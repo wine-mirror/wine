@@ -24,8 +24,6 @@
 #include "queue.h"
 #include "winproc.h"
 #include "options.h"
-#include "stddebug.h"
-/* #define DEBUG_MSG */
 #include "debug.h"
 
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
@@ -357,7 +355,7 @@ static int MSG_JournalPlayBackMsg(void)
   tmpMsg = SEGPTR_NEW(EVENTMSG16);
   wtime=HOOK_CallHooks16( WH_JOURNALPLAYBACK, HC_GETNEXT, 0,
 			  (LPARAM)SEGPTR_GET(tmpMsg));
-  /*  dprintf_msg(stddeb,"Playback wait time =%ld\n",wtime); */
+  /*  dprintf_info(msg,"Playback wait time =%ld\n",wtime); */
   if (wtime<=0)
   {
    wtime=0;
@@ -598,12 +596,12 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     if (IsTaskLocked() || !IsWindow32(hwnd)) return 0;
 
     debugSMRL+=4;
-    dprintf_sendmsg(stddeb,"%*sSM: %s [%04x] (%04x -> %04x)\n", 
+    dprintf_info(sendmsg,"%*sSM: %s [%04x] (%04x -> %04x)\n", 
 		    prevSMRL, "", SPY_GetMsgName(msg), msg, queue->self, hDestQueue );
 
     if( !(queue->wakeBits & QS_SMPARAMSFREE) )
     {
-      dprintf_sendmsg(stddeb,"\tIntertask SendMessage: sleeping since unreplied SendMessage pending\n");
+      dprintf_info(sendmsg,"\tIntertask SendMessage: sleeping since unreplied SendMessage pending\n");
       queue->changeBits &= ~QS_SMPARAMSFREE;
       QUEUE_WaitBits( QS_SMPARAMSFREE );
     }
@@ -621,7 +619,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     queue->wakeBits &= ~QS_SMPARAMSFREE;
     queue->flags = (queue->flags & ~(QUEUE_SM_WIN32|QUEUE_SM_UNICODE)) | flags;
 
-    dprintf_sendmsg(stddeb,"%*ssm: smResultInit = %08x\n", prevSMRL, "", (unsigned)&qCtrl);
+    dprintf_info(sendmsg,"%*ssm: smResultInit = %08x\n", prevSMRL, "", (unsigned)&qCtrl);
 
     queue->smResultInit = &qCtrl;
 
@@ -636,11 +634,11 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
         queue->changeBits &= ~QS_SMRESULT;
         DirectedYield( destQ->hTask );
         QUEUE_WaitBits( QS_SMRESULT );
-	dprintf_sendmsg(stddeb,"\tsm: have result!\n");
+	dprintf_info(sendmsg,"\tsm: have result!\n");
       }
       /* got something */
 
-      dprintf_sendmsg(stddeb,"%*ssm: smResult = %08x\n", prevSMRL, "", (unsigned)queue->smResult );
+      dprintf_info(sendmsg,"%*ssm: smResult = %08x\n", prevSMRL, "", (unsigned)queue->smResult );
 
       if (queue->smResult) { /* FIXME, smResult should always be set */
         queue->smResult->lResult = queue->SendMessageReturn;
@@ -649,11 +647,11 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
       queue->wakeBits &= ~QS_SMRESULT;
 
       if( queue->smResult != &qCtrl )
-	  dprintf_sendmsg(stddeb,"%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
+	  dprintf_err(sendmsg, "%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
     }
     queue->smResultInit = NULL;
     
-    dprintf_sendmsg(stddeb,"%*sSM: [%04x] returning %08lx\n", prevSMRL, "", msg, qCtrl.lResult);
+    dprintf_info(sendmsg,"%*sSM: [%04x] returning %08lx\n", prevSMRL, "", msg, qCtrl.lResult);
     debugSMRL-=4;
 
     return qCtrl.lResult;
@@ -670,11 +668,11 @@ void WINAPI ReplyMessage16( LRESULT result )
 
     if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return;
 
-    dprintf_msg(stddeb,"ReplyMessage, queue %04x\n", queue->self);
+    dprintf_info(msg,"ReplyMessage, queue %04x\n", queue->self);
 
     while( (senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->InSendMessageHandle)))
     {
-      dprintf_msg(stddeb,"\trpm: replying to %04x (%04x -> %04x)\n",
+      dprintf_info(msg,"\trpm: replying to %04x (%04x -> %04x)\n",
                           queue->msg, queue->self, senderQ->self);
 
       if( queue->wakeBits & QS_SENDMESSAGE )
@@ -686,10 +684,10 @@ void WINAPI ReplyMessage16( LRESULT result )
       if(!(senderQ->wakeBits & QS_SMRESULT) ) break;
       OldYield();
     } 
-    if( !senderQ ) { dprintf_msg(stddeb,"\trpm: done\n"); return; }
+    if( !senderQ ) { dprintf_info(msg,"\trpm: done\n"); return; }
 
     senderQ->SendMessageReturn = result;
-    dprintf_msg(stddeb,"\trpm: smResult = %08x, result = %08lx\n", 
+    dprintf_info(msg,"\trpm: smResult = %08x, result = %08lx\n", 
 			(unsigned)queue->smResultCurrent, result );
 
     senderQ->smResult = queue->smResultCurrent;
@@ -939,7 +937,7 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
     MSG_PeekMessage( lpmsg,
                      hwnd, first, last, PM_REMOVE, FALSE );
 
-    dprintf_msg(stddeb,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
+    dprintf_info(msg,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
 		     				                 hwnd, first, last );
     HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (lpmsg->message != WM_QUIT);
@@ -970,17 +968,17 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
     
     if (hwnd == HWND_BROADCAST)
     {
-        dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
+        dprintf_info(msg,"PostMessage // HWND_BROADCAST !\n");
         for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
         {
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
+                dprintf_info(msg,"BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
                             wndPtr->hwndSelf, message, wParam, lParam);
                 PostMessage16( wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
-        dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
+        dprintf_info(msg,"PostMessage // End of HWND_BROADCAST !\n");
         return TRUE;
     }
 
@@ -1053,20 +1051,20 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     {
         if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
             return TRUE;
-        dprintf_msg(stddeb,"SendMessage // HWND_BROADCAST !\n");
+        dprintf_info(msg,"SendMessage // HWND_BROADCAST !\n");
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;
             if (!IsWindow32(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
+                dprintf_info(msg,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
                             wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
                 SendMessage16( wndPtr->hwndSelf, msg, wParam, lParam );
             }
         }
         HeapFree( SystemHeap, 0, list );
-        dprintf_msg(stddeb,"SendMessage // End of HWND_BROADCAST !\n");
+        dprintf_info(msg,"SendMessage // End of HWND_BROADCAST !\n");
         return TRUE;
     }
 
@@ -1424,15 +1422,16 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
     static int dead_char;
     BYTE wp[2];
     
-    if ((debugging_msg && message != WM_MOUSEMOVE && message != WM_TIMER)
-        || (debugging_key
-            && message >= WM_KEYFIRST && message <= WM_KEYLAST))
-        fprintf(stddeb, "TranslateMessage(%s, %04X, %08lX)\n",
-		SPY_GetMsgName(message), wParam, lParam );
+    if (message != WM_MOUSEMOVE && message != WM_TIMER)
+        dprintf_info(msg, "TranslateMessage(%s, %04X, %08lX)\n",
+		     SPY_GetMsgName(message), wParam, lParam );
+    if(message >= WM_KEYFIRST && message <= WM_KEYLAST)
+        dprintf_info(key, "TranslateMessage(%s, %04X, %08lX)\n",
+		     SPY_GetMsgName(message), wParam, lParam );
 
     if ((message != WM_KEYDOWN) && (message != WM_SYSKEYDOWN)) return FALSE;
 
-    dprintf_key( stddeb, "Translating key %04X, scancode %04X\n",
+    dprintf_info(key, "Translating key %04X, scancode %04X\n",
                  wParam, HIWORD(lParam) );
 
     /* FIXME : should handle ToAscii yielding 2 */
@@ -1463,14 +1462,14 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
                 }
             dead_char = 0;
         }
-        dprintf_key(stddeb, "1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
+        dprintf_info(key, "1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
         PostMessage16( hwnd, message, wp[0], lParam );
         return TRUE;
 
     case -1 :
         message = (message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
         dead_char = wp[0];
-        dprintf_key( stddeb, "-1 -> PostMessage(%s)\n",
+        dprintf_info(key, "-1 -> PostMessage(%s)\n",
                      SPY_GetMsgName(message));
         PostMessage16( hwnd, message, wp[0], lParam );
         return TRUE;
@@ -1643,7 +1642,7 @@ LONG WINAPI DispatchMessage32W( const MSG32* msg )
  */
 WORD WINAPI RegisterWindowMessage16( SEGPTR str )
 {
-    dprintf_msg(stddeb, "RegisterWindowMessage16: %08lx\n", (DWORD)str );
+    dprintf_info(msg, "RegisterWindowMessage16: %08lx\n", (DWORD)str );
     return GlobalAddAtom16( str );
 }
 
@@ -1653,7 +1652,7 @@ WORD WINAPI RegisterWindowMessage16( SEGPTR str )
  */
 WORD WINAPI RegisterWindowMessage32A( LPCSTR str )
 {
-    dprintf_msg(stddeb, "RegisterWindowMessage32A: %s\n", str );
+    dprintf_info(msg, "RegisterWindowMessage32A: %s\n", str );
     return GlobalAddAtom32A( str );
 }
 
@@ -1663,7 +1662,7 @@ WORD WINAPI RegisterWindowMessage32A( LPCSTR str )
  */
 WORD WINAPI RegisterWindowMessage32W( LPCWSTR str )
 {
-    dprintf_msg(stddeb, "RegisterWindowMessage32W: %p\n", str );
+    dprintf_info(msg, "RegisterWindowMessage32W: %p\n", str );
     return GlobalAddAtom32W( str );
 }
 

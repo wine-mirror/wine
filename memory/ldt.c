@@ -10,7 +10,6 @@
 #include <string.h>
 #include <errno.h>
 #include "ldt.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #ifdef __i386__
@@ -148,7 +147,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 {
     int ret = 0;
 
-    dprintf_ldt(stddeb,
+    dprintf_info(ldt,
 	  "LDT_SetEntry: entry=%04x base=%08lx limit=%05lx %s %d-bit flags=%c%c%c\n",
           entry, content->base, content->limit,
           content->limit_in_pages ? "pages" : "bytes",

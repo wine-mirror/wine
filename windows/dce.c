@@ -25,8 +25,6 @@
 #include "region.h"
 #include "heap.h"
 #include "sysmetrics.h"
-#include "stddebug.h"
-/* #define DEBUG_DC */
 #include "debug.h"
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
@@ -174,7 +172,7 @@ static void DCE_DeleteClipRgn( DCE* dce )
 
     dce->hClipRgn = 0;
 
-    dprintf_dc(stddeb,"\trestoring VisRgn\n");
+    dprintf_info(dc,"\trestoring VisRgn\n");
 
     RestoreVisRgn(dce->hDC);
 }
@@ -228,10 +226,11 @@ BOOL32 DCE_InvalidateDCE(WND* pWnd, const RECT32* pRectUpdate)
     {
 	DCE *dce;
 
-	dprintf_dc(stddeb,"InvalidateDCE: scope hwnd = %04x, (%i,%i - %i,%i)\n",
-                         wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
-				        pRectUpdate->right,pRectUpdate->bottom);
-	if( debugging_dc ) DCE_DumpCache();
+	dprintf_info(dc,"InvalidateDCE: scope hwnd = %04x, (%i,%i - %i,%i)\n",
+		     wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
+		     pRectUpdate->right,pRectUpdate->bottom);
+	if(debugging_info(dc)) 
+	  DCE_DumpCache();
 
  	/* walk all DCEs and fixup non-empty entries */
 
@@ -268,7 +267,7 @@ BOOL32 DCE_InvalidateDCE(WND* pWnd, const RECT32* pRectUpdate)
 				{
 				    /* Don't bother with visible regions of unused DCEs */
 
-				    dprintf_dc(stddeb,"\tpurged %08x dce [%04x]\n", 
+				    dprintf_info(dc,"\tpurged %08x dce [%04x]\n", 
 						(unsigned)dce, wndCurrent->hwndSelf);
 
 				    dce->hwndCurrent = 0;
@@ -279,7 +278,7 @@ BOOL32 DCE_InvalidateDCE(WND* pWnd, const RECT32* pRectUpdate)
 				{
 				    /* Set dirty bits in the hDC and DCE structs */
 
-				    dprintf_dc(stddeb,"\tfixed up %08x dce [%04x]\n", 
+				    dprintf_info(dc,"\tfixed up %08x dce [%04x]\n", 
 						(unsigned)dce, wndCurrent->hwndSelf);
 
 				    dce->DCXflags |= DCX_DCEDIRTY;
@@ -606,7 +605,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     BOOL32	bUpdateVisRgn = TRUE;
     BOOL32	bUpdateClipOrigin = FALSE;
 
-    dprintf_dc(stddeb,"GetDCEx: hwnd %04x, hrgnClip %04x, flags %08x\n", 
+    dprintf_info(dc,"GetDCEx: hwnd %04x, hrgnClip %04x, flags %08x\n", 
 				hwnd, hrgnClip, (unsigned)flags);
     
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
@@ -685,7 +684,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 		   ((dce->DCXflags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
 				      DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
 		{
-		    dprintf_dc(stddeb,"\tfound valid %08x dce [%04x], flags %08x\n", 
+		    dprintf_info(dc,"\tfound valid %08x dce [%04x], flags %08x\n", 
 					(unsigned)dce, hwnd, (unsigned)dcxFlags );
 		    bUpdateVisRgn = FALSE; 
 		    bUpdateClipOrigin = TRUE;
@@ -700,7 +699,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
         dce = (wndPtr->class->style & CS_OWNDC) ? wndPtr->dce : wndPtr->class->dce;
 	if( dce->hwndCurrent == hwnd )
 	{
-	    dprintf_dc(stddeb,"\tskipping hVisRgn update\n");
+	    dprintf_info(dc,"\tskipping hVisRgn update\n");
 	    bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
 
 	    if( (dce->DCXflags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN)) &&
@@ -734,7 +733,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     DCE_SetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
     if( bUpdateVisRgn )
     {
-	dprintf_dc(stddeb,"updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
+	dprintf_info(dc,"updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
 
 	if (flags & DCX_PARENTCLIP)
         {
@@ -770,7 +769,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 	SelectVisRgn( hdc, hrgnVisible );
     }
     else
-	dprintf_dc(stddeb,"no visrgn update %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
+	dprintf_info(dc,"no visrgn update %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
 
     /* apply additional region operation (if any) */
 
@@ -781,7 +780,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 	dce->DCXflags |= flags & (DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
 	dce->hClipRgn = hrgnClip;
 
-	dprintf_dc(stddeb, "\tsaved VisRgn, clipRgn = %04x\n", hrgnClip);
+	dprintf_info(dc, "\tsaved VisRgn, clipRgn = %04x\n", hrgnClip);
 
 	SaveVisRgn( hdc );
         CombineRgn32( hrgnVisible, InquireVisRgn( hdc ), hrgnClip,
@@ -791,7 +790,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 
     if( hrgnVisible ) DeleteObject32( hrgnVisible );
 
-    dprintf_dc(stddeb, "GetDCEx(%04x,%04x,0x%lx): returning %04x\n", 
+    dprintf_info(dc, "GetDCEx(%04x,%04x,0x%lx): returning %04x\n", 
 	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
@@ -853,7 +852,7 @@ INT32 WINAPI ReleaseDC32( HWND32 hwnd, HDC32 hdc )
 {
     DCE * dce = firstDCE;
     
-    dprintf_dc(stddeb, "ReleaseDC: %04x %04x\n", hwnd, hdc );
+    dprintf_info(dc, "ReleaseDC: %04x %04x\n", hwnd, hdc );
         
     while (dce && (dce->hDC != hdc)) dce = dce->next;
 
@@ -873,7 +872,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     HRGN32 hVisRgn;
     DCE *dce = firstDCE;;
 
-    dprintf_dc(stddeb,"DCHook: hDC = %04x, %i\n", hDC, code);
+    dprintf_info(dc,"DCHook: hDC = %04x, %i\n", hDC, code);
 
     while (dce && (dce->hDC != hDC)) dce = dce->next;
     if (!dce) return 0;
@@ -892,7 +891,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	       SetHookFlags(hDC, DCHF_VALIDATEVISRGN);
 	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags);
 
-	       dprintf_dc(stddeb,"\tapplying saved clipRgn\n");
+	       dprintf_info(dc,"\tapplying saved clipRgn\n");
   
 	       /* clip this region with saved clipping region */
 
@@ -912,7 +911,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	       DeleteObject32( hVisRgn );
 	   }
            else /* non-fatal but shouldn't happen */
-	     dprintf_dc(stddeb,"DCHook: DC is not in use!\n");
+	     dprintf_warn(dc, "DCHook: DC is not in use!\n");
 	   break;
 
       case DCHC_DELETEDC: /* FIXME: ?? */

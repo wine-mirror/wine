@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "msdos.h"
 #include "miscemu.h"
-#include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
 

@@ -12,10 +12,12 @@
 #include <time.h>
 #include "ole.h"
 #include "ole2.h"
-#include "stddebug.h"
+#include "winerror.h"
 #include "debug.h"
 #include "file.h"
 #include "compobj.h"
+#include "heap.h"
+#include "ldt.h"
 #include "interfaces.h"
 #include "shlobj.h"
 #include "ddraw.h"
@@ -23,27 +25,36 @@
 #include "dinput.h"
 #include "d3d.h"
 
-DWORD currentMalloc=0;
+LPMALLOC16 currentMalloc16=NULL;
+LPMALLOC32 currentMalloc32=NULL;
 
 /***********************************************************************
  *           CoBuildVersion [COMPOBJ.1]
  */
 DWORD WINAPI CoBuildVersion()
 {
-	dprintf_ole(stddeb,"CoBuildVersion()\n");
-	return (rmm<<16)+rup;
+    dprintf_info(ole,"CoBuildVersion()\n");
+    return (rmm<<16)+rup;
 }
 
 /***********************************************************************
  *           CoInitialize	[COMPOBJ.2]
- * lpReserved is an IMalloc pointer in 16bit OLE. We just stored it as-is.
+ * lpReserved is an IMalloc pointer in 16bit OLE.
  */
-HRESULT WINAPI CoInitialize(DWORD lpReserved)
+HRESULT WINAPI CoInitialize16(LPMALLOC16 lpReserved)
 {
-	dprintf_ole(stdnimp,"CoInitialize\n");
-	/* remember the LPMALLOC, maybe somebody wants to read it later on */
-	currentMalloc = lpReserved;
-	return S_OK;
+    currentMalloc16 = lpReserved;
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoInitialize	(OLE32.26)
+ * lpReserved is an IMalloc pointer in 32bit OLE.
+ */
+HRESULT WINAPI CoInitialize32(LPMALLOC32 lpReserved)
+{
+    currentMalloc32 = lpReserved;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -51,22 +62,29 @@ HRESULT WINAPI CoInitialize(DWORD lpReserved)
  */
 void WINAPI CoUnitialize()
 {
-	dprintf_ole(stdnimp,"CoUnitialize()\n");
+    dprintf_info(ole,"CoUnitialize()\n");
 }
 
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
  */
-HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
+HRESULT WINAPI CoGetMalloc16(DWORD dwMemContext, LPMALLOC16 * lpMalloc)
 {
-	if(currentMalloc)
-	{
-		*lpMalloc = currentMalloc;
-		return S_OK;
-	}
-	*lpMalloc = 0;
-	/* 16-bit E_NOTIMPL */
-	return 0x80000001L;
+    if(!currentMalloc16)
+	currentMalloc16 = IMalloc16_Constructor();
+    *lpMalloc = currentMalloc16;
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoGetMalloc    (OLE32.4]
+ */
+HRESULT WINAPI CoGetMalloc32(DWORD dwMemContext, LPMALLOC32 *lpMalloc)
+{
+    if(!currentMalloc32)
+	currentMalloc32 = IMalloc32_Constructor();
+    *lpMalloc = currentMalloc32;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -74,8 +92,8 @@ HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
  */
 OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
-    dprintf_ole(stdnimp,"CoDisconnectObject:%p %lx\n",lpUnk,reserved);
-    return OLE_OK;
+    dprintf_info(ole,"CoDisconnectObject:%p %lx\n",lpUnk,reserved);
+    return S_OK;
 }
 
 /***********************************************************************
@@ -92,14 +110,14 @@ BOOL16 WINAPI IsEqualGUID(GUID* g1, GUID* g2)
 
 /* Class id: DWORD-WORD-WORD-BYTES[2]-BYTES[6] */
 
-OLESTATUS WINAPI CLSIDFromString(const LPCSTR idstr, CLSID *id)
+OLESTATUS WINAPI CLSIDFromString16(const LPCOLESTR16 idstr, CLSID *id)
 {
   BYTE *s = (BYTE *) idstr;
   BYTE *p;
   int	i;
   BYTE table[256];
 
-  dprintf_ole(stddeb,"ClsIDFromString() %s -> %p\n", idstr, id);
+  dprintf_info(ole,"ClsIDFromString() %s -> %p\n", idstr, id);
 
   /* quick lookup table */
   memset(table, 0, 256);
@@ -153,13 +171,25 @@ OLESTATUS WINAPI CLSIDFromString(const LPCSTR idstr, CLSID *id)
     s += 2;
   }
 
-  return OLE_OK;
+  return S_OK;
+}
+
+/***********************************************************************
+ *           CLSIDFromString (OLE32.3)
+ */
+OLESTATUS WINAPI CLSIDFromString32(const LPCOLESTR32 idstr, CLSID *id)
+{
+    LPOLESTR16      xid = HEAP_strdupWtoA(GetProcessHeap(),0,idstr);
+    OLESTATUS       ret = CLSIDFromString16(xid,id);
+
+    HeapFree(GetProcessHeap(),0,xid);
+    return ret;
 }
 
 /***********************************************************************
  *           StringFromCLSID [COMPOBJ.19]
  */
-OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR idstr)
+OLESTATUS WINAPI WINE_StringFromCLSID(const CLSID *id, LPSTR idstr)
 {
   static const char *hex = "0123456789ABCDEF";
   char *s;
@@ -183,16 +213,64 @@ OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR idstr)
     idstr[i] = toupper(idstr[i]);
   }
 
-  dprintf_ole(stddeb,"StringFromClsID: %p->%s\n", id, idstr);
+  dprintf_info(ole,"StringFromClsID: %p->%s\n", id, idstr);
 
   return OLE_OK;
 }
+
+OLESTATUS WINAPI StringFromCLSID16(const CLSID *id, LPOLESTR16 *idstr)
+{
+    LPMALLOC16	mllc;
+    OLESTATUS	ret;
+    DWORD	args[2];
+
+    ret = CoGetMalloc16(0,&mllc);
+    if (ret) return ret;
+
+    args[0] = (DWORD)mllc;
+    args[1] = 40;
+
+    /* No need for a Callback entry, we have WOWCallback16Ex which does
+     * everything we need.
+     */
+    if (!WOWCallback16Ex(
+    	(FARPROC16)((LPMALLOC16_VTABLE)PTR_SEG_TO_LIN(
+		((LPMALLOC16)PTR_SEG_TO_LIN(mllc))->lpvtbl)
+	)->fnAlloc,
+	WCB16_CDECL,
+	2,
+	(LPVOID)args,
+	(LPDWORD)idstr
+    )) {
+    	fprintf(stderr,"CallTo16 IMalloc16 failed\n");
+    	return E_FAIL;
+    }
+    return WINE_StringFromCLSID(id,PTR_SEG_TO_LIN(*idstr));
+}
+
+OLESTATUS WINAPI StringFromCLSID32(const CLSID *id, LPOLESTR32 *idstr)
+{
+	char            buf[80];
+	OLESTATUS       ret;
+	LPMALLOC32	mllc;
+
+	if ((ret=CoGetMalloc32(0,&mllc)))
+		return ret;
+
+	ret=WINE_StringFromCLSID(id,buf);
+	if (!ret) {
+		*idstr = mllc->lpvtbl->fnAlloc(mllc,strlen(buf)*2+2);
+		lstrcpyAtoW(*idstr,buf);
+	}
+	return ret;
+}
+
 
 /***********************************************************************
  *           CLSIDFromProgID [COMPOBJ.61]
  */
 
-OLESTATUS WINAPI CLSIDFromProgID(LPCSTR progid,LPCLSID riid)
+OLESTATUS WINAPI CLSIDFromProgID16(LPCSTR progid,LPCLSID riid)
 {
 	char	*buf,buf2[80];
 	DWORD	buf2len;
@@ -212,7 +290,19 @@ OLESTATUS WINAPI CLSIDFromProgID(LPCSTR progid,LPCLSID riid)
 		return OLE_ERROR_GENERIC;
 	}
 	RegCloseKey(xhkey);
-	return CLSIDFromString(buf2,riid);
+	return CLSIDFromString16(buf2,riid);
+}
+
+/***********************************************************************
+ *           CLSIDFromProgID (OLE32.2)
+ */
+OLESTATUS WINAPI CLSIDFromProgID32(LPCOLESTR32 progid,LPCLSID riid)
+{
+	LPOLESTR16 pid = HEAP_strdupWtoA(GetProcessHeap(),0,progid);
+	OLESTATUS       ret = CLSIDFromProgID16(pid,riid);
+
+	HeapFree(GetProcessHeap(),0,pid);
+	return ret;
 }
 
 OLESTATUS WINAPI LookupETask(LPVOID p1,LPVOID p2) {
@@ -228,13 +318,13 @@ OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 /***********************************************************************
  *		CoRegisterClassObject [COMPOBJ.5]
  */
-OLESTATUS WINAPI CoRegisterClassObject(
+OLESTATUS WINAPI CoRegisterClassObject16(
 	REFCLSID rclsid, LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,
 	LPDWORD lpdwRegister
 ) {
 	char	buf[80];
 
-	StringFromCLSID(rclsid,buf);
+	WINE_StringFromCLSID(rclsid,buf);
 
 	fprintf(stderr,"CoRegisterClassObject(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
 		buf,pUnk,dwClsContext,flags,lpdwRegister
@@ -243,7 +333,24 @@ OLESTATUS WINAPI CoRegisterClassObject(
 }
 
 /***********************************************************************
- *		CoRegisterClassObject [COMPOBJ.27]
+ *		CoRegisterClassObject (OLE32.36)
+ */
+OLESTATUS WINAPI CoRegisterClassObject32(
+	REFCLSID rclsid, LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,
+	LPDWORD lpdwRegister
+) {
+    char buf[80];
+
+    WINE_StringFromCLSID(rclsid,buf);
+
+    fprintf(stderr,"CoRegisterClassObject(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
+	    buf,pUnk,dwClsContext,flags,lpdwRegister
+    );
+    return 0;
+}
+
+/***********************************************************************
+ *		CoRegisterMessageFilter [COMPOBJ.27]
  */
 OLESTATUS WINAPI CoRegisterMessageFilter16(
 	LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter
@@ -282,4 +389,35 @@ HRESULT WINAPI CoFileTimeNow(FILETIME *lpFileTime)
 {
 	DOSFS_UnixTimeToFileTime(time(NULL), lpFileTime, 0);
 	return S_OK;
+}
+
+/***********************************************************************
+ *           CoTaskMemAlloc (OLE32.43)
+ */
+LPVOID WINAPI CoTaskMemAlloc(ULONG size) {
+    LPMALLOC32	lpmalloc;
+    HRESULT	ret = CoGetMalloc32(0,&lpmalloc);
+
+    if (ret) 
+	return NULL;
+    return lpmalloc->lpvtbl->fnAlloc(lpmalloc,size);
+}
+
+/***********************************************************************
+ *           CoTaskMemFree (OLE32.44)
+ */
+VOID WINAPI CoTaskMemFree(LPVOID ptr) {
+    LPMALLOC32	lpmalloc;
+    HRESULT	ret = CoGetMalloc32(0,&lpmalloc);
+
+    if (ret) return;
+    return lpmalloc->lpvtbl->fnFree(lpmalloc,ptr);
+}
+
+/***********************************************************************
+ *           CoInitializeWOW (OLE32.27)
+ */
+HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
+    fprintf(stderr,"CoInitializeWOW(0x%08lx,0x%08lx),stub!\n",x,y);
+    return 0;
 }

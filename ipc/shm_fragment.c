@@ -10,7 +10,6 @@
 #ifdef CONFIG_IPC
 
 #include <stdio.h>		   /* for debugging only */
-#include <stddebug.h>
 #include <debug.h>		   /* for "stddeb" */
 
 #include "shm_fragment.h"

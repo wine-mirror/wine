@@ -6,7 +6,6 @@
 
 #include "pen.h"
 #include "color.h"
-#include "stddebug.h"
 #include "debug.h"
 
 static const char PEN_dash[]       = { 5,3 };      /* -----   -----   -----  */

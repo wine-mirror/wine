@@ -1,0 +1,19 @@
+
+WINE = ../../wine
+LCCINC = c:\\lcc\\include
+OBJS = view.obj init.obj winmain.obj 
+RES = viewrc.res
+
+.SUFFIXES: .rc .obj .res
+
+.c.obj:
+	$(WINE) "lcc -I$(LCCINC) $<"
+
+.rc.res:
+	$(WINE) "lrc $<"
+
+view.exe: $(OBJS) $(RES)
+	$(WINE) "lcclnk $(OBJS) $(RES)"
+
+clean:
+	rm *.exe *.obj *.res

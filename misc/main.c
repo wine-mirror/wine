@@ -29,12 +29,10 @@
 #include "process.h"
 #include "shell.h"
 #include "winbase.h"
-#define DEBUG_DEFINE_VARIABLES
-#include "stddebug.h"
 #include "debug.h"
+#include "debugdefs.h"
 #include "xmalloc.h"
 #include "version.h"
-
 
 const WINE_LANGUAGE_DEF Languages[] =
 {
@@ -46,14 +44,14 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Fi",0x040B},	/* LANG_Fi */
     {"Da",0x0406},	/* LANG_Da */
     {"Cz",0x0405},	/* LANG_Cz */
-    {"Eo",     0},	/* LANG_Eo */ /* FIXME languageid */
+    {"Eo",0x0425},	/* LANG_Eo */
     {"It",0x0410},	/* LANG_It */
     {"Ko",0x0412},	/* LANG_Ko */
     {"Hu",0x0436},	/* LANG_Hu */
-    {"Pl",0x0415},      /* LANG_Pl */
-    {"Po",0x0416},      /* LANG_Po */
-    {"Sw",0x0417},      /* LANG_Sw */
-    {"Ca",     0},      /* LANG_Ca */ /* FIXME languageid */
+    {"Pl",0x0415},	/* LANG_Pl */
+    {"Po",0x0416},	/* LANG_Po */
+    {"Sw",0x0417},	/* LANG_Sw */
+    {"Ca",0x0426},	/* LANG_Ca */
     {NULL,0}
 };
 
@@ -206,37 +204,53 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
  *  Turns specific debug messages on or off, according to "options".
  *  Returns TRUE if parsing was successful
  */
-#ifdef DEBUG_RUNTIME
-
 BOOL32 ParseDebugOptions(char *options)
 {
-  int l;
+  int l, cls;
   if (strlen(options)<3)
     return FALSE;
   do
   {
-    if ((*options!='+')&&(*options!='-'))
-      return FALSE;
+    if ((*options!='+')&&(*options!='-')){
+      int j;
+
+      for(j=0; j<DEBUG_CLASS_COUNT; j++)
+	if(!lstrncmpi32A(options, debug_cl_name[j], strlen(debug_cl_name[j])))
+	  break;
+      if(j==DEBUG_CLASS_COUNT)
+	return FALSE;
+      options += strlen(debug_cl_name[j]);
+      if ((*options!='+')&&(*options!='-'))
+	return FALSE;
+      cls = j;
+    }
+    else
+      cls = -1; /* all classes */
+
     if (strchr(options,','))
       l=strchr(options,',')-options;
     else
       l=strlen(options);
+
     if (!lstrncmpi32A(options+1,"all",l-1))
       {
-	int i;
-	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	  debug_msg_enabled[i]=(*options=='+');
+	int i, j;
+	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
+	  for(j=0; j<DEBUG_CLASS_COUNT; j++)
+	    if(cls == -1 || cls == j)
+	      debug_msg_enabled[i][j]=(*options=='+');
       }
     else
       {
-	int i;
-	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	  if (debug_msg_name && (!lstrncmpi32A(options+1,debug_msg_name[i],l-1)))
-	    {
-	      debug_msg_enabled[i]=(*options=='+');
-	      break;
-	    }
-	if (i==sizeof(debug_msg_enabled)/sizeof(short))
+	int i, j;
+	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
+	  if (debug_ch_name && (!lstrncmpi32A(options+1,debug_ch_name[i],l-1))){
+	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
+	      if(cls == -1 || cls == j)
+		debug_msg_enabled[i][j]=(*options=='+');
+	    break;
+	  }
+	if (i==DEBUG_CHANNEL_COUNT)
 	  return FALSE;
       }
     options+=l;
@@ -247,8 +261,6 @@ BOOL32 ParseDebugOptions(char *options)
   else
     return TRUE;
 }
-
-#endif
 
 /***********************************************************************
  *           MAIN_ParseLanguageOption
@@ -370,29 +382,34 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         Options.managed = TRUE;
     if (MAIN_GetResource( db, ".mode", &value))
         MAIN_ParseModeOption( (char *)value.addr );
-
-#ifdef DEBUG_RUNTIME
     if (MAIN_GetResource( db, ".debugoptions", &value))
 	ParseDebugOptions((char*)value.addr);
-#endif
     if (MAIN_GetResource( db, ".debugmsg", &value))
       {
 #ifndef DEBUG_RUNTIME
 	fprintf(stderr,"%s: Option \"-debugmsg\" not implemented.\n" \
-          "    Recompile with DEBUG_RUNTIME in include/stddebug.h defined.\n",
+          "    Recompile with DEBUG_RUNTIME in include/debugtools.h defined.\n",
 	  argv[0]);
 	exit(1);
 #else
 	if (ParseDebugOptions((char*)value.addr)==FALSE)
 	  {
 	    int i;
-	    fprintf(stderr,"%s: Syntax: -debugmsg +xxx,...  or -debugmsg -xxx,...\n",argv[0]);
-	    fprintf(stderr,"Example: -debugmsg +all,-heap    turn on all messages except heap messages\n");
+	    fprintf(stderr,"%s: Syntax: -debugmsg [class]+xxx,...  or "
+		    "-debugmsg [class]-xxx,...\n",argv[0]);
+	    fprintf(stderr,"Example: -debugmsg +all,warn-heap"
+		    "turn on all messages except warning heap messages\n");
+
+	    fprintf(stderr,"Available message classes:\n");
+	    for(i=0;i<DEBUG_CLASS_COUNT;i++)
+	      fprintf(stderr, "%-9s", debug_cl_name[i]);
+	    fprintf(stderr,"\n\n");
+
 	    fprintf(stderr,"Available message types:\n");
 	    fprintf(stderr,"%-9s ","all");
-	    for(i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	      if(debug_msg_name[i])
-		fprintf(stderr,"%-9s%c",debug_msg_name[i],
+	    for(i=0;i<DEBUG_CHANNEL_COUNT;i++)
+	      if(debug_ch_name[i])
+		fprintf(stderr,"%-9s%c",debug_ch_name[i],
 			(((i+2)%8==0)?'\n':' '));
 	    fprintf(stderr,"\n\n");
 	    exit(1);

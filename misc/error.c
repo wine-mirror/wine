@@ -9,14 +9,11 @@
 #include <string.h>
 
 #include "windows.h"
-#include "stddebug.h"
 #include "debug.h"
-
-#ifdef DEBUG_RUNTIME
 
 #define ErrorString(manifest) { manifest, # manifest }
 
-const struct {
+static const struct {
 	int constant;
 	const char *name;
 } ErrorStrings[] = {
@@ -47,9 +44,7 @@ const struct {
 	ErrorString(ERR_SELBITMAP)
 };
 
-#define ErrorStringCount (sizeof(ErrorStrings) / sizeof(ErrorStrings[0]))
-
-const struct {
+static const struct {
 	int constant;
 	const char *name;
 } ParamErrorStrings[] = {
@@ -90,27 +85,25 @@ const struct {
 	ErrorString(ERR_BAD_HMETAFILE)
 };
 
+#undef  ErrorString
+#define ErrorStringCount (sizeof(ErrorStrings) / sizeof(ErrorStrings[0]))
 #define ParamErrorStringCount (sizeof(ParamErrorStrings) / sizeof(ParamErrorStrings[0]))
-
-#endif /* DEBUG_RUNTIME */
 
 /***********************************************************************
 *	GetErrorString (internal)
 */
-static const char *GetErrorString(UINT16 uErr) {
-	static char buffer[80];
+static const char *GetErrorString(UINT16 uErr) 
+{
+  static char buffer[80];
+  int i;
 
-#ifdef DEBUG_RUNTIME
-	int i;
+  for (i = 0; i < ErrorStringCount; i++) {
+    if (uErr == ErrorStrings[i].constant)
+      return ErrorStrings[i].name;
+  }
 
-	for (i = 0; i < ErrorStringCount; i++) {
-		if (uErr == ErrorStrings[i].constant)
-			return ErrorStrings[i].name;
-	}
-#endif
-
-	sprintf(buffer, "%x", uErr);
-	return buffer;
+  sprintf(buffer, "%x", uErr);
+  return buffer;
 }
 
 
@@ -126,7 +119,6 @@ static const char *GetParamErrorString(UINT16 uErr) {
 	} else
 		buffer[0] = '\0';
 
-#ifdef DEBUG_RUNTIME
 	{
 		int i;
 
@@ -137,7 +129,6 @@ static const char *GetParamErrorString(UINT16 uErr) {
 			}
 		}
 	}
-#endif
 
 	sprintf(buffer + strlen(buffer), "%x", uErr);
 	return buffer;

@@ -2,7 +2,7 @@
 #include "wintypes.h"
 long WINAPI stub_GDI_379(void) { fprintf(stderr, "Warning: GDI_379:STARTPAGE unimplemented stub\n"); return 1; }
 long WINAPI stub_GDI_380(void) { fprintf(stderr, "Warning: GDI_380:ENDPAGE unimplemented stub\n"); return 1; }
-long WINAPI stub_GDI_381(void) { fprintf(stderr, "Warning: GDI_381:SETABORTPROC unimplemented stub\n"); return 1; }
+long WINAPI stub_GDI_381(HDC16 hdc, SEGPTR proc) { fprintf(stderr, "Warning: GDI_381:SETABORTPROC unimplemented stub\n"); return 1; }
 long WINAPI stub_GDI_382(void) { fprintf(stderr, "Warning: GDI_382:ABORTPROC unimplemented stub\n"); return 1; }
 long WINAPI stub_GDI_530(void) { fprintf(stderr, "Warning: GDI_530: unimplemented stub\n"); return 0; }
 long WINAPI stub_GDI_531(void) { fprintf(stderr, "Warning: GDI_531: unimplemented stub\n"); return 0; }
@@ -46,4 +46,3 @@ long WINAPI stub_USER_920(void) { fprintf(stderr, "Warning: USER_920: unimplemen
 long WINAPI stub_USER_922(void) { fprintf(stderr, "Warning: USER_922: unimplemented stub\n"); return 0; }
 long WINAPI stub_USER_923(void) { fprintf(stderr, "Warning: USER_923: unimplemented stub\n"); return 0; }
 long WINAPI stub_KERNEL_700(void) { fprintf(stderr, "Warning: KERNEL_700: unimplemented stub\n"); return 1; }
-long WINAPI stub_KERNEL_449(void) { fprintf(stderr, "Warning: KERNEL_449: unimplemented stub\n"); return 0; }

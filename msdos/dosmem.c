@@ -226,6 +226,7 @@ void DOSMEM_InitExports(HMODULE16 hKernel)
                                   DOSMEM_dosmem+(addr), 0x10000, hKernel, \
                                   FALSE, FALSE, FALSE, NULL ))
 
+    SET_ENTRY_POINT( 183, 0x00000 );  /* KERNEL.183: __0000H */
     SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
     SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
     SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
@@ -386,7 +387,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    LPVOID       lin;
 
    lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
-   dprintf_selector(stddeb,"DOSMEM_MapR2L(0x%08lx) returns 0x%p.\n",
+   dprintf_info(selector,"DOSMEM_MapR2L(0x%08lx) returns 0x%p.\n",
                     x,lin );
    return lin;
 }
@@ -405,7 +406,7 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 		GMEM_FIXED,DOSMEM_dosmem+realsel*16,0x10000,
 		hModule,FALSE,FALSE,FALSE,NULL
 	);
-	dprintf_selector(stddeb,"DOSMEM_AllocSelector(0x%04x) returns 0x%04x.\n",
+	dprintf_info(selector,"DOSMEM_AllocSelector(0x%04x) returns 0x%04x.\n",
 		realsel,sel
 	);
 	return sel;

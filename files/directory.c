@@ -18,7 +18,6 @@
 #include "heap.h"
 #include "msdos.h"
 #include "options.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #define MAX_PATH_ELEMENTS 20
@@ -97,10 +96,10 @@ void DIR_ParseWindowsPath( char *path )
         DIR_PathElements++;
     }
 
-    if (debugging_dosfs)
+    if (debugging_info(dosfs))
         for (i = 0; i < DIR_PathElements; i++)
         {
-            dprintf_dosfs( stddeb, "Path[%d]: %s = %s\n",
+            dprintf_info(dosfs, "Path[%d]: %s = %s\n",
                            i, DIR_DosPath[i], DIR_UnixPath[i] );
         }
 }
@@ -156,9 +155,9 @@ int DIR_Init(void)
                              path, sizeof(path) );
     DIR_ParseWindowsPath( path );
 
-    dprintf_dosfs( stddeb, "WindowsDir = %s\nSystemDir  = %s\n",
+    dprintf_info(dosfs, "WindowsDir = %s\nSystemDir  = %s\n",
                    DIR_WindowsDosDir, DIR_SystemDosDir );
-    dprintf_dosfs( stddeb, "TempDir    = %s\nCwd        = %c:\\%s\n",
+    dprintf_info(dosfs, "TempDir    = %s\nCwd        = %c:\\%s\n",
                    DIR_TempDosDir, 'A' + drive, DRIVE_GetDosCwd( drive ) );
 
     /* Put the temp and Windows and system directories into the environment */
@@ -328,7 +327,7 @@ UINT32 WINAPI GetSystemDirectory32W( LPWSTR path, UINT32 count )
  */
 BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 {
-    dprintf_file( stddeb,"CreateDirectory16(%s,%p)\n", path, dummy );
+    dprintf_info(file,"CreateDirectory16(%s,%p)\n", path, dummy );
     return (BOOL16)CreateDirectory32A( path, NULL );
 }
 
@@ -340,12 +339,11 @@ BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
 {
     DOS_FULL_NAME full_name;
-    LPCSTR unixName;
 
-    dprintf_file( stddeb, "CreateDirectory32A(%s,%p)\n", path, lpsecattribs );
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    dprintf_info(file, "CreateDirectory32A(%s,%p)\n", path, lpsecattribs );
+    if (DOSFS_IsDevice( path ))
     {
-        dprintf_file(stddeb, "CreateDirectory: device '%s'!\n", unixName);
+        dprintf_info(file, "CreateDirectory: cannot use device '%s'!\n",path);
         DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
         return FALSE;
     }
@@ -407,13 +405,12 @@ BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
 BOOL32 WINAPI RemoveDirectory32A( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
-    LPCSTR unixName;
 
-    dprintf_file(stddeb, "RemoveDirectory: '%s'\n", path );
+    dprintf_info(file, "RemoveDirectory: '%s'\n", path );
 
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    if (DOSFS_IsDevice( path ))
     {
-        dprintf_file(stddeb, "RemoveDirectory: device '%s'!\n", unixName);
+        dprintf_info(file, "RemoveDirectory: cannot remove device '%s'!\n", path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return FALSE;
     }

@@ -12,7 +12,6 @@
 #include <win.h>
 #include "dde_atom.h"
 #include "shm_main_blk.h"
-#include <stddebug.h>
 #include <debug.h>
 #define TOGETHER (DDE_ATOMS/5)
 
@@ -25,9 +24,9 @@ int main()
   int i,j,atom_n;
   int atom_len[TOGETHER];
   
-  debugging_shm=1;
-  debugging_atom=0;
-  debugging_sem=0;
+  debugging_info(shm)=1;
+  debugging_info(atom)=0;
+  debugging_info(sem)=0;
   
   for (i=0 ; i<=10000/TOGETHER ; i++) {
      for (atom_n=0 ; atom_n<TOGETHER ; atom_n++) {

@@ -18,13 +18,20 @@ INFOFILES = \
 	wine.info-1 \
 	wine.info-2
 
+HTMLFILES = \
+	wine_toc.html \
+	wine.html
+
 DVIFILES = wine.dvi
 
-all: $(INFOFILES) $(DVIFILES)
+
+all: $(INFOFILES) $(DVIFILES) $(HTMLFILES)
 
 info: $(INFOFILES)
 
 dvi: $(DVIFILES)
+
+html: $(HTMLFILES)
 
 @MAKE_RULES@
 
@@ -33,6 +40,10 @@ $(INFOFILES): $(SOURCES)
 
 $(DVIFILES): $(SOURCES)
 	texi2dvi $(SRCDIR)/wine.texinfo
+
+$(HTMLFILES): $(SOURCES)
+	makeinfo -E wine.texi $(SRCDIR)/wine.texinfo
+	texi2html wine.texi 
 
 $(INCLUDES):
 	$(RM) $(INCLUDES)
@@ -48,7 +59,8 @@ install_info: $(INFOFILES)
 clean::
 	$(RM) $(INFOFILES) $(DVIFILES) $(INCLUDES)
 	$(RM) wine.aux wine.cp wine.cps wine.fn wine.fns wine.ky wine.log \
-		wine.pg wine.toc wine.tp wine.tps wine.vr wine.vrs
+		wine.pg wine.toc wine.tp wine.tps wine.vr wine.vrs \
+		wine.texi
 	$(RM) -r man3w
 
 ### Dependencies:

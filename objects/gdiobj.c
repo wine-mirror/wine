@@ -16,7 +16,6 @@
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "gdi.h"
 
@@ -361,7 +360,7 @@ BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
         return TRUE;
     if (!(header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj ))) return FALSE;
 
-    dprintf_gdi(stddeb, "DeleteObject: %04x\n", obj );
+    dprintf_info(gdi, "DeleteObject: %04x\n", obj );
 
       /* Delete object */
 
@@ -394,7 +393,7 @@ HGDIOBJ32 WINAPI GetStockObject32( INT32 obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
-    dprintf_gdi(stddeb, "GetStockObject: returning %d\n",
+    dprintf_info(gdi, "GetStockObject: returning %d\n",
                 FIRST_STOCK_HANDLE + obj );
     return (HGDIOBJ16)(FIRST_STOCK_HANDLE + obj);
 }
@@ -407,7 +406,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
     INT16 result = 0;
-    dprintf_gdi(stddeb, "GetObject16: %04x %d %p\n", handle, count, buffer );
+    dprintf_info(gdi, "GetObject16: %04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -446,7 +445,7 @@ INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
     INT32 result = 0;
-    dprintf_gdi(stddeb, "GetObject32A: %08x %d %p\n", handle, count, buffer );
+    dprintf_info(gdi, "GetObject32A: %08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -485,7 +484,7 @@ DWORD WINAPI GetObjectType( HANDLE32 handle )
 {
     GDIOBJHDR * ptr = NULL;
     INT32 result = 0;
-    dprintf_gdi(stddeb, "GetObjectType: %08x\n", handle );
+    dprintf_info(gdi, "GetObjectType: %08x\n", handle );
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
       ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
@@ -582,7 +581,7 @@ HGDIOBJ32 WINAPI SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pSelectObject) return 0;
-    dprintf_gdi(stddeb, "SelectObject: hdc=%04x %04x\n", hdc, handle );
+    dprintf_info(gdi, "SelectObject: hdc=%04x %04x\n", hdc, handle );
     return dc->funcs->pSelectObject( dc, handle );
 }
 
@@ -607,7 +606,7 @@ BOOL32 WINAPI UnrealizeObject32( HGDIOBJ32 obj )
     GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj );
     if (!header) return FALSE;
 
-    dprintf_gdi( stddeb, "UnrealizeObject: %04x\n", obj );
+    dprintf_info(gdi, "UnrealizeObject: %04x\n", obj );
 
       /* Unrealize object */
 
@@ -648,7 +647,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
     LOGPEN16 *pen;
     LOGBRUSH16 *brush = NULL;
 
-    dprintf_gdi( stddeb, "EnumObjects16: %04x %d %08lx %08lx\n",
+    dprintf_info(gdi, "EnumObjects16: %04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
     switch(nObjType)
     {
@@ -662,7 +661,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             pen->lopnWidth.y = 0;
             pen->lopnColor   = solid_colors[i];
             retval = lpEnumFunc( SEGPTR_GET(pen), lParam );
-            dprintf_gdi( stddeb, "EnumObjects16: solid pen %08lx, ret=%d\n",
+            dprintf_info(gdi, "EnumObjects16: solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -678,7 +677,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             brush->lbColor = solid_colors[i];
             brush->lbHatch = 0;
             retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
-            dprintf_gdi( stddeb, "EnumObjects16: solid brush %08lx, ret=%d\n",
+            dprintf_info(gdi, "EnumObjects16: solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -690,7 +689,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             brush->lbColor = RGB(0,0,0);
             brush->lbHatch = i;
             retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
-            dprintf_gdi( stddeb, "EnumObjects16: hatched brush %d, ret=%d\n",
+            dprintf_info(gdi, "EnumObjects16: hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;
         }
@@ -727,7 +726,7 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
     LOGPEN32 pen;
     LOGBRUSH32 brush;
 
-    dprintf_gdi( stddeb, "EnumObjects32: %04x %d %08lx %08lx\n",
+    dprintf_info(gdi, "EnumObjects32: %04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
     switch(nObjType)
     {
@@ -740,7 +739,7 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
             pen.lopnWidth.y = 0;
             pen.lopnColor   = solid_colors[i];
             retval = lpEnumFunc( &pen, lParam );
-            dprintf_gdi( stddeb, "EnumObjects32: solid pen %08lx, ret=%d\n",
+            dprintf_info(gdi, "EnumObjects32: solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -754,7 +753,7 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
             brush.lbColor = solid_colors[i];
             brush.lbHatch = 0;
             retval = lpEnumFunc( &brush, lParam );
-            dprintf_gdi( stddeb, "EnumObjects32: solid brush %08lx, ret=%d\n",
+            dprintf_info(gdi, "EnumObjects32: solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -766,7 +765,7 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
             brush.lbColor = RGB(0,0,0);
             brush.lbHatch = i;
             retval = lpEnumFunc( &brush, lParam );
-            dprintf_gdi( stddeb, "EnumObjects32: hatched brush %d, ret=%d\n",
+            dprintf_info(gdi, "EnumObjects32: hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;
         }

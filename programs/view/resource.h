@@ -1,0 +1,10 @@
+#define IDS_APPNAME                     1
+#define IDS_DESCRIPTION                 2
+#define IDI_APPICON                     101
+#define IDM_EXIT                        1000
+#define IDM_HELLO                       501
+#define IDM_OPEN                        502
+#define IDM_LEFT                        601
+#define IDM_RIGHT                       602
+#define IDM_UP                          603
+#define IDM_DOWN                        604

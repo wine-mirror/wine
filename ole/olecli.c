@@ -10,7 +10,6 @@
 #include "windows.h"
 #include "ole.h"
 #include "gdi.h"
-#include "stddebug.h"
 #include "debug.h"
 
 extern LONG	OLE_current_handle;
@@ -111,7 +110,7 @@ OLESTATUS WINAPI OleQueryCreateFromClip32(LPCSTR name,OLEOPT_RENDER render,OLECL
  */
 BOOL16 WINAPI OleIsDcMeta(HDC16 hdc)
 {
-	dprintf_ole(stddeb,"OleIsDCMeta(%04x)\n",hdc);
+	dprintf_info(ole,"OleIsDCMeta(%04x)\n",hdc);
 	return GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0;
 }
 

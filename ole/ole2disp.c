@@ -10,7 +10,6 @@
 #include "interfaces.h"
 #include "heap.h"
 #include "ldt.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* This implementation of the BSTR API is 16-bit only. It
@@ -104,7 +103,7 @@ OLESTATUS WINAPI RegisterActiveObject(
 	IUnknown * punk,REFCLSID rclsid,DWORD dwFlags, DWORD * pdwRegister
 ) {
 	char	buf[80];
-	StringFromCLSID(rclsid,buf);
+	WINE_StringFromCLSID(rclsid,buf);
 	fprintf(stderr,"RegisterActiveObject(%p,%s,0x%08lx,%p),stub\n",punk,buf,dwFlags,pdwRegister);
 	return 0;
 }

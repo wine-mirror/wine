@@ -22,7 +22,6 @@
 #include "libres.h"
 #include "stackframe.h"
 #include "neexe.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /**********************************************************************

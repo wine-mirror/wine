@@ -115,5 +115,5 @@ extern PDB32 *PROCESS_Current(void);
 extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
 extern PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line );
-
+extern void PROCESS_CloseObjHandles(PDB32 *pdb, K32OBJ *ptr);
 #endif  /* __WINE_PROCESS_H */

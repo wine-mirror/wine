@@ -28,6 +28,9 @@ dnl AC_ARG_WITH(ipc,
 dnl [  --enable-ipc            use inter-process communication for DDE],
 dnl [if test "$enableval" = "no"; then : ; else OPTIONS="-DCONFIG_IPC"; fi])
 
+AC_ARG_WITH(reentrant-x,
+[  --without-reentrant-x   Compile for use with non-reentrant X libraries])
+
 AC_SUBST(MAIN_TARGET)
 AC_SUBST(LIB_TARGET)
 AC_SUBST(OPTIONS)
@@ -162,6 +165,43 @@ then
 fi
 AC_SUBST(DLLFLAGS)
 
+dnl **** Check for reentrant X libraries ****
+dnl
+dnl This may fail to determine whether X libraries are reentrant if
+dnl AC_PATH_XTRA does not set x_libraries. In this case manual configuration
+dnl is possible with the --without-reentrant-x option.
+
+AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
+  [ if test "x$with_reentrant_x" = "xno"
+    then
+        wine_cv_x_reentrant=no
+    else
+	libX11_ckeck=none
+	for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
+	    if test -e $dir/libX11.so; then
+		libX11_check="-D $dir/libX11.so"
+		break 1
+	    fi
+	    if test -e $dir/libX11.a; then
+		libX11_check="$dir/libX11.a"
+		break 1
+	    fi
+	done
+	if test "$libX11_check" != "none"; then
+	    if nm $libX11_check | grep -q __errno_location; then
+		wine_cv_x_reentrant=yes
+	    else
+		wine_cv_x_reentrant=no
+	    fi
+	else
+	    wine_cv_x_reentrant=unknown
+	fi
+    fi ] )
+if test "$wine_cv_x_reentrant" = "no"
+then
+  AC_DEFINE(NO_REENTRANT_X11)
+fi
+
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone memmove strerror tcgetattr usleep wait4 waitpid)
@@ -199,8 +239,10 @@ multimedia/Makefile
 objects/Makefile
 ole/Makefile
 programs/Makefile
+programs/clock/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
+programs/view/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 rc/Makefile

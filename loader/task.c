@@ -29,7 +29,6 @@
 #include "toolhelp.h"
 #include "winnt.h"
 #include "thread.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
 
@@ -177,9 +176,9 @@ static HGLOBAL16 TASK_CreateDOSEnvironment(void)
     /* Display it */
 
     p = (char *) GlobalLock16( handle );
-    dprintf_task(stddeb, "Master DOS environment at %p\n", p);
-    for (; *p; p += strlen(p) + 1) dprintf_task(stddeb, "    %s\n", p);
-    dprintf_task( stddeb, "Progname: %s\n", p+3 );
+    dprintf_info(task, "Master DOS environment at %p\n", p);
+    for (; *p; p += strlen(p) + 1) dprintf_info(task, "    %s\n", p);
+    dprintf_info(task, "Progname: %s\n", p+3 );
 
     return handle;
 }
@@ -348,7 +347,7 @@ static void TASK_CallToStart(void)
 
         InitApp( pTask->hModule );
         PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, (LPVOID)-1 );
-        dprintf_relay( stddeb, "CallTo32(entryproc=%p)\n", entry );
+        dprintf_info(relay, "CallTo32(entryproc=%p)\n", entry );
         exit_code = entry();
         TASK_KillCurrentTask( exit_code );
     }
@@ -377,7 +376,7 @@ static void TASK_CallToStart(void)
         ECX_reg(&context) = pModule->heap_size;
         EDI_reg(&context) = context.SegDs;
 
-        dprintf_task( stddeb, "Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
+        dprintf_info(task, "Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
                       CS_reg(&context), IP_reg(&context), DS_reg(&context),
                       SELECTOROF(pTask->thdb->cur_stack),
                       OFFSETOF(pTask->thdb->cur_stack) );
@@ -564,7 +563,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     TASK_LinkTask( hTask );
 
-    dprintf_task( stddeb, "CreateTask: module='%s' cmdline='%s' task=%04x\n",
+    dprintf_info(task, "CreateTask: module='%s' cmdline='%s' task=%04x\n",
                   name, cmdLine, hTask );
 
     return hTask;
@@ -622,7 +621,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
     TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
     if (!pTask) USER_ExitWindows();  /* No current task yet */
 
-    dprintf_task(stddeb, "Killing task %04x\n", hCurrentTask );
+    dprintf_info(task, "Killing task %04x\n", hCurrentTask );
 
     /* Delete active sockets */
 
@@ -644,7 +643,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
 
     if (nTaskCount <= 1)
     {
-        dprintf_task( stddeb, "\nthis is the last task, exiting\n" );
+        dprintf_info(task, "\nthis is the last task, exiting\n" );
         USER_ExitWindows();
     }
 
@@ -725,7 +724,7 @@ void TASK_Reschedule(void)
         {
             pNewTask = (TDB *)GlobalLock16( hTask );
 
-	    dprintf_task( stddeb, "\ttask = %04x, events = %i\n", hTask, pNewTask->nEvents);
+	    dprintf_info(task, "\ttask = %04x, events = %i\n", hTask, pNewTask->nEvents);
 
             if (pNewTask->nEvents) break;
             hTask = pNewTask->hNext;
@@ -740,11 +739,11 @@ void TASK_Reschedule(void)
 
     if (hTask == hCurrentTask) 
     {
-       dprintf_task( stddeb, "returning to the current task(%04x)\n", hTask );
+       dprintf_info(task, "returning to the current task(%04x)\n", hTask );
        return;  /* Nothing to do */
     }
     pNewTask = (TDB *)GlobalLock16( hTask );
-    dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
+    dprintf_info(task, "Switching to task %04x (%.8s)\n",
                   hTask, pNewTask->module_name );
 
      /* Make the task the last in the linked list (round-robin scheduling) */
@@ -1013,7 +1012,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     thunk = PTR_SEG_TO_LIN( thunkaddr );
     lfunc = PTR_SEG_TO_LIN( func );
 
-    dprintf_task( stddeb, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
+    dprintf_info(task, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
                   (DWORD)func, hInstance, (DWORD)thunkaddr );
     if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) ||
     	((lfunc[0]==0x1e) && (lfunc[1]==0x58))
@@ -1037,7 +1036,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
  */
 void WINAPI FreeProcInstance16( FARPROC16 func )
 {
-    dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (DWORD)func );
+    dprintf_info(task, "FreeProcInstance(%08lx)\n", (DWORD)func );
     if (!__winelib) TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 }
 
@@ -1119,7 +1118,7 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
-    dprintf_task( stddeb, "SwitchStackTo: old=%04x:%04x new=%04x:%04x\n",
+    dprintf_info(task, "SwitchStackTo: old=%04x:%04x new=%04x:%04x\n",
                   SELECTOROF( pTask->thdb->cur_stack ),
                   OFFSETOF( pTask->thdb->cur_stack ), seg, ptr );
 
@@ -1168,7 +1167,7 @@ void WINAPI SwitchStackBack(void)
         fprintf( stderr, "SwitchStackBack: no previous SwitchStackTo\n" );
         return;
     }
-    dprintf_task( stddeb, "SwitchStackBack: restoring stack %04x:%04x\n",
+    dprintf_info(task, "SwitchStackBack: restoring stack %04x:%04x\n",
                   SELECTOROF(pData->old_ss_sp), OFFSETOF(pData->old_ss_sp) );
 
     oldFrame = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
@@ -1182,7 +1181,7 @@ void WINAPI SwitchStackBack(void)
 
     newFrame = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
     newFrame->frame32 = oldFrame->frame32;
-    if (debugging_relay)
+    if (debugging_info(relay))
     {
         newFrame->entry_ip = oldFrame->entry_ip;
         newFrame->entry_cs = oldFrame->entry_cs;
@@ -1447,7 +1446,7 @@ BOOL16 WINAPI TaskNext( TASKENTRY *lpte )
     TDB *pTask;
     INSTANCEDATA *pInstData;
 
-    dprintf_toolhelp( stddeb, "TaskNext(%p): task=%04x\n", lpte, lpte->hNext );
+    dprintf_info(toolhelp, "TaskNext(%p): task=%04x\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
     pTask = (TDB *)GlobalLock16( lpte->hNext );
     if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;

@@ -33,7 +33,6 @@
 #include "msdos.h"
 #include "options.h"
 #include "task.h"
-#include "stddebug.h"
 #include "debug.h"
 
 typedef struct
@@ -194,12 +193,12 @@ int DRIVE_Init(void)
                 DRIVE_CurDrive = i;
 
             count++;
-            dprintf_dosfs( stddeb, "%s: path=%s type=%s label='%s' serial=%08lx flags=%08x dev=%x ino=%x\n",
+            dprintf_info(dosfs, "%s: path=%s type=%s label='%s' serial=%08lx flags=%08x dev=%x ino=%x\n",
                            name, path, DRIVE_Types[drive->type],
                            drive->label, drive->serial, drive->flags,
                            (int)drive->dev, (int)drive->ino );
         }
-        else dprintf_dosfs( stddeb, "%s: not defined\n", name );
+        else dprintf_warn(dosfs, "%s: not defined\n", name );
     }
 
     if (!count) 
@@ -266,7 +265,7 @@ int DRIVE_SetCurrentDrive( int drive )
         DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
         return 0;
     }
-    dprintf_dosfs( stddeb, "DRIVE_SetCurrentDrive: %c:\n", 'A' + drive );
+    dprintf_info(dosfs, "DRIVE_SetCurrentDrive: %c:\n", 'A' + drive );
     DRIVE_CurDrive = drive;
     if (pTask) pTask->curdrive = drive | 0x80;
     return 1;
@@ -326,7 +325,7 @@ int DRIVE_FindDriveRoot( const char **path )
     *next = 0;
 
     if (rootdrive != -1)
-        dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: %s -> drive %c:, root='%s', name='%s'\n",
+        dprintf_info(dosfs, "DRIVE_FindDriveRoot: %s -> drive %c:, root='%s', name='%s'\n",
                        buffer, 'A' + rootdrive,
                        DOSDrives[rootdrive].root, *path );
     return rootdrive;
@@ -447,7 +446,7 @@ int DRIVE_Chdir( int drive, const char *path )
     BY_HANDLE_FILE_INFORMATION info;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:,%s)\n", 'A' + drive, path );
+    dprintf_info(dosfs, "DRIVE_Chdir(%c:,%s)\n", 'A' + drive, path );
     strcpy( buffer, "A:" );
     buffer[0] += drive;
     lstrcpyn32A( buffer + 2, path, sizeof(buffer) - 2 );
@@ -462,7 +461,7 @@ int DRIVE_Chdir( int drive, const char *path )
     unix_cwd = full_name.long_name + strlen( DOSDrives[drive].root );
     while (*unix_cwd == '/') unix_cwd++;
 
-    dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:): unix_cwd=%s dos_cwd=%s\n",
+    dprintf_info(dosfs, "DRIVE_Chdir(%c:): unix_cwd=%s dos_cwd=%s\n",
                    'A' + drive, unix_cwd, full_name.short_name + 3 );
 
     HeapFree( SystemHeap, 0, DOSDrives[drive].dos_cwd );
@@ -535,7 +534,7 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
 
     if ( new->root )
     {
-        dprintf_dosfs ( stddeb, "Can\'t map drive %c to drive %c - "
+        dprintf_info(dosfs, "Can\'t map drive %c to drive %c - "
 	                        "drive %c already exists\n",
 			'A' + existing_drive, 'A' + new_drive,
 			'A' + new_drive );
@@ -552,7 +551,7 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     new->dev = old->dev;
     new->ino = old->ino;
 
-    dprintf_dosfs ( stddeb, "Drive %c is now equal to drive %c\n",
+    dprintf_info(dosfs, "Drive %c is now equal to drive %c\n",
                     'A' + new_drive, 'A' + existing_drive );
 
     return 1;
@@ -566,7 +565,7 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
  */
 int DRIVE_OpenDevice( int drive, int flags )
 {
-    if (!DRIVE_IsValid( drive )) return NULL;
+    if (!DRIVE_IsValid( drive )) return -1;
     return open( DOSDrives[drive].device, flags );
 }
 
@@ -735,7 +734,7 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32W( LPCWSTR root, LPULARGE_INTEGER avail,
  */
 UINT16 WINAPI GetDriveType16( UINT16 drive )
 {
-    dprintf_dosfs( stddeb, "GetDriveType16(%c:)\n", 'A' + drive );
+    dprintf_info(dosfs, "GetDriveType16(%c:)\n", 'A' + drive );
     switch(DRIVE_GetType(drive))
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
@@ -753,7 +752,7 @@ UINT16 WINAPI GetDriveType16( UINT16 drive )
  */
 UINT32 WINAPI GetDriveType32A( LPCSTR root )
 {
-    dprintf_dosfs( stddeb, "GetDriveType32A(%s)\n", root );
+    dprintf_info(dosfs, "GetDriveType32A(%s)\n", root );
     if ((root[1]) && (root[1] != ':'))
     {
         fprintf( stderr, "GetDriveType32A: invalid root '%s'\n", root );

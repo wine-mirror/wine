@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "options.h"
-#include "stddebug.h"
 #include "debug.h"
 
 static BYTE cmosaddress;
@@ -224,7 +223,7 @@ DWORD IO_inport( int port, int count )
     }
 #endif
 
-    dprintf_int(stddeb, "IO: %d bytes from port 0x%02x ", count, port );
+    dprintf_info(int, "IO: %d bytes from port 0x%02x\n", count, port );
 
     while (count-- > 0)
     {
@@ -244,7 +243,7 @@ DWORD IO_inport( int port, int count )
         port++;
         res = (res << 8) | b;
     }
-    dprintf_int(stddeb, "( 0x%lx )\n", res );
+    dprintf_info(int, "  returning ( 0x%lx )\n", res );
     return res;
 }
 
@@ -256,7 +255,7 @@ void IO_outport( int port, int count, DWORD value )
 {
     BYTE b;
 
-    dprintf_int( stddeb, "IO: 0x%lx (%d bytes) to port 0x%02x\n",
+    dprintf_info(int, "IO: 0x%lx (%d bytes) to port 0x%02x\n",
                  value, count, port );
 
 #ifdef DIRECT_IO_ACCESS

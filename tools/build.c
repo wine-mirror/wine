@@ -1308,16 +1308,21 @@ static int BuildSpecFile( FILE *outfile, char *specname )
 static int TransferArgs16To32( FILE *outfile, char *args, int usecdecl )
 {
     int i, pos16, pos32;
+    char *xargs;
 
     /* Copy the arguments */
 
     pos16 = 6;  /* skip bp and return address */
     pos32 = usecdecl ? -(strlen(args) * 4) : 0;
+    xargs = usecdecl ? args:args+strlen(args);
 
     for (i = strlen(args); i > 0; i--)
     {
-        if (!usecdecl) pos32 -= 4;
-        switch(args[i-1])
+        if (!usecdecl) {
+            pos32 -= 4;
+            xargs--;
+        }
+        switch(*xargs)
         {
         case 'w':  /* word */
             fprintf( outfile, "\tmovzwl %d(%%ebp),%%eax\n", pos16 );
@@ -1353,9 +1358,12 @@ static int TransferArgs16To32( FILE *outfile, char *args, int usecdecl )
             break;
 
         default:
-            fprintf( stderr, "Unknown arg type '%c'\n", args[i-1] );
+            fprintf( stderr, "Unknown arg type '%c'\n", *xargs );
         }
-        if (usecdecl) pos32 += 4;
+        if (usecdecl) {
+            pos32 += 4;
+            xargs++;
+        }
     }
 
     return pos16 - 6;  /* Return the size of the 16-bit args */
@@ -2087,7 +2095,7 @@ static void BuildCallTo32LargeStack( FILE *outfile )
  *
  * Stack layout:
  *   ...     ...
- * (esp+208) ret addr (or relay addr when debugging_relay is on)
+ * (esp+208) ret addr (or relay addr when debugging(relay) is on)
  * (esp+204) entry point
  * (esp+0)   CONTEXT struct
  */

@@ -8,7 +8,6 @@
 #include "color.h"
 #include "win16drv.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /***********************************************************************
@@ -21,7 +20,7 @@ HPEN32 WIN16DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
     int		 nSize;
     LOGPEN16 	 lPen16;
     dc->w.hPen = hpen;
-    dprintf_win16drv(stddeb, "In WIN16DRV_PEN_SelectObject\n");
+    dprintf_info(win16drv, "In WIN16DRV_PEN_SelectObject\n");
     lPen16.lopnStyle   = pen->logpen.lopnStyle;
     lPen16.lopnWidth.x = pen->logpen.lopnWidth.x;
     lPen16.lopnWidth.y = pen->logpen.lopnWidth.y;
@@ -29,7 +28,7 @@ HPEN32 WIN16DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
 
     if ( physDev->PenInfo )
     {
-        dprintf_win16drv(stddeb, "UnRealizing PenInfo\n");
+        dprintf_info(win16drv, "UnRealizing PenInfo\n");
         nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, -DRVOBJ_PEN,
 				      physDev->PenInfo,
 				      physDev->PenInfo, 0);

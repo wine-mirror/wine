@@ -1,4 +1,167 @@
 ----------------------------------------------------------------------
+Sun Feb 29 10:45:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [loader/ne_image.c]
+	Fixed problem with weird DLLs (NE_FFLAGS_SINGLEDATA && DGROUP = 0).
+
+	* [msdos/dosmem.c]
+	Export address for __0000H, too.
+
+	* [msdos/dpmi.c]
+	Changed MemAlloc functions to return less fragmented addresses.
+
+Sat Feb 28 18:50:12 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [scheduler/process.c] [scheduler/sysdeps.c]
+	Don't use %fs register before threading initialization.
+
+Sat Feb 28 14:04:56 1998  Kristian Nielsen  <kristian.nielsen@risoe.dk>
+
+	* [configure.in] [include/acconfig.h]
+	Autoconf macro to check for non-reentrant X libraries.
+
+	* [windows/winpos.c]
+	In SetWindowPos32(), do not cause WM_SIZE messages when the
+	SWP_NOSIZE flag is specified. This fixes the division-by-zero in
+	Borland C++ 4.0 "Open Project" menu item.
+
+Sat Feb 28 13:11:26 1998  James Moody  <013263m@dragon.acadiau.ca>
+
+	* [ole/ole2nls.c]
+	Changed "English" values from German to English.
+
+	* [files/dos_fs.c]
+	Fixed off-by-one month bug.
+
+Fri Feb 27 22:12:01 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [windows/win.c]
+	Fix winelib class menu loading bug.
+
+	* [include/module.h] [loader/module.c]
+	LoadModule32 should be implemented in terms of CreateProcess.
+
+	* [programs/view/*]
+	Metafile viewer sample program.
+
+	* [documentation/wine.texinfo] [documentation/Makefile.in]
+	Improvements and additions, HTML target.
+
+Fri Feb 27 04:27:48 1998  Dimitrie O. Paun <dimi@cs.toronto.edu>
+
+	* [*/*]
+	Switched to the new debug messages interface. For more information
+	please refer to documentation/debug-msgs. Because the new scheme
+	introduces a new semantic level, I had to manually do through
+	about 530 dprintf_xxx!  The rest of about 2400 where transformed
+	via a script.  Because of the large number of changes that I had
+	to do, some may have not come out as nicely as I wanted them.  If
+	this is the case, please let me know. There is a lot of work left
+	to do: -- a few hundred printf's to be converted -- about 2300
+	fprintf's to be converted -- about 600 FIXME's to be transformed
+	The problem is that in the above mentioned cases, a lot of manual
+	intervention is required because a lot of the information is
+	missing.  There are also a lot of other things to be done to the
+	interface and so forth. I have now ideas for a at least a month
+	worth of full time work :) I will proceed with many changes in the
+	next few releases, so please do not start modifing things because
+	there will be a hell of a lot of conflicts. If you have ideas that
+	you want to integrate or you want to work on different things,
+	please coordinate with me.
+
+Thu Feb 26 13:04:29 1998  David Lee Lambert <lamber45@egr.msu.edu>
+
+	* [ole/ole2nls.c] [include/windows.h]
+	First try at OLE date- and time-formatting functions.
+
+Wed Feb 25 11:20:35 1998 Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/*.c]
+	Changed dos device handling, added 'CON' devicehandling.
+
+	* [graphics/ddraw.c]
+	Bug fixes, some additions.
+
+	* [if1632/builtin.c][loader/module.c][library/winestub.c]
+	Small hack so we don't need a dummy BUILTIN_LoadModule
+	in winestub.c.
+
+	* [ole/*][relay32/ole32.spec][if1632/storage.spec]
+	storage.dll started. winword loads documents (saving
+	doesn't work yet, dunno why).
+	Several ole additions, some cleanups and bugfixes.
+	IMalloc16 implemented.
+
+	* [loader/pe_image.c]
+	Added some comments, fixed circular dll references,
+	fixed modref ordering, fixed tls allocation.
+
+	* [memory/global.c]
+	Added validity checks before every GET_ARENA_PTR.
+	(several functions rely on Global* return values
+	 on invalid handles, like IsTask).
+	Implemented GlobalUnlockFree16.
+
+	* [memory/virtual.c]
+	Replaced dprintf_virtual by fprintf, so we can
+	do 'info map' again in the debugger. Increase read
+	linesize for Linux2.1 cases.
+
+	* [misc/cpu.c][misc/registry.c]
+	Moved cpu registry initialization to misc/cpu.c.
+
+	* [multimedia/dsound.c]
+	Enhanced, replaced GETOSPACE bufferingcheck by SETFRAGMENT.
+
+	* [relay32/crtdll.spec][relay32/ntdll.spec]
+	Replaced some ptr by respective 'str' and 'wstr' arguments
+	for libc functions.
+
+	* [scheduler/thread.c]
+	Added some sanity checks to stackallocation, tlshandling fixed.
+
+	* [tools/build.c]
+	Fixed cdecl argumenttype order (was reversed).
+
+	* [win32/ordinals.c]
+	Implemented KERNEL_449.
+
+	* [windows/dinput.c]
+	Some fixes, needs much more work. Tomb Raider2 works with keyboard ;)
+
+Tue Feb 24 20:46:37 1998  James Juran   <jrj120@psu.edu>
+
+	* [windows/win.c]
+	Fixed USER32 ordinal numbers in documentation.
+
+Sat Feb 21 12:30:38 1998  John Richardson <jrichard@zko.dec.com>
+
+	* [files/file.c] [include/k32obj.h] [memory/virtual.c]
+	[scheduler/critsection.c] [scheduler/event.c] [scheduler/handle.c]
+	[scheduler/k32obj.c] [scheduler/mutex.c] [scheduler/process.c]
+	[scheduler/semaphore.c] [scheduler/thread.c]
+	Added generic k32obj read and write routines for k32objs that
+	support I/O.
+
+	* [documentation/console]
+	Updated console docs.
+
+	* [win32/console.c]
+	Make console work like a k32obj that supports I/O.
+
+	* [include/windows.h]
+	Make WriteFile and ReadFile take HANDLE32 for handle.
+
+----------------------------------------------------------------------
+Sun Feb 15 14:07:07 1998  Dimitrie O. Paun  <dimi@mail.cs.toronto.edu>
+
+	* [controls/menu.c] [misc/ver.c] [multimedia/dsound.c]
+	  [multimedia/joystick.c] [windows/dialog.c]
+	Modified some dprintf_xxx's to prepare them for a new
+	dprintf_ scheme. Basically, I changed the dprintf's that
+	outputed a line with many dprintf calls to do just one
+	dprintf call.
+
 Sun Feb 15 12:02:59 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [graphics/x11drv/*.c] [objects/*.c]

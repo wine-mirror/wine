@@ -8,6 +8,7 @@
 #define __WINE_K32OBJ_H
 
 #include "wintypes.h"
+#include "windows.h"
 
 /* Object types */
 typedef enum
@@ -47,6 +48,8 @@ typedef struct
     BOOL32 (*satisfied)(K32OBJ*,DWORD);   /* Wait on object is satisfied */
     void   (*add_wait)(K32OBJ*,DWORD);    /* Add thread to wait queue */
     void   (*remove_wait)(K32OBJ*,DWORD); /* Remove thread from wait queue */
+    BOOL32 (*read)(K32OBJ*,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+    BOOL32 (*write)(K32OBJ*,LPCVOID,DWORD,LPDWORD,LPOVERLAPPED);
     void   (*destroy)(K32OBJ *);          /* Destroy object on refcount==0 */
 } K32OBJ_OPS;
 

@@ -21,7 +21,6 @@
 #include "graphics.h"
 #include "queue.h"
 #include "selectors.h"
-#include "stddebug.h"
 #include "tweak.h"
 #include "debug.h"
 #include "options.h"
@@ -202,7 +201,7 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
     exStyle &= WS_EX_DLGMODALFRAME;
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08lx %d %08lx\n",
+    dprintf_info(nonclient, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08lx %d %08lx\n",
                       rect->left, rect->top, rect->right, rect->bottom,
                       style, menu, exStyle );
 
@@ -256,7 +255,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT32 *winRect )
 	winRect->bottom -= tmpRect.bottom;
 
 	if (HAS_MENU(pWnd)) {
-	    dprintf_nonclient( stddeb, "NC_HandleNCCalcSize: Calling "
+	    dprintf_info(nonclient, "NC_HandleNCCalcSize: Calling "
 			       "GetMenuBarHeight with HWND 0x%x, width %d, "
 			       "at (%d, %d).\n", pWnd->hwndSelf,
 			       winRect->right - winRect->left,
@@ -323,7 +322,7 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return HTERROR;
 
-    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd=%04x pt=%d,%d\n",
+    dprintf_info(nonclient, "NC_HandleNCHitTest: hwnd=%04x pt=%d,%d\n",
 		      hwnd, pt.x, pt.y );
 
     GetWindowRect16( hwnd, &rect );
@@ -1013,7 +1012,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
-    dprintf_nonclient(stddeb, "NC_DoNCPaint: %04x %d\n", hwnd, active );
+    dprintf_info(nonclient, "NC_DoNCPaint: %04x %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
@@ -1120,7 +1119,7 @@ void  NC_DoNCPaint95(
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
-    dprintf_nonclient(stddeb, "NC_DoNCPaint95: %04x %d\n", hwnd, active );
+    dprintf_info(nonclient, "NC_DoNCPaint95: %04x %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
@@ -1173,14 +1172,14 @@ void  NC_DoNCPaint95(
 	r.bottom = rect.top + sysMetrics[SM_CYMENU] - sysMetrics[SM_CYBORDER];
 	r.top -= sysMetrics[SM_CYBORDER];
 	
-	dprintf_nonclient(stddeb, "DoNCPaint95: Calling DrawMenuBar with "
+	dprintf_info(nonclient, "DoNCPaint95: Calling DrawMenuBar with "
 			  "rect (%d, %d)-(%d, %d)\n", r.left, r.top,
 			  r.right, r.bottom);
 
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
     }
 
-    dprintf_nonclient( stddeb, "After MenuBar, rect is (%d, %d)-(%d, %d).\n",
+    dprintf_info(nonclient, "After MenuBar, rect is (%d, %d)-(%d, %d).\n",
 		       rect.left, rect.top, rect.right, rect.bottom );
 
     /* Draw the inner frames */
@@ -1882,7 +1881,7 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
     POINT32 pt32;
     UINT16 uCommand = wParam & 0xFFF0;
 
-    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
+    dprintf_info(nonclient, "Handling WM_SYSCOMMAND %x %d,%d\n", 
 		      wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD && uCommand != SC_KEYMENU )

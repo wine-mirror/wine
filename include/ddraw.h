@@ -813,6 +813,7 @@ struct IDirectDrawPalette {
     DWORD			ref;
     LPDIRECTDRAW		ddraw;
     Colormap			cm;
+    PALETTEENTRY		palents[256];
 };
 #undef THIS
 

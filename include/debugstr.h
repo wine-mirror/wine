@@ -11,5 +11,8 @@ LPSTR debugstr_an (LPCSTR s, int n);
 LPSTR debugstr_a (LPCSTR s);
 LPSTR debugstr_wn (LPCWSTR s, int n);
 LPSTR debugstr_w (LPCWSTR s);
+LPSTR debugres (const void *res);
 
 #endif /* __WINE_DEBUGSTR_H */
+
+

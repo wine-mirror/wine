@@ -12,7 +12,6 @@
 #include "region.h"
 #include "xmalloc.h"
 #include "metafiledrv.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /**********************************************************************

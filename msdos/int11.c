@@ -7,7 +7,6 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "drive.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /**********************************************************************

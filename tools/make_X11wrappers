@@ -78,7 +78,6 @@ END
 
 $x11_incl#include <X11/$extensions_dir$name.h>
 #include "x11drv.h"
-#include "stddebug.h"
 #include "debug.h"
 END
 
@@ -212,13 +211,13 @@ sub raw_output_fn {
 #    print OUTH "#define $fn_name TS$fn_name\n";
     print OUTC "{\n";
     print OUTC "  $resultdecl;\n" if $resultdecl;
-    print OUTC "  dprintf_x11(stddeb, \"Call $fn_name\\n\");\n";
+    print OUTC "  dprintf_info(x11, \"Call $fn_name\\n\");\n";
     print OUTC "  EnterCriticalSection( &X11DRV_CritSection );\n";
     print OUTC "  ";
     print OUTC "r = " if $resultdecl;
     print OUTC "$fn_name($actuals);\n";
     print OUTC "  LeaveCriticalSection( &X11DRV_CritSection );\n";
-    print OUTC "  dprintf_x11(stddeb, \"Ret $fn_name\\n\");\n";
+    print OUTC "  dprintf_info(x11, \"Ret $fn_name\\n\");\n";
     print OUTC "  return r;\n" if $resultdecl;
     print OUTC "}\n";
     $want{$fn_name} = 2;

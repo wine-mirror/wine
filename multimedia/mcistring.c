@@ -24,7 +24,6 @@
 #include "driver.h"
 #include "mmsystem.h"
 #include "callback.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -66,10 +65,10 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
  * for use in mciSendString()
  */
 #define _MCI_STR(s) do {\
-	dprintf_mci(stddeb,"->returns \"%s\"",s);\
+	dprintf_info(mci,"->returns \"%s\"",s);\
 	if (lpstrReturnString) {\
 	    lstrcpyn32A(lpstrReturnString,s,uReturnLength);\
-	    dprintf_mci(stddeb,"-->\"%s\"\n",lpstrReturnString);\
+	    dprintf_info(mci,"-->\"%s\"\n",lpstrReturnString);\
 	}\
 } while(0)
 
@@ -89,7 +88,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		res=ANIM_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_DIGITAL_VIDEO:\
-		dprintf_mci(stddeb,"_MCI_CALL_DRIVER //No DIGITAL_VIDEO yet !\n");\
+		dprintf_fixme(mci,"_MCI_CALL_DRIVER //No DIGITAL_VIDEO yet !\n");\
 		res=MCIERR_DEVICE_NOT_INSTALLED;\
 		break;\
 	default:\
@@ -336,7 +335,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	while(GetDrv(wDevID)->modp.wType) {
 		wDevID = MMSYSTEM_NextDevID(wDevID);
 		if (!MMSYSTEM_DevIDValid(wDevID)) {
-			dprintf_mci(stddeb, __FILE__":MCISTR_Open:MAXMCIDRIVERS reached (%x) !\n", wDevID);
+			dprintf_info(mci, __FILE__":MCISTR_Open:MAXMCIDRIVERS reached (%x) !\n", wDevID);
 			SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrElementName));
 			SEGPTR_FREE(pU);
 			return MCIERR_INTERNAL;
@@ -2113,7 +2112,7 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	DWORD	dwFlags;
 	int	res=0,i,nrofkeywords;
 
-	dprintf_mci(stddeb,"mciSendString('%s', %p, %d, %X)\n", lpstrCommand, 
+	dprintf_info(mci,"mciSendString('%s', %p, %d, %X)\n", lpstrCommand, 
 		lpstrReturnString, uReturnLength, hwndCallback
 	);
 	/* format is <command> <device> <optargs> */
@@ -2183,7 +2182,7 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 				break;
 			wDevID = MMSYSTEM_NextDevID(wDevID);
 			if (!MMSYSTEM_DevIDValid(wDevID)) {
-				dprintf_mci(stddeb, __FILE__":mciSendString:MAXMCIDRIVERS reached!\n");
+				dprintf_info(mci, __FILE__":mciSendString:MAXMCIDRIVERS reached!\n");
 				free(keywords);free(cmd);
 				return MCIERR_INVALID_DEVICE_NAME;
 			}

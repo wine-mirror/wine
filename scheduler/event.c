@@ -32,6 +32,8 @@ const K32OBJ_OPS EVENT_Ops =
     EVENT_Satisfied,    /* satisfied */
     EVENT_AddWait,      /* add_wait */
     EVENT_RemoveWait,   /* remove_wait */
+    NULL,               /* read */
+    NULL,               /* write */
     EVENT_Destroy       /* destroy */
 };
 

@@ -5,7 +5,6 @@
 #include <win.h>
 #define DEBUG_DEFINE_VARIABLES
 #define DEBUG_ALL
-#include <stddebug.h>
 #include <debug.h>
 
 #define DDE_PROC2WIN(proc_idx)   (  (HWND) ~( (proc_idx)+1)  )

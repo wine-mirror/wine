@@ -35,6 +35,8 @@ const K32OBJ_OPS MUTEX_Ops =
     MUTEX_Satisfied,   /* satisfied */
     MUTEX_AddWait,     /* add_wait */
     MUTEX_RemoveWait,  /* remove_wait */
+    NULL,              /* read */
+    NULL,              /* write */
     MUTEX_Destroy      /* destroy */
 };
 

@@ -260,7 +260,7 @@ file	gdi.exe
 378 pascal16 EndDoc(word) EndDoc16
 379 pascal16 StartPage() stub_GDI_379
 380 pascal16 EndPage() stub_GDI_380
-381 pascal16 SetAbortProc() stub_GDI_381
+381 pascal16 SetAbortProc(word segptr) stub_GDI_381
 382 pascal16 AbortDoc() stub_GDI_382
 400 pascal16 FastWindowFrame(word ptr s_word s_word long) FastWindowFrame
 401 stub GDIMOVEBITMAP

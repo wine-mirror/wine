@@ -21,7 +21,6 @@
 #include "font.h"
 #include "callback.h"
 #include "options.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #define SUPPORT_REALIZED_FONTS 1
@@ -178,7 +177,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
         return FALSE;
     }
 
-    dprintf_win16drv(stddeb, "In creatdc for (%s,%s,%s) initData 0x%p\n",driver, device, output, initData);
+    dprintf_info(win16drv, "In creatdc for (%s,%s,%s) initData 0x%p\n",driver, device, output, initData);
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( SystemHeap, 0, sizeof(*physDev) );
     if (!physDev) return FALSE;
@@ -187,11 +186,11 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     pLPD = LoadPrinterDriver(driver);
     if (pLPD == NULL)
     {
-	dprintf_win16drv(stddeb, "LPGDI_CreateDC: Failed to find printer driver\n");
+	dprintf_warn(win16drv, "LPGDI_CreateDC: Failed to find printer driver\n");
         HeapFree( SystemHeap, 0, physDev );
         return FALSE;
     }
-    dprintf_win16drv(stddeb, "windevCreateDC pLPD 0x%p\n", pLPD);
+    dprintf_info(win16drv, "windevCreateDC pLPD 0x%p\n", pLPD);
 
     /* Now Get the device capabilities from the printer driver */
     
@@ -227,7 +226,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     pPDH = (PDEVICE_HEADER *)((BYTE*)PTR_SEG_TO_LIN(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
     pPDH->pLPD = pLPD;
     
-    dprintf_win16drv(stddeb, "PRTDRV_Enable: PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
+    dprintf_info(win16drv, "PRTDRV_Enable: PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
     
     /* Now get the printer driver to initialise this data */
     wRet = PRTDRV_Enable((LPVOID)physDev->segptrPDEVICE, INITPDEVICE, device, driver, output, NULL); 
@@ -539,7 +538,7 @@ HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
     HANDLE16 hHandle = (HANDLE16)SP_ERROR;
     PPRINTJOB pPrintJob;
 
-    dprintf_win16drv(stddeb, "OpenJob: \"%s\" \"%s\" %04x\n", lpOutput, lpTitle, hDC);
+    dprintf_info(win16drv, "OpenJob: \"%s\" \"%s\" %04x\n", lpOutput, lpTitle, hDC);
 
     pPrintJob = gPrintJobsTable[0];
     if (pPrintJob == NULL)
@@ -564,7 +563,7 @@ HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
 	    gPrintJobsTable[pPrintJob->nIndex] = pPrintJob; 
 	}
     }
-    dprintf_win16drv(stddeb, "OpenJob: return %04x\n", hHandle);
+    dprintf_info(win16drv, "OpenJob: return %04x\n", hHandle);
     return hHandle;
 }
 
@@ -573,7 +572,7 @@ int WINAPI CloseJob(HANDLE16 hJob)
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
 
-    dprintf_win16drv(stddeb, "CloseJob: %04x\n", hJob);
+    dprintf_info(win16drv, "CloseJob: %04x\n", hJob);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL)
@@ -591,7 +590,7 @@ int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
 
-    dprintf_win16drv(stddeb, "WriteSpool: %04x %08lx %04x\n", hJob, (DWORD)lpData, cch);
+    dprintf_info(win16drv, "WriteSpool: %04x %08lx %04x\n", hJob, (DWORD)lpData, cch);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL && pPrintJob->fd >= 0 && cch)
@@ -608,7 +607,7 @@ int WINAPI WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 {
     int nRet = 0;
 
-    dprintf_win16drv(stddeb, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
+    dprintf_info(win16drv, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
 
     nRet = MessageBox16(0, lpMsg, "Printing Error", MB_OKCANCEL);
     return nRet;
@@ -618,7 +617,7 @@ int WINAPI DeleteJob(HANDLE16 hJob, WORD wNotUsed)
 {
     int nRet;
 
-    dprintf_win16drv(stddeb, "DeleteJob: %04x\n", hJob);
+    dprintf_info(win16drv, "DeleteJob: %04x\n", hJob);
 
     nRet = FreePrintJob(hJob);
     return nRet;
@@ -631,13 +630,13 @@ int WINAPI DeleteJob(HANDLE16 hJob, WORD wNotUsed)
  */
 int WINAPI StartSpoolPage(HANDLE16 hJob)
 {
-    dprintf_win16drv(stddeb, "StartSpoolPage GDI.246 unimplemented\n");
+    dprintf_fixme(win16drv, "StartSpoolPage GDI.246 unimplemented\n");
     return 1;
 
 }
 int WINAPI EndSpoolPage(HANDLE16 hJob)
 {
-    dprintf_win16drv(stddeb, "EndSpoolPage GDI.247 unimplemented\n");
+    dprintf_fixme(win16drv, "EndSpoolPage GDI.247 unimplemented\n");
     return 1;
 }
 
@@ -645,6 +644,6 @@ int WINAPI EndSpoolPage(HANDLE16 hJob)
 DWORD WINAPI GetSpoolJob(int nOption, LONG param)
 {
     DWORD retval = 0;
-    dprintf_win16drv(stddeb, "In GetSpoolJob param 0x%lx noption %d\n",param, nOption);
+    dprintf_info(win16drv, "In GetSpoolJob param 0x%lx noption %d\n",param, nOption);
     return retval;
 }

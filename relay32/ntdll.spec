@@ -872,21 +872,21 @@ type	win32
 869 stub _snprintf
 870 stub _snwprintf
 871 stub _splitpath
-872 cdecl _strcmpi(ptr ptr) CRTDLL__strcmpi
-873 cdecl _stricmp(ptr ptr) CRTDLL__strcmpi
+872 cdecl _strcmpi(str str) CRTDLL__strcmpi
+873 cdecl _stricmp(str str) CRTDLL__strcmpi
 874 stub _strlwr
-875 cdecl _strnicmp(ptr ptr long) CRTDLL__strnicmp
-876 cdecl _strupr(ptr) CRTDLL__strupr
+875 cdecl _strnicmp(str str long) CRTDLL__strnicmp
+876 cdecl _strupr(str) CRTDLL__strupr
 877 stub _ultoa
 878 stub _vsnprintf
-879 cdecl _wcsicmp(ptr ptr) CRTDLL__wcsicmp
-880 cdecl _wcslwr(ptr) CRTDLL__wcslwr
-881 cdecl _wcsnicmp(ptr ptr long) CRTDLL__wcsnicmp
-882 cdecl _wcsupr(ptr) CRTDLL__wcsupr
+879 cdecl _wcsicmp(wstr wstr) CRTDLL__wcsicmp
+880 cdecl _wcslwr(wstr) CRTDLL__wcslwr
+881 cdecl _wcsnicmp(wstr wstr long) CRTDLL__wcsnicmp
+882 cdecl _wcsupr(wstr) CRTDLL__wcsupr
 883 stub abs
 884 stub atan
-885 cdecl atoi(ptr) atoi
-886 cdecl atol(ptr) atol
+885 cdecl atoi(str) atoi
+886 cdecl atol(str) atol
 887 stub ceil
 888 stub cos
 889 stub fabs
@@ -914,39 +914,39 @@ type	win32
 911 varargs sprintf() wsprintf32A
 912 stub sqrt
 913 varargs sscanf() sscanf
-914 cdecl strcat(ptr ptr) strcat
-915 cdecl strchr(ptr long) strchr
-916 cdecl strcmp(ptr ptr) strcmp
-917 cdecl strcpy(ptr ptr) strcpy
-918 cdecl strcspn(ptr ptr) strcspn
-919 cdecl strlen(ptr) strlen
-920 cdecl strncat(ptr ptr long) strncat
-921 cdecl strncmp(ptr ptr long) strncmp
-922 cdecl strncpy(ptr ptr long) strncpy
-923 cdecl strpbrk(ptr ptr long) strpbrk
-924 cdecl strrchr(ptr long) strrchr
-925 cdecl strspn(ptr ptr) strspn
-926 cdecl strstr(ptr ptr) strstr
+914 cdecl strcat(str str) strcat
+915 cdecl strchr(str long) strchr
+916 cdecl strcmp(str str) strcmp
+917 cdecl strcpy(ptr str) strcpy
+918 cdecl strcspn(str str) strcspn
+919 cdecl strlen(str) strlen
+920 cdecl strncat(str str long) strncat
+921 cdecl strncmp(str str long) strncmp
+922 cdecl strncpy(ptr str long) strncpy
+923 cdecl strpbrk(str str long) strpbrk
+924 cdecl strrchr(str long) strrchr
+925 cdecl strspn(str str) strspn
+926 cdecl strstr(str str) strstr
 927 varargs swprintf() wsprintf32W
 928 stub tan
 929 cdecl tolower(long) tolower
 930 cdecl toupper(long) toupper
 931 stub towlower
 932 stub towupper
-933 cdecl vsprintf(ptr ptr ptr) CRTDLL_vsprintf
-934 cdecl wcscat(ptr ptr) CRTDLL_wcscat
-935 cdecl wcschr(ptr long) CRTDLL_wcschr
+933 cdecl vsprintf(ptr str ptr) CRTDLL_vsprintf
+934 cdecl wcscat(wstr wstr) CRTDLL_wcscat
+935 cdecl wcschr(wstr long) CRTDLL_wcschr
 936 stub wcscmp
-937 cdecl wcscpy(ptr ptr) CRTDLL_wcscpy
+937 cdecl wcscpy(ptr wstr) CRTDLL_wcscpy
 938 stub wcscspn
-939 cdecl wcslen(ptr) CRTDLL_wcslen
+939 cdecl wcslen(wstr) CRTDLL_wcslen
 940 stub wcsncat
 941 stub wcsncmp
-942 cdecl wcsncpy(ptr ptr long) CRTDLL_wcsncpy
+942 cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
 943 stub wcspbrk
-944 cdecl wcsrchr(ptr long) CRTDLL_wcsrchr
-945 stub wcsspn
-946 cdecl wcsstr(ptr ptr) CRTDLL_wcsstr
+944 cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
+945 cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
+946 cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
 947 stub wcstok
 948 stub wcstol
 949 cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs

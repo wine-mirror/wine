@@ -146,7 +146,7 @@ typedef struct IShellFolder_VTable {
 
     /* *** IShellFolder methods *** */
     STDMETHOD(ParseDisplayName) (THIS_ HWND32 hwndOwner,
-        LPBC pbcReserved, LPOLESTR lpszDisplayName,
+        LPBC pbcReserved, LPOLESTR32 lpszDisplayName,
         ULONG * pchEaten, LPITEMIDLIST * ppidl, ULONG *pdwAttributes) PURE;
     STDMETHOD(EnumObjects) ( THIS_ HWND32 hwndOwner, DWORD grfFlags, LPENUMIDLIST
 * ppenumIDList) PURE;
@@ -163,7 +163,7 @@ typedef struct IShellFolder_VTable {
                                  REFIID riid, UINT32 * prgfInOut, LPVOID * ppvOut) PURE;
     STDMETHOD(GetDisplayNameOf) (THIS_ LPCITEMIDLIST pidl, DWORD uFlags, LPSTRRET lpName) PURE;
     STDMETHOD(SetNameOf)        (THIS_ HWND32 hwndOwner, LPCITEMIDLIST pidl,
-                                 LPCOLESTR lpszName, DWORD uFlags,
+                                 LPCOLESTR32 lpszName, DWORD uFlags,
                                  LPITEMIDLIST * ppidlOut) PURE;
 } *LPSHELLFOLDER_VTABLE,IShellFolder_VTable;
 

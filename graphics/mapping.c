@@ -6,7 +6,6 @@
 
 #include <math.h>
 #include "dc.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -164,7 +163,7 @@ INT32 WINAPI SetMapMode32( HDC32 hdc, INT32 mode )
     if (!dc) return 0;
     if (dc->funcs->pSetMapMode) return dc->funcs->pSetMapMode( dc, mode );
 
-    dprintf_gdi(stddeb, "SetMapMode: %04x %d\n", hdc, mode );
+    dprintf_info(gdi, "SetMapMode: %04x %d\n", hdc, mode );
     
     prevMode = dc->w.MapMode;
     switch(mode)

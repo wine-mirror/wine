@@ -11,8 +11,6 @@
 #include <string.h>
 #include <errno.h>
 #include "windows.h"
-#include "module.h"
-#include "selectors.h"
 #include "bitmap.h"
 #include "comm.h"
 #include "win.h"
@@ -27,7 +25,6 @@
 #include "heap.h"
 #include "keyboard.h"
 #include "miscemu.h"
-#include "neexe.h"
 #include "options.h"
 #include "spy.h"
 #include "task.h"
@@ -36,7 +33,6 @@
 #include "dce.h"
 #include "shell.h"
 #include "winproc.h"
-#include "stddebug.h"
 #include "debug.h"
 
 

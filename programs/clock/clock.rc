@@ -1,0 +1,60 @@
+/*
+ * Clock (clock.rc)
+ *
+ * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ */
+
+#include "main.h"
+ 
+#define CONCAT(a, b) CONCAT1(a, b)
+#define CONCAT1(a, b) a##b
+
+/* Main Menu */
+
+CONCAT(MENU_, LANGUAGE_ID) MENU
+{
+ POPUP MENU_PROPERTIES {
+   MENUITEM MENU_ANALOG,                CL_ANALOG
+   MENUITEM MENU_DIGITAL,               CL_DIGITAL
+   MENUITEM SEPARATOR
+   MENUITEM MENU_FONT,                  CL_FONT
+   MENUITEM SEPARATOR
+   MENUITEM MENU_WITHOUT_TITLE,         CL_WITHOUT_TITLE
+   MENUITEM SEPARATOR
+   MENUITEM MENU_SECONDS,               CL_SECONDS
+   MENUITEM MENU_DATE,                  CL_DATE
+   MENUITEM SEPARATOR
+   MENUITEM MENU_ON_TOP,                CL_ON_TOP
+   }
+   POPUP MENU_LANGUAGE {
+     /* Dummy item, will be removed */
+     MENUITEM SEPARATOR
+   }
+   
+   POPUP MENU_INFO {
+      MENUITEM MENU_INFO_LICENSE,       CL_INFO_LICENSE
+      MENUITEM MENU_INFO_NO_WARRANTY,   CL_INFO_NO_WARRANTY
+      MENUITEM MENU_INFO_ABOUT_WINE,    CL_INFO_ABOUT_WINE
+   }
+ 
+}
+
+/* Strings */
+
+#define ADDSTRING(str) ADDSTRING1(LANGUAGE_NUMBER, IDS_ ## str) STRING_ ## str
+#define ADDSTRING1(langnum, ids) ADDSTRING2(langnum, ids)
+#define ADDSTRING2(langnum, ids) 0x ## langnum ## ids
+
+#define STRINGIFY(str) STRINGIFY1(str)
+#define STRINGIFY1(str) #str
+
+#define STRING_LANGUAGE_ID        STRINGIFY(LANGUAGE_ID)
+#define STRING_LANGUAGE_MENU_ITEM LANGUAGE_MENU_ITEM
+
+
+STRINGTABLE
+{
+ADDSTRING(LANGUAGE_ID)
+ADDSTRING(LANGUAGE_MENU_ITEM)
+ADDSTRING(CLOCK)
+}

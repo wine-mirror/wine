@@ -50,6 +50,8 @@ const K32OBJ_OPS CRITICAL_SECTION_Ops =
     CRIT_SECTION_Satisfied,    /* satisfied */
     CRIT_SECTION_AddWait,      /* add_wait */
     CRIT_SECTION_RemoveWait,   /* remove_wait */
+    NULL,                      /* read */
+    NULL,                      /* write */
     CRIT_SECTION_Destroy       /* destroy */
 };
 

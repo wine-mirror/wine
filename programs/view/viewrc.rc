@@ -1,0 +1,60 @@
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+/*IDI_APPICON             ICON    DISCARDABLE     "view.ico"*/
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+VIEW MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+	MENUITEM "&Open",			IDM_OPEN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "&Pan"
+    BEGIN
+      MENUITEM "&Left",				IDM_LEFT
+      MENUITEM "&Right",			IDM_RIGHT
+      MENUITEM "&Up",				IDM_UP
+      MENUITEM "&Down",				IDM_DOWN
+    END
+    POPUP "&Info"
+    BEGIN
+	MENUITEM "&Hello",			IDM_HELLO
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+VIEW ACCELERATORS 
+BEGIN
+    "Q",            IDM_EXIT,                CONTROL
+END
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APPNAME             "View"
+    IDS_DESCRIPTION         "Regular Metafile Viewer"
+END
+
+
+

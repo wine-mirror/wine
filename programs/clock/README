@@ -1,0 +1,18 @@
+
+ Clock for Wine
+ ==============
+ 
+ This is a first attempt to realize a desktop clock for Wine as done in 
+ Windows. It'a an early release and most of the code is still broken.
+
+ Please see file TODO for things to do and keep the file ChangeLog
+ up to date.
+
+ Code is currently under heavy construction. Nearly all files will 
+ change until next release. You can speed up development of clock
+ if you send patches and additions directly to my personal email 
+ address <mbaur@g26.ethz.ch>.
+
+ I also try to read news:comp.emulators.ms-windows.wine frequently, 
+ so I can also integrate patches posted via usenet.
+

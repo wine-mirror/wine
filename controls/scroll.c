@@ -15,7 +15,6 @@
 #include "graphics.h"
 #include "heap.h"
 #include "win.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -616,7 +615,7 @@ void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar, UINT32 msg, POINT32 pt)
           return;  /* Should never happen */
     }
 
-    dprintf_scroll( stddeb, "ScrollBar Event: hwnd=%04x bar=%d msg=%x pt=%d,%d hit=%d\n",
+    dprintf_info(scroll, "ScrollBar Event: hwnd=%04x bar=%d msg=%x pt=%d,%d hit=%d\n",
                     hwnd, nBar, msg, pt.x, pt.y, hittest );
 
     switch(trackHitTest)
@@ -795,7 +794,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
-        dprintf_scroll( stddeb, "ScrollBar creation, hwnd=%04x\n", hwnd );
+        dprintf_info(scroll, "ScrollBar creation, hwnd=%04x\n", hwnd );
         return 0;
 	
     case WM_LBUTTONDOWN:
@@ -910,19 +909,18 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
     SCROLLBAR_INFO *infoPtr;
     UINT32 new_flags;
     BOOL32 repaint_arrows = FALSE;
+    dbg_decl_str(scroll, 256);
 
     if (!(infoPtr = SCROLL_GetScrollInfo(hwnd, nBar))) return 0;
     if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return 0;
     if ((info->cbSize != sizeof(*info)) &&
         (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return 0;
 
-    dprintf_scroll( stddeb, "SetScrollInfo: hwnd=%04x bar=%d", hwnd, nBar );
-
     /* Set the page size */
 
     if (info->fMask & SIF_PAGE)
     {
-        dprintf_scroll( stddeb, " page=%d", info->nPage );
+        dsprintf(scroll, " page=%d", info->nPage );
         infoPtr->Page = info->nPage;
     }
 
@@ -930,7 +928,7 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
 
     if (info->fMask & SIF_POS)
     {
-        dprintf_scroll( stddeb, " pos=%d", info->nPos );
+        dsprintf(scroll, " pos=%d", info->nPos );
         infoPtr->CurVal = info->nPos;
     }
 
@@ -938,7 +936,7 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
 
     if (info->fMask & SIF_RANGE)
     {
-        dprintf_scroll( stddeb, " min=%d max=%d", info->nMin, info->nMax );
+        dsprintf(scroll, " min=%d max=%d", info->nMin, info->nMax );
 
         /* Invalid range -> range is set to (0,0) */
         if ((info->nMin > info->nMax) ||
@@ -954,6 +952,9 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
         }
     }
 
+    dprintf_info(scroll, "SetScrollInfo: hwnd=%04x bar=%d %s\n", 
+		    hwnd, nBar, dbg_str(scroll));
+
     /* Make sure the page size is valid */
 
     if (infoPtr->Page < 0) infoPtr->Page = 0;
@@ -967,7 +968,7 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
     else if (infoPtr->CurVal > infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
         infoPtr->CurVal = infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 );
 
-    dprintf_scroll( stddeb, "\n   new values: page=%d pos=%d min=%d max=%d\n",
+    dprintf_info(scroll, "\n   new values: page=%d pos=%d min=%d max=%d\n",
                     infoPtr->Page, infoPtr->CurVal,
                     infoPtr->MinVal, infoPtr->MaxVal );
 
@@ -1208,7 +1209,7 @@ BOOL32 WINAPI ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return FALSE;
-    dprintf_scroll( stddeb, "ShowScrollBar: hwnd=%04x bar=%d on=%d\n",
+    dprintf_info(scroll, "ShowScrollBar: hwnd=%04x bar=%d on=%d\n",
                     hwnd, nBar, fShow );
 
     switch(nBar)
@@ -1284,7 +1285,7 @@ BOOL32 WINAPI EnableScrollBar32( HWND32 hwnd, INT32 nBar, UINT32 flags )
     SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
-    dprintf_scroll( stddeb, "EnableScrollBar: %04x %d %d\n",
+    dprintf_info(scroll, "EnableScrollBar: %04x %d %d\n",
                     hwnd, nBar, flags );
     flags &= ESB_DISABLE_BOTH;
     if (infoPtr->flags == flags) return FALSE;

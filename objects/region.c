@@ -82,7 +82,6 @@ SOFTWARE.
 
 #include <stdio.h>
 #include "region.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "heap.h"
 #include "dc.h"
@@ -107,11 +106,11 @@ static void REGION_DumpRegion(WINEREGION *pReg)
 {
     RECT32 *pRect, *pRectEnd = pReg->rects + pReg->numRects;
 
-    dprintf_region(stddeb, "Region %p: %d,%d - %d,%d %d rects\n", pReg,
+    dprintf_info(region, "Region %p: %d,%d - %d,%d %d rects\n", pReg,
 	    pReg->extents.left, pReg->extents.top,
 	    pReg->extents.right, pReg->extents.bottom, pReg->numRects);
     for(pRect = pReg->rects; pRect < pRectEnd; pRect++)
-        dprintf_region(stddeb, "\t%d,%d - %d,%d\n", pRect->left, pRect->top,
+        dprintf_info(region, "\t%d,%d - %d,%d\n", pRect->left, pRect->top,
 		       pRect->right, pRect->bottom);
     return;
 }
@@ -171,7 +170,7 @@ static void REGION_DestroyWineRegion( WINEREGION* pReg )
  */
 BOOL32 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj )
 {
-    dprintf_region(stddeb, "DeleteRegion: %04x\n", hrgn );
+    dprintf_info(region, "DeleteRegion: %04x\n", hrgn );
 
     REGION_DestroyWineRegion( obj->rgn );
     return GDI_FreeObject( hrgn );
@@ -198,7 +197,7 @@ INT32 WINAPI OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
 	int nbox = obj->rgn->numRects;
 	RECT32 *pbox = obj->rgn->rects;
 	
-	dprintf_region(stddeb, "OffsetRgn: %04x %d,%d\n", hrgn, x, y );
+	dprintf_info(region, "OffsetRgn: %04x %d,%d\n", hrgn, x, y );
 	if(nbox && (x || y)) {
 	    while(nbox--) {
 	        pbox->left += x;
@@ -240,7 +239,7 @@ INT32 WINAPI GetRgnBox32( HRGN32 hrgn, LPRECT32 rect )
     if (obj)
     {
 	INT32 ret;
-	dprintf_region(stddeb, "GetRgnBox: %04x\n", hrgn );
+	dprintf_info(region, "GetRgnBox: %04x\n", hrgn );
 	rect->left = obj->rgn->extents.left;
 	rect->top = obj->rgn->extents.top;
 	rect->right = obj->rgn->extents.right;
@@ -271,7 +270,7 @@ HRGN32 WINAPI CreateRectRgn32(INT32 left, INT32 top, INT32 right, INT32 bottom)
 
     if (!(hrgn = REGION_CreateRegion()))
 	return 0;
-    dprintf_region(stddeb, "CreateRectRgn: ");
+    dprintf_info(region, "CreateRectRgn: \n");
     SetRectRgn32(hrgn, left, top, right, bottom);
     return hrgn;
 }
@@ -312,7 +311,7 @@ VOID WINAPI SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
 {
     RGNOBJ * obj;
 
-    dprintf_region(stddeb, "SetRectRgn: %04x %d,%d-%d,%d\n", 
+    dprintf_info(region, "SetRectRgn: %04x %d,%d-%d,%d\n", 
 		   hrgn, left, top, right, bottom );
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return;
@@ -365,7 +364,7 @@ HRGN32 WINAPI CreateRoundRectRgn32( INT32 left, INT32 top,
 
     if (!(hrgn = REGION_CreateRegion())) return 0;
     obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
-    dprintf_region(stddeb,"CreateRoundRectRgn(%d,%d-%d,%d %dx%d): ret=%04x\n",
+    dprintf_info(region,"CreateRoundRectRgn(%d,%d-%d,%d %dx%d): ret=%04x\n",
 	       left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
 
       /* Check parameters */
@@ -496,7 +495,7 @@ DWORD WINAPI GetRegionData(HRGN32 hrgn, DWORD count, LPRGNDATA rgndata)
     DWORD size;
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     
-    dprintf_region(stddeb, "GetRegionData: %04x count = %ld, rgndata = %p\n",
+    dprintf_info(region, "GetRegionData: %04x count = %ld, rgndata = %p\n",
 		   hrgn, count, rgndata);
 
     if(!obj) return 0;
@@ -533,7 +532,7 @@ HRGN32 WINAPI ExtCreateRegion( XFORM *lpXform, DWORD dwCount, RGNDATA *rgndata)
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     RECT32 *pCurRect, *pEndRect;
 
-    dprintf_region(stddeb, "ExtCreateRegion: %p %ld %p. Returning %04x\n",
+    dprintf_info(region, "ExtCreateRegion: %p %ld %p. Returning %04x\n",
 		   lpXform, dwCount, rgndata, hrgn);
     if(!hrgn)
     {
@@ -774,7 +773,7 @@ BOOL32 REGION_LPTODP( HDC32 hdc, HRGN32 hDest, HRGN32 hSrc )
     DC * dc = DC_GetDCPtr( hdc );
     RECT32 tmpRect;
 
-    dprintf_region( stddeb, "REGION_LPTODP: hdc=%04x dest=%04x src=%04x\n",
+    dprintf_info(region, "REGION_LPTODP: hdc=%04x dest=%04x src=%04x\n",
 		    hdc, hDest, hSrc) ;
     
     if (dc->w.MapMode == MM_TEXT) /* Requires only a translation */
@@ -829,7 +828,7 @@ INT32 WINAPI CombineRgn32(HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode)
     RGNOBJ *destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC);
     INT32 result = ERROR;
 
-    dprintf_region(stddeb, "CombineRgn: %04x,%04x -> %04x mode=%x\n", 
+    dprintf_info(region, "CombineRgn: %04x,%04x -> %04x mode=%x\n", 
 		   hSrc1, hSrc2, hDest, mode );
     if (destObj)
     {
@@ -837,8 +836,9 @@ INT32 WINAPI CombineRgn32(HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode)
 
 	if (src1Obj)
 	{
-	    dprintf_region(stddeb, "src1:\n");
-	    if(debugging_region) REGION_DumpRegion(src1Obj->rgn);
+	    dprintf_info(region, "src1:\n");
+	    if(debugging_info(region)) 
+	      REGION_DumpRegion(src1Obj->rgn);
 	    if (mode == RGN_COPY)
 	    {
 		REGION_CopyRegion( destObj->rgn, src1Obj->rgn );
@@ -850,8 +850,9 @@ INT32 WINAPI CombineRgn32(HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode)
 
 		if (src2Obj)
 		{
-		    dprintf_region(stddeb, "src2:\n");
-		    if(debugging_region) REGION_DumpRegion(src2Obj->rgn);
+		    dprintf_info(region, "src2:\n");
+		    if(debugging_info(region)) 
+		      REGION_DumpRegion(src2Obj->rgn);
 		    switch (mode)
 		    {
 		    case RGN_AND:
@@ -873,8 +874,9 @@ INT32 WINAPI CombineRgn32(HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode)
 	    }
 	    GDI_HEAP_UNLOCK( hSrc1 );
 	}
-	dprintf_region(stddeb, "dest:\n");
-	if(debugging_region) REGION_DumpRegion(destObj->rgn);
+	dprintf_info(region, "dest:\n");
+	if(debugging_info(region)) 
+	  REGION_DumpRegion(destObj->rgn);
 
 	GDI_HEAP_UNLOCK( hDest );
     }

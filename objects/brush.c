@@ -9,7 +9,6 @@
 #include "bitmap.h"
 #include "metafile.h"
 #include "color.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -53,7 +52,7 @@ HBRUSH32 WINAPI CreateBrushIndirect32( const LOGBRUSH32 * brush )
 HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_HATCHED, color, style };
-    dprintf_gdi(stddeb, "CreateHatchBrush16: %d %06lx\n", style, color );
+    dprintf_info(gdi, "CreateHatchBrush16: %d %06lx\n", style, color );
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
     return CreateBrushIndirect32( &logbrush );
 }
@@ -65,7 +64,7 @@ HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 HBRUSH32 WINAPI CreateHatchBrush32( INT32 style, COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_HATCHED, color, style };
-    dprintf_gdi(stddeb, "CreateHatchBrush32: %d %06lx\n", style, color );
+    dprintf_info(gdi, "CreateHatchBrush32: %d %06lx\n", style, color );
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
     return CreateBrushIndirect32( &logbrush );
 }
@@ -88,7 +87,7 @@ HBRUSH32 WINAPI CreatePatternBrush32( HBITMAP32 hbitmap )
     LOGBRUSH32 logbrush = { BS_PATTERN, 0, 0 };
     BITMAPOBJ *bmp, *newbmp;
 
-    dprintf_gdi(stddeb, "CreatePatternBrush: %04x\n", hbitmap );
+    dprintf_info(gdi, "CreatePatternBrush: %04x\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -119,7 +118,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
     BITMAPINFO *info, *newInfo;
     INT32 size;
     
-    dprintf_gdi(stddeb, "CreateDIBPatternBrush: %04x\n", hbitmap );
+    dprintf_info(gdi, "CreateDIBPatternBrush: %04x\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -154,7 +153,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
     BITMAPINFO *info, *newInfo;
     INT32 size;
     
-    dprintf_gdi(stddeb, "CreateDIBPatternBrush: %04x\n", hbitmap );
+    dprintf_info(gdi, "CreateDIBPatternBrush: %04x\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -186,7 +185,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
 HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_SOLID, color, 0 };
-    dprintf_gdi(stddeb, "CreateSolidBrush16: %06lx\n", color );
+    dprintf_info(gdi, "CreateSolidBrush16: %06lx\n", color );
     return CreateBrushIndirect32( &logbrush );
 }
 
@@ -197,7 +196,7 @@ HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 HBRUSH32 WINAPI CreateSolidBrush32( COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_SOLID, color, 0 };
-    dprintf_gdi(stddeb, "CreateSolidBrush32: %06lx\n", color );
+    dprintf_info(gdi, "CreateSolidBrush32: %06lx\n", color );
     return CreateBrushIndirect32( &logbrush );
 }
 

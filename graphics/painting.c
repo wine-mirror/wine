@@ -24,7 +24,6 @@
 #include "color.h"
 #include "region.h"
 #include "path.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /***********************************************************************

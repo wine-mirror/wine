@@ -16,7 +16,6 @@
 #include "region.h"
 #include "graphics.h"
 #include "sysmetrics.h"
-#include "stddebug.h"
 #include "debug.h"
 
 extern HWND32 CARET_GetHwnd();			/* windows/caret.c */
@@ -51,7 +50,7 @@ BOOL32 WINAPI ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy,
     HWND32 	hCaretWnd = CARET_GetHwnd();
     WND*	wndScroll = WIN_FindWndPtr( hwnd );
 
-    dprintf_scroll(stddeb,"ScrollWindow: hwnd=%04x, dx=%d, dy=%d, lpRect =%p clipRect=%i,%i,%i,%i\n", 
+    dprintf_info(scroll,"ScrollWindow: hwnd=%04x, dx=%d, dy=%d, lpRect =%p clipRect=%i,%i,%i,%i\n", 
                    hwnd, dx, dy, rect,
                    clipRect ? clipRect->left : 0,
                    clipRect ? clipRect->top : 0,
@@ -157,7 +156,7 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     INT32  ldx, ldy;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
-    dprintf_scroll(stddeb,"ScrollDC: %04x %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d)\n",
+    dprintf_info(scroll,"ScrollDC: %04x %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d)\n",
                    (HDC16)hdc, dx, dy, hrgnUpdate, rcUpdate, 
 		   prLClip ? prLClip->left : 0, prLClip ? prLClip->top : 0, prLClip ? prLClip->right : 0, prLClip ? prLClip->bottom : 0,
 		   rc ? rc->left : 0, rc ? rc->top : 0, rc ? rc->right : 0, rc ? rc->bottom : 0 );
@@ -374,7 +373,7 @@ INT32 WINAPI ScrollWindowEx32( HWND32 hwnd, INT32 dx, INT32 dy,
 	BOOL32  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
 	HRGN32  hrgnClip = CreateRectRgnIndirect32(&cliprc);
 
-dprintf_scroll(stddeb,"ScrollWindowEx: %04x, %d,%d hrgnUpdate=%04x rcUpdate = %p \
+dprintf_info(scroll,"ScrollWindowEx: %04x, %d,%d hrgnUpdate=%04x rcUpdate = %p \
 cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d) %04x\n",             
 (HWND16)hwnd, dx, dy, hrgnUpdate, rcUpdate,
 clipRect?clipRect->left:0, clipRect?clipRect->top:0, clipRect?clipRect->right:0, clipRect?clipRect->bottom:0,

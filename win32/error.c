@@ -8,7 +8,6 @@
 #include <errno.h>
 #include "windows.h"
 #include "winerror.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* The errno_xlat_table contains the errno-to-Win32 error

@@ -23,8 +23,6 @@
 #include "heap.h"
 #include "keyboard.h"
 #include "message.h"
-#include "stddebug.h"
-/* #define DEBUG_KEYBOARD */
 #include "debug.h"
 #include "struct32.h"
 
@@ -191,12 +189,12 @@ BOOL32 KEYBOARD_Init(void)
                     if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Mode_switch)
 		    {
                         AltGrMask = 1 << i;
-                        dprintf_key(stddeb, "AltGrMask is %x\n", AltGrMask);
+                        dprintf_info(key, "AltGrMask is %x\n", AltGrMask);
 		    }
                     else if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
 		    {
                         NumLockMask = 1 << i;
-                        dprintf_key(stddeb, "NumLockMask is %x\n", NumLockMask);
+                        dprintf_info(key, "NumLockMask is %x\n", NumLockMask);
 		    }
             }
     }
@@ -283,10 +281,12 @@ BOOL32 KEYBOARD_Init(void)
 
                 vkey = OEMvkey;
 		  
-                if (debugging_keyboard)
+                if (debugging_info(keyboard))
                 {
-                    fprintf(stddeb,"OEM specific virtual key %X assigned to keycode %X :\n ("
-                            ,OEMvkey,e2.keycode);
+		    dbg_decl_str(keyboard, 1024);
+
+                    dprintf_info(keyboard, "OEM specific virtual key %X assigned"
+				 "to keycode %X :\n", OEMvkey, e2.keycode);
                     for (i = 0; i < keysyms_per_keycode; i += 1)
                     {
                         char	*ksname;
@@ -295,9 +295,9 @@ BOOL32 KEYBOARD_Init(void)
                         ksname = TSXKeysymToString(keysym);
                         if (!ksname)
 			    ksname = "NoSymbol";
-                        fprintf(stddeb, "%lX (%s) ", keysym, ksname);
+                        dsprintf(keyboard, "%lX (%s) ", keysym, ksname);
                     }
-                    fprintf(stddeb, ")\n");
+                    dprintf_info(keyboard, "(%s)\n", dbg_str(keyboard));
                 }
             }
         }
@@ -318,14 +318,14 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT32 event_x, INT32 event_y,
        don't treat it. It's from the same key press. Then the state goes to ON.
        And from there, a 'release' event will switch off the toggle key. */
     *State=FALSE;
-    dprintf_keyboard(stddeb,"INTERM : don\'t treat release of toggle key. InputKeyStateTable[%#x] = %#x\n",vkey,InputKeyStateTable[vkey]);
+    dprintf_info(keyboard,"INTERM : don\'t treat release of toggle key. InputKeyStateTable[%#x] = %#x\n",vkey,InputKeyStateTable[vkey]);
   } else
     {
 	if ( InputKeyStateTable[vkey] & 0x1 ) /* it was ON */
 	  {
 	    if (Evtype!=KeyPress)
 	      {
-		dprintf_keyboard(stddeb,"ON + KeyRelease => generating DOWN and UP messages.\n");
+		dprintf_info(keyboard,"ON + KeyRelease => generating DOWN and UP messages.\n");
 		localkeylp.lp1.previous = 0; /* ? */
 		localkeylp.lp1.transition = 0;
 		hardware_event( WM_KEYDOWN, vkey, localkeylp.lp2,
@@ -339,7 +339,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT32 event_x, INT32 event_y,
 	else /* it was OFF */
 	  if (Evtype==KeyPress)
 	    {
-	      dprintf_keyboard(stddeb,"OFF + Keypress => generating DOWN and UP messages.\n");
+	      dprintf_info(keyboard,"OFF + Keypress => generating DOWN and UP messages.\n");
 	      hardware_event( WM_KEYDOWN, vkey, localkeylp.lp2,
                               event_x, event_y, event_time, 0 );
 	      localkeylp.lp1.previous = 1;
@@ -372,15 +372,15 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     INT32 event_y = pWnd->rectWindow.top + event->y;
     DWORD event_time = event->time - MSG_WineStartTicks;
 
-    dprintf_key(stddeb, "EVENT_key : state = %X\n", event->state);
+    dprintf_info(key, "EVENT_key : state = %X\n", event->state);
     if (keysym == XK_Mode_switch)
 	{
-	dprintf_key(stddeb, "Alt Gr key event received\n");
+	dprintf_info(key, "Alt Gr key event received\n");
 	event->keycode = TSXKeysymToKeycode(event->display, XK_Control_L);
-	dprintf_key(stddeb, "Control_L is keycode 0x%x\n", event->keycode);
+	dprintf_info(key, "Control_L is keycode 0x%x\n", event->keycode);
 	KEYBOARD_HandleEvent( pWnd, event );
 	event->keycode = TSXKeysymToKeycode(event->display, XK_Alt_L);
-	dprintf_key(stddeb, "Alt_L is keycode 0x%x\n", event->keycode);
+	dprintf_info(key, "Alt_L is keycode 0x%x\n", event->keycode);
 	force_extended = TRUE;
 	KEYBOARD_HandleEvent( pWnd, event );
 	force_extended = FALSE;
@@ -388,22 +388,21 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	}
 
     Str[ascii_chars] = '\0';
-    if (debugging_key)
-	{
+    if (debugging_info(key)){
 	char	*ksname;
 
 	ksname = TSXKeysymToString(keysym);
 	if (!ksname)
-	    ksname = "No Name";
-	fprintf(stddeb, "%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
-                (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
-                keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
-	}
+	  ksname = "No Name";
+	dprintf_info(key, "%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
+		     (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
+		     keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
+    }
 
     vkey = EVENT_event_to_vkey(event);
     if (force_extended) vkey |= 0x100;
 
-    dprintf_key(stddeb, "keycode 0x%x converted to vkey 0x%x\n",
+    dprintf_info(key, "keycode 0x%x converted to vkey 0x%x\n",
 		    event->keycode, vkey);
 
    if (vkey)
@@ -424,10 +423,10 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
                             event_time, keylp);
       break;
     case VK_CAPITAL:
-      dprintf_keyboard(stddeb,"Caps Lock event. (type %d). State before : %#.2x\n",event->type,InputKeyStateTable[vkey]);
+      dprintf_info(keyboard,"Caps Lock event. (type %d). State before : %#.2x\n",event->type,InputKeyStateTable[vkey]);
       KEYBOARD_GenerateMsg( VK_CAPITAL, event->type, event_x, event_y,
                             event_time, keylp ); 
-      dprintf_keyboard(stddeb,"State after : %#.2x\n",InputKeyStateTable[vkey]);
+      dprintf_info(keyboard,"State after : %#.2x\n",InputKeyStateTable[vkey]);
       break;
     default:
       {
@@ -458,7 +457,7 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 			      (InputKeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
 	if (!(InputKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  { 
-	    dprintf_keyboard(stddeb,"Adjusting NumLock state. \n");
+	    dprintf_info(keyboard,"Adjusting NumLock state. \n");
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyPress, event_x, event_y,
                                   event_time, keylp );
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyRelease, event_x, event_y,
@@ -466,20 +465,20 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	  }
 	if (!(InputKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
-	    dprintf_keyboard(stddeb,"Adjusting Caps Lock state. State before %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
+	    dprintf_info(keyboard,"Adjusting Caps Lock state. State before %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyPress, event_x, event_y,
                                   event_time, keylp );
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyRelease, event_x, event_y,
                                   event_time, keylp );
-	    dprintf_keyboard(stddeb,"State after %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
+	    dprintf_info(keyboard,"State after %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
 	  }
 	/* End of intermediary states. */
 	NumState = FALSE;
 	CapsState = FALSE;
 
-	dprintf_key(stddeb,"            wParam=%04X, lParam=%08lX\n", 
+	dprintf_info(key,"            wParam=%04X, lParam=%08lX\n", 
 		    vkey, keylp.lp2 );
-	dprintf_key(stddeb,"            InputKeyState=%X\n",
+	dprintf_info(key,"            InputKeyState=%X\n",
 		    InputKeyStateTable[vkey]);
 
 	hardware_event( message, vkey, keylp.lp2,
@@ -525,7 +524,7 @@ WORD WINAPI GetKeyState32(INT32 vkey)
 	    retval = ( (WORD)(QueueKeyStateTable[vkey] & 0x80) << 8 ) |
 		       (WORD)(QueueKeyStateTable[vkey] & 0x01);
 	}
-    dprintf_key(stddeb, "GetKeyState(0x%x) -> %x\n", vkey, retval);
+    dprintf_info(key, "GetKeyState(0x%x) -> %x\n", vkey, retval);
     return retval;
 }
 
@@ -537,7 +536,7 @@ WORD WINAPI GetKeyState32(INT32 vkey)
  */
 VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
 {
-    dprintf_key(stddeb, "GetKeyboardState()\n");
+    dprintf_info(key, "GetKeyboardState()\n");
     if (lpKeyState != NULL) {
 	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
 	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
@@ -551,7 +550,7 @@ VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
  */
 VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
 {
-    dprintf_key(stddeb, "SetKeyboardState()\n");
+    dprintf_info(key, "SetKeyboardState()\n");
     if (lpKeyState != NULL) {
 	memcpy(QueueKeyStateTable, lpKeyState, 256);
 	MouseButtonsStates[0] = (QueueKeyStateTable[VK_LBUTTON] != 0);
@@ -600,7 +599,7 @@ WORD WINAPI GetAsyncKeyState32(INT32 nKey)
     memset( AsyncMouseButtonsStates, 0, sizeof(AsyncMouseButtonsStates) );
     memset( AsyncKeyStateTable, 0, sizeof(AsyncKeyStateTable) );
 
-    dprintf_key(stddeb, "GetAsyncKeyState(%x) -> %x\n", nKey, retval);
+    dprintf_info(key, "GetAsyncKeyState(%x) -> %x\n", nKey, retval);
     return retval;
 }
 
@@ -635,13 +634,14 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
     	if (msg->message == WM_CHAR) {
         if ( !(fVirt & FALT) && !(fVirt & FVIRTKEY) )
         {
-   	  dprintf_accel(stddeb,"found accel for WM_CHAR: ('%c')",msg->wParam&0xff);
+   	  dprintf_info(accel,"found accel for WM_CHAR: ('%c')\n",
+			msg->wParam&0xff);
    	  sendmsg=TRUE;
    	}  
       } else {
        if(fVirt & FVIRTKEY) {
 	INT32 mask = 0;
-        dprintf_accel(stddeb,"found accel for virt_key %04x (scan %04x)",
+        dprintf_info(accel,"found accel for virt_key %04x (scan %04x)\n",
   	                       msg->wParam,0xff & HIWORD(msg->lParam));                
 	if(GetKeyState32(VK_SHIFT) & 0x8000) mask |= FSHIFT;
 	if(GetKeyState32(VK_CONTROL) & 0x8000) mask |= FCONTROL;
@@ -649,7 +649,7 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
 	if(mask == (fVirt & (FSHIFT | FCONTROL | FALT)))
           sendmsg=TRUE;			    
         else
-          dprintf_accel(stddeb,", but incorrect SHIFT/CTRL/ALT-state\n");
+          dprintf_info(accel,", but incorrect SHIFT/CTRL/ALT-state\n");
        }
        else
        {
@@ -657,7 +657,7 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
          {
            if ((fVirt & FALT) && (msg->lParam & 0x20000000))
            {                                                   /* ^^ ALT pressed */
-	    dprintf_accel(stddeb,"found accel for Alt-%c", msg->wParam&0xff);
+	    dprintf_info(accel,"found accel for Alt-%c\n", msg->wParam&0xff);
 	    sendmsg=TRUE;	    
 	   } 
          } 
@@ -714,7 +714,7 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
           }
           if ( mesg==WM_COMMAND || mesg==WM_SYSCOMMAND )
           {
-              dprintf_accel(stddeb,", sending %s, wParam=%0x\n",
+              dprintf_info(accel,", sending %s, wParam=%0x\n",
                   mesg==WM_COMMAND ? "WM_COMMAND" : "WM_SYSCOMMAND",
                   cmd);
 	      SendMessage32A(hWnd, mesg, cmd, 0x00010000L);
@@ -730,7 +730,9 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
 	    *   #5: it's a menu option, but window is iconic
 	    *   #6: it's a menu option, but disabled
 	    */
-	    dprintf_accel(stddeb,", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
+	    dprintf_info(accel,", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
+	    if(mesg==0)
+	      dprintf_err(accel, " unknown reason - please report!");
 	  }          
           return TRUE;         
       }
@@ -750,7 +752,7 @@ INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
 	msg->message != WM_SYSKEYUP &&
     	msg->message != WM_CHAR) return 0;
 
-    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
+    dprintf_info(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
 msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
 
     for (i = 0; lpAccelTbl[i].key ; i++)
@@ -773,7 +775,7 @@ INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
 	msg->message != WM_SYSKEYUP &&
     	msg->message != WM_CHAR) return 0;
 
-    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
+    dprintf_info(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
 msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
     STRUCT32_MSG16to32(msg,&msg32);
 
@@ -791,7 +793,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
  */
 DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
-    dprintf_keyboard(stddeb,"*OemKeyScan (%d)\n",wOemChar);
+    dprintf_info(keyboard,"*OemKeyScan (%d)\n",wOemChar);
 
     return wOemChar;
 }
@@ -831,8 +833,8 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 	  keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
 	}
 
-	dprintf_keyboard(stddeb,"VkKeyScan '%c'(%#lx, %lu) : got keycode %#.2x ",
-	    cChar,keysym,keysym,keycode);
+	dprintf_info(keyboard,"VkKeyScan '%c'(%#lx, %lu): got keycode %#.2x\n",
+			 cChar,keysym,keysym,keycode);
 	
 	if (keycode)
 	  {
@@ -854,7 +856,7 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 	      index : ?     adds 0x0700 (ctrl+alt+shift (used?))
 	     */
 	  }
-	dprintf_keyboard(stddeb," ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
+	dprintf_info(keyboard," ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
 	return keyc2vkey[keycode]+highbyte;   /* keycode -> (keyc2vkey) vkey */
 }
 
@@ -887,7 +889,7 @@ INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
  */
 INT32 WINAPI GetKeyboardType32(INT32 nTypeFlag)
 {
-  dprintf_keyboard(stddeb,"GetKeyboardType(%d)\n",nTypeFlag);
+  dprintf_info(keyboard,"GetKeyboardType(%d)\n",nTypeFlag);
   switch(nTypeFlag)
     {
     case 0:      /* Keyboard type */
@@ -928,9 +930,10 @@ UINT32 WINAPI MapVirtualKey32W(UINT32 code, UINT32 maptype)
  */
 UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 {
-#define returnMVK(value) { dprintf_keyboard(stddeb,"returning 0x%x.\n",value); return value; }
+#define returnMVK(value) { dprintf_info(keyboard,"returning 0x%x.\n",value); return value; }
 
-	dprintf_keyboard(stddeb,"MapVirtualKey wCode=0x%x wMapType=%d ... ",wCode,wMapType);
+	dprintf_info(keyboard,"MapVirtualKey wCode=0x%x wMapType=%d ... \n",
+			 wCode,wMapType);
 	switch(wMapType) {
 		case 0:	{ /* vkey-code to scan-code */
 			/* let's do vkey -> keycode -> scan */
@@ -974,7 +977,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
  */
 INT16 WINAPI GetKBCodePage16(void)
 {
-    dprintf_keyboard(stddeb,"GetKBCodePage()\n");
+    dprintf_info(keyboard,"GetKBCodePage()\n");
     return 850;
 }
 
@@ -984,7 +987,7 @@ INT16 WINAPI GetKBCodePage16(void)
  */
 UINT32 WINAPI GetKBCodePage32(void)
 {
-    dprintf_keyboard(stddeb,"GetKbCodePage()\n");
+    dprintf_info(keyboard,"GetKbCodePage()\n");
     return 850;
 }
 
@@ -1017,7 +1020,7 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
   /*	int i; */
 	
-    	dprintf_keyboard(stddeb,"GetKeyNameText(%ld,<ptr>,%d)\n",lParam,nSize);
+    	dprintf_info(keyboard,"GetKeyNameText(%ld,<ptr>,%d)\n",lParam,nSize);
 
 	lParam >>= 16;
 	lParam &= 0xff;
@@ -1065,7 +1068,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 	  {
 	    if ((e.keycode) && ((virtKey<0x10) || (virtKey>0x12))) 
 		/* it's normal to have 2 shift, control, and alt ! */
-		dprintf_keyboard(stddeb,"ToAscii : The keycodes %d and %d are matching the same vkey %#X\n",
+		dprintf_info(keyboard,"ToAscii : The keycodes %d and %d are matching the same vkey %#X\n",
 				 e.keycode,keyc,virtKey);
 	    e.keycode = keyc;
 	  }
@@ -1085,7 +1088,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
     e.state = 0;
     if (lpKeyState[VK_SHIFT] & 0x80)
 	e.state |= ShiftMask;
-    dprintf_keyboard(stddeb,"ToAscii : lpKeyState[0x14(VK_CAPITAL)]=%#x\n",lpKeyState[VK_CAPITAL]);
+    dprintf_info(keyboard,"ToAscii : lpKeyState[0x14(VK_CAPITAL)]=%#x\n",lpKeyState[VK_CAPITAL]);
     if (lpKeyState[VK_CAPITAL] & 0x01)
 	e.state |= LockMask;
     if (lpKeyState[VK_CONTROL] & 0x80)
@@ -1095,7 +1098,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 	    e.state |= ControlMask;
     if (lpKeyState[VK_NUMLOCK] & 0x01)
 	e.state |= NumLockMask;
-    dprintf_key(stddeb, "ToAscii(%04X, %04X) : faked state = %X\n",
+    dprintf_info(key, "ToAscii(%04X, %04X) : faked state = %X\n",
 		virtKey, scanCode, e.state);
     ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
     if (ret == 0)
@@ -1209,7 +1212,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 		}
 	    }
 	}
-    dprintf_key(stddeb, "ToAscii about to return %d with char %x\n",
+    dprintf_info(key, "ToAscii about to return %d with char %x\n",
 		ret, *(char*)lpChar);
     return ret;
 }

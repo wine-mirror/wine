@@ -9,7 +9,6 @@
 
 #include "windows.h"
 #include "ole.h"
-#include "stddebug.h"
 #include "debug.h"
 
 LONG	OLE_current_handle;
@@ -21,7 +20,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
                                       LHSERVER *hRet, HINSTANCE16 hServer,
                                       OLE_SERVER_USE use )
 {
-    dprintf_ole(stdnimp,"OleRegisterServer:%s\n",name);
+    dprintf_fixme(ole,"OleRegisterServer:%s - stub\n",name);
     *hRet=++OLE_current_handle;
     /* return OLE_ERROR_MEMORY, OLE_ERROR_PROTECT_ONLY if you want it fail*/
     return OLE_OK;
@@ -74,7 +73,8 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    dprintf_ole(stdnimp,"OleRegisterServerDoc:%ld,%s\n", hServer, docname);
+    dprintf_fixme(ole,"OleRegisterServerDoc:%ld,%s - stub\n", 
+		hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -84,7 +84,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {
-    dprintf_ole(stdnimp,"OleRevokeServerDoc:%ld\n",hServerDoc);
+    dprintf_fixme(ole,"OleRevokeServerDoc:%ld  - stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -102,7 +102,7 @@ OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
 {
-    dprintf_ole(stdnimp,"OleRevokeServer:%ld\n",hServer);
+    dprintf_fixme(ole,"OleRevokeServer:%ld - stub\n",hServer);
     return OLE_OK;
 }
 

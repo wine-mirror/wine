@@ -11,7 +11,6 @@
 #include "winerror.h"
 #include "shell.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /***********************************************************************

@@ -1,0 +1,33 @@
+/*
+ * Clock (German resources)
+ *
+ * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
+ *
+ */
+
+#define LANGUAGE_ID                  De
+#define LANGUAGE_NUMBER              2
+#define LANGUAGE_MENU_ITEM           "&Deutsch"
+
+/* Menu */
+
+#define MENU_PROPERTIES              "&Einstellungen"
+#define MENU_ANALOG                  "Ana&log"
+#define MENU_DIGITAL                 "Digi&tal"
+#define MENU_FONT                    "Schrift&art..."
+#define MENU_WITHOUT_TITLE           "&Ohne Titelleiste"
+#define MENU_ON_TOP                  "&Immer im Vordergrund"
+#define MENU_SECONDS                 "&Sekunden"
+#define MENU_DATE                    "&Datum"
+
+#define MENU_LANGUAGE                "&Sprache"
+
+#define MENU_INFO                    "Inf&o..."
+#define MENU_INFO_LICENSE            "&Lizenz"
+#define MENU_INFO_NO_WARRANTY        "&KEINE GARANTIE"
+#define MENU_INFO_ABOUT_WINE         "&Über Uhr..."
+
+/* Strings */
+#define STRING_CLOCK                 "Uhr"
+
+#include "clock.rc"

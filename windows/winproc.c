@@ -13,7 +13,6 @@
 #include "struct32.h"
 #include "win.h"
 #include "winproc.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Window procedure 16-to-32-bit thunk,
@@ -115,7 +114,7 @@ BOOL32 WINPROC_Init(void)
 static LRESULT WINPROC_CallWndProc32( WNDPROC32 proc, HWND32 hwnd, UINT32 msg,
                                       WPARAM32 wParam, LPARAM lParam )
 {
-    dprintf_relay( stddeb, "CallTo32(wndproc=%p,hwnd=%08x,msg=%08x,wp=%08x,lp=%08lx)\n",
+    dprintf_info(relay, "CallTo32(wndproc=%p,hwnd=%08x,msg=%08x,wp=%08x,lp=%08lx)\n",
                    proc, hwnd, msg, wParam, lParam );
     return proc( hwnd, msg, wParam, lParam );
 }
@@ -225,7 +224,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
         proc->user  = user;
     }
     proc->next  = NULL;
-    dprintf_win( stddeb, "WINPROC_AllocWinProc(%08x,%d): returning %08x\n",
+    dprintf_info(win, "WINPROC_AllocWinProc(%08x,%d): returning %08x\n",
                  (UINT32)func, type, (UINT32)proc );
     return proc;
 }
@@ -340,7 +339,7 @@ BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
 
     /* Add the win proc at the head of the list */
 
-    dprintf_win( stddeb, "WINPROC_SetProc(%08x,%08x,%d): res=%08x\n",
+    dprintf_info(win, "WINPROC_SetProc(%08x,%08x,%d): res=%08x\n",
                  (UINT32)*pFirst, (UINT32)func, type, (UINT32)proc );
     proc->next  = *(WINDOWPROC **)pFirst;
     *(WINDOWPROC **)pFirst = proc;
@@ -359,7 +358,7 @@ void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
     {
         WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
         if (((WINDOWPROC *)proc)->user != user) break;
-        dprintf_win( stddeb, "WINPROC_FreeProc: freeing %08x\n", (UINT32)proc);
+        dprintf_info(win, "WINPROC_FreeProc: freeing %08x\n", (UINT32)proc);
         HeapFree( WinProcHeap, 0, proc );
         proc = next;
     }

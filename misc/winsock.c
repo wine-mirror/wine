@@ -44,7 +44,6 @@
 #include "task.h"
 #include "message.h"
 #include "miscemu.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #define DEBUG_SOCKADDR 0
@@ -206,7 +205,7 @@ __inline__ static int sock_error_p(int s)
 
     optlen = sizeof(optval);
     getsockopt(s, SOL_SOCKET, SO_ERROR, &optval, &optlen);
-    if (optval) dprintf_winsock(stddeb, "\t[%i] error: %d\n", s, optval);
+    if (optval) dprintf_warn(winsock, "\t[%i] error: %d\n", s, optval);
     return optval != 0;
 }
 
@@ -249,7 +248,7 @@ static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* w
 	if( b32 ) wsfds32->fd_count = j;
 	else wsfds16->fd_count = j;
 
-	dprintf_winsock(stddeb, "\n");
+	dprintf_info(winsock, "\n");
 #undef wsfds32
 #undef wsfds16
     }
@@ -304,7 +303,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
     HTASK16             tid = GetCurrentTask();
     LPWSINFO            pwsi;
 
-    dprintf_winsock(stddeb, "WSAStartup: verReq=%x\n", wVersionRequested);
+    dprintf_info(winsock, "WSAStartup: verReq=%x\n", wVersionRequested);
 
     if (LOBYTE(wVersionRequested) < 1 || (LOBYTE(wVersionRequested) == 1 &&
         HIBYTE(wVersionRequested) < 1)) return WSAVERNOTSUPPORTED;
@@ -359,7 +358,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 
     memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
 
-    dprintf_winsock(stddeb, "WSAStartup: succeeded\n");
+    dprintf_info(winsock, "WSAStartup: succeeded\n");
     return 0;
 }
 
@@ -411,12 +410,12 @@ INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
 	WINSOCK_Shutdown();	/* just in case */
 
     if( pwsi->flags & WSI_BLOCKINGCALL )
-	dprintf_winsock(stddeb,"\tinside blocking call!\n");
+	dprintf_info(winsock,"\tinside blocking call!\n");
 
 /* FIXME: aop_control() doesn't decrement pwsi->num_async_rq
  *
  *    if( pwsi->num_async_rq )
- *	  dprintf_winsock(stddeb,"\thave %i outstanding async ops!\n", pwsi->num_async_rq );
+ *	  dprintf_warn(winsock,"\thave %i outstanding async ops!\n", pwsi->num_async_rq );
  */
 
     for(i = 0, j = 0, n = 0; i < WS_MAX_SOCKETS_PER_PROCESS; i++)
@@ -430,7 +429,7 @@ INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
             close(pwsi->sock[i].fd); j++; 
         }
     if( j ) 
-	  dprintf_winsock(stddeb,"\tclosed %i sockets, killed %i async selects!\n", j, n);
+	  dprintf_info(winsock,"\tclosed %i sockets, killed %i async selects!\n", j, n);
 
     /* delete scratch buffers */
 
@@ -448,7 +447,7 @@ INT32 WINAPI WSACleanup(void)
 {
     HTASK16	hTask = GetCurrentTask();
 
-    dprintf_winsock(stddeb, "WSACleanup(%04x)\n", hTask );
+    dprintf_info(winsock, "WSACleanup(%04x)\n", hTask );
     if( hTask )
     {
 	LPWSINFO pwsi = wsi_find(hTask);
@@ -467,14 +466,11 @@ INT32 WINAPI WSACleanup(void)
  */
 INT32 WINAPI WSAGetLastError(void)
 {
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
-    INT16		ret;
+    LPWSINFO pwsi = wsi_find(GetCurrentTask());
+    INT16    ret = (pwsi) ? pwsi->err : WSANOTINITIALISED;
 
-    dprintf_winsock(stddeb, "WSAGetLastError(%08x)", (unsigned)pwsi);
-
-    ret = (pwsi) ? pwsi->err : WSANOTINITIALISED;
-
-    dprintf_winsock(stddeb, " = %i\n", (int)ret);
+    dprintf_info(winsock, "WSAGetLastError(%08x) = %i\n", 
+		    (unsigned)pwsi, (int)ret);
     return ret;
 }
 
@@ -485,7 +481,7 @@ void WINAPI WSASetLastError32(INT32 iError)
 {
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WSASetLastError(%08x): %d\n", (unsigned)pwsi, (int)iError);
+    dprintf_info(winsock, "WSASetLastError(%08x): %d\n", (unsigned)pwsi, (int)iError);
     if( pwsi ) pwsi->err = iError;
 }
 
@@ -526,7 +522,7 @@ SOCKET32 WINAPI WINSOCK_accept32(SOCKET32 s, struct sockaddr *addr,
     ws_socket*	pws  = (ws_socket*)WS_HANDLE2PTR((SOCKET16)s);
     LPWSINFO	pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_ACCEPT(%08x): socket %04x\n", 
+    dprintf_info(winsock, "WS_ACCEPT(%08x): socket %04x\n", 
 				  (unsigned)pwsi, (UINT16)s ); 
     if( _check_ws(pwsi, pws) )
     {
@@ -577,7 +573,7 @@ INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_BIND(%08x): socket %04x, ptr %8x, length %d\n", 
+    dprintf_info(winsock, "WS_BIND(%08x): socket %04x, ptr %8x, length %d\n", 
 			   (unsigned)pwsi, s, (int) name, namelen);
 #if DEBUG_SOCKADDR
     dump_sockaddr(name);
@@ -589,7 +585,7 @@ INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 	  if ( bind(pws->fd, name, namelen) < 0 ) 
 	  {
 	     int	loc_errno = errno;
-	     dprintf_winsock(stddeb,"\tfailure - errno = %i\n", errno);
+	     dprintf_warn(winsock, "\tfailure - errno = %i\n", errno);
 	     errno = loc_errno;
 	     switch(errno)
 	     {
@@ -620,7 +616,7 @@ INT32 WINAPI WINSOCK_closesocket32(SOCKET32 s)
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_CLOSE(%08x): socket %08x\n", (unsigned)pwsi, s);
+    dprintf_info(winsock, "WS_CLOSE(%08x): socket %08x\n", (unsigned)pwsi, s);
 
     if( _check_ws(pwsi, pws) )
     { 
@@ -655,7 +651,7 @@ INT32 WINAPI WINSOCK_connect32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
   ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
   LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_CONNECT(%08x): socket %04x, ptr %8x, length %d\n", 
+  dprintf_info(winsock, "WS_CONNECT(%08x): socket %04x, ptr %8x, length %d\n", 
 			   (unsigned)pwsi, s, (int) name, namelen);
 #if DEBUG_SOCKADDR
   dump_sockaddr(name);
@@ -713,7 +709,7 @@ INT32 WINAPI WINSOCK_getpeername32(SOCKET32 s, struct sockaddr *name,
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GETPEERNAME(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
+    dprintf_info(winsock, "WS_GETPEERNAME(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
 			   (unsigned)pwsi, s, (int) name, *namelen);
     if( _check_ws(pwsi, pws) )
     {
@@ -750,7 +746,7 @@ INT32 WINAPI WINSOCK_getsockname32(SOCKET32 s, struct sockaddr *name,
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GETSOCKNAME(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
+    dprintf_info(winsock, "WS_GETSOCKNAME(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
 			  (unsigned)pwsi, s, (int) name, (int) *namelen);
     if( _check_ws(pwsi, pws) )
     {
@@ -794,7 +790,7 @@ INT32 WINAPI WINSOCK_getsockopt32(SOCKET32 s, INT32 level,
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GETSOCKOPT(%08x): socket: %04x, opt %d, ptr %8x, ptr %8x\n", 
+    dprintf_info(winsock, "WS_GETSOCKOPT(%08x): socket: %04x, opt %d, ptr %8x, ptr %8x\n", 
 			   (unsigned)pwsi, s, level, (int) optval, (int) *optlen);
     if( _check_ws(pwsi, pws) )
     {
@@ -887,7 +883,7 @@ INT32 WINAPI WINSOCK_ioctlsocket32(SOCKET32 s, UINT32 cmd, UINT32 *argp)
   ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
   LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_IOCTL(%08x): socket %04x, cmd %08x, ptr %8x\n", 
+  dprintf_info(winsock, "WS_IOCTL(%08x): socket %04x, cmd %08x, ptr %8x\n", 
 			  (unsigned)pwsi, s, cmd, (unsigned) argp);
   if( _check_ws(pwsi, pws) )
   {
@@ -920,7 +916,7 @@ INT32 WINAPI WINSOCK_ioctlsocket32(SOCKET32 s, UINT32 cmd, UINT32 *argp)
 
 	default:	  
 		/* Netscape tries hard to use bogus ioctl 0x667e */
-		dprintf_winsock(stddeb,"\tunknown WS_IOCTL cmd (%08x)\n", cmd);
+		dprintf_warn(winsock, "\tunknown WS_IOCTL cmd (%08x)\n", cmd);
     }
     if( ioctl(pws->fd, newcmd, (char*)argp ) == 0 ) return 0;
     pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno(); 
@@ -945,7 +941,7 @@ INT32 WINAPI WINSOCK_listen32(SOCKET32 s, INT32 backlog)
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_LISTEN(%08x): socket %04x, backlog %d\n", 
+    dprintf_info(winsock, "WS_LISTEN(%08x): socket %04x, backlog %d\n", 
 			    (unsigned)pwsi, s, backlog);
     if( _check_ws(pwsi, pws) )
     {
@@ -983,14 +979,15 @@ INT32 WINAPI WINSOCK_recv32(SOCKET32 s, char *buf, INT32 len, INT32 flags)
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_RECV(%08x): socket %04x, buf %8x, len %d, flags %d",
-                          (unsigned)pwsi, s, (unsigned)buf, len, flags);
+    dprintf_info(winsock, "WS_RECV(%08x): socket %04x, buf %8x, len %d, "
+		    "flags %d\n", (unsigned)pwsi, s, (unsigned)buf, 
+		    len, flags);
     if( _check_ws(pwsi, pws) )
     {
 	INT32 length;
 	if ((length = recv(pws->fd, buf, len, flags)) >= 0) 
 	{ 
-	    dprintf_winsock(stddeb, " -> %i bytes\n", length);
+	    dprintf_info(winsock, " -> %i bytes\n", length);
 
 	    if( pws->psop && (pws->flags & (WS_FD_READ | WS_FD_CLOSE)) )
 		EVENT_AddIO( pws->fd, EVENT_IO_READ );	/* reenabler */
@@ -1000,7 +997,7 @@ INT32 WINAPI WINSOCK_recv32(SOCKET32 s, char *buf, INT32 len, INT32 flags)
 	pwsi->err = wsaErrno();
     }
     else if( pwsi ) pwsi->err = WSAENOTSOCK;
-    dprintf_winsock(stddeb, " -> ERROR\n");
+    dprintf_warn(winsock, " -> ERROR\n");
     return SOCKET_ERROR;
 }
 
@@ -1022,8 +1019,9 @@ INT32 WINAPI WINSOCK_recvfrom32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_RECVFROM(%08x): socket %04x, ptr %08x, len %d, flags %d",
-                          (unsigned)pwsi, s, (unsigned)buf, len, flags);
+    dprintf_info(winsock, "WS_RECVFROM(%08x): socket %04x, ptr %08x, "
+		    "len %d, flags %d\n", (unsigned)pwsi, s, (unsigned)buf,
+		    len, flags);
 #if DEBUG_SOCKADDR
     if( from ) dump_sockaddr(from);
     else fprintf(stderr, "\tfrom = NULL\n");
@@ -1035,7 +1033,7 @@ INT32 WINAPI WINSOCK_recvfrom32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
 
 	if ((length = recvfrom(pws->fd, buf, len, flags, from, fromlen32)) >= 0)
 	{
-	    dprintf_winsock(stddeb, " -> %i bytes\n", length);
+	    dprintf_info(winsock, " -> %i bytes\n", length);
 
 	    if( pws->psop && (pws->flags & (WS_FD_READ | WS_FD_CLOSE)) )
 		EVENT_AddIO( pws->fd, EVENT_IO_READ );  /* reenabler */
@@ -1045,7 +1043,7 @@ INT32 WINAPI WINSOCK_recvfrom32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
 	pwsi->err = wsaErrno();
     }
     else if( pwsi ) pwsi->err = WSAENOTSOCK;
-    dprintf_winsock(stddeb, " -> ERROR\n");
+    dprintf_warn(winsock, " -> ERROR\n");
     return SOCKET_ERROR;
 }
 
@@ -1073,7 +1071,7 @@ static INT32 __ws_select( BOOL32 b32, void *ws_readfds, void *ws_writefds, void 
 {
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 	
-    dprintf_winsock(stddeb, "WS_SELECT(%08x): read %8x, write %8x, excp %8x\n", 
+    dprintf_info(winsock, "WS_SELECT(%08x): read %8x, write %8x, excp %8x\n", 
     (unsigned) pwsi, (unsigned) ws_readfds, (unsigned) ws_writefds, (unsigned) ws_exceptfds);
 
     if( pwsi )
@@ -1152,7 +1150,7 @@ INT32 WINAPI WINSOCK_send32(SOCKET32 s, char *buf, INT32 len, INT32 flags)
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_SEND(%08x): socket %04x, ptr %08x, length %d, flags %d\n", 
+    dprintf_info(winsock, "WS_SEND(%08x): socket %04x, ptr %08x, length %d, flags %d\n", 
 			   (unsigned)pwsi, s, (unsigned) buf, len, flags);
     if( _check_ws(pwsi, pws) )
     {
@@ -1188,7 +1186,7 @@ INT32 WINAPI WINSOCK_sendto32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_SENDTO(%08x): socket %04x, ptr %08x, length %d, flags %d\n",
+    dprintf_info(winsock, "WS_SENDTO(%08x): socket %04x, ptr %08x, length %d, flags %d\n",
                           (unsigned)pwsi, s, (unsigned) buf, len, flags);
     if( _check_ws(pwsi, pws) )
     {
@@ -1225,7 +1223,7 @@ INT32 WINAPI WINSOCK_setsockopt32(SOCKET16 s, INT32 level, INT32 optname,
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_SETSOCKOPT(%08x): socket %04x, lev %d, opt %d, ptr %08x, len %d\n",
+    dprintf_info(winsock, "WS_SETSOCKOPT(%08x): socket %04x, lev %d, opt %d, ptr %08x, len %d\n",
 			  (unsigned)pwsi, s, level, optname, (int) optval, optlen);
     if( _check_ws(pwsi, pws) )
     {
@@ -1265,7 +1263,7 @@ INT32 WINAPI WINSOCK_shutdown32(SOCKET32 s, INT32 how)
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_SHUTDOWN(%08x): socket %04x, how %i\n",
+    dprintf_info(winsock, "WS_SHUTDOWN(%08x): socket %04x, how %i\n",
 			    (unsigned)pwsi, s, how );
     if( _check_ws(pwsi, pws) )
     {
@@ -1330,7 +1328,7 @@ SOCKET32 WINAPI WINSOCK_socket32(INT32 af, INT32 type, INT32 protocol)
 {
   LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_SOCKET(%08x): af=%d type=%d protocol=%d\n", 
+  dprintf_info(winsock, "WS_SOCKET(%08x): af=%d type=%d protocol=%d\n", 
 			  (unsigned)pwsi, af, type, protocol);
 
   if( pwsi )
@@ -1374,7 +1372,7 @@ SOCKET32 WINAPI WINSOCK_socket32(INT32 af, INT32 type, INT32 protocol)
     {
         ws_socket*      pnew = wsi_alloc_socket(pwsi, sock);
 
-	dprintf_winsock(stddeb,"\tcreated %i (handle %04x)\n", sock, (UINT16)WS_PTR2HANDLE(pnew));
+	dprintf_info(winsock,"\tcreated %i (handle %04x)\n", sock, (UINT16)WS_PTR2HANDLE(pnew));
 
         if( pnew ) 
 	{
@@ -1394,7 +1392,7 @@ SOCKET32 WINAPI WINSOCK_socket32(INT32 af, INT32 type, INT32 protocol)
     } else pwsi->err = wsaErrno();
   }
  
-  dprintf_winsock(stddeb, "\t\tfailed!\n");
+  dprintf_warn(winsock, "\t\tfailed!\n");
   return INVALID_SOCKET32;
 }
 
@@ -1441,7 +1439,7 @@ static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int typ
 SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 {
     struct WIN_hostent* retval;
-    dprintf_winsock(stddeb, "WS_GetHostByAddr16: ptr %08x, len %d, type %d\n",
+    dprintf_info(winsock, "WS_GetHostByAddr16: ptr %08x, len %d, type %d\n",
                             (unsigned) addr, len, type);
     retval = __ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR );
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
@@ -1450,7 +1448,7 @@ SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 struct WIN_hostent* WINAPI WINSOCK_gethostbyaddr32(const char *addr, INT32 len,
                                                 INT32 type)
 {
-    dprintf_winsock(stddeb, "WS_GetHostByAddr32: ptr %08x, len %d, type %d\n",
+    dprintf_info(winsock, "WS_GetHostByAddr32: ptr %08x, len %d, type %d\n",
                              (unsigned) addr, len, type);
     return __ws_gethostbyaddr(addr, len, type, WS_DUP_LINEAR);
 }
@@ -1477,14 +1475,14 @@ static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
 {
     struct WIN_hostent* retval;
-    dprintf_winsock(stddeb, "WS_GetHostByName16: %s\n", (name)?name:NULL_STRING);
+    dprintf_info(winsock, "WS_GetHostByName16: %s\n", (name)?name:NULL_STRING);
     retval = __ws_gethostbyname( name, WS_DUP_SEGPTR );
     return (retval)? SEGPTR_GET(retval) : ((SEGPTR)NULL) ;
 }
 
 struct WIN_hostent* WINAPI WINSOCK_gethostbyname32(const char* name)
 {
-    dprintf_winsock(stddeb, "WS_GetHostByName32: %s\n", (name)?name:NULL_STRING);
+    dprintf_info(winsock, "WS_GetHostByName32: %s\n", (name)?name:NULL_STRING);
     return __ws_gethostbyname( name, WS_DUP_LINEAR );
 }
 
@@ -1511,14 +1509,14 @@ static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
 {
     struct WIN_protoent* retval;
-    dprintf_winsock(stddeb, "WS_GetProtoByName16: %s\n", (name)?name:NULL_STRING);
+    dprintf_info(winsock, "WS_GetProtoByName16: %s\n", (name)?name:NULL_STRING);
     retval = __ws_getprotobyname(name, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
 struct WIN_protoent* WINAPI WINSOCK_getprotobyname32(const char* name)
 {
-    dprintf_winsock(stddeb, "WS_GetProtoByName32: %s\n", (name)?name:NULL_STRING);
+    dprintf_info(winsock, "WS_GetProtoByName32: %s\n", (name)?name:NULL_STRING);
     return __ws_getprotobyname(name, WS_DUP_LINEAR);
 }
 
@@ -1545,14 +1543,14 @@ static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
 {
     struct WIN_protoent* retval;
-    dprintf_winsock(stddeb, "WS_GetProtoByNumber16: %i\n", number);
+    dprintf_info(winsock, "WS_GetProtoByNumber16: %i\n", number);
     retval = __ws_getprotobynumber(number, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
 struct WIN_protoent* WINAPI WINSOCK_getprotobynumber32(INT32 number)
 {
-    dprintf_winsock(stddeb, "WS_GetProtoByNumber32: %i\n", number);
+    dprintf_info(winsock, "WS_GetProtoByNumber32: %i\n", number);
     return __ws_getprotobynumber(number, WS_DUP_LINEAR);
 }
 
@@ -1583,7 +1581,7 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
 {
     struct WIN_servent* retval;
-    dprintf_winsock(stddeb, "WS_GetServByName16: '%s', '%s'\n",
+    dprintf_info(winsock, "WS_GetServByName16: '%s', '%s'\n",
                             (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
     retval = __ws_getservbyname(name, proto, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
@@ -1591,7 +1589,7 @@ SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
 
 struct WIN_servent* WINAPI WINSOCK_getservbyname32(const char *name, const char *proto)
 {
-    dprintf_winsock(stddeb, "WS_GetServByName32: '%s', '%s'\n",
+    dprintf_info(winsock, "WS_GetServByName32: '%s', '%s'\n",
                             (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
     return __ws_getservbyname(name, proto, WS_DUP_LINEAR);
 }
@@ -1623,7 +1621,7 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
 {
     struct WIN_servent* retval;
-    dprintf_winsock(stddeb, "WS_GetServByPort16: %i, '%s'\n",
+    dprintf_info(winsock, "WS_GetServByPort16: %i, '%s'\n",
                             (int)port, (proto)?proto:NULL_STRING);
     retval = __ws_getservbyport(port, proto, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
@@ -1631,7 +1629,7 @@ SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
 
 struct WIN_servent* WINAPI WINSOCK_getservbyport32(INT32 port, const char *proto)
 {
-    dprintf_winsock(stddeb, "WS_GetServByPort32: %i, '%s'\n",
+    dprintf_info(winsock, "WS_GetServByPort32: %i, '%s'\n",
                             (int)port, (proto)?proto:NULL_STRING);
     return __ws_getservbyport(port, proto, WS_DUP_LINEAR);
 }
@@ -1644,7 +1642,7 @@ INT32 WINAPI WINSOCK_gethostname32(char *name, INT32 namelen)
 {
     LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GetHostName(%08x): name %s, len %d\n",
+    dprintf_info(winsock, "WS_GetHostName(%08x): name %s, len %d\n",
                           (unsigned)pwsi, (name)?name:NULL_STRING, namelen);
     if( pwsi )
     {
@@ -1684,7 +1682,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetHostByAddr16(%08x): hwnd %04x, msg %04x, addr %08x[%i]\n",
+  dprintf_info(winsock, "WS_AsyncGetHostByAddr16(%08x): hwnd %04x, msg %04x, addr %08x[%i]\n",
                           (unsigned)pwsi, hWnd, uMsg, (unsigned)addr , len );
 
   if( pwsi ) 
@@ -1701,7 +1699,7 @@ HANDLE32 WINAPI WSAAsyncGetHostByAddr32(HWND32 hWnd, UINT32 uMsg, LPCSTR addr,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetHostByAddr32(%08x): hwnd %04x, msg %08x, addr %08x[%i]\n",
+  dprintf_info(winsock, "WS_AsyncGetHostByAddr32(%08x): hwnd %04x, msg %08x, addr %08x[%i]\n",
                           (unsigned)pwsi, (HWND16)hWnd, uMsg, (unsigned)addr , len );
 
   if( pwsi )
@@ -1719,7 +1717,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetHostByName16(%08x): hwnd %04x, msg %04x, host %s, 
+  dprintf_info(winsock, "WS_AsyncGetHostByName16(%08x): hwnd %04x, msg %04x, host %s, 
 buffer %i\n", (unsigned)pwsi, hWnd, uMsg, (name)?name:NULL_STRING, (int)buflen );
 
   if( pwsi )
@@ -1735,7 +1733,7 @@ HANDLE32 WINAPI WSAAsyncGetHostByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
 					LPSTR sbuf, INT32 buflen)
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-  dprintf_winsock(stddeb, "WS_AsyncGetHostByName32(%08x): hwnd %04x, msg %08x, host %s, 
+  dprintf_info(winsock, "WS_AsyncGetHostByName32(%08x): hwnd %04x, msg %08x, host %s, 
 buffer %i\n", (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING, (int)buflen );
   if( pwsi )
     return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
@@ -1752,7 +1750,7 @@ HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetProtoByName16(%08x): hwnd %04x, msg %08x, protocol %s\n",
+  dprintf_info(winsock, "WS_AsyncGetProtoByName16(%08x): hwnd %04x, msg %08x, protocol %s\n",
                           (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING );
 
   if( pwsi )
@@ -1769,7 +1767,7 @@ HANDLE32 WINAPI WSAAsyncGetProtoByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetProtoByName32(%08x): hwnd %04x, msg %08x, protocol %s\n",
+  dprintf_info(winsock, "WS_AsyncGetProtoByName32(%08x): hwnd %04x, msg %08x, protocol %s\n",
                           (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING );
 
   if( pwsi )
@@ -1787,7 +1785,7 @@ HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd, UINT16 uMsg, INT16 numbe
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetProtoByNumber16(%08x): hwnd %04x, msg %04x, num %i\n",
+  dprintf_info(winsock, "WS_AsyncGetProtoByNumber16(%08x): hwnd %04x, msg %04x, num %i\n",
                           (unsigned)pwsi, hWnd, uMsg, number );
 
   if( pwsi )
@@ -1804,7 +1802,7 @@ HANDLE32 WINAPI WSAAsyncGetProtoByNumber32(HWND32 hWnd, UINT32 uMsg, INT32 numbe
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetProtoByNumber32(%08x): hwnd %04x, msg %08x, num %i\n",
+  dprintf_info(winsock, "WS_AsyncGetProtoByNumber32(%08x): hwnd %04x, msg %08x, num %i\n",
                           (unsigned)pwsi, (HWND16)hWnd, uMsg, number );
 
   if( pwsi )
@@ -1822,7 +1820,7 @@ HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetServByName16(%08x): hwnd %04x, msg %04x, name %s, proto %s\n",
+  dprintf_info(winsock, "WS_AsyncGetServByName16(%08x): hwnd %04x, msg %04x, name %s, proto %s\n",
                    (unsigned)pwsi, hWnd, uMsg, (name)?name:NULL_STRING, (proto)?proto:NULL_STRING );
 
   if( pwsi )
@@ -1844,7 +1842,7 @@ HANDLE32 WINAPI WSAAsyncGetServByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetServByName32(%08x): hwnd %04x, msg %08x, name %s, proto %s\n",
+  dprintf_info(winsock, "WS_AsyncGetServByName32(%08x): hwnd %04x, msg %08x, name %s, proto %s\n",
            (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING, (proto)?proto:NULL_STRING );
   if( pwsi )
   {
@@ -1866,7 +1864,7 @@ HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetServByPort16(%08x): hwnd %04x, msg %04x, port %i, proto %s\n",
+  dprintf_info(winsock, "WS_AsyncGetServByPort16(%08x): hwnd %04x, msg %04x, port %i, proto %s\n",
                            (unsigned)pwsi, hWnd, uMsg, port, (proto)?proto:NULL_STRING );
 
   if( pwsi )
@@ -1888,7 +1886,7 @@ HANDLE32 WINAPI WSAAsyncGetServByPort32(HWND32 hWnd, UINT32 uMsg, INT32 port,
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_AsyncGetServByPort32(%08x): hwnd %04x, msg %08x, port %i, proto %s\n",
+  dprintf_info(winsock, "WS_AsyncGetServByPort32(%08x): hwnd %04x, msg %08x, port %i, proto %s\n",
                            (unsigned)pwsi, (HWND16)hWnd, uMsg, port, (proto)?proto:NULL_STRING );
 
   if( pwsi )
@@ -1912,7 +1910,7 @@ INT32 WINAPI WSACancelAsyncRequest32(HANDLE32 hAsyncTaskHandle)
     LPWSINFO		pwsi = wsi_find(GetCurrentTask());
     ws_async_op*	p_aop = (ws_async_op*)WS_HANDLE2PTR(hAsyncTaskHandle);
 
-    dprintf_winsock(stddeb, "WS_CancelAsyncRequest(%08x): handle %08x\n", 
+    dprintf_info(winsock, "WS_CancelAsyncRequest(%08x): handle %08x\n", 
 			   (unsigned)pwsi, hAsyncTaskHandle);
     if( pwsi )
     {
@@ -1952,7 +1950,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending,
     DWORD		dwEvent, dwErrBytes;
     int			num_posted;
 
-    dprintf_winsock(stddeb,"WINSOCK_HandleIO: %i pending descriptors\n", num_pending );
+    dprintf_info(winsock,"WINSOCK_HandleIO: %i pending descriptors\n", num_pending );
 
     for( num_posted = dwEvent = 0 ; psop; psop = psop->next )
     {
@@ -1970,7 +1968,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending,
 	     * Reenabling calls turn them back on.
 	     */
 
-	    dprintf_winsock(stddeb,"\tchecking psop = 0x%08x\n", (unsigned) psop );
+	    dprintf_info(winsock,"\tchecking psop = 0x%08x\n", (unsigned) psop );
 
 	    num_pending--;
 
@@ -2046,7 +2044,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending,
 		    if( PostMessage32A( psop->hWnd, psop->uMsg, (WPARAM32)WS_PTR2HANDLE(psop->pws), 
 			              (LPARAM)WSAMAKESELECTREPLY( WS_FD_WRITE, 0 ) ) )
 		    {
-			dprintf_winsock(stddeb, "\t    hwnd %04x - %04x, %08x\n",
+			dprintf_info(winsock, "\t    hwnd %04x - %04x, %08x\n",
                                 psop->hWnd, psop->uMsg, (unsigned)MAKELONG(WS_FD_WRITE, 0) );
 			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
 			num_posted++;
@@ -2108,7 +2106,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending,
 
 	    if( bPost )
 	    {
-		dprintf_winsock(stddeb, "\t    hwnd %04x - %04x, %08x\n", 
+		dprintf_info(winsock, "\t    hwnd %04x - %04x, %08x\n", 
 				psop->hWnd, psop->uMsg, (unsigned)dwEvent );
 		PostMessage32A( psop->hWnd, psop->uMsg, 
 			      (WPARAM32)WS_PTR2HANDLE(psop->pws), (LPARAM)dwEvent );
@@ -2119,7 +2117,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending,
 	if( num_pending <= 0 ) break;
     }
 
-    dprintf_winsock(stddeb, "\tdone, %i posted events\n", num_posted );
+    dprintf_info(winsock, "\tdone, %i posted events\n", num_posted );
     return ( num_posted ) ? TRUE : FALSE;
 }
 
@@ -2128,7 +2126,7 @@ INT32 WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 lEven
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_AsyncSelect(%08x): %04x, hWnd %04x, uMsg %08x, event %08x\n",
+    dprintf_info(winsock, "WS_AsyncSelect(%08x): %04x, hWnd %04x, uMsg %08x, event %08x\n",
 			  (unsigned)pwsi, (SOCKET16)s, (HWND16)hWnd, uMsg, (unsigned)lEvent );
     if( _check_ws(pwsi, pws) )
     {
@@ -2149,7 +2147,7 @@ INT32 WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 lEven
 	    if( pws->flags & (WS_FD_CONNECT | WS_FD_WRITE) )
 		EVENT_DeleteIO( pws->fd, EVENT_IO_WRITE );
 
-	    dprintf_winsock(stddeb,"\tremoving psop = 0x%08x\n", (unsigned) psop );
+	    dprintf_info(winsock,"\tremoving psop = 0x%08x\n", (unsigned) psop );
 
 	    WS_FREE( pws->psop );
 	    pws->flags &= ~(WS_FD_RAW | WS_FD_ACCEPT | WS_FD_CONNECT | 
@@ -2188,7 +2186,7 @@ INT32 WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 lEven
 
 		/* TODO: handle WS_FD_ACCEPT right away if the socket is readable */
 
-		dprintf_winsock(stddeb,"\tcreating psop = 0x%08x\n", (unsigned)psop );
+		dprintf_info(winsock,"\tcreating psop = 0x%08x\n", (unsigned)psop );
 
 		return 0; /* success */
 	    }
@@ -2213,7 +2211,7 @@ INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
 {
   int i = set->fd_count;
   
-  dprintf_winsock(stddeb, "__WSAFDIsSet16(%d,%8lx(%i))\n", s,(unsigned long)set, i);
+  dprintf_info(winsock, "__WSAFDIsSet16(%d,%8lx(%i))\n", s,(unsigned long)set, i);
     
   while (i--)
       if (set->fd_array[i] == s) return 1;
@@ -2227,7 +2225,7 @@ INT32 WINAPI __WSAFDIsSet32(SOCKET32 s, ws_fd_set32 *set)
 {
   int i = set->fd_count;
 
-  dprintf_winsock(stddeb, "__WSAFDIsSet32(%d,%8lx(%i))\n", s,(unsigned long)set, i);
+  dprintf_info(winsock, "__WSAFDIsSet32(%d,%8lx(%i))\n", s,(unsigned long)set, i);
 
   while (i--)
       if (set->fd_array[i] == s) return 1;
@@ -2247,7 +2245,7 @@ BOOL32 WINAPI WSAIsBlocking(void)
    * Note: It is allowed to call this function without prior WSAStartup().
    */
 
-  dprintf_winsock(stddeb, "WS_IsBlocking()\n");
+  dprintf_info(winsock, "WS_IsBlocking()\n");
   return FALSE;
 }
 
@@ -2258,7 +2256,7 @@ INT32 WINAPI WSACancelBlockingCall(void)
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_CancelBlockingCall(%08x)\n", (unsigned)pwsi);
+  dprintf_info(winsock, "WS_CancelBlockingCall(%08x)\n", (unsigned)pwsi);
 
   if( pwsi ) return 0;
   return SOCKET_ERROR;
@@ -2273,7 +2271,7 @@ FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
   FARPROC16		prev;
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_SetBlockingHook16(%08x): hook %08x\n", 
+  dprintf_info(winsock, "WS_SetBlockingHook16(%08x): hook %08x\n", 
 			  (unsigned)pwsi, (unsigned) lpBlockFunc);
   if( pwsi ) 
   { 
@@ -2294,7 +2292,7 @@ FARPROC32 WINAPI WSASetBlockingHook32(FARPROC32 lpBlockFunc)
   FARPROC32             prev;
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_SetBlockingHook32(%08x): hook %08x\n",
+  dprintf_info(winsock, "WS_SetBlockingHook32(%08x): hook %08x\n",
                           (unsigned)pwsi, (unsigned) lpBlockFunc);
   if( pwsi ) {
       prev = (FARPROC32)pwsi->blocking_hook;
@@ -2313,7 +2311,7 @@ INT16 WINAPI WSAUnhookBlockingHook16(void)
 {
     LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_UnhookBlockingHook16(%08x)\n", (unsigned)pwsi);
+    dprintf_info(winsock, "WS_UnhookBlockingHook16(%08x)\n", (unsigned)pwsi);
     if( pwsi ) return (INT16)(pwsi->blocking_hook = 0);
     return SOCKET_ERROR;
 }
@@ -2326,7 +2324,7 @@ INT32 WINAPI WSAUnhookBlockingHook32(void)
 {
     LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_UnhookBlockingHook32(%08x)\n", (unsigned)pwsi);
+    dprintf_info(winsock, "WS_UnhookBlockingHook32(%08x)\n", (unsigned)pwsi);
     if( pwsi )
     {
 	pwsi->blocking_hook = 0;
@@ -2573,10 +2571,10 @@ UINT16 wsaErrno(void)
 {
     int	loc_errno = errno; 
 #if defined(__FreeBSD__)
-       dprintf_winsock(stderr, "winsock: errno %d, (%s).\n", 
+       dprintf_err(winsock, "winsock: errno %d, (%s).\n", 
                 			 errno, strerror(errno));
 #else
-       dprintf_winsock(stderr, "winsock: errno %d\n", errno);
+       dprintf_err(winsock, "winsock: errno %d\n", errno);
 #endif
 
     switch(loc_errno)
@@ -2648,13 +2646,10 @@ UINT16 wsaHerrno(void)
     int		loc_errno = h_errno;
 
 #if defined(__FreeBSD__)
-    dprintf_winsock(stderr, "winsock: h_errno %d, (%s).\n", 
+    dprintf_err(winsock, "winsock: h_errno %d, (%s).\n", 
                	    h_errno, strerror(h_errno));
 #else
-    dprintf_winsock(stderr, "winsock: h_errno %d.\n", h_errno);
-#ifndef sun
-    if( debugging_winsock )  herror("wine: winsock: wsaherrno");
-#endif
+    dprintf_err(winsock, "winsock: h_errno %d.\n", h_errno);
 #endif
 
     switch(loc_errno)

@@ -14,8 +14,6 @@
 #include "gdi.h"
 #include "dce.h"
 #include "heap.h"
-#include "stddebug.h"
-/* #define DEBUG_WIN */
 #include "debug.h"
 
   /* Last CTLCOLOR id */
@@ -30,7 +28,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL32 bUpdate)
     POINT16 pt = {0, 0}; 
     HRGN32 hClip = 1;
 
-    dprintf_nonclient(stddeb,"NCUpdate: hwnd %04x, hrgnUpdate %04x\n", 
+    dprintf_info(nonclient,"NCUpdate: hwnd %04x, hrgnUpdate %04x\n", 
                       wnd->hwndSelf, wnd->hrgnUpdate );
 
     /* desktop window doesn't have nonclient area */
@@ -112,7 +110,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     HideCaret32( hwnd );
 
-    dprintf_win(stddeb,"hrgnUpdate = %04x, ", hrgnUpdate);
+    dprintf_info(win,"hrgnUpdate = %04x, \n", hrgnUpdate);
 
     /* When bIcon is TRUE hrgnUpdate is automatically in window coordinates
      * (because rectClient == rectWindow for WS_MINIMIZE windows).
@@ -133,7 +131,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
                              (bIcon ? DCX_WINDOW : 0) );
     }
 
-    dprintf_win(stddeb,"hdc = %04x\n", lps->hdc);
+    dprintf_info(win,"hdc = %04x\n", lps->hdc);
 
     if (!lps->hdc)
     {
@@ -143,7 +141,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     GetRgnBox16( InquireVisRgn(lps->hdc), &lps->rcPaint );
 
-dprintf_win(stddeb,"box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
+dprintf_info(win,"box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );
 
     DPtoLP16( lps->hdc, (LPPOINT16)&lps->rcPaint, 2 );
@@ -297,13 +295,13 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
     bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
     if (rectUpdate)
     {
-        dprintf_win(stddeb, "RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
+        dprintf_info(win, "RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
                     hwnd, rectUpdate->left, rectUpdate->top,
                     rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags );
     }
     else
     {
-        dprintf_win(stddeb, "RedrawWindow: %04x NULL %04x flags=%04x\n",
+        dprintf_info(win, "RedrawWindow: %04x NULL %04x flags=%04x\n",
                      hwnd, hrgnUpdate, flags);
     }
 

@@ -10,7 +10,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -85,9 +84,9 @@ BOOL32 WINAPI IsValidCodePage(UINT32 CodePage)
 /***********************************************************************
  *              MultiByteToWideChar                (KERNEL32.392)
  */
-int WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
-			       const char *src, int srclen,
-                               WCHAR *dst, int dstlen)
+INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
+			         LPCSTR src, INT32 srclen,
+                                 LPWSTR dst, INT32 dstlen)
 {
     int ret;
 
@@ -111,8 +110,9 @@ int WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
     return ret;
 }
 
-int WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,
-                               char *dst, int dstlen, char* defchar, BOOL32 *used)
+INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
+				 INT32 srclen,LPSTR dst, INT32 dstlen,
+				 LPCSTR defchar, BOOL32 *used)
 {
     int count = 0;
     int eos = 0;
@@ -207,7 +207,7 @@ BOOL32 WINAPI IsDBCSLeadByte32( BYTE testchar )
  */
 BOOL32 WINAPI EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags)
 {
-	dprintf_win32(stddeb,"EnumSystemCodePages32A(%p,%08lx)\n",
+	dprintf_info(win32,"EnumSystemCodePages32A(%p,%08lx)\n",
 		lpfnCodePageEnum,flags
 	);
 	lpfnCodePageEnum("437");
@@ -221,7 +221,7 @@ BOOL32 WINAPI EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum,
                                       DWORD flags)
 {
     WCHAR	*cp;
-    dprintf_win32(stddeb,"EnumSystemCodePages32W(%p,%08lx)\n",
+    dprintf_info(win32,"EnumSystemCodePages32W(%p,%08lx)\n",
                   lpfnCodePageEnum,flags );
 
     cp = HEAP_strdupAtoW( GetProcessHeap(), 0, "437" );

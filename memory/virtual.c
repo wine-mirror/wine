@@ -18,7 +18,6 @@
 #include "heap.h"
 #include "process.h"
 #include "xmalloc.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #ifndef MS_SYNC
@@ -104,8 +103,13 @@ const K32OBJ_OPS MEM_MAPPED_FILE_Ops =
     NULL,                      /* satisfied */
     NULL,                      /* add_wait */
     NULL,                      /* remove_wait */
+    NULL,                      /* read */
+    NULL,                      /* write */
     VIRTUAL_DestroyMapping     /* destroy */
 };
+
+#define VIRTUAL_DEBUG_DUMP_VIEW(view) \
+   if (!debugging_info(virtual)); else VIRTUAL_DumpView(view)
 
 /***********************************************************************
  *           VIRTUAL_GetProtStr
@@ -133,29 +137,28 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     UINT32 addr = view->base;
     BYTE prot = view->prot[0];
 
-    dprintf_virtual( stddeb, "View: %08x - %08x%s",
+    printf( "View: %08x - %08x%s",
              view->base, view->base + view->size - 1,
              (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
     if (view->mapping && view->mapping->file)
-        dprintf_virtual( stddeb, " %s @ %08x\n",
-                 view->mapping->file->unix_name, view->offset );
+        printf( " %s @ %08x\n", view->mapping->file->unix_name, view->offset );
     else
-        dprintf_virtual( stddeb, " (anonymous)\n");
+        printf( " (anonymous)\n");
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
         if (view->prot[i] == prot) continue;
-        dprintf_virtual( stddeb, "      %08x - %08x %s\n",
-                 addr, addr + (count << page_shift) - 1,
-                 VIRTUAL_GetProtStr(prot) );
+        printf( "      %08x - %08x %s\n",
+                addr, addr + (count << page_shift) - 1,
+                VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
         prot = view->prot[i];
         count = 0;
     }
     if (count)
-        dprintf_virtual( stddeb, "      %08x - %08x %s\n",
-                 addr, addr + (count << page_shift) - 1,
-                 VIRTUAL_GetProtStr(prot) );
+        printf( "      %08x - %08x %s\n",
+                addr, addr + (count << page_shift) - 1,
+                VIRTUAL_GetProtStr(prot) );
 }
 
 
@@ -165,7 +168,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 void VIRTUAL_Dump(void)
 {
     FILE_VIEW *view = VIRTUAL_FirstView;
-    dprintf_virtual( stddeb, "\nDump of all virtual memory views:\n\n" );
+    printf( "\nDump of all virtual memory views:\n\n" );
     while (view)
     {
         VIRTUAL_DumpView( view );
@@ -235,7 +238,7 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
         if (view->next) view->next->prev = view;
         prev->next  = view;
     }
-    if (debugging_virtual) VIRTUAL_DumpView( view );
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
     return view;
 }
 
@@ -342,7 +345,7 @@ static BYTE VIRTUAL_GetProt( DWORD protect )
 static BOOL32 VIRTUAL_SetProt( FILE_VIEW *view, UINT32 base,
                                UINT32 size, BYTE vprot )
 {
-    dprintf_virtual( stddeb, "VIRTUAL_SetProt: %08x-%08x %s\n",
+    dprintf_info(virtual, "VIRTUAL_SetProt: %08x-%08x %s\n",
                      base, base + size - 1, VIRTUAL_GetProtStr( vprot ) );
 
     if (mprotect( (void *)base, size, VIRTUAL_GetUnixProt(vprot) ))
@@ -350,7 +353,7 @@ static BOOL32 VIRTUAL_SetProt( FILE_VIEW *view, UINT32 base,
 
     memset( view->prot + ((base - view->base) >> page_shift),
             vprot, size >> page_shift );
-    if (debugging_virtual) VIRTUAL_DumpView( view );
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
     return TRUE;
 }
 
@@ -399,7 +402,7 @@ BOOL32 VIRTUAL_Init(void)
         int fd = open ("/proc/self/maps", O_RDONLY);
         if (fd >= 0)
         {
-            char buffer[80];
+            char buffer[512]; /* line might be rather long in 2.1 */
 
             for (;;)
             {
@@ -441,7 +444,7 @@ LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
     UINT32 base, ptr, view_size;
     BYTE vprot;
 
-    dprintf_virtual( stddeb, "VirtualAlloc: %08x %08lx %lx %08lx\n",
+    dprintf_info(virtual, "VirtualAlloc: %08x %08lx %lx %08lx\n",
                      (UINT32)addr, size, type, protect );
 
     /* Round parameters to a page boundary */
@@ -470,6 +473,13 @@ LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
         size = (size + page_mask) & ~page_mask;
     }
 
+    if (type & MEM_TOP_DOWN) {
+    	/* FIXME: MEM_TOP_DOWN allocates the largest possible address.
+	 *  	  Is there _ANY_ way to do it with UNIX mmap()?
+	 */
+    	fprintf(stderr,"VirtualAlloc:MEM_TOP_DOWN ignored\n");
+    	type &= ~MEM_TOP_DOWN;
+    }
     /* Compute the protection flags */
 
     if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
@@ -522,7 +532,7 @@ LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
             SetLastError( ERROR_OUTOFMEMORY );
             return NULL;
         }
-        if (debugging_virtual) VIRTUAL_DumpView( view );
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
         return (LPVOID)ptr;
     }
 
@@ -548,7 +558,7 @@ BOOL32 WINAPI VirtualFree( LPVOID addr, DWORD size, DWORD type )
     FILE_VIEW *view;
     UINT32 base;
 
-    dprintf_virtual( stddeb, "VirtualFree: %08x %08lx %lx\n",
+    dprintf_info(virtual, "VirtualFree: %08x %08lx %lx\n",
                      (UINT32)addr, size, type );
 
     /* Fix the parameters */
@@ -618,7 +628,7 @@ BOOL32 WINAPI VirtualProtect( LPVOID addr, DWORD size, DWORD new_prot,
     UINT32 base, i;
     BYTE vprot, *p;
 
-    dprintf_virtual( stddeb, "VirtualProtect: %08x %08lx %08lx\n",
+    dprintf_info(virtual, "VirtualProtect: %08x %08lx %08lx\n",
                      (UINT32)addr, size, new_prot );
 
     /* Fix the parameters */
@@ -890,7 +900,7 @@ HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
 
     /* Check parameters */
 
-    dprintf_virtual(stddeb,"CreateFileMapping32A(%x,%p,%08lx,%08lx%08lx,%s)\n",
+    dprintf_info(virtual,"CreateFileMapping32A(%x,%p,%08lx,%08lx%08lx,%s)\n",
                     hFile, attr, protect, size_high, size_low, name );
 
     vprot = VIRTUAL_GetProt( protect );
@@ -1102,7 +1112,7 @@ LPVOID WINAPI MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offset_high,
 
     /* Map the file */
 
-    dprintf_virtual( stddeb, "MapViewOfFile: handle=%x size=%x offset=%lx\n",
+    dprintf_info(virtual, "MapViewOfFile: handle=%x size=%x offset=%lx\n",
                      handle, size, offset_low );
 
     ptr = (UINT32)FILE_dommap( mapping->file, addr, 0, size, 0, offset_low,
@@ -1137,7 +1147,7 @@ BOOL32 WINAPI FlushViewOfFile( LPCVOID base, DWORD cbFlush )
     FILE_VIEW *view;
     UINT32 addr = ROUND_ADDR( base );
 
-    dprintf_virtual( stddeb, "FlushViewOfFile at %p for %ld bytes\n",
+    dprintf_info(virtual, "FlushViewOfFile at %p for %ld bytes\n",
                      base, cbFlush );
 
     if (!(view = VIRTUAL_FindView( addr )))

@@ -260,7 +260,7 @@ file	krnl386.exe
 337 pascal16 IsBadStringPtr(segptr word) IsBadStringPtr16
 338 stub HasGPHandler
 339 pascal16 DiagQuery() DiagQuery
-340 pascal16 DiagOutput() DiagOutput
+340 pascal16 DiagOutput(str) DiagOutput
 341 pascal ToolHelpHook(ptr) ToolHelpHook
 342 stub __GP
 343 stub RegisterWinOldApHook
@@ -308,14 +308,16 @@ file	krnl386.exe
 445 stub KERNEL_445
 446 stub KERNEL_446
 447 stub KERNEL_447
-449 pascal KERNEL_449() stub_KERNEL_449
+449 pascal KERNEL_449() KERNEL_449
 450 pascal16 KERNEL_450() stub_KERNEL_450
 454 stub KERNEL_454
 455 stub KERNEL_455
-471 stub KERNEL_471
+471 pascal KERNEL_471() _KERNEL_471
 472 register KERNEL_472() _KERNEL_472
 473 stub KERNEL_473
 475 stub KERNEL_475
+480 stub KERNEL_480
+481 stub KERNEL_481
 482 stub KERNEL_482
 485 stub KERNEL_485
 491 stub RegisterServiceProcess

@@ -13,7 +13,6 @@
 #include <linux/fd.h>
 #endif
 #include "miscemu.h"
-#include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
 #include "drive.h"

@@ -11,8 +11,6 @@
 #include "ldt.h"
 #include "miscemu.h"
 #include "drive.h"
-#include "stddebug.h"
-/* #define DEBUG_INT */
 #include "debug.h"
 
 /**********************************************************************
@@ -44,7 +42,7 @@ void WINAPI INT_Int25Handler( CONTEXT *context )
         begin  = DX_reg(context);
         length = CX_reg(context);
     }
-    dprintf_int( stdnimp, "int25: abs diskread, drive %d, sector %ld, "
+    dprintf_info(int, "int25: abs diskread, drive %d, sector %ld, "
                  "count %ld, buffer %d\n",
                  AL_reg(context), begin, length, (int) dataptr);
 
@@ -63,3 +61,4 @@ void WINAPI INT_Int25Handler( CONTEXT *context )
     }
     RESET_CFLAG(context);
 }
+

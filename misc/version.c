@@ -294,6 +294,7 @@ BOOL16 WINAPI DiagQuery()
  *
  * writes a debug string into <windir>\bootlog.txt
  */
-void WINAPI DiagOutput()
+void WINAPI DiagOutput(LPCSTR str)
 {
+	fprintf(stderr,"DIAGOUTPUT:%s\n",str);
 }

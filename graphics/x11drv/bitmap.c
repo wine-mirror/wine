@@ -13,7 +13,6 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 extern void CLIPPING_UpdateGCRegion(DC* );

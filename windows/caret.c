@@ -7,8 +7,6 @@
 
 #include "windows.h"
 #include "module.h"
-#include "stddebug.h"
-/* #define DEBUG_CARET */
 #include "debug.h"
 
 typedef struct
@@ -79,7 +77,7 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
  */
 static VOID CARET_Callback( HWND32 hwnd, UINT32 msg, UINT32 id, DWORD ctime)
 {
-    dprintf_caret(stddeb,"CARET_Callback: hwnd=%04x, timerid=%d, caret=%d\n",
+    dprintf_info(caret,"CARET_Callback: hwnd=%04x, timerid=%d, caret=%d\n",
                   hwnd, id, Caret.on);
     CARET_DisplayCaret(CARET_TOGGLE);
 }
@@ -138,7 +136,7 @@ void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap,
 BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
                              INT32 width, INT32 height )
 {
-    dprintf_caret(stddeb,"CreateCaret: hwnd=%04x\n", hwnd);
+    dprintf_info(caret,"CreateCaret: hwnd=%04x\n", hwnd);
 
     if (!hwnd) return FALSE;
 
@@ -190,7 +188,7 @@ BOOL32 WINAPI DestroyCaret32(void)
 {
     if (!Caret.hwnd) return FALSE;
 
-    dprintf_caret(stddeb,"DestroyCaret: hwnd=%04x, timerid=%d\n",
+    dprintf_info(caret,"DestroyCaret: hwnd=%04x, timerid=%d\n",
 		Caret.hwnd, Caret.timerid);
 
     CARET_KillTimer();
@@ -218,7 +216,7 @@ BOOL32 WINAPI SetCaretPos32( INT32 x, INT32 y)
     if (!Caret.hwnd) return FALSE;
     if ((x == Caret.x) && (y == Caret.y)) return TRUE;
 
-    dprintf_caret(stddeb,"SetCaretPos: x=%d, y=%d\n", x, y);
+    dprintf_info(caret,"SetCaretPos: x=%d, y=%d\n", x, y);
 
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
@@ -250,7 +248,7 @@ BOOL32 WINAPI HideCaret32( HWND32 hwnd )
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
 
-    dprintf_caret(stddeb,"HideCaret: hwnd=%04x, hidden=%d\n",
+    dprintf_info(caret,"HideCaret: hwnd=%04x, hidden=%d\n",
                   hwnd, Caret.hidden);
 
     CARET_KillTimer();
@@ -277,7 +275,7 @@ BOOL32 WINAPI ShowCaret32( HWND32 hwnd )
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
 
-    dprintf_caret(stddeb,"ShowCaret: hwnd=%04x, hidden=%d\n",
+    dprintf_info(caret,"ShowCaret: hwnd=%04x, hidden=%d\n",
 		hwnd, Caret.hidden);
 
     if (Caret.hidden)
@@ -308,7 +306,7 @@ BOOL32 WINAPI SetCaretBlinkTime32( UINT32 msecs )
 {
     if (!Caret.hwnd) return FALSE;
 
-    dprintf_caret(stddeb,"SetCaretBlinkTime: hwnd=%04x, msecs=%d\n",
+    dprintf_info(caret,"SetCaretBlinkTime: hwnd=%04x, msecs=%d\n",
 		Caret.hwnd, msecs);
 
     Caret.timeout = msecs;
@@ -342,7 +340,7 @@ VOID WINAPI GetCaretPos16( LPPOINT16 pt )
 {
     if (!Caret.hwnd || !pt) return;
 
-    dprintf_caret(stddeb,"GetCaretPos: hwnd=%04x, pt=%p, x=%d, y=%d\n",
+    dprintf_info(caret,"GetCaretPos: hwnd=%04x, pt=%p, x=%d, y=%d\n",
                   Caret.hwnd, pt, Caret.x, Caret.y);
     pt->x = (INT16)Caret.x;
     pt->y = (INT16)Caret.y;

@@ -33,6 +33,8 @@ const K32OBJ_OPS PROCESS_Ops =
     PROCESS_Satisfied,   /* satisfied */
     PROCESS_AddWait,     /* add_wait */
     PROCESS_RemoveWait,  /* remove_wait */
+    NULL,                /* read */
+    NULL,                /* write */
     PROCESS_Destroy      /* destroy */
 };
 
@@ -203,6 +205,7 @@ error:
 BOOL32 PROCESS_Init(void)
 {
     extern BOOL32 VIRTUAL_Init(void);
+    extern BOOL32 THREAD_InitDone;
     PDB32 *pdb;
     THDB *thdb;
 
@@ -217,6 +220,7 @@ BOOL32 PROCESS_Init(void)
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
     if (!(thdb = THREAD_Create( pdb, 0, NULL, NULL ))) return FALSE;
     SET_CUR_THREAD( thdb );
+    THREAD_InitDone = TRUE;
 
     return TRUE;
 }
@@ -311,9 +315,29 @@ static void PROCESS_RemoveWait( K32OBJ *obj, DWORD thread_id )
     return K32OBJ_OPS( pdb->event )->remove_wait( pdb->event, thread_id );
 }
 
+/***********************************************************************
+ *		PROCESS_CloseObjHandles
+ *
+ *	closes all handles that reference "ptr"
+ * note: need to add 1 to the array entry to get to what
+ * CloseHandle expects (there is no zero handle)
+ */
+void PROCESS_CloseObjHandles(PDB32 *pdb, K32OBJ *ptr)
+{
+	HANDLE32 handle;
+
+	assert( pdb->header.type == K32OBJ_PROCESS );
+
+	/* Close all handles that have a pointer to ptr */
+	for (handle = 0; handle < pdb->handle_table->count; handle++)
+		if (pdb->handle_table->entries[handle].ptr == ptr) 
+			CloseHandle( handle+1 );
+}
 
 /***********************************************************************
  *           PROCESS_Destroy
+ * note: need to add 1 to the array entry to get to what
+ * CloseHandle expects (there is no zero handle)
  */
 static void PROCESS_Destroy( K32OBJ *ptr )
 {
@@ -323,7 +347,7 @@ static void PROCESS_Destroy( K32OBJ *ptr )
 
     /* Close all handles */
     for (handle = 0; handle < pdb->handle_table->count; handle++)
-        if (pdb->handle_table->entries[handle].ptr) CloseHandle( handle );
+        if (pdb->handle_table->entries[handle].ptr) CloseHandle( handle+1 );
 
     /* Free everything */
 
@@ -343,6 +367,7 @@ void WINAPI ExitProcess( DWORD status )
     /* FIXME: should kill all running threads of this process */
     pdb->exit_code = status;
     EVENT_Set( pdb->event );
+    if (pdb->console) FreeConsole();
     SYSTEM_UNLOCK();
 
     __RESTORE_ES;  /* Necessary for Pietrek's showseh example program */

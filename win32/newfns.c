@@ -13,7 +13,6 @@ at a later date. */
 #include "windows.h"
 #include "winnt.h"
 #include "winerror.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /****************************************************************************
@@ -90,4 +89,12 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 	/* FIXME: Set appropriate error */
 	return FALSE;
 
+}
+
+/****************************************************************************
+ *		FlushInstructionCache (KERNEL32.261)
+ */
+BOOL32 WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
+	fprintf(stderr,"FlushInstructionCache(0x%08lx,0x%08lx,0x%08lx)\n",x,y,z);
+	return TRUE;
 }

@@ -27,7 +27,6 @@
 #include "cursoricon.h"
 #include "interfaces.h"
 #include "shlobj.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "winreg.h"
 
@@ -470,10 +469,10 @@ LRESULT WINAPI SHELL32_102(
 	DWORD	pathlen,type,tmodellen;
 	DWORD	hres;
 	
-	StringFromCLSID(refiid,xiid);
+	WINE_StringFromCLSID(refiid,xiid);
 
 	if (clsid)
-		StringFromCLSID(clsid,xclsid);
+		WINE_StringFromCLSID(clsid,xclsid);
 	else {
 		if (!aclsid)
 		    return 0x80040154;
@@ -524,7 +523,7 @@ void __cdecl SHELL32_183(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,
 	fprintf(stderr,"SHELL32_183(%08lx,%08lx,%08lx(%s),%08lx(%s),%08lx,%p),stub!\n",
 		(DWORD)hmod,(DWORD)hwnd,id,buf2,x,buf,type,arglist
 	);
-	MessageBox32A(hwnd,buf3,buf,id|0x10000);
+	/*MessageBox32A(hwnd,buf3,buf,id|0x10000);*/
 }
 
 

@@ -23,7 +23,6 @@
 #include "file.h"
 #include "module.h"
 #include "stackframe.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -55,7 +54,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
     fd = MODULE_OpenFile( pModule->self );
-    dprintf_module( stddeb, "Loading segment %d, selector=%04x, flags=%04x\n",
+    dprintf_info(module, "Loading segment %d, selector=%04x, flags=%04x\n",
                     segnum, pSeg->selector, pSeg->flags );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     if (pSeg->size) size = pSeg->size;
@@ -143,7 +142,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     read( fd, &count, sizeof(count) );
     if (!count) return TRUE;
 
-    dprintf_fixup( stddeb, "Fixups for %*.*s, segment %d, selector %04x\n",
+    dprintf_info(fixup, "Fixups for %*.*s, segment %d, selector %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
@@ -153,7 +152,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     if (read( fd, reloc_entries, count * sizeof(struct relocation_entry_s)) !=
             count * sizeof(struct relocation_entry_s))
     {
-        dprintf_fixup( stddeb, "Unable to read relocation information\n" );
+        dprintf_warn(fixup, "Unable to read relocation information\n" );
         return FALSE;
     }
 
@@ -194,14 +193,14 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
             }
-            if (debugging_fixup)
+            if (debugging_info(fixup))
             {
                 NE_MODULE *pTarget = MODULE_GetPtr( module );
-                fprintf( stddeb,"%d: %*.*s.%d=%04x:%04x\n", i + 1, 
-                         *((BYTE *)pTarget + pTarget->name_table),
-                         *((BYTE *)pTarget + pTarget->name_table),
-                         (char *)pTarget + pTarget->name_table + 1,
-                         ordinal, HIWORD(address), LOWORD(address) );
+                dprintf_info(fixup, "%d: %*.*s.%d=%04x:%04x\n", i + 1, 
+			     *((BYTE *)pTarget + pTarget->name_table),
+			     *((BYTE *)pTarget + pTarget->name_table),
+			     (char *)pTarget + pTarget->name_table + 1,
+			     ordinal, HIWORD(address), LOWORD(address) );
             }
 	    break;
 	    
@@ -215,20 +214,20 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
             address = MODULE_GetEntryPoint( module, ordinal );
 
-            if (!address)
+            if (debugging_err(fixup) && !address)
             {
                 NE_MODULE *pTarget = MODULE_GetPtr( module );
-                fprintf( stderr, "Warning: no handler for %.*s.%s, setting to 0:0\n",
-                        *((BYTE *)pTarget + pTarget->name_table),
-                        (char *)pTarget + pTarget->name_table + 1, func_name );
+                dprintf_err(fixup, "Warning: no handler for %.*s.%s, setting to 0:0\n",
+			    *((BYTE *)pTarget + pTarget->name_table),
+			    (char *)pTarget + pTarget->name_table + 1, func_name );
             }
-            if (debugging_fixup)
+            if (debugging_info(fixup))
             {
-                NE_MODULE *pTarget = MODULE_GetPtr( module );
-                fprintf( stddeb,"%d: %.*s.%s=%04x:%04x\n", i + 1, 
-                         *((BYTE *)pTarget + pTarget->name_table),
-                         (char *)pTarget + pTarget->name_table + 1,
-                         func_name, HIWORD(address), LOWORD(address) );
+	        NE_MODULE *pTarget = MODULE_GetPtr( module );
+                dprintf_info(fixup, "%d: %.*s.%s=%04x:%04x\n", i + 1, 
+			     *((BYTE *)pTarget + pTarget->name_table),
+			     (char *)pTarget + pTarget->name_table + 1,
+			     func_name, HIWORD(address), LOWORD(address) );
             }
 	    break;
 	    
@@ -242,7 +241,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( pSegTable[rep->target1-1].selector, rep->target2 );
 	    }
 	    
-	    dprintf_fixup(stddeb,"%d: %04x:%04x\n", 
+	    dprintf_info(fixup,"%d: %04x:%04x\n", 
 			  i + 1, HIWORD(address), LOWORD(address) );
 	    break;
 
@@ -255,21 +254,17 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	     * successfully emulate the coprocessor if it doesn't
 	     * exist.
 	     */
-	    dprintf_fixup(stddeb,
-                   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
+	    dprintf_info(fixup,
+                   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
 		   i + 1, rep->address_type, rep->relocation_type, 
-		   rep->offset);
-	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
-		   rep->target1, rep->target2);
+		   rep->offset, rep->target1, rep->target2);
 	    continue;
 	    
 	  default:
-	    dprintf_fixup(stddeb,
-		   "WARNING: %d: ADDR TYPE %d,  unknown TYPE %d,  OFFSET %04x,  ",
-		   i + 1, rep->address_type, rep->relocation_type, 
-		   rep->offset);
-	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
-		    rep->target1, rep->target2);
+	    dprintf_warn(fixup, "WARNING: %d: ADDR TYPE %d,  "
+			  "unknown TYPE %d, OFFSET %04x, TARGET %04x %04x\n",
+			  i + 1, rep->address_type, rep->relocation_type, 
+			  rep->offset, rep->target1, rep->target2);
 	    free(reloc_entries);
 	    return FALSE;
 	}
@@ -287,7 +282,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	  case NE_RADDR_LOWBYTE:
             do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-                dprintf_fixup(stddeb,"    %04x:%04x:%04x BYTE%s\n",
+                dprintf_info(fixup,"    %04x:%04x:%04x BYTE%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive":"");
                 offset = *sp;
 		if(additive)
@@ -301,7 +296,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	  case NE_RADDR_OFFSET16:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16%s\n",
+		dprintf_info(fixup,"    %04x:%04x:%04x OFFSET16%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp = LOWORD(address);
@@ -313,7 +308,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	  case NE_RADDR_POINTER32:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x POINTER32%s\n",
+		dprintf_info(fixup,"    %04x:%04x:%04x POINTER32%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = LOWORD(address);
@@ -326,7 +321,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	  case NE_RADDR_SELECTOR:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x SELECTOR%s\n",
+		dprintf_info(fixup,"    %04x:%04x:%04x SELECTOR%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = HIWORD(address);
@@ -339,12 +334,10 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	    break;
 	    
 	  default:
-	    dprintf_fixup(stddeb,
-		   "WARNING: %d: unknown ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
+	    dprintf_warn(fixup, "WARNING: %d: unknown ADDR TYPE %d,  "
+			  "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
 		   i + 1, rep->address_type, rep->relocation_type, 
-		   rep->offset);
-	    dprintf_fixup(stddeb,
-		   "TARGET %04x %04x\n", rep->target1, rep->target2);
+		   rep->offset, rep->target1, rep->target2);
 	    free(reloc_entries);
 	    return FALSE;
 	}
@@ -374,7 +367,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         DWORD oldstack;
         WORD saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
 
-        dprintf_module(stddeb, "MODULE_Load: %.*s is a self-loading module!\n",
+        dprintf_info(module, "NE_LoadAllSegments: %.*s is a self-loading module!\n",
                        *((BYTE*)pModule + pModule->name_table),
                        (char *)pModule + pModule->name_table + 1);
         if (!NE_LoadSegment( pModule, 1 )) return FALSE;
@@ -431,7 +424,7 @@ BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
         BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
         memcpy( buffer, pstr + 1, *pstr );
         strcpy( buffer + *pstr, ".dll" );
-        dprintf_module( stddeb, "Loading '%s'\n", buffer );
+        dprintf_info(module, "Loading '%s'\n", buffer );
         if (!(*pModRef = MODULE_FindModule( buffer )))
         {
             /* If the DLL is not loaded yet, load it and store */
@@ -483,12 +476,13 @@ void NE_FixupPrologs( NE_MODULE *pModule )
     WORD dgroup = 0;
     WORD sel;
     BYTE *p, *fixup_ptr, count;
+    dbg_decl_str(module, 512);
 
     pSegTable = NE_SEG_TABLE(pModule);
     if (pModule->flags & NE_FFLAGS_SINGLEDATA)
         dgroup = pSegTable[pModule->dgroup-1].selector;
 
-    dprintf_module( stddeb, "MODULE_FixupPrologs(%04x)\n", pModule->self );
+    dprintf_info(module, "MODULE_FixupPrologs(%04x)\n", pModule->self );
     p = (BYTE *)pModule + pModule->entry_table;
     while (*p)
     {
@@ -509,21 +503,23 @@ void NE_FixupPrologs( NE_MODULE *pModule )
         p += 2;
         while (count-- > 0)
         {
-            dprintf_module( stddeb,"Flags: %04x, sel %02x ", *p, sel);
+	    dbg_reset_str(module);
+            dsprintf(module,"Flags: %04x, sel %02x ", *p, sel);
             /* According to the output generated by TDUMP, the flags mean:
              * 0x0001 function is exported
 	     * 0x0002 Single data (seems to occur only in DLLs)
 	     */
 	    if (sel == 0xff) { /* moveable */
-		dprintf_module( stddeb, "(%02x) o %04x ", p[3], *(WORD *)(p+4) );
+		dsprintf(module, "(%02x) o %04x", p[3], *(WORD *)(p+4) );
 		fixup_ptr = (char *)GET_SEL_BASE(pSegTable[p[3]-1].selector) + *(WORD *)(p + 4);
 	    } else { /* fixed */
-		dprintf_module( stddeb, "offset %04x ", *(WORD *)(p+1) );
-		fixup_ptr = (char *)GET_SEL_BASE(pSegTable[sel-1].selector) + *(WORD *)(p + 1);
+		dsprintf(module, "offset %04x", *(WORD *)(p+1) );
+		fixup_ptr = (char *)GET_SEL_BASE(pSegTable[sel-1].selector) + 
+		  *(WORD *)(p + 1);
 	    }
-	    dprintf_module( stddeb, "Signature: %02x %02x %02x,ff %x\n",
-			   fixup_ptr[0], fixup_ptr[1], fixup_ptr[2],
-			   pModule->flags );
+	    dprintf_info(module, "%s Signature: %02x %02x %02x,ff %x\n",
+			    dbg_str(module), fixup_ptr[0], fixup_ptr[1], 
+			    fixup_ptr[2], pModule->flags );
             if (*p & 0x0001)
             {
                 /* Verify the signature */
@@ -553,11 +549,11 @@ void NE_FixupPrologs( NE_MODULE *pModule )
 			}
                     }
                 } else {
-		    dprintf_fixup( stddeb, "Unknown signature\n" );
+		    dprintf_warn(fixup, "Unknown signature\n" );
 		}
             }
 	    else
-	      dprintf_module( stddeb,"\n");
+	      dprintf_info(module,"\n");
             p += (sel == 0xff) ? 6 : 3;  
         }
     }
@@ -618,8 +614,17 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
     }
     else  /* DATA SINGLE DLL */
     {
-        DS_reg(&context)  = pSegTable[pModule->dgroup-1].selector;
-        ECX_reg(&context) = pModule->heap_size;
+	if (pModule->dgroup) {
+            DS_reg(&context)  = pSegTable[pModule->dgroup-1].selector;
+            ECX_reg(&context) = pModule->heap_size;
+	}
+	else /* hmm, DLL has no dgroup,
+		but why has it NE_FFLAGS_SINGLEDATA set ?
+		Buggy DLL compiler ? */
+	{
+            DS_reg(&context)  = 0;
+            ECX_reg(&context) = 0;
+	}
     }
 
     CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
@@ -630,7 +635,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
-    dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
+    dprintf_info(dll, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
     Callbacks->CallRegisterShortProc( &context, 0 );

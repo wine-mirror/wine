@@ -14,7 +14,7 @@ type	win32
  11 stub    WOWGlobalLock16
  12 stub    WOWGlobalLockSize16
  13 stub    WOWGlobalUnlock16
- 14 stub    WOWGlobalUnlockFree16
+ 14 stdcall WOWGlobalUnlockFree16(long) WOWGlobalUnlockFree16
  15 stub    WOWHandle16
  16 stdcall WOWHandle32(long long) WOWHandle32
  17 stub    WOWYield16

@@ -1,4 +1,4 @@
-#if !defined(COMPOBJ_H)
+#ifndef COMPOBJ_H
 #define COMPOBJ_H
 
 #include "ole.h"
@@ -15,9 +15,14 @@ typedef struct tagGUID	GUID,*LPGUID,*REFGUID;
 typedef struct tagGUID	CLSID,*LPCLSID,*REFCLSID;
 typedef struct tagGUID	IID,*REFIID,*LPIID;
 
-OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR);
-OLESTATUS WINAPI CLSIDFromString(const LPCSTR, CLSID *);
+OLESTATUS WINAPI StringFromCLSID16(const CLSID *id, LPOLESTR16*);
+OLESTATUS WINAPI StringFromCLSID32(const CLSID *id, LPOLESTR32*);
+#define StringFromCLSID WINELIB_NAME(StringFromCLSID)
+OLESTATUS WINAPI CLSIDFromString16(LPCOLESTR16, CLSID *);
+OLESTATUS WINAPI CLSIDFromString32(LPCOLESTR32, CLSID *);
+#define CLSIDFromString WINELIB_NAME(CLSIDFromString)
 
+OLESTATUS WINAPI WINE_StringFromCLSID(const CLSID *id, LPSTR);
 
 #ifdef INITGUID
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \

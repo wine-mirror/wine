@@ -27,7 +27,6 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Define the VFAT ioctl to get both short and long file names */
@@ -50,20 +49,8 @@ typedef struct
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 
-static const char *DOSFS_Devices[][2] =
-{
-    { "CON",  "" },
-    { "PRN",  "" },
-    { "NUL",  "/dev/null" },
-    { "AUX",  "" },
-    { "LPT1", "" },
-    { "LPT2", "" },
-    { "LPT3", "" },
-    { "LPT4", "" },
-    { "COM1", "" },
-    { "COM2", "" },
-    { "COM3", "" },
-    { "COM4", "" }
+static const char *DOSFS_Devices[] = {
+"CON","PRN","NUL","AUX","LPT1","LPT2","LPT3","LPT4","COM1","COM2","COM3","COM4",
 };
 
 
@@ -513,13 +500,13 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
     if ((p = strchr( name, '\\' ))) len = MIN( (int)(p - name), len );
     if (long_len < len + 1) return FALSE;
 
-    dprintf_dosfs( stddeb, "DOSFS_FindUnixName: %s,%s\n", path, name );
+    dprintf_info(dosfs, "DOSFS_FindUnixName: %s,%s\n", path, name );
 
     if (!DOSFS_ToDosFCBFormat( name, dos_name )) dos_name[0] = '\0';
 
     if (!(dir = DOSFS_OpenDir( path )))
     {
-        dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s): can't open dir: %s\n",
+        dprintf_warn(dosfs, "DOSFS_FindUnixName(%s,%s): can't open dir: %s\n",
                        path, name, strerror(errno) );
         return FALSE;
     }
@@ -559,12 +546,11 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
             else
                 DOSFS_Hash( long_name, short_buf, FALSE, ignore_case );
         }
-        dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s) -> %s (%s)\n",
-                       path, name, long_name, short_buf ? short_buf : "***");
+        dprintf_info(dosfs, "(%s,%s) -> %s (%s)\n",
+		     path, name, long_name, short_buf ? short_buf : "***");
     }
     else
-        dprintf_dosfs(stddeb,"DOSFS_FindUnixName(%s,%s) -> ** Not found **\n",
-                      path, name );
+        dprintf_warn(dosfs, "file: '%s' NOT FOUND in dir: '%s'\n", name, path);
     DOSFS_CloseDir( dir );
     return ret;
 }
@@ -573,10 +559,34 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
 /***********************************************************************
  *           DOSFS_IsDevice
  *
- * Check if a DOS file name represents a DOS device. Returns the name
- * of the associated Unix device, or NULL if not found.
+ * Check if a DOS file name represents a DOS device.
  */
-const char *DOSFS_IsDevice( const char *name )
+BOOL32 DOSFS_IsDevice( const char *name )
+{
+    int	i;
+    const char *p;
+
+    if (name[0] && (name[1] == ':')) name += 2;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
+    {
+        const char *dev = DOSFS_Devices[i];
+        if (!lstrncmpi32A( dev, name, strlen(dev) ))
+        {
+            p = name + strlen( dev );
+            if (!*p || (*p == '.')) return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           DOSFS_OpenDevice
+ *
+ * Open a DOS device. This might not map 1:1 into the UNIX device concept.
+ */
+HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 {
     int i;
     const char *p;
@@ -586,15 +596,36 @@ const char *DOSFS_IsDevice( const char *name )
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
-        const char *dev = DOSFS_Devices[i][0];
+        const char *dev = DOSFS_Devices[i];
         if (!lstrncmpi32A( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
-            if (!*p || (*p == '.')) return DOSFS_Devices[i][1];
+            if (!*p || (*p == '.')) {
+	    	/* got it */
+		if (!strcmp(DOSFS_Devices[i],"NUL"))
+			return FILE_OpenUnixFile("/dev/null",unixmode);
+		if (!strcmp(DOSFS_Devices[i],"CON")) {
+			switch (unixmode) {
+			case O_RDONLY:
+				return GetStdHandle( STD_INPUT_HANDLE );
+				break;
+			case O_WRONLY:
+				return GetStdHandle( STD_OUTPUT_HANDLE );
+				break;
+			default:
+				fprintf(stderr,"DOSFS_OpenDevice: CON cannot be opened read/write currently, FIXME.\n");
+				return HFILE_ERROR32;
+				break;
+			}
+		}
+		/* FIXME: the rest of the devices ... lptX, comX et.al. */
+    		return HFILE_ERROR32;
+	    }
         }
     }
-    return NULL;
+    return HFILE_ERROR32;
 }
+
 
 /***********************************************************************
  *           DOSFS_GetPathDrive
@@ -648,7 +679,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     UINT32 flags;
     char *p_l, *p_s, *root;
 
-    dprintf_dosfs( stddeb, "DOSFS_GetFullName: %s (last=%d)\n",
+    dprintf_info(dosfs, "DOSFS_GetFullName: %s (last=%d)\n",
                    name, check_last );
 
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
@@ -756,7 +787,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     }
     if (!full->long_name[0]) strcpy( full->long_name, "/" );
     if (!full->short_name[2]) strcpy( full->short_name + 2, "\\" );
-    dprintf_dosfs( stddeb, "DOSFS_GetFullName: returning %s = %s\n",
+    dprintf_info(dosfs, "DOSFS_GetFullName: returning %s = %s\n",
                    full->long_name, full->short_name );
     return TRUE;
 }
@@ -846,7 +877,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     int drive;
     char *p;
 
-    dprintf_dosfs( stddeb, "GetFullPathName: converting %s\n", name );
+    dprintf_info(dosfs, "GetFullPathName: converting %s\n", name );
 
     if (!name || !result) return 0;
 
@@ -910,7 +941,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if (unicode) lstrcpynAtoW( (LPWSTR)result, buffer, len );
     else lstrcpyn32A( result, buffer, len );
 
-    dprintf_dosfs( stddeb, "GetFullPathName: returning %s\n", buffer );
+    dprintf_info(dosfs, "GetFullPathName: returning %s\n", buffer );
     return strlen(buffer);
 }
 
@@ -995,7 +1026,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     else  /* Not in the cache, open it anew */
     {
         const char *drive_path;
-        dprintf_dosfs( stddeb, "DOSFS_FindNext: cache miss, path=%s skip=%d buf=%s cur=%d\n",
+        dprintf_info(dosfs, "DOSFS_FindNext: cache miss, path=%s skip=%d buf=%s cur=%d\n",
                        path, skip, buffer, cur_pos );
         cur_pos = skip;
         if (dir) DOSFS_CloseDir(dir);
@@ -1004,7 +1035,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         drive_path = path + strlen(DRIVE_GetRoot(drive));
         while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
         drive_root = !*drive_path;
-        dprintf_dosfs(stddeb, "DOSFS_FindNext: drive_root = %d\n", drive_root);
+        dprintf_info(dosfs, "DOSFS_FindNext: drive_root = %d\n", drive_root);
         lstrcpyn32A( buffer, path, sizeof(buffer) - 1 );
     }
     strcat( buffer, "/" );
@@ -1070,7 +1101,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 
         lstrcpyn32A( entry->cFileName, long_name, sizeof(entry->cFileName) );
         if (!(flags & DRIVE_CASE_PRESERVING)) CharLower32A( entry->cFileName );
-        dprintf_dosfs( stddeb, "DOSFS_FindNext: returning %s (%s) %02lx %ld\n",
+        dprintf_info(dosfs, "DOSFS_FindNext: returning %s (%s) %02lx %ld\n",
                        entry->cFileName, entry->cAlternateFileName,
                        entry->dwFileAttributes, entry->nFileSizeLow );
         cur_pos += count;
@@ -1537,7 +1568,7 @@ BOOL32 WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
     time_t xtime = DOSFS_FileTimeToUnixTime( ft, &remainder );
     xtm = gmtime(&xtime);
     syst->wYear         = xtm->tm_year;
-    syst->wMonth        = xtm->tm_mon;
+    syst->wMonth        = xtm->tm_mon + 1;
     syst->wDayOfWeek    = xtm->tm_wday;
     syst->wDay	        = xtm->tm_mday;
     syst->wHour	        = xtm->tm_hour;
@@ -1557,7 +1588,7 @@ DWORD WINAPI QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
     LPSTR s;
     char  buffer[200];
 
-    dprintf_dosfs(stddeb,"QueryDosDevice(%s,...)\n",devname?devname:"<null>");
+    dprintf_info(dosfs,"QueryDosDevice(%s,...)\n",devname?devname:"<null>");
     if (!devname) {
 	/* return known MSDOS devices */
 	lstrcpy32A(buffer,"CON COM1 COM2 LPT1 NUL ");
@@ -1601,7 +1632,7 @@ BOOL32 WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     struct tm xtm;
 
     xtm.tm_year	= syst->wYear;
-    xtm.tm_mon	= syst->wMonth;
+    xtm.tm_mon	= syst->wMonth - 1;
     xtm.tm_wday	= syst->wDayOfWeek;
     xtm.tm_mday	= syst->wDay;
     xtm.tm_hour	= syst->wHour;

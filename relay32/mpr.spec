@@ -83,3 +83,8 @@ type win32
 0102 stub WNetVerifyPasswordW 
 #additions
 0103 stub WNetRestoreConnection
+0104 stub WNetLogonNotify
+0105 stub WNetPasswordChangeNotify
+0106 stub WNetGetPropertyTextA
+0107 stub WNetPropertyDialogA
+0108 stub WNetGetDirectoryTypeA

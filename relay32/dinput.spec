@@ -7,4 +7,3 @@ type win32
 3 stub DllGetClassObject
 4 stub DllRegisterServer
 5 stub DllUnregisterServer
-

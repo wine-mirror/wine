@@ -41,6 +41,7 @@ extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE32 FILE_Dup( HFILE32 hFile );
 extern HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 );
 extern HFILE32 FILE_Open( LPCSTR path, INT32 mode );
+extern HFILE32 FILE_OpenUnixFile( LPCSTR path, INT32 mode );
 extern BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type );
 extern LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
                          DWORD size_high, DWORD size_low,
@@ -68,7 +69,8 @@ extern void DOSFS_UnixTimeToFileTime( time_t unixtime, LPFILETIME ft,
                                       DWORD remainder );
 extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
 extern BOOL32 DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
-extern const char *DOSFS_IsDevice( const char *name );
+extern BOOL32 DOSFS_IsDevice( const char *name );
+extern HFILE32 DOSFS_OpenDevice( const char *name, INT32 mode );
 extern BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
                                   INT32 long_len, LPSTR short_buf,
                                   BOOL32 ignore_case );

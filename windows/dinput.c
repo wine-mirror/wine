@@ -5,9 +5,13 @@
 /* Status:
  *
  * - Tomb Raider 2 Demo:
- *   Doesn't accept input yet. Although I am sure I've done everything right...
+ *   Playable using keyboard only.
  * - WingCommander Prophecy Demo:
- *   dito.
+ *   Doesn't get Input Focus.
+ * 
+ * FIXME: The keyboard handling needs to (and will) be merged into keyboard.c
+ *	  (The current implementation is currently only a proof of concept and
+ *	   an utter mess.)
  */
 
 #include "config.h"
@@ -28,8 +32,10 @@
 #include "heap.h"
 #include "win.h"
 #include "dinput.h"
-#include "stddebug.h"
 #include "debug.h"
+
+extern BYTE InputKeyStateTable[256];
+extern BYTE vkey2scode[512];
 
 static IDirectInputA_VTable ddiavt;
 static IDirectInputDeviceA_VTable SysKeyboardAvt;
@@ -73,13 +79,14 @@ static HRESULT WINAPI IDirectInputA_CreateDevice(
 ) {
 	char	xbuf[50];
 	
-	StringFromCLSID(rguid,xbuf);
+	WINE_StringFromCLSID(rguid,xbuf);
 	fprintf(stderr,"IDirectInputA(%p)->CreateDevice(%s,%p,%p),stub!\n",this,xbuf,pdev,punk);
 	if (!memcmp(&GUID_SysKeyboard,rguid,sizeof(GUID_SysKeyboard))) {
-		*pdev = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectInputDevice32A));
+		*pdev = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboard32A));
 		(*pdev)->ref = 1;
 		(*pdev)->lpvtbl = &SysKeyboardAvt;
 		memcpy(&((*pdev)->guid),rguid,sizeof(*rguid));
+		memset(((LPSYSKEYBOARD32A)(*pdev))->keystate,0,256);
 		return 0;
 	}
 	if (!memcmp(&GUID_SysMouse,rguid,sizeof(GUID_SysMouse))) {
@@ -97,7 +104,7 @@ static HRESULT WINAPI IDirectInputA_QueryInterface(
 ) {
 	char	xbuf[50];
 
-	StringFromCLSID(riid,xbuf);
+	WINE_StringFromCLSID(riid,xbuf);
 	fprintf(stderr,"IDirectInputA(%p)->QueryInterface(%s,%p)\n",this,xbuf,ppobj);
 	if (!memcmp(&IID_IUnknown,riid,sizeof(*riid))) {
 		this->lpvtbl->fnAddRef(this);
@@ -112,6 +119,12 @@ static HRESULT WINAPI IDirectInputA_QueryInterface(
 	return E_FAIL;
 }
 
+static HRESULT WINAPI IDirectInputA_Initialize(
+	LPDIRECTINPUT32A this,HINSTANCE32 hinst,DWORD x
+) {
+	return DIERR_ALREADYINITIALIZED;
+}
+
 static IDirectInputA_VTable ddiavt= {
 	IDirectInputA_QueryInterface,
 	IDirectInputA_AddRef,
@@ -120,7 +133,7 @@ static IDirectInputA_VTable ddiavt= {
 	IDirectInputA_EnumDevices,
 	(void*)6,
 	(void*)7,
-	(void*)8
+	IDirectInputA_Initialize
 };
 
 /******************************************************************************
@@ -143,7 +156,7 @@ static HRESULT WINAPI IDirectInputDeviceA_SetDataFormat(
 		char	xbuf[50];
 
 		if (df->rgodf[i].pguid)
-			StringFromCLSID(df->rgodf[i].pguid,xbuf);
+			WINE_StringFromCLSID(df->rgodf[i].pguid,xbuf);
 		else
 			strcpy(xbuf,"<no guid>");
 		fprintf(stderr,"df.rgodf[%d].guid %s\n",i,xbuf);
@@ -168,10 +181,23 @@ static HRESULT WINAPI IDirectInputDeviceA_SetProperty(
 	char	xbuf[50];
 
 	if (HIWORD(rguid))
-		StringFromCLSID(rguid,xbuf);
+		WINE_StringFromCLSID(rguid,xbuf);
 	else
-		strcpy(xbuf,"<no guid>");
+		sprintf(xbuf,"<special guid %ld>",(DWORD)rguid);
 	fprintf(stderr,"IDirectInputDeviceA(%p)->SetProperty(%s,%p)\n",this,xbuf,ph);
+	if (!HIWORD(rguid)) {
+		switch ((DWORD)rguid) {
+		case DIPROP_BUFFERSIZE: {
+			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
+
+			fprintf(stderr,"	buffersize = %ld\n",pd->dwData);
+			break;
+		}
+		default:
+			fprintf(stderr,"	unknown type %ld\n",(DWORD)rguid);
+			break;
+		}
+	}
 	return 0;
 }
 
@@ -183,14 +209,13 @@ static HRESULT WINAPI IDirectInputDeviceA_SetEventNotification(
 }
 
 static HRESULT WINAPI IDirectInputDeviceA_GetDeviceData(
-	LPDIRECTINPUTDEVICE32A this,DWORD x,LPDIDEVICEOBJECTDATA dod,
-	LPDWORD y,DWORD z
+	LPDIRECTINPUTDEVICE32A this,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
+	LPDWORD entries,DWORD flags
 ) {
-/*
-	fprintf(stderr,"IDirectInputDeviceA(%p)->GetDeviceData(0x%08lx,%p,%p,0x%08lx)\n",this,x,dod,y,z);
- */
+/*	fprintf(stderr,"IDirectInputDeviceA(%p)->GetDeviceData(%ld,%p,%p(0x%08lx),0x%08lx)\n",this,dodsize,dod,entries,*entries,flags);*/
 	return 0;
 }
+
 
 static HRESULT WINAPI IDirectInputDeviceA_Acquire(LPDIRECTINPUTDEVICE32A this) {
 	fprintf(stderr,"IDirectInputDeviceA(%p)->Aquire()\n",this);
@@ -210,29 +235,100 @@ static ULONG WINAPI IDirectInputDeviceA_Release(LPDIRECTINPUTDEVICE32A this) {
 	return 0;
 }
 
+static HRESULT WINAPI SysKeyboardA_SetProperty(
+	LPDIRECTINPUTDEVICE32A this,REFGUID rguid,LPCDIPROPHEADER ph
+) {
+	LPSYSKEYBOARD32A	kthis = (LPSYSKEYBOARD32A)this;
+	char			xbuf[50];
 
-extern BYTE InputKeyStateTable[256];
-extern BYTE vkey2scode[512];
+	if (HIWORD(rguid))
+		WINE_StringFromCLSID(rguid,xbuf);
+	else
+		sprintf(xbuf,"<special guid %ld>",(DWORD)rguid);
+	fprintf(stderr,"SysKeyboardA(%p)->SetProperty(%s,%p)\n",this,xbuf,ph);
+	fprintf(stderr,"	size is %ld, headersize is %ld,obj is %ld,how is %ld\n",ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
+	if (!HIWORD(rguid)) {
+		switch ((DWORD)rguid) {
+		case DIPROP_BUFFERSIZE: {
+			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
+
+			fprintf(stderr,"	buffersize = %ld\n",pd->dwData);
+			break;
+		}
+		default:
+			fprintf(stderr,"	unknown type %ld\n",(DWORD)rguid);
+			break;
+		}
+	}
+	return 0;
+}
+
+static HRESULT WINAPI SysKeyboardA_GetDeviceState(
+	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
+) {
+	if (len==256) {
+		int	i;
+
+		memset(ptr,0,256);
+		for (i=0;i<256;i++)
+			if (InputKeyStateTable[i]&0x80) {
+				((LPBYTE)ptr)[vkey2scode[i]     ]=0x80;
+				((LPBYTE)ptr)[vkey2scode[i]|0x80]=0x80;
+			}
+		return 0;
+	}
+	fprintf(stderr,"whoops, SysKeyboardA_GetDeviceState got len %ld?\n",len);
+	return 0;
+}
+
+static HRESULT WINAPI SysKeyboardA_GetDeviceData(
+	LPDIRECTINPUTDEVICE32A this,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
+	LPDWORD entries,DWORD flags
+) {
+	int			i,n,xentries;
+	LPSYSKEYBOARD32A	kthis = (LPSYSKEYBOARD32A)this;
+
+/*	fprintf(stderr,"SysKeyboardA(%p)->GetDeviceData(%ld,%p,%p(%ld),0x%08lx)\n",this,dodsize,dod,entries,entries?*entries:0,flags);*/
+	if (entries)
+		xentries = *entries; 
+	else
+		xentries = 1;
+
+	for (n=i=0;(i<256) && (n<*entries);i++) {
+		if (kthis->keystate[i] == (InputKeyStateTable[i]&0x80))
+			continue;
+		if (dod) {
+			/* add an entry */
+			dod[n].dwOfs		= vkey2scode[i];
+			dod[n].dwData		= InputKeyStateTable[i]&0x80;
+			dod[n].dwTimeStamp	= 0; /* umm */
+			dod[n].dwSequence	= 0; /* umm */
+			n++;
+		}
+		if (!(flags & DIGDD_PEEK))
+			kthis->keystate[i] = InputKeyStateTable[i]&0x80;
+	}
+	*entries = n;
+	return 0;
+}
+
+static HRESULT WINAPI SysKeyboardA_Acquire(LPDIRECTINPUTDEVICE32A this) {
+	fprintf(stderr,"SysKeyboardA(%p)->Aquire()\n",this);
+	return 0;
+}
+
+static HRESULT WINAPI SysKeyboardA_Unacquire(LPDIRECTINPUTDEVICE32A this) {
+	fprintf(stderr,"SysKeyboardA(%p)->Unaquire()\n",this);
+	return 0;
+}
+
 
 static HRESULT WINAPI IDirectInputDeviceA_GetDeviceState(
 	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
 ) {
-/*
 	fprintf(stderr,"IDirectInputDeviceA(%p)->GetDeviceState(0x%08lx,%p)\n",
 		this,len,ptr
 	);
- */
-	if (len==256) {/* && this_is_a_keyboard */
-		int	i;
-
-		memset(ptr,0,256);
-		for (i=0;i<256;i++) {
-			if (InputKeyStateTable[i]&0x80)
-				fprintf(stderr,"VKEY %d pressed (DIK 0x%02x\n",i,vkey2scode[i]);
-			((LPBYTE)ptr)[i]=vkey2scode[InputKeyStateTable[i]]&0x80;
-		}
-		return 0;
-	}
 	return 0;
 }
 
@@ -241,7 +337,7 @@ static HRESULT WINAPI IDirectInputDeviceA_QueryInterface(
 ) {
 	char	xbuf[50];
 
-	StringFromCLSID(riid,xbuf);
+	WINE_StringFromCLSID(riid,xbuf);
 	fprintf(stderr,"IDirectInputA(%p)->QueryInterface(%s,%p)\n",this,xbuf,ppobj);
 	if (!memcmp(&IID_IUnknown,riid,sizeof(*riid))) {
 		this->lpvtbl->fnAddRef(this);
@@ -263,11 +359,11 @@ static IDirectInputDeviceA_VTable SysKeyboardAvt={
 	(void*)4,
 	(void*)5,
 	(void*)6,
-	IDirectInputDeviceA_SetProperty,
-	IDirectInputDeviceA_Acquire,
-	IDirectInputDeviceA_Unacquire,
-	IDirectInputDeviceA_GetDeviceState,
-	IDirectInputDeviceA_GetDeviceData,
+	SysKeyboardA_SetProperty,
+	SysKeyboardA_Acquire,
+	SysKeyboardA_Unacquire,
+	SysKeyboardA_GetDeviceState,
+	SysKeyboardA_GetDeviceData,
 	IDirectInputDeviceA_SetDataFormat,
 	IDirectInputDeviceA_SetEventNotification,
 	IDirectInputDeviceA_SetCooperativeLevel,

@@ -33,6 +33,7 @@
 
 #if defined(linux) && defined(__i386__)
 /* This is the sigaction structure from the Linux 2.1.20 kernel.  */
+#undef sa_handler
 struct kernel_sigaction
 {
     void (*sa_handler)();

@@ -37,7 +37,6 @@
 #include "drive.h"
 #include "shell.h"
 #include "keyboard.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
 
@@ -155,7 +154,7 @@ void EVENT_ProcessEvent( XEvent *event )
                       (char **)&pWnd ) != 0)
         return;  /* Not for a registered window */
 
-    dprintf_event( stddeb, "Got event %s for hwnd %04x\n",
+    dprintf_info(event, "Got event %s for hwnd %04x\n",
                    event_names[event->type], pWnd->hwndSelf );
 
     switch(event->type)
@@ -249,7 +248,7 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     default:    
-	dprintf_event(stddeb, "Unprocessed event %s for hwnd %04x\n",
+	dprintf_warn(event, "Unprocessed event %s for hwnd %04x\n",
 	        event_names[event->type], pWnd->hwndSelf );
 	break;
     }
@@ -510,7 +509,7 @@ static Window __get_top_decoration( Window w, Window ancestor )
         TSXQueryTree( display, w, &root, &parent, &children, &total );
         if( children ) TSXFree( children );
     } while( parent && parent != ancestor );
-    dprintf_event( stddeb, "\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
+    dprintf_info(event, "\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
     return ( parent ) ? w : 0 ;
 }
 
@@ -932,7 +931,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
     }
 
     if(rprop == None) 
-       dprintf_event(stddeb,"Request for %s ignored\n", TSXGetAtomName(display,event->target));
+       dprintf_info(event,"Request for %s ignored\n", TSXGetAtomName(display,event->target));
 
     result.type = SelectionNotify;
     result.display = display;
@@ -955,7 +954,7 @@ static void EVENT_SelectionNotify( XSelectionEvent *event )
     if (event->target != XA_STRING) CLIPBOARD_ReadSelection( 0, None );
     else CLIPBOARD_ReadSelection( event->requestor, event->property );
 
-    dprintf_clipboard(stddeb,"\tSelectionNotify done!\n");
+    dprintf_info(clipboard,"\tSelectionNotify done!\n");
 }
 
 
@@ -1087,7 +1086,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 	  } /* WS_EX_ACCEPTFILES */
        } /* dndProtocol */
        else
-	  dprintf_event( stddeb, "unrecognized ClientMessage\n" );
+	  dprintf_info(event, "unrecognized ClientMessage\n" );
     }
 }
 
@@ -1145,7 +1144,7 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
                            GrabModeAsync, GrabModeAsync,
                            None, None, CurrentTime ) == GrabSuccess) )
 	{
-            dprintf_win(stddeb, "SetCapture(0x%04x)\n", hwnd );
+            dprintf_info(win, "SetCapture(0x%04x)\n", hwnd );
             captureWnd   = hwnd;
 	    captureHT    = ht;
         }
@@ -1191,7 +1190,7 @@ HWND32 WINAPI SetCapture32( HWND32 hwnd )
  */
 void WINAPI ReleaseCapture(void)
 {
-    dprintf_win(stddeb, "ReleaseCapture() [%04x]\n", captureWnd );
+    dprintf_info(win, "ReleaseCapture() [%04x]\n", captureWnd );
     if( captureWnd ) EVENT_Capture( 0, 0 );
 }
 
@@ -1271,7 +1270,7 @@ void WINAPI Mouse_Event( CONTEXT *context )
 BOOL16 WINAPI EnableHardwareInput(BOOL16 bEnable)
 {
   BOOL16 bOldState = InputEnabled;
-  dprintf_event(stdnimp,"EnableHardwareInput(%d);\n", bEnable);
+  dprintf_fixme(event,"EnableHardwareInput(%d) - stub\n", bEnable);
   InputEnabled = bEnable;
   return bOldState;
 }

@@ -16,7 +16,6 @@
 #include "metafile.h"
 #include "options.h"
 #include "x11drv.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -1120,12 +1119,12 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     widthDst  = widthDst * dcDst->vportExtX / dcDst->wndExtX;
     heightDst = heightDst * dcDst->vportExtY / dcDst->wndExtY;
 
-    dprintf_bitblt( stddeb, "    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
+    dprintf_info(bitblt, "    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
                     dcDst->vportOrgX, dcDst->vportOrgY,
                     dcDst->vportExtX, dcDst->vportExtY,
                     dcDst->wndOrgX, dcDst->wndOrgY,
                     dcDst->wndExtX, dcDst->wndExtY );
-    dprintf_bitblt( stddeb, "    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
+    dprintf_info(bitblt, "    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
                     xDst, yDst, widthDst, heightDst,
                     dcDst->w.DCOrgX, dcDst->w.DCOrgY );
 
@@ -1136,19 +1135,19 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         widthSrc  = widthSrc * dcSrc->vportExtX / dcSrc->wndExtX;
         heightSrc = heightSrc * dcSrc->vportExtY / dcSrc->wndExtY;
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
-        dprintf_bitblt( stddeb,"    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
+        dprintf_info(bitblt,"    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
                         dcSrc->vportOrgX, dcSrc->vportOrgY,
                         dcSrc->vportExtX, dcSrc->vportExtY,
                         dcSrc->wndOrgX, dcSrc->wndOrgY,
                         dcSrc->wndExtX, dcSrc->wndExtY );
-        dprintf_bitblt( stddeb, "    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
+        dprintf_info(bitblt, "    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
                         xSrc, ySrc, widthSrc, heightSrc,
                         dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
-        dprintf_bitblt( stddeb, "    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
+        dprintf_info(bitblt, "    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
                         visRectSrc.left, visRectSrc.top,
                         visRectSrc.right, visRectSrc.bottom,
                         visRectDst.left, visRectDst.top,
@@ -1160,7 +1159,7 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
-        dprintf_bitblt( stddeb, "    vissrc=none visdst=%d,%d-%d,%d\n",
+        dprintf_info(bitblt, "    vissrc=none visdst=%d,%d-%d,%d\n",
                         visRectDst.left, visRectDst.top,
                         visRectDst.right, visRectDst.bottom );
     }

@@ -13,7 +13,8 @@ C_SRCS = \
 	ole2disp.c \
 	ole2nls.c \
 	olecli.c \
-	olesvr.c
+	olesvr.c \
+	storage.c
 
 all: $(MODULE).o
 

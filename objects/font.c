@@ -12,7 +12,6 @@
 #include "heap.h"
 #include "metafile.h"
 #include "options.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "debugstr.h"
 
@@ -223,7 +222,7 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 	    fontPtr = (FONTOBJ *) GDI_HEAP_LOCK( hFont );
 	    memcpy( &fontPtr->logfont, font, sizeof(LOGFONT16) );
 
-	    dprintf_font(stddeb,"CreateFontIndirect(%i %i) '%s' %s %s => %04x\n",
+	    dprintf_info(font,"CreateFontIndirect(%i %i) '%s' %s %s => %04x\n",
 				 font->lfHeight, font->lfWidth, 
 				 font->lfFaceName ? font->lfFaceName : "NULL",
 				 font->lfWeight > 400 ? "Bold" : "",
@@ -271,7 +270,7 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
     LOGFONT16 logfont = { height, width, esc, orient, weight, italic, underline,
                           strikeout, charset, outpres, clippres, quality, pitch, };
 
-    dprintf_font(stddeb,"CreateFont16('%s',%d,%d)\n",
+    dprintf_info(font,"CreateFont16('%s',%d,%d)\n",
 		 (name ? name : "(null)") , height, width);
     if (name) 
 	lstrcpyn32A(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
@@ -716,7 +715,7 @@ BOOL32 WINAPI GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
         !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
         return FALSE;
 
-    dprintf_font(stddeb,"GetTextExtentPoint(%08x %s %d %p): returning %d,%d\n",
+    dprintf_info(font,"GetTextExtentPoint(%08x %s %d %p): returning %d,%d\n",
                  hdc, debugstr_an (str, count), count,
 		 size, size->cx, size->cy );
     return TRUE;
@@ -742,7 +741,7 @@ BOOL32 WINAPI GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
 BOOL32 WINAPI GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
                                           LPSIZE32 size )
 {
-    dprintf_font( stddeb, "GetTextExtentPoint32ABuggy: not bug compatible.\n");
+    dprintf_info(font, "GetTextExtentPoint32ABuggy: not bug compatible.\n");
     return GetTextExtentPoint32A( hdc, str, count, size );
 }
 
@@ -752,7 +751,7 @@ BOOL32 WINAPI GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
 BOOL32 WINAPI GetTextExtentPoint32WBuggy( HDC32 hdc, LPCWSTR str, INT32 count,
                                           LPSIZE32 size )
 {
-    dprintf_font( stddeb, "GetTextExtentPoint32WBuggy: not bug compatible.\n");
+    dprintf_info(font, "GetTextExtentPoint32WBuggy: not bug compatible.\n");
     return GetTextExtentPoint32W( hdc, str, count, size );
 }
 
@@ -792,7 +791,7 @@ BOOL32 WINAPI GetTextExtentExPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
     size->cx = extent;
    *lpnFit = nFit;
 
-    dprintf_font(stddeb,"GetTextExtentExPoint32A(%08x '%.*s' %d) returning %d %d %d\n",
+    dprintf_info(font,"GetTextExtentExPoint32A(%08x '%.*s' %d) returning %d %d %d\n",
                hdc,count,str,maxExt,nFit, size->cx,size->cy);
     return TRUE;
 }
@@ -861,7 +860,7 @@ BOOL32 WINAPI GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
     metrics->tmMaxCharWidth     = WDPTOLP(metrics->tmMaxCharWidth);
     metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
 
-    dprintf_font(stddeb,"text metrics:
+    dprintf_info(font,"text metrics:
     Weight = %03i\t FirstChar = %03i\t AveCharWidth = %i
     Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %i
     UnderLined = %01i\t DefaultChar = %03i\t Overhang = %i
@@ -988,8 +987,8 @@ DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
  */
 DWORD WINAPI SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
 {
-    dprintf_font(stdnimp,"SetMapperFlags(%04x, %08lX) // Empty Stub !\n",
-                 hDC, dwFlag);
+    dprintf_fixme(font, "SetMapperFlags(%04x, %08lX) // Empty Stub !\n",
+		  hDC, dwFlag);
     return 0L;
 }
 
@@ -998,9 +997,8 @@ DWORD WINAPI SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
  */
 BOOL16 GetAspectRatioFilterEx16( HDC16 hdc, LPVOID pAspectRatio )
 {
-  dprintf_font(stdnimp, 
-      "GetAspectRatioFilterEx(%04x, %p): // Empty Stub !\n",
-	       hdc, pAspectRatio);
+  dprintf_fixme(font, "GetAspectRatioFilterEx(%04x, %p): // Empty Stub !\n",
+		hdc, pAspectRatio);
   return FALSE;
 }
 

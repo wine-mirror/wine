@@ -18,8 +18,6 @@
 #include "driver.h"
 #include "mmsystem.h"
 #include "xmalloc.h"
-
-#include "stddebug.h"
 #include "debug.h"
 
 #ifdef linux
@@ -91,7 +89,7 @@ static LINUX_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 static DWORD MIDI_NotifyClient(UINT16 wDevID, WORD wMsg, 
 				DWORD dwParam1, DWORD dwParam2)
 {
-	dprintf_midi(stddeb,"MIDI_NotifyClient // wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
+	dprintf_info(midi,"MIDI_NotifyClient // wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
 
 #if defined(linux) || defined(__FreeBSD__)
 
@@ -109,7 +107,7 @@ static DWORD MIDI_NotifyClient(UINT16 wDevID, WORD wMsg,
 		MidiOutDev[wDevID].midiDesc.dwInstance, 
                 dwParam1, 
                 dwParam2)) {
-	    dprintf_midi(stddeb,"MIDI_NotifyClient // can't notify client !\n");
+	    dprintf_warn(midi,"MIDI_NotifyClient // can't notify client !\n");
 	    return MMSYSERR_NOERROR;
 	  }
 	  break;
@@ -122,7 +120,7 @@ static DWORD MIDI_NotifyClient(UINT16 wDevID, WORD wMsg,
 		MidiInDev[wDevID].midiDesc.dwCallback, MidiInDev[wDevID].wFlags, 
 		MidiInDev[wDevID].midiDesc.hMidi, wMsg, 
 		MidiInDev[wDevID].midiDesc.dwInstance, dwParam1, dwParam2)) {
-	    dprintf_mciwave(stddeb,"MIDI_NotifyClient // can't notify client !\n");
+	    dprintf_warn(mciwave,"MIDI_NotifyClient // can't notify client !\n");
 		return MMSYSERR_NOERROR;
 		}
 	  break;
@@ -146,7 +144,7 @@ static DWORD MIDI_ReadByte(UINT16 wDevID, BYTE *lpbyt)
 			return 0;
 		}
 	}
-	dprintf_midi(stddeb, "MIDI_ReadByte // error reading wDevID=%04X\n", wDevID);
+	dprintf_warn(midi, "MIDI_ReadByte // error reading wDevID=%04X\n", wDevID);
 	return MCIERR_INTERNAL;
 
 #else
@@ -169,7 +167,7 @@ static DWORD MIDI_ReadWord(UINT16 wDevID, LPWORD lpw)
 			}
 		}
 	}
-	dprintf_midi(stddeb, "MIDI_ReadWord // error reading wDevID=%04X\n", wDevID);
+	dprintf_warn(midi, "MIDI_ReadWord // error reading wDevID=%04X\n", wDevID);
 	return MCIERR_INTERNAL;
 }
 
@@ -188,7 +186,7 @@ static DWORD MIDI_ReadLong(UINT16 wDevID, LPDWORD lpdw)
 			}
 		}
 	}
-	dprintf_midi(stddeb, "MIDI_ReadLong // error reading wDevID=%04X\n", wDevID);
+	dprintf_warn(midi, "MIDI_ReadLong // error reading wDevID=%04X\n", wDevID);
 	return MCIERR_INTERNAL;
 }
 
@@ -202,20 +200,20 @@ static DWORD MIDI_ReadVaryLen(UINT16 wDevID, LPDWORD lpdw)
 	DWORD	value;
 	if (lpdw == NULL) return MCIERR_INTERNAL;
 	if (MIDI_ReadByte(wDevID, &byte) != 0) {
-		dprintf_midi(stddeb, "MIDI_ReadVaryLen // error reading wDevID=%04X\n", wDevID);
+		dprintf_warn(midi, "MIDI_ReadVaryLen // error reading wDevID=%04X\n", wDevID);
 		return MCIERR_INTERNAL;
 	}
 	value = (DWORD)(byte & 0x7F);
 	while (byte & 0x80) {
 		if (MIDI_ReadByte(wDevID, &byte) != 0) {
-			dprintf_midi(stddeb, "MIDI_ReadVaryLen // error reading wDevID=%04X\n", wDevID);
+			dprintf_warn(midi, "MIDI_ReadVaryLen // error reading wDevID=%04X\n", wDevID);
 			return MCIERR_INTERNAL;
 		}
 		value = (value << 7) + (byte & 0x7F);
 	}
 	*lpdw = value;
 /*
-	dprintf_midi(stddeb, "MIDI_ReadVaryLen // val=%08lX \n", value);
+	dprintf_info(midi, "MIDI_ReadVaryLen // val=%08lX \n", value);
 */
 	return 0;
 }
@@ -229,9 +227,9 @@ static DWORD MIDI_ReadMThd(UINT16 wDevID, DWORD dwOffset)
 #if defined(linux) || defined(__FreeBSD__)
 	DWORD	toberead;
 	FOURCC	fourcc;
-	dprintf_midi(stddeb, "MIDI_ReadMThd(%04X, %08lX);\n", wDevID, dwOffset);
+	dprintf_info(midi, "MIDI_ReadMThd(%04X, %08lX);\n", wDevID, dwOffset);
 	if (mmioSeek(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
-		dprintf_midi(stddeb, "MIDI_ReadMThd // can't seek at %08lX begin of 'MThd' \n", dwOffset);
+		dprintf_warn(midi, "MIDI_ReadMThd // can't seek at %08lX begin of 'MThd' \n", dwOffset);
 		return MCIERR_INTERNAL;
 	}
 	if (mmioRead(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
@@ -245,7 +243,7 @@ static DWORD MIDI_ReadMThd(UINT16 wDevID, DWORD dwOffset)
 		return MCIERR_INTERNAL;
 	if (MIDI_ReadWord(wDevID, &MCIMidiDev[wDevID].nTempo) != 0)
 		return MCIERR_INTERNAL;
-	dprintf_midi(stddeb, "MIDI_ReadMThd // toberead=%08lX, wFormat=%04X nTracks=%04X nTempo=%04X\n",
+	dprintf_info(midi, "MIDI_ReadMThd // toberead=%08lX, wFormat=%04X nTracks=%04X nTempo=%04X\n",
 		toberead, MCIMidiDev[wDevID].wFormat,
 		MCIMidiDev[wDevID].nTracks,
 		MCIMidiDev[wDevID].nTempo);
@@ -267,7 +265,7 @@ static DWORD MIDI_ReadMTrk(UINT16 wDevID, DWORD dwOffset)
 	DWORD	toberead;
 	FOURCC	fourcc;
 	if (mmioSeek(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
-		dprintf_midi(stddeb, "MIDI_ReadMTrk // can't seek at %08lX begin of 'MThd' \n", dwOffset);
+		dprintf_warn(midi, "MIDI_ReadMTrk // can't seek at %08lX begin of 'MThd' \n", dwOffset);
 		}
 	if (mmioRead(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
 		(long) sizeof(FOURCC)) != (long) sizeof(FOURCC)) {
@@ -276,7 +274,7 @@ static DWORD MIDI_ReadMTrk(UINT16 wDevID, DWORD dwOffset)
 	if (MIDI_ReadLong(wDevID, &toberead) != 0) {
 		return MCIERR_INTERNAL;
 		}
-	dprintf_midi(stddeb, "MIDI_ReadMTrk // toberead=%08lX\n", toberead);
+	dprintf_info(midi, "MIDI_ReadMTrk // toberead=%08lX\n", toberead);
 	toberead -= 3 * sizeof(WORD);
 	MCIMidiDev[wDevID].dwTotalLen = toberead;
 	return 0;
@@ -298,7 +296,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 	LPSTR		lpstrElementName;
 	char		str[128];
 
-	dprintf_midi(stddeb, "MIDI_mciOpen(%08lX, %p)\n", dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciOpen(%08lX, %p)\n", dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 
 	if (MCIMidiDev[wDevID].nUseCount > 0) {
@@ -315,26 +313,26 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 		MCIMidiDev[wDevID].hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR));
 	}
 
-	dprintf_midi(stddeb, "MIDI_mciOpen // wDevID=%04X\n", wDevID);
+	dprintf_info(midi, "MIDI_mciOpen // wDevID=%04X\n", wDevID);
 /*	lpParms->wDeviceID = wDevID;*/
-	dprintf_midi(stddeb, "MIDI_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
-	dprintf_midi(stddeb, "MIDI_mciOpen // before OPEN_ELEMENT\n");
+	dprintf_info(midi, "MIDI_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
+	dprintf_info(midi, "MIDI_mciOpen // before OPEN_ELEMENT\n");
 	if (dwFlags & MCI_OPEN_ELEMENT) {
 		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
-		dprintf_midi(stddeb, "MIDI_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
+		dprintf_info(midi, "MIDI_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
 			CharUpper32A(str);
 			MCIMidiDev[wDevID].hFile = mmioOpen16(str, NULL, 
 				MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 			if (MCIMidiDev[wDevID].hFile == 0) {
-				dprintf_midi(stddeb, "MIDI_mciOpen // can't find file='%s' !\n", str);
+				dprintf_warn(midi, "MIDI_mciOpen // can't find file='%s' !\n", str);
 				return MCIERR_FILE_NOT_FOUND;
 			}
 		} else 
 			MCIMidiDev[wDevID].hFile = 0;
 	}
-	dprintf_midi(stddeb, "MIDI_mciOpen // hFile=%u\n", MCIMidiDev[wDevID].hFile);
+	dprintf_info(midi, "MIDI_mciOpen // hFile=%u\n", MCIMidiDev[wDevID].hFile);
 	memcpy(&MCIMidiDev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS16));
 	MCIMidiDev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
@@ -346,30 +344,30 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 		if (mmioDescend(MCIMidiDev[wDevID].hFile, &ckMainRIFF, NULL, 0) != 0) {
 			return MCIERR_INTERNAL;
 		}
-		dprintf_midi(stddeb,"MIDI_mciOpen // ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+		dprintf_info(midi,"MIDI_mciOpen // ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
 				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
 				ckMainRIFF.cksize);
 		dwOffset = 0;
 		if (ckMainRIFF.ckid == mmioFOURCC('R', 'M', 'I', 'D')) {
-			dprintf_midi(stddeb, "MIDI_mciOpen // is a 'RMID' file \n");
+			dprintf_info(midi, "MIDI_mciOpen // is a 'RMID' file \n");
 			dwOffset = ckMainRIFF.dwDataOffset;
 		}
 		if (ckMainRIFF.ckid != mmioFOURCC('M', 'T', 'h', 'd')) {
-			dprintf_midi(stddeb, "MIDI_mciOpen // unknown format !\n");
+			dprintf_warn(midi, "MIDI_mciOpen // unknown format !\n");
 			return MCIERR_INTERNAL;
 		}
 		if (MIDI_ReadMThd(wDevID, dwOffset) != 0) {
-			dprintf_midi(stddeb, "MIDI_mciOpen // can't read 'MThd' header \n");
+			dprintf_warn(midi, "MIDI_mciOpen // can't read 'MThd' header \n");
 			return MCIERR_INTERNAL;
 		}
 		dwOffset = mmioSeek(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR);
 		if (MIDI_ReadMTrk(wDevID, dwOffset) != 0) {
-			dprintf_midi(stddeb, "MIDI_mciOpen // can't read 'MTrk' header \n");
+			dprintf_warn(midi, "MIDI_mciOpen // can't read 'MTrk' header \n");
 			return MCIERR_INTERNAL;
 		}
 		dwOffset = mmioSeek(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR);
 		MCIMidiDev[wDevID].dwBeginData = dwOffset;
-		dprintf_midi(stddeb, "MIDI_mciOpen // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+		dprintf_info(midi, "MIDI_mciOpen // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
 				ckMainRIFF.cksize);
 	}
@@ -389,10 +387,10 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 static DWORD MIDI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciStop(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciStop(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
-	dprintf_midi(stddeb, "MIDI_mciStop // MCIMidiDev[wDevID].dwStatus=%p %d\n",
+	dprintf_info(midi, "MIDI_mciStop // MCIMidiDev[wDevID].dwStatus=%p %d\n",
 			&MCIMidiDev[wDevID].dwStatus, MCIMidiDev[wDevID].dwStatus);
 	return 0;
 #else
@@ -409,7 +407,7 @@ static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 #if defined(linux) || defined(__FreeBSD__)
 	DWORD		dwRet;
 
-	dprintf_midi(stddeb, "MIDI_mciClose(%04X, %08lX, %p);\n", wDevID, dwParam, lpParms);
+	dprintf_info(midi, "MIDI_mciClose(%04X, %08lX, %p);\n", wDevID, dwParam, lpParms);
 	if (MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
 		MIDI_mciStop(wDevID, MCI_WAIT, lpParms);
 		}
@@ -419,7 +417,7 @@ static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 		if (MCIMidiDev[wDevID].hFile != 0) {
 			mmioClose(MCIMidiDev[wDevID].hFile, 0);
 			MCIMidiDev[wDevID].hFile = 0;
-			dprintf_midi(stddeb, "MIDI_mciClose // hFile closed !\n");
+			dprintf_info(midi, "MIDI_mciClose // hFile closed !\n");
 			}
 		USER_HEAP_FREE(MCIMidiDev[wDevID].hMidiHdr);
 		dwRet = modMessage(wDevID, MODM_CLOSE, 0, 0L, 0L);
@@ -447,33 +445,33 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	DWORD		dwData,dwRet;
 	LPWORD		ptr;
 
-	dprintf_midi(stddeb, "MIDI_mciPlay(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciPlay(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (MCIMidiDev[wDevID].hFile == 0) {
-		dprintf_midi(stddeb, "MIDI_mciPlay // can't find file='%08lx' !\n", 
+		dprintf_warn(midi, "MIDI_mciPlay // can't find file='%08lx' !\n", 
 				(DWORD)MCIMidiDev[wDevID].openParms.lpstrElementName);
 		return MCIERR_FILE_NOT_FOUND;
 	}
 	start = 1; 		end = 99999;
 	if (dwFlags & MCI_FROM) {
 		start = lpParms->dwFrom; 
-		dprintf_midi(stddeb, "MIDI_mciPlay // MCI_FROM=%d \n", start);
+		dprintf_info(midi, "MIDI_mciPlay // MCI_FROM=%d \n", start);
 	}
 	if (dwFlags & MCI_TO) {
 		end = lpParms->dwTo;
-		dprintf_midi(stddeb, "MIDI_mciPlay // MCI_TO=%d \n", end);
+		dprintf_info(midi, "MIDI_mciPlay // MCI_TO=%d \n", end);
 	}
 #if 0
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_midi(stddeb, "MIDI_mciPlay // MCI_NOTIFY %08lX !\n", lpParms->dwCallback);
+		dprintf_info(midi, "MIDI_mciPlay // MCI_NOTIFY %08lX !\n", lpParms->dwCallback);
 		switch(fork()) {
 		case -1:
-			dprintf_midi(stddeb, "MIDI_mciPlay // Can't 'fork' process !\n");
+			dprintf_warn(midi, "MIDI_mciPlay // Can't 'fork' process !\n");
 			break;
 		case 0:
-			dprintf_midi(stddeb, "MIDI_mciPlay // process started ! play in background ...\n");
+			dprintf_info(midi, "MIDI_mciPlay // process started ! play in background ...\n");
 			break;
 		default:
-			dprintf_midi(stddeb, "MIDI_mciPlay // process started ! return to caller...\n");
+			dprintf_info(midi, "MIDI_mciPlay // process started ! return to caller...\n");
 			return 0;
 		}
 	}
@@ -488,11 +486,11 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	lpMidiHdr->dwFlags = 0L;
 	dwRet = modMessage(wDevID, MODM_PREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
 
-/*	dprintf_midi(stddeb, "MIDI_mciPlay // after MODM_PREPARE \n"); */
+/*	dprintf_info(midi, "MIDI_mciPlay // after MODM_PREPARE \n"); */
 
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_PLAY;
 	while(MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
-		dprintf_midi(stddeb, "MIDI_mciPlay // MCIMidiDev[wDevID].dwStatus=%p %d\n",
+		dprintf_info(midi, "MIDI_mciPlay // MCIMidiDev[wDevID].dwStatus=%p %d\n",
 			&MCIMidiDev[wDevID].dwStatus, MCIMidiDev[wDevID].dwStatus);
 
 		ptr = (LPWORD)lpMidiHdr->lpData;
@@ -503,11 +501,11 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 /*
 		count = mmioRead(MCIMidiDev[wDevID].hFile, lpMidiHdr->lpData, lpMidiHdr->dwBufferLength);
 */
-		dprintf_midi(stddeb, "MIDI_mciPlay // after read count = %d\n",count);
+		dprintf_info(midi, "MIDI_mciPlay // after read count = %d\n",count);
 
 		if (count < 1) break;
 		lpMidiHdr->dwBytesRecorded = count;
-		dprintf_midi(stddeb, "MIDI_mciPlay // before MODM_LONGDATA lpMidiHdr=%p dwBytesRecorded=%lu\n",
+		dprintf_info(midi, "MIDI_mciPlay // before MODM_LONGDATA lpMidiHdr=%p dwBytesRecorded=%lu\n",
 					lpMidiHdr, lpMidiHdr->dwBytesRecorded);
 		dwRet = modMessage(wDevID, MODM_LONGDATA, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
 		if (dwRet != MMSYSERR_NOERROR) {
@@ -539,7 +537,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	}
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_midi(stddeb, "MIDI_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+		dprintf_info(midi, "MIDI_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 #if 0
@@ -563,20 +561,20 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	LPMIDIHDR	lpMidiHdr;
 	DWORD		dwRet;
 
-	dprintf_midi(stddeb, "MIDI_mciRecord(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciRecord(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (MCIMidiDev[wDevID].hFile == 0) {
-		dprintf_midi(stddeb, "MIDI_mciRecord // can't find file='%08lx' !\n", 
+		dprintf_warn(midi, "MIDI_mciRecord // can't find file='%08lx' !\n", 
 			(DWORD)MCIMidiDev[wDevID].openParms.lpstrElementName);
 		return MCIERR_FILE_NOT_FOUND;
 	}
 	start = 1; 		end = 99999;
 	if (dwFlags & MCI_FROM) {
 		start = lpParms->dwFrom; 
-		dprintf_midi(stddeb, "MIDI_mciRecord // MCI_FROM=%d \n", start);
+		dprintf_info(midi, "MIDI_mciRecord // MCI_FROM=%d \n", start);
 	}
 	if (dwFlags & MCI_TO) {
 		end = lpParms->dwTo;
-		dprintf_midi(stddeb, "MIDI_mciRecord // MCI_TO=%d \n", end);
+		dprintf_info(midi, "MIDI_mciRecord // MCI_TO=%d \n", end);
 	}
 	lpMidiHdr = USER_HEAP_LIN_ADDR(MCIMidiDev[wDevID].hMidiHdr);
 	lpMidiHdr->lpData = (LPSTR) xmalloc(1200);
@@ -584,27 +582,27 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	lpMidiHdr->dwUser = 0L;
 	lpMidiHdr->dwFlags = 0L;
 	dwRet = midMessage(wDevID, MIDM_PREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
-	dprintf_midi(stddeb, "MIDI_mciRecord // after MIDM_PREPARE \n");
+	dprintf_info(midi, "MIDI_mciRecord // after MIDM_PREPARE \n");
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_RECORD;
 	while(MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
-		dprintf_midi(stddeb, "MIDI_mciRecord // MCIMidiDev[wDevID].dwStatus=%p %d\n",
+		dprintf_info(midi, "MIDI_mciRecord // MCIMidiDev[wDevID].dwStatus=%p %d\n",
 			&MCIMidiDev[wDevID].dwStatus, MCIMidiDev[wDevID].dwStatus);
 		lpMidiHdr->dwBytesRecorded = 0;
 		dwRet = midMessage(wDevID, MIDM_START, 0, 0L, 0L);
-		dprintf_midi(stddeb, "MIDI_mciRecord // after MIDM_START lpMidiHdr=%p dwBytesRecorded=%lu\n",
+		dprintf_info(midi, "MIDI_mciRecord // after MIDM_START lpMidiHdr=%p dwBytesRecorded=%lu\n",
 					lpMidiHdr, lpMidiHdr->dwBytesRecorded);
 		if (lpMidiHdr->dwBytesRecorded == 0) break;
 	}
-	dprintf_midi(stddeb, "MIDI_mciRecord // before MIDM_UNPREPARE \n");
+	dprintf_info(midi, "MIDI_mciRecord // before MIDM_UNPREPARE \n");
 	dwRet = midMessage(wDevID, MIDM_UNPREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
-	dprintf_midi(stddeb, "MIDI_mciRecord // after MIDM_UNPREPARE \n");
+	dprintf_info(midi, "MIDI_mciRecord // after MIDM_UNPREPARE \n");
 	if (lpMidiHdr->lpData != NULL) {
 		free(lpMidiHdr->lpData);
 		lpMidiHdr->lpData = NULL;
 	}
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_midi(stddeb, "MIDI_mciRecord // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+		dprintf_info(midi, "MIDI_mciRecord // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
@@ -621,7 +619,7 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 static DWORD MIDI_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciPause(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciPause(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
 #else
@@ -636,7 +634,7 @@ static DWORD MIDI_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 static DWORD MIDI_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciResume(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciResume(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
 #else
@@ -651,23 +649,23 @@ static DWORD MIDI_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 static DWORD MIDI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciSet(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciSet(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	dprintf_midi(stddeb, "MIDI_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
-	dprintf_midi(stddeb, "MIDI_mciSet // dwAudio=%08lX\n", lpParms->dwAudio);
+	dprintf_info(midi, "MIDI_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
+	dprintf_info(midi, "MIDI_mciSet // dwAudio=%08lX\n", lpParms->dwAudio);
 	if (dwFlags & MCI_SET_TIME_FORMAT) {
 		switch (lpParms->dwTimeFormat) {
 		case MCI_FORMAT_MILLISECONDS:
-			dprintf_midi(stddeb, "MIDI_mciSet // MCI_FORMAT_MILLISECONDS !\n");
+			dprintf_info(midi, "MIDI_mciSet // MCI_FORMAT_MILLISECONDS !\n");
 			break;
 		case MCI_FORMAT_BYTES:
-			dprintf_midi(stddeb, "MIDI_mciSet // MCI_FORMAT_BYTES !\n");
+			dprintf_info(midi, "MIDI_mciSet // MCI_FORMAT_BYTES !\n");
 			break;
 		case MCI_FORMAT_SAMPLES:
-			dprintf_midi(stddeb, "MIDI_mciSet // MCI_FORMAT_SAMPLES !\n");
+			dprintf_info(midi, "MIDI_mciSet // MCI_FORMAT_SAMPLES !\n");
 			break;
 		default:
-			dprintf_midi(stddeb, "MIDI_mciSet // bad time format !\n");
+			dprintf_warn(midi, "MIDI_mciSet // bad time format !\n");
 			return MCIERR_BAD_TIME_FORMAT;
 		}
 	}
@@ -675,26 +673,26 @@ static DWORD MIDI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	if (dwFlags & MCI_SET_DOOR_OPEN) return MCIERR_UNSUPPORTED_FUNCTION;
 	if (dwFlags & MCI_SET_DOOR_CLOSED) return MCIERR_UNSUPPORTED_FUNCTION;
 	if (dwFlags & MCI_SET_AUDIO)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SET_AUDIO !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SET_AUDIO !\n");
 	if (dwFlags && MCI_SET_ON) {
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SET_ON !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SET_ON !\n");
 		if (dwFlags && MCI_SET_AUDIO_LEFT)
-			dprintf_midi(stddeb, "MIDI_mciSet // MCI_SET_AUDIO_LEFT !\n");
+			dprintf_info(midi, "MIDI_mciSet // MCI_SET_AUDIO_LEFT !\n");
 		if (dwFlags && MCI_SET_AUDIO_RIGHT)
-			dprintf_midi(stddeb, "MIDI_mciSet // MCI_SET_AUDIO_RIGHT !\n");
+			dprintf_info(midi, "MIDI_mciSet // MCI_SET_AUDIO_RIGHT !\n");
 	}
 	if (dwFlags & MCI_SET_OFF)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SET_OFF !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SET_OFF !\n");
 	if (dwFlags & MCI_SEQ_SET_MASTER)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SEQ_SET_MASTER !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SEQ_SET_MASTER !\n");
 	if (dwFlags & MCI_SEQ_SET_SLAVE)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SEQ_SET_SLAVE !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SEQ_SET_SLAVE !\n");
 	if (dwFlags & MCI_SEQ_SET_OFFSET)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SEQ_SET_OFFSET !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SEQ_SET_OFFSET !\n");
 	if (dwFlags & MCI_SEQ_SET_PORT)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SEQ_SET_PORT !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SEQ_SET_PORT !\n");
 	if (dwFlags & MCI_SEQ_SET_TEMPO)
-		dprintf_midi(stddeb, "MIDI_mciSet // MCI_SEQ_SET_TEMPO !\n");
+		dprintf_info(midi, "MIDI_mciSet // MCI_SEQ_SET_TEMPO !\n");
  	return 0;
 #else
 	return MCIERR_INTERNAL;
@@ -708,7 +706,7 @@ static DWORD MIDI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciStatus(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciStatus(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_STATUS_ITEM) {
 		switch(lpParms->dwItem) {
@@ -726,7 +724,7 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 			lpParms->dwReturn = MCI_MODE_STOP;
 			break;
 		case MCI_STATUS_MEDIA_PRESENT:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_STATUS_MEDIA_PRESENT !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_STATUS_MEDIA_PRESENT !\n");
 			lpParms->dwReturn = TRUE;
 			break;
 		case MCI_STATUS_NUMBER_OF_TRACKS:
@@ -742,44 +740,44 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 			}
 			break;
 		case MCI_STATUS_READY:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_STATUS_READY !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_STATUS_READY !\n");
 			lpParms->dwReturn = TRUE;
 			break;
 		case MCI_STATUS_TIME_FORMAT:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_STATUS_TIME_FORMAT !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_STATUS_TIME_FORMAT !\n");
 			lpParms->dwReturn = MCI_FORMAT_MILLISECONDS;
 			break;
 		case MCI_SEQ_STATUS_DIVTYPE:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_SEQ_STATUS_DIVTYPE !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_SEQ_STATUS_DIVTYPE !\n");
 			lpParms->dwReturn = 0;
 			break;
 		case MCI_SEQ_STATUS_MASTER:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_SEQ_STATUS_MASTER !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_SEQ_STATUS_MASTER !\n");
 			lpParms->dwReturn = 0;
 			break;
 		case MCI_SEQ_STATUS_SLAVE:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_SEQ_STATUS_SLAVE !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_SEQ_STATUS_SLAVE !\n");
 			lpParms->dwReturn = 0;
 			break;
 		case MCI_SEQ_STATUS_OFFSET:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_SEQ_STATUS_OFFSET !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_SEQ_STATUS_OFFSET !\n");
 			lpParms->dwReturn = 0;
 			break;
 		case MCI_SEQ_STATUS_PORT:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_SEQ_STATUS_PORT !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_SEQ_STATUS_PORT !\n");
 			lpParms->dwReturn = 0;
 			break;
 		case MCI_SEQ_STATUS_TEMPO:
-			dprintf_midi(stddeb, "MIDI_mciStatus // MCI_SEQ_STATUS_TEMPO !\n");
+			dprintf_info(midi, "MIDI_mciStatus // MCI_SEQ_STATUS_TEMPO !\n");
 			lpParms->dwReturn = 0;
 			break;
 		default:
-			dprintf_midi(stddeb, "MIDI_mciStatus // unknowm command %08lX !\n", lpParms->dwItem);
+			dprintf_warn(midi, "MIDI_mciStatus // unknowm command %08lX !\n", lpParms->dwItem);
 			return MCIERR_UNRECOGNIZED_COMMAND;
 		}
 	}
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_midi(stddeb, "MIDI_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+		dprintf_info(midi, "MIDI_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
@@ -796,7 +794,7 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 					LPMCI_GETDEVCAPS_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciGetDevCaps(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciGetDevCaps(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 		switch(lpParms->dwItem) {
@@ -843,7 +841,7 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "MIDI_mciInfo(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+	dprintf_info(midi, "MIDI_mciInfo(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	lpParms->lpstrReturn = NULL;
 	switch(dwFlags) {
@@ -875,7 +873,7 @@ static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
  */
 static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPS16 lpCaps, DWORD dwSize)
 {
-	dprintf_midi(stddeb, "midGetDevCaps(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
+	dprintf_info(midi, "midGetDevCaps(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 	lpCaps->wMid = 0x00FF; 	        /* Manufac ID */
 	lpCaps->wPid = 0x0001; 	        /* Product ID */
 	lpCaps->vDriverVersion = 0x001; /* Product Version */
@@ -891,37 +889,37 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
 #if defined(linux) || defined(__FreeBSD__)
 	int		midi;
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
 		"midOpen(%04X, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
 	if (lpDesc == NULL) {
-		dprintf_midi(stddeb,"Linux 'midOpen' // Invalid Parameter !\n");
+		dprintf_warn(midi, "Linux 'midOpen' // Invalid Parameter !\n");
 		return MMSYSERR_INVALPARAM;
 	}
 	if (wDevID >= MAX_MIDIINDRV) {
-		dprintf_midi(stddeb,"Linux 'midOpen' // MAX_MIDIINDRV reached !\n");
+		dprintf_info(midi,"Linux 'midOpen' // MAX_MIDIINDRV reached !\n");
 		return MMSYSERR_ALLOCATED;
 	}
 	MidiInDev[wDevID].unixdev = 0;
 	midi = open (MIDI_DEV, O_RDONLY, 0);
 	if (midi == -1) {
-		dprintf_midi(stddeb,"Linux 'midOpen' // can't open !\n");
+		dprintf_warn(midi,"Linux 'midOpen' // can't open !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	MidiInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 	switch(MidiInDev[wDevID].wFlags) {
 		case DCB_NULL:
-			dprintf_midi(stddeb,"Linux 'midOpen' // CALLBACK_NULL !\n");
+			dprintf_info(midi,"Linux 'midOpen' // CALLBACK_NULL !\n");
 			break;
 		case DCB_WINDOW:
-			dprintf_midi(stddeb,
+			dprintf_info(midi,
 				"Linux 'midOpen' // CALLBACK_WINDOW !\n");
 			break;
 		case DCB_TASK:
-			dprintf_midi(stddeb,
+			dprintf_info(midi,
 				   "Linux 'midOpen' // CALLBACK_TASK !\n");
 			break;
 		case DCB_FUNCTION:
-			dprintf_midi(stddeb,
+			dprintf_info(midi,
 				   "Linux 'midOpen' // CALLBACK_FUNCTION !\n");
 			break;
 	}
@@ -930,7 +928,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	MidiInDev[wDevID].dwTotalPlayed = 0;
 	MidiInDev[wDevID].bufsize = 0x3FFF;
 	if (MIDI_NotifyClient(wDevID, MIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
-		dprintf_midi(stddeb,"Linux 'midOpen' // can't notify client !\n");
+		dprintf_warn(midi,"Linux 'midOpen' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
 	}
 	return MMSYSERR_NOERROR;
@@ -945,16 +943,16 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 static DWORD midClose(WORD wDevID)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "midClose(%04X);\n", wDevID);
+	dprintf_info(midi, "midClose(%04X);\n", wDevID);
 	if (MidiInDev[wDevID].unixdev == 0) {
-		dprintf_midi(stddeb,"Linux 'midClose' // can't close !\n");
+		dprintf_warn(midi,"Linux 'midClose' // can't close !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	close(MidiInDev[wDevID].unixdev);
 	MidiInDev[wDevID].unixdev = 0;
 	MidiInDev[wDevID].bufsize = 0;
 	if (MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
-		dprintf_midi(stddeb,"Linux 'midClose' // can't notify client !\n");
+		dprintf_warn(midi,"Linux 'midClose' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
 	}
 	return MMSYSERR_NOERROR;
@@ -968,7 +966,7 @@ static DWORD midClose(WORD wDevID)
  */
 static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-	dprintf_midi(stddeb, "midAddBuffer(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+	dprintf_info(midi, "midAddBuffer(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -977,7 +975,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-	dprintf_midi(stddeb, "midPrepare(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+	dprintf_info(midi, "midPrepare(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -986,7 +984,7 @@ static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-	dprintf_midi(stddeb, "midUnprepare(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+	dprintf_info(midi, "midUnprepare(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -995,7 +993,7 @@ static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midReset(WORD wDevID)
 {
-	dprintf_midi(stddeb, "midReset(%04X);\n", wDevID);
+	dprintf_info(midi, "midReset(%04X);\n", wDevID);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -1005,7 +1003,7 @@ static DWORD midReset(WORD wDevID)
  */
 static DWORD midStart(WORD wDevID)
 {
-	dprintf_midi(stddeb, "midStart(%04X);\n", wDevID);
+	dprintf_info(midi, "midStart(%04X);\n", wDevID);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -1015,7 +1013,7 @@ static DWORD midStart(WORD wDevID)
  */
 static DWORD midStop(WORD wDevID)
 {
-	dprintf_midi(stddeb, "midStop(%04X);\n", wDevID);
+	dprintf_info(midi, "midStop(%04X);\n", wDevID);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -1026,7 +1024,7 @@ static DWORD midStop(WORD wDevID)
 DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
-	dprintf_midi(stddeb, "midMessage(%04X, %04X, %08lX, %08lX, %08lX);\n", 
+	dprintf_info(midi, "midMessage(%04X, %04X, %08lX, %08lX, %08lX);\n", 
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 	case MIDM_OPEN:
@@ -1063,7 +1061,7 @@ DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
  */
 static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPS16 lpCaps, DWORD dwSize)
 {
-	dprintf_midi(stddeb, "modGetDevCaps(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
+	dprintf_info(midi, "modGetDevCaps(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
 	lpCaps->wPid = 0x0001; 	/* Product ID */
 	lpCaps->vDriverVersion = 0x001; /* Product Version */
@@ -1076,7 +1074,7 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPS16 lpCaps, DWORD dwSize)
 	lpCaps->wVoices     = 14;       /* make it ioctl */
 	lpCaps->wNotes      = 14;       /* make it ioctl */
 	lpCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	dprintf_midi(stddeb,"Linux modGetDevCaps // techn = %d voices=%d notes = %d support = %ld\n",lpCaps->wTechnology,lpCaps->wVoices,lpCaps->wNotes,lpCaps->dwSupport);
+	dprintf_info(midi,"Linux modGetDevCaps // techn = %d voices=%d notes = %d support = %ld\n",lpCaps->wTechnology,lpCaps->wVoices,lpCaps->wNotes,lpCaps->dwSupport);
 
 	return MMSYSERR_NOERROR;
 }
@@ -1090,37 +1088,37 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 #if defined(linux) || defined(__FreeBSD__)
 	int		midi;
 
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
 		"modOpen(%04X, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
 	if (lpDesc == NULL) {
-		dprintf_midi(stddeb,"Linux 'modOpen' // Invalid Parameter !\n");
+		dprintf_warn(midi, "Linux 'modOpen' // Invalid Parameter !\n");
 		return MMSYSERR_INVALPARAM;
 	}
 	if (wDevID>= MAX_MIDIOUTDRV) {
-		dprintf_midi(stddeb,"Linux 'modOpen' // MAX_MIDIOUTDRV reached !\n");
+		dprintf_info(midi,"Linux 'modOpen' // MAX_MIDIOUTDRV reached !\n");
 		return MMSYSERR_ALLOCATED;
 	}
 	MidiOutDev[wDevID].unixdev = 0;
 	midi = open (MIDI_DEV, O_WRONLY, 0);
 	if (midi == -1) {
-		dprintf_midi(stddeb,"Linux 'modOpen' // can't open !\n");
+		dprintf_warn(midi,"Linux 'modOpen' // can't open !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 	switch(MidiOutDev[wDevID].wFlags) {
 	case DCB_NULL:
-		dprintf_midi(stddeb,"Linux 'modOpen' // CALLBACK_NULL !\n");
+		dprintf_info(midi,"Linux 'modOpen' // CALLBACK_NULL !\n");
 		break;
 	case DCB_WINDOW:
-		dprintf_midi(stddeb,
+		dprintf_info(midi,
 			"Linux 'modOpen' // CALLBACK_WINDOW !\n");
 		break;
 	case DCB_TASK:
-		dprintf_midi(stddeb,
+		dprintf_info(midi,
 			"Linux 'modOpen' // CALLBACK_TASK !\n");
 		break;
 	case DCB_FUNCTION:
-		dprintf_midi(stddeb,
+		dprintf_info(midi,
 			"Linux 'modOpen' // CALLBACK_FUNCTION !\n");
 		break;
 	}
@@ -1129,10 +1127,10 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	MidiOutDev[wDevID].dwTotalPlayed = 0;
 	MidiOutDev[wDevID].bufsize = 0x3FFF;
 	if (MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
-		dprintf_midi(stddeb,"Linux 'modOpen' // can't notify client !\n");
+		dprintf_warn(midi,"Linux 'modOpen' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
 	}
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
 		"Linux 'modOpen' // Succesful unixdev=%d !\n", midi);
 	return MMSYSERR_NOERROR;
 #else
@@ -1147,16 +1145,16 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 static DWORD modClose(WORD wDevID)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb, "modClose(%04X);\n", wDevID);
+	dprintf_info(midi, "modClose(%04X);\n", wDevID);
 	if (MidiOutDev[wDevID].unixdev == 0) {
-		dprintf_midi(stddeb,"Linux 'modClose' // can't close !\n");
+		dprintf_warn(midi,"Linux 'modClose' // can't close !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	close(MidiOutDev[wDevID].unixdev);
 	MidiOutDev[wDevID].unixdev = 0;
 	MidiOutDev[wDevID].bufsize = 0;
 	if (MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
-		dprintf_midi(stddeb,"Linux 'modClose' // can't notify client !\n");
+		dprintf_warn(midi,"Linux 'modClose' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
 	}
 	return MMSYSERR_NOERROR;
@@ -1173,17 +1171,16 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 #if defined(linux) || defined(__FreeBSD__)
 	WORD	event;
 
-	dprintf_midi(stddeb,	
+	dprintf_info(midi,	
 		"modData(%04X, %08lX);\n", wDevID, dwParam);
 	if (MidiOutDev[wDevID].unixdev == 0) {
-        	dprintf_midi(stddeb,"Linux 'modData' // can't play !\n");
+        	dprintf_warn(midi,"Linux 'modData' // can't play !\n");
 		return MIDIERR_NODEVICE;
 	}
 	event = LOWORD(dwParam);
 	if (write (MidiOutDev[wDevID].unixdev, 
 		&event, sizeof(WORD)) != sizeof(WORD)) {
-		dprintf_midi(stddeb,
-			"modData() // error writting unixdev !\n");
+		dprintf_warn(midi, "modData() // error writting unixdev !\n");
 	}
 	return MMSYSERR_NOTENABLED;
 #else
@@ -1201,10 +1198,10 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	LPWORD	ptr;
 	int     en;
 
-	dprintf_midi(stddeb,	
+	dprintf_info(midi,	
 		"modLongData(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	if (MidiOutDev[wDevID].unixdev == 0) {
-        dprintf_midi(stddeb,"Linux 'modLongData' // can't play !\n");
+        dprintf_warn(midi,"Linux 'modLongData' // can't play !\n");
 		return MIDIERR_NODEVICE;
 		}
 	if (lpMidiHdr->lpData == NULL) return MIDIERR_UNPREPARED;
@@ -1212,9 +1209,9 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
 	lpMidiHdr->dwFlags &= ~MHDR_DONE;
 	lpMidiHdr->dwFlags |= MHDR_INQUEUE;
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
 		"modLongData() // dwBytesRecorded %lu !\n", lpMidiHdr->dwBytesRecorded);
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
                 "                 %02X %02X %02X %02X\n",lpMidiHdr->lpData[0],
                                                          lpMidiHdr->lpData[1],
 		                                         lpMidiHdr->lpData[2],
@@ -1231,19 +1228,19 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	}
 
 	en = errno;
-	dprintf_midi(stddeb, "Linux 'modLongData' // after write count = %d\n",count);
+	dprintf_info(midi, "Linux 'modLongData' // after write count = %d\n",count);
 	if (count != lpMidiHdr->dwBytesRecorded) {
-		dprintf_midi(stddeb,
-			"modLongData() // error writting unixdev #%d ! (%d != %ld)\n",
+		dprintf_warn(midi,
+		       "modLongData() // error writting unixdev #%d ! (%d != %ld)\n",
 			MidiOutDev[wDevID].unixdev, count, lpMidiHdr->dwBytesRecorded);
-		dprintf_midi(stddeb,
-			"                 errno = %d error = %s\n",en,strerror(en));
+		dprintf_info(midi,
+			"\terrno = %d error = %s\n",en,strerror(en));
 		return MMSYSERR_NOTENABLED;
 	}
 	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	lpMidiHdr->dwFlags |= MHDR_DONE;
 	if (MIDI_NotifyClient(wDevID, MOM_DONE, 0L, 0L) != MMSYSERR_NOERROR) {
-		dprintf_midi(stddeb,"Linux 'modLongData' // can't notify client !\n");
+		dprintf_warn(midi,"Linux 'modLongData' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
 	}
 	return MMSYSERR_NOERROR;
@@ -1258,14 +1255,14 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
 		  "modPrepare(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	if (MidiOutDev[wDevID].unixdev == 0) {
-		dprintf_midi(stddeb,"Linux 'modPrepare' // can't prepare !\n");
+		dprintf_warn(midi,"Linux 'modPrepare' // can't prepare !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	if (MidiOutDev[wDevID].lpQueueHdr != NULL) {
-		dprintf_midi(stddeb,"Linux 'modPrepare' // already prepare !\n");
+		dprintf_info(midi,"Linux 'modPrepare' // already prepare !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	MidiOutDev[wDevID].dwTotalPlayed = 0;
@@ -1285,10 +1282,10 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_midi(stddeb,
+	dprintf_info(midi,
 		"modUnprepare(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	if (MidiOutDev[wDevID].unixdev == 0) {
-		dprintf_midi(stddeb,"Linux 'modUnprepare' // can't unprepare !\n");
+		dprintf_warn(midi,"Linux 'modUnprepare' // can't unprepare !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	return MMSYSERR_NOERROR;
@@ -1302,7 +1299,7 @@ static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD modReset(WORD wDevID)
 {
-	dprintf_midi(stddeb, "modReset(%04X);\n", wDevID);
+	dprintf_info(midi, "modReset(%04X);\n", wDevID);
 	return MMSYSERR_NOTENABLED;
 }
 
@@ -1313,7 +1310,7 @@ static DWORD modReset(WORD wDevID)
 DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
-	dprintf_midi(stddeb, "modMessage(%04X, %04X, %08lX, %08lX, %08lX);\n", 
+	dprintf_info(midi, "modMessage(%04X, %04X, %08lX, %08lX, %08lX);\n", 
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 	case MODM_OPEN:

@@ -18,7 +18,6 @@
 #include "stackframe.h"
 #include "user.h"
 #include "process.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Built-in modules descriptors */
@@ -142,7 +141,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     if (!hModule) return 0;
     FarSetOwner( hModule, hModule );
 
-    dprintf_module( stddeb, "Built-in %s: hmodule=%04x\n",
+    dprintf_info(module, "Built-in %s: hmodule=%04x\n",
                     descr->name, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->self = hModule;
@@ -185,6 +184,8 @@ BOOL32 BUILTIN_Init(void)
     NE_MODULE *pModule;
     WORD vector;
     HMODULE16 hModule;
+
+    fnBUILTIN_LoadModule = BUILTIN_LoadModule;
 
     for (dll = BuiltinDLLs; dll->descr; dll++)
     {

@@ -16,8 +16,6 @@
 #include "color.h"
 #include "palette.h"
 #include "xmalloc.h"
-#include "stddebug.h"
-/* #define DEBUG_PALETTE */
 #include "debug.h"
 
 static UINT32 SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
@@ -95,7 +93,7 @@ HPALETTE32 WINAPI CreatePalette32( const LOGPALETTE* palette )
     HPALETTE32 hpalette;
     int size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
-    dprintf_palette(stddeb,"CreatePalette: %i entries, ",
+    dprintf_info(palette,"CreatePalette: %i entries \n",
                     palette->palNumEntries);
 
     hpalette = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR) , PALETTE_MAGIC );
@@ -108,7 +106,7 @@ HPALETTE32 WINAPI CreatePalette32( const LOGPALETTE* palette )
     palettePtr->mapping = NULL;
     GDI_HEAP_UNLOCK( hpalette );
 
-    dprintf_palette(stddeb,"returning %04x\n", hpalette);
+    dprintf_info(palette,"   returning %04x\n", hpalette);
     return hpalette;
 }
 
@@ -140,7 +138,7 @@ UINT32 WINAPI GetPaletteEntries32( HPALETTE32 hpalette, UINT32 start,
     PALETTEOBJ * palPtr;
     INT32 numEntries;
 
-    dprintf_palette( stddeb,"GetPaletteEntries: hpal = %04x, %i entries\n",
+    dprintf_info(palette,"GetPaletteEntries: hpal = %04x, %i entries\n",
                      hpalette, count );
         
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
@@ -182,7 +180,7 @@ UINT32 WINAPI SetPaletteEntries32( HPALETTE32 hpalette, UINT32 start,
     PALETTEOBJ * palPtr;
     INT32 numEntries;
 
-    dprintf_palette( stddeb,"SetPaletteEntries: hpal = %04x, %i entries\n",
+    dprintf_info(palette,"SetPaletteEntries: hpal = %04x, %i entries\n",
                      hpalette, count );
 
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
@@ -225,7 +223,7 @@ BOOL32 WINAPI ResizePalette32( HPALETTE32 hPal, UINT32 cEntries )
     int		 prevsize, size = sizeof(LOGPALETTE) + (cEntries - 1) * sizeof(PALETTEENTRY);
     int*	 mapping = NULL;
 
-    dprintf_palette(stddeb,"ResizePalette: hpal = %04x, prev = %i, new = %i\n",
+    dprintf_info(palette,"ResizePalette: hpal = %04x, prev = %i, new = %i\n",
 		    hPal, palPtr ? palPtr->logpalette.palNumEntries : -1,
                     cEntries );
     if( !palPtr ) return FALSE;
@@ -277,7 +275,7 @@ void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
 BOOL32 WINAPI AnimatePalette32( HPALETTE32 hPal, UINT32 StartIndex,
                                UINT32 NumEntries, LPPALETTEENTRY PaletteColors)
 {
-    dprintf_palette(stddeb, "AnimatePalette: %04x (%i - %i)", hPal, 
+    dprintf_info(palette, "AnimatePalette: %04x (%i - %i)\n", hPal, 
                     StartIndex, StartIndex + NumEntries );
 
     if( hPal != STOCK_DEFAULT_PALETTE ) 
@@ -358,7 +356,8 @@ UINT32 WINAPI GetSystemPaletteEntries32( HDC32 hdc, UINT32 start, UINT32 count,
     UINT32 i;
     DC *dc;
 
-    dprintf_palette(stddeb,"GetSystemPaletteEntries: hdc = %04x, cound = %i", hdc, count );
+    dprintf_info(palette, "GetSystemPaletteEntries: hdc = %04x, "
+		    "cound = %i\n", hdc, count );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     if (start >= dc->w.devCaps->sizePalette)
@@ -372,7 +371,7 @@ UINT32 WINAPI GetSystemPaletteEntries32( HDC32 hdc, UINT32 start, UINT32 count,
     {
 	*(COLORREF*)(entries + i) = COLOR_GetSystemPaletteEntry( start + i );
 
-        dprintf_palette( stddeb,"\tidx(%02x) -> RGB(%08lx)\n",
+        dprintf_info(palette,"\tidx(%02x) -> RGB(%08lx)\n",
                          start + i, *(COLORREF*)(entries + i) );
     }
     GDI_HEAP_UNLOCK( hdc );
@@ -402,7 +401,7 @@ UINT32 WINAPI GetNearestPaletteIndex32( HPALETTE32 hpalette, COLORREF color )
 				          palObj->logpalette.palNumEntries,
                                           NULL, color, FALSE );
 
-    dprintf_palette(stddeb,"GetNearestPaletteIndex(%04x,%06lx): returning %d\n", 
+    dprintf_info(palette,"GetNearestPaletteIndex(%04x,%06lx): returning %d\n", 
                     hpalette, color, index );
     GDI_HEAP_UNLOCK( hpalette );
     return index;
@@ -438,7 +437,7 @@ COLORREF WINAPI GetNearestColor32( HDC32 hdc, COLORREF color )
       GDI_HEAP_UNLOCK( dc->w.hPalette );
     }
 
-    dprintf_palette(stddeb,"GetNearestColor(%06lx): returning %06lx\n", 
+    dprintf_info(palette,"GetNearestColor(%06lx): returning %06lx\n", 
                     color, nearest );
     GDI_HEAP_UNLOCK( hdc );    
     return nearest;
@@ -490,7 +489,7 @@ HPALETTE16 WINAPI GDISelectPalette( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
     HPALETTE16 prev;
     DC *dc;
 
-    dprintf_palette(stddeb, "GDISelectPalette: %04x %04x\n", hdc, hpal );
+    dprintf_info(palette, "GDISelectPalette: %04x %04x\n", hdc, hpal );
     
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -520,7 +519,7 @@ UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
 	if (!dc) return 0;
     }
 
-    dprintf_palette(stddeb, "GDIRealizePalette: %04x...", hdc );
+    dprintf_info(palette, "GDIRealizePalette: %04x...\n", hdc );
     
     if( dc &&  dc->w.hPalette != hLastRealizedPalette )
     {
@@ -535,11 +534,11 @@ UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
 	GDI_HEAP_UNLOCK( dc->w.hPalette );
 	hLastRealizedPalette = dc->w.hPalette;
     }
-    else dprintf_palette(stddeb, " skipping (hLastRealizedPalette = %04x) ",
+    else dprintf_info(palette, "  skipping (hLastRealizedPalette = %04x)\n",
 			 hLastRealizedPalette);
     
     GDI_HEAP_UNLOCK( hdc );
-    dprintf_palette(stdnimp, " realized %i colors\n", realized );
+    dprintf_fixme(palette, "   realized %i colors - not impmenented?\n", realized );
     return (UINT16)realized;
 }
 
@@ -553,7 +552,7 @@ UINT16 WINAPI RealizeDefaultPalette( HDC16 hdc )
     PALETTEOBJ*  palPtr;
     int          i, index, realized = 0;
 
-    dprintf_palette(stddeb,"RealizeDefaultPalette: %04x\n", hdc );
+    dprintf_info(palette,"RealizeDefaultPalette: %04x\n", hdc );
 
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -620,11 +619,11 @@ HPALETTE32 WINAPI SelectPalette32( HDC32 hDC, HPALETTE32 hPal,
     WORD	wBkgPalette = 1;
     PALETTEOBJ* lpt = (PALETTEOBJ*) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
-    dprintf_palette(stddeb,"SelectPalette: dc %04x pal %04x, force=%i ", 
+    dprintf_info(palette,"SelectPalette: dc %04x pal %04x, force=%i \n", 
 			    hDC, hPal, bForceBackground);
     if( !lpt ) return 0;
 
-    dprintf_palette(stddeb," entries = %d\n", 
+    dprintf_info(palette," entries = %d\n", 
 			    lpt->logpalette.palNumEntries);
     GDI_HEAP_UNLOCK( hPal );
 

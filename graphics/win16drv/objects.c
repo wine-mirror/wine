@@ -10,7 +10,6 @@
 #include "brush.h"
 #include "font.h"
 #include "pen.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -32,7 +31,7 @@ HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
     HGDIOBJ32 ret = 0;
 
     if (!ptr) return 0;
-    dprintf_gdi(stddeb, "SelectObject: hdc=%04x %04x\n", dc->hSelf, handle );
+    dprintf_info(gdi, "SelectObject: hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {

@@ -54,8 +54,8 @@ struct IClassFactory {
 };
 #undef THIS
 
-#define THIS LPMALLOC this
-typedef struct IMalloc *LPMALLOC,IMalloc;
+#define THIS LPMALLOC32 this
+typedef struct IMalloc32 *LPMALLOC32,IMalloc32;
 typedef struct {
 	STDMETHOD(QueryInterface) (THIS_ REFIID riid,LPVOID FAR* ppvObj) PURE;
 	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
@@ -65,20 +65,46 @@ typedef struct {
 	STDMETHOD_(LPVOID,Realloc) ( THIS_ LPVOID pv,DWORD cb);
 	STDMETHOD_(VOID,Free) ( THIS_ LPVOID pv);
 	STDMETHOD_(DWORD,GetSize) ( THIS_ LPVOID pv);
-	STDMETHOD_(LPINT32,DidAlloc) ( THIS_ LPVOID pv);
+	STDMETHOD_(INT32,DidAlloc) ( THIS_ LPVOID pv);
 	STDMETHOD_(LPVOID,HeapMinimize) ( THIS );
-} *LPMALLOC_VTABLE,IMalloc_VTable;
+} *LPMALLOC32_VTABLE,IMalloc32_VTable;
 
-struct IMalloc {
-	LPMALLOC_VTABLE lpvtbl;
-	DWORD		ref;
+struct IMalloc32 {
+	LPMALLOC32_VTABLE	lpvtbl;
+	DWORD			ref;
+};
+#undef THIS
+
+#define THIS LPMALLOC16 this
+typedef struct IMalloc16 *LPMALLOC16,IMalloc16;
+typedef struct {
+	STDMETHOD(QueryInterface) (THIS_ REFIID riid,LPVOID FAR* ppvObj) PURE;
+	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
+	STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+	STDMETHOD_(LPVOID,Alloc) ( THIS_ DWORD cb);
+	STDMETHOD_(LPVOID,Realloc) ( THIS_ LPVOID pv,DWORD cb);
+	STDMETHOD_(VOID,Free) ( THIS_ LPVOID pv);
+	STDMETHOD_(DWORD,GetSize) ( THIS_ LPVOID pv);
+	STDMETHOD_(INT16,DidAlloc) ( THIS_ LPVOID pv);
+	STDMETHOD_(LPVOID,HeapMinimize) ( THIS );
+} *LPMALLOC16_VTABLE,IMalloc16_VTable;
+
+struct IMalloc16 {
+	LPMALLOC16_VTABLE	lpvtbl;
+	DWORD			ref;
+	/* Gmm, I think one is not enough, we should probably manage a list of
+	 * heaps
+	 */
+	HGLOBAL16		heap;
 };
 #undef THIS
 
 /* private prototypes for the constructors */
 #ifdef __WINE__
 LPUNKNOWN	IUnknown_Constructor();
-LPMALLOC	IMalloc_Constructor();
+LPMALLOC16	IMalloc16_Constructor();
+LPMALLOC32	IMalloc32_Constructor();
 #endif
 
 #undef STDMETHOD

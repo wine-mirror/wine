@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pty.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -25,7 +24,6 @@
 #include "winerror.h"
 #include "wincon.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 static CONSOLE_SCREEN_BUFFER_INFO dummyinfo =
@@ -39,23 +37,26 @@ static CONSOLE_SCREEN_BUFFER_INFO dummyinfo =
 
 /* The console -- I chose to keep the master and slave
  * (UNIX) file descriptors around in case they are needed for
- * ioctls later.  The pid is needed to detroy the xterm if needed.
+ * ioctls later.  The pid is needed to destroy the xterm on close
  */
 typedef struct _CONSOLE {
 	K32OBJ  header;
 	int	master;			/* xterm side of pty */
 	int	slave;			/* wine side of pty */
 	int	pid;			/* xterm's pid, -1 if no xterm */
-	int	flags;			/* CONSOLE_STARTED_FROM */
-        K32OBJ *file_in;                /* console input */
-        K32OBJ *file_out;               /* console output */
-        K32OBJ *file_err;               /* console error */
 } CONSOLE;
 
-#define CONSOLE_STARTED_FROM  (0x1)	/* FIXME: this is lame, it should have 
-					   something to do with sharing... */
 
 static void CONSOLE_Destroy( K32OBJ *obj );
+static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer, 
+			    DWORD nNumberOfChars,  LPDWORD lpNumberOfChars, 
+			    LPOVERLAPPED lpOverlapped);
+static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, 
+			   DWORD nNumberOfChars, LPDWORD lpNumberOfChars, 
+			   LPOVERLAPPED lpOverlapped);
+static int wine_openpty(int *master, int *slave, char *name, 
+		     struct termios *term, struct winsize *winsize);
+static BOOL32 wine_createConsole(int *master, int *slave, int *pid);
 
 const K32OBJ_OPS CONSOLE_Ops =
 {
@@ -63,12 +64,11 @@ const K32OBJ_OPS CONSOLE_Ops =
 	NULL,			/* satisfied */
 	NULL,			/* add_wait */
 	NULL,			/* remove_wait */
+	CONSOLE_Read,		/* read */
+	CONSOLE_Write,		/* write */
 	CONSOLE_Destroy		/* destroy */
 };
 
-
-static int wine_openpty(int *master, int *slave, char *name, 
-		     struct termios *term, struct winsize *winsize);
 
 
 
@@ -84,8 +84,53 @@ static void CONSOLE_Destroy(K32OBJ *obj)
 		kill(console->pid, SIGTERM);
 	}
 	HeapFree(SystemHeap, 0, console);
-
 }
+
+
+/* lpOverlapped is ignored */
+static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
+			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
+{
+	CONSOLE *console = (CONSOLE *)ptr;
+	int result;
+
+	dprintf_info(console, "CONSOLE_Read: %p %p %ld\n", ptr, lpBuffer,
+		      nNumberOfChars);
+
+	*lpNumberOfChars = 0; 
+
+	if ((result = read(console->slave, lpBuffer, nNumberOfChars)) == -1) {
+		FILE_SetDosError();
+		return FALSE;
+	}
+	*lpNumberOfChars = result;
+	return TRUE;
+}
+
+/* lpOverlapped is ignored */
+static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer, 
+			    DWORD nNumberOfChars,
+			    LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
+{
+	CONSOLE *console = (CONSOLE *)ptr;
+	int result;
+
+	dprintf_info(console, "CONSOLE_Write: %p %p %ld\n", ptr, lpBuffer,
+		      nNumberOfChars);
+
+	*lpNumberOfChars = 0; 
+
+	/* FIXME: there was a loop here before, why??? */
+
+	if ((result = write(console->slave, lpBuffer, nNumberOfChars)) == -1) {
+		FILE_SetDosError();
+		return FALSE;
+	}
+	*lpNumberOfChars = result;
+	return TRUE;
+}
+
+
 
 
 /***********************************************************************
@@ -164,9 +209,8 @@ BOOL32 WINAPI FreeConsole(VOID)
 		return FALSE;
 	}
 
-        if (console->file_in) K32OBJ_DecCount( console->file_in );
-        if (console->file_out) K32OBJ_DecCount( console->file_out );
-        if (console->file_err) K32OBJ_DecCount( console->file_err );
+	PROCESS_CloseObjHandles(pdb, &console->header);
+
 	K32OBJ_DecCount( &console->header );
 	pdb->console = NULL;
 	SYSTEM_UNLOCK();
@@ -264,6 +308,24 @@ static BOOL32 wine_createConsole(int *master, int *slave, int *pid)
 
 }
 
+/***********************************************************************
+ *		CONSOLE_GetConsoleHandle
+ *	 returns a 16-bit style console handle
+ * note: only called from _lopen
+ */
+HFILE32 CONSOLE_GetConsoleHandle(VOID)
+{
+	PDB32 *pdb = PROCESS_Current();
+	HFILE32 handle = HFILE_ERROR32;
+
+	SYSTEM_LOCK();
+	if (pdb->console != NULL) {
+		CONSOLE *console = (CONSOLE *)pdb->console;
+		handle = (HFILE32)HANDLE_Alloc(&console->header, 0, TRUE);
+	}
+	SYSTEM_UNLOCK();
+	return handle;
+}
 
 /***********************************************************************
  *            AllocConsole (KERNEL32.103)
@@ -287,13 +349,8 @@ BOOL32 WINAPI AllocConsole(VOID)
 
 	console = (CONSOLE *)pdb->console;
 
-	/* we only want to be able to open a console if the process doesn't have one
-	 * now or we got the one we have from our parent
-	 *  - invalid handle comes from when the console was closed via FreeConsole()
-	 *  - CONSOLE_STARTED_FROM is when this process inherits its console from
-	 *    its parent
-	 */
-	if (console && (console->flags & CONSOLE_STARTED_FROM) == 0) {
+	/* don't create a console if we already have one */
+	if (console != NULL) {
 		SetLastError(ERROR_ACCESS_DENIED);
 		SYSTEM_UNLOCK();
 		return FALSE;
@@ -308,9 +365,6 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->header.type     = K32OBJ_CONSOLE;
         console->header.refcount = 1;
         console->pid             = -1;
-        console->file_in         = NULL;
-        console->file_out        = NULL;
-        console->file_err        = NULL;
 
 	if (wine_createConsole(&master, &slave, &pid) == FALSE) {
 		K32OBJ_DecCount(&console->header);
@@ -322,26 +376,24 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->master = master;
 	console->slave = slave;
 	console->pid = pid;
-	console->flags = 0;
 
-	if ((hIn = FILE_DupUnixHandle(slave)) == INVALID_HANDLE_VALUE32)
+	if ((hIn = HANDLE_Alloc(&console->header, 0, TRUE)) == INVALID_HANDLE_VALUE32)
         {
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
 	}
-	FILE_SetFileType(hIn, FILE_TYPE_CHAR);
 
-	if ((hOut = FILE_DupUnixHandle(slave)) == INVALID_HANDLE_VALUE32)
+	if ((hOut = HANDLE_Alloc(&console->header, 0, TRUE)) == INVALID_HANDLE_VALUE32)
         {
             CloseHandle(hIn);
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
 	}
-	FILE_SetFileType(hOut, FILE_TYPE_CHAR);
 
-	if ((hErr = FILE_DupUnixHandle(slave)) == INVALID_HANDLE_VALUE32)
+
+	if ((hErr = HANDLE_Alloc(&console->header, 0, TRUE)) == INVALID_HANDLE_VALUE32)
         {
             CloseHandle(hIn);
             CloseHandle(hOut);
@@ -349,11 +401,6 @@ BOOL32 WINAPI AllocConsole(VOID)
             SYSTEM_UNLOCK();
             return FALSE;
 	}
-	FILE_SetFileType(hErr, FILE_TYPE_CHAR);
-
-        console->file_in = HANDLE_GetObjPtr( hIn, K32OBJ_FILE, 0 /*FIXME*/ );
-        console->file_out = HANDLE_GetObjPtr( hIn, K32OBJ_FILE, 0 /*FIXME*/ );
-        console->file_err = HANDLE_GetObjPtr( hIn, K32OBJ_FILE, 0 /*FIXME*/ );
 
 	/* associate this console with the process */
         if (pdb->console) K32OBJ_DecCount( pdb->console );
@@ -436,18 +483,6 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
 	/* FIXME: should I check if this is a console handle? */
 	return WriteFile(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite,
 			 lpNumberOfCharsWritten, NULL);
-
-#ifdef OLD
-	*lpNumberOfCharsWritten = fprintf(CONSOLE_console.conIO, "%.*s",
-					   (int)nNumberOfCharsToWrite,
-					   (LPSTR)lpBuffer );
-	if (ferror(CONSOLE_console.conIO) {
-		clearerr();
-		return FALSE;
-	}
-
-	return TRUE;
-#endif
 }
 
 /***********************************************************************
@@ -476,20 +511,6 @@ BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
 	return WriteFile(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite,
 			 lpNumberOfCharsWritten, NULL);
 
-
-#ifdef OLD
-	LPSTR buf =  HEAP_strdupWtoA( GetProcessHeap(), 0, lpBuffer );
-	*lpNumberOfCharsWritten = fprintf(CONSOLE_console.conIO, "%.*s",
-					  (int)nNumberOfCharsToWrite, buf );
-	HeapFree( GetProcessHeap(), 0, buf );
-
-	if (ferror(CONSOLE_console.conIO) {
-		clearerr();
-		return FALSE;
-	}
-
-	return TRUE;
-#endif
 }
 
 /***********************************************************************

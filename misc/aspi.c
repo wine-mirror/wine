@@ -13,7 +13,7 @@
 #include "options.h"
 #include "heap.h"
 #include "debug.h"
-#include "stddebug.h"
+
 
 /* FIXME!
  * 1) Residual byte length reporting not handled
@@ -122,16 +122,16 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     sprintf(idstr, "scsi c%1dt%1dd%1d", prb->SRB_HaId, prb->SRB_Target, prb->SRB_Lun);
 
     if (!PROFILE_GetWineIniString(idstr, "Device", "", device_str, sizeof(device_str))) {
-	dprintf_aspi(stddeb, "Trying to open unlisted scsi device %s\n", idstr);
+	dprintf_info(aspi, "Trying to open unlisted scsi device %s\n", idstr);
 	return -1;
     }
 
-    dprintf_aspi(stddeb, "Opening device %s=%s\n", idstr, device_str);
+    dprintf_info(aspi, "Opening device %s=%s\n", idstr, device_str);
 
     fd = open(device_str, O_RDWR);
     if (fd == -1) {
 	int save_error = errno;
-	dprintf_aspi(stddeb, "Error opening device errno=%d\n", save_error);
+	dprintf_warn(aspi, "Error opening device errno=%d\n", save_error);
 	return -1;
     }
 
@@ -156,59 +156,58 @@ ASPI_DebugPrintCmd16(SRB_ExecSCSICmd16 *prb)
   int	i;
   BYTE *cdb;
   BYTE *lpBuf;
+  dbg_decl_str(aspi, 512);
 
   lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
-    dprintf_aspi(stddeb, "{\n");
-    dprintf_aspi(stddeb, "\tEVPD: %d\n", prb->CDBByte[1] & 1);
-    dprintf_aspi(stddeb, "\tLUN: %d\n", (prb->CDBByte[1] & 0xc) >> 1);
-    dprintf_aspi(stddeb, "\tPAGE CODE: %d\n", prb->CDBByte[2]);
-    dprintf_aspi(stddeb, "\tALLOCATION LENGTH: %d\n", prb->CDBByte[4]);
-    dprintf_aspi(stddeb, "\tCONTROL: %d\n", prb->CDBByte[5]);
-    dprintf_aspi(stddeb, "}\n");
+    dprintf_info(aspi, "{\n");
+    dprintf_info(aspi, "\tEVPD: %d\n", prb->CDBByte[1] & 1);
+    dprintf_info(aspi, "\tLUN: %d\n", (prb->CDBByte[1] & 0xc) >> 1);
+    dprintf_info(aspi, "\tPAGE CODE: %d\n", prb->CDBByte[2]);
+    dprintf_info(aspi, "\tALLOCATION LENGTH: %d\n", prb->CDBByte[4]);
+    dprintf_info(aspi, "\tCONTROL: %d\n", prb->CDBByte[5]);
+    dprintf_info(aspi, "}\n");
     break;
   case CMD_SCAN_SCAN:
-    dprintf_aspi(stddeb, "Transfer Length: %d\n", prb->CDBByte[4]);
+    dprintf_info(aspi, "Transfer Length: %d\n", prb->CDBByte[4]);
     break;
   }
 
-  dprintf_aspi(stddeb, "Host Adapter: %d\n", prb->SRB_HaId);
-  dprintf_aspi(stddeb, "Flags: %d\n", prb->SRB_Flags);
+  dprintf_info(aspi, "Host Adapter: %d\n", prb->SRB_HaId);
+  dprintf_info(aspi, "Flags: %d\n", prb->SRB_Flags);
   if (TARGET_TO_HOST(prb)) {
-    dprintf_aspi(stddeb, "\tData transfer: Target to host. Length checked.\n");
+    dprintf_info(aspi, "\tData transfer: Target to host. Length checked.\n");
   }
   else if (HOST_TO_TARGET(prb)) {
-    dprintf_aspi(stddeb, "\tData transfer: Host to target. Length checked.\n");
+    dprintf_info(aspi, "\tData transfer: Host to target. Length checked.\n");
   }
   else if (NO_DATA_TRANSFERED(prb)) {
-    dprintf_aspi(stddeb, "\tData transfer: none\n");
+    dprintf_info(aspi, "\tData transfer: none\n");
   }
   else {
-    dprintf_aspi(stddeb, "\tTransfer by scsi cmd. Length not checked\n");
+    dprintf_warn(aspi, "\tTransfer by scsi cmd. Length not checked\n");
   }
 
-  dprintf_aspi(stddeb, "\tResidual byte length reporting %s\n", prb->SRB_Flags & 0x4 ? "enabled" : "disabled");
-  dprintf_aspi(stddeb, "\tLinking %s\n", prb->SRB_Flags & 0x2 ? "enabled" : "disabled");
-  dprintf_aspi(stddeb, "\tPosting %s\n", prb->SRB_Flags & 0x1 ? "enabled" : "disabled");
-  dprintf_aspi(stddeb, "Target: %d\n", prb->SRB_Target);
-  dprintf_aspi(stddeb, "Lun: %d\n", prb->SRB_Lun);
-  dprintf_aspi(stddeb, "BufLen: %ld\n", prb->SRB_BufLen);
-  dprintf_aspi(stddeb, "SenseLen: %d\n", prb->SRB_SenseLen);
-  dprintf_aspi(stddeb, "BufPtr: %lx (%p)\n", prb->SRB_BufPointer, lpBuf);
-  dprintf_aspi(stddeb, "LinkPointer %lx\n", prb->SRB_Rsvd1);
-  dprintf_aspi(stddeb, "CDB Length: %d\n", prb->SRB_CDBLen);
-  dprintf_aspi(stddeb, "POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
+  dprintf_info(aspi, "\tResidual byte length reporting %s\n", prb->SRB_Flags & 0x4 ? "enabled" : "disabled");
+  dprintf_info(aspi, "\tLinking %s\n", prb->SRB_Flags & 0x2 ? "enabled" : "disabled");
+  dprintf_info(aspi, "\tPosting %s\n", prb->SRB_Flags & 0x1 ? "enabled" : "disabled");
+  dprintf_info(aspi, "Target: %d\n", prb->SRB_Target);
+  dprintf_info(aspi, "Lun: %d\n", prb->SRB_Lun);
+  dprintf_info(aspi, "BufLen: %ld\n", prb->SRB_BufLen);
+  dprintf_info(aspi, "SenseLen: %d\n", prb->SRB_SenseLen);
+  dprintf_info(aspi, "BufPtr: %lx (%p)\n", prb->SRB_BufPointer, lpBuf);
+  dprintf_info(aspi, "LinkPointer %lx\n", prb->SRB_Rsvd1);
+  dprintf_info(aspi, "CDB Length: %d\n", prb->SRB_CDBLen);
+  dprintf_info(aspi, "POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
-  dprintf_aspi(stddeb, "CDB buffer[");
   cmd = prb->CDBByte[0];
   for (i = 0; i < prb->SRB_CDBLen; i++) {
-    if (i != 0)
-      dprintf_aspi(stddeb, ",");
-    dprintf_aspi(stddeb, "%02x", *cdb++);
+    if (i != 0) dsprintf(aspi, ",");
+    dsprintf(aspi, "%02x", *cdb++);
   }
-  dprintf_aspi(stddeb, "]\n");
+  dprintf_info(aspi, "CDB buffer[%s]\n", dbg_str(aspi));
 }
 
 static void
@@ -216,15 +215,14 @@ PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 {
   int	i;
   BYTE *cdb;
+  dbg_decl_str(aspi, 512);
 
   cdb = &prb->CDBByte[0];
-  dprintf_aspi(stddeb, "SenseArea[");
   for (i = 0; i < prb->SRB_SenseLen; i++) {
-    if (i)
-      dprintf_aspi(stddeb, ",");
-    dprintf_aspi(stddeb, "%02x", *cdb++);
+    if (i) dsprintf(aspi, ",");
+    dsprintf(aspi, "%02x", *cdb++);
   }
-  dprintf_aspi(stddeb, "]\n");
+  dprintf_info(aspi, "SenseArea[%s]\n", dbg_str(aspi));
 }
 
 static void
@@ -236,7 +234,7 @@ ASPI_DebugPrintResult16(SRB_ExecSCSICmd16 *prb)
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
-    dprintf_aspi(stddeb, "Vendor: %s\n", lpBuf + INQUIRY_VENDOR);
+    dprintf_info(aspi, "Vendor: %s\n", lpBuf + INQUIRY_VENDOR);
     break;
   case CMD_TEST_UNIT_READY:
     PrintSenseArea16(prb);
@@ -314,20 +312,20 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
 	if (myerror == ENOMEM) {
 	    fprintf(stderr, "ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
 	}
-	dprintf_aspi(stddeb, "errno: = %d\n", myerror);
+	dprintf_warn(aspi, "errno: = %d\n", myerror);
     }
     goto error_exit;
   }
 
   status = read(fd, sg_reply_hdr, out_len);
   if (status < 0 || status != out_len) {
-    dprintf_aspi(stddeb, "not enough bytes read from scsi device%d\n", status);
+    dprintf_warn(aspi, "not enough bytes read from scsi device%d\n", status);
     goto error_exit;
   }
 
   if (sg_reply_hdr->result != 0) {
     error_code = sg_reply_hdr->result;
-    dprintf_aspi(stddeb, "reply header error (%d)\n", sg_reply_hdr->result);
+    dprintf_warn(aspi, "reply header error (%d)\n", sg_reply_hdr->result);
     goto error_exit;
   }
 
@@ -351,7 +349,7 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
   /* now do  posting */
 
   if (ASPI_POSTING(prb) && prb->SRB_PostProc) {
-    dprintf_aspi(stddeb, "ASPI: Post Routine (%lx) called\n", (DWORD) prb->SRB_PostProc);
+    dprintf_info(aspi, "ASPI: Post Routine (%lx) called\n", (DWORD) prb->SRB_PostProc);
     Callbacks->CallASPIPostProc(prb->SRB_PostProc, segptr_prb);
   }
 
@@ -363,17 +361,17 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
 error_exit:
   if (error_code == EBUSY) {
       prb->SRB_Status = SS_ASPI_IS_BUSY;
-      dprintf_aspi(stddeb, "ASPI: Device busy\n");
+      dprintf_info(aspi, "ASPI: Device busy\n");
   }
   else {
-      dprintf_aspi(stddeb, "ASPI_GenericHandleScsiCmd failed\n");
+      dprintf_warn(aspi, "ASPI_GenericHandleScsiCmd failed\n");
       prb->SRB_Status = SS_ERR;
   }
 
   /* I'm not sure exactly error codes work here
    * We probably should set prb->SRB_TargStat, SRB_HaStat ?
    */
-  dprintf_aspi(stddeb, "ASPI_GenericHandleScsiCmd: error_exit\n");
+  dprintf_warn(aspi, "ASPI_GenericHandleScsiCmd: error_exit\n");
   free(sg_reply_hdr);
   free(sg_hd);
   return prb->SRB_Status;
@@ -387,7 +385,7 @@ error_exit:
 WORD WINAPI GetASPISupportInfo16()
 {
 #ifdef linux
-    dprintf_aspi(stddeb, "GETASPISupportInfo\n");
+    dprintf_info(aspi, "GETASPISupportInfo\n");
     /* high byte SS_COMP - low byte number of host adapters.
      * FIXME!!! The number of host adapters is incorrect.
      * I'm not sure how to determine this under linux etc.
@@ -409,19 +407,19 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 
   switch (lpSRB->common.SRB_cmd) {
   case SC_HA_INQUIRY:
-    dprintf_aspi(stddeb, "ASPI: Not implemented SC_HA_INQUIRY\n");
+    dprintf_fixme(aspi, "ASPI: Not implemented SC_HA_INQUIRY\n");
     break;
   case SC_GET_DEV_TYPE:
-    dprintf_aspi(stddeb, "ASPI: Not implemented SC_GET_DEV_TYPE\n");
+    dprintf_fixme(aspi, "ASPI: Not implemented SC_GET_DEV_TYPE\n");
     break;
   case SC_EXEC_SCSI_CMD:
     return ASPI_ExecScsiCmd16(&lpSRB->cmd, segptr_srb);
     break;
   case SC_RESET_DEV:
-    dprintf_aspi(stddeb, "ASPI: Not implemented SC_RESET_DEV\n");
+    dprintf_fixme(aspi, "ASPI: Not implemented SC_RESET_DEV\n");
     break;
   default:
-    dprintf_aspi(stddeb, "ASPI: Unknown command %d\n", lpSRB->common.SRB_cmd);
+    dprintf_warn(aspi, "ASPI: Unknown command %d\n", lpSRB->common.SRB_cmd);
   }
   return SS_INVALID_SRB;
 #else

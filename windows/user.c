@@ -300,6 +300,20 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
     return FALSE;
 }
 
+/***********************************************************************
+ *           EnumDisplaySettingsA   (USER32.592)
+ */
+BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
+	fprintf(stderr,"EnumDisplaySettings32A(%s,%ld,%p)\n",name,n,devmode);
+	if (n==0) {
+		devmode->dmBitsPerPel = DefaultDepthOfScreen(screen);
+		devmode->dmPelsHeight = screenHeight;
+		devmode->dmPelsWidth = screenWidth;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 
 /***********************************************************************
  *           SetEventHook   (USER.321)

@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "miscemu.h"
-#include "stddebug.h"
 #include "debug.h"
 
 

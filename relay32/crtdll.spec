@@ -52,7 +52,7 @@ type	win32
  48 stub _cabs
  49 cdecl _cexit(long) CRTDLL__cexit
  50 stub _cgets
- 51 cdecl _chdir(ptr) CRTDLL__chdir
+ 51 cdecl _chdir(str) CRTDLL__chdir
  52 cdecl _chdrive(long) CRTDLL__chdrive
  53 stub _chgsign
  54 stub _chmod
@@ -115,7 +115,7 @@ type	win32
 111 stub _fstat
 112 stub _ftime
 113 cdecl _ftol(double) CRTDLL__ftol
-114 cdecl _fullpath(ptr ptr long) CRTDLL__fullpath
+114 cdecl _fullpath(ptr str long) CRTDLL__fullpath
 115 stub _futime
 116 stub _gcvt
 117 stub _get_osfhandle
@@ -198,15 +198,15 @@ type	win32
 194 stub _mbctoupper
 195 stub _mbctype
 196 stub _mbsbtype
-197 cdecl _mbscat(ptr ptr) CRTDLL__mbscat
+197 cdecl _mbscat(str str) CRTDLL__mbscat
 198 stub _mbschr
 199 stub _mbscmp
-200 cdecl _mbscpy(ptr ptr) CRTDLL__mbscpy
+200 cdecl _mbscpy(ptr str) CRTDLL__mbscpy
 201 stub _mbscspn
 202 stub _mbsdec
 203 stub _mbsdup
-204 cdecl _mbsicmp(ptr ptr) CRTDLL__mbsicmp
-205 cdecl _mbsinc(ptr) CRTDLL__mbsinc
+204 cdecl _mbsicmp(str str) CRTDLL__mbsicmp
+205 cdecl _mbsinc(str) CRTDLL__mbsinc
 206 stub _mbslen
 207 stub _mbslwr
 208 stub _mbsnbcat
@@ -235,12 +235,12 @@ type	win32
 231 stub _mbsupr
 232 stub _memccpy
 233 stub _memicmp
-234 cdecl _mkdir(ptr) CRTDLL__mkdir
+234 cdecl _mkdir(str) CRTDLL__mkdir
 235 stub _mktemp
 236 stub _msize
 237 stub _nextafter
 238 stub _onexit
-239 cdecl _open(ptr long) CRTDLL__open
+239 cdecl _open(str long) CRTDLL__open
 240 cdecl _open_osfhandle(long long) CRTDLL__open_osfhandle
 241 extern _osmajor_dll CRTDLL_osmajor_dll
 242 extern _osminor_dll CRTDLL_osminor_dll
@@ -280,33 +280,33 @@ type	win32
 276 stub _spawnve
 277 stub _spawnvp
 278 stub _spawnvpe
-279 cdecl _splitpath (ptr ptr ptr ptr ptr) CRTDLL__splitpath
-280 cdecl _stat (ptr ptr) CRTDLL__stat
+279 cdecl _splitpath (str ptr ptr ptr ptr) CRTDLL__splitpath
+280 cdecl _stat (str ptr) CRTDLL__stat
 281 stub _statusfp
-282 cdecl _strcmpi(ptr ptr) CRTDLL__strcmpi
+282 cdecl _strcmpi(str str) CRTDLL__strcmpi
 283 stub _strdate
 284 stub _strdec
-285 cdecl _strdup(ptr) CRTDLL__strdup
+285 cdecl _strdup(str) CRTDLL__strdup
 286 stub _strerror
-287 cdecl _stricmp(ptr ptr) CRTDLL__strcmpi
+287 cdecl _stricmp(str str) CRTDLL__strcmpi
 288 stub _stricoll
 289 stub _strinc
-290 cdecl _strlwr(ptr) CRTDLL__strlwr
+290 cdecl _strlwr(str) CRTDLL__strlwr
 291 stub _strncnt
 292 stub _strnextc
-293 cdecl _strnicmp(ptr ptr long) CRTDLL__strnicmp
+293 cdecl _strnicmp(str str long) CRTDLL__strnicmp
 294 stub _strninc
 295 stub _strnset
 296 stub _strrev
 297 stub _strset
 298 stub _strspnp
 299 stub _strtime
-300 cdecl _strupr(ptr) CRTDLL__strupr
+300 cdecl _strupr(str) CRTDLL__strupr
 301 stub _swab
 302 stub _sys_errlist
 303 stub _sys_nerr_dll
 304 stub _tell
-305 cdecl _tempnam(ptr ptr) CRTDLL__tempnam
+305 cdecl _tempnam(str ptr) CRTDLL__tempnam
 306 stub _timezone_dll
 307 stub _tolower
 308 stub _toupper
@@ -316,20 +316,20 @@ type	win32
 312 stub _ultow
 313 stub _umask
 314 stub _ungetch
-315 cdecl _unlink(ptr) CRTDLL__unlink
+315 cdecl _unlink(str) CRTDLL__unlink
 316 stub _unloaddll
 317 stub _utime
 318 stub _vsnprintf
 319 stub _vsnwprintf
 320 stub _wcsdup
-321 cdecl _wcsicmp(ptr ptr) CRTDLL__wcsicmp
-322 cdecl _wcsicoll(ptr ptr) CRTDLL__wcsicoll
-323 cdecl _wcslwr(ptr) CRTDLL__wcslwr
-324 cdecl _wcsnicmp(ptr ptr long) CRTDLL__wcsnicmp
+321 cdecl _wcsicmp(wstr wstr) CRTDLL__wcsicmp
+322 cdecl _wcsicoll(wstr wstr) CRTDLL__wcsicoll
+323 cdecl _wcslwr(wstr) CRTDLL__wcslwr
+324 cdecl _wcsnicmp(wstr wstr long) CRTDLL__wcsnicmp
 325 stub _wcsnset
-326 cdecl _wcsrev(ptr) CRTDLL__wcsrev
+326 cdecl _wcsrev(wstr) CRTDLL__wcsrev
 327 stub _wcsset
-328 cdecl _wcsupr(ptr) CRTDLL__wcsupr
+328 cdecl _wcsupr(wstr) CRTDLL__wcsupr
 329 extern _winmajor_dll CRTDLL_winmajor_dll
 330 extern _winminor_dll CRTDLL_winminor_dll
 331 extern _winver_dll CRTDLL_winver_dll
@@ -347,9 +347,9 @@ type	win32
 343 cdecl atan(double) atan
 344 cdecl atan2(double double) atan2
 345 cdecl atexit(ptr) CRTDLL_atexit
-346 cdecl atof(ptr) atof
-347 cdecl atoi(ptr) atoi
-348 cdecl atol(ptr) atol
+346 cdecl atof(str) atof
+347 cdecl atoi(str) atoi
+348 cdecl atol(str) atol
 349 stub bsearch
 350 cdecl calloc(long long) CRTDLL_calloc
 351 stub ceil
@@ -373,10 +373,10 @@ type	win32
 369 stub fgetwc
 370 cdecl floor(double) floor
 371 cdecl fmod(double double) fmod
-372 cdecl fopen(ptr ptr) CRTDLL_fopen
+372 cdecl fopen(str str) CRTDLL_fopen
 373 varargs fprintf() CRTDLL_fprintf
 374 cdecl fputc(long ptr) CRTDLL_fputc
-375 cdecl fputs(ptr ptr) CRTDLL_fputs
+375 cdecl fputs(str ptr) CRTDLL_fputs
 376 stub fputwc
 377 cdecl fread(ptr long long ptr) CRTDLL_fread
 378 cdecl free(ptr) CRTDLL_free
@@ -429,8 +429,8 @@ type	win32
 425 cdecl log10(double) log10
 426 cdecl longjmp(ptr long) CRTDLL_longjmp
 427 cdecl malloc(ptr) CRTDLL_malloc
-428 cdecl mblen(ptr long) CRTDLL_mblen
-429 cdecl mbstowcs(ptr ptr long) CRTDLL_mbstowcs
+428 cdecl mblen(str long) CRTDLL_mblen
+429 cdecl mbstowcs(ptr str long) CRTDLL_mbstowcs
 430 cdecl mbtowc(ptr ptr long) CRTDLL_mbtowc
 431 cdecl memchr(ptr long long) memchr
 432 cdecl memcmp(ptr ptr long) memcmp
@@ -444,7 +444,7 @@ type	win32
 440 varargs printf() printf
 441 cdecl putc(long ptr) CRTDLL_putc
 442 cdecl putchar(long) CRTDLL_putchar
-443 cdecl puts(ptr) CRTDLL_puts
+443 cdecl puts(str) CRTDLL_puts
 444 cdecl qsort(ptr long long ptr) qsort
 445 stub raise
 446 cdecl rand() CRTDLL_rand
@@ -463,62 +463,62 @@ type	win32
 459 cdecl sqrt(double) sqrt
 460 cdecl srand(long) CRTDLL_srand
 461 varargs sscanf() sscanf
-462 cdecl strcat(ptr ptr) strcat
-463 cdecl strchr(ptr long) strchr
-464 cdecl strcmp(ptr ptr) strcmp
-465 cdecl strcoll(ptr ptr) strcoll
-466 cdecl strcpy(ptr ptr) strcpy
-467 cdecl strcspn(ptr ptr) strcspn
+462 cdecl strcat(str str) strcat
+463 cdecl strchr(str long) strchr
+464 cdecl strcmp(str str) strcmp
+465 cdecl strcoll(str str) strcoll
+466 cdecl strcpy(ptr str) strcpy
+467 cdecl strcspn(str str) strcspn
 468 stub strerror
-469 cdecl strftime(ptr long ptr ptr) strftime
-470 cdecl strlen(ptr) strlen
-471 cdecl strncat(ptr ptr long) strncat
-472 cdecl strncmp(ptr ptr long) strncmp
-473 cdecl strncpy(ptr ptr long) strncpy
-474 cdecl strpbrk(ptr ptr) strpbrk
-475 cdecl strrchr(ptr long) strrchr
-476 cdecl strspn(ptr ptr) strspn
-477 cdecl strstr(ptr ptr) strstr
-478 cdecl strtod(ptr ptr) strtod
-479 cdecl strtok(ptr ptr) strtok
-480 cdecl strtol(ptr ptr long) strtol
-481 cdecl strtoul(ptr ptr long) strtoul
-482 cdecl strxfrm(ptr ptr long) strxfrm
+469 cdecl strftime(ptr long str ptr) strftime
+470 cdecl strlen(str) strlen
+471 cdecl strncat(str str long) strncat
+472 cdecl strncmp(str str long) strncmp
+473 cdecl strncpy(ptr str long) strncpy
+474 cdecl strpbrk(str str) strpbrk
+475 cdecl strrchr(str long) strrchr
+476 cdecl strspn(str str) strspn
+477 cdecl strstr(str str) strstr
+478 cdecl strtod(str ptr) strtod
+479 cdecl strtok(str str) strtok
+480 cdecl strtol(str ptr long) strtol
+481 cdecl strtoul(str ptr long) strtoul
+482 cdecl strxfrm(ptr str long) strxfrm
 483 varargs swprintf() wsprintf32W
 484 stub swscanf
-485 cdecl system(ptr) CRTDLL_system
+485 cdecl system(str) CRTDLL_system
 486 cdecl tan(double) tan
 487 cdecl tanh(double) tanh
 488 cdecl time(ptr) CRTDLL_time
 489 stub tmpfile
-490 cdecl tmpnam(ptr) CRTDLL_tmpnam
+490 cdecl tmpnam(str) CRTDLL_tmpnam
 491 cdecl tolower(long) tolower
 492 cdecl toupper(long) toupper
 493 stub towlower
 494 cdecl towupper(long) CRTDLL_towupper
 495 stub ungetc
 496 stub ungetwc
-497 cdecl vfprintf(ptr ptr ptr) CRTDLL_vfprintf
+497 cdecl vfprintf(ptr str ptr) CRTDLL_vfprintf
 498 stub vfwprintf
 499 stub vprintf
-500 cdecl vsprintf(ptr ptr ptr) CRTDLL_vsprintf
-501 cdecl vswprintf(ptr ptr ptr) CRTDLL_vswprintf
+500 cdecl vsprintf(ptr str ptr) CRTDLL_vsprintf
+501 cdecl vswprintf(ptr wstr ptr) CRTDLL_vswprintf
 502 stub vwprintf
-503 cdecl wcscat(ptr ptr) CRTDLL_wcscat
-504 cdecl wcschr(ptr long) CRTDLL_wcschr
-505 cdecl wcscmp(ptr ptr) CRTDLL_wcscmp
-506 cdecl wcscoll(ptr ptr) CRTDLL_wcscoll
-507 cdecl wcscpy(ptr ptr) CRTDLL_wcscpy
-508 cdecl wcscspn(ptr ptr) CRTDLL_wcscspn
+503 cdecl wcscat(wstr wstr) CRTDLL_wcscat
+504 cdecl wcschr(wstr long) CRTDLL_wcschr
+505 cdecl wcscmp(wstr wstr) CRTDLL_wcscmp
+506 cdecl wcscoll(wstr wstr) CRTDLL_wcscoll
+507 cdecl wcscpy(ptr wstr) CRTDLL_wcscpy
+508 cdecl wcscspn(wstr wstr) CRTDLL_wcscspn
 509 stub wcsftime
-510 cdecl wcslen(ptr) CRTDLL_wcslen
-511 cdecl wcsncat(ptr ptr long) CRTDLL_wcsncat
-512 cdecl wcsncmp(ptr ptr long) CRTDLL_wcsncmp
-513 cdecl wcsncpy(ptr ptr long) CRTDLL_wcsncpy
+510 cdecl wcslen(wstr) CRTDLL_wcslen
+511 cdecl wcsncat(wstr wstr long) CRTDLL_wcsncat
+512 cdecl wcsncmp(wstr wstr long) CRTDLL_wcsncmp
+513 cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
 514 stub wcspbrk
-515 cdecl wcsrchr(ptr long) CRTDLL_wcsrchr
-516 cdecl wcsspn(ptr ptr) CRTDLL_wcsspn
-517 cdecl wcsstr(ptr ptr) CRTDLL_wcsstr
+515 cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
+516 cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
+517 cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
 518 stub wcstod
 519 stub wcstok
 520 stub wcstol

@@ -12,7 +12,6 @@
 #include "msdos.h"
 #include "module.h"
 #include "stackframe.h"
-#include "stddebug.h"
 #include "debug.h"
 
 static FARPROC16 INT_Vectors[256];
@@ -36,7 +35,7 @@ FARPROC16 INT_GetHandler( BYTE intnum )
  */
 void INT_SetHandler( BYTE intnum, FARPROC16 handler )
 {
-    dprintf_int( stddeb, "Set interrupt vector %02x <- %04x:%04x\n",
+    dprintf_info(int, "Set interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
     INT_Vectors[intnum] = handler;
 }

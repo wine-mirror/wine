@@ -15,9 +15,9 @@
 #include "module.h"
 #include "callback.h"
 #include "debug.h"
-#include "stddebug.h"
 
 static CRITICAL_SECTION Win16Mutex;
+static SEGPTR segWin16Mutex = NULL;
 
 /***********************************************
  *           GetPWinLock    (KERNEL32)
@@ -131,4 +131,20 @@ BOOL32 WINAPI _KERNEL32_99(HANDLE32 threadid,DWORD exitcode,DWORD x) {
 DWORD WINAPI _KERNEL32_98(DWORD x) {
 	fprintf(stderr,"KERNEL32_98(0x%08lx),stub\n",x);
 	return 1;
+}
+
+/************************************************************************
+ *		KERNEL_449		(KERNEL.449)
+ * This returns a segmented static pointer to a linear pointer to a critical
+ * section in kernel32 address space. This is most likely the Win16 Lock,
+ * but I am not sure.
+ */
+SEGPTR WINAPI KERNEL_449(void) { 
+	if (!segWin16Mutex) {
+		LPDWORD	w16m = SEGPTR_ALLOC(4);
+		
+		*w16m = (DWORD)&Win16Mutex;
+		segWin16Mutex = SEGPTR_GET(w16m);
+	}
+	return segWin16Mutex;
 }

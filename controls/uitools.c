@@ -574,7 +574,7 @@ BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
  */
 BOOL32 WINAPI DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 {
-    dprintf_graphics( stddeb, "DrawEdge: %04x %d,%d-%d,%d %04x %04x\n",
+    dprintf_info(graphics, "DrawEdge: %04x %d,%d-%d,%d %04x %04x\n",
                       hdc, rc->left, rc->top, rc->right, rc->bottom,
                       edge, flags );
 

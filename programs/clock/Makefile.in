@@ -1,0 +1,47 @@
+DEFS      = -DWINELIB
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = clock
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+RCFLAGS   = -w32 -h
+
+LANGUAGES   = En De Sw
+LICENSELANG = En
+
+MOSTSRCS = \
+	language.c \
+	license.c \
+	winclock.c \
+	main.c
+
+# Some strings need addresses >= 0x10000
+STRINGSRCS = \
+	$(LICENSELANG:%=License_%.c)
+
+RC_SRCS = $(LANGUAGES:%=%.rc)
+
+C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
+
+MOSTOBJS = $(MOSTSRCS:.c=.o)
+STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
+
+all: check_winerc $(PROGRAMS)
+
+depend:: $(RC_SRCS:.rc=.h)
+
+@MAKE_RULES@
+
+clock: $(MOSTOBJS) $(STRINGOBJS)
+	$(CC) -o clock $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
+
+install: dummy
+	$(INSTALL_PROGRAM) clock $(bindir)/clock
+
+$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
+
+dummy:
+
+### Dependencies:

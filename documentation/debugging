@@ -51,18 +51,19 @@ relevant developer as feasonable.
     the reason is located in the last call(s).  Those lines usually look like
     this:
 
-|Call KERNEL.90: LSTRLEN(0227:0692) ret=01e7:2ce7 ds=0227
-      ^^^^^^^^^  ^       ^^^^^^^^^      ^^^^^^^^^    ^^^^
-      |          |       |              |            |Datasegment on entry
-      |          |       |              |Return address.
+|Call KERNEL.90: LSTRLEN(0227:0692 "text") ret=01e7:2ce7 ds=0227
+      ^^^^^^^^^  ^       ^^^^^^^^^ ^^^^^^      ^^^^^^^^^    ^^^^
+      |          |       |         |           |            |Datasegment
+      |          |       |         |           |Return address
+      |          |       |         |textual parameter
       |          |       |
       |          |       |Argument(s). This one is a win16 segmented pointer.
       |          |Function called.
       |The module, the function is called in. In this case it is KERNEL.
 		        
-|Ret  KERNEL.90: LSTRLEN() retval=0x0007 ret=01e7:2ce7 ds=0227
+|Ret  KERNEL.90: LSTRLEN() retval=0x0004 ret=01e7:2ce7 ds=0227
                                   ^^^^^^
-				  |Returnvalue is 16 bit and has the value 7.
+				  |Returnvalue is 16 bit and has the value 4.
 
 
  3. If you have found a misbehaving function, try to find out why it
@@ -119,18 +120,28 @@ Program reports an error with a Messagebox
   "continue". With "-debugmsg +all" Wine will now stop directly directly
   before setting up the Messagebox.  Proceed as explained above.
 
+  You can also run wine using "wine -debugmsg +relay program.exe 2>&1|less -i"
+  and in less search for messagebox.
 
 Disassembling programs:
 =======================
   You may also try to disassemble the offending program to check for 
   undocumented features and/or use of them.
-  The best, freely available, disassembler for win16 programs is
+
+  The best, freely available, disassembler for Win16 programs is
   Windows Codeback, archivename wcbxxx.zip, which usually can be found
   in the Cica-Mirror subdirectory on the WINE ftpsites. (See ANNOUNCE).
-  Disassembling win32 programs is currenty only possible using 
-  Windows Disassembler 32, archivename something like wdasm32x.zip on
-  ftp.winsite.com and mirrors.
+  Disassembling win32 programs is possible using the Windows Disassembler 32,
+  archivename something like w32dasm.zip on ftp.winsite.com and mirrors.
+  The shareware version does not allow saving of disassembly listings.
+
+  [It also has a bug, it disassembles the dll and immediately after that
+   crashes, leaving a very large file caled 'winsys' in the directory of the
+   disassembled file. This file contains nothing of value (just the disassembly)
+   and can be safely deleted.]
+
   Understanding disassembled code is just a question of exercise.
+
   Most code out there uses standard C function entries (for it is usually 
   written in C). Win16 function entries usually look like that:
 |  	push bp
@@ -157,7 +168,6 @@ Disassembling programs:
 |	call KERNEL.LSTRLEN
   Here first the selector and then the offset to the passed string are pushed.
 
-
 Sample debugging session:
 =========================
 
@@ -171,88 +181,78 @@ Sample debugging session:
 
 
 |marcus@jet $ wine winword.exe -debugmsg +relay -debug
-|CallTo32(func=08007e00,000001c4,00000081,00000000,00000000)
-|CallTo32(func=08007e00,000001c4,00000014,000006d0,00000000)
-|Win16 task 'winword': Breakpoint 1 at 0x0157:0x001a
-|CallTo16(func=0097:0130,ds=0000)
-|Call WPROCS.24: TASK_RESCHEDULE() ret=003f:0759 ds=0000
-|Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x0000 ret=003f:0759 ds=08a7
-|CallTo16(func=0157:001a,ds=08a7,0x11d7,0x0000,0x0000,0x3cb4,0x1f40,0x0000,0x0000,0x08a7)
-|Loading symbols from ELF file /home/marcus/wine/wine...
-|...more Loading symbols ... 
-|Stopped on breakpoint 1 at 0x0157:0x001a (WPROCS_VXD_PAGEFILE+0xffffeeea)
+|CallTo32(wndproc=0x40065bc0,hwnd=000001ac,msg=00000081,wp=00000000,lp=00000000)
+|Win16 task 'winword': Breakpoint 1 at 0x01d7:0x001a
+|CallTo16(func=0127:0070,ds=0927)
+|Call WPROCS.24: TASK_RESCHEDULE() ret=00b7:1456 ds=0927
+|Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x8672 ret=00b7:1456 ds=0927
+|CallTo16(func=01d7:001a,ds=0927)
+|     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=0927 BP=0000 ES=11f7
+|Loading symbols: /home/marcus/wine/wine...
+|Stopped on breakpoint 1 at 0x01d7:0x001a
 |In 16 bit mode.
 |Wine-dbg>break MessageBox32A                          <---- Set Breakpoint
-|Breakpoint 2 at 0x080e792c (MessageBox32A [msgbox.c:198])
+|Breakpoint 2 at 0x40189100 (MessageBox32A [msgbox.c:190])
 |Wine-dbg>c                                            <---- Continue
 |Call KERNEL.91: INITTASK() ret=0157:0022 ds=08a7
 |     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=08a7 ES=11d7 EFL=00000286
 |CallTo16(func=090f:085c,ds=0dcf,0x0000,0x0000,0x0000,0x0000,0x0800,0x0000,0x0000,0x0dcf)
 |...                                                   <----- Much debugoutput
-|Call KERNEL.97: GETTEMPFILENAME(0x00c3,08a7:8350,0x0000,08a7:8234) ret=058f:09b1 ds=08a7
-                                 ^      ^         ^      ^
-				 |      |         |      |LPSTR buffer
-				 |      |         |UINT16 unique
-				 |      |LPCSTR prefix
-				 |BYTE drive
+|Call KERNEL.136: GETDRIVETYPE(0x0000) ret=060f:097b ds=0927
+                               ^^^^^^ Drive 0 (A:)
+|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0002 ret=060f:097b ds=0927
+                                        ^^^^^^  DRIVE_REMOVEABLE
+						(It is a floppy diskdrive.)
 
-|Ret  KERNEL.97: GETTEMPFILENAME() retval=0xce3f ret=058f:09b1 ds=08a7
-                                          ^
-                                          |new unique number
+|Call KERNEL.136: GETDRIVETYPE(0x0001) ret=060f:097b ds=0927
+                               ^^^^^^ Drive 1 (B:)
+|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0000 ret=060f:097b ds=0927
+                                        ^^^^^^  DRIVE_CANNOTDETERMINE
+						(I don't have drive B: assigned)
 
-|Call KERNEL.74: OPENFILE(08a7:8234,08a7:82c6,0x1012) ret=058f:09d8 ds=08a7
-                          ^         ^         ^
-                          |         |         |UINT32 mode
-                          |         |OFSTRUCT *ofs
-                          |LPCSTR name
+|Call KERNEL.136: GETDRIVETYPE(0x0002) ret=060f:097b ds=0927
+                               ^^^^^^^ Drive 2 (C:)
+|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0003 ret=060f:097b ds=0927
+                                        ^^^^^^ DRIVE_FIXED
+                                               (specified as a harddisk)
 
-|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=058f:09d8 ds=08a7
-                                   ^
-				   | -1 aka. HFILE_ERROR
+|Call KERNEL.97: GETTEMPFILENAME(0x00c3,0x09278364"doc",0x0000,0927:8248) ret=060f:09b1 ds=0927
+                                 ^^^^^^           ^^^^^        ^^^^^^^^^
+                                 |                |            |buffer for fname
+                                 |                |temporary name ~docXXXX.tmp
+                                 |Force use of Drive C:.
 
-|Call USER.1: MESSAGEBOX(0x0000,08ef:8362,0000:0000,0x1030) ret=05d7:084f ds=08efStopped on breakpoint 2 at 0x080e792c (MessageBox32A [msgbox.c:198])
-|198     {
-|In 32 bit mode.
-|Wine-dbg> _
-
-    Now, we see that OPENFILE seem to have returned 0xFFFF (or -1). Checking
-    the implementation of OpenFile in files/file.c, this signals an error.
-    The mode flags (OF_READWRITE|OF_SHARE_EXCLUSIVE|OF_CREATE) seems to
-    indicate, that WinWord wants to open the file for writing, so we check
-    the filename. Since we don't see the filename in this debugoutput, we use
-    the dprintf_file() in OpenFile to print out more information by adding
-    "-debugmsg +relay" to the commandline.
-
-    (In fact, we see that the filename has been returned by the GetTempFileName
-     function above, but we check it anyway.)
-
-|marcus@jet $ wine winword.exe -debugmsg +relay,+file -debug
-|.....much more debugoutput .....
-|
-
-|Call KERNEL.97: GETTEMPFILENAME(0x00c3,08ef:8350,0x0000,08ef:8234) ret=05d7:09b1 ds=08ef
-|FILE_Create: 'C:\~doc8b93.tmp' 01b6 1
-|FILE_SetDosError: errno = 13
-
-|Warning: GetTempFileName returns 'C:\~doc8b93.tmp', which doesn't seem to be writeable.
+|Warning: GetTempFileName returns 'C:~doc9281.tmp', which doesn't seem to be writeable.
 |Please check your configuration file if this generates a failure.
- ^ Warning message
 
-|GetTempFileName: returning C:\~doc8b93.tmp
-|Ret  KERNEL.97: GETTEMPFILENAME() retval=0x8b93 ret=05d7:09b1 ds=08ef
-|Call KERNEL.74: OPENFILE(08ef:8234,08ef:82c6,0x1012) ret=05d7:09d8 ds=08ef
-|OpenFile: C:\~doc8b93.tmp 1012
-|FILE_Create: 'C:\~doc8b93.tmp' 01b6 0
-|FILE_SetDosError: errno = 13
-|OpenFile(C:\~doc8b93.tmp): return = HFILE_ERROR
-|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=05d7:09d8 ds=08ef
+Whoops, it even detects that something is wrong!
 
+|Ret  KERNEL.97: GETTEMPFILENAME() retval=0x9281 ret=060f:09b1 ds=0927
+                                          ^^^^^^ Temporary storage ID
 
-    The filename is "C:\~docd03d.tmp". Of course, C:\ is writeable for the
-    superuser only, so the open fails for a normal user and OpenFile returns
-    -1, which in turn generates this messagebox. (As said by the warning
-    message.)
+|Call KERNEL.74: OPENFILE(0x09278248"C:~doc9281.tmp",0927:82da,0x1012) ret=060f:09d8 ds=0927
+                                    ^^^^^^^^^^^^^^^^ ^^^^^^^^^ ^^^^^^^
+                                    |filename        |OFSTRUCT |open mode:
 
+                                       OF_CREATE|OF_SHARE_EXCLUSIVE|OF_READWRITE
+
+This fails, since my C: drive is in this case mounted readonly.
+
+|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=060f:09d8 ds=0927
+                                   ^^^^^^ HFILE_ERROR16, yes, it failed.
+
+|Call USER.1: MESSAGEBOX(0x0000,0x09278376"Sie müssen Windows verlassen und SHARE.EXE laden bevor Sie Word starten.",0x00000000,0x1030) ret=060f:084f ds=0927
+           
+And MessageBox'ed.
+
+|Stopped on breakpoint 2 at 0x40189100 (MessageBox32A [msgbox.c:190])
+|190     {		<- the sourceline
+In 32 bit mode.
+Wine-dbg>
+
+	The code seems to find a writeable harddisk and tries to create a file
+	there. To work around this bug, you can define C: as a networkdrive,
+	which is ignored by the code above.
 
 Written by Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>,
 additions welcome.

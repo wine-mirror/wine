@@ -4,12 +4,17 @@ Console - First Pass
 
 Consoles are just xterms created with the -Sxxn switch.
 A pty is opened and the master goes to the xterm side
-and the slave is held by the wine side.  The slave fd
-is changed into a HANDLE32 and this HANDLE32 is set
+and the slave is held by the wine side.  The console
+itself it turned into a few HANDLE32s and is set 
 to the STD_*_HANDLES.
 
-For now writing/reading to a console just calls FileWrite/FileRead.
+It is possible to use the WriteFile and ReadFile commands
+to write to a win32 console.  To accomplish this, all K32OBJs 
+that support I/O have a read and write function pointer.
+So, WriteFile calls K32OBJ_WriteFile which calls the K32OBJ's
+write function pointer, which then finally calls write.
 
+[this paragraph is now out of date]
 If the command line console is to be inheirited or
 a process inherits it's parents console (-- can that happen???),
 the console is created at process init time via PROCESS_InheritConsole.
@@ -23,20 +28,55 @@ pdb->console is set to NULL.  This helps indicate when
 it is possible to create a new console (via AllocConsole).
 
 
-Like most k32 objects, when the FreeConsole is called, the 
-ref count is decremented and the console is freed when
-it reaches zero.  The free kills the xterm and closes
-the master/slave fds.
+When FreeConsole is called, all handles that the process has
+open to the console are closed.  Like most k32objs, if the 
+console's refcount reaches zero, its k32obj destroy function
+is called.  The destroy kills the xterm if one was open.
 
 Also like most k32 objects, we assume that (K32OBJ) header is the
 first field so the casting (from K32OBJ *to CONSOLE *)
 works correctly.
 
+FreeConsole is called on process exit (in ExitProcess) if 
+pdb->console is not NULL.
+
 BUGS
 ----
+Console processes do not inherit their parent's handles.  I think
+there needs to be two cases, one where they have to inherit
+the stdin/stdout/stderr from unix, and one where they have to
+inherit from another windows app.
 
-A exit handler needs to be added.  If the process exits
-without calling FreeConsole, the xterm continues on...
-But... there should probably be a generic exit handler in
-wine for this kind of stuff (K32OBJs).
 
+================================================================
+
+experimentation with NT4 yields that:
+
+WriteFile
+---------
+	o does not truncate file on 0 length write
+	o 0 length write or error on write changes numcharswritten to 0
+	o 0 length write returns TRUE
+	o works with console handles
+
+_lwrite
+-------
+	o does truncate/expand file at current position on 0 length write
+	o returns 0 on a zero length write
+	o works with console handles (typecasted)
+
+WriteConsole
+------------
+	o expects only console handles
+
+
+SetFilePointer
+--------------
+	o returns -1 (err 6) when used with a console handle
+
+
+FreeConsole
+-----------
+	o even when all the handles to it are freed, the win32 console
+	  stays visible, the only way I could find to free it
+	  was via the FreeConsole

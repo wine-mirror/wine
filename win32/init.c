@@ -13,7 +13,6 @@
 #include "except.h"
 #include "heap.h"
 #include "task.h"
-#include "stddebug.h"
 #include "debug.h"
   
 /***********************************************************************
@@ -83,6 +82,7 @@ BOOL32 WINAPI GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
   char *name;
 
   name=getlogin();
+  if (!name) name=cuserid(NULL);
   len = name ? strlen(name) : 0;
   if (!len || !lpSize || len > *lpSize) {
     if (lpszName) *lpszName = 0;

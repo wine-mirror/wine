@@ -23,7 +23,7 @@ END-INFO-DIR-ENTRY
 This file documents Wine, the Windows Emulator.
 
 @c 
-Copyright @copyright{} 1997 The Wine authors. @*
+Copyright @copyright{} 1997,1998 The Wine authors. @*
 @xref{Authors, The Wine Authors, The Wine Authors},
 for a list of the copyright holders.
 
@@ -44,8 +44,8 @@ versions of this manual under the conditions stated in
 the section entitled ``License, Warranty, and Authors of Wine''.
 
 @sp 4
-FIXME: UNIX and POSIX trademarks. @*
-X11 @*
+FIXME: X11 and POSIX trademarks. @*
+UNIX is a registered trademark of the Open Group.
 Microsoft, Windows, MS-Windows, Windows-NT, Windows 95, and MS-DOS are
 registered trademarks of Microsoft Corporation.
 NT is a trademark of Northern Telecom Limited.
@@ -59,17 +59,16 @@ be registered in certain jurisdictions.
 @setchapternewpage odd
 
 @titlepage
-@sp 10
 
-@center @titlefont{The Wine Reference Manual}
-@center Edition 0.0.3, 14 August 1997
+@title{The Wine Reference Manual}
+@subtitle{Edition 0.0.5, February 1998}
 
-
+@author{The Wine Team}
 @c The following two commands start the copyright page.
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 1997 The Wine authors. @*
+Copyright @copyright{} 1997, 1998 The Wine authors. @*
 @xref{Authors, The Wine Authors, The Wine Authors},
 for a list of the copyright holders.
 
@@ -101,12 +100,12 @@ be registered in certain jurisdictions.
 
 @c Edit this macro manually in the above parts of the document
 @macro winemanualversion
-0.0.3
+0.0.4
 @end macro
 
 @c Edit this macro manually in the above parts of the document
 @macro winemanualdate
-14 August 1997
+February 1998
 @end macro
 
 @c Edit this macro manually into the TeX titlepage
@@ -122,12 +121,12 @@ Winelib
 @c MICROSOFT
 @c
 
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @macro mswindows
 MS-Windows
 @end macro
 
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @c spell it always the same
 @macro WIN32
 WIN32
@@ -136,17 +135,17 @@ WIN32
 WIN16
 @end macro
 
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @macro WINNT
 Windows NT
 @end macro
 
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @macro WINNT40
 Windows NT 4.0
 @end macro
 
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @macro WIN95
 Windows 95
 @end macro
@@ -155,12 +154,12 @@ Windows 95
 @c
 @c THE OTHERS
 @c
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @macro unix
 UNIX
 @end macro
 
-@c FIXME: automatical trademark reference
+@c FIXME: automatic trademark reference
 @macro posix
 POSIX
 @end macro
@@ -1203,7 +1202,14 @@ FIXME: write installation guide
 @section Applying patches
 @xref{Creating patches}, for instructions on creating patches.
 
-FIXME: write patch instructions
+@kbd{cd} to the top source directory for Wine, and run 
+@code{patch -p1 < @var{patchfile}}.
+What needs to be done next depends to some extent on what the
+patch touches. For small patches which only alter C source, it can be
+enough to rerun @code{make}. In general, the sequence @code{configure},
+@code{make depend}, @code{make} is sufficient, unless the patch alters
+@code{[config.in]}, in which case you must regenerate @code{configure}
+via @code{make configure} (which just runs @code{autoconf}).
 
 
 @node The Wine Project, , Installation, Top
@@ -1842,7 +1848,7 @@ compiled as a library, they will be defined; if Wine is compiled as an
 emulator, they won't.
 
 You therefore have to access all functions and data types by their full
-names, with the proper suffix explicitely appended. In Wine, the 16 bit
+names, with the proper suffix explicitly appended. In Wine, the 16 bit
 and 32 bit versions of the functions are distinct entities, which might
 (theoretically) show a completely different behaviour. They may even
 call each other (and they will quite frequently).
@@ -1858,7 +1864,20 @@ The 16-to-32 bit mapping is done on exporting the DLL functions.
 @section Creating patches
 @xref{Applying patches}, for instructions on applying patches.
 
-FIXME: how to create patches
+Patches are created with the program @code{diff}. You need a copy
+of clean source tree to diff against. The @samp{-u} option, to create 
+unified diffs, is popular but not obligatory.
+For changes to a single file,
+@code{diff -u wine990101/windows/win.c mywine/windows/win.c > win_patch}
+is sufficient.
+To generate a complete diff between your tree and the distribution,
+use @code{diff -uR wine990101 mywine}.
+
+This assumes that the original distribution and your personal tree
+have the same parent directory, from which you make the diff.
+This ensures a consistent format for the diffs, which in turn
+is necessary so that they can be applied consistently as described in
+@xref{Applying patches}.
 
 @node Adding Documentation, File names, Creating patches, The Wine Project
 @section Adding Documentation

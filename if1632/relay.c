@@ -13,13 +13,11 @@
 #include "module.h"
 #include "stackframe.h"
 #include "task.h"
-#include "stddebug.h"
-/* #define DEBUG_RELAY */
 #include "debug.h"
 
 #if 0
 /* Make make_debug think these were really used */
-dprintf_relay
+dprintf_info(relay, "test - dummy");
 #endif
 
 
@@ -83,7 +81,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     char *args16;
     int i;
 
-    if (!debugging_relay) return;
+    if (!debugging_info(relay)) return;
 
     frame = CURRENT_STACK16;
     printf( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
@@ -201,7 +199,7 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
     STACK16FRAME *frame;
     WORD ordinal;
 
-    if (!debugging_relay) return;
+    if (!debugging_info(relay)) return;
     frame = CURRENT_STACK16;
     printf( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
                                                    frame->entry_ip,
@@ -259,7 +257,7 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 {
     THDB *thdb;
 
-    if (!debugging_relay) return;
+    if (!debugging_info(relay)) return;
     thdb = THREAD_Current();
 
     if (nb_args == -1)  /* Register function */
@@ -385,7 +383,7 @@ void WINAPI Throw( CONTEXT *context )
     if (lpbuf[8] != SS_reg(context))
         fprintf( stderr, "Switching stack segment with Throw() not supported; expect crash now\n" );
 
-    if (debugging_relay)  /* Make sure we have a valid entry point address */
+    if (debugging_info(relay))  /* Make sure we have a valid entry point address */
     {
         static FARPROC16 entryPoint = NULL;
 
@@ -410,12 +408,13 @@ static DWORD RELAY_CallProc32W(int Ex)
 	DWORD *args, ret;
         VA_LIST16 valist;
 	int i;
+	dbg_decl_str(relay, 1024);
 
         VA_START16( valist );
         nrofargs    = VA_ARG16( valist, DWORD );
         argconvmask = VA_ARG16( valist, DWORD );
         proc32      = VA_ARG16( valist, FARPROC32 );
-	dprintf_relay(stddeb,"CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
+	dsprintf(relay, "CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
 	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
                                     sizeof(DWORD)*nrofargs );
 	for (i=0;i<nrofargs;i++) {
@@ -423,15 +422,15 @@ static DWORD RELAY_CallProc32W(int Ex)
                 {
                     SEGPTR ptr = VA_ARG16( valist, SEGPTR );
                     args[nrofargs-i-1] = (DWORD)PTR_SEG_TO_LIN(ptr);
-                    dprintf_relay(stddeb,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
+                    dsprintf(relay,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
 		}
                 else
                 {
                     args[nrofargs-i-1] = VA_ARG16( valist, DWORD );
-                    dprintf_relay(stddeb,"%ld,",args[nrofargs-i-1]);
+                    dsprintf(relay,"%ld,",args[nrofargs-i-1]);
 		}
 	}
-	dprintf_relay(stddeb,"]) - ");
+	dsprintf(relay,"])");
         VA_END16( valist );
 
 	switch (nrofargs) {
@@ -469,7 +468,7 @@ static DWORD RELAY_CallProc32W(int Ex)
         if (!Ex) STACK16_POP( THREAD_Current(),
                               (3 + nrofargs) * sizeof(DWORD) );
 
-	dprintf_relay(stddeb,"returns %08lx\n",ret);
+	dprintf_info(relay,"%s - returns %08lx\n",dbg_str(relay),ret);
 	HeapFree( GetProcessHeap(), 0, args );
 	return ret;
 }

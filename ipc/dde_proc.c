@@ -26,7 +26,6 @@
 #include "dde_proc.h"
 #include "dde_mem.h"
 #include "dde.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -48,9 +47,7 @@ sigjmp_buf env_wait_x;
 #define DDE_MSG_SIZE   sizeof(MSG16)
 #define FREE_WND (WORD)(-2)
 #define DELETED_WND (WORD)(-3)
-#if defined(DEBUG_MSG) || defined(DEBUG_RUNTIME)
 static char *msg_type[4]={"********", "DDE_SEND", "DDE_POST", "DDE_ACK"};
-#endif
 
 struct msg_dat {
 	struct msgbuf dat;
@@ -126,7 +123,7 @@ void dde_proc_add(dde_proc procs)
 {
   dde_proc proc;
   int proc_idx;
-  dprintf_dde(stddeb,"dde_proc_add(..)\n");
+  dprintf_info(dde,"dde_proc_add(..)\n");
   shm_write_wait(main_block->sem);
 
   /* find free proc_idx and allocate it */
@@ -167,7 +164,7 @@ static BOOL32 get_ack()
        size= msgrcv( main_block->proc[curr_proc_idx].msg , &ack_buff.dat,
 		     1, DDE_ACK, IPC_NOWAIT);
        if (size>=0) {
-	  dprintf_msg(stddeb,"get_ack: received DDE_ACK message\n");
+	  dprintf_info(msg,"get_ack: received DDE_ACK message\n");
 	  return TRUE;
        }
        if (DDE_GetRemoteMessage()) {
@@ -200,7 +197,7 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      return FALSE;
   }
 
-  if (debugging_dde) {
+  if (debugging_info(dde) || debugging_warn_dde) {
      MSG16 *msg=(MSG16*) &msgbuf->mtext;
      char *title;
      if (msgbuf->mtype==DDE_SEND)
@@ -212,13 +209,13 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      if (title)
 	 print_dde_message(title, msg);
      else
-       fprintf(stddeb,"Unknown message type=0x%lx\n",msgbuf->mtype);
+       dprintf_warn(dde, "Unknown message type=0x%lx\n", msgbuf->mtype);
   }
-  dprintf_msg(stddeb,
+  dprintf_info(msg,
 	      "DDE_DoOneMessage: to proc_idx=%d (pid=%d), queue=%u\n",
 	      proc_idx, proc->pid, (unsigned)proc->msg);
   if ( proc->msg != -1) {
-     dprintf_msg(stddeb, "DDE_DoOneMessage: doing...(type=%s)\n",
+     dprintf_info(msg, "DDE_DoOneMessage: doing...(type=%s)\n",
 		 msg_type[msgbuf->mtype]);
      size=msgsnd (proc->msg, msgbuf, size, 0);
 
@@ -228,7 +225,7 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      }
      kill(proc->pid,SIGUSR2);	   /* tell the process there is a message */
 
-     dprintf_msg(stddeb,"DDE_DoOneMessage: "
+     dprintf_info(msg,"DDE_DoOneMessage: "
 		 "Trying to get acknowledgment from msg queue=%d\n",
 		 proc->msg);
      Yield16();			/* force task switch, and */
@@ -242,7 +239,7 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      }
   }
   else {
-     dprintf_msg(stddeb,"DDE_DoOneMessage: message not sent, "
+     dprintf_warn(msg, "DDE_DoOneMessage: message not sent, "
 		 "target has no message queue\n");
      return FALSE;
   }
@@ -315,11 +312,11 @@ static BOOL32 DDE_DoMessage( MSG16 *msg, int type )
   if ( ! DDE_IsRemoteWindow(msg->hwnd) && msg->hwnd!= (HWND16)-1)
      return FALSE;
 
-  dprintf_msg(stddeb, "%s: DDE_DoMessage(hwnd=0x%x,msg=0x%x,..)\n",
+  dprintf_info(msg, "%s: DDE_DoMessage(hwnd=0x%x,msg=0x%x,..)\n",
 	      msg_type[type], (int)msg->hwnd,(int)msg->message);
 
 
-  dprintf_msg(stddeb,
+  dprintf_info(msg,
 	      "DDE_DoMessage(hwnd=0x%x,msg=0x%x,..) // HWND_BROADCAST !\n",
 	      (int)msg->hwnd,(int)msg->message);
   remote_message=(void*)&msg_dat.dat.mtext;
@@ -364,7 +361,7 @@ void dde_proc_send_ack(HWND16 wnd, BOOL32 val) {
 
    proc=DDE_WIN2PROC(wnd);
    msg=main_block->proc[proc].msg;
-   dprintf_msg(stddeb,"DDE_GetRemoteMessage: sending ACK "
+   dprintf_info(msg,"DDE_GetRemoteMessage: sending ACK "
 	       "to wnd=%4x, proc=%d,msg=%d, pid=%d\n",wnd,proc,msg,
 	       main_block->proc[proc].pid
      );
@@ -405,7 +402,7 @@ int DDE_GetRemoteMessage()
 
   if (size==DDE_MSG_SIZE) {	   /* is this a correct message (if any) ?*/
      was_sent=TRUE;
-     dprintf_msg(stddeb,
+     dprintf_info(msg,
 		 "DDE:receive sent message. msg=%04x wPar=%04x"
 		 " lPar=%08lx\n",
 		 remote_message->message, remote_message->wParam,
@@ -416,7 +413,7 @@ int DDE_GetRemoteMessage()
 
      if (size==DDE_MSG_SIZE) {	   /* is this a correct message (if any) ?*/
 	was_sent=FALSE;
-	dprintf_msg(stddeb,
+	dprintf_info(msg,
 		    "DDE:receive posted message. "
 		    "msg=%04x wPar=%04x lPar=%08lx\n",
 		    remote_message->message, remote_message->wParam,
@@ -432,7 +429,7 @@ int DDE_GetRemoteMessage()
 
   nesting++;
 
-  if (debugging_dde) {
+  if (debugging_info(dde)) {
      char *title;
      if (was_sent)
 	title="receive sent dde:";
@@ -445,7 +442,7 @@ int DDE_GetRemoteMessage()
     HWND16 dde_window= DDE_WIN_INFO(remote_message->hwnd).wnd;
      /* we should know exactly where to send the message (locally)*/
      if (was_sent) {
-	dprintf_dde(stddeb,
+	dprintf_info(dde,
 		    "SendMessage(wnd=0x%04x, msg=0x%04x, wPar=0x%04x,"
 		    "lPar=0x%08x\n",
 		    dde_window, remote_message->message,
@@ -527,7 +524,7 @@ void DDE_TestDDE(HWND16 hwnd)
      in_test--;
      return;
   }
-  dprintf_msg(stddeb,"DDE_TestDDE(0x%04x)\n", hwnd);
+  dprintf_info(msg,"DDE_TestDDE(0x%04x)\n", hwnd);
   if (hwnd==0)
       hwnd=-1;
   /* just send a message to see how things are going */
@@ -565,6 +562,7 @@ static void print_dde_message(char *desc, MSG16 *msg)
     DDEADVISE *ddeadvise;
     DDEDATA *ddedata;
     DDEPOKE *ddepoke;
+    dbg_decl_str(dde, 2048);
 
     if (is_dde_handle(msg->lParam & 0xffff) )
 	ptr=DDE_AttachHandle(msg->lParam&0xffff, NULL);
@@ -573,8 +571,8 @@ static void print_dde_message(char *desc, MSG16 *msg)
     wStatus=LOWORD(msg->lParam);
     hWord=HIWORD(msg->lParam);
 
-    fprintf(stddeb,"%s", desc);
-    fprintf(stddeb,"%04x %04x==%s %04x %08lx ",
+    dsprintf(dde,"%s", desc);
+    dsprintf(dde,"%04x %04x==%s %04x %08lx ",
 	    msg->hwnd, msg->message,"",/*MessageTypeNames[msg->message],*/
 	    msg->wParam, msg->lParam);
     switch(msg->message) {
@@ -588,52 +586,52 @@ static void print_dde_message(char *desc, MSG16 *msg)
 	/* DDEADVISE: hOptions in WM_DDE_ADVISE message */
 	if (ptr) {
 	   ddeadvise=ptr;
-	   fprintf(stddeb,"fDeferUpd=%d,fAckReq=%d,cfFormat=0x%x",
+	   dsprintf(dde,"fDeferUpd=%d,fAckReq=%d,cfFormat=0x%x",
 		   ddeadvise->fDeferUpd, ddeadvise->fAckReq,
 		   ddeadvise->cfFormat);
 	} else
-	   fprintf(stddeb,"NO-DATA");
-	fprintf(stddeb," atom=0x%x",hWord);
+	   dsprintf(dde,"NO-DATA");
+	dsprintf(dde," atom=0x%x",hWord);
 	break;
 
       case WM_DDE_UNADVISE:
-	fprintf(stddeb,"format=0x%x, atom=0x%x",wStatus,hWord);
+	dsprintf(dde,"format=0x%x, atom=0x%x",wStatus,hWord);
 	break;
       case WM_DDE_ACK:
 	ddeack=(DDEACK*)&wStatus;
-	fprintf(stddeb,"bAppReturnCode=%d,fBusy=%d,fAck=%d",
+	dsprintf(dde,"bAppReturnCode=%d,fBusy=%d,fAck=%d",
 		ddeack->bAppReturnCode, ddeack->fBusy, ddeack->fAck);
 	if (ddeack->fAck)
-	   fprintf(stddeb,"(True)");
+	   dsprintf(dde,"(True)");
 	else
-	   fprintf(stddeb,"(False)");
+	   dsprintf(dde,"(False)");
 	break;
 
       case WM_DDE_DATA:
 	if (ptr) {
 	   ddedata=ptr;
-	   fprintf(stddeb,"fResponse=%d,fRelease=%d,"
+	   dsprintf(dde,"fResponse=%d,fRelease=%d,"
 		   "fAckReq=%d,cfFormat=0x%x,value=\"%.*s\"",
 		   ddedata->fResponse, ddedata->fRelease,
 		   ddedata->fAckReq, ddedata->cfFormat,
 		   debug_last_handle_size- (int)sizeof(*ddedata)+1,
 		   ddedata->Value);
 	} else
-	   fprintf(stddeb,"NO-DATA");
-	fprintf(stddeb," atom=0x%04x",hWord);
+	   dsprintf(dde,"NO-DATA");
+	dsprintf(dde," atom=0x%04x",hWord);
 	break;
 
       case WM_DDE_POKE:
 	if (ptr) {
 	   ddepoke=ptr;
-	   fprintf(stddeb,"fRelease=%d,cfFormat=0x%x,value[0]='%c'",
+	   dsprintf(dde,"fRelease=%d,cfFormat=0x%x,value[0]='%c'",
 		   ddepoke->fRelease, ddepoke->cfFormat, ddepoke->Value[0]);
 	} else
-	   fprintf(stddeb,"NO-DATA");
-	fprintf(stddeb," atom=0x%04x",hWord);
+	   dsprintf(dde,"NO-DATA");
+	dsprintf(dde," atom=0x%04x",hWord);
 	break;
     }
-    fprintf(stddeb,"\n");
+    dprintf_info(dde,"%s\n", dbg_str(dde));
 }
 
 void dde_proc_done(dde_proc proc)

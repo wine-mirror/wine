@@ -14,7 +14,6 @@
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #define MAX_ANIMDRV 		2
@@ -55,7 +54,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 	LPSTR		lpstrElementName;
 	char		str[128];
 
-	dprintf_mcianim(stddeb,"ANIM_mciOpen(%04X, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciOpen(%04X, %08lX, %p);\n", 
 					wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (AnimDev[wDevID].nUseCount > 0) {
@@ -71,12 +70,12 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 		AnimDev[wDevID].nUseCount = 1;
 		AnimDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		}
-	dprintf_mcianim(stddeb,"ANIM_mciOpen // wDevID=%04X\n", wDevID);
+	dprintf_info(mcianim,"ANIM_mciOpen // wDevID=%04X\n", wDevID);
 	lpParms->wDeviceID = wDevID;
-	dprintf_mcianim(stddeb,"ANIM_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
+	dprintf_info(mcianim,"ANIM_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
     if (dwFlags & MCI_OPEN_ELEMENT) {
 		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
-		dprintf_mcianim(stddeb,"ANIM_mciOpen // MCI_OPEN_ELEMENT '%s' !\n",
+		dprintf_info(mcianim,"ANIM_mciOpen // MCI_OPEN_ELEMENT '%s' !\n",
 						lpstrElementName);
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
@@ -96,7 +95,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
    Moved to mmsystem.c mciOpen routine 
 
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciOpen // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -115,7 +114,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 static DWORD ANIM_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciClose(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciClose(%u, %08lX, %p);\n", 
 				wDevID, dwParam, lpParms);
 	if (AnimDev[wDevID].lpdwTrackLen != NULL) free(AnimDev[wDevID].lpdwTrackLen);
 	if (AnimDev[wDevID].lpdwTrackPos != NULL) free(AnimDev[wDevID].lpdwTrackPos);
@@ -130,11 +129,11 @@ static DWORD ANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 						LPMCI_GETDEVCAPS_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciGetDevCaps(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciGetDevCaps(%u, %08lX, %p);\n", 
 				wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_GETDEVCAPS_ITEM) {
-        	dprintf_mcianim(stddeb,
+        	dprintf_info(mcianim,
 		"ANIM_mciGetDevCaps // MCI_GETDEVCAPS_ITEM dwItem=%08lX;\n",
 				lpParms->dwItem);
 		switch(lpParms->dwItem) {
@@ -169,7 +168,7 @@ static DWORD ANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 				return MCIERR_UNRECOGNIZED_COMMAND;
 			}
 		}
-	dprintf_mcianim(stddeb,
+	dprintf_info(mcianim,
 		"ANIM_mciGetDevCaps // lpParms->dwReturn=%08lX;\n", 
 		lpParms->dwReturn);
  	return 0;
@@ -190,13 +189,13 @@ static DWORD ANIM_CalcTime(UINT16 wDevID, DWORD dwFormatType, DWORD dwFrame)
 	UINT16	wMinutes;
 	UINT16	wSeconds;
 	UINT16	wFrames;
-	dprintf_mcianim(stddeb,"ANIM_CalcTime(%u, %08lX, %lu);\n", 
+	dprintf_info(mcianim,"ANIM_CalcTime(%u, %08lX, %lu);\n", 
 			wDevID, dwFormatType, dwFrame);
     
 	switch (dwFormatType) {
 		case MCI_FORMAT_MILLISECONDS:
 			dwTime = dwFrame / ANIMFRAMES_PERSEC * 1000;
-			dprintf_mcianim(stddeb,
+			dprintf_info(mcianim,
 				"ANIM_CalcTime // MILLISECONDS %lu\n", dwTime);
 			break;
 		case MCI_FORMAT_MSF:
@@ -205,7 +204,7 @@ static DWORD ANIM_CalcTime(UINT16 wDevID, DWORD dwFormatType, DWORD dwFrame)
 			wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
 								ANIMFRAMES_PERSEC * wSeconds;
 			dwTime = MCI_MAKE_MSF(wMinutes, wSeconds, wFrames);
-			dprintf_mcianim(stddeb,"ANIM_CalcTime // MSF %02u:%02u:%02u -> dwTime=%lu\n",
+			dprintf_info(mcianim,"ANIM_CalcTime // MSF %02u:%02u:%02u -> dwTime=%lu\n",
 								wMinutes, wSeconds, wFrames, dwTime);
 			break;
 		default:
@@ -223,7 +222,7 @@ static DWORD ANIM_CalcTime(UINT16 wDevID, DWORD dwFormatType, DWORD dwFrame)
 			wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
 								ANIMFRAMES_PERSEC * wSeconds;
 			dwTime = MCI_MAKE_TMSF(wTrack, wMinutes, wSeconds, wFrames);
-			dprintf_mcianim(stddeb,
+			dprintf_info(mcianim,
 				"ANIM_CalcTime // %02u-%02u:%02u:%02u\n",
 				wTrack, wMinutes, wSeconds, wFrames);
 			break;
@@ -241,17 +240,17 @@ static DWORD ANIM_CalcFrame(UINT16 wDevID, DWORD dwFormatType, DWORD dwTime)
 	DWORD	dwFrame = 0;
 #if defined(linux) || defined(__FreeBSD__)
 	UINT16	wTrack;
-	dprintf_mcianim(stddeb,"ANIM_CalcFrame(%u, %08lX, %lu);\n", 
+	dprintf_info(mcianim,"ANIM_CalcFrame(%u, %08lX, %lu);\n", 
 			wDevID, dwFormatType, dwTime);
 
         switch (dwFormatType) {
 		case MCI_FORMAT_MILLISECONDS:
 			dwFrame = dwTime * ANIMFRAMES_PERSEC / 1000;
-			dprintf_mcianim(stddeb,
+			dprintf_info(mcianim,
 				"ANIM_CalcFrame // MILLISECONDS %lu\n", dwFrame);
 			break;
 		case MCI_FORMAT_MSF:
-			dprintf_mcianim(stddeb,
+			dprintf_info(mcianim,
 				"ANIM_CalcFrame // MSF %02u:%02u:%02u\n",
 				MCI_MSF_MINUTE(dwTime), MCI_MSF_SECOND(dwTime), 
 				MCI_MSF_FRAME(dwTime));
@@ -264,11 +263,11 @@ static DWORD ANIM_CalcFrame(UINT16 wDevID, DWORD dwFormatType, DWORD dwTime)
 			dwFormatType = MCI_FORMAT_TMSF;
 		case MCI_FORMAT_TMSF:
 			wTrack = MCI_TMSF_TRACK(dwTime);
-			dprintf_mcianim(stddeb,
+			dprintf_info(mcianim,
 				"ANIM_CalcFrame // TMSF %02u-%02u:%02u:%02u\n",
 				MCI_TMSF_TRACK(dwTime), MCI_TMSF_MINUTE(dwTime), 
 				MCI_TMSF_SECOND(dwTime), MCI_TMSF_FRAME(dwTime));
-			dprintf_mcianim(stddeb,
+			dprintf_info(mcianim,
 				"ANIM_CalcFrame // TMSF trackpos[%u]=%lu\n",
 				wTrack, AnimDev[wDevID].lpdwTrackPos[wTrack - 1]);
 			dwFrame = AnimDev[wDevID].lpdwTrackPos[wTrack - 1];
@@ -288,7 +287,7 @@ static DWORD ANIM_CalcFrame(UINT16 wDevID, DWORD dwFormatType, DWORD dwTime)
 static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciInfo(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciInfo(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	lpParms->lpstrReturn = NULL;
@@ -322,11 +321,11 @@ static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciStatus(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciStatus(%u, %08lX, %p);\n", 
 			wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -336,11 +335,11 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 		switch(lpParms->dwItem) {
 			case MCI_STATUS_CURRENT_TRACK:
 				lpParms->dwReturn = AnimDev[wDevID].nCurTrack;
-				dprintf_mcianim(stddeb,"ANIM_mciStatus // CURRENT_TRACK=%lu!\n", lpParms->dwReturn);
+				dprintf_info(mcianim,"ANIM_mciStatus // CURRENT_TRACK=%lu!\n", lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_LENGTH:
 				if (dwFlags & MCI_TRACK) {
-					dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_TRACK #%lu LENGTH=??? !\n",
+					dprintf_info(mcianim,"ANIM_mciStatus // MCI_TRACK #%lu LENGTH=??? !\n",
 														lpParms->dwTrack);
 					if (lpParms->dwTrack > AnimDev[wDevID].nTracks)
 						return MCIERR_OUTOFRANGE;
@@ -350,20 +349,20 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 					lpParms->dwReturn = AnimDev[wDevID].dwTotalLen;
 				lpParms->dwReturn = ANIM_CalcTime(wDevID, 
 					AnimDev[wDevID].dwTimeFormat, lpParms->dwReturn);
-                		dprintf_mcianim(stddeb,"ANIM_mciStatus // LENGTH=%lu !\n", lpParms->dwReturn);
+                		dprintf_info(mcianim,"ANIM_mciStatus // LENGTH=%lu !\n", lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_MODE:
 				lpParms->dwReturn = AnimDev[wDevID].mode;
-				dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_STATUS_MODE=%08lX !\n",
+				dprintf_info(mcianim,"ANIM_mciStatus // MCI_STATUS_MODE=%08lX !\n",
 												lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_MEDIA_PRESENT:
 				lpParms->dwReturn = TRUE;
-				dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_STATUS_MEDIA_PRESENT !\n");
+				dprintf_info(mcianim,"ANIM_mciStatus // MCI_STATUS_MEDIA_PRESENT !\n");
 			 	return 0;
 			case MCI_STATUS_NUMBER_OF_TRACKS:
 				lpParms->dwReturn = 1;
-				dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n",
+				dprintf_info(mcianim,"ANIM_mciStatus // MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n",
 											lpParms->dwReturn);
 				if (lpParms->dwReturn == (WORD)-1) return MCIERR_INTERNAL;
 			 	return 0;
@@ -371,25 +370,25 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 				lpParms->dwReturn = AnimDev[wDevID].dwCurFrame;
 				if (dwFlags & MCI_STATUS_START) {
 					lpParms->dwReturn = 0;
-					dprintf_mcianim(stddeb,"CDAUDIO_mciStatus // get MCI_STATUS_START !\n");
+					dprintf_info(mcianim,"CDAUDIO_mciStatus // get MCI_STATUS_START !\n");
 					}
 				if (dwFlags & MCI_TRACK) {
 					if (lpParms->dwTrack > AnimDev[wDevID].nTracks)
 						return MCIERR_OUTOFRANGE;
 					lpParms->dwReturn = AnimDev[wDevID].lpdwTrackPos[lpParms->dwTrack - 1];
-					dprintf_mcianim(stddeb,"ANIM_mciStatus // get MCI_TRACK #%lu !\n", lpParms->dwTrack);
+					dprintf_info(mcianim,"ANIM_mciStatus // get MCI_TRACK #%lu !\n", lpParms->dwTrack);
 					}
 				lpParms->dwReturn = ANIM_CalcTime(wDevID, 
 					AnimDev[wDevID].dwTimeFormat, lpParms->dwReturn);
-					dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_STATUS_POSITION=%08lX !\n",
+					dprintf_info(mcianim,"ANIM_mciStatus // MCI_STATUS_POSITION=%08lX !\n",
 														lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_READY:
-				dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_STATUS_READY !\n");
+				dprintf_info(mcianim,"ANIM_mciStatus // MCI_STATUS_READY !\n");
 				lpParms->dwReturn = TRUE;
 			 	return 0;
 			case MCI_STATUS_TIME_FORMAT:
-				dprintf_mcianim(stddeb,"ANIM_mciStatus // MCI_STATUS_TIME_FORMAT !\n");
+				dprintf_info(mcianim,"ANIM_mciStatus // MCI_STATUS_TIME_FORMAT !\n");
 				lpParms->dwReturn = MCI_FORMAT_MILLISECONDS;
 			 	return 0;
 			default:
@@ -412,7 +411,7 @@ static DWORD ANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 {
 #if defined(linux) || defined(__FreeBSD__)
 	int 	start, end;
-	dprintf_mcianim(stddeb,"ANIM_mciPlay(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciPlay(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	start = 0; 		end = AnimDev[wDevID].dwTotalLen;
@@ -420,19 +419,19 @@ static DWORD ANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	if (dwFlags & MCI_FROM) {
 		start = ANIM_CalcFrame(wDevID, 
 			AnimDev[wDevID].dwTimeFormat, lpParms->dwFrom); 
-        dprintf_mcianim(stddeb,"ANIM_mciPlay // MCI_FROM=%08lX -> %u \n",
+        dprintf_info(mcianim,"ANIM_mciPlay // MCI_FROM=%08lX -> %u \n",
 				lpParms->dwFrom, start);
 		}
 	if (dwFlags & MCI_TO) {
 		end = ANIM_CalcFrame(wDevID, 
 			AnimDev[wDevID].dwTimeFormat, lpParms->dwTo);
-        	dprintf_mcianim(stddeb,
+        	dprintf_info(mcianim,
 			"ANIM_mciPlay // MCI_TO=%08lX -> %u \n",
 			lpParms->dwTo, end);
 		}
 	AnimDev[wDevID].mode = MCI_MODE_PLAY;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -450,12 +449,12 @@ static DWORD ANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 static DWORD ANIM_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciStop(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciStop(%u, %08lX, %p);\n", 
 			wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	AnimDev[wDevID].mode = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciStop // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -473,12 +472,12 @@ static DWORD ANIM_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 static DWORD ANIM_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciPause(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciPause(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	AnimDev[wDevID].mode = MCI_MODE_PAUSE;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciPause // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -496,12 +495,12 @@ static DWORD ANIM_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 static DWORD ANIM_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciResume(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciResume(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	AnimDev[wDevID].mode = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciResume // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -521,7 +520,7 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 #if defined(linux) || defined(__FreeBSD__)
 	DWORD	dwRet;
 	MCI_PLAY_PARMS PlayParms;
-	dprintf_mcianim(stddeb,"ANIM_mciSeek(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciSeek(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	AnimDev[wDevID].mode = MCI_MODE_SEEK;
@@ -540,7 +539,7 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 	if (dwRet != 0) return dwRet;
 	dwRet = ANIM_mciStop(wDevID, MCI_WAIT, (LPMCI_GENERIC_PARMS)&PlayParms);
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciSeek // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
@@ -559,7 +558,7 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	dprintf_mcianim(stddeb,"ANIM_mciSet(%u, %08lX, %p);\n", 
+	dprintf_info(mcianim,"ANIM_mciSet(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 /*
@@ -569,14 +568,14 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	if (dwFlags & MCI_SET_TIME_FORMAT) {
 		switch (lpParms->dwTimeFormat) {
 			case MCI_FORMAT_MILLISECONDS:
-				dprintf_mcianim(stddeb,
+				dprintf_info(mcianim,
 					"ANIM_mciSet // MCI_FORMAT_MILLISECONDS !\n");
 				break;
 			case MCI_FORMAT_MSF:
-				dprintf_mcianim(stddeb,"ANIM_mciSet // MCI_FORMAT_MSF !\n");
+				dprintf_info(mcianim,"ANIM_mciSet // MCI_FORMAT_MSF !\n");
 				break;
 			case MCI_FORMAT_TMSF:
-				dprintf_mcianim(stddeb,"ANIM_mciSet // MCI_FORMAT_TMSF !\n");
+				dprintf_info(mcianim,"ANIM_mciSet // MCI_FORMAT_TMSF !\n");
 				break;
 			default:
 				fprintf(stderr,"ANIM_mciSet // bad time format !\n");
@@ -588,7 +587,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	if (dwFlags & MCI_SET_ON) return MCIERR_UNSUPPORTED_FUNCTION;
 	if (dwFlags & MCI_SET_OFF) return MCIERR_UNSUPPORTED_FUNCTION;
 	if (dwFlags & MCI_NOTIFY) {
-		dprintf_mcianim(stddeb,
+		dprintf_info(mcianim,
 			"ANIM_mciSet // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 

@@ -225,6 +225,7 @@ struct IDirectSoundBuffer {
 	DSBUFFERDESC			dsbd;
 	LPDSBPOSITIONNOTIFY		notifies;
 	int				nrofnotifies;
+	double				volfac;
 };
 #undef THIS
 

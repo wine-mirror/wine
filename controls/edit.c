@@ -18,7 +18,6 @@
 #include "combo.h"
 #include "local.h"
 #include "resource.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "callback.h"
 
@@ -110,7 +109,7 @@ typedef struct
 #define ORDER_UINT32(x,y) do { if ((UINT32)(y) < (UINT32)(x)) SWAP_UINT32((x),(y)); } while(0)
 
 #define DPRINTF_EDIT_NOTIFY(hwnd, str) \
-	({dprintf_edit(stddeb, \
+	({dprintf_info(edit, \
 			"edit: notification " str " sent to hwnd=%08x\n", \
 			(UINT32)(hwnd));})
 
@@ -123,11 +122,11 @@ typedef struct
 			MAKEWPARAM((wnd)->wIDmenu, wNotifyCode), \
 			(LPARAM)(wnd)->hwndSelf))
 #define DPRINTF_EDIT_MSG16(str) \
-	dprintf_edit(stddeb, \
+	dprintf_info(edit, \
 			"edit: 16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
 			(UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
 #define DPRINTF_EDIT_MSG32(str) \
-	dprintf_edit(stddeb, \
+	dprintf_info(edit, \
 			"edit: 32 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
 			(UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
 
@@ -987,7 +986,7 @@ static INT32 EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT32 start, INT32 
 	}
         else if (es->word_break_proc32A)
         {
-            dprintf_relay( stddeb, "CallTo32(wordbrk=%p,str='%s',idx=%d,cnt=%d,act=%d)\n",
+            dprintf_info(relay, "CallTo32(wordbrk=%p,str='%s',idx=%d,cnt=%d,act=%d)\n",
                            es->word_break_proc32A, es->text + start, index,
                            count, action );
             return (INT32)es->word_break_proc32A( es->text + start, index,
@@ -1319,7 +1318,7 @@ static BOOL32 EDIT_MakeFit(WND *wnd, EDITSTATE *es, INT32 size)
 	if (size > es->buffer_limit)
 		size = es->buffer_limit;
 
-	dprintf_edit(stddeb, "edit: EDIT_MakeFit: trying to ReAlloc to %d+1\n", size);
+	dprintf_info(edit, "edit: EDIT_MakeFit: trying to ReAlloc to %d+1\n", size);
 
 	EDIT_UnlockBuffer(wnd, es, TRUE);
 	if (es->text) {
@@ -1329,25 +1328,25 @@ static BOOL32 EDIT_MakeFit(WND *wnd, EDITSTATE *es, INT32 size)
 			es->buffer_size = 0;
 	} else if (es->hloc32) {
 		if ((hNew32 = LocalReAlloc32(es->hloc32, size + 1, 0))) {
-			dprintf_edit(stddeb, "edit: EDIT_MakeFit: Old 32 bit handle %08x, new handle %08x\n", es->hloc32, hNew32);
+			dprintf_info(edit, "edit: EDIT_MakeFit: Old 32 bit handle %08x, new handle %08x\n", es->hloc32, hNew32);
 			es->hloc32 = hNew32;
 			es->buffer_size = MIN(LocalSize32(es->hloc32) - 1, es->buffer_limit);
 		}
 	} else if (es->hloc16) {
 		if ((hNew16 = LOCAL_ReAlloc(wnd->hInstance, es->hloc16, size + 1, LMEM_MOVEABLE))) {
-			dprintf_edit(stddeb, "edit: EDIT_MakeFit: Old 16 bit handle %08x, new handle %08x\n", es->hloc16, hNew16);
+			dprintf_info(edit, "edit: EDIT_MakeFit: Old 16 bit handle %08x, new handle %08x\n", es->hloc16, hNew16);
 			es->hloc16 = hNew16;
 			es->buffer_size = MIN(LOCAL_Size(wnd->hInstance, es->hloc16) - 1, es->buffer_limit);
 		}
 	}
 	if (es->buffer_size < size) {
 		EDIT_LockBuffer(wnd, es);
-		dprintf_edit(stddeb, "edit: EDIT_MakeFit: FAILED !  We now have %d+1\n", es->buffer_size);
+		dprintf_warn(edit, "edit: EDIT_MakeFit: FAILED !  We now have %d+1\n", es->buffer_size);
 		EDIT_NOTIFY_PARENT(wnd, EN_ERRSPACE, "EN_ERRSPACE");
 		return FALSE;
 	} else {
 		EDIT_LockBuffer(wnd, es);
-		dprintf_edit(stddeb, "edit: EDIT_MakeFit: We now have %d+1\n", es->buffer_size);
+		dprintf_info(edit, "edit: EDIT_MakeFit: We now have %d+1\n", es->buffer_size);
 		return TRUE;
 	}
 }
@@ -1366,12 +1365,12 @@ static BOOL32 EDIT_MakeUndoFit(WND *wnd, EDITSTATE *es, INT32 size)
 		return TRUE;
 	size = ((size / GROWLENGTH) + 1) * GROWLENGTH;
 
-	dprintf_edit(stddeb, "edit: EDIT_MakeUndoFit: trying to ReAlloc to %d+1\n", size);
+	dprintf_info(edit, "edit: EDIT_MakeUndoFit: trying to ReAlloc to %d+1\n", size);
 
 	if ((es->undo_text = HeapReAlloc(es->heap, 0, es->undo_text, size + 1))) {
 		es->undo_buffer_size = HeapSize(es->heap, 0, es->undo_text) - 1;
 		if (es->undo_buffer_size < size) {
-			dprintf_edit(stddeb, "edit: EDIT_MakeUndoFit: FAILED !  We now have %d+1\n", es->undo_buffer_size);
+			dprintf_warn(edit, "edit: EDIT_MakeUndoFit: FAILED !  We now have %d+1\n", es->undo_buffer_size);
 			return FALSE;
 		}
 		return TRUE;
@@ -1659,7 +1658,7 @@ static void EDIT_PaintLine(WND *wnd, EDITSTATE *es, HDC32 dc, INT32 line, BOOL32
 	} else if (line)
 		return;
 
-	dprintf_edit(stddeb, "edit: EDIT_PaintLine: line=%d\n", line);
+	dprintf_info(edit, "edit: EDIT_PaintLine: line=%d\n", line);
 
 	pos = EDIT_EM_PosFromChar(wnd, es, EDIT_EM_LineIndex(wnd, es, line), FALSE);
 	x = SLOWORD(pos);
@@ -1868,7 +1867,7 @@ static INT32 EDIT_WordBreakProc(LPSTR s, INT32 index, INT32 count, INT32 action)
 {
 	INT32 ret = 0;
 
-	dprintf_edit(stddeb, "edit: EDIT_WordBreakProc: s=%p, index=%u"
+	dprintf_info(edit, "edit: EDIT_WordBreakProc: s=%p, index=%u"
 			", count=%u, action=%d\n", s, index, count, action);
 
 	switch (action) {
@@ -2008,7 +2007,7 @@ static HLOCAL32 EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es)
 	es->buffer_size = newSize;
 	es->text = newText;
 	EDIT_LockBuffer(wnd, es);
-	dprintf_edit(stddeb, "edit: EM_GETHANDLE: switched to 32 bit local heap\n");
+	dprintf_info(edit, "edit: EM_GETHANDLE: switched to 32 bit local heap\n");
 
 	return es->hloc32;
 }
@@ -2047,7 +2046,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 			fprintf(stderr, "edit: EM_GETHANDLE: could not initialize local heap\n");
 			return 0;
 		}
-		dprintf_edit(stddeb, "edit: EM_GETHANDLE: local heap initialized\n");
+		dprintf_info(edit, "edit: EM_GETHANDLE: local heap initialized\n");
 	}
 	if (!(newBuf = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE, lstrlen32A(es->text) + 1))) {
 		fprintf(stderr, "edit: EM_GETHANDLE: could not allocate new 16 bit buffer\n");
@@ -2072,7 +2071,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 	es->buffer_size = newSize;
 	es->text = newText;
 	EDIT_LockBuffer(wnd, es);
-	dprintf_edit(stddeb, "edit: EM_GETHANDLE: switched to 16 bit buffer\n");
+	dprintf_info(edit, "edit: EM_GETHANDLE: switched to 16 bit buffer\n");
 
 	return es->hloc16;
 }
@@ -2624,7 +2623,7 @@ static void EDIT_EM_SetMargins(WND *wnd, EDITSTATE *es, INT32 action, INT32 left
 		if (action & EC_RIGHTMARGIN)
 			es->right_margin = right;
 	}
-	dprintf_edit(stddeb, "EDIT_EM_SetMargins: left=%d, right=%d\n", es->left_margin, es->right_margin);
+	dprintf_info(edit, "EDIT_EM_SetMargins: left=%d, right=%d\n", es->left_margin, es->right_margin);
 }
 
 
@@ -2810,7 +2809,7 @@ static BOOL32 EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 
 	lstrcpy32A(utext, es->undo_text);
 
-	dprintf_edit(stddeb, "edit: before UNDO:insertion length = %d, deletion buffer = %s\n",
+	dprintf_info(edit, "edit: before UNDO:insertion length = %d, deletion buffer = %s\n",
 			es->undo_insert_count, utext);
 
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
@@ -2819,7 +2818,7 @@ static BOOL32 EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	HeapFree(es->heap, 0, utext);
 
-	dprintf_edit(stddeb, "edit: after UNDO: insertion length = %d, deletion buffer = %s\n",
+	dprintf_info(edit, "edit: after UNDO: insertion length = %d, deletion buffer = %s\n",
 			es->undo_insert_count, es->undo_text);
 
 	return TRUE;
@@ -2891,7 +2890,7 @@ static void EDIT_WM_Command(WND *wnd, EDITSTATE *es, INT32 code, INT32 id, HWND3
 			EDIT_EM_ScrollCaret(wnd, es);
 			break;
 		default:
-			dprintf_edit(stddeb, "edit: unknown menu item, please report\n");
+			dprintf_err(edit, "edit: unknown menu item, please report\n");
 			break;
 	}
 }
@@ -3193,7 +3192,7 @@ static LRESULT EDIT_HScroll_Hack(WND *wnd, EDITSTATE *es, INT32 action, INT32 po
 		break;
 
 	default:
-		dprintf_edit(stddeb, "edit: undocumented (hacked) WM_HSCROLL parameter, please report\n");
+		dprintf_err(edit, "edit: undocumented (hacked) WM_HSCROLL parameter, please report\n");
 		return 0;
 	}
 	if (dx)
@@ -3286,7 +3285,7 @@ static BOOL32 EDIT_CheckCombo(WND *wnd, UINT32 msg, INT32 key, DWORD key_data)
 		HWND32 hCombo = wnd->parent->hwndSelf;
 		BOOL32 bUIFlip = TRUE;
 
-		dprintf_combo(stddeb, "EDIT_CheckCombo [%04x]: handling msg %04x (%04x)\n",
+		dprintf_info(combo, "EDIT_CheckCombo [%04x]: handling msg %04x (%04x)\n",
 					wnd->hwndSelf, (UINT16)msg, (UINT16)key);
 
 		switch (msg) {
@@ -3719,7 +3718,7 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 {
 	EDIT_EM_SetSel(wnd, es, 0, -1, FALSE);
 	if (text) {
-		dprintf_edit(stddeb, "\t'%s'\n", text);
+		dprintf_info(edit, "\t'%s'\n", text);
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, text);
 		es->x_offset = 0;
 	}

@@ -1,0 +1,14 @@
+Tue Feb 24 23:26:40 1998  Karl Backström <karl_b@geocities.com>
+       * [language.c] [language.h] NEW
+	 Moved language stuff here.
+       * [main.c] [winclock.c] [clock.rc]
+	 Made the clock appear in the center.
+	 Fixed problems with menues.
+
+Mon Feb 23 19:59:27 1998  Marcel Baur <mbaur@g26.ethz.ch>
+       * [ChangeLog] [De.rc] [En.rc] [Sw.rc] [clock.rc]
+         [license.c] [license.h] [License_En.c]
+         [README] [TODO]
+         [main.c] [main.h] [winclock.c] [winclock.h]
+
+	 Originals by Marcel Baur

@@ -13,7 +13,6 @@
 #include "spy.h"
 #include "win.h"
 #include "combo.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Unimplemented yet:
@@ -309,7 +308,7 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
         if ((descr->height > descr->item_height) &&
             (descr->height % descr->item_height))
         {
-            dprintf_listbox(stddeb, "Listbox %04x: changing height %d -> %d\n",
+            dprintf_info(listbox, "Listbox %04x: changing height %d -> %d\n",
                             wnd->hwndSelf, descr->height,
                             descr->height - descr->height%descr->item_height );
             SetWindowPos32( wnd->hwndSelf, 0, 0, 0,
@@ -320,7 +319,7 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
             return;
         }
     }
-    dprintf_listbox( stddeb, "Listbox %04x: new size = %d,%d\n",
+    dprintf_info(listbox, "Listbox %04x: new size = %d,%d\n",
                      wnd->hwndSelf, descr->width, descr->height );
     LISTBOX_UpdatePage( wnd, descr );
     LISTBOX_UpdateScroll( wnd, descr );
@@ -458,7 +457,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
         if (wnd->dwStyle & WS_DISABLED) dis.itemState |= ODS_DISABLED;
         dis.itemData     = item ? item->data : 0;
         dis.rcItem       = *rect;
-        dprintf_listbox( stddeb, "Listbox %04x: drawitem %d (%s) action=%02x "
+        dprintf_info(listbox, "Listbox %04x: drawitem %d (%s) action=%02x "
                          "state=%02x rect=%d,%d-%d,%d\n",
                          wnd->hwndSelf, index, item ? item->str : "", action,
                          dis.itemState, rect->left, rect->top,
@@ -480,7 +479,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
             oldText = SetTextColor32( hdc, GetSysColor32(COLOR_HIGHLIGHTTEXT));
         }
 
-        dprintf_listbox( stddeb, "Listbox %04x: painting %d (%s) action=%02x "
+        dprintf_info(listbox, "Listbox %04x: painting %d (%s) action=%02x "
                          "rect=%d,%d-%d,%d\n",
                          wnd->hwndSelf, index, item ? item->str : "", action,
                          rect->left, rect->top, rect->right, rect->bottom );
@@ -603,12 +602,15 @@ static BOOL32 LISTBOX_SetTabStops( WND *wnd, LB_DESCR *descr, INT32 count,
     {
         INT32 i;
         LPINT16 p = (LPINT16)tabs;
-        dprintf_listbox( stddeb, "Listbox %04x: settabstops ", wnd->hwndSelf);
+	dbg_decl_str(listbox, 256);
+
         for (i = 0; i < descr->nb_tabs; i++) {
-            descr->tabs[i] = *p++<<1; /* FIXME */
-            dprintf_listbox( stddeb, "%hd ", descr->tabs[i]);
+	    descr->tabs[i] = *p++<<1; /* FIXME */
+	    if(debugging_info(listbox))
+              dsprintf(listbox, "%hd ", descr->tabs[i]);
 	}
-	dprintf_listbox( stddeb, "\n");
+        dprintf_info(listbox, "Listbox %04x: settabstops %s\n", 
+			 wnd->hwndSelf, dbg_str(listbox));
     }
     else memcpy( descr->tabs, tabs, descr->nb_tabs * sizeof(INT32) );
     /* FIXME: repaint the window? */
@@ -986,7 +988,7 @@ static LRESULT LISTBOX_SetItemHeight( WND *wnd, LB_DESCR *descr, INT32 index,
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
         if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
-        dprintf_listbox( stddeb, "Listbox %04x: item %d height = %d\n",
+        dprintf_info(listbox, "Listbox %04x: item %d height = %d\n",
                          wnd->hwndSelf, index, height );
         descr->items[index].height = height;
         LISTBOX_UpdateScroll( wnd, descr );
@@ -994,7 +996,7 @@ static LRESULT LISTBOX_SetItemHeight( WND *wnd, LB_DESCR *descr, INT32 index,
     }
     else if (height != descr->item_height)
     {
-        dprintf_listbox( stddeb, "Listbox %04x: new height = %d\n",
+        dprintf_info(listbox, "Listbox %04x: new height = %d\n",
                          wnd->hwndSelf, height );
         descr->item_height = height;
         LISTBOX_UpdatePage( wnd, descr );
@@ -1016,7 +1018,7 @@ static void LISTBOX_SetHorizontalPos( WND *wnd, LB_DESCR *descr, INT32 pos )
         pos = descr->horz_extent - descr->width;
     if (pos < 0) pos = 0;
     if (!(diff = descr->horz_pos - pos)) return;
-    dprintf_listbox( stddeb, "Listbox %04x: new horz pos = %d\n",
+    dprintf_info(listbox, "Listbox %04x: new horz pos = %d\n",
                      wnd->hwndSelf, pos );
     descr->horz_pos = pos;
     LISTBOX_UpdateScroll( wnd, descr );
@@ -1038,7 +1040,7 @@ static LRESULT LISTBOX_SetHorizontalExtent( WND *wnd, LB_DESCR *descr,
         return LB_OKAY;
     if (extent <= 0) extent = 1;
     if (extent == descr->horz_extent) return LB_OKAY;
-    dprintf_listbox( stddeb, "Listbox %04x: new horz extent = %d\n",
+    dprintf_info(listbox, "Listbox %04x: new horz extent = %d\n",
                      wnd->hwndSelf, extent );
     descr->horz_extent = extent;
     if (descr->horz_pos > extent - descr->width)
@@ -1056,7 +1058,7 @@ static LRESULT LISTBOX_SetColumnWidth( WND *wnd, LB_DESCR *descr, UINT32 width)
 {
     width += 2;  /* For left and right margin */
     if (width == descr->column_width) return LB_OKAY;
-    dprintf_listbox( stddeb, "Listbox %04x: new column width = %d\n",
+    dprintf_info(listbox, "Listbox %04x: new column width = %d\n",
                      wnd->hwndSelf, width );
     descr->column_width = width;
     LISTBOX_UpdatePage( wnd, descr );
@@ -1305,7 +1307,7 @@ static LRESULT LISTBOX_InsertItem( WND *wnd, LB_DESCR *descr, INT32 index,
         mis.itemHeight = descr->item_height;
         SendMessage32A( descr->owner, WM_MEASUREITEM, id, (LPARAM)&mis );
         item->height = mis.itemHeight ? mis.itemHeight : 1;
-        dprintf_listbox( stddeb, "Listbox %04x: measure item %d (%s) = %d\n",
+        dprintf_info(listbox, "Listbox %04x: measure item %d (%s) = %d\n",
                          wnd->hwndSelf, index, str ? str : "", item->height );
     }
 
@@ -1357,7 +1359,7 @@ static LRESULT LISTBOX_InsertString( WND *wnd, LB_DESCR *descr, INT32 index,
         return ret;
     }
 
-    dprintf_listbox( stddeb, "Listbox %04x: added item %d '%s'\n",
+    dprintf_info(listbox, "Listbox %04x: added item %d '%s'\n",
                      wnd->hwndSelf, index, HAS_STRINGS(descr) ? new_str : "" );
     return index;
 }
@@ -1694,7 +1696,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                                           WPARAM32 wParam, INT32 x, INT32 y )
 {
     INT32 index = LISTBOX_GetItemFromPoint( wnd, descr, x, y );
-    dprintf_listbox( stddeb, "Listbox %04x: lbuttondown %d,%d item %d\n",
+    dprintf_info(listbox, "Listbox %04x: lbuttondown %d,%d item %d\n",
                      wnd->hwndSelf, x, y, index );
     if (!descr->caret_on && (GetFocus32() == wnd->hwndSelf)) return 0;
     if (index != -1)
@@ -2029,7 +2031,7 @@ static BOOL32 LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
 
     if( lphc )
     {
-	dprintf_combo(stddeb,"ComboLBox [%04x]: resetting owner %04x -> %04x\n",
+	dprintf_info(combo,"ComboLBox [%04x]: resetting owner %04x -> %04x\n",
 			      wnd->hwndSelf, descr->owner, lphc->self->hwndSelf );
 	descr->owner = lphc->self->hwndSelf;
     }
@@ -2098,7 +2100,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
         if (msg == WM_CREATE)
         {
             if (!LISTBOX_Create( wnd, NULL )) return -1;
-            dprintf_listbox( stddeb, "Listbox: creating wnd=%04x descr=%p\n",
+            dprintf_info(listbox, "Listbox: creating wnd=%04x descr=%p\n",
                              hwnd, *(LB_DESCR **)wnd->wExtra );
             return 0;
         }
@@ -2106,7 +2108,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
         return DefWindowProc32A( hwnd, msg, wParam, lParam );
     }
 
-    dprintf_listbox( stddeb, "Listbox %04x: msg %s wp %08x lp %08lx\n",
+    dprintf_info(listbox, "Listbox %04x: msg %s wp %08x lp %08lx\n",
                      wnd->hwndSelf, SPY_GetMsgName(msg), wParam, lParam );
     switch(msg)
     {
@@ -2476,7 +2478,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
-            dprintf_listbox(stddeb,"Listbox %04x: unknown msg %04x wp %08x lp %08lx\n",
+            dprintf_warn(listbox, "Listbox %04x: unknown msg %04x wp %08x lp %08lx\n",
                     hwnd, msg, wParam, lParam );
         return DefWindowProc32A( hwnd, msg, wParam, lParam );
     }
@@ -2521,7 +2523,7 @@ LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
     {
 	LB_DESCR *descr = *(LB_DESCR **)wnd->wExtra;
 
-        dprintf_combo( stddeb, "ComboLBox [%04x]: msg %s wp %08x lp %08lx\n",
+        dprintf_info(combo, "ComboLBox [%04x]: msg %s wp %08x lp %08lx\n",
                        wnd->hwndSelf, SPY_GetMsgName(msg), wParam, lParam );
 
 	if( descr || msg == WM_CREATE )
@@ -2532,7 +2534,7 @@ LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
 	    {
 		case WM_CREATE:
 #define lpcs	((LPCREATESTRUCT32A)lParam)
-		     dprintf_combo(stddeb, "\tpassed parent handle = 0x%08x\n", 
+		     dprintf_info(combo, "\tpassed parent handle = 0x%08x\n", 
 					         (UINT32)lpcs->lpCreateParams);
 
 		     lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
@@ -2578,7 +2580,7 @@ LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
         }
         lRet = DefWindowProc32A( hwnd, msg, wParam, lParam );
 
-        dprintf_combo(stddeb,"\tComboLBox: default on msg [%04x]\n", (UINT16)msg );
+        dprintf_info(combo,"\tComboLBox: default on msg [%04x]\n", (UINT16)msg );
     }
 
     return lRet;

@@ -10,7 +10,6 @@
 #include "win16drv.h"
 #include "dc.h"
 #include "gdi.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /***********************************************************************
@@ -32,7 +31,7 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     if (count == 0)
       return FALSE;
 
-    dprintf_win16drv(stddeb, "WIN16DRV_ExtTextOut: %04x %d %d %x %p %*s %p\n",
+    dprintf_info(win16drv, "WIN16DRV_ExtTextOut: %04x %d %d %x %p %*s %p\n",
 	   dc->hSelf, x, y, flags,  lprect, count > 0 ? count : 8, str, lpDx);
 
 
@@ -55,7 +54,7 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
             
         }
         
-	dprintf_win16drv(stddeb, "textalign = %d\n", dc->w.textAlign);
+	dprintf_info(win16drv, "textalign = %d\n", dc->w.textAlign);
 
 	if (dc->w.textAlign & TA_UPDATECP)
 	{

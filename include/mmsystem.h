@@ -782,6 +782,7 @@ MMRESULT32 WINAPI timeEndPeriod32(UINT32);
 #define JOYERR_NOCANDO        (JOYERR_BASE+6)      /* request not completed */
 #define JOYERR_UNPLUGGED      (JOYERR_BASE+7)      /* joystick is unplugged */
 
+/* JOYINFO, JOYINFOEX, MM_JOY* */
 #define JOY_BUTTON1         0x0001
 #define JOY_BUTTON2         0x0002
 #define JOY_BUTTON3         0x0004
@@ -793,6 +794,50 @@ MMRESULT32 WINAPI timeEndPeriod32(UINT32);
 
 #define JOYSTICKID1         0
 #define JOYSTICKID2         1
+
+/* JOYCAPS.wCaps */
+#define JOYCAPS_HASZ		0x0001
+#define JOYCAPS_HASR		0x0002
+#define JOYCAPS_HASU		0x0004
+#define JOYCAPS_HASV		0x0008
+#define JOYCAPS_HASPOV		0x0010
+#define JOYCAPS_POV4DIR		0x0020
+#define JOYCAPS_POVCTS		0x0040
+
+/* JOYINFOEX stuff */
+#define JOY_POVCENTERED		(WORD) -1
+#define JOY_POVFORWARD		0
+#define JOY_POVRIGHT		9000
+#define JOY_POVBACKWARD		18000
+#define JOY_POVLEFT		27000
+
+#define JOY_RETURNX		0x00000001
+#define JOY_RETURNY		0x00000002
+#define JOY_RETURNZ		0x00000004
+#define JOY_RETURNR		0x00000008
+#define JOY_RETURNU		0x00000010
+#define JOY_RETURNV		0x00000020
+#define JOY_RETURNPOV		0x00000040
+#define JOY_RETURNBUTTONS	0x00000080
+#define JOY_RETURNRAWDATA	0x00000100
+#define JOY_RETURNPOVCTS	0x00000200
+#define JOY_RETURNCENTERED	0x00000400
+#define JOY_USEDEADZONE		0x00000800
+#define JOY_RETURNALL		(JOY_RETURNX | JOY_RETURNY | JOY_RETURNZ | \
+				 JOY_RETURNR | JOY_RETURNU | JOY_RETURNV | \
+				 JOY_RETURNPOV | JOY_RETURNBUTTONS)
+#define JOY_CAL_READALWAYS	0x00010000
+#define JOY_CAL_READXYONLY	0x00020000
+#define JOY_CAL_READ3		0x00040000
+#define JOY_CAL_READ4		0x00080000
+#define JOY_CAL_READXONLY	0x00100000
+#define JOY_CAL_READYONLY	0x00200000
+#define JOY_CAL_READ5		0x00400000
+#define JOY_CAL_READ6		0x00800000
+#define JOY_CAL_READZONLY	0x01000000
+#define JOY_CAL_READRONLY	0x02000000
+#define JOY_CAL_READUONLY	0x04000000
+#define JOY_CAL_READVONLY	0x08000000
 
 typedef struct {
     WORD wMid;                  /* manufacturer ID */
@@ -892,6 +937,22 @@ typedef struct {
     UINT32 wButtons;
 } JOYINFO32, *LPJOYINFO32;
 
+typedef struct {
+    DWORD	dwSize;		/* size of structure */
+    DWORD	dwFlags;	/* flags to indicate what to return */
+    DWORD	dwXpos;		/* x position */
+    DWORD	dwYpos;		/* y position */
+    DWORD	dwZpos;		/* z position */
+    DWORD	dwRpos;		/* rudder/4th axis position */
+    DWORD	dwUpos;		/* 5th axis position */
+    DWORD	dwVpos;		/* 6th axis position */
+    DWORD	dwButtons;	/* button states */
+    DWORD	dwButtonNumber;	/* current button number pressed */
+    DWORD	dwPOV;		/* point of view state */
+    DWORD	dwReserved1;	/* reserved for communication between winmm & driver */
+    DWORD	dwReserved2;	/* reserved for future expansion */
+} JOYINFOEX,*LPJOYINFOEX;
+
 DECL_WINELIB_TYPE(JOYINFO);
 DECL_WINELIB_TYPE(LPJOYINFO);
 
@@ -905,6 +966,7 @@ UINT32 WINAPI joyGetNumDevs32(void);
 MMRESULT16 WINAPI joyGetPos16(UINT16,LPJOYINFO16);
 MMRESULT32 WINAPI joyGetPos32(UINT32,LPJOYINFO32);
 #define joyGetPos WINELIB_NAME(joyGetPos)
+MMRESULT32 WINAPI joyGetPosEx(UINT32,LPJOYINFOEX);
 MMRESULT16 WINAPI joyGetThreshold16(UINT16,UINT16*);
 MMRESULT32 WINAPI joyGetThreshold32(UINT32,UINT32*);
 #define joyGetThreshold WINELIB_NAME(joyGetThreshold)

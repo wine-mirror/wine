@@ -9,7 +9,6 @@
 #include "windows.h"
 #include "gdi.h"
 #include "debug.h"
-#include "stddebug.h"
 
 /***********************************************************************
  *           GetEnvironment   (GDI.134)

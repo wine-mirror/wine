@@ -8,7 +8,6 @@
 #include "brush.h"
 #include "win16drv.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 HBRUSH32 WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
@@ -26,7 +25,7 @@ HBRUSH32 WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
 
     if ( physDev->BrushInfo )
     {
-        dprintf_win16drv(stddeb, "UnRealizing BrushInfo\n");
+        dprintf_info(win16drv, "UnRealizing BrushInfo\n");
         nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, -DRVOBJ_BRUSH,
 				      physDev->BrushInfo,
 				      physDev->BrushInfo, 0);

@@ -31,13 +31,16 @@
 #include "ldt.h"
 #include "process.h"
 #include "task.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
+static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
+			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped);
+static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
+			 LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped);
 static void FILE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS FILE_Ops =
@@ -47,6 +50,8 @@ const K32OBJ_OPS FILE_Ops =
     NULL,              /* satisfied */
     NULL,              /* add_wait */
     NULL,              /* remove_wait */
+    FILE_Read,	        /* read */
+    FILE_Write,        /* write */
     FILE_Destroy       /* destroy */
 };
 
@@ -90,6 +95,70 @@ static HFILE32 FILE_Alloc( FILE_OBJECT **file )
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
 }
+
+
+/* FIXME: lpOverlapped is ignored */
+static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
+			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
+{
+	FILE_OBJECT *file = (FILE_OBJECT *)ptr;
+	int result;
+
+	dprintf_info(file, "FILE_Read: %p %p %ld\n", ptr, lpBuffer,
+                     nNumberOfChars);
+
+	if (nNumberOfChars == 0) {
+		*lpNumberOfChars = 0;  /* FIXME: does this change */
+		return TRUE;
+	}
+
+	if ((result = read(file->unix_handle, lpBuffer, nNumberOfChars)) == -1)
+        {
+            FILE_SetDosError();
+            return FALSE;
+	}
+	*lpNumberOfChars = result;
+	return TRUE;
+}
+
+/**
+ *  experimentation yields that WriteFile:
+ *	o does not truncate on write of 0
+ *	o always changes the *lpNumberOfChars to actual number of
+ *	  characters written
+ *	o write of 0 nNumberOfChars returns TRUE
+ */
+static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
+			 LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
+{
+	FILE_OBJECT *file = (FILE_OBJECT *)ptr;
+	int result;
+
+	dprintf_info(file, "FILE_Write: %p %p %ld\n", ptr, lpBuffer,
+		      nNumberOfChars);
+
+	*lpNumberOfChars = 0; 
+
+	/* FIXME: there was a loop here before that 
+	 * retried writes after EAGAIN, why??? -- I assume
+	 * it is because win32 doesn't have interrupted
+	 * system calls 
+	 */
+
+	for (;;)
+        {
+		result = write(file->unix_handle, lpBuffer, nNumberOfChars);
+		if (result != -1) {
+			*lpNumberOfChars = result;
+                        return TRUE;
+		}
+		if (errno != EINTR) {
+			FILE_SetDosError();
+			return FALSE;
+		}
+        }
+}
+
 
 
 /***********************************************************************
@@ -160,8 +229,7 @@ void FILE_SetDosError(void)
 {
     int save_errno = errno; /* errno gets overwritten by printf */
 
-    dprintf_file(stddeb, "FILE_SetDosError: errno = %d %s\n", errno,
-		 strerror(errno) );
+    dprintf_info(file, "FILE_SetDosError: errno = %d %s\n", errno, strerror(errno));
     switch (save_errno)
     {
     case EAGAIN:
@@ -235,7 +303,7 @@ HFILE32 FILE_DupUnixHandle( int fd )
 /***********************************************************************
  *           FILE_OpenUnixFile
  */
-static HFILE32 FILE_OpenUnixFile( const char *name, int mode )
+HFILE32 FILE_OpenUnixFile( const char *name, int mode )
 {
     HFILE32 handle;
     FILE_OBJECT *file;
@@ -277,19 +345,24 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
     DOS_FULL_NAME full_name;
     const char *unixName;
 
-    dprintf_file(stddeb, "FILE_Open: '%s' %04x\n", path, mode );
+    dprintf_info(file, "FILE_Open: '%s' %04x\n", path, mode );
 
     if (!path) return HFILE_ERROR32;
 
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    if (DOSFS_IsDevice( path ))
     {
-        dprintf_file( stddeb, "FILE_Open: opening device '%s'\n", unixName );
-        if (!unixName[0])  /* Non-existing device */
-        {
-            dprintf_file(stddeb, "FILE_Open: Non-existing device\n");
-            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return HFILE_ERROR32;
-        }
+    	HFILE32	ret;
+
+        dprintf_info(file, "FILE_Open: opening device '%s'\n", path );
+
+	if (HFILE_ERROR32!=(ret=DOSFS_OpenDevice( path, mode )))
+		return ret;
+
+	/* Do not silence this please. It is a critical error. -MM */
+        fprintf(stderr, "FILE_Open: Couldn't open device '%s'!\n",path);
+        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        return HFILE_ERROR32;
+	
     }
     else /* check for filename, don't check for last entry if creating */
     {
@@ -308,16 +381,15 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 {
     HFILE32 handle;
     FILE_OBJECT *file;
-    const char *unixName;
     DOS_FULL_NAME full_name;
 
-    dprintf_file(stddeb, "FILE_Create: '%s' %04x %d\n", path, mode, unique );
+    dprintf_info(file, "FILE_Create: '%s' %04x %d\n", path, mode, unique );
 
     if (!path) return INVALID_HANDLE_VALUE32;
 
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    if (DOSFS_IsDevice( path ))
     {
-        dprintf_file(stddeb, "FILE_Create: creating device '%s'!\n", unixName);
+        fprintf(stderr, "FILE_Create: cannot create DOS device '%s'!\n", path);
         DOS_ERROR( ER_AccessDenied, EC_NotFound, SA_Abort, EL_Disk );
         return INVALID_HANDLE_VALUE32;
     }
@@ -510,11 +582,11 @@ HFILE32 FILE_Dup( HFILE32 hFile )
     FILE_OBJECT *file;
     HFILE32 handle;
 
-    dprintf_file( stddeb, "FILE_Dup for handle %d\n", hFile );
+    dprintf_info(file, "FILE_Dup for handle %d\n", hFile );
     if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR32;
     handle = HANDLE_Alloc( &file->header, FILE_ALL_ACCESS /*FIXME*/, FALSE );
     FILE_ReleaseFile( file );
-    dprintf_file( stddeb, "FILE_Dup return handle %d\n", handle );
+    dprintf_info(file, "FILE_Dup return handle %d\n", handle );
     return handle;
 }
 
@@ -528,7 +600,7 @@ HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 )
 {
     FILE_OBJECT *file;
 
-    dprintf_file( stddeb, "FILE_Dup2 for handle %d\n", hFile1 );
+    dprintf_info(file, "FILE_Dup2 for handle %d\n", hFile1 );
     /* FIXME: should use DuplicateHandle */
     if (!(file = FILE_GetFile( hFile1 ))) return HFILE_ERROR32;
     if (!HANDLE_SetObjPtr( hFile2, &file->header, 0 )) hFile2 = HFILE_ERROR32;
@@ -600,7 +672,7 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
             HFILE32 handle = FILE_Create( buffer, 0666, TRUE );
             if (handle != INVALID_HANDLE_VALUE32)
             {  /* We created it */
-                dprintf_file( stddeb, "GetTempFileName32A: created %s\n",
+                dprintf_info(file, "GetTempFileName32A: created %s\n",
 			      buffer);
                 CloseHandle( handle );
                 break;
@@ -624,7 +696,7 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
                      "Please check your configuration file if this generates a failure.\n",
                      buffer);
     }
-    dprintf_file( stddeb, "GetTempFileName32A: returning %s\n", buffer );
+    dprintf_info(file, "GetTempFileName32A: returning %s\n", buffer );
     return unique ? unique : num;
 }
 
@@ -678,7 +750,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 	return HFILE_ERROR32;
     }
 
-    dprintf_file( stddeb, "OpenFile: %s %04x\n", name, mode );
+    dprintf_info(file, "OpenFile: %s %04x\n", name, mode );
 
     /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
        Are there any cases where getting the path here is wrong? 
@@ -692,7 +764,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     {
         ofs->fFixedDisk = (GetDriveType16( ofs->szPathName[0]-'A' )
                            != DRIVE_REMOVABLE);
-        dprintf_file( stddeb, "OpenFile(%s): OF_PARSE, res = '%s'\n",
+        dprintf_info(file, "OpenFile(%s): OF_PARSE, res = '%s'\n",
                       name, ofs->szPathName );
         return 0;
     }
@@ -725,7 +797,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     if (!DIR_SearchPath( NULL, name, NULL, &full_name, win32 )) goto not_found;
 
 found:
-    dprintf_file( stddeb, "OpenFile: found %s = %s\n",
+    dprintf_info(file, "OpenFile: found %s = %s\n",
                   full_name.long_name, full_name.short_name );
     lstrcpyn32A( ofs->szPathName, full_name.short_name,
                  sizeof(ofs->szPathName) );
@@ -733,7 +805,7 @@ found:
     if (mode & OF_DELETE)
     {
         if (unlink( full_name.long_name ) == -1) goto not_found;
-        dprintf_file( stddeb, "OpenFile(%s): OF_DELETE return = OK\n", name);
+        dprintf_info(file, "OpenFile(%s): OF_DELETE return = OK\n", name);
         return 1;
     }
 
@@ -757,7 +829,7 @@ found:
         if (memcmp( ofs->reserved, filedatetime, sizeof(ofs->reserved) ))
         {
             CloseHandle( hFileRet );
-            dprintf_file( stddeb, "OpenFile(%s): OF_VERIFY failed\n", name );
+            dprintf_warn(file, "OpenFile(%s): OF_VERIFY failed\n", name );
             /* FIXME: what error here? */
             DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
             goto error;
@@ -766,19 +838,19 @@ found:
     memcpy( ofs->reserved, filedatetime, sizeof(ofs->reserved) );
 
 success:  /* We get here if the open was successful */
-    dprintf_file( stddeb, "OpenFile(%s): OK, return = %d\n", name, hFileRet );
+    dprintf_info(file, "OpenFile(%s): OK, return = %d\n", name, hFileRet );
     if (mode & OF_EXIST) /* Return the handle, but close it first */
         CloseHandle( hFileRet );
     return hFileRet;
 
 not_found:  /* We get here if the file does not exist */
-    dprintf_file( stddeb, "OpenFile: '%s' not found\n", name );
+    dprintf_warn(file, "OpenFile: '%s' not found\n", name );
     DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
     /* fall through */
 
 error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = DOS_ExtendedError;
-    dprintf_file( stddeb, "OpenFile(%s): return = HFILE_ERROR error= %d\n", 
+    dprintf_warn(file, "OpenFile(%s): return = HFILE_ERROR error= %d\n", 
 		  name,ofs->nErrCode );
     return HFILE_ERROR32;
 }
@@ -807,7 +879,7 @@ HFILE32 WINAPI OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
  */
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
-    dprintf_file( stddeb, "_lclose16: handle %d\n", hFile );
+    dprintf_info(file, "_lclose16: handle %d\n", hFile );
     return CloseHandle( hFile ) ? 0 : HFILE_ERROR16;
 }
 
@@ -817,7 +889,7 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
  */
 HFILE32 WINAPI _lclose32( HFILE32 hFile )
 {
-    dprintf_file( stddeb, "_lclose32: handle %d\n", hFile );
+    dprintf_info(file, "_lclose32: handle %d\n", hFile );
     return CloseHandle( hFile ) ? 0 : HFILE_ERROR32;
 }
 
@@ -829,7 +901,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
 {
     LONG maxlen;
 
-    dprintf_file( stddeb, "WIN16_hread: %d %08lx %ld\n",
+    dprintf_info(file, "WIN16_hread: %d %08lx %ld\n",
                   hFile, (DWORD)buffer, count );
 
     /* Some programs pass a count larger than the allocated buffer */
@@ -851,18 +923,19 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 /***********************************************************************
  *           _lread32   (KERNEL32.596)
  */
-UINT32 WINAPI _lread32( HFILE32 hFile, LPVOID buffer, UINT32 count )
+UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
 {
-    FILE_OBJECT *file;
-    UINT32 result;
+    K32OBJ *ptr;
+    DWORD numWritten;
+    BOOL32 result = FALSE;
 
-    dprintf_file( stddeb, "_lread32: %d %p %d\n", hFile, buffer, count );
-    if (!(file = FILE_GetFile( hFile ))) return -1;
-    if (!count) result = 0;
-    else if ((result = read( file->unix_handle, buffer, count )) == -1)
-        FILE_SetDosError();
-    FILE_ReleaseFile( file );
-    return result;
+    dprintf_info( file, "_lread32: %d %p %d\n", handle, buffer, count);
+    if (!(ptr = HANDLE_GetObjPtr( handle, K32OBJ_UNKNOWN, 0))) return -1;
+    if (K32OBJ_OPS(ptr)->read)
+        result = K32OBJ_OPS(ptr)->read(ptr, buffer, count, &numWritten, NULL);
+    K32OBJ_DecCount( ptr );
+    if (!result) return -1;
+    return (UINT32)numWritten;
 }
 
 
@@ -881,7 +954,7 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
     int mode = (attr & 1) ? 0444 : 0666;
-    dprintf_file( stddeb, "_lcreat16: %s %02x\n", path, attr );
+    dprintf_info(file, "_lcreat16: %s %02x\n", path, attr );
     return (HFILE16)FILE_Create( path, mode, FALSE );
 }
 
@@ -892,7 +965,7 @@ HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
 {
     int mode = (attr & 1) ? 0444 : 0666;
-    dprintf_file( stddeb, "_lcreat32: %s %02x\n", path, attr );
+    dprintf_info(file, "_lcreat32: %s %02x\n", path, attr );
     return FILE_Create( path, mode, FALSE );
 }
 
@@ -903,7 +976,7 @@ HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
 HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
 {
     int mode = (attr & 1) ? 0444 : 0666;
-    dprintf_file( stddeb, "_lcreat_uniq: %s %02x\n", path, attr );
+    dprintf_info(file, "_lcreat_uniq: %s %02x\n", path, attr );
     return FILE_Create( path, mode, TRUE );
 }
 
@@ -923,7 +996,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0xffffffff;
     }
-    dprintf_file( stddeb, "SetFilePointer: handle %d offset %ld origin %ld\n",
+    dprintf_info(file, "SetFilePointer: handle %d offset %ld origin %ld\n",
                   hFile, distance, method );
 
     if (!(file = FILE_GetFile( hFile ))) return 0xffffffff;
@@ -975,7 +1048,7 @@ HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
 {
     INT32 unixMode;
 
-    dprintf_file(stddeb, "_lopen32('%s',%04x)\n", path, mode );
+    dprintf_info(file, "_lopen32('%s',%04x)\n", path, mode );
 
     switch(mode & 3)
     {
@@ -1040,31 +1113,43 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 
 /***********************************************************************
  *           _hwrite32   (KERNEL32.591)
+ *
+ *	experimenation yields that _lwrite:
+ *		o truncates the file at the current position with 
+ *		  a 0 len write
+ *		o returns 0 on a 0 length write
+ *		o works with console handles
+ *		
  */
-LONG WINAPI _hwrite32( HFILE32 hFile, LPCSTR buffer, LONG count )
+LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
 {
-    FILE_OBJECT *file;
-    LONG result;
+	K32OBJ *ioptr;
+	DWORD result;
+	BOOL32 status = FALSE;
+	
+	dprintf_info(file, "_hwrite32: %d %p %ld\n", handle, buffer, count );
 
-    dprintf_file( stddeb, "_hwrite32: %d %p %ld\n", hFile, buffer, count );
+	if (count == 0) {       /* Expand or truncate at current position */
+		FILE_OBJECT *file = FILE_GetFile(handle);
 
-    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR32;
-    if (count == 0)  /* Expand or truncate at current position */
-        result = ftruncate( file->unix_handle,
-                            lseek( file->unix_handle, 0, SEEK_CUR ) );
-    else for (;;)
-    {
-        result = write( file->unix_handle, buffer, count );
-        if (result != -1) break;
-        if (errno != EINTR)
-        {
-            FILE_SetDosError();
-            break;
-        }
-    }
-
-    FILE_ReleaseFile( file );
-    return result;
+		if ( ftruncate(file->unix_handle,
+			       lseek( file->unix_handle, 0, SEEK_CUR)) == 0 ) {
+			FILE_ReleaseFile(file);
+			return 0;
+		} else {
+			FILE_SetDosError();
+			FILE_ReleaseFile(file);
+			return HFILE_ERROR32;
+		}
+	}
+	
+	if (!(ioptr = HANDLE_GetObjPtr( handle, K32OBJ_UNKNOWN, 0 )))
+            return HFILE_ERROR32;
+        if (K32OBJ_OPS(ioptr)->write)
+            status = K32OBJ_OPS(ioptr)->write(ioptr, buffer, count, &result, NULL);
+	K32OBJ_DecCount( ioptr );
+	if (!status) result = HFILE_ERROR32;
+	return result;
 }
 
 
@@ -1077,7 +1162,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
     PDB *pdb = (PDB *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
 
-    dprintf_file( stddeb, "SetHandleCount16(%d)\n", count );
+    dprintf_info(file, "SetHandleCount16(%d)\n", count );
 
     if (count < 20) count = 20;  /* No point in going below 20 */
     else if (count > 254) count = 254;
@@ -1137,7 +1222,7 @@ BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
     FILE_OBJECT *file;
     BOOL32 ret;
 
-    dprintf_file( stddeb, "FlushFileBuffers(%d)\n", hFile );
+    dprintf_info(file, "FlushFileBuffers(%d)\n", hFile );
     if (!(file = FILE_GetFile( hFile ))) return FALSE;
     if (fsync( file->unix_handle ) != -1) ret = TRUE;
     else
@@ -1158,7 +1243,7 @@ BOOL32 WINAPI SetEndOfFile( HFILE32 hFile )
     FILE_OBJECT *file;
     BOOL32 ret = TRUE;
 
-    dprintf_file( stddeb, "SetEndOfFile(%d)\n", hFile );
+    dprintf_info(file, "SetEndOfFile(%d)\n", hFile );
     if (!(file = FILE_GetFile( hFile ))) return FALSE;
     if (ftruncate( file->unix_handle,
                    lseek( file->unix_handle, 0, SEEK_CUR ) ))
@@ -1186,13 +1271,12 @@ BOOL16 WINAPI DeleteFile16( LPCSTR path )
 BOOL32 WINAPI DeleteFile32A( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
-    const char *unixName;
 
-    dprintf_file(stddeb, "DeleteFile: '%s'\n", path );
+    dprintf_info(file, "DeleteFile: '%s'\n", path );
 
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    if (DOSFS_IsDevice( path ))
     {
-        dprintf_file(stddeb, "DeleteFile: removing device '%s'!\n", unixName);
+        fprintf(stderr, "DeleteFile: cannot remove DOS device '%s'!\n", path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return FALSE;
     }
@@ -1361,7 +1445,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
     DOS_FULL_NAME full_name1, full_name2;
     int mode=0; /* mode == 1: use copy */
 
-    dprintf_file( stddeb, "MoveFileEx32A(%s,%s,%04lx)\n", fn1, fn2, flag);
+    dprintf_info(file, "MoveFileEx32A(%s,%s,%04lx)\n", fn1, fn2, flag);
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
     if (fn2) { /* !fn2 means delete fn1 */
@@ -1461,7 +1545,7 @@ BOOL32 WINAPI MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
     DOS_FULL_NAME full_name1, full_name2;
     struct stat fstat;
 
-    dprintf_file( stddeb, "MoveFile32A(%s,%s)\n", fn1, fn2 );
+    dprintf_info(file, "MoveFile32A(%s,%s)\n", fn1, fn2 );
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
     if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
@@ -1479,7 +1563,7 @@ BOOL32 WINAPI MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
     else /*copy */ {
       if (stat(  full_name1.long_name, &fstat ))
 	{
-	  dprintf_file( stddeb, "Invalid source file %s\n",
+	  dprintf_warn(file, "Invalid source file %s\n",
 			full_name1.long_name);
 	  FILE_SetDosError();
 	  return FALSE;
@@ -1580,7 +1664,7 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
     struct utimbuf utimbuf;
     
     if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
-    dprintf_file(stddeb,"SetFileTime(%s,%p,%p,%p)\n",
+    dprintf_info(file,"SetFileTime(%s,%p,%p,%p)\n",
 	file->unix_name,
 	lpCreationTime,
 	lpLastAccessTime,
@@ -1697,12 +1781,12 @@ BOOL32 WINAPI LockFile(
   struct flock f;
   FILE_OBJECT *file;
 
-  dprintf_file(stddeb, "LockFile32: handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
+  dprintf_info(file, "LockFile32: handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
 	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
 	       nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
 
   if (dwFileOffsetHigh || nNumberOfBytesToLockHigh) {
-    dprintf_file(stddeb, "LockFile32: Unimplemented bytes > 32bits\n");
+    dprintf_fixme(file, "LockFile32: Unimplemented bytes > 32bits\n");
     return FALSE;
   }
 
@@ -1748,12 +1832,12 @@ BOOL32 WINAPI UnlockFile(
   FILE_OBJECT *file;
   struct flock f;
 
-  dprintf_file(stddeb, "UnlockFile32: handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
+  dprintf_info(file, "UnlockFile32: handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
 	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
 	       nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh);
 
   if (dwFileOffsetHigh || nNumberOfBytesToUnlockHigh) {
-    dprintf_file(stddeb, "UnlockFile32: Unimplemented bytes > 32bits\n");
+    dprintf_warn(file, "UnlockFile32: Unimplemented bytes > 32bits\n");
     return FALSE;
   }
 

@@ -15,7 +15,6 @@
 #include "drive.h"
 #include "msdos.h"
 #include "toolhelp.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
@@ -461,9 +460,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             break;
         }
     case 0x0501:  /* Allocate memory block */
-        if (!(ptr = (BYTE *)HeapAlloc( GetProcessHeap(), 0,
-                                       MAKELONG( CX_reg(context),
-                                                 BX_reg(context) ))))
+	if (!(ptr = (BYTE *)VirtualAlloc(NULL, MAKELONG(CX_reg(context), BX_reg(context)), MEM_COMMIT, PAGE_EXECUTE_READWRITE)))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
@@ -476,8 +473,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0502:  /* Free memory block */
-        HeapFree( GetProcessHeap(), 0,
-                  (void *)MAKELONG( DI_reg(context), SI_reg(context) ) );
+	VirtualFree((void *)MAKELONG(DI_reg(context), SI_reg(context)), 0, MEM_RELEASE);
         break;
 
     case 0x0503:  /* Resize memory block */

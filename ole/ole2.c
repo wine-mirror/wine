@@ -9,7 +9,7 @@
 
 #include "windows.h"
 #include "ole2.h"
-#include "stddebug.h"
+#include "process.h"
 #include "debug.h"
 
 /***********************************************************************
@@ -17,7 +17,7 @@
  */
 DWORD WINAPI OleBuildVersion()
 {
-    dprintf_ole(stddeb,"OleBuildVersion()\n");
+    dprintf_info(ole,"OleBuildVersion()\n");
     return (rmm<<16)+rup;
 }
 
@@ -26,8 +26,12 @@ DWORD WINAPI OleBuildVersion()
  */
 HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
-    dprintf_ole(stdnimp,"OleInitialize\n");
-	return S_OK;
+    dprintf_fixme(ole,"OleInitialize - stub\n");
+    return S_OK;
+}
+
+DWORD WINAPI CoGetCurrentProcess() {
+	return PROCESS_Current();
 }
 
 /***********************************************************************
@@ -35,7 +39,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
  */
 void WINAPI OleUninitialize(void)
 {
-    dprintf_ole(stdnimp,"OleUninitialize()\n");
+    dprintf_fixme(ole,"OleUninitialize() - stub\n");
 }
 
 /***********************************************************************
@@ -53,9 +57,17 @@ HRESULT WINAPI CoRegisterMessageFilter32(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
     LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
 ) {
-    dprintf_ole(stdnimp,"CoRegisterMessageFilter()\n");
+    dprintf_fixme(ole,"CoRegisterMessageFilter() - stub\n");
     if (lplpMessageFilter) {
 	*lplpMessageFilter = NULL;
     }
     return S_OK;
+}
+
+/***********************************************************************
+ *           OleInitializeWOW (OLE32.27)
+ */
+HRESULT WINAPI OleInitializeWOW(DWORD x) {
+        fprintf(stderr,"OleInitializeWOW(0x%08lx),stub!\n",x);
+        return 0;
 }

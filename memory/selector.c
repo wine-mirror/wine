@@ -10,7 +10,6 @@
 #include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -60,7 +59,7 @@ WORD WINAPI AllocSelector( WORD sel )
 
     count = sel ? ((GET_SEL_LIMIT(sel) >> 16) + 1) : 1;
     newsel = AllocSelectorArray( count );
-    dprintf_selector( stddeb, "AllocSelector(%04x): returning %04x\n",
+    dprintf_info(selector, "AllocSelector(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
     if (!sel) return newsel;  /* nothing to copy */
@@ -149,7 +148,7 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
     ldt_entry entry;
     STACK16FRAME *frame;
 
-    dprintf_selector( stddeb, "SELECTOR_FreeBlock(%04x,%d)\n", sel, count );
+    dprintf_info(selector, "SELECTOR_FreeBlock(%04x,%d)\n", sel, count );
     sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
     nextsel = sel + (count << __AHSHIFT);
 
@@ -253,7 +252,7 @@ WORD WINAPI AllocCStoDSAlias( WORD sel )
     ldt_entry entry;
 
     newsel = AllocSelectorArray( 1 );
-    dprintf_selector( stddeb, "AllocCStoDSAlias(%04x): returning %04x\n",
+    dprintf_info(selector, "AllocCStoDSAlias(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
@@ -272,7 +271,7 @@ WORD WINAPI AllocDStoCSAlias( WORD sel )
     ldt_entry entry;
 
     newsel = AllocSelectorArray( 1 );
-    dprintf_selector( stddeb, "AllocDStoCSAlias(%04x): returning %04x\n",
+    dprintf_info(selector, "AllocDStoCSAlias(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );

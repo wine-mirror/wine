@@ -9,7 +9,6 @@
 #include "bitmap.h"
 #include "color.h"
 #include "x11drv.h"
-#include "stddebug.h"
 #include "debug.h"
 
 static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
@@ -209,7 +208,7 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
     BITMAPINFO * bmpInfo;
     HBRUSH16 prevHandle = dc->w.hBrush;
 
-    dprintf_gdi(stddeb, "Brush_SelectObject: hdc=%04x hbrush=%04x\n",
+    dprintf_info(gdi, "Brush_SelectObject: hdc=%04x hbrush=%04x\n",
                 dc->hSelf,hbrush);
 #ifdef NOTDEF
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
@@ -244,16 +243,16 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
     switch(brush->logbrush.lbStyle)
     {
       case BS_NULL:
-	dprintf_gdi( stddeb,"BS_NULL\n" );
+	dprintf_info(gdi,"BS_NULL\n" );
 	break;
 
       case BS_SOLID:
-        dprintf_gdi( stddeb,"BS_SOLID\n" );
+        dprintf_info(gdi,"BS_SOLID\n" );
 	BRUSH_SelectSolidBrush( dc, brush->logbrush.lbColor );
 	break;
 	
       case BS_HATCHED:
-	dprintf_gdi( stddeb, "BS_HATCHED\n" );
+	dprintf_info(gdi, "BS_HATCHED\n" );
 	dc->u.x.brush.pixel = COLOR_ToPhysical( dc, brush->logbrush.lbColor );
 	dc->u.x.brush.pixmap = TSXCreateBitmapFromData( display, rootWindow,
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
@@ -261,12 +260,12 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
 	break;
 	
       case BS_PATTERN:
-	dprintf_gdi( stddeb, "BS_PATTERN\n");
+	dprintf_info(gdi, "BS_PATTERN\n");
 	BRUSH_SelectPatternBrush( dc, (HBRUSH16)brush->logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
-	dprintf_gdi( stddeb, "BS_DIBPATTERN\n");
+	dprintf_info(gdi, "BS_DIBPATTERN\n");
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );

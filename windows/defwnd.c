@@ -14,7 +14,6 @@
 #include "winpos.h"
 #include "dce.h"
 #include "sysmetrics.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "spy.h"
 
@@ -98,7 +97,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM32 wParam )
 {
     BOOL32 bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
-dprintf_win(stddeb,"SetRedraw: %04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
+dprintf_info(win,"SetRedraw: %04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
 
     if( wParam )
     {
@@ -185,7 +184,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 			SYSMETRICS_CXICON)/2;
 	        int y = (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top -
 			SYSMETRICS_CYICON)/2;
-		dprintf_win(stddeb,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
+		dprintf_info(win,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
 		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
 	        DrawIcon32( hdc, x, y, wndPtr->class->hIcon );
 	      }

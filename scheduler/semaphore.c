@@ -32,6 +32,8 @@ const K32OBJ_OPS SEMAPHORE_Ops =
     SEMAPHORE_Satisfied,   /* satisfied */
     SEMAPHORE_AddWait,     /* add_wait */
     SEMAPHORE_RemoveWait,  /* remove_wait */
+    NULL,                  /* read */
+    NULL,                  /* write */
     SEMAPHORE_Destroy      /* destroy */
 };
 

@@ -35,8 +35,6 @@
 #include "graphics.h"
 #include "heap.h"
 #include "win.h"
-#include "stddebug.h"
-/*#define  DEBUG_UPDOWN*/
 #include "debug.h"
 
 /* Control configuration constants */
@@ -62,7 +60,7 @@
 
 static int accelIndex = -1;
 
-#define UNKNOWN_PARAM(msg, wParam, lParam) dprintf_updown(stddeb, \
+#define UNKNOWN_PARAM(msg, wParam, lParam) dprintf_warn(updown, \
         "UpDown Ctrl: Unknown parameter(s) for message " #msg     \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
 
@@ -209,7 +207,7 @@ static BOOL32 UPDOWN_GetBuddyInt(WND *wndPtr)
     if(*src || !UPDOWN_InBounds(wndPtr, newVal)) 
       return FALSE;
 
-    dprintf_updown(stddeb, "UpDown Ctrl: new value(%d) read from buddy "
+    dprintf_info(updown, "UpDown Ctrl: new value(%d) read from buddy "
 		   "(old=%d)\n",  newVal, infoPtr->CurVal);
   }
   
@@ -234,7 +232,7 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
   if (!IsWindow32(infoPtr->Buddy)) 
     return FALSE;
 
-  dprintf_updown(stddeb, "UpDown Ctrl: set new value(%d) to buddy.\n",
+  dprintf_info(updown, "UpDown Ctrl: set new value(%d) to buddy.\n",
 		 infoPtr->CurVal);
 
   /*if the buddy is a list window, we must set curr index */
@@ -381,7 +379,7 @@ static void UPDOWN_DoAction(WND *wndPtr, int delta, BOOL32 incr)
   int old_val = infoPtr->CurVal;
   NM_UPDOWN ni;
 
-  dprintf_updown(stddeb, "UpDown Ctrl action: %s by %d\n",
+  dprintf_info(updown, "UpDown Ctrl action: %s by %d\n",
 		 incr ? "inc" : "dec", delta);
 
   /* check if we can do the modification first */
@@ -583,13 +581,13 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       if(wndPtr->dwStyle & UDS_AUTOBUDDY)
 	UPDOWN_SetBuddy(wndPtr, GetWindow32(wndPtr->hwndSelf, GW_HWNDPREV));
 	
-      dprintf_updown(stddeb, "UpDown Ctrl creation, hwnd=%04x\n", hwnd);
+      dprintf_info(updown, "UpDown Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
     case WM_DESTROY:
       if(infoPtr->AccelVect)
 	free(infoPtr->AccelVect);
-      dprintf_updown(stddeb, "UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
+      dprintf_info(updown, "UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
       break;
 	
     case WM_ENABLE:
@@ -679,7 +677,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       return temp;
 
     case UDM_SETACCEL:
-      dprintf_updown(stddeb, "UpDown Ctrl new accel info, hwnd=%04x\n", hwnd);
+      dprintf_info(updown, "UpDown Ctrl new accel info, hwnd=%04x\n", hwnd);
       if(infoPtr->AccelVect){
 	free(infoPtr->AccelVect);
 	infoPtr->AccelCount = 0;
@@ -699,7 +697,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       return infoPtr->Base;
 
     case UDM_SETBASE:
-      dprintf_updown(stddeb, "UpDown Ctrl new base(%d), hwnd=%04x\n", 
+      dprintf_info(updown, "UpDown Ctrl new base(%d), hwnd=%04x\n", 
 		     wParam, hwnd);
       if ( !(wParam==10 || wParam==16) || lParam)
 	UNKNOWN_PARAM(UDM_SETBASE, wParam, lParam);
@@ -721,7 +719,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       temp = infoPtr->Buddy;
       infoPtr->Buddy = wParam;
       UPDOWN_SetBuddy(wndPtr, wParam);
-      dprintf_updown(stddeb, "UpDown Ctrl new buddy(%04x), hwnd=%04x\n", 
+      dprintf_info(updown, "UpDown Ctrl new buddy(%04x), hwnd=%04x\n", 
 		     infoPtr->Buddy, hwnd);
       return temp;
 
@@ -735,7 +733,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       if (wParam || HIWORD(lParam))
 	UNKNOWN_PARAM(UDM_GETPOS, wParam, lParam);
       temp = SLOWORD(lParam);
-      dprintf_updown(stddeb, "UpDown Ctrl new value(%d), hwnd=%04x\n",
+      dprintf_info(updown, "UpDown Ctrl new value(%d), hwnd=%04x\n",
 		     temp, hwnd);
       if(!UPDOWN_InBounds(wndPtr, temp)){
 	if(temp < infoPtr->MinVal)  
@@ -760,7 +758,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       infoPtr->MaxVal = SLOWORD(lParam); /* UD_MINVAL <= Max <= UD_MAXVAL */
       infoPtr->MinVal = SHIWORD(lParam); /* UD_MINVAL <= Min <= UD_MAXVAL */
                                          /* |Max-Min| <= UD_MAXVAL        */
-      dprintf_updown(stddeb, "UpDown Ctrl new range(%d to %d), hwnd=%04x\n", 
+      dprintf_info(updown, "UpDown Ctrl new range(%d to %d), hwnd=%04x\n", 
 		     infoPtr->MinVal, infoPtr->MaxVal, hwnd);
       break;                             
 

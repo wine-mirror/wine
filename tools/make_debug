@@ -1,164 +1,75 @@
-#!/bin/sh
+#!/bin/bash
 #
-# This script scans the whole source code for symbols of the form dprintf_xxx,
-# generates the necessary macro definitions and puts them into the files
-# include/stddebug.h and include/debug.h . This script must be started with 
-# cwd = rootdir of the Wine-distribution.
+# This script generates the required files for supporting the debug
+# channels used throught the code.
+# The generated files are 
+#   include/debugdefs.h
+#   include/debug.h
+# The script must be run in the root directory of the project.
 #
-# Michael Patra  <micky@marie.physik.tu-berlin.de>
+# Dimitrie O. Paun <dimi@cs.toronto.edu>
 #
-DEBUG_H=include/debug.h
-STDDEBUG_H=include/stddebug.h
+DEBUG_H="include/debug.h"
+DEBUG_DEFS_H="include/debugdefs.h"
 
-mv $DEBUG_H $DEBUG_H.old
-mv $STDDEBUG_H $STDDEBUG_H.old
+DEBUG_CHANNELS="$( tools/find_debug_channels )"
 
-# Build the list of debug identifiers
-grep -h dprintf_ `find . -name '*.c' -print` | \
-    sed 's/.*dprintf_\([A-Za-z0-9_]*\).*/\1/g' | sort | uniq > temp.$$
-
-# Build debug.h
-
-sed '/^\/\* Do not remove this line or change anything below this line \*\//q'\
-      <$DEBUG_H.old >$DEBUG_H
-cat <<++EOF++ >> $DEBUG_H
-
-#ifdef DEBUG_NONE_EXT
-++EOF++
-
-cat temp.$$ | tr a-z A-Z |
 {
-while read x
-do
-	echo "#undef DEBUG_$x" >> $DEBUG_H
-done
-}
+    cat <<EOF
+/* Do not modify this file -- it is automatically generated! */
 
-cat <<++EOF++ >>$DEBUG_H
+#ifndef __DEBUGTOOLS_H
+#include "debugtools.h"
 #endif
 
-#ifdef DEBUG_ALL_EXT
-++EOF++
-
-cat temp.$$ | tr a-z A-Z |
-{
-while read x
-do
-	echo "#define DEBUG_$x" >> $DEBUG_H
-done
-}
-
-cat <<++EOF++ >>$DEBUG_H
-#endif
-
-#ifdef DEBUG_RUNTIME
-#ifdef DEBUG_DEFINE_VARIABLES
-short debug_msg_enabled[]={
-++EOF++
-
-cat temp.$$ | tr a-z A-Z |
-{
-while read x
-do
-	cat <<++EOF++ >>$DEBUG_H
-#ifdef DEBUG_$x
-    1,
-#else
-    0,
-#endif
-++EOF++
-
-done
-}
-
-cat <<++EOF++ >>$DEBUG_H
-    0
-};
-#else
-extern short debug_msg_enabled[];
-#endif
-#endif
-
-++EOF++
-
-i=0
-cat temp.$$ |
-{
-while read x 
-do
-	y=`echo $x | tr a-z A-Z`
-	cat <<++EOF++ >>$DEBUG_H
-#ifdef DEBUG_RUNTIME
-#define dprintf_$x if(!debug_msg_enabled[$i]) ; else fprintf
-#define debugging_$x debug_msg_enabled[$i]
-#else
-#ifdef DEBUG_$y
-#define dprintf_$x fprintf
-#define debugging_$x 1
-#else
-#define dprintf_$x while(0) fprintf
-#define debugging_$x 0
-#endif
-#endif
-
-++EOF++
+EOF
+    i=0
+    for ch in $DEBUG_CHANNELS
+    do
+	echo "#define dbch_${ch} $i"
 	let i=$i+1
-done
-}
+    done
+} > $DEBUG_H
 
-cat <<++EOF++ >>$DEBUG_H
+# Now, on the last step, we proceed to construct
+# the definitions to be used by the main function.
+# These will be stored in include/debugdefs.h
+{
+    cat <<EOF
+/* Do not modify this file -- it is automatically generated! */
 
+#ifndef __DEBUGTOOLS_H
+#include "debugtools.h"
+#endif
+
+#define DEBUG_CHANNEL_COUNT $i
 #ifdef DEBUG_RUNTIME
-#ifdef DEBUG_DEFINE_VARIABLES
-static char *debug_msg_name[] = {
-++EOF++
+short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+EOF
 
-cat temp.$$ | 
-{
-while read x
-do
-	echo "    \"$x\"," >> $DEBUG_H
-done
-}
+    for ch in $DEBUG_CHANNELS
+    do
+	echo "{1, 1, 0, 0},"
+    done
+    echo '};'
 
-cat <<++EOF++ >>$DEBUG_H
-    ""
-};
-#endif
-#endif
-++EOF++
+    echo 'const char* debug_ch_name[] = {'
+    for ch in $DEBUG_CHANNELS
+    do
+	echo "\"${ch}\","
+    done
+    echo '};'
+    
+    cat <<EOF
 
-# Build stddebug.h
+const char* debug_cl_name[] =
+{ "fixme", "err", "warn", "info" };
 
-sed '/^\/\* Do not remove this line or change anything below this line \*\//q'\
-      <$STDDEBUG_H.old >$STDDEBUG_H
+#endif /*DEBUG_RUNTIME*/
 
-cat <<++EOF++ >>$STDDEBUG_H
+/* end of automatically generated debug.h */
+EOF
 
-#ifdef DEBUG_NONE
-++EOF++
+} > $DEBUG_DEFS_H
 
-cat temp.$$ | tr a-z A-Z |
-{
-while read x
-do
-	echo "#undef DEBUG_$x" >> $STDDEBUG_H
-done
-}
 
-cat <<++EOF++ >>$STDDEBUG_H
-#endif
-
-#ifdef DEBUG_ALL
-++EOF++
-
-cat temp.$$ | tr a-z A-Z |
-{
-while read x
-do
-	echo "#define DEBUG_$x" >> $STDDEBUG_H
-done
-}
-echo "#endif" >> $STDDEBUG_H
-
-rm temp.$$ $DEBUG_H.old $STDDEBUG_H.old

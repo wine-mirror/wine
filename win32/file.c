@@ -18,9 +18,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "file.h"
+#include "process.h"
 #include "heap.h"
-#include "stddebug.h"
-#define DEBUG_WIN32
 #include "debug.h"
 
 DWORD ErrnoToLastError(int errno_num);
@@ -31,38 +30,44 @@ static int TranslateAccessFlags(DWORD access_flags);
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
  */
-BOOL32 WINAPI WriteFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
+BOOL32 WINAPI WriteFile(HANDLE32 hFile, LPCVOID lpBuffer, 
+			DWORD numberOfBytesToWrite,
                         LPDWORD numberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-    LONG	res;
-
-    res = _lwrite32(hFile,lpBuffer,numberOfBytesToWrite);
-    if (res==-1) {
-    	SetLastError(ErrnoToLastError(errno));
-    	return FALSE;
-    }
-    if(numberOfBytesWritten)
-        *numberOfBytesWritten = res;
-    return TRUE;
+	K32OBJ *ioptr;
+	BOOL32 status = FALSE;
+	
+	dprintf_info(file, "WriteFile: %d %p %ld\n", hFile, lpBuffer, 
+		      numberOfBytesToWrite);
+	
+	if (!(ioptr = HANDLE_GetObjPtr( hFile, K32OBJ_UNKNOWN, 0 ))) 
+		return HFILE_ERROR32;
+        if (K32OBJ_OPS(ioptr)->write)
+            status = K32OBJ_OPS(ioptr)->write(ioptr, lpBuffer, numberOfBytesToWrite, 
+                                              numberOfBytesWritten, lpOverlapped);
+	K32OBJ_DecCount( ioptr );
+	return status;
 }
 
 /***********************************************************************
  *              ReadFile                (KERNEL32.428)
  */
-BOOL32 WINAPI ReadFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
-                       LPDWORD numread, LPOVERLAPPED lpOverlapped)
+BOOL32 WINAPI ReadFile(HANDLE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToRead,
+                       LPDWORD numberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-    int actual_read;
-
-    actual_read = _lread32(hFile,lpBuffer,numtoread);
-    if(actual_read == -1) {
-        SetLastError(ErrnoToLastError(errno));
-        return FALSE;
-    }
-    if(numread)
-        *numread = actual_read;
-
-    return TRUE;
+	K32OBJ *ioptr;
+	BOOL32 status = FALSE;
+	
+	dprintf_info(file, "ReadFile: %d %p %ld\n", hFile, lpBuffer, 
+		      numberOfBytesToRead);
+	
+	if (!(ioptr = HANDLE_GetObjPtr( hFile, K32OBJ_UNKNOWN, 0 ))) 
+		return HFILE_ERROR32;
+        if (K32OBJ_OPS(ioptr)->read)
+            status = K32OBJ_OPS(ioptr)->read(ioptr, lpBuffer, numberOfBytesToRead, 
+                                             numberOfBytesRead, lpOverlapped);
+	K32OBJ_DecCount( ioptr );
+	return status;
 }
 
 
@@ -107,7 +112,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
     create_flags = TranslateCreationFlags(creation);
 
     if(template)
-        dprintf_file(stddeb, "CreateFile: template handles not supported.\n");
+        dprintf_fixme(file, "CreateFile: template handles not supported.\n");
 
     /* If the name starts with '\\?' or '\\.', ignore the first 3 chars.
      */
@@ -118,7 +123,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
      */
     if(!strncmp(filename, "\\\\", 2))
     {
-        dprintf_file(stddeb, "CreateFile: UNC names not supported.\n");
+        dprintf_fixme(file, "CreateFile: UNC names not supported.\n");
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
         return HFILE_ERROR32;
     }
@@ -220,7 +225,7 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
     if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name ))
         return FALSE;
 
-    dprintf_file(stddeb,"SetFileAttributes(%s,%lx)\n",lpFileName,attributes);
+    dprintf_info(file,"SetFileAttributes(%s,%lx)\n",lpFileName,attributes);
     if (attributes & FILE_ATTRIBUTE_NORMAL) {
       attributes &= ~FILE_ATTRIBUTE_NORMAL;
       if (attributes)

@@ -18,7 +18,6 @@
 #include "dde_mem.h"
 #include "stackframe.h"
 #include "module.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "winerror.h"
 
@@ -50,6 +49,7 @@ static int globalArenaSize = 0;
 
 #define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
 
+#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 
 /***********************************************************************
@@ -165,6 +165,8 @@ BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
 
     if (!handle) return TRUE;
     sel = GlobalHandleToSel( handle ); 
+    if (!VALID_HANDLE(sel))
+    	return FALSE;
     pArena = GET_ARENA_PTR(sel);
     SELECTOR_FreeBlock( sel, (pArena->size + 0xffff) / 0x10000 );
     memset( pArena, 0, sizeof(GLOBALARENA) );
@@ -184,7 +186,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
     HGLOBAL16 handle;
     SHMDATA shmdata;
 
-    dprintf_global( stddeb, "GlobalAlloc: %ld flags=%04x\n", size, flags );
+    dprintf_info(global, "GlobalAlloc: %ld flags=%04x\n", size, flags );
 
     /* If size is 0, create a discarded block */
 
@@ -291,7 +293,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
     GLOBALARENA *pArena, *pNewArena;
     WORD sel = GlobalHandleToSel( handle );
 
-    dprintf_global( stddeb, "GlobalReAlloc16: %04x %ld flags=%04x\n",
+    dprintf_info(global, "GlobalReAlloc16: %04x %ld flags=%04x\n",
                     handle, size, flags );
     if (!handle) return 0;
     
@@ -304,6 +306,10 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
     }
 #endif  /* CONFIG_IPC */
 
+    if (!VALID_HANDLE(handle)) {
+    	fprintf(stderr," Invalid handle 0x%04x passed to GlobalReAlloc16!\n",handle);
+    	return 0;
+    }
     pArena = GET_ARENA_PTR( handle );
 
       /* Discard the block if requested */
@@ -344,7 +350,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
 
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
-    dprintf_global(stddeb,"oldsize %08lx\n",oldsize);
+    dprintf_info(global,"oldsize %08lx\n",oldsize);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
     ptr = HeapReAlloc( SystemHeap, 0, ptr, size );
@@ -395,9 +401,15 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
  */
 HGLOBAL16 WINAPI GlobalFree16( HGLOBAL16 handle )
 {
-    void *ptr = (void *)GET_ARENA_PTR(handle)->base;
+    void *ptr;
 
-    dprintf_global( stddeb, "GlobalFree16: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+    	fprintf(stderr," Invalid handle 0x%04x passed to GlobalFree16!\n",handle);
+    	return 0;
+    }
+    ptr = (void *)GET_ARENA_PTR(handle)->base;
+
+    dprintf_info(global, "GlobalFree16: %04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
@@ -414,7 +426,7 @@ HGLOBAL16 WINAPI GlobalFree16( HGLOBAL16 handle )
  */
 SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "WIN16_GlobalLock16(%04x) -> %08lx\n",
+    dprintf_info(global, "WIN16_GlobalLock16(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (handle)
     {
@@ -425,6 +437,10 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 	    return PTR_SEG_OFF_TO_SEGPTR( DDE_GlobalHandleToSel(handle), 0 );
 #endif  /* CONFIG_IPC */
 
+	if (!VALID_HANDLE(handle)) {
+	    fprintf(stderr,"Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
+	    return (SEGPTR)0;
+	}
 	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
         GET_ARENA_PTR(handle)->lockCount++;
 	return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
@@ -442,6 +458,8 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 LPVOID WINAPI GlobalLock16( HGLOBAL16 handle )
 {
     if (!handle) return 0;
+    if (!VALID_HANDLE(handle))
+	return (LPVOID)0;
     GET_ARENA_PTR(handle)->lockCount++;
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_AttachHandle(handle, NULL);
@@ -456,7 +474,11 @@ LPVOID WINAPI GlobalLock16( HGLOBAL16 handle )
 BOOL16 WINAPI GlobalUnlock16( HGLOBAL16 handle )
 {
     GLOBALARENA *pArena = GET_ARENA_PTR(handle);
-    dprintf_global( stddeb, "GlobalUnlock16: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
+	return 0;
+    }
+    dprintf_info(global, "GlobalUnlock16: %04x\n", handle );
     if (pArena->lockCount) pArena->lockCount--;
     return pArena->lockCount;
 }
@@ -467,8 +489,10 @@ BOOL16 WINAPI GlobalUnlock16( HGLOBAL16 handle )
  */
 DWORD WINAPI GlobalSize16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalSize16: %04x\n", handle );
+    dprintf_info(global, "GlobalSize16: %04x\n", handle );
     if (!handle) return 0;
+    if (!VALID_HANDLE(handle))
+	return 0;
     return GET_ARENA_PTR(handle)->size;
 }
 
@@ -478,7 +502,11 @@ DWORD WINAPI GlobalSize16( HGLOBAL16 handle )
  */
 DWORD WINAPI GlobalHandle16( WORD sel )
 {
-    dprintf_global( stddeb, "GlobalHandle16: %04x\n", sel );
+    dprintf_info(global, "GlobalHandle16: %04x\n", sel );
+    if (!VALID_HANDLE(sel)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
+	return 0;
+    }
     return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
 }
 
@@ -502,7 +530,11 @@ UINT16 WINAPI GlobalFlags16( HGLOBAL16 handle )
 {
     GLOBALARENA *pArena;
 
-    dprintf_global( stddeb, "GlobalFlags16: %04x\n", handle );
+    dprintf_info(global, "GlobalFlags16: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalFlags16!\n",handle);
+	return 0;
+    }
     pArena = GET_ARENA_PTR(handle);
     return pArena->lockCount |
            ((pArena->flags & GA_DISCARDABLE) ? GMEM_DISCARDABLE : 0) |
@@ -515,8 +547,12 @@ UINT16 WINAPI GlobalFlags16( HGLOBAL16 handle )
  */
 HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "LockSegment: %04x\n", handle );
+    dprintf_info(global, "LockSegment: %04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to LockSegment16!\n",handle);
+	return 0;
+    }
     GET_ARENA_PTR(handle)->lockCount++;
     return handle;
 }
@@ -527,8 +563,12 @@ HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
  */
 void WINAPI UnlockSegment16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "UnlockSegment: %04x\n", handle );
+    dprintf_info(global, "UnlockSegment: %04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to UnlockSegment16!\n",handle);
+	return;
+    }
     GET_ARENA_PTR(handle)->lockCount--;
     /* FIXME: this ought to return the lock count in CX (go figure...) */
 }
@@ -583,7 +623,7 @@ BOOL16 WINAPI GlobalUnWire16( HGLOBAL16 handle )
  */
 LONG WINAPI SetSwapAreaSize16( WORD size )
 {
-    dprintf_global(stdnimp, "STUB: SetSwapAreaSize(%d)\n", size );
+    dprintf_fixme(global, "STUB: SetSwapAreaSize(%d)\n", size );
     return MAKELONG( size, 0xffff );
 }
 
@@ -593,7 +633,7 @@ LONG WINAPI SetSwapAreaSize16( WORD size )
  */
 HGLOBAL16 WINAPI GlobalLRUOldest( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalLRUOldest: %04x\n", handle );
+    dprintf_info(global, "GlobalLRUOldest: %04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     return handle;
 }
@@ -604,7 +644,7 @@ HGLOBAL16 WINAPI GlobalLRUOldest( HGLOBAL16 handle )
  */
 HGLOBAL16 WINAPI GlobalLRUNewest( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalLRUNewest: %04x\n", handle );
+    dprintf_info(global, "GlobalLRUNewest: %04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     return handle;
 }
@@ -662,7 +702,11 @@ WORD WINAPI GlobalDOSFree(WORD sel)
  */
 WORD WINAPI GlobalPageLock( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalPageLock: %04x\n", handle );
+    dprintf_info(global, "GlobalPageLock: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalPageLock!\n",handle);
+	return 0;
+    }
     return ++(GET_ARENA_PTR(handle)->pageLockCount);
 }
 
@@ -672,7 +716,11 @@ WORD WINAPI GlobalPageLock( HGLOBAL16 handle )
  */
 WORD WINAPI GlobalPageUnlock( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalPageUnlock: %04x\n", handle );
+    dprintf_info(global, "GlobalPageUnlock: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalPageUnlock!\n",handle);
+	return 0;
+    }
     return --(GET_ARENA_PTR(handle)->pageLockCount);
 }
 
@@ -682,7 +730,11 @@ WORD WINAPI GlobalPageUnlock( HGLOBAL16 handle )
  */
 void WINAPI GlobalFix16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalFix16: %04x\n", handle );
+    dprintf_info(global, "GlobalFix16: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
+	return;
+    }
     GET_ARENA_PTR(handle)->lockCount++;
 }
 
@@ -692,7 +744,11 @@ void WINAPI GlobalFix16( HGLOBAL16 handle )
  */
 void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalUnfix16: %04x\n", handle );
+    dprintf_info(global, "GlobalUnfix16: %04x\n", handle );
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
+	return;
+    }
     GET_ARENA_PTR(handle)->lockCount--;
 }
 
@@ -702,6 +758,10 @@ void WINAPI GlobalUnfix16( HGLOBAL16 handle )
  */
 void WINAPI FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
 {
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to FarSetOwner!\n",handle);
+	return;
+    }
     GET_ARENA_PTR(handle)->hOwner = hOwner;
 }
 
@@ -711,6 +771,10 @@ void WINAPI FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
  */
 HANDLE16 WINAPI FarGetOwner( HGLOBAL16 handle )
 {
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to FarGetOwner!\n",handle);
+	return 0;
+    }
     return GET_ARENA_PTR(handle)->hOwner;
 }
 
@@ -720,11 +784,15 @@ HANDLE16 WINAPI FarGetOwner( HGLOBAL16 handle )
  */
 WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle )
 {
-    dprintf_toolhelp( stddeb, "GlobalHandleToSel: %04x\n", handle );
+    dprintf_info(toolhelp, "GlobalHandleToSel: %04x\n", handle );
     if (!handle) return 0;
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalHandleToSel(handle);
 #endif
+    if (!VALID_HANDLE(handle)) {
+	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
+	return 0;
+    }
     if (!(handle & 7))
     {
         fprintf( stderr, "Program attempted invalid selector conversion\n" );
@@ -961,7 +1029,7 @@ LPVOID WINAPI GlobalLock32(HGLOBAL32 hmem)
    }
    else
    {
-      dprintf_global(stddeb, "GlobalLock32: invalid handle\n");
+      dprintf_warn(global, "GlobalLock32: invalid handle\n");
       palloc=(LPVOID) NULL;
    }
    /* HeapUnlock(GetProcessHeap()); */;
@@ -992,7 +1060,7 @@ BOOL32 WINAPI GlobalUnlock32(HGLOBAL32 hmem)
    }
    else
    {
-      dprintf_global(stddeb, "GlobalUnlock32: invalid handle\n");
+      dprintf_warn(global, "GlobalUnlock32: invalid handle\n");
       locked=FALSE;
    }
    /* HeapUnlock(GetProcessHeap()); */
@@ -1165,7 +1233,7 @@ DWORD WINAPI GlobalSize32(HGLOBAL32 hmem)
       }
       else
       {
-	 dprintf_global(stddeb, "GlobalSize32: invalid handle\n");
+	 dprintf_warn(global, "GlobalSize32: invalid handle\n");
 	 retval=0;
       }
       /* HeapUnlock(GetProcessHeap()); */
@@ -1234,7 +1302,7 @@ UINT32 WINAPI GlobalFlags32(HGLOBAL32 hmem)
       }
       else
       {
-	 dprintf_global(stddeb,"GlobalFlags32: invalid handle\n");
+	 dprintf_warn(global,"GlobalFlags32: invalid handle\n");
 	 retval=0;
       }
       /* HeapUnlock(GetProcessHeap()); */
@@ -1323,4 +1391,15 @@ SEGPTR WINAPI WOWGlobalAllocLock16(DWORD flags,DWORD cb,HGLOBAL16 *hmem)
     xhmem = GlobalAlloc16(flags,cb);
     if (hmem) *hmem = xhmem;
     return WIN16_GlobalLock16(xhmem);
+}
+
+/**********************************************************************
+ *           WOWGlobalUnlockFree (KERNEL32.64)
+ *
+ * Combined GlobalUnlock and GlobalFree.
+ */
+WORD WOWGlobalUnlockFree16(DWORD vpmem) {
+    if (!GlobalUnlock16(HIWORD(vpmem)))
+    	return 0;
+    return GlobalFree16(HIWORD(vpmem));
 }

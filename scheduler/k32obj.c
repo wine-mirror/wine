@@ -28,6 +28,8 @@ static const K32OBJ_OPS K32OBJ_NullOps =
     NULL,    /* satisfied */
     NULL,    /* add_wait */
     NULL,    /* remove_wait */
+    NULL,    /* read */
+    NULL,    /* write */
     NULL     /* destroy */
 };
 

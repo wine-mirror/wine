@@ -13,7 +13,6 @@
 #include "options.h"
 #include "gdi.h"
 #include "color.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -289,7 +288,7 @@ static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
 
     COLOR_sysPal = (PALETTEENTRY*)xmalloc(sizeof(PALETTEENTRY)*cs->size);
 
-    dprintf_palette(stddeb,"\tbuilding private map - %i palette entries\n", cs->size);
+    dprintf_info(palette,"\tbuilding private map - %i palette entries\n", cs->size);
 
       /* Allocate system palette colors */ 
 
@@ -346,9 +345,9 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
    COLOR_max = PROFILE_GetWineIniInt( "options", "AllocSystemColors", 256);
    if (COLOR_max > 256) COLOR_max = 256;
    else if (COLOR_max < 20) COLOR_max = 20;
-   dprintf_palette(stddeb,"COLOR_Init: %d colors configured.\n", COLOR_max);
+   dprintf_info(palette,"COLOR_Init: %d colors configured.\n", COLOR_max);
    
-   dprintf_palette(stddeb,"\tbuilding shared map - %i palette entries\n", cs->size);
+   dprintf_info(palette,"\tbuilding shared map - %i palette entries\n", cs->size);
 
    /* Be nice and allocate system colors as read-only */
 
@@ -365,7 +364,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	     
              if( !warn++ ) 
 	     {
-		  dprintf_palette(stddeb, "Not enough colors for the full system palette.\n");
+		  dprintf_warn(palette, "Not enough colors for the full system palette.\n");
 
 	          bp = BlackPixel(display, DefaultScreen(display));
 	          wp = WhitePixel(display, DefaultScreen(display));
@@ -403,7 +402,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 
         sysPixel[i] = color.pixel;
 
-        dprintf_palette(stddeb,"\tsyscolor(%lx) -> pixel %i\n",
+        dprintf_info(palette,"\tsyscolor(%lx) -> pixel %i\n",
 		      *(COLORREF*)(__sysPalTemplate+i), (int)color.pixel);
 
         /* Set EGA mapping if color in the first or last eight */
@@ -420,7 +419,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
      {
 	int c_min = 0, c_max = cs->size, c_val;
 
-	dprintf_palette(stddeb,"\tdynamic colormap... ");
+	dprintf_info(palette,"\tdynamic colormap... \n");
 
 	/* comment this out if you want to debug palette init */
 
@@ -462,7 +461,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 
 	TSXUngrabServer(display);
 
-	dprintf_palette(stddeb,"adjusted size %i colorcells\n", cs->size);
+	dprintf_info(palette,"adjusted size %i colorcells\n", cs->size);
      }
    else if( cSpace.flags & COLOR_VIRTUAL ) 
 	{
@@ -471,12 +470,12 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	   * to maintain compatibility
 	   */
 	  cs->size = 256;
-	  dprintf_palette(stddeb,"\tvirtual colorspace - screendepth %i\n", screenDepth);
+	  dprintf_info(palette,"\tvirtual colorspace - screendepth %i\n", screenDepth);
 	}
    else cs->size = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
 
-   dprintf_palette(stddeb,"Shared system palette uses %i colors.\n", cs->size);
+   dprintf_info(palette,"Shared system palette uses %i colors.\n", cs->size);
 
    /* set gap to account for pixel shortage. It has to be right in the center
     * of the system palette because otherwise raster ops get screwed. */
@@ -530,7 +529,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
            else
              COLOR_PaletteToPixel[i] = i;
 
-      dprintf_palette(stddeb,"\tindex %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
+      dprintf_info(palette,"\tindex %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
 
       if( COLOR_PixelToPalette )
           COLOR_PixelToPalette[COLOR_PaletteToPixel[i]] = i;
@@ -575,7 +574,7 @@ BOOL32 COLOR_Init(void)
 
     visual = DefaultVisual( display, DefaultScreen(display) );
 
-    dprintf_palette(stddeb,"COLOR_Init: initializing palette manager...");
+    dprintf_info(palette,"COLOR_Init: initializing palette manager...\n");
 
     white = WhitePixelOfScreen( screen );
     black = BlackPixelOfScreen( screen );
@@ -650,7 +649,7 @@ BOOL32 COLOR_Init(void)
     }
     }
 
-    dprintf_palette(stddeb," visual class %i (%i)\n", 
+    dprintf_info(palette," visual class %i (%i)\n", 
 		    visual->class, cSpace.monoPlane);
 
     memset(COLOR_freeList, 0, 256*sizeof(unsigned char));
@@ -942,7 +941,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
 	if( !palPtr ) return 0;
 	else if( !palPtr->mapping ) 
-            dprintf_palette(stddeb,"\tpalette %04x is not realized\n", dc->w.hPalette);
+            dprintf_warn(palette, "\tpalette %04x is not realized\n", dc->w.hPalette);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{
@@ -961,7 +960,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	    	index = COLOR_PaletteLookupPixel( COLOR_sysPal, 256, 
 						  COLOR_PaletteToPixel, color, FALSE);
 
-		/* dprintf_palette(stddeb,"\tRGB(%lx) -> pixel %i\n", color, index);
+		/* dprintf_info(palette,"\tRGB(%lx) -> pixel %i\n", color, index);
 		 */
 	    	break;
        	    case 1:  /* PALETTEINDEX */
@@ -971,14 +970,14 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 		    fprintf(stderr, "\tRGB(%lx) : index %i is out of bounds\n", color, index); 
 		else if( palPtr->mapping ) index = palPtr->mapping[index];
 
-		/*  dprintf_palette(stddeb,"\tPALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
+		/*  dprintf_info(palette,"\tPALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
 		 */
 		break;
             case 2:  /* PALETTERGB */
 		index = COLOR_PaletteLookupPixel( palPtr->logpalette.palPalEntry, 
                                              palPtr->logpalette.palNumEntries,
                                              palPtr->mapping, color, FALSE);
-		/* dprintf_palette(stddeb,"\tPALETTERGB(%lx) -> pixel %i\n", color, index);
+		/* dprintf_info(palette,"\tPALETTERGB(%lx) -> pixel %i\n", color, index);
 		 */
 		break;
 	}
@@ -1078,7 +1077,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT32 uStart, UINT32 uNum, BOOL32 map
         if( !prevMapping || palPtr->mapping[uStart] != index ) iRemapped++;
         palPtr->mapping[uStart] = index;
 
-        dprintf_palette(stddeb,"\tentry %i (%lx) -> pixel %i\n", uStart, 
+        dprintf_info(palette,"\tentry %i (%lx) -> pixel %i\n", uStart, 
 				*(COLORREF*)(palPtr->logpalette.palPalEntry + uStart), index);
 	
     }

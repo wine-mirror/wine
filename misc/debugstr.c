@@ -1,6 +1,7 @@
 #include "debugstr.h"
 #include "xmalloc.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /* ---------------------------------------------------------------------- */
 
@@ -125,3 +126,18 @@ debugstr_w (LPCWSTR s)
 }
 
 /* ---------------------------------------------------------------------- */
+/* This routine returns a nicely formated name of the resource res
+   If the resource name is a string, it will return '<res-name>'
+   If it is a number, it will return #<4-digit-hex-number> */
+LPSTR
+debugres (const void *res)
+{
+  if (HIWORD((DWORD)res))
+    return debugstr_a((LPCSTR)res);
+  else{
+    char resname[10];
+    sprintf(resname, "#%04x", LOWORD(res));
+    return debugstr_a (resname);
+  }
+}
+

@@ -11,7 +11,6 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
-#include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
 

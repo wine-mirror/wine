@@ -1,6 +1,8 @@
 SUBDIRS = \
+	clock \
 	notepad \
 	progman \
+	view \
 	winhelp \
 	winver
 

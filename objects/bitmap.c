@@ -14,7 +14,6 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #ifdef PRELIMINARY_WING16_SUPPORT
@@ -143,7 +142,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     planes = (BYTE)planes;
     bpp    = (BYTE)bpp;
 
-    dprintf_gdi( stddeb, "CreateBitmap: %dx%d, %d colors\n", 
+    dprintf_info(gdi, "CreateBitmap: %dx%d, %d colors\n", 
                  width, height, 1 << (planes*bpp) );
 
       /* Check parameters */
@@ -199,11 +198,11 @@ HBITMAP32 WINAPI CreateCompatibleBitmap32(HDC32 hdc, INT32 width, INT32 height)
     HBITMAP32 hbmpRet = 0;
     DC *dc;
 
-    dprintf_gdi( stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
+    dprintf_info(gdi, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
                  hdc, width, height );
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     hbmpRet = CreateBitmap32( width, height, 1, dc->w.bitsPerPixel, NULL );
-    dprintf_gdi(stddeb,"\t\t%04x\n", hbmpRet);
+    dprintf_info(gdi,"\t\t%04x\n", hbmpRet);
     return hbmpRet;
 }
 
@@ -272,7 +271,7 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
 
-    dprintf_bitmap(stddeb, "GetBitmapBits: %dx%d %d colors %p fetched height: %ld\n",
+    dprintf_info(bitmap, "GetBitmapBits: %dx%d %d colors %p fetched height: %ld\n",
 	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	    1 << bmp->bitmap.bmBitsPixel, buffer, height );
 
@@ -395,7 +394,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return 0;
 
-    dprintf_bitmap(stddeb, "SetBitmapBits: %dx%d %d colors %p\n",
+    dprintf_info(bitmap, "SetBitmapBits: %dx%d %d colors %p\n",
 	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	    1 << bmp->bitmap.bmBitsPixel, buffer );
 
@@ -506,11 +505,11 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
 	}
 	switch (type) {
 	case IMAGE_BITMAP:
-		return LoadBitmap16(hinst,name);
+		return LoadBitmap16(hinst,(SEGPTR)name);
 	case IMAGE_ICON:
-		return LoadIcon16(hinst,name);
+		return LoadIcon16(hinst,(SEGPTR)name);
 	case IMAGE_CURSOR:
-		return LoadCursor16(hinst,name);
+		return LoadCursor16(hinst,(SEGPTR)name);
 	}
 	return 0;
 	
@@ -525,11 +524,11 @@ HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
                               INT32 desiredx, INT32 desiredy, UINT32 loadflags)
 {
 	if (HIWORD(name)) {
-		dprintf_resource(stddeb,"LoadImage32A(0x%04x,%s,%d,%d,%d,0x%08x)\n",
+		dprintf_info(resource,"LoadImage32A(0x%04x,%s,%d,%d,%d,0x%08x)\n",
 			hinst,name,type,desiredx,desiredy,loadflags
 		);
 	} else {
-		dprintf_resource(stddeb,"LoadImage32A(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+		dprintf_info(resource,"LoadImage32A(0x%04x,%p,%d,%d,%d,0x%08x)\n",
 			hinst,name,type,desiredx,desiredy,loadflags
 		);
 	}
@@ -548,11 +547,11 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
                               INT32 desiredx, INT32 desiredy, UINT32 loadflags)
 {
 	if (HIWORD(name)) {
-		dprintf_resource(stddeb,"LoadImage32W(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+		dprintf_info(resource,"LoadImage32W(0x%04x,%p,%d,%d,%d,0x%08x)\n",
 			hinst,name,type,desiredx,desiredy,loadflags
 		);
 	} else {
-		dprintf_resource(stddeb,"LoadImage32W(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+		dprintf_info(resource,"LoadImage32W(0x%04x,%p,%d,%d,%d,0x%08x)\n",
 			hinst,name,type,desiredx,desiredy,loadflags
 		);
 	}
@@ -620,11 +619,11 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
     if (HIWORD(name))
     {
         char *str = (char *)PTR_SEG_TO_LIN( name );
-        dprintf_bitmap( stddeb, "LoadBitmap16(%04x,'%s')\n", instance, str );
+        dprintf_info(bitmap, "LoadBitmap16(%04x,'%s')\n", instance, str );
         if (str[0] == '#') name = (SEGPTR)(DWORD)(WORD)atoi( str + 1 );
     }
     else
-        dprintf_bitmap( stddeb, "LoadBitmap16(%04x,%04x)\n",
+        dprintf_info(bitmap, "LoadBitmap16(%04x,%04x)\n",
                         instance, LOWORD(name) );
 
     if (!instance)  /* OEM bitmap */

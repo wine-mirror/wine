@@ -9,7 +9,6 @@
 #include <string.h>
 #include "ole.h"
 #include "ole2.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "compobj.h"
 #include "interfaces.h"
@@ -95,7 +94,7 @@ static HRESULT WINAPI IShellFolder_BindToObject(
 ) {
 	char	xclsid[50];
 
-	StringFromCLSID(riid,xclsid);
+	WINE_StringFromCLSID(riid,xclsid);
 	fprintf(stderr,"IShellFolder(%p)->BindToObject(%p,%p,%s,%p),stub!\n",
 		this,pidl,pbcReserved,xclsid,ppvOut
 	);
@@ -105,10 +104,10 @@ static HRESULT WINAPI IShellFolder_BindToObject(
 
 static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPSHELLFOLDER this,HWND32 hwndOwner,LPBC pbcReserved,
-	LPOLESTR lpszDisplayName,DWORD *pchEaten,LPITEMIDLIST *ppidl,
+	LPOLESTR32 lpszDisplayName,DWORD *pchEaten,LPITEMIDLIST *ppidl,
 	DWORD *pdwAttributes
 ) {
-	fprintf(stderr,"IShellFolder(%p)->ParseDisplayName(%08x,%p,%s,%p,%p,%p),stub!\n",
+	fprintf(stderr,"IShellFolder(%p)->ParseDisplayName(%08x,%p,%p,%p,%p,%p),stub!\n",
 		this,hwndOwner,pbcReserved,lpszDisplayName,pchEaten,ppidl,pdwAttributes
 	);
 	*(DWORD*)pbcReserved = 0;
@@ -131,7 +130,7 @@ static HRESULT WINAPI IShellFolder_CreateViewObject(
 ) {
 	char	xclsid[50];
 
-	StringFromCLSID(riid,xclsid);
+	WINE_StringFromCLSID(riid,xclsid);
 	fprintf(stderr,"IShellFolder(%p)->CreateViewObject(0x%04x,%s,%p),stub!\n",
 		this,hwndOwner,xclsid,ppv
 	);

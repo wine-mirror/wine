@@ -16,7 +16,6 @@
 #include "miscemu.h"
 #include "winnt.h"
 #include "debug.h"
-#include "stddebug.h"
 
 #ifndef __i386__
 THDB *pCurrentThread;
@@ -34,11 +33,16 @@ const K32OBJ_OPS THREAD_Ops =
     THREAD_Satisfied,   /* satisfied */
     THREAD_AddWait,     /* add_wait */
     THREAD_RemoveWait,  /* remove_wait */
+    NULL,               /* read */
+    NULL,               /* write */
     THREAD_Destroy      /* destroy */
 };
 
 
-/***********************************************************************
+/* Is threading code initialized? */
+BOOL32 THREAD_InitDone = FALSE;
+
+/**********************************************************************
  *           THREAD_GetPtr
  *
  * Return a pointer to a thread object. The object count must be decremented
@@ -65,9 +69,8 @@ THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access )
  */
 THDB *THREAD_Current(void)
 {
-    TEB *teb = NtCurrentTeb();
-    if (!teb) return NULL;
-    return (THDB *)((char *)teb - (int)&((THDB *)0)->teb);
+    if (!THREAD_InitDone) return NULL;
+    return (THDB *)((char *)NtCurrentTeb() - (int)&((THDB *)0)->teb);
 }
 
 
@@ -143,6 +146,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->teb.stack_sel   = 0; /* FIXME */
     thdb->teb.self        = &thdb->teb;
     thdb->teb.tls_ptr     = thdb->tls_array;
+    thdb->teb.process     = pdb;
     thdb->wait_list       = &thdb->wait_struct;
     thdb->exit_code       = 0x103; /* STILL_ACTIVE */
     thdb->entry_point     = start_addr;
@@ -150,7 +154,18 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
 
     /* Allocate the stack */
 
-    if (!stack_size) stack_size = 1024 * 1024;  /* default size = 1Mb */
+    /* FIXME:
+     * If stacksize smaller than 1 MB, allocate 1MB 
+     * (one program wanted only 10 kB, which is recommendable, but some WINE
+     *  functions, noteably in the files subdir, push HUGE structures and
+     *  arrays on the stack. They probably shouldn't.)
+     * If stacksize larger than 16 MB, warn the user. (We could shrink the stack
+     * but this could give more or less unexplainable crashes.)
+     */
+    if (stack_size<1024*1024)
+    	stack_size = 1024 * 1024;
+    if (stack_size >= 16*1024*1024)
+    	fprintf(stderr,"Warning:Thread stack size is %ld MB.\n",stack_size/1024/1024);
     thdb->stack_base = VirtualAlloc( NULL, stack_size, MEM_COMMIT,
                                      PAGE_EXECUTE_READWRITE );
     if (!thdb->stack_base) goto error;
@@ -377,12 +392,11 @@ void WINAPI SetLastErrorEx( DWORD error, DWORD type )
 
 
 /**********************************************************************
- *           TlsAlloc   (KERNEL32.530)
+ *           THREAD_TlsAlloc
  */
-DWORD WINAPI TlsAlloc(void)
+DWORD THREAD_TlsAlloc(THDB *thread)
 {
     DWORD i, mask, ret = 0;
-    THDB *thread = THREAD_Current();
     DWORD *bits = thread->process->tls_bits;
     EnterCriticalSection( &thread->process->crit_section );
     if (*bits == 0xffffffff)
@@ -400,6 +414,14 @@ DWORD WINAPI TlsAlloc(void)
     *bits |= mask;
     LeaveCriticalSection( &thread->process->crit_section );
     return ret + i;
+}
+
+/**********************************************************************
+ *           TlsAlloc   (KERNEL32.530)
+ */
+DWORD WINAPI TlsAlloc(void)
+{
+    return THREAD_TlsAlloc(THREAD_Current());
 }
 
 

@@ -1,7 +1,7 @@
 /*
  * KERNEL32 thunks and other undocumented stuff
  *
- * Copyright 1997 Marcus Meissner
+ * Copyright 1997-1998 Marcus Meissner
  */
 
 #include <stdio.h>
@@ -14,10 +14,10 @@
 #include "module.h"
 #include "process.h"
 #include "stackframe.h"
+#include "heap.h"
 #include "selectors.h"
 #include "task.h"
 #include "win.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /***********************************************************************
@@ -103,16 +103,16 @@ UINT32 WINAPI ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
 	SEGPTR		thkbuf;
 	struct	thunkstruct	*ths16;
 
-	dprintf_thunk(stddeb,"ThunkConnect32(<struct>,%s,%s,%s,%x,%lx)\n",
+	dprintf_info(thunk,"ThunkConnect32(<struct>,%s,%s,%s,%x,%lx)\n",
 		thunkfun16,module32,module16,hmod32,dllinitarg1
 	);
-	dprintf_thunk(stddeb,"	magic = %c%c%c%c\n",
+	dprintf_info(thunk,"	magic = %c%c%c%c\n",
 		ths->magic[0],
 		ths->magic[1],
 		ths->magic[2],
 		ths->magic[3]
 	);
-	dprintf_thunk(stddeb,"	length = %lx\n",ths->length);
+	dprintf_info(thunk,"	length = %lx\n",ths->length);
 	if (lstrncmp32A(ths->magic,"SL01",4)&&lstrncmp32A(ths->magic,"LS01",4))
 		return 0;
 	hmm=LoadModule16(module16,NULL);
@@ -130,7 +130,7 @@ UINT32 WINAPI ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
 			return 0;
 		ths->x0C = (DWORD)ths16;
 
-		dprintf_thunk(stddeb,"	ths16 magic is 0x%08lx\n",*(DWORD*)ths16->magic);
+		dprintf_info(thunk,"	ths16 magic is 0x%08lx\n",*(DWORD*)ths16->magic);
 		if (*((DWORD*)ths16->magic) != 0x0000304C)
 			return 0;
 		if (!*(WORD*)(((LPBYTE)ths16)+0x12))
@@ -187,9 +187,9 @@ VOID WINAPI QT_Thunk(CONTEXT *context)
 DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
 {
 	DWORD	ret;
-	dprintf_thunk(stddeb,"WOWCallback16(%p,0x%08lx) ",fproc,arg);
+	dprintf_info(thunk,"WOWCallback16(%p,0x%08lx)...\n",fproc,arg);
 	ret =  Callbacks->CallWOWCallbackProc(fproc,arg);
-	dprintf_thunk(stddeb,"... returns %ld\n",ret);
+	dprintf_info(thunk,"... returns %ld\n",ret);
 	return ret;
 }
 
@@ -212,7 +212,7 @@ LPVOID WINAPI _KERNEL32_52()
 {
 	HMODULE32	hmod = LoadLibrary16("systhunk.dll");
 
-	dprintf_thunk(stddeb, "_KERNEL32_52: systhunk.dll module %d\n", hmod);
+	dprintf_info(thunk, "_KERNEL32_52: systhunk.dll module %d\n", hmod);
 	
 	if (hmod<=32)
 		return 0;
@@ -256,7 +256,7 @@ DWORD WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
 		return 0;
 	*(DWORD*)thunk = addr[1];
 
-	dprintf_thunk(stddeb, "_KERNEL32_43: loaded module %d, func %s (%d) @ %p (%p), returning %p\n",
+	dprintf_info(thunk, "_KERNEL32_43: loaded module %d, func %s (%d) @ %p (%p), returning %p\n",
 		      hmod, HIWORD(thkbuf)==0 ? "<ordinal>" : thkbuf, (int)thkbuf, (void*)segaddr, addr, (void*)addr[1]);
 
 	return addr[1];
@@ -277,11 +277,11 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
         DWORD ret,stacksize;
 	THDB *thdb = THREAD_Current();
 
-	dprintf_thunk(stddeb,"KERNEL32_45(%%eax=0x%08lx(%%cx=0x%04lx,%%edx=0x%08lx))\n",
+	dprintf_info(thunk,"KERNEL32_45(%%eax=0x%08lx(%%cx=0x%04lx,%%edx=0x%08lx))\n",
 		(DWORD)EAX_reg(context),(DWORD)CX_reg(context),(DWORD)EDX_reg(context)
 	);
 	stacksize = EBP_reg(context)-ESP_reg(context);
-	dprintf_thunk(stddeb,"	stacksize = %ld\n",stacksize);
+	dprintf_info(thunk,"	stacksize = %ld\n",stacksize);
 
 	memcpy(&context16,context,sizeof(context16));
 
@@ -294,7 +294,7 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 	ret = Callbacks->CallRegisterLongProc(&context16,0);
 	STACK16_POP( thdb, stacksize );
 
-	dprintf_thunk(stddeb,". returned %08lx\n",ret);
+	dprintf_info(thunk,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
 }
 
@@ -312,12 +312,12 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
 	DWORD	ret,stacksize;
 	THDB *thdb = THREAD_Current();
 
-	dprintf_thunk(stddeb,"_KERNEL32_40(EDX=0x%08lx)\n",
+	dprintf_info(thunk,"_KERNEL32_40(EDX=0x%08lx)\n",
 		EDX_reg(context)
 	);
 	stacksize = EBP_reg(context)-ESP_reg(context);
-	dprintf_thunk(stddeb,"	stacksize = %ld\n",stacksize);
-	dprintf_thunk(stddeb,"on top of stack: 0x%04x\n",*(WORD*)ESP_reg(context));
+	dprintf_info(thunk,"	stacksize = %ld\n",stacksize);
+	dprintf_info(thunk,"on top of stack: 0x%04x\n",*(WORD*)ESP_reg(context));
 
 	memcpy(&context16,context,sizeof(context16));
 
@@ -329,7 +329,7 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
 	ret = Callbacks->CallRegisterShortProc(&context16,0);
 	STACK16_POP( thdb, stacksize );
 
-	dprintf_thunk(stddeb,". returned %08lx\n",ret);
+	dprintf_info(thunk,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
 }
 
@@ -404,7 +404,7 @@ LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
 	if (HIWORD(addr2))
 		*(DWORD*)thunk = (DWORD)addr2;
 
-	dprintf_thunk(stddeb, "_KERNEL32_41: loaded module %d, func %s(%d) @ %p (%p), returning %p\n",
+	dprintf_info(thunk, "_KERNEL32_41: loaded module %d, func %s(%d) @ %p (%p), returning %p\n",
 		      hmod, HIWORD(thkbuf)==0 ? "<ordinal>" : thkbuf, (int)thkbuf, (void*)segaddr, addr, addr2);
 
 	return addr2;
@@ -419,7 +419,7 @@ LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
  */
 VOID WINAPI _KERNEL32_90(CONTEXT *context)
 {
-	dprintf_thunk(stddeb, "_KERNEL32_90: QT Thunk priming; context %p\n", context);
+	dprintf_info(thunk, "_KERNEL32_90: QT Thunk priming; context %p\n", context);
 	
 	_write_qtthunk((LPBYTE)EAX_reg(context),*(DWORD*)(EAX_reg(context)+EDX_reg(context)));
 	/* we just call the real QT_Thunk right now 
@@ -461,7 +461,7 @@ VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
 	}
 	*(DWORD*)PTR_SEG_TO_LIN(addr[1]) = (DWORD)thunk;
 
-	dprintf_thunk(stddeb, "_KERNEL32_46: loaded module %d, func %s(%d) @ %p (%p)\n",
+	dprintf_info(thunk, "_KERNEL32_46: loaded module %d, func %s(%d) @ %p (%p)\n",
 		      hmod, HIWORD(thkbuf)==0 ? "<ordinal>" : thkbuf, (int)thkbuf, (void*)segaddr, addr);
 }
 
@@ -473,7 +473,7 @@ VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
  */
 BOOL32 WINAPI _KERNEL32_87()
 {
-    dprintf_thunk(stddeb, "_KERNEL32_87: Yes, thunking is initialized\n");
+    dprintf_info(thunk, "_KERNEL32_87: Yes, thunking is initialized\n");
     return TRUE;
 }
 
@@ -490,9 +490,13 @@ DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
     DWORD i,ret;
     DWORD *args = ((DWORD *)&fun) + 1;
 
-    dprintf_thunk(stddeb,"KERNEL32_88(%ld,0x%08lx,%p,[ ",nr,flags,fun);
-    for (i=0;i<nr/4;i++) { dprintf_thunk(stddeb,"0x%08lx,",args[i]); }
-    dprintf_thunk(stddeb,"])\n");
+    if(debugging_info(thunk)){
+      dbg_decl_str(thunk, 256);
+      for (i=0;i<nr/4;i++) 
+	dsprintf(thunk,"0x%08lx,",args[i]);
+      dprintf_info(thunk,"KERNEL32_88(%ld,0x%08lx,%p,[%s])\n",
+		    nr,flags,fun,dbg_str(thunk));
+    }
     switch (nr) {
     case 0:	ret = fun();
 		break;
@@ -526,7 +530,7 @@ DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
 	break;
 
     }
-    dprintf_thunk(stddeb," returning %ld ...\n",ret);
+    dprintf_info(thunk," returning %ld ...\n",ret);
     return ret;
 }
 
@@ -621,6 +625,15 @@ _KERNEL_359(DWORD x) {
 		return;
 	SELECTOR_FreeBlock(x>>16,1);
 	return;
+}
+
+/**********************************************************************
+ * 		KERNEL_471		(KERNEL)
+ * Seems to return the uncrypted current process pointer. [Not 100% sure].
+ */
+LPVOID WINAPI
+_KERNEL_471() {
+	return PROCESS_Current();
 }
 
 /**********************************************************************

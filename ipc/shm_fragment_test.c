@@ -9,7 +9,6 @@
  */
 #include <assert.h>
 #include <stdio.h>		   
-#include <stddebug.h>
 #define DEBUG_DEFINE_VARIABLES	   /* just avoid dumb errors */
 #include <debug.h>		   /* for "stddeb" */
 #include <stdlib.h>

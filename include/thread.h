@@ -12,6 +12,8 @@
 #include "winnt.h"
 #include "selectors.h"  /* for SET_FS */
 
+struct _PDB32;
+
 /* Thread exception block */
 typedef struct _TEB
 {
@@ -30,6 +32,7 @@ typedef struct _TEB
     HQUEUE16     queue;          /* 28 Message queue */
     WORD         pad1;           /* 2a */
     LPVOID      *tls_ptr;        /* 2c Pointer to TLS array */
+    struct _PDB32 *process;      /* 30 owning process (used by NT3.51 applets)*/
 } TEB;
 
 /* Event waiting structure */
@@ -41,8 +44,6 @@ typedef struct
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
 } WAIT_STRUCT;
 
-struct _PDB32;
-
 /* Thread database */
 typedef struct _THDB
 {
@@ -50,7 +51,6 @@ typedef struct _THDB
     struct _PDB32 *process;        /*  08 Process owning this thread */
     K32OBJ        *event;          /*  0c Thread event */
     TEB            teb;            /*  10 Thread exception block */
-    DWORD          cur_stack;      /*  40 Current stack (was: process2) */
     DWORD          flags;          /*  44 Flags */
     DWORD          exit_code;      /*  48 Termination status */
     WORD           teb_sel;        /*  4c Selector to TEB */
@@ -67,7 +67,8 @@ typedef struct _THDB
     void          *debugger_CB;    /*  74 Debugger context block */
     DWORD          debug_thread;   /*  78 Thread debugging this one (?) */
     void          *pcontext;       /*  7c Thread register context */
-    DWORD          unknown3[3];    /*  80 Unknown */
+    DWORD          cur_stack;      /*  80 Current stack (was: unknown) */
+    DWORD          unknown3[2];    /*  84 Unknown */
     WORD           current_ss;     /*  8c Another 16-bit stack selector */
     WORD           pad2;           /*  8e */
     void          *ss_table;       /*  90 Pointer to info about 16-bit stack */
@@ -125,6 +126,7 @@ extern THDB *THREAD_Current(void);
 extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
+extern DWORD THREAD_TlsAlloc( THDB *thread );
 
 /* scheduler/event.c */
 extern void EVENT_Set( K32OBJ *obj );

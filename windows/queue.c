@@ -15,7 +15,6 @@
 #include "hook.h"
 #include "thread.h"
 #include "process.h"
-#include "stddebug.h"
 #include "debug.h"
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
@@ -123,7 +122,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( int size )
     int queueSize;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    dprintf_msg(stddeb,"Creating message queue...\n");
+    dprintf_info(msg,"Creating message queue...\n");
 
     queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
     if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
@@ -153,11 +152,11 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     HQUEUE16  senderQ;
     HQUEUE16 *pPrev;
 
-    dprintf_msg(stddeb,"Deleting message queue %04x\n", hQueue);
+    dprintf_info(msg,"Deleting message queue %04x\n", hQueue);
 
     if (!hQueue || !msgQueue)
     {
-	dprintf_msg(stddeb,"DeleteMsgQueue: invalid argument.\n");
+	dprintf_warn(msg, "DeleteMsgQueue: invalid argument.\n");
 	return 0;
     }
     if( pCursorQueue == msgQueue ) pCursorQueue = NULL;
@@ -224,7 +223,7 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
  */
 void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
 {
-    dprintf_msg(stddeb,"SetWakeBit: queue = %04x (wm=%04x), bit = %04x\n", 
+    dprintf_info(msg,"SetWakeBit: queue = %04x (wm=%04x), bit = %04x\n", 
 	                queue->self, queue->wakeMask, bit );
 
     if (bit & QS_MOUSE) pMouseQueue = queue;
@@ -258,7 +257,7 @@ void QUEUE_WaitBits( WORD bits )
 {
     MESSAGEQUEUE *queue;
 
-    dprintf_msg(stddeb,"WaitBits: q %04x waiting for %04x\n", GetTaskQueue(0), bits);
+    dprintf_info(msg,"WaitBits: q %04x waiting for %04x\n", GetTaskQueue(0), bits);
 
     for (;;)
     {
@@ -282,7 +281,7 @@ void QUEUE_WaitBits( WORD bits )
         queue->wakeMask = bits | QS_SENDMESSAGE;
 	if(queue->changeBits & bits) continue;
 	
-	dprintf_msg(stddeb,"wb: (%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
+	dprintf_info(msg,"wb: (%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
 
         WaitEvent( 0 );
     }
@@ -301,10 +300,10 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     QSMCTRL*      prevCtrlPtr = NULL;
     LRESULT       result = 0;
 
-    dprintf_msg(stddeb, "ReceiveMessage, queue %04x\n", queue->self );
+    dprintf_info(msg, "ReceiveMessage, queue %04x\n", queue->self );
     if (!(queue->wakeBits & QS_SENDMESSAGE) ||
         !(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask))) 
-	{ dprintf_msg(stddeb,"\trcm: nothing to do\n"); return; }
+	{ dprintf_info(msg,"\trcm: nothing to do\n"); return; }
 
     if( !senderQ->hPrevSendingTask )
     {
@@ -321,11 +320,11 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     queue->smResultCurrent     = senderQ->smResultInit;
     queue->hSendingTask	       = senderQ->hPrevSendingTask;
 
-    dprintf_msg(stddeb, "\trcm: smResultCurrent = %08x, prevCtrl = %08x\n", 
+    dprintf_info(msg, "\trcm: smResultCurrent = %08x, prevCtrl = %08x\n", 
 				(unsigned)queue->smResultCurrent, (unsigned)prevCtrlPtr );
     QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
 
-    dprintf_msg(stddeb, "\trcm: calling wndproc - %04x %04x %04x%04x %08x\n",
+    dprintf_info(msg, "\trcm: calling wndproc - %04x %04x %04x%04x %08x\n",
                 senderQ->hWnd, senderQ->msg, senderQ->wParamHigh,
                 senderQ->wParam, (unsigned)senderQ->lParam );
 
@@ -338,7 +337,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         if (senderQ->flags & QUEUE_SM_WIN32)
         {
             WPARAM32 wParam = MAKELONG( senderQ->wParam, senderQ->wParamHigh );
-            dprintf_msg(stddeb, "\trcm: msg is Win32\n" );
+            dprintf_info(msg, "\trcm: msg is Win32\n" );
             if (senderQ->flags & QUEUE_SM_UNICODE)
                 result = CallWindowProc32W( wndPtr->winproc,
                                             senderQ->hWnd, senderQ->msg,
@@ -354,9 +353,9 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
                                        senderQ->wParam, senderQ->lParam );
 
         queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
-	dprintf_msg(stddeb,"\trcm: result =  %08x\n", (unsigned)result );
+	dprintf_info(msg,"\trcm: result =  %08x\n", (unsigned)result );
     }
-    else dprintf_msg(stddeb,"\trcm: bad hWnd\n");
+    else dprintf_warn(msg, "\trcm: bad hWnd\n");
 
     /* Return the result to the sender task */
     ReplyMessage16( result );
@@ -364,7 +363,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     queue->InSendMessageHandle = prevSender;
     queue->smResultCurrent     = prevCtrlPtr;
 
-    dprintf_msg(stddeb,"ReceiveMessage: done!\n");
+    dprintf_info(msg,"ReceiveMessage: done!\n");
 }
 
 /***********************************************************************
@@ -448,7 +447,7 @@ int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
 {
     int i, pos = msgQueue->nextMessage;
 
-    dprintf_msg(stddeb,"QUEUE_FindMsg: hwnd=%04x pos=%d\n", hwnd, pos );
+    dprintf_info(msg,"QUEUE_FindMsg: hwnd=%04x pos=%d\n", hwnd, pos );
 
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;
@@ -539,7 +538,7 @@ static void QUEUE_WakeSomeone( UINT32 message )
       }
       if( !queue )
       { 
-        dprintf_msg(stddeb,"WakeSomeone: couldn't find queue\n"); 
+        dprintf_warn(msg, "WakeSomeone: couldn't find queue\n"); 
         return; 
       }
     }
@@ -735,13 +734,13 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
     HQUEUE16 hQueue, hNewQueue;
     MESSAGEQUEUE *queuePtr;
 
-    dprintf_msg(stddeb,"SetMessageQueue: task %04x size %i\n", GetCurrentTask(), size); 
+    dprintf_info(msg,"SetMessageQueue: task %04x size %i\n", GetCurrentTask(), size); 
 
     if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
 
     if( !(hNewQueue = QUEUE_CreateMsgQueue( size ))) 
     {
-	dprintf_msg(stddeb,"SetMessageQueue: failed!\n");
+	dprintf_warn(msg, "SetMessageQueue: failed!\n");
 	return FALSE;
     }
     queuePtr = (MESSAGEQUEUE *)GlobalLock16( hNewQueue );

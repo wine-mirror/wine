@@ -5,7 +5,6 @@
 #include "windows.h"
 #include "winerror.h"
 #include "ntdll.h"
-#include "stddebug.h"
 #include "debug.h"
 
 BOOL32 WINAPI IsValidSid (LPSID pSid);

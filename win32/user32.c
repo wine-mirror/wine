@@ -16,7 +16,6 @@
 #include "struct32.h"
 #include "win.h"
 #include "debug.h"
-#include "stddebug.h"
 
 /***********************************************************************
  *          GetMessage32A   (USER32.269)

@@ -91,6 +91,14 @@ typedef struct
     SEGPTR    reserved WINE_PACKED;
 } LOADPARAMS;
 
+typedef struct 
+{
+    LPSTR lpEnvAddress;
+    LPSTR lpCmdLine;
+    LPSTR lpCmdShow;
+    DWORD dwReserved;
+} LOADPARAMS32;
+
 #pragma pack(4)
 
 /* Resource types */
@@ -150,5 +158,8 @@ extern void NE_InitializeDLLs( HMODULE16 hModule );
 /* relay32/builtin.c */
 extern HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force,
                                        struct _PDB32 *process );
+
+/* if1632/builtin.c */
+extern HMODULE32 (*fnBUILTIN_LoadModule)(LPCSTR name, BOOL32 force);
 
 #endif  /* __WINE_MODULE_H */

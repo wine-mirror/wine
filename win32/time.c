@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "winerror.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /***********************************************************************

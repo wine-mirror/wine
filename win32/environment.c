@@ -11,7 +11,6 @@
 #include "winerror.h"
 #include "module.h"
 #include "task.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "process.h"  /* for PROCESS_Current() */
 

@@ -17,13 +17,8 @@ static int *ph_errno = &h_errno;
 #include "thread.h"
 #include "winbase.h"
 
-/* FIXME: X libs compiled w/o -D_REENTRANT should be detected by autoconf. */
-#define NO_REENTRANT_X11
-
-#ifdef NO_REENTRANT_X11
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = { 0, };
-#endif
 
 #ifdef __linux__
 # ifdef HAVE_SCHED_H
@@ -123,24 +118,19 @@ void SYSDEPS_ExitThread(void)
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.89)
+ *
+ * This will crash and burn if called before threading is initialized
  */
 TEB * WINAPI NtCurrentTeb(void)
 {
 #ifdef __i386__
     TEB *teb;
-    WORD ds, fs;
 
-    /* Check if we have a current thread */
-    GET_FS( fs );
-    if (!fs) return NULL;
-    GET_DS( ds );
-    if (fs == ds) return NULL; /* FIXME: should be an assert */
     /* Get the TEB self-pointer */
     __asm__( ".byte 0x64\n\tmovl (%1),%0"
              : "=r" (teb) : "r" (&((TEB *)0)->self) );
     return teb;
 #else
-    if (!pCurrentThread) return NULL;
     return &pCurrentThread->teb;
 #endif  /* __i386__ */
 }

@@ -2,10 +2,12 @@
  *	OLE2NLS library
  *
  *	Copyright 1995	Martin von Loewis
+ *      Copyright 1998  David Lee Lambert
  */
 
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
 #include "heap.h"
@@ -14,7 +16,6 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Locale name to id map. used by EnumSystemLocales, GetLocalInfoA 
@@ -261,7 +262,7 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	char	*retString;
 	int	found,i;
 
-	dprintf_ole(stddeb,"GetLocaleInfo32A(%8lX,%8lX,%p,%4X)\n",
+	dprintf_info(ole,"GetLocaleInfo32A(%8lX,%8lX,%p,%4X)\n",
 			lcid,LCType,buf,len);
 
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
@@ -530,13 +531,13 @@ LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
 LOCVAL(LOCALE_ILANGUAGE,"9")
 LOCVAL(LOCALE_SLANGUAGE,"English")
 LOCVAL(LOCALE_SENGLANGUAGE,"English")
-LOCVAL(LOCALE_SABBREVLANGNAME,"enu")
+LOCVAL(LOCALE_SABBREVLANGNAME,"en")
 LOCVAL(LOCALE_SNATIVELANGNAME,"English")
 LOCVAL(LOCALE_ICOUNTRY,"11")
-LOCVAL(LOCALE_SCOUNTRY,"Deutschland")
-LOCVAL(LOCALE_SENGCOUNTRY,"Deutschland")
-LOCVAL(LOCALE_SABBREVCTRYNAME,"De")
-LOCVAL(LOCALE_SNATIVECTRYNAME,"Deutschland")
+LOCVAL(LOCALE_SCOUNTRY,"United States")
+LOCVAL(LOCALE_SENGCOUNTRY,"United States")
+LOCVAL(LOCALE_SABBREVCTRYNAME,"US")
+LOCVAL(LOCALE_SNATIVECTRYNAME,"United States")
 LOCVAL(LOCALE_IDEFAULTLANGUAGE,"9")
 LOCVAL(LOCALE_IDEFAULTCOUNTRY,"49")
 LOCVAL(LOCALE_IDEFAULTCODEPAGE,"437")
@@ -545,8 +546,8 @@ LOCVAL(LOCALE_IDEFAULTANSICODEPAGE)
 */
 LOCVAL(LOCALE_SLIST,";")
 LOCVAL(LOCALE_IMEASURE,"0")
-LOCVAL(LOCALE_SDECIMAL,",")
-LOCVAL(LOCALE_STHOUSAND,".")
+LOCVAL(LOCALE_SDECIMAL,".")
+LOCVAL(LOCALE_STHOUSAND,",")
 LOCVAL(LOCALE_SGROUPING, "3;0")
 LOCVAL(LOCALE_IDIGITS,"2")
 LOCVAL(LOCALE_ILZERO,"1")
@@ -566,7 +567,7 @@ LOCVAL(LOCALE_ICURRENCY,"3")
 LOCVAL(LOCALE_INEGCURR,"8")
 LOCVAL(LOCALE_SDATE,".")
 LOCVAL(LOCALE_STIME,":")
-LOCVAL(LOCALE_SSHORTDATE,"dd.MM.yyyy")
+LOCVAL(LOCALE_SSHORTDATE,"MM/dd/yy")
 LOCVAL(LOCALE_SLONGDATE,"ddd, d. MMMM yyyy")
 LOCVAL(LOCALE_STIMEFORMAT, "h:mm:ss tt")
 LOCVAL(LOCALE_IDATE,"1")
@@ -591,49 +592,49 @@ LOCVAL(LOCALE_IOPTIONALCALENDAR)
 LOCVAL(LOCALE_IFIRSTDAYOFWEEK)
 LOCVAL(LOCALE_IFIRSTWEEKOFYEAR)
 */
-LOCVAL(LOCALE_SDAYNAME1,"Montag")
-LOCVAL(LOCALE_SDAYNAME2,"Dienstag")
-LOCVAL(LOCALE_SDAYNAME3,"Mittwoch")
-LOCVAL(LOCALE_SDAYNAME4,"Donnerstag")
-LOCVAL(LOCALE_SDAYNAME5,"Freitag")
-LOCVAL(LOCALE_SDAYNAME6,"Sonnabend")
-LOCVAL(LOCALE_SDAYNAME7,"Sonntag")
-LOCVAL(LOCALE_SABBREVDAYNAME1,"Mo")
-LOCVAL(LOCALE_SABBREVDAYNAME2,"Di")
-LOCVAL(LOCALE_SABBREVDAYNAME3,"Mi")
-LOCVAL(LOCALE_SABBREVDAYNAME4,"Do")
-LOCVAL(LOCALE_SABBREVDAYNAME5,"Fr")
-LOCVAL(LOCALE_SABBREVDAYNAME6,"Sa")
-LOCVAL(LOCALE_SABBREVDAYNAME7,"So")
-LOCVAL(LOCALE_SMONTHNAME1,"Januar")
-LOCVAL(LOCALE_SMONTHNAME2,"Februar")
-LOCVAL(LOCALE_SMONTHNAME3,"März")
+LOCVAL(LOCALE_SDAYNAME1,"Monday")
+LOCVAL(LOCALE_SDAYNAME2,"Tuesday")
+LOCVAL(LOCALE_SDAYNAME3,"Wednesday")
+LOCVAL(LOCALE_SDAYNAME4,"Thursday")
+LOCVAL(LOCALE_SDAYNAME5,"Friday")
+LOCVAL(LOCALE_SDAYNAME6,"Saturday")
+LOCVAL(LOCALE_SDAYNAME7,"Sunday")
+LOCVAL(LOCALE_SABBREVDAYNAME1,"Mon")
+LOCVAL(LOCALE_SABBREVDAYNAME2,"Tue")
+LOCVAL(LOCALE_SABBREVDAYNAME3,"Wed")
+LOCVAL(LOCALE_SABBREVDAYNAME4,"Thu")
+LOCVAL(LOCALE_SABBREVDAYNAME5,"Fri")
+LOCVAL(LOCALE_SABBREVDAYNAME6,"Sat")
+LOCVAL(LOCALE_SABBREVDAYNAME7,"Sun")
+LOCVAL(LOCALE_SMONTHNAME1,"January")
+LOCVAL(LOCALE_SMONTHNAME2,"February")
+LOCVAL(LOCALE_SMONTHNAME3,"March")
 LOCVAL(LOCALE_SMONTHNAME4,"April")
-LOCVAL(LOCALE_SMONTHNAME5,"Mai")
-LOCVAL(LOCALE_SMONTHNAME6,"Juni")
-LOCVAL(LOCALE_SMONTHNAME7,"Juli")
+LOCVAL(LOCALE_SMONTHNAME5,"May")
+LOCVAL(LOCALE_SMONTHNAME6,"June")
+LOCVAL(LOCALE_SMONTHNAME7,"July")
 LOCVAL(LOCALE_SMONTHNAME8,"August")
 LOCVAL(LOCALE_SMONTHNAME9,"September")
-LOCVAL(LOCALE_SMONTHNAME10,"Oktober")
+LOCVAL(LOCALE_SMONTHNAME10,"October")
 LOCVAL(LOCALE_SMONTHNAME11,"November")
-LOCVAL(LOCALE_SMONTHNAME12,"Dezember")
+LOCVAL(LOCALE_SMONTHNAME12,"December")
 LOCVAL(LOCALE_SMONTHNAME13,"")
 LOCVAL(LOCALE_SABBREVMONTHNAME1,"Jan")
 LOCVAL(LOCALE_SABBREVMONTHNAME2,"Feb")
-LOCVAL(LOCALE_SABBREVMONTHNAME3,"Mär")
+LOCVAL(LOCALE_SABBREVMONTHNAME3,"Mar")
 LOCVAL(LOCALE_SABBREVMONTHNAME4,"Apr")
-LOCVAL(LOCALE_SABBREVMONTHNAME5,"Mai")
+LOCVAL(LOCALE_SABBREVMONTHNAME5,"May")
 LOCVAL(LOCALE_SABBREVMONTHNAME6,"Jun")
 LOCVAL(LOCALE_SABBREVMONTHNAME7,"Jul")
 LOCVAL(LOCALE_SABBREVMONTHNAME8,"Aug")
 LOCVAL(LOCALE_SABBREVMONTHNAME9,"Sep")
-LOCVAL(LOCALE_SABBREVMONTHNAME10,"Okt")
+LOCVAL(LOCALE_SABBREVMONTHNAME10,"Oct")
 LOCVAL(LOCALE_SABBREVMONTHNAME11,"Nov")
-LOCVAL(LOCALE_SABBREVMONTHNAME12,"Dez")
+LOCVAL(LOCALE_SABBREVMONTHNAME12,"Dec")
 LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
+LOCVAL(LOCALE_SPOSITIVESIGN,"")
+LOCVAL(LOCALE_SNEGATIVESIGN,"-")
 /*
-LOCVAL(LOCALE_SPOSITIVESIGN)
-LOCVAL(LOCALE_SNEGATIVESIGN)
 LOCVAL(LOCALE_IPOSSIGNPOSN)
 LOCVAL(LOCALE_INEGSIGNPOSN)
 LOCVAL(LOCALE_IPOSSYMPRECEDES)
@@ -1908,7 +1909,7 @@ BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
 	WCHAR	buffer[200];
 	HKEY	xhkey;
 
-	dprintf_win32(stddeb,"EnumSystemLocales32W(%p,%08lx)\n",
+	dprintf_info(win32,"EnumSystemLocales32W(%p,%08lx)\n",
                       lpfnLocaleEnum,flags );
 	/* see if we can reuse the Win95 registry entries.... */
 	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
@@ -1951,7 +1952,7 @@ BOOL32 WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,
 	CHAR	buffer[200];
 	HKEY	xhkey;
 
-	dprintf_win32(stddeb,"EnumSystemLocales32A(%p,%08lx)\n",
+	dprintf_info(win32,"EnumSystemLocales32A(%p,%08lx)\n",
 		lpfnLocaleEnum,flags
 	);
 	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
@@ -2081,7 +2082,7 @@ DWORD WINAPI VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen)
 	int	i;
 	char	*buf;
 
-	dprintf_ver(stddeb,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
+	dprintf_info(ver,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
 	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
 	 * from the registry. 
 	 */
@@ -2140,7 +2141,7 @@ INT32 WINAPI LCMapString32A(
 ) {
 	int	i,len;
 
-	dprintf_string(stderr,"LCMapStringA(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+	dprintf_info(string,"LCMapStringA(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
 		lcid,mapflags,srcstr,srclen,dststr,dstlen);
 	if (!dstlen || !dststr) {
 		dststr = (LPSTR)srcstr;
@@ -2178,7 +2179,7 @@ INT32 WINAPI LCMapString32W(
 ) {
 	int	i,len;
 
-	dprintf_string(stderr,"LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+	dprintf_info(string,"LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
 		lcid,mapflags,srcstr,srclen,dststr,dstlen
 	);
 	if (!dstlen || !dststr) {
@@ -2209,23 +2210,253 @@ INT32 WINAPI LCMapString32W(
 	return len;
 }
 
+/* FIXME: these shouldn't be needed */
+
+static char *any_locale_days[] = 
+{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+static char *any_locale_months[] =
+{"zero", "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+typedef struct {
+    int inpos;   /* place in the input buffer */
+    int outpos;  /* place in the output buffer */
+    int count;   
+    int inquote; 
+    char type;
+  } PARSING_STATE;
+
+/*****************************************************************
+ *
+ *  GetDateFormat()
+
+  This function uses format to format the date,  or,  if format
+  is NULL, uses the default for the locale.  format is a string
+  of literal fields and characters as follows:
+
+  d    single-digit (no leading zero) day (of month)
+  dd   two-digit day (of month)
+  ddd  short day-of-week name
+  dddd long day-of-week name
+  M    single-digit month
+  MM   two-digit month
+  MMM  short month name
+  MMMM full month name
+  y    two-digit year, no leading 0
+  yy   two-digit year
+  yyyy four-digit year
+  gg   era string
+
+ * ***********************/
 
 INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
-			      LPCSTR format, LPSTR date,INT32 datelen
-) {
-	fprintf(stderr,"GetDateFormat(0x%04lx,0x%08lx,%p,%s,%p,%d), stub\n",
-		locale,flags,xtime,format,date,datelen
-	);
-	lstrcpyn32A(date,"1.4.1997",datelen);
-	return strlen("1.4.1997");
+			      LPCSTR format, LPSTR date,INT32 datelen) 
+{
+  PARSING_STATE state;   
+  char buf[40];
+  int buflen;
+  LPCSTR thisformat;
+
+  dprintf_info(ole,"GetDateFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
+	      locale,flags,xtime,format,date,datelen);
+
+  /* FIXME: Get the default for this locale */
+  if (format) {
+    thisformat = format;
+  } else {
+    thisformat = "yyyy-MM-dd (ddd) ";
+  };
+
+  
+  /* initialize state variables */
+  state.inpos = state.outpos = 0;
+  state.count = state.inquote = 0;
+  state.type = '\0';
+  /* initialise output buffer */
+  date[0] = '\0';
+      
+  for (state.inpos = 0; thisformat[state.inpos] ; state.inpos++) {
+       if (state.inquote) {
+	    if (thisformat[state.inpos] == '\'') {
+		 state.inquote = 0;
+		 continue;
+	    } else {
+		 date[state.outpos++] = thisformat[state.inpos];
+	    };	    
+       } else if ( (state.count && (thisformat[state.inpos] != state.type)) 
+		   || state.count == 4 
+		   || (state.count == 2 && state.type == 'g' ) ) 
+       {
+	    /* end of a format-type string */
+	    if         (state.type == 'd') {
+		 if        (state.count == 1) {
+		      sprintf(buf, "%d", xtime->wDay);
+		 } else if (state.count == 2) {
+		      sprintf(buf, "%02d", xtime->wDay);
+		 } else if (state.count == 3) {
+		      /* day of week, short */
+		      /* FIXME: This is the way to do it everywhere */
+		      if (locale) {
+			   
+			   GetLocaleInfo32A(locale, 
+					    LOCALE_SABBREVDAYNAME1 
+					    + xtime->wDayOfWeek - 1,
+					    buf, sizeof(buf));
+		      } else {
+			   strcpy(buf, 
+				  any_locale_days[xtime->wDayOfWeek -1]);
+		      };
+		 } else if (state.count == 4) {
+		      /* day of week, long */
+
+		      /* FIXME: get the days from the locale */
+		      /* FIXME: these should be long days */
+		      sprintf(buf, "%.*s", (int) sizeof(buf),
+			      any_locale_days[xtime->wDayOfWeek]);
+		 } else {
+		      dprintf_info(ole, 
+				  "GetDateFormat(): unbekannt format, \
+c=%c, n=%d\n",
+				  state.type, state.count);
+		 };
+	    } else if (state.type == 'M') {
+		 if        (state.count == 1) {
+		      sprintf(buf, "%d", xtime->wMonth);
+		 } else if (state.count == 2) {
+		      sprintf(buf, "%02d", xtime->wMonth);
+		 } else if (state.count == 3) {
+		      /* FIXME: get the month-name from the locale */
+		      sprintf(buf, "%.*s", (int) sizeof(buf),
+			      any_locale_months[xtime->wMonth]);
+		 } else if (state.count == 4) {
+		      /* FIXME: get the month-name from the locale */
+		      /* FIXME: should return a long month */
+		      sprintf(buf, "%.*s", (int) sizeof(buf), 
+			      any_locale_months[xtime->wMonth]);
+		 } else {
+		      dprintf_info(ole, 
+			  "GetDateFormat(): unbekannt format, c=%c, n=%d\n",
+				  state.type, state.count);
+		 };
+	    } else if (state.type == 'y') {
+		 if        (state.count == 1) {
+		      sprintf(buf, "%d", xtime->wYear % 100);
+		 } else if (state.count == 2) {
+		      sprintf(buf, "02%d", xtime->wYear % 100);
+		 } else if (state.count == 4) {
+		      sprintf(buf, "%d", xtime->wYear);
+		 } else {
+		      dprintf_info(ole, 
+			 "GetDateFormat(): unbekannt format, c=%c, n=%d\n",
+				  state.type, state.count);
+		 };
+	    } else if (state.type == 'g') {
+		 if        (state.count == 2) {
+		      /* FIXME: Get era from the locale */
+		      strcpy(buf, "AD (CE)");
+		 } else {
+		      dprintf_info(ole, 
+			 "GetDateFormat(): unbekannt format, c=%c, n=%d",
+				  state.type, state.count);
+		 };
+	    } else {
+		 dprintf_info(ole, 
+		     "GetDateFormat(): unbekannt format, c=%c, n=%d\n",
+			     state.type, state.count);
+	    };
+	    buflen = strlen(buf);
+
+	    /* we need to check the next char again, one
+	       way or another */
+	    state.inpos--;
+	    
+            /* now, add buf to the output buffer */
+	    if (state.outpos + buflen < datelen) {
+		 date[state.outpos] = '\0'; /* for strcat to hook on */
+		 strcat(date, buf);
+		 state.outpos += buflen;
+	    } else {
+		 date[state.outpos] = '\0';
+		 strncat(date, buf, datelen - state.outpos - 1);
+		 date[datelen - 1] = '\0';
+		 SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		 return 0;
+	    };
+
+	    /* reset other variables */
+	    state.count = 0;
+	    state.type = '\0';
+
+	    /* end of code for printing format-strings */
+       } else if (state.count) {
+	    /* and char is of same type (see above) */
+	    state.count += 1;;
+       } else if (strchr("yMdg", thisformat[state.inpos])) {
+	    state.type = thisformat[state.inpos];
+	    state.count = 1;
+       } else if (thisformat[state.inpos] == '\'') {
+	    state.inquote = 1;
+       } else {
+	    date[state.outpos++] = thisformat[state.inpos];
+       };
+     if (state.outpos >= datelen) {
+       date[datelen - 1] = '\0';
+       SetLastError(ERROR_INSUFFICIENT_BUFFER);
+       return 0;
+     };
+   };
+
+  state.outpos++;
+  if (state.outpos >= datelen - 1) {
+       state.outpos = datelen - 1;
+  };
+
+  date[state.outpos] = '\0';
+
+   dprintf_info(ole, 
+	       "GetDateFormat32A() returning %d, with data=%s\n",
+	       state.outpos, date);
+   return state.outpos;
 }
+
+/*****************************************************************
+ *
+ * GetTimeFormat() 
+
+ Formats date according to format,  or locale default if format is NULL.
+ The format consists of literal characters and fields as follows:
+
+ h  hours with no leading zero (12-hour)
+ hh hours with full two digits
+ H  hours with no leading zero (24-hour)
+ HH hours with full two digits
+ m  minutes with no leading zero
+ mm minutes with full two digits
+ s  seconds with no leading zero
+ ss seconds with full two digits
+ t  time marker (A or P)
+ tt time marker (AM, PM)
+
+ */
 
 INT32 WINAPI GetTimeFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
 			      LPCSTR format, LPSTR timestr,INT32 timelen
 ) {
-	fprintf(stderr,"GetDateFormat(0x%04lx,0x%08lx,%p,%s,%p,%d), stub\n",
+   dprintf_info(ole,"GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d), stub\n",
 		locale,flags,xtime,format,timestr,timelen
 	);
+   
+   /* FIXME: implement this one.  Perhaps a common codebase? */
+
+
+
+
+
 	lstrcpyn32A(timestr,"00:00:42",timelen);
 	return strlen("00:00:42");
 }
+
+
+
+

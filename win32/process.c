@@ -15,7 +15,6 @@
 #include "process.h"
 #include "pe_image.h"
 #include "file.h"
-#include "stddebug.h"
 #include "debug.h"
 
 
@@ -51,7 +50,7 @@ BOOL32 WINAPI GetProcessAffinityMask(HANDLE32 hProcess,
                                      LPDWORD lpProcessAffinityMask,
                                      LPDWORD lpSystemAffinityMask)
 {
-	dprintf_task(stddeb,"GetProcessAffinityMask(%x,%lx,%lx)\n",
+	dprintf_info(task,"GetProcessAffinityMask(%x,%lx,%lx)\n",
 		hProcess,(lpProcessAffinityMask?*lpProcessAffinityMask:0),
 		(lpSystemAffinityMask?*lpSystemAffinityMask:0));
 	/* It is definitely important for a process to know on what processor

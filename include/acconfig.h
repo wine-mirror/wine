@@ -17,3 +17,6 @@
 
 /* Define if you have the Open Sound system.  */
 #undef HAVE_OSS
+
+/* Define if X libraries are not reentrant (compiled without -D_REENTRANT).  */
+#undef NO_REENTRANT_X11

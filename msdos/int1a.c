@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include "options.h"
 #include "miscemu.h"
-#include "stddebug.h"
-/* #define DEBUG_INT */
 #include "debug.h"
 
 #define	BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
@@ -57,7 +55,7 @@ void WINAPI INT_Int1aHandler( CONTEXT *context )
             CX_reg(context) = HIWORD(ticks);
             DX_reg(context) = LOWORD(ticks);
             AX_reg(context) = 0;  /* No midnight rollover */
-            dprintf_int(stddeb,"int1a_00 // ticks=%ld\n", ticks);
+            dprintf_info(int,"int1a_00 // ticks=%ld\n", ticks);
             break;
 		
 	case 2: 

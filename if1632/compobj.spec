@@ -2,10 +2,10 @@ name	compobj
 type	win16
 
 1 pascal CoBuildVersion() CoBuildVersion
-2 pascal CoInitialize(long) CoInitialize
+2 pascal CoInitialize(long) CoInitialize16
 3 pascal CoUninitialize() CoUnitialize
-4 pascal CoGetMalloc(long ptr) CoGetMalloc
-5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject
+4 pascal CoGetMalloc(long ptr) CoGetMalloc16
+5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject16
 6 stub COREVOKECLASSOBJECT
 7 stub COGETCLASSOBJECT
 8 stub COMARSHALINTERFACE
@@ -19,8 +19,8 @@ type	win16
 16 stub CORELEASEMARSHALDATA
 17 pascal16 COFREEUNUSEDLIBRARIES() CoFreeUnusedLibraries
 18 pascal16 IsEqualGUID(ptr ptr) IsEqualGUID
-19 pascal StringFromCLSID(ptr ptr) StringFromCLSID
-20 pascal CLSIDFromString(str ptr) CLSIDFromString
+19 pascal StringFromCLSID(ptr ptr) StringFromCLSID16
+20 pascal CLSIDFromString(str ptr) CLSIDFromString16
 21 stub ISVALIDPTRIN
 22 stub ISVALIDPTROUT
 23 stub ISVALIDINTERFACE
@@ -61,7 +61,7 @@ type	win16
 58 stub _IID_IDFRESERVED2
 59 stub _IID_IDFRESERVED3
 60 stub _IID_IMESSAGEFILTER
-61 pascal CLSIDFromProgID(str ptr) CLSIDFromProgID
+61 pascal CLSIDFromProgID(str ptr) CLSIDFromProgID16
 62 stub PROGIDFROMCLSID
 63 stub COLOCKOBJECTEXTERNAL
 64 stub _CLSID_STDMARSHAL
@@ -147,3 +147,14 @@ type	win16
 201 pascal CALLOBJECTINWOW(ptr ptr) CallObjectInWOW
 204 stub COMPOBJ_204
 207 stub COMPOBJ_207
+
+# WINE internal relays (for Win16 interfaces)
+500 cdecl IMalloc16_QueryInterface(ptr ptr ptr) IMalloc16_QueryInterface
+501 cdecl IMalloc16_AddRef(ptr) IMalloc16_AddRef
+502 cdecl IMalloc16_Release(ptr) IMalloc16_Release
+503 cdecl IMalloc16_Alloc(ptr long) IMalloc16_Alloc
+504 cdecl IMalloc16_Realloc(ptr segptr long) IMalloc16_Realloc
+505 cdecl IMalloc16_Free(ptr segptr) IMalloc16_Free
+506 cdecl IMalloc16_GetSize(ptr segptr) IMalloc16_GetSize
+507 cdecl IMalloc16_DidAlloc(ptr segptr) IMalloc16_DidAlloc
+508 cdecl IMalloc16_HeapMinimize(ptr) IMalloc16_HeapMinimize

@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include "win.h"
-#include "stddebug.h"
 #include "debug.h"
 
 DWORD WINAPI WNetGetCachedPassword(

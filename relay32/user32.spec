@@ -595,7 +595,7 @@ type	win32
 589 stub ChangeDisplaySettingsA
 590 stub ChangeDisplaySettingsW
 591 stub EnumDesktopWindows
-592 stub EnumDisplaySettingsA
+592 stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettings32A
 593 stub EnumDisplaySettingsW
 594 stub GetWindowRgn
 595 stub MapVirtualKeyExW

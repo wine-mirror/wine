@@ -11,7 +11,6 @@
 #include "windows.h"
 #include "builtin32.h"
 #include "selectors.h"
-#include "stddebug.h"
 #include "debug.h"
 
 static void _dumpstr(unsigned char *s) {
@@ -54,7 +53,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     BYTE *relay_addr = (BYTE *)args[-1];
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
-    assert(debugging_relay);
+    assert(debugging_info(relay));
     func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
     printf( "Call %s(", buffer );
@@ -175,7 +174,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
  * Stack layout:
  *  ...      ...
  * (esp+216) ret_addr
- * (esp+212) return to relay debugging code (only when debugging_relay)
+ * (esp+212) return to relay debugging code (only when debugging(relay))
  * (esp+208) entry point to call
  * (esp+4)   CONTEXT
  * (esp)     return addr to relay code
@@ -184,7 +183,7 @@ void RELAY_CallFrom32Regs( CONTEXT context,
                            void (CALLBACK *entry_point)(CONTEXT *),
                            BYTE *relay_addr, int ret_addr )
 {
-    if (!debugging_relay)
+    if (!debugging_info(relay))
     {
         /* Simply call the entry point */
         entry_point( &context );

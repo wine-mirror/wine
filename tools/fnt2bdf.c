@@ -81,7 +81,8 @@ int   ret_val = 0;
                 }
             break;
             }
-	case(dfString):
+		case(dfString):
+			break;
         } 
     return ret_val;
 }

@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "heap.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Note: the heap data structures are based on what Pietrek describes in his
@@ -189,7 +188,7 @@ static HEAP *HEAP_GetPtr( HANDLE32 heap )
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    if (debugging_heap && !HeapValidate( heap, 0, NULL ))
+    if (debugging_info(heap) && !HeapValidate( heap, 0, NULL ))
     {
         HEAP_Dump( heapPtr );
         assert( FALSE );
@@ -303,7 +302,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, DWORD size )
 
     /* If debugging, erase the freed block content */
 
-    if (debugging_heap)
+    if (debugging_info(heap))
     {
         char *pEnd = (char *)ptr + size;
         if (pEnd > (char *)subheap + subheap->commitSize)
@@ -322,7 +321,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, DWORD size )
         pNext->next->prev = pNext->prev;
         pNext->prev->next = pNext->next;
         size += (pNext->size & ARENA_SIZE_MASK) + sizeof(*pNext);
-        if (debugging_heap)
+        if (debugging_info(heap))
             memset( pNext, ARENA_FREE_FILLER, sizeof(ARENA_FREE) );
     }
 
@@ -541,7 +540,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
     subheap->next = heap->subheap.next;
     heap->subheap.next = subheap;
     size = subheap->size;
-    dprintf_heap( stddeb, "HEAP_FindFreeBlock: created new sub-heap %08lx of %08lx bytes for heap %08lx\n",
+    dprintf_info(heap, "HEAP_FindFreeBlock: created new sub-heap %08lx of %08lx bytes for heap %08lx\n",
                   (DWORD)subheap, size, (DWORD)heap );
 
     HEAP_CreateFreeBlock( subheap, subheap + 1, size - sizeof(*subheap) );
@@ -851,7 +850,7 @@ BOOL32 WINAPI HeapDestroy( HANDLE32 heap )
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
-    dprintf_heap( stddeb, "HeapDestroy: %08x\n", heap );
+    dprintf_info(heap, "HeapDestroy: %08x\n", heap );
     if (!heapPtr) return FALSE;
 
     DeleteCriticalSection( &heapPtr->critSection );
@@ -890,7 +889,7 @@ LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
 
     if (!(pArena = HEAP_FindFreeBlock( heapPtr, size, &subheap )))
     {
-        dprintf_heap( stddeb, "HeapAlloc(%08x,%08lx,%08lx): returning NULL\n",
+        dprintf_info(heap, "HeapAlloc(%08x,%08lx,%08lx): returning NULL\n",
                   heap, flags, size  );
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_COMMITMENT_LIMIT );
@@ -916,11 +915,11 @@ LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
     HEAP_ShrinkBlock( subheap, pInUse, size );
 
     if (flags & HEAP_ZERO_MEMORY) memset( pInUse + 1, 0, size );
-    else if (debugging_heap) memset( pInUse + 1, ARENA_INUSE_FILLER, size );
+    else if (debugging_info(heap)) memset( pInUse + 1, ARENA_INUSE_FILLER, size );
 
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 
-    dprintf_heap( stddeb, "HeapAlloc(%08x,%08lx,%08lx): returning %08lx\n",
+    dprintf_info(heap, "HeapAlloc(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, size, (DWORD)(pInUse + 1) );
     return (LPVOID)(pInUse + 1);
 }
@@ -945,7 +944,7 @@ BOOL32 WINAPI HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );
-        dprintf_heap( stddeb, "HeapFree(%08x,%08lx,%08lx): returning FALSE\n",
+        dprintf_info(heap, "HeapFree(%08x,%08lx,%08lx): returning FALSE\n",
                       heap, flags, (DWORD)ptr );
         return FALSE;
     }
@@ -959,7 +958,7 @@ BOOL32 WINAPI HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 /*    SetLastError( 0 ); */
 
-    dprintf_heap( stddeb, "HeapFree(%08x,%08lx,%08lx): returning TRUE\n",
+    dprintf_info(heap, "HeapFree(%08x,%08lx,%08lx): returning TRUE\n",
                   heap, flags, (DWORD)ptr );
     return TRUE;
 }
@@ -991,7 +990,7 @@ LPVOID WINAPI HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );
-        dprintf_heap( stddeb, "HeapReAlloc(%08x,%08lx,%08lx,%08lx): returning NULL\n",
+        dprintf_info(heap, "HeapReAlloc(%08x,%08lx,%08lx,%08lx): returning NULL\n",
                       heap, flags, (DWORD)ptr, size );
         return NULL;
     }
@@ -1065,7 +1064,7 @@ LPVOID WINAPI HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
         if (flags & HEAP_ZERO_MEMORY)
             memset( (char *)(pArena + 1) + oldSize, 0,
                     (pArena->size & ARENA_SIZE_MASK) - oldSize );
-        else if (debugging_heap)
+        else if (debugging_info(heap))
             memset( (char *)(pArena + 1) + oldSize, ARENA_INUSE_FILLER,
                     (pArena->size & ARENA_SIZE_MASK) - oldSize );
     }
@@ -1075,7 +1074,7 @@ LPVOID WINAPI HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
     pArena->callerEIP = *((DWORD *)&heap - 1);  /* hack hack */
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 
-    dprintf_heap( stddeb, "HeapReAlloc(%08x,%08lx,%08lx,%08lx): returning %08lx\n",
+    dprintf_info(heap, "HeapReAlloc(%08x,%08lx,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, size, (DWORD)(pArena + 1) );
     return (LPVOID)(pArena + 1);
 }
@@ -1138,7 +1137,7 @@ DWORD WINAPI HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
     }
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 
-    dprintf_heap( stddeb, "HeapSize(%08x,%08lx,%08lx): returning %08lx\n",
+    dprintf_info(heap, "HeapSize(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, ret );
     return ret;
 }

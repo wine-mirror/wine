@@ -17,7 +17,6 @@
 #include "graphics.h"
 #include "heap.h"
 #include "win.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Control configuration constants */
@@ -27,7 +26,7 @@
 
 /* Work constants */
 
-#define UNKNOWN_PARAM(msg, wParam, lParam) dprintf_progress(stddeb, \
+#define UNKNOWN_PARAM(msg, wParam, lParam) dprintf_warn(progress, \
         "Progress Ctrl: Unknown parameter(s) for message " #msg     \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
 
@@ -48,7 +47,7 @@ static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
   RECT32 rect;
   HDC32 hdc;
 
-  dprintf_progress(stddeb, "Progress Bar: paint pos=%d min=%d, max=%d\n",
+  dprintf_info(progress, "Progress Bar: paint pos=%d min=%d, max=%d\n",
 		   infoPtr->CurVal, infoPtr->MinVal, infoPtr->MaxVal);
 
   /* get a dc */
@@ -115,11 +114,11 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       infoPtr->MaxVal=100;
       infoPtr->CurVal=0; 
       infoPtr->Step=10;
-      dprintf_updown(stddeb, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
+      dprintf_info(updown, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
     case WM_DESTROY:
-      dprintf_updown(stddeb, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+      dprintf_info(updown, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
       break;
 
     case WM_ERASEBKGND:

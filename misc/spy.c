@@ -12,7 +12,6 @@
 #include "win.h"
 #include "module.h"
 #include "options.h"
-#include "stddebug.h"
 #include "debug.h"
 #include "spy.h"
 
@@ -643,21 +642,21 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
 {
     LPCSTR pname;
 
-    if (!debugging_message || SPY_EXCLUDE(msg)) return;
+    if (!debugging_info(message) || SPY_EXCLUDE(msg)) return;
 
     /* each SPY_SENDMESSAGE must be complemented by call to SPY_ExitMessage */
     switch(iFlag)
     {
     case SPY_DISPATCHMESSAGE16:
 	pname = SPY_GetWndName(hWnd);
-        dprintf_message(stddeb,"%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
+        dprintf_info(message,"%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
                         wParam, lParam);
         break;
 
     case SPY_DISPATCHMESSAGE32:
 	pname = SPY_GetWndName(hWnd);
-        dprintf_message(stddeb,"%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
+        dprintf_info(message,"%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
                         wParam, lParam);
         break;
@@ -675,12 +674,12 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
 	    pname = SPY_GetWndName(hWnd);
 
             if (iFlag == SPY_SENDMESSAGE16)
-                dprintf_message(stddeb,
+                dprintf_info(message,
 				"%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
                                 SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 				taskName, wParam, lParam );
             else
-                dprintf_message(stddeb,
+                dprintf_info(message,
 				"%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
                                 SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 				taskName, wParam, lParam );
@@ -689,14 +688,14 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
 
     case SPY_DEFWNDPROC16:
 	if( SPY_ExcludeDWP ) return;
-        dprintf_message(stddeb, "%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
+        dprintf_info(message, "%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
                         msg, wParam, lParam );
         break;
 
     case SPY_DEFWNDPROC32:
 	if( SPY_ExcludeDWP ) return;
-        dprintf_message(stddeb, "%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
+        dprintf_info(message, "%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
                         msg, wParam, lParam );
         break;
@@ -712,7 +711,7 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
 {
     LPCSTR pname;
 
-    if (!debugging_message || SPY_EXCLUDE(msg) ||
+    if (!debugging_info(message) || SPY_EXCLUDE(msg) ||
 	(SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND32)) )
 	return;
 
@@ -721,39 +720,39 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
     switch(iFlag)
     {
     case SPY_RESULT_DEFWND16:
-	dprintf_message(stddeb,"%*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
+	dprintf_info(message,"%*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
     case SPY_RESULT_DEFWND32:
-	dprintf_message(stddeb,"%*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
+	dprintf_info(message,"%*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
     case SPY_RESULT_OK16:
 	pname = SPY_GetWndName(hWnd);
-        dprintf_message(stddeb,"%*s(%04x) %-16s message [%04x] %s returned %08lx\n",
+        dprintf_info(message,"%*s(%04x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break;
 
     case SPY_RESULT_OK32:
 	pname = SPY_GetWndName(hWnd);
-        dprintf_message(stddeb,"%*s(%08x) %-16s message [%04x] %s returned %08lx\n",
+        dprintf_info(message,"%*s(%08x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
 	pname = SPY_GetWndName(hWnd);
-        dprintf_message(stddeb,"%*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
+        dprintf_warn(message, "%*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ) );
         break;
 
     case SPY_RESULT_INVALIDHWND32:
 	pname = SPY_GetWndName(hWnd);
-        dprintf_message(stddeb,"%*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
+        dprintf_warn(message, "%*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ) );
         break;
@@ -769,12 +768,12 @@ int SPY_Init(void)
     int i;
     char buffer[1024];
 
-    if (!debugging_message) return TRUE;
+    if (!debugging_info(message)) return TRUE;
 
     PROFILE_GetWineIniString( "Spy", "Include", "", buffer, sizeof(buffer) );
     if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))
     {
-        dprintf_message( stddeb, "SpyInit: Include=%s\n", buffer );
+        dprintf_info(message, "SpyInit: Include=%s\n", buffer );
         for (i = 0; i <= SPY_MAX_MSGNUM; i++)
             SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
     }
@@ -782,7 +781,7 @@ int SPY_Init(void)
     PROFILE_GetWineIniString( "Spy", "Exclude", "", buffer, sizeof(buffer) );
     if (buffer[0])
     {
-        dprintf_message( stddeb, "SpyInit: Exclude=%s\n", buffer );
+        dprintf_info(message, "SpyInit: Exclude=%s\n", buffer );
         if (!strcmp( buffer, "EXCLUDEALL" ))
             for (i = 0; i <= SPY_MAX_MSGNUM; i++) SPY_Exclude[i] = TRUE;
         else

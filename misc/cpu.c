@@ -10,6 +10,7 @@
 #include <string.h>
 #include "windows.h"
 #include "winnt.h"
+#include "winreg.h"
 
 static BYTE PF[64] = {0,};
 
@@ -20,6 +21,8 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 {
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
+	HKEY	xhkey=0,hkey;
+	char	buf[20];
 
 	if (cache) {
 		memcpy(si,&cachedsi,sizeof(*si));
@@ -55,6 +58,8 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 
 	if (!f)
 		return;
+        xhkey = 0;
+	RegCreateKey16(HKEY_LOCAL_MACHINE,"\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey);
 	while (fgets(line,200,f)!=NULL) {
 		char	*s,*value;
 
@@ -88,6 +93,10 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 					break;
 				}
 			}
+			/* set the CPU type of the current processor */
+			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
+			if (xhkey)
+				RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
 		/* old 2.0 method */
@@ -112,6 +121,10 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 					break;
 				}
 			}
+			/* set the CPU type of the current processor */
+			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
+			if (xhkey)
+				RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
 		if (!lstrncmpi32A(line,"fdiv_bug",strlen("fdiv_bug"))) {
@@ -133,6 +146,12 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 			if (sscanf(value,"%d",&x))
 				if (x+1>cachedsi.dwNumberOfProcessors)
 					cachedsi.dwNumberOfProcessors=x+1;
+
+			/* create a new processor subkey */
+			sprintf(buf,"%d",x);
+			if (xhkey)
+				RegCloseKey(xhkey);
+			RegCreateKey16(hkey,buf,&xhkey);
 		}
 		if (!lstrncmpi32A(line,"stepping",strlen("stepping"))) {
 			int	x;
@@ -151,11 +170,15 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 	fclose (f);
 	}
 	memcpy(si,&cachedsi,sizeof(*si));
-	return;
 #else  /* linux */
 	/* FIXME: how do we do this on other systems? */
-	return;
-#endif  /* linux */
+
+	RegCreateKey16(hkey,"0",&xhkey);
+	RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
+#endif  /* !linux */
+	if (xhkey)
+		RegCloseKey(xhkey);
+	RegCloseKey(hkey);
 }
 
 /***********************************************************************

@@ -136,7 +136,7 @@ void WINSOCK_cancel_task_aops(HTASK16 hTask, void (*__opfree)(void*))
     int num = 0;
     ws_async_op*   p, *next;
 
-    dprintf_winsock(stddeb,"\tcancelling async DNS requests... ");
+    dprintf_info(winsock," cancelling async DNS requests... \n");
 
     SIGNAL_MaskAsyncEvents( TRUE );
     next = __async_op_list;
@@ -153,7 +153,7 @@ void WINSOCK_cancel_task_aops(HTASK16 hTask, void (*__opfree)(void*))
 	}
     }
     SIGNAL_MaskAsyncEvents( FALSE );
-    dprintf_winsock(stddeb,"%i total\n", num );
+    dprintf_info(winsock," -> %i total\n", num );
 }
 
 void WINSOCK_link_async_op(ws_async_op* p_aop)
@@ -176,7 +176,7 @@ void WINSOCK_link_async_op(ws_async_op* p_aop)
 	  {
 	      ws_async_op* dead = p;
 
-	      dprintf_winsock(stddeb,"\treaping dead aop [%08x]\n", (unsigned)p );
+	      dprintf_info(winsock,"\treaping dead aop [%08x]\n", (unsigned)p );
 
 	      p = p->next;
 	      WINSOCK_unlink_async_op( dead );
@@ -343,7 +343,7 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, L
 	    async_ctl.ws_aop->pid = fork();
 	    if( async_ctl.ws_aop->pid )
 	    {
-		dprintf_winsock(stddeb, "\tasync_op = %04x (child %i)\n", 
+		dprintf_info(winsock, "\tasync_op = %04x (child %i)\n", 
 				handle, async_ctl.ws_aop->pid);
 
 		close(async_ctl.ws_aop->fd[1]);  /* write endpoint */
@@ -452,7 +452,7 @@ void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
 	 : gethostbyaddr(async_ctl.rq.name,
 		 	 async_ctl.ilength, async_ctl.type);
 
-  dprintf_winsock(stddeb,"DNS: got hostent for [%s]\n", async_ctl.rq.name );
+  dprintf_info(winsock,"DNS: got hostent for [%s]\n", async_ctl.rq.name );
 
   if( p_he ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_he(pwsi, p_he, WS_DUP_OFFSET | 
@@ -476,7 +476,7 @@ void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
 	 ? getprotobyname(async_ctl.rq.name)
 	 : getprotobynumber(async_ctl.type);
 
-  dprintf_winsock(stddeb,"DNS: got protoent for [%s]\n", async_ctl.rq.name );
+  dprintf_info(winsock,"DNS: got protoent for [%s]\n", async_ctl.rq.name );
 
   if( p_pe ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_pe(pwsi, p_pe, WS_DUP_OFFSET |

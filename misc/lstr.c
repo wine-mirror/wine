@@ -31,7 +31,6 @@
 #include "ldt.h"
 #include "stackframe.h"
 #include "module.h"
-#include "stddebug.h"
 #include "debug.h"
 
 /* Funny to divide them between user and kernel. */
@@ -518,7 +517,7 @@ DWORD WINAPI FormatMessage32A(
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 	DWORD	nolinefeed = 0;
 
-	dprintf_resource(stddeb,
+	dprintf_info(resource,
 		"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args
 	);
@@ -535,10 +534,10 @@ DWORD WINAPI FormatMessage32A(
 		INT32	bufsize;
 
 		dwMessageId &= 0xFFFF;
-		bufsize=LoadMessage32A(0,dwMessageId,dwLanguageId,NULL,100);
+		bufsize=LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,NULL,100);
 		if (bufsize) {
 			from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
-			LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
+			LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
 	target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
@@ -684,7 +683,7 @@ DWORD WINAPI FormatMessage32W(
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 	DWORD	nolinefeed = 0;
 
-	dprintf_resource(stddeb,
+	dprintf_info(resource,
 		"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args
 	);
@@ -702,11 +701,11 @@ DWORD WINAPI FormatMessage32W(
 		INT32	bufsize;
 
 		dwMessageId &= 0xFFFF;
-		bufsize=LoadMessage32A(0,dwMessageId,dwLanguageId,NULL,100);
+		bufsize=LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,NULL,100);
 		if (bufsize)
                 {
                     from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
-                    LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
+                    LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
 	target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100 );

@@ -53,7 +53,7 @@ type	win32
  61 stdcall WOWGlobalUnlock16(long) GlobalUnlock16
  62 stdcall WOWGlobalFree16(long) GlobalFree16
  63 stdcall WOWGlobalAllocLock16(long long ptr) WOWGlobalAllocLock16
- 64 stub WOWGlobalUnlockFree16
+ 64 stdcall WOWGlobalUnlockFree16(long) WOWGlobalUnlockFree16
  65 stub WOWGlobalLockSize16
  66 stub WOWYield16
  67 stub WOWDirectedYield16
@@ -249,7 +249,7 @@ type	win32
 258 stdcall FindResourceW(long wstr wstr) FindResource32W
 259 stdcall FlushConsoleInputBuffer(long) FlushConsoleInputBuffer
 260 stdcall FlushFileBuffers(long) FlushFileBuffers
-261 stub FlushInstructionCache
+261 stdcall FlushInstructionCache(long long long) FlushInstructionCache
 262 stdcall FlushViewOfFile(ptr long) FlushViewOfFile
 263 stub FoldStringA
 264 stub FoldStringW

@@ -1,0 +1,36 @@
+
+Some ideas for improvements:
+============================
+
+- Add Font Selection Dialog (should be CommDlg).
+
+- Make "Without Titlebar", Double-clicking the clock should reveal the caption
+  again.
+
+- Move the "Without Titlebar" into the System Menu (as in Windows)
+
+- Implement a "digital clock"
+
+- Font Handling of Digital Clock.
+
+- Make distinction between analog clock and digital clock according to
+  Globals.bAnalog setting / CL_ANALOG menu event.
+
+- Implement Date (Window caption), but mind the different languages.
+
+- Make distinction between Date / no Date according to
+  Globals.bDate setting / CL_DATE menu event.
+
+- Implement Timer Mechanism instead Polling.
+  Clock does not run if menu is being selected (?).
+
+- Fix Clock Background (sometimes destroyed).
+  ( This is because the old "Hands" are removed one more time )
+
+- Fix English translation by comparing strings from an original English
+  Windows Clock application (I only have a German version).
+
+- Add new .rc resources for all languages you know.
+
+
+Please don't forget a ChangeLog entry.

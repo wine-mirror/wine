@@ -17,7 +17,6 @@
 #include "dc.h"
 #include "gdi.h"
 #include "xmalloc.h"
-#include "stddebug.h"
 #include "debug.h"
 
 extern void CLIPPING_UpdateGCRegion(DC* );
