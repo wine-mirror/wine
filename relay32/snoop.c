@@ -20,8 +20,16 @@
 #include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"
+#include "wine/exception.h"
 
 DEFAULT_DEBUG_CHANNEL(snoop);
+
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 
@@ -201,6 +209,7 @@ static char*
 SNOOP_PrintArg(DWORD x) {
 	static char	buf[200];
 	int		i,nostring;
+	char * ret=0;
 	MEMORY_BASIC_INFORMATION	mbi;
 
 	if (	!HIWORD(x)					||
@@ -210,7 +219,7 @@ SNOOP_PrintArg(DWORD x) {
 		sprintf(buf,"%08lx",x);
 		return buf;
 	}
-	if (!IsBadStringPtrA((LPSTR)x,80)) {
+	__TRY{
 		LPBYTE	s=(LPBYTE)x;
 		i=0;nostring=0;
 		while (i<80) {
@@ -222,11 +231,15 @@ SNOOP_PrintArg(DWORD x) {
 		if (!nostring) {
 			if (i>5) {
 				wsnprintfA(buf,sizeof(buf),"%08lx %s",x,debugstr_an((LPSTR)x,sizeof(buf)-10));
-				return buf;
+				ret=buf;
 			}
 		}
 	}
-	if (!IsBadStringPtrW((LPWSTR)x,80)) {
+	__EXCEPT(page_fault){}
+	__ENDTRY
+	if (ret)
+	  return ret;
+	__TRY{
 		LPWSTR	s=(LPWSTR)x;
 		i=0;nostring=0;
 		while (i<80) {
@@ -238,10 +251,14 @@ SNOOP_PrintArg(DWORD x) {
 		if (!nostring) {
 			if (i>5) {
 				wsnprintfA(buf,sizeof(buf),"%08lx %s",x,debugstr_wn((LPWSTR)x,sizeof(buf)-10));
-				return buf;
+				ret=buf;
 			}
 		}
 	}
+	__EXCEPT(page_fault){}
+	__ENDTRY
+	if (ret)
+	  return ret;
 	sprintf(buf,"%08lx",x);
 	return buf;
 }
