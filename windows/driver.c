@@ -10,11 +10,10 @@
 
 #include <string.h>
 #include "heap.h"
-#include "callback.h"
+#include "winuser.h"
 #include "driver.h"
 #include "ldt.h"
 #include "module.h"
-#include "mmsystem.h"
 #include "mmddk.h"
 #include "debugtools.h"
 
@@ -23,10 +22,16 @@ DEFAULT_DEBUG_CHANNEL(driver)
 static LPWINE_DRIVER	lpDrvItemList = NULL;
 
 /* TODO list :
- *	- LoadModule count and clean up is not handled correctly (it's not a problem as 
- * 	  long as FreeLibrary is not working correctly)
- *	- msacm has some FIXME related to new code here...
+ *	- LoadModule count and clean up is not handled correctly (it's not a 
+ *	  problem as long as FreeLibrary is not working correctly)
+ *	- shoudln't the allocations be done on a per process basis ?
+ * 	- get rid of external function "int DRIVER_GetType(HDRVR hDrvr)"
+ *	- split 16/32 bit functions between DLLs as windows do (16 bit in USER, 32 bit in WINMM)
  */
+
+/* ### start build ### */
+extern LONG CALLBACK DRIVER_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
+/* ### stop build ### */
 
 /**************************************************************************
  *			LoadStartupDrivers			[internal]
@@ -115,7 +120,7 @@ static	LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 /**************************************************************************
  *				DRIVER_GetType			[internal]
  * 
- * From a hDrvr (being 16 or 32 bits), returns the WINE internal structure.
+ * From a hDrvr (being 16 or 32 bits), returns TRUE the flags for the driver.
  */
 int	DRIVER_GetType(HDRVR hDrvr)
 {
@@ -474,8 +479,8 @@ LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
 	case WINE_DI_TYPE_16:
 	    TRACE("Before CallDriverProc proc=%p driverID=%08lx hDrv=%u wMsg=%04x p1=%08lx p2=%08lx\n", 
 		  lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, hDriver, msg, lParam1, lParam2);		  
-	    retval = Callbacks->CallDriverProc(lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, hDriver, 
-					       msg, lParam1, lParam2);
+	    retval = DRIVER_CallTo16_long_lwwll((FARPROC16)lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, 
+						hDriver, msg, lParam1, lParam2);
 	    break;
 	case WINE_DI_TYPE_32:
 	    mapRet = DRIVER_MapMsg16To32(msg, &lParam1, &lParam2);
@@ -523,8 +528,8 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
 	    if (mapRet >= 0) {
 		TRACE("Before CallDriverProc proc=%p driverID=%08lx hDrv=%u wMsg=%04x p1=%08lx p2=%08lx\n", 
 		      lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, lpDrv->hDriver16, msg, lParam1, lParam2);		  
-		retval = Callbacks->CallDriverProc(lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, lpDrv->hDriver16, 
-						   msg, lParam1, lParam2);
+		retval = DRIVER_CallTo16_long_lwwll((FARPROC16)lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, 
+						    lpDrv->hDriver16, msg, lParam1, lParam2);
 		if (mapRet >= 1) {
 		    DRIVER_UnMapMsg32To16(msg, lParam1, lParam2);
 		}
@@ -802,6 +807,10 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 					     drvName, sizeof(drvName), "SYSTEM.INI") > 0) {
 	hDriver = DRIVER_TryOpenDriver16(drvName, lParam, FALSE);
     }
+    if (!hDriver)
+	ERR("Failed to open driver %s from section %s\n", lpDriverName, lpSectionName);
+    else 
+	TRACE("=> %08x\n", hDriver);
     return hDriver;
 }
 
@@ -847,7 +856,10 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
 	    }
 	}
     }
-    TRACE("retval='%08x'\n", hDriver);
+    if (!hDriver)
+	ERR("Failed to open driver %s from section %s\n", lpDriverName, lpSectionName);
+    else 
+	TRACE("=> %08x\n", hDriver);
     return hDriver;
 }
 
@@ -910,6 +922,7 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 DWORD	WINAPI GetDriverFlags(HDRVR hDrvr)
 {
     FIXME("(%04x); stub!\n", hDrvr);
+    /* should I merge it with DRIVER_GetType() ? */
     return 0;
 }
 

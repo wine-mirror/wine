@@ -1,2 +1,3 @@
 Makefile
+driver.glue.c
 hook.glue.c

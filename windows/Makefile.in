@@ -39,7 +39,8 @@ C_SRCS = \
 	winpos.c \
 	winproc.c
 
-GLUE = hook.c
+GLUE =	hook.c \
+	driver.c
 
 all: $(MODULE).o
 
