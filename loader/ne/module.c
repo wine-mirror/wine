@@ -1098,8 +1098,8 @@ BOOL16 WINAPI ModuleNext( MODULEENTRY *lpme )
     if (!lpme->wNext) return FALSE;
     if (!(pModule = NE_GetPtr( lpme->wNext ))) return FALSE;
     name = (char *)pModule + pModule->name_table;
-    memcpy( lpme->szModule, name + 1, *name );
-    lpme->szModule[(BYTE)*name] = '\0';
+    memcpy( lpme->szModule, name + 1, min(*name, MAX_MODULE_NAME) );
+    lpme->szModule[min(*name, MAX_MODULE_NAME)] = '\0';
     lpme->hModule = lpme->wNext;
     lpme->wcUsage = pModule->count;
     strncpy( lpme->szExePath, NE_MODULE_NAME(pModule), MAX_PATH );
