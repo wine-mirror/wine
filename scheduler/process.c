@@ -15,6 +15,7 @@
 #include "heap.h"
 #include "task.h"
 #include "ldt.h"
+#include "syslevel.h"
 #include "thread.h"
 #include "winerror.h"
 #include "pe_image.h"
@@ -236,6 +237,9 @@ BOOL32 PROCESS_Init(void)
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
     if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL, NULL, NULL ))) return FALSE;
     thdb->unix_pid = getpid();
+
+    /* Remember TEB selector of initial process for emergency use */
+    SYSLEVEL_EmergencyTeb = thdb->teb_sel;
 
     /* Create the environment DB of the first process */
     if (!PROCESS_BuildEnvDB( pdb )) return FALSE;

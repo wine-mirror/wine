@@ -219,8 +219,10 @@ typedef struct _CONTEXT		/* Note 1 */
 #ifdef FS_sig
 #include "syslevel.h"
 #define HANDLER_INIT() \
-    SET_FS(IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)) ? \
-           FS_sig(HANDLER_CONTEXT) : SYSLEVEL_Win16CurrentTeb)
+    do { int fs = IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)) ?       \
+                  FS_sig(HANDLER_CONTEXT) : SYSLEVEL_Win16CurrentTeb; \
+         if (!fs) fs = SYSLEVEL_EmergencyTeb;                         \
+         SET_FS(fs);                           } while (0)
 #else
 #define HANDLER_INIT() /* nothing */
 #endif

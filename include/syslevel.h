@@ -11,6 +11,7 @@
 #include "winbase.h"
 
 extern WORD SYSLEVEL_Win16CurrentTeb;
+extern WORD SYSLEVEL_EmergencyTeb;
 
 void SYSLEVEL_Init(void);
 VOID SYSLEVEL_EnterWin16Lock(VOID);

@@ -16,6 +16,9 @@ static SEGPTR segpWin16Mutex;
 /* Global variable to save current TEB while in 16-bit code */
 WORD SYSLEVEL_Win16CurrentTeb = 0;
 
+/* TEB of initial process for emergency use */
+WORD SYSLEVEL_EmergencyTeb = 0;
+
 
 /************************************************************************
  *           SYSLEVEL_Init
