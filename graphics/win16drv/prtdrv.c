@@ -167,10 +167,15 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
     }
 
     {
-        char *drvName = malloc(strlen(pszDriver)+5);
+        char *p, *drvName = HeapAlloc(GetProcessHeap(), 0, strlen(pszDriver) + 5);
         strcpy(drvName, pszDriver);
-        strcat(drvName, ".DRV");
+
+	/* Append .DRV to name if no extension present */
+	if (!(p = strrchr(drvName, '.')) || strchr(p, '/') || strchr(p, '\\'))
+	    strcat(drvName, ".DRV");
+
         hInst = LoadLibrary16(drvName);
+	HeapFree(GetProcessHeap(), 0, drvName);
     }
 
     
