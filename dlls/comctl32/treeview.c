@@ -1055,7 +1055,7 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
 	TEXTMETRICA tm;
 	HBRUSH hbrBk;
     RECT rect;
-    INT iItem, indent, x, y, cx, height, itemHeight;
+    INT iItem, indent, x, y, height, itemHeight;
     INT viewtop,viewbottom,viewleft,viewright;
     TREEVIEW_ITEM *wineItem, *prevItem;
 
@@ -1070,19 +1070,22 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
     
     GetClientRect (hwnd, &rect);
     if ((rect.left-rect.right ==0) || (rect.top-rect.bottom==0)) return;
+    
+    hdc=GetDC (hwnd);
 
-    infoPtr->cdmode=TREEVIEW_SendCustomDrawNotify 
-						(hwnd, CDDS_PREPAINT, hdc, rect);
+    infoPtr->cdmode=TREEVIEW_SendCustomDrawNotify(hwnd,CDDS_PREPAINT,hdc,rect);
 
-	if (infoPtr->cdmode==CDRF_SKIPDEFAULT) return;
+    if (infoPtr->cdmode==CDRF_SKIPDEFAULT) return;
 
-	infoPtr->uVisibleHeight= rect.bottom-rect.top;
-	infoPtr->uVisibleWidth= rect.right-rect.left;
+    infoPtr->uVisibleHeight= rect.bottom-rect.top;
+    infoPtr->uVisibleWidth= rect.right-rect.left;
 
     viewtop=infoPtr->cy;
     viewbottom=infoPtr->cy + rect.bottom-rect.top;
     viewleft=infoPtr->cx;
     viewright=infoPtr->cx + rect.right-rect.left;
+
+    TRACE("[%d %d %d %d]\n",viewtop,viewbottom,viewleft,viewright);
 
     /* draw background */
     
@@ -1090,28 +1093,26 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
     FillRect(hdc, &rect, hbrBk);
     DeleteObject(hbrBk);
 
+    ImageList_GetIconSize (infoPtr->himlNormal, &x, &itemHeight);
+    if (infoPtr->uItemHeight>itemHeight)
+	itemHeight=infoPtr->uItemHeight;
+
+    GetTextMetricsA (hdc, &tm);
+    if ((tm.tmHeight + tm.tmExternalLeading) > itemHeight)
+	 itemHeight=tm.tmHeight + tm.tmExternalLeading;
+
+    infoPtr->uRealItemHeight=itemHeight;
+
     iItem=(INT)infoPtr->TopRootItem;
     infoPtr->firstVisible=0;
     wineItem=NULL;
     indent=0;
     x=y=0;
-    TRACE("[%d %d %d %d]\n",viewtop,viewbottom,viewleft,viewright);
 
     while (iItem) {
-		prevItem=wineItem;
+	prevItem=wineItem;
         wineItem= & infoPtr->items[iItem];
-		wineItem->iLevel=indent;
-
-        ImageList_GetIconSize (infoPtr->himlNormal, &cx, &itemHeight);
-        if (infoPtr->uItemHeight>itemHeight)
-		    itemHeight=infoPtr->uItemHeight;
-
-	    GetTextMetricsA (hdc, &tm);
- 	    if ((tm.tmHeight + tm.tmExternalLeading) > itemHeight)
-		     itemHeight=tm.tmHeight + tm.tmExternalLeading;
-
-        infoPtr->uRealItemHeight=itemHeight;	
-
+	wineItem->iLevel=indent;
 
 /* FIXME: remove this in later stage  */
 /*
@@ -1161,7 +1162,6 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
 			while ((!iItem) && (indent>0)) {
 				indent--;
 				x-=infoPtr->uIndent;
-				prevItem=wineItem;
 				wineItem=&infoPtr->items[(INT)wineItem->parent];
 				iItem=(INT)wineItem->sibling;
 			}
