@@ -16,7 +16,6 @@
 #include "syslevel.h"
 #include "main.h"
 #include "module.h"
-#include "process.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(relay);
@@ -114,7 +113,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     /* First find the module */
 
-    for (wm = PROCESS_Current()->modref_list; wm; wm = wm->next)
+    for (wm = MODULE_modref_list; wm; wm = wm->next)
     {
         if (!(wm->flags & WINE_MODREF_INTERNAL)) continue;
         base = (char *)wm->module;

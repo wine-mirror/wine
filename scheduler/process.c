@@ -15,7 +15,6 @@
 #include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "process.h"
 #include "drive.h"
 #include "main.h"
 #include "module.h"
@@ -35,14 +34,79 @@ DEFAULT_DEBUG_CHANNEL(process);
 DECLARE_DEBUG_CHANNEL(relay);
 DECLARE_DEBUG_CHANNEL(win32);
 
+struct _ENVDB;
+
+/* Win32 process database */
+typedef struct _PDB
+{
+    LONG             header[2];        /* 00 Kernel object header */
+    HMODULE          module;           /* 08 Main exe module (NT) */
+    void            *event;            /* 0c Pointer to an event object (unused) */
+    DWORD            exit_code;        /* 10 Process exit code */
+    DWORD            unknown2;         /* 14 Unknown */
+    HANDLE           heap;             /* 18 Default process heap */
+    HANDLE           mem_context;      /* 1c Process memory context */
+    DWORD            flags;            /* 20 Flags */
+    void            *pdb16;            /* 24 DOS PSP */
+    WORD             PSP_sel;          /* 28 Selector to DOS PSP */
+    WORD             imte;             /* 2a IMTE for the process module */
+    WORD             threads;          /* 2c Number of threads */
+    WORD             running_threads;  /* 2e Number of running threads */
+    WORD             free_lib_count;   /* 30 Recursion depth of FreeLibrary calls */
+    WORD             ring0_threads;    /* 32 Number of ring 0 threads */
+    HANDLE           system_heap;      /* 34 System heap to allocate handles */
+    HTASK            task;             /* 38 Win16 task */
+    void            *mem_map_files;    /* 3c Pointer to mem-mapped files */
+    struct _ENVDB   *env_db;           /* 40 Environment database */
+    void            *handle_table;     /* 44 Handle table */
+    struct _PDB     *parent;           /* 48 Parent process */
+    void            *modref_list;      /* 4c MODREF list */
+    void            *thread_list;      /* 50 List of threads */
+    void            *debuggee_CB;      /* 54 Debuggee context block */
+    void            *local_heap_free;  /* 58 Head of local heap free list */
+    DWORD            unknown4;         /* 5c Unknown */
+    CRITICAL_SECTION crit_section;     /* 60 Critical section */
+    DWORD            unknown5[3];      /* 78 Unknown */
+    void            *console;          /* 84 Console */
+    DWORD            tls_bits[2];      /* 88 TLS in-use bits */
+    DWORD            process_dword;    /* 90 Unknown */
+    struct _PDB     *group;            /* 94 Process group */
+    void            *exe_modref;       /* 98 MODREF for the process EXE */
+    void            *top_filter;       /* 9c Top exception filter */
+    DWORD            priority;         /* a0 Priority level */
+    HANDLE           heap_list;        /* a4 Head of process heap list */
+    void            *heap_handles;     /* a8 Head of heap handles list */
+    DWORD            unknown6;         /* ac Unknown */
+    void            *console_provider; /* b0 Console provider (??) */
+    WORD             env_selector;     /* b4 Selector to process environment */
+    WORD             error_mode;       /* b6 Error mode */
+    HANDLE           load_done_evt;    /* b8 Event for process loading done */
+    void            *UTState;          /* bc Head of Univeral Thunk list */
+    DWORD            unknown8;         /* c0 Unknown (NT) */
+    LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
+} PDB;
+
 PDB current_process;
+
+/* Process flags */
+#define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
+#define PDB32_WIN16_PROC    0x0008  /* Win16 process */
+#define PDB32_DOS_PROC      0x0010  /* Dos process */
+#define PDB32_CONSOLE_PROC  0x0020  /* Console process */
+#define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
+#define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
 static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
 static HANDLE main_exe_file = INVALID_HANDLE_VALUE;
-static HMODULE main_module;
 
 unsigned int server_startticks;
+
+/* memory/environ.c */
+extern struct _ENVDB *ENV_BuildEnvironment(void);
+extern BOOL ENV_BuildCommandLine( char **argv );
+extern STARTUPINFOA current_startupinfo;
+
 
 /***********************************************************************
  *           PROCESS_CallUserSignalProc
@@ -178,7 +242,6 @@ static BOOL process_init( char *argv[] )
     current_process.ring0_threads   = 1;
     current_process.group           = &current_process;
     current_process.priority        = 8;  /* Normal */
-    current_process.env_db          = &current_envdb;
 
     /* Setup the server connection */
     NtCurrentTeb()->socket = CLIENT_InitServer();
@@ -201,9 +264,12 @@ static BOOL process_init( char *argv[] )
             current_startupinfo.dwFlags     = req->start_flags;
             server_startticks               = req->server_start;
             current_startupinfo.wShowWindow = req->cmd_show;
-            current_envdb.hStdin   = current_startupinfo.hStdInput  = req->hstdin;
-            current_envdb.hStdout  = current_startupinfo.hStdOutput = req->hstdout;
-            current_envdb.hStderr  = current_startupinfo.hStdError  = req->hstderr;
+            current_startupinfo.hStdInput   = req->hstdin;
+            current_startupinfo.hStdOutput  = req->hstdout;
+            current_startupinfo.hStdError   = req->hstderr;
+            SetStdHandle( STD_INPUT_HANDLE,  current_startupinfo.hStdInput );
+            SetStdHandle( STD_OUTPUT_HANDLE, current_startupinfo.hStdOutput );
+            SetStdHandle( STD_ERROR_HANDLE,  current_startupinfo.hStdError );
         }
     }
     SERVER_END_REQ;
@@ -214,54 +280,12 @@ static BOOL process_init( char *argv[] )
     current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
 
     /* Copy the parent environment */
-    if (!ENV_BuildEnvironment()) return FALSE;
-
-    /* Initialize the critical sections */
-    InitializeCriticalSection( &current_process.crit_section );
+    if (!(current_process.env_db = ENV_BuildEnvironment())) return FALSE;
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( argv );
 
     return MAIN_MainInit();
-}
-
-
-/***********************************************************************
- *           build_command_line
- *
- * Build the command line of a process from the argv array.
- *
- * Note that it does NOT necessarily include the file name.
- * Sometimes we don't even have any command line options at all.
- */
-static inline char *build_command_line( char **argv )
-{
-    int len, quote = 0;
-    char *cmdline, *p, **arg;
-
-    for (arg = argv, len = 0; *arg; arg++) len += strlen(*arg) + 1;
-    if ((argv[0]) && (quote = (strchr( argv[0], ' ' ) != NULL))) len += 2;
-    if (!(p = cmdline = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
-    arg = argv;
-    if (quote)
-    {
-        *p++ = '\"';
-        strcpy( p, *arg );
-        p += strlen(p);
-        *p++ = '\"';
-        *p++ = ' ';
-        arg++;
-    }
-    while (*arg)
-    {
-        strcpy( p, *arg );
-        p += strlen(p);
-        *p++ = ' ';
-        arg++;
-    }
-    if (p > cmdline) p--;  /* remove last space */
-    *p = 0;
-    return cmdline;
 }
 
 
@@ -277,10 +301,10 @@ static void start_process(void)
     WINE_MODREF *wm;
 
     /* build command line */
-    if (!(current_envdb.cmd_line = build_command_line( main_exe_argv ))) goto error;
+    if (!ENV_BuildCommandLine( main_exe_argv )) goto error;
 
     /* create 32-bit module for main exe */
-    if (!(main_module = BUILTIN32_LoadExeModule( main_module ))) goto error;
+    if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
 
     /* use original argv[0] as name for the main module */
     if (!main_exe_name[0])
@@ -290,16 +314,16 @@ static void start_process(void)
     }
 
     /* Retrieve entry point address */
-    entry = (LPTHREAD_START_ROUTINE)((char*)main_module +
-                                     PE_HEADER(main_module)->OptionalHeader.AddressOfEntryPoint);
-    console_app = (PE_HEADER(main_module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+    entry = (LPTHREAD_START_ROUTINE)((char*)current_process.module +
+                         PE_HEADER(current_process.module)->OptionalHeader.AddressOfEntryPoint);
+    console_app = (PE_HEADER(current_process.module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
     if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
 
     /* Signal the parent process to continue */
     SERVER_START_REQ
     {
         struct init_process_done_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->module = (void *)main_module;
+        req->module = (void *)current_process.module;
         req->entry  = entry;
         req->name   = main_exe_name;
         req->gui    = !console_app;
@@ -314,14 +338,14 @@ static void start_process(void)
     if (!SIGNAL_Init()) goto error;
 
     /* create the main modref and load dependencies */
-    if (!(wm = PE_CreateModule( main_module, main_exe_name, 0, main_exe_file, FALSE )))
+    if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, main_exe_file, FALSE )))
         goto error;
     wm->refCount++;
 
-    EnterCriticalSection( &current_process.crit_section );
+    RtlAcquirePebLock();
     PE_InitTls();
-    MODULE_DllProcessAttach( current_process.exe_modref, (LPVOID)1 );
-    LeaveCriticalSection( &current_process.crit_section );
+    MODULE_DllProcessAttach( NULL, (LPVOID)1 );
+    RtlReleasePebLock();
 
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
@@ -344,7 +368,7 @@ static void start_process(void)
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
-    TRACE_(relay)( "Starting Win32 process %s (entryproc=%p)\n", current_process.exe_modref->filename, entry );
+    TRACE_(relay)( "Starting Win32 process %s (entryproc=%p)\n", main_exe_name, entry );
     if (debugged) DbgBreakPoint();
     /* FIXME: should use _PEB as parameter for NT 3.5 programs !
      * Dunno about other OSs */
@@ -443,11 +467,11 @@ void PROCESS_InitWine( int argc, char *argv[] )
     }
 
     /* first try Win32 format; this will fail if the file is not a PE binary */
-    if ((main_module = PE_LoadImage( main_exe_file, main_exe_name, 0 )))
+    if ((current_process.module = PE_LoadImage( main_exe_file, main_exe_name, 0 )))
     {
-        if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
+        if (PE_HEADER(current_process.module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
             ExitProcess( ERROR_BAD_EXE_FORMAT );
-        stack_size = PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve;
+        stack_size = PE_HEADER(current_process.module)->OptionalHeader.SizeOfStackReserve;
         goto found;
     }
 
@@ -1366,6 +1390,115 @@ UINT WINAPI SetErrorMode( UINT mode )
     current_process.error_mode = mode;
     return old;
 }
+
+
+/**********************************************************************
+ * TlsAlloc [KERNEL32.530]  Allocates a TLS index.
+ *
+ * Allocates a thread local storage index
+ *
+ * RETURNS
+ *    Success: TLS Index
+ *    Failure: 0xFFFFFFFF
+ */
+DWORD WINAPI TlsAlloc( void )
+{
+    DWORD i, mask, ret = 0;
+    DWORD *bits = current_process.tls_bits;
+    RtlAcquirePebLock();
+    if (*bits == 0xffffffff)
+    {
+        bits++;
+        ret = 32;
+        if (*bits == 0xffffffff)
+        {
+            RtlReleasePebLock();
+            SetLastError( ERROR_NO_MORE_ITEMS );
+            return 0xffffffff;
+        }
+    }
+    for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
+    *bits |= mask;
+    RtlReleasePebLock();
+    return ret + i;
+}
+
+
+/**********************************************************************
+ * TlsFree [KERNEL32.531]  Releases a TLS index.
+ *
+ * Releases a thread local storage index, making it available for reuse
+ * 
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL WINAPI TlsFree(
+    DWORD index) /* [in] TLS Index to free */
+{
+    DWORD mask = (1 << (index & 31));
+    DWORD *bits = current_process.tls_bits;
+    if (index >= 64)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (index >= 32) bits++;
+    RtlAcquirePebLock();
+    if (!(*bits & mask))  /* already free? */
+    {
+        RtlReleasePebLock();
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    *bits &= ~mask;
+    NtCurrentTeb()->tls_array[index] = 0;
+    /* FIXME: should zero all other thread values */
+    RtlReleasePebLock();
+    return TRUE;
+}
+
+
+/**********************************************************************
+ * TlsGetValue [KERNEL32.532]  Gets value in a thread's TLS slot
+ *
+ * RETURNS
+ *    Success: Value stored in calling thread's TLS slot for index
+ *    Failure: 0 and GetLastError returns NO_ERROR
+ */
+LPVOID WINAPI TlsGetValue(
+    DWORD index) /* [in] TLS index to retrieve value for */
+{
+    if (index >= 64)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    SetLastError( ERROR_SUCCESS );
+    return NtCurrentTeb()->tls_array[index];
+}
+
+
+/**********************************************************************
+ * TlsSetValue [KERNEL32.533]  Stores a value in the thread's TLS slot.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL WINAPI TlsSetValue(
+    DWORD index,  /* [in] TLS index to set value for */
+    LPVOID value) /* [in] Value to be stored */
+{
+    if (index >= 64)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    NtCurrentTeb()->tls_array[index] = value;
+    return TRUE;
+}
+
 
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.198)

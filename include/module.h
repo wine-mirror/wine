@@ -140,6 +140,7 @@ typedef struct _wine_modref
 #define WINE_MODREF_DONT_RESOLVE_REFS     0x00000020
 #define WINE_MODREF_MARKER                0x80000000
 
+extern WINE_MODREF *MODULE_modref_list;
 
 /* Resource types */
 
@@ -230,5 +231,34 @@ extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags);
 extern HMODULE BUILTIN32_LoadExeModule( HMODULE main );
 extern void *BUILTIN32_dlopen( const char *name );
 extern int BUILTIN32_dlclose( void *handle );
+
+/* USER signal proc flags and codes */
+/* See PROCESS_CallUserSignalProc for comments */
+#define USIG_FLAGS_WIN32          0x0001
+#define USIG_FLAGS_GUI            0x0002
+#define USIG_FLAGS_FEEDBACK       0x0004
+#define USIG_FLAGS_FAULT          0x0008
+
+#define USIG_DLL_UNLOAD_WIN16     0x0001
+#define USIG_DLL_UNLOAD_WIN32     0x0002
+#define USIG_FAULT_DIALOG_PUSH    0x0003
+#define USIG_FAULT_DIALOG_POP     0x0004
+#define USIG_DLL_UNLOAD_ORPHANS   0x0005
+#define USIG_THREAD_INIT          0x0010
+#define USIG_THREAD_EXIT          0x0020
+#define USIG_PROCESS_CREATE       0x0100
+#define USIG_PROCESS_INIT         0x0200
+#define USIG_PROCESS_EXIT         0x0300
+#define USIG_PROCESS_DESTROY      0x0400
+#define USIG_PROCESS_RUNNING      0x0500
+#define USIG_PROCESS_LOADED       0x0600
+
+/* scheduler/process.c */
+extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
+extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
+                            LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                            BOOL inherit, DWORD flags,
+                            STARTUPINFOA *startup, PROCESS_INFORMATION *info,
+                            LPCSTR lpCurrentDirectory );
 
 #endif  /* __WINE_MODULE_H */

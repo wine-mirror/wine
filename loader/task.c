@@ -18,7 +18,6 @@
 #include "instance.h"
 #include "miscemu.h"
 #include "module.h"
-#include "process.h"
 #include "queue.h"
 #include "selectors.h"
 #include "stackframe.h"
@@ -283,17 +282,18 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
                                (int)&((PDB16 *)0)->fileHandles );
     pTask->pdb.hFileHandles = 0;
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
-    pTask->pdb.environment    = current_envdb.env_sel;
+    /* FIXME: should we make a copy of the environment? */
+    pTask->pdb.environment    = SELECTOROF(GetDOSEnvironment16());
     pTask->pdb.nbFiles        = 20;
 
     /* Fill the command line */
 
     if (!cmdline)
     {
-        cmdline = current_envdb.cmd_line;
+        cmdline = GetCommandLineA();
         /* remove the first word (program name) */
         if (*cmdline == '"')
-            if (!(cmdline = strchr( cmdline+1, '"' ))) cmdline = current_envdb.cmd_line;
+            if (!(cmdline = strchr( cmdline+1, '"' ))) cmdline = GetCommandLineA();
         while (*cmdline && (*cmdline != ' ') && (*cmdline != '\t')) cmdline++;
         while ((*cmdline == ' ') || (*cmdline == '\t')) cmdline++;
         len = strlen(cmdline);
@@ -313,10 +313,6 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
     pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, (void *)pTask,
                                           sizeof(TDB), pTask->hPDB, WINE_LDT_FLAGS_CODE );
-
-      /* Set the owner of the environment block */
-
-    FarSetOwner16( pTask->pdb.environment, pTask->hPDB );
 
       /* Default DTA overwrites command line */
 
@@ -1316,18 +1312,6 @@ UINT16 WINAPI SetErrorMode16( UINT16 mode )
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
     pTask->error_mode = mode;
     return SetErrorMode( mode );
-}
-
-
-/***********************************************************************
- *           GetDOSEnvironment   (KERNEL.131)
- */
-SEGPTR WINAPI GetDOSEnvironment16(void)
-{
-    TDB *pTask;
-
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
-    return PTR_SEG_OFF_TO_SEGPTR( pTask->pdb.environment, 0 );
 }
 
 

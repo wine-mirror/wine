@@ -5,11 +5,11 @@
  */
 
 #include "wine/winbase16.h"
+#include "ntddk.h"
 #include "heap.h"
 #include "module.h"
 #include "selectors.h"
 #include "callback.h"
-#include "process.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk);
@@ -50,6 +50,8 @@ typedef struct _UTINFO
     UT32THUNK          ut32;
 
 } UTINFO;
+
+static UTINFO *UT_head; /* head of Universal Thunk list */
 
 typedef DWORD (CALLBACK *UTGLUEPROC)( LPVOID lpBuff, DWORD dwUserDefined );
 
@@ -173,8 +175,8 @@ static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
     ut->ut32.jmp       = 0xe9;
     ut->ut32.utglue32  = (DWORD)UTGlue32 - ((DWORD)&ut->ut32.utglue32 + sizeof(DWORD));
 
-    ut->next = PROCESS_Current()->UTState;
-    PROCESS_Current()->UTState = ut;
+    ut->next = UT_head;
+    UT_head = ut;
 
     return ut;
 }
@@ -186,7 +188,7 @@ static void UTFree( UTINFO *ut )
 {
     UTINFO **ptr;
 
-    for ( ptr = &PROCESS_Current()->UTState; *ptr; ptr = &(*ptr)->next )
+    for ( ptr = &UT_head; *ptr; ptr = &(*ptr)->next )
         if ( *ptr == ut )
         {
             *ptr = ut->next;
@@ -203,7 +205,7 @@ static UTINFO *UTFind( HMODULE hModule )
 {
     UTINFO *ut;
 
-    for ( ut = PROCESS_Current()->UTState; ut; ut =ut->next )
+    for ( ut = UT_head; ut; ut =ut->next )
         if ( ut->hModule == hModule )
             break;
 
@@ -231,12 +233,12 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 
     /* Allocate UTINFO struct */
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
     if ( (ut = UTFind( hModule )) != NULL )
         ut = NULL;
     else
         ut = UTAlloc( hModule, hModule16, target16, pfnUT32CallBack );
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
 
     if ( !ut )
     {
@@ -276,14 +278,14 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
     UTINFO *ut;
     HMODULE16 hModule16 = 0;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
     ut = UTFind( hModule );
     if ( !ut )
     {
         hModule16 = ut->hModule16;
         UTFree( ut );
     }
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
 
     if ( hModule16 ) 
         FreeLibrary16( hModule16 );

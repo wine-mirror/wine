@@ -11,7 +11,6 @@
  */
 
 #include "crtdll.h"
-#include "process.h"
 #include <stdlib.h>
 #include <sys/times.h>
 

@@ -24,7 +24,7 @@
 #include "sysmetrics.h"
 #include "callback.h"
 #include "local.h"
-#include "process.h"
+#include "module.h"
 #include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(hook);

@@ -9,9 +9,30 @@
 #include "windef.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "process.h"
+#include "ntddk.h"
 #include "heap.h"
 #include "selectors.h"
+
+/* Win32 process environment database */
+typedef struct _ENVDB
+{
+    LPSTR            environ;          /* 00 Process environment strings */
+    DWORD            unknown1;         /* 04 Unknown */
+    LPSTR            cmd_line;         /* 08 Command line */
+    LPSTR            cur_dir;          /* 0c Current directory */
+    STARTUPINFOA    *startup_info;     /* 10 Startup information */
+    HANDLE           hStdin;           /* 14 Handle for standard input */
+    HANDLE           hStdout;          /* 18 Handle for standard output */
+    HANDLE           hStderr;          /* 1c Handle for standard error */
+    DWORD            unknown2;         /* 20 Unknown */
+    DWORD            inherit_console;  /* 24 Inherit console flag */
+    DWORD            break_type;       /* 28 Console events flag */
+    void            *break_sem;        /* 2c SetConsoleCtrlHandler semaphore */
+    void            *break_event;      /* 30 SetConsoleCtrlHandler event */
+    void            *break_thread;     /* 34 SetConsoleCtrlHandler thread */
+    void            *break_handlers;   /* 38 List of console handlers */
+} ENVDB;
+
 
 /* Format of an environment block:
  * ASCIIZ   string 1 (xx=yy format)
@@ -79,11 +100,12 @@ ENVDB current_envdb =
     0,                       /* break_sem */
     0,                       /* break_event */
     0,                       /* break_thread */
-    0,                       /* break_handlers */
-    CRITICAL_SECTION_INIT,   /* section */
-    0,                       /* cmd_lineW */
-    0                        /* env_sel */
+    0                        /* break_handlers */
 };
+
+
+static WCHAR *cmdlineW;  /* Unicode command line */
+static WORD env_sel;     /* selector to the environment */
 
 /***********************************************************************
  *           ENV_FindVariable
@@ -108,7 +130,7 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
  *
  * Build the environment for the initial process
  */
-BOOL ENV_BuildEnvironment(void)
+ENVDB *ENV_BuildEnvironment(void)
 {
     extern char **environ;
     LPSTR p, *e;
@@ -121,9 +143,9 @@ BOOL ENV_BuildEnvironment(void)
 
     /* Now allocate the environment */
 
-    if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+    if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
     current_envdb.environ = p;
-    current_envdb.env_sel = SELECTOR_AllocBlock( p, 0x10000, WINE_LDT_FLAGS_DATA );
+    env_sel = SELECTOR_AllocBlock( p, 0x10000, WINE_LDT_FLAGS_DATA );
 
     /* And fill it with the Unix environment */
 
@@ -136,6 +158,50 @@ BOOL ENV_BuildEnvironment(void)
     /* Now add the program name */
 
     FILL_EXTRA_ENV( p );
+    return &current_envdb;
+}
+
+
+/***********************************************************************
+ *           ENV_BuildCommandLine
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * Note that it does NOT necessarily include the file name.
+ * Sometimes we don't even have any command line options at all.
+ */
+BOOL ENV_BuildCommandLine( char **argv )
+{
+    int len, quote = 0;
+    char *p, **arg;
+
+    for (arg = argv, len = 0; *arg; arg++) len += strlen(*arg) + 1;
+    if ((argv[0]) && (quote = (strchr( argv[0], ' ' ) != NULL))) len += 2;
+    if (!(p = current_envdb.cmd_line = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
+    arg = argv;
+    if (quote)
+    {
+        *p++ = '\"';
+        strcpy( p, *arg );
+        p += strlen(p);
+        *p++ = '\"';
+        *p++ = ' ';
+        arg++;
+    }
+    while (*arg)
+    {
+        strcpy( p, *arg );
+        p += strlen(p);
+        *p++ = ' ';
+        arg++;
+    }
+    if (p > current_envdb.cmd_line) p--;  /* remove last space */
+    *p = 0;
+    /* now allocate the Unicode version */
+    len = MultiByteToWideChar( CP_ACP, 0, current_envdb.cmd_line, -1, NULL, 0 );
+    if (!(cmdlineW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return FALSE;
+    MultiByteToWideChar( CP_ACP, 0, current_envdb.cmd_line, -1, cmdlineW, len );
     return TRUE;
 }
 
@@ -153,12 +219,7 @@ LPSTR WINAPI GetCommandLineA(void)
  */
 LPWSTR WINAPI GetCommandLineW(void)
 {
-    EnterCriticalSection( &current_envdb.section );
-    if (!current_envdb.cmd_lineW)
-        current_envdb.cmd_lineW = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                  current_envdb.cmd_line );
-    LeaveCriticalSection( &current_envdb.section );
-    return current_envdb.cmd_lineW;
+    return cmdlineW;
 }
 
 
@@ -179,7 +240,7 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
     INT size;
     LPWSTR ret;
 
-    EnterCriticalSection( &current_envdb.section );
+    RtlAcquirePebLock();
     size = HeapSize( GetProcessHeap(), 0, current_envdb.environ );
     if ((ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )) != NULL)
     {
@@ -187,7 +248,7 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
         LPWSTR pW = ret;
         while (size--) *pW++ = (WCHAR)(BYTE)*pA++;
     }
-    LeaveCriticalSection( &current_envdb.section );
+    RtlReleasePebLock();
     return ret;
 }
 
@@ -228,7 +289,7 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    EnterCriticalSection( &current_envdb.section );
+    RtlAcquirePebLock();
     if ((p = ENV_FindVariable( current_envdb.environ, name, strlen(name) )))
     {
         ret = strlen(p);
@@ -241,7 +302,7 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         }
         else if (value) strcpy( value, p );
     }
-    LeaveCriticalSection( &current_envdb.section );
+    RtlReleasePebLock();
     if (!ret)
 	SetLastError( ERROR_ENVVAR_NOT_FOUND );
     return ret;
@@ -276,7 +337,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     LPSTR p, env, new_env;
     BOOL ret = FALSE;
 
-    EnterCriticalSection( &current_envdb.section );
+    RtlAcquirePebLock();
     env = p = current_envdb.environ;
 
     /* Find a place to insert the string */
@@ -302,9 +363,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     }
     if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, old_size + len )))
         goto done;
-    if (current_envdb.env_sel)
-        current_envdb.env_sel = SELECTOR_ReallocBlock( current_envdb.env_sel,
-                                                       new_env, old_size + len );
+    if (env_sel) env_sel = SELECTOR_ReallocBlock( env_sel, new_env, old_size + len );
     p = new_env + (p - env);
     if (len > 0) memmove( p + len, p, old_size - (p - new_env) );
 
@@ -320,7 +379,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     ret = TRUE;
 
 done:
-    LeaveCriticalSection( &current_envdb.section );
+    RtlReleasePebLock();
     return ret;
 }
 
@@ -350,7 +409,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
     LPCSTR p, var;
 
     if (!count) dst = NULL;
-    EnterCriticalSection( &current_envdb.section );
+    RtlAcquirePebLock();
 
     while (*src)
     {
@@ -395,7 +454,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
             count -= len;
         }
     }
-    LeaveCriticalSection( &current_envdb.section );
+    RtlReleasePebLock();
 
     /* Null-terminate the string */
     if (dst)
@@ -422,6 +481,15 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     }
     HeapFree( GetProcessHeap(), 0, srcA );
     return ret;
+}
+
+
+/***********************************************************************
+ *           GetDOSEnvironment   (KERNEL.131)
+ */
+SEGPTR WINAPI GetDOSEnvironment16(void)
+{
+    return PTR_SEG_OFF_TO_SEGPTR( env_sel, 0 );
 }
 
 

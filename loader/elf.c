@@ -17,7 +17,6 @@
 #include <sys/types.h>
 
 #include "snoop.h"
-#include "process.h"
 #include "heap.h"
 #include "file.h"
 #include "module.h"

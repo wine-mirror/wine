@@ -16,9 +16,9 @@
 #include "wine/winuser16.h"
 #include "msdos.h"
 #include "miscemu.h"
+#include "module.h"
 #include "selectors.h"
 #include "task.h"
-#include "process.h"
 #include "file.h"
 #include "debugtools.h"
 
@@ -33,6 +33,7 @@ DEFAULT_DEBUG_CHANNEL(vxd);
              CX_reg(context), DX_reg(context), SI_reg(context), \
              DI_reg(context), (WORD)context->SegDs, (WORD)context->SegEs )
 
+UINT W32S_offset = 0;
 
 static WORD VXD_WinVersion(void)
 {
@@ -515,10 +516,8 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
  * any routine apart from those, e.g. some other VxD handler, that code
  * would have to take the offset into account as well!)
  *
- * The application of the offset is triggered by marking the current process
- * as a Win32s process by setting the PDB32_WIN32S_PROC flag in the process
- * database. This is done the first time any application calls the GetVersion()
- * service of the Win32s VxD. (Note that the flag is never removed.)
+ * The offset is set the first time any application calls the GetVersion()
+ * service of the Win32s VxD. (Note that the offset is never reset.)
  * 
  */
 
@@ -596,7 +595,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * performance of Win32s.
          */
 
-        if (!(PROCESS_Current()->flags & PDB32_WIN32S_PROC))
+        if (!W32S_offset)
         {
             HMODULE16 hModule = GetModuleHandle16("win32s16");
             SEGPTR func1 = (SEGPTR)GetProcAddress16(hModule, "SetFS");
@@ -633,9 +632,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Mark process as Win32s, so that subsequent DPMI calls
          * will perform the W32S_APP2WINE/W32S_WINE2APP address shift.
          */
-
-        PROCESS_Current()->flags |= PDB32_WIN32S_PROC;
-	break;
+        W32S_offset = 0x10000;
+        break;
 
 
     case 0x0001: /* Install Exception Handling */
@@ -743,7 +741,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         struct Win32sModule *moduleTable = 
-                            (struct Win32sModule *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+                            (struct Win32sModule *)W32S_APP2WINE(context->Edx);
         struct Win32sModule *module = moduleTable + context->Ecx;
 
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(module->baseAddr);
@@ -835,7 +833,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 1 if OK
          */
         
-        TRACE("UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(context->Edx, W32S_OFFSET));
+        TRACE("UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(context->Edx));
 
         /* As we didn't map anything, there's nothing to unmap ... */
 
@@ -858,9 +856,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
-        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
         DWORD  size   = stack[2];
         DWORD  type   = stack[3];
         DWORD  prot   = stack[4];
@@ -883,8 +881,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         result = (DWORD)VirtualAlloc(base, size, type, prot);
 
-        if (W32S_WINE2APP(result, W32S_OFFSET))
-            *retv            = W32S_WINE2APP(result, W32S_OFFSET),
+        if (W32S_WINE2APP(result))
+            *retv            = W32S_WINE2APP(result),
             context->Eax = STATUS_SUCCESS;
         else
             *retv            = 0,
@@ -907,9 +905,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
-        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
         DWORD  size   = stack[2];
         DWORD  type   = stack[3];
         DWORD  result;
@@ -944,12 +942,12 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        DWORD *retv     = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
-        LPVOID base     = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx);
+        DWORD *retv     = (DWORD *)W32S_APP2WINE(stack[0]);
+        LPVOID base     = (LPVOID) W32S_APP2WINE(stack[1]);
         DWORD  size     = stack[2];
         DWORD  new_prot = stack[3];
-        DWORD *old_prot = (DWORD *)W32S_APP2WINE(stack[4], W32S_OFFSET);
+        DWORD *old_prot = (DWORD *)W32S_APP2WINE(stack[4]);
         DWORD  result;
 
         TRACE("VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n", 
@@ -981,11 +979,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
-        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
         LPMEMORY_BASIC_INFORMATION info = 
-                        (LPMEMORY_BASIC_INFORMATION)W32S_APP2WINE(stack[2], W32S_OFFSET);
+                        (LPMEMORY_BASIC_INFORMATION)W32S_APP2WINE(stack[2]);
         DWORD  len    = stack[3];
         DWORD  result;
 
@@ -1064,11 +1062,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)   W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        DWORD *stack    = (DWORD *)   W32S_APP2WINE(context->Edx);
+        HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0]);
         DWORD  flags1   = stack[1];
         DWORD  atom     = stack[2];
-        LARGE_INTEGER *size = (LARGE_INTEGER *)W32S_APP2WINE(stack[3], W32S_OFFSET);
+        LARGE_INTEGER *size = (LARGE_INTEGER *)W32S_APP2WINE(stack[3]);
         DWORD  protect  = stack[4];
         DWORD  flags2   = stack[5];
         HANDLE hFile    = DosFileHandleToWin32Handle(stack[6]);
@@ -1117,8 +1115,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx);
+        HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0]);
         DWORD  protect  = stack[1];
         DWORD  atom     = stack[2];
 
@@ -1160,9 +1158,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx);
         HANDLE handle = stack[0];
-        DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1]);
 
         TRACE("NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
 
@@ -1183,7 +1181,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx);
         HANDLE handle = stack[0];
         HANDLE new_handle;
 
@@ -1215,20 +1213,20 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *  stack          = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+        DWORD *  stack          = (DWORD *)W32S_APP2WINE(context->Edx);
         HANDLE SectionHandle  = stack[0];
         DWORD    ProcessHandle  = stack[1]; /* ignored */
-        DWORD *  BaseAddress    = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
+        DWORD *  BaseAddress    = (DWORD *)W32S_APP2WINE(stack[2]);
         DWORD    ZeroBits       = stack[3];
         DWORD    CommitSize     = stack[4];
-        LARGE_INTEGER *SectionOffset = (LARGE_INTEGER *)W32S_APP2WINE(stack[5], W32S_OFFSET);
-        DWORD *  ViewSize       = (DWORD *)W32S_APP2WINE(stack[6], W32S_OFFSET);
+        LARGE_INTEGER *SectionOffset = (LARGE_INTEGER *)W32S_APP2WINE(stack[5]);
+        DWORD *  ViewSize       = (DWORD *)W32S_APP2WINE(stack[6]);
         DWORD    InheritDisposition = stack[7];
         DWORD    AllocationType = stack[8];
         DWORD    Protect        = stack[9];
 
         LPBYTE address = (LPBYTE)(BaseAddress?
-			W32S_APP2WINE(*BaseAddress, W32S_OFFSET) : 0);
+			W32S_APP2WINE(*BaseAddress) : 0);
         DWORD  access = 0, result;
 
         switch (Protect & ~(PAGE_GUARD|PAGE_NOCACHE))
@@ -1259,9 +1257,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         TRACE("NtMapViewOfSection: result=%lx\n", result);
 
-        if (W32S_WINE2APP(result, W32S_OFFSET))
+        if (W32S_WINE2APP(result))
         {
-            if (BaseAddress) *BaseAddress = W32S_WINE2APP(result, W32S_OFFSET);
+            if (BaseAddress) *BaseAddress = W32S_WINE2APP(result);
             context->Eax = STATUS_SUCCESS;
         }
         else
@@ -1280,9 +1278,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack          = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+        DWORD *stack          = (DWORD *)W32S_APP2WINE(context->Edx);
         DWORD  ProcessHandle  = stack[0]; /* ignored */
-        LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1], W32S_OFFSET);
+        LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1]);
 
         TRACE("NtUnmapViewOfSection(%lx, %lx)\n", 
                    ProcessHandle, (DWORD)BaseAddress);
@@ -1306,13 +1304,13 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack          = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+        DWORD *stack          = (DWORD *)W32S_APP2WINE(context->Edx);
         DWORD  ProcessHandle  = stack[0]; /* ignored */
-        DWORD *BaseAddress    = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
-        DWORD *ViewSize       = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
-        DWORD *unknown        = (DWORD *)W32S_APP2WINE(stack[3], W32S_OFFSET);
+        DWORD *BaseAddress    = (DWORD *)W32S_APP2WINE(stack[1]);
+        DWORD *ViewSize       = (DWORD *)W32S_APP2WINE(stack[2]);
+        DWORD *unknown        = (DWORD *)W32S_APP2WINE(stack[3]);
         
-        LPBYTE address = (LPBYTE)(BaseAddress? W32S_APP2WINE(*BaseAddress, W32S_OFFSET) : 0);
+        LPBYTE address = (LPBYTE)(BaseAddress? W32S_APP2WINE(*BaseAddress) : 0);
         DWORD  size    = ViewSize? *ViewSize : 0;
 
         TRACE("NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n", 
@@ -1413,9 +1411,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
-        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
         DWORD  size   = stack[2];
         DWORD  result;
 
@@ -1447,9 +1445,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
-        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
-        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
         DWORD  size   = stack[2];
         DWORD  result;
 
@@ -1487,8 +1485,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *       FIXME: What about other OSes ?
          */
 
-        context->Ecx = W32S_WINE2APP(0x00000000, W32S_OFFSET);
-        context->Edx = W32S_WINE2APP(0xbfffffff, W32S_OFFSET);
+        context->Ecx = W32S_WINE2APP(0x00000000);
+        context->Edx = W32S_WINE2APP(0xbfffffff);
         break;
 
 
@@ -1511,7 +1509,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         };
 
         struct Win32sMemoryInfo *info = 
-                       (struct Win32sMemoryInfo *)W32S_APP2WINE(context->Esi, W32S_OFFSET);
+                       (struct Win32sMemoryInfo *)W32S_APP2WINE(context->Esi);
 
         FIXME("KGlobalMemStat(%lx)\n", (DWORD)info);
 
@@ -1548,7 +1546,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
     {
         DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(context->Edx), 
                                            HIWORD(context->Edx));
-        LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0]);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
         DWORD  prot   = stack[3];
@@ -1565,8 +1563,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         result = (DWORD)VirtualAlloc(base, size, type, prot);
 
-        if (W32S_WINE2APP(result, W32S_OFFSET))
-            context->Edx = W32S_WINE2APP(result, W32S_OFFSET),
+        if (W32S_WINE2APP(result))
+            context->Edx = W32S_WINE2APP(result),
             context->Eax = STATUS_SUCCESS;
         else
             context->Edx = 0,
@@ -1590,7 +1588,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
     {
         DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(context->Edx), 
                                            HIWORD(context->Edx));
-        LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0]);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
         DWORD  result;
@@ -1620,7 +1618,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  NtStatus
          */
     {
-        DWORD *ptr = (DWORD *)W32S_APP2WINE(context->Ecx, W32S_OFFSET);
+        DWORD *ptr = (DWORD *)W32S_APP2WINE(context->Ecx);
         BOOL set = context->Edx;
         
         TRACE("FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);

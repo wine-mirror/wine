@@ -1880,13 +1880,33 @@ typedef struct tagSYSLEVEL
     INT              level;
 } SYSLEVEL;
 
+/* [GS]etProcessDword offsets */
+#define  GPD_APP_COMPAT_FLAGS    (-56)
+#define  GPD_LOAD_DONE_EVENT     (-52)
+#define  GPD_HINSTANCE16         (-48)
+#define  GPD_WINDOWS_VERSION     (-44)
+#define  GPD_THDB                (-40)
+#define  GPD_PDB                 (-36)
+#define  GPD_STARTF_SHELLDATA    (-32)
+#define  GPD_STARTF_HOTKEY       (-28)
+#define  GPD_STARTF_SHOWWINDOW   (-24)
+#define  GPD_STARTF_SIZE         (-20)
+#define  GPD_STARTF_POSITION     (-16)
+#define  GPD_STARTF_FLAGS        (-12)
+#define  GPD_PARENT              (- 8)
+#define  GPD_FLAGS               (- 4)
+#define  GPD_USERDATA            (  0)
+
 void        WINAPI DisposeLZ32Handle(HANDLE);
 HANDLE      WINAPI DosFileHandleToWin32Handle(HFILE);
+DWORD       WINAPI GetProcessDword(DWORD,INT);
 VOID        WINAPI GetpWin16Lock(SYSLEVEL**);
 DWORD       WINAPI MapLS(LPCVOID);
+DWORD       WINAPI MapProcessHandle(HANDLE);
 LPVOID      WINAPI MapSL(DWORD);
 VOID        WINAPI ReleaseThunkLock(DWORD*);
 VOID        WINAPI RestoreThunkLock(DWORD);
+void        WINAPI SetProcessDword(DWORD,INT,DWORD);
 VOID        WINAPI UnMapLS(DWORD);
 HFILE       WINAPI Win32HandleToDosFileHandle(HANDLE);
 DWORD       WINAPI _ConfirmWin16Lock(void);

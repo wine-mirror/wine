@@ -26,7 +26,6 @@
 #include "selectors.h"
 #include "file.h"
 #include "ldt.h"
-#include "process.h"
 #include "miscemu.h"
 #include "debugtools.h"
 #include "dosexe.h"

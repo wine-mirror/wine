@@ -15,7 +15,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
-#include "process.h"
+#include "module.h"
 #include "options.h"
 #include "debugtools.h"
 #include "winerror.h"
@@ -259,26 +259,15 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
  * 5.12/5.00/5.00/4.00	Win98		calc
  * x.xx/5.00/5.00/4.00	win95/win98/NT4	IE5 files
  */
-DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
+DWORD VERSION_GetLinkedDllVersion(void)
 {
 	WINE_MODREF *wm;
 	DWORD WinVersion = NB_WINDOWS_VERSIONS;
 	PIMAGE_OPTIONAL_HEADER ophd;
 
-	if (!pdb->exe_modref)
-	{
-	  if (!pdb->modref_list)
-            return WIN31;
-
-	  /* FIXME: The above condition will never trigger, since all our
-	   * standard dlls load their win32 equivalents. We have usually at
-	   * this point: kernel32.dll and ntdll.dll.
-	   */
-	  return WIN95;
-	}
 	/* First check the native dlls provided. These have to be
 	from one windows version */
-	for ( wm = pdb->modref_list; wm; wm=wm->next )
+	for ( wm = MODULE_modref_list; wm; wm=wm->next )
 	{
 	  ophd = &(PE_HEADER(wm->module)->OptionalHeader);
 
@@ -319,10 +308,9 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	if(WinVersion != NB_WINDOWS_VERSIONS) return WinVersion;
 	
 	/* we are using no external system dlls, look at the exe */
-	ophd = &(PE_HEADER(pdb->exe_modref->module)->OptionalHeader);
+	ophd = &(PE_HEADER(GetModuleHandleA(NULL))->OptionalHeader);
 	
-	TRACE("-%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
-	    pdb->exe_modref->modname,
+	TRACE("%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
 	    ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
 	    ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
 	    ophd->MajorImageVersion, ophd->MinorImageVersion,
@@ -373,7 +361,7 @@ static WINDOWS_VERSION VERSION_GetVersion(void)
 	  return defaultWinVersion;
 
 	if (winver == 0xffff) /* to be determined */ {
-	  WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion( PROCESS_Current() );
+	  WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion();
 
 	  if (retver != WIN31) winver = retver;
 	  return retver;

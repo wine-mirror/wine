@@ -15,7 +15,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "file.h"
-#include "process.h"
+#include "module.h"
 #include "selectors.h"
 #include "debugtools.h"
 #include "callback.h"
@@ -25,6 +25,10 @@
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(win32);
 
+WINE_MODREF *MODULE_modref_list = NULL;
+
+static WINE_MODREF *exe_modref;
+static int free_lib_count;   /* recursion depth of FreeLibrary calls */
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE
@@ -36,14 +40,14 @@ static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
     WINE_MODREF	*wm;
 
     if (!hmod) 
-    	return PROCESS_Current()->exe_modref;
+    	return exe_modref;
 
     if (!HIWORD(hmod)) {
     	ERR("tried to lookup 0x%04x in win32 module handler!\n",hmod);
         SetLastError( ERROR_INVALID_HANDLE );
 	return NULL;
     }
-    for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next )
+    for ( wm = MODULE_modref_list; wm; wm=wm->next )
 	if (wm->module == hmod)
 	    return wm;
     SetLastError( ERROR_INVALID_HANDLE );
@@ -76,9 +80,15 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
         if ((wm->short_modname = strrchr( wm->short_filename, '\\' ))) wm->short_modname++;
         else wm->short_modname = wm->short_filename;
 
-        wm->next = PROCESS_Current()->modref_list;
+        wm->next = MODULE_modref_list;
         if (wm->next) wm->next->prev = wm;
-        PROCESS_Current()->modref_list = wm;
+        MODULE_modref_list = wm;
+
+        if (!(PE_HEADER(hModule)->FileHeader.Characteristics & IMAGE_FILE_DLL))
+        {
+            if (!exe_modref) exe_modref = wm;
+            else FIXME( "Trying to load second .EXE file: %s\n", filename );
+        }
     }
     return wm;
 }
@@ -139,20 +149,21 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
  * list after the attach notification has returned.  This implies that the
  * detach notifications are called in the reverse of the sequence the attach
  * notifications *returned*.
- *
- * NOTE: Assumes that the process critical section is held!
- *
  */
 BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 {
     BOOL retv = TRUE;
     int i;
+
+    RtlAcquirePebLock();
+
+    if (!wm) wm = exe_modref;
     assert( wm );
 
     /* prevent infinite recursion in case of cyclical dependencies */
     if (    ( wm->flags & WINE_MODREF_MARKER )
          || ( wm->flags & WINE_MODREF_PROCESS_ATTACHED ) )
-        return retv;
+        goto done;
 
     TRACE("(%s,%p) - START\n", wm->modname, lpReserved );
 
@@ -179,8 +190,8 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
         if ( wm->next ) wm->next->prev = wm->prev;
 
         wm->prev = NULL;
-        wm->next = PROCESS_Current()->modref_list;
-        PROCESS_Current()->modref_list = wm->next->prev = wm;
+        wm->next = MODULE_modref_list;
+        MODULE_modref_list = wm->next->prev = wm;
     }
 
     /* Remove recursion flag */
@@ -188,6 +199,8 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 
     TRACE("(%s,%p) - END\n", wm->modname, lpReserved );
 
+ done:
+    RtlReleasePebLock();
     return retv;
 }
 
@@ -202,11 +215,11 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 {
     WINE_MODREF *wm;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
 
     do
     {
-        for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+        for ( wm = MODULE_modref_list; wm; wm = wm->next )
         {
             /* Check whether to detach this DLL */
             if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
@@ -224,7 +237,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
         }
     } while ( wm );
 
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
 }
 
 /*************************************************************************
@@ -238,9 +251,9 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
 {
     WINE_MODREF *wm;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
 
-    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
         if ( !wm->next )
             break;
 
@@ -254,7 +267,7 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
         MODULE_InitDLL( wm, DLL_THREAD_ATTACH, lpReserved );
     }
 
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
 }
 
 /*************************************************************************
@@ -268,9 +281,9 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
 {
     WINE_MODREF *wm;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
 
-    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
     {
         if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
             continue;
@@ -280,7 +293,7 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
         MODULE_InitDLL( wm, DLL_THREAD_DETACH, lpReserved );
     }
 
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
 }
 
 /****************************************************************************
@@ -293,7 +306,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
     WINE_MODREF *wm;
     BOOL retval = TRUE;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
 
     wm = MODULE32_LookupHMODULE( hModule );
     if ( !wm )
@@ -301,7 +314,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
     else
         wm->flags |= WINE_MODREF_NO_DLL_CALLS;
 
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
 
     return retval;
 }
@@ -432,7 +445,7 @@ WINE_MODREF *MODULE_FindModule(
     if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
             strcat( dllname, ".DLL" );
 
-    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
     {
         if ( !FILE_strcasecmp( dllname, wm->modname ) )
             break;
@@ -1155,7 +1168,7 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
     WINE_MODREF *wm;
 
     if ( module == NULL )
-        wm = PROCESS_Current()->exe_modref;
+        wm = exe_modref;
     else
         wm = MODULE_FindModule( module );
 
@@ -1190,13 +1203,13 @@ DWORD WINAPI GetModuleFileNameA(
 {
     WINE_MODREF *wm;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
 
     lpFileName[0] = 0;
     if ((wm = MODULE32_LookupHMODULE( hModule )))
         lstrcpynA( lpFileName, wm->filename, size );
 
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
     TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
 }                   
@@ -1249,7 +1262,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
             return hmod;
         }
 
-	EnterCriticalSection(&PROCESS_Current()->crit_section);
+        RtlAcquirePebLock();
 
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
 	if ( wm )
@@ -1263,8 +1276,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 		}
 	}
 
-	LeaveCriticalSection(&PROCESS_Current()->crit_section);
-
+        RtlReleasePebLock();
 	return wm ? wm->module : 0;
 }
 
@@ -1323,7 +1335,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	        strcat( filename, ".DLL" );
 	}
 
-	EnterCriticalSection(&PROCESS_Current()->crit_section);
+        RtlAcquirePebLock();
 
 	/* Check for already loaded module */
 	if (!(pwm = MODULE_FindModule(filename)) && 
@@ -1361,7 +1373,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                     fixup_imports( pwm );
 		}
 		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", filename, pwm->module, pwm->refCount);
-		LeaveCriticalSection(&PROCESS_Current()->crit_section);
+                RtlReleasePebLock();
 		HeapFree ( GetProcessHeap(), 0, filename );
 		return pwm;
 	}
@@ -1407,7 +1419,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
 			pwm->refCount++;
 
-			LeaveCriticalSection(&PROCESS_Current()->crit_section);
+                        RtlReleasePebLock();
                         SetLastError( err );  /* restore last error */
 			HeapFree ( GetProcessHeap(), 0, filename );
 			return pwm;
@@ -1417,7 +1429,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			break;
 	}
 
-	LeaveCriticalSection(&PROCESS_Current()->crit_section);
+        RtlReleasePebLock();
  error:
 	WARN("Failed to load module '%s'; error=0x%08lx, \n", filename, GetLastError());
 	HeapFree ( GetProcessHeap(), 0, filename );
@@ -1477,7 +1489,7 @@ static void MODULE_FlushModrefs(void)
 {
 	WINE_MODREF *wm, *next;
 
-	for(wm = PROCESS_Current()->modref_list; wm; wm = next)
+	for(wm = MODULE_modref_list; wm; wm = next)
 	{
 		next = wm->next;
 
@@ -1489,8 +1501,8 @@ static void MODULE_FlushModrefs(void)
                         wm->next->prev = wm->prev;
 		if(wm->prev)
                         wm->prev->next = wm->next;
-		if(wm == PROCESS_Current()->modref_list)
-			PROCESS_Current()->modref_list = wm->next;
+		if(wm == MODULE_modref_list)
+			MODULE_modref_list = wm->next;
 
                 TRACE(" unloading %s\n", wm->filename);
                 /* VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE ); */  /* FIXME */
@@ -1511,8 +1523,8 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     BOOL retv = FALSE;
     WINE_MODREF *wm;
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
-    PROCESS_Current()->free_lib_count++;
+    RtlAcquirePebLock();
+    free_lib_count++;
 
     wm = MODULE32_LookupHMODULE( hLibModule );
     if ( !wm || !hLibModule )
@@ -1520,8 +1532,8 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     else
         retv = MODULE_FreeLibrary( wm );
 
-    PROCESS_Current()->free_lib_count--;
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    free_lib_count--;
+    RtlReleasePebLock();
 
     return retv;
 }
@@ -1569,7 +1581,7 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     MODULE_DecRefCount( wm );
 
     /* Call process detach notifications */
-    if ( PROCESS_Current()->free_lib_count <= 1 )
+    if ( free_lib_count <= 1 )
     {
         MODULE_DllProcessDetach( FALSE, NULL );
         SERVER_START_REQ
@@ -1700,13 +1712,13 @@ FARPROC MODULE_GetProcAddress(
     else
 	TRACE_(win32)("(%08lx,%p)\n",(DWORD)hModule,function);
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    RtlAcquirePebLock();
     if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
         retproc = wm->find_export( wm, function, snoop );
         if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
     }
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    RtlReleasePebLock();
     return retproc;
 }
 

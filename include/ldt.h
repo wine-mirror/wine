@@ -26,10 +26,10 @@
 #define PTR_SEG_OFF_TO_HUGEPTR(seg,off) \
    PTR_SEG_OFF_TO_SEGPTR( (seg) + (HIWORD(off) << __AHSHIFT), LOWORD(off) )
 
-#define W32S_APPLICATION() (PROCESS_Current()->flags & PDB32_WIN32S_PROC)
-#define W32S_OFFSET 0x10000
-#define W32S_APP2WINE(addr, offset) ((addr)? (DWORD)(addr) + (DWORD)(offset) : 0)
-#define W32S_WINE2APP(addr, offset) ((addr)? (DWORD)(addr) - (DWORD)(offset) : 0)
+extern UINT W32S_offset;
+
+#define W32S_APP2WINE(addr) ((addr)? (DWORD)(addr) + W32S_offset : 0)
+#define W32S_WINE2APP(addr) ((addr)? (DWORD)(addr) - W32S_offset : 0)
 
 #define FIRST_LDT_ENTRY_TO_ALLOC  17
 

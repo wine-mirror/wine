@@ -25,7 +25,6 @@
  */
 #include "crtdll.h"
 #include <errno.h>
-#include "process.h"
 
 
 DEFAULT_DEBUG_CHANNEL(crtdll);

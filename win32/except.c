@@ -29,13 +29,14 @@
 #include "wine/exception.h"
 #include "selectors.h"
 #include "callback.h"
-#include "process.h"
 #include "thread.h"
 #include "stackframe.h"
 #include "server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh);
+
+static PTOP_LEVEL_EXCEPTION_FILTER top_filter;
 
 
 /*******************************************************************
@@ -143,7 +144,6 @@ static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer )
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
-    PDB*		pdb = PROCESS_Current();
     char 		format[256];
     char 		buffer[256];
     HKEY		hDbgConf;
@@ -179,9 +179,9 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
         FIXME("Unsupported yet debug continue value %d (please report)\n", status);
     }
 
-    if (pdb->top_filter)
+    if (top_filter)
     {
-        DWORD ret = pdb->top_filter( epointers );
+        DWORD ret = top_filter( epointers );
         if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
     }
 
@@ -265,9 +265,8 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
                                           LPTOP_LEVEL_EXCEPTION_FILTER filter )
 {
-    PDB *pdb = PROCESS_Current();
-    LPTOP_LEVEL_EXCEPTION_FILTER old = pdb->top_filter;
-    pdb->top_filter = filter;
+    LPTOP_LEVEL_EXCEPTION_FILTER old = top_filter;
+    top_filter = filter;
     return old;
 }
 

@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "thread.h"
-#include "process.h"
 #include "task.h"
 #include "module.h"
 #include "global.h"
@@ -34,6 +33,8 @@ DEFAULT_DEBUG_CHANNEL(thread);
 
 /* TEB of the initial thread */
 static TEB initial_teb;
+
+extern struct _PDB current_process;
 
 /***********************************************************************
  *           THREAD_IsWin16
@@ -239,8 +240,8 @@ TEB *THREAD_Create( int fd, DWORD stack_size, BOOL alloc_stack16 )
 
     if ((teb = THREAD_InitStack( NULL, stack_size, alloc_stack16 )))
     {
-        teb->tibflags = (current_process.flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
-        teb->process  = &current_process;
+        teb->tibflags = TEBF_WIN32;
+        teb->process  = NtCurrentTeb()->process;
         teb->socket   = fd;
         fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
         TRACE("(%p) succeeded\n", teb);
@@ -304,7 +305,6 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
         close( socket );
         return 0;
     }
-    teb->tibflags   |= TEBF_WIN32;
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
@@ -376,115 +376,6 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_ExitTask();
         SYSDEPS_ExitThread( code );
     }
-}
-
-
-/**********************************************************************
- * TlsAlloc [KERNEL32.530]  Allocates a TLS index.
- *
- * Allocates a thread local storage index
- *
- * RETURNS
- *    Success: TLS Index
- *    Failure: 0xFFFFFFFF
- */
-DWORD WINAPI TlsAlloc( void )
-{
-    DWORD i, mask, ret = 0;
-    DWORD *bits = current_process.tls_bits;
-    EnterCriticalSection( &current_process.crit_section );
-    if (*bits == 0xffffffff)
-    {
-        bits++;
-        ret = 32;
-        if (*bits == 0xffffffff)
-        {
-            LeaveCriticalSection( &current_process.crit_section );
-            SetLastError( ERROR_NO_MORE_ITEMS );
-            return 0xffffffff;
-        }
-    }
-    for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
-    *bits |= mask;
-    LeaveCriticalSection( &current_process.crit_section );
-    return ret + i;
-}
-
-
-/**********************************************************************
- * TlsFree [KERNEL32.531]  Releases a TLS index.
- *
- * Releases a thread local storage index, making it available for reuse
- * 
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI TlsFree(
-    DWORD index) /* [in] TLS Index to free */
-{
-    DWORD mask;
-    DWORD *bits = current_process.tls_bits;
-    if (index >= 64)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    EnterCriticalSection( &current_process.crit_section );
-    if (index >= 32) bits++;
-    mask = (1 << (index & 31));
-    if (!(*bits & mask))  /* already free? */
-    {
-        LeaveCriticalSection( &current_process.crit_section );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    *bits &= ~mask;
-    NtCurrentTeb()->tls_array[index] = 0;
-    /* FIXME: should zero all other thread values */
-    LeaveCriticalSection( &current_process.crit_section );
-    return TRUE;
-}
-
-
-/**********************************************************************
- * TlsGetValue [KERNEL32.532]  Gets value in a thread's TLS slot
- *
- * RETURNS
- *    Success: Value stored in calling thread's TLS slot for index
- *    Failure: 0 and GetLastError returns NO_ERROR
- */
-LPVOID WINAPI TlsGetValue(
-    DWORD index) /* [in] TLS index to retrieve value for */
-{
-    if (index >= 64)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
-    }
-    SetLastError( ERROR_SUCCESS );
-    return NtCurrentTeb()->tls_array[index];
-}
-
-
-/**********************************************************************
- * TlsSetValue [KERNEL32.533]  Stores a value in the thread's TLS slot.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI TlsSetValue(
-    DWORD index,  /* [in] TLS index to set value for */
-    LPVOID value) /* [in] Value to be stored */
-{
-    if (index >= 64)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    NtCurrentTeb()->tls_array[index] = value;
-    return TRUE;
 }
 
 

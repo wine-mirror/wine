@@ -28,7 +28,6 @@
 #include "wine/port.h"
 #include "winerror.h"
 #include "file.h"
-#include "process.h"
 #include "global.h"
 #include "server.h"
 #include "debugtools.h"

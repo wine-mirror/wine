@@ -32,7 +32,6 @@
  * -File handles need some special handling. Sometimes children get
  *  open file handles, sometimes not. The docs are confusing.
  * -No check for maximum path/argument/environment size is done.
- * -Wine has a "process.h" which is not the same as any crt version.
  * Unresolved issues Uwe Bonnes 970904:
  * -system-call calls another wine process, but without debugging arguments
  *  and uses the first wine executable in the path
@@ -40,7 +39,6 @@
 
 #include "crtdll.h"
 #include <errno.h>
-#include "process.h"
 #include <stdlib.h>
 
 

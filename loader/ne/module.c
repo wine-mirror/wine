@@ -19,7 +19,6 @@
 #include "heap.h"
 #include "task.h"
 #include "global.h"
-#include "process.h"
 #include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
@@ -1073,6 +1072,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     if (hThread == -1) return 0;
 
     if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
+    teb->tibflags &= ~TEBF_WIN32;
     teb->startup = NE_InitProcess;
 
     /* Create a task for this process */

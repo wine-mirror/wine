@@ -11,8 +11,9 @@
 #include "callback.h"
 #include "options.h"
 #include "dosexe.h"
-#include "process.h"
 #include "debugtools.h"
+
+extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
 
 /***********************************************************************
  *           Main loop of initial task

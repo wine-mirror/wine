@@ -43,7 +43,6 @@
 #include "wine/keyboard16.h"
 #include "thread.h"
 #include "file.h"
-#include "process.h"
 #include "winerror.h"
 #include "wincon.h"
 #include "heap.h"

@@ -31,7 +31,6 @@
 #endif
 #include "wine/winbase16.h"
 #include "winerror.h"
-#include "process.h"
 #include "snoop.h"
 #include "server.h"
 #include "debugtools.h"
@@ -639,21 +638,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     if ( pe_export )
         dump_exports( hModule );
 
-    /* The exe_modref must be in place, before implicit linked DLLs are loaded 
-       by fixup_imports, otherwhise GetModuleFileName will not work and modules 
-       in the executables directory can not be found */
-
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
-    {
-      if ( PROCESS_Current()->exe_modref )
-	FIXME( "Trying to load second .EXE file: %s\n", filename );
-      else  
-      {
-	PROCESS_Current()->exe_modref = wm;
-        PROCESS_Current()->module = wm->module;
-      }
-    }
-
     /* Fixup Imports */
 
     if (!(wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) && fixup_imports( wm ))
@@ -661,7 +645,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         /* remove entry from modref chain */
 
         if ( !wm->prev )
-            PROCESS_Current()->modref_list = wm->next;
+            MODULE_modref_list = wm->next;
         else
             wm->prev->next = wm->next;
 
@@ -791,7 +775,7 @@ void PE_InitTls( void )
 	PIMAGE_TLS_DIRECTORY	pdir;
         int delta;
 	
-	for (wm = PROCESS_Current()->modref_list;wm;wm=wm->next) {
+	for (wm = MODULE_modref_list;wm;wm=wm->next) {
 		peh = PE_HEADER(wm->module);
 		delta = wm->module - peh->OptionalHeader.ImageBase;
 		if (!peh->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
