@@ -596,7 +596,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     for(font = pi->ppd->InstalledFonts; font; font = font->next) {
         afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
 	if(!afm) {
-	    MESSAGE(
+	    TRACE(
 	 "Couldn't find AFM file for installed printer font '%s' - ignoring\n",
 	 font->Name);
 	} else {

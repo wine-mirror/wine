@@ -33,6 +33,7 @@ static struct {
 } PageTrans[] = {
   {"10x11",                   DMPAPER_10X11},
   {"10x14",                   DMPAPER_10X14},
+  {"11x17",		      DMPAPER_11X17},	/* not in Adobe PPD file spec */
   {"12x11",                   DMPAPER_12X11},
   {"15x11",                   DMPAPER_15X11},
   {"9x11",                    DMPAPER_9X11},
@@ -64,18 +65,18 @@ static struct {
   {"B5Rotated",               DMPAPER_B5_JIS_ROTATED},
   {"B6",                      DMPAPER_B6_JIS},
   {"B6Rotated",               DMPAPER_B6_JIS_ROTATED},
-  {"C4",                      DMPAPER_ENV_C4},
-  {"C5",                      DMPAPER_ENV_C5},
-  {"C6",                      DMPAPER_ENV_C6},
-  {"Comm10",                  DMPAPER_ENV_10},
-  {"DL",                      DMPAPER_ENV_DL},
+  {"C4",                      DMPAPER_ENV_C4},		/*  use EnvC4 */
+  {"C5",                      DMPAPER_ENV_C5},		/*  use EnvC5 */
+  {"C6",                      DMPAPER_ENV_C6},		/*  use EnvC6 */
+  {"Comm10",                  DMPAPER_ENV_10},		/*  use Env10 */
+  {"DL",                      DMPAPER_ENV_DL},		/*  use EnvDL */
   {"DoublePostcard",          DMPAPER_DBL_JAPANESE_POSTCARD},
   {"DoublePostcardRotated",   DMPAPER_DBL_JAPANESE_POSTCARD_ROTATED},
-  {"Env9",                    DMPAPER_ENV_9},
   {"Env10",                   DMPAPER_ENV_10},
   {"Env11",                   DMPAPER_ENV_11},
   {"Env12",                   DMPAPER_ENV_12},
   {"Env14",                   DMPAPER_ENV_14},
+  {"Env9",		      DMPAPER_ENV_9},
   {"EnvC3",                   DMPAPER_ENV_C3},
   {"EnvC4",                   DMPAPER_ENV_C4},
   {"EnvC5",                   DMPAPER_ENV_C5},
@@ -86,18 +87,19 @@ static struct {
   {"EnvChou4",                DMPAPER_JENV_CHOU4},
   {"EnvChou4Rotated",         DMPAPER_JENV_CHOU4_ROTATED},
   {"EnvDL",                   DMPAPER_ENV_DL},
-  {"EnvInvite",               DMPAPER_ENV_INVITE},
   {"EnvISOB4",                DMPAPER_ENV_B4},
   {"EnvISOB5",                DMPAPER_ENV_B5},
   {"EnvISOB6",                DMPAPER_ENV_B6},
+  {"EnvInvite",		      DMPAPER_ENV_INVITE},
   {"EnvItalian",              DMPAPER_ENV_ITALY},
   {"EnvKaku2",                DMPAPER_JENV_KAKU2},
   {"EnvKaku2Rotated",         DMPAPER_JENV_KAKU2_ROTATED},
   {"EnvKaku3",                DMPAPER_JENV_KAKU3},
   {"EnvKaku3Rotated",         DMPAPER_JENV_KAKU3_ROTATED},
   {"EnvMonarch",              DMPAPER_ENV_MONARCH},
-  {"EnvPersonal",             DMPAPER_ENV_PERSONAL},
   {"EnvPRC1",                 DMPAPER_PENV_1},
+  {"EnvPRC10",		      DMPAPER_PENV_10},
+  {"EnvPRC10Rotated",         DMPAPER_PENV_10_ROTATED},
   {"EnvPRC1Rotated",          DMPAPER_PENV_1_ROTATED},
   {"EnvPRC2",                 DMPAPER_PENV_2},
   {"EnvPRC2Rotated",          DMPAPER_PENV_2_ROTATED},
@@ -115,14 +117,13 @@ static struct {
   {"EnvPRC8Rotated",          DMPAPER_PENV_8_ROTATED},
   {"EnvPRC9",                 DMPAPER_PENV_9},
   {"EnvPRC9Rotated",          DMPAPER_PENV_9_ROTATED},
-  {"EnvPRC10",                DMPAPER_PENV_10},
-  {"EnvPRC10Rotated",         DMPAPER_PENV_10_ROTATED},
+  {"EnvPersonal",	      DMPAPER_ENV_PERSONAL},
   {"EnvYou4",                 DMPAPER_JENV_YOU4},
   {"EnvYou4Rotated",          DMPAPER_JENV_YOU4_ROTATED},
   {"Executive",               DMPAPER_EXECUTIVE},
-  {"FanFoldUS",               DMPAPER_FANFOLD_US},
   {"FanFoldGerman",           DMPAPER_FANFOLD_STD_GERMAN},
   {"FanFoldGermanLegal",      DMPAPER_FANFOLD_LGL_GERMAN},
+  {"FanFoldUS",               DMPAPER_FANFOLD_US},
   {"Folio",                   DMPAPER_FOLIO},
   {"ISOB4",                   DMPAPER_ISO_B4},
   {"ISOB5Extra",              DMPAPER_B5_EXTRA},
@@ -136,16 +137,16 @@ static struct {
   {"LetterPlus",              DMPAPER_LETTER_PLUS},
   {"LetterRotated",           DMPAPER_LETTER_ROTATED},
   {"LetterSmall",             DMPAPER_LETTERSMALL},
-  {"Monarch",                 DMPAPER_ENV_MONARCH},
+  {"Monarch",                 DMPAPER_ENV_MONARCH},	/* use EnvMonarch */
   {"Note",                    DMPAPER_NOTE},
-  {"Postcard",                DMPAPER_JAPANESE_POSTCARD},
-  {"PostcardRotated",         DMPAPER_JAPANESE_POSTCARD_ROTATED},
   {"PRC16K",                  DMPAPER_P16K},
   {"PRC16KRotated",           DMPAPER_P16K_ROTATED},
   {"PRC32K",                  DMPAPER_P32K},
   {"PRC32KBig",               DMPAPER_P32KBIG},
   {"PRC32KBigRotated",        DMPAPER_P32KBIG_ROTATED},
   {"PRC32KRotated",           DMPAPER_P32K_ROTATED},
+  {"Postcard",                DMPAPER_JAPANESE_POSTCARD},
+  {"PostcardRotated",         DMPAPER_JAPANESE_POSTCARD_ROTATED},
   {"Quarto",                  DMPAPER_QUARTO},
   {"Statement",               DMPAPER_STATEMENT},
   {"SuperA",                  DMPAPER_A_PLUS},
@@ -155,25 +156,8 @@ static struct {
   {NULL,                      0}
 };
 
-/* the same for bin names */
-
-static struct {
-  char *PSName;
-  WORD WinBin;
-} BinTrans[] = {
-  /* In alphabetical order by the PSName member */
-  {"Cassette",          DMBIN_CASSETTE},
-  {"Envelope",		DMBIN_ENVELOPE},
-  {"LargeCapacity",	DMBIN_LARGECAPACITY},
-  {"Lower",		DMBIN_LOWER},
-  {"Manual",            DMBIN_MANUAL},
-  {"ManualEnv",         DMBIN_ENVMANUAL},
-  {"ManualFeed",        DMBIN_MANUAL},
-  {"Middle",            DMBIN_MIDDLE},
-  {"OnlyOne",		DMBIN_ONLYONE},
-  {"Upper",		DMBIN_UPPER},
-  {NULL,		0}
-};
+static WORD UserPageType = DMPAPER_USER;
+static WORD UserBinType = DMBIN_USER;
 
 /***********************************************************************
  *
@@ -512,6 +496,33 @@ static char *PSDRV_PPDGetWord(char *str, char **next)
     return ret;
 }
 
+/*******************************************************************************
+ *	PSDRV_AddSlot
+ *
+ */
+static INT PSDRV_AddSlot(PPD *ppd, LPSTR szName, LPSTR szFullName,
+	LPSTR szInvocationString, WORD wWinBin)
+{
+    INPUTSLOT	*slot, **insert = &ppd->InputSlots;
+
+    while (*insert)
+	insert = &((*insert)->next);
+
+    slot = *insert = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(INPUTSLOT));
+    if (!slot)
+    {
+	ERR("Failed to allocate %i bytes of memory\n", sizeof(INPUTSLOT));
+	return 1;
+    }
+
+    slot->Name = szName;
+    slot->FullName = szFullName;
+    slot->InvocationString = szInvocationString;
+    slot->WinBin = wWinBin;
+
+    return 0;
+}
+
 /***********************************************************************
  *
  *		PSDRV_ParsePPD
@@ -538,6 +549,17 @@ PPD *PSDRV_ParsePPD(char *fname)
 	return NULL;
     }
 
+    /*
+     *	The Windows PostScript drivers create the following "virtual bin" for
+     *	every PostScript printer
+     */
+    if (PSDRV_AddSlot(ppd, NULL, "Automatically Select", NULL,
+	    DMBIN_FORMSOURCE))
+    {
+	HeapFree (PSDRV_Heap, 0, ppd);
+	fclose(fp);
+	return NULL;
+    }
     
     while( PSDRV_PPDGetNextTuple(fp, &tuple)) {
 
@@ -618,9 +640,11 @@ PPD *PSDRV_ParsePPD(char *fname)
 			break;
 		    }
 		}
-		if(!page->WinPage)
-		    FIXME("Can't find Windows page type for '%s'\n",
-			  page->Name);
+		if(!page->WinPage) {
+		    TRACE("Can't find Windows page type for '%s' - using %u\n",
+			  page->Name, UserPageType);
+		    page->WinPage = UserPageType++;
+		}
 	    }
 	    if(!page->FullName) {
 	        if(tuple.opttrans) {
@@ -710,42 +734,34 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    con->Value2 = PSDRV_PPDGetWord(start, &start);
 	}
 	    
-	else if(!strcmp("*InputSlot", tuple.key)) {
-	    INPUTSLOT *slot, **insert = &ppd->InputSlots;
-	    int i;
+	else if (!strcmp("*InputSlot", tuple.key))
+	{
 
-	    while(*insert)
-	        insert = &((*insert)->next);
+	    if (!tuple.opttrans)
+		tuple.opttrans = tuple.option;
 
-	    slot = *insert = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
-				    sizeof(*slot) );
+	    TRACE("Using Windows bin type %u for '%s'\n", UserBinType,
+		    tuple.option);
 
-	    slot->Name = tuple.option;
-	    tuple.option = NULL;
-	    if(tuple.opttrans) {
-	        slot->FullName = tuple.opttrans;
-		tuple.opttrans = NULL;
-	    } else {
-	        slot->FullName = HEAP_strdupA( PSDRV_Heap, 0, slot->Name );
-	    }
+	    /* FIXME - should check for failure */
+	    PSDRV_AddSlot(ppd, tuple.option, tuple.opttrans, tuple.value,
+		    UserBinType++);
 
-	    if(tuple.value) {
-	        slot->InvocationString = tuple.value;
-		tuple.value = NULL;
-	    }
-
-	    
-	    for(i = 0; BinTrans[i].PSName; i++) {
-	        if(!strcmp(BinTrans[i].PSName, slot->Name)) { /* case ? */
-		    slot->WinBin = BinTrans[i].WinBin;
-		    break;
-		}
-	    }
-	    if(!slot->WinBin)
-	        FIXME("Can't find Windows bin type for '%s'\n",
-			  slot->Name);
-
+	    tuple.option = tuple.opttrans = tuple.value = NULL;
 	}   
+
+	/*
+	 *  Windows treats "manual feed" as another paper source.  Most PPD
+	 *  files, however, treat it as a separate option which is either on or
+	 *  off.
+	 */
+	else if (!strcmp("*ManualFeed", tuple.key) && tuple.option &&
+		!strcmp ("True", tuple.option))
+	{
+	    /* FIXME - should check for failure */
+	    PSDRV_AddSlot(ppd, NULL, "Manual Feed", tuple.value, DMBIN_MANUAL);
+	    tuple.value = NULL;
+	}
 
 	if(tuple.key) HeapFree(PSDRV_Heap, 0, tuple.key);
 	if(tuple.option) HeapFree(PSDRV_Heap, 0, tuple.option);
