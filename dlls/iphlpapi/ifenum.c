@@ -630,6 +630,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
       *type = MIB_IF_TYPE_LOOPBACK;
       memset(addr, 0, *len);
       *len = 0;
+      ret=NOERROR;
     }
     else {
       struct arpreq arp;
@@ -639,7 +640,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
       arp.arp_pa.sa_family = AF_INET;
       saddr = (struct sockaddr_in *)&arp; /* proto addr is first member */
       saddr->sin_family = AF_INET;
-      saddr->sin_addr.s_addr = getInterfaceAddrByName(name);
+      saddr->sin_addr.s_addr = getInterfaceIPAddrByName(name);
       if ((ioctl(fd, SIOCGARP, &arp)))
         ret = ERROR_INVALID_DATA;
       else {
@@ -661,9 +662,11 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
         }
       }
     }
+    close(fd);
+  }
     else
       ret = ERROR_NO_MORE_FILES;
-  }
+
   return ret;
 }
 #elif defined (HAVE_SYS_SYSCTL_H) && defined (HAVE_NET_IF_DL_H)
