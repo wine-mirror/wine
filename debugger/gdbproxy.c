@@ -1812,11 +1812,15 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         case 0: /* in child... and alive */
             {
                 char    buf[MAX_PATH];
+		int fd;
                 char*   gdb_path;
                 FILE*   f;
 
                 if (!(gdb_path = getenv("WINE_GDB"))) gdb_path = "gdb";
-                if (!tmpnam(buf) || (f = fopen(buf, "w+")) == NULL) return FALSE;
+		strcpy(buf,"/tmp/winegdb.XXXXXX");
+		fd = mkstemp(buf);
+		if (fd == -1) return FALSE;
+                if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
                 fprintf(f, "file %s\n", wine_path);
                 fprintf(f, "target remote localhost:%d\n", ntohs(s_addr.sin_port));
                 fprintf(f, "monitor trace=0\n");

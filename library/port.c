@@ -340,6 +340,35 @@ int lstat(const char *file_name, struct stat *buf)
 }
 #endif /* HAVE_LSTAT */
 
+/***********************************************************************
+ *		mkstemp
+ */
+#ifndef HAVE_MKSTEMP
+int mkstemp(char *tmpfn)
+{
+    int tries;
+    char *xstart;
+
+    xstart = tmpfn+strlen(tmpfn)-1;
+    while ((xstart > tmpfn) && (*xstart == 'X'))
+        xstart--;
+    tries = 10;
+    while (tries--) {
+    	char *newfn = mktemp(tmpfn);
+	int fd;
+	if (!newfn) /* something else broke horribly */
+	    return -1;
+	fd = open(newfn,O_CREAT|O_RDWR|O_EXCL,0600);
+	if (fd!=-1)
+	    return fd;
+	newfn = xstart;
+	/* fill up with X and try again ... */
+	while (*newfn) *newfn++ = 'X';
+    }
+    return -1;
+}
+#endif /* HAVE_MKSTEMP */
+
 
 /***********************************************************************
  *		pread

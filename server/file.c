@@ -230,24 +230,17 @@ int get_file_drive_type( struct file *file )
 /* Create an anonymous Unix file */
 int create_anonymous_file(void)
 {
-    char *name;
+    char tmpfn[21];
     int fd;
 
-    do
-    {
-        if (!(name = tmpnam(NULL)))
-        {
-            set_error( STATUS_TOO_MANY_OPENED_FILES );
-            return -1;
-        }
-        fd = open( name, O_CREAT | O_EXCL | O_RDWR, 0600 );
-    } while ((fd == -1) && (errno == EEXIST));
+    sprintf(tmpfn,"/tmp/anonmap.XXXXXX");
+    fd = mkstemp(tmpfn);
     if (fd == -1)
     {
         file_set_error();
         return -1;
     }
-    unlink( name );
+    unlink( tmpfn );
     return fd;
 }
 

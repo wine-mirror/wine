@@ -19,6 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <time.h>
 #include <stdlib.h>
 
@@ -109,20 +112,22 @@ int wpp_parse( const char *input, FILE *output )
 /* parse into a temporary file */
 int wpp_parse_temp( const char *input, char **output_name )
 {
-    char *temp_name;
     FILE *output;
-    int ret;
+    int ret, fd;
+    char tmpfn[20], *temp_name;
 
-    if(!(temp_name = tmpnam(NULL)))
+    strcpy(tmpfn,"/tmp/wpp.XXXXXX");
+
+    if((fd = mkstemp(tmpfn)) == -1)
     {
         fprintf(stderr, "Could not generate a temp-name\n");
         exit(2);
     }
-    temp_name = pp_xstrdup(temp_name);
+    temp_name = pp_xstrdup(tmpfn);
 
-    if (!(output = fopen(temp_name, "wt")))
+    if (!(output = fdopen(fd, "wt")))
     {
-        fprintf(stderr,"Could not open %s for writing\n", temp_name);
+        fprintf(stderr,"Could not open fd %s for writing\n", temp_name);
         exit(2);
     }
 

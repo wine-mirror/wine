@@ -28,6 +28,7 @@
 # include <sys/wait.h>
 #endif
 #include "wine/debug.h"
+#include "wine/port.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -551,8 +552,15 @@ static BOOL create_default_icon( const char *filename )
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
 static char *extract_icon( const char *path, int index)
 {
-    int nodefault = 1;
-    char *filename = heap_strdup( tmpnam(NULL) );
+    int fd, nodefault = 1;
+    char *filename, tmpfn[25];
+
+    strcpy(tmpfn,"/tmp/icon.XXXXXX");
+    fd = mkstemp( tmpfn );
+    if (fd == -1)
+        return NULL;
+    filename = heap_strdup( tmpfn );
+    close(fd); /* not needed */
 
     /* If icon path begins with a '*' then this is a deferred call */
     if (path[0] == '*')

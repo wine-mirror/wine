@@ -222,6 +222,10 @@ unsigned long inet_network(const char *cp);
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
 
+#ifndef HAVE_MKSTEMP
+int mkstemp(char *tmpfn);
+#endif /* HAVE_MKSTEMP */
+
 #ifndef HAVE_MEMMOVE
 void *memmove(void *dest, const void *src, unsigned int len);
 #endif /* !defined(HAVE_MEMMOVE) */

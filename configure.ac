@@ -879,6 +879,7 @@ AC_CHECK_FUNCS(\
 	lseek64 \
 	lstat \
 	memmove \
+	mkstemp \
 	mmap \
 	pclose \
 	popen \

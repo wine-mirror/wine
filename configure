@@ -11199,6 +11199,7 @@ fi
 
 
 
+
 for ac_func in \
 	__libc_fork \
 	_lwp_create \
@@ -11226,6 +11227,7 @@ for ac_func in \
 	lseek64 \
 	lstat \
 	memmove \
+	mkstemp \
 	mmap \
 	pclose \
 	popen \
