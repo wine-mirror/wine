@@ -177,7 +177,7 @@ QueryPathOfRegTypeLib(
  *    Failure: Status
  */
 HRESULT WINAPI CreateTypeLib(
-	SYSKIND syskind, LPCOLESTR szFile, /*ICreateTypeLib*/IUnknown ** ppctlib
+	SYSKIND syskind, LPCOLESTR szFile, ICreateTypeLib** ppctlib
 ) {
     FIXME("(%d,%s,%p), stub!\n",syskind,debugstr_w(szFile),ppctlib);
     return E_FAIL;
@@ -194,7 +194,7 @@ HRESULT WINAPI CreateTypeLib(
  */
 HRESULT WINAPI LoadTypeLib16(
     LPOLESTR szFile, /* [in] Name of file to load from */
-    void * *pptLib) /* [out] Pointer to pointer to loaded type library */
+    ITypeLib** pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     FIXME("('%s',%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
 
@@ -218,8 +218,8 @@ HRESULT WINAPI LoadTypeLib16(
 int TLB_ReadTypeLib(PCHAR file, ITypeLib2 **ppTypelib);
 
 HRESULT WINAPI LoadTypeLib(
-    OLECHAR *szFile,   /* [in] Name of file to load from */
-    ITypeLib * *pptLib) /* [out] Pointer to pointer to loaded type library */
+    const OLECHAR *szFile,/* [in] Name of file to load from */
+    ITypeLib * *pptLib)   /* [out] Pointer to pointer to loaded type library */
 {
     TRACE("\n");
     return LoadTypeLibEx(szFile, REGKIND_DEFAULT, pptLib);
@@ -234,7 +234,7 @@ HRESULT WINAPI LoadTypeLib(
  *    Failure: Status
  */
 HRESULT WINAPI LoadTypeLibEx(
-    LPOLESTR szFile,   /* [in] Name of file to load from */
+    LPCOLESTR szFile,  /* [in] Name of file to load from */
     REGKIND  regkind,  /* specify kind of registration */
     ITypeLib **pptLib) /* [out] Pointer to pointer to loaded type library */
 {
