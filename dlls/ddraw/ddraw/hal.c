@@ -79,7 +79,7 @@ static BOOL WINAPI set_hal_info(LPDDHALINFO lpDDHalInfo, BOOL reset)
     dd_gbl.dwMonitorFrequency	 = lpDDHalInfo->dwMonitorFrequency;
     dd_gbl.vmiData		 = lpDDHalInfo->vmiData;
     dd_gbl.dwModeIndex		 = lpDDHalInfo->dwModeIndex;
-    /* FIXME: dwNumFourCC */
+    dd_gbl.dwNumFourCC	         = lpDDHalInfo->ddCaps.dwNumFourCCCodes;
     dd_gbl.lpdwFourCC		 = lpDDHalInfo->lpdwFourCC;
     dd_gbl.dwNumModes		 = lpDDHalInfo->dwNumModes;
     dd_gbl.lpModeInfo		 = lpDDHalInfo->lpModeInfo;
@@ -498,6 +498,35 @@ HAL_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     return hr;
 }
 
+HRESULT WINAPI
+HAL_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
+			       LPDWORD pCodes)
+{
+    int i;
+    ICOM_THIS(IDirectDrawImpl,iface);
+    if (*pNumCodes)
+	*pNumCodes=dd_gbl.dwNumFourCC;
+    if (pCodes && dd_gbl.dwNumFourCC)
+	memcpy(pCodes,dd_gbl.lpdwFourCC,sizeof(pCodes[0])*dd_gbl.dwNumFourCC);
+    FIXME("(%p,%p,%p)\n",This,pNumCodes,pCodes);
+    if (dd_gbl.dwNumFourCC) {
+	if (pCodes && FIXME_ON(ddraw)) {
+	    FIXME("returning: ");
+	    for (i=0;i<dd_gbl.dwNumFourCC;i++) {
+		MESSAGE("%c%c%c%c,",
+			((LPBYTE)(pCodes+i))[0],
+			((LPBYTE)(pCodes+i))[1],
+			((LPBYTE)(pCodes+i))[2],
+			((LPBYTE)(pCodes+i))[3]
+		);
+	    }
+	    MESSAGE("\n");
+	}
+    }
+    return DD_OK;
+}
+
+
 static ICOM_VTABLE(IDirectDraw7) HAL_DirectDraw_VTable =
 {
     Main_DirectDraw_QueryInterface,
@@ -513,7 +542,7 @@ static ICOM_VTABLE(IDirectDraw7) HAL_DirectDraw_VTable =
     Main_DirectDraw_FlipToGDISurface,
     Main_DirectDraw_GetCaps,
     Main_DirectDraw_GetDisplayMode,
-    Main_DirectDraw_GetFourCCCodes,
+    HAL_DirectDraw_GetFourCCCodes,
     Main_DirectDraw_GetGDISurface,
     Main_DirectDraw_GetMonitorFrequency,
     Main_DirectDraw_GetScanLine,
