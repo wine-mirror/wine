@@ -81,46 +81,6 @@ struct stab_nlist {
   unsigned long n_value;
 };
 
-/*
- * This is used to keep track of known datatypes so that we don't redefine
- * them over and over again.  It sucks up lots of memory otherwise.
- */
-struct known_typedef
-{
-  struct known_typedef * next;
-  char		       * name;
-  int			 ndefs;
-  struct datatype      * types[1];
-};
-
-#define NR_STAB_HASH 521
-
-static struct known_typedef * ktd_head[NR_STAB_HASH] = {NULL,};
-static struct datatype **     curr_types = NULL;
-static int		      allocated_types = 0;
-
-static unsigned int stab_hash( const char * name )
-{
-    unsigned int hash = 0;
-    unsigned int tmp;
-    const char * p;
-
-    p = name;
-
-    while (*p) 
-      {
-	hash = (hash << 4) + *p++;
-
-	if( (tmp = (hash & 0xf0000000)) )
-	  {
-	    hash ^= tmp >> 24;
-	  }
-	hash &= ~tmp;
-      }
-    return hash % NR_STAB_HASH;
-}
-
-
 static void stab_strcpy(char * dest, int sz, const char * source)
 {
   /*
@@ -274,28 +234,6 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
   return ret;
 }
 
-static
-struct datatype**
-DEBUG_ReadTypeEnumBackwards(char*x) {
-    int	filenr,subnr;
-
-    if (*x==')') {
-	while (*x!='(')
-	    x--;
-	x++;				/* '(' */
-	filenr=strtol(x,&x,10);		/* <int> */
-	x++;				/* ',' */
-	subnr=strtol(x,&x,10);		/* <int> */
-	x++;				/* ')' */
-    } else {
-	while ((*x>='0') && (*x<='9'))
-	    x--;
-	filenr = 0;
-	subnr = atol(x+1);
-    }
-    return DEBUG_FileSubNr2StabEnum(filenr,subnr);
-}
-
 static 
 struct datatype**
 DEBUG_ReadTypeEnum(char **x) {
@@ -314,424 +252,325 @@ DEBUG_ReadTypeEnum(char **x) {
     return DEBUG_FileSubNr2StabEnum(filenr,subnr);
 }
 
-static
-int
-DEBUG_RegisterTypedef(const char * name, struct datatype ** types, int ndef)
+struct ParseTypedefData {
+    char*		ptr;
+    char		buf[1024];
+    int			idx;
+};
+
+static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typename,
+				 struct datatype** dt);
+
+static int DEBUG_PTS_ReadID(struct ParseTypedefData* ptd)
 {
-  int			 hash;
-  struct known_typedef * ktd;
+    char*	first = ptd->ptr;
+    int		len;
 
-  if( ndef == 1 )
-      return TRUE;
-
-  ktd = (struct known_typedef *) DBG_alloc(sizeof(struct known_typedef) 
-					 + (ndef - 1) * sizeof(struct datatype *));
-  
-  hash = stab_hash(name);
-
-  ktd->name = DBG_strdup(name);
-  ktd->ndefs = ndef;
-  memcpy(&ktd->types[0], types, ndef * sizeof(struct datatype *));
-  ktd->next = ktd_head[hash];
-  ktd_head[hash] = ktd;
-
-  return TRUE;
+    if ((ptd->ptr = strchr(ptd->ptr, ':')) == NULL) return -1;
+    len = ptd->ptr - first;
+    if (len >= sizeof(ptd->buf) - ptd->idx) return -1;
+    memcpy(ptd->buf + ptd->idx, first, len);
+    ptd->buf[ptd->idx + len] = '\0';
+    ptd->idx += len + 1;
+    ptd->ptr++; /* ':' */
+    return 0;
 }
 
-static
-int
-DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
+static int DEBUG_PTS_ReadNum(struct ParseTypedefData* ptd, int* v)
 {
-  int			 count;
-  enum debug_type	 expect;
-  int			 hash;
-  struct known_typedef * ktd;
-  char		       * ptr;
+    char*	last;
 
-  hash = stab_hash(name);
-
-  for(ktd = ktd_head[hash]; ktd; ktd = ktd->next)
-      if ((ktd->name[0] == name[0]) && (strcmp(name, ktd->name) == 0) )
-	  break;
-
-  /*
-   * Didn't find it.  This must be a new one.
-   */
-  if( ktd == NULL )
-      return FALSE;
-
-  /*
-   * Examine the stab to make sure it has the same number of definitions.
-   */
-  count = 0;
-  for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
-    {
-      if( count >= ktd->ndefs )
-	  return FALSE;
-
-      /*
-       * Make sure the types of all of the objects is consistent with
-       * what we have already parsed.
-       */
-      switch(ptr[1])
-	{
-	case '*':
-	  expect = DT_POINTER;
-	  break;
-	case 's':
-	case 'u':
-	  expect = DT_STRUCT;
-	  break;
-	case 'a':
-	  expect = DT_ARRAY;
-	  break;
-	case '(':	/* it's mainly a ref to another typedef, skip it */
-          expect = -1;
-	  break;
-	case '1':
-	case 'r':
-	  expect = DT_BASIC;
-	  break;
-	case 'x':
-	  expect = DT_STRUCT;
-	  break;
-	case 'e':
-	  expect = DT_ENUM;
-	  break;
-	case 'f':
-	  expect = DT_FUNC;
-	  break;
-	default:
-	  DEBUG_Printf(DBG_CHN_FIXME, "Unknown type (%c).\n",ptr[1]);
-	  return FALSE;
-	}
-      if( expect != -1 && expect != DEBUG_GetType(ktd->types[count]) )
-	  return FALSE;
-      count++;
-    }
-
-  if( ktd->ndefs != count )
-      return FALSE;
-
-  /*
-   * Go through, dig out all of the type numbers, and substitute the
-   * appropriate things.
-   */
-  count = 0;
-  for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
-      *DEBUG_ReadTypeEnumBackwards(ptr-1) = ktd->types[count++];
-
-  return TRUE;
+    *v = strtol(ptd->ptr, &last, 10);
+    if (last == ptd->ptr) return -1;
+    ptd->ptr = last;
+    return 0;
 }
 
-static int DEBUG_FreeRegisteredTypedefs(void)
+static int DEBUG_PTS_ReadTypeReference(struct ParseTypedefData* ptd, 
+				       int* filenr, int* subnr)
 {
-  int			 count;
-  int			 j;
-  struct known_typedef * ktd;
-  struct known_typedef * next;
-
-  count = 0;
-  for(j=0; j < NR_STAB_HASH; j++ )
-    {
-      for(ktd = ktd_head[j]; ktd; ktd = next)
-	{
-	  count++;
-	  next = ktd->next;
-	  DBG_free(ktd->name);
-	  DBG_free(ktd);
-	}  
-      ktd_head[j] = NULL;
+    if (*ptd->ptr == '(') {
+	/* '(' <int> ',' <int> ')' */
+	ptd->ptr++;
+	if (DEBUG_PTS_ReadNum(ptd, filenr) == -1) return -1;
+	if (*ptd->ptr++ != ',') return -1;
+	if (DEBUG_PTS_ReadNum(ptd, subnr) == -1) return -1;
+	if (*ptd->ptr++ != ')') return -1;
+    } else {
+    	*filenr = 0;
+	if (DEBUG_PTS_ReadNum(ptd, subnr) == -1) return -1;
     }
-
-  return TRUE;
-
+    return 0;
 }
 
-static 
-int
-DEBUG_ParseTypedefStab(char * ptr, const char * typename)
+static int DEBUG_PTS_ReadRange(struct ParseTypedefData* ptd, struct datatype** dt, 
+			       int* lo, int* hi)
 {
-  int		    arrmax;
-  int		    arrmin;
-  char		  * c;
-  struct datatype * curr_type;
-  struct datatype * datatype;
-  char	            element_name[1024];
-  int		    ntypes = 0, ntp;
-  int		    offset;
-  const char	  * orig_typename;
-  int		    size;
-  char		  * tc;
-  char		  * tc2;
-  int 		    failure;
-  
-  orig_typename = typename;
+    /* type ';' <int> ';' <int> ';' */
+    if (DEBUG_PTS_ReadTypedef(ptd, NULL, dt) == -1) return -1;
+    if (*ptd->ptr++ != ';') return -1;	/* ';' */
+    if (DEBUG_PTS_ReadNum(ptd, lo) == -1) return -1;
+    if (*ptd->ptr++ != ';') return -1;	/* ';' */
+    if (DEBUG_PTS_ReadNum(ptd, hi) == -1) return -1;
+    if (*ptd->ptr++ != ';') return -1;	/* ';' */
+    return 0;
+}
 
-  if( DEBUG_HandlePreviousTypedef(typename, ptr) )
-    return TRUE;
+static int inline DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct datatype* sdt)
+{
+    int			sz, ofs;
+    char*		last;
+    struct datatype*	adt;
+    int			idx;
+    int			doadd;
 
-  /* 
-   * Go from back to front.  First we go through and figure out what
-   * type numbers we need, and register those types.  Then we go in
-   * and fill the details.  
-   */
+    sz = strtol(ptd->ptr, &last, 10);
+    if (last == ptd->ptr) return -1;
+    ptd->ptr = last;
 
-  for( c = strchr(ptr, '='); c != NULL; c = strchr(c + 1, '=') )
-    {
-      /*
-       * Back up until we get to a non-numeric character, to get datatype
-       */
-      struct datatype** dt = DEBUG_ReadTypeEnumBackwards(c-1);
-      
-      if( ntypes >= allocated_types )
-	{
-	  allocated_types += 64;
-	  curr_types = DBG_realloc(curr_types, sizeof(struct datatype*) * allocated_types);
-	  if (!curr_types) return FALSE;
-	}
-      
-      switch(c[1])
-	{
-	case '*':
-	  *dt = DEBUG_NewDataType(DT_POINTER, NULL);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	case 's':
-	case 'u':
-	  *dt = DEBUG_NewDataType(DT_STRUCT, typename);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	case 'a':
-	  *dt = DEBUG_NewDataType(DT_ARRAY, NULL);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	case '(':
-	  /* will be handled in next loop, 
-	   * just a ref to another type 
-	   */
-	  curr_types[ntypes++] = NULL;
-	  break;
-	case '1':
-	case 'r':
-	  *dt = DEBUG_NewDataType(DT_BASIC, typename);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	case 'x':
-	  stab_strcpy(element_name, sizeof(element_name), c + 3);
-	  *dt = DEBUG_NewDataType(DT_STRUCT, element_name);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	case 'e':
-	  *dt = DEBUG_NewDataType(DT_ENUM, NULL);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	case 'f':
-	  *dt = DEBUG_NewDataType(DT_FUNC, NULL);
-	  curr_types[ntypes++] = *dt;
-	  break;
-	default:
-	  DEBUG_Printf(DBG_CHN_FIXME, "Unknown type (%c).\n",c[1]);
-	  return FALSE;
-	}
-      typename = NULL;
-      
+    doadd = DEBUG_SetStructSize(sdt, sz);
+    /* if the structure has already been filled, just redo the parsing
+     * but don't store results into the struct
+     * FIXME: there's a quite ugly memory leak in there...
+     */
+	  
+    /* Now parse the individual elements of the structure/union. */
+    while (*ptd->ptr != ';') {
+	/* agg_name : type ',' <int:offset> ',' <int:size> */
+	idx = ptd->idx;
+	if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
+
+	if (DEBUG_PTS_ReadTypedef(ptd, NULL, &adt) == -1) return -1;
+	if (!adt) return -1;
+
+	if (*ptd->ptr++ != ',') return -1;
+	if (DEBUG_PTS_ReadNum(ptd, &ofs) == -1) return -1;
+	if (*ptd->ptr++ != ',') return -1;
+	if (DEBUG_PTS_ReadNum(ptd, &sz) == -1) return -1;
+	if (*ptd->ptr++ != ';') return -1;
+
+	if (doadd) DEBUG_AddStructElement(sdt, ptd->buf + idx, adt, ofs, sz);
+	ptd->idx = idx;
     }
+    ptd->ptr++; /* ';' */
+    return 0;
+}
 
-  ntp = ntypes - 1;
-  /* 
-   * OK, now take a second sweep through.  Now we will be digging
-   * out the definitions of the various components, and storing
-   * them in the skeletons that we have already allocated.  We take
-   * a right-to left search as this is much easier to parse.  
-   */
-  for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
-    {
-      struct datatype** dt = DEBUG_ReadTypeEnumBackwards(c-1);
-      struct datatype** dt2;
-	
-      curr_type = *dt;
-      
-      switch(c[1])
-	{
-	case 'x':
-	  ntp--;
-	  tc = c + 3;
-	  while( *tc != ':' )
-	    tc++;
-	  tc++;
-	  if( *tc == '\0' )
-	    *c = '\0';
-	  else
-	    strcpy(c, tc);
-	  break;
-	case '*':
-	case 'f':
-	  ntp--;
-	  tc = c + 2;
-	  datatype = *DEBUG_ReadTypeEnum(&tc);
-	  DEBUG_SetPointerType(curr_type, datatype);
-	  if( *tc == '\0' )
-	    *c = '\0';
-	  else
-	    strcpy(c, tc);
-	  break;
-	case '(':
-	  tc = c + 1;
-	  dt2 = DEBUG_ReadTypeEnum(&tc);
+static int inline DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, struct datatype* edt)
+{
+    int			ofs;
+    int			idx;
+
+    while (*ptd->ptr != ';') {
+	idx = ptd->idx;
+	if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
+	if (DEBUG_PTS_ReadNum(ptd, &ofs) == -1) return -1;
+	if (*ptd->ptr++ != ',') return -1;
+	DEBUG_AddStructElement(edt, ptd->buf + idx, NULL, ofs, 0);
+	ptd->idx = idx;
+    }
+    ptd->ptr++;
+    return 0;
+}
+
+static int inline DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, struct datatype* adt)
+{
+    int			lo, hi;
+    struct datatype*	rdt;
+
+    /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo> */
 	  
-	  if (!*dt && *dt2) 
-	    {
-	      *dt = *dt2;
-	    } 
-	  else if (!*dt && !*dt2) 
-	    {
-	      /* this should be a basic type, define it */
-	      *dt2 = *dt = DEBUG_NewDataType(DT_BASIC, typename);
-	    } 
-	  else 
-	    {
-	      DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %08lx %08lx (%s)\n", 
-			   (unsigned long)*dt, (unsigned long)*dt2, ptr);
-	    }
-	  if( *tc == '\0' )
-	    *c = '\0';
-	  else
-	    strcpy(c, tc);
-	  curr_types[ntp--] = *dt;
-	  break;
-	case '1':
-	case 'r':
-	  ntp--;
-	  /*
-	   * We have already handled these above.
-	   */
-	  *c = '\0';
-	  break;
-	case 'a':
-	  ntp--;
-	  /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo>,<int>,<int>;; */
-	  
-	  tc  = c + 3;
-	  /* 'r' */
-	  DEBUG_ReadTypeEnum(&tc);
-	  tc++;		 			/* ';' */
-	  arrmin = strtol(tc, &tc, 10); 	/* <int> */
-	  tc++;		 			/* ';' */
-	  arrmax = strtol(tc, &tc, 10);		/* <int> */
-	  tc++;		 			/* ';' */
-	  datatype = *DEBUG_ReadTypeEnum(&tc);  /* <typeinfo> */
-	  if( *tc == '\0' )
-	    *c = '\0';
-	  else
-	    strcpy(c, tc);
-	  DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
-	  break;
-	case 's':
-	case 'u':
-	  ntp--;
-	  failure = 0;
-	  
-	  tc = c + 2;
-	  if( DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10)) == FALSE )
-	    {
-	      /*
-	       * We have already filled out this structure.  Nothing to do,
-	       * so just skip forward to the end of the definition.
-	       */
-	      while( tc[0] != ';' && tc[1] != ';' )
-		tc++;
-	      
-	      tc += 2;
-	      
-	      if( *tc == '\0' )
-		*c = '\0';
-	      else
-		strcpy(c, tc + 1);
-	      continue;
-	    }
-	  
-	  /*
-	   * Now parse the individual elements of the structure/union.
-	   */
-	  while(*tc != ';')
-	    {
-	      char *ti;
-	      tc2 = element_name;
-	      while(*tc != ':')
-		*tc2++ = *tc++;
-	      tc++;
-	      *tc2++ = '\0';
-	      ti=tc;
-	      datatype = *DEBUG_ReadTypeEnum(&tc);
-	      *tc='\0';
-	      tc++;
-	      offset  = strtol(tc, &tc, 10);
-	      tc++;
-	      size  = strtol(tc, &tc, 10);
-	      tc++;
-	      if (datatype)
-		DEBUG_AddStructElement(curr_type, element_name, datatype, 
-				       offset, size);
-	      else 
-		{
-		  failure = 1;
-		  /* ... but proceed parsing to the end of the stab */
-		  DEBUG_Printf(DBG_CHN_MESG, "failure on %s %s\n", ptr, ti);
+    if (*ptd->ptr++ != 'r') return -1;
+    /* FIXME: range type is lost, always assume int */
+    if (DEBUG_PTS_ReadRange(ptd, &rdt, &lo, &hi) == -1) return -1;
+    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &rdt) == -1) return -1;
+
+    DEBUG_SetArrayParams(adt, lo, hi, rdt);
+    return 0;
+}
+
+static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typename,
+				 struct datatype** ret_dt)
+{
+    int			idx, lo, hi;
+    struct datatype*	new_dt = NULL;	/* newly created data type */
+    struct datatype*	ref_dt;		/* referenced data type (pointer...) */
+    struct datatype* 	dt1;		/* intermediate data type (scope is limited) */
+    struct datatype* 	dt2;		/* intermediate data type: t1=t2=new_dt */
+    int			filenr1, subnr1;
+    int			filenr2 = 0, subnr2 = 0;
+
+    /* things are a bit complicated because of the way the typedefs are stored inside
+     * the file (we cannot keep the struct datatype** around, because address can
+     * change when realloc is done, so we must call over and over
+     * DEBUG_FileSubNr2StabEnum to keep the correct values around
+     * (however, keeping struct datatype* is valid
+     */
+    if (DEBUG_PTS_ReadTypeReference(ptd, &filenr1, &subnr1) == -1) return -1;
+
+    while (*ptd->ptr == '=') {
+	ptd->ptr++;
+	if (new_dt) {
+	    DEBUG_Printf(DBG_CHN_MESG, "Bad recursion (1) in typedef\n");
+	    return -1;
+	}
+	/* first handle attribute if any */
+	switch (*ptd->ptr) {
+	case '@':
+	    if (*++ptd->ptr == 's') {
+		ptd->ptr++;
+		if (DEBUG_PTS_ReadNum(ptd, &lo) == -1) {
+		    DEBUG_Printf(DBG_CHN_MESG, "Not an attribute... NIY\n");
+		    ptd->ptr -= 2;
+		    return -1;
 		}
+		if (*ptd->ptr++ != ';') return -1;
 	    }
-	  
-	  if (failure) 
-	    {
-	      
-	      /* if we had a undeclared value this one is undeclared too.
-	       * remove it from the stab_types. 
-	       * I just set it to NULL to detect bugs in my thoughtprocess.
-	       * FIXME: leaks the memory for the structure elements.
-	       * FIXME: such structures should have been optimized away
-	       *        by ld.
-	       */
-	      *dt = NULL;
+	    break;
+	}
+	/* then the real definitions */
+	switch (*ptd->ptr++) {
+	case '*':
+	    new_dt = DEBUG_NewDataType(DT_POINTER, NULL);
+	    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+	    DEBUG_SetPointerType(new_dt, ref_dt);
+	    break;
+	case '(':
+	    ptd->ptr--;
+	    /* doit a two level by hand, otherwise we'd need a stack */
+	    if (filenr2 || subnr2) {
+		DEBUG_Printf(DBG_CHN_MESG, "Bad recursion (2) in typedef\n");
+		return -1;
 	    }
-	  if( *tc == '\0' )
-	    *c = '\0';
-	  else
-	    strcpy(c, tc + 1);
-	  break;
+	    if (DEBUG_PTS_ReadTypeReference(ptd, &filenr2, &subnr2) == -1) return -1;
+
+	    dt1 = *DEBUG_FileSubNr2StabEnum(filenr1, subnr1);
+	    dt2 = *DEBUG_FileSubNr2StabEnum(filenr2, subnr2);
+
+	    if (!dt1 && dt2) {
+		new_dt = dt2;
+		filenr2 = subnr2 = 0;
+	    } else if (!dt1 && !dt2)  {
+		new_dt = NULL;
+	    } else {
+		DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %08lx %08lx (%s)\n", 
+			     (unsigned long)dt1, (unsigned long)dt2, ptd->ptr);
+		return -1;
+	    }
+	    break;
+	case 'a':
+	    new_dt = DEBUG_NewDataType(DT_ARRAY, NULL);
+	    if (DEBUG_PTS_ReadArray(ptd, new_dt) == -1) return -1;
+	    break;
+	case 'r':
+	    new_dt = DEBUG_NewDataType(DT_BASIC, typename);
+	    assert(!*DEBUG_FileSubNr2StabEnum(filenr1, subnr1));
+	    *DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = new_dt;
+	    if (DEBUG_PTS_ReadRange(ptd, &ref_dt, &lo, &hi) == -1) return -1;
+	    /* should perhaps do more here... */
+	    break;
+	case 'f':
+	    new_dt = DEBUG_NewDataType(DT_FUNC, NULL);
+	    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+	    DEBUG_SetPointerType(new_dt, ref_dt);
+	    break;
 	case 'e':
-	  ntp--;
-	  tc = c + 2;
-	  /*
-	   * Now parse the individual elements of the structure/union.
-	   */
-	  while(*tc != ';')
-	    {
-	      tc2 = element_name;
-	      while(*tc != ':')
-		*tc2++ = *tc++;
-	      tc++;
-	      *tc2++ = '\0';
-	      offset  = strtol(tc, &tc, 10);
-	      tc++;
-	      DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
+	    new_dt = DEBUG_NewDataType(DT_ENUM, NULL);
+	    if (DEBUG_PTS_ReadEnum(ptd, new_dt) == -1) return -1;
+	    break;
+	case 's':
+	case 'u':
+	    /* dt1 can have been already defined in a forward definition */
+	    dt1 = *DEBUG_FileSubNr2StabEnum(filenr1, subnr1);
+	    dt2 = DEBUG_TypeCast(DT_STRUCT, typename);
+	    if (!dt1) {
+		new_dt = DEBUG_NewDataType(DT_STRUCT, typename);
+		/* we need to set it here, because a struct can hold a pointer 
+		 * to itself 
+		 */
+		*DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = new_dt;
+	    } else {
+		if (DEBUG_GetType(dt1) != DT_STRUCT) {
+		    DEBUG_Printf(DBG_CHN_MESG, 
+				 "Forward declaration is not an aggregate\n");
+		    return -1;
+		}
+
+		/* should check typename is the same too */
+		new_dt = dt1;
 	    }
-	  if( *tc == '\0' )
-	    *c = '\0';
-	  else
-	    strcpy(c, tc + 1);
-	  break;
+	    if (DEBUG_PTS_ReadAggregate(ptd, new_dt) == -1) return -1;
+	    break;
+	case 'x':
+	    switch (*ptd->ptr++) {
+	    case 'e':			lo = DT_ENUM;	break;
+	    case 's':	case 'u':	lo = DT_STRUCT;	break;
+	    default: return -1;
+	    }
+	    
+	    idx = ptd->idx;
+	    if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
+	    new_dt = DEBUG_NewDataType(lo, ptd->buf + idx); 
+	    ptd->idx = idx;
+	    break;
 	default:
-	  DEBUG_Printf(DBG_CHN_FIXME, "Unknown type (%c).\n",c[1]);
-	  return FALSE;
+	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", *ptd->ptr);
+	    return -1;
 	}
     }
-  /*
-   * Now register the type so that if we encounter it again, we will know
-   * what to do.
-   */
-  DEBUG_RegisterTypedef(orig_typename, curr_types, ntypes);
+
+    if ((filenr2 || subnr2) && !*DEBUG_FileSubNr2StabEnum(filenr2, subnr2)) {
+	if (!new_dt) {
+	    /* this should be a basic type, define it, or even void */
+	    new_dt = DEBUG_NewDataType(DT_BASIC, typename);
+	}
+	*DEBUG_FileSubNr2StabEnum(filenr2, subnr2) = new_dt;
+    }
+
+    if (!new_dt) {
+	dt1 = *DEBUG_FileSubNr2StabEnum(filenr1, subnr1);
+	if (!dt1) {
+	    DEBUG_Printf(DBG_CHN_MESG, "Nothing has been defined <%s>\n", ptd->ptr);
+	    return -1;
+	}
+	*ret_dt = dt1;
+	return 0;
+    }
+
+    *DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = *ret_dt = new_dt;
+
+#if 0
+    if (typename) {
+	DEBUG_Printf(DBG_CHN_MESG, "Adding (%d,%d) %s => ", filenr1, subnr1, typename);
+	DEBUG_PrintTypeCast(new_dt);
+	DEBUG_Printf(DBG_CHN_MESG, "\n");
+    }
+#endif
+
+    return 0;
+}
+
+static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
+{
+    struct ParseTypedefData	ptd;
+    struct datatype*		dt;
+    int				ret = -1;
+
+    /* check for already existing definition */
     
-  return TRUE;
+    ptd.idx = 0;
+    if ((ptd.ptr = strchr(ptr, ':'))) {
+	ptd.ptr++;
+	if (*ptd.ptr != '(') ptd.ptr++;
+	ret = DEBUG_PTS_ReadTypedef(&ptd, typename, &dt);
+    }
+
+    if (ret == -1 || *ptd.ptr) {
+	DEBUG_Printf(DBG_CHN_MESG, "failure on %s at %s\n", ptr, ptd.ptr);
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 static struct datatype *
@@ -1081,11 +920,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 #endif
     }
 
-  DEBUG_FreeRegisteredTypedefs();
   DEBUG_FreeIncludes();
-  DBG_free(curr_types);
-  curr_types = NULL;
-  allocated_types = 0;
 
   return DIL_LOADED;
 }
@@ -1439,7 +1274,7 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
     struct link_map     lm;
     Elf32_Ehdr	        ehdr;
     char		bufstr[256];
-    
+
     /*
      * Now walk the linked list.  In all known ELF implementations,
      * the dynamic loader maintains this linked list for us.  In some
