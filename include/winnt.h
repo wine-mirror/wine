@@ -3096,6 +3096,8 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 #define RtlFillMemory(Destination, Length, Fill) memset((Destination),(Fill),(Length))
 #define RtlZeroMemory(Destination, Length) memset((Destination),0,(Length))
 
+#include "guiddef.h"
+
 #include "poppack.h"
 
 #endif  /* __WINE_WINNT_H */

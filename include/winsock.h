@@ -7,16 +7,22 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
+#ifndef RC_INVOKED
 #include <sys/types.h>
 
-/* Solaris kludge */
+/* Solaris uses these macro names */
 #undef FSHIFT
-#undef PAGESIZE
 #undef TRANSPARENT
 #include <netinet/in.h>
+/* Restore the Windows values */
+#ifdef _WINUSER_
 #undef FSHIFT
-#undef PAGESIZE
+#define FSHIFT            0x04
+#endif
+#ifdef _WINGDI_
 #undef TRANSPARENT
+#define TRANSPARENT       1
+#endif
 
 #include <arpa/inet.h>
 #include <sys/time.h>
@@ -24,6 +30,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#endif /* RC_INVOKED */
 
 #include "windef.h"
 
