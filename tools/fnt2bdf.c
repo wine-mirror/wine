@@ -21,7 +21,6 @@
 #include <fcntl.h>
 
 #include "fnt2bdf.h"
-#include "neexe.h"
 #include "module.h"
 
 #define FILE_ERROR	0

@@ -14,9 +14,8 @@
 #include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "neexe.h"
+#include "wine/winbase16.h"
 #include "cursoricon.h"
-#include "module.h"
 #include "heap.h"
 #include "debugtools.h"
 

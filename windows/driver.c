@@ -15,7 +15,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "ldt.h"
-#include "module.h"
 #include "mmddk.h"
 #include "debugtools.h"
 

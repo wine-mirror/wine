@@ -12,11 +12,10 @@
 #include <unistd.h>
 
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "winnls.h"
 #include "wine/unicode.h"
 
-#include "neexe.h"
-#include "module.h"
 #include "winver.h"
 #include "lzexpand.h"
 #include "debugtools.h"

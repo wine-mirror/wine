@@ -26,7 +26,6 @@
 #include "region.h"
 #include "heap.h"
 #include "local.h"
-#include "module.h"
 #include "user.h"
 #include "debugtools.h"
 #include "windef.h"
@@ -90,7 +89,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
     
     /* store DCE handle in DC hook data field */
 
-    hookProc = (FARPROC16)NE_GetEntryPoint( GetModuleHandle16("USER"), 362 );
+    hookProc = GetProcAddress16( GetModuleHandle16("USER"), (LPCSTR)362 );
     SetDCHook( dce->hDC, hookProc, (DWORD)dce );
 
     dce->hwndCurrent = hWnd;

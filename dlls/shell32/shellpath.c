@@ -13,7 +13,6 @@
 
 #include "shlobj.h"
 #include "shell32_main.h"
-#include "options.h"
 #include "wine/undocshell.h"
 #include "wine/unicode.h"
 #include "shlwapi.h"

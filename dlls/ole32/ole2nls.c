@@ -15,13 +15,11 @@
 #include "winuser.h"
 #include "wine/windef16.h"
 #include "heap.h"
-#include "options.h"
 #include "winver.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "main.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 

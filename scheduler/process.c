@@ -19,7 +19,6 @@
 #include "drive.h"
 #include "main.h"
 #include "module.h"
-#include "neexe.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"

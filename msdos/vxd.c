@@ -17,7 +17,6 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "selectors.h"
-#include "neexe.h"
 #include "task.h"
 #include "process.h"
 #include "file.h"

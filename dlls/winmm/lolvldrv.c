@@ -13,7 +13,6 @@
 #include "user.h"	/* should be removed asap; used in MMDRV_(Get|Alloc|Free) */
 #include "selectors.h"
 #include "winver.h"
-#include "module.h"
 #include "winemm.h"
 #include "debugtools.h"
 

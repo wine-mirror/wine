@@ -18,7 +18,6 @@
 #include "global.h"
 #include "ldt.h"
 #include "module.h"
-#include "neexe.h"
 #include "callback.h"
 #include "debugtools.h"
 

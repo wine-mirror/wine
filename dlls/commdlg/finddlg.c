@@ -13,7 +13,6 @@
 #include "wine/winuser16.h"
 #include "commdlg.h"
 #include "ldt.h"
-#include "module.h"
 #include "debugtools.h"
 #include "cderr.h"
 

@@ -12,7 +12,6 @@
 #include "winerror.h"
 #include "wine/winuser16.h"
 #include "heap.h"
-#include "module.h"
 #include "user.h"
 #include "region.h"
 #include "win.h"

@@ -9,7 +9,6 @@
 #include "winnls.h"
 #include "wine/winbase16.h"
 #include "win16drv.h"
-#include "module.h"
 #include "font.h"
 #include "heap.h"
 #include "gdi.h"
@@ -190,7 +189,7 @@ BOOL	WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf,
     WEPFC wepfc;
     DC *dc;
     /* EnumDFontCallback is GDI.158 */
-    FARPROC16 pfnCallback = NE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
+    FARPROC16 pfnCallback = GetProcAddress16( GetModuleHandle16("GDI"), (LPCSTR)158 );
 
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     physDev = (WIN16DRV_PDEVICE *)dc->physDev;

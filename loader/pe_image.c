@@ -31,7 +31,6 @@
 #endif
 #include "wine/winbase16.h"
 #include "winerror.h"
-#include "neexe.h"
 #include "process.h"
 #include "snoop.h"
 #include "server.h"

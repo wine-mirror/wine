@@ -27,7 +27,6 @@
 #include "heap.h"
 #include "winemm.h"
 #include "selectors.h"
-#include "module.h"
 #include "debugtools.h"
 #include "ntddk.h"
 

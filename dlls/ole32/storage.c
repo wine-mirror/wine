@@ -21,7 +21,6 @@
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "heap.h"
-#include "module.h"
 #include "ldt.h"
 #include "debugtools.h"
 

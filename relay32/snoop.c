@@ -13,7 +13,6 @@
 #include "winnt.h"
 #include "heap.h"
 #include "snoop.h"
-#include "neexe.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"

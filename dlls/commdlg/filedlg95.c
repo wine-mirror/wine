@@ -48,7 +48,6 @@
 #include "cdlg.h"
 #include "debugtools.h"
 #include "cderr.h"
-#include "tweak.h"
 #include "shellapi.h"
 #include "shlguid.h"
 #include "filedlgbrowser.h"

@@ -6,7 +6,6 @@
 
 /* #define VERBOSE */
 
-#include "neexe.h"
 #include "cvinclude.h"
 
 typedef enum { CV_NONE, CV_DOS, CV_NT, CV_DBG } CVHeaderType;

@@ -22,7 +22,6 @@
 #include "task.h"
 #include "process.h"
 #include "stackframe.h"
-#include "neexe.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);

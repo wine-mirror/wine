@@ -11,7 +11,6 @@
 #include "builtin16.h"
 #include "heap.h"
 #include "module.h"
-#include "neexe.h"
 #include "stackframe.h"
 #include "selectors.h"
 #include "debugtools.h"

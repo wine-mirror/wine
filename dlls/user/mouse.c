@@ -10,7 +10,6 @@
 #include "debugtools.h"
 #include "callback.h"
 #include "builtin16.h"
-#include "module.h"
 #include "mouse.h"
 #include "windef.h"
 #include "wingdi.h"

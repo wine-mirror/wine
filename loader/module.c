@@ -14,7 +14,6 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "heap.h"
-#include "neexe.h"
 #include "process.h"
 #include "selectors.h"
 #include "debugtools.h"

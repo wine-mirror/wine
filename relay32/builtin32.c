@@ -22,7 +22,6 @@
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "global.h"
-#include "neexe.h"
 #include "module.h"
 #include "heap.h"
 #include "main.h"

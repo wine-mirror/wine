@@ -21,7 +21,6 @@
 #include "heap.h"
 #include "callback.h"
 #include "cursoricon.h"
-#include "neexe.h"
 #include "task.h"
 #include "process.h"
 #include "module.h"

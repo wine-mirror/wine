@@ -13,7 +13,6 @@
 #include "global.h"
 #include "process.h"
 #include "module.h"
-#include "neexe.h"
 #include "heap.h"
 #include "wine/winbase16.h"
 #include "elfdll.h"

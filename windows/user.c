@@ -22,7 +22,6 @@
 #include "hook.h"
 #include "toolhelp.h"
 #include "message.h"
-#include "module.h"
 #include "miscemu.h"
 #include "sysmetrics.h"
 #include "callback.h"

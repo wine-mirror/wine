@@ -19,7 +19,6 @@
 #include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
-#include "module.h"
 #include "debugtools.h"
 #include "cderr.h"
 

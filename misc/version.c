@@ -18,7 +18,6 @@
 #include "process.h"
 #include "options.h"
 #include "debugtools.h"
-#include "neexe.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(ver);

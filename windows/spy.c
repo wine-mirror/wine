@@ -13,7 +13,6 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "win.h"
-#include "module.h"
 #include "options.h"
 #include "debugtools.h"
 #include "spy.h"

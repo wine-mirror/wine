@@ -13,7 +13,6 @@
 #include "heap.h"
 #include "wine/winbase16.h"
 #include "wine/obj_base.h"
-#include "module.h"
 #include "debugtools.h"
 
 #include "ole.h"

@@ -19,7 +19,6 @@
 #include "commctrl.h"
 #include "vfw.h"
 #include "mmsystem.h"
-#include "services.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(animate);

@@ -24,7 +24,6 @@
 #define PATH_MAX _MAX_PATH
 #endif
 #include "debugger.h"
-#include "neexe.h"
 #include "file.h"
 
 typedef struct

@@ -22,7 +22,6 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "module.h"
-#include "neexe.h"
 #include "task.h"
 #include "selectors.h"
 #include "file.h"

@@ -12,7 +12,6 @@
 
 #include "crtdll.h"
 #include "process.h"
-#include "options.h"
 #include <stdlib.h>
 #include <sys/times.h>
 

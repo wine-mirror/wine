@@ -785,8 +785,8 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
                 break;
             }
             if (entryPoint) 
-                context->Eax = LOWORD(NE_GetEntryPoint( GetModuleHandle16( "KERNEL" ),
-                                                            entryPoint ));
+                context->Eax = LOWORD(GetProcAddress16( GetModuleHandle16( "KERNEL" ),
+                                                        (LPCSTR)(ULONG_PTR)entryPoint ));
         }
         break;
 

@@ -29,7 +29,6 @@
 #include "mouse.h"
 #include "message.h"
 #include "queue.h"
-#include "module.h"
 #include "debugtools.h"
 #include "winerror.h"
 #include "task.h"
@@ -296,7 +295,7 @@ void WINAPI WIN16_mouse_event( CONTEXT86 *context )
 FARPROC16 WINAPI GetMouseEventProc16(void)
 {
     HMODULE16 hmodule = GetModuleHandle16("USER");
-    return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "mouse_event" ));
+    return GetProcAddress16( hmodule, "mouse_event" );
 }
 
 

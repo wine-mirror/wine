@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "class.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/unicode.h"
