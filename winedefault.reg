@@ -1483,6 +1483,13 @@
 @="shell32.dll"
 "ThreadingModel"="Apartment"
 
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{20d04fe0-3aea-1069-a2d8-08002b30309d}]
+@="My Computer"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{20d04fe0-3aea-1069-a2d8-08002b30309d}\InProcServer32]
+@="shell32.dll"
+"ThreadingModel"="Apartment"
+
 #
 # Entries for COMCAT (Component Category Manager)
 #
@@ -1500,9 +1507,10 @@
 #
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\DirectX]
-# left here in case a program needs the DX 7.0 string
+# left here in case a program needs the DX 7 or 8.1 string
 #"Version"="4.07.00.0700"
-"Version"="4.08.01.0810"
+#"Version"="4.08.01.0810"
+"Version"="4.09.00.0902"
 
 #
 # DirectDraw
