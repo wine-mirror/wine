@@ -1085,7 +1085,6 @@ VOID __cdecl CRTDLL_perror (LPCSTR err)
 {
   char *err_str = CRTDLL_strerror(CRTDLL_errno);
   CRTDLL_fprintf(CRTDLL_stderr,"%s: %s\n",err,err_str);
-  CRTDLL_free(err_str);
 }
  
 
