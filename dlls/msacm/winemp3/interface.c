@@ -175,7 +175,9 @@ int decodeMP3(struct mpstr *mp,char *in,int isize,char *out,
 			return MP3_NEED_MORE;
 		}
 		read_head(mp);
-		decode_header(&mp->fr,mp->header);
+		if (decode_header(&mp->fr,mp->header) == 0) {
+			return MP3_ERR;
+		}
 		mp->framesize = mp->fr.framesize;
 	}
 
