@@ -904,7 +904,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     int tmplen, drive;
     UINT flags;
 
-    TRACE("%s\n", longpath);
+    TRACE("%s\n", debugstr_a(longpath));
 
     if (!longpath) {
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -964,7 +964,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     }
 
     lstrcpynA ( shortpath, tmpshortpath, shortlen );
-    TRACE("returning %s\n", shortpath );
+    TRACE("returning %s\n", debugstr_a(shortpath) );
     tmplen = lstrlenA ( tmpshortpath );
     HeapFree ( GetProcessHeap(), 0, tmpshortpath );
     

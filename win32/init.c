@@ -32,11 +32,12 @@ VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo)
 	  "\tlpReserverd: %s, lpDesktop: %s, lpTitle: %s\n"
 	  "\tdwX: %ld, dwY: %ld, dwXSize: %ld, dwYSize: %ld\n"
 	  "\tdwFlags: %lx, wShowWindow: %x\n", lpStartupInfo->cb, 
-	  lpStartupInfo->lpReserved, lpStartupInfo->lpDesktop, 
-	  lpStartupInfo->lpTitle, lpStartupInfo->dwX, 
-	  lpStartupInfo->dwY, lpStartupInfo->dwXSize, 
-	  lpStartupInfo->dwYSize, lpStartupInfo->dwFlags, 
-	  lpStartupInfo->wShowWindow );
+	  debugstr_a(lpStartupInfo->lpReserved),
+	  debugstr_a(lpStartupInfo->lpDesktop), 
+	  debugstr_a(lpStartupInfo->lpTitle),
+	  lpStartupInfo->dwX, lpStartupInfo->dwY,
+	  lpStartupInfo->dwXSize, lpStartupInfo->dwYSize,
+	  lpStartupInfo->dwFlags, lpStartupInfo->wShowWindow );
 }
 
 /***********************************************************************
