@@ -286,7 +286,7 @@ typedef struct
 /*************************************************************************
  *              FontFamilyEnumProc32                           [internal]
  */
-INT WINAPI FontFamilyEnumProc(LPENUMLOGFONTA lpEnumLogFont, 
+static INT WINAPI FontFamilyEnumProc(LPENUMLOGFONTA lpEnumLogFont, 
 	  LPNEWTEXTMETRICA metrics, UINT nFontType, LPARAM lParam)
 {
   LPCFn_ENUMSTRUCT e;
@@ -393,7 +393,7 @@ static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTA lpcf)
 /***********************************************************************
  *                 AddFontStyle                          [internal]
  */
-INT AddFontStyle(LPLOGFONTA lplf, UINT nFontType, 
+static INT AddFontStyle(LPLOGFONTA lplf, UINT nFontType, 
     LPCHOOSEFONTA lpcf, HWND hcmb2, HWND hcmb3, HWND hDlg)
 {
   int i;
@@ -444,7 +444,7 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
 /***********************************************************************
  *                 FontStyleEnumProc32                     [internal]
  */
-INT WINAPI FontStyleEnumProc( LPENUMLOGFONTA lpFont, 
+static INT WINAPI FontStyleEnumProc( LPENUMLOGFONTA lpFont, 
           LPNEWTEXTMETRICA metrics, UINT nFontType, LPARAM lParam )
 {
   LPCFn_ENUMSTRUCT s=(LPCFn_ENUMSTRUCT)lParam;
@@ -458,7 +458,7 @@ INT WINAPI FontStyleEnumProc( LPENUMLOGFONTA lpFont,
 /***********************************************************************
  *           CFn_WMInitDialog                            [internal]
  */
-LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
+static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
                          LPCHOOSEFONTA lpcf)
 {
   HDC hdc;
@@ -579,7 +579,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 /***********************************************************************
  *           CFn_WMMeasureItem                           [internal]
  */
-LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
+static LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
   BITMAP bm;
   LPMEASUREITEMSTRUCT lpmi=(LPMEASUREITEMSTRUCT)lParam;
@@ -595,7 +595,7 @@ LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMDrawItem                              [internal]
  */
-LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
+static LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
   HBRUSH hBrush;
   char buffer[40];
@@ -697,7 +697,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMCtlColor                              [internal]
  */
-LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
+static LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
                              LPCHOOSEFONTA lpcf)
 {
   if (lpcf->Flags & CF_EFFECTS)
@@ -712,7 +712,7 @@ LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
 /***********************************************************************
  *           CFn_WMCommand                               [internal]
  */
-LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
+static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
                       LPCHOOSEFONTA lpcf)
 {
   HFONT hFont;

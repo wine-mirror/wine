@@ -44,7 +44,7 @@ VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 /***********************************************************************
  *           DISPLAY_CheckCursor                  (DISPLAY.104)
  */
-VOID WINAPI DISPLAY_CheckCursor()
+VOID WINAPI DISPLAY_CheckCursor( void )
 {
     TRACE( cursor, "stub\n" );
 }

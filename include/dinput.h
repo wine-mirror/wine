@@ -832,5 +832,10 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
 #define IDirectInputA_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
 #endif
 
+/* Export functions */ 
+
+HRESULT WINAPI DirectInputCreateA(HINSTANCE,DWORD,LPDIRECTINPUTA *,LPUNKNOWN);
+HRESULT WINAPI DirectInputCreateW(HINSTANCE,DWORD,LPDIRECTINPUTA *,LPUNKNOWN);
+#define DirectInputCreate WINELIB_NAME_AW(DirectInputCreate)
 
 #endif /* __WINE_DINPUT_H */

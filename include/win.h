@@ -165,9 +165,9 @@ typedef struct
 
   /* Window functions */
 extern void   WIN_Init( void );
-extern void   WIN_LockWnds();
-extern void   WIN_UnlockWnds();
-extern int    WIN_SuspendWndsLock();
+extern void   WIN_LockWnds( void );
+extern void   WIN_UnlockWnds( void );
+extern int    WIN_SuspendWndsLock( void );
 extern void   WIN_RestoreWndsLock(int ipreviousLock);
 extern WND*   WIN_FindWndPtr( HWND hwnd );
 extern WND*   WIN_LockWndPtr(WND *wndPtr);
@@ -207,10 +207,19 @@ extern BOOL WIDGETS_Init( void );
 extern BOOL WIDGETS_IsControl( WND* pWnd, BUILTIN_CLASS32 cls );  
 
 /* controls/icontitle.c */
+extern LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
 extern HWND ICONTITLE_Create( WND* );
 extern BOOL ICONTITLE_Init( void );
 
 /* windows/focus.c */
 extern void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND , HWND );
+
+/* windows/edit.c */
+extern LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
+/* windows/listbox.c */
+extern LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+extern LRESULT WINAPI ComboLBWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 #endif  /* __WINE_WIN_H */

@@ -73,8 +73,8 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     TEB *teb = NtCurrentTeb();
     int i;
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
-                  lock, lock->level, teb->tid, teb->teb_sel, getpid(),
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count before %ld\n", 
+                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
                   teb->sys_count[lock->level] );
 
     for ( i = 3; i > lock->level; i-- )
@@ -89,8 +89,8 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     teb->sys_count[lock->level]++;
     teb->sys_mutex[lock->level] = lock;
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
-                  lock, lock->level, teb->tid, teb->teb_sel, getpid(), 
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count after  %ld\n",
+                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(), 
                   teb->sys_count[lock->level] );
 
     if (lock == &Win16Mutex)
@@ -104,8 +104,8 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
     TEB *teb = NtCurrentTeb();
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
-                  lock, lock->level, teb->tid, teb->teb_sel, getpid(),
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count before %ld\n", 
+                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
                   teb->sys_count[lock->level] );
 
     if ( teb->sys_count[lock->level] <= 0 || teb->sys_mutex[lock->level] != lock )
@@ -122,8 +122,8 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 
     LeaveCriticalSection( &lock->crst );
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
-                  lock, lock->level, teb->tid, teb->teb_sel, getpid(), 
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count after  %ld\n",
+                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(), 
                   teb->sys_count[lock->level] );
 }
 

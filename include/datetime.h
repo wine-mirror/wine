@@ -7,6 +7,8 @@
 #ifndef __WINE_DATETIME_H
 #define __WINE_DATETIME_H
 
+#include "windef.h"
+
 typedef struct tagDATETIME_INFO
 {
     DWORD dwDummy;  /* just to keep the compiler happy ;-) */

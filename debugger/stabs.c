@@ -93,7 +93,7 @@ struct known_typedef
   struct known_typedef * next;
   char		       * name;
   int			 ndefs;
-  struct datatype      * types[0];
+  struct datatype      * types[1];
 };
 
 #define NR_STAB_HASH 521
@@ -221,7 +221,7 @@ DEBUG_RegisterTypedef(const char * name, struct datatype ** types, int ndef)
       return TRUE;
 
   ktd = (struct known_typedef *) DBG_alloc(sizeof(struct known_typedef) 
-					 + ndef * sizeof(struct datatype *));
+					 + (ndef - 1) * sizeof(struct datatype *));
   
   hash = stab_hash(name);
 

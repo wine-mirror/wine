@@ -85,7 +85,7 @@ void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 /* converts from physical (mouse) position to logical position 
    (in range of trackbar) */
 
-static __inline__ DOUBLE
+static inline DOUBLE
 TRACKBAR_ConvertPlaceToPosition (TRACKBAR_INFO *infoPtr, int place, 
                                  int vertical) 
 {

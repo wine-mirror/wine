@@ -145,21 +145,7 @@ void COMM_Init(void)
 }
 
 
-struct DosDeviceStruct *GetDeviceStruct_fd(int fd)
-{
-	int x;
-
-	for (x=0; x!=MAX_PORTS; x++) {
-	    if (COM[x].fd == fd)
-		return &COM[x];
-	    if (LPT[x].fd == fd)
-		return &LPT[x];
-	}
-
-	return NULL;
-}
-
-struct DosDeviceStruct *GetDeviceStruct(int fd)
+static struct DosDeviceStruct *GetDeviceStruct(int fd)
 {
 	if ((fd&0x7F)<=MAX_PORTS) {
             if (!(fd&FLAG_LPT)) {
@@ -174,7 +160,7 @@ struct DosDeviceStruct *GetDeviceStruct(int fd)
 	return NULL;
 }
 
-int    GetCommPort_fd(int fd)
+static int    GetCommPort_fd(int fd)
 {
         int x;
         
@@ -186,17 +172,17 @@ int    GetCommPort_fd(int fd)
        return -1;
 } 
 
-int ValidCOMPort(int x)
+static int ValidCOMPort(int x)
 {
 	return(x < MAX_PORTS ? (int) COM[x].devicename : 0); 
 }
 
-int ValidLPTPort(int x)
+static int ValidLPTPort(int x)
 {
 	return(x < MAX_PORTS ? (int) LPT[x].devicename : 0); 
 }
 
-int WinError(void)
+static int WinError(void)
 {
         TRACE(comm, "errno = %d\n", errno);
 	switch (errno) {

@@ -93,7 +93,7 @@ ANIMATE_Free (ANIMATE_INFO *infoPtr)
 
 
 static VOID
-ANIMATE_GetAviInfo (infoPtr)
+ANIMATE_GetAviInfo (ANIMATE_INFO *infoPtr)
 {
 
 
@@ -305,7 +305,7 @@ ANIMATE_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-ANIMATE_Register (VOID)
+ANIMATE_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -325,7 +325,7 @@ ANIMATE_Register (VOID)
 
 
 VOID
-ANIMATE_Unregister (VOID)
+ANIMATE_Unregister (void)
 {
     if (GlobalFindAtomA (ANIMATE_CLASSA))
 	UnregisterClassA (ANIMATE_CLASSA, (HINSTANCE)NULL);

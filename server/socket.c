@@ -73,7 +73,7 @@ static int do_write( struct client *client )
         cmsg.fd = client->pass_fd;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-        iovec.iov_base = (char *)&client->res;
+        iovec.iov_base = (void *)&client->res;
         iovec.iov_len  = sizeof(client->res);
 
         ret = sendmsg( client->select.fd, &msghdr, 0 );
@@ -113,7 +113,7 @@ static void do_read( struct client *client )
 
     assert( client->pass_fd == -1 );
 
-    iovec.iov_base = &req;
+    iovec.iov_base = (void *)&req;
     iovec.iov_len  = sizeof(req);
 
     ret = recvmsg( client->select.fd, &msghdr, 0 );

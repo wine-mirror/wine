@@ -7,7 +7,15 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
+/* Solaris kludge */
+#undef FSHIFT
+#undef PAGESIZE
+#undef TRANSPARENT
 #include <netinet/in.h>
+#undef FSHIFT
+#undef PAGESIZE
+#undef TRANSPARENT
+
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/time.h>

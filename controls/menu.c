@@ -295,7 +295,7 @@ static HMENU MENU_CopySysPopup(void)
  *
  * Return the locked pointer pTopPopupWnd.
  */
-WND *MENU_GetTopPopupWnd()
+static WND *MENU_GetTopPopupWnd()
 {
     return WIN_LockWndPtr(pTopPopupWnd);
 }
@@ -304,7 +304,7 @@ WND *MENU_GetTopPopupWnd()
  *
  * Realease the locked pointer pTopPopupWnd.
  */
-void MENU_ReleaseTopPopupWnd()
+static void MENU_ReleaseTopPopupWnd()
 {
     WIN_ReleaseWndPtr(pTopPopupWnd);
 }
@@ -313,7 +313,7 @@ void MENU_ReleaseTopPopupWnd()
  *
  * Destroy the locked pointer pTopPopupWnd.
  */
-void MENU_DestroyTopPopupWnd()
+static void MENU_DestroyTopPopupWnd()
 {
     WND *tmpWnd = pTopPopupWnd;
     pTopPopupWnd = NULL;

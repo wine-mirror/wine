@@ -5,10 +5,12 @@
  * Copyright 1996 Frans van Dorsselaer
  */
 
-#include "winuser.h"
-#include "module.h"
-#include "debug.h"
 #include "wine/wingdi16.h"
+#include "wine/winuser16.h"
+#include "module.h"
+#include "win.h"
+#include "winuser.h"
+#include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(caret)
 

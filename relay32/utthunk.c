@@ -85,8 +85,8 @@ DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR translationLis
 /****************************************************************************
  *		UTGlue32
  */
-DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefined, 
-                       LPVOID translationList[] )
+static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefined, 
+                              LPVOID translationList[] )
 {
     SEGPTR segBuff, *segptrList = NULL;
     INT i, nList = 0;

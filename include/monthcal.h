@@ -7,6 +7,8 @@
 #ifndef __WINE_MONTHCAL_H
 #define __WINE_MONTHCAL_H
 
+#include "windef.h"
+
 typedef struct tagMONTHCAL_INFO
 {
     DWORD dwDummy;  /* just to keep the compiler happy ;-) */

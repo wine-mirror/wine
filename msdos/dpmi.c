@@ -336,7 +336,7 @@ callrmproc_again:
         SP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
 #else
     if (!already) {
-        stack16 = CURRENT_STACK16;
+        stack16 = (LPWORD) CURRENT_STACK16;
 #endif
         stack16 -= args;
         if (args) memcpy(stack16, stack, args*sizeof(WORD) );
@@ -387,7 +387,7 @@ callrmproc_again:
 
         CS_reg(context) = HIWORD(seg_addr);
         IP_reg(context) = LOWORD(seg_addr);
-        EBP_reg(context) = OFFSETOF( thdb->cur_stack )
+        EBP_reg(context) = OFFSETOF( NtCurrentTeb()->cur_stack )
                                    + (WORD)&((STACK16FRAME*)0)->bp;
         Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
 	SELECTOR_FreeBlock(sel, 1);

@@ -96,14 +96,23 @@ static GUID XLIB_DirectDraw_GUID = { /* 1574a740-dc61-11d1-8407-f7875a7d1879 */
     {0x84, 0x07, 0xf7, 0x87, 0x5a, 0x7d, 0x18, 0x79}
 };
 
-static struct ICOM_VTABLE(IDirectDrawSurface4)	dga_dds4vt, xlib_dds4vt;
-static struct ICOM_VTABLE(IDirectDraw)		dga_ddvt, xlib_ddvt;
-static struct ICOM_VTABLE(IDirectDraw2)		dga_dd2vt, xlib_dd2vt;
-static struct ICOM_VTABLE(IDirectDraw4)		dga_dd4vt, xlib_dd4vt;
+#ifdef HAVE_LIBXXF86DGA
+static struct ICOM_VTABLE(IDirectDrawSurface4)	dga_dds4vt;
+static struct ICOM_VTABLE(IDirectDraw)		dga_ddvt;
+static struct ICOM_VTABLE(IDirectDraw2)		dga_dd2vt;
+static struct ICOM_VTABLE(IDirectDraw4)		dga_dd4vt;
+static struct ICOM_VTABLE(IDirectDrawPalette)	dga_ddpalvt;
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+static struct ICOM_VTABLE(IDirectDrawSurface4)	xlib_dds4vt;
+static struct ICOM_VTABLE(IDirectDraw)		xlib_ddvt;
+static struct ICOM_VTABLE(IDirectDraw2)		xlib_dd2vt;
+static struct ICOM_VTABLE(IDirectDraw4)		xlib_dd4vt;
+static struct ICOM_VTABLE(IDirectDrawPalette)	xlib_ddpalvt;
+
 static struct ICOM_VTABLE(IDirectDrawClipper)	ddclipvt;
-static struct ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt, xlib_ddpalvt;
-static struct ICOM_VTABLE(IDirect3D)			d3dvt;
-static struct ICOM_VTABLE(IDirect3D2)			d3d2vt;
+static struct ICOM_VTABLE(IDirect3D)		d3dvt;
+static struct ICOM_VTABLE(IDirect3D2)		d3d2vt;
 
 #ifdef HAVE_LIBXXF86VM
 static XF86VidModeModeInfo *orig_mode = NULL;
@@ -629,6 +638,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(
 	LPDIRECTDRAWSURFACE4 iface,LPVOID surface
 ) {
@@ -636,6 +646,7 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(
 	TRACE(ddraw,"(%p)->Unlock(%p)\n",This,surface);
 	return DD_OK;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
   if (This->s.ddraw->d.pixel_convert != NULL)
@@ -688,12 +699,12 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
 	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
 ) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
         IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
-#ifdef HAVE_LIBXXF86DGA
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
 	if (!iflipto) {
 		if (This->s.backbuffer)
@@ -721,10 +732,8 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
 		iflipto->s.surface_desc.y.lpSurface = ptmp;
 	}
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
 	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
@@ -841,13 +850,14 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
 	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal
 ) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
         IDirectDrawPaletteImpl* ipal=(IDirectDrawPaletteImpl*)pal;
 	TRACE(ddraw,"(%p)->(%p)\n",This,ipal);
-#ifdef HAVE_LIBXXF86DGA
+
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
          */
@@ -870,12 +880,8 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
 	  TSXF86DGAInstallColormap(display,DefaultScreen(display),This->s.palette->cm);
         }
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
-
-
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT _Blt_ColorFill(LPBYTE buf, int width, int height, int bpp, LONG lPitch, DWORD color)
 {
@@ -1275,11 +1281,11 @@ static ULONG WINAPI IDirectDrawSurface4Impl_AddRef(LPDIRECTDRAWSURFACE4 iface) {
 	return ++(This->ref);
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
         TRACE( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
 
-#ifdef HAVE_LIBXXF86DGA
 	if (!--(This->ref)) {
 		IDirectDraw2_Release((IDirectDraw2*)This->s.ddraw);
 		/* clear out of surface list */
@@ -1303,9 +1309,9 @@ static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 ifa
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
-#endif /* defined(HAVE_LIBXXF86DGA) */
 	return This->ref;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
@@ -1982,6 +1988,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_ChangeUniquenessValue(LPDIRECTDRAW
   return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt = 
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -2031,6 +2038,7 @@ static ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt =
 	IDirectDrawSurface4Impl_GetUniquenessValue,
 	IDirectDrawSurface4Impl_ChangeUniquenessValue
 };
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt = 
 {
@@ -2261,10 +2269,10 @@ static HRESULT WINAPI Xlib_IDirectDrawPaletteImpl_SetEntries(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 	LPDIRECTDRAWPALETTE iface,DWORD x,DWORD start,DWORD count,LPPALETTEENTRY palent
 ) {
-#ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDrawPaletteImpl,iface);
 	XColor		xc;
 	Colormap	cm;
@@ -2298,10 +2306,8 @@ static HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 	}
 	TSXF86DGAInstallColormap(display,DefaultScreen(display),This->cm);
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static ULONG WINAPI IDirectDrawPaletteImpl_Release(LPDIRECTDRAWPALETTE iface) {
         ICOM_THIS(IDirectDrawPaletteImpl,iface);
@@ -2353,6 +2359,7 @@ static HRESULT WINAPI IDirectDrawPaletteImpl_QueryInterface(
   return S_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt = 
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -2364,6 +2371,7 @@ static ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt =
 	IDirectDrawPaletteImpl_Initialize,
 	DGA_IDirectDrawPaletteImpl_SetEntries
 };
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static ICOM_VTABLE(IDirectDrawPalette) xlib_ddpalvt = 
 {
@@ -2743,10 +2751,10 @@ static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
   return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 	LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk
 ) {
-#ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDraw2Impl,iface);
         IDirectDrawSurfaceImpl** ilpdsf=(IDirectDrawSurfaceImpl**)lpdsf;
 	int	i;
@@ -2847,10 +2855,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 	}
 	
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 #ifdef HAVE_LIBXXSHM
 /* Error handlers for Image creation */
@@ -3300,10 +3306,10 @@ static int _common_depth_to_pixelformat(DWORD depth, DDPIXELFORMAT *pixelformat,
   return match;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
 ) {
-#ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDrawImpl,iface);
         int	i,mode_count;
 
@@ -3387,10 +3393,8 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	EXC_InitHandlers();
 #endif
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 /* *************************************
       16 / 15 bpp to palettized 8 bpp
@@ -3637,10 +3641,10 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
 	LPDIRECTDRAW2 iface,LPDDCAPS caps1,LPDDCAPS caps2
 ) {
-#ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw,"(%p)->GetCaps(%p,%p)\n",This,caps1,caps2);
 	if (!caps1 && !caps2)
@@ -3656,10 +3660,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
 		caps2->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
 	}
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static void fill_caps(LPDDCAPS caps) {
   /* This function tries to fill the capabilities of Wine's DDraw implementation.
@@ -3763,6 +3765,7 @@ static HRESULT WINAPI common_IDirectDraw2Impl_CreatePalette(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
 	LPDIRECTDRAW2 iface,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
 ) {
@@ -3795,6 +3798,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
 	}
 	return DD_OK;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreatePalette(
 	LPDIRECTDRAW2 iface,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
@@ -3811,8 +3815,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreatePalette(
 	return DD_OK;
 }
 
-static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 iface) {
 #ifdef HAVE_LIBXXF86DGA
+static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 iface) {
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw, "(%p)->()\n",This);
 	Sleep(1000);
@@ -3821,10 +3825,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 ifac
 	EXC_InitHandlers();
 #endif
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 iface) {
         ICOM_THIS(IDirectDraw2Impl,iface);
@@ -3848,11 +3850,11 @@ static ULONG WINAPI IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 iface) {
 	return ++(This->ref);
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
         ICOM_THIS(IDirectDraw2Impl,iface);
         TRACE( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
 
-#ifdef HAVE_LIBXXF86DGA
 	if (!--(This->ref)) {
 		TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 		if (This->d.window && (This->d.mainWindow != This->d.window))
@@ -3876,9 +3878,9 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
-#endif /* defined(HAVE_LIBXXF86DGA) */
 	return This->ref;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static ULONG WINAPI Xlib_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
         ICOM_THIS(IDirectDraw2Impl,iface);
@@ -3894,6 +3896,7 @@ static ULONG WINAPI Xlib_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 	return This->ref;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 	LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
 ) {
@@ -3968,6 +3971,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 	WARN(ddraw,"(%p):interface for IID %s _NOT_ found!\n",This,xrefiid);
         return OLE_E_ENUM_NOMORE;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 	LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
@@ -4053,6 +4057,7 @@ static HRESULT WINAPI IDirectDraw2Impl_GetVerticalBlankStatus(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 	LPDIRECTDRAW2 iface,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,LPDDENUMMODESCALLBACK modescb
 ) {
@@ -4137,6 +4142,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 	}
 	return DD_OK;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	LPDIRECTDRAW2 iface,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,LPDDENUMMODESCALLBACK modescb
@@ -4266,10 +4272,10 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsfd
 ) {
-#ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw,"(%p)->(%p)\n",This,lpddsfd);
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
@@ -4281,10 +4287,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
 	return DD_OK;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
 	LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsfd
@@ -4367,6 +4371,8 @@ static HRESULT WINAPI IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface,
   return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
+
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(dga_ddvt.fn##fun))
@@ -4401,6 +4407,17 @@ static ICOM_VTABLE(IDirectDraw) dga_ddvt =
 	DGA_IDirectDrawImpl_SetDisplayMode,
 	XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
 };
+
+#undef XCAST
+
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+/* Note: Hack so we can reuse the old functions without compiler warnings */
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(xlib_ddvt.fn##fun))
+#else
+# define XCAST(fun)	(void *)
+#endif
 
 static ICOM_VTABLE(IDirectDraw) xlib_ddvt = 
 {
@@ -4438,11 +4455,13 @@ static ICOM_VTABLE(IDirectDraw) xlib_ddvt =
  */
 
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_SetDisplayMode(
 	LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD xx,DWORD yy
 ) {
 	return DGA_IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_SetDisplayMode(
 	LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD xx,DWORD yy
@@ -4450,6 +4469,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_SetDisplayMode(
 	return Xlib_IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_GetAvailableVidMem(
 	LPDIRECTDRAW2 iface,LPDDSCAPS ddscaps,LPDWORD total,LPDWORD free
 ) {
@@ -4461,6 +4481,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetAvailableVidMem(
 	if (free) *free = This->e.dga.fb_memsize * 1024;
 	return DD_OK;
 }
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetAvailableVidMem(
 	LPDIRECTDRAW2 iface,LPDDSCAPS ddscaps,LPDWORD total,LPDWORD free
@@ -4474,6 +4495,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetAvailableVidMem(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
 static ICOM_VTABLE(IDirectDraw2) dga_dd2vt = 
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -4502,6 +4524,7 @@ static ICOM_VTABLE(IDirectDraw2) dga_dd2vt =
 	IDirectDraw2Impl_WaitForVerticalBlank,
 	DGA_IDirectDraw2Impl_GetAvailableVidMem
 };
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 static ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = 
 {
@@ -4569,12 +4592,13 @@ static HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 iface,
   return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(dga_dd4vt.fn##fun))
 #else
 # define XCAST(fun)	(void*)
 #endif
-
 
 static ICOM_VTABLE(IDirectDraw4) dga_dd4vt = 
 {
@@ -4608,6 +4632,16 @@ static ICOM_VTABLE(IDirectDraw4) dga_dd4vt =
 	IDirectDraw4Impl_TestCooperativeLevel,
 	IDirectDraw4Impl_GetDeviceIdentifier
 };
+
+#undef XCAST
+
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(xlib_dd4vt.fn##fun))
+#else
+# define XCAST(fun)	(void*)
+#endif
 
 static ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = 
 {

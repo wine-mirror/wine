@@ -7,6 +7,10 @@
 #ifndef __WINE_LISTVIEW_H
 #define __WINE_LISTVIEW_H
 
+#include "commctrl.h"
+#include "windef.h"
+#include "wingdi.h"
+
 typedef struct tagLISTVIEW_SUBITEM
 {
     LPSTR pszText;

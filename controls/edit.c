@@ -154,11 +154,7 @@ static inline BOOL	EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es);
 static inline void		EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es);
 static inline void		EDIT_WM_Clear(WND *wnd, EDITSTATE *es);
 static inline void		EDIT_WM_Cut(WND *wnd, EDITSTATE *es);
-/*
- *	This is the only exported function
- */
-LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
-                            WPARAM wParam, LPARAM lParam );
+
 /*
  *	Helper functions only valid for one type of control
  */

@@ -1,6 +1,8 @@
 #ifndef __WINE_WINVERSION_H
 #define __WINE_WINVERSION_H
 
+#include "windef.h"
+
 typedef enum
 {
     WIN31, /* Windows 3.1 */

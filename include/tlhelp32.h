@@ -23,7 +23,7 @@ extern "C" {
 #define TH32CS_INHERIT     0x80000000
 
 #ifdef __cplusplus
-extern "C" {
+} /* extern "C" */
 #endif
 
 #endif /* __WINE_TLHELP32_H */

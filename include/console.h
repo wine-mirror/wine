@@ -70,7 +70,7 @@ extern CONSOLE_device driver; /* Global driver struct */
 
 /* Generic defines */
 int  CONSOLE_Init(char *drivers);
-void CONSOLE_Close();
+void CONSOLE_Close(void);
 void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute);
 void CONSOLE_MoveCursor(char row, char col);
 void CONSOLE_ClearWindow(char, char, char, char, int, int);

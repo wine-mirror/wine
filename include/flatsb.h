@@ -8,6 +8,8 @@
 #ifndef __WINE_FLATSB_H
 #define __WINE_FLATSB_H
 
+#include "windef.h"
+
 typedef struct tagFLATSB_INFO
 {
     DWORD dwDummy;  /* just to keep the compiler happy ;-) */

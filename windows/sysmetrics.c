@@ -12,6 +12,7 @@
 #include "winuser.h"
 #include "monitor.h"
 #include "options.h"
+#include "sysmetrics.h"
 #include "tweak.h"
 
 static short sysMetrics[SM_CMETRICS+1];

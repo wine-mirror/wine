@@ -30,7 +30,7 @@ typedef struct tagDESKTOP_DRIVER {
 
 extern DESKTOP_DRIVER *DESKTOP_Driver;
 
-extern BOOL DESKTOP_IsSingleWindow();
+extern BOOL DESKTOP_IsSingleWindow(void);
 extern int DESKTOP_GetScreenWidth(void);
 extern int DESKTOP_GetScreenHeight(void);
 extern int DESKTOP_GetScreenDepth(void);

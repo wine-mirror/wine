@@ -591,6 +591,7 @@ BOOL  WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
 BOOL  WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
 #define ChooseColor WINELIB_NAME_AW(ChooseColor)
 DWORD   WINAPI CommDlgExtendedError(void);
+DWORD   WINAPI CommDlgExtendedError16(void);
 HWND16  WINAPI FindText16( SEGPTR find);
 HWND  WINAPI FindTextA(LPFINDREPLACEA lpFind);
 HWND  WINAPI FindTextW(LPFINDREPLACEW lpFind);
@@ -641,8 +642,11 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT WINAPI FormatCharDlgProcA(HWND,UINT,WPARAM,LPARAM);
 LRESULT WINAPI FormatCharDlgProcW(HWND,UINT,WPARAM,LPARAM);
 #define FormatCharDlgProc WINELIB_NAME_AW(FormatCharDlgProc)
+INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics, UINT16 nFontType, LPARAM lParam);
+INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics, UINT16 nFontType, LPARAM lParam);
 
-void COMDLG32_SetCommDlgExtendedError(DWORD err); 
+BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2);
+BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved);
 
 #include "poppack.h"
 

@@ -132,7 +132,7 @@ int	DRIVER_GetType(HDRVR hDrvr)
  * -1 : ko, unknown message
  * -2 : ko, memory problem
  */
-int	DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
+static int DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 {
     int	ret = -1;
     
@@ -217,7 +217,7 @@ int	DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
  * -1 : ko
  * -2 : ko, memory problem
  */
-int	DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
+static int DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
 {
     int	ret = -1;
     
@@ -284,7 +284,7 @@ int	DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
  * -1 : ko, unknown message
  * -2 : ko, memory problem
  */
-int	DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
+static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 {
     int	ret = -1;
     
@@ -393,7 +393,7 @@ int	DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
  * -1 : ko
  * -2 : ko, memory problem
  */
-int	DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
+static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 {
     int	ret = -1;
     

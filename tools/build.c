@@ -2730,7 +2730,9 @@ static int BuildSpec( FILE *outfile, int argc, char *argv[] )
 static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[] )
 {
     int i;
+#ifdef USE_STABS
     char buffer[1024];
+#endif
 
     /* File header */
 
@@ -2884,7 +2886,9 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
  */
 static int BuildCall32( FILE *outfile, char * outname )
 {
+#ifdef USE_STABS
     char buffer[1024];
+#endif
 
     /* File header */
 

@@ -8,6 +8,9 @@
 #ifndef __WINE_HEADER_H_
 #define __WINE_HEADER_H_
 
+#include "commctrl.h"
+#include "windef.h"
+
 typedef struct 
 {
     INT     cxy;

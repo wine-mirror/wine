@@ -66,15 +66,15 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 BOOL16 WINAPI IsEqualGUID16(GUID* g1,GUID* g2);
 BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 /*#define IsEqualGUID WINELIB_NAME(IsEqualGUID)*/
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CINTERFACE)
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(&(rguid1), &(rguid2), sizeof(GUID)))
-#else
+#else /* defined(__cplusplus) && !defined(CINTERFACE) */
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
-#endif /* cplusplus */
+#endif /* defined(__cplusplus) && !defined(CINTERFACE) */
 #define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
 #define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CINTERFACE)
 inline BOOL operator==(const GUID& guidOne, const GUID& guidOther)
 {
     return !memcmp(&guidOne,&guidOther,sizeof(GUID));

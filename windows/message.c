@@ -49,7 +49,7 @@ static UINT doubleClickSpeed = 452;
 /***********************************************************************
  *           MSG_CheckFilter
  */
-BOOL MSG_CheckFilter(DWORD uMsg, DWORD first, DWORD last)
+static BOOL MSG_CheckFilter(DWORD uMsg, DWORD first, DWORD last)
 {
    if( first || last )
        return (uMsg >= first && uMsg <= last);
@@ -1553,7 +1553,7 @@ static void  MSG_CallWndProcHook( LPMSG pmsg, BOOL bUnicode )
  * return values: 0 if timeout occurs
  *                1 otherwise
  */
-LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
+static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
                          LPARAM lParam, DWORD timeout, WORD flags,
                          LRESULT *pRes)
 {

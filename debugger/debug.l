@@ -23,7 +23,7 @@
 	if ( (result = dbg_read((char *) buf, max_size )) < 0 ) \
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
 
-extern char * readline(char *);
+extern char * readline(const char *);
 extern void add_history(char *);
 static int dbg_read(char * buf, int size);
 static char * make_symbol(char *);

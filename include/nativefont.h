@@ -7,6 +7,8 @@
 #ifndef __WINE_NATIVEFONT_H
 #define __WINE_NATIVEFONT_H
 
+#include "windef.h"
+
 typedef struct tagNATIVEFONT_INFO
 {
     DWORD  dwDummy;   /* just to keep the compiler happy ;-) */

@@ -25,6 +25,9 @@ DEFAULT_DEBUG_CHANNEL(aspi)
  */
 
 #ifdef linux
+
+static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
+
 static int
 ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
 {

@@ -402,7 +402,7 @@ WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc )
  *
  * Return TRUE if the lparam is a string
  */
-BOOL WINPROC_TestCBForStr ( HWND hwnd )
+static BOOL WINPROC_TestCBForStr ( HWND hwnd )
 {
     BOOL retvalue;
     WND * wnd = WIN_FindWndPtr(hwnd);
@@ -416,7 +416,7 @@ BOOL WINPROC_TestCBForStr ( HWND hwnd )
  *
  * Return TRUE if the lparam is a string
  */
-BOOL WINPROC_TestLBForStr ( HWND hwnd )
+static BOOL WINPROC_TestLBForStr ( HWND hwnd )
 {
     BOOL retvalue;
     WND * wnd = WIN_FindWndPtr(hwnd); 

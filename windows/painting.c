@@ -380,10 +380,14 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags )
      */
 
     BOOL bHadOne =  wndPtr->hrgnUpdate && hRgn;
-    RECT r = {0, 0, wndPtr->rectWindow.right - wndPtr->rectWindow.left,
-		    wndPtr->rectWindow.bottom - wndPtr->rectWindow.top };
     BOOL bChildren =  ( wndPtr->child && !(flags & RDW_NOCHILDREN) && !(wndPtr->dwStyle & WS_MINIMIZE) 
 			&& ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) );
+    RECT r;
+
+    r.left = 0;
+    r.top = 0;
+    r.right = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+    r.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
     TRACE_(win)("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", wndPtr->hwndSelf, wndPtr->hrgnUpdate, hRgn, flags );
 
@@ -411,8 +415,8 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags )
 			    }
 			}
 			break;
-
 		case 1:	/* already an entire window */
+		        break;
 	    }
 	}
 	else if( hRgn == 1 )
@@ -474,9 +478,11 @@ EMPTY:
 	if( hRgn > 1 && bChildren )
 	{
             WND* wnd = wndPtr->child;
-            POINT ptClient = { wndPtr->rectClient.left - wndPtr->rectWindow.left,
-                               wndPtr->rectClient.top - wndPtr->rectWindow.top };
 	    POINT ptTotal, prevOrigin = {0,0};
+            POINT ptClient;
+
+            ptClient.x = wndPtr->rectClient.left - wndPtr->rectWindow.left;
+            ptClient.y = wndPtr->rectClient.top - wndPtr->rectWindow.top;
 
             for( ptTotal.x = ptTotal.y = 0; wnd; wnd = wnd->next )
             {

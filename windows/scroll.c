@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 
+#include "wine/winuser16.h"
 #include "winuser.h"
 #include "dc.h"
 #include "win.h"

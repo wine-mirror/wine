@@ -46,7 +46,6 @@ VOID WINAPI GetSystemInfo(
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
 	HKEY	xhkey=0,hkey;
-	char	buf[20];
 
 	if (cache) {
 		memcpy(si,&cachedsi,sizeof(*si));
@@ -82,6 +81,7 @@ VOID WINAPI GetSystemInfo(
 
 #ifdef linux
 	{
+	char buf[20];
 	char line[200];
 	FILE *f = fopen ("/proc/cpuinfo", "r");
 

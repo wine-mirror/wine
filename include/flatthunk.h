@@ -7,6 +7,10 @@
 #ifndef __WINE_FLATTHUNK_H
 #define __WINE_FLATTHUNK_H
 
+#include "windef.h"
+
+struct _PDB;
+
 struct ThunkDataCommon
 {
     char                   magic[4];         /* 00 */
@@ -96,7 +100,7 @@ struct ThunkDataSL
 struct SLTargetDB
 {
      struct SLTargetDB *   next;
-     PDB *               process;
+     struct _PDB *         process;
      DWORD *               targetTable;
 };
 

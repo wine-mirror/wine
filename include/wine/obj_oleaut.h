@@ -61,11 +61,11 @@ typedef struct ISupportErrorInfo ISupportErrorInfo,*LPSUPPORTERRORINFO;
 /*****************************************************************************
  * Automation data types
  */
-#ifdef __cplusplus
-#define DUMMY_UNION_NAME 
-#else
-#define DUMMY_UNION_NAME u
-#endif
+#if defined(__cplusplus) && !defined(NONAMELESSUNION)
+#define DUMMYUNIONNAME 
+#else /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
+#define DUMMYUNIONNAME u
+#endif /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
 
 /*****************************************************************
  *  SafeArray defines and structs 
@@ -132,7 +132,7 @@ struct tagVARIANT {
 	WORD wReserved1;
 	WORD wReserved2;
 	WORD wReserved3;
-	union /*DUMMY_UNION_NAME*/
+	union /* DUMMYUNIONNAME */
 	{
 	/* By value. */
 		CHAR cVal;
@@ -177,7 +177,7 @@ struct tagVARIANT {
 		IUnknown** ppunkVal;
 		IDispatch** ppdispVal;
 	        SAFEARRAY** pparray;
-	} DUMMY_UNION_NAME;
+	} DUMMYUNIONNAME;
 };
 
              
@@ -260,7 +260,7 @@ typedef struct tagTYPEDESC
 		struct tagTYPEDESC *lptdesc;
 		struct tagARRAYDESC *lpadesc;
 		HREFTYPE hreftype;
-	} DUMMY_UNION_NAME;
+	} DUMMYUNIONNAME;
 	VARTYPE vt;
 } TYPEDESC;
  
@@ -270,7 +270,7 @@ typedef struct tagELEMDESC
 	union {
 		IDLDESC idldesc;
 		PARAMDESC paramdesc;
-	} DUMMY_UNION_NAME;
+	} DUMMYUNIONNAME;
 } ELEMDESC, *LPELEMDESC;
 
 typedef enum tagTYPEKIND
@@ -363,7 +363,7 @@ typedef struct tagVARDESC
 	union {
 		ULONG oInst;
 		VARIANT *lpvarValue;
-	} DUMMY_UNION_NAME;
+	} DUMMYUNIONNAME;
 	ELEMDESC elemdescVar;
 	WORD wVarFlags;
 	VARKIND varkind;

@@ -120,10 +120,11 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
 	{
+#ifdef MZ_SUPPORTED
             TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
             NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
             GlobalUnlock16( GetCurrentTask() );
-#ifdef MZ_SUPPORTED
+
             if (pModule && pModule->lpDosTask)
                 ES_reg(context) = pModule->lpDosTask->xms_seg;
             else
@@ -359,11 +360,14 @@ static void do_int2f_16( CONTEXT *context )
         if (ISV86(context)) break; /* so bail out for now if in v86 mode */
 #endif
         {
+	    SYSTEM_INFO si;
+#ifdef MZ_SUPPORTED
             TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
             NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-	    SYSTEM_INFO si;
 
             GlobalUnlock16( GetCurrentTask() );
+#endif
+
 	    GetSystemInfo(&si);
 	    AX_reg(context) = 0x0000; /* DPMI Installed */
             BX_reg(context) = 0x0001; /* 32bits available */

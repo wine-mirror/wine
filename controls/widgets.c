@@ -4,33 +4,20 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 #include "win.h"
 #include "button.h"
-#include "static.h"
-#include "scroll.h"
+#include "combo.h"
 #include "desktop.h"
-#include "mdi.h"
 #include "gdi.h"
-#include "module.h"
 #include "heap.h"
-
-/* Window procedures */
-
-extern LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
-                                   WPARAM wParam, LPARAM lParam );
-extern LRESULT WINAPI ComboWndProc( HWND hwnd, UINT msg,
-                                    WPARAM wParam, LPARAM lParam );
-extern LRESULT WINAPI ComboLBWndProc( HWND hwnd, UINT msg,
-                                      WPARAM wParam, LPARAM lParam );
-extern LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg,
-                                      WPARAM wParam, LPARAM lParam );
-extern LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT msg,
-                                        WPARAM wParam, LPARAM lParam );
-extern LRESULT WINAPI IconTitleWndProc( HWND hwnd, UINT msg,
-                                        WPARAM wParam, LPARAM lParam );
+#include "mdi.h"
+#include "menu.h"
+#include "module.h"
+#include "scroll.h"
+#include "static.h"
 
 /* Built-in classes */
 

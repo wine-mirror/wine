@@ -7,6 +7,9 @@
 #ifndef __WINE_TOOLTIPS_H
 #define __WINE_TOOLTIPS_H
 
+#include "commctrl.h"
+#include "windef.h"
+#include "wingdi.h"
 
 typedef struct tagTT_SUBCLASS_INFO
 {

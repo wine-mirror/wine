@@ -25,9 +25,9 @@ int main( int argc, char *argv[] )
 
     debug_level = 1;
 
-    if (debug_level) fprintf( stderr, "Server: starting (pid=%d)\n", getpid() );
+    if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
     create_initial_thread( fd );
-    if (debug_level) fprintf( stderr, "Server: exiting (pid=%d)\n", getpid() );
+    if (debug_level) fprintf( stderr, "Server: exiting (pid=%ld)\n", (long) getpid() );
 
 #ifdef DEBUG_OBJECTS
     dump_objects();  /* dump any remaining objects */

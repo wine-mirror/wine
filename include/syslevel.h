@@ -20,10 +20,10 @@ extern WORD SYSLEVEL_Win16CurrentTeb;
 extern WORD SYSLEVEL_EmergencyTeb;
 
 void SYSLEVEL_Init(void);
-VOID WINAPI SYSLEVEL_EnterWin16Lock(VOID);
-VOID WINAPI SYSLEVEL_LeaveWin16Lock(VOID);
-VOID SYSLEVEL_ReleaseWin16Lock(VOID);
-VOID SYSLEVEL_RestoreWin16Lock(VOID);
+VOID WINAPI SYSLEVEL_EnterWin16Lock(void);
+VOID WINAPI SYSLEVEL_LeaveWin16Lock(void);
+VOID SYSLEVEL_ReleaseWin16Lock(void);
+VOID SYSLEVEL_RestoreWin16Lock(void);
 VOID SYSLEVEL_CheckNotLevel( INT level );
 
 VOID WINAPI GetpWin16Lock(SYSLEVEL **lock);

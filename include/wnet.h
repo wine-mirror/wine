@@ -5,6 +5,7 @@
 #ifndef __WINE_WNET_H
 #define __WINE_WNET_H
 
+#include "windef.h"
 #include "winerror.h"
 
 #define WNDN_MKDIR  1

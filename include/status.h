@@ -7,6 +7,9 @@
 #ifndef __WINE_STATUS_H
 #define __WINE_STATUS_H
 
+#include "windef.h"
+#include "wingdi.h"
+
 typedef struct
 {
     INT	x;

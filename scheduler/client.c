@@ -104,7 +104,7 @@ static void send_request_fd( enum request req, int fd )
     struct msghdr msghdr;
     struct iovec vec;
 
-    vec.iov_base = &req;
+    vec.iov_base = (void *)&req;
     vec.iov_len  = sizeof(req);
 
     msghdr.msg_name    = NULL;
@@ -194,7 +194,7 @@ static unsigned int wait_reply_fd( int *fd )
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
-    vec.iov_base = &res;
+    vec.iov_base = (void *)&res;
     vec.iov_len  = sizeof(res);
 
     for (;;)

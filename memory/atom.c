@@ -19,6 +19,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
+#include "global.h"
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"

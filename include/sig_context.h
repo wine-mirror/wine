@@ -88,7 +88,10 @@ typedef struct sigcontext SIGCONTEXT;
 #ifdef _SCO_DS
 #include <sys/regset.h>
 #endif
+/* Solaris kludge */
+#undef ERR
 #include <sys/ucontext.h>
+#undef ERR
 typedef struct ucontext SIGCONTEXT;
 #define __HAVE_SIGCONTEXT
 

@@ -49,7 +49,7 @@ static UINT		HelpMessage;
  *	RETURNS
  *		Current state of check and radio buttons
  */
-DWORD COMDLG32_FR_GetFlags(HWND hDlgWnd)
+static DWORD COMDLG32_FR_GetFlags(HWND hDlgWnd)
 {
 	DWORD flags = 0;
 	if(IsDlgButtonChecked(hDlgWnd, rad2) == BST_CHECKED)
@@ -65,7 +65,7 @@ DWORD COMDLG32_FR_GetFlags(HWND hDlgWnd)
  *	COMDLG32_FR_HandleWMCommand		[internal]
  * Handle WM_COMMAND messages...
  */
-void COMDLG32_FR_HandleWMCommand(HWND hDlgWnd, COMDLG32_FR_Data *pData, int Id, int NotifyCode)
+static void COMDLG32_FR_HandleWMCommand(HWND hDlgWnd, COMDLG32_FR_Data *pData, int Id, int NotifyCode)
 {
 	DWORD flag;
 
@@ -148,7 +148,7 @@ Replace:
  *	COMDLG32_FindReplaceDlgProc		[internal]
  * [Find/Replace]Text32[A/W] window procedure.
  */
-BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	COMDLG32_FR_Data *pdata = (COMDLG32_FR_Data *)GetPropA(hDlgWnd, (LPSTR)COMDLG32_Atom);
 	BOOL retval = TRUE;;
@@ -272,7 +272,7 @@ BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam
  *		TRUE: Succes
  *		FALSE: Failure
  */
-BOOL COMDLG32_FR_CheckPartial(
+static BOOL COMDLG32_FR_CheckPartial(
 	LPFINDREPLACEA pfr,	/* [in] Find structure */
         BOOL Replace		/* [in] True if called as replace */
 ) {
@@ -340,7 +340,7 @@ BOOL COMDLG32_FR_CheckPartial(
  *		Window handle to created dialog:Succes
  *		NULL:Failure
  */
-HWND COMDLG32_FR_DoFindReplace(
+static HWND COMDLG32_FR_DoFindReplace(
 	COMDLG32_FR_Data *pdata	/* [in] Internal data structure */
 ) {
 	HWND hdlgwnd = 0;

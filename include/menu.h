@@ -7,6 +7,9 @@
 
 #include "win.h"
 
+LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam,
+                                 LPARAM lParam );
+
 extern BOOL MENU_Init(void);
 extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,

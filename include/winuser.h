@@ -2914,8 +2914,10 @@ typedef struct
 #define     AnsiToOemBuffA CharToOemBuffA
 #define     AnsiToOemBuffW CharToOemBuffW
 #define     AnsiToOemBuff WINELIB_NAME_AW(AnsiToOemBuff)
-WORD        WINAPI CascadeWindows (HWND, UINT, const LPRECT,
-                                   UINT, const HWND *);
+
+HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
+LONG        WINAPI BroadcastSystemMessage(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
+WORD        WINAPI CascadeWindows(HWND, UINT, const LPRECT, UINT, const HWND *);
 INT       WINAPI CopyAcceleratorTableA(HACCEL,LPACCEL,INT);
 INT       WINAPI CopyAcceleratorTableW(HACCEL,LPACCEL,INT);
 #define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
@@ -2928,7 +2930,9 @@ INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 BOOL      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC,LPARAM);
 BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
 BOOL      WINAPI GetIconInfo(HICON,LPICONINFO);
-DWORD       WINAPI GetMenuContextHelpId(HMENU);
+HKL       WINAPI GetKeyboardLayout(DWORD);
+INT       WINAPI GetKeyboardLayoutList(INT,HKL *);
+DWORD     WINAPI GetMenuContextHelpId(HMENU);
 UINT      WINAPI GetMenuDefaultItem(HMENU,UINT,UINT);
 BOOL      WINAPI GetMenuInfo(HMENU,LPMENUINFO);
 BOOL      WINAPI GetMenuItemInfoA(HMENU,UINT,BOOL,MENUITEMINFOA*);
@@ -2957,7 +2961,11 @@ BOOL      WINAPI PaintDesktop(HDC);
 BOOL      WINAPI PostThreadMessageA(DWORD, UINT, WPARAM, LPARAM);
 BOOL      WINAPI PostThreadMessageW(DWORD, UINT, WPARAM, LPARAM);
 #define     PostThreadMessage WINELIB_NAME_AW(PostThreadMessage)
+BOOL        WINAPI RegisterHotKey(HWND,INT,UINT,UINT);
 UINT      WINAPI ReuseDDElParam(UINT,UINT,UINT,UINT,UINT);
+BOOL        WINAPI SendMessageCallbackA(HWND,UINT,WPARAM,LPARAM,FARPROC,DWORD);
+BOOL        WINAPI SendMessageCallbackW(HWND,UINT,WPARAM,LPARAM,FARPROC,DWORD);
+#define      SendMessageCallback WINELIB_NAME_AW(SendMessageCallback)
 BOOL      WINAPI SendNotifyMessageA(HWND,UINT,WPARAM,LPARAM);
 BOOL      WINAPI SendNotifyMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     SendNotifyMessage WINELIB_NAME_AW(SendNotifyMessage)
@@ -2971,9 +2979,11 @@ BOOL      WINAPI SetMenuItemInfoW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 BOOL      WINAPI SetWindowContextHelpId(HWND,DWORD);
 WORD        WINAPI TileWindows (HWND, UINT, const LPRECT,
                                 UINT, const HWND *);
+INT         WINAPI ToUnicode(UINT,UINT,PBYTE,LPWSTR,int,UINT);
 BOOL      WINAPI TrackPopupMenuEx(HMENU,UINT,INT,INT,HWND,
                                     LPTPMPARAMS);
 UINT      WINAPI UnpackDDElParam(UINT,UINT,UINT*,UINT*);
+BOOL        WINAPI UnregisterHotKey(HWND,INT);
 DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);
 VOID        WINAPI keybd_event(BYTE,BYTE,DWORD,DWORD);
 VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,DWORD);

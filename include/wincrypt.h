@@ -1,6 +1,8 @@
 #ifndef __WINE_WINCRYPT_H
 #define __WINE_WINCRYPT_H
 
+#include "windef.h"
+
 /* FIXME: this whole file plus the implementation */
 
 /* some typedefs for function parameters */

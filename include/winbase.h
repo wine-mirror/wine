@@ -1142,7 +1142,8 @@ BOOL      WINAPI SetCommTimeouts(INT,LPCOMMTIMEOUTS);
 BOOL      WINAPI GetCommState(INT,LPDCB);
 BOOL      WINAPI SetCommState(INT,LPDCB);
 BOOL      WINAPI TransmitCommChar(INT,CHAR);
-
+BOOL      WINAPI SetupComm(HANDLE, DWORD, DWORD);
+BOOL      WINAPI GetCommProperties(HANDLE, LPDCB *);
   
 /*DWORD WINAPI GetVersion( void );*/
 BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16*);
@@ -1158,7 +1159,6 @@ BOOL      WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
-HANDLE  WINAPI OpenProcess(DWORD access, BOOL inherit, DWORD id);
 BOOL    WINAPI GetProcessWorkingSetSize(HANDLE,LPDWORD,LPDWORD);
 DWORD     WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
 void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
@@ -1504,6 +1504,7 @@ BOOL      WINAPI CreateDirectoryW(LPCWSTR,LPSECURITY_ATTRIBUTES);
 BOOL      WINAPI CreateDirectoryExA(LPCSTR,LPCSTR,LPSECURITY_ATTRIBUTES);
 BOOL      WINAPI CreateDirectoryExW(LPCWSTR,LPCWSTR,LPSECURITY_ATTRIBUTES);
 #define     CreateDirectoryEx WINELIB_NAME_AW(CreateDirectoryEx)
+BOOL        WINAPI DefineDosDeviceA(DWORD,LPCSTR,LPCSTR);
 #define     DefineHandleTable(w) ((w),TRUE)
 ATOM        WINAPI DeleteAtom(ATOM);
 BOOL      WINAPI DeleteFileA(LPCSTR);

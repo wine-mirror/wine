@@ -7,6 +7,8 @@
 #ifndef __WINE_TOOLBAR_H
 #define __WINE_TOOLBAR_H
 
+#include "commctrl.h"
+#include "windef.h"
 
 typedef struct tagTBUTTON_INFO
 {

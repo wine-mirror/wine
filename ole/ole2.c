@@ -8,7 +8,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "winuser.h"
 #include "winerror.h"

@@ -242,7 +242,7 @@ BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 /***********************************************************************
  *               PRINTDLG_UpdatePrinterInfoTexts               [internal]
  */
-void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
+static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
 {
 	char   PrinterName[256];
     char   StatusMsg[256];
@@ -272,8 +272,8 @@ void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
 /***********************************************************************
  *           PRINTDLG_WMInitDialog                      [internal]
  */
-LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                         PRINT_PTRA* PrintStructures)
+static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
+				     PRINT_PTRA* PrintStructures)
 {
  int         i;
  LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
@@ -377,8 +377,8 @@ TRACE("succesful!\n");
  *   FALSE if user is not allowed to close (i.e. wrong nTo or nFrom values)
  *   TRUE  if succesful.
  */
-BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, 
-                                           PRINT_PTRA* PrintStructures)
+static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, 
+						  PRINT_PTRA* PrintStructures)
 {
  LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
  

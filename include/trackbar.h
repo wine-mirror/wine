@@ -7,6 +7,9 @@
 #ifndef __WINE_TRACKBAR_H
 #define __WINE_TRACKBAR_H
 
+#include "windef.h"
+#include "wingdi.h"
+
 typedef struct tagTRACKBAR_INFO
 {
     INT  nRangeMin;

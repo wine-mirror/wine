@@ -380,7 +380,7 @@ static BOOL NumState=FALSE, CapsState=FALSE;
  * Convention : called with vkey only VK_NUMLOCK or VK_CAPITAL
  *
  */
-void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT event_y,
+static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT event_y,
                            DWORD event_time )
 {
   BOOL * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
@@ -429,7 +429,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
  * Updates internal state for <vkey>, depending on key <state> under X
  *
  */
-void KEYBOARD_UpdateOneState ( int vkey, int state )
+static void KEYBOARD_UpdateOneState ( int vkey, int state )
 {
     /* Do something if internal table state != X state for keycode */
     if (((pKeyStateTable[vkey] & 0x80)!=0) != state)
@@ -592,7 +592,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
  *  This routine walks through the defined keyboard layouts and selects
  *  whichever matches most closely.
  */
-void
+static void
 X11DRV_KEYBOARD_DetectLayout (void)
 {
   unsigned current, match, mismatch, seq;

@@ -22,7 +22,7 @@ DESKTOP_DRIVER *DESKTOP_Driver = NULL;
 /***********************************************************************
  *		DESKTOP_IsSingleWindow
  */
-BOOL DESKTOP_IsSingleWindow()
+BOOL DESKTOP_IsSingleWindow(void)
 {
   BOOL retvalue;
   DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;

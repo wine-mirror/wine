@@ -9,6 +9,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
+#include "sysmetrics.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "debug.h"

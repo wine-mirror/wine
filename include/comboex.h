@@ -7,6 +7,8 @@
 #ifndef __WINE_COMBOEX_H
 #define __WINE_COMBOEX_H
 
+#include "commctrl.h"
+#include "windef.h"
 
 typedef struct tagCOMBOEX_INFO
 {

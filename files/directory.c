@@ -16,6 +16,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
+#include "wine/winuser16.h"
 #include "winerror.h"
 #include "process.h"
 #include "drive.h"

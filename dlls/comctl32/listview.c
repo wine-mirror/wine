@@ -2040,7 +2040,7 @@ static INT LISTVIEW_GetCountPerColumn(HWND hwnd)
  * RETURN:
  * Number of columns.
  */
-static INT LISTVIEW_GetColumnCount(hwnd)
+static INT LISTVIEW_GetColumnCount(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
@@ -6767,7 +6767,7 @@ LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
  * RETURN:
  * None
  */
-VOID LISTVIEW_Register(VOID)
+VOID LISTVIEW_Register(void)
 {
   WNDCLASSA wndClass;
 
@@ -6795,7 +6795,7 @@ VOID LISTVIEW_Register(VOID)
  * RETURN:
  * None
  */
-VOID LISTVIEW_Unregister(VOID)
+VOID LISTVIEW_Unregister(void)
 {
   if (GlobalFindAtomA(WC_LISTVIEWA))
   {

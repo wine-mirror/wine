@@ -8,6 +8,7 @@
 #define __WINE_PROGRESS_H
 
 #include "windef.h"
+#include "wingdi.h"
 
 typedef struct
 {

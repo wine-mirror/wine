@@ -30,7 +30,7 @@ typedef enum
 {
     SYSRES_MENU_SYSMENU,
     SYSRES_MENU_EDITMENU,
-    SYSRES_DIALOG_MSGBOX,
+    SYSRES_DIALOG_MSGBOX
 } SYSTEM_RESOURCE;
 
 extern void LIBRES_RegisterResources(const wrc_resource32_t * const * Res);

@@ -23,6 +23,7 @@
 #include "user.h"
 #include "menu.h"
 #include "resource.h"
+#include "scroll.h"
 #include "struct32.h"
 #include "tweak.h"
 #include "debug.h"
@@ -33,8 +34,6 @@ DEFAULT_DEBUG_CHANNEL(mdi)
 
 static HBITMAP16 hBmpClose   = 0;
 static HBITMAP16 hBmpRestore = 0;
-
-INT SCROLL_SetNCSbState(WND*,int,int,int,int,int,int);
 
 /* ----------------- declarations ----------------- */
 static void MDI_UpdateFrameText(WND *, HWND, BOOL, LPCSTR);

@@ -7,6 +7,8 @@
 #ifndef __WINE_LOADORDER_H
 #define __WINE_LOADORDER_H
 
+#include "windef.h"
+
 #define MODULE_LOADORDER_INVALID	0	/* Must be 0 */
 #define MODULE_LOADORDER_DLL		1	/* Native DLLs */
 #define MODULE_LOADORDER_ELFDLL		2	/* Elf-dlls */

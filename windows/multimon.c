@@ -21,7 +21,7 @@ MONITOR MONITOR_PrimaryMonitor;
 /***********************************************************************
  *              MONITOR_GetMonitor
  */
-MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
+static MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
 {
   if(hMonitor == xPRIMARY_MONITOR)
     {

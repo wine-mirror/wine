@@ -3570,7 +3570,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-TREEVIEW_Register (VOID)
+TREEVIEW_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -3592,7 +3592,7 @@ TREEVIEW_Register (VOID)
 
 
 VOID
-TREEVIEW_Unregister (VOID)
+TREEVIEW_Unregister (void)
 {
     if (GlobalFindAtomA (WC_TREEVIEWA))
 	UnregisterClassA (WC_TREEVIEWA, (HINSTANCE)NULL);

@@ -21,10 +21,10 @@
 # define iswlower(c) islower(c)
 #endif  /* HAVE_WCTYPE_H */
 
-
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wine/winbase16.h"
 #include "winnls.h"
 #include "task.h"
 #include "heap.h"

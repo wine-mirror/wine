@@ -5,6 +5,8 @@
 #ifndef __WINE_MAIN_H
 #define __WINE_MAIN_H
 
+#include "windef.h"
+
 extern void MAIN_Usage(char*);
 extern BOOL MAIN_MainInit(void);
 extern BOOL MAIN_WineInit( int *argc, char *argv[] );

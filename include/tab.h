@@ -7,6 +7,9 @@
 #ifndef __WINE_TAB_H  
 #define __WINE_TAB_H
 
+#include "commctrl.h"
+#include "windef.h"
+
 typedef struct tagTAB_ITEM
 {
   UINT   mask;

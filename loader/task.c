@@ -599,8 +599,8 @@ void TASK_Reschedule(void)
     /* Check what we need to do */
     hOldTask = GetCurrentTask();
     pOldTask = (TDB *)GlobalLock16( hOldTask );
-    TRACE_(task)( "entered with hCurrentTask %04x by hTask %04x (pid %d)\n", 
-                  hCurrentTask, hOldTask, getpid() );
+    TRACE_(task)( "entered with hCurrentTask %04x by hTask %04x (pid %ld)\n", 
+                  hCurrentTask, hOldTask, (long) getpid() );
 
     if ( pOldTask && THREAD_IsWin16( NtCurrentTeb() ) )
     {

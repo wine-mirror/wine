@@ -251,7 +251,7 @@ inline static int sock_error_p(int s)
     unsigned int optval, optlen;
 
     optlen = sizeof(optval);
-    getsockopt(s, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+    getsockopt(s, SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
     if (optval) WARN(winsock, "\t[%i] error: %d\n", s, optval);
     return optval != 0;
 }
@@ -2336,7 +2336,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, UINT lEvent)
 
 		pws->psop = psop;
 		pws->flags |= (0x0000FFFF & lEvent);
-		getsockopt(pws->fd, SOL_SOCKET, SO_TYPE, &sock_type, &bytes);
+		getsockopt(pws->fd, SOL_SOCKET, SO_TYPE, (void *) &sock_type, &bytes);
 		if( sock_type == SOCK_RAW ) pws->flags |= WS_FD_RAW;
 
 		if( lEvent & (WS_FD_ACCEPT | WS_FD_CONNECT | WS_FD_READ | WS_FD_CLOSE) )

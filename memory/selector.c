@@ -12,6 +12,7 @@
 #include "stackframe.h"
 #include "process.h"
 #include "debugtools.h"
+#include "toolhelp.h"
 
 DEFAULT_DEBUG_CHANNEL(selector)
 

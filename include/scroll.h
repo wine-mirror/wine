@@ -10,6 +10,8 @@
 
 #include "windef.h"
 
+struct tagWND;
+
 typedef struct
 {
     INT   CurVal;   /* Current scroll-bar value */
@@ -21,9 +23,13 @@ typedef struct
 
 extern LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT uMsg,
                                         WPARAM wParam, LPARAM lParam );
+
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
                                   BOOL arrows, BOOL interior );
 extern void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar,
                                       UINT msg, POINT pt );
-
+extern INT SCROLL_SetNCSbState( struct tagWND *wndPtr, int vMin, int vMax, int vPos,
+				int hMin, int hMax, int hPos );
 #endif  /* __WINE_SCROLL_H */
+
+

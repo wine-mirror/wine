@@ -398,7 +398,7 @@ INT WINAPI RtlExtendedLargeIntegerDivide(
 		*rest = x1 % divisor;
 	return x1/divisor;
 #else
-	FIXME("((%d<<32)+%d,%d,%p), implement this using normal integer arithmetic!\n",dividend.HighPart,dividend.LowPart,divisor,rest);
+	FIXME("((%ld<<32)+%ld,%ld,%p), implement this using normal integer arithmetic!\n",dividend.HighPart,dividend.LowPart,divisor,rest);
 	return 0;
 #endif
 }
@@ -415,7 +415,7 @@ long long WINAPI RtlExtendedIntegerMultiply(
 #if SIZEOF_LONG_LONG==8
 	return (*(long long*)&factor1) * factor2;
 #else
-	FIXME("((%d<<32)+%d,%ld), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
+	FIXME("((%ld<<32)+%ld,%d), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
 	return 0;
 #endif
 }

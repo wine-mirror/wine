@@ -636,7 +636,7 @@ END:
  * Handle a WM_NCHITTEST message. Called from NC_HandleNcHitTest().
  */
 
-LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
+static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
 {
     RECT16 rect;
 
@@ -771,7 +771,7 @@ LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
  * FIXME:  Just a modified copy of the Win 3.1 version.
  */
 
-LONG
+static LONG
 NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
 {
     RECT16 rect;
@@ -1070,7 +1070,7 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
  *
  *****************************************************************************/
 
-void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
+static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
 {
     RECT rect;
     HDC hdcMem;
@@ -1556,7 +1556,7 @@ static void  NC_DrawCaption95(
  *
  * Paint the non-client area. clip is currently unused.
  */
-void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
+static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 {
     HDC hdc;
     RECT rect;
@@ -1667,7 +1667,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
  *
  *****************************************************************************/
 
-void  NC_DoNCPaint95(
+static void  NC_DoNCPaint95(
     WND  *wndPtr,
     HRGN  clip,
     BOOL  suppress_menupaint )

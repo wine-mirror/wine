@@ -7,6 +7,8 @@
 #ifndef __WINE_PAGER_H
 #define __WINE_PAGER_H
 
+#include "windef.h"
+#include "wingdi.h"
 
 typedef struct tagPAGER_INFO
 {

@@ -729,7 +729,7 @@ void SHELL_SaveRegistry( void )
 
     if (!(home = getenv( "HOME" )))
     {
-        WARN_(reg)("Failed to get homedirectory of UID %d.\n",getuid());
+        WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
         return;
     }
     /* 
@@ -1964,7 +1964,7 @@ void SHELL_LoadRegistry( void )
   }
   else
   {
-    WARN_(reg)("Failed to get homedirectory of UID %d.\n",getuid());
+    WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
   }
 
   /* 

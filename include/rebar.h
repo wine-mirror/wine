@@ -7,6 +7,10 @@
 #ifndef __WINE_REBAR_H
 #define __WINE_REBAR_H
 
+#include "commctrl.h"
+#include "windef.h"
+#include "wingdi.h"
+
 typedef struct tagREBAR_BAND
 {
     UINT    fStyle;

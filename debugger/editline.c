@@ -27,11 +27,13 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "windef.h"
 #include "debugger.h"
@@ -151,8 +153,7 @@ extern int	tgetent();
 #include <termios.h>
 
 static void
-rl_ttyset(Reset)
-    int				Reset;
+rl_ttyset(int Reset)
 {
     static struct termios	old;
     struct termios		new;
@@ -181,8 +182,7 @@ rl_ttyset(Reset)
 #else  /* HAVE_TCGETATTR */
 
 static void
-rl_ttyset(Reset)
-    int				Reset;
+rl_ttyset(int Reset)
 {
     static struct sgttyb	old_sgttyb;
     static struct tchars	old_tchars;
@@ -221,7 +221,7 @@ rl_ttyset(Reset)
 #endif	/* HAVE_TCGETATTR */
 
 static void
-TTYflush()
+TTYflush(void)
 {
     if (ScreenCount) {
 	(void)write(1, Screen, ScreenCount);
@@ -230,8 +230,7 @@ TTYflush()
 }
 
 static void
-TTYput(c)
-    CHAR	c;
+TTYput(CHAR c)
 {
     Screen[ScreenCount] = c;
     if (++ScreenCount >= ScreenSize - 1) {
@@ -241,16 +240,14 @@ TTYput(c)
 }
 
 static void
-TTYputs(p)
-    CHAR	*p;
+TTYputs(CHAR *p)
 {
     while (*p)
 	TTYput(*p++);
 }
 
 static void
-TTYshow(c)
-    CHAR	c;
+TTYshow(CHAR c)
 {
     if (c == DEL) {
 	TTYput('^');
@@ -270,15 +267,14 @@ TTYshow(c)
 }
 
 static void
-TTYstring(p)
-    CHAR	*p;
+TTYstring(CHAR *p)
 {
     while (*p)
 	TTYshow(*p++);
 }
 
 static unsigned int
-TTYget()
+TTYget(void)
 {
     CHAR	c;
     int retv;
@@ -306,15 +302,14 @@ TTYget()
 #define TTYback()	(backspace ? TTYputs((CHAR *)backspace) : TTYput('\b'))
 
 static void
-TTYbackn(n)
-    int		n;
+TTYbackn(int n)
 {
     while (--n >= 0)
 	TTYback();
 }
 
 static void
-TTYinfo()
+TTYinfo(void)
 {
     static int		init;
 #if	defined(USE_TERMCAP)
@@ -370,7 +365,7 @@ TTYinfo()
 
 
 static void
-reposition()
+reposition(void)
 {
     int		i;
     CHAR	*p;
@@ -382,8 +377,7 @@ reposition()
 }
 
 static void
-left(Change)
-    STATUS	Change;
+left(STATUS Change)
 {
     TTYback();
     if (Point) {
@@ -399,8 +393,7 @@ left(Change)
 }
 
 static void
-right(Change)
-    STATUS	Change;
+right(STATUS Change)
 {
     TTYshow(Line[Point]);
     if (Change == CSmove)
@@ -408,7 +401,7 @@ right(Change)
 }
 
 static STATUS
-ring_bell()
+ring_bell(void)
 {
     TTYput('\07');
     TTYflush();
@@ -416,8 +409,7 @@ ring_bell()
 }
 
 static STATUS
-do_macro(c)
-    unsigned int	c;
+do_macro(unsigned int c)
 {
     CHAR		name[4];
 
@@ -434,8 +426,7 @@ do_macro(c)
 }
 
 static STATUS
-do_forward(move)
-    STATUS	move;
+do_forward(STATUS move)
 {
     int		i;
     CHAR	*p;
@@ -459,8 +450,7 @@ do_forward(move)
 }
 
 static STATUS
-do_case(type)
-    CASE	type;
+do_case(CASE type)
 {
     int		i;
     int		end;
@@ -488,19 +478,19 @@ do_case(type)
 }
 
 static STATUS
-case_down_word()
+case_down_word(void)
 {
     return do_case(TOlower);
 }
 
 static STATUS
-case_up_word()
+case_up_word(void)
 {
     return do_case(TOupper);
 }
 
 static void
-ceol()
+ceol(void)
 {
     int		extras;
     int		i;
@@ -524,7 +514,7 @@ ceol()
 }
 
 static void
-clear_line()
+clear_line(void)
 {
     Point = -strlen(Prompt);
     TTYput('\r');
@@ -535,8 +525,7 @@ clear_line()
 }
 
 static STATUS
-insert_string(p)
-    CHAR	*p;
+insert_string(CHAR *p)
 {
     size_t	len;
     int		i;
@@ -568,7 +557,7 @@ insert_string(p)
 
 
 static CHAR *
-next_hist()
+next_hist(void)
 {
     return H.Pos >= H.Size - 1 ? NULL : H.Lines[++H.Pos];
 }
@@ -580,8 +569,7 @@ prev_hist()
 }
 
 static STATUS
-do_insert_hist(p)
-    CHAR	*p;
+do_insert_hist(CHAR *p)
 {
     if (p == NULL)
 	return ring_bell();
@@ -593,8 +581,7 @@ do_insert_hist(p)
 }
 
 static STATUS
-do_hist(move)
-    CHAR	*(*move)();
+do_hist(CHAR *(*move)(void))
 {
     CHAR	*p;
     int		i;
@@ -608,25 +595,25 @@ do_hist(move)
 }
 
 static STATUS
-h_next()
+h_next(void)
 {
     return do_hist(next_hist);
 }
 
 static STATUS
-h_prev()
+h_prev(void)
 {
     return do_hist(prev_hist);
 }
 
 static STATUS
-h_first()
+h_first(void)
 {
     return do_insert_hist(H.Lines[H.Pos = 0]);
 }
 
 static STATUS
-h_last()
+h_last(void)
 {
     return do_insert_hist(H.Lines[H.Pos = H.Size - 1]);
 }
@@ -635,10 +622,7 @@ h_last()
 **  Return zero if pat appears as a substring in text.
 */
 static int
-substrcmp(text, pat, len)
-    char	*text;
-    char	*pat;
-    int		len;
+substrcmp(char *text, char *pat, int len)
 {
     CHAR	c;
 
@@ -651,9 +635,7 @@ substrcmp(text, pat, len)
 }
 
 static CHAR *
-search_hist(search, move)
-    CHAR	*search;
-    CHAR	*(*move)();
+search_hist(CHAR *search, CHAR *(*move)(void))
 {
     static CHAR	*old_search;
     int		len;
@@ -692,7 +674,7 @@ search_hist(search, move)
 }
 
 static STATUS
-h_search()
+h_search(void)
 {
     static int	Searching;
     const char	*old_prompt;
@@ -718,7 +700,7 @@ h_search()
 }
 
 static STATUS
-fd_char()
+fd_char(void)
 {
     int		i;
 
@@ -732,9 +714,7 @@ fd_char()
 }
 
 static void
-save_yank(begin, i)
-    int		begin;
-    int		i;
+save_yank(int begin, int i)
 {
     if (Yanked) {
 	DISPOSE(Yanked);
@@ -751,8 +731,7 @@ save_yank(begin, i)
 }
 
 static STATUS
-delete_string(count)
-    int		count;
+delete_string(int count)
 {
     int		i;
     CHAR	*p;
@@ -794,7 +773,7 @@ delete_string(count)
 }
 
 static STATUS
-bk_char()
+bk_char(void)
 {
     int		i;
 
@@ -809,7 +788,7 @@ bk_char()
 }
 
 static STATUS
-bk_del_char()
+bk_del_char(void)
 {
     int		i;
 
@@ -824,7 +803,7 @@ bk_del_char()
 }
 
 static STATUS
-redisplay()
+redisplay(void)
 {
     TTYputs((CHAR *)NEWLINE);
     TTYputs((CHAR *)Prompt);
@@ -833,7 +812,7 @@ redisplay()
 }
 
 static STATUS
-kill_line()
+kill_line(void)
 {
     int		i;
 
@@ -859,8 +838,7 @@ kill_line()
 }
 
 static STATUS
-insert_char(c)
-    int		c;
+insert_char(int c)
 {
     STATUS	s;
     CHAR	buff[2];
@@ -886,7 +864,7 @@ insert_char(c)
 }
 
 static STATUS
-meta()
+meta(void)
 {
     unsigned int	c;
     KEYMAP		*kp;
@@ -922,8 +900,7 @@ meta()
 }
 
 static STATUS
-emacs(c)
-    unsigned int	c;
+emacs(unsigned int c)
 {
     STATUS		s;
     KEYMAP		*kp;
@@ -944,8 +921,7 @@ emacs(c)
 }
 
 static STATUS
-TTYspecial(c)
-    unsigned int	c;
+TTYspecial(unsigned int c)
 {
     if (ISMETA(c))
 	return CSdispatch;
@@ -972,7 +948,7 @@ TTYspecial(c)
 }
 
 static CHAR *
-editinput()
+editinput(void)
 {
     unsigned int	c;
 
@@ -1010,8 +986,7 @@ editinput()
 }
 
 static void
-hist_add(p)
-    CHAR	*p;
+hist_add(CHAR *p)
 {
     int		i;
 
@@ -1029,8 +1004,7 @@ hist_add(p)
 }
 
 char *
-readline(prompt)
-    const char	*prompt;
+readline(const char *prompt)
 {
     CHAR	*line;
 
@@ -1059,8 +1033,7 @@ readline(prompt)
 }
 
 void
-add_history(p)
-    char	*p;
+add_history(char *p)
 {
     if (p == NULL || *p == '\0')
 	return;
@@ -1074,7 +1047,7 @@ add_history(p)
 
 
 static STATUS
-beg_line()
+beg_line(void)
 {
     if (Point) {
 	Point = 0;
@@ -1084,13 +1057,13 @@ beg_line()
 }
 
 static STATUS
-del_char()
+del_char(void)
 {
     return delete_string(Repeat == NO_ARG ? 1 : Repeat);
 }
 
 static STATUS
-end_line()
+end_line(void)
 {
     if (Point != End) {
 	Point = End;
@@ -1100,14 +1073,14 @@ end_line()
 }
 
 static STATUS
-accept_line()
+accept_line(void)
 {
     Line[End] = '\0';
     return CSdone;
 }
 
 static STATUS
-transpose()
+transpose(void)
 {
     CHAR	c;
 
@@ -1125,7 +1098,7 @@ transpose()
 }
 
 static STATUS
-quote()
+quote(void)
 {
     unsigned int	c;
 
@@ -1133,7 +1106,7 @@ quote()
 }
 
 static STATUS
-wipe()
+wipe(void)
 {
     int		i;
 
@@ -1151,14 +1124,14 @@ wipe()
 }
 
 static STATUS
-mk_set()
+mk_set(void)
 {
     Mark = Point;
     return CSstay;
 }
 
 static STATUS
-exchange()
+exchange(void)
 {
     unsigned int	c;
 
@@ -1174,7 +1147,7 @@ exchange()
 }
 
 static STATUS
-yank()
+yank(void)
 {
     if (Yanked && *Yanked)
 	return insert_string(Yanked);
@@ -1182,7 +1155,7 @@ yank()
 }
 
 static STATUS
-copy_region()
+copy_region(void)
 {
     if (Mark > End)
 	return ring_bell();
@@ -1196,7 +1169,7 @@ copy_region()
 }
 
 static STATUS
-move_to_char()
+move_to_char(void)
 {
     unsigned int	c;
     int			i;
@@ -1213,13 +1186,13 @@ move_to_char()
 }
 
 static STATUS
-fd_word()
+fd_word(void)
 {
     return do_forward(CSmove);
 }
 
 static STATUS
-fd_kill_word()
+fd_kill_word(void)
 {
     int		i;
 
@@ -1233,7 +1206,7 @@ fd_kill_word()
 }
 
 static STATUS
-bk_word()
+bk_word(void)
 {
     int		i;
     CHAR	*p;
@@ -1254,7 +1227,7 @@ bk_word()
 }
 
 static STATUS
-bk_kill_word()
+bk_kill_word(void)
 {
     (void)bk_word();
     if (OldPoint != Point)
@@ -1263,9 +1236,7 @@ bk_kill_word()
 }
 
 static int
-argify(line, avp)
-    CHAR	*line;
-    CHAR	***avp;
+argify(CHAR *line, CHAR ***avp)
 {
     CHAR	*c;
     CHAR	**p;
@@ -1309,7 +1280,7 @@ argify(line, avp)
 }
 
 static STATUS
-last_argument()
+last_argument(void)
 {
     CHAR	**av;
     CHAR	*p;

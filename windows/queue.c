@@ -488,7 +488,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
  * 
  * Try to reply to all pending sent messages on exit.
  */
-void QUEUE_FlushMessages( MESSAGEQUEUE *queue )
+static void QUEUE_FlushMessages( MESSAGEQUEUE *queue )
 {
     SMSG *smsg;
     MESSAGEQUEUE *senderQ = 0;

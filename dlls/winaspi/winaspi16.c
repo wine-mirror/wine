@@ -28,6 +28,8 @@ DEFAULT_DEBUG_CHANNEL(aspi)
 
 #ifdef linux
 
+static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
+
 static FARPROC16 ASPIChainFunc = NULL;
 static WORD HA_Count = 1; /* host adapter count; FIXME: detect it */
 

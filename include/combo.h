@@ -5,6 +5,10 @@
 #ifndef __WINE_COMBO_H
 #define __WINE_COMBO_H
 
+#include "windef.h"
+
+struct tagWND;
+
 #define ID_CB_LISTBOX           1000
 #define ID_CB_EDIT              1001
 
@@ -28,7 +32,7 @@
 
 typedef struct
 {
-   WND*    	self;
+   struct tagWND *self;
    HWND  	owner;
    UINT  	dwStyle;
    HWND  	hWndEdit;
@@ -54,8 +58,10 @@ typedef struct
 #define CB_HASSTRINGS( lphc ) ((lphc)->dwStyle & CBS_HASSTRINGS)
 #define CB_HWND( lphc )       ((lphc)->self->hwndSelf)
 
+LRESULT WINAPI ComboWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
 BOOL 	COMBO_FlipListbox( LPHEADCOMBO, BOOL );
-HWND 	COMBO_GetLBWindow( WND* );
+HWND 	COMBO_GetLBWindow( struct tagWND * );
 LRESULT COMBO_Directory( LPHEADCOMBO, UINT, LPSTR, BOOL );
 
 #endif /* __WINE_COMBO_H */

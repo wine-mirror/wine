@@ -7,6 +7,7 @@
 #ifndef __WINE_ANIMATE_H
 #define __WINE_ANIMATE_H
 
+#include "windef.h"
 
 typedef struct tagANIMATE_INFO
 {

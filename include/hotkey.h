@@ -7,6 +7,8 @@
 #ifndef __WINE_HOTKEY_H
 #define __WINE_HOTKEY_H
 
+#include "windef.h"
+
 typedef struct tagHOTKEY_INFO
 {
     HFONT hFont;

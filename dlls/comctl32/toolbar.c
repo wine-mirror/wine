@@ -3227,7 +3227,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-TOOLBAR_Register (VOID)
+TOOLBAR_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -3247,7 +3247,7 @@ TOOLBAR_Register (VOID)
 
 
 VOID
-TOOLBAR_Unregister (VOID)
+TOOLBAR_Unregister (void)
 {
     if (GlobalFindAtomA (TOOLBARCLASSNAMEA))
 	UnregisterClassA (TOOLBARCLASSNAMEA, (HINSTANCE)NULL);
