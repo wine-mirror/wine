@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = control
-IMPORTS   = shlwapi shell32 ole32 rpcrt4 user32 gdi32 kernel32
+IMPORTS   = advapi32 comctl32 shlwapi shell32 ole32 rpcrt4 user32 gdi32 kernel32
 
 C_SRCS = control.c
 
