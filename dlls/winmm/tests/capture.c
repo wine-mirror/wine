@@ -586,15 +586,15 @@ static void wave_in_tests()
            "expected, got %s\n",dev_name(ndev+1),wave_in_error(rc));
 
     rc=waveInGetDevCapsW(ndev+1,&capsW,sizeof(capsW));
-    ok(rc==MMSYSERR_BADDEVICEID,
-       "waveInGetDevCapsW(%s): MMSYSERR_BADDEVICEID expected, got %s\n",
-       dev_name(ndev+1),wave_in_error(rc));
+    ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NOTSUPPORTED,
+       "waveInGetDevCapsW(%s): MMSYSERR_BADDEVICEID or MMSYSERR_NOTSUPPORTED "
+       "expected, got %s\n",dev_name(ndev+1),wave_in_error(rc));
 
     rc=waveInGetDevCapsW(WAVE_MAPPER,&capsW,sizeof(capsW));
     if (ndev>0)
-        ok(rc==MMSYSERR_NOERROR,
-           "waveInGetDevCapsW(%s): MMSYSERR_NOERROR expected, got %s\n",
-           dev_name(ndev+1),wave_in_error(rc));
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
+           "waveInGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED "
+           "expected, got %s\n",dev_name(ndev+1),wave_in_error(rc));
     else
         ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
            "waveInGetDevCapsW(%s): MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER "

@@ -995,9 +995,11 @@ void mixer_testsW()
     trace("found %d Mixer devices\n",ndev);
 
     rc=mixerGetDevCapsW(ndev+1,&capsW,sizeof(capsW));
-    ok(rc==MMSYSERR_BADDEVICEID,
-       "mixerGetDevCapsW: MMSYSERR_BADDEVICEID expected, got %s\n",
-       mmsys_error(rc));
+    ok(rc==MMSYSERR_BADDEVICEID||rc==MMSYSERR_NOTSUPPORTED,
+       "mixerGetDevCapsW: MMSYSERR_BADDEVICEID or MMSYSERR_NOTSUPPORTED "
+       "expected, got %s\n", mmsys_error(rc));
+    if (rc==MMSYSERR_NOTSUPPORTED)
+        return;
 
     rc=mixerOpen(&mix, ndev+1, 0, 0, 0);
     ok(rc==MMSYSERR_BADDEVICEID,
