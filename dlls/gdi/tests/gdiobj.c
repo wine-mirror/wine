@@ -33,6 +33,7 @@ static void test_logfont(void)
 {
     LOGFONTA lf, lfout;
     HFONT hfont;
+    int ret;
 
     memset(&lf, 0, sizeof lf);
 
@@ -47,8 +48,9 @@ static void test_logfont(void)
     hfont = CreateFontIndirectA(&lf);
     ok(hfont != 0, "CreateFontIndirect failed\n");
 
-    ok(GetObjectA(hfont, sizeof(lfout), &lfout) == sizeof(lfout),
-       "GetObject returned wrong size\n");
+    ret = GetObjectA(hfont, sizeof(lfout), &lfout);
+    ok(ret == sizeof(lfout),
+       "GetObject returned %d expected %d\n", ret, sizeof(lfout));
 
     ok(!memcmp(&lfout, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "fonts don't match\n");
     ok(!lstrcmpA(lfout.lfFaceName, lf.lfFaceName),
