@@ -99,5 +99,39 @@ HRESULT WINAPI URLMON_DllUnregisterServer(void)
     
     return S_OK;
 }
-         
 
+/**************************************************************************
+ *                 CoInternetGetSession (URLMON.@)
+ */
+HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode,
+                                    LPVOID /* IInternetSession ** */ ppIInternetSession,
+                                    DWORD dwReserved)
+{
+    FIXME("(%ld, %p, %ld): stub\n", dwSessionMode, ppIInternetSession,
+	  dwReserved);
+
+    if(dwSessionMode) {
+      ERR("dwSessionMode: %ld, must be zero\n", dwSessionMode);
+    }
+
+    if(dwReserved) {
+      ERR("dwReserved: %ld, must be zero\n", dwReserved);
+    }
+
+    return S_OK;
+}
+
+
+/**************************************************************************
+ *                 ObtainUserAgentString (URLMON.@)
+ */
+HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPCSTR pcszUAOut, DWORD *cbSize)
+{
+    FIXME("(%ld, %p, %p): stub\n", dwOption, pcszUAOut, cbSize);
+
+    if(dwOption) {
+      ERR("dwOption: %ld, must be zero\n", dwOption);
+    }
+
+    return S_OK;
+}

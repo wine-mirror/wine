@@ -19,7 +19,7 @@ debug_channels (urlmon win32)
 @ stub CoInternetCreateZoneManager
 @ stub CoInternetGetProtocolFlags
 @ stub CoInternetGetSecurityUrl
-@ stub CoInternetGetSession
+@ stdcall CoInternetGetSession(long ptr long) CoInternetGetSession
 @ stub CoInternetParseUrl
 @ stub CoInternetQueryInfo
 @ stub CopyBindInfo
@@ -55,7 +55,7 @@ debug_channels (urlmon win32)
 @ stub IsLoggingEnabledW
 @ stub IsValidURL
 @ stub MkParseDisplayNameEx
-@ stub ObtainUserAgentString
+@ stdcall ObtainUserAgentString(long str ptr) ObtainUserAgentString
 @ stub PrivateCoInstall
 @ stdcall RegisterBindStatusCallback(ptr ptr ptr long) RegisterBindStatusCallback
 @ stub RegisterFormatEnumerator
