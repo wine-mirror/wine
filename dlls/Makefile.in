@@ -73,6 +73,7 @@ BASEDIRS = \
 	msvideo/msrle32 \
 	mswsock \
 	netapi32 \
+	newdev \
 	ntdll \
 	odbc32 \
 	ole32 \
@@ -270,6 +271,7 @@ SYMLINKS = \
 	msvfw32.dll$(DLLEXT) \
 	mswsock.dll$(DLLEXT) \
 	netapi32.dll$(DLLEXT) \
+	newdev.dll$(DLLEXT) \
 	ntdll.dll$(DLLEXT) \
 	odbc32.dll$(DLLEXT) \
 	ole32.dll$(DLLEXT) \
@@ -542,6 +544,9 @@ mswsock.dll$(DLLEXT): mswsock/mswsock.dll$(DLLEXT)
 netapi32.dll$(DLLEXT): netapi32/netapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) netapi32/netapi32.dll$(DLLEXT) $@
 
+newdev.dll$(DLLEXT): newdev/newdev.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) newdev/newdev.dll$(DLLEXT) $@
+
 ntdll.dll$(DLLEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
 
@@ -772,6 +777,7 @@ IMPORT_LIBS = \
 	libmsvfw32 \
 	libmswsock \
 	libnetapi32 \
+	libnewdev \
 	libntdll \
 	libodbc32 \
 	libole32 \
@@ -1111,6 +1117,11 @@ libnetapi32.def: netapi32/netapi32.spec.def
 libnetapi32.a: netapi32/netapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d netapi32/netapi32.spec.def
 
+libnewdev.def: newdev/newdev.spec.def
+	$(RM) $@ && $(LN_S) newdev/newdev.spec.def $@
+libnewdev.a: newdev/newdev.spec.def
+	$(DLLTOOL) -k -l $@ -d newdev/newdev.spec.def
+
 libntdll.def: ntdll/ntdll.spec.def
 	$(RM) $@ && $(LN_S) ntdll/ntdll.spec.def $@
 libntdll.a: ntdll/ntdll.spec.def
@@ -1409,6 +1420,7 @@ msvcrtd/msvcrtd.spec.def: $(WINEBUILD)
 msvideo/msvfw32.spec.def: $(WINEBUILD)
 mswsock/mswsock.spec.def: $(WINEBUILD)
 netapi32/netapi32.spec.def: $(WINEBUILD)
+newdev/newdev.spec.def: $(WINEBUILD)
 ntdll/ntdll.spec.def: $(WINEBUILD)
 odbc32/odbc32.spec.def: $(WINEBUILD)
 ole32/ole32.spec.def: $(WINEBUILD)
@@ -1534,6 +1546,7 @@ msvcrtd/msvcrtd.dll$(DLLEXT): msvcrtd
 msvideo/msvfw32.dll$(DLLEXT): msvideo
 mswsock/mswsock.dll$(DLLEXT): mswsock
 netapi32/netapi32.dll$(DLLEXT): netapi32
+newdev/newdev.dll$(DLLEXT): newdev
 ntdll/ntdll.dll$(DLLEXT): ntdll
 odbc32/odbc32.dll$(DLLEXT): odbc32
 ole32/ole32.dll$(DLLEXT): ole32

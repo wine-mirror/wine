@@ -1551,6 +1551,7 @@ dlls/msvideo/msrle32/Makefile
 dlls/mswsock/Makefile
 dlls/netapi32/Makefile
 dlls/netapi32/tests/Makefile
+dlls/newdev/Makefile
 dlls/ntdll/Makefile
 dlls/ntdll/tests/Makefile
 dlls/odbc32/Makefile
