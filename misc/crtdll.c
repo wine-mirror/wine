@@ -91,6 +91,12 @@ typedef VOID (*new_handler_type)(VOID);
 
 static new_handler_type new_handler;
 
+#if defined(__GNUC__) && defined(__i386__)
+#define USING_REAL_FPU
+#define DO_FPU(x,y) __asm__ __volatile__( x " %0;fwait" : "=m" (y) : )
+#define POP_FPU(x) DO_FPU("fstpl",x)
+#endif
+
 /*********************************************************************
  *                  _GetMainArgs  (CRTDLL.022)
  */
@@ -2000,11 +2006,41 @@ VOID __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
 }
 
 /*********************************************************************
- *                  _ftol           (CRTDLL.113)
+ *                  _ftol            (CRTDLL.113)
  */
-LONG __cdecl CRTDLL__ftol(double fl) {
+#ifdef USING_REAL_FPU
+LONG __cdecl CRTDLL__ftol(void) {
+	/* don't just do DO_FPU("fistp",retval), because the rounding
+	 * mode must also be set to "round towards zero"... */
+	double fl;
+	POP_FPU(fl);
 	return (LONG)fl;
 }
+#else
+LONG __cdecl CRTDLL__ftol(double fl) {
+	FIXME(crtdll,"should be register function\n");
+	return (LONG)fl;
+}
+#endif
+
+/*********************************************************************
+ *                  _CIpow           (CRTDLL.14)
+ */
+#ifdef USING_REAL_FPU
+LONG __cdecl CRTDLL__CIpow(void) {
+	double x,y;
+	POP_FPU(y);
+	POP_FPU(x);
+	FIXME(crtdll,"(%f,%f): argument order unknown! Please report!\n",x,y);
+	return pow(x,y);
+}
+#else
+LONG __cdecl CRTDLL__CIpow(double x,double y) {
+	FIXME(crtdll,"should be register function\n");
+	return pow(x,y);
+}
+#endif
+
 /*********************************************************************
  *                  _sleep           (CRTDLL.267)
  */

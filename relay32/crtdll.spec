@@ -15,7 +15,7 @@ type	win32
  11 stub _CIfmod
  12 stub _CIlog
  13 stub _CIlog10
- 14 stub _CIpow
+ 14 cdecl _CIpow() CRTDLL__CIpow
  15 stub _CIsin
  16 stub _CIsinh
  17 stub _CIsqrt
@@ -114,7 +114,7 @@ type	win32
 110 stub _fsopen
 111 cdecl _fstat(long ptr) CRTDLL__fstat
 112 stub _ftime
-113 cdecl _ftol(double) CRTDLL__ftol
+113 cdecl _ftol() CRTDLL__ftol
 114 cdecl _fullpath(ptr str long) CRTDLL__fullpath
 115 stub _futime
 116 stub _gcvt
