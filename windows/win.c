@@ -1904,7 +1904,7 @@ HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
   WND *pWndNewParent = 
     (hwndNewParent) ? WIN_FindWndPtr( hwndNewParent ) : pWndDesktop;
   WND *pWndOldParent =
-    (*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent);
+    (wndPtr)?(*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent):NULL;
 
   return pWndOldParent?pWndOldParent->hwndSelf:0;
 }
