@@ -70,7 +70,7 @@ static DWORD copy_data( void *data, const void *src, DWORD len, DWORD *count, DW
     }
     if (count) 
     {
-        if (is_string( type ) && len && (len < *count) && ((WCHAR *)data)[len-1])
+        if (len && data && is_string( type ) && (len < *count) && ((WCHAR *)data)[len-1])
             ((WCHAR *)data)[len] = 0;
         *count = len;
     }
