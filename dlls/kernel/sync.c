@@ -21,6 +21,11 @@
 #include "config.h"
 
 #include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
 
 #include "winbase.h"
 #include "winerror.h"
@@ -28,6 +33,7 @@
 
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "file.h"
 
 #include "wine/debug.h"
 
@@ -530,9 +536,28 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
 BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
                            LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage )
 {
-    FIXME("(%08x, %p, %08lx, %p, %p, %p): stub\n",
-          hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
+    int avail=0,fd;
+
+    fd = FILE_GetUnixHandle(hPipe, GENERIC_READ);
+    if (fd == -1)
+	return FALSE;
+    /* On linux fstat on pipes doesn't work */
+    if (ioctl(fd,FIONREAD, &avail ) != 0)
+      {
+	TRACE("FIONREAD failed reason: %s\n",strerror(errno));
+        close(fd);
+	return FALSE;
+      }
+    close(fd);
+    TRACE(" 0x%08x bytes available\n", avail );
+    if (!lpvBuffer && lpcbAvail)
+      {
+	*lpcbAvail= avail;
+	return TRUE;
+      }
+
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    FIXME("function not implemented\n");
     return FALSE;
 }
 
@@ -800,4 +825,3 @@ BOOL WINAPI CallNamedPipeW(
            lpOutput, lpOutputSize, lpBytesRead, nTimeout);
     return FALSE;
 }
-
