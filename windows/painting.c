@@ -479,23 +479,13 @@ void WINAPI PaintRect16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
  */
 HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
 {
-    WND* wndPtr = WIN_FindWndPtr( hwnd );
-    HBRUSH16 retvalue;
-
-    if((ctlType <= CTLCOLOR_MAX) && wndPtr )
+    if (ctlType <= CTLCOLOR_MAX)
     {
-	WND* parent;
-	if( wndPtr->dwStyle & WS_POPUP ) parent = WIN_LockWndPtr(wndPtr->owner);
-	else parent = WIN_LockWndPtr(wndPtr->parent);
-	if( !parent ) parent = wndPtr;
-	retvalue = (HBRUSH16)PAINT_GetControlBrush( parent->hwndSelf, hwnd, hdc, ctlType );
-        WIN_ReleaseWndPtr(parent);
-        goto END;
+        HWND16 parent = GetParent16( hwnd );
+        if (!parent) parent = hwnd;
+        return PAINT_GetControlBrush( parent, hwnd, hdc, ctlType );
     }
-    retvalue = (HBRUSH16)0;
-END:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return 0;
 }
 
 
