@@ -1,6 +1,11 @@
 /*
  * Win32 file change notification functions
  *
+ * FIXME: this is VERY difficult to implement with proper Unix support
+ * at the wineserver side.
+ * (Unix doesn't really support this)
+ * See http://x57.deja.com/getdoc.xp?AN=575483053 for possible solutions.
+ *
  * Copyright 1998 Ulrich Weigand
  */
 
@@ -17,6 +22,7 @@
 #include "server.h"
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(file);
 
 /****************************************************************************
  *		FindFirstChangeNotificationA (KERNEL32.248)
@@ -26,6 +32,7 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
 {
     struct create_change_notification_request *req = get_req_buffer();
 
+    FIXME("this is not supported yet (non-trivial).\n");
     req->subtree = bWatchSubtree;
     req->filter  = dwNotifyFilter;
     server_call( REQ_CREATE_CHANGE_NOTIFICATION );
