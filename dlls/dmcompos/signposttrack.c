@@ -51,17 +51,20 @@ HRESULT WINAPI IDirectMusicSignPostTrack_IUnknown_QueryInterface (LPUNKNOWN ifac
 
 ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, UnknownVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
+        ULONG ref = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
 	
 	DMCOMPOS_LockModule();
 	
-	return ++(This->ref);
+	return ref;
 }
 
 ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, UnknownVtbl, iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+	ULONG ref = InterlockedDecrement(&This->ref);
+
+	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
 	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
