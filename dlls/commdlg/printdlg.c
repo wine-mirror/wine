@@ -27,7 +27,6 @@ DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 
-
 /* This PRINTDLGA internal structure stores
  * pointers to several throughout useful structures.
  * 
@@ -35,7 +34,10 @@ DEFAULT_DEBUG_CHANNEL(commdlg);
 typedef struct  
 {
   LPDEVMODEA        lpDevMode;
-  LPPRINTDLGA       lpPrintDlg;
+  struct {
+      LPPRINTDLGA       lpPrintDlg;
+      LPPRINTDLG16	lpPrintDlg16;
+  } dlg;
   LPPRINTER_INFO_2A lpPrinterInfo;
   UINT              HelpMessageID;
   HICON             hCollateIcon;    /* PrintDlg only */
@@ -88,10 +90,14 @@ static BOOL PRINTDLG_GetDefaultPrinterName(LPSTR buf, DWORD len)
 {
     char *ptr;
 
-    if(!GetProfileStringA("windows", "device", "", buf, len))
+    if(!GetProfileStringA("windows", "device", "", buf, len)) {
+	TRACE("No profile entry for default printer found.\n");
 	return FALSE;
-    if((ptr = strchr(buf, ',')) == NULL)
+    }
+    if((ptr = strchr(buf, ',')) == NULL) {
+	FIXME("bad format for default printer (%s)!\n",buf);
 	return FALSE;
+    }
     *ptr = '\0';
     return TRUE;
 }
@@ -107,9 +113,13 @@ static BOOL PRINTDLG_GetDefaultPrinterName(LPSTR buf, DWORD len)
 static BOOL PRINTDLG_OpenDefaultPrinter(HANDLE *hprn)
 {
     char buf[260];
+    BOOL res;
     if(!PRINTDLG_GetDefaultPrinterName(buf, sizeof(buf)))
         return FALSE;
-    return OpenPrinterA(buf, hprn, NULL);
+    res = OpenPrinterA(buf, hprn, NULL);
+    if (!res)
+	FIXME("Could not open printer %s?!\n",buf);
+    return res;
 }
 
 /***********************************************************************
@@ -145,13 +155,13 @@ static INT PRINTDLG_SetUpPrinterListCombo(HWND hDlg, UINT id, LPCSTR name)
 				(LPARAM)name)) == CB_ERR) {
 
         char buf[260];
-        TRACE("Can't find '%s' in printer list so trying to find default\n",
+        FIXME("Can't find '%s' in printer list so trying to find default\n",
 	      name);
 	if(!PRINTDLG_GetDefaultPrinterName(buf, sizeof(buf)))
 	    return num;
 	i = SendDlgItemMessageA(hDlg, id, CB_FINDSTRINGEXACT, -1, (LPARAM)buf);
 	if(i == CB_ERR)
-	    TRACE("Can't find default printer in printer list\n");
+	    FIXME("Can't find default printer in printer list\n");
     }
     SendDlgItemMessageA(hDlg, id, CB_SETCURSEL, i, 0);
     return num;
@@ -207,6 +217,49 @@ static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, char* DeviceDriverName,
     return TRUE;
 }
 
+static BOOL PRINTDLG_CreateDevNames16(HGLOBAL16 *hmem, char* DeviceDriverName, 
+				      char* DeviceName, char* OutputPort)
+{
+    long size;
+    char*   pDevNamesSpace;
+    char*   pTempPtr;
+    LPDEVNAMES lpDevNames;
+    char buf[260];
+
+    size = strlen(DeviceDriverName) + 1
+            + strlen(DeviceName) + 1
+            + strlen(OutputPort) + 1
+            + sizeof(DEVNAMES);
+            
+    if(*hmem)
+        *hmem = GlobalReAlloc16(*hmem, size, GMEM_MOVEABLE);
+    else
+        *hmem = GlobalAlloc16(GMEM_MOVEABLE, size);
+    if (*hmem == 0)
+        return FALSE;
+
+    pDevNamesSpace = GlobalLock16(*hmem);
+    lpDevNames = (LPDEVNAMES) pDevNamesSpace;
+
+    pTempPtr = pDevNamesSpace + sizeof(DEVNAMES);
+    strcpy(pTempPtr, DeviceDriverName);
+    lpDevNames->wDriverOffset = pTempPtr - pDevNamesSpace;
+
+    pTempPtr += strlen(DeviceDriverName) + 1;
+    strcpy(pTempPtr, DeviceName);
+    lpDevNames->wDeviceOffset = pTempPtr - pDevNamesSpace;
+        
+    pTempPtr += strlen(DeviceName) + 1;
+    strcpy(pTempPtr, OutputPort);
+    lpDevNames->wOutputOffset = pTempPtr - pDevNamesSpace;
+
+    PRINTDLG_GetDefaultPrinterName(buf, sizeof(buf));
+    lpDevNames->wDefault = (strcmp(buf, DeviceName) == 0) ? 1 : 0;
+    GlobalUnlock16(*hmem);
+    return TRUE;
+}
+
+
 /***********************************************************************
  *             PRINTDLG_UpdatePrintDlg          [internal]
  *
@@ -220,12 +273,15 @@ static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, char* DeviceDriverName,
 static BOOL PRINTDLG_UpdatePrintDlg(HWND hDlg, 
 				    PRINT_PTRA* PrintStructures)
 {
-    LPPRINTDLGA       lppd = PrintStructures->lpPrintDlg;
+    LPPRINTDLGA       lppd = PrintStructures->dlg.lpPrintDlg;
     PDEVMODEA         lpdm = PrintStructures->lpDevMode;
     LPPRINTER_INFO_2A pi = PrintStructures->lpPrinterInfo;
 
 
-    if(!lpdm) return FALSE;
+    if(!lpdm) {
+	FIXME("No lpdm ptr?\n");
+	return FALSE;
+    }
 
 
     if(!(lppd->Flags & PD_PRINTSETUP)) {
@@ -430,7 +486,7 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, LPPRINTER_INFO_2A pi)
 static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
 				   PRINT_PTRA *PrintStructures)
 {
-    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+    LPPRINTDLGA lppd = PrintStructures->dlg.lpPrintDlg;
     LPDEVMODEA lpdm = NULL;
     LONG dmSize;
     DWORD needed;
@@ -567,7 +623,6 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
         /* hide if PD_SHOWHELP not specified */
         ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);         
     }
-
     return TRUE;
 }
 
@@ -577,7 +632,7 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
 static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 				     PRINT_PTRA* PrintStructures)
 {
-    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+    LPPRINTDLGA lppd = PrintStructures->dlg.lpPrintDlg;
     DEVNAMES *pdn;
     DEVMODEA *pdm;
     char *name = NULL;
@@ -628,22 +683,123 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
     if (lppd->nFromPage > lppd->nMaxPage)
         lppd->nFromPage = lppd->nMaxPage;
 
-    /* Fill Combobox 
-     */
-    pdn = GlobalLock(lppd->hDevNames);
-    pdm = GlobalLock(lppd->hDevMode);
-    if(pdn)
-        name = (char*)pdn + pdn->wDeviceOffset;
-    else if(pdm)
-        name = pdm->dmDeviceName;
-    PRINTDLG_SetUpPrinterListCombo(hDlg, comboID, name);
-    if(pdm) GlobalUnlock(lppd->hDevMode);
-    if(pdn) GlobalUnlock(lppd->hDevNames);
+    /* if we have the combo box, fill it */
+    if (GetDlgItem(hDlg,comboID)) {
+	/* Fill Combobox 
+	 */
+	pdn = GlobalLock(lppd->hDevNames);
+	pdm = GlobalLock(lppd->hDevMode);
+	if(pdn)
+	    name = (char*)pdn + pdn->wDeviceOffset;
+	else if(pdm)
+	    name = pdm->dmDeviceName;
+	PRINTDLG_SetUpPrinterListCombo(hDlg, comboID, name);
+	if(pdm) GlobalUnlock(lppd->hDevMode);
+	if(pdn) GlobalUnlock(lppd->hDevNames);
 
-    /* Now find selected printer and update rest of dlg */
-    name = HeapAlloc(GetProcessHeap(),0,256);
-    GetDlgItemTextA(hDlg, comboID, name, 255);
-    PRINTDLG_ChangePrinter(hDlg, name, PrintStructures);
+	/* Now find selected printer and update rest of dlg */
+	name = HeapAlloc(GetProcessHeap(),0,256);
+	if (GetDlgItemTextA(hDlg, comboID, name, 255))
+	    PRINTDLG_ChangePrinter(hDlg, name, PrintStructures);
+	HeapFree(GetProcessHeap(),0,name);
+    } else {
+	/* else use default printer */
+	char name[200];
+	BOOL ret = PRINTDLG_GetDefaultPrinterName(name, sizeof(name));
+
+	if (ret)
+	    PRINTDLG_ChangePrinter(hDlg, name, PrintStructures);
+	else
+	    FIXME("No default printer found, expect problems!\n");
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           PRINTDLG_WMInitDialog                      [internal]
+ */
+static LRESULT PRINTDLG_WMInitDialog16(HWND hDlg, WPARAM wParam,
+				     PRINT_PTRA* PrintStructures)
+{
+    LPPRINTDLG16 lppd = PrintStructures->dlg.lpPrintDlg16;
+    DEVNAMES *pdn;
+    DEVMODEA *pdm;
+    char *name = NULL;
+    UINT comboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
+
+    /* load Collate ICONs */
+    PrintStructures->hCollateIcon =
+      LoadIconA(COMDLG32_hInstance, "PD32_COLLATE");
+    PrintStructures->hNoCollateIcon = 
+      LoadIconA(COMDLG32_hInstance, "PD32_NOCOLLATE");
+    if(PrintStructures->hCollateIcon == 0 ||
+       PrintStructures->hNoCollateIcon == 0) {
+        ERR("no icon in resourcefile\n");
+	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	EndDialog(hDlg, FALSE);
+    }
+
+    /* load Paper Orientation ICON */
+    /* FIXME: not implemented yet */
+
+    /*
+     * if lppd->Flags PD_SHOWHELP is specified, a HELPMESGSTRING message
+     * must be registered and the Help button must be shown.
+     */
+    if (lppd->Flags & PD_SHOWHELP) {
+        if((PrintStructures->HelpMessageID = 
+	    RegisterWindowMessageA(HELPMSGSTRING)) == 0) {
+	    COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
+	    return FALSE;
+	}
+    } else
+        PrintStructures->HelpMessageID = 0;
+
+    /* FIXME: I allow more freedom than either Win95 or WinNT,
+     *        which do not agree to what errors should be thrown or not
+     *        in case nToPage or nFromPage is out-of-range.
+     */
+    if (lppd->nMaxPage < lppd->nMinPage)
+    	lppd->nMaxPage = lppd->nMinPage;
+    if (lppd->nMinPage == lppd->nMaxPage) 
+    	lppd->Flags |= PD_NOPAGENUMS;        
+    if (lppd->nToPage < lppd->nMinPage)
+        lppd->nToPage = lppd->nMinPage;
+    if (lppd->nToPage > lppd->nMaxPage)
+        lppd->nToPage = lppd->nMaxPage;
+    if (lppd->nFromPage < lppd->nMinPage)
+        lppd->nFromPage = lppd->nMinPage;
+    if (lppd->nFromPage > lppd->nMaxPage)
+        lppd->nFromPage = lppd->nMaxPage;
+
+    /* If the printer combo box is in the dialog, fill it */
+    if (GetDlgItem(hDlg,comboID)) {
+	/* Fill Combobox 
+	 */
+	pdn = GlobalLock16(lppd->hDevNames);
+	pdm = GlobalLock16(lppd->hDevMode);
+	if(pdn)
+	    name = (char*)pdn + pdn->wDeviceOffset;
+	else if(pdm)
+	    name = pdm->dmDeviceName;
+	PRINTDLG_SetUpPrinterListCombo(hDlg, comboID, name);
+	if(pdm) GlobalUnlock16(lppd->hDevMode);
+	if(pdn) GlobalUnlock16(lppd->hDevNames);
+
+	/* Now find selected printer and update rest of dlg */
+	name = HeapAlloc(GetProcessHeap(),0,256);
+	if (GetDlgItemTextA(hDlg, comboID, name, 255))
+	    PRINTDLG_ChangePrinter(hDlg, name, PrintStructures);
+    } else {
+	/* else just use default printer */
+	char name[200];
+	BOOL ret = PRINTDLG_GetDefaultPrinterName(name, sizeof(name));
+
+	if (ret)
+	    PRINTDLG_ChangePrinter(hDlg, name, PrintStructures);
+	else
+	    FIXME("No default printer found, expect problems!\n");
+    }
     HeapFree(GetProcessHeap(),0,name);
 
     return TRUE;
@@ -655,15 +811,17 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam, 
 			LPARAM lParam, PRINT_PTRA* PrintStructures)
 {
-    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+    LPPRINTDLGA lppd = PrintStructures->dlg.lpPrintDlg;
     UINT PrinterComboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
     LPDEVMODEA lpdm = PrintStructures->lpDevMode;
 
     switch (LOWORD(wParam))  {
     case IDOK:
         TRACE(" OK button was hit\n");
-        if (PRINTDLG_UpdatePrintDlg(hDlg, PrintStructures)!=TRUE)
+        if (PRINTDLG_UpdatePrintDlg(hDlg, PrintStructures)!=TRUE) {
+	    FIXME("Update printdlg was not successful!\n");
 	    return(FALSE);
+	}
 	EndDialog(hDlg, TRUE);
 	return(TRUE);
 
@@ -704,7 +862,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 
          GetDlgItemTextA(hDlg, PrinterComboID, PrinterName, 255);
          if (!OpenPrinterA(PrinterName, &hPrinter, NULL)) {
-	     WARN(" Call to OpenPrinter did not succeed!\n");
+	     FIXME(" Call to OpenPrinter did not succeed!\n");
 	     break;
 	 }
 	 DocumentPropertiesA(hDlg, hPrinter, PrinterName, 
@@ -765,16 +923,15 @@ BOOL WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 	SetWindowLongA(hDlg, DWL_USER, lParam); 
 	res = PRINTDLG_WMInitDialog(hDlg, wParam, PrintStructures);
 
-	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
-	    res = PrintStructures->lpPrintDlg->lpfnPrintHook(hDlg, uMsg,
-						 wParam,
-				       (LPARAM)PrintStructures->lpPrintDlg); 
-	}
+	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
+	    res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(
+		hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg
+	    ); 
 	return res;
     }
   
-    if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
-        res = PrintStructures->lpPrintDlg->lpfnPrintHook(hDlg, uMsg, wParam,
+    if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
+        res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam,
 							 lParam);
 	if(res) return res;
     }
@@ -803,7 +960,7 @@ static HGLOBAL PRINTDLG_GetDlgTemplate(PRINTDLGA *lppd)
     HGLOBAL hDlgTmpl, hResInfo;
 
     if (lppd->Flags & PD_PRINTSETUP) {
-        if(lppd->Flags & PD_ENABLESETUPTEMPLATEHANDLE) {
+	if(lppd->Flags & PD_ENABLESETUPTEMPLATEHANDLE) {
 	    hDlgTmpl = lppd->hSetupTemplate;
 	} else if(lppd->Flags & PD_ENABLESETUPTEMPLATE) {	
 	    hResInfo = FindResourceA(lppd->hInstance,
@@ -815,7 +972,7 @@ static HGLOBAL PRINTDLG_GetDlgTemplate(PRINTDLGA *lppd)
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     } else {
-        if(lppd->Flags & PD_ENABLEPRINTTEMPLATEHANDLE) {
+	if(lppd->Flags & PD_ENABLEPRINTTEMPLATEHANDLE) {
 	    hDlgTmpl = lppd->hPrintTemplate;
 	} else if(lppd->Flags & PD_ENABLEPRINTTEMPLATE) {
 	    hResInfo = FindResourceA(lppd->hInstance,
@@ -826,6 +983,42 @@ static HGLOBAL PRINTDLG_GetDlgTemplate(PRINTDLGA *lppd)
 	    hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32",
 				     RT_DIALOGA);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
+	}
+    }
+    return hDlgTmpl;
+}
+
+/************************************************************
+ *
+ *      PRINTDLG_GetDlgTemplate
+ *
+ */
+static HGLOBAL16 PRINTDLG_GetDlgTemplate16(PRINTDLG16 *lppd)
+{
+    HGLOBAL16 hDlgTmpl, hResInfo;
+
+    if (lppd->Flags & PD_PRINTSETUP) {
+	if(lppd->Flags & PD_ENABLESETUPTEMPLATEHANDLE) {
+	    hDlgTmpl = lppd->hSetupTemplate;
+	} else if(lppd->Flags & PD_ENABLESETUPTEMPLATE) {	
+	    hResInfo = FindResource16(lppd->hInstance,
+				     MapSL(lppd->lpSetupTemplateName), RT_DIALOGA);
+	    hDlgTmpl = LoadResource16(lppd->hInstance, hResInfo);
+	} else {
+	    ERR("no comctl32 templates for printing setup currently!\n");
+	    hDlgTmpl = 0;
+	}
+    } else {
+	if(lppd->Flags & PD_ENABLEPRINTTEMPLATEHANDLE) {
+	    hDlgTmpl = lppd->hPrintTemplate;
+	} else if(lppd->Flags & PD_ENABLEPRINTTEMPLATE) {
+	    hResInfo = FindResource16(lppd->hInstance,
+				     MapSL(lppd->lpPrintTemplateName),
+				     RT_DIALOGA);
+	    hDlgTmpl = LoadResource16(lppd->hInstance, hResInfo);
+	} else {
+	    ERR("no comctl32 templates for printing currently!\n");
+	    hDlgTmpl = 0;
 	}
     }
     return hDlgTmpl;
@@ -854,6 +1047,27 @@ static BOOL PRINTDLG_CreateDC(LPPRINTDLGA lppd)
     }
     GlobalUnlock(lppd->hDevNames);
     GlobalUnlock(lppd->hDevMode);
+    return lppd->hDC ? TRUE : FALSE;
+}
+
+static BOOL PRINTDLG_CreateDC16(LPPRINTDLG16 lppd)
+{
+    DEVNAMES *pdn = GlobalLock16(lppd->hDevNames);
+    DEVMODEA *pdm = GlobalLock16(lppd->hDevMode);
+
+    if(lppd->Flags & PD_RETURNDC) {
+        lppd->hDC = CreateDCA((char*)pdn + pdn->wDriverOffset,
+			      (char*)pdn + pdn->wDeviceOffset,
+			      (char*)pdn + pdn->wOutputOffset,
+			      pdm );
+    } else if(lppd->Flags & PD_RETURNIC) {
+        lppd->hDC = CreateICA((char*)pdn + pdn->wDriverOffset,
+			      (char*)pdn + pdn->wDeviceOffset,
+			      (char*)pdn + pdn->wOutputOffset,
+			      pdm );
+    }
+    GlobalUnlock16(lppd->hDevNames);
+    GlobalUnlock16(lppd->hDevMode);
     return lppd->hDC ? TRUE : FALSE;
 }
 
@@ -945,20 +1159,26 @@ BOOL WINAPI PrintDlgA(
      * depending on Flags indicates Print32 or Print32_setup dialog 
      */
 	hDlgTmpl = PRINTDLG_GetDlgTemplate(lppd);
-	if (!(hDlgTmpl) || !(ptr = LockResource( hDlgTmpl ))) {
+	if (!hDlgTmpl) {
 	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	    return FALSE;
 	}
+	ptr = LockResource( hDlgTmpl );
+	if (!ptr) {
+	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	    return FALSE;
+	}
+
         PrintStructures = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				    sizeof(PRINT_PTRA));
-	PrintStructures->lpPrintDlg = lppd;
+	PrintStructures->dlg.lpPrintDlg = lppd;
 
 	/* and create & process the dialog .
 	 * -1 is failure, 0 is broken hwnd, everything else is ok.
 	 */
 	bRet = (0<DialogBoxIndirectParamA(hInst, ptr, lppd->hwndOwner,
-				       PrintDlgProcA,
-				       (LPARAM)PrintStructures));
+					   PrintDlgProcA,
+					   (LPARAM)PrintStructures));
 
 	if(bRet) {
 	    DEVMODEA *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
@@ -1007,6 +1227,165 @@ BOOL WINAPI PrintDlgA(
     return bRet;    
 }
 
+/***********************************************************************
+ *           PrintDlg16   (COMMDLG.20)
+ * 
+ *  Displays the the PRINT dialog box, which enables the user to specify
+ *  specific properties of the print job.
+ *
+ * RETURNS
+ *  nonzero if the user pressed the OK button
+ *  zero    if the user cancelled the window or an error occurred
+ *
+ * BUGS
+ *  * calls up to the 32-bit versions of the Dialogs, which look different
+ *  * Customizing is *not* implemented.
+ */
+
+BOOL16 WINAPI PrintDlg16(
+	      LPPRINTDLG16 lppd /* [in/out] ptr to PRINTDLG struct */
+) {
+    BOOL      bRet = FALSE;
+    LPVOID   ptr;
+    HINSTANCE hInst = GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
+
+    if(TRACE_ON(commdlg)) {
+        char flagstr[1000] = "";
+	struct pd_flags *pflag = pd_flags;
+	for( ; pflag->name; pflag++) {
+	    if(lppd->Flags & pflag->flag)
+	        strcat(flagstr, pflag->name);
+	}
+	TRACE("(%p): hwndOwner = %08x, hDevMode = %08x, hDevNames = %08x\n"
+	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %08x\n"
+	      "flags %08lx (%s)\n",
+	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
+	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
+	      lppd->nCopies, lppd->hInstance, lppd->Flags, flagstr);
+    }
+
+    if(lppd->lStructSize != sizeof(PRINTDLG16)) {
+        ERR("structure size (%ld/%d)\n",lppd->lStructSize,sizeof(PRINTDLG16));
+	COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
+	return FALSE;
+    }
+
+    if(lppd->Flags & PD_RETURNDEFAULT) {
+        PRINTER_INFO_2A *pbuf;
+	HANDLE hprn;
+	DWORD needed;
+
+	if(lppd->hDevMode || lppd->hDevNames) {
+	    WARN("hDevMode or hDevNames non-zero for PD_RETURNDEFAULT\n");
+	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE); 
+	    return FALSE;
+	}
+        if(!PRINTDLG_OpenDefaultPrinter(&hprn)) {
+	    WARN("Can't find default printer\n");
+	    COMDLG32_SetCommDlgExtendedError(PDERR_NODEFAULTPRN); 
+	    return FALSE;
+	}
+
+	GetPrinterA(hprn, 2, NULL, 0, &needed);
+	pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
+	GetPrinterA(hprn, 2, (LPBYTE)pbuf, needed, &needed);
+	ClosePrinter(hprn);
+	PRINTDLG_CreateDevNames16(&(lppd->hDevNames), "winspool",
+				    pbuf->pDevMode->dmDeviceName,
+				    pbuf->pPortName);
+	lppd->hDevMode = GlobalAlloc16(GMEM_MOVEABLE,pbuf->pDevMode->dmSize+
+				     pbuf->pDevMode->dmDriverExtra);
+	ptr = GlobalLock16(lppd->hDevMode);
+	memcpy(ptr, pbuf->pDevMode, pbuf->pDevMode->dmSize +
+	       pbuf->pDevMode->dmDriverExtra);
+	GlobalUnlock16(lppd->hDevMode);
+	HeapFree(GetProcessHeap(), 0, pbuf);
+	bRet = TRUE;
+    } else {
+	HGLOBAL hDlgTmpl;
+	PRINT_PTRA *PrintStructures;
+
+    /* load Dialog resources, 
+     * depending on Flags indicates Print32 or Print32_setup dialog 
+     */
+	hDlgTmpl = PRINTDLG_GetDlgTemplate16(lppd);
+	if (!hDlgTmpl) {
+	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	    return FALSE;
+	}
+        PrintStructures = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+				    sizeof(PRINT_PTRA));
+	PrintStructures->dlg.lpPrintDlg16 = lppd;
+	PrintStructures->dlg.lpPrintDlg = (LPPRINTDLGA)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(PRINTDLGA));
+#define CVAL(x)	PrintStructures->dlg.lpPrintDlg->x = lppd->x;
+#define MVAL(x)	PrintStructures->dlg.lpPrintDlg->x = MapSL(lppd->x);
+	CVAL(Flags);CVAL(hwndOwner);CVAL(hDC);
+	CVAL(nFromPage);CVAL(nToPage);CVAL(nMinPage);CVAL(nMaxPage);
+	CVAL(nCopies);CVAL(hInstance);CVAL(lCustData);
+	MVAL(lpPrintTemplateName);MVAL(lpSetupTemplateName);
+	/* Don't copy rest, it is 16 bit specific */
+#undef MVAL
+#undef CVAL
+
+	PrintStructures->lpDevMode = HeapAlloc(GetProcessHeap(),0,sizeof(DEVMODEA));
+
+	/* and create & process the dialog .
+	 * -1 is failure, 0 is broken hwnd, everything else is ok.
+	 */
+	bRet =	(0<DialogBoxIndirectParam16(
+		 hInst, hDlgTmpl, lppd->hwndOwner,
+		 (DLGPROC16)GetProcAddress16(GetModuleHandle16("COMMDLG"),(LPCSTR)21),
+		 (LPARAM)PrintStructures
+		)
+	);
+	if (!PrintStructures->lpPrinterInfo) bRet = FALSE;
+	if(bRet) {
+	    DEVMODEA *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
+	    PRINTER_INFO_2A *pi = PrintStructures->lpPrinterInfo;
+
+	    if (lppd->hDevMode == 0) {
+	        TRACE(" No hDevMode yet... Need to create my own\n");
+		lppd->hDevMode = GlobalAlloc16(GMEM_MOVEABLE,
+					lpdm->dmSize + lpdm->dmDriverExtra);
+	    } else {
+	        WORD locks;
+		if((locks = (GlobalFlags16(lppd->hDevMode)&GMEM_LOCKCOUNT))) {
+		    WARN("hDevMode has %d locks on it. Unlocking it now\n", locks);
+		    while(locks--) {
+		        GlobalUnlock16(lppd->hDevMode);
+			TRACE("Now got %d locks\n", locks);
+		    }
+		}
+		lppd->hDevMode = GlobalReAlloc16(lppd->hDevMode,
+					       lpdm->dmSize + lpdm->dmDriverExtra,
+					       GMEM_MOVEABLE);
+	    }
+	    lpdmReturn = GlobalLock16(lppd->hDevMode);
+	    memcpy(lpdmReturn, lpdm, lpdm->dmSize + lpdm->dmDriverExtra);
+
+	    if (lppd->hDevNames != 0) {
+	        WORD locks;
+		if((locks = (GlobalFlags16(lppd->hDevNames)&GMEM_LOCKCOUNT))) {
+		    WARN("hDevNames has %d locks on it. Unlocking it now\n", locks);
+		    while(locks--)
+		        GlobalUnlock16(lppd->hDevNames);
+		}
+	    }
+	    PRINTDLG_CreateDevNames16(&(lppd->hDevNames), "winspool",
+				    lpdmReturn->dmDeviceName, pi->pPortName);
+	    GlobalUnlock16(lppd->hDevMode);
+	}
+	HeapFree(GetProcessHeap(), 0, PrintStructures->lpDevMode);
+	HeapFree(GetProcessHeap(), 0, PrintStructures->lpPrinterInfo);
+	HeapFree(GetProcessHeap(), 0, PrintStructures);
+    }
+    if(bRet && (lppd->Flags & PD_RETURNDC || lppd->Flags & PD_RETURNIC))
+        bRet = PRINTDLG_CreateDC16(lppd);
+
+    TRACE("exit! (%d)\n", bRet);        
+    return bRet;    
+}
+
 
 
 /***********************************************************************
@@ -1046,28 +1425,50 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 /***********************************************************************
  *           PrintDlgProc16   (COMMDLG.21)
  */
-LRESULT WINAPI PrintDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
                             LPARAM lParam)
 {
-  switch (wMsg)
-    {
-    case WM_INITDIALOG:
-      TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow(hWnd, SW_SHOWNORMAL);
-      return (TRUE);
-    case WM_COMMAND:
-      switch (wParam)
-	{
-	case IDOK:
-	  EndDialog(hWnd, TRUE);
-	  return(TRUE);
-	case IDCANCEL:
-	  EndDialog(hWnd, FALSE);
-	  return(TRUE);
+    PRINT_PTRA* PrintStructures;
+    LRESULT res=FALSE;
+
+    if (uMsg!=WM_INITDIALOG) {
+        PrintStructures = (PRINT_PTRA*) GetWindowLongA(hDlg, DWL_USER);   
+	if (!PrintStructures)
+	    return FALSE;
+    } else {
+        PrintStructures = (PRINT_PTRA*) lParam;
+	SetWindowLongA(hDlg, DWL_USER, lParam); 
+	res = PRINTDLG_WMInitDialog16(hDlg, wParam, PrintStructures);
+
+	if(PrintStructures->dlg.lpPrintDlg16->Flags & PD_ENABLEPRINTHOOK) {
+	    res = CallWindowProc16(
+		(WNDPROC16)PrintStructures->dlg.lpPrintDlg16->lpfnPrintHook,
+		hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg16
+	    );
 	}
-      return(FALSE);
+	return res;
     }
-  return FALSE;
+  
+    if(PrintStructures->dlg.lpPrintDlg16->Flags & PD_ENABLEPRINTHOOK) {
+        res = CallWindowProc16(
+		(WNDPROC16)PrintStructures->dlg.lpPrintDlg16->lpfnPrintHook,
+		hDlg,uMsg, wParam, lParam
+	);
+	if(res) return res;
+    }
+
+    switch (uMsg) {
+    case WM_COMMAND:
+        return PRINTDLG_WMCommand(hDlg, wParam, lParam, PrintStructures);
+
+    case WM_DESTROY:
+	DestroyIcon(PrintStructures->hCollateIcon);
+	DestroyIcon(PrintStructures->hNoCollateIcon);
+    /* FIXME: don't forget to delete the paper orientation icons here! */
+
+        return FALSE;
+    }    
+    return res;
 }
 
 
@@ -1097,102 +1498,6 @@ LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   return FALSE;
 }
 
-
-/***********************************************************************
- *           PrintDlg16   (COMMDLG.20)
- * 
- *  Displays the the PRINT dialog box, which enables the user to specify
- *  specific properties of the print job.
- *
- * RETURNS
- *  nonzero if the user pressed the OK button
- *  zero    if the user cancelled the window or an error occurred
- *
- * BUGS
- *  * calls up to the 32-bit versions of the Dialogs, which look different
- *  * Customizing is *not* implemented.
- */
-BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
-{
-    PRINTDLGA Print32;
-    BOOL16 ret;
-    char *ptr, *ptr16;
-    DWORD size;
-
-    memset(&Print32, 0, sizeof(Print32));
-    Print32.lStructSize = sizeof(Print32);
-    Print32.hwndOwner   = lpPrint->hwndOwner;
-    if(lpPrint->hDevMode) {
-        size = GlobalSize16(lpPrint->hDevMode);
-        Print32.hDevMode = GlobalAlloc(GMEM_MOVEABLE, size);
-	ptr = GlobalLock(Print32.hDevMode);
-	ptr16 = GlobalLock16(lpPrint->hDevMode);
-	memcpy(ptr, ptr16, size);
-	GlobalFree16(lpPrint->hDevMode);
-	GlobalUnlock(Print32.hDevMode);
-    } else
-        Print32.hDevMode = 0;
-    if(lpPrint->hDevNames) {
-        size = GlobalSize16(lpPrint->hDevNames);
-        Print32.hDevNames = GlobalAlloc(GMEM_MOVEABLE, size);
-	ptr = GlobalLock(Print32.hDevNames);
-	ptr16 = GlobalLock16(lpPrint->hDevNames);
-	memcpy(ptr, ptr16, size);
-	GlobalFree16(lpPrint->hDevNames);
-	GlobalUnlock(Print32.hDevNames);
-    } else
-        Print32.hDevNames = 0;
-    Print32.Flags       = lpPrint->Flags;
-    Print32.nFromPage   = lpPrint->nFromPage;
-    Print32.nToPage     = lpPrint->nToPage;
-    Print32.nMinPage    = lpPrint->nMinPage;
-    Print32.nMaxPage    = lpPrint->nMaxPage;
-    Print32.nCopies     = lpPrint->nCopies;
-    Print32.hInstance   = lpPrint->hInstance;
-    Print32.lCustData   = lpPrint->lCustData;
-    if(lpPrint->lpfnPrintHook) {
-        FIXME("Need to allocate thunk\n");
-/*        Print32.lpfnPrintHook = lpPrint->lpfnPrintHook;*/
-    }
-    if(lpPrint->lpfnSetupHook) {
-        FIXME("Need to allocate thunk\n");
-/*	Print32.lpfnSetupHook = lpPrint->lpfnSetupHook;*/
-    }
-    Print32.lpPrintTemplateName = MapSL(lpPrint->lpPrintTemplateName);
-    Print32.lpSetupTemplateName = MapSL(lpPrint->lpSetupTemplateName);
-    Print32.hPrintTemplate = lpPrint->hPrintTemplate;
-    Print32.hSetupTemplate = lpPrint->hSetupTemplate;
-
-    ret = PrintDlgA(&Print32);
-
-    if(Print32.hDevMode) {
-        size = GlobalSize(Print32.hDevMode);
-	lpPrint->hDevMode = GlobalAlloc16(GMEM_MOVEABLE, size);
-	ptr16 = GlobalLock16(lpPrint->hDevMode);
-	ptr = GlobalLock(Print32.hDevMode);
-	memcpy(ptr16, ptr, size);
-	GlobalFree(Print32.hDevMode);
-	GlobalUnlock16(lpPrint->hDevMode);
-    } else
-        lpPrint->hDevMode = 0;
-    if(Print32.hDevNames) {
-        size = GlobalSize(Print32.hDevNames);
-	lpPrint->hDevNames = GlobalAlloc16(GMEM_MOVEABLE, size);
-	ptr16 = GlobalLock16(lpPrint->hDevNames);
-	ptr = GlobalLock(Print32.hDevNames);
-	memcpy(ptr16, ptr, size);
-	GlobalFree(Print32.hDevNames);
-	GlobalUnlock16(lpPrint->hDevNames);
-    } else
-        lpPrint->hDevNames = 0;
-    lpPrint->hDC       = Print32.hDC;
-    lpPrint->Flags     = Print32.Flags;
-    lpPrint->nFromPage = Print32.nFromPage;
-    lpPrint->nToPage   = Print32.nToPage;
-    lpPrint->nCopies   = Print32.nCopies;
-
-    return ret;
-}
 
 /***********************************************************************
  *	PrintDlgExA
