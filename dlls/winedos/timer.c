@@ -35,11 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  *        This should also make it possible to
  *        emulate really fast timers.
  * FIXME: Support special timer modes in addition to periodic mode.
- * FIXME: Make sure that there are only limited number
- *        of pending timer IRQ events queued. This makes sure that
- *        timer handling does not eat all available memory even
- *        if IRQ handling stops for some reason (suspended process?). 
- *        This is easy to do by using DOSRELAY parameter.
  * FIXME: Use timeSetEvent, NtSetEvent or timer thread for more precise
  *        timing.
  * FIXME: Move Win16 timer emulation code here.
@@ -47,6 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /* The PC clocks ticks at 1193180 Hz. */
 #define TIMER_FREQ 1193180
+
+/* How many timer IRQs can be pending at any time. */
+#define TIMER_MAX_PENDING 20
 
 /* Unique system timer identifier. */
 static UINT_PTR TIMER_id = 0;
@@ -57,6 +55,22 @@ static DWORD TIMER_stamp = 0;
 /* Timer ticks between timer IRQs. */
 static UINT TIMER_ticks = 0;
 
+/* Number of pending timer IRQs. */
+static LONG TIMER_pending = 0;
+
+
+/*********************************************************************** 
+ *              TIMER_Relay
+ *
+ * Decrement the number of pending IRQs after IRQ handler has been 
+ * called. This function will be called even if application has its 
+ * own IRQ handler that does not jump to builtin IRQ handler.
+ */
+static void TIMER_Relay( CONTEXT86 *context, void *data )
+{
+    InterlockedDecrement( &TIMER_pending );
+}
+
 
 /***********************************************************************
  *              TIMER_TimerProc
@@ -66,8 +80,26 @@ static void CALLBACK TIMER_TimerProc( HWND     hwnd,
                                       UINT_PTR idEvent,
                                       DWORD    dwTime )
 {
-    TIMER_stamp = dwTime;
-    DOSVM_QueueEvent( 0, DOS_PRIORITY_REALTIME, NULL, NULL );
+    LONG pending = InterlockedIncrement( &TIMER_pending );
+
+    if (pending >= TIMER_MAX_PENDING)
+    {
+        DWORD delta = (dwTime >= TIMER_stamp) ? 
+            (dwTime - TIMER_stamp) : (0xffffffff - (TIMER_stamp - dwTime));
+
+        if (delta >= 60000)
+        {
+            ERR( "DOS timer has been stuck for 60 seconds...\n" );
+            TIMER_stamp = dwTime;
+        }
+
+        InterlockedDecrement( &TIMER_pending );
+    }
+    else
+    {
+        TIMER_stamp = dwTime;
+        DOSVM_QueueEvent( 0, DOS_PRIORITY_REALTIME, TIMER_Relay, NULL );
+    }
 }
 
 
@@ -119,6 +151,10 @@ UINT WINAPI DOSVM_GetTimer( void )
  */
 void WINAPI DOSVM_SetTimer( UINT ticks )
 {
+    /* PIT interprets zero as a maximum length delay. */
+    if (ticks == 0)
+        ticks = 0x10000;
+
     if (!DOSVM_IsWin16())
         MZ_RunInThread( TIMER_DoSetTimer, ticks );
 }
