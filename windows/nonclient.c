@@ -2204,7 +2204,9 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	if( !hDragCursor ) iconic = FALSE;
     }
 
-    if( !iconic ) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+    /* invert frame if WIN31_LOOK to indicate mouse click on caption */
+    if( !iconic && TWEAK_WineLook == WIN31_LOOK )
+	NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     while(1)
     {
@@ -2244,12 +2246,16 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    if( !moved )
 	    {
 		moved = TRUE;
-        	if( iconic ) /* ok, no system popup tracking */
+
+		if( iconic ) /* ok, no system popup tracking */
 		{
 		    hOldCursor = SetCursor(hDragCursor);
 		    ShowCursor( TRUE );
 		    WINPOS_ShowIconTitle( wndPtr, FALSE );
-		}
+		} else if(TWEAK_WineLook != WIN31_LOOK)
+                {
+		    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+                }
 	    }
 
 	    if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
@@ -2287,15 +2293,13 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	}
         DestroyCursor( hDragCursor );
     }
-    else
-	NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+    else if(moved || TWEAK_WineLook == WIN31_LOOK)
+        NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     if (wndPtr->dwStyle & WS_CHILD)
         ReleaseDC( wndPtr->parent->hwndSelf, hdc );
     else
-    {
-	ReleaseDC( 0, hdc );
-    }
+        ReleaseDC( 0, hdc );
 
     wndPtr->pDriver->pPostSizeMove(wndPtr);
 
