@@ -24,6 +24,13 @@ typedef struct tagANIMATE_INFO
    LRESULT	(WINAPI*  fnICSendMessage)(HIC, UINT, DWORD, DWORD);
    DWORD	(WINAPIV* fnICDecompress)(HIC,DWORD,LPBITMAPINFOHEADER,LPVOID,LPBITMAPINFOHEADER,LPVOID);
 
+    HMMIO (WINAPI* fnmmioOpenA)(LPSTR,MMIOINFO*,DWORD);
+    MMRESULT (WINAPI * fnmmioClose)(HMMIO,UINT);
+    UINT (WINAPI * fnmmioAscend)(HMMIO,MMCKINFO*,UINT);
+    UINT (WINAPI * fnmmioDescend)(HMMIO,MMCKINFO*,const MMCKINFO*,UINT);
+    LONG (WINAPI * fnmmioSeek)(HMMIO,LONG,INT);
+    LONG (WINAPI * fnmmioRead)(HMMIO,HPSTR,LONG);
+
    /* reference to input stream (file or resource) */
    HGLOBAL 		hRes;
    HMMIO			hMMio;	/* handle to mmio stream */

@@ -25,7 +25,7 @@
 #include "services.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(animate)
+DEFAULT_DEBUG_CHANNEL(animate);
 
 #define ANIMATE_GetInfoPtr(hWnd) ((ANIMATE_INFO *)GetWindowLongA(hWnd, 0))
 
@@ -60,7 +60,7 @@ static BOOL ANIMATE_LoadResA(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPSTR lpNam
     mminfo.fccIOProc = FOURCC_MEM;
     mminfo.pchBuffer = (LPSTR)lpAvi;
     mminfo.cchBuffer = SizeofResource(hInst, hrsrc);
-    infoPtr->hMMio = mmioOpenA(NULL, &mminfo, MMIO_READ);
+    infoPtr->hMMio = infoPtr->fnmmioOpenA(NULL, &mminfo, MMIO_READ);
     
     if (!infoPtr->hMMio) {
 	GlobalFree((HGLOBAL)lpAvi);
@@ -73,7 +73,7 @@ static BOOL ANIMATE_LoadResA(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPSTR lpNam
 
 static BOOL ANIMATE_LoadFileA(ANIMATE_INFO *infoPtr, LPSTR lpName)
 {
-    infoPtr->hMMio = mmioOpenA((LPSTR)lpName, NULL,
+    infoPtr->hMMio = infoPtr->fnmmioOpenA((LPSTR)lpName, NULL,
 			       MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
     
     if (!infoPtr->hMMio)
@@ -109,7 +109,7 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
 {
     if (infoPtr->hMMio) {
 	ANIMATE_DoStop(infoPtr);
-	mmioClose(infoPtr->hMMio, 0);
+	infoPtr->fnmmioClose(infoPtr->hMMio, 0);
 	if (infoPtr->hRes) {
  	    FreeResource(infoPtr->hRes);
 	    infoPtr->hRes = 0;
@@ -168,8 +168,8 @@ static LRESULT ANIMATE_DrawFrame(ANIMATE_INFO* infoPtr)
 
     EnterCriticalSection(&infoPtr->cs);
 
-    mmioSeek(infoPtr->hMMio, infoPtr->lpIndex[infoPtr->currFrame], SEEK_SET);
-    mmioRead(infoPtr->hMMio, infoPtr->indata, infoPtr->ash.dwSuggestedBufferSize);
+    infoPtr->fnmmioSeek(infoPtr->hMMio, infoPtr->lpIndex[infoPtr->currFrame], SEEK_SET);
+    infoPtr->fnmmioRead(infoPtr->hMMio, infoPtr->indata, infoPtr->ash.dwSuggestedBufferSize);
     
     if (infoPtr->hic &&
 	(infoPtr->fnICDecompress)(infoPtr->hic, 0, infoPtr->inbih, infoPtr->indata, 
@@ -261,7 +261,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
     DWORD		numFrame;
     DWORD		insize;
 
-    if (mmioDescend(infoPtr->hMMio, &ckMainRIFF, NULL, 0) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &ckMainRIFF, NULL, 0) != 0) {
 	WARN("Can't find 'RIFF' chunk\n");
 	return FALSE;
     }
@@ -273,18 +273,18 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
     }
 
     mmckHead.fccType = mmioFOURCC('h', 'd', 'r', 'l');
-    if (mmioDescend(infoPtr->hMMio, &mmckHead, &ckMainRIFF, MMIO_FINDLIST) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckHead, &ckMainRIFF, MMIO_FINDLIST) != 0) {
 	WARN("Can't find 'hdrl' list\n");
 	return FALSE;
     }
 
     mmckInfo.ckid = mmioFOURCC('a', 'v', 'i', 'h');
-    if (mmioDescend(infoPtr->hMMio, &mmckInfo, &mmckHead, MMIO_FINDCHUNK) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckInfo, &mmckHead, MMIO_FINDCHUNK) != 0) {
 	WARN("Can't find 'avih' chunk\n");
 	return FALSE;
     }
 
-    mmioRead(infoPtr->hMMio, (LPSTR)&infoPtr->mah, sizeof(infoPtr->mah));
+    infoPtr->fnmmioRead(infoPtr->hMMio, (LPSTR)&infoPtr->mah, sizeof(infoPtr->mah));
     TRACE("mah.dwMicroSecPerFrame=%ld\n", 	infoPtr->mah.dwMicroSecPerFrame);
     TRACE("mah.dwMaxBytesPerSec=%ld\n", 	infoPtr->mah.dwMaxBytesPerSec);
     TRACE("mah.dwPaddingGranularity=%ld\n", 	infoPtr->mah.dwPaddingGranularity);
@@ -295,21 +295,21 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
     TRACE("mah.dwSuggestedBufferSize=%ld\n",	infoPtr->mah.dwSuggestedBufferSize);
     TRACE("mah.dwWidth=%ld\n", 			infoPtr->mah.dwWidth);
     TRACE("mah.dwHeight=%ld\n", 		infoPtr->mah.dwHeight);
-    mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
+    infoPtr->fnmmioAscend(infoPtr->hMMio, &mmckInfo, 0);
 
     mmckList.fccType = mmioFOURCC('s', 't', 'r', 'l');
-    if (mmioDescend(infoPtr->hMMio, &mmckList, &mmckHead, MMIO_FINDLIST) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckList, &mmckHead, MMIO_FINDLIST) != 0) {
 	WARN("Can't find 'strl' list\n");
 	return FALSE;
     }
 
     mmckInfo.ckid = mmioFOURCC('s', 't', 'r', 'h');
-    if (mmioDescend(infoPtr->hMMio, &mmckInfo, &mmckList, MMIO_FINDCHUNK) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckInfo, &mmckList, MMIO_FINDCHUNK) != 0) {
 	WARN("Can't find 'strh' chunk\n");
 	return FALSE;
     }
 
-    mmioRead(infoPtr->hMMio, (LPSTR)&infoPtr->ash, sizeof(infoPtr->ash));
+    infoPtr->fnmmioRead(infoPtr->hMMio, (LPSTR)&infoPtr->ash, sizeof(infoPtr->ash));
     TRACE("ash.fccType='%c%c%c%c'\n", 		LOBYTE(LOWORD(infoPtr->ash.fccType)), 
 	                                        HIBYTE(LOWORD(infoPtr->ash.fccType)), 
 	                                        LOBYTE(HIWORD(infoPtr->ash.fccType)), 
@@ -331,10 +331,10 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
     TRACE("ash.dwSampleSize=%ld\n", 		infoPtr->ash.dwSampleSize);
     TRACE("ash.rcFrame=(%d,%d,%d,%d)\n", 	infoPtr->ash.rcFrame.top, infoPtr->ash.rcFrame.left, 
 	  infoPtr->ash.rcFrame.bottom, infoPtr->ash.rcFrame.right);
-    mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
+    infoPtr->fnmmioAscend(infoPtr->hMMio, &mmckInfo, 0);
 
     mmckInfo.ckid = mmioFOURCC('s', 't', 'r', 'f');
-    if (mmioDescend(infoPtr->hMMio, &mmckInfo, &mmckList, MMIO_FINDCHUNK) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckInfo, &mmckList, MMIO_FINDCHUNK) != 0) {
 	WARN("Can't find 'strh' chunk\n");
 	return FALSE;
     }
@@ -345,7 +345,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    mmioRead(infoPtr->hMMio, (LPSTR)infoPtr->inbih, mmckInfo.cksize);
+    infoPtr->fnmmioRead(infoPtr->hMMio, (LPSTR)infoPtr->inbih, mmckInfo.cksize);
     TRACE("bih.biSize=%ld\n", 		infoPtr->inbih->biSize);
     TRACE("bih.biWidth=%ld\n", 		infoPtr->inbih->biWidth);
     TRACE("bih.biHeight=%ld\n", 	infoPtr->inbih->biHeight);
@@ -357,27 +357,27 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
     TRACE("bih.biYPelsPerMeter=%ld\n", 	infoPtr->inbih->biYPelsPerMeter);
     TRACE("bih.biClrUsed=%ld\n", 	infoPtr->inbih->biClrUsed);
     TRACE("bih.biClrImportant=%ld\n", 	infoPtr->inbih->biClrImportant);
-    mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
+    infoPtr->fnmmioAscend(infoPtr->hMMio, &mmckInfo, 0);
 
-    mmioAscend(infoPtr->hMMio, &mmckList, 0);
+    infoPtr->fnmmioAscend(infoPtr->hMMio, &mmckList, 0);
     
 #if 0
     /* an AVI has 0 or 1 video stream, and to be animated should not contain
      * an audio stream, so only one strl is allowed 
      */
     mmckList.fccType = mmioFOURCC('s', 't', 'r', 'l');
-    if (mmioDescend(infoPtr->hMMio, &mmckList, &mmckHead, MMIO_FINDLIST) == 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckList, &mmckHead, MMIO_FINDLIST) == 0) {
 	WARN("There should be a single 'strl' list\n");
 	return FALSE;
     }
 #endif
 
-    mmioAscend(infoPtr->hMMio, &mmckHead, 0);
+    infoPtr->fnmmioAscend(infoPtr->hMMio, &mmckHead, 0);
 
     /* no need to read optional JUNK chunk */
 
     mmckList.fccType = mmioFOURCC('m', 'o', 'v', 'i');
-    if (mmioDescend(infoPtr->hMMio, &mmckList, &ckMainRIFF, MMIO_FINDLIST) != 0) {
+    if (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckList, &ckMainRIFF, MMIO_FINDLIST) != 0) {
 	WARN("Can't find 'movi' list\n");
 	return FALSE;
     }
@@ -392,13 +392,13 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
     }
 
     numFrame = insize = 0;
-    while (mmioDescend(infoPtr->hMMio, &mmckInfo, &mmckList, 0) == 0 && 
+    while (infoPtr->fnmmioDescend(infoPtr->hMMio, &mmckInfo, &mmckList, 0) == 0 && 
 	   numFrame < infoPtr->mah.dwTotalFrames) {
 	infoPtr->lpIndex[numFrame] = mmckInfo.dwDataOffset;
 	if (insize < mmckInfo.cksize)
 	    insize = mmckInfo.cksize;
 	numFrame++;
-	mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
+	infoPtr->fnmmioAscend(infoPtr->hMMio, &mmckInfo, 0);
     }
     if (numFrame != infoPtr->mah.dwTotalFrames) {
 	WARN("Found %ld frames (/%ld)\n", numFrame, infoPtr->mah.dwTotalFrames);
@@ -580,6 +580,13 @@ static LRESULT ANIMATE_Create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hWnd = hWnd;
 
     hModWinmm = LoadLibraryA("WINMM");
+
+    infoPtr->fnmmioOpenA = (void*)GetProcAddress(hModWinmm, "mmioOpenA");
+    infoPtr->fnmmioClose = (void*)GetProcAddress(hModWinmm, "mmioClose");
+    infoPtr->fnmmioAscend = (void*)GetProcAddress(hModWinmm, "mmioAscend");
+    infoPtr->fnmmioDescend = (void*)GetProcAddress(hModWinmm, "mmioDescend");
+    infoPtr->fnmmioSeek = (void*)GetProcAddress(hModWinmm, "mmioSeek");
+    infoPtr->fnmmioRead = (void*)GetProcAddress(hModWinmm, "mmioRead");
 
     InitializeCriticalSection(&infoPtr->cs);
     
