@@ -79,6 +79,8 @@ static BOOL INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }
+    if (!IS_SELECTOR_SYSTEM(*sel) && !IS_SELECTOR_FREE(*sel))
+        ERR_(int)("Got protection fault on valid selector, maybe your kernel is too old?\n" );
     return FALSE;  /* Can't replace selector, crashdump */
 }
 
