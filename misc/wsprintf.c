@@ -530,8 +530,11 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
  */
 INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 {
+    INT16 res;
+
     TRACE("for %p got:\n",buffer);
-    return wvsnprintf16( buffer, 0xffff, spec, args );
+    res = wvsnprintf16( buffer, 1024, spec, args );
+    return ( res == -1 ) ? 1024 : res;
 }
 
 
@@ -540,8 +543,11 @@ INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
  */
 INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, va_list args )
 {
+    INT res;
+
     TRACE("for %p got:\n",buffer);
-    return wvsnprintfA( buffer, 0xffffffff, spec, args );
+    res = wvsnprintfA( buffer, 1024, spec, args );
+    return ( res == -1 ) ? 1024 : res;
 }
 
 
@@ -550,8 +556,13 @@ INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, va_list args )
  */
 INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, va_list args )
 {
+    INT res;
+
     TRACE("for %p got:\n",buffer);
-    return wvsnprintfW( buffer, 0xffffffff, spec, args );
+	/* FIXME: in w*printfW, */
+	/*        is maximum buffer size 1024-bytes? (or 1024-wchars?) */
+	res = wvsnprintfW( buffer, 1024, spec, args );
+    return ( res == -1 ) ? 1024 : res;
 }
 
 
@@ -567,9 +578,9 @@ INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, ... )
     TRACE("for %p got:\n",buffer);
     va_start( valist, spec );
     /* Note: we call the 32-bit version, because the args are 32-bit */
-    res = (INT16)wvsnprintfA( buffer, 0xffffffff, spec, valist );
+    res = (INT16)wvsnprintfA( buffer, 1024, spec, valist );
     va_end( valist );
-    return res;
+    return ( res == -1 ) ? 1024 : res;
 }
 
 /* Emulator version */
@@ -583,10 +594,10 @@ INT16 WINAPIV WIN16_wsprintf16(void)
     buffer = VA_ARG16( valist, SEGPTR );
     spec   = VA_ARG16( valist, SEGPTR );
     TRACE("got:\n");
-    res = wvsnprintf16( (LPSTR)PTR_SEG_TO_LIN(buffer), 0xffff,
+    res = wvsnprintf16( (LPSTR)PTR_SEG_TO_LIN(buffer), 1024,
                         (LPCSTR)PTR_SEG_TO_LIN(spec), valist );
     VA_END16( valist );
-    return res;
+    return ( res == -1 ) ? 1024 : res;
 }
 
 
@@ -600,9 +611,9 @@ INT WINAPIV wsprintfA( LPSTR buffer, LPCSTR spec, ... )
 
     TRACE("for %p got:\n",buffer);
     va_start( valist, spec );
-    res = wvsnprintfA( buffer, 0xffffffff, spec, valist );
+    res = wvsnprintfA( buffer, 1024, spec, valist );
     va_end( valist );
-    return res;
+    return ( res == -1 ) ? 1024 : res;
 }
 
 
@@ -616,9 +627,9 @@ INT WINAPIV wsprintfW( LPWSTR buffer, LPCWSTR spec, ... )
 
     TRACE("wsprintfW for %p\n",buffer);
     va_start( valist, spec );
-    res = wvsnprintfW( buffer, 0xffffffff, spec, valist );
+    res = wvsnprintfW( buffer, 1024, spec, valist );
     va_end( valist );
-    return res;
+    return ( res == -1 ) ? 1024 : res;
 }
 
 
