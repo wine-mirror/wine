@@ -175,7 +175,6 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
 void CDROM_InitRegistry(int dev)
 {
     int portnum, targetid;
-    int dma;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR dataW[50];
@@ -231,9 +230,12 @@ void CDROM_InitRegistry(int dev)
     RtlFreeUnicodeString( &nameW );
     value = 0;
 #ifdef HDIO_GET_DMA
-    if (ioctl(dev,HDIO_GET_DMA, &dma) != -1) {
-        value = dma;
-        TRACE("setting dma to %lx\n", value);
+    {
+        int dma;
+        if (ioctl(dev,HDIO_GET_DMA, &dma) != -1) {
+            value = dma;
+            TRACE("setting dma to %lx\n", value);
+        }
     }
 #endif
     RtlCreateUnicodeStringFromAsciiz( &nameW, "DMAEnabled" );
