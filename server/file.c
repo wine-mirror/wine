@@ -319,6 +319,7 @@ void file_set_error(void)
     case EBADF:     set_error( STATUS_INVALID_HANDLE ); break;
     case ENOSPC:    set_error( STATUS_DISK_FULL ); break;
     case EACCES:
+    case ESRCH:
     case EPERM:     set_error( STATUS_ACCESS_DENIED ); break;
     case EROFS:     set_error( STATUS_MEDIA_WRITE_PROTECTED ); break;
     case EBUSY:     set_error( STATUS_FILE_LOCK_CONFLICT ); break;

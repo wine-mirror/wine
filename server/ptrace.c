@@ -42,20 +42,17 @@
 #define PTRACE_POKEDATA PT_WRITE_D
 #endif
 
-#ifdef HAVE_SYS_PTRACE_H
-static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
-#else
-static const int use_ptrace = 0;
-
+#ifndef HAVE_SYS_PTRACE_H
 #define PT_CONTINUE 0
 #define PT_ATTACH   1
 #define PT_DETACH   2
 #define PT_READ_D   3
 #define PT_WRITE_D  4
 #define PT_STEP     5
+inline static int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
+#endif  /* HAVE_SYS_PTRACE_H */
 
-static int ptrace(int req, ...) { return -1; /*FAIL*/ }
-#endif
+static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 
 /* handle a status returned by wait4 */
 static int handle_child_status( struct thread *thread, int pid, int status )
@@ -129,7 +126,12 @@ void wait4_thread( struct thread *thread, int signal )
 static int attach_thread( struct thread *thread )
 {
     /* this may fail if the client is already being debugged */
-    if (!use_ptrace || (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)) return 0;
+    if (!use_ptrace) return 0;
+    if (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)
+    {
+        if (errno == ESRCH) thread->unix_pid = 0;  /* process got killed */
+        return 0;
+    }
     if (debug_level) fprintf( stderr, "%08x: *attached*\n", (unsigned int)thread );
     thread->attached = 1;
     wait4_thread( thread, SIGSTOP );
@@ -143,10 +145,11 @@ void detach_thread( struct thread *thread, int sig )
     if (thread->attached)
     {
         /* make sure it is stopped */
-        if (!(thread->suspend + thread->process->suspend)) stop_thread( thread );
+        suspend_thread( thread, 0 );
         if (sig) kill( thread->unix_pid, sig );
         if (debug_level) fprintf( stderr, "%08x: *detached*\n", (unsigned int)thread );
         ptrace( PTRACE_DETACH, thread->unix_pid, (caddr_t)1, sig );
+        thread->suspend = 0;  /* detach makes it continue */
         thread->attached = 0;
     }
     else

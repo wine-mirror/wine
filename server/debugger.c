@@ -411,7 +411,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
     for (thread = debugger; thread; thread = thread->process->debugger)
         if (thread->process == process) goto error;
 
-    suspend_process_for_ptrace( process );
+    suspend_process( process );
 
     /* we must have been able to attach all threads */
     for (thread = process->thread_list; thread; thread = thread->proc_next)
