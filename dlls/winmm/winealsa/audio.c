@@ -217,13 +217,13 @@ static int ALSA_InitializeVolumeCtl(WINE_WAVEOUT * wwo)
     } \
 } while(0)
 
-    EXIT_ON_ERROR( snd_ctl_open(&ctl,"hw:0",0) , "ctl open failed" );
+    EXIT_ON_ERROR( snd_ctl_open(&ctl,"hw",0) , "ctl open failed" );
     EXIT_ON_ERROR( snd_ctl_card_info(ctl, cardinfo), "card info failed");
     EXIT_ON_ERROR( snd_ctl_elem_list(ctl, elemlist), "elem list failed");
 
     nCtrls = snd_ctl_elem_list_get_count(elemlist);
 
-    EXIT_ON_ERROR( snd_hctl_open(&hctl,"hw:0",0), "hctl open failed");
+    EXIT_ON_ERROR( snd_hctl_open(&hctl,"hw",0), "hctl open failed");
     EXIT_ON_ERROR( snd_hctl_load(hctl), "hctl load failed" );
 
     elem=snd_hctl_first_elem(hctl);
@@ -405,7 +405,7 @@ LONG ALSA_WaveInit(void)
     wwo = &WOutDev[0];
 
     /* FIXME: use better values */
-    wwo->device = "hw:0,0";
+    wwo->device = "hw";
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
     strcpy(wwo->caps.szPname, "SB16 Wave Out");
@@ -1033,8 +1033,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_access_t            access;
     snd_pcm_format_t            format;
     int                         rate;
-    int                         buffer_size = 0x4000;  /* in frames (1 frame = sizeof(sample) * n.channels) */
-    int                         num_periods = 32;
+    unsigned int                buffer_time = 500000;
+    unsigned int                period_time = 10000;
+    int                         buffer_size;
     snd_pcm_uframes_t           period_size;
     int                         flags;
     snd_pcm_t *                 pcm;
@@ -1128,12 +1129,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     format = (wwo->format.wBitsPerSample == 16) ? SND_PCM_FORMAT_S16_LE : SND_PCM_FORMAT_U8;
     EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format");
 
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_size_near(pcm, hw_params, buffer_size), MMSYSERR_NOMEM, "unable to get required buffer");
-    buffer_size = snd_pcm_hw_params_get_buffer_size(hw_params);
-
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_period_size_near(pcm, hw_params, buffer_size/num_periods, 0), MMSYSERR_ERROR, "unable to set required period size");
-    period_size = snd_pcm_hw_params_get_period_size(hw_params, 0);
-
     rate = snd_pcm_hw_params_set_rate_near(pcm, hw_params, wwo->format.wf.nSamplesPerSec, 0);
     if (rate < 0) {
 	ERR("Rate %ld Hz not available for playback: %s\n", wwo->format.wf.nSamplesPerSec, snd_strerror(rate));
@@ -1145,8 +1140,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
+    
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, buffer_time, 0), MMSYSERR_INVALPARAM, "unable to set buffer time");
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_period_time_near(pcm, hw_params, period_time, 0), MMSYSERR_INVALPARAM, "unable to set period time");
 
     EXIT_ON_ERROR( snd_pcm_hw_params(pcm, hw_params), MMSYSERR_INVALPARAM, "unable to set hw params for playback");
+    
+    period_size = snd_pcm_hw_params_get_period_size(hw_params, 0);
+    buffer_size = snd_pcm_hw_params_get_buffer_size(hw_params);
 
     snd_pcm_sw_params_current(pcm, sw_params);
     EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? INT_MAX : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
