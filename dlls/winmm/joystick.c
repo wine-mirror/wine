@@ -13,6 +13,13 @@
  * routines for backward compatibility.
  */
 
+/*
+ * Wolfgang Schwotzer
+ *
+ *    01/2000    added support for new joystick driver
+ *
+ */
+
 #include "config.h"
 
 #include <unistd.h>
@@ -20,6 +27,10 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_LINUX_JOYSTICK_H
+#include <linux/joystick.h>
+#define JOYDEV "/dev/js%d"
+#endif
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
@@ -30,16 +41,17 @@
 
 DEFAULT_DEBUG_CHANNEL(mmsys)
 
-#define MAXJOYDRIVERS	4
+#define MAXJOYSTICK	(JOYSTICKID2 + 1)
+#define JOY_PERIOD_MIN	(10)	/* min Capture time period */
+#define JOY_PERIOD_MAX	(1000)	/* max Capture time period */
 
-static int count_use[MAXJOYDRIVERS] = {0, 0, 0, 0};
-static int dev_stat;
+static int count_use[MAXJOYSTICK] = {0, 0};
 static int joy_nr_open = 0;
 static BOOL16 joyCaptured = FALSE;
-static HWND16 CaptureWnd[MAXJOYDRIVERS] = {0, 0};
-static int joy_dev[MAXJOYDRIVERS] = {-1, -1,-1,-1};
-static JOYINFO16 joyCapData[MAXJOYDRIVERS];
-static unsigned int joy_threshold[MAXJOYDRIVERS] = {0, 0, 0, 0};
+static HWND16 CaptureWnd[MAXJOYSTICK] = {0, 0};
+static int joy_dev[MAXJOYSTICK] = {-1, -1};
+static JOYINFO16 joyCapData[MAXJOYSTICK];
+static unsigned int joy_threshold[MAXJOYSTICK] = {0, 0};
 
 struct js_status
 {
@@ -54,13 +66,17 @@ struct js_status
  */
 BOOL16 joyOpenDriver(WORD wID)
 {
-	char dev_name[] = "/dev/js%d";
 	char	buf[20];
+	int	flags;
 
-	if (wID>3) return FALSE;
-	if (joy_dev[wID] >= 0) return TRUE;
-        sprintf(buf,dev_name,wID);
-        if ((joy_dev[wID] = open(buf, O_RDONLY)) >= 0) {
+	if (wID>=MAXJOYSTICK) return FALSE;
+	if (joy_dev[wID] >= 0) return TRUE; /* was already open */
+        sprintf(buf,JOYDEV,wID);
+	flags = O_RDONLY;
+#ifdef HAVE_LINUX_22_JOYSTICK_API
+	flags |= O_NONBLOCK;
+#endif
+        if ((joy_dev[wID] = open(buf, flags)) >= 0) {
 		joy_nr_open++;
 		return TRUE;
 	} else
@@ -80,16 +96,70 @@ void joyCloseDriver(WORD wID)
 }
 
 /**************************************************************************
+ *                              joyUpdateCaptureData           [internal]
+ */
+#ifdef HAVE_LINUX_22_JOYSTICK_API
+void joyUpdateCaptureData(WORD wID)
+{
+	struct 		js_event ev;
+	unsigned int	ButtonState;
+	int		messageType = 0;
+
+	if (joyOpenDriver(wID) == FALSE) return;
+	while (read(joy_dev[wID], &ev, sizeof(struct js_event)) > 0) {
+       		if (ev.type & JS_EVENT_AXIS) {
+			if (ev.number == 0)
+				joyCapData[wID].wXpos = ev.value + 32767;
+			if (ev.number == 1)
+				joyCapData[wID].wYpos = ev.value + 32767;
+			if (ev.number <= 1) /* Message for X, Y-Axis */
+			   SendMessageA(CaptureWnd[wID], MM_JOY1MOVE + wID,
+				joyCapData[wID].wButtons,
+				MAKELONG(joyCapData[wID].wXpos,
+					joyCapData[wID].wYpos));
+			if (ev.number == 2) { /* Message for Z-axis */
+				joyCapData[wID].wZpos = ev.value + 32767;
+			   SendMessageA(CaptureWnd[wID], MM_JOY1ZMOVE + wID,
+				joyCapData[wID].wButtons,
+				joyCapData[wID].wZpos);
+			}
+		} else if (ev.type & JS_EVENT_BUTTON) {
+			if (ev.value) {
+                        	joyCapData[wID].wButtons |= (1 << ev.number);
+				messageType = MM_JOY1BUTTONDOWN;
+                	} else {
+                        	joyCapData[wID].wButtons &= ~(1 << ev.number);
+				messageType = MM_JOY1BUTTONUP;
+			}
+			/* create button state with changed buttons and 
+			   pressed buttons */
+			ButtonState = ((1 << (ev.number + 8)) & 0xFF00) |
+					(joyCapData[wID].wButtons & 0xFF);
+			SendMessageA(CaptureWnd[wID], messageType + wID,
+				ButtonState,
+				MAKELONG(joyCapData[wID].wXpos,
+					joyCapData[wID].wYpos));
+		}
+	}
+	/* EAGAIN is returned when the queue is empty */
+	if (errno != EAGAIN) {
+		/* FIXME: error should not be ignored */
+	}
+}
+#endif
+
+/**************************************************************************
  *                              joySendMessages           [internal]
  */
 void joySendMessages(void)
 {
 	int joy;
+#ifndef HAVE_LINUX_22_JOYSTICK_API
         struct js_status js;
-
+#endif
 	if (joy_nr_open)
         {
-            for (joy=0; joy < MAXJOYDRIVERS; joy++) 
+            for (joy=0; joy < MAXJOYSTICK; joy++) 
 		if (joy_dev[joy] >= 0) {
 			if (count_use[joy] > 250) {
 				joyCloseDriver(joy);
@@ -103,7 +173,14 @@ void joySendMessages(void)
 
 	TRACE(" --\n");
 
-        for (joy=0; joy < MAXJOYDRIVERS; joy++) {
+#ifdef HAVE_LINUX_22_JOYSTICK_API
+       	for (joy=0; joy < MAXJOYSTICK; joy++)
+		joyUpdateCaptureData(joy);
+	return;
+#else
+        for (joy=0; joy < MAXJOYSTICK; joy++) {
+		int dev_stat;
+
 		if (joyOpenDriver(joy) == FALSE) continue;
                 dev_stat = read(joy_dev[joy], &js, sizeof(js));
                 if (dev_stat == sizeof(js)) {
@@ -126,6 +203,7 @@ void joySendMessages(void)
                         }
                 }
         }
+#endif
 }
 
 
@@ -142,10 +220,10 @@ UINT WINAPI joyGetNumDevs(void)
  */
 UINT16 WINAPI joyGetNumDevs16(void)
 {
-    int joy;
+/*    int joy;
     UINT16 joy_cnt = 0;
 
-    for (joy=0; joy<MAXJOYDRIVERS; joy++)
+    for (joy=0; joy<MAXJOYSTICK; joy++)
 	if (joyOpenDriver(joy) == TRUE) {		
 		joyCloseDriver(joy);
 		joy_cnt++;
@@ -155,7 +233,13 @@ UINT16 WINAPI joyGetNumDevs16(void)
 			  "perhaps get joystick-0.8.0.tar.gz and load"
 			  "it as module or use Linux >= 2.1.45 to be "
 			  "able to use joysticks.\n");
-    return joy_cnt;
+    return joy_cnt;*/
+
+/* simply return the max. nr. of supported joysticks. The rest
+   will be done with joyGetPos or joyGetDevCaps. Look at
+   MS Joystick Driver */
+
+    return MAXJOYSTICK;
 }
 
 /**************************************************************************
@@ -166,6 +250,7 @@ MMRESULT WINAPI joyGetDevCapsA(UINT wID, LPJOYCAPSA lpCaps,UINT wSize)
 	JOYCAPS16	jc16;
 	MMRESULT16	ret = joyGetDevCaps16(wID,&jc16,sizeof(jc16));
 
+	if (ret != JOYERR_NOERROR) return ret;
 	lpCaps->wMid = jc16.wMid;
 	lpCaps->wPid = jc16.wPid;
 	strcpy(lpCaps->szPname,jc16.szPname);
@@ -202,6 +287,7 @@ MMRESULT WINAPI joyGetDevCapsW(UINT wID, LPJOYCAPSW lpCaps,UINT wSize)
 	JOYCAPS16	jc16;
 	MMRESULT16	ret = joyGetDevCaps16(wID,&jc16,sizeof(jc16));
 
+	if (ret != JOYERR_NOERROR) return ret;
 	lpCaps->wMid = jc16.wMid;
 	lpCaps->wPid = jc16.wPid;
 	lstrcpyAtoW(lpCaps->szPname,jc16.szPname);
@@ -236,39 +322,95 @@ MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
 {
     TRACE("(%04X, %p, %d);\n",
             wID, lpCaps, wSize);
+    if (wID >= MAXJOYSTICK) return MMSYSERR_NODRIVER;
+#ifdef HAVE_LINUX_22_JOYSTICK_API
+    if (joyOpenDriver(wID) == TRUE) {
+	char	nrOfAxes;
+	char	nrOfButtons;
+	char	identString[MAXPNAMELEN];
+	int	driverVersion;
+
+	ioctl(joy_dev[wID], JSIOCGAXES, &nrOfAxes);
+        ioctl(joy_dev[wID], JSIOCGBUTTONS, &nrOfButtons);
+        ioctl(joy_dev[wID], JSIOCGVERSION, &driverVersion);
+        ioctl(joy_dev[wID], JSIOCGNAME(sizeof(identString)),
+		&identString);
+	TRACE("Driver: 0x%06x, Name: %s, #Axes: %d, #Buttons: %d\n",
+		driverVersion, identString, nrOfAxes, nrOfButtons);
+       	lpCaps->wMid = MM_MICROSOFT;
+       	lpCaps->wPid = MM_PC_JOYSTICK;
+       	strncpy(lpCaps->szPname, identString, MAXPNAMELEN);
+	lpCaps->szPname[MAXPNAMELEN-1]='\0';
+       	lpCaps->wXmin = 0;
+       	lpCaps->wXmax = 0xFFFF;
+       	lpCaps->wYmin = 0;
+       	lpCaps->wYmax = 0xFFFF;
+       	lpCaps->wZmin = 0;
+       	lpCaps->wZmax = nrOfAxes >= 3 ? 0xFFFF : 0;
+       	lpCaps->wNumButtons = nrOfButtons;
+       	lpCaps->wPeriodMin = JOY_PERIOD_MIN; /* FIXME */
+       	lpCaps->wPeriodMax = JOY_PERIOD_MAX; /* FIXME (same as MS Joystick Driver */
+	if (wSize == sizeof(JOYCAPS16)) {
+		/* complete 95 structure */
+		lpCaps->wRmin = 0;
+		lpCaps->wRmax = nrOfAxes >= 4 ? 0xFFFF : 0;
+		lpCaps->wUmin = 0;
+		lpCaps->wUmax = nrOfAxes >= 5 ? 0xFFFF : 0;
+		lpCaps->wVmin = 0;
+		lpCaps->wVmax = nrOfAxes >= 6 ? 0xFFFF : 0;
+		lpCaps->wMaxAxes = 6; /* same as MS Joystick Driver */
+		lpCaps->wNumAxes = nrOfAxes; /* nr of axes in use */
+		lpCaps->wMaxButtons = 32; /* same as MS Joystick Driver */
+		strcpy(lpCaps->szRegKey,"");
+		strcpy(lpCaps->szOEMVxD,"");
+		lpCaps->wCaps = 0;
+		switch(nrOfAxes) {
+		  case 6: lpCaps->wCaps |= JOYCAPS_HASV;
+		  case 5: lpCaps->wCaps |= JOYCAPS_HASU;
+		  case 4: lpCaps->wCaps |= JOYCAPS_HASR;
+		  case 3: lpCaps->wCaps |= JOYCAPS_HASZ;
+		  /* FIXME: don't know how to detect for
+		     JOYCAPS_HASPOV, JOYCAPS_POV4DIR, JOYCAPS_POVCTS */
+		}
+	}
+	joyCloseDriver(wID);
+        return JOYERR_NOERROR;
+    } else
+    	return JOYERR_PARMS;
+#else
     if (joyOpenDriver(wID) == TRUE) {
         lpCaps->wMid = MM_MICROSOFT;
         lpCaps->wPid = MM_PC_JOYSTICK;
         strcpy(lpCaps->szPname, "WineJoy"); /* joystick product name */
-        lpCaps->wXmin = 0; /* FIXME */
-        lpCaps->wXmax = 0xffff;
+        lpCaps->wXmin = 0;
+        lpCaps->wXmax = 0xFFFF;
         lpCaps->wYmin = 0;
-        lpCaps->wYmax = 0xffff;
+        lpCaps->wYmax = 0xFFFF;
         lpCaps->wZmin = 0;
-        lpCaps->wZmax = 0xffff;
+        lpCaps->wZmax = 0;
         lpCaps->wNumButtons = 2;
-        lpCaps->wPeriodMin = 0;
-        lpCaps->wPeriodMax = 50; /* FIXME end */
+        lpCaps->wPeriodMin = JOY_PERIOD_MIN; /* FIXME */
+        lpCaps->wPeriodMax = JOY_PERIOD_MAX; /* FIXME end */
 	if (wSize == sizeof(JOYCAPS16)) {
 		/* complete 95 structure */
 		lpCaps->wRmin = 0;
-		lpCaps->wRmax = 0xffff;
+		lpCaps->wRmax = 0;
 		lpCaps->wUmin = 0;
-		lpCaps->wUmax = 0xffff;
+		lpCaps->wUmax = 0;
 		lpCaps->wVmin = 0;
-		lpCaps->wVmax = 0xffff;
+		lpCaps->wVmax = 0;
 		lpCaps->wCaps = 0;
-		lpCaps->wMaxAxes = 6;
+		lpCaps->wMaxAxes = 2;
 		lpCaps->wNumAxes = 2;
-		lpCaps->wMaxButtons = 3;
+		lpCaps->wMaxButtons = 4;
 		strcpy(lpCaps->szRegKey,"");
 		strcpy(lpCaps->szOEMVxD,"");
 	}
 	joyCloseDriver(wID);
         return JOYERR_NOERROR;
-    }
-    else
-    return MMSYSERR_NODRIVER;
+    } else
+    	return JOYERR_PARMS;
+#endif
 }
 
 /**************************************************************************
@@ -276,8 +418,7 @@ MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
  */
 MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 {
-	/* FIXME: implement it */
-	return MMSYSERR_NODRIVER;
+	return joyGetPosEx16(wID, lpInfo);
 }
 
 /**************************************************************************
@@ -285,33 +426,62 @@ MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
  */
 MMRESULT16 WINAPI joyGetPosEx16(UINT16 wID, LPJOYINFOEX lpInfo)
 {
-	return joyGetPosEx(wID, lpInfo);
-}
 
-/**************************************************************************
- * 				JoyGetPos	       	[WINMM.30]
- */
-MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
-{
-	JOYINFO16	ji;
-	MMRESULT16	ret = joyGetPos16(wID,&ji);
+    TRACE("(%04X, %p)\n", wID, lpInfo);
 
-	lpInfo->wXpos = ji.wXpos;
-	lpInfo->wYpos = ji.wYpos;
-	lpInfo->wZpos = ji.wZpos;
-	lpInfo->wButtons = ji.wButtons;
-	return ret;
-}
+    if (wID < MAXJOYSTICK) {
+#ifdef HAVE_LINUX_22_JOYSTICK_API
+	struct js_event ev;
 
-/**************************************************************************
- * 				JoyGetPos	       	[MMSYSTEM.103]
- */
-MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
-{
+	joyCloseDriver(wID);
+       	if (joyOpenDriver(wID) == FALSE) return JOYERR_PARMS;
+	lpInfo->dwSize = sizeof(JOYINFOEX);
+	lpInfo->dwXpos = lpInfo->dwYpos =lpInfo->dwZpos = 0;
+	lpInfo->dwButtons = lpInfo->dwFlags = 0;
+	/* After opening the device it's state can be
+	   read with JS_EVENT_INIT flag */
+	while ((read(joy_dev[wID], &ev, sizeof(struct js_event))) > 0) {
+       		if (ev.type == (JS_EVENT_AXIS | JS_EVENT_INIT)) {
+			switch (ev.number) {
+			 case 0: lpInfo->dwXpos   = ev.value + 32767;
+				 lpInfo->dwFlags |= JOY_RETURNX; break;
+			 case 1: lpInfo->dwYpos   = ev.value + 32767;
+				 lpInfo->dwFlags |= JOY_RETURNY; break;
+			 case 2: lpInfo->dwZpos   = ev.value + 32767;
+				 lpInfo->dwFlags |= JOY_RETURNZ; break;
+			 case 3: lpInfo->dwRpos   = ev.value + 32767;
+				 lpInfo->dwFlags |= JOY_RETURNR; break;
+			 case 4: lpInfo->dwUpos   = ev.value + 32767;
+				 lpInfo->dwFlags |= JOY_RETURNU; break;
+			 case 5: lpInfo->dwVpos   = ev.value + 32767;
+				 lpInfo->dwFlags |= JOY_RETURNV; break;
+			}
+		} else if (ev.type ==
+			(JS_EVENT_BUTTON | JS_EVENT_INIT)) {
+			if (ev.value)
+                       		lpInfo->dwButtons |= (1 << ev.number);
+               		else
+                       		lpInfo->dwButtons &= ~(1 << ev.number);
+			lpInfo->dwFlags |= JOY_RETURNBUTTONS;
+		}
+	}
+	/* EAGAIN is returned when the queue is empty */
+	if (errno != EAGAIN) {
+		/* FIXME: error should not be ignored */
+	}
+	joyCloseDriver(wID);
+	TRACE("x: %ld, y: %ld, z: %ld, r: %ld, u: %ld, v: %ld, \
+		buttons: 0x%04x, flags: 0x%04x\n", 
+		lpInfo->dwXpos, lpInfo->dwYpos, lpInfo->dwZpos,
+		lpInfo->dwRpos, lpInfo->dwUpos, lpInfo->dwVpos,
+		(unsigned int)lpInfo->dwButtons,
+		(unsigned int)lpInfo->dwFlags);
+	return JOYERR_NOERROR;
+#else
         struct js_status js;
-
-        TRACE("(%04X, %p)\n", wID, lpInfo);
-        if (joyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
+       	int    dev_stat;
+ 
+	if (joyOpenDriver(wID) == FALSE) return JOYERR_UNPLUGGED;
 	dev_stat = read(joy_dev[wID], &js, sizeof(js));
 	if (dev_stat != sizeof(js)) {
 		joyCloseDriver(wID);
@@ -320,12 +490,55 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 	count_use[wID] = 0;
 	js.x = js.x<<8;
 	js.y = js.y<<8;
-	lpInfo->wXpos = js.x;   /* FIXME: perhaps multiply it somehow ? */
-	lpInfo->wYpos = js.y;
-	lpInfo->wZpos = 0; /* FIXME: Don't know what to do with this value as joystick driver doesn't provide a Z value */
-	lpInfo->wButtons = js.buttons;
-	TRACE("x: %d, y: %d, buttons: %d\n", js.x, js.y, js.buttons);
+	lpInfo->dwXpos = js.x;   /* FIXME: perhaps multiply it somehow ? */
+	lpInfo->dwYpos = js.y;
+	lpInfo->dwZpos = 0;
+	lpInfo->dwButtons = js.buttons;
+	lpInfo->dwFlags = JOY_RETURNX | JOY_RETURNY | JOY_RETURNBUTTONS;
+	TRACE("x: %ld, y: %ld, buttons: 0x%04x, flags: 0x%04x\n",
+		lpInfo->dwXpos, lpInfo->dwYpos,
+		(unsigned int)lpInfo->dwButtons,
+		(unsigned int)lpInfo->dwFlags);
 	return JOYERR_NOERROR;
+#endif
+    } else
+    	return JOYERR_PARMS;
+}
+
+/**************************************************************************
+ * 				JoyGetPos	       	[WINMM.30]
+ */
+MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
+{
+	JOYINFOEX	ji;
+	MMRESULT	ret;
+
+        TRACE("(%d, %p);\n", wID, lpInfo);
+
+	ret = joyGetPosEx16(wID,&ji);
+	lpInfo->wXpos = ji.dwXpos;
+	lpInfo->wYpos = ji.dwYpos;
+	lpInfo->wZpos = ji.dwZpos;
+	lpInfo->wButtons = ji.dwButtons;
+	return ret;
+}
+
+/**************************************************************************
+ * 				JoyGetPos16	       	[MMSYSTEM.103]
+ */
+MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
+{
+	JOYINFOEX	ji;
+	MMRESULT16	ret;
+
+        TRACE("(%d, %p);\n", wID, lpInfo);
+
+	ret = joyGetPosEx16(wID,&ji);
+	lpInfo->wXpos = ji.dwXpos;
+	lpInfo->wYpos = ji.dwYpos;
+	lpInfo->wZpos = ji.dwZpos;
+	lpInfo->wButtons = ji.dwButtons;
+	return ret;
 }
 
 /**************************************************************************
@@ -346,7 +559,7 @@ MMRESULT WINAPI joyGetThreshold(UINT wID, LPUINT lpThreshold)
 MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 {
     TRACE("(%04X, %p);\n", wID, lpThreshold);
-    if (wID >= MAXJOYDRIVERS) return JOYERR_PARMS;
+    if (wID >= MAXJOYSTICK) return MMSYSERR_INVALPARAM;
     *lpThreshold = joy_threshold[wID];
     return JOYERR_NOERROR;
 }
@@ -365,6 +578,7 @@ MMRESULT WINAPI joyReleaseCapture(UINT wID)
 MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
 {
     TRACE("(%04X);\n", wID);
+    if (wID >= MAXJOYSTICK) return MMSYSERR_INVALPARAM;
     joyCaptured = FALSE;
     joyCloseDriver(wID);
     joy_dev[wID] = -1;
@@ -388,14 +602,19 @@ MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd,UINT16 wID,UINT16 wPeriod,BOOL16 b
 
     TRACE("(%04X, %04X, %d, %d);\n",
 	    hWnd, wID, wPeriod, bChanged);
-
+    if (wID >= MAXJOYSTICK) return JOYERR_PARMS;
+    if (hWnd == 0) return JOYERR_PARMS;
+    if (wPeriod<JOY_PERIOD_MIN || wPeriod>JOY_PERIOD_MAX) return JOYERR_PARMS;
     if (!CaptureWnd[wID]) {
-	if (joyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
+	if (joyOpenDriver(wID) == FALSE) return JOYERR_PARMS;
 	joyCaptured = TRUE;
 	CaptureWnd[wID] = hWnd;
+	joyCapData[wID].wXpos = 0;
+	joyCapData[wID].wYpos = 0;
+	joyCapData[wID].wZpos = 0;
+	joyCapData[wID].wButtons = 0;
 	return JOYERR_NOERROR;
-    }
-    else
+    } else
     return JOYERR_NOCANDO; /* FIXME: what should be returned ? */
 }
 
@@ -413,7 +632,7 @@ MMRESULT16 WINAPI joySetThreshold16(UINT16 wID, UINT16 wThreshold)
 {
     TRACE("(%04X, %d);\n", wID, wThreshold);
 
-    if (wID > 3) return JOYERR_PARMS;
+    if (wID >= MAXJOYSTICK) return MMSYSERR_INVALPARAM;
     joy_threshold[wID] = wThreshold;
     return JOYERR_NOERROR;
 }
