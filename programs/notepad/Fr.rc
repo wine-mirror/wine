@@ -115,7 +115,7 @@ STRING_TOOLARGE,                                "Le fichier '%s' est trop grand 
 Veuillez utiliser un autre éditeur."
 STRING_NOTEXT,                                  "Vous n'avez pas entré de texte. Veuillez taper quelque chose et recommencer\
 \n"
-STRING_DOESNOTEXIST,                    "Le fichier '%s'\n\'existe pas.\n\n \
+STRING_DOESNOTEXIST,                    "Le fichier '%s'\nn'existe pas.\n\n \
 Voulez vous créer un nouveau fichier ?"
 STRING_NOTSAVED,                                "Le fichier '%s'\na été modifié\n\n \
 Voulez vous enregistrer vos modifications ?"
