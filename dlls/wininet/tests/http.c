@@ -239,7 +239,7 @@ void InternetOpenUrlA_test(void)
   totalbytes += readbytes;
   while (readbytes && InternetReadFile(myhttp, buffer,0x400,&readbytes))
     totalbytes += readbytes;
-  printf("read 0x%08lx bytes\n",totalbytes);
+  trace("read 0x%08lx bytes\n",totalbytes);
 }
   
 void InternetCrackUrl_test(void)
