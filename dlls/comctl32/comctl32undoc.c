@@ -1879,6 +1879,9 @@ DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
 
     if (!hdpa || i < 0) return -1;
 
+    if (i == 0x7fff)
+	i = hdpa->nItemCount;
+
     if (i >= hdpa->nItemCount)
 	return DPA_SetPtr(hdpa, i, p) ? i : -1;
 
@@ -1911,7 +1914,7 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 
     TRACE("(%p %d %p)\n", hdpa, i, p);
 
-    if ((!hdpa) || i < 0)
+    if (!hdpa || i < 0 || i > 0x7fff)
 	return FALSE;
 
     if (hdpa->nItemCount <= i) {
