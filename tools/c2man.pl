@@ -1870,7 +1870,7 @@ sub output_master_index_files
       "For an alphabetical listing of the functions available, please click the ",
       "first letter of the functions name below:","",
       "[ _(), A(), B(), C(), D(), E(), F(), G(), H(), ".
-      "I(), J(), K(), L(), M(), N(), O(), P(), Q() ".
+      "I(), J(), K(), L(), M(), N(), O(), P(), Q(), ".
       "R(), S(), T(), U(), V(), W(), X(), Y(), Z() ]", "",
       "DLLS",
       "Each dll provided by Wine is documented individually. The following dlls are provided :",
