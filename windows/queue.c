@@ -634,7 +634,11 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         
         /* Wake up thread waiting for message */
         if ( THREAD_IsWin16( queue->thdb ) )
+        {
+            int iWndsLock = WIN_SuspendWndsLock();
             PostEvent16( queue->thdb->process->task );
+            WIN_RestoreWndsLock( iWndsLock );
+        }
         else
         {
             SetEvent( queue->hEvent );
