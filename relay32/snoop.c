@@ -24,8 +24,8 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 
-extern void SNOOP_Entry();
-extern void SNOOP_Return();
+extern void WINAPI SNOOP_Entry();
+extern void WINAPI SNOOP_Return();
 
 #ifdef __i386__
 
