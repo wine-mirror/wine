@@ -1382,6 +1382,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
                      ((Color >>  0) & 0xFF) / 255.0f, 
 		     ((Color >> 24) & 0xFF) / 255.0f);
         checkGLcall("glClearColor");
+
+        /* Clear ALL colors! */
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
 
@@ -1426,6 +1429,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
                      old_color_clear_value[1],
                      old_color_clear_value[2], 
                      old_color_clear_value[3]);
+        glColorMask(This->StateBlock->renderstate[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE, 
+                    This->StateBlock->renderstate[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    This->StateBlock->renderstate[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE, 
+                    This->StateBlock->renderstate[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     }
 
     glDisable(GL_SCISSOR_TEST);
@@ -2897,10 +2904,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 	      Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
 	      Value & D3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
 	      Value & D3DCOLORWRITEENABLE_ALPHA ? 1 : 0); 
-	glColorMask(Value & D3DCOLORWRITEENABLE_RED, 
-                    Value & D3DCOLORWRITEENABLE_GREEN,
-		    Value & D3DCOLORWRITEENABLE_BLUE, 
-                    Value & D3DCOLORWRITEENABLE_ALPHA);
+        glColorMask(Value & D3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE, 
+                    Value & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    Value & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE, 
+                    Value & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
         checkGLcall("glColorMask(...)");
 		break;
 
