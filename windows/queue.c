@@ -325,7 +325,7 @@ MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
 /***********************************************************************
  *	     QUEUE_Unlock
  *
- * Use with QUEUE_Lock to get a thread safe acces to message queue
+ * Use with QUEUE_Lock to get a thread safe access to message queue
  * structure
  */
 void QUEUE_Unlock( MESSAGEQUEUE *queue )
@@ -848,6 +848,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             else
             {
                 ERR( sendmsg, "should always remove the top one in Pending list, smsg=0x%p queue=0x%p", smsg, queue);
+				LeaveCriticalSection( &queue->cSection );
                 return 0;
             }
             
