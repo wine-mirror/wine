@@ -61,8 +61,7 @@ struct debug_info
 typedef struct _TEB
 {
     NT_TIB       Tib;            /* 12-  00 Thread information block */
-    WORD         tibflags;       /* 1!n  1c Flags (NT: EnvironmentPointer) */
-    WORD         mutex_count;    /* 1-n  1e Win16 mutex count */
+    PVOID        EnvironmentPointer; /* 12-  1c EnvironmentPointer (win95: tib flags + win16 mutex count) */
     CLIENT_ID    ClientId;       /* -2-  20 Process and thread id (win95: debug context) */
     HQUEUE16     queue;          /* 1!-  28 Message queue (NT: DWORD ActiveRpcHandle)*/
     WORD         pad1;           /* --n  2a */
@@ -133,10 +132,6 @@ typedef struct _TEB
     PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
 } TEB;
 #endif /* WINE_TEB_DEFINED */
-
-/* Thread exception flags */
-#define TEBF_WIN32  0x0001
-#define TEBF_TRAP   0x0002
 
 /* scheduler/thread.c */
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );

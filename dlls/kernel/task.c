@@ -447,7 +447,6 @@ static DWORD CALLBACK task_start( TDB *pTask )
 {
     DWORD ret;
 
-    NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
     NtCurrentTeb()->htask16 = pTask->hSelf;
     NtCurrentTeb()->Tib.SubSystemTib = allocate_win16_tib( pTask );
 

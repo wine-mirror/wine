@@ -116,7 +116,6 @@ void thread_init(void)
     InitializeListHead( &tls_links );
 
     teb = alloc_teb( &size );
-    teb->tibflags      = TEBF_WIN32;
     teb->request_fd    = -1;
     teb->reply_fd      = -1;
     teb->wait_fd[0]    = -1;
@@ -250,7 +249,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
     teb->ClientId.UniqueThread  = (HANDLE)tid;
 
-    teb->tibflags    = TEBF_WIN32;
     teb->exit_code   = STILL_ACTIVE;
     teb->request_fd  = request_pipe[1];
     teb->reply_fd    = -1;
