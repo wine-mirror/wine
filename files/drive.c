@@ -1365,18 +1365,6 @@ BOOL WINAPI DefineDosDeviceW(DWORD flags,LPCWSTR devname,LPCWSTR targetpath)
 
 
 /***********************************************************************
- *           DRIVE_OpenDevice
- *
- * Open the drive raw device and return a Unix fd (or -1 on error).
- */
-int DRIVE_OpenDevice( int drive, int flags )
-{
-    if (!DRIVE_IsValid( drive )) return -1;
-    return open( DOSDrives[drive].device, flags );
-}
-
-
-/***********************************************************************
  *           DRIVE_GetFreeSpace
  */
 static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,

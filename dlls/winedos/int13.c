@@ -35,8 +35,8 @@
 #endif
 
 #include "dosexe.h"
+#include "wine/server.h"
 #include "wine/debug.h"
-#include "drive.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
@@ -98,7 +98,8 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
     int floppy_fd;
     int r;
     struct floppy_drive_params floppy_parm;
-    char root[] = "A:\\";
+    WCHAR root[] = {'A',':','\\',0}, drive_root[] = {'\\','\\','.','\\','A',':',0};
+    HANDLE h;
 
     TRACE("in  [ EDX=%08lx ]\n", context->Edx );
 
@@ -108,7 +109,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
     SET_DH( context, 0 );
 
     for (i = 0; i < MAX_DOS_DRIVES; i++, root[0]++)
-        if (GetDriveTypeA(root) == DRIVE_REMOVABLE) nr_of_drives++;
+        if (GetDriveTypeW(root) == DRIVE_REMOVABLE) nr_of_drives++;
     SET_DL( context, nr_of_drives );
 
     if (drive_nr > 1) { 
@@ -117,15 +118,20 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
         return;
     }
 
-    if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_RDONLY|O_NONBLOCK)) == -1)
+    drive_root[4] = 'A' + drive_nr;
+    h = CreateFileW(drive_root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    if (h == INVALID_HANDLE_VALUE ||
+        wine_server_handle_to_fd(h, GENERIC_READ, &floppy_fd, NULL, NULL))
     {
         WARN("Can't determine floppy geometry !\n");
         INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
         return;
     }
     r = ioctl(floppy_fd, FDGETDRVPRM, &floppy_parm);
- 
+
     close(floppy_fd);
+    CloseHandle(h);
 
     if(r<0)
     {

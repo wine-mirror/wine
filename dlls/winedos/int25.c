@@ -27,7 +27,6 @@
 # include <unistd.h>
 #endif
 #include "dosexe.h"
-#include "drive.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -40,17 +39,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  */
 BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL fake_success)
 {    
-    int fd;
+    WCHAR root[] = {'\\','\\','.','\\','A',':',0};
+    HANDLE h;
 
-    if ((fd = DRIVE_OpenDevice( drive, O_RDONLY )) != -1)
+    root[4] += drive;
+    h = CreateFileW(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    if (h != INVALID_HANDLE_VALUE)
     {
-        lseek( fd, begin * 512, SEEK_SET );
+        SetFilePointer(h, begin * 512, NULL, SEEK_SET );
         /* FIXME: check errors */
-        read( fd, dataptr, nr_sect * 512 );
-        close( fd );
+        ReadFile(h, dataptr, nr_sect * 512, NULL, NULL );
+        CloseHandle(h);
     }
     else
     {
+        if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
         memset( dataptr, 0, nr_sect * 512 );
         if (fake_success)
         {
