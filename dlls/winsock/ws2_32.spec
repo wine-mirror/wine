@@ -71,7 +71,7 @@
 67  stdcall  WSARecv(long ptr long ptr ptr ptr ptr)
 68  stub     WSARecvDisconnect
 69  stdcall  WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr )
-70  stub     WSARemoveServiceClass
+70  stdcall  WSARemoveServiceClass(ptr)
 71  stdcall  WSAResetEvent(long) kernel32.ResetEvent
 72  stdcall  WSASend(long ptr long ptr long ptr ptr)
 73  stdcall  WSASendDisconnect(long ptr)

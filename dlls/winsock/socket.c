@@ -4261,7 +4261,8 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
 int WINAPI WSAInstallServiceClassA(LPWSASERVICECLASSINFOA info)
 {
     FIXME("Request to install service %s\n",debugstr_a(info->lpszServiceClassName));
-    return WSAEACCES;
+    WSASetLastError(WSAEACCES);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
@@ -4270,5 +4271,16 @@ int WINAPI WSAInstallServiceClassA(LPWSASERVICECLASSINFOA info)
 int WINAPI WSAInstallServiceClassW(LPWSASERVICECLASSINFOW info)
 {
     FIXME("Request to install service %s\n",debugstr_w(info->lpszServiceClassName));
-    return WSAEACCES;
+    WSASetLastError(WSAEACCES);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSARemoveServiceClass                    (WS2_32.70)
+ */
+int WINAPI WSARemoveServiceClass(LPGUID info)
+{
+    FIXME("Request to remove service %p\n",info);
+    WSASetLastError(WSATYPE_NOT_FOUND);
+    return SOCKET_ERROR;
 }
