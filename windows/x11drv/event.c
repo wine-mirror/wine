@@ -13,9 +13,6 @@
 #include "ts_xlib.h"
 #include "ts_xresource.h"
 #include "ts_xutil.h"
-#ifdef HAVE_LIBXXSHM
-#include "ts_xshm.h"
-#endif
 #ifdef HAVE_LIBXXF86DGA2
 #include "ts_xf86dga2.h"
 #endif
@@ -113,12 +110,6 @@ static void EVENT_MapNotify( HWND pWnd, XMapEvent *event );
 static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
 static void EVENT_MappingNotify( XMappingEvent *event );
 
-#ifdef HAVE_LIBXXSHM
-static void EVENT_ShmCompletion( XShmCompletionEvent *event );
-static int ShmAvailable, ShmCompletionType;
-extern int XShmGetEventBase( Display * );/* Missing prototype for function in libXext. */
-#endif
-
 #ifdef HAVE_LIBXXF86DGA2
 static int DGAMotionEventType;
 static int DGAButtonPressEventType;
@@ -155,13 +146,6 @@ static HANDLE service_object, service_timer;
  */
 void X11DRV_EVENT_Init(void)
 {
-#ifdef HAVE_LIBXXSHM
-    ShmAvailable = XShmQueryExtension( display );
-    if (ShmAvailable) {
-        ShmCompletionType = XShmGetEventBase( display ) + ShmCompletion;
-    }
-#endif
-
     /* Install the X event processing callback */
     if ((service_object = SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ|SYNCHRONIZE ),
                            EVENT_ProcessAllEvents, 0 )) == INVALID_HANDLE_VALUE)
@@ -259,13 +243,6 @@ static void EVENT_ProcessEvent( XEvent *event )
       return;
   }
 
-#ifdef HAVE_LIBXXSHM
-  if (ShmAvailable && (event->type == ShmCompletionType)) {
-    EVENT_ShmCompletion( (XShmCompletionEvent*)event );
-    return;
-  }
-#endif
-      
 #ifdef HAVE_LIBXXF86DGA2
   if (DGAUsed) {
     if (event->type == DGAMotionEventType) {
@@ -1989,190 +1966,3 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
 }
 
 #endif
-
-#ifdef HAVE_LIBXXSHM
-
-/*
-Normal XShm operation:
-
-X11           service thread    app thread
-------------- ----------------- ------------------------
-              (idle)            ddraw calls XShmPutImage
-(copies data)                   (waiting for shm_event)
-ShmCompletion ->                (waiting for shm_event)
-(idle)        signal shm_event ->
-              (idle)            returns to app
-
-However, this situation can occur for some reason:
-
-X11           service thread    app thread
-------------- ----------------- ------------------------
-Expose ->
-              WM_ERASEBKGND? ->
-              (waiting for app) ddraw calls XShmPutImage
-(copies data) (waiting for app) (waiting for shm_event)
-ShmCompletion (waiting for app) (waiting for shm_event)
-(idle)        DEADLOCK          DEADLOCK
-
-which is why I also wait for shm_read and do XCheckTypedEvent()
-calls in the wait loop. This results in:
-
-X11           service thread    app thread
-------------- ----------------- ------------------------
-ShmCompletion (waiting for app) waking up on shm_read
-(idle)        (waiting for app) XCheckTypedEvent() -> signal shm_event
-              (waiting for app) returns
-              (idle)
-*/
-
-typedef struct {
-  Drawable draw;
-  LONG state, waiter;
-  HANDLE sema;
-} shm_qs;
-   
-/* FIXME: this is not pretty */
-static HANDLE shm_read = 0;
-
-#define SHM_MAX_Q 4
-static volatile shm_qs shm_q[SHM_MAX_Q];
-
-static void EVENT_ShmCompletion( XShmCompletionEvent *event )
-{
-  int n;
-
-  TRACE("Got ShmCompletion for drawable %ld (time %ld)\n", event->drawable, GetTickCount() );
-
-  for (n=0; n<SHM_MAX_Q; n++)
-    if ((shm_q[n].draw == event->drawable) && (shm_q[n].state == 0)) {
-      HANDLE sema = shm_q[n].sema;
-      if (!InterlockedCompareExchange((PVOID*)&shm_q[n].state, (PVOID)1, (PVOID)0)) {
-        ReleaseSemaphore(sema, 1, NULL);
-        TRACE("Signaling ShmCompletion (#%d) (semaphore %x)\n", n, sema);
-      }
-      return;
-    }
-
-  ERR("Got ShmCompletion for unknown drawable %ld\n", event->drawable );
-}
-
-int X11DRV_EVENT_PrepareShmCompletion( Drawable dw )
-{
-  int n;
-
-  if (!shm_read)
-      shm_read = FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ | SYNCHRONIZE );
-
-  for (n=0; n<SHM_MAX_Q; n++)
-    if (!shm_q[n].draw)
-      if (!InterlockedCompareExchange((PVOID*)&shm_q[n].draw, (PVOID)dw, (PVOID)0))
-        break;
-
-  if (n>=SHM_MAX_Q) {
-    ERR("Maximum number of outstanding ShmCompletions exceeded!\n");
-    return 0;
-  }
-
-  shm_q[n].state = 0;
-  if (!shm_q[n].sema) {
-      shm_q[n].sema = CreateSemaphoreA( NULL, 0, 256, NULL );
-    TRACE("Allocated ShmCompletion slots have been increased to %d, new semaphore is %x\n", n+1, shm_q[n].sema);
-  }
-
-  TRACE("Prepared ShmCompletion (#%d) wait for drawable %ld (thread %lx) (time %ld)\n", n, dw, GetCurrentThreadId(), GetTickCount() );
-  return n+1;
-}
-
-static void X11DRV_EVENT_WaitReplaceShmCompletionInternal( int *compl, Drawable dw, int creat )
-{
-  int n = *compl;
-  LONG nn, st;
-  HANDLE sema;
-
-  if ((!n) || (creat && (!shm_q[n-1].draw))) {
-    nn = X11DRV_EVENT_PrepareShmCompletion(dw);
-    if (!(n=(LONG)InterlockedCompareExchange((PVOID*)compl, (PVOID)nn, (PVOID)n)))
-      return;
-    /* race for compl lost, clear slot */
-    shm_q[nn-1].draw = 0;
-    return;
-  }
-
-  if (dw && (shm_q[n-1].draw != dw)) {
-    /* this shouldn't happen with the current ddraw implementation */
-    FIXME("ShmCompletion replace with different drawable!\n");
-    return;
-  }
-
-  sema = shm_q[n-1].sema;
-  if (!sema) {
-    /* nothing to wait on (PrepareShmCompletion not done yet?), so probably nothing to wait for */
-    return;
-  }
-
-  nn = InterlockedExchangeAdd((PLONG)&shm_q[n-1].waiter, 1);
-  if ((!shm_q[n-1].draw) || (shm_q[n-1].state == 2)) {
-    /* too late, the wait was just cleared (wait complete) */
-    TRACE("Wait skip for ShmCompletion (#%d) (thread %lx) (time %ld) (semaphore %x)\n", n-1, GetCurrentThreadId(), GetTickCount(), sema);
-  } else {
-    TRACE("Waiting for ShmCompletion (#%d) (thread %lx) (time %ld) (semaphore %x)\n", n-1, GetCurrentThreadId(), GetTickCount(), sema);
-    if (nn) {
-      /* another thread is already waiting, let the primary waiter do the dirty work
-       * (to avoid TSX critical section contention - that could get really slow) */
-      WaitForSingleObject( sema, INFINITE );
-    } else
-    /* we're primary waiter - first check if it's already triggered */
-    if ( WaitForSingleObject( sema, 0 ) != WAIT_OBJECT_0 ) {
-      /* nope, may need to poll X event queue, in case the service thread is blocked */
-      XEvent event;
-      HANDLE hnd[2];
-
-      hnd[0] = sema;
-      hnd[1] = shm_read;
-      do {
-        /* check X event queue */
-        if (TSXCheckTypedEvent( display, ShmCompletionType, &event)) {
-          EVENT_ProcessEvent( &event );
-        }
-      } while ( WaitForMultipleObjects(2, hnd, FALSE, INFINITE) > WAIT_OBJECT_0 );
-    }
-    TRACE("Wait complete (thread %lx) (time %ld)\n", GetCurrentThreadId(), GetTickCount() );
-
-    /* clear wait */
-    st = InterlockedExchange((LPLONG)&shm_q[n-1].state, 2);
-    if (st != 2) {
-      /* first waiter to return, release all other waiters */
-      nn = shm_q[n-1].waiter;
-      TRACE("Signaling %ld additional ShmCompletion (#%d) waiter(s), semaphore %x\n", nn-1, n-1, sema);
-      ReleaseSemaphore(sema, nn-1, NULL);
-    }
-  }
-  nn = InterlockedDecrement((LPLONG)&shm_q[n-1].waiter);
-  if (!nn) {
-    /* last waiter to return, replace drawable and prepare new wait */
-    shm_q[n-1].draw = dw;
-    shm_q[n-1].state = 0;
-  }
-}
-
-void X11DRV_EVENT_WaitReplaceShmCompletion( int *compl, Drawable dw )
-{
-  X11DRV_EVENT_WaitReplaceShmCompletionInternal( compl, dw, 1 );
-}
-
-void X11DRV_EVENT_WaitShmCompletion( int compl )
-{
-  if (!compl) return;
-  X11DRV_EVENT_WaitReplaceShmCompletionInternal( &compl, 0, 0 );
-}
-
-void X11DRV_EVENT_WaitShmCompletions( Drawable dw )
-{
-  int n;
-
-  for (n=0; n<SHM_MAX_Q; n++)
-    if (shm_q[n].draw == dw)
-      X11DRV_EVENT_WaitShmCompletion( n+1 );
-}
-
-#endif /* defined(HAVE_LIBXXSHM) */
