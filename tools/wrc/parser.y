@@ -829,6 +829,7 @@ dialog	: tDIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
 		$$ = $10;
 		if(!$$->gotstyle)
 		{
+			$$->style = new_style(0,0);
 			$$->style->or_mask = WS_POPUP;
 			$$->gotstyle = TRUE;
 		}
