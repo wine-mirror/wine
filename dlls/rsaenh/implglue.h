@@ -1,6 +1,6 @@
 /*
- * dlls/rsaenh/implossl.h
- * Encapsulating the OpenSSL dependend parts of RSABASE
+ * dlls/rsaenh/implglue.h
+ * Glueing the RSAENH specific code to the crypto library
  *
  * Copyright (c) 2004 Michael Jung
  *
@@ -21,28 +21,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_IMPLOSSL_H
-#define __WINE_IMPLOSSL_H
+#ifndef __WINE_IMPLGLUE_H
+#define __WINE_IMPLGLUE_H
 
-#ifdef HAVE_OPENSSL_MD2_H
-#include <openssl/md2.h>
-#endif 
-
-#ifdef HAVE_OPENSSL_RC2_H
-#include <openssl/rc2.h>
-#endif
-
-#ifdef HAVE_OPENSSL_RC4_H
-#include <openssl/rc4.h>
-#endif
-
-#ifdef HAVE_OPENSSL_DES_H
-#include <openssl/des.h>
-#endif
-
-#ifdef HAVE_OPENSSL_RSA_H
-#include <openssl/rsa.h>
-#endif
+#include "tomcrypt.h"
 
 /* Next typedef copied from dlls/advapi32/crypt_md4.c */
 typedef struct tagMD4_CTX {
@@ -71,31 +53,19 @@ typedef struct tagSHA_CTX
 } SHA_CTX, *PSHA_CTX;
 
 typedef union tagHASH_CONTEXT {
-#ifdef HAVE_OPENSSL_MD2_H
-    MD2_CTX md2;
-#endif
+    md2_state md2;
     MD4_CTX md4;
     MD5_CTX md5;
     SHA_CTX sha;
 } HASH_CONTEXT;
 
 typedef union tagKEY_CONTEXT {
-#ifdef HAVE_OPENSSL_RC2_H
-    RC2_KEY rc2;
-#endif
-#ifdef HAVE_OPENSSL_RC4_H
-    RC4_KEY rc4;
-#endif
-#ifdef HAVE_OPENSSL_DES_H
-    DES_key_schedule des[3];
-#endif
-#ifdef HAVE_OPENSSL_RSA_H
-    RSA *rsa;
-#endif
-    DWORD dwDummy;
+    rc2_key rc2;
+    des_key des;
+    des3_key des3;
+    prng_state rc4;
+    rsa_key rsa;
 } KEY_CONTEXT;
-
-BOOL load_lib(void);
 
 BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext);
 BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, CONST BYTE *pbData, 
@@ -126,4 +96,4 @@ BOOL import_private_key_impl(CONST BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD 
 
 BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen);
 
-#endif /* __WINE_IMPLOSSL_H */
+#endif /* __WINE_IMPLGLUE_H */

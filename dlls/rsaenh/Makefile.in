@@ -7,8 +7,14 @@ MODULE    = rsaenh.dll
 IMPORTS   = advapi32 kernel32
 
 C_SRCS = \
+	des.c \
 	handle.c \
-	implossl.c \
+	implglue.c \
+	md2.c \
+	mpi.c \
+	rc2.c \
+	rc4.c \
+	rsa.c \
 	rsaenh.c
 
 SUBDIRS = tests

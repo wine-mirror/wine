@@ -35,7 +35,7 @@
 #include "wincrypt.h"
 #include "lmcons.h"
 #include "handle.h"
-#include "implossl.h"
+#include "implglue.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -939,8 +939,6 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
           debugstr_a(pszContainer), dwFlags, pVTable);
 
     SetLastError(ERROR_SUCCESS);
-	
-    if (!load_lib()) return FALSE;
     
     if (pszContainer ? strlen(pszContainer) : 0) 
     {
@@ -1787,18 +1785,23 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
         case AT_SIGNATURE:
             RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
             pKeyContainer->hSignatureKeyPair = 
-                new_key(hProv, CALG_RSA_SIGN, dwFlags, abKeyValue, 0);
+                new_key(hProv, CALG_RSA_SIGN, dwFlags, NULL, 0);
             copy_handle(&handle_table, pKeyContainer->hSignatureKeyPair, RSAENH_MAGIC_KEY, 
                         (unsigned int*)phKey);
             break;
 
         case AT_KEYEXCHANGE:
             RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
-            pKeyContainer->hKeyExchangeKeyPair = new_key(hProv, CALG_RSA_KEYX, dwFlags, abKeyValue, 0);
+            pKeyContainer->hKeyExchangeKeyPair = new_key(hProv, CALG_RSA_KEYX, dwFlags, NULL, 0);
             copy_handle(&handle_table, pKeyContainer->hKeyExchangeKeyPair, RSAENH_MAGIC_KEY, 
                         (unsigned int*)phKey);
             break;
-        
+     
+        case CALG_RSA_SIGN:
+        case CALG_RSA_KEYX:
+            *phKey = new_key(hProv, Algid, dwFlags, NULL, 0);
+            break;
+            
         case CALG_RC2:
         case CALG_RC4:
         case CALG_DES:
