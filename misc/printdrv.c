@@ -399,6 +399,7 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
 {
     FIXME(print,"Nearly empty stub\n");
     *lpdwReturned=0;
+    *lpdwNeeded = 0;
     return TRUE;
 }
 
@@ -413,6 +414,7 @@ BOOL32  WINAPI EnumPrinters32W(DWORD dwType, LPWSTR lpszName,
 {
     FIXME(print,"Nearly empty stub\n");
     *lpdwReturned=0;
+    *lpdwNeeded = 0;
     return TRUE;
 }
 
