@@ -1842,7 +1842,9 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
      * due to coalescing, so we have to examine fewer rectangles.
      */
     REGION_SetExtents(newReg);
-    newReg->type = (newReg->numRects) ? COMPLEXREGION : NULLREGION ;
+    newReg->type = (newReg->numRects) ?
+                       ((newReg->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
+                       : NULLREGION ;
     return;
 }
 
@@ -2019,7 +2021,9 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
     newReg->extents.top = MIN(reg1->extents.top, reg2->extents.top);
     newReg->extents.right = MAX(reg1->extents.right, reg2->extents.right);
     newReg->extents.bottom = MAX(reg1->extents.bottom, reg2->extents.bottom);
-    newReg->type = (newReg->numRects) ? COMPLEXREGION : NULLREGION ;
+    newReg->type = (newReg->numRects) ?
+                        ((newReg->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
+                        : NULLREGION ;
     return;
 }
 
@@ -2225,7 +2229,9 @@ static void REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM,
      * due to coalescing, so we have to examine fewer rectangles.
      */
     REGION_SetExtents (regD);
-    regD->type = (regD->numRects) ? COMPLEXREGION : NULLREGION ;
+    regD->type = (regD->numRects) ?
+                       ((regD->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
+                       : NULLREGION ;
     return;
 }
 
@@ -2819,6 +2825,10 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     }
     REGION_FreeStorage(SLLBlock.next);	
     REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, region);
+    region->type = (region->numRects) ?
+                        ((region->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
+                        : NULLREGION;
+
     for (curPtBlock = FirstPtBlock.next; --numFullPtBlocks >= 0;) {
 	tmpPtBlock = curPtBlock->next;
 	HeapFree( GetProcessHeap(), 0, curPtBlock );
