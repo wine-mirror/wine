@@ -255,6 +255,8 @@ struct pthread_functions
   int (*ptr_pthread_sigwait) (const sigset_t *set, int *sig);
   int (*ptr_pthread_raise) (int sig);
   int (*ptr___pthread_cond_timedwait) (pthread_cond_t *, pthread_mutex_t *, const struct timespec *);
+  void (*ptr__pthread_cleanup_push) (struct _pthread_cleanup_buffer * buffer, void (*routine)(void *), void * arg);
+  void (*ptr__pthread_cleanup_pop) (struct _pthread_cleanup_buffer * buffer, int execute);
 };
 
 static pid_t (*libc_fork)(void);
@@ -810,7 +812,9 @@ static struct pthread_functions libc_pthread_functions =
     NULL,                          /* ptr_pthread_sigaction */
     NULL,                          /* ptr_pthread_sigwait */
     NULL,                          /* ptr_pthread_raise */
-    __pthread_cond_timedwait       /* ptr___pthread_cond_timedwait */
+    __pthread_cond_timedwait,      /* ptr___pthread_cond_timedwait */
+    _pthread_cleanup_push,         /* ptr__pthread_cleanup_push */
+    _pthread_cleanup_pop           /* ptr__pthread_cleanup_pop */
 };
 
 #endif /* __GLIBC__ || __FREEBSD__ */
