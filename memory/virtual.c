@@ -813,7 +813,7 @@ BOOL WINAPI VirtualProtectEx(
               DWORD new_prot,  /* [in]  Desired access protection */
               LPDWORD old_prot /* [out] Address of variable to get old protection */ )
 {
-    if (PROCESS_IsCurrent( handle ))
+    if (MapProcessHandle( handle ) == GetCurrentProcessId())
         return VirtualProtect( addr, size, new_prot, old_prot );
     ERR("Unsupported on other process\n");
     return FALSE;
@@ -902,7 +902,7 @@ DWORD WINAPI VirtualQueryEx(
              LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
              DWORD len                        /* [in] Size of buffer */ )
 {
-    if (PROCESS_IsCurrent( handle ))
+    if (MapProcessHandle( handle ) == GetCurrentProcessId())
         return VirtualQuery( addr, info, len );
     ERR("Unsupported on other process\n");
     return 0;

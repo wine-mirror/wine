@@ -63,19 +63,6 @@ void PROCESS_WalkProcess(void)
     return;
 }
 
-/***********************************************************************
- *           PROCESS_IsCurrent
- *
- * Check if a handle is to the current process
- */
-BOOL PROCESS_IsCurrent( HANDLE handle )
-{
-    struct get_process_info_request *req = get_req_buffer();
-    req->handle = handle;
-    return (!server_call( REQ_GET_PROCESS_INFO ) &&
-            (req->pid == PROCESS_Current()->server_pid));
-}
-
 
 /***********************************************************************
  *           PROCESS_IdToPDB
@@ -274,7 +261,7 @@ void PROCESS_FreePDB( PDB *pdb )
     ENV_FreeEnvironment( pdb );
     while (*pptr && (*pptr != pdb)) pptr = &(*pptr)->next;
     if (*pptr) *pptr = pdb->next;
-    HeapFree( SystemHeap, 0, pdb );
+    HeapFree( GetProcessHeap(), 0, pdb );
 }
 
 
@@ -286,7 +273,7 @@ void PROCESS_FreePDB( PDB *pdb )
  */
 static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 {
-    PDB *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB) );
+    PDB *pdb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PDB) );
 
     if (!pdb) return NULL;
     pdb->exit_code       = STILL_ACTIVE;

@@ -157,7 +157,6 @@ extern void ENV_FreeEnvironment( PDB *pdb );
 
 /* scheduler/process.c */
 extern BOOL PROCESS_Init( BOOL win32 );
-extern BOOL PROCESS_IsCurrent( HANDLE handle );
 extern PDB *PROCESS_IdToPDB( DWORD id );
 extern void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule );
 extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, HFILE hFile,
@@ -167,9 +166,6 @@ extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, HFILE hFile,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 extern void PROCESS_FreePDB( PDB *pdb );
 extern void PROCESS_WalkProcess( void );
-
-/* scheduler/debugger.c */
-extern DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEXT *ctx );
 
 static inline PDB * WINE_UNUSED PROCESS_Current(void)
 {
