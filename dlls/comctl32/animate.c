@@ -236,10 +236,21 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
                 SelectObject( hdcMem, infoPtr->bkgFrameb);
                 BitBlt(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hDC, 0, 0, SRCCOPY);
                 /* Get the transparent color from the first frame*/
-                if (infoPtr->inbih->biBitCount<=8)
-                    infoPtr->bkColor = (LPVOID)((LPSTR)infoPtr->inbih + (WORD)(((LPBITMAPINFO)infoPtr->inbih)->bmiHeader.biSize));
-                else
-                    infoPtr->bkColor = (LPVOID)GetPixel(hdcSrc, 0, 0);
+                switch (infoPtr->inbih->biBitCount) {
+                   case 1:                
+                   case 4:
+                     /*FIXME: Not supported Yet.*/
+                     break;
+                   case 8:
+                     infoPtr->bkColor = (LPVOID)((LPSTR)infoPtr->inbih + (WORD)(((LPBITMAPINFO)infoPtr->inbih)->bmiHeader.biSize));
+                     break;
+                   case 16:
+                   case 24:
+                   case 32:
+                     infoPtr->bkColor = (LPVOID)GetPixel(hdcSrc, 0, 0);
+                     /*FIXME:Has not been test with more than 8bpp, errors are possible*/
+                     break;
+            }
 
             }
             /* Need the copy of the original destination HDC*/
@@ -254,11 +265,20 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
             monochrome. In this situation, all pixels in the color bitmap that are the same color
             as the background color become 1s, and all the other pixels are converted to 0s. */
 
-            if (infoPtr->inbih->biBitCount<=8)
-                SetBkColor(hdcSrc, infoPtr->bkColor[(((BYTE*)infoPtr->indata)[0])]);
-            else{ /* has not been tested with more then 8 bpp */
-                FIXME("Has not been test with more than 8bpp, errors are possible\n");
-                SetBkColor(hdcSrc, (COLORREF)infoPtr->bkColor);
+            /* Set the transparent color from the first frame*/
+            switch (infoPtr->inbih->biBitCount) {
+                   case 1:
+                   case 4:
+                     /*FIXME: Not supported Yet.*/
+                     break;
+                   case 8:                     
+                     SetBkColor(hdcSrc, infoPtr->bkColor[(((BYTE*)infoPtr->indata)[0])]);
+                     break;
+                   case 16:
+                   case 24:
+                   case 32:                     
+                     SetBkColor(hdcSrc, (COLORREF)infoPtr->bkColor);
+                     break;
             }
 
             BitBlt(hdcMask, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcSrc, 0, 0, SRCCOPY);
@@ -269,13 +289,13 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
             bitmap are converted to the destination's text (foreground) color, and the 1
             (white) pixels are converted to the background color. */
 
-            SetBkColor(hdcSrc, RGB(0,0,0));          // 1s --> black (0x000000)
-            SetTextColor(hdcSrc, RGB(255,255,255));  // 0s --> white (0xFFFFFF)
+            SetBkColor(hdcSrc, RGB(0,0,0));          /* 1s --> black (0x000000)*/
+            SetTextColor(hdcSrc, RGB(255,255,255));  /* 0s --> white (0xFFFFFF)*/
 
             BitBlt(hdcSrc, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcMask, 0, 0, SRCAND);
 
-            SetBkColor(hdcMem, RGB(255,255,255));  // 0s --> white (0xFFFFFF)
-            SetTextColor(hdcMem, RGB(0,0,0));          // 1s --> black (0x000000)
+            SetBkColor(hdcMem, RGB(255,255,255));  /* 0s --> white (0xFFFFFF) */
+            SetTextColor(hdcMem, RGB(0,0,0));          /* 1s --> black (0x000000) */
 
             BitBlt(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcMask, 0, 0, SRCAND);
 
