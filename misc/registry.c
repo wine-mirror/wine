@@ -1321,7 +1321,7 @@ static LPSTR _convert_win95_registry_to_wine_format(LPCSTR fn,int level)
 error:
     if(ret == NULL) {
         ERR("Unable to load native win95 registry file %s.\n",fn);
-        ERR("Please report to a.mohr@mailto.de.\n");
+        ERR("Please report this.\n");
         ERR("Make a backup of the file, run a good reg cleaner program and try again!\n");
     }
 

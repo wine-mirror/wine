@@ -501,7 +501,7 @@ RETERR16 SETUPX_DelLdd(LOGDISKID16 ldid)
  */
 RETERR16 WINAPI CtlDelLdd16(LOGDISKID16 ldid)
 {
-    FIXME("(%d); - please report to a.mohr@mailto.de !!!\n", ldid);
+    FIXME("(%d); - please report this!\n", ldid);
     return SETUPX_DelLdd(ldid);
 }
 
@@ -678,7 +678,7 @@ static RETERR16 SETUPX_GetLdd(LPLOGDISKDESC pldd)
 
 RETERR16 WINAPI CtlGetLdd16(LPLOGDISKDESC pldd)
 {
-    FIXME("(%p); - please report to a.mohr@mailto.de !!!\n", pldd);
+    FIXME("(%p); - please report this!\n", pldd);
     return SETUPX_GetLdd(pldd);
 }
 

@@ -592,7 +592,7 @@ DWORD WINAPI OaBuildVersion16(void)
      * in case the user didn't force a --winver, but I don't know how
      * to retrieve the "versionForced" info from misc/version.c :(
      * (this would be useful in other places, too) */
-    FIXME("Please report to a.mohr@mailto.de if you get version error messages !\n");
+    FIXME("If you get version error messages, please report them\n");
     switch(GetVersion() & 0x8000ffff)  /* mask off build number */
     {
     case 0x80000a03:  /* WIN31 */
