@@ -3,6 +3,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wine
+EXTRALIBS = @LIBPTHREAD@
 
 C_SRCS = \
 	$(TOPOBJDIR)/scheduler/pthread.c \
@@ -17,7 +18,7 @@ all: $(MODULE)
 LDEXECFLAGS = @LDEXECFLAGS@
 
 $(MODULE): $(OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
 
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)
