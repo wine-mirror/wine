@@ -512,6 +512,17 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 
     if (handle) *handle = 0;
 
+    if (!filename)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    if (!*filename)
+    {
+        SetLastError(ERROR_BAD_PATHNAME);
+        return 0;
+    }
+
     len = VERSION_GetFileVersionInfo_PE(filename, 0, NULL);
     /* 0xFFFFFFFF means: file is a PE module, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF)
@@ -531,7 +542,12 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
         len = VERSION_GetFileVersionInfo_16(filenameA, 0, NULL);
         HeapFree( GetProcessHeap(), 0, filenameA );
         /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-        if (!len || len == 0xFFFFFFFF)
+        if (!len)
+        {
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            return 0;
+        }
+        if (len == 0xFFFFFFFF)
         {
             SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
             return 0;
