@@ -38,7 +38,6 @@
 #include "file.h"
 #include "global.h"
 #include "instance.h"
-#include "miscemu.h"
 #include "module.h"
 #include "winternl.h"
 #include "selectors.h"

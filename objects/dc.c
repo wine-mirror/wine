@@ -29,7 +29,6 @@
 #include "wine/winuser16.h"
 #include "gdi.h"
 #include "heap.h"
-#include "font.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);

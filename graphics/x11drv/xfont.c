@@ -43,8 +43,6 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "font.h"
-#include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11font.h"
 #include "wine/library.h"
 #include "wine/unicode.h"

@@ -31,7 +31,6 @@
 #include "wine/port.h"
 #include "wine/debug.h"
 #include "gdi.h"
-#include "font.h"
 
 #include <stdlib.h>
 #include <sys/stat.h>

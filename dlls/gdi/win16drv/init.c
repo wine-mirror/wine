@@ -30,7 +30,6 @@
 #include "win16drv/win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"
-#include "font.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win16drv);

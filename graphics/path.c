@@ -35,7 +35,6 @@
 
 #include "gdi.h"
 #include "wine/debug.h"
-#include "path.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 

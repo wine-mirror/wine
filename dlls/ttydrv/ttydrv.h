@@ -36,18 +36,9 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "wine/winuser16.h"
-#include "wine/wingdi16.h"
-#include "user.h"
+#include "winuser.h"
 
 struct tagBITMAPOBJ;
-struct tagCLASS;
-struct tagDESKTOP;
-struct tagPALETTEOBJ;
-struct tagWND;
-struct tagCURSORICONINFO;
-struct tagCREATESTRUCTA;
-struct tagWINDOWPOS;
 
 #if defined(HAVE_LIBCURSES) || defined(HAVE_LIBNCURSES)
 #define WINE_CURSES
@@ -82,7 +73,6 @@ extern BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev);
 extern BOOL TTYDRV_DC_BitBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT width, INT height, TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, DWORD rop);
 extern BOOL TTYDRV_DC_Chord(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
 extern BOOL TTYDRV_DC_Ellipse(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom);
-extern INT TTYDRV_DC_Escape(TTYDRV_PDEVICE *physDev, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
 extern BOOL TTYDRV_DC_ExtFloodFill(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF color, UINT fillType);
 extern BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags, const RECT *lpRect, LPCWSTR str, UINT count, const INT *lpDx);
 extern BOOL TTYDRV_DC_GetCharWidth(TTYDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, LPINT buffer);

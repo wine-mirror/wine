@@ -58,7 +58,6 @@
 #include "stackframe.h"
 #include "global.h"
 #include "miscemu.h"
-#include "syslevel.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);

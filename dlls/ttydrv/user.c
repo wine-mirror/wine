@@ -27,6 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
+struct tagCURSORICONINFO;
 
 /***********************************************************************
  *		VkKeyScan (TTYDRV.@)

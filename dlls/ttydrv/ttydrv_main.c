@@ -24,9 +24,6 @@
 
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "gdi.h"
-#include "user.h"
-#include "win.h"
 #include "wine/debug.h"
 #include "ttydrv.h"
 

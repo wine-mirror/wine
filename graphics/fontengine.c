@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "winbase.h"
-#include "font.h"
+#include "wine/wingdi16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);

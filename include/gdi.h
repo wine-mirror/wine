@@ -24,7 +24,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
-#include "path.h"
 #include <math.h>
 
   /* GDI objects magic numbers */
@@ -70,6 +69,27 @@ typedef struct tagGDIOBJHDR
     const struct gdi_obj_funcs *funcs;
 } GDIOBJHDR;
 
+
+/* It should not be necessary to access the contents of the GdiPath
+ * structure directly; if you find that the exported functions don't
+ * allow you to do what you want, then please place a new exported
+ * function that does this job in path.c.
+ */
+typedef enum tagGdiPathState
+{
+   PATH_Null,
+   PATH_Open,
+   PATH_Closed
+} GdiPathState;
+
+typedef struct tagGdiPath
+{
+   GdiPathState state;
+   POINT      *pPoints;
+   BYTE         *pFlags;
+   int          numEntriesUsed, numEntriesAllocated;
+   BOOL       newStroke;
+} GdiPath;
 
 typedef struct tagGdiFont *GdiFont;
 
@@ -447,6 +467,26 @@ extern void CLIPPING_UpdateGCRegion( DC * dc );
 /* enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
 
+/* freetype.c */
+extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);
+extern GdiFont WineEngCreateFontInstance(DC*, HFONT);
+extern BOOL WineEngDestroyFontInstance(HFONT handle);
+extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
+extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
+extern DWORD WineEngGetFontData(GdiFont, DWORD, DWORD, LPVOID, DWORD);
+extern DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+				    LPWORD pgi, DWORD flags);
+extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
+				    LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
+				    const MAT2*);
+extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
+extern BOOL WineEngGetTextExtentPoint(GdiFont, LPCWSTR, INT, LPSIZE);
+extern BOOL WineEngGetTextExtentPointI(GdiFont, const WORD *, INT, LPSIZE);
+extern INT  WineEngGetTextFace(GdiFont, INT, LPWSTR);
+extern BOOL WineEngGetTextMetrics(GdiFont, LPTEXTMETRICW);
+extern BOOL WineEngInit(void);
+extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID);
+
 /* metafile.c */
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh);
 extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh);
@@ -458,6 +498,37 @@ extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 /* palette.c */
 extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
 extern UINT WINAPI GDIRealizePalette( HDC hdc );
+
+/* path.c */
+
+#define PATH_IsPathOpen(path) ((path).state==PATH_Open)
+/* Returns TRUE if the specified path is in the open state, i.e. in the
+ * state where points will be added to the path, or FALSE otherwise. This
+ * function is implemented as a macro for performance reasons.
+ */
+
+extern void PATH_InitGdiPath(GdiPath *pPath);
+extern void PATH_DestroyGdiPath(GdiPath *pPath);
+extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc);
+
+extern BOOL PATH_MoveTo(DC *dc);
+extern BOOL PATH_LineTo(DC *dc, INT x, INT y);
+extern BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2);
+extern BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2);
+extern BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
+                     INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines);
+extern BOOL PATH_PolyBezierTo(DC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyBezier(DC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolylineTo(DC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_Polyline(DC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_Polygon(DC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyPolyline(DC *dc, const POINT *pt, const DWORD *counts, DWORD polylines);
+extern BOOL PATH_PolyPolygon(DC *dc, const POINT *pt, const INT *counts, UINT polygons);
+extern BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height);
+extern BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags);
+
+/* text.c */
+extern LPWSTR FONT_mbtowc(HDC, LPCSTR, INT, INT*, UINT*);
 
 #define WINE_GGO_GRAY16_BITMAP 0x7f
 

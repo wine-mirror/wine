@@ -30,11 +30,10 @@
 #include "winerror.h"
 
 #include "bitmap.h"
-#include "font.h"
 #include "local.h"
 #include "palette.h"
-#include "wine/debug.h"
 #include "gdi.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 

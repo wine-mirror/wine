@@ -28,10 +28,9 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wownt32.h"
-#include "wine/unicode.h"
-#include "font.h"
-#include "wine/debug.h"
 #include "gdi.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 WINE_DECLARE_DEBUG_CHANNEL(gdi);

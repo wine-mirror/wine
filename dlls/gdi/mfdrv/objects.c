@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "font.h"
 #include "wownt32.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"

@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include "bitmap.h"
 #include "gdi.h"
 #include "ttydrv.h"
 #include "wine/debug.h"
