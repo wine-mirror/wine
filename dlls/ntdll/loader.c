@@ -373,6 +373,9 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     WCHAR buffer[32];
     const char *name = get_rva( module, descr->Name );
     DWORD len = strlen(name) + 1;
+    PVOID protect_base;
+    DWORD protect_size = 0;
+    DWORD protect_old;
 
     thunk_list = get_rva( module, (DWORD)descr->FirstThunk );
     if (descr->u.OriginalFirstThunk)
@@ -405,6 +408,14 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
         return NULL;
     }
 
+    /* unprotect the import address table since it can be located in
+     * readonly section */
+    while (import_list[protect_size].u1.Ordinal) protect_size++;
+    protect_base = thunk_list;
+    protect_size *= sizeof(*thunk_list);
+    NtProtectVirtualMemory( GetCurrentProcess(), &protect_base,
+                            &protect_size, PAGE_WRITECOPY, &protect_old );
+
     imp_mod = wmImp->ldr.BaseAddress;
     exports = RtlImageDirectoryEntryToData( imp_mod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
 
@@ -429,7 +440,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
             import_list++;
             thunk_list++;
         }
-        return wmImp;
+        goto done;
     }
 
     while (import_list->u1.Ordinal)
@@ -465,6 +476,10 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
         import_list++;
         thunk_list++;
     }
+
+done:
+    /* restore old protection of the import address table */
+    NtProtectVirtualMemory( GetCurrentProcess(), &protect_base, &protect_size, protect_old, NULL );
     return wmImp;
 }
 
