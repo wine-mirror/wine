@@ -1891,6 +1891,8 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
  *
  * Parse a standard menu resource and add items to the menu.
  * Return a pointer to the end of the resource.
+ *
+ * NOTE: flags is equivalent to the mtOption field
  */
 static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
 {
@@ -1906,8 +1908,6 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
             id = GET_WORD(res);
             res += sizeof(WORD);
         }
-        if (!IS_STRING_ITEM(flags))
-            ERR("not a string item %04x\n", flags );
         str = res;
         if (!unicode) res += strlen(str) + 1;
         else res += (strlenW((LPCWSTR)str) + 1) * sizeof(WCHAR);
@@ -4192,7 +4192,7 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
     TRACE("%p, ver %d\n", template, version );
     switch (version)
     {
-      case 0:
+      case 0: /* standard format is version of 0 */
 	offset = GET_WORD(p);
 	p += sizeof(WORD) + offset;
 	if (!(hMenu = CreateMenu())) return 0;
@@ -4202,7 +4202,7 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 	    return 0;
 	  }
 	return hMenu;
-      case 1:
+      case 1: /* extended format is version of 1 */
 	offset = GET_WORD(p);
 	p += sizeof(WORD) + offset;
 	if (!(hMenu = CreateMenu())) return 0;
