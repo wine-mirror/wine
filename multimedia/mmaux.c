@@ -37,6 +37,8 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #endif
 
 
+static int	NumDev = 6;
+
 /*-----------------------------------------------------------------------*/
 
 
@@ -118,7 +120,7 @@ DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
 #ifdef linux
 	int 	mixer;
-	int		volume;
+	int		volume, left, right;
 	int		cmd;
 	printf("AUX_GetVolume(%u, %p);\n", wDevID, lpdwVol);
 	if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
@@ -148,17 +150,22 @@ DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 			cmd = SOUND_MIXER_READ_MIC;
 			break;
 		case 5:
-		default:
 			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_VOLUME !\n");
 			cmd = SOUND_MIXER_READ_VOLUME;
 			break;
+		default:
+			fprintf(stderr, "Linux 'AUX_GetVolume' // invalid device id=%d !\n", wDevID);
+			return MMSYSERR_NOTENABLED;
 		}
     if (ioctl(mixer, cmd, &volume) == -1) {
 		printf("Linux 'AUX_GetVolume' // unable read mixer !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	close(mixer);
-	*lpdwVol = MAKELONG(volume, volume);
+	left = volume & 0x7F;
+	right = (volume >> 8) & 0x7F;
+	printf("Linux 'AUX_GetVolume' // left=%d right=%d !\n", left, right);
+	*lpdwVol = MAKELONG(left << 9, right << 9);
 	return MMSYSERR_NOERROR;
 #else
 	return MMSYSERR_NOTENABLED;
@@ -174,8 +181,9 @@ DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 	int 	mixer;
 	int		volume;
 	int		cmd;
-	printf("AUX_SetVolume(%u, %08lX);\n", wDevID, dwParam);
-	volume = LOWORD(dwParam);
+	printf("AUX_SetVolume(%u (%04X), %08lX);\n", wDevID, wDevID, dwParam);
+	volume = (LOWORD(dwParam) >> 9 & 0x7F) + 
+		((HIWORD(dwParam) >> 9  & 0x7F) << 8);
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		printf("Linux 'AUX_SetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
@@ -202,10 +210,12 @@ DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 			cmd = SOUND_MIXER_WRITE_MIC;
 			break;
 		case 5:
-		default:
 			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_VOLUME !\n");
 			cmd = SOUND_MIXER_WRITE_VOLUME;
 			break;
+		default:
+			fprintf(stderr, "Linux 'AUX_SetVolume' // invalid device id=%d !\n", wDevID);
+			return MMSYSERR_NOTENABLED;
 		}
     if (ioctl(mixer, cmd, &volume) == -1) {
 		printf("Linux 'AUX_SetVolume' // unable set mixer !\n");
@@ -229,14 +239,17 @@ DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 		case AUXDM_GETDEVCAPS:
-			return AUX_GetDevCaps(wDevID, (LPAUXCAPS)dwParam1, dwParam2);
+			return AUX_GetDevCaps(wDevID, 
+				(LPAUXCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case AUXDM_GETNUMDEVS:
-			printf("AUX_GetNumDevs();\n");
-			return 1L;
+			printf("AUX_GetNumDevs() return %d;\n", NumDev);
+			return NumDev;
 		case AUXDM_GETVOLUME:
-			return AUX_GetVolume(wDevID, (LPDWORD)dwParam1);
+			return AUX_GetVolume(wDevID, (LPDWORD)PTR_SEG_TO_LIN(dwParam1));
 		case AUXDM_SETVOLUME:
 			return AUX_SetVolume(wDevID, dwParam1);
+		default:
+			fprintf(stderr,"auxMessage // unknown message !\n");
 		}
 	return MMSYSERR_NOTSUPPORTED;
 }

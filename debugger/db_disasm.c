@@ -74,6 +74,8 @@
 #include "db_disasm.h"
 #include "ldt.h"
 
+extern void print_address(unsigned int addr, FILE * outfile, int addrlen);
+
 /*
  * Switch to disassemble 16-bit code.
  */
@@ -1016,7 +1018,6 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 
 static void db_task_printsym(unsigned int addr, int size)
 {
-    extern void print_address(unsigned int addr, FILE * outfile, int addrlen);
     switch(size)
     {
     case BYTE:
@@ -1486,7 +1487,10 @@ db_disasm(loc, altfmt, flag16)
 			get_value_inc(imm, loc, 4, FALSE); /* offset */
 		    }
 		    get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-		    fprintf(stderr,"$%d,%d", imm2, imm);
+                    if (short_addr)
+                        print_address( (imm2 << 16) | imm, stderr, 16 );
+                    else
+                        fprintf(stderr,"$0x%x,0x%08x", imm2, imm);
 		    break;
 	    }
 	}

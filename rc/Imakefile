@@ -46,9 +46,6 @@ LOCAL_LIBRARIES = -ly -ll
 #if defined(i386BsdArchitecture) || defined(i386FreeBsd) || defined(FreeBSDArchitecture)
 LOCAL_LIBRARIES = -ll
 #endif
-#ifdef LinuxArchitecture
-LOCAL_LIBRARIES = -lfl
-#endif
 
 NormalProgramTarget(winerc,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES),)
 

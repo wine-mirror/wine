@@ -14,12 +14,12 @@ SRCS = \
 	escape.c \
 	file.c \
 	keyboard.c \
+	kernel32.c \
 	lstr.c \
 	main.c \
 	ole2nls.c \
 	olecli.c \
 	olesvr.c \
-	message.c \
 	network.c \
 	profile.c \
 	rect.c \

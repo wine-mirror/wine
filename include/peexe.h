@@ -138,9 +138,10 @@ struct pe_segment_table
 struct PE_Import_Directory
 {
   u_int Import_List;
-  u_int reserved[2];
+  u_int TimeDate;
+  u_int Forwarder;
   u_int ModuleName;
-  u_int reserved1;
+  u_int Thunk_List;
 };
 
 struct pe_import_name

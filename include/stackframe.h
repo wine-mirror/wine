@@ -54,11 +54,17 @@ extern WORD IF1632_Saved16_sp;
 
   /* Saved 32-bit stack */
 extern DWORD IF1632_Saved32_esp;
-
+extern SEGPTR IF1632_Stack32_base;
 
 #define CURRENT_STACK16 \
     ((STACK16FRAME *)PTR_SEG_OFF_TO_LIN(IF1632_Saved16_ss,IF1632_Saved16_sp))
 
 #define CURRENT_DS   (CURRENT_STACK16->ds)
+
+  /* Make a segmented pointer from a pointer to a variable located */
+  /* on the 32-bit stack for the current task. */
+#define MAKE_SEGPTR(ptr) \
+     ((SEGPTR)IF1632_Stack32_base + \
+      ((DWORD)(ptr) - (DWORD)PTR_SEG_TO_LIN(IF1632_Stack32_base)))
 
 #endif /* WINE_STACKFRAME_H */

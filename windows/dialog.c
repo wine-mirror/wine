@@ -13,6 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "dialog.h"
 #include "win.h"
 #include "ldt.h"
+#include "stackframe.h"
 #include "user.h"
 #include "message.h"
 #include "stddebug.h"
@@ -191,8 +192,8 @@ HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     HGLOBAL hmem;
     LPCSTR data;
 
-    dprintf_dialog(stddeb, "CreateDialogParam: %d,%08lx,%d,%p,%ld\n",
-	    hInst, dlgTemplate, owner, dlgProc, param );
+    dprintf_dialog(stddeb, "CreateDialogParam: %d,%08lx,%d,%08lx,%ld\n",
+	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
      
     if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
     if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
@@ -251,11 +252,11 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	  break;
       default:
           {
-                /* Need to copy the menu name to a 16-bit area */
-              HANDLE handle = USER_HEAP_ALLOC( strlen(template.menuName)+1 );
-              strcpy( USER_HEAP_LIN_ADDR( handle ), template.menuName );
-              hMenu = LoadMenu( hInst, USER_HEAP_SEG_ADDR( handle ) );
-              USER_HEAP_FREE( handle );
+                /* Need to copy the menu name to a 16-bit accessible area */
+              char name[256];
+              strncpy( name, template.menuName, 255 );
+              name[255] = '\0';
+              hMenu = LoadMenu( hInst, MAKE_SEGPTR(name) );
           }
 	  break;
     }
@@ -298,7 +299,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     AdjustWindowRectEx( &rect, template.header->style, hMenu, exStyle );
 
     hwnd = CreateWindowEx( exStyle, template.className, template.caption,
-			   template.header->style,
+			   template.header->style & ~WS_VISIBLE,
 			   rect.left + template.header->x * xUnit / 4,
 			   rect.top + template.header->y * yUnit / 8,
 			   rect.right - rect.left, rect.bottom - rect.top,
@@ -397,7 +398,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	SendMessage( hwnd, WM_SETFONT, dlgInfo->hUserFont, 0 );
     if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
 	SetFocus( dlgInfo->hwndFocus );
-
+    ShowWindow(hwnd, SW_SHOW);
     return hwnd;
 }
 
@@ -459,8 +460,8 @@ int DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 {
     HWND hwnd;
     
-    dprintf_dialog(stddeb, "DialogBoxParam: %d,%08lx,%d,%p,%ld\n",
-	    hInst, dlgTemplate, owner, dlgProc, param );
+    dprintf_dialog(stddeb, "DialogBoxParam: %d,%08lx,%d,%08lx,%ld\n",
+	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
@@ -690,14 +691,11 @@ int GetDlgItemText( HWND hwnd, WORD id, SEGPTR str, WORD max )
  */
 void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
 {
-    HANDLE hText = USER_HEAP_ALLOC( 10 );
-    char * str = (char *) USER_HEAP_LIN_ADDR( hText );
+    char str[20];
 
-    if (fSigned) sprintf( str, "%d", value );
+    if (fSigned) sprintf( str, "%d", (int)value );
     else sprintf( str, "%u", value );
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0,
-                        USER_HEAP_SEG_ADDR(hText) );
-    USER_HEAP_FREE( hText );
+    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, MAKE_SEGPTR(str) );
 }
 
 
@@ -706,18 +704,11 @@ void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
  */
 WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 {
-    int len;
-    HANDLE hText;
+    char str[30];
     long result = 0;
-    char * str;
     
     if (translated) *translated = FALSE;
-    if (!(len = SendDlgItemMessage( hwnd, id, WM_GETTEXTLENGTH, 0, 0 )))
-	return 0;
-    if (!(hText = USER_HEAP_ALLOC( len+1 ))) return 0;
-    str = (char *) USER_HEAP_LIN_ADDR( hText );
-    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, len+1,
-                            USER_HEAP_SEG_ADDR(hText) ))
+    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, 30, MAKE_SEGPTR(str) ))
     {
 	char * endptr;
 	result = strtol( str, &endptr, 10 );
@@ -735,7 +726,6 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 	    }
 	}
     }
-    USER_HEAP_FREE( hText );
     return (WORD)result;
 }
 
@@ -888,7 +878,7 @@ HWND GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 	if (!hwnd) hwnd = dlgPtr->hwndChild;
 	if (hwnd == hwndCtrl) break;
 	wndPtr = WIN_FindWndPtr( hwnd );
-	if (wndPtr->dwStyle & WS_TABSTOP)
+	if ((wndPtr->dwStyle & WS_TABSTOP) && (wndPtr->dwStyle & WS_VISIBLE))
 	{
 	    hwndLast = hwnd;
 	    if (!fPrevious) break;

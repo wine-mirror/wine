@@ -1,4 +1,248 @@
 ----------------------------------------------------------------------
+Sun May 21 12:30:30 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [debugger/hash.c] [debugger/info.c]
+	Added support for symbolic segmented addresses. Add symbols for all
+	built-in API entry points.
+
+	* [if1632/relay.c] [include/dlls.h]
+	Removed dll_table structure, as we now use the built-in module
+	structures.
+
+	* [if1632/relay.c] [loader/main.c]
+	Removed winestat option, as it was no longer very meaningful.
+
+	* [include/stackframe.h]
+	New macro MAKE_SEGPTR that creates a segmented pointer to a local
+	variable on the 32-bit stack.
+
+	* [loader/module.c]
+	Added support for multiple instances of an application.
+	Implemented LoadModule() and FreeModule().
+
+	* [loader/ne_image.c] [loader/task.c]
+	Moved initialisation of built-in DLLs to InitTask().
+
+	* [memory/global.c]
+	Implemented discardable blocks.
+
+	* [misc/file.c]
+	Search path of current executable in OpenFile().
+	Fixed bug with searching in Windows path.
+
+	* [misc/lstr.c]
+	Hard-coded translation tables for Ansi<->Oem.
+
+	* [misc/user.c]
+	Moved some global initializations to InitApp(), because they need
+	a task context to be performed.
+
+	* [objects/dc.c]
+	Handle R2_BLACK and R2_WHITE specially so that they work correctly
+	with palette displays.
+
+	* [tools/build.c]
+	Suppressed generation of the C file for DLL specs, because it's no
+	longer needed. Output all the assembly code directly to stdout.
+	Some changes to integrate Win32 support from Martin von	Loewis. 
+
+	* [windows/msgbox.c]
+	Moved message box code from misc/ to windows/.
+
+Mon May 15 23:40:04 1995  Martin Ayotte (wine@trgcorp.mksinfo.qc.ca)
+
+	* [misc/audio.c] [misc/mcicda.c] [misc/mcianim.c] [misc/midi.c]
+	  [misc/mmaux.c] [misc/mmsystem.c]
+	Modify code & use pointers conversion macros.
+	Make cdaudio & wave devices work again (only using some applets).
+
+	* [misc/profile.c]
+	Change getc() to fgetc() where needed.
+
+Mon May 15 22:10:56 1995  Martin von Loewis  <loewis@informatik.hu-berlin.de>
+
+	* [if1632/Imakefile]
+	added entries for the new files gdi32.spec, kernel32.spec,
+	user32.spec, shell32.spec and winprocs32.spec.
+
+	* [if1632/commdlg.spec][if1632/kernel.spec][if1632/shell.spec]
+	  [if1632/storage.spec][if1632/system.spec][if1632/user.spec]
+	ChooseFont, RESERVED5, InternalExtractIcon: Marked as stubs
+	ExtractAssociatedIcon, DoEnvironmentSubst, DumpIcon:
+		stub implementations provided 
+	marked storage.dll,storege.sys functions as stubs
+
+	* [include/pe_image.h]
+	Added structures WIN32_builtin and  WIN32_function
+
+	* [include/peexe.h]
+	PE_Import_Directory: renamed reserved fields to 
+		TimeDate, Forwarder, Thunk_List
+
+	* [include/winerror.h]
+	New file.
+
+	* [loader/main.c]
+	called RELAY32_Init
+
+	* [loader/pe_image.c]
+	xmmap: map BSS anonymous
+	dump_imports: renamed to fixup_imports, do the fixup of imported
+	              symbols
+	PE_LoadImage: pass raw data size to xmmap
+
+	* [loader/resource.c]
+	DumpIcon: new function
+
+	* [misc/kernel32.c]
+	New file.
+
+	* [misc/main.c]
+	make stdout and stderr unbuffered
+
+	* [misc/shell.c]
+	DoEnvironmentSubst: new function
+
+	* [objects/font.c]
+	FONT_MatchFont: try oblique if there is no italic
+
+	* [rc/Imakefile][rc/parser.l]
+	yywrap: new function
+	Don't link with libfl.a on Linux
+
+	* [tools/build.c]
+	Added keywords stdcall, subsystem, base
+	GenerateForWin32: new function
+	BuildSpecFiles: call GenerateForWin32 if subsystem is win32
+
+Mon May 15 10:38:14 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+        * [controls/listbox.c] [controls/combo.c] [windows/defwnd.c]
+	Minor fixes.
+	
+	* [misc/message.c] [misc/main.c] [rc/sysres*.rc] [include/texts.h]
+	Rewrote message box handling.
+	
+	* [windows/dialog.c]
+	Dialogs should be invisible until after WM_INITDIALOG is seent.
+	Don't switch to invisible dialog items on a TAB keypress.
+	
+	* [windows/mdi.c]
+	Send WM_NCPAINT message in MDIRestoreChild().
+	
+	* [windows/painting.c]
+	Fixed typo (&& -> &).
+	
+	* [windows/message.c] [if1632/user.spec]
+	Implemented PostAppMessage().
+	
+	* [windows/event.c]
+	SetCapture(0) should act like ReleaseCapture().
+
+Tue May  9 11:55:52 1995     Eddie C. Dost             (ecd@dressler.de)
+
+	* [Imakefile]
+	Changed CDEBUGFLAGS for systems running __ELF__ (temporarily)
+	Added ASFLAGS to exported variables.
+
+	* [debugger/readline/Imakefile]
+	Moved defines for libreadline from DEFINES to EXTRA_DEFINES
+
+	* [memory/local.c] [miscemu/int21.c]
+	Added some more debugging outputs.
+
+Mon May  8 00:55:27 MET DST 1995	  Dag Asheim (dash@ifi.uio.no)
+
+	* [misc/message.c]
+	Fixed a "FIXME" concerning norwegian translation.
+
+Sun May  7 23:25:23 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+	* [*/*]
+        Removed warnings in a couple of files and deleted some obsolete code.
+
+        * [controls/listbox.c]
+        Cleanup, speed improvements & lots of bug fixes.
+
+        * [controls/combo.c]
+	Mostly rewritten. This is still very buggy, but not quite as bad as 
+	before.
+
+        * [include/commdlg.h] [misc/commdlg.c]
+        Removed the need for sysres.dll. Small bug fixes.
+	
+        * [objects/oembitmap.c] [include/bitmaps/<many>] [include/windows.h]
+          [loader/library.c] [loader/main.c] [rc/sysres*.rc]
+        Removed sysres.dll and replaced the remaining bitmaps/icons with
+        XPM equivalents.
+
+        * [misc/message.c] [windows/nonclient.c] [misc/main.c]
+          [if1632/winprocs.spec]
+        "About Wine..." now brings up a standard ShellAbout() window with
+        the Wine icon and the list of contributors.
+	
+	* [misc/shell.c]
+	Fixed ShellAbout()/AboutDialogProc() to show the right icon.
+
+	* [windows/event.c]
+	Small hack for non-alphanumeric keys: Dont't send the ascii value in
+	the WM_KEYDOWN message, but some unused code instead. Should be done
+	properly by sending different codes for each key. The edit control
+	used to get a VK_DELETE message each time the user typed '.'.
+
+	* [windows/class.c]
+	Removed a check for CS_GLOBALCLASS in CLASS_FindClassByName().
+	This used to be no problem, but breaks Resource Workshop in 950403.
+	
+	* [objects/dib.c]
+	New diagnostic for a bug I've been encountering. If it shows up,
+	please report it.
+
+Sun May  7 23:11:18 EDT 1995  William Magro (wmagro@tc.cornell.edu)
+
+	* [objects/color.c]
+	Handle situation when 'dc' exists, but palette mapping
+	does not.  (Fixes kidpix2 demo.)
+
+Sun May  7 03:32:00 1995  Charles M. Hannum  (mycroft@mit.edu)
+
+	* [loader/ldt.c]
+	LDT_Print: Only show the number of entries that the kernel
+	returned. Make this work for NetBSD.
+
+Fri May  5 02:53:26 1995  Charles M. Hannum  (mycroft@mit.edu)
+
+	* [debugger/dbg.y] [include/wine.h] [loader/signal.c]
+	Modify cs and ds selector values for NetBSD-current.
+
+	* [debugger/debug.l]
+	$sp, $esp: Use RN_ESP_AT_SIGNAL rather than RN_ESP.
+
+	* [debugger/regpos.h]
+	Modify sigcontext format for NetBSD-current.
+	SC_ESP: Use RN_ESP_AT_SIGNAL rather than RN_ESP.
+
+	* [include/ldt.h]
+	SELECTOR_TO_ENTRY: Explicitly clear the top half of the selector
+	value, since only 16 bits of it may have been saved.
+
+	* [misc/winsocket.c]
+	Set structure packing with `#pragma pack' to accomodate
+	other/older compilers.
+
+Tue May  2 18:15:01 1995 Paal Beyer (beyer@idt.unit.no)
+	
+	* [misc/commdlg.c]
+	Fixed path-names so when changing directory the listboxes
+	changes too.
+	
+	* [debugger/dbg.y debugger/debug.l wine.ini]
+	Added SymbolTableFile to wine.ini so symbols can be read
+	without standing in the directory containing wine.sym.
+	Added the possibility to specify full name of wine.sym from
+	the debugger prompt.
+
+----------------------------------------------------------------------
 Sat Apr 29 20:42:01 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [controls/static.c]

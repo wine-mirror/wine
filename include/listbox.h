@@ -1,39 +1,70 @@
 /*
- *   List Box definitions
+ *   Listbox definitions
  */
 
-
 typedef struct tagLISTSTRUCT {
-	DRAWITEMSTRUCT 	dis;
-	HANDLE		hMem;
+        MEASUREITEMSTRUCT mis;
+        UINT            itemState;
+        RECT            itemRect;
 	HANDLE		hData;
-	char		*itemText;
+	char            *itemText;
 	struct tagLISTSTRUCT *lpNext;
-} LISTSTRUCT;
-typedef LISTSTRUCT FAR* LPLISTSTRUCT;
+} LISTSTRUCT, *LPLISTSTRUCT;
 
-
-typedef struct tagHEADLIST {
-	UINT	FirstVisible;
-	UINT	ItemsCount;
-	short	ItemsVisible;
-	short	ColumnsVisible;
-	short	ItemsPerColumn;
-	short	ItemFocused;
-	short	PrevFocused;
-	short 	StdItemHeight;
-	short	ColumnsWidth;
-	short	DrawCtlType;
-	void	*lpFirst;
-	DWORD	dwStyle;
-	HWND	hWndLogicParent;
-	HFONT	hFont;
-	BOOL	bRedrawFlag;
+typedef struct {
+	WORD    FirstVisible;
+	WORD    ItemsCount;
+	WORD    ItemsVisible;
+	WORD    ColumnsVisible;
+	WORD    ItemsPerColumn;
+	short   ItemFocused;
+	short   PrevFocused;
+	WORD    StdItemHeight;
+	WORD    ColumnsWidth;
+	WORD    DrawCtlType;
+        WORD    CtlID;
+	LPLISTSTRUCT lpFirst;
+	DWORD   dwStyle;
+	HWND    hParent;
+	HFONT   hFont;
+	BOOL    bRedrawFlag;
 	WORD    iNumStops;
 	LPINT   TabStops;
 	HANDLE  hDrawItemStruct;
-/*	MDESC	*Heap; */
-} HEADLIST;
-typedef HEADLIST FAR* LPHEADLIST;
+        BOOL    needMeasure;
+/*	MDESC   *Heap; */
+} HEADLIST,*LPHEADLIST;
 
+/* shared code between listbox and combo controls */
+extern void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent);
+extern void DestroyListBoxStruct(LPHEADLIST lphl);
 
+extern void ListBoxSendNotification(LPHEADLIST lphl,HWND hwnd, WORD code);
+
+extern BOOL OWNER_DRAWN(LPHEADLIST lphl);
+extern BOOL HasStrings(LPHEADLIST lphl);
+
+extern LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex);
+extern int ListMaxFirstVisible(LPHEADLIST lphl);
+extern int ListBoxScrollToFocus(LPHEADLIST lphl);
+extern int ListBoxAddString(LPHEADLIST lphl, LPSTR newstr);
+extern int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPSTR newstr);
+extern int ListBoxGetText(LPHEADLIST lphl, UINT uIndex, LPSTR OutStr);
+extern DWORD ListBoxGetItemData(LPHEADLIST lphl, UINT uIndex);
+extern int ListBoxSetItemData(LPHEADLIST lphl, UINT uIndex, DWORD ItemData);
+extern int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex);
+extern int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr);
+extern int ListBoxResetContent(LPHEADLIST lphl);
+extern int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex);
+extern int ListBoxSetSel(LPHEADLIST lphl, WORD wIndex, WORD state);
+extern int ListBoxGetSel(LPHEADLIST lphl, WORD wIndex);
+extern int ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPSTR filespec);
+extern int ListBoxGetItemRect(LPHEADLIST lphl, WORD wIndex, LPRECT rect);
+extern int ListBoxSetItemHeight(LPHEADLIST lphl, WORD wIndex, long height);
+extern int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar);
+
+extern void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc,
+			     LPLISTSTRUCT lpls, RECT *rect, WORD itemAction,
+			     WORD itemState);
+extern int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y);
+extern void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls);

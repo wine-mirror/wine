@@ -12,6 +12,7 @@
 #include "bitmap.h"
 #include "palette.h"
 #include "icon.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "color.h"
 #include "debug.h"
@@ -514,13 +515,34 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 	break;
     }
     if (colorMapping) free(colorMapping);
-
-    XPutImage( display, drawable, gc, bmpImage, xSrc, ySrc,
-	       xDest, yDest, width, height );
+    {
+      WORD saved_ds = CURRENT_DS;
+      XPutImage( display, drawable, gc, bmpImage, xSrc, ySrc,
+		xDest, yDest, width, height );
+      if (saved_ds != CURRENT_DS) {
+	fprintf(stderr,"Uh oh. XPutImage clobbered the 16 bit stack.\n"
+		"Please report: %s compression, %d bitplanes!!\n",
+		info->bmiHeader.biCompression ? "" : "no", 
+		info->bmiHeader.biBitCount);
+      }
+    }
     XDestroyImage( bmpImage );
     return lines;
 }
 
+
+/***********************************************************************
+ *           StretchDIBits    	(GDI.439)
+ */
+int StretchDIBits( HDC hdc, 
+	WORD xDest, WORD yDest, WORD wDestWidth, WORD wDestHeight,
+	WORD xSrc, WORD ySrc, WORD wSrcWidth, WORD wSrcHeight,
+	LPSTR bits, LPBITMAPINFO info, WORD wUsage, DWORD dwRop )
+{
+	printf("StretchDIBits // call SetDIBitsToDevice for now !!!!\n");
+	return SetDIBitsToDevice(hdc, xDest, yDest, wDestWidth, wDestHeight,
+		xSrc, ySrc, 1, 1, bits, info, wUsage);
+}
 
 /***********************************************************************
  *           SetDIBits    (GDI.440)
@@ -578,6 +600,7 @@ int SetDIBitsToDevice( HDC hdc, short xDest, short yDest, WORD cx, WORD cy,
 			     dc->w.DCOrgY + YLPTODP( dc, yDest ),
 			     cx, cy );
 }
+
 
 
 /***********************************************************************

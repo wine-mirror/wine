@@ -22,6 +22,9 @@ id	5
  22 pascal ShellAbout(word ptr ptr word) ShellAbout
  33 pascal AboutDlgProc(word word word long) AboutDlgProc
  34 pascal ExtractIcon(word ptr s_word) ExtractIcon
+ 36 pascal ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon
+ 37 pascal DoEnvironmentSubst(ptr word word) DoEnvironmentSubst
+ 39 stub InternalExtractIcon
 102 pascal RegisterShellHook(ptr) RegisterShellHook
 103 pascal ShellHookProc() ShellHookProc
 

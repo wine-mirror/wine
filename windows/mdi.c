@@ -58,6 +58,19 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
     }
 }
 
+
+/**********************************************************************
+ *					MDIIconArrange
+ */
+WORD
+MDIIconArrange(HWND parent)
+{
+  return ArrangeIconicWindows(parent);		/* Any reason why the    */
+						/* existing icon arrange */
+						/* can't be used here?	 */
+						/* -DRP			 */
+}
+
 /**********************************************************************
  *					MDICreateChild
  */
@@ -66,12 +79,19 @@ MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 {
     MDICREATESTRUCT *cs = (MDICREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
     HWND hwnd;
+    int spacing;
 
     /*
      * Create child window
      */
     cs->style &= (WS_MINIMIZE | WS_MAXIMIZE | WS_HSCROLL | WS_VSCROLL);
-    
+
+				/* The child windows should probably  */
+				/* stagger, shouldn't they? -DRP      */
+    spacing = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
+    cs->x = ci->nActiveChildren * spacing;  
+    cs->y = ci->nActiveChildren * spacing;
+
     hwnd = CreateWindowEx(0, PTR_SEG_TO_LIN(cs->szClass),
                           PTR_SEG_TO_LIN(cs->szTitle), 
 			  WS_CHILD | WS_BORDER | WS_CAPTION | WS_CLIPSIBLINGS |
@@ -293,6 +313,7 @@ LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
 
     ShowWindow(child, SW_RESTORE);		/* display the window */
     MDIBringChildToTop(parent, child, FALSE, FALSE);
+    SendMessage(GetParent(parent), WM_NCPAINT, 0, 0);
 
     return 0;
 }
@@ -612,8 +633,7 @@ MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 		((LONG) ci->flagChildMaximized << 16));
 
       case WM_MDIICONARRANGE:
-	/* return MDIIconArrange(...) */
-	break;
+	return MDIIconArrange(hwnd);
 	
       case WM_MDIMAXIMIZE:
 	return MDIMaximizeChild(hwnd, wParam, ci);

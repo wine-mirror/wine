@@ -6,11 +6,12 @@
 #include <string.h>
 #include <unistd.h>
 #include "windows.h"
-#include "library.h"
 #include "shell.h"
 #include "neexe.h"
 #include "selectors.h"
 #include "../rc/sysres.h"
+#include "dlgs.h"
+#include "dialog.h"
 #include "stddebug.h"
 /* #define DEBUG_REG */
 #include "debug.h"
@@ -312,7 +313,7 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
  */
 void DragAcceptFiles(HWND hWnd, BOOL b)
 {
-	dprintf_reg(stdnimp, "DragAcceptFiles : Empty Stub !!!\n");
+	fprintf(stdnimp, "DragAcceptFiles : Empty Stub !!!\n");
 }
 
 
@@ -321,7 +322,7 @@ void DragAcceptFiles(HWND hWnd, BOOL b)
  */
 void DragQueryFile(HDROP h, UINT u, LPSTR u2, UINT u3)
 {
-	dprintf_reg(stdnimp, "DragQueryFile : Empty Stub !!!\n");
+	fprintf(stdnimp, "DragQueryFile : Empty Stub !!!\n");
 
 }
 
@@ -331,8 +332,7 @@ void DragQueryFile(HDROP h, UINT u, LPSTR u2, UINT u3)
  */
 void DragFinish(HDROP h)
 {
-	dprintf_reg(stdnimp, "DragFinish : Empty Stub !!!\n");
-
+	fprintf(stdnimp, "DragFinish : Empty Stub !!!\n");
 }
 
 
@@ -341,7 +341,7 @@ void DragFinish(HDROP h)
  */
 BOOL DragQueryPoint(HDROP h, POINT FAR *p)
 {
-	dprintf_reg(stdnimp, "DragQueryPoinyt : Empty Stub !!!\n");
+	fprintf(stdnimp, "DragQueryPoint : Empty Stub !!!\n");
         return FALSE;
 }
 
@@ -351,12 +351,14 @@ BOOL DragQueryPoint(HDROP h, POINT FAR *p)
  */
 HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int iShowCmd)
 {
-	dprintf_reg(stdnimp, "ShellExecute // hWnd=%04X\n", hWnd);
-	dprintf_reg(stdnimp, "ShellExecute // lpOperation='%s'\n", lpOperation);
-	dprintf_reg(stdnimp, "ShellExecute // lpFile='%s'\n", lpFile);
-	dprintf_reg(stdnimp, "ShellExecute // lpParameters='%s'\n", lpParameters);
-	dprintf_reg(stdnimp, "ShellExecute // lpDirectory='%s'\n", lpDirectory);
-	dprintf_reg(stdnimp, "ShellExecute // iShowCmd=%04X\n", iShowCmd);
+        fprintf(stdnimp, "ShellExecute: empty stub\n");
+        return 2;
+	fprintf(stdnimp, "ShellExecute // hWnd=%04X\n", hWnd);  
+	fprintf(stdnimp, "ShellExecute // lpOperation='%s'\n", lpOperation);
+	fprintf(stdnimp, "ShellExecute // lpFile='%s'\n", lpFile);
+	fprintf(stdnimp, "ShellExecute // lpParameters='%s'\n", lpParameters);
+	fprintf(stdnimp, "ShellExecute // lpDirectory='%s'\n", lpDirectory);
+	fprintf(stdnimp, "ShellExecute // iShowCmd=%04X\n", iShowCmd);
 	return 2; /* file not found */
 }
 
@@ -366,58 +368,57 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
  */
 HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 {
-	dprintf_reg(stdnimp, "FindExecutable : Empty Stub !!!\n");
+	fprintf(stdnimp, "FindExecutable : Empty Stub !!!\n");
         return 0;
 }
 
-char AppName[256], AppMisc[256];
-INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam);
-
-/*************************************************************************
- *				ShellAbout		[SHELL.22]
- */
-INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
-{
-/*	fprintf(stderr, "ShellAbout ! (%s, %s)\n", szApp, szOtherStuff);*/
-
-	if (szApp)
-		strcpy(AppName, szApp);
-	else
-		*AppName = 0;
-
-	if (szOtherStuff)
-		strcpy(AppMisc, szOtherStuff);
-	else
-		*AppMisc = 0;
-
-	return DialogBoxIndirectPtr( GetWindowWord(hWnd, GWW_HINSTANCE),
-                                     sysres_DIALOG_SHELL_ABOUT_MSGBOX,
-                                     hWnd, GetWndProcEntry16("AboutDlgProc"));
-}
-
+static char AppName[512], AppMisc[512];
 
 /*************************************************************************
  *				AboutDlgProc		[SHELL.33]
  */
 INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
 {
-	char temp[256];
+  switch(msg) {
+   case WM_INITDIALOG:
+    SendDlgItemMessage(hWnd,stc1,STM_SETICON,LOWORD(lParam),0);
+    SetWindowText(hWnd, AppName);
+    SetWindowText(GetDlgItem(hWnd,100), AppMisc);
+    return 1;
+    
+   case WM_COMMAND:
+    switch (wParam) {
+     case IDOK:
+      EndDialog(hWnd, TRUE);
+      return TRUE;
+    }
+    break;
+  }
+  return FALSE;
+}
 
-	switch(msg) {
-        case WM_INITDIALOG:
-		sprintf(temp, "About %s", AppName);
-		SetWindowText(hWnd, temp);
-                SetWindowText(GetDlgItem(hWnd,100), AppMisc );
-		break;
-
-        case WM_COMMAND:
-		switch (wParam) {
-		case IDOK:
-			EndDialog(hWnd, TRUE);
-			return TRUE;
-		}
-	}
-	return FALSE;
+/*************************************************************************
+ *				ShellAbout		[SHELL.22]
+ */
+INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
+{
+  if (szApp) {
+    sprintf(AppName, "About %s", szApp);
+  } else  {
+    *AppName = 0;
+  }
+  if (szOtherStuff) {
+    strcpy(AppMisc, szOtherStuff);
+  } else {
+    *AppMisc = 0;
+  }
+  if (!hIcon) {
+    hIcon = LoadIcon(0,MAKEINTRESOURCE(OIC_WINEICON));
+  }
+  return DialogBoxIndirectParamPtr(GetWindowWord(hWnd, GWW_HINSTANCE),
+				   sysres_DIALOG_SHELL_ABOUT_MSGBOX,
+				   hWnd, GetWndProcEntry16("AboutDlgProc"),
+				   hIcon);
 }
 
 /*************************************************************************
@@ -425,24 +426,23 @@ INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
  */
 HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 {
-	int		count;
 	HICON	hIcon = 0;
 	HINSTANCE hInst2 = hInst;
 	dprintf_reg(stddeb, "ExtractIcon(%04X, '%s', %d\n", 
 			hInst, lpszExeFileName, nIconIndex);
 	if (lpszExeFileName != NULL) {
 		hInst2 = LoadLibrary(lpszExeFileName);
-		}
+	}
 	if (hInst2 != 0 && nIconIndex == (UINT)-1) {
 #if 0
 		count = GetRsrcCount(hInst2, NE_RSCTYPE_GROUP_ICON);
 		dprintf_reg(stddeb, "ExtractIcon // '%s' has %d icons !\n", lpszExeFileName, count);
 		return (HICON)count;
 #endif
-		}
+	}
 	if (hInst2 != hInst && hInst2 != 0) {
 		FreeLibrary(hInst2);
-		}
+	}
 	return hIcon;
 }
 
@@ -452,8 +452,20 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
  */
 HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
 {
-	dprintf_reg(stdnimp, "ExtractAssociatedIcon : Empty Stub !!!\n");
-        return 0;
+    dprintf_reg(stdnimp, "ExtractAssociatedIcon : Empty Stub !!!\n");
+    return 0;
+}
+
+/*************************************************************************
+ *              DoEnvironmentSubst      [SHELL.37]
+ * I couldn't find any reference, so even the number of bytes on the
+ * stack might be wrong
+ */
+WORD DoEnvironmentSubst(LPSTR a,WORD b,WORD c)
+{
+    printf(stderr, "DoEnvironmentSubst: Unknown argument count\n");
+    dprintf_reg(stdnimp, "DoEnvironmentSubst %x %x %x\n",a,b,c);
+    return 0;
 }
 
 /*************************************************************************

@@ -44,7 +44,6 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
  */
 LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
-    MEASUREITEMSTRUCT *measure;
     CLASS * classPtr;
     LPSTR textPtr;
     int len;
@@ -233,26 +232,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	break;
 
     case WM_SYSKEYUP:
-		break;    	
-    case WM_MEASUREITEM:
-		measure = (MEASUREITEMSTRUCT *)PTR_SEG_TO_LIN(lParam);
-		switch(measure->CtlType) {
-			case ODT_BUTTON:
-				break;
-			case ODT_COMBOBOX:
-				measure->itemHeight = 10;
-/*				printf("defwndproc WM_MEASUREITEM // ODT_COMBOBOX !\n");*/
-				break;
-			case ODT_LISTBOX:
-				measure->itemHeight = 10;
-/*				printf("defwndproc WM_MEASUREITEM // ODT_LISTBOX !\n");*/
-				break;
-			case ODT_MENU:
-				break;
-			default:
-				break;
-			}
-    	break;    	
+		break;
     }
     return 0;
 }

@@ -25,17 +25,12 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "options.h"
 #include "desktop.h"
 #include "prototypes.h"
-#include "texts.h"
-#include "library.h"
 #include "dlls.h"
-#include "if1632.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
 
-extern ButtonTexts ButtonText;
-
-static const char people[] = "Wine is available thanks to the work of "\
+const char people[] = "Wine is available thanks to the work of "\
 "Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, "\
 "John Brezak, Andrew Bulhak, John Burton, Paul Falstad, Olaf Flebbe, "\
 "Peter Galbavy, Cameron Heide, Jeffrey Hsu, Miguel de Icaza, "\
@@ -50,13 +45,12 @@ static const char people[] = "Wine is available thanks to the work of "\
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
 typedef struct tagENVENTRY {
-	LPSTR				Name;
-	LPSTR				Value;
-	WORD				wSize;
-	struct tagENVENTRY	*Prev;
-	struct tagENVENTRY	*Next;
-	} ENVENTRY;
-typedef ENVENTRY *LPENVENTRY;
+  LPSTR	       	        Name;
+  LPSTR	       	        Value;
+  WORD	       	        wSize;
+  struct tagENVENTRY    *Prev;
+  struct tagENVENTRY    *Next;
+} ENVENTRY, *LPENVENTRY;
 
 LPENVENTRY	lpEnvList = NULL;
 
@@ -77,7 +71,8 @@ struct options Options =
     FALSE,          /* backing store */
     SW_SHOWNORMAL,  /* cmdShow */
     FALSE,
-    FALSE           /* AllowReadOnly */
+    FALSE,          /* AllowReadOnly */
+    FALSE           /* Enhanced mode */
 };
 
 
@@ -95,7 +90,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
-    { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" }
+    { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" },
+    { "-enhanced",      ".enhanced",        XrmoptionNoArg,  (caddr_t)"off"}
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -114,10 +110,10 @@ static XrmOptionDescRec optionsTable[] =
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -backingstore   Turn on backing store\n" \
   "    -spy file       Turn on message spying to the specified file\n" \
-  "    -relaydbg       Obsolete. Use -debugmsg +relay instead\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
   "    -dll name       Enable or disable built-in DLLs\n" \
-  "    -allowreadonly  Read only files may be opened in write mode\n"
+  "    -allowreadonly  Read only files may be opened in write mode\n" \
+  "    -enhanced       Start wine in enhanced mode\n"
 
 
 
@@ -177,53 +173,6 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
     return retval;
 }
 
-
-/***********************************************************************
- *           MAIN_GetButtonText
- *
- * Fetch the value of resource 'name' using the correct instance name.
- * 'name' must begin with '.' or '*'
- *
- * The address of the string got from the XResoure is stored in Button.Label.
- * The corresponding hotkey is taken from this string.
- */
-
-static void MAIN_GetButtonText( XrmDatabase db, char *name, ButtonDesc *Button)
-{
-    XrmValue value;
-    char *i;
-
-    if (MAIN_GetResource( db, name, &value))
-      {
-       Button->Label = value.addr;
-       i = strchr(Button->Label,'&');
-       if ( i == NULL )
-         Button->Hotkey = '\0';
-       else if ( i++ == '\0' )
-         Button->Hotkey = '\0';
-       else
-         Button->Hotkey = *i;
-      }
-    Button->Hotkey = toupper(Button->Hotkey);
-}
-
-/***********************************************************************
- *           MAIN_GetAllButtonTexts
- *
- * Read all Button-labels from X11-resources if they exist.
- */
-
-static void MAIN_GetAllButtonTexts(XrmDatabase db)
-{
-  MAIN_GetButtonText(db, ".YesLabel",    &ButtonText.Yes);
-  MAIN_GetButtonText(db, ".NoLabel",     &ButtonText.No);
-  MAIN_GetButtonText(db, ".OkLabel",     &ButtonText.Ok);
-  MAIN_GetButtonText(db, ".CancelLabel", &ButtonText.Cancel);
-  MAIN_GetButtonText(db, ".AbortLabel",  &ButtonText.Abort);
-  MAIN_GetButtonText(db, ".RetryLabel",  &ButtonText.Retry);
-  MAIN_GetButtonText(db, ".IgnoreLabel", &ButtonText.Ignore);
-  MAIN_GetButtonText(db, ".CancelLabel", &ButtonText.Cancel);
-}
 
 /***********************************************************************
  *                    ParseDebugOptions
@@ -294,9 +243,9 @@ static BOOL MAIN_ParseDLLOptions(char *options)
       l=strchr(options,',')-options;
     else l=strlen(options);
     for (i=0;i<N_BUILTINS;i++)
-         if (!strncasecmp(options+1,dll_builtin_table[i].dll_name,l-1))
+         if (!strncasecmp(options+1,dll_builtin_table[i].name,l-1))
            {
-             dll_builtin_table[i].dll_is_used=(*options=='+');
+             dll_builtin_table[i].used = (*options=='+');
              break;
            }
     if (i==N_BUILTINS)
@@ -360,6 +309,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.debug = TRUE;
     if (MAIN_GetResource( db, ".allowreadonly", &value ))
         Options.allowReadOnly = TRUE;
+    if (MAIN_GetResource( db, ".enhanced", &value ))
+        Options.enhanced = TRUE;
     if (MAIN_GetResource( db, ".spy", &value))
 	Options.spyFilename = value.addr;
     if (MAIN_GetResource( db, ".depth", &value))
@@ -403,14 +354,11 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
          fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
          fprintf(stderr,"Available DLLs\n");
          for(i=0;i<N_BUILTINS;i++)
-               fprintf(stderr,"%-9s%c",dll_builtin_table[i].dll_name,
+               fprintf(stderr,"%-9s%c",dll_builtin_table[i].name,
                        (((i+2)%8==0)?'\n':' '));
          fprintf(stderr,"\n\n");
          exit(1);
        }
-
-/*    MAIN_GetAllButtonTexts(db); */
- 
 }
 
 
@@ -531,6 +479,9 @@ int main( int argc, char *argv[] )
     int depth_count, i;
     int *depth_list;
 
+	setbuf(stdout,NULL);
+	setbuf(stderr,NULL);
+
     setlocale(LC_CTYPE,"");
 
     XrmInitialize();
@@ -607,7 +558,10 @@ LONG GetVersion(void)
  */
 LONG GetWinFlags(void)
 {
-	return (WF_STANDARD | WF_CPU286 | WF_PMODE | WF_80x87);
+  if (Options.enhanced)
+    return (WF_STANDARD | WF_ENHANCED | WF_CPU286 | WF_PMODE | WF_80x87);
+  else
+    return (WF_STANDARD | WF_CPU286 | WF_PMODE | WF_80x87);
 }
 
 /***********************************************************************

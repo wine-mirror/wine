@@ -1,6 +1,7 @@
 /*
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995 Alexandre Julliard
+ * Copyright 1995 Martin von Loewis
  */
 
 #include <stdio.h>
@@ -28,6 +29,7 @@
 #define TYPE_ABS         7
 #define TYPE_RETURN      8
 #define TYPE_STUB        9
+#define TYPE_STDCALL    10
 
 #define MAX_ORDINALS	1299
 
@@ -67,6 +69,7 @@ char LowerDLLName[80];
 char UpperDLLName[80];
 int Limit = 0;
 int DLLId;
+int Base = 0;
 FILE *SpecFp;
 
 char *ParseBuffer = NULL;
@@ -410,7 +413,9 @@ static int ParseOrdinal(int ordinal)
     else if (strcmp(token, "pascal16") == 0)
 	return ParseExportFunction(ordinal, TYPE_PASCAL_16);
     else if (strcmp(token, "register") == 0)
-	return ParseExportFunction(ordinal, TYPE_REGISTER);
+        return ParseExportFunction(ordinal, TYPE_REGISTER);
+    else if (strcmp(token, "stdcall") == 0)
+        return ParseExportFunction(ordinal, TYPE_STDCALL);
     else if (strcmp(token, "equate") == 0)
 	return ParseEquate(ordinal);
     else if (strcmp(token, "return") == 0)
@@ -451,6 +456,17 @@ static int ParseTopLevel(void)
 	    
 	    DLLId = atoi(token);
 	}
+	else if (strcmp(token, "base") == 0)
+	{
+		token = GetToken();
+		if (!IsNumberString(token))
+		{
+		fprintf(stderr, "%d: Expected number after base\n", Line);
+		exit(1);
+		}
+
+		Base = atoi(token);
+	}
 	else if (IsNumberString(token))
 	{
 	    int ordinal;
@@ -472,27 +488,25 @@ static int ParseTopLevel(void)
 }
 
 
-static int OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
+static int OutputVariableCode( char *storage, ORDDEF *odp )
 {
     ORDVARDEF *vdp;
     int i;
 
     vdp = odp->additional_data;
-    fprintf( fp, "\t.data\n" );
+    printf( "\t.data\n" );
     for (i = 0; i < vdp->n_values; i++)
     {
 	if ((i & 7) == 0)
-	    fprintf(fp, "\t%s\t", storage);
+	    printf( "\t%s\t", storage);
 	    
-	fprintf(fp, "%d", vdp->values[i]);
+	printf( "%d", vdp->values[i]);
 	
-	if ((i & 7) == 7 || i == vdp->n_values - 1)
-	    fprintf(fp, "\n");
-	else
-	    fprintf(fp, ", ");
+	if ((i & 7) == 7 || i == vdp->n_values - 1) printf( "\n");
+	else printf( ", ");
     }
-    fprintf(fp, "\n");
-    fprintf( fp, "\t.text\n" );
+    printf( "\n");
+    printf( "\t.text\n" );
     return vdp->n_values;
 }
 
@@ -503,7 +517,7 @@ static int OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
  * Build the in-memory representation of the module, and dump it
  * as a byte stream into the assembly code.
  */
-static void BuildModule( FILE *fp, int max_code_offset, int max_data_offset )
+static void BuildModule( int max_code_offset, int max_data_offset )
 {
     ORDDEF *odp;
     int i, size;
@@ -549,7 +563,7 @@ static void BuildModule( FILE *fp, int max_code_offset, int max_data_offset )
     pModule->truetype = 0;
     pModule->os_flags = NE_OSFLAGS_WINDOWS;
     pModule->misc_flags = 0;
-    pModule->reserved = 0;
+    pModule->dlls_to_init  = 0;
     pModule->nrname_handle = 0;
     pModule->min_swap_area = 0;
     pModule->expected_version = 0x030a;
@@ -677,28 +691,151 @@ static void BuildModule( FILE *fp, int max_code_offset, int max_data_offset )
 
       /* Dump the module content */
 
-    fprintf( fp, "\t.data\n" );
-    fprintf( fp, "\t.globl " PREFIX "%s_Module_Start\n", UpperDLLName );
-    fprintf( fp, PREFIX "%s_Module_Start:\n", UpperDLLName );
+    printf( "\t.data\n" );
+    printf( "\t.globl " PREFIX "%s_Module_Start\n", UpperDLLName );
+    printf( PREFIX "%s_Module_Start:\n", UpperDLLName );
     size = (int)pstr - (int)pModule;
     for (i = 0, pstr = buffer; i < size; i++, pstr++)
     {
-        if (!(i & 7)) fprintf( fp, "\t.byte " );
-        fprintf( fp, "%d%c", *pstr, ((i & 7) != 7) ? ',' : '\n' );
+        if (!(i & 7)) printf( "\t.byte " );
+        printf( "%d%c", *pstr, ((i & 7) != 7) ? ',' : '\n' );
     }
-    if (i & 7) fprintf( fp, "0\n" );
-    fprintf( fp, "\t.globl " PREFIX "%s_Module_End\n", UpperDLLName );
-    fprintf( fp, PREFIX "%s_Module_End:\n", UpperDLLName );
+    if (i & 7) printf( "0\n" );
+    printf( "\t.globl " PREFIX "%s_Module_End\n", UpperDLLName );
+    printf( PREFIX "%s_Module_End:\n", UpperDLLName );
 }
 
 
-static void BuildSpecFiles( char *specname)
+static void BuildSpec32Files( char *specname )
 {
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
     ORDRETDEF *rdp;
-    FILE *fp;
-    char filename[80];
+    int i;
+
+    SpecFp = fopen( specname, "r");
+    if (SpecFp == NULL)
+    {
+	fprintf(stderr, "Could not open specification file, '%s'\n", specname);
+	exit(1);
+    }
+
+    ParseTopLevel();
+
+    printf( "/* File generated automatically, do not edit! */\n" );
+    printf( "#include <sys/types.h>\n");
+    printf( "#include \"dlls.h\"\n");
+    printf( "#include \"pe_image.h\"\n");
+    printf( "#include \"winerror.h\"\n");
+    printf( "#include \"stddebug.h\"\n");
+    printf( "#include \"debug.h\"\n");
+    printf( "\nextern int RELAY32_Unimplemented();\n\n" );
+
+    odp = OrdinalDefinitions;
+    for (i = 0; i <= Limit; i++, odp++)
+    {
+        int argno,argc;
+        fdp = odp->additional_data;
+        rdp = odp->additional_data;
+
+        switch (odp->type)
+        {
+        case TYPE_INVALID:
+        case TYPE_STUB:
+            printf( "int %s_%d()\n{\n\t", UpperDLLName, i);
+            printf( "RELAY32_Unimplemented(\"%s\",%d);\n", UpperDLLName, i);
+            printf( "\t/*NOTREACHED*/\n\treturn 0;\n}\n\n");
+            break;
+        case TYPE_STDCALL:
+            argc=strlen(fdp->arg_types);
+            printf( "void %s_%d(", UpperDLLName, i);
+            for(argno=0;argno<argc;argno++)
+            {
+                switch(fdp->arg_types[argno])
+                {
+                case 'p': printf( "void *");break;
+                case 'l': printf( "int ");break;
+                default:
+                    fprintf(stderr, "Not supported argument type %c\n",
+                            fdp->arg_types[argno]);
+                    exit(1);
+                }
+                putchar( 'a'+argno );
+                if (argno!=argc-1) putchar( ',' );
+            }
+            printf( ")\n{\n" );
+            printf( "\textern int %s();\n", fdp->internal_name );
+            printf( "\tdprintf_relay(stddeb,\"Entering %%s.%%s(");
+            for (argno=0;argno<argc;argno++) printf( "%%x ");
+            printf( ")\\n\", \"%s\", \"%s\"", UpperDLLName, odp->export_name);
+            for(argno=0;argno<argc;argno++) printf( ",%c", 'a'+argno);
+            printf( ");\n\t%s(", fdp->internal_name );
+            for(argno=0;argno<argc;argno++)
+            {
+                putchar('a'+argno);
+                if (argno!=argc-1) putchar(',');
+            }
+            printf( ");\n\t__asm__ __volatile__(\"movl %%ebp,%%esp;"
+                    "popl %%ebp;ret $%d\");\n}\n\n",
+                    4*argc);
+            break;
+        case TYPE_RETURN:
+            printf( "void %s_%d()\n{\n\t", UpperDLLName, i);
+            printf( "RELAY32_DebugEnter(\"%s\",\"%s\");\n\t",
+                   UpperDLLName, odp->export_name);
+            printf( "WIN32_LastError=ERROR_CALL_NOT_IMPLEMENTED;\n");
+            printf( "\t__asm__ __volatile__ (\"movl %d,%%eax\");\n", 
+                   rdp->ret_value);
+            printf( "\t__asm__ __volatile__ (\"movl %%ebp,%%esp;popl %%ebp;"
+                    "ret $%d\");\n}\n\n", rdp->arg_size);
+            break;
+        default:
+            fprintf(stderr,"build: function type %d not available for Win32\n",
+                    odp->type);
+            break;
+        }
+    }
+
+    printf( "static WIN32_function functions[%d+1]={\n", Limit);
+
+    odp = OrdinalDefinitions;
+    for (i = 0; i <= Limit; i++, odp++)
+    {
+        fdp = odp->additional_data;
+        rdp = odp->additional_data;
+
+        switch (odp->type)
+        {
+        case TYPE_INVALID:
+            printf( "{0,%s_%d},\n",UpperDLLName, i);
+            break;
+        case TYPE_RETURN:
+        case TYPE_STDCALL:
+        case TYPE_STUB:
+            printf( "{\"%s\",%s_%d},\n", odp->export_name, UpperDLLName, i);
+            break;
+        default:
+            fprintf(stderr, "build: implementation error: missing %d\n",
+                    odp->type);
+            exit(1);
+        }
+    }
+    printf("};\n\n");
+
+    printf( "static WIN32_builtin dll={\"%s\",functions,%d,0};\n",
+            UpperDLLName, Limit);
+
+    printf( "void %s_Init(void)\n{\n",UpperDLLName);
+    printf( "\tdll.next=WIN32_builtin_list;\n");
+    printf( "\tWIN32_builtin_list=&dll;\n}");
+}
+
+
+static void BuildSpec16Files( char *specname )
+{
+    ORDDEF *odp;
+    ORDFUNCDEF *fdp;
+    ORDRETDEF *rdp;
     int i;
     int code_offset, data_offset;
 
@@ -711,17 +848,15 @@ static void BuildSpecFiles( char *specname)
 
     ParseTopLevel();
 
-    sprintf(filename, "dll_%s.S", LowerDLLName);
-    fp = fopen(filename, "w");
-    fprintf( fp, "/* File generated automatically; do not edit! */\n" );
-    fprintf( fp, "\t.data\n" );
-    fprintf( fp, "\t.globl " PREFIX "%s_Data_Start\n", UpperDLLName );
-    fprintf( fp, PREFIX "%s_Data_Start:\n", UpperDLLName );
-    fprintf( fp, "\t.word 0,0,0,0,0,0,0,0\n" );
+    printf( "/* File generated automatically; do not edit! */\n" );
+    printf( "\t.data\n" );
+    printf( "\t.globl " PREFIX "%s_Data_Start\n", UpperDLLName );
+    printf( PREFIX "%s_Data_Start:\n", UpperDLLName );
+    printf( "\t.word 0,0,0,0,0,0,0,0\n" );
     data_offset = 16;
-    fprintf( fp, "\t.text\n" );
-    fprintf( fp, "\t.globl " PREFIX "%s_Code_Start\n", UpperDLLName );
-    fprintf( fp, PREFIX "%s_Code_Start:\n", UpperDLLName );
+    printf( "\t.text\n" );
+    printf( "\t.globl " PREFIX "%s_Code_Start\n", UpperDLLName );
+    printf( PREFIX "%s_Code_Start:\n", UpperDLLName );
     code_offset = 0;
 
     odp = OrdinalDefinitions;
@@ -741,32 +876,32 @@ static void BuildSpecFiles( char *specname)
             break;
 
           case TYPE_BYTE:
-            fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", UpperDLLName, i);
             odp->offset = data_offset;
-            data_offset += OutputVariableCode(fp, ".byte", odp);
+            data_offset += OutputVariableCode( ".byte", odp);
             break;
 
           case TYPE_WORD:
-            fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", UpperDLLName, i);
             odp->offset = data_offset;
-            data_offset += 2 * OutputVariableCode(fp, ".word", odp);
+            data_offset += 2 * OutputVariableCode( ".word", odp);
             break;
 
           case TYPE_LONG:
-            fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", UpperDLLName, i);
             odp->offset = data_offset;
-            data_offset += 4 * OutputVariableCode(fp, ".long", odp);
+            data_offset += 4 * OutputVariableCode( ".long", odp);
             break;
 
           case TYPE_RETURN:
-            fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
-            fprintf( fp, "\tmovw $%d,%%ax\n", rdp->ret_value & 0xffff );
-            fprintf( fp, "\tmovw $%d,%%dx\n", (rdp->ret_value >> 16) & 0xffff);
-            fprintf(fp, "\t.byte 0x66\n");
+            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "\tmovw $%d,%%ax\n", rdp->ret_value & 0xffff );
+            printf( "\tmovw $%d,%%dx\n", (rdp->ret_value >> 16) & 0xffff);
+            printf( "\t.byte 0x66\n");
             if (rdp->arg_size != 0)
-                fprintf(fp, "\tlret $%d\n", rdp->arg_size);
+                printf( "\tlret $%d\n", rdp->arg_size);
             else
-                fprintf(fp, "\tlret\n");
+                printf( "\tlret\n");
             odp->offset = code_offset;
             code_offset += 10;  /* Assembly code is 10 bytes long */
             if (rdp->arg_size != 0) code_offset += 2;
@@ -776,17 +911,22 @@ static void BuildSpecFiles( char *specname)
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
           case TYPE_STUB:
-            fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
-            fprintf(fp, "\tpushw %%bp\n" );
-            fprintf(fp, "\tpushl $0x%08x\n", (DLLId << 16) | i);
-            fprintf(fp, "\tpushl $" PREFIX "%s\n", fdp->internal_name );
-            fprintf(fp, "\tljmp $0x%04x, $" PREFIX "CallTo32_%s_%s\n\n",
-                        WINE_CODE_SELECTOR,
-                        (odp->type == TYPE_REGISTER) ? "regs" :
-                        (odp->type == TYPE_PASCAL) ? "long" : "word",
-                        fdp->arg_types );
+            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "\tpushw %%bp\n" );
+            printf( "\tpushl $0x%08x\n", (DLLId << 16) | i);
+            printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
+            printf( "\tljmp $0x%04x, $" PREFIX "CallTo32_%s_%s\n\n",
+                    WINE_CODE_SELECTOR,
+                    (odp->type == TYPE_REGISTER) ? "regs" :
+                    (odp->type == TYPE_PASCAL) ? "long" : "word",
+                    fdp->arg_types );
+            printf( "\tnop\n" );
+            printf( "\tnop\n" );
+            printf( "\tnop\n" );
+            printf( "\tnop\n" );
+            printf( "\tnop\n" );
             odp->offset = code_offset;
-            code_offset += 19;  /* Assembly code is 19 bytes long */
+            code_offset += 24;  /* Assembly code is 24 bytes long */
             break;
 		
           default:
@@ -797,74 +937,11 @@ static void BuildSpecFiles( char *specname)
 
     if (!code_offset)  /* Make sure the code segment is not empty */
     {
-        fprintf( fp, "\t.byte 0\n" );
+        printf( "\t.byte 0\n" );
         code_offset++;
     }
 
-    BuildModule( fp, code_offset, data_offset );
-
-    fclose(fp);
-
-    sprintf(filename, "tab_%s.c", LowerDLLName);
-    fp = fopen(filename, "w");
-
-    fprintf( fp, "/* File generated automatically; do not edit! */\n\n" );
-    fprintf( fp, "#include \"dlls.h\"\n\n" );
-    fprintf( fp, "static struct dll_table_entry_s %s_table_entries[%d] =\n{\n",
-                 UpperDLLName, Limit + 1);
-    odp = OrdinalDefinitions;
-    for (i = 0; i <= Limit; i++, odp++)
-    {
-        int selector = 0;
-
-	switch (odp->type)
-	{
-        case TYPE_INVALID:
-            selector = 0;  /* Invalid selector */
-            break;
-
-        case TYPE_PASCAL:
-        case TYPE_PASCAL_16:
-        case TYPE_REGISTER:
-        case TYPE_RETURN:
-        case TYPE_STUB:
-            selector = 1;  /* Code selector */
-            break;
-
-        case TYPE_BYTE:
-        case TYPE_WORD:
-        case TYPE_LONG:
-            selector = 2;  /* Data selector */
-            break;
-
-        case TYPE_ABS:
-            selector = 0xff;  /* Constant selector */
-            break;
-        }
-
-/*         fprintf(fp, "    { %d, %d, ", selector, odp->offset ); */
-        fprintf( fp, "    { " );
-        fprintf(fp, "\"%s\" ", odp->export_name);
-#ifdef WINESTAT
-        fprintf(fp, ",0 ");
-#endif	    
-        fprintf(fp, "}, \n");
-    }
-
-    fprintf(fp, "};\n\n");
-
-    fprintf( fp, "extern BYTE %s_Code_Start[];\n", UpperDLLName );
-    fprintf( fp, "extern BYTE %s_Data_Start[];\n", UpperDLLName );
-    fprintf( fp, "extern BYTE %s_Module_Start[];\n", UpperDLLName );
-    fprintf( fp, "extern BYTE %s_Module_End[];\n\n", UpperDLLName );
-    fprintf( fp, "struct dll_table_s %s_table =\n{\n", UpperDLLName );
-    fprintf( fp, "  %s_table_entries, %d, %d,\n",
-             UpperDLLName, Limit + 1, DLLId );
-    fprintf( fp, "  %s_Code_Start, %s_Data_Start,\n",
-             UpperDLLName, UpperDLLName );
-    fprintf( fp, "  %s_Module_Start, %s_Module_End\n};\n",
-             UpperDLLName, UpperDLLName );
-    fclose(fp);
+    BuildModule( code_offset, data_offset );
 }
 
 
@@ -1410,9 +1487,13 @@ int main(int argc, char **argv)
 
     if (argc <= 2) usage();
 
-    if (!strcmp( argv[1], "-spec" ))
+    if (!strcmp( argv[1], "-spec16" ))
     {
-        for (i = 2; i < argc; i++) BuildSpecFiles( argv[i] );
+        for (i = 2; i < argc; i++) BuildSpec16Files( argv[i] );
+    }
+    else if (!strcmp( argv[1], "-spec32" ))
+    {
+        for (i = 2; i < argc; i++) BuildSpec32Files( argv[i] );
     }
     else if (!strcmp( argv[1], "-call32" ))  /* 32-bit callbacks */
     {

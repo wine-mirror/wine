@@ -13,7 +13,7 @@
 
 ldt_copy_entry ldt_copy[LDT_SIZE] = { {0,0}, };
 
-#define FIRST_LDT_ENTRY_TO_ALLOC  4
+#define FIRST_LDT_ENTRY_TO_ALLOC  6
 
 
 /***********************************************************************

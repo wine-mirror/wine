@@ -18,6 +18,11 @@
 
 
   /* Include OEM pixmaps */
+#include "bitmaps/obm_cdrom"
+#include "bitmaps/obm_harddisk"
+#include "bitmaps/obm_drive"
+#include "bitmaps/obm_folder2"
+#include "bitmaps/obm_folder"
 #include "bitmaps/obm_lfarrowi"
 #include "bitmaps/obm_rgarrowi"
 #include "bitmaps/obm_dnarrowi"
@@ -53,7 +58,7 @@
 #include "bitmaps/obm_size"
 #include "bitmaps/obm_old_close"
 
-#define OBM_FIRST  OBM_LFARROWI    /* First OEM bitmap */
+#define OBM_FIRST  OBM_CDROM      /* First OEM bitmap */
 #define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
 
 static const struct
@@ -61,6 +66,11 @@ static const struct
     char** data;   /* Pointer to bitmap data */
     BOOL   color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
+    { obm_cdrom, TRUE },        /* OBM_CDROM    */
+    { obm_harddisk, TRUE },     /* OBM_HARDDISK */
+    { obm_drive, TRUE },        /* OBM_DRIVE    */
+    { obm_folder2, TRUE },      /* OBM_FOLDER2  */
+    { obm_folder, TRUE },       /* OBM_FOLDER   */
     { obm_lfarrowi, TRUE },     /* OBM_LFARROWI */
     { obm_rgarrowi, TRUE },     /* OBM_RGARROWI */
     { obm_dnarrowi, TRUE },     /* OBM_DNARROWI */
@@ -104,9 +114,12 @@ static const struct
 #include "bitmaps/oic_ques"
 #include "bitmaps/oic_bang"
 #include "bitmaps/oic_note"
+#include "bitmaps/oic_portrait"
+#include "bitmaps/oic_landscape"
+#include "bitmaps/oic_wineicon"
 
 #define OIC_FIRST  OIC_SAMPLE      /* First OEM icon */
-#define OIC_LAST   OIC_NOTE        /* Last OEM icon */
+#define OIC_LAST   OIC_WINEICON   /* Last OEM icon */
 
 static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 {
@@ -114,7 +127,10 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
     oic_hand,      /* OIC_HAND */
     oic_ques,      /* OIC_QUES */
     oic_bang,      /* OIC_BANG */
-    oic_note       /* OIC_NOTE */
+    oic_note,      /* OIC_NOTE */
+    oic_portrait,  /* OIC_PORTRAIT */
+    oic_landscape, /* OIC_LANDSCAPE */
+    oic_wineicon   /* OIC_WINEICON */
 };
 
 
@@ -137,6 +153,12 @@ static const struct
     { "green",            RGB(0,255,0) },
     { "blue",             RGB(0,0,255) },
     { "yellow",           RGB(255,255,0) },
+    { "cyan",             RGB(0,255,255) },    
+    { "dkyellow",         RGB(128,128,0) },
+    { "purple",           RGB(128,0,128) },
+    { "ltgray",           RGB(192,192,192) },
+    { "dkgray",           RGB(128,128,128) },
+    { "foldercol",        RGB(0,191,191) },
     { "button_face",      PALETTEINDEX(COLOR_BTNFACE) },
     { "button_shadow",    PALETTEINDEX(COLOR_BTNSHADOW) },
     { "button_highlight", PALETTEINDEX(COLOR_BTNHIGHLIGHT) },

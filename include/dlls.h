@@ -12,9 +12,6 @@
 #define MAX_NAME_LENGTH		64
 
 
-struct ne_data {
-    struct ne_header_s *ne_header;
-};
 
 struct pe_data {
 	struct pe_header_s *pe_header;
@@ -36,7 +33,6 @@ struct w_files
     HANDLE hModule;
     int initialised;
     struct mz_header_s *mz_header;
-    struct ne_data *ne;
     struct pe_data *pe;
 };
 
@@ -45,64 +41,52 @@ extern struct  w_files *wine_files;
 #define DLL	0
 #define EXE	1
 
-struct dll_table_entry_s
-{
-    /*
-     * 16->32 bit interface data
-     */
-    char *export_name;
-#ifdef WINESTAT
-    int used;			/* Number of times this function referenced */
-#endif
-};
 
 struct dll_table_s
 {
-    struct dll_table_entry_s *dll_table;
-    int dll_table_length;
-    int dll_number;
-    BYTE *code_start;    /* 32-bit address of DLL code */
-    BYTE *data_start;    /* 32-bit address of DLL data */
-    BYTE *module_start;  /* 32-bit address of the module data */
-    BYTE *module_end;
-    HMODULE hModule;
+    char *  name;          /* DLL name */
+    BYTE *  code_start;    /* 32-bit address of DLL code */
+    BYTE *  data_start;    /* 32-bit address of DLL data */
+    BYTE *  module_start;  /* 32-bit address of the module data */
+    BYTE *  module_end;
+    BOOL    used;          /* use MS provided if FALSE */
+    HMODULE hModule;       /* module created for this DLL */
 };
 
-struct dll_name_table_entry_s
-{
-    char *dll_name;
-    struct dll_table_s *table;
-    int dll_is_used;   /* use MS provided if set to zero */
-};
+#define DECLARE_DLL(name) \
+extern BYTE name##_Code_Start[]; \
+extern BYTE name##_Data_Start[]; \
+extern BYTE name##_Module_Start[]; \
+extern BYTE name##_Module_End[];
 
-extern struct dll_table_s KERNEL_table;
-extern struct dll_table_s USER_table;
-extern struct dll_table_s GDI_table;
-extern struct dll_table_s WIN87EM_table;
-extern struct dll_table_s MMSYSTEM_table;
-extern struct dll_table_s SHELL_table;
-extern struct dll_table_s SOUND_table;
-extern struct dll_table_s KEYBOARD_table;
-extern struct dll_table_s WINSOCK_table;
-extern struct dll_table_s STRESS_table;
-extern struct dll_table_s SYSTEM_table;
-extern struct dll_table_s TOOLHELP_table;
-extern struct dll_table_s MOUSE_table;
-extern struct dll_table_s COMMDLG_table;
-extern struct dll_table_s OLE2_table;
-extern struct dll_table_s OLE2CONV_table;
-extern struct dll_table_s OLE2DISP_table;
-extern struct dll_table_s OLE2NLS_table;
-extern struct dll_table_s OLE2PROX_table;
-extern struct dll_table_s OLECLI_table;
-extern struct dll_table_s OLESVR_table;
-extern struct dll_table_s COMPOBJ_table;
-extern struct dll_table_s STORAGE_table;
-extern struct dll_table_s WINPROCS_table;
-extern struct dll_table_s DDEML_table;
+DECLARE_DLL(KERNEL)
+DECLARE_DLL(USER)
+DECLARE_DLL(GDI)
+DECLARE_DLL(WIN87EM)
+DECLARE_DLL(MMSYSTEM)
+DECLARE_DLL(SHELL)
+DECLARE_DLL(SOUND)
+DECLARE_DLL(KEYBOARD)
+DECLARE_DLL(WINSOCK)
+DECLARE_DLL(STRESS)
+DECLARE_DLL(SYSTEM)
+DECLARE_DLL(TOOLHELP)
+DECLARE_DLL(MOUSE)
+DECLARE_DLL(COMMDLG)
+DECLARE_DLL(OLE2)
+DECLARE_DLL(OLE2CONV)
+DECLARE_DLL(OLE2DISP)
+DECLARE_DLL(OLE2NLS)
+DECLARE_DLL(OLE2PROX)
+DECLARE_DLL(OLECLI)
+DECLARE_DLL(OLESVR)
+DECLARE_DLL(COMPOBJ)
+DECLARE_DLL(STORAGE)
+DECLARE_DLL(WINPROCS)
+DECLARE_DLL(DDEML)
 
 #define N_BUILTINS	25
 
+extern struct dll_table_s dll_builtin_table[];
+
 #endif /* DLLS_H */
-
-

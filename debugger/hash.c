@@ -10,12 +10,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <neexe.h>
+#include "module.h"
 #include "selectors.h"
-#include <wine.h>
-#include <dlls.h>
+#include "wine.h"
 
 struct  name_hash{
 	struct name_hash * next;
+        unsigned short segment;
 	unsigned int * address;
 	char * name;
 };
@@ -36,11 +37,13 @@ static  unsigned int name_hash(const char * name){
 }
 
 
-void add_hash(char * name, unsigned int * address){
+void add_hash(char * name, unsigned short segment, unsigned int * address)
+{
 	struct name_hash  * new;
 	int hash;
 
 	new = (struct  name_hash *) malloc(sizeof(struct name_hash));
+        new->segment = segment;
 	new->address = address;
 	new->name = strdup(name);
 	new->next = NULL;
@@ -51,7 +54,8 @@ void add_hash(char * name, unsigned int * address){
 	name_hash_table[hash] = new;
 }
 
-unsigned int * find_hash(char * name){
+unsigned int * find_hash(char * name)
+{
 	char buffer[256];
 	struct name_hash  * nh;
 
@@ -72,7 +76,8 @@ unsigned int * find_hash(char * name){
 
 static char name_buffer[256];
 
-char * find_nearest_symbol(unsigned int * address){
+char * find_nearest_symbol(unsigned int segment, unsigned int * address)
+{
 	struct name_hash * nearest;
 	struct name_hash start;
 	struct name_hash  * nh;
@@ -83,8 +88,9 @@ char * find_nearest_symbol(unsigned int * address){
 	
 	for(i=0; i<NR_NAME_HASH; i++) {
 		for(nh = name_hash_table[i]; nh; nh = nh->next)
-			if(nh->address <= address && nh->address > nearest->address)
-				nearest = nh;
+			if (nh->segment == segment &&
+                            nh->address <= address &&
+                            nh->address > nearest->address) nearest = nh;
 	};
 	if((unsigned int) nearest->address == 0) return NULL;
 
@@ -136,7 +142,7 @@ read_symboltable(char * filename){
 		};
 		
 		nargs = sscanf(buffer, "%x %c %s", &addr, &type, name);
-		add_hash(name, (unsigned int *) addr);
+		add_hash(name, 0, (unsigned int *) addr);
       };
       fclose(symbolfile);
 }
@@ -147,33 +153,40 @@ read_symboltable(char * filename){
  * tables correctly 
  */
 
-void
-load_entrypoints(){
-	char buffer[256];
-	char * cpnt;
-	int j, ordinal, len;
-	unsigned int address;
+void load_entrypoints( HMODULE hModule )
+{
+    char buffer[256];
+    unsigned char *cpnt, *name;
+    NE_MODULE *pModule;
+    unsigned int address;
 
-#if 0
-	struct w_files * wpnt;
-	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
-		cpnt  = wpnt->ne->nrname_table;
-		while(1==1){
-			if( ((int) cpnt)  - ((int)wpnt->ne->nrname_table) >  
-			   wpnt->ne->ne_header->nrname_tab_length)  break;
-			len = *cpnt++;
-			strncpy(buffer, cpnt, len);
-			buffer[len] = 0;
-			ordinal =  *((unsigned short *)  (cpnt +  len));
-			j = GetEntryPointFromOrdinal(wpnt, ordinal);		
-			address  = j & 0xffff;
-			j = j >> 16;
-			address |= wpnt->ne->selector_table[j] << 16;
-			fprintf(stderr,"%s -> %x\n", buffer, address);
-			add_hash(buffer, (unsigned int *) address);
-			cpnt += len + 2;
-		};
-	};
-	return;
-#endif
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return;
+    name = (unsigned char *)pModule + pModule->name_table;
+
+      /* First search the resident names */
+
+    cpnt = (unsigned char *)pModule + pModule->name_table;
+    while (*cpnt)
+    {
+        cpnt += *cpnt + 1 + sizeof(WORD);
+        sprintf( buffer, "%*.*s.%*.*s", *name, *name, name + 1,
+                 *cpnt, *cpnt, cpnt + 1 );
+        address = MODULE_GetEntryPoint( hModule, *(WORD *)(cpnt + *cpnt + 1) );
+        if (address)
+            add_hash(buffer, address >> 16, (unsigned int*)(address & 0xffff));
+    }
+
+      /* Now search the non-resident names table */
+
+    if (!pModule->nrname_handle) return;  /* No non-resident table */
+    cpnt = (char *)GlobalLock( pModule->nrname_handle );
+    while (*cpnt)
+    {
+        cpnt += *cpnt + 1 + sizeof(WORD);
+        sprintf( buffer, "%*.*s.%*.*s", *name, *name, name + 1,
+                 *cpnt, *cpnt, cpnt + 1 );
+        address = MODULE_GetEntryPoint( hModule, *(WORD *)(cpnt + *cpnt + 1) );
+        if (address)
+            add_hash(buffer, address >> 16, (unsigned int*)(address & 0xffff));
+    }
 }

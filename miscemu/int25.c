@@ -6,6 +6,7 @@
 #include "ldt.h"
 #include "wine.h"
 #include "miscemu.h"
+#include "dos_fs.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"

@@ -42,13 +42,19 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
 {
   int  handle;
   char *UnixFileName;
+  int mode = 0;
 
   dprintf_file(stddeb, "_lopen: open('%s', %X);\n", lpPathName, iReadWrite);
   if ((UnixFileName = DOS_GetUnixFileName(lpPathName)) == NULL)
   	return HFILE_ERROR;
-  iReadWrite &= 0x000F;
-  handle =  open (UnixFileName, iReadWrite);
-  if( ( handle == -1 ) && Options.allowReadOnly )
+  switch(iReadWrite & 3)
+  {
+  case OF_READ:      mode = O_RDONLY; break;
+  case OF_WRITE:     mode = O_WRONLY; break;
+  case OF_READWRITE: mode = O_RDWR; break;
+  }
+  handle = open( UnixFileName, mode );
+  if (( handle == -1 ) && Options.allowReadOnly)
     handle = open( UnixFileName, O_RDONLY );
 
   dprintf_file(stddeb, "_lopen: open: %s (handle %d)\n", UnixFileName, handle);
@@ -112,17 +118,14 @@ INT _lclose (INT hFile)
  **************************************************************************/
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
-#ifdef WINELIB
-    dprintf_file(stdnimp, "OpenFile: not implemented\n");
-#else
-    char                      filename[MAX_PATH+1];
-    int                       action;
-    struct stat               s;
-    struct tm                 *now;
-    int                       res;
-    int                       verify_time;
+    char         filename[MAX_PATH+1];
+    int          action;
+    struct stat  s;
+    struct tm   *now;
+    int          res, handle;
+    int          verify_time;
   
-    dprintf_file(stddeb,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
+    dprintf_file(stddeb,"Openfile(%s,<struct>,%d)\n",lpFileName,wStyle);
   
     action = wStyle & 0xff00;
   
@@ -131,31 +134,29 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
        handle it first */
 
     if (action & OF_CREATE)
-      {
-      int handle;
-      char *unixfilename;
+    {
+        char *unixfilename;
 
-      if (!(action & OF_REOPEN))
-        strcpy(ofs->szPathName, lpFileName);
-      ofs->cBytes = sizeof(OFSTRUCT);
-      ofs->fFixedDisk = FALSE;
-      ofs->nErrCode = 0;
-      *((int*)ofs->reserved) = 0;
+        if (!(action & OF_REOPEN)) strcpy(ofs->szPathName, lpFileName);
+        ofs->cBytes = sizeof(OFSTRUCT);
+        ofs->fFixedDisk = FALSE;
+        ofs->nErrCode = 0;
+        *((int*)ofs->reserved) = 0;
 
-      if ((unixfilename = DOS_GetUnixFileName (ofs->szPathName)) == NULL)
-      {
-        errno_to_doserr();
-	ofs->nErrCode = ExtendedError;
-        return -1;
-      }
-      handle = open (unixfilename, (wStyle & 0x0003) | O_CREAT, 0x666);
-      if (handle == -1)
-      {
-	errno_to_doserr();
-	ofs->nErrCode = ExtendedError;
-      }   
-      return handle;
-      }
+        if ((unixfilename = DOS_GetUnixFileName (ofs->szPathName)) == NULL)
+        {
+            errno_to_doserr();
+            ofs->nErrCode = ExtendedError;
+            return -1;
+        }
+        handle = open (unixfilename, (wStyle & 0x0003) | O_CREAT, 0x666);
+        if (handle == -1)
+        {
+            errno_to_doserr();
+            ofs->nErrCode = ExtendedError;
+        }   
+        return handle;
+    }
 
 
     /* If path isn't given, try to find the file. */
@@ -166,27 +167,53 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 	      index(lpFileName,':')))
 	while(1)
 	{
-	  char temp[MAX_PATH+1];
+          char temp[MAX_PATH+1];
+          /* Try current directory */
 	  strcpy (filename, lpFileName);
 	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
+
+          /* Try Windows directory */
+
 	  GetWindowsDirectory (filename,MAX_PATH);
 	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
             strcat(filename, "\\");
 	  strcat (filename, lpFileName);
 	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
+
+          /* Try Windows system directory */
+
 	  GetSystemDirectory (filename,MAX_PATH);
 	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
  	    strcat(filename, "\\");
 	  strcat (filename, lpFileName);
 	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
-	  if (!DOS_FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
-	    {
+
+          /* Try the path of the current executable */
+
+          if (GetCurrentTask())
+          {
+              char *p;
+              GetModuleFileName( GetCurrentTask(), filename, MAX_PATH );
+              if ((p = strrchr( filename, '\\' )))
+              {
+                  p[1] = '\0';
+                  strcat( filename, lpFileName );
+                  if ((!stat(DOS_GetUnixFileName(filename), &s)) &&
+                      (S_ISREG(s.st_mode)) )
+                      break;
+              }
+          }
+
+          /* Try all directories in path */
+
+	  if (DOS_FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
+          {
 	      strcpy(filename, DOS_GetDosFileName(temp));
 	      break;
-	    }
+          }
 	  strcpy (filename, lpFileName);
 	  break;
 	}
@@ -235,46 +262,14 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     if (action & OF_EXIST)
       return 0;
     
-   /* Now we are actually going to open the file. According to Microsoft's
-       Knowledge Basis, this is done by calling int 21h, ax=3dh. */    
-
-#if 0
-    AX = 0x3d00;
-    AL = (AL & 0x0f) | (wStyle & 0x70); /* Handle OF_SHARE_xxx etc. */
-    AL = (AL & 0xf0) | (wStyle & 0x03); /* Handle OF_READ etc. */
-    DS = SELECTOROF(ofs->szPathName);
-    DX = OFFSETOF(ofs->szPathName);
-  
-    OpenExistingFile (context);
-
-    if (EFL & 0x00000001)     /* Cflag */
+    if ((handle = _lopen( ofs->szPathName, wStyle )) == -1)
     {
-      ofs->nErrCode = AL;
-      return -1;
-      }
-
-    return AX;
-#endif
-      /* FIXME: Quick hack to get it to work without calling DOS  --AJ */
-    {
-        int mode, handle;
-        switch(wStyle & 3)
-        {
-            case 0: mode = O_RDONLY; break;
-            case 1: mode = O_WRONLY; break;
-            default: mode = O_RDWR; break;
-        }
-        if ((handle = open(DOS_GetUnixFileName(ofs->szPathName), mode)) == -1)
-        {
-            ofs->nErrCode = 2;  /* not found */
-            return -1;
-        }
-          /* don't bother with locking for now */
-
-        return handle;
+        ofs->nErrCode = 2;  /* not found */
+        return -1;
     }
-#endif /*WINELIB*/
+    return handle;
 }
+
 
 /**************************************************************************
  SetHandleCount
@@ -358,7 +353,8 @@ UINT GetDriveType(INT drive)
 BYTE GetTempDrive(BYTE chDriveLetter)
 {
     dprintf_file(stddeb,"GetTempDrive (%d)\n",chDriveLetter);
-	return('C');
+    if (TempDirectory[1] == ':') return TempDirectory[0];
+    else return 'C';
 }
 
 /***************************************************************************
@@ -437,14 +433,14 @@ WORD SetErrorMode(WORD x)
 /***************************************************************************
  _hread
  ***************************************************************************/
-long _hread(int hf, void FAR *hpvBuffer, long cbBuffer)
+LONG _hread(INT hf, LPSTR hpvBuffer, LONG cbBuffer)
 {
 	return read(hf, hpvBuffer, cbBuffer);
 }
 /***************************************************************************
  _hwrite
  ***************************************************************************/
-long _hwrite(int hf, const void FAR *hpvBuffer, long cbBuffer)
+LONG _hwrite(INT hf, const LPSTR hpvBuffer, LONG cbBuffer)
 {
 	return write(hf, hpvBuffer, cbBuffer);
 }

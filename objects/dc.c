@@ -260,8 +260,19 @@ BOOL DC_SetupGCForPen( DC * dc )
     XGCValues val;
 
     if (dc->u.x.pen.style == PS_NULL) return FALSE;
-    val.function   = DC_XROPfunction[dc->w.ROPmode-1];
-    val.foreground = dc->u.x.pen.pixel;
+
+    if ((screenDepth <= 8) &&  /* FIXME: Should check for palette instead */
+        ((dc->w.ROPmode == R2_BLACK) || (dc->w.ROPmode == R2_WHITE)))
+    {
+        val.function   = GXcopy;
+        val.foreground = COLOR_ToPhysical( NULL, (dc->w.ROPmode == R2_BLACK) ?
+                                               RGB(0,0,0) : RGB(255,255,255) );
+    }
+    else
+    {
+        val.function   = DC_XROPfunction[dc->w.ROPmode-1];
+        val.foreground = dc->u.x.pen.pixel;
+    }
     val.background = dc->w.backgroundPixel;
     val.fill_style = FillSolid;
     if ((dc->u.x.pen.style!=PS_SOLID) && (dc->u.x.pen.style!=PS_INSIDEFRAME))

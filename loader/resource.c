@@ -22,7 +22,6 @@
 #include "dlls.h"
 #include "module.h"
 #include "resource.h"
-#include "library.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -458,6 +457,17 @@ BOOL DestroyIcon(HICON hIcon)
     GlobalFree(hIcon);
     return TRUE;
 }
+
+/**********************************************************************
+ *          DumpIcon [USER.459]
+ */
+DWORD DumpIcon(void* cursorIconInfo, WORD FAR *lpLen, LPSTR FAR *lpXorBits,
+	LPSTR FAR *lpAndMask)
+{
+	dprintf_resource(stdnimp,"DumpIcon: Empty Stub!!!\n");
+	return 0;
+}
+
 
 /**********************************************************************
  *			LoadAccelerators	[USER.177]

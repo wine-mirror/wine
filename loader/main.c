@@ -13,37 +13,14 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "neexe.h"
 #include "dos_fs.h"
 #include "dlls.h"
-#include "library.h"
 #include "windows.h"
 #include "wineopts.h"
 #include "wine.h"
 #include "task.h"
-#include "prototypes.h"
 #include "options.h"
-#include "if1632.h"
-#include "ne_image.h"
 #include "pe_image.h"
 #include "stddebug.h"
 #include "debug.h"
-
-char **Argv;
-int Argc;
-HINSTANCE hSysRes, hInstMain;
-unsigned short WIN_StackSize;
-
-/**********************************************************************
- *					myerror
- */
-void
-myerror(const char *s)
-{
-    if (s == NULL)
-	perror("wine");
-    else
-	fprintf(stderr, "wine: %s\n", s);
-
-    exit(1);
-}
 
 
 /***********************************************************************
@@ -51,12 +28,17 @@ myerror(const char *s)
  */
 int MAIN_Init(void)
 {
+    extern BOOL RELAY_Init(void);
+
     int queueSize;
 
     SpyInit();
 
       /* Initialize relay code */
     if (!RELAY_Init()) return 0;
+
+      /* Initialize Win32 relay code */
+    if (!RELAY32_Init()) return 0;
 
       /* Create built-in modules */
     if (!MODULE_Init()) return 0;
@@ -66,6 +48,12 @@ int MAIN_Init(void)
 
       /* Initialize the DOS file system */
     DOS_InitFS();
+
+      /* Create DOS environment */
+    CreateSelectors();
+
+      /* Initialize signal handling */
+    init_wine_signals();
 
       /* Initialize communications */
     COMM_Init();
@@ -91,18 +79,11 @@ int MAIN_Init(void)
       /* Create the DCEs */
     DCE_Init();
     
-      /* Initialize built-in window classes */
-    if (!WIDGETS_Init()) return 0;
-
       /* Initialize dialog manager */
     if (!DIALOG_Init()) return 0;
 
       /* Initialize menus */
     if (!MENU_Init()) return 0;
-
-      /* Create desktop window */
-    if (!WIN_CreateDesktopWindow()) return 0;
-    if (!DESKTOP_Init()) return 0;
 
       /* Create system message queue */
     queueSize = GetProfileInt( "windows", "TypeAhead", 120 );
@@ -118,70 +99,20 @@ int MAIN_Init(void)
  */
 int _WinMain(int argc, char **argv)
 {
-    char *p, filename[256];
     int i;
-
-    struct w_files *wpnt;
-#ifdef WINESTAT
-    char * cp;
-#endif
 
     if (!MAIN_Init()) return 0;
 
-	Argc = argc - 1;
-	Argv = argv + 1;
-
-	if (strchr(Argv[0], '\\') || strchr(Argv[0],'/')) {
-            for (p = Argv[0] + strlen(Argv[0]); *p != '\\' && *p !='/'; p--)
-		/* NOTHING */;
-		
-	    strncpy(filename, Argv[0], p - Argv[0]);
-	    filename[p - Argv[0]] = '\0';
-	    strcat(WindowsPath, ";");
-	    if (strchr(filename, '/'))
-		    strcat(WindowsPath, DOS_GetDosFileName(filename));
-	    else
-	    	    strcat(WindowsPath, filename);
-	}
-
-	for (i = 0; i < Argc; i++)
+    for (i = 1; i < argc; i++)
+    {
+        if (WinExec( argv[i], SW_SHOWNORMAL ) < 32)
         {
-            if ((hInstMain = LoadImage(Argv[i], EXE, 1)) < 32) {
-		fprintf(stderr, "wine: can't load %s!.\n", Argv[i]);
-		exit(1);
-            }
+            fprintf(stderr, "wine: can't exec '%s'.\n", argv[i]);
+            exit(1);
         }
+    }
 
-	GetPrivateProfileString("wine", "SystemResources", "sysres.dll", 
-				filename, sizeof(filename), WINE_INI);
-
-	hSysRes = LoadImage(filename, DLL, 0);
-	if (hSysRes < 32) {
-		fprintf(stderr, "wine: can't load %s!.\n", filename);
-		exit(1);
-	} else
- 	    dprintf_dll(stddeb,"System Resources Loaded // hSysRes='%04X'\n",
-			hSysRes);
-	
-
-#ifdef WINESTAT
-    cp = strrchr(argv[0], '/');
-    if(!cp) cp = argv[0];
-	else cp++;
-    if(strcmp(cp,"winestat") == 0) {
-	    winestat();
-	    exit(0);
-    };
-#endif
-
-    /*
-     * Initialize signal handling.
-     */
-    init_wine_signals();
-        
-    wpnt = GetFileInfo(hInstMain);
-    if (Options.debug)
-	wine_debug(0, NULL);
+    if (Options.debug) wine_debug(0, NULL);
 
     Yield();  /* Start the first task */
     fprintf( stderr, "WinMain: Should never happen: returned from Yield()\n" );

@@ -180,12 +180,17 @@ void LDT_Print()
     }
 #else  /* WINELIB */
 
-#ifdef linux
     long buffer[2*LDT_SIZE];
     ldt_entry content;
+    int n;
 
-    modify_ldt( 0, buffer, sizeof(buffer) );
-    for (i = 0; i < LDT_SIZE; i++)
+#ifdef linux
+    n = modify_ldt( 0, buffer, sizeof(buffer) ) / 8;
+#endif  /* linux */
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+    n = i386_get_ldt( 0, (union descriptor *)buffer, LDT_SIZE );
+#endif  /* __NetBSD__ || __FreeBSD__ */
+    for (i = 0; i < n; i++)
     {
         LDT_BytesToEntry( &buffer[2*i], &content );
         if (content.base || content.limit)
@@ -197,25 +202,5 @@ void LDT_Print()
                     content.type );
         }
     }
-#endif  /* linux */
-
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-    long buffer[2*LDT_SIZE];
-    ldt_entry content;
-
-    i386_get_ldt( 0, (union descriptor *)buffer, LDT_SIZE );
-    for (i = 0; i < LDT_SIZE; i++)
-    {
-        LDT_BytesToEntry( buffer[2*i], &content );
-        if (content.base || content.limit)
-        {
-            fprintf( stderr, "%04x: sel=%04x base=%08lx limit=%05lx %s type=%d\n",
-                    i, ENTRY_TO_SELECTOR(i),
-                    content.base, content.limit,
-                    content.limit_in_pages ? "(pages)" : "(bytes)",
-                    content.type );
-        }
-    }
-#endif  /* __NetBSD__ || __FreeBSD__ */
 #endif  /* WINELIB */
 }

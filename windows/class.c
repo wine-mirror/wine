@@ -55,7 +55,12 @@ HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr )
     for (class = firstClass; (class); class = classPtr->hNext)
     {
         classPtr = (CLASS *) USER_HEAP_LIN_ADDR(class);
-        if (!(classPtr->wc.style & CS_GLOBALCLASS)) continue;
+#if 0
+      /* This breaks Borland's Resource Workshop: A DLL creates a class,
+       * and the main program tries to use it, but passes a different
+       * hInstance */
+      if (!(classPtr->wc.style & CS_GLOBALCLASS)) continue;
+#endif
         if (classPtr->atomName == atom)
         {
             if (ptr) *ptr = classPtr;
@@ -93,9 +98,9 @@ ATOM RegisterClass( LPWNDCLASS class )
     int classExtra;
     char *name = PTR_SEG_TO_LIN( class->lpszClassName );
 
-    dprintf_class(stddeb, "RegisterClass: wndproc=%p hinst=%d name='%s' background %x\n", 
-	    class->lpfnWndProc, class->hInstance, name, class->hbrBackground );
-
+    dprintf_class(stddeb, "RegisterClass: wndproc=%08lx hinst=%d name='%s' background %04x\n",
+	    (DWORD)class->lpfnWndProc, class->hInstance, name, class->hbrBackground );
+    dprintf_class(stddeb, "               style %04x\n",class->style);
       /* Check if a class with this name already exists */
 
     prevClass = CLASS_FindClassByName( name, class->hInstance, &prevClassPtr );

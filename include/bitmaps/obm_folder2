@@ -1,0 +1,21 @@
+/* XPM */
+static char * obm_folder2[] = {
+"20 15 3 1",
+" 	s white c white",
+".	s black c black",
+"X	s foldercol c #00bfbf",
+"                    ",
+"                    ",
+"    ...             ",
+"   ..X..            ",
+"  ..X.X........     ",
+"  .X.X.X.X.X.X..    ",
+"  ..X.X.X.X.X.X.    ",
+"  .X.X............  ",
+"  ..X.X.XXXXXXXXXX. ",
+"  .X.X.XXXXXXXXXXX. ",
+"  ..X.XXXXXXXXXXX.  ",
+"  .X.XXXXXXXXXXX.   ",
+"  ..XXXXXXXXXXX.    ",
+"  .............     ",
+"                    "};

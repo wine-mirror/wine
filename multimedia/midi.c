@@ -83,7 +83,7 @@ static LINUX_MIDIOUT	MidiOutDev[MAX_MIDIOUTDRV];
 static LINUX_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 #endif
 
-DWORD MIDI_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms);
+DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms);
 DWORD MIDI_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms);
 DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms);
 DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms);
@@ -160,7 +160,7 @@ LRESULT MIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 			return (LRESULT)DRVCNF_RESTART;
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
-			return MIDI_mciOpen(dwParam1, (LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2));
+			return MIDI_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
 			return MIDI_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
@@ -352,18 +352,17 @@ DWORD MIDI_ReadMTrk(UINT wDevID, DWORD dwOffset)
 /**************************************************************************
 * 				MIDI_mciOpen			[internal]	
 */
-DWORD MIDI_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
+DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
 #ifdef linux
-	UINT 		wDevID;
 	MIDIOPENDESC 	MidiDesc;
 	DWORD		dwRet;
 	DWORD		dwOffset;
+	LPSTR		lpstrElementName;
 	char		str[128];
 
 	dprintf_midi( stddeb, "MIDI_mciOpen(%08lX, %p)\n", dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	wDevID = lpParms->wDeviceID;
 	if (MCIMidiDev[wDevID].nUseCount > 0) {
 		/* The driver already open on this channel */
 		/* If the driver was opened shareable before and this open specifies */
@@ -377,12 +376,16 @@ DWORD MIDI_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 		MCIMidiDev[wDevID].nUseCount = 1;
 		MCIMidiDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		}
+	dprintf_midi(stddeb,"MIDI_mciOpen // wDevID=%04X\n", wDevID);
+	lpParms->wDeviceID = wDevID;
+	dprintf_midi(stddeb,"MIDI_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
+	dprintf_midi(stddeb,"MIDI_mciOpen // before OPEN_ELEMENT\n");
     if (dwFlags & MCI_OPEN_ELEMENT) {
-		printf("MIDI_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", 
-								lpParms->lpstrElementName);
+		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
+		dprintf_midi( stddeb, "MIDI_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 /*		printf("MIDI_mciOpen // cdw='%s'\n", DOS_GetCurrentDir(DOS_GetDefaultDrive())); */
-		if (strlen(lpParms->lpstrElementName) > 0) {
-			strcpy(str, lpParms->lpstrElementName);
+		if (strlen(lpstrElementName) > 0) {
+			strcpy(str, lpstrElementName);
 			AnsiUpper(str);
 			MCIMidiDev[wDevID].hFile = mmioOpen(str, NULL, 
 				MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
@@ -1095,7 +1098,7 @@ DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		case MIDM_GETDEVCAPS:
 			return midGetDevCaps(wDevID, (LPMIDIINCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MIDM_GETNUMDEVS:
-			return 1L;
+			return 0L;
 		case MIDM_RESET:
 			return midReset(wDevID);
 		case MIDM_START:

@@ -178,7 +178,11 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
             height -= 10;		
             if (height < 10) {
                 dprintf_font(stddeb,"*** No match for %s\n", pattern );
-                return NULL;
+				if(slant == 'i')
+					/* try oblique if no italic font */
+					slant = 'o';
+				else
+                	return NULL;
             }
     }
     dprintf_font(stddeb,"        Found '%s'\n", *names );
@@ -694,9 +698,9 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
   int          nRet;
   int          i;
   
-  dprintf_font(stddeb,"EnumFonts(%04X, %p='%s', %p, %p)\n", 
-	       hDC, lpFaceName, lpFaceName, lpEnumFunc, lpData);
-  if (lpEnumFunc == NULL) return 0;
+  dprintf_font(stddeb,"EnumFonts(%04X, %p='%s', %08lx, %p)\n", 
+	       hDC, lpFaceName, lpFaceName, (LONG)lpEnumFunc, lpData);
+  if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
   lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
   if (lpLogFont == NULL) {
@@ -763,9 +767,9 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
   int	       	nRet;
   int	       	i;
   
-  dprintf_font(stddeb,"EnumFontFamilies(%04X, %p, %p, %p)\n", 
+  dprintf_font(stddeb,"EnumFontFamilies(%04X, %p, %08lx, %p)\n",
 	       hDC, lpszFamily, lpEnumFunc, lpData);
-  if (lpEnumFunc == NULL) return 0;
+  if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONT) );
   lpEnumLogFont = (LPENUMLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
   if (lpEnumLogFont == NULL) {

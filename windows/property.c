@@ -119,7 +119,7 @@ int EnumProps( HWND hwnd, FARPROC func )
     HANDLE hProp;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "EnumProps: %04x %p\n", hwnd, func );
+    dprintf_prop( stddeb, "EnumProps: %04x %08lx\n", hwnd, (LONG)func );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     hProp = wndPtr->hProp;
     while (hProp)

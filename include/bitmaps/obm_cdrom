@@ -1,0 +1,23 @@
+/* XPM */
+static char * obm_cdrom[] = {
+"20 15 5 1",
+" 	s white c white",
+".	s black c black",
+"X	s ltgray c #c0c0c0",
+"o	s dkgray c #808080",
+"O	s red c red",
+"                    ",
+"                    ",
+" .................. ",
+" .XXXXXXXXXXXXXXXo. ",
+" .XXXXXXXXXXXXXXXo. ",
+" .XoooooooooooooXo. ",
+" .Xo.XXXXXXXXX.oXo. ",
+" .Xoo..XXXXX..ooXo. ",
+" .XXXXX.....XXXXXo. ",
+" .X.XOOXXXXXXX..Xo. ",
+" .X.XOOXXXXXXX..Xo. ",
+" .oooooooooooooooo. ",
+" .................. ",
+"                    ",
+"                    "};

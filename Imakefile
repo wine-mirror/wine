@@ -6,9 +6,11 @@ MAKE = gmake
 CC = gcc -D__FreeBSD__
 #endif
 
-DEFINES = AutoDefines -DUSE_READLINE -DWINESTAT
+DEFINES = AutoDefines -DUSE_READLINE
 #ifdef __ELF__
-CDEBUGFLAGS = -O2 -Wall -static
+LD = /usr/i486-linuxaout/bin/ld -m i386linux
+CDEBUGFLAGS = -O2 -Wall -b i486-linuxaout
+ASFLAGS = -b i486-linuxaout
 #else
 CDEBUGFLAGS = -O2 -Wall
 #endif
@@ -26,7 +28,7 @@ CDEBUGFLAGS = -O2 -Wall
 
 #define IHaveSubdirs
 #define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)' 'MAKE=$(MAKE)'\
-			'DEFINES=$(DEFINES)' 'LD=$(LD)'
+			'DEFINES=$(DEFINES)' 'LD=$(LD)' 'ASFLAGS=$(ASFLAGS)'
 
 COMMONSUBDIRS = \
 	controls \

@@ -4,11 +4,6 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-/*
- * This code assumes that there is only one Windows task (hence
- * one message queue).
- */
-
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -861,27 +856,27 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     WND 	*wndPtr;
 
     if (hwnd == HWND_BROADCAST) {
-	    dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
-	    hwnd = GetTopWindow(GetDesktopWindow());
-	    while (hwnd) {
-	        if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
-			if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
-				dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08lX !\n", 
-							hwnd, message, wParam, lParam);
-				PostMessage(hwnd, message, wParam, lParam);
-				}
-/*				{
-				char	str[128];
-				GetWindowText(hwnd, str, sizeof(str));
-				dprintf_msg(stddeb, "BROADCAST GetWindowText()='%s' !\n", str); 
-				}*/
-			hwnd = wndPtr->hwndNext;
-			}
-		dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
-		return TRUE;
-		}
+      dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
+      hwnd = GetTopWindow(GetDesktopWindow());
+      while (hwnd) {
+	if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
+	if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
+	  dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08lX !\n",
+		      hwnd, message, wParam, lParam);
+	  PostMessage(hwnd, message, wParam, lParam);
+	}
+	/*{
+	  char	str[128];
+	  GetWindowText(hwnd, str, sizeof(str));
+	  dprintf_msg(stddeb, "BROADCAST GetWindowText()='%s' !\n", str); 
+	}*/
+	hwnd = wndPtr->hwndNext;
+      }
+      dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
+      return TRUE;
+    }
 
-	wndPtr = WIN_FindWndPtr( hwnd );
+    wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr || !wndPtr->hmemTaskQ) return FALSE;
     msg.hwnd    = hwnd;
     msg.message = message;
@@ -892,6 +887,25 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     msg.pt.y    = 0;
 
     return MSG_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
+}
+
+/***********************************************************************
+ *           PostAppMessage   (USER.116)
+ */
+BOOL PostAppMessage( HTASK hTask, WORD message, WORD wParam, LONG lParam )
+{
+    MSG 	msg;
+
+    if (GetTaskQueue(hTask) == 0) return FALSE;
+    msg.hwnd    = 0;
+    msg.message = message;
+    msg.wParam  = wParam;
+    msg.lParam  = lParam;
+    msg.time    = GetTickCount();
+    msg.pt.x    = 0;
+    msg.pt.y    = 0;
+
+    return MSG_AddMsg( GetTaskQueue(hTask), &msg, 0 );
 }
 
 

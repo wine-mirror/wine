@@ -3,15 +3,15 @@
  */
 
 
-typedef struct tagHEADCOMBO {
-    DWORD	dwStyle;
-    DWORD	dwState;
-    HWND	hWndEdit;
-    HWND	hWndLBox;
-	short	LastSel;
-	RECT	RectEdit;
-	BOOL	bRedrawFlag;
-} HEADCOMBO;
-typedef HEADCOMBO FAR* LPHEADCOMBO;
-
-
+typedef struct {
+  DWORD dwStyle;
+  DWORD dwState;
+  HWND  hWndEdit;
+  HWND  hWndLBox;
+  WORD  LBoxTop;
+  BOOL  DropDownVisible;
+  short LastSel;
+  RECT  RectEdit;
+  RECT  RectButton;
+  BOOL  bRedrawFlag;
+} HEADCOMBO,*LPHEADCOMBO;

@@ -1,0 +1,23 @@
+/* XPM */
+static char * obm_drive[] = {
+"20 15 5 1",
+" 	s white c white",
+".	s black c black",
+"X	s ltgray c #c0c0c0",
+"o	s dkgray c #808080",
+"O	s red c red",
+"                    ",
+"                    ",
+" .................. ",
+" .XXXXXXXXXXXXXXXo. ",
+" .XXXXXXXXXXXXXXXo. ",
+" .XXX.........XXXo. ",
+" .X.............Xo. ",
+" .XXX.........XXXo. ",
+" .XXXXXXXXXXXXXXXo. ",
+" .XXXOOXXXXX..XXXo. ",
+" .XXXOOXXXXX..XXXo. ",
+" .oooooooooooooooo. ",
+" .................. ",
+"                    ",
+"                    "};

@@ -106,7 +106,7 @@ static TSecHeader *load (char *filename)
 
 
     state = FirstBrace;
-    while ((c = getc (f)) != EOF){
+    while ((c = fgetc (f)) != EOF){
 	if (c == '\r')		/* Ignore Carriage Return */
 	    continue;
 	
@@ -188,7 +188,7 @@ static TSecHeader *load (char *filename)
 	    
 	} /* switch */
 	
-    } /* while ((c = getc (f)) != EOF) */
+    } /* while ((c = fgetc (f)) != EOF) */
     return SecHeader;
 }
 

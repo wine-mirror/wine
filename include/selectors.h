@@ -16,15 +16,7 @@ extern WORD SELECTOR_ReallocBlock( WORD sel, void *base, DWORD size,
                                    enum seg_type type, BOOL is32bit,
                                    BOOL readonly );
 
-#include "dlls.h"
-
 extern void CreateSelectors(void);
-
-extern unsigned int GetEntryDLLName(char *dll_name, char *function,
-                                    WORD *sel, WORD *offset);
-extern unsigned int GetEntryDLLOrdinal(char *dll_name, int ordinal,
-                                       WORD *sel, WORD *offset);
-extern void InitSelectors(void);
 
 extern WNDPROC GetWndProcEntry16( char *name );
 

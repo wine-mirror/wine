@@ -12,7 +12,6 @@
 #include "user.h"
 #include "dialog.h"
 #include "syscolor.h"
-#include "library.h"
 #include "menu.h"
 #include "winpos.h"
 #include "scroll.h"
@@ -33,7 +32,6 @@ static HBITMAP hbitmapRestore = 0;
 static HBITMAP hbitmapRestoreD = 0;
 
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
-extern BOOL AboutWine_Proc( HWND hDlg, WORD msg, WORD wParam, LONG lParam );
 
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \
@@ -1312,7 +1310,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
 
     case SC_TASKLIST:
-	/* WinExec( "taskman.exe", SW_SHOWNORMAL ); */
+	WinExec( "taskman.exe", SW_SHOWNORMAL ); 
 	break;
 
     case SC_HOTKEY:
@@ -1320,9 +1318,9 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
-	{   extern char sysres_DIALOG_2[];
-	    DialogBoxIndirectPtr( wndPtr->hInstance, sysres_DIALOG_2,
-		       hwnd, GetWndProcEntry16("AboutWine_Proc") );
+	{   
+	  extern const char people[];
+	  ShellAbout(hwnd,"WINE",people,0);
         }
 	break;
     }

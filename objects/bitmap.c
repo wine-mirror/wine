@@ -13,6 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "arch.h"
 #include "dc.h"
 #include "bitmap.h"
+#include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_GDI    */
 /* #define DEBUG_BITMAP */

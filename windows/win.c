@@ -215,6 +215,7 @@ BOOL WIN_CreateDesktopWindow()
     WND *wndPtr;
     HCLASS hclass;
     CLASS *classPtr;
+    HDC hdc;
 
     if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_NAME, 0, &classPtr )))
 	return FALSE;
@@ -256,6 +257,12 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->hSysMenu          = 0;
     wndPtr->hProp	      = 0;
     EVENT_RegisterWindow( wndPtr->window, hwndDesktop );
+    SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
+    if ((hdc = GetDC( hwndDesktop )) != 0)
+    {
+        SendMessage( hwndDesktop, WM_ERASEBKGND, hdc, 0 );
+        ReleaseDC( hwndDesktop, hdc );
+    }
     return TRUE;
 }
 
@@ -283,8 +290,8 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     CLASS *classPtr;
     WND *wndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
-    CREATESTRUCT *createStruct;
-    HANDLE hcreateStruct, hwinName, hclassName;
+    CREATESTRUCT createStruct;
+    HANDLE hwinName, hclassName;
     int wmcreate;
     XSetWindowAttributes win_attr;
 
@@ -453,35 +460,32 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
       /* Send the WM_CREATE message */
 
-    hcreateStruct = USER_HEAP_ALLOC( sizeof(CREATESTRUCT) );
     hclassName = USER_HEAP_ALLOC( strlen(className)+1 );
     strcpy( USER_HEAP_LIN_ADDR(hclassName), className );
-    createStruct = (CREATESTRUCT *) USER_HEAP_LIN_ADDR( hcreateStruct );
-    createStruct->lpCreateParams = (LPSTR)data;
-    createStruct->hInstance      = instance;
-    createStruct->hMenu          = menu;
-    createStruct->hwndParent     = parent;
-    createStruct->cx             = width;
-    createStruct->cy             = height;
-    createStruct->x              = x;
-    createStruct->y              = y;
-    createStruct->style          = style;
-    createStruct->lpszClass      = (LPSTR)USER_HEAP_SEG_ADDR(hclassName);
-    createStruct->dwExStyle      = 0;
+    createStruct.lpCreateParams = (LPSTR)data;
+    createStruct.hInstance      = instance;
+    createStruct.hMenu          = menu;
+    createStruct.hwndParent     = parent;
+    createStruct.cx             = width;
+    createStruct.cy             = height;
+    createStruct.x              = x;
+    createStruct.y              = y;
+    createStruct.style          = style;
+    createStruct.lpszClass      = (LPSTR)USER_HEAP_SEG_ADDR(hclassName);
+    createStruct.dwExStyle      = 0;
     if (windowName)
     {
         hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
         strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
-        createStruct->lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
+        createStruct.lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
     }
     else
     {
         hwinName = 0;
-        createStruct->lpszName = NULL;
+        createStruct.lpszName = NULL;
     }
 
-    wmcreate = SendMessage( hwnd, WM_NCCREATE, 0,
-                            USER_HEAP_SEG_ADDR(hcreateStruct) );
+    wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, MAKE_SEGPTR(&createStruct) );
     if (!wmcreate) {
 		dprintf_win(stddeb,"CreateWindowEx: WM_NCCREATE return 0\n");
 		wmcreate = -1;
@@ -490,11 +494,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     {
 	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
 			       NULL, NULL, NULL, &wndPtr->rectClient );
-	wmcreate = SendMessage( hwnd, WM_CREATE, 0,
-                                USER_HEAP_SEG_ADDR(hcreateStruct) );
+	wmcreate = SendMessage(hwnd, WM_CREATE, 0, MAKE_SEGPTR(&createStruct));
     }
 
-    USER_HEAP_FREE( hcreateStruct );
     USER_HEAP_FREE( hclassName );
     if (hwinName) USER_HEAP_FREE( hwinName );
 

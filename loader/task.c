@@ -20,10 +20,12 @@
 #include "stddebug.h"
 #include "debug.h"
 
+  /* Min. number of thunks allocated when creating a new segment */
+#define MIN_THUNKS  32
 
-#define MIN_THUNKS  32  /* Min. thunks allocated when creating a new segment */
-
-#define STACK32_SIZE 0x10000  /* 32-bit stack size for each task */
+  /* 32-bit stack size for each task */
+  /* Must not be greater than 64k, or MAKE_SEGPTR won't work */
+#define STACK32_SIZE 0x10000
 
 
 static HTASK hFirstTask = 0;
@@ -194,7 +196,6 @@ static void TASK_CallToStart(void)
     TDB *pTask = (TDB *)GlobalLock( hCurrentTask );
     NE_MODULE *pModule = (NE_MODULE *)GlobalLock( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
-    extern unsigned short WIN_StackSize;
 
     /* Registers at initialization must be:
      * ax   zero
@@ -209,20 +210,17 @@ static void TASK_CallToStart(void)
      * sp   top of the stack
      */
 
-    WIN_StackSize = pModule->stack_size;
-
     cs_reg = pSegTable[pModule->cs - 1].selector;
     ip_reg = pModule->ip;
     ds_reg = pSegTable[pModule->dgroup - 1].selector;
     IF1632_Saved16_ss = pTask->ss;
     IF1632_Saved16_sp = pTask->sp;
-/*    dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
+    dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
                  cs_reg, ip_reg, ds_reg,
                  IF1632_Saved16_ss, IF1632_Saved16_sp);
-*/
     CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
                    pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
-                   WIN_StackSize /*bx*/, pModule->heap_size /*cx*/,
+                   pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
                    0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
     /* This should never return */
     fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
@@ -233,8 +231,8 @@ static void TASK_CallToStart(void)
 /***********************************************************************
  *           TASK_CreateTask
  */
-HTASK TASK_CreateTask( HMODULE hModule, HANDLE hEnvironment,
-                       HTASK hTaskParent, char *cmdLine )
+HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
+                       HANDLE hEnvironment, char *cmdLine, WORD cmdShow )
 {
     HTASK hTask;
     TDB *pTask;
@@ -258,15 +256,17 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hEnvironment,
 
       /* Fill the task structure */
 
-    pTask->nEvents   = 1;  /* So the task can be started */
-    pTask->hSelf     = hTask;
-    pTask->flags     = 0;
-    pTask->version   = pModule->expected_version;
-    pTask->hInstance = NE_SEG_TABLE(pModule)[pModule->dgroup-1].selector,
-    pTask->hModule   = hModule;
-    pTask->hParent   = hTaskParent;
-    pTask->curdrive  = 'C' - 'A' + 0x80;
-    pTask->magic     = TDB_MAGIC;
+    pTask->nEvents       = 1;  /* So the task can be started */
+    pTask->hSelf         = hTask;
+    pTask->flags         = 0;
+    pTask->version       = pModule->expected_version;
+    pTask->hInstance     = hInstance;
+    pTask->hPrevInstance = hPrevInstance;
+    pTask->hModule       = hModule;
+    pTask->hParent       = hCurrentTask;
+    pTask->curdrive      = 'C' - 'A' + 0x80;
+    pTask->magic         = TDB_MAGIC;
+    pTask->nCmdShow      = cmdShow;
     strcpy( pTask->curdir, "WINDOWS" );
 
       /* Create the thunks block */
@@ -338,7 +338,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hEnvironment,
 
       /* Create the 16-bit stack frame */
 
-    pTask->ss = pSegTable[pModule->ss - 1].selector;
+    pTask->ss = hInstance;
     pTask->sp = (pModule->sp != 0) ? pModule->sp :
                 pSegTable[pModule->ss-1].minsize + pModule->stack_size;
     stack16Top = (char *)PTR_SEG_OFF_TO_LIN( pTask->ss, pTask->sp );
@@ -384,6 +384,10 @@ void TASK_DeleteTask( HTASK hTask )
 
     if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
 
+      /* Free the task module */
+
+    FreeModule( pTask->hModule );
+
       /* Free all memory used by this task (including the 32-bit stack, */
       /* the environment block and the thunk segments). */
 
@@ -394,7 +398,9 @@ void TASK_DeleteTask( HTASK hTask )
     GLOBAL_FreeBlock( pTask->hCSAlias );
     GLOBAL_FreeBlock( pTask->hPDB );
 
-    GlobalFree( hTask );  /* Free the task structure */
+      /* Free the task structure itself */
+
+    GlobalFree( hTask );
 }
 
 
@@ -501,9 +507,42 @@ void TASK_Reschedule(void)
       /* Switch to the new stack */
 
     hCurrentTask = hTask;
-    IF1632_Saved16_ss  = pNewTask->ss;
-    IF1632_Saved16_sp  = pNewTask->sp;
-    IF1632_Saved32_esp = pNewTask->esp;
+    IF1632_Saved16_ss   = pNewTask->ss;
+    IF1632_Saved16_sp   = pNewTask->sp;
+    IF1632_Saved32_esp  = pNewTask->esp;
+    IF1632_Stack32_base = WIN16_GlobalLock( pNewTask->hStack32 );
+}
+
+
+/***********************************************************************
+ *           InitTask  (KERNEL.91)
+ */
+void InitTask( struct sigcontext_struct context )
+{
+    TDB *pTask;
+    NE_MODULE *pModule;
+
+    context.sc_eax = 0;
+    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
+    if (!(pModule = (NE_MODULE *)GlobalLock( pTask->hModule ))) return;
+
+    NE_InitializeDLLs( pTask->hModule );
+
+    /* Registers on return are:
+     * ax     1 if OK, 0 on error
+     * cx     stack limit in bytes
+     * dx     cmdShow parameter
+     * si     instance handle of the previous instance
+     * di     instance handle of the new task
+     * es:bx  pointer to command-line inside PSP
+     */
+    context.sc_eax = 1;
+    context.sc_ebx = 0x81;
+    context.sc_ecx = pModule->stack_size;
+    context.sc_edx = pTask->nCmdShow;
+    context.sc_esi = pTask->hPrevInstance;
+    context.sc_edi = pTask->hInstance;
+    context.sc_es  = pTask->hPDB;
 }
 
 
@@ -650,7 +689,8 @@ HANDLE GetCodeHandle( FARPROC proc )
     else
         handle = GlobalHandle( HIWORD(proc) );
 
-    printf( "STUB: GetCodeHandle(%p) returning %04x\n", proc, handle );
+    printf( "STUB: GetCodeHandle(%08lx) returning %04x\n",
+            (DWORD)proc, handle );
     return handle;
 }
 

@@ -19,6 +19,7 @@ struct options
     int    debug;
     int    allowReadOnly;   /* Opening a read only file will succeed even
 			       if write access is requested */
+    int    enhanced;        /* Start Wine in enhanced mode */ 
 };
 
 extern struct options Options;

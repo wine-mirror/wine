@@ -62,13 +62,14 @@ DWORD ANIM_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime);
 /**************************************************************************
 * 				ANIM_mciOpen			[internal]
 */
-DWORD ANIM_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
+DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
 #ifdef linux
-	UINT	wDevID;
-	dprintf_mcianim(stddeb,"ANIM_mciOpen(%08lX, %p);\n", dwFlags, lpParms);
+	LPSTR		lpstrElementName;
+	char		str[128];
+	dprintf_mcianim(stddeb,"ANIM_mciOpen(%04X, %08lX, %p);\n", 
+					wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	wDevID = lpParms->wDeviceID;
 	if (AnimDev[wDevID].nUseCount > 0) {
 		/* The driver already open on this channel */
 		/* If the driver was opened shareable before and this open specifies */
@@ -82,10 +83,17 @@ DWORD ANIM_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 		AnimDev[wDevID].nUseCount = 1;
 		AnimDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		}
+	dprintf_mcianim(stddeb,"ANIM_mciOpen // wDevID=%04X\n", wDevID);
+	lpParms->wDeviceID = wDevID;
+	dprintf_mcianim(stddeb,"ANIM_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
     if (dwFlags & MCI_OPEN_ELEMENT) {
-        dprintf_mcianim(stddeb,"ANIM_mciOpen // MCI_OPEN_ELEMENT !\n");
-        printf("ANIM_mciOpen // MCI_OPEN_ELEMENT !\n");
-/*		return MCIERR_NO_ELEMENT_ALLOWED; */
+		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
+		dprintf_mcianim(stddeb,"ANIM_mciOpen // MCI_OPEN_ELEMENT '%s' !\n",
+						lpstrElementName);
+		if (strlen(lpstrElementName) > 0) {
+			strcpy(str, lpstrElementName);
+			AnsiUpper(str);
+			}
 		}
 	memcpy(&AnimDev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS));
 	AnimDev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
@@ -618,12 +626,13 @@ LRESULT ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 		case DRV_OPEN:
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
-			return ANIM_mciOpen(dwParam1, (LPMCI_OPEN_PARMS)dwParam2); 
+			return ANIM_mciOpen(dwDevID, dwParam1, 
+					(LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2)); 
 		case DRV_CLOSE:
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
 			return ANIM_mciClose(dwDevID, dwParam1, 
-					(LPMCI_GENERIC_PARMS)dwParam2);
+					(LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case DRV_ENABLE:
 			return (LRESULT)1L;
 		case DRV_DISABLE:
@@ -640,31 +649,31 @@ LRESULT ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 			return (LRESULT)DRVCNF_RESTART;
 		case MCI_GETDEVCAPS:
 			return ANIM_mciGetDevCaps(dwDevID, dwParam1, 
-					(LPMCI_GETDEVCAPS_PARMS)dwParam2);
+					(LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_INFO:
 			return ANIM_mciInfo(dwDevID, dwParam1, 
-						(LPMCI_INFO_PARMS)dwParam2);
+						(LPMCI_INFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STATUS:
 			return ANIM_mciStatus(dwDevID, dwParam1, 
-						(LPMCI_STATUS_PARMS)dwParam2);
+						(LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_SET:
 			return ANIM_mciSet(dwDevID, dwParam1, 
-						(LPMCI_SET_PARMS)dwParam2);
+						(LPMCI_SET_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_PLAY:
 			return ANIM_mciPlay(dwDevID, dwParam1, 
-						(LPMCI_PLAY_PARMS)dwParam2);
+						(LPMCI_PLAY_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STOP:
 			return ANIM_mciStop(dwDevID, dwParam1, 
-					(LPMCI_GENERIC_PARMS)dwParam2);
+					(LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_PAUSE:
 			return ANIM_mciPause(dwDevID, dwParam1, 
-					(LPMCI_GENERIC_PARMS)dwParam2);
+					(LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_RESUME:
 			return ANIM_mciResume(dwDevID, dwParam1, 
-					(LPMCI_GENERIC_PARMS)dwParam2);
+					(LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_SEEK:
 			return ANIM_mciSeek(dwDevID, dwParam1, 
-					(LPMCI_SEEK_PARMS)dwParam2);
+					(LPMCI_SEEK_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		default:
 			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 		}

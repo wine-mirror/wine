@@ -3,7 +3,7 @@
 #ifndef WINDOWS_H
 #define WINDOWS_H
 
-#include <wintypes.h>
+#include "wintypes.h"
 
 #ifndef WINELIB
 #pragma pack(1)
@@ -47,8 +47,6 @@ typedef PAINTSTRUCT *LPPAINTSTRUCT;
 
 
   /* Window classes */
-
-typedef LONG (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct {
 	WORD	style;
@@ -700,6 +698,10 @@ typedef struct
 #define TT_AVAILABLE        0x0001
 #define TT_ENABLED          0x0002
 
+/* Get/SetSystemPaletteUse() values */
+#define SYSPAL_STATIC   1
+#define SYSPAL_NOSTATIC 2
+
 typedef struct tagPALETTEENTRY
 {
 	BYTE peRed, peGreen, peBlue, peFlags;
@@ -1313,6 +1315,12 @@ typedef struct tagCOMSTAT
 #define OBM_RGARROWI        32735
 #define OBM_LFARROWI        32734
 
+#define OBM_FOLDER          32733
+#define OBM_FOLDER2         32732
+#define OBM_FLOPPY          32731
+#define OBM_HDISK           32730
+#define OBM_CDROM           32729
+
 #define OBM_OLD_CLOSE       32767
 #define OBM_SIZE            32766
 #define OBM_OLD_UPARROW     32765
@@ -1346,6 +1354,9 @@ typedef struct tagCOMSTAT
 #define OIC_QUES            32514
 #define OIC_BANG            32515
 #define OIC_NOTE            32516
+#define OIC_PORTRAIT        32517
+#define OIC_LANDSCAPE       32518
+#define OIC_WINEICON        32519
 
   /* Stock GDI objects for GetStockObject() */
 
@@ -2131,6 +2142,8 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 #define GMEM_DDESHARE       0x2000
 #define GMEM_NOTIFY         0x4000
 #define GMEM_LOWER          GMEM_NOT_BANKED
+#define GMEM_DISCARDED      0x4000
+#define GMEM_LOCKCOUNT      0x00ff
 
 #define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
 #define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
@@ -2310,20 +2323,20 @@ typedef METAFILEPICT *LPMETAFILEPICT;
 
 
 #define F(ret,name) ret name(void);
-#define Fa(ret,name,t1,a1) ret name(t1 a1);
-#define Fb(ret,name,t1,a1,t2,a2) ret name(t1 a1,t2 a2);
-#define Fc(ret,name,t1,a1,t2,a2,t3,a3) ret name(t1 a1,t2 a2,t3 a3);
-#define Fd(ret,name,t1,a1,t2,a2,t3,a3,t4,a4) ret name(t1 a1,t2 a2,t3 a3,t4 a4);
-#define Fe(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5) ret name( t1 a1,t2 a2,t3 a3,t4 a4,t5 a5);
-#define Ff(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6);
-#define Fg(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7) ret name( t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7);
-#define Fh(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8);
-#define Fi(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9);
-#define Fj(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9,t10 a10);
-#define Fk(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11) ret name (t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9,t10 a10,t11 a11);
-#define Fl(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9,t10 a10,t11 a11,t12 a12);
-#define Fm(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9,t10 a10,t11 a11,t12 a12,t13 a13);
-#define Fn(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13,t14,a14) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9,t10 a10,t11 a11,t12 a12,t13 a13,t14 a14);
+#define Fa(ret,name,t1,a1) ret name(t1);
+#define Fb(ret,name,t1,a1,t2,a2) ret name(t1,t2);
+#define Fc(ret,name,t1,a1,t2,a2,t3,a3) ret name(t1,t2,t3);
+#define Fd(ret,name,t1,a1,t2,a2,t3,a3,t4,a4) ret name(t1,t2,t3,t4);
+#define Fe(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5) ret name(t1,t2,t3,t4,t5);
+#define Ff(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6) ret name(t1,t2,t3,t4,t5,t6);
+#define Fg(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7) ret name(t1,t2,t3,t4,t5,t6,t7);
+#define Fh(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8) ret name(t1,t2,t3,t4,t5,t6,t7,t8);
+#define Fi(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9);
+#define Fj(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10);
+#define Fk(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11);
+#define Fl(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12);
+#define Fm(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13);
+#define Fn(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13,t14,a14) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14);
 
 int wsprintf(LPSTR a,LPSTR b,...);
 
@@ -2459,7 +2472,7 @@ Fa(HANDLE,GetMetaFileBits,HANDLE,a)
 Fa(HANDLE,GetModuleHandle,LPCSTR,a)
 Fa(HANDLE,GetStockObject,int,a)
 Fa(HANDLE,GetWindowTask,HWND,a)
-Fa(HANDLE,LoadLibrary,LPSTR,a)
+Fa(HANDLE,LoadLibrary,LPCSTR,a)
 Fa(HANDLE,LocalFree,HANDLE,a)
 Fa(HANDLE,LocalHandle,WORD,a)
 Fa(HANDLE,SetMetaFileBits,HANDLE,a)
@@ -2528,6 +2541,7 @@ Fa(WORD,GetPolyFillMode,HDC,a)
 Fa(WORD,GetROP2,HDC,a)
 Fa(WORD,GetRelAbs,HDC,a)
 Fa(WORD,GetStretchBltMode,HDC,a)
+Fa(WORD,GetSystemPaletteUse,HDC,a)
 Fa(WORD,GetTextAlign,HDC,a)
 Fa(WORD,GlobalDOSFree,WORD,a)
 Fa(WORD,GlobalFlags,HGLOBAL,a)
@@ -2644,7 +2658,7 @@ Fb(FARPROC,SetWindowsHook,short,a,FARPROC,b)
 Fb(HANDLE,CopyMetaFile,HANDLE,a,LPSTR,b)
 Fb(HANDLE,GetProp,HWND,a,SEGPTR,b)
 Fb(HANDLE,LoadAccelerators,HANDLE,a,SEGPTR,b)
-Fb(HANDLE,LoadModule,LPSTR,a,LPVOID,b)
+Fb(HANDLE,LoadModule,LPCSTR,a,LPVOID,b)
 Fb(HANDLE,LoadResource,HANDLE,a,HANDLE,b)
 Fb(HANDLE,LocalAlloc,WORD,a,WORD,b)
 Fb(HANDLE,RemoveProp,HWND,a,SEGPTR,b)
@@ -2689,7 +2703,6 @@ Fb(WORD,GetCommEventMask,int,a,int,b)
 Fb(WORD,GetMenuItemID,HMENU,a,int,b)
 Fb(WORD,GetNearestPaletteIndex,HPALETTE,a,DWORD,b)
 Fb(WORD,GetSystemDirectory,LPSTR,a,WORD,b)
-Fb(WORD,GetSystemPaletteUse,HDC,a,WORD,b)
 Fb(WORD,GetWindowWord,HWND,a,short,b)
 Fb(WORD,GetWindowsDirectory,LPSTR,a,WORD,b)
 Fb(WORD,IsDlgButtonChecked,HWND,a,WORD,b)
@@ -2803,6 +2816,8 @@ Fc(INT,GetTextFace,HDC,a,INT,b,LPSTR,c)
 Fc(INT,OpenFile,LPSTR,a,LPOFSTRUCT,b,WORD,c)
 Fc(INT,_lread,INT,a,LPSTR,b,WORD,c)
 Fc(INT,_lwrite,INT,a,LPSTR,b,WORD,c)
+Fc(LONG,_hread,INT,a,LPSTR,b,LONG,c)
+Fc(LONG,_hwrite,INT,a,LPSTR,b,LONG,c)
 Fc(LONG,GetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetClassLong,HWND,a,short,b,LONG,c)
@@ -2980,7 +2995,7 @@ Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,ySt
 Fi(BOOL,GrayString,HDC,a,HBRUSH,b,FARPROC,gsprc,LPARAM,lParam,INT,cch,INT,x,INT,y,INT,cx,INT,cy)
 Fi(BOOL,Pie,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fk(BOOL,StretchBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,short,i,short,j,DWORD,k)
-Fk(HWND,CreateWindow,LPSTR,szAppName,LPSTR,Label,DWORD,ol,short,x,short,y,short,w,short,h,HWND,d,HMENU,e,,HANDLE i,SEGPTR,g)
+Fk(HWND,CreateWindow,LPSTR,a,LPSTR,b,DWORD,c,short,d,short,e,short,f,short,g,HWND,h,HMENU,i,HANDLE,j,SEGPTR,k)
 Fl(HWND,CreateWindowEx,DWORD,a,LPSTR,b,LPSTR,c,DWORD,d,short,e,short,f,short,g,short,h,HWND,i,HMENU,j,HANDLE,k,SEGPTR,l)
 Fl(int,SetDIBitsToDevice,HDC,a,short,b,short,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l)
 Fm(int,StretchDIBits,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l,DWORD,m)

@@ -21,15 +21,22 @@ void application_not_running()
 
 void print_address(unsigned int addr, FILE * outfile, int addrlen)
 {
+    extern char * find_nearest_symbol(unsigned short, unsigned int *);
+    char *name;
+
     if (addrlen == 16)
     {
-        fprintf( outfile, "%4.4x:%4.4x", addr >> 16, addr & 0xffff );
+        name = find_nearest_symbol( addr >> 16,
+                                    (unsigned int *)(addr & 0xffff) );
+        if (name)
+            fprintf( outfile, "0x%4.4x:0x%4.4x (%s)",
+                     addr >> 16, addr & 0xffff, name );
+        else
+            fprintf( outfile, "0x%4.4x:0x%4.4x", addr >> 16, addr & 0xffff );
     }
     else
     {
-        extern char * find_nearest_symbol(unsigned int *);
-
-        char * name = find_nearest_symbol((unsigned int *) addr);
+        name = find_nearest_symbol(0, (unsigned int *) addr);
 	if(name)
 		fprintf(outfile,"0x%8.8x(%s)", addr, name);
 	else

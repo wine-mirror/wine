@@ -2,9 +2,7 @@
  * Windows widgets (built-in window classes)
  *
  * Copyright 1993 Alexandre Julliard
-
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
 
 #include "win.h"
 #include "button.h"
@@ -15,6 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "user.h"
 #include "selectors.h"
+#include "stackframe.h"
 
 
 static WNDCLASS WIDGETS_BuiltinClasses[] =
@@ -27,8 +26,10 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
       sizeof(SCROLLINFO), 0, 0, 0, 0, NULL, "SCROLLBAR" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, (WNDPROC)"ListBoxWndProc", 0,
       8, 0, 0, 0, 0, NULL, "LISTBOX" },
-    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, (WNDPROC)"ComboBoxWndProc", 0,
+    { CS_GLOBALCLASS | CS_PARENTDC, (WNDPROC)"ComboBoxWndProc", 0,
       8, 0, 0, 0, 0, NULL, "COMBOBOX" },
+    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, (WNDPROC)"ComboLBoxWndProc", 0,
+      8, 0, 0, 0, 0, NULL, "COMBOLBOX" },
     { CS_GLOBALCLASS, (WNDPROC)"EditWndProc", 0,
       sizeof(WORD), 0, 0, 0, 0, NULL, "EDIT" },
     { CS_GLOBALCLASS | CS_SAVEBITS, (WNDPROC)"PopupMenuWndProc", 0,
@@ -53,20 +54,16 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
 BOOL WIDGETS_Init(void)
 {
     int i;
-    HANDLE hName;
-    char *name;
+    char name[20];
     WNDCLASS *class = WIDGETS_BuiltinClasses;
 
-    if (!(hName = USER_HEAP_ALLOC( 20 ))) return FALSE;
-    name = USER_HEAP_LIN_ADDR( hName );
     for (i = 0; i < NB_BUILTIN_CLASSES; i++, class++)
     {
         strcpy( name, class->lpszClassName );
-        class->lpszClassName = (LPSTR)USER_HEAP_SEG_ADDR( hName );
+        class->lpszClassName = (LPSTR)MAKE_SEGPTR(name);
 	class->hCursor = LoadCursor( 0, IDC_ARROW );
         class->lpfnWndProc = GetWndProcEntry16( (char *)class->lpfnWndProc );
 	if (!RegisterClass( class )) return FALSE;
     }
-    USER_HEAP_FREE( hName );
     return TRUE;
 }

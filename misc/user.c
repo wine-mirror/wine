@@ -92,16 +92,27 @@ BOOL USER_HeapInit(void)
  */
 int USER_InitApp(int hInstance)
 {
+    extern BOOL WIDGETS_Init(void);
+
+    static int firstTask = 1;
     int queueSize;
+
+    if (firstTask)
+    {
+        /* Perform global initialisations that need a task context */
+
+          /* Initialize built-in window classes */
+        if (!WIDGETS_Init()) return 0;
+
+          /* Create desktop window */
+        if (!WIN_CreateDesktopWindow()) return 0;
+
+        firstTask = 0;
+    }
 
       /* Create task message queue */
     queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
     if (!SetMessageQueue( queueSize )) return 0;
 
-#ifndef WINELIB
-    /* Initialize DLLs */
-    InitializeLoadedDLLs(NULL);
-#endif
-        
     return 1;
 }

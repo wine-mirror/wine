@@ -82,10 +82,11 @@ default: c:\windows;c:\windows\system
 
 Used to specify the path which will be used to find executables and DLL's.
 
-format: systemresources = <filename>
-default: c:\temp
+format: symboltablefile = <filename>
+default: wine.sym
 
-Used to specify the name of sysres.dll, a dll which is used by Wine itself.
+Used to specify the path and file name of the symbol table used by the
+built-in debugger.
 
 * [serialports]
 

@@ -1,14 +1,15 @@
-This is release 950430 of Wine the MS Windows emulator.  This is still a
+This is release 950522 of Wine the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work.
 
 Patches should be submitted to "wine-new@amscons.com".  Please don't forget
 to include a ChangeLog entry.  I'll make a new release every other Sunday.
 
-WHAT'S NEW with Wine-950430: (see ChangeLog for details)
-	- Preliminary multitasking support.
-	- Better DOS drives support.
-	- Stubs for DDEML library.
+WHAT'S NEW with Wine-950522: (see ChangeLog for details)
+	- Preliminary Win32 support.
+	- Multimedia code works better.
+	- Better message boxes, listboxes and combos.
+	- SYSRES.DLL is no longer needed.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,10 +18,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-    sunsite.unc.edu:/pub/Linux/ALPHA/wine/Wine-950430.tar.gz
-    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-950430.tar.gz
-    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-950430.tar.gz
-    ftp.funet.fi:/pub/OS/Linux/ALPHA/Wine/Wine-950430.tar.gz
+    sunsite.unc.edu:/pub/Linux/ALPHA/wine/Wine-950522.tar.gz
+    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-950522.tar.gz
+    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-950522.tar.gz
+    ftp.funet.fi:/pub/OS/Linux/ALPHA/Wine/Wine-950522.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 

@@ -29,6 +29,7 @@ DIGIT	[0-9]
 HEXDIGIT [0-9a-fA-F]
 
 IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
+FILE_IDENTIFIER [_a-zA-Z\.~/][_a-zA-Z\.~/]*
 
 %%
 
@@ -61,9 +62,9 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 		}
 
 $pc		{ yylval = RN_EIP; return REG;}
-$sp		{ yylval = RN_ESP; return REG;}
+$sp		{ yylval = RN_ESP_AT_SIGNAL; return REG;}
 $eip		{ yylval = RN_EIP; return REG;}
-$esp		{ yylval = RN_ESP; return REG;}
+$esp		{ yylval = RN_ESP_AT_SIGNAL; return REG;}
 $ebp		{ yylval = RN_EBP; return REG;}
 $eax		{ yylval = RN_EAX; return REG;}
 $ebx		{ yylval = RN_EBX; return REG;}
@@ -117,6 +118,10 @@ q		{ return 'q'; }
 
 {IDENTIFIER}	{yylval = (int) make_symbol(yytext); 
 	          return IDENTIFIER;
+	         }
+
+{FILE_IDENTIFIER} {yylval = (int) make_symbol(yytext); 
+	          return FILE_IDENTIFIER;
 	         }
 
 [ \t]+        /* Eat up whitespace */
@@ -203,7 +208,7 @@ static char *local_symbols[10];
 static int next_symbol;
 
 char * make_symbol(char * symbol){
-	return local_symbols[next_symbol++] = strdup(symbol);
+        return local_symbols[next_symbol++] = strdup(symbol);
 }
 
 void

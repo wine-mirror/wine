@@ -25,8 +25,10 @@ typedef LONG *LPLONG;
 typedef void *LPVOID;
 #ifdef WINELIB
 typedef long (*FARPROC)();
+typedef LONG (*WNDPROC)(WORD,WORD,WORD,LONG);
 #else
 typedef SEGPTR FARPROC;
+typedef SEGPTR WNDPROC;
 #endif
 typedef FARPROC DLGPROC;
 typedef int CATCHBUF[9];
@@ -69,9 +71,8 @@ DECLARE_HANDLE(LOCALHANDLE);
 #define WINAPI              PASCAL
 #define CALLBACK            PASCAL
 
-#ifndef NULL
-#define NULL (0)
-#endif
+#undef NULL
+#define NULL 0
 
 #ifdef WINELIB
 #define WINE_PACKED
@@ -84,6 +85,9 @@ DECLARE_HANDLE(LOCALHANDLE);
 
 #define LOWORD(l)           ((WORD)(DWORD)(l))
 #define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
+
+#define SLOWORD(l)           ((INT)(LONG)(l))
+#define SHIWORD(l)           ((INT)((LONG)(l) >> 16))
 
 #define MAKELONG(low, high) ((LONG)(((WORD)(low)) | \
 				    (((DWORD)((WORD)(high))) << 16)))

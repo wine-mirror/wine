@@ -44,7 +44,7 @@ typedef struct
     WORD    truetype;         /* Set to 2 if TrueType font */
     BYTE    os_flags;         /* Operating system flags */
     BYTE    misc_flags;       /* Misc. flags */
-    WORD    reserved;         /* Same value as import_table */
+    HANDLE  dlls_to_init;     /* List of DLLs to initialize */
     HANDLE  nrname_handle;    /* Handle to non-resident name table in memory */
     WORD    min_swap_area;    /* Min. swap area size */
     WORD    expected_version; /* Expected Windows version */
@@ -71,6 +71,14 @@ typedef struct
     WORD    selector;  /* Selector of segment in memory */
 } SEGTABLEENTRY;
 
+  /* Parameters for LoadModule() */
+typedef struct
+{
+    HANDLE hEnvironment;  /* Environment segment */
+    SEGPTR cmdLine;       /* Command-line */
+    SEGPTR showCmd;       /* Code for ShowWindow() */
+    SEGPTR reserved;
+} LOADPARAMS;
 
 #define NE_SEG_TABLE(pModule) \
     ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->seg_table))
@@ -87,6 +95,11 @@ extern int MODULE_OpenFile( HMODULE hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE hModule );
 extern WORD MODULE_GetOrdinal( HMODULE hModule, char *name );
 extern DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal );
-extern void MODULE_FixupPrologs( HMODULE hModule );
+extern BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset );
+extern LPSTR MODULE_GetEntryPointName( HMODULE hModule, WORD ordinal );
+
+extern BOOL NE_LoadSegment( HMODULE hModule, WORD segnum );
+extern void NE_FixupPrologs( HMODULE hModule );
+extern void NE_InitializeDLLs( HMODULE hModule );
 
 #endif  /* _WINE_MODULE_H */

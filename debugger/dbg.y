@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include "ldt.h"
+#include "windows.h"
+#include "wine.h"
 
 #define YYSTYPE int
 
@@ -41,6 +43,7 @@ void mode_command(int);
 %token SET
 %token MODE
 %token PRINT
+%token FILE_IDENTIFIER
 %token IDENTIFIER
 %token NO_SYMBOL
 %token SYMBOLFILE
@@ -61,8 +64,8 @@ void mode_command(int);
 	| CONT '\n'        { return 0; }
 	| 'c' '\n'         { return 0; }
 	| ABORT '\n'       { kill(getpid(), SIGABRT); }
-	| SYMBOLFILE IDENTIFIER '\n' { read_symboltable($2); }
-	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, $3); }
+ 	| SYMBOLFILE FILE_IDENTIFIER '\n' { read_symboltable($2); }
+	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, 0, $3); }
 	| MODE NUM	   { mode_command($2); }
 	| ENABLE NUM	   { enable_break($2); }
 	| DISABLE NUM	   { disable_break($2); }
@@ -151,6 +154,7 @@ void
 wine_debug(int signal, int * regs)
 {
 	static int dummy_regs[32];
+	char SymbolTableFile[256];
 #ifdef YYDEBUG
 	yydebug = 0;
 #endif
@@ -158,34 +162,23 @@ wine_debug(int signal, int * regs)
 	yyin = stdin;
 	regval = regs ? regs : dummy_regs;
 
-#ifdef linux        
-	if((SC_CS & 7) != 7) {
+	if (SC_CS == WINE_CODE_SELECTOR)
+        {
 		dbg_mask = 0xffffffff;
 		dbg_mode = 32;
-	} else {
+	} else
+        {
 		dbg_mask = 0xffff;
 		dbg_mode = 16;
 	}
-#endif
-#ifdef __NetBSD__
-	if(SC_CS == 0x1f) {
-		dbg_mask = 0xffffffff;
-		dbg_mode = 32;
-	} else {
-		dbg_mask = 0xffff;
-		dbg_mode = 16;
-	}
-#endif
 	fprintf(stderr,"In %d bit mode.\n", dbg_mode);
 
-	/* This is intended to read the entry points from the Windows image, and
-	   insert them in the hash table.  It does not work yet, so it is commented out. */
-	if(dbg_mode == 32 && !loaded_symbols){
+	if(dbg_mode == 32 && !loaded_symbols)
+        {
 		loaded_symbols++;
-		read_symboltable("wine.sym");
-#if 0
-		load_entrypoints();
-#endif
+		GetPrivateProfileString("wine", "SymbolTableFile", "wine.sym",
+			SymbolTableFile, sizeof(SymbolTableFile), WINE_INI);
+		read_symboltable(SymbolTableFile);
 	}
 
 	/* Remove the breakpoints from memory... */

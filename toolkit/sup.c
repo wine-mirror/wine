@@ -5,8 +5,6 @@
 #include "wine.h"
 #include "arch.h"
 
-/* HANDLE hSysRes = 1; */
-
 LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam)
 {

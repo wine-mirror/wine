@@ -58,13 +58,13 @@ typedef struct
     BYTE    unused1;
     HGLOBAL hStack32;                   /* Handle to 32-bit stack */
     WORD    hSelf;                      /* Selector of this TDB */
-    WORD    unused3;
+    HANDLE  hPrevInstance;              /* Previous instance of the module */
     DWORD   esp;                        /* 32-bit stack pointer */
     WORD    ctrlword8087;               /* 80x87 control word */
     WORD    flags;                      /* Task flags */
     WORD    error_flags;                /* Error handling flags */
     WORD    version;                    /* Expected Windows version */
-    HANDLE  hInstance;                  /* Instance handle  for this task */
+    HANDLE  hInstance;                  /* Instance handle for this task */
     HMODULE hModule;                    /* Module handle */
     HANDLE  hQueue;                     /* Selector of task message queue */
     HTASK   hParent;                    /* Selector of TDB of parent task */
@@ -85,7 +85,7 @@ typedef struct
     DWORD   dta WINE_PACKED;            /* Current DTA */
     BYTE    curdrive;                   /* Current drive */
     BYTE    curdir[65];                 /* Current directory */
-    WORD    unused5;
+    WORD    nCmdShow;                   /* cmdShow parameter to WinMain */
     HTASK   hYieldTo;                   /* Next task to schedule */
     DWORD   dlls_to_init;               /* Ptr to list of DLL to initialize */
     HANDLE  hCSAlias;                   /* Code segment alias for this TDB */
@@ -107,6 +107,10 @@ typedef struct
 #ifndef WINELIB
 #pragma pack(4)
 #endif
+
+extern HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance,
+                              HANDLE hPrevInstance, HANDLE hEnvironment,
+                              char *cmdLine, WORD cmdShow );
 
   /* TASK_Reschedule() 16-bit entry point */
 extern FARPROC RELAY_RescheduleProcAddr;

@@ -18,12 +18,8 @@
 #include "dlls.h"
 #include "windows.h"
 #include "arch.h"
-#include "library.h"
-#include "if1632.h"
 #include "selectors.h"
 #include "callback.h"
-#include "ne_image.h"
-#include "prototypes.h"
 #include "module.h"
 #include "stackframe.h"
 #include "stddebug.h"
@@ -33,7 +29,7 @@
 /***********************************************************************
  *           NE_LoadSegment
  */
-static BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
+BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 {
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable, *pSeg;
@@ -42,9 +38,9 @@ static BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     DWORD address;
     int fd;
     struct relocation_entry_s *rep, *reloc_entries;
-    char *dll_name, *func_name;
+    BYTE *func_name;
 
-    char buffer[100], buffer2[100];
+    char buffer[100];
     int ordinal, additive;
     unsigned short *sp;
 
@@ -65,6 +61,12 @@ static BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 
     read( fd, &count, sizeof(count) );
     if (!count) return TRUE;
+
+    dprintf_fixup( stddeb, "Fixups for %*.*s, segment %d, selector %04x\n",
+                   *((BYTE *)pModule + pModule->name_table),
+                   *((BYTE *)pModule + pModule->name_table),
+                   (char *)pModule + pModule->name_table + 1,
+                   segnum, pSeg->selector );
 
     reloc_entries = (struct relocation_entry_s *)malloc(count * sizeof(struct relocation_entry_s));
     if (read( fd, reloc_entries, count * sizeof(struct relocation_entry_s)) !=
@@ -93,42 +95,62 @@ static BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	{
 	  case NE_RELTYPE_ORDINAL:
             module = pModuleTable[rep->target1-1];
-            dll_name = (char *)pModule + pModule->import_table + module;
-            memcpy( buffer, dll_name+1, *dll_name );
-            buffer[*dll_name] = '\0';
-            dll_name = buffer;
-            module = GetModuleHandle( dll_name );
-
 	    ordinal = rep->target2;
             address = MODULE_GetEntryPoint( module, ordinal );
-            if (!address) fprintf( stderr, "Warning: no handler for %s.%d, setting to 0:0\n",
-                                  dll_name, ordinal );
-
-	    dprintf_fixup(stddeb,"%d: %s.%d: %04x:%04x\n", i + 1, 
-                        dll_name, ordinal, HIWORD(address), LOWORD(address) );
+            if (!address)
+            {
+                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                if (!pTarget)
+                    fprintf( stderr, "Module not found: %04x, reference %d of module %*.*s\n",
+                             module, rep->target1, 
+                             *((BYTE *)pModule + pModule->name_table),
+                             *((BYTE *)pModule + pModule->name_table),
+                             (char *)pModule + pModule->name_table + 1 );
+                else
+                    fprintf( stderr, "Warning: no handler for %*.*s.%d, setting to 0:0\n",
+                            *((BYTE *)pTarget + pTarget->name_table),
+                            *((BYTE *)pTarget + pTarget->name_table),
+                            (char *)pTarget + pTarget->name_table + 1,
+                            ordinal );
+            }
+            if (debugging_fixup)
+            {
+                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                fprintf( stddeb,"%d: %*.*s.%d=%04x:%04x\n", i + 1, 
+                         *((BYTE *)pTarget + pTarget->name_table),
+                         *((BYTE *)pTarget + pTarget->name_table),
+                         (char *)pTarget + pTarget->name_table + 1,
+                         ordinal, HIWORD(address), LOWORD(address) );
+            }
 	    break;
 	    
 	  case NE_RELTYPE_NAME:
             module = pModuleTable[rep->target1-1];
-            dll_name = (char *)pModule + pModule->import_table + module;
-            memcpy( buffer, dll_name+1, *dll_name );
-            buffer[*dll_name] = '\0';
-            dll_name = buffer;
-            module = GetModuleHandle( dll_name );
-
             func_name = (char *)pModule + pModule->import_table + rep->target2;
-            memcpy( buffer2, func_name+1, *func_name );
-            buffer2[*func_name] = '\0';
-            func_name = buffer2;
+            memcpy( buffer, func_name+1, *func_name );
+            buffer[*func_name] = '\0';
+            func_name = buffer;
             ordinal = MODULE_GetOrdinal( module, func_name );
 
             address = MODULE_GetEntryPoint( module, ordinal );
 
-            if (!address) fprintf( stderr, "Warning: no handler for %s.%s, setting to 0:0\n",
-                                  dll_name, func_name );
-
-            dprintf_fixup(stddeb,"%d: %s.%s: %04x:%04x\n", i + 1, 
-                       dll_name, func_name, HIWORD(address), LOWORD(address) );
+            if (!address)
+            {
+                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                fprintf( stderr, "Warning: no handler for %*.*s.%s, setting to 0:0\n",
+                        *((BYTE *)pTarget + pTarget->name_table),
+                        *((BYTE *)pTarget + pTarget->name_table),
+                        (char *)pTarget + pTarget->name_table + 1, func_name );
+            }
+            if (debugging_fixup)
+            {
+                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                fprintf( stddeb,"%d: %*.*s.%s=%04x:%04x\n", i + 1, 
+                         *((BYTE *)pTarget + pTarget->name_table),
+                         *((BYTE *)pTarget + pTarget->name_table),
+                         (char *)pTarget + pTarget->name_table + 1,
+                         func_name, HIWORD(address), LOWORD(address) );
+            }
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
@@ -173,17 +195,6 @@ static BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	    return FALSE;
 	}
 
-        /* I'm not sure why a DLL entry point fixup could be additive.
-           Old code used to ignore additive if the target is a built-in
-           DLL. This doesn't seem to work for __AHSHIFT */
-#if 0
-        if (additive && FindDLLTable(dll_name) != NULL)
-            dprintf_fixup(stddeb,"Additive for builtin???\n"
-                          "%d: ADDR TYPE %d, TYPE %d, OFFSET %04x, "
-                          "TARGET %04x %04x\n",
-                          i+1, rep->address_type, rep->relocation_type,
-                          rep->offset, rep->target1, rep->target2);
-#endif
 	offset  = rep->offset;
 
 	switch (rep->address_type)
@@ -263,7 +274,7 @@ static BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
  *
  * Fixup the exported functions prologs.
  */
-static void NE_FixupPrologs( HMODULE hModule )
+void NE_FixupPrologs( HMODULE hModule )
 {
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -333,15 +344,12 @@ static void NE_FixupPrologs( HMODULE hModule )
 }
 
 
-int NE_unloadImage(struct w_files *wpnt)
-{
-	dprintf_fixup(stdnimp, "NEunloadImage() called!\n");
-	/* free resources, image */
-	return 1;
-}
-
-
-BOOL NE_InitDLL( HMODULE hModule )
+/***********************************************************************
+ *           NE_InitDLL
+ *
+ * Call the DLL initialization code
+ */
+static BOOL NE_InitDLL( HMODULE hModule )
 {
     int cs_reg, ds_reg, ip_reg, cx_reg, di_reg, bp_reg;
     NE_MODULE *pModule;
@@ -383,7 +391,7 @@ BOOL NE_InitDLL( HMODULE hModule )
     cs_reg = pSegTable[pModule->cs-1].selector;
     ip_reg = pModule->ip;
     di_reg = ds_reg ? ds_reg : hModule;
-    bp_reg = IF1632_Saved16_sp + (&((STACK16FRAME*)1)->bp - 1);
+    bp_reg = IF1632_Saved16_sp + ((WORD)&((STACK16FRAME*)1)->bp - 1);
 
     pModule->cs = 0;  /* Don't initialize it twice */
     dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04x:%04x ds=%04x di=%04x cx=%04x\n", 
@@ -394,92 +402,23 @@ BOOL NE_InitDLL( HMODULE hModule )
 }
 
 
-/**********************************************************************
- *			NE_LoadImage
- * Load one NE format executable into memory
+/***********************************************************************
+ *           NE_InitializeDLLs
+ *
+ * Initialize the loaded DLLs.
  */
-HINSTANCE NE_LoadImage(struct w_files *wpnt)
+void NE_InitializeDLLs( HMODULE hModule )
 {
     NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegTable;
-    WORD *pModRef;
-    unsigned int read_size, status, segment;
-    int i;
-    char cmdLine[256];
-    extern int Argc;
-    extern char **Argv;
+    WORD *pDLL;
 
-    wpnt->ne = malloc(sizeof(struct ne_data));
-    wpnt->ne->ne_header = malloc(sizeof(struct ne_header_s));
-
-    lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
-    if (read(wpnt->fd, wpnt->ne->ne_header, sizeof(struct ne_header_s)) 
-	!= sizeof(struct ne_header_s))
-	myerror("Unable to read NE header from file");
-
-    wpnt->hModule = MODULE_LoadExeHeader( wpnt->fd, wpnt->filename );
-    pModule = (NE_MODULE *)GlobalLock( wpnt->hModule );
-    pSegTable = NE_SEG_TABLE(pModule);
-
-      /* Create the module segments */
-
-    MODULE_CreateSegments( wpnt->hModule );
-#ifndef WINELIB
-    /*
-     * Create segment selectors.
-     */
-    CreateSelectors();
-
-    if (pModule->dgroup)
-        wpnt->hinstance = NE_SEG_TABLE(pModule)[pModule->dgroup-1].selector;
-    else
-        wpnt->hinstance = wpnt->hModule;
-#endif
-
-      /* Create a task for this module */
-
-    cmdLine[0] = '\0';
-    for (i = 1; i < Argc; i++)
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule->dlls_to_init) return;
+    for (pDLL = (WORD *)GlobalLock( pModule->dlls_to_init ); *pDLL; pDLL++)
     {
-        strcat( cmdLine, Argv[i] );
-        strcat( cmdLine, " " );
+        NE_InitDLL( *pDLL );
+        NE_InitializeDLLs( *pDLL );
     }
-    if (!(pModule->flags & NE_FFLAGS_LIBMODULE))
-        TASK_CreateTask( wpnt->hModule, SELECTOROF( GetDOSEnvironment() ),
-                         GetCurrentTask(), cmdLine );
-
-    /*
-     * Now load any DLLs that  this module refers to.
-     */
-    pModRef = (WORD *)((char *)pModule + pModule->modref_table);
-    for (i = 0; i < pModule->modref_count; i++, pModRef++)
-    {
-        char buffer[80];
-        char *pstr = (char *)pModule + pModule->import_table + *pModRef;
-        memcpy( buffer, pstr + 1, *pstr );
-        buffer[*pstr] = '\0';
-        dprintf_module( stddeb, "Loading '%s'\n", buffer );
-        LoadImage( buffer, DLL, 0 );
-    }
-
-    /* fixup references */
-
-    for (i = 1; i <= pModule->seg_count; i++)
-        NE_LoadSegment( wpnt->hModule, i );
-
-    NE_FixupPrologs( wpnt->hModule );
-    InitializeLoadedDLLs(wpnt);
-
-
-      /* Initialize the local heap */
-
-    if (pModule->dgroup)
-    {
-        int start = pSegTable[pModule->dgroup-1].minsize;
-        if (pModule->ss == pModule->dgroup) start += pModule->stack_size;
-        LocalInit( pSegTable[pModule->dgroup-1].selector,
-                   start, start + pModule->heap_size );
-    }
-
-    return(wpnt->hinstance);
+    GlobalFree( pModule->dlls_to_init );
+    pModule->dlls_to_init = 0;
 }

@@ -18,6 +18,7 @@ SRCS = \
 	mapping.c \
 	mdi.c \
 	message.c \
+	msgbox.c \
 	nonclient.c \
 	painting.c \
 	property.c \

@@ -15,8 +15,7 @@ SRCS = \
 	int2a.c \
 	int2f.c \
 	int31.c \
-	ioports.c \
-	kernel.c
+	ioports.c
 
 OBJS = $(SRCS:.c=.o)
 

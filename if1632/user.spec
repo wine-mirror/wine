@@ -114,7 +114,7 @@ id	2
 113 pascal TranslateMessage(ptr) TranslateMessage
 114 pascal DispatchMessage(ptr) DispatchMessage
 115 stub ReplyMessage
-116 stub PostAppMessage
+116 pascal PostAppMessage(word word word long) PostAppMessage
 118 pascal RegisterWindowMessage(ptr) RegisterWindowMessage
 119 pascal GetMessagePos() GetMessagePos
 120 pascal GetMessageTime() GetMessageTime
@@ -372,7 +372,7 @@ id	2
 456 stub LoadIconHandler
 457 pascal DestroyIcon(word) DestroyIcon
 458 pascal DestroyCursor(word) DestroyCursor
-459 stub DumpIcon
+459 pascal DumpIcon(ptr ptr ptr ptr) DumpIcon
 460 pascal GetInternalWindowPos(word ptr ptr) GetInternalWindowPos
 461 pascal SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos
 462 stub CalcChildScroll

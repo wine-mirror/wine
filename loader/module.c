@@ -12,19 +12,18 @@
 #include <unistd.h>
 #include "windows.h"
 #include "dlls.h"
+#include "dos_fs.h"
 #include "global.h"
 #include "ldt.h"
 #include "module.h"
 #include "neexe.h"
+#include "stackframe.h"
+#include "task.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 /* #define DEBUG_MODULE */
 #include "debug.h"
 
-
-extern BYTE KERNEL_Module_Start[], KERNEL_Module_End[];
-
-extern struct dll_name_table_entry_s dll_builtin_table[];
 
 static HMODULE hFirstModule = 0;
 
@@ -36,18 +35,20 @@ static HMODULE hFirstModule = 0;
  */
 BOOL MODULE_Init(void)
 {
+    extern void load_entrypoints( HMODULE );
+
     HMODULE hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     struct dll_table_s *table;
+    char *dosmem;
     int i;
 
       /* Create the built-in modules */
 
-    for (i = 0; i < N_BUILTINS; i++)
+    for (i = 0, table = dll_builtin_table; i < N_BUILTINS; i++, table++)
     {
-        if (!dll_builtin_table[i].dll_is_used) continue;
-        table = dll_builtin_table[i].table;
+        if (!table->used) continue;
 
         hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, table->module_start,
                                       table->module_end - table->module_start,
@@ -58,7 +59,7 @@ BOOL MODULE_Init(void)
         table->hModule = hModule;
 
         dprintf_module( stddeb, "Built-in %s: hmodule=%04x\n",
-                        dll_builtin_table[i].dll_name, hModule );
+                        table->name, hModule );
 
           /* Allocate the code segment */
 
@@ -81,7 +82,51 @@ BOOL MODULE_Init(void)
 
         pModule->next = hFirstModule;
         hFirstModule = hModule;
+        load_entrypoints( hModule );
     }
+
+      /* Initialize some KERNEL exported values */
+
+    if (!(hModule = GetModuleHandle( "KERNEL" ))) return TRUE;
+
+      /* KERNEL.178: __WINFLAGS */
+    MODULE_SetEntryPoint( hModule, 178, GetWinFlags() );
+
+    /* Allocate 7 64k segments for 0000, A000, B000, C000, D000, E000, F000. */
+
+    dosmem = malloc( 0x70000 );
+
+    MODULE_SetEntryPoint( hModule, 183,  /* KERNEL.183: __0000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 193,  /* KERNEL.193: __0040H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x400,
+                                     0x100, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 174,  /* KERNEL.174: __A000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x10000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 181,  /* KERNEL.181: __B000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x20000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 182,  /* KERNEL.182: __B800H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x28000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 195,  /* KERNEL.195: __C000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x30000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 179,  /* KERNEL.179: __D000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x40000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 190,  /* KERNEL.190: __E000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x50000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 173,  /* KERNEL.173: __ROMBIOS */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x60000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+    MODULE_SetEntryPoint( hModule, 194,  /* KERNEL.194: __F000H */
+                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x60000,
+                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+
     return TRUE;
 }
 
@@ -237,7 +282,7 @@ int MODULE_OpenFile( HMODULE hModule )
     close( cachedfd );
     hCachedModule = hModule;
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    cachedfd = open( name /* DOS_GetUnixFileName( name ) */, O_RDONLY );
+    cachedfd = open( DOS_GetUnixFileName( name ), O_RDONLY );
     dprintf_module( stddeb, "MODULE_OpenFile: opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;
@@ -263,7 +308,9 @@ BOOL MODULE_CreateSegments( HMODULE hModule )
         {
             /* FIXME: this is needed because heap growing is not implemented */
             pModule->heap_size = 0x10000 - minsize;
+            /* For tasks, the DGROUP is allocated by MODULE_MakeNewInstance */
             minsize = 0x10000;
+            if (!(pModule->flags & NE_FFLAGS_LIBMODULE)) continue;
         }
         pSegment->selector = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
                                       minsize, hModule,
@@ -282,7 +329,7 @@ BOOL MODULE_CreateSegments( HMODULE hModule )
 /***********************************************************************
  *           MODULE_LoadExeHeader
  */
-HMODULE MODULE_LoadExeHeader( int fd, char *filename )
+HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
 {
     struct mz_header_s mz_header;
     struct ne_header_s ne_header;
@@ -316,7 +363,7 @@ HMODULE MODULE_LoadExeHeader( int fd, char *filename )
 
     size = sizeof(NE_MODULE) +
              /* loaded file info */
-           sizeof(LOADEDFILEINFO) + strlen(filename) +
+           sizeof(LOADEDFILEINFO) + strlen(ofs->szPathName) +
              /* segment table */
            ne_header.n_segment_tab * sizeof(SEGTABLEENTRY) +
              /* resource table */
@@ -335,6 +382,7 @@ HMODULE MODULE_LoadExeHeader( int fd, char *filename )
     FarSetOwner( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock( hModule );
     memcpy( pModule, &ne_header, sizeof(NE_MODULE) );
+    pModule->count = 0;
     pData = (BYTE *)(pModule + 1);
 
     /* Read the fast-load area */
@@ -359,12 +407,12 @@ HMODULE MODULE_LoadExeHeader( int fd, char *filename )
     /* Store the filename information */
 
     pModule->fileinfo = (int)pData - (int)pModule;
-    ((LOADEDFILEINFO*)pData)->length = sizeof(LOADEDFILEINFO)+strlen(filename);
+    ((LOADEDFILEINFO*)pData)->length = sizeof(LOADEDFILEINFO)+strlen(ofs->szPathName);
     ((LOADEDFILEINFO*)pData)->fixed_media = TRUE;
     ((LOADEDFILEINFO*)pData)->error = 0;
     ((LOADEDFILEINFO*)pData)->date = 0;
     ((LOADEDFILEINFO*)pData)->time = 0;
-    strcpy( ((LOADEDFILEINFO*)pData)->filename, filename );
+    strcpy( ((LOADEDFILEINFO*)pData)->filename, ofs->szPathName );
     pData += ((LOADEDFILEINFO*)pData)->length--;
 
     /* Get the segment table */
@@ -451,10 +499,77 @@ HMODULE MODULE_LoadExeHeader( int fd, char *filename )
     }
     else pModule->nrname_handle = 0;
 
+    /* Allocate a segment for the implicitly-loaded DLLs */
+
+    if (pModule->modref_count)
+    {
+        pModule->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,
+                                    (pModule->modref_count+1)*sizeof(HMODULE),
+                                    hModule, FALSE, FALSE, FALSE );
+        if (!pModule->dlls_to_init) return 11;  /* invalid exe */
+    }
+    else pModule->dlls_to_init = 0;
+
     if (debugging_module) MODULE_PrintModule( hModule );
     pModule->next = hFirstModule;
     hFirstModule = hModule;
     return hModule;
+}
+
+
+/***********************************************************************
+ *           MODULE_MakeNewInstance
+ *
+ * Create a new instance of the specified module.
+ */
+HINSTANCE MODULE_MakeNewInstance( HMODULE hModule, LOADPARAMS *params )
+{
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegment;
+    HINSTANCE hNewInstance, hPrevInstance;
+    int minsize;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!pModule->dgroup) return hModule;  /* No DGROUP -> return the module */
+
+    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+    hPrevInstance = pSegment->selector;
+
+      /* Don't create a new instance if it's a library */
+
+    if (pModule->flags & NE_FFLAGS_LIBMODULE) return hPrevInstance;
+    if (params == (LOADPARAMS*)-1) return hPrevInstance;
+
+      /* Allocate the new data segment */
+
+    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
+    minsize += pModule->heap_size;
+    hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
+                                 minsize, hModule, FALSE, FALSE, FALSE );
+    if (!hNewInstance) return 0;
+    pSegment->selector = hNewInstance;
+    NE_LoadSegment( hModule, pModule->dgroup );
+
+      /* Create a new task for this instance */
+    if (!TASK_CreateTask( hModule, hNewInstance, hPrevInstance,
+                          params->hEnvironment,
+                          (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
+                          *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1) ))
+    {
+        GlobalFree( hNewInstance );
+        return 0;
+    }
+
+      /* Initialize the local heap */
+
+    if (pModule->heap_size)
+    {
+        WORD heapstart = pSegment->minsize;
+        if (pModule->ss == pModule->dgroup) heapstart += pModule->stack_size;
+        LocalInit( hNewInstance, heapstart, heapstart + pModule->heap_size );
+    }
+    return hNewInstance;
 }
 
 
@@ -538,8 +653,6 @@ DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
 
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 
-    dprintf_module( stddeb, "MODULE_GetEntryPoint(%04x,%d)\n",
-                    hModule, ordinal );
     p = (BYTE *)pModule + pModule->entry_table;
     while (*p && (curOrdinal + *p <= ordinal))
     {
@@ -552,16 +665,11 @@ DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
             default:   p += 2 + *p * 3; break;  /* fixed */
         }
     }
-    if (!*p)
-    {
-        dprintf_module( stddeb, "  Not found (last=%d)\n", curOrdinal-1 );
-        return 0;
-    }
+    if (!*p) return 0;
 
     switch(p[1])
     {
         case 0:  /* unused */
-            dprintf_module( stddeb, "  Found, but entry is unused\n" );
             return 0;
         case 0xff:  /* moveable */
             p += 2 + 6 * (ordinal - curOrdinal);
@@ -575,11 +683,90 @@ DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
             break;
     }
 
-    dprintf_module( stddeb, "  Found, logical addr = %04x:%04x\n",
-                    sel, offset );
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = NE_SEG_TABLE(pModule)[sel-1].selector;
     return MAKELONG( offset, sel );
+}
+
+
+/***********************************************************************
+ *           MODULE_SetEntryPoint
+ *
+ * Change the value of an entry point. Use with caution!
+ * It can only change the offset value, not the selector.
+ */
+BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset )
+{
+    NE_MODULE *pModule;
+    WORD curOrdinal = 1;
+    BYTE *p;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return FALSE;
+
+    p = (BYTE *)pModule + pModule->entry_table;
+    while (*p && (curOrdinal + *p <= ordinal))
+    {
+          /* Skipping this bundle */
+        curOrdinal += *p;
+        switch(p[1])
+        {
+            case 0:    p += 2; break;  /* unused */
+            case 0xff: p += 2 + *p * 6; break;  /* moveable */
+            default:   p += 2 + *p * 3; break;  /* fixed */
+        }
+    }
+    if (!*p) return FALSE;
+
+    switch(p[1])
+    {
+        case 0:  /* unused */
+            return FALSE;
+        case 0xff:  /* moveable */
+            p += 2 + 6 * (ordinal - curOrdinal);
+            *(WORD *)(p + 4) = offset;
+            break;
+        default:  /* fixed */
+            p += 2 + 3 * (ordinal - curOrdinal);
+            *(WORD *)(p + 1) = offset;
+            break;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           MODULE_GetEntryPointName
+ *
+ * Return the entry point name for a given ordinal.
+ * Used only by relay debugging.
+ * Warning: returned pointer is to a Pascal-type string.
+ */
+LPSTR MODULE_GetEntryPointName( HMODULE hModule, WORD ordinal )
+{
+    register char *cpnt;
+    NE_MODULE *pModule;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+
+      /* First search the resident names */
+
+    cpnt = (char *)pModule + pModule->name_table;
+    while (*cpnt)
+    {
+        cpnt += *cpnt + 1 + sizeof(WORD);
+        if (*(WORD *)(cpnt + *cpnt + 1) == ordinal) return cpnt;
+    }
+
+      /* Now search the non-resident names table */
+
+    if (!pModule->nrname_handle) return 0;  /* No non-resident table */
+    cpnt = (char *)GlobalLock( pModule->nrname_handle );
+    while (*cpnt)
+    {
+        cpnt += *cpnt + 1 + sizeof(WORD);
+        if (*(WORD *)(cpnt + *cpnt + 1) == ordinal) return cpnt;
+    }
+    return NULL;
 }
 
 
@@ -602,10 +789,208 @@ LPSTR MODULE_GetModuleName( HMODULE hModule )
 
 
 /**********************************************************************
+ *	    MODULE_FindModule
+ *
+ * Find a module from a path name.
+ */
+HMODULE MODULE_FindModule( LPCSTR path )
+{
+    HMODULE hModule = hFirstModule;
+    LPCSTR filename, dotptr, modulepath, modulename;
+    BYTE len, *name_table;
+
+    if (!(filename = strrchr( path, '\\' ))) filename = path;
+    if ((dotptr = strrchr( filename, '.' )) != NULL)
+        len = (BYTE)(dotptr - filename);
+    else len = strlen( filename );
+
+    while(hModule)
+    {
+        NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
+        if (!pModule) break;
+        modulepath = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
+        if (!(modulename = strrchr( modulepath, '\\' )))
+            modulename = modulepath;
+        if (!strcasecmp( modulename, filename )) return hModule;
+
+        name_table = (BYTE *)pModule + pModule->name_table;
+        if ((*name_table == len) && !strncasecmp(filename, name_table+1, len))
+            return hModule;
+        hModule = pModule->next;
+    }
+    return 0;
+}
+
+
+/**********************************************************************
+ *	    MODULE_FreeModule
+ *
+ * Remove a module from memory.
+ */
+static void MODULE_FreeModule( HMODULE hModule )
+{
+    HMODULE *hPrevModule;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegment;
+    WORD *pModRef;
+    int i;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return;
+
+    /* FIXME: should call the exit code for the library here */
+
+      /* Remove it from the linked list */
+
+    hPrevModule = &hFirstModule;
+    while (*hPrevModule && (*hPrevModule != hModule))
+    {
+        hPrevModule = &((NE_MODULE *)GlobalLock( *hPrevModule ))->next;
+    }
+    if (*hPrevModule) *hPrevModule = pModule->next;
+
+      /* Free all the segments */
+
+    pSegment = NE_SEG_TABLE( pModule );
+    for (i = 1; i <= pModule->seg_count; i++, pSegment++)
+    {
+        GlobalFree( pSegment->selector );
+    }
+
+      /* Free the referenced modules */
+
+    pModRef = NE_MODULE_TABLE( pModule );
+    for (i = 0; i < pModule->modref_count; i++, pModRef++)
+    {
+        FreeModule( *pModRef );
+    }
+
+      /* Free the module storage */
+
+    if (pModule->nrname_handle) GlobalFree( pModule->nrname_handle );
+    if (pModule->dlls_to_init) GlobalFree( pModule->dlls_to_init );
+    GlobalFree( hModule );
+}
+
+
+/**********************************************************************
  *	    LoadModule    (KERNEL.45)
  */
-HINSTANCE MODULE_LoadModule( LPCSTR name, LPVOID paramBlock )
+HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 {
+    HMODULE hModule;
+    HANDLE hInstance;
+    NE_MODULE *pModule;
+    WORD *pModRef, *pDLLs;
+    int i, fd;
+
+    hModule = MODULE_FindModule( name );
+    if (!hModule)  /* We have to load the module */
+    {
+        OFSTRUCT ofs;
+        if (strchr( name, '/' )) name = DOS_GetDosFileName( name );
+        if ((fd = OpenFile( name, &ofs, OF_READ )) == -1)
+            return 2;  /* File not found */
+
+          /* Create the module structure */
+
+        if ((hModule = MODULE_LoadExeHeader( fd, &ofs )) < 32)
+        {
+            close( fd );
+            fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
+                     name, hModule );
+            return hModule;
+        }
+        pModule = (NE_MODULE *)GlobalLock( hModule );
+
+          /* Allocate the segments for this module */
+
+        MODULE_CreateSegments( hModule );
+
+          /* Load the referenced DLLs */
+
+        pModRef = (WORD *)((char *)pModule + pModule->modref_table);
+        pDLLs = (WORD *)GlobalLock( pModule->dlls_to_init );
+        for (i = 0; i < pModule->modref_count; i++, pModRef++)
+        {
+            char buffer[256];
+            BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
+            memcpy( buffer, pstr + 1, *pstr );
+            strcpy( buffer + *pstr, ".dll" );
+            dprintf_module( stddeb, "Loading '%s'\n", buffer );
+            if (!(*pModRef = MODULE_FindModule( buffer )))
+            {
+                /* If the DLL is not loaded yet, load it and store */
+                /* its handle in the list of DLLs to initialize.   */
+                HMODULE hDLL;
+
+                if ((hDLL = LoadModule( buffer, (LPVOID)-1 )) == 2)  /* file not found */
+                {
+                    char *p;
+
+                    /* Try with prepending the path of the current module */
+                    GetModuleFileName( hModule, buffer, 256 );
+                    if (!(p = strrchr( buffer, '\\' ))) p = buffer;
+                    memcpy( p + 1, pstr + 1, *pstr );
+                    strcpy( p + 1 + *pstr, ".dll" );
+                    hDLL = LoadModule( buffer, (LPVOID)-1 );
+                }
+                if (hDLL < 32)
+                {
+                    fprintf( stderr, "Could not load '%s' required by '%s', error = %d\n",
+                             buffer, name, hDLL );
+                    return 2;  /* file not found */
+                }
+                *pModRef = GetExePtr( hDLL );
+                *pDLLs++ = *pModRef;
+            }
+            else  /* Increment the reference count of the DLL */
+            {
+                NE_MODULE *pOldDLL = (NE_MODULE *)GlobalLock( *pModRef );
+                if (pOldDLL) pOldDLL->count++;
+            }
+        }
+
+          /* Load the segments (except the DGROUP) */
+
+        for (i = 1; i <= pModule->seg_count; i++)
+            if (i != pModule->dgroup) NE_LoadSegment( hModule, i );
+
+          /* Create an instance for this module */
+
+        hInstance = MODULE_MakeNewInstance( hModule, (LOADPARAMS*)paramBlock );
+
+          /* Fixup the functions prologs */
+
+        NE_FixupPrologs( hModule );
+
+          /* Make sure the usage count is 1 on the first loading of  */
+          /* the module, even if it contains circular DLL references */
+
+        pModule->count = 1;
+    }
+    else
+    {
+        pModule = (NE_MODULE *)GlobalLock( hModule );
+        hInstance = MODULE_MakeNewInstance( hModule, (LOADPARAMS*)paramBlock );
+        pModule->count++;
+    }
+
+    return hInstance;
+}
+
+
+/**********************************************************************
+ *	    FreeModule    (KERNEL.46)
+ */
+BOOL FreeModule( HANDLE hModule )
+{
+    NE_MODULE *pModule;
+
+    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return FALSE;
+
+    if (--pModule->count == 0) MODULE_FreeModule( hModule );
+    return TRUE;
 }
 
 
@@ -614,21 +999,15 @@ HINSTANCE MODULE_LoadModule( LPCSTR name, LPVOID paramBlock )
  */
 HMODULE GetModuleHandle( LPCSTR name )
 {
-    char buffer[16];
-    BYTE len;
-    HMODULE hModule;
+    BYTE len = strlen(name);
+    HMODULE hModule = hFirstModule;
 
-    strncpy( buffer, name, 15 );
-    buffer[15] = '\0';
-    len = strlen(buffer);
-    AnsiUpper( buffer );
-
-    hModule = hFirstModule;
     while( hModule )
     {
         NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
         char *pname = (char *)pModule + pModule->name_table;
-        if (((BYTE)*pname == len) && !memcmp( pname+1, buffer, len )) break;
+        if (((BYTE)*pname == len) && !strncasecmp( pname+1, name, len ))
+            break;
         hModule = pModule->next;
     }
     dprintf_module( stddeb, "GetModuleHandle('%s'): returning %04x\n",
@@ -666,6 +1045,122 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
     strncpy( lpFileName, name, nSize );
     lpFileName[nSize-1] = '\0';
     return strlen(lpFileName);
+}
+
+
+/***********************************************************************
+ *           LoadLibrary   (KERNEL.95)
+ */
+HANDLE LoadLibrary( LPCSTR libname )
+{
+    HANDLE handle;
+
+    dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
+    handle = LoadModule( libname, (LPVOID)-1 );
+    if (handle == 2)  /* file not found */
+    {
+        char buffer[256];
+        strcpy( buffer, libname );
+        strcat( buffer, ".dll" );
+        handle = LoadModule( buffer, (LPVOID)-1 );
+    }
+    if (handle >= 32) NE_InitializeDLLs( handle );
+    return handle;
+}
+
+
+/***********************************************************************
+ *           FreeLibrary   (KERNEL.96)
+ */
+void FreeLibrary( HANDLE handle )
+{
+    dprintf_module( stddeb,"FreeLibrary: %04x\n", handle );
+    FreeModule( handle );
+}
+
+
+/***********************************************************************
+ *           WinExec   (KERNEL.166)
+ */
+HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
+{
+    LOADPARAMS params;
+    HLOCAL cmdShowHandle, cmdLineHandle;
+    HANDLE handle;
+    WORD *cmdShowPtr;
+    char *p, *cmdline, filename[256];
+
+    if (!(cmdShowHandle = GlobalAlloc( 0, 2 * sizeof(WORD) ))) return 0;
+    if (!(cmdLineHandle = GlobalAlloc( 0, 256 ))) return 0;
+
+      /* Store nCmdShow */
+
+    cmdShowPtr = (WORD *)GlobalLock( cmdShowHandle );
+    cmdShowPtr[0] = 2;
+    cmdShowPtr[1] = nCmdShow;
+
+      /* Build the filename and command-line */
+
+    cmdline = (char *)GlobalLock( cmdLineHandle );
+    strncpy( filename, lpCmdLine, 256 );
+    filename[255] = '\0';
+    for (p = filename; *p && (*p != ' ') && (*p != '\t'); p++);
+    if (*p)
+    {
+        strncpy( cmdline, p + 1, 128 );
+        cmdline[127] = '\0';
+    }
+    else cmdline[0] = '\0';
+    *p = '\0';
+
+      /* Now load the executable file */
+
+    params.hEnvironment = SELECTOROF( GetDOSEnvironment() );
+    params.cmdLine  = WIN16_GlobalLock( cmdLineHandle );
+    params.showCmd  = WIN16_GlobalLock( cmdShowHandle );
+    params.reserved = 0;
+    handle = LoadModule( filename, &params );
+    if (handle == 2)  /* file not found */
+    {
+        strcat( filename, ".exe" );
+        handle = LoadModule( filename, &params );
+    }
+
+    GlobalFree( cmdShowHandle );
+    GlobalFree( cmdLineHandle );
+    return handle;
+}
+
+
+/***********************************************************************
+ *           GetProcAddress   (KERNEL.50)
+ */
+FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
+{
+    WORD ordinal;
+    SEGPTR ret;
+
+    if (!hModule) hModule = GetCurrentTask();
+    hModule = GetExePtr( hModule );
+
+    if (HIWORD(name) != 0)
+    {
+        ordinal = MODULE_GetOrdinal( hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
+        dprintf_module( stddeb, "GetProcAddress: %04x '%s'\n",
+                        hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
+    }
+    else
+    {
+        ordinal = LOWORD(name);
+        dprintf_module( stddeb, "GetProcAddress: %04x %04x\n",
+                        hModule, ordinal );
+    }
+    if (!ordinal) return (FARPROC)0;
+
+    ret = MODULE_GetEntryPoint( hModule, ordinal );
+
+    dprintf_module( stddeb, "GetProcAddress: returning %08lx\n", ret );
+    return (FARPROC)ret;
 }
 
 

@@ -1,13 +1,13 @@
 name	storage
 id	23
  
-#1 STGCREATEDOCFILE
-#2 STGCREATEDOCFILEONILOCKBYTES
-#3 STGOPENSTORAGE
-#4 STGOPENSTORAGEONILOCKBYTES
-#5 STGISSTORAGEFILE
-#6 STGISSTORAGEILOCKBYTES
-#7 STGSETTIMES
+1 stub StgCreateDocFile
+2 stub StgCreateDocFileOnILockBytes
+3 stub StgOpenStorage
+4 stub StgOpenStorageOnILockBytes
+5 stub StgIsStorageFile
+6 stub StgIsStorageILockBytes
+7 stub StgSetTimes
 #8 WEP
 #9 ___EXPORTEDSTUB
-#103 DLLGETCLASSOBJECT
+103 stub DllGetClassObject

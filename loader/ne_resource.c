@@ -204,8 +204,10 @@ HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                                        pTypeInfo->count * sizeof(NE_NAMEINFO));
         }
     }
-    fprintf( stderr, "FindResource(%04x,%08lx,%08lx): Not found.\n",
-             hModule, typeId, resId );
+    fprintf( stderr, "FindResource('%*.*s',%08lx,%08lx): Not found.\n",
+             *((BYTE *)pModule + pModule->name_table),
+             *((BYTE *)pModule + pModule->name_table),
+             (char *)pModule + pModule->name_table + 1, typeId, resId );
     return 0;
 }
 

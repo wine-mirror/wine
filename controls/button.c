@@ -3,19 +3,15 @@
  * Copyright (C) 1993 Johannes Ruscheinski
  * Copyright (C) 1993 David Metcalfe
  * Copyright (C) 1994 Alexandre Julliard
-
-static char Copyright1[] = "Copyright Johannes Ruscheinski, 1993";
-static char Copyright2[] = "Copyright David Metcalfe, 1993";
-static char Copyright3[] = "Copyright Alexandre Julliard, 1994";
-*/
+ */
 
 #include "win.h"
 #include "user.h"
 #include "syscolor.h"
 #include "graphics.h"
 #include "button.h"
-#include "stddebug.h"
-#include "debug.h"
+#include "stackframe.h"
+
 extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
 static void PB_Paint( HWND hWnd, HDC hDC, WORD action );
@@ -477,26 +473,20 @@ static void UB_Paint( HWND hWnd, HDC hDC, WORD action )
 
 static void OB_Paint( HWND hWnd, HDC hDC, WORD action )
 {
-    HANDLE	hDis;
-    LPDRAWITEMSTRUCT lpdis;
+    DRAWITEMSTRUCT dis;
     WND *wndPtr = WIN_FindWndPtr( hWnd );
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
-    if (!(hDis = USER_HEAP_ALLOC( sizeof(DRAWITEMSTRUCT) ))) return;
-    lpdis = (LPDRAWITEMSTRUCT)USER_HEAP_LIN_ADDR(hDis);
-    lpdis->CtlType    = ODT_BUTTON;
-    lpdis->CtlID      = wndPtr->wIDmenu;
-    lpdis->itemID     = 0;
-    lpdis->itemAction = action;
-    lpdis->itemState  = (infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0 |
+    dis.CtlType    = ODT_BUTTON;
+    dis.CtlID      = wndPtr->wIDmenu;
+    dis.itemID     = 0;
+    dis.itemAction = action;
+    dis.itemState  = (infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0 |
                      (infoPtr->state & BUTTON_HIGHLIGHTED) ? ODS_SELECTED : 0 |
                      (wndPtr->dwStyle & WS_DISABLED) ? ODS_DISABLED : 0;
-    lpdis->hwndItem   = hWnd;
-    lpdis->hDC        = hDC;
-    GetClientRect( hWnd, &lpdis->rcItem );
-    lpdis->itemData   = 0;
-    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, USER_HEAP_SEG_ADDR(hDis) );
-    USER_HEAP_FREE(hDis);
+    dis.hwndItem   = hWnd;
+    dis.hDC        = hDC;
+    GetClientRect( hWnd, &dis.rcItem );
+    dis.itemData   = 0;
+    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, MAKE_SEGPTR(&dis) );
 }
-
-

@@ -15,7 +15,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
-#include "library.h"
 #include "neexe.h"
 #include "wine.h"
 #include "cursor.h"
@@ -61,7 +60,7 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
     CURSORDESCRIP *lpcurdesc;
     CURSORALLOC	  *lpcur;
     HDC 	hdc;
-    int i, image_size;
+    int i;
     unsigned char *cp1,*cp2;
     dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %08lx\n",
 	   instance, cursor_name);
@@ -145,7 +144,6 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 	}
     lpcurdesc = (CURSORDESCRIP *)(lp + 3);
 #if 0
-    dprintf_cursor(stddeb,"LoadCursor / image_size=%d\n", image_size);
     dprintf_cursor(stddeb,"LoadCursor / curReserved=%X\n", *lp);
     dprintf_cursor(stddeb,"LoadCursor / curResourceType=%X\n", *(lp + 1));
     dprintf_cursor(stddeb,"LoadCursor / curResourceCount=%X\n", *(lp + 2));

@@ -11,8 +11,11 @@
 
 extern BOOL DIALOG_Init(void);
 extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
-extern int DialogBoxIndirectPtr( HINSTANCE hInst, LPCSTR dlgTemplate,
-                          HWND owner, WNDPROC dlgProc);
+extern int DialogBoxIndirectPtr(HINSTANCE hInst, LPCSTR dlgTemplate,
+				HWND owner, WNDPROC dlgProc);
+extern int DialogBoxIndirectParamPtr(HINSTANCE hInst, LPCSTR dlgTemplate,
+				     HWND owner, WNDPROC dlgProc, 
+				     LPARAM param);
 
 #ifndef WINELIB
 #pragma pack(1)

@@ -45,7 +45,7 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
 #define __AHSHIFT  3
 #define __AHINCR   (1 << __AHSHIFT)
 
-#define SELECTOR_TO_ENTRY(sel)  ((int)(sel) >> __AHSHIFT)
+#define SELECTOR_TO_ENTRY(sel)  (((int)(sel) & 0xffff) >> __AHSHIFT)
 #define ENTRY_TO_SELECTOR(i)    ((i) ? (((int)(i) << __AHSHIFT) | 7) : 0)
 #define IS_LDT_ENTRY_FREE(i)    (!(ldt_copy[(i)].base || ldt_copy[(i)].limit))
 #define IS_SELECTOR_FREE(sel)   (IS_LDT_ENTRY_FREE(SELECTOR_TO_ENTRY(sel)))

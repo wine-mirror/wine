@@ -279,7 +279,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
         else index = 0;
 	break;
     }
-    if (dc)
+    if (dc&&dc->u.x.pal.mappingSize)
     {
         if (index >= dc->u.x.pal.mappingSize) return 0;
         mapping = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hMapping );

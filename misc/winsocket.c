@@ -36,6 +36,9 @@ struct ipc_packet {
 	WORD	wMsg;
 	LONG	lParam;
 };
+
+#pragma pack(1)
+
 #define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long))
 #define MTYPE 0xb0b0eb05
 #define WINE_PACKED __attribute__ ((packed))
@@ -81,6 +84,8 @@ struct WinSockHeap {
 	struct	WIN_servent WSAservent_port;
 };
 static struct WinSockHeap *heap;
+
+#pragma pack(4)
 
 #define dump_sockaddr(a) \
 	fprintf(stderr, "sockaddr_in: family %d, address %s, port %d\n", \

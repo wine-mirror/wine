@@ -213,7 +213,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
  */
 WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
-    dprintf_timer(stddeb, "SetTimer: %d %d %d %p\n", hwnd, id, timeout, proc );
+    dprintf_timer(stddeb, "SetTimer: %d %d %d %08lx\n", hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, proc, FALSE );
 }
 
@@ -223,8 +223,8 @@ WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
  */
 WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
-    dprintf_timer(stddeb, "SetSystemTimer: %d %d %d %p\n", 
-		  hwnd, id, timeout, proc );
+    dprintf_timer(stddeb, "SetSystemTimer: %d %d %d %08lx\n", 
+		  hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, proc, TRUE );
 }
 

@@ -1,11 +1,11 @@
 /*
  * X events handling functions
- *
+ * 
  * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ * 
+ */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <X11/Xlib.h>
@@ -322,10 +322,10 @@ static void EVENT_key( XKeyEvent *event )
     }
     else if (key_type == 0)                        /* character key */
     {
-	if (key >= 0x61 && key <= 0x7A)
-	    vkey = key - 0x20;                 /* convert lower to uppercase */
+	if (isalnum(key))
+	    vkey = toupper(key);                 /* convert lower to uppercase */
 	else
-	    vkey = key;
+	    vkey = 0xbe;
     }
 
     if (event->type == KeyPress)
@@ -527,6 +527,11 @@ HWND SetCapture( HWND hwnd )
     Window win;
     HWND old_capture_wnd = captureWnd;
 
+    if (!hwnd)
+    {
+        ReleaseCapture();
+        return old_capture_wnd;
+    }
     if (!(win = WIN_GetXWindow( hwnd ))) return 0;
     if (XGrabPointer(display, win, False, 
                      ButtonPressMask | ButtonReleaseMask | PointerMotionMask,

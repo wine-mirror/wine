@@ -41,7 +41,7 @@ id	1
 41  return EnableDos 0 0
 42  return DisableDos 0 0
 45  pascal16 LoadModule(ptr ptr) LoadModule
-46  pascal16 FreeModule(word) FreeLibrary
+46  pascal16 FreeModule(word) FreeModule
 47  pascal16 GetModuleHandle(ptr) GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName
@@ -82,11 +82,11 @@ id	1
 84  pascal _llseek(word long word) _llseek
 85  pascal16 _lopen(ptr word) _lopen
 86  pascal16 _lwrite(word ptr word) _lwrite
-#87 RESERVED5
+87 	stub RESERVED5
 88  pascal lstrcpy(segptr segptr) lstrcpy
 89  pascal lstrcat(segptr segptr) lstrcat
 90  pascal16 lstrlen(ptr) lstrlen
-91  register InitTask() KERNEL_InitTask
+91  register InitTask() InitTask
 92  pascal16 GetTempDrive(byte) GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
 94  stub DefineHandleTable
@@ -161,29 +161,29 @@ id	1
 170 pascal16 AllocCStoDSAlias(word) AllocCStoDSAlias
 171 pascal16 AllocDStoCSAlias(word) AllocDStoCSAlias
 172 pascal16 AllocAlias(word) AllocCStoDSAlias
-#173 __ROMBIOS
-#174 __A000H
+173 equate __ROMBIOS 0
+174 equate __A000H 0
 175 pascal16 AllocSelector(word) AllocSelector
 176 pascal16 FreeSelector(word) FreeSelector
 177 pascal16 PrestoChangoSelector(word word) PrestoChangoSelector
 178 equate __WINFLAGS 0x413
-#179 __D000H
+179 equate __D000H 0
 180 pascal16 LongPtrAdd(long long) LongPtrAdd
-#181 __B000H
-#182 __B800H
-#183 __0000H
+181 equate __B000H 0
+182 equate __B800H 0
+183 equate __0000H 0
 184 pascal GlobalDOSAlloc(long) GlobalDOSAlloc
 185 pascal16 GlobalDOSFree(word) GlobalDOSFree
 186 pascal GetSelectorBase(word) GetSelectorBase
 187 pascal16 SetSelectorBase(word long) SetSelectorBase
 188 pascal GetSelectorLimit(word) GetSelectorLimit
 189 pascal16 SetSelectorLimit(word long) SetSelectorLimit
-#190 __E000H
+190 equate __E000H 0
 191 pascal16 GlobalPageLock(word) GlobalPageLock
 192 pascal16 GlobalPageUnlock(word) GlobalPageUnlock
-#193 __0040H
-#194 __F000H
-#195 __C000H
+193 equate __0040H 0
+194 equate __F000H 0
+195 equate __C000H 0
 196 pascal16 SelectorAccessRights(word word word) SelectorAccessRights
 197 pascal16 GlobalFix(word) GlobalFix
 198 pascal16 GlobalUnfix(word) GlobalUnfix

@@ -281,20 +281,14 @@ typedef DEVNAMES * LPDEVNAMES;
 *                 COMMDLG Resources placed in Wine SYSRES.DLL		    *
 ************************************************************************/
 
-#define OBM_FOLDER			32520
-#define OBM_FOLDER2			32521
-#define OBM_FLOPPY			32522
-#define OBM_HDISK			32523
-#define OBM_CDROM			32524
-
-#define OPENFILEDLG				3
-#define SAVEFILEDLG				4
-#define PRINTDLG				5
+#define OPENFILEDLG    			3
+#define SAVEFILEDLG    			4
+#define PRINTDLG	       		5
 #define PRINTSETUPDLG			6
-#define FONTDLG					7
-#define COLORDLG				8
-#define FINDDLG					9
-#define REPLACEDLG				10
+#define FONTDLG		       		7
+#define COLORDLG	       		8
+#define FINDDLG		       		9
+#define REPLACEDLG	       		10
 
 
 

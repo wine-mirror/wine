@@ -11,10 +11,10 @@
 #include "win.h"
 #include "user.h"
 #include "message.h"
-#include "library.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "selectors.h"
+#include "../rc/sysres.h"
 
 #define OPENFILEDLG2			11
 #define SAVEFILEDLG2			12
@@ -57,16 +57,46 @@ static BOOL COMMDLG_IsPathName(LPSTR str)
  */
 static BOOL FileDlg_Init()
 {
-  if (!hFolder) hFolder = LoadBitmap(hSysRes, MAKEINTRESOURCE(OBM_FOLDER));
-  if (!hFolder2) hFolder2 = LoadBitmap(hSysRes, MAKEINTRESOURCE(OBM_FOLDER2));
-  if (!hFloppy) hFloppy = LoadBitmap(hSysRes, MAKEINTRESOURCE(OBM_FLOPPY));
-  if (!hHDisk) hHDisk = LoadBitmap(hSysRes, MAKEINTRESOURCE(OBM_HDISK));
-  if (!hCDRom) hCDRom = LoadBitmap(hSysRes, MAKEINTRESOURCE(OBM_CDROM));
+  if (!hFolder) hFolder = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER));
+  if (!hFolder2) hFolder2 = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER2));
+  if (!hFloppy) hFloppy = LoadBitmap(0, MAKEINTRESOURCE(OBM_FLOPPY));
+  if (!hHDisk) hHDisk = LoadBitmap(0, MAKEINTRESOURCE(OBM_HDISK));
+  if (!hCDRom) hCDRom = LoadBitmap(0, MAKEINTRESOURCE(OBM_CDROM));
   if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
       hHDisk == 0 || hCDRom == 0)
   fprintf(stderr, "FileDlg_Init // Error loading bitmaps !");
   return TRUE;
 }
+
+/***********************************************************************
+ *                              OpenDlg_FixDirName              [internal]
+ */
+void OpenDlg_FixDirName(LPSTR dirname)
+{
+  char temp[512];
+  char* strp1;
+  char* strp2;
+
+  strp1=dirname;
+  if( dirname[1] != ':'){
+    temp[0]=(char)((char)DOS_GetDefaultDrive()+'A');
+    temp[1]=':';
+    temp[2]='\\';
+    temp[3]= '\0';
+    strcat(temp, DOS_GetCurrentDir(DOS_GetDefaultDrive()));
+    if(dirname[0]=='.' && dirname[1]=='.') {
+      strp2 = strrchr(temp, '\\');
+      if (strp2 != NULL){
+	*strp2='\0';
+	strp1+=2;
+      }
+    }
+    strcat(temp, "\\");
+    strcat(temp, strp1);
+    strcpy(dirname, temp);
+  } 
+}
+  
 
 /***********************************************************************
  * 				OpenDlg_ScanDir			[internal]
@@ -77,13 +107,14 @@ static BOOL OpenDlg_ScanDir(HWND hWnd, LPSTR newPath)
   static LPSTR  str  = NULL;
   static SEGPTR str16 = 0;
   LPSTR strp;
-  
+
+  OpenDlg_FixDirName(newPath);
   if (str == NULL)  {
     hStr = GlobalAlloc(0,512);
     str = GlobalLock(hStr);
     str16 = WIN16_GlobalLock(hStr);
   }
-  
+
   strcpy(str,newPath);
   DlgDirList(hWnd, str, lst1, 0, 0x0000);
   strp = strrchr(str,'\\');
@@ -96,37 +127,27 @@ static BOOL OpenDlg_ScanDir(HWND hWnd, LPSTR newPath)
   } else strp++;
   strcpy(str,strp);
   SendDlgItemMessage(hWnd,edt1,WM_SETTEXT, 0, str16);
-  strcpy(str,newPath);
-  *strp = 0;
-  strcat(str,"*.*");
+  strcpy(str,"*.*");
   DlgDirList(hWnd, str, lst2, stc1, 0x8010);
   
   return TRUE;
 }
 
-
-
 /***********************************************************************
  * 				OpenDlg_GetFileType		[internal]
  */
-LPSTR OpenDlg_GetFileType(LPCSTR types, WORD index)
+static LPSTR OpenDlg_GetFileType(LPCSTR types, WORD index)
 {
 	int		n;
 	int		i = 1;
 	LPSTR 	ptr = (LPSTR) types;
 	if	(ptr == NULL) return NULL;
 	while((n = strlen(ptr)) != 0) {
-#ifdef DEBUG_OPENDLG
-		printf("OpenDlg_GetFileType // file type '%s' !\n", ptr);
-#endif
 		ptr += ++n;
-#ifdef DEBUG_OPENDLG
-		printf("OpenDlg_GetFileType // file spec '%s' !\n", ptr);
-#endif
 		if (i++ == index) return ptr;
 		n = strlen(ptr);
 		ptr += ++n;
-		}
+	}
 	return NULL;
 }
 
@@ -135,45 +156,45 @@ LPSTR OpenDlg_GetFileType(LPCSTR types, WORD index)
  */
 BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 {
-	HANDLE		hDlgTmpl;
-	HANDLE		hResInfo;
-	HINSTANCE	hInst;
-	WND 		*wndPtr;
-	BOOL		bRet;
-
-        if (lpofn == NULL) return FALSE;
-	if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
-		hDlgTmpl = lpofn->hInstance;
-	} else {
-		if (lpofn->Flags & OFN_ENABLETEMPLATE) {
-			hInst = lpofn->hInstance;
-			hResInfo = FindResource(hInst,
-				lpofn->lpTemplateName, RT_DIALOG);
-		} else {
-			hInst = hSysRes;
-			hResInfo = FindResource(hInst, MAKEINTRESOURCE(OPENFILEDLG2), RT_DIALOG);
-		}
-		if (hResInfo == 0) {
-			CommDlgLastError = CDERR_FINDRESFAILURE;
-			return FALSE;
-		}
-		printf("GetOpenFileName // apres FindResource hResInfo=%04X!\n", hResInfo);
-		hDlgTmpl = LoadResource(hInst, hResInfo);
-       	}
-	if (hDlgTmpl == 0) {
-		CommDlgLastError = CDERR_LOADRESFAILURE;
-		return FALSE;
-	}
-	printf("GetOpenFileName // apres LoadResource hDlgTmpl=%04X!\n", hDlgTmpl);
-        wndPtr = WIN_FindWndPtr(lpofn->hwndOwner);
-	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl,
-                                      lpofn->hwndOwner,
-                                      GetWndProcEntry16("FileOpenDlgProc"),
-                                      (DWORD)lpofn); 
-
-	printf("GetOpenFileName // return lpstrFile='%s' !\n", 
-	       (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
-	return bRet;
+  HANDLE    hDlgTmpl;
+  HANDLE    hResInfo;
+  HINSTANCE hInst;
+  BOOL 	    bRet;
+  LPCSTR    dlgTemplate;
+  
+  if (lpofn == NULL) return FALSE;
+  if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
+    dlgTemplate = GlobalLock(lpofn->hInstance);
+    if (!dlgTemplate) {
+      CommDlgLastError = CDERR_LOADRESFAILURE;
+      return FALSE;
+    }
+  } else {
+    if (lpofn->Flags & OFN_ENABLETEMPLATE) {
+      hInst = lpofn->hInstance;
+      hResInfo = FindResource(hInst, lpofn->lpTemplateName, RT_DIALOG);
+      if (hResInfo == 0) {
+	CommDlgLastError = CDERR_FINDRESFAILURE;
+	return FALSE;
+      }
+      hDlgTmpl = LoadResource(hInst, hResInfo);
+      if (hDlgTmpl == 0) {
+	CommDlgLastError = CDERR_LOADRESFAILURE;
+	return FALSE;
+      }
+      dlgTemplate = GlobalLock(hDlgTmpl);
+    } else {
+      dlgTemplate = sysres_DIALOG_3;
+    }
+  }
+  hInst = GetWindowWord(lpofn->hwndOwner, GWW_HINSTANCE);
+  bRet = DialogBoxIndirectParamPtr(hInst, dlgTemplate, lpofn->hwndOwner,
+				   GetWndProcEntry16("FileOpenDlgProc"),
+				   (DWORD)lpofn); 
+  
+  printf("GetOpenFileName // return lpstrFile='%s' !\n", 
+	 (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
+  return bRet;
 }
 
 
@@ -182,42 +203,44 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
  */
 BOOL GetSaveFileName(LPOPENFILENAME lpofn)
 {
-        HANDLE	        hDlgTmpl;
-        HANDLE	        hResInfo;
-        HINSTANCE       hInst;
-        WND 	        *wndPtr;
-        BOOL	        bRet;
-
-        if (lpofn == NULL) return FALSE;
-	if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
-		hDlgTmpl = lpofn->hInstance;
-	} else {
-		if (lpofn->Flags & OFN_ENABLETEMPLATE) {
-			hInst = lpofn->hInstance;
-                        hResInfo = FindResource(hInst, lpofn->lpTemplateName,
-						RT_DIALOG);
-		} else {
-			hInst = hSysRes;
-			hResInfo = FindResource(hInst, MAKEINTRESOURCE(SAVEFILEDLG2), RT_DIALOG);
-		}
-		if (hResInfo == 0) {
-			CommDlgLastError = CDERR_FINDRESFAILURE;
-			return FALSE;
-		}
-		hDlgTmpl = LoadResource(hInst, hResInfo);
-	}
-	if (hDlgTmpl == 0) {
-		CommDlgLastError = CDERR_LOADRESFAILURE;
-		return FALSE;
-	}
-        wndPtr = WIN_FindWndPtr(lpofn->hwndOwner);
-	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-                                      lpofn->hwndOwner,
-                                      GetWndProcEntry16("FileSaveDlgProc"),
-                                      (DWORD)lpofn );
-	printf("GetSaveFileName // return lpstrFile='%s' !\n", 
-	       (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
-	return bRet;
+  HANDLE    hDlgTmpl;
+  HANDLE    hResInfo;
+  HINSTANCE hInst;
+  BOOL	    bRet;
+  LPCSTR    dlgTemplate;
+  
+  if (lpofn == NULL) return FALSE;
+  if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
+    dlgTemplate = GlobalLock(lpofn->hInstance);
+    if (!dlgTemplate) {
+      CommDlgLastError = CDERR_LOADRESFAILURE;
+      return FALSE;
+    }
+  } else {
+    if (lpofn->Flags & OFN_ENABLETEMPLATE) {
+      hInst = lpofn->hInstance;
+      hResInfo = FindResource(hInst, lpofn->lpTemplateName, RT_DIALOG);
+      if (hResInfo == 0) {
+	CommDlgLastError = CDERR_FINDRESFAILURE;
+	return FALSE;
+      }
+      hDlgTmpl = LoadResource(hInst, hResInfo);
+      if (hDlgTmpl == 0) {
+	CommDlgLastError = CDERR_LOADRESFAILURE;
+	return FALSE;
+      }
+      dlgTemplate = GlobalLock(hDlgTmpl);
+    } else {
+      dlgTemplate = sysres_DIALOG_4; /* SAVEFILEDIALOG */
+    }
+  }
+  hInst = GetWindowWord(lpofn->hwndOwner, GWW_HINSTANCE);
+  bRet = DialogBoxIndirectParamPtr(hInst, dlgTemplate, lpofn->hwndOwner,
+				   GetWndProcEntry16("FileSaveDlgProc"),
+				   (DWORD)lpofn); 
+  printf("GetSaveFileName // return lpstrFile='%s' !\n", 
+	 (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
+  return bRet;
 }
 
 
@@ -228,13 +251,10 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
 {
         WND     *wndPtr;
 	BOOL	bRet;
-
         wndPtr = WIN_FindWndPtr(lpChCol->hwndOwner);
-	bRet = DialogBoxParam( wndPtr->hInstance,
-                               MAKEINTRESOURCE(COLORDLG), 
-                               lpChCol->hwndOwner,
-                               GetWndProcEntry16("ColorDlgProc"), 
-                               (DWORD)lpChCol);
+	bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, sysres_DIALOG_8,
+		lpChCol->hwndOwner, GetWndProcEntry16("ColorDlgProc"), 
+		(DWORD)lpChCol);
 	return bRet;
 }
 
@@ -459,13 +479,11 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 #endif
       break;
      case IDOK:
-      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 0, str16);
-      printf("OK: str %s\n",str);
+      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, str16);
       if (COMMDLG_IsPathName(str)) {
 	OpenDlg_ScanDir(hWnd, str);
       } else  {	
 	ShowWindow(hWnd, SW_HIDE); 
-	printf("FileOpenDlgProc // IDOK str='%s'\n", str);
 	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), str);
 	lpofn->nFileOffset = 0;
 	lpofn->nFileExtension = strlen(PTR_SEG_TO_LIN(lpofn->lpstrFile)) - 3;
@@ -723,7 +741,7 @@ BOOL FileSaveDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 #endif
       break;
      case IDOK:
-      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 0, str16);
+      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, str16);
       if (COMMDLG_IsPathName(str)) {
 	OpenDlg_ScanDir(hWnd, str);
       } else  {	
@@ -797,26 +815,16 @@ BOOL ColorDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
  */
 BOOL FindText(LPFINDREPLACE lpFind)
 {
-	HANDLE	hDlgTmpl;
-	HANDLE	hResInfo;
-    WND 	*wndPtr;
-	BOOL	bRet;
-	hResInfo = FindResource(hSysRes, MAKEINTRESOURCE(FINDDLG), RT_DIALOG);
-	if (hResInfo == 0) {
-		CommDlgLastError = CDERR_FINDRESFAILURE;
-		return FALSE;
-		}
-	hDlgTmpl = LoadResource(hSysRes, hResInfo);
-	if (hDlgTmpl == 0) {
-		CommDlgLastError = CDERR_LOADRESFAILURE;
-		return FALSE;
-		}
-    wndPtr = WIN_FindWndPtr(lpFind->hwndOwner);
-	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl,
-                                      lpFind->hwndOwner,
-                                      GetWndProcEntry16("FindTextDlgProc"),
-                                      (DWORD)lpFind);
-	return bRet;
+  WND    *wndPtr;
+  BOOL   bRet;
+  LPCSTR lpTemplate;
+  
+  lpTemplate = sysres_DIALOG_9;
+  wndPtr = WIN_FindWndPtr(lpFind->hwndOwner);
+  bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, lpTemplate,
+				lpFind->hwndOwner, GetWndProcEntry16("FindTextDlgProc"),
+				(DWORD)lpFind);
+  return bRet;
 }
 
 
@@ -825,26 +833,16 @@ BOOL FindText(LPFINDREPLACE lpFind)
  */
 BOOL ReplaceText(LPFINDREPLACE lpFind)
 {
-	HANDLE	hDlgTmpl;
-	HANDLE	hResInfo;
-    WND 	*wndPtr;
-	BOOL	bRet;
-	hResInfo = FindResource(hSysRes, MAKEINTRESOURCE(REPLACEDLG), RT_DIALOG);
-	if (hResInfo == 0) {
-		CommDlgLastError = CDERR_FINDRESFAILURE;
-		return FALSE;
-		}
-	hDlgTmpl = LoadResource(hSysRes, hResInfo);
-	if (hDlgTmpl == 0) {
-		CommDlgLastError = CDERR_LOADRESFAILURE;
-		return FALSE;
-		}
-    wndPtr = WIN_FindWndPtr(lpFind->hwndOwner);
-	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl,
-                                      lpFind->hwndOwner,
-                                      GetWndProcEntry16("ReplaceTextDlgProc"),
-                                      (DWORD)lpFind);
-	return bRet;
+  WND    *wndPtr;
+  BOOL   bRet;
+  LPCSTR lpTemplate;
+
+  lpTemplate = sysres_DIALOG_10;
+  wndPtr = WIN_FindWndPtr(lpFind->hwndOwner);
+  bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, lpTemplate,
+				   lpFind->hwndOwner, GetWndProcEntry16("ReplaceTextDlgProc"),
+				   (DWORD)lpFind);
+  return bRet;
 }
 
 
@@ -853,24 +851,24 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
  */
 BOOL FindTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
-	switch (wMsg) {
-		case WM_INITDIALOG:
-			printf("FindTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-			ShowWindow(hWnd, SW_SHOWNORMAL);
-			return (TRUE);
-
-		case WM_COMMAND:
-			switch (wParam) {
-				case IDOK:
-					EndDialog(hWnd, TRUE);
-					return(TRUE);
-				case IDCANCEL:
-					EndDialog(hWnd, FALSE);
-					return(TRUE);
-				}
-			return(FALSE);
-		}
-	return FALSE;
+  switch (wMsg) {
+   case WM_INITDIALOG:
+    printf("FindTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    return (TRUE);
+    
+   case WM_COMMAND:
+    switch (wParam) {
+     case IDOK:
+      EndDialog(hWnd, TRUE);
+      return(TRUE);
+     case IDCANCEL:
+      EndDialog(hWnd, FALSE);
+      return(TRUE);
+    }
+    return(FALSE);
+  }
+  return FALSE;
 }
 
 
@@ -879,24 +877,24 @@ BOOL FindTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
  */
 BOOL ReplaceTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
-	switch (wMsg) {
-		case WM_INITDIALOG:
-			printf("ReplaceTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-			ShowWindow(hWnd, SW_SHOWNORMAL);
-			return (TRUE);
-
-		case WM_COMMAND:
-			switch (wParam) {
-				case IDOK:
-					EndDialog(hWnd, TRUE);
-					return(TRUE);
-				case IDCANCEL:
-					EndDialog(hWnd, FALSE);
-					return(TRUE);
-				}
-			return(FALSE);
-		}
-	return FALSE;
+  switch (wMsg) {
+   case WM_INITDIALOG:
+    printf("ReplaceTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    return (TRUE);
+    
+   case WM_COMMAND:
+    switch (wParam) {
+     case IDOK:
+      EndDialog(hWnd, TRUE);
+      return(TRUE);
+     case IDCANCEL:
+      EndDialog(hWnd, FALSE);
+      return(TRUE);
+    }
+    return(FALSE);
+  }
+  return FALSE;
 }
 
 
@@ -905,36 +903,26 @@ BOOL ReplaceTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
  */
 BOOL PrintDlg(LPPRINTDLG lpPrint)
 {
-	HANDLE	hDlgTmpl;
-	HANDLE	hResInfo;
-    WND 	*wndPtr;
-	BOOL	bRet;
-	printf("PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags);
-	if (lpPrint->Flags & PD_PRINTSETUP)
-		hResInfo = FindResource(hSysRes, MAKEINTRESOURCE(PRINTSETUPDLG), RT_DIALOG);
-	else
-		hResInfo = FindResource(hSysRes, MAKEINTRESOURCE(PRINTDLG), RT_DIALOG);
-	if (hResInfo == 0) {
-		CommDlgLastError = CDERR_FINDRESFAILURE;
-		return FALSE;
-		}
-	hDlgTmpl = LoadResource(hSysRes, hResInfo);
-	if (hDlgTmpl == 0) {
-		CommDlgLastError = CDERR_LOADRESFAILURE;
-		return FALSE;
-		}
-    wndPtr = WIN_FindWndPtr(lpPrint->hwndOwner);
-	if (lpPrint->Flags & PD_PRINTSETUP)
-            bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl,
-                                          lpPrint->hwndOwner,
-                                          GetWndProcEntry16("PrintSetupDlgProc"),
-                                          (DWORD)lpPrint);
-	else
-            bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl,
-                                          lpPrint->hwndOwner,
-                                          GetWndProcEntry16("PrintDlgProc"),
-                                          (DWORD)lpPrint);
-	return bRet;
+  WND    *wndPtr;
+  BOOL   bRet;
+  LPCSTR lpTemplate;
+  
+  printf("PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags);
+  if (lpPrint->Flags & PD_PRINTSETUP)  {
+    lpTemplate = sysres_DIALOG_6;
+  } else  {
+    lpTemplate = sysres_DIALOG_5;
+  }
+  wndPtr = WIN_FindWndPtr(lpPrint->hwndOwner);
+  if (lpPrint->Flags & PD_PRINTSETUP)
+  bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, lpTemplate,
+				   lpPrint->hwndOwner, GetWndProcEntry16("PrintSetupDlgProc"),
+				   (DWORD)lpPrint);
+  else
+  bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, lpTemplate,
+				   lpPrint->hwndOwner, GetWndProcEntry16("PrintDlgProc"),
+				   (DWORD)lpPrint);
+  return bRet;
 }
 
 
@@ -943,24 +931,24 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
  */
 BOOL PrintDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
-	switch (wMsg) {
-		case WM_INITDIALOG:
-			printf("PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-			ShowWindow(hWnd, SW_SHOWNORMAL);
-			return (TRUE);
-
-		case WM_COMMAND:
-			switch (wParam) {
-				case IDOK:
-					EndDialog(hWnd, TRUE);
-					return(TRUE);
-				case IDCANCEL:
-					EndDialog(hWnd, FALSE);
-					return(TRUE);
-				}
-			return(FALSE);
-		}
-	return FALSE;
+  switch (wMsg) {
+   case WM_INITDIALOG:
+    printf("PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    return (TRUE);
+    
+   case WM_COMMAND:
+    switch (wParam) {
+     case IDOK:
+      EndDialog(hWnd, TRUE);
+      return(TRUE);
+     case IDCANCEL:
+      EndDialog(hWnd, FALSE);
+      return(TRUE);
+    }
+    return(FALSE);
+  }
+  return FALSE;
 }
 
 
@@ -969,24 +957,24 @@ BOOL PrintDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
  */
 BOOL PrintSetupDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
-	switch (wMsg) {
-		case WM_INITDIALOG:
-			printf("PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-			ShowWindow(hWnd, SW_SHOWNORMAL);
-			return (TRUE);
-
-		case WM_COMMAND:
-			switch (wParam) {
-				case IDOK:
-					EndDialog(hWnd, TRUE);
-					return(TRUE);
-				case IDCANCEL:
-					EndDialog(hWnd, FALSE);
-					return(TRUE);
-				}
-			return(FALSE);
-		}
-	return FALSE;
+  switch (wMsg) {
+   case WM_INITDIALOG:
+    printf("PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    return (TRUE);
+    
+   case WM_COMMAND:
+    switch (wParam) {
+     case IDOK:
+      EndDialog(hWnd, TRUE);
+      return(TRUE);
+     case IDCANCEL:
+      EndDialog(hWnd, FALSE);
+      return(TRUE);
+    }
+    return(FALSE);
+  }
+  return FALSE;
 }
 
 
@@ -1004,7 +992,7 @@ DWORD CommDlgExtendError(void)
  */
 int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
-	int		i, len;
+	int    	i, len;
 	printf("GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
 	if (lpFile == NULL || lpTitle == NULL) return -1;
 	len = strlen(lpFile);
@@ -1015,13 +1003,11 @@ int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 	len--;
 	if (lpFile[len] == '/' || lpFile[len] == '\\' || lpFile[len] == ':') return -1;
 	for (i = len; i >= 0; i--) {
-		if (lpFile[i] == '/' || 
-			lpFile[i] == '\\' || 
-			lpFile[i] == ':') {
-			i++;
-			break;
-			}
-		}
+	  if (lpFile[i] == '/' ||  lpFile[i] == '\\' ||  lpFile[i] == ':') {
+	    i++;
+	    break;
+	  }
+	}
 	printf("\n---> '%s' ", &lpFile[i]);
 	len = min(cbBuf, strlen(&lpFile[i]) + 1);
 	strncpy(lpTitle, &lpFile[i], len + 1);

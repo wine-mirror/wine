@@ -25,7 +25,28 @@
 #define  RN_CR2			21
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#ifdef __NetBSD__
+/* Register numbers */
+#define  RN_GS			0
+#define  RN_FS			1
+#define  RN_ES			2
+#define  RN_DS			3
+#define  RN_EDI  		4
+#define  RN_ESI			5
+#define  RN_EBP			6
+#define  RN_EBX			7
+#define  RN_EDX			8
+#define  RN_ECX			9
+#define  RN_EAX			10
+#define  RN_EIP			11
+#define  RN_CS			12
+#define  RN_EFLAGS		13
+#define  RN_ESP_AT_SIGNAL	14
+#define  RN_SS			15
+#define  RN_OLDMASK		17
+#endif
+
+#ifdef __FreeBSD__
 #define  RN_OLDMASK		1
 /* Register numbers */
 #define  RN_ESP			2
@@ -43,7 +64,7 @@
 #define  RN_EDX			14
 #define  RN_ECX			15
 #define  RN_EAX			16
-/* NetBSD doesn't context switch gs or fs */
+/* FreeBSD doesn't save gs or fs */
 #define  SC_GS			0x27
 #define  SC_FS			0x27
 #endif
@@ -54,12 +75,15 @@
 #define  I387			regval[RN_I387]
 #define  CR2			regval[RN_CR2]
 #endif
+#ifdef __NetBSD__
+#define  SC_GS			regval[RN_GS]
+#define  SC_FS			regval[RN_FS]
+#endif
 #define  SC_ES			regval[RN_ES]
 #define  SC_DS			regval[RN_DS]
 #define  SC_EDI(dbg_mask)  	(regval[RN_EDI] & dbg_mask)
 #define  SC_ESI(dbg_mask)	(regval[RN_ESI] & dbg_mask)
 #define  SC_EBP(dbg_mask)	(regval[RN_EBP] & dbg_mask)
-#define  SC_ESP(dbg_mask)	(regval[RN_ESP] & dbg_mask)
 #define  SC_EBX(dbg_mask)	(regval[RN_EBX] & dbg_mask)
 #define  SC_EDX(dbg_mask)	(regval[RN_EDX] & dbg_mask)
 #define  SC_ECX(dbg_mask)	(regval[RN_ECX] & dbg_mask)
@@ -77,6 +101,6 @@
 #define  SC_EIP(dbg_mask)	(regval[RN_EIP] & dbg_mask)
 #define  SC_CS			regval[RN_CS]
 #define  SC_EFLAGS		regval[RN_EFLAGS]
-#define  ESP_AT_SIGNAL		regval[RN_ESP_AT_SIGNAL]
+#define  SC_ESP(dbg_mask)	(regval[RN_ESP_AT_SIGNAL] & dbg_mask)
 #define  SC_SS			regval[RN_SS]
 #define  OLDMASK		regval[RN_OLDMASK]

@@ -12,7 +12,7 @@ id	14
  12   pascal  REPLACETEXT(ptr) ReplaceText
  13   pascal  FINDTEXTDLGPROC(word word word long) FindTextDlgProc
  14   pascal  REPLACETEXTDLGPROC(word word word long) ReplaceTextDlgProc
-# 15   pascal  CHOOSEFONT exported, shared data
+ 15   stub  ChooseFont
 # 16   pascal  FORMATCHARDLGPROC exported, shared data
 # 18   pascal  FONTSTYLEENUMPROC exported, shared data
 # 19   pascal  FONTFAMILYENUMPROC exported, shared data

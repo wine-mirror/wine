@@ -80,6 +80,17 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
 
 
 /***********************************************************************
+ *           GetSystemPaletteUse    (GDI.374)
+ */
+WORD GetSystemPaletteUse( HDC hdc )
+{
+	printf("GetSystemPaletteUse(%04X) // empty stub !!!\n", hdc);
+	/* Assuming there is remaining system colors ... */
+	return SYSPAL_STATIC;
+}
+
+
+/***********************************************************************
  *           GetSystemPaletteEntries    (GDI.375)
  */
 WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,

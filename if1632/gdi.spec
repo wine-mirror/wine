@@ -234,6 +234,7 @@ id	3
 368 stub ResizePalette
 370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex
 372 pascal16 ExtFloodFill(word s_word s_word long word) ExtFloodFill
+374 pascal16 GetSystemPaletteUse(word) GetSystemPaletteUse
 375 pascal16 GetSystemPaletteEntries(word word word ptr)
              GetSystemPaletteEntries
 376 stub ResetDC
@@ -252,7 +253,8 @@ id	3
 410 stub ISVALIDMETAFILE
 411 pascal16 GetCurLogFont(word) GetCurLogFont
 412 stub IsDCCurrentPalette
-439 stub StretchDIBits
+439 pascal16 StretchDIBits (word s_word s_word word word word word
+                               word word ptr ptr word long) StretchDIBits
 440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits
 441 pascal16 GetDIBits(word word word word ptr ptr word) GetDIBits
 442 pascal16 CreateDIBitmap(word ptr long ptr ptr word) CreateDIBitmap

@@ -21,7 +21,6 @@
 #include "menu.h"
 #include "user.h"
 #include "win.h"
-#include "library.h"
 #include "message.h"
 #include "graphics.h"
 #include "stddebug.h"
@@ -667,7 +666,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, WORD id, int x, int y)
 	menu->FocusedItem = NO_SELECTED_ITEM;
     }
     SendMessage( hwndOwner, WM_INITMENUPOPUP, hmenu,
-		 MAKELONG( id, (menu->wFlags & MF_POPUP) ? 1 : 0 ));
+		 MAKELONG( id, (menu->wFlags & MF_SYSMENU) ? 1 : 0 ));
     MENU_PopupMenuCalcSize( menu, hwndOwner );
     if (!menu->hWnd)
     {
@@ -740,7 +739,7 @@ static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
 			       !(lppop->wFlags & MF_POPUP) );
 	    dprintf_menu(stddeb,"Sending WM_MENUSELECT %04x %04x\n", items[lppop->FocusedItem].item_id,items[lppop->FocusedItem].item_flags);
 	    SendMessage(lppop->hWnd, WM_MENUSELECT, items[lppop->FocusedItem].item_id,
-		       MAKELONG( hmenu, items[lppop->FocusedItem].item_flags));
+		       MAKELONG( items[lppop->FocusedItem].item_flags | MF_MOUSESELECT, hmenu));
 	}
     }
     ReleaseDC( lppop->hWnd, hdc );

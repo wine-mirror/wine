@@ -199,41 +199,23 @@ BOOL GDI_Init(void)
 BOOL GDI_AppendToPenBrushList(HANDLE hNewObj)
 {
 	HANDLE	 	*lphObj;
-	int			i = 1;
+	int	       	i = 1;
 	if (hNewObj == 0) return FALSE;
 	if (lpPenBrushList == NULL) {
 		lpPenBrushList = malloc(MAX_OBJ * sizeof(HANDLE));
 		lpPenBrushList[0] = 0;
 		dprintf_gdi(stddeb,"GDI_AppendToPenBrushList() lpPenBrushList allocated !\n");
-		}
+	}
 	for (lphObj = lpPenBrushList; i < MAX_OBJ; i++) {
 		if (*lphObj == 0) {
 			*lphObj = hNewObj;
 			*(lphObj + 1) = 0;
 			dprintf_gdi(stddeb,"GDI_AppendToPenBrushList(%04X) appended (count=%d)\n", hNewObj, i);
 			return TRUE;
-			}
-		lphObj++;
 		}
+		lphObj++;
+	}
 	return FALSE;
-}
-
-
-/***********************************************************************
- *           GDI_FindPrevObject
- *
- * Return the GDI object whose hNext field points to obj.
- */
-HANDLE GDI_FindPrevObject( HANDLE first, HANDLE obj )
-{
-    HANDLE handle;
-        
-    for (handle = first; handle && (handle != obj); )
-    {
-	GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
-	handle = header->hNext;
-    }
-    return handle;
 }
 
 
@@ -250,9 +232,9 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;
-	if (magic == PEN_MAGIC || magic == BRUSH_MAGIC) {
-		GDI_AppendToPenBrushList(handle);
-		}
+    if (magic == PEN_MAGIC || magic == BRUSH_MAGIC) {
+      GDI_AppendToPenBrushList(handle);
+    }
     return handle;
 }
 
@@ -429,110 +411,106 @@ BOOL UnrealizeObject( HANDLE handle )
  */
 int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 {
-/*    HANDLE 		handle;
-    DC 			*dc;*/
-	HANDLE		*lphObj;
-	GDIOBJHDR 	*header;
-	WORD  		wMagic;
-	LPSTR		lpLog;  	/* Point to a LOGBRUSH or LOGPEN struct */
-	HANDLE 		hLog;
-	int			i, nRet;
-	if (lpEnumFunc == NULL) {
-		fprintf(stderr,"EnumObjects // Bad EnumProc callback address !\n");
-		return 0;
-		}
-	switch (nObjType) {
-		case OBJ_PEN:
-			wMagic = PEN_MAGIC;
-			dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_PEN, %p, %p);\n", 
-									hDC, lpEnumFunc, lpData);
-			hLog = GDI_HEAP_ALLOC( sizeof(LOGPEN) );
-			lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
-			if (lpLog == NULL) {
-				fprintf(stderr,"EnumObjects // Unable to alloc LOGPEN struct !\n");
-				return 0;
-				}
-			break;
-		case OBJ_BRUSH:
-			wMagic = BRUSH_MAGIC;
-			dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_BRUSH, %p, %p);\n", 
-									hDC, lpEnumFunc, lpData);
-			hLog = GDI_HEAP_ALLOC( sizeof(LOGBRUSH) );
-			lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
-			if (lpLog == NULL) {
-				fprintf(stderr,"EnumObjects // Unable to alloc LOGBRUSH struct !\n");
-				return 0;
-				}
-			break;
-		default:
-			fprintf(stderr,"EnumObjects(%04X, %04X, %p, %p); // Unknown OBJ type !\n", 
-						hDC, nObjType, lpEnumFunc, lpData);
-			return 0;
-		}
+  /*    HANDLE 		handle;
+   DC 			*dc;*/
+  HANDLE       	*lphObj;
+  GDIOBJHDR 	*header;
+  WORD         	wMagic;
+  LPSTR		lpLog;  	/* Point to a LOGBRUSH or LOGPEN struct */
+  HANDLE       	hLog;
+  int	       	i, nRet = 0;
+  
+  if (lpEnumFunc == NULL) {
+    fprintf(stderr,"EnumObjects // Bad EnumProc callback address !\n");
+    return 0;
+  }
+  switch (nObjType) {
+   case OBJ_PEN:
+    wMagic = PEN_MAGIC;
+    dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_PEN, %08lx, %p);\n",
+		hDC, (LONG)lpEnumFunc, lpData);
+    hLog = GDI_HEAP_ALLOC( sizeof(LOGPEN) );
+    lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
+    if (lpLog == NULL) {
+      fprintf(stderr,"EnumObjects // Unable to alloc LOGPEN struct !\n");
+      return 0;
+    }
+    break;
+   case OBJ_BRUSH:
+    wMagic = BRUSH_MAGIC;
+    dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_BRUSH, %08lx, %p);\n",
+		hDC, (LONG)lpEnumFunc, lpData);
+    hLog = GDI_HEAP_ALLOC( sizeof(LOGBRUSH) );
+    lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
+    if (lpLog == NULL) {
+      fprintf(stderr,"EnumObjects // Unable to alloc LOGBRUSH struct !\n");
+      return 0;
+    }
+    break;
+   default:
+    fprintf(stderr,"EnumObjects(%04X, %04X, %08lx, %p); // Unknown OBJ type !\n", 
+	    hDC, nObjType, (LONG)lpEnumFunc, lpData);
+    return 0;
+  }
 #ifdef notdef  /* FIXME: stock object ptr won't work in callback */
-	dprintf_gdi(stddeb,"EnumObjects // Stock Objects first !\n");
-	for (i = 0; i < NB_STOCK_OBJECTS; i++) {
-		header = StockObjects[i];
-		if (header->wMagic == wMagic) {
-			PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
-			BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH),lpLog);
-			dprintf_gdi(stddeb,"EnumObjects // StockObj lpLog=%p lpData=%p\n", lpLog, lpData);
-			if (header->wMagic == BRUSH_MAGIC) {
-				dprintf_gdi(stddeb,"EnumObjects // StockBrush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
-				dprintf_gdi(stddeb,"EnumObjects // StockBrush lbColor=%08lX\n", ((LPLOGBRUSH)lpLog)->lbColor);
-				dprintf_gdi(stddeb,"EnumObjects // StockBrush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
-				}
-			if (header->wMagic == PEN_MAGIC) {
-				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
-				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
-				}
-			nRet = CallEnumObjectsProc( lpEnumFunc,
-                                                    GDI_HEAP_SEG_ADDR(hLog),
-                                                    (int)lpData );
-			dprintf_gdi(stddeb,"EnumObjects // after Callback!\n");
-			if (nRet == 0) {
-				GDI_HEAP_FREE(hLog);
-				dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
-				return 0;
-				}
-			}
-		}
-#endif  /* notdef */
-
-	if (lpPenBrushList == NULL) return 0;
-	dprintf_gdi(stddeb,"EnumObjects // Now DC owned objects %p !\n", header);
-	for (lphObj = lpPenBrushList; *lphObj != 0; ) {
-		dprintf_gdi(stddeb,"EnumObjects // *lphObj=%04X\n", *lphObj);
-		header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR(*lphObj++);
-		if (header->wMagic == wMagic) {
-			dprintf_gdi(stddeb,"EnumObjects // DC_Obj lpLog=%p lpData=%p\n", lpLog, lpData);
-			if (header->wMagic == BRUSH_MAGIC) {
-				BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH), lpLog);
-				dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
-				dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbColor=%08lX\n", ((LPLOGBRUSH)lpLog)->lbColor);
-				dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
-				}
-			if (header->wMagic == PEN_MAGIC) {
-				PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
-				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
-				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
-				}
-			nRet = CallEnumObjectsProc( lpEnumFunc,
-                                                    GDI_HEAP_SEG_ADDR(hLog),
-                                                    (int)lpData );
-			dprintf_gdi(stddeb,"EnumObjects // after Callback!\n");
-			if (nRet == 0) {
-				GDI_HEAP_FREE(hLog);
-				dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
-				return 0;
-				}
-			}
-		}
+  dprintf_gdi(stddeb,"EnumObjects // Stock Objects first !\n");
+  for (i = 0; i < NB_STOCK_OBJECTS; i++) {
+    header = StockObjects[i];
+    if (header->wMagic == wMagic) {
+      PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
+      BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH),lpLog);
+      dprintf_gdi(stddeb,"EnumObjects // StockObj lpLog=%p lpData=%p\n", lpLog, lpData);
+      if (header->wMagic == BRUSH_MAGIC) {
+	dprintf_gdi(stddeb,"EnumObjects // StockBrush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
+	dprintf_gdi(stddeb,"EnumObjects // StockBrush lbColor=%08lX\n", ((LPLOGBRUSH)lpLog)->lbColor);
+	dprintf_gdi(stddeb,"EnumObjects // StockBrush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
+      }
+      if (header->wMagic == PEN_MAGIC) {
+	dprintf_gdi(stddeb,"EnumObjects // StockPen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
+	dprintf_gdi(stddeb,"EnumObjects // StockPen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
+	dprintf_gdi(stddeb,"EnumObjects // StockPen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
+      }
+      nRet = CallEnumObjectsProc( lpEnumFunc,
+				 GDI_HEAP_SEG_ADDR(hLog),
+				 (int)lpData );
+      dprintf_gdi(stddeb,"EnumObjects // after Callback!\n");
+      if (nRet == 0) {
 	GDI_HEAP_FREE(hLog);
-	dprintf_gdi(stddeb,"EnumObjects // End of enumeration !\n");
+	dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
 	return 0;
+      }
+    }
+  }
+  dprintf_gdi(stddeb,"EnumObjects // Now DC owned objects %p !\n", header);
+#endif  /* notdef */
+  
+  if (lpPenBrushList == NULL) return 0;
+  for (lphObj = lpPenBrushList; *lphObj != 0; ) {
+    dprintf_gdi(stddeb,"EnumObjects // *lphObj=%04X\n", *lphObj);
+    header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR(*lphObj++);
+    if (header->wMagic == wMagic) {
+      dprintf_gdi(stddeb,"EnumObjects // DC_Obj lpLog=%p lpData=%p\n", lpLog, lpData);
+      if (header->wMagic == BRUSH_MAGIC) {
+	BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH), lpLog);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbColor=%08lX\n", ((LPLOGBRUSH)lpLog)->lbColor);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
+      }
+      if (header->wMagic == PEN_MAGIC) {
+	PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
+      }
+      nRet = CallEnumObjectsProc(lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),
+				 (LONG)lpData);
+      if (nRet == 0)
+        break;
+    }
+  }
+  GDI_HEAP_FREE(hLog);
+  dprintf_gdi(stddeb,"EnumObjects // End of enumeration !\n");
+  return nRet;
 }
 
 /***********************************************************************

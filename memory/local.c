@@ -243,6 +243,11 @@ static void LOCAL_PrintHeap( WORD ds )
         LOCALARENA *pArena = ARENA_PTR(ptr,arena);
         printf( "  %04x: prev=%04x next=%04x type=%d\n", arena,
                 pArena->prev & ~3, pArena->next, pArena->prev & 3 );
+        if (arena == pInfo->first)
+	{
+            printf( "        size=%d free_prev=%04x free_next=%04x\n",
+                    pArena->size, pArena->free_prev, pArena->free_next );
+	}
         if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
         {
             printf( "        size=%d free_prev=%04x free_next=%04x\n",
@@ -377,6 +382,7 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
       /* Find a suitable free block */
 
     if (!(pInfo = LOCAL_GetHeap( ds ))) {
+      dprintf_local( stddeb, "LocalAlloc: Heap not found\n");
       LOCAL_PrintHeap(ds);
       return 0;
     }
@@ -387,7 +393,8 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
     for (;;)
     {
         if (arena == pArena->free_next) {
-	  LOCAL_PrintHeap(ds);
+	  fprintf(stderr, "Local heap full\n");
+	  if (debugging_local) LOCAL_PrintHeap(ds);
           return 0;  /* not found */
 	}
         arena = pArena->free_next;
@@ -629,6 +636,8 @@ WORD LocalFlags( HLOCAL handle )
  */
 WORD LocalCompact( WORD minfree )
 {
+    dprintf_local( stddeb, "LocalCompact: %04x\n", minfree );
+    return 0;
 }
 
 
@@ -637,6 +646,8 @@ WORD LocalCompact( WORD minfree )
  */
 FARPROC LocalNotify( FARPROC func )
 {
+    dprintf_local( stddeb, "LocalNotify: %08lx\n", func );
+    return 0;
 }
 
 
@@ -645,6 +656,8 @@ FARPROC LocalNotify( FARPROC func )
  */
 WORD LocalShrink( HLOCAL handle, WORD newsize )
 {
+    dprintf_local( stddeb, "LocalShrink: %04x %04x\n", handle, newsize );
+    return 0;
 }
 
 
@@ -662,6 +675,7 @@ DWORD GetHeapSpaces( HMODULE module )
  */
 void LocalCountFree()
 {
+    dprintf_local( stddeb, "LocalCountFree:\n" );
 }
 
 
@@ -670,6 +684,7 @@ void LocalCountFree()
  */
 WORD LocalHeapSize()
 {
+    dprintf_local( stddeb, "LocalHeapSize:\n" );
     return LOCAL_HeapSize( CURRENT_DS );
 }
 
@@ -679,6 +694,8 @@ WORD LocalHeapSize()
  */
 WORD LocalHandleDelta( WORD delta )
 {
+    dprintf_local( stddeb, "LocalHandleDelta: %04x\n", delta );
+    return 0;
 }
 
 

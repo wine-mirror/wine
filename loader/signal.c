@@ -114,24 +114,26 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
     if(signal == SIGTRAP) {
       scp->sc_eip--;
       goto oops;
-    };
-
-    if((scp->sc_cs & 7) != 7)
-    {
+    }
 #endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#ifdef __NetBSD__
+/*         set_es(0x1f); set_ds(0x1f); */
+    if(signal != SIGBUS && signal != SIGSEGV && signal != SIGTRAP) 
+	exit(1);
+#endif
+#ifdef __FreeBSD__
 /*         set_es(0x27); set_ds(0x27); */
     if(signal != SIGBUS && signal != SIGSEGV && signal != SIGTRAP) 
 	exit(1);
-    if(scp->sc_cs == 0x1f)
-    {
 #endif
+    if (scp->sc_cs == WINE_CODE_SELECTOR)
+    {
 	fprintf(stderr,
 		"Segmentation fault in Wine program (%x:%lx)."
 		"  Please debug\n",
 		scp->sc_cs, scp->sc_eip);
 	goto oops;
-    };
+    }
 
     /*  Now take a look at the actual instruction where the program
 	bombed */

@@ -156,10 +156,12 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_INITMENU",              /* 0x0116 */
     "WM_INITMENUPOPUP",         /* 0x0117 */
     "WM_SYSTIMER",		/* 0x0118 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_MENUSELECT",            /* 0x011f */
 
-    /* 0x0120 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_MENUCHAR",              /* 0x0120 */
+    "WM_ENTERIDLE",             /* 0x0121 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0130 */
@@ -227,16 +229,23 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_PARENTNOTIFY",		/* 0x0210 */
-
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_ENTERMENULOOP",         /* 0x0211 */
+    "WM_EXITMENULOOP",          /* 0x0212 */
+    NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x0220 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_MDICREATE",             /* 0x0220 */
+    "WM_MDIDESTROY",            /* 0x0221 */
+    "WM_MDIACTIVATE",           /* 0x0222 */
+    "WM_MDIRESTORE",            /* 0x0223 */
+    "WM_MDINEXT",               /* 0x0224 */
+    "WM_MDIMAXIMIZE",           /* 0x0225 */
+    "WM_MDITILE",               /* 0x0226 */
+    "WM_MDICASCADE",            /* 0x0227 */
+    "WM_MDIICONARRANGE",        /* 0x0228 */
+    "WM_MDIGETACTIVE",          /* 0x0229 */
 
-    
-    NULL,			/* 0x0230 */
+    "WM_MDISETMENU",            /* 0x0230 */
     "WM_ENTERSIZEMOVE",		/* 0x0231 */
     "WM_EXITSIZEMOVE"		/* 0x0232 */
 };

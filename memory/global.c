@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
+#include "global.h"
 #include "toolhelp.h"
 #include "selectors.h"
 #include "stackframe.h"
@@ -17,7 +18,7 @@
 typedef struct
 {
     DWORD    base;           /* Base address  */
-    DWORD    size;           /* Size in bytes */
+    DWORD    size;           /* Size in bytes (0 indicates a free block) */
     HGLOBAL  handle;         /* Handle for this block */
     HGLOBAL  hOwner;         /* Owner of this block */
     BYTE     lockCount;      /* Count of GlobalFix() calls */
@@ -27,6 +28,7 @@ typedef struct
 } GLOBALARENA;
 
   /* Flags definitions */
+#define GA_MOVEABLE     0x02  /* same as GMEM_MOVEABLE */
 #define GA_DGROUP       0x04
 #define GA_DISCARDABLE  0x08
 
@@ -45,14 +47,16 @@ static int globalArenaSize = 0;
  */
 static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
 {
-    if (((sel >> __AHSHIFT) + selcount) >= globalArenaSize)
+    if (((sel >> __AHSHIFT) + selcount) > globalArenaSize)
     {
+        int newsize = ((sel >> __AHSHIFT) + selcount + 0xff) & ~0xff;
         GLOBALARENA *pNewArena = realloc( pGlobalArena,
-                               (globalArenaSize + 256) * sizeof(GLOBALARENA) );
+                                          newsize * sizeof(GLOBALARENA) );
         if (!pNewArena) return 0;
         pGlobalArena = pNewArena;
-        memset( pGlobalArena + globalArenaSize, 0, 256 * sizeof(GLOBALARENA) );
-        globalArenaSize += 256;
+        memset( pGlobalArena + globalArenaSize, 0,
+                (newsize - globalArenaSize) * sizeof(GLOBALARENA) );
+        globalArenaSize = newsize;
     }
     return pGlobalArena + (sel >> __AHSHIFT);
 }
@@ -91,7 +95,7 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
     pArena->hOwner = hOwner;
     pArena->lockCount = 0;
     pArena->pageLockCount = 0;
-    pArena->flags = flags & 0xff;
+    pArena->flags = flags & GA_MOVEABLE;
     if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
     if (!isCode) pArena->flags |= GA_DGROUP;
     pArena->selCount = selcount;
@@ -188,19 +192,29 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     if (!handle) return 0;
     pArena = GET_ARENA_PTR( handle );
 
+      /* Discard the block if requested */
+
+    if ((size == 0) && (flags & GMEM_MOVEABLE))
+    {
+        if (!(pArena->flags & GA_MOVEABLE) ||
+            !(pArena->flags & GA_DISCARDABLE) ||
+            (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
+        free( (void *)pArena->base );
+        pArena->base = 0;
+    }
+
       /* Fixup the size */
 
-    if (size >= 0x00ff0000-0x0f) return 0;  /* No allocation > 16Mb-64Kb */
-    if (size == 0) size = 0x10;
-    else size = (size + 0x0f) & ~0x0f;
+    if (size > GLOBAL_MAX_ALLOC_SIZE - 0x20) return 0;
+    if (size == 0) size = 0x20;
+    else size = (size + 0x1f) & ~0x1f;
 
       /* Change the flags */
 
     if (flags & GMEM_MODIFY)
     {
           /* Change the flags, leaving GA_DGROUP alone */
-        pArena->flags = (pArena->flags & GA_DGROUP) |
-                           (flags & ~GA_DGROUP);
+        pArena->flags = (pArena->flags & GA_DGROUP) | (flags & GA_MOVEABLE);
         if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
         return handle;
     }
@@ -245,7 +259,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     pNewArena->base = (DWORD)ptr;
     pNewArena->size = GET_SEL_LIMIT(sel) + 1;
     pNewArena->selCount = selcount;
-    pNewArena->handle = (pNewArena->flags & GMEM_MOVEABLE) ? sel - 1 : sel;
+    pNewArena->handle = (pNewArena->flags & GA_MOVEABLE) ? sel - 1 : sel;
 
     if (selcount > 1)  /* clear the next arena blocks */
         memset( pNewArena + 1, 0, (selcount - 1) * sizeof(GLOBALARENA) );
@@ -281,6 +295,7 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
     dprintf_global( stddeb, "WIN16_GlobalLock(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (!handle) return 0;
+    if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
     return (SEGPTR)MAKELONG( 0, GlobalHandleToSel(handle) );
 }
 
@@ -339,7 +354,8 @@ WORD GlobalFlags( HGLOBAL handle )
     dprintf_global( stddeb, "GlobalFlags: %04x\n", handle );
     pArena = GET_ARENA_PTR(handle);
     return pArena->lockCount |
-           ((pArena->flags & GA_DISCARDABLE) ? GMEM_DISCARDABLE : 0);
+           ((pArena->flags & GA_DISCARDABLE) ? GMEM_DISCARDABLE : 0) |
+           ((pArena->base == 0) ? GMEM_DISCARDED : 0);
 }
 
 
@@ -631,4 +647,15 @@ BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule, WORD wSeg )
 BOOL MemManInfo( MEMMANINFO *pInfo )
 {
     return TRUE;
+}
+
+/***********************************************************************
+ *               GlobalAlloc32
+ * implements    GlobalAlloc        (KERNEL32.316)
+ *               LocalAlloc         (KERNEL32.372)
+ */
+void *GlobalAlloc32(int flags,int size)
+{
+    dprintf_global(stddeb,"GlobalAlloc32(%x,%x)\n",flags,size);
+    return malloc(size);
 }

@@ -250,7 +250,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
       /* Recursively process children */
 
     if (!(flags & RDW_NOCHILDREN) &&
-	((flags && RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)))
+	((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)))
     {
 	if (hrgnUpdate)
 	{

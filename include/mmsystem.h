@@ -232,11 +232,11 @@ typedef WAVEINCAPS FAR  *LPWAVEINCAPS;
 
 /* general format structure common to all formats */
 typedef struct {
-    WORD    wFormatTag;        /* format type */
-    WORD    nChannels;         /* number of channels (i.e. mono, stereo, etc.) */
-    DWORD   nSamplesPerSec;    /* sample rate */
-    DWORD   nAvgBytesPerSec;   /* for buffer estimation */
-    WORD    nBlockAlign;       /* block size of data */
+    WORD    wFormatTag;						/* format type */
+    WORD    nChannels; 						/* number of channels */
+    DWORD   nSamplesPerSec WINE_PACKED;		/* sample rate */
+    DWORD   nAvgBytesPerSec WINE_PACKED;	/* for buffer estimation */
+    WORD    nBlockAlign; 					/* block size of data */
 } WAVEFORMAT;
 typedef WAVEFORMAT FAR  *LPWAVEFORMAT;
 

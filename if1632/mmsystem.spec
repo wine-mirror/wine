@@ -1,7 +1,7 @@
 name	mmsystem
 id	10
 
-1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
+#1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound
 5      pascal  MMSYSTEMGETVERSION() mmsystemGetVersion
 6      pascal  DriverProc(long word word long long) DriverProc
@@ -20,51 +20,51 @@ id	10
 107    pascal  JOYSETTHRESHOLD(word word) JoySetThreshold
 109    pascal  JOYSETCALIBRATION(word) JoySetCalibration
 201    pascal  MIDIOUTGETNUMDEVS() midiOutGetNumDevs
-202    pascal  MIDIOUTGETDEVCAPS(word ptr word) midiOutGetDevCaps
+202    pascal  MIDIOUTGETDEVCAPS(word segptr word) midiOutGetDevCaps
 203    pascal  MIDIOUTGETERRORTEXT(word ptr word) midiOutGetErrorText
 204    pascal  MIDIOUTOPEN(ptr word ptr long long long) midiOutOpen
 205    pascal  MIDIOUTCLOSE(word) midiOutClose
-206    pascal  MIDIOUTPREPAREHEADER(word ptr word) midiOutPrepareHeader
-207    pascal  MIDIOUTUNPREPAREHEADER(word ptr word) midiOutUnprepareHeader
+206    pascal  MIDIOUTPREPAREHEADER(word segptr word) midiOutPrepareHeader
+207    pascal  MIDIOUTUNPREPAREHEADER(word segptr word) midiOutUnprepareHeader
 208    pascal  MIDIOUTSHORTMSG(word long) midiOutShortMsg
 209    pascal  MIDIOUTLONGMSG(word ptr word) midiOutLongMsg
 210    pascal  MIDIOUTRESET(word) midiOutReset
-211    pascal  MIDIOUTGETVOLUME(word ptr) midiOutGetVolume
+211    pascal  MIDIOUTGETVOLUME(word segptr) midiOutGetVolume
 212    pascal  MIDIOUTSETVOLUME(word long) midiOutSetVolume
 215    pascal  MIDIOUTGETID(word ptr) midiOutGetID
 216    pascal  MIDIOUTMESSAGE(word word long long) midiOutMessage
 301    pascal  MIDIINGETNUMDEVS() midiInGetNumDevs
-302    pascal  MIDIINGETDEVCAPS(word ptr word) midiInGetDevCaps
+302    pascal  MIDIINGETDEVCAPS(word segptr word) midiInGetDevCaps
 303    pascal  MIDIINGETERRORTEXT(word ptr word) midiInGetErrorText
 304    pascal  MIDIINOPEN(ptr word ptr long long long) midiInOpen
 305    pascal  MIDIINCLOSE(word) midiInClose
-306    pascal  MIDIINPREPAREHEADER(word ptr word) midiInPrepareHeader
-307    pascal  MIDIINUNPREPAREHEADER(word ptr word) midiInUnprepareHeader
+306    pascal  MIDIINPREPAREHEADER(word segptr word) midiInPrepareHeader
+307    pascal  MIDIINUNPREPAREHEADER(word segptr word) midiInUnprepareHeader
 309    pascal  MIDIINSTART(word) midiInStart
 310    pascal  MIDIINSTOP(word) midiInStop
 311    pascal  MIDIINRESET(word) midiInReset
 312    pascal  MIDIINGETID(word ptr) midiInGetID
 313    pascal  MIDIINMESSAGE(word word long long) midiInMessage
 350    pascal  AUXGETNUMDEVS() auxGetNumDevs
-351    pascal  AUXGETDEVCAPS(word ptr word) auxGetDevCaps
-352    pascal  AUXGETVOLUME(word ptr) auxGetVolume
+351    pascal  AUXGETDEVCAPS(word segptr word) auxGetDevCaps
+352    pascal  AUXGETVOLUME(word segptr) auxGetVolume
 353    pascal  AUXSETVOLUME(word long) auxSetVolume
 354    pascal  AUXOUTMESSAGE(word word long long) auxOutMessage
 401    pascal  WAVEOUTGETNUMDEVS() waveOutGetNumDevs
-402    pascal  WAVEOUTGETDEVCAPS(word ptr word) waveOutGetDevCaps
+402    pascal  WAVEOUTGETDEVCAPS(word segptr word) waveOutGetDevCaps
 403    pascal  WAVEOUTGETERRORTEXT(word ptr word) waveOutGetErrorText
 404    pascal  WAVEOUTOPEN(ptr word ptr long long long) waveOutOpen
 405    pascal  WAVEOUTCLOSE(word) waveOutClose
-406    pascal  WAVEOUTPREPAREHEADER(word ptr word) waveOutPrepareHeader
-407    pascal  WAVEOUTUNPREPAREHEADER(word ptr word) waveOutUnprepareHeader
-408    pascal  WAVEOUTWRITE(word ptr word) waveOutWrite
+406    pascal  WAVEOUTPREPAREHEADER(word segptr word) waveOutPrepareHeader
+407    pascal  WAVEOUTUNPREPAREHEADER(word segptr word) waveOutUnprepareHeader
+408    pascal  WAVEOUTWRITE(word segptr word) waveOutWrite
 409    pascal  WAVEOUTPAUSE(word) waveOutPause
 410    pascal  WAVEOUTRESTART(word) waveOutRestart
 411    pascal  WAVEOUTRESET(word) waveOutReset
-412    pascal  WAVEOUTGETPOSITION(word ptr word) waveOutGetPosition
+412    pascal  WAVEOUTGETPOSITION(word segptr word) waveOutGetPosition
 413    pascal  WAVEOUTGETPITCH(word ptr) waveOutGetPitch
 414    pascal  WAVEOUTSETPITCH(word long) waveOutSetPitch
-415    pascal  WAVEOUTGETVOLUME(word ptr) waveOutGetVolume
+415    pascal  WAVEOUTGETVOLUME(word segptr) waveOutGetVolume
 416    pascal  WAVEOUTSETVOLUME(word long) waveOutSetVolume
 417    pascal  WAVEOUTGETPLAYBACKRATE(word ptr) waveOutGetPlaybackRate
 418    pascal  WAVEOUTSETPLAYBACKRATE(word long) waveOutSetPlaybackRate
@@ -72,17 +72,17 @@ id	10
 420    pascal  WAVEOUTGETID(word ptr) waveOutGetID
 421    pascal  WAVEOUTMESSAGE(word word long long) waveOutMessage
 501    pascal  WAVEINGETNUMDEVS() waveInGetNumDevs
-502    pascal  WAVEINGETDEVCAPS(word ptr word) waveInGetDevCaps
+502    pascal  WAVEINGETDEVCAPS(word segptr word) waveInGetDevCaps
 503    pascal  WAVEINGETERRORTEXT(word ptr word) waveInGetErrorText
 504    pascal  WAVEINOPEN(ptr word ptr long long long) waveInOpen
 505    pascal  WAVEINCLOSE(word) waveInClose
-506    pascal  WAVEINPREPAREHEADER(word ptr word) waveInPrepareHeader
-507    pascal  WAVEINUNPREPAREHEADER(word ptr word) waveInUnprepareHeader
-508    pascal  WAVEINADDBUFFER(word ptr word) waveInAddBuffer
+506    pascal  WAVEINPREPAREHEADER(word segptr word) waveInPrepareHeader
+507    pascal  WAVEINUNPREPAREHEADER(word segptr word) waveInUnprepareHeader
+508    pascal  WAVEINADDBUFFER(word segptr word) waveInAddBuffer
 509    pascal  WAVEINSTART(word) waveInStart
 510    pascal  WAVEINSTOP(word) waveInStop
 511    pascal  WAVEINRESET(word) waveInReset
-512    pascal  WAVEINGETPOSITION(word ptr word) waveInGetPosition
+512    pascal  WAVEINGETPOSITION(word segptr word) waveInGetPosition
 513    pascal  WAVEINGETID(word ptr) waveInGetID
 514    pascal  WAVEINMESSAGE(word word long long) waveInMessage
 601    pascal  timeGetSystemTime(ptr word) timeGetSystemTime

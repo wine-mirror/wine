@@ -36,7 +36,15 @@ struct sigcontext_struct {
 #define WINE_CODE_SELECTOR 0x23
 #endif  /* linux */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#ifdef __NetBSD__
+#include <signal.h>
+#define sigcontext_struct sigcontext
+#define HZ 100
+#define WINE_DATA_SELECTOR 0x1f
+#define WINE_CODE_SELECTOR 0x17
+#endif
+
+#ifdef __FreeBSD__
 #include <signal.h>
 #define sigcontext_struct sigcontext
 #define HZ 100

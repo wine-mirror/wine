@@ -73,3 +73,9 @@ VIRTKEY		return VIRTKEY;
 \'[^']*\'   yylval.str=strdup(yytext+1);return SINGLE_QUOTED;
 [ \t\n\r]		;
 .			return yytext[0];
+%%
+
+#ifndef yywrap
+int yywrap(void) { return 1; }
+#endif
+

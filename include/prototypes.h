@@ -8,8 +8,6 @@
 
 #include <sys/types.h>
 
-#include "neexe.h"
-#include "msdos.h"
 #include "windows.h"
 
 #ifndef WINELIB
@@ -26,20 +24,11 @@ extern void wine_debug(int signal, int * regs);
 
 /* loader/wine.c */
 
-extern void myerror(const char *s);
-
-extern char *GetFilenameFromInstance(unsigned short instance);
-extern HINSTANCE LoadImage(char *modulename, int filetype, int change_dir);
 extern int _WinMain(int argc, char **argv);
-extern void InitializeLoadedDLLs();
 
 /* misc/spy.c */
 
 extern void SpyInit(void);
-
-/* controls/widget.c */
-
-extern BOOL WIDGETS_Init(void);
 
 #endif /* WINELIB */
 #endif /* _WINE_PROTOTYPES_H */

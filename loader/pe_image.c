@@ -21,6 +21,8 @@
 
 #define MAP_ANONYMOUS	0x20
 
+struct w_files *wine_files = NULL;
+
 unsigned int load_addr;
 
 void my_wcstombs(char * result, u_short * source, int len)
@@ -34,10 +36,15 @@ void my_wcstombs(char * result, u_short * source, int len)
   };
 }
 
-char * xmmap(char * vaddr, unsigned int v_size, int prot, int flags, 
-	     int fd, unsigned int file_offset)
+char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
+	int prot, int flags, int fd, unsigned int file_offset)
 {
   char * result;
+  /* .bss has no associated storage in the PE file */
+  if(r_size)
+    v_size=r_size;
+  else
+    flags |= MAP_ANON;
   result = mmap(vaddr, v_size, prot, flags, fd, file_offset);
   if((unsigned int) result != 0xffffffff) return result;
 
@@ -79,9 +86,10 @@ void dump_exports(struct PE_Export_Directory * pe_exports)
     }
 }
 
-void dump_imports(struct PE_Import_Directory *pe_imports)
+void fixup_imports(struct PE_Import_Directory *pe_imports)
 { 
   struct PE_Import_Directory * pe_imp;
+  int fixup_failed=0;
 
  /* OK, now dump the import list */
   printf("\nDumping imports list\n");
@@ -90,7 +98,7 @@ void dump_imports(struct PE_Import_Directory *pe_imports)
     {
       char * Module;
       struct pe_import_name * pe_name;
-      unsigned int * import_list;
+      unsigned int * import_list, *thunk_list;
       char * c;
 
       Module = ((char *) load_addr) + pe_imp->ModuleName;
@@ -100,15 +108,32 @@ void dump_imports(struct PE_Import_Directory *pe_imports)
 
       import_list = (unsigned int *) 
 	(((unsigned int) load_addr) + pe_imp->Import_List);
+	  thunk_list = (unsigned int *)
+	  (((unsigned int) load_addr) + pe_imp->Thunk_List);
+
 
       while(*import_list)
 	{
 	  pe_name = (struct pe_import_name *) ((int) load_addr + *import_list);
+	  if((unsigned)pe_name & 0x80000000)
+	  {
+	  	fprintf(stderr,"Import by ordinal not supported\n");
+		exit(0);
+	  }
 	  printf("--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
+	  *thunk_list=RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
+	  if(!*thunk_list)
+	  {
+	  	fprintf(stderr,"No implementation for %s.%d\n",Module, pe_name->Hint);
+		fixup_failed=1;
+	  }
+
 	  import_list++;
+	  thunk_list++;
 	}
       pe_imp++;
     };
+	if(fixup_failed)exit(1);
 }
 
 static void dump_table(struct w_files *wpnt)
@@ -155,18 +180,27 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 			wpnt->pe->pe_header->coff.NumberOfSections);
 
 	load_addr = wpnt->pe->pe_header->opt_coff.BaseOfImage;
+	printf("Load addr is %x\n",load_addr);
 	dump_table(wpnt);
 
 	for(i=0; i < wpnt->pe->pe_header->coff.NumberOfSections; i++)
 	{
 	if(!load_addr) {
-		result = xmmap((char *)0, wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7,
+		result = xmmap((char *)0, wpnt->pe->pe_seg[i].Virtual_Size,
+			wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7,
 			MAP_PRIVATE, wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
 		load_addr = (unsigned int) result -  wpnt->pe->pe_seg[i].Virtual_Address;
 	} else {
 		result = xmmap((char *) load_addr + wpnt->pe->pe_seg[i].Virtual_Address, 
+			  wpnt->pe->pe_seg[i].Virtual_Size,
 		      wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE | MAP_FIXED, 
 		      wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
+	}
+	if(result==-1){
+		fprintf(stderr,"Could not load section %x to desired address %x\n",
+			i, load_addr+wpnt->pe->pe_seg[i].Virtual_Address);
+		fprintf(stderr,"Need to implement relocations now\n");
+		exit(0);
 	}
 
 	if(strcmp(wpnt->pe->pe_seg[i].Name, ".idata") == 0)
@@ -184,7 +218,7 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 	    }
 	}
 
-	if(wpnt->pe->pe_import) dump_imports(wpnt->pe->pe_import);
+	if(wpnt->pe->pe_import) fixup_imports(wpnt->pe->pe_import);
 	if(wpnt->pe->pe_export) dump_exports(wpnt->pe->pe_export);
   
 	wpnt->hinstance = 0x8000;

@@ -291,6 +291,8 @@ static void ReadFile(struct sigcontext_struct *context)
 		Error (InvalidHandle, EL_Unknown, EC_Unknown);
 		AX = InvalidHandle;
 		SetCflag;
+        	dprintf_int(stddeb,
+			"int21: read (%d, void *, 0x%x) = EBADF\n", BX, CX);
 		return;
 	}
 
@@ -300,9 +302,14 @@ static void ReadFile(struct sigcontext_struct *context)
 		Error (0,0,0);
 		AX = 1;
 		ResetCflag;
+        	dprintf_int(stddeb,
+			"int21: read (%d, void *, 0x%x) = EOF\n", BX, CX);
 		return;
 	} else {
 		size = read(BX, ptr, CX);
+        	dprintf_int(stddeb,
+			"int21: read (%d, void *, 0x%x) = 0x%x\n",
+			BX, CX, size);
 		if (size == -1) {
 			errno_to_doserr();
 			AL = ExtendedError;
@@ -372,6 +379,10 @@ static void SeekFile(struct sigcontext_struct *context)
 			break;
 		}
         status = lseek(BX, (CX << 16) + DX, fileoffset);
+
+	dprintf_int (stddeb, "int21: seek (%d, 0x%x, %d) = 0x%lx\n",
+			BX, (CX << 16) + DX, AL, status);
+
 	if (status == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;			SetCflag;
@@ -386,6 +397,9 @@ static void SeekFile(struct sigcontext_struct *context)
 
 static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 {
+
+	dprintf_int (stddeb, "int21: ioctl (%d, GetDeviceInfo)\n", BX);
+
 	switch (BX) {
 		case 0:
 		case 1:
@@ -467,7 +481,7 @@ static void GetSystemDate(struct sigcontext_struct *context)
 	ltime = time(NULL);
 	now = localtime(&ltime);
 
-	CX = now->tm_year + 1900;
+	CX = now->tm_year + 1900 - 1980;
 	DX = ((now->tm_mon + 1) << 8) | now->tm_mday;
 	AX = now->tm_wday;
 }
@@ -537,12 +551,17 @@ void OpenExistingFile(struct sigcontext_struct *context)
                                O_RDONLY );
             if( handle == -1 )
             {
+		dprintf_int (stddeb, "int21: open (%s, %d) = -1\n",
+			DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS,DX)), mode);
                 errno_to_doserr();
                 AL = ExtendedError;
                 SetCflag;
                 return;
             }
 	}		
+
+	dprintf_int (stddeb, "int21: open (%s, %d) = %d\n",
+		DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS,DX)), mode, handle);
 
         switch (AX & 0x0070)
 	{
@@ -602,6 +621,8 @@ void OpenExistingFile(struct sigcontext_struct *context)
 
 static void CloseFile(struct sigcontext_struct *context)
 {
+	dprintf_int (stddeb, "int21: close (%d)\n", BX);
+
 	if (close(BX) == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;
@@ -1166,12 +1187,16 @@ static void GetFileAttribute (struct sigcontext_struct * context)
   if ((S_IWRITE & s.st_mode) != S_IWRITE)
     cx|=0x01;
 
+  dprintf_int (stddeb, "int21: GetFileAttributes (%s) = 0x%x\n",
+		filename, cx);
+
   ECX = (ECX & 0xffff0000) | cx;
   ResetCflag;
   Error (0,0,0); 
 }
 
 
+extern void LOCAL_PrintHeap (WORD ds);
 
 /************************************************************************/
 
@@ -1282,6 +1307,7 @@ int do_int21(struct sigcontext_struct * context)
             {
                 TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
                 pTask->dta = MAKELONG( DX, DS );
+                dprintf_int(stddeb, "int21: Set DTA: %08lx\n", pTask->dta);
             }
             break;
 
@@ -1701,6 +1727,10 @@ int do_int21(struct sigcontext_struct * context)
 	    return 1;
 	}
     }
+    dprintf_int(stddeb,"ret21: AX %04x, BX %04x, CX %04x, DX %04x, "
+           "SI %04x, DI %04x, DS %04x, ES %04x EFL %08lx\n",
+           AX, BX, CX, DX, SI, DI, DS, ES, EFL);
+
     return 1;
 }
 
