@@ -5601,6 +5601,23 @@ HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD st
 }
 
 /******************************************************************************
+ *              StgCreatePropSetStg       [OLE32.@]
+ */
+HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved,
+ IPropertySetStorage **ppPropSetStg)
+{
+    HRESULT hr;
+
+    TRACE("(%p, 0x%lx, %p): stub\n", pstg, reserved, ppPropSetStg);
+    if (reserved)
+        hr = STG_E_INVALIDPARAMETER;
+    else
+        hr = StorageBaseImpl_QueryInterface(pstg, &IID_IPropertySetStorage,
+         (void**)ppPropSetStg);
+    return hr;
+}
+
+/******************************************************************************
  *              StgOpenStorage        [OLE32.@]
  */
 HRESULT WINAPI StgOpenStorage(
