@@ -119,8 +119,8 @@ DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 i
 }
 DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface) {
     ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    
-    return 0;
+    TRACE("(%p) : returning %d\n", This, This->levels);    
+    return This->levels;
 }
 
 ICOM_VTABLE(IDirect3DBaseTexture8) Direct3DBaseTexture8_Vtbl =
