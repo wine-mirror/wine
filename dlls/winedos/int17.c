@@ -38,7 +38,7 @@ void WINAPI DOSVM_Int17Handler( CONTEXT86 *context )
     {
 	case 0x01:		/* PRINTER - INITIALIZE */
 	    FIXME("Initialize Printer - Not Supported\n");
-	    SET_AH( context, 0 ); /* time out */
+	    SET_AH( context, 0x30 ); /* selected | out of paper */
             break;
 	case 0x02:		/* PRINTER - GET STATUS */
 	    FIXME("Get Printer Status - Not Supported\n");
