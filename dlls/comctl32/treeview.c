@@ -509,7 +509,7 @@ static void
 TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
-
+  DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
   INT   center,xpos,cx,cy, cditem, drawmode;
   HFONT hOldFont;
   UINT  uTextJustify = DT_LEFT;
@@ -546,7 +546,7 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   /* 
    * Display the tree hierarchy 
    */
-  if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES) 
+  if ( dwStyle & TVS_HASLINES) 
   {
     /* 
      * Write links to parent node 
@@ -556,7 +556,7 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
      * points[1] is the L corner
      * points[2] is attached to the parent or the up sibling
      */
-    if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_LINESATROOT) 
+    if ( dwStyle & TVS_LINESATROOT) 
     {
       TREEVIEW_ITEM *upNode    = NULL;
      	BOOL  hasParentOrSibling = TRUE;
@@ -618,8 +618,7 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   if (wineItem->iLevel != 0)/*  update position only for non root node */
     xpos+=(5*wineItem->iLevel);
 
-  if (( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASBUTTONS) && 
-      ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES))
+  if (( dwStyle & TVS_HASBUTTONS) && ( dwStyle & TVS_HASLINES))
   {
 	  if ( (wineItem->cChildren) ||
 	       (wineItem->cChildren == I_CHILDRENCALLBACK))
@@ -2037,14 +2036,9 @@ TREEVIEW_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TREEVIEW_StyleChanged (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  LPSTYLESTRUCT lpss=(LPSTYLESTRUCT) lParam;
-
   TRACE("(%x %lx)\n",wParam,lParam);
   
-  if (wParam & (GWL_STYLE)) 
-	 SetWindowLongA( hwnd, GWL_STYLE, lpss->styleNew);
-  if (wParam & (GWL_EXSTYLE)) 
-	 SetWindowLongA( hwnd, GWL_STYLE, lpss->styleNew);
+  TREEVIEW_Refresh (hwnd);
 
   return 0;
 }
@@ -2487,11 +2481,13 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (!wineItem->cChildren) 
     return 0;
 
-  TRACE("For (%s) flags:%x item:%d state:%d\n", 
-    wineItem->pszText,
-    flag, 
-    expand,
-    wineItem->state);
+	if (wineItem->pszText==LPSTR_TEXTCALLBACKA) 
+		TRACE ("For item %d, flags %d, state %d\n",
+				expand, flag, wineItem->state);
+	else
+  		TRACE("For (%s) item:%d, flags %x, state:%d\n", 
+                wineItem->pszText, flag, expand, wineItem->state);
+
 
   if (wineItem->cChildren==I_CHILDRENCALLBACK) {
     FIXME("we don't handle I_CHILDRENCALLBACK yet\n");
