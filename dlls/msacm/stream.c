@@ -132,10 +132,12 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec, 
 	  pwfxDst->nBlockAlign, pwfxDst->wBitsPerSample, pwfxDst->cbSize);
 
-#define SIZEOF_WFX(wfx) (sizeof(WAVEFORMATEX) + ((wfx->wFormatTag == WAVE_FORMAT_PCM) ? 0 : wfx->cbSize))
-    wfxSrcSize = SIZEOF_WFX(pwfxSrc);
-    wfxDstSize = SIZEOF_WFX(pwfxDst);
-#undef SIZEOF_WFX
+    if ((fdwOpen & ACM_STREAMOPENF_QUERY) && phas) return MMSYSERR_INVALPARAM;
+    if (pwfltr && (pwfxSrc->wFormatTag != pwfxDst->wFormatTag)) return MMSYSERR_INVALPARAM;
+
+    wfxSrcSize = wfxDstSize = sizeof(WAVEFORMATEX);
+    if (pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) wfxSrcSize += pwfxSrc->cbSize;
+    if (pwfxDst->wFormatTag != WAVE_FORMAT_PCM) wfxDstSize += pwfxDst->cbSize;
 
     was = HeapAlloc(MSACM_hHeap, 0, sizeof(*was) + wfxSrcSize + wfxDstSize + ((pwfltr) ? sizeof(WAVEFILTER) : 0));
     if (was == NULL)

@@ -303,8 +303,10 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 	
     switch (fdwDetails) {
     case ACM_FORMATDETAILSF_FORMAT:
-	if (pafd->dwFormatTag != pafd->pwfx->wFormatTag)
+	if (pafd->dwFormatTag != pafd->pwfx->wFormatTag) {
 	    mmr = MMSYSERR_INVALPARAM;
+	    break;
+	}
 	if (had == (HACMDRIVER)NULL) {
 	    PWINE_ACMDRIVERID		padid;
 
