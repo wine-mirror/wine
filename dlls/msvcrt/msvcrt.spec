@@ -243,7 +243,7 @@
 @ cdecl _fstat(long ptr) MSVCRT__fstat
 @ stub _fstati64 #(long ptr)
 @ cdecl _ftime(ptr) _ftime
-@ forward -noimport _ftol ntdll._ftol
+@ forward _ftol ntdll._ftol
 @ cdecl _fullpath(ptr str long) _fullpath
 @ cdecl _futime(long ptr) _futime
 @ cdecl _gcvt( double long str) gcvt
@@ -310,7 +310,7 @@
 @ cdecl _ismbslead(ptr ptr) _ismbslead
 @ cdecl _ismbstrail(ptr ptr) _ismbstrail
 @ cdecl _isnan( double ) _isnan
-@ forward -noimport _itoa ntdll._itoa
+@ forward _itoa ntdll._itoa
 @ cdecl _itow(long wstr long) _itow
 @ cdecl _j0(double) j0
 @ cdecl _j1(double) j1
@@ -328,7 +328,7 @@
 @ cdecl _lsearch(ptr ptr long long ptr) _lsearch
 @ cdecl _lseek(long long long) _lseek
 @ stub _lseeki64 #(long long long)
-@ forward -noimport _ltoa ntdll._ltoa
+@ forward _ltoa ntdll._ltoa
 @ cdecl _ltow(long ptr long) _ltow
 @ cdecl _makepath(str str str str str) _makepath
 @ cdecl _matherr(ptr) _matherr
@@ -388,7 +388,7 @@
 @ cdecl _mbstrlen(str) _mbstrlen
 @ cdecl _mbsupr(str) _mbsupr
 @ cdecl _memccpy(ptr ptr long long) memccpy
-@ forward -noimport _memicmp ntdll._memicmp
+@ forward _memicmp ntdll._memicmp
 @ cdecl _mkdir(str) _mkdir
 @ cdecl _mktemp(str) _mktemp
 @ cdecl _msize(ptr) _msize
@@ -434,7 +434,7 @@
 @ stub _setsystime #(ptr long)
 @ cdecl _sleep(long) _sleep
 @ varargs _snprintf(str long str) snprintf
-@ forward -noimport _snwprintf ntdll._snwprintf
+@ forward _snwprintf ntdll._snwprintf
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ varargs _spawnl(long str str) _spawnl
 @ stub _spawnle #(str str) varargs
@@ -444,7 +444,7 @@
 @ cdecl _spawnve(long str ptr ptr) _spawnve
 @ cdecl _spawnvp(long str ptr) _spawnvp
 @ cdecl _spawnvpe(long str ptr ptr) _spawnvpe
-@ forward -noimport _splitpath ntdll._splitpath
+@ forward _splitpath ntdll._splitpath
 @ cdecl _stat(str ptr) MSVCRT__stat
 @ stub _stati64 #(str ptr)
 @ cdecl _statusfp() _statusfp
@@ -454,7 +454,7 @@
 @ cdecl _strerror(long) _strerror
 @ cdecl _stricmp(str str) strcasecmp
 @ stub _stricoll #(str str)
-@ forward -noimport _strlwr ntdll._strlwr
+@ forward _strlwr ntdll._strlwr
 @ stub _strncoll #(str str long)
 @ cdecl _strnicmp(str str long) strncasecmp
 @ stub _strnicoll #(str str long)
@@ -462,7 +462,7 @@
 @ cdecl _strrev(str) _strrev
 @ cdecl _strset(str long) _strset
 @ cdecl _strtime(str) _strtime
-@ forward -noimport _strupr ntdll._strupr
+@ forward _strupr ntdll._strupr
 @ cdecl _swab(str str long) _swab
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr MSVCRT__sys_nerr
@@ -476,8 +476,8 @@
 @ cdecl _tzset() tzset
 @ stub _ui64toa #(long str long)
 @ stub _ui64tow #(long wstr long)
-@ forward -noimport _ultoa ntdll._ultoa
-@ forward -noimport _ultow ntdll._ultow
+@ forward _ultoa ntdll._ultoa
+@ forward _ultow ntdll._ultow
 @ cdecl _umask(long) _umask
 @ cdecl _ungetch(long) _ungetch
 @ cdecl _unlink(str) _unlink
@@ -493,16 +493,16 @@
 @ extern _wcmdln MSVCRT__wcmdln
 @ cdecl _wcreat(wstr long) _wcreat
 @ cdecl _wcsdup(wstr) _wcsdup
-@ forward -noimport _wcsicmp ntdll._wcsicmp
+@ forward _wcsicmp ntdll._wcsicmp
 @ cdecl _wcsicoll(wstr wstr) _wcsicoll
-@ forward -noimport _wcslwr ntdll._wcslwr
+@ forward _wcslwr ntdll._wcslwr
 @ stub _wcsncoll #(wstr wstr long)
-@ forward -noimport _wcsnicmp ntdll._wcsnicmp
+@ forward _wcsnicmp ntdll._wcsnicmp
 @ stub _wcsnicoll #(wstr wstr long)
 @ cdecl _wcsnset(wstr long long) _wcsnset
 @ cdecl _wcsrev(wstr) _wcsrev
 @ cdecl _wcsset(wstr long) _wcsset
-@ forward -noimport _wcsupr ntdll._wcsupr
+@ forward _wcsupr ntdll._wcsupr
 @ stub _wctime #(ptr)
 @ extern _wenviron MSVCRT__wenviron
 @ stub _wexecl #(wstr wstr) varargs
@@ -559,7 +559,7 @@
 @ stub _wsystem #(wstr)
 @ cdecl _wtempnam(wstr wstr) _wtempnam
 @ stub _wtmpnam #(wstr)
-@ forward -noimport _wtoi NTDLL._wtoi
+@ forward _wtoi NTDLL._wtoi
 @ stub _wtoi64 #(wstr)
 @ forward _wtol NTDLL._wtol
 @ cdecl _wunlink(wstr) _wunlink
@@ -568,29 +568,29 @@
 @ cdecl _y1(double) _y1
 @ cdecl _yn(long double ) _yn
 @ cdecl abort() MSVCRT_abort
-@ forward -noimport abs ntdll.abs
-@ cdecl acos( double ) acos
-@ cdecl asctime(ptr) asctime
-@ cdecl asin(double) asin
-@ forward -noimport atan ntdll.atan
-@ cdecl atan2(double double) atan2
+@ cdecl -noimport abs(long) abs
+@ cdecl -noimport acos(double) acos
+@ cdecl -noimport asctime(ptr) asctime
+@ cdecl -noimport asin(double) asin
+@ cdecl -noimport atan(double) atan
+@ cdecl -noimport atan2(double double) atan2
 @ cdecl atexit(ptr) MSVCRT_atexit
-@ cdecl atof(str) atof
-@ cdecl atoi(str) atoi
-@ cdecl atol(str) atol
-@ cdecl bsearch(ptr ptr long long ptr) bsearch
+@ cdecl -noimport atof(str) atof
+@ cdecl -noimport atoi(str) atoi
+@ cdecl -noimport atol(str) atol
+@ cdecl -noimport bsearch(ptr ptr long long ptr) bsearch
 @ cdecl calloc(long long) MSVCRT_calloc
-@ forward -noimport ceil ntdll.ceil
+@ cdecl -noimport ceil(double) ceil
 @ cdecl clearerr(ptr) MSVCRT_clearerr
 @ cdecl clock() MSVCRT_clock
-@ cdecl cos(double) cos
-@ cdecl cosh(double) cosh
-@ cdecl ctime(ptr) ctime
+@ cdecl -noimport cos(double) cos
+@ cdecl -noimport cosh(double) cosh
+@ cdecl -noimport ctime(ptr) ctime
 @ cdecl difftime(long long) MSVCRT_difftime
 @ cdecl -noimport div(long long) MSVCRT_div
 @ cdecl exit(long) MSVCRT_exit
-@ cdecl exp(double) exp
-@ forward -noimport fabs ntdll.fabs
+@ cdecl -noimport exp(double) exp
+@ cdecl -noimport fabs(double) fabs
 @ cdecl fclose(ptr) MSVCRT_fclose
 @ cdecl feof(ptr) MSVCRT_feof
 @ cdecl ferror(ptr) MSVCRT_ferror
@@ -600,8 +600,8 @@
 @ cdecl fgets(ptr long ptr) MSVCRT_fgets
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
-@ forward -noimport floor ntdll.floor
-@ cdecl fmod(double double) fmod
+@ cdecl -noimport floor(double) floor
+@ cdecl -noimport fmod(double double) fmod
 @ cdecl fopen(str str) MSVCRT_fopen
 @ varargs fprintf(ptr str) MSVCRT_fprintf
 @ cdecl fputc(long ptr) MSVCRT_fputc
@@ -611,7 +611,7 @@
 @ cdecl fread(ptr long long ptr) MSVCRT_fread
 @ cdecl free(ptr) MSVCRT_free
 @ cdecl freopen(str str ptr) MSVCRT_freopen
-@ cdecl frexp(double ptr) frexp
+@ cdecl -noimport frexp(double ptr) frexp
 @ varargs fscanf(ptr str) MSVCRT_fscanf
 @ cdecl fseek(ptr long long) MSVCRT_fseek
 @ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
@@ -625,8 +625,8 @@
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
-@ cdecl gmtime(ptr) gmtime
-@ forward -noimport is_wctype ntdll.iswctype
+@ cdecl -noimport gmtime(ptr) gmtime
+@ forward is_wctype ntdll.iswctype
 @ cdecl isalnum(long) MSVCRT_isalnum
 @ cdecl isalpha(long) MSVCRT_isalpha
 @ cdecl iscntrl(long) MSVCRT_iscntrl
@@ -639,10 +639,10 @@
 @ cdecl isspace(long) MSVCRT_isspace
 @ cdecl isupper(long) MSVCRT_isupper
 @ cdecl iswalnum(long) MSVCRT_iswalnum
-@ forward -noimport iswalpha ntdll.iswalpha
+@ forward iswalpha ntdll.iswalpha
 @ cdecl iswascii(long) MSVCRT_iswascii
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
-@ forward -noimport iswctype ntdll.iswctype
+@ forward iswctype ntdll.iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit
 @ cdecl iswgraph(long) MSVCRT_iswgraph
 @ cdecl iswlower(long) MSVCRT_iswlower
@@ -652,34 +652,34 @@
 @ cdecl iswupper(long) MSVCRT_iswupper
 @ cdecl iswxdigit(long) MSVCRT_iswxdigit
 @ cdecl isxdigit(long) MSVCRT_isxdigit
-@ forward -noimport labs ntdll.labs
+@ cdecl -noimport labs(long) labs
 @ cdecl ldexp( double long) MSVCRT_ldexp
 @ cdecl -noimport ldiv(long long) MSVCRT_ldiv
 @ stub localeconv #()
-@ cdecl localtime(ptr) localtime
-@ forward -noimport log ntdll.log
-@ cdecl log10(double) log10
+@ cdecl -noimport localtime(ptr) localtime
+@ cdecl -noimport log(double) log
+@ cdecl -noimport log10(double) log10
 @ cdecl -register -noimport -i386 longjmp(ptr long) _MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ forward -noimport mbstowcs ntdll.mbstowcs
 @ cdecl mbtowc(wstr str long) MSVCRT_mbtowc
-@ cdecl memchr(ptr long long) memchr
-@ cdecl memcmp(ptr ptr long) memcmp
-@ cdecl memcpy(ptr ptr long) memcpy
-@ cdecl memmove(ptr ptr long) memmove
-@ cdecl memset(ptr long long) memset
+@ cdecl -noimport memchr(ptr long long) memchr
+@ cdecl -noimport memcmp(ptr ptr long) memcmp
+@ cdecl -noimport memcpy(ptr ptr long) memcpy
+@ cdecl -noimport memmove(ptr ptr long) memmove
+@ cdecl -noimport memset(ptr long long) memset
 @ cdecl mktime(ptr) MSVCRT_mktime
-@ cdecl modf(double ptr) modf
+@ cdecl -noimport modf(double ptr) modf
 @ cdecl perror(str) MSVCRT_perror
-@ cdecl pow(double double) pow
+@ cdecl -noimport pow(double double) pow
 @ varargs printf(str) MSVCRT_printf
 @ cdecl putc(long ptr) MSVCRT_putc
 @ cdecl putchar(long) MSVCRT_putchar
 @ cdecl puts(str) MSVCRT_puts
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) _fputwchar
-@ cdecl qsort(ptr long long ptr) qsort
+@ cdecl -noimport qsort(ptr long long ptr) qsort
 @ stub raise #(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl realloc(ptr long) MSVCRT_realloc
@@ -691,45 +691,45 @@
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
 @ cdecl signal(long long) MSVCRT_signal
-@ cdecl sin(double) sin
-@ cdecl sinh(double) sinh
+@ cdecl -noimport sin(double) sin
+@ cdecl -noimport sinh(double) sinh
 @ varargs sprintf(ptr str) sprintf
-@ forward -noimport sqrt ntdll.sqrt
-@ cdecl srand(long) srand
+@ cdecl -noimport sqrt(double) sqrt
+@ cdecl -noimport srand(long) srand
 @ varargs sscanf(str str) MSVCRT_sscanf
-@ cdecl strcat(str str) strcat
-@ cdecl strchr(str long) strchr
-@ cdecl strcmp(str str) strcmp
-@ cdecl strcoll(str str) strcoll
-@ cdecl strcpy(ptr str) strcpy
-@ cdecl strcspn(str str) strcspn
+@ cdecl -noimport strcat(str str) strcat
+@ cdecl -noimport strchr(str long) strchr
+@ cdecl -noimport strcmp(str str) strcmp
+@ cdecl -noimport strcoll(str str) strcoll
+@ cdecl -noimport strcpy(ptr str) strcpy
+@ cdecl -noimport strcspn(str str) strcspn
 @ cdecl strerror(long) MSVCRT_strerror
-@ cdecl strftime(str long str ptr) strftime
-@ cdecl strlen(str) strlen
-@ cdecl strncat(str str long) strncat
-@ cdecl strncmp(str str long) strncmp
-@ cdecl strncpy(ptr str long) strncpy
-@ cdecl strpbrk(str str) strpbrk
-@ cdecl strrchr(str long) strrchr
-@ cdecl strspn(str str) strspn
-@ cdecl strstr(str str) strstr
-@ cdecl strtod(str ptr) strtod
-@ cdecl strtok(str str) strtok
-@ cdecl strtol(str ptr long) strtol
-@ cdecl strtoul(str ptr long) strtoul
-@ cdecl strxfrm(ptr str long) strxfrm
-@ forward -noimport swprintf ntdll.swprintf
+@ cdecl -noimport strftime(str long str ptr) strftime
+@ cdecl -noimport strlen(str) strlen
+@ cdecl -noimport strncat(str str long) strncat
+@ cdecl -noimport strncmp(str str long) strncmp
+@ cdecl -noimport strncpy(ptr str long) strncpy
+@ cdecl -noimport strpbrk(str str) strpbrk
+@ cdecl -noimport strrchr(str long) strrchr
+@ cdecl -noimport strspn(str str) strspn
+@ cdecl -noimport strstr(str str) strstr
+@ cdecl -noimport strtod(str ptr) strtod
+@ cdecl -noimport strtok(str str) strtok
+@ cdecl -noimport strtol(str ptr long) strtol
+@ cdecl -noimport strtoul(str ptr long) strtoul
+@ cdecl -noimport strxfrm(ptr str long) strxfrm
+@ forward swprintf ntdll.swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
 @ cdecl system(str) MSVCRT_system
-@ forward -noimport tan ntdll.tan
-@ cdecl tanh(double) tanh
+@ cdecl -noimport tan(double) tan
+@ cdecl -noimport tanh(double) tanh
 @ cdecl time(ptr) MSVCRT_time
 @ cdecl tmpfile() MSVCRT_tmpfile
 @ cdecl tmpnam(str) MSVCRT_tmpnam
-@ cdecl tolower(long) tolower
-@ cdecl toupper(long) toupper
-@ forward -noimport towlower ntdll.towlower
-@ forward -noimport towupper ntdll.towupper
+@ cdecl -noimport tolower(long) tolower
+@ cdecl -noimport toupper(long) toupper
+@ forward towlower ntdll.towlower
+@ forward towupper ntdll.towupper
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
 @ cdecl vfprintf(ptr str long) MSVCRT_vfprintf
@@ -738,26 +738,26 @@
 @ cdecl vsprintf(ptr str ptr) vsprintf
 @ cdecl vswprintf(ptr wstr long) MSVCRT_vswprintf
 @ cdecl vwprintf(wstr long) MSVCRT_vwprintf
-@ forward -noimport wcscat ntdll.wcscat
-@ forward -noimport wcschr ntdll.wcschr
-@ forward -noimport wcscmp ntdll.wcscmp
+@ forward wcscat ntdll.wcscat
+@ forward wcschr ntdll.wcschr
+@ forward wcscmp ntdll.wcscmp
 @ cdecl wcscoll(wstr wstr) MSVCRT_wcscoll
-@ forward -noimport wcscpy ntdll.wcscpy
-@ forward -noimport wcscspn ntdll.wcscspn
+@ forward wcscpy ntdll.wcscpy
+@ forward wcscspn ntdll.wcscspn
 @ stub wcsftime #(wstr long wstr ptr)
-@ forward -noimport wcslen ntdll.wcslen
-@ forward -noimport wcsncat ntdll.wcsncat
-@ forward -noimport wcsncmp ntdll.wcsncmp
-@ forward -noimport wcsncpy ntdll.wcsncpy
+@ forward wcslen ntdll.wcslen
+@ forward wcsncat ntdll.wcsncat
+@ forward wcsncmp ntdll.wcsncmp
+@ forward wcsncpy ntdll.wcsncpy
 @ cdecl wcspbrk(wstr wstr) MSVCRT_wcspbrk
-@ forward -noimport wcsrchr ntdll.wcsrchr
-@ forward -noimport wcsspn ntdll.wcsspn
-@ forward -noimport wcsstr ntdll.wcsstr
+@ forward wcsrchr ntdll.wcsrchr
+@ forward wcsspn ntdll.wcsspn
+@ forward wcsstr ntdll.wcsstr
 @ stub wcstod #(wstr ptr)
-@ forward -noimport wcstok ntdll.wcstok
-@ forward -noimport wcstol ntdll.wcstol
-@ forward -noimport wcstombs ntdll.wcstombs
-@ forward -noimport wcstoul ntdll.wcstoul
+@ forward wcstok ntdll.wcstok
+@ forward wcstol ntdll.wcstol
+@ forward wcstombs ntdll.wcstombs
+@ forward wcstoul ntdll.wcstoul
 @ stub wcsxfrm #(wstr wstr long)
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
