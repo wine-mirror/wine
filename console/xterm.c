@@ -17,9 +17,13 @@
 
 #include "windows.h"
 #include "console.h"
+#include "options.h"
 #include "debug.h"
 
 #define ESC '\x1b'
+
+char console_xterm_prog[80];
+char console_xterm_resolution[10];
 
 static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid);
 FILE *wine_openpty(int *master, int *slave, char *name,
@@ -52,6 +56,13 @@ void XTERM_Start()
 
    chain.resizeScreen = driver.resizeScreen;
    driver.resizeScreen = XTERM_ResizeScreen;
+
+   /* Read in driver configuration */
+   PROFILE_GetWineIniString("console", "XtermProg",
+      "xterm", console_xterm_prog, 79); 
+   PROFILE_GetWineIniString("console", "XtermResolution",
+      "80x24", console_xterm_resolution, 9);
+
 }
 
 void XTERM_Init()
@@ -123,9 +134,10 @@ static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid)
         if ((*pid=fork()) == 0) {
                 tcsetattr(fileno(*slave), TCSADRAIN, &term);
                 sprintf(buf, "-Sxx%d", fileno(*master));
-                execlp(CONSOLE_XTERM_PROG, CONSOLE_XTERM_PROG, buf, "-fg",
-                   "white", "-bg", "black", NULL);
-                ERR(console, "error creating xterm\n");
+                execlp(console_xterm_prog, console_xterm_prog, buf, "-fg",
+                   "white", "-bg", "black", "-g",
+                   console_xterm_resolution, NULL);
+                ERR(console, "error creating xterm (file not found?)\n");
                 exit(1);
         }
 
