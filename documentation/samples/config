@@ -230,7 +230,7 @@ WINE REGISTRY Version 2
 "Desktop" = "640x480"
 
 [AppDefaults\\_INS5576._MP\\x11drv]
-"Desktop" = "640x480"
+"Desktop" = "800x600"
 
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
 ;"shlwapi" = "native"
