@@ -12,10 +12,10 @@
 #include "message.h"
 #include "monitor.h"
 #include "mouse.h"
-#include "ttydrv.h"
 #include "user.h"
 #include "win.h"
 #include "debugtools.h"
+#include "ttydrv.h"
 
 DEFAULT_DEBUG_CHANNEL(ttydrv);
 
@@ -54,9 +54,7 @@ static USER_DRIVER user_driver =
 
 int cell_width = 8;
 int cell_height = 8;
-#ifdef HAVE_LIBCURSES
 WINDOW *root_window;
-#endif /* defined(HAVE_LIBCURSES) */
 
 
 /***********************************************************************
@@ -70,17 +68,17 @@ static void process_attach(void)
     CLIPBOARD_Driver = &TTYDRV_CLIPBOARD_Driver;
     WND_Driver       = &TTYDRV_WND_Driver;
 
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
     if ((root_window = initscr()))
     {
         werase(root_window);
         wrefresh(root_window);
     }
     getmaxyx(root_window, rows, cols);
-#else /* defined(HAVE_LIBCURSES) */
+#else  /* WINE_CURSES */
     rows = 60; /* FIXME: Hardcoded */
     cols = 80; /* FIXME: Hardcoded */
-#endif /* defined(HAVE_LIBCURSES) */
+#endif  /* WINE_CURSES */
 
     MONITOR_PrimaryMonitor.rect.left   = 0;
     MONITOR_PrimaryMonitor.rect.top    = 0;
@@ -99,9 +97,9 @@ static void process_detach(void)
 {
     TTYDRV_GDI_Finalize();
 
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
     if (root_window) endwin();
-#endif /* defined(HAVE_LIBCURSES) */
+#endif  /* WINE_CURSES */
 
     USER_Driver      = NULL;
     CLIPBOARD_Driver = NULL;

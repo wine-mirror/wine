@@ -7,6 +7,7 @@
 #include "config.h"
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "dc.h"
 #include "debugtools.h"
@@ -22,7 +23,7 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
 			  const RECT *lpRect, LPCWSTR str, UINT count,
 			  const INT *lpDx)
 {
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
   LPSTR ascii;
@@ -56,10 +57,10 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
   }
 
   return TRUE;
-#else /* defined(HAVE_LIBCURSES) */
+#else /* defined(WINE_CURSES) */
   FIXME("(%p, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
 	dc, x, y, flags, lpRect, debugstr_wn(str,count), count, lpDx);
 
   return TRUE;
-#endif /* defined(HAVE_LIBCURSES) */
+#endif /* defined(WINE_CURSES) */
 }

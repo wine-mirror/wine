@@ -73,7 +73,7 @@ COLORREF TTYDRV_DC_GetPixel(DC *dc, INT x, INT y)
  */
 BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
 {
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row1, col1, row2, col2;
 
@@ -110,11 +110,11 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
   wrefresh(physDev->window);
 
   return TRUE;
-#else /* defined(HAVE_LIBCURSES) */
+#else /* defined(WINE_CURSES) */
   FIXME("(%p, %d, %d): stub\n", dc, x, y);
 
   return TRUE;
-#endif /* defined(HAVE_LIBCURSES) */
+#endif /* defined(WINE_CURSES) */
 }
 
 /***********************************************************************
@@ -184,7 +184,7 @@ BOOL TTYDRV_DC_PolyPolyline(DC *dc, const POINT* pt, const DWORD* counts, DWORD 
  */
 BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 {
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row1, col1, row2, col2;
 
@@ -229,11 +229,11 @@ BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
   wrefresh(physDev->window);
 
   return TRUE;
-#else /* defined(HAVE_LIBCURSES) */
+#else /* defined(WINE_CURSES) */
   FIXME("(%p, %d, %d, %d, %d): stub\n", dc, left, top, right, bottom);
 
   return TRUE;
-#endif /* defined(HAVE_LIBCURSES) */
+#endif /* defined(WINE_CURSES) */
 }
 
 /***********************************************************************
@@ -268,7 +268,7 @@ COLORREF TTYDRV_DC_SetBkColor(DC *dc, COLORREF color)
  */
 COLORREF TTYDRV_DC_SetPixel(DC *dc, INT x, INT y, COLORREF color)
 {
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
 
@@ -284,11 +284,11 @@ COLORREF TTYDRV_DC_SetPixel(DC *dc, INT x, INT y, COLORREF color)
   wrefresh(physDev->window);
 
   return RGB(0,0,0); /* FIXME: Always returns black */
-#else /* defined(HAVE_LIBCURSES) */
+#else /* defined(WINE_CURSES) */
   FIXME("(%p, %d, %d, 0x%08lx): stub\n", dc, x, y, color);
 
   return RGB(0,0,0); /* FIXME: Always returns black */
-#endif /* defined(HAVE_LIBCURSES) */
+#endif /* defined(WINE_CURSES) */
 }
 
 /***********************************************************************

@@ -31,6 +31,10 @@ struct tagWINDOWPOS;
 struct tagKEYBOARD_CONFIG;
 struct DIDEVICEOBJECTDATA;
 
+#if defined(HAVE_LIBCURSES) || defined(HAVE_LIBNCURSES)
+#define WINE_CURSES
+#endif
+
 /**************************************************************************
  * TTY GDI driver
  */
@@ -49,10 +53,12 @@ extern INT TTYDRV_BITMAP_SetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, U
 extern INT TTYDRV_BITMAP_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPVOID bits, BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
 extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 
+#ifndef WINE_CURSES
+typedef struct { int dummy; } WINDOW;
+#endif
+
 typedef struct {
-#ifdef HAVE_LIBCURSES
   WINDOW *window;
-#endif /* defined(HAVE_LIBCURSES) */
   int cellWidth;
   int cellHeight;
 } TTYDRV_PDEVICE;
@@ -119,10 +125,8 @@ extern int cell_height;
 static inline int TTYDRV_GetCellWidth(void)  { return cell_width; }
 static inline int TTYDRV_GetCellHeight(void) { return cell_height; }
 
-#ifdef HAVE_LIBCURSES
 extern WINDOW *root_window;
 static inline WINDOW *TTYDRV_GetRootWindow(void) { return root_window; }
-#endif /* defined(HAVE_LIBCURSES) */
 
 extern BOOL TTYDRV_GetScreenSaveActive(void);
 extern void TTYDRV_SetScreenSaveActive(BOOL bActivate);
@@ -142,12 +146,6 @@ extern BOOL TTYDRV_CLIPBOARD_IsFormatAvailable(UINT wFormat);
 extern BOOL TTYDRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName );
 extern BOOL TTYDRV_CLIPBOARD_IsSelectionowner();
 extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
-
-/* TTY desktop driver */
-
-#ifdef HAVE_LIBCURSES
-extern WINDOW *TTYDRV_DESKTOP_GetCursesRootWindow(struct tagDESKTOP *pDesktop);
-#endif /* defined(HAVE_LIBCURSES) */
 
 /* TTY event driver */
 
@@ -182,16 +180,10 @@ extern LONG TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 extern struct tagWND_DRIVER TTYDRV_WND_Driver;
 
 typedef struct tagTTYDRV_WND_DATA {
-#ifdef HAVE_LIBCURSES
   WINDOW *window;
-#else /* defined(HAVE_LIBCURSES) */
-  int dummy; /* FIXME: Remove later */
-#endif /* defined(HAVE_LIBCURSES) */
 } TTYDRV_WND_DATA;
 
-#ifdef HAVE_LIBCURSES
 WINDOW *TTYDRV_WND_GetCursesWindow(struct tagWND *wndPtr);
-#endif /* defined(HAVE_LIBCURSES) */
 
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
 extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);

@@ -44,9 +44,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
   dc->w.devCaps = &TTYDRV_DC_DevCaps;
 
   if(dc->w.flags & DC_MEMORY){
-#ifdef HAVE_LIBCURSES
     physDev->window = NULL;
-#endif /* defined(HAVE_LIBCURSES) */
     physDev->cellWidth = 1;
     physDev->cellHeight = 1;
 
@@ -63,9 +61,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     
     GDI_HEAP_UNLOCK( dc->w.hBitmap );
   } else {
-#ifdef HAVE_LIBCURSES
     physDev->window = TTYDRV_GetRootWindow();
-#endif /* defined(HAVE_LIBCURSES) */
     physDev->cellWidth = TTYDRV_GetCellWidth();
     physDev->cellHeight = TTYDRV_GetCellHeight();
     

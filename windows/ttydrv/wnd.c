@@ -20,13 +20,11 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
  *
  * Return the Curses window associated to a window.
  */
-#ifdef HAVE_LIBCURSES
 WINDOW *TTYDRV_WND_GetCursesWindow(WND *wndPtr)
 {
     return wndPtr && wndPtr->pDriverData ? 
       ((TTYDRV_WND_DATA *) wndPtr->pDriverData)->window : 0;
 }
-#endif /* defined(HAVE_LIBCURSES) */
 
 /**********************************************************************
  *		TTYDRV_WND_Initialize
@@ -40,9 +38,7 @@ void TTYDRV_WND_Initialize(WND *wndPtr)
 
   wndPtr->pDriverData = (void *) pWndDriverData;
 
-#ifdef HAVE_LIBCURSES
   pWndDriverData->window = NULL;
-#endif /* defined(HAVE_LIBCURSES) */
 }
 
 /**********************************************************************
@@ -60,11 +56,9 @@ void TTYDRV_WND_Finalize(WND *wndPtr)
     return;
   }
 
-#ifdef HAVE_LIBCURSES
   if(pWndDriverData->window) {
     ERR("WND destroyed without destroying the associated Curses Windows");
   }
-#endif /* defined(HAVE_LIBCURSES) */
 
   HeapFree(SystemHeap, 0, pWndDriverData);
   wndPtr->pDriverData = NULL;
@@ -82,10 +76,7 @@ BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 
   if(!pWndDriverData) { ERR("WND never initialized\n"); return FALSE; }
 
-#ifdef HAVE_LIBCURSES
-  pWndDriverData->window = TTYDRV_WND_GetCursesRootWindow(wndPtr);
-#endif /* defined(HAVE_LIBCURSES) */
-
+  pWndDriverData->window = TTYDRV_GetRootWindow();
   return TRUE;
 }
 
@@ -94,8 +85,8 @@ BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
  */
 BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode)
 {
-#ifdef HAVE_LIBCURSES
-  WINDOW *window, *rootWindow;
+#ifdef WINE_CURSES
+  WINDOW *window;
   INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
   TRACE("(%p, %p, %p, %d)\n", wndPtr, classPtr, cs, bUnicode);
@@ -104,20 +95,17 @@ BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
   if(cs->style & WS_CHILD)
     return TRUE;
 
-  if(!(rootWindow = TTYDRV_WND_GetCursesRootWindow(wndPtr)))
-    return FALSE;
-
-  window = subwin(rootWindow, cs->cy/cellHeight, cs->cx/cellWidth,
+  window = subwin(TTYDRV_GetRootWindow(), cs->cy/cellHeight, cs->cx/cellWidth,
 		  cs->y/cellHeight, cs->x/cellWidth);
   werase(window);
   wrefresh(window);
 		  
   return TRUE;
-#else /* defined(HAVE_LIBCURSES) */
+#else /* defined(WINE_CURSES) */
   FIXME("(%p, %p, %p, %d): stub\n", wndPtr, classPtr, cs, bUnicode);
 
   return TRUE;
-#endif /* defined(HAVE_LIBCURSES) */
+#endif /* defined(WINE_CURSES) */
 }
 
 /***********************************************************************
@@ -125,22 +113,22 @@ BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
  */
 BOOL TTYDRV_WND_DestroyWindow(WND *wndPtr)
 {
-#ifdef HAVE_LIBCURSES
+#ifdef WINE_CURSES
   WINDOW *window;
 
   TRACE("(%p)\n", wndPtr);
 
   window = TTYDRV_WND_GetCursesWindow(wndPtr);
-  if(window && window != TTYDRV_WND_GetCursesRootWindow(wndPtr)) {
+  if(window && window != TTYDRV_GetRootWindow()) {
     delwin(window);
   }
 
   return TRUE;
-#else /* defined(HAVE_LIBCURSES) */
+#else /* defined(WINE_CURSES) */
   FIXME("(%p): stub\n", wndPtr);
 
   return TRUE;
-#endif /* defined(HAVE_LIBCURSES) */
+#endif /* defined(WINE_CURSES) */
 }
 
 /*****************************************************************
