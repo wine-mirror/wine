@@ -62,7 +62,7 @@ extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
 extern void DIB_UpdateDIBSection( DC *dc, BOOL toDIB );
 extern void DIB_DeleteDIBSection( BITMAPOBJ *bmp );
 extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );
-extern void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags,
-  BYTE pix);
+extern void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix);
+extern HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 
 #endif  /* __WINE_BITMAP_H */

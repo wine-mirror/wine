@@ -59,6 +59,7 @@ extern int  TSXConvertSelection(Display*, Atom, Atom, Atom, Window, Time);
 extern int  TSXCopyArea(Display*, Drawable, Drawable, GC, int, int, unsigned int, unsigned int, int, int);
 extern int  TSXCopyPlane(Display*, Drawable, Drawable, GC, int, int, unsigned int, unsigned int, int, int, unsigned long);
 extern int  TSXDefineCursor(Display*, Window, Cursor);
+extern int  TSXDeleteProperty(Display*, Window, Atom);
 extern int  TSXDestroyWindow(Display*, Window);
 extern int  TSXDisplayKeycodes(Display*, int*, int*);
 extern int  TSXDrawArc(Display*, Drawable, GC, int, int, unsigned int, unsigned int, int, int);

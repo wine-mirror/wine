@@ -796,27 +796,28 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
       if( lpRender->wFormatID == CF_METAFILEPICT )
 	size = sizeof( METAFILEPICT16 );
       else
-	size = GlobalSize(lpRender->hData32);
+          size = GlobalSize(lpRender->hData32);
+      
       lpRender->hData16 = GlobalAlloc16(GMEM_ZEROINIT, size);
       if( !lpRender->hData16 )
 	ERR("(%04X) -- not enough memory in 16b heap\n", wFormat);
       else
       {
-      if( lpRender->wFormatID == CF_METAFILEPICT )
-      {
-	FIXME("\timplement function CopyMetaFilePict32to16\n");
-	FIXME("\tin the appropriate file.\n");
-#ifdef SOMEONE_IMPLEMENTED_ME
-	CopyMetaFilePict32to16( GlobalLock16(lpRender->hData16), 
-			        GlobalLock(lpRender->hData32) );
-#endif
-      }
-      else
-      {
-	memcpy( GlobalLock16(lpRender->hData16), 
-		GlobalLock(lpRender->hData32), 
-		size );
-      }
+        if( lpRender->wFormatID == CF_METAFILEPICT )
+        {
+          FIXME("\timplement function CopyMetaFilePict32to16\n");
+          FIXME("\tin the appropriate file.\n");
+  #ifdef SOMEONE_IMPLEMENTED_ME
+          CopyMetaFilePict32to16( GlobalLock16(lpRender->hData16), 
+                                  GlobalLock(lpRender->hData32) );
+  #endif
+        }
+        else
+        {
+          memcpy( GlobalLock16(lpRender->hData16), 
+                  GlobalLock(lpRender->hData32), 
+                  size );
+        }
 	GlobalUnlock16(lpRender->hData16);
 	GlobalUnlock(lpRender->hData32);
       }

@@ -43,8 +43,6 @@
  *    and vice versa. If a native format is available in the selection, it takes
  *    precedence, in order to avoid unnecessary conversions.
  *
- * TODO:
- *    - Support for converting between DIB and PIXMAP formats
  */
 
 #include "config.h"
@@ -62,6 +60,9 @@
 #include "win.h"
 #include "windef.h"
 #include "x11drv.h"
+#include "bitmap.h"
+#include "commctrl.h"
+#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(clipboard)
 
@@ -83,9 +84,16 @@ static Window ClipboardSelectionOwner = None;  /* The window which owns the clip
 static unsigned long cSelectionTargets = 0;    /* Number of target formats reported by TARGETS selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 
+/*
+ * Dynamic pointer arrays to manage destruction of Pixmap resources
+ */
+static HDPA PropDPA = NULL;
+static HDPA PixmapDPA = NULL;
+
+
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_MapPropertyToID
+ *		X11DRV_CLIPBOARD_MapPropertyToFormat
  *
  *  Map an X selection property type atom name to a windows clipboard format ID
  */
@@ -102,10 +110,21 @@ UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName)
         return RegisterClipboardFormatA(itemFmtName + strlen(FMT_PREFIX));
     else if ( 0 == strcmp(itemFmtName, "STRING") )
         return CF_OEMTEXT;
-    else if ( 0 == strcmp(itemFmtName, "PIXMAP") )
-        return CF_DIB;
-    else if ( 0 == strcmp(itemFmtName, "BITMAP") )
-        return CF_DIB;
+    else if ( 0 == strcmp(itemFmtName, "PIXMAP")
+                ||  0 == strcmp(itemFmtName, "BITMAP") )
+    {
+        /*
+         * Return CF_DIB as first preference, if WINE is the selection owner
+         * and if CF_DIB exists in the cache.
+         * If wine dowsn't own the selection we always return CF_DIB
+         */
+        if ( !X11DRV_CLIPBOARD_IsSelectionowner() )
+            return CF_DIB;
+        else if ( CLIPBOARD_IsPresent(CF_DIB) )
+            return CF_DIB;
+        else
+            return CF_BITMAP;
+    }
 
     WARN("\tNo mapping to Windows clipboard format for property %s\n", itemFmtName);
     return 0;
@@ -185,6 +204,7 @@ BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
     return bRet;
 }
 
+
 /**************************************************************************
  *		X11DRV_CLIPBOARD_CacheDataFormats
  *
@@ -259,7 +279,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
 
     /* Read the TARGETS property contents */
     if(TSXGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
-                            0, 0x3FFF, True, XA_ATOM, &atype, &aformat,
+                            0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat,
                             &cSelectionTargets, &remain, (unsigned char**)&targetList) != Success)
         TRACE("\tCouldn't read TARGETS property\n");
     else
@@ -270,7 +290,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
         */
-       if(atype == XA_ATOM && aformat == 32)
+       if( (atype == XA_ATOM || atype == aTargets) && aformat == 32 )
        {
           int i;
           LPWINE_CLIPFORMAT lpFormat;
@@ -291,9 +311,13 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
               {
                   lpFormat = CLIPBOARD_LookupFormat( wFormat );
                   
-                  /* Don't replace if the property already cached is a native format */
-                  if (lpFormat->wDataPresent
-                      && X11DRV_CLIPBOARD_IsNativeProperty(lpFormat->drvData))
+                  /* Don't replace if the property already cached is a native format,
+                   * or if a PIXMAP is being replaced by a BITMAP.
+                   */
+                  if (lpFormat->wDataPresent &&
+                        ( X11DRV_CLIPBOARD_IsNativeProperty(lpFormat->drvData)
+                          || (lpFormat->drvData == XA_PIXMAP && targetList[i] == XA_BITMAP) )
+                     )
                   {
                       TRACE("\tAtom# %d: '%s' --> FormatID(%d) %s (Skipped)\n",
                             i, itemFmtName, wFormat, lpFormat->Name);
@@ -326,7 +350,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
  *  This method is invoked only to read the contents of a the selection owned
  *  by an external application. i.e. when we do not own the X selection.
  */
-static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, Atom reqFormat)
+static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, Atom reqType)
 {
     Atom	      atype=AnyPropertyType;
     int		      aformat;
@@ -336,26 +360,27 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     LPWINE_CLIPFORMAT lpFormat;
     BOOL              bRet = FALSE;
     HWND              hWndClipWindow = GetOpenClipboardWindow();
+
     
     if(prop == None)
         return bRet;
 
     TRACE("Reading X selection...\n");
 
-    TRACE("\tretrieving property %s into %s\n",
-          TSXGetAtomName(display,reqFormat), TSXGetAtomName(display,prop) );
+    TRACE("\tretrieving property %s from window %ld into %s\n",
+          TSXGetAtomName(display,reqType), (long)w, TSXGetAtomName(display,prop) );
 
     /*
-     * Retrieve the property in the required X format.
      * First request a zero length in order to figure out the request size.
      */
-    if(TSXGetWindowProperty(display,w,prop,0,0,True,reqFormat,
+    if(TSXGetWindowProperty(display,w,prop,0,0,False, AnyPropertyType/*reqType*/,
                             &atype, &aformat, &nitems, &itemSize, &val) != Success)
     {
         WARN("\tcouldn't get property size\n");
         return bRet;
     }
-    /* Free property if one was returned */
+
+    /* Free zero length return data if any */
     if ( val )
     {
        TSXFree(val);
@@ -365,7 +390,10 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     TRACE("\tretrieving %ld bytes...\n", itemSize * aformat/8);
     lRequestLength = (itemSize * aformat/8)/4  + 1;
     
-    if(TSXGetWindowProperty(display,w,prop,0,lRequestLength,True,reqFormat,
+    /*
+     * Retrieve the actual property in the required X format.
+     */
+    if(TSXGetWindowProperty(display,w,prop,0,lRequestLength,False,AnyPropertyType/*reqType*/,
                             &atype, &aformat, &nitems, &remain, &val) != Success)
     {
         WARN("\tcouldn't read property\n");
@@ -378,14 +406,14 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     if (remain)
     {
         WARN("\tCouldn't read entire property- selection may be too large! Remain=%ld\n", remain);
-        return bRet;
+        goto END;
     }
     
     /*
      * Translate the X property into the appropriate Windows clipboard
      * format, if possible.
      */
-    if ( (reqFormat == XA_STRING)
+    if ( (reqType == XA_STRING)
          && (atype == XA_STRING) && (aformat == 8) ) /* treat Unix text as CF_OEMTEXT */
     {
       HANDLE16   hText = 0;
@@ -432,16 +460,56 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
           bRet = TRUE;
       }
     }
-    else if ( reqFormat == XA_PIXMAP ) /* treat PIXMAP as CF_DIB or CF_BITMAP */
+    else if ( reqType == XA_PIXMAP || reqType == XA_BITMAP ) /* treat PIXMAP as CF_DIB or CF_BITMAP */
     {
-      if (wFormat == CF_BITMAP )
-          FIXME("PIXMAP to CF_BITMAP conversion not yet implemented!\n");
-      else if (wFormat == CF_DIB )
-          FIXME("PIXMAP to CF_DIB conversion not yet implemented!\n");
+      /* Get the first pixmap handle passed to us */
+      Pixmap *pPixmap = (Pixmap *)val;
+      HANDLE hTargetImage = NULL;  /* Handle to store the converted bitmap or DIB */
+      
+      if (aformat != 32 || nitems < 1 || atype != XA_PIXMAP
+          || (wFormat != CF_BITMAP && wFormat != CF_DIB))
+      {
+          WARN("\tUnimplemented format conversion request\n");
+          goto END;
+      }
+          
+      if ( wFormat == CF_BITMAP )
+      {
+        /* For CF_BITMAP requests we must return an HBITMAP */
+        hTargetImage = X11DRV_BITMAP_CreateBitmapFromPixmap(*pPixmap, TRUE);
+      }
+      else if (wFormat == CF_DIB)
+      {
+        HWND hwnd = GetOpenClipboardWindow();
+        HDC hdc = GetDC(hwnd);
+        
+        /* For CF_DIB requests we must return an HGLOBAL storing a packed DIB */
+        hTargetImage = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc, TRUE);
+        
+        ReleaseDC(hdc, hwnd);
+      }
+
+      if (!hTargetImage)
+      {
+          WARN("PIXMAP conversion failed!\n" );
+          goto END;
+      }
+      
+      /* Delete previous clipboard data */
+      lpFormat = CLIPBOARD_LookupFormat(wFormat);
+      if (lpFormat->wDataPresent && (lpFormat->hData16 || lpFormat->hData32))
+          CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
+      
+      /* Update the clipboard record */
+      lpFormat->wDataPresent = 1;
+      lpFormat->hData32 = hTargetImage;
+      lpFormat->hData16 = 0;
+
+      bRet = TRUE;
     }
  
-    /* For other data types simply copy the X data without conversion */
-    else
+    /* For native properties simply copy the X data without conversion */
+    else if (X11DRV_CLIPBOARD_IsNativeProperty(reqType)) /* <WCF>* */
     {
       HANDLE hClipData = 0;
       void*  lpClipData;
@@ -475,9 +543,20 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
           bRet = TRUE;
       }
     }
- 
-    /* Free the retrieved property */
-    TSXFree(val);
+    else
+    {
+        WARN("\tUnimplemented format conversion request\n");
+        goto END;
+    }
+
+END:
+    /* Delete the property on the window now that we are done
+     * This will send a PropertyNotify event to the selection owner. */
+    TSXDeleteProperty(display,w,prop);
+    
+    /* Free the retrieved property data */
+    if (val)
+       TSXFree(val);
     
     return bRet;
 }
@@ -629,6 +708,24 @@ void X11DRV_CLIPBOARD_Release()
         
 	LeaveCriticalSection(&X11DRV_CritSection);
     }
+
+    /* Get rid of any Pixmap resources we may still have */
+    if (PropDPA)
+        DPA_Destroy( PropDPA );
+    if (PixmapDPA)
+    {
+      int i;
+      Pixmap pixmap;
+      for( i = 0; ; i++ )
+      {
+        if ( (pixmap = ((Pixmap)DPA_GetPtr(PixmapDPA, i))) )
+          XFreePixmap(display, pixmap);
+        else
+          break;
+      }
+      DPA_Destroy( PixmapDPA );
+    }
+    PixmapDPA = PropDPA = NULL;
 }
 
 /**************************************************************************
@@ -675,6 +772,12 @@ void X11DRV_CLIPBOARD_Acquire()
 
         if (selectionAcquired)
         {
+            /* Create dynamic pointer arrays to manage Pixmap resources we may expose */
+            if (!PropDPA)
+                PropDPA = DPA_CreateEx( 2, SystemHeap );
+            if (!PixmapDPA)
+                PixmapDPA = DPA_CreateEx( 2, SystemHeap );
+            
 	    selectionWindow = owner;
 	    TRACE("Grabbed X selection, owner=(%08x)\n", (unsigned) owner);
         }
@@ -986,6 +1089,59 @@ END:
        CLIPBOARD_ReleaseOwner();
        ClipboardSelectionOwner = PrimarySelectionOwner = 0;
        selectionWindow = 0;
+    }
+}
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_RegisterPixmapResource
+ * Registers a Pixmap resource which is to be associated with a property Atom.
+ * When the property is destroyed we also destroy the Pixmap through the
+ * PropertyNotify event.
+ */
+BOOL X11DRV_CLIPBOARD_RegisterPixmapResource( Atom property, Pixmap pixmap )
+{
+  if ( -1 == DPA_InsertPtr( PropDPA, 0, (void*)property ) )
+    return FALSE;
+    
+  if ( -1 == DPA_InsertPtr( PixmapDPA, 0, (void*)pixmap ) )
+    return FALSE;
+
+  return TRUE;
+}
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_FreeResources
+ *
+ * Called from EVENT_PropertyNotify() to give us a chance to destroy
+ * any resources associated with this property.
+ */
+void X11DRV_CLIPBOARD_FreeResources( Atom property )
+{
+    /* Do a simple linear search to see if we have a Pixmap resource
+     * associated with this property and release it.
+     */
+    int i;
+    Pixmap pixmap;
+    Atom cacheProp = NULL;
+    for( i = 0; ; i++ )
+    {
+        if ( !(cacheProp = ((Atom)DPA_GetPtr(PropDPA, i))) )
+            break;
+        
+        if ( cacheProp == property )
+        {
+            /* Lookup the associated Pixmap and free it */
+            pixmap = (Pixmap)DPA_GetPtr(PixmapDPA, i);
+  
+            TRACE("Releasing pixmap %ld for Property %s\n",
+                  (long)pixmap, TSXGetAtomName(display, cacheProp));
+            
+            XFreePixmap(display, pixmap);
+
+            /* Free the entries from the table */
+            DPA_DeletePtr(PropDPA, i);
+            DPA_DeletePtr(PixmapDPA, i);
+        }
     }
 }
 

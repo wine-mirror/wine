@@ -488,6 +488,17 @@ int  TSXDefineCursor(Display* a0, Window a1, Cursor a2)
   return r;
 }
 
+int  TSXDeleteProperty(Display* a0, Window a1, Atom a2)
+{
+  int  r;
+  TRACE("Call XDeleteProperty\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XDeleteProperty(a0, a1, a2);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XDeleteProperty\n");
+  return r;
+}
+
 int  TSXDestroyWindow(Display* a0, Window a1)
 {
   int  r;

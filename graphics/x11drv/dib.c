@@ -3418,6 +3418,114 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 }
 
 
+/**************************************************************************
+ *	        X11DRV_DIB_CreateDIBFromPixmap
+ *
+ *  Allocates a packed DIB and copies the Pixmap data into it.
+ *  If bDeletePixmap is TRUE, the Pixmap passed in is deleted after the conversion.
+ */
+HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap)
+{
+    HBITMAP hBmp = 0;
+    BITMAPOBJ *pBmp = NULL;
+    HGLOBAL hPackedDIB = NULL;
+
+    /* Allocates an HBITMAP which references the Pixmap passed to us */
+    hBmp = X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(pixmap);
+    if (!hBmp)
+    {
+        TRACE_(bitmap)("\tCould not create bitmap header for Pixmap\n");
+        goto END;
+    }
+
+    /*
+     * Create a packed DIB from the Pixmap wrapper bitmap created above.
+     * A packed DIB contains a BITMAPINFO structure followed immediately by
+     * an optional color palette and the pixel data.
+     */
+    hPackedDIB = DIB_CreateDIBFromBitmap(hdc, hBmp);
+    
+    /* Get a pointer to the BITMAPOBJ structure */
+    pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+
+    /* We can now get rid of the HBITMAP wrapper we created earlier.
+     * Note: Simply calling DeleteObject will free the embedded Pixmap as well.
+     */
+    if (!bDeletePixmap)
+    {
+        /* Manually free the DDBitmap internals to prevent the Pixmap 
+         * from being deleted by DeleteObject.
+         */
+        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap->physBitmap );
+        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap );
+        pBmp->DDBitmap = NULL;
+    }
+    DeleteObject(hBmp);  
+    
+END:
+    TRACE_(bitmap)("\tReturning packed DIB %x\n", hPackedDIB);
+    return hPackedDIB;
+}
+
+
+/**************************************************************************
+ *	           X11DRV_DIB_CreatePixmapFromDIB
+ *
+ *    Creates a Pixmap from a packed DIB
+ */
+Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
+{
+    Pixmap pixmap = NULL;
+    HBITMAP hBmp = 0;
+    BITMAPOBJ *pBmp = NULL;
+    LPBYTE pPackedDIB = NULL;
+    LPBITMAPINFO pbmi = NULL;
+    LPBITMAPINFOHEADER pbmiHeader = NULL;
+    LPBYTE pbits = NULL;
+    
+    /* Get a pointer to the packed DIB's data  */
+    pPackedDIB = (LPBYTE)GlobalLock(hPackedDIB);
+    pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
+    pbmi = (LPBITMAPINFO)pPackedDIB;
+    pbits = (LPBYTE)(pPackedDIB
+                     + DIB_BitmapInfoSize( (LPBITMAPINFO)pbmiHeader, DIB_RGB_COLORS ));
+    
+    /* Create a DDB from the DIB */
+     
+    hBmp = CreateDIBitmap(hdc,
+                          pbmiHeader,
+                          CBM_INIT,
+                          (LPVOID)pbits,
+                          pbmi,
+                          DIB_RGB_COLORS);
+
+    GlobalUnlock(hPackedDIB);
+
+    TRACE_(bitmap)("CreateDIBitmap returned %x\n", hBmp);
+
+    /* Retrieve the internal Pixmap from the DDB */
+     
+    pBmp = (BITMAPOBJ *) GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+
+    if (pBmp->DDBitmap && pBmp->DDBitmap->physBitmap)
+    {
+        pixmap = ((X11DRV_PHYSBITMAP *)(pBmp->DDBitmap->physBitmap))->pixmap;
+        if (!pixmap)
+            TRACE_(bitmap)("NULL Pixmap in DDBitmap->physBitmap!\n");
+        
+        /* Manually free the BITMAPOBJ internals so that we can steal its pixmap */
+        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap->physBitmap );
+        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap );
+        pBmp->DDBitmap = NULL;   /* Its not a DDB anymore */
+    }
+
+    /* Delete the DDB we created earlier now that we have stolen its pixmap */
+    DeleteObject(hBmp);
+    
+    TRACE_(bitmap)("\tReturning Pixmap %ld\n", pixmap);
+    return pixmap;
+}
+
 #endif /* !defined(X_DISPLAY_MISSING) */
 
 

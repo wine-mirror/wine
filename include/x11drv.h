@@ -169,6 +169,11 @@ extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
 extern BOOL X11DRV_DIB_Init(void);
 extern X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( struct tagBITMAPOBJ *bmp );
+extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap);
+extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
+extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap);
+extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
+extern Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc );
 
 extern BOOL X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc,
 				       BOOL fMapColors );
@@ -325,11 +330,15 @@ extern void X11DRV_USER_EndDebugging(void);
 
 extern struct tagCLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
+extern void X11DRV_CLIPBOARD_FreeResources( Atom property );
+extern BOOL X11DRV_CLIPBOARD_RegisterPixmapResource( Atom property, Pixmap pixmap );
+    
 extern void X11DRV_CLIPBOARD_Acquire(void);
 extern void X11DRV_CLIPBOARD_Release(void);
 extern void X11DRV_CLIPBOARD_SetData(UINT wFormat);
 extern BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat);
 extern BOOL X11DRV_CLIPBOARD_IsFormatAvailable(UINT wFormat);
+extern BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop);
 extern BOOL X11DRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName );
 extern BOOL X11DRV_CLIPBOARD_IsSelectionowner();
 extern UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName);
