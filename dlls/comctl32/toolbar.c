@@ -1566,20 +1566,29 @@ TOOLBAR_EnableButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     HDC hdc;
     INT nIndex;
+    DWORD bState;
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
     if (nIndex == -1)
 	return FALSE;
 
     btnPtr = &infoPtr->buttons[nIndex];
-    if (LOWORD(lParam) == FALSE)
-	btnPtr->fsState &= ~(TBSTATE_ENABLED | TBSTATE_PRESSED);
-    else
-	btnPtr->fsState |= TBSTATE_ENABLED;
 
-    hdc = GetDC (hwnd);
-    TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
-    ReleaseDC (hwnd, hdc);
+    bState = btnPtr->fsState & TBSTATE_ENABLED;
+
+    /* update the toolbar button state */
+    if(LOWORD(lParam) == FALSE) {
+ 	btnPtr->fsState &= ~(TBSTATE_ENABLED | TBSTATE_PRESSED);
+    } else {
+	btnPtr->fsState |= TBSTATE_ENABLED;
+    }
+
+    /* redraw the button only if the state of the button changed */
+    if(bState != (btnPtr->fsState & TBSTATE_ENABLED)) {	
+        hdc = GetDC (hwnd);
+        TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
+        ReleaseDC (hwnd, hdc);
+    }
 
     return TRUE;
 }
