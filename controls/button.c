@@ -256,8 +256,8 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
     case WM_LBUTTONDOWN:
         SetCapture( hWnd );
         SetFocus( hWnd );
-        SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );
         set_button_state( hWnd, get_button_state( hWnd ) | BUTTON_BTNPRESSED );
+        SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );
         break;
 
     case WM_KEYUP:

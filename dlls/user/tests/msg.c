@@ -1670,6 +1670,25 @@ static const struct message WmKillFocusStaticSeq[] =
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { 0 }
 };
+static const struct message WmLButtonDownSeq[] =
+{
+    { WM_LBUTTONDOWN, sent|wparam|lparam, 0, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_CTLCOLORBTN, sent|defwinproc },
+    { BM_SETSTATE, sent|wparam|defwinproc, TRUE },
+    { WM_CTLCOLORBTN, sent|defwinproc },
+    { 0 }
+};
+static const struct message WmLButtonUpSeq[] =
+{
+    { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
+    { BM_SETSTATE, sent|wparam|defwinproc, FALSE },
+    { WM_CTLCOLORBTN, sent|defwinproc },
+    { WM_CAPTURECHANGED, sent|wparam|defwinproc, 0 },
+    { 0 }
+};
 
 static WNDPROC old_button_proc;
 
@@ -1679,7 +1698,7 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     LRESULT ret;
     struct message msg;
 
-    trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+    trace("button: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -1687,6 +1706,9 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     msg.wParam = wParam;
     msg.lParam = lParam;
     add_message(&msg);
+
+    if (message == BM_SETSTATE)
+	ok(GetCapture() == hwnd, "GetCapture() = %p\n", GetCapture());
 
     defwndproc_counter++;
     ret = CallWindowProcA(old_button_proc, hwnd, message, wParam, lParam);
@@ -1754,6 +1776,20 @@ static void test_button_messages(void)
 
 	DestroyWindow(hwnd);
     }
+
+    hwnd = CreateWindowExA(0, "my_button_class", "test", button[i].style | WS_POPUP | WS_VISIBLE,
+			   0, 0, 50, 14, 0, 0, 0, NULL);
+    ok(hwnd != 0, "Failed to create button window\n");
+
+    SetFocus(0);
+    flush_sequence();
+
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, 0);
+    ok_sequence(WmLButtonDownSeq, "WM_LBUTTONDOWN on a button", FALSE);
+
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, 0);
+    ok_sequence(WmLButtonUpSeq, "WM_LBUTTONDOWN on a button", FALSE);
+    DestroyWindow(hwnd);
 }
 
 /************* painting message test ********************/
