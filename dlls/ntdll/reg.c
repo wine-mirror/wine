@@ -558,12 +558,30 @@ NTSTATUS WINAPI NtFlushKey(HKEY key)
  *  NtLoadKey	[NTDLL.@]
  *  ZwLoadKey   [NTDLL.@]
  */
-NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTES *file )
+NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file )
 {
-    FIXME("stub!\n");
-    dump_ObjectAttributes(attr);
-    dump_ObjectAttributes(file);
-    return STATUS_SUCCESS;
+    NTSTATUS ret;
+    HANDLE hive;
+    IO_STATUS_BLOCK io;
+
+    TRACE("(%p,%p)\n", attr, file);
+
+    ret = NtCreateFile(&hive, GENERIC_READ, file, &io, NULL, FILE_ATTRIBUTE_NORMAL, 0,
+                       OPEN_EXISTING, 0, NULL, 0);
+    if (ret) return ret;
+
+    SERVER_START_REQ( load_registry )
+    {
+        req->hkey = attr->RootDirectory;
+        req->file = hive;
+        wine_server_add_data(req, attr->ObjectName->Buffer, attr->ObjectName->Length);
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    NtClose(hive);
+   
+    return ret;
 }
 
 /******************************************************************************

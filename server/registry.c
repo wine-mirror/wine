@@ -1834,13 +1834,18 @@ DECL_HANDLER(delete_key_value)
 /* load a registry branch from a file */
 DECL_HANDLER(load_registry)
 {
-    struct key *key;
+    struct key *key, *parent;
 
-    if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
+    if ((parent = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
     {
-        /* FIXME: use subkey name */
-        load_registry( key, req->file );
-        release_object( key );
+        int dummy;
+        WCHAR *name = copy_path( get_req_data(), get_req_data_size(), !req->hkey );
+        if (name && (key = create_key( parent, name, NULL, KEY_DIRTY, time(NULL), &dummy )))
+        {
+            load_registry( key, req->file );
+            release_object( key );
+        }
+        release_object( parent );
     }
 }
 

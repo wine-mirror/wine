@@ -1588,42 +1588,28 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
  */
 LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 {
-    HANDLE file;
-    DWORD ret, len, err = GetLastError();
-    HKEY shkey;
+    OBJECT_ATTRIBUTES destkey, file;
+    UNICODE_STRING subkeyW, filenameW;
 
-    TRACE( "(%p,%s,%s)\n", hkey, debugstr_w(subkey), debugstr_w(filename) );
+    if (!(hkey = get_special_root_hkey(hkey))) return ERROR_INVALID_HANDLE;
 
-    if (!filename || !*filename) return ERROR_INVALID_PARAMETER;
-    if (!subkey || !*subkey) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    destkey.Length = sizeof(destkey);
+    destkey.RootDirectory = hkey;               /* root key: HKLM or HKU */
+    destkey.ObjectName = &subkeyW;              /* name of the key */
+    destkey.Attributes = 0;
+    destkey.SecurityDescriptor = NULL;
+    destkey.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString(&subkeyW, subkey);
 
-    len = strlenW( subkey ) * sizeof(WCHAR);
-    if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
+    file.Length = sizeof(file);
+    file.RootDirectory = NULL;
+    file.ObjectName = &filenameW;               /* file containing the hive */
+    file.Attributes = OBJ_CASE_INSENSITIVE;
+    file.SecurityDescriptor = NULL;
+    file.SecurityQualityOfService = NULL;
+    RtlDosPathNameToNtPathName_U(filename, &filenameW, NULL, NULL);
 
-    if ((file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
-    {
-        ret = GetLastError();
-        goto done;
-    }
-
-    RegCreateKeyW(hkey,subkey,&shkey);
-
-    SERVER_START_REQ( load_registry )
-    {
-        req->hkey  = shkey;
-        req->file  = file;
-        wine_server_add_data( req, subkey, len );
-        ret = RtlNtStatusToDosError( wine_server_call(req) );
-    }
-    SERVER_END_REQ;
-    CloseHandle( file );
-    RegCloseKey(shkey);
-
- done:
-    SetLastError( err );  /* restore the last error code */
-    return ret;
+    return RtlNtStatusToDosError( NtLoadKey(&destkey, &file) );
 }
 
 
@@ -1634,43 +1620,20 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
  */
 LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
-    WCHAR buffer[MAX_PATH];
-    HANDLE file;
-    DWORD ret, len, err = GetLastError();
-    HKEY shkey;
+    UNICODE_STRING subkeyW, filenameW;
+    STRING subkeyA, filenameA;
+    NTSTATUS status;
 
-    TRACE( "(%p,%s,%s)\n", hkey, debugstr_a(subkey), debugstr_a(filename) );
+    RtlInitAnsiString(&subkeyA, subkey);
+    RtlInitAnsiString(&filenameA, filename);
 
-    if (!filename || !*filename) return ERROR_INVALID_PARAMETER;
-    if (!subkey || !*subkey) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if ((status = RtlAnsiStringToUnicodeString(&subkeyW, &subkeyA, TRUE)))
+        return RtlNtStatusToDosError(status);
 
-    if (!(len = MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey), buffer, MAX_PATH )))
-        return ERROR_INVALID_PARAMETER;
+    if ((status = RtlAnsiStringToUnicodeString(&filenameW, &filenameA, TRUE)))
+        return RtlNtStatusToDosError(status);
 
-    if ((file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
-    {
-        ret = GetLastError();
-        goto done;
-    }
-
-    RegCreateKeyA(hkey,subkey,&shkey);
-
-    SERVER_START_REQ( load_registry )
-    {
-        req->hkey  = shkey;
-        req->file  = file;
-        wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
-        ret = RtlNtStatusToDosError( wine_server_call(req) );
-    }
-    SERVER_END_REQ;
-    CloseHandle( file );
-    RegCloseKey(shkey);
-
- done:
-    SetLastError( err );  /* restore the last error code */
-    return ret;
+    return RegLoadKeyW(hkey, subkeyW.Buffer, filenameW.Buffer);
 }
 
 
