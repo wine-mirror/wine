@@ -47,11 +47,11 @@ type	win32
 543 stub	RasEditPhonebookEntryW
 544 stdcall	RasEnumConnectionsA(ptr ptr ptr) RasEnumConnectionsA
 545 stub	RasEnumConnectionsW
-546 stub	RasEnumEntriesA
+546 stdcall	RasEnumEntriesA(str str ptr ptr ptr) RasEnumEntriesA
 547 stub	RasEnumEntriesW
 548 stub	RasGetConnectStatusA
 549 stub	RasGetConnectStatusW
-550 stub	RasGetEntryDialParamsA
+550 stdcall	RasGetEntryDialParamsA(str ptr ptr) RasGetEntryDialParamsA
 551 stub	RasGetEntryDialParamsW
 552 stub	RasGetErrorStringA
 553 stub	RasGetErrorStringW

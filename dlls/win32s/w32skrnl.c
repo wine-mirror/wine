@@ -6,6 +6,8 @@
  */
 
 #include <string.h>
+
+#include "wine/w32skrnl.h"
 #include "winbase.h"
 
 LPSTR WINAPI GetWin32sDirectory(void)
