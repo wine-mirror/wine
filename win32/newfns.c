@@ -57,67 +57,6 @@ BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T
 
 
 /******************************************************************************
- * CreateMailslotA [KERNEL32.@]
- */
-HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
-                                   DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa)
-{
-    FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_a(lpName),
-          nMaxMessageSize, lReadTimeout, sa);
-    return (HANDLE)1;
-}
-
-
-/******************************************************************************
- * CreateMailslotW [KERNEL32.@]  Creates a mailslot with specified name
- *
- * PARAMS
- *    lpName          [I] Pointer to string for mailslot name
- *    nMaxMessageSize [I] Maximum message size
- *    lReadTimeout    [I] Milliseconds before read time-out
- *    sa              [I] Pointer to security structure
- *
- * RETURNS
- *    Success: Handle to mailslot
- *    Failure: INVALID_HANDLE_VALUE
- */
-HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
-                                   DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
-{
-    FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName),
-          nMaxMessageSize, lReadTimeout, sa);
-    return (HANDLE)1;
-}
-
-
-/******************************************************************************
- * GetMailslotInfo [KERNEL32.@]  Retrieves info about specified mailslot
- *
- * PARAMS
- *    hMailslot        [I] Mailslot handle
- *    lpMaxMessageSize [O] Address of maximum message size
- *    lpNextSize       [O] Address of size of next message
- *    lpMessageCount   [O] Address of number of messages
- *    lpReadTimeout    [O] Address of read time-out
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
-                               LPDWORD lpNextSize, LPDWORD lpMessageCount,
-                               LPDWORD lpReadTimeout )
-{
-    FIXME("(%p): stub\n",hMailslot);
-    if (lpMaxMessageSize) *lpMaxMessageSize = (DWORD)NULL;
-    if (lpNextSize) *lpNextSize = (DWORD)NULL;
-    if (lpMessageCount) *lpMessageCount = (DWORD)NULL;
-    if (lpReadTimeout) *lpReadTimeout = (DWORD)NULL;
-    return TRUE;
-}
-
-
-/******************************************************************************
  * GetCompressedFileSizeA [KERNEL32.@]
  *
  * NOTES

@@ -1178,6 +1178,98 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
 }
 
 
+/******************************************************************************
+ * CreateMailslotA [KERNEL32.@]
+ */
+HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
+                               DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
+{
+    DWORD len;
+    HANDLE handle;
+    LPWSTR name = NULL;
+
+    TRACE("%s %ld %ld %p\n", debugstr_a(lpName),
+          nMaxMessageSize, lReadTimeout, sa);
+
+    if( lpName )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpName, -1, NULL, 0 );
+        name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpName, -1, name, len );
+    }
+
+    handle = CreateMailslotW( name, nMaxMessageSize, lReadTimeout, sa );
+
+    if( name )
+        HeapFree( GetProcessHeap(), 0, name );
+
+    return handle;
+}
+
+
+/******************************************************************************
+ * CreateMailslotW [KERNEL32.@]  Creates a mailslot with specified name
+ *
+ * PARAMS
+ *    lpName          [I] Pointer to string for mailslot name
+ *    nMaxMessageSize [I] Maximum message size
+ *    lReadTimeout    [I] Milliseconds before read time-out
+ *    sa              [I] Pointer to security structure
+ *
+ * RETURNS
+ *    Success: Handle to mailslot
+ *    Failure: INVALID_HANDLE_VALUE
+ */
+HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
+                               DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
+{
+    FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName),
+          nMaxMessageSize, lReadTimeout, sa);
+    return (HANDLE)1;
+}
+
+
+/******************************************************************************
+ * GetMailslotInfo [KERNEL32.@]  Retrieves info about specified mailslot
+ *
+ * PARAMS
+ *    hMailslot        [I] Mailslot handle
+ *    lpMaxMessageSize [O] Address of maximum message size
+ *    lpNextSize       [O] Address of size of next message
+ *    lpMessageCount   [O] Address of number of messages
+ *    lpReadTimeout    [O] Address of read time-out
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
+                               LPDWORD lpNextSize, LPDWORD lpMessageCount,
+                               LPDWORD lpReadTimeout )
+{
+    FIXME("(%p): stub\n",hMailslot);
+    if (lpMaxMessageSize) *lpMaxMessageSize = (DWORD)NULL;
+    if (lpNextSize) *lpNextSize = (DWORD)NULL;
+    if (lpMessageCount) *lpMessageCount = (DWORD)NULL;
+    if (lpReadTimeout) *lpReadTimeout = (DWORD)NULL;
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * SetMailslotInfo [KERNEL32.@]  Sets the read timeout of a specified mailslot
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
+{
+    FIXME("%p %ld: stub\n", hMailslot, dwReadTimeout);
+    return TRUE;
+}
+
+
 #ifdef __i386__
 
 /***********************************************************************

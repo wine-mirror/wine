@@ -772,7 +772,7 @@
 @ stdcall SetLocalTime(ptr)
 @ stdcall SetLocaleInfoA(long long str)
 @ stdcall SetLocaleInfoW(long long wstr)
-@ stub SetMailslotInfo
+@ stdcall SetMailslotInfo(long long)
 @ stub SetMessageWaitingIndicator
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long)
