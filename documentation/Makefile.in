@@ -77,7 +77,7 @@ uninstall::
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 clean::
-	$(RM) *.aux *.dvi *.tex *.log $(BOOKNAME).pdf $(BOOKNAME).ps
+	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log $(BOOKNAME).pdf $(BOOKNAME).ps
 	$(RM) -r $(BOOKNAME) html man3w *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
