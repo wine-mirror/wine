@@ -33,15 +33,10 @@ CROSSWINDRES = @CROSSWINDRES@
 
 all: $(TESTPROGRAM)
 
-# Rule for main module spec file
-
-$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe $(MODULE) --mode cui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%)
-
 # Rules for .so main module
 
-$(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
-	$(LDDLL) $(MODULE).spec.o $(OBJS) -o $@ -L$(DLLDIR) $(ALL_LIBS) -lc
+$(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) $(IMPORTLIBS) Makefile.in
+	WINEBUILD=$(WINEBUILD) $(WINEGCC) -mconsole $(OBJS) $(RC_SRCS:.rc=.res) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS) -lc
 
 # Rules for .exe main module
 

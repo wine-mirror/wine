@@ -70,6 +70,7 @@ WRC          = $(TOOLSDIR)/tools/wrc/wrc
 BIN2RES      = $(TOOLSDIR)/tools/bin2res
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
 WIDL         = $(TOOLSDIR)/tools/widl/widl
+WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc
 RC           = $(WRC)
 RC16         = $(WRC)
 RCFLAGS      = --nostdinc $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
