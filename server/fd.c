@@ -1068,8 +1068,9 @@ void async_terminate( struct async *async, int status )
 static void fd_dump( struct object *obj, int verbose )
 {
     struct fd *fd = (struct fd *)obj;
-    fprintf( stderr, "Fd unix_fd=%d user=%p unlink='%s'\n",
-             fd->unix_fd, fd->user, fd->closed->unlink );
+    fprintf( stderr, "Fd unix_fd=%d user=%p", fd->unix_fd, fd->user );
+    if (fd->inode) fprintf( stderr, " inode=%p unlink='%s'", fd->inode, fd->closed->unlink );
+    fprintf( stderr, "\n" );
 }
 
 static void fd_destroy( struct object *obj )
