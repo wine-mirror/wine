@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
