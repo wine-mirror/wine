@@ -6,7 +6,6 @@
 
 #include "wine/winbase16.h"
 #include "ntddk.h"
-#include "heap.h"
 #include "module.h"
 #include "callback.h"
 #include "debugtools.h"
@@ -154,7 +153,7 @@ static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
         if ( !UTGlue16_Segptr ) return NULL;
     }
 
-    ut = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY|HEAP_WINE_SEGPTR, sizeof(UTINFO) );
+    ut = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(UTINFO) );
     if ( !ut ) return NULL;
 
     ut->hModule   = hModule;
@@ -194,7 +193,7 @@ static void UTFree( UTINFO *ut )
             break;
         }
 
-    HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, ut );
+    HeapFree( GetProcessHeap(), 0, ut );
 }
 
 /****************************************************************************
@@ -250,16 +249,18 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     if (     lpszInitName
          && (init16 = GetProcAddress16( hModule16, lpszInitName )) != 0 )
     {
-        SEGPTR callback = SEGPTR_GET( &ut->ut16 );
+        SEGPTR callback = MapLS( &ut->ut16 );
         SEGPTR segBuff  = MapLS( lpBuff );
 
         if ( !UTTHUNK_CallTo16_long_ll( init16, callback, segBuff ) )
         {
             UnMapLS( segBuff );
+            UnMapLS( callback );
             UTUnRegister( hModule );
             return FALSE;
         }
         UnMapLS( segBuff );
+        UnMapLS( callback );
     }
 
     /* Return 32-bit thunk */

@@ -1446,6 +1446,7 @@ typedef struct _THUNKLET
 #define THUNKLET_TYPE_SL  2
 
 static HANDLE  ThunkletHeap = 0;
+static WORD ThunkletCodeSel;
 static THUNKLET *ThunkletAnchor = NULL;
 
 static FARPROC ThunkletSysthunkGlueLS = 0;
@@ -1454,6 +1455,13 @@ static SEGPTR    ThunkletSysthunkGlueSL = 0;
 static FARPROC ThunkletCallbackGlueLS = 0;
 static SEGPTR    ThunkletCallbackGlueSL = 0;
 
+
+/* map a thunk allocated on ThunkletHeap to a 16-bit pointer */
+inline static SEGPTR get_segptr( void *thunk )
+{
+    return MAKESEGPTR( ThunkletCodeSel, (char *)thunk - (char *)ThunkletHeap );
+}
+
 /***********************************************************************
  *           THUNK_Init
  */
@@ -1461,17 +1469,19 @@ BOOL THUNK_Init(void)
 {
     LPBYTE thunk;
 
-    ThunkletHeap = HeapCreate(HEAP_WINE_SEGPTR | HEAP_WINE_CODE16SEG, 0, 0);
+    ThunkletHeap = HeapCreate( 0, 0x10000, 0x10000 );
     if (!ThunkletHeap) return FALSE;
+
+    ThunkletCodeSel = SELECTOR_AllocBlock( (void *)ThunkletHeap, 0x10000, WINE_LDT_FLAGS_CODE );
 
     thunk = HeapAlloc( ThunkletHeap, 0, 5 );
     if (!thunk) return FALSE;
-    
+
     ThunkletSysthunkGlueLS = (FARPROC)thunk;
     *thunk++ = 0x58;                             /* popl eax */
     *thunk++ = 0xC3;                             /* ret      */
 
-    ThunkletSysthunkGlueSL = HEAP_GetSegptr( ThunkletHeap, 0, thunk );
+    ThunkletSysthunkGlueSL = get_segptr( thunk );
     *thunk++ = 0x66; *thunk++ = 0x58;            /* popl eax */
     *thunk++ = 0xCB;                             /* lret     */
 
@@ -1571,7 +1581,7 @@ SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
         ThunkletAnchor = thunk;
     }
 
-    return HEAP_GetSegptr( ThunkletHeap, 0, thunk );
+    return get_segptr( thunk );
 }
 
 /**********************************************************************
@@ -1700,7 +1710,7 @@ SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
     thunk = THUNK_FindThunklet( (DWORD)target, relay, 
                                 (DWORD)ThunkletCallbackGlueSL, 
                                 THUNKLET_TYPE_SL );
-    return HEAP_GetSegptr( ThunkletHeap, 0, thunk );
+    return get_segptr( thunk );
 }
 
 
@@ -1855,21 +1865,35 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
  * A 16:16 segmented pointer to the function is returned.
  * Written without any docu.
  */
-SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name) {
-	HANDLE ThunkHeap = HeapCreate(HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 64);
-        LPBYTE x;
-	LPVOID tmpheap = HeapAlloc(ThunkHeap, 0, 32);
-	SEGPTR thunk = HEAP_GetSegptr(ThunkHeap, 0, tmpheap);
-	DWORD proc_16;
+SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name)
+{
+    static WORD code_sel32;
+    FARPROC16 proc_16;
+    LPBYTE thunk;
 
-        if (!handle) handle=GetModuleHandle16("WIN32S16");
-        proc_16 = (DWORD)GetProcAddress16(handle, func_name);
+    if (!code_sel32)
+    {
+        code_sel32 = SELECTOR_AllocBlock( (void *)ThunkletHeap, 0x10000,
+                                          WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+        if (!code_sel32) return 0;
+    }
+    if (!(thunk = HeapAlloc( ThunkletHeap, 0, 32 ))) return 0;
 
-        x=MapSL(thunk);
-        *x++=0xba; *(DWORD*)x=proc_16;x+=4;             /* movl proc_16, $edx */
-        *x++=0xea; *(DWORD*)x=(DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");x+=4;     /* jmpl QT_Thunk */
-	*(WORD*)x=__get_cs();
-        return thunk;
+    if (!handle) handle = GetModuleHandle16("WIN32S16");
+    proc_16 = GetProcAddress16(handle, func_name);
+
+    /* movl proc_16, $edx */
+    *thunk++ = 0xba;
+    *(FARPROC16 *)thunk = proc_16;
+    thunk += sizeof(FARPROC16);
+
+     /* jmpl QT_Thunk */
+    *thunk++ = 0xea;
+    *(FARPROC *)thunk = GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");
+    thunk += sizeof(FARPROC16);
+    *(WORD *)thunk = __get_cs();
+
+    return MAKESEGPTR( code_sel32, (char *)thunk - (char *)ThunkletHeap );
 }
 
 

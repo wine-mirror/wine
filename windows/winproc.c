@@ -15,6 +15,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "stackframe.h"
+#include "selectors.h"
 #include "builtin16.h"
 #include "controls.h"
 #include "heap.h"
@@ -103,6 +104,7 @@ static LRESULT WINAPI WINPROC_Thunk16To32A( WNDPROC func, LPBYTE args );
 static LRESULT WINAPI WINPROC_Thunk16To32W( WNDPROC func, LPBYTE args );
 
 static HANDLE WinProcHeap;
+static WORD WinProcSel;
 
 
 /**********************************************************************
@@ -110,8 +112,10 @@ static HANDLE WinProcHeap;
  */
 BOOL WINPROC_Init(void)
 {
-    WinProcHeap = HeapCreate( HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 0 );
-    if (!WinProcHeap)
+    WinProcHeap = HeapCreate( 0, 0x10000, 0x10000 );
+    WinProcSel = SELECTOR_AllocBlock( (void *)WinProcHeap, 0x10000,
+                                      WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+    if (!WinProcHeap || !WinProcSel)
     {
         WARN_(relay)("Unable to create winproc heap\n" );
         return FALSE;
@@ -366,25 +370,26 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
  */
 WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
 {
+    WINDOWPROC *ptr = (WINDOWPROC *)proc;
+
     if (!proc) return NULL;
     if (type == WIN_PROC_16)  /* We want a 16:16 address */
     {
-        if (((WINDOWPROC *)proc)->type == WIN_PROC_16)
-            return ((WINDOWPROC *)proc)->thunk.t_from32.proc;
+        if (ptr->type == WIN_PROC_16)
+            return ptr->thunk.t_from32.proc;
         else
-            return (WNDPROC16)HEAP_GetSegptr( WinProcHeap, 0,
-                                              &((WINDOWPROC *)proc)->thunk );
+            return (WNDPROC16)MAKESEGPTR( WinProcSel, (char *)&ptr->thunk - (char *)WinProcHeap );
     }
     else  /* We want a 32-bit address */
     {
-        if (((WINDOWPROC *)proc)->type == WIN_PROC_16)
-            return (WNDPROC16)&((WINDOWPROC *)proc)->thunk;
-        else if (type != ((WINDOWPROC *)proc)->type)
+        if (ptr->type == WIN_PROC_16)
+            return (WNDPROC16)&ptr->thunk;
+        else if (type != ptr->type)
             /* Have to return the jmp address if types don't match */
-            return (WNDPROC16)&((WINDOWPROC *)proc)->jmp;
+            return (WNDPROC16)&ptr->jmp;
         else
             /* Some Win16 programs want to get back the proc they set */
-            return (WNDPROC16)((WINDOWPROC *)proc)->thunk.t_from16.proc;
+            return (WNDPROC16)ptr->thunk.t_from16.proc;
     }
 }
 
