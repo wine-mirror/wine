@@ -60,6 +60,7 @@ LPWSTR __cdecl CRTDLL_wcsrchr( LPWSTR str, WCHAR ch );
 INT    __cdecl CRTDLL_wcsspn( LPCWSTR str, LPCWSTR accept );
 LPWSTR __cdecl CRTDLL_wcsstr( LPCWSTR str, LPCWSTR sub );
 LPWSTR __cdecl CRTDLL_wcstok( LPWSTR str, LPCWSTR delim );
+INT    __cdecl CRTDLL_wcstol( LPWSTR s, LPWSTR *end, INT base );
 INT    __cdecl CRTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n );
 INT    __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch );
 
