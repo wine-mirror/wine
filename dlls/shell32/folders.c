@@ -9,6 +9,7 @@
 
 #include "wine/obj_base.h"
 #include "wine/obj_extracticon.h"
+#include "wine/undocshell.h"
 
 #include "debugtools.h"
 #include "winerror.h"
@@ -121,6 +122,8 @@ static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 }
 /**************************************************************************
 *  IExtractIconA_GetIconLocation
+*
+* mapping filetype to icon
 */
 static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	IExtractIconA * iface,
@@ -133,7 +136,8 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	ICOM_THIS(IExtractIconAImpl,iface);
 
 	char	sTemp[MAX_PATH];
-	DWORD	ret = S_FALSE, dwNr;
+	DWORD	dwNr;
+	GUID const * riid;
 	LPITEMIDLIST	pSimplePidl = ILFindLastID(This->pidl);
 			
 	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
@@ -142,61 +146,79 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	  *pwFlags = 0;
 
 	if (_ILIsDesktop(pSimplePidl))
-	{ strncpy(szIconFile, "shell32.dll", cchMax);
+	{
+	  lstrcpynA(szIconFile, "shell32.dll", cchMax);
 	  *piIndex = 34;
-	  ret = NOERROR;
 	}
-	else if (_ILIsMyComputer(pSimplePidl))
-	{ if (HCR_GetDefaultIcon("CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}", sTemp, MAX_PATH, &dwNr))
-	  { strncpy(szIconFile, sTemp, cchMax);
+
+	/* my computer and other shell extensions */
+	else if ( (riid = _ILGetGUIDPointer(pSimplePidl)) )
+	{ 
+	  char xriid[50];
+	  strcpy(xriid,"CLSID\\");
+	  WINE_StringFromCLSID((LPCLSID)riid,&xriid[strlen(xriid)]);
+
+	  if (HCR_GetDefaultIcon(xriid, sTemp, MAX_PATH, &dwNr))
+	  {
+	    lstrcpynA(szIconFile, sTemp, cchMax);
 	    *piIndex = dwNr;
 	  }
 	  else
-	  { strncpy(szIconFile, "shell32.dll", cchMax);
+	  {
+	    lstrcpynA(szIconFile, "shell32.dll", cchMax);
 	    *piIndex = 15;
-	  }
-	  ret = NOERROR;
-	}
-	else if (_ILIsDrive (pSimplePidl))
-	{ if (HCR_GetDefaultIcon("Drive", sTemp, MAX_PATH, &dwNr))
-	  { strncpy(szIconFile, sTemp, cchMax);
-	    *piIndex = dwNr;
-	  }
-	  else
-	  { strncpy(szIconFile, "shell32.dll", cchMax);
-	    *piIndex = 8;
-	  }
-	  ret = NOERROR;
-	}
-	else if (_ILIsFolder (pSimplePidl))
-	{ if (HCR_GetDefaultIcon("Folder", sTemp, MAX_PATH, &dwNr))
-	  { strncpy(szIconFile, sTemp, cchMax);
-	    *piIndex = dwNr;
-	  }
-	  else
-	  { strncpy(szIconFile, "shell32.dll", cchMax);
-	    *piIndex = 3;
-	  }
-	  ret = NOERROR;
-	}
-	else
-	{ if (_ILGetExtension (pSimplePidl, sTemp, MAX_PATH))		/* object is file */
-	  { if ( HCR_MapTypeToValue(sTemp, sTemp, MAX_PATH))
-	    { if (HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
-	      { if (!strcmp("%1",sTemp))					/* icon is in the file */
-	        { _ILGetPidlPath(This->pidl, sTemp, MAX_PATH);
-	          dwNr = 0;
-	        }
-	        strncpy(szIconFile, sTemp, cchMax);
-	        *piIndex = dwNr;
-	        ret = NOERROR;
-	      }
-	    }
 	  }
 	}
 
-	TRACE("-- %s %x\n", (ret==NOERROR)?debugstr_a(szIconFile):"[error]", *piIndex);
-	return ret;
+	else if (_ILIsDrive (pSimplePidl))
+	{
+	  if (HCR_GetDefaultIcon("Drive", sTemp, MAX_PATH, &dwNr))
+	  {
+	    lstrcpynA(szIconFile, sTemp, cchMax);
+	    *piIndex = dwNr;
+	  }
+	  else
+	  {
+	    lstrcpynA(szIconFile, "shell32.dll", cchMax);
+	    *piIndex = 8;
+	  }
+	}
+	else if (_ILIsFolder (pSimplePidl))
+	{
+	  if (HCR_GetDefaultIcon("Folder", sTemp, MAX_PATH, &dwNr))
+	  {
+	    lstrcpynA(szIconFile, sTemp, cchMax);
+	    *piIndex = dwNr;
+	  }
+	  else
+	  {
+	    lstrcpynA(szIconFile, "shell32.dll", cchMax);
+	    *piIndex = 3;
+	  }
+	}
+	else	/* object is file */
+	{
+	  if (_ILGetExtension (pSimplePidl, sTemp, MAX_PATH)
+	      && HCR_MapTypeToValue(sTemp, sTemp, MAX_PATH)
+	      && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+	  {
+	    if (!strcmp("%1",sTemp))		/* icon is in the file */
+	    {
+	      SHGetPathFromIDListA(This->pidl, sTemp);
+	      dwNr = 0;
+	    }
+	    lstrcpynA(szIconFile, sTemp, cchMax);
+	    *piIndex = dwNr;
+	  }
+	  else					/* default icon */
+	  {
+	    lstrcpynA(szIconFile, "shell32.dll", cchMax);
+	    *piIndex = 0;
+	  }
+	}
+
+	TRACE("-- %s %x\n", szIconFile, *piIndex);
+	return NOERROR;
 }
 /**************************************************************************
 *  IExtractIconA_Extract
