@@ -707,32 +707,7 @@ DECL_WINELIB_TYPE_AW(ENUMRESLANGPROC)
 #define	LOAD_LIBRARY_AS_DATAFILE	0x00000002
 #define	LOAD_WITH_ALTERED_SEARCH_PATH	0x00000008
 
-/* ifdef _x86_ ... */
-typedef struct _LDT_ENTRY {
-    WORD	LimitLow;
-    WORD	BaseLow;
-    union {
-	struct {
-	    BYTE	BaseMid;
-	    BYTE	Flags1;/*Declare as bytes to avoid alignment problems */
-	    BYTE	Flags2;
-	    BYTE	BaseHi;
-	} Bytes;
-	struct {
-	    unsigned	BaseMid		: 8;
-	    unsigned	Type		: 5;
-	    unsigned	Dpl		: 2;
-	    unsigned	Pres		: 1;
-	    unsigned	LimitHi		: 4;
-	    unsigned	Sys		: 1;
-	    unsigned	Reserved_0	: 1;
-	    unsigned	Default_Big	: 1;
-	    unsigned	Granularity	: 1;
-	    unsigned	BaseHi		: 8;
-	} Bits;
-    } HighWord;
-} LDT_ENTRY, *LPLDT_ENTRY;
-
+typedef PLDT_ENTRY LPLDT_ENTRY;
 
 typedef enum _GET_FILEEX_INFO_LEVELS {
     GetFileExInfoStandard
