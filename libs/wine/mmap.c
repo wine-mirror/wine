@@ -189,7 +189,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 }
 
 
-#if defined(__i386__) && defined(HAVE_MMAP)
+#ifdef HAVE_MMAP
 
 /***********************************************************************
  *           reserve_area
@@ -223,12 +223,37 @@ static void reserve_area( void *addr, void *end )
 
 
 /***********************************************************************
+ *           reserve_dos_area
+ *
+ * Reserve the DOS area (0x00000000-0x00110000).
+ */
+static void reserve_dos_area(void)
+{
+    const size_t page_size = getpagesize();
+    const size_t dos_area_size = 0x110000;
+    void *ptr;
+
+    /* first page has to be handled specially */
+    ptr = wine_anon_mmap( (void *)page_size, dos_area_size - page_size, PROT_NONE, MAP_NORESERVE );
+    if (ptr != (void *)page_size)
+    {
+        if (ptr != (void *)-1) munmap( ptr, dos_area_size - page_size );
+        return;
+    }
+    /* now add first page with MAP_FIXED */
+    wine_anon_mmap( NULL, page_size, PROT_NONE, MAP_NORESERVE|MAP_FIXED );
+    wine_mmap_add_reserved_area( NULL, dos_area_size );
+}
+
+
+/***********************************************************************
  *           mmap_init
  */
 void mmap_init(void)
 {
     struct reserved_area *area;
     struct list *ptr;
+#ifdef __i386__
     char stack;
     char * const stack_ptr = &stack;
     char *user_space_limit = (char *)0x80000000;
@@ -259,9 +284,20 @@ void mmap_init(void)
             reserve_area( base, 0 );
     }
     else reserve_area( user_space_limit, 0 );
+#endif /* __i386__ */
+
+    /* reserve the DOS area if not already done */
+
+    ptr = list_head( &reserved_areas );
+    if (ptr)
+    {
+        area = LIST_ENTRY( ptr, struct reserved_area, entry );
+        if (!area->base) return;  /* already reserved */
+    }
+    reserve_dos_area();
 }
 
-#else /* __i386__ */
+#else /* HAVE_MMAP */
 
 void mmap_init(void)
 {
