@@ -8,6 +8,7 @@
  * Copyright 1999 Francis Beaudet
  * Copyright 1999 Sylvain St-Germain
  * Copyright 1999 Thuy Nguyen
+ * Copyright 2005 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,7 +52,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 #define FILE_BEGIN 0
 
-#define STGM_SHARE_MODE(stgm) ((stgm)&0xf0)
+#define STGM_ACCESS_MODE(stgm)   ((stgm)&0x0000f)
+#define STGM_SHARE_MODE(stgm)    ((stgm)&0x000f0)
+#define STGM_CREATE_MODE(stgm)   ((stgm)&0x0f000)
+
+#define STGM_KNOWN_FLAGS (0xf0ff | \
+     STGM_TRANSACTED | STGM_CONVERT | STGM_PRIORITY | STGM_NOSCRATCH | \
+     STGM_NOSNAPSHOT | STGM_DIRECT_SWMR | STGM_DELETEONRELEASE | STGM_SIMPLE)
 
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 #define OLESTREAM_ID 0x501
@@ -391,7 +398,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
   /*
    * As documented.
    */
-  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) ||
+  if ( STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE ||
         (grfMode & STGM_DELETEONRELEASE) ||
         (grfMode & STGM_TRANSACTED) )
   {
@@ -510,7 +517,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   /*
    * As documented.
    */
-  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) ||
+  if ( STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE ||
         (grfMode & STGM_DELETEONRELEASE) ||
         (grfMode & STGM_PRIORITY) )
   {
@@ -892,7 +899,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   if ( FAILED( validateSTGM(grfMode) ))
     return STG_E_INVALIDFLAG;
 
-  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) )
+  if (STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE) 
     return STG_E_INVALIDFLAG;
 
   /*
@@ -924,7 +931,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
     /*
      * An element with this name already exists
      */
-    if (grfMode & STGM_CREATE)
+    if (STGM_CREATE_MODE(grfMode) == STGM_CREATE)
     {
       IStorage_DestroyElement(iface, pwcsName);
     }
@@ -1112,7 +1119,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
     /*
      * An element with this name already exists
      */
-    if (grfMode & STGM_CREATE)
+    if (STGM_CREATE_MODE(grfMode) == STGM_CREATE)
       IStorage_DestroyElement(iface, pwcsName);
     else
       return STG_E_FILEALREADYEXISTS;
@@ -5453,13 +5460,39 @@ HRESULT WINAPI StgCreateDocfile(
     return STG_E_INVALIDFLAG;
 
   /* StgCreateDocFile always opens for write */
-  if (!(grfMode & (STGM_WRITE|STGM_READWRITE)))
+  switch(STGM_ACCESS_MODE(grfMode))
+  {
+  case STGM_WRITE:
+  case STGM_READWRITE:
+    break;
+  default:
+    return STG_E_INVALIDFLAG;
+  }
+
+  /* can't share write */
+  switch(STGM_SHARE_MODE(grfMode))
+  {
+  case STGM_SHARE_EXCLUSIVE:
+  case STGM_SHARE_DENY_WRITE:
+    break;
+  default:
+    return STG_E_INVALIDFLAG;
+  }
+
+  /* need to create in transacted mode */
+  if( STGM_CREATE_MODE(grfMode) == STGM_CREATE &&
+      !(grfMode&STGM_TRANSACTED) )
     return STG_E_INVALIDFLAG;
 
-  /* always opens non-shared */
-  if (!(grfMode & STGM_SHARE_EXCLUSIVE))
+  /*
+   * Write only access only works in create mode.
+   * I guess we need read access to read in the old file if there is one.
+   */
+  if( STGM_ACCESS_MODE(grfMode) == STGM_WRITE &&
+      STGM_SHARE_MODE(grfMode) == STGM_SHARE_DENY_WRITE &&
+      STGM_CREATE_MODE(grfMode) != STGM_CREATE )
     return STG_E_INVALIDFLAG;
-      
+
   /*
    * Generate a unique name.
    */
@@ -5468,9 +5501,7 @@ HRESULT WINAPI StgCreateDocfile(
     WCHAR tempPath[MAX_PATH];
     static const WCHAR prefix[] = { 'S', 'T', 'O', 0 };
 
-    if (!(grfMode & STGM_SHARE_EXCLUSIVE))
-      return STG_E_INVALIDFLAG;
-    if (!(grfMode & (STGM_WRITE|STGM_READWRITE)))
+    if (STGM_SHARE_MODE(grfMode) == STGM_SHARE_EXCLUSIVE)
       return STG_E_INVALIDFLAG;
 
     memset(tempPath, 0, sizeof(tempPath));
@@ -5513,10 +5544,10 @@ HRESULT WINAPI StgCreateDocfile(
   hFile = CreateFileW(pwcsName,
                         accessMode,
                         shareMode,
-            NULL,
+                        NULL,
                         creationMode,
                         fileAttributes,
-            0);
+                        0);
 
   if (hFile == INVALID_HANDLE_VALUE)
   {
@@ -6009,6 +6040,9 @@ HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm)
 /****************************************************************************
  * This method validate a STGM parameter that can contain the values below
  *
+ * The stgm modes in 0x0000ffff are not bit masks, but distinct 4 bit values.
+ * The stgm values contained in 0xffff0000 are bitmasks.
+ *
  * STGM_DIRECT               0x00000000
  * STGM_TRANSACTED           0x00010000
  * STGM_SIMPLE               0x08000000
@@ -6034,79 +6068,74 @@ HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm)
  */
 static HRESULT validateSTGM(DWORD stgm)
 {
-  BOOL bSTGM_TRANSACTED       = ((stgm & STGM_TRANSACTED) == STGM_TRANSACTED);
-  BOOL bSTGM_SIMPLE           = ((stgm & STGM_SIMPLE) == STGM_SIMPLE);
-  BOOL bSTGM_DIRECT           = ! (bSTGM_TRANSACTED || bSTGM_SIMPLE);
+  DWORD access = STGM_ACCESS_MODE(stgm);
+  DWORD share  = STGM_SHARE_MODE(stgm);
+  DWORD create = STGM_CREATE_MODE(stgm);
 
-  BOOL bSTGM_WRITE            = ((stgm & STGM_WRITE) == STGM_WRITE);
-  BOOL bSTGM_READWRITE        = ((stgm & STGM_READWRITE) == STGM_READWRITE);
-  BOOL bSTGM_READ             = ! (bSTGM_WRITE || bSTGM_READWRITE);
+  if (stgm&~STGM_KNOWN_FLAGS)
+  {
+    ERR("unknown flags %08lx\n", stgm);
+    return E_FAIL;
+  }
 
-  BOOL bSTGM_SHARE_DENY_NONE  =
-                     ((stgm & STGM_SHARE_DENY_NONE)  == STGM_SHARE_DENY_NONE);
+  switch (access)
+  {
+  case STGM_READ:
+  case STGM_WRITE:
+  case STGM_READWRITE:
+    break;
+  default:
+    return E_FAIL;
+  }
 
-  BOOL bSTGM_SHARE_DENY_READ  =
-                     ((stgm & STGM_SHARE_DENY_READ)  == STGM_SHARE_DENY_READ);
+  switch (share)
+  {
+  case STGM_SHARE_DENY_NONE:
+  case STGM_SHARE_DENY_READ:
+  case STGM_SHARE_DENY_WRITE:
+  case STGM_SHARE_EXCLUSIVE:
+    break;
+  default:
+    return E_FAIL;
+  }
 
-  BOOL bSTGM_SHARE_DENY_WRITE =
-                     ((stgm & STGM_SHARE_DENY_WRITE) == STGM_SHARE_DENY_WRITE);
-
-  BOOL bSTGM_SHARE_EXCLUSIVE  =
-                     ((stgm & STGM_SHARE_EXCLUSIVE)  == STGM_SHARE_EXCLUSIVE);
-
-  BOOL bSTGM_CREATE           = ((stgm & STGM_CREATE) == STGM_CREATE);
-  BOOL bSTGM_CONVERT          = ((stgm & STGM_CONVERT) == STGM_CONVERT);
-
-  BOOL bSTGM_NOSCRATCH        = ((stgm & STGM_NOSCRATCH) == STGM_NOSCRATCH);
-  BOOL bSTGM_NOSNAPSHOT       = ((stgm & STGM_NOSNAPSHOT) == STGM_NOSNAPSHOT);
+  switch (create)
+  {
+  case STGM_CREATE:
+  case STGM_FAILIFTHERE:
+    break;
+  default:
+    return E_FAIL;
+  }
 
   /*
    * STGM_DIRECT | STGM_TRANSACTED | STGM_SIMPLE
    */
-  if ( ! bSTGM_DIRECT )
-    if( bSTGM_TRANSACTED && bSTGM_SIMPLE )
-      return E_FAIL;
-
-  /*
-   * STGM_WRITE |  STGM_READWRITE | STGM_READ
-   */
-  if ( ! bSTGM_READ )
-    if( bSTGM_WRITE && bSTGM_READWRITE )
-      return E_FAIL;
-
-  /*
-   * STGM_SHARE_DENY_NONE | others
-   * (I assume here that DENY_READ implies DENY_WRITE)
-   */
-  if ( bSTGM_SHARE_DENY_NONE )
-    if ( bSTGM_SHARE_DENY_READ ||
-         bSTGM_SHARE_DENY_WRITE ||
-         bSTGM_SHARE_EXCLUSIVE)
+  if ( (stgm & STGM_TRANSACTED) && (stgm & STGM_SIMPLE) )
       return E_FAIL;
 
   /*
    * STGM_CREATE | STGM_CONVERT
    * if both are false, STGM_FAILIFTHERE is set to TRUE
    */
-  if ( bSTGM_CREATE && bSTGM_CONVERT )
+  if ( create == STGM_CREATE && (stgm & STGM_CONVERT) )
     return E_FAIL;
 
   /*
    * STGM_NOSCRATCH requires STGM_TRANSACTED
    */
-  if ( bSTGM_NOSCRATCH && ! bSTGM_TRANSACTED )
+  if ( (stgm & STGM_NOSCRATCH) && (stgm & STGM_TRANSACTED) )
     return E_FAIL;
 
   /*
    * STGM_NOSNAPSHOT requires STGM_TRANSACTED and
    * not STGM_SHARE_EXCLUSIVE or STGM_SHARE_DENY_WRITE`
    */
-  if (bSTGM_NOSNAPSHOT)
-  {
-    if ( ! ( bSTGM_TRANSACTED &&
-           !(bSTGM_SHARE_EXCLUSIVE || bSTGM_SHARE_DENY_WRITE)) )
+  if ( (stgm & STGM_NOSNAPSHOT) &&
+        (!(stgm & STGM_TRANSACTED) ||
+         share == STGM_SHARE_EXCLUSIVE ||
+         share == STGM_SHARE_DENY_WRITE) )
     return E_FAIL;
-  }
 
   return S_OK;
 }
@@ -6119,29 +6148,20 @@ static HRESULT validateSTGM(DWORD stgm)
  */
 static DWORD GetShareModeFromSTGM(DWORD stgm)
 {
-  DWORD dwShareMode = 0;
-  BOOL bSTGM_SHARE_DENY_NONE  =
-                     ((stgm & STGM_SHARE_DENY_NONE)  == STGM_SHARE_DENY_NONE);
-
-  BOOL bSTGM_SHARE_DENY_READ  =
-                     ((stgm & STGM_SHARE_DENY_READ)  == STGM_SHARE_DENY_READ);
-
-  BOOL bSTGM_SHARE_DENY_WRITE =
-                     ((stgm & STGM_SHARE_DENY_WRITE) == STGM_SHARE_DENY_WRITE);
-
-  BOOL bSTGM_SHARE_EXCLUSIVE  =
-                     ((stgm & STGM_SHARE_EXCLUSIVE)  == STGM_SHARE_EXCLUSIVE);
-
-  if ((bSTGM_SHARE_EXCLUSIVE) || (bSTGM_SHARE_DENY_READ))
-    dwShareMode = 0;
-
-  if (bSTGM_SHARE_DENY_NONE)
-    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
-
-  if (bSTGM_SHARE_DENY_WRITE)
-    dwShareMode = FILE_SHARE_READ;
-
-  return dwShareMode;
+  switch (STGM_SHARE_MODE(stgm))
+  {
+  case STGM_SHARE_DENY_NONE:
+    return FILE_SHARE_READ | FILE_SHARE_WRITE;
+  case STGM_SHARE_DENY_READ:
+    return FILE_SHARE_WRITE;
+  case STGM_SHARE_DENY_WRITE:
+    return FILE_SHARE_READ;
+  case STGM_SHARE_EXCLUSIVE:
+    return 0;
+  }
+  ERR("Invalid share mode!\n");
+  assert(0);
+  return 0;
 }
 
 /****************************************************************************
@@ -6152,21 +6172,18 @@ static DWORD GetShareModeFromSTGM(DWORD stgm)
  */
 static DWORD GetAccessModeFromSTGM(DWORD stgm)
 {
-  DWORD dwDesiredAccess = GENERIC_READ;
-  BOOL bSTGM_WRITE     = ((stgm & STGM_WRITE) == STGM_WRITE);
-  BOOL bSTGM_READWRITE = ((stgm & STGM_READWRITE) == STGM_READWRITE);
-  BOOL bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);
-
-  if (bSTGM_READ)
-    dwDesiredAccess = GENERIC_READ;
-
-  if (bSTGM_WRITE)
-    dwDesiredAccess |= GENERIC_WRITE;
-
-  if (bSTGM_READWRITE)
-    dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
-
-  return dwDesiredAccess;
+  switch (STGM_ACCESS_MODE(stgm))
+  {
+  case STGM_READ:
+    return GENERIC_READ;
+  case STGM_WRITE:
+    return GENERIC_WRITE;
+  case STGM_READWRITE:
+    return GENERIC_READ | GENERIC_WRITE;
+  }
+  ERR("Invalid access mode!\n");
+  assert(0);
+  return 0;
 }
 
 /****************************************************************************
@@ -6177,16 +6194,19 @@ static DWORD GetAccessModeFromSTGM(DWORD stgm)
  */
 static DWORD GetCreationModeFromSTGM(DWORD stgm)
 {
-  if ( stgm & STGM_CREATE)
+  switch(STGM_CREATE_MODE(stgm))
+  {
+  case STGM_CREATE:
     return CREATE_ALWAYS;
-  if (stgm & STGM_CONVERT) {
+  case STGM_CONVERT:
     FIXME("STGM_CONVERT not implemented!\n");
     return CREATE_NEW;
+  case STGM_FAILIFTHERE:
+    return CREATE_NEW;
   }
-  /* All other cases */
-  if (stgm & ~ (STGM_CREATE|STGM_CONVERT))
-  	FIXME("unhandled storage mode : 0x%08lx\n",stgm & ~ (STGM_CREATE|STGM_CONVERT));
-  return CREATE_NEW;
+  ERR("Invalid create mode!\n");
+  assert(0);
+  return 0;
 }
 
 

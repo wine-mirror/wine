@@ -90,15 +90,31 @@ void test_create_storage_modes(void)
    ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE, 0, &stg);
    ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
-   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
-                                   STGM_READWRITE, 0, NULL);
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, NULL);
    ok(r==STG_E_INVALIDPOINTER, "StgCreateDocfile succeeded\n");
-   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
-                                   STGM_READWRITE, 1, &stg);
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 1, &stg);
    ok(r==STG_E_INVALIDPARAMETER, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_DENY_WRITE | STGM_READWRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
    r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READ, 0, &stg);
    ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
    r = StgCreateDocfile( filename, STGM_PRIORITY, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+
+   /* StgCreateDocfile seems to be very particular about the flags it accepts */
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | STGM_WRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | 8, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | 0x80, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | 0x800, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | 0x8000, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | 0x80000, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED | 0x800000, 0, &stg);
    ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
    ok(stg == NULL, "stg was set\n");
 
@@ -107,8 +123,7 @@ void test_create_storage_modes(void)
    ok(r==S_OK, "StgCreateDocfile failed\n");
    r = IStorage_Release(stg);
    ok(r == 0, "storage not released\n");
-   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |
-                                   STGM_TRANSACTED, 0, &stg);
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
    ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
    r = StgCreateDocfile( filename, STGM_READ, 0, &stg);
    ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
@@ -130,23 +145,49 @@ void test_create_storage_modes(void)
    ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile wrong error\n");
    ok(DeleteFileW(filename), "failed to delete file\n");
 
-   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |
-                                   STGM_TRANSACTED, 0, &stg);
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
    ok(r==S_OK, "StgCreateDocfile failed\n");
    r = IStorage_Release(stg);
    ok(r == 0, "storage not released\n");
-   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |
-                                   STGM_TRANSACTED |STGM_FAILIFTHERE, 0, &stg);
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED |STGM_FAILIFTHERE, 0, &stg);
    ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
    r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_WRITE, 0, &stg);
    ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
+   /*ok(DeleteFileW(filename), "failed to delete file\n"); */
 
-   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
-                                   STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
    ok(r==S_OK, "StgCreateDocfile failed\n");
    r = IStorage_Release(stg);
    ok(r == 0, "storage not released\n");
 
+   ok(DeleteFileW(filename), "failed to delete file\n");
+
+
+   /* test the way excel uses StgCreateDocFile */
+   r = StgCreateDocfile( filename, STGM_TRANSACTED|STGM_CREATE|STGM_SHARE_DENY_WRITE|STGM_READWRITE, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile the excel way failed\n");
+   if(r == S_OK)
+   {
+      r = IStorage_Release(stg);
+      ok(r == 0, "storage not released\n");
+      ok(DeleteFileW(filename), "failed to delete file\n");
+   }
+
+   /* looks like we need STGM_TRANSACTED or STGM_CREATE */
+   r = StgCreateDocfile( filename, STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile the excel way failed\n");
+   if(r == S_OK)
+   {
+      r = IStorage_Release(stg);
+      ok(r == 0, "storage not released\n");
+      ok(DeleteFileW(filename), "failed to delete file\n");
+   }
+
+   /* test the way msi uses StgCreateDocfile */
+   r = StgCreateDocfile( filename, STGM_DIRECT | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stg);
+   ok(r==S_OK, "StgCreateDocFile failed\n");
+   r = IStorage_Release(stg);
+   ok(r == 0, "storage not released\n");
    ok(DeleteFileW(filename), "failed to delete file\n");
 }
 
