@@ -320,7 +320,9 @@ callrmproc_again:
             return 1;
         }
     }
+#endif
     if (!already) {
+#ifdef MZ_SUPPORTED
         if (!SS_reg(context)) {
             alloc = 1; /* allocate default stack */
             stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, (UINT16 *)&(SS_reg(context)) );
@@ -335,7 +337,6 @@ callrmproc_again:
         }
         ESP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
 #else
-    if (!already) {
         stack16 = (LPWORD) CURRENT_STACK16;
 #endif
         stack16 -= args;
