@@ -229,7 +229,7 @@ typedef [unique] FLAGGED_WORD_BLOB *UP_FLAGGED_WORD_BLOB;
 const unsigned long WDT_INPROC_CALL = 0x48746457;
 const unsigned long WDT_REMOTE_CALL = 0x52746457;
 
-typedef union _userCLIPFORMAT switch(long fContext) {
+typedef union _userCLIPFORMAT switch(long fContext) u {
   case WDT_INPROC_CALL: DWORD dwValue;
   case WDT_REMOTE_CALL: [string] WCHAR *pwszName;
 } userCLIPFORMAT;
@@ -245,7 +245,7 @@ typedef struct tagRemHMETAFILEPICT {
   [size_is(cbData)] byte data[];
 } RemHMETAFILEPICT;
 
-typedef union _userHMETAFILE switch(long fContext) {
+typedef union _userHMETAFILE switch(long fContext) u {
   case WDT_INPROC_CALL: long       hInproc;
   case WDT_REMOTE_CALL: BYTE_BLOB *hRemote;
   default:              long       hGlobal;
@@ -260,7 +260,7 @@ typedef struct _remoteMETAFILEPICT {
   userHMETAFILE *hMF;
 } remoteMETAFILEPICT;
 
-typedef union _userHMETAFILEPICT switch(long fContext) {
+typedef union _userHMETAFILEPICT switch(long fContext) u {
   case WDT_INPROC_CALL: long                hInproc;
   case WDT_REMOTE_CALL: remoteMETAFILEPICT *hRemote;
   default:              long                hGlobal;
