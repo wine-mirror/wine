@@ -81,8 +81,12 @@ static int strict;
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
 #define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Accessibility\\Keyboard Preference"
 #define SPI_SETKEYBOARDPREF_VALNAME     "On"
+#define SPI_SETKEYBOARDPREF_REGKEY_LEGACY      "Control Panel\\Accessibility"
+#define SPI_SETKEYBOARDPREF_VALNAME_LEGACY     "Keyboard Preference"
 #define SPI_SETSCREENREADER_REGKEY      "Control Panel\\Accessibility\\Blind Access"
 #define SPI_SETSCREENREADER_VALNAME     "On"
+#define SPI_SETSCREENREADER_REGKEY_LEGACY       "Control Panel\\Accessibility"
+#define SPI_SETSCREENREADER_VALNAME_LEGACY      "Blind Access"
 #define SPI_SETLOWPOWERACTIVE_REGKEY            "Control Panel\\Desktop"
 #define SPI_SETLOWPOWERACTIVE_VALNAME           "LowPowerActive"
 #define SPI_SETPOWEROFFACTIVE_REGKEY            "Control Panel\\Desktop"
@@ -165,7 +169,7 @@ static void test_change_message( int action, int optional )
  * lpsRegName - registry entry name
  * lpsTestValue - value to test
  */
-static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName, LPCSTR testValue )
+static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCSTR valName2, LPCSTR testValue )
 {
     CHAR  value[MAX_PATH];
     DWORD valueLen;
@@ -177,43 +181,90 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName, LPCST
     *value='\0';
     valueLen=sizeof(value);
     RegOpenKeyA( HKEY_CURRENT_USER, subKey1, &hKey );
-    rc=RegQueryValueExA( hKey, valName, NULL, &type, value, &valueLen );
+    rc=RegQueryValueExA( hKey, valName1, NULL, &type, value, &valueLen );
     RegCloseKey( hKey );
     if (rc==ERROR_SUCCESS)
     {
         ok( !strcmp( testValue, value ),
             "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s\n",
-            subKey1, valName, testValue, value );
+            subKey1, valName1, testValue, value );
         found++;
     }
     else if (strict)
     {
         ok(0,"Missing registry entry: subKey=%s, valName=%s\n",
-           subKey1, valName);
+           subKey1, valName1);
+    }
+    if (valName2)
+    {
+        *value='\0';
+        valueLen=sizeof(value);
+        RegOpenKeyA( HKEY_CURRENT_USER, subKey1, &hKey );
+        rc=RegQueryValueExA( hKey, valName2, NULL, &type, value, &valueLen );
+        RegCloseKey( hKey );
+        if (rc==ERROR_SUCCESS)
+        {
+            ok( !strcmp( testValue, value ),
+                "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s\n",
+                subKey1, valName2, testValue, value );
+            found++;
+        }
+        else if (strict)
+        {
+            ok( 0,"Missing registry entry: subKey=%s, valName=%s\n",
+                subKey1, valName2 );
+        }
     }
     if (subKey2 && !strict)
     {
         *value='\0';
         valueLen=sizeof(value);
         RegOpenKeyA( HKEY_CURRENT_USER, subKey2, &hKey );
-        rc=RegQueryValueExA( hKey, valName, NULL, &type, value, &valueLen );
+        rc=RegQueryValueExA( hKey, valName1, NULL, &type, value, &valueLen );
         RegCloseKey( hKey );
         if (rc==ERROR_SUCCESS)
         {
             ok( !strcmp( testValue, value ),
                 "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s\n",
-                subKey2, valName, testValue, value );
+                subKey2, valName1, testValue, value );
             found++;
         }
+        else if (strict)
+        {
+            ok( 0,"Missing registry entry: subKey=%s, valName=%s\n",
+                subKey2, valName1 );
+        }
+        if (valName2)
+        {
+            *value='\0';
+            valueLen=sizeof(value);
+            RegOpenKeyA( HKEY_CURRENT_USER, subKey2, &hKey );
+            rc=RegQueryValueExA( hKey, valName2, NULL, &type, value, &valueLen );
+            RegCloseKey( hKey );
+            if (rc==ERROR_SUCCESS)
+            {
+                ok( !strcmp( testValue, value ),
+                    "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s\n",
+                    subKey2, valName2, testValue, value );
+                found++;
+            }
+            else if (strict)
+            {
+                ok( 0,"Missing registry entry: subKey=%s, valName=%s\n",
+                    subKey2, valName2 );
+            }
+         }
     }
-    ok(found,"Missing registry entry: %s in %s or %s\n",
-       valName, subKey1, (subKey2?subKey2:"<n/a>") );
+    ok(found,"Missing registry values: %s or %s in keys: %s or %s\n",
+       valName1, (valName2?valName2:"<n/a>"), subKey1, (subKey2?subKey2:"<n/a>") );
 }
 
 #define test_reg_key( subKey, valName, testValue ) \
-    _test_reg_key( subKey, NULL, valName, testValue )
+    _test_reg_key( subKey, NULL, valName, NULL, testValue )
 #define test_reg_key_ex( subKey1, subKey2, valName, testValue ) \
-    _test_reg_key( subKey1, subKey2, valName, testValue )
+    _test_reg_key( subKey1, subKey2, valName, NULL, testValue )
+#define test_reg_key_ex2( subKey1, subKey2, valName1, valName2, testValue ) \
+    _test_reg_key( subKey1, subKey2, valName1, valName2, testValue )
 
 static void test_SPI_SETBEEP( void )                   /*      2 */
 {
@@ -1203,9 +1254,9 @@ static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETKEYBOARDPREF, 0 );
-        test_reg_key( SPI_SETKEYBOARDPREF_REGKEY,
-                      SPI_SETKEYBOARDPREF_VALNAME,
-                      vals[i] ? "1" : "0" );
+        test_reg_key_ex2( SPI_SETKEYBOARDPREF_REGKEY, SPI_SETKEYBOARDPREF_REGKEY_LEGACY,
+                          SPI_SETKEYBOARDPREF_VALNAME, SPI_SETKEYBOARDPREF_VALNAME_LEGACY,
+                          vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETKEYBOARDPREF, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
@@ -1241,8 +1292,8 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETSCREENREADER, 0 );
-        test_reg_key( SPI_SETSCREENREADER_REGKEY,
-                      SPI_SETSCREENREADER_VALNAME,
+        test_reg_key_ex2( SPI_SETSCREENREADER_REGKEY, SPI_SETSCREENREADER_REGKEY_LEGACY,
+                      SPI_SETSCREENREADER_VALNAME, SPI_SETSCREENREADER_VALNAME_LEGACY,
                       vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETSCREENREADER, 0, &v, 0 );
