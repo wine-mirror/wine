@@ -125,7 +125,7 @@ static HRESULT WINAPI
 read_pipe(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
     if (!ReadFile(hf,ptr,size,&res,NULL)) {
-	FIXME("Failed to read from %p, le is %lx\n",hf,GetLastError());
+	FIXME("Failed to read from %p, le is %ld\n",hf,GetLastError());
 	return E_FAIL;
     }
     if (res!=size) {
@@ -165,7 +165,7 @@ static HRESULT WINAPI
 write_pipe(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
     if (!WriteFile(hf,ptr,size,&res,NULL)) {
-	FIXME("Failed to write to %p, le is %lx\n",hf,GetLastError());
+	FIXME("Failed to write to %p, le is %ld\n",hf,GetLastError());
 	return E_FAIL;
     }
     if (res!=size) {
@@ -877,6 +877,12 @@ static DWORD WINAPI stub_dispatch_thread(LPVOID param)
     return 0;
 }
 
+struct apartment_listener_params
+{
+    APARTMENT *apt;
+    HANDLE event;
+};
+
 /* This thread listens on a named pipe for each apartment that exports
  * objects. It deals with incoming connection requests. Each time a
  * client connects a separate thread is spawned for that particular
@@ -884,11 +890,15 @@ static DWORD WINAPI stub_dispatch_thread(LPVOID param)
  *
  * This architecture is different in native DCOM.
  */
-static DWORD WINAPI apartment_listener_thread(LPVOID param)
+static DWORD WINAPI apartment_listener_thread(LPVOID p)
 {
     char		pipefn[200];
     HANDLE		listenPipe;
-    APARTMENT          *apt = (APARTMENT *) param;
+    struct apartment_listener_params * params = (struct apartment_listener_params *)p;
+    APARTMENT *apt = params->apt;
+    HANDLE event = params->event;
+
+    HeapFree(GetProcessHeap(), 0, params);
 
     /* we must join the marshalling threads apartment. we already have a ref here */
     NtCurrentTeb()->ReservedForOle = apt;
@@ -907,15 +917,25 @@ static DWORD WINAPI apartment_listener_thread(LPVOID param)
 	    NMPWAIT_USE_DEFAULT_WAIT,
 	    NULL
 	);
+
+	/* tell function that started this thread that we have attempted to created the
+	 * named pipe. */
+	if (event) {
+	    SetEvent(event);
+	    event = NULL;
+	}
+
 	if (listenPipe == INVALID_HANDLE_VALUE) {
-	    FIXME("pipe creation failed for %s, error %lx\n",pipefn,GetLastError());
+	    FIXME("pipe creation failed for %s, error %ld\n",pipefn,GetLastError());
 	    return 1; /* permanent failure, so quit stubmgr thread */
 	}
+
 	if (!ConnectNamedPipe(listenPipe,NULL)) {
-	    ERR("Failure during ConnectNamedPipe %lx!\n",GetLastError());
+	    ERR("Failure during ConnectNamedPipe %ld!\n",GetLastError());
 	    CloseHandle(listenPipe);
 	    continue;
 	}
+
 	PIPE_StartRequestThread(listenPipe);
     }
     return 0;
@@ -939,7 +959,18 @@ void start_apartment_listener_thread()
     
     if (!apt->listenertid)
     {
-        CreateThread(NULL, 0, apartment_listener_thread, apt, 0, &apt->listenertid);
+        HANDLE thread;
+        HANDLE event = CreateEventW(NULL, TRUE, FALSE, NULL);
+        struct apartment_listener_params * params = HeapAlloc(GetProcessHeap(), 0, sizeof(*params));
+
+        params->apt = apt;
+        params->event = event;
+        thread = CreateThread(NULL, 0, apartment_listener_thread, params, 0, &apt->listenertid);
+        CloseHandle(thread);
+        /* wait for pipe to be created before returning, otherwise we
+         * might try to use it and fail */
+        WaitForSingleObject(event, INFINITE);
+        CloseHandle(event);
     }
 }
 
