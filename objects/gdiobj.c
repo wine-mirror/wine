@@ -650,7 +650,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 
       default:
           ERR("Invalid GDI Magic %04x\n", ptr->wMagic);
-	  return 0;
+          break;
     }
     GDI_ReleaseObj( handle );
     return result;
