@@ -359,8 +359,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
 
     TRACE("Requesting TARGETS selection for '%s' (owner=%08x)...\n",
           TSXGetAtomName(display, selectionCacheSrc), (unsigned)ownerSelection );
-          
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
     XConvertSelection(display, selectionCacheSrc, aTargets,
                     TSXInternAtom(display, "SELECTION_DATA", False),
                     w, CurrentTime);
@@ -374,7 +373,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
            if( xe.xselection.selection == selectionCacheSrc )
                break;
     }
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_unlock();
 
     /* Verify that the selection returned a valid TARGETS property */
     if ( (xe.xselection.target != aTargets)
@@ -797,7 +796,7 @@ void X11DRV_ReleaseClipboard(void)
 	TRACE("\tgiving up selection (spw = %08x)\n", 
 	     (unsigned)selectionPrevWindow);
       
-	EnterCriticalSection(&X11DRV_CritSection);
+        wine_tsx11_lock();
 
         TRACE("Releasing CLIPBOARD selection\n");
         XSetSelectionOwner(display, xaClipboard, None, CurrentTime);
@@ -815,8 +814,7 @@ void X11DRV_ReleaseClipboard(void)
                 while( !XCheckTypedWindowEvent( display, selectionPrevWindow,
                                                 SelectionClear, &xe ) );
         }
-        
-	LeaveCriticalSection(&X11DRV_CritSection);
+        wine_tsx11_unlock();
     }
 
     /* Get rid of any Pixmap resources we may still have */
@@ -1028,8 +1026,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
             TRACE("Requesting %s selection from %s...\n",
                   TSXGetAtomName(display, propRequest),
                   TSXGetAtomName(display, selectionCacheSrc) );
-    
-            EnterCriticalSection( &X11DRV_CritSection );
+            wine_tsx11_lock();
             XConvertSelection(display, selectionCacheSrc, propRequest,
                             TSXInternAtom(display, "SELECTION_DATA", False),
                             w, CurrentTime);
@@ -1042,8 +1039,8 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
                    if( xe.xselection.selection == selectionCacheSrc )
                        break;
             }
-            LeaveCriticalSection( &X11DRV_CritSection );
-        
+            wine_tsx11_unlock();
+
             /*
              *  Read the contents of the X selection property into WINE's
              *  clipboard cache converting the selection to be compatible if possible.

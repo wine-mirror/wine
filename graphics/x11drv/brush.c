@@ -112,7 +112,7 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
     unsigned int x, y;
     Pixmap pixmap;
 
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
     if (color != prevColor)
     {
 	int r = GetRValue( color ) * DITHER_LEVELS;
@@ -138,7 +138,7 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
                             MATRIX_SIZE, MATRIX_SIZE, X11DRV_GetDepth() );
     XPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_unlock();
     return pixmap;
 }
 

@@ -191,16 +191,15 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
   
     TRACE( "called (thread %lx).\n", GetCurrentThreadId() );
 
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
     while ( XPending( display ) )
     {
         XNextEvent( display, &event );
-      
-        LeaveCriticalSection( &X11DRV_CritSection );
+        wine_tsx11_unlock();
         EVENT_ProcessEvent( &event );
-        EnterCriticalSection( &X11DRV_CritSection );
+        wine_tsx11_lock();
     }
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_unlock();
 }
 
 /***********************************************************************
@@ -894,7 +893,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
     Window root, top;
     int x, y, width, height, border, depth;
 
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
 
     /* Get the geometry of the window */
     XGetGeometry( display, win, &root, &x, &y, &width, &height,
@@ -903,7 +902,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
     /* Translate the window origin to root coordinates */
     XTranslateCoordinates( display, win, root, 0, 0, &x, &y, &top );
 
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_unlock();
 
     *px = x;
     *py = y;

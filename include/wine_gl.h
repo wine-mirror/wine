@@ -11,11 +11,12 @@
 
 #if defined(HAVE_OPENGL)
 
+#include "ts_xlib.h"
 #include "x11drv.h"
 
 /* As GLX relies on X, this is needed */
-#define ENTER_GL() EnterCriticalSection( &X11DRV_CritSection )
-#define LEAVE_GL() LeaveCriticalSection( &X11DRV_CritSection )
+#define ENTER_GL() wine_tsx11_lock()
+#define LEAVE_GL() wine_tsx11_unlock()
 
 #undef APIENTRY
 #undef CALLBACK
