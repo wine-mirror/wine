@@ -247,7 +247,14 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
 {
     TRACE(string,"strcpy %s\n", debugstr_a (src));
-    /* Windows does not check for NULL pointers here, so we don't either */
+    /* In real windows the whole function is protected by an exception handler
+     * that returns ERROR_INVALID_PARAMETER on faulty parameters
+     * We currently just check for NULL.
+     */
+    if (!dst || !src) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     strcpy( dst, src );
     return dst;
 }
@@ -260,7 +267,14 @@ LPWSTR WINAPI lstrcpy32W( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
     TRACE(string,"strcpy L%s\n", debugstr_w (src));
-    /* Windows does not check for NULL pointers here, so we don't either */
+    /* In real windows the whole function is protected by an exception handler
+     * that returns ERROR_INVALID_PARAMETER on faulty parameters
+     * We currently just check for NULL.
+     */
+    if (!dst || !src) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     while ((*p++ = *src++));
     return dst;
 }
@@ -286,7 +300,14 @@ LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
     LPSTR p = dst;
     TRACE(string,"strcpyn %s for %d chars\n",
 		   debugstr_an (src,n), n);
-    /* Windows does not check for NULL pointers here, so we don't either */
+    /* In real windows the whole function is protected by an exception handler
+     * that returns ERROR_INVALID_PARAMETER on faulty parameters
+     * We currently just check for NULL.
+     */
+    if (!dst || !src) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     while ((n-- > 1) && *src) *p++ = *src++;
     if (n >= 0) *p = 0;
     return dst;
@@ -303,7 +324,14 @@ LPWSTR WINAPI lstrcpyn32W( LPWSTR dst, LPCWSTR src, INT32 n )
     LPWSTR p = dst;
     TRACE(string,"strcpyn L%s for %d chars\n",
 		   debugstr_wn (src,n), n);
-    /* Windows does not check for NULL pointers here, so we don't either */
+    /* In real windows the whole function is protected by an exception handler
+     * that returns ERROR_INVALID_PARAMETER on faulty parameters
+     * We currently just check for NULL.
+     */
+    if (!dst || !src) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     while ((n-- > 1) && *src) *p++ = *src++;
     if (n >= 0) *p = 0;
     return dst;
