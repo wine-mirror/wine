@@ -249,17 +249,17 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     }
 
     /* handle modal MessageBoxes */
-    if (lpmb->dwStyle & (MB_TASKMODAL|MB_SYSTEMMODAL))
+    if (lpmb->dwStyle & MB_SYSTEMMODAL)
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+    
+    if (lpmb->dwStyle & MB_TASKMODAL)
     {
-	FIXME("%s modal msgbox ! Not modal yet.\n",
-		lpmb->dwStyle & MB_TASKMODAL ? "task" : "system");
-	/* Probably do EnumTaskWindows etc. here for TASKMODAL
-	 * and work your way up to the top - I'm lazy (HWND_TOP) */
-	SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
-			SWP_NOSIZE | SWP_NOMOVE);
-	if (lpmb->dwStyle & MB_TASKMODAL)
-	    /* at least MB_TASKMODAL seems to imply a ShowWindow */
-	    ShowWindow(hwnd, SW_SHOW);
+	FIXME("task modal msgbox ! Not modal yet.\n");
+	/* Probably do EnumTaskWindows etc. here and work
+	 * your way up to the top - I'm lazy (HWND_TOP) */
+	SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	/* MB_TASKMODAL seems to imply a ShowWindow */
+	ShowWindow(hwnd, SW_SHOW);
     }
 
     return hFont;
