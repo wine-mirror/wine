@@ -777,6 +777,7 @@ HRESULT WINAPI PathProcessCommandA (LPSTR lpCommand, LPSTR v, DWORD w, DWORD x)
 {
 	FIXME("%p(%s) %p 0x%04lx 0x%04lx stub\n",
 	lpCommand, lpCommand, v, w,x );
+	lstrcpyA(v, lpCommand);
 	return 0;
 }
 

@@ -203,18 +203,12 @@ static BYTE * ICO_GetIconDirectory( HFILE hFile, LPicoICONDIR* lplpiID, ULONG *u
 }
 
 /*************************************************************************
- *			InternalExtractIcon		[SHELL.39]
  *
- * This abortion is called directly by Progman
- *  fixme: the icon section is broken (don't have a handle for
- *    ICO_GetIconDirectory....)
- *
+ * returns
+ *  failure:0; success: icon handle or nr of icons (nIconIndex-1)
  */
-#define ICO_INVALID_FILE	1
-#define ICO_NO_ICONS		0
-
-HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nIconIndex, UINT n, UINT cxDesired, UINT cyDesired )
-{	HGLOBAL	hRet = ICO_NO_ICONS;
+HICON WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nIconIndex, UINT n, UINT cxDesired, UINT cyDesired )
+{	HGLOBAL		hRet = 0;
 	LPBYTE		pData;
 	OFSTRUCT	ofs;
 	DWORD		sig;
@@ -227,7 +221,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	TRACE("(file %s,start %d,extract %d\n", lpszExeFileName, nIconIndex, n);
 
 	if( hFile == HFILE_ERROR || !n )
-	  return ICO_INVALID_FILE;
+	  return hRet;
 
 	sig = SHELL_GetResourceTable(hFile,&pData);
 
@@ -321,13 +315,11 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 		  
 	  if ( !(fmapping = CreateFileMappingA(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL))) 
 	  { WARN("failed to create filemap.\n");	/* FIXME, INVALID_HANDLE_VALUE? */
-	    hRet = ICO_INVALID_FILE;
 	    goto end_2;		/* failure */
 	  }
 
 	  if ( !(peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0))) 
 	  { WARN("failed to mmap filemap.\n");
-	    hRet = ICO_INVALID_FILE;
 	    goto end_2;		/* failure */
 	  }
 
@@ -348,12 +340,12 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 
 	  if (!rootresdir) 
 	  { WARN("haven't found section for resource directory.\n");
-	    goto end_4;		/* failure */
+	    goto end_3;		/* failure */
 	  }
   /* search the group icon dir*/
 	  if (!(icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICONW, (DWORD)rootresdir,FALSE))) 
 	  { WARN("No Icongroupresourcedirectory!\n");
-	    goto end_4;		/* failure */
+	    goto end_3;		/* failure */
 	  }
 	  iconDirCount = icongroupresdir->NumberOfNamedEntries+icongroupresdir->NumberOfIdEntries;
 
@@ -365,7 +357,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 
 	  if (nIconIndex >= iconDirCount) 
 	  { WARN("nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
-	    goto end_4;		/* failure */
+	    goto end_3;		/* failure */
 	  }
 
 	  xresent = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1);	/* caller just wanted the number of entries */
@@ -399,14 +391,14 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 
 	    if (!igdata) 
 	    { WARN("no matching real address for icongroup!\n");
-	      goto end_4;	/* failure */
+	      goto end_3;	/* failure */
 	    }
 	    RetPtr[i] = (HICON)pLookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 
 	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,(DWORD)rootresdir,FALSE))) 
 	  { WARN("No Iconresourcedirectory!\n");
-	    goto end_4;		/* failure */
+	    goto end_3;		/* failure */
 	  }
 
 	  for (i=0;i<n;i++) 
@@ -434,11 +426,9 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  hRet = RetPtr[0];	/* return first icon */
 	  goto end_3;		/* sucess */
 	}
-	hRet = ICO_INVALID_FILE;
 	goto end_1;		/* unknown filetype */
 
 /* cleaning up (try & catch would be nicer:-) ) */
-end_4:	hRet = 0;	/* failure */
 end_3:	UnmapViewOfFile(peimage);	/* success */
 end_2:	CloseHandle(fmapping);
 end_1:	_lclose( hFile);

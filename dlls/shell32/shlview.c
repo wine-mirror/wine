@@ -417,8 +417,8 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
         /* Sort by Attribute: Folder or Files can be sorted */
         else if(pSortInfo->nHeaderID == LISTVIEW_COLUMN_ATTRIB)
         {
-            _ILGetAttributeStr(pItemIdList1, strName1, MAX_PATH);
-            _ILGetAttributeStr(pItemIdList2, strName2, MAX_PATH);
+            _ILGetFileAttributes(pItemIdList1, strName1, MAX_PATH);
+            _ILGetFileAttributes(pItemIdList2, strName2, MAX_PATH);
             nDiff = strcasecmp(strName1, strName2);
         }
         /* Sort by FileName: Folder or Files can be sorted */

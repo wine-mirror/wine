@@ -121,7 +121,7 @@ BOOL	_ILGetFileDate 		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 DWORD	_ILGetFileSize		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 BOOL	_ILGetExtension		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 void	_ILGetFileType		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
-BOOL	_ILGetAttributeStr	(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+DWORD	_ILGetFileAttributes	(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 
 BOOL	_ILGetFileDateTime	(LPCITEMIDLIST pidl, FILETIME *ft);
 DWORD	_ILGetDrive		(LPCITEMIDLIST, LPSTR, UINT16);
@@ -158,8 +158,8 @@ LPITEMIDLIST	_ILCreateSpecial	(LPCSTR szGUID);
  * helper functions (getting struct-pointer)
  */
 LPPIDLDATA	_ILGetDataPointer	(LPCITEMIDLIST);
-LPSTR		_ILGetTextPointer	(PIDLTYPE type, LPPIDLDATA pidldata);
-LPSTR		_ILGetSTextPointer	(PIDLTYPE type, LPPIDLDATA pidldata);
+LPSTR		_ILGetTextPointer	(LPCITEMIDLIST);
+LPSTR		_ILGetSTextPointer	(LPCITEMIDLIST);
 REFIID		_ILGetGUIDPointer	(LPCITEMIDLIST pidl);
 
 /* 

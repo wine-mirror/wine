@@ -469,10 +469,10 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
  *     free_ptr() - frees memory using IMalloc
  *     exported by ordinal
  */
-/*#define MEM_DEBUG 1*/
+#define MEM_DEBUG 0
 DWORD WINAPI SHFree(LPVOID x) 
 {
-#ifdef MEM_DEBUG
+#if MEM_DEBUG
 	WORD len = *(LPWORD)(x-2);
 
 	if ( *(LPWORD)(x+len) != 0x7384)
@@ -503,13 +503,13 @@ LPVOID WINAPI SHAlloc(DWORD len)
 {
 	LPBYTE ret;
 
-#ifdef MEM_DEBUG
+#if MEM_DEBUG
 	ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len+6);
 #else
 	ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
 #endif
 
-#ifdef MEM_DEBUG
+#if MEM_DEBUG
 	*(LPWORD)(ret) = 0x8271;
 	*(LPWORD)(ret+2) = (WORD)len;
 	*(LPWORD)(ret+4+len) = 0x7384;

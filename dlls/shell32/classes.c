@@ -136,7 +136,7 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 	    LoadStringA(shell32_hInstance, IDS_DESKTOP, szDest, buflen);
 	    ret = TRUE;
 	  }
-	  else if (IsEqualIID(riid, &IID_MyComputer))
+	  else if (IsEqualIID(riid, &CLSID_MyComputer))
 	  {
 	    LoadStringA(shell32_hInstance, IDS_MYCOMPUTER, szDest, buflen);
 	    ret = TRUE;
@@ -152,6 +152,9 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 *	HCR_GetFolderAttributes	[internal]
 *
 * gets the folder attributes of a class
+*
+* FIXME
+*	verify the defaultvalue for *szDest
 */
 BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest)
 {	HKEY	hkey;
@@ -163,6 +166,9 @@ BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest)
 	WINE_StringFromCLSID(riid,&xriid[strlen(xriid)]);
 	TRACE("%s\n",xriid );
 
+	if (!szDest) return FALSE;
+	*szDest = SFGAO_FOLDER|SFGAO_FILESYSTEM;
+	
 	strcat (xriid, "\\ShellFolder");
 
 	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,xriid,0,KEY_READ,&hkey))

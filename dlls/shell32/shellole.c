@@ -28,6 +28,13 @@
 DEFAULT_DEBUG_CHANNEL(shell)
 
 DWORD WINAPI SHCLSIDFromStringA (LPSTR clsid, CLSID *id);
+extern IShellFolder * IShellFolder_Constructor(
+	IShellFolder * psf,
+	LPITEMIDLIST pidl);
+extern HRESULT IFSFolder_Constructor(
+	IUnknown * pUnkOuter,
+	REFIID riid,
+	LPVOID * ppv);
 
 /*************************************************************************
  * SHCoCreateInstance [SHELL32.102]
@@ -62,14 +69,22 @@ LRESULT WINAPI SHCoCreateInstance(
 	TRACE("(%p,\n\tCLSID:\t%s, unk:%p\n\tIID:\t%s,%p)\n",
 		aclsid,xclsid,unknownouter,xiid,ppv);
 
-	hres = CoCreateInstance(myclsid, unknownouter, CLSCTX_INPROC_SERVER, refiid, ppv);
-
+	if IsEqualCLSID(myclsid, &CLSID_ShellFSFolder)
+	{
+	  hres = IFSFolder_Constructor(unknownouter, refiid, ppv);
+	}
+	else
+	{
+	  hres = CoCreateInstance(myclsid, unknownouter, CLSCTX_INPROC_SERVER, refiid, ppv);
+	}
+	
 	if(hres!=S_OK)
 	{
 	  ERR("failed (0x%08lx) to create \n\tCLSID:\t%s\n\tIID:\t%s\n", hres, xclsid, xiid);
-	  ERR("you might need to import the winedefault.reg\n");
+	  ERR("class not found in registry\n");
 	}
 
+	TRACE("-- instance: %p\n",*ppv);
 	return hres;
 }
 
@@ -87,11 +102,6 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv
 	
 	*ppv = NULL;
 
-	if(IsEqualCLSID(rclsid, &CLSID_PaperBin))
-	{
-	  ERR("paper bin not implemented\n");
-	  return CLASS_E_CLASSNOTAVAILABLE;
-	}
 	if(IsEqualCLSID(rclsid, &CLSID_ShellDesktop)|| 
 	   IsEqualCLSID(rclsid, &CLSID_ShellLink))
 	{
