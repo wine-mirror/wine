@@ -121,9 +121,6 @@ static const WCHAR comW[] = {'c','o','m',0};
 static const WCHAR batW[] = {'b','a','t',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
-/* dlls/ntdll/env.c */
-extern BOOL build_command_line( char **argv );
-
 extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const WCHAR *appname );
 extern void MODULE_InitLoadPath(void);
@@ -419,6 +416,173 @@ static BOOL build_initial_environment(void)
         p += strlenW(p) + 1;
     }
     *p = 0;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              set_library_argv
+ *
+ * Set the Wine library argc/argv global variables.
+ */
+static void set_library_argv( char **argv )
+{
+    int argc;
+    WCHAR *p;
+    WCHAR **wargv;
+    DWORD total = 0;
+
+    for (argc = 0; argv[argc]; argc++)
+        total += MultiByteToWideChar( CP_UNIXCP, 0, argv[argc], -1, NULL, 0 );
+
+    wargv = RtlAllocateHeap( GetProcessHeap(), 0,
+                             total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
+    p = (WCHAR *)(wargv + argc + 1);
+    for (argc = 0; argv[argc]; argc++)
+    {
+        DWORD reslen = MultiByteToWideChar( CP_UNIXCP, 0, argv[argc], -1, p, total );
+        wargv[argc] = p;
+        p += reslen;
+        total -= reslen;
+    }
+    wargv[argc] = NULL;
+
+    __wine_main_argc  = argc;
+    __wine_main_argv  = argv;
+    __wine_main_wargv = wargv;
+}
+
+
+/***********************************************************************
+ *           build_command_line
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * Note that it does NOT necessarily include the file name.
+ * Sometimes we don't even have any command line options at all.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
+ */
+static BOOL build_command_line( WCHAR **argv )
+{
+    int len;
+    WCHAR **arg;
+    LPWSTR p;
+    RTL_USER_PROCESS_PARAMETERS* rupp = NtCurrentTeb()->Peb->ProcessParameters;
+
+    if (rupp->CommandLine.Buffer) return TRUE; /* already got it from the server */
+
+    len = 0;
+    for (arg = argv; *arg; arg++)
+    {
+        int has_space,bcount;
+        WCHAR* a;
+
+        has_space=0;
+        bcount=0;
+        a=*arg;
+        if( !*a ) has_space=1;
+        while (*a!='\0') {
+            if (*a=='\\') {
+                bcount++;
+            } else {
+                if (*a==' ' || *a=='\t') {
+                    has_space=1;
+                } else if (*a=='"') {
+                    /* doubling of '\' preceeding a '"',
+                     * plus escaping of said '"'
+                     */
+                    len+=2*bcount+1;
+                }
+                bcount=0;
+            }
+            a++;
+        }
+        len+=(a-*arg)+1 /* for the separating space */;
+        if (has_space)
+            len+=2; /* for the quotes */
+    }
+
+    if (!(rupp->CommandLine.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        return FALSE;
+
+    p = rupp->CommandLine.Buffer;
+    rupp->CommandLine.Length = (len - 1) * sizeof(WCHAR);
+    rupp->CommandLine.MaximumLength = len * sizeof(WCHAR);
+    for (arg = argv; *arg; arg++)
+    {
+        int has_space,has_quote;
+        WCHAR* a;
+
+        /* Check for quotes and spaces in this argument */
+        has_space=has_quote=0;
+        a=*arg;
+        if( !*a ) has_space=1;
+        while (*a!='\0') {
+            if (*a==' ' || *a=='\t') {
+                has_space=1;
+                if (has_quote)
+                    break;
+            } else if (*a=='"') {
+                has_quote=1;
+                if (has_space)
+                    break;
+            }
+            a++;
+        }
+
+        /* Now transfer it to the command line */
+        if (has_space)
+            *p++='"';
+        if (has_quote) {
+            int bcount;
+            WCHAR* a;
+
+            bcount=0;
+            a=*arg;
+            while (*a!='\0') {
+                if (*a=='\\') {
+                    *p++=*a;
+                    bcount++;
+                } else {
+                    if (*a=='"') {
+                        int i;
+
+                        /* Double all the '\\' preceeding this '"', plus one */
+                        for (i=0;i<=bcount;i++)
+                            *p++='\\';
+                        *p++='"';
+                    } else {
+                        *p++=*a;
+                    }
+                    bcount=0;
+                }
+                a++;
+            }
+        } else {
+            WCHAR* x = *arg;
+            while ((*p=*x++)) p++;
+        }
+        if (has_space)
+            *p++='"';
+        *p++=' ';
+    }
+    if (p > rupp->CommandLine.Buffer)
+        p--;  /* remove last space */
+    *p = '\0';
+
     return TRUE;
 }
 
@@ -741,7 +905,7 @@ void __wine_process_init( int argc, char *argv[] )
             if (DOSFS_GetFullName( main_exe_name, TRUE, &full_name ) &&
                 wine_dlopen( full_name.long_name, RTLD_NOW, error, sizeof(error) ))
             {
-                static const WCHAR soW[] = {'s','o',0};
+                static const WCHAR soW[] = {'.','s','o',0};
                 if ((p = strrchrW( main_exe_name, '.' )) && !strcmpW( p, soW ))
                 {
                     *p = 0;
@@ -758,7 +922,8 @@ void __wine_process_init( int argc, char *argv[] )
 
  found:
     /* build command line */
-    if (!build_command_line( argv )) goto error;
+    set_library_argv( argv );
+    if (!build_command_line( __wine_main_wargv )) goto error;
 
     /* create 32-bit module for main exe */
     if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module, CreateFileW )))
