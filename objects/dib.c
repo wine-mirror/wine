@@ -489,12 +489,13 @@ INT32 WINAPI GetDIBits32(
 
     if (bits)
     {	
-	BYTE*	bbits = (BYTE*)bits;
-	int	pad, yend, xend = bmp->bitmap.bmWidth;
+	BYTE    *bbits = (BYTE*)bits, *linestart;
+	int	dstwidth, yend, xend = bmp->bitmap.bmWidth;
 
         TRACE(bitmap, "%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
-			    lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-			    (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight, startscan );
+	      lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+	      (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
+	      startscan );
 
 	/* adjust number of scanlines to copy */
 
@@ -510,36 +511,31 @@ INT32 WINAPI GetDIBits32(
 
 	/* adjust scanline width */
 
-	pad = info->bmiHeader.biWidth - bmp->bitmap.bmWidth;
-	if( pad < 0 ) 
-	{
-	    /* bitmap is wider than DIB, copy only a part */
-
-	    pad = 0;
+	if(bmp->bitmap.bmWidth > info->bmiHeader.biWidth)
             xend = info->bmiHeader.biWidth;
-	}
 
 	/* HACK for now */
 	if(!bmp->DDBitmap)
 	    X11DRV_CreateBitmap(hbitmap);
 
+	dstwidth = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
+					 info->bmiHeader.biBitCount );
+
         EnterCriticalSection( &X11DRV_CritSection );
 	bmpImage = (XImage *)CALL_LARGE_STACK( X11DRV_BITMAP_GetXImage, bmp );
 
+	linestart = bbits;
 	switch( info->bmiHeader.biBitCount )
 	{
 	   case 8:
-		/* pad up to 32 bit */
-		pad += (4 - (info->bmiHeader.biWidth & 3)) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
 		   for( x = 0; x < xend; x++ )
 			*bbits++ = XGetPixel( bmpImage, x, y );
-		   bbits += pad;
+		   bbits = (linestart += dstwidth);
 		}
 		break;
 	   case 1:
-	   	pad += ((32 - (info->bmiHeader.biWidth & 31)) / 8) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
 		   for( x = 0; x < xend; x++ ) {
@@ -547,11 +543,10 @@ INT32 WINAPI GetDIBits32(
 			*bbits |= XGetPixel( bmpImage, x, y)<<(7-(x&7));
 			if ((x&7)==7) bbits++;
 		   }
-		   bbits += pad;
+		   bbits = (linestart += dstwidth);
 		}
 		break;
 	   case 4:
-	   	pad += ((8 - (info->bmiHeader.biWidth & 7)) / 2) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
 		   for( x = 0; x < xend; x++ ) {
@@ -559,12 +554,11 @@ INT32 WINAPI GetDIBits32(
 			*bbits |= XGetPixel( bmpImage, x, y)<<(4*(1-(x&1)));
 			if ((x&1)==1) bbits++;
 		   }
-		   bbits += pad;
+		   bbits = (linestart += dstwidth);
 		}
 		break;
 	   case 15:
            case 16:
-	   	pad += (4 - ((info->bmiHeader.biWidth*2) & 3)) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
 		   for( x = 0; x < xend; x++ ) {
@@ -572,11 +566,10 @@ INT32 WINAPI GetDIBits32(
 			*bbits++ = pixel & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
 		   }
-		   bbits += pad;
+		   bbits = (linestart += dstwidth);
 		}
 		break;
 	   case 24:
-	   	pad += (4 - ((info->bmiHeader.biWidth*3) & 3)) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
 		   for( x = 0; x < xend; x++ ) {
@@ -585,7 +578,7 @@ INT32 WINAPI GetDIBits32(
 			*bbits++ = (pixel >> 8) & 0xff;
 			*bbits++ =  pixel       & 0xff;
 		   }
-		   bbits += pad;
+		   bbits = (linestart += dstwidth);
 		}
 		break;
 	   case 32:
@@ -597,6 +590,7 @@ INT32 WINAPI GetDIBits32(
 			*bbits++ = (pixel >> 8) & 0xff;
 			*bbits++ =  pixel       & 0xff;
 		   }
+		   bbits = (linestart += dstwidth);
 		}
 		break;
 	   default:
@@ -607,6 +601,9 @@ INT32 WINAPI GetDIBits32(
 
 	XDestroyImage( bmpImage );
         LeaveCriticalSection( &X11DRV_CritSection );
+
+	if(bbits - (BYTE *)bits > info->bmiHeader.biSizeImage)
+	    ERR(bitmap, "Buffer overrun. Please investigate.\n");
 
 	info->bmiHeader.biCompression = 0;
     }
@@ -623,7 +620,9 @@ INT32 WINAPI GetDIBits32(
                                                    bmp->bitmap.bmBitsPixel );
 	info->bmiHeader.biCompression = 0;
     }
-
+    TRACE(bitmap, "biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
+	  info->bmiHeader.biSizeImage, info->bmiHeader.biWidth,
+	  info->bmiHeader.biHeight);
     GDI_HEAP_UNLOCK( hbitmap );
     GDI_HEAP_UNLOCK( dc->w.hPalette );
     return lines;
