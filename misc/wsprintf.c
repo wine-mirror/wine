@@ -242,22 +242,22 @@ static UINT32 WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
 /***********************************************************************
  *           WPRINTF_ExtractVAPtr (Not a Windows API)
  */
-static LPVOID WPRINTF_ExtractVAPtr( WPRINTF_FORMAT *format, va_list args )
+static LPVOID WPRINTF_ExtractVAPtr( WPRINTF_FORMAT *format, va_list* args )
 {
     switch(format->type)
     {
         case WPR_WCHAR:
-            return (LPVOID)va_arg( args, WCHAR );
+            return (LPVOID)va_arg( *args, WCHAR );
         case WPR_CHAR:
-            return (LPVOID)va_arg( args, CHAR );
+            return (LPVOID)va_arg( *args, CHAR );
         case WPR_STRING:
-            return (LPVOID)va_arg( args, LPCSTR);
+            return (LPVOID)va_arg( *args, LPCSTR);
         case WPR_WSTRING:
-            return (LPVOID)va_arg( args, LPCWSTR);
+            return (LPVOID)va_arg( *args, LPCWSTR);
         case WPR_HEXA:
         case WPR_SIGNED:
         case WPR_UNSIGNED:
-            return (LPVOID)va_arg( args, INT32 ); 
+            return (LPVOID)va_arg( *args, INT32 ); 
         default:
             return NULL;
     }
@@ -375,7 +375,7 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
         spec++;
         if (*spec == '%') { *p++ = *spec++; maxlen--; continue; }
         spec += WPRINTF_ParseFormatA( spec, &format );
-        argPtr = WPRINTF_ExtractVAPtr( &format, args );
+        argPtr = WPRINTF_ExtractVAPtr( &format, &args );
         len = WPRINTF_GetLen( &format, &argPtr, number, maxlen - 1 );
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
