@@ -47,7 +47,7 @@ BOOL32 MAIN_EmulatorInit(void)
 int main( int argc, char *argv[] )
 {
     extern char * DEBUG_argv0;
-    char startProg[256];
+    char startProg[256], defProg[256];
     int i,loaded;
     HINSTANCE32 handle;
 
@@ -86,6 +86,14 @@ int main( int argc, char *argv[] )
     /* This needs to be done just before task-switching starts */
 
     loaded=0;
+    
+    /* Add the Default Program if no program on the command line */
+    if (!argv[1])
+    {
+        PROFILE_GetWineIniString( "programs", "Default", "",
+                                  defProg, sizeof(defProg) );
+        if (defProg[0]) argv[argc++] = defProg;
+    }
     
     /* Add the Startup Program to the run list */
     PROFILE_GetWineIniString( "programs", "Startup", "", 
