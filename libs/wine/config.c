@@ -104,21 +104,12 @@ inline static void remove_trailing_slashes( char *path )
 /* initialize the server directory value */
 static void init_server_dir( dev_t dev, ino_t ino )
 {
-    const char *user = wine_get_user_name();
     char *p;
 
-    server_dir = xmalloc( sizeof(server_root_prefix) + strlen(user) + sizeof(server_dir_prefix) +
+    server_dir = xmalloc( sizeof(server_root_prefix) + 32 + sizeof(server_dir_prefix) +
                           2*sizeof(dev) + 2*sizeof(ino) );
-    strcpy( server_dir, server_root_prefix );
-    p = server_dir + sizeof(server_root_prefix) - 1;
-    strcpy( p, user );
-    while (*p)
-    {
-        if (*p == '/') *p = '!';
-        p++;
-    }
-    strcpy( p, server_dir_prefix );
-    p += sizeof(server_dir_prefix) - 1;
+    sprintf( server_dir, "%s%u%s", server_root_prefix, getuid(), server_dir_prefix );
+    p = server_dir + strlen(server_dir);
 
     if (sizeof(dev) > sizeof(unsigned long) && dev > ~0UL)
         sprintf( p, "%lx%08lx-", (unsigned long)(dev >> 32), (unsigned long)dev );
@@ -151,7 +142,7 @@ static void init_paths(void)
     }
     if (!user)
     {
-        sprintf( uid_str, "%d", getuid() );
+        sprintf( uid_str, "%u", getuid() );
         user = uid_str;
     }
 #else  /* HAVE_GETPWUID */
