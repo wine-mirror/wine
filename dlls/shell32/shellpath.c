@@ -1089,6 +1089,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	        strcpy(szPath, "C:\\");	/* FIXME ??? */
 	        strcat(szPath, szDefaultPath);
 	      }
+              dwType=REG_SZ;
 	      RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
 	    }
 	  }
@@ -1125,6 +1126,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	      strcpy(szPath, "C:\\");	/* FIXME ??? */
 	      strcat(szPath, szDefaultPath);
 	    }
+            dwType=REG_SZ;
 	    RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
 	  }
 	  RegCloseKey(hKey);
