@@ -2582,6 +2582,22 @@ DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA)
 
 #define GETBASEIRQ	10
 
+/* Purge functions for Comm Port */
+#define PURGE_TXABORT       0x0001  /* Kill the pending/current writes to the 
+				       comm port */
+#define PURGE_RXABORT       0x0002  /*Kill the pending/current reads to 
+				     the comm port */
+#define PURGE_TXCLEAR       0x0004  /* Kill the transmit queue if there*/
+#define PURGE_RXCLEAR       0x0008  /* Kill the typeahead buffer if there*/
+
+
+/* Modem Status Flags */
+#define MS_CTS_ON           ((DWORD)0x0010)
+#define MS_DSR_ON           ((DWORD)0x0020)
+#define MS_RING_ON          ((DWORD)0x0040)
+#define MS_RLSD_ON          ((DWORD)0x0080)
+
+
 #define CN_RECEIVE	0x0001
 #define CN_TRANSMIT	0x0002
 #define CN_EVENT	0x0004
@@ -6528,6 +6544,31 @@ DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
 
 typedef BOOL32  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC32,LPRECT32,LPARAM);
 
+typedef struct tagDLGTEMPLATE
+{
+    DWORD style;
+    DWORD dwExtendedStyle;
+    WORD cdit;
+    short x;
+    short y;
+    short cx;
+    short cy;
+}DLGTEMPLATE, *LPDLGTEMPLATE;
+typedef const DLGTEMPLATE *LPCDLGTEMPLATE;
+/* Fixme: use this instaed of LPCVOID for CreateDialogIndirectParam and DialogBoxIndirectParam*/
+typedef struct tagDLGITEMTEMPLATE
+{
+    DWORD style;
+    DWORD dwExtendedStyle;
+    WORD cdit;
+    short x;
+    short y;
+    short cx;
+    short cy;
+    WORD id;
+}DLGITEMTEMPLATE, *LPDLGITEMTEMPLATE;
+typedef const DLGITEMTEMPLATE *LPCDLGITEMTEMPLATE;
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -6824,6 +6865,8 @@ DWORD       WINAPI GetConsoleTitle32A(LPSTR,DWORD);
 DWORD       WINAPI GetConsoleTitle32W(LPWSTR,DWORD);
 #define     GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
 BOOL32      WINAPI GetCPInfo(UINT32,LPCPINFO);
+BOOL32      WINAPI GetCommMask(HANDLE32, LPDWORD);
+BOOL32      WINAPI GetCommModemStatus(HANDLE32, LPDWORD);
 HANDLE32    WINAPI GetCurrentObject(HDC32,UINT32);
 HANDLE32    WINAPI GetCurrentProcess(void);
 DWORD       WINAPI GetCurrentProcessId(void);
@@ -6982,6 +7025,7 @@ BOOL32      WINAPI PlayEnhMetaFile(HDC32,HENHMETAFILE32,const RECT32*);
 BOOL32      WINAPI PlayEnhMetaFileRecord(HDC32,LPHANDLETABLE32,const ENHMETARECORD*,UINT32);
 BOOL32      WINAPI PolyPolyline32(HDC32,const POINT32*,const DWORD*,DWORD);
 BOOL32      WINAPI PulseEvent(HANDLE32);
+BOOL32      WINAPI PurgeComm(HANDLE32,DWORD);
 DWORD       WINAPI QueryDosDevice32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI QueryDosDevice32W(LPCWSTR,LPWSTR,DWORD);
 #define     QueryDosDevice WINELIB_NAME_AW(QueryDosDevice)
@@ -7113,6 +7157,7 @@ BOOL32      WINAPI VirtualProtectEx(HANDLE32,LPVOID,DWORD,DWORD,LPDWORD);
 DWORD       WINAPI VirtualQuery(LPCVOID,LPMEMORY_BASIC_INFORMATION,DWORD);
 DWORD       WINAPI VirtualQueryEx(HANDLE32,LPCVOID,LPMEMORY_BASIC_INFORMATION,DWORD);
 BOOL32      WINAPI VirtualUnlock(LPVOID,DWORD);
+BOOL32      WINAPI WaitCommEvent(HANDLE32,LPDWORD,LPOVERLAPPED);
 BOOL32      WINAPI WaitForDebugEvent(LPDEBUG_EVENT,DWORD);
 DWORD       WINAPI WaitForInputIdle(HANDLE32,DWORD);
 DWORD       WINAPI WaitForMultipleObjects(DWORD,const HANDLE32*,BOOL32,DWORD);
@@ -9332,6 +9377,12 @@ INT16       WINAPI StartDoc16(HDC16,const DOCINFO16*);
 INT32       WINAPI StartDoc32A(HDC32,const DOCINFO32A*);
 INT32       WINAPI StartDoc32W(HDC32,const DOCINFO32W*);
 #define     StartDoc WINELIB_NAME_AW(StartDoc)
+INT16       WINAPI StartPage16(HDC16);
+INT32       WINAPI StartPage32(HDC32);
+#define     StartPage WINELIB_NAME(StartPage)
+INT16       WINAPI EndPage16(HDC16);
+INT32       WINAPI EndPage32(HDC32);
+#define     EndPage WINELIB_NAME(EndPage)
 INT16       WINAPI StartSound16(void);
 VOID        WINAPI StartSound32(void);
 #define     StartSound WINELIB_NAME(StartSound)
