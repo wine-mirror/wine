@@ -203,13 +203,13 @@ int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
  */
 BOOL WINAPI OleStrToStrNA (LPSTR lpStr, INT nStr, LPCWSTR lpOle, INT nOle) 
 {
-	TRACE("%p %x %s %x\n", lpStr, nStr, debugstr_w(lpOle), nOle);
+	TRACE("(%p, %x, %s, %x)\n", lpStr, nStr, debugstr_wn(lpOle,nOle), nOle);
 	return WideCharToMultiByte (0, 0, lpOle, nOle, lpStr, nStr, NULL, NULL);
 }
 
 BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle) 
 {
-	TRACE("%p %x %s %x\n", lpwStr, nwStr, debugstr_w(lpOle), nOle);
+	TRACE("(%p, %x, %s, %x)\n", lpwStr, nwStr, debugstr_wn(lpOle,nOle), nOle);
 
 	if (lstrcpynW ( lpwStr, lpOle, nwStr))
 	{ return lstrlenW (lpwStr);
@@ -231,12 +231,12 @@ BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn)
  */
 BOOL WINAPI StrToOleStrNA (LPWSTR lpWide, INT nWide, LPCSTR lpStrA, INT nStr) 
 {
-	TRACE("%p %x %s %x\n", lpWide, nWide, lpStrA, nStr);
+	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_an(lpStrA,nStr), nStr);
 	return MultiByteToWideChar (0, 0, lpStrA, nStr, lpWide, nWide);
 }
 BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr) 
 {
-	TRACE("%p %x %s %x\n", lpWide, nWide, debugstr_w(lpStrW), nStr);
+	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_wn(lpStrW, nStr), nStr);
 
 	if (lstrcpynW (lpWide, lpStrW, nWide))
 	{ return lstrlenW (lpWide);
@@ -1364,15 +1364,15 @@ DWORD WINAPI RLBuildListOfPaths (void)
  */
 int WINAPI StrToOleStrA (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
 {
-	TRACE("%p %p(%s)\n",
-	lpWideCharStr, lpMultiByteString, lpMultiByteString);
+	TRACE("(%p, %p %s)\n",
+	lpWideCharStr, lpMultiByteString, debugstr_a(lpMultiByteString));
 
 	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
 
 }
 int WINAPI StrToOleStrW (LPWSTR lpWideCharStr, LPCWSTR lpWString)
 {
-	TRACE("%p %p(%s)\n",
+	TRACE("(%p, %p %s)\n",
 	lpWideCharStr, lpWString, debugstr_w(lpWString));
 
 	if (lstrcpyW (lpWideCharStr, lpWString ))
@@ -1404,13 +1404,13 @@ HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
  */
 HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
 {
-	FIXME("%p(%s) %p(%s) stub\n", x, x, y, y);
+	FIXME("(%p %s, %p %s) stub\n", x, debugstr_a(x), y, debugstr_a(y));
 	return 0;
 }
 
 HRESULT WINAPI DoEnvironmentSubstW(LPWSTR x, LPWSTR y)
 {
-	FIXME("%p(%s) %p(%s) stub\n", x, debugstr_w(x), y, debugstr_w(y));
+	FIXME("(%p %s, %p %s) stub\n", x, debugstr_w(x), y, debugstr_w(y));
 	return 0;
 }
 

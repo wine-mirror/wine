@@ -171,7 +171,7 @@ INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
  */
 INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
 {
-    TRACE("L%s and L%s\n",
+    TRACE("%s and %s\n",
 		   debugstr_w (str1), debugstr_w (str2));
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
@@ -210,7 +210,7 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 
 #if 0
     /* Too much!  (From registry loading.)  */
-    TRACE("strcmpi L%s and L%s\n",
+    TRACE("strcmpi %s and %s\n",
 		   debugstr_w (str1), debugstr_w (str2));
 #endif
     if (!str1 || !str2) {
@@ -299,8 +299,7 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR p = dst;
-    TRACE("strcpyn %s for %d chars\n",
-		   debugstr_an (src,n), n);
+    TRACE("(%p, %s, %i)\n", dst, debugstr_an(src,n), n);
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -323,8 +322,7 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR p = dst;
-    TRACE("strcpyn L%s for %d chars\n",
-		   debugstr_wn (src,n), n);
+    TRACE("(%p, %s, %i)\n", dst,  debugstr_wn(src,n), n);
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -395,7 +393,7 @@ LPWSTR WINAPI lstrcpyAtoW( LPWSTR dst, LPCSTR src )
 {
     register LPWSTR p = dst;
 
-    TRACE("%s\n",src);
+    TRACE("(%p, %s)\n", dst, debugstr_a(src));
 
     while ((*p++ = (WCHAR)(unsigned char)*src++));
     return dst;
@@ -409,7 +407,7 @@ LPSTR WINAPI lstrcpyWtoA( LPSTR dst, LPCWSTR src )
 {
     register LPSTR p = dst;
 
-    TRACE("L%s\n",debugstr_w(src));
+    TRACE("(%p, %s)\n", dst, debugstr_w(src));
 
     while ((*p++ = (CHAR)*src++));
     return dst;
@@ -425,7 +423,7 @@ LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT n )
 {
     LPWSTR p = dst;
 
-    TRACE("%s %i\n",src, n);
+    TRACE("(%p, %s, %i)\n", dst, debugstr_an(src,n), n);
 
     while ((n-- > 1) && *src) *p++ = (WCHAR)(unsigned char)*src++;
     if (n >= 0) *p = 0;
@@ -446,6 +444,7 @@ LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT n )
 {
     if (--n >= 0)
     {
+        TRACE("(%p, %s, %i)\n", dst, debugstr_wn(src,n), n);
         n = CRTDLL_wcstombs( dst, src, n );
         if(n<0)
                  n=0;
@@ -583,7 +582,7 @@ BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 {
     LPSTR oldd = d;
     if (!s || !d) return TRUE;
-    TRACE("CharToOem L%s\n", debugstr_w (s));
+    TRACE("CharToOem %s\n", debugstr_w (s));
     while ((*d++ = ANSI_TO_OEM(*s++)));
     TRACE("       to %s\n", debugstr_a (oldd));
     return TRUE;
@@ -647,7 +646,7 @@ INT WINAPI WideCharToLocal(
 		LPCWSTR pWide, 
 		INT dwChars)
 { *pLocal = 0;
-  TRACE("(%p, %s, %i)\n",	pLocal, debugstr_w(pWide),dwChars);
+  TRACE("(%p, %s, %i)\n", pLocal, debugstr_wn(pWide,dwChars), dwChars);
   WideCharToMultiByte(CP_ACP,0,pWide,-1,pLocal,dwChars,NULL,NULL);
   return strlen(pLocal);
 }
@@ -663,7 +662,7 @@ INT WINAPI LocalToWideChar(
 		LPCSTR pLocal, 
 		INT dwChars)
 { *pWide = 0;
-  TRACE("(%p, %s, %i)\n",pWide,	pLocal, dwChars);
+  TRACE("(%p, %s, %i)\n", pWide, debugstr_an(pLocal,dwChars), dwChars);
 	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
   return lstrlenW(pWide);
 }
@@ -672,7 +671,7 @@ INT WINAPI LocalToWideChar(
 /***********************************************************************
  *           lstrrchr   (Not a Windows API)
  *
- * This is the implementation meant to be invoked form within
+ * This is the implementation meant to be invoked from within
  * COMCTL32_StrRChrA and shell32(TODO)...
  *
  * Return a pointer to the last occurence of wMatch in lpStart
@@ -682,7 +681,7 @@ LPSTR WINAPI lstrrchr( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 {
   LPCSTR lpGotIt = NULL;
 
-  TRACE("(%s, %s)\n", lpStart, lpEnd);
+  TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
 
   if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
 
@@ -714,7 +713,7 @@ LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
 {
   LPCWSTR lpGotIt = NULL;
 
-  TRACE("(%p, %p, %c)\n", lpStart,      lpEnd, wMatch);
+  TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
   if (!lpEnd) lpEnd = lpStart + lstrlenW(lpStart);
 
   for(; lpStart < lpEnd; lpStart = CharNextW(lpStart)) 

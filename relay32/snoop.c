@@ -209,11 +209,10 @@ SNOOP_PrintArg(DWORD x) {
 		sprintf(buf,"%08lx",x);
 		return buf;
 	}
-	i=0;nostring=0;
 	if (!IsBadStringPtrA((LPSTR)x,80)) {
+		LPBYTE	s=(LPBYTE)x;
+		i=0;nostring=0;
 		while (i<80) {
-			LPBYTE	s=(LPBYTE)x;
-
 			if (s[i]==0) break;
 			if (s[i]<0x20) {nostring=1;break;}
 			if (s[i]>=0x80) {nostring=1;break;}
@@ -221,18 +220,15 @@ SNOOP_PrintArg(DWORD x) {
 		}
 		if (!nostring) {
 			if (i>5) {
-				sprintf(buf,"%08lx \"",x);
-				strncat(buf,(LPSTR)x,198-strlen(buf)-2);
-				strcat(buf,"\"");
+				wsnprintfA(buf,sizeof(buf),"%08lx %s",x,debugstr_an((LPSTR)x,sizeof(buf)-10));
 				return buf;
 			}
 		}
 	}
-	i=0;nostring=0;
 	if (!IsBadStringPtrW((LPWSTR)x,80)) {
+		LPWSTR	s=(LPWSTR)x;
+		i=0;nostring=0;
 		while (i<80) {
-			LPWSTR	s=(LPWSTR)x;
-
 			if (s[i]==0) break;
 			if (s[i]<0x20) {nostring=1;break;}
 			if (s[i]>0x100) {nostring=1;break;}
@@ -240,8 +236,7 @@ SNOOP_PrintArg(DWORD x) {
 		}
 		if (!nostring) {
 			if (i>5) {
-				sprintf(buf,"%08lx L",x);
-				strcat(buf,debugstr_wn((LPWSTR)x,198-strlen(buf)-2));
+				wsnprintfA(buf,sizeof(buf),"%08lx %s",x,debugstr_wn((LPWSTR)x,sizeof(buf)-10));
 				return buf;
 			}
 		}

@@ -761,7 +761,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathA (LPSTR lpszPath)
 LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPWSTR lpszPath)
 {
 	char	lpszTemp[MAX_PATH];
-	TRACE("path=L%s\n",debugstr_w(lpszPath));
+	TRACE("path=%s\n",debugstr_w(lpszPath));
 
 	WideCharToLocal(lpszTemp, lpszPath, MAX_PATH);
 

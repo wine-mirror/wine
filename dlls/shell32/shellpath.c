@@ -93,7 +93,7 @@ LPCSTR WINAPI PathFindExtensionA(LPCSTR path)
 }
 LPCWSTR WINAPI PathFindExtensionW(LPCWSTR path) 
 {	LPCWSTR   lastpoint = NULL;
-	TRACE("%p L%s\n",path,debugstr_w(path));
+	TRACE("(%p %s)\n",path,debugstr_w(path));
 	while (*path)
 	{ if (*path==(WCHAR)'\\'||*path==(WCHAR)' ')
 	    lastpoint=NULL;
@@ -213,7 +213,7 @@ LPCWSTR WINAPI PathFindFilenameW(LPCWSTR wptr)
 {	LPCWSTR wslash;
 	wslash = wptr;
 
-	TRACE("L%s\n",debugstr_w(wslash));
+	TRACE("%s\n",debugstr_w(wslash));
 	while (wptr[0]) 
 	{ if (((wptr[0]=='\\') || (wptr[0]==':')) && wptr[1] && wptr[1]!='\\')
 	    wslash = wptr+1;
@@ -582,7 +582,7 @@ LPCSTR WINAPI PathGetArgsA(LPCSTR cmdline)
 LPCWSTR WINAPI PathGetArgsW(LPCWSTR cmdline) 
 {	BOOL	qflag = FALSE;
 
-	TRACE("%sL\n",debugstr_w(cmdline));
+	TRACE("%s\n",debugstr_w(cmdline));
 
 	while (*cmdline) 
 	{ if ((*cmdline==' ') && !qflag)
@@ -610,7 +610,7 @@ LPSTR WINAPI PathQuoteSpacesA(LPCSTR aptr)
 
 }
 LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR wptr)
-{	FIXME("L%s\n",debugstr_w(wptr));
+{	FIXME("%s\n",debugstr_w(wptr));
 	return 0;	
 }
 LPVOID WINAPI PathQuoteSpacesAW (LPCVOID fn)
@@ -719,7 +719,7 @@ LPCSTR WINAPI PathGetExtensionA(LPCSTR path,DWORD y,DWORD z)
 	return *path?(path+1):path;
 }
 LPCWSTR WINAPI PathGetExtensionW(LPCWSTR path,DWORD y,DWORD z)
-{	TRACE("(L%s,%08lx,%08lx)\n",debugstr_w(path),y,z);
+{	TRACE("(%s, %08lx, %08lx)\n",debugstr_w(path),y,z);
 	path = PathFindExtensionW(path);
 	return *path?(path+1):path;
 }
@@ -735,13 +735,13 @@ LPCVOID WINAPI PathGetExtensionAW(LPCVOID path,DWORD y,DWORD z)
  */
 DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y)
 {
-	FIXME("%p(%s) %p(%s) stub\n",x,x,y,y);
+	FIXME("(%p %s, %p %s) stub\n",x,debugstr_a(x),y,debugstr_a(y));
 	return TRUE;
 }
 
 DWORD WINAPI PathCleanupSpecW(LPWSTR x, LPWSTR y)
 {
-	FIXME("%p(%s) %p(%s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
+	FIXME("(%p %s, %p %s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
 	return TRUE;
 }
 
@@ -783,7 +783,7 @@ HRESULT WINAPI PathProcessCommandA (LPSTR lpCommand, LPSTR v, DWORD w, DWORD x)
 
 HRESULT WINAPI PathProcessCommandW (LPWSTR lpCommand, LPSTR v, DWORD w, DWORD x)
 {
-	FIXME("%p(%s) %p 0x%04lx 0x%04lx stub\n",
+	FIXME("(%p %s, %p, 0x%04lx, 0x%04lx) stub\n",
 	lpCommand, debugstr_w(lpCommand), v, w,x );
 	return 0;
 }

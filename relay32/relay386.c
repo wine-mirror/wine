@@ -73,7 +73,7 @@ static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemas
 	if ((typemask & 3) && HIWORD(*args))
         {
 	    if (typemask & 2)
-	    	DPRINTF( "%08x L%s", *args, debugstr_w((LPWSTR)*args) );
+	    	DPRINTF( "%08x %s", *args, debugstr_w((LPWSTR)*args) );
             else
 	    	DPRINTF( "%08x %s", *args, debugstr_a((LPCSTR)*args) );
 	}

@@ -100,7 +100,7 @@ static HRESULT SHELL32_ParseNextElement(
 	LPITEMIDLIST	pidlOut, pidlTemp = NULL;
 	IShellFolder	*psfChild;
 	
-	TRACE("(%p %p %s)\n",psf, pidlInOut? *pidlInOut: NULL, debugstr_w(szNext));
+	TRACE("(%p, %p, %s)\n",psf, pidlInOut? *pidlInOut: "(null)", debugstr_w(szNext));
 
 
 	/* get the shellfolder for the child pidl and let it analyse further */

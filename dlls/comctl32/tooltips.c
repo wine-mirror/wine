@@ -152,7 +152,7 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 	infoPtr->szTipText[0] = L'\0';
     }
 
-    TRACE("\"%s\"\n", debugstr_w(infoPtr->szTipText));
+    TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 }
 
 
@@ -170,7 +170,7 @@ TOOLTIPS_CalcTipSize (HWND hwnd, TOOLTIPS_INFO *infoPtr, LPSIZE lpSize)
     }
     if (GetWindowLongA (hwnd, GWL_STYLE) & TTS_NOPREFIX)
 	uFlags |= DT_NOPREFIX;
-    TRACE("\"%s\"\n", debugstr_w(infoPtr->szTipText));
+    TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     hdc = GetDC (hwnd);
     hOldFont = SelectObject (hdc, infoPtr->hFont);
@@ -219,7 +219,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     SendMessageA (toolPtr->hwnd, WM_NOTIFY,
 		    (WPARAM)toolPtr->uId, (LPARAM)&hdr);
 
-    TRACE("\"%s\"\n", debugstr_w(infoPtr->szTipText));
+    TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
     TRACE("size %d - %d\n", size.cx, size.cy);
@@ -340,7 +340,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     SendMessageA (toolPtr->hwnd, WM_NOTIFY,
 		    (WPARAM)toolPtr->uId, (LPARAM)&hdr);
 
-    TRACE("\"%s\"\n", debugstr_w(infoPtr->szTipText));
+    TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
     TRACE("size %d - %d\n", size.cx, size.cy);
@@ -728,7 +728,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 	else {
 	    INT len = lstrlenW (lpToolInfo->lpszText);
-	    TRACE("add text \"%s\"!\n",
+	    TRACE("add text %s!\n",
 		   debugstr_w(lpToolInfo->lpszText));
 	    toolPtr->lpszText =	COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
 	    lstrcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
