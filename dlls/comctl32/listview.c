@@ -2167,7 +2167,7 @@ static void LISTVIEW_GetAreaRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
 	for (i = 0; i < infoPtr->nItemCount; i++)
 	{
 	    x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, i);
-	    y = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, i);
+           y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, i);
 	    lprcView->right = max(lprcView->right, x);
 	    lprcView->bottom = max(lprcView->bottom, y);
 	}
@@ -5426,6 +5426,7 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
     UINT uMask = 0;
     LVFINDINFOW lvFindInfo;
     INT nCountPerColumn;
+    INT nCountPerRow;
     INT i;
 
     TRACE("nItem=%d, uFlags=%x, nItemCount=%d\n", nItem, uFlags, infoPtr->nItemCount);
@@ -5466,6 +5467,18 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
       }
       else
       {
+        /* Special case for autoarrange - move 'til the top of a list */
+        if (is_autoarrange(infoPtr))
+        {
+          nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
+          while (nItem - nCountPerRow >= 0)
+          {
+            nItem -= nCountPerRow;
+            if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
+              return nItem;
+          }
+          return -1;
+        }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_UP;
         ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
@@ -5489,6 +5502,18 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
       }
       else
       {
+        /* Special case for autoarrange - move 'til the bottom of a list */
+        if (is_autoarrange(infoPtr))
+        {
+          nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
+          while (nItem + nCountPerRow < infoPtr->nItemCount )
+          {
+            nItem += nCountPerRow;
+            if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
+              return nItem;
+          }
+          return -1;
+        }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_DOWN;
         ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
@@ -5513,6 +5538,18 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
       }
       else if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
       {
+        /* Special case for autoarrange - move 'ti the beginning of a row */
+        if (is_autoarrange(infoPtr))
+        {
+          nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
+          while (nItem % nCountPerRow > 0)
+          {
+            nItem --;
+            if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
+              return nItem;
+          }
+          return -1;
+        }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_LEFT;
         ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
@@ -5537,6 +5574,18 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
       }
       else if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
       {
+        /* Special case for autoarrange - move 'til the end of a row */
+        if (is_autoarrange(infoPtr))
+        {
+          nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
+          while (nItem % nCountPerRow < nCountPerRow - 1 )
+          {
+            nItem ++;
+            if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
+              return nItem;
+          }
+          return -1;
+        }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_RIGHT;
         ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
@@ -7403,7 +7452,7 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
         *  should be fixed in the future.
         */
         LISTVIEW_VScroll(infoPtr, SB_INTERNAL, (gcWheelDelta < 0) ?
-                LISTVIEW_SCROLL_ICON_LINE_SIZE : -LISTVIEW_SCROLL_ICON_LINE_SIZE, 0);
+                -LISTVIEW_SCROLL_ICON_LINE_SIZE : LISTVIEW_SCROLL_ICON_LINE_SIZE, 0);
         break;
 
     case LVS_REPORT:
