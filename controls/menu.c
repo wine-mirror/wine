@@ -4479,6 +4479,15 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOA *lpmii) 
 {
+    if ((lpmii->fType & (MF_HILITE|MF_POPUP)) || (lpmii->fState)) {
+	/* QuickTime does pass invalid data into SetMenuItemInfo. 
+	 * do some of the checks Windows does.
+	 */
+        WARN("Bad masks for type (0x%08x) or state (0x%08x)\n",
+             lpmii->fType,lpmii->fState );
+	return FALSE;
+    }
+
     return SetMenuItemInfo_common(MENU_FindItem(&hmenu, &item, bypos? MF_BYPOSITION : 0),
 				    (const MENUITEMINFOW *)lpmii, FALSE);
 }
