@@ -176,7 +176,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
     lfr->find = TRUE;
     if (FINDDLG_Get16BitsTemplate(lfr))
     {
-        hInst = GetWindowLongA( lfr->fr16->hwndOwner , GWL_HINSTANCE);
+        hInst = GetWindowLongA( HWND_32(lfr->fr16->hwndOwner), GWL_HINSTANCE);
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 13);
         ret = CreateDialogIndirectParam16( hInst, lfr->template,
                     lfr->fr16->hwndOwner, (DLGPROC16) ptr, find);
@@ -206,7 +206,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
     lfr->find = FALSE;
     if (FINDDLG_Get16BitsTemplate(lfr))
     {
-        hInst = GetWindowLongA( lfr->fr16->hwndOwner , GWL_HINSTANCE);
+        hInst = GetWindowLongA( HWND_32(lfr->fr16->hwndOwner), GWL_HINSTANCE);
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 14);
         ret = CreateDialogIndirectParam16( hInst, lfr->template,
                     lfr->fr16->hwndOwner, (DLGPROC16) ptr, find);
@@ -311,9 +311,10 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 /***********************************************************************
  *           FindTextDlgProc   (COMMDLG.13)
  */
-LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                  LPARAM lParam)
 {
+    HWND hWnd = HWND_32(hWnd16);
     LPFINDREPLACE16 lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -322,7 +323,7 @@ LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 		MapSL(lpfr->lpstrFindWhat), FALSE);
 	case WM_COMMAND:
 	    lpfr=MapSL(GetWindowLongA(hWnd, DWL_USER));
-	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
+	    return FINDDLG_WMCommand(hWnd, wParam, HWND_32(lpfr->hwndOwner),
 		&lpfr->Flags, MapSL(lpfr->lpstrFindWhat),
 		lpfr->wFindWhatLen, FALSE);
     }
@@ -467,9 +468,10 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 /***********************************************************************
  *           ReplaceTextDlgProc   (COMMDLG.14)
  */
-LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                     LPARAM lParam)
 {
+    HWND hWnd = HWND_32(hWnd16);
     LPFINDREPLACE16 lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -479,11 +481,10 @@ LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 		    MapSL(lpfr->lpstrReplaceWith), FALSE);
 	case WM_COMMAND:
 	    lpfr=MapSL(GetWindowLongA(hWnd, DWL_USER));
-	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
+	    return REPLACEDLG_WMCommand(hWnd, wParam, HWND_32(lpfr->hwndOwner),
 		    &lpfr->Flags, MapSL(lpfr->lpstrFindWhat),
 		    lpfr->wFindWhatLen, MapSL(lpfr->lpstrReplaceWith),
 		    lpfr->wReplaceWithLen, FALSE);
     }
     return FALSE;
 }
-

@@ -845,8 +845,9 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
            return FALSE;
        }
        ch32->lStructSize = sizeof(CHOOSECOLORW);
-       ch32->hwndOwner = ch16->hwndOwner;
-       ch32->hInstance = ch16->hInstance;
+       ch32->hwndOwner = HWND_32(ch16->hwndOwner);
+       /* Should be an HINSTANCE but MS made a typo */
+       ch32->hInstance = HWND_32(ch16->hInstance);
        ch32->lpCustColors = MapSL(ch16->lpCustColors);
        ch32->lpfnHook = (LPCCHOOKPROC) ch16->lpfnHook; /* only used as flag */
        ch32->Flags = ch16->Flags;
@@ -917,7 +918,8 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
    if (CC_HookCallChk(lpp->lpcc))
    {
       if (b16)
-          res = CallWindowProc16( (WNDPROC16)lpp->lpcc16->lpfnHook, hDlg, WM_INITDIALOG, wParam, lParam);
+          res = CallWindowProc16( (WNDPROC16)lpp->lpcc16->lpfnHook,
+				  HWND_16(hDlg), WM_INITDIALOG, wParam, lParam);
       else
           res = CallWindowProcA( (WNDPROC)lpp->lpcc->lpfnHook, hDlg, WM_INITDIALOG, wParam, lParam);
    }
@@ -1054,8 +1056,9 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
                    if (lpp->lpcc->hwndOwner)
 		       SendMessageA(lpp->lpcc->hwndOwner, i, 0, (LPARAM)lpp->lpcc16);
                    if ( CC_HookCallChk(lpp->lpcc))
-		       CallWindowProc16( (WNDPROC16) lpp->lpcc16->lpfnHook, hDlg,
-		          WM_COMMAND, psh15, (LPARAM)lpp->lpcc16);
+		       CallWindowProc16( (WNDPROC16) lpp->lpcc16->lpfnHook,
+					 HWND_16(hDlg), WM_COMMAND, psh15,
+					 (LPARAM)lpp->lpcc16);
                }
                else
                {
@@ -1299,10 +1302,12 @@ static LRESULT WINAPI ColorDlgProc( HWND hDlg, UINT message,
 /***********************************************************************
  *           ColorDlgProc   (COMMDLG.8)
  */
-LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
+LRESULT WINAPI ColorDlgProc16( HWND16 hDlg16, UINT16 message,
                             WPARAM16 wParam, LONG lParam )
 {
  int res;
+ HWND hDlg = HWND_32(hDlg16);
+
  LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
  if (message != WM_INITDIALOG)
  {
@@ -1310,7 +1315,7 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
      return FALSE;
   res=0;
   if (CC_HookCallChk(lpp->lpcc))
-     res = CallWindowProc16( (WNDPROC16)lpp->lpcc16->lpfnHook, hDlg, message, wParam, lParam);
+     res = CallWindowProc16( (WNDPROC16)lpp->lpcc16->lpfnHook, hDlg16, message, wParam, lParam);
   if (res)
      return res;
  }
@@ -1332,7 +1337,8 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
 	                SetWindowLongA(hDlg, DWL_USER, 0L); /* we don't need it anymore */
 	                break;
 	  case WM_COMMAND:
-	                if (CC_WMCommand(hDlg, wParam, lParam, HIWORD(lParam), (HWND)LOWORD(lParam)))
+	                if (CC_WMCommand(hDlg, wParam, lParam,
+					 HIWORD(lParam), HWND_32(LOWORD(lParam))))
 	                   return TRUE;
 	                break;
 	  case WM_PAINT:
@@ -1432,7 +1438,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
     }
 
     ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 8);
-    hInst = GetWindowLongA(lpChCol->hwndOwner, GWL_HINSTANCE);
+    hInst = GetWindowLongA(HWND_32(lpChCol->hwndOwner), GWL_HINSTANCE);
     bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChCol->hwndOwner,
                      (DLGPROC16) ptr, (DWORD)lpChCol);
     if (hResource16) FreeResource16(hDlgTmpl16);

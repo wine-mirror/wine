@@ -3314,7 +3314,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
  */
 INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
 {
-    return (INT16)WSAAsyncSelect( s, hWnd, wMsg, lEvent );
+    return (INT16)WSAAsyncSelect( s, HWND_32(hWnd), wMsg, lEvent );
 }
 
 /***********************************************************************

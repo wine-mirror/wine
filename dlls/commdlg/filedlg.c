@@ -297,7 +297,7 @@ static BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
     if (lfs->ofn16)
     {
         return (BOOL16) CallWindowProc16(
-          (WNDPROC16)lfs->ofn16->lpfnHook, lfs->hwnd,
+          (WNDPROC16)lfs->ofn16->lpfnHook, HWND_16(lfs->hwnd),
           (UINT16)wMsg, (WPARAM16)wParam, lParam);
     }
     if (lfs->ofnA)
@@ -1042,7 +1042,7 @@ void FILEDLG_MapDrawItemStruct(LPDRAWITEMSTRUCT16 lpdis16, LPDRAWITEMSTRUCT lpdi
     lpdis->itemID = lpdis16->itemID;
     lpdis->itemAction = lpdis16->itemAction;
     lpdis->itemState = lpdis16->itemState;
-    lpdis->hwndItem = lpdis16->hwndItem;
+    lpdis->hwndItem = HWND_32(lpdis16->hwndItem);
     lpdis->hDC = lpdis16->hDC;
     lpdis->rcItem.right = lpdis16->rcItem.right;
     lpdis->rcItem.left = lpdis16->rcItem.left;
@@ -1145,7 +1145,7 @@ void FILEDLG_MapOfnStruct16(LPOPENFILENAME16 ofn16, LPOPENFILENAMEW ofnW, BOOL o
     /* first convert to linear pointers */
     memset(&ofnA, 0, sizeof(OPENFILENAMEA));
     ofnA.lStructSize = sizeof(OPENFILENAMEA);
-    ofnA.hwndOwner = ofn16->hwndOwner;
+    ofnA.hwndOwner = HWND_32(ofn16->hwndOwner);
     ofnA.hInstance = ofn16->hInstance;
     if (ofn16->lpstrFilter)
         ofnA.lpstrFilter = MapSL(ofn16->lpstrFilter);
@@ -1343,9 +1343,10 @@ BOOL WINAPI GetFileName31W(
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {
+    HWND hWnd = HWND_32(hWnd16);
     LFSPRIVATE lfs = (LFSPRIVATE)GetPropA(hWnd,OFN_PROP);
     DRAWITEMSTRUCT dis;
 
@@ -1362,7 +1363,7 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
         return FILEDLG_WMInitDialog(hWnd, wParam, lParam);
 
     case WM_MEASUREITEM:
-        return FILEDLG_WMMeasureItem16(hWnd, wParam, lParam);
+        return FILEDLG_WMMeasureItem16(hWnd16, wParam, lParam);
 
     case WM_DRAWITEM:
         FILEDLG_MapDrawItemStruct(MapSL(lParam), &dis);
@@ -1391,9 +1392,10 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {
+ HWND hWnd = HWND_32(hWnd16);
  LFSPRIVATE lfs = (LFSPRIVATE)GetPropA(hWnd,OFN_PROP);
  DRAWITEMSTRUCT dis;
 
@@ -1410,7 +1412,7 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
       return FILEDLG_WMInitDialog(hWnd, wParam, lParam);
 
    case WM_MEASUREITEM:
-      return FILEDLG_WMMeasureItem16(hWnd, wParam, lParam);
+      return FILEDLG_WMMeasureItem16(hWnd16, wParam, lParam);
 
    case WM_DRAWITEM:
       FILEDLG_MapDrawItemStruct(MapSL(lParam), &dis);
@@ -1515,7 +1517,7 @@ BOOL16 WINAPI GetOpenFileName16(
     lfs = FILEDLG_AllocPrivate((LPARAM) ofn, LFS16, OPEN_DIALOG);
     if (lfs)
     {
-        hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
+        hInst = GetWindowLongA( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 6);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
              (DLGPROC16) ptr, (DWORD) lfs);
@@ -1553,7 +1555,7 @@ BOOL16 WINAPI GetSaveFileName16(
     lfs = FILEDLG_AllocPrivate((LPARAM) ofn, LFS16, SAVE_DIALOG);
     if (lfs)
     {
-        hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
+        hInst = GetWindowLongA( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 7);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
              (DLGPROC16) ptr, (DWORD) lfs);

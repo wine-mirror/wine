@@ -1726,7 +1726,7 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 
 	    memcpy(&pdlg,PrintStructures->dlg.lpPrintDlg16,sizeof(pdlg));
 	    pdlg.Flags |= PD_PRINTSETUP;
-	    pdlg.hwndOwner = hDlg;
+	    pdlg.hwndOwner = HWND_16(hDlg);
 	    if (!PrintDlg16(&pdlg))
 		break;
 	}
@@ -2660,7 +2660,7 @@ BOOL16 WINAPI PrintDlg16(
 ) {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
+    HINSTANCE hInst = GetWindowLongA( HWND_32(lppd->hwndOwner), GWL_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
@@ -2743,7 +2743,9 @@ BOOL16 WINAPI PrintDlg16(
 	PrintStructures->dlg.lpPrintDlg = (LPPRINTDLGA)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(PRINTDLGA));
 #define CVAL(x)	PrintStructures->dlg.lpPrintDlg->x = lppd->x;
 #define MVAL(x)	PrintStructures->dlg.lpPrintDlg->x = MapSL(lppd->x);
-	CVAL(Flags);CVAL(hwndOwner);CVAL(hDC);
+	CVAL(Flags);
+	PrintStructures->dlg.lpPrintDlg->hwndOwner = HWND_32(lppd->hwndOwner);
+	CVAL(hDC);
 	CVAL(nFromPage);CVAL(nToPage);CVAL(nMinPage);CVAL(nMaxPage);
 	CVAL(nCopies);CVAL(hInstance);CVAL(lCustData);
 	MVAL(lpPrintTemplateName);MVAL(lpSetupTemplateName);
@@ -3459,9 +3461,10 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
+LRESULT WINAPI PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam,
                             LPARAM lParam)
 {
+    HWND hDlg = HWND_32(hDlg16);
     PRINT_PTRA* PrintStructures;
     LRESULT res=FALSE;
 
@@ -3477,7 +3480,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
 	if(PrintStructures->dlg.lpPrintDlg16->Flags & PD_ENABLEPRINTHOOK) {
 	    res = CallWindowProc16(
 		(WNDPROC16)PrintStructures->dlg.lpPrintDlg16->lpfnPrintHook,
-		hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg16
+		hDlg16, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg16
 	    );
 	}
 	return res;
@@ -3486,7 +3489,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
     if(PrintStructures->dlg.lpPrintDlg16->Flags & PD_ENABLEPRINTHOOK) {
         res = CallWindowProc16(
 		(WNDPROC16)PrintStructures->dlg.lpPrintDlg16->lpfnPrintHook,
-		hDlg,uMsg, wParam, lParam
+		hDlg16,uMsg, wParam, lParam
 	);
 	if(LOWORD(res)) return res;
     }
@@ -3517,9 +3520,10 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
 				   LPARAM lParam)
 {
+  HWND hWnd = HWND_32(hWnd16);
   switch (wMsg)
     {
     case WM_INITDIALOG:

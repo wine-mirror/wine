@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+#define HWND_16(h32)		(LOWORD(h32))
+#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 /************************************************************************
  *
@@ -325,7 +327,7 @@ fwMode);
     psh.dwSize = sizeof(psh);
     psh.pszCaption = SetupW;
     psh.nPages = 1;
-    psh.hwndParent = hwnd;
+    psh.hwndParent = HWND_32(hwnd);
     psh.u3.phpage = hpsp;
 
     pPropertySheet(&psh);
@@ -351,8 +353,8 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 			LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
 			LPSTR lpszProfile, DWORD dwMode)
 {
-    return PSDRV_ExtDeviceMode16(hwnd, 0, lpdmOutput, lpszDevice, lpszPort,
-				 lpdmInput, lpszProfile, dwMode);
+    return PSDRV_ExtDeviceMode16(HWND_16(hwnd), 0, lpdmOutput, lpszDevice,
+				 lpszPort, lpdmInput, lpszProfile, dwMode);
 }
 
 /***********************************************************************

@@ -70,7 +70,7 @@ static void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
 static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 {
   chf32a->lStructSize=sizeof(CHOOSEFONTA);
-  chf32a->hwndOwner=chf16->hwndOwner;
+  chf32a->hwndOwner=HWND_32(chf16->hwndOwner);
   chf32a->hDC=chf16->hDC;
   chf32a->iPointSize=chf16->iPointSize;
   chf32a->Flags=chf16->Flags;
@@ -223,7 +223,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     lpChFont->lpTemplateName=(SEGPTR)&cf32a;
 
     ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 16);
-    hInst = GetWindowLongA(lpChFont->hwndOwner, GWL_HINSTANCE);
+    hInst = GetWindowLongA(HWND_32(lpChFont->hwndOwner), GWL_HINSTANCE);
     bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChFont->hwndOwner,
                      (DLGPROC16) ptr, (DWORD)lpChFont);
     if (hResource16) FreeResource16(hDlgTmpl16);
@@ -536,7 +536,7 @@ static INT WINAPI FontFamilyEnumProc(const LOGFONTA *lpLogFont,
 INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                    UINT16 nFontType, LPARAM lParam )
 {
-  HWND16 hwnd=LOWORD(lParam);
+  HWND hwnd=HWND_32(LOWORD(lParam));
   HWND hDlg=GetParent(hwnd);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);
   LOGFONT16 *lplf = MapSL( logfont );
@@ -667,8 +667,8 @@ static INT AddFontStyle(const LOGFONTA *lplf, UINT nFontType,
 INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                   UINT16 nFontType, LPARAM lParam )
 {
-  HWND16 hcmb2=LOWORD(lParam);
-  HWND16 hcmb3=HIWORD(lParam);
+  HWND hcmb2=HWND_32(LOWORD(lParam));
+  HWND hcmb3=HWND_32(HIWORD(lParam));
   HWND hDlg=GetParent(hcmb3);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);
   LOGFONT16 *lplf = MapSL(logfont);
@@ -782,7 +782,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
       {
         SendDlgItemMessageA(hDlg, cmb1, CB_SETCURSEL, j, 0);
 	SendMessageA(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
-                       GetDlgItem(hDlg,cmb1));
+                     (LPARAM)GetDlgItem(hDlg,cmb1));
         init=1;
         /* look for fitting font style in combobox2 */
         l=MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:FW_NORMAL,lpxx->lfItalic !=0);
@@ -805,7 +805,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     {
       SendDlgItemMessageA(hDlg,cmb1,CB_SETCURSEL,0,0);
       SendMessageA(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
-                       GetDlgItem(hDlg,cmb1));
+                   (LPARAM)GetDlgItem(hDlg,cmb1));
     }
     if (lpcf->Flags & CF_USESTYLE && lpcf->lpszStyle)
     {
@@ -814,7 +814,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
       {
         j=SendDlgItemMessageA(hDlg,cmb2,CB_SETCURSEL,j,0);
         SendMessageA(hDlg,WM_COMMAND,cmb2,
-                       MAKELONG(GetDlgItem(hDlg,cmb2),CBN_SELCHANGE));
+                       MAKELONG(HWND_16(GetDlgItem(hDlg,cmb2)),CBN_SELCHANGE));
       }
     }
   }
@@ -957,7 +957,7 @@ static LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
                              LPCHOOSEFONTA lpcf)
 {
   if (lpcf->Flags & CF_EFFECTS)
-   if (GetDlgCtrlID(lParam)==stc6)
+   if (GetDlgCtrlID(HWND_32(LOWORD(lParam)))==stc6)
    {
      SetTextColor((HDC)wParam, lpcf->rgbColors);
      return GetStockObject(WHITE_BRUSH);
@@ -1118,9 +1118,10 @@ static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     2. some CF_.. flags are not supported
                     3. some TType extensions
  */
-LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
-                                   LPARAM lParam)
+LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
+				   WPARAM16 wParam, LPARAM lParam)
 {
+  HWND hDlg = HWND_32(hDlg16);
   LPCHOOSEFONT16 lpcf;
   LPCHOOSEFONTA lpcf32a;
   LRESULT res=0;
@@ -1130,7 +1131,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
    if (!lpcf)
       return FALSE;
    if (CFn_HookCallChk(lpcf))
-     res=CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg,message,wParam,lParam);
+     res=CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,message,wParam,lParam);
    if (res)
     return res;
   }
@@ -1144,7 +1145,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
       return FALSE;
     }
     if (CFn_HookCallChk(lpcf))
-      return CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      return CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,WM_INITDIALOG,wParam,lParam);
   }
   lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
   switch (message)
@@ -1173,7 +1174,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
             dis.itemID     = dis16->itemID;
             dis.itemAction = dis16->itemAction;
             dis.itemState  = dis16->itemState;
-            dis.hwndItem   = dis16->hwndItem;
+            dis.hwndItem   = HWND_32(dis16->hwndItem);
             dis.hDC        = dis16->hDC;
             dis.itemData   = dis16->itemData;
             CONV_RECT16TO32( &dis16->rcItem, &dis.rcItem );
@@ -1182,7 +1183,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
         break;
     case WM_CTLCOLOR:
         if (HIWORD(lParam) == CTLCOLOR_STATIC)
-            res=CFn_WMCtlColorStatic(hDlg, (HDC)wParam, (HWND)LOWORD(lParam), lpcf32a);
+            res=CFn_WMCtlColorStatic(hDlg, (HDC)wParam, LOWORD(lParam), lpcf32a);
         break;
     case WM_COMMAND:
         res=CFn_WMCommand(hDlg, MAKEWPARAM( wParam, HIWORD(lParam) ), LOWORD(lParam), lpcf32a);
