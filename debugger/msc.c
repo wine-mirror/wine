@@ -27,7 +27,6 @@
 #include "neexe.h"
 #include "file.h"
 
-
 typedef struct
 {
     DWORD  from;
@@ -35,7 +34,7 @@ typedef struct
 
 } OMAP_DATA;
 
-typedef struct 
+typedef struct tagMSC_DBG_INFO
 {
     int			  nsect;
     PIMAGE_SECTION_HEADER sectp;
@@ -44,10 +43,6 @@ typedef struct
     OMAP_DATA *           omapp;
 
 } MSC_DBG_INFO;
-
-#define	MSC_INFO(module)	((MSC_DBG_INFO*)((module)->extra_info))
-
-
 
 /*========================================================================
  * Debug file access helper routines
@@ -209,7 +204,7 @@ static void DEBUG_AddCoffSymbol( struct CoffFile* coff_file, struct name_hash* s
    coff_file->entries[coff_file->neps++] = sym;
 }
 
-static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
+static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 {
   PIMAGE_AUX_SYMBOL		aux;
   PIMAGE_COFF_SYMBOLS_HEADER	coff;
@@ -227,7 +222,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
   const char	     	      * nampnt;
   int		       		naux;
   DBG_VALUE	       		new_value;
-  int		       		rtn = FALSE;
+  enum DbgInfoLoad		dil = DIL_ERROR;
 
   DEBUG_Printf(DBG_CHN_TRACE, "Processing COFF symbols...\n");
 
@@ -344,7 +339,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  && (naux == 0)
 	  && (coff_sym->SectionNumber == 1) )
 	{
-	  DWORD	base = MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
+	  DWORD	base = module->msc_info->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
 	  /*
 	   * This is a normal static function when naux == 0.
 	   * Just register it.  The current file is the correct
@@ -373,7 +368,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
           && (coff_sym->SectionNumber > 0) )
 	{
 	  const char* this_file = NULL;
-	  DWORD	base = MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
+	  DWORD	base = module->msc_info->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
 	  nampnt = DEBUG_GetCoffName( coff_sym, coff_strtab );
 
 	  new_value.addr.seg = 0;
@@ -411,7 +406,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
       if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
           && (coff_sym->SectionNumber > 0) )
 	{
-	  DWORD	base = MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
+	  DWORD	base = module->msc_info->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
 	  /*
 	   * Similar to above, but for the case of data symbols.
 	   * These aren't treated as entrypoints.
@@ -517,7 +512,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	}
     }
 
-  rtn = TRUE;
+  dil = DIL_LOADED;
 
   if( coff_files.files != NULL )
     {
@@ -531,7 +526,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
       DBG_free(coff_files.files);
     }
 
-  return (rtn);
+  return dil;
 
 }
 
@@ -2030,8 +2025,8 @@ union codeview_symbol
 static unsigned int 
 DEBUG_MapCVOffset( DBG_MODULE *module, unsigned int offset )
 {
-    int        nomap = MSC_INFO(module)->nomap;
-    OMAP_DATA *omapp = MSC_INFO(module)->omapp;
+    int        nomap = module->msc_info->nomap;
+    OMAP_DATA *omapp = module->msc_info->omapp;
     int i;
 
     if ( !nomap || !omapp )
@@ -2050,8 +2045,8 @@ DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
                    int type, int seg, int offset, int size, int cookie, int flags, 
                    struct codeview_linetab_hdr *linetab )
 {
-    int			  nsect = MSC_INFO(module)->nsect;
-    PIMAGE_SECTION_HEADER sectp = MSC_INFO(module)->sectp;
+    int			  nsect = module->msc_info->nsect;
+    PIMAGE_SECTION_HEADER sectp = module->msc_info->sectp;
 
     struct name_hash *symbol;
     char symname[PATH_MAX];
@@ -2529,8 +2524,10 @@ static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols,
     }
 }
 
-static int DEBUG_ProcessPDBFile( DBG_MODULE *module, const char *filename, DWORD timestamp )
+static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module, 
+					      const char *filename, DWORD timestamp )
 {
+    enum DbgInfoLoad dil = DIL_ERROR;
     HANDLE hFile, hMap;
     char *image = NULL;
     PDB_HEADER *pdb = NULL;
@@ -2690,6 +2687,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE *module, const char *filename, DWORD
         file = (char *)( (DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3 );
     }
     
+    dil = DIL_LOADED;
 
  leave:    
 
@@ -2706,7 +2704,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE *module, const char *filename, DWORD
 
     DEBUG_UnmapDebugInfoFile(hFile, hMap, image);
 
-    return TRUE;
+    return dil;
 }
 
 
@@ -2759,10 +2757,10 @@ typedef struct _CV_DIRECTORY_ENTRY
 #define	sstSrcModule		0x127
 
 
-static BOOL DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
+static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
 {
     PCODEVIEW_HEADER cv = (PCODEVIEW_HEADER)root;
-    BOOL retv = FALSE;
+    enum DbgInfoLoad dil = DIL_ERROR;
  
     switch ( cv->dwSignature )
     {
@@ -2806,7 +2804,7 @@ static BOOL DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
             }
         }
 
-        retv = TRUE;
+        dil = DIL_LOADED;
         break;
     }
  
@@ -2814,7 +2812,7 @@ static BOOL DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
     {
         PCODEVIEW_PDB_DATA pdb = (PCODEVIEW_PDB_DATA)(cv + 1);
 
-        retv = DEBUG_ProcessPDBFile( module, pdb->name, pdb->timestamp );
+        dil = DEBUG_ProcessPDBFile( module, pdb->name, pdb->timestamp );
         break;
     }
  
@@ -2824,51 +2822,81 @@ static BOOL DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
         break;
     }
 
-    return retv;
+    return dil;
 }
 
 
 /*========================================================================
  * Process debug directory.
  */
-static BOOL DEBUG_ProcessDebugDirectory( DBG_MODULE *module, LPBYTE file_map,
-                                         PIMAGE_DEBUG_DIRECTORY dbg, int nDbg )
+static enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module, 
+						     LPBYTE file_map,
+						     PIMAGE_DEBUG_DIRECTORY dbg, 
+						     int nDbg )
 {
-    BOOL retv = FALSE;
+    enum DbgInfoLoad dil = DIL_ERROR;
     int i;
 
     /* First, watch out for OMAP data */
     for ( i = 0; i < nDbg; i++ )
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC )
         {
-            MSC_INFO(module)->nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
-            MSC_INFO(module)->omapp = (OMAP_DATA *)(file_map + dbg[i].PointerToRawData);
+            module->msc_info->nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
+            module->msc_info->omapp = (OMAP_DATA *)(file_map + dbg[i].PointerToRawData);
             break;
         }
 
 
     /* Now, try to parse CodeView debug info */
-    for ( i = 0; !retv && i < nDbg; i++ )
+    for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW )
-            retv = DEBUG_ProcessCodeView( module, file_map + dbg[i].PointerToRawData );
+            dil = DEBUG_ProcessCodeView( module, file_map + dbg[i].PointerToRawData );
 
 
     /* If not found, try to parse COFF debug info */
-    for ( i = 0; !retv && i < nDbg; i++ )
+    for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_COFF )
-            retv = DEBUG_ProcessCoff( module, file_map + dbg[i].PointerToRawData );
+            dil = DEBUG_ProcessCoff( module, file_map + dbg[i].PointerToRawData );
 
+#if 0
+	 /* FIXME: this should be supported... this is the debug information for
+	  * functions compiled without a frame pointer (FPO = frame pointer omission)
+	  * the associated data helps finding out the relevant information
+	  */
+    for ( i = 0; i < nDbg; i++ )
+        if ( dbg[i].Type == IMAGE_DEBUG_TYPE_FPO )
+			  DEBUG_Printf(DBG_CHN_MESG, "This guy has FPO information\n");
 
-    return retv;
+#define FRAME_FPO   0
+#define FRAME_TRAP  1
+#define FRAME_TSS   2
+
+typedef struct _FPO_DATA {
+	DWORD       ulOffStart;            /* offset 1st byte of function code */
+	DWORD       cbProcSize;            /* # bytes in function */
+	DWORD       cdwLocals;             /* # bytes in locals/4 */
+	WORD        cdwParams;             /* # bytes in params/4 */
+
+	WORD        cbProlog : 8;          /* # bytes in prolog */
+	WORD        cbRegs   : 3;          /* # regs saved */
+	WORD        fHasSEH  : 1;          /* TRUE if SEH in func */
+	WORD        fUseBP   : 1;          /* TRUE if EBP has been allocated */
+	WORD        reserved : 1;          /* reserved for future use */
+	WORD        cbFrame  : 2;          /* frame type */
+} FPO_DATA;
+#endif
+
+    return dil;
 }
 
 
 /*========================================================================
  * Process DBG file.
  */
-static BOOL DEBUG_ProcessDBGFile( DBG_MODULE *module, const char *filename, DWORD timestamp )
+static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module, 
+					      const char *filename, DWORD timestamp )
 {
-    BOOL retv = FALSE;
+    enum DbgInfoLoad dil = DIL_ERROR;
     HANDLE hFile = 0, hMap = 0;
     LPBYTE file_map = NULL;
     PIMAGE_SEPARATE_DEBUG_HEADER hdr;
@@ -2905,22 +2933,22 @@ static BOOL DEBUG_ProcessDBGFile( DBG_MODULE *module, const char *filename, DWOR
 
     nDbg = hdr->DebugDirectorySize / sizeof(*dbg);
 
-    retv = DEBUG_ProcessDebugDirectory( module, file_map, dbg, nDbg );
+    dil = DEBUG_ProcessDebugDirectory( module, file_map, dbg, nDbg );
 
 
  leave:
     DEBUG_UnmapDebugInfoFile( hFile, hMap, file_map );
-    return retv;
+    return dil;
 }
 
 
 /*========================================================================
  * Process MSC debug information in PE file.
  */
-int DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile, 
-                                void *_nth, unsigned long nth_ofs )
+enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile, 
+					     void *_nth, unsigned long nth_ofs )
 {
-    BOOL                   retv = FALSE;
+    enum DbgInfoLoad	   dil = DIL_ERROR;
     PIMAGE_NT_HEADERS      nth = (PIMAGE_NT_HEADERS)_nth;
     PIMAGE_DATA_DIRECTORY  dir = nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
     PIMAGE_DEBUG_DIRECTORY dbg = NULL;
@@ -2932,7 +2960,7 @@ int DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
 
     /* Read in section data */
 
-    MSC_INFO(module) = &extra_info;
+    module->msc_info = &extra_info;
     extra_info.nsect = nth->FileHeader.NumberOfSections;
     extra_info.sectp = DBG_alloc( extra_info.nsect * sizeof(IMAGE_SECTION_HEADER) );
     if ( !extra_info.sectp )
@@ -2982,24 +3010,23 @@ int DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
             goto leave;
         }
 
-        retv = DEBUG_ProcessDBGFile( module, misc->Data, nth->FileHeader.TimeDateStamp );
+        dil = DEBUG_ProcessDBGFile( module, misc->Data, nth->FileHeader.TimeDateStamp );
     }
     else
     {
         /* Debug info is embedded into PE module */
 
-        retv = DEBUG_ProcessDebugDirectory( module, file_map, dbg, nDbg );
+        dil = DEBUG_ProcessDebugDirectory( module, file_map, dbg, nDbg );
     }
 
 
  leave:
-    module->status = retv ? DM_STATUS_LOADED : DM_STATUS_ERROR;
-    MSC_INFO(module) = NULL;
+    module->msc_info = NULL;
 
     DEBUG_UnmapDebugInfoFile( 0, hMap, file_map );
     if ( extra_info.sectp ) DBG_free( extra_info.sectp );
     if ( dbg ) DBG_free( dbg );
-    return retv;
+    return dil;
 }
 
 
@@ -3007,14 +3034,15 @@ int DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
  * look for stabs information in PE header (it's how mingw compiler provides its
  * debugging information), and also wine PE <-> ELF linking thru .wsolnk sections
  */
-int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth, 
-				 unsigned long nth_ofs)
+enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, 
+					      void* _nth, unsigned long nth_ofs)
 {
     IMAGE_SECTION_HEADER	pe_seg;
     unsigned long		pe_seg_ofs;
     int 		      	i, stabsize = 0, stabstrsize = 0;
     unsigned int 		stabs = 0, stabstr = 0;
     PIMAGE_NT_HEADERS		nth = (PIMAGE_NT_HEADERS)_nth;
+    enum DbgInfoLoad		dil = DIL_ERROR;
 
     pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
 	nth->FileHeader.SizeOfOptionalHeader;
@@ -3040,7 +3068,7 @@ int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth,
 	  if (DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabs, s1, stabsize) &&
 	      DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabstr, 
 				     s1 + stabsize, stabstrsize)) {
-	     DEBUG_ParseStabs(s1, 0, 0, stabsize, stabsize, stabstrsize);
+	     dil = DEBUG_ParseStabs(s1, 0, 0, stabsize, stabsize, stabstrsize);
 	  } else {
 	     DEBUG_Printf(DBG_CHN_MESG, "couldn't read data block\n");
 	  }
@@ -3049,7 +3077,9 @@ int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth,
 	  DEBUG_Printf(DBG_CHN_MESG, "couldn't alloc %d bytes\n", 
 		       stabsize + stabstrsize);
        }
+    } else {
+       dil = DIL_NOINFO;
     }
-    return TRUE;
+    return dil;
 }
 

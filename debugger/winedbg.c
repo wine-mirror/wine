@@ -145,6 +145,7 @@ static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
     p->num_threads = 0;
     p->continue_on_first_exception = FALSE;
     p->modules = NULL;
+    p->num_modules = 0;
     p->next_index = 0;
     p->dbg_hdr_addr = 0;
 

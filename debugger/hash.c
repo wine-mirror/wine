@@ -203,7 +203,6 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, const char * source,
 			 name, nh->value.addr.seg, nh->value.addr.off, value->addr.seg, value->addr.off);
 #endif
  	    nh->value.addr = value->addr;
-
  	    if( nh->value.type == NULL && value->type != NULL )
             {
  		nh->value.type = value->type;
@@ -345,7 +344,6 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
 BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
 			   DBG_VALUE *value, int bp_flag )
 {
-    char buffer[256];
     struct name_hash *nh;
 
     for(nh = name_hash_table[name_hash(name)]; nh; nh = nh->next)
@@ -360,6 +358,9 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 
     if (!nh && (name[0] != '_'))
     {
+        char buffer[256];
+	
+	assert(strlen(name) < sizeof(buffer) - 2); /* one for '_', one for '\0' */
         buffer[0] = '_';
         strcpy(buffer+1, name);
         for(nh = name_hash_table[name_hash(buffer)]; nh; nh = nh->next)
@@ -393,7 +394,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
  *
  * Get the address of a named symbol.
  */
-BOOL DEBUG_GetLineNumberAddr( struct name_hash * nh, const int lineno, 
+BOOL DEBUG_GetLineNumberAddr( const struct name_hash * nh, const int lineno, 
 			      DBG_ADDR *addr, int bp_flag )
 {
     int i;

@@ -26,7 +26,8 @@
 #define SYM_TRAMPOLINE	 0x10
 #define SYM_STEP_THROUGH 0x20
 
-enum	debug_type {DT_BASIC, DT_CONST, DT_POINTER, DT_ARRAY, DT_STRUCT, DT_ENUM, DT_TYPEDEF, DT_FUNC, DT_BITFIELD};
+enum	debug_type {DT_BASIC, DT_CONST, DT_POINTER, DT_ARRAY, DT_STRUCT, DT_ENUM, 
+		    DT_TYPEDEF, DT_FUNC, DT_BITFIELD};
 
 
 /*
@@ -170,7 +171,8 @@ typedef struct tagDBG_PROCESS {
     DBG_THREAD*			threads;
     int				num_threads;
     unsigned			continue_on_first_exception;
-    struct tagDBG_MODULE*	modules;
+    struct tagDBG_MODULE**	modules;
+    int				num_modules;
     unsigned long		dbg_hdr_addr;
     /*
      * This is an index we use to keep track of the debug information
@@ -201,27 +203,21 @@ extern  CONTEXT		DEBUG_context;
 #define DEBUG_WRITE_MEM_VERBOSE(addr, buf, len) \
       (DEBUG_WRITE_MEM((addr), (buf), (len)) || (DEBUG_InvalLinAddr( addr ),0))
 
+enum DbgInfoLoad {DIL_DEFERRED, DIL_LOADED, DIL_NOINFO, DIL_ERROR};
+enum DbgModuleType {DMT_UNKNOWN, DMT_ELF, DMT_NE, DMT_PE};
+
 typedef struct tagDBG_MODULE {
-   struct tagDBG_MODULE*	next;
    void*			load_addr;
+   unsigned long		size;
    char*			module_name;
-   char				status;
-   char				type;
+   enum DbgInfoLoad		dil;
+   enum DbgModuleType		type;
+   unsigned char		main;
    short int			dbg_index;
    HMODULE                      handle;
-   void*			extra_info;
+   struct tagMSC_DBG_INFO*	msc_info;
+   struct tagELF_DBG_INFO*	elf_info;
 } DBG_MODULE;
-
-/* status field */
-#define DM_STATUS_NEW		0
-#define DM_STATUS_LOADED	1
-#define DM_STATUS_ERROR		2
-
-/* type field */
-#define DM_TYPE_UNKNOWN		0
-#define DM_TYPE_ELF		1
-#define DM_TYPE_NE		2
-#define DM_TYPE_PE		3
 
 typedef struct {
    DWORD		val;
@@ -246,7 +242,8 @@ extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
 extern BOOL DEBUG_HandleTrap(void);
-extern BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int * count );
+extern BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode,
+				  int * count );
 extern void DEBUG_SuspendExecution( void );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
 extern BOOL DEBUG_IsFctReturn(void);
@@ -322,7 +319,7 @@ extern int DEBUG_SetSymbolSize(struct name_hash * sym, unsigned int len);
 extern int DEBUG_SetSymbolBPOff(struct name_hash * sym, unsigned int len);
 extern int DEBUG_GetSymbolAddr(struct name_hash * sym, DBG_ADDR * addr);
 extern int DEBUG_cmp_sym(const void * p1, const void * p2);
-extern BOOL DEBUG_GetLineNumberAddr( struct name_hash *, const int lineno, 
+extern BOOL DEBUG_GetLineNumberAddr( const struct name_hash *, const int lineno, 
 				     DBG_ADDR *addr, int bp_flag );
 
 extern int DEBUG_SetLocalSymbolType(struct wine_locals * sym, 
@@ -331,7 +328,8 @@ extern BOOL DEBUG_Normalize(struct name_hash * nh );
 
   /* debugger/info.c */
 extern void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format );
-extern struct symbol_info DEBUG_PrintAddress( const DBG_ADDR *addr, enum dbg_mode mode, int flag );
+extern struct symbol_info DEBUG_PrintAddress( const DBG_ADDR *addr, 
+					      enum dbg_mode mode, int flag );
 extern void DEBUG_Help(void);
 extern void DEBUG_HelpInfo(void);
 extern struct symbol_info DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, 
@@ -370,18 +368,27 @@ extern int  DEBUG_IsSelectorSystem( WORD sel );
   /* debugger/module.c */
 extern int  DEBUG_LoadEntryPoints( const char * prefix );
 extern void DEBUG_LoadModule32( const char* name, HANDLE hFile, DWORD base );
-extern DBG_MODULE* DEBUG_AddModule(const char* name, int type, 
-				   void* mod_addr, HMODULE hmod);
-extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, int type);
-extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, int type);
+extern DBG_MODULE* DEBUG_AddModule(const char* name, enum DbgModuleType type, 
+				   void* mod_addr, u_long size, HMODULE hmod);
+extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, enum DbgModuleType type);
+extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_GetProcessMainModule(DBG_PROCESS* process);
-extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, const char* name);
-extern DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, const char* name);
+extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, u_long size, 
+					  const char* name);
+extern DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, u_long size, 
+					   const char* name);
+extern enum DbgInfoLoad DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
+						  void* _nth, unsigned long nth_ofs);
+extern void DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx, 
+			    const char* filename, DWORD load_addr);
 extern void DEBUG_InfoShare(void);
 
   /* debugger/msc.c */
-extern int DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, HANDLE hFile, void* nth, unsigned long nth_ofs);
-extern int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* nth, unsigned long nth_ofs);
+extern enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, HANDLE hFile, 
+						   void* nth, unsigned long nth_ofs);
+extern enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, 
+						     HANDLE hFile, void* nth, 
+						     unsigned long nth_ofs);
 extern void DEBUG_InitCVDataTypes(void);
 
   /* debugger/registers.c */
@@ -407,16 +414,18 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 				  unsigned int * ebp);
 
   /* debugger/stabs.c */
-extern int DEBUG_ReadExecutableDbgInfo(const char* exe_name);
-extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, 
-			    int stablen, unsigned int strtaboff, int strtablen);
+extern enum DbgInfoLoad DEBUG_ReadExecutableDbgInfo(const char* exe_name);
+extern enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset, 
+					 unsigned int staboff, int stablen, 
+					 unsigned int strtaboff, int strtablen);
 
   /* debugger/types.c */
 extern int DEBUG_nchar;
 extern void DEBUG_InitTypes(void);
 extern struct datatype * DEBUG_NewDataType(enum debug_type xtype, 
 					   const char * typename);
-extern unsigned int DEBUG_TypeDerefPointer(const DBG_VALUE *value, struct datatype ** newtype);
+extern unsigned int DEBUG_TypeDerefPointer(const DBG_VALUE *value, 
+					   struct datatype ** newtype);
 extern int DEBUG_AddStructElement(struct datatype * dt, 
 				  char * name, struct datatype * type, 
 				  int offset, int size);
@@ -429,7 +438,8 @@ extern unsigned int DEBUG_FindStructElement(DBG_VALUE * addr,
 					    const char * ele_name, int * tmpbuf);
 extern struct datatype * DEBUG_GetPointerType(struct datatype * dt);
 extern int DEBUG_GetObjectSize(struct datatype * dt);
-extern unsigned int DEBUG_ArrayIndex(const DBG_VALUE * addr, DBG_VALUE * result, int index);
+extern unsigned int DEBUG_ArrayIndex(const DBG_VALUE * addr, DBG_VALUE * result, 
+				     int index);
 extern struct datatype * DEBUG_FindOrMakePointerType(struct datatype * reftype);
 extern long long int DEBUG_GetExprValue(const DBG_VALUE * addr, char ** format);
 extern int DEBUG_SetBitfieldParams(struct datatype * dt, int offset, 

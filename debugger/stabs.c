@@ -1,4 +1,4 @@
-/* -*- tab-width: 8; c-basic-offset: 2 -*- */
+/* -*- tab-width: 8; c-basic-offset: 4 -*- */
 
 /*
  * File stabs.c - read stabs information from the wine executable itself.
@@ -73,6 +73,9 @@
 #define N_EXCL		0xc2
 #define N_RBRAC		0xe0
 
+typedef struct tagELF_DBG_INFO {
+    unsigned long	elf_addr;
+} ELF_DBG_INFO;
 
 struct stab_nlist {
   union {
@@ -767,10 +770,9 @@ DEBUG_ParseStabType(const char * stab)
   return *DEBUG_ReadTypeEnum(&c);
 }
 
-int
-DEBUG_ParseStabs(char * addr, unsigned int load_offset,
-                 unsigned int staboff, int stablen, 
-                 unsigned int strtaboff, int strtablen)
+enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
+				  unsigned int staboff, int stablen, 
+				  unsigned int strtaboff, int strtablen)
 {
   struct name_hash    * curr_func = NULL;
   struct wine_locals  * curr_loc = NULL;
@@ -979,8 +981,13 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 		   * all of the pages related to the stabs, and that
 		   * sucks up swap space like crazy.
 		   */
+#ifdef __ELF__
 		  curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
-					       SYM_WINE | SYM_FUNC | SYM_INVALID);
+					       SYM_WINE | SYM_FUNC | SYM_INVALID );
+#else
+		  curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
+					       SYM_WINE | SYM_FUNC );
+#endif
 		} 
 	      else
 		{
@@ -1069,7 +1076,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            */
           break;
         default:
-	  DEBUG_Printf(DBG_CHN_MESG, "Unkown stab type 0x%02x\n", stab_ptr->n_type);
+	  DEBUG_Printf(DBG_CHN_MESG, "Unknown stab type 0x%02x\n", stab_ptr->n_type);
           break;
         }
 
@@ -1088,7 +1095,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
   curr_types = NULL;
   allocated_types = 0;
 
-  return TRUE;
+  return DIL_LOADED;
 }
 
 #ifdef __ELF__
@@ -1102,10 +1109,9 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
  * This is all really quite easy, since we don't have to worry about line
  * numbers or local data variables.
  */
-static
-int
-DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
-		       Elf32_Shdr * symtab, Elf32_Shdr * strtab)
+static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr, 
+				  u_long load_addr, Elf32_Shdr* symtab, 
+				  Elf32_Shdr* strtab)
 {
   char		* curfile = NULL;
   struct name_hash * curr_sym = NULL;
@@ -1116,7 +1122,6 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
   char		* strp;
   char		* symname;
   Elf32_Sym	* symp;
-
 
   symp = (Elf32_Sym *) (addr + symtab->sh_offset);
   nsym = symtab->sh_size / sizeof(*symp);
@@ -1154,12 +1159,12 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
        * multiple local symbols by the same name.
        */
       if(    (DEBUG_GetSymbolValue(symname, -1, &new_value, FALSE ) == TRUE)
-	  && (new_value.addr.off == (load_offset + symp->st_value)) )
+	  && (new_value.addr.off == (load_addr + symp->st_value)) )
 	  continue;
 
       new_value.addr.seg = 0;
       new_value.type = NULL;
-      new_value.addr.off = load_offset + symp->st_value;
+      new_value.addr.off = load_addr + symp->st_value;
       new_value.cookie = DV_TARGET;
       flags = SYM_WINE | ((ELF32_ST_TYPE(symp->st_info) == STT_FUNC) 
 			  ? SYM_FUNC : SYM_DATA);
@@ -1189,179 +1194,279 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
  *	read or parsed)
  *	1 on success
  */
-static int DEBUG_ProcessElfFile(const char * filename, unsigned int load_offset)
+enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
 {
-  int			rtn = -1;
-  char		      * addr = (char*)0xffffffff;
-  int			fd = -1;
-  struct stat		statbuf;
-  Elf32_Ehdr	      * ehptr;
-  Elf32_Shdr	      * spnt;
-  char		      * shstrtab;
-  int			nsect;
-  int			i;
-  int			stabsect;
-  int			stabstrsect;
-  
-  /* check that the file exists, and that the module hasn't been loaded yet */
-  if (stat(filename, &statbuf) == -1) goto leave;
-  
-  /*
-   * Now open the file, so that we can mmap() it.
-   */
-  if ((fd = open(filename, O_RDONLY)) == -1) goto leave;
-  
-  rtn = 0;
-  /*
-   * Now mmap() the file.
-   */
-  addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (addr == (char*)0xffffffff) goto leave;
-  
-  /*
-   * Next, we need to find a few of the internal ELF headers within
-   * this thing.  We need the main executable header, and the section
-   * table.
-   */
-  ehptr = (Elf32_Ehdr *) addr;
-  
-  DEBUG_RegisterELFModule((load_offset == 0) ? ehptr->e_entry : load_offset, filename);
-  
-  spnt = (Elf32_Shdr *) (addr + ehptr->e_shoff);
-  nsect = ehptr->e_shnum;
-  shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
-  
-  stabsect = stabstrsect = -1;
-  
-  for (i = 0; i < nsect; i++) {
-    if (strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0)
-      stabsect = i;
+    enum DbgInfoLoad dil = DIL_ERROR;
+    char*	addr = (char*)0xffffffff;
+    int		fd = -1;
+    struct stat	statbuf;
+    Elf32_Ehdr* ehptr;
+    Elf32_Shdr* spnt;
+    char*	shstrtab;
+    int	       	i;
+    int		stabsect;
+    int		stabstrsect;
 
-    if (strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0)
-      stabstrsect = i;
-  }
+    if (module->type != DMT_ELF || ! module->elf_info) {
+	DEBUG_Printf(DBG_CHN_ERR, "Bad elf module '%s'\n", module->module_name);
+	return DIL_ERROR;
+    }
 
-  if (stabsect == -1 || stabstrsect == -1) {
-    DEBUG_Printf(DBG_CHN_WARN, "no .stab section\n");
-    goto leave;
-  }
+    /* check that the file exists, and that the module hasn't been loaded yet */
+    if (stat(module->module_name, &statbuf) == -1) goto leave;
+    
+    /*
+     * Now open the file, so that we can mmap() it.
+     */
+    if ((fd = open(module->module_name, O_RDONLY)) == -1) goto leave;
+    
+    dil = DIL_NOINFO;
+    /*
+     * Now mmap() the file.
+     */
+    addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (addr == (char*)0xffffffff) goto leave;
+    
+    /*
+     * Next, we need to find a few of the internal ELF headers within
+     * this thing.  We need the main executable header, and the section
+     * table.
+     */
+    ehptr = (Elf32_Ehdr*) addr;
+    spnt = (Elf32_Shdr*) (addr + ehptr->e_shoff);
+    shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
+    
+    stabsect = stabstrsect = -1;
+    
+    for (i = 0; i < ehptr->e_shnum; i++) {
+	if (strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0)
+	    stabsect = i;
+	
+	if (strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0)
+	    stabstrsect = i;
+    }
+    
+    if (stabsect == -1 || stabstrsect == -1) {
+	DEBUG_Printf(DBG_CHN_WARN, "no .stab section\n");
+	goto leave;
+    }
+    
+    /*
+     * OK, now just parse all of the stabs.
+     */
+    if (DEBUG_ParseStabs(addr, 
+			 module->elf_info->elf_addr, 
+			 spnt[stabsect].sh_offset,
+			 spnt[stabsect].sh_size,
+			 spnt[stabstrsect].sh_offset,
+			 spnt[stabstrsect].sh_size)) {
+	dil = DIL_LOADED;
+    } else {
+	dil = DIL_ERROR;
+	DEBUG_Printf(DBG_CHN_WARN, "bad stabs\n");
+	goto leave;
+    }
+    
+    for (i = 0; i < ehptr->e_shnum; i++) {
+	if (   (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
+	    && (spnt[i].sh_type == SHT_SYMTAB))
+	    DEBUG_ProcessElfSymtab(module, addr, module->elf_info->elf_addr,
+				   spnt + i, spnt + spnt[i].sh_link);
+	
+	if (   (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
+	    && (spnt[i].sh_type == SHT_DYNSYM))
+	    DEBUG_ProcessElfSymtab(module, addr, module->elf_info->elf_addr, 
+				   spnt + i, spnt + spnt[i].sh_link);
+    }
 
-  /*
-   * OK, now just parse all of the stabs.
-   */
-  if (!(rtn = DEBUG_ParseStabs(addr, load_offset, 
-			       spnt[stabsect].sh_offset,
-			       spnt[stabsect].sh_size,
-			       spnt[stabstrsect].sh_offset,
-			       spnt[stabstrsect].sh_size))) {
-    DEBUG_Printf(DBG_CHN_WARN, "bad stabs\n");
-    goto leave;
-  }
-
-  for (i = 0; i < nsect; i++) {
-    if (   (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
-	&& (spnt[i].sh_type == SHT_SYMTAB))
-      DEBUG_ProcessElfSymtab(addr, load_offset, 
-			     spnt + i, spnt + spnt[i].sh_link);
-
-    if (   (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
-	&& (spnt[i].sh_type == SHT_DYNSYM))
-      DEBUG_ProcessElfSymtab(addr, load_offset, 
-			     spnt + i, spnt + spnt[i].sh_link);
-  }
-
-leave:
-  if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
-  if (fd != -1) close(fd);
-
-  return rtn;
+ leave:
+    if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
+    if (fd != -1) close(fd);
+    
+    return dil;
 }
 
-static int DEBUG_ProcessElfFileFromPath(const char * filename, 
-					unsigned int load_offset, const char* path)
+/*
+ * Loads the information for ELF module stored in 'filename'
+ * the module has been loaded at 'load_offset' address
+ * returns 
+ *	-1 if the file cannot be found/opened
+ *	0 if the file doesn't contain symbolic info (or this info cannot be 
+ *	read or parsed)
+ *	1 on success
+ */
+static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename, 
+					     unsigned int load_offset,
+					     unsigned int* dyn_addr)
 {
-   int		rtn = -1;
-   char 	*s, *t, *fn;
-   char*	paths = NULL;
+    enum DbgInfoLoad dil = DIL_ERROR;
+    char*	addr = (char*)0xffffffff;
+    int		fd = -1;
+    struct stat	statbuf;
+    Elf32_Ehdr* ehptr;
+    Elf32_Shdr* spnt;
+    Elf32_Phdr*	ppnt;
+    char      * shstrtab;
+    int	       	i;
+    DBG_MODULE* module = NULL;
+    DWORD	size;
+    DWORD	delta;
 
-   if (!path) return -1;
+    DEBUG_Printf(DBG_CHN_TRACE, "Processing elf file '%s'\n", filename);
 
-   for (s = paths = DBG_strdup(path); s && *s; s = (t) ? (t+1) : NULL) {
-      t = strchr(s, ':');
-      if (t) *t = '\0';
-      fn = (char*)DBG_alloc(strlen(filename) + 1 + strlen(s) + 1);
-      if (!fn) break;
-      strcpy(fn, s );
-      strcat(fn, "/");
-      strcat(fn, filename);
-      rtn = DEBUG_ProcessElfFile(fn, load_offset);
-      DBG_free(fn);
-      if (rtn >= 0) break;
-      s = (t) ? (t+1) : NULL;
-   }
+    /* check that the file exists, and that the module hasn't been loaded yet */
+    if (stat(filename, &statbuf) == -1) goto leave;
+    
+    /*
+     * Now open the file, so that we can mmap() it.
+     */
+    if ((fd = open(filename, O_RDONLY)) == -1) goto leave;
+    
+    /*
+     * Now mmap() the file.
+     */
+    addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (addr == (char*)0xffffffff) goto leave;
 
-   DBG_free(paths);
-   return rtn;
+    dil = DIL_NOINFO;
+    
+    /*
+     * Next, we need to find a few of the internal ELF headers within
+     * this thing.  We need the main executable header, and the section
+     * table.
+     */
+    ehptr = (Elf32_Ehdr*) addr;
+    spnt = (Elf32_Shdr*) (addr + ehptr->e_shoff);
+    shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
+
+    /* if non relocatable ELF, then remove fixed address from computation
+     * otherwise, all addresses are zero based
+     */
+    delta = (load_offset == 0) ? ehptr->e_entry : 0;
+
+    /* grab size of module once loaded in memory */
+    ppnt = (Elf32_Phdr*) (addr + ehptr->e_phoff);
+    size = 0;
+    for (i = 0; i < ehptr->e_phnum; i++) {
+	if (ppnt[i].p_type != PT_LOAD) continue;
+	if (size < ppnt[i].p_vaddr - delta + ppnt[i].p_memsz)
+	    size = ppnt[i].p_vaddr - delta + ppnt[i].p_memsz;
+    }
+    
+    for (i = 0; i < ehptr->e_shnum; i++) {
+	if (strcmp(shstrtab + spnt[i].sh_name, ".bss") == 0 &&
+	    spnt[i].sh_type == SHT_NOBITS) {
+	    if (size < spnt[i].sh_addr - delta + spnt[i].sh_size)
+		size = spnt[i].sh_addr - delta + spnt[i].sh_size;
+	}
+	if (strcmp(shstrtab + spnt[i].sh_name, ".dynamic") == 0 &&
+	    spnt[i].sh_type == SHT_DYNAMIC) {
+	    if (dyn_addr) *dyn_addr = spnt[i].sh_addr;
+	}
+    }
+    
+    module = DEBUG_RegisterELFModule((load_offset == 0) ? ehptr->e_entry : load_offset, 
+				     size, filename);
+    if (!module) {
+	dil = DIL_ERROR;
+	goto leave;
+    }
+
+    if ((module->elf_info = DBG_alloc(sizeof(ELF_DBG_INFO))) == NULL) {
+	DEBUG_Printf(DBG_CHN_ERR, "OOM\n");
+	exit(0);
+    }
+
+    module->elf_info->elf_addr = load_offset;
+    dil = DEBUG_LoadElfStabs(module);
+
+ leave:
+    if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
+    if (fd != -1) close(fd);
+    if (module) module->dil = dil;
+    
+    return dil;
 }
 
-static int DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
+static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(const char * filename, 
+						     unsigned int load_offset, 
+						     unsigned int* dyn_addr, 
+						     const char* path)
 {
-   int		rtn = -1;
-   const char*	fmt;
+    enum DbgInfoLoad	dil = DIL_ERROR;
+    char 	*s, *t, *fn;
+    char*	paths = NULL;
 
-   DEBUG_Printf(DBG_CHN_TRACE, "Processing elf file '%s'\n", filename);
+    if (!path) return -1;
 
-   if (filename == NULL) return FALSE;
-   if (DEBUG_FindModuleByName(filename, DM_TYPE_ELF)) return TRUE;
+    for (s = paths = DBG_strdup(path); s && *s; s = (t) ? (t+1) : NULL) {
+	t = strchr(s, ':');
+	if (t) *t = '\0';
+	fn = (char*)DBG_alloc(strlen(filename) + 1 + strlen(s) + 1);
+	if (!fn) break;
+	strcpy(fn, s );
+	strcat(fn, "/");
+	strcat(fn, filename);
+	dil = DEBUG_ProcessElfFile(fn, load_offset, dyn_addr);
+	DBG_free(fn);
+	if (dil != DIL_ERROR) break;
+	s = (t) ? (t+1) : NULL;
+    }
 
-   rtn = DEBUG_ProcessElfFile(filename, load_offset);
+    DBG_free(paths);
+    return dil;
+}
+
+static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename, 
+					       unsigned int load_offset,
+					       unsigned int* dyn_addr)
+{
+   enum DbgInfoLoad	dil = DIL_ERROR;
+
+   if (filename == NULL) return DIL_ERROR;
+   if (DEBUG_FindModuleByName(filename, DMT_ELF)) return DIL_LOADED;
+
+   dil = DEBUG_ProcessElfFile(filename, load_offset, dyn_addr);
 
    /* if relative pathname, try some absolute base dirs */
-   if (rtn < 0 && !strchr(filename, '/')) {
-      rtn = DEBUG_ProcessElfFileFromPath(filename, load_offset, getenv("PATH"));
-      if (rtn < 0)
-	rtn = DEBUG_ProcessElfFileFromPath(filename, load_offset, getenv("LD_LIBRARY_PATH"));
+   if (dil == DIL_ERROR && !strchr(filename, '/')) {
+      dil = DEBUG_ProcessElfFileFromPath(filename, load_offset, dyn_addr, getenv("PATH"));
+      if (dil == DIL_ERROR)
+	dil = DEBUG_ProcessElfFileFromPath(filename, load_offset, dyn_addr, getenv("LD_LIBRARY_PATH"));
    }
 
-   switch (rtn) {
-   case 1: fmt = "Loaded stabs debug symbols from ELF '%s' (0x%08x)\n"; break;
-   case 0: fmt = "No stabs debug symbols in ELF '%s' (0x%08x)\n";	break;
-   case -1:fmt = "Can't find file for ELF '%s' (0x%08x)\n";		break;
-   default: DEBUG_Printf(DBG_CHN_ERR, "Oooocch (%d)\n", rtn); return FALSE;
-   }
-   
-   DEBUG_Printf(DBG_CHN_MESG, fmt, filename, load_offset);
+   DEBUG_ReportDIL(dil, "ELF", filename, load_offset);
 
-   return rtn >= 0;
+   return dil;
 }
    
 static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 {
-  u_long		lm_addr;
-  struct link_map       lm;
-  Elf32_Ehdr	        ehdr;
-  char			bufstr[256];
-
-  /*
-   * Now walk the linked list.  In all known ELF implementations,
-   * the dynamic loader maintains this linked list for us.  In some
-   * cases the first entry doesn't appear with a name, in other cases it
-   * does.
-   */
-  for (lm_addr = (u_long)dbg_hdr->r_map; lm_addr; lm_addr = (u_long)lm.l_next) {
-    if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
-      return FALSE;
-    if (lm.l_addr != 0 &&
-	DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
-	ehdr.e_type == ET_DYN && /* only look at dynamic modules */
-	lm.l_name != NULL &&
-	DEBUG_READ_MEM_VERBOSE((void*)lm.l_name, bufstr, sizeof(bufstr))) {
-      bufstr[sizeof(bufstr) - 1] = '\0';
-      DEBUG_ProcessElfObject(bufstr, (unsigned)lm.l_addr);
+    u_long		lm_addr;
+    struct link_map     lm;
+    Elf32_Ehdr	        ehdr;
+    char		bufstr[256];
+    
+    /*
+     * Now walk the linked list.  In all known ELF implementations,
+     * the dynamic loader maintains this linked list for us.  In some
+     * cases the first entry doesn't appear with a name, in other cases it
+     * does.
+     */
+    for (lm_addr = (u_long)dbg_hdr->r_map; lm_addr; lm_addr = (u_long)lm.l_next) {
+	if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
+	    return FALSE;
+	if (lm.l_addr != 0 &&
+	    DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
+	    ehdr.e_type == ET_DYN && /* only look at dynamic modules */
+	    lm.l_name != NULL &&
+	    DEBUG_READ_MEM_VERBOSE((void*)lm.l_name, bufstr, sizeof(bufstr))) {
+	    bufstr[sizeof(bufstr) - 1] = '\0';
+	    DEBUG_ProcessElfObject(bufstr, (unsigned)lm.l_addr, NULL);
+	}
     }
-  }
-  
-  return TRUE;
+    
+    return TRUE;
 }
 
 static BOOL DEBUG_RescanElf(void)
@@ -1379,75 +1484,65 @@ static BOOL DEBUG_RescanElf(void)
     case RT_ADD:
        break;
     case RT_DELETE:
-       /*FIXME: this is not currently handled, would need some kind of mark&sweep algo */
+       /* FIXME: this is not currently handled, would need some kind of mark&sweep algo */
       break;
     }
     return FALSE;
 }
 
-int
-DEBUG_ReadExecutableDbgInfo(const char* exe_name)
+enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 {
-  Elf32_Dyn		dyn;
-  struct r_debug        dbg_hdr;
-  int			rtn = FALSE;
-  DBG_VALUE		val;
-
-  /*
-   * Make sure we can stat and open this file.
-   */
-  if (exe_name == NULL) goto leave;
-  DEBUG_ProcessElfObject(exe_name, 0);
-
-  /* previous step should have loaded symbol _DYNAMIC if it exists inside 
-   * the main executable
-   */
-  if (!DEBUG_GetSymbolValue("_DYNAMIC", -1, &val, FALSE)) {
-    DEBUG_Printf(DBG_CHN_WARN, "Can't find symbol _DYNAMIC\n");
-    goto leave;
-  }
-
-  do {
-    if (!DEBUG_READ_MEM_VERBOSE((void*)val.addr.off, &dyn, sizeof(dyn)))
-      goto leave;
-    val.addr.off += sizeof(dyn);
-  } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
-  if (dyn.d_tag == DT_NULL) goto leave;
-
-  /*
-   * OK, now dig into the actual tables themselves.
-   */
-  if (!DEBUG_READ_MEM_VERBOSE((void*)dyn.d_un.d_ptr, &dbg_hdr, sizeof(dbg_hdr)))
-    goto leave;
-
-  assert(!DEBUG_CurrProcess->dbg_hdr_addr);
-  DEBUG_CurrProcess->dbg_hdr_addr = (u_long)dyn.d_un.d_ptr;
-
-  if (dbg_hdr.r_brk) {
-    DBG_VALUE	value;
-
-    DEBUG_Printf(DBG_CHN_TRACE, "Setting up a breakpoint on r_brk(%lx)\n",
-		 (unsigned long)dbg_hdr.r_brk);
-
-    DEBUG_SetBreakpoints(FALSE);
-    value.type = NULL;
-    value.cookie = DV_TARGET;
-    value.addr.seg = 0;
-    value.addr.off = (DWORD)dbg_hdr.r_brk;
-    DEBUG_AddBreakpoint(&value, DEBUG_RescanElf);
-    DEBUG_SetBreakpoints(TRUE);
-  }
-
-  rtn = DEBUG_WalkList(&dbg_hdr);
-
-leave:
-  return rtn;
+    Elf32_Dyn		dyn;
+    struct r_debug      dbg_hdr;
+    enum DbgInfoLoad	dil = DIL_NOINFO;
+    unsigned int	dyn_addr;
+    
+    /*
+     * Make sure we can stat and open this file.
+     */
+    if (exe_name == NULL) goto leave;
+    DEBUG_ProcessElfObject(exe_name, 0, &dyn_addr);
+    
+    do {
+	if (!DEBUG_READ_MEM_VERBOSE((void*)dyn_addr, &dyn, sizeof(dyn)))
+	    goto leave;
+	dyn_addr += sizeof(dyn);
+    } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
+    if (dyn.d_tag == DT_NULL) goto leave;
+    
+    /*
+     * OK, now dig into the actual tables themselves.
+     */
+    if (!DEBUG_READ_MEM_VERBOSE((void*)dyn.d_un.d_ptr, &dbg_hdr, sizeof(dbg_hdr)))
+	goto leave;
+    
+    assert(!DEBUG_CurrProcess->dbg_hdr_addr);
+    DEBUG_CurrProcess->dbg_hdr_addr = (u_long)dyn.d_un.d_ptr;
+    
+    if (dbg_hdr.r_brk) {
+	DBG_VALUE	value;
+	
+	DEBUG_Printf(DBG_CHN_TRACE, "Setting up a breakpoint on r_brk(%lx)\n",
+		     (unsigned long)dbg_hdr.r_brk);
+	
+	DEBUG_SetBreakpoints(FALSE);
+	value.type = NULL;
+	value.cookie = DV_TARGET;
+	value.addr.seg = 0;
+	value.addr.off = (DWORD)dbg_hdr.r_brk;
+	DEBUG_AddBreakpoint(&value, DEBUG_RescanElf);
+	DEBUG_SetBreakpoints(TRUE);
+    }
+    
+    dil = DEBUG_WalkList(&dbg_hdr);
+    
+ leave:
+    return dil;
 }
 
 #else	/* !__ELF__ */
 
-int
-DEBUG_ReadExecutableDbgInfo(const char* exe_name)
+int	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 {
   return FALSE;
 }
