@@ -1489,17 +1489,37 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 
 /**************************************************************************
  *         BuildCommDCBA		(KERNEL32.14)
+ *
+ *  Updates a device control block data structure with values from an
+ *  ascii device control string.  The device control string has two forms
+ *  normal and extended, it must be exclusively in one or the other form.
+ *
+ * RETURNS
+ *
+ *  True on success, false on an malformed control string.
  */
-BOOL WINAPI BuildCommDCBA(LPCSTR device,LPDCB lpdcb)
+BOOL WINAPI BuildCommDCBA(
+	LPCSTR device, /* The ascii device control string used to update the DCB. */
+	LPDCB lpdcb /* The device control block to be updated. */)
 {
 	return BuildCommDCBAndTimeoutsA(device,lpdcb,NULL);
 }
 
 /**************************************************************************
  *         BuildCommDCBAndTimeoutsA	(KERNEL32.15)
+ *
+ *  Updates a device control block data structure with values from an
+ *  ascii device control string.  Taking time out values from a time outs
+ *  struct if desired by the control string.
+ *
+ * RETURNS
+ *
+ *  True on success, false bad handles etc
  */
-BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
-                                         LPCOMMTIMEOUTS lptimeouts)
+BOOL WINAPI BuildCommDCBAndTimeoutsA(
+	LPCSTR device, /* The ascii device control string. */
+	LPDCB lpdcb, /* The device control block to be updated. */
+    LPCOMMTIMEOUTS lptimeouts /* The time outs to use if asked to set them by the control string. */)
 {
 	int	port;
 	char	*ptr,*temp;
@@ -1621,24 +1641,47 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
 
 /**************************************************************************
  *         BuildCommDCBAndTimeoutsW		(KERNEL32.16)
+ *
+ *  Updates a device control block data structure with values from an
+ *  unicode device control string.  Taking time out values from a time outs
+ *  struct if desired by the control string.
+ *
+ * RETURNS
+ *
+ *  True on success, false bad handles etc.
  */
-BOOL WINAPI BuildCommDCBAndTimeoutsW( LPCWSTR devid, LPDCB lpdcb,
-                                          LPCOMMTIMEOUTS lptimeouts )
+BOOL WINAPI BuildCommDCBAndTimeoutsW(
+	LPCWSTR devid, /* The unicode device control string. */
+	LPDCB lpdcb, /* The device control block to be updated. */
+    LPCOMMTIMEOUTS lptimeouts /* The time outs to use if asked to set them by the control string. */)
 {
+	BOOL ret = FALSE;
 	LPSTR	devidA;
-	BOOL	ret;
 
 	TRACE("(%p,%p,%p)\n",devid,lpdcb,lptimeouts);
 	devidA = HEAP_strdupWtoA( GetProcessHeap(), 0, devid );
+	if (devidA)
+	{
 	ret=BuildCommDCBAndTimeoutsA(devidA,lpdcb,lptimeouts);
         HeapFree( GetProcessHeap(), 0, devidA );
+	}
 	return ret;
 }
 
 /**************************************************************************
  *         BuildCommDCBW		(KERNEL32.17)
+ *
+ *  Updates a device control block structure with values from an
+ *  unicode device control string.  The device control string has two forms
+ *  normal and extended, it must be exclusively in one or the other form.
+ *
+ * RETURNS
+ *
+ *  True on success, false on an malformed control string.
  */
-BOOL WINAPI BuildCommDCBW(LPCWSTR devid,LPDCB lpdcb)
+BOOL WINAPI BuildCommDCBW(
+	LPCWSTR devid, /* The unicode device control string. */
+	LPDCB lpdcb /* The device control block to be updated. */)
 {
 	return BuildCommDCBAndTimeoutsW(devid,lpdcb,NULL);
 }
@@ -1648,8 +1691,20 @@ int commerror=0;
 
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.449)
+ *
+ *  Halts the transmission of characters to a communications device.
+ *
+ * RETURNS
+ *
+ *  True on success, and false if the communications device could not be found,
+ *  the control is not supported.
+ *
+ * BUGS
+ *
+ *  Only TIOCSBRK and TIOCCBRK are supported. 
  */
-BOOL WINAPI SetCommBreak(HANDLE handle)
+BOOL WINAPI SetCommBreak(
+		HANDLE handle /* The communictions device to suspend. */)
 {
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
@@ -1677,8 +1732,19 @@ BOOL WINAPI SetCommBreak(HANDLE handle)
 
 /*****************************************************************************
  *	ClearCommBreak		(KERNEL32.20)
+ *
+ *  Resumes character transmission from a communication device.
+ *
+ * RETURNS
+ *
+ *  True on success and false if the communications device could not be found.
+ *
+ * BUGS
+ *
+ *  Only TIOCSBRK and TIOCCBRK are supported. 
  */
-BOOL WINAPI ClearCommBreak(HANDLE handle)
+BOOL WINAPI ClearCommBreak(
+		HANDLE handle /* The halted communication device whose character transmission is to be resumed. */)
 {
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
@@ -1706,8 +1772,18 @@ BOOL WINAPI ClearCommBreak(HANDLE handle)
 
 /*****************************************************************************
  *	EscapeCommFunction	(KERNEL32.214)
+ *
+ *  Directs a communication device to perform an extended function.
+ *
+ * RETURNS
+ *
+ *  True or requested data on successful completion of the command,
+ *  false if the device is not present cannot execute the command
+ *  or the command failed.
  */
-BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
+BOOL WINAPI EscapeCommFunction(
+		HANDLE handle, /* The communication device to perform the extended function. */
+		UINT nFunction /* The extended function to be performed. */)
 {
 	int fd,direct=FALSE,result=FALSE;
 	struct termios	port;
@@ -1814,8 +1890,17 @@ BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 
 /********************************************************************
  *      PurgeComm        (KERNEL32.557)
+ *
+ *  Terminates pending operations and/or discards buffers on a
+ *  communication resource.
+ *
+ * RETURNS
+ *
+ *  True on success and false if the communications handle is bad.
  */
-BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags) 
+BOOL WINAPI PurgeComm(
+		HANDLE handle, /* The communication resource to be purged. */
+		DWORD flags  /* Flags for clear pending/buffer on input/output. */) 
 {
      int fd;
 
@@ -1847,8 +1932,18 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
 
 /*****************************************************************************
  *	ClearCommError	(KERNEL32.21)
+ *
+ *  Enables further I/O operations on a communications resource after
+ *  supplying error and current status information.
+ *
+ * RETURNS
+ *
+ *  True on success, false if the communication resource handle is bad.
  */
-BOOL WINAPI ClearCommError(HANDLE handle,LPDWORD errors,LPCOMSTAT lpStat)
+BOOL WINAPI ClearCommError(
+		HANDLE handle, /* The communication resource with the error. */
+		LPDWORD errors, /* Flags indicating error the resource experienced. */
+		LPCOMSTAT lpStat /* The status of the communication resource. */)
 {
     int fd;
 
@@ -1896,8 +1991,22 @@ BOOL WINAPI ClearCommError(HANDLE handle,LPDWORD errors,LPCOMSTAT lpStat)
 
 /*****************************************************************************
  *      SetupComm       (KERNEL32.676)
+ *
+ *  Called after CreateFile to hint to the communication resource to use
+ *  specified sizes for input and output buffers rather than the default values.
+ *
+ * RETURNS
+ *
+ *  True if successful, false if the communications resource handle is bad.
+ *
+ * BUGS
+ *
+ *  Stub.
  */
-BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
+BOOL WINAPI SetupComm(
+		HANDLE handle, /* The just created communication resource handle. */
+		DWORD insize, /* The suggested size of the communication resources input buffer in bytes. */
+		DWORD outsize /* The suggested size of the communication resources output buffer in bytes. */)
 {
     int fd;
 
@@ -1913,8 +2022,17 @@ BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
 
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
+ *
+ *  Obtain the events associated with a communication device that will cause a call
+ *  WaitCommEvent to return.
+ *
+ *  RETURNS
+ *
+ *   True on success, fail on bad device handle etc.
  */
-BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
+BOOL WINAPI GetCommMask(
+    HANDLE handle, /* The communications device. */
+    LPDWORD evtmask /* The events which cause WaitCommEvent to return. */)
 {
     BOOL ret;
 
@@ -1935,8 +2053,18 @@ BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
 
 /*****************************************************************************
  *	SetCommMask	(KERNEL32.451)
+ *
+ *  There be some things we need to hear about yon there communications device.
+ *  (Set which events associated with a communication device should cause
+ *  a call WaitCommEvent to return.)
+ *
+ * RETURNS
+ *
+ *  True on success, false on bad handle etc.
  */
-BOOL WINAPI SetCommMask(HANDLE handle,DWORD evtmask)
+BOOL WINAPI SetCommMask(
+    HANDLE handle, /* The communications device.  */
+    DWORD evtmask /* The events that to be monitored. */)
 {
     BOOL ret;
 
@@ -1956,12 +2084,21 @@ BOOL WINAPI SetCommMask(HANDLE handle,DWORD evtmask)
 
 /*****************************************************************************
  *	SetCommState    (KERNEL32.452)
+ *
+ *  Re-initializes all hardware and control settings of a communications device,
+ *  with values from a device control block without effecting the input and output
+ *  queues.
+ *
+ * RETURNS
+ *
+ *  True on success, false on failure eg if the XonChar is equal to the XoffChar.
  */
-BOOL WINAPI SetCommState(HANDLE handle,LPDCB lpdcb)
+BOOL WINAPI SetCommState(
+	HANDLE handle, /* The communications device. */
+	LPDCB lpdcb /* The device control block. */)
 {
      struct termios port;
-     int fd;
-     int bytesize, stopbits;
+     int fd, bytesize, stopbits;
 
      TRACE("handle %d, ptr %p\n", handle, lpdcb);
      TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
@@ -2257,8 +2394,20 @@ BOOL WINAPI SetCommState(HANDLE handle,LPDCB lpdcb)
 
 /*****************************************************************************
  *	GetCommState	(KERNEL32.159)
+ *
+ *  Fills in a device control block with information from a communications device.
+ *
+ * RETURNS
+ *
+ *  True on success, false if the communication device handle is bad etc
+ *  
+ * BUGS
+ *
+ *  XonChar and XoffChar are not set.
  */
-BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
+BOOL WINAPI GetCommState(
+	HANDLE handle, /* The communications device. */
+	LPDCB lpdcb /* The device control block. */)
 {
      struct termios port;
      int fd,speed;
@@ -2449,8 +2598,22 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
 
 /*****************************************************************************
  *	TransmitCommChar	(KERNEL32.535)
+ *
+ *  Transmits a single character in front of any pending characters in the
+ *  output buffer.  Usually used to send an interrupt character to a host.
+ *
+ * RETURNS
+ *
+ *  True if the call succeeded, false if the previous command character to the
+ *  same device has not been sent yet the handle is bad etc.
+ *
+ * BUGS
+ *
+ *  Stub.
  */
-BOOL WINAPI TransmitCommChar(HANDLE hComm,CHAR chTransmit)
+BOOL WINAPI TransmitCommChar(
+	HANDLE hComm, /* The communication device in need of a command character. */
+	CHAR chTransmit /* The character to transmit. */)
 {
     	FIXME("(%x,'%c'), use win32 handle!\n",hComm,chTransmit);
 	return TRUE;
@@ -2458,8 +2621,17 @@ BOOL WINAPI TransmitCommChar(HANDLE hComm,CHAR chTransmit)
 
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
+ *
+ *  Obtains the request time out values for the communications device.
+ *
+ * RETURNS
+ *
+ *  True on success, false if communications device handle is bad
+ *  or the target structure is null.
  */
-BOOL WINAPI GetCommTimeouts(HANDLE hComm,LPCOMMTIMEOUTS lptimeouts)
+BOOL WINAPI GetCommTimeouts(
+	HANDLE hComm, /* The communications device. */
+	LPCOMMTIMEOUTS lptimeouts /* The struct of request time outs. */)
 {
     BOOL ret;
 
@@ -2499,6 +2671,10 @@ BOOL WINAPI GetCommTimeouts(HANDLE hComm,LPCOMMTIMEOUTS lptimeouts)
  *     - used in ReadFile to calculate GetOverlappedResult's timeout
  * WriteTotalTimeoutMultiplier, WriteTotalTimeoutConstant
  *     - used in WriteFile to calculate GetOverlappedResult's timeout
+ *
+ * RETURNS
+ *
+ *  True if the time outs were set, false otherwise.
  */
 BOOL WINAPI SetCommTimeouts(
     HANDLE hComm,             /* [in] handle of COMM device */
@@ -2554,8 +2730,17 @@ BOOL WINAPI SetCommTimeouts(
 
 /***********************************************************************
  *           GetCommModemStatus   (KERNEL32.285)
+ *
+ *  Obtains the four control register bits if supported by the hardware.
+ *
+ * RETURNS
+ *
+ *  True if the communications handle was good and for hardware that
+ *  control register access, false otherwise.
  */
-BOOL WINAPI GetCommModemStatus(HANDLE hFile,LPDWORD lpModemStat )
+BOOL WINAPI GetCommModemStatus(
+	HANDLE hFile, /* The communications device. */
+	LPDWORD lpModemStat /* The control register bits. */)
 {
 	int fd,mstat, result=FALSE;
 	
@@ -2844,10 +3029,18 @@ BOOL WINAPI CommConfigDialogW(
  *
  *  TRUE on success, FALSE on failure
  *  If successful, lpCommConfig contains the comm port configuration.
+ *
+ * BUGS
+ *
+ *  The signature is missing a the parameter for the size of the COMMCONFIG
+ *  structure/buffer it should be
+ *  BOOL WINAPI GetCommConfig(HANDLE hFile,LPCOMMCONFIG lpCommConfig,LPDWORD lpdwSize)
  */
 BOOL WINAPI GetCommConfig(
-	HANDLE hFile,
-	LPCOMMCONFIG lpCommConfig
+	HANDLE hFile, /* The communications device. */
+	LPCOMMCONFIG lpCommConfig /* The communications configuration of the device (if it fits). */
+	/* LPDWORD lpdwSize Initially the size of the configuration buffer/structure,
+					    afterwards the number of bytes copied to the buffer or the needed size of the buffer. */
 ) {
     BOOL r;
 
@@ -2870,26 +3063,34 @@ BOOL WINAPI GetCommConfig(
 /***********************************************************************
  *           SetCommConfig     (KERNEL32.617)
  *
+ *  Sets the configuration of the commications device.
+ *
+ * RETURNS
+ *
+ *  True on success, false if the handle was bad is not a communications device.
  */
 BOOL WINAPI SetCommConfig(
-	HANDLE hFile,
-	LPCOMMCONFIG lpCommConfig
+	HANDLE hFile, /* The communications device. */
+	LPCOMMCONFIG lpCommConfig /* The desired configuration. */
 ) {
-    BOOL r;
-
     TRACE("(%x %p)\n",hFile,lpCommConfig);
-    
-    r = SetCommState(hFile,&lpCommConfig->dcb);
-    return r;
+    return SetCommState(hFile,&lpCommConfig->dcb);
 }
 
 /***********************************************************************
  *           SetDefaultCommConfigA   (KERNEL32.638)
+ *
+ *  Initializes the default configuration for the specified communication
+ *  device. (ascii)
+ *
+ * RETURNS
+ *
+ *  True if the device was found and the defaults set, false otherwise
  */
 BOOL WINAPI SetDefaultCommConfigA(
-	LPCSTR lpszDevice, 
-	LPCOMMCONFIG lpCommConfig,
-	DWORD dwSize
+	LPCSTR lpszDevice, /* The ascii name of the device targeted for configuration. */
+	LPCOMMCONFIG lpCommConfig, /* The default configuration for the device. */
+	DWORD dwSize /* The number of bytes in the configuration structure. */
 ) {
     FARPROC lpfnSetDefaultCommConfig;
     HMODULE hConfigModule;
@@ -2917,11 +3118,16 @@ BOOL WINAPI SetDefaultCommConfigA(
 /***********************************************************************
  *           SetDefaultCommConfigW     (KERNEL32.639)
  *
+ *  Initializes the default configuration for the specified
+ *  communication device. (unicode)
+ *
+ * RETURNS
+ *
  */
 BOOL WINAPI SetDefaultCommConfigW(
-	LPCWSTR lpszDevice, 
-	LPCOMMCONFIG lpCommConfig,
-	DWORD dwSize
+	LPCWSTR lpszDevice, /* The unicode name of the device targeted for configuration. */
+	LPCOMMCONFIG lpCommConfig, /* The default configuration for the device. */
+	DWORD dwSize /* The number of bytes in the configuration structure. */
 ) {
     BOOL r;
     LPSTR lpDeviceA;
@@ -2939,10 +3145,20 @@ BOOL WINAPI SetDefaultCommConfigW(
 
 /***********************************************************************
  *           GetDefaultCommConfigA   (KERNEL32.313)
+ *
+ *   Acquires the default configuration of the specified communication device. (unicode)
+ *
+ *  RETURNS
+ *
+ *   True on successful reading of the default configuration,
+ *   if the device is not found or the buffer is too small.
  */
-BOOL WINAPI GetDefaultCommConfigA(LPCSTR lpszName,LPCOMMCONFIG lpCC,
-                                      LPDWORD lpdwSize)
-{    
+BOOL WINAPI GetDefaultCommConfigA(
+	LPCSTR lpszName, /* The ascii name of the device targeted for configuration. */
+	LPCOMMCONFIG lpCC, /* The default configuration for the device. */
+    LPDWORD lpdwSize ) /* Initially the size of the default configuration buffer,
+                        afterwards the number of bytes copied to the buffer or the needed size of the buffer. */
+{
      LPDCB lpdcb = &(lpCC->dcb);
      char  temp[40];
 
@@ -2976,17 +3192,30 @@ BOOL WINAPI GetDefaultCommConfigA(LPCSTR lpszName,LPCOMMCONFIG lpCC,
 
 /**************************************************************************
  *         GetDefaultCommConfigW		(KERNEL32.314)
+ *
+ *   Acquires the default configuration of the specified communication device. (unicode)
+ *
+ *  RETURNS
+ *
+ *   True on successful reading of the default configuration,
+ *   if the device is not found or the buffer is too small.
  */
-BOOL WINAPI GetDefaultCommConfigW( LPCWSTR lpszName,LPCOMMCONFIG lpCC,
-                                      LPDWORD lpdwSize)
-{
+BOOL WINAPI GetDefaultCommConfigW(
+	LPCWSTR lpszName, /* The unicode name of the device targeted for configuration. */
+	LPCOMMCONFIG lpCC, /* The default configuration for the device. */
+    LPDWORD lpdwSize /* Initially the size of the default configuration buffer,
+					    afterwards the number of bytes copied to the buffer or the needed size of the buffer. */
+) {
+	BOOL ret = FALSE;
 	LPSTR	lpszNameA;
-	BOOL	ret;
 
 	TRACE("(%p,%p,%ld)\n",lpszName,lpCC,*lpdwSize);
 	lpszNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszName );
+	if (lpszNameA)
+	{
 	ret=GetDefaultCommConfigA(lpszNameA,lpCC,lpdwSize);
         HeapFree( GetProcessHeap(), 0, lpszNameA );
+	}
 	return ret;
 }
 

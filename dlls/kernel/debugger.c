@@ -19,15 +19,16 @@ DEFAULT_DEBUG_CHANNEL(debugstr);
 /******************************************************************************
  *           WaitForDebugEvent   (KERNEL32.720)
  *
- * Waits for a debugging event to occur in a process being debugged
+ *  Waits for a debugging event to occur in a process being debugged before
+ *  filling out the debug event structure.
  *
- * PARAMS
- *    event   [I] Address of structure for event information
- *    timeout [I] Number of milliseconds to wait for event
+ * RETURNS
  *
- * RETURNS STD
+ *  Returns true if a debug event occurred and false if the call timed out.
  */
-BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
+BOOL WINAPI WaitForDebugEvent(
+	 LPDEBUG_EVENT event, /* Address of structure for event information. */
+	 DWORD timeout /* Number of milliseconds to wait for event. */)
 {
     BOOL ret;
     SERVER_START_REQ
@@ -111,8 +112,18 @@ BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
 
 /**********************************************************************
  *           ContinueDebugEvent   (KERNEL32.146)
+ *
+ *  Enables a thread that previously produced a debug event to continue.
+ *
+ * RETURNS
+ *
+ *  True if the debugger is listed as the processes owner and the process
+ *  and thread are valid.
  */
-BOOL WINAPI ContinueDebugEvent( DWORD pid, DWORD tid, DWORD status )
+BOOL WINAPI ContinueDebugEvent(
+	DWORD pid, /* The id of the process to continue. */
+	DWORD tid, /* The id of the thread to continue. */
+	DWORD status /* The rule to apply to unhandled exeptions. */)
 {
     BOOL ret;
     SERVER_START_REQ
@@ -130,8 +141,15 @@ BOOL WINAPI ContinueDebugEvent( DWORD pid, DWORD tid, DWORD status )
 
 /**********************************************************************
  *           DebugActiveProcess   (KERNEL32.180)
+ *
+ *  Attempts to attach the dugger to a process.
+ *
+ * RETURNS
+ *
+ *  True if the debugger was attached to process.
  */
-BOOL WINAPI DebugActiveProcess( DWORD pid )
+BOOL WINAPI DebugActiveProcess(
+	DWORD pid /* The process to be debugged. */)
 {
     BOOL ret;
     SERVER_START_REQ
@@ -147,8 +165,12 @@ BOOL WINAPI DebugActiveProcess( DWORD pid )
 
 /***********************************************************************
  *           OutputDebugStringA   (KERNEL32.548)
+ *
+ *  Output by an application of a unicode string to a debugger (if attached)
+ *  and program log.
  */
-void WINAPI OutputDebugStringA( LPCSTR str )
+void WINAPI OutputDebugStringA(
+        LPCSTR str /* The message to be logged and given to the debugger. */)
 {
     SERVER_START_REQ
     {
@@ -165,8 +187,12 @@ void WINAPI OutputDebugStringA( LPCSTR str )
 
 /***********************************************************************
  *           OutputDebugStringW   (KERNEL32.549)
+ *
+ *  Output by an appliccation of a unicode string to a debugger (if attached)
+ *  and program log.
  */
-void WINAPI OutputDebugStringW( LPCWSTR str )
+void WINAPI OutputDebugStringW(
+	LPCWSTR str /* The message to be logged and given to the debugger. */)
 {
     SERVER_START_REQ
     {
@@ -183,8 +209,12 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
 
 /***********************************************************************
  *           OutputDebugString16   (KERNEL.115)
+ *
+ *  Output by a 16 bit application of an ascii string to a debugger (if attached)
+ *  and program log.
  */
-void WINAPI OutputDebugString16( LPCSTR str )
+void WINAPI OutputDebugString16(
+        LPCSTR str /* The message to be logged and given to the debugger.*/)
 {
     OutputDebugStringA( str );
 }
@@ -192,6 +222,9 @@ void WINAPI OutputDebugString16( LPCSTR str )
 
 /***********************************************************************
  *           DebugBreak   (KERNEL32.181)
+ *
+ *  Raises an exception so that a debugger (if attached)
+ *  can take some action.
  */
 void WINAPI DebugBreak(void)
 {
@@ -201,8 +234,16 @@ void WINAPI DebugBreak(void)
 
 /***********************************************************************
  *           DebugBreak16   (KERNEL.203)
+ *
+ *  Raises an expection in a 16 bit application so that a debugger (if attached)
+ *  can take some action.
+ *
+ * BUGS
+ *
+ *  Only 386 compatible processors implemented.
  */
-void WINAPI DebugBreak16( CONTEXT86 *context )
+void WINAPI DebugBreak16(
+        CONTEXT86 *context /* A pointer to the 386 compatible processor state. */)
 {
 #ifdef __i386__
     EXCEPTION_RECORD rec;
@@ -219,6 +260,12 @@ void WINAPI DebugBreak16( CONTEXT86 *context )
 
 /***********************************************************************
  *           IsDebuggerPresent   (KERNEL32)
+ *
+ *  Allows a process to determine if there is a debugger attached.
+ *
+ * RETURNS
+ *
+ *  True if there is a debugger attached.
  */
 BOOL WINAPI IsDebuggerPresent(void)
 {
