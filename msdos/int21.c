@@ -29,11 +29,10 @@
 #include "heap.h"
 #include "msdos.h"
 #include "ldt.h"
-#include "task.h"
 #include "options.h"
 #include "miscemu.h"
+#include "task.h"
 #include "dosexe.h" /* for the MZ_SUPPORTED define */
-#include "module.h"
 #include "debugtools.h"
 #include "console.h"
 
@@ -1151,27 +1150,28 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 
     case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
+        /* FIXME: Use DOSDEV_Peek/Read/Write(DOSDEV_Console(),...) !! */
         if (DL_reg(context) == 0xff) {
             static char scan = 0;
             TRACE("Direct Console Input\n");
             if (scan) {
                 /* return pending scancode */
                 AL_reg(context) = scan;
-                EFL_reg(context) &= ~0x40; /* clear ZF */
+                RESET_ZFLAG(context);
                 scan = 0;
             } else {
                 char ascii;
-                if (CONSOLE_CheckForKeystroke(&scan,&ascii)) {
-                    CONSOLE_GetKeystroke(&scan,&ascii);
+                if (INT_Int16ReadChar(&ascii,&scan,TRUE)) {
+                    INT_Int16ReadChar(&ascii,&scan,FALSE);
                     /* return ASCII code */
                     AL_reg(context) = ascii;
-                    EFL_reg(context) &= ~0x40; /* clear ZF */
+                    RESET_ZFLAG(context);
                     /* return scan code on next call only if ascii==0 */
                     if (ascii) scan = 0;
                 } else {
                     /* nothing pending, clear everything */
                     AL_reg(context) = 0;
-                    EFL_reg(context) |= 0x40; /* set ZF */
+                    SET_ZFLAG(context);
                     scan = 0; /* just in case */
                 }
             }
@@ -1182,13 +1182,15 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
+        /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
         TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-	AL_reg(context) = CONSOLE_GetCharacter();
+        INT_Int16ReadChar(&AL_reg(context), NULL, FALSE);
         break;
 
     case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
+        /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
         TRACE("CHARACTER INPUT WITHOUT ECHO\n");
-	AL_reg(context) = CONSOLE_GetCharacter();
+        INT_Int16ReadChar(&AL_reg(context), NULL, FALSE);
         break;
 
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
