@@ -2160,7 +2160,7 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
  * DirectSound ClassFactory
  */
 static HRESULT WINAPI 
-DSCF_QueryInterface(LPUNKNOWN iface,REFIID riid,LPVOID *ppobj) {
+DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactory,iface);
 	char buf[80];
 
@@ -2173,12 +2173,12 @@ DSCF_QueryInterface(LPUNKNOWN iface,REFIID riid,LPVOID *ppobj) {
 }
 
 static ULONG WINAPI
-DSCF_AddRef(LPUNKNOWN iface) {
+DSCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactory,iface);
 	return ++(this->ref);
 }
 
-static ULONG WINAPI DSCF_Release(LPUNKNOWN iface) {
+static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactory,iface);
 	/* static class, won't be  freed */
 	return --(this->ref);
@@ -2206,11 +2206,9 @@ static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL32 dolock) {
 }
 
 static ICOM_VTABLE(IClassFactory) DSCF_VTable = {
-  {
 	DSCF_QueryInterface,
 	DSCF_AddRef,
-    DSCF_Release
-  },
+	DSCF_Release,
 	DSCF_CreateInstance,
 	DSCF_LockServer
 };

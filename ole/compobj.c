@@ -689,7 +689,7 @@ HRESULT WINE_StringFromCLSID(
  *	the string representation and OLESTATUS
  */
 HRESULT WINAPI StringFromCLSID16(
-	const CLSID *id,	/* [in] the GUID to be converted */
+        REFCLSID id,            /* [in] the GUID to be converted */
 	LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
 
 ) {
@@ -729,7 +729,7 @@ HRESULT WINAPI StringFromCLSID16(
  *	the string representation and OLESTATUS
  */
 HRESULT WINAPI StringFromCLSID32(
-	const CLSID *id,	/* [in] the GUID to be converted */
+        REFCLSID id,            /* [in] the GUID to be converted */
 	LPOLESTR32 *idstr	/* [out] a pointer to a to-be-allocated pointer pointing to the resulting string */
 ) {
 	char            buf[80];

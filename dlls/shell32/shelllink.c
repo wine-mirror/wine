@@ -180,7 +180,7 @@ LPCLASSFACTORY IShellLink_CF_Constructor(void)
  *  IShellLink_CF_QueryInterface
  */
 static HRESULT WINAPI IShellLink_CF_QueryInterface(
-  LPUNKNOWN iface, REFIID riid, LPVOID *ppvObj)
+  LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(IClassFactory,iface);
 	char	xriid[50];
@@ -207,7 +207,7 @@ static HRESULT WINAPI IShellLink_CF_QueryInterface(
 /******************************************************************************
  * IShellLink_CF_AddRef
  */
-static ULONG WINAPI IShellLink_CF_AddRef(LPUNKNOWN iface)
+static ULONG WINAPI IShellLink_CF_AddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
@@ -218,7 +218,7 @@ static ULONG WINAPI IShellLink_CF_AddRef(LPUNKNOWN iface)
 /******************************************************************************
  * IShellLink_CF_Release
  */
-static ULONG WINAPI IShellLink_CF_Release(LPUNKNOWN iface)
+static ULONG WINAPI IShellLink_CF_Release(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
@@ -280,11 +280,9 @@ static HRESULT WINAPI IShellLink_CF_LockServer(LPCLASSFACTORY iface, BOOL32 fLoc
 }
 static ICOM_VTABLE(IClassFactory) slcfvt = 
 {
-  {
     IShellLink_CF_QueryInterface,
     IShellLink_CF_AddRef,
-    IShellLink_CF_Release
-  },
+  IShellLink_CF_Release,
   IShellLink_CF_CreateInstance,
   IShellLink_CF_LockServer
 };
@@ -519,7 +517,7 @@ LPCLASSFACTORY IShellLinkW_CF_Constructor(void)
  *  IShellLinkW_CF_QueryInterface
  */
 static HRESULT WINAPI IShellLinkW_CF_QueryInterface(
-  LPUNKNOWN iface, REFIID riid, LPVOID *ppvObj)
+  LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(IClassFactory,iface);
 	char	xriid[50];
@@ -546,7 +544,7 @@ static HRESULT WINAPI IShellLinkW_CF_QueryInterface(
 /******************************************************************************
  * IShellLinkW_CF_AddRef
  */
-static ULONG WINAPI IShellLinkW_CF_AddRef(LPUNKNOWN iface)
+static ULONG WINAPI IShellLinkW_CF_AddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
@@ -557,7 +555,7 @@ static ULONG WINAPI IShellLinkW_CF_AddRef(LPUNKNOWN iface)
 /******************************************************************************
  * IShellLinkW_CF_Release
  */
-static ULONG WINAPI IShellLinkW_CF_Release(LPUNKNOWN iface)
+static ULONG WINAPI IShellLinkW_CF_Release(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
@@ -621,11 +619,9 @@ static HRESULT WINAPI IShellLinkW_CF_LockServer(LPCLASSFACTORY iface, BOOL32 fLo
 
 static ICOM_VTABLE(IClassFactory) slwcfvt = 
 {
-  {
     IShellLinkW_CF_QueryInterface,
     IShellLinkW_CF_AddRef,
-    IShellLinkW_CF_Release
-  },
+  IShellLinkW_CF_Release,
   IShellLinkW_CF_CreateInstance,
   IShellLinkW_CF_LockServer
 };

@@ -34,12 +34,14 @@
 /*****************************************************************************
  * GUID API
  */
-HRESULT WINAPI StringFromCLSID16(const CLSID *id, LPOLESTR16*);
-HRESULT WINAPI StringFromCLSID32(const CLSID *id, LPOLESTR32*);
+HRESULT WINAPI StringFromCLSID16(REFCLSID id, LPOLESTR16*);
+HRESULT WINAPI StringFromCLSID32(REFCLSID id, LPOLESTR32*);
 #define StringFromCLSID WINELIB_NAME(StringFromCLSID)
+
 HRESULT WINAPI CLSIDFromString16(LPCOLESTR16, CLSID *);
 HRESULT WINAPI CLSIDFromString32(LPCOLESTR32, CLSID *);
 #define CLSIDFromString WINELIB_NAME(CLSIDFromString)
+
 HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid);
 HRESULT WINAPI CLSIDFromProgID32(LPCOLESTR32 progid, LPCLSID riid);
 #define CLSIDFromProgID WINELIB_NAME(CLSIDFromProgID)
@@ -83,21 +85,23 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  * Let's take Direct3D as an example:
  *
  *    #define ICOM_INTERFACE IDirect3D
- *    ICOM_BEGIN(IDirect3D,IUnknown)
- *        ICOM_METHOD1(HRESULT,Initialize,    REFIID,);
- *        ICOM_METHOD2(HRESULT,EnumDevices,   LPD3DENUMDEVICESCALLBACK,, LPVOID,);
- *        ICOM_METHOD2(HRESULT,CreateLight,   LPDIRECT3DLIGHT*,, IUnknown*,);
- *        ICOM_METHOD2(HRESULT,CreateMaterial,LPDIRECT3DMATERIAL*,, IUnknown*,);
- *        ICOM_METHOD2(HRESULT,CreateViewport,LPDIRECT3DVIEWPORT*,, IUnknown*,);
+ *    #define IDirect3D_METHODS \
+ *        ICOM_METHOD1(HRESULT,Initialize,    REFIID,); \
+ *        ICOM_METHOD2(HRESULT,EnumDevices,   LPD3DENUMDEVICESCALLBACK,, LPVOID,); \
+ *        ICOM_METHOD2(HRESULT,CreateLight,   LPDIRECT3DLIGHT*,, IUnknown*,); \
+ *        ICOM_METHOD2(HRESULT,CreateMaterial,LPDIRECT3DMATERIAL*,, IUnknown*,); \
+ *        ICOM_METHOD2(HRESULT,CreateViewport,LPDIRECT3DVIEWPORT*,, IUnknown*,); \
  *        ICOM_METHOD2(HRESULT,FindDevice,    LPD3DFINDDEVICESEARCH,, LPD3DFINDDEVICERESULT,);
- *    ICOM_END(IDirect3D)
+ *    #define IDirect3D_IMETHODS \
+ *        ICOM_INHERITS(IDirect3D,IUnknown)
+ *    ICOM_DEFINE(IDirect3D,IUnknown)
  *    #undef ICOM_INTERFACE
  *
- *    #if !defined(__cplusplus) || defined(CINTERFACE)
+ *    #ifdef ICOM_CINTERFACE
  *    // *** IUnknown methods *** //
- *    #define IDirect3D_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
- *    #define IDirect3D_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
- *    #define IDirect3D_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+ *    #define IDirect3D_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+ *    #define IDirect3D_AddRef(p)             ICOM_CALL (AddRef,p)
+ *    #define IDirect3D_Release(p)            ICOM_CALL (Release,p)
  *    // *** IDirect3D methods *** //
  *    #define IDirect3D_Initialize(p,a)       ICOM_CALL1(Initialize,p,a)
  *    #define IDirect3D_EnumDevices(p,a,b)    ICOM_CALL2(EnumDevice,p,a,b)
@@ -108,19 +112,22 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *    #endif
  *
  * Comments:
- *  - The ICOM_INTERFACE is used in the ICOM_METHOD macros for the 'this' pointer and to cast 
- *    pointers. Defining this macro here saves us the trouble of having to repeat the interface 
- *    name everywhere. Note haowever that because of the way macros work a macro like ICOM_METHOD1 
+ *  - The ICOM_INTERFACE macro is used in the ICOM_METHOD macros to define the type of the 'this' 
+ *    pointer. Defining this macro here saves us the trouble of having to repeat the interface 
+ *    name everywhere. Note however that because of the way macros work, a macro like ICOM_METHOD1 
  *    cannot use 'ICOM_INTERFACE##_VTABLE' because this would give 'ICOM_INTERFACE_VTABLE' and not 
  *    'IDirect3D_VTABLE'.
- *  - ICOM_BEGIN and ICOM_END are responsible for generating whatever structure is appropriate for 
- *    representing the interface in the current language. In C this is a couple of structs in C++ 
- *    it's a class. The first parameter is the interface name and the second one is the interface 
- *    we inherit from. The reason why you have to repeat the interface name is because that's the 
- *    only way these macro can successfully output "IDirect3D_VTABLE'. Trying to use ICOM_INTERFACE 
- *    would, as in ICOM_METHOD, only yield 'ICOM_INTERFACE_VTABLE'.
- *  - With the way ICOM_BEGIN works you don't have to repeat the definitions of the methods of the 
- *    parent interface. They are automatically inherited both in C and in C++.
+ *  - ICOM_METHODS defines the methods specific to this interface. It is then aggregated with the 
+ *    inherited methods to form ICOM_IMETHODS.
+ *  - ICOM_INHERITS takes as its first parameter the name of the current interface and as its 
+ *    second parameter the name of the parent interface. The reason why you have to repeat the 
+ *    interface name is because that's the only way these macro can successfully output 
+ *    "IDirect3D_VTABLE'. Trying to use ICOM_INTERFACE would only yield 'ICOM_INTERFACE_VTABLE'.
+ *  - The ICOM_DEFINE declares all the structures necessary for the interface. As with 
+ *    ICOM_INHERITS you have to explicitly state the name of the current interface and that of 
+ *    its parent.
+ *    Inherited methods are inherited in both C and C++ by using the IDirect3D_METHODS macro and 
+ *    the parent's Xxx_IMETHODS macro.
  *  - In C++ the ICOM_METHOD macros generate a function prototype and a call to a function pointer 
  *    method. This means using once 't1 p1, t2 p2, ...' and once 'p1, p2' without the types. The 
  *    only way I found to handle this is to have one ICOM_METHOD macro per number of parameters and 
@@ -135,25 +142,24 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *    I left them blank.
  *  - Finally the set of 'IDirect3D_Xxx' macros is a standard set of macros defined to ease access 
  *    to the interface methods in C. Unfortunately I don't see any way to avoid having to duplicate 
- *    the inherited method definitions there. We must use ICOM_ICALL to invoke inherited methods, 
- *    because in C we have to cast the virtual table pointer, and we should use the ICOM_CALL 
- *    method in the other cases. This time I could have used a trick to use only one macro whatever 
- *    the number of parameters but I prefered to have it work the same way as above.
+ *    the inherited method definitions there. This time I could have used a trick to use only one 
+ *    macro whatever the number of parameters but I prefered to have it work the same way as above.
  *  - You probably have noticed that we don't define the fields we need to actually implement this 
  *    interface: reference count, pointer to other resources and miscellaneous fields. That's 
- *    because it's not needed, and the user will anyway only manipulate pointers to this structure
- *    so he does not need to know its real size. Of course on the implementation side we have the 
- *    real definition of the interface structure and they should match what the macros yield in 
- *    each language (or conversely).
+ *    because these interfaces are just that: interfaces. They may be implemented more than once, in 
+ *    different contexts and sometimes not even in Wine. Thus it would not make sense to impose 
+ *    that the interface contains some specific fields.
  *
  *
  * In C this gives:
- *    typedef struct IDirect3D_VTABLE IDirect3D_VTABLE;
+ *    typedef struct IDirect3DVtbl IDirect3DVtbl;
  *    struct IDirect3D {
- *        IDirect3D_VTABLE* lpvtbl;
+ *        IDirect3DVtbl* lpvtbl;
  *    };
- *    struct IDirect3D_VTABLE {
- *        IUnknown_VTABLE bvt;
+ *    struct IDirect3DVtbl {
+ *        HRESULT (*fnQueryInterface)(IDirect3D* me, REFIID riid, LPVOID* ppvObj);
+ *        ULONG (*fnQueryInterface)(IDirect3D* me);
+ *        ULONG (*fnQueryInterface)(IDirect3D* me);
  *        HRESULT (*fnInitialize)(IDirect3D* me, REFIID a);
  *        HRESULT (*fnEnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
  *        HRESULT (*fnCreateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
@@ -162,11 +168,11 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *        HRESULT (*fnFindDevice)(IDirect3D* me, LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b);
  *    }; 
  *
- *    #if !defined(__cplusplus) || defined(CINTERFACE)
+ *    #ifdef ICOM_CINTERFACE
  *    // *** IUnknown methods *** //
- *    #define IDirect3D_QueryInterface(p,a,b) ((IUnknown_VTABLE*)(p)->lpvtbl)->fnQueryInterface((IUnknown*)p,a,b)
- *    #define IDirect3D_AddRef(p)             ((IUnknown_VTABLE*)(p)->lpvtbl)->fnAddRef((IUnknown*)p)
- *    #define IDirect3D_Release(p)            ((IUnknown_VTABLE*)(p)->lpvtbl)->fnRelease((IUnknown*)p)
+ *    #define IDirect3D_QueryInterface(p,a,b) (p)->lpvtbl->fnQueryInterface(p,a,b)
+ *    #define IDirect3D_AddRef(p)             (p)->lpvtbl->fnAddRef(p)
+ *    #define IDirect3D_Release(p)            (p)->lpvtbl->fnRelease(p)
  *    // *** IDirect3D methods *** //
  *    #define IDirect3D_Initialize(p,a)       (p)->lpvtbl->fnInitialize(p,a)
  *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpvtbl->fnEnumDevice(p,a,b)
@@ -180,22 +186,18 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *  - IDirect3D only contains a pointer to the IDirect3D virtual/jump table. This is the only thing 
  *    the user needs to know to use the interface. Of course the structure we will define to 
  *    implement this interface will have more fields but the first one will match this pointer.
- *  - The code generated by ICOM_BEGIN goes up to the bvt field in the IDirect3D virtual table. 
- *    This bvt field is what saves us from having to duplicate the inherited method definitions.
- *    It's a shame that C (gcc) will not allow unnamed structs. If this was possible we could 
- *    seamlessly inherit and use the parent's interface function pointers.
- *  - What follows is just a bunch of function pointer definitions generated by the ICOM_METHOD 
- *    macros. The implementation will fill this jump table with appropriate values in a static 
- *    variable and initialize the lpvtbl field to point to this variable.
+ *  - The code generated by ICOM_DEFINE defines both the structure representing the interface and 
+ *    the structure for the jump table. ICOM_DEFINE uses the parent's Xxx_IMETHODS macro to 
+ *    automatically repeat the prototypes of all the inherited methods and then uses IDirect3D_METHODS 
+ *    to define the IDirect3D methods.
+ *  - Each method is declared as a pointer to function field in the jump table. The implementation 
+ *    will fill this jump table with appropriate values, probably using a static variable, and 
+ *    initialize the lpvtbl field to point to this variable.
  *  - The IDirect3D_Xxx macros then just derefence the lpvtbl pointer and use the function pointer 
  *    corresponding to the macro name. This emulates the behavior of a virtual table and should be 
- *    about as fast. In the case of inherited methods we have some additional casting to do to 
- *    because the inherited methods are defined in the bvt field or maybe further imbricated. Since 
- *    the effect of the bvt field is that we inherit the parent virtual table fields this cast is 
- *    relatively inocuous. A similar cast must be performed on the interface pointer before the 
- *    invoked method will accept it. Despite all these casts there is little chance that you call a 
- *    method on the wrong type of interface because the function names still have to match. But this 
- *    is the only thing that will make the compilation fail.
+ *    just as fast.
+ *  - This C code should be quite compatible with the Windows headers both for code that uses COM 
+ *    interfaces and for code implementing a COM interface.
  *
  *
  * And in C++ (with gcc's g++):
@@ -241,12 +243,14 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *    we need different macros to handle different numbers of parameters.
  *  - Finally there is no IDirect3D_Xxx macro. These are not needed in C++ unless the CINTERFACE 
  *    macro is defined in which case we would not be here.
+ *  - This C++ code works well for code that just uses COM interfaces. But it will not work with 
+ *    C++ code implement a COM interface. That's because such code assumes the interface methods 
+ *    are declared as virtual C++ methods which is not the case here.
  *
  *
  * Implementing a COM interface.
  *
- * This continues the above example.I assume the implementation is in C but it would probably 
- * be similar in C++.
+ * This continues the above example. This example assumes that the implementation is in C.
  *
  *    typedef struct _IDirect3D {
  *        void* lpvtbl;
@@ -258,7 +262,7 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *
  *    // implement the IDirect3D methods here
  *
- *    int IDirect3D_fnQueryInterface(LPUNKNOWN me)
+ *    int IDirect3D_fnQueryInterface(IDirect3D* me)
  *    {
  *        ICOM_THIS(IDirect3D,me);
  *        // ...
@@ -267,11 +271,9 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *    // ...
  *
  *    static ICOM_VTABLE(IDirect3D) d3dvt = {
- *        {
  *            IDirect3D_fnQueryInterface,
- *            IUnknown_fnAdd,
- *            IUnknown_fnAdd2
- *        },
+ *        IDirect3D_fnAdd,
+ *        IDirect3D_fnAdd2,
  *        IDirect3D_fnInitialize,
  *        IDirect3D_fnSetWidth
  *    };
@@ -282,19 +284,23 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *  - Then we predeclare our static virtual table variable, we will need its address in some 
  *    methods to initialize the virtual table pointer of the returned interface objects.
  *  - Then we implement the interface methods. To match what has been declared in the header file 
- *    they must take a pointer to a IDirect3D structure so we must cast it to an _IDirect3D so that 
+ *    they must take a pointer to a IDirect3D structure and we must cast it to an _IDirect3D so that 
  *    we can manipulate the fields. This is performed by the ICOM_THIS macro.
- *  - Finally we initialize the virtual table. The inherited methods must be in curly brackets to 
- *    match the parent interface's virtual table definition.
+ *  - Finally we initialize the virtual table.
  */
 
 
-#define ICOM_VTABLE(iface)       iface##_VTABLE
+#define ICOM_VTABLE(iface)       iface##Vtbl
 
 
-#if defined(__cplusplus) && !defined(CINTERFACE)
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define ICOM_CINTERFACE 1
+#endif
+
+#ifndef ICOM_CINTERFACE
 /* C++ interface */
 
+/* FIXME: to be removed as soon as it's no longer used */
 #define ICOM_BEGIN(iface,ibase) \
     typedef struct iface: public ibase {
 
@@ -331,6 +337,10 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
     private: ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g); \
     public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g); };
 
+#define ICOM_METHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    private: ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h); \
+    public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h); };
+
 
 #define ICOM_CMETHOD(ret,xfn) \
     private: ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me); \
@@ -363,6 +373,10 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_CMETHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
     private: ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g); \
     public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) const { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g); };
+
+#define ICOM_CMETHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    private: ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h); \
+    public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) const { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h); };
 
 
 #define ICOM_VMETHOD(xfn) \
@@ -397,6 +411,10 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
     private: void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g); \
     public: inline void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) { ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g); };
 
+#define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    private: void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h); \
+    public: inline void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) { ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h); };
+
 
 #define ICOM_CVMETHOD(xfn) \
     private: void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me); \
@@ -430,10 +448,23 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
     private: void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g); \
     public: inline void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) const { ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g); };
 
+#define ICOM_CVMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    private: void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h); \
+    public: inline void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) const { ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h); };
 
+
+/* FIXME: to be removed as soon as it's no longer used */
 #define ICOM_END(iface) \
     };
 
+#define ICOM_INHERITS(iface, ibase) this_is_a_syntax_error
+
+#define ICOM_DEFINE(iface,ibase) \
+    typedef struct iface: public ibase { \
+        iface##_METHODS \
+    };
+
+/* FIXME: to be removed as soon as they (ICOM_ICALL) are no longer used */
 #define ICOM_ICALL(ibase, xfn, p)                this_is_a_syntax_error
 #define ICOM_ICALL1(ibase, xfn, p,a)             this_is_a_syntax_error
 #define ICOM_ICALL2(ibase, xfn, p,a,b)           this_is_a_syntax_error
@@ -442,6 +473,7 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_ICALL5(ibase, xfn, p,a,b,c,d,e)     this_is_a_syntax_error
 #define ICOM_ICALL6(ibase, xfn, p,a,b,c,d,e,f)   this_is_a_syntax_error
 #define ICOM_ICALL7(ibase, xfn, p,a,b,c,d,e,f,g) this_is_a_syntax_error
+#define ICOM_ICALL8(ibase, xfn, p,a,b,c,d,e,f,g,h) this_is_a_syntax_error
 
 #define ICOM_CALL(xfn, p)                        this_is_a_syntax_error
 #define ICOM_CALL1(xfn, p,a)                     this_is_a_syntax_error
@@ -451,12 +483,14 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_CALL5(xfn, p,a,b,c,d,e)             this_is_a_syntax_error
 #define ICOM_CALL6(xfn, p,a,b,c,d,e,f)           this_is_a_syntax_error
 #define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g)         this_is_a_syntax_error
+#define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h) this_is_a_syntax_error
 
 
 #else
 /* C interface */
 
 
+/* FIXME: to be removed as soon as it's no longer used */
 #define ICOM_BEGIN(iface,ibase) \
     typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
     struct iface { \
@@ -490,6 +524,9 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_METHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
     ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
 
+#define ICOM_METHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
+
 
 #define ICOM_CMETHOD(ret,xfn) \
         ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me);
@@ -514,6 +551,9 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 
 #define ICOM_CMETHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
     ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
+
+#define ICOM_CMETHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 
 
 #define ICOM_VMETHOD(xfn) \
@@ -540,6 +580,9 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_VMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
     void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
 
+#define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,nh) \
+    void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
+
 
 #define ICOM_CVMETHOD(xfn) \
         void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me);
@@ -565,10 +608,29 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_CVMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
     void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
 
+#define ICOM_CVMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
+    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 
+
+/* FIXME: to be removed as soon as it's no longer used */
 #define ICOM_END(iface) \
     };
 
+#define ICOM_INHERITS(iface, ibase) \
+     ibase##_IMETHODS \
+     iface##_METHODS
+
+#define ICOM_DEFINE(iface,ibase) \
+    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
+    struct iface { \
+        const ICOM_VTABLE(iface)* lpvtbl; \
+    }; \
+    struct ICOM_VTABLE(iface) { \
+        ibase##_IMETHODS \
+        iface##_METHODS \
+    };
+
+/* FIXME: to be removed as soon as they (ICOM_ICALL) are no longer used */
 #define ICOM_ICALL(ibase, xfn, p)  ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p)
 #define ICOM_ICALL1(ibase, xfn, p,a) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a)
 #define ICOM_ICALL2(ibase, xfn, p,a,b) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b)
@@ -577,6 +639,7 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_ICALL5(ibase, xfn, p,a,b,c,d,e) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e)
 #define ICOM_ICALL6(ibase, xfn, p,a,b,c,d,e,f) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e,f)
 #define ICOM_ICALL7(ibase, xfn, p,a,b,c,d,e,f,g) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e,f,g)
+#define ICOM_ICALL8(ibase, xfn, p,a,b,c,d,e,f,g,h) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e,f,g,h)
 
 #define ICOM_CALL(xfn, p)  (p)->lpvtbl->fn##xfn(p)
 #define ICOM_CALL1(xfn, p,a) (p)->lpvtbl->fn##xfn(p,a)
@@ -586,6 +649,7 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_CALL5(xfn, p,a,b,c,d,e) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e)
 #define ICOM_CALL6(xfn, p,a,b,c,d,e,f) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f)
 #define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f,g)
+#define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f,g,h)
 
 
 #define ICOM_THIS(iface,me)          struct _##iface* this=(struct _##iface*)me
@@ -614,32 +678,32 @@ typedef struct IUnknown IUnknown, *LPUNKNOWN;
  * IUnknown interface
  */
 #define ICOM_INTERFACE IUnknown
-#if defined(__cplusplus) && !defined(CINTERFACE)
+#define IUnknown_IMETHODS \
+    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj); \
+    ICOM_METHOD (ULONG,AddRef); \
+    ICOM_METHOD (ULONG,Release);
+#ifdef ICOM_CINTERFACE
+typedef struct ICOM_VTABLE(IUnknown) ICOM_VTABLE(IUnknown);
+struct IUnknown {
+    ICOM_VTABLE(IUnknown)* lpvtbl;
+};
+struct ICOM_VTABLE(IUnknown) {
+    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj);
+#else
 struct IUnknown {
     union {
         const void* lpvtbl;
         HRESULT (CALLBACK *fnQueryInterface)(IUnknown* me, REFIID riid, LPVOID* ppvObj);
     } t;
     inline int QueryInterface(REFIID a, LPVOID* b) { return ((IUnknown*)t.lpvtbl)->t.fnQueryInterface(this,a,b); }
-#else
-typedef struct ICOM_VTABLE(IUnknown) ICOM_VTABLE(IUnknown);
-struct IUnknown {
-    ICOM_VTABLE(IUnknown)* lpvtbl;
-};
-struct ICOM_VTABLE(IUnknown) {
-    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj)
 #endif
 
-    ICOM_METHOD (ULONG,AddRef)
-    ICOM_METHOD (ULONG,Release)
-#ifdef __WRC__
-}; /* FIXME: WRC does not support function macros and it is ICOM_END that is supposed to close the class */
-#else
-ICOM_END(IUnknown)
-#endif
+    ICOM_METHOD (ULONG,AddRef);
+    ICOM_METHOD (ULONG,Release);
+};
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IUnknown_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IUnknown_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -651,17 +715,19 @@ ICOM_END(IUnknown)
  * IClassFactory interface
  */
 #define ICOM_INTERFACE IClassFactory
-ICOM_BEGIN(IClassFactory,IUnknown)
-    ICOM_METHOD3(HRESULT,CreateInstance, LPUNKNOWN,pUnkOuter, REFIID,riid, LPVOID*,ppvObject);
+#define IClassFactory_METHODS \
+    ICOM_METHOD3(HRESULT,CreateInstance, LPUNKNOWN,pUnkOuter, REFIID,riid, LPVOID*,ppvObject); \
     ICOM_METHOD1(HRESULT,LockServer,     BOOL32,fLock);
-ICOM_END(IClassFactory)
+#define IClassFactory_IMETHODS \
+    ICOM_INHERITS(IClassFactory,IUnknown)
+ICOM_DEFINE(IClassFactory,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IClassFactory_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IClassFactory_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IClassFactory_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IClassFactory_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IClassFactory_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IClassFactory_Release(p)            ICOM_CALL (Release,p)
 /*** IClassFactory methods ***/
 #define IClassFactory_CreateInstance(p,a,b,c) ICOM_CALL3(CreateInstance,p,a,b,c)
 #define IClassFactory_LockServer(p,a)         ICOM_CALL1(LockServer,p,a)
@@ -672,21 +738,23 @@ ICOM_END(IClassFactory)
  * IMalloc interface
  */
 #define ICOM_INTERFACE IMalloc16
-ICOM_BEGIN(IMalloc16,IUnknown)
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb);
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb);
-    ICOM_VMETHOD1(       Free,        LPVOID,pv);
-    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv);
-    ICOM_CMETHOD1(INT16, DidAlloc,    LPVOID,pv);
+#define IMalloc16_METHODS \
+    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb); \
+    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb); \
+    ICOM_VMETHOD1(       Free,        LPVOID,pv); \
+    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv); \
+    ICOM_CMETHOD1(INT16, DidAlloc,    LPVOID,pv); \
     ICOM_METHOD  (LPVOID,HeapMinimize);
-ICOM_END(IMalloc16)
+#define IMalloc16_IMETHODS \
+    ICOM_INHERITS(IMalloc16,IUnknown)
+ICOM_DEFINE(IMalloc16,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IMalloc16_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IMalloc16_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IMalloc16_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IMalloc16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMalloc16_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMalloc16_Release(p)            ICOM_CALL (Release,p)
 /*** IMalloc16 methods ***/
 #define IMalloc16_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
 #define IMalloc16_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
@@ -698,21 +766,23 @@ ICOM_END(IMalloc16)
 
 
 #define ICOM_INTERFACE IMalloc32
-ICOM_BEGIN(IMalloc32,IUnknown)
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb);
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb);
-    ICOM_VMETHOD1(       Free,        LPVOID,pv);
-    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv);
-    ICOM_CMETHOD1(INT32, DidAlloc,    LPVOID,pv);
+#define IMalloc32_METHODS \
+    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb); \
+    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb); \
+    ICOM_VMETHOD1(       Free,        LPVOID,pv); \
+    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv); \
+    ICOM_CMETHOD1(INT32, DidAlloc,    LPVOID,pv); \
     ICOM_METHOD  (LPVOID,HeapMinimize);
-ICOM_END(IMalloc32)
+#define IMalloc32_IMETHODS \
+    ICOM_INHERITS(IMalloc32,IUnknown)
+ICOM_DEFINE(IMalloc32,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IMalloc32_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IMalloc32_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IMalloc32_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IMalloc32_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMalloc32_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMalloc32_Release(p)            ICOM_CALL (Release,p)
 /*** IMalloc32 methods ***/
 #define IMalloc32_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
 #define IMalloc32_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
@@ -724,9 +794,9 @@ ICOM_END(IMalloc32)
 #ifndef __WINE__
 /* Duplicated for WINELIB */
 /*** IUnknown methods ***/
-#define IMalloc_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IMalloc_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IMalloc_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IMalloc_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMalloc_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMalloc_Release(p)            ICOM_CALL (Release,p)
 /*** IMalloc methods ***/
 #define IMalloc_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
 #define IMalloc_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)

@@ -232,7 +232,7 @@ LPCLASSFACTORY IClassFactory_Constructor(void)
  *  IClassFactory_QueryInterface
  */
 static HRESULT WINAPI IClassFactory_fnQueryInterface(
-  LPUNKNOWN iface, REFIID riid, LPVOID *ppvObj)
+  LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(IClassFactory,iface);
 	char	xriid[50];
@@ -259,7 +259,7 @@ static HRESULT WINAPI IClassFactory_fnQueryInterface(
 /******************************************************************************
  * IClassFactory_AddRef
  */
-static ULONG WINAPI IClassFactory_fnAddRef(LPUNKNOWN iface)
+static ULONG WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
@@ -270,7 +270,7 @@ static ULONG WINAPI IClassFactory_fnAddRef(LPUNKNOWN iface)
 /******************************************************************************
  * IClassFactory_Release
  */
-static ULONG WINAPI IClassFactory_fnRelease(LPUNKNOWN iface)
+static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
@@ -345,11 +345,9 @@ static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface, BOOL32 fL
 
 static ICOM_VTABLE(IClassFactory) clfvt = 
 {
-  {
     IClassFactory_fnQueryInterface,
     IClassFactory_fnAddRef,
-    IClassFactory_fnRelease
-  },
+  IClassFactory_fnRelease,
   IClassFactory_fnCreateInstance,
   IClassFactory_fnLockServer
 };

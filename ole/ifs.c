@@ -97,7 +97,7 @@ typedef struct _IMalloc16 {
 /******************************************************************************
  *		IMalloc16_QueryInterface	[COMPOBJ.500]
  */
-HRESULT WINAPI IMalloc16_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LPVOID *obj) {
+HRESULT WINAPI IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *obj) {
         ICOM_THIS(IMalloc16,iface);
 	char	xrefiid[50];
 
@@ -115,7 +115,7 @@ HRESULT WINAPI IMalloc16_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LPVOID *
 /******************************************************************************
  *		IMalloc16_AddRef	[COMPOBJ.501]
  */
-ULONG WINAPI IMalloc16_fnAddRef(LPUNKNOWN iface) {
+ULONG WINAPI IMalloc16_fnAddRef(IMalloc16* iface) {
         ICOM_THIS(IMalloc16,iface);
 	TRACE(relay,"(%p)->AddRef()\n",this);
 	return 1; /* cannot be freed */
@@ -124,7 +124,7 @@ ULONG WINAPI IMalloc16_fnAddRef(LPUNKNOWN iface) {
 /******************************************************************************
  *		IMalloc16_Release	[COMPOBJ.502]
  */
-ULONG WINAPI IMalloc16_fnRelease(LPUNKNOWN iface) {
+ULONG WINAPI IMalloc16_fnRelease(IMalloc16* iface) {
         ICOM_THIS(IMalloc16,iface);
 	TRACE(relay,"(%p)->Release()\n",this);
 	return 1; /* cannot be freed */
@@ -198,12 +198,10 @@ IMalloc16_Constructor() {
         if (!msegvt16) {
             this->lpvtbl = msegvt16 = SEGPTR_NEW(ICOM_VTABLE(IMalloc16));
 
-#define VTENT(x) msegvt16->bvt.fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->bvt.fn##x)
+#define VTENT(x) msegvt16->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->fn##x)
             VTENT(QueryInterface);
             VTENT(AddRef);
             VTENT(Release);
-#undef VTENT
-#define VTENT(x) msegvt16->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->fn##x)
             VTENT(Alloc);
             VTENT(Realloc);
             VTENT(Free);
@@ -232,7 +230,7 @@ typedef struct _IMalloc32 {
 /******************************************************************************
  *		IMalloc32_QueryInterface	[VTABLE]
  */
-static HRESULT WINAPI IMalloc32_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LPVOID *obj) {
+static HRESULT WINAPI IMalloc32_fnQueryInterface(LPMALLOC32 iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IMalloc32,iface);
 	char	xrefiid[50];
 
@@ -250,7 +248,7 @@ static HRESULT WINAPI IMalloc32_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,L
 /******************************************************************************
  *		IMalloc32_AddRef	[VTABLE]
  */
-static ULONG WINAPI IMalloc32_fnAddRef(LPUNKNOWN iface) {
+static ULONG WINAPI IMalloc32_fnAddRef(LPMALLOC32 iface) {
 	ICOM_THIS(IMalloc32,iface);
 	TRACE(relay,"(%p)->AddRef()\n",this);
 	return 1; /* cannot be freed */
@@ -259,7 +257,7 @@ static ULONG WINAPI IMalloc32_fnAddRef(LPUNKNOWN iface) {
 /******************************************************************************
  *		IMalloc32_Release	[VTABLE]
  */
-static ULONG WINAPI IMalloc32_fnRelease(LPUNKNOWN iface) {
+static ULONG WINAPI IMalloc32_fnRelease(LPMALLOC32 iface) {
 	ICOM_THIS(IMalloc32,iface);
 	TRACE(relay,"(%p)->Release()\n",this);
 	return 1; /* cannot be freed */
@@ -320,11 +318,9 @@ static LPVOID WINAPI IMalloc32_fnHeapMinimize(LPMALLOC32 iface) {
 }
 
 static ICOM_VTABLE(IMalloc32) VT_IMalloc32 = {
-  {
     IMalloc32_fnQueryInterface,
     IMalloc32_fnAddRef,
-    IMalloc32_fnRelease
-  },
+  IMalloc32_fnRelease,
   IMalloc32_fnAlloc,
   IMalloc32_fnRealloc,
   IMalloc32_fnFree,
