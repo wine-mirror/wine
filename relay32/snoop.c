@@ -209,7 +209,7 @@ static char*
 SNOOP_PrintArg(DWORD x) {
 	static char	buf[200];
 	int		i,nostring;
-	char * ret=0;
+	char * volatile ret=0;
 	MEMORY_BASIC_INFORMATION	mbi;
 
 	if (	!HIWORD(x)					||
