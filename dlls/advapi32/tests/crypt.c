@@ -521,5 +521,4 @@ START_TEST(crypt)
 	test_enum_provider_types();
 	test_get_default_provider();
 	test_set_provider_ex();
-	test_set_provider_ex();
 }
