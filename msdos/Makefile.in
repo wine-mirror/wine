@@ -36,6 +36,7 @@ C_SRCS = \
 	int5c.c \
 	interrupts.c \
 	ioports.c \
+	vga.c \
 	vxd.c
 
 all: $(MODULE).o
