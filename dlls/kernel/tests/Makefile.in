@@ -17,6 +17,7 @@ CTESTS = \
 	generated.c \
 	locale.c \
 	path.c \
+	pipe.c \
 	process.c \
 	thread.c
 

@@ -507,16 +507,28 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
                                 DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES attr )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
+    DWORD len;
+    static const WCHAR leadin[] = {'\\','\\','.','\\','P','I','P','E','\\'};
 
     TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p)\n",
           debugstr_w(name), dwOpenMode, dwPipeMode, nMaxInstances,
           nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
 
+    if (!name)
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+    len = strlenW(name);
     if (len >= MAX_PATH)
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
+        return INVALID_HANDLE_VALUE;
+    }
+    if (strncmpiW(name, leadin, sizeof(leadin)/sizeof(leadin[0])))
+    {
+        SetLastError( ERROR_INVALID_NAME );
+        return INVALID_HANDLE_VALUE;
     }
     SERVER_START_REQ( create_named_pipe )
     {
