@@ -131,8 +131,6 @@ static const WCHAR SPI_SETMOUSEBUTTONSWAP_REGKEY[]=           {'C','o','n','t','
 static const WCHAR SPI_SETMOUSEBUTTONSWAP_VALNAME[]=          {'S','w','a','p','M','o','u','s','e','B','u','t','t','o','n','s',0};
 static const WCHAR SPI_SETDRAGFULLWINDOWS_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETDRAGFULLWINDOWS_VALNAME[]=          {'D','r','a','g','F','u','l','l','W','i','n','d','o','w','s',0};
-static const WCHAR SPI_SETWORKAREA_REGKEY[]=                  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
-static const WCHAR SPI_SETWORKAREA_VALNAME[]=                 {'W','I','N','E','_','W','o','r','k','A','r','e','a',0};
 static const WCHAR SPI_SETSHOWSOUNDS_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                                                'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
                                                                'S','h','o','w','S','o','u','n','d','s',0};
@@ -1563,56 +1561,31 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_SETWORKAREA:                       /*     47  WINVER >= 0x400 */
     {
-        static const WCHAR CSld[]={'%','l','d',' ','%','l','d',' ','%','l','d',' ','%','l','d',0};
-        WCHAR buf[20];
-        RECT *pr = (RECT *) pvParam;
-
         if (!pvParam) return FALSE;
 
         spi_idx = SPI_SETWORKAREA_IDX;
-        wsprintfW(buf, CSld, pr->left, pr->top,
-                pr->right, pr->bottom );
-
-        if (SYSPARAMS_Save( SPI_SETWORKAREA_REGKEY,
-                            SPI_SETWORKAREA_VALNAME,
-                            buf, fWinIni ))
-        {
-            CopyRect( &work_area, (RECT *)pvParam );
-            spi_loaded[spi_idx] = TRUE;
-        }
-        else
-            ret = FALSE;
+        CopyRect( &work_area, (RECT *)pvParam );
+        spi_loaded[spi_idx] = TRUE;
+        
         break;
     }
 
     case SPI_GETWORKAREA:                       /*     48  WINVER >= 0x400 */
+    {
         if (!pvParam) return FALSE;
 
-      spi_idx = SPI_SETWORKAREA_IDX;
-      if (!spi_loaded[spi_idx])
-      {
-          WCHAR buf[20];
+        spi_idx = SPI_SETWORKAREA_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            SetRect( &work_area, 0, 0,
+                     GetSystemMetrics( SM_CXSCREEN ),
+                     GetSystemMetrics( SM_CYSCREEN ) );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        CopyRect( (RECT *)pvParam, &work_area );
 
-          SetRect( &work_area, 0, 0,
-                   GetSystemMetrics( SM_CXSCREEN ),
-                   GetSystemMetrics( SM_CYSCREEN ) );
-
-          if (SYSPARAMS_Load( SPI_SETWORKAREA_REGKEY,
-                              SPI_SETWORKAREA_VALNAME,
-                              buf, sizeof(buf) ))
-          {
-              char tmpbuf[20];
-              WideCharToMultiByte( CP_ACP, 0, buf, -1,
-                                   tmpbuf, sizeof(tmpbuf), NULL, NULL );
-              sscanf( tmpbuf, "%ld %ld %ld %ld",
-                      &work_area.left, &work_area.top,
-                      &work_area.right, &work_area.bottom );
-          }
-          spi_loaded[spi_idx] = TRUE;
-      }
-      CopyRect( (RECT *)pvParam, &work_area );
-
-      break;
+        break;
+    }
 
     WINE_SPI_FIXME(SPI_SETPENWINDOWS);		/*     49  WINVER >= 0x400 */
 
