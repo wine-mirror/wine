@@ -329,7 +329,7 @@ static void dump_varargs_startup_info( size_t size )
     fprintf( stderr, "hStdInput=%p,", params.hStdInput );
     fprintf( stderr, "hStdOutput=%p,", params.hStdOutput );
     fprintf( stderr, "hStdError=%p,", params.hStdError );
-    fprintf( stderr, "CurrentDirectoryHandle=%p,", params.CurrentDirectoryHandle );
+    fprintf( stderr, "CurrentDirectory.Handle=%p,", params.CurrentDirectory.Handle );
     fprintf( stderr, "dwX=%ld,", params.dwX );
     fprintf( stderr, "dwY=%ld,", params.dwY );
     fprintf( stderr, "dwXSize=%ld,", params.dwXSize );
@@ -339,8 +339,8 @@ static void dump_varargs_startup_info( size_t size )
     fprintf( stderr, "dwFillAttribute=%lx,", params.dwFillAttribute );
     fprintf( stderr, "dwFlags=%lx,", params.dwFlags );
     fprintf( stderr, "wShowWindow=%lx,", params.wShowWindow );
-    fprintf( stderr, "CurrentDirectoryName=L\"" );
-    dump_inline_unicode_string( &params.CurrentDirectoryName, cur_data, size );
+    fprintf( stderr, "CurrentDirectory.DosPath=L\"" );
+    dump_inline_unicode_string( &params.CurrentDirectory.DosPath, cur_data, size );
     fprintf( stderr, "\",DllPath=L\"" );
     dump_inline_unicode_string( &params.DllPath, cur_data, size );
     fprintf( stderr, "\",ImagePathName=L\"" );

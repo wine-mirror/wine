@@ -442,12 +442,13 @@ static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
     else tib->exe_name = NULL;
 
     RtlAcquirePebLock();
-    curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
-    tib->curdir.MaximumLength = sizeof(tib->curdir_buffer);
-    tib->curdir.Length = min( curdir->Length, tib->curdir.MaximumLength-sizeof(WCHAR) );
-    tib->curdir.Buffer = tib->curdir_buffer;
-    memcpy( tib->curdir_buffer, curdir->Buffer, tib->curdir.Length );
-    tib->curdir_buffer[tib->curdir.Length/sizeof(WCHAR)] = 0;
+    curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.DosPath;
+    tib->curdir.DosPath.MaximumLength = sizeof(tib->curdir_buffer);
+    tib->curdir.DosPath.Length = min( curdir->Length, tib->curdir.DosPath.MaximumLength-sizeof(WCHAR) );
+    tib->curdir.DosPath.Buffer = tib->curdir_buffer;
+    tib->curdir.Handle = 0;
+    memcpy( tib->curdir_buffer, curdir->Buffer, tib->curdir.DosPath.Length );
+    tib->curdir_buffer[tib->curdir.DosPath.Length/sizeof(WCHAR)] = 0;
     RtlReleasePebLock();
     return tib;
 }

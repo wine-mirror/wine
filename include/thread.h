@@ -143,7 +143,7 @@ typedef struct
 
     /* the following fields do not exist under Windows */
     UNICODE_STRING  exe_str;    /* exe name string pointed to by exe_name */
-    UNICODE_STRING  curdir;     /* current directory */
+    CURDIR          curdir;     /* current directory */
     WCHAR           curdir_buffer[MAX_PATH];
 } WIN16_SUBSYSTEM_TIB;
 

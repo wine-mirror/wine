@@ -617,7 +617,7 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     params->AllocationSize = size;
 
     /* make sure the strings are valid */
-    fix_unicode_string( &params->CurrentDirectoryName, (char *)info_size );
+    fix_unicode_string( &params->CurrentDirectory.DosPath, (char *)info_size );
     fix_unicode_string( &params->DllPath, (char *)info_size );
     fix_unicode_string( &params->ImagePathName, (char *)info_size );
     fix_unicode_string( &params->CommandLine, (char *)info_size );
@@ -685,13 +685,13 @@ static BOOL process_init( char *argv[], char **environ )
         wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params->hStdError );
 
         /* <hack: to be changed later on> */
-        params->CurrentDirectoryName.Length = 3 * sizeof(WCHAR);
-        params->CurrentDirectoryName.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
-        params->CurrentDirectoryName.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, params->CurrentDirectoryName.MaximumLength);
-        params->CurrentDirectoryName.Buffer[0] = 'C';
-        params->CurrentDirectoryName.Buffer[1] = ':';
-        params->CurrentDirectoryName.Buffer[2] = '\\';
-        params->CurrentDirectoryName.Buffer[3] = '\0';
+        params->CurrentDirectory.DosPath.Length = 3 * sizeof(WCHAR);
+        params->CurrentDirectory.DosPath.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
+        params->CurrentDirectory.DosPath.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, params->CurrentDirectory.DosPath.MaximumLength);
+        params->CurrentDirectory.DosPath.Buffer[0] = 'C';
+        params->CurrentDirectory.DosPath.Buffer[1] = ':';
+        params->CurrentDirectory.DosPath.Buffer[2] = '\\';
+        params->CurrentDirectory.DosPath.Buffer[3] = '\0';
         /* </hack: to be changed later on> */
     }
     else

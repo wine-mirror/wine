@@ -106,8 +106,7 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
     HANDLE              hStdInput;
     HANDLE              hStdOutput;
     HANDLE              hStdError;
-    UNICODE_STRING      CurrentDirectoryName;
-    HANDLE              CurrentDirectoryHandle;
+    CURDIR              CurrentDirectory;
     UNICODE_STRING      DllPath;
     UNICODE_STRING      ImagePathName;
     UNICODE_STRING      CommandLine;

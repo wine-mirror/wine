@@ -348,7 +348,7 @@ PRTL_USER_PROCESS_PARAMETERS WINAPI RtlNormalizeProcessParams( RTL_USER_PROCESS_
 {
     if (params && !(params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED))
     {
-        normalize( params, &params->CurrentDirectoryName.Buffer );
+        normalize( params, &params->CurrentDirectory.DosPath.Buffer );
         normalize( params, &params->DllPath.Buffer );
         normalize( params, &params->ImagePathName.Buffer );
         normalize( params, &params->CommandLine.Buffer );
@@ -374,7 +374,7 @@ PRTL_USER_PROCESS_PARAMETERS WINAPI RtlDeNormalizeProcessParams( RTL_USER_PROCES
 {
     if (params && (params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED))
     {
-        denormalize( params, &params->CurrentDirectoryName.Buffer );
+        denormalize( params, &params->CurrentDirectory.DosPath.Buffer );
         denormalize( params, &params->DllPath.Buffer );
         denormalize( params, &params->ImagePathName.Buffer );
         denormalize( params, &params->CommandLine.Buffer );
@@ -425,7 +425,7 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
     RtlAcquirePebLock();
     cur_params = NtCurrentTeb()->Peb->ProcessParameters;
     if (!DllPath) DllPath = &cur_params->DllPath;
-    if (!CurrentDirectoryName) CurrentDirectoryName = &cur_params->CurrentDirectoryName;
+    if (!CurrentDirectoryName) CurrentDirectoryName = &cur_params->CurrentDirectory.DosPath;
     if (!CommandLine) CommandLine = ImagePathName;
     if (!Environment) Environment = cur_params->Environment;
     if (!WindowTitle) WindowTitle = &empty_str;
@@ -456,7 +456,7 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
         /* all other fields are zero */
 
         ptr = params + 1;
-        append_unicode_string( &ptr, CurrentDirectoryName, &params->CurrentDirectoryName );
+        append_unicode_string( &ptr, CurrentDirectoryName, &params->CurrentDirectory.DosPath );
         append_unicode_string( &ptr, DllPath, &params->DllPath );
         append_unicode_string( &ptr, ImagePathName, &params->ImagePathName );
         append_unicode_string( &ptr, CommandLine, &params->CommandLine );
