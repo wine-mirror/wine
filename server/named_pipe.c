@@ -38,6 +38,9 @@
 #endif
 #include <time.h>
 #include <unistd.h>
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"

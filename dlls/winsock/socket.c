@@ -104,6 +104,9 @@
 # define HAVE_IPX
 #endif
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 # include <sys/poll.h>
 #endif

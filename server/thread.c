@@ -32,6 +32,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
