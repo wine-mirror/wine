@@ -133,7 +133,7 @@ type	win32
 130 stdcall OleTranslateAccelerator(ptr ptr ptr) OleTranslateAccelerator
 131 stdcall OleUninitialize() OleUninitialize
 132 stub OpenOrCreateStream
-133 stub ProgIDFromCLSID
+133 stdcall ProgIDFromCLSID(wstr ptr) ProgIDFromCLSID
 134 stdcall ReadClassStg(ptr ptr) ReadClassStg
 135 stdcall ReadClassStm(ptr ptr) ReadClassStm
 136 stdcall ReadFmtUserTypeStg(ptr ptr ptr) ReadFmtUserTypeStg

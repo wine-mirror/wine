@@ -858,6 +858,57 @@ StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
 }
 
 /******************************************************************************
+ * ProgIDFromCLSID [OLE32.133]
+ * Converts a class id into the respective Program ID. (By using a registry lookup)
+ * RETURNS S_OK on success
+ * riid associated with the progid
+ */
+
+HRESULT WINAPI ProgIDFromCLSID(
+  REFCLSID clsid, /* [in] class id as found in registry */
+  LPOLESTR *lplpszProgID/* [out] associated Prog ID */
+)
+{
+  char     strCLSID[50], *buf, *buf2;
+  DWORD    buf2len;
+  HKEY     xhkey;
+  LPMALLOC mllc;
+  HRESULT  ret = S_OK;
+
+  WINE_StringFromCLSID(clsid, strCLSID);
+
+  buf = HeapAlloc(GetProcessHeap(), 0, strlen(strCLSID)+14);
+  sprintf(buf,"CLSID\\%s\\ProgID", strCLSID);
+  if (RegOpenKeyA(HKEY_CLASSES_ROOT, buf, &xhkey))
+    ret = REGDB_E_CLASSNOTREG;
+
+  HeapFree(GetProcessHeap(), 0, buf);
+
+  if (ret == S_OK)
+  {
+    buf2 = HeapAlloc(GetProcessHeap(), 0, 255);
+    buf2len = 255;
+    if (RegQueryValueA(xhkey, NULL, buf2, &buf2len))
+      ret = REGDB_E_CLASSNOTREG;
+
+    if (ret == S_OK)
+    {
+      if (CoGetMalloc(0,&mllc))
+        ret = E_OUTOFMEMORY;
+      else
+      {
+        *lplpszProgID = IMalloc_Alloc(mllc, (buf2len+1)*2);
+        lstrcpyAtoW(*lplpszProgID, buf2);
+      }
+    }
+    HeapFree(GetProcessHeap(), 0, buf2);
+  }
+
+  RegCloseKey(xhkey);
+  return ret;
+}
+
+/******************************************************************************
  *		CLSIDFromProgID16	[COMPOBJ.61]
  * Converts a program id into the respective GUID. (By using a registry lookup)
  * RETURNS
