@@ -136,7 +136,7 @@ LRESULT WINAPI PSDRV_AdvancedSetupDlgProc(HWND hWnd, UINT wMsg,
       return TRUE;
 
     case 200:
-      DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
+      DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
 			  SYSRES_GetResPtr( SYSRES_DIALOG_PSDRV_NEWPRINTER ),
 			  hWnd, PSDRV_NewPrinterDlgProc, (LPARAM) NULL );
       return TRUE;
@@ -166,7 +166,7 @@ WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
 
 
 #if 0
-  return DialogBoxIndirectParamA( WIN_GetWindowInstance( hwnd ),
+  return DialogBoxIndirectParamA( GetWindowLongA( hwnd, GWL_HINSTANCE ),
 	SYSRES_GetResPtr( SYSRES_DIALOG_PSDRV_ADVANCEDSETUP ),
 	hwnd, PSDRV_AdvancedSetupDlgProc, (LPARAM) NULL );
 #endif

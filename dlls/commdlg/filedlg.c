@@ -11,7 +11,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "win.h"
+#include "ldt.h"
 #include "heap.h"
 #include "message.h"
 #include "commdlg.h"
@@ -179,7 +179,7 @@ BOOL16 WINAPI GetOpenFileName16(
 	    }
     }
 
-    hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
+    hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
 
     if (!(lpofn->lpstrFilter))
       {
@@ -342,7 +342,7 @@ BOOL16 WINAPI GetSaveFileName16(
 	}
     }
 
-    hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
+    hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
 
     if (!(lpofn->lpstrFilter))
       {

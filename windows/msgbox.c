@@ -8,10 +8,7 @@
 #include "wine/winuser16.h"
 #include "dlgs.h"
 #include "heap.h"
-#include "module.h"
-#include "win.h"
-#include "resource.h"
-#include "task.h"
+#include "ldt.h"
 #include "debug.h"
 #include "debugstr.h"
 #include "tweak.h"
@@ -234,7 +231,7 @@ INT WINAPI MessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type)
     mbox.lpszCaption = title;
     mbox.lpszText  = text;
     mbox.dwStyle  = type;
-    return DialogBoxIndirectParamA( WIN_GetWindowInstance(hWnd), template,
+    return DialogBoxIndirectParamA( GetWindowLongA(hWnd,GWL_HINSTANCE), template,
                                       hWnd, (DLGPROC)MSGBOX_DlgProc, (LPARAM)&mbox );
 }
 

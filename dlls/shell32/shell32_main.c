@@ -12,7 +12,7 @@
 #include "heap.h"
 #include "resource.h"
 #include "dlgs.h"
-#include "win.h"
+#include "ldt.h"
 #include "sysmetrics.h"
 #include "debugtools.h"
 #include "winreg.h"
@@ -878,7 +878,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
-    return DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
+    return DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                       template, hWnd, AboutDlgProc, (LPARAM)&info );
 }
 
@@ -904,7 +904,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
-    ret = DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
+    ret = DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                    template, hWnd, AboutDlgProc, (LPARAM)&info );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szOtherStuff );

@@ -185,7 +185,6 @@ extern BOOL WIN_CreateDesktopWindow(void);
 extern HWND WIN_GetTopParent( HWND hwnd );
 extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
-extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
 extern void   WIN_ReleaseWinArray(WND **wndArray);
 

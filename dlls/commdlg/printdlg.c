@@ -12,7 +12,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "win.h"
+#include "ldt.h"
 #include "message.h"
 #include "commdlg.h"
 #include "resource.h"
@@ -64,7 +64,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
 	return FALSE;
     }
 
-    hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
+    hInst = GetWindowLongA( lpPrint->hwndOwner, GWL_HINSTANCE );
     hwndDialog = DIALOG_CreateIndirect( hInst, template, TRUE,
                                         lpPrint->hwndOwner,
                                (DLGPROC16)((lpPrint->Flags & PD_PRINTSETUP) ?
@@ -126,7 +126,7 @@ BOOL WINAPI PrintDlgA(
     BOOL      bRet = FALSE;
     LPCVOID   ptr;
     HANDLE    hResInfo, hDlgTmpl;
-    HINSTANCE hInst = WIN_GetWindowInstance( lppd->hwndOwner );
+    HINSTANCE hInst = GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
     DWORD     EnumBytesNeeded;
     DWORD     CopyOfEnumBytesNeeded;
     PRINT_PTRA PrintStructures;

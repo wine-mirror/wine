@@ -1854,21 +1854,6 @@ end:
     return retvalue;
 }
 
-
-/**********************************************************************
- *	     WIN_GetWindowInstance
- */
-HINSTANCE WIN_GetWindowInstance( HWND hwnd )
-{
-    
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return (HINSTANCE)0;
-    WIN_ReleaseWndPtr(wndPtr);
-    return wndPtr->hInstance;
-    
-}
-
-
 /**********************************************************************
  *	     SetWindowWord16    (USER.134)
  */

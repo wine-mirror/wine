@@ -11,7 +11,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "win.h"
+#include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
 #include "resource.h"
@@ -82,7 +82,7 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
         win32Format = TRUE;
     }
 
-    hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
+    hInst = GetWindowLongA( lpChCol->hwndOwner, GWL_HINSTANCE );
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpChCol->hwndOwner,
                            (DLGPROC16)MODULE_GetWndProcEntry16("ColorDlgProc"),

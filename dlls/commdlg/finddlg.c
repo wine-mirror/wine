@@ -10,7 +10,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "win.h"
+#include "ldt.h"
 #include "message.h"
 #include "commdlg.h"
 #include "resource.h"
@@ -52,7 +52,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	return FALSE;
     }
-    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
+    hInst = GetWindowLongA( lpFind->hwndOwner , GWL_HINSTANCE);
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
                         (DLGPROC16)MODULE_GetWndProcEntry16("FindTextDlgProc"),
                                   find, WIN_PROC_16 );
@@ -86,7 +86,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	return FALSE;
     }
-    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
+    hInst = GetWindowLongA( lpFind->hwndOwner , GWL_HINSTANCE);
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
                      (DLGPROC16)MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
                                   find, WIN_PROC_16 );

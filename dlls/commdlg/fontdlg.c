@@ -11,7 +11,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "win.h"
+#include "ldt.h"
 #include "heap.h"
 #include "message.h"
 #include "commdlg.h"
@@ -115,7 +115,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
         win32Format = TRUE;
     }
 
-    hInst = WIN_GetWindowInstance( lpChFont->hwndOwner );
+    hInst = GetWindowLongA( lpChFont->hwndOwner, GWL_HINSTANCE );
     
     /* lpTemplateName is not used in the dialog */
     lpTemplateName=lpChFont->lpTemplateName;
@@ -141,7 +141,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
   BOOL bRet=FALSE;
   HWND hwndDialog;
-  HINSTANCE hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
+  HINSTANCE hInst=GetWindowLongA( lpChFont->hwndOwner, GWL_HINSTANCE );
   LPCVOID template;
   HANDLE hResInfo, hDlgTmpl;
 
@@ -172,7 +172,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 {
   BOOL bRet=FALSE;
   HWND hwndDialog;
-  HINSTANCE hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
+  HINSTANCE hInst=GetWindowLongA( lpChFont->hwndOwner, GWL_HINSTANCE );
   CHOOSEFONTA cf32a;
   LOGFONTA lf32a;
   LPCVOID template;

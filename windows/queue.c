@@ -8,6 +8,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "miscemu.h"
+#include "syslevel.h"
 #include "module.h"
 #include "queue.h"
 #include "task.h"
