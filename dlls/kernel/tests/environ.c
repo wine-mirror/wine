@@ -215,13 +215,16 @@ static void test_ExpandEnvironmentStringsA()
 {
     char buf[256], buf1[256];
     DWORD ret_size, ret_size1;
+    int error;
 
     ret_size1 = GetWindowsDirectoryA(buf1,256);
     ok ((ret_size1 >0) && (ret_size1<256), "GetWindowsDirectory Failed\n");
-    ret_size = ExpandEnvironmentStringsA("%SystemRoot%",buf,256);
-    ok(!strcmp(buf, buf1), "ExpandEnvironmentStrings failed %s vs %s\n", buf, buf1);
+    ret_size = ExpandEnvironmentStringsA("%SystemRoot%",buf,sizeof(buf));
+    error = GetLastError();
+    ok(!strcmp(buf, buf1),
+       "ExpandEnvironmentStrings failed %s vs %s. GetLastError() == %d, ret_size = %ld\n",
+       buf, buf1, error, ret_size);
 }
-  
 
 START_TEST(environ)
 {
