@@ -1027,7 +1027,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
     /* Function header */
 
-    function_header( outfile, "CALL32_Regs" );
+    function_header( outfile, "__wine_call_from_32_regs" );
 
     /* Allocate some buffer space on the stack */
 
@@ -1130,11 +1130,11 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
 
 /*******************************************************************
- *         BuildRelays
+ *         BuildRelays16
  *
- * Build all the relay callbacks
+ * Build all the 16-bit relay callbacks
  */
-void BuildRelays( FILE *outfile )
+void BuildRelays16( FILE *outfile )
 {
     /* File header */
 
@@ -1191,9 +1191,6 @@ void BuildRelays( FILE *outfile )
     /* CBClientThunkSLEx routine */
     BuildCallTo32CBClient( outfile, TRUE  );
 
-    /* 32-bit register entry point */
-    BuildCallFrom32Regs( outfile );
-
     fprintf( outfile, PREFIX"Call16_End:\n" );
     fprintf( outfile, "\t.globl "PREFIX"Call16_End\n" );
 
@@ -1221,9 +1218,51 @@ void BuildRelays( FILE *outfile )
     fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
 }
 
+/*******************************************************************
+ *         BuildRelays32
+ *
+ * Build all the 32-bit relay callbacks
+ */
+void BuildRelays32( FILE *outfile )
+{
+    /* File header */
+
+    fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
+    fprintf( outfile, "\t.text\n" );
+
+#ifdef USE_STABS
+    if (output_file_name)
+    {
+        char buffer[1024];
+        getcwd(buffer, sizeof(buffer));
+        fprintf( outfile, "\t.file\t\"%s\"\n", output_file_name );
+
+        /*
+         * The stabs help the internal debugger as they are an indication that it
+         * is sensible to step into a thunk/trampoline.
+         */
+        fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+        fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", output_file_name );
+        fprintf( outfile, "Code_Start:\n\n" );
+    }
+#endif
+    /* 32-bit register entry point */
+    BuildCallFrom32Regs( outfile );
+
+#ifdef USE_STABS
+    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+    fprintf( outfile, ".Letext:\n");
+#endif
+}
+
 #else /* __i386__ */
 
-void BuildRelays( FILE *outfile )
+void BuildRelays16( FILE *outfile )
+{
+    fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
+}
+
+void BuildRelays32( FILE *outfile )
 {
     fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
 }

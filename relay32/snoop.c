@@ -381,10 +381,10 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 
 /* assembly wrappers that save the context */
 __ASM_GLOBAL_FUNC( SNOOP_Entry,
-                   "call " __ASM_NAME("CALL32_Regs") "\n\t"
+                   "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
                    ".long " __ASM_NAME("SNOOP_DoEntry") ",0" );
 __ASM_GLOBAL_FUNC( SNOOP_Return,
-                   "call " __ASM_NAME("CALL32_Regs") "\n\t"
+                   "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
                    ".long " __ASM_NAME("SNOOP_DoReturn") ",0" );
 
 #else	/* !__i386__ */

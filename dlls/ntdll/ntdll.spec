@@ -1021,6 +1021,9 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ cdecl -norelay __wine_exception_handler(ptr ptr ptr ptr) __wine_exception_handler
 @ cdecl -norelay __wine_finally_handler(ptr ptr ptr ptr) __wine_finally_handler
 
+# Relays
+@ cdecl -norelay -i386 __wine_call_from_32_regs() __wine_call_from_32_regs
+
 # Debugging interface
 @ cdecl -norelay wine_dbgstr_an(str long) wine_dbgstr_an
 @ cdecl -norelay wine_dbgstr_wn(str long) wine_dbgstr_wn

@@ -12,7 +12,7 @@ C_SRCS = \
 	thunk.c
 
 GEN_ASM_SRCS = \
-	asmrelay.s
+	relay16.s
 
 GLUE = thunk.c
 
@@ -23,7 +23,7 @@ all: $(MODULE).o
 $(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(LDCOMBINE) $(OBJS) -o $@
 
-asmrelay.s: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay
+relay16.s: $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay16
 
 ### Dependencies:

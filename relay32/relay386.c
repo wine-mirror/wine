@@ -381,7 +381,7 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 
 void WINAPI RELAY_CallFrom32Regs(void);
 __ASM_GLOBAL_FUNC( RELAY_CallFrom32Regs,
-                   "call " __ASM_NAME("CALL32_Regs") "\n\t"
+                   "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
                    ".long " __ASM_NAME("RELAY_DoCallFrom32Regs") ",0" );
 
 /***********************************************************************

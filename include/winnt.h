@@ -1106,7 +1106,7 @@ typedef CONTEXT *PCONTEXT;
 
 #define _DEFINE_REGS_ENTRYPOINT( name, fn, args ) \
     __ASM_GLOBAL_FUNC( name, \
-                       "call " __ASM_NAME("CALL32_Regs") "\n\t" \
+                       "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
                        ".long " __ASM_NAME(#fn) "\n\t" \
                        ".byte " #args ", " #args )
 #define DEFINE_REGS_ENTRYPOINT_0( name, fn ) \

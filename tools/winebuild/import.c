@@ -207,7 +207,7 @@ static int remove_symbol_holes(void)
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
 static void add_extra_undef_symbols(void)
 {
-    const char *extras[8];
+    const char *extras[10];
     int i, count = 0;
 
 #define ADD_SYM(name) \
@@ -245,6 +245,13 @@ static void add_extra_undef_symbols(void)
     {
        ADD_SYM( "LoadLibraryA" );
        ADD_SYM( "GetProcAddress" );
+    }
+
+    for (i = 0; i < nb_entry_points; i++)
+    {
+        ORDDEF *odp = EntryPoints[i];
+        if (odp->type != TYPE_REGISTER) continue;
+        ADD_SYM( "__wine_call_from_32_regs" );
     }
 
     if (count)

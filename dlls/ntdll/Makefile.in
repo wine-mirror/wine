@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll
-SOVERSION = 1.0
 EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
@@ -26,6 +25,9 @@ C_SRCS = \
 	sync.c \
 	time.c \
 	wcstring.c
+
+GEN_ASM_SRCS = \
+	relay32.s
 
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/files/files.o \
@@ -58,5 +60,8 @@ SUBDIRS = \
 
 $(EXTRA_OBJS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
+
+relay32.s: $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay32
 
 ### Dependencies:

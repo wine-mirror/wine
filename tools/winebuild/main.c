@@ -55,7 +55,7 @@ static FILE *input_file;
 static FILE *output_file;
 
 /* execution mode */
-static enum { MODE_NONE, MODE_SPEC, MODE_GLUE, MODE_RELAY } exec_mode = MODE_NONE;
+static enum { MODE_NONE, MODE_SPEC, MODE_GLUE, MODE_RELAY16, MODE_RELAY32 } exec_mode = MODE_NONE;
 
 /* open the input file */
 static void open_input( const char *name )
@@ -92,21 +92,23 @@ static void do_output( const char *arg );
 static void do_usage(void);
 static void do_spec( const char *arg );
 static void do_glue( const char *arg );
-static void do_relay(void);
+static void do_relay16(void);
+static void do_relay32(void);
 static void do_sym( const char *arg );
 static void do_lib( const char *arg );
 
 static const struct option_descr option_table[] =
 {
-    { "-fPIC",  0, do_pic,    "-fPIC            Generate PIC code" },
-    { "-h",     0, do_usage,  "-h               Display this help message" },
-    { "-L",     1, do_lib,    "-L directory     Look for imports libraries in 'directory'" },
-    { "-o",     1, do_output, "-o name          Set the output file name (default: stdout)" },
-    { "-sym",   1, do_sym,    "-sym file.o      Read the list of undefined symbols from 'file.o'" },
-    { "-spec",  1, do_spec,   "-spec file.spec  Build a .c file from a spec file" },
-    { "-glue",  1, do_glue,   "-glue file.c     Build the 16-bit glue for a .c file" },
-    { "-relay", 0, do_relay,  "-relay           Build the relay assembly routines" },
-    { NULL,     0, NULL,      NULL }
+    { "-fPIC",    0, do_pic,     "-fPIC            Generate PIC code" },
+    { "-h",       0, do_usage,   "-h               Display this help message" },
+    { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
+    { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
+    { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'" },
+    { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
+    { "-glue",    1, do_glue,    "-glue file.c     Build the 16-bit glue for a .c file" },
+    { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
+    { "-relay32", 0, do_relay32, "-relay32         Build the 32-bit relay assembly routines" },
+    { NULL,       0, NULL,      NULL }
 };
 
 static void do_pic(void)
@@ -154,10 +156,16 @@ static void do_glue( const char *arg )
     open_input( arg );
 }
 
-static void do_relay(void)
+static void do_relay16(void)
 {
     if (exec_mode != MODE_NONE) do_usage();
-    exec_mode = MODE_RELAY;
+    exec_mode = MODE_RELAY16;
+}
+
+static void do_relay32(void)
+{
+    if (exec_mode != MODE_NONE) do_usage();
+    exec_mode = MODE_RELAY32;
 }
 
 static void do_sym( const char *arg )
@@ -239,8 +247,11 @@ int main(int argc, char **argv)
     case MODE_GLUE:
         BuildGlue( output_file, input_file );
         break;
-    case MODE_RELAY:
-        BuildRelays( output_file );
+    case MODE_RELAY16:
+        BuildRelays16( output_file );
+        break;
+    case MODE_RELAY32:
+        BuildRelays32( output_file );
         break;
     default:
         do_usage();

@@ -407,7 +407,7 @@ static void output_register_funcs( FILE *outfile )
                  "asm(\".align %d\\n\\t\"\n"
                  "    \"" __ASM_FUNC("%s") "\\n\\t\"\n"
                  "    \"" PREFIX "%s:\\n\\t\"\n"
-                 "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
+                 "    \"call " PREFIX "__wine_call_from_32_regs\\n\\t\"\n"
                  "    \".long " PREFIX "%s\\n\\t\"\n"
                  "    \".byte %d,%d\");\n",
                  get_alignment(4),
