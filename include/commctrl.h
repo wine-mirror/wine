@@ -3354,6 +3354,10 @@ typedef struct NMLVSCROLL
 #define ListView_SetColumnW(hwnd,x,col)\
     (LRESULT)SNDMSGW((hwnd),LVM_SETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
 #define ListView_SetColumn WINELIB_NAME_AW(ListView_SetColumn)
+#define ListView_GetColumnWidth(hwnd,x)\
+    (INT)SNDMSGW((hwnd),LVM_GETCOLUMNWIDTH,(WPARAM)(INT)(x),0L)
+#define ListView_SetColumnWidth(hwnd,x,width)\
+    (BOOL)SNDMSGW((hwnd),LVM_SETCOLUMNWIDTH,(WPARAM)(INT)(x),(LPARAM)(MAKELPARAM(width,0)))
 
 
 #define ListView_GetNextItem(hwnd,nItem,flags) \
@@ -3403,6 +3407,8 @@ typedef struct NMLVSCROLL
     (HIMAGELIST)(UINT)SNDMSGA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
     (INT)SNDMSGA((hwnd),LVM_GETITEMCOUNT,0,0L)
+#define ListView_RedrawItems(hwnd,first,last) \
+    (BOOL)SNDMSGA((hwnd),LVM_REDRAWITEMS,(WPARAM)(INT)(first),(LPARAM)(INT)(last))
 
 #define ListView_GetItemA(hwnd,pitem) \
     (BOOL)SNDMSGA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
