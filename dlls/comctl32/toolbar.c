@@ -1123,10 +1123,13 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpAddBmp->nID & 1) 
 	{
 	    /* large icons */
+	    /* FIXME: on windows the size of the images is 25x24 but the size of the bitmap 
+             * in rsrc is only 24x24. Fix the bitmap (how?) and then fix this 
+             */
 	    SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
-			  MAKELPARAM((WORD)26, (WORD)26));
+			  MAKELPARAM((WORD)24, (WORD)24));
 	    SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
-			  MAKELPARAM((WORD)33, (WORD)33));
+			  MAKELPARAM((WORD)31, (WORD)30));
 	}	
 	else 
 	{
@@ -1239,7 +1242,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
        if (infoPtr->nNumBitmaps + nButtons != imagecount)
        {
-         WARN("Desired images do not match recieved images : Previous image number %i Previous images in list %i  added %i expecting total %i, Images in list %i\n",
+         WARN("Desired images do not match received images : Previous image number %i Previous images in list %i added %i expecting total %i, Images in list %i\n",
 	      infoPtr->nNumBitmaps, nCount, imagecount - nCount,
 	      infoPtr->nNumBitmaps+nButtons,imagecount);
 
@@ -2815,7 +2818,7 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    *lpString = COMCTL32_ReAlloc (lpString, sizeof(WCHAR)*(len+1));
 #endif
 
-	    /* this is the ultimate sollution */
+	    /* this is the ultimate solution */
 /*	    Str_SetPtrA (&infoPtr->strings[btnPtr->iString], lptbbi->pszText); */
 	}
     }
