@@ -15,9 +15,10 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "wine/exception.h"
 #include "debugger.h"
 #include "expr.h"
-#include "wine/exception.h"
+#include "task.h"
 
 extern FILE * yyin;
 int curr_frame = 0;

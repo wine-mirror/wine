@@ -1701,7 +1701,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 		if (bmpImage->bits_per_pixel == 24) {
 			int tocopy = linebytes;
 			BYTE *dstpixel;
-			BYTE *ptr = srcbits+left*3;
+			BYTE *ptr = (BYTE *)(srcbits+left*3);
 
 			if (tocopy < 0 ) tocopy = -tocopy;
 			dstpixel = bmpImage->data + lines*tocopy + left*3;

@@ -45,6 +45,7 @@
  */
 
 #include <assert.h>
+
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -53,6 +54,8 @@
 #include "ole2.h"
 #include "debugtools.h"
 #include "olestd.h"
+
+#include "storage32.h"
 
 #define HANDLE_ERROR(err) { hr = err; TRACE("(HRESULT=%lx)\n", (HRESULT)err); goto CLEANUP; }
 

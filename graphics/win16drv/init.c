@@ -5,8 +5,10 @@
  *           1998 Huw Davies
  */
 
-#include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"

@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "debugger.h"
+#include "miscemu.h"
 #include "winbase.h"
 
 #ifdef __i386__
@@ -71,7 +73,7 @@ DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
    LDT_ENTRY	le;
    
    if (IS_SELECTOR_V86(addr->seg))
-      return DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
+      return (DWORD) DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
    if (DEBUG_IsSelectorSystem(addr->seg))
       return addr->off;
    

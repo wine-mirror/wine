@@ -168,6 +168,13 @@ void           BIGBLOCKFILE_ReleaseBigBlock(LPBIGBLOCKFILE This, void *pBlock);
 void           BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
 ULARGE_INTEGER BIGBLOCKFILE_GetSize(LPBIGBLOCKFILE This);
 
+/*************************************************************************
+ * Ole Convert support
+ */
+
+void OLECONVERT_CreateOleStream(LPSTORAGE pStorage);
+HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName);
+
 /****************************************************************************
  * Storage32BaseImpl definitions.
  *

@@ -412,7 +412,7 @@ INT __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch )
 /*********************************************************************
  *           CRTDLL_iswalnum    (CRTDLL.405)
  */
-int CRTDLL_iswalnum( WCHAR wc )
+INT __cdecl CRTDLL_iswalnum( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswalnum
@@ -425,7 +425,7 @@ int CRTDLL_iswalnum( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswalpha    (CRTDLL.406)
  */
-int CRTDLL_iswalpha( WCHAR wc )
+INT __cdecl CRTDLL_iswalpha( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswalpha
@@ -438,7 +438,7 @@ int CRTDLL_iswalpha( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswcntrl    (CRTDLL.408)
  */
-int CRTDLL_iswcntrl( WCHAR wc )
+INT __cdecl CRTDLL_iswcntrl( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswcntrl
@@ -451,7 +451,7 @@ int CRTDLL_iswcntrl( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswdigit    (CRTDLL.410)
  */
-int CRTDLL_iswdigit( WCHAR wc )
+INT __cdecl CRTDLL_iswdigit( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswdigit
@@ -464,7 +464,7 @@ int CRTDLL_iswdigit( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswgraph    (CRTDLL.411)
  */
-int CRTDLL_iswgraph( WCHAR wc )
+INT __cdecl CRTDLL_iswgraph( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswgraph
@@ -477,7 +477,7 @@ int CRTDLL_iswgraph( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswlower    (CRTDLL.412)
  */
-int CRTDLL_iswlower( WCHAR wc )
+INT __cdecl CRTDLL_iswlower( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswlower
@@ -490,7 +490,7 @@ int CRTDLL_iswlower( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswprint    (CRTDLL.413)
  */
-int CRTDLL_iswprint( WCHAR wc )
+INT __cdecl CRTDLL_iswprint( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswprint
@@ -503,7 +503,7 @@ int CRTDLL_iswprint( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswpunct    (CRTDLL.414)
  */
-int CRTDLL_iswpunct( WCHAR wc )
+INT __cdecl CRTDLL_iswpunct( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswpunct
@@ -516,7 +516,7 @@ int CRTDLL_iswpunct( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswspace    (CRTDLL.415)
  */
-int CRTDLL_iswspace( WCHAR wc )
+INT __cdecl CRTDLL_iswspace( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswspace
@@ -529,7 +529,7 @@ int CRTDLL_iswspace( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswupper    (CRTDLL.416)
  */
-int CRTDLL_iswupper( WCHAR wc )
+INT __cdecl CRTDLL_iswupper( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswupper
@@ -542,7 +542,7 @@ int CRTDLL_iswupper( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswxdigit    (CRTDLL.417)
  */
-int CRTDLL_iswxdigit( WCHAR wc )
+INT __cdecl CRTDLL_iswxdigit( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswxdigit
@@ -555,9 +555,9 @@ int CRTDLL_iswxdigit( WCHAR wc )
 /*********************************************************************
  *           CRTDLL_iswctype    (CRTDLL.409)
  */
-int CRTDLL_iswctype( WCHAR wc, WCHAR wct )
+INT __cdecl CRTDLL_iswctype( WCHAR wc, WCHAR wct )
 {
-    int res = 0;
+    INT res = 0;
 
     if (wct & 0x0001) res |= CRTDLL_iswupper(wc);
     if (wct & 0x0002) res |= CRTDLL_iswlower(wc);

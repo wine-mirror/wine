@@ -210,6 +210,11 @@ void SYSDEPS_ExitThread( int status )
     _lwp_exit();
 #endif
     _exit( status );
+    /*
+     * It is of course impossible to come here,
+     * but it eliminates a compiler warning.
+     */
+    exit( status );
 }
 
 
