@@ -598,7 +598,7 @@ BOOL QUEUE_CreateSysMsgQueue( int size )
     /* Note: We dont need perQ data for the system message queue */
     if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( FALSE )))
         return FALSE;
-    
+    FarSetOwner16( hmemSysMsgQueue, 0 );
     sysMsgQueue = (MESSAGEQUEUE *) GlobalLock16( hmemSysMsgQueue );
     return TRUE;
 }
