@@ -16,7 +16,10 @@ VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
 MODULE    = none
 
-PROGRAMS = winegcc$(EXEEXT)
+PROGRAMS = \
+	winecpp$(EXEEXT) \
+	winegcc$(EXEEXT) \
+	wineg++$(EXEEXT)
 
 C_SRCS = \
 	utils.c \
@@ -28,6 +31,9 @@ all: $(PROGRAMS)
 
 winegcc$(EXEEXT): winegcc.o utils.o
 	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT)
+
+winecpp$(EXEEXT) wineg++$(EXEEXT): winegcc$(EXEEXT)
+	$(RM) $@ && $(LN_S) winegcc$(EXEEXT) $@
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
