@@ -320,8 +320,7 @@ typedef struct
 
 /* OEM Resource Ordinal Numbers */
 #define OBM_CLOSED          32731
-#define OBM_RADIOCHECK      32732
-#define OBM_TRTYPE          32733
+#define OBM_TRTYPE          32732
 #define OBM_LFARROWI        32734
 #define OBM_RGARROWI        32735
 #define OBM_DNARROWI        32736

@@ -64,7 +64,6 @@ typedef unsigned long Pixel;
 #include "bitmaps/obm_size"
 #include "bitmaps/obm_old_close"
 #include "bitmaps/obm_trtype"
-#include "bitmaps/obm_radiocheck"
 
 #include "bitmaps/obm_zoomd"
 #include "bitmaps/obm_reduced"
@@ -94,8 +93,8 @@ static struct
     BOOL color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
     { obm_closed_95,TRUE},      /* OBM_CLOSED */
-    { obm_radiocheck, FALSE },	/* OBM_RADIOCHECK */
-    { obm_trtype, TRUE },	/* OBM_TRTYPE */    
+    { obm_trtype, TRUE },       /* OBM_TRTYPE */
+    { NULL, FALSE },            /* unused */
     { obm_lfarrowi, TRUE },     /* OBM_LFARROWI */
     { obm_rgarrowi, TRUE },     /* OBM_RGARROWI */
     { obm_dnarrowi, TRUE },     /* OBM_DNARROWI */
@@ -317,6 +316,7 @@ static HBITMAP16 OBM_LoadBitmap( WORD id )
 
     if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
     id -= OBM_FIRST;
+    if (!OBM_Pixmaps_Data[id].data) return 0;
 
     if (!OBM_InitColorSymbols()) return 0;
 
