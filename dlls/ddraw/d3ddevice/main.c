@@ -1380,7 +1380,9 @@ Main_IDirect3DDeviceImpl_1_SetMatrix(LPDIRECT3DDEVICE iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, (DWORD) D3DMatHandle, lpD3DMatrix);
 
-    dump_D3DMATRIX(lpD3DMatrix);
+    if (TRACE_ON(ddraw)) {
+	dump_D3DMATRIX(lpD3DMatrix);
+    }
     *((D3DMATRIX *) D3DMatHandle) = *lpD3DMatrix;   
     
     return DD_OK;
