@@ -101,6 +101,10 @@ typedef HRESULT (CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
  *     pStream  [I] pointer to a stream
  *     lParam   [I] application specific value
  *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE 
+ *
  * NOTES
  *     No more information available yet!
  */
@@ -196,6 +200,10 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
  *     pStream  [I] pointer to a stream
  *     lParam   [I] application specific value
  *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE 
+ *
  * NOTES
  *     No more information available yet!
  */
@@ -221,6 +229,10 @@ DPA_SaveStream (const HDPA hDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM 
  *     pfnCompare  [I] pointer to sort function
  *     pfnMerge    [I] pointer to merge function
  *     lParam      [I] application specific value
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE 
  *
  * NOTES
  *     No more information available yet!
@@ -505,8 +517,9 @@ typedef struct tagWINEMRULIST
 #define WMRUF_CHANGED  0x0001   /* MRU list has changed              */
 
 /**************************************************************************
- *              MRU_SaveChanged - Localize MRU saving code
+ *              MRU_SaveChanged (internal)
  *
+ * Localize MRU saving code
  */
 VOID MRU_SaveChanged( LPWINEMRULIST mp )
 {
@@ -570,11 +583,16 @@ VOID MRU_SaveChanged( LPWINEMRULIST mp )
 /**************************************************************************
  *              FreeMRUList [COMCTL32.152]
  *
+ * Frees a most-recently-used items list.
+ *
  * PARAMS
  *     hMRUList [I] Handle to list.
  *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
-DWORD WINAPI
+BOOL WINAPI
 FreeMRUList (HANDLE hMRUList)
 {
     LPWINEMRULIST mp = (LPWINEMRULIST)hMRUList;
@@ -764,6 +782,8 @@ AddMRUStringW(HANDLE hList, LPCWSTR lpszString)
 
 /**************************************************************************
  *              AddMRUStringA [COMCTL32.153]
+ *
+ * See AddMRUStringW.
  */
 INT WINAPI
 AddMRUStringA(HANDLE hList, LPCSTR lpszString)
@@ -794,6 +814,8 @@ DelMRUString(HANDLE hList, INT nItemPos)
 
 /**************************************************************************
  *                  FindMRUStringW [COMCTL32.402]
+ *
+ * See FindMRUStringA.
  */
 INT WINAPI
 FindMRUStringW (HANDLE hList, LPCWSTR lpszString, LPINT lpRegNum)
@@ -831,7 +853,7 @@ FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
 }
 
 /*************************************************************************
- *                 CreateMRUListLazy_common
+ *                 CreateMRUListLazy_common (internal)
  */
 HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 {
@@ -915,6 +937,8 @@ HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 
 /**************************************************************************
  *                  CreateMRUListLazyW [COMCTL32.404]
+ *
+ * See CreateMRUListLazyA.
  */
 HANDLE WINAPI
 CreateMRUListLazyW (LPCREATEMRULISTW lpcml, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
@@ -938,6 +962,17 @@ CreateMRUListLazyW (LPCREATEMRULISTW lpcml, DWORD dwParam2, DWORD dwParam3, DWOR
 
 /**************************************************************************
  *                  CreateMRUListLazyA [COMCTL32.157]
+ *
+ * Creates a most-recently-used list.
+ *
+ * PARAMS
+ *     lpcml    [I] ptr to CREATEMRULIST structure.
+ *     dwParam2 [I] Unknown
+ *     dwParam3 [I] Unknown
+ *     dwParam4 [I] Unknown
+ *
+ * RETURNS
+ *     Handle to MRU list.
  */
 HANDLE WINAPI
 CreateMRUListLazyA (LPCREATEMRULISTA lpcml, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
@@ -964,11 +999,7 @@ CreateMRUListLazyA (LPCREATEMRULISTA lpcml, DWORD dwParam2, DWORD dwParam3, DWOR
 /**************************************************************************
  *              CreateMRUListW [COMCTL32.400]
  *
- * PARAMS
- *     lpcml [I] ptr to CREATEMRULIST structure.
- *
- * RETURNS
- *     Handle to MRU list.
+ * See CreateMRUListA.
  */
 HANDLE WINAPI
 CreateMRUListW (LPCREATEMRULISTW lpcml)
@@ -978,6 +1009,14 @@ CreateMRUListW (LPCREATEMRULISTW lpcml)
 
 /**************************************************************************
  *              CreateMRUListA [COMCTL32.151]
+ *
+ * Creates a most-recently-used list.
+ *
+ * PARAMS
+ *     lpcml [I] ptr to CREATEMRULIST structure.
+ *
+ * RETURNS
+ *     Handle to MRU list.
  */
 HANDLE WINAPI
 CreateMRUListA (LPCREATEMRULISTA lpcml)
@@ -989,7 +1028,7 @@ CreateMRUListA (LPCREATEMRULISTA lpcml)
 /**************************************************************************
  *                EnumMRUListW [COMCTL32.403]
  *
- * Enumerate item in a list
+ * Enumerate item in a most-recenty-used list
  *
  * PARAMS
  *    hList [I] list handle
@@ -1027,6 +1066,7 @@ DWORD nBufferSize)
 /**************************************************************************
  *                EnumMRUListA [COMCTL32.154]
  *
+ * See EnumMRUListW.
  */
 INT WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, LPVOID lpBuffer,
 DWORD nBufferSize)
@@ -1061,12 +1101,15 @@ DWORD nBufferSize)
 /**************************************************************************
  * Str_GetPtrA [COMCTL32.233]
  *
+ * Copies a string into a destination buffer.
+ *
  * PARAMS
- *     lpSrc   [I]
- *     lpDest  [O]
- *     nMaxLen [I]
+ *     lpSrc   [I] Source string
+ *     lpDest  [O] Destination buffer
+ *     nMaxLen [I] Size of buffer in characters
  *
  * RETURNS
+ *     The number of characters copied.
  */
 
 INT WINAPI
@@ -1101,11 +1144,19 @@ Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
 /**************************************************************************
  * Str_SetPtrA [COMCTL32.234]
  *
+ * Makes a copy of a string, allocating memory if necessary.
+ *
  * PARAMS
- *     lppDest [O]
- *     lpSrc   [I]
+ *     lppDest [O] Pointer to destination string
+ *     lpSrc   [I] Source string
  *
  * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     Set lpSrc to NULL to free the memory allocated by a previous call
+ *     to this function.
  */
 
 BOOL WINAPI
@@ -1134,12 +1185,7 @@ Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
 /**************************************************************************
  * Str_GetPtrW [COMCTL32.235]
  *
- * PARAMS
- *     lpSrc   [I]
- *     lpDest  [O]
- *     nMaxLen [I]
- *
- * RETURNS
+ * See Str_GetPtrA.
  */
 
 INT WINAPI
@@ -1174,11 +1220,7 @@ Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
 /**************************************************************************
  * Str_SetPtrW [COMCTL32.236]
  *
- * PARAMS
- *     lpDest [O]
- *     lpSrc  [I]
- *
- * RETURNS
+ * See Str_SetPtrA.
  */
 
 BOOL WINAPI
@@ -1292,13 +1334,9 @@ Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
 
 
 /**************************************************************************
- * The DSA-API is a set of functions to create and manipulate arrays of
- * fixed-size memory blocks. These arrays can store any kind of data
- * (strings, icons...).
- */
-
-/**************************************************************************
- * DSA_Create [COMCTL32.320] Creates a dynamic storage array
+ * DSA_Create [COMCTL32.320]
+ *
+ * Creates a dynamic storage array
  *
  * PARAMS
  *     nSize [I] size of the array elements
@@ -1307,6 +1345,11 @@ Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
  * RETURNS
  *     Success: pointer to an array control structure. Use this like a handle.
  *     Failure: NULL
+ *
+ * NOTES
+ *     The DSA_ functions can be used to create and manipulate arrays of
+ *     fixed-size memory blocks. These arrays can store any kind of data
+ *     (e.g. strings and icons).
  */
 
 HDSA WINAPI
@@ -1331,7 +1374,9 @@ DSA_Create (INT nSize, INT nGrow)
 
 
 /**************************************************************************
- * DSA_Destroy [COMCTL32.321] Destroys a dynamic storage array
+ * DSA_Destroy [COMCTL32.321]
+ * 
+ * Destroys a dynamic storage array
  *
  * PARAMS
  *     hdsa [I] pointer to the array control structure
@@ -1358,6 +1403,8 @@ DSA_Destroy (const HDSA hdsa)
 
 /**************************************************************************
  * DSA_GetItem [COMCTL32.322]
+ *
+ * Copies the specified item into a caller-supplied buffer.
  *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
@@ -1483,6 +1530,8 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 /**************************************************************************
  * DSA_InsertItem [COMCTL32.324]
  *
+ * Inserts an item into the array at the specified index.
+ *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
  *     nIndex [I] index for the new item
@@ -1544,6 +1593,8 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
 /**************************************************************************
  * DSA_DeleteItem [COMCTL32.326]
+ *
+ * Deletes the specified item from the array.
  *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
@@ -1627,12 +1678,9 @@ DSA_DeleteAllItems (const HDSA hdsa)
 
 
 /**************************************************************************
- * The DPA-API is a set of functions to create and manipulate arrays of
- * pointers.
- */
-
-/**************************************************************************
- * DPA_Destroy [COMCTL32.329] Destroys a dynamic pointer array
+ * DPA_Destroy [COMCTL32.329]
+ *
+ * Destroys a dynamic pointer array
  *
  * PARAMS
  *     hdpa [I] handle (pointer) to the pointer array
@@ -2180,6 +2228,10 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
  * RETURNS
  *     Success: handle (pointer) to the pointer array.
  *     Failure: NULL
+ *
+ * NOTES
+ *     The DPA_ functions can be used to create and manipulate arrays of
+ *     pointers.
  */
 
 HDPA WINAPI
@@ -2209,7 +2261,9 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
 
 
 /**************************************************************************
- * DPA_Create [COMCTL32.328] Creates a dynamic pointer array
+ * DPA_Create [COMCTL32.328]
+ *
+ * Creates a dynamic pointer array.
  *
  * PARAMS
  *     nGrow [I] number of items by which the array grows when it is filled
@@ -2217,6 +2271,10 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
  * RETURNS
  *     Success: handle (pointer) to the pointer array.
  *     Failure: NULL
+ *
+ * NOTES
+ *     The DPA_ functions can be used to create and manipulate arrays of
+ *     pointers.
  */
 
 HDPA WINAPI
@@ -2281,15 +2339,22 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
 /**************************************************************************
  * SendNotify [COMCTL32.341]
  *
+ * Sends a WM_NOTIFY message to the specified window.
+ *
  * PARAMS
- *     hwndTo   [I]
- *     hwndFrom [I]
- *     uCode    [I]
- *     lpHdr    [I]
+ *     hwndTo   [I] Window to receive the message
+ *     hwndFrom [I] Window that the message is from (see notes)
+ *     uCode    [I] Notification code
+ *     lpHdr    [I] The NMHDR and any additional information to send or NULL
  *
  * RETURNS
  *     Success: return value from notification
  *     Failure: 0
+ *
+ * NOTES
+ *     If hwndFrom is -1 then the identifier of the control sending the
+ *     message is taken from the NMHDR structure.
+ *     If hwndFrom is not -1 then lpHdr can be NULL.
  */
 
 LRESULT WINAPI SendNotify (HWND hwndTo, HWND hwndFrom, UINT uCode, LPNMHDR lpHdr)
@@ -2311,16 +2376,23 @@ LRESULT WINAPI SendNotify (HWND hwndTo, HWND hwndFrom, UINT uCode, LPNMHDR lpHdr
 /**************************************************************************
  * SendNotifyEx [COMCTL32.342]
  *
+ * Sends a WM_NOTIFY message to the specified window.
+ *
  * PARAMS
- *     hwndFrom [I]
- *     hwndTo   [I]
- *     uCode    [I]
- *     lpHdr    [I]
- *     dwParam5 [I]
+ *     hwndFrom [I] Window to receive the message
+ *     hwndTo   [I] Window that the message is from
+ *     uCode    [I] Notification code
+ *     lpHdr    [I] The NMHDR and any additional information to send or NULL
+ *     dwParam5 [I] Unknown
  *
  * RETURNS
  *     Success: return value from notification
  *     Failure: 0
+ *
+ * NOTES
+ *     If hwndFrom is -1 then the identifier of the control sending the
+ *     message is taken from the NMHDR structure.
+ *     If hwndFrom is not -1 then lpHdr can be NULL.
  */
 
 LRESULT WINAPI SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
@@ -2353,18 +2425,35 @@ LRESULT WINAPI SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
 /**************************************************************************
  * StrChrA [COMCTL32.350]
  *
+ * Find a given character in a string.
+ *
+ * PARAMS
+ *  lpszStr [I] String to search in.
+ *  ch      [I] Character to search for.
+ *
+ * RETURNS
+ *  Success: A pointer to the first occurrence of ch in lpszStr, or NULL if
+ *           not found.
+ *  Failure: NULL, if any arguments are invalid.
  */
-
-LPSTR WINAPI StrChrA (LPCSTR lpString, CHAR cChar)
+LPSTR WINAPI StrChrA (LPCSTR lpszStr, CHAR ch)
 {
-    return strchr (lpString, cChar);
+    return strchr (lpszStr, ch);
 }
 
 
 /**************************************************************************
  * StrStrIA [COMCTL32.355]
+ *
+ * Find a substring within a string, ignoring case.
+ *
+ * PARAMS
+ *  lpStr1    [I] String to search in
+ *  lpStr2    [I] String to look for
+ *
+ * RETURNS
+ *  The start of lpszSearch within lpszStr, or NULL if not found.
  */
-
 LPSTR WINAPI StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
 {
     INT len1, len2, i;
@@ -2393,18 +2482,27 @@ LPSTR WINAPI StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
 }
 
 /**************************************************************************
- * StrToIntA [COMCTL32.357] Converts a string to a signed integer.
+ * StrToIntA [COMCTL32.357]
+ *
+ * Read a signed integer from a string.
+ *
+ * PARAMS
+ *  lpszStr [I] String to read integer from
+ *
+ * RETURNS
+ *   The signed integer value represented by the string, or 0 if no integer is
+ *   present.
  */
-
-INT WINAPI StrToIntA (LPSTR lpString)
+INT WINAPI StrToIntA (LPSTR lpszStr)
 {
-    return atoi(lpString);
+    return atoi(lpszStr);
 }
 
 /**************************************************************************
  * StrStrIW [COMCTL32.363]
+ *
+ * See StrStrIA.
  */
-
 LPWSTR WINAPI StrStrIW (LPCWSTR lpStr1, LPCWSTR lpStr2)
 {
     INT len1, len2, i;
@@ -2433,9 +2531,10 @@ LPWSTR WINAPI StrStrIW (LPCWSTR lpStr1, LPCWSTR lpStr2)
 }
 
 /**************************************************************************
- * StrToIntW [COMCTL32.365] Converts a wide char string to a signed integer.
+ * StrToIntW [COMCTL32.365]
+ *
+ * See StrToIntA.
  */
-
 INT WINAPI StrToIntW (LPWSTR lpString)
 {
     return atoiW(lpString);
@@ -2563,6 +2662,16 @@ DSA_DestroyCallback (HDSA hdsa, PFNDSAENUMCALLBACK enumProc, LPVOID lParam)
 /**************************************************************************
  * StrCSpnA [COMCTL32.356]
  *
+ * Find the length of the start of a string that does not contain certain
+ * characters.
+ *
+ * PARAMS
+ *  lpszStr   [I] String to search
+ *  lpszMatch [I] Characters that cannot be in the substring
+ *
+ * RETURNS
+ *  The length of the part of lpszStr containing only chars not in lpszMatch,
+ *  or 0 if any parameter is invalid.
  */
 INT WINAPI StrCSpnA( LPCSTR lpStr, LPCSTR lpSet)
 {
@@ -2572,6 +2681,7 @@ INT WINAPI StrCSpnA( LPCSTR lpStr, LPCSTR lpSet)
 /**************************************************************************
  * StrChrW [COMCTL32.358]
  *
+ * See StrChrA.
  */
 LPWSTR WINAPI StrChrW( LPCWSTR lpStart, WORD wMatch)
 {
@@ -2581,6 +2691,16 @@ LPWSTR WINAPI StrChrW( LPCWSTR lpStart, WORD wMatch)
 /**************************************************************************
  * StrCmpNA [COMCTL32.352]
  *
+ * Compare two strings, up to a maximum length.
+ *
+ * PARAMS
+ *  lpszStr  [I] First string to compare
+ *  lpszComp [I] Second string to compare
+ *  iLen     [I] Maximum number of chars to compare.
+ *
+ * RETURNS
+ *  An integer less than, equal to or greater than 0, indicating that
+ *  lpszStr is less than, the same, or greater than lpszComp.
  */
 INT WINAPI StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar)
 {
