@@ -3960,7 +3960,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	SetTimer(hwnd, TV_EDIT_TIMER, GetDoubleClickTime(), 0);
 	infoPtr->Timer |= TV_EDIT_TIMER_SET;
     }
-    else if (ht.flags & TVHT_ONITEM) /* select the item if the hit was inside of the icon or text */
+    else if (ht.flags & (TVHT_ONITEMICON|TVHT_ONITEMLABEL)) /* select the item if the hit was inside of the icon or text */
     {
         /*
          * if we are TVS_SINGLEEXPAND then we want this single click to
