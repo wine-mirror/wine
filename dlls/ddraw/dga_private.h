@@ -6,11 +6,6 @@
 
 #include "ts_xf86dga.h"
 
-#ifdef HAVE_LIBXXF86VM
-# include "ts_xf86vmode.h"
-extern XF86VidModeModeInfo *orig_mode;
-#endif /* defined(HAVE_LIBXXF86VM) */
-
 extern ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt;
 extern ICOM_VTABLE(IDirectDraw)		dga_ddvt;
 extern ICOM_VTABLE(IDirectDrawPalette)	dga_ddpalvt;

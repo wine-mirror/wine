@@ -148,6 +148,71 @@ clean_up_and_exit:
   return index;
 }
 
+#ifdef HAVE_LIBXXF86VM
+static XF86VidModeModeInfo *orig_mode = NULL;
+
+void
+xf86vmode_setdisplaymode(width,height) {
+    int i, mode_count;
+    XF86VidModeModeInfo **all_modes, *vidmode = NULL;
+    XF86VidModeModeLine mod_tmp;
+    /* int dotclock_tmp; */
+
+    /* save original video mode and set fullscreen if available*/
+    orig_mode = (XF86VidModeModeInfo *)malloc(sizeof(XF86VidModeModeInfo));  
+    TSXF86VidModeGetModeLine(display, DefaultScreen(display), &orig_mode->dotclock, &mod_tmp);
+    orig_mode->hdisplay = mod_tmp.hdisplay; 
+    orig_mode->hsyncstart = mod_tmp.hsyncstart;
+    orig_mode->hsyncend = mod_tmp.hsyncend; 
+    orig_mode->htotal = mod_tmp.htotal;
+    orig_mode->vdisplay = mod_tmp.vdisplay; 
+    orig_mode->vsyncstart = mod_tmp.vsyncstart;
+    orig_mode->vsyncend = mod_tmp.vsyncend; 
+    orig_mode->vtotal = mod_tmp.vtotal;
+    orig_mode->flags = mod_tmp.flags; 
+    orig_mode->private = mod_tmp.private;
+
+    TSXF86VidModeGetAllModeLines(display,DefaultScreen(display),&mode_count,&all_modes);
+    for (i=0;i<mode_count;i++) {
+	if (all_modes[i]->hdisplay == width &&
+	    all_modes[i]->vdisplay == height
+	) {
+	    vidmode = (XF86VidModeModeInfo *)malloc(sizeof(XF86VidModeModeInfo));
+	    *vidmode = *(all_modes[i]);
+	    break;
+	} else
+	    TSXFree(all_modes[i]->private);
+    }
+    for (i++;i<mode_count;i++) TSXFree(all_modes[i]->private);
+	TSXFree(all_modes);
+
+    if (!vidmode)
+	WARN("Fullscreen mode not available!\n");
+
+    if (vidmode) {
+	TRACE("SwitchToMode(%dx%d)\n",vidmode->hdisplay,vidmode->vdisplay);
+	TSXF86VidModeSwitchToMode(display, DefaultScreen(display), vidmode);
+#if 0 /* This messes up my screen (XF86_Mach64, 3.3.2.3a) for some reason, and should now be unnecessary */
+	TSXF86VidModeSetViewPort(display, DefaultScreen(display), 0, 0);
+#endif
+    }
+}
+
+void xf86vmode_restore() {
+    if (!orig_mode)
+	return;
+    TSXF86VidModeSwitchToMode(display,DefaultScreen(display),orig_mode);
+    if (orig_mode->privsize)
+	TSXFree(orig_mode->private);		
+    free(orig_mode);
+    orig_mode = NULL;
+}
+#else
+void xf86vmode_setdisplaymode(width,height) {}
+void xf86vmode_restore() {}
+#endif
+
+
 /*******************************************************************************
  *				IDirectDraw
  */
@@ -476,6 +541,23 @@ static XvImage *create_xvimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* 
 }
 #endif
 
+ULONG WINAPI Xlib_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
+    ICOM_THIS(IDirectDraw2Impl,iface);
+    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
+
+    if (!--(This->ref)) {
+	if (!--(This->d->ref)) {
+	    if (This->d->window && GetPropA(This->d->window,ddProp))
+		DestroyWindow(This->d->window);
+	    HeapFree(GetProcessHeap(),0,This->d);
+	}
+	HeapFree(GetProcessHeap(),0,This);
+	xf86vmode_restore();
+	return S_OK;
+    }
+    return This->ref;
+}
+
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
     LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,
     IUnknown *lpunk
@@ -678,6 +760,8 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
     This->d->height	= height;
 
     _common_IDirectDrawImpl_SetDisplayMode(This);
+
+    xf86vmode_setdisplaymode(width,height);
 
     tmpWnd = WIN_FindWndPtr(This->d->window);
     This->d->paintable = 1;
@@ -1060,7 +1144,7 @@ ICOM_VTABLE(IDirectDraw) xlib_ddvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
     XCAST(AddRef)IDirectDraw2Impl_AddRef,
-    XCAST(Release)IDirectDraw2Impl_Release,
+    XCAST(Release)Xlib_IDirectDraw2Impl_Release,
     XCAST(Compact)IDirectDraw2Impl_Compact,
     XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
     XCAST(CreatePalette)Xlib_IDirectDraw2Impl_CreatePalette,
@@ -1111,7 +1195,7 @@ ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Xlib_IDirectDraw2Impl_QueryInterface,
     IDirectDraw2Impl_AddRef,
-    IDirectDraw2Impl_Release,
+    Xlib_IDirectDraw2Impl_Release,
     IDirectDraw2Impl_Compact,
     IDirectDraw2Impl_CreateClipper,
     Xlib_IDirectDraw2Impl_CreatePalette,
@@ -1145,7 +1229,7 @@ ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
     XCAST(AddRef)IDirectDraw2Impl_AddRef,
-    XCAST(Release)IDirectDraw2Impl_Release,
+    XCAST(Release)Xlib_IDirectDraw2Impl_Release,
     XCAST(Compact)IDirectDraw2Impl_Compact,
     XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
     XCAST(CreatePalette)Xlib_IDirectDraw2Impl_CreatePalette,

@@ -18,6 +18,14 @@
 # include "ts_xshm.h"
 #endif /* defined(HAVE_LIBXXSHM) */
 
+#ifdef HAVE_LIBXXF86VM
+# include "ts_xf86vmode.h"
+extern XF86VidModeModeInfo *orig_mode;
+#endif /* defined(HAVE_LIBXXF86VM) */
+
+extern void xf86vmode_setdisplaymode(int,int);
+extern void xf86vmode_restore();
+
 #ifdef HAVE_XVIDEO
 #include "ts_xvideo.h"
 #else

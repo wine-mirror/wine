@@ -208,7 +208,6 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 ) {
     ICOM_THIS(IDirectDrawImpl,iface);
     DDPRIVATE(This);
-    int	i,mode_count;
 
     TRACE("(%p)->(%ld,%ld,%ld)\n", This, width, height, depth);
 
@@ -231,52 +230,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	ddpriv->fb_height = height;
     _common_IDirectDrawImpl_SetDisplayMode(This);
 
-#ifdef HAVE_LIBXXF86VM
-    {
-	XF86VidModeModeInfo **all_modes, *vidmode = NULL;
-	XF86VidModeModeLine mod_tmp;
-	/* int dotclock_tmp; */
-
-	/* save original video mode and set fullscreen if available*/
-	orig_mode = (XF86VidModeModeInfo *)malloc(sizeof(XF86VidModeModeInfo));  
-	TSXF86VidModeGetModeLine(display, DefaultScreen(display), &orig_mode->dotclock, &mod_tmp);
-	orig_mode->hdisplay = mod_tmp.hdisplay; 
-	orig_mode->hsyncstart = mod_tmp.hsyncstart;
-	orig_mode->hsyncend = mod_tmp.hsyncend; 
-	orig_mode->htotal = mod_tmp.htotal;
-	orig_mode->vdisplay = mod_tmp.vdisplay; 
-	orig_mode->vsyncstart = mod_tmp.vsyncstart;
-	orig_mode->vsyncend = mod_tmp.vsyncend; 
-	orig_mode->vtotal = mod_tmp.vtotal;
-	orig_mode->flags = mod_tmp.flags; 
-	orig_mode->private = mod_tmp.private;
-
-	TSXF86VidModeGetAllModeLines(display,DefaultScreen(display),&mode_count,&all_modes);
-	for (i=0;i<mode_count;i++) {
-	    if (all_modes[i]->hdisplay == width &&
-		all_modes[i]->vdisplay == height
-	    ) {
-		vidmode = (XF86VidModeModeInfo *)malloc(sizeof(XF86VidModeModeInfo));
-		*vidmode = *(all_modes[i]);
-		break;
-	    } else
-		TSXFree(all_modes[i]->private);
-	}
-	for (i++;i<mode_count;i++) TSXFree(all_modes[i]->private);
-	    TSXFree(all_modes);
-
-	if (!vidmode)
-	    WARN("Fullscreen mode not available!\n");
-
-	if (vidmode) {
-	    TRACE("SwitchToMode(%dx%d)\n",vidmode->hdisplay,vidmode->vdisplay);
-	    TSXF86VidModeSwitchToMode(display, DefaultScreen(display), vidmode);
-#if 0 /* This messes up my screen (XF86_Mach64, 3.3.2.3a) for some reason, and should now be unnecessary */
-	    TSXF86VidModeSetViewPort(display, DefaultScreen(display), 0, 0);
-#endif
-	}
-    }
-#endif
+    xf86vmode_setdisplaymode(width,height);
 
     /* FIXME: this function OVERWRITES several signal handlers. 
      * can we save them? and restore them later? In a way that
@@ -414,20 +368,9 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 	  TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 	  if (This->d->window && GetPropA(This->d->window,ddProp))
 	    DestroyWindow(This->d->window);
-#ifdef HAVE_LIBXXF86VM
-	  if (orig_mode) {
-	    TSXF86VidModeSwitchToMode(
-				      display,
-				      DefaultScreen(display),
-				      orig_mode
-				      );
-	    if (orig_mode->privsize)
-		    TSXFree(orig_mode->private);		
-	    free(orig_mode);
-	    orig_mode = NULL;
-	  }
-#endif
-	    
+
+	  xf86vmode_restore();
+
 #ifdef RESTORE_SIGNALS
 	  SIGNAL_Init();
 #endif
