@@ -6,7 +6,7 @@ type	win16
 3      pascal  PlaySound(ptr word long) PlaySound16
 5      pascal  mmsystemGetVersion() mmsystemGetVersion16
 6      pascal  DriverProc(long word word long long) DriverProc16
-8      stub    WMMMIDIRUNONCE
+8      pascal  WMMMIDIRUNONCE() WMMMidiRunOnce16
 30     pascal16 OutputDebugStr(str) OutputDebugString16
 31     pascal  DriverCallback(long word word word long long long) DriverCallback16
 32     pascal  StackEnter() StackEnterLeave16

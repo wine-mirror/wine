@@ -5044,3 +5044,11 @@ void	WINAPI	StackEnterLeave16(void)
     __asm__("stc");
 #endif
 }
+
+/**************************************************************************
+ * 			WMMMIDIRUNONCE 	[MMSYSTEM.8]
+ */
+void WINAPI WMMMidiRunOnce16(void)
+{
+	FIXME("(), stub!\n");
+}
