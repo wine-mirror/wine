@@ -32,7 +32,6 @@ EXPORTS
     wine_dlopen
     wine_dlsym
     wine_exec_wine_binary
-    wine_free_pe_load_area
     wine_get_config_dir
     wine_get_cs
     wine_get_ds
@@ -56,6 +55,9 @@ EXPORTS
     wine_ldt_is_system
     wine_ldt_realloc_entries
     wine_ldt_set_entry
+    wine_mmap_add_reserved_area
+    wine_mmap_is_in_reserved_area
+    wine_mmap_remove_reserved_area
     wine_pthread_abort_thread
     wine_pthread_create_thread
     wine_pthread_exit_thread
@@ -64,5 +66,4 @@ EXPORTS
     wine_pthread_init_thread
     wine_set_fs
     wine_set_gs
-    wine_set_pe_load_area
     wine_switch_to_stack

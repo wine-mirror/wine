@@ -70,9 +70,15 @@ extern int wine_dbg_parse_options( const char *str );
 /* portability */
 
 extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
-extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
 extern void wine_set_pe_load_area( void *base, size_t size );
 extern void wine_free_pe_load_area(void);
+
+/* memory mappings */
+
+extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
+extern void wine_mmap_add_reserved_area( void *addr, size_t size );
+extern void wine_mmap_remove_reserved_area( void *addr, size_t size, int unmap );
+extern int wine_mmap_is_in_reserved_area( void *addr, size_t size );
 
 /* LDT management */
 

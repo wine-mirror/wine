@@ -13,6 +13,7 @@ C_SRCS = \
 	debug.c \
 	ldt.c \
 	loader.c \
+	mmap.c \
 	port.c
 
 @MAKE_LIB_RULES@

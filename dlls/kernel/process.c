@@ -1116,8 +1116,6 @@ void __wine_kernel_init(void)
     }
 
  found:
-    wine_free_pe_load_area();  /* the main binary is loaded, we don't need this anymore */
-
     /* build command line */
     set_library_wargv( __wine_main_argv );
     if (!build_command_line( __wine_main_wargv )) goto error;

@@ -29,11 +29,6 @@ int main( int argc, char *argv[] )
 {
     char error[1024];
 
-#if 0
-    static char pe_load[256*1024*1024] __attribute__((aligned(4096)));
-    wine_set_pe_load_area( pe_load, sizeof(pe_load) );
-#endif
-
     wine_init( argc, argv, error, sizeof(error) );
     fprintf( stderr, "wine: failed to initialize: %s\n", error );
     exit(1);

@@ -71,6 +71,7 @@ static const char **dll_paths;
 static int nb_dll_paths;
 static int dll_path_maxlen;
 
+extern void mmap_init(void);
 
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
@@ -516,6 +517,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_environ = environ;
+    mmap_init();
 
     if ((wine_debug = getenv("WINEDEBUG")))
     {

@@ -57,6 +57,10 @@ WINE_DECLARE_DEBUG_CHANNEL(module);
 #define MS_SYNC 0
 #endif
 
+#ifndef MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
+
 /* File view */
 typedef struct file_view
 {
@@ -112,16 +116,15 @@ static CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 # define page_mask  0xfff
 # define page_shift 12
 # define page_size  0x1000
-/* Note: ADDRESS_SPACE_LIMIT is a Windows limit, you cannot change it.
- * If you are on Solaris you need to find a way to avoid having the system
- * allocate things above 0xc000000. Don't touch that define.
- */
-# define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the user address space */
+/* Note: these are Windows limits, you cannot change them. */
+# define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the total available address space */
+# define USER_SPACE_LIMIT     ((void *)0x80000000)  /* top of the user address space */
 #else
 static UINT page_shift;
 static UINT page_mask;
 static UINT page_size;
 # define ADDRESS_SPACE_LIMIT  0   /* no limit needed on other platforms */
+# define USER_SPACE_LIMIT     0   /* no limit needed on other platforms */
 #endif  /* __i386__ */
 #define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
 
@@ -219,24 +222,88 @@ static struct file_view *VIRTUAL_FindView( const void *addr ) /* [in] Address */
     {
         struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
         if (view->base > addr) break;
-        if ((char*)view->base + view->size > (char*)addr) return view;
+        if ((char *)view->base + view->size > (const char *)addr) return view;
     }
     return NULL;
 }
 
 
 /***********************************************************************
- *           VIRTUAL_DeleteView
+ *           find_view_range
+ *
+ * Find the first view overlapping at least part of the specified range.
+ * The csVirtual section must be held by caller.
+ */
+static struct file_view *find_view_range( const void *addr, size_t size )
+{
+    struct list *ptr;
+
+    LIST_FOR_EACH( ptr, &views_list )
+    {
+        struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
+        if ((char *)view->base >= (const char *)addr + size) break;
+        if ((char *)view->base + view->size > (const char *)addr) return view;
+    }
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           add_reserved_area
+ *
+ * Add a reserved area to the list maintained by libwine.
+ * The csVirtual section must be held by caller.
+ */
+static void add_reserved_area( void *addr, size_t size )
+{
+    TRACE( "adding %p-%p\n", addr, (char *)addr + size );
+
+    if (addr < USER_SPACE_LIMIT)
+    {
+        /* unmap the part of the area that is below the limit */
+        assert( (char *)addr + size > (char *)USER_SPACE_LIMIT );
+        munmap( addr, (char *)USER_SPACE_LIMIT - (char *)addr );
+        size -= (char *)USER_SPACE_LIMIT - (char *)addr;
+        addr = USER_SPACE_LIMIT;
+    }
+    wine_mmap_add_reserved_area( addr, size );
+}
+
+
+/***********************************************************************
+ *           is_beyond_limit
+ *
+ * Check if an address range goes beyond a given limit.
+ */
+static inline int is_beyond_limit( void *addr, size_t size, void *limit )
+{
+    return (limit && (addr >= limit || (char *)addr + size > (char *)limit));
+}
+
+
+/***********************************************************************
+ *           unmap_area
+ *
+ * Unmap an area, or simply replace it by an empty mapping if it is
+ * in a reserved area. The csVirtual section must be held by caller.
+ */
+static inline void unmap_area( void *addr, size_t size )
+{
+    if (wine_mmap_is_in_reserved_area( addr, size ))
+        wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
+    else
+        munmap( addr, size );
+}
+
+
+/***********************************************************************
+ *           delete_view
  *
  * Deletes a view. The csVirtual section must be held by caller.
- *
- * RETURNS
- *	None
  */
-static void VIRTUAL_DeleteView( struct file_view *view ) /* [in] View */
+static void delete_view( struct file_view *view ) /* [in] View */
 {
-    if (!(view->flags & VFLAG_SYSTEM))
-        munmap( (void *)view->base, view->size );
+    if (!(view->flags & VFLAG_SYSTEM)) unmap_area( view->base, view->size );
     list_remove( &view->entry );
     if (view->mapping) NtClose( view->mapping );
     free( view );
@@ -290,7 +357,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
                    prev->base, (char *)prev->base + prev->size,
                    base, (char *)base + view->size );
             assert( prev->flags & VFLAG_SYSTEM );
-            VIRTUAL_DeleteView( prev );
+            delete_view( prev );
         }
     }
     if ((ptr = list_next( &views_list, &view->entry )) != NULL)
@@ -302,7 +369,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
                    next->base, (char *)next->base + next->size,
                    base, (char *)base + view->size );
             assert( next->flags & VFLAG_SYSTEM );
-            VIRTUAL_DeleteView( next );
+            delete_view( next );
         }
     }
 
@@ -450,26 +517,52 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
 
     if (base)
     {
-        if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        if (is_beyond_limit( base, size, ADDRESS_SPACE_LIMIT ))
+            return STATUS_WORKING_SET_LIMIT_RANGE;
+
+        switch (wine_mmap_is_in_reserved_area( base, size ))
         {
-            if (errno == ENOMEM) return STATUS_NO_MEMORY;
-            return STATUS_INVALID_PARAMETER;
-        }
-        if (ptr != base)
-        {
-            /* We couldn't get the address we wanted */
-            munmap( ptr, size );
+        case -1: /* partially in a reserved area */
             return STATUS_CONFLICTING_ADDRESSES;
+
+        case 0:  /* not in a reserved area, do a normal allocation */
+            if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+            {
+                if (errno == ENOMEM) return STATUS_NO_MEMORY;
+                return STATUS_INVALID_PARAMETER;
+            }
+            if (ptr != base)
+            {
+                /* We couldn't get the address we wanted */
+                if (is_beyond_limit( ptr, size, USER_SPACE_LIMIT )) add_reserved_area( ptr, size );
+                else munmap( ptr, size );
+                return STATUS_CONFLICTING_ADDRESSES;
+            }
+            break;
+
+        default:
+        case 1:  /* in a reserved area, make sure the address is available */
+            if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
+            /* replace the reserved area by our mapping */
+            if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), MAP_FIXED )) != base)
+                return STATUS_INVALID_PARAMETER;
+            break;
         }
     }
     else
     {
         size_t view_size = size + granularity_mask + 1;
 
-        if ((ptr = wine_anon_mmap( NULL, view_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        for (;;)
         {
-            if (errno == ENOMEM) return STATUS_NO_MEMORY;
-            return STATUS_INVALID_PARAMETER;
+            if ((ptr = wine_anon_mmap( NULL, view_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+            {
+                if (errno == ENOMEM) return STATUS_NO_MEMORY;
+                return STATUS_INVALID_PARAMETER;
+            }
+            /* if we got something beyond the user limit, unmap it and retry */
+            if (is_beyond_limit( ptr, view_size, USER_SPACE_LIMIT )) add_reserved_area( ptr, view_size );
+            else break;
         }
 
         /* Release the extra memory while keeping the range
@@ -486,7 +579,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
     }
 
     status = create_view( view_ret, ptr, size, vprot );
-    if (status != STATUS_SUCCESS) munmap( ptr, size );
+    if (status != STATUS_SUCCESS) unmap_area( ptr, size );
     return status;
 }
 
@@ -885,7 +978,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
     return STATUS_SUCCESS;
 
  error:
-    if (view) VIRTUAL_DeleteView( view );
+    if (view) delete_view( view );
     RtlLeaveCriticalSection( &csVirtual );
     return status;
 }
@@ -1040,7 +1133,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
         /* disallow low 64k, wrap-around and kernel space */
         if (((char *)base <= (char *)granularity_mask) ||
             ((char *)base + size < (char *)base) ||
-            (ADDRESS_SPACE_LIMIT && ((char *)base + size > (char *)ADDRESS_SPACE_LIMIT)))
+            is_beyond_limit( base, size, ADDRESS_SPACE_LIMIT ))
             return STATUS_INVALID_PARAMETER;
     }
     else
@@ -1148,7 +1241,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
         *addr_ptr = view->base;
         *size_ptr = view->size;
         view->flags |= VFLAG_SYSTEM;
-        VIRTUAL_DeleteView( view );
+        delete_view( view );
     }
     else if (type == MEM_RELEASE)
     {
@@ -1157,7 +1250,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
         if (size || (base != view->base)) status = STATUS_INVALID_PARAMETER;
         else
         {
-            VIRTUAL_DeleteView( view );
+            delete_view( view );
             *addr_ptr = base;
             *size_ptr = size;
         }
@@ -1264,7 +1357,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     if (info_class != MemoryBasicInformation) return STATUS_INVALID_INFO_CLASS;
     if (ADDRESS_SPACE_LIMIT && addr >= ADDRESS_SPACE_LIMIT)
-        return STATUS_WORKING_SET_LIMIT_RANGE;  /* FIXME */
+        return STATUS_WORKING_SET_LIMIT_RANGE;
 
     if (!is_current_process( process ))
     {
@@ -1282,7 +1375,18 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     {
         if (!ptr)
         {
-            size = (char *)ADDRESS_SPACE_LIMIT - alloc_base;
+            /* make the address space end at the user limit, except if
+             * the last view was mapped beyond that */
+            if (alloc_base < (char *)USER_SPACE_LIMIT)
+            {
+                if (USER_SPACE_LIMIT && base >= (char *)USER_SPACE_LIMIT)
+                {
+                    RtlLeaveCriticalSection( &csVirtual );
+                    return STATUS_WORKING_SET_LIMIT_RANGE;
+                }
+                size = (char *)USER_SPACE_LIMIT - alloc_base;
+            }
+            else size = (char *)ADDRESS_SPACE_LIMIT - alloc_base;
             view = NULL;
             break;
         }
@@ -1585,7 +1689,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     {
         ERR( "map_file_into_view %p %x %lx%08lx failed\n",
              view->base, size, offset->u.HighPart, offset->u.LowPart );
-        VIRTUAL_DeleteView( view );
+        delete_view( view );
     }
 
     RtlLeaveCriticalSection( &csVirtual );
@@ -1614,7 +1718,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     RtlEnterCriticalSection( &csVirtual );
     if ((view = VIRTUAL_FindView( base )) && (base == view->base))
     {
-        VIRTUAL_DeleteView( view );
+        delete_view( view );
         status = STATUS_SUCCESS;
     }
     RtlLeaveCriticalSection( &csVirtual );
