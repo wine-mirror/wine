@@ -1875,4 +1875,30 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
   return (INT)(lpLoop-lpStr);
 }
 
+/*************************************************************************
+ * DPA_LoadStream [COMCTL32.9]
+ *
+ * NOTE: Ordinal is only accurate for Win98 / IE 4 and later
+ */
 
+DWORD WINAPI DPA_LoadStream(HDPA *hDpa, DWORD pfnDpaLoadCallback, DWORD param3, DWORD param4)
+{
+  FIXME(commctrl, "(%p %lx %lx %lx): partial stub!\n", hDpa, pfnDpaLoadCallback, param3, param4);
+
+ *hDpa = DPA_Create(8);
+
+  return(0);
+}
+
+/************************************************************************
+ * DPA_SaveStream [COMCTL32.10]
+ *
+ * NOTE: Ordinal is only accurate for Win98 / IE 4 and later
+ */
+
+DWORD WINAPI DPA_SaveStream(DWORD param1, DWORD param2, DWORD param3, DWORD param4)
+{
+  FIXME(commctrl, "(%lx %lx %lx %lx): stub!\n", param1, param2, param3, param4);
+
+  return(0);
+}
