@@ -50,6 +50,10 @@ static USER_DRIVER user_driver =
 static XKeyboardState keyboard_state;
 
 Display *display;
+Screen *screen;
+Visual *visual;
+int screen_depth;
+Window root_window;
 
 /***********************************************************************
  *		error_handler
@@ -85,7 +89,28 @@ static void process_attach(void)
                  argv0, Options.display ? Options.display : "(none specified)" );
         ExitProcess(1);
     }
-  
+    screen = DefaultScreenOfDisplay( display );
+    visual = DefaultVisual( display, DefaultScreen(display) );
+    root_window = DefaultRootWindow( display );
+
+    /* Initialize screen depth */
+
+    screen_depth = PROFILE_GetWineIniInt( "x11drv", "ScreenDepth", 0 );
+    if (screen_depth)  /* depth specified */
+    {
+        int depth_count, i;
+        int *depth_list = TSXListDepths(display, DefaultScreen(display), &depth_count);
+        for (i = 0; i < depth_count; i++)
+            if (depth_list[i] == screen_depth) break;
+        TSXFree( depth_list );
+        if (i >= depth_count)
+	{
+            MESSAGE( "%s: Depth %d not supported on this screen.\n", argv0, screen_depth );
+            ExitProcess(1);
+	}
+    }
+    else screen_depth = DefaultDepthOfScreen( screen );
+
     /* tell the libX11 that we will do input method handling ourselves
      * that keep libX11 from doing anything whith dead keys, allowing Wine
      * to have total control over dead keys, that is this line allows

@@ -66,7 +66,7 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
          */
         pixmapAll = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                    ptr->nWidth, ptr->nHeight * 2, 1 );
-        image = XCreateImage( display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
+        image = XCreateImage( display, X11DRV_GetVisual(),
                               1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
                               ptr->nHeight * 2, 16, ptr->nWidthBytes);
         if (image)

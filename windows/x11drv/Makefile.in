@@ -7,11 +7,9 @@ MODULE    = x11drv
 
 C_SRCS = \
 	clipboard.c \
-	desktop.c \
 	event.c \
 	init.c \
 	keyboard.c \
-	main.c \
 	monitor.c \
 	mouse.c \
 	wnd.c

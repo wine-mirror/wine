@@ -82,28 +82,6 @@ Window X11DRV_WND_FindXWindow(WND *wndPtr)
 }
 
 /***********************************************************************
- *              X11DRV_WND_GetXScreen
- *
- * Return the X screen associated to the window.
- */
-Screen *X11DRV_WND_GetXScreen(WND *wndPtr)
-{
-  while(wndPtr->parent) wndPtr = wndPtr->parent;
-  return X11DRV_DESKTOP_GetXScreen((struct tagDESKTOP *) wndPtr->wExtra);
-}
-
-/***********************************************************************
- *              X11DRV_WND_GetXRootWindow
- *
- * Return the X display associated to the window.
- */
-Window X11DRV_WND_GetXRootWindow(WND *wndPtr)
-{
-  while(wndPtr->parent) wndPtr = wndPtr->parent;
-  return X11DRV_DESKTOP_GetXRootWindow((struct tagDESKTOP *) wndPtr->wExtra);
-}
-
-/***********************************************************************
  *		X11DRV_WND_RegisterWindow
  *
  * Associate an X window to a HWND.
@@ -172,8 +150,7 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
     if (kwmDockWindow == None)
         kwmDockWindow = TSXInternAtom( display, "KWM_DOCKWINDOW", False );
 
-    ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
-      X11DRV_WND_GetXRootWindow( wndPtr );
+    ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = X11DRV_GetXRootWindow();
     X11DRV_WND_RegisterWindow( wndPtr );
 
     return TRUE;
@@ -188,8 +165,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
   /* Create the X window (only for top-level windows, and then only */
   /* when there's no desktop window) */
   
-  if (!(cs->style & WS_CHILD) && 
-      (X11DRV_WND_GetXRootWindow(wndPtr) == DefaultRootWindow(display)))
+  if (!(cs->style & WS_CHILD) && (X11DRV_GetXRootWindow() == DefaultRootWindow(display)))
   {
       Window    wGroupLeader;
       XWMHints* wm_hints;
@@ -222,8 +198,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->bit_gravity = win_attr.bit_gravity;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
-	TSXCreateWindow( display, 
-			 X11DRV_WND_GetXRootWindow(wndPtr), 
+	TSXCreateWindow( display, X11DRV_GetXRootWindow(), 
 			 cs->x, cs->y, cs->cx, cs->cy, 
 			 0, CopyFromParent, 
 			 InputOutput, CopyFromParent,
@@ -384,7 +359,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
             {
                 wndPtr->dwStyle &= ~WS_CHILD;
                 wndPtr->wIDmenu = 0;
-                if( X11DRV_WND_GetXRootWindow(wndPtr) == DefaultRootWindow(display) )
+                if( X11DRV_GetXRootWindow() == DefaultRootWindow(display) )
                 {
                     CREATESTRUCTA cs;
                     cs.lpCreateParams = NULL;
@@ -609,7 +584,7 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   
   /* Only mess with the X focus if there's */
   /* no desktop window and if the window is not managed by the WM. */
-  if ((X11DRV_WND_GetXRootWindow(wndPtr) != DefaultRootWindow(display))
+  if ((X11DRV_GetXRootWindow() != DefaultRootWindow(display))
       || (wndPtr->flags & WIN_MANAGED)) return;
   
   if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
@@ -638,8 +613,7 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
  */
 void X11DRV_WND_PreSizeMove(WND *wndPtr)
 {
-  if (!(wndPtr->dwStyle & WS_CHILD) && 
-      (X11DRV_WND_GetXRootWindow(wndPtr) == DefaultRootWindow(display)))
+  if (!(wndPtr->dwStyle & WS_CHILD) && (X11DRV_GetXRootWindow() == DefaultRootWindow(display)))
     TSXGrabServer( display );
 }
 
@@ -698,7 +672,7 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
     {
         dc->w.DCOrgX = 0;
         dc->w.DCOrgY = 0;
-        physDev->drawable = X11DRV_WND_GetXRootWindow(wndPtr);
+        physDev->drawable = X11DRV_GetXRootWindow();
         TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
     }
     else
@@ -832,7 +806,7 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 				ev.window = w;
 
 				if( TSXSendEvent (display,
-		RootWindow( display, XScreenNumberOfScreen(X11DRV_WND_GetXScreen(wnd)) ), 
+		RootWindow( display, XScreenNumberOfScreen(X11DRV_GetXScreen()) ), 
 		True, (SubstructureRedirectMask | SubstructureNotifyMask), (XEvent*)&ev))
 				{
 				    XEvent xe;

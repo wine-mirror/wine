@@ -17,7 +17,6 @@
 #include "color.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "monitor.h"
 #include "options.h"
 #include "palette.h"
 #include "windef.h"
@@ -102,7 +101,7 @@ BOOL X11DRV_PALETTE_Init(void)
     int	mask, white, black;
     int monoPlane;
 
-    Visual *visual = DefaultVisual( display, DefaultScreen(display) );
+    Visual *visual = X11DRV_GetVisual();
 
     TRACE("initializing palette manager...\n");
 
@@ -149,7 +148,7 @@ BOOL X11DRV_PALETTE_Init(void)
     case StaticGray:
 	X11DRV_PALETTE_PaletteXColormap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-        X11DRV_PALETTE_Graymax = (1<<MONITOR_GetDepth(&MONITOR_PrimaryMonitor))-1;
+        X11DRV_PALETTE_Graymax = (1 << X11DRV_GetDepth())-1;
         break;
 
     case TrueColor:
@@ -343,7 +342,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	          bp = BlackPixel(display, DefaultScreen(display));
 	          wp = WhitePixel(display, DefaultScreen(display));
 
-	          max = (0xffffffff)>>(32 - MONITOR_GetDepth(&MONITOR_PrimaryMonitor));
+	          max = (0xffffffff)>>(32 - X11DRV_GetDepth());
 	          if( max > 256 ) 
 	          {
 	  	      step = max/256;
@@ -444,7 +443,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	   * to maintain compatibility
 	   */
 	  X11DRV_DevCaps.sizePalette = 256;
-	  TRACE("Virtual colorspace - screendepth %i\n", MONITOR_GetDepth(&MONITOR_PrimaryMonitor));
+	  TRACE("Virtual colorspace - screendepth %i\n", X11DRV_GetDepth());
 	}
    else X11DRV_DevCaps.sizePalette = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
@@ -471,7 +470,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
    /* setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
 
-   if( MONITOR_GetDepth(&MONITOR_PrimaryMonitor) <= 8 )
+   if (X11DRV_GetDepth() <= 8)
    {
        X11DRV_PALETTE_XPixelToPalette = (int*)calloc(256, sizeof(int));
        if(X11DRV_PALETTE_XPixelToPalette == NULL) {
@@ -632,7 +631,7 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 #if 0
     /* truecolor visual */
 
-    if (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) >= 24) return pixel;
+    if (X11DRV_GetDepth() >= 24) return pixel;
 #endif
 
     /* check for hicolor visuals first */
@@ -649,7 +648,7 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 
     /* check if we can bypass X */
 
-    if ((MONITOR_GetDepth(&MONITOR_PrimaryMonitor) <= 8) && (pixel < 256) && 
+    if ((X11DRV_GetDepth() <= 8) && (pixel < 256) && 
        !(X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_VIRTUAL | X11DRV_PALETTE_FIXED)) )
          return  ( *(COLORREF*)(COLOR_sysPal + 
 		   ((X11DRV_PALETTE_XPixelToPalette)?X11DRV_PALETTE_XPixelToPalette[pixel]:pixel)) ) & 0x00ffffff;

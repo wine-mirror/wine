@@ -1017,8 +1017,8 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
 	
 	if( !(ipal->cm) && (This->s.ddraw->d.screen_pixelformat.u.dwRGBBitCount<=8)) 
 	{
-		ipal->cm = TSXCreateColormap(display,This->s.ddraw->d.drawable,
-					    DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
+            ipal->cm = TSXCreateColormap(display,This->s.ddraw->d.drawable,
+                                         X11DRV_GetVisual(),AllocAll);
 
     	    	if (!Options.managed)
 			TSXInstallColormap(display,ipal->cm);
@@ -3228,8 +3228,7 @@ static XImage *create_xshmimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl*
     XImage *img;
     int (*WineXHandler)(Display *, XErrorEvent *);
 
-    img = TSXShmCreateImage(display,
-	DefaultVisualOfScreen(X11DRV_GetXScreen()),
+    img = TSXShmCreateImage(display, X11DRV_GetVisual(),
 	This->d.pixmap_depth,
 	ZPixmap,
 	NULL,
@@ -3348,8 +3347,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	}
 
 	/* In this case, create an XImage */
-	img = TSXCreateImage(display,
-	    DefaultVisualOfScreen(X11DRV_GetXScreen()),
+	img = TSXCreateImage(display, X11DRV_GetVisual(),
 	    This->d.pixmap_depth,
 	    ZPixmap,
 	    0,
@@ -4268,7 +4266,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
 	if (res != 0) return res;
 	ICOM_VTBL(*ilpddpal) = &dga_ddpalvt;
 	if (This->d.directdraw_pixelformat.u.dwRGBBitCount<=8) {
-		(*ilpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
+		(*ilpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),X11DRV_GetVisual(),AllocAll);
 	} else {
 		FIXME("why are we doing CreatePalette in hi/truecolor?\n");
 		(*ilpddpal)->cm = 0;
@@ -5377,7 +5375,6 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
         IDirectDrawImpl** ilplpDD=(IDirectDrawImpl**)lplpDD;
 	int  memsize,banksize,major,minor,flags;
 	char *addr;
-	int  depth;
 	int  dga_version;
 	int  width, height;
 	  
@@ -5423,8 +5420,8 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 	  (*ilplpDD)->e.dga.vpmask = 0;
 	  
 	  /* just assume the default depth is the DGA depth too */
-	  depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-	  _common_depth_to_pixelformat(depth, &((*ilplpDD)->d.directdraw_pixelformat), &((*ilplpDD)->d.screen_pixelformat), NULL);
+	  _common_depth_to_pixelformat(X11DRV_GetDepth(), &((*ilplpDD)->d.directdraw_pixelformat),
+                                       &((*ilplpDD)->d.screen_pixelformat), NULL);
 #ifdef RESTORE_SIGNALS
 	  SIGNAL_Init();
 #endif
@@ -5510,7 +5507,6 @@ DDRAW_XSHM_Available(void)
 
 static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
         IDirectDrawImpl** ilplpDD=(IDirectDrawImpl**)lplpDD;
-	int depth;
 
 	*ilplpDD = (IDirectDrawImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawImpl));
 	ICOM_VTBL(*ilplpDD) = &xlib_ddvt;
@@ -5518,8 +5514,7 @@ static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUn
 	(*ilplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
 	/* At DirectDraw creation, the depth is the default depth */
-	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-	_common_depth_to_pixelformat(depth,
+	_common_depth_to_pixelformat(X11DRV_GetDepth(),
 				     &((*ilplpDD)->d.directdraw_pixelformat),
 				     &((*ilplpDD)->d.screen_pixelformat),
 				     &((*ilplpDD)->d.pixmap_depth));

@@ -19,7 +19,6 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "monitor.h"
 #include "debugtools.h"
 #include "xmalloc.h"
 #include "local.h"
@@ -28,7 +27,7 @@
 #include "windef.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(x11drv)
+DEFAULT_DEBUG_CHANNEL(x11drv);
 
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
@@ -53,12 +52,10 @@ BOOL X11DRV_BITMAP_Init(void)
 	TSXFreePixmap( display, tmpPixmap );
     }
 
-    if (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) != 1)
+    if (X11DRV_GetDepth() != 1)
     {
-	if ((tmpPixmap = TSXCreatePixmap(display, 
-					 X11DRV_GetXRootWindow(),
-					 1, 1,
-					 MONITOR_GetDepth(&MONITOR_PrimaryMonitor))))
+	if ((tmpPixmap = TSXCreatePixmap(display, X11DRV_GetXRootWindow(),
+					 1, 1, X11DRV_GetDepth())))
 	{
 	    BITMAP_colorGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
 	    TSXSetGraphicsExposures( display, BITMAP_colorGC, False );
@@ -200,7 +197,8 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
       /* Check parameters */
     if (bmp->bitmap.bmPlanes != 1) return 0;
     if ((bmp->bitmap.bmBitsPixel != 1) && 
-	(bmp->bitmap.bmBitsPixel != MONITOR_GetDepth(&MONITOR_PrimaryMonitor))) {
+	(bmp->bitmap.bmBitsPixel != X11DRV_GetDepth()))
+    {
         ERR("Trying to make bitmap with planes=%d, bpp=%d\n",
 	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
         GDI_HEAP_UNLOCK( hbitmap );
@@ -395,8 +393,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     height = count / bmp->bitmap.bmWidthBytes;
 
     EnterCriticalSection( &X11DRV_CritSection );
-    image = XCreateImage( display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
-                          bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
+    image = XCreateImage( display, X11DRV_GetVisual(), bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
                           bmp->bitmap.bmWidth, height, 32, 0 );
     image->data = (LPBYTE)xmalloc(image->bytes_per_line * height);
     

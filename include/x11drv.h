@@ -191,7 +191,7 @@ extern void _XInitImageFuncPtrs(XImage *);
 #define XCREATEIMAGE(image,width,height,bpp) \
 { \
     int width_bytes = X11DRV_DIB_GetXImageWidthBytes( (width), (bpp) ); \
-    (image) = TSXCreateImage(display, DefaultVisualOfScreen(X11DRV_GetXScreen()), \
+    (image) = TSXCreateImage(display, X11DRV_GetVisual(), \
                            (bpp), ZPixmap, 0, calloc( (height), width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }
@@ -311,8 +311,15 @@ extern BOOL X11DRV_PALETTE_IsDark(int pixel);
  */
 
 extern Display *display;
-extern Screen *X11DRV_GetXScreen(void);
-extern Window X11DRV_GetXRootWindow(void);
+extern Screen *screen;
+extern Visual *visual;
+extern Window root_window;
+extern int screen_depth;
+
+static inline Screen *X11DRV_GetXScreen(void)    { return screen; }
+static inline Visual *X11DRV_GetVisual(void)     { return visual; }
+static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
+static inline int X11DRV_GetDepth(void)          { return screen_depth; }
 
 /* X11 clipboard driver */
 
@@ -333,13 +340,6 @@ extern UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName);
 extern Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT id);
 extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
-
-/* X11 desktop driver */
-
-struct tagDESKTOP;
-
-extern Screen *X11DRV_DESKTOP_GetXScreen(struct tagDESKTOP *pDesktop);
-extern Window X11DRV_DESKTOP_GetXRootWindow(struct tagDESKTOP *pDesktop);
 
 /* X11 event driver */
 
@@ -383,17 +383,11 @@ extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 extern struct tagMONITOR_DRIVER X11DRV_MONITOR_Driver;
 
 typedef struct _X11DRV_MONITOR_DATA {
-  Screen  *screen;
-  Window   rootWindow;
   int      width;
   int      height;
-  int      depth;
 } X11DRV_MONITOR_DATA;
 
 struct tagMONITOR;
-
-extern Screen *X11DRV_MONITOR_GetXScreen(struct tagMONITOR *pMonitor);
-extern Window X11DRV_MONITOR_GetXRootWindow(struct tagMONITOR *pMonitor);
 
 extern void X11DRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
 extern void X11DRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
@@ -425,8 +419,6 @@ typedef struct _X11DRV_WND_DATA {
 
 extern Window X11DRV_WND_GetXWindow(struct tagWND *wndPtr);
 extern Window X11DRV_WND_FindXWindow(struct tagWND *wndPtr);
-extern Screen *X11DRV_WND_GetXScreen(struct tagWND *wndPtr);
-extern Window X11DRV_WND_GetXRootWindow(struct tagWND *wndPtr);
 
 extern void X11DRV_WND_Initialize(struct tagWND *wndPtr);
 extern void X11DRV_WND_Finalize(struct tagWND *wndPtr);

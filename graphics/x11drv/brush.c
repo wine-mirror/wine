@@ -16,10 +16,9 @@
 #include "color.h"
 #include "x11drv.h"
 #include "debugtools.h"
-#include "monitor.h"
 #include "local.h"
 
-DEFAULT_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(gdi);
 
 static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
 {
@@ -102,7 +101,7 @@ static XImage *ditherImage = NULL;
  */
 BOOL X11DRV_BRUSH_Init(void)
 {
-    XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
+    XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, X11DRV_GetDepth() );
     return (ditherImage != NULL);
 }
 
@@ -139,7 +138,7 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
     }
     
     pixmap = XCreatePixmap( display, X11DRV_GetXRootWindow(),
-                            MATRIX_SIZE, MATRIX_SIZE, MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
+                            MATRIX_SIZE, MATRIX_SIZE, X11DRV_GetDepth() );
     XPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -154,7 +153,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if ((dc->w.bitsPerPixel > 1) && (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) <= 8) && !COLOR_IsSolid( color ))
+    if ((dc->w.bitsPerPixel > 1) && (X11DRV_GetDepth() <= 8) && !COLOR_IsSolid( color ))
     {
 	  /* Dithered brush */
 	physDev->brush.pixmap = BRUSH_DitherColor( dc, color );

@@ -191,7 +191,7 @@ BOOL X11DRV_GDI_Initialize(void)
     X11DRV_DevCaps.vertSize = HeightMMOfScreen(X11DRV_GetXScreen()) * MONITOR_GetHeight(&MONITOR_PrimaryMonitor) / HeightOfScreen(X11DRV_GetXScreen());
     X11DRV_DevCaps.horzRes = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
     X11DRV_DevCaps.vertRes = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    X11DRV_DevCaps.bitsPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
+    X11DRV_DevCaps.bitsPixel = X11DRV_GetDepth();
  
     /* Resolution will be adjusted during the font init */
 
@@ -260,7 +260,7 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     {
         physDev->drawable  = X11DRV_GetXRootWindow();
         physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
-        dc->w.bitsPerPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
+        dc->w.bitsPerPixel = X11DRV_GetDepth();
 
         dc->w.totalExtent.left   = 0;
         dc->w.totalExtent.top    = 0;

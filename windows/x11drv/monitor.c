@@ -21,36 +21,6 @@
 #include "windef.h"
 #include "x11drv.h"
 
-/**********************************************************************/
-
-extern Display *display;
-
-/***********************************************************************
- *              X11DRV_MONITOR_GetXScreen
- *
- * Return the X screen associated to the MONITOR.
- */
-Screen *X11DRV_MONITOR_GetXScreen(MONITOR *pMonitor)
-{
-  X11DRV_MONITOR_DATA *pX11Monitor =
-    (X11DRV_MONITOR_DATA *) pMonitor->pDriverData;
-
-  return pX11Monitor->screen;
-}
-
-/***********************************************************************
- *              X11DRV_MONITOR_GetXRootWindow
- *
- * Return the X screen associated to the MONITOR.
- */
-Window X11DRV_MONITOR_GetXRootWindow(MONITOR *pMonitor)
-{
-  X11DRV_MONITOR_DATA *pX11Monitor =
-    (X11DRV_MONITOR_DATA *) pMonitor->pDriverData;
-
-  return pX11Monitor->rootWindow;
-}
-
 /***********************************************************************
  *		X11DRV_MONITOR_CreateDesktop
  * FIXME 
@@ -87,8 +57,7 @@ static void X11DRV_MONITOR_CreateDesktop(MONITOR *pMonitor)
     ButtonReleaseMask | EnterWindowMask;
   win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
 
-  pX11Monitor->rootWindow =
-    TSXCreateWindow( display, 
+  root_window = TSXCreateWindow( display, 
 		     DefaultRootWindow(display),
 		     x, y, width, height, 0,
 		     CopyFromParent, InputOutput, CopyFromParent,
@@ -118,17 +87,17 @@ static void X11DRV_MONITOR_CreateDesktop(MONITOR *pMonitor)
   class_hints->res_class = "Wine";
 
   TSXStringListToTextProperty( &name, 1, &window_name );
-  TSXSetWMProperties( display, pX11Monitor->rootWindow, &window_name, &window_name,
+  TSXSetWMProperties( display, root_window, &window_name, &window_name,
                       Options.argv, Options.argc, size_hints, wm_hints, class_hints );
   XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
-  TSXSetWMProtocols( display, pX11Monitor->rootWindow, &XA_WM_DELETE_WINDOW, 1 );
+  TSXSetWMProtocols( display, root_window, &XA_WM_DELETE_WINDOW, 1 );
   TSXFree( size_hints );
   TSXFree( wm_hints );
   TSXFree( class_hints );
 
   /* Map window */
 
-  TSXMapWindow( display, pX11Monitor->rootWindow );
+  TSXMapWindow( display, root_window );
 }
 
 /***********************************************************************
@@ -139,37 +108,12 @@ void X11DRV_MONITOR_Initialize(MONITOR *pMonitor)
   X11DRV_MONITOR_DATA *pX11Monitor = (X11DRV_MONITOR_DATA *) 
     HeapAlloc(SystemHeap, 0, sizeof(X11DRV_MONITOR_DATA));
 
-  int depth_count, i;
-  int *depth_list;
-
   pMonitor->pDriverData = pX11Monitor;
 
-  pX11Monitor->screen  = DefaultScreenOfDisplay( display );
+  pX11Monitor->width   = WidthOfScreen( screen );
+  pX11Monitor->height  = HeightOfScreen( screen );
 
-  pX11Monitor->width   = WidthOfScreen( pX11Monitor->screen );
-  pX11Monitor->height  = HeightOfScreen( pX11Monitor->screen );
-
-  pX11Monitor->depth   = PROFILE_GetWineIniInt( "x11drv", "ScreenDepth", 0 );
-  if (pX11Monitor->depth)  /* depth specified */
-    {
-      depth_list = TSXListDepths(display, DefaultScreen(display), &depth_count);
-      for (i = 0; i < depth_count; i++)
-	if (depth_list[i] == pX11Monitor->depth) break;
-      TSXFree( depth_list );
-      if (i >= depth_count)
-	{
-	  MESSAGE( "%s: Depth %d not supported on this screen.\n", argv0, pX11Monitor->depth );
-	  exit(1);
-	}
-    }
-  else
-    pX11Monitor->depth  = DefaultDepthOfScreen( pX11Monitor->screen );
-
-  if (Options.desktopGeometry)
-    X11DRV_MONITOR_CreateDesktop(pMonitor);
-  else 
-    pX11Monitor->rootWindow =
-      DefaultRootWindow( display );
+  if (Options.desktopGeometry) X11DRV_MONITOR_CreateDesktop(pMonitor);
 }
 
 /***********************************************************************
@@ -185,10 +129,7 @@ void X11DRV_MONITOR_Finalize(MONITOR *pMonitor)
  */
 BOOL X11DRV_MONITOR_IsSingleWindow(MONITOR *pMonitor)
 {
-  X11DRV_MONITOR_DATA *pX11Monitor =
-    (X11DRV_MONITOR_DATA *) pMonitor->pDriverData;
-
-  return (pX11Monitor->rootWindow != DefaultRootWindow(display));
+  return (root_window != DefaultRootWindow(display));
 }
 
 /***********************************************************************
@@ -224,10 +165,7 @@ int X11DRV_MONITOR_GetHeight(MONITOR *pMonitor)
  */
 int X11DRV_MONITOR_GetDepth(MONITOR *pMonitor)
 {
-  X11DRV_MONITOR_DATA *pX11Monitor =
-    (X11DRV_MONITOR_DATA *) pMonitor->pDriverData;
-
-  return pX11Monitor->depth;
+    return screen_depth;
 }
 
 /***********************************************************************

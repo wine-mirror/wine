@@ -50,7 +50,7 @@ BOOL X11DRV_DIB_Init(void)
 
     for( i = 0; bitmapDepthTable[i]; i++ )
     {
-	 testimage = TSXCreateImage(display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
+	 testimage = TSXCreateImage(display, X11DRV_GetVisual(),
 			 bitmapDepthTable[i], ZPixmap, 0, NULL, 1, 1, 32, 20 );
 	 if( testimage ) ximageDepthTable[i] = testimage->bits_per_pixel;
 	 else return FALSE;
@@ -2506,9 +2506,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     if (descr->image)
         bmpImage = descr->image;
     else {
-        bmpImage = XCreateImage( display,
-				 DefaultVisualOfScreen(X11DRV_GetXScreen()),
-				 descr->depth, ZPixmap, 0, NULL,
+        bmpImage = XCreateImage( display, X11DRV_GetVisual(), descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
@@ -2611,9 +2609,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     if (descr->image)
         bmpImage = descr->image;
     else {
-        bmpImage = XCreateImage( display,
-				 DefaultVisualOfScreen(X11DRV_GetXScreen()),
-				 descr->depth, ZPixmap, 0, NULL,
+        bmpImage = XCreateImage( display, X11DRV_GetVisual(), descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
@@ -3232,8 +3228,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
 {
     int (*WineXHandler)(Display *, XErrorEvent *);
      
-    *image = TSXShmCreateImage(display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
-                                bpp, ZPixmap, NULL, shminfo, width, height);
+    *image = TSXShmCreateImage(display, X11DRV_GetVisual(), bpp, ZPixmap, NULL, shminfo, width, height);
     if( *image != NULL ) 
     {
         EnterCriticalSection( &X11DRV_CritSection );

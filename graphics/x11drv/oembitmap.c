@@ -29,7 +29,6 @@ typedef unsigned long Pixel;
 #include "gdi.h"
 #include "heap.h"
 #include "local.h"
-#include "monitor.h"
 #include "tweak.h"
 #include "x11drv.h"
 
@@ -392,7 +391,7 @@ static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
                                           XpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
     attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
-    attrs->depth        = descr->color ? MONITOR_GetDepth(&MONITOR_PrimaryMonitor) : 1;
+    attrs->depth        = descr->color ? X11DRV_GetDepth() : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
         

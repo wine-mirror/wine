@@ -32,7 +32,6 @@
 #include "bitmap.h"
 #include "gdi.h"
 #include "dc.h"
-#include "monitor.h"
 #include "callback.h"
 #include "metafile.h"
 #include "palette.h"
@@ -41,7 +40,7 @@
 #include "struct32.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(graphics)
+DEFAULT_DEBUG_CHANNEL(graphics);
 
 #define ABS(x)    ((x)<0?(-(x)):(x))
 
@@ -131,10 +130,8 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
             register int x, y;
             XImage *image;
             EnterCriticalSection( &X11DRV_CritSection );
-            pixmap = XCreatePixmap( display, 
-				    X11DRV_GetXRootWindow(), 
-				    8, 8, 
-				    MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
+            pixmap = XCreatePixmap( display, X11DRV_GetXRootWindow(), 
+				    8, 8, X11DRV_GetDepth() );
             image = XGetImage( display, physDev->brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
             for (y = 0; y < 8; y++)
