@@ -347,7 +347,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       local_func = p_glXGetProcAddressARB(lpszProc);
       LEAVE_GL();
       if (local_func != NULL) {
-	ERR("Extension %s defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n", lpszProc);
+	WARN("Extension %s defined in the OpenGL library but NOT in opengl_ext.c...\n", lpszProc);
 	return NULL;
       }
       
