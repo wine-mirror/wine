@@ -2,16 +2,51 @@ package winapi_local;
 
 use strict;
 
+use nativeapi qw($nativeapi);
+use options qw($options);
+use output qw($output);
+use winapi qw($win16api $win32api @winapis);
+
 sub check_function {
-    my $options = shift;
-    my $output = shift;
+    my $function = shift;
+
+    my $return_type = $function->return_type;
+    my $calling_convention = $function->calling_convention;
+    my $calling_convention16 = $function->calling_convention16;
+    my $calling_convention32 = $function->calling_convention32;
+    my $internal_name = $function->internal_name;
+    my $external_name16 = $function->external_name16;
+    my $external_name32 = $function->external_name32;
+    my $module16 = $function->module16;
+    my $module32 = $function->module32;
+    my $refargument_types = $function->argument_types;
+
+    if(!defined($refargument_types)) {
+	return;
+    }
+
+    if($options->win16 && $options->report_module($module16)) {
+	_check_function($return_type, 
+			$calling_convention, $external_name16, 
+			$internal_name, $refargument_types,
+			$win16api);
+    }
+
+    if($options->win32 && $options->report_module($module32)) {
+	_check_function($return_type, 
+			$calling_convention, $external_name32, 
+			$internal_name, $refargument_types,
+			$win32api);
+    }
+}
+
+sub _check_function {
     my $return_type = shift;
     my $calling_convention = shift;
     my $external_name = shift;
     my $internal_name = shift;
     my $refargument_types = shift;
     my @argument_types = @$refargument_types;
-    my $nativeapi = shift;
     my $winapi = shift;
 
     my $module = $winapi->function_internal_module($internal_name);
@@ -212,8 +247,22 @@ sub check_function {
 }
 
 sub check_statements {
-    my $options = shift;
-    my $output = shift;
+    my $functions = shift;
+    my $function = shift;
+
+    my $module16 = $function->module16;
+    my $module32 = $function->module32;
+
+    if($options->win16 && $options->report_module($module16)) {
+	_check_statements($win16api, $functions, $function);
+    }
+
+    if($options->win32 && $options->report_module($module32)) {
+	_check_statements($win16api, $functions, $function);
+    }
+}
+
+sub _check_statements {
     my $winapi = shift;
     my $functions = shift;
     my $function = shift;
@@ -288,8 +337,6 @@ sub check_statements {
 }
 
 sub check_file {
-    my $options = shift;
-    my $output = shift;
     my $file = shift;
     my $functions = shift;
 

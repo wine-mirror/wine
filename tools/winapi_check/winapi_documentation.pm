@@ -3,7 +3,11 @@ package winapi_documentation;
 use strict;
 
 use config qw($current_dir $wine_dir);
+use modules qw($modules);
 use nativeapi qw($nativeapi);
+use options qw($options);
+use output qw($output);
+use winapi qw($win16api $win32api @winapis);
 
 my %comment_width;
 my %comment_indent;
@@ -12,11 +16,6 @@ my %comment_spacing;
 sub check_documentation {
     local $_;
 
-    my $options = shift;
-    my $output = shift;
-    my $win16api = shift;
-    my $win32api = shift;
-    my $modules = shift;
     my $function = shift;
 
     my $file = $function->file;
@@ -29,7 +28,6 @@ sub check_documentation {
     my $ordinal32 = $function->ordinal32;
     my $documentation = $function->documentation;
     my $documentation_line = $function->documentation_line;
-    my @argument_documentations = @{$function->argument_documentations};
 
     my $documentation_error = 0;
     my $documentation_warning = 0;
@@ -159,12 +157,16 @@ sub check_documentation {
     }
 
     if($options->documentation_arguments) {
-	my $n = 0;
-	for my $argument_documentation (@argument_documentations) {
-	    $n++;
-	    if($argument_documentation ne "") {
-		if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out|\?\?\?)\].*?\*\/$/s) {
-		    $output->write("argument $n documentation: \\\n$argument_documentation\n");
+	my $refargument_documentations = $function->argument_documentations;
+
+	if(defined($refargument_documentations)) {
+	    my $n = 0;
+	    for my $argument_documentation (@$refargument_documentations) {
+		$n++;
+		if($argument_documentation ne "") {
+		    if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out|\?\?\?)\].*?\*\/$/s) {
+			$output->write("argument $n documentation: \\\n$argument_documentation\n");
+		    }
 		}
 	    }
 	}
@@ -172,9 +174,6 @@ sub check_documentation {
 }
 
 sub report_documentation {
-    my $options = shift;
-    my $output = shift;
-
     if($options->documentation_comment_indent) {
 	foreach my $indent (sort(keys(%comment_indent))) {
 	    my $count = $comment_indent{$indent};

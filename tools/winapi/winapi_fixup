@@ -16,47 +16,12 @@ use config qw(
     &get_spec_files
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
-use output;
-use options;
+use output qw($output);
 use modules;
 use util;
 use winapi;
 use winapi_parser;
-
-my $output = 'output'->new;
-
-my %options_long = (
-    "debug" => { default => 0, description => "debug mode" },
-    "help" => { default => 0, description => "help mode" },
-    "verbose" => { default => 0, description => "verbose mode" },
-
-    "progress" => { default => 1, description => "show progress" },
-
-    "win16" => { default => 1, description => "Win16 fixup" },
-    "win32" => { default => 1, description => "Win32 fixup" },
-
-    "local" =>  { default => 1, description => "local fixup" },
-    "documentation" => { default => 1, parent => "local", description => "documentation fixup" },
-    "documentation-missing" => { default => 1, parent => "documentation", description => "documentation missing fixup" },
-    "documentation-name" => { default => 1, parent => "documentation", description => "documentation name fixup" },
-    "documentation-ordinal" => { default => 1, parent => "documentation", description => "documentation ordinal fixup" },
-    "documentation-wrong" => { default => 1, parent => "documentation", description => "documentation wrong fixup" },
-    "stub" => { default => 0, parent => "local", description => "stub fixup" },
-
-    "global" => { default => 1, description => "global fixup" },
-
-    "modify" => { default => 0, description => "actually perform the fixups" },	    
-);
-
-my %options_short = (
-    "d" => "debug",
-    "?" => "help",
-    "v" => "verbose"
-);
-
-my $options_usage = "usage: winapi_fixup [--help] [<files>]\n";
-
-my $options = 'options'->new(\%options_long, \%options_short, $options_usage);
+use winapi_fixup_options qw($options);
 
 my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
 
@@ -91,6 +56,8 @@ foreach my $file (@c_files) {
 	$output->progress("$file: file $progress_current of $progress_max");
     }
 
+    my %documentation_line_used;
+
     my $found_function = sub {
 	my $function = shift;
 	
@@ -101,12 +68,12 @@ foreach my $file (@c_files) {
 	my $return_type = $function->return_type;
 	my $calling_convention = $function->calling_convention;
 	my $internal_name = $function->internal_name;
-	my @argument_types = @{$function->argument_types};
-	my @argument_names = @{$function->argument_names};
-	my @argument_documentations = @{$function->argument_documentations};
 	my $statements = $function->statements;
 
-	if($linkage eq "static" || ($linkage eq "" && !defined($statements))) {
+	if($linkage eq "static" ||
+	   ($linkage eq "extern" && !defined($statements)) ||
+	   ($linkage eq "" && !defined($statements)))
+	{
 	    return;
 	}
 
@@ -115,7 +82,12 @@ foreach my $file (@c_files) {
 	    return;
 	}
 
-	$output->prefix("$file: " . $function->prefix);
+	if($documentation_line_used{$documentation_line}) {
+	    $documentation = undef;
+	}
+	$documentation_line_used{$documentation_line}++;
+    
+	$output->prefix_callback(sub { return $function->prefix; });
 
 	my @module_ordinal_entries = ();
 	foreach my $entry2 ($function->get_all_module_ordinal) {
@@ -131,7 +103,7 @@ foreach my $file (@c_files) {
 
 	my $spec_modified = 0;
 
-	if($options->stub && $documentation) {
+	if($options->stub && defined($documentation)) {
 	    my $calling_convention16 = $function->calling_convention16;
 	    my $calling_convention32 = $function->calling_convention32;
 
@@ -170,6 +142,12 @@ foreach my $file (@c_files) {
 		foreach my $entry (@entries) {
 		    (my $external_name, my $module, my $ordinal) = @$entry;
 
+		    my $refargument_types = $function->argument_types;
+
+		    if(!defined($refargument_types)) {
+			next;
+		    }
+
 		    my $abort = 0;
 		    my $n;
 		    my @argument_kinds = map {
@@ -198,7 +176,7 @@ foreach my $file (@c_files) {
 			    $n++;
 			    "undef";
 			}
-		    } @argument_types;
+		    } @$refargument_types;
 
 		    my $substitute = {};
 		    $substitute->{search} = "^\\s*$ordinal\\s+stub\\s+$external_name\\s*(?:#.*?)?\$";
@@ -229,9 +207,9 @@ foreach my $file (@c_files) {
 	my $documentation_modified = 0;
 
 	if(!$spec_modified &&
-	   ($documentation && !$documentation_modified) &&
+	   (defined($documentation) && !$documentation_modified) &&
 	   ($options->documentation_name || $options->documentation_ordinal || 
-	    $options->documentation_missing)) 
+	    $options->documentation_missing))
 	{
 	    local $_;
 
@@ -337,6 +315,7 @@ foreach my $file (@c_files) {
 		    # $output->write("@external_names\n");
 		} else {
 		    $documentation_modified = 1;
+
 		    $substitute_line{$line3}{search} = $search;
 		    $substitute_line{$line3}{replace} = $replace;
 		    
@@ -345,7 +324,7 @@ foreach my $file (@c_files) {
 	}
 
 	if(!$spec_modified && !$documentation_modified &&
-	   $options->documentation_missing && $documentation)
+	   $options->documentation_missing && defined($documentation))
 	{
 	    my $part1;
 	    my $part2;
@@ -385,6 +364,8 @@ foreach my $file (@c_files) {
 		   !$win32api->is_function_stub_in_module($module2, $internal_name)) 
 		{
 		    if($line3 > 0) {
+			$documentation_modified = 1;
+
 			$part2 = $external_name2 . " " x (length($part2) - length($external_name2));
 			$insert_line{$line3} = "$part1$part2$part3\U$module2\E.$ordinal2$part4\n";
 		    } else {
@@ -395,6 +376,7 @@ foreach my $file (@c_files) {
 	}
 
 	if(!$documentation_modified && 
+	   defined($documentation) &&
 	   $options->documentation_wrong)
 	{
 	    my $line2 = $documentation_line - 1;
@@ -418,6 +400,8 @@ foreach my $file (@c_files) {
 		    }
 		    if(!$found) {
 			if(1) {
+			    $documentation_modified = 1;
+
 			    $delete_line{$line2} = "^\Q$_\E\$";
 			} else {
 			    $output->write("$external_name (\U$module\E.$ordinal) wrong (fixup not supported)\n");
@@ -427,24 +411,22 @@ foreach my $file (@c_files) {
 	    }
 	}
 
-	if(0) # !$spec_modified && !$documentation
+	if(!$spec_modified && !$documentation_modified && !defined($documentation))
 	{
-	    # FIXME: Not correct
-
-	    my $external_name;
-	    my $module;
-	    my $ordinal;
+	    my $insert = "";
 	    foreach my $winapi (@winapis) {
-		$external_name = ($winapi->function_external_name($internal_name) || $external_name);
-		$module = ($winapi->function_internal_module($internal_name) || $module);
-		$ordinal = ($winapi->function_internal_ordinal($internal_name) || $ordinal);
-		if(defined($external_name) || defined($module) || defined($ordinal)) { last; }
-	    }
+		my $external_name = $winapi->function_external_name($internal_name);
+		my $module = $winapi->function_internal_module($internal_name);
+		my $ordinal = $winapi->function_internal_ordinal($internal_name);
 
-	    if(defined($external_name) && defined($module) && defined($ordinal)) {
+		if(defined($external_name) && defined($module) && defined($ordinal)) {
+		    $insert .= " *\t\t$external_name (\U$module\E.$ordinal)\n";
+		}
+	    }
+	    if($insert) {
 		$insert_line{$function_line} = 
 		    "/" . "*" x 71 . "\n" .
-		    " *\t\t$external_name (\U$module\E.$ordinal)\n" .
+		    "$insert" .
 		    " */\n";
 	    }
 	}
@@ -457,7 +439,7 @@ foreach my $file (@c_files) {
 	my $argument = shift;
     };
 
-    winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+    &winapi_parser::parse_c_file($options, $file, $found_function, $found_preprocessor);
 
     my $editor = sub {
 	local *IN = shift;
@@ -617,5 +599,3 @@ foreach my $file (@c_files) {
 }
 
 $output->hide_progress;
-
-

@@ -74,13 +74,27 @@ sub _external_names {
     }
 }
 
+sub external_name { 
+    my $self = shift;
+
+    foreach my $winapi (@winapis) {
+	my $external_name = $self->_external_name($winapi, @_);
+
+	if(defined($external_name)) {
+	    return $external_name;
+	}
+    }
+
+    return undef;
+}
+
 sub external_name16 { my $self = shift; return $self->_external_name($win16api, @_); }
 sub external_name32 { my $self = shift; return $self->_external_name($win32api, @_); }
 
 sub external_names16 { my $self = shift; return $self->_external_names($win16api, @_); }
 sub external_names32 { my $self = shift; return $self->_external_names($win32api, @_); }
 
-sub external_names { my $self = shift; return ($self->external_names16,$self->external_names32); }
+sub external_names { my $self = shift; return ($self->external_names16, $self->external_names32); }
 
 ########################################################################
 # module
@@ -201,10 +215,14 @@ sub prefix {
     my $return_type = $self->return_type;
     my $internal_name = $self->internal_name;
     my $calling_convention = $self->calling_convention;
-    my @argument_types = @{$self->argument_types};
 
-    if($#argument_types < 0) {
-	@argument_types = ("void");
+    my $refargument_types = $self->argument_types;
+    my @argument_types = ();
+    if(defined($refargument_types)) {
+	@argument_types = @$refargument_types;
+	if($#argument_types < 0) {
+	    @argument_types = ("void");
+	}
     }
 
     my $prefix = "";
@@ -326,10 +344,14 @@ sub return_kind32 {
 sub _argument_kinds {   
     my $self = shift;
     my $winapi = shift;
-    my @argument_types = @{$self->argument_types};
+    my $refargument_types = $self->argument_types;
+
+    if(!defined($refargument_types)) {
+	return undef;
+    }
 
     my @argument_kinds;
-    foreach my $argument_type (@argument_types) {
+    foreach my $argument_type (@$refargument_types) {
 	my $argument_kind = $winapi->translate_argument($argument_type);
 
 	if(defined($argument_kind) && $argument_kind eq "longlong") {

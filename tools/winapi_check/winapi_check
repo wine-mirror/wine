@@ -26,7 +26,7 @@ use config qw(
 );
 use modules;
 use nativeapi;
-use output;
+use output qw($output);
 use preprocessor;
 use util qw(&is_subset);
 use winapi;
@@ -34,20 +34,8 @@ use winapi_documentation;
 use winapi_function;
 use winapi_local;
 use winapi_global;
-use winapi_options;
+use winapi_check_options qw($options);
 use winapi_parser;
-
-my $output = 'output'->new;
-
-my $options = winapi_options->new($output, \@ARGV, $wine_dir);
-if(!defined($options)) {
-    $output->write("usage: winapi_check [--help] [<files>]\n");
-
-    exit 1;
-} elsif($options->help) {
-    $options->show_help;
-    exit;
-}
 
 my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
 
@@ -140,10 +128,12 @@ if($options->headers) {
 	my $found_function = sub {
 	    my $function = shift;
 
-	    $output->prefix($function->prefix);
+	    $output->prefix_callback(sub { return $function->prefix; });
 
 	    my $function_line = $function->function_line;
+	    my $linkage = $function->linkage;
 	    my $internal_name = $function->internal_name;
+	    my $external_name = $function->external_name;
 	    my $statements = $function->statements;
 
 	    if($options->headers_misplaced &&
@@ -154,7 +144,9 @@ if($options->headers) {
 		$output->write("declaration misplaced\n");
 	    }
 
-	    if(!defined($statements)) {
+	    if(defined($external_name) && !defined($statements) &&
+	       ($linkage eq "" || $linkage eq "extern")) 
+	    {
 		my $previous_function = $declared_functions{$internal_name};
 		if(!defined($previous_function)) {
 		    $declared_functions{$internal_name} = $function;
@@ -171,7 +163,7 @@ if($options->headers) {
 	    my $argument = shift;
 	};
 
-        winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+        &winapi_parser::parse_c_file($options, $file, $found_function, $found_preprocessor);
     }
 }
 
@@ -181,6 +173,8 @@ my %type_found = ();
 foreach my $file (@c_files) {
     my %functions = ();
     my %includes = ();
+
+    $includes{$file}++;
 
     my $file_module16 = $modules->allowed_modules_in_file("$current_dir/$file");
     my $file_module32 = $modules->allowed_modules_in_file("$current_dir/$file");
@@ -198,7 +192,7 @@ foreach my $file (@c_files) {
     my $found_function = sub {
 	my $function = shift;
 
-	$output->prefix($function->prefix);
+	$output->prefix_callback(sub { return $function->prefix; });
 
 	my $internal_name = $function->internal_name;
 	$functions{$internal_name} = $function;
@@ -210,20 +204,44 @@ foreach my $file (@c_files) {
 	my $linkage = $function->linkage;
 	my $return_type = $function->return_type;
 	my $calling_convention = $function->calling_convention;
-	my @argument_types = @{$function->argument_types};
-	my @argument_names = @{$function->argument_names};
-	my @argument_documentations = @{$function->argument_documentations};
 	my $statements = $function->statements;
 
 	my $module16 = $function->module16;
 	my $module32 = $function->module32;
 
+	my $external_name = $function->external_name;
 	my $external_name16 = $function->external_name16;
 	my $external_name32 = $function->external_name32;
 
+	if(defined($external_name) && !defined($statements) && 
+	   ($linkage eq "" || $linkage eq "extern")) 
+	{
+	    my $previous_function = $declared_functions{$internal_name};
+	    if(!defined($previous_function)) {
+		$declared_functions{$internal_name} = $function;
+	    } else {
+		my $file = $previous_function->file;
+		my $function_line = $previous_function->function_line;
+
+		my $header = $file;
+		$header =~ s%^(include|$file_dir)/%%;
+		if($header !~ m%^msvcrt/% || $file_dir =~ m%^dlls/msvcrt%) {
+		    $output->write("duplicate declaration (first declaration at $file:$function_line)\n");
+		}
+	    }
+	}
+
 	foreach my $module ($function->modules) {
 	    $module2functions{$module}{$internal_name} = $function;
-	    for my $type ($return_type, @argument_types) {
+
+	    my @types = ($return_type);
+
+	    my $refargument_types = $function->argument_types;
+	    if(defined($refargument_types)) {
+		push @types, @$refargument_types;
+	    }
+
+	    for my $type (@types) {
 		$type_found{$module}{$type}++;
 	    }
 	}
@@ -240,14 +258,34 @@ foreach my $file (@c_files) {
 	    }
 	}
 
-	if($options->headers_needed && defined($declared_function)) {
+	if($options->headers && $options->headers_needed && 
+	   defined($declared_function) && defined($external_name) && 
+	   defined($statements))
+	{
 	    my $needed_include = $declared_function->file;
 
 	    if(!defined($includes{$needed_include})) {
 		my $header = $needed_include;
 		$header =~ s%^(include|$file_dir)/%%;
-		$output->write("prototype not included: #include \"$header\" is needed\n");
+		if($header !~ m%^msvcrt/% || $file_dir =~ m%^dlls/msvcrt%) {
+		    $output->write("prototype not included: #include \"$header\" is needed\n");
+		}
 	    }
+	}
+
+	if($options->local && $options->argument) {
+	    &winapi_local::check_function($function);
+	}
+	
+	if($options->local && $options->statements) {
+	    &winapi_local::check_statements(\%functions, $function);
+	}
+	
+	if($options->local && $options->documentation &&
+	   (defined($module16) || defined($module32)) &&
+	   $linkage ne "static" && ($linkage ne "" || defined($statements)))
+	{
+	    &winapi_documentation::check_documentation($function);
 	}
 
 	if(1) {
@@ -316,36 +354,9 @@ foreach my $file (@c_files) {
 		    }
 		}
 	    }
-
-	    if($options->local && $options->argument) {
-		if($options->win16 && $options->report_module($module16)) {
-		  winapi_local::check_function $options, $output,
-		    $return_type, $calling_convention, $external_name16, $internal_name, [@argument_types], $nativeapi, $win16api;
-		}	
-		if($options->win32 && $options->report_module($module32)) {
-		  winapi_local::check_function $options, $output,
-		    $return_type, $calling_convention, $external_name32, $internal_name, [@argument_types], $nativeapi, $win32api;
-		}
-	    }
-
-	    if($options->local && $options->statements) {
-		if($options->win16 && $options->report_module($module16)) {
-		  winapi_local::check_statements $options, $output, $win16api, \%functions, $function;
-		}
-
-		if($options->win32 && $options->report_module($module32)) {
-		  winapi_local::check_statements $options, $output, $win32api, \%functions, $function;
-		}
-	    }
-
-	    if($options->local && $options->documentation &&
-	       (defined($module16) || defined($module32)) &&
-	       $linkage ne "static" && ($linkage ne "" || defined($statements)))
-	    {
-	        winapi_documentation::check_documentation $options, $output, $win16api, $win32api, $modules, $function;
-	    }
-	    $output->prefix("");
 	}
+
+	$output->prefix("");
     };
 
     my $config = 0;
@@ -500,7 +511,7 @@ foreach my $file (@c_files) {
 	}
     };
   
-    winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+    &winapi_parser::parse_c_file($options, $file, $found_function, $found_preprocessor);
     
     if($options->config_unnessary) {
 	if($config && $conditional == 0) {
@@ -508,7 +519,7 @@ foreach my $file (@c_files) {
 	}
     }
 
-    winapi_local::check_file $options, $output, $file, \%functions;
+    &winapi_local::check_file($file, \%functions);
 }
 
 $output->hide_progress;
@@ -565,7 +576,7 @@ if($options->declared) {
 }
 
 if($options->global) {
-    winapi_documentation::report_documentation $options, $output;
+    &winapi_documentation::report_documentation;
 
     if($options->headers_unused) {
 	foreach my $name (sort(keys(%include2info))) {
@@ -577,8 +588,7 @@ if($options->global) {
 	}
     }
 
-    winapi_global::check $options, $output, $win16api, $nativeapi, \%type_found if $options->win16;
-    winapi_global::check $options, $output, $win32api, $nativeapi, \%type_found if $options->win32;
+    &winapi_global::check(\%type_found);
 
     $modules->global_report;
     $nativeapi->global_report;

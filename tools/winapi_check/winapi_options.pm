@@ -2,6 +2,18 @@ package winapi_options;
 
 use strict;
 
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+require Exporter;
+
+@ISA = qw(Exporter);
+@EXPORT = qw(&parse_comma_list);
+@EXPORT_OK = qw($options);
+
+use vars qw($options);
+
+use config qw($current_dir $wine_dir);
+use output qw($output);
+
 sub parser_comma_list {
     my $prefix = shift;
     my $value = shift;
@@ -138,12 +150,6 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
-    my $output = \${$self->{OUTPUT}};
-
-    $$output = shift;
-    my $refarguments = shift;
-    my $wine_dir = shift;
-
     $self->options_set("default");
 
     my $c_files = \@{$self->{C_FILES}};
@@ -160,7 +166,7 @@ sub new {
 	$$global = 0;
     }
 
-    while(defined($_ = shift @$refarguments)) {
+    while(defined($_ = shift @ARGV)) {
 	if(/^--(all|none)$/) {
 	    $self->options_set("$1");
 	    next;
@@ -185,7 +191,7 @@ sub new {
 		$name = $1;
 		$prefix = "no";
 		if(defined($value)) {
-		    $$output->write("options with prefix 'no' can't take parameters\n");
+		    $output->write("options with prefix 'no' can't take parameters\n");
 
 		    return undef;
 		}
@@ -258,12 +264,12 @@ sub new {
 	    $$module = { active => 1, filter => 1, hash => \%names };
 	}	
 	elsif(/^-(.*)$/) {
-	    $$output->write("unknown option: $_\n"); 
+	    $output->write("unknown option: $_\n"); 
 
 	    return undef;
 	} else {
 	    if(!-e $_) {
-		$$output->write("$_: no such file or directory\n");
+		$output->write("$_: no such file or directory\n");
 
 		return undef;
 	    }
@@ -329,6 +335,9 @@ sub new {
 	    }
 	} split(/\n/, `$h_command`));
     }
+
+    $options = $self;
+
     return $self;
 }
 

@@ -2,11 +2,11 @@ package winapi_parser;
 
 use strict;
 
+use output qw($output);
 use winapi_function;
 
 sub parse_c_file {
     my $options = shift;
-    my $output = shift;
     my $file = shift;
     my $function_found_callback = shift;
     my $preprocessor_found_callback = shift;
@@ -39,13 +39,17 @@ sub parse_c_file {
 	$argument_names = shift;
 	$argument_documentations = shift;
 
-	if($#$argument_names == -1) {
+	if(defined($argument_names) && defined($argument_types) &&
+	   $#$argument_names == -1)
+	{
 	    foreach my $n (0..$#$argument_types) {
 		push @$argument_names, "";
 	    }
 	}
 
-	if($#$argument_documentations == -1) {
+	if(defined($argument_documentations) &&
+	   $#$argument_documentations == -1)
+	{
 	    foreach my $n (0..$#$argument_documentations) {
 		push @$argument_documentations, "";
 	    }
@@ -69,9 +73,15 @@ sub parse_c_file {
 	$function->return_type($return_type); 
 	$function->calling_convention($calling_convention);
 	$function->internal_name($internal_name);
-	$function->argument_types([@$argument_types]);
-	$function->argument_names([@$argument_names]);
-	$function->argument_documentations([@$argument_documentations]);
+	if(defined($argument_types)) {
+	    $function->argument_types([@$argument_types]);
+	}
+	if(defined($argument_names)) {
+	    $function->argument_names([@$argument_names]);
+	}
+	if(defined($argument_documentations)) {
+	    $function->argument_documentations([@$argument_documentations]);
+	}
 	$function->statements($statements);
 
 	&$function_found_callback($function);
@@ -351,53 +361,89 @@ sub parse_c_file {
 		&$function_end;
 	    }
 	} elsif(/__ASM_GLOBAL_FUNC\(\s*(.*?)\s*,/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
-	    my @arguments = ();
+
 	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "void", "__asm", $1, \@arguments);
+			     $function_line, "", "void", "__asm", $1);
+	    $statements = "";
 	    &$function_end;
-	} elsif(/DC_(GET_X_Y|GET_VAL_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	} elsif(/DC_(GET_X_Y_16|GET_VAL_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s){ 
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
+
+	    my $return16 = $2 . "16";
+	    my $name16 = $3 . "16";
+
+	    $return16 =~ s/^(COLORREF|DWORD)16$/$1/;
+
 	    my @arguments = ("HDC16");
 	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", $2, "WINAPI", $3, \@arguments);
+			     $function_line, "", $return16, "WINAPI", $name16, \@arguments);
+	    $statements = "";
 	    &$function_end;
-	} elsif(/DC_(GET_VAL)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,.*?\)/s) {
+	} elsif(/DC_(GET_VAL_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,.*?\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
-	    my $return16 = $3 . "16";
-	    my $return32 = $3;
-	    my $name16 = $2 . "16";
-	    my $name32 = $2;
-	    my @arguments16 = ("HDC16");
+
+	    my $return32 = $2;
+	    my $name32 = $3;
 	    my @arguments32 = ("HDC");
 
-	    if($name16 eq "COLORREF16") { $name16 = "COLORREF"; }
+	    &$function_end;
+	    &$function_begin($documentation_line, $documentation,
+			     $function_line, "", $return32, "WINAPI", $name32, \@arguments32);
+	    $statements = "";
+	    &$function_end;
+	} elsif(/DC_(GET_VAL_EX_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
 
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", $name16, "WINAPI", $return16, \@arguments16);
-	    &$function_end;
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", $name32, "WINAPI", $return32, \@arguments32);
-	    &$function_end;
-	} elsif(/DC_(GET_VAL_EX)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
+
 	    my @arguments16 = ("HDC16", "LP" . $5 . "16");
-	    my @arguments32 = ("HDC", "LP" . $5);
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "BOOL16", "WINAPI", $2 . "16", \@arguments16);
+	    $statements = "";
 	    &$function_end;
+	} elsif(/DC_(GET_VAL_EX_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
+	    $_ = $'; $again = 1;
+
+	    my @arguments32 = ("HDC", "LP" . $5);
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "BOOL", "WINAPI", $2, \@arguments32);
+	    $statements = "";
 	    &$function_end;
-	} elsif(/DC_(SET_MODE)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	} elsif(/DC_(SET_MODE_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
+
 	    my @arguments16 = ("HDC16", "INT16");
-	    my @arguments32 = ("HDC", "INT");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "INT16", "WINAPI", $2 . "16", \@arguments16);
+	    $statements = "";
 	    &$function_end;
+	} elsif(/DC_(SET_MODE_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
+	    $_ = $'; $again = 1;
+
+	    my @arguments32 = ("HDC", "INT");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "INT", "WINAPI", $2, \@arguments32);
+	    $statements = "";
 	    &$function_end;
 	} elsif(/WAVEIN_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
@@ -405,27 +451,39 @@ sub parse_c_file {
 	    my @arguments32 = ("HWAVEIN");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line,  "", "UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
+	    $statements = "";
 	    &$function_end;
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT", "WINAPI", "waveIn" . $1, \@arguments32);
+	    $statements = "";
 	    &$function_end;	    
 	} elsif(/WAVEOUT_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
+
 	    my @arguments16 = ("HWAVEOUT16");
 	    my @arguments32 = ("HWAVEOUT");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
+	    $statements = "";
 	    &$function_end;
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
 	    &$function_end;
 	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
+
 	    if($1 eq "1") {
 		my @arguments16 = ("HWAVEOUT16", $4);
 		my @arguments32 = ("HWAVEOUT", $4);
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut" . $2 . "16", \@arguments16);
+		$statements = "";
 		&$function_end;
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
@@ -435,6 +493,7 @@ sub parse_c_file {
 		my @arguments32 = ("UINT", $4);
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
+		$statements = "";
 		&$function_end;
 		&$function_begin($documentation_line, $documentation, 
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);

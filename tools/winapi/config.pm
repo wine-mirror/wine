@@ -20,7 +20,7 @@ require Exporter;
 
 use vars qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
 
-my $output = "output";
+use output qw($output);
 
 sub file_type {
     local $_ = shift;

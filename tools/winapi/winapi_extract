@@ -15,40 +15,12 @@ use config qw(
 );
 use modules;
 use nativeapi;
-use output;
+use output qw($output);
 use options;
 use winapi;
 use winapi_function;
 use winapi_parser;
-
-my $output = 'output'->new;
-
-my %options_long = (
-    "debug" => { default => 0, description => "debug mode" },
-    "help" => { default => 0, description => "help mode" },
-    "verbose" => { default => 0, description => "verbose mode" },
-
-    "progress" => { default => 1, description => "show progress" },
-
-    "win16" => { default => 1, description => "Win16 extraction" },
-    "win32" => { default => 1, description => "Win32 extraction" },
-
-    "local" =>  { default => 1, description => "local extraction" },
-    "global" => { default => 1, description => "global extraction" },
-
-    "spec-files" => { default => 1, parent => "global", description => "spec files extraction" },
-    "stub-statistics" => { default => 0, parent => "global", description => "stub statistics" },
-);
-
-my %options_short = (
-    "d" => "debug",
-    "?" => "help",
-    "v" => "verbose"
-);
-
-my $options_usage = "usage: winapi_extract [--help] [<files>]\n";
-
-my $options = 'options'->new(\%options_long, \%options_short, $options_usage);
+use winapi_extract_options qw($options);
 
 my %module2spec_file;
 my %module2type;
@@ -104,7 +76,6 @@ sub documentation_specifications {
     my $return_type = $function->return_type;
     my $linkage = $function->linkage;
     my $internal_name = $function->internal_name;
-    my @argument_types = @{$function->argument_types};
 
     if($linkage eq "static") {
 	return;
@@ -203,14 +174,11 @@ foreach my $file (@c_files) {
 	my $return_type = $function->return_type;
 	my $calling_convention = $function->calling_convention;
 	my $internal_name = $function->internal_name;
-	my @argument_types = @{$function->argument_types};
-	my @argument_names = @{$function->argument_names};
-	my @argument_documentations = @{$function->argument_documentations};
 	my $statements = $function->statements;
 
 	$functions{$internal_name} = $function;
 
-	$output->prefix("$file: " . $function->prefix);
+	$output->prefix_callback(sub { return $function->prefix; });
 
 	if($options->spec_files) {
 	    documentation_specifications($function);
@@ -228,7 +196,7 @@ foreach my $file (@c_files) {
 	my $argument = shift;
     };
 
-    winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+    &winapi_parser::parse_c_file($options, $file, $found_function, $found_preprocessor);
 
     my @internal_names = keys(%functions);
     if($#internal_names < 0) {
@@ -247,18 +215,23 @@ sub output_function {
 
     my $return_kind;
     my $calling_convention;
-    my @argument_kinds;
+    my $refargument_kinds;
     if($type eq "win16") {
 	$return_kind = $function->return_kind16 || "undef";
 	$calling_convention = $function->calling_convention16 || "undef";
-	@argument_kinds = map { $_ || "undef"; } @{$function->argument_kinds16};
+	$refargument_kinds = $function->argument_kinds16;
     } elsif($type eq "win32") {
 	$return_kind = $function->return_kind32 || "undef";
 	$calling_convention = $function->calling_convention32 || "undef";
-	@argument_kinds = map { $_ || "undef"; } @{$function->argument_kinds32};
+	$refargument_kinds = $function->argument_kinds32;
     }
 
-    print OUT "$ordinal $calling_convention $external_name(@argument_kinds) $internal_name\n";
+    if(defined($refargument_kinds)) {
+	my @argument_kinds = map { $_ || "undef"; } @$refargument_kinds;
+	print OUT "$ordinal $calling_convention $external_name(@argument_kinds) $internal_name\n";
+    } else {
+	print OUT "$ordinal $calling_convention $external_name() $internal_name # FIXME: arguments undefined\n";
+    }
 }
 
 if($options->spec_files) {

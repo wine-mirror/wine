@@ -6,10 +6,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 require Exporter;
 
 @ISA = qw(Exporter);
-@EXPORT = qw(&parse_comma_list);
-@EXPORT_OK = qw();
+@EXPORT = qw();
+@EXPORT_OK = qw($options &parse_comma_list);
 
-my $output = "output";
+use vars qw($options);
 
 sub parse_comma_list {
     my $prefix = shift;
@@ -27,26 +27,12 @@ sub parse_comma_list {
     }
 }
 
-my $_options;
-
-sub new {
-    my $self = shift;
-    $_options = _options->new(@_);
-    return $_options;
-}
-
-sub AUTOLOAD {
-    my $self = shift;
-
-    my $name = $options::AUTOLOAD;
-    $name =~ s/^.*::(.[^:]*)$/$1/;
-
-    return $_options->$name(@_);
-}
-
 package _options;
 
 use strict;
+
+use config qw($current_dir $wine_dir);
+use output qw($output);
 
 sub new {
     my $proto = shift;
@@ -209,8 +195,8 @@ sub new {
 	} split(/\n/, `$c_command`));
     }
 
-    if($#h_files != -1) {
-	my $h_command = "find " . join(" ", @h_files) . " -name \\*.h";
+    if($#paths != -1 || $#h_files != -1) {
+	my $h_command = "find " . join(" ", @paths, @h_files) . " -name \\*.h";
 	my %found;
 
 	@$h_files = sort(map {

@@ -1,12 +1,26 @@
 package winapi_global;
 
 use strict;
- 
+
+use nativeapi qw($nativeapi);
+use options qw($options);
+use output qw($output);
+use winapi qw($win16api $win32api @winapis);
+
 sub check {
-    my $options = shift;
-    my $output = shift;
+    my $type_found = shift;
+
+    if($options->win16) {
+	_check($win16api, $type_found);
+    }
+
+    if($options->win32) {
+	_check($win32api, $type_found);
+    }
+}
+
+sub _check {
     my $winapi = shift;
-    my $nativeapi = shift;
     my $type_found = shift;
 
     my $winver = $winapi->name;

@@ -2,22 +2,16 @@ package output;
 
 use strict;
 
-my $_output;
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+require Exporter;
 
-sub new {
-    my $self = shift;
-    $_output = _output->new(@_);
-    return $_output;
-}
+@ISA = qw(Exporter);
+@EXPORT = qw();
+@EXPORT_OK = qw($output);
 
-sub AUTOLOAD {
-    my $self = shift;
+use vars qw($output);
 
-    my $name = $output::AUTOLOAD;
-    $name =~ s/^.*::(.[^:]*)$/$1/;
-
-    return $_output->$name(@_);
-}
+$output = '_output'->new;
 
 package _output;
 
@@ -37,16 +31,17 @@ sub new {
     my $last_time = \${$self->{LAST_TIME}};
     my $progress_count = \${$self->{PROGRESS_COUNT}};
     my $prefix = \${$self->{PREFIX}};
+    my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
 
     $$progress = "";
     $$last_progress = "";
     $$last_time = 0;
     $$progress_count = 0;
-    $$prefix = "";
+    $$prefix = undef;
+    $$prefix_callback = undef;
 
     return $self;
 }
-
 
 sub show_progress {
     my $self = shift;
@@ -134,8 +129,20 @@ sub lazy_progress {
 sub prefix {
     my $self = shift;
     my $prefix = \${$self->{PREFIX}};
+    my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
 
     $$prefix = shift;
+    $$prefix_callback = undef;
+}
+
+sub prefix_callback {
+    my $self = shift;
+
+    my $prefix = \${$self->{PREFIX}};
+    my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
+
+    $$prefix = undef;
+    $$prefix_callback = shift;
 }
 
 sub write {
@@ -144,9 +151,16 @@ sub write {
     my $message = shift;
 
     my $prefix = \${$self->{PREFIX}};
+    my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
 
     $self->hide_progress if $stdout_isatty;
-    print $$prefix . $message;
+    if(defined($$prefix)) {
+	print $$prefix . $message;
+    } elsif(defined($$prefix_callback)) {
+	print &{$$prefix_callback}() . $message;
+    } else {
+	print $message;
+    }
     $self->show_progress if $stdout_isatty;
 }
 
