@@ -810,6 +810,26 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 	      hr = NOERROR;
 	      break;
 
+	    case CSIDL_NETWORK:
+	      *ppidl = _ILCreateNetwork ();
+	      hr = NOERROR;
+	      break;
+
+	    case CSIDL_CONTROLS:
+	      *ppidl = _ILCreateControl ();
+	      hr = NOERROR;
+	      break;
+
+	    case CSIDL_PRINTERS:
+	      *ppidl = _ILCreatePrinter ();
+	      hr = NOERROR;
+	      break;
+
+	    case CSIDL_BITBUCKET:
+	      *ppidl = _ILCreateBitBucket ();
+	      hr = NOERROR;
+	      break;
+
 	    default:
 	      if (SHGetSpecialFolderPathA(hwndOwner, szPath, nFolder, TRUE))
 	      {
@@ -1043,6 +1063,26 @@ LPITEMIDLIST WINAPI _ILCreateMyComputer()
 LPITEMIDLIST WINAPI _ILCreateIExplore()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_MYCOMP, &IID_IExplore, sizeof(GUID));
+}
+
+LPITEMIDLIST WINAPI _ILCreateControl()
+{	TRACE_(pidl)("()\n");
+	return _ILCreate(PT_SPECIAL, &IID_Control, sizeof(GUID));
+}
+
+LPITEMIDLIST WINAPI _ILCreatePrinter()
+{	TRACE_(pidl)("()\n");
+	return _ILCreate(PT_SPECIAL, &IID_Printer, sizeof(GUID));
+}
+
+LPITEMIDLIST WINAPI _ILCreateNetwork()
+{	TRACE_(pidl)("()\n");
+	return _ILCreate(PT_MYCOMP, &IID_Network, sizeof(GUID));
+}
+
+LPITEMIDLIST WINAPI _ILCreateBitBucket()
+{	TRACE_(pidl)("()\n");
+	return _ILCreate(PT_MYCOMP, &IID_BitBucket, sizeof(GUID));
 }
 
 LPITEMIDLIST WINAPI _ILCreateDrive( LPCSTR lpszNew)
@@ -1529,3 +1569,4 @@ BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 
 	return TRUE;
 }
+

@@ -29,6 +29,8 @@
 *	              ! size
 *	----------------------------------------------------------------
 *	my computer	0x1F/20		mycomp (2)	(usual)
+*	network		0x1F		mycomp
+*	bitbucket	0x1F		mycomp
 *	drive		0x23/25		drive		(usual)
 *	drive		0x25/25		drive		(lnk/persistant)
 *	drive		0x29/25		drive
@@ -117,12 +119,6 @@ typedef struct tagPIDLDATA
  * return value is strlen()
  */
 DWORD WINAPI _ILGetDrive(LPCITEMIDLIST,LPSTR,UINT16);
-/*
-DWORD WINAPI _ILGetItemText(LPCITEMIDLIST,LPSTR,UINT16);
-DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST,LPSTR,DWORD);
-DWORD WINAPI _ILGetValueText(LPCITEMIDLIST,LPSTR,DWORD);
-DWORD WINAPI _ILGetPidlPath(LPCITEMIDLIST,LPSTR,DWORD);
-*/
 
 /*
  * getting special values from simple pidls
@@ -149,6 +145,10 @@ BOOL WINAPI _ILIsPidlSimple ( LPCITEMIDLIST pidl);
 LPITEMIDLIST WINAPI _ILCreateDesktop(void);
 LPITEMIDLIST WINAPI _ILCreateMyComputer(void);
 LPITEMIDLIST WINAPI _ILCreateIExplore(void);
+LPITEMIDLIST WINAPI _ILCreateControl(void);
+LPITEMIDLIST WINAPI _ILCreatePrinter(void);
+LPITEMIDLIST WINAPI _ILCreateNetwork(void);
+LPITEMIDLIST WINAPI _ILCreateBitBucket(void);
 LPITEMIDLIST WINAPI _ILCreateDrive(LPCSTR);
 LPITEMIDLIST WINAPI _ILCreateFolder(WIN32_FIND_DATAA * stffile);
 LPITEMIDLIST WINAPI _ILCreateValue(WIN32_FIND_DATAA * stffile);

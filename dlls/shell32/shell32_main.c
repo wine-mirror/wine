@@ -124,6 +124,11 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	if (flags & SHGFI_PIDL)
 	{
 	  pidl = (LPCITEMIDLIST) path;
+	  if (!pidl )
+	  {
+	    ERR_(shell)("pidl is null!\n");
+	    return FALSE;
+	  }
 	}
 	else if (!(flags & SHGFI_USEFILEATTRIBUTES))
 	{
