@@ -7,6 +7,11 @@ overview over the rationales I thought up and how I tried to implement it.
 (While the examples use "rpm" most of this stuff can be applied to other
 packagers too.)
 
+NOTE THAT YOU SHOULD RECHECK THIS FILE EVERY TWO MONTHS OR SO
+(diff -uN comes to my mind here...).
+We'll be adding stuff constantly here in order to improve the Wine
+environment !
+
 1. Rationales
 
 A WINE install should:
@@ -28,6 +33,7 @@ g. The .exe and .dll from a global read-only Windows installation to be
    found by applications.
 h. Some special .dll and .exe files in the windows\system directory, since
    applications directly check for their presence.
+i. Some special program environment.
 
 
 2. Implementation
@@ -144,6 +150,16 @@ Add this prepared configuration file to the package.
 Install the package using the usual packager "rpm -i wine.rpm".
 You may edit /etc/wine/wine.conf, [Drive W], to point to a possible windows
 installation right after the install. Thats it.
+
+Note that on Linux you should somehow try to add the "unhide" mount option
+(-> "man mount") to the CD-ROM entry in /etc/fstab during package install,
+as several stupid Windows programs mark some setup (!) files
+as hidden (ISO9660) on CD-ROMs, which will greatly confuse users
+as they won't find their setup files on the CD-ROMs as they were
+used on Windows systems when "unhide" is not set ;-\
+And of course the setup program will complain that "setup.ins" or some other
+mess is missing...
+If you choose to do so, then please make this change verbose to the admin.
 
 2.4 Installing WINE for the user
 
