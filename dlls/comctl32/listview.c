@@ -279,13 +279,10 @@ static void LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
-static INT LISTVIEW_CalculateMaxHeight(LISTVIEW_INFO *);
 static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
-static INT LISTVIEW_CalculateMaxWidth(LISTVIEW_INFO *);
 static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *, INT);
-static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *, INT);
 static void LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
@@ -297,11 +294,11 @@ static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *);
 static void LISTVIEW_UnsupportedStyles(LONG);
 static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *, INT, BOOL);
 static LRESULT LISTVIEW_Command(LISTVIEW_INFO *, WPARAM, LPARAM);
-static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *, PFNLVCOMPARE, LPARAM);
-static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *, LPCWSTR, BOOL);
+static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *, PFNLVCOMPARE, LPARAM);
+static INT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *, LPCWSTR, BOOL);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT);
-static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *, INT, UINT);
-static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, LPLVITEMW);
+static UINT LISTVIEW_GetItemState(LISTVIEW_INFO *, INT, UINT);
+static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, LPLVITEMW);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *);
@@ -3667,7 +3664,7 @@ enddraw:
  * RETURN:
  * Returns a DWORD. The width in the low word and the height in high word.
  */
-static LRESULT LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCount,
+static DWORD LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCount,
                                             WORD wWidth, WORD wHeight)
 {
   UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
@@ -3732,7 +3729,7 @@ static LRESULT LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCou
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
+static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
 {
   UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
   BOOL bResult = FALSE;
@@ -3773,7 +3770,7 @@ static LRESULT LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
+static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 {
   LONG lStyle = infoPtr->dwStyle;
   UINT uView = lStyle & LVS_TYPEMASK;
@@ -4008,7 +4005,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
+static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
   LONG lStyle = infoPtr->dwStyle;
   UINT uView = lStyle & LVS_TYPEMASK;
@@ -4302,8 +4299,8 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
  *   SUCCESS : index of item
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
-                                  LPLVFINDINFOW lpFindInfo)
+static INT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
+                              LPLVFINDINFOW lpFindInfo)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
@@ -4423,12 +4420,12 @@ again:
  *   SUCCESS : index of item
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
-                                  LPLVFINDINFOA lpFindInfo)
+static INT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
+                              LPLVFINDINFOA lpFindInfo)
 {
   BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL);
   LVFINDINFOW fiw;
-  LRESULT res;
+  INT res;
 
   memcpy(&fiw, lpFindInfo, sizeof(fiw));
   if (hasText) fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
@@ -4449,7 +4446,7 @@ static LRESULT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-/* static LRESULT LISTVIEW_GetBkImage(LISTVIEW_INFO *infoPtr, LPLVBKIMAGE lpBkImage)   */
+/* static BOOL LISTVIEW_GetBkImage(LISTVIEW_INFO *infoPtr, LPLVBKIMAGE lpBkImage)   */
 /* {   */
 /*   FIXME (listview, "empty stub!\n"); */
 /*   return FALSE;   */
@@ -4470,7 +4467,7 @@ static LRESULT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn, LPLVCOLUMNW lpColumn, BOOL isW)
+static BOOL LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn, LPLVCOLUMNW lpColumn, BOOL isW)
 {
     COLUMN_INFO *lpColumnInfo;
     HDITEMW hdi;
@@ -4512,7 +4509,7 @@ static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn, LPLVCOLU
 }
 
 
-static LRESULT LISTVIEW_GetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, LPINT lpiArray)
+static BOOL LISTVIEW_GetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, LPINT lpiArray)
 {
     INT i;
 
@@ -4574,7 +4571,7 @@ static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
  * RETURN:
  * Number of fully visible items.
  */
-static LRESULT LISTVIEW_GetCountPerPage(LISTVIEW_INFO *infoPtr)
+static INT LISTVIEW_GetCountPerPage(LISTVIEW_INFO *infoPtr)
 {
   UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
   INT nItemCount = 0;
@@ -5147,7 +5144,7 @@ static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *infoPtr, INT nItem)
  * RETURN:
  * Horizontal + vertical spacing
  */
-static LRESULT LISTVIEW_GetItemSpacing(LISTVIEW_INFO *infoPtr, BOOL bSmall)
+static LONG LISTVIEW_GetItemSpacing(LISTVIEW_INFO *infoPtr, BOOL bSmall)
 {
   LONG lResult;
 
@@ -5177,7 +5174,7 @@ static LRESULT LISTVIEW_GetItemSpacing(LISTVIEW_INFO *infoPtr, BOOL bSmall)
  * RETURN:
  * State specified by the mask.
  */
-static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *infoPtr, INT nItem, UINT uMask)
+static UINT LISTVIEW_GetItemState(LISTVIEW_INFO *infoPtr, INT nItem, UINT uMask)
 {
     LVITEMW lvItem;
 
@@ -5206,7 +5203,7 @@ static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *infoPtr, INT nItem, UINT uMa
  *   SUCCESS : string length
  *   FAILURE : 0
  */
-static LRESULT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lpLVItem, BOOL isW)
+static INT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lpLVItem, BOOL isW)
 {
     if (!lpLVItem || nItem < 0 || nItem >= infoPtr->nItemCount) return 0;
 
@@ -5233,7 +5230,7 @@ static LRESULT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
  *   SUCCESS : item index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
+static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     UINT uMask = 0;
@@ -5431,7 +5428,7 @@ static void LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
  *   SUCCESS : string width (in pixels)
  *   FAILURE : zero
  */
-static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText, BOOL isW)
+static INT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText, BOOL isW)
 {
     SIZE stringSize;
     
@@ -5471,7 +5468,7 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText
  *   SUCCESS : item index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem, BOOL select)
+static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem, BOOL select)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
@@ -5615,7 +5612,7 @@ static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM 
  *   SUCCESS : new item index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
+static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
     LONG lStyle = infoPtr->dwStyle;
     UINT uView = lStyle & LVS_TYPEMASK;
@@ -5726,7 +5723,7 @@ fail:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_RedrawItems(LISTVIEW_INFO *infoPtr, INT nFirst, INT nLast)
+static BOOL LISTVIEW_RedrawItems(LISTVIEW_INFO *infoPtr, INT nFirst, INT nLast)
 {
     INT i;
  
@@ -5773,7 +5770,7 @@ static LRESULT LISTVIEW_RedrawItems(LISTVIEW_INFO *infoPtr, INT nFirst, INT nLas
  *                    dy=  see above
  *
  */
-static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
+static BOOL LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
 {
     switch(infoPtr->dwStyle & LVS_TYPEMASK) {
     case LVS_REPORT:
@@ -5806,7 +5803,7 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
+static BOOL LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
 {
     TRACE("(clrBk=%lx)\n", clrBk);
 
@@ -5912,8 +5909,8 @@ static void column_fill_hditem(LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT nColu
  *   SUCCESS : new column index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
-                                      LPLVCOLUMNW lpColumn, BOOL isW)
+static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
+                                  LPLVCOLUMNW lpColumn, BOOL isW)
 {
     COLUMN_INFO *lpColumnInfo;
     INT nNewColumn;
@@ -6017,8 +6014,8 @@ fail:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
-                                   LPLVCOLUMNW lpColumn, BOOL isW)
+static BOOL LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
+                                LPLVCOLUMNW lpColumn, BOOL isW)
 {
     HDITEMW hdi, hdiget;
     BOOL bResult;
@@ -6070,7 +6067,7 @@ static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, LPINT lpiArray)
+static BOOL LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, LPINT lpiArray)
 {
   FIXME("iCount %d lpiArray %p\n", iCount, lpiArray);
 
@@ -6208,7 +6205,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
  *   SUCCESS : previous style
  *   FAILURE : 0
  */
-static LRESULT LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwMask, DWORD dwStyle)
+static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwMask, DWORD dwStyle)
 {
     DWORD dwOldStyle = infoPtr->dwLvExStyle;
 
@@ -6254,7 +6251,7 @@ static HCURSOR LISTVIEW_SetHotCursor(LISTVIEW_INFO *infoPtr, HCURSOR hCursor)
  *   SUCCESS : previous hot item index
  *   FAILURE : -1 (no hot item)
  */
-static LRESULT LISTVIEW_SetHotItem(LISTVIEW_INFO *infoPtr, INT iIndex)
+static INT LISTVIEW_SetHotItem(LISTVIEW_INFO *infoPtr, INT iIndex)
 {
     INT iOldIndex = infoPtr->nHotItem;
     
@@ -6275,7 +6272,7 @@ static LRESULT LISTVIEW_SetHotItem(LISTVIEW_INFO *infoPtr, INT iIndex)
  * RETURN:
  * Returns the previous hover time
  */
-static LRESULT LISTVIEW_SetHoverTime(LISTVIEW_INFO *infoPtr, DWORD dwHoverTime)
+static DWORD LISTVIEW_SetHoverTime(LISTVIEW_INFO *infoPtr, DWORD dwHoverTime)
 {
     DWORD oldHoverTime = infoPtr->dwHoverTime;
     
@@ -6295,7 +6292,7 @@ static LRESULT LISTVIEW_SetHoverTime(LISTVIEW_INFO *infoPtr, DWORD dwHoverTime)
  * RETURN:
  *   MAKELONG(oldcx, oldcy)
  */
-static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
+static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
 {
     INT cy = HIWORD(spacing), cx = LOWORD(spacing);
     DWORD oldspacing = MAKELONG(infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy);
@@ -6531,7 +6528,7 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lpLVItem)
+static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lpLVItem)
 {
     BOOL bResult = TRUE;
     LVITEMW lvItem;
@@ -6597,7 +6594,7 @@ static BOOL LISTVIEW_SetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW l
  * RETURN:
  * Index number or -1 if there is no selection mark.
  */
-static LRESULT LISTVIEW_SetSelectionMark(LISTVIEW_INFO *infoPtr, INT nIndex)
+static INT LISTVIEW_SetSelectionMark(LISTVIEW_INFO *infoPtr, INT nIndex)
 {
   INT nOldIndex = infoPtr->nSelectionMark;
 
@@ -6620,7 +6617,7 @@ static LRESULT LISTVIEW_SetSelectionMark(LISTVIEW_INFO *infoPtr, INT nIndex)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrTextBk)
+static BOOL LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrTextBk)
 {
     TRACE("(clrTextBk=%lx)\n", clrTextBk);
 
@@ -6645,7 +6642,7 @@ static LRESULT LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrTextB
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetTextColor (LISTVIEW_INFO *infoPtr, COLORREF clrText)
+static BOOL LISTVIEW_SetTextColor (LISTVIEW_INFO *infoPtr, COLORREF clrText)
 {
     TRACE("(clrText=%lx)\n", clrText);
 
@@ -6699,7 +6696,7 @@ static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM l
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, LPARAM lParamSort)
+static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, LPARAM lParamSort)
 {
     UINT lStyle = infoPtr->dwStyle;
     HDPA hdpaSubItems;
@@ -8640,6 +8637,7 @@ void LISTVIEW_Unregister(void)
  * [I] lParam : the second message parameter
  *
  * RETURN:
+ *   Zero.
  */
 static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -8713,6 +8711,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
  * [I] isW : TRUE if input is Unicode
  *
  * RETURN:
+ *   Zero.
  */
 static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL isW)
 {
@@ -8777,7 +8776,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     }
 
     SendMessageW(hwnd, WM_CLOSE, 0, 0);
-    return TRUE;
+    return 0;
 }
 
 /***
