@@ -1,3 +1,6 @@
+@ stub A_SHAFinal
+@ stub A_SHAInit
+@ stub A_SHAUpdate
 @ stdcall AbortSystemShutdownA(ptr)
 @ stdcall AbortSystemShutdownW(ptr)
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
@@ -169,6 +172,12 @@
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stub MapGenericMask
+@ stub MD4Final
+@ stub MD4Init
+@ stub MD4Update
+@ stub MD5Final
+@ stub MD5Init
+@ stub MD5Update
 @ stdcall NotifyBootConfigStatus(long)
 @ stdcall NotifyChangeEventLog (long long)
 @ stub ObjectCloseAuditAlarmA
