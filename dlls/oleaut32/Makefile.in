@@ -16,6 +16,7 @@ C_SRCS = \
 	olefont.c \
 	parsedt.c \
 	safearray.c \
+	stubs.c \
 	typelib.c \
 	variant.c
 

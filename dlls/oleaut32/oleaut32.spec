@@ -280,11 +280,11 @@ type win32
 412 stdcall SafeArrayCopyData(ptr ptr) SafeArrayCopyData
 413 stub VectorFromBstr
 414 stub BstrFromVector
-415 stub OleIconToCursor
-416 stub OleCreatePropertyFrameIndirect
-417 stub OleCreatePropertyFrame
-418 stub OleLoadPicture
-419 stub OleCreatePictureIndirect
+415 stdcall OleIconToCursor(long long) OleIconToCursor
+416 stdcall OleCreatePropertyFrameIndirect(ptr) OleCreatePropertyFrameIndirect
+417 stdcall OleCreatePropertyFrame(ptr long long ptr long ptr long ptr ptr long ptr) OleCreatePropertyFrame
+418 stdcall OleLoadPicture(ptr long long ptr ptr) OleLoadPicture
+419 stdcall OleCreatePictureIndirect(ptr ptr long ptr) OleCreatePictureIndirect
 420 stdcall OleCreateFontIndirect(ptr ptr ptr) OleCreateFontIndirect
 421 stdcall OleTranslateColor(long long long) OleTranslateColor
 422 stub OleLoadPictureFile

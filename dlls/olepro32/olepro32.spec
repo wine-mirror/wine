@@ -1,13 +1,15 @@
 name olepro32
 type win32
 
-@ stdcall OleIconToCursor( ptr ptr) OleIconToCursor
-@ stdcall OleCreatePropertyFrameIndirect( ptr ) OleCreatePropertyFrameIndirect
-@ stdcall OleCreatePropertyFrame( ptr long long ptr long ptr long ptr ptr long ptr ) OleCreatePropertyFrame
-@ stdcall OleLoadPicture( ptr long long ptr ptr ) OleLoadPicture
-@ stdcall OleCreatePictureIndirect( ptr ptr long ptr ) OleCreatePictureIndirect
-@ stdcall OleCreateFontIndirect( ptr ptr ptr ) OleCreateFontIndirect
-@ stdcall OleTranslateColor( long ptr ptr ) OleTranslateColor
+import oleaut32.dll
+
+@ forward OleIconToCursor OLEAUT32.OleIconToCursor
+@ forward OleCreatePropertyFrameIndirect OLEAUT32.OleCreatePropertyFrameIndirect
+@ forward OleCreatePropertyFrame OLEAUT32.OleCreatePropertyFrame
+@ forward OleLoadPicture OLEAUT32.OleLoadPicture
+@ forward OleCreatePictureIndirect OLEAUT32.OleCreatePictureIndirect
+@ forward OleCreateFontIndirect OLEAUT32.OleCreateFontIndirect
+@ forward OleTranslateColor OLEAUT32.OleTranslateColor
 @ stdcall DllCanUnloadNow() OLEPRO32_DllCanUnloadNow
 @ stdcall DllGetClassObjecti( ptr ptr ptr )  OLEPRO32_DllGetClassObject
 @ stdcall DllRegisterServer() OLEPRO32_DllRegisterServer
