@@ -1889,6 +1889,17 @@ typedef struct tagTVHITTESTINFO {
 #define LVNI_TOLEFT		0x0400
 #define LVNI_TORIGHT		0x0800
 
+#define LVHT_NOWHERE		0x0001
+#define LVHT_ONITEMICON		0x0002
+#define LVHT_ONITEMLABEL	0x0004
+#define LVHT_ONITEMSTATEICON	0x0008
+#define LVHT_ONITEM		(LVHT_ONITEMICON|LVHT_ONITEMLABEL|LVHT_ONITEMSTATEICON)
+
+#define LVHT_ABOVE		0x0008
+#define LVHT_BELOW		0x0010
+#define LVHT_TORIGHT		0x0020
+#define LVHT_TOLEFT		0x0040
+
 #define LVM_FIRST               0x1000
 #define LVM_GETBKCOLOR          (LVM_FIRST+0)
 #define LVM_SETBKCOLOR          (LVM_FIRST+1)
@@ -2132,6 +2143,18 @@ typedef struct tagLVDISPINFOW
 #define LV_DISPINFO     NMLVDISPINFO
 
 
+typedef struct tagLVHITTESTINFO
+{
+    POINT32 pt;
+    UINT32  flags;
+    INT32   iItem;
+    INT32   iSubItem;
+} LVHITTESTINFO, *LPLVHITTESTINFO;
+
+#define LV_HITTESTINFO LVHITTESTINFO
+#define _LV_HITTESTINFO tagLVHITTESTINFO
+#define LVHITTESTINFO_V1_SIZE CCSIZEOF_STRUCT(LVHITTESTINFO,iItem)
+
 typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
 #define ListView_SetBkColor(hwnd,clrBk) \
@@ -2147,6 +2170,8 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define ListView_GetItem32W(hwnd,pitem) \
     (BOOL32)SendMessage32W((hwnd),LVM_GETITEM32W,0,(LPARAM)(LVITEM32W *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
+#define ListView_HitTest(hwnd,pinfo) \
+    (INT32)SendMessage32A((hwnd),LVMHITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
 #define ListView_InsertItem32A(hwnd,pitem) \
     (INT32)SendMessage32A((hwnd),LVM_INSERTITEM32A,0,(LPARAM)(const LVITEM32A *)(pitem))
 #define ListView_InsertItem32W(hwnd,pitem) \
@@ -2354,6 +2379,24 @@ typedef struct tagNMIPADDRESS
 #define NFS_LISTCOMBO		0x0004
 #define NFS_BUTTON		0x0008
 #define NFS_ALL			0x0010
+
+
+/**************************************************************************
+ * Month calendar control
+ */
+
+#define MONTHCAL_CLASS32A	"SysMonthCal32"
+#define MONTHCAL_CLASS32W	L"SysMonthCal32"
+#define MONTHCAL_CLASS		WINELIB_NAME_AW(MONTHCAL_CLASS)
+
+
+/**************************************************************************
+ * Date and time picker control
+ */
+
+#define DATETIMEPICK_CLASS32A	"SysDateTimePick32"
+#define DATETIMEPICK_CLASS32W	L"SysDateTimePick32"
+#define DATETIMEPICK_CLASS	WINELIB_NAME_AW(DATETIMEPICK_CLASS)
 
 
 /**************************************************************************

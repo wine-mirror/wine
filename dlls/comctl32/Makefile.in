@@ -10,11 +10,13 @@ C_SRCS = \
 	comboex.c \
 	comctl32undoc.c \
 	commctrl.c \
+	datetime.c \
 	header.c \
 	hotkey.c \
 	imagelist.c \
 	ipaddress.c \
 	listview.c \
+	monthcal.c \
 	nativefont.c \
 	pager.c \
 	progress.c \
