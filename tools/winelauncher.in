@@ -522,7 +522,7 @@ You may view this file by selecting View Log, below."
         #------------------------------------------------------------------------------
         if [ $debug_return -eq 2 ] ; then
             echo "Rerunning $0 $debug_options $@"
-            exec $0 $debug_options $@
+            exec $0 $debug_options "$@"
         fi
     done 
 fi
