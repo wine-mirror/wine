@@ -41,6 +41,7 @@
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 
 static HWND hwndMain, hwndMain2;
+static HHOOK hhook;
 
 /* check the values returned by the various parent/owner functions on a given window */
 static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_parent,
@@ -112,6 +113,18 @@ static void test_parent_owner(void)
     SetWindowLongA( test, GWL_STYLE, WS_CHILD );
     DestroyWindow( test );
 
+    /* normal child window with WS_MAXIMIZE */
+    test = create_tool_window( WS_CHILD | WS_MAXIMIZE, hwndMain );
+    DestroyWindow( test );
+
+    /* normal child window with WS_THICKFRAME */
+    test = create_tool_window( WS_CHILD | WS_THICKFRAME, hwndMain );
+    DestroyWindow( test );
+
+    /* popup window with WS_THICKFRAME */
+    test = create_tool_window( WS_POPUP | WS_THICKFRAME, hwndMain );
+    DestroyWindow( test );
+
     /* child of desktop */
     test = create_tool_window( WS_CHILD, desktop );
     trace( "created child of desktop %p\n", test );
@@ -120,6 +133,14 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, 0, 0, test, test );
     SetWindowLongA( test, GWL_STYLE, 0 );
     check_parents( test, desktop, 0, 0, 0, test, test );
+    DestroyWindow( test );
+
+    /* child of desktop with WS_MAXIMIZE */
+    test = create_tool_window( WS_CHILD | WS_MAXIMIZE, desktop );
+    DestroyWindow( test );
+
+    /* child of desktop with WS_MINIMIZE */
+    test = create_tool_window( WS_CHILD | WS_MINIMIZE, desktop );
     DestroyWindow( test );
 
     /* child of child */
@@ -132,6 +153,14 @@ static void test_parent_owner(void)
     check_parents( test, child, child, 0, 0, hwndMain, test );
     DestroyWindow( test );
 
+    /* child of child with WS_MAXIMIZE */
+    test = create_tool_window( WS_CHILD | WS_MAXIMIZE, child );
+    DestroyWindow( test );
+
+    /* child of child with WS_MINIMIZE */
+    test = create_tool_window( WS_CHILD | WS_MINIMIZE, child );
+    DestroyWindow( test );
+
     /* not owned top-level window */
     test = create_tool_window( 0, 0 );
     trace( "created top-level %p\n", test );
@@ -140,6 +169,10 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, 0, 0, test, test );
     SetWindowLongA( test, GWL_STYLE, WS_CHILD );
     check_parents( test, desktop, 0, desktop, 0, test, desktop );
+    DestroyWindow( test );
+
+    /* not owned top-level window with WS_MAXIMIZE */
+    test = create_tool_window( WS_MAXIMIZE, 0 );
     DestroyWindow( test );
 
     /* owned top-level window */
@@ -152,6 +185,10 @@ static void test_parent_owner(void)
     check_parents( test, desktop, hwndMain, desktop, hwndMain, test, desktop );
     DestroyWindow( test );
 
+    /* owned top-level window with WS_MAXIMIZE */
+    test = create_tool_window( WS_MAXIMIZE, hwndMain );
+    DestroyWindow( test );
+
     /* not owned popup */
     test = create_tool_window( WS_POPUP, 0 );
     trace( "created popup %p\n", test );
@@ -160,6 +197,10 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, desktop, 0, test, desktop );
     SetWindowLongA( test, GWL_STYLE, 0 );
     check_parents( test, desktop, 0, 0, 0, test, test );
+    DestroyWindow( test );
+
+    /* not owned popup with WS_MAXIMIZE */
+    test = create_tool_window( WS_POPUP | WS_MAXIMIZE, 0 );
     DestroyWindow( test );
 
     /* owned popup */
@@ -172,10 +213,18 @@ static void test_parent_owner(void)
     check_parents( test, desktop, hwndMain, 0, hwndMain, test, test );
     DestroyWindow( test );
 
+    /* owned popup with WS_MAXIMIZE */
+    test = create_tool_window( WS_POPUP | WS_MAXIMIZE, hwndMain );
+    DestroyWindow( test );
+
     /* top-level window owned by child (same as owned by top-level) */
     test = create_tool_window( 0, child );
     trace( "created top-level owned by child %p\n", test );
     check_parents( test, desktop, hwndMain, 0, hwndMain, test, test );
+    DestroyWindow( test );
+
+    /* top-level window owned by child (same as owned by top-level) with WS_MAXIMIZE */
+    test = create_tool_window( WS_MAXIMIZE, child );
     DestroyWindow( test );
 
     /* popup owned by desktop (same as not owned) */
@@ -184,10 +233,18 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, 0, 0, test, test );
     DestroyWindow( test );
 
+    /* popup owned by desktop (same as not owned) with WS_MAXIMIZE */
+    test = create_tool_window( WS_POPUP | WS_MAXIMIZE, desktop );
+    DestroyWindow( test );
+
     /* popup owned by child (same as owned by top-level) */
     test = create_tool_window( WS_POPUP, child );
     trace( "created popup owned by child %p\n", test );
     check_parents( test, desktop, hwndMain, hwndMain, hwndMain, test, hwndMain );
+    DestroyWindow( test );
+
+    /* popup owned by child (same as owned by top-level) with WS_MAXIMIZE */
+    test = create_tool_window( WS_POPUP | WS_MAXIMIZE, child );
     DestroyWindow( test );
 
     /* not owned popup with WS_CHILD (same as WS_POPUP only) */
@@ -196,10 +253,18 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, 0, 0, test, test );
     DestroyWindow( test );
 
+    /* not owned popup with WS_CHILD | WS_MAXIMIZE (same as WS_POPUP only) */
+    test = create_tool_window( WS_POPUP | WS_CHILD | WS_MAXIMIZE, 0 );
+    DestroyWindow( test );
+
     /* owned popup with WS_CHILD (same as WS_POPUP only) */
     test = create_tool_window( WS_POPUP | WS_CHILD, hwndMain );
     trace( "created owned WS_CHILD popup %p\n", test );
     check_parents( test, desktop, hwndMain, hwndMain, hwndMain, test, hwndMain );
+    DestroyWindow( test );
+
+    /* owned popup with WS_CHILD (same as WS_POPUP only) with WS_MAXIMIZE */
+    test = create_tool_window( WS_POPUP | WS_CHILD | WS_MAXIMIZE, hwndMain );
     DestroyWindow( test );
 
     /******************** parent changes *************************/
@@ -207,12 +272,13 @@ static void test_parent_owner(void)
 
     /* desktop window */
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
+#if 0 /* this test succeeds on NT but crashes on win9x systems */
     ret = (HWND)SetWindowLongA( test, GWL_HWNDPARENT, (LONG_PTR)hwndMain2 );
     ok( !ret, "Set GWL_HWNDPARENT succeeded on desktop" );
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
     ok( !SetParent( desktop, hwndMain ), "SetParent succeeded on desktop" );
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
-
+#endif
     /* normal child window */
     test = create_tool_window( WS_CHILD, hwndMain );
     trace( "created child %p\n", test );
@@ -354,12 +420,90 @@ static void test_parent_owner(void)
 }
 
 
+static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+	case WM_GETMINMAXINFO:
+	{
+	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
+
+	    trace("hwnd %p, WM_GETMINMAXINFO, %08x, %08lx\n", hwnd, wparam, lparam);
+	    trace("ptReserved (%ld,%ld), ptMaxSize (%ld,%ld), ptMaxPosition (%ld,%ld)\n"
+		  "	  ptMinTrackSize (%ld,%ld), ptMaxTrackSize (%ld,%ld)\n",
+		  minmax->ptReserved.x, minmax->ptReserved.y,
+		  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+		  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+		  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+		  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+	    SetWindowLongA(hwnd, GWL_USERDATA, 0x20031021);
+	    break;
+	}
+	case WM_NCCREATE:
+	{
+	    BOOL got_getminmaxinfo = GetWindowLongA(hwnd, GWL_USERDATA) == 0x20031021;
+	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+
+	    trace("WM_NCCREATE: hwnd %p, parent %p, style %08lx\n", hwnd, cs->hwndParent, cs->style);
+	    if (got_getminmaxinfo)
+		trace("%p got WM_GETMINMAXINFO\n", hwnd);
+
+	    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
+		ok(got_getminmaxinfo, "main: WM_GETMINMAXINFO should have been received before WM_NCCREATE\n");
+	    else
+		ok(!got_getminmaxinfo, "main: WM_GETMINMAXINFO should NOT have been received before WM_NCCREATE\n");
+	    break;
+	}
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+	case WM_GETMINMAXINFO:
+	{
+	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
+
+	    trace("hwnd %p, WM_GETMINMAXINFO, %08x, %08lx\n", hwnd, wparam, lparam);
+	    trace("ptReserved (%ld,%ld), ptMaxSize (%ld,%ld), ptMaxPosition (%ld,%ld)\n"
+		  "	  ptMinTrackSize (%ld,%ld), ptMaxTrackSize (%ld,%ld)\n",
+		  minmax->ptReserved.x, minmax->ptReserved.y,
+		  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+		  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+		  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+		  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+	    SetWindowLongA(hwnd, GWL_USERDATA, 0x20031021);
+	    break;
+	}
+	case WM_NCCREATE:
+	{
+	    BOOL got_getminmaxinfo = GetWindowLongA(hwnd, GWL_USERDATA) == 0x20031021;
+	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+
+	    trace("WM_NCCREATE: hwnd %p, parent %p, style %08lx\n", hwnd, cs->hwndParent, cs->style);
+	    if (got_getminmaxinfo)
+		trace("%p got WM_GETMINMAXINFO\n", hwnd);
+
+	    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
+		ok(got_getminmaxinfo, "tool: WM_GETMINMAXINFO should have been received before WM_NCCREATE\n");
+	    else
+		ok(!got_getminmaxinfo, "tool: WM_GETMINMAXINFO should NOT have been received before WM_NCCREATE\n");
+	    break;
+	}
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
 static BOOL RegisterWindowClasses(void)
 {
     WNDCLASSA cls;
 
     cls.style = 0;
-    cls.lpfnWndProc = DefWindowProcA;
+    cls.lpfnWndProc = main_window_procA;
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
@@ -372,7 +516,7 @@ static BOOL RegisterWindowClasses(void)
     if(!RegisterClassA(&cls)) return FALSE;
 
     cls.style = 0;
-    cls.lpfnWndProc = DefWindowProcA;
+    cls.lpfnWndProc = tool_window_procA;
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
@@ -387,12 +531,46 @@ static BOOL RegisterWindowClasses(void)
     return TRUE;
 }
 
+static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
+{ 
+    static const char *CBT_code_name[10] = {
+	"HCBT_MOVESIZE",
+	"HCBT_MINMAX",
+	"HCBT_QS",
+	"HCBT_CREATEWND",
+	"HCBT_DESTROYWND",
+	"HCBT_ACTIVATE",
+	"HCBT_CLICKSKIPPED",
+	"HCBT_KEYSKIPPED",
+	"HCBT_SYSCOMMAND",
+	"HCBT_SETFOCUS" };
+    const char *code_name = (nCode >= 0 && nCode <= HCBT_SETFOCUS) ? CBT_code_name[nCode] : "Unknown";
+
+    trace("CBT: %d (%s), %08x, %08lx\n", nCode, code_name, wParam, lParam);
+
+    switch (nCode)
+    {
+	case HCBT_CREATEWND:
+	{
+	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
+	    trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08lx\n",
+		  (HWND)wParam, createwnd->lpcs->hwndParent, createwnd->lpcs->style);
+	    ok(createwnd->hwndInsertAfter == HWND_TOP, "hwndInsertAfter should be always HWND_TOP\n");
+	    break;
+	}
+    }
+
+    return CallNextHookEx(hhook, nCode, wParam, lParam);
+}
 
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
 
     if (!RegisterWindowClasses()) assert(0);
+
+    hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
+    assert(hhook);
 
     hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -408,4 +586,6 @@ START_TEST(win)
     assert( hwndMain2 );
 
     test_parent_owner();
+
+    UnhookWindowsHookEx(hhook);
 }
