@@ -1457,7 +1457,17 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
   if (event->message_type != None && event->format == 32) {
     if ((event->message_type == wmProtocols) && 
 	(((Atom) event->data.l[0]) == wmDeleteWindow))
+    {
+      /* Ignore the delete window request if the window has been disabled
+       * and we are in managed mode. This is to disallow applications from
+       * being closed by the window manager while in a modal state.
+       */
+      BOOL bIsDisabled;
+      bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
+
+      if ( !Options.managed || !bIsDisabled )
       SendMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+    }
     else if ( event->message_type == dndProtocol &&
 	      (event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )
       EVENT_DropFromOffiX(hWnd, event);
