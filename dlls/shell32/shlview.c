@@ -38,6 +38,7 @@
 #include "docobj.h"
 #include "pidl.h"
 #include "shell32_main.h"
+#include "shellfolder.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -1288,10 +1289,51 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 #if 0
 	      TranslateAccelerator(This->hWnd, This->hAccel, &msg)
 #endif
+	      else if(plvKeyDown->wVKey == VK_DELETE)
+              {
+		int i, item_index;
+		LVITEMA item;
+		LPITEMIDLIST* pItems;
+		ISFHelper *psfhlp;
+
+		IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper,
+		 	(LPVOID*)&psfhlp);
+
+		if(!(i = ListView_GetSelectedCount(This->hWndList)))
+		  break;
+	
+		/* allocate memory for the pidl array */
+		pItems = HeapAlloc(GetProcessHeap(), 0, 
+			sizeof(LPITEMIDLIST) * i);
+ 
+		/* retrieve all selected items */
+		i = 0;
+		item_index = -1;
+		while(ListView_GetSelectedCount(This->hWndList) > i)
+		{
+		  /* get selected item */
+		  item_index = ListView_GetNextItem(This->hWndList, 
+			item_index, LVNI_SELECTED);
+		  item.iItem = item_index;
+		  ListView_GetItemA(This->hWndList, &item);
+
+		  /* get item pidl */
+		  pItems[i] = (LPITEMIDLIST)item.lParam;
+		  
+		  i++;
+		}
+
+		/* perform the item deletion */
+		ISFHelper_DeleteItems(psfhlp, i, pItems);
+
+		/* free pidl array memory */
+		HeapFree(GetProcessHeap(), 0, pItems);
+              }
               else
-	        FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
+		FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
 	    }
 	    break;
+
 	  default:
 	    TRACE("-- %p WM_COMMAND %x unhandled\n", This, lpnmh->code);
 	    break;;

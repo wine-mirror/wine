@@ -149,7 +149,13 @@ void InitChangeNotifications(void);
 void FreeChangeNotifications(void);
 
 /* file operation */
+#define ASK_DELETE_FILE		 1
+#define ASK_DELETE_FOLDER	 2
+#define ASK_DELETE_MULTIPLE_ITEM 3
+
 BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
+BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI);
+BOOL SHELL_WarnItemDelete(int nKindOfDialog, LPCSTR szDir);
 
 extern HINSTANCE SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
 
