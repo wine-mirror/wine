@@ -9,6 +9,8 @@ EXTRALIBS = -luuid
 C_SRCS = \
 	dinput8_main.c
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
