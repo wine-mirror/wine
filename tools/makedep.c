@@ -347,7 +347,7 @@ static void output_dependencies(void)
     }
     if (!file)
     {
-        if (!(file = fopen( OutputFileName, "a" )))
+        if (!(file = fopen( OutputFileName, Separator ? "a" : "w" )))
         {
             perror( OutputFileName );
             exit(1);
@@ -416,6 +416,6 @@ int main( int argc, char *argv[] )
     }
     for (pFile = firstInclude; pFile; pFile = pFile->next)
         parse_file( pFile, 0 );
-    output_dependencies();
+    if( firstSrc ) output_dependencies();
     return 0;
 }
