@@ -22,7 +22,7 @@ init	Shell32LibMain
   14 stub Control_FillCache_RunDLLW@16   # exported by name
   15 stdcall ILGetDisplayName(ptr ptr) ILGetDisplayName
   16 stdcall ILFindLastID(ptr) ILFindLastID
-  17 stdcall ILRemoveLastID@4(ptr) ILRemoveLastID
+  17 stdcall ILRemoveLastID(ptr) ILRemoveLastID
   18 stdcall ILClone(ptr) ILClone
   19 stdcall ILCloneFirst (ptr) ILCloneFirst
   20 stub ILGlobalClone@4
@@ -126,7 +126,7 @@ init	Shell32LibMain
  118 stdcall FileMenu_Destroy (long) FileMenu_Destroy
  119 stdcall IsLFNDrive(str) IsLFNDrive
  120 stub FileMenu_AbortInitMenu
- 121 stub SHFlushClipboard
+ 121 stdcall SHFlushClipboard() SHFlushClipboard
  122 stub RunDLL_CallEntry16
  123 stdcall SHFreeUnusedLibraries (long) SHFreeUnusedLibraries
  124 stub FileMenu_AppendFilesForPidl
@@ -166,7 +166,7 @@ init	Shell32LibMain
  158 stdcall PathGetExtension(str long long) PathGetExtension
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
- 161 stdcall SHRunConrolPanel (long long)SHRunConrolPanel
+ 161 stdcall SHRunControlPanel (long long)SHRunControlPanel
  162 stub SHSimpleIDListFromPath
  163 stub StrToOleStr
  164 stub Win32DeleteFile

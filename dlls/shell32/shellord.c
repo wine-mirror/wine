@@ -876,10 +876,10 @@ HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
 	return 0;
 }
 /*************************************************************************
- *  SHRunConrolPanel [SHELL32.161]
+ *  SHRunControlPanel [SHELL32.161]
  *
  */
-HRESULT WINAPI SHRunConrolPanel (DWORD x, DWORD z)
+HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
 {	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,z);
 	return 0;
 }
@@ -971,4 +971,12 @@ HRESULT WINAPI SHFileOperationA(DWORD x)
 {	FIXME(shell,"0x%08lx stub\n",x);
 	return 0;
 
+}
+/*************************************************************************
+ * SHFlushClipboard [SHELL32.121]
+ *
+ */
+HRESULT WINAPI SHFlushClipboard(VOID)
+{	FIXME(shell,"stub\n");
+	return 0;
 }
