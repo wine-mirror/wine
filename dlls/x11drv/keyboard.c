@@ -348,14 +348,14 @@ static const char main_key_IT[MAIN_LEN][4] =
  "<>|"
 };
 
-/*** Finnish keyboard layout */
+/*** Finnish keyboard layout (setxkbmap fi) */
 static const char main_key_FI[MAIN_LEN][4] =
 {
- "§½","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?\\","´`",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^~",
+ "§½","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>|"
+ "<>"
 };
 
 /*** Bulgarian bds keyboard layout */
