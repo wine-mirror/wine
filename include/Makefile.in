@@ -7,6 +7,7 @@ MODULE	  = none
 IDL_SRCS = \
 	comcat.idl \
 	docobj.idl \
+	exdisp.idl \
 	oaidl.idl \
 	objidl.idl \
 	ocidl.idl \
@@ -252,7 +253,6 @@ WINE_INCLUDES = \
 	obj_shellfolder.h \
 	obj_shelllink.h \
 	obj_shellview.h \
-	obj_webbrowser.h \
 	unicode.h
 
 EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine

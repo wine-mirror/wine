@@ -30,7 +30,7 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "shlobj.h"
-#include "wine/obj_webbrowser.h"
+#include "exdisp.h"
 
 /**********************************************************************
  * IClassFactory declaration for SHDOCVW.DLL

@@ -42,6 +42,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "ocidl.h"
 
 #include "docobj.h"
+#include "exdisp.h"
 
 #include "shlguid.h"
 #include "shlobj.h"
@@ -51,8 +52,6 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 /* FIXME: cguids declares GUIDs but does not define their values */
 
 /* other GUIDs */
-
-#include "wine/obj_webbrowser.h"
 
 #include "vfw.h"
 

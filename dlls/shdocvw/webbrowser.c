@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
  * Implement the IWebBrowser interface
  */
 
-static HRESULT WINAPI WB_QueryInterface(LPWEBBROWSER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI WB_QueryInterface(IWebBrowser *iface, REFIID riid, LPVOID *ppobj)
 {
     ICOM_THIS(IWebBrowserImpl, iface);
 
@@ -35,7 +35,7 @@ static HRESULT WINAPI WB_QueryInterface(LPWEBBROWSER iface, REFIID riid, LPVOID 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI WB_AddRef(LPWEBBROWSER iface)
+static ULONG WINAPI WB_AddRef(IWebBrowser *iface)
 {
     ICOM_THIS(IWebBrowserImpl, iface);
 
@@ -43,7 +43,7 @@ static ULONG WINAPI WB_AddRef(LPWEBBROWSER iface)
     return ++(This->ref);
 }
 
-static ULONG WINAPI WB_Release(LPWEBBROWSER iface)
+static ULONG WINAPI WB_Release(IWebBrowser *iface)
 {
     ICOM_THIS(IWebBrowserImpl, iface);
 
@@ -53,20 +53,20 @@ static ULONG WINAPI WB_Release(LPWEBBROWSER iface)
 }
 
 /* IDispatch methods */
-static HRESULT WINAPI WB_GetTypeInfoCount(LPWEBBROWSER iface, UINT *pctinfo)
+static HRESULT WINAPI WB_GetTypeInfoCount(IWebBrowser *iface, UINT *pctinfo)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_GetTypeInfo(LPWEBBROWSER iface, UINT iTInfo, LCID lcid,
+static HRESULT WINAPI WB_GetTypeInfo(IWebBrowser *iface, UINT iTInfo, LCID lcid,
                                      LPTYPEINFO *ppTInfo)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_GetIDsOfNames(LPWEBBROWSER iface, REFIID riid,
+static HRESULT WINAPI WB_GetIDsOfNames(IWebBrowser *iface, REFIID riid,
                                        LPOLESTR *rgszNames, UINT cNames,
                                        LCID lcid, DISPID *rgDispId)
 {
@@ -74,7 +74,7 @@ static HRESULT WINAPI WB_GetIDsOfNames(LPWEBBROWSER iface, REFIID riid,
     return S_OK;
 }
 
-static HRESULT WINAPI WB_Invoke(LPWEBBROWSER iface, DISPID dispIdMember,
+static HRESULT WINAPI WB_Invoke(IWebBrowser *iface, DISPID dispIdMember,
                                 REFIID riid, LCID lcid, WORD wFlags,
                                 DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                 EXCEPINFO *pExepInfo, UINT *puArgErr)
@@ -84,31 +84,31 @@ static HRESULT WINAPI WB_Invoke(LPWEBBROWSER iface, DISPID dispIdMember,
 }
 
 /* IWebBrowser methods */
-static HRESULT WINAPI WB_GoBack(LPWEBBROWSER iface)
+static HRESULT WINAPI WB_GoBack(IWebBrowser *iface)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_GoForward(LPWEBBROWSER iface)
+static HRESULT WINAPI WB_GoForward(IWebBrowser *iface)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_GoHome(LPWEBBROWSER iface)
+static HRESULT WINAPI WB_GoHome(IWebBrowser *iface)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_GoSearch(LPWEBBROWSER iface)
+static HRESULT WINAPI WB_GoSearch(IWebBrowser *iface)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_Navigate(LPWEBBROWSER iface, BSTR URL,
+static HRESULT WINAPI WB_Navigate(IWebBrowser *iface, BSTR URL,
                                   VARIANT *Flags, VARIANT *TargetFrameName,
                                   VARIANT *PostData, VARIANT *Headers)
 {
@@ -117,121 +117,121 @@ static HRESULT WINAPI WB_Navigate(LPWEBBROWSER iface, BSTR URL,
     return S_OK;
 }
 
-static HRESULT WINAPI WB_Refresh(LPWEBBROWSER iface)
+static HRESULT WINAPI WB_Refresh(IWebBrowser *iface)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_Refresh2(LPWEBBROWSER iface, VARIANT *Level)
+static HRESULT WINAPI WB_Refresh2(IWebBrowser *iface, VARIANT *Level)
 {
     FIXME("stub: %p\n", Level);
     return S_OK;
 }
 
-static HRESULT WINAPI WB_Stop(LPWEBBROWSER iface)
+static HRESULT WINAPI WB_Stop(IWebBrowser *iface)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Application(LPWEBBROWSER iface, LPVOID *ppDisp)
+static HRESULT WINAPI WB_get_Application(IWebBrowser *iface, IDispatch **ppDisp)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Parent(LPWEBBROWSER iface, LPVOID *ppDisp)
+static HRESULT WINAPI WB_get_Parent(IWebBrowser *iface, IDispatch **ppDisp)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Container(LPWEBBROWSER iface, LPVOID *ppDisp)
+static HRESULT WINAPI WB_get_Container(IWebBrowser *iface, IDispatch **ppDisp)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Document(LPWEBBROWSER iface, LPVOID *ppDisp)
+static HRESULT WINAPI WB_get_Document(IWebBrowser *iface, IDispatch **ppDisp)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_TopLevelContainer(LPWEBBROWSER iface, VARIANT *pBool)
+static HRESULT WINAPI WB_get_TopLevelContainer(IWebBrowser *iface, VARIANT_BOOL *pBool)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Type(LPWEBBROWSER iface, BSTR *Type)
+static HRESULT WINAPI WB_get_Type(IWebBrowser *iface, BSTR *Type)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Left(LPWEBBROWSER iface, long *pl)
+static HRESULT WINAPI WB_get_Left(IWebBrowser *iface, long *pl)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_put_Left(LPWEBBROWSER iface, long Left)
+static HRESULT WINAPI WB_put_Left(IWebBrowser *iface, long Left)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Top(LPWEBBROWSER iface, long *pl)
+static HRESULT WINAPI WB_get_Top(IWebBrowser *iface, long *pl)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_put_Top(LPWEBBROWSER iface, long Top)
+static HRESULT WINAPI WB_put_Top(IWebBrowser *iface, long Top)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Width(LPWEBBROWSER iface, long *pl)
+static HRESULT WINAPI WB_get_Width(IWebBrowser *iface, long *pl)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_put_Width(LPWEBBROWSER iface, long Width)
+static HRESULT WINAPI WB_put_Width(IWebBrowser *iface, long Width)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Height(LPWEBBROWSER iface, long *pl)
+static HRESULT WINAPI WB_get_Height(IWebBrowser *iface, long *pl)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_put_Height(LPWEBBROWSER iface, long Height)
+static HRESULT WINAPI WB_put_Height(IWebBrowser *iface, long Height)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_LocationName(LPWEBBROWSER iface, BSTR *LocationName)
+static HRESULT WINAPI WB_get_LocationName(IWebBrowser *iface, BSTR *LocationName)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_LocationURL(LPWEBBROWSER iface, BSTR *LocationURL)
+static HRESULT WINAPI WB_get_LocationURL(IWebBrowser *iface, BSTR *LocationURL)
 {
     FIXME("stub \n");
     return S_OK;
 }
 
-static HRESULT WINAPI WB_get_Busy(LPWEBBROWSER iface, VARIANT *pBool)
+static HRESULT WINAPI WB_get_Busy(IWebBrowser *iface, VARIANT_BOOL *pBool)
 {
     FIXME("stub \n");
     return S_OK;

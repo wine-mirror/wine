@@ -29,18 +29,19 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "docobj.h"
-#include "shlguid.h"
 #include "windef.h"
-#include "winnls.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "ddeml.h"
+#include "docobj.h"
+#include "exdisp.h"
+#include "shlguid.h"
 #include "shlobj.h"
 #include "olectl.h"
 #include "shellapi.h"
 #include "commdlg.h"
 #include "wine/unicode.h"
-#include "wine/obj_webbrowser.h"
 #include "servprov.h"
 #include "wingdi.h"
 #include "winreg.h"
