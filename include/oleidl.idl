@@ -728,10 +728,8 @@ interface IOleObject : IUnknown
         [in] DWORD dwAspect,
         [out] DWORD *pdwStatus);
 
-cpp_quote("struct tagLOGPALETTE;")  /* FIXME */
-
     HRESULT SetColorScheme(
-        [in] struct tagLOGPALETTE *pLogpal);
+        [in] LOGPALETTE *pLogpal);
 }
 
 
@@ -821,7 +819,7 @@ interface IViewObject : IUnknown
         [in, unique] void *pvAspect,
         [in, unique] DVTARGETDEVICE *ptd,
         [in] HDC hicTargetDev,
-        [out] struct tagLOGPALETTE **ppColorSet);
+        [out] LOGPALETTE **ppColorSet);
 
     [call_as(GetColorSet)]
     HRESULT RemoteGetColorSet(
@@ -830,7 +828,7 @@ interface IViewObject : IUnknown
         [in] ULONG_PTR pvAspect,
         [in, unique] DVTARGETDEVICE *ptd,
         [in] ULONG_PTR hicTargetDev,
-        [out] struct tagLOGPALETTE **ppColorSet);
+        [out] LOGPALETTE **ppColorSet);
 
     [local]
     HRESULT Freeze(

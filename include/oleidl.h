@@ -2500,7 +2500,6 @@ typedef enum tagOLECLOSE {
     OLECLOSE_PROMPTSAVE = 2
 } OLECLOSE;
 
-struct tagLOGPALETTE;
 /*****************************************************************************
  * IOleObject interface
  */
@@ -2589,11 +2588,7 @@ struct IOleObject : public IUnknown
         DWORD* pdwStatus) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE SetColorScheme(
-        struct tagLOGPALETTE {
-            WORD palVersion;
-            WORD palNumEntries;
-            PALETTEENTRY palPalEntry[1];
-        }* pLogpal) = 0;
+        LOGPALETTE* pLogpal) = 0;
 
 };
 #else
@@ -2714,7 +2709,7 @@ struct IOleObjectVtbl {
 
     HRESULT (STDMETHODCALLTYPE *SetColorScheme)(
         IOleObject* This,
-        struct tagLOGPALETTE* pLogpal);
+        LOGPALETTE* pLogpal);
 
 };
 
@@ -2774,7 +2769,7 @@ struct IOleObjectVtbl {
     STDMETHOD_(HRESULT,Unadvise)(THIS_ DWORD dwConnection) PURE; \
     STDMETHOD_(HRESULT,EnumAdvise)(THIS_ IEnumSTATDATA** ppenumAdvise) PURE; \
     STDMETHOD_(HRESULT,GetMiscStatus)(THIS_ DWORD dwAspect, DWORD* pdwStatus) PURE; \
-    STDMETHOD_(HRESULT,SetColorScheme)(THIS_ struct tagLOGPALETTE* pLogpal) PURE;
+    STDMETHOD_(HRESULT,SetColorScheme)(THIS_ LOGPALETTE* pLogpal) PURE;
 
 HRESULT CALLBACK IOleObject_SetClientSite_Proxy(
     IOleObject* This,
@@ -2953,7 +2948,7 @@ void __RPC_STUB IOleObject_GetMiscStatus_Stub(
     DWORD* pdwStubPhase);
 HRESULT CALLBACK IOleObject_SetColorScheme_Proxy(
     IOleObject* This,
-    struct tagLOGPALETTE* pLogpal);
+    LOGPALETTE* pLogpal);
 void __RPC_STUB IOleObject_SetColorScheme_Stub(
     struct IRpcStubBuffer* This,
     struct IRpcChannelBuffer* pRpcChannelBuffer,
@@ -3231,7 +3226,7 @@ struct IViewObject : public IUnknown
         void* pvAspect,
         DVTARGETDEVICE* ptd,
         HDC hicTargetDev,
-        struct tagLOGPALETTE** ppColorSet) = 0;
+        LOGPALETTE** ppColorSet) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE Freeze(
         DWORD dwDrawAspect,
@@ -3294,7 +3289,7 @@ struct IViewObjectVtbl {
         void* pvAspect,
         DVTARGETDEVICE* ptd,
         HDC hicTargetDev,
-        struct tagLOGPALETTE** ppColorSet);
+        LOGPALETTE** ppColorSet);
 
     HRESULT (STDMETHODCALLTYPE *Freeze)(
         IViewObject* This,
@@ -3343,7 +3338,7 @@ struct IViewObjectVtbl {
     STDMETHOD_(ULONG,Release)(THIS) PURE; \
     /*** IViewObject methods ***/ \
     STDMETHOD_(HRESULT,Draw)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DVTARGETDEVICE* ptd, HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds, LPCRECTL lprcWBounds, BOOL (STDMETHODCALLTYPE *pfnContinue)(ULONG_PTR dwContinue), ULONG_PTR dwContinue) PURE; \
-    STDMETHOD_(HRESULT,GetColorSet)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DVTARGETDEVICE* ptd, HDC hicTargetDev, struct tagLOGPALETTE** ppColorSet) PURE; \
+    STDMETHOD_(HRESULT,GetColorSet)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DVTARGETDEVICE* ptd, HDC hicTargetDev, LOGPALETTE** ppColorSet) PURE; \
     STDMETHOD_(HRESULT,Freeze)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DWORD* pdwFreeze) PURE; \
     STDMETHOD_(HRESULT,Unfreeze)(THIS_ DWORD dwFreeze) PURE; \
     STDMETHOD_(HRESULT,SetAdvise)(THIS_ DWORD aspects, DWORD advf, IAdviseSink* pAdvSink) PURE; \
@@ -3395,7 +3390,7 @@ HRESULT CALLBACK IViewObject_RemoteGetColorSet_Proxy(
     ULONG_PTR pvAspect,
     DVTARGETDEVICE* ptd,
     ULONG_PTR hicTargetDev,
-    struct tagLOGPALETTE** ppColorSet);
+    LOGPALETTE** ppColorSet);
 void __RPC_STUB IViewObject_RemoteGetColorSet_Stub(
     struct IRpcStubBuffer* This,
     struct IRpcChannelBuffer* pRpcChannelBuffer,
@@ -3408,7 +3403,7 @@ HRESULT CALLBACK IViewObject_GetColorSet_Proxy(
     void* pvAspect,
     DVTARGETDEVICE* ptd,
     HDC hicTargetDev,
-    struct tagLOGPALETTE** ppColorSet);
+    LOGPALETTE** ppColorSet);
 HRESULT __RPC_STUB IViewObject_GetColorSet_Stub(
     IViewObject* This,
     DWORD dwDrawAspect,
@@ -3416,7 +3411,7 @@ HRESULT __RPC_STUB IViewObject_GetColorSet_Stub(
     ULONG_PTR pvAspect,
     DVTARGETDEVICE* ptd,
     ULONG_PTR hicTargetDev,
-    struct tagLOGPALETTE** ppColorSet);
+    LOGPALETTE** ppColorSet);
 HRESULT CALLBACK IViewObject_RemoteFreeze_Proxy(
     IViewObject* This,
     DWORD dwDrawAspect,
@@ -3546,7 +3541,7 @@ struct IViewObject2Vtbl {
         void* pvAspect,
         DVTARGETDEVICE* ptd,
         HDC hicTargetDev,
-        struct tagLOGPALETTE** ppColorSet);
+        LOGPALETTE** ppColorSet);
 
     HRESULT (STDMETHODCALLTYPE *Freeze)(
         IViewObject2* This,
@@ -3605,7 +3600,7 @@ struct IViewObject2Vtbl {
     STDMETHOD_(ULONG,Release)(THIS) PURE; \
     /*** IViewObject methods ***/ \
     STDMETHOD_(HRESULT,Draw)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DVTARGETDEVICE* ptd, HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds, LPCRECTL lprcWBounds, BOOL (STDMETHODCALLTYPE *pfnContinue)(ULONG_PTR dwContinue), ULONG_PTR dwContinue) PURE; \
-    STDMETHOD_(HRESULT,GetColorSet)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DVTARGETDEVICE* ptd, HDC hicTargetDev, struct tagLOGPALETTE** ppColorSet) PURE; \
+    STDMETHOD_(HRESULT,GetColorSet)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DVTARGETDEVICE* ptd, HDC hicTargetDev, LOGPALETTE** ppColorSet) PURE; \
     STDMETHOD_(HRESULT,Freeze)(THIS_ DWORD dwDrawAspect, LONG lindex, void* pvAspect, DWORD* pdwFreeze) PURE; \
     STDMETHOD_(HRESULT,Unfreeze)(THIS_ DWORD dwFreeze) PURE; \
     STDMETHOD_(HRESULT,SetAdvise)(THIS_ DWORD aspects, DWORD advf, IAdviseSink* pAdvSink) PURE; \

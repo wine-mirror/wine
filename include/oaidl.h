@@ -5343,6 +5343,203 @@ void __RPC_STUB ICreateTypeLib2_SetHelpStringDll_Stub(
 
 #endif  /* __ICreateTypeLib2_INTERFACE_DEFINED__ */
 
+#ifndef __IErrorLog_FWD_DEFINED__
+#define __IErrorLog_FWD_DEFINED__
+typedef struct IErrorLog IErrorLog;
+#endif
+
+typedef IErrorLog *LPERRORLOG;
+
+/*****************************************************************************
+ * IErrorLog interface
+ */
+#ifndef __IErrorLog_INTERFACE_DEFINED__
+#define __IErrorLog_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IErrorLog, 0x3127ca40, 0x446e, 0x11ce, 0x81,0x35, 0x00,0xaa,0x00,0x4b,0xb8,0x51);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IErrorLog : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE AddError(
+        LPCOLESTR pszPropName,
+        EXCEPINFO* pExcepInfo) = 0;
+
+};
+#else
+typedef struct IErrorLogVtbl IErrorLogVtbl;
+struct IErrorLog {
+    const IErrorLogVtbl* lpVtbl;
+};
+struct IErrorLogVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IErrorLog* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IErrorLog* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IErrorLog* This);
+
+    /*** IErrorLog methods ***/
+    HRESULT (STDMETHODCALLTYPE *AddError)(
+        IErrorLog* This,
+        LPCOLESTR pszPropName,
+        EXCEPINFO* pExcepInfo);
+
+};
+
+/*** IUnknown methods ***/
+#define IErrorLog_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IErrorLog_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IErrorLog_Release(p) (p)->lpVtbl->Release(p)
+/*** IErrorLog methods ***/
+#define IErrorLog_AddError(p,a,b) (p)->lpVtbl->AddError(p,a,b)
+
+#endif
+
+#define IErrorLog_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IErrorLog methods ***/ \
+    STDMETHOD_(HRESULT,AddError)(THIS_ LPCOLESTR pszPropName, EXCEPINFO* pExcepInfo) PURE;
+
+HRESULT CALLBACK IErrorLog_AddError_Proxy(
+    IErrorLog* This,
+    LPCOLESTR pszPropName,
+    EXCEPINFO* pExcepInfo);
+void __RPC_STUB IErrorLog_AddError_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IErrorLog_INTERFACE_DEFINED__ */
+
+#ifndef __IPropertyBag_FWD_DEFINED__
+#define __IPropertyBag_FWD_DEFINED__
+typedef struct IPropertyBag IPropertyBag;
+#endif
+
+typedef IPropertyBag *LPPROPERTYBAG;
+
+/*****************************************************************************
+ * IPropertyBag interface
+ */
+#ifndef __IPropertyBag_INTERFACE_DEFINED__
+#define __IPropertyBag_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IPropertyBag, 0x55272a00, 0x42cb, 0x11ce, 0x81,0x35, 0x00,0xaa,0x00,0x4b,0xb8,0x51);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IPropertyBag : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE Read(
+        LPCOLESTR pszPropName,
+        VARIANT* pVar,
+        IErrorLog* pErrorLog) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Write(
+        LPCOLESTR pszPropName,
+        VARIANT* pVar) = 0;
+
+};
+#else
+typedef struct IPropertyBagVtbl IPropertyBagVtbl;
+struct IPropertyBag {
+    const IPropertyBagVtbl* lpVtbl;
+};
+struct IPropertyBagVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IPropertyBag* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IPropertyBag* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IPropertyBag* This);
+
+    /*** IPropertyBag methods ***/
+    HRESULT (STDMETHODCALLTYPE *Read)(
+        IPropertyBag* This,
+        LPCOLESTR pszPropName,
+        VARIANT* pVar,
+        IErrorLog* pErrorLog);
+
+    HRESULT (STDMETHODCALLTYPE *Write)(
+        IPropertyBag* This,
+        LPCOLESTR pszPropName,
+        VARIANT* pVar);
+
+};
+
+/*** IUnknown methods ***/
+#define IPropertyBag_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyBag_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IPropertyBag_Release(p) (p)->lpVtbl->Release(p)
+/*** IPropertyBag methods ***/
+#define IPropertyBag_Read(p,a,b,c) (p)->lpVtbl->Read(p,a,b,c)
+#define IPropertyBag_Write(p,a,b) (p)->lpVtbl->Write(p,a,b)
+
+#endif
+
+#define IPropertyBag_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IPropertyBag methods ***/ \
+    STDMETHOD_(HRESULT,Read)(THIS_ LPCOLESTR pszPropName, VARIANT* pVar, IErrorLog* pErrorLog) PURE; \
+    STDMETHOD_(HRESULT,Write)(THIS_ LPCOLESTR pszPropName, VARIANT* pVar) PURE;
+
+HRESULT CALLBACK IPropertyBag_RemoteRead_Proxy(
+    IPropertyBag* This,
+    LPCOLESTR pszPropName,
+    VARIANT* pVar,
+    IErrorLog* pErrorLog,
+    DWORD varType,
+    IUnknown* pUnkObj);
+void __RPC_STUB IPropertyBag_RemoteRead_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IPropertyBag_Read_Proxy(
+    IPropertyBag* This,
+    LPCOLESTR pszPropName,
+    VARIANT* pVar,
+    IErrorLog* pErrorLog);
+HRESULT __RPC_STUB IPropertyBag_Read_Stub(
+    IPropertyBag* This,
+    LPCOLESTR pszPropName,
+    VARIANT* pVar,
+    IErrorLog* pErrorLog,
+    DWORD varType,
+    IUnknown* pUnkObj);
+HRESULT CALLBACK IPropertyBag_Write_Proxy(
+    IPropertyBag* This,
+    LPCOLESTR pszPropName,
+    VARIANT* pVar);
+void __RPC_STUB IPropertyBag_Write_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IPropertyBag_INTERFACE_DEFINED__ */
+
 #ifdef __cplusplus
 }
 #endif

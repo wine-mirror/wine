@@ -1576,3 +1576,53 @@ interface ICreateTypeLib2 : ICreateTypeLib
   HRESULT SetHelpStringDll(
     [in] LPOLESTR szFileName);
 }
+
+
+/*****************************************************************************
+ * IErrorLog interface
+ */
+[
+  object,
+  uuid(3127ca40-446e-11ce-8135-00aa004bb851),
+  pointer_default(unique)
+]
+interface IErrorLog : IUnknown
+{
+  typedef IErrorLog *LPERRORLOG;
+
+  HRESULT AddError(
+    [in] LPCOLESTR pszPropName,
+    [in] EXCEPINFO *pExcepInfo);
+}
+
+
+/*****************************************************************************
+ * IPropertyBag interface
+ */
+[
+  object,
+  uuid(55272a00-42cb-11ce-8135-00aa004bb851),
+  pointer_default(unique)
+]
+interface IPropertyBag : IUnknown
+{
+  typedef IPropertyBag *LPPROPERTYBAG;
+
+  [local]
+  HRESULT Read(
+    [in] LPCOLESTR pszPropName,
+    [in, out] VARIANT *pVar,
+    [in] IErrorLog *pErrorLog);
+
+  [call_as(Read)]
+  HRESULT RemoteRead(
+    [in] LPCOLESTR pszPropName,
+    [out] VARIANT *pVar,
+    [in] IErrorLog *pErrorLog,
+    [in] DWORD varType,
+    [in] IUnknown *pUnkObj);
+
+  HRESULT Write(
+    [in] LPCOLESTR pszPropName,
+    [in] VARIANT *pVar);
+}

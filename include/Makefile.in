@@ -8,6 +8,7 @@ IDL_SRCS = \
 	comcat.idl \
 	oaidl.idl \
 	objidl.idl \
+	ocidl.idl \
 	oleidl.idl \
 	servprov.idl \
 	strmif.idl \
@@ -123,7 +124,6 @@ WINDOWS_INCLUDES = \
 	ntsecapi.h \
 	ntstatus.h \
 	objbase.h \
-	ocidl.h \
 	ole2.h \
 	ole2ver.h \
 	oleauto.h \
@@ -242,17 +242,11 @@ WINE_INCLUDES = \
 	exception.h \
 	library.h \
 	obj_commdlgbrowser.h \
-	obj_connection.h \
 	obj_contextmenu.h \
-	obj_control.h \
 	obj_dockingwindowframe.h \
 	obj_dragdrophelper.h \
 	obj_enumidlist.h \
 	obj_extracticon.h \
-	obj_olefont.h \
-	obj_oleundo.h \
-	obj_picture.h \
-	obj_property.h \
 	obj_shellbrowser.h \
 	obj_shellextinit.h \
 	obj_shellfolder.h \
