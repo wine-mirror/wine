@@ -6,7 +6,7 @@
 #endif
 
 #include "basetsd.h"
-#include "winnt.h"
+#include "windef.h"
 #include "pshpack1.h"
 
 #ifndef RC_INVOKED

@@ -1,7 +1,7 @@
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
-#include "winnt.h" /* LARGE_INTEGER ... */
+#include "windef.h" /* LARGE_INTEGER ... */
 #include "wingdi.h" /* PALETTE stuff ... */
 #include "wine/obj_base.h"
 
