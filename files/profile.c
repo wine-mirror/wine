@@ -971,6 +971,7 @@ int PROFILE_LoadWineIni(void)
     const char *p;
     FILE *f;
     HKEY hKeySW;
+    DWORD disp;
 
     /* make sure HKLM\\Software\\Wine\\Wine exists as non-volatile key */
     if (RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine", &hKeySW ))
@@ -980,7 +981,7 @@ int PROFILE_LoadWineIni(void)
     }
     RegCloseKey( hKeySW );
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &wine_profile_key, NULL ))
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &wine_profile_key, &disp ))
     {
         ERR("Cannot create config registry key\n" );
         return 0;
@@ -1019,11 +1020,23 @@ int PROFILE_LoadWineIni(void)
 	lstrcpynA(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN);
         goto found;
     }
+
+    if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
+
     MESSAGE( "Can't open configuration file %s or $HOME%s\n",
 	     WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
 
  found:
+
+    if (disp == REG_OPENED_EXISTING_KEY)
+    {
+        MESSAGE( "Warning: configuration loaded by the server from %s/config,\n"
+                 "         file %s was ignored.\n", get_config_dir(), PROFILE_WineIniUsed );
+        fclose( f );
+        return 1;
+    }
+
     PROFILE_RegistryLoad( wine_profile_key, f );
     fclose( f );
     return 1;

@@ -28,6 +28,9 @@ extern void fatal_protocol_error( struct thread *thread,
 extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
 #endif
 
+extern void fatal_error( const char *err, ... ) WINE_NORETURN;
+extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
+extern const char *get_config_dir(void);
 extern void read_request( struct thread *thread );
 extern int write_request( struct thread *thread );
 extern void set_reply_fd( struct thread *thread, int pass_fd );

@@ -76,6 +76,7 @@ int main( int argc, char *argv[] )
     setvbuf( stderr, NULL, _IOLBF, 0 );
 
     if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
+    init_registry();
     select_loop();
     close_registry();
     if (debug_level) fprintf( stderr, "Server: exiting (pid=%ld)\n", (long) getpid() );

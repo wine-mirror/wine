@@ -107,9 +107,10 @@ extern int read_thread_int( struct thread *thread, const int *addr, int *data );
 extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
 extern void *get_thread_ip( struct thread *thread );
 
+extern int global_error;  /* global error code for when no thread is current */
 
-static inline int get_error(void)       { return current->error; }
-static inline void set_error( int err ) { current->error = err; }
+static inline int get_error(void)       { return current ? current->error : global_error; }
+static inline void set_error( int err ) { global_error = err; if (current) current->error = err; }
 static inline void clear_error(void)    { set_error(0); }
 
 static inline void *get_thread_id( struct thread *thread ) { return thread; }

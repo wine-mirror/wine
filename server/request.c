@@ -72,6 +72,7 @@ static const struct object_ops master_socket_ops =
 
 
 struct thread *current = NULL;  /* thread handling the current request */
+int global_error = 0;  /* global error code for when no thread is current */
 
 static struct master_socket *master_socket;  /* the master socket object */
 
@@ -103,8 +104,7 @@ void fatal_protocol_error( struct thread *thread, const char *err, ... )
 }
 
 /* die on a fatal error */
-static void fatal_error( const char *err, ... ) WINE_NORETURN;
-static void fatal_error( const char *err, ... )
+void fatal_error( const char *err, ... )
 {
     va_list args;
 
@@ -116,8 +116,7 @@ static void fatal_error( const char *err, ... )
 }
 
 /* die on a fatal error */
-static void fatal_perror( const char *err, ... ) WINE_NORETURN;
-static void fatal_perror( const char *err, ... )
+void fatal_perror( const char *err, ... )
 {
     va_list args;
 
@@ -306,7 +305,7 @@ static void master_socket_destroy( struct object *obj )
 }
 
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
-static const char *get_config_dir(void)
+const char *get_config_dir(void)
 {
     static char *confdir;
     if (!confdir)

@@ -174,6 +174,7 @@ extern int get_page_size(void);
 
 /* registry functions */
 
+extern void init_registry(void);
 extern void close_registry(void);
 
 /* atom functions */

@@ -67,12 +67,27 @@ struct key_value
 #define MIN_VALUES   8   /* min. number of allocated values per key */
 
 
-/* the root keys */
-#define HKEY_ROOT_FIRST   HKEY_CLASSES_ROOT
-#define HKEY_ROOT_LAST    HKEY_DYN_DATA
-#define NB_ROOT_KEYS      (HKEY_ROOT_LAST - HKEY_ROOT_FIRST + 1)
-#define IS_ROOT_HKEY(h)   (((h) >= HKEY_ROOT_FIRST) && ((h) <= HKEY_ROOT_LAST))
-static struct key *root_keys[NB_ROOT_KEYS];
+/* the special root keys */
+#define HKEY_SPECIAL_ROOT_FIRST   HKEY_CLASSES_ROOT
+#define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
+#define NB_SPECIAL_ROOT_KEYS      (HKEY_SPECIAL_ROOT_LAST - HKEY_SPECIAL_ROOT_FIRST + 1)
+#define IS_SPECIAL_ROOT_HKEY(h)   (((h) >= HKEY_SPECIAL_ROOT_FIRST) && ((h) <= HKEY_SPECIAL_ROOT_LAST))
+static struct key *special_root_keys[NB_SPECIAL_ROOT_KEYS];
+
+/* the real root key */
+static struct key *root_key;
+
+/* the special root key names */
+static const char * const special_root_names[NB_SPECIAL_ROOT_KEYS] =
+{
+    "Machine\\Software\\Classes",                                    /* HKEY_CLASSES_ROOT */
+    "User\\",    /* we append the user name dynamically */           /* HKEY_CURRENT_USER */
+    "Machine",                                                       /* HKEY_LOCAL_MACHINE */
+    "User",                                                          /* HKEY_USERS */
+    "PerfData",                                                      /* HKEY_PERFORMANCE_DATA */
+    "Machine\\System\\CurrentControlSet\\HardwardProfiles\\Current", /* HKEY_CURRENT_CONFIG */
+    "DynData"                                                        /* HKEY_DYN_DATA */
+};
 
 
 /* keys saving level */
@@ -148,7 +163,7 @@ static inline char to_hex( char ch )
 /* dump the full path of a key */
 static void dump_path( struct key *key, struct key *base, FILE *f )
 {
-    if (key->parent && key != base)
+    if (key->parent && key->parent != base)
     {
         dump_path( key->parent, base, f );
         fprintf( f, "\\\\" );
@@ -220,7 +235,7 @@ static void save_subkeys( struct key *key, struct key *base, FILE *f )
     if ((key->level >= saving_level) && ((key->last_value >= 0) || (key->last_subkey == -1)))
     {
         fprintf( f, "\n[" );
-        dump_path( key, base, f );
+        if (key != base) dump_path( key, base, f );
         fprintf( f, "] %ld\n", key->modif );
         for (i = 0; i <= key->last_value; i++) dump_value( &key->values[i], f );
     }
@@ -491,6 +506,7 @@ static struct key *create_key( struct key *key, const WCHAR *name, size_t maxlen
         set_error( STATUS_CHILD_MUST_BE_VOLATILE );
         return NULL;
     }
+    if (!modif) modif = time(NULL);
 
     path = get_path_token( name, maxlen );
     *created = 0;
@@ -826,104 +842,38 @@ static void delete_value( struct key *key, const WCHAR *name )
         key->values = new_val;
         key->nb_values = nb_values;
     }
-}    
-
-static struct key *get_hkey_obj( int hkey, unsigned int access );
+}
 
 static struct key *create_root_key( int hkey )
 {
-    int dummy;
+    WCHAR keyname[80];
+    int i, dummy;
     struct key *key;
+    const char *p;
 
-    switch(hkey)
+    p = special_root_names[hkey - HKEY_SPECIAL_ROOT_FIRST];
+    i = 0;
+    while (*p) keyname[i++] = *p++;
+
+    if (hkey == HKEY_CURRENT_USER)  /* this one is special */
     {
-    /* the two real root-keys */
-    case HKEY_LOCAL_MACHINE:
-        {
-	    static const WCHAR name[] = { 'M','A','C','H','I','N','E',0 };
-            key = alloc_key( name, time(NULL) );
-	}
-	break;
-    case HKEY_USERS:
-        {
-	    static const WCHAR name[] = { 'U','S','E','R',0 };
-            key = alloc_key( name, time(NULL) );
-	}
-	break;
-    /* special subkeys */
-    case HKEY_CLASSES_ROOT:
-        {
-            static const WCHAR name[] =
-                          { 'S','O','F','T','W','A','R','E','\\','C','l','a','s','s','e','s',0 };
+        /* get the current user name */
+        char buffer[10];
+        struct passwd *pwd = getpwuid( getuid() );
 
-            struct key *root = get_hkey_obj( HKEY_LOCAL_MACHINE, 0 );
-            assert( root );
-            key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
-            release_object( root );
+        if (pwd) p = pwd->pw_name;
+        else
+        {
+            sprintf( buffer, "%ld", (long) getuid() );
+            p = buffer;
         }
-        break;
-    case HKEY_CURRENT_CONFIG:
-        {
-	    static const WCHAR name[] = {
-		'S','Y','S','T','E','M','\\',
-		'C','U','R','R','E','N','T','C','O','N','T','R','O','L','S','E','T','\\',
-		'H','A','R','D','W','A','R','E','P','R','O','F','I','L','E','S','\\',
-		'C','U','R','R','E','N','T',0};
-            struct key *root = get_hkey_obj( HKEY_LOCAL_MACHINE, 0 );
-            assert( root );
-            key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
-            release_object( root );
-	}
-	break;
-    case HKEY_CURRENT_USER:
-        {
-            /* get the current user name */
-            int i, len;
-            WCHAR *name;
-            char buffer[10];
-            const char *p;
-            struct passwd *pwd = getpwuid( getuid() );
-
-            if (pwd) p = pwd->pw_name;
-            else
-            {
-                sprintf( buffer, "%ld", (long) getuid() );
-                p = buffer;
-            }
-            len = strlen(p);
-            if ((name = mem_alloc( (len+1) * sizeof(WCHAR) )))
-            {
-                struct key *root = get_hkey_obj( HKEY_USERS, 0 );
-                assert( root );
-                for (i = 0; i <= len; i++) name[i] = p[i];
-                key = create_key( root, name, (len+1) * sizeof(WCHAR),
-                                  NULL, 0, time(NULL), &dummy );
-                release_object( root );
-                free( name );
-            }
-            else key = NULL;
-        }
-        break;
-    /* dynamically generated keys */
-    case HKEY_PERFORMANCE_DATA:
-        {
-	    static const WCHAR name[] = { 'P','E','R','F','D','A','T','A',0 };  /* FIXME */
-            key = alloc_key( name, time(NULL) );
-	}
-	break;
-    case HKEY_DYN_DATA:
-        {
-	    static const WCHAR name[] = { 'D','Y','N','D','A','T','A',0 };  /* FIXME */
-            key = alloc_key( name, time(NULL) );
-	}
-	break;
-    default:
-        key = NULL;
-        assert(0);
+        while (*p && i < sizeof(keyname)/sizeof(WCHAR)-1) keyname[i++] = *p++;
     }
-    if (key)
+    keyname[i++] = 0;
+
+    if ((key = create_key( root_key, keyname, i*sizeof(WCHAR), NULL, 0, time(NULL), &dummy )))
     {
-        root_keys[hkey - HKEY_ROOT_FIRST] = key;
+        special_root_keys[hkey - HKEY_SPECIAL_ROOT_FIRST] = key;
         key->flags |= KEY_ROOT;
     }
     return key;
@@ -934,10 +884,13 @@ static struct key *get_hkey_obj( int hkey, unsigned int access )
 {
     struct key *key;
 
-    if (IS_ROOT_HKEY(hkey))
+    if (!hkey) return (struct key *)grab_object( root_key );
+    if (IS_SPECIAL_ROOT_HKEY(hkey))
     {
-        if (!(key = root_keys[hkey - HKEY_ROOT_FIRST])) key = create_root_key( hkey );
-        grab_object( key );
+        if (!(key = special_root_keys[hkey - HKEY_SPECIAL_ROOT_FIRST]))
+            key = create_root_key( hkey );
+        else
+            grab_object( key );
     }
     else
         key = (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
@@ -1160,8 +1113,10 @@ static struct key_value *parse_value_name( struct key *key, const char *buffer, 
         if ((*len = parse_strW( (WCHAR *)info->tmp, &maxlen, buffer + 1, '\"' )) == -1) goto error;
         (*len)++;  /* for initial quote */
     }
+    while (isspace(buffer[*len])) (*len)++;
     if (buffer[*len] != '=') goto error;
     (*len)++;
+    while (isspace(buffer[*len])) (*len)++;
     return insert_value( key, (WCHAR *)info->tmp );
 
  error:
@@ -1251,12 +1206,12 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     }
     for (p = (WCHAR *)info->tmp; *p; p++) if (*p == '\\') break;
     *p = 0;
-    for (res = 1; key; res++)
+    for (res = 1; key != root_key; res++)
     {
         if (!strcmpiW( (WCHAR *)info->tmp, key->name )) break;
         key = key->parent;
     }
-    if (!key) res = 0;  /* no matching name */
+    if (key == root_key) res = 0;  /* no matching name */
     return res;
 }
 
@@ -1340,6 +1295,51 @@ static void load_registry( struct key *key, int handle )
         }
         else file_set_error();
     }
+}
+
+/* registry initialisation */
+void init_registry(void)
+{
+    static const WCHAR root_name[] = { 0 };
+    static const WCHAR config_name[] =
+    { 'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+      'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g',0 };
+
+    char *filename;
+    const char *config;
+    FILE *f;
+
+    /* create the root key */
+    root_key = alloc_key( root_name, time(NULL) );
+    assert( root_key );
+    root_key->flags |= KEY_ROOT;
+
+    /* load the config file */
+    config = get_config_dir();
+    if (!(filename = malloc( strlen(config) + 8 ))) fatal_error( "out of memory\n" );
+    strcpy( filename, config );
+    strcat( filename, "/config" );
+    if ((f = fopen( filename, "r" )))
+    {
+        struct key *key;
+        int dummy;
+
+        /* create the config key */
+        if (!(key = create_key( root_key, config_name, sizeof(config_name),
+                                NULL, 0, time(NULL), &dummy )))
+            fatal_error( "could not create config key\n" );
+        key->flags |= KEY_VOLATILE;
+
+        load_keys( key, f );
+        fclose( f );
+        if (get_error() == STATUS_NOT_REGISTRY_FILE)
+            fatal_error( "%s is not a valid registry file\n", filename );
+        if (get_error())
+            fatal_error( "loading %s failed with error %x\n", filename, get_error() );
+
+        release_object( key );
+    }
+    free( filename );
 }
 
 /* update the level of the parents of a key (only needed for the old format) */
@@ -1513,10 +1513,7 @@ void close_registry(void)
         }
         release_object( save_branch_info[i].key );
     }
-    for (i = 0; i < NB_ROOT_KEYS; i++)
-    {
-        if (root_keys[i]) release_object( root_keys[i] );
-    }
+    release_object( root_key );
 }
 
 
@@ -1581,7 +1578,7 @@ DECL_HANDLER(close_key)
 {
     int hkey = req->hkey;
     /* ignore attempts to close a root key */
-    if (!IS_ROOT_HKEY(hkey)) close_handle( current->process, hkey );
+    if (hkey && !IS_SPECIAL_ROOT_HKEY(hkey)) close_handle( current->process, hkey );
 }
 
 /* enumerate registry subkeys */

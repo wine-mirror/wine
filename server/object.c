@@ -51,7 +51,7 @@ void *mem_alloc( size_t size )
 {
     void *ptr = malloc( size );
     if (ptr) memset( ptr, 0x55, size );
-    else if (current) set_error( STATUS_NO_MEMORY );
+    else set_error( STATUS_NO_MEMORY );
     return ptr;
 }
 
@@ -60,7 +60,7 @@ void *memdup( const void *data, size_t len )
 {
     void *ptr = malloc( len );
     if (ptr) memcpy( ptr, data, len );
-    else if (current) set_error( STATUS_NO_MEMORY );
+    else set_error( STATUS_NO_MEMORY );
     return ptr;
 }
 
