@@ -106,7 +106,6 @@ static int output_exports( FILE *outfile, int nr_exports )
 {
     int i, fwd_size = 0, total_size = 0;
     char *p;
-    ORDDEF *odp;
 
     if (!nr_exports) return 0;
 
@@ -146,12 +145,12 @@ static int output_exports( FILE *outfile, int nr_exports )
         else switch(odp->type)
         {
         case TYPE_EXTERN:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", odp->u.ext.link_name );
+            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", odp->link_name );
             break;
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", odp->u.func.link_name);
+            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", odp->link_name);
             break;
         case TYPE_STUB:
             fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", make_internal_name( odp, "stub" ) );
@@ -164,7 +163,7 @@ static int output_exports( FILE *outfile, int nr_exports )
             break;
         case TYPE_FORWARD:
             fprintf( outfile, "    \"\\t.long __wine_spec_forwards+%d\\n\"\n", fwd_size );
-            fwd_size += strlen(odp->u.fwd.link_name) + 1;
+            fwd_size += strlen(odp->link_name) + 1;
             break;
         default:
             assert(0);
@@ -218,7 +217,7 @@ static int output_exports( FILE *outfile, int nr_exports )
         {
             ORDDEF *odp = Ordinals[i];
             if (odp && odp->type == TYPE_FORWARD)
-                fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", odp->u.fwd.link_name );
+                fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
         }
         fprintf( outfile, "    \"\\t.align 4\\n\"\n" );
         total_size += (fwd_size + 3) & ~3;
@@ -252,19 +251,19 @@ static int output_exports( FILE *outfile, int nr_exports )
             switch(odp->type)
             {
             case TYPE_STDCALL:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", odp->u.func.link_name );
+                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", odp->link_name );
                 fprintf( outfile, "    \"\\tret $%d\\n\"\n",
                          strlen(odp->u.func.arg_types) * sizeof(int) );
                 fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n",
-                         odp->u.func.link_name, mask );
+                         odp->link_name, mask );
                 break;
             case TYPE_CDECL:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", odp->u.func.link_name );
+                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", odp->link_name );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
                 fprintf( outfile, "    \"\\t.short %d\\n\"\n",
                          strlen(odp->u.func.arg_types) * sizeof(int) );
                 fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n",
-                         odp->u.func.link_name, mask );
+                         odp->link_name, mask );
                 break;
             case TYPE_REGISTER:
                 fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n",
@@ -304,8 +303,9 @@ static int output_exports( FILE *outfile, int nr_exports )
 
     /* output variables */
 
-    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    for (i = 0; i < nb_entry_points; i++)
     {
+        ORDDEF *odp = EntryPoints[i];
         if (odp->type == TYPE_VARIABLE)
         {
             int j;
@@ -334,10 +334,10 @@ static int output_exports( FILE *outfile, int nr_exports )
 static void output_stub_funcs( FILE *outfile )
 {
     int i;
-    ORDDEF *odp;
 
-    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    for (i = 0; i < nb_entry_points; i++)
     {
+        ORDDEF *odp = EntryPoints[i];
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
@@ -366,8 +366,9 @@ static void output_stub_funcs( FILE *outfile )
         break;
     }
 
-    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    for (i = 0; i < nb_entry_points; i++)
     {
+        ORDDEF *odp = EntryPoints[i];
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "void %s(void) ", make_internal_name( odp, "stub" ) );
         if (odp->name[0])
@@ -385,12 +386,12 @@ static void output_stub_funcs( FILE *outfile )
  */
 static void output_register_funcs( FILE *outfile )
 {
-    ORDDEF *odp;
     const char *name;
     int i;
 
-    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    for (i = 0; i < nb_entry_points; i++)
     {
+        ORDDEF *odp = EntryPoints[i];
         if (odp->type != TYPE_REGISTER) continue;
         name = make_internal_name( odp, "regs" );
         fprintf( outfile,
@@ -400,7 +401,7 @@ static void output_register_funcs( FILE *outfile )
                  "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
                  "    \".long " PREFIX "%s\\n\\t\"\n"
                  "    \".byte %d,%d\");\n",
-                 name, name, odp->u.func.link_name,
+                 name, name, odp->link_name,
                  4 * strlen(odp->u.func.arg_types), 4 * strlen(odp->u.func.arg_types) );
     }
 }
@@ -416,7 +417,6 @@ void BuildSpec32File( FILE *outfile )
     int exports_size = 0;
     int nr_exports, nr_imports, nr_resources, nr_debug;
     int characteristics, subsystem;
-    const char *init_func;
     DWORD page_size;
 
 #ifdef HAVE_GETPAGESIZE
@@ -490,7 +490,6 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output LibMain function */
 
-    init_func = DLLInitFunc[0] ? DLLInitFunc : NULL;
     characteristics = subsystem = 0;
     switch(SpecMode)
     {

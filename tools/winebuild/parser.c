@@ -279,7 +279,7 @@ static void ParseExportFunction( ORDDEF *odp )
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
-    strcpy(odp->u.func.link_name, GetToken(0));
+    odp->link_name = xstrdup( GetToken(0) );
 }
 
 
@@ -310,7 +310,7 @@ static void ParseEquate( ORDDEF *odp )
 static void ParseStub( ORDDEF *odp )
 {
     odp->u.func.arg_types[0] = '\0';
-    odp->u.func.link_name[0] = '\0';
+    odp->link_name = xstrdup("");
 }
 
 
@@ -333,7 +333,7 @@ static void ParseInterrupt( ORDDEF *odp )
     if (*token != ')') fatal_error( "Expected ')' got '%s'\n", token );
 
     odp->u.func.arg_types[0] = '\0';
-    strcpy( odp->u.func.link_name, GetToken(0) );
+    odp->link_name = xstrdup( GetToken(0) );
 }
 
 
@@ -345,7 +345,7 @@ static void ParseInterrupt( ORDDEF *odp )
 static void ParseExtern( ORDDEF *odp )
 {
     if (SpecType == SPEC_WIN16) fatal_error( "'extern' not supported for Win16\n" );
-    strcpy( odp->u.ext.link_name, GetToken(0) );
+    odp->link_name = xstrdup( GetToken(0) );
     /* 'extern' definitions are not available for implicit import */
     odp->flags |= FLAG_NOIMPORT;
 }
@@ -359,7 +359,7 @@ static void ParseExtern( ORDDEF *odp )
 static void ParseForward( ORDDEF *odp )
 {
     if (SpecType == SPEC_WIN16) fatal_error( "'forward' not supported for Win16\n" );
-    strcpy( odp->u.fwd.link_name, GetToken(0) );
+    odp->link_name = xstrdup( GetToken(0) );
 }
 
 
@@ -409,7 +409,9 @@ static void ParseOrdinal(int ordinal)
 {
     char *token;
 
-    ORDDEF *odp = &EntryPoints[nb_entry_points++];
+    ORDDEF *odp = xmalloc( sizeof(*odp) );
+    memset( odp, 0, sizeof(*odp) );
+    EntryPoints[nb_entry_points++] = odp;
 
     token = GetToken(0);
 
@@ -423,7 +425,7 @@ static void ParseOrdinal(int ordinal)
     token = GetToken(0);
     if (*token == '-') token = ParseFlags( odp );
 
-    strcpy( odp->name, token );
+    odp->name = xstrdup( token );
     fix_export_name( odp->name );
     odp->lineno = current_line;
     odp->ordinal = ordinal;
@@ -464,8 +466,8 @@ static void ParseOrdinal(int ordinal)
     if (odp->flags & FLAG_I386)
     {
         /* ignore this entry point on non-Intel archs */
-        nb_entry_points--;
-        memset( odp, 0, sizeof(*odp) );
+        EntryPoints[--nb_entry_points] = NULL;
+        free( odp );
         return;
     }
 #endif
@@ -572,11 +574,9 @@ SPEC_TYPE ParseTopLevel( FILE *file )
 	}
         else if (strcmp(token, "init") == 0)
         {
-            strcpy(DLLInitFunc, GetToken(0));
-	    if (SpecType == SPEC_WIN16)
+            if (SpecType == SPEC_WIN16)
                 fatal_error( "init cannot be used for Win16 spec files\n" );
-            if (!DLLInitFunc[0])
-                fatal_error( "Expected function name after init\n" );
+            init_func = xstrdup( GetToken(0) );
         }
         else if (strcmp(token, "import") == 0)
         {

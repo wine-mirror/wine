@@ -74,7 +74,6 @@ typedef struct
 {
     int  n_args;
     char arg_types[17];
-    char link_name[80];
 } ORD_FUNCTION;
 
 typedef struct
@@ -84,29 +83,18 @@ typedef struct
 
 typedef struct
 {
-    char link_name[80];
-} ORD_EXTERN;
-
-typedef struct
-{
-    char link_name[80];
-} ORD_FORWARD;
-
-typedef struct
-{
     ORD_TYPE    type;
     int         ordinal;
     int         offset;
     int         lineno;
     int         flags;
-    char        name[80];
+    char       *name;
+    char       *link_name;
     union
     {
         ORD_VARIABLE   var;
         ORD_FUNCTION   func;
         ORD_ABS        abs;
-        ORD_EXTERN     ext;
-        ORD_FORWARD    fwd;
     } u;
 } ORDDEF;
 
@@ -132,7 +120,7 @@ typedef struct
 #define STACKOFFSET (STRUCTOFFSET(TEB,cur_stack))
 
 
-#define MAX_ORDINALS	2048
+#define MAX_ORDINALS  65535
 
 /* global functions */
 
@@ -176,14 +164,14 @@ extern int nb_lib_paths;
 
 extern char DLLName[80];
 extern char DLLFileName[80];
-extern char DLLInitFunc[80];
 extern char owner_name[80];
+extern char *init_func;
 extern const char *input_file_name;
 extern const char *output_file_name;
 extern char **debug_channels;
 extern char **lib_path;
 
-extern ORDDEF EntryPoints[MAX_ORDINALS];
+extern ORDDEF *EntryPoints[MAX_ORDINALS];
 extern ORDDEF *Ordinals[MAX_ORDINALS];
 extern ORDDEF *Names[MAX_ORDINALS];
 extern SPEC_MODE SpecMode;

@@ -247,8 +247,8 @@ static void warn_unused( const struct import* imp )
     {
         ORDDEF *odp = Ordinals[i];
         if (!odp || odp->type != TYPE_FORWARD) continue;
-        if (!strncasecmp( odp->u.fwd.link_name, imp->dll, len ) &&
-            odp->u.fwd.link_name[len] == '.')
+        if (!strncasecmp( odp->link_name, imp->dll, len ) &&
+            odp->link_name[len] == '.')
             return;  /* found an import, do not warn */
     }
     /* switch current_line temporarily to the line of the import declaration */

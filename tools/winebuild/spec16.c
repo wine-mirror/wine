@@ -536,11 +536,12 @@ static void output_stub_funcs( FILE *outfile )
     {
         ORDDEF *odp = Ordinals[i];
         if (!odp || odp->type != TYPE_STUB) continue;
-        strcpy( odp->u.func.link_name, "__stub_" );
-        strcat( odp->u.func.link_name, odp->name );
-        for (p = odp->u.func.link_name; *p; p++) if (!isalnum(*p)) *p = '_';
+        odp->link_name = xrealloc( odp->link_name, strlen(odp->name) + 13 );
+        strcpy( odp->link_name, "__wine_stub_" );
+        strcat( odp->link_name, odp->name );
+        for (p = odp->link_name; *p; p++) if (!isalnum(*p)) *p = '_';
         fprintf( outfile, "static void %s(void) { __wine_unimplemented(\"%s\"); }\n",
-                 odp->u.func.link_name, odp->name );
+                 odp->link_name, odp->name );
     }
 }
 
@@ -640,7 +641,7 @@ void BuildSpec16File( FILE *outfile )
         case TYPE_CDECL:
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
-            fprintf( outfile, "extern void %s();\n", odp->u.func.link_name );
+            fprintf( outfile, "extern void %s();\n", odp->link_name );
             break;
         default:
             break;
@@ -727,7 +728,7 @@ void BuildSpec16File( FILE *outfile )
 
             fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
             fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s_%s_%s */ },\n",
-                     odp->u.func.link_name,
+                     odp->link_name,
                      (type-typelist)*sizeof(CALLFROM16) -
                      (code_offset + sizeof(ENTRYPOINT16)),
                      (odp->type == TYPE_CDECL) ? "c" : "p",

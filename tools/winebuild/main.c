@@ -17,7 +17,7 @@
 #include "winnt.h"
 #include "build.h"
 
-ORDDEF EntryPoints[MAX_ORDINALS];
+ORDDEF *EntryPoints[MAX_ORDINALS];
 ORDDEF *Ordinals[MAX_ORDINALS];
 ORDDEF *Names[MAX_ORDINALS];
 
@@ -40,8 +40,8 @@ int debugging = 0;
 
 char DLLName[80];
 char DLLFileName[80];
-char DLLInitFunc[80];
 char owner_name[80];
+char *init_func = NULL;
 char **debug_channels = NULL;
 char **lib_path = NULL;
 
