@@ -704,7 +704,7 @@ static HRESULT WINAPI IDirectDrawSurface4_Blt(
 	if (TRACE_ON(ddraw)) {
 	  if (rdst) TRACE(ddraw,"	destrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
 	  if (rsrc) TRACE(ddraw,"	srcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
-	  TRACE(ddraw,"\tflags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
+	  TRACE(ddraw,"\tflags: "); _dump_DDBLT(dwFlags);
 	  if (dwFlags & DDBLT_DDFX) {
 	    TRACE(ddraw,"	blitfx: \n");_dump_DDBLTFX(lpbltfx->dwDDFX);
 	  }
@@ -774,7 +774,7 @@ static HRESULT WINAPI IDirectDrawSurface4_Blt(
 	
 	if (!src) {
 	    if (dwFlags) {
-	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
+	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: "); _dump_DDBLT(dwFlags);
 	    }
 	    this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
 	    return DD_OK;
@@ -980,13 +980,12 @@ static HRESULT WINAPI IDirectDrawSurface4_GetSurfaceDesc(
   *ddsd = this->s.surface_desc;
   
   if (TRACE_ON(ddraw)) {
-		fprintf(stderr,"	flags: ");
+    DUMP("   flags: ");
 		_dump_DDSD(ddsd->dwFlags);
     if (ddsd->dwFlags & DDSD_CAPS) {
-      fprintf(stderr, "  caps:  ");
+      DUMP("   caps:  ");
       _dump_DDSCAPS(ddsd->ddsCaps.dwCaps);
     }
-		fprintf(stderr,"\n");
 	}
 
 	return DD_OK;
@@ -2222,11 +2221,10 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 
 	TRACE(ddraw, "(%p)->(%p,%p,%p)\n",this,lpddsd,lpdsf,lpunk);
 	if (TRACE_ON(ddraw)) {
-		DUMP("[w=%ld,h=%ld,flags ",lpddsd->dwWidth,lpddsd->dwHeight);
+		DUMP("   w=%ld,h=%ld,flags ",lpddsd->dwWidth,lpddsd->dwHeight);
 		_dump_DDSD(lpddsd->dwFlags);
-		fprintf(stderr,"caps ");
+		DUMP("   caps ");
 		_dump_DDSCAPS(lpddsd->ddsCaps.dwCaps);
-		fprintf(stderr,"]\n");
 	}
 
 	*lpdsf = (LPDIRECTDRAWSURFACE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface));
@@ -2477,11 +2475,10 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 		     this,lpddsd,lpdsf,lpunk);
 
 	if (TRACE_ON(ddraw)) {
-		fprintf(stderr,"[w=%ld,h=%ld,flags ",lpddsd->dwWidth,lpddsd->dwHeight);
+		DUMP("   w=%ld,h=%ld,flags ",lpddsd->dwWidth,lpddsd->dwHeight);
 		_dump_DDSD(lpddsd->dwFlags);
-		fprintf(stderr,"caps ");
+		DUMP("   caps ");
 		_dump_DDSCAPS(lpddsd->ddsCaps.dwCaps);
-		fprintf(stderr,"]\n");
 	}
 
 	*lpdsf = (LPDIRECTDRAWSURFACE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface));
@@ -2837,10 +2834,9 @@ static void fill_caps(LPDDCAPS caps) {
     return;
 
   caps->dwSize = sizeof(*caps);
-  caps->dwCaps = DDCAPS_3D | DDCAPS_ALPHA | DDCAPS_BLT | DDCAPS_BLTSTRETCH | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL |
-    DDCAPS_CANBLTSYSMEM |  DDCAPS_COLORKEY | DDCAPS_PALETTE | DDCAPS_ZBLTS;
-  caps->dwCaps2 = DDCAPS2_CERTIFIED | DDCAPS2_NO2DDURING3DSCENE | DDCAPS2_NOPAGELOCKREQUIRED |
-    DDCAPS2_WIDESURFACES;
+  caps->dwCaps = DDCAPS_ALPHA | DDCAPS_BLT | DDCAPS_BLTSTRETCH | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL |
+    DDCAPS_CANBLTSYSMEM |  DDCAPS_COLORKEY | DDCAPS_PALETTE;
+  caps->dwCaps2 = DDCAPS2_CERTIFIED | DDCAPS2_NOPAGELOCKREQUIRED | DDCAPS2_WIDESURFACES;
   caps->dwCKeyCaps = 0xFFFFFFFF; /* Should put real caps here one day... */
   caps->dwFXCaps = 0;
   caps->dwFXAlphaCaps = 0;
@@ -2854,10 +2850,15 @@ static void fill_caps(LPDDCAPS caps) {
   caps->dwVidMemTotal = 8192 * 1024;
   caps->dwVidMemFree = 8192 * 1024;
   /* These are all the supported capabilities of the surfaces */
-  caps->ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER | DDSCAPS_COMPLEX | DDSCAPS_FLIP |
-    DDSCAPS_FRONTBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_MIPMAP | DDSCAPS_NONLOCALVIDMEM | DDSCAPS_OFFSCREENPLAIN |
-      DDSCAPS_OVERLAY | DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE |
-	DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE | DDSCAPS_ZBUFFER;
+  caps->ddsCaps.dwCaps = DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER | DDSCAPS_COMPLEX | DDSCAPS_FLIP |
+    DDSCAPS_FRONTBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_NONLOCALVIDMEM | DDSCAPS_OFFSCREENPLAIN |
+      DDSCAPS_OVERLAY | DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
+	DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
+#ifdef HAVE_MESAGL
+  caps->dwCaps |= DDCAPS_3D | DDCAPS_ZBLTS;
+  caps->dwCaps2 |=  DDCAPS2_NO2DDURING3DSCENE;
+  caps->ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
+#endif
 }
 
 static HRESULT WINAPI Xlib_IDirectDraw2_GetCaps(
@@ -3887,6 +3888,6 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	return ret;
 
       err:
-	fprintf(stderr,"DirectDrawCreate(%s,%p,%p): did not recognize requested GUID\n",xclsid,lplpDD,pUnkOuter);
+	ERR(ddraw, "DirectDrawCreate(%s,%p,%p): did not recognize requested GUID\n",xclsid,lplpDD,pUnkOuter);
 	return DDERR_INVALIDDIRECTDRAWGUID;
 }
