@@ -1196,7 +1196,8 @@ static void CBDropDown( LPHEADCOMBO lphc )
      RedrawWindow( lphc->self->hwndSelf, NULL, 0, RDW_INVALIDATE | 
 			   RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
 
-   ShowWindow( lphc->hWndLBox, SW_SHOWNA );
+   EnableWindow( lphc->hWndLBox, TRUE );
+   ShowWindow( lphc->hWndLBox, SW_SHOW);
 }
 
 /***********************************************************************
