@@ -53,6 +53,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(time);
 #define SETTIME_MAX_ADJUST 120
 #define CALINFO_MAX_YEAR 2029
 
+#define LL2FILETIME( ll, pft )\
+    (pft)->dwLowDateTime = (UINT)(ll); \
+    (pft)->dwHighDateTime = (UINT)((ll) >> 32);
+#define FILETIME2LL( pft, ll) \
+    ll = (((LONGLONG)((pft)->dwHighDateTime))<<32) + (pft)-> dwLowDateTime ;
 
 /***********************************************************************
  *              SetLocalTime            (KERNEL32.@)
@@ -204,19 +209,11 @@ BOOL WINAPI SetTimeZoneInformation(
  */
 
 static int _DayLightCompareDate(
-    const LPSYSTEMTIME date,                       /* [in] The date to compare. */
-    const LPSYSTEMTIME compareDate)                /* [in] The daylight saving begin or end date */
+    const LPSYSTEMTIME date,        /* [in] The local time to compare. */
+    const LPSYSTEMTIME compareDate) /* [in] The daylight saving begin
+                                       or end date */
 {
-    int limit_day;
-
-    if (compareDate->wYear != 0)
-    {
-        if (date->wMonth < compareDate->wMonth)
-            return -1; /* We are in a year before the date limit. */
-
-        if (date->wMonth > compareDate->wMonth)
-            return 1; /* We are in a year after the date limit. */
-    }
+    int limit_day, dayinsecs;
 
     if (date->wMonth < compareDate->wMonth)
         return -1; /* We are in a month before the date limit. */
@@ -229,8 +226,8 @@ static int _DayLightCompareDate(
        SYSTEMTIME tmp;
        FILETIME tmp_ft;
 
-       /* compareDate->wDay is interpreted as number of the week in the month. */
-       /* 5 means: the last week in the month */
+       /* compareDate->wDay is interpreted as number of the week in the month
+        * 5 means: the last week in the month */
        int weekofmonth = compareDate->wDay;
 
          /* calculate day of week for the first day in the month */
@@ -253,19 +250,11 @@ static int _DayLightCompareDate(
 
         if (weekofmonth == 5)
         {
-          LONGLONG t, one_day;
-
-          t = tmp_ft.dwHighDateTime;
-          t <<= 32;
-          t += (UINT)tmp_ft.dwLowDateTime;
-
+          LONGLONG t;
+          FILETIME2LL( &tmp_ft, t)
           /* subtract one day */
-          one_day = 24*60*60;
-          one_day *= 10000000;
-          t -= one_day;
-
-          tmp_ft.dwLowDateTime  = (UINT)t;
-          tmp_ft.dwHighDateTime = (UINT)(t >> 32);
+          t -= (LONGLONG) 24*60*60*10000000;
+          LL2FILETIME( t, &tmp_ft);
         }
 
         if (!FileTimeToSystemTime(&tmp_ft, &tmp))
@@ -295,13 +284,15 @@ static int _DayLightCompareDate(
        limit_day = compareDate->wDay;
     }
 
-    if (date->wDay < limit_day)
-        return -1;
-
-    if (date->wDay > limit_day)
-        return 1;
-
-    return 0;   /* date is equal to the date limit. */
+    /* convert to seconds */
+    limit_day = ((limit_day * 24  + compareDate->wHour) * 60 +
+            compareDate->wMinute ) * 60;
+    dayinsecs = ((date->wDay * 24  + date->wHour) * 60 +
+            date->wMinute ) * 60 + date->wSecond;
+    /* and compare */
+    return dayinsecs < limit_day ? -1 :
+           dayinsecs > limit_day ? 1 :
+           0;   /* date is equal to the date limit. */
 }
 
 
@@ -316,14 +307,21 @@ static int _DayLightCompareDate(
  */
 
 static BOOL _GetTimezoneBias(
-    const LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The time zone data.            */
-    LPSYSTEMTIME                  lpSystemTime,          /* [in] The system time.               */
-    LONG*                         pBias)                 /* [out] The calulated bias in minutes */
+    const LPTIME_ZONE_INFORMATION
+                   lpTimeZoneInformation, /* [in] The time zone data. */
+    LPSYSTEMTIME   lpSysOrLocalTime,   /* [in] The system or local time. */
+    BOOL           islocal,            /* [in] it is local time */       
+    LONG*          pBias               /* [out] The calulated bias in minutes */
+    )
 {
     int ret;
     BOOL beforeStandardDate, afterDaylightDate;
     BOOL daylightsaving = FALSE;
     LONG bias = lpTimeZoneInformation->Bias;
+    FILETIME ft;
+    LONGLONG llTime = 0; /* initialized to prevent gcc complaining */
+    SYSTEMTIME stTemp;
+    LPSYSTEMTIME lpTime = lpSysOrLocalTime;
 
     if (lpTimeZoneInformation->DaylightDate.wMonth != 0)
     {
@@ -337,20 +335,43 @@ static BOOL _GetTimezoneBias(
             return FALSE;
         }
 
+        if (!islocal) {
+            if (!SystemTimeToFileTime(lpSysOrLocalTime, &ft)) return -2;
+            FILETIME2LL( &ft, llTime );
+            llTime -= ( lpTimeZoneInformation->Bias +
+                    lpTimeZoneInformation->DaylightBias ) * (LONGLONG)600000000;
+            LL2FILETIME( llTime, &ft)
+            FileTimeToSystemTime(&ft, &stTemp);
+            lpTime =  &stTemp;
+        }
+        
          /* check for daylight saving */
-        ret = _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->StandardDate);
+        ret = _DayLightCompareDate(lpTime, &lpTimeZoneInformation->StandardDate);
         if (ret == -2)
           return FALSE;
 
         beforeStandardDate = ret < 0;
 
-        ret = _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->DaylightDate);
+        if (!islocal) {
+            llTime -= ( lpTimeZoneInformation->StandardBias -
+                    lpTimeZoneInformation->DaylightBias ) * (LONGLONG)600000000;
+            LL2FILETIME( llTime, &ft)
+            FileTimeToSystemTime(&ft, &stTemp);
+            lpTime =  &stTemp;
+        }
+
+        ret = _DayLightCompareDate(lpTime, &lpTimeZoneInformation->DaylightDate);
         if (ret == -2)
           return FALSE;
 
         afterDaylightDate = ret >= 0;
 
-        if (beforeStandardDate && afterDaylightDate)
+        if( lpTimeZoneInformation->DaylightDate.wMonth <       /* Northern */
+                lpTimeZoneInformation->StandardDate.wMonth ) { /* hemisphere */
+            if( beforeStandardDate && afterDaylightDate )
+                daylightsaving = TRUE;
+        } else    /* Down south */
+            if( beforeStandardDate || afterDaylightDate )
             daylightsaving = TRUE;
     }
 
@@ -376,13 +397,14 @@ static BOOL _GetTimezoneBias(
  */
 
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The desired time zone. */
-    LPSYSTEMTIME            lpUniversalTime,       /* [in] The utc time to base local time on. */
-    LPSYSTEMTIME            lpLocalTime)           /* [out] The local time in the time zone. */
+    LPTIME_ZONE_INFORMATION
+           lpTimeZoneInformation, /* [in] The desired time zone. */
+    LPSYSTEMTIME lpUniversalTime, /* [in] The utc time to base local time on. */
+    LPSYSTEMTIME lpLocalTime)     /* [out] The local time in the time zone. */
 {
     FILETIME ft;
     LONG lBias;
-    LONGLONG t, bias;
+    LONGLONG llTime;
     TIME_ZONE_INFORMATION tzinfo;
 
     if (lpTimeZoneInformation != NULL)
@@ -397,19 +419,12 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
 
     if (!SystemTimeToFileTime(lpUniversalTime, &ft))
         return FALSE;
-
-    t = ft.dwHighDateTime;
-    t <<= 32;
-    t += (UINT)ft.dwLowDateTime;
-
-    if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, &lBias))
+    FILETIME2LL( &ft, llTime)
+    if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, FALSE, &lBias))
         return FALSE;
-
-    bias = (LONGLONG)lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
-    t -= bias;
-
-    ft.dwLowDateTime  = (UINT)t;
-    ft.dwHighDateTime = (UINT)(t >> 32);
+    /* convert minutes to 100-nanoseconds-ticks */
+    llTime -= (LONGLONG)lBias * 600000000;
+    LL2FILETIME( llTime, &ft)
 
     return FileTimeToSystemTime(&ft, lpLocalTime);
 }
@@ -431,7 +446,7 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
 {
     FILETIME ft;
     LONG lBias;
-    LONGLONG t, bias;
+    LONGLONG t;
     TIME_ZONE_INFORMATION tzinfo;
 
     if (lpTimeZoneInformation != NULL)
@@ -446,20 +461,12 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
 
     if (!SystemTimeToFileTime(lpLocalTime, &ft))
         return FALSE;
-
-    t = ft.dwHighDateTime;
-    t <<= 32;
-    t += (UINT)ft.dwLowDateTime;
-
-    if (!_GetTimezoneBias(&tzinfo, lpLocalTime, &lBias))
+    FILETIME2LL( &ft, t)
+    if (!_GetTimezoneBias(&tzinfo, lpLocalTime, TRUE, &lBias))
         return FALSE;
-
-    bias = (LONGLONG)lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
-    t += bias;
-
-    ft.dwLowDateTime  = (UINT)t;
-    ft.dwHighDateTime = (UINT)(t >> 32);
-
+    /* convert minutes to 100-nanoseconds-ticks */
+    t += (LONGLONG)lBias * 600000000;
+    LL2FILETIME( t, &ft)
     return FileTimeToSystemTime(&ft, lpUniversalTime);
 }
 
