@@ -72,6 +72,7 @@ static const char * const SHELL_People[] =
     "Per Lindström",
     "Martin von Loewis",
     "Michiel van Loon",
+    "David Luyer",
     "Kenneth MacDonald",
     "Peter MacDonald",
     "William Magro",
