@@ -209,10 +209,33 @@ static void queue_mouse_event( const MOUSEINPUT *mi, UINT flags )
         int width  = GetSystemMetrics(SM_CXSCREEN);
         int height = GetSystemMetrics(SM_CYSCREEN);
         long posX = (long) PosX, posY = (long) PosY;
+        int accel[3];
+        int accelMult;
 
         /* dx and dy can be negative numbers for relative movements */
-        posX += (long)mi->dx;
-        posY += (long)mi->dy;
+        SystemParametersInfoA(SPI_GETMOUSE, 0, accel, 0);
+
+        accelMult = 1;
+        if (mi->dx > accel[0] && accel[2] != 0)
+        {
+            accelMult = 2;
+            if ((mi->dx > accel[1]) && (accel[2] == 2))
+            {
+                accelMult = 4;
+            }
+        }
+        posX += (long)mi->dx * accelMult;
+
+        accelMult = 1;
+        if (mi->dy > accel[0] && accel[2] != 0)
+        {
+            accelMult = 2;
+            if ((mi->dy > accel[1]) && (accel[2] == 2))
+            {
+                accelMult = 4;
+            }
+        }
+        posY += (long)mi->dy * accelMult;
 
         /* Clip to the current screen size */
         if (posX < 0) PosX = 0;

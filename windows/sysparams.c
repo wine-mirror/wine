@@ -26,10 +26,13 @@ DEFAULT_DEBUG_CHANNEL(system);
 
 /* System parameter indexes */
 #define SPI_SETBEEP_IDX                         0
-#define SPI_SETBORDER_IDX                       1
-#define SPI_ICONHORIZONTALSPACING_IDX           2
-#define SPI_ICONVERTICALSPACING_IDX             3
-#define SPI_SETSHOWSOUNDS_IDX                   4
+#define SPI_SETMOUSE_IDX                        1
+#define SPI_SETBORDER_IDX                       2
+#define SPI_SETKEYBOARDSPEED_IDX                3
+#define SPI_ICONHORIZONTALSPACING_IDX           4
+#define SPI_SETKEYBOARDDELAY_IDX                5
+#define SPI_ICONVERTICALSPACING_IDX             6
+#define SPI_SETSHOWSOUNDS_IDX                   7
 #define SPI_WINE_IDX                            SPI_SETSHOWSOUNDS_IDX
 
 /**
@@ -39,16 +42,24 @@ DEFAULT_DEBUG_CHANNEL(system);
  * "SET" action names, value names are created by adding "_REG_NAME"
  * to the "SET" action name.
  */
-#define SPI_SETBEEP_REGKEY           "Control Panel\\Sound"
-#define SPI_SETBEEP_VALNAME          "Beep"
-#define SPI_SETBORDER_REGKEY         "Control Panel\\Desktop"
-#define SPI_SETBORDER_VALNAME        "BorderWidth"
+#define SPI_SETBEEP_REGKEY              "Control Panel\\Sound"
+#define SPI_SETBEEP_VALNAME             "Beep"
+#define SPI_SETMOUSE_REGKEY             "Control Panel\\Mouse"
+#define SPI_SETMOUSE_VALNAME1           "MouseThreshold1"
+#define SPI_SETMOUSE_VALNAME2           "MouseThreshold2"
+#define SPI_SETMOUSE_VALNAME3           "MouseSpeed"
+#define SPI_SETBORDER_REGKEY            "Control Panel\\Desktop"
+#define SPI_SETBORDER_VALNAME           "BorderWidth"
+#define SPI_SETKEYBOARDSPEED_REGKEY             "Control Panel\\Keyboard"
+#define SPI_SETKEYBOARDSPEED_VALNAME            "KeyboardSpeed"
 #define SPI_ICONHORIZONTALSPACING_REGKEY        "Control Panel\\Desktop"
 #define SPI_ICONHORIZONTALSPACING_VALNAME       "IconSpacing"
+#define SPI_SETKEYBOARDDELAY_REGKEY             "Control Panel\\Keyboard"
+#define SPI_SETKEYBOARDDELAY_VALNAME            "KeyboardDelay"
 #define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop"
 #define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
-#define SPI_SETSHOWSOUNDS_REGKEY     "Control Panel\\Accessibility\\ShowSounds"
-#define SPI_SETSHOWSOUNDS_VALNAME    "On"
+#define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
+#define SPI_SETSHOWSOUNDS_VALNAME       "On"
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 #define WINE_CURRENT_USER_REGKEY     "Wine"
@@ -60,8 +71,12 @@ static BOOL notify_change = TRUE;
 
 /* System parameters storage */
 static BOOL beep_active = TRUE;
+static int mouse_threshold1 = 6;
+static int mouse_threshold2 = 10;
+static int mouse_speed = 1;
 static int border = 1;
-
+static int keyboard_speed = 31;
+static int keyboard_delay = 1;
 
 /***********************************************************************
  *		GetTimerResolution (USER.14)
@@ -201,6 +216,9 @@ void SYSPARAMS_Reset( UINT uiAction )
             switch (uiAction)
             {
             WINE_INVALIDATE_SPI(SPI_SETBEEP);
+            WINE_INVALIDATE_SPI(SPI_SETMOUSE);
+            WINE_INVALIDATE_SPI(SPI_SETKEYBOARDSPEED);
+            WINE_INVALIDATE_SPI(SPI_SETKEYBOARDDELAY);
             default:
                 FIXME( "Unknown action reset: %u\n", uiAction );
                 break;
@@ -384,6 +402,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         
 	*(BOOL *)pvParam = beep_active;
         break;
+
     case SPI_SETBEEP:				/*      2 */
         spi_idx = SPI_SETBEEP_IDX;
         if (SYSPARAMS_Save( SPI_SETBEEP_REGKEY, SPI_SETBEEP_VALNAME,
@@ -396,8 +415,56 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             ret = FALSE;
         break;
 
-    WINE_SPI_FIXME(SPI_GETMOUSE);		/*      3 */
-    WINE_SPI_FIXME(SPI_SETMOUSE);		/*      4 */
+    case SPI_GETMOUSE:                          /*      3 */
+        spi_idx = SPI_SETMOUSE_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME1,
+                                buf ))
+                mouse_threshold1 = atoi( buf );
+            if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME2,
+                                buf ))
+                mouse_threshold2 = atoi( buf );
+            if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
+                                buf ))
+                mouse_speed = atoi( buf );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        ((INT *)pvParam)[0] = mouse_threshold1;
+        ((INT *)pvParam)[1] = mouse_threshold2;
+        ((INT *)pvParam)[2] = mouse_speed;
+        break;
+        
+    case SPI_SETMOUSE:                          /*      4 */
+    {
+        char buf[10];
+
+        spi_idx = SPI_SETMOUSE_IDX;
+        sprintf(buf, "%d", ((INT *)pvParam)[0]);
+
+        if (SYSPARAMS_Save( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME1,
+                            buf, fWinIni ))
+        {
+            mouse_threshold1 = ((INT *)pvParam)[0];
+            spi_loaded[spi_idx] = TRUE;
+
+            sprintf(buf, "%d", ((INT *)pvParam)[1]);
+            SYSPARAMS_Save( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME2,
+                            buf, fWinIni );
+            mouse_threshold2 = ((INT *)pvParam)[1];
+
+            sprintf(buf, "%d", ((INT *)pvParam)[2]);
+            SYSPARAMS_Save( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
+                            buf, fWinIni );
+            mouse_speed = ((INT *)pvParam)[2];
+        }
+        else
+            ret = FALSE;
+    
+        break;
+    }
 
     case SPI_GETBORDER:				/*      5 */
         spi_idx = SPI_SETBORDER_IDX;
@@ -447,10 +514,41 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
     }
 
-    case SPI_GETKEYBOARDSPEED:			/*     10 */
-	*(DWORD *)pvParam = GetProfileIntA( "keyboard", "KeyboardSpeed", 30 );
+    case SPI_GETKEYBOARDSPEED:                  /*     10 */
+        spi_idx = SPI_SETKEYBOARDSPEED_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETKEYBOARDSPEED_REGKEY,
+                                SPI_SETKEYBOARDSPEED_VALNAME,
+                                buf ))
+                keyboard_speed = atoi( buf );
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = keyboard_speed;
 	break;
-    WINE_SPI_WARN(SPI_SETKEYBOARDSPEED);	/*     11 */
+
+    case SPI_SETKEYBOARDSPEED:                  /*     11 */
+    {
+        char buf[10];
+
+        spi_idx = SPI_SETKEYBOARDSPEED_IDX;
+        if (uiParam > 31)
+            uiParam = 31;
+        sprintf(buf, "%u", uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETKEYBOARDSPEED_REGKEY,
+                            SPI_SETKEYBOARDSPEED_VALNAME,
+                            buf, fWinIni ))
+        {
+            keyboard_speed = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     WINE_SPI_WARN(SPI_LANGDRIVER);		/*     12 */
 
@@ -538,10 +636,44 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	    ret = DESKTOP_SetPattern( (LPSTR)pvParam );
 	break;
 
-    case SPI_GETKEYBOARDDELAY:			/*     22 */
-	*(INT *)pvParam = GetProfileIntA( "keyboard", "KeyboardDelay", 1 );
+    case SPI_GETKEYBOARDDELAY:                  /*     22 */
+        spi_idx = SPI_SETKEYBOARDDELAY_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETKEYBOARDDELAY_REGKEY,
+                                SPI_SETKEYBOARDDELAY_VALNAME,
+                                buf ))
+            {
+                int i = atoi( buf );
+                if ( (i >= 0) && (i <= 3)) keyboard_delay = i;
+            }
+            
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = keyboard_delay;
 	break;
-    WINE_SPI_WARN(SPI_SETKEYBOARDDELAY);	/*     23 */
+
+    case SPI_SETKEYBOARDDELAY:                  /*     23 */
+    {
+        char buf[10];
+
+        spi_idx = SPI_SETKEYBOARDDELAY_IDX;
+        sprintf(buf, "%u", uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETKEYBOARDDELAY_REGKEY,
+                            SPI_SETKEYBOARDDELAY_VALNAME,
+                            buf, fWinIni ))
+        {
+            if (uiParam <= 3)
+                keyboard_delay = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     case SPI_ICONVERTICALSPACING:		/*     24 */
         spi_idx = SPI_ICONVERTICALSPACING_IDX;
