@@ -36,6 +36,7 @@
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
@@ -59,6 +60,7 @@ static const D3DFORMAT device_formats[NUM_FORMATS] = {
 
 static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display);
 
+
 /* retrieve the X display to use on a given DC */
 inline static Display *get_display( HDC hdc )
 {
@@ -70,7 +72,102 @@ inline static Display *get_display( HDC hdc )
     return display;
 }
 
+/** 
+ * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
+ * ie there is no GL Context - Get a default rendering context to enable the 
+ * function query some info from GL                                     
+ */    
+static
+WineD3D_Context* WineD3DCreateFakeGLContext(void) {
+  static WineD3D_Context ctx = { NULL, NULL, NULL, 0, 0 };
+  WineD3D_Context* ret = NULL;
 
+   if (glXGetCurrentContext() == NULL) {
+     BOOL         gotContext  = FALSE;
+     BOOL         created     = FALSE;
+     XVisualInfo  template;
+     HDC          device_context;
+     Visual*      visual;
+     BOOL         failed = FALSE;
+     int          num;
+     XWindowAttributes win_attr;
+     
+     TRACE_(d3d_caps)("Creating Fake GL Context\n");
+
+     ctx.drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
+
+     /* Get the display */
+     device_context = GetDC(0);
+     ctx.display = get_display(device_context);
+     ReleaseDC(0, device_context);
+     
+     /* Get the X visual */
+     ENTER_GL();
+     if (XGetWindowAttributes(ctx.display, ctx.drawable, &win_attr)) {
+       visual = win_attr.visual;
+     } else {
+       visual = DefaultVisual(ctx.display, DefaultScreen(ctx.display));
+     }
+     template.visualid = XVisualIDFromVisual(visual);
+     ctx.visInfo = XGetVisualInfo(ctx.display, VisualIDMask, &template, &num);
+     if (ctx.visInfo == NULL) {
+       LEAVE_GL();
+       WARN_(d3d_caps)("Error creating visual info for capabilities initialization\n");
+       failed = TRUE;
+     }
+     
+     /* Create a GL context */
+     if (!failed) {
+       ctx.glCtx = glXCreateContext(ctx.display, ctx.visInfo, NULL, GL_TRUE);
+       
+       if (ctx.glCtx == NULL) {
+	 LEAVE_GL();
+	 WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
+	 failed = TRUE;
+       }
+     }
+     
+     /* Make it the current GL context */
+     if (!failed && glXMakeCurrent(ctx.display, ctx.drawable, ctx.glCtx) == False) {
+       glXDestroyContext(ctx.display, ctx.glCtx);
+       LEAVE_GL();
+       WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
+       failed = TRUE;	
+     }
+     
+     /* It worked! Wow... */
+     if (!failed) {
+       gotContext = TRUE;
+       created = TRUE;
+       ret = &ctx;
+     } else {
+       ret = NULL;
+     }
+   } else {
+     if (ctx.ref > 0) ret = &ctx;
+   }
+
+   if (NULL != ret) ++ret->ref;
+
+   return ret;
+}
+
+static
+void WineD3DReleaseFakeGLContext(WineD3D_Context* ctx) {
+  /* If we created a dummy context, throw it away */
+  if (NULL != ctx) {
+    --ctx->ref;
+    if (0 == ctx->ref) {
+      glXMakeCurrent(ctx->display, None, NULL);
+      glXDestroyContext(ctx->display, ctx->glCtx);
+      ctx->display = NULL;
+      ctx->glCtx = NULL;
+      LEAVE_GL();
+    }
+  }
+}
+ 
+   
 /* IDirect3D IUnknown parts follow: */
 HRESULT WINAPI IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface,REFIID riid,LPVOID *ppobj)
 {
@@ -105,14 +202,14 @@ ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
 /* IDirect3D Interface follow: */
 HRESULT  WINAPI  IDirect3D8Impl_RegisterSoftwareDevice     (LPDIRECT3D8 iface, void* pInitializeFunction) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(%p): stub\n", This, pInitializeFunction);
+    FIXME_(d3d_caps)("(%p)->(%p): stub\n", This, pInitializeFunction);
     return D3D_OK;
 }
 
 UINT     WINAPI  IDirect3D8Impl_GetAdapterCount            (LPDIRECT3D8 iface) {
     ICOM_THIS(IDirect3D8Impl,iface);
     /* FIXME: Set to one for now to imply the display */
-    TRACE("(%p): Mostly stub, only returns primary display\n", This);
+    TRACE_(d3d_caps)("(%p): Mostly stub, only returns primary display\n", This);
     return 1;
 }
 
@@ -120,22 +217,40 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
                                                             UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8* pIdentifier) {
     ICOM_THIS(IDirect3D8Impl,iface);
 
-    TRACE("(%p}->(Adapter: %d, Flags: %lx, pId=%p)\n", This, Adapter, Flags, pIdentifier);
+    TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %lx, pId=%p)\n", This, Adapter, Flags, pIdentifier);
 
     if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
     }
 
-    if (Adapter == 0) { /* Display */
-        FIXME("Autodetect device/Vendor Name and Version using FillGLCaps, currently using NVIDIA ids");
-        strcpy(pIdentifier->Driver, "Display");
-        strcpy(pIdentifier->Description, "Direct3D HAL");
-        pIdentifier->DriverVersion.u.HighPart = 0xa;
-        pIdentifier->DriverVersion.u.LowPart = MAKEDWORD_VERSION(53, 96); /* last Linux Nvidia drivers */
-        pIdentifier->VendorId = VENDOR_NVIDIA;
-        pIdentifier->DeviceId = CARD_NVIDIA_GEFORCE4_TI4600;
-        pIdentifier->SubSysId = 0;
-        pIdentifier->Revision = 0;
+    if (Adapter == 0) { /* Display */   
+        /* If we don't know the device settings, go query them now */
+        if (This->isGLInfoValid == FALSE) {
+	  WineD3D_Context* ctx = WineD3DCreateFakeGLContext();
+	  if (NULL != ctx) IDirect3D8Impl_FillGLCaps(iface, NULL);
+	  WineD3DReleaseFakeGLContext(ctx);
+	}
+        if (This->isGLInfoValid == TRUE) {
+	  TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
+	  strcpy(pIdentifier->Driver, "Display");
+	  strcpy(pIdentifier->Description, "Direct3D HAL");
+	  pIdentifier->DriverVersion.u.HighPart = 0xa;
+	  pIdentifier->DriverVersion.u.LowPart = This->gl_info.gl_driver_version;
+	  pIdentifier->VendorId = This->gl_info.gl_vendor;
+	  pIdentifier->DeviceId = This->gl_info.gl_card;
+	  pIdentifier->SubSysId = 0;
+	  pIdentifier->Revision = 0;
+	} else {
+	  WARN_(d3d_caps)("Cannot get GLCaps for device/Vendor Name and Version detection using FillGLCaps, currently using NVIDIA identifiers\n");
+	  strcpy(pIdentifier->Driver, "Display");
+	  strcpy(pIdentifier->Description, "Direct3D HAL");
+	  pIdentifier->DriverVersion.u.HighPart = 0xa;
+	  pIdentifier->DriverVersion.u.LowPart = MAKEDWORD_VERSION(53, 96); /* last Linux Nvidia drivers */
+	  pIdentifier->VendorId = VENDOR_NVIDIA;
+	  pIdentifier->DeviceId = CARD_NVIDIA_GEFORCE4_TI4600;
+	  pIdentifier->SubSysId = 0;
+	  pIdentifier->Revision = 0;
+	}
         /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
         if (Flags & D3DENUM_NO_WHQL_LEVEL) {
             pIdentifier->WHQLLevel = 0;
@@ -143,7 +258,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
             pIdentifier->WHQLLevel = 1;
         }
     } else {
-        FIXME("Adapter not primary display\n");
+        FIXME_(d3d_caps)("Adapter not primary display\n");
     }
 
     return D3D_OK;
@@ -153,7 +268,7 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
                                                             UINT Adapter) {
     ICOM_THIS(IDirect3D8Impl,iface);
 
-    TRACE("(%p}->(Adapter: %d)\n", This, Adapter);
+    TRACE_(d3d_caps)("(%p}->(Adapter: %d)\n", This, Adapter);
 
     if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
@@ -166,10 +281,10 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
         while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0)) {
             i++;
         }
-        TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
+        TRACE_(d3d_caps)("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
         return i;
     } else {
-        FIXME("Adapter not primary display\n");
+        FIXME_(d3d_caps)("Adapter not primary display\n");
     }
 
     return 0;
@@ -179,7 +294,7 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
                                                             UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
     ICOM_THIS(IDirect3D8Impl,iface);
 
-    TRACE("(%p}->(Adapter:%d, mode:%d, pMode:%p)\n", This, Adapter, Mode, pMode);
+    TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p)\n", This, Adapter, Mode, pMode);
 
     if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
@@ -203,7 +318,7 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
         }
         else
         {
-            TRACE("Requested mode out of range %d\n", Mode);
+            TRACE_(d3d_caps)("Requested mode out of range %d\n", Mode);
             return D3DERR_INVALIDCALL;
         }
 
@@ -218,10 +333,10 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
         case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
         default: pMode->Format = D3DFMT_UNKNOWN;
         }
-        TRACE("W %d H %d rr %d fmt (%x,%s) bpp %u\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
+        TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x,%s) bpp %u\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
 
     } else {
-        FIXME("Adapter not primary display\n");
+        FIXME_(d3d_caps)("Adapter not primary display\n");
     }
 
     return D3D_OK;
@@ -230,7 +345,7 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
 HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDISPLAYMODE* pMode) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
+    TRACE_(d3d_caps)("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
 
     if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
@@ -259,10 +374,10 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
         }
 
     } else {
-        FIXME("Adapter not primary display\n");
+        FIXME_(d3d_caps)("Adapter not primary display\n");
     }
 
-    TRACE("returning w:%d, h:%d, ref:%d, fmt:%x\n", pMode->Width,
+    TRACE_(d3d_caps)("returning w:%d, h:%d, ref:%d, fmt:%x\n", pMode->Width,
           pMode->Height, pMode->RefreshRate, pMode->Format);
     return D3D_OK;
 }
@@ -271,7 +386,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
                                                             D3DFORMAT BackBufferFormat, BOOL Windowed) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE("(%p)->(Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
+    TRACE_(d3d_caps)("(%p)->(Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
 	  This, 
 	  Adapter, 
 	  CheckType, debug_d3ddevicetype(CheckType),
@@ -294,7 +409,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
                                                             DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n", 
+    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n", 
           This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType), 
@@ -339,7 +454,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 iface,
 							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE("(%p)->(Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x)\n", 
+    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x)\n", 
 	  This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType),
@@ -356,7 +471,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
 						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE("(%p)->(Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
+    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
 	  This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType),
@@ -385,79 +500,25 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
 HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps) {
 
     BOOL        gotContext  = FALSE;
-    BOOL        created     = FALSE;
     GLint       gl_tex_size = 0;    
-    GLXContext  gl_context  = 0;
-    Display    *display     = NULL;
+    WineD3D_Context* fake_ctx = NULL;
     ICOM_THIS(IDirect3D8Impl,iface);
 
-    TRACE("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
+    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
     /* Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
-        ie there is no GL Context - Get a default rendering context to enable the 
-        function query some info from GL                                           */    
+       ie there is no GL Context - Get a default rendering context to enable the 
+       function query some info from GL                                           */    
     if (glXGetCurrentContext() == NULL) {
-
-        XVisualInfo  template;
-        XVisualInfo *vis;
-        HDC          device_context;
-        Visual      *visual;
-        Drawable     drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
-        XWindowAttributes win_attr;
-        BOOL         failed = FALSE;
-        int          num;
-
-        /* Get the display */
-        device_context = GetDC(0);
-        display = get_display(device_context);
-        ReleaseDC(0, device_context);
-
-        /* Get the X visual */
-        ENTER_GL();
-        if (XGetWindowAttributes(display, drawable, &win_attr)) {
-            visual = win_attr.visual;
-        } else {
-            visual = DefaultVisual(display, DefaultScreen(display));
-        }
-        template.visualid = XVisualIDFromVisual(visual);
-        vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
-        if (vis == NULL) {
-            LEAVE_GL();
-            WARN("Error creating visual info for capabilities initialization\n");
-            failed = TRUE;
-        }
-
-        /* Create a GL context */
-        if (!failed) {
-           gl_context = glXCreateContext(display, vis, NULL, GL_TRUE);
-
-           if (gl_context == NULL) {
-              LEAVE_GL();
-              WARN("Error creating default context for capabilities initialization\n");
-              failed = TRUE;
-           }
-        }
-
-        /* Make it the current GL context */
-        if (!failed && glXMakeCurrent(display, drawable, gl_context) == False) {
-            glXDestroyContext(display, gl_context);
-            LEAVE_GL();
-            WARN("Error setting default context as current for capabilities initialization\n");
-            failed = TRUE;	
-        }
-
-        /* It worked! Wow... */
-        if (!failed) {
-           gotContext = TRUE;
-           created = TRUE;
-        }
+      fake_ctx = WineD3DCreateFakeGLContext();
+      if (NULL != fake_ctx) gotContext = TRUE;
     } else {
-        gotContext = TRUE;
+      gotContext = TRUE;
     }
 
     if (gotContext == FALSE) {
 
-        FIXME("GetDeviceCaps called but no GL Context - Returning dummy values\n");
+        FIXME_(d3d_caps)("GetDeviceCaps called but no GL Context - Returning dummy values\n");
         gl_tex_size=65535;
         pCaps->MaxTextureBlendStages = 2;
         pCaps->MaxSimultaneousTextures = 2;
@@ -498,15 +559,18 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 
     pCaps->RasterCaps = D3DPRASTERCAPS_DITHER   | 
                         D3DPRASTERCAPS_PAT      | 
+			D3DPRASTERCAPS_WFOG |
+			D3DPRASTERCAPS_ZFOG |
+                        D3DPRASTERCAPS_FOGVERTEX |
+			D3DPRASTERCAPS_FOGTABLE  |
                         D3DPRASTERCAPS_FOGRANGE;
+
+    if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+      pCaps->RasterCaps |= D3DPRASTERCAPS_ANISOTROPY;
+    }
                         /* FIXME Add:
-			   D3DPRASTERCAPS_FOGVERTEX
-			   D3DPRASTERCAPS_FOGTABLE
 			   D3DPRASTERCAPS_MIPMAPLODBIAS
 			   D3DPRASTERCAPS_ZBIAS
-			   D3DPRASTERCAPS_ANISOTROPY
-			   D3DPRASTERCAPS_WFOG
-			   D3DPRASTERCAPS_ZFOG 
 			   D3DPRASTERCAPS_COLORPERSPECTIVE
 			   D3DPRASTERCAPS_STRETCHBLTMULTISAMPLE
 			   D3DPRASTERCAPS_ANTIALIASEDGES
@@ -534,11 +598,12 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
                           D3DPTEXTURECAPS_POW2         | 
                           D3DPTEXTURECAPS_VOLUMEMAP    | 
                           D3DPTEXTURECAPS_MIPMAP;
-#if defined(GL_VERSION_1_3) || defined(GL_ARB_texture_cube_map)
-    pCaps->TextureCaps |= D3DPTEXTURECAPS_CUBEMAP      | 
-                          D3DPTEXTURECAPS_MIPCUBEMAP   | 
-                          D3DPTEXTURECAPS_CUBEMAP_POW2;
-#endif
+
+    if (GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+      pCaps->TextureCaps |= D3DPTEXTURECAPS_CUBEMAP      | 
+	                    D3DPTEXTURECAPS_MIPCUBEMAP   | 
+	                    D3DPTEXTURECAPS_CUBEMAP_POW2;
+    }
 
     pCaps->TextureFilterCaps = D3DPTFILTERCAPS_MAGFLINEAR | 
                                D3DPTFILTERCAPS_MAGFPOINT  | 
@@ -553,12 +618,16 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_BORDER | 
                                  D3DPTADDRESSCAPS_CLAMP  | 
                                  D3DPTADDRESSCAPS_WRAP;
-#if defined(GL_VERSION_1_3)
-    pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
-#endif
-                                 /* FIXME: Add 
-				    D3DPTADDRESSCAPS_BORDER
-				    D3DPTADDRESSCAPS_MIRRORONCE */
+
+    if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
+      pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_BORDER;
+    }
+    if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
+      pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
+    }
+    if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
+      pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
+    }
 
     pCaps->VolumeTextureAddressCaps = 0;
 
@@ -611,21 +680,25 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 | 
                             D3DTEXOPCAPS_SUBTRACT;
 #endif
+    if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) || 
+	GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) || 
+	GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+      pCaps->TextureOpCaps |= D3DTEXOPCAPS_BLENDDIFFUSEALPHA |
+	                      D3DTEXOPCAPS_BLENDTEXTUREALPHA | 
+			      D3DTEXOPCAPS_BLENDFACTORALPHA  |
+			      D3DTEXOPCAPS_BLENDCURRENTALPHA |
+			      D3DTEXOPCAPS_LERP;
+    }
+    if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+      pCaps->TextureOpCaps |= D3DTEXOPCAPS_ADDSMOOTH | 
+			      D3DTEXOPCAPS_MULTIPLYADD |
+			      D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
+			      D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
+                              D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
+    }
                             /* FIXME: Add 
-			      D3DTEXOPCAPS_ADDSMOOTH
-			      D3DTEXOPCAPS_BLENDCURRENTALPHA 
-			      D3DTEXOPCAPS_BLENDDIFFUSEALPHA 
-			      D3DTEXOPCAPS_BLENDFACTORALPHA 
-			      D3DTEXOPCAPS_BLENDTEXTUREALPHA 
-			      D3DTEXOPCAPS_BLENDTEXTUREALPHAPM 
 			      D3DTEXOPCAPS_BUMPENVMAP
 			      D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
-			      D3DTEXOPCAPS_LERP 
-			      D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR 
-			      D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA 
-			      D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR 
-			      D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA
-			      D3DTEXOPCAPS_MULTIPLYADD 
 			      D3DTEXOPCAPS_PREMODULATE */
 
     if (gotContext) {
@@ -636,17 +709,17 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 #else
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
 #endif
-        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
+        TRACE_(d3d_caps)("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
         pCaps->MaxTextureBlendStages = min(8, gl_max);
         pCaps->MaxSimultaneousTextures = min(8, gl_max);
 
         glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
         pCaps->MaxUserClipPlanes = min(MAX_CLIPPLANES, gl_max);
-        TRACE("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", pCaps->MaxUserClipPlanes);
+        TRACE_(d3d_caps)("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", pCaps->MaxUserClipPlanes);
 
         glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
         pCaps->MaxActiveLights = gl_max;
-        TRACE("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
+        TRACE_(d3d_caps)("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
 
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
 	   glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
@@ -657,13 +730,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
            pCaps->MaxVertexBlendMatrixIndex = 1;
         }
 
-#if defined(GL_EXT_texture_filter_anisotropic)
-        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
-        checkGLcall("glGetInterv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT)");
-        pCaps->MaxAnisotropy = gl_max;
-#else
-        pCaps->MaxAnisotropy = 0;
-#endif
+	if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+	  glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+	  checkGLcall("glGetInterv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT)");
+	  pCaps->MaxAnisotropy = gl_max;
+	} else {
+	  pCaps->MaxAnisotropy = 0;
+	}
 
 	glGetFloatv(GL_POINT_SIZE_RANGE, &gl_float);
 	pCaps->MaxPointSize = gl_float;
@@ -697,17 +770,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 #endif
 
     /* If we created a dummy context, throw it away */
-    if (created) {
-        glXMakeCurrent(display, None, NULL);
-        glXDestroyContext(display, gl_context);
-        LEAVE_GL();
-    }
+    WineD3DReleaseFakeGLContext(fake_ctx);
     return D3D_OK;
 }
 
 HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d)\n", This, Adapter);
+    FIXME_(d3d_caps)("(%p)->(Adptr:%d)\n", This, Adapter);
     return D3D_OK;
 }
 
@@ -725,6 +794,8 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     if (This->gl_info.bIsFilled) return ;
     This->gl_info.bIsFilled = 1;
 
+    TRACE_(d3d_caps)("(%p, %p)\n", This, display);
+
     if (NULL != display) {
       test = glXQueryVersion(NULL, &major, &minor);
       This->gl_info.glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
@@ -732,6 +803,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     } else {
       gl_string = glGetString(GL_VENDOR);
     }
+    
     if (strstr(gl_string, "NVIDIA")) {
       This->gl_info.gl_vendor = VENDOR_NVIDIA;
     } else if (strstr(gl_string, "ATI")) {
@@ -739,7 +811,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     } else {
       This->gl_info.gl_vendor = VENDOR_WINE;
     }
-
+   
+    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), This->gl_info.gl_vendor);
+    
     gl_string = glGetString(GL_VERSION);
     switch (This->gl_info.gl_vendor) {
     case VENDOR_NVIDIA:
@@ -757,7 +831,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	tmp[cursor] = 0;
 	major = atoi(tmp);
 	
-	if (*gl_string_cursor != '.') WARN("malformed GL_VERSION:%s", gl_string);
+	if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
 	++gl_string_cursor;
 
 	while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
@@ -773,11 +847,31 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
       major = 0;
       minor = 9;
     }
-    This->gl_info.gl_driver_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
+    This->gl_info.gl_driver_version = MAKEDWORD_VERSION(major, minor);
 
     gl_string = glGetString(GL_RENDERER);
     strcpy(This->gl_info.gl_renderer, gl_string);
 
+    switch (This->gl_info.gl_vendor) {
+    case VENDOR_NVIDIA:
+      if (strstr(This->gl_info.gl_renderer, "GeForce4 Ti")) {
+	This->gl_info.gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
+      } else if (strstr(This->gl_info.gl_renderer, "GeForceFX")) {
+	This->gl_info.gl_card = CARD_NVIDIA_GEFORCEFX_5900ULTRA;
+      } else {
+	This->gl_info.gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
+      }
+      break;
+    case VENDOR_ATI:
+      This->gl_info.gl_card = CARD_ATI_RADEON_8500;
+      break;
+    default:
+      This->gl_info.gl_card = CARD_WINE;
+      break;
+    }
+
+    FIXME_(d3d_caps)("found GL_VERSION  (0x%08lx)\n", This->gl_info.gl_driver_version);
+    FIXME_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(This->gl_info.gl_renderer), This->gl_info.gl_card);
     /* 
      * Initialize openGL extension related variables
      *  with Default values 
@@ -796,15 +890,15 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
     This->gl_info.max_clipplanes = min(MAX_CLIPPLANES, gl_max);
-    TRACE("ClipPlanes support - num Planes=%d\n", gl_max);
+    TRACE_(d3d_caps)("ClipPlanes support - num Planes=%d\n", gl_max);
 
     glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
     This->gl_info.max_lights = gl_max;
-    TRACE("Lights support - max lights=%d\n", gl_max);
+    TRACE_(d3d_caps)("Lights support - max lights=%d\n", gl_max);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
-    TRACE("GL_Extensions reported:\n");  
+    TRACE_(d3d_caps)("GL_Extensions reported:\n");  
     
     if (NULL == GL_Extensions) {
       ERR("   GL_Extensions returns NULL\n");      
@@ -818,105 +912,105 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	  GL_Extensions++;
         }
         memcpy(ThisExtn, Start, (GL_Extensions - Start));
-        TRACE("- %s\n", ThisExtn);
+        TRACE_(d3d_caps)("- %s\n", ThisExtn);
 
 	/**
 	 * ARB 
 	 */
 	if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
 	  This->gl_info.ps_arb_version = PS_VERSION_11;
-	  TRACE(" FOUND: ARB Pixel Shader support - version=%02x\n", This->gl_info.ps_arb_version);
+	  TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - version=%02x\n", This->gl_info.ps_arb_version);
 	  This->gl_info.supported[ARB_FRAGMENT_PROGRAM] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
-	  TRACE(" FOUND: ARB Multisample support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
 	  This->gl_info.supported[ARB_MULTISAMPLE] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
 	  glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-	  TRACE(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
+	  TRACE_(d3d_caps)(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
 	  This->gl_info.supported[ARB_MULTITEXTURE] = TRUE;
 	  This->gl_info.max_textures = min(8, gl_max);
         } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
-	  TRACE(" FOUND: ARB Texture Cube Map support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
 	  This->gl_info.supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
-	  TRACE(" FOUND: ARB Texture Compression support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Texture Compression support\n");
 	  This->gl_info.supported[ARB_TEXTURE_COMPRESSION] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_add") == 0) {
-	  TRACE(" FOUND: ARB Texture Env Add support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Texture Env Add support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_ADD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_combine") == 0) {
-	  TRACE(" FOUND: ARB Texture Env combine support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Texture Env combine support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
-	  TRACE(" FOUND: ARB Dot3 support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Dot3 support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_texture_border_clamp") == 0) {
-	  TRACE(" FOUND: ARB Texture border clamp support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Texture border clamp support\n");
 	  This->gl_info.supported[ARB_TEXTURE_BORDER_CLAMP] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_texture_mirrored_repeat") == 0) {
-	  TRACE(" FOUND: ARB Texture mirrored repeat support\n");
+	  TRACE_(d3d_caps)(" FOUND: ARB Texture mirrored repeat support\n");
 	  This->gl_info.supported[ARB_TEXTURE_MIRRORED_REPEAT] = TRUE;
 	} else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
 	  This->gl_info.vs_arb_version = VS_VERSION_11;
-	  TRACE(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
+	  TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
 	  This->gl_info.supported[ARB_VERTEX_PROGRAM] = TRUE;
 
 	/**
 	 * EXT
 	 */
         } else if (strcmp(ThisExtn, "GL_EXT_fog_coord") == 0) {
-	  TRACE(" FOUND: EXT Fog coord support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Fog coord support\n");
 	  This->gl_info.supported[EXT_FOG_COORD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) { /* handle paletted texture extensions */
-	  TRACE(" FOUND: EXT Paletted texture support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Paletted texture support\n");
 	  This->gl_info.supported[EXT_PALETTED_TEXTURE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_point_parameters") == 0) {
-	  TRACE(" FOUND: EXT Point parameters support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Point parameters support\n");
 	  This->gl_info.supported[EXT_POINT_PARAMETERS] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
-	  TRACE(" FOUND: EXT Secondary coord support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Secondary coord support\n");
 	  This->gl_info.supported[EXT_SECONDARY_COLOR] = TRUE;
-#if defined(GL_EXT_texture_compression_s3tc)
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
-	  TRACE(" FOUND: EXT Texture S3TC compression support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
-#endif
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_add") == 0) {
-	  TRACE(" FOUND: EXT Texture Env Add support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Texture Env Add support\n");
 	  This->gl_info.supported[EXT_TEXTURE_ENV_ADD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_combine") == 0) {
-	  TRACE(" FOUND: EXT Texture Env combine support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Texture Env combine support\n");
 	  This->gl_info.supported[EXT_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
-	  TRACE(" FOUND: EXT Dot3 support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Dot3 support\n");
 	  This->gl_info.supported[EXT_TEXTURE_ENV_DOT3] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
-	  TRACE(" FOUND: EXT Texture Anisotropic filter support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Texture Anisotropic filter support\n");
 	  This->gl_info.supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod") == 0) {
-	  TRACE(" FOUND: EXT Texture LOD support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Texture LOD support\n");
 	  This->gl_info.supported[EXT_TEXTURE_LOD] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod_bias") == 0) {
-	  TRACE(" FOUND: EXT Texture LOD bias support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Texture LOD bias support\n");
 	  This->gl_info.supported[EXT_TEXTURE_LOD_BIAS] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_vertex_weighting") == 0) {
-	  TRACE(" FOUND: EXT Vertex weighting support\n");
+	  TRACE_(d3d_caps)(" FOUND: EXT Vertex weighting support\n");
 	  This->gl_info.supported[EXT_VERTEX_WEIGHTING] = TRUE;
 
 	/**
 	 * NVIDIA 
 	 */
         } else if (strcmp(ThisExtn, "GL_NV_texture_env_combine4") == 0) {
-	  TRACE(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
 	  This->gl_info.supported[NV_TEXTURE_ENV_COMBINE4] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
 	  This->gl_info.ps_nv_version = PS_VERSION_11;
-	  TRACE(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
-	  This->gl_info.supported[NV_FRAGMENT_PROGRAM] = TRUE;
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
+	} else if (strstr(ThisExtn, "GL_NV_fog_distance")) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Fog Distance support\n");
+	  This->gl_info.supported[NV_FOG_DISTANCE] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program1_1")) ? VS_VERSION_11 : VS_VERSION_10);
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program2"))   ? VS_VERSION_20 : VS_VERSION_10);
-	  TRACE(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", This->gl_info.vs_nv_version);
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", This->gl_info.vs_nv_version);
 	  This->gl_info.supported[NV_VERTEX_PROGRAM] = TRUE;
 
 	/**
@@ -924,14 +1018,14 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	 */
 	/** TODO */
         } else if (strcmp(ThisExtn, "GL_ATI_texture_env_combine3") == 0) {
-	  TRACE(" FOUND: ATI Texture Env combine (3) support\n");
+	  TRACE_(d3d_caps)(" FOUND: ATI Texture Env combine (3) support\n");
 	  This->gl_info.supported[ATI_TEXTURE_ENV_COMBINE3] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ATI_texture_mirror_once") == 0) {
-	  TRACE(" FOUND: ATI Texture Mirror Once support\n");
+	  TRACE_(d3d_caps)(" FOUND: ATI Texture Mirror Once support\n");
 	  This->gl_info.supported[ATI_TEXTURE_MIRROR_ONCE] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_vertex_shader") == 0) {
 	  This->gl_info.vs_ati_version = VS_VERSION_11;
-	  TRACE(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", This->gl_info.vs_ati_version);
+	  TRACE_(d3d_caps)(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", This->gl_info.vs_ati_version);
 	  This->gl_info.supported[EXT_VERTEX_SHADER] = TRUE;
 	}
 
@@ -946,7 +1040,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
     if (display != NULL) {
         GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-        TRACE("GLX_Extensions reported:\n");  
+        TRACE_(d3d_caps)("GLX_Extensions reported:\n");  
     
         if (NULL == GLX_Extensions) {
           ERR("   GLX_Extensions returns NULL\n");      
@@ -960,7 +1054,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
               GLX_Extensions++;
             }
             memcpy(ThisExtn, Start, (GLX_Extensions - Start));
-            TRACE("- %s\n", ThisExtn);
+            TRACE_(d3d_caps)("- %s\n", ThisExtn);
             if (*GLX_Extensions == ' ') GLX_Extensions++;
           }
         }

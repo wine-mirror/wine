@@ -474,11 +474,8 @@ ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
 HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
   ICOM_THIS(IDirect3DSurface8Impl,iface);
 
-  if ((This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8) 
-#if defined(GL_EXT_paletted_texture)
-      && !GL_SUPPORT_DEV(EXT_PALETTED_TEXTURE, This->Device)
-#endif
-      ) {
+  if ((This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8) && 
+      !GL_SUPPORT_DEV(EXT_PALETTED_TEXTURE, This->Device)) {
     /**
      * wanted a paletted texture and not really support it in HW 
      * so software emulation code begin
@@ -532,7 +529,6 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
   if (This->myDesc.Format == D3DFMT_DXT1 || 
       This->myDesc.Format == D3DFMT_DXT3 || 
       This->myDesc.Format == D3DFMT_DXT5) {
-#if defined(GL_EXT_texture_compression_s3tc)
     if (GL_SUPPORT_DEV(EXT_TEXTURE_COMPRESSION_S3TC, This->Device)) {
       TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
 	    gl_target, 
@@ -546,21 +542,20 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
       
       ENTER_GL();
 
-      glCompressedTexImage2DARB(gl_target, 
-				gl_level, 
-				D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
-				This->myDesc.Width,
-				This->myDesc.Height,
-				0,
-				This->myDesc.Size,
-				This->allocatedMemory);
+      glCompressedTexImage2D(gl_target, 
+			     gl_level, 
+			     D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
+			     This->myDesc.Width,
+			     This->myDesc.Height,
+			     0,
+			     This->myDesc.Size,
+			     This->allocatedMemory);
       checkGLcall("glCommpressedTexTexImage2D");
 
       LEAVE_GL();
+    } else {
+      FIXME("Using DXT1/3/5 without advertized support\n");
     }
-#else
-    FIXME("Using DXT1/3/5 without advertized support\n");
-#endif
   } else {
     TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
 	  gl_target, 

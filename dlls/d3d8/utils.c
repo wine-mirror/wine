@@ -417,7 +417,6 @@ SHORT D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     GLint retVal = 0;
 
-#if defined(GL_EXT_texture_compression_s3tc)
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
       case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
@@ -428,7 +427,6 @@ GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 	break;
       }
     }
-#endif
 
     if (retVal == 0) {
         switch (fmt) {
@@ -453,7 +451,6 @@ GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     GLenum retVal = 0;
 
-#if defined(GL_EXT_texture_compression_s3tc)
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
       case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
@@ -464,7 +461,6 @@ GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 	break;
       }
     }
-#endif
 
     if (retVal == 0) {
         switch (fmt) {
@@ -490,7 +486,6 @@ GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 GLenum D3DFmt2GLType(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     GLenum retVal = 0;
 
-#if defined(GL_EXT_texture_compression_s3tc)
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
       case D3DFMT_DXT1:             retVal = 0; break;
@@ -501,7 +496,6 @@ GLenum D3DFmt2GLType(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 	break;
       }
     }
-#endif
 
     if (retVal == 0) {
         switch (fmt) {

@@ -44,7 +44,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
-WINE_DECLARE_DEBUG_CHANNEL(fps);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_fps);
 
 IDirect3DVertexShaderImpl*            VertexShaders[64];
 IDirect3DVertexShaderDeclarationImpl* VertexShaderDeclarations[64];
@@ -497,7 +497,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface,
     TRACE("glXSwapBuffers called, Starting new frame\n");
 
     /* FPS support */
-    if (TRACE_ON(fps))
+    if (TRACE_ON(d3d_fps))
     {
         static long prev_time, frames;
 
@@ -505,7 +505,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface,
         frames++;
         /* every 1.5 seconds */
         if (time - prev_time > 1500) {
-            TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
+            TRACE_(d3d_fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
             prev_time = time;
             frames = 0;
         }
@@ -1809,6 +1809,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
         /* FIXME: Range */
         break;
 
+    case D3DLIGHT_DIRECTIONAL:
+        /* Direction */
+        object->lightPosn[0] = -pLight->Direction.x;
+        object->lightPosn[1] = -pLight->Direction.y;
+        object->lightPosn[2] = -pLight->Direction.z;
+        object->lightPosn[3] = 0.0;
+        object->exponent     = 0.0f;
+        object->cutoff       = 180.0f;
+        break;
+
     case D3DLIGHT_SPOT:
         /* Position */
         object->lightPosn[0] = pLight->Position.x;
@@ -1839,16 +1849,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
         object->cutoff = pLight->Phi*90/M_PI;
 
         /* FIXME: Range */
-        break;
-
-    case D3DLIGHT_DIRECTIONAL:
-        /* Direction */
-        object->lightPosn[0] = -pLight->Direction.x;
-        object->lightPosn[1] = -pLight->Direction.y;
-        object->lightPosn[2] = -pLight->Direction.z;
-        object->lightPosn[3] = 0.0;
-        object->exponent     = 0.0f;
-        object->cutoff       = 180.0f;
         break;
 
     default:
@@ -2686,7 +2686,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_FOGENABLE                 :
         {
-            if (Value && This->StateBlock->renderstate[D3DRS_FOGTABLEMODE] != D3DFOG_NONE) {
+	  if (Value/* && This->StateBlock->renderstate[D3DRS_FOGTABLEMODE] != D3DFOG_NONE*/) {
                glEnable(GL_FOG);
                checkGLcall("glEnable GL_FOG");
             } else {
@@ -2695,6 +2695,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             }
         }
         break;
+
+    case D3DRS_RANGEFOGENABLE            :
+        {
+            if (Value) {
+	      TRACE("Enabled RANGEFOG");
+            } else {
+	      TRACE("Disabled RANGEFOG");
+            }
+        }
+	break;
 
     case D3DRS_FOGCOLOR                  :
         {
@@ -2707,16 +2717,37 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         break;
 
     case D3DRS_FOGTABLEMODE              :
-        {
+        { 
+	  glHint(GL_FOG_HINT, GL_NICEST);
 	  switch (Value) {
-	  case D3DFOG_NONE:    /* I don't know what to do here */ break;
+	  case D3DFOG_NONE:    /* I don't know what to do here */ checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
 	  case D3DFOG_EXP:     glFogi(GL_FOG_MODE, GL_EXP); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
 	  case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
 	  case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
 	  default:
 	    FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
 	  }
+	  if (GL_SUPPORT(NV_FOG_DISTANCE)) {
+	    glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
+	  }
         }
+	break;
+
+    case D3DRS_FOGVERTEXMODE             :
+        { 
+	  glHint(GL_FOG_HINT, GL_FASTEST);
+	  switch (Value) {
+	  case D3DFOG_NONE:    /* I don't know what to do here */ checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+	  case D3DFOG_EXP:     glFogi(GL_FOG_MODE, GL_EXP); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+	  case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
+	  case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
+	  default:
+	    FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
+	  }
+	  if (GL_SUPPORT(NV_FOG_DISTANCE)) {
+	    glFogi(GL_FOG_DISTANCE_MODE_NV, This->StateBlock->renderstate[D3DRS_RANGEFOGENABLE] ? GL_EYE_RADIAL_NV : GL_EYE_PLANE_ABSOLUTE_NV);
+	  }
+	}
 	break;
 
     case D3DRS_FOGSTART                  :
@@ -2930,7 +2961,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_LASTPIXEL                 :
     case D3DRS_ZVISIBLE                  :
     case D3DRS_EDGEANTIALIAS             :
-    case D3DRS_RANGEFOGENABLE            :
     case D3DRS_WRAP0                     :
     case D3DRS_WRAP1                     :
     case D3DRS_WRAP2                     :
@@ -2939,7 +2969,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP5                     :
     case D3DRS_WRAP6                     :
     case D3DRS_WRAP7                     :
-    case D3DRS_FOGVERTEXMODE             :
     case D3DRS_LOCALVIEWER               :
     case D3DRS_SOFTWAREVERTEXPROCESSING  :
     case D3DRS_POINTSPRITEENABLE         :

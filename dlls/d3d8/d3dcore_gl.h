@@ -357,6 +357,35 @@ typedef void (APIENTRY * PGLFNGETVERTEXATTRIBFVARBPROC) (GLuint index, GLenum pn
 typedef void (APIENTRY * PGLFNGETVERTEXATTRIBIVARBPROC) (GLuint index, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETVERTEXATTRIBPOINTERVARBPROC) (GLuint index, GLenum pname, GLvoid* *pointer);
 typedef GLboolean (APIENTRY * PGLFNISPROGRAMARBPROC) (GLuint program);
+/* GL_EXT_texture_compression_s3tc */
+#ifndef GL_EXT_texture_compression_s3tc
+#define GL_EXT_texture_compression_s3tc 1
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT   0x83F0
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT  0x83F1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT  0x83F2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT  0x83F3
+#endif
+typedef void (APIENTRY * PGLFNCOMPRESSEDTEXIMAGE3DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PGLFNCOMPRESSEDTEXIMAGE2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PGLFNCOMPRESSEDTEXIMAGE1DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PGLFNCOMPRESSEDTEXSUBIMAGE3DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PGLFNCOMPRESSEDTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PGLFNCOMPRESSEDTEXSUBIMAGE1DPROC) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PGLFNGETCOMPRESSEDTEXIMAGEPROC) (GLenum target, GLint level, void *img);
+/* GL_EXT_stencil_wrap */
+#ifndef GL_EXT_stencil_wrap
+#define GL_EXT_stencil_wrap 1
+#define GL_INCR_WRAP_EXT                  0x8507
+#define GL_DECR_WRAP_EXT                  0x8508
+#endif
+/* GL_NV_fog_distance */
+#ifndef GL_NV_fog_distance
+#define GL_NV_fog_distance 1
+#define GL_FOG_DISTANCE_MODE_NV           0x855A
+#define GL_EYE_RADIAL_NV                  0x855B
+#define GL_EYE_PLANE_ABSOLUTE_NV          0x855C
+/* reuse GL_EYE_PLANE */
+#endif
 
 /*******
  * OpenGL Official Version 
@@ -440,6 +469,7 @@ typedef enum _GL_SupportedExt {
   /* NVIDIA */
   NV_TEXTURE_ENV_COMBINE4,
   NV_FRAGMENT_PROGRAM,
+  NV_FOG_DISTANCE,
   NV_VERTEX_PROGRAM,
   /* ATI */
   ATI_TEXTURE_ENV_COMBINE3,
@@ -568,6 +598,14 @@ typedef struct Direct3DVertexStridedData {
         Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
     } u;
 } Direct3DVertexStridedData;
+
+typedef struct _WineD3D_GLContext {
+  GLXContext   glCtx; 
+  XVisualInfo* visInfo;
+  Display*     display;
+  Drawable     drawable;
+  DWORD        ref;
+} WineD3D_Context;
 
 #define USE_GL_FUNC(type, pfn) type pfn;
 typedef struct _GL_Info {
