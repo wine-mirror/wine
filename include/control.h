@@ -50,7 +50,7 @@ typedef LONG_PTR OAEVENT;
 ICOM_DEFINE(IMediaControl,IDispatch)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaControl_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaControl_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -82,7 +82,7 @@ ICOM_DEFINE(IMediaControl,IDispatch)
 ICOM_DEFINE(IBasicAudio,IDispatch)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBasicAudio_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBasicAudio_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -137,7 +137,7 @@ ICOM_DEFINE(IBasicAudio,IDispatch)
 ICOM_DEFINE(IBasicVideo,IDispatch)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBasicVideo_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBasicVideo_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -227,7 +227,7 @@ ICOM_DEFINE(IBasicVideo,IDispatch)
 ICOM_DEFINE(IVideoWindow,IDispatch)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IVideoWindow_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IVideoWindow_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -291,7 +291,7 @@ ICOM_DEFINE(IVideoWindow,IDispatch)
 ICOM_DEFINE(IMediaEvent,IDispatch)
 #undef INTERFACE
      
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaEvent_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaEvent_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -319,7 +319,7 @@ ICOM_DEFINE(IMediaEvent,IDispatch)
 ICOM_DEFINE(IMediaEventEx,IMediaEvent)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaEventEx_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaEventEx_AddRef(p)   (p)->lpVtbl->AddRef(p)

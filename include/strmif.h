@@ -98,7 +98,7 @@ typedef DWORD_PTR HEVENT;
 ICOM_DEFINE(IPin,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPin_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPin_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -131,7 +131,7 @@ ICOM_DEFINE(IPin,IUnknown)
 ICOM_DEFINE(IEnumPins,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumPins_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumPins_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -155,7 +155,7 @@ ICOM_DEFINE(IEnumPins,IUnknown)
 ICOM_DEFINE(IMediaFilter,IPersist)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaFilter_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaFilter_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -182,7 +182,7 @@ ICOM_DEFINE(IMediaFilter,IPersist)
 ICOM_DEFINE(IBaseFilter,IMediaFilter)
 #undef INTERFACE
      
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBaseFilter_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBaseFilter_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -218,7 +218,7 @@ ICOM_DEFINE(IBaseFilter,IMediaFilter)
 ICOM_DEFINE(IFilterGraph,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterGraph_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterGraph_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -244,7 +244,7 @@ ICOM_DEFINE(IFilterGraph,IUnknown)
 ICOM_DEFINE(IEnumFilters,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumFilters_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumFilters_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -266,7 +266,7 @@ ICOM_DEFINE(IEnumFilters,IUnknown)
 ICOM_DEFINE(IEnumMediaTypes,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumMediaTypes_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumMediaTypes_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -288,7 +288,7 @@ ICOM_DEFINE(IEnumMediaTypes,IUnknown)
 ICOM_DEFINE(IReferenceClock,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IReferenceClock_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IReferenceClock_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -313,7 +313,7 @@ ICOM_DEFINE(IReferenceClock,IUnknown)
 ICOM_DEFINE(IGraphBuilder,IFilterGraph)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IGraphBuilder_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGraphBuilder_AddRef(p)   (p)->lpVtbl->AddRef(p)
@@ -360,7 +360,7 @@ ICOM_DEFINE(IGraphBuilder,IFilterGraph)
 ICOM_DEFINE(IMediaSeeking,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaSeeking_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaSeeking_AddRef(p)   (p)->lpVtbl->AddRef(p)
