@@ -1819,7 +1819,12 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
         }
     }
 
-    if( !descr->lphc ) SetFocus( wnd->hwndSelf );
+    if( !descr->lphc )
+    {
+	HWND hwndFocus = GetFocus();
+        if ((hwndFocus != wnd->hwndSelf) && (hwndFocus != descr->owner))
+		SetFocus( wnd->hwndSelf );
+    }
     else SetFocus( (descr->lphc->hWndEdit) ? descr->lphc->hWndEdit
                                              : descr->lphc->self->hwndSelf ) ;
 
@@ -2638,6 +2643,10 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
             LISTBOX_RepaintItem( wnd, descr, descr->focus_item, ODA_FOCUS );
         return LB_OKAY;
 
+    case WM_MOUSEACTIVATE:
+    case WM_ACTIVATE:
+        return MA_NOACTIVATE; 
+	
     case WM_DESTROY:
         return LISTBOX_Destroy( wnd, descr );
 
