@@ -131,6 +131,7 @@ typedef struct
     BOOL                isBook;
     WINHELP_WINDOW*     active_win;
     WINHELP_WINDOW*     win_list;
+    WNDPROC             button_proc;
 } WINHELP_GLOBALS;
 
 extern WINHELP_GLOBALS Globals;

@@ -4,6 +4,7 @@
  * Copyright    1996 Ulrich Schmid <uschmid@mail.hh.provi.de>
  *              2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *              2002 Eric Pouech <eric.pouech@wanadoo.fr>
+ *              2004 Ken Belleau <jamez@ivic.qc.ca>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,7 +43,9 @@ static BOOL    WINHELP_RegisterWinClasses(void);
 static LRESULT CALLBACK WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_TextWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK WINHELP_ButtonWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND, UINT, WPARAM, LPARAM);
 static void    WINHELP_CheckPopup(UINT);
 static BOOL    WINHELP_SplitLines(HWND hWnd, LPSIZE);
 static void    WINHELP_InitFonts(HWND hWnd);
@@ -51,7 +54,7 @@ static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
-WINHELP_GLOBALS Globals = {3, 0, 0, 0, 1, 0, 0};
+WINHELP_GLOBALS Globals = {3, 0, 0, 0, 1, 0, 0, NULL};
 
 /***********************************************************************
  *
@@ -249,7 +252,7 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_text.lpszClassName       = TEXT_WIN_CLASS_NAME;
 
     class_shadow = class_main;
-    class_shadow.lpfnWndProc       = DefWindowProc;
+    class_shadow.lpfnWndProc       = WINHELP_ShadowWndProc;
     class_shadow.hbrBackground     = GetStockObject(GRAY_BRUSH);
     class_shadow.lpszClassName     = SHADOW_WIN_CLASS_NAME;
 
@@ -530,6 +533,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
             win->histIndex = win->backIndex = 1;
             win->history[0] = win->back[0] = page;
             page->file->wRefCount += 2;
+            strcpy(wi->caption, page->file->lpszTitle);
         }
     }
 
@@ -570,7 +574,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     WINHELP_WINDOW *win;
     WINHELP_BUTTON *button;
     RECT rect, button_box_rect;
-    INT  text_top;
+    INT  text_top, curPos, min, max, dy, keyDelta;
 
     WINHELP_CheckPopup(msg);
 
@@ -653,6 +657,49 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         break;
     case WM_COPYDATA:
         return WINHELP_HandleCommand((HWND)wParam, lParam);
+
+    case WM_KEYDOWN:
+        keyDelta = 0;
+
+        switch (wParam)
+        {
+        case VK_UP:
+        case VK_DOWN:
+            keyDelta = GetSystemMetrics(SM_CXVSCROLL);
+            if (wParam == VK_UP)
+                keyDelta = -keyDelta;
+
+        case VK_PRIOR:
+        case VK_NEXT:
+            win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+            curPos = GetScrollPos(win->hTextWnd, SB_VERT);
+            GetScrollRange(win->hTextWnd, SB_VERT, &min, &max);
+
+            if (keyDelta == 0)
+            {            
+                GetClientRect(win->hTextWnd, &rect);
+                keyDelta = (rect.bottom - rect.top) / 2;
+                if (wParam == VK_PRIOR)
+                    keyDelta = -keyDelta;
+            }
+
+            curPos += keyDelta;
+            if (curPos > max)
+                 curPos = max;
+            else if (curPos < min)
+                 curPos = min;
+
+            dy = GetScrollPos(win->hTextWnd, SB_VERT) - curPos;
+            SetScrollPos(win->hTextWnd, SB_VERT, curPos, TRUE);
+            ScrollWindow(win->hTextWnd, 0, dy, NULL, NULL);
+            UpdateWindow(win->hTextWnd);
+            return 0;
+
+        case VK_ESCAPE:
+            MACRO_Exit();
+            return 0;
+        }
+        break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
@@ -691,11 +738,18 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
             HDC  hDc;
             SIZE textsize;
             if (!button->hWnd)
+            {
                 button->hWnd = CreateWindow(STRING_BUTTON, (LPSTR) button->lpszName,
                                             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
                                             0, 0, 0, 0,
                                             hWnd, (HMENU) button->wParam,
                                             Globals.hInstance, 0);
+                if (button->hWnd) {
+                    if (Globals.button_proc == NULL)
+                        Globals.button_proc = (WNDPROC) GetWindowLong(button->hWnd, GWL_WNDPROC);
+                    SetWindowLong(button->hWnd, GWL_WNDPROC, (LONG) WINHELP_ButtonWndProc);
+                }
+            }
             hDc = GetDC(button->hWnd);
             GetTextExtentPoint(hDc, button->lpszName,
                                lstrlen(button->lpszName), &textsize);
@@ -725,6 +779,22 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
     }
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+/***********************************************************************
+ *
+ *           WINHELP_ButtonWndProc
+ */
+static LRESULT CALLBACK WINHELP_ButtonWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    WINHELP_WINDOW* win;
+
+    if (msg == WM_LBUTTONUP)
+    {
+        win = (WINHELP_WINDOW*) GetWindowLong(GetParent(hWnd), 0);
+        SetFocus(win->hMainWnd);
+    }
+    return CallWindowProc(Globals.button_proc, hWnd, msg, wParam, lParam);
 }
 
 /***********************************************************************
@@ -1099,6 +1169,16 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
 
 /***********************************************************************
  *
+ *           WINHELP_ShadowWndProc
+ */
+static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    WINHELP_CheckPopup(msg);
+    return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+/***********************************************************************
+ *
  *           SetupText
  */
 static void WINHELP_SetupText(HWND hWnd)
@@ -1116,7 +1196,11 @@ static void WINHELP_SetupText(HWND hWnd)
         WINHELP_SplitLines(hWnd, &newsize);
         SetScrollRange(hWnd, SB_VERT, 0, rect.top + newsize.cy - rect.bottom, TRUE);
     }
-    else SetScrollPos(hWnd, SB_VERT, 0, FALSE);
+    else
+    {
+        SetScrollPos(hWnd, SB_VERT, 0, FALSE);
+        SetScrollRange(hWnd, SB_VERT, 0, 0, FALSE);
+    }
 
     ReleaseDC(hWnd, hDc);
 }
@@ -1652,7 +1736,7 @@ WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM
     POINT mouse;
     WINHELP_LINE      *line;
     WINHELP_LINE_PART *part;
-    int scroll_pos = GetScrollPos(win->hMainWnd, SB_VERT);
+    int scroll_pos = GetScrollPos(win->hTextWnd, SB_VERT);
 
     mouse.x = LOWORD(lParam);
     mouse.y = HIWORD(lParam);
