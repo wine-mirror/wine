@@ -3,7 +3,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wineoss
+MODULE    = wineoss.drv
 
 SPEC_SRCS = \
 	wineoss.spec

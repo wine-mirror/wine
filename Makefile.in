@@ -191,7 +191,7 @@ LIBOBJS = \
 	dlls/winmm/mciwave/mciwave.drv.o \
 	dlls/winmm/midimap/midimap.drv.o \
 	dlls/winmm/wavemap/msacm.drv.o \
-	dlls/winmm/wineoss/wineoss.o \
+	dlls/winmm/wineoss/wineoss.drv.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \
