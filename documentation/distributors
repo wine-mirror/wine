@@ -1,0 +1,152 @@
+		A small WINE distribution guide.
+
+While packaging WINE for one of the Linux distributions I came across
+several points which have been clarified yet. Particular a how-to for WINE
+packaging distributors is missing. This document tries to give a brief
+overview over the rationales I thought up and how I tried to implement it.
+(While the examples use "rpm" most of this stuff can be applied to other
+packagers too.)
+
+1. Rationales
+
+A WINE install should:
+a. Not have a world writeable directory (-tree).
+b. Require only as much user input as possible. It would be very good if it
+   would not require any at all. Just let the system administrator do "rpm
+   -i wine.rpm" and let any user be able to run "wine sol.exe" instantly.
+c. Give the user as much flexibility to install his own applications, do
+   his own configuring etc.
+d. Come as preconfigured as possible, so the user does not need to change
+   any configuration files.
+e. Use only as much diskspace as needed per user.
+
+A WINE install needs:
+f. A writeable C:\ directory structure on a per user basis. Applications do
+   dump .ini files into c:\windows, installers dump .exe, .dll and more into
+   c:\windows\ and subdirectories or into C:\Program Files\.
+g. The .exe and .dll from a global read-only Windows installation to be 
+   found by applications.
+h. Some special .dll and .exe files in the windows\system directory, since
+   applications directly check for their presence.
+
+
+2. Implementation
+
+2.1 Building the package
+
+WINE is configured the usual way (depending on your buildenvironment).
+The "prefix" is chosen using your application placement policy
+(/usr/,/usr/X11R6/, /opt/wine/ or similar).  The configuration files
+(wine.conf, wineuser.reg, winesystem.reg) are targeted for /etc/wine/
+(rationale: FHS 2.0, multiple readonly configuration files of a package).
+
+Example (split this into %build and %install section for rpm):
+	CFLAGS=$RPM_OPT_FLAGS \
+	./configure --prefix=/usr/X11R6 --sysconfdir=/etc/wine/ --enable-dll
+	make
+	make install prefix=$BUILDROOT/usr/X11R6/
+	install -d /etc/wine/
+	install -m 644 wine.ini /etc/wine/wine.conf
+
+Here we unfortunately do need to create wineuser.reg and winesystem.reg
+from the WINE distributed winedefault.reg. This can be done using
+./regapi once for one example user and the reusing his .wine/user.reg
+and .wine/system.reg files. [FIXME: this needs to be done better]
+
+	install -m 644 winesytem.reg /etc/wine/
+	install -m 644 wineuser.reg /etc/wine/
+
+You will need to package the files:
+	$prefix/bin/wine, $prefix/bin/dosmod, $prefix/lib/libwine.so.1.0,
+	$prefix/man/man1/wine.1, $prefix/include/wine/*,
+
+	%config /etc/wine/*
+	%doc ... choose from the toplevel directory and documentation/
+
+Do not forget ldconfig for the postinstall, the postuninstall and 'rm
+libwine.so' for the postuninstall.
+
+2.2 Creating a good default configuration file
+
+For the rationales of needing as less input from the user as possible 
+arises the need for a very good configuration file. The one supplied
+with WINE is currently lacking. We need:
+
+- [Drive X]:
+  + A for the floppy. Specify your distributions default floppy mountpoint
+    here. (Path=/auto/floppy)
+  + C for the C:\ directory. Here we use the users homedirectory, for most
+    applications do see C:\ as root-writeable directory of every windows
+    installation and this basically is it in the UNIX-user context.
+    (Path=${HOME})
+  + R for the CD-Rom drive. Specify your distributions default CD-ROM drives
+    mountpoint here. (Path=/auto/cdrom)
+  + T for temporary storage. We do use /tmp/ (rationale: between process
+    temporary data belongs to /tmp/, FHS 2.0)
+  + W for the original Windows installation. This drive points to the
+    windows\ subdirectory of the original windows installation. This avoids
+    problems with renamed 'windows' directories (as for instance 'lose95',
+    'win' or 'sys\win95'). During compile/package/install we leave this 
+    to be '/', it has to be configured after the package install.
+  + Z for the UNIX Root directory (Path=/). This avoids any problems with
+    "could not find drive for current directory" users occasionaly complain
+    about in the newsgroup and the ircchannel. It also makes the whole
+    directory structure browseable. The type of Z should be network, so
+    applications expect it to be readonly.
+
+- [wine]:
+  Windows=c:\windows\ 		(the windows/ subdirectory in the users
+  				 homedirectory)
+  System=c:\windows\system\	(the windows/system subdirectory in the users
+  				 homedirectory)
+  Path=c:\windows;c:\windows\system;c:\windows\system32;w:\;w:\system;w:\system32;
+  ; Using this trick we have in fact two windows installations in one, we
+  ; get the stuff from the readonly installation and can write to our own.
+  Temp=t:\			(the TEMP directory)
+- [Tweak.Layout]
+  WineLook=win95		(just the coolest look ;)
+- Possibly modify the [spooler], [serialports] and [parallelports] sections.
+(FIXME: possibly more, including printer stuff)
+
+Add this prepared configuration file to the package.
+
+2.3 Installing WINE for the system administrator
+
+Install the package using the usual packager "rpm -i wine.rpm".
+You may edit /etc/wine/wine.conf, [Drive W], to point to a possible windows
+installation right after the install. Thats it.
+
+2.4 Installing WINE for the user
+
+The user will need to run a setup script before the first invocation of
+WINE. This script should:
+- Copy /etc/wine/wine.conf for user modification.
+- Allow specification of the original windows installation to use (which
+  modifies the copied wine.conf file).
+- Create the windows directory structure (c:\windows,c:\windows\system,
+  c:\Program Files,c:\Desktop,etc...)
+
+  (FIXME: Not sure this is needed for all files:)
+- Symlink all .dll and .exe files from the original windows installation to
+  the windows directory. Why? Some program reference "%windowsdir%/file.dll"
+  or "%systemdir%/file.dll" directly and fail if there are not present.
+  This will give a huge number of symlinks, yes. However, if an installer
+  later overwrites on of those files, it will overwrite the symlink (so
+  that the file now lies in the windows/ subdirectory).
+
+- On later invocation the script might want to compare regular files in 
+  the users windows directories and in the global windows directories and
+  replace same files by symlinks (to avoid diskspace problems).
+
+Done.
+
+This procedure requires:
+- Much thought and work from the packager (1x)
+- No work for the sysadmin. Well except one "rpm -i" and possible one edit
+  of the configuration file.
+- Some or no work from the user, except running the per-user setup script
+  once.
+=> It scales well and suffices most of the rationales.
+
+				Marcus Meissner <marcus@jet.franken.de>
+
