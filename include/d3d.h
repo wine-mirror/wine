@@ -1,6 +1,8 @@
 #ifndef _WINE_D3D_H
 #define _WINE_D3D_H
 
+#include "ddraw.h"
+
 typedef LPVOID LPDIRECT3DMATERIAL,LPDIRECT3DVIEWPORT;
 typedef LPVOID LPDIRECT3DMATERIAL2,LPDIRECT3DVIEWPORT2;
 typedef LPVOID LPDIRECT3DDEVICE2;
@@ -277,6 +279,8 @@ typedef float D3DVALUE,*LPD3DVALUE;
 #define D3DDivide(a, b)		(float)((double) (a) / (double) (b))
 #define D3DMultiply(a, b)	((a) * (b))
 
+#if 0
+// This causes lots o' problems
 typedef struct {
 	union {
 		D3DVALUE x;
@@ -292,7 +296,13 @@ typedef struct {
 	} z;
 	/* the c++ variant has operator overloads etc. too */
 } D3DVECTOR,*LPD3DVECTOR;
+#endif
 
+typedef struct _D3DVECTOR {
+	D3DVALUE	x;
+	D3DVALUE	y;
+	D3DVALUE	z;
+} D3DVECTOR,*LPD3DVECTOR;
 
 typedef enum {
     D3DLIGHT_POINT          = 1,
