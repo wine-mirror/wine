@@ -36,10 +36,13 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 	                                        HIBYTE(LOWORD(wma->ash_audio.fccType)),
 	                                        LOBYTE(HIWORD(wma->ash_audio.fccType)),
 	                                        HIBYTE(HIWORD(wma->ash_audio.fccType)));
-    TRACE("ash.fccHandler='%c%c%c%c'\n",	LOBYTE(LOWORD(wma->ash_audio.fccHandler)),
+    if (wma->ash_audio.fccHandler) /* not all streams specify a handler */
+        TRACE("ash.fccHandler='%c%c%c%c'\n",	LOBYTE(LOWORD(wma->ash_audio.fccHandler)),
 	                                        HIBYTE(LOWORD(wma->ash_audio.fccHandler)),
 	                                        LOBYTE(HIWORD(wma->ash_audio.fccHandler)),
 	                                        HIBYTE(HIWORD(wma->ash_audio.fccHandler)));
+    else
+        TRACE("ash.fccHandler=0, no handler specified\n");
     TRACE("ash.dwFlags=%ld\n", 			wma->ash_audio.dwFlags);
     TRACE("ash.wPriority=%d\n", 		wma->ash_audio.wPriority);
     TRACE("ash.wLanguage=%d\n", 		wma->ash_audio.wLanguage);
