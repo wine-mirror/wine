@@ -67,9 +67,6 @@ BOOL MAIN_MainInit(void)
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
 
-    /* Load the configuration file */
-    if (!PROFILE_LoadWineIni()) return FALSE;
-
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return FALSE;
 

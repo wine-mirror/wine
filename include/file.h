@@ -109,7 +109,6 @@ extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            int skip, WIN32_FIND_DATAA *entry );
 
 /* profile.c */
-extern int PROFILE_LoadWineIni(void);
 extern void PROFILE_UsageWineIni(void);
 extern int PROFILE_GetWineIniString( LPCWSTR section, LPCWSTR key_name,
                                      LPCWSTR def, LPWSTR buffer, int len );

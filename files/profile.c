@@ -83,13 +83,7 @@ static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
 
 #define CurProfile (MRUProfile[0])
 
-/* wine.ini config file registry root */
-static HKEY wine_profile_key;
-
 #define PROFILE_MAX_LINE_LEN   1024
-
-/* Wine profile: the profile file being used */
-static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
@@ -897,6 +891,41 @@ static BOOL PROFILE_SetString( LPCWSTR section_name, LPCWSTR key_name,
 
 
 /***********************************************************************
+ *           get_profile_key
+ */
+static HKEY get_profile_key(void)
+{
+    static HKEY profile_key;
+
+    if (!profile_key)
+    {
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+        HKEY hkey;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\Software\\Wine\\Wine\\Config" ) ||
+            NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL ))
+        {
+            ERR("Cannot create config registry key\n" );
+            ExitProcess( 1 );
+        }
+        RtlFreeUnicodeString( &nameW );
+
+        if (InterlockedCompareExchangePointer( (void **)&profile_key, hkey, 0 ))
+            NtClose( hkey );  /* somebody beat us to it */
+    }
+    return profile_key;
+}
+
+
+/***********************************************************************
  *           PROFILE_GetWineIniString
  *
  * Get a config string from the wine.ini file.
@@ -910,7 +939,7 @@ int PROFILE_GetWineIniString( LPCWSTR section, LPCWSTR key_name,
     UNICODE_STRING nameW;
 
     attr.Length = sizeof(attr);
-    attr.RootDirectory = wine_profile_key;
+    attr.RootDirectory = get_profile_key();
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
@@ -985,54 +1014,6 @@ int  PROFILE_GetWineIniBool( LPCWSTR section, LPCWSTR key_name, int def )
 		    retval ? "TRUE" : "FALSE");
 
     return retval;
-}
-
-
-/***********************************************************************
- *           PROFILE_LoadWineIni
- *
- * Load the old .winerc file.
- */
-int PROFILE_LoadWineIni(void)
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    char buffer[MAX_PATHNAME_LEN];
-    const char *p;
-    FILE *f;
-    HKEY hKeySW;
-    DWORD disp;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    /* make sure HKLM\\Software\\Wine\\Wine exists as non-volatile key */
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\Software\\Wine\\Wine" ) ||
-        NtCreateKey( &hKeySW, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &disp ))
-    {
-        ERR("Cannot create config registry key\n" );
-        ExitProcess( 1 );
-    }
-    RtlFreeUnicodeString( &nameW );
-    NtClose( hKeySW );
-
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\Software\\Wine\\Wine\\Config" ) ||
-        NtCreateKey( &wine_profile_key, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create config registry key\n" );
-        ExitProcess( 1 );
-    }
-    RtlFreeUnicodeString( &nameW );
-
-    if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
-
-    MESSAGE( "Can't open configuration file %s/config\n", wine_get_config_dir() );
-    return 0;
 }
 
 
