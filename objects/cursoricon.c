@@ -1565,9 +1565,17 @@ HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
 }
 
 /**********************************************************************
- *          GetIconInfo		(USER32.242)
+ *          GetIconInfo16       (USER.395)
  */
-BOOL32 WINAPI GetIconInfo(HICON32 hIcon,LPICONINFO iconinfo) {
+BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO iconinfo)
+{
+    return (BOOL16)GetIconInfo32((HICON32)hIcon, iconinfo);
+}
+
+/**********************************************************************
+ *          GetIconInfo32		(USER32.242)
+ */
+BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO iconinfo) {
     CURSORICONINFO	*ciconinfo;
 
     ciconinfo = GlobalLock16(hIcon);

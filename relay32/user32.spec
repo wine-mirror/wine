@@ -243,7 +243,7 @@ init	MAIN_UserInit
 239 stdcall GetDoubleClickTime() GetDoubleClickTime32
 240 stdcall GetFocus() GetFocus32
 241 stdcall GetForegroundWindow() GetForegroundWindow32
-242 stdcall GetIconInfo(long ptr) GetIconInfo
+242 stdcall GetIconInfo(long ptr) GetIconInfo32
 243 stub GetInputDesktop
 244 stdcall GetInputState() GetInputState32
 245 stdcall GetInternalWindowPos(long ptr ptr) GetInternalWindowPos32

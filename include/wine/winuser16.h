@@ -352,6 +352,7 @@ INT16       WINAPI GetDlgItemText16(HWND16,INT16,SEGPTR,UINT16);
 UINT16      WINAPI GetDoubleClickTime16(void);
 HWND16      WINAPI GetFocus16(void);
 HWND16      WINAPI GetForegroundWindow16(void);
+BOOL16      WINAPI GetIconInfo16(HICON16,LPICONINFO);
 BOOL16      WINAPI GetInputState16(void);
 UINT16      WINAPI GetInternalWindowPos16(HWND16,LPRECT16,LPPOINT16);
 INT16       WINAPI GetKeyboardLayoutName16(LPSTR);

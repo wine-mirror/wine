@@ -1431,7 +1431,7 @@ ImageList_LoadImage32A (HINSTANCE32 hi, LPCSTR lpbmp, INT32 cx,	INT32 cGrow,
         ICONINFO ii;
         BITMAP32 bmp;
 
-        GetIconInfo (handle, &ii);
+        GetIconInfo32 (handle, &ii);
         GetObject32A (ii.hbmColor, sizeof(BITMAP32), (LPVOID)&bmp);
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight, 
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
@@ -1495,7 +1495,7 @@ ImageList_LoadImage32W (HINSTANCE32 hi, LPCWSTR lpbmp, INT32 cx, INT32 cGrow,
         ICONINFO ii;
         BITMAP32 bmp;
 
-        GetIconInfo (handle, &ii);
+        GetIconInfo32 (handle, &ii);
         GetObject32A (ii.hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight, 
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
@@ -1876,7 +1876,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     if ((i >= himl->cCurImage) || (i < -1))
 	return -1;
 
-    GetIconInfo (hIcon, &ii);
+    GetIconInfo32 (hIcon, &ii);
     if (ii.hbmMask == 0)
 	ERR (imagelist, "no mask!\n");
     if (ii.hbmColor == 0)

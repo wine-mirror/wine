@@ -363,7 +363,7 @@ file	user.exe
 390 pascal16 CopyImage(word word word word word) CopyImage16
 391 stub SignalProc32
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
-395 stub GetIconInfo
+395 pascal16 GetIconInfo(word long) GetIconInfo16
 397 pascal16 RegisterClassEx(ptr) RegisterClassEx16
 398 pascal16 GetClassInfoEx(word segstr ptr) GetClassInfoEx16
 399 pascal16 ChildWindowFromPointEx(word long word) ChildWindowFromPointEx16
