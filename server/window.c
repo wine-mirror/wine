@@ -836,15 +836,15 @@ DECL_HANDLER(get_window_properties)
 /* helper for set_global_windows request */
 static int get_new_global_window( struct window **win, user_handle_t handle )
 {
-    if (*win && (*win)->thread != current)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
     if (!handle)
     {
         *win = NULL;
         return 1;
+    }
+    else if (*win)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
     }
     *win = get_window( handle );
     return (*win != NULL);

@@ -563,6 +563,128 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(hhook, nCode, wParam, lParam);
 }
 
+static void test_shell_window()
+{
+    BOOL ret;
+    DWORD error;
+    HMODULE hinst, hUser32;
+    BOOL (WINAPI*SetShellWindow)(HWND);
+    BOOL (WINAPI*SetShellWindowEx)(HWND, HWND);
+    HWND hwnd1, hwnd2, hwnd3, hwnd4, hwnd5;
+    HWND shellWindow, nextWnd;
+
+    shellWindow = GetShellWindow();
+    hinst = GetModuleHandle(0);
+    hUser32 = GetModuleHandleA("user32");
+
+    SetShellWindow = (void *)GetProcAddress(hUser32, "SetShellWindow");
+    SetShellWindowEx = (void *)GetProcAddress(hUser32, "SetShellWindowEx");
+
+    trace("previous shell window: %p\n", shellWindow);
+
+    if (shellWindow) {
+        DWORD pid;
+        HANDLE hProcess;
+
+        ret = DestroyWindow(shellWindow);
+        error = GetLastError();
+
+        ok(!ret, "DestroyWindow(shellWindow)\n");
+        /* passes on Win XP, but not on Win98
+        ok(error==ERROR_ACCESS_DENIED, "ERROR_ACCESS_DENIED after DestroyWindow(shellWindow)\n"); */
+
+        /* close old shell instance */
+        GetWindowThreadProcessId(shellWindow, &pid);
+        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+        ret = TerminateProcess(hProcess, 0);
+        ok(ret, "termination of previous shell process failed: GetLastError()=%ld", GetLastError());
+        WaitForSingleObject(hProcess, INFINITE);    /* wait for termination */
+        CloseHandle(hProcess);
+    }
+
+    hwnd1 = CreateWindowEx(0, TEXT("#32770"), TEXT("TEST1"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 100, 100, 300, 200, 0, 0, hinst, 0);
+    trace("created window 1: %p\n", hwnd1);
+
+    ret = SetShellWindow(hwnd1);
+    ok(ret, "first call to SetShellWindow(hwnd1)\n");
+    shellWindow = GetShellWindow();
+    ok(shellWindow==hwnd1, "wrong shell window: %p", shellWindow);
+
+    ret = SetShellWindow(hwnd1);
+    ok(!ret, "second call to SetShellWindow(hwnd1)\n");
+
+    ret = SetShellWindow(0);
+    error = GetLastError();
+    /* passes on Win XP, but not on Win98
+    ok(!ret, "reset shell window by SetShellWindow(0)\n");
+    ok(error==ERROR_INVALID_WINDOW_HANDLE, "ERROR_INVALID_WINDOW_HANDLE after SetShellWindow(0)\n"); */
+
+    ret = SetShellWindow(hwnd1);
+    /* passes on Win XP, but not on Win98
+    ok(!ret, "third call to SetShellWindow(hwnd1)\n"); */
+
+    todo_wine
+    {
+        SetWindowLong(hwnd1, GWL_EXSTYLE, GetWindowLong(hwnd1,GWL_EXSTYLE)|WS_EX_TOPMOST);
+        ret = GetWindowLong(hwnd1,GWL_EXSTYLE)&WS_EX_TOPMOST? TRUE: FALSE;
+        ok(!ret, "SetWindowExStyle(hwnd1, WS_EX_TOPMOST)\n");
+    }
+
+    ret = DestroyWindow(hwnd1);
+    ok(ret, "DestroyWindow(hwnd1)\n");
+
+    hwnd2 = CreateWindowEx(WS_EX_TOPMOST, TEXT("#32770"), TEXT("TEST2"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 150, 250, 300, 200, 0, 0, hinst, 0);
+    trace("created window 2: %p\n", hwnd2);
+    ret = SetShellWindow(hwnd2);
+    ok(!ret, "SetShellWindow(hwnd2) with WS_EX_TOPMOST");
+
+    hwnd3 = CreateWindowEx(0, TEXT("#32770"), TEXT("TEST3"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 200, 400, 300, 200, 0, 0, hinst, 0);
+    trace("created window 3: %p\n", hwnd3);
+
+    hwnd4 = CreateWindowEx(0, TEXT("#32770"), TEXT("TEST4"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 250, 500, 300, 200, 0, 0, hinst, 0);
+    trace("created window 4: %p\n", hwnd4);
+
+    nextWnd = GetWindow(hwnd4, GW_HWNDNEXT);
+    ok(nextWnd==hwnd3, "wrong next window for hwnd4: %p - expected hwnd3\n", nextWnd);
+
+    ret = SetShellWindow(hwnd4);
+    ok(ret, "SetShellWindow(hwnd4)\n");
+    shellWindow = GetShellWindow();
+    ok(shellWindow==hwnd4, "wrong shell window: %p - expected hwnd4", shellWindow);
+
+    nextWnd = GetWindow(hwnd4, GW_HWNDNEXT);
+    ok(nextWnd==0, "wrong next window for hwnd4: %p - expected 0\n", nextWnd);
+
+    ret = SetWindowPos(hwnd4, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "SetWindowPos(hwnd4, HWND_TOPMOST)\n");
+
+    ret = SetWindowPos(hwnd4, hwnd3, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "SetWindowPos(hwnd4, hwnd3");
+
+    ret = SetShellWindow(hwnd3);
+    ok(!ret, "SetShellWindow(hwnd3)\n");
+    shellWindow = GetShellWindow();
+    ok(shellWindow==hwnd4, "wrong shell window: %p - expected hwnd4", shellWindow);
+
+    hwnd5 = CreateWindowEx(0, TEXT("#32770"), TEXT("TEST5"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 300, 600, 300, 200, 0, 0, hinst, 0);
+    trace("created window 5: %p\n", hwnd5);
+    ret = SetWindowPos(hwnd4, hwnd5, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "SetWindowPos(hwnd4, hwnd5)\n");
+
+    todo_wine
+    {
+        nextWnd = GetWindow(hwnd4, GW_HWNDNEXT);
+        ok(nextWnd==0, "wrong next window for hwnd4 after SetWindowPos(): %p - expected 0\n", nextWnd);
+    }
+
+    /* destroy test windows */
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd3);
+    DestroyWindow(hwnd4);
+    DestroyWindow(hwnd5);
+}
+
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -586,6 +708,6 @@ START_TEST(win)
     assert( hwndMain2 );
 
     test_parent_owner();
-
+    test_shell_window();
     UnhookWindowsHookEx(hhook);
 }
