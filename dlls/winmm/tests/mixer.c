@@ -20,7 +20,6 @@
 
 /*
  * To Do:
- * examine and update control details
  * add interactive tests
  */
 
@@ -42,6 +41,12 @@
 # define S1(x) (x).s1
 #else
 # define S1(x) (x)
+#endif
+
+#ifdef NONAMELESSUNION
+# define U(x) (x).u
+#else
+# define U(x) (x)
 #endif
 
 static const char * line_flags(DWORD fdwLine)
@@ -181,6 +186,176 @@ static const char * control_flags(DWORD fdwControl)
 
     return flags;
 }
+
+static void mixer_test_controlA(HMIXER mix, LPMIXERCONTROLA control)
+{
+    MMRESULT rc;
+
+    if ((control->dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME) ||
+        (control->dwControlType == MIXERCONTROL_CONTROLTYPE_UNSIGNED)) {
+        MIXERCONTROLDETAILS details;
+        MIXERCONTROLDETAILS_UNSIGNED value;
+
+        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+        details.dwControlID = control->dwControlID;
+        details.cChannels = 1;
+        U(details).cMultipleItems = 0;
+        details.paDetails = &value;
+        details.cbDetails = sizeof(value);
+
+        /* read the current control value */
+        rc=mixerGetControlDetails((HMIXEROBJ)mix,&details,MIXER_GETCONTROLDETAILSF_VALUE);
+        ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+           "MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        if (rc==MMSYSERR_NOERROR) {
+            MIXERCONTROLDETAILS new_details;
+            MIXERCONTROLDETAILS_UNSIGNED new_value;
+
+            if (winetest_interactive)
+                trace("            Value=%ld\n",value.dwValue);
+
+            if (value.dwValue + control->Metrics.cSteps < S1(control->Bounds).dwMaximum)
+                new_value.dwValue = value.dwValue + control->Metrics.cSteps;
+            else
+                new_value.dwValue = value.dwValue - control->Metrics.cSteps;
+
+            new_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+            new_details.dwControlID = control->dwControlID;
+            new_details.cChannels = 1;
+            U(new_details).cMultipleItems = 0;
+            new_details.paDetails = &new_value;
+            new_details.cbDetails = sizeof(new_value);
+
+            /* change the control value by one step */
+            rc=mixerSetControlDetails((HMIXEROBJ)mix,&new_details,MIXER_SETCONTROLDETAILSF_VALUE);
+            ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+               "MMSYSERR_NOERROR expected, got %s\n",
+               mmsys_error(rc));
+            if (rc==MMSYSERR_NOERROR) {
+                MIXERCONTROLDETAILS ret_details;
+                MIXERCONTROLDETAILS_UNSIGNED ret_value;
+
+                ret_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                ret_details.dwControlID = control->dwControlID;
+                ret_details.cChannels = 1;
+                U(ret_details).cMultipleItems = 0;
+                ret_details.paDetails = &ret_value;
+                ret_details.cbDetails = sizeof(ret_value);
+
+                /* read back the new control value */
+                rc=mixerGetControlDetails((HMIXEROBJ)mix,&ret_details,MIXER_GETCONTROLDETAILSF_VALUE);
+                ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+                   "MMSYSERR_NOERROR expected, got %s\n",
+                   mmsys_error(rc));
+                if (rc==MMSYSERR_NOERROR) {
+                    /* result may not match exactly because of rounding */
+                    ok(abs(ret_value.dwValue-new_value.dwValue)<=1,
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
+                       value.dwValue,new_value.dwValue,ret_value.dwValue);
+
+                    if (abs(ret_value.dwValue-new_value.dwValue)<=1) {
+                        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                        details.dwControlID = control->dwControlID;
+                        details.cChannels = 1;
+                        U(details).cMultipleItems = 0;
+                        details.paDetails = &value;
+                        details.cbDetails = sizeof(value);
+
+                        /* restore original value */
+                        rc=mixerSetControlDetails((HMIXEROBJ)mix,&details,MIXER_SETCONTROLDETAILSF_VALUE);
+                        ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+                           "MMSYSERR_NOERROR expected, got %s\n",
+                           mmsys_error(rc));
+                    }
+                }
+            }
+        }
+    } else if ((control->dwControlType == MIXERCONTROL_CONTROLTYPE_MUTE) ||
+        (control->dwControlType == MIXERCONTROL_CONTROLTYPE_BOOLEAN) ||
+        (control->dwControlType == MIXERCONTROL_CONTROLTYPE_BUTTON)) {
+        MIXERCONTROLDETAILS details;
+        MIXERCONTROLDETAILS_BOOLEAN value;
+
+        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+        details.dwControlID = control->dwControlID;
+        details.cChannels = 1;
+        U(details).cMultipleItems = 0;
+        details.paDetails = &value;
+        details.cbDetails = sizeof(value);
+
+        rc=mixerGetControlDetails((HMIXEROBJ)mix,&details,MIXER_GETCONTROLDETAILSF_VALUE);
+        ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+           "MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        if (rc==MMSYSERR_NOERROR) {
+            MIXERCONTROLDETAILS new_details;
+            MIXERCONTROLDETAILS_BOOLEAN new_value;
+
+            if (winetest_interactive)
+                trace("            Value=%ld\n",value.fValue);
+
+            if (value.fValue == FALSE)
+                new_value.fValue = TRUE;
+            else
+                new_value.fValue = FALSE;
+
+            new_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+            new_details.dwControlID = control->dwControlID;
+            new_details.cChannels = 1;
+            U(new_details).cMultipleItems = 0;
+            new_details.paDetails = &new_value;
+            new_details.cbDetails = sizeof(new_value);
+
+            /* change the control value by one step */
+            rc=mixerSetControlDetails((HMIXEROBJ)mix,&new_details,MIXER_SETCONTROLDETAILSF_VALUE);
+            ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+               "MMSYSERR_NOERROR expected, got %s\n",
+               mmsys_error(rc));
+            if (rc==MMSYSERR_NOERROR) {
+                MIXERCONTROLDETAILS ret_details;
+                MIXERCONTROLDETAILS_BOOLEAN ret_value;
+
+                ret_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                ret_details.dwControlID = control->dwControlID;
+                ret_details.cChannels = 1;
+                U(ret_details).cMultipleItems = 0;
+                ret_details.paDetails = &ret_value;
+                ret_details.cbDetails = sizeof(ret_value);
+
+                /* read back the new control value */
+                rc=mixerGetControlDetails((HMIXEROBJ)mix,&ret_details,MIXER_GETCONTROLDETAILSF_VALUE);
+                ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+                   "MMSYSERR_NOERROR expected, got %s\n",
+                   mmsys_error(rc));
+                if (rc==MMSYSERR_NOERROR) {
+                    /* result may not match exactly because of rounding */
+                    ok(ret_value.fValue==new_value.fValue,
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
+                       value.fValue,new_value.fValue,ret_value.fValue);
+
+                    if (ret_value.fValue==new_value.fValue) {
+                        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                        details.dwControlID = control->dwControlID;
+                        details.cChannels = 1;
+                        U(details).cMultipleItems = 0;
+                        details.paDetails = &value;
+                        details.cbDetails = sizeof(value);
+
+                        /* restore original value */
+                        rc=mixerSetControlDetails((HMIXEROBJ)mix,&details,MIXER_SETCONTROLDETAILSF_VALUE);
+                        ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+                           "MMSYSERR_NOERROR expected, got %s\n",
+                           mmsys_error(rc));
+                    }
+                }
+            }
+        }
+    } else {
+        /* FIXME */
+    }
+}
+
 void mixer_test_deviceA(int device)
 {
     MIXERCAPSA capsA;
@@ -208,6 +383,10 @@ void mixer_test_deviceA(int device)
               capsA.szPname, capsA.vDriverVersion >> 8,
               capsA.vDriverVersion & 0xff,capsA.wMid,capsA.wPid,
               capsA.cDestinations);
+    } else {
+        trace("  %d: \"%s\" %d.%d (%d:%d)\n", device,
+              capsA.szPname, capsA.vDriverVersion >> 8,
+              capsA.vDriverVersion & 0xff,capsA.wMid,capsA.wPid);
     }
 
     rc=mixerOpen(&mix, device, 0, 0, 0);
@@ -363,6 +542,8 @@ void mixer_test_deviceA(int device)
                                               S1(array[nc].Bounds).dwMaximum,
                                               array[nc].Metrics.cSteps);
                                     }
+
+                                    mixer_test_controlA(mix, &array[nc]);
                                 }
                             }
 
@@ -376,6 +557,175 @@ void mixer_test_deviceA(int device)
         ok(rc==MMSYSERR_NOERROR,
            "mixerClose: MMSYSERR_BADDEVICEID expected, got %s\n",
            mmsys_error(rc));
+    }
+}
+
+static void mixer_test_controlW(HMIXER mix, LPMIXERCONTROLW control)
+{
+    MMRESULT rc;
+
+    if ((control->dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME) ||
+        (control->dwControlType == MIXERCONTROL_CONTROLTYPE_UNSIGNED)) {
+        MIXERCONTROLDETAILS details;
+        MIXERCONTROLDETAILS_UNSIGNED value;
+
+        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+        details.dwControlID = control->dwControlID;
+        details.cChannels = 1;
+        U(details).cMultipleItems = 0;
+        details.paDetails = &value;
+        details.cbDetails = sizeof(value);
+
+        /* read the current control value */
+        rc=mixerGetControlDetails((HMIXEROBJ)mix,&details,MIXER_GETCONTROLDETAILSF_VALUE);
+        ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+           "MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        if (rc==MMSYSERR_NOERROR) {
+            MIXERCONTROLDETAILS new_details;
+            MIXERCONTROLDETAILS_UNSIGNED new_value;
+
+            if (winetest_interactive)
+                trace("            Value=%ld\n",value.dwValue);
+
+            if (value.dwValue + control->Metrics.cSteps < S1(control->Bounds).dwMaximum)
+                new_value.dwValue = value.dwValue + control->Metrics.cSteps;
+            else
+                new_value.dwValue = value.dwValue - control->Metrics.cSteps;
+
+            new_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+            new_details.dwControlID = control->dwControlID;
+            new_details.cChannels = 1;
+            U(new_details).cMultipleItems = 0;
+            new_details.paDetails = &new_value;
+            new_details.cbDetails = sizeof(new_value);
+
+            /* change the control value by one step */
+            rc=mixerSetControlDetails((HMIXEROBJ)mix,&new_details,MIXER_SETCONTROLDETAILSF_VALUE);
+            ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+               "MMSYSERR_NOERROR expected, got %s\n",
+               mmsys_error(rc));
+            if (rc==MMSYSERR_NOERROR) {
+                MIXERCONTROLDETAILS ret_details;
+                MIXERCONTROLDETAILS_UNSIGNED ret_value;
+
+                ret_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                ret_details.dwControlID = control->dwControlID;
+                ret_details.cChannels = 1;
+                U(ret_details).cMultipleItems = 0;
+                ret_details.paDetails = &ret_value;
+                ret_details.cbDetails = sizeof(ret_value);
+
+                /* read back the new control value */
+                rc=mixerGetControlDetails((HMIXEROBJ)mix,&ret_details,MIXER_GETCONTROLDETAILSF_VALUE);
+                ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+                   "MMSYSERR_NOERROR expected, got %s\n",
+                   mmsys_error(rc));
+                if (rc==MMSYSERR_NOERROR) {
+                    /* result may not match exactly because of rounding */
+                    ok(abs(ret_value.dwValue-new_value.dwValue)<=1,
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
+                       value.dwValue,new_value.dwValue,ret_value.dwValue);
+
+                    if (abs(ret_value.dwValue-new_value.dwValue)<=1) {
+                        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                        details.dwControlID = control->dwControlID;
+                        details.cChannels = 1;
+                        U(details).cMultipleItems = 0;
+                        details.paDetails = &value;
+                        details.cbDetails = sizeof(value);
+
+                        /* restore original value */
+                        rc=mixerSetControlDetails((HMIXEROBJ)mix,&details,MIXER_SETCONTROLDETAILSF_VALUE);
+                        ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+                           "MMSYSERR_NOERROR expected, got %s\n",
+                           mmsys_error(rc));
+                    }
+                }
+            }
+        }
+    } else if ((control->dwControlType == MIXERCONTROL_CONTROLTYPE_MUTE) ||
+        (control->dwControlType == MIXERCONTROL_CONTROLTYPE_BOOLEAN) ||
+        (control->dwControlType == MIXERCONTROL_CONTROLTYPE_BUTTON)) {
+        MIXERCONTROLDETAILS details;
+        MIXERCONTROLDETAILS_BOOLEAN value;
+
+        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+        details.dwControlID = control->dwControlID;
+        details.cChannels = 1;
+        U(details).cMultipleItems = 0;
+        details.paDetails = &value;
+        details.cbDetails = sizeof(value);
+
+        rc=mixerGetControlDetails((HMIXEROBJ)mix,&details,MIXER_GETCONTROLDETAILSF_VALUE);
+        ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+           "MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        if (rc==MMSYSERR_NOERROR) {
+            MIXERCONTROLDETAILS new_details;
+            MIXERCONTROLDETAILS_BOOLEAN new_value;
+
+            if (winetest_interactive)
+                trace("            Value=%ld\n",value.fValue);
+
+            if (value.fValue == FALSE)
+                new_value.fValue = TRUE;
+            else
+                new_value.fValue = FALSE;
+
+            new_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+            new_details.dwControlID = control->dwControlID;
+            new_details.cChannels = 1;
+            U(new_details).cMultipleItems = 0;
+            new_details.paDetails = &new_value;
+            new_details.cbDetails = sizeof(new_value);
+
+            /* change the control value by one step */
+            rc=mixerSetControlDetails((HMIXEROBJ)mix,&new_details,MIXER_SETCONTROLDETAILSF_VALUE);
+            ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+               "MMSYSERR_NOERROR expected, got %s\n",
+               mmsys_error(rc));
+            if (rc==MMSYSERR_NOERROR) {
+                MIXERCONTROLDETAILS ret_details;
+                MIXERCONTROLDETAILS_BOOLEAN ret_value;
+
+                ret_details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                ret_details.dwControlID = control->dwControlID;
+                ret_details.cChannels = 1;
+                U(ret_details).cMultipleItems = 0;
+                ret_details.paDetails = &ret_value;
+                ret_details.cbDetails = sizeof(ret_value);
+
+                /* read back the new control value */
+                rc=mixerGetControlDetails((HMIXEROBJ)mix,&ret_details,MIXER_GETCONTROLDETAILSF_VALUE);
+                ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
+                   "MMSYSERR_NOERROR expected, got %s\n",
+                   mmsys_error(rc));
+                if (rc==MMSYSERR_NOERROR) {
+                    /* result may not match exactly because of rounding */
+                    ok(ret_value.fValue==new_value.fValue,
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
+                       value.fValue,new_value.fValue,ret_value.fValue);
+
+                    if (ret_value.fValue==new_value.fValue) {
+                        details.cbStruct = sizeof(MIXERCONTROLDETAILS);
+                        details.dwControlID = control->dwControlID;
+                        details.cChannels = 1;
+                        U(details).cMultipleItems = 0;
+                        details.paDetails = &value;
+                        details.cbDetails = sizeof(value);
+
+                        /* restore original value */
+                        rc=mixerSetControlDetails((HMIXEROBJ)mix,&details,MIXER_SETCONTROLDETAILSF_VALUE);
+                        ok(rc==MMSYSERR_NOERROR,"mixerSetControlDetails(MIXER_SETCONTROLDETAILSF_VALUE): "
+                           "MMSYSERR_NOERROR expected, got %s\n",
+                           mmsys_error(rc));
+                    }
+                }
+            }
+        }
+    } else {
+        /* FIXME */
     }
 }
 
@@ -411,6 +761,10 @@ void mixer_test_deviceW(int device)
               szPname, capsW.vDriverVersion >> 8,
               capsW.vDriverVersion & 0xff,capsW.wMid,capsW.wPid,
               capsW.cDestinations);
+    } else {
+        trace("  %d: \"%s\" %d.%d (%d:%d)\n", device,
+              szPname, capsW.vDriverVersion >> 8,
+              capsW.vDriverVersion & 0xff,capsW.wMid,capsW.wPid);
     }
     rc=mixerOpen(&mix, device, 0, 0, 0);
     ok(rc==MMSYSERR_NOERROR,
@@ -586,6 +940,7 @@ void mixer_test_deviceW(int device)
                                               S1(array[nc].Bounds).dwMaximum,
                                               array[nc].Metrics.cSteps);
                                     }
+                                    mixer_test_controlW(mix, &array[nc]);
                                 }
                             }
 
