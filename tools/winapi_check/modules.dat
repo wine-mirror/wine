@@ -44,6 +44,18 @@ dlls/crtdll
 
 dlls/crypt32
 
+% dlls/ctl3d/ctl3d.spec
+
+% dlls/ctl3d/ctl3d32.spec
+
+% dlls/ctl3d/ctl3dv2.spec
+
+dlls/ctl3d
+
+% dlls/d3dim/d3dim.spec
+
+dlls/d3dim
+
 % dlls/d3d8/d3d8.spec
 
 dlls/d3d8
@@ -73,6 +85,10 @@ dlls/dinput
 
 dlls/dinput8
 
+% dlls/dmusic/dmusic.spec
+
+dlls/dmusic
+
 % dlls/dplay/dplay.spec
 
 % dlls/dplayx/dplayx.spec
@@ -92,7 +108,6 @@ graphics
 dlls/gdi
 dlls/gdi/enhmfdrv
 dlls/gdi/mfdrv
-dlls/gdi/win16drv
 graphics
 objects
 
@@ -101,7 +116,6 @@ objects
 dlls/gdi
 dlls/gdi/enhmfdrv
 dlls/gdi/mfdrv
-dlls/gdi/win16drv
 graphics
 objects
 
@@ -178,6 +192,10 @@ dlls/msvcrt
 % dlls/msvcrt20/msvcrt20.spec
 
 dlls/msvcrt20
+
+% dlls/msvcrtd/msvcrtd.spec
+
+dlls/msvcrtd
 
 % dlls/kernel/stress.spec
 
