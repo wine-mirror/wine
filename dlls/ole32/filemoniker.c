@@ -587,7 +587,7 @@ HRESULT WINAPI FileMonikerImpl_BindToObject(IMoniker* iface,
                 res=GetClassFile(This->filePathName,&clsID);
                 if (SUCCEEDED(res)){
 
-                    res=CoCreateInstance(&clsID,NULL,CLSCTX_ALL,&IID_IPersistFile,(void**)&ppf);
+                    res=CoCreateInstance(&clsID,NULL,CLSCTX_ALL,&IID_IPersistFile,(void**)(char*)&ppf);
                     if (SUCCEEDED(res)){
 
                         res=IPersistFile_Load(ppf,This->filePathName,STGM_READ);
@@ -602,11 +602,11 @@ HRESULT WINAPI FileMonikerImpl_BindToObject(IMoniker* iface,
         }
     }
     else{
-        res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IClassFactory,(void**)&pcf);
+        res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IClassFactory,(void**)(char*)&pcf);
 
         if (res==E_NOINTERFACE){
 
-            res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IClassActivator,(void**)&pca);
+            res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IClassActivator,(void**)(char*)&pca);
 
             if (res==E_NOINTERFACE)
                 return MK_E_INTERMEDIATEINTERFACENOTSUPPORTED;

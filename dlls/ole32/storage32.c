@@ -5898,7 +5898,7 @@ HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvOb
     res=CoCreateInstance(&clsid,NULL,CLSCTX_INPROC_SERVER,iidInterface,ppvObj);
     if (!SUCCEEDED(res))
 	return res;
-    res=IUnknown_QueryInterface((IUnknown*)*ppvObj,&IID_IPersistStream,(LPVOID*)&xstm);
+    res=IUnknown_QueryInterface((IUnknown*)*ppvObj,&IID_IPersistStream,(LPVOID*)(char*)&xstm);
     if (!SUCCEEDED(res)) {
 	IUnknown_Release((IUnknown*)*ppvObj);
 	return res;
