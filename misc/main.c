@@ -1499,8 +1499,10 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 
     case SPI_GETICONTITLELOGFONT:
         {
-            /* FIXME GetProfileString32A( "?", "?", "?" ) */
             LPLOGFONT32W lpLogFont = (LPLOGFONT32W)lpvParam;
+ 	    GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
+			 buffer, sizeof(buffer) );
+	    lstrcpynAtoW(lpLogFont->lfFaceName, buffer ,LF_FACESIZE);
             lpLogFont->lfHeight = 10;
             lpLogFont->lfWidth = 0;
             lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
