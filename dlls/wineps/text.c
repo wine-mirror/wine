@@ -146,15 +146,14 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
 	for(i = 0; i < count; i++) {
-	    deltas[i] = char_extra;
 	    if(lpDx)
-	        deltas[i] += lpDx[i];
+	        deltas[i] = lpDx[i] + char_extra;
 	    else {
 	        if(physDev->font.fontloc == Download)
 		    GetTextExtentPointI(physDev->hdc, glyphs + i, 1, &tmpsz);
 		else
 		    GetTextExtentPoint32W(physDev->hdc, str + i, 1, &tmpsz);
-	        deltas[i] += tmpsz.cx;
+	        deltas[i] = tmpsz.cx;
 	    }
 	}
     } else if(lpDx)
