@@ -1812,6 +1812,10 @@ INT WINAPI WSAIoctl (SOCKET s,
 
    if (fd == -1) return SOCKET_ERROR;
 
+   TRACE("%d, 0x%08lx, %p, %ld, %p, %ld, %p, %p, %p\n", 
+       s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpbOutBuffer,
+       cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
+
    switch( dwIoControlCode )
    {
    case SIO_GET_INTERFACE_LIST:
@@ -1849,8 +1853,9 @@ INT WINAPI WSAIoctl (SOCKET s,
                   {
                      PIP_ADAPTER_INFO ptr;
 
-                     if (size > cbOutBuffer)
+                     if (size*sizeof(INTERFACE_INFO)/sizeof(IP_ADAPTER_INFO) > cbOutBuffer)
                      {
+                        WARN("Buffer too small = %lu, cbOutBuffer = %lu\n", size, cbOutBuffer);
                         HeapFree(GetProcessHeap(),0,table);
                         release_sock_fd( s, fd );
                         WSASetLastError(WSAEFAULT);
@@ -1889,6 +1894,8 @@ INT WINAPI WSAIoctl (SOCKET s,
                               intArray->iiFlags |= WS_IFF_LOOPBACK;
                            if (ifInfo.ifr_flags & IFF_UP)
                               intArray->iiFlags |= WS_IFF_UP;
+                           if (ifInfo.ifr_flags & IFF_MULTICAST)
+                              intArray->iiFlags |= WS_IFF_MULTICAST;
                         }
 
                         addr = inet_addr(ptr->IpAddressList.IpAddress.String);
@@ -1937,6 +1944,12 @@ INT WINAPI WSAIoctl (SOCKET s,
            *lpcbBytesReturned = sizeof(INTERFACE_INFO) * numInt;
            break;
        }
+
+   case SIO_ADDRESS_LIST_CHANGE:
+       FIXME("-> SIO_ADDRESS_LIST_CHANGE request: stub\n");
+       /* FIXME: error and return code depend on whether socket was created
+        * with WSA_FLAG_OVERLAPPED, but there is no easy way to get this */
+       break;
 
    default:
        WARN("\tunsupported WS_IOCTL cmd (%08lx)\n", dwIoControlCode);

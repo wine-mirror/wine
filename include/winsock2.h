@@ -117,6 +117,7 @@ extern "C" {
 #define IOC_WS2                    0x08000000
 #define IOC_PROTOCOL               0x10000000
 #define IOC_VENDOR                 0x18000000
+#define IOC_VOID                   0x20000000
 #define _WSAIO(x,y)                (IOC_VOID|(x)|(y))
 #define _WSAIOR(x,y)               (IOC_OUT|(x)|(y))
 #define _WSAIOW(x,y)               (IOC_IN|(x)|(y))
