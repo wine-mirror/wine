@@ -39,6 +39,7 @@
  * get localized bitmaps for example.
  */
 #include "wps_En.rc"
+#include "wps_Pt.rc"
 #include "wps_Ru.rc"
 #include "wps_Sk.rc"
 #include "wps_De.rc"

@@ -20,7 +20,6 @@
  */
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
-#pragma code_page(850)
 
 
 /* Menu */
@@ -129,7 +128,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Lado a lado &horizontalmente" ,		ID_WINDOW_TILE_HORZ
 		MENUITEM "Lado a lado &verticalmente\tCtrl+F4" ,		ID_WINDOW_TILE_VERT
 #ifndef _NO_EXTENSIONS
-		MENUITEM "Organizar automaticalmente" ,		ID_WINDOW_AUTOSORT
+		MENUITEM "Organizar automaticamente" ,		ID_WINDOW_AUTOSORT
 #endif
 		MENUITEM "&Organizar ícones" ,		ID_WINDOW_ARRANGE
 		MENUITEM "&Atualizar\tF5" ,		ID_REFRESH

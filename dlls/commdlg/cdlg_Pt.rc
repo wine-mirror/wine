@@ -1,5 +1,6 @@
 /*
  * Copyright 1997 Ricardo R. Massaro
+ * Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -168,7 +169,7 @@ FONT 8, "Helv"
  DEFPUSHBUTTON "Ok",  IDOK,  4, 166, 44, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Cancelar", IDCANCEL, 52, 166, 44, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Aj&uda", 1038,100,166, 44, 14
- PUSHBUTTON "&Adicionar Cor",    712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Adicionar Cor Personalizada",    712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Definir Cores Personalizadas >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON  "&o",713,300,200,4,14   /* just a dummy:  'o' is  like  &o  in "solid&o"  */
 }
@@ -195,19 +196,19 @@ FONT 8, "Helv"
 
 REPLACEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 230, 94
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Alterar"
+CAPTION "Substituir"
 FONT 8, "Helv"
 {
  LTEXT "&Procurar:", -1, 4, 9, 48, 8
  EDITTEXT 1152, 54, 7, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT "Alterar Pa&ra:", -1, 4, 26, 48, 8
+ LTEXT "Substituir Pa&ra:", -1, 4, 26, 48, 8
  EDITTEXT 1153, 54, 24, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  CHECKBOX "Palavra &inteira", 1040, 5, 46, 104, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
  CHECKBOX "&Maiúsculas/minúsculas", 1041, 5, 62, 59, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 
  DEFPUSHBUTTON "Procurar a Pró&xima", IDOK,	174,  4, 50, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
- PUSHBUTTON "&Alterar", psh1,			174, 21, 50, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Alterar &Todas", psh2,		174, 38, 50, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Substituir", psh1,			174, 21, 50, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Substituir &Todas", psh2,		174, 38, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Cancelar", IDCANCEL,		174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "A&juda", pshHelp,			174, 75, 50, 14, WS_GROUP | WS_TABSTOP
 }
@@ -216,10 +217,10 @@ FONT 8, "Helv"
 PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
-CAPTION "Print32"
+CAPTION "Imprimir"
 FONT 8, "Helv"
 {
-    DEFPUSHBUTTON   "OK",	IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+    DEFPUSHBUTTON   "Ok",	IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
     PUSHBUTTON	    "Cancelar",	IDCANCEL, 232,164, 48,14, WS_GROUP
     PUSHBUTTON      "&Ajuda",   pshHelp,  50, 161, 48,14, WS_GROUP
 
@@ -256,7 +257,7 @@ FONT 8, "Helv"
 PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
-CAPTION "Print32 Setup"
+CAPTION "Configurações de Impressão"
 FONT 8, "Helv"
 BEGIN
     DEFPUSHBUTTON   "OK",	IDOK,180,156,48,14,WS_GROUP
@@ -288,12 +289,42 @@ BEGIN
     CONTROL	"&Paisagem",      rad2, "Button", BS_AUTORADIOBUTTON, 224, 126, 52, 12
 END
 
+PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Configurações de Página"
+FONT 8, "Helv"
+BEGIN
+  CONTROL "", rct1, 130, 0x00020006, 80, 8, 80, 80,  SS_WHITERECT
+  CONTROL "", rct2, 130, 0x00020005, 160, 12, 4, 80, SS_GRAYRECT
+  CONTROL "", rct3, 130, 0x00020005, 84, 88, 80, 4,  SS_GRAYRECT
+  GROUPBOX "Papel", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "&Tamanho:", stc2, 16, 112, 36, 8
+  COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  LTEXT "&Bandeja:", stc3, 16, 132, 36, 8
+  COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Orientação", grp1, 8, 156, 64, 56, BS_GROUPBOX
+  AUTORADIOBUTTON "&Retrato", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Paisagem", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  GROUPBOX "Bordas", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  LTEXT "&Esquerda:", stc15, 88, 172, 21, 8
+  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Direita:", stc16, 159, 172, 27, 8
+  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Superior:", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Inferior:", stc18, 159, 192, 23, 8
+  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
+  PUSHBUTTON "Cancelar", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "Im&pressora...", psh3, 184, 220, 48, 14
+END
+
 NEWFILEOPENORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 280, 164
 STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Open"
+CAPTION "Abrir"
 FONT 8, "helv"
 {
-    LTEXT	"Olhar &em",IDC_LOOKINSTATIC,7,6,27,8, SS_NOTIFY
+    LTEXT	"Procurar &em",IDC_LOOKINSTATIC,7,6,27,8, SS_NOTIFY
     COMBOBOX	IDC_LOOKIN,36,3,138,300,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
 
     LTEXT	"" , IDC_TOOLBARSTATIC, 172, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
@@ -308,19 +339,19 @@ FONT 8, "helv"
     CONTROL	"Abrir como &somente-leitura",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,148,74,10
 
     DEFPUSHBUTTON	"&Abrir",		IDOK,222,110,50,13
-    PUSHBUTTON		"Cancel",		IDCANCEL,222,128,50,14
-    PUSHBUTTON		"&Help",		pshHelp,222,145,50,14
+    PUSHBUTTON		"Cancelar",		IDCANCEL,222,128,50,14
+    PUSHBUTTON		"&Ajuda",		pshHelp,222,145,50,14
 }
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_ABOUTBOX	"&Sobre FolderPicker Text"
+    IDS_ABOUTBOX	"&Sobre FolderPicker Test"
     IDS_DOCUMENTFOLDERS	"Pastas de Documentos"
     IDS_PERSONAL	"Meus Documentos"
     IDS_FAVORITES	"Favoritos"
     IDS_PATH		"Caminho do Sistema"
     IDS_DESKTOP		"Área de Trabalho"
-    IDS_FONTS		"Fonts"
+    IDS_FONTS		"Fontes"
     IDS_MYCOMPUTER	"Meu Computador"
 }
 
@@ -331,28 +362,41 @@ STRINGTABLE DISCARDABLE
     IDS_FILENOTFOUND	"Arquivo não encontrado"
     IDS_VERIFYFILE	"Por favor verifique se foi fornecido o nome correto do arquivo"
     IDS_CREATEFILE	"Arquivo não existe\nVocê gostaria de cria-lo"
-
+    IDL_OVERWRITEFILE       "Arquivo já existe.\nGostaria de substituí-lo?"
+    IDS_INVALID_FILENAME_TITLE "Caracter(es) inválidos no caminho"
+    IDS_INVALID_FILENAME    "Um nome de arquivo não pode conter quaisquer dos seguintes caracteres: \n                          / : < > |"
+    IDS_PATHNOTEXISTING     "Caminho não existe"
+    IDS_FILENOTEXISTING     "Arquivo não existe"
 }
 
 STRINGTABLE DISCARDABLE
 {
-    PD32_PRINT_TITLE				"Print"
+    IDS_UPFOLDER         "Um Nível Acima"
+    IDS_NEWFOLDER        "Criar Nova Pasta"
+    IDS_LISTVIEW         "Lista"
+    IDS_REPORTVIEW       "Detalhes"
+    IDS_TODESKTOP        "Área de Trabalho"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    PD32_PRINT_TITLE				"Imprimir"
 
     PD32_VALUE_UREADABLE			"Entrada Ilegível"
     PD32_INVALID_PAGE_RANGE			"Este valor não se encaixa na faixa de páginas\n\
-Por favor entre um valor entre %d e %d"
-    PD32_FROM_NOT_ABOVE_TO			"A entrada DE não pode exceder ATÉ:"
+Por favor entre um valor entre %d e %d."
+    PD32_FROM_NOT_ABOVE_TO			"A entrada DE não pode exceder ATÉ."
     PD32_MARGINS_OVERLAP			"As margens estão fora das medidas \
-do papel.\nPor favor reentre as margens"
-    PD32_NR_OF_COPIES_EMPTY			"O número de cópias não pode ter valor vazio"
-    PD32_TOO_LARGE_COPIES			"Esta quantidade de impressão não é suportada \
-pela sua impressora.\nPor favor entre um valor entre 1 e %d"
-    PD32_PRINT_ERROR				"Ocorreu um erro de impressão"
-    PD32_NO_DEFAULT_PRINTER			"Não existe uma impressora padrão"
-    PD32_CANT_FIND_PRINTER			"Nãp pude encontrar uma impressora"
-    PD32_OUT_OF_MEMORY				"Memória insulficiente"
-    PD32_GENERIC_ERROR				"Ocorreu algum erro"
-    PD32_DRIVER_UNKNOWN				"Driver de impressora desconhecido"
+do papel.\nPor favor reentre as margens."
+    PD32_NR_OF_COPIES_EMPTY			"O número de cópias não pode ter valor vazio."
+    PD32_TOO_LARGE_COPIES			"Esta grande quantidade de cópias não é suportada \
+pela sua impressora.\nPor favor entre um valor entre 1 e %d."
+    PD32_PRINT_ERROR				"Ocorreu um erro de impressão."
+    PD32_NO_DEFAULT_PRINTER			"Não existe uma impressora padrão."
+    PD32_CANT_FIND_PRINTER			"Não é possível encontrar uma impressora."
+    PD32_OUT_OF_MEMORY				"Memória insuficiente."
+    PD32_GENERIC_ERROR				"Ocorreu algum erro."
+    PD32_DRIVER_UNKNOWN				"Driver de impressora desconhecido."
 
     PD32_DEFAULT_PRINTER			"Impressora Padrão; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE		"Existem %d documentos na fila"
@@ -362,18 +406,18 @@ pela sua impressora.\nPor favor entre um valor entre 1 e %d"
     PD32_MILIMETERS				"mm"
 
     PD32_PRINTER_STATUS_READY			"Pronto"
-    PD32_PRINTER_STATUS_PAUSED			"Pausado; "
+    PD32_PRINTER_STATUS_PAUSED			"Pausada; "
     PD32_PRINTER_STATUS_ERROR			"Erro; "
     PD32_PRINTER_STATUS_PENDING_DELETION	"Exclusão pendente; "
     PD32_PRINTER_STATUS_PAPER_JAM		"Papel atolado; "
     PD32_PRINTER_STATUS_PAPER_OUT		"Sem papel; "
-    PD32_PRINTER_STATUS_MANUAL_FEED		"Carregue papel manualmente; "
+    PD32_PRINTER_STATUS_MANUAL_FEED		"Alimentação manual; "
     PD32_PRINTER_STATUS_PAPER_PROBLEM		"Problemas com o papel; "
     PD32_PRINTER_STATUS_OFFLINE			"Impressora desligada; "
-    PD32_PRINTER_STATUS_IO_ACTIVE		"E/S Ativo; "
-    PD32_PRINTER_STATUS_BUSY			"Ocupado; "
+    PD32_PRINTER_STATUS_IO_ACTIVE		"E/S Ativa; "
+    PD32_PRINTER_STATUS_BUSY			"Ocupada; "
     PD32_PRINTER_STATUS_PRINTING		"Imprimindo; "
-    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL		"Fila de impressão está cheia; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL		"Bandeja de saída está cheia; "
     PD32_PRINTER_STATUS_NOT_AVAILABLE		"Não disponível; "
     PD32_PRINTER_STATUS_WAITING			"Esperando; "
     PD32_PRINTER_STATUS_PROCESSING		"Processando; "
@@ -381,10 +425,30 @@ pela sua impressora.\nPor favor entre um valor entre 1 e %d"
     PD32_PRINTER_STATUS_WARMING_UP		"Aquecendo; "
     PD32_PRINTER_STATUS_TONER_LOW		"Pouco toner; "
     PD32_PRINTER_STATUS_NO_TONER		"Sem toner; "
-    PD32_PRINTER_STATUS_PAGE_PUNT		"Page punt; "
-    PD32_PRINTER_STATUS_USER_INTERVENTION	"Interrompido pelo usuário; "
-    PD32_PRINTER_STATUS_OUT_OF_MEMORY		"Memória insulficiente; "
+    PD32_PRINTER_STATUS_PAGE_PUNT		"Lançar página; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION	"Intervenção do usuário; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY		"Memória insuficiente; "
     PD32_PRINTER_STATUS_DOOR_OPEN		"A impressora está aberta; "
     PD32_PRINTER_STATUS_SERVER_UNKNOWN		"Servidor de impressão desconhecido; "
     PD32_PRINTER_STATUS_POWER_SAVE		"Modo econômico; "
+}
+
+STRINGTABLE DISCARDABLE /* Nomes de cores */
+{
+    IDS_COLOR_BLACK     "Preto"
+    IDS_COLOR_MAROON    "Castanho"
+    IDS_COLOR_GREEN     "Verde"
+    IDS_COLOR_OLIVE     "Verde-oliva"
+    IDS_COLOR_NAVY      "Azul-marinho"
+    IDS_COLOR_PURPLE    "Roxo"
+    IDS_COLOR_TEAL      "Azul-petróleo"
+    IDS_COLOR_GRAY      "Cinza"
+    IDS_COLOR_SILVER    "Prateado"
+    IDS_COLOR_RED       "Vermelho"
+    IDS_COLOR_LIME      "Verde-limão"
+    IDS_COLOR_YELLOW    "Amarelo"
+    IDS_COLOR_BLUE      "Azul"
+    IDS_COLOR_FUCHSIA   "Fúcsia"
+    IDS_COLOR_AQUA      "Azul-piscina"
+    IDS_COLOR_WHITE     "Branco"
 }
