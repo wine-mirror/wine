@@ -253,7 +253,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 
     SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
 		    rect.right - rect.left, rect.bottom - rect.top,
-		    SWP_SHOWWINDOW);
+		    SWP_SHOWWINDOW | SWP_NOACTIVATE);
 
     /* repaint the tooltip */
     hdc = GetDC (hwnd);
@@ -286,7 +286,7 @@ TOOLTIPS_Hide (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     infoPtr->nCurrentTool = -1;
 
     SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0,
-		    SWP_NOZORDER | SWP_HIDEWINDOW);
+		    SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOACTIVATE);
 }
 
 
@@ -370,7 +370,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 
     SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
 		    rect.right - rect.left, rect.bottom - rect.top,
-		    SWP_SHOWWINDOW);
+		    SWP_SHOWWINDOW | SWP_NOACTIVATE );
 
     hdc = GetDC (hwnd);
     TOOLTIPS_Refresh (hwnd, hdc);
@@ -397,7 +397,7 @@ TOOLTIPS_TrackHide (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 		    (WPARAM)toolPtr->uId, (LPARAM)&hdr);
 
     SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0,
-		    SWP_NOZORDER | SWP_HIDEWINDOW);
+		    SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOACTIVATE);
 }
 
 
@@ -1864,7 +1864,7 @@ TOOLTIPS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	FIXME (tooltips, " -- WM_NOTIFYFORMAT returns: error!\n");
 
-    SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOZORDER | SWP_HIDEWINDOW);
+    SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOACTIVATE);
 
     return 0;
 }
