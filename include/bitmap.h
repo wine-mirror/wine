@@ -50,8 +50,7 @@ extern INT16   BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 extern INT   BITMAP_GetObject( BITMAPOBJ * bmp, INT count, LPVOID buffer );
 extern BOOL  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
 extern INT   BITMAP_GetWidthBytes( INT width, INT depth );
-extern HBITMAP BITMAP_LoadBitmapW(HINSTANCE instance,LPCWSTR name,
-  UINT loadflags);
+extern HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags );
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
 
   /* objects/dib.c */

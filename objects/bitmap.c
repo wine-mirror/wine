@@ -408,27 +408,13 @@ LONG WINAPI SetBitmapBits(
 HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
                              INT16 desiredx, INT16 desiredy, UINT16 loadflags)
 {
-	if (HIWORD(name)) {
-	    TRACE(resource,"(0x%04x,%s,%d,%d,%d,0x%08x)\n",
-                hinst,(char *)PTR_SEG_TO_LIN(name),type,desiredx,desiredy,loadflags);
-	} else {
-	    TRACE(resource,"LoadImage16(0x%04x,%p,%d,%d,%d,0x%08x)\n",
-                hinst,name,type,desiredx,desiredy,loadflags);
-	}
-	switch (type) {
-	case IMAGE_BITMAP:
-		return LoadBitmap16(hinst,(SEGPTR)name);
-	case IMAGE_ICON:
-		return LoadIcon16(hinst,(SEGPTR)name);
-	case IMAGE_CURSOR:
-		return LoadCursor16(hinst,(SEGPTR)name);
-	}
-	return 0;
-	
+    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
+    return LoadImageA( hinst, nameStr, type, 
+                       desiredx, desiredy, loadflags );
 }
 
 /**********************************************************************
- *	    LoadImage32A    (USER32.365)
+ *	    LoadImageA    (USER32.365)
  * 
  * FIXME: implementation lacks some features, see LR_ defines in windows.h
  */
@@ -448,7 +434,7 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
 
 
 /******************************************************************************
- * LoadImage32W [USER32.366]  Loads an icon, cursor, or bitmap
+ * LoadImageW [USER32.366]  Loads an icon, cursor, or bitmap
  *
  * PARAMS
  *    hinst     [I] Handle of instance that contains image
@@ -486,7 +472,7 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
     if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
     switch (type) {
     case IMAGE_BITMAP:
-        return BITMAP_LoadBitmapW(hinst, name, loadflags);
+        return BITMAP_Load( hinst, name, loadflags );
 
     case IMAGE_ICON:
         {
@@ -578,66 +564,9 @@ HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
 }
 
 /**********************************************************************
- *	    LoadBitmap16    (USER.175)
- *
- * NOTES
- *    Can this call LoadBitmap32?
+ *       BITMAP_Load
  */
-HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
-{
-    HBITMAP hbitmap = 0;
-    HDC hdc;
-    HRSRC16 hRsrc;
-    HGLOBAL16 handle;
-    BITMAPINFO *info;
-
-    if (HIWORD(name))
-    {
-        char *str = (char *)PTR_SEG_TO_LIN( name );
-        TRACE(bitmap, "(%04x,'%s')\n", instance, str );
-        if (str[0] == '#') name = (SEGPTR)(DWORD)(WORD)atoi( str + 1 );
-    }
-    else
-        TRACE(bitmap, "(%04x,%04x)\n",
-                        instance, LOWORD(name) );
-
-    if (!instance)  /* OEM bitmap */
-    {
-        HDC hdc;
-	DC *dc;
-
-        if (HIWORD((int)name)) return 0;
-	hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
-	dc = DC_GetDCPtr( hdc );
-	if(dc->funcs->pLoadOEMResource)
-	  hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name),
-						 OEM_BITMAP );
-	GDI_HEAP_UNLOCK( hdc );
-	DeleteDC( hdc );
-	return hbitmap;
-    }
-
-    if (!(hRsrc = FindResource16( instance, name, RT_BITMAP16 ))) return 0;
-    if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
-
-    info = (BITMAPINFO *)LockResource16( handle );
-    if ((hdc = GetDC(0)) != 0)
-    {
-        char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
-        hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-                                    bits, info, DIB_RGB_COLORS );
-        ReleaseDC( 0, hdc );
-    }
-    FreeResource16( handle );
-    return hbitmap;
-}
-
-
-/**********************************************************************
- *       BITMAP_LoadBitmap32W
- */
-HBITMAP BITMAP_LoadBitmapW(HINSTANCE instance,LPCWSTR name, 
-			       UINT loadflags)
+HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
 {
     HBITMAP hbitmap = 0;
     HDC hdc;
@@ -702,7 +631,7 @@ HBITMAP BITMAP_LoadBitmapW(HINSTANCE instance,LPCWSTR name,
 
 
 /******************************************************************************
- * LoadBitmap32W [USER32.358]  Loads bitmap from the executable file
+ * LoadBitmapW [USER32.358]  Loads bitmap from the executable file
  *
  * RETURNS
  *    Success: Handle to specified bitmap
@@ -712,25 +641,26 @@ HBITMAP WINAPI LoadBitmapW(
     HINSTANCE instance, /* [in] Handle to application instance */
     LPCWSTR name)         /* [in] Address of bitmap resource name */
 {
-    return BITMAP_LoadBitmapW(instance, name, 0);
+    return LoadImageW( instance, name, IMAGE_BITMAP, 0, 0, 0 );
 }
 
-
 /**********************************************************************
- *	    LoadBitmap32A   (USER32.357)
+ *	    LoadBitmapA   (USER32.357)
  */
 HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
 {
-    HBITMAP res;
-    if (!HIWORD(name)) res = LoadBitmapW( instance, (LPWSTR)name );
-    else
-    {
-        LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-        res = LoadBitmapW( instance, uni );
-        HeapFree( GetProcessHeap(), 0, uni );
-    }
-    return res;
+    return LoadImageA( instance, name, IMAGE_BITMAP, 0, 0, 0 );
 }
+
+/**********************************************************************
+ *	    LoadBitmap16    (USER.175)
+ */
+HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
+{
+    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
+    return LoadBitmapA( instance, nameStr );
+}
+
 
 
 /***********************************************************************
