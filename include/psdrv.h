@@ -1,3 +1,5 @@
+#ifndef __WINE_PSDRV_H
+#define __WINE_PSDRV_H
 
 /*
  *	PostScript driver definitions
@@ -330,6 +332,6 @@ extern INT32 PSDRV_StretchDIBits( DC *dc, INT32 xDst, INT32 yDst,
 				  const void *bits, const BITMAPINFO *info,
 				  UINT32 wUsage, DWORD dwRop );
 
-
+#endif
 
 
