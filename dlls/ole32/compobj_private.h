@@ -5,7 +5,7 @@
  * Copyright 1999 Sylvain St-Germain
  * Copyright 2002 Marcus Meissner
  * Copyright 2003 Ove Kåven, TransGaming Technologies
- * Copyright 2004 Mike Hearn, CodeWeavers Inc
+ * Copyright 2004 Mike Hearn, Rob Shearman, CodeWeavers Inc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -131,8 +131,10 @@ struct apartment
   struct list stubmgrs;    /* stub managers for exported objects (CS cs) */
   BOOL remunk_exported;    /* has the IRemUnknown interface for this apartment been created yet? (CS cs) */
 
-  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs). FIXME: remove me */
-  DWORD listenertid;       /* id of apartment_listener_thread. FIXME: remove me */
+  /* FIXME: These should all be removed long term as they leak information that should be encapsulated */
+  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
+  DWORD listenertid;       /* id of apartment_listener_thread */
+  HANDLE shutdown_event;   /* event used to tell the client_dispatch_thread to shut down */
 };
 
 /* this is what is stored in TEB->ReservedForOle */

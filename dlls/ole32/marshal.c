@@ -868,6 +868,8 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
                                          stdobjref->oxid, stdobjref->oid,
                                          chanbuf, &proxy_manager);
     }
+    else
+        TRACE("proxy manager already created, using\n");
 
     if (hr == S_OK)
     {
@@ -961,7 +963,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
             wine_dbgstr_longlong(stdobjref.oxid));
 
   if (hres == S_OK)
-    hres = unmarshal_object(&stdobjref, apt, riid, ppv);
+      hres = unmarshal_object(&stdobjref, apt, riid, ppv);
 
   if (hres) WARN("Failed with error 0x%08lx\n", hres);
   else TRACE("Successfully created proxy %p\n", *ppv);
@@ -1382,6 +1384,9 @@ cleanup:
     if (pMarshalStream && (objref.flags & OBJREF_CUSTOM))
         IStream_Release(pMarshalStream);
     IMarshal_Release(pMarshal);
+
+    TRACE("completed with hr 0x%08lx\n", hr);
+    
     return hr;
 }
 
@@ -1437,6 +1442,9 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
     }
 
     IMarshal_Release(pMarshal);
+
+    TRACE("completed with hr 0x%lx\n", hr);
+    
     return hr;
 }
 

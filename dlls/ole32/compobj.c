@@ -277,6 +277,8 @@ APARTMENT* COM_CreateApartment(DWORD model)
             MTA = apt;
         }
 
+        apt->shutdown_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+        
         TRACE("Created apartment on OXID %s\n", wine_dbgstr_longlong(apt->oxid));
 
         list_add_head(&apts, &apt->entry);
@@ -338,6 +340,8 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
         if (apt->filter) IUnknown_Release(apt->filter);
 
         DeleteCriticalSection(&apt->cs);
+        SetEvent(apt->shutdown_event);
+        CloseHandle(apt->shutdown_event);
         CloseHandle(apt->thread);
         HeapFree(GetProcessHeap(), 0, apt);
     }

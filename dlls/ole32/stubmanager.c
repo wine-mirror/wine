@@ -94,6 +94,7 @@ static void stub_manager_delete(struct stub_manager *m)
 
     list_remove(&m->entry);
 
+    /* release every ifstub */
     while ((cursor = list_head(&m->ifstubs)))
     {
         struct ifstub *ifstub = LIST_ENTRY(cursor, struct ifstub, entry);
