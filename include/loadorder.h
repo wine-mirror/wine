@@ -9,19 +9,18 @@
 
 #include "windef.h"
 
-#define MODULE_LOADORDER_INVALID	0	/* Must be 0 */
-#define MODULE_LOADORDER_DLL		1	/* Native DLLs */
-#define MODULE_LOADORDER_SO		2	/* Native .so libraries */
-#define MODULE_LOADORDER_BI		3	/* Built-in modules */
-#define MODULE_LOADORDER_NTYPES		3
+enum loadorder_type
+{
+    LOADORDER_INVALID = 0, /* Must be 0 */
+    LOADORDER_DLL,         /* Native DLLs */
+    LOADORDER_SO,          /* Native .so libraries */
+    LOADORDER_BI,          /* Built-in modules */
+    LOADORDER_NTYPES
+};
 
-typedef struct module_loadorder {
-	char	*modulename;
-	char	loadorder[MODULE_LOADORDER_NTYPES];
-} module_loadorder_t;
-
-BOOL MODULE_InitLoadOrder(void);
-module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32);
+extern void MODULE_InitLoadOrder(void);
+extern void MODULE_GetLoadOrder( enum loadorder_type plo[], const char *path, BOOL win32 );
+extern void MODULE_AddLoadOrderOption( const char *option );
 
 #endif
 

@@ -891,35 +891,33 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
  */
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only )
 {
-	HINSTANCE16 hinst;
+	HINSTANCE16 hinst = 2;
+	enum loadorder_type loadorder[LOADORDER_NTYPES];
 	int i;
-	module_loadorder_t *plo;
         const char *filetype = "";
 
-	plo = MODULE_GetLoadOrder(libname, FALSE);
+	MODULE_GetLoadOrder(loadorder, libname, FALSE);
 
-	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
+	for(i = 0; i < LOADORDER_NTYPES; i++)
 	{
-		switch(plo->loadorder[i])
+            if (loadorder[i] == LOADORDER_INVALID) break;
+
+		switch(loadorder[i])
 		{
-		case MODULE_LOADORDER_DLL:
+		case LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", libname);
 			hinst = NE_LoadModule(libname, lib_only);
                         filetype = "native";
 			break;
 
-		case MODULE_LOADORDER_BI:
+		case LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", libname);
 			hinst = BUILTIN_LoadModule(libname);
                         filetype = "builtin";
 			break;
 
-		default:
-			ERR("Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
-		/* Fall through */
-
-		case MODULE_LOADORDER_SO:	/* This is not supported for NE modules */
-		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
+		case LOADORDER_SO: /* This is not supported for NE modules */
+                default:
 			hinst = 2;
 			break;
 		}

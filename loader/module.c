@@ -1305,7 +1305,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	DWORD err = GetLastError();
 	WINE_MODREF *pwm;
 	int i;
-	module_loadorder_t *plo;
+	enum loadorder_type loadorder[LOADORDER_NTYPES];
 	LPSTR filename, p;
         const char *filetype = "";
 
@@ -1388,36 +1388,34 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		return pwm;
 	}
 
-	plo = MODULE_GetLoadOrder(filename, TRUE);
+        MODULE_GetLoadOrder( loadorder, filename, TRUE);
 
-	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
+	for(i = 0; i < LOADORDER_NTYPES; i++)
 	{
+                if (loadorder[i] == LOADORDER_INVALID) break;
                 SetLastError( ERROR_FILE_NOT_FOUND );
-		switch(plo->loadorder[i])
+
+		switch(loadorder[i])
 		{
-		case MODULE_LOADORDER_DLL:
+		case LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", filename);
 			pwm = PE_LoadLibraryExA(filename, flags);
                         filetype = "native";
 			break;
 
-		case MODULE_LOADORDER_SO:
+		case LOADORDER_SO:
 			TRACE("Trying so-library '%s'\n", filename);
                         pwm = ELF_LoadLibraryExA(filename, flags);
                         filetype = "so";
 			break;
 
-		case MODULE_LOADORDER_BI:
+		case LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", filename);
 			pwm = BUILTIN32_LoadLibraryExA(filename, flags);
                         filetype = "builtin";
 			break;
 
-		default:
-			ERR("Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
-		/* Fall through */
-
-		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
+                default:
 			pwm = NULL;
 			break;
 		}

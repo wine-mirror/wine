@@ -58,12 +58,12 @@ BOOL MAIN_MainInit(void)
 
     /* Registry initialisation */
     SHELL_LoadRegistry();
-    
-    /* Global boot finished, the rest is process-local */
-    CLIENT_BootDone( TRACE_ON(server) );
 
     /* Initialize module loadorder */
-    if (!MODULE_InitLoadOrder()) return FALSE;
+    if (CLIENT_IsBootThread()) MODULE_InitLoadOrder();
+
+    /* Global boot finished, the rest is process-local */
+    CLIENT_BootDone( TRACE_ON(server) );
 
     return TRUE;
 }

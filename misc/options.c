@@ -13,6 +13,7 @@
 #include "ntddk.h"
 #include "wine/library.h"
 #include "options.h"
+#include "loadorder.h"
 #include "version.h"
 #include "debugtools.h"
 
@@ -31,7 +32,6 @@ struct options Options =
 {
     NULL,           /* desktopGeometry */
     NULL,           /* display */
-    NULL,           /* dllFlags */
     FALSE,          /* synchronous */
     FALSE           /* Managed windows */
 };
@@ -62,7 +62,6 @@ static char *xstrdup( const char *str )
 static void do_debugmsg( const char *arg );
 static void do_desktop( const char *arg );
 static void do_display( const char *arg );
-static void do_dll( const char *arg );
 static void do_help( const char *arg );
 static void do_language( const char *arg );
 static void do_managed( const char *arg );
@@ -77,7 +76,7 @@ static const struct option_descr option_table[] =
       "--desktop geom   Use a desktop window of the given geometry" },
     { "display",      0, 1, 0, do_display,
       "--display name   Use the specified display" },
-    { "dll",          0, 1, 1, do_dll,
+    { "dll",          0, 1, 1, MODULE_AddLoadOrderOption,
       "--dll name       Enable or disable built-in DLLs" },
     { "dosver",       0, 1, 1, VERSION_ParseDosVersion,
       "--dosver x.xx    DOS version to imitate (e.g. 6.22)\n"
@@ -123,22 +122,6 @@ static void do_desktop( const char *arg )
 static void do_display( const char *arg )
 {
     Options.display = xstrdup( arg );
-}
-
-static void do_dll( const char *arg )
-{
-    if (Options.dllFlags)
-    {
-        Options.dllFlags = (char *) realloc ( Options.dllFlags, 
-					    strlen ( Options.dllFlags ) + strlen ( arg ) + 2 );
-	if ( !Options.dllFlags ) out_of_memory(); 
-	strcat ( Options.dllFlags, "+" );
-	strcat ( Options.dllFlags, arg );
-    }
-    else 
-    {
-        Options.dllFlags = xstrdup( arg );
-    }
 }
 
 static void do_language( const char *arg )

@@ -103,7 +103,7 @@ Use a desktop window of the given geometry, e.g. "640x480"
 .I --display name
 Use the specified X display
 .TP
-.I --dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]][+...]
+.I --dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]]
 Selects the override type and load order of dll used in the loading
 process for any dll. The default is set in the configuration
 file. There are currently three types of libraries that can be loaded
@@ -119,13 +119,12 @@ internal dlls (
 .I n, s, b
 ). Each sequence of orders must be separated by commas.
 .br
-Each dll may have its own specific load order. The load order determines
-which version of the dll is attempted to be loaded into the address space. If
-the first fails, then the next is tried and so on. Different load orders can
-be specified by separating the entries with a plus sign. Multiple libraries
-with the same load order can be separated with commas. It is also possible to 
-use the --dll option several times, to specify different loadorders for different
-libraries
+Each dll may have its own specific load order. The load order
+determines which version of the dll is attempted to be loaded into the
+address space. If the first fails, then the next is tried and so
+on. Multiple libraries with the same load order can be separated with
+commas. It is also possible to use the --dll option several times, to
+specify different loadorders for different libraries
 .br
 Examples:
 .br
@@ -139,7 +138,7 @@ the builtin version if the native load fails.
 Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
 an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
 .br
-.I --dll comdlg32,commdlg=b,n:shell,shell32=b+comctl32,commctrl=n
+.I --dll comdlg32,commdlg=b,n --dll shell,shell32=b --dll comctl32,commctrl=n
 .br
 Try to load comdlg32 and commdlg as builtin first and try the native version
 if the builtin load fails; load shell32/shell always as builtin and

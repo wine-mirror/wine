@@ -10,6 +10,8 @@
 
 #include "config.h"
 #include "windef.h"
+#include "winreg.h"
+#include "winerror.h"
 #include "options.h"
 #include "loadorder.h"
 #include "heap.h"
@@ -19,79 +21,102 @@
 
 DEFAULT_DEBUG_CHANNEL(module);
 
-
-/* #define DEBUG_LOADORDER */
-
 #define LOADORDER_ALLOC_CLUSTER	32	/* Allocate with 32 entries at a time */
 
-static module_loadorder_t default_loadorder;
-static module_loadorder_t *module_loadorder = NULL;
-static int nmodule_loadorder = 0;
-static int nmodule_loadorder_alloc = 0;
+typedef struct module_loadorder
+{
+    const char         *modulename;
+    enum loadorder_type loadorder[LOADORDER_NTYPES];
+} module_loadorder_t;
 
-/* DLL order is irrelevant ! Gets sorted later. */
-static struct tagDllOverride {
-	char *key,*value;
-} DefaultDllOverrides[] = {
-	/* "system" DLLs */
-	{"kernel32,gdi32,user32",	"builtin"},
-	{"krnl386,gdi,user",		"builtin"},
-	{"toolhelp",			"builtin"},
-	{"windebug",			"native,builtin"},
-	{"system,display",		"builtin"},
-	{"w32skrnl,wow32",		"builtin"},
-	{"advapi32,crtdll,ntdll",	"builtin,native"},
-	{"lz32,lzexpand",		"builtin,native"},
-	{"version,ver",			"builtin,native"},
-        {"msvcrt",                      "native,builtin"},
-	/* "new" interface */
-	{"comdlg32,commdlg",		"builtin,native"},
-	{"shell32,shell",		"builtin,native"},
-	{"shlwapi",			"native,builtin"},
-	{"shfolder",                    "builtin,native"},
-	{"comctl32,commctrl",		"builtin,native"},
-	/* network */
-	{"wsock32,ws2_32,winsock",	"builtin"},
-        {"icmp",                        "builtin"},
-	/* multimedia */
-	{"ddraw,dinput,dsound",		"builtin,native"},
-	{"winmm,mmsystem",		"builtin"},
-	{"msvfw32,msvideo",		"builtin,native"},
-	{"mcicda.drv,mciseq.drv",	"builtin,native"},
-	{"mciwave.drv",			"builtin,native"},
-	{"mciavi.drv,mcianim.drv",	"native,builtin"},
-	{"msacm.drv,midimap.drv",       "builtin,native"},
-	{"msacm,msacm32",               "builtin,native"},
-	{"opengl32",                    "builtin,native"},
-	/* we have to use libglideXx.so instead of glideXx.dll ... */
-	{"glide2x,glide3x",		"so,native"},
-	/* other stuff */
-	{"mpr,winspool.drv",		"builtin,native"},
-	{"wnaspi32,winaspi",		"builtin"},
-	{"odbc32",			"builtin"},
-	{"rpcrt4",                      "native,builtin"},
-	/* non-windows DLLs */
-	{"wineps,wprocs,x11drv",	"builtin"},
-	{NULL,NULL},
+struct loadorder_list
+{
+    int                 count;
+    int                 alloc;
+    module_loadorder_t *order;
 };
 
-static const struct tagDllPair {
-    const char *dll1, *dll2;
-} DllPairs[] = {
-    { "krnl386",  "kernel32" },
-    { "gdi",      "gdi32" },
-    { "user",     "user32" },
-    { "commdlg",  "comdlg32" },
-    { "commctrl", "comctl32" },
-    { "ver",      "version" },
-    { "shell",    "shell32" },
-    { "lzexpand", "lz32" },
-    { "mmsystem", "winmm" },
-    { "msvideo",  "msvfw32" },
-    { "msacm",    "msacm32" },
-    { "winsock",  "wsock32" },
-    { NULL,       NULL }
+/* default load-order if nothing specified */
+/* the list must remain sorted by dll name */
+static module_loadorder_t default_order_list[] =
+{
+    { "advapi32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "comctl32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "comdlg32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "commctrl",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "commdlg",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "crtdll",       { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "ddraw",        { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "dinput",       { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "display",      { LOADORDER_BI,  0,             0, 0 } },
+    { "dsound",       { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "gdi",          { LOADORDER_BI,  0,             0, 0 } },
+    { "gdi32",        { LOADORDER_BI,  0,             0, 0 } },
+    { "glide2x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
+    { "glide3x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
+    { "icmp",         { LOADORDER_BI,  0,             0, 0 } },
+    { "kernel",       { LOADORDER_BI,  0,             0, 0 } },
+    { "kernel32",     { LOADORDER_BI,  0,             0, 0 } },
+    { "keyboard",     { LOADORDER_BI,  0,             0, 0 } },
+    { "krnl386",      { LOADORDER_BI,  0,             0, 0 } },
+    { "lz32",         { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "lzexpand",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "mcianim.drv",  { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
+    { "mciavi.drv",   { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
+    { "mcicda.drv",   { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "mciseq.drv",   { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "mciwave.drv",  { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "midimap.drv",  { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "mmsystem",     { LOADORDER_BI,  0,             0, 0 } },
+    { "mouse",        { LOADORDER_BI,  0,             0, 0 } },
+    { "mpr",          { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "msacm",        { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "msacm.drv",    { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "msacm32",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "msvcrt",       { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
+    { "msvfw32",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "msvideo",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "ntdll",        { LOADORDER_BI,  0,             0, 0 } },
+    { "odbc32",       { LOADORDER_BI,  0,             0, 0 } },
+    { "opengl32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "rpcrt4",       { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
+    { "shell",        { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "shell32",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "shfolder",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "shlwapi",      { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
+    { "system",       { LOADORDER_BI,  0,             0, 0 } },
+    { "toolhelp",     { LOADORDER_BI,  0,             0, 0 } },
+    { "ttydrv",       { LOADORDER_BI,  0,             0, 0 } },
+    { "user",         { LOADORDER_BI,  0,             0, 0 } },
+    { "user32",       { LOADORDER_BI,  0,             0, 0 } },
+    { "ver",          { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "version",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "w32skrnl",     { LOADORDER_BI,  0,             0, 0 } },
+    { "winaspi",      { LOADORDER_BI,  0,             0, 0 } },
+    { "windebug",     { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
+    { "winedos",      { LOADORDER_BI,  0,             0, 0 } },
+    { "wineps",       { LOADORDER_BI,  0,             0, 0 } },
+    { "wing",         { LOADORDER_BI,  0,             0, 0 } },
+    { "winmm",        { LOADORDER_BI,  0,             0, 0 } },
+    { "winsock",      { LOADORDER_BI,  0,             0, 0 } },
+    { "winspool.drv", { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
+    { "wnaspi32",     { LOADORDER_BI,  0,             0, 0 } },
+    { "wow32",        { LOADORDER_BI,  0,             0, 0 } },
+    { "wprocs",       { LOADORDER_BI,  0,             0, 0 } },
+    { "ws2_32",       { LOADORDER_BI,  0,             0, 0 } },
+    { "wsock32",      { LOADORDER_BI,  0,             0, 0 } },
+    { "x11drv",       { LOADORDER_BI,  0,             0, 0 } }
 };
+
+static const struct loadorder_list default_list =
+{
+    sizeof(default_order_list)/sizeof(default_order_list[0]),
+    sizeof(default_order_list)/sizeof(default_order_list[0]),
+    default_order_list
+};
+
+static struct loadorder_list cmdline_list;
+
 
 /***************************************************************************
  *	cmp_sort_func	(internal, static)
@@ -151,50 +176,46 @@ static char *get_tok(const char *str, const char *delim)
  * Parses the loadorder options from the configuration and puts it into
  * a structure.
  */
-static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
+static BOOL ParseLoadOrder(char *order, enum loadorder_type lo[])
 {
     static int warn;
 	char *cptr;
 	int n = 0;
 
-	memset(mlo->loadorder, 0, sizeof(mlo->loadorder));
-
 	cptr = get_tok(order, ", \t");
 	while(cptr)
 	{
-		char type = MODULE_LOADORDER_INVALID;
+            enum loadorder_type type = LOADORDER_INVALID;
 
-		if(n >= MODULE_LOADORDER_NTYPES)
+		if(n >= LOADORDER_NTYPES-1)
 		{
-			ERR("More than existing %d module-types specified, rest ignored", MODULE_LOADORDER_NTYPES);
+			ERR("More than existing %d module-types specified, rest ignored\n", LOADORDER_NTYPES-1);
 			break;
 		}
 
 		switch(*cptr)
 		{
 		case 'N':	/* Native */
-		case 'n': type = MODULE_LOADORDER_DLL; break;
+		case 'n': type = LOADORDER_DLL; break;
 
 		case 'E':	/* Elfdll */
 		case 'e':
                     if (!warn++) MESSAGE("Load order 'elfdll' no longer supported, ignored\n");
                     break;
 		case 'S':	/* So */
-		case 's': type = MODULE_LOADORDER_SO; break;
+		case 's': type = LOADORDER_SO; break;
 
 		case 'B':	/* Builtin */
-		case 'b': type = MODULE_LOADORDER_BI; break;
+		case 'b': type = LOADORDER_BI; break;
 
 		default:
 			ERR("Invalid load order module-type '%s', ignored\n", cptr);
 		}
 
-		if(type != MODULE_LOADORDER_INVALID)
-		{
-			mlo->loadorder[n++] = type;
-		}
+                if(type != LOADORDER_INVALID) lo[n++] = type;
 		cptr = get_tok(NULL, ", \t");
 	}
+        lo[n] = LOADORDER_INVALID;
 	return TRUE;
 }
 
@@ -202,44 +223,39 @@ static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 /***************************************************************************
  *	AddLoadOrder	(internal, static)
  *
- * Adds an entry in the list of overrides. If the entry exists, then the
- * override parameter determines whether it will be overwritten.
+ * Adds an entry in the list of command-line overrides.
  */
-static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
+static BOOL AddLoadOrder(module_loadorder_t *plo)
 {
 	int i;
 
 	/* TRACE(module, "'%s' -> %08lx\n", plo->modulename, *(DWORD *)(plo->loadorder)); */
 
-	for(i = 0; i < nmodule_loadorder; i++)
+	for(i = 0; i < cmdline_list.count; i++)
 	{
-		if(!cmp_sort_func(plo, &module_loadorder[i]))
-		{
-			if(!override)
-				ERR("Module '%s' is already in the list of overrides, using first definition\n", plo->modulename);
-			else
-				memcpy(module_loadorder[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
-			return TRUE;
-		}
+            if(!cmp_sort_func(plo, &cmdline_list.order[i] ))
+            {
+                /* replace existing option */
+                memcpy( cmdline_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
+                return TRUE;
+            }
 	}
 
-	if(nmodule_loadorder >= nmodule_loadorder_alloc)
+	if (i >= cmdline_list.alloc)
 	{
 		/* No space in current array, make it larger */
-		nmodule_loadorder_alloc += LOADORDER_ALLOC_CLUSTER;
-		module_loadorder = (module_loadorder_t *)HeapReAlloc(GetProcessHeap(),
-								     0,
-								     module_loadorder,
-								     nmodule_loadorder_alloc * sizeof(module_loadorder_t));
-		if(!module_loadorder)
+		cmdline_list.alloc += LOADORDER_ALLOC_CLUSTER;
+		cmdline_list.order = HeapReAlloc(GetProcessHeap(), 0, cmdline_list.order,
+                                          cmdline_list.alloc * sizeof(module_loadorder_t));
+		if(!cmdline_list.order)
 		{
 			MESSAGE("Virtual memory exhausted\n");
 			exit(1);
 		}
 	}
-	memcpy(module_loadorder[nmodule_loadorder].loadorder, plo->loadorder, sizeof(plo->loadorder));
-	module_loadorder[nmodule_loadorder].modulename = HEAP_strdupA(GetProcessHeap(), 0, plo->modulename);
-	nmodule_loadorder++;
+	memcpy(cmdline_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
+	cmdline_list.order[i].modulename = HEAP_strdupA(GetProcessHeap(), 0, plo->modulename);
+	cmdline_list.count++;
 	return TRUE;
 }
 
@@ -247,17 +263,15 @@ static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 /***************************************************************************
  *	AddLoadOrderSet	(internal, static)
  *
- * Adds a set of entries in the list of overrides from the key parameter.
- * If the entry exists, then the override parameter determines whether it
- * will be overwritten.
+ * Adds a set of entries in the list of command-line overrides from the key parameter.
  */
-static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
+static BOOL AddLoadOrderSet(char *key, char *order)
 {
 	module_loadorder_t ldo;
 	char *cptr;
 
 	/* Parse the loadorder before the rest because strtok is not reentrant */
-	if(!ParseLoadOrder(order, &ldo))
+	if(!ParseLoadOrder(order, ldo.loadorder))
 		return FALSE;
 
 	cptr = get_tok(key, ", \t");
@@ -272,8 +286,7 @@ static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
 		}
 
 		ldo.modulename = cptr;
-		if(!AddLoadOrder(&ldo, override))
-			return FALSE;
+		if(!AddLoadOrder(&ldo)) return FALSE;
 		cptr = get_tok(NULL, ", \t");
 	}
 	return TRUE;
@@ -281,190 +294,220 @@ static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
 
 
 /***************************************************************************
- *	ParseCommandlineOverrides	(internal, static)
+ *	MODULE_AddLoadOrderOption
  *
- * The commandline is in the form:
- * name[,name,...]=native[,b,...][+...]
+ * The commandline option is in the form:
+ * name[,name,...]=native[,b,...]
  */
-static BOOL ParseCommandlineOverrides(void)
+void MODULE_AddLoadOrderOption( const char *option )
 {
-	char *cpy;
-	char *key;
-	char *next;
-	char *value;
-	BOOL retval = TRUE;
+    char *key = HEAP_strdupA(GetProcessHeap(), 0, option);
+    char *value = strchr(key, '=');
 
-	if(!Options.dllFlags)
-		return TRUE;
+    if (!value) goto error;
+    *value++ = '\0';
 
-	cpy = HEAP_strdupA(GetProcessHeap(), 0, Options.dllFlags);
-	key = cpy;
-	next = key;
-	for(; next; key = next)
-	{
-		next = strchr(key, '+');
-		if(next)
-		{
-			*next = '\0';
-			next++;
-		}
-		value = strchr(key, '=');
-		if(!value)
-		{
-			retval = FALSE;
-			goto endit;
-		}
-		*value = '\0';
-		value++;
+    TRACE("Commandline override '%s' = '%s'\n", key, value);
 
-		TRACE("Commandline override '%s' = '%s'\n", key, value);
-		
-		if(!AddLoadOrderSet(key, value, TRUE))
-		{
-			retval = FALSE;
-			goto endit;
-		}
-	}
-endit:
-	HeapFree(GetProcessHeap(), 0, cpy);
-	return retval;;
+    if (!AddLoadOrderSet(key, value)) goto error;
+    HeapFree(GetProcessHeap(), 0, key);
+
+    /* sort the array for quick lookup */
+    qsort(cmdline_list.order, cmdline_list.count, sizeof(cmdline_list.order[0]), cmp_sort_func);
+    return;
+
+ error:
+    MESSAGE( "Syntax: -dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]]\n"
+             "    - 'name' is the name of any dll without extension\n"
+             "    - the order of loading (native, so and builtin) can be abbreviated\n"
+             "      with the first letter\n"
+             "    - the option can be specified multiple times\n"
+             "    Example:\n"
+             "    -dll comdlg32,commdlg=n -dll shell,shell32=b\n" );
+    ExitProcess(1);
 }
 
 
 /***************************************************************************
- *	MODULE_InitLoadOrder	(internal)
+ *	set_registry_keys
  *
- * Initialize the load order from the wine.conf file.
- * The section has the following format:
- * Section:
- *	[DllDefaults]
- *
- * Keys:
- *	DefaultLoadOrder=native,so,builtin
- * A comma separated list of module types to try to load in that specific
- * order. The DefaultLoadOrder key is used as a fallback when a module is
- * not specified explicitly. If the DefaultLoadOrder key is not found, 
- * then the order "dll,so,bi" is used
- * The possible module types are:
- *	- native	Native windows dll files
- *	- so		Native .so libraries mapped to dlls
- *	- builtin	Built-in modules
- *
- * Case is not important and only the first letter of each type is enough to
- * identify the type n[ative], s[o], b[uiltin]. Also whitespace is
- * ignored.
- * E.g.:
- * 	n,s , b
- * is equal to:
- *	native,so,builtin
- *
- * Section:
- *	[DllOverrides]
- *
- * Keys:
- * There are no explicit keys defined other than module/library names. A comma
- * separated list of modules is followed by an assignment of the load-order
- * for these specific modules. See above for possible types. You should not
- * specify an extension.
- * Examples:
- * kernel32, gdi32, user32 = builtin
- * kernel, gdi, user = builtin
- * comdlg32 = native, builtin
- * commdlg = native, builtin
- * version, ver = native, builtin
- *
+ * Set individual registry keys for a multiple dll specification
+ * Helper for MODULE_InitLoadOrder().
  */
-
-#define BUFFERSIZE	1024
-
-BOOL MODULE_InitLoadOrder(void)
+inline static void set_registry_keys( HKEY hkey, char *module, const char *buffer )
 {
-	char buffer[BUFFERSIZE];
-	char key[256];
-	int nbuffer;
-        int idx;
-        const struct tagDllPair *dllpair;
+    static int warn;
+    char *p = get_tok( module, ", \t" );
 
-	/* Get the default load order */
-	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,b,s", buffer, sizeof(buffer));
-	if(!nbuffer)
-	{
-		MESSAGE("MODULE_InitLoadOrder: mysteriously read nothing from default loadorder\n");
-		return FALSE;
-	}
+    TRACE( "converting \"%s\" = \"%s\"\n", module, buffer );
 
-	TRACE("Setting default loadorder=%s\n", buffer);
+    if (!warn)
+        MESSAGE( "Warning: setting multiple modules in a single DllOverrides entry is no longer\n"
+                 "recommended. It is suggested that you rewrite the configuration file entry:\n\n"
+                 "\"%s\" = \"%s\"\n\n"
+                 "into something like:\n\n", module, buffer );
+    while (p)
+    {
+        if (!warn) MESSAGE( "\"%s\" = \"%s\"\n", p, buffer );
+        /* only set it if not existing already */
+        if (RegQueryValueExA( hkey, p, 0, NULL, NULL, NULL ) == ERROR_FILE_NOT_FOUND)
+            RegSetValueExA( hkey, p, 0, REG_SZ, buffer, strlen(buffer)+1 );
+        p = get_tok( NULL, ", \t" );
+    }
+    if (!warn) MESSAGE( "\n" );
+    warn = 1;
+}
 
-	if(!ParseLoadOrder(buffer, &default_loadorder))
-		return FALSE;
-	default_loadorder.modulename = "<none>";
 
-	{
-	    int i;
-	    for (i=0;DefaultDllOverrides[i].key;i++)
-		AddLoadOrderSet(
-		    DefaultDllOverrides[i].key,
-		    DefaultDllOverrides[i].value,
-		    FALSE
-		);
-	}
+/***************************************************************************
+ *	MODULE_InitLoadOrder
+ *
+ * Convert entries containing multiple dll names (old syntax) to the
+ * new one dll module per entry syntax
+ */
+void MODULE_InitLoadOrder(void)
+{
+    char module[80];
+    char buffer[1024];
+    char *p;
+    HKEY hkey;
+    DWORD index = 0;
 
-	/* Read the explicitly defined orders for specific modules as an entire section */
-        idx = 0;
-        while (PROFILE_EnumWineIniString( "DllOverrides", idx++, key, sizeof(key),
-                                          buffer, sizeof(buffer)))
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\DllOverrides", &hkey ))
+        return;
+
+    for (;;)
+    {
+        DWORD type, count = sizeof(buffer), name_len = sizeof(module);
+
+        if (RegEnumValueA( hkey, index, module, &name_len, NULL, &type, buffer, &count )) break;
+        p = module;
+        while (isspace(*p)) p++;
+        p += strcspn( p, ", \t" );
+        while (isspace(*p)) p++;
+        if (*p)
         {
-            TRACE("Key '%s' uses override '%s'\n", key, buffer);
-            if(!AddLoadOrderSet(key, buffer, TRUE))
-                return FALSE;
+            RegDeleteValueA( hkey, module );
+            set_registry_keys( hkey, module, buffer );
         }
+        else index++;
+    }
+    RegCloseKey( hkey );
+}
 
-	/* Add the command line overrides to the pool */
-	if(!ParseCommandlineOverrides())
-	{
-		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]][+...]\n"
-			"    - 'name' is the name of any dll without extension\n"
-			"    - the order of loading (native, so and builtin) can be abbreviated\n"
-			"      with the first letter\n"
-			"    - different loadorders for different dlls can be specified by separating the\n"
-			"      command line entries with a '+'\n"
-			"    Example:\n"
-			"    -dll comdlg32,commdlg=n+shell,shell32=b\n"
-		   );
-		return FALSE;
-	}
 
-	/* Sort the array for quick lookup */
-	qsort(module_loadorder, nmodule_loadorder, sizeof(module_loadorder[0]), cmp_sort_func);
+/***************************************************************************
+ *	get_list_load_order
+ *
+ * Get the load order for a given module from the command-line or
+ * default lists.
+ */
+static BOOL get_list_load_order( const char *module, const struct loadorder_list *list,
+                                 enum loadorder_type lo[] )
+{
+    module_loadorder_t tmp, *res;
 
-	/* Check the pairs of dlls */
-        dllpair = DllPairs;
-        while (dllpair->dll1)
+    tmp.modulename = module;
+    if ((res = bsearch(&tmp, list->order, list->count, sizeof(list->order[0]), cmp_sort_func)))
+        memcpy( lo, res->loadorder, sizeof(res->loadorder) );
+    return (res != NULL);
+}
+
+
+/***************************************************************************
+ *	get_app_load_order
+ *
+ * Get the load order for a given module from the app-specific DllOverrides list
+ */
+static BOOL get_app_load_order( const char *module, enum loadorder_type lo[] )
+{
+    HKEY hkey, appkey;
+    DWORD count, type, res;
+    char buffer[MAX_PATH+16], *appname, *p;
+
+    if (!GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) &&
+        !GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    {
+        WARN( "could not get module file name loading %s\n", module );
+        return FALSE;
+    }
+    appname = buffer;
+    if ((p = strrchr( appname, '/' ))) appname = p + 1;
+    if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+
+    TRACE( "searching '%s' in AppDefaults\\%s\\DllOverrides\n", module, appname );
+
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &hkey ))
+        return FALSE;
+
+    /* open AppDefaults\\appname\\DllOverrides key */
+    strcat( appname, "\\DllOverrides" );
+    res = RegOpenKeyA( hkey, appname, &appkey );
+    RegCloseKey( hkey );
+    if (res) return FALSE;
+
+    count = sizeof(buffer);
+    res = RegQueryValueExA( appkey, module, NULL, &type, buffer, &count );
+    RegCloseKey( appkey );
+    if (res) return FALSE;
+    TRACE( "got app loadorder '%s' for '%s'\n", buffer, module );
+    return ParseLoadOrder( buffer, lo );
+}
+
+
+/***************************************************************************
+ *	get_standard_load_order
+ *
+ * Get the load order for a given module from the main DllOverrides list
+ */
+static BOOL get_standard_load_order( const char *module, enum loadorder_type lo[] )
+{
+    HKEY hkey;
+    DWORD count, type, res;
+    char buffer[80];
+
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\DllOverrides", &hkey ))
+        return FALSE;
+
+    count = sizeof(buffer);
+    res = RegQueryValueExA( hkey, module, NULL, &type, buffer, &count );
+    RegCloseKey( hkey );
+    if (res) return FALSE;
+    TRACE( "got standard loadorder '%s' for '%s'\n", buffer, module );
+    return ParseLoadOrder( buffer, lo );
+}
+
+
+/***************************************************************************
+ *	get_default_load_order
+ *
+ * Get the default load order if nothing specified for a given dll.
+ */
+static void get_default_load_order( enum loadorder_type lo[] )
+{
+    DWORD res;
+    static enum loadorder_type default_loadorder[LOADORDER_NTYPES];
+    static int loaded;
+
+    if (!loaded)
+    {
+        char buffer[80];
+        HKEY hkey;
+
+        if (!(res = RegOpenKeyA( HKEY_LOCAL_MACHINE,
+                                 "Software\\Wine\\Wine\\Config\\DllDefaults", &hkey )))
         {
-            module_loadorder_t *plo1, *plo2;
-            plo1 = MODULE_GetLoadOrder(dllpair->dll1, FALSE);
-            plo2 = MODULE_GetLoadOrder(dllpair->dll2, FALSE);
-            assert(plo1 && plo2);
-            if(memcmp(plo1->loadorder, plo2->loadorder, sizeof(plo1->loadorder)))
-                MESSAGE("Warning: Modules '%s' and '%s' have different loadorder which may cause trouble\n", dllpair->dll1, dllpair->dll2);
-            dllpair++;
+            DWORD type, count = sizeof(buffer);
+
+            res = RegQueryValueExA( hkey, "DefaultLoadOrder", NULL, &type, buffer, &count );
+            RegCloseKey( hkey );
         }
-
-	if(TRACE_ON(module))
-	{
-		int i, j;
-		static char types[] = "-NSB";
-
-		for(i = 0; i < nmodule_loadorder; i++)
-		{
-			DPRINTF("%3d: %-12s:", i, module_loadorder[i].modulename);
-			for(j = 0; j < MODULE_LOADORDER_NTYPES; j++)
-				DPRINTF(" %c", types[module_loadorder[i].loadorder[j] % (MODULE_LOADORDER_NTYPES+1)]);
-			DPRINTF("\n");
-		}
-	}
-
-	return TRUE;
+        if (res) strcpy( buffer, "n,b,s" );
+        ParseLoadOrder( buffer, default_loadorder );
+        loaded = 1;
+        TRACE( "got default loadorder '%s'\n", buffer );
+    }
+    memcpy( lo, default_loadorder, sizeof(default_loadorder) );
 }
 
 
@@ -476,9 +519,8 @@ BOOL MODULE_InitLoadOrder(void)
  * '.dll' and '.exe'. A lookup in the table can yield an override for
  * the specific dll. Otherwise the default load order is returned.
  */
-module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32 )
+void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOOL win32 )
 {
-	module_loadorder_t lo, *tmp;
 	char fname[256];
 	char sysdir[MAX_PATH+1];
 	char *cptr;
@@ -486,11 +528,8 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32 )
 	int len;
 
 	TRACE("looking for %s\n", path);
-	
-	assert(path != NULL);
 
-	if ( ! GetSystemDirectoryA ( sysdir, MAX_PATH ) ) 
-	  return &default_loadorder; /* Hmmm ... */
+        if ( ! GetSystemDirectoryA ( sysdir, MAX_PATH ) ) goto done;
 
 	/* Strip path information for 16 bit modules or if the module 
 	   resides in the system directory */
@@ -517,21 +556,27 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32 )
 	len = strlen(name);
 	if(len >= sizeof(fname) || len <= 0)
 	{
-	     ERR("Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
-	     return &default_loadorder;
+            WARN("Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
+            goto done;
 	}
 
 	strcpy(fname, name);
 	if(len >= 4 && (!FILE_strcasecmp(fname+len-4, ".dll") || !FILE_strcasecmp(fname+len-4, ".exe")))
 		fname[len-4] = '\0';
 
-	lo.modulename = fname;
-	tmp = bsearch(&lo, module_loadorder, nmodule_loadorder, sizeof(module_loadorder[0]), cmp_sort_func);
+        /* check command-line first */
+        if (get_list_load_order( fname, &cmdline_list, loadorder )) return;
 
-	TRACE("Looking for '%s' (%s), found '%s'\n", path, fname, tmp ? tmp->modulename : "<nothing>");
+        /* then app-specific config */
+        if (get_app_load_order( fname, loadorder )) return;
 
-	if(!tmp)
-		return &default_loadorder;
-	return tmp;
+        /* then standard config */
+        if (get_standard_load_order( fname, loadorder )) return;
+
+        /* then compiled-in defaults */
+        if (get_list_load_order( fname, &default_list, loadorder )) return;
+
+ done:
+        /* last, return the default */
+        get_default_load_order( loadorder );
 }
-

@@ -13,7 +13,6 @@ struct options
 {
     char * desktopGeometry; /* NULL when no desktop */
     char * display;         /* display name */
-    char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    synchronous;     /* X synchronous mode */
     int    managed;	    /* Managed windows */
 };
