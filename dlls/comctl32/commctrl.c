@@ -2,7 +2,7 @@
  * Common controls functions
  *
  * Copyright 1997 Dimitrie O. Paun
- * Copyright 1998 Eric Kohl
+ * Copyright 1998,2000 Eric Kohl
  *
  */
 
@@ -41,6 +41,7 @@ HANDLE COMCTL32_hHeap = (HANDLE)NULL;
 DWORD    COMCTL32_dwProcessesAttached = 0;
 LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
 HMODULE COMCTL32_hModule = 0;
+LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
 
 
 /***********************************************************************
@@ -840,10 +841,10 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 	return E_INVALIDARG;
     }
 
-    pdvi->dwMajorVersion = 4;
-    pdvi->dwMinorVersion = 72;
-    pdvi->dwBuildNumber = 3110;
-    pdvi->dwPlatformID = 1;
+    pdvi->dwMajorVersion = 5;
+    pdvi->dwMinorVersion = 0;
+    pdvi->dwBuildNumber = 2919;
+    pdvi->dwPlatformID = 6304;
 
     TRACE("%lu.%lu.%lu.%lu\n",
 	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
@@ -1102,4 +1103,29 @@ _TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     }
 
     return TRUE;
+}
+
+
+/*************************************************************************
+ * GetMUILanguage [COMCTL32.39]
+ *
+ * FIXME: What's this supposed to do?  Apparently some i18n thing.
+ *
+ */
+LANGID WINAPI GetMUILanguage (VOID)
+{
+    return COMCTL32_uiLang;
+}
+
+
+/*************************************************************************
+ * InitMUILanguage [COMCTL32.85]
+ *
+ * FIXME: What's this supposed to do?  Apparently some i18n thing.
+ *
+ */
+
+VOID WINAPI InitMUILanguage (LANGID uiLang)
+{
+   COMCTL32_uiLang = uiLang;
 }

@@ -2278,17 +2278,18 @@ BOOL WINAPI COMCTL32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
    return TRUE;
 }
 
-/*************************************************************************
- * InitMUILanguage [COMCTL32.70]
+
+/**************************************************************************
+ * COMCTL32_415 [COMCTL32.415]
  *
- * FIXME: What's this supposed to do?  Apparently some i18n thing.
- *
+ * FIXME: What's this supposed to do?
+ *        Parameter 1 is an HWND, you're on your own for the rest.
  */
 
-BOOL WINAPI InitMUILanguage( LANGID uiLang) {
+BOOL WINAPI COMCTL32_415( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
+{
 
-   FIXME("(%04x): stub!\n", uiLang);
+   FIXME("(%x, %lx, %lx, %lx, %lx): stub!\n", hwnd, b, c, d, e);
 
    return TRUE;
 }
-

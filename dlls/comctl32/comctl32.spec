@@ -6,7 +6,7 @@ rsrc	comctl32
 # Functions exported by the Win95 comctl32.dll 
 # (these need to have these exact ordinals, because some win95 dlls 
 #  import comctl32.dll by ordinal)
-#   This list was created from a comctl32.dll v4.72 (IE4.01).
+#   This list was created from a comctl32.dll v5.81 (IE5.01).
 
   2 stdcall MenuHelp(long long long long long long ptr) MenuHelp
   3 stdcall ShowHideMenuCtl(long long ptr) ShowHideMenuCtl
@@ -45,55 +45,59 @@ rsrc	comctl32
  36 stdcall FlatSB_SetScrollProp (long long long long) FlatSB_SetScrollProp
  37 stdcall FlatSB_SetScrollRange (long long long long long) FlatSB_SetScrollRange
  38 stdcall FlatSB_ShowScrollBar (long long long) FlatSB_ShowScrollBar
- 39 stdcall ImageList_Add(ptr long long) ImageList_Add
- 40 stdcall ImageList_AddIcon(ptr long) ImageList_AddIcon
- 41 stdcall ImageList_AddMasked(ptr long long) ImageList_AddMasked
- 42 stdcall ImageList_BeginDrag(ptr long long long) ImageList_BeginDrag
- 43 stdcall ImageList_Copy(ptr long ptr long long) ImageList_Copy
- 44 stdcall ImageList_Create(long long long long long) ImageList_Create
- 45 stdcall ImageList_Destroy(ptr) ImageList_Destroy
- 46 stdcall ImageList_DragEnter(long long long) ImageList_DragEnter
- 47 stdcall ImageList_DragLeave(long) ImageList_DragLeave
- 48 stdcall ImageList_DragMove(long long) ImageList_DragMove
- 49 stdcall ImageList_DragShowNolock(long) ImageList_DragShowNolock
- 50 stdcall ImageList_Draw(ptr long long long long long) ImageList_Draw
- 51 stdcall ImageList_DrawEx(ptr long long long long long long long long long) ImageList_DrawEx
- 52 stdcall ImageList_DrawIndirect(ptr) ImageList_DrawIndirect
- 53 stdcall ImageList_Duplicate(ptr) ImageList_Duplicate
- 54 stdcall ImageList_EndDrag() ImageList_EndDrag 
- 55 stdcall ImageList_GetBkColor(ptr) ImageList_GetBkColor
- 56 stdcall ImageList_GetDragImage(ptr ptr) ImageList_GetDragImage
- 57 stdcall ImageList_GetIcon(ptr long long) ImageList_GetIcon
- 58 stdcall ImageList_GetIconSize(ptr ptr ptr) ImageList_GetIconSize
- 59 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
- 60 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
- 61 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
- 62 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImageA
- 63 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImageA
- 64 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImageW
- 65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
- 66 stdcall ImageList_Read(ptr) ImageList_Read
- 67 stdcall ImageList_Remove(ptr long) ImageList_Remove
- 68 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
- 69 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
- 70 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
+ 39 stdcall GetMUILanguage() GetMUILanguage
+ 40 stdcall ImageList_Add(ptr long long) ImageList_Add
+ 41 stdcall ImageList_AddIcon(ptr long) ImageList_AddIcon
+ 42 stdcall ImageList_AddMasked(ptr long long) ImageList_AddMasked
+ 43 stdcall ImageList_BeginDrag(ptr long long long) ImageList_BeginDrag
+ 44 stdcall ImageList_Copy(ptr long ptr long long) ImageList_Copy
+ 45 stdcall ImageList_Create(long long long long long) ImageList_Create
+ 46 stdcall ImageList_Destroy(ptr) ImageList_Destroy
+ 47 stdcall ImageList_DragEnter(long long long) ImageList_DragEnter
+ 48 stdcall ImageList_DragLeave(long) ImageList_DragLeave
+ 49 stdcall ImageList_DragMove(long long) ImageList_DragMove
+ 50 stdcall ImageList_DragShowNolock(long) ImageList_DragShowNolock
+ 51 stdcall ImageList_Draw(ptr long long long long long) ImageList_Draw
+ 52 stdcall ImageList_DrawEx(ptr long long long long long long long long long) ImageList_DrawEx
+ 53 stdcall ImageList_DrawIndirect(ptr) ImageList_DrawIndirect
+ 54 stdcall ImageList_Duplicate(ptr) ImageList_Duplicate
+ 55 stdcall ImageList_EndDrag() ImageList_EndDrag
+ 56 stdcall ImageList_GetBkColor(ptr) ImageList_GetBkColor
+ 57 stdcall ImageList_GetDragImage(ptr ptr) ImageList_GetDragImage
+ 58 stub ImageList_GetFlags
+ 59 stdcall ImageList_GetIcon(ptr long long) ImageList_GetIcon
+ 60 stdcall ImageList_GetIconSize(ptr ptr ptr) ImageList_GetIconSize
+ 61 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
+ 62 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
+ 63 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
+ 64 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImageA
+ 65 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImageA
+ 66 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImageW
+ 67 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
+ 68 stdcall ImageList_Read(ptr) ImageList_Read
+ 69 stdcall ImageList_Remove(ptr long) ImageList_Remove
+ 70 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
  71 stdcall Alloc(long) COMCTL32_Alloc
  72 stdcall ReAlloc(ptr long) COMCTL32_ReAlloc
  73 stdcall Free(ptr) COMCTL32_Free
  74 stdcall GetSize(ptr) COMCTL32_GetSize
- 75 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
- 76 stdcall ImageList_SetFilter(ptr long long) ImageList_SetFilter
- 77 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
- 78 stdcall ImageList_SetImageCount(ptr long) ImageList_SetImageCount
- 79 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
- 80 stdcall ImageList_Write(ptr ptr) ImageList_Write
- 81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
- 82 stdcall InitializeFlatSB(long) InitializeFlatSB
- 83 stdcall PropertySheet(ptr) PropertySheetA
- 84 stdcall PropertySheetA(ptr) PropertySheetA
- 85 stdcall PropertySheetW(ptr) PropertySheetW
- 86 stdcall UninitializeFlatSB(long) UninitializeFlatSB
- 87 stdcall _TrackMouseEvent(ptr) _TrackMouseEvent
+ 75 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
+ 76 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
+ 77 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
+ 78 stdcall ImageList_SetFilter(ptr long long) ImageList_SetFilter
+ 79 stub ImageList_SetFlags
+ 80 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
+ 81 stdcall ImageList_SetImageCount(ptr long) ImageList_SetImageCount
+ 82 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
+ 83 stdcall ImageList_Write(ptr ptr) ImageList_Write
+ 84 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
+ 85 stdcall InitMUILanguage(long) InitMUILanguage
+ 86 stdcall InitializeFlatSB(long) InitializeFlatSB
+ 87 stdcall PropertySheet(ptr) PropertySheetA
+ 88 stdcall PropertySheetA(ptr) PropertySheetA
+ 89 stdcall PropertySheetW(ptr) PropertySheetW
+ 90 stdcall UninitializeFlatSB(long) UninitializeFlatSB
+ 91 stdcall _TrackMouseEvent(ptr) _TrackMouseEvent
 
 151 stdcall CreateMRUListA(ptr) CreateMRUListA
 152 stdcall FreeMRUList(ptr) FreeMRUListA
@@ -186,7 +190,11 @@ rsrc	comctl32
 411 stdcall COMCTL32_411(long long long) COMCTL32_411
 412 stdcall COMCTL32_412(long long long) COMCTL32_412
 413 stdcall COMCTL32_413(long long long long) COMCTL32_413
-
-# this is actually ordinal 70 in COMCTL32 v5.0
-414 stdcall InitMUILanguage(long) InitMUILanguage
-
+414 stub COMCTL32_414
+415 stdcall COMCTL32_415(long long long long long) COMCTL32_415
+416 stub COMCTL32_416
+417 stub COMCTL32_417
+418 stub COMCTL32_418
+419 stub COMCTL32_419
+420 stub COMCTL32_420
+421 stub COMCTL32_421

@@ -9,6 +9,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "imagelist.h"
 #include "prsht.h"
 
@@ -26,6 +27,10 @@ typedef struct tagINITCOMMONCONTROLSEX {
 } INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
 
 BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
+
+LANGID WINAPI GetMUILanguage (VOID);
+VOID WINAPI InitMUILanguage (LANGID uiLang);
+
 
 #define COMCTL32_VERSION                5  /* dll version */
 
@@ -105,9 +110,9 @@ BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define LPSTR_TEXTCALLBACK WINELIB_NAME_AW(LPSTR_TEXTCALLBACK)
 
 #define I_IMAGECALLBACK          (-1)
+#define I_IMAGENONE              (-2)
 #define I_INDENTCALLBACK         (-1)
 #define I_CHILDRENCALLBACK       (-1)
-
 
 /* owner drawn types */
 #define ODT_HEADER      100
@@ -3547,6 +3552,8 @@ LPVOID WINAPI COMCTL32_Alloc (DWORD);
 LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
 BOOL WINAPI COMCTL32_Free (LPVOID);
 DWORD  WINAPI COMCTL32_GetSize (LPVOID);
+
+LPWSTR WINAPI COMCTL32_StrChrW (LPCWSTR, WORD);
 
 
 INT  WINAPI Str_GetPtrA (LPCSTR, LPSTR, INT);
