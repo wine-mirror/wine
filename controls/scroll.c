@@ -790,6 +790,10 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
 
+    /* do not draw if the scrollbar rectangle is empty */
+    if(IsRectEmpty(&rect))
+      goto END;
+
     if (Save_SCROLL_MovingThumb &&
         (SCROLL_TrackingWin == hwnd) &&
         (SCROLL_TrackingBar == nBar))
