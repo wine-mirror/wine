@@ -313,6 +313,8 @@ int main( int argc, char **argv )
 {
     char *p;
 
+    setvbuf (stdout, NULL, _IONBF, 0);
+
     winetest_argc = argc;
     winetest_argv = argv;
 
