@@ -835,7 +835,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
              should be always at the top of the list */
             if ( (smsg != queue->smProcessing) || !queue->smProcessing )
         {
-                ERR_(sendmsg)("smsg not at the top of Processing list, smsg=0x%p queue=0x%p", smsg, queue);
+                ERR_(sendmsg)("smsg not at the top of Processing list, smsg=0x%p queue=0x%p\n", smsg, queue);
                 return 0;
             }
             else
@@ -859,7 +859,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
              should be always at the top of the list */
             if ( (smsg != queue->smWaiting) || !queue->smWaiting )
             {
-                ERR_(sendmsg)("smsg not at the top of Waiting list, smsg=0x%p queue=0x%p", smsg, queue);
+                ERR_(sendmsg)("smsg not at the top of Waiting list, smsg=0x%p queue=0x%p\n", smsg, queue);
                 return 0;
             }
             else
@@ -878,7 +878,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
                 smsg = queue->smPending;
 	    if ( (smsg != queue->smPending) || !queue->smPending )
             {
-                ERR_(sendmsg)("should always remove the top one in Pending list, smsg=0x%p queue=0x%p", smsg, queue);
+                ERR_(sendmsg)("should always remove the top one in Pending list, smsg=0x%p queue=0x%p\n", smsg, queue);
 		LeaveCriticalSection( &queue->cSection );
                 return 0;
             }
@@ -897,7 +897,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             return smsg;
 
         default:
-            ERR_(sendmsg)("Invalid list: %d", list);
+            ERR_(sendmsg)("Invalid list: %d\n", list);
             break;
     }
 

@@ -887,7 +887,7 @@ got:
     }
     WIN_RestoreWndsLock(iWndsLocks);
 
-    /* remove the smsg from the processingg list of the source queue */
+    /* remove the smsg from the processing list of the source queue */
     QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
 
     /* Note: the destination thread is in charge of removing the smsg from
@@ -897,7 +897,7 @@ got:
        released the smsg structure if the receiver thread is done
        (SMSG_RECEIVED set). If the receiver thread isn't done,
        SMSG_RECEIVER_CLEANS_UP flag is set, and it will be the receiver
-       responsability to released smsg */
+       responsibility to release smsg */
         EnterCriticalSection( &queue->cSection );
     
         if (smsg->flags & SMSG_RECEIVED)
@@ -977,7 +977,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     
     if (smsg->flags & SMSG_SENDING_REPLY)
     {
-        /* remove msg from the waiting list, since this  is the last
+        /* remove msg from the waiting list, since this is the last
           ReplyMessage */
         QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
         
@@ -987,7 +987,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
         smsg->flags |= SMSG_RECEIVED;
 
         /* sender will set SMSG_RECEIVER_CLEANS_UP if it wants the
-         receiver to clean up smsg, it could only happens when there is
+         receiver to clean up smsg, it could only happen when there is
          an early reply or a timeout */
         if ( smsg->flags & SMSG_RECEIVER_CLEANS )
         {

@@ -667,7 +667,7 @@ END:
 /***********************************************************************
  * NC_DoNCHitTest
  *
- * Handle a WM_NCHITTEST message. Called from NC_HandleNcHitTest().
+ * Handle a WM_NCHITTEST message. Called from NC_HandleNCHitTest().
  */
 
 static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
