@@ -979,7 +979,7 @@ typedef struct _DDSURFACEDESC
 
 typedef struct _DDSURFACEDESC2
 {
-	DWORD	dwSize;		/* 0: size of the DDSURFACEDESC structure*/
+	DWORD	dwSize;		/* 0: size of the DDSURFACEDESC2 structure*/
 	DWORD	dwFlags;	/* 4: determines what fields are valid*/
 	DWORD	dwHeight;	/* 8: height of surface to be created*/
 	DWORD	dwWidth;	/* C: width of input surface*/

@@ -326,9 +326,13 @@ struct displaymodescallback_context
 static HRESULT CALLBACK
 EnumDisplayModesCallbackThunk(LPDDSURFACEDESC2 pDDSD2, LPVOID context)
 {
+    DDSURFACEDESC DDSD;
     struct displaymodescallback_context *cbcontext = context;
 
-    return cbcontext->func((LPDDSURFACEDESC)pDDSD2, cbcontext->context);
+    memcpy(&DDSD,pDDSD2,sizeof DDSD);
+    DDSD.dwSize = sizeof DDSD;
+
+    return cbcontext->func(&DDSD, cbcontext->context);
 }
 
 static HRESULT WINAPI
