@@ -149,7 +149,7 @@ BOOL HCR_GetExecuteCommandA(LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD l
 *
 * Gets the icon for a filetype
 */
-static HRESULT HCR_RegOpenClassIDKey(REFIID riid, HKEY *hkey)
+static BOOL HCR_RegOpenClassIDKey(REFIID riid, HKEY *hkey)
 {
 	char	xriid[50];
     sprintf( xriid, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
@@ -159,7 +159,7 @@ static HRESULT HCR_RegOpenClassIDKey(REFIID riid, HKEY *hkey)
 
  	TRACE("%s\n",xriid );
 
-	return RegOpenKeyExA(HKEY_CLASSES_ROOT, xriid, 0, KEY_READ, hkey);
+	return !RegOpenKeyExA(HKEY_CLASSES_ROOT, xriid, 0, KEY_READ, hkey);
 }
 
 static BOOL HCR_RegGetDefaultIconW(HKEY hkey, LPWSTR szDest, DWORD len, LPDWORD dwNr)
@@ -253,7 +253,7 @@ BOOL HCR_GetDefaultIconFromGUIDW(REFIID riid, LPWSTR szDest, DWORD len, LPDWORD 
 	HKEY	hkey;
 	BOOL	ret = FALSE;
 
-	if (!HCR_RegOpenClassIDKey(riid, &hkey))
+	if (HCR_RegOpenClassIDKey(riid, &hkey))
 	{
 	  ret = HCR_RegGetDefaultIconW(hkey, szDest, len, dwNr);
 	  RegCloseKey(hkey);
