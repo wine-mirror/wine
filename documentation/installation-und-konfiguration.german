@@ -384,13 +384,13 @@ die folgenden Programme und Dateien installiert sein:
    Außerdem ist es möglich, innerhalb der Konfigurationsdatei mit
    Werten von Umgebungsvariablen zu arbeiten. Dazu ist an Stelle eines
    Wertes der Name der zu verwendenden Umgebungsvariablen in
-   geschweiften Klammern und mit einem vorangestellten Dollarzeichen
-   anzugeben. Soll beispielsweise der Variablen Path aus dem obigen
+   DOS Schreibweise anzugeben, d.h. die Variable wird in Prozentzeichen 
+   eingeschlossen. Soll beispielsweise der Variablen Path aus dem obigen
    Beispiel der Wert zugeordnet werden, den die Umgebungsvariable HOME
    zur Zeit der Ausführung von WINE hat, so wäre die entsprechende
    Zeile folgendermaßen zu schreiben:
 
-   "Path" = "${HOME}"
+   "Path" = "%HOME%"
 
    Vom Basisverzeichnis des WINE-Quellcodes aus befindet sich in der Datei
    documentation/samples/config ein Beispiel als Vorlage für die Erstellung
@@ -482,7 +482,7 @@ die folgenden Programme und Dateien installiert sein:
    mit denen die Eigenschaften des Laufwerkes festgelegt werden. Die
    wichtigste dieser Variablen ist Path. Hiermit wird bestimmt,
    welchem UNIX-Verzeichnis das Laufwerk entsprechen soll (Beispiele:
-   "Path" = "/home/karl", "Path" = "${HOME}"). Die weiteren Variablen
+   "Path" = "/home/karl", "Path" = "%HOME%"). Die weiteren Variablen
    haben die folgende Bedeutung:
    
    Type
