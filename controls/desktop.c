@@ -228,7 +228,7 @@ BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 
 
 /***********************************************************************
- *           SetDeskWallPaper32   (USER32.475)
+ *           SetDeskWallPaper   (USER32.475)
  *
  * FIXME: is there a unicode version?
  */

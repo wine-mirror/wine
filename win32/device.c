@@ -1234,6 +1234,9 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 	return FALSE;
 }
 
+/***********************************************************************
+ *		OpenVxDHandle
+ */
 DWORD	WINAPI	OpenVxDHandle(DWORD pmt)
 {
 	FIXME( "(0x%08lx) stub!\n", pmt);

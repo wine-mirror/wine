@@ -33,13 +33,13 @@ static UINT		HelpMessage;
  * but _not_ at those places that are protected with the mutex (there are
  * globals that seem to hold info for the wndproc).
  *
- * FindText32x/ReplaceText32x
+ * FindText[AW]/ReplaceText[AW]
  * The find/replace calls are passed a structure that is _not_ used
  * internally. There is a local copy that holds the running info to
- * be able to combine xxx32A and xxx32W calls. The passed pointer is
+ * be able to combine xxxA and xxxW calls. The passed pointer is
  * returned upon sendmessage. Apps wont break this way when they rely
  * on the original pointer. This will work as long as the sizes of
- * FINDREPLACE32A == FINDREPLACE32W. The local copy will also prevent
+ * FINDREPLACEA == FINDREPLACEW. The local copy will also prevent
  * the app to see the wine-specific extra flags to distinguish between
  * A/W and Find/Replace.
  */
@@ -415,7 +415,7 @@ cleanup:
 }
 
 /***********************************************************************
- *	FindText32A 				[COMDLG32.6]
+ *	FindTextA 				[COMDLG32.6]
  *	RETURNS
  *		Window handle to created dialog: Succes
  *		NULL: Failure
@@ -439,7 +439,7 @@ HWND WINAPI FindTextA(
 }
 
 /***********************************************************************
- *	ReplaceText32A 				[COMDLG32.19]
+ *	ReplaceTextA 				[COMDLG32.19]
  *	RETURNS
  *		Window handle to created dialog: Succes
  *		NULL: Failure
@@ -464,7 +464,7 @@ HWND WINAPI ReplaceTextA(
 }
 
 /***********************************************************************
- *	FindText32W 				[COMDLG32.7]
+ *	FindTextW 				[COMDLG32.7]
  *	RETURNS
  *		Window handle to created dialog: Succes
  *		NULL: Failure

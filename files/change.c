@@ -33,7 +33,7 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
 }
 
 /****************************************************************************
- *		FindFirstChangeNotification32W (KERNEL32.249)
+ *		FindFirstChangeNotificationW (KERNEL32.249)
  */
 HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
                                                 BOOL bWatchSubtree,

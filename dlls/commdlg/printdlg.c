@@ -306,7 +306,7 @@ BOOL WINAPI PrintDlgA(
 
 
 /***********************************************************************
- *           PrintDlg32W   (COMDLG32.18)
+ *           PrintDlgW   (COMDLG32.18)
  */
 BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 {

@@ -120,7 +120,7 @@ BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
 
 
 /******************************************************************************
- * CreateMailslot32A [KERNEL32.164]
+ * CreateMailslotA [KERNEL32.164]
  */
 HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
                                    DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa)
@@ -132,7 +132,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 
 
 /******************************************************************************
- * CreateMailslot32W [KERNEL32.165]  Creates a mailslot with specified name
+ * CreateMailslotW [KERNEL32.165]  Creates a mailslot with specified name
  * 
  * PARAMS
  *    lpName          [I] Pointer to string for mailslot name
@@ -181,7 +181,7 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
 
 
 /******************************************************************************
- * GetCompressedFileSize32A [KERNEL32.291]
+ * GetCompressedFileSizeA [KERNEL32.291]
  *
  * NOTES
  *    This should call the W function below
@@ -196,7 +196,7 @@ DWORD WINAPI GetCompressedFileSizeA(
 
 
 /******************************************************************************
- * GetCompressedFileSize32W [KERNEL32.292]  
+ * GetCompressedFileSizeW [KERNEL32.292]  
  * 
  * RETURNS
  *    Success: Low-order doubleword of number of bytes
@@ -262,7 +262,7 @@ VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 
 
 /******************************************************************************
- * SetComputerName32A [KERNEL32.621]  
+ * SetComputerNameA [KERNEL32.621]  
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 {
@@ -274,7 +274,7 @@ BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 
 
 /******************************************************************************
- * SetComputerName32W [KERNEL32.622]
+ * SetComputerNameW [KERNEL32.622]
  *
  * PARAMS
  *    lpComputerName [I] Address of new computer name
@@ -287,14 +287,16 @@ BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
     return TRUE;
 }
 
-
+/******************************************************************************
+ *		EnumPortsA
+ */
 BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD bufneeded,LPDWORD bufreturned) {
 	FIXME("(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
 	return FALSE;
 }
 
 /******************************************************************************
- * OpenDesktop32A [USER32.408]
+ * OpenDesktopA [USER32.408]
  *
  * NOTES
  *    Return type should be HDESK
@@ -312,6 +314,9 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 }
 
 
+/******************************************************************************
+ *		SetUserObjectInformationA
+ */
 BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex, 
 				       LPVOID pvInfo, DWORD nLength )
 {
@@ -319,13 +324,18 @@ BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,
     return TRUE;
 }
 
-
+/******************************************************************************
+ *		SetThreadDesktop
+ */
 BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
 {
     FIXME("(%x): stub\n",hDesktop);
     return TRUE;
 }
 
+/******************************************************************************
+ *		CreateIoCompletionPort
+ */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
 HANDLE hExistingCompletionPort, DWORD dwCompletionKey,
 DWORD dwNumberOfConcurrentThreads)

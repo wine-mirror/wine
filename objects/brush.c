@@ -124,7 +124,7 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
 
 
 /***********************************************************************
- *           CreateBrushIndirect32    (GDI32.27)
+ *           CreateBrushIndirect    (GDI32.27)
  *
  * BUGS
  *      As for Windows 95 and Windows 98:
@@ -164,7 +164,7 @@ HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 
 
 /***********************************************************************
- *           CreateHatchBrush32    (GDI32.48)
+ *           CreateHatchBrush    (GDI32.48)
  */
 HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
@@ -190,7 +190,7 @@ HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 
 
 /***********************************************************************
- *           CreatePatternBrush32    (GDI32.54)
+ *           CreatePatternBrush    (GDI32.54)
  */
 HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 {
@@ -220,7 +220,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 
 
 /***********************************************************************
- *           CreateDIBPatternBrush32    (GDI32.34)
+ *           CreateDIBPatternBrush    (GDI32.34)
  *
  *	Create a logical brush which has the pattern specified by the DIB
  *
@@ -292,7 +292,7 @@ HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 
 
 /***********************************************************************
- *           CreateSolidBrush32    (GDI32.64)
+ *           CreateSolidBrush    (GDI32.64)
  */
 HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
@@ -386,7 +386,7 @@ INT16 BRUSH_GetObject16( BRUSHOBJ * brush, INT16 count, LPSTR buffer )
 
 
 /***********************************************************************
- *           BRUSH_GetObject32
+ *           BRUSH_GetObject
  */
 INT BRUSH_GetObject( BRUSHOBJ * brush, INT count, LPSTR buffer )
 {

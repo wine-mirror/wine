@@ -10,10 +10,10 @@
 #include "debugtools.h"
 #include "imagehlp.h"
 
-DEFAULT_DEBUG_CHANNEL(imagehlp)
+DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /***********************************************************************
- *           FindDebugInfoFile32 (IMAGEHLP.5)
+ *		FindDebugInfoFile (IMAGEHLP.@)
  */
 HANDLE WINAPI FindDebugInfoFile(
   LPSTR FileName, LPSTR SymbolPath, LPSTR DebugFilePath)
@@ -27,7 +27,7 @@ HANDLE WINAPI FindDebugInfoFile(
 }
 
 /***********************************************************************
- *           FindExecutableImage32 (IMAGEHLP.6)
+ *		FindExecutableImage (IMAGEHLP.@)
  */
 HANDLE WINAPI FindExecutableImage(
   LPSTR FileName, LPSTR SymbolPath, LPSTR ImageFilePath)
@@ -41,7 +41,7 @@ HANDLE WINAPI FindExecutableImage(
 }
 
 /***********************************************************************
- *           MapDebugInformation32 (IMAGEHLP.26)
+ *		MapDebugInformation (IMAGEHLP.@)
  */
 PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
   HANDLE FileHandle, LPSTR FileName,
@@ -55,7 +55,7 @@ PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
 }
 
 /***********************************************************************
- *           StackWalk32 (IMAGEHLP.36)
+ *		StackWalk (IMAGEHLP.@)
  */
 BOOL WINAPI StackWalk(
   DWORD MachineType, HANDLE hProcess, HANDLE hThread,
@@ -76,7 +76,7 @@ BOOL WINAPI StackWalk(
 }
 
 /***********************************************************************
- *           UnDecorateSymbolName32 (IMAGEHLP.57)
+ *		UnDecorateSymbolName (IMAGEHLP.@)
  */
 DWORD WINAPI UnDecorateSymbolName(
   LPCSTR DecoratedName, LPSTR UnDecoratedName,
@@ -91,9 +91,8 @@ DWORD WINAPI UnDecorateSymbolName(
 }
 
 /***********************************************************************
- *           UnmapDebugInformation32 (IMAGEHLP.59)
+ *		UnmapDebugInformation (IMAGEHLP.@)
  */
-
 BOOL WINAPI UnmapDebugInformation(
   PIMAGE_DEBUG_INFORMATION DebugInfo)
 {

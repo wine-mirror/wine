@@ -16,8 +16,9 @@
 
 MONITOR MONITOR_PrimaryMonitor;
 
-/**********************************************************************/
-
+/***********************************************************************
+ *		MonitorFromPoint
+ */
 HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
 {
     if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
@@ -31,6 +32,9 @@ HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
         return NULL;
 }
 
+/***********************************************************************
+ *		MonitorFromRect
+ */
 HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
 {
     if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
@@ -44,6 +48,9 @@ HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
     return NULL;
 }
 
+/***********************************************************************
+ *		MonitorFromWindow
+ */
 HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 {
     WINDOWPLACEMENT wp;
@@ -61,6 +68,9 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
     return NULL;
 }
 
+/***********************************************************************
+ *		GetMonitorInfoA
+ */
 BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
     RECT rcWork;
@@ -83,6 +93,9 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     return FALSE;
 }
 
+/***********************************************************************
+ *		GetMonitorInfoW
+ */
 BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
     RECT rcWork;
@@ -105,6 +118,9 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     return FALSE;
 }
 
+/***********************************************************************
+ *		EnumDisplayMonitors
+ */
 BOOL WINAPI EnumDisplayMonitors(
         HDC             hdcOptionalForPainting,
         LPRECT         lprcEnumMonitorsThatIntersect,

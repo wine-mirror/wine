@@ -64,7 +64,7 @@ BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 
 
 /**************************************************************************
- *              SetFileAttributes32A	(KERNEL32.490)
+ *              SetFileAttributesA	(KERNEL32.490)
  */
 BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 {
@@ -118,7 +118,7 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 
 
 /**************************************************************************
- *              SetFileAttributes32W	(KERNEL32.491)
+ *              SetFileAttributesW	(KERNEL32.491)
  */
 BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
 {

@@ -158,7 +158,7 @@ int DIR_Init(void)
 
 
 /***********************************************************************
- *           GetTempPath32A   (KERNEL32.292)
+ *           GetTempPathA   (KERNEL32.292)
  */
 UINT WINAPI GetTempPathA( UINT count, LPSTR path )
 {
@@ -177,7 +177,7 @@ UINT WINAPI GetTempPathA( UINT count, LPSTR path )
 
 
 /***********************************************************************
- *           GetTempPath32W   (KERNEL32.293)
+ *           GetTempPathW   (KERNEL32.293)
  */
 UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
 {
@@ -261,7 +261,7 @@ UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
 
 
 /***********************************************************************
- *           GetWindowsDirectory32A   (KERNEL32.311)
+ *           GetWindowsDirectoryA   (KERNEL32.311)
  */
 UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 {
@@ -271,7 +271,7 @@ UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetWindowsDirectory32W   (KERNEL32.312)
+ *           GetWindowsDirectoryW   (KERNEL32.312)
  */
 UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
@@ -290,7 +290,7 @@ UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 
 
 /***********************************************************************
- *           GetSystemDirectory32A   (KERNEL32.282)
+ *           GetSystemDirectoryA   (KERNEL32.282)
  */
 UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 {
@@ -300,7 +300,7 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetSystemDirectory32W   (KERNEL32.283)
+ *           GetSystemDirectoryW   (KERNEL32.283)
  */
 UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
@@ -320,7 +320,7 @@ BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 
 
 /***********************************************************************
- *           CreateDirectory32A   (KERNEL32.39)
+ *           CreateDirectoryA   (KERNEL32.39)
  * RETURNS:
  *	TRUE : success
  *	FALSE : failure
@@ -358,7 +358,7 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path,
 
 
 /***********************************************************************
- *           CreateDirectory32W   (KERNEL32.42)
+ *           CreateDirectoryW   (KERNEL32.42)
  */
 BOOL WINAPI CreateDirectoryW( LPCWSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
@@ -371,7 +371,7 @@ BOOL WINAPI CreateDirectoryW( LPCWSTR path,
 
 
 /***********************************************************************
- *           CreateDirectoryEx32A   (KERNEL32.40)
+ *           CreateDirectoryExA   (KERNEL32.40)
  */
 BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path,
                                     LPSECURITY_ATTRIBUTES lpsecattribs)
@@ -381,7 +381,7 @@ BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path,
 
 
 /***********************************************************************
- *           CreateDirectoryEx32W   (KERNEL32.41)
+ *           CreateDirectoryExW   (KERNEL32.41)
  */
 BOOL WINAPI CreateDirectoryExW( LPCWSTR template, LPCWSTR path,
                                     LPSECURITY_ATTRIBUTES lpsecattribs)
@@ -400,7 +400,7 @@ BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
 
 
 /***********************************************************************
- *           RemoveDirectory32A   (KERNEL32.437)
+ *           RemoveDirectoryA   (KERNEL32.437)
  */
 BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 {
@@ -425,7 +425,7 @@ BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 
 
 /***********************************************************************
- *           RemoveDirectory32W   (KERNEL32.438)
+ *           RemoveDirectoryW   (KERNEL32.438)
  */
 BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
 {
@@ -512,7 +512,7 @@ static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
 {
     PDB	*pdb = PROCESS_Current();
 
-    /* FIXME: for now, GetModuleFileName32A can't return more */
+    /* FIXME: for now, GetModuleFileNameA can't return more */
     /* than OFS_MAXPATHNAME. This may change with Win32. */
 
     char buffer[OFS_MAXPATHNAME];
@@ -536,7 +536,7 @@ static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
 /***********************************************************************
  *           DIR_SearchPath
  *
- * Implementation of SearchPath32A. 'win32' specifies whether the search
+ * Implementation of SearchPathA. 'win32' specifies whether the search
  * order is Win16 (module path last) or Win32 (module path first).
  *
  * FIXME: should return long path names.
@@ -625,7 +625,7 @@ done:
 
 
 /***********************************************************************
- * SearchPath32A [KERNEL32.447]
+ * SearchPathA [KERNEL32.447]
  *
  * Searches for a specified file in the search path.
  *
@@ -674,7 +674,7 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
 
 
 /***********************************************************************
- *           SearchPath32W   (KERNEL32.448)
+ *           SearchPathW   (KERNEL32.448)
  */
 DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                             DWORD buflen, LPWSTR buffer, LPWSTR *lastpart )

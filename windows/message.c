@@ -759,7 +759,7 @@ void WINAPI SetDoubleClickTime16( UINT16 interval )
 
 
 /**********************************************************************
- *           SetDoubleClickTime32   (USER32.480)
+ *           SetDoubleClickTime   (USER32.480)
  */
 BOOL WINAPI SetDoubleClickTime( UINT interval )
 {
@@ -778,7 +778,7 @@ UINT16 WINAPI GetDoubleClickTime16(void)
 
 
 /**********************************************************************
- *           GetDoubleClickTime32   (USER32.239)
+ *           GetDoubleClickTime   (USER32.239)
  */
 UINT WINAPI GetDoubleClickTime(void)
 {
@@ -1506,7 +1506,7 @@ BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
 }
 
 /***********************************************************************
- *          GetMessage32W   (USER32.274) Retrieve next message
+ *          GetMessageW   (USER32.274) Retrieve next message
  *
  * GetMessage retrieves the next event from the calling thread's
  * queue and deposits it in *lpmsg.
@@ -1814,7 +1814,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           SendMessage32A   (USER32.454)
+ *           SendMessageA   (USER32.454)
  */
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wParam,
                                LPARAM lParam )
@@ -1829,7 +1829,7 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- *           SendMessage32W   (USER32.459)  Send Window Message
+ *           SendMessageW   (USER32.459)  Send Window Message
  *
  *  Sends a message to the window procedure of the specified window.
  *  SendMessage() will not return until the called window procedure
@@ -2258,7 +2258,7 @@ BOOL16 WINAPI TranslateMessage32_16( const MSG32_16 *msg, BOOL16 wHaveParamHigh 
 }
 
 /***********************************************************************
- *           TranslateMessage32   (USER32.556)
+ *           TranslateMessage   (USER32.556)
  */
 BOOL WINAPI TranslateMessage( const MSG *msg )
 {
@@ -2343,7 +2343,7 @@ LONG WINAPI DispatchMessage32_16( const MSG32_16* lpmsg16_32, BOOL16 wHaveParamH
 }
 
 /***********************************************************************
- *           DispatchMessage32A   (USER32.141)
+ *           DispatchMessageA   (USER32.141)
  */
 LONG WINAPI DispatchMessageA( const MSG* msg )
 {
@@ -2399,7 +2399,7 @@ END:
 
 
 /***********************************************************************
- *           DispatchMessage32W   (USER32.142)     Process Message
+ *           DispatchMessageW   (USER32.142)     Process Message
  *
  * Process the message specified in the structure *_msg_.
  *
@@ -2483,7 +2483,7 @@ WORD WINAPI RegisterWindowMessageA( LPCSTR str )
 
 
 /***********************************************************************
- *           RegisterWindowMessage32W   (USER32.438)
+ *           RegisterWindowMessageW   (USER32.438)
  */
 WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 {
@@ -2513,7 +2513,7 @@ BOOL16 WINAPI InSendMessage16(void)
 
 
 /***********************************************************************
- *           InSendMessage32    (USER32.320)
+ *           InSendMessage    (USER32.320)
  */
 BOOL WINAPI InSendMessage(void)
 {
@@ -2584,7 +2584,7 @@ BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 }
 
 /***********************************************************************
- *           SendMessageCallback32A
+ *           SendMessageCallbackA
  * FIXME: It's like PostMessage. The callback gets called when the message
  * is processed. We have to modify the message processing for a exact
  * implementation...
@@ -2604,7 +2604,7 @@ BOOL WINAPI SendMessageCallbackA(
 		return TRUE;
 }
 /***********************************************************************
- *           SendMessageCallback32W
+ *           SendMessageCallbackW
  * FIXME: It's like PostMessage. The callback gets called when the message
  * is processed. We have to modify the message processing for a exact
  * implementation...

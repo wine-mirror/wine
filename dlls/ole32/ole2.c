@@ -263,7 +263,7 @@ void WINAPI OleUninitialize(void)
 }
 
 /******************************************************************************
- *		CoRegisterMessageFilter32	[OLE32.38]
+ *		CoRegisterMessageFilter	[OLE32.38]
  */
 HRESULT WINAPI CoRegisterMessageFilter(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
@@ -296,7 +296,7 @@ HRESULT WINAPI RegisterDragDrop16(
 }
 
 /***********************************************************************
- *           RegisterDragDrop32 (OLE32.139)
+ *           RegisterDragDrop (OLE32.139)
  */
 HRESULT WINAPI RegisterDragDrop(
 	HWND hwnd,
@@ -349,7 +349,7 @@ HRESULT WINAPI RevokeDragDrop16(
 }
 
 /***********************************************************************
- *           RevokeDragDrop32 (OLE32.141)
+ *           RevokeDragDrop (OLE32.141)
  */
 HRESULT WINAPI RevokeDragDrop(
 	HWND hwnd)
@@ -475,7 +475,7 @@ HRESULT WINAPI OleRegGetUserType(
 }
 
 /***********************************************************************
- * DoDragDrop32 [OLE32.65]
+ * DoDragDrop [OLE32.65]
  */
 HRESULT WINAPI DoDragDrop (
   IDataObject *pDataObject,  /* ptr to the data obj           */
@@ -566,7 +566,7 @@ HRESULT WINAPI DoDragDrop (
 }
 
 /***********************************************************************
- * OleQueryLinkFromData32 [OLE32.118]
+ * OleQueryLinkFromData [OLE32.118]
  */
 HRESULT WINAPI OleQueryLinkFromData(
   IDataObject* pSrcDataObject)

@@ -10,7 +10,7 @@
 #include "windef.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(imagehlp)
+DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /**********************************************************************/
 
@@ -44,7 +44,7 @@ BOOL WINAPI IMAGEHLP_LibMain(
 }
 
 /***********************************************************************
- *           ImagehlpApiVersion32 (IMAGEHLP.22)
+ *           ImagehlpApiVersion (IMAGEHLP.@)
  */
 PAPI_VERSION WINAPI ImagehlpApiVersion()
 {
@@ -52,7 +52,7 @@ PAPI_VERSION WINAPI ImagehlpApiVersion()
 }
 
 /***********************************************************************
- *           ImagehlpApiVersionEx32 (IMAGEHLP.23)
+ *           ImagehlpApiVersionEx (IMAGEHLP.@)
  */
 PAPI_VERSION WINAPI ImagehlpApiVersionEx(PAPI_VERSION AppVersion)
 {
@@ -68,7 +68,7 @@ PAPI_VERSION WINAPI ImagehlpApiVersionEx(PAPI_VERSION AppVersion)
 }
 
 /***********************************************************************
- *           MakeSureDirectoryPathExists32 (IMAGEHLP.24)
+ *           MakeSureDirectoryPathExists (IMAGEHLP.@)
  */
 BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 {
@@ -78,13 +78,13 @@ BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 }
 
 /***********************************************************************
- *           MarkImageAsRunFromSwap (IMAGEHLP.29)
+ *           MarkImageAsRunFromSwap (IMAGEHLP.@)
  * FIXME
  *   No documentation available.
  */
 
 /***********************************************************************
- *           SearchTreeForFile32 (IMAGEHLP.33)
+ *           SearchTreeForFile (IMAGEHLP.@)
  */
 BOOL WINAPI SearchTreeForFile(
   LPSTR RootPath, LPSTR InputPathName, LPSTR OutputPathBuffer)
@@ -98,7 +98,7 @@ BOOL WINAPI SearchTreeForFile(
 }
 
 /***********************************************************************
- *           TouchFileTimes32 (IMAGEHLP.56)
+ *           TouchFileTimes (IMAGEHLP.@)
  */
 BOOL WINAPI TouchFileTimes(
   HANDLE FileHandle, LPSYSTEMTIME lpSystemTime)

@@ -1843,7 +1843,7 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 }
 
 /******************************************************************************
- * RegConnectRegistry32W [ADVAPI32.128]
+ * RegConnectRegistryW [ADVAPI32.128]
  *
  * PARAMS
  *    lpMachineName [I] Address of name of remote computer
@@ -1866,7 +1866,7 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
 
 
 /******************************************************************************
- * RegConnectRegistry32A [ADVAPI32.127]
+ * RegConnectRegistryA [ADVAPI32.127]
  */
 LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, LPHKEY reskey )
 {
@@ -1933,7 +1933,7 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
 
 
 /******************************************************************************
- * RegUnLoadKey32W [ADVAPI32.173]
+ * RegUnLoadKeyW [ADVAPI32.173]
  *
  * PARAMS
  *    hkey     [I] Handle of open key
@@ -1947,7 +1947,7 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 
 
 /******************************************************************************
- * RegUnLoadKey32A [ADVAPI32.172]
+ * RegUnLoadKeyA [ADVAPI32.172]
  */
 LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
@@ -1991,7 +1991,7 @@ LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
 
 
 /******************************************************************************
- * RegRestoreKey32W [ADVAPI32.164]
+ * RegRestoreKeyW [ADVAPI32.164]
  *
  * PARAMS
  *    hkey    [I] Handle of key where restore begins
@@ -2015,7 +2015,7 @@ LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
 
 
 /******************************************************************************
- * RegRestoreKey32A [ADVAPI32.163]
+ * RegRestoreKeyA [ADVAPI32.163]
  */
 LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 {
@@ -2028,7 +2028,7 @@ LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 
 
 /******************************************************************************
- * RegReplaceKey32W [ADVAPI32.162]
+ * RegReplaceKeyW [ADVAPI32.162]
  *
  * PARAMS
  *    hkey      [I] Handle of open key
@@ -2046,7 +2046,7 @@ LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
 
 
 /******************************************************************************
- * RegReplaceKey32A [ADVAPI32.161]
+ * RegReplaceKeyA [ADVAPI32.161]
  */
 LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
                               LPCSTR lpOldFile )

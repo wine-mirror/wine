@@ -23,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(msacm)
 static DWORD MSACM_dwProcessesAttached = 0;
 
 /***********************************************************************
- *           MSACM_LibMain32 (MSACM32.init) 
+ *           MSACM_LibMain (MSACM32.init) 
  */
 BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -62,7 +62,7 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
  */
 
 /***********************************************************************
- *           acmGetVersion32 (MSACM32.34)
+ *           acmGetVersion (MSACM32.34)
  */
 DWORD WINAPI acmGetVersion(void)
 {

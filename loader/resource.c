@@ -572,7 +572,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 }
 
 /**********************************************************************
- *			LoadAccelerators32W	[USER.177]
+ *			LoadAcceleratorsW	[USER.177]
  * The image layout seems to look like this (not 100% sure):
  * 00:	BYTE	type		type of accelerator
  * 01:	BYTE	pad		(to WORD boundary)
@@ -619,6 +619,9 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
     return hRetval;
 }
 
+/***********************************************************************
+ *		LoadAcceleratorsA
+ */
 HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 {
 	LPWSTR	 uni;
@@ -633,7 +636,7 @@ HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 }
 
 /**********************************************************************
- *             CopyAcceleratorTable32A   (USER32.58)
+ *             CopyAcceleratorTableA   (USER32.58)
  */
 INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT entries)
 {
@@ -641,7 +644,7 @@ INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT entries)
 }
 
 /**********************************************************************
- *             CopyAcceleratorTable32W   (USER32.59)
+ *             CopyAcceleratorTableW   (USER32.59)
  *
  * By mortene@pvv.org 980321
  */
@@ -695,7 +698,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
 }
 
 /*********************************************************************
- *                    CreateAcceleratorTable   (USER32.64)
+ *                    CreateAcceleratorTableA   (USER32.64)
  *
  * By mortene@pvv.org 980321
  */
@@ -857,7 +860,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 }
 
 /**********************************************************************
- *	LoadString32W		(USER32.376)
+ *	LoadStringW		(USER32.376)
  */
 INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
                             LPWSTR buffer, INT buflen )
@@ -908,7 +911,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 }
 
 /**********************************************************************
- *	LoadString32A	(USER32.375)
+ *	LoadStringA	(USER32.375)
  */
 INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
                             LPSTR buffer, INT buflen )
@@ -980,7 +983,7 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
  */
 
 /**********************************************************************
- *	LoadMessage32A		(internal)
+ *	LoadMessageA		(internal)
  */
 INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
                       LPSTR buffer, INT buflen )
@@ -1038,7 +1041,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
 }
 
 /**********************************************************************
- *	LoadMessage32W	(internal)
+ *	LoadMessageW	(internal)
  */
 INT WINAPI LoadMessageW( HMODULE instance, UINT id, WORD lang,
                       LPWSTR buffer, INT buflen )

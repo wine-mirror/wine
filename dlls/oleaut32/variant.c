@@ -1657,7 +1657,7 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
 
 
 /******************************************************************************
- *		VariantInit32	[OLEAUT32.8]
+ *		VariantInit	[OLEAUT32.8]
  *
  * Initializes the Variant.  Unlike VariantClear it does not interpret the current
  * contents of the Variant.
@@ -1673,7 +1673,7 @@ void WINAPI VariantInit(VARIANTARG* pvarg)
 }
 
 /******************************************************************************
- *		VariantClear32	[OLEAUT32.9]
+ *		VariantClear	[OLEAUT32.9]
  *
  * This function clears the VARIANT by setting the vt field to VT_EMPTY. It also
  * sets the wReservedX field to 0.	The current contents of the VARIANT are
@@ -1735,7 +1735,7 @@ HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 }
 
 /******************************************************************************
- *		VariantCopy32	[OLEAUT32.10]
+ *		VariantCopy	[OLEAUT32.10]
  *
  * Frees up the designation variant and makes a copy of the source.
  */
@@ -1818,7 +1818,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 
 
 /******************************************************************************
- *		VariantCopyInd32	[OLEAUT32.11]
+ *		VariantCopyInd	[OLEAUT32.11]
  *
  * Frees up the destination variant and makes a copy of the source.  If
  * the source is of type VT_BYREF it performs the necessary indirections.
@@ -1947,7 +1947,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 }
 
 /******************************************************************************
- *		VariantChangeType32	[OLEAUT32.12]
+ *		VariantChangeType	[OLEAUT32.12]
  */
 HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 							USHORT wFlags, VARTYPE vt)
@@ -1956,7 +1956,7 @@ HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 }
 
 /******************************************************************************
- *		VariantChangeTypeEx32	[OLEAUT32.147]
+ *		VariantChangeTypeEx	[OLEAUT32.147]
  */
 HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 							  LCID lcid, USHORT wFlags, VARTYPE vt)
@@ -2034,7 +2034,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 
 
 /******************************************************************************
- *		VarUI1FromI232		[OLEAUT32.130]
+ *		VarUI1FromI2		[OLEAUT32.130]
  */
 HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut)
 {
@@ -2053,7 +2053,7 @@ HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromI432		[OLEAUT32.131]
+ *		VarUI1FromI4		[OLEAUT32.131]
  */
 HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut)
 {
@@ -2073,7 +2073,7 @@ HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut)
 
 
 /******************************************************************************
- *		VarUI1FromR432		[OLEAUT32.132]
+ *		VarUI1FromR4		[OLEAUT32.132]
  */
 HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
 {
@@ -2093,7 +2093,7 @@ HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromR832		[OLEAUT32.133]
+ *		VarUI1FromR8		[OLEAUT32.133]
  */
 HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
 {
@@ -2113,7 +2113,7 @@ HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromDate32		[OLEAUT32.135]
+ *		VarUI1FromDate		[OLEAUT32.135]
  */
 HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut)
 {
@@ -2133,7 +2133,7 @@ HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromBool32		[OLEAUT32.138]
+ *		VarUI1FromBool		[OLEAUT32.138]
  */
 HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut)
 {
@@ -2145,7 +2145,7 @@ HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromI132		[OLEAUT32.237]
+ *		VarUI1FromI1		[OLEAUT32.237]
  */
 HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE* pbOut)
 {
@@ -2157,7 +2157,7 @@ HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromUI232		[OLEAUT32.238]
+ *		VarUI1FromUI2		[OLEAUT32.238]
  */
 HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE* pbOut)
 {
@@ -2176,7 +2176,7 @@ HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE* pbOut)
 }
 
 /******************************************************************************
- *		VarUI1FromUI432		[OLEAUT32.239]
+ *		VarUI1FromUI4		[OLEAUT32.239]
  */
 HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE* pbOut)
 {
@@ -2196,7 +2196,7 @@ HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE* pbOut)
 
 
 /******************************************************************************
- *		VarUI1FromStr32		[OLEAUT32.54]
+ *		VarUI1FromStr		[OLEAUT32.54]
  */
 HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
 {
@@ -2236,7 +2236,7 @@ HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbO
 }
 
 /**********************************************************************
- *              VarUI1FromCy32 [OLEAUT32.134]
+ *              VarUI1FromCy [OLEAUT32.134]
  * Convert currency to unsigned char
  */
 HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut) {
@@ -2249,7 +2249,7 @@ HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut) {
 }
 
 /******************************************************************************
- *		VarI2FromUI132		[OLEAUT32.48]
+ *		VarI2FromUI1		[OLEAUT32.48]
  */
 HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut)
 {
@@ -2261,7 +2261,7 @@ HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromI432		[OLEAUT32.49]
+ *		VarI2FromI4		[OLEAUT32.49]
  */
 HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut)
 {
@@ -2280,7 +2280,7 @@ HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromR432		[OLEAUT32.50]
+ *		VarI2FromR4		[OLEAUT32.50]
  */
 HRESULT WINAPI VarI2FromR4(FLOAT fltIn, short* psOut)
 {
@@ -2300,7 +2300,7 @@ HRESULT WINAPI VarI2FromR4(FLOAT fltIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromR832		[OLEAUT32.51]
+ *		VarI2FromR8		[OLEAUT32.51]
  */
 HRESULT WINAPI VarI2FromR8(double dblIn, short* psOut)
 {
@@ -2320,7 +2320,7 @@ HRESULT WINAPI VarI2FromR8(double dblIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromDate32		[OLEAUT32.53]
+ *		VarI2FromDate		[OLEAUT32.53]
  */
 HRESULT WINAPI VarI2FromDate(DATE dateIn, short* psOut)
 {
@@ -2340,7 +2340,7 @@ HRESULT WINAPI VarI2FromDate(DATE dateIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromBool32		[OLEAUT32.56]
+ *		VarI2FromBool		[OLEAUT32.56]
  */
 HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
 {
@@ -2352,7 +2352,7 @@ HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromI132		[OLEAUT32.48]
+ *		VarI2FromI1		[OLEAUT32.48]
  */
 HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
 {
@@ -2364,7 +2364,7 @@ HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromUI232		[OLEAUT32.206]
+ *		VarI2FromUI2		[OLEAUT32.206]
  */
 HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short* psOut)
 {
@@ -2383,7 +2383,7 @@ HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromUI432		[OLEAUT32.49]
+ *		VarI2FromUI4		[OLEAUT32.49]
  */
 HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short* psOut)
 {
@@ -2402,7 +2402,7 @@ HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromStr32		[OLEAUT32.54]
+ *		VarI2FromStr		[OLEAUT32.54]
  */
 HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psOut)
 {
@@ -2442,7 +2442,7 @@ HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psO
 }
 
 /**********************************************************************
- *              VarI2FromCy32 [OLEAUT32.52]
+ *              VarI2FromCy [OLEAUT32.52]
  * Convert currency to signed short
  */
 HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut) {
@@ -2455,7 +2455,7 @@ HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut) {
 }
 
 /******************************************************************************
- *		VarI4FromUI132		[OLEAUT32.58]
+ *		VarI4FromUI1		[OLEAUT32.58]
  */
 HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut)
 {
@@ -2468,7 +2468,7 @@ HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut)
 
 
 /******************************************************************************
- *		VarI4FromR432		[OLEAUT32.60]
+ *		VarI4FromR4		[OLEAUT32.60]
  */
 HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG* plOut)
 {
@@ -2488,7 +2488,7 @@ HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromR832		[OLEAUT32.61]
+ *		VarI4FromR8		[OLEAUT32.61]
  */
 HRESULT WINAPI VarI4FromR8(double dblIn, LONG* plOut)
 {
@@ -2508,7 +2508,7 @@ HRESULT WINAPI VarI4FromR8(double dblIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromDate32		[OLEAUT32.63]
+ *		VarI4FromDate		[OLEAUT32.63]
  */
 HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG* plOut)
 {
@@ -2528,7 +2528,7 @@ HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromBool32		[OLEAUT32.66]
+ *		VarI4FromBool		[OLEAUT32.66]
  */
 HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut)
 {
@@ -2540,7 +2540,7 @@ HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromI132		[OLEAUT32.209]
+ *		VarI4FromI1		[OLEAUT32.209]
  */
 HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut)
 {
@@ -2552,7 +2552,7 @@ HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromUI232		[OLEAUT32.210]
+ *		VarI4FromUI2		[OLEAUT32.210]
  */
 HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG* plOut)
 {
@@ -2564,7 +2564,7 @@ HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromUI432		[OLEAUT32.211]
+ *		VarI4FromUI4		[OLEAUT32.211]
  */
 HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG* plOut)
 {
@@ -2583,7 +2583,7 @@ HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromI232		[OLEAUT32.59]
+ *		VarI4FromI2		[OLEAUT32.59]
  */
 HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut)
 {
@@ -2595,7 +2595,7 @@ HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut)
 }
 
 /******************************************************************************
- *		VarI4FromStr32		[OLEAUT32.64]
+ *		VarI4FromStr		[OLEAUT32.64]
  */
 HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOut)
 {
@@ -2635,7 +2635,7 @@ HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOu
 }
 
 /**********************************************************************
- *              VarI4FromCy32 [OLEAUT32.62]
+ *              VarI4FromCy [OLEAUT32.62]
  * Convert currency to signed long
  */
 HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut) {
@@ -2648,7 +2648,7 @@ HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut) {
 }
 
 /******************************************************************************
- *		VarR4FromUI132		[OLEAUT32.68]
+ *		VarR4FromUI1		[OLEAUT32.68]
  */
 HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut)
 {
@@ -2660,7 +2660,7 @@ HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromI232		[OLEAUT32.69]
+ *		VarR4FromI2		[OLEAUT32.69]
  */
 HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut)
 {
@@ -2672,7 +2672,7 @@ HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromI432		[OLEAUT32.70]
+ *		VarR4FromI4		[OLEAUT32.70]
  */
 HRESULT WINAPI VarR4FromI4(LONG lIn, FLOAT* pfltOut)
 {
@@ -2684,7 +2684,7 @@ HRESULT WINAPI VarR4FromI4(LONG lIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromR832		[OLEAUT32.71]
+ *		VarR4FromR8		[OLEAUT32.71]
  */
 HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut)
 {
@@ -2703,7 +2703,7 @@ HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromDate32		[OLEAUT32.73]
+ *		VarR4FromDate		[OLEAUT32.73]
  */
 HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut)
 {
@@ -2722,7 +2722,7 @@ HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromBool32		[OLEAUT32.76]
+ *		VarR4FromBool		[OLEAUT32.76]
  */
 HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut)
 {
@@ -2734,7 +2734,7 @@ HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromI132		[OLEAUT32.213]
+ *		VarR4FromI1		[OLEAUT32.213]
  */
 HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT* pfltOut)
 {
@@ -2746,7 +2746,7 @@ HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromUI232		[OLEAUT32.214]
+ *		VarR4FromUI2		[OLEAUT32.214]
  */
 HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT* pfltOut)
 {
@@ -2758,7 +2758,7 @@ HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromUI432		[OLEAUT32.215]
+ *		VarR4FromUI4		[OLEAUT32.215]
  */
 HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT* pfltOut)
 {
@@ -2770,7 +2770,7 @@ HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT* pfltOut)
 }
 
 /******************************************************************************
- *		VarR4FromStr32		[OLEAUT32.74]
+ *		VarR4FromStr		[OLEAUT32.74]
  */
 HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfltOut)
 {
@@ -2809,7 +2809,7 @@ HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfl
 }
 
 /**********************************************************************
- *              VarR4FromCy32 [OLEAUT32.72]
+ *              VarR4FromCy [OLEAUT32.72]
  * Convert currency to float
  */
 HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
@@ -2819,7 +2819,7 @@ HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
 }
 
 /******************************************************************************
- *		VarR8FromUI132		[OLEAUT32.68]
+ *		VarR8FromUI1		[OLEAUT32.68]
  */
 HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
 {
@@ -2831,7 +2831,7 @@ HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromI232		[OLEAUT32.69]
+ *		VarR8FromI2		[OLEAUT32.69]
  */
 HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
 {
@@ -2843,7 +2843,7 @@ HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromI432		[OLEAUT32.70]
+ *		VarR8FromI4		[OLEAUT32.70]
  */
 HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut)
 {
@@ -2855,7 +2855,7 @@ HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromR432		[OLEAUT32.81]
+ *		VarR8FromR4		[OLEAUT32.81]
  */
 HRESULT WINAPI VarR8FromR4(FLOAT fltIn, double* pdblOut)
 {
@@ -2867,7 +2867,7 @@ HRESULT WINAPI VarR8FromR4(FLOAT fltIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromDate32		[OLEAUT32.83]
+ *		VarR8FromDate		[OLEAUT32.83]
  */
 HRESULT WINAPI VarR8FromDate(DATE dateIn, double* pdblOut)
 {
@@ -2879,7 +2879,7 @@ HRESULT WINAPI VarR8FromDate(DATE dateIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromBool32		[OLEAUT32.86]
+ *		VarR8FromBool		[OLEAUT32.86]
  */
 HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut)
 {
@@ -2891,7 +2891,7 @@ HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromI132		[OLEAUT32.217]
+ *		VarR8FromI1		[OLEAUT32.217]
  */
 HRESULT WINAPI VarR8FromI1(CHAR cIn, double* pdblOut)
 {
@@ -2903,7 +2903,7 @@ HRESULT WINAPI VarR8FromI1(CHAR cIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromUI232		[OLEAUT32.218]
+ *		VarR8FromUI2		[OLEAUT32.218]
  */
 HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double* pdblOut)
 {
@@ -2915,7 +2915,7 @@ HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromUI432		[OLEAUT32.219]
+ *		VarR8FromUI4		[OLEAUT32.219]
  */
 HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double* pdblOut)
 {
@@ -2927,7 +2927,7 @@ HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromStr32		[OLEAUT32.84]
+ *		VarR8FromStr		[OLEAUT32.84]
  */
 HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pdblOut)
 {
@@ -2959,7 +2959,7 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
 }
 
 /**********************************************************************
- *              VarR8FromCy32 [OLEAUT32.82]
+ *              VarR8FromCy [OLEAUT32.82]
  * Convert currency to double
  */
 HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
@@ -2969,7 +2969,7 @@ HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
 }
 
 /******************************************************************************
- *		VarDateFromUI132		[OLEAUT32.]
+ *		VarDateFromUI1		[OLEAUT32.]
  */
 HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
 {
@@ -2981,7 +2981,7 @@ HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromI232		[OLEAUT32.222]
+ *		VarDateFromI2		[OLEAUT32.222]
  */
 HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut)
 {
@@ -2993,7 +2993,7 @@ HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromI432		[OLEAUT32.90]
+ *		VarDateFromI4		[OLEAUT32.90]
  */
 HRESULT WINAPI VarDateFromI4(LONG lIn, DATE* pdateOut)
 {
@@ -3010,7 +3010,7 @@ HRESULT WINAPI VarDateFromI4(LONG lIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromR432		[OLEAUT32.91]
+ *		VarDateFromR4		[OLEAUT32.91]
  */
 HRESULT WINAPI VarDateFromR4(FLOAT fltIn, DATE* pdateOut)
 {
@@ -3027,7 +3027,7 @@ HRESULT WINAPI VarDateFromR4(FLOAT fltIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromR832		[OLEAUT32.92]
+ *		VarDateFromR8		[OLEAUT32.92]
  */
 HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
 {
@@ -3044,7 +3044,7 @@ HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromStr32		[OLEAUT32.94]
+ *		VarDateFromStr		[OLEAUT32.94]
  * The string representing the date is composed of two parts, a date and time.
  *
  * The format of the time is has follows:
@@ -3092,7 +3092,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
 }
 
 /******************************************************************************
- *		VarDateFromI132		[OLEAUT32.221]
+ *		VarDateFromI1		[OLEAUT32.221]
  */
 HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE* pdateOut)
 {
@@ -3104,7 +3104,7 @@ HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromUI232		[OLEAUT32.222]
+ *		VarDateFromUI2		[OLEAUT32.222]
  */
 HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE* pdateOut)
 {
@@ -3121,7 +3121,7 @@ HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromUI432		[OLEAUT32.223]
+ *		VarDateFromUI4		[OLEAUT32.223]
  */
 HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE* pdateOut)
 {
@@ -3138,7 +3138,7 @@ HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromBool32		[OLEAUT32.96]
+ *		VarDateFromBool		[OLEAUT32.96]
  */
 HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut)
 {
@@ -3150,7 +3150,7 @@ HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut)
 }
 
 /**********************************************************************
- *              VarDateFromCy32 [OLEAUT32.93]
+ *              VarDateFromCy [OLEAUT32.93]
  * Convert currency to date
  */
 HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut) {
@@ -3161,7 +3161,7 @@ HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut) {
 }
 
 /******************************************************************************
- *		VarBstrFromUI132		[OLEAUT32.108]
+ *		VarBstrFromUI1		[OLEAUT32.108]
  */
 HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3174,7 +3174,7 @@ HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOu
 }
 
 /******************************************************************************
- *		VarBstrFromI232		[OLEAUT32.109]
+ *		VarBstrFromI2		[OLEAUT32.109]
  */
 HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3186,7 +3186,7 @@ HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOu
 }
 
 /******************************************************************************
- *		VarBstrFromI432		[OLEAUT32.110]
+ *		VarBstrFromI4		[OLEAUT32.110]
  */
 HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3199,7 +3199,7 @@ HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 }
 
 /******************************************************************************
- *		VarBstrFromR432		[OLEAUT32.111]
+ *		VarBstrFromR4		[OLEAUT32.111]
  */
 HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3212,7 +3212,7 @@ HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
 }
 
 /******************************************************************************
- *		VarBstrFromR832		[OLEAUT32.112]
+ *		VarBstrFromR8		[OLEAUT32.112]
  */
 HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3234,7 +3234,7 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) 
 
  
 /******************************************************************************
- *		VarBstrFromDate32		[OLEAUT32.114]
+ *		VarBstrFromDate		[OLEAUT32.114]
  *
  * The date is implemented using an 8 byte floating-point number.
  * Days are represented by whole numbers increments starting with 0.00 has
@@ -3286,7 +3286,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
 }
 
 /******************************************************************************
- *		VarBstrFromBool32		[OLEAUT32.116]
+ *		VarBstrFromBool		[OLEAUT32.116]
  */
 HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3307,7 +3307,7 @@ HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BS
 }
 
 /******************************************************************************
- *		VarBstrFromI132		[OLEAUT32.229]
+ *		VarBstrFromI1		[OLEAUT32.229]
  */
 HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3319,7 +3319,7 @@ HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 }
 
 /******************************************************************************
- *		VarBstrFromUI232		[OLEAUT32.230]
+ *		VarBstrFromUI2		[OLEAUT32.230]
  */
 HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3331,7 +3331,7 @@ HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
 }
 
 /******************************************************************************
- *		VarBstrFromUI432		[OLEAUT32.231]
+ *		VarBstrFromUI4		[OLEAUT32.231]
  */
 HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
@@ -3343,7 +3343,7 @@ HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
 }
 
 /******************************************************************************
- *		VarBoolFromUI132		[OLEAUT32.118]
+ *		VarBoolFromUI1		[OLEAUT32.118]
  */
 HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut)
 {
@@ -3362,7 +3362,7 @@ HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromI232		[OLEAUT32.119]
+ *		VarBoolFromI2		[OLEAUT32.119]
  */
 HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut)
 {
@@ -3381,7 +3381,7 @@ HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromI432		[OLEAUT32.120]
+ *		VarBoolFromI4		[OLEAUT32.120]
  */
 HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut)
 {
@@ -3400,7 +3400,7 @@ HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromR432		[OLEAUT32.121]
+ *		VarBoolFromR4		[OLEAUT32.121]
  */
 HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut)
 {
@@ -3419,7 +3419,7 @@ HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromR832		[OLEAUT32.122]
+ *		VarBoolFromR8		[OLEAUT32.122]
  */
 HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut)
 {
@@ -3438,7 +3438,7 @@ HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromDate32		[OLEAUT32.123]
+ *		VarBoolFromDate		[OLEAUT32.123]
  */
 HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut)
 {
@@ -3457,7 +3457,7 @@ HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromStr32		[OLEAUT32.125]
+ *		VarBoolFromStr		[OLEAUT32.125]
  */
 HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL* pboolOut)
 {
@@ -3510,7 +3510,7 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
 }
 
 /******************************************************************************
- *		VarBoolFromI132		[OLEAUT32.233]
+ *		VarBoolFromI1		[OLEAUT32.233]
  */
 HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
 {
@@ -3529,7 +3529,7 @@ HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromUI232		[OLEAUT32.234]
+ *		VarBoolFromUI2		[OLEAUT32.234]
  */
 HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL* pboolOut)
 {
@@ -3548,7 +3548,7 @@ HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL* pboolOut)
 }
 
 /******************************************************************************
- *		VarBoolFromUI432		[OLEAUT32.235]
+ *		VarBoolFromUI4		[OLEAUT32.235]
  */
 HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
 {
@@ -3567,7 +3567,7 @@ HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
 }
 
 /**********************************************************************
- *              VarBoolFromCy32 [OLEAUT32.124]
+ *              VarBoolFromCy [OLEAUT32.124]
  * Convert currency to boolean
  */
 HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
@@ -3578,7 +3578,7 @@ HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
 }
 
 /******************************************************************************
- *		VarI1FromUI132		[OLEAUT32.244]
+ *		VarI1FromUI1		[OLEAUT32.244]
  */
 HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
 {
@@ -3597,7 +3597,7 @@ HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromI232		[OLEAUT32.245]
+ *		VarI1FromI2		[OLEAUT32.245]
  */
 HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
 {
@@ -3614,7 +3614,7 @@ HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromI432		[OLEAUT32.246]
+ *		VarI1FromI4		[OLEAUT32.246]
  */
 HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
 {
@@ -3631,7 +3631,7 @@ HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromR432		[OLEAUT32.247]
+ *		VarI1FromR4		[OLEAUT32.247]
  */
 HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
 {
@@ -3649,7 +3649,7 @@ HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromR832		[OLEAUT32.248]
+ *		VarI1FromR8		[OLEAUT32.248]
  */
 HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
 {
@@ -3667,7 +3667,7 @@ HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromDate32		[OLEAUT32.249]
+ *		VarI1FromDate		[OLEAUT32.249]
  */
 HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR* pcOut)
 {
@@ -3685,7 +3685,7 @@ HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromStr32		[OLEAUT32.251]
+ *		VarI1FromStr		[OLEAUT32.251]
  */
 HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOut)
 {
@@ -3725,7 +3725,7 @@ HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOu
 }
 
 /******************************************************************************
- *		VarI1FromBool32		[OLEAUT32.253]
+ *		VarI1FromBool		[OLEAUT32.253]
  */
 HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
 {
@@ -3737,7 +3737,7 @@ HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromUI232		[OLEAUT32.254]
+ *		VarI1FromUI2		[OLEAUT32.254]
  */
 HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
 {
@@ -3754,7 +3754,7 @@ HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
 }
 
 /******************************************************************************
- *		VarI1FromUI432		[OLEAUT32.255]
+ *		VarI1FromUI4		[OLEAUT32.255]
  */
 HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
 {
@@ -3771,7 +3771,7 @@ HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
 }
 
 /**********************************************************************
- *              VarI1FromCy32 [OLEAUT32.250]
+ *              VarI1FromCy [OLEAUT32.250]
  * Convert currency to signed char
  */
 HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
@@ -3784,7 +3784,7 @@ HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
 }
 
 /******************************************************************************
- *		VarUI2FromUI132		[OLEAUT32.257]
+ *		VarUI2FromUI1		[OLEAUT32.257]
  */
 HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT* puiOut)
 {
@@ -3796,7 +3796,7 @@ HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromI232		[OLEAUT32.258]
+ *		VarUI2FromI2		[OLEAUT32.258]
  */
 HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT* puiOut)
 {
@@ -3813,7 +3813,7 @@ HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromI432		[OLEAUT32.259]
+ *		VarUI2FromI4		[OLEAUT32.259]
  */
 HRESULT WINAPI VarUI2FromI4(LONG lIn, USHORT* puiOut)
 {
@@ -3830,7 +3830,7 @@ HRESULT WINAPI VarUI2FromI4(LONG lIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromR432		[OLEAUT32.260]
+ *		VarUI2FromR4		[OLEAUT32.260]
  */
 HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT* puiOut)
 {
@@ -3848,7 +3848,7 @@ HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromR832		[OLEAUT32.261]
+ *		VarUI2FromR8		[OLEAUT32.261]
  */
 HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* puiOut)
 {
@@ -3866,7 +3866,7 @@ HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromDate32		[OLEAUT32.262]
+ *		VarUI2FromDate		[OLEAUT32.262]
  */
 HRESULT WINAPI VarUI2FromDate(DATE dateIn, USHORT* puiOut)
 {
@@ -3884,7 +3884,7 @@ HRESULT WINAPI VarUI2FromDate(DATE dateIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromStr32		[OLEAUT32.264]
+ *		VarUI2FromStr		[OLEAUT32.264]
  */
 HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* puiOut)
 {
@@ -3924,7 +3924,7 @@ HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* p
 }
 
 /******************************************************************************
- *		VarUI2FromBool32		[OLEAUT32.266]
+ *		VarUI2FromBool		[OLEAUT32.266]
  */
 HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT* puiOut)
 {
@@ -3936,7 +3936,7 @@ HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromI132		[OLEAUT32.267]
+ *		VarUI2FromI1		[OLEAUT32.267]
  */
 HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT* puiOut)
 {
@@ -3948,7 +3948,7 @@ HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI2FromUI432		[OLEAUT32.268]
+ *		VarUI2FromUI4		[OLEAUT32.268]
  */
 HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT* puiOut)
 {
@@ -3965,7 +3965,7 @@ HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT* puiOut)
 }
 
 /******************************************************************************
- *		VarUI4FromStr32		[OLEAUT32.277]
+ *		VarUI4FromStr		[OLEAUT32.277]
  */
 HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pulOut)
 {
@@ -4005,7 +4005,7 @@ HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pu
 }
 
 /**********************************************************************
- *              VarUI2FromCy32 [OLEAUT32.263]
+ *              VarUI2FromCy [OLEAUT32.263]
  * Convert currency to unsigned short
  */
 HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut) {
@@ -4019,7 +4019,7 @@ HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut) {
 }
 
 /******************************************************************************
- *		VarUI4FromUI132		[OLEAUT32.270]
+ *		VarUI4FromUI1		[OLEAUT32.270]
  */
 HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG* pulOut)
 {
@@ -4031,7 +4031,7 @@ HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromI232		[OLEAUT32.271]
+ *		VarUI4FromI2		[OLEAUT32.271]
  */
 HRESULT WINAPI VarUI4FromI2(short uiIn, ULONG* pulOut)
 {
@@ -4048,7 +4048,7 @@ HRESULT WINAPI VarUI4FromI2(short uiIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromI432		[OLEAUT32.272]
+ *		VarUI4FromI4		[OLEAUT32.272]
  */
 HRESULT WINAPI VarUI4FromI4(LONG lIn, ULONG* pulOut)
 {
@@ -4065,7 +4065,7 @@ HRESULT WINAPI VarUI4FromI4(LONG lIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromR432		[OLEAUT32.273]
+ *		VarUI4FromR4		[OLEAUT32.273]
  */
 HRESULT WINAPI VarUI4FromR4(FLOAT fltIn, ULONG* pulOut)
 {
@@ -4081,7 +4081,7 @@ HRESULT WINAPI VarUI4FromR4(FLOAT fltIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromR832		[OLEAUT32.274]
+ *		VarUI4FromR8		[OLEAUT32.274]
  */
 HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG* pulOut)
 {
@@ -4099,7 +4099,7 @@ HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromDate32		[OLEAUT32.275]
+ *		VarUI4FromDate		[OLEAUT32.275]
  */
 HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG* pulOut)
 {
@@ -4117,7 +4117,7 @@ HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromBool32		[OLEAUT32.279]
+ *		VarUI4FromBool		[OLEAUT32.279]
  */
 HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG* pulOut)
 {
@@ -4129,7 +4129,7 @@ HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromI132		[OLEAUT32.280]
+ *		VarUI4FromI1		[OLEAUT32.280]
  */
 HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG* pulOut)
 {
@@ -4141,7 +4141,7 @@ HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG* pulOut)
 }
 
 /******************************************************************************
- *		VarUI4FromUI232		[OLEAUT32.281]
+ *		VarUI4FromUI2		[OLEAUT32.281]
  */
 HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG* pulOut)
 {
@@ -4153,7 +4153,7 @@ HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG* pulOut)
 }
 
 /**********************************************************************
- *              VarUI4FromCy32 [OLEAUT32.276]
+ *              VarUI4FromCy [OLEAUT32.276]
  * Convert currency to unsigned long
  */
 HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
@@ -4167,7 +4167,7 @@ HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
 }
 
 /**********************************************************************
- *              VarCyFromUI132 [OLEAUT32.98]
+ *              VarCyFromUI1 [OLEAUT32.98]
  * Convert unsigned char to currency
  */
 HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
@@ -4178,7 +4178,7 @@ HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromI232 [OLEAUT32.99]
+ *              VarCyFromI2 [OLEAUT32.99]
  * Convert signed short to currency
  */
 HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut) {
@@ -4190,7 +4190,7 @@ HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromI432 [OLEAUT32.100]
+ *              VarCyFromI4 [OLEAUT32.100]
  * Convert signed long to currency
  */
 HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut) {
@@ -4203,7 +4203,7 @@ HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromR432 [OLEAUT32.101]
+ *              VarCyFromR4 [OLEAUT32.101]
  * Convert float to currency
  */
 HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut) {
@@ -4216,7 +4216,7 @@ HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromR832 [OLEAUT32.102]
+ *              VarCyFromR8 [OLEAUT32.102]
  * Convert double to currency
  */
 HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut) {
@@ -4229,7 +4229,7 @@ HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromDate32 [OLEAUT32.103]
+ *              VarCyFromDate [OLEAUT32.103]
  * Convert date to currency
  */
 HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
@@ -4251,7 +4251,7 @@ HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut
 
  
 /**********************************************************************
- *              VarCyFromBool32 [OLEAUT32.106]
+ *              VarCyFromBool [OLEAUT32.106]
  * Convert boolean to currency
  */
 HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
@@ -4263,7 +4263,7 @@ HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromI132 [OLEAUT32.225]
+ *              VarCyFromI1 [OLEAUT32.225]
  * Convert signed char to currency
  */
 HRESULT WINAPI VarCyFromI1(CHAR cIn, CY* pcyOut) {
@@ -4275,7 +4275,7 @@ HRESULT WINAPI VarCyFromI1(CHAR cIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromUI232 [OLEAUT32.226]
+ *              VarCyFromUI2 [OLEAUT32.226]
  * Convert unsigned short to currency
  */
 HRESULT WINAPI VarCyFromUI2(USHORT usIn, CY* pcyOut) {
@@ -4286,7 +4286,7 @@ HRESULT WINAPI VarCyFromUI2(USHORT usIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromUI432 [OLEAUT32.227]
+ *              VarCyFromUI4 [OLEAUT32.227]
  * Convert unsigned long to currency
  */
 HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY* pcyOut) {

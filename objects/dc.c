@@ -399,7 +399,7 @@ INT16 WINAPI SaveDC16( HDC16 hdc )
 
 
 /***********************************************************************
- *           SaveDC32    (GDI32.292)
+ *           SaveDC    (GDI32.292)
  */
 INT WINAPI SaveDC( HDC hdc )
 {
@@ -454,7 +454,7 @@ BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
 
 
 /***********************************************************************
- *           RestoreDC32    (GDI32.290)
+ *           RestoreDC    (GDI32.290)
  */
 BOOL WINAPI RestoreDC( HDC hdc, INT level )
 {
@@ -536,7 +536,7 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateDC32A    (GDI32.)
+ *           CreateDCA    (GDI32.)
  */
 HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODEA *initData )
@@ -546,7 +546,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateDC32W    (GDI32.)
+ *           CreateDCW    (GDI32.)
  */
 HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                           const DEVMODEW *initData )
@@ -575,7 +575,7 @@ HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateIC32A    (GDI32.49)
+ *           CreateICA    (GDI32.49)
  */
 HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODEA* initData )
@@ -586,7 +586,7 @@ HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateIC32W    (GDI32.50)
+ *           CreateICW    (GDI32.50)
  */
 HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                           const DEVMODEW* initData )
@@ -606,7 +606,7 @@ HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
 
 
 /***********************************************************************
- *           CreateCompatibleDC32   (GDI32.31)
+ *           CreateCompatibleDC   (GDI32.31)
  */
 HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
@@ -656,7 +656,7 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 
 
 /***********************************************************************
- *           DeleteDC32    (GDI32.67)
+ *           DeleteDC    (GDI32.67)
  */
 BOOL WINAPI DeleteDC( HDC hdc )
 {
@@ -713,7 +713,7 @@ HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
 
 
 /***********************************************************************
- *           ResetDC32A    (GDI32.287)
+ *           ResetDCA    (GDI32.287)
  */
 HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 {
@@ -723,7 +723,7 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 
 
 /***********************************************************************
- *           ResetDC32W    (GDI32.288)
+ *           ResetDCW    (GDI32.288)
  */
 HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
@@ -742,7 +742,7 @@ INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 
 
 /***********************************************************************
- *           GetDeviceCaps32    (GDI32.171)
+ *           GetDeviceCaps    (GDI32.171)
  */
 INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 {
@@ -803,7 +803,7 @@ COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetBkColor32    (GDI32.305)
+ *           SetBkColor    (GDI32.305)
  */
 COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 {
@@ -832,7 +832,7 @@ COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextColor32    (GDI32.338)
+ *           SetTextColor    (GDI32.338)
  */
 COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 {
@@ -967,7 +967,7 @@ INT16 WINAPI GetArcDirection16( HDC16 hdc )
 
 
 /***********************************************************************
- *           GetArcDirection32    (GDI32.141)
+ *           GetArcDirection    (GDI32.141)
  */
 INT WINAPI GetArcDirection( HDC hdc )
 {
@@ -990,7 +990,7 @@ INT16 WINAPI SetArcDirection16( HDC16 hdc, INT16 nDirection )
 
 
 /***********************************************************************
- *           SetArcDirection32    (GDI32.302)
+ *           SetArcDirection    (GDI32.302)
  */
 INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 {
@@ -1319,7 +1319,7 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 }
 
 /***********************************************************************
- *           GetBoundsRect32    (GDI32.147)
+ *           GetBoundsRect    (GDI32.147)
  */
 UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
@@ -1339,7 +1339,7 @@ UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
 }
 
 /***********************************************************************
- *           SetBoundsRect32    (GDI32.307)
+ *           SetBoundsRect    (GDI32.307)
  */
 UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {

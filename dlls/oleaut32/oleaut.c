@@ -121,10 +121,17 @@ UINT WINAPI OaBuildVersion()
     }
 }
 
+/***********************************************************************
+ *		DllRegisterServer
+ */
 HRESULT WINAPI OLEAUT32_DllRegisterServer() { 
     FIXME("stub!\n");
     return S_OK;
 }
+
+/***********************************************************************
+ *		DllUnregisterServer
+ */
 HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
     FIXME("stub!\n");
     return S_OK;

@@ -27,7 +27,7 @@ BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           PatBlt32    (GDI32.260)
+ *           PatBlt    (GDI32.260)
  */
 BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
                         INT width, INT height, DWORD rop)
@@ -62,7 +62,7 @@ BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
 
 
 /***********************************************************************
- *           BitBlt32    (GDI32.10)
+ *           BitBlt    (GDI32.10)
  */
 BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
                         INT height, HDC hdcSrc, INT xSrc, INT ySrc,
@@ -107,7 +107,7 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
 
 
 /***********************************************************************
- *           StretchBlt32    (GDI32.350)
+ *           StretchBlt    (GDI32.350)
  */
 BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
                             INT widthDst, INT heightDst,
@@ -149,7 +149,7 @@ BOOL16 WINAPI FastWindowFrame16( HDC16 hdc, const RECT16 *rect,
     return TRUE;
 }
 /***********************************************************************
- *           MaskBlt32 [GDI32.252]
+ *           MaskBlt [GDI32.252]
  */
 BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
                         INT nWidth, INT nHeight, HDC hdcSource,

@@ -10,10 +10,10 @@
 #include "imagehlp.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(imagehlp)
+DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /***********************************************************************
- *           ImageAddCertificate32 (IMAGEHLP.10)
+ *		ImageAddCertificate (IMAGEHLP.@)
  */
 
 BOOL WINAPI ImageAddCertificate(
@@ -27,7 +27,7 @@ BOOL WINAPI ImageAddCertificate(
 }
 
 /***********************************************************************
- *           ImageEnumerateCertificates32 (IMAGEHLP.12)
+ *		ImageEnumerateCertificates (IMAGEHLP.@)
  */
 BOOL WINAPI ImageEnumerateCertificates(
   HANDLE FileHandle, WORD TypeFilter, PDWORD CertificateCount,
@@ -41,7 +41,7 @@ BOOL WINAPI ImageEnumerateCertificates(
 }
 
 /***********************************************************************
- *           ImageGetCertificateData32 (IMAGEHLP.13)
+ *		ImageGetCertificateData (IMAGEHLP.@)
  */
 BOOL WINAPI ImageGetCertificateData(
   HANDLE FileHandle, DWORD CertificateIndex,
@@ -55,7 +55,7 @@ BOOL WINAPI ImageGetCertificateData(
 }
 
 /***********************************************************************
- *           ImageGetCertificateHeader32 (IMAGEHLP.14)
+ *		ImageGetCertificateHeader (IMAGEHLP.@)
  */
 BOOL WINAPI ImageGetCertificateHeader(
   HANDLE FileHandle, DWORD CertificateIndex,
@@ -69,7 +69,7 @@ BOOL WINAPI ImageGetCertificateHeader(
 }
 
 /***********************************************************************
- *           ImageGetDigestStream32 (IMAGEHLP.15)
+ *		ImageGetDigestStream (IMAGEHLP.@)
  */
 BOOL WINAPI ImageGetDigestStream(
   HANDLE FileHandle, DWORD DigestLevel,
@@ -83,7 +83,7 @@ BOOL WINAPI ImageGetDigestStream(
 }
 
 /***********************************************************************
- *           ImageRemoveCertificate32 (IMAGEHLP.18)
+ *		ImageRemoveCertificate (IMAGEHLP.@)
  */
 BOOL WINAPI ImageRemoveCertificate(HANDLE FileHandle, DWORD Index)
 {

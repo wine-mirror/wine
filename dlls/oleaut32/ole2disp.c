@@ -57,7 +57,7 @@ BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 }
 
 /******************************************************************************
- *		SysAllocString32	[OLEAUT32.2]
+ *		SysAllocString	[OLEAUT32.2]
  */
 BSTR WINAPI SysAllocString(LPCOLESTR in)
 {
@@ -77,7 +77,7 @@ INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPCOLESTR16 in)
 }
 
 /******************************************************************************
- *		SysReAllocString32	[OLEAUT32.3]
+ *		SysReAllocString	[OLEAUT32.3]
  */
 INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
 {
@@ -125,7 +125,7 @@ BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
 }
 
 /******************************************************************************
- *             SysAllocStringLen32     [OLEAUT32.4]
+ *             SysAllocStringLen     [OLEAUT32.4]
  *
  * In "Inside OLE, second edition" by Kraig Brockshmidt. In the Automation
  * section, he describes the DWORD value placed before the BSTR data type.
@@ -204,7 +204,7 @@ int WINAPI SysReAllocStringLen16(BSTR16 *old,const char *in,int len)
 
  
 /******************************************************************************
- *             SysReAllocStringLen32   [OLEAUT32.5]
+ *             SysReAllocStringLen   [OLEAUT32.5]
  */
 int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
 {
@@ -237,7 +237,7 @@ void WINAPI SysFreeString16(BSTR16 in)
 }
 
 /******************************************************************************
- *		SysFreeString32	[OLEAUT32.6]
+ *		SysFreeString	[OLEAUT32.6]
  */
 void WINAPI SysFreeString(BSTR in)
 {
@@ -270,7 +270,7 @@ int WINAPI SysStringLen16(BSTR16 str)
 }
 
 /******************************************************************************
- *             SysStringLen32  [OLEAUT32.7]
+ *             SysStringLen  [OLEAUT32.7]
  *
  * The Windows documentation states that the length returned by this function
  * is not necessarely the same as the length returned by the _lstrlenW method.

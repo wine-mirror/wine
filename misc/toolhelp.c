@@ -37,6 +37,9 @@ static int nrofnotifys = 0;
 
 static FARPROC16 HookNotify = NULL;
 
+/***********************************************************************
+ *		NotifyRegister16
+ */
 BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
                               WORD wFlags )
 {
@@ -64,6 +67,9 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
     return TRUE;
 }
 
+/***********************************************************************
+ *		NotifyUnregister16
+ */
 BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
     int	i;
@@ -82,26 +88,41 @@ BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
     return TRUE;
 }
 
+/***********************************************************************
+ *		StackTraceCSIPFirst16
+ */
 BOOL16 WINAPI StackTraceCSIPFirst16(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
 {
     return TRUE;
 }
 
+/***********************************************************************
+ *		StackTraceFirst16
+ */
 BOOL16 WINAPI StackTraceFirst16(STACKTRACEENTRY *ste, HTASK16 Task)
 {
     return TRUE;
 }
 
+/***********************************************************************
+ *		StackTraceNext16
+ */
 BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
 {
     return TRUE;
 }
 
+/***********************************************************************
+ *		InterruptRegister16
+ */
 BOOL16 WINAPI InterruptRegister16( HTASK16 task, FARPROC callback )
 {
     return TRUE;
 }
 
+/***********************************************************************
+ *		InterruptUnRegister16
+ */
 BOOL16 WINAPI InterruptUnRegister16( HTASK16 task )
 {
     return TRUE;
@@ -122,7 +143,7 @@ FARPROC16 tmp;
 
 
 /***********************************************************************
- *           CreateToolHelp32Snapshot			(KERNEL32.179)
+ *           CreateToolhelp32Snapshot			(KERNEL32.179)
  */
 HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
 {

@@ -2,9 +2,11 @@
 #include "stress.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(stress)
+DEFAULT_DEBUG_CHANNEL(stress);
 
-
+/***********************************************************************
+ *		AllocDiskSpace
+ */
 INT16 WINAPI AllocDiskSpace(LONG lLeft, UINT16 uDrive)
 {
 	FIXME("(%d, %ld) - stub\n", 
@@ -13,6 +15,9 @@ INT16 WINAPI AllocDiskSpace(LONG lLeft, UINT16 uDrive)
 	return 1;
 }
 
+/***********************************************************************
+ *		AllocFileHandles
+ */
 INT16 WINAPI AllocFileHandles(INT16 Left)
 {
 	TRACE("(%d) - stub\n", Left);
@@ -23,6 +28,9 @@ INT16 WINAPI AllocFileHandles(INT16 Left)
 		return 1;
 }
 
+/***********************************************************************
+ *		AllocGDIMem
+ */
 BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 {
 	TRACE("(%d) - stub\n", uLeft);
@@ -30,6 +38,9 @@ BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 	return 1;
 }
 
+/***********************************************************************
+ *		AllocMem
+ */
 BOOL16 WINAPI AllocMem(DWORD dwLeft)
 {
 	FIXME("(%ld) - stub\n", dwLeft);
@@ -37,6 +48,9 @@ BOOL16 WINAPI AllocMem(DWORD dwLeft)
 	return 1;
 }
 
+/***********************************************************************
+ *		AllocUserMem
+ */
 BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 {
 	TRACE("AllocUserMem %d\n", uContig);
@@ -44,26 +58,41 @@ BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 	return 1;
 }
 
+/***********************************************************************
+ *		FreeAllMem
+ */
 void WINAPI FreeAllMem(void)
 {
 	TRACE("FreeAllMem\n");
 }
 
+/***********************************************************************
+ *		FreeAllGDIMem
+ */
 void WINAPI FreeAllGDIMem(void)
 {
 	TRACE("FreeAllGDIMem\n");
 }
 
+/***********************************************************************
+ *		FreeAllUserMem
+ */
 void WINAPI FreeAllUserMem(void)
 {
 	TRACE("FreeAllUserMem\n");
 }
 
+/***********************************************************************
+ *
+ */
 void WINAPI GetFreeAllUserMem(void)
 {
        TRACE("GetFreeAllUserMem\n");
 }
 
+/***********************************************************************
+ *		GetFreeFileHandles
+ */
 INT16 WINAPI GetFreeFileHandles(void)
 {
 	TRACE("GetFreeFileHandles\n");
@@ -75,11 +104,17 @@ INT16 WINAPI GetFreeFileHandles(void)
 #endif
 }
 
+/***********************************************************************
+ *		UnAllocDiskSpace
+ */
 void WINAPI UnAllocDiskSpace(UINT16 drive)
 {
 	TRACE("UnAllocDiskSpace %d\n", drive);
 }
 
+/***********************************************************************
+ *		UnAllocFileHandles
+ */
 void WINAPI UnAllocFileHandles(void)
 {
 	TRACE("GetFreeAllUserMem\n");

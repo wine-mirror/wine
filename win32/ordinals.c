@@ -73,12 +73,17 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
        don't need it :-) */
 }
 
-
+/**********************************************************************
+ *		_KERNEL32_100
+ */
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x) {
 	FIXME_(thread)("(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 
+/**********************************************************************
+ *		_KERNEL32_99
+ */
 DWORD WINAPI _KERNEL32_99(DWORD x) {
 	FIXME_(win32)("(0x%08lx): stub\n",x);
 	return 1;
@@ -124,7 +129,7 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 	
 }
 /***********************************************************************
- *           RegisterTaskList32   			[USER23.436]
+ *           RegisterTaskList   			[USER23.436]
  */
 DWORD WINAPI RegisterTaskList (DWORD x)
 {	FIXME_(win)("0x%08lx\n",x);

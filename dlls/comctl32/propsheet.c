@@ -1939,7 +1939,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 }
 
 /******************************************************************************
- *            PropertySheet32W   (COMCTL32.85)
+ *            PropertySheetW   (COMCTL32.85)
  */
 INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW propertySheetHeader)
 {

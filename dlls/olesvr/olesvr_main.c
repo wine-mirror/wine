@@ -40,7 +40,7 @@ OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 }
 
 /******************************************************************************
- *		OleBlockServer32	[OLESVR32.4]
+ *		OleBlockServer	[OLESVR32.4]
  */
 OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
 {
@@ -60,7 +60,7 @@ OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 }
 
 /******************************************************************************
- *		OleUnblockServer32	[OLESVR32.5]
+ *		OleUnblockServer	[OLESVR32.5]
  */
 OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL *block)
 {
@@ -92,7 +92,7 @@ OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 }
 
 /******************************************************************************
- *		OleRevokeServerDoc32	[OLESVR32.7]
+ *		OleRevokeServerDoc	[OLESVR32.7]
  */
 OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
 {
@@ -110,7 +110,7 @@ OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
 }
 
 /******************************************************************************
- * OleRegisterServer32 [OLESVR32.2]
+ * OleRegisterServer [OLESVR32.2]
  */
 OLESTATUS WINAPI OleRegisterServer(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* hRet,HINSTANCE hinst,OLE_SERVER_USE osu) {
 	FIXME("(%s,%p,%p,%08x,%d): stub!\n",svrname,olesvr,hRet,hinst,osu);
@@ -119,7 +119,7 @@ OLESTATUS WINAPI OleRegisterServer(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* h
 }
 
 /******************************************************************************
- * OleRegisterServerDoc32 [OLESVR32.6]
+ * OleRegisterServerDoc [OLESVR32.6]
  */
 OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
@@ -131,7 +131,7 @@ OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
 }
 
 /******************************************************************************
- *		OleRenameServerDoc32	[OLESVR32.8]
+ *		OleRenameServerDoc	[OLESVR32.8]
  *
  */
 OLESTATUS WINAPI OleRenameServerDoc(LHSERVERDOC hDoc, LPCSTR newName)

@@ -343,7 +343,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
 
 
 /***********************************************************************
- * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
+ * DrawStatusTextA [COMCTL32.5][COMCTL32.27]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -387,7 +387,7 @@ DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 
 
 /***********************************************************************
- * DrawStatusText32W [COMCTL32.28]
+ * DrawStatusTextW [COMCTL32.28]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -411,7 +411,7 @@ DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
 
 
 /***********************************************************************
- * CreateStatusWindow32A [COMCTL32.6][COMCTL32.21]
+ * CreateStatusWindowA [COMCTL32.6][COMCTL32.21]
  *
  * Creates a status bar
  *
@@ -437,7 +437,7 @@ CreateStatusWindowA (INT style, LPCSTR text, HWND parent, UINT wid)
 
 
 /***********************************************************************
- * CreateStatusWindow32W [COMCTL32.22] Creates a status bar control
+ * CreateStatusWindowW [COMCTL32.22] Creates a status bar control
  *
  * PARAMS
  *     style  [I] window style

@@ -69,7 +69,7 @@ HWND16 WINAPI SetFocus16( HWND16 hwnd )
 
 
 /*****************************************************************
- *               SetFocus32   (USER32.481)
+ *               SetFocus   (USER32.481)
  */
 HWND WINAPI SetFocus( HWND hwnd )
 {
@@ -183,7 +183,7 @@ HWND16 WINAPI GetFocus16(void)
 
 
 /*****************************************************************
- *               GetFocus32   (USER32.240)
+ *               GetFocus   (USER32.240)
  */
 HWND WINAPI GetFocus(void)
 {

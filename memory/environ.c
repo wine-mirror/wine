@@ -170,7 +170,7 @@ void ENV_FreeEnvironment( PDB *pdb )
 
 
 /***********************************************************************
- *           GetCommandLine32A      (KERNEL32.289)
+ *           GetCommandLineA      (KERNEL32.289)
  */
 LPCSTR WINAPI GetCommandLineA(void)
 {
@@ -178,7 +178,7 @@ LPCSTR WINAPI GetCommandLineA(void)
 }
 
 /***********************************************************************
- *           GetCommandLine32W      (KERNEL32.290)
+ *           GetCommandLineW      (KERNEL32.290)
  */
 LPCWSTR WINAPI GetCommandLineW(void)
 {
@@ -193,7 +193,7 @@ LPCWSTR WINAPI GetCommandLineW(void)
 
 
 /***********************************************************************
- *           GetEnvironmentStrings32A   (KERNEL32.319) (KERNEL32.320)
+ *           GetEnvironmentStringsA   (KERNEL32.319) (KERNEL32.320)
  */
 LPSTR WINAPI GetEnvironmentStringsA(void)
 {
@@ -203,7 +203,7 @@ LPSTR WINAPI GetEnvironmentStringsA(void)
 
 
 /***********************************************************************
- *           GetEnvironmentStrings32W   (KERNEL32.321)
+ *           GetEnvironmentStringsW   (KERNEL32.321)
  */
 LPWSTR WINAPI GetEnvironmentStringsW(void)
 {
@@ -225,7 +225,7 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
 
 
 /***********************************************************************
- *           FreeEnvironmentStrings32A   (KERNEL32.268)
+ *           FreeEnvironmentStringsA   (KERNEL32.268)
  */
 BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
 {
@@ -240,7 +240,7 @@ BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
 
 
 /***********************************************************************
- *           FreeEnvironmentStrings32W   (KERNEL32.269)
+ *           FreeEnvironmentStringsW   (KERNEL32.269)
  */
 BOOL WINAPI FreeEnvironmentStringsW( LPWSTR ptr )
 {
@@ -249,7 +249,7 @@ BOOL WINAPI FreeEnvironmentStringsW( LPWSTR ptr )
 
 
 /***********************************************************************
- *           GetEnvironmentVariable32A   (KERNEL32.322)
+ *           GetEnvironmentVariableA   (KERNEL32.322)
  */
 DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 {
@@ -281,7 +281,7 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 
 
 /***********************************************************************
- *           GetEnvironmentVariable32W   (KERNEL32.323)
+ *           GetEnvironmentVariableW   (KERNEL32.323)
  */
 DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
 {
@@ -299,7 +299,7 @@ DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
 
 
 /***********************************************************************
- *           SetEnvironmentVariable32A   (KERNEL32.641)
+ *           SetEnvironmentVariableA   (KERNEL32.641)
  */
 BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
 {
@@ -357,7 +357,7 @@ done:
 
 
 /***********************************************************************
- *           SetEnvironmentVariable32W   (KERNEL32.642)
+ *           SetEnvironmentVariableW   (KERNEL32.642)
  */
 BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
 {
@@ -371,7 +371,7 @@ BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
 
 
 /***********************************************************************
- *           ExpandEnvironmentStrings32A   (KERNEL32.216)
+ *           ExpandEnvironmentStringsA   (KERNEL32.216)
  *
  * Note: overlapping buffers are not supported; this is how it should be.
  */
@@ -440,7 +440,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
 
 
 /***********************************************************************
- *           ExpandEnvironmentStrings32W   (KERNEL32.217)
+ *           ExpandEnvironmentStringsW   (KERNEL32.217)
  */
 DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 {

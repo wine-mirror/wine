@@ -9,31 +9,114 @@
 
 DEFAULT_DEBUG_CHANNEL(relay)
 
+/***********************************************************************
+ *		RawTextOut16
+ */
 LONG WINAPI RawTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		RawExtTextOut16
+ */
 LONG WINAPI RawExtTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		RawGetTextExtent16
+ */
 LONG WINAPI RawGetTextExtent16(HDC16 hdc, LPCSTR lpszString, INT16 cbString ) { 
       FIXME("(%04hx, %p, %hd): stub\n", hdc, lpszString, cbString); 
       return 0; 
 }
+
+/***********************************************************************
+ *		BiDiLayout16
+ */
 LONG WINAPI BiDiLayout16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiCreateTabString16
+ */
 LONG WINAPI BiDiCreateTabString16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiGlyphOut16
+ */
 LONG WINAPI BiDiGlyphOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiGetStringExtent16
+ */
 LONG WINAPI BiDiGetStringExtent16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiDeleteString16
+ */
 LONG WINAPI BiDiDeleteString16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiSetDefaults16
+ */
 LONG WINAPI BiDiSetDefaults16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiGetDefaults16
+ */
 LONG WINAPI BiDiGetDefaults16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiShape16
+ */
 LONG WINAPI BiDiShape16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiFontComplement16
+ */
 LONG WINAPI BiDiFontComplement16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiSetKashida16
+ */
 LONG WINAPI BiDiSetKashida16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiKExtTextOut16
+ */
 LONG WINAPI BiDiKExtTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiShapeEx16
+ */
 LONG WINAPI BiDiShapeEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiCreateStringEx16
+ */
 LONG WINAPI BiDiCreateStringEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		GetTextExtentRtoL16
+ */
 LONG WINAPI GetTextExtentRtoL16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		GetHDCCharSet16
+ */
 LONG WINAPI GetHDCCharSet16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiLayoutEx16
+ */
 LONG WINAPI BiDiLayoutEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
 
-/* the prototypes of these functions have not been found yet */
+/***********************************************************************
+ *		ChangeDialogTemplate16
+ * FIXME: The prototypes of this function have not been found yet.
+ */
 LONG WINAPI ChangeDialogTemplate16(void) { FIXME("stub (no prototype)\n"); return 0; }
+
+/***********************************************************************
+ *		BiDiMessageBoxEx16
+ * FIXME: The prototypes of this function have not been found yet.
+ */
 LONG WINAPI BiDiMessageBoxEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
 
 

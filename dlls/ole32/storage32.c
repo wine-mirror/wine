@@ -5252,7 +5252,7 @@ ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 }
 
 /******************************************************************************
- *    StgCreateDocfile32  [OLE32.144]
+ *    StgCreateDocfile  [OLE32.144]
  */
 HRESULT WINAPI StgCreateDocfile(
   LPCOLESTR pwcsName,
@@ -5372,7 +5372,7 @@ HRESULT WINAPI StgCreateDocfile(
 }
 
 /******************************************************************************
- *              StgOpenStorage32        [OLE32.148]
+ *              StgOpenStorage        [OLE32.148]
  */
 HRESULT WINAPI StgOpenStorage(
   const OLECHAR *pwcsName,
@@ -5637,7 +5637,7 @@ HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
 }
 
 /******************************************************************************
- *              WriteClassStg32        [OLE32.158]
+ *              WriteClassStg        [OLE32.158]
  *
  * This method will store the specified CLSID in the specified storage object
  */

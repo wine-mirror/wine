@@ -469,22 +469,80 @@ static void FT_Exit(CONTEXT86 *context, int nPopArgs)
     ESP_reg(context) += nPopArgs;
 }
 
+/***********************************************************************
+ *		FT_Exit0 (KERNEL32.218)
+ */
 void WINAPI FT_Exit0 (CONTEXT86 *context) { FT_Exit(context,  0); }
-void WINAPI FT_Exit4 (CONTEXT86 *context) { FT_Exit(context,  4); }
-void WINAPI FT_Exit8 (CONTEXT86 *context) { FT_Exit(context,  8); }
-void WINAPI FT_Exit12(CONTEXT86 *context) { FT_Exit(context, 12); }
-void WINAPI FT_Exit16(CONTEXT86 *context) { FT_Exit(context, 16); }
-void WINAPI FT_Exit20(CONTEXT86 *context) { FT_Exit(context, 20); }
-void WINAPI FT_Exit24(CONTEXT86 *context) { FT_Exit(context, 24); }
-void WINAPI FT_Exit28(CONTEXT86 *context) { FT_Exit(context, 28); }
-void WINAPI FT_Exit32(CONTEXT86 *context) { FT_Exit(context, 32); }
-void WINAPI FT_Exit36(CONTEXT86 *context) { FT_Exit(context, 36); }
-void WINAPI FT_Exit40(CONTEXT86 *context) { FT_Exit(context, 40); }
-void WINAPI FT_Exit44(CONTEXT86 *context) { FT_Exit(context, 44); }
-void WINAPI FT_Exit48(CONTEXT86 *context) { FT_Exit(context, 48); }
-void WINAPI FT_Exit52(CONTEXT86 *context) { FT_Exit(context, 52); }
-void WINAPI FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
 
+/***********************************************************************
+ *		FT_Exit4 (KERNEL32.219)
+ */
+void WINAPI FT_Exit4 (CONTEXT86 *context) { FT_Exit(context,  4); }
+
+/***********************************************************************
+ *		FT_Exit8 (KERNEL32.220)
+ */
+void WINAPI FT_Exit8 (CONTEXT86 *context) { FT_Exit(context,  8); }
+
+/***********************************************************************
+ *		FT_Exit12 (KERNEL32.221)
+ */
+void WINAPI FT_Exit12(CONTEXT86 *context) { FT_Exit(context, 12); }
+
+/***********************************************************************
+ *		FT_Exit16 (KERNEL32.222)
+ */
+void WINAPI FT_Exit16(CONTEXT86 *context) { FT_Exit(context, 16); }
+
+/***********************************************************************
+ *		FT_Exit20 (KERNEL32.223)
+ */
+void WINAPI FT_Exit20(CONTEXT86 *context) { FT_Exit(context, 20); }
+
+/***********************************************************************
+ *		FT_Exit24 (KERNEL32.224)
+ */
+void WINAPI FT_Exit24(CONTEXT86 *context) { FT_Exit(context, 24); }
+
+/***********************************************************************
+ *		FT_Exit28 (KERNEL32.225)
+ */
+void WINAPI FT_Exit28(CONTEXT86 *context) { FT_Exit(context, 28); }
+
+/***********************************************************************
+ *		FT_Exit32 (KERNEL32.226)
+ */
+void WINAPI FT_Exit32(CONTEXT86 *context) { FT_Exit(context, 32); }
+
+/***********************************************************************
+ *		FT_Exit36 (KERNEL32.227)
+ */
+void WINAPI FT_Exit36(CONTEXT86 *context) { FT_Exit(context, 36); }
+
+/***********************************************************************
+ *		FT_Exit40 (KERNEL32.228)
+ */
+void WINAPI FT_Exit40(CONTEXT86 *context) { FT_Exit(context, 40); }
+
+/***********************************************************************
+ *		FT_Exit44 (KERNEL32.229)
+ */
+void WINAPI FT_Exit44(CONTEXT86 *context) { FT_Exit(context, 44); }
+
+/***********************************************************************
+ *		FT_Exit48 (KERNEL32.230)
+ */
+void WINAPI FT_Exit48(CONTEXT86 *context) { FT_Exit(context, 48); }
+
+/***********************************************************************
+ *		FT_Exit52 (KERNEL32.231)
+ */
+void WINAPI FT_Exit52(CONTEXT86 *context) { FT_Exit(context, 52); }
+
+/***********************************************************************
+ *		FT_Exit56 (KERNEL32.232)
+ */
+void WINAPI FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
 
 /***********************************************************************
  * 		ThunkInitLS 	(KERNEL32.43)
@@ -765,7 +823,7 @@ void WINAPI QT_ThunkPrime( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *							(KERNEL32.46)
+ *		ThunkInitSL (KERNEL32.46)
  * Another thunkbuf link routine.
  * The start of the thunkbuf looks like this:
  * 	00: DWORD	length
@@ -1107,7 +1165,7 @@ void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           UpdateResource32A                 (KERNEL32.707)
+ *           UpdateResourceA                 (KERNEL32.707)
  */
 BOOL WINAPI UpdateResourceA(
   HANDLE  hUpdate,
@@ -1123,7 +1181,7 @@ BOOL WINAPI UpdateResourceA(
 }
 
 /***********************************************************************
- *           UpdateResource32W                 (KERNEL32.708)
+ *           UpdateResourceW                 (KERNEL32.708)
  */
 BOOL WINAPI UpdateResourceW(
   HANDLE  hUpdate,
@@ -1140,7 +1198,7 @@ BOOL WINAPI UpdateResourceW(
 
 
 /***********************************************************************
- *           WaitNamedPipe32A                 [KERNEL32.725]
+ *           WaitNamedPipeA                 [KERNEL32.725]
  */
 BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {	FIXME_(win32)("%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
@@ -1148,7 +1206,7 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 	return FALSE;
 }
 /***********************************************************************
- *           WaitNamedPipe32W                 [KERNEL32.726]
+ *           WaitNamedPipeW                 [KERNEL32.726]
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 {	FIXME_(win32)("%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);

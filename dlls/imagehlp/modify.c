@@ -10,10 +10,10 @@
 #include "debugtools.h"
 #include "imagehlp.h"
 
-DEFAULT_DEBUG_CHANNEL(imagehlp)
+DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /***********************************************************************
- *           BindImage32 (IMAGEHLP.1)
+ *		BindImage (IMAGEHLP.@)
  */
 BOOL WINAPI BindImage(
   LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath)
@@ -22,7 +22,7 @@ BOOL WINAPI BindImage(
 }
 
 /***********************************************************************
- *           BindImageEx32 (IMAGEHLP.2)
+ *		BindImageEx (IMAGEHLP.@)
  */
 BOOL WINAPI BindImageEx(
   DWORD Flags, LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath,
@@ -37,7 +37,7 @@ BOOL WINAPI BindImageEx(
 }
 
 /***********************************************************************
- *           CheckSumMappedFile32 (IMAGEHLP.3)
+ *		CheckSumMappedFile (IMAGEHLP.@)
  */
 PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
   LPVOID BaseAddress, DWORD FileLength, 
@@ -51,7 +51,7 @@ PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
 }
 
 /***********************************************************************
- *           MapFileAndCheckSum32A (IMAGEHLP.27)
+ *		MapFileAndCheckSumA (IMAGEHLP.@)
  */
 DWORD WINAPI MapFileAndCheckSumA(
   LPSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum)
@@ -64,7 +64,7 @@ DWORD WINAPI MapFileAndCheckSumA(
 }
 
 /***********************************************************************
- *           MapFileAndCheckSum32W (IMAGEHLP.28)
+ *		MapFileAndCheckSumW (IMAGEHLP.@)
  */
 DWORD WINAPI MapFileAndCheckSumW(
   LPWSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum)
@@ -77,7 +77,7 @@ DWORD WINAPI MapFileAndCheckSumW(
 }
 
 /***********************************************************************
- *           ReBaseImage32 (IMAGEHLP.30)
+ *		ReBaseImage (IMAGEHLP.@)
  */
 BOOL WINAPI ReBaseImage(
   LPSTR CurrentImageName, LPSTR SymbolPath, BOOL fReBase,
@@ -96,7 +96,7 @@ BOOL WINAPI ReBaseImage(
 }
 
 /***********************************************************************
- *           RemovePrivateCvSymbolic32 (IMAGEHLP.31)
+ *		RemovePrivateCvSymbolic (IMAGEHLP.@)
  */
 BOOL WINAPI RemovePrivateCvSymbolic(
   PCHAR DebugData, PCHAR *NewDebugData, ULONG *NewDebugSize)
@@ -109,7 +109,7 @@ BOOL WINAPI RemovePrivateCvSymbolic(
 }
 
 /***********************************************************************
- *           RemoveRelocations32 (IMAGEHLP.32)
+ *		RemoveRelocations (IMAGEHLP.@)
  */
 VOID WINAPI RemoveRelocations(PCHAR ImageName)
 {
@@ -118,7 +118,7 @@ VOID WINAPI RemoveRelocations(PCHAR ImageName)
 }
 
 /***********************************************************************
- *           SplitSymbols32 (IMAGEHLP.35)
+ *		SplitSymbols (IMAGEHLP.@)
  */
 BOOL WINAPI SplitSymbols(
   LPSTR ImageName, LPSTR SymbolsPath, 
@@ -133,7 +133,7 @@ BOOL WINAPI SplitSymbols(
 }
 
 /***********************************************************************
- *           UpdateDebugInfoFile32 (IMAGEHLP.60)
+ *		UpdateDebugInfoFile (IMAGEHLP.@)
  */
 BOOL WINAPI UpdateDebugInfoFile(
   LPSTR ImageFileName, LPSTR SymbolPath,
@@ -148,9 +148,7 @@ BOOL WINAPI UpdateDebugInfoFile(
 }
 
 /***********************************************************************
- *           UpdateDebugInfoFileEx32 (IMAGEHLP.?)
- * FIXME
- *   Function has no ordinal.
+ *		UpdateDebugInfoFileEx (IMAGEHLP.@)
  */
 BOOL WINAPI UpdateDebugInfoFileEx(
   LPSTR ImageFileName, LPSTR SymbolPath, LPSTR DebugFilePath,

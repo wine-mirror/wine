@@ -136,7 +136,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 
 
 /***********************************************************************
- *           ChooseFont32A   (COMDLG32.3)
+ *           ChooseFontA   (COMDLG32.3)
  */
 BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
@@ -167,7 +167,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 }
 
 /***********************************************************************
- *           ChooseFont32W   (COMDLG32.4)
+ *           ChooseFontW   (COMDLG32.4)
  */
 BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 {
@@ -922,7 +922,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
 }
 
 /***********************************************************************
- *           FormatCharDlgProc32A   [internal]
+ *           FormatCharDlgProcA   [internal]
  */
 LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
@@ -972,7 +972,7 @@ LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 }
 
 /***********************************************************************
- *           FormatCharDlgProc32W   [internal]
+ *           FormatCharDlgProcW   [internal]
  */
 LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)

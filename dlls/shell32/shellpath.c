@@ -858,7 +858,7 @@ VOID WINAPI PathUnquoteSpacesAW(LPVOID str)
 
 
 /*************************************************************************
- * PathGetDriveNumber32 [SHELL32.57]
+ * PathGetDriveNumber [SHELL32.57]
  *
  */
 HRESULT WINAPI PathGetDriveNumber(LPSTR u)

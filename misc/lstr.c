@@ -53,12 +53,18 @@ extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
 /* FIXME: should probably get rid of wctype.h altogether */
 #include "casemap.h"
 
+/***********************************************************************
+ *		towupper
+ */
 WCHAR towupper(WCHAR code)
 {
     const WCHAR * ptr = uprtable[HIBYTE(code)];
     return ptr ? ptr[LOBYTE(code)] : code;
 }
 
+/***********************************************************************
+ *		towlower
+ */
 WCHAR towlower(WCHAR code)
 {
     const WCHAR * ptr = lwrtable[HIBYTE(code)];
@@ -176,7 +182,7 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 
 
 /***********************************************************************
- *           CharNext32A   (USER32.29)
+ *           CharNextA   (USER32.29)
  */
 LPSTR WINAPI CharNextA( LPCSTR ptr )
 {
@@ -187,7 +193,7 @@ LPSTR WINAPI CharNextA( LPCSTR ptr )
 
 
 /***********************************************************************
- *           CharNextEx32A   (USER32.30)
+ *           CharNextExA   (USER32.30)
  */
 LPSTR WINAPI CharNextExA( WORD codepage, LPCSTR ptr, DWORD flags )
 {
@@ -217,7 +223,7 @@ LPWSTR WINAPI CharNextW(LPCWSTR x)
 }
 
 /***********************************************************************
- *           CharPrev32A   (USER32.33)
+ *           CharPrevA   (USER32.33)
  */
 LPSTR WINAPI CharPrevA( LPCSTR start, LPCSTR ptr )
 {
@@ -232,7 +238,7 @@ LPSTR WINAPI CharPrevA( LPCSTR start, LPCSTR ptr )
 
 
 /***********************************************************************
- *           CharPrevEx32A   (USER32.34)
+ *           CharPrevExA   (USER32.34)
  */
 LPSTR WINAPI CharPrevExA( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
 {
@@ -342,7 +348,7 @@ LPWSTR WINAPI CharLowerW(LPWSTR x)
 }
 
 /***********************************************************************
- *           CharUpper32A   (USER32.41)
+ *           CharUpperA   (USER32.41)
  * FIXME: handle current locale
  */
 LPSTR WINAPI CharUpperA(LPSTR x)
@@ -452,7 +458,7 @@ BOOL WINAPI IsCharAlphaW(WCHAR x)
 }
 
 /***********************************************************************
- *           IsCharLower32A   (USER32.335)
+ *           IsCharLowerA   (USER32.335)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharLowerA(CHAR x)
@@ -461,7 +467,7 @@ BOOL WINAPI IsCharLowerA(CHAR x)
 }
 
 /***********************************************************************
- *           IsCharLower32W   (USER32.336)
+ *           IsCharLowerW   (USER32.336)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharLowerW(WCHAR x)
@@ -470,7 +476,7 @@ BOOL WINAPI IsCharLowerW(WCHAR x)
 }
 
 /***********************************************************************
- *           IsCharUpper32A   (USER32.337)
+ *           IsCharUpperA   (USER32.337)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharUpperA(CHAR x)
@@ -479,7 +485,7 @@ BOOL WINAPI IsCharUpperA(CHAR x)
 }
 
 /***********************************************************************
- *           IsCharUpper32W   (USER32.338)
+ *           IsCharUpperW   (USER32.338)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharUpperW(WCHAR x)

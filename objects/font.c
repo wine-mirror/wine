@@ -498,7 +498,7 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEX16 plf,
 static INT FONT_EnumInstance( LPENUMLOGFONTEX16 plf,
 				  LPNEWTEXTMETRIC16 ptm, UINT16 fType, LPARAM lp )
 {
-    /* lfCharSet is at the same offset in both LOGFONT32A and LOGFONT32W */
+    /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
 
 #define pfe ((fontEnum32*)lp)
     if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET || 
@@ -1710,7 +1710,7 @@ INT16 WINAPI AddFontResource16( LPCSTR filename )
 
 
 /***********************************************************************
- *           AddFontResource32A    (GDI32.2)
+ *           AddFontResourceA    (GDI32.2)
  */
 INT WINAPI AddFontResourceA( LPCSTR str )
 {
@@ -1721,7 +1721,7 @@ INT WINAPI AddFontResourceA( LPCSTR str )
 
 
 /***********************************************************************
- *           AddFontResource32W    (GDI32.4)
+ *           AddFontResourceW    (GDI32.4)
  */
 INT WINAPI AddFontResourceW( LPCWSTR str )
 {
@@ -1741,7 +1741,7 @@ BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
 
 
 /***********************************************************************
- *           RemoveFontResource32A    (GDI32.284)
+ *           RemoveFontResourceA    (GDI32.284)
  */
 BOOL WINAPI RemoveFontResourceA( LPCSTR str )
 {
@@ -1773,7 +1773,7 @@ BOOL WINAPI RemoveFontResourceA( LPCSTR str )
 
 
 /***********************************************************************
- *           RemoveFontResource32W    (GDI32.286)
+ *           RemoveFontResourceW    (GDI32.286)
  */
 BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
 {

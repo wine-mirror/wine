@@ -11,7 +11,7 @@
 
 
 /***********************************************************************
- *           CreateSemaphore32A   (KERNEL32.174)
+ *           CreateSemaphoreA   (KERNEL32.174)
  */
 HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
@@ -37,7 +37,7 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
 
 
 /***********************************************************************
- *           CreateSemaphore32W   (KERNEL32.175)
+ *           CreateSemaphoreW   (KERNEL32.175)
  */
 HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
                                     LONG max, LPCWSTR name )
@@ -64,7 +64,7 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
 
 
 /***********************************************************************
- *           OpenSemaphore32A   (KERNEL32.545)
+ *           OpenSemaphoreA   (KERNEL32.545)
  */
 HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -80,7 +80,7 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenSemaphore32W   (KERNEL32.546)
+ *           OpenSemaphoreW   (KERNEL32.546)
  */
 HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 {

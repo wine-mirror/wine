@@ -1250,7 +1250,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 }
 
 /***********************************************************************
- *              GetModuleHandle         (KERNEL32.237)
+ *              GetModuleHandleA         (KERNEL32.237)
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
@@ -1264,6 +1264,9 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
     return wm? wm->module : 0;
 }
 
+/***********************************************************************
+ *		GetModuleHandleW
+ */
 HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
     HMODULE hModule;
@@ -1300,7 +1303,7 @@ DWORD WINAPI GetModuleFileNameA(
  
 
 /***********************************************************************
- *              GetModuleFileName32W      (KERNEL32.236)
+ *              GetModuleFileNameW      (KERNEL32.236)
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
                                    DWORD size )
@@ -1699,7 +1702,7 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 
 
 /***********************************************************************
- *           GetProcAddress32   		(KERNEL32.257)
+ *           GetProcAddress   		(KERNEL32.257)
  */
 FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 {
@@ -1715,7 +1718,7 @@ FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 }
 
 /***********************************************************************
- *           MODULE_GetProcAddress32   		(internal)
+ *           MODULE_GetProcAddress   		(internal)
  */
 FARPROC MODULE_GetProcAddress( 
 	HMODULE hModule, 	/* [in] current module handle */
@@ -1752,7 +1755,7 @@ FARPROC MODULE_GetProcAddress(
 
 
 /***********************************************************************
- *           RtlImageNtHeaders   (NTDLL)
+ *           RtlImageNtHeader   (NTDLL)
  */
 PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 {

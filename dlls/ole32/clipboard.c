@@ -435,7 +435,7 @@ CLEANUP:
 
 
 /***********************************************************************
- * OleGetClipboard32 [OLE32.105]
+ * OleGetClipboard [OLE32.105]
  * Returns a pointer to our internal IDataObject which represents the conceptual 
  * state of the Windows clipboard. If the current clipboard already contains 
  * an IDataObject, our internal IDataObject will delegate to this object.
@@ -566,7 +566,7 @@ CLEANUP:
 
 
 /***********************************************************************
- *           OleIsCurrentClipboard32 [OLE32.110]
+ *           OleIsCurrentClipboard [OLE32.110]
  */
 HRESULT WINAPI OleIsCurrentClipboard (  IDataObject *pDataObject) 
 {

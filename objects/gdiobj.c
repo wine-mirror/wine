@@ -434,7 +434,7 @@ BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 
 
 /***********************************************************************
- *           DeleteObject32    (GDI32.70)
+ *           DeleteObject    (GDI32.70)
  */
 BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
@@ -479,7 +479,7 @@ HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
 
 
 /***********************************************************************
- *           GetStockObject32    (GDI32.220)
+ *           GetStockObject    (GDI32.220)
  */
 HGDIOBJ WINAPI GetStockObject( INT obj )
 {
@@ -534,7 +534,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 
 
 /***********************************************************************
- *           GetObject32A    (GDI32.204)
+ *           GetObjectA    (GDI32.204)
  */
 INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 {
@@ -591,7 +591,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 }
 
 /***********************************************************************
- *           GetObject32W    (GDI32.206)
+ *           GetObjectW    (GDI32.206)
  */
 INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 {
@@ -726,7 +726,7 @@ HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 
 
 /***********************************************************************
- *           SelectObject32    (GDI32.299)
+ *           SelectObject    (GDI32.299)
  */
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
@@ -856,7 +856,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
 
 
 /***********************************************************************
- *           EnumObjects32    (GDI32.89)
+ *           EnumObjects    (GDI32.89)
  */
 INT WINAPI EnumObjects( HDC hdc, INT nObjType,
                             GOBJENUMPROC lpEnumFunc, LPARAM lParam )
@@ -1001,7 +1001,7 @@ void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 
 
 /***********************************************************************
- *           SetObjectOwner32    (GDI32.386)
+ *           SetObjectOwner    (GDI32.386)
  */
 void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
 {
@@ -1120,7 +1120,7 @@ INT16 WINAPI MulDiv16(
 
 
 /***********************************************************************
- *           MulDiv32   (KERNEL32.391)
+ *           MulDiv   (KERNEL32.391)
  * RETURNS
  *	Result of multiplication and division
  *	-1: Overflow occurred or Divisor was 0

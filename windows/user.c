@@ -386,7 +386,7 @@ static void _dump_CDS_flags(DWORD flags) {
 }
 
 /***********************************************************************
- *           ChangeDisplaySettingA    (USER32.589)
+ *           ChangeDisplaySettingsA    (USER32.589)
  */
 LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 {
@@ -414,7 +414,7 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 }
 
 /***********************************************************************
- *           ChangeDisplaySettingExA    (USER32.604)
+ *           ChangeDisplaySettingsExA    (USER32.604)
  */
 LONG WINAPI ChangeDisplaySettingsExA( 
 	LPCSTR devname, LPDEVMODEA devmode, HWND hwnd, DWORD flags,
@@ -448,7 +448,7 @@ LONG WINAPI ChangeDisplaySettingsExA(
  * FIXME: Currently uses static list of modes.
  *
  * RETURNS
- *	TRUE if nth setting exists found (described in the LPDEVMODE32A struct)
+ *	TRUE if nth setting exists found (described in the LPDEVMODEA struct)
  *	FALSE if we do not have the nth setting
  */
 BOOL WINAPI EnumDisplaySettingsA(
@@ -585,7 +585,7 @@ DWORD WINAPI RegisterLogonProcess(HANDLE hprocess,BOOL x) {
 }
 
 /***********************************************************************
- *           CreateWindowStation32W   (USER32.86)
+ *           CreateWindowStationW   (USER32.86)
  */
 HWINSTA WINAPI CreateWindowStationW(
 	LPWSTR winstation,DWORD res1,DWORD desiredaccess,
@@ -618,7 +618,7 @@ BOOL WINAPI SetUserObjectSecurity(
 }
 
 /***********************************************************************
- *           CreateDesktop32W   (USER32.69)
+ *           CreateDesktopW   (USER32.69)
  */
 HDESK WINAPI CreateDesktopW(
 	LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODEW pDevmode,
@@ -631,11 +631,18 @@ HDESK WINAPI CreateDesktopW(
 	return 0xcafedead;
 }
 
+/***********************************************************************
+ *           CloseWindowStation
+ */
 BOOL WINAPI CloseWindowStation(HWINSTA hWinSta)
 {
     FIXME_(win32)("(0x%08x)\n", hWinSta);
     return TRUE;
 }
+
+/***********************************************************************
+ *           CloseDesktop
+ */
 BOOL WINAPI CloseDesktop(HDESK hDesk)
 {
     FIXME_(win32)("(0x%08x)\n", hDesk);
@@ -666,21 +673,21 @@ VOID WINAPI LoadLocalFonts(VOID) {
 	return;
 }
 /***********************************************************************
- *           GetUserObjectInformation32A   (USER32.299)
+ *           GetUserObjectInformationA   (USER32.299)
  */
 BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
 {	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
- *           GetUserObjectInformation32W   (USER32.300)
+ *           GetUserObjectInformationW   (USER32.300)
  */
 BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
 {	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
- *           GetUserObjectSecurity32   (USER32.300)
+ *           GetUserObjectSecurity   (USER32.300)
  */
 BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, SECURITY_INFORMATION * pSIRequested,
 	PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)

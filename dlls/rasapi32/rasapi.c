@@ -11,7 +11,7 @@
 DEFAULT_DEBUG_CHANNEL(ras)
 
 /**************************************************************************
- *                 RasEnumConnections32A			[RASAPI32.544]
+ *                 RasEnumConnectionsA			[RASAPI32.544]
  */
 DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD x, LPDWORD y) {
 	/* Remote Access Service stuff is done by underlying OS anyway */

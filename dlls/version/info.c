@@ -262,7 +262,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
 
 
 /***********************************************************************
- *           GetFileVersionInfoSize32A         [VERSION.2]
+ *           GetFileVersionInfoSizeA         [VERSION.2]
  */
 DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 {
@@ -308,7 +308,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 }
 
 /***********************************************************************
- *           GetFileVersionInfoSize32W         [VERSION.3]
+ *           GetFileVersionInfoSizeW         [VERSION.3]
  */
 DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
@@ -319,7 +319,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 }
 
 /***********************************************************************
- *           GetFileVersionInfo32A             [VERSION.1]
+ *           GetFileVersionInfoA             [VERSION.1]
  */
 DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
@@ -345,7 +345,7 @@ DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
 }
 
 /***********************************************************************
- *           GetFileVersionInfo32W             [VERSION.4]
+ *           GetFileVersionInfoW             [VERSION.4]
  */
 DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
@@ -414,7 +414,7 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
 }
 
 /***********************************************************************
- *           VerQueryValue32A              [VERSION.12]
+ *           VerQueryValueA              [VERSION.12]
  */
 DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
@@ -460,7 +460,7 @@ DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 }
 
 /***********************************************************************
- *           VerQueryValue32W              [VERSION.13]
+ *           VerQueryValueW              [VERSION.13]
  */
 DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )

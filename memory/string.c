@@ -158,7 +158,7 @@ INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmp32A   (KERNEL.602)
+ *           lstrcmpA   (KERNEL.602)
  */
 INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
 {
@@ -167,8 +167,8 @@ INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmp32W   (KERNEL.603)
- * FIXME : should call CompareString32W, when it is implemented.
+ *           lstrcmpW   (KERNEL.603)
+ * FIXME : should call CompareStringW, when it is implemented.
  *    This implementation is not "word sort", as it should.
  */
 INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
@@ -194,7 +194,7 @@ INT16 WINAPI lstrcmpi16( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmpi32A   (KERNEL32.605)
+ *           lstrcmpiA   (KERNEL32.605)
  */
 INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
 {    TRACE("strcmpi %s and %s\n",
@@ -204,7 +204,7 @@ INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmpi32W   (KERNEL32.606)
+ *           lstrcmpiW   (KERNEL32.606)
  */
 INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 {
@@ -294,7 +294,7 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
- *           lstrcpyn32A   (KERNEL32.611)
+ *           lstrcpynA   (KERNEL32.611)
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
@@ -317,7 +317,7 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 
 
 /***********************************************************************
- *           lstrcpyn32W   (KERNEL32.612)
+ *           lstrcpynW   (KERNEL32.612)
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
@@ -516,7 +516,7 @@ void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 
 
 /***********************************************************************
- *           CharToOem32A   (USER32.37)
+ *           CharToOemA   (USER32.37)
  */
 BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 {
@@ -530,7 +530,7 @@ BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           CharToOemBuff32A   (USER32.38)
+ *           CharToOemBuffA   (USER32.38)
  */
 BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
@@ -540,7 +540,7 @@ BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
 
 
 /***********************************************************************
- *           CharToOemBuff32W   (USER32.39)
+ *           CharToOemBuffW   (USER32.39)
  */
 BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
 {
@@ -550,7 +550,7 @@ BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
 
 
 /***********************************************************************
- *           CharToOem32W   (USER32.40)
+ *           CharToOemW   (USER32.40)
  */
 BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 {
@@ -564,7 +564,7 @@ BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           OemToChar32A   (USER32.402)
+ *           OemToCharA   (USER32.402)
  */
 BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
 {
@@ -577,7 +577,7 @@ BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           OemToCharBuff32A   (USER32.403)
+ *           OemToCharBuffA   (USER32.403)
  */
 BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
@@ -588,7 +588,7 @@ BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
 
 
 /***********************************************************************
- *           OemToCharBuff32W   (USER32.404)
+ *           OemToCharBuffW   (USER32.404)
  */
 BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
 {
@@ -599,7 +599,7 @@ BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
 
 
 /***********************************************************************
- *           OemToChar32W   (USER32.405)
+ *           OemToCharW   (USER32.405)
  */
 BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 {

@@ -1232,8 +1232,8 @@ INT16 WINAPI SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
 
 
 /*************************************************************************
- *           SetScrollInfo32   (USER32.501)
- * SetScrollInfo32 can be used to set the position, upper bound, 
+ *           SetScrollInfo   (USER32.501)
+ * SetScrollInfo can be used to set the position, upper bound, 
  * lower bound, and page size of a scrollbar control.
  *
  * RETURNS
@@ -1412,8 +1412,8 @@ BOOL16 WINAPI GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
 
 
 /*************************************************************************
- *           GetScrollInfo32   (USER32.284)
- * GetScrollInfo32 can be used to retrieve the position, upper bound, 
+ *           GetScrollInfo   (USER32.284)
+ * GetScrollInfo can be used to retrieve the position, upper bound, 
  * lower bound, and page size of a scrollbar control.
  *
  * RETURNS STD
@@ -1454,7 +1454,7 @@ INT16 WINAPI SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos,
 
 
 /*************************************************************************
- *           SetScrollPos32   (USER32.502)
+ *           SetScrollPos   (USER32.502)
  *
  * RETURNS
  *    Success: Scrollbar position
@@ -1494,7 +1494,7 @@ INT16 WINAPI GetScrollPos16( HWND16 hwnd, INT16 nBar )
 
 
 /*************************************************************************
- *           GetScrollPos32   (USER32.285)
+ *           GetScrollPos   (USER32.285)
  *
  * RETURNS
  *    Success: Current position
@@ -1528,7 +1528,7 @@ void WINAPI SetScrollRange16( HWND16 hwnd, INT16 nBar,
 
 
 /*************************************************************************
- *           SetScrollRange32   (USER32.503)
+ *           SetScrollRange   (USER32.503)
  *
  * RETURNS STD
  */
@@ -1599,7 +1599,7 @@ BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar,
 
 
 /*************************************************************************
- *           GetScrollRange32   (USER32.286)
+ *           GetScrollRange   (USER32.286)
  *
  * RETURNS STD
  */
@@ -1710,7 +1710,7 @@ void WINAPI ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
 
 
 /*************************************************************************
- *           ShowScrollBar32   (USER32.532)
+ *           ShowScrollBar   (USER32.532)
  *
  * RETURNS STD
  */
@@ -1735,7 +1735,7 @@ BOOL16 WINAPI EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
 
 
 /*************************************************************************
- *           EnableScrollBar32   (USER32.171)
+ *           EnableScrollBar   (USER32.171)
  */
 BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
 {

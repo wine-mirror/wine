@@ -442,7 +442,7 @@ error_exit:
 
 
 /*******************************************************************
- *     GetASPI32SupportInfo32		[WNASPI32.0]
+ *     GetASPI32SupportInfo		[WNASPI32.0]
  *
  * Checks if the ASPI subsystem is initialized correctly.
  *
@@ -458,7 +458,7 @@ DWORD WINAPI GetASPI32SupportInfo()
 
 
 /***********************************************************************
- *             SendASPI32Command32 (WNASPI32.1)
+ *             SendASPI32Command (WNASPI32.1)
  */
 DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 {
@@ -534,7 +534,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 
 
 /***********************************************************************
- *             GetASPI32DLLVersion32   (WNASPI32.3)
+ *             GetASPI32DLLVersion   (WNASPI32.3)
  */
 
 DWORD WINAPI GetASPI32DLLVersion()

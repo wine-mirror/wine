@@ -1671,7 +1671,7 @@ DWORD WINAPI GetAppCompatFlags16( HTASK16 hTask )
 
 
 /***********************************************************************
- *           GetAppCompatFlags32   (USER32.206)
+ *           GetAppCompatFlags   (USER32.206)
  */
 DWORD WINAPI GetAppCompatFlags( HTASK hTask )
 {

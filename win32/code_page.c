@@ -267,7 +267,7 @@ BOOL16 WINAPI IsDBCSLeadByte16( BYTE testchar )
 
 
 /***********************************************************************
- *           IsDBCSLeadByte32   (KERNEL32.358)
+ *           IsDBCSLeadByte   (KERNEL32.358)
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
@@ -276,7 +276,7 @@ BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 
 
 /***********************************************************************
- *              EnumSystemCodePages32A                (KERNEL32.92)
+ *              EnumSystemCodePagesA                (KERNEL32.92)
  */
 BOOL WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA lpfnCodePageEnum,DWORD flags)
 {
@@ -286,7 +286,7 @@ BOOL WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA lpfnCodePageEnum,DWORD flags
 }
 
 /***********************************************************************
- *              EnumSystemCodePages32W                (KERNEL32.93)
+ *              EnumSystemCodePagesW                (KERNEL32.93)
  */
 BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum,
                                       DWORD flags)

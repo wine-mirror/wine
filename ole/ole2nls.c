@@ -711,7 +711,7 @@ LCID WINAPI ConvertDefaultLocale32 (LCID lcid)
 	return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
 }
 /******************************************************************************
- * GetLocaleInfo32A [KERNEL32.342]
+ * GetLocaleInfoA [KERNEL32.342]
  *
  * NOTES 
  *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
@@ -805,12 +805,12 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 }
 
 /******************************************************************************
- *		GetLocaleInfo32W	[KERNEL32.343]
+ *		GetLocaleInfoW	[KERNEL32.343]
  *
  * NOTES
  *  MS documentation states that len "specifies the size, in bytes (ANSI version)
  *  or characters (Unicode version), of" wbuf. Thus the number returned is
- *  the same between GetLocaleInfo32W and GetLocaleInfo32A.
+ *  the same between GetLocaleInfoW and GetLocaleInfoA.
  */
 INT WINAPI GetLocaleInfoW(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT len)
 {	WORD wlen;
@@ -850,7 +850,7 @@ BOOL WINAPI IsValidLocale(LCID lcid,DWORD flags)
 }
 
 /******************************************************************************
- *		EnumSystemLocales32W	[KERNEL32.209]
+ *		EnumSystemLocalesW	[KERNEL32.209]
  */
 BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum,
                                     DWORD flags )
@@ -893,7 +893,7 @@ BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum,
 }
 
 /******************************************************************************
- *		EnumSystemLocales32A	[KERNEL32.208]
+ *		EnumSystemLocalesA	[KERNEL32.208]
  */
 BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
                                    DWORD flags)
@@ -1459,7 +1459,7 @@ BOOL16 WINAPI GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,
 	return GetStringTypeExA(locale,dwInfoType,src,cchSrc,chartype);
 }
 /******************************************************************************
- *		GetStringType32A	[KERNEL32.396]
+ *		GetStringTypeA	[KERNEL32.396]
  */
 BOOL WINAPI GetStringTypeA(LCID locale,DWORD dwInfoType,LPCSTR src,
                                INT cchSrc,LPWORD chartype)
@@ -1468,7 +1468,7 @@ BOOL WINAPI GetStringTypeA(LCID locale,DWORD dwInfoType,LPCSTR src,
 }
 
 /******************************************************************************
- *		GetStringTypeEx32A	[KERNEL32.397]
+ *		GetStringTypeExA	[KERNEL32.397]
  *
  * FIXME: Ignores the locale.
  */
@@ -1526,7 +1526,7 @@ BOOL WINAPI GetStringTypeExA(LCID locale,DWORD dwInfoType,LPCSTR src,
 }
 
 /******************************************************************************
- *		GetStringType32W	[KERNEL32.399]
+ *		GetStringTypeW	[KERNEL32.399]
  *
  * NOTES
  * Yes, this is missing LCID locale. MS fault.
@@ -1538,7 +1538,7 @@ BOOL WINAPI GetStringTypeW(DWORD dwInfoType,LPCWSTR src,INT cchSrc,
 }
 
 /******************************************************************************
- *		GetStringTypeEx32W	[KERNEL32.398]
+ *		GetStringTypeExW	[KERNEL32.398]
  *
  * FIXME: unicode chars are assumed chars
  */
@@ -2064,7 +2064,7 @@ static int OLE2NLS_isPunctuation(unsigned char c)
  */
 static int OLE2NLS_isNonSpacing(unsigned char c) 
 {
-  /* This function is used by LCMapString32A.  Characters 
+  /* This function is used by LCMapStringA.  Characters 
      for which it returns true are ignored when mapping a
      string with NORM_IGNORENONSPACE */
   return ((c==136) || (c==170) || (c==186));
@@ -2075,7 +2075,7 @@ static int OLE2NLS_isNonSpacing(unsigned char c)
  */
 static int OLE2NLS_isSymbol(unsigned char c) 
 {
-  /* This function is used by LCMapString32A.  Characters 
+  /* This function is used by LCMapStringA.  Characters 
      for which it returns true are ignored when mapping a
      string with NORM_IGNORESYMBOLS */
   return ( (c!=0) && !IsCharAlphaNumericA(c) );
@@ -2090,7 +2090,7 @@ static int identity(int c)
 }
 
 /*************************************************************************
- *              LCMapString32A                [KERNEL32.492]
+ *              LCMapStringA                [KERNEL32.492]
  *
  * Convert a string, or generate a sort key from it.
  *
@@ -2112,7 +2112,7 @@ static int identity(int c)
  *    NORM_IGNOREWIDTH means to compare ASCII and wide characters
  *    as if they are equal.  
  *    In the only code page implemented so far, there may not be
- *    wide characters in strings passed to LCMapString32A,
+ *    wide characters in strings passed to LCMapStringA,
  *    so there is nothing to be done for this flag.
  */
 INT WINAPI LCMapStringA(
@@ -2352,13 +2352,13 @@ INT WINAPI LCMapStringA(
 }
 		     
 /*************************************************************************
- *              LCMapString32W                [KERNEL32.493]
+ *              LCMapStringW                [KERNEL32.493]
  *
  * Convert a string, or generate a sort key from it.
  *
  * NOTE
  *
- * See LCMapString32A for documentation
+ * See LCMapStringA for documentation
  */
 INT WINAPI LCMapStringW(
 	LCID lcid,DWORD mapflags,LPCWSTR srcstr,INT srclen,LPWSTR dststr,
@@ -2679,7 +2679,7 @@ static inline int OLE2NLS_EstimateMappingLength(LCID lcid, DWORD dwMapFlags,
 }
 
 /******************************************************************************
- *		CompareString32A	[KERNEL32.143]
+ *		CompareStringA	[KERNEL32.143]
  * Compares two strings using locale
  *
  * RETURNS
@@ -2741,7 +2741,7 @@ UINT WINAPI CompareStringA(
   if ( (!LCMapStringA(lcid,mapstring_flags,s1,l1,sk1,len1))
 	 || (!LCMapStringA(lcid,mapstring_flags,s2,l2,sk2,len2)) )
   {
-    ERR("Bug in LCmapString32A.\n");
+    ERR("Bug in LCmapStringA.\n");
     result = 0;
   }
   else
@@ -2761,10 +2761,10 @@ UINT WINAPI CompareStringA(
 }
 
 /******************************************************************************
- *		CompareString32W	[KERNEL32.144]
+ *		CompareStringW	[KERNEL32.144]
  * This implementation ignores the locale
  * FIXME :  Does only string sort.  Should
- * be reimplemented the same way as CompareString32A.
+ * be reimplemented the same way as CompareStringA.
  */
 UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle, 
                                LPCWSTR s1, DWORD l1, LPCWSTR s2,DWORD l2)
@@ -3265,7 +3265,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 
 
 /******************************************************************************
- *		GetDateFormat32A	[KERNEL32.310]
+ *		GetDateFormatA	[KERNEL32.310]
  * Makes an ASCII string of the date
  *
  * This function uses format to format the date,  or,  if format
@@ -3336,16 +3336,16 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
   
 
    TRACE(
-	       "GetDateFormat32A() returning %d, with data=%s\n",
+	       "GetDateFormatA() returning %d, with data=%s\n",
 	       ret, date);
   return ret;
 }
 
 /******************************************************************************
- *		GetDateFormat32W	[KERNEL32.311]
+ *		GetDateFormatW	[KERNEL32.311]
  * Makes a Unicode string of the date
  *
- * Acts the same as GetDateFormat32A(),  except that it's Unicode.
+ * Acts the same as GetDateFormatA(),  except that it's Unicode.
  * Accepts & returns sizes as counts of Unicode characters.
  *
  */
@@ -3364,7 +3364,7 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 }
 
 /**************************************************************************
- *              EnumDateFormats32A	(KERNEL32.198)
+ *              EnumDateFormatsA	(KERNEL32.198)
  */
 BOOL WINAPI EnumDateFormatsA(
   DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
@@ -3401,7 +3401,7 @@ BOOL WINAPI EnumDateFormatsA(
 }
 
 /**************************************************************************
- *              EnumDateFormats32W	(KERNEL32.199)
+ *              EnumDateFormatsW	(KERNEL32.199)
  */
 BOOL WINAPI EnumDateFormatsW(
   DATEFMT_ENUMPROCW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
@@ -3412,7 +3412,7 @@ BOOL WINAPI EnumDateFormatsW(
 }
 
 /**************************************************************************
- *              EnumTimeFormats32A	(KERNEL32.210)
+ *              EnumTimeFormatsA	(KERNEL32.210)
  */
 BOOL WINAPI EnumTimeFormatsA(
   TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
@@ -3439,7 +3439,7 @@ BOOL WINAPI EnumTimeFormatsA(
 }
 
 /**************************************************************************
- *              EnumTimeFormats32W	(KERNEL32.211)
+ *              EnumTimeFormatsW	(KERNEL32.211)
  */
 BOOL WINAPI EnumTimeFormatsW(
   TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
@@ -3451,7 +3451,7 @@ BOOL WINAPI EnumTimeFormatsW(
 
 
 /**************************************************************************
- *              GetNumberFormat32A	(KERNEL32.355)
+ *              GetNumberFormatA	(KERNEL32.355)
  */
 INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
                                LPCSTR lpValue,   const NUMBERFMTA * lpFormat,
@@ -3715,7 +3715,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 }
 
 /**************************************************************************
- *              GetNumberFormat32W	(KERNEL32.xxx)
+ *              GetNumberFormatW	(KERNEL32.xxx)
  */
 INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
 			       LPCWSTR lpvalue,  const NUMBERFMTW * lpFormat,
@@ -3746,7 +3746,7 @@ static LCID OLE2NLS_CheckLocale (LCID locale)
 	}
 }
 /******************************************************************************
- *		GetTimeFormat32A	[KERNEL32.422]
+ *		GetTimeFormatA	[KERNEL32.422]
  * Makes an ASCII string of the time
  *
  * Formats date according to format,  or locale default if format is
@@ -3814,7 +3814,7 @@ GetTimeFormatA(LCID locale,        /* in  */
 
 
 /******************************************************************************
- *		GetTimeFormat32W	[KERNEL32.423]
+ *		GetTimeFormatW	[KERNEL32.423]
  * Makes a Unicode string of the time
  */
 INT WINAPI 

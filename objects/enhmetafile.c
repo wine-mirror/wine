@@ -139,7 +139,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
 }
 
 /*****************************************************************************
- *          GetEnhMetaFile32W  (GDI32.180)
+ *          GetEnhMetaFileW  (GDI32.180)
  */
 HENHMETAFILE WINAPI GetEnhMetaFileW(
              LPCWSTR lpszMetaFile)  /* filename of enhanced metafile */ 
@@ -184,7 +184,7 @@ UINT WINAPI GetEnhMetaFileHeader(
 
 
 /*****************************************************************************
- *          GetEnhMetaFileDescription32A  (GDI32.176)
+ *          GetEnhMetaFileDescriptionA  (GDI32.176)
  */
 UINT WINAPI GetEnhMetaFileDescriptionA( 
        HENHMETAFILE hmf, /* enhanced metafile */
@@ -219,7 +219,7 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
 }
 
 /*****************************************************************************
- *          GetEnhMetaFileDescription32W  (GDI32.177)
+ *          GetEnhMetaFileDescriptionW  (GDI32.177)
  *
  *  Copies the description string of an enhanced metafile into a buffer 
  *  _buf_.
@@ -1210,7 +1210,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
 /*****************************************************************************
  *
- *        EnumEnhMetaFile32  (GDI32.79)
+ *        EnumEnhMetaFile  (GDI32.79)
  *
  *  Walk an enhanced metafile, calling a user-specified function _EnhMetaFunc_
  *  for each

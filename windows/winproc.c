@@ -2390,7 +2390,7 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
 
 
 /**********************************************************************
- *	     CallWindowProc32A    (USER32.18) 
+ *	     CallWindowProcA    (USER32.18) 
  *
  * The CallWindowProc() function invokes the windows procedure _func_,
  * with _hwnd_ as the target window, the message specified by _msg_, and
@@ -2451,7 +2451,7 @@ LRESULT WINAPI CallWindowProcA(
 
 
 /**********************************************************************
- *	     CallWindowProc32W    (USER32.19)
+ *	     CallWindowProcW    (USER32.19)
  */
 LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
                                   WPARAM wParam, LPARAM lParam )

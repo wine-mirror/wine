@@ -12,12 +12,10 @@
 #include "font.h"
 #include "debugtools.h"     
 
-DEFAULT_DEBUG_CHANNEL(font)
+DEFAULT_DEBUG_CHANNEL(font);
 
-
-
-/* **************************************************************** 
- *    EngineEnumerateFont [GDI.300] 
+/***********************************************************************
+ *		EngineEnumerateFont16 (GDI.300)
  */
 WORD WINAPI 
 EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
@@ -26,8 +24,8 @@ EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
     return 0;
 }
 
-/* **************************************************************** 
- *   EngineDeleteFont [GDI.301] 
+/***********************************************************************
+ *		EngineDeleteFont16 (GDI.301)
  */
 WORD WINAPI EngineDeleteFont16(LPFONTINFO16 lpFontInfo)
 {
@@ -52,8 +50,8 @@ WORD WINAPI EngineDeleteFont16(LPFONTINFO16 lpFontInfo)
     return 1;
 }
 
-/* ****************************************************************
- *       EngineRealizeFont [GDI.302] 
+/***********************************************************************
+ *		EngineRealizeFont16 (GDI.302)
  */
 WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
 {
@@ -62,8 +60,8 @@ WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform
     return 0;
 }
 
-/* ****************************************************************
- *       EngineRealizeFontExt [GDI.315] 
+/***********************************************************************
+ *		EngineRealizeFontExt16 (GDI.315)
  */
 WORD WINAPI EngineRealizeFontExt16(LONG l1, LONG l2, LONG l3, LONG l4)
 {
@@ -72,8 +70,8 @@ WORD WINAPI EngineRealizeFontExt16(LONG l1, LONG l2, LONG l3, LONG l4)
     return 0;
 }
 
-/* ****************************************************************
- *        EngineGetCharWidth [GDI.303] 
+/***********************************************************************
+ *		EngineGetCharWidth16 (GDI.303)
  */
 WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE lastChar, LPINT16 buffer)
 {
@@ -85,8 +83,8 @@ WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE l
     return 1;
 }
 
-/* ****************************************************************
- *      EngineSetFontContext [GDI.304] 
+/***********************************************************************
+ *		EngineSetFontContext (GDI.304)
  */
 WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
 {
@@ -94,8 +92,8 @@ WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
 	return 0;
 }
 
-/* ****************************************************************
- *       EngineGetGlyphBMP   [GDI.305] 
+/***********************************************************************
+ *		EngineGetGlyphBMP (GDI.305)
  */
 WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD w2, LPSTR string, DWORD dword, /*LPBITMAPMETRICS16*/ LPVOID metrics)
 {
@@ -103,8 +101,8 @@ WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD 
     return 0;
 }
 
-/* ****************************************************************
- *             EngineMakeFontDir  [GDI.306] 
+/***********************************************************************
+ *		EngineMakeFontDir (GDI.306)
  */
 DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
 {
@@ -113,10 +111,9 @@ DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
     
 }
 
-/* ****************************************************************
- *              EngineExtTextOut [GDI.314] 
+/***********************************************************************
+ *		EngineExtTextOut (GDI.314)
  */
-
 WORD WINAPI EngineExtTextOut()
 {
    FIXME("stub!\n");

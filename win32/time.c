@@ -175,7 +175,7 @@ VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime)
 }
 
 /***********************************************************************
- *              SystemTimeToTzSpecificLocalTime32  (KERNEL32.683)
+ *              SystemTimeToTzSpecificLocalTime  (KERNEL32.683)
  */
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
   LPTIME_ZONE_INFORMATION lpTimeZoneInformation,

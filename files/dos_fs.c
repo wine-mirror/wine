@@ -978,7 +978,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
 
 /***********************************************************************
- *           GetShortPathName32W   (KERNEL32.272)
+ *           GetShortPathNameW   (KERNEL32.272)
  */
 DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
                                   DWORD shortlen )
@@ -1000,7 +1000,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
 
 
 /***********************************************************************
- *           GetLongPathName32A   (KERNEL32.xxx)
+ *           GetLongPathNameA   (KERNEL32.xxx)
  */
 DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
                                   DWORD longlen )
@@ -1056,7 +1056,7 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
 
 
 /***********************************************************************
- *           GetLongPathName32W   (KERNEL32.269)
+ *           GetLongPathNameW   (KERNEL32.269)
  */
 DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
                                   DWORD longlen )
@@ -1079,7 +1079,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
 /***********************************************************************
  *           DOSFS_DoGetFullPathName
  *
- * Implementation of GetFullPathName32A/W.
+ * Implementation of GetFullPathNameA/W.
  *
  * Known discrepancies to Win95 OSR2 bon 000118
  * "g:..\test should return G:\test
@@ -1197,7 +1197,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 
 
 /***********************************************************************
- *           GetFullPathName32A   (KERNEL32.272)
+ *           GetFullPathNameA   (KERNEL32.272)
  * NOTES
  *   if the path closed with '\', *lastpart is 0 
  */
@@ -1221,7 +1221,7 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
 
 
 /***********************************************************************
- *           GetFullPathName32W   (KERNEL32.273)
+ *           GetFullPathNameW   (KERNEL32.273)
  */
 DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
                                  LPWSTR *lastpart )
@@ -1450,7 +1450,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
 
 
 /*************************************************************************
- *           FindFirstFile32A   (KERNEL32.123)
+ *           FindFirstFileA   (KERNEL32.123)
  */
 HANDLE WINAPI FindFirstFileA( LPCSTR path, WIN32_FIND_DATAA *data )
 {
@@ -1461,7 +1461,7 @@ HANDLE WINAPI FindFirstFileA( LPCSTR path, WIN32_FIND_DATAA *data )
 
 
 /*************************************************************************
- *           FindFirstFile32W   (KERNEL32.124)
+ *           FindFirstFileW   (KERNEL32.124)
  */
 HANDLE WINAPI FindFirstFileW( LPCWSTR path, WIN32_FIND_DATAW *data )
 {
@@ -1515,7 +1515,7 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
 
 
 /*************************************************************************
- *           FindNextFile32A   (KERNEL32.126)
+ *           FindNextFileA   (KERNEL32.126)
  */
 BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
@@ -1524,7 +1524,7 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 
 
 /*************************************************************************
- *           FindNextFile32W   (KERNEL32.127)
+ *           FindNextFileW   (KERNEL32.127)
  */
 BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 {
@@ -1564,7 +1564,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
 
 
 /*************************************************************************
- *           FindClose32   (KERNEL32.119)
+ *           FindClose   (KERNEL32.119)
  */
 BOOL WINAPI FindClose( HANDLE handle )
 {

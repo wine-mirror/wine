@@ -1349,7 +1349,7 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
 
 
 /***********************************************************************
- *           PostQuitMessage32   (USER32.421)
+ *           PostQuitMessage   (USER32.421)
  *
  * PostQuitMessage() posts a message to the system requesting an
  * application to terminate execution. As a result of this function,
@@ -1493,7 +1493,7 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
 }
 
 /***********************************************************************
- *           GetQueueStatus32   (USER32.283)
+ *           GetQueueStatus   (USER32.283)
  */
 DWORD WINAPI GetQueueStatus( UINT flags )
 {
@@ -1571,7 +1571,7 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 }
 
 /***********************************************************************
- *           GetInputState32   (USER32.244)
+ *           GetInputState   (USER32.244)
  */
 BOOL WINAPI GetInputState(void)
 {

@@ -13,7 +13,7 @@
 
 DEFAULT_DEBUG_CHANNEL(ole)
 /***********************************************************************
- *           OleUIAddVerbMenu32A (OLEDLG.1)
+ *           OleUIAddVerbMenuA (OLEDLG.1)
  */
 BOOL WINAPI OleUIAddVerbMenuA(
   LPOLEOBJECT lpOleObj, LPCSTR lpszShortType,
@@ -30,7 +30,7 @@ BOOL WINAPI OleUIAddVerbMenuA(
 }
 
 /***********************************************************************
- *           OleUIAddVerbMenu32W (OLEDLG.14)
+ *           OleUIAddVerbMenuW (OLEDLG.14)
  */
 BOOL WINAPI OleUIAddVerbMenuW(
   LPOLEOBJECT lpOleObj, LPCWSTR lpszShortType,
@@ -47,7 +47,7 @@ BOOL WINAPI OleUIAddVerbMenuW(
 }
 
 /***********************************************************************
- *           OleUICanConvertOrActivateAs32 (OLEDLG.2)
+ *           OleUICanConvertOrActivateAs (OLEDLG.2)
  */
 BOOL WINAPI OleUICanConvertOrActivateAs(
     REFCLSID rClsid, BOOL fIsLinkedObject, WORD wFormat)
@@ -60,7 +60,7 @@ BOOL WINAPI OleUICanConvertOrActivateAs(
 }
 
 /***********************************************************************
- *           OleUIInsertObject32A (OLEDLG.3)
+ *           OleUIInsertObjectA (OLEDLG.3)
  */
 UINT WINAPI OleUIInsertObjectA(LPOLEUIINSERTOBJECTA lpOleUIInsertObject)
 {
@@ -70,7 +70,7 @@ UINT WINAPI OleUIInsertObjectA(LPOLEUIINSERTOBJECTA lpOleUIInsertObject)
 }
 
 /***********************************************************************
- *           OleUIInsertObject32W (OLEDLG.20)
+ *           OleUIInsertObjectW (OLEDLG.20)
  */
 UINT WINAPI OleUIInsertObjectW(LPOLEUIINSERTOBJECTW lpOleUIInsertObject)
 {
@@ -80,7 +80,7 @@ UINT WINAPI OleUIInsertObjectW(LPOLEUIINSERTOBJECTW lpOleUIInsertObject)
 }
 
 /***********************************************************************
- *           OleUIPasteSpecial32A (OLEDLG.4)
+ *           OleUIPasteSpecialA (OLEDLG.4)
  */
 UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA lpOleUIPasteSpecial)
 {
@@ -90,7 +90,7 @@ UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA lpOleUIPasteSpecial)
 }
 
 /***********************************************************************
- *           OleUIPasteSpecial32W (OLEDLG.22)
+ *           OleUIPasteSpecialW (OLEDLG.22)
  */
 UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW lpOleUIPasteSpecial)
 {
@@ -100,7 +100,7 @@ UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW lpOleUIPasteSpecial)
 }
 
 /***********************************************************************
- *           OleUIEditLinks32A (OLEDLG.5)
+ *           OleUIEditLinksA (OLEDLG.5)
  */
 UINT WINAPI OleUIEditLinksA(LPOLEUIEDITLINKSA lpOleUIEditLinks)
 {
@@ -110,7 +110,7 @@ UINT WINAPI OleUIEditLinksA(LPOLEUIEDITLINKSA lpOleUIEditLinks)
 }
 
 /***********************************************************************
- *           OleUIEditLinks32W (OLEDLG.19)
+ *           OleUIEditLinksW (OLEDLG.19)
  */
 UINT WINAPI OleUIEditLinksW(LPOLEUIEDITLINKSW lpOleUIEditLinks)
 {
@@ -120,7 +120,7 @@ UINT WINAPI OleUIEditLinksW(LPOLEUIEDITLINKSW lpOleUIEditLinks)
 }
 
 /***********************************************************************
- *           OleUIChangeIcon32A (OLEDLG.6)
+ *           OleUIChangeIconA (OLEDLG.6)
  */
 UINT WINAPI OleUIChangeIconA(
   LPOLEUICHANGEICONA lpOleUIChangeIcon)
@@ -131,7 +131,7 @@ UINT WINAPI OleUIChangeIconA(
 }
 
 /***********************************************************************
- *           OleUIChangeIcon32W (OLEDLG.16)
+ *           OleUIChangeIconW (OLEDLG.16)
  */
 UINT WINAPI OleUIChangeIconW(
   LPOLEUICHANGEICONW lpOleUIChangeIcon)
@@ -142,7 +142,7 @@ UINT WINAPI OleUIChangeIconW(
 }
 
 /***********************************************************************
- *           OleUIConvert32A (OLEDLG.7)
+ *           OleUIConvertA (OLEDLG.7)
  */
 UINT WINAPI OleUIConvertA(LPOLEUICONVERTA lpOleUIConvert)
 {
@@ -152,7 +152,7 @@ UINT WINAPI OleUIConvertA(LPOLEUICONVERTA lpOleUIConvert)
 }
 
 /***********************************************************************
- *           OleUIConvert32W (OLEDLG.18)
+ *           OleUIConvertW (OLEDLG.18)
  */
 UINT WINAPI OleUIConvertW(LPOLEUICONVERTW lpOleUIConvert)
 {
@@ -162,7 +162,7 @@ UINT WINAPI OleUIConvertW(LPOLEUICONVERTW lpOleUIConvert)
 }
 
 /***********************************************************************
- *           OleUIBusy32A (OLEDLG.8)
+ *           OleUIBusyA (OLEDLG.8)
  */
 UINT WINAPI OleUIBusyA(LPOLEUIBUSYA lpOleUIBusy)
 {
@@ -172,7 +172,7 @@ UINT WINAPI OleUIBusyA(LPOLEUIBUSYA lpOleUIBusy)
 }
 
 /***********************************************************************
- *           OleUIBusy32W (OLEDLG.15)
+ *           OleUIBusyW (OLEDLG.15)
  */
 UINT WINAPI OleUIBusyW(LPOLEUIBUSYW lpOleUIBusy)
 {
@@ -182,7 +182,7 @@ UINT WINAPI OleUIBusyW(LPOLEUIBUSYW lpOleUIBusy)
 }
 
 /***********************************************************************
- *           OleUIUpdateLinks32A (OLEDLG.9)
+ *           OleUIUpdateLinksA (OLEDLG.9)
  */
 BOOL WINAPI OleUIUpdateLinksA(
   LPOLEUILINKCONTAINERA lpOleUILinkCntr,
@@ -196,7 +196,7 @@ BOOL WINAPI OleUIUpdateLinksA(
 }
 
 /***********************************************************************
- *           OleUIUpdateLinks32W (OLEDLG.?)
+ *           OleUIUpdateLinksW (OLEDLG.?)
  * FIXME
  *     I haven't been able to find the ordinal for this function,
  *     This means it can't be called from outside the DLL.
@@ -213,7 +213,7 @@ BOOL WINAPI OleUIUpdateLinksW(
 }
 
 /***********************************************************************
- *           OleUIPromptUser32A (OLEDLG.10)
+ *           OleUIPromptUserA (OLEDLG.10)
  */
 INT __cdecl OleUIPromptUserA(
   INT nTemplate, HWND hwndParent, ...)
@@ -224,7 +224,7 @@ INT __cdecl OleUIPromptUserA(
 }
 
 /***********************************************************************
- *           OleUIPromptUser32W (OLEDLG.13)
+ *           OleUIPromptUserW (OLEDLG.13)
  */
 INT __cdecl OleUIPromptUserW(
   INT nTemplate, HWND hwndParent, ...)
@@ -235,7 +235,7 @@ INT __cdecl OleUIPromptUserW(
 }
 
 /***********************************************************************
- *           OleUIObjectProperties32A (OLEDLG.11)
+ *           OleUIObjectPropertiesA (OLEDLG.11)
  */
 UINT WINAPI OleUIObjectPropertiesA(
   LPOLEUIOBJECTPROPSA lpOleUIObjectProps)
@@ -246,7 +246,7 @@ UINT WINAPI OleUIObjectPropertiesA(
 }
 
 /***********************************************************************
- *           OleUIObjectProperties32W (OLEDLG.21)
+ *           OleUIObjectPropertiesW (OLEDLG.21)
  */
 UINT WINAPI OleUIObjectPropertiesW(
   LPOLEUIOBJECTPROPSW lpOleUIObjectProps)
@@ -257,7 +257,7 @@ UINT WINAPI OleUIObjectPropertiesW(
 }
 
 /***********************************************************************
- *           OleUIChangeSource32A (OLEDLG.12)
+ *           OleUIChangeSourceA (OLEDLG.12)
  */
 UINT WINAPI OleUIChangeSourceA(
   LPOLEUICHANGESOURCEA lpOleUIChangeSource)
@@ -268,7 +268,7 @@ UINT WINAPI OleUIChangeSourceA(
 }
 
 /***********************************************************************
- *           OleUIChangeSource32W (OLEDLG.17)
+ *           OleUIChangeSourceW (OLEDLG.17)
  */
 UINT WINAPI OleUIChangeSourceW(
   LPOLEUICHANGESOURCEW lpOleUIChangeSource)

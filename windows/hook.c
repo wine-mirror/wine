@@ -1091,7 +1091,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 }
 
 /***********************************************************************
- *           HOOK_CallHooks32A
+ *           HOOK_CallHooksA
  *
  * Call a hook chain.
  */
@@ -1106,7 +1106,7 @@ LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
 }
 
 /***********************************************************************
- *           HOOK_CallHooks32W
+ *           HOOK_CallHooksW
  *
  * Call a hook chain.
  */
@@ -1224,7 +1224,7 @@ FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 }
 
 /***********************************************************************
- *           SetWindowsHook32A   (USER32.525)
+ *           SetWindowsHookA   (USER32.525)
  */
 HHOOK WINAPI SetWindowsHookA( INT id, HOOKPROC proc )
 {
@@ -1232,7 +1232,7 @@ HHOOK WINAPI SetWindowsHookA( INT id, HOOKPROC proc )
 }
 
 /***********************************************************************
- *           SetWindowsHook32W   (USER32.528)
+ *           SetWindowsHookW   (USER32.528)
  */
 HHOOK WINAPI SetWindowsHookW( INT id, HOOKPROC proc )
 {
@@ -1255,7 +1255,7 @@ HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
 }
 
 /***********************************************************************
- *           SetWindowsHookEx32A   (USER32.526)
+ *           SetWindowsHookExA   (USER32.526)
  */
 HHOOK WINAPI SetWindowsHookExA( INT id, HOOKPROC proc, HINSTANCE hInst,
                                   DWORD dwThreadId )
@@ -1264,7 +1264,7 @@ HHOOK WINAPI SetWindowsHookExA( INT id, HOOKPROC proc, HINSTANCE hInst,
 }
 
 /***********************************************************************
- *           SetWindowsHookEx32W   (USER32.527)
+ *           SetWindowsHookExW   (USER32.527)
  */
 HHOOK WINAPI SetWindowsHookExW( INT id, HOOKPROC proc, HINSTANCE hInst,
                                   DWORD dwThreadId )
@@ -1282,7 +1282,7 @@ BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 }
 
 /***********************************************************************
- *           UnhookWindowsHook32   (USER32.557)
+ *           UnhookWindowsHook   (USER32.557)
  */
 BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
@@ -1310,7 +1310,7 @@ BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
 }
 
 /***********************************************************************
- *           UnhookWindowHookEx32   (USER32.558)
+ *           UnhookWindowsHookEx   (USER32.558)
  */
 BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 {
@@ -1338,7 +1338,7 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           CallNextHookEx32    (USER32.17)
+ *           CallNextHookEx    (USER32.17)
  *
  * There aren't ANSI and UNICODE versions of this.
  */
@@ -1435,7 +1435,7 @@ BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParam
 
 
 /***********************************************************************
- *           CallMsgFilter32A   (USER32.15)
+ *           CallMsgFilterA   (USER32.15)
  */
 /*
  * FIXME: There are ANSI and UNICODE versions of this, plus an unspecified
@@ -1451,7 +1451,7 @@ BOOL WINAPI CallMsgFilterA( LPMSG msg, INT code )
 
 
 /***********************************************************************
- *           CallMsgFilter32W   (USER32.16)
+ *           CallMsgFilterW   (USER32.16)
  */
 BOOL WINAPI CallMsgFilterW( LPMSG msg, INT code )
 {

@@ -171,7 +171,7 @@ COLORREF WINAPI GetSysColor16( INT16 nIndex )
 
 
 /*************************************************************************
- *             GetSysColor32   (USER32.289)
+ *             GetSysColor   (USER32.289)
  */
 COLORREF WINAPI GetSysColor( INT nIndex )
 {
@@ -207,7 +207,7 @@ VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 
 
 /*************************************************************************
- *             SetSysColors32   (USER32.505)
+ *             SetSysColors   (USER32.505)
  */
 BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
                               const COLORREF *lpColorValues )
@@ -241,7 +241,7 @@ HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 
 
 /***********************************************************************
- *           GetSysColorBrush32    (USER32.290)
+ *           GetSysColorBrush    (USER32.290)
  */
 HBRUSH WINAPI GetSysColorBrush( INT index )
 {
@@ -262,7 +262,7 @@ HPEN16 WINAPI GetSysColorPen16( INT16 index )
 
 
 /***********************************************************************
- *           GetSysColorPen32    (Not a Windows API)
+ *           GetSysColorPen    (Not a Windows API)
  *
  * This function is new to the Wine lib -- it does not exist in 
  * Windows. However, it is a natural complement for GetSysColorBrush

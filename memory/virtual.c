@@ -909,7 +909,7 @@ DWORD WINAPI VirtualQueryEx(
 
 
 /***********************************************************************
- *             IsBadReadPtr32   (KERNEL32.354)
+ *             IsBadReadPtr   (KERNEL32.354)
  *
  * RETURNS
  *	FALSE: Process has read access to entire block
@@ -925,7 +925,7 @@ BOOL WINAPI IsBadReadPtr(
 
 
 /***********************************************************************
- *             IsBadWritePtr32   (KERNEL32.357)
+ *             IsBadWritePtr   (KERNEL32.357)
  *
  * RETURNS
  *	FALSE: Process has write access to entire block
@@ -941,7 +941,7 @@ BOOL WINAPI IsBadWritePtr(
 
 
 /***********************************************************************
- *             IsBadHugeReadPtr32   (KERNEL32.352)
+ *             IsBadHugeReadPtr   (KERNEL32.352)
  * RETURNS
  *	FALSE: Process has read access to entire block
  *      TRUE: Otherwise
@@ -955,7 +955,7 @@ BOOL WINAPI IsBadHugeReadPtr(
 
 
 /***********************************************************************
- *             IsBadHugeWritePtr32   (KERNEL32.353)
+ *             IsBadHugeWritePtr   (KERNEL32.353)
  * RETURNS
  *	FALSE: Process has write access to entire block
  *      TRUE: Otherwise
@@ -969,7 +969,7 @@ BOOL WINAPI IsBadHugeWritePtr(
 
 
 /***********************************************************************
- *             IsBadCodePtr32   (KERNEL32.351)
+ *             IsBadCodePtr   (KERNEL32.351)
  *
  * RETURNS
  *	FALSE: Process has read access to specified memory
@@ -983,7 +983,7 @@ BOOL WINAPI IsBadCodePtr(
 
 
 /***********************************************************************
- *             IsBadStringPtr32A   (KERNEL32.355)
+ *             IsBadStringPtrA   (KERNEL32.355)
  *
  * RETURNS
  *	FALSE: Read access to all bytes in string
@@ -1017,8 +1017,8 @@ BOOL WINAPI IsBadStringPtrA(
 
 
 /***********************************************************************
- *             IsBadStringPtr32W   (KERNEL32.356)
- * See IsBadStringPtr32A
+ *             IsBadStringPtrW   (KERNEL32.356)
+ * See IsBadStringPtrA
  */
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 {
@@ -1046,7 +1046,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 
 
 /***********************************************************************
- *             CreateFileMapping32A   (KERNEL32.46)
+ *             CreateFileMappingA   (KERNEL32.46)
  * Creates a named or unnamed file-mapping object for the specified file
  *
  * RETURNS
@@ -1098,8 +1098,8 @@ HANDLE WINAPI CreateFileMappingA(
 
 
 /***********************************************************************
- *             CreateFileMapping32W   (KERNEL32.47)
- * See CreateFileMapping32A
+ *             CreateFileMappingW   (KERNEL32.47)
+ * See CreateFileMappingA
  */
 HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa, 
                                   DWORD protect, DWORD size_high,  
@@ -1141,7 +1141,7 @@ HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa,
 
 
 /***********************************************************************
- *             OpenFileMapping32A   (KERNEL32.397)
+ *             OpenFileMappingA   (KERNEL32.397)
  * Opens a named file-mapping object.
  *
  * RETURNS
@@ -1165,8 +1165,8 @@ HANDLE WINAPI OpenFileMappingA(
 
 
 /***********************************************************************
- *             OpenFileMapping32W   (KERNEL32.398)
- * See OpenFileMapping32A
+ *             OpenFileMappingW   (KERNEL32.398)
+ * See OpenFileMappingA
  */
 HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 {

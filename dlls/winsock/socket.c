@@ -322,6 +322,9 @@ static void WINSOCK_DeleteIData(void)
     }
 }
 
+/***********************************************************************
+ *		WSOCK32_LibMain (WSOCK32.init)
+ */
 BOOL WINAPI WSOCK32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
@@ -333,6 +336,9 @@ BOOL WINAPI WSOCK32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad
     return TRUE;
 }
 
+/***********************************************************************
+ *		WINSOCK_LibMain (WINSOCK.init)
+ */
 BOOL WINAPI WINSOCK_LibMain(DWORD fdwReason, HINSTANCE hInstDLL, WORD ds,
                             WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
@@ -598,7 +604,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 }
 
 /***********************************************************************
- *      WSAStartup32()			(WSOCK32.115)
+ *      WSAStartup()			(WSOCK32.115)
  */
 INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 {
@@ -631,7 +637,7 @@ INT WINAPI WSAGetLastError(void)
 }
 
 /***********************************************************************
- *      WSASetLastError32()		(WSOCK32.112)
+ *      WSASetLastError()		(WSOCK32.112)
  */
 void WINAPI WSASetLastError(INT iError) {
     SetLastError(iError);
@@ -2394,7 +2400,7 @@ FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 
 
 /***********************************************************************
- *      WSASetBlockingHook32()
+ *      WSASetBlockingHook()
  */
 FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
 {
@@ -2427,7 +2433,7 @@ INT16 WINAPI WSAUnhookBlockingHook16(void)
 
 
 /***********************************************************************
- *      WSAUnhookBlockingHook32()
+ *      WSAUnhookBlockingHook()
  */
 INT WINAPI WSAUnhookBlockingHook(void)
 {

@@ -387,7 +387,7 @@ static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
 }
 
 /*************************************************************************
- * SHAppBarMessage32			[SHELL32.207]
+ * SHAppBarMessage			[SHELL32.207]
  */
 UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 {
@@ -496,7 +496,7 @@ ShellExecuteW(
 }
 
 /*************************************************************************
- * AboutDlgProc32			(internal)
+ * AboutDlgProc			(internal)
  */
 BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )

@@ -419,7 +419,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 }                     
 
 /***********************************************************************
- *       WSAAsyncGetHostByName32()	(WSOCK32.103)
+ *       WSAAsyncGetHostByName()	(WSOCK32.103)
  */
 HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name, 
 					LPSTR sbuf, INT buflen)

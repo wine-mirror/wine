@@ -296,7 +296,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 
 
 /***********************************************************************
- *           DrawText32A    (USER32.164)
+ *           DrawTextA    (USER32.164)
  */
 INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count,
                           LPRECT rect, UINT flags )
@@ -314,7 +314,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count,
 
 
 /***********************************************************************
- *           DrawText32W    (USER32.167)
+ *           DrawTextW    (USER32.167)
  */
 INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
                           LPRECT rect, UINT flags )
@@ -326,7 +326,7 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
 }
 
 /***********************************************************************
- *           DrawTextEx32A    (USER32.165)
+ *           DrawTextExA    (USER32.165)
  */
 INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
@@ -341,7 +341,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
 }
 
 /***********************************************************************
- *           DrawTextEx32W    (USER32.166)
+ *           DrawTextExW    (USER32.166)
  */
 INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT count,
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
@@ -420,7 +420,7 @@ BOOL16 WINAPI TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
 
 
 /***********************************************************************
- *           TextOut32A    (GDI32.355)
+ *           TextOutA    (GDI32.355)
  */
 BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, LPCSTR str, INT count )
 {
@@ -429,7 +429,7 @@ BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, LPCSTR str, INT count )
 
 
 /***********************************************************************
- *           TextOut32W    (GDI32.356)
+ *           TextOutW    (GDI32.356)
  */
 BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
 {
@@ -550,7 +550,7 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
 
 
 /***********************************************************************
- *           GrayString32A   (USER32.315)
+ *           GrayStringA   (USER32.315)
  */
 BOOL WINAPI GrayStringA( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                              LPARAM lParam, INT cch, INT x, INT y,
@@ -561,7 +561,7 @@ BOOL WINAPI GrayStringA( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
 
 
 /***********************************************************************
- *           GrayString32W   (USER32.316)
+ *           GrayStringW   (USER32.316)
  */
 BOOL WINAPI GrayStringW( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                              LPARAM lParam, INT cch, INT x, INT y,
@@ -663,7 +663,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOut32A    (USER32.542)
+ *           TabbedTextOutA    (USER32.542)
  */
 LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr,
                               INT count, INT cTabStops,
@@ -677,7 +677,7 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOut32W    (USER32.543)
+ *           TabbedTextOutW    (USER32.543)
  */
 LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str,
                               INT count, INT cTabStops,
@@ -712,7 +712,7 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtent32A    (USER32.293)
+ *           GetTabbedTextExtentA    (USER32.293)
  */
 DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count, 
                                      INT cTabStops, const INT *lpTabPos )
@@ -725,7 +725,7 @@ DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtent32W    (USER32.294)
+ *           GetTabbedTextExtentW    (USER32.294)
  */
 DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count, 
                                      INT cTabStops, const INT *lpTabPos )
@@ -744,7 +744,7 @@ DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count,
 }
 
 /***********************************************************************
- * GetTextCharset32 [GDI32.226]  Gets character set for font in DC
+ * GetTextCharset [GDI32.226]  Gets character set for font in DC
  *
  * NOTES
  *    Should it return a UINT32 instead of an INT32?

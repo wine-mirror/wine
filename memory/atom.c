@@ -402,7 +402,7 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 
 
 /***********************************************************************
- *           AddAtom32A   (KERNEL32.0)
+ *           AddAtomA   (KERNEL32.0)
  * Adds a string to the atom table and returns the atom identifying the
  * string.
  *
@@ -418,8 +418,8 @@ ATOM WINAPI AddAtomA(
 
 
 /***********************************************************************
- *           AddAtom32W   (KERNEL32.1)
- * See AddAtom32A
+ *           AddAtomW   (KERNEL32.1)
+ * See AddAtomA
  */
 ATOM WINAPI AddAtomW( LPCWSTR str )
 {
@@ -428,7 +428,7 @@ ATOM WINAPI AddAtomW( LPCWSTR str )
 
 
 /***********************************************************************
- *           DeleteAtom32   (KERNEL32.69)
+ *           DeleteAtom   (KERNEL32.69)
  * Decrements the reference count of a string atom.  If count becomes
  * zero, the string associated with the atom is removed from the table.
  *
@@ -444,7 +444,7 @@ ATOM WINAPI DeleteAtom(
 
 
 /***********************************************************************
- *           FindAtom32A   (KERNEL32.117)
+ *           FindAtomA   (KERNEL32.117)
  * Searches the local atom table for the string and returns the atom
  * associated with that string.
  *
@@ -460,8 +460,8 @@ ATOM WINAPI FindAtomA(
 
 
 /***********************************************************************
- *           FindAtom32W   (KERNEL32.118)
- * See FindAtom32A
+ *           FindAtomW   (KERNEL32.118)
+ * See FindAtomA
  */
 ATOM WINAPI FindAtomW( LPCWSTR str )
 {
@@ -470,7 +470,7 @@ ATOM WINAPI FindAtomW( LPCWSTR str )
 
 
 /***********************************************************************
- *           GetAtomName32A   (KERNEL32.149)
+ *           GetAtomNameA   (KERNEL32.149)
  * Retrieves a copy of the string associated with the atom.
  *
  * RETURNS
@@ -487,8 +487,8 @@ UINT WINAPI GetAtomNameA(
 
 
 /***********************************************************************
- *           GetAtomName32W   (KERNEL32.150)
- * See GetAtomName32A
+ *           GetAtomNameW   (KERNEL32.150)
+ * See GetAtomNameA
  */
 UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {

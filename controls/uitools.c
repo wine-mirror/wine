@@ -576,7 +576,7 @@ BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 }
 
 /**********************************************************************
- *          DrawEdge32   (USER32.155)
+ *          DrawEdge   (USER32.155)
  */
 BOOL WINAPI DrawEdge( HDC hdc, LPRECT rc, UINT edge, UINT flags )
 {
@@ -1359,7 +1359,7 @@ BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
 
 
 /**********************************************************************
- *          DrawFrameControl32  (USER32.158)
+ *          DrawFrameControl  (USER32.158)
  */
 BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
                                   UINT uState )

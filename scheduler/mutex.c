@@ -11,7 +11,7 @@
 
 
 /***********************************************************************
- *           CreateMutex32A   (KERNEL32.166)
+ *           CreateMutexA   (KERNEL32.166)
  */
 HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
@@ -28,7 +28,7 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 
 
 /***********************************************************************
- *           CreateMutex32W   (KERNEL32.167)
+ *           CreateMutexW   (KERNEL32.167)
  */
 HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 {
@@ -45,7 +45,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 
 
 /***********************************************************************
- *           OpenMutex32A   (KERNEL32.541)
+ *           OpenMutexA   (KERNEL32.541)
  */
 HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -61,7 +61,7 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenMutex32W   (KERNEL32.542)
+ *           OpenMutexW   (KERNEL32.542)
  */
 HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 {

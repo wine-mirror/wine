@@ -449,7 +449,7 @@ MakeSelfRelativeSD(
 }
 
 /******************************************************************************
- * GetSecurityDescriptorControl32			[ADVAPI32]
+ * GetSecurityDescriptorControl			[ADVAPI32]
  */
 
 BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
@@ -477,7 +477,7 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 */
 
 /******************************************************************************
- * LookupPrivilegeValue32W			[ADVAPI32.93]
+ * LookupPrivilegeValueW			[ADVAPI32.93]
  * Retrieves LUID used on a system to represent the privilege name.
  *
  * NOTES
@@ -499,7 +499,7 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
 }
 
 /******************************************************************************
- * LookupPrivilegeValue32A			[ADVAPI32.92]
+ * LookupPrivilegeValueA			[ADVAPI32.92]
  */
 BOOL WINAPI
 LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
@@ -515,7 +515,7 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
 }
 
 /******************************************************************************
- * GetFileSecurity32A [ADVAPI32.45]
+ * GetFileSecurityA [ADVAPI32.45]
  *
  * Obtains Specified information about the security of a file or directory
  * The information obtained is constrained by the callers access rights and
@@ -532,7 +532,7 @@ GetFileSecurityA( LPCSTR lpFileName,
 }
 
 /******************************************************************************
- * GetFileSecurity32W [ADVAPI32.46]
+ * GetFileSecurityW [ADVAPI32.46]
  *
  * Obtains Specified information about the security of a file or directory
  * The information obtained is constrained by the callers access rights and
@@ -557,7 +557,7 @@ GetFileSecurityW( LPCWSTR lpFileName,
 
 
 /******************************************************************************
- * LookupAccountSid32A [ADVAPI32.86]
+ * LookupAccountSidA [ADVAPI32.86]
  */
 BOOL WINAPI
 LookupAccountSidA(
@@ -590,7 +590,7 @@ LookupAccountSidA(
 }
 
 /******************************************************************************
- * LookupAccountSid32W [ADVAPI32.87]
+ * LookupAccountSidW [ADVAPI32.87]
  *
  * PARAMS
  *   system      []
@@ -632,7 +632,7 @@ LookupAccountSidW(
 }
 
 /******************************************************************************
- * SetFileSecurity32A [ADVAPI32.182]
+ * SetFileSecurityA [ADVAPI32.182]
  * Sets the security of a file or directory
  */
 BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
@@ -644,7 +644,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
 }
 
 /******************************************************************************
- * SetFileSecurity32W [ADVAPI32.183]
+ * SetFileSecurityW [ADVAPI32.183]
  * Sets the security of a file or directory
  *
  * PARAMS
@@ -862,7 +862,7 @@ ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 }
 
 /******************************************************************************
- * AccessCheck32 [ADVAPI32.71]
+ * AccessCheck [ADVAPI32.71]
  *
  * FIXME check cast LPBOOL to PBOOLEAN
  */

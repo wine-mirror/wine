@@ -679,7 +679,7 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title,DWORD size)
 
 
 /******************************************************************************
- * GetConsoleTitle32W [KERNEL32.192]  Retrieves title string for console
+ * GetConsoleTitleW [KERNEL32.192]  Retrieves title string for console
  *
  * PARAMS
  *    title [O] Address of buffer for title
@@ -934,7 +934,7 @@ BOOL WINAPI ReadConsoleW( HANDLE hConsoleInput,
 
 
 /******************************************************************************
- * ReadConsoleInput32A [KERNEL32.569]  Reads data from a console
+ * ReadConsoleInputA [KERNEL32.569]  Reads data from a console
  *
  * PARAMS
  *    hConsoleInput        [I] Handle to console input buffer
@@ -971,7 +971,7 @@ BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
 
 
 /***********************************************************************
- *            ReadConsoleInput32W   (KERNEL32.570)
+ *            ReadConsoleInputW   (KERNEL32.570)
  */
 BOOL WINAPI ReadConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read )
@@ -1032,7 +1032,7 @@ BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput,
 
 
 /******************************************************************************
- * WriteConsoleInput32A [KERNEL32.730]  Write data to a console input buffer
+ * WriteConsoleInputA [KERNEL32.730]  Write data to a console input buffer
  *
  */
 BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
@@ -1058,7 +1058,7 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
 
 
 /***********************************************************************
- *            SetConsoleTitle32A   (KERNEL32.476)
+ *            SetConsoleTitleA   (KERNEL32.476)
  *
  * Sets the console title.
  *
@@ -1095,7 +1095,7 @@ BOOL WINAPI SetConsoleTitleA(LPCSTR title)
 
 
 /******************************************************************************
- * SetConsoleTitle32W [KERNEL32.477]  Sets title bar string for console
+ * SetConsoleTitleW [KERNEL32.477]  Sets title bar string for console
  *
  * PARAMS
  *    title [I] Address of new title
@@ -1177,7 +1177,7 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 }
 
 /******************************************************************************
- * GetConsoleCursorInfo32 [KERNEL32.296]  Gets size and visibility of console
+ * GetConsoleCursorInfo [KERNEL32.296]  Gets size and visibility of console
  *
  * PARAMS
  *    hcon  [I] Handle to console screen buffer
@@ -1202,7 +1202,7 @@ BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo )
 
 
 /******************************************************************************
- * SetConsoleCursorInfo32 [KERNEL32.626]  Sets size and visibility of cursor
+ * SetConsoleCursorInfo [KERNEL32.626]  Sets size and visibility of cursor
  *
  * RETURNS
  *    Success: TRUE
@@ -1246,7 +1246,7 @@ BOOL WINAPI SetConsoleWindowInfo(
 
 
 /******************************************************************************
- * SetConsoleTextAttribute32 [KERNEL32.631]  Sets colors for text
+ * SetConsoleTextAttribute [KERNEL32.631]  Sets colors for text
  *
  * Sets the foreground and background color attributes of characters
  * written to the screen buffer.
@@ -1386,7 +1386,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- * ReadConsoleOutputCharacter32A [KERNEL32.573]
+ * ReadConsoleOutputCharacterA [KERNEL32.573]
  * 
  * BUGS
  *   Unimplemented

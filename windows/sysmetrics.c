@@ -181,7 +181,7 @@ INT16 WINAPI GetSystemMetrics16( INT16 index )
 
 
 /***********************************************************************
- *           GetSystemMetrics32    (USER32.292)
+ *           GetSystemMetrics    (USER32.292)
  */
 INT WINAPI GetSystemMetrics( INT index )
 {

@@ -1081,7 +1081,7 @@ UINT16 WINAPI GetProfileInt16( LPCSTR section, LPCSTR entry, INT16 def_val )
 
 
 /***********************************************************************
- *           GetProfileInt32A   (KERNEL32.264)
+ *           GetProfileIntA   (KERNEL32.264)
  */
 UINT WINAPI GetProfileIntA( LPCSTR section, LPCSTR entry, INT def_val )
 {
@@ -1089,7 +1089,7 @@ UINT WINAPI GetProfileIntA( LPCSTR section, LPCSTR entry, INT def_val )
 }
 
 /***********************************************************************
- *           GetProfileInt32W   (KERNEL32.264)
+ *           GetProfileIntW   (KERNEL32.264)
  */
 UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
 {
@@ -1107,7 +1107,7 @@ INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 }
 
 /***********************************************************************
- *           GetProfileString32A   (KERNEL32.268)
+ *           GetProfileStringA   (KERNEL32.268)
  */
 INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 			      LPSTR buffer, UINT len )
@@ -1117,7 +1117,7 @@ INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 }
 
 /***********************************************************************
- *           GetProfileString32W   (KERNEL32.269)
+ *           GetProfileStringW   (KERNEL32.269)
  */
 INT WINAPI GetProfileStringW( LPCWSTR section, LPCWSTR entry,
 			      LPCWSTR def_val, LPWSTR buffer, UINT len )
@@ -1136,7 +1136,7 @@ BOOL16 WINAPI WriteProfileString16( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           WriteProfileString32A   (KERNEL32.587)
+ *           WriteProfileStringA   (KERNEL32.587)
  */
 BOOL WINAPI WriteProfileStringA( LPCSTR section, LPCSTR entry,
 				 LPCSTR string )
@@ -1145,7 +1145,7 @@ BOOL WINAPI WriteProfileStringA( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           WriteProfileString32W   (KERNEL32.588)
+ *           WriteProfileStringW   (KERNEL32.588)
  */
 BOOL WINAPI WriteProfileStringW( LPCWSTR section, LPCWSTR entry,
                                      LPCWSTR string )
@@ -1169,7 +1169,7 @@ UINT16 WINAPI GetPrivateProfileInt16( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           GetPrivateProfileInt32A   (KERNEL32.251)
+ *           GetPrivateProfileIntA   (KERNEL32.251)
  */
 UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 				   INT def_val, LPCSTR filename )
@@ -1187,7 +1187,7 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           GetPrivateProfileInt32W   (KERNEL32.252)
+ *           GetPrivateProfileIntW   (KERNEL32.252)
  */
 UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
 				   INT def_val, LPCWSTR filename )
@@ -1213,7 +1213,7 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           GetPrivateProfileString32A   (KERNEL32.255)
+ *           GetPrivateProfileStringA   (KERNEL32.255)
  */
 INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
 				     LPCSTR def_val, LPSTR buffer,
@@ -1239,7 +1239,7 @@ INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           GetPrivateProfileString32W   (KERNEL32.256)
+ *           GetPrivateProfileStringW   (KERNEL32.256)
  */
 INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 				     LPCWSTR def_val, LPWSTR buffer,
@@ -1271,7 +1271,7 @@ INT16 WINAPI GetPrivateProfileSection16( LPCSTR section, LPSTR buffer,
 }
 
 /***********************************************************************
- *           GetPrivateProfileSection32A   (KERNEL32.255)
+ *           GetPrivateProfileSectionA   (KERNEL32.255)
  */
 INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
 				      DWORD len, LPCSTR filename )
@@ -1290,7 +1290,7 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
 }
 
 /***********************************************************************
- *           GetPrivateProfileSection32W   (KERNEL32.256)
+ *           GetPrivateProfileSectionW   (KERNEL32.256)
  */
 
 INT WINAPI GetPrivateProfileSectionW (LPCWSTR section, LPWSTR buffer,
@@ -1318,7 +1318,7 @@ INT16 WINAPI GetProfileSection16( LPCSTR section, LPSTR buffer, UINT16 len )
 }
 
 /***********************************************************************
- *           GetProfileSection32A   (KERNEL32.268)
+ *           GetProfileSectionA   (KERNEL32.268)
  */
 INT WINAPI GetProfileSectionA( LPCSTR section, LPSTR buffer, DWORD len )
 {
@@ -1326,7 +1326,7 @@ INT WINAPI GetProfileSectionA( LPCSTR section, LPSTR buffer, DWORD len )
 }
 
 /***********************************************************************
- *           GetProfileSection32W   (KERNEL32)
+ *           GetProfileSectionW   (KERNEL32)
  */
 INT WINAPI GetProfileSectionW( LPCWSTR section, LPWSTR buffer, DWORD len )
 {
@@ -1344,7 +1344,7 @@ BOOL16 WINAPI WritePrivateProfileString16( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           WritePrivateProfileString32A   (KERNEL32.582)
+ *           WritePrivateProfileStringA   (KERNEL32.582)
  */
 BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
 					LPCSTR string, LPCSTR filename )
@@ -1366,7 +1366,7 @@ BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           WritePrivateProfileString32W   (KERNEL32.583)
+ *           WritePrivateProfileStringW   (KERNEL32.583)
  */
 BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 					LPCWSTR string, LPCWSTR filename )
@@ -1427,7 +1427,7 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
 }
 
 /***********************************************************************
- *           WritePrivateProfileSection32W   (KERNEL32)
+ *           WritePrivateProfileSectionW   (KERNEL32)
  */
 BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
 					 LPCWSTR string, LPCWSTR filename)
@@ -1452,7 +1452,7 @@ BOOL16 WINAPI WriteProfileSection16( LPCSTR section, LPCSTR keys_n_values)
 }
 
 /***********************************************************************
- *           WriteProfileSection32A   (KERNEL32.747)
+ *           WriteProfileSectionA   (KERNEL32.747)
  */
 BOOL WINAPI WriteProfileSectionA( LPCSTR section, LPCSTR keys_n_values)
                                      
@@ -1461,7 +1461,7 @@ BOOL WINAPI WriteProfileSectionA( LPCSTR section, LPCSTR keys_n_values)
 }
 
 /***********************************************************************
- *           WriteProfileSection32W   (KERNEL32.748)
+ *           WriteProfileSectionW   (KERNEL32.748)
  */
 BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 {
@@ -1498,7 +1498,7 @@ WORD WINAPI GetProfileSectionNames16( LPSTR buffer, WORD size)
 
 
 /***********************************************************************
- *           GetPrivateProfileSectionNames32A  (KERNEL32.365)
+ *           GetPrivateProfileSectionNamesA  (KERNEL32.365)
  */
 DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
 					     LPCSTR filename)
@@ -1509,7 +1509,7 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
 
 
 /***********************************************************************
- *           GetPrivateProfileSectionNames32W  (KERNEL32.366)
+ *           GetPrivateProfileSectionNamesW  (KERNEL32.366)
  */
 DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
 					     LPCWSTR filename)
@@ -1536,7 +1536,7 @@ BOOL16 WINAPI GetPrivateProfileStruct16(LPCSTR section, LPCSTR key,
 }
 
 /***********************************************************************
- *           GetPrivateProfileStruct32A (KERNEL32.370)
+ *           GetPrivateProfileStructA (KERNEL32.370)
  *
  * Should match Win95's behaviour pretty much
  */
@@ -1611,7 +1611,7 @@ BOOL WINAPI GetPrivateProfileStructA (LPCSTR section, LPCSTR key,
 }
 
 /***********************************************************************
- *           GetPrivateProfileStruct32W (KERNEL32.543)
+ *           GetPrivateProfileStructW (KERNEL32.543)
  */
 BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 				      LPVOID buffer, UINT len, LPCWSTR filename)
@@ -1644,7 +1644,7 @@ BOOL16 WINAPI WritePrivateProfileStruct16 (LPCSTR section, LPCSTR key,
 }
 
 /***********************************************************************
- *           WritePrivateProfileStruct32A (KERNEL32.744)
+ *           WritePrivateProfileStructA (KERNEL32.744)
  */
 BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key, 
                                         LPVOID buf, UINT bufsize, LPCSTR filename)
@@ -1683,7 +1683,7 @@ BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key,
 }
 
 /***********************************************************************
- *           WritePrivateProfileStruct32W (KERNEL32.544)
+ *           WritePrivateProfileStructW (KERNEL32.544)
  */
 BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 					LPVOID buf, UINT bufsize, LPCWSTR filename)

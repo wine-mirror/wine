@@ -10,10 +10,10 @@
 #include "debugtools.h"
 #include "imagehlp.h"
 
-DEFAULT_DEBUG_CHANNEL(imagehlp)
+DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /***********************************************************************
- *           SymCleanup32 (IMAGEHLP.37)
+ *		SymCleanup (IMAGEHLP.@)
  */
 BOOL WINAPI SymCleanup(HANDLE hProcess)
 {
@@ -23,7 +23,7 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
 }
 
 /***********************************************************************
- *           SymEnumerateModules32 (IMAGEHLP.38)
+ *		SymEnumerateModules (IMAGEHLP.@)
  */
 
 BOOL WINAPI SymEnumerateModules(
@@ -38,7 +38,7 @@ BOOL WINAPI SymEnumerateModules(
 }
 
 /***********************************************************************
- *           SymEnumerateSymbols32 (IMAGEHLP.39)
+ *		SymEnumerateSymbols (IMAGEHLP.@)
  */
 BOOL WINAPI SymEnumerateSymbols(
   HANDLE hProcess, DWORD BaseOfDll,
@@ -52,7 +52,7 @@ BOOL WINAPI SymEnumerateSymbols(
 }
 
 /***********************************************************************
- *           SymFunctionTableAccess32 (IMAGEHLP.40)
+ *		SymFunctionTableAccess (IMAGEHLP.@)
  */
 PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
 {
@@ -62,7 +62,7 @@ PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
 }
 
 /***********************************************************************
- *           SymGetModuleBase32 (IMAGEHLP.41)
+ *		SymGetModuleBase (IMAGEHLP.@)
  */
 DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
 {
@@ -72,7 +72,7 @@ DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
 }
 
 /***********************************************************************
- *           SymGetModuleInfo32 (IMAGEHLP.42)
+ *		SymGetModuleInfo (IMAGEHLP.@)
  */
 BOOL WINAPI SymGetModuleInfo(
   HANDLE hProcess, DWORD dwAddr,
@@ -86,7 +86,7 @@ BOOL WINAPI SymGetModuleInfo(
 }
 
 /***********************************************************************
- *           SymGetOptions32 (IMAGEHLP.43)
+ *		SymGetOptions (IMAGEHLP.@)
  */
 DWORD WINAPI SymGetOptions()
 {
@@ -96,7 +96,7 @@ DWORD WINAPI SymGetOptions()
 }
 
 /***********************************************************************
- *           SymGetSearchPath32 (IMAGEHLP.44)
+ *		SymGetSearchPath (IMAGEHLP.@)
  */
 BOOL WINAPI SymGetSearchPath(
   HANDLE hProcess, LPSTR szSearchPath, DWORD SearchPathLength)
@@ -109,7 +109,7 @@ BOOL WINAPI SymGetSearchPath(
 }
 
 /***********************************************************************
- *           SymGetSymFromAddr32 (IMAGEHLP.45)
+ *		SymGetSymFromAddr (IMAGEHLP.@)
  */
 BOOL WINAPI SymGetSymFromAddr(
   HANDLE hProcess, DWORD dwAddr, 
@@ -123,7 +123,7 @@ BOOL WINAPI SymGetSymFromAddr(
 }
 
 /***********************************************************************
- *           SymGetSymFromName32 (IMAGEHLP.46)
+ *		SymGetSymFromName (IMAGEHLP.@)
  */
 BOOL WINAPI SymGetSymFromName(
   HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symbol)
@@ -134,7 +134,7 @@ BOOL WINAPI SymGetSymFromName(
 }
 
 /***********************************************************************
- *           SymGetSymNext32 (IMAGEHLP.47)
+ *		SymGetSymNext (IMAGEHLP.@)
  */
 BOOL WINAPI SymGetSymNext(
   HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
@@ -145,7 +145,7 @@ BOOL WINAPI SymGetSymNext(
 }
 
 /***********************************************************************
- *           SymGetSymPrev32 (IMAGEHLP.48)
+ *		SymGetSymPrev (IMAGEHLP.@)
  */
 
 BOOL WINAPI SymGetSymPrev(
@@ -157,7 +157,7 @@ BOOL WINAPI SymGetSymPrev(
 }
 
 /***********************************************************************
- *           SymInitialize32 (IMAGEHLP.49)
+ *		SymInitialize (IMAGEHLP.@)
  */
 BOOL WINAPI SymInitialize(
   HANDLE hProcess, LPSTR UserSearchPath, BOOL fInvadeProcess)
@@ -170,7 +170,7 @@ BOOL WINAPI SymInitialize(
 }
 
 /***********************************************************************
- *           SymLoadModule32 (IMAGEHLP.50)
+ *		SymLoadModule (IMAGEHLP.@)
  */
 
 BOOL WINAPI SymLoadModule(
@@ -186,7 +186,7 @@ BOOL WINAPI SymLoadModule(
 }
 
 /***********************************************************************
- *           SymRegisterCallback32 (IMAGEHLP.51)
+ *		SymRegisterCallback (IMAGEHLP.@)
  */
 BOOL WINAPI SymRegisterCallback(
   HANDLE hProcess, PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
@@ -200,7 +200,7 @@ BOOL WINAPI SymRegisterCallback(
 }
 
 /***********************************************************************
- *           SymSetOptions32 (IMAGEHLP.52)
+ *		SymSetOptions (IMAGEHLP.@)
  */
 DWORD WINAPI SymSetOptions(DWORD SymOptions)
 {
@@ -210,7 +210,7 @@ DWORD WINAPI SymSetOptions(DWORD SymOptions)
 }
 
 /***********************************************************************
- *           SymSetSearchPath32 (IMAGEHLP.53)
+ *		SymSetSearchPath (IMAGEHLP.@)
  */
 BOOL WINAPI SymSetSearchPath(HANDLE hProcess, LPSTR szSearchPath)
 {
@@ -222,7 +222,7 @@ BOOL WINAPI SymSetSearchPath(HANDLE hProcess, LPSTR szSearchPath)
 }
 
 /***********************************************************************
- *           SymUnDName32 (IMAGEHLP.54)
+ *		SymUnDName (IMAGEHLP.@)
  */
 BOOL WINAPI SymUnDName(
   PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLength)
@@ -235,7 +235,7 @@ BOOL WINAPI SymUnDName(
 }
 
 /***********************************************************************
- *           SymUnloadModule32 (IMAGEHLP.55)
+ *		SymUnloadModule (IMAGEHLP.@)
  */
 BOOL WINAPI SymUnloadModule(
   HANDLE hProcess, DWORD BaseOfDll)

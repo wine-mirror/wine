@@ -12,7 +12,7 @@
 
 
 /***********************************************************************
- *           CreateEvent32A    (KERNEL32.156)
+ *           CreateEventA    (KERNEL32.156)
  */
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCSTR name )
@@ -31,7 +31,7 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 
 
 /***********************************************************************
- *           CreateEvent32W    (KERNEL32.157)
+ *           CreateEventW    (KERNEL32.157)
  */
 HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCWSTR name )
@@ -58,7 +58,7 @@ HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
 
 
 /***********************************************************************
- *           OpenEvent32A    (KERNEL32.536)
+ *           OpenEventA    (KERNEL32.536)
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -74,7 +74,7 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenEvent32W    (KERNEL32.537)
+ *           OpenEventW    (KERNEL32.537)
  */
 HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {

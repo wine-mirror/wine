@@ -14,7 +14,7 @@
 DEFAULT_DEBUG_CHANNEL(advapi)
 
 /******************************************************************************
- * BackupEventLog32A [ADVAPI32.15]
+ * BackupEventLogA [ADVAPI32.15]
  */
 BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
@@ -23,7 +23,7 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 }
 
 /******************************************************************************
- * BackupEventLog32W [ADVAPI32.16]
+ * BackupEventLogW [ADVAPI32.16]
  *
  * PARAMS
  *   hEventLog        []
@@ -37,7 +37,7 @@ BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 }
 
 /******************************************************************************
- * ClearEventLog32A [ADVAPI32.19]
+ * ClearEventLogA [ADVAPI32.19]
  */
 BOOL WINAPI ClearEventLogA ( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
@@ -46,7 +46,7 @@ BOOL WINAPI ClearEventLogA ( HANDLE hEventLog, LPCSTR lpBackupFileName )
 }
 
 /******************************************************************************
- * ClearEventLog32W [ADVAPI32.20]
+ * ClearEventLogW [ADVAPI32.20]
  */
 BOOL WINAPI ClearEventLogW ( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
@@ -55,7 +55,7 @@ BOOL WINAPI ClearEventLogW ( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 }
 
 /******************************************************************************
- * CloseEventLog32 [ADVAPI32.21]
+ * CloseEventLog [ADVAPI32.21]
  */
 BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
 {
@@ -64,7 +64,7 @@ BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
 }
 
 /******************************************************************************
- * DeregisterEventSource32 [ADVAPI32.32]
+ * DeregisterEventSource [ADVAPI32.32]
  * Closes a handle to the specified event log
  *
  * PARAMS
@@ -79,7 +79,7 @@ BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 }
 
 /******************************************************************************
- * GetNumberOfEventLogRecords32 [ADVAPI32.49]
+ * GetNumberOfEventLogRecords [ADVAPI32.49]
  *
  * PARAMS
  *   hEventLog       []
@@ -93,7 +93,7 @@ GetNumberOfEventLogRecords( HANDLE hEventLog, PDWORD NumberOfRecords )
 }
 
 /******************************************************************************
- * GetOldestEventLogRecord32 [ADVAPI32.50]
+ * GetOldestEventLogRecord [ADVAPI32.50]
  *
  * PARAMS
  *   hEventLog    []
@@ -107,7 +107,7 @@ GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
 }
 
 /******************************************************************************
- * NotifyChangeEventLog32 [ADVAPI32.98]
+ * NotifyChangeEventLog [ADVAPI32.98]
  *
  * PARAMS
  *   hEventLog []
@@ -120,7 +120,7 @@ BOOL WINAPI NotifyChangeEventLog( HANDLE hEventLog, HANDLE hEvent )
 }
 
 /******************************************************************************
- * OpenBackupEventLog32A [ADVAPI32.105]
+ * OpenBackupEventLogA [ADVAPI32.105]
  */
 HANDLE WINAPI
 OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
@@ -130,7 +130,7 @@ OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 }
 
 /******************************************************************************
- * OpenBackupEventLog32W [ADVAPI32.106]
+ * OpenBackupEventLogW [ADVAPI32.106]
  *
  * PARAMS
  *   lpUNCServerName []
@@ -144,7 +144,7 @@ OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 }
 
 /******************************************************************************
- * OpenEventLog32A [ADVAPI32.107]
+ * OpenEventLogA [ADVAPI32.107]
  */
 HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source) 
 {
@@ -153,7 +153,7 @@ HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source)
 }
 
 /******************************************************************************
- * OpenEventLog32W [ADVAPI32.108]
+ * OpenEventLogW [ADVAPI32.108]
  *
  * PARAMS
  *   uncname []
@@ -167,7 +167,7 @@ OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 }
 
 /******************************************************************************
- * ReadEventLog32A [ADVAPI32.124]
+ * ReadEventLogA [ADVAPI32.124]
  */
 BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
     LPVOID lpBuffer, DWORD nNumberOfBytesToRead, DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
@@ -177,7 +177,7 @@ BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
 }
 
 /******************************************************************************
- * ReadEventLog32W [ADVAPI32.125]
+ * ReadEventLogW [ADVAPI32.125]
  *
  * PARAMS
  *   hEventLog                []
@@ -198,7 +198,7 @@ ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
 }
 
 /******************************************************************************
- * RegisterEventSource32A [ADVAPI32.174]
+ * RegisterEventSourceA [ADVAPI32.174]
  */
 HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName )
 {
@@ -211,7 +211,7 @@ HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName 
 }
 
 /******************************************************************************
- * RegisterEventSource32W [ADVAPI32.175]
+ * RegisterEventSourceW [ADVAPI32.175]
  * Returns a registered handle to an event log
  *
  * PARAMS
@@ -231,7 +231,7 @@ RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 }
 
 /******************************************************************************
- * ReportEvent32A [ADVAPI32.178]
+ * ReportEventA [ADVAPI32.178]
  */
 BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dwEventID,
     PSID lpUserSid, WORD wNumStrings, DWORD dwDataSize, LPCSTR *lpStrings, LPVOID lpRawData)
@@ -241,7 +241,7 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
 }
 
 /******************************************************************************
- * ReportEvent32W [ADVAPI32.179]
+ * ReportEventW [ADVAPI32.179]
  *
  * PARAMS
  *   hEventLog   []

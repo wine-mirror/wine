@@ -318,7 +318,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           DefDlgProc32A   (USER32.120)
+ *           DefDlgProcA   (USER32.120)
  */
 LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
                               WPARAM wParam, LPARAM lParam )
@@ -378,7 +378,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
 
 
 /***********************************************************************
- *           DefDlgProc32W   (USER32.121)
+ *           DefDlgProcW   (USER32.121)
  */
 LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )

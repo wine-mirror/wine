@@ -38,7 +38,7 @@ void SYSLEVEL_Init(void)
 }
 
 /************************************************************************
- *           GetpWin16Lock32    (KERNEL32.93)
+ *           GetpWin16Lock    (KERNEL32.93)
  */
 VOID WINAPI GetpWin16Lock(SYSLEVEL **lock)
 {
@@ -129,7 +129,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 }
 
 /************************************************************************
- *           (KERNEL32.86)
+ *		_KERNEL32_86 (KERNEL32.86)
  */
 VOID WINAPI _KERNEL32_86(SYSLEVEL *lock)
 {

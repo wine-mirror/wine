@@ -1642,7 +1642,7 @@ HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 }
 
 /******************************************************************************
- * StgIsStorageFile32 [OLE32.146]
+ * StgIsStorageFile [OLE32.146]
  */
 HRESULT WINAPI 
 StgIsStorageFile(LPCOLESTR fn) 

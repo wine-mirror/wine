@@ -592,7 +592,7 @@ HWND16 WINAPI ChildWindowFromPointEx16( HWND16 hwndParent, POINT16 pt, UINT16 uF
 
 
 /*******************************************************************
- *         ChildWindowFromPointEx32   (USER32.50)
+ *         ChildWindowFromPointEx   (USER32.50)
  */
 HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt,
 		UINT uFlags)

@@ -9,14 +9,20 @@
 #include "windows.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(setupx)
+DEFAULT_DEBUG_CHANNEL(setupx);
 
+/***********************************************************************
+ *		SURegOpenKey
+ */
 DWORD WINAPI SURegOpenKey( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
 {
     FIXME("(%x,%s,%p), semi-stub.\n",hkey,debugstr_a(lpszSubKey),retkey);
     return RegOpenKeyA( hkey, lpszSubKey, retkey );
 }
 
+/***********************************************************************
+ *		SURegQueryValueEx
+ */
 DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
                                 LPBYTE lpbData, LPDWORD lpcbData )

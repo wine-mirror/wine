@@ -13,10 +13,10 @@
 #include "winversion.h"
 #include "imm.h"
 
-DEFAULT_DEBUG_CHANNEL(imm)
+DEFAULT_DEBUG_CHANNEL(imm);
 
 /***********************************************************************
- *           ImmAssociateContext32 (IMM32.1)
+ *		ImmAssociateContext (IMM32.@)
  */
 HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
@@ -26,7 +26,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 }
 
 /***********************************************************************
- *           ImmConfigureIME32A (IMM32.2)
+ *		ImmConfigureIMEA (IMM32.@)
  */
 BOOL WINAPI ImmConfigureIMEA(
   HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
@@ -39,7 +39,7 @@ BOOL WINAPI ImmConfigureIMEA(
 }
 
 /***********************************************************************
- *           ImmConfigureIME32W (IMM32.3)
+ *		ImmConfigureIMEW (IMM32.@)
  */
 BOOL WINAPI ImmConfigureIMEW(
   HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
@@ -52,7 +52,7 @@ BOOL WINAPI ImmConfigureIMEW(
 }
 
 /***********************************************************************
- *           ImmCreateContext32 (IMM32.4)
+ *		ImmCreateContext (IMM32.@)
  */
 HIMC WINAPI ImmCreateContext()
 {
@@ -62,7 +62,7 @@ HIMC WINAPI ImmCreateContext()
 }
 
 /***********************************************************************
- *           ImmDestroyContext32 (IMM32.7)
+ *		ImmDestroyContext (IMM32.@)
  */
 BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 {
@@ -72,7 +72,7 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 }
 
 /***********************************************************************
- *           ImmEnumRegisterWord32A (IMM32.10)
+ *		ImmEnumRegisterWordA (IMM32.@)
  */
 UINT WINAPI ImmEnumRegisterWordA(
   HKL hKL, REGISTERWORDENUMPROCA lpfnEnumProc,
@@ -89,7 +89,7 @@ UINT WINAPI ImmEnumRegisterWordA(
 }
 
 /***********************************************************************
- *           ImmEnumRegisterWord32W (IMM32.11)
+ *		ImmEnumRegisterWordW (IMM32.@)
  */
 UINT WINAPI ImmEnumRegisterWordW(
   HKL hKL, REGISTERWORDENUMPROCW lpfnEnumProc,
@@ -106,7 +106,7 @@ UINT WINAPI ImmEnumRegisterWordW(
 }
 
 /***********************************************************************
- *           ImmEscape32A (IMM32.12)
+ *		ImmEscapeA (IMM32.@)
  */
 LRESULT WINAPI ImmEscapeA(
   HKL hKL, HIMC hIMC, 
@@ -120,7 +120,7 @@ LRESULT WINAPI ImmEscapeA(
 }
 
 /***********************************************************************
- *           ImmEscape32W (IMM32.13)
+ *		ImmEscapeW (IMM32.@)
  */
 LRESULT WINAPI ImmEscapeW(
   HKL hKL, HIMC hIMC,
@@ -134,7 +134,7 @@ LRESULT WINAPI ImmEscapeW(
 }
 
 /***********************************************************************
- *           ImmGetCandidateList32A (IMM32.15)
+ *		ImmGetCandidateListA (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListA(
   HIMC hIMC, DWORD deIndex, 
@@ -149,7 +149,7 @@ DWORD WINAPI ImmGetCandidateListA(
 }
 
 /***********************************************************************
- *           ImmGetCandidateListCount32A (IMM32.16)
+ *		ImmGetCandidateListCountA (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListCountA(
   HIMC hIMC, LPDWORD lpdwListCount)
@@ -160,7 +160,7 @@ DWORD WINAPI ImmGetCandidateListCountA(
 }
 
 /***********************************************************************
- *           ImmGetCandidateListCount32W (IMM32.17)
+ *		ImmGetCandidateListCountW (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListCountW(
   HIMC hIMC, LPDWORD lpdwListCount)
@@ -171,7 +171,7 @@ DWORD WINAPI ImmGetCandidateListCountW(
 }
 
 /***********************************************************************
- *           ImmGetCandidateList32W (IMM32.18)
+ *		ImmGetCandidateListW (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListW(
   HIMC hIMC, DWORD deIndex, 
@@ -186,7 +186,7 @@ DWORD WINAPI ImmGetCandidateListW(
 }
 
 /***********************************************************************
- *           ImmGetCandidateWindow32 (IMM32.19)
+ *		ImmGetCandidateWindow (IMM32.@)
  */
 BOOL WINAPI ImmGetCandidateWindow(
   HIMC hIMC, DWORD dwBufLen, LPCANDIDATEFORM lpCandidate)
@@ -197,7 +197,7 @@ BOOL WINAPI ImmGetCandidateWindow(
 }
 
 /***********************************************************************
- *           ImmGetCompositionFont32A (IMM32.20)
+ *		ImmGetCompositionFontA (IMM32.@)
  */
 BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 {
@@ -207,7 +207,7 @@ BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 }
 
 /***********************************************************************
- *           ImmGetCompositionFont32W (IMM32.21)
+ *		ImmGetCompositionFontW (IMM32.@)
  */
 BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
@@ -217,7 +217,7 @@ BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 }
 
 /***********************************************************************
- *           ImmGetCompositionString32A (IMM32.22)
+ *		ImmGetCompositionStringA (IMM32.@)
  */
 LONG WINAPI ImmGetCompositionStringA(
   HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen)
@@ -238,7 +238,7 @@ LONG WINAPI ImmGetCompositionStringA(
 }
 
 /***********************************************************************
- *           ImmGetCompositionString32W (IMM32.23)
+ *		ImmGetCompositionStringW (IMM32.@)
  */
 LONG WINAPI ImmGetCompositionStringW(
   HIMC hIMC, DWORD dwIndex, 
@@ -260,7 +260,7 @@ LONG WINAPI ImmGetCompositionStringW(
 }
 
 /***********************************************************************
- *           ImmGetCompositionWindow32 (IMM32.24)
+ *		ImmGetCompositionWindow (IMM32.@)
  */
 BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 {
@@ -270,7 +270,7 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 }
 
 /***********************************************************************
- *           ImmGetContext32 (IMM32.25)
+ *		ImmGetContext (IMM32.@)
  */
 HIMC WINAPI ImmGetContext(HWND hWnd)
 {
@@ -280,7 +280,7 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
 }
 
 /***********************************************************************
- *           ImmGetConversionList32A (IMM32.26)
+ *		ImmGetConversionListA (IMM32.@)
  */
 DWORD WINAPI ImmGetConversionListA(
   HKL hKL, HIMC hIMC,
@@ -295,7 +295,7 @@ DWORD WINAPI ImmGetConversionListA(
 }
 
 /***********************************************************************
- *           ImmGetConversionList32W (IMM32.27)
+ *		ImmGetConversionListW (IMM32.@)
  */
 DWORD WINAPI ImmGetConversionListW(
   HKL hKL, HIMC hIMC,
@@ -310,7 +310,7 @@ DWORD WINAPI ImmGetConversionListW(
 }
 
 /***********************************************************************
- *           ImmGetConversionStatus32 (IMM32.28)
+ *		ImmGetConversionStatus (IMM32.@)
  */
 BOOL WINAPI ImmGetConversionStatus(
   HIMC hIMC, LPDWORD lpfdwConversion, LPDWORD lpfdwSentence)
@@ -323,7 +323,7 @@ BOOL WINAPI ImmGetConversionStatus(
 }
 
 /***********************************************************************
- *           ImmGetDefaultIMEWnd32 (IMM32.29)
+ *		ImmGetDefaultIMEWnd (IMM32.@)
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
@@ -333,7 +333,7 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 }
 
 /***********************************************************************
- *           ImmGetDescription32A (IMM32.30)
+ *		ImmGetDescriptionA (IMM32.@)
  */
 UINT WINAPI ImmGetDescriptionA(
   HKL hKL, LPSTR lpszDescription, UINT uBufLen)
@@ -346,7 +346,7 @@ UINT WINAPI ImmGetDescriptionA(
 }
 
 /***********************************************************************
- *           ImmGetDescription32W (IMM32.31)
+ *		ImmGetDescriptionW (IMM32.@)
  */
 UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 {
@@ -358,7 +358,7 @@ UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 }
 
 /***********************************************************************
- *           ImmGetGuideLine32A (IMM32.32)
+ *		ImmGetGuideLineA (IMM32.@)
  */
 DWORD WINAPI ImmGetGuideLineA(
   HIMC hIMC, DWORD dwIndex, LPSTR lpBuf, DWORD dwBufLen)
@@ -371,7 +371,7 @@ DWORD WINAPI ImmGetGuideLineA(
 }
 
 /***********************************************************************
- *           ImmGetGuideLine32W (IMM32.33)
+ *		ImmGetGuideLineW (IMM32.@)
  */
 DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBufLen)
 {
@@ -383,7 +383,7 @@ DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBu
 }
 
 /***********************************************************************
- *           ImmGetIMEFileName32A (IMM32.38)
+ *		ImmGetIMEFileNameA (IMM32.@)
  */
 UINT WINAPI ImmGetIMEFileNameA(
   HKL hKL, LPSTR lpszFileName, UINT uBufLen)
@@ -396,7 +396,7 @@ UINT WINAPI ImmGetIMEFileNameA(
 }
 
 /***********************************************************************
- *           ImmGetIMEFileName32W (IMM32.39)
+ *		ImmGetIMEFileNameW (IMM32.@)
  */
 UINT WINAPI ImmGetIMEFileNameW(
   HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
@@ -409,7 +409,7 @@ UINT WINAPI ImmGetIMEFileNameW(
 }
 
 /***********************************************************************
- *           ImmGetOpenStatus32 (IMM32.40)
+ *		ImmGetOpenStatus (IMM32.@)
  */
 BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 {
@@ -419,7 +419,7 @@ BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 }
 
 /***********************************************************************
- *           ImmGetProperty32 (IMM32.41)
+ *		ImmGetProperty (IMM32.@)
  */
 DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
 {
@@ -429,7 +429,7 @@ DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
 }
 
 /***********************************************************************
- *           ImmGetRegisterWordStyle32A (IMM32.42)
+ *		ImmGetRegisterWordStyleA (IMM32.@)
  */
 UINT WINAPI ImmGetRegisterWordStyleA(
   HKL hKL, UINT nItem, LPSTYLEBUFA lpStyleBuf)
@@ -440,7 +440,7 @@ UINT WINAPI ImmGetRegisterWordStyleA(
 }
 
 /***********************************************************************
- *           ImmGetRegisterWordStyle32W (IMM32.43)
+ *		ImmGetRegisterWordStyleW (IMM32.@)
  */
 UINT WINAPI ImmGetRegisterWordStyleW(
   HKL hKL, UINT nItem, LPSTYLEBUFW lpStyleBuf)
@@ -451,7 +451,7 @@ UINT WINAPI ImmGetRegisterWordStyleW(
 }
 
 /***********************************************************************
- *           ImmGetStatusWindowPos32 (IMM32.44)
+ *		ImmGetStatusWindowPos (IMM32.@)
  */
 BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
@@ -461,7 +461,7 @@ BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 }
 
 /***********************************************************************
- *           ImmGetVirtualKey32 (IMM32.45)
+ *		ImmGetVirtualKey (IMM32.@)
  */
 UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 {
@@ -479,7 +479,7 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 }
 
 /***********************************************************************
- *           ImmInstallIME32A (IMM32.46)
+ *		ImmInstallIMEA (IMM32.@)
  */
 HKL WINAPI ImmInstallIMEA(
   LPCSTR lpszIMEFileName, LPCSTR lpszLayoutText)
@@ -492,7 +492,7 @@ HKL WINAPI ImmInstallIMEA(
 }
 
 /***********************************************************************
- *           ImmInstallIME32W (IMM32.47)
+ *		ImmInstallIMEW (IMM32.@)
  */
 HKL WINAPI ImmInstallIMEW(
   LPCWSTR lpszIMEFileName, LPCWSTR lpszLayoutText)
@@ -505,7 +505,7 @@ HKL WINAPI ImmInstallIMEW(
 }
 
 /***********************************************************************
- *           ImmIsIME32 (IMM32.48)
+ *		ImmIsIME (IMM32.@)
  */
 BOOL WINAPI ImmIsIME(HKL hKL)
 {
@@ -515,7 +515,7 @@ BOOL WINAPI ImmIsIME(HKL hKL)
 }
 
 /***********************************************************************
- *           ImmIsUIMessage32A (IMM32.49)
+ *		ImmIsUIMessageA (IMM32.@)
  */
 BOOL WINAPI ImmIsUIMessageA(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -528,7 +528,7 @@ BOOL WINAPI ImmIsUIMessageA(
 }
 
 /***********************************************************************
- *           ImmIsUIMessage32W (IMM32.50)
+ *		ImmIsUIMessageW (IMM32.@)
  */
 BOOL WINAPI ImmIsUIMessageW(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -541,7 +541,7 @@ BOOL WINAPI ImmIsUIMessageW(
 }
 
 /***********************************************************************
- *           ImmNotifyIME32 (IMM32.53)
+ *		ImmNotifyIME (IMM32.@)
  */
 BOOL WINAPI ImmNotifyIME(
   HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
@@ -554,7 +554,7 @@ BOOL WINAPI ImmNotifyIME(
 }
 
 /***********************************************************************
- *           ImmRegisterWord32A (IMM32.55)
+ *		ImmRegisterWordA (IMM32.@)
  */
 BOOL WINAPI ImmRegisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszRegister)
@@ -567,7 +567,7 @@ BOOL WINAPI ImmRegisterWordA(
 }
 
 /***********************************************************************
- *           ImmRegisterWord32W (IMM32.56)
+ *		ImmRegisterWordW (IMM32.@)
  */
 BOOL WINAPI ImmRegisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszRegister)
@@ -580,7 +580,7 @@ BOOL WINAPI ImmRegisterWordW(
 }
 
 /***********************************************************************
- *           ImmReleaseContext32 (IMM32.57)
+ *		ImmReleaseContext (IMM32.@)
  */
 BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 {
@@ -590,7 +590,7 @@ BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 }
 
 /***********************************************************************
- *           ImmSetCandidateWindow32 (IMM32.58)
+ *		ImmSetCandidateWindow (IMM32.@)
  */
 BOOL WINAPI ImmSetCandidateWindow(
   HIMC hIMC, LPCANDIDATEFORM lpCandidate)
@@ -601,7 +601,7 @@ BOOL WINAPI ImmSetCandidateWindow(
 }
 
 /***********************************************************************
- *           ImmSetCompositionFont32A (IMM32.59)
+ *		ImmSetCompositionFontA (IMM32.@)
  */
 BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 {
@@ -611,7 +611,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 }
 
 /***********************************************************************
- *           ImmSetCompositionFont32W (IMM32.60)
+ *		ImmSetCompositionFontW (IMM32.@)
  */
 BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
@@ -621,7 +621,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 }
 
 /***********************************************************************
- *           ImmSetCompositionString32A (IMM32.61)
+ *		ImmSetCompositionStringA (IMM32.@)
  */
 BOOL WINAPI ImmSetCompositionStringA(
   HIMC hIMC, DWORD dwIndex, 
@@ -636,7 +636,7 @@ BOOL WINAPI ImmSetCompositionStringA(
 }
 
 /***********************************************************************
- *           ImmSetCompositionString32W (IMM32.62)
+ *		ImmSetCompositionStringW (IMM32.@)
  */
 BOOL WINAPI ImmSetCompositionStringW(
 	HIMC hIMC, DWORD dwIndex,
@@ -651,7 +651,7 @@ BOOL WINAPI ImmSetCompositionStringW(
 }
 
 /***********************************************************************
- *           ImmSetCompositionWindow32 (IMM32.63)
+ *		ImmSetCompositionWindow (IMM32.@)
  */
 BOOL WINAPI ImmSetCompositionWindow(
   HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
@@ -662,7 +662,7 @@ BOOL WINAPI ImmSetCompositionWindow(
 }
 
 /***********************************************************************
- *           ImmSetConversionStatus32 (IMM32.64)
+ *		ImmSetConversionStatus (IMM32.@)
  */
 BOOL WINAPI ImmSetConversionStatus(
   HIMC hIMC, DWORD fdwConversion, DWORD fdwSentence)
@@ -675,7 +675,7 @@ BOOL WINAPI ImmSetConversionStatus(
 }
 
 /***********************************************************************
- *           ImmSetOpenStatus32 (IMM32.66)
+ *		ImmSetOpenStatus (IMM32.@)
  */
 BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
 {
@@ -685,7 +685,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
 }
 
 /***********************************************************************
- *           ImmSetStatusWindowPos32 (IMM32.67)
+ *		ImmSetStatusWindowPos (IMM32.@)
  */
 BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
@@ -695,7 +695,7 @@ BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 }
 
 /***********************************************************************
- *           ImmSimulateHotKey32 (IMM32.69)
+ *		ImmSimulateHotKey (IMM32.@)
  */
 BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 {
@@ -705,7 +705,7 @@ BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 }
 
 /***********************************************************************
- *           ImmUnregisterWord32A (IMM32.72)
+ *		ImmUnregisterWordA (IMM32.@)
  */
 BOOL WINAPI ImmUnregisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszUnregister)
@@ -718,10 +718,7 @@ BOOL WINAPI ImmUnregisterWordA(
 }
 
 /***********************************************************************
- *           ImmUnregisterWord32W (IMM32.?)
- * FIXME
- *     I haven't been able to find the ordinal for this function,
- *     This means it can't be called from outside the DLL.
+ *		ImmUnregisterWordW (IMM32.@)
  */
 BOOL WINAPI ImmUnregisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszUnregister)

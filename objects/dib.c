@@ -127,7 +127,7 @@ INT16 WINAPI StretchDIBits16(HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
 
 
 /***********************************************************************
- *           StretchDIBits32   (GDI32.351)
+ *           StretchDIBits   (GDI32.351)
  */
 INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                        INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
@@ -142,7 +142,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 					    heightDst, xSrc, ySrc, widthSrc,
 					    heightSrc, bits, info, wUsage,
 					    dwRop);
-    else { /* use StretchBlt32 */
+    else { /* use StretchBlt */
         HBITMAP hBitmap, hOldBitmap;
 	HDC hdcMem;
 
@@ -175,7 +175,7 @@ INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
 
 
 /******************************************************************************
- * SetDIBits32 [GDI32.312]  Sets pixels in a bitmap using colors from DIB
+ * SetDIBits [GDI32.312]  Sets pixels in a bitmap using colors from DIB
  *
  * PARAMS
  *    hdc       [I] Handle to device context
@@ -237,7 +237,7 @@ INT16 WINAPI SetDIBitsToDevice16(HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
 
 
 /***********************************************************************
- *           SetDIBitsToDevice32   (GDI32.313)
+ *           SetDIBitsToDevice   (GDI32.313)
  */
 INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
                            DWORD cy, INT xSrc, INT ySrc, UINT startscan,
@@ -272,7 +272,7 @@ UINT16 WINAPI SetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 }
 
 /***********************************************************************
- *           SetDIBColorTable32    (GDI32.311)
+ *           SetDIBColorTable    (GDI32.311)
  */
 UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 				  RGBQUAD *colors )
@@ -327,7 +327,7 @@ UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 }
 
 /***********************************************************************
- *           GetDIBColorTable32    (GDI32.169)
+ *           GetDIBColorTable    (GDI32.169)
  */
 UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 				  RGBQUAD *colors )
@@ -433,7 +433,7 @@ INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
 
 
 /******************************************************************************
- * GetDIBits32 [GDI32.170]  Retrieves bits of bitmap and copies to buffer
+ * GetDIBits [GDI32.170]  Retrieves bits of bitmap and copies to buffer
  *
  * RETURNS
  *    Success: Number of scan lines copied from bitmap
@@ -783,7 +783,7 @@ HBITMAP16 WINAPI CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
 
 
 /***********************************************************************
- *           CreateDIBitmap32    (GDI32.37)
+ *           CreateDIBitmap    (GDI32.37)
  */
 HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
                             DWORD init, LPCVOID bits, const BITMAPINFO *data,
@@ -878,7 +878,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 }
 
 /***********************************************************************
- *           CreateDIBSection32    (GDI32.36)
+ *           CreateDIBSection    (GDI32.36)
  */
 HBITMAP WINAPI CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 				LPVOID *bits, HANDLE section,

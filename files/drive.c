@@ -942,7 +942,7 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpace32A   (KERNEL32.206)
+ *           GetDiskFreeSpaceA   (KERNEL32.206)
  *
  * Fails if expression resulting from current drive's dir and "root"
  * is not a root dir of the target drive.
@@ -1034,7 +1034,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpace32W   (KERNEL32.207)
+ *           GetDiskFreeSpaceW   (KERNEL32.207)
  */
 BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
@@ -1052,7 +1052,7 @@ BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpaceEx32A   (KERNEL32.871)
+ *           GetDiskFreeSpaceExA   (KERNEL32.871)
  *
  *  This function is used to aquire the size of the available and
  *  total space on a logical volume.
@@ -1128,7 +1128,7 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 }
 
 /***********************************************************************
- *           GetDiskFreeSpaceEx32W   (KERNEL32.873)
+ *           GetDiskFreeSpaceExW   (KERNEL32.873)
  */
 BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 				     PULARGE_INTEGER total,
@@ -1171,7 +1171,7 @@ UINT16 WINAPI GetDriveType16(
 
 
 /***********************************************************************
- *           GetDriveType32A   (KERNEL32.208)
+ *           GetDriveTypeA   (KERNEL32.208)
  *
  * Returns the type of the disk drive specified.  If root is NULL the
  * root of the current directory is used.
@@ -1227,7 +1227,7 @@ UINT WINAPI GetDriveTypeA(LPCSTR root /* String describing drive */)
 
 
 /***********************************************************************
- *           GetDriveType32W   (KERNEL32.209)
+ *           GetDriveTypeW   (KERNEL32.209)
  */
 UINT WINAPI GetDriveTypeW( LPCWSTR root )
 {
@@ -1248,7 +1248,7 @@ UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
 
 
 /***********************************************************************
- *           GetCurrentDirectory32A   (KERNEL32.196)
+ *           GetCurrentDirectoryA   (KERNEL32.196)
  */
 UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
 {
@@ -1268,7 +1268,7 @@ UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
 }
 
 /***********************************************************************
- *           GetCurrentDirectory32W   (KERNEL32.197)
+ *           GetCurrentDirectoryW   (KERNEL32.197)
  */
 UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
 {
@@ -1290,7 +1290,7 @@ BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
 
 
 /***********************************************************************
- *           SetCurrentDirectory32A   (KERNEL32.479)
+ *           SetCurrentDirectoryA   (KERNEL32.479)
  */
 BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 {
@@ -1321,7 +1321,7 @@ BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 
 
 /***********************************************************************
- *           SetCurrentDirectory32W   (KERNEL32.480)
+ *           SetCurrentDirectoryW   (KERNEL32.480)
  */
 BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dirW )
 {
@@ -1333,7 +1333,7 @@ BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dirW )
 
 
 /***********************************************************************
- *           GetLogicalDriveStrings32A   (KERNEL32.231)
+ *           GetLogicalDriveStringsA   (KERNEL32.231)
  */
 UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
 {
@@ -1362,7 +1362,7 @@ UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
 
 
 /***********************************************************************
- *           GetLogicalDriveStrings32W   (KERNEL32.232)
+ *           GetLogicalDriveStringsW   (KERNEL32.232)
  */
 UINT WINAPI GetLogicalDriveStringsW( UINT len, LPWSTR buffer )
 {
@@ -1406,7 +1406,7 @@ DWORD WINAPI GetLogicalDrives(void)
 
 
 /***********************************************************************
- *           GetVolumeInformation32A   (KERNEL32.309)
+ *           GetVolumeInformationA   (KERNEL32.309)
  */
 BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
                                        DWORD label_len, DWORD *serial,
@@ -1467,7 +1467,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
 
 
 /***********************************************************************
- *           GetVolumeInformation32W   (KERNEL32.310)
+ *           GetVolumeInformationW   (KERNEL32.310)
  */
 BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
                                        DWORD label_len, DWORD *serial,

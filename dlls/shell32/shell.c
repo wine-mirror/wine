@@ -124,7 +124,7 @@ BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
 }
 
 /*************************************************************************
- *				DragAcceptFiles32		[SHELL32.54]
+ *				DragAcceptFiles		[SHELL32.54]
  */
 void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 {
@@ -190,7 +190,7 @@ static UINT SHELL_DragQueryFile(LPSTR lpDrop, LPWSTR lpwDrop, UINT lFile,
 }
 
 /*************************************************************************
- *				DragQueryFile32A	[SHELL32.81] [shell32.82]
+ *				DragQueryFileA	[SHELL32.81] [shell32.82]
  */
 UINT WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile,
 			      UINT lLength)
@@ -215,7 +215,7 @@ UINT WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile,
 }
 
 /*************************************************************************
- *				DragQueryFile32W	[shell32.133]
+ *				DragQueryFileW	[shell32.133]
  */
 UINT WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszwFile,
 			      UINT lLength)
@@ -265,7 +265,7 @@ UINT16 WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile,
 
 
 /*************************************************************************
- *				DragFinish32		[SHELL32.80]
+ *				DragFinish		[SHELL32.80]
  */
 void WINAPI DragFinish(HDROP h)
 {
@@ -284,7 +284,7 @@ void WINAPI DragFinish16(HDROP16 h)
 
 
 /*************************************************************************
- *				DragQueryPoint32		[SHELL32.135]
+ *				DragQueryPoint		[SHELL32.135]
  */
 BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 {
@@ -349,7 +349,7 @@ HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     }
 
     if (SearchPathA( NULL, lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
-  { TRACE("SearchPath32A returned non-zero\n");
+  { TRACE("SearchPathA returned non-zero\n");
         lpFile = xlpFile;
     }
 

@@ -67,7 +67,7 @@ BOOL WINAPI EnumProcessModules(
 }
 
 /***********************************************************************
- *          GetDeviceDriverBaseName32A (PSAPI.5)
+ *          GetDeviceDriverBaseNameA (PSAPI.5)
  */
 DWORD WINAPI GetDeviceDriverBaseNameA(
   LPVOID ImageBase, LPSTR lpBaseName, DWORD nSize)
@@ -83,7 +83,7 @@ DWORD WINAPI GetDeviceDriverBaseNameA(
 }
 
 /***********************************************************************
- *           GetDeviceDriverBaseName32W (PSAPI.6)
+ *           GetDeviceDriverBaseNameW (PSAPI.6)
  */
 DWORD WINAPI GetDeviceDriverBaseNameW(
   LPVOID ImageBase, LPWSTR lpBaseName, DWORD nSize)
@@ -99,7 +99,7 @@ DWORD WINAPI GetDeviceDriverBaseNameW(
 }
 
 /***********************************************************************
- *           GetDeviceDriverFileName32A (PSAPI.7)
+ *           GetDeviceDriverFileNameA (PSAPI.7)
  */
 DWORD WINAPI GetDeviceDriverFileNameA(
   LPVOID ImageBase, LPSTR lpFilename, DWORD nSize)
@@ -115,7 +115,7 @@ DWORD WINAPI GetDeviceDriverFileNameA(
 }
 
 /***********************************************************************
- *           GetDeviceDriverFileName32W (PSAPI.8)
+ *           GetDeviceDriverFileNameW (PSAPI.8)
  */
 DWORD WINAPI GetDeviceDriverFileNameW(
   LPVOID ImageBase, LPWSTR lpFilename, DWORD nSize)
@@ -131,7 +131,7 @@ DWORD WINAPI GetDeviceDriverFileNameW(
 }
 
 /***********************************************************************
- *           GetMappedFileName32A (PSAPI.9)
+ *           GetMappedFileNameA (PSAPI.9)
  */
 DWORD WINAPI GetMappedFileNameA(
   HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, DWORD nSize)
@@ -147,7 +147,7 @@ DWORD WINAPI GetMappedFileNameA(
 }
 
 /***********************************************************************
- *           GetMappedFileName32W (PSAPI.10)
+ *           GetMappedFileNameW (PSAPI.10)
  */
 DWORD WINAPI GetMappedFileNameW(
   HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, DWORD nSize)
@@ -163,7 +163,7 @@ DWORD WINAPI GetMappedFileNameW(
 }
 
 /***********************************************************************
- *           GetModuleBaseName32A (PSAPI.11)
+ *           GetModuleBaseNameA (PSAPI.11)
  */
 DWORD WINAPI GetModuleBaseNameA(
   HANDLE hProcess, HMODULE hModule, LPSTR lpBaseName, DWORD nSize)
@@ -179,7 +179,7 @@ DWORD WINAPI GetModuleBaseNameA(
 }
 
 /***********************************************************************
- *           GetModuleBaseName32W (PSAPI.12)
+ *           GetModuleBaseNameW (PSAPI.12)
  */
 DWORD WINAPI GetModuleBaseNameW(
   HANDLE hProcess, HMODULE hModule, LPWSTR lpBaseName, DWORD nSize)
@@ -194,7 +194,7 @@ DWORD WINAPI GetModuleBaseNameW(
 }
 
 /***********************************************************************
- *           GetModuleFileNameEx32A (PSAPI.13)
+ *           GetModuleFileNameExA (PSAPI.13)
  */
 DWORD WINAPI GetModuleFileNameExA(
   HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
@@ -210,7 +210,7 @@ DWORD WINAPI GetModuleFileNameExA(
 }
 
 /***********************************************************************
- *           GetModuleFileNameEx32W (PSAPI.14)
+ *           GetModuleFileNameExW (PSAPI.14)
  */
 DWORD WINAPI GetModuleFileNameExW(
   HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
@@ -226,7 +226,7 @@ DWORD WINAPI GetModuleFileNameExW(
 }
 
 /***********************************************************************
- *           GetModuleInformation32 (PSAPI.15)
+ *           GetModuleInformation (PSAPI.15)
  */
 BOOL WINAPI GetModuleInformation(
   HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb)
@@ -241,7 +241,7 @@ BOOL WINAPI GetModuleInformation(
 }
 
 /***********************************************************************
- *           GetProcessMemoryInfo32 (PSAPI.16)
+ *           GetProcessMemoryInfo (PSAPI.16)
  */
 BOOL WINAPI GetProcessMemoryInfo(
   HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
@@ -256,7 +256,7 @@ BOOL WINAPI GetProcessMemoryInfo(
 }
 
 /***********************************************************************
- *           GetWsChanges32 (PSAPI.17)
+ *           GetWsChanges (PSAPI.17)
  */
 BOOL WINAPI GetWsChanges(
   HANDLE hProcess, PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
@@ -271,7 +271,7 @@ BOOL WINAPI GetWsChanges(
 }
 
 /***********************************************************************
- *           InitializeProcessForWsWatch32 (PSAPI.18)
+ *           InitializeProcessForWsWatch (PSAPI.18)
  */
 BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 {
@@ -281,7 +281,7 @@ BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 }
 
 /***********************************************************************
- *           QueryWorkingSet32 (PSAPI.?)
+ *           QueryWorkingSet (PSAPI.?)
  * FIXME
  *     I haven't been able to find the ordinal for this function,
  *     This means it can't be called from outside the DLL.

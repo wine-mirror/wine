@@ -683,7 +683,7 @@ void WINAPI MessageBeep16( UINT16 i )
 
 
 /***********************************************************************
- *           MessageBeep32   (USER32.390)
+ *           MessageBeep   (USER32.390)
  */
 BOOL WINAPI MessageBeep( UINT i )
 {

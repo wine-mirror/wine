@@ -655,7 +655,7 @@ HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
 
 
 /**********************************************************************
- *          CreateIconFromResourceEx32          (USER32.77)
+ *          CreateIconFromResourceEx          (USER32.77)
  */
 HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                            BOOL bIcon, DWORD dwVersion,
@@ -1102,7 +1102,7 @@ HCURSOR16 WINAPI CreateCursor16( HINSTANCE16 hInstance,
 
 
 /***********************************************************************
- *           CreateCursor32    (USER32.67)
+ *           CreateCursor    (USER32.67)
  */
 HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
                                  INT xHotSpot, INT yHotSpot,
@@ -1151,7 +1151,7 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
 
 
 /***********************************************************************
- *           CreateIcon32    (USER32.75)
+ *           CreateIcon    (USER32.75)
  */
 HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
                              INT nHeight, BYTE bPlanes, BYTE bBitsPixel,
@@ -1215,7 +1215,7 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 
 
 /***********************************************************************
- *           CopyIcon32    (USER32.60)
+ *           CopyIcon    (USER32.60)
  */
 HICON WINAPI CopyIcon( HICON hIcon )
 {
@@ -1318,7 +1318,7 @@ BOOL16 WINAPI DrawIcon16( HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon )
 
 
 /***********************************************************************
- *           DrawIcon32    (USER32.159)
+ *           DrawIcon    (USER32.159)
  */
 BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 {
@@ -1384,7 +1384,7 @@ HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           SetCursor32    (USER32.472)
+ *           SetCursor    (USER32.472)
  * RETURNS:
  *	A handle to the previous cursor shape.
  */
@@ -1417,7 +1417,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           SetCursorPos32    (USER32.474)
+ *           SetCursorPos    (USER32.474)
  */
 BOOL WINAPI SetCursorPos( INT x, INT y )
 {
@@ -1436,7 +1436,7 @@ INT16 WINAPI ShowCursor16( BOOL16 bShow )
 
 
 /***********************************************************************
- *           ShowCursor32    (USER32.530)
+ *           ShowCursor    (USER32.530)
  */
 INT WINAPI ShowCursor( BOOL bShow )
 {
@@ -1470,7 +1470,7 @@ HCURSOR16 WINAPI GetCursor16(void)
 
 
 /***********************************************************************
- *           GetCursor32    (USER32.227)
+ *           GetCursor    (USER32.227)
  */
 HCURSOR WINAPI GetCursor(void)
 {
@@ -1490,7 +1490,7 @@ BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 
 
 /***********************************************************************
- *           ClipCursor32    (USER32.53)
+ *           ClipCursor    (USER32.53)
  */
 BOOL WINAPI ClipCursor( const RECT *rect )
 {
@@ -1516,7 +1516,7 @@ BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 
 
 /***********************************************************************
- *           GetCursorPos32    (USER32.229)
+ *           GetCursorPos    (USER32.229)
  */
 BOOL WINAPI GetCursorPos( POINT *pt )
 {
@@ -1539,7 +1539,7 @@ void WINAPI GetClipCursor16( RECT16 *rect )
 
 
 /***********************************************************************
- *           GetClipCursor32    (USER32.221)
+ *           GetClipCursor    (USER32.221)
  */
 BOOL WINAPI GetClipCursor( RECT *rect )
 {
@@ -1587,7 +1587,7 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectoryEx32       (USER32.380)
+ *          LookupIconIdFromDirectoryEx       (USER32.380)
  */
 INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
              INT width, INT height, UINT cFlag )
@@ -1778,7 +1778,7 @@ BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 }
 
 /**********************************************************************
- *          GetIconInfo32		(USER32.242)
+ *          GetIconInfo		(USER32.242)
  */
 BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
     CURSORICONINFO	*ciconinfo;
@@ -1878,7 +1878,7 @@ BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
 
 
 /******************************************************************************
- * DrawIconEx32 [USER32.160]  Draws an icon or cursor on device context
+ * DrawIconEx [USER32.160]  Draws an icon or cursor on device context
  *
  * NOTES
  *    Why is this using SM_CXICON instead of SM_CXCURSOR?
@@ -2195,7 +2195,7 @@ HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
 }
 
 /******************************************************************************
- * CopyImage32 [USER32.61]  Creates new image and copies attributes to it
+ * CopyImage [USER32.61]  Creates new image and copies attributes to it
  *
  * PARAMS
  *    hnd      [I] Handle to image to copy

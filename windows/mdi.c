@@ -1411,7 +1411,7 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 
 
 /***********************************************************************
- *           DefFrameProc32A   (USER32.122)
+ *           DefFrameProcA   (USER32.122)
  */
 LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
                                 UINT message, WPARAM wParam, LPARAM lParam)
@@ -1452,7 +1452,7 @@ LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
 
 
 /***********************************************************************
- *           DefFrameProc32W   (USER32.123)
+ *           DefFrameProcW   (USER32.123)
  */
 LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
                                 UINT message, WPARAM wParam, LPARAM lParam)
@@ -1676,7 +1676,7 @@ END:
 
 
 /***********************************************************************
- *           DefMDIChildProc32A   (USER32.124)
+ *           DefMDIChildProcA   (USER32.124)
  */
 LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
                                    WPARAM wParam, LPARAM lParam )
@@ -1746,7 +1746,7 @@ END:
 
 
 /***********************************************************************
- *           DefMDIChildProc32W   (USER32.125)
+ *           DefMDIChildProcW   (USER32.125)
  */
 LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
                                    WPARAM wParam, LPARAM lParam )
@@ -1830,7 +1830,7 @@ HWND WINAPI CreateMDIWindowA(
 /**********************************************************************
  * MDI_CreateMDIWindowA 
  * single threaded version of CreateMDIWindowA
- * called by CreateWindowEx32A
+ * called by CreateWindowExA
  */
 HWND MDI_CreateMDIWindowA(
     LPCSTR lpClassName,
@@ -1875,7 +1875,7 @@ HWND MDI_CreateMDIWindowA(
 }
 
 /***************************************
- * CreateMDIWindow32W [USER32.80] Creates a MDI child in new thread
+ * CreateMDIWindowW [USER32.80] Creates a MDI child in new thread
  *
  * RETURNS
  *    Success: Handle to created window
@@ -1901,9 +1901,9 @@ HWND WINAPI CreateMDIWindowW(
 
 
 /******************************************************************************
- * CreateMDIWindow32W [USER32.80]  Creates a MDI child window
+ * CreateMDIWindowW [USER32.80]  Creates a MDI child window
  * single threaded version of CreateMDIWindow
- * called by CreateWindowEx32W(). 
+ * called by CreateWindowExW(). 
  */
 HWND MDI_CreateMDIWindowW(
     LPCWSTR lpClassName,   /* [in] Pointer to registered child class name */
@@ -1925,7 +1925,7 @@ HWND MDI_CreateMDIWindowW(
 
 
 /**********************************************************************
- *             TranslateMDISysAccel32   (USER32.555)
+ *             TranslateMDISysAccel   (USER32.555)
  */
 BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
 {
@@ -2050,7 +2050,7 @@ void WINAPI ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM l
 
 
 /***********************************************************************
- *           ScrollChildren32   (USER32.448)
+ *           ScrollChildren   (USER32.448)
  */
 void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
                              LPARAM lParam)

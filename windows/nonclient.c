@@ -162,7 +162,7 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
  + PARAMS
  *     LPRECT16  rect
  *     DWORD  style
- *     BOOL32  menu
+ *     BOOL  menu
  *     DWORD  exStyle
  *
  * NOTES
@@ -284,7 +284,7 @@ DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 uFlags)
 
 
 /***********************************************************************
- * DrawCaption32 [USER32.154] Draws a caption bar
+ * DrawCaption [USER32.154] Draws a caption bar
  *
  * PARAMS
  *     hwnd   [I]
@@ -329,7 +329,7 @@ DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
 
 
 /***********************************************************************
- * DrawCaptionTemp32A [USER32.599]
+ * DrawCaptionTempA [USER32.599]
  *
  * PARAMS
  *
@@ -437,7 +437,7 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
 
 /***********************************************************************
- * DrawCaptionTemp32W [USER32.602]
+ * DrawCaptionTempW [USER32.602]
  *
  * PARAMS
  *
@@ -467,7 +467,7 @@ BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 
 
 /***********************************************************************
- *           AdjustWindowRect32    (USER32.2)
+ *           AdjustWindowRect    (USER32.2)
  */
 BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
@@ -506,7 +506,7 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 
 
 /***********************************************************************
- *           AdjustWindowRectEx32    (USER32.3)
+ *           AdjustWindowRectEx    (USER32.3)
  */
 BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style,
                                     BOOL menu, DWORD exStyle )
@@ -1047,9 +1047,9 @@ static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
 /******************************************************************************
  *
  *   void  NC_DrawSysButton95(
- *      HWND32  hwnd,
- *      HDC32  hdc,
- *      BOOL32  down )
+ *      HWND  hwnd,
+ *      HDC  hdc,
+ *      BOOL  down )
  *
  *   Draws the Win95 system icon.
  *
@@ -1099,9 +1099,9 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 /******************************************************************************
  *
  *   void  NC_DrawCloseButton95(
- *      HWND32  hwnd,
- *      HDC32  hdc,
- *      BOOL32  down,
+ *      HWND  hwnd,
+ *      HDC  hdc,
+ *      BOOL  down,
  *      BOOL    bGrayed )
  *
  *   Draws the Win95 close button.
@@ -1149,9 +1149,9 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
 /******************************************************************************
  *
  *   NC_DrawMaxButton95(
- *      HWND32  hwnd,
+ *      HWND  hwnd,
  *      HDC16  hdc,
- *      BOOL32  down 
+ *      BOOL  down 
  *      BOOL    bGrayed )
  *
  *   Draws the maximize button for Win95 style windows.
@@ -1209,9 +1209,9 @@ static void NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
 /******************************************************************************
  *
  *   NC_DrawMinButton95(
- *      HWND32  hwnd,
+ *      HWND  hwnd,
  *      HDC16  hdc,
- *      BOOL32  down,
+ *      BOOL  down,
  *      BOOL    bGrayed )
  *
  *   Draws the minimize button for Win95 style windows.
@@ -1351,10 +1351,10 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
 /******************************************************************************
  *
  *   void  NC_DrawFrame95(
- *      HDC32  hdc,
- *      RECT32  *rect,
- *      BOOL32  dlgFrame,
- *      BOOL32  active )
+ *      HDC  hdc,
+ *      RECT  *rect,
+ *      BOOL  dlgFrame,
+ *      BOOL  active )
  *
  *   Draw a window frame inside the given rectangle, and update the rectangle.
  *   The correct pen for the frame must be selected in the DC.
@@ -1519,11 +1519,11 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 /******************************************************************************
  *
  *   NC_DrawCaption95(
- *      HDC32  hdc,
- *      RECT32 *rect,
- *      HWND32 hwnd,
+ *      HDC  hdc,
+ *      RECT *rect,
+ *      HWND hwnd,
  *      DWORD  style,
- *      BOOL32 active )
+ *      BOOL active )
  *
  *   Draw the window caption for Win95 style windows.
  *   The correct pen for the window frame must be selected in the DC.
@@ -1732,8 +1732,8 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
  *
  *   void  NC_DoNCPaint95(
  *      WND  *wndPtr,
- *      HRGN32  clip,
- *      BOOL32  suppress_menupaint )
+ *      HRGN  clip,
+ *      BOOL  suppress_menupaint )
  *
  *   Paint the non-client area for Win95 windows.  The clip region is
  *   currently ignored.

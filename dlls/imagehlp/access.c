@@ -12,7 +12,7 @@
 #include "debugtools.h"
 #include "imagehlp.h"
 
-DEFAULT_DEBUG_CHANNEL(imagehlp)
+DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /***********************************************************************
  *           Data
@@ -37,7 +37,7 @@ static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
 };
 
 /***********************************************************************
- *           EnumerateLoadedModules32 (IMAGEHLP.4)
+ *		EnumerateLoadedModules (IMAGEHLP.@)
  */
 BOOL WINAPI EnumerateLoadedModules(
   HANDLE hProcess,
@@ -52,7 +52,7 @@ BOOL WINAPI EnumerateLoadedModules(
 }
 
 /***********************************************************************
- *           GetTimestampForLoadedLibrary32 (IMAGEHLP.9)
+ *		GetTimestampForLoadedLibrary (IMAGEHLP.@)
  */
 DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
 {
@@ -62,7 +62,7 @@ DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
 }
 
 /***********************************************************************
- *           GetImageConfigInformation32 (IMAGEHLP.7)
+ *		GetImageConfigInformation (IMAGEHLP.@)
  */
 BOOL WINAPI GetImageConfigInformation(
   PLOADED_IMAGE LoadedImage,
@@ -76,7 +76,7 @@ BOOL WINAPI GetImageConfigInformation(
 }
 
 /***********************************************************************
- *           GetImageUnusedHeaderBytes32 (IMAGEHLP.8)
+ *		GetImageUnusedHeaderBytes (IMAGEHLP.@)
  */
 DWORD WINAPI GetImageUnusedHeaderBytes(
   PLOADED_IMAGE LoadedImage,
@@ -90,7 +90,7 @@ DWORD WINAPI GetImageUnusedHeaderBytes(
 }
 
 /***********************************************************************
- *           ImageDirectoryEntryToData32 (IMAGEHLP.11)
+ *		ImageDirectoryEntryToData (IMAGEHLP.@)
  */
 PVOID WINAPI ImageDirectoryEntryToData(
   PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size)
@@ -103,7 +103,7 @@ PVOID WINAPI ImageDirectoryEntryToData(
 }
 
 /***********************************************************************
- *           ImageLoad32 (IMAGEHLP.16)
+ *		ImageLoad (IMAGEHLP.@)
  */
 PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
 {
@@ -113,7 +113,7 @@ PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
 }
 
 /***********************************************************************
- *           ImageNtHeader32 (IMAGEHLP.17)
+ *		ImageNtHeader (IMAGEHLP.@)
  */
 PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base)
 {
@@ -122,7 +122,7 @@ PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base)
 }
 
 /***********************************************************************
- *           ImageRvaToSection32 (IMAGEHLP.19)
+ *		ImageRvaToSection (IMAGEHLP.@)
  */
 PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(
   PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva)
@@ -133,7 +133,7 @@ PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(
 }
 
 /***********************************************************************
- *           ImageRvaToVa32 (IMAGEHLP.20)
+ *		ImageRvaToVa (IMAGEHLP.@)
  */
 PVOID WINAPI ImageRvaToVa(
   PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva,
@@ -147,7 +147,7 @@ PVOID WINAPI ImageRvaToVa(
 }
 
 /***********************************************************************
- *           ImageUnload32 (IMAGEHLP.21)
+ *		ImageUnload (IMAGEHLP.@)
  */
 BOOL WINAPI ImageUnload(PLOADED_IMAGE pLoadedImage)
 {
@@ -187,7 +187,7 @@ BOOL WINAPI ImageUnload(PLOADED_IMAGE pLoadedImage)
 }
 
 /***********************************************************************
- *           MapAndLoad32 (IMAGEHLP.25)
+ *		MapAndLoad (IMAGEHLP.@)
  */
 BOOL WINAPI MapAndLoad(
   LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoadedImage,
@@ -202,7 +202,7 @@ BOOL WINAPI MapAndLoad(
   /* PathCombine(&szFileName, pszDllPath, pszImageName); */
   /* PathRenameExtension(&szFileName, bDotDll?:"dll":"exe"); */
 
-  /* FIXME: Check if the file already loaded (use IMAGEHLP_pFirstLoadedImage32) */
+  /* FIXME: Check if the file already loaded (use IMAGEHLP_pFirstLoadedImage) */
   if(!(hFile = CreateFileA(
     szFileName, GENERIC_READ, 1, /* FIXME: FILE_SHARE_READ not defined */
     NULL, OPEN_EXISTING, 0, (HANDLE) NULL)))
@@ -281,7 +281,7 @@ Error:
 }
 
 /***********************************************************************
- *           SetImageConfigInformation32 (IMAGEHLP.34)
+ *		SetImageConfigInformation (IMAGEHLP.@)
  */
 BOOL WINAPI SetImageConfigInformation(
   PLOADED_IMAGE LoadedImage,
@@ -295,7 +295,7 @@ BOOL WINAPI SetImageConfigInformation(
 }
 
 /***********************************************************************
- *           UnMapAndLoad32 (IMAGEHLP.58)
+ *		UnMapAndLoad (IMAGEHLP.@)
  */
 BOOL WINAPI UnMapAndLoad(PLOADED_IMAGE LoadedImage)
 {

@@ -1789,7 +1789,7 @@ BOOL16 WINAPI LocalNext16( LOCALENTRY *pLocalEntry )
 
 
 /***********************************************************************
- *           LocalAlloc32   (KERNEL32.371)
+ *           LocalAlloc   (KERNEL32.371)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -1803,7 +1803,7 @@ HLOCAL WINAPI LocalAlloc(
 
 
 /***********************************************************************
- *           LocalCompact32   (KERNEL32.372)
+ *           LocalCompact   (KERNEL32.372)
  */
 UINT WINAPI LocalCompact( UINT minfree )
 {
@@ -1812,7 +1812,7 @@ UINT WINAPI LocalCompact( UINT minfree )
 
 
 /***********************************************************************
- *           LocalFlags32   (KERNEL32.374)
+ *           LocalFlags   (KERNEL32.374)
  * RETURNS
  *	Value specifying allocation flags and lock count.
  *	LMEM_INVALID_HANDLE: Failure
@@ -1825,7 +1825,7 @@ UINT WINAPI LocalFlags(
 
 
 /***********************************************************************
- *           LocalFree32   (KERNEL32.375)
+ *           LocalFree   (KERNEL32.375)
  * RETURNS
  *	NULL: Success
  *	Handle: Failure
@@ -1838,7 +1838,7 @@ HLOCAL WINAPI LocalFree(
 
 
 /***********************************************************************
- *           LocalHandle32   (KERNEL32.376)
+ *           LocalHandle   (KERNEL32.376)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -1851,7 +1851,7 @@ HLOCAL WINAPI LocalHandle(
 
 
 /***********************************************************************
- *           LocalLock32   (KERNEL32.377)
+ *           LocalLock   (KERNEL32.377)
  * Locks a local memory object and returns pointer to the first byte
  * of the memory block.
  *
@@ -1867,7 +1867,7 @@ LPVOID WINAPI LocalLock(
 
 
 /***********************************************************************
- *           LocalReAlloc32   (KERNEL32.378)
+ *           LocalReAlloc   (KERNEL32.378)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -1882,7 +1882,7 @@ HLOCAL WINAPI LocalReAlloc(
 
 
 /***********************************************************************
- *           LocalShrink32   (KERNEL32.379)
+ *           LocalShrink   (KERNEL32.379)
  */
 UINT WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 {
@@ -1891,7 +1891,7 @@ UINT WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 
 
 /***********************************************************************
- *           LocalSize32   (KERNEL32.380)
+ *           LocalSize   (KERNEL32.380)
  * RETURNS
  *	Size: Success
  *	0: Failure
@@ -1904,7 +1904,7 @@ UINT WINAPI LocalSize(
 
 
 /***********************************************************************
- *           LocalUnlock32   (KERNEL32.381)
+ *           LocalUnlock   (KERNEL32.381)
  * RETURNS
  *	TRUE: Object is still locked
  *	FALSE: Object is unlocked

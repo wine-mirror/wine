@@ -29,7 +29,7 @@ LONG WINAPI GetTimerResolution16(void)
 }
 
 /***********************************************************************
- *	SystemParametersInfo32A   (USER32.540)
+ *	SystemParametersInfoA   (USER32.540)
  */
 BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
                                        LPVOID lpvParam, UINT fuWinIni )
@@ -449,7 +449,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 }
 
 /***********************************************************************
- *	SystemParametersInfo32W   (USER32.541)
+ *	SystemParametersInfoW   (USER32.541)
  */
 BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
                                        LPVOID lpvParam, UINT fuWinIni )
