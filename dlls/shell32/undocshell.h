@@ -858,6 +858,9 @@ HRESULT WINAPI SHCreateDefClassObject(
 	LPDWORD lpdwUsage,
 	REFIID riidObject);
 
+DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id);
+DWORD WINAPI SHCLSIDFromStringW (LPWSTR clsid, CLSID *id);
+
 HRESULT WINAPI SHCoCreateInstance(
 	LPCSTR lpszClsid,
 	REFCLSID rClsid,

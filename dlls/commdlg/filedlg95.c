@@ -1046,18 +1046,18 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   /* Initialise the file name edit control */
   handledPath = FALSE;
   TRACE("Before manipilation, file = '%s', dir = '%s'\n", fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
-  
+
   if(fodInfos->ofnInfos->lpstrFile)
   {
       /* 1. If win2000 or higher and filename contains a path, use it
          in preference over the lpstrInitialDir                       */
-      if (win2000plus && *fodInfos->ofnInfos->lpstrFile && 
+      if (win2000plus && *fodInfos->ofnInfos->lpstrFile &&
           strstr(fodInfos->ofnInfos->lpstrFile, "\\")) {
          char tmpBuf[MAX_PATH];
          char *nameBit;
          DWORD result;
 
-         result = GetFullPathNameA(fodInfos->ofnInfos->lpstrFile, MAX_PATH, 
+         result = GetFullPathNameA(fodInfos->ofnInfos->lpstrFile, MAX_PATH,
                                   tmpBuf, &nameBit);
          if (result) {
             strcpy(fodInfos->ofnInfos->lpstrFile, (LPSTR)nameBit);
@@ -1071,7 +1071,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
                strcpy((LPSTR)fodInfos->ofnInfos->lpstrInitialDir, tmpBuf);
             }
             handledPath = TRUE;
-            TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n", 
+            TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n",
                     fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
          }
          SetDlgItemTextA(hwnd, IDC_FILENAME, fodInfos->ofnInfos->lpstrFile);
@@ -1113,13 +1113,13 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   {
       /* 3. All except w2k+: if filename contains a path use it */
       if (!win2000plus && fodInfos->ofnInfos->lpstrFile &&
-          *fodInfos->ofnInfos->lpstrFile && 
+          *fodInfos->ofnInfos->lpstrFile &&
           strstr(fodInfos->ofnInfos->lpstrFile, "\\")) {
          char tmpBuf[MAX_PATH];
          char *nameBit;
          DWORD result;
 
-         result = GetFullPathNameA(fodInfos->ofnInfos->lpstrFile, MAX_PATH, 
+         result = GetFullPathNameA(fodInfos->ofnInfos->lpstrFile, MAX_PATH,
                                   tmpBuf, &nameBit);
          if (result) {
             strcpy(fodInfos->ofnInfos->lpstrFile, nameBit);
@@ -1133,7 +1133,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
                strcpy((LPSTR)fodInfos->ofnInfos->lpstrInitialDir, tmpBuf);
             }
             handledPath = TRUE;
-            TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n", 
+            TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n",
                  fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
          }
          SetDlgItemTextA(hwnd, IDC_FILENAME, fodInfos->ofnInfos->lpstrFile);
@@ -1141,8 +1141,8 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
       /* 4. win98+ and win2000+ if any files of specified filter types in
             current directory, use it                                      */
-      if ( win98plus && handledPath == FALSE && 
-           fodInfos->ofnInfos->lpstrFilter && 
+      if ( win98plus && handledPath == FALSE &&
+           fodInfos->ofnInfos->lpstrFilter &&
           *fodInfos->ofnInfos->lpstrFilter) {
 
          BOOL   searchMore = TRUE;
@@ -1150,7 +1150,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
          WIN32_FIND_DATAA FindFileData;
          HANDLE hFind;
 
-         while (searchMore) 
+         while (searchMore)
          {
            /* filter is a list...  title\0ext\0......\0\0 */
 
@@ -1169,7 +1169,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
            } else {
                searchMore = FALSE;
-               
+
                initDir = MemAlloc(MAX_PATH);
                GetCurrentDirectoryA(MAX_PATH, initDir);
                fodInfos->ofnInfos->lpstrInitialDir = initDir;
@@ -2680,11 +2680,11 @@ static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPI
 	    COMDLG32_SHFree(src->u.pOleStr);
 	    break;
 
-	  case STRRET_CSTRA:
+	  case STRRET_CSTR:
 	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
 	    break;
 
-	  case STRRET_OFFSETA:
+	  case STRRET_OFFSET:
 	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
 	    break;
 
@@ -2946,9 +2946,9 @@ LPITEMIDLIST GetParentPidl(LPITEMIDLIST pidl)
  * returns the pidl of the file name relative to folder
  * NULL if an error occurred
  */
-LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPCSTR lpcstrFileName)
+LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf, LPCSTR lpcstrFileName)
 {
-  LPITEMIDLIST pidl;
+  LPITEMIDLIST pidl = NULL;
   ULONG ulEaten;
   WCHAR lpwstrDirName[MAX_PATH];
 
@@ -2957,16 +2957,16 @@ LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPCSTR lpcstrFileName)
   if(!lpcstrFileName) return NULL;
   if(!*lpcstrFileName) return NULL;
 
-  MultiByteToWideChar(CP_ACP,MB_PRECOMPOSED,lpcstrFileName,-1,(LPWSTR)lpwstrDirName,MAX_PATH);
-
   if(!lpsf)
   {
-    SHGetDesktopFolder(&lpsf);
-    pidl = GetPidlFromName(lpsf, lpcstrFileName);
-    IShellFolder_Release(lpsf);
+    if (SUCCEEDED(SHGetDesktopFolder(&lpsf))) {
+        pidl = GetPidlFromName(lpsf, lpcstrFileName);
+        IShellFolder_Release(lpsf);
+    }
   }
   else
   {
+    MultiByteToWideChar(CP_ACP,MB_PRECOMPOSED,lpcstrFileName,-1,(LPWSTR)lpwstrDirName,MAX_PATH);
     IShellFolder_ParseDisplayName(lpsf, 0, NULL, (LPWSTR)lpwstrDirName, &ulEaten, &pidl, NULL);
   }
   return pidl;
@@ -3035,4 +3035,3 @@ static void MemFree(void *mem)
         HeapFree(GetProcessHeap(),0,mem);
     }
 }
-

@@ -47,40 +47,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-static int refClipCount = 0;
-static HINSTANCE hShellOle32 = 0;
+HRESULT (WINAPI *pOleInitialize)(LPVOID reserved);
+void    (WINAPI *pOleUninitialize)(void);
+HRESULT (WINAPI *pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
+HRESULT (WINAPI *pRevokeDragDrop)(HWND hwnd);
+HRESULT (WINAPI *pDoDragDrop)(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
+void 	(WINAPI *pReleaseStgMedium)(STGMEDIUM* pmedium);
+HRESULT (WINAPI *pOleSetClipboard)(IDataObject* pDataObj);
+HRESULT (WINAPI *pOleGetClipboard)(IDataObject** ppDataObj);
 
 /**************************************************************************
- * InitShellOle
- *
- *
- */
-void InitShellOle(void)
-{
-}
-
-/**************************************************************************
- * FreeShellOle
- *
- * unload OLE32.DLL
- */
-void FreeShellOle(void)
-{
-	if (!--refClipCount)
-	{
-	  pOleUninitialize();
-	  FreeLibrary(hShellOle32);
-	}
-}
-
-/**************************************************************************
- * LoadShellOle
+ * GetShellOle
  *
  * make sure OLE32.DLL is loaded
  */
 BOOL GetShellOle(void)
 {
-	if(!refClipCount)
+	if(!hShellOle32)
 	{
 	  hShellOle32 = LoadLibraryA("ole32.dll");
 	  if(hShellOle32)
@@ -95,7 +78,6 @@ BOOL GetShellOle(void)
 	    pOleGetClipboard=(void*)GetProcAddress(hShellOle32,"OleGetClipboard");
 
 	    pOleInitialize(NULL);
-	    refClipCount++;
 	  }
 	}
 	return TRUE;

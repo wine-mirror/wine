@@ -345,64 +345,6 @@ int WINAPIV ShellMessageBoxA(
 }
 
 /*************************************************************************
- * SHFree					[SHELL32.195]
- *
- * NOTES
- *     free_ptr() - frees memory using IMalloc
- *     exported by ordinal
- */
-#define MEM_DEBUG 0
-void WINAPI SHFree(LPVOID x)
-{
-#if MEM_DEBUG
-	WORD len = *(LPWORD)((LPBYTE)x-2);
-
-	if ( *(LPWORD)((LPBYTE)x+len) != 0x7384)
-	  ERR("MAGIC2!\n");
-
-	if ( (*(LPWORD)((LPBYTE)x-4)) != 0x8271)
-	  ERR("MAGIC1!\n");
-	else
-	  memset((LPBYTE)x-4, 0xde, len+6);
-
-	TRACE("%p len=%u\n",x, len);
-
-	x = (LPBYTE) x - 4;
-#else
-	TRACE("%p\n",x);
-#endif
-	HeapFree(GetProcessHeap(), 0, x);
-}
-
-/*************************************************************************
- * SHAlloc					[SHELL32.196]
- *
- * NOTES
- *     void *task_alloc(DWORD len), uses SHMalloc allocator
- *     exported by ordinal
- */
-LPVOID WINAPI SHAlloc(DWORD len)
-{
-	LPBYTE ret;
-
-#if MEM_DEBUG
-	ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len+6);
-#else
-	ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
-#endif
-
-#if MEM_DEBUG
-	*(LPWORD)(ret) = 0x8271;
-	*(LPWORD)(ret+2) = (WORD)len;
-	*(LPWORD)(ret+4+len) = 0x7384;
-	ret += 4;
-	memset(ret, 0xdf, len);
-#endif
-	TRACE("%lu bytes at %p\n",len, ret);
-	return (LPVOID)ret;
-}
-
-/*************************************************************************
  * SHRegisterDragDrop				[SHELL32.86]
  *
  * NOTES

@@ -31,24 +31,15 @@ extern "C" {
 *  STRRET
 */
 #define	STRRET_WSTR	0x0000
-#define STRRET_ASTR	0x0003
+#define	STRRET_OFFSET	0x0001
+#define	STRRET_CSTR	0x0002
 
-#define	STRRET_OFFSETA	0x0001
-#define STRRET_OFFSETW	0x0004
-#define STRRET_OFFSET WINELIB_NAME_AW(STRRET_OFFSET)
-
-#define	STRRET_CSTRA	0x0002
-#define STRRET_CSTRW	0x0005
-#define STRRET_CSTR WINELIB_NAME_AW(STRRET_CSTR)
-
-typedef struct _STRRET
-{ UINT uType;		/* STRRET_xxx */
-  union
-  { LPWSTR	pOleStr;	/* OLESTR that will be freed */
-    LPSTR	pStr;
-    UINT	uOffset;	/* OffsetINT32o SHITEMID (ANSI) */
-    char	cStr[MAX_PATH];	/* Buffer to fill in */
-    WCHAR	cStrW[MAX_PATH];
+typedef struct _STRRET {
+  UINT uType;			/* STRRET_xxx */
+  union {
+    LPWSTR	pOleStr;	/* OLESTR that will be freed */
+    UINT	uOffset;	/* Offset into SHITEMID (ANSI) */
+    char	cStr[MAX_PATH];	/* ANSI Buffer */
   } DUMMYUNIONNAME;
 } STRRET,*LPSTRRET;
 
@@ -61,6 +52,9 @@ typedef struct IPersistFolder IPersistFolder, *LPPERSISTFOLDER;
 
 DEFINE_GUID(IID_IPersistFolder2, 0x1ac3d9f0L, 0x175C, 0x11D1, 0x95, 0xBE, 0x00, 0x60, 0x97, 0x97, 0xEA, 0x4F);
 typedef struct IPersistFolder2 IPersistFolder2, *LPPERSISTFOLDER2;
+
+DEFINE_GUID(IID_IPersistFolder3, 0xcef04fdf, 0xfe72, 0x11d2, 0x87, 0xa5, 0x0, 0xc0, 0x4f, 0x68, 0x37, 0xcf);
+typedef struct IPersistFolder3 IPersistFolder3, *LPPERSISTFOLDER3;
 
 DEFINE_GUID(IID_IShellFolder2,  0xB82C5AA8, 0xA41B, 0x11D2, 0xBE, 0x32, 0x0, 0xc0, 0x4F, 0xB9, 0x36, 0x61);
 typedef struct IShellFolder2 IShellFolder2, *LPSHELLFOLDER2;
@@ -317,11 +311,6 @@ ICOM_DEFINE(IShellFolder2, IShellFolder)
  * IPersistFolder interface
  */
 
-/* ClassID's */
-DEFINE_GUID (CLSID_SFMyComp,0x20D04FE0,0x3AEA,0x1069,0xA2,0xD8,0x08,0x00,0x2B,0x30,0x30,0x9D);
-DEFINE_GUID (CLSID_SFINet,  0x871C5380,0x42A0,0x1069,0xA2,0xEA,0x08,0x00,0x2B,0x30,0x30,0x9D);
-DEFINE_GUID (CLSID_SFFile,  0xF3364BA0,0x65B9,0x11CE,0xA9,0xBA,0x00,0xAA,0x00,0x4A,0xE8,0x37);
-
 #define ICOM_INTERFACE IPersistFolder
 #define IPersistFolder_METHODS \
     ICOM_METHOD1( HRESULT, Initialize, LPCITEMIDLIST, pidl)
@@ -364,6 +353,46 @@ ICOM_DEFINE(IPersistFolder2, IPersistFolder)
 #define IPersistFolder2_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
 /*** IPersistFolder2 methods ***/
 #define IPersistFolder2_GetCurFolder(p,a)	ICOM_CALL1(GetCurFolder,p,a)
+
+
+/*****************************************************************************
+ * IPersistFolder3 interface
+ */
+
+typedef struct {
+	LPITEMIDLIST	pidlTargetFolder;
+	WCHAR		szTargetParsingName[MAX_PATH];
+	WCHAR		szNetworkProvider[MAX_PATH];
+	DWORD		dwAttributes;
+	int		csidl;
+} PERSIST_FOLDER_TARGET_INFO;
+
+#define ICOM_INTERFACE IPersistFolder3
+#define IPersistFolder3_METHODS \
+    ICOM_METHOD3( HRESULT, InitializeEx, IBindCtx*, pbc, LPCITEMIDLIST, pidlRoot, const PERSIST_FOLDER_TARGET_INFO*, ppfti)\
+    ICOM_METHOD1( HRESULT, GetFolderTargetInfo, PERSIST_FOLDER_TARGET_INFO*, ppfti)
+#define IPersistFolder3_IMETHODS \
+    IPersist_IMETHODS \
+    IPersistFolder_METHODS \
+    IPersistFolder2_METHODS \
+    IPersistFolder3_METHODS
+ICOM_DEFINE(IPersistFolder3, IPersistFolder2)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IPersistFolder3_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
+#define IPersistFolder3_AddRef(p)		ICOM_CALL (AddRef,p)
+#define IPersistFolder3_Release(p)		ICOM_CALL (Release,p)
+/*** IPersist methods ***/
+#define IPersistFolder3_GetClassID(p,a)		ICOM_CALL1(GetClassID,p,a)
+/*** IPersistFolder methods ***/
+#define IPersistFolder3_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
+/*** IPersistFolder2 methods ***/
+#define IPersistFolder3_GetCurFolder(p,a)	ICOM_CALL1(GetCurFolder,p,a)
+/*** IPersistFolder3 methods ***/
+#define IPersistFolder3_InitializeEx(p,a,b,c)	ICOM_CALL3(InitializeEx,p,a,b,c)
+#define IPersistFolder3_GetFolderTargetInfo(p,a) ICOM_CALL1(InitializeEx,p,a)
+
 
 #ifdef __cplusplus
 } /* extern "C" */

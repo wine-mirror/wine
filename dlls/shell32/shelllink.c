@@ -958,10 +958,21 @@ static ICOM_VTABLE(IPersistStream) psvt =
 /**************************************************************************
  *	  IShellLink_Constructor
  */
-IShellLinkA * IShellLink_Constructor(BOOL bUnicode)
-{	IShellLinkImpl * sl;
+HRESULT WINAPI IShellLink_Constructor (
+	IUnknown * pUnkOuter,
+	REFIID riid,
+	LPVOID * ppv)
+{
+	IShellLinkImpl * sl;
 
-	sl = (IShellLinkImpl *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellLinkImpl));
+	TRACE("unkOut=%p riid=%s\n",pUnkOuter, debugstr_guid(riid));
+
+	*ppv = NULL;
+
+	if(pUnkOuter) return CLASS_E_NOAGGREGATION;
+	sl = (IShellLinkImpl *) LocalAlloc(GMEM_ZEROINIT,sizeof(IShellLinkImpl));
+	if (!sl) return E_OUTOFMEMORY;
+
 	sl->ref = 1;
 	ICOM_VTBL(sl) = &slvt;
 	sl->lpvtblw = &slvtw;
@@ -969,8 +980,19 @@ IShellLinkA * IShellLink_Constructor(BOOL bUnicode)
 	sl->lpvtblPersistStream = &psvt;
 
 	TRACE("(%p)->()\n",sl);
+
+	if (IsEqualIID(riid, &IID_IShellLinkA))
+	    *ppv = sl;
+	else if (IsEqualIID(riid, &IID_IShellLinkW))
+	    *ppv = &(sl->lpvtblw);
+	else {
+	    LocalFree((HLOCAL)sl);
+	    ERR("E_NOINTERFACE\n");
+	    return E_NOINTERFACE;
+	}
+
 	shell32_ObjCount++;
-	return bUnicode ? (IShellLinkA *) &(sl->lpvtblw) : (IShellLinkA *)sl;
+	return S_OK;
 }
 
 /**************************************************************************
@@ -1059,7 +1081,7 @@ static ULONG WINAPI IShellLinkA_fnRelease(IShellLinkA * iface)
 
 	  This->iIcoNdx = 0;
 
-	  HeapFree(GetProcessHeap(),0,This);
+	  LocalFree((HANDLE)This);
 	  return 0;
 	}
 	return This->ref;
@@ -1538,4 +1560,3 @@ static ICOM_VTABLE(IShellLinkW) slvtw =
 	IShellLinkW_fnResolve,
 	IShellLinkW_fnSetPath
 };
-

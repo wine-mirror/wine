@@ -26,6 +26,8 @@
 #include "shlguid.h"
 #include "wine/debug.h"
 #include "debughlp.h"
+#include "docobj.h"
+#include "shell32_main.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(pidl);
@@ -273,4 +275,55 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	  } while (pidltemp->mkid.cb);
 	}
 	return ret;
+}
+
+static char shdebugstr_buf[100];
+
+
+static struct {
+	REFIID	riid;
+	char 	*name;
+} InterfaceDesc[] = {
+	{&IID_IUnknown,			"IID_IUnknown"},
+	{&IID_IShellView,		"IID_IShellView"},
+	{&IID_IOleCommandTarget,	"IID_IOleCommandTarget"},
+	{&IID_IDropTarget,		"IID_IDropTarget"},
+	{&IID_IDropSource,		"IID_IDropSource"},
+	{&IID_IViewObject,		"IID_IViewObject"},
+	{&IID_IContextMenu,		"IID_IContextMenu"},
+	{&IID_IShellExtInit,		"IID_IShellExtInit"},
+	{&IID_IShellFolder,		"IID_IShellFolder"},
+	{&IID_IShellFolder2,		"IID_IShellFolder2"},
+	{&IID_IPersist,			"IID_IPersist"},
+	{&IID_IPersistFolder,		"IID_IPersistFolder"},
+	{&IID_IPersistFolder2,		"IID_IPersistFolder2"},
+	{&IID_IPersistFolder3,		"IID_IPersistFolder3"},
+	{&IID_IExtractIconA,		"IID_IExtractIconA"},
+	{&IID_IDataObject,		"IID_IDataObject"},
+	{&IID_IDataObject,		"IID_IDataObject"},
+	{NULL,NULL}};
+
+const char * shdebugstr_guid( const struct _GUID *id )
+{
+	int i;
+	char* name = NULL;
+	char clsidbuf[100];
+
+	if (!id) {
+	  strcpy (shdebugstr_buf, "(null)");
+	} else {
+	    for (i=0;InterfaceDesc[i].riid && !name;i++) {
+	        if (IsEqualIID(InterfaceDesc[i].riid, id)) name = InterfaceDesc[i].name;
+	    }
+	    if (!name) {
+		if (HCR_GetClassName(id, clsidbuf, 100))
+		    name = clsidbuf;
+	    }
+
+	    sprintf( shdebugstr_buf, "\n\t{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x} (%s)",
+                 id->Data1, id->Data2, id->Data3,
+                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7], name ? name : "unknown" );
+	}
+	return shdebugstr_buf;
 }

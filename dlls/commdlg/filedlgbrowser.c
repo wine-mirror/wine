@@ -111,12 +111,12 @@ static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPI
 	    COMDLG32_SHFree(src->u.pOleStr);
 	    break;
 
-	  case STRRET_CSTRA:
+	  case STRRET_CSTR:
             if (len && !MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, (LPWSTR)dest, len ))
                 ((LPWSTR)dest)[len-1] = 0;
 	    break;
 
-	  case STRRET_OFFSETA:
+	  case STRRET_OFFSET:
 	    if (pidl)
 	    {
                 if (len && !MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset,
@@ -212,7 +212,7 @@ ULONG WINAPI IShellBrowserImpl_AddRef(IShellBrowser * iface)
 {
     ICOM_THIS(IShellBrowserImpl, iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p,%lu)\n", This, This->ref);
 
     return ++(This->ref);
 }
@@ -224,11 +224,12 @@ ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
 {
     ICOM_THIS(IShellBrowserImpl, iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p,%lu)\n", This, This->ref);
 
     if (!--(This->ref))
     {
       HeapFree(GetProcessHeap(),0, This);
+      TRACE("-- destroyed\n");
       return 0;
     }
     return This->ref;
@@ -906,9 +907,8 @@ ULONG WINAPI IShellBrowserImpl_IServiceProvider_Release(IServiceProvider * iface
 *  IShellBrowserImpl_IServiceProvider_Release
 *
 * NOTES
-*  the w2k shellview asks for
-*   guidService = SID_STopLevelBrowser
-*   riid = IShellBrowser
+*  the w2k shellview asks for (guidService = SID_STopLevelBrowser,
+*  riid = IShellBrowser) to call SendControlMsg ().
 *
 * FIXME
 *  this is a hack!

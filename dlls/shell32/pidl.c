@@ -1162,7 +1162,11 @@ LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
 
     if (!MultiByteToWideChar( CP_ACP, 0, szGUID, -1, buffer, sizeof(buffer)/sizeof(WCHAR) ))
         return NULL;
-    CLSIDFromString( buffer, &iid );
+
+    if (! SUCCEEDED (CLSIDFromString( buffer, &iid ))) {
+	ERR("%s is not a GUID\n", szGUID);
+	return NULL;
+    }
     return _ILCreate(PT_MYCOMP, &iid, sizeof(IID));
 }
 
@@ -1219,7 +1223,7 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
 	    pData =_ILGetDataPointer(pidlOut);
 	    pData->type = type;
 	    memcpy(&(pData->u.mycomp.guid), pIn, uInSize);
-	    TRACE("- create GUID-pidl\n");
+	    TRACE("-- create GUID-pidl %s\n", debugstr_guid(&(pData->u.mycomp.guid)));
 	    break;
 
 	  case PT_DRIVE:
@@ -1227,7 +1231,7 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
 	    pData->type = type;
 	    pszDest = _ILGetTextPointer(pidlOut);
 	    memcpy(pszDest, pIn, uInSize);
-	    TRACE("- create Drive: %s\n",debugstr_a(pszDest));
+	    TRACE("-- create Drive: %s\n",debugstr_a(pszDest));
 	    break;
 
 	  case PT_FOLDER:
@@ -1236,7 +1240,7 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
 	    pData->type = type;
 	    pszDest =  _ILGetTextPointer(pidlOut);
 	    memcpy(pszDest, pIn, uInSize);
-	    TRACE("- create Value: %s\n",debugstr_a(pszDest));
+	    TRACE("-- create Value: %s\n",debugstr_a(pszDest));
 	    break;
 	}
 

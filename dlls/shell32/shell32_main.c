@@ -996,12 +996,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	  case DLL_PROCESS_DETACH:
 	      shell32_hInstance = 0;
 
-	      if (pdesktopfolder)
-	      {
-	        IShellFolder_Release(pdesktopfolder);
-	        pdesktopfolder = NULL;
-	      }
-
 	      SIC_Destroy();
 	      FreeChangeNotifications();
 

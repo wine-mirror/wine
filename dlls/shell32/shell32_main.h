@@ -65,14 +65,7 @@ extern INT      (WINAPI *pFindMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbDa
 extern INT      (WINAPI *pEnumMRUListA) (HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
 #define pDPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))
 
-/* ole2 */
-/*
-extern HRESULT (WINAPI *pOleInitialize)(LPVOID reserved);
-extern void (WINAPI *pOleUninitialize)(void);
-extern HRESULT (WINAPI *pDoDragDrop)(IDataObject* pDataObject, IDropSource * pDropSource, DWORD dwOKEffect, DWORD * pdwEffect);
-extern HRESULT (WINAPI *pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
-extern HRESULT (WINAPI *pRevokeDragDrop)(HWND hwnd);
-*/
+
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
 
 /* Iconcache */
@@ -101,9 +94,10 @@ LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID);
 IContextMenu *	ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *aPidls, UINT uItemCount);
 IContextMenu *	ISvBgCm_Constructor(LPSHELLFOLDER pSFParent);
 LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER);
-LPSHELLLINK	IShellLink_Constructor(BOOL);
 
-IShellFolder * ISF_Desktop_Constructor(void);
+HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
+HRESULT WINAPI IShellLink_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
+HRESULT WINAPI ISF_Desktop_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 
 /* kind of enumidlist */
 #define EIDL_DESK	0
@@ -145,19 +139,20 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 /* Systray */
 BOOL SYSTRAY_Init(void);
 
-/* Clipboard */
-void InitShellOle(void);
-void FreeShellOle(void);
-BOOL GetShellOle(void);
+/* OLE32 */
+extern HINSTANCE hShellOle32;
 
-HRESULT (WINAPI *pOleInitialize)(LPVOID reserved);
-void    (WINAPI *pOleUninitialize)(void);
-HRESULT (WINAPI *pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
-HRESULT (WINAPI *pRevokeDragDrop)(HWND hwnd);
-HRESULT (WINAPI *pDoDragDrop)(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
-void 	(WINAPI *pReleaseStgMedium)(STGMEDIUM* pmedium);
-HRESULT (WINAPI *pOleSetClipboard)(IDataObject* pDataObj);
-HRESULT (WINAPI *pOleGetClipboard)(IDataObject** ppDataObj);
+extern HRESULT (WINAPI *pOleInitialize)(LPVOID reserved);
+extern void    (WINAPI *pOleUninitialize)(void);
+extern HRESULT (WINAPI *pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
+extern HRESULT (WINAPI *pRevokeDragDrop)(HWND hwnd);
+extern HRESULT (WINAPI *pDoDragDrop)(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
+extern void    (WINAPI *pReleaseStgMedium)(STGMEDIUM* pmedium);
+extern HRESULT (WINAPI *pOleSetClipboard)(IDataObject* pDataObj);
+extern HRESULT (WINAPI *pOleGetClipboard)(IDataObject** ppDataObj);
+extern HRESULT (WINAPI *pCoCreateInstance)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID iid, LPVOID *ppv);
+
+BOOL GetShellOle(void);
 
 HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
 HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
