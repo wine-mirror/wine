@@ -1526,6 +1526,12 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
         memset(lpbPrinters, 0, cbBuf);
     if(lpdwReturned)
         *lpdwReturned = 0;
+    if(lpdwNeeded)
+        *lpdwNeeded = 0;
+
+    /* PRINTER_ENUM_DEFAULT is only supported under win9x, we behave like NT */
+    if(dwType == PRINTER_ENUM_DEFAULT)
+	return TRUE;
 
     if (!((dwType & PRINTER_ENUM_LOCAL) || (dwType & PRINTER_ENUM_NAME))) {
         FIXME("dwType = %08lx\n", dwType);
