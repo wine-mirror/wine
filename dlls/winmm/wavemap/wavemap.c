@@ -128,7 +128,6 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     UINT 		ndlo, ndhi;
     UINT		i;
     WAVEMAPDATA*	wom = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
-    WAVEFORMATEX	wfx;
 
     TRACE("(%p %p %08lx\n", lpdwUser, lpDesc, dwFlags);
 
@@ -155,45 +154,49 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	 * level, this will be done transparently
 	 */
 	if (waveOutOpen(&wom->hInnerWave, i, lpDesc->lpFormat, (DWORD)wodCallback,
-			(DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION) == MMSYSERR_NOERROR) {
+			(DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
 	    wom->hAcmStream = 0;
 	    goto found;
 	}
     }
 
-    wfx.wFormatTag = WAVE_FORMAT_PCM;
-    wfx.cbSize = 0; /* normally, this field is not used for PCM format, just in case */
-    /* try some ACM stuff */
+    if ((dwFlags & WAVE_FORMAT_DIRECT) == 0) {
+        WAVEFORMATEX	wfx;
+
+        wfx.wFormatTag = WAVE_FORMAT_PCM;
+        wfx.cbSize = 0; /* normally, this field is not used for PCM format, just in case */
+        /* try some ACM stuff */
 
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags) == MMSYSERR_NOERROR) goto found;
+                        if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) goto found;
 
-    for (i = ndlo; i < ndhi; i++) {
-	/* first try with same stereo/mono option as source */
-	wfx.nChannels = lpDesc->lpFormat->nChannels;
-	TRY(44100, 16);
-	TRY(22050, 16);
-	TRY(11025, 16);
+        for (i = ndlo; i < ndhi; i++) {
+            /* first try with same stereo/mono option as source */
+            wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(44100, 16);
+            TRY(22050, 16);
+            TRY(11025, 16);
 
-	/* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
-	wfx.nChannels ^= 3;
-	TRY(44100, 16);
-	TRY(22050, 16);
-	TRY(11025, 16);
+            /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+            wfx.nChannels ^= 3;
+            TRY(44100, 16);
+            TRY(22050, 16);
+            TRY(11025, 16);
 
-	/* first try with same stereo/mono option as source */
-	wfx.nChannels = lpDesc->lpFormat->nChannels;
-	TRY(44100, 8);
-	TRY(22050, 8);
-	TRY(11025, 8);
+            /* first try with same stereo/mono option as source */
+            wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(44100, 8);
+            TRY(22050, 8);
+            TRY(11025, 8);
 
-	/* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
-	wfx.nChannels ^= 3;
-	TRY(44100, 8);
-	TRY(22050, 8);
-	TRY(11025, 8);
-    }
+            /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+            wfx.nChannels ^= 3;
+            TRY(44100, 8);
+            TRY(22050, 8);
+            TRY(11025, 8);
+        }
 #undef TRY
+    }
 
     HeapFree(GetProcessHeap(), 0, wom);
     return MMSYSERR_ALLOCATED;
@@ -239,6 +242,11 @@ static	DWORD	wodWrite(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2)
 	return MMSYSERR_ERROR;
 
     lpWaveHdrDst = (LPWAVEHDR)((LPSTR)ash + sizeof(ACMSTREAMHEADER));
+    if (ash->cbSrcLength > ash->cbSrcLengthUsed)
+        FIXME("Not all src buffer has been written, expect bogus sound\n");
+    else if (ash->cbSrcLength < ash->cbSrcLengthUsed)
+        ERR("CoDec has read more data than it is allowed to\n");
+
     if (ash->cbDstLengthUsed == 0)
     {
         /* something went wrong in decoding */
@@ -536,7 +544,6 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     UINT 		ndlo, ndhi;
     UINT		i;
     WAVEMAPDATA*	wim = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
-    WAVEFORMATEX	wfx;
 
     TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
 
@@ -561,32 +568,38 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     for (i = ndlo; i < ndhi; i++) {
 	if (waveInOpen(&wim->hInnerWave, i, lpDesc->lpFormat, (DWORD)widCallback,
-			(DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION) == MMSYSERR_NOERROR) {
+                       (DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
 	    wim->hAcmStream = 0;
 	    goto found;
 	}
     }
-    wfx.wFormatTag = WAVE_FORMAT_PCM;
-    wfx.cbSize = 0; /* normally, this field is not used for PCM format, just in case */
-    /* try some ACM stuff */
 
+    if ((dwFlags & WAVE_FORMAT_DIRECT) == 0)
+    {
+        WAVEFORMATEX	wfx;
+
+        wfx.wFormatTag = WAVE_FORMAT_PCM;
+        wfx.cbSize = 0; /* normally, this field is not used for PCM format, just in case */
+        /* try some ACM stuff */
+        
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        if (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags) == MMSYSERR_NOERROR) goto found;
-
-    for (i = ndlo; i < ndhi; i++) {
-	/* first try with same stereo/mono option as source */
-	wfx.nChannels = lpDesc->lpFormat->nChannels;
-	TRY(44100, 8);
-	TRY(22050, 8);
-	TRY(11025, 8);
-
-	/* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
-	wfx.nChannels ^= 3;
-	TRY(44100, 8);
-	TRY(22050, 8);
-	TRY(11025, 8);
-    }
+                        if (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) goto found;
+        
+        for (i = ndlo; i < ndhi; i++) {
+            /* first try with same stereo/mono option as source */
+            wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(44100, 8);
+            TRY(22050, 8);
+            TRY(11025, 8);
+            
+            /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+            wfx.nChannels ^= 3;
+            TRY(44100, 8);
+            TRY(22050, 8);
+            TRY(11025, 8);
+        }
 #undef TRY
+    }
 
     HeapFree(GetProcessHeap(), 0, wim);
     return MMSYSERR_ALLOCATED;
