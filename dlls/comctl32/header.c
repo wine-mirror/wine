@@ -1382,7 +1382,22 @@ HEADER_Paint (HWND hwnd, WPARAM wParam)
 static LRESULT
 HEADER_RButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    return HEADER_SendSimpleNotify (hwnd, NM_RCLICK);
+    BOOL bRet;
+    POINT pt;
+
+    pt.x = LOWORD(lParam);
+    pt.y = HIWORD(lParam);
+
+    /* Send a Notify message */
+    bRet = HEADER_SendSimpleNotify (hwnd, NM_RCLICK);
+
+    /* Change to screen coordinate for WM_CONTEXTMENU */
+    ClientToScreen(hwnd, &pt);
+
+    /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
+    SendMessageA( hwnd, WM_CONTEXTMENU, (WPARAM) hwnd, MAKELPARAM(pt.x, pt.y));
+    
+    return bRet;
 }
 
 
