@@ -23,7 +23,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -468,8 +467,6 @@ BOOL SIGNAL_Init(void)
         if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
     }
 #endif  /* HAVE_SIGALTSTACK */
-
-    sigfillset( &all_sigs );
 
     if (set_handler( SIGINT,  have_sigaltstack, (void (*)())int_handler ) == -1) goto error;
     if (set_handler( SIGFPE,  have_sigaltstack, (void (*)())fpe_handler ) == -1) goto error;
