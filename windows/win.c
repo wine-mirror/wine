@@ -21,7 +21,6 @@
 #include "nonclient.h"
 #include "queue.h"
 #include "winpos.h"
-#include "color.h"
 #include "shm_main_blk.h"
 #include "dde_proc.h"
 #include "clipboard.h"
