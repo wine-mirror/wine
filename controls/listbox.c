@@ -1281,7 +1281,7 @@ static void LISTBOX_MoveCaret( WND *wnd, LB_DESCR *descr, INT index,
             LISTBOX_SelectItemRange( wnd, descr, first, last, TRUE );
         }
     }
-    else if (!(descr->style & LBS_MULTIPLESEL) && (descr->selected_item != -1))
+    else if (!(descr->style & LBS_MULTIPLESEL))
     {
         /* Set selection to new caret item */
         LISTBOX_SetSelection( wnd, descr, index, TRUE, FALSE );
@@ -2611,6 +2611,82 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 		     lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
 #undef  lpcs
 		     return LISTBOX_Create( wnd, lphc );
+	        case WM_MOUSEMOVE:
+		     if ( (TWEAK_WineLook > WIN31_LOOK) &&
+			  (CB_GETTYPE(lphc) != CBS_SIMPLE) )
+		     {
+		       POINT   mousePos;
+		       BOOL    captured;
+		       RECT    clientRect;
+
+		       mousePos.x = (INT16)LOWORD(lParam);
+		       mousePos.y = (INT16)HIWORD(lParam);
+
+		       /*
+			* If we are in a dropdown combobox, we simulate that
+			* the mouse is captured to show the tracking of the item.
+			*/
+		       captured = descr->captured;
+		       descr->captured = TRUE;			 
+		       
+		       LISTBOX_HandleMouseMove( wnd, 
+						descr, 
+						mousePos.x, mousePos.y);
+		       
+		       descr->captured = captured;
+
+		       /*
+			* However, when tracking, it is important that we do not
+			* perform a selection if the cursor is outside the list.
+			*/
+		       GetClientRect(hwnd, &clientRect);
+
+		       if (!PtInRect( &clientRect, mousePos ))
+		       {
+			 LISTBOX_MoveCaret( wnd, descr, -1, FALSE );
+		       }
+
+		       return 0;
+		     }
+		     else
+		     {
+		       /*
+			* If we are in Win3.1 look, go with the default behavior.
+			*/
+		       return ListBoxWndProc( hwnd, msg, wParam, lParam );
+		     }
+  	        case WM_LBUTTONUP:
+		     if (TWEAK_WineLook > WIN31_LOOK)
+		     {
+		       POINT mousePos;
+		       RECT  clientRect;
+
+		       /*
+			* If the mouse button "up" is not in the listbox,
+			* we make sure there is no selection by re-selecting the
+			* item that was selected when the listbox was made visible.
+			*/
+		       mousePos.x = (INT16)LOWORD(lParam);
+		       mousePos.y = (INT16)HIWORD(lParam);
+
+		       GetClientRect(hwnd, &clientRect);
+
+		       /*
+			* When the user clicks outside the combobox and the focus
+			* is lost, the owning combobox will send a fake buttonup with
+			* 0xFFFFFFF as the mouse location, we must also revert the
+			* selection to the original selection.
+			*/
+		       if ( (lParam == 0xFFFFFFFF) ||
+			    (!PtInRect( &clientRect, mousePos )) )
+		       {
+			 LISTBOX_MoveCaret( wnd,
+					    descr, 
+					    lphc->droppedIndex, 
+					    FALSE );
+		       }
+		     }
+		     return LISTBOX_HandleLButtonUp( wnd, descr );
 		case WM_LBUTTONDOWN:
 		     return LISTBOX_HandleLButtonDown( wnd, descr, wParam,
                              (INT16)LOWORD(lParam), (INT16)HIWORD(lParam));

@@ -21,6 +21,7 @@
 #define CBF_NOTIFY		0x0100
 #define CBF_NOREDRAW            0x0200
 #define CBF_SELCHANGE		0x0400
+#define CBF_NOEDITNOTIFY        0x1000
 #define CBF_EUI                 0x8000
 
 /* Combo state struct */
@@ -37,6 +38,7 @@ typedef struct
    RECT         textRect;
    RECT         buttonRect;
    RECT         droppedRect;
+   INT          droppedIndex;
    INT          fixedOwnerDrawHeight;
    INT   	droppedWidth;		/* last two are not used unless set */
    INT   	editHeight;		/* explicitly */

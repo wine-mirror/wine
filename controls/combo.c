@@ -548,10 +548,27 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 				       lphc->droppedRect.top, 
 				       lphc->droppedRect.right - lphc->droppedRect.left, 
 				       lphc->droppedRect.bottom - lphc->droppedRect.top, 
-			lphc->self->hwndSelf, 
+				       lphc->self->hwndSelf, 
 		       (lphc->dwStyle & CBS_DROPDOWN)? (HMENU)0 : (HMENU)ID_CB_LISTBOX,
 				       lphc->self->hInstance,
 				       (LPVOID)lphc );
+
+      /*
+       * The ComboLBox is a strange little beast (when it's not a CBS_SIMPLE)...
+       * It's a popup window but, when you get the window style, you get WS_CHILD.
+       * When created, it's parent is the combobox but, when you ask for it's parent
+       * after that, you're supposed to get the desktop. (see MFC code function
+       * AfxCancelModes)
+       * To achieve this in Wine, we have to create it as a popup and change 
+       * it's style to child after the creation. 
+       */
+      if ( (lphc->hWndLBox!= 0) &&
+	   (CB_GETTYPE(lphc) != CBS_SIMPLE) )
+      {
+	SetWindowLongA(lphc->hWndLBox, 
+		       GWL_STYLE, 
+		       (GetWindowLongA(lphc->hWndLBox, GWL_STYLE) | WS_CHILD) & ~WS_POPUP);
+      }
 
       if( lphc->hWndLBox )
       {
@@ -1040,6 +1057,9 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 	   {
 		SendMessageA( lphc->hWndLBox, LB_GETTEXT, 
 				(WPARAM)index, (LPARAM)pText );
+
+		lphc->wState |= CBF_NOEDITNOTIFY;
+
 		SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)pText );
 		SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
 		HeapFree( GetProcessHeap(), 0, pText );
@@ -1055,7 +1075,6 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
  */
 static void CBDropDown( LPHEADCOMBO lphc )
 {
-   INT	index;
    RECT	rect;
 
    TRACE("[%04x]: drop down\n", CB_HWND(lphc));
@@ -1067,14 +1086,19 @@ static void CBDropDown( LPHEADCOMBO lphc )
    lphc->wState |= CBF_DROPPED;
    if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
    {
-       index = CBUpdateLBox( lphc );
-       if( !(lphc->wState & CBF_CAPTURE) ) CBUpdateEdit( lphc, index );
+       lphc->droppedIndex = CBUpdateLBox( lphc );
+
+       if( !(lphc->wState & CBF_CAPTURE) ) 
+	 CBUpdateEdit( lphc, lphc->droppedIndex );
    }
    else
    {
-       index = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
-       if( index == LB_ERR ) index = 0;
-       SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)index, 0 );
+       lphc->droppedIndex = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
+
+       if( lphc->droppedIndex == LB_ERR ) 
+	 lphc->droppedIndex = 0;
+
+       SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)lphc->droppedIndex, 0 );
        SendMessageA( lphc->hWndLBox, LB_CARETON, 0, 0 );
    }
 
@@ -1116,8 +1140,11 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 
        TRACE("[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT)ok );
 
-       /* always send WM_LBUTTONUP? */
-       SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, (LPARAM)(-1) );
+       /* 
+	* It seems useful to send the WM_LBUTTONUP with (-1,-1) when cancelling 
+	* and with (0,0) (anywhere in the listbox) when Oking.
+	*/
+       SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, ok ? (LPARAM)0 : (LPARAM)(-1) );       
 
        if( lphc->wState & CBF_DROPPED ) 
        {
@@ -1252,7 +1279,7 @@ static void COMBO_KillFocus( LPHEADCOMBO lphc )
  */
 static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 {
-   if( lphc->wState & CBF_EDIT && lphc->hWndEdit == hWnd )
+   if ( lphc->wState & CBF_EDIT && lphc->hWndEdit == hWnd )
    {
        /* ">> 8" makes gcc generate jump-table instead of cmp ladder */
 
@@ -1282,7 +1309,22 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 
 
 	   case (EN_CHANGE >> 8):
-		CB_NOTIFY( lphc, CBN_EDITCHANGE );
+	       /*
+	        * In some circumstances (when the selection of the combobox
+		* is changed for example) we don't wans the EN_CHANGE notification
+		* to be forwarded to the parent of the combobox. This code
+		* checks a flag that is set in these occasions and ignores the 
+		* notification.
+	        */
+	        if (lphc->wState & CBF_NOEDITNOTIFY)
+		{
+		  lphc->wState &= ~CBF_NOEDITNOTIFY;
+		}
+		else
+		{
+		  CB_NOTIFY( lphc, CBN_EDITCHANGE );
+		}
+
 		CBUpdateLBox( lphc );
 		break;
 
@@ -1763,7 +1805,11 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
         case WM_PASTE:
 	case WM_COPY:
 		if( lphc->wState & CBF_EDIT )
-                    return  SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		{
+		    lphc->wState |= CBF_NOEDITNOTIFY;
+
+		    return SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		}
 		return  CB_ERR;
 	case WM_DRAWITEM:
 	case WM_DELETEITEM:
