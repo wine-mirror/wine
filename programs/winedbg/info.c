@@ -391,7 +391,8 @@ void DEBUG_InfoWindow(HWND hWnd)
        strcpy(clsName, "-- Unknown --");
    if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
       strcpy(wndName, "-- Empty --");
-   if (!GetClientRect(hWnd, &clientRect))
+   if (!GetClientRect(hWnd, &clientRect) || 
+           !MapWindowPoints( hWnd, 0, (LPPOINT) &clientRect, 2))
       SetRectEmpty(&clientRect);
    if (!GetWindowRect(hWnd, &windowRect))
       SetRectEmpty(&windowRect);
