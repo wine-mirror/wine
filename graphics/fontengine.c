@@ -63,6 +63,16 @@ WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform
 }
 
 /* ****************************************************************
+ *       EngineRealizeFontExt [GDI.315] 
+ */
+WORD WINAPI EngineRealizeFontExt16(LONG l1, LONG l2, LONG l3, LONG l4)
+{
+    FIXME("(%08lx,%08lx,%08lx,%08lx),stub\n",l1,l2,l3,l4);
+    
+    return 0;
+}
+
+/* ****************************************************************
  *        EngineGetCharWidth [GDI.303] 
  */
 WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE lastChar, LPINT16 buffer)

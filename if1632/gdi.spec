@@ -225,7 +225,7 @@ file	gdi.exe
 312 stub ConvertOutLineFontFile
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps16
 314 stub EngineExtTextOut
-315 stub EngineRealizeFontExt
+315 pascal EngineRealizeFontExt(long long long long) EngineRealizeFontExt16
 316 stub EngineGetCharWidthStr
 317 stub EngineGetGlyphBmpExt
 330 pascal16 EnumFontFamilies(word str segptr long) THUNK_EnumFontFamilies16
