@@ -144,6 +144,7 @@ typedef struct _NetBTAdapter
 } NetBTAdapter;
 
 static ULONG gTransportID;
+static BOOL  gEnableDNS;
 static DWORD gBCastQueries;
 static DWORD gBCastQueryTimeout;
 static DWORD gWINSQueries;
@@ -506,14 +507,15 @@ static UCHAR NetBTStoreCacheEntry(struct NBNameCache **nameCache,
     return ret;
 }
 
-/* Attempts to look up name using gethostbyname(), if the suffix byte is either
- * <00> or <20>.  If the name can be looked up, returns 0 and stores the looked
- * up addresses as a NBNameCacheEntry in *cacheEntry.
+/* Attempts to resolve name using inet_addr(), then gethostbyname() if
+ * gEnableDNS is TRUE, if the suffix byte is either <00> or <20>.  If the name
+ * can be looked up, returns 0 and stores the looked up addresses as a
+ * NBNameCacheEntry in *cacheEntry.
  * Returns NRC_GOODRET on success, though this may not mean the name was
  * resolved--check whether *cacheEntry is NULL.  Returns something else on
  * error.
  */
-static UCHAR NetBTgethostbyname(const UCHAR name[NCBNAMSZ],
+static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
  NBNameCacheEntry **cacheEntry)
 {
     UCHAR ret = NRC_GOODRET;
@@ -553,7 +555,7 @@ static UCHAR NetBTgethostbyname(const UCHAR name[NCBNAMSZ],
                     ret = NRC_OSRESNOTAV;
             }
         }
-        if (ret == NRC_GOODRET && !*cacheEntry)
+        if (gEnableDNS && ret == NRC_GOODRET && !*cacheEntry)
         {
             struct hostent *host;
 
@@ -623,7 +625,7 @@ static UCHAR NetBTInternalFindName(NetBTAdapter *adapter, PNCB ncb,
         {
             NBNameCacheEntry *newEntry = NULL;
 
-            ret = NetBTgethostbyname(ncb->ncb_callname, &newEntry);
+            ret = NetBTinetResolve(ncb->ncb_callname, &newEntry);
             if (ret == NRC_GOODRET && newEntry)
             {
                 ret = NetBTStoreCacheEntry(&gNameCache, newEntry);
@@ -1410,9 +1412,11 @@ void NetBTInit(void)
 {
     HKEY hKey;
     NetBIOSTransport transport;
+    LONG ret;
 
     TRACE("\n");
 
+    gEnableDNS = TRUE;
     gBCastQueries = BCAST_QUERIES;
     gBCastQueryTimeout = BCAST_QUERY_TIMEOUT;
     gWINSQueries = WINS_QUERIES;
@@ -1422,15 +1426,22 @@ void NetBTInit(void)
     gScopeID[0] = '\0';
     gCacheTimeout = CACHE_TIMEOUT;
 
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-     "\\SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey)
-     == ERROR_SUCCESS)
+    /* Try to open the Win9x NetBT configuration key */
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+     "\\SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
+    /* If that fails, try the WinNT NetBT configuration key */
+    if (ret != ERROR_SUCCESS)
+        ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+         "\\SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters", 0,
+         KEY_READ, &hKey);
+    if (ret == ERROR_SUCCESS)
     {
-        DWORD dword, size = sizeof(dword), ndx;
-        static const char *nsValueNames[] =
-         { "NameServer", "BackupNameServer" };
-        char nsString[16];
+        DWORD dword, size;
 
+        size = sizeof(dword);
+        if (RegQueryValueExA(hKey, "EnableDNS", NULL, NULL,
+         (LPBYTE)&dword, &size) == ERROR_SUCCESS)
+            gEnableDNS = dword;
         size = sizeof(dword);
         if (RegQueryValueExA(hKey, "BcastNameQueryCount", NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERIES
@@ -1451,19 +1462,6 @@ void NetBTInit(void)
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERY_TIMEOUT
          && dword <= MAX_QUERY_TIMEOUT)
             gWINSQueryTimeout = dword;
-        for (ndx = 0; ndx < sizeof(nsValueNames) / sizeof(nsValueNames[0]);
-         ndx++)
-        {
-            size = sizeof(nsString) / sizeof(char);
-            if (RegQueryValueExA(hKey, nsValueNames[ndx], NULL, NULL,
-             (LPBYTE)nsString, &size) == ERROR_SUCCESS)
-            {
-                unsigned long addr = inet_addr(nsString);
-
-                if (addr != INADDR_NONE && gNumWINSServers < MAX_WINS_SERVERS)
-                    gWINSServers[gNumWINSServers++] = addr;
-            }
-        }
         size = MAX_DOMAIN_NAME_LEN - 1;
         if (RegQueryValueExA(hKey, "ScopeID", NULL, NULL, gScopeID + 1, &size)
          == ERROR_SUCCESS)
@@ -1484,6 +1482,33 @@ void NetBTInit(void)
         if (RegQueryValueExA(hKey, "CacheTimeout", NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_CACHE_TIMEOUT)
             gCacheTimeout = dword;
+        RegCloseKey(hKey);
+    }
+    /* WINE-specific NetBT registry settings.  Because our adapter naming is
+     * different than MS', we can't do per-adapter WINS configuration in the
+     * same place.  Just do a global WINS configuration instead.
+     */
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+     "\\Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ, &hKey)
+     == ERROR_SUCCESS)
+    {
+        static const char *nsValueNames[] = { "WinsServer", "BackupWinsServer" };
+        char nsString[16];
+        DWORD size, ndx;
+
+        for (ndx = 0; ndx < sizeof(nsValueNames) / sizeof(nsValueNames[0]);
+         ndx++)
+        {
+            size = sizeof(nsString) / sizeof(char);
+            if (RegQueryValueExA(hKey, nsValueNames[ndx], NULL, NULL,
+             (LPBYTE)nsString, &size) == ERROR_SUCCESS)
+            {
+                unsigned long addr = inet_addr(nsString);
+
+                if (addr != INADDR_NONE && gNumWINSServers < MAX_WINS_SERVERS)
+                    gWINSServers[gNumWINSServers++] = addr;
+            }
+        }
         RegCloseKey(hKey);
     }
 
