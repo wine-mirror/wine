@@ -484,6 +484,8 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
     if (IS_OWNERDRAW(descr))
     {
         DRAWITEMSTRUCT dis;
+        RECT r;
+        HRGN hrgn;
 
 	if (!item)
 	{
@@ -493,6 +495,16 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
 	        FIXME("called with an out of bounds index %d(%d) in owner draw, Not good.\n",index,descr->nb_items);
 	    return;
 	}
+
+        /* some programs mess with the clipping region when
+        drawing the item, *and* restore the previous region
+        after they are done, so a region has better to exist
+        else everything ends clipped */
+        GetClientRect(wnd->hwndSelf, &r);
+        hrgn = CreateRectRgnIndirect(&r);
+        SelectClipRgn( hdc, hrgn);
+        DeleteObject( hrgn );
+
         dis.CtlType      = ODT_LISTBOX;
         dis.CtlID        = wnd->wIDmenu;
         dis.hwndItem     = wnd->hwndSelf;
@@ -922,16 +934,6 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
     {
         SetWindowOrgEx( hdc, descr->horz_pos, 0, NULL );
         rect.right += descr->horz_pos;
-    }
-
-    if (IS_OWNERDRAW(descr))
-    {
-        RECT r;
-        HRGN hrgn;
-        GetClientRect(wnd->hwndSelf, &r);
-        hrgn = CreateRectRgnIndirect(&r);
-        SelectClipRgn( hdc, hrgn);
-        DeleteObject( hrgn );
     }
 
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
