@@ -144,12 +144,19 @@ static BOOL PSDRV_DrawArc( PSDRV_PDEVICE *physDev, INT left, INT top,
     INT x, y, h, w;
     double start_angle, end_angle, ratio;
     RECT rect;
+    POINT start, end;
 
     rect.left = left;
     rect.top = top;
     rect.right = right;
     rect.bottom = bottom;
     LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
+    start.x = xstart;
+    start.y = ystart;
+    end.x = xend;
+    end.y = yend;
+    LPtoDP( physDev->hdc, &start, 1 );
+    LPtoDP( physDev->hdc, &end, 1 );
 
     x = (rect.left + rect.right) / 2;
     y = (rect.top + rect.bottom) / 2;
@@ -163,8 +170,8 @@ static BOOL PSDRV_DrawArc( PSDRV_PDEVICE *physDev, INT left, INT top,
     /* angle is the angle after the rectangle is transformed to a square and is
        measured anticlockwise from the +ve x-axis */
 
-    start_angle = atan2((double)(y - ystart) * ratio, (double)(xstart - x));
-    end_angle = atan2((double)(y - yend) * ratio, (double)(xend - x));
+    start_angle = atan2((double)(y - start.y) * ratio, (double)(start.x - x));
+    end_angle = atan2((double)(y - end.y) * ratio, (double)(end.x - x));
 
     start_angle *= 180.0 / PI;
     end_angle *= 180.0 / PI;
