@@ -83,13 +83,14 @@ inline static char *put_string_a( const char *src, int n )
 {
     static const char hex[16] = "0123456789abcdef";
     char *dst, *res;
+    size_t size;
 
     if (n == -1) n = strlen(src);
     if (n < 0) n = 0;
-    else if (n > 80) n = 80;
-    dst = res = gimme1 (n * 4 + 6);
+    size = 10 + min( 300, n * 4 );
+    dst = res = gimme1( size );
     *dst++ = '"';
-    while (n-- > 0)
+    while (n-- > 0 && dst <= res + size - 9)
     {
         unsigned char c = *src++;
         switch (c)
@@ -127,14 +128,15 @@ inline static char *put_string_a( const char *src, int n )
 inline static char *put_string_w( const WCHAR *src, int n )
 {
     char *dst, *res;
+    size_t size;
 
     if (n == -1) n = strlenW(src);
     if (n < 0) n = 0;
-    else if (n > 80) n = 80;
-    dst = res = gimme1 (n * 5 + 7);
+    size = 12 + min( 300, n * 5 );
+    dst = res = gimme1( size );
     *dst++ = 'L';
     *dst++ = '"';
-    while (n-- > 0)
+    while (n-- > 0 && dst <= res + size - 10)
     {
         WCHAR c = *src++;
         switch (c)
