@@ -458,7 +458,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) + len * sizeof(WCHAR) ))) break;
             memcpy(key->name, szLineStart, len * sizeof(WCHAR));
             key->name[len] = '\0';
-            if (szValueStart && szValueStart < szLineEnd)
+            if (szValueStart)
             {
                 len = (int)(szLineEnd - szValueStart);
                 key->value = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
