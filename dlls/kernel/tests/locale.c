@@ -795,11 +795,18 @@ static void test_CompareStringA()
     ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", 5, "saLuT", -1);
     ok (ret == 2, "(Salut/saLuT) Expected 2, got %d\n", ret);
 
+    /* test for CompareStringA flags */
     SetLastError(0xdeadbeef);
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0x10, "NULL", -1, "NULL", -1);
     ok(GetLastError() == ERROR_INVALID_FLAGS,
         "unexpected error code %ld\n", GetLastError());
     ok(!ret, "CompareStringA must fail with invalid flag\n");
+
+    SetLastError(0xdeadbeef);
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, LOCALE_USE_CP_ACP, "NULL", -1, "NULL", -1);
+    ok(GetLastError() == 0xdeadbeef, "unexpected error code %ld\n", GetLastError());
+    ok(ret == CSTR_EQUAL, "CompareStringA error: %d != CSTR_EQUAL\n", ret);
+    /* end of test for CompareStringA flags */
 
     ret = lstrcmpA("", "");
     ok (ret == 0, "lstrcmpA(\"\", \"\") should return 0, got %d\n", ret);
@@ -956,6 +963,14 @@ void test_LCMapStringA(void)
     static const char lower_case[] = "\tjust! a, test; string 1/*+-.\r\n";
     static const char symbols_stripped[] = "justateststring1";
 
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP | LCMAP_LOWERCASE,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret == lstrlenA(lower_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenA(lower_case) + 1);
+    ok(!memcmp(buf, lower_case, ret), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | LCMAP_UPPERCASE,
                        upper_case, -1, buf, sizeof(buf));
     ok(!ret, "LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n");
@@ -969,7 +984,6 @@ void test_LCMapStringA(void)
        "unexpected error code %ld\n", GetLastError());
 
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
-
                        upper_case, -1, buf, sizeof(buf));
     ok(!ret, "LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,

@@ -2141,7 +2141,7 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
     WCHAR *bufW = NtCurrentTeb()->StaticUnicodeBuffer;
     LPWSTR srcW, dstW;
     INT ret = 0, srclenW, dstlenW;
-    UINT locale_cp;
+    UINT locale_cp = CP_ACP;
 
     if (!src || !srclen || dstlen < 0)
     {
@@ -2149,7 +2149,7 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
         return 0;
     }
 
-    locale_cp = get_lcid_codepage(lcid);
+    if (!(flags & LOCALE_USE_CP_ACP)) locale_cp = get_lcid_codepage( lcid );
 
     srclenW = MultiByteToWideChar(locale_cp, 0, src, srclen, bufW, 260);
     if (srclenW)
@@ -2328,7 +2328,7 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
     }
 
     if( style & ~(NORM_IGNORECASE|NORM_IGNORENONSPACE|NORM_IGNORESYMBOLS|
-        SORT_STRINGSORT|NORM_IGNOREKANATYPE|NORM_IGNOREWIDTH|0x10000000) )
+        SORT_STRINGSORT|NORM_IGNOREKANATYPE|NORM_IGNOREWIDTH|LOCALE_USE_CP_ACP|0x10000000) )
     {
         SetLastError(ERROR_INVALID_FLAGS);
         return 0;
@@ -2372,7 +2372,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
     WCHAR *buf2W = buf1W + 130;
     LPWSTR str1W, str2W;
     INT len1W, len2W, ret;
-    UINT locale_cp;
+    UINT locale_cp = CP_ACP;
 
     if (!str1 || !str2)
     {
@@ -2382,7 +2382,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
     if (len1 < 0) len1 = strlen(str1);
     if (len2 < 0) len2 = strlen(str2);
 
-    locale_cp = get_lcid_codepage(lcid);
+    if (!(style & LOCALE_USE_CP_ACP)) locale_cp = get_lcid_codepage( lcid );
 
     len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 130);
     if (len1W)
@@ -2444,7 +2444,7 @@ int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
     if (str1 == NULL) return -1;
     if (str2 == NULL) return 1;
 
-    ret = CompareStringA(GetThreadLocale(), 0, str1, -1, str2, -1);
+    ret = CompareStringA(GetThreadLocale(), LOCALE_USE_CP_ACP, str1, -1, str2, -1);
     if (ret) ret -= 2;
     
     return ret;
@@ -2473,7 +2473,7 @@ int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
     if (str1 == NULL) return -1;
     if (str2 == NULL) return 1;
 
-    ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
+    ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE|LOCALE_USE_CP_ACP, str1, -1, str2, -1);
     if (ret) ret -= 2;
     
     return ret;
