@@ -209,7 +209,7 @@ file	krnl386.exe
 204 stub SwapRecording
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray16
-207 pascal16 IsDBCSLeadByte(word) IsDBCSLeadByte16
+207 pascal16 IsDBCSLeadByte(word) IsDBCSLeadByte
 
 
 # 208-237 are Win95 extensions; a few of those are also present in WinNT

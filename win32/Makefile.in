@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = win32
 
 C_SRCS = \
-	code_page.c \
 	console.c \
 	device.c \
 	error.c \

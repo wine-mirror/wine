@@ -7,6 +7,7 @@ MODULE    = memory
 
 C_SRCS = \
 	atom.c \
+	codepage.c \
 	environ.c \
 	global.c \
 	heap.c \
