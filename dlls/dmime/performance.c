@@ -21,16 +21,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
-typedef struct DMUS_PMSGItem DMUS_PMSGItem;
-struct DMUS_PMSGItem {
-  DMUS_PMSGItem* next;
-  DMUS_PMSGItem* prev;
-
-  BOOL bInUse;
-  DWORD cb;
-  DMUS_PMSG pMsg;
-};
-
 /* IDirectMusicPerformance8 IUnknown part: */
 HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORMANCE8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
@@ -155,9 +145,53 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_GetBumperLength (LPDIRECTMUSICPERFOR
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SendPMsg (LPDIRECTMUSICPERFORMANCE8 iface, DMUS_PMSG* pPMSG) {
-	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
-	FIXME("(%p, %p): stub\n", This, pPMSG);
-	return S_OK;
+  ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+  DMUS_PMSGItem* pItem = NULL;
+  DMUS_PMSGItem* it = NULL;
+  DMUS_PMSGItem* prev_it = NULL;
+  DMUS_PMSGItem** queue = NULL;
+
+  FIXME("(%p, %p): stub\n", This, pPMSG);
+	 
+  if (NULL == pPMSG) {
+    return E_POINTER;
+  }
+  pItem = DMUS_PMSGToItem(pPMSG);
+  if (NULL == pItem) {
+    return E_POINTER;
+  }
+  if (TRUE == pItem->bInUse) {
+    return DMUS_E_ALREADY_SENT;
+  }
+  
+  /* TODO: Valid Flags */
+  /* TODO: DMUS_PMSGF_MUSICTIME */
+  pItem->rtItemTime = pPMSG->rtTime;
+
+  if (pPMSG->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE) {
+    queue = &This->imm_head;
+  } else {
+    queue = &This->head;
+  }
+
+  for (it = *queue; NULL != it && it->rtItemTime < pItem->rtItemTime; it = it->next) {
+    prev_it = it;
+  }
+  if (NULL == prev_it) {
+    pItem->prev = NULL;
+    pItem->next = (*queue)->next;
+    /*assert( NULL == pItem->next->prev );*/
+    if (NULL != pItem->next) pItem->next->prev = pItem;
+    *queue = pItem;
+  } else {
+    pItem->prev = prev_it;
+    pItem->next = prev_it->next;
+    prev_it->next = pItem;
+    if (NULL != pItem->next) pItem->next->prev = pItem;
+  }
+  /** now in use, prevent from stupid Frees */
+  pItem->bInUse = TRUE;
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_MusicToReferenceTime (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, REFERENCE_TIME* prtTime) {
@@ -201,7 +235,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_AllocPMsg (LPDIRECTMUSICPERFORMANCE8
     return E_OUTOFMEMORY;
   }
   pItem->pMsg.dwSize = cb;
-  *ppPMSG = &(pItem->pMsg);
+  *ppPMSG = DMUS_ItemToPMSG(pItem);
   return S_OK;
 }
 
@@ -214,41 +248,45 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg (LPDIRECTMUSICPERFORMANCE8 
   if (NULL == pPMSG) {
     return E_POINTER;
   }
-  pItem = (DMUS_PMSGItem*) (((unsigned char*) pPMSG) - sizeof(DMUS_PMSG) - sizeof(DMUS_PMSGItem));
+  pItem = DMUS_PMSGToItem(pPMSG);
   if (NULL == pItem) {
     return E_POINTER;
   }
   if (TRUE == pItem->bInUse) {
+    /** prevent for freeing PMsg in queue (ie to be processed) */
     return DMUS_E_CANNOT_FREE;
-  }	
+  }
+  /** now we can remove it safely */
+  DMUS_ItemRemoveFromQueue( This, pItem );
+  /** TODO: see if we should Release the pItem->pMsg->punkUser and others Interfaces */
   HeapFree(GetProcessHeap(), 0, pItem);  
   return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetGraph (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicGraph** ppGraph) {
-	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
-	FIXME("(%p, %p): to check\n", This, ppGraph);
-	if (NULL != This->pToolGraph) {
-	  *ppGraph = (LPDIRECTMUSICGRAPH) This->pToolGraph; 
-	  IDirectMusicGraph_AddRef((LPDIRECTMUSICGRAPH) *ppGraph);
-	}
-	return S_OK;
+  ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+  FIXME("(%p, %p): to check\n", This, ppGraph);
+  if (NULL != This->pToolGraph) {
+    *ppGraph = (LPDIRECTMUSICGRAPH) This->pToolGraph; 
+    IDirectMusicGraph_AddRef((LPDIRECTMUSICGRAPH) *ppGraph);
+  }
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetGraph (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicGraph* pGraph) {
-	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
-
-	FIXME("(%p, %p): to check\n", This, pGraph);
-
-	if (NULL != This->pToolGraph) {
-	  /* Todo clean buffers and tools before */
-	  IDirectMusicGraph_Release((LPDIRECTMUSICGRAPH) This->pToolGraph);
-	}
-	This->pToolGraph = pGraph;
-	if (NULL != This->pToolGraph) {
-	  IDirectMusicGraph_AddRef((LPDIRECTMUSICGRAPH) This->pToolGraph);
-	}
-	return S_OK;
+  ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+  
+  FIXME("(%p, %p): to check\n", This, pGraph);
+  
+  if (NULL != This->pToolGraph) {
+    /* Todo clean buffers and tools before */
+    IDirectMusicGraph_Release((LPDIRECTMUSICGRAPH) This->pToolGraph);
+  }
+  This->pToolGraph = pGraph;
+  if (NULL != This->pToolGraph) {
+    IDirectMusicGraph_AddRef((LPDIRECTMUSICGRAPH) This->pToolGraph);
+  }
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetNotificationHandle (LPDIRECTMUSICPERFORMANCE8 iface, HANDLE hNotification, REFERENCE_TIME rtMinimum) {
@@ -261,10 +299,15 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_SetNotificationHandle (LPDIRECTMUSIC
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetNotificationPMsg (LPDIRECTMUSICPERFORMANCE8 iface, DMUS_NOTIFICATION_PMSG** ppNotificationPMsg) {
   ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+  
+  
   FIXME("(%p, %p): stub\n", This, ppNotificationPMsg);
   if (NULL == ppNotificationPMsg) {
     return E_POINTER;
   }
+  
+  
+
   return S_FALSE;
   /*return S_OK;*/
 }
@@ -735,7 +778,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID 
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicPerformance8_Vtbl;
-	obj->ref = 1;
+	obj->ref = 0;  /* will be inited by QueryInterface */
 	obj->pDirectMusic = NULL;
 	obj->pDirectSound = NULL;
 	obj->pDefaultPath = NULL;
