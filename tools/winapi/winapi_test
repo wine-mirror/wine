@@ -55,9 +55,9 @@ my @files = ();
     foreach my $test (@tests) {
 	my @test_dirs = $tests->get_test_dirs($test);
 	foreach my $test_dir (@test_dirs) {
-	    my @includes = $tests->get_section($test_dir, $test, "include");
-	    foreach my $include (@includes) {
-		$files{"include/$include"} = 1;
+	    my @headers = $tests->get_section($test_dir, $test, "header");
+	    foreach my $header (@headers) {
+		$files{"include/$header"} = 1;
 	    }
 	}
     }
@@ -65,11 +65,11 @@ my @files = ();
     foreach my $test (@tests) {
 	my @test_dirs = $tests->get_test_dirs($test);
 	foreach my $test_dir (@test_dirs) {
-	    my @includes = $tests->get_section($test_dir, $test, "include");
-	    foreach my $include (@includes) {
-		if($files{"include/$include"}) {
-		    push @files, "include/$include";
-		    $files{"include/$include"} = 0;
+	    my @headers = $tests->get_section($test_dir, $test, "header");
+	    foreach my $header (@headers) {
+		if($files{"include/$header"}) {
+		    push @files, "include/$header";
+		    $files{"include/$header"} = 0;
 		}
 	    }
 	}
@@ -102,6 +102,7 @@ my %defines = (
     "MAX_PROFILE_LEN" => 80, 
     "OFS_MAXPATHNAME" => 128,
     "SIZE_OF_80387_REGISTERS" => 80,
+    "TOKEN_SOURCE_LENGTH" => 8,
 );
 
 my %align_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
@@ -387,9 +388,9 @@ sub output_header {
     print OUT " */\n";
 
     print OUT "\n";
-    print OUT "#include <stdio.h>\n";
+    print OUT "#define WINVER 0x0501\n";
+    print OUT "#define WINE_NOWINSOCK\n";
     print OUT "\n";
-    print OUT "#include \"wine/test.h\"\n";
     foreach my $test (@tests) {
 	my @includes = $tests->get_section($test_dir, $test, "include");
 	foreach my $include (@includes) {
@@ -397,7 +398,8 @@ sub output_header {
 	}
     }
     print OUT "\n";
-
+    print OUT "#include \"wine/test.h\"\n";
+    print OUT "\n";
 
     print OUT "/***********************************************************************\n";
     print OUT " * Windows API extension\n";
@@ -476,7 +478,7 @@ sub output_test_pack {
     my $test_dir = shift;
     my $test = shift;
 
-    my @includes = $tests->get_section($test_dir, $test, "include");
+    my @headers = $tests->get_section($test_dir, $test, "header");
     my @type_names = $tests->get_section($test_dir, $test, "struct");
 
     my %type_name_not_used;
@@ -485,8 +487,8 @@ sub output_test_pack {
 	$type_name_not_used{$type_name} = 1;
     }
 
-    foreach my $include (@includes) {
-	my $types = $file2types{"include/$include"};
+    foreach my $header (@headers) {
+	my $types = $file2types{"include/$header"};
 	
 	foreach my $type_name (@type_names) {
 	    my $type = $$types{$type_name};

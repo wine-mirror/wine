@@ -6,12 +6,16 @@
 
 Unit tests for data structure packing
 
-%include
+%header
 
 basetsd.h
 winnt.h
 windef.h
 wingdi.h
+
+%include
+
+windows.h
 
 %struct
 
@@ -161,12 +165,16 @@ XFORM
 
 Unit tests for data structure packing
 
-%include
+%header
 
 basetsd.h
 winnt.h
 windef.h
 winbase.h
+
+%include
+
+windows.h
 
 %struct
 
@@ -200,7 +208,7 @@ RIP_INFO
 SECURITY_ATTRIBUTES
 STARTUPINFOA
 STARTUPINFOW
-SYSLEVEL
+# SYSLEVEL
 SYSTEMTIME
 # SYSTEM_INFO
 SYSTEM_POWER_STATUS
@@ -219,11 +227,15 @@ WIN32_STREAM_ID
 
 Unit tests for data structure packing
 
-%include
+%header
 
 basetsd.h
 winnt.h
 windef.h
+
+%include
+
+windows.h
 
 %struct
 
@@ -231,7 +243,6 @@ ACCESS_ALLOWED_ACE
 ACCESS_DENIED_ACE
 ACE_HEADER
 ACL
-CONTEXT86
 # EXCEPTION_FRAME
 EXCEPTION_POINTERS
 EXCEPTION_RECORD
@@ -309,7 +320,7 @@ TOKEN_USER
 
 Unit tests for data structure packing
 
-%include
+%header
 
 basetsd.h
 winnt.h
@@ -317,6 +328,10 @@ windef.h
 winbase.h
 wingdi.h
 winuser.h
+
+%include
+
+windows.h
 
 %struct
 
