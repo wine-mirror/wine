@@ -996,7 +996,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 {
     HRGN hrgn;
 
-    TRACE(" %p %ld %p = ", lpXform, dwCount, rgndata );
+    TRACE(" %p %ld %p\n", lpXform, dwCount, rgndata );
 
     if( lpXform )
         WARN("(Xform not implemented - ignored)\n");
@@ -1006,7 +1006,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 	/* FIXME: We can use CreatePolyPolygonRgn() here
 	 *        for trapezoidal data */
 
-        WARN("(Unsupported region data)\n");
+        WARN("(Unsupported region data type: %lu)\n", rgndata->rdh.iType);
 	goto fail;
     }
 
@@ -1024,7 +1024,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
             }
 	    GDI_ReleaseObj( hrgn );
 
-            TRACE("%p\n", hrgn );
+            TRACE("-- %p\n", hrgn );
             return hrgn;
         }
 	else ERR("Could not get pointer to newborn Region!\n");
