@@ -18,6 +18,20 @@
 
 #include "windef.h"
 
+static void (*__glutExitFunc)(int ret) = 0;
+
+/***************************************************
+ *	DllMain [glut32.init]
+ */
+BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
+{
+   if(fdwReason == DLL_PROCESS_DETACH)	{
+      if(__glutExitFunc)
+         __glutExitFunc(0);
+   }
+   return TRUE;
+}
+
 /****************************************************
  *	glutGetColor (glut32.@)
  */
@@ -57,8 +71,9 @@ int WINAPI wine_glutCreateMenu(void *arg)
 /****************************************************
  *	__glutCreateMenuWithExit (glut32.@)
  */
-int WINAPI wine___glutCreateMenuWithExit(void *arg1, void *arg2)
+int WINAPI wine___glutCreateMenuWithExit(void *arg1, void (*exitfunc)(int))
 {
+   __glutExitFunc = exitfunc;
    return glutCreateMenu(arg1);
 }
 
@@ -83,8 +98,9 @@ int WINAPI wine_glutCreateWindow(void *arg)
 /****************************************************
  *	__glutCreateWindowWithExit (glut32.@)
  */
-int WINAPI wine___glutCreateWindowWithExit(void *arg, void *arg2)
+int WINAPI wine___glutCreateWindowWithExit(void *arg, void (*exitfunc)(int))
 {
+   __glutExitFunc = exitfunc;
    return glutCreateWindow(arg);
 }
 
@@ -433,8 +449,9 @@ void WINAPI wine_glutInit(void *arg1, void **arg2)
 /**********************************************
  *	__glutInitWithExit (glut32.@)
  */
-void WINAPI wine___glutInitWithExit(void *arg1, void *arg2, void *arg3)
+void WINAPI wine___glutInitWithExit(void *arg1, void *arg2, void (*exitfunc)(int))
 {
+   __glutExitFunc = exitfunc;
    glutInit(arg1, arg2);
 }
 
