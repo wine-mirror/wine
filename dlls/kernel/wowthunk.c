@@ -293,6 +293,7 @@ DWORD WINAPI K32WOWCallback16( DWORD vpfn16, DWORD dwParam )
  */
 DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 {
+    GlobalPageLock16(GlobalHandle16(SELECTOROF(vp)));
     return (DWORD)K32WOWGetVDMPointer( vp, 0, (DWORD)fMode );
 }
 
