@@ -1013,14 +1013,11 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
       /* paint the edit control padding area */
       if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
       {
-          HPEN hPrevPen = SelectObject( hDC, GetSysColorPen(COLOR_WINDOW) );
           RECT rPadEdit = lphc->textRect;
 
           InflateRect(&rPadEdit, EDIT_CONTROL_PADDING(), EDIT_CONTROL_PADDING());
 
-          Rectangle( hDC, rPadEdit.left, rPadEdit.top, rPadEdit.right, rPadEdit.bottom);
-
-          SelectObject( hDC, hPrevPen );
+          FrameRect( hDC, &rPadEdit, GetSysColorBrush(COLOR_WINDOW) );
       }
  
       if( !(lphc->wState & CBF_EDIT) )
