@@ -268,13 +268,30 @@ HRESULT WINAPI LoadTypeLibEx(
     
     p=HEAP_strdupWtoA(GetProcessHeap(),0,szFile);
     
-    if(regkind != REGKIND_NONE)
-        FIXME ("registration of typelibs not supported yet!\n");
-
     res= TLB_ReadTypeLib(p, (ITypeLib2**)pptLib);
+
+    if (SUCCEEDED(res))
+        switch(regkind)
+        {
+            case REGKIND_DEFAULT:
+                /* FIXME: is this correct? */
+                if (!p || !p[0] || (p[0] != '\\' && p[0] != '/' && p[1] != ':'))
+                    break;
+                /* else fall-through */
+            case REGKIND_REGISTER:
+                /* FIXME: Help path? */
+                if (!SUCCEEDED(res = RegisterTypeLib(*pptLib, (LPOLESTR)szFile, NULL)))
+                {
+                    IUnknown_Release(*pptLib);
+                    *pptLib = 0;
+                }
+                break;
+            case REGKIND_NONE:
+                break;
+        }
+
     HeapFree(GetProcessHeap(),0,p);
     TRACE(" returns %08lx\n",res);
-
     return res;
 }
 
@@ -320,8 +337,73 @@ HRESULT WINAPI RegisterTypeLib(
      OLECHAR * szFullPath, /* [in] full Path of the library*/
      OLECHAR * szHelpDir)  /* [in] dir to the helpfile for the library,
 							 may be NULL*/
-{   FIXME("(%p,%s,%s): stub\n",ptlib, debugstr_w(szFullPath),debugstr_w(szHelpDir));
-    return S_OK;	/* FIXME: pretend everything is OK */
+{
+    HRESULT res;
+    TLIBATTR *attr;
+    OLECHAR guid[80];
+    LPSTR guidA;
+    CHAR keyName[120];
+    HKEY key, subKey;
+
+    if (ptlib == NULL || szFullPath == NULL)
+        return E_INVALIDARG;
+
+    if (!SUCCEEDED(ITypeLib_GetLibAttr(ptlib, &attr)))
+        return E_FAIL;
+
+    StringFromGUID2(&attr->guid, guid, 80);
+    guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
+    snprintf(keyName, sizeof(keyName), "TypeLib\\%s\\%x.%x",
+        guidA, attr->wMajorVerNum, attr->wMinorVerNum);
+    HeapFree(GetProcessHeap(), 0, guidA);
+
+    res = S_OK;
+    if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
+        KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS)
+    {
+        LPOLESTR doc;
+
+        if (SUCCEEDED(ITypeLib_GetDocumentation(ptlib, -1, NULL, &doc, NULL, NULL)))
+        {
+            if (RegSetValueExW(key, NULL, 0, REG_SZ,
+                (BYTE *)doc, lstrlenW(doc) * sizeof(OLECHAR)) != ERROR_SUCCESS)
+                res = E_FAIL;
+
+            SysFreeString(doc);
+        }
+        else
+            res = E_FAIL;
+
+        /* FIXME: This *seems* to be 0 always, not sure though */
+        if (res == S_OK && RegCreateKeyExA(key, "0\\win32", 0, NULL, 0,
+            KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS)
+        {
+            if (RegSetValueExW(subKey, NULL, 0, REG_SZ,
+                (BYTE *)szFullPath, lstrlenW(szFullPath) * sizeof(OLECHAR)) != ERROR_SUCCESS)
+                res = E_FAIL;
+
+            RegCloseKey(subKey);
+        }
+        else
+            res = E_FAIL;
+
+        if (res == S_OK && RegCreateKeyExA(key, "FLAGS", 0, NULL, 0,
+            KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS)
+        {
+            CHAR buf[20];
+            /* FIXME: is %u correct? */
+            snprintf(buf, strlen(buf), "%u", attr->wLibFlags);
+            if (RegSetValueExA(subKey, NULL, 0, REG_SZ,
+                buf, lstrlenA(buf) + 1) != ERROR_SUCCESS)
+                res = E_FAIL;
+        }
+        RegCloseKey(key);
+    }
+    else
+        res = E_FAIL;
+
+    ITypeLib_ReleaseTLibAttr(ptlib, attr);
+    return res;
 }
 
 
