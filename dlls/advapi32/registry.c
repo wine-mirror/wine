@@ -1061,7 +1061,7 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
         handle = CreateFileA( buffer, GENERIC_WRITE, 0, NULL,
                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
         if (handle != INVALID_HANDLE_VALUE) break;
-        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) goto done;
+        if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) goto done;
     }
 
     req->hkey = hkey;
