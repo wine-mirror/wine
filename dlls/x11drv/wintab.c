@@ -621,7 +621,19 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
                                 button_press_type)?"press":"release");
 
         set_button_state(button->deviceid);
-    }
+        gMsgPacket.pkTime = button->time;
+        gMsgPacket.pkSerialNumber = gSerial++;
+        gMsgPacket.pkCursor = button->deviceid;
+        gMsgPacket.pkX = button->axis_data[0];
+        gMsgPacket.pkY = button->axis_data[1];
+        gMsgPacket.pkOrientation.orAzimuth =
+                    figure_deg(button->axis_data[3],button->axis_data[4]);
+        gMsgPacket.pkOrientation.orAltitude = 1000 - 15 * max
+                    (abs(button->axis_data[3]),abs(button->axis_data[4]));
+        gMsgPacket.pkNormalPressure = button->axis_data[2];
+        gMsgPacket.pkButtons = get_button_state(button->deviceid);
+        SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
+  }
     else if (event->type == key_press_type)
     {
         TRACE_(event)("Received tablet key press event\n");
