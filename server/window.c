@@ -337,7 +337,8 @@ DECL_HANDLER(create_window)
 
         if (!(parent = get_window( req->parent ))) return;
         if (req->owner && !(owner = get_window( req->owner ))) return;
-        if (owner && owner->parent != parent)
+        if (owner == top_window) owner = NULL;
+        else if (owner && owner->parent != parent)
         {
             /* owner must be a sibling of the new window */
             set_error( STATUS_ACCESS_DENIED );
