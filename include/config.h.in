@@ -229,6 +229,9 @@
 /* Define if you have the <freetype/ftnames.h> header file.  */
 #undef HAVE_FREETYPE_FTNAMES_H
 
+/* Define if you have the <freetype/ftoutln.h> header file.  */
+#undef HAVE_FREETYPE_FTOUTLN_H
+
 /* Define if you have the <freetype/ftsnames.h> header file.  */
 #undef HAVE_FREETYPE_FTSNAMES_H
 

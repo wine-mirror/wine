@@ -70,7 +70,18 @@ extern void FONT_TextMetric16ToW(const TEXTMETRIC16 *ptm16, LPTEXTMETRICW ptm32 
 extern void FONT_TextMetricAToW(const TEXTMETRICA *ptm32A, LPTEXTMETRICW ptm32W );
 extern void FONT_NewTextMetricEx16ToW(const NEWTEXTMETRICEX16*, LPNEWTEXTMETRICEXW);
 extern void FONT_EnumLogFontEx16ToW(const ENUMLOGFONTEX16*, LPENUMLOGFONTEXW);
-extern BOOL ENGINE_InitFonts(void);
 
+extern DWORD WineEngAddRefFont(GdiFont);
+extern GdiFont WineEngCreateFontInstance(HFONT);
+extern DWORD WineEngDecRefFont(GdiFont);
+extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
+extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
+extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
+				    LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
+				    const MAT2*);
+extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
+extern BOOL WineEngGetTextExtentPoint(GdiFont, LPCWSTR, INT, LPSIZE);
+extern BOOL WineEngGetTextMetrics(GdiFont, LPTEXTMETRICW);
+extern BOOL WineEngInit(void);
 
 #endif /* __WINE_FONT_H */

@@ -130,7 +130,6 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
 HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
 {
     LOGFONTW lf;
-    HFONT16 prevfont = dc->hFont;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     BOOL bd = FALSE, it = FALSE;
     AFMLISTENTRY *afmle;
@@ -142,8 +141,6 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
 	  lf.lfWeight);
-
-    dc->hFont = hfont;
 
     if(lf.lfItalic)
         it = TRUE;
@@ -258,7 +255,7 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     physDev->font.tm.tmDigitizedAspectX = physDev->logPixelsY;
     physDev->font.tm.tmDigitizedAspectY = physDev->logPixelsX;
     
-    return prevfont;
+    return TRUE; /* We'll use a device font for now */
 }
 
 /***********************************************************************

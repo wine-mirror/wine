@@ -407,7 +407,8 @@ else
                          freetype/tttables.h \
                          freetype/ftnames.h \
                          freetype/ftsnames.h \
-                         freetype/ttnameid.h)
+                         freetype/ttnameid.h \
+                         freetype/ftoutln.h)
 	CPPFLAGS="$ac_save_CPPFLAGS"
 	wine_cv_msg_freetype=no
     fi

@@ -37,14 +37,9 @@ static HBRUSH TTYDRV_DC_BRUSH_SelectObject(DC *dc, HBRUSH hbrush)
  */
 static HFONT TTYDRV_DC_FONT_SelectObject(DC* dc, HFONT hfont)
 {
-  HFONT hPreviousFont;
-
   TRACE("(%p, 0x%04x)\n", dc, hfont);
 
-  hPreviousFont = dc->hFont;
-  dc->hFont = hfont;
-
-  return hPreviousFont;
+  return TRUE; /* Use device font */
 }
 
 /***********************************************************************

@@ -75,12 +75,10 @@ BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics )
 HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont)
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    HPEN prevHandle = dc->hFont;
     int	nSize;
 
-    if (!GetObject16( hfont, sizeof(physDev->lf), &physDev->lf )) return 0;
-
-    dc->hFont = hfont;
+    if (!GetObject16( hfont, sizeof(physDev->lf), &physDev->lf ))
+        return GDI_ERROR;
 
     TRACE("WIN16DRV_FONT_SelectObject %s h=%d\n",
           debugstr_a(physDev->lf.lfFaceName), physDev->lf.lfHeight);
@@ -146,11 +144,11 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont)
            physDev->tm.tmMaxCharWidth,
            physDev->tm.tmWeight);
 
-    return prevHandle;
+    return TRUE; /* We'll use a device font */
 }
 
 /***********************************************************************
- *           GetCharWidth32A    (GDI32.@)
+ *           WIN16DRV_GetCharWidth
  */
 BOOL WIN16DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 			    LPINT buffer )

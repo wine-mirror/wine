@@ -178,13 +178,12 @@ static BOOL MFDRV_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
  */
 static HFONT MFDRV_FONT_SelectObject( DC * dc, HFONT hfont )
 {
-    HFONT16 prevHandle = dc->hFont;
     LOGFONT16 lf16;
 
-    if (!GetObject16( hfont, sizeof(lf16), &lf16 )) return 0;
+    if (!GetObject16( hfont, sizeof(lf16), &lf16 )) return GDI_ERROR;
     if (MFDRV_CreateFontIndirect(dc, hfont, &lf16))
-        return prevHandle;
-    return 0;
+        return FALSE;
+    return GDI_ERROR;
 }
 
 /******************************************************************

@@ -6,10 +6,13 @@ MODULE    = gdi32
 SOVERSION = 1.0
 ALTNAMES  = gdi dispdib wing
 IMPORTS   = kernel32 ntdll
+EXTRALIBS = @FREETYPELIBS@
+EXTRAINCL = @FREETYPEINCL@
 
 C_SRCS = \
 	bidi16.c \
 	driver.c \
+	freetype.c \
 	gdi_main.c \
 	printdrv.c \
 	thunk.c \

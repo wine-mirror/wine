@@ -244,6 +244,9 @@ BOOL GDI_Init(void)
     }
 
     if (hkey) RegCloseKey( hkey );
+
+    WineEngInit();
+
     return TRUE;
 }
 
@@ -732,7 +735,46 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
     }
     return ret;
 }
+/***********************************************************************
+ *           FONT_SelectObject
+ *
+ * If the driver supports vector fonts we create a gdi font first and
+ * then call the driver to give it a chance to supply its own device
+ * font.  If the driver wants to do this it returns TRUE and we can
+ * delete the gdi font, if the driver wants to use the gdi font it
+ * should return FALSE, to signal an error return GDI_ERROR.  For
+ * drivers that don't support vector fonts they must supply their own
+ * font.
+ */
+static HGDIOBJ FONT_SelectObject(DC *dc, HGDIOBJ hFont)
+{
+    HGDIOBJ ret = FALSE;
 
+    if(dc->gdiFont) {
+        WineEngDecRefFont(dc->gdiFont);
+	dc->gdiFont = 0;
+    }
+
+    if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
+        dc->gdiFont = WineEngCreateFontInstance(hFont);
+
+    if(dc->funcs->pSelectObject)
+        ret = dc->funcs->pSelectObject(dc, hFont);
+
+    if(ret && dc->gdiFont) {
+        WineEngDecRefFont(dc->gdiFont);
+	dc->gdiFont = 0;
+    }
+
+    if(ret == GDI_ERROR)
+        ret = FALSE; /* SelectObject returns FALSE on error */
+    else {
+        ret = dc->hFont;
+	dc->hFont = hFont;
+    }
+
+    return ret;
+}
 
 /***********************************************************************
  *           SelectObject    (GDI.45)
@@ -752,7 +794,12 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return 0;
     TRACE("hdc=%04x %04x\n", hdc, handle );
-    if (dc->funcs->pSelectObject)
+
+    /* Fonts get a rather different treatment so we'll handle them
+       separately */
+    if(GetObjectType(handle) == OBJ_FONT)
+        ret = FONT_SelectObject(dc, handle);
+    else if (dc->funcs->pSelectObject)
         ret = dc->funcs->pSelectObject( dc, handle );
     GDI_ReleaseObj( hdc );
 

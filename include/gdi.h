@@ -50,6 +50,8 @@ typedef struct tagGDIOBJHDR
 
 typedef BOOL16 CALLBACK (*DCHOOKPROC)(HDC16,WORD,DWORD,LPARAM);
 
+typedef struct tagGdiFont *GdiFont;
+
 typedef struct tagDC
 {
     GDIOBJHDR    header;
@@ -81,6 +83,7 @@ typedef struct tagDC
     HANDLE16      hDevice;
     HPALETTE16    hPalette;
 
+    GdiFont       gdiFont;
     GdiPath       path;
 
     WORD          ROPmode;

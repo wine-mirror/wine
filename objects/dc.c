@@ -57,6 +57,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     dc->hBitmap             = 0;
     dc->hDevice             = 0;
     dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
+    dc->gdiFont             = 0;
     dc->ROPmode             = R2_COPYPEN;
     dc->polyFillMode        = ALTERNATE;
     dc->stretchBltMode      = BLACKONWHITE;
@@ -311,6 +312,13 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     }
     else
 	newdc->hClipRgn = 0;
+
+    if(dc->gdiFont) {
+        WineEngAddRefFont(dc->gdiFont);
+	newdc->gdiFont = dc->gdiFont;
+    } else
+        newdc->gdiFont = 0;
+
     GDI_ReleaseObj( handle );
     GDI_ReleaseObj( hdc );
     return handle;
@@ -767,6 +775,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->hGCClipRgn) DeleteObject( dc->hGCClipRgn );
     if (dc->pAbortProc) THUNK_Free( (FARPROC)dc->pAbortProc );
     if (dc->hookThunk) THUNK_Free( (FARPROC)dc->hookThunk );
+    if (dc->gdiFont) WineEngDecRefFont( dc->gdiFont );
     PATH_DestroyGdiPath(&dc->path);
 
     GDI_FreeObject( hdc, dc );

@@ -178,7 +178,6 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
 {
     EMRSELECTOBJECT emr;
     DWORD index;
-    HFONT hOldFont;
     int i;
 
     /* If the object is a stock font object, do not need to create it.
@@ -195,17 +194,15 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
             goto found;
         }
     }
-    if (!(index = EMFDRV_CreateFontIndirect(dc, hFont ))) return 0;
+    if (!(index = EMFDRV_CreateFontIndirect(dc, hFont ))) return GDI_ERROR;
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
-        return FALSE;
+        return GDI_ERROR;
 
-    hOldFont = dc->hFont;
-    dc->hFont = hFont;
-    return hOldFont;
+    return FALSE;
 }
 
 

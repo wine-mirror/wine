@@ -3146,12 +3146,14 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
  */
 HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont )
 {
-    HFONT hPrevFont = 0;
     LOGFONTW logfont;
     LOGFONT16 lf;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return 0;
+    if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return GDI_ERROR;
+
+    /* If we want to use a gdi font, we should check for XRender extension
+       and return FALSE here */
 
     EnterCriticalSection( &crtsc_fonts_X11 );
 
@@ -3215,12 +3217,9 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont )
 	logfont.lfCharSet = charsetMatched;
     }
 
-    hPrevFont = dc->hFont;
-    dc->hFont = hfont;
-
     LeaveCriticalSection( &crtsc_fonts_X11 );
 
-    return hPrevFont;
+    return TRUE; /* Use a device font */
 }
 
 

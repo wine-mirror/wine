@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "winerror.h"
 #include "winnls.h"
 #include "font.h"
@@ -724,25 +725,28 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
 				    LPARAM lParam, DWORD dwUnicode)
 {
     BOOL (*enum_func)(HDC,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
-    INT ret = 0;
+    INT ret = 1;
     DC *dc = DC_GetDCPtr( hDC );
+    fontEnum32 fe32;
+    BOOL enum_gdi_fonts;
 
     if (!dc) return 0;
+
+    fe32.lpLogFontParam = plf;
+    fe32.lpEnumFunc = efproc;
+    fe32.lpData = lParam;
+    fe32.dwFlags = dwUnicode;
+
     enum_func = dc->funcs->pEnumDeviceFonts;
     GDI_ReleaseObj( hDC );
+    enum_gdi_fonts = GetDeviceCaps(hDC, TEXTCAPS) & TC_VA_ABLE;
 
-    if (enum_func)
-    {
-	fontEnum32 fe32;
-
-	fe32.lpLogFontParam = plf;
-	fe32.lpEnumFunc = efproc;
-	fe32.lpData = lParam;
-	
-	fe32.dwFlags = dwUnicode;
-
+    if (!enum_func && !enum_gdi_fonts) return 0;
+    
+    if (enum_gdi_fonts)
+        ret = WineEngEnumFonts( plf, FONT_EnumInstance, (LPARAM)&fe32 );
+    if (ret && enum_func)
 	ret = enum_func( hDC, plf, FONT_EnumInstance, (LPARAM)&fe32 );
-    }
     return ret;
 }
 
@@ -1029,25 +1033,15 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 {
     BOOL ret = FALSE;
     UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-    DC * dc = DC_GetDCPtr( hdc );
+    UINT wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
+    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
 
-    if (!dc) return FALSE;
-
-    if (dc->funcs->pGetTextExtentPoint)
-    {
-        /* str may not be 0 terminated so we can't use HEAP_strdupWtoA.
-         * So we use MultiByteToWideChar.
-         */
-        UINT wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
-        LPWSTR p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
-        if (p)
-        {
-            wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
-            ret = dc->funcs->pGetTextExtentPoint( dc, p, wlen, size );
-            HeapFree( GetProcessHeap(), 0, p );
-        }
+    if (p) {
+        wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
+	ret = GetTextExtentPoint32W( hdc, p, wlen, size );
+	HeapFree( GetProcessHeap(), 0, p );
     }
-    GDI_ReleaseObj( hdc );
+
     TRACE("(%08x %s %d %p): returning %ld x %ld\n",
           hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
     return ret;
@@ -1071,12 +1065,15 @@ BOOL WINAPI GetTextExtentPoint32W(
 {
     BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
-    if (dc)
-    {
-	if(dc->funcs->pGetTextExtentPoint)
-	    ret = dc->funcs->pGetTextExtentPoint( dc, str, count, size );
-        GDI_ReleaseObj( hdc );
-    }
+    if (!dc) return FALSE;
+
+    if(dc->gdiFont)
+        ret = WineEngGetTextExtentPoint(dc->gdiFont, str, count, size);
+    else if(dc->funcs->pGetTextExtentPoint)
+        ret = dc->funcs->pGetTextExtentPoint( dc, str, count, size );
+
+    GDI_ReleaseObj( hdc );
+
     TRACE("(%08x %s %d %p): returning %ld x %ld\n",
           hdc, debugstr_wn (str, count), count, size, size->cx, size->cy );
     return ret;
@@ -1160,15 +1157,11 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     int index, nFit, extent;
     SIZE tSize;
     BOOL ret = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
-    if (!dc) return FALSE;
-
-    if (!dc->funcs->pGetTextExtentPoint) goto done;
 
     size->cx = size->cy = nFit = extent = 0;
     for(index = 0; index < count; index++)
     {
- 	if(!dc->funcs->pGetTextExtentPoint( dc, str, 1, &tSize )) goto done;
+ 	if(!GetTextExtentPoint32W( hdc, str, 1, &tSize )) goto done;
         /* GetTextExtentPoint includes intercharacter spacing. */
         /* FIXME - justification needs doing yet.  Remember that the base
          * data will not be in logical coordinates.
@@ -1191,7 +1184,6 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
           hdc,debugstr_wn(str,count),maxExt,nFit, size->cx,size->cy);
 
 done:
-    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -1229,7 +1221,12 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
-    if (dc->funcs->pGetTextMetrics && dc->funcs->pGetTextMetrics( dc, metrics ))
+    if (dc->gdiFont)
+        ret = WineEngGetTextMetrics(dc->gdiFont, metrics);
+    else if (dc->funcs->pGetTextMetrics)
+        ret = dc->funcs->pGetTextMetrics( dc, metrics );
+
+    if (ret)
     {
     /* device layer returns values in device units
      * therefore we have to convert them to logical */
@@ -1311,62 +1308,130 @@ UINT WINAPI GetOutlineTextMetricsA(
     UINT cbData, /* [in]  Size of metric data array */
     LPOUTLINETEXTMETRICA lpOTM)  /* [out] Address of metric data array */
 {
+    char buf[512], *ptr;
+    UINT ret, needed;
+    OUTLINETEXTMETRICW *lpOTMW = (OUTLINETEXTMETRICW *)buf;
+    INT left, len;
+
+    if((ret = GetOutlineTextMetricsW(hdc, sizeof(buf), lpOTMW)) == 0) {
+        if((ret = GetOutlineTextMetricsW(hdc, 0, NULL)) == 0)
+	    return 0;
+	lpOTMW = HeapAlloc(GetProcessHeap(), 0, ret);
+	GetOutlineTextMetricsW(hdc, ret, lpOTMW);
+    }
+
+    needed = sizeof(OUTLINETEXTMETRICA);
+    if(lpOTMW->otmpFamilyName)
+        needed += WideCharToMultiByte(CP_ACP, 0,
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1, 
+				      NULL, 0, NULL, NULL);
+    if(lpOTMW->otmpFaceName)
+        needed += WideCharToMultiByte(CP_ACP, 0,
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1, 
+				      NULL, 0, NULL, NULL);
+    if(lpOTMW->otmpStyleName)
+        needed += WideCharToMultiByte(CP_ACP, 0,
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1, 
+				      NULL, 0, NULL, NULL);
+    if(lpOTMW->otmpFullName)
+        needed += WideCharToMultiByte(CP_ACP, 0,
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1, 
+				      NULL, 0, NULL, NULL);
+
+    if(!lpOTM) {
+        ret = needed;
+	goto end;
+    }
+
+    if(needed > cbData) {
+        ret = 0;
+	goto end;
+    }
 
 
-    UINT rtn = FALSE;
-    LPTEXTMETRICA lptxtMetr;
-
-
-
-    if (lpOTM == 0)
-    {
-        
-        lpOTM = (LPOUTLINETEXTMETRICA)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OUTLINETEXTMETRICA));
-        rtn = sizeof(OUTLINETEXTMETRICA);
-        cbData = rtn;
-    } else
-    {
-        cbData = sizeof(*lpOTM);
-        rtn = cbData;
-    };
-
-    lpOTM->otmSize = cbData;
-
-    lptxtMetr =HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TEXTMETRICA));
-    
-    if (!GetTextMetricsA(hdc,lptxtMetr))
-    {
-        return 0;
-    } else
-    {
-       memcpy(&(lpOTM->otmTextMetrics),lptxtMetr,sizeof(TEXTMETRICA));
-    };
-
-    HeapFree(GetProcessHeap(),HEAP_ZERO_MEMORY,lptxtMetr);
-    
+    lpOTM->otmSize = needed;
+    FONT_TextMetricWToA( &lpOTMW->otmTextMetrics, &lpOTM->otmTextMetrics );
     lpOTM->otmFiller = 0;
+    lpOTM->otmPanoseNumber = lpOTMW->otmPanoseNumber;
+    lpOTM->otmfsSelection = lpOTMW->otmfsSelection;
+    lpOTM->otmfsType = lpOTMW->otmfsType;
+    lpOTM->otmsCharSlopeRise = lpOTMW->otmsCharSlopeRise;
+    lpOTM->otmsCharSlopeRun = lpOTMW->otmsCharSlopeRun;
+    lpOTM->otmItalicAngle = lpOTMW->otmItalicAngle;
+    lpOTM->otmEMSquare = lpOTMW->otmEMSquare;
+    lpOTM->otmAscent = lpOTMW->otmAscent;
+    lpOTM->otmDescent = lpOTMW->otmDescent;
+    lpOTM->otmLineGap = lpOTMW->otmLineGap;
+    lpOTM->otmsCapEmHeight = lpOTMW->otmsCapEmHeight;
+    lpOTM->otmsXHeight = lpOTMW->otmsXHeight;
+    lpOTM->otmrcFontBox = lpOTMW->otmrcFontBox;
+    lpOTM->otmMacAscent = lpOTMW->otmMacAscent;
+    lpOTM->otmMacDescent = lpOTMW->otmMacDescent;
+    lpOTM->otmMacLineGap = lpOTMW->otmMacLineGap;
+    lpOTM->otmusMinimumPPEM = lpOTMW->otmusMinimumPPEM;
+    lpOTM->otmptSubscriptSize = lpOTMW->otmptSubscriptSize;
+    lpOTM->otmptSubscriptOffset = lpOTMW->otmptSubscriptOffset;
+    lpOTM->otmptSuperscriptSize = lpOTMW->otmptSuperscriptSize;
+    lpOTM->otmptSuperscriptOffset = lpOTMW->otmptSuperscriptOffset;
+    lpOTM->otmsStrikeoutSize = lpOTMW->otmsStrikeoutSize;
+    lpOTM->otmsStrikeoutPosition = lpOTMW->otmsStrikeoutPosition;
+    lpOTM->otmsUnderscoreSize = lpOTMW->otmsUnderscoreSize;
+    lpOTM->otmsUnderscorePosition = lpOTMW->otmsUnderscorePosition;
 
-    lpOTM->otmPanoseNumber.bFamilyType  = 0;
-    lpOTM->otmPanoseNumber.bSerifStyle  = 0;
-    lpOTM->otmPanoseNumber.bWeight      = 0;
-    lpOTM->otmPanoseNumber.bProportion  = 0;
-    lpOTM->otmPanoseNumber.bContrast    = 0;
-    lpOTM->otmPanoseNumber.bStrokeVariation = 0;
-    lpOTM->otmPanoseNumber.bArmStyle    = 0;
-    lpOTM->otmPanoseNumber.bLetterform  = 0;
-    lpOTM->otmPanoseNumber.bMidline     = 0;
-    lpOTM->otmPanoseNumber.bXHeight     = 0;
 
-    lpOTM->otmfsSelection     = 0;
-    lpOTM->otmfsType          = 0;
+    ptr = (char*)(lpOTM + 1);
+    left = needed - sizeof(*lpOTM);
 
-    /*
-     Further fill of the structure not implemented,
-     Needs real values for the structure members
-     */
+    if(lpOTMW->otmpFamilyName) {
+        lpOTM->otmpFamilyName = (LPSTR)(ptr - (char*)lpOTM);
+	len = WideCharToMultiByte(CP_ACP, 0,
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1, 
+				  ptr, left, NULL, NULL);
+	left -= len;
+	ptr += len;
+    } else
+        lpOTM->otmpFamilyName = 0;
+
+    if(lpOTMW->otmpFaceName) {
+        lpOTM->otmpFaceName = (LPSTR)(ptr - (char*)lpOTM);
+	len = WideCharToMultiByte(CP_ACP, 0,
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1, 
+				  ptr, left, NULL, NULL);
+	left -= len;
+	ptr += len;
+    } else
+        lpOTM->otmpFaceName = 0;
+
+    if(lpOTMW->otmpStyleName) {
+        lpOTM->otmpStyleName = (LPSTR)(ptr - (char*)lpOTM);
+	len = WideCharToMultiByte(CP_ACP, 0,
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1, 
+				  ptr, left, NULL, NULL);
+	left -= len;
+	ptr += len;
+    } else
+        lpOTM->otmpStyleName = 0;
+
+    if(lpOTMW->otmpFullName) {
+        lpOTM->otmpFullName = (LPSTR)(ptr - (char*)lpOTM);
+	len = WideCharToMultiByte(CP_ACP, 0,
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1, 
+				  ptr, left, NULL, NULL);
+	left -= len;
+    } else
+        lpOTM->otmpFullName = 0;
     
-    return rtn;
+    assert(left == 0);
+    
+    ret = needed;
+
+end:
+    if(lpOTMW != (OUTLINETEXTMETRICW *)buf)
+        HeapFree(GetProcessHeap(), 0, lpOTMW);
+
+    return ret;
 }
+
 
 /***********************************************************************
  *           GetOutlineTextMetricsW [GDI32.@]
@@ -1376,9 +1441,37 @@ UINT WINAPI GetOutlineTextMetricsW(
     UINT cbData, /* [in]  Size of metric data array */
     LPOUTLINETEXTMETRICW lpOTM)  /* [out] Address of metric data array */
 {
-    FIXME("(%d,%d,%p): stub\n", hdc, cbData, lpOTM);
-    return 0; 
+    DC *dc = DC_GetDCPtr( hdc );
+    UINT ret;
+
+    TRACE("(%d,%d,%p)\n", hdc, cbData, lpOTM);
+    if(!dc) return 0;
+
+    if(dc->gdiFont)
+        ret = WineEngGetOutlineTextMetrics(dc->gdiFont, cbData, lpOTM);
+
+    else { /* This stuff was in GetOutlineTextMetricsA, I've moved it here
+	      but really this should just be a return 0. */
+
+        ret = sizeof(*lpOTM);
+        if (lpOTM) {
+	    if(cbData < ret)
+	        ret = 0;
+	    else {
+	        memset(lpOTM, 0, ret);
+		lpOTM->otmSize = sizeof(*lpOTM);
+		GetTextMetricsW(hdc, &lpOTM->otmTextMetrics);
+		/*
+		  Further fill of the structure not implemented,
+		  Needs real values for the structure members
+		*/
+	    }
+	}
+    }
+    GDI_ReleaseObj(hdc);
+    return ret;
 }
+
 
 /***********************************************************************
  *           GetCharWidth    (GDI.350)
@@ -1428,7 +1521,12 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
-    if (dc->funcs->pGetCharWidth && dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer))
+    if (dc->gdiFont)
+        ret = WineEngGetCharWidth( dc->gdiFont, firstChar, lastChar, buffer );
+    else if (dc->funcs->pGetCharWidth)
+        ret = dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer);
+
+    if (ret)
     {
         /* convert device units to logical */
 
@@ -1589,9 +1687,8 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
-	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
-    return (DWORD)-1; /* failure */
+    return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer,
+			    lpmat2);
 }
 
 /***********************************************************************
@@ -1601,9 +1698,22 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
+    DC *dc = DC_GetDCPtr(hdc);
+    DWORD ret;
+
+    TRACE("(%04x, '%c', %04x, %p, %ld, %p, %p)\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
-    return (DWORD)-1; /* failure */
+
+    if(!dc) return GDI_ERROR;
+
+    if(dc->gdiFont)
+      ret = WineEngGetGlyphOutline(dc->gdiFont, uChar, fuFormat, lpgm,
+				   cbBuffer, lpBuffer, lpmat2);
+    else
+      ret = GDI_ERROR;
+
+    GDI_ReleaseObj(hdc);
+    return ret;
 }
 
 /***********************************************************************
