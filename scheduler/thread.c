@@ -37,6 +37,9 @@ DEFAULT_DEBUG_CHANNEL(thread);
 /* TEB of the initial thread */
 static TEB initial_teb;
 
+/* The initial process PDB */
+static PDB initial_pdb;
+
 /***********************************************************************
  *           THREAD_IsWin16
  */
@@ -75,18 +78,15 @@ TEB *THREAD_IdToTEB( DWORD id )
  *
  * Initialization of a newly created TEB.
  */
-static BOOL THREAD_InitTEB( TEB *teb, PDB *pdb )
+static BOOL THREAD_InitTEB( TEB *teb )
 {
     teb->except    = (void *)~0UL;
-    teb->htask16   = pdb->task;
     teb->self      = teb;
-    teb->tibflags  = (pdb->flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
+    teb->tibflags  = TEBF_WIN32;
     teb->tls_ptr   = teb->tls_array;
-    teb->process   = pdb;
     teb->exit_code = STILL_ACTIVE;
     teb->socket    = -1;
     teb->stack_top = (void *)~0UL;
-
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
@@ -121,7 +121,7 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
  *
  * Allocate the stack of a thread.
  */
-TEB *THREAD_InitStack( TEB *teb, PDB *pdb, DWORD stack_size, BOOL alloc_stack16 )
+TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
 {
     DWORD old_prot, total_size;
     DWORD page_size = VIRTUAL_GetPageSize();
@@ -158,7 +158,7 @@ TEB *THREAD_InitStack( TEB *teb, PDB *pdb, DWORD stack_size, BOOL alloc_stack16 
     if (!teb)
     {
         teb = (TEB *)((char *)base + total_size - page_size);
-        if (!THREAD_InitTEB( teb, pdb ))
+        if (!THREAD_InitTEB( teb ))
         {
             VirtualFree( base, 0, MEM_RELEASE );
             return NULL;
@@ -202,13 +202,18 @@ error:
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-TEB *THREAD_Init( struct _PDB *pdb )
+void THREAD_Init(void)
 {
-    if (!THREAD_InitTEB( &initial_teb, pdb )) return NULL;
-    SYSDEPS_SetCurThread( &initial_teb );
-    return &initial_teb;
+    if (!initial_teb.self)  /* do it only once */
+    {
+        THREAD_InitTEB( &initial_teb );
+        assert( initial_teb.teb_sel );
+        initial_teb.process = &initial_pdb;
+        SYSDEPS_SetCurThread( &initial_teb );
+    }
 }
 
+DECL_GLOBAL_CONSTRUCTOR(thread_init) { THREAD_Init(); }
 
 /***********************************************************************
  *           THREAD_Create
@@ -218,9 +223,11 @@ TEB *THREAD_Create( PDB *pdb, int fd, DWORD stack_size, BOOL alloc_stack16 )
 {
     TEB *teb;
 
-    if ((teb = THREAD_InitStack( NULL, pdb, stack_size, alloc_stack16 )))
+    if ((teb = THREAD_InitStack( NULL, stack_size, alloc_stack16 )))
     {
-        teb->socket = fd;
+        teb->tibflags = (pdb->flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
+        teb->process  = pdb;
+        teb->socket   = fd;
         fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
         TRACE("(%p) succeeded\n", teb);
     }

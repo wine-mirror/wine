@@ -47,7 +47,7 @@ void MAIN_EmulatorRun( void )
     if (PROFILE_GetWineIniString( "Wine", "GraphicsDriver", 
         "x11drv", szGraphicsDriver, sizeof(szGraphicsDriver)))
     {
-        if (!LoadLibraryA( szGraphicsDriver )) return FALSE;
+        if (!LoadLibraryA( szGraphicsDriver )) ExitProcess(1);
     }
 
     /* Load system DLLs into the initial process (and initialize them) */
@@ -109,7 +109,7 @@ int main( int argc, char *argv[] )
     /* Initialize everything */
     if (!MAIN_MainInit( argc, argv, FALSE )) return 1;
 
-    if (!THREAD_InitStack( NtCurrentTeb(), PROCESS_Current(), 0, TRUE )) return 1;
+    if (!THREAD_InitStack( NtCurrentTeb(), 0, TRUE )) return 1;
     SIGNAL_Init();  /* reinitialize signal stack */
 
     /* Initialize KERNEL */

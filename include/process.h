@@ -145,7 +145,7 @@ typedef struct _PDB
 #define  GPD_USERDATA            (  0)
 
 extern DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset );
-void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
+extern void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
 extern DWORD WINAPI MapProcessHandle( HANDLE handle );
 
 /* memory/environ.c */
@@ -166,8 +166,6 @@ extern BOOL PROCESS_CreateUnixProcess( LPCSTR filename, LPCSTR cmd_line, LPCSTR 
                                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                                        LPPROCESS_INFORMATION info );
-extern void PROCESS_FreePDB( PDB *pdb );
-extern void PROCESS_WalkProcess( void );
 
 static inline PDB * WINE_UNUSED PROCESS_Current(void)
 {

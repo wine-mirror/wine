@@ -37,12 +37,10 @@ DECLARE_DEBUG_CHANNEL(relay);
 DECLARE_DEBUG_CHANNEL(win32);
 
 
-/* The initial process PDB */
-static PDB initial_pdb;
 static ENVDB initial_envdb;
 static STARTUPINFOA initial_startup;
 
-static PDB *PROCESS_First = &initial_pdb;
+static PDB *PROCESS_First;
 
 
 /***********************************************************************
@@ -213,7 +211,7 @@ static BOOL PROCESS_CreateEnvDB(void)
  *
  * Free a PDB and all associated storage.
  */
-void PROCESS_FreePDB( PDB *pdb )
+static void PROCESS_FreePDB( PDB *pdb )
 {
     PDB **pptr = &PROCESS_First;
 
@@ -263,28 +261,30 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 BOOL PROCESS_Init( BOOL win32 )
 {
     struct init_process_request *req;
-    TEB *teb;
+    PDB *pdb = PROCESS_Current();
 
     /* Fill the initial process structure */
-    initial_pdb.exit_code       = STILL_ACTIVE;
-    initial_pdb.threads         = 1;
-    initial_pdb.running_threads = 1;
-    initial_pdb.ring0_threads   = 1;
-    initial_pdb.env_db          = &initial_envdb;
-    initial_pdb.group           = &initial_pdb;
-    initial_pdb.priority        = 8;  /* Normal */
-    initial_pdb.flags           = win32? 0 : PDB32_WIN16_PROC;
-    initial_pdb.winver          = 0xffff; /* to be determined */
-    initial_pdb.main_queue      = INVALID_HANDLE_VALUE16;
+    pdb->exit_code              = STILL_ACTIVE;
+    pdb->threads                = 1;
+    pdb->running_threads        = 1;
+    pdb->ring0_threads          = 1;
+    pdb->env_db                 = &initial_envdb;
+    pdb->group                  = pdb;
+    pdb->priority               = 8;  /* Normal */
+    pdb->winver                 = 0xffff; /* to be determined */
+    pdb->main_queue             = INVALID_HANDLE_VALUE16;
     initial_envdb.startup_info  = &initial_startup;
-    teb = THREAD_Init( &initial_pdb );
+    PROCESS_First = pdb;
+
+    if (!win32)
+    {
+        pdb->flags = PDB32_WIN16_PROC;
+        NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
+    }
 
     /* Setup the server connection */
-    teb->socket = CLIENT_InitServer();
+    NtCurrentTeb()->socket = CLIENT_InitServer();
     if (CLIENT_InitThread()) return FALSE;
-
-    /* Initialize virtual memory management */
-    if (!VIRTUAL_Init()) return FALSE;
 
     /* Retrieve startup info from the server */
     req = get_req_buffer();
@@ -292,7 +292,7 @@ BOOL PROCESS_Init( BOOL win32 )
     req->ldt_flags = ldt_flags_copy;
     req->ppid      = getppid();
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
-    initial_pdb.exe_file        = req->exe_file;
+    pdb->exe_file               = req->exe_file;
     initial_startup.dwFlags     = req->start_flags;
     initial_startup.wShowWindow = req->cmd_show;
     initial_envdb.hStdin   = initial_startup.hStdInput  = req->hstdin;
@@ -304,19 +304,19 @@ BOOL PROCESS_Init( BOOL win32 )
     if (!SIGNAL_Init()) return FALSE;
 
     /* Remember TEB selector of initial process for emergency use */
-    SYSLEVEL_EmergencyTeb = teb->teb_sel;
+    SYSLEVEL_EmergencyTeb = NtCurrentTeb()->teb_sel;
 
     /* Create the system and process heaps */
     if (!HEAP_CreateSystemHeap()) return FALSE;
-    initial_pdb.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
+    pdb->heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
 
     /* Create the idle event for the initial process
        FIXME 1: Shouldn't we call UserSignalProc for the initial process too?
        FIXME 2: It seems to me that the initial pdb becomes never freed, so I don't now
                 where to release the idle event for the initial process.
     */
-    initial_pdb.idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
-    initial_pdb.idle_event = ConvertToGlobalHandle ( initial_pdb.idle_event );
+    pdb->idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
+    pdb->idle_event = ConvertToGlobalHandle ( pdb->idle_event );
 
     /* Copy the parent environment */
     if (!ENV_BuildEnvironment()) return FALSE;
@@ -325,7 +325,7 @@ BOOL PROCESS_Init( BOOL win32 )
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
     /* Initialize the critical sections */
-    InitializeCriticalSection( &initial_pdb.crit_section );
+    InitializeCriticalSection( &pdb->crit_section );
     InitializeCriticalSection( &initial_envdb.section );
 
     return TRUE;
@@ -467,7 +467,7 @@ void PROCESS_Init32( HFILE hFile, LPCSTR filename, LPCSTR cmd_line )
     if (!PE_CreateModule( main_module, filename, 0, FALSE )) goto error;
 
     /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(), pdb,
+    if (!THREAD_InitStack( NtCurrentTeb(),
                            PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
         goto error;
 
@@ -516,7 +516,7 @@ void PROCESS_InitWinelib( int argc, char *argv[] )
     if (!PE_CreateModule( main_module, filename, 0, FALSE )) goto error;
 
     /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(), pdb,
+    if (!THREAD_InitStack( NtCurrentTeb(),
                            PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
         goto error;
 
