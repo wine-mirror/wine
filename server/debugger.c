@@ -42,8 +42,7 @@ enum debug_event_state { EVENT_QUEUED, EVENT_SENT, EVENT_CONTINUED };
 struct debug_event
 {
     struct object          obj;       /* object header */
-    struct debug_event    *next;      /* event queue */
-    struct debug_event    *prev;
+    struct list            entry;     /* entry in event queue */
     struct thread         *sender;    /* thread which sent this event */
     struct thread         *debugger;  /* debugger thread receiving the event */
     enum debug_event_state state;     /* event state */
@@ -56,8 +55,7 @@ struct debug_event
 struct debug_ctx
 {
     struct object        obj;         /* object header */
-    struct debug_event  *event_head;  /* head of pending events queue */
-    struct debug_event  *event_tail;  /* tail of pending events queue */
+    struct list          event_queue; /* pending events queue */
     int                  kill_on_exit;/* kill debuggees on debugger exit ? */
 };
 
@@ -220,11 +218,7 @@ static const fill_event_func fill_debug_event[NB_DEBUG_EVENTS] =
 /* unlink the first event from the queue */
 static void unlink_event( struct debug_ctx *debug_ctx, struct debug_event *event )
 {
-    if (event->prev) event->prev->next = event->next;
-    else debug_ctx->event_head = event->next;
-    if (event->next) event->next->prev = event->prev;
-    else debug_ctx->event_tail = event->prev;
-    event->next = event->prev = NULL;
+    list_remove( &event->entry );
     if (event->sender->debug_event == event) event->sender->debug_event = NULL;
     release_object( event );
 }
@@ -236,11 +230,7 @@ static void link_event( struct debug_event *event )
 
     assert( debug_ctx );
     grab_object( event );
-    event->next = NULL;
-    event->prev = debug_ctx->event_tail;
-    debug_ctx->event_tail = event;
-    if (event->prev) event->prev->next = event;
-    else debug_ctx->event_head = event;
+    list_add_tail( &debug_ctx->event_queue, &event->entry );
     if (!event->sender->debug_event) wake_up( &debug_ctx->obj, 0 );
 }
 
@@ -248,13 +238,14 @@ static void link_event( struct debug_event *event )
 static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
 {
     struct debug_event *event;
-    for (event = debug_ctx->event_head; event; event = event->next)
+
+    LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
     {
         if (event->state == EVENT_SENT) continue;  /* already sent */
         if (event->sender->debug_event) continue;  /* thread busy with another one */
-        break;
+        return event;
     }
-    return event;
+    return NULL;
 }
 
 static void debug_event_dump( struct object *obj, int verbose )
@@ -276,10 +267,6 @@ static void debug_event_destroy( struct object *obj )
 {
     struct debug_event *event = (struct debug_event *)obj;
     assert( obj->ops == &debug_event_ops );
-
-    /* cannot still be in the queue */
-    assert( !event->next );
-    assert( !event->prev );
 
     /* If the event has been sent already, the handles are now under the */
     /* responsibility of the debugger process, so we don't touch them    */
@@ -313,7 +300,7 @@ static void debug_ctx_dump( struct object *obj, int verbose )
     struct debug_ctx *debug_ctx = (struct debug_ctx *)obj;
     assert( obj->ops == &debug_ctx_ops );
     fprintf( stderr, "Debug context head=%p tail=%p\n",
-             debug_ctx->event_head, debug_ctx->event_tail );
+             debug_ctx->event_queue.next, debug_ctx->event_queue.prev );
 }
 
 static int debug_ctx_signaled( struct object *obj, struct thread *thread )
@@ -325,40 +312,41 @@ static int debug_ctx_signaled( struct object *obj, struct thread *thread )
 
 static void debug_ctx_destroy( struct object *obj )
 {
-    struct debug_event *event;
+    struct list *ptr;
     struct debug_ctx *debug_ctx = (struct debug_ctx *)obj;
     assert( obj->ops == &debug_ctx_ops );
 
     /* free all pending events */
-    while ((event = debug_ctx->event_head) != NULL) unlink_event( debug_ctx, event );
+    while ((ptr = list_head( &debug_ctx->event_queue )))
+        unlink_event( debug_ctx, LIST_ENTRY( ptr, struct debug_event, entry ));
 }
 
 /* continue a debug event */
 static int continue_debug_event( struct process *process, struct thread *thread, int status )
 {
-    struct debug_event *event;
     struct debug_ctx *debug_ctx = current->debug_ctx;
 
-    if (!debug_ctx || process->debugger != current || thread->process != process) goto error;
-
-    /* find the event in the queue */
-    for (event = debug_ctx->event_head; event; event = event->next)
+    if (debug_ctx && process->debugger == current && thread->process == process)
     {
-        if (event->state != EVENT_SENT) continue;
-        if (event->sender == thread) break;
+        struct debug_event *event;
+
+        /* find the event in the queue */
+        LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
+        {
+            if (event->state != EVENT_SENT) continue;
+            if (event->sender == thread)
+            {
+                assert( event->sender->debug_event == event );
+
+                event->status = status;
+                event->state  = EVENT_CONTINUED;
+                wake_up( &event->obj, 0 );
+                unlink_event( debug_ctx, event );
+                resume_process( process );
+                return 1;
+            }
+        }
     }
-    if (!event) goto error;
-
-    assert( event->sender->debug_event == event );
-
-    event->status = status;
-    event->state  = EVENT_CONTINUED;
-    wake_up( &event->obj, 0 );
-
-    unlink_event( debug_ctx, event );
-    resume_process( process );
-    return 1;
- error:
     /* not debugging this process, or no such event */
     set_error( STATUS_ACCESS_DENIED );  /* FIXME */
     return 0;
@@ -377,8 +365,6 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code,
 
     /* build the event */
     if (!(event = alloc_object( &debug_event_ops ))) return NULL;
-    event->next      = NULL;
-    event->prev      = NULL;
     event->state     = EVENT_QUEUED;
     event->sender    = (struct thread *)grab_object( thread );
     event->debugger  = (struct thread *)grab_object( debugger );
@@ -468,7 +454,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
 
     /* find the event in the queue
      * FIXME: could loop on process' threads and look the debug_event field */
-    for (event = debug_ctx->event_head; event; event = event->next)
+    LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
     {
         if (event->state != EVENT_QUEUED) continue;
 
@@ -481,6 +467,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
             unlink_event( debug_ctx, event );
             /* from queued debug event */
             resume_process( process );
+            break;
         }
     }
 
@@ -529,9 +516,8 @@ int set_process_debugger( struct process *process, struct thread *debugger )
     if (!debugger->debug_ctx)  /* need to allocate a context */
     {
         if (!(debug_ctx = alloc_object( &debug_ctx_ops ))) return 0;
-        debug_ctx->event_head = NULL;
-        debug_ctx->event_tail = NULL;
         debug_ctx->kill_on_exit = 1;
+        list_init( &debug_ctx->event_queue );
         debugger->debug_ctx = debug_ctx;
     }
     process->debugger = debugger;
