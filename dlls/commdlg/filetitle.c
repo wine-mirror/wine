@@ -28,7 +28,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 
 	TRACE("(%p %p %d); \n", lpFile, lpTitle, cbBuf);
 
-	if(lpFile == NULL || lpTitle == NULL)
+	if(lpFile == NULL || (lpTitle == NULL && cbBuf != 0))
 		return -1;
 
 	len = strlen(lpFile);
