@@ -251,8 +251,8 @@
 @ stdcall EnumCalendarInfoExW(ptr long long long)
 @ stdcall EnumDateFormatsA(ptr long long)
 @ stdcall EnumDateFormatsW(ptr long long)
-@ stub EnumDateFormatsExA
-@ stub EnumDateFormatsExW
+@ stdcall EnumDateFormatsExA(ptr long long)
+@ stdcall EnumDateFormatsExW(ptr long long)
 @ stdcall EnumLanguageGroupLocalesA(ptr long long ptr)
 @ stdcall EnumLanguageGroupLocalesW(ptr long long ptr)
 @ stdcall EnumResourceLanguagesA(long str str ptr long)

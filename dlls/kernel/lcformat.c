@@ -1581,6 +1581,26 @@ GetCurrencyFormatW_Error:
  */
 
 /**************************************************************************
+ *              EnumDateFormatsExA    (KERNEL32.@)
+ */
+BOOL WINAPI EnumDateFormatsExA( DATEFMT_ENUMPROCEXA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags )
+{
+  FIXME("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/**************************************************************************
+ *              EnumDateFormatsExW    (KERNEL32.@)
+ */
+BOOL WINAPI EnumDateFormatsExW( DATEFMT_ENUMPROCEXW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags )
+{
+  FIXME("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/**************************************************************************
  *              EnumDateFormatsA	(KERNEL32.@)
  */
 BOOL WINAPI EnumDateFormatsA( DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
