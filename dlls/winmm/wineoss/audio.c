@@ -806,7 +806,7 @@ static DWORD wodClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
     
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -847,7 +847,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -916,7 +916,7 @@ static DWORD wodPause(WORD wDevID)
 {
     TRACE("(%u);!\n", wDevID);
     
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -935,7 +935,7 @@ static DWORD wodRestart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
     
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -964,7 +964,7 @@ static DWORD wodReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
     
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -988,7 +988,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
     
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1616,7 +1616,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    bytesRead = read(wwi->unixdev, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, 
 			     lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
 
-	    if (bytesRead > 0) {
+	    if (bytesRead != (DWORD) -1) {
 		TRACE("Read=%lu (%ld)\n", bytesRead, lpWaveHdr->dwBufferLength);
 		lpWaveHdr->dwBytesRecorded += bytesRead;
 		wwi->dwTotalRecorded += bytesRead;
@@ -1813,7 +1813,7 @@ static DWORD widClose(WORD wDevID)
     WINE_WAVEIN*	wwi;
 
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't close !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1845,7 +1845,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't do it !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1907,7 +1907,7 @@ static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 static DWORD widStart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't start recording !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1924,7 +1924,7 @@ static DWORD widStart(WORD wDevID)
 static DWORD widStop(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't stop !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1941,7 +1941,7 @@ static DWORD widStop(WORD wDevID)
 static DWORD widReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't reset !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1960,7 +1960,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == 0) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't get pos !\n");
 	return MMSYSERR_INVALHANDLE;
     }
