@@ -1336,6 +1336,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         CloseHandle( process_info );
         return FALSE;
     }
+    close( execfd[0] );
 
     /* wait for the new process info to be ready */
 
