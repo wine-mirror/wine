@@ -5,6 +5,7 @@
  * Copyright 1994 Martin Ayotte
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -249,11 +250,31 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, void* lp, BOOL32 is32
 	TRACE(cdaudio,"MCI_OPEN_ELEMENT !\n");
 	/*		return MCIERR_NO_ELEMENT_ALLOWED; */
     }
-    memcpy(&CDADev[wDevID].openParms, lp, sizeof(MCI_OPEN_PARMS16));
+
+    if( is32 )
+    {
+      /* memcpy(&CDADev[wDevID].openParms, lp, sizeof(MCI_OPEN_PARMS32A)); */
+      /* This is an ugly temporary, hopefully, fix. Slap it in....*/
+
+      LPMCI_OPEN_PARMS32A lpOpenParams = (LPMCI_OPEN_PARMS32A)lp;
+
+      CDADev[wDevID].openParms.dwCallback = lpOpenParams->dwCallback;
+      CDADev[wDevID].openParms.wDeviceID  = (WORD)lpOpenParams->wDeviceID;
+      CDADev[wDevID].openParms.wReserved0 = 0; /*????*/
+      CDADev[wDevID].openParms.lpstrDeviceType = lpOpenParams->lpstrDeviceType;
+      CDADev[wDevID].openParms.lpstrElementName = lpOpenParams->lpstrElementName;
+      CDADev[wDevID].openParms.lpstrAlias = lpOpenParams->lpstrAlias;
+    } 
+    else
+    {
+      memcpy(&CDADev[wDevID].openParms, lp, sizeof(MCI_OPEN_PARMS16));
+    }
+
     CDADev[wDevID].wNotifyDeviceID = dwDeviceID;
     CDADev[wDevID].unixdev = open (CDAUDIO_DEV, O_RDONLY, 0);
     if (CDADev[wDevID].unixdev == -1) {
-	WARN(cdaudio,"can't open '%s' !\n", CDAUDIO_DEV);
+	WARN(cdaudio,"can't open '%s'!.  errno=%d\n", CDAUDIO_DEV, errno );
+        perror( "can't open\n" );
 	return MCIERR_HARDWARE;
     }
     CDADev[wDevID].mode = 0;
