@@ -512,9 +512,18 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     while (*pPrev && (*pPrev != hQueue))
     {
         MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock16(*pPrev);
+
+        /* sanity check */
+        if ( !msgQ || (msgQ->magic != QUEUE_MAGIC) )
+        {
+            /* HQUEUE link list is corrupted, try to exit gracefully */
+            WARN( msg, "HQUEUE link list corrupted!\n");
+            pPrev = 0;
+            break;
+        }
         pPrev = &msgQ->next;
     }
-    if (*pPrev) *pPrev = msgQueue->next;
+    if (pPrev && *pPrev) *pPrev = msgQueue->next;
     msgQueue->self = 0;
 
     SYSTEM_UNLOCK();
@@ -579,7 +588,7 @@ static void QUEUE_Wait( DWORD wait_mask )
 
 
 /***********************************************************************
- *           QUEUE_SetWakeBit               `
+ *           QUEUE_SetWakeBit
  *
  * See "Windows Internals", p.449
  */

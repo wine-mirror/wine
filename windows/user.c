@@ -161,21 +161,13 @@ static void USER_ModuleUnload( HMODULE16 hModule )
 }
 
 /**********************************************************************
- *           USER_AppExit
+ *           USER_QueueCleanup
  */
-static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
+void USER_QueueCleanup( HQUEUE16 hQueue )
 {
     if ( hQueue )
     {
-        /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
-         *	      only complains about them but does nothing);
-         */
-
         WND* desktop = WIN_GetDesktop();
-
-        /* Patch desktop window */
-        if( desktop->hmemTaskQ == hQueue )
-    	desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
 
         /* Patch resident popup menu window */
         MENU_PatchResidentPopup( hQueue, NULL );
@@ -193,6 +185,24 @@ static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue 
         /* Free the message queue */
         QUEUE_DeleteMsgQueue( hQueue );
     }
+}
+
+/**********************************************************************
+ *           USER_AppExit
+ */
+static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
+{
+    /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
+     *	      only complains about them but does nothing);
+     */
+
+    WND* desktop = WIN_GetDesktop();
+
+    /* Patch desktop window */
+    if( desktop->hmemTaskQ == hQueue )
+        desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
+                  
+    USER_QueueCleanup(hQueue);
 
     /* ModuleUnload() in "Internals" */
 

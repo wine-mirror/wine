@@ -335,6 +335,10 @@ void WINAPI ExitThread(
     SYSTEM_LOCK();
     thdb->exit_code = code;
 
+    /* cleanup the message queue, if there's one */
+    if (thdb->teb.queue)
+        USER_QueueCleanup( thdb->teb.queue );
+        
     /* FIXME: should free the stack somehow */
 #if 0
     /* FIXME: We cannot do this; once the current thread is destroyed,
