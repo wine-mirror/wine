@@ -82,12 +82,24 @@ IDirectSoundCaptureImpl*       dsound_capture = NULL;
 /***************************************************************************
  * DirectSoundCaptureCreate [DSOUND.6]
  *
- * Create and initialize a DirectSoundCapture interface
+ * Create and initialize a DirectSoundCapture interface.
+ *
+ * PARAMS
+ *    lpcGUID   [I] Address of the GUID that identifies the sound capture device.
+ *    lplpDSC   [O] Address of a variable to receive the interface pointer.
+ *    pUnkOuter [I] Must be NULL.
  *
  * RETURNS
  *    Success: DS_OK
  *    Failure: DSERR_NOAGGREGATION, DSERR_ALLOCATED, DSERR_INVALIDPARAM,
  *             DSERR_OUTOFMEMORY
+ *
+ * NOTES
+ *    lpcGUID must be one of the values returned from DirectSoundCaptureEnumerate
+ *    or NULL for the default device or DSDEVID_DefaultCapture or 
+ *    DSDEVID_DefaultVoiceCapture.
+ *
+ *    DSERR_ALLOCATED is returned for sound devices that do not support full duplex.
  */
 HRESULT WINAPI 
 DirectSoundCaptureCreate8(
@@ -99,7 +111,7 @@ DirectSoundCaptureCreate8(
     TRACE("(%s,%p,%p)\n", debugstr_guid(lpcGUID), lplpDSC, pUnkOuter);
 
     if ( pUnkOuter ) {
-	WARN("pUnkOuter != 0\n");
+	WARN("invalid parameter: pUnkOuter != NULL\n");
         return DSERR_NOAGGREGATION;
     }
 
@@ -141,7 +153,11 @@ DirectSoundCaptureCreate8(
 /***************************************************************************
  * DirectSoundCaptureEnumerateA [DSOUND.7]
  *
- * Enumerate all DirectSound drivers installed in the system
+ * Enumerate all DirectSound drivers installed in the system.
+ *
+ * PARAMS
+ *    lpDSEnumCallback  [I] Address of callback function.
+ *    lpContext         [I] Address of user defined context passed to callback function.
  *
  * RETURNS
  *    Success: DS_OK
@@ -160,7 +176,7 @@ DirectSoundCaptureEnumerateA(
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter\n");
+	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -204,7 +220,11 @@ DirectSoundCaptureEnumerateA(
 /***************************************************************************
  * DirectSoundCaptureEnumerateW [DSOUND.8]
  *
- * Enumerate all DirectSound drivers installed in the system
+ * Enumerate all DirectSound drivers installed in the system.
+ *
+ * PARAMS
+ *    lpDSEnumCallback  [I] Address of callback function.
+ *    lpContext         [I] Address of user defined context passed to callback function.
  *
  * RETURNS
  *    Success: DS_OK
@@ -225,7 +245,7 @@ DirectSoundCaptureEnumerateW(
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter\n");
+	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -283,7 +303,9 @@ DSOUND_capture_callback(
     DWORD dw2 )
 {
     IDirectSoundCaptureImpl* This = (IDirectSoundCaptureImpl*)dwUser;
-    TRACE("entering at %ld, msg=%08x\n", GetTickCount(), msg);
+    TRACE("(%p,%08x(%s),%08lx,%08lx,%08lx) entering at %ld\n",hwi,msg,
+	msg == MM_WIM_OPEN ? "MM_WIM_OPEN" : msg == MM_WIM_CLOSE ? "MM_WIM_CLOSE" :
+	msg == MM_WIM_DATA ? "MM_WIM_DATA" : "UNKNOWN",dwUser,dw1,dw2,GetTickCount());
 
     if (msg == MM_WIM_DATA) {
     	EnterCriticalSection( &(This->lock) );
@@ -300,8 +322,8 @@ DSOUND_capture_callback(
 	    }
 	    This->index = (This->index + 1) % This->nrofpwaves;
 	    waveInUnprepareHeader(hwi,&(This->pwave[This->index]),sizeof(WAVEHDR));
-	    if (This->capture_buffer->nrofnotifies)
-		SetEvent(This->capture_buffer->notifies[This->index].hEventNotify);
+	    if (This->capture_buffer->notify && This->capture_buffer->notify->nrofnotifies)
+		SetEvent(This->capture_buffer->notify->notifies[This->index].hEventNotify);
 	    if ( (This->index == 0) && !(This->capture_buffer->flags & DSCBSTART_LOOPING) ) {
 		TRACE("end of buffer\n");
 		This->state = STATE_STOPPED;
@@ -698,22 +720,40 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
-    if (IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
-        IDirectSoundNotifyImpl  *dsn;
+    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ||
+         IsEqualGUID( &IID_IDirectSoundNotify8, riid ) ) {
+	if (!This->notify) {
+	    This->notify = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(),
+		HEAP_ZERO_MEMORY, sizeof(*This->notify));
+	    if (This->notify) {
+		This->notify->ref = 0;	/* release when ref = -1 */
+		This->notify->lpVtbl = &dsnvt;
+	    }
+	}
+	if (This->notify) {
+	    if (This->dsound->hwbuf) {
+		HRESULT err;
+		
+		err = IDsCaptureDriverBuffer_QueryInterface(This->dsound->hwbuf, 
+		    &IID_IDsDriverNotify, (LPVOID*)&(This->notify->hwnotify));
+		if (err != DS_OK) {
+		    WARN("IDsCaptureDriverBuffer_QueryInterface failed\n");
+		    *ppobj = 0;
+		    return err;
+	        }
+	    }
 
-        dsn = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(),0,
-            sizeof(*dsn));
-        dsn->ref = 1;
-        dsn->dsb = 0;
-        dsn->dscb = This;
-	/* FIXME: get this right someday */
-        IDirectSoundCaptureBuffer8_AddRef(iface);
-        dsn->lpVtbl = &dsnvt;
-        *ppobj = (LPVOID)dsn;
-        return DS_OK;
+	    IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
+	    *ppobj = (LPVOID)This->notify;
+	    return DS_OK;
+	}
+
+	*ppobj = 0;
+	return E_FAIL;
     }
 
-    if ( IsEqualGUID( &IID_IDirectSoundCaptureBuffer8, riid ) ) {
+    if ( IsEqualGUID( &IID_IDirectSoundCaptureBuffer, riid ) ||
+         IsEqualGUID( &IID_IDirectSoundCaptureBuffer8, riid ) ) {
 	IDirectSoundCaptureBuffer8_AddRef(iface);
 	*ppobj = This;
 	return NO_ERROR;
@@ -721,7 +761,9 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 
     FIXME("(%p,%s,%p) unsupported GUID\n", This, debugstr_guid(riid), ppobj);
 
-    return E_FAIL;
+    *ppobj = 0;
+
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI
@@ -783,8 +825,8 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
         else
             ERR("does not reference dsound\n");
 
-        if (This->notifies)
-            HeapFree(GetProcessHeap(),0, This->notifies);
+        if (This->notify)
+	    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
         
         HeapFree( GetProcessHeap(), 0, This );
     }
@@ -1042,10 +1084,10 @@ IDirectSoundCaptureBufferImpl_Start(
         IDirectSoundCaptureImpl* ipDSC = This->dsound;
 
         if (ipDSC->buffer) {
-            if (This->nrofnotifies) {
+            if (This->notify && This->notify->nrofnotifies) {
             	unsigned c;
 
-		ipDSC->nrofpwaves = This->nrofnotifies;
+		ipDSC->nrofpwaves = This->notify->nrofnotifies;
 
                 /* prepare headers */
                 ipDSC->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->pwave,
@@ -1055,13 +1097,13 @@ IDirectSoundCaptureBufferImpl_Start(
                     if (c == 0) {
                         ipDSC->pwave[0].lpData = ipDSC->buffer;
                         ipDSC->pwave[0].dwBufferLength = 
-                            This->notifies[0].dwOffset + 1;
+                            This->notify->notifies[0].dwOffset + 1;
                     } else {
                         ipDSC->pwave[c].lpData = ipDSC->buffer + 
-                            This->notifies[c-1].dwOffset + 1;
+                            This->notify->notifies[c-1].dwOffset + 1;
                         ipDSC->pwave[c].dwBufferLength = 
-                            This->notifies[c].dwOffset - 
-                            This->notifies[c-1].dwOffset;
+                            This->notify->notifies[c].dwOffset - 
+                            This->notify->notifies[c-1].dwOffset;
                     }
                     ipDSC->pwave[c].dwUser = (DWORD)ipDSC;
                     ipDSC->pwave[c].dwFlags = 0;
@@ -1256,9 +1298,21 @@ static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt =
 };
 
 /***************************************************************************
- * DirectSoundFullDuplexCreate8 [DSOUND.8]
+ * DirectSoundFullDuplexCreate8 [DSOUND.10]
  *
- * Create and initialize a DirectSoundFullDuplex interface
+ * Create and initialize a DirectSoundFullDuplex interface.
+ *
+ * PARAMS
+ *    pcGuidCaptureDevice [I] Address of sound capture device GUID. 
+ *    pcGuidRenderDevice  [I] Address of sound render device GUID.
+ *    pcDSCBufferDesc     [I] Address of capture buffer description.
+ *    pcDSBufferDesc      [I] Address of  render buffer description.
+ *    hWnd                [I] Handle to application window.
+ *    dwLevel             [I] Cooperative level.
+ *    ppDSFD              [O] Address where full duplex interface returned.
+ *    ppDSCBuffer8        [0] Address where capture buffer interface returned.
+ *    ppDSBuffer8         [0] Address where render buffer interface returned.
+ *    pUnkOuter           [I] Must be NULL.
  *
  * RETURNS
  *    Success: DS_OK

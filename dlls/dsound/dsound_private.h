@@ -117,8 +117,7 @@ struct IDirectSoundBufferImpl
     DWORD                     primary_mixpos, buf_mixpos;
     BOOL                      need_remix;
     /* IDirectSoundNotifyImpl fields */
-    LPDSBPOSITIONNOTIFY       notifies;
-    int                       nrofnotifies;
+    IDirectSoundNotifyImpl    *notify;
 };
 
 HRESULT WINAPI SecondaryBuffer_Create(
@@ -189,9 +188,9 @@ struct IDirectSoundCaptureBufferImpl
     IDirectSoundCaptureImpl*           dsound;
     /* FIXME: don't need this */
     LPDSCBUFFERDESC                    pdscbd;
-    LPDSBPOSITIONNOTIFY                notifies;
-    int                                nrofnotifies;
     DWORD                              flags;
+    /* IDirectSoundNotifyImpl fields */
+    IDirectSoundNotifyImpl             *notify;
 };
 
 /*****************************************************************************
@@ -216,8 +215,10 @@ struct IDirectSoundNotifyImpl
     ICOM_VFIELD(IDirectSoundNotify);
     DWORD                            ref;
     /* IDirectSoundNotifyImpl fields */
-    IDirectSoundBufferImpl*          dsb;
-    IDirectSoundCaptureBufferImpl*   dscb;
+    LPDSBPOSITIONNOTIFY              notifies;
+    int                              nrofnotifies;
+
+    PIDSDRIVERNOTIFY                 hwnotify;
 };
 
 /*****************************************************************************

@@ -231,13 +231,24 @@ void setup_dsound_options(void)
 
 
 /***************************************************************************
- * GetDeviceId	[DSOUND.2]
+ * GetDeviceID	[DSOUND.9]
  *
  * Retrieves unique identifier of default device specified
+ *
+ * PARAMS
+ *    pGuidSrc  [I] Address of device GUID.
+ *    pGuidDest [O] Address to receive unique device GUID.
  *
  * RETURNS
  *    Success: DS_OK
  *    Failure: DSERR_INVALIDPARAM
+ *
+ * NOTES
+ *    pGuidSrc is a valid device GUID or DSDEVID_DefaultPlayback,
+ *    DSDEVID_DefaultCapture, DSDEVID_DefaultVoicePlayback, or 
+ *    DSDEVID_DefaultVoiceCapture.
+ *    Returns pGuidSrc if pGuidSrc is a valid device or the device
+ *    GUID for the specified constants.
  */
 HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
 {
@@ -277,6 +288,10 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
  *
  * Enumerate all DirectSound drivers installed in the system
  *
+ * PARAMS
+ *    lpDSEnumCallback  [I] Address of callback function.
+ *    lpContext         [I] Address of user defined context passed to callback function.
+ *
  * RETURNS
  *    Success: DS_OK
  *    Failure: DSERR_INVALIDPARAM
@@ -294,7 +309,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 	lpDSEnumCallback, lpContext);
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter\n");
+	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
 	return DSERR_INVALIDPARAM;
     }
 
@@ -339,6 +354,10 @@ HRESULT WINAPI DirectSoundEnumerateA(
  *
  * Enumerate all DirectSound drivers installed in the system
  *
+ * PARAMS
+ *    lpDSEnumCallback  [I] Address of callback function.
+ *    lpContext         [I] Address of user defined context passed to callback function.
+ *
  * RETURNS
  *    Success: DS_OK
  *    Failure: DSERR_INVALIDPARAM
@@ -358,7 +377,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
 	lpDSEnumCallback, lpContext);
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter\n");
+	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
 	return DSERR_INVALIDPARAM;
     }
 
@@ -708,6 +727,18 @@ static ICOM_VTABLE(IDirectSound8) dsvt =
 
 /*******************************************************************************
  *		DirectSoundCreate (DSOUND.1)
+ *
+ *  Creates and initializes a DirectSound interface.
+ *
+ *  PARAMS
+ *     lpcGUID   [I] Address of the GUID that identifies the sound device.
+ *     ppDS      [O] Address of a variable to receive the interface pointer.
+ *     pUnkOuter [I] Must be NULL.
+ *
+ *  RETURNS
+ *     Success: DS_OK
+ *     Failure: DSERR_ALLOCATED, DSERR_INVALIDPARAM, DSERR_NOAGGREGATION, 
+ *              DSERR_NODRIVER, DSERR_OUTOFMEMORY
  */
 HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown *pUnkOuter )
 {
@@ -976,7 +1007,8 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
 
 /*******************************************************************************
- * DllCanUnloadNow [DSOUND.4]  Determines whether the DLL is in use.
+ * DllCanUnloadNow [DSOUND.4]  
+ * Determines whether the DLL is in use.
  *
  * RETURNS
  *    Success: S_OK

@@ -79,13 +79,13 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 	DWORD			offset;
 	LPDSBPOSITIONNOTIFY	event;
 
-	if (dsb->nrofnotifies == 0)
+	if (!dsb->notify || dsb->notify->nrofnotifies == 0)
 		return;
 
 	TRACE("(%p) buflen = %ld, playpos = %ld, len = %d\n",
 		dsb, dsb->buflen, dsb->playpos, len);
-	for (i = 0; i < dsb->nrofnotifies ; i++) {
-		event = dsb->notifies + i;
+	for (i = 0; i < dsb->notify->nrofnotifies ; i++) {
+		event = dsb->notify->notifies + i;
 		offset = event->dwOffset;
 		TRACE("checking %d, position %ld, event = %p\n",
 			i, offset, event->hEventNotify);

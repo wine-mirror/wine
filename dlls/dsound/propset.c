@@ -388,10 +388,12 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     }
 
     ppd->Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
+
     if (pcbReturned) {
 	*pcbReturned = cbPropData; 
 	TRACE("*pcbReturned=%ld\n", *pcbReturned);
     }
+
     return S_OK;
 }
 

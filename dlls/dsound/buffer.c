@@ -54,13 +54,21 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	LPDIRECTSOUNDNOTIFY iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
-
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-	if (This->dsb)
-		return IDirectSoundBuffer8_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
-	else if (This->dscb)
-		return IDirectSoundCaptureBuffer8_QueryInterface((LPDIRECTSOUNDCAPTUREBUFFER8)This->dscb, riid, ppobj);
-	return DSERR_GENERIC;
+
+	if ( IsEqualGUID(riid, &IID_IUnknown) || 
+	     IsEqualGUID(riid, &IID_IDirectSoundNotify) ||
+	     IsEqualGUID(riid, &IID_IDirectSoundNotify8) ) {
+		IDirectSoundNotify_AddRef(iface);
+		*ppobj = This;
+		return DS_OK;
+	}
+
+	FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
+
+	*ppobj = 0;
+
+	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface) {
@@ -80,11 +88,12 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 	TRACE("(%p) ref was %ld\n", This, This->ref);
 
 	ref = InterlockedDecrement(&(This->ref));
-	if (!ref) {
-		if (This->dsb)
-			IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
-		else if (This->dscb)
-			IDirectSoundCaptureBuffer8_Release((LPDIRECTSOUNDCAPTUREBUFFER8)This->dscb);
+	/* FIXME: A notification should be a part of a buffer rather than pointed 
+	 * to from a buffer. Hence the -1 ref count */
+	if (ref == -1) {
+		if (This->notifies != NULL)
+			HeapFree(GetProcessHeap(), 0, This->notifies);
+
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
@@ -95,33 +104,31 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	LPDIRECTSOUNDNOTIFY iface,DWORD howmuch,LPCDSBPOSITIONNOTIFY notify
 ) {
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
-	int	i;
+	TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
+
+	if (!notify) {
+	    WARN("invalid parameter\n");
+	    return DSERR_INVALIDPARAM;
+	}
 
 	if (TRACE_ON(dsound)) {
-	    TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
+	    int	i;
 	    for (i=0;i<howmuch;i++)
-		    TRACE("notify at %ld to 0x%08lx\n",
-                            notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
+		TRACE("notify at %ld to 0x%08lx\n",
+		    notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
 	}
-	if (This->dsb) {
-		This->dsb->notifies = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->dsb->notifies,(This->dsb->nrofnotifies+howmuch)*sizeof(DSBPOSITIONNOTIFY));
-		memcpy(	This->dsb->notifies+This->dsb->nrofnotifies,
-			notify,
-			howmuch*sizeof(DSBPOSITIONNOTIFY)
-		);
-		This->dsb->nrofnotifies+=howmuch;
-	} else if (This->dscb) {
-		TRACE("notifies = %p, nrofnotifies = %d\n", This->dscb->notifies, This->dscb->nrofnotifies);
-		This->dscb->notifies = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->dscb->notifies,(This->dscb->nrofnotifies+howmuch)*sizeof(DSBPOSITIONNOTIFY));
-		memcpy(	This->dscb->notifies+This->dscb->nrofnotifies,
-			notify,
-			howmuch*sizeof(DSBPOSITIONNOTIFY)
-		);
-		This->dscb->nrofnotifies+=howmuch;
-		TRACE("notifies = %p, nrofnotifies = %d\n", This->dscb->notifies, This->dscb->nrofnotifies);
+
+	if (This->hwnotify) {
+	    return IDsDriverNotify_SetNotificationPositions(This->hwnotify, howmuch, notify);
 	}
-	else
-		return DSERR_INVALIDPARAM;
+	else {
+	    /* Make an internal copy of the caller-supplied array.
+	     * Replace the existing copy if one is already present. */
+	    This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+	        This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	    memcpy(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	    This->nrofnotifies = howmuch;
+	}
 
 	return S_OK;
 }
@@ -816,17 +823,23 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
-	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
-		IDirectSoundNotifyImpl	*dsn;
-
-		dsn = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*dsn));
-		dsn->ref = 1;
-		dsn->dsb = This;
-		dsn->dscb = 0;
-		IDirectSoundBuffer8_AddRef(iface);
-		dsn->lpVtbl = &dsnvt;
-		*ppobj = (LPVOID)dsn;
-		return S_OK;
+	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ||
+	     IsEqualGUID( &IID_IDirectSoundNotify8, riid ) ) {
+		if (!This->notify) {
+			This->notify = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(),
+				HEAP_ZERO_MEMORY,sizeof(*This->notify));
+			if (This->notify) {
+				This->notify->ref = 0;	/* release when ref == -1 */
+				This->notify->lpVtbl = &dsnvt;
+			}
+		}
+		if (This->notify) {
+			IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
+			*ppobj = (LPVOID)This->notify;
+			return S_OK;
+		}
+		*ppobj = NULL;
+		return E_FAIL;
 	}
 
 	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
@@ -837,6 +850,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 			IDirectSound3DBuffer_AddRef((LPDIRECTSOUND3DBUFFER)*ppobj);
 			return S_OK;
 		}
+		*ppobj = NULL;
 		return E_FAIL;
 	}
 
@@ -854,6 +868,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 			IKsPropertySet_AddRef((LPKSPROPERTYSET)*ppobj);
 			return S_OK;
 		}
+		*ppobj = NULL;
 		return E_FAIL;
 	}
 
