@@ -1,7 +1,8 @@
 /* 
  * Implementation of VER.DLL
  * 
- * Copyright 1996 Marcus Meissner
+ * Copyright 1996,1997 Marcus Meissner
+ * Copyright 1997 David Cuthbert
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -166,8 +167,9 @@ static int  testFileExclusiveExistence(
 
 
 int
-read_ne_header(HFILE32 lzfd,LPIMAGE_OS2_HEADER nehd) {
+read_xx_header(HFILE32 lzfd) {
 	IMAGE_DOS_HEADER	mzh;
+	char			magic[2];
 
 	LZSeek32(lzfd,0,SEEK_SET);
 	if (sizeof(mzh)!=LZRead32(lzfd,&mzh,sizeof(mzh)))
@@ -175,22 +177,24 @@ read_ne_header(HFILE32 lzfd,LPIMAGE_OS2_HEADER nehd) {
 	if (mzh.e_magic!=IMAGE_DOS_SIGNATURE)
 		return 0;
 	LZSeek32(lzfd,mzh.e_lfanew,SEEK_SET);
-	LZREAD(nehd);
-	if (nehd->ne_magic == IMAGE_OS2_SIGNATURE) {
-		LZSeek32(lzfd,mzh.e_lfanew,SEEK_SET);
-		return 1;
-	}
-	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle PE files yet.\n");
-	/* must handle PE files too. Later. */
+	if (2!=LZRead32(lzfd,magic,2))
+		return 0;
+	LZSeek32(lzfd,mzh.e_lfanew,SEEK_SET);
+	if (magic[0] == 'N' && magic[1] == 'E')
+		return IMAGE_OS2_SIGNATURE;
+	if (magic[0] == 'P' && magic[1] == 'E')
+		return IMAGE_NT_SIGNATURE;
+	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle %*s files.\n",2,magic);
 	return 0;
 }
 
 
 int
 find_ne_resource(
-	HFILE32 lzfd,LPIMAGE_OS2_HEADER nehd,SEGPTR typeid,SEGPTR resid,
+	HFILE32 lzfd,SEGPTR typeid,SEGPTR resid,
 	BYTE **resdata,int *reslen,DWORD *off
 ) {
+	IMAGE_OS2_HEADER nehd;
 	NE_TYPEINFO	ti;
 	NE_NAMEINFO	ni;
 	int		i;
@@ -198,7 +202,12 @@ find_ne_resource(
 	DWORD		nehdoffset;
 
 	nehdoffset = LZTELL(lzfd);
-	LZSeek32(lzfd,nehd->resource_tab_offset,SEEK_CUR);
+	LZREAD(&nehd);
+	if (nehd.resource_tab_offset==nehd.rname_tab_offset) {
+		dprintf_ver(stddeb,"no resources in NE dll\n");
+		return 0;
+	}
+	LZSeek32(lzfd,nehd.resource_tab_offset+nehdoffset,SEEK_SET);
 	LZREAD(&shiftcount);
 	dprintf_ver(stddeb,"shiftcount is %d\n",shiftcount);
 	dprintf_ver(stddeb,"reading resource typeinfo dir.\n");
@@ -212,6 +221,7 @@ find_ne_resource(
 		if (!ti.type_id)
 			return 0;
 		dprintf_ver(stddeb,"    ti.typeid =%04x,count=%d\n",ti.type_id,ti.count);
+
 		skipflag=0;
 		if (!HIWORD(typeid)) {
 			if ((ti.type_id&0x8000)&&(typeid!=ti.type_id))
@@ -227,7 +237,7 @@ find_ne_resource(
 				whereleft = LZTELL(lzfd);
 				LZSeek32(
 					lzfd,
-					nehdoffset+nehd->resource_tab_offset+ti.type_id,
+					nehdoffset+nehd.resource_tab_offset+ti.type_id,
 					SEEK_SET
 				);
 				LZREAD(&len);
@@ -268,7 +278,7 @@ find_ne_resource(
 					whereleft = LZTELL(lzfd);
 					  LZSeek32(
 						lzfd,
-						nehdoffset+nehd->resource_tab_offset+ni.id,
+						nehdoffset+nehd.resource_tab_offset+ni.id,
 						SEEK_SET
 					);
 					LZREAD(&len);
@@ -302,31 +312,135 @@ find_ne_resource(
 	}
 }
 
+extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(
+	LPIMAGE_RESOURCE_DIRECTORY resdirptr,LPCWSTR name,DWORD root
+);
+
+/* Loads the specified PE resource.
+ * FIXME: shouldn't load the whole image
+ */
+int
+find_pe_resource(
+	HFILE32 lzfd,LPWSTR typeid,LPWSTR resid,
+	BYTE **resdata,int *reslen,DWORD *off
+) {
+	IMAGE_NT_HEADERS pehd;
+	int		i;
+	UINT32		nrofsections;
+	DWORD		imagesize,pehdoffset;
+	BYTE		*image;
+	IMAGE_DATA_DIRECTORY		resdir;
+	LPIMAGE_RESOURCE_DIRECTORY	resourcedir,xresdir;
+	LPIMAGE_RESOURCE_DATA_ENTRY	xresdata;
+	LPIMAGE_SECTION_HEADER		sections;
+
+	pehdoffset = LZTELL(lzfd);
+	LZREAD(&pehd);
+	resdir = pehd.OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+	dprintf_ver(stddeb,"find_pe_resource(.,%p,%p,....)\n",typeid,resid);
+	if (!resdir.Size) {
+		fprintf(stderr,"misc/ver.c:find_pe_resource() no resource directory found in PE file.\n");
+		return 0;
+	}
+	imagesize = pehd.OptionalHeader.SizeOfImage;
+	image = HeapAlloc(GetProcessHeap(),0,imagesize);
+	nrofsections = pehd.FileHeader.NumberOfSections;
+
+	sections = (LPIMAGE_SECTION_HEADER)HeapAlloc(GetProcessHeap(),0,pehd.FileHeader.NumberOfSections*sizeof(IMAGE_SECTION_HEADER));
+	LZSeek32(lzfd,
+		pehdoffset+
+		sizeof(DWORD)+	/* Signature */
+		sizeof(IMAGE_FILE_HEADER)+	
+		pehd.FileHeader.SizeOfOptionalHeader,
+		SEEK_SET
+	);
+	if (	nrofsections*sizeof(IMAGE_SECTION_HEADER)!=
+		LZRead32(lzfd,sections,nrofsections*sizeof(IMAGE_SECTION_HEADER))
+	) {
+		HeapFree(GetProcessHeap(),0,image);
+		return 0;
+	}
+	for (i=0;i<nrofsections;i++) {
+		if (sections[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+			continue;
+		LZSeek32(lzfd,sections[i].PointerToRawData,SEEK_SET);
+		if (	sections[i].SizeOfRawData!=
+			LZRead32(lzfd,image+sections[i].VirtualAddress,sections[i].SizeOfRawData)
+		)
+			continue;
+	}
+	resourcedir = (LPIMAGE_RESOURCE_DIRECTORY)(image+resdir.VirtualAddress);
+	xresdir = GetResDirEntryW(resourcedir,typeid,(DWORD)resourcedir);
+	if (!xresdir) {
+		dprintf_ver(stddeb,"...no typeid entry found for %p\n",typeid);
+		HeapFree(GetProcessHeap(),0,image);
+		return 0;
+	}
+	xresdir = GetResDirEntryW(xresdir,resid,(DWORD)resourcedir);
+	if (!xresdir) {
+		dprintf_ver(stddeb,"...no resid entry found for %p\n",resid);
+		HeapFree(GetProcessHeap(),0,image);
+		return 0;
+	}
+	
+	xresdir = GetResDirEntryW(xresdir,0,(DWORD)resourcedir);
+	if (!xresdir) {
+		dprintf_ver(stddeb,"...no 0 (default language) entry found for %p\n",resid);
+		HeapFree(GetProcessHeap(),0,image);
+		return 0;
+	}
+	xresdata = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
+	*reslen	= xresdata->Size;
+	*resdata= (LPBYTE)xmalloc(*reslen);
+	memcpy(*resdata,image+xresdata->OffsetToData,*reslen);
+	/* find physical address for virtual offset */
+	for (i=0;i<nrofsections;i++) {
+		if (sections[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+			continue;
+		if (	(xresdata->OffsetToData >= sections[i].VirtualAddress)&&
+			(xresdata->OffsetToData < sections[i].VirtualAddress+sections[i].SizeOfRawData)
+		) {
+			*off = (DWORD)(xresdata->OffsetToData)-(DWORD)(sections[i].VirtualAddress)+(DWORD)(sections[i].PointerToRawData);
+			break;
+		}
+	}
+	HeapFree(GetProcessHeap(),0,image);
+	HeapFree(GetProcessHeap(),0,sections);
+	return 1;
+}
+
 /* GetFileResourceSize				[VER.2] */
 DWORD WINAPI GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,
                                  LPDWORD off)
 {
 	HFILE32			lzfd;
 	OFSTRUCT		ofs;
-	BYTE			*resdata;
-	int			reslen;
-	IMAGE_OS2_HEADER	nehd;
+	BYTE			*resdata = NULL;
+	int			reslen,res;
 
 	dprintf_ver(stddeb,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
 	);
 	lzfd=LZOpenFile32A(filename,&ofs,OF_READ);
-	if (lzfd==0)
+	if (!lzfd)
 		return 0;
-	if (!read_ne_header(lzfd,&nehd)) {
-		LZClose32(lzfd);
-		return 0;
+	switch (read_xx_header(lzfd)) {
+	case 0:
+	    res=0;
+	    break;
+	case IMAGE_OS2_SIGNATURE:
+	    res=find_ne_resource(lzfd,restype,resid,&resdata,&reslen,off);
+	    break;
+	case IMAGE_NT_SIGNATURE:
+	    res=find_pe_resource(lzfd,(LPWSTR)restype,(LPWSTR)resid,&resdata,&reslen,off);
+	    break;
 	}
-	if (!find_ne_resource(lzfd,&nehd,restype,resid,&resdata,&reslen,off)) {
-		LZClose32(lzfd);
-		return 0;
+	if (!res) {
+	    LZClose32(lzfd);
+	    return 0;
 	}
-	free(resdata);
+	if (resdata)
+		free(resdata);
 	LZClose32(lzfd);
 	return reslen;
 }
@@ -337,9 +451,9 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 {
 	HFILE32			lzfd;
 	OFSTRUCT		ofs;
-	BYTE			*resdata;
-	int			reslen=datalen;
-	IMAGE_OS2_HEADER	nehd;
+	BYTE			*resdata=NULL;
+	int			res,reslen=datalen;
+
 	dprintf_ver(stddeb,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
@@ -348,20 +462,26 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	if (lzfd==0)
 		return 0;
 	if (!off) {
-		if (!read_ne_header(lzfd,&nehd)) {
-			LZClose32(lzfd);
-			return 0;
+		switch (read_xx_header(lzfd)) {
+		case 0:	res=0;
+			break;
+		case IMAGE_OS2_SIGNATURE:
+			res= find_ne_resource(lzfd,restype,resid,&resdata,&reslen,&off);
+			break;
+		case IMAGE_NT_SIGNATURE:
+			res= find_pe_resource(lzfd,restype,resid,&resdata,&reslen,&off);
+			break;
 		}
-		if (!find_ne_resource(lzfd,&nehd,restype,resid,&resdata,&reslen,&off)) {
-			LZClose32(lzfd);
+		LZClose32(lzfd);
+		if (!res)
 			return 0;
-		}
+		if (reslen>datalen) reslen = datalen;
+		memcpy(data,resdata,reslen);
 		free(resdata);
+		return reslen;
 	}
 	LZSeek32(lzfd,off,SEEK_SET);
-	if (reslen>datalen)
-		reslen=datalen;
-	LZRead32(lzfd,data,reslen);
+	reslen = LZRead32(lzfd,data,datalen);
 	LZClose32(lzfd);
 	return reslen;
 }
@@ -369,8 +489,8 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 /* GetFileVersionInfoSize			[VER.6] */
 DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 {
-	DWORD	len,ret;
-	BYTE	buf[72];
+	DWORD	len,ret,isuni=0;
+	BYTE	buf[144];
 	VS_FIXEDFILEINFO *vffi;
 
 	dprintf_ver(stddeb,"GetFileVersionInfoSize16(%s,%p)\n",filename,handle);
@@ -384,15 +504,41 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 		return 0;
 
 	vffi=(VS_FIXEDFILEINFO*)(buf+0x14);
-	if (vffi->dwSignature != VS_FFI_SIGNATURE)
-		return 0;
+	if (vffi->dwSignature != VS_FFI_SIGNATURE) {
+		/* unicode resource */
+		if (vffi->dwSignature == 0x004f0049) {
+			isuni = 1;
+			vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
+		} else {
+			fprintf(stderr,"vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+				vffi->dwSignature,VS_FFI_SIGNATURE
+			);
+			return 0;
+		}
+	}
 	if (*(WORD*)buf < len)
 		len = *(WORD*)buf;
-	dprintf_ver(stddeb,"->strucver=%ld.%ld,filever=%ld.%ld,productver=%ld.%ld,flagmask=%lx,flags=%lx,OS=",
+	dprintf_ver(stddeb,"	structversion=0x%lx.0x%lx,\n    fileversion=0x%lx.0x%lx,\n    productversion=0x%lx.0x%lx,\n    flagmask=0x%lx,\n    flags=",
 		(vffi->dwStrucVersion>>16),vffi->dwStrucVersion&0xFFFF,
 		vffi->dwFileVersionMS,vffi->dwFileVersionLS,
 		vffi->dwProductVersionMS,vffi->dwProductVersionLS,
-		vffi->dwFileFlagsMask,vffi->dwFileFlags
+		vffi->dwFileFlagsMask
+	);
+	if (vffi->dwFileFlags & VS_FF_DEBUG) 
+		dprintf_ver(stddeb,"DEBUG,");
+	if (vffi->dwFileFlags & VS_FF_PRERELEASE)
+		dprintf_ver(stddeb,"PRERELEASE,");
+	if (vffi->dwFileFlags & VS_FF_PATCHED)
+		dprintf_ver(stddeb,"PATCHED,");
+	if (vffi->dwFileFlags & VS_FF_PRIVATEBUILD)
+		dprintf_ver(stddeb,"PRIVATEBUILD,");
+	if (vffi->dwFileFlags & VS_FF_INFOINFERRED)
+		dprintf_ver(stddeb,"INFOINFERRED,");
+	if (vffi->dwFileFlags & VS_FF_SPECIALBUILD)
+		dprintf_ver(stddeb,"SPECIALBUILD,");
+	dprintf_ver(stddeb,"\n    OS=0x%lx.0x%lx (",
+		(vffi->dwFileOS&0xFFFF0000)>>16,
+		vffi->dwFileOS&0x0000FFFF
 	);
 	switch (vffi->dwFileOS&0xFFFF0000) {
 	case VOS_DOS:dprintf_ver(stddeb,"DOS,");break;
@@ -401,7 +547,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 	case VOS_NT:dprintf_ver(stddeb,"NT,");break;
 	case VOS_UNKNOWN:
 	default:
-		dprintf_ver(stddeb,"UNKNOWN(%ld),",vffi->dwFileOS&0xFFFF0000);break;
+		dprintf_ver(stddeb,"UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
 	}
 	switch (vffi->dwFileOS & 0xFFFF) {
 	case VOS__BASE:dprintf_ver(stddeb,"BASE");break;
@@ -409,21 +555,22 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 	case VOS__WINDOWS32:dprintf_ver(stddeb,"WIN32");break;
 	case VOS__PM16:dprintf_ver(stddeb,"PM16");break;
 	case VOS__PM32:dprintf_ver(stddeb,"PM32");break;
-	default:dprintf_ver(stddeb,"UNKNOWN(%ld)",vffi->dwFileOS&0xFFFF);break;
+	default:dprintf_ver(stddeb,"UNKNOWN(0x%lx)",vffi->dwFileOS&0xFFFF);break;
 	}
+	dprintf_ver(stddeb,")\n    ");
 	switch (vffi->dwFileType) {
 	default:
 	case VFT_UNKNOWN:
-		dprintf_ver(stddeb,"filetype=Unknown(%ld)",vffi->dwFileType);
+		dprintf_ver(stddeb,"filetype=Unknown(0x%lx)",vffi->dwFileType);
 		break;
-	case VFT_APP:dprintf_ver(stddeb,"filetype=APP");break;
-	case VFT_DLL:dprintf_ver(stddeb,"filetype=DLL");break;
+	case VFT_APP:dprintf_ver(stddeb,"filetype=APP,");break;
+	case VFT_DLL:dprintf_ver(stddeb,"filetype=DLL,");break;
 	case VFT_DRV:
 		dprintf_ver(stddeb,"filetype=DRV,");
 		switch(vffi->dwFileSubtype) {
 		default:
 		case VFT2_UNKNOWN:
-			dprintf_ver(stddeb,"UNKNOWN(%ld)",vffi->dwFileSubtype);
+			dprintf_ver(stddeb,"UNKNOWN(0x%lx)",vffi->dwFileSubtype);
 			break;
 		case VFT2_DRV_PRINTER:
 			dprintf_ver(stddeb,"PRINTER");
@@ -464,7 +611,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 		dprintf_ver(stddeb,"filetype=FONT.");
 		switch (vffi->dwFileSubtype) {
 		default:
-			dprintf_ver(stddeb,"UNKNOWN(%ld)",vffi->dwFileSubtype);
+			dprintf_ver(stddeb,"UNKNOWN(0x%lx)",vffi->dwFileSubtype);
 			break;
 		case VFT2_FONT_RASTER:dprintf_ver(stddeb,"RASTER");break;
 		case VFT2_FONT_VECTOR:dprintf_ver(stddeb,"VECTOR");break;
@@ -474,7 +621,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 	case VFT_VXD:dprintf_ver(stddeb,"filetype=VXD");break;
 	case VFT_STATIC_LIB:dprintf_ver(stddeb,"filetype=STATIC_LIB");break;
 	}
-	dprintf_ver(stddeb,"filedata=%lx.%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
+	dprintf_ver(stddeb,"\n    filedata=0x%lx.0x%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
 	return len;
 }
 
@@ -749,7 +896,7 @@ DWORD WINAPI VerInstallFile16(
 
 /* VerInstallFileA				[VERSION.7] */
 static LPBYTE
-_fetch_versioninfo(LPSTR fn) {
+_fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
     DWORD	alloclen;
     LPBYTE	buf;
     DWORD	ret;
@@ -766,8 +913,14 @@ _fetch_versioninfo(LPSTR fn) {
 	    free(buf);
 	    alloclen = *(WORD*)buf;
 	    buf = xmalloc(alloclen);
-	} else
+	} else {
+	    *vffi = (VS_FIXEDFILEINFO*)(buf+0x14);
+	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
+	    	*vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
+	    if ((*vffi)->dwSignature != VS_FFI_SIGNATURE)
+	    	fprintf(stderr,"_fetch_versioninfo:bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
 	    return buf;
+	}
     }
 }
 
@@ -868,16 +1021,14 @@ DWORD WINAPI VerInstallFile32A(
     }
     xret = 0;
     if (!(flags & VIFF_FORCEINSTALL)) {
-    	buf1 = _fetch_versioninfo(destfn);
+	VS_FIXEDFILEINFO *destvffi,*tmpvffi;
+    	buf1 = _fetch_versioninfo(destfn,&destvffi);
 	if (buf1) {
-	    buf2 = _fetch_versioninfo(tmpfn);
+	    buf2 = _fetch_versioninfo(tmpfn,&tmpvffi);
 	    if (buf2) {
 	    	char	*tbuf1,*tbuf2;
-		VS_FIXEDFILEINFO *destvffi,*tmpvffi;
 		UINT32	len1,len2;
 
-		destvffi= (VS_FIXEDFILEINFO*)(buf1+0x14);
-		tmpvffi = (VS_FIXEDFILEINFO*)(buf2+0x14);
 		len1=len2=40;
 
 		/* compare file versions */
@@ -974,7 +1125,7 @@ DWORD WINAPI VerInstallFile32W(
 
 
 /* FIXME: UNICODE? */
-struct db {
+struct dbA {
 	WORD	nextoff;
 	WORD	datalen;
 /* in memory structure... */
@@ -985,11 +1136,25 @@ struct db {
  */
 };
 
+/* FIXME: UNICODE? */
+struct dbW {
+	WORD	nextoff;
+	WORD	datalen;
+	WORD	btext;		/* type of data */
+/* in memory structure... */
+	WCHAR	name[1]; 	/* padded to dword alignment */
+/* .... 
+	WCHAR	data[datalen];     padded to dword alignment
+	BYTE	subdirdata[];      until nextoff
+ */
+};
+
+/* this one used for Win16 resources, which are always in ASCII format */
 static BYTE*
-_find_data(BYTE *block,LPCSTR str, WORD buff_remain) {
+_find_dataA(BYTE *block,LPCSTR str, WORD buff_remain) {
 	char	*nextslash;
 	int	substrlen, inc_size;
-	struct	db	*db;
+	struct	dbA	*db;
 
 	while (*str && *str=='\\')
 		str++;
@@ -1006,7 +1171,7 @@ _find_data(BYTE *block,LPCSTR str, WORD buff_remain) {
 
 
 	while (1) {
-		db=(struct db*)block;
+		db=(struct dbA*)block;
 		dprintf_ver(stddeb,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s,db->data=%s\n",
 			db,db->nextoff,db->datalen,db->name,(char*)((char*)db+4+((strlen(db->name)+4)&~3))
 		);
@@ -1018,10 +1183,52 @@ _find_data(BYTE *block,LPCSTR str, WORD buff_remain) {
 			if (nextslash) {
 				inc_size = 4+((strlen(db->name)+4)&~3)+((db->datalen+3)&~3);
 
-				return _find_data( block+inc_size ,nextslash,
+				return _find_dataA( block+inc_size ,nextslash,
 							buff_remain - inc_size);
 			}
 			else
+				return block;
+		}
+		inc_size=((db->nextoff+3)&~3);
+		block=block+inc_size;
+		buff_remain=buff_remain-inc_size;
+	}
+}
+
+/* this one used for Win32 resources, which are always in UNICODE format */
+extern LPWSTR CRTDLL_wcschr(LPWSTR str,WCHAR xchar);
+static BYTE*
+_find_dataW(BYTE *block,LPCWSTR str, WORD buff_remain) {
+	LPWSTR	nextslash;
+	int	substrlen, inc_size;
+	struct	dbW	*db;
+
+	while (*str && *str=='\\')
+		str++;
+	if (NULL!=(nextslash=CRTDLL_wcschr(str,'\\')))
+		substrlen=nextslash-str;
+	else
+		substrlen=lstrlen32W(str);
+	if (nextslash!=NULL) {
+		while (*nextslash && *nextslash=='\\')
+			nextslash++;
+		if (!*nextslash)
+			nextslash=NULL;
+	}
+
+
+	while (1) {
+		db=(struct dbW*)block;
+		if ((!db->nextoff) || (!buff_remain)) /* no more entries ? */
+			return NULL;
+
+		if (!lstrncmp32W(db->name,str,substrlen)) {
+			if (nextslash) {
+				inc_size = 8+((lstrlen32W(db->name)*sizeof(WCHAR)+4)&~3)+((db->datalen+3)&~3);
+
+				return _find_dataW( block+inc_size ,nextslash,
+							buff_remain - inc_size);
+			} else
 				return block;
 		}
 		inc_size=((db->nextoff+3)&~3);
@@ -1036,7 +1243,6 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
                              UINT16 *buflen)
 {
 	BYTE	*block=PTR_SEG_TO_LIN(segblock),*b;
-	struct	db	*db;
 	char	*s;
 
 	dprintf_ver(stddeb,"VerQueryValue16(%p,%s,%p,%d)\n",
@@ -1044,16 +1250,36 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
-	b=_find_data(block, s, *(WORD *)block);
-	if (b==NULL) {
-		*buflen=0;
-		return 0;
+
+	/* check for UNICODE version */
+	if (	(*(DWORD*)(block+0x14) != VS_FFI_SIGNATURE) && 
+		(*(DWORD*)(block+0x28) == VS_FFI_SIGNATURE)
+	) {
+		struct	dbW	*db;
+		LPWSTR	wstr;
+		wstr = HEAP_strdupAtoW(GetProcessHeap(),0,s);
+		b=_find_dataW(block, wstr, *(WORD *)block);
+		HeapFree(GetProcessHeap(),0,wstr);
+		if (!b) {
+			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			*buflen=0;
+			return 0;
+		}
+		db=(struct dbW*)b;
+		b	= b+8+((lstrlen32W(db->name)*sizeof(WCHAR)+4)&~3);
+		*buflen	= db->datalen;
+	} else {
+		struct	dbA	*db;
+		b=_find_dataA(block, s, *(WORD *)block);
+		if (!b) {
+			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			*buflen=0;
+			return 0;
+		}
+		db=(struct dbA*)b;
+		b	= b+4+((lstrlen32A(db->name)+4)&~3);
+		*buflen	= db->datalen;
 	}
-	db=(struct db*)b;
-	*buflen	= db->datalen;
-	/* let b point to data area */
-	b	= b+4+((strlen(db->name)+4)&~3);
-	/* now look up what the resp. SEGPTR would be ... */
 	*buffer	= (b-block)+segblock;
 	dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
 	return 1;
@@ -1063,23 +1289,42 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
                               LPVOID *vbuffer,UINT32 *buflen)
 {
 	BYTE	*b,*block=(LPBYTE)vblock,**buffer=(LPBYTE*)vbuffer;
-	struct	db	*db;
-	char	*s;
+	LPSTR	s;
 
 	dprintf_ver(stddeb,"VerQueryValue32A(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
-	b=_find_data(block, s, *(WORD *)block);
-	if (b==NULL) {
-		*buflen=0;
-		return 0;
+	/* check for UNICODE version */
+	if (	(*(DWORD*)(block+0x14) != VS_FFI_SIGNATURE) && 
+		(*(DWORD*)(block+0x28) == VS_FFI_SIGNATURE)
+	) {
+		LPWSTR	wstr;
+		struct	dbW	*db;
+		wstr = HEAP_strdupAtoW(GetProcessHeap(),0,s);
+		b=_find_dataW(block, wstr, *(WORD *)block);
+		HeapFree(GetProcessHeap(),0,wstr);
+		if (!b) {
+			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			*buflen=0;
+			return 0;
+		}
+		db=(struct dbW*)b;
+		*buflen	= db->datalen;
+		b	= b+8+((lstrlen32W(db->name)*sizeof(WCHAR)+4)&~3);
+	} else {
+		struct	dbA	*db;
+		b=_find_dataA(block, s, *(WORD *)block);
+		if (!b) {
+			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			*buflen=0;
+			return 0;
+		}
+		db=(struct dbA*)b;
+		*buflen	= db->datalen;
+		b	= b+4+((lstrlen32A(db->name)+4)&~3);
 	}
-	db=(struct db*)b;
-	*buflen	= db->datalen;
-	/* let b point to data area */
-	b	= b+4+((strlen(db->name)+4)&~3);
 	*buffer	= b;
 	dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
 	return 1;
@@ -1088,30 +1333,11 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 DWORD WINAPI VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,
                               UINT32 *buflen)
 {
-	/* FIXME: hmm, we not only need to convert subblock, but also 
-	 *        the content...or?
-	 * And what about UNICODE version info?
-	 * And the NAMES of the values?
-	 */
-	BYTE		*b,**buffer=(LPBYTE*)vbuffer,*block=(LPBYTE)vblock;
-	struct	db	*db;
-	char		*s,*sb;
+	LPSTR		sb;
+	DWORD		ret;
 
 	sb = HEAP_strdupWtoA( GetProcessHeap(), 0, subblock );
-	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(sb)+1);
-	strcpy(s,"VS_VERSION_INFO\\");strcat(s,sb);
-	b=_find_data(block, s, *(WORD *)block);
-	if (b==NULL) {
-		*buflen=0;
-		HeapFree( GetProcessHeap(), 0, sb );
-		return 0;
-	}
-	db=(struct db*)b;
-	*buflen	= db->datalen;
-	/* let b point to data area */
-	b	= b+4+((strlen(db->name)+4)&~3);
-	*buffer	= b;
-	dprintf_ver(stddeb,"	-> %s=%s\n",sb,b);
+	ret = VerQueryValue32A(vblock,sb,vbuffer,buflen);
         HeapFree( GetProcessHeap(), 0, sb );
 	return 1;
 }

@@ -418,7 +418,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         break;
     }
 
-    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, result );
+    SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result );
     return result;
 }
 
@@ -479,7 +479,7 @@ LRESULT WINAPI DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         break;
     }
 
-    SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, result );
+    SPY_ExitMessage( SPY_RESULT_DEFWND32, hwnd, msg, result );
     return result;
 }
 

@@ -982,11 +982,17 @@ static INT32 EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT32 start, INT32 
 						segptr + start, index, count, action);
 		LocalUnlock16(hloc16);
 		return ret;
-	} else if (es->word_break_proc32A)
-		return (INT32)CallWordBreakProc32A((FARPROC32)es->word_break_proc32A,
-						es->text + start, index, count, action);
+	}
+        else if (es->word_break_proc32A)
+        {
+            dprintf_relay( stddeb, "CallTo32(wordbrk=%p,str='%s',idx=%d,cnt=%d,act=%d)\n",
+                           es->word_break_proc32A, es->text + start, index,
+                           count, action );
+            return (INT32)es->word_break_proc32A( es->text + start, index,
+                                                  count, action );
+        }
 	else
-		return EDIT_WordBreakProc(es->text + start, index, count, action);
+            return EDIT_WordBreakProc(es->text + start, index, count, action);
 }
 
 
@@ -2819,7 +2825,7 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 			EDIT_EM_ReplaceSel(wnd, es, TRUE, "\t");
 		break;
 	default:
-		if (!(es->style & ES_READONLY) && (c >= ' ') && (c != 127)) {
+		if (!(es->style & ES_READONLY) && ((BYTE)c >= ' ') && (c != 127)) {
 			char str[2];
  			str[0] = c;
  			str[1] = '\0';

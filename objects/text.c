@@ -254,7 +254,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
                 HPEN32 hpen = CreatePen32( PS_SOLID, 1, GetTextColor32(hdc) );
                 HPEN32 oldPen = SelectObject32( hdc, hpen );
                 MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
-                LineTo32(hdc, x + prefix_end, y + tm.tmAscent + 1 );
+                LineTo32(hdc, x + prefix_end + 1, y + tm.tmAscent + 1 );
                 SelectObject32( hdc, oldPen );
                 DeleteObject32( hpen );
             }
@@ -312,6 +312,31 @@ INT32 WINAPI DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
     return ret;
 }
 
+/***********************************************************************
+ *           DrawTextEx32A    (USER32.164)
+ */
+INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
+                     LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
+{
+    fprintf(stderr,"DrawTextEx32A(%d,'%s',%d,%p,0x%08x,%p)\n",
+    	hdc,str,count,rect,flags,dtp
+    );
+    /*FIXME: ignores extended functionality ... */
+    return DrawText32A(hdc,str,count,rect,flags);
+}
+
+/***********************************************************************
+ *           DrawTextEx32W    (USER32.165)
+ */
+INT32 DrawTextEx32W( HDC32 hdc, LPCWSTR str, INT32 count,
+                     LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
+{
+    fprintf(stderr,"DrawTextEx32A(%d,%p,%d,%p,0x%08x,%p)\n",
+    	hdc,str,count,rect,flags,dtp
+    );
+    /*FIXME: ignores extended functionality ... */
+    return DrawText32W(hdc,str,count,rect,flags);
+}
 
 /***********************************************************************
  *           ExtTextOut16    (GDI.351)

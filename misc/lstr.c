@@ -137,7 +137,7 @@ void WINAPI OutputDebugString16( LPCSTR str )
     for (p = buffer; *str; str++) if (*str != '\r') *p++ = *str;
     *p = '\0';
     if ((p > buffer) && (p[-1] == '\n')) p[1] = '\0'; /* Remove trailing \n */
-    module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
+    module = MODULE_GetModuleName( GetCurrentTask() );
     fprintf( stderr, "OutputDebugString: %s says '%s'\n",
              module ? module : "???", buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
@@ -475,7 +475,7 @@ BOOL32 WINAPI IsCharUpper32W(WCHAR x)
 }
 
 /***********************************************************************
- *           FormatMessageA   (KERNEL32.138) Library Version
+ *           FormatMessage32A   (KERNEL32.138)
  * FIXME: missing wrap,FROM_SYSTEM message-loading,
  */
 DWORD WINAPI FormatMessage32A(
@@ -577,10 +577,7 @@ DWORD WINAPI FormatMessage32A(
 						if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
 							argliststart=args+insertnr-1;
 						else
-							/* FIXME: not sure that this is
-							 * correct for unix-c-varargs.
-							 */
-							argliststart=((DWORD*)&args)+insertnr-1;
+                                                    argliststart=(*(DWORD**)args)+insertnr-1;
 
 						if (fmtstr[strlen(fmtstr)]=='s')
 							sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
@@ -643,44 +640,10 @@ DWORD WINAPI FormatMessage32A(
 }
 #undef ADD_TO_T
 
+
 /***********************************************************************
- *           FormatMessageA   (KERNEL32.138) Emulator Version
+ *           FormatMessage32W   (KERNEL32.138)
  */
-DWORD WINAPI WIN32_FormatMessage32A(DWORD *args)
-{
-	DWORD	dwFlags		= args[0];
-	LPCVOID	lpSource	= (LPCVOID)args[1];
-	DWORD	dwMessageId	= args[2];
-	DWORD	dwLanguageId	= args[3];
-	LPSTR	lpBuffer	= (LPSTR)args[4];
-	DWORD	nSize		= args[5];
-	DWORD	*xargs;
-
-	/* convert possible varargs to an argument array look-a-like */
-
-	if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) {
-		xargs=(DWORD*)args[6];
-	} else {
-		/* args[6] is a pointer to a pointer to the start of 
-		 * a list of arguments.
-		 */
-		if (args[6])
-			xargs=(DWORD*)(((DWORD*)args[6])[0]);
-		else
-			xargs=NULL;
-		dwFlags|=FORMAT_MESSAGE_ARGUMENT_ARRAY;
-	}
-	return FormatMessage32A(
-		dwFlags,
-		lpSource,
-		dwMessageId,
-		dwLanguageId,
-		lpBuffer,
-		nSize,
-		xargs
-	);
-}
-
 DWORD WINAPI FormatMessage32W(
 	DWORD	dwFlags,
 	LPCVOID	lpSource,
@@ -781,10 +744,7 @@ DWORD WINAPI FormatMessage32W(
 					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
 						argliststart=args+insertnr-1;
 					else
-						/* FIXME: not sure that this is
-						 * correct for unix-c-varargs.
-						 */
-						argliststart=((DWORD*)&args)+insertnr-1;
+						argliststart=(*(DWORD**)args)+insertnr-1;
 
 					if (fmtstr[strlen(fmtstr)]=='s') {
 						DWORD	xarr[3];
@@ -847,41 +807,3 @@ DWORD WINAPI FormatMessage32W(
 			lstrlen32W(lpBuffer);
 }
 #undef ADD_TO_T
-
-/***********************************************************************
- *           FormatMessageW   (KERNEL32.138) Emulator Version
- */
-DWORD WINAPI WIN32_FormatMessage32W(DWORD *args)
-{
-	DWORD	dwFlags		= args[0];
-	LPCVOID	lpSource	= (LPCVOID)args[1];
-	DWORD	dwMessageId	= args[2];
-	DWORD	dwLanguageId	= args[3];
-	LPWSTR	lpBuffer	= (LPWSTR)args[4];
-	DWORD	nSize		= args[5];
-	DWORD	*xargs;
-
-	/* convert possible varargs to an argument array look-a-like */
-
-	if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) {
-		xargs=(DWORD*)args[6];
-	} else {
-		/* args[6] is a pointer to a pointer to the start of 
-		 * a list of arguments.
-		 */
-		if (args[6])
-			xargs=(DWORD*)(((DWORD*)args[6])[0]);
-		else
-			xargs=NULL;
-		dwFlags|=FORMAT_MESSAGE_ARGUMENT_ARRAY;
-	}
-	return FormatMessage32W(
-		dwFlags,
-		lpSource,
-		dwMessageId,
-		dwLanguageId,
-		lpBuffer,
-		nSize,
-		xargs
-	);
-}

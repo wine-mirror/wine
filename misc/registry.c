@@ -2093,11 +2093,33 @@ DWORD WINAPI RegQueryValueEx32A(
 		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,
 		lpcbData?*lpcbData:0
 	);
+	if (lpszValueName)
+		lpszValueNameW=strdupA2W(lpszValueName);
+	else 
+		lpszValueNameW=NULL;
+
+	if (lpdwType)
+		type=*lpdwType;
+
 	if (lpbData) {
-		/* double buffer */
-		buf	= (LPBYTE)xmalloc((*lpcbData)*2);
-		myxlen	= *lpcbData*2;
+		myxlen  = 0;
 		mylen	= &myxlen;
+		buf	= xmalloc(4);
+		ret=RegQueryValueEx32W(
+			hkey,
+			lpszValueNameW,
+			lpdwReserved,
+			&type,
+			buf,
+			mylen
+		);
+		free(buf);
+		if (ret==ERROR_MORE_DATA) {
+			buf	= (LPBYTE)xmalloc(*mylen);
+		} else {
+			buf	= (LPBYTE)xmalloc(2*(*lpcbData));
+			myxlen  = 2*(*lpcbData);
+		}
 	} else {
 		buf=NULL;
 		if (lpcbData) {
@@ -2106,13 +2128,6 @@ DWORD WINAPI RegQueryValueEx32A(
 		} else
 			mylen	= NULL;
 	}
-	if (lpszValueName)
-		lpszValueNameW=strdupA2W(lpszValueName);
-	else 
-		lpszValueNameW=NULL;
-
-	if (lpdwType)
-		type=*lpdwType;
 	ret=RegQueryValueEx32W(
 		hkey,
 		lpszValueNameW,

@@ -1,6 +1,5 @@
 name	advapi32
 type	win32
-base	0
 
 0000 stub AbortSystemShutdownA
 0001 stub AbortSystemShutdownW

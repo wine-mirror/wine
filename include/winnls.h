@@ -1,6 +1,10 @@
 #ifndef __WINE_WINNLS_H
 #define __WINE_WINNLS_H
 
+/* flags to GetLocaleInfo */
+#define	LOCALE_NOUSEROVERRIDE	    0x80000000
+#define	LOCALE_USE_CP_ACP	    0x40000000
+
 /* When adding new defines, don't forget to add an entry to the
  * locale2id map in misc/ole2nls.c
  */
@@ -103,6 +107,8 @@
 #define LOCALE_IPOSSEPBYSPACE       0x00000055   
 #define LOCALE_INEGSYMPRECEDES      0x00000056   
 #define LOCALE_INEGSEPBYSPACE       0x00000057   
+#define	LOCALE_FONTSIGNATURE        0x00000058
+
 
 #define NORM_IGNORECASE				1
 #define NORM_IGNORENONSPACE			2
@@ -128,5 +134,16 @@
 #define LANG_USER_DEFAULT     (MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT))
 #define LOCALE_SYSTEM_DEFAULT (MAKELCID(LANG_SYSTEM_DEFAULT, SORT_DEFAULT))
 #define LOCALE_USER_DEFAULT   (MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT)) 
+
+/* Locale Dependent Mapping Flags */
+#define LCMAP_LOWERCASE	0x00000100	/* lower case letters */
+#define LCMAP_UPPERCASE	0x00000200	/* upper case letters */
+#define LCMAP_SORTKEY	0x00000400	/* WC sort key (normalize) */
+#define LCMAP_BYTEREV	0x00000800	/* byte reversal */
+
+#define LCMAP_HIRAGANA	0x00100000	/* map katakana to hiragana */
+#define LCMAP_KATAKANA	0x00200000	/* map hiragana to katakana */
+#define LCMAP_HALFWIDTH	0x00400000	/* map double byte to single byte */
+#define LCMAP_FULLWIDTH	0x00800000	/* map single byte to double byte */
 
 #endif  /* __WINE_WINNLS_H */

@@ -51,11 +51,15 @@ typedef struct
 struct _THDB;
 struct _WSINFO;
 
+  /* signal proc typedef */
+typedef void (CALLBACK *USERSIGNALPROC)(HANDLE16, UINT16, UINT16,
+                                        HINSTANCE16, HQUEUE16);
+
   /* Task database. See 'Windows Internals' p. 226.
    * Note that 16-bit OLE 2 libs like to read it directly 
    * so we have to keep entry offsets as they are. 
    */
-typedef struct
+typedef struct _TDB
 {
     HTASK16   hNext;                      /* 00 Selector of next TDB */
     DWORD     ss_sp WINE_PACKED;          /* 02 Stack pointer of task */
@@ -75,7 +79,7 @@ typedef struct
     HTASK16   hParent;                    /* 22 Selector of TDB of parent */
     WORD      signal_flags;               /* 24 Flags for signal handler */
     FARPROC16 sighandler WINE_PACKED;     /* 26 Signal handler */
-    FARPROC16 userhandler WINE_PACKED;    /* 2a USER signal handler */
+    USERSIGNALPROC userhandler WINE_PACKED; /* 2a USER signal handler */
     FARPROC16 discardhandler WINE_PACKED; /* 2e Handler for GlobalNotify() */
     DWORD     int0 WINE_PACKED;           /* 32 int 0 (divide by 0) handler */
     DWORD     int2 WINE_PACKED;           /* 36 int 2 (NMI) handler */
@@ -111,6 +115,12 @@ typedef struct
 #define TDBF_WINOLDAP   0x0001
 #define TDBF_OS2APP     0x0008
 #define TDBF_WIN32      0x0010
+
+  /* USER signals */
+#define USIG_TERMINATION	0x0020
+#define USIG_DLL_LOAD		0x0040
+#define USIG_DLL_UNLOAD		0x0080
+#define USIG_GPF		0x0666
 
 #pragma pack(4)
 

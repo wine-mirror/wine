@@ -2033,15 +2033,15 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
 HFONT32 X11DRV_FONT_SelectObject( DC* dc, HFONT32 hfont, FONTOBJ* font )
 {
     HFONT32 hPrevFont = 0;
-    LOGFONT16	lf;
+    LOGFONT16 lf;
 
     if( CHECK_PFONT(dc->u.x.font) ) 
         XFONT_ReleaseCacheEntry( __PFONT(dc->u.x.font) );
 
     /* FIXME: do we need to pass anything back from here? */
     memcpy(&lf,&font->logfont,sizeof(lf));
-    lf.lfWidth	= font->logfont.lfWidth * dc->vportExtX/dc->wndExtX;
-    lf.lfHeight	= font->logfont.lfHeight* dc->vportExtY/dc->wndExtY;
+    lf.lfWidth  = font->logfont.lfWidth * dc->vportExtX/dc->wndExtX;
+    lf.lfHeight = font->logfont.lfHeight* dc->vportExtY/dc->wndExtY;
 
     dc->u.x.font = XFONT_RealizeFont( &lf );
     hPrevFont = dc->w.hFont;

@@ -22,7 +22,14 @@ typedef struct
   INT32       Flags;        /* Internal Flags FLAG_* */
 } UPDOWN_INFO;
 
-LRESULT WINAPI UpDownWindowProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                                 LPARAM lParam);
+typedef struct tagNM_UPDOWN
+{
+  NMHDR hdr;
+  int iPos;
+  int iDelta;
+} NM_UPDOWN;
+
+LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                                LPARAM lParam);
 
 #endif  /* __WINE_UPDOWN_H */

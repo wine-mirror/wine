@@ -128,7 +128,7 @@ int DEBUG_GetRegister( enum debug_regs reg )
  *
  * Set the register values from a sigcontext. 
  */
-extern void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
+void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
 {
     EAX_reg(&DEBUG_context) = EAX_sig(sigcontext);
     EBX_reg(&DEBUG_context) = EBX_sig(sigcontext);
@@ -164,7 +164,7 @@ extern void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
  *
  * Build a sigcontext from the register values.
  */
-extern void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
+void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
 {
     EAX_sig(sigcontext) = EAX_reg(&DEBUG_context);
     EBX_sig(sigcontext) = EBX_reg(&DEBUG_context);

@@ -265,7 +265,7 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 extern int DEBUG_ReadExecutableDbgInfo(void);
 
   /* debugger/msc.c */
-extern int DEBUG_RegisterDebugInfo(int, struct pe_data *pe,
+extern int DEBUG_RegisterDebugInfo(struct pe_data *pe,
 				   int, unsigned long, unsigned long);
 extern int DEBUG_ProcessDeferredDebug(void);
 extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name);

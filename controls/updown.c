@@ -8,6 +8,7 @@
  *     arrow keys
  *   - I am not sure about the default values for the Min, Max, Pos
  *     (in the UPDOWN_INFO the fields: MinVal, MaxVal, CurVal)
+ *   - I think I do not handle correctly the WS_BORDER style.
  * Testing:
  *   Not much. The following  have not been tested at all:
  *     - horizontal arrows
@@ -20,10 +21,7 @@
  *   behave very well so I am confident it does work in most (all) of the
  *   untested cases.
  * Problems:
- *   At the moment, the control will no draw itself very well because it
- *   uses some features in DrawEdge that are not yet implemented. 
- *   In other words, there is no known problem, exempt for the things in
- *   the TODO list above.
+ *   I do not like the arrows yet, I'll work more on them later on.
  */
 
 #include <stdlib.h>
@@ -47,10 +45,10 @@
 #define INITIAL_DELAY    500 /* initial timer until auto-increment kicks in */
 #define REPEAT_DELAY     50  /* delay between auto-increments */
 
-#define DEFAULT_WIDTH    10  /* default width of the ctrl */
-#define DEFAULT_XSEP     0   /* default separation between buddy and crtl */
-#define DEFAULT_ADDTOP   1   /* amount to extend above the buddy window */
-#define DEFAULT_ADDBOT   1   /* amount to extend below the buddy window */
+#define DEFAULT_WIDTH    14  /* default width of the ctrl */
+#define DEFAULT_XSEP      0  /* default separation between buddy and crtl */
+#define DEFAULT_ADDTOP    0  /* amount to extend above the buddy window */
+#define DEFAULT_ADDBOT    0  /* amount to extend below the buddy window */
 
 
 /* Work constants */
@@ -64,9 +62,6 @@
 #define TIMERID2         2
 
 static int accelIndex = -1;
-
-#define max(a,b) ((a)>(b)?(a):(b))
-#define min(a,b) ((a)<(b)?(a):(b))
 
 #define UNKNOWN_PARAM(msg, wParam, lParam) dprintf_updown(stddeb, \
         "UpDown Ctrl: Unknown parameter(s) for message " #msg     \
@@ -129,7 +124,7 @@ static void UPDOWN_GetArrowRect(WND *wndPtr, RECT32 *rect, BOOL32 incr)
   if (wndPtr->dwStyle & UDS_HORZ) {
     len = rect->right - rect->left; /* compute the width */
     if (incr)
-      rect->left = len/2;
+      rect->left = len/2+1; 
     else
       rect->right = len/2;
   }
@@ -138,7 +133,7 @@ static void UPDOWN_GetArrowRect(WND *wndPtr, RECT32 *rect, BOOL32 incr)
     if (incr)
       rect->bottom = len/2;
     else
-      rect->top = len/2;
+      rect->top = len/2+1;
   }
 }
 
@@ -290,48 +285,57 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
 static void UPDOWN_DrawArrow(HDC32 hdc, RECT32 *rect, BOOL32 incr, 
 			     BOOL32 pressed, BOOL32 horz)
 {
-  const int w = rect->right - rect->left;
-  const int h = rect->bottom - rect->top;
-  int offset = pressed ? 1 : 0, tmp;
-  POINT32 pts[3];
+  const int rw = rect->right - rect->left;
+  const int rh = rect->bottom - rect->top;
+  int offset = pressed ? 1 : 0;
+  int th, x, y, len;
 
+  /* compute max extents of the triangle */
   if(horz){ /* horizontal arrows */
-    pts[0].x = rect->right  - max(2, w/3) + offset;
-    pts[0].y = rect->top    + max(2, h/4) + offset;
-    pts[1].x = pts[0].x;
-    pts[1].y = rect->bottom - max(2, h/4) + offset;
-    pts[2].x = rect->left + w/3 + offset;
-    pts[2].y = (pts[0].y + pts[1].y)/2;
-    if(pts[2].x-2<rect->left)
-      pts[2].x = rect->left + 2;
-    if(pts[2].x <= pts[0].x)
-      pts[2].x = pts[0].x - 1;
+    th = (3*rh)/5-2*4;
+    if(th > rw/2)
+      th = rw/2;
+    if(th < 2)
+      th = 2;
 
-    if(incr){
-      tmp = pts[2].x;
-      pts[2].x = pts[0].x;
-      pts[0].x = pts[1].x = tmp;
-    }
+    /* compute the position of the tip */
+    y = (rect->top+rect->bottom+1)/2 + offset; 
+    if(incr)
+      x = (rect->left+rect->right+1)/2 + (2*th)/3 + offset;
+    else
+      x = (rect->left+rect->right)/2 + th/3 + offset;
+
+    for(len=1; th>0; th--, len+=2){
+      MoveToEx32(hdc, x, y, 0);
+      LineTo32(hdc, x, y+len);
+      if(incr) x--;
+      else     x++;
+      y++;
+    }  
   }
   else{                   /* vertical arrows */
-    pts[0].x = rect->left + max(2, w/4) + offset;
-    pts[0].y = rect->top  + max(2, h/3) + offset;
-    pts[1].x = rect->right- max(2, w/4) + offset;
-    pts[1].y = pts[0].y;
-    pts[2].x = (pts[0].x + pts[1].x)/2;
-    pts[2].y = pts[0].y + h/3 + offset;
-    if(pts[2].y+2>rect->bottom)
-      pts[2].y = rect->bottom - 2;
-    if(pts[2].y <= pts[0].y)
-      pts[2].y = pts[0].y + 1;
+    th = (3*rw)/5-2*4;
+    if(th > rh/2)
+      th = rh/2;
+    if(th < 2)
+      th = 2;
 
-    if(incr){
-      tmp = pts[2].y;
-      pts[2].y = pts[0].y;
-      pts[0].y = pts[1].y = tmp;
+    /* compute the position of the tip */
+    x = (rect->left+rect->right+1)/2 + offset;
+    if(incr)
+      y = (rect->top+rect->bottom+1)/2 - th/3 + offset;
+    else
+      y = (rect->top+rect->bottom)/2 + (2*th)/3 + offset;
+
+    for(len=1; th>0; th--, len+=2){
+      MoveToEx32(hdc, x, y, 0);
+      LineTo32(hdc, x+len, y);
+      if(incr) y++;
+      else     y--;
+      x--;
     }
+    
   }
-  Polygon32(hdc, pts, 3);
 
 }
 
@@ -350,14 +354,6 @@ static void UPDOWN_Paint(WND *wndPtr)
 
   hdc = BeginPaint32( wndPtr->hwndSelf, &ps );
 
-  /*FIXME - this is just for test */
-  /*      - when DrawEdge works properly, this should dissapear 
-	  as DrawEdge will erase the background */
-/*oldBrush = SelectObject32(hdc, GetStockObject32(GRAY_BRUSH));
-  GetClientRect32(wndPtr->hwndSelf, &rect);
-  Rectangle32(hdc, rect.left, rect.top, rect.right, rect.bottom);
-  SelectObject32(hdc, oldBrush);*/
-
   /* First select the proper brush */
   oldBrush = wndPtr->dwStyle & WS_DISABLED ? GRAY_BRUSH : BLACK_BRUSH;
   oldBrush = SelectObject32(hdc, GetStockObject32(oldBrush));
@@ -365,9 +361,12 @@ static void UPDOWN_Paint(WND *wndPtr)
   /* Draw the incr button */
   UPDOWN_GetArrowRect(wndPtr, &rect, TRUE);
   prssed = (infoPtr->Flags & FLAG_INCR) && (infoPtr->Flags & FLAG_MOUSEIN);
-  DrawEdge32(hdc, &rect, prssed ? EDGE_SUNKEN : EDGE_RAISED, 
-	   BF_RECT | BF_SOFT | BF_MIDDLE);
+  DrawEdge32(hdc, &rect, prssed?EDGE_SUNKEN:EDGE_RAISED, BF_RECT|BF_MIDDLE);
   UPDOWN_DrawArrow(hdc, &rect, TRUE, prssed, wndPtr->dwStyle & UDS_HORZ);
+
+  /* Draw the space between the buttons */
+  rect.top = rect.bottom; rect.bottom++;
+  DrawEdge32(hdc, &rect, 0, BF_MIDDLE);
 		    
   /* Draw the decr button */
   UPDOWN_GetArrowRect(wndPtr, &rect, FALSE);
@@ -634,7 +633,7 @@ static void UPDOWN_HandleMouseEvent(WND *wndPtr, UINT32 msg, POINT32 pt)
  *           UpDownWndProc
  */
 LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                                LPARAM lParam)
+				LPARAM lParam)
 {
   WND *wndPtr = WIN_FindWndPtr(hwnd);
   UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr(wndPtr); 
@@ -643,6 +642,9 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
   switch(message)
     {
     case WM_CREATE:
+      /* get rid of border, if any */
+      wndPtr->dwStyle &= ~WS_BORDER;
+
       /* initialize the info struct */
       infoPtr->AccelCount=0; infoPtr->AccelVect=0; 
       infoPtr->CurVal=0; infoPtr->MinVal=0; infoPtr->MaxVal=100; /*FIXME*/
@@ -745,7 +747,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 	UNKNOWN_PARAM(UDM_GETACCEL, wParam, lParam);
 	return 0;
       }
-      temp = min(infoPtr->AccelCount, wParam);
+      temp = MIN(infoPtr->AccelCount, wParam);
       memcpy((void *)lParam, infoPtr->AccelVect, temp*sizeof(UDACCEL));
       return temp;
 

@@ -501,7 +501,7 @@ static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
     PROFILEKEY *key = NULL;
 
     if (!def_val) def_val = "";
-    if (key_name)
+    if (key_name && key_name[0])
     {
         key = PROFILE_Find( &CurProfile.section, section, key_name, FALSE );
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val,
@@ -839,6 +839,14 @@ INT32 WINAPI GetProfileString32W( LPCWSTR section, LPCWSTR entry,
                                        buffer, len, wininiW );
 }
 
+/***********************************************************************
+ *           GetProfileSection32A   (KERNEL32.268)
+ */
+INT32 WINAPI GetProfileSection32A( LPCSTR section, LPSTR buffer, INT32 len )
+{
+    return GetPrivateProfileSection32A( section, buffer, len, "win.ini" );
+}
+
 
 /***********************************************************************
  *           WriteProfileString16   (KERNEL.59)
@@ -963,6 +971,16 @@ INT32 WINAPI GetPrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
     return ret;
 }
 
+/***********************************************************************
+ *           GetPrivateProfileSection32A   (KERNEL32.255)
+ */
+INT32 WINAPI GetPrivateProfileSection32A( LPCSTR section, LPSTR buffer,
+                                         INT32 len, LPCSTR filename )
+{
+    if (PROFILE_Open( filename ))
+        return PROFILE_GetString( section, NULL, NULL, buffer, len );
+    return 0;
+}
 
 
 /***********************************************************************

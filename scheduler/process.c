@@ -22,7 +22,7 @@ PDB32 *pCurrentProcess = NULL;
 #define HTABLE_SIZE  0x30  /* Handle table initial size */
 #define HTABLE_INC   0x10  /* Handle table increment */
 
-#define BOOT_HTABLE_SIZE  5
+#define BOOT_HTABLE_SIZE  10
 
 static HANDLE_ENTRY boot_handles[BOOT_HTABLE_SIZE];
 
@@ -146,6 +146,7 @@ HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags )
     if ((h < pCurrentProcess->handle_table->count) ||
         PROCESS_GrowHandleTable( pCurrentProcess ))
     {
+        entry = &pCurrentProcess->handle_table->entries[h];
         entry->flags = flags;
         entry->ptr   = ptr;
         LeaveCriticalSection( &pCurrentProcess->crit_section );
@@ -251,7 +252,7 @@ static int pstr_cmp( const void *ps1, const void *ps2 )
 /***********************************************************************
  *           PROCESS_FillEnvDB
  */
-static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask )
+static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask, LPCSTR cmd_line )
 {
     LPSTR p, env;
     INT32 count = 0;
@@ -278,9 +279,15 @@ static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask )
     HeapFree( pdb->heap, 0, array );
     array = NULL;
 
+    /* Copy the command line */
+
+    if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
+        goto error;
+
     return TRUE;
 
 error:
+    if (pdb->env_db->cmd_line) HeapFree( pdb->heap, 0, pdb->env_db->cmd_line );
     if (array) HeapFree( pdb->heap, 0, array );
     if (pdb->env_db->environ) HeapFree( pdb->heap, 0, pdb->env_db->environ );
     return FALSE;
@@ -290,7 +297,7 @@ error:
 /***********************************************************************
  *           PROCESS_Create
  */
-PDB32 *PROCESS_Create( TDB *pTask )
+PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
 {
     PDB32 *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB32) );
     if (!pdb) return NULL;
@@ -310,7 +317,7 @@ PDB32 *PROCESS_Create( TDB *pTask )
     if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         goto error;
     if (!(pdb->handle_table = PROCESS_AllocHandleTable( pdb ))) goto error;
-    if (!PROCESS_FillEnvDB( pdb, pTask )) goto error;
+    if (!PROCESS_FillEnvDB( pdb, pTask, cmd_line )) goto error;
     return pdb;
 
 error:
@@ -352,6 +359,7 @@ void PROCESS_Destroy( K32OBJ *ptr )
  */
 void WINAPI ExitProcess( DWORD status )
 {
+    __RESTORE_ES;  /* Necessary for Pietrek's showseh example program */
     TASK_KillCurrentTask( status );
 }
 

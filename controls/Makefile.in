@@ -13,9 +13,11 @@ C_SRCS = \
 	icontitle.c \
 	listbox.c \
 	menu.c \
+	progress.c \
 	scroll.c \
 	static.c \
 	status.c \
+	uitools.c \
 	updown.c \
 	widgets.c
 

@@ -38,6 +38,6 @@ typedef struct tagCLASS
 extern void CLASS_DumpClass( CLASS *class );
 extern void CLASS_WalkClasses(void);
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
-extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance );
+extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE32 hinstance );
 
 #endif  /* __WINE_CLASS_H */

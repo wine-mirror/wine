@@ -7,6 +7,9 @@
 
 #include "windows.h"
 #include "callback.h"
+#include "resource.h"
+#include "task.h"
+#include "user.h"
 #include "heap.h"
 #include "hook.h"
 #include "module.h"
@@ -50,7 +53,6 @@ BOOL32 THUNK_Init(void)
 {
     /* Set the window proc calling functions */
     WINPROC_SetCallWndProc16( THUNK_CallWndProc16 );
-    WINPROC_SetCallWndProc32( (WINPROC_CALLWNDPROC32)CallTo32_4 );
     return TRUE;
 }
 
@@ -115,20 +117,20 @@ static void THUNK_Free( THUNK *thunk )
 static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
                                     WPARAM16 wParam, LPARAM lParam )
 {
-    if ((msg == WM_CREATE) || (msg == WM_NCCREATE))
+    if (((msg == WM_CREATE) || (msg == WM_NCCREATE)) && lParam)
     {
         CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
         /* Build the CREATESTRUCT on the 16-bit stack. */
         /* This is really ugly, but some programs (notably the */
         /* "Undocumented Windows" examples) want it that way.  */
-        return CallTo16_long_lllllllwlwwwl( (FARPROC16)proc,
+        return CallTo16_wndp_lllllllwlwwwl( (FARPROC16)proc,
                          cs->dwExStyle, cs->lpszClass, cs->lpszName, cs->style,
                          MAKELONG( cs->y, cs->x ), MAKELONG( cs->cy, cs->cx ),
                          MAKELONG( cs->hMenu, cs->hwndParent ), cs->hInstance,
                          (LONG)cs->lpCreateParams, hwnd, msg, wParam,
                          IF1632_Saved16_ss_sp - sizeof(CREATESTRUCT16) );
     }
-    return CallTo16_long_wwwl( (FARPROC16)proc, hwnd, msg, wParam, lParam );
+    return CallTo16_wndp_wwwl( (FARPROC16)proc, hwnd, msg, wParam, lParam );
 }
 
 
@@ -143,17 +145,6 @@ INT16 WINAPI THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
 }
 
 
-/***********************************************************************
- *           THUNK_EnumObjects32   (GDI32.89)
- */
-INT32 WINAPI THUNK_EnumObjects32( HDC32 hdc, INT32 nObjType,
-                                  GOBJENUMPROC32 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_2 );
-    return EnumObjects32( hdc, nObjType, (GOBJENUMPROC32)&thunk, lParam );
-}
-
-
 /*************************************************************************
  *           THUNK_EnumFonts16   (GDI.70)
  */
@@ -162,26 +153,6 @@ INT16 WINAPI THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
 {
     DECL_THUNK( thunk, func, CallTo16_word_llwl );
     return EnumFonts16( hdc, lpFaceName, (FONTENUMPROC16)&thunk, lParam );
-}
-
-/*************************************************************************
- *           THUNK_EnumFonts32A   (GDI32.84)
- */
-INT32 WINAPI THUNK_EnumFonts32A( HDC32 hdc, LPCSTR lpFaceName,
-                                 FONTENUMPROC32A func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumFonts32A( hdc, lpFaceName, (FONTENUMPROC32A)&thunk, lParam );
-}
-
-/*************************************************************************
- *           THUNK_EnumFonts32W   (GDI32.85)
- */
-INT32 WINAPI THUNK_EnumFonts32W( HDC32 hdc, LPCWSTR lpFaceName,
-                                 FONTENUMPROC32W func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumFonts32W( hdc, lpFaceName, (FONTENUMPROC32W)&thunk, lParam );
 }
 
 /******************************************************************
@@ -207,27 +178,6 @@ INT16 WINAPI THUNK_EnumFontFamilies16( HDC16 hdc, LPCSTR lpszFamily,
 
 
 /*************************************************************************
- *           THUNK_EnumFontFamilies32A   (GDI32.80)
- */
-INT32 WINAPI THUNK_EnumFontFamilies32A( HDC32 hdc, LPCSTR lpszFamily,
-                                        FONTENUMPROC32A func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumFontFamilies32A(hdc,lpszFamily,(FONTENUMPROC32A)&thunk,lParam);
-}
-
-
-/*************************************************************************
- *           THUNK_EnumFontFamilies32W   (GDI32.83)
- */
-INT32 WINAPI THUNK_EnumFontFamilies32W( HDC32 hdc, LPCWSTR lpszFamily,
-                                        FONTENUMPROC32W func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumFontFamilies32W(hdc,lpszFamily,(FONTENUMPROC32W)&thunk,lParam);
-}
-
-/*************************************************************************
  *           THUNK_EnumFontFamiliesEx16   (GDI.613)
  */
 INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
@@ -237,32 +187,6 @@ INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
     DECL_THUNK( thunk, func, CallTo16_word_llwl );
     return EnumFontFamiliesEx16( hdc, lpLF, (FONTENUMPROCEX16)&thunk,
                                  lParam, reserved );
-}
-
-
-/*************************************************************************
- *           THUNK_EnumFontFamiliesEx32A   (GDI32.81)
- */
-INT32 WINAPI THUNK_EnumFontFamiliesEx32A( HDC32 hdc, LPLOGFONT32A lpLF,
-                                          FONTENUMPROCEX32A func, LPARAM lParam,
-                                          DWORD reserved)
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumFontFamiliesEx32A( hdc, lpLF, (FONTENUMPROCEX32A)&thunk,
-                                  lParam, reserved );
-}
-
-
-/*************************************************************************
- *           THUNK_EnumFontFamiliesEx32W   (GDI32.82)
- */
-INT32 WINAPI THUNK_EnumFontFamiliesEx32W( HDC32 hdc, LPLOGFONT32W lpLF,
-                                          FONTENUMPROCEX32W func, LPARAM lParam,
-                                          DWORD reserved )
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumFontFamiliesEx32W( hdc, lpLF, (FONTENUMPROCEX32W)&thunk,
-                                  lParam, reserved );
 }
 
 
@@ -277,18 +201,6 @@ void WINAPI THUNK_LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
 }
 
 
-/**********************************************************************
- *           THUNK_LineDDA32   (GDI32.248)
- */
-BOOL32 WINAPI THUNK_LineDDA32( INT32 nXStart, INT32 nYStart, INT32 nXEnd,
-                               INT32 nYEnd, LINEDDAPROC32 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    return LineDDA32( nXStart, nYStart, nXEnd, nYEnd,
-                      (LINEDDAPROC32)&thunk, lParam );
-}
-
-
 /*******************************************************************
  *           THUNK_EnumWindows16   (USER.54)
  */
@@ -296,16 +208,6 @@ BOOL16 WINAPI THUNK_EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
 {
     DECL_THUNK( thunk, func, CallTo16_word_wl );
     return EnumWindows16( (WNDENUMPROC16)&thunk, lParam );
-}
-
-
-/*******************************************************************
- *           THUNK_EnumWindows32   (USER32.192)
- */
-BOOL32 WINAPI THUNK_EnumWindows32( WNDENUMPROC32 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_2 );
-    return EnumWindows32( (WNDENUMPROC32)&thunk, lParam );
 }
 
 
@@ -321,17 +223,6 @@ BOOL16 WINAPI THUNK_EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
 
 
 /**********************************************************************
- *           THUNK_EnumChildWindows32   (USER32.177)
- */
-BOOL32 WINAPI THUNK_EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func,
-                                        LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_2 );
-    return EnumChildWindows32( parent, (WNDENUMPROC32)&thunk, lParam );
-}
-
-
-/**********************************************************************
  *           THUNK_EnumTaskWindows16   (USER.225)
  */
 BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
@@ -342,17 +233,6 @@ BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
 }
 
 
-/**********************************************************************
- *           THUNK_EnumThreadWindows   (USER32.189)
- */
-BOOL32 WINAPI THUNK_EnumThreadWindows( DWORD id, WNDENUMPROC32 func,
-                                       LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_2 );
-    return EnumThreadWindows( id, (WNDENUMPROC32)&thunk, lParam );
-}
-
-
 /***********************************************************************
  *           THUNK_EnumProps16   (USER.27)
  */
@@ -360,154 +240,6 @@ INT16 WINAPI THUNK_EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 {
     DECL_THUNK( thunk, func, CallTo16_word_wlw );
     return EnumProps16( hwnd, (PROPENUMPROC16)&thunk );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumProps32A   (USER32.185)
- */
-INT32 WINAPI THUNK_EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    return EnumProps32A( hwnd, (PROPENUMPROC32A)&thunk );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumProps32W   (USER32.188)
- */
-INT32 WINAPI THUNK_EnumProps32W( HWND32 hwnd, PROPENUMPROC32W func )
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    return EnumProps32W( hwnd, (PROPENUMPROC32W)&thunk );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumPropsEx32A   (USER32.186)
- */
-INT32 WINAPI THUNK_EnumPropsEx32A( HWND32 hwnd, PROPENUMPROCEX32A func,
-                                   LPARAM lParam)
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumPropsEx32A( hwnd, (PROPENUMPROCEX32A)&thunk, lParam );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumPropsEx32W   (USER32.187)
- */
-INT32 WINAPI THUNK_EnumPropsEx32W( HWND32 hwnd, PROPENUMPROCEX32W func,
-                                   LPARAM lParam)
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumPropsEx32W( hwnd, (PROPENUMPROCEX32W)&thunk, lParam );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumSystemCodePages32A	(KERNEL32.92)
- */
-BOOL32 WINAPI THUNK_EnumSystemCodePages32A( CODEPAGE_ENUMPROC32A func,
-                                            DWORD flags )
-{
-    DECL_THUNK( thunk, func, CallTo32_1 );
-    return EnumSystemCodePages32A( (CODEPAGE_ENUMPROC32A)&thunk, flags );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumSystemCodePages32W	(KERNEL32.93)
- */
-BOOL32 WINAPI THUNK_EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W func,
-                                            DWORD flags )
-{
-    DECL_THUNK( thunk, func, CallTo32_1 );
-    return EnumSystemCodePages32W( (CODEPAGE_ENUMPROC32W)&thunk, flags );
-}
-
-/***********************************************************************
- *           THUNK_EnumSystemLocales32A   (KERNEL32.92)
- */
-BOOL32 WINAPI THUNK_EnumSystemLocales32A( LOCALE_ENUMPROC32A func, DWORD flags)
-{
-    DECL_THUNK( thunk, func, CallTo32_1 );
-    return EnumSystemLocales32A( (LOCALE_ENUMPROC32A)&thunk, flags );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumSystemLocales32W   (KERNEL32.93)
- */
-BOOL32 WINAPI THUNK_EnumSystemLocales32W( LOCALE_ENUMPROC32W func, DWORD flags)
-{
-    DECL_THUNK( thunk, func, CallTo32_1 );
-    return EnumSystemLocales32W( (LOCALE_ENUMPROC32W)&thunk, flags );
-}
-
-/***********************************************************************
- *           THUNK_EnumResourceLanguages32W   (KERNEL32.87)
- */
-BOOL32 WINAPI THUNK_EnumResourceLanguages32W( HMODULE32 hmod, LPCWSTR type,
-                                              LPCWSTR name,
-                                              ENUMRESLANGPROC32W func,
-                                              LONG lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_5 );
-    return EnumResourceLanguages32W( hmod,type,name,(ENUMRESLANGPROC32W)&thunk, lParam );
-}
-
-/***********************************************************************
- *           THUNK_EnumResourceLanguages32A   (KERNEL32.86)
- */
-BOOL32 WINAPI THUNK_EnumResourceLanguages32A( HMODULE32 hmod, LPCSTR type,
-                                              LPCSTR name,
-                                              ENUMRESLANGPROC32A func,
-                                              LONG lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_5 );
-    return EnumResourceLanguages32A( hmod,type,name,(ENUMRESLANGPROC32A)&thunk, lParam );
-}
-
-/***********************************************************************
- *           THUNK_EnumResourceNames32A   (KERNEL32.88)
- */
-BOOL32 WINAPI THUNK_EnumResourceNames32A( HMODULE32 hmod, LPCSTR type,
-                                          ENUMRESNAMEPROC32A func, LONG lParam)
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumResourceNames32A( hmod,type,(ENUMRESNAMEPROC32A)&thunk,lParam );
-}
-
-/***********************************************************************
- *           THUNK_EnumResourceNames32W   (KERNEL32.89)
- */
-BOOL32 WINAPI THUNK_EnumResourceNames32W( HMODULE32 hmod, LPCWSTR type,
-                                          ENUMRESNAMEPROC32W func, LONG lParam)
-{
-    DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumResourceNames32W( hmod,type,(ENUMRESNAMEPROC32W)&thunk, lParam);
-}
-
-/***********************************************************************
- *           THUNK_EnumResourceTypes32A   (KERNEL32.90)
- */
-BOOL32 WINAPI THUNK_EnumResourceTypes32A( HMODULE32 hmod,
-                                          ENUMRESTYPEPROC32A func, LONG lParam)
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    return EnumResourceTypes32A( hmod,(ENUMRESTYPEPROC32A)&thunk, lParam );
-}
-
-/***********************************************************************
- *           THUNK_EnumResourceTypes32W   (KERNEL32.91)
- */
-BOOL32 WINAPI THUNK_EnumResourceTypes32W( HMODULE32 hmod,
-                                          ENUMRESTYPEPROC32W func,
-                                          LONG lParam )
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    return EnumResourceTypes32W( hmod,(ENUMRESTYPEPROC32W)&thunk, lParam );
 }
 
 
@@ -525,40 +257,6 @@ BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
     else
         return GrayString16( hdc, hbr, (GRAYSTRINGPROC16)&thunk, lParam, cch,
                              x, y, cx, cy );
-}
-
-
-/***********************************************************************
- *           THUNK_GrayString32A   (USER32.314)
- */
-BOOL32 WINAPI THUNK_GrayString32A( HDC32 hdc, HBRUSH32 hbr,
-                                   GRAYSTRINGPROC32 func, LPARAM lParam,
-                                   INT32 cch, INT32 x, INT32 y,
-                                   INT32 cx, INT32 cy )
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    if (!func)
-        return GrayString32A( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
-    else
-        return GrayString32A( hdc, hbr, (GRAYSTRINGPROC32)&thunk, lParam, cch,
-                              x, y, cx, cy );
-}
-
-
-/***********************************************************************
- *           THUNK_GrayString32W   (USER32.315)
- */
-BOOL32 WINAPI THUNK_GrayString32W( HDC32 hdc, HBRUSH32 hbr,
-                                   GRAYSTRINGPROC32 func,
-                                   LPARAM lParam, INT32 cch, INT32 x, INT32 y,
-                                   INT32 cx, INT32 cy )
-{
-    DECL_THUNK( thunk, func, CallTo32_3 );
-    if (!func)
-        return GrayString32W( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
-    else
-        return GrayString32W( hdc, hbr, (GRAYSTRINGPROC32)&thunk, lParam, cch,
-                              x, y, cx, cy );
 }
 
 
@@ -639,24 +337,6 @@ WORD WINAPI THUNK_KillSystemTimer( WORD timer )
 }
 
 
-/***********************************************************************
- *            THUNK_SetUnhandledExceptionFilter   (KERNEL32.516)
- */
-LPTOP_LEVEL_EXCEPTION_FILTER WINAPI THUNK_SetUnhandledExceptionFilter(
-                                          LPTOP_LEVEL_EXCEPTION_FILTER filter )
-{
-    LPTOP_LEVEL_EXCEPTION_FILTER old;
-    THUNK *thunk = THUNK_Alloc( (FARPROC16)filter, (RELAY)CallTo32_1 );
-    if (!thunk) return NULL;
-    old = SetUnhandledExceptionFilter( (LPTOP_LEVEL_EXCEPTION_FILTER)thunk );
-    if (!old) return NULL;
-    thunk = (THUNK *)old;
-    old = (LPTOP_LEVEL_EXCEPTION_FILTER)thunk->proc;
-    THUNK_Free( thunk );
-    return old;
-}
-
-
 static FARPROC16 defDCHookProc = NULL;
 
 /***********************************************************************
@@ -705,6 +385,93 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
     return ret;
 }
 
+
+/***********************************************************************
+ *           THUNK_SetTaskSignalProc (KERNEL.38)
+ */
+FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
+{
+    static FARPROC16 defSignalProc16 = NULL;
+
+    THUNK *thunk = NULL;
+
+    if( !defSignalProc16 )
+	defSignalProc16 = MODULE_GetEntryPoint(GetModuleHandle16("USER"), 314 );
+
+    if( proc == defSignalProc16 )
+	thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)&USER_SignalProc );
+    else 
+    {
+	thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwwww );
+	if( !thunk ) return FALSE;
+	thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)thunk );
+    }
+
+    if( thunk != (THUNK*)USER_SignalProc )
+    {
+	if( !thunk ) return NULL;
+
+	proc = thunk->proc;
+	THUNK_Free( thunk );
+	return proc;
+    }
+    return defSignalProc16;
+}
+
+
+/***********************************************************************
+ *           THUNK_SetResourceHandler	(KERNEL.67)
+ */
+FARPROC16 WINAPI THUNK_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FARPROC16 proc )
+{
+    /* loader/ne_resource.c */
+    extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
+
+    static FARPROC16 defDIBIconLoader16 = NULL;
+    static FARPROC16 defDIBCursorLoader16 = NULL;
+    static FARPROC16 defResourceLoader16 = NULL;
+
+    THUNK *thunk = NULL;
+
+    if( !defResourceLoader16 )
+    {
+	HMODULE16 hUser = GetModuleHandle16("USER");
+	defDIBIconLoader16 = MODULE_GetEntryPoint( hUser, 357 );
+	defDIBCursorLoader16 = MODULE_GetEntryPoint( hUser, 356 );
+	defResourceLoader16 = MODULE_GetWndProcEntry16( "DefResourceHandler" );
+    }
+
+    if( proc == defResourceLoader16 )
+	thunk = (THUNK*)&NE_DefResourceHandler;
+    else if( proc == defDIBIconLoader16 )
+	thunk = (THUNK*)&LoadDIBIconHandler;
+    else if( proc == defDIBCursorLoader16 )
+	thunk = (THUNK*)&LoadDIBCursorHandler;
+    else
+    {
+	thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_www );
+	if( !thunk ) return FALSE;
+    }
+
+    thunk = (THUNK*)SetResourceHandler( hModule, typeId, (FARPROC16)thunk );
+
+    if( thunk == (THUNK*)&NE_DefResourceHandler )
+	return defResourceLoader16;
+    if( thunk == (THUNK*)&LoadDIBIconHandler )
+	return defDIBIconLoader16;
+    if( thunk == (THUNK*)&LoadDIBCursorHandler )
+	return defDIBCursorLoader16;
+
+    if( thunk )
+    {
+	proc = thunk->proc;
+	THUNK_Free( thunk );
+	return proc;
+    }
+    return NULL;
+}
+
+
 /***********************************************************************
  *                                                                     *
  *                 Win95 internal thunks                               *
@@ -726,7 +493,7 @@ static void _write_ftprolog(LPBYTE start,DWORD thunkstart) {
 	*x++	= 0x0f;*x++=0xb6;*x++=0xd1; /* movzbl edx,cl */
 	*x++	= 0x8B;*x++=0x14;*x++=0x95;*(DWORD*)x= thunkstart;
 	x+=4;	/* mov edx, [4*edx + thunkstart] */
-	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress32(WIN32_GetModuleHandleA("KERNEL32"),"FT_Prolog");
+	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"FT_Prolog");
 	x+=4; 	/* push FT_Prolog */
 	*x++	= 0xC3;		/* lret */
 	/* fill rest with 0xCC / int 3 */
@@ -749,7 +516,7 @@ static void _write_qtthunk(LPBYTE start,DWORD thunkstart) {
 	*x++	= 0x8A;*x++=0x4D;*x++=0xFC; /* movb cl,[ebp-04] */
 	*x++	= 0x8B;*x++=0x14;*x++=0x8D;*(DWORD*)x= thunkstart;
 	x+=4;	/* mov edx, [4*ecx + (EAX+EDX) */
-	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress32(WIN32_GetModuleHandleA("KERNEL32"),"QT_Thunk");
+	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"QT_Thunk");
 	x+=4; 	/* mov eax , QT_Thunk */
 	*x++	= 0xFF; *x++ = 0xE0;	/* jmp eax */
 	/* should fill the rest of the 32 bytes with 0xCC */
@@ -1020,7 +787,7 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
                            LPCSTR dll32)
 {
-	HMODULE32	hkrnl32 = WIN32_GetModuleHandleA("KERNEL32");
+	HMODULE32	hkrnl32 = GetModuleHandle32A("KERNEL32");
 	HMODULE16	hmod;
 	LPDWORD		addr,addr2;
 	DWORD		segaddr;
@@ -1130,44 +897,41 @@ BOOL32 WINAPI _KERNEL32_87()
  *
  * And YES, I've seen nr=48 (somewhere in the Win95 32<->16 OLE coupling)
  */
-DWORD WINAPI _KERNEL32_88(DWORD *args)
+DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
 {
-    DWORD	nr = args[0];
-    DWORD	flags = args[1];
-    FARPROC32	fun = (FARPROC32)args[2];
-    DWORD	i,ret;
+    DWORD i,ret;
+    DWORD *args = ((DWORD *)&fun) + 1;
 
     fprintf(stderr,"KERNEL32_88(%ld,0x%08lx,%p,[ ",nr,flags,fun);
-    for (i=0;i<nr/4;i++)
-    	fprintf(stderr,"0x%08lx,",args[3+i]);
+    for (i=0;i<nr/4;i++) fprintf(stderr,"0x%08lx,",args[i]);
     fprintf(stderr,"])");
 #ifndef WINELIB
     switch (nr) {
     case 0:	ret = CallTo32_0(fun);
 		break;
-    case 4:	ret = CallTo32_1(fun,args[3]);
+    case 4:	ret = CallTo32_1(fun,args[0]);
 		break;
-    case 8:	ret = CallTo32_2(fun,args[3],args[4]);
+    case 8:	ret = CallTo32_2(fun,args[0],args[1]);
 		break;
-    case 12:	ret = CallTo32_3(fun,args[3],args[4],args[5]);
+    case 12:	ret = CallTo32_3(fun,args[0],args[1],args[2]);
 		break;
-    case 16:	ret = CallTo32_4(fun,args[3],args[4],args[5],args[6]);
+    case 16:	ret = CallTo32_4(fun,args[0],args[1],args[2],args[3]);
 		break;
-    case 20:	ret = CallTo32_5(fun,args[3],args[4],args[5],args[6],args[7]);
+    case 20:	ret = CallTo32_5(fun,args[0],args[1],args[2],args[3],args[4]);
 		break;
-    case 24:	ret = CallTo32_6(fun,args[3],args[4],args[5],args[6],args[7],args[8]);
+    case 24:	ret = CallTo32_6(fun,args[0],args[1],args[2],args[3],args[4],args[5]);
 		break;
-    case 28:	ret = CallTo32_7(fun,args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+    case 28:	ret = CallTo32_7(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
 		break;
-    case 32:	ret = CallTo32_8(fun,args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
+    case 32:	ret = CallTo32_8(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
 		break;
-    case 36:	ret = CallTo32_9(fun,args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
+    case 36:	ret = CallTo32_9(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
 		break;
-    case 40:	ret = CallTo32_10(fun,args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
+    case 40:	ret = CallTo32_10(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
 		break;
-    case 44:	ret = CallTo32_11(fun,args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13]);
+    case 44:	ret = CallTo32_11(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
 		break;
-    case 48:	ret = CallTo32_12(fun,args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14]);
+    case 48:	ret = CallTo32_12(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
 		break;
     default:
 	fprintf(stderr,"    unsupported nr of arguments, %ld\n",nr);

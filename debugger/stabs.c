@@ -1085,6 +1085,25 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
   status = stat(filename, &statbuf);
   if( status == -1 )
     {
+      char *s,*t,*fn,*paths;
+      if (strchr(filename,'/'))
+      	goto leave;
+      paths = xstrdup(getenv("PATH"));
+      s = paths;
+      while (s && *s) {
+      	t = strchr(s,':');
+	if (t) *t='\0';
+	fn = (char*)xmalloc(strlen(filename)+1+strlen(s)+1);
+	strcpy(fn,s);
+	strcat(fn,"/");
+	strcat(fn,filename);
+	if ((rtn = DEBUG_ProcessElfObject(fn,load_offset))) {
+      		free(paths);
+		goto leave;
+	}
+	s = t+1;
+      }
+      free(paths);
       goto leave;
     }
 

@@ -72,6 +72,14 @@ OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 }
 
 /***********************************************************************
+ *           IsEqualGUID [COMPOBJ.18]
+ */
+BOOL16 WINAPI IsEqualGUID(GUID* g1, GUID* g2)
+{
+    return !memcmp( g1, g2, sizeof(GUID) );
+}
+
+/***********************************************************************
  *           CLSIDFromString [COMPOBJ.20]
  */
 

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
+#include "resource.h"
 #include "heap.h"
 #include "gdi.h"
 #include "user.h"
@@ -22,6 +23,8 @@
 
 WORD USER_HeapSel = 0;
 
+extern HGLOBAL16 LoadDIBCursorHandler( HGLOBAL16, HINSTANCE16, HRSRC16 );
+extern HGLOBAL16 LoadDIBIconHandler( HGLOBAL16, HINSTANCE16, HRSRC16 );
 extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
 extern void QUEUE_FlushMessages(HQUEUE16);
 
@@ -93,6 +96,35 @@ BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo )
     return TRUE;
 }
 
+static RESOURCEHANDLER16 __r16loader = NULL;
+
+/**********************************************************************
+ *           USER_CallDefaultRsrcHandler
+ *
+ * Called by the LoadDIBIcon/CursorHandler().
+ */
+HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
+{
+    return __r16loader( hMemObj, hModule, hRsrc );
+}
+
+/**********************************************************************
+ *           USER_InstallRsrcHandler
+ */
+static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
+{
+    FARPROC16 proc;
+
+    /* SetResourceHandler() returns previous function which is set
+     * when a module's resource table is loaded. */
+
+    proc = SetResourceHandler( hInstance, RT_ICON, (FARPROC32)LoadDIBIconHandler );
+    if(!__r16loader ) 
+	__r16loader = (RESOURCEHANDLER16)proc;
+    proc = SetResourceHandler( hInstance, RT_CURSOR, (FARPROC32)LoadDIBCursorHandler );
+    if(!__r16loader )
+	__r16loader = (RESOURCEHANDLER16)proc;
+}
 
 /**********************************************************************
  *           InitApp   (USER.5)
@@ -100,6 +132,15 @@ BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo )
 INT16 WINAPI InitApp( HINSTANCE16 hInstance )
 {
     int queueSize;
+
+      /* InitTask() calls LibMain()'s of implicitly loaded DLLs 
+       * prior to InitApp() so there is no clean way to do
+       * SetTaskSignalHandler() in time. So, broken Windows bypasses 
+       * a pTask->userhandler on startup and simply calls a global 
+       * function pointer to the default USER signal handler.
+       */
+
+    USER_InstallRsrcHandler( hInstance );
 
       /* Create task message queue */
     queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
@@ -109,9 +150,18 @@ INT16 WINAPI InitApp( HINSTANCE16 hInstance )
 }
 
 /**********************************************************************
+ *           USER_ModuleUnload
+ */
+static void USER_ModuleUnload( HMODULE16 hModule )
+{
+    HOOK_FreeModuleHooks( hModule );
+    CLASS_FreeModuleClasses( hModule );
+}
+
+/**********************************************************************
  *           USER_AppExit
  */
-void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
+static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 {
     /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
      *	      only complains about them but does nothing);
@@ -132,12 +182,18 @@ void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
     HOOK_FreeQueueHooks( hQueue );
 
     QUEUE_SetExitingQueue( hQueue );
-    WIN_ResetQueueWindows( desktop->child, hQueue, (HQUEUE16)0);
+    WIN_ResetQueueWindows( desktop, hQueue, (HQUEUE16)0);
     QUEUE_SetExitingQueue( 0 );
 
     /* Free the message queue */
 
     QUEUE_DeleteMsgQueue( hQueue );
+
+    /* ModuleUnload() in "Internals" */
+
+    hInstance = GetExePtr( hInstance );
+    if( GetModuleUsage( hInstance ) <= 1 ) 
+	USER_ModuleUnload( hInstance );
 }
 
 
@@ -156,6 +212,34 @@ void USER_ExitWindows(void)
     SHELL_SaveRegistry();
 
     exit(0);
+}
+
+
+/***********************************************************************
+ *           USER_SignalProc (USER.314)
+ */
+void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
+                             UINT16 uExitFn, HINSTANCE16 hInstance,
+                             HQUEUE16 hQueue )
+{
+    switch( uCode )
+    {
+	case USIG_GPF:
+	case USIG_TERMINATION:
+	     USER_AppExit( hTaskOrModule, hInstance, hQueue ); /* task */
+	     break;
+
+	case USIG_DLL_LOAD:
+	     USER_InstallRsrcHandler( hTaskOrModule ); /* module */
+	     break;
+
+	case USIG_DLL_UNLOAD:
+	     USER_ModuleUnload( hTaskOrModule ); /* module */
+	     break;
+
+	default:
+	     fprintf(stderr,"Unimplemented USER signal: %i\n", (int)uCode );
+    }
 }
 
 

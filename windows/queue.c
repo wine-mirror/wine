@@ -85,7 +85,7 @@ void QUEUE_WalkQueues(void)
         }
         fprintf( stderr, "%04x %5d %4d %04x %s\n",
                  hQueue, queue->msgSize, queue->msgCount, queue->hTask,
-                 MODULE_GetModuleName( GetExePtr(queue->hTask) ) );
+                 MODULE_GetModuleName( queue->hTask ) );
         hQueue = queue->next;
     }
     fprintf( stderr, "\n" );
@@ -761,7 +761,7 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
        HOOK_ResetQueueHooks( hNewQueue );
        if( WIN_GetDesktop()->hmemTaskQ == hQueue )
 	   WIN_GetDesktop()->hmemTaskQ = hNewQueue;
-       WIN_ResetQueueWindows( WIN_GetDesktop()->child, hQueue, hNewQueue );
+       WIN_ResetQueueWindows( WIN_GetDesktop(), hQueue, hNewQueue );
        QUEUE_DeleteMsgQueue( hQueue );
     }
 

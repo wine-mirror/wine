@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "windows.h"
+#include "winerror.h"
 #include "ldt.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -147,6 +148,12 @@ INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
  */
 INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
 {
+    /* Win95 KERNEL32.DLL does it that way. Hands off! */
+    if (!str1 || !str2) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+
     dprintf_string(stddeb,"strcmp: '%s' and '%s'\n",
 		 (str1)?str1:"NULL",(str2)?str2:"NULL");
     return (INT32)strcmp( str1, str2 );
@@ -158,6 +165,10 @@ INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
  */
 INT32 WINAPI lstrcmp32W( LPCWSTR str1, LPCWSTR str2 )
 {
+    if (!str1 || !str2) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
     return (INT32)(*str1 - *str2);
 }
@@ -179,6 +190,10 @@ INT32 WINAPI lstrcmpi32A( LPCSTR str1, LPCSTR str2 )
 {
     INT32 res;
 
+    if (!str1 || !str2) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     dprintf_string(stddeb,"strcmpi '%s' and '%s'\n",
 		 (str1)?str1:"NULL",(str2)?str2:"NULL");
     while (*str1)
@@ -198,6 +213,10 @@ INT32 WINAPI lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
 {
     INT32 res;
 
+    if (!str1 || !str2) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     while (*str1)
     {
         /* FIXME: Unicode */

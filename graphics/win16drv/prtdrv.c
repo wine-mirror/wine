@@ -82,7 +82,7 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(const char *pszDriver)
 	      pLPD = ptmpLPD;
 	}
     }
-    if (pLPD == NULL) printf("Couldn't find driver %s\n", pszDriver);
+    if (pLPD == NULL) fprintf(stderr,"Couldn't find driver %s\n", pszDriver);
     return pLPD;
 }
 
@@ -132,7 +132,7 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
     }
     if (!bSlotFound)
     {
-	printf("Too many printers drivers loaded\n");
+	fprintf(stderr,"Too many printers drivers loaded\n");
 	return NULL;
     }
 
@@ -381,7 +381,7 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
                                   lP1, lP2, lP3, lP4);
     }
     else 
-        printf("Failed to find device\n");
+        fprintf(stderr,"Failed to find device\n");
     
     dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts: return %x\n", wRet);
     return wRet;
@@ -423,7 +423,7 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
                                   lP1, wP2, lP3, lP4);
     }
     else 
-        printf("Failed to find device\n");
+        fprintf(stderr,"Failed to find device\n");
     
     dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts: return %x\n", wRet);
     return wRet;
@@ -465,7 +465,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
             nSize = sizeof(LOGFONT16); 
             break;
         default:
-	    printf("PRTDRV_RealizeObject: Object type %d not supported\n", wStyle);
+	    fprintf(stderr,"PRTDRV_RealizeObject: Object type %d not supported\n", wStyle);
             nSize = 0;
             
 	}

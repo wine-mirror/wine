@@ -58,7 +58,7 @@ static BOOL32 FileDlg_Init()
  */
 BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 {
-    HINSTANCE16 hInst;
+    HINSTANCE32 hInst;
     HANDLE32 hDlgTmpl = 0, hResInfo;
     BOOL32 bRet = FALSE, win32Format = FALSE;
     HWND32 hwndDialog;
@@ -148,7 +148,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
  */
 BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 {
-    HINSTANCE16 hInst;
+    HINSTANCE32 hInst;
     HANDLE32 hDlgTmpl = 0;
     BOOL32 bRet = FALSE, win32Format = FALSE;
     LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
@@ -3028,7 +3028,8 @@ BOOL32 WINAPI xxx##32A( LPOPENFILENAME32A ofn )				\
 	memset(ofn16,'\0',sizeof(*ofn16));				\
 	ofn16->lStructSize = sizeof(*ofn16);				\
 	ofn16->hwndOwner = ofn->hwndOwner;				\
-	ofn16->hInstance = ofn->hInstance;				\
+	/* FIXME: OPENFILENAME16 got only 16 bit for HINSTANCE... */	\
+	ofn16->hInstance = MODULE_HANDLEtoHMODULE16(ofn->hInstance);	\
 	if (ofn->lpstrFilter) {						\
 		LPSTR	s,x;						\
 									\
@@ -3107,7 +3108,8 @@ BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 	memset(ofn16,'\0',sizeof(*ofn16));				\
 	ofn16->lStructSize = sizeof(*ofn16);				\
 	ofn16->hwndOwner = ofn->hwndOwner;				\
-	ofn16->hInstance = ofn->hInstance;				\
+	/* FIXME: OPENFILENAME16 got only 16 bit for HINSTANCE... */	\
+	ofn16->hInstance = MODULE_HANDLEtoHMODULE16(ofn->hInstance);	\
 	if (ofn->lpstrFilter) {						\
 		LPWSTR	s;						\
 		LPSTR	x,y;						\
@@ -3119,7 +3121,7 @@ BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 			s = s+lstrlen32W(s)+1;				\
 		s++;							\
 		n = s - ofn->lpstrFilter; /* already divides by 2. ptr magic */\
-		x = y = (LPSTR)SEGPTR_ALLOC(n);			\
+		x = y = (LPSTR)SEGPTR_ALLOC(n);				\
 		s = (LPWSTR)ofn->lpstrFilter;				\
 		while (*s) {						\
 			lstrcpyWtoA(x,s);				\

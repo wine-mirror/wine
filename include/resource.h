@@ -44,14 +44,21 @@ extern void LIBRES_RegisterResources(const struct resource* const * Res);
 #define WINE_CONSTRUCTOR
 #endif
 
+typedef HGLOBAL16 (CALLBACK *RESOURCEHANDLER16)(HGLOBAL16, HMODULE16, HRSRC16 );
+
+/* FIXME: convert all NE_ functions to accept NE_MODULE pointer instead
+ * of redundant hModule (which is always verified prior to calling these).
+ */
+
 extern int NE_AccessResource( HMODULE16 hModule, HRSRC16 hRsrc );
 extern BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle );
 extern HRSRC16 NE_FindResource(HMODULE16 hModule, SEGPTR typeId, SEGPTR resId);
 extern DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC16 hRsrc );
 extern SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL16 handle );
-extern HGLOBAL16 NE_AllocResource( HMODULE16 hModule, HRSRC16 hRsrc,
-                                   DWORD size );
+extern HGLOBAL16 NE_AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size );
 extern HGLOBAL16 NE_LoadResource( HMODULE16 hModule,  HRSRC16 hRsrc );
+extern BOOL32 NE_InitResourceHandler( HMODULE16 hModule );
+extern FARPROC32 NE_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FARPROC32 handler);
 
 extern HGLOBAL16 SYSRES_LoadResource( SYSTEM_RESOURCE id );
 extern void SYSRES_FreeResource( HGLOBAL16 handle );

@@ -15,7 +15,6 @@
 
 /* for windows/winproc.c */
 void CallFrom16_long_wwwll(void) {}
-void CallFrom32_stdcall_5(void) {}
 
 extern LRESULT ColorDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT FileOpenDlgProc(HWND16,UINT16,WPARAM16,LPARAM);

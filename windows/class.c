@@ -210,14 +210,13 @@ void CLASS_FreeModuleClasses( HMODULE16 hModule )
  *           CLASS_FindClassByAtom
  *
  * Return a pointer to the class.
+ * hinstance has been normalized by the caller.
  */
-CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance )
+CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE32 hinstance )
 {
     CLASS * class;
 
-    if (hinstance != 0xffff) hinstance = GetExePtr(hinstance);
-
-      /* First search task-specific classes */
+    /* First search task-specific classes */
 
     for (class = firstClass; (class); class = class->next)
     {
@@ -308,8 +307,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
-
-    HINSTANCE32 hInstance = (HINSTANCE32)GetExePtr( wc->hInstance );
+    HINSTANCE16 hInstance=GetExePtr(wc->hInstance);
 
     if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
@@ -347,11 +345,8 @@ ATOM WINAPI RegisterClass32A( const WNDCLASS32A* wc )
     ATOM atom;
     CLASS *classPtr;
 
-    /* FIXME: this should not be necessary for Win32 */
-    HINSTANCE32 hInstance = (HINSTANCE32)GetExePtr( wc->hInstance );
-
     if (!(atom = GlobalAddAtom32A( wc->lpszClassName ))) return 0;
-    if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
+    if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
                                           WIN_PROC_32A )))
@@ -362,7 +357,7 @@ ATOM WINAPI RegisterClass32A( const WNDCLASS32A* wc )
 
     dprintf_class( stddeb, "RegisterClass32A: atom=%04x wndproc=%08lx
 hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
-                   atom, (DWORD)wc->lpfnWndProc, hInstance,
+                   atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr,
                    HIWORD(wc->lpszClassName) ? wc->lpszClassName : "" );
@@ -384,11 +379,8 @@ ATOM WINAPI RegisterClass32W( const WNDCLASS32W* wc )
     ATOM atom;
     CLASS *classPtr;
 
-    /* FIXME: this should not be necessary for Win32 */
-    HINSTANCE32 hInstance = (HINSTANCE32)GetExePtr( wc->hInstance );
-
     if (!(atom = GlobalAddAtom32W( wc->lpszClassName ))) return 0;
-    if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
+    if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
                                           WIN_PROC_32W )))
@@ -398,7 +390,7 @@ ATOM WINAPI RegisterClass32W( const WNDCLASS32W* wc )
     }
 
     dprintf_class( stddeb, "RegisterClass32W: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
-                   atom, (DWORD)wc->lpfnWndProc, hInstance,
+                   atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
@@ -418,8 +410,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
-
-    HINSTANCE32 hInstance = (HINSTANCE32)GetExePtr( wc->hInstance );
+    HINSTANCE16 hInstance = GetExePtr( wc->hInstance );
 
     if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
@@ -454,11 +445,8 @@ ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
     ATOM atom;
     CLASS *classPtr;
 
-    /* FIXME: this should not be necessary for Win32 */
-    HINSTANCE32 hInstance = (HINSTANCE32)GetExePtr( wc->hInstance );
-
     if (!(atom = GlobalAddAtom32A( wc->lpszClassName ))) return 0;
-    if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
+    if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
                                           WIN_PROC_32A )))
@@ -468,7 +456,7 @@ ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
     }
 
     dprintf_class( stddeb, "RegisterClassEx32A: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
-                   atom, (DWORD)wc->lpfnWndProc, hInstance,
+                   atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
@@ -489,11 +477,8 @@ ATOM WINAPI RegisterClassEx32W( const WNDCLASSEX32W* wc )
     ATOM atom;
     CLASS *classPtr;
 
-    /* FIXME: this should not be necessary for Win32 */
-    HINSTANCE32 hInstance = (HINSTANCE32)GetExePtr( wc->hInstance );
-
     if (!(atom = GlobalAddAtom32W( wc->lpszClassName ))) return 0;
-    if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
+    if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
                                           WIN_PROC_32W )))
@@ -503,7 +488,7 @@ ATOM WINAPI RegisterClassEx32W( const WNDCLASSEX32W* wc )
     }
 
     dprintf_class( stddeb, "RegisterClassEx32W: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
-                   atom, (DWORD)wc->lpfnWndProc, hInstance,
+                   atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
@@ -540,7 +525,6 @@ BOOL32 WINAPI UnregisterClass32A( LPCSTR className, HINSTANCE32 hInstance )
     CLASS *classPtr;
     ATOM atom;
 
-    hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32A( className ))) return FALSE;
     if (!(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (classPtr->hInstance != hInstance)) return FALSE;
@@ -556,7 +540,6 @@ BOOL32 WINAPI UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
     CLASS *classPtr;
     ATOM atom;
 
-    hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32W( className ))) return FALSE;
     if (!(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (classPtr->hInstance != hInstance)) return FALSE;
@@ -910,7 +893,6 @@ BOOL32 WINAPI GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name,
     ATOM atom;
     CLASS *classPtr;
 
-    hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32A( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
 	(classPtr->hInstance && (hInstance != classPtr->hInstance)))
@@ -940,7 +922,6 @@ BOOL32 WINAPI GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name,
     ATOM atom;
     CLASS *classPtr;
 
-    hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32W( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
 	(classPtr->hInstance && (hInstance != classPtr->hInstance)))
@@ -1003,7 +984,6 @@ BOOL32 WINAPI GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
     ATOM atom;
     CLASS *classPtr;
 
-    hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32A( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (hInstance != classPtr->hInstance)) return FALSE;
@@ -1032,7 +1012,6 @@ BOOL32 WINAPI GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
     ATOM atom;
     CLASS *classPtr;
 
-    hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32W( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (hInstance != classPtr->hInstance)) return FALSE;

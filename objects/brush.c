@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "brush.h"
 #include "bitmap.h"
+#include "syscolor.h"
 #include "metafile.h"
 #include "color.h"
 #include "stddebug.h"
@@ -241,18 +242,80 @@ BOOL32 WINAPI SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
  */
 HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 {
-    fprintf( stderr, "Unimplemented stub: GetSysColorBrush16(%d)\n", index );
-    return GetStockObject32(LTGRAY_BRUSH);
+    return (HBRUSH16)GetSysColorBrush32(index);
 }
 
 
 /***********************************************************************
  *           GetSysColorBrush32    (USER32.289)
  */
-HBRUSH32 WINAPI GetSysColorBrush32( INT32 index)
+HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
 {
-    fprintf( stderr, "Unimplemented stub: GetSysColorBrush32(%d)\n", index );
-    return GetStockObject32(LTGRAY_BRUSH);
+  switch(index){
+  case COLOR_SCROLLBAR:
+    return sysColorObjects.hbrushScrollbar;
+  case COLOR_BACKGROUND: /* same as COLOR_DESKTOP */
+    return sysColorObjects.hbrushScrollbar; /*FIXME*/
+  case COLOR_ACTIVECAPTION:
+    return sysColorObjects.hbrushActiveCaption;
+  case COLOR_INACTIVECAPTION:
+    return sysColorObjects.hbrushInactiveCaption;
+  case COLOR_MENU:
+    return sysColorObjects.hbrushMenu;
+  case COLOR_WINDOW:
+    return sysColorObjects.hbrushWindow;
+  case COLOR_WINDOWFRAME:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_MENUTEXT:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_WINDOWTEXT:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_CAPTIONTEXT:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_ACTIVEBORDER:
+    return sysColorObjects.hbrushActiveBorder;
+  case COLOR_INACTIVEBORDER:
+    return sysColorObjects.hbrushInactiveBorder;
+  case COLOR_APPWORKSPACE:
+    return sysColorObjects.hbrushActiveBorder; /*FIXME*/
+  case COLOR_HIGHLIGHT:
+    return sysColorObjects.hbrushHighlight;
+  case COLOR_HIGHLIGHTTEXT:
+    return sysColorObjects.hbrushHighlight; /*FIXME*/
+  case COLOR_BTNFACE: /* same as COLOR_3DFACE */
+    return sysColorObjects.hbrushBtnFace;
+  case COLOR_BTNSHADOW: /* same as COLOR_3DSHADOW */
+    return sysColorObjects.hbrushBtnShadow;
+  case COLOR_GRAYTEXT:
+    return sysColorObjects.hbrushBtnShadow; /*FIXME*/
+  case COLOR_BTNTEXT:
+    return sysColorObjects.hbrushBtnShadow; /*FIXME*/
+  case COLOR_INACTIVECAPTIONTEXT:
+    return sysColorObjects.hbrushBtnShadow; /*FIXME*/
+  case COLOR_BTNHIGHLIGHT: /* same as COLOR_(3DHIGH|3DHI|BTNHI)LIGHT */
+    return sysColorObjects.hbrushBtnHighlight;
+    /*  case COLOR_3DDKSHADOW: FIXME
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_3DLIGHT:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_INFOTEXT:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;
+  case COLOR_INFOBK:
+    fprintf( stderr, "GetSysColorBrush32: Unimplemented index(%d)\n", index );
+    break;*/
+  default:
+    fprintf( stderr, "GetSysColorBrush32: Unknown index(%d)\n", index );
+  }
+
+  return GetStockObject32(LTGRAY_BRUSH);
+
 }
 
 
@@ -299,5 +362,3 @@ INT32 BRUSH_GetObject32( BRUSHOBJ * brush, INT32 count, LPSTR buffer )
     memcpy( buffer, &brush->logbrush, count );
     return count;
 }
-
-

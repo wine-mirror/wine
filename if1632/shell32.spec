@@ -1,140 +1,153 @@
 name	shell32
 type	win32
-base	1
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some win95 dlls 
 #  import shell32.dll by ordinal)
 
-   1 stub CheckEscapesA
-   4 stub CheckEscapesW
-   5 stdcall CommandLineToArgvW(ptr ptr) CommandLineToArgvW
-   6 stub Control_FillCache_RunDLL
-  10 stub Control_RunDLL
-  12 stub DllGetClassObject
-  20 stub DoEnvironmentSubstA
-  36 stub DoEnvironmentSubstW
-  39 stdcall DragAcceptFiles(long long) DragAcceptFiles
-  40 stub DragFinish
-  42 stub DragQueryFile
+   3 stub CheckEscapesA
+   6 stub CheckEscapesW
+   7 stdcall CommandLineToArgvW(ptr ptr) CommandLineToArgvW
+   8 stub Control_FillCache_RunDLL
+  12 stdcall Control_RunDLL(long long long long) Control_RunDLL
+  14 stub DllGetClassObject
+  22 stub DoEnvironmentSubstA
+  33 stub SHELL32_33
+  34 stub SHELL32_34
+  35 stub SHELL32_35
+  38 stub DoEnvironmentSubstW
+  41 stdcall DragAcceptFiles(long long) DragAcceptFiles
+  42 stub DragFinish
+  44 stub DragQueryFile
+  46 stub SHELL32_46
   47 stub SHELL32_47
-  48 stub DragQueryFileA
-  51 stub DragQueryFileAorW
-  52 stub DragQueryFileW
-  74 stub DragQueryPoint
-  78 stub DuplicateIcon
-  80 stub ExtractAssociatedIconA
-  99 stub ExtractAssociatedIconExA
- 122 stub ExtractAssociatedIconExW
- 123 stub ExtractAssociatedIconW
- 131 stub ExtractIconA
- 133 stub ExtractIconEx
- 136 stub ExtractIconExA
- 146 stub ExtractIconResInfoA
- 148 stub ExtractIconResInfoW
- 154 stub SHELL32_154
- 155 stub SHELL32_155
+  48 stub SHELL32_48
+  49 stub SHELL32_49
+  50 stub DragQueryFileA
+  53 stub DragQueryFileAorW
+  54 stub DragQueryFileW
+  56 stub SHELL32_56
+  57 stub SHELL32_57
+  58 stub SHELL32_58
+  62 stub SHELL32_62
+  63 stub SHELL32_63
+  64 stub SHELL32_64
+  65 stub SHELL32_65
+  76 stub DragQueryPoint
+  80 stub DuplicateIcon
+  82 stub ExtractAssociatedIconA
+ 101 stub ExtractAssociatedIconExA
+ 124 stub ExtractAssociatedIconExW
+ 125 stub ExtractAssociatedIconW
+ 133 stub ExtractIconA
+ 135 stub ExtractIconEx
+ 138 stub ExtractIconExA
+ 148 stub ExtractIconResInfoA
+ 150 stub ExtractIconResInfoW
  156 stub SHELL32_156
+ 157 stub SHELL32_157
  158 stub SHELL32_158
- 178 stub ExtractIconW
- 180 stub ExtractVersionResource16W
- 182 stub SHELL32_182
- 183 stub SHELL32_183
- 184 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A
- 185 stub FindExecutableW
- 186 return FreeIconList 4 0
- 187 stub InternalExtractIconListA
- 188 stub InternalExtractIconListW
- 189 stub OpenAs_RunDLL
- 190 stub PrintersGetCommand_RunDLL
- 191 stub RealShellExecuteA
- 192 stub RealShellExecuteExA
- 201 stub RealShellExecuteExW
- 202 stub RealShellExecuteW
- 203 stub RegenerateUserEnvironment
- 204 stub SHAddToRecentDocs
- 205 stub SHAppBarMessage
- 206 stub SHBrowseForFolder
- 207 stub SHBrowseForFolderA
- 208 stub SHChangeNotify
- 209 stub SHFileOperation
- 210 stub SHFileOperationA
- 211 stub SHFormatDrive
- 212 stub SHFreeNameMappings
- 213 stub SHGetDataFromIDListA
- 214 stub SHGetDesktopFolder
- 215 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A
- 216 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A
- 217 stub SHGetInstanceExplorer
- 218 stub SHGetMalloc
- 219 stub SHGetPathFromIDList
- 220 stub SHGetPathFromIDListA
- 221 stub SHGetSpecialFolderLocation
- 222 stub SHHelpShortcuts_RunDLL
- 223 stub SHLoadInProc
- 224 stub SheChangeDirA
- 225 stub SheChangeDirExA
- 226 stub SheChangeDirExW
- 227 stub SheChangeDirW
- 228 stub SheConvertPathW
- 229 stub SheFullPathA
- 230 stub SheFullPathW
- 231 stub SheGetCurDrive
- 232 stub SheGetDirA
- 233 stub SheGetDirExW
- 234 stub SheGetDirW
- 235 stub SheGetPathOffsetW
- 236 stub SheRemoveQuotesA
- 237 stub SheRemoveQuotesW
- 238 stub SheSetCurDrive
- 239 stub SheShortenPathA
- 240 stub SheShortenPathW
- 241 stdcall ShellAboutA(long ptr ptr long) ShellAbout32A
- 242 stdcall ShellAboutW(long ptr ptr long) ShellAbout32W
- 243 stdcall ShellExecuteA(long ptr ptr ptr ptr long) ShellExecute32A
- 244 stub ShellExecuteEx
- 245 stub ShellExecuteExA
- 246 stub ShellExecuteW
- 247 stub Shell_NotifyIcon
- 248 stub Shell_NotifyIconA
- 249 stub Shl1632_ThunkData32
- 250 stub Shl3216_ThunkData32
-1023 stub ExtractIconExW # proper ordinal unknown
-1028 stub FindExeDlgProc # proper ordinal unknown
-1041 stub RegisterShellHook # proper ordinal unknown
-1046 stub SHBrowseForFolderW # proper ordinal unknown
-1050 stub SHFileOperationW # proper ordinal unknown
-1056 stub SHGetFileInfoW # proper ordinal unknown
-1061 stub SHGetPathFromIDListW # proper ordinal unknown
-1087 stub ShellExecuteExW # proper ordinal unknown
-1089 stub ShellHookProc # proper ordinal unknown
-1092 stub Shell_NotifyIconW # proper ordinal unknown
-1093 stub StrChrA # proper ordinal unknown
-1094 stub StrChrIA # proper ordinal unknown
-1095 stub StrChrIW # proper ordinal unknown
-1096 stub StrChrW # proper ordinal unknown
-1097 stub StrCmpNA # proper ordinal unknown
-1098 stub StrCmpNIA # proper ordinal unknown
-1099 stub StrCmpNIW # proper ordinal unknown
-1100 stub StrCmpNW # proper ordinal unknown
-1101 stub StrCpyNA # proper ordinal unknown
-1102 stub StrCpyNW # proper ordinal unknown
-1103 stub StrNCmpA # proper ordinal unknown
-1104 stub StrNCmpIA # proper ordinal unknown
-1105 stub StrNCmpIW # proper ordinal unknown
-1106 stub StrNCmpW # proper ordinal unknown
-1107 stub StrNCpyA # proper ordinal unknown
-1108 stub StrNCpyW # proper ordinal unknown
-1109 stub StrRChrA # proper ordinal unknown
-1110 stub StrRChrIA # proper ordinal unknown
-1111 stub StrRChrIW # proper ordinal unknown
-1112 stub StrRChrW # proper ordinal unknown
-1113 stub StrRStrA # proper ordinal unknown
-1114 stub StrRStrIA # proper ordinal unknown
-1115 stub StrRStrIW # proper ordinal unknown
-1116 stub StrRStrW # proper ordinal unknown
-1117 stub StrStrA # proper ordinal unknown
-1118 stub StrStrIA # proper ordinal unknown
-1119 stub StrStrIW # proper ordinal unknown
-1120 stub StrStrW # proper ordinal unknown
-1121 stub WOWShellExecute # proper ordinal unknown
+ 159 stub SHELL32_159
+ 160 stub SHELL32_160
+ 180 stub ExtractIconW
+ 182 stub ExtractVersionResource16W
+ 184 stub SHELL32_184
+ 185 stub SHELL32_185
+ 186 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A
+ 187 stub FindExecutableW
+ 188 return FreeIconList 4 0
+ 189 stub InternalExtractIconListA
+ 190 stub InternalExtractIconListW
+ 191 stub OpenAs_RunDLL
+ 192 stub PrintersGetCommand_RunDLL
+ 193 stub RealShellExecuteA
+ 194 stub RealShellExecuteExA
+ 203 stub RealShellExecuteExW
+ 204 stub RealShellExecuteW
+ 205 stub RegenerateUserEnvironment
+ 206 stub SHAddToRecentDocs
+ 207 stub SHAppBarMessage
+ 208 stub SHBrowseForFolder
+ 209 stub SHBrowseForFolderA
+ 210 stub SHChangeNotify
+ 211 stub SHFileOperation
+ 212 stub SHFileOperationA
+ 213 stub SHFormatDrive
+ 214 stub SHFreeNameMappings
+ 215 stub SHGetDataFromIDListA
+ 216 stub SHGetDesktopFolder
+ 217 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A
+ 218 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A
+ 219 stub SHGetInstanceExplorer
+ 220 stub SHGetMalloc
+ 221 stub SHGetPathFromIDList
+ 222 stub SHGetPathFromIDListA
+ 223 stub SHGetSpecialFolderLocation
+ 224 stub SHHelpShortcuts_RunDLL
+ 225 stub SHLoadInProc
+ 226 stub SheChangeDirA
+ 227 stub SheChangeDirExA
+ 228 stub SheChangeDirExW
+ 229 stub SheChangeDirW
+ 230 stub SheConvertPathW
+ 231 stub SheFullPathA
+ 232 stub SheFullPathW
+ 233 stub SheGetCurDrive
+ 234 stub SheGetDirA
+ 235 stub SheGetDirExW
+ 236 stub SheGetDirW
+ 237 stub SheGetPathOffsetW
+ 238 stub SheRemoveQuotesA
+ 239 stub SheRemoveQuotesW
+ 240 stub SheSetCurDrive
+ 241 stub SheShortenPathA
+ 242 stub SheShortenPathW
+ 243 stdcall ShellAboutA(long ptr ptr long) ShellAbout32A
+ 244 stdcall ShellAboutW(long ptr ptr long) ShellAbout32W
+ 245 stdcall ShellExecuteA(long ptr ptr ptr ptr long) ShellExecute32A
+ 246 stub ShellExecuteEx
+ 247 stub ShellExecuteExA
+ 248 stub ShellExecuteW
+ 249 stub Shell_NotifyIcon
+ 250 stub Shell_NotifyIconA
+ 251 stub Shl1632_ThunkData32
+ 252 stub Shl3216_ThunkData32
+1025 stub ExtractIconExW # proper ordinal unknown
+1030 stub FindExeDlgProc # proper ordinal unknown
+1043 stub RegisterShellHook # proper ordinal unknown
+1048 stub SHBrowseForFolderW # proper ordinal unknown
+1052 stub SHFileOperationW # proper ordinal unknown
+1058 stub SHGetFileInfoW # proper ordinal unknown
+1063 stub SHGetPathFromIDListW # proper ordinal unknown
+1089 stub ShellExecuteExW # proper ordinal unknown
+1091 stub ShellHookProc # proper ordinal unknown
+1094 stub Shell_NotifyIconW # proper ordinal unknown
+1095 stub StrChrA # proper ordinal unknown
+1096 stub StrChrIA # proper ordinal unknown
+1097 stub StrChrIW # proper ordinal unknown
+1098 stub StrChrW # proper ordinal unknown
+1099 stub StrCmpNA # proper ordinal unknown
+1100 stub StrCmpNIA # proper ordinal unknown
+1101 stub StrCmpNIW # proper ordinal unknown
+1102 stub StrCmpNW # proper ordinal unknown
+1103 stub StrCpyNA # proper ordinal unknown
+1104 stub StrCpyNW # proper ordinal unknown
+1105 stub StrNCmpA # proper ordinal unknown
+1106 stub StrNCmpIA # proper ordinal unknown
+1107 stub StrNCmpIW # proper ordinal unknown
+1108 stub StrNCmpW # proper ordinal unknown
+1109 stub StrNCpyA # proper ordinal unknown
+1110 stub StrNCpyW # proper ordinal unknown
+1111 stub StrRChrA # proper ordinal unknown
+1112 stub StrRChrIA # proper ordinal unknown
+1113 stub StrRChrIW # proper ordinal unknown
+1114 stub StrRChrW # proper ordinal unknown
+1115 stub StrRStrA # proper ordinal unknown
+1116 stub StrRStrIA # proper ordinal unknown
+1117 stub StrRStrIW # proper ordinal unknown
+1118 stub StrRStrW # proper ordinal unknown
+1119 stub StrStrA # proper ordinal unknown
+1120 stub StrStrIA # proper ordinal unknown
+1121 stub StrStrIW # proper ordinal unknown
+1122 stub StrStrW # proper ordinal unknown
+1123 stub WOWShellExecute # proper ordinal unknown

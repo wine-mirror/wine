@@ -48,7 +48,7 @@ type win32
 0067 stub WNetFormatNetworkNameA
 0068 stub WNetFormatNetworkNameW
 0069 stdcall WNetGetCachedPassword(ptr long ptr ptr long) WNetGetCachedPassword
-0070 stub WNetGetConnectionA
+0070 stdcall WNetGetConnectionA(ptr ptr ptr) WNetGetConnection32A
 0071 stub WNetGetConnectionW
 0072 stub WNetGetHomeDirectoryA
 0073 stub WNetGetHomeDirectoryW

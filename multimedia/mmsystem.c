@@ -2304,22 +2304,23 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
                           const MMCKINFO * lpckParent, UINT16 uFlags)
 {
 	DWORD	dwfcc, dwOldPos;
-	LPMMIOINFO	lpmminfo;
+
 	dprintf_mmio(stddeb, "mmioDescend(%04X, %p, %p, %04X);\n", 
 				hmmio, lpck, lpckParent, uFlags);
-	if (lpck == NULL) return 0;
-	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
-	if (lpmminfo == NULL) return 0;
+
+	if (lpck == NULL)
+	    return 0;
+
 	dwfcc = lpck->ckid;
 	dprintf_mmio(stddeb, "mmioDescend // dwfcc=%08lX\n", dwfcc);
-	dprintf_mmio(stddeb, "mmioDescend // hfile = %ld\n", lpmminfo->dwReserved2);
-	dwOldPos = _llseek32((HFILE32)lpmminfo->dwReserved2, 0, SEEK_CUR);
+
+	dwOldPos = mmioSeek(hmmio, 0, SEEK_CUR);
 	dprintf_mmio(stddeb, "mmioDescend // dwOldPos=%ld\n", dwOldPos);
+
 	if (lpckParent != NULL) {
 		dprintf_mmio(stddeb, "mmioDescend // seek inside parent at %ld !\n", lpckParent->dwDataOffset);
-		dwOldPos = _llseek32((HFILE32)lpmminfo->dwReserved2,
-					lpckParent->dwDataOffset, SEEK_SET);
-		}
+		dwOldPos = mmioSeek(hmmio, lpckParent->dwDataOffset, SEEK_SET);
+	}
 /*
 
    It seems to be that FINDRIFF should not be treated the same as the 
@@ -2331,44 +2332,43 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDLIST)) {
 		dprintf_mmio(stddeb, "mmioDescend // MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
-		        size_t ix;
+		        LONG ix;
 
-			ix =_lread32((HFILE32)lpmminfo->dwReserved2, (LPSTR)lpck, sizeof(MMCKINFO));
-			dprintf_mmio(stddeb, "mmioDescend // after _lread32 ix = %d req = %d, errno = %d\n",ix,sizeof(MMCKINFO),errno);
+			ix = mmioRead(hmmio, (LPSTR)lpck, sizeof(MMCKINFO));
+			dprintf_mmio(stddeb, "mmioDescend // after _lread32 ix = %ld req = %d, errno = %d\n",ix,sizeof(MMCKINFO),errno);
 			if (ix < sizeof(MMCKINFO)) {
 
-				_llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
-				GlobalUnlock16(hmmio);
+				mmioSeek(hmmio, dwOldPos, SEEK_SET);
 				dprintf_mmio(stddeb, "mmioDescend // return ChunkNotFound\n");
 				return MMIOERR_CHUNKNOTFOUND;
-				}
+			}
 			dprintf_mmio(stddeb, "mmioDescend // dwfcc=%08lX ckid=%08lX cksize=%08lX !\n", 
 									dwfcc, lpck->ckid, lpck->cksize);
-			if (dwfcc == lpck->ckid) break;
+			if (dwfcc == lpck->ckid)
+				break;
+
 			dwOldPos += lpck->cksize + 2 * sizeof(DWORD);
 			if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
 				dwOldPos += sizeof(DWORD);
-			_llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
-			}
+			mmioSeek(hmmio, dwOldPos, SEEK_SET);
 		}
+	}
 	else {
-		if (_lread32(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
-				sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
-                    _llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
-			GlobalUnlock16(hmmio);
- 		        dprintf_mmio(stddeb, "mmioDescend // return ChunkNotFound 2nd\n");
+		if (mmioRead(hmmio, (LPSTR)lpck, sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
+			mmioSeek(hmmio, dwOldPos, SEEK_SET);
+			dprintf_mmio(stddeb, "mmioDescend // return ChunkNotFound 2nd\n");
 			return MMIOERR_CHUNKNOTFOUND;
-			}
 		}
+	}
 	lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
 	if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
 		lpck->dwDataOffset += sizeof(DWORD);
-	lpmminfo->lDiskOffset = _llseek32((HFILE32)lpmminfo->dwReserved2, 
-                                          lpck->dwDataOffset, SEEK_SET);
-	GlobalUnlock16(hmmio);
+	mmioSeek(hmmio, lpck->dwDataOffset, SEEK_SET);
+
 	dprintf_mmio(stddeb, "mmioDescend // lpck->ckid=%08lX lpck->cksize=%ld !\n", 
 								lpck->ckid, lpck->cksize);
 	dprintf_mmio(stddeb, "mmioDescend // lpck->fccType=%08lX !\n", lpck->fccType);
+
 	return 0;
 }
 

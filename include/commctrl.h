@@ -41,25 +41,18 @@ void WINAPI InitCommonControls(void);
 #define CCS_BOTTOM            0x0003
 #define SBARS_SIZEGRIP        0x0100
 
-/* UpDown control */
+/* UpDown */
 
-#define UPDOWN_CLASS32A  "msctls_updown32"
-#define UPDOWN_CLASS32W  "msctls_updown32"
-#define UPDOWN_CLASS16   "msctls_updown"
-#define UPDOWN_CLASS WINELIB_NAME_AW(UPDOWN_CLASS)
+#define UPDOWN_CLASS32A       "msctls_updown32"
+#define UPDOWN_CLASS32W      L"msctls_updown32"
+#define UPDOWN_CLASS16        "msctls_updown"
+#define UPDOWN_CLASS          WINELIB_NAME_AW(UPDOWN_CLASS)
 
 typedef struct tagUDACCEL
 {
   UINT32 nSec;
   UINT32 nInc;
 } UDACCEL;
- 
-typedef struct tagNM_UPDOWN
-{
-    NMHDR hdr;
-    int iPos;
-    int iDelta;
-} NM_UPDOWN;
 
 #define UD_MAXVAL          0x7fff
 #define UD_MINVAL          0x8001
@@ -74,7 +67,7 @@ typedef struct tagNM_UPDOWN
 #define UDS_NOTHOUSANDS    0x0080
 
 #define UDN_FIRST          (0U-721)
-#define UDN_DELTAPOS       (UDN_FIRST - 1)
+#define UDN_DELTAPOS       (UDN_FIRST-1)
 
 #define UDM_SETRANGE       (WM_USER+101)
 #define UDM_GETRANGE       (WM_USER+102)
@@ -87,13 +80,28 @@ typedef struct tagNM_UPDOWN
 #define UDM_SETBASE        (WM_USER+109)
 #define UDM_GETBASE        (WM_USER+110)
 
+/* Progress Bar */
+
+#define PROGRESS_CLASS32A   "msctls_progress32"
+#define PROGRESS_CLASS32W  L"msctls_progress32"
+#define PROGRESS_CLASS16    "msctls_progress"
+
+#define PROGRESS_CLASS      WINELIB_NAME_AW(PROGRESS_CLASS)
+
+#define PBM_SETRANGE        (WM_USER+1)
+#define PBM_SETPOS          (WM_USER+2)
+#define PBM_DELTAPOS        (WM_USER+3)
+#define PBM_SETSTEP         (WM_USER+4)
+#define PBM_STEPIT          (WM_USER+5)
+ 
 /* Functions prototypes */
 
 HWND32     WINAPI CreateStatusWindow32A(INT32,LPCSTR,HWND32,UINT32);
 HWND32     WINAPI CreateStatusWindow32W(INT32,LPCWSTR,HWND32,UINT32);
 #define    CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
-HWND32     WINAPI CreateUpDownControl(DWORD,INT32,INT32,INT32,INT32,HWND32,
-                                   INT32,HINSTANCE32,HWND32,INT32,INT32,INT32);
+HWND32     WINAPI CreateUpDownControl(DWORD,INT32,INT32,INT32,INT32,
+                                      HWND32,INT32,HINSTANCE32,HWND32,
+                                      INT32,INT32,INT32);
 VOID       WINAPI DrawStatusText32A(HDC32,LPRECT32,LPCSTR,UINT32);
 VOID       WINAPI DrawStatusText32W(HDC32,LPRECT32,LPCWSTR,UINT32);
 #define    DrawStatusText WINELIB_NAME_AW(DrawStatusText)

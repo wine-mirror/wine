@@ -274,10 +274,9 @@ void WINAPI GetClientRect32( HWND32 hwnd, LPRECT32 rect )
 /*******************************************************************
  *         ClientToScreen16   (USER.28)
  */
-BOOL16 WINAPI ClientToScreen16( HWND16 hwnd, LPPOINT16 lppnt )
+void WINAPI ClientToScreen16( HWND16 hwnd, LPPOINT16 lppnt )
 {
     MapWindowPoints16( hwnd, 0, lppnt, 1 );
-    return TRUE;
 }
 
 
@@ -1566,14 +1565,19 @@ LONG WINPOS_SendNCCalcSize( HWND32 hwnd, BOOL32 calcValidRect,
  */
 LONG WINPOS_HandleWindowPosChanging16( WND *wndPtr, WINDOWPOS16 *winpos )
 {
-    POINT32 maxSize;
+    POINT32 maxSize, minTrack;
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((wndPtr->dwStyle & WS_THICKFRAME) ||
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, NULL, NULL );
-	winpos->cx = MIN( winpos->cx, maxSize.x );
-	winpos->cy = MIN( winpos->cy, maxSize.y );
+	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, &minTrack, NULL );
+	if (maxSize.x < winpos->cx) winpos->cx = maxSize.x;
+	if (maxSize.y < winpos->cy) winpos->cy = maxSize.y;
+	if (!(wndPtr->dwStyle & WS_MINIMIZE))
+	{
+	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
+	    if (winpos->cy < minTrack.y ) winpos->cy = minTrack.y;
+	}
     }
     return 0;
 }
@@ -2380,14 +2384,19 @@ HDWP32 WINAPI DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
     int i;
     HDWP32 newhdwp = hdwp;
     HWND32 parent;
+    WND *pWnd;
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return 0;
     if (hwnd == GetDesktopWindow32()) return 0;
 
-      /* All the windows of a DeferWindowPos() must have the same parent */
-
-    parent = WIN_FindWndPtr( hwnd )->parent->hwndSelf;
+    /* All the windows of a DeferWindowPos() must have the same parent */
+    if (!(pWnd=WIN_FindWndPtr( hwnd ))) {
+        USER_HEAP_FREE( hdwp );
+        return 0;
+    }
+    	
+    parent = pWnd->parent->hwndSelf;
     if (pDWP->actualCount == 0) pDWP->hwndParent = parent;
     else if (parent != pDWP->hwndParent)
     {

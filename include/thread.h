@@ -79,6 +79,8 @@ typedef struct _THDB
 extern THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
                             LPTHREAD_START_ROUTINE start_addr );
 extern void THREAD_Destroy( K32OBJ *ptr );
+extern THDB *THREAD_Current(void);
+extern THDB *THREAD_SwitchThread( CONTEXT *context );
 
 extern THDB *pCurrentThread;
 

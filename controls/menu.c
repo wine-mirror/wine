@@ -1141,48 +1141,44 @@ UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect, HWND32 hwnd,
 /***********************************************************************
  *	     MENU_PatchResidentPopup
  */
-BOOL32 MENU_PatchResidentPopup( HQUEUE16 checkQueue, WND* wndOwner )
+BOOL32 MENU_PatchResidentPopup( HQUEUE16 checkQueue, WND* checkWnd )
 {
-   /* checkQueue tells us whether we have to disconnect top
-    * popup from the wndOwner or (if the latter is NULL) from 
-    * the checkQueue. If checkQueue is 0 then we need to set 
-    * popup owner to the wndOwner.
-    *
-    * This is supposed to be called when top popup is hidden. */
-
     if( pTopPopupWnd )
     {
 	HTASK16 hTask = 0;
 
-	dprintf_menu(stddeb,"patching resident popup: %04x, %08x\n", 
-				   checkQueue, (unsigned) wndOwner);
-	if( wndOwner )
-	{
-	    if( pTopPopupWnd->owner == wndOwner )
-	    {
-		if( checkQueue ) pTopPopupWnd->owner = NULL;
-		return TRUE;
-	    }
-	
-	    /* switch to the new owner */
+	dprintf_menu(stddeb,"patching resident popup: %04x %04x [%04x %04x]\n", 
+		checkQueue, checkWnd ? checkWnd->hwndSelf : 0, pTopPopupWnd->hmemTaskQ, 
+		pTopPopupWnd->owner ? pTopPopupWnd->owner->hwndSelf : 0);
 
-	    if( wndOwner->hmemTaskQ == pTopPopupWnd->hmemTaskQ ) 
-		return TRUE;
-	    hTask = QUEUE_GetQueueTask( wndOwner->hmemTaskQ );
-	} 
-	else if( pTopPopupWnd->hmemTaskQ == checkQueue )
+	switch( checkQueue )
 	{
-	    /* switch to the different task */
+	    case 0: /* checkWnd is the new popup owner */
+		 if( checkWnd )
+		 {
+		     pTopPopupWnd->owner = checkWnd;
+		     if( pTopPopupWnd->hmemTaskQ != checkWnd->hmemTaskQ )
+			 hTask = QUEUE_GetQueueTask( checkWnd->hmemTaskQ );
+		 }
+		 break;
 
-	    hTask = QUEUE_GetQueueTask( pTopPopupWnd->hmemTaskQ );
-	    hTask = TASK_GetNextTask( hTask );  
+	    case 0xFFFF: /* checkWnd is destroyed */
+		 if( pTopPopupWnd->owner == checkWnd )
+		     pTopPopupWnd->owner = NULL;
+		 return TRUE; 
+
+	    default: /* checkQueue is exiting */
+		 if( pTopPopupWnd->hmemTaskQ == checkQueue )
+		 {
+		     hTask = QUEUE_GetQueueTask( pTopPopupWnd->hmemTaskQ );
+		     hTask = TASK_GetNextTask( hTask );
+		 }
+		 break;
 	}
 
 	if( hTask )
 	{
 	    TDB* task = (TDB*)GlobalLock16( hTask );
-
-	    pTopPopupWnd->owner = wndOwner;
 	    if( task )
 	    {
 		pTopPopupWnd->hInstance = task->hInstance;
@@ -3537,7 +3533,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, SEGPTR name )
     if (!name) return 0;
     
     /* check for Win32 module */
-    instance = GetExePtr( instance );
+    instance = MODULE_HANDLEtoHMODULE16( instance );
     if (MODULE_GetPtr(instance)->flags & NE_FFLAGS_WIN32)
         return LoadMenu32A(instance,PTR_SEG_TO_LIN(name));
 
@@ -3837,7 +3833,7 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
 
     miia.cbSize        = sizeof(miia);
     miia.fMask         = mii->fMask;
-    miia.dwTypeData    = miia.dwTypeData;
+    miia.dwTypeData    = mii->dwTypeData;
     miia.fType         = mii->fType;
     miia.fState        = mii->fState;
     miia.wID           = mii->wID;

@@ -46,7 +46,7 @@ typedef struct
 
 #pragma pack(4)
 
-extern HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16, HINSTANCE16, BOOL32);
+extern HICON16   LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew );
 extern WORD 	 GetIconID( HGLOBAL16 hResource, DWORD resType );
 
 static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
@@ -688,34 +688,40 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
       if( nIconIndex == (UINT16)-1 ) RetPtr[0] = iconDirCount;
       else if( nIconIndex < iconDirCount )
       {
-	   UINT16   i, icon;
+	  UINT16   i, icon;
 
-	   if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
+	  if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
 
-	   for( i = nIconIndex; i < nIconIndex + n; i++ ) 
-	   {
-	       /* .ICO files have only one icon directory */
+	  for( i = nIconIndex; i < nIconIndex + n; i++ ) 
+	  {
+	      /* .ICO files have only one icon directory */
 
-	       if( lpiID == NULL )
+	      if( lpiID == NULL )
 	           hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, 
 							      *(WORD*)pData );
-	       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
-	       GlobalFree16(hIcon); 
-           }
+	      RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
+	      GlobalFree16(hIcon); 
+          }
 
-	   for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
-	   {
-	       hIcon = 0;
-	       if( lpiID )
+	  for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
+	  {
+	      hIcon = 0;
+	      if( lpiID )
 		   hIcon = ICO_LoadIcon( hInstance, hFile, 
 					 lpiID->idEntries + RetPtr[icon-nIconIndex]);
-	       else
+	      else
 	         for( i = 0; i < iconCount; i++ )
 		   if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
 		     hIcon = SHELL_LoadResource( hInstance, hFile, pIconStorage + i,
 								    *(WORD*)pData );
-	       RetPtr[icon-nIconIndex] = (hIcon)?CURSORICON_LoadHandler( hIcon, hInstance, FALSE ):0;
-	   }
+	      if( hIcon )
+	      {
+		  RetPtr[icon-nIconIndex] = LoadIconHandler( hIcon, TRUE ); 
+		  FarSetOwner( RetPtr[icon-nIconIndex], GetExePtr(hInstance) );
+	      }
+	      else
+		  RetPtr[icon-nIconIndex] = 0;
+	  }
       }
     if( lpiID ) HeapFree( GetProcessHeap(), 0, lpiID);
     else HeapFree( GetProcessHeap(), 0, pData);
@@ -1029,4 +1035,10 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 	argv[i]=NULL;
 	*numargs=i;
 	return argv;
+}
+
+void WINAPI Control_RunDLL(DWORD a1,DWORD a2,LPSTR a3,DWORD a4) {
+	fprintf(stderr,"Control_RunDLL(0x%08lx,0x%08lx,%s,0x%08lx)\n",
+		a1,a2,a3,a4
+	);
 }

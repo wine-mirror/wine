@@ -17,6 +17,7 @@
 #include <errno.h>
 #include "neexe.h"
 #include "windows.h"
+#include "task.h"
 #include "arch.h"
 #include "selectors.h"
 #include "callback.h"
@@ -455,7 +456,7 @@ void NE_FixupPrologs( NE_MODULE *pModule )
  *
  * Call the DLL initialization code
  */
-static BOOL32 NE_InitDLL( HMODULE16 hModule )
+static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
 {
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -473,6 +474,17 @@ static BOOL32 NE_InitDLL( HMODULE16 hModule )
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) ||
         (pModule->flags & NE_FFLAGS_WIN32)) return TRUE; /*not a library*/
+
+    /* Call USER signal handler. This is necessary to install a
+     * proper loader for HICON and HCURSOR resources that this DLL 
+     * may contain. InitApp() does this for task modules. */
+
+    if (pTask && pTask->userhandler)
+    {
+        pTask->userhandler( hModule, USIG_DLL_LOAD, 0, pTask->hInstance,
+                            pTask->hQueue );
+    }
+
     if (!pModule->cs) return TRUE;  /* no initialization code */
 
     memset( &context, 0, sizeof(context) );
@@ -516,10 +528,12 @@ static BOOL32 NE_InitDLL( HMODULE16 hModule )
 /***********************************************************************
  *           NE_InitializeDLLs
  *
- * Initialize the loaded DLLs.
+ * Recursively initialize all DLLs (according to the order in which 
+ * they where loaded).
  */
 void NE_InitializeDLLs( HMODULE16 hModule )
 {
+    TDB* pTask = (TDB*)GlobalLock16(GetCurrentTask());
     NE_MODULE *pModule;
     HMODULE16 *pDLL;
 
@@ -529,6 +543,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 /*        PE_InitializeDLLs(hModule); */
         return;
     }
+
     if (pModule->dlls_to_init)
     {
 	HGLOBAL16 to_init = pModule->dlls_to_init;
@@ -539,7 +554,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
         }
         GlobalFree16( to_init );
     }
-    NE_InitDLL( hModule );
+    NE_InitDLL( pTask, hModule );
 }
 
 

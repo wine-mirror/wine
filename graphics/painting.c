@@ -25,6 +25,12 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+BOOL32 DrawDiagEdge32(HDC32 hdc, RECT32 *rect, UINT32 edge, UINT32 flags);
+BOOL32 DrawRectEdge32(HDC32 hdc, RECT32 *rect, UINT32 edge, UINT32 flags);
+BOOL32 DrawFrameButton32(HDC32 hdc, LPRECT32 rc, UINT32 uState);
+BOOL32 DrawFrameCaption32(HDC32 hdc, LPRECT32 rc, UINT32 uState);
+BOOL32 DrawFrameMenu32(HDC32 hdc, LPRECT32 rc, UINT32 uState);
+BOOL32 DrawFrameScroll32(HDC32 hdc, LPRECT32 rc, UINT32 uState);
 
 /***********************************************************************
  *           LineTo16    (GDI.19)
@@ -659,127 +665,6 @@ BOOL32 WINAPI FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 
 
 /**********************************************************************
- *          DrawEdge16   (USER.659)
- */
-BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
-{
-    RECT32 rect32;
-    BOOL32 ret;
-
-    CONV_RECT16TO32( rc, &rect32 );
-    ret = DrawEdge32( hdc, &rect32, edge, flags );
-    CONV_RECT32TO16( &rect32, rc );
-    return ret;
-}
-
-
-/**********************************************************************
- *          DrawEdge32   (USER32.154)
- */
-BOOL32 WINAPI DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
-{
-    HBRUSH32 hbrushOld;
-
-    if (flags >= BF_DIAGONAL)
-        fprintf( stderr, "DrawEdge: unsupported flags %04x\n", flags );
-
-    dprintf_graphics( stddeb, "DrawEdge: %04x %d,%d-%d,%d %04x %04x\n",
-                      hdc, rc->left, rc->top, rc->right, rc->bottom,
-                      edge, flags );
-
-    /* First do all the raised edges */
-
-    hbrushOld = SelectObject32( hdc, sysColorObjects.hbrushBtnHighlight );
-    if (edge & BDR_RAISEDOUTER)
-    {
-        if (flags & BF_LEFT) PatBlt32( hdc, rc->left, rc->top,
-                                       1, rc->bottom - rc->top - 1, PATCOPY );
-        if (flags & BF_TOP) PatBlt32( hdc, rc->left, rc->top,
-                                      rc->right - rc->left - 1, 1, PATCOPY );
-    }
-    if (edge & BDR_SUNKENOUTER)
-    {
-        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 1, rc->top,
-                                        1, rc->bottom - rc->top, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left, rc->bottom - 1,
-                                         rc->right - rc->left, 1, PATCOPY );
-    }
-    if (edge & BDR_RAISEDINNER)
-    {
-        if (flags & BF_LEFT) PatBlt32( hdc, rc->left + 1, rc->top + 1, 
-                                       1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_TOP) PatBlt32( hdc, rc->left + 1, rc->top + 1,
-                                      rc->right - rc->left - 2, 1, PATCOPY );
-    }
-    if (edge & BDR_SUNKENINNER)
-    {
-        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 2, rc->top + 1,
-                                        1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left + 1, rc->bottom - 2,
-                                         rc->right - rc->left - 2, 1, PATCOPY );
-    }
-
-    /* Then do all the sunken edges */
-
-    SelectObject32( hdc, sysColorObjects.hbrushBtnShadow );
-    if (edge & BDR_SUNKENOUTER)
-    {
-        if (flags & BF_LEFT) PatBlt32( hdc, rc->left, rc->top,
-                                       1, rc->bottom - rc->top - 1, PATCOPY );
-        if (flags & BF_TOP) PatBlt32( hdc, rc->left, rc->top,
-                                      rc->right - rc->left - 1, 1, PATCOPY );
-    }
-    if (edge & BDR_RAISEDOUTER)
-    {
-        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 1, rc->top,
-                                        1, rc->bottom - rc->top, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left, rc->bottom - 1,
-                                         rc->right - rc->left, 1, PATCOPY );
-    }
-    if (edge & BDR_SUNKENINNER)
-    {
-        if (flags & BF_LEFT) PatBlt32( hdc, rc->left + 1, rc->top + 1, 
-                                       1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_TOP) PatBlt32( hdc, rc->left + 1, rc->top + 1,
-                                      rc->right - rc->left - 2, 1, PATCOPY );
-    }
-    if (edge & BDR_RAISEDINNER)
-    {
-        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 2, rc->top + 1,
-                                        1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left + 1, rc->bottom - 2,
-                                         rc->right - rc->left - 2, 1, PATCOPY );
-    }
-
-    SelectObject32( hdc, hbrushOld );
-    return TRUE;
-}
-
-
-/**********************************************************************
- *          DrawFrameControl16  (USER.656)
- */
-BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
-                                  UINT16 uState )
-{
-    fprintf( stdnimp,"DrawFrameControl16(%x,%p,%d,%x), empty stub!\n",
-             hdc,rc,uType,uState );
-    return TRUE;
-}
-
-
-/**********************************************************************
- *          DrawFrameControl32  (USER32.157)
- */
-BOOL32 WINAPI DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType,
-                                  UINT32 uState )
-{
-    fprintf( stdnimp,"DrawFrameControl32(%x,%p,%d,%x), empty stub!\n",
-             hdc,rc,uType,uState );
-    return TRUE;
-}
-
-/**********************************************************************
  *          DrawFrameControl32  (USER32.152)
  */
 BOOL32 WINAPI DrawAnimatedRects32( HWND32 hwnd, int idAni,
@@ -795,7 +680,7 @@ BOOL32 WINAPI DrawState32A(
 	HDC32 hdc,HBRUSH32 hbrush,DRAWSTATEPROC drawstateproc,
 	LPARAM lparam,WPARAM32 wparam,INT32 x,INT32 y,INT32 z,INT32 a,UINT32 b
 ) {
-	fprintf(stderr,"DrawStateA(%x,%x,%p,0x%08lx,0x%08lx,%d,%d,%d,%d,%d),stub\n",
+	fprintf(stderr,"DrawStateA(%x,%x,%p,0x%08lx,0x%08x,%d,%d,%d,%d,%d),stub\n",
 		hdc,hbrush,drawstateproc,lparam,wparam,x,y,z,a,b
 	);
 	return TRUE;

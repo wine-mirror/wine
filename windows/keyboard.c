@@ -1184,9 +1184,21 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 /***********************************************************************
  *           GetKeyboardLayout			(USER32.249)
  */
-/*HKL*/ HANDLE32 WINAPI GetKeyboardLayout(DWORD dwLayout)
+HKL32 WINAPI GetKeyboardLayout(DWORD dwLayout)
 {
 	fprintf(stderr,"GetKeyboardLayout(%ld),STUB!\n",dwLayout);
-	return 0;
+	return (0xcafe<<16)|GetSystemDefaultLCID(); /* FIXME */
+}
+
+/***********************************************************************
+ *           GetKeyboardLayoutList		(USER32.250)
+ * FIXME
+ */
+INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
+{
+	fprintf(stderr,"GetKeyboardLayoutList(%d,%p),STUB!\n",nBuff,layouts);
+	if (layouts)
+		layouts[0] = GetKeyboardLayout(0);
+	return 1;
 }
 

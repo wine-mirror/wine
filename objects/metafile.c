@@ -727,16 +727,16 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_CREATEREGION:
 	 {
 	    int i;
-	    HRGN32 h1,h2,hrgn=CreateRectRgn32(mr->rdParam[7],mr->rdParam[8],
-					      mr->rdParam[9],mr->rdParam[10]);
-	    for (i=0,h1=CreateRectRgn32(0,0,0,0);i<mr->rdParam[5];i++)
+	    HRGN32 h2,hrgn=CreateRectRgn32(mr->rdParam[7],mr->rdParam[8],
+                                           mr->rdParam[9],mr->rdParam[10]);
+	    for (i = 0; i < mr->rdParam[5]; i++)
 	    {
 	     if (mr->rdParam[11+i*6]==2)
 	     { 
 	       h2=CreateRectRgn32(mr->rdParam[14+i*6],mr->rdParam[12+i*6],
 				  mr->rdParam[15+i*6],mr->rdParam[13+i*6]);
-	       CombineRgn32(hrgn,h1,h2,mr->rdParam[16+i*6]);	/* e.g. RGN_OR */
-	       h1=hrgn;
+	       CombineRgn32(hrgn,hrgn,h2,mr->rdParam[16+i*6]);	/* e.g. RGN_OR */
+               DeleteObject32( h2 );
 	     }
 	    }
 	    MF_AddHandle(ht, nHandles,hrgn);

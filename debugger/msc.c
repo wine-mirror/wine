@@ -886,8 +886,7 @@ DEBUG_InitCVDataTypes()
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe, 
-			int load_addr, u_long v_addr, u_long size)
+DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr, u_long v_addr, u_long size)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
@@ -957,10 +956,7 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 	   * to proceed if we know what we need to do next.
 	   */
 	  deefer->dbg_size = dbgptr->SizeOfData;
-	  deefer->dbg_info = (char *) xmalloc(dbgptr->SizeOfData);
-	  lseek(fd, dbgptr->PointerToRawData, SEEK_SET);
-	  read(fd, deefer->dbg_info, deefer->dbg_size);
-
+	  deefer->dbg_info = pe->mappeddll+dbgptr->PointerToRawData;
 	  deefer->load_addr = (char *) load_addr;
 	  deefer->dbgdir = dbgptr;
 	  deefer->next = dbglist;

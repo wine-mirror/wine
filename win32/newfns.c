@@ -14,6 +14,30 @@ at a later date. */
 #include "debug.h"
 
 /****************************************************************************
+ *		UTRegister (KERNEL32.697)
+ */
+BOOL32 WINAPI UTRegister(HMODULE32 hModule,
+                      LPSTR lpsz16BITDLL,
+                      LPSTR lpszInitName,
+                      LPSTR lpszProcName,
+                      /*UT32PROC*/ LPVOID *ppfn32Thunk,
+                      /*FARPROC*/ LPVOID pfnUT32CallBack,
+                      LPVOID lpBuff)
+{
+    fprintf(stdnimp, "UTRegister Stub called!\n");
+    return TRUE;
+}
+
+/****************************************************************************
+ *		UTUnRegister (KERNEL32.698)
+ */
+BOOL32 WINAPI UTUnRegister(HMODULE32 hModule)
+{
+    fprintf(stdnimp, "UTUnRegister Stub called!\n");
+    return TRUE;
+}
+
+/****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.415)
  */
 BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
@@ -23,14 +47,3 @@ BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
 	counter->HighPart	= 0;
 	return TRUE;
 }
-
-/****************************************************************************
- *		DisableThreadLibraryCalls (KERNEL32.74)
- * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
- */
-BOOL32 WINAPI DisableThreadLibraryCalls(HMODULE32 hModule)
-{
-    fprintf(stdnimp, "DisableThreadLibraryCalls Stub called!\n");
-    return TRUE;
-}
-

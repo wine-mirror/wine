@@ -41,34 +41,29 @@ static STATUSWINDOWINFO *GetStatusInfo(HWND32 hwnd)
 void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
                                UINT32 style )
 {
-    RECT32		r, rt;
+    RECT32 r, rt;
     int	oldbkmode;
+    UINT32 border;
 
     r = *lprc;
 
-    if (style == 0 ||
-	style == SBT_POPOUT) {
-	InflateRect32(&r, -1, -1);
-	SelectObject32(hdc, sysColorObjects.hbrushScrollbar);
-	Rectangle32(hdc, r.left, r.top, r.right, r.bottom);
+    if(style == SBT_OWNERDRAW){
+      /* FIXME for SBT_OWNERDRAW, SBT_RTLREADING */
+    }
+    else{
+      DrawEdge32(hdc, &r, BDR_RAISEDINNER, BF_RECT|BF_ADJUST|BF_FLAT);
 
-	/* draw border */
-	SelectObject32(hdc, sysColorObjects.hpenWindowFrame);
-	if (style == 0)
-	    DrawEdge32(hdc, &r, EDGE_SUNKEN, BF_RECT);
-	else
-	    DrawEdge32(hdc, &r, EDGE_RAISED, BF_RECT);
-    }
-    else if (style == SBT_NOBORDERS) {
-	SelectObject32(hdc, sysColorObjects.hbrushScrollbar);
-	Rectangle32(hdc, r.left, r.top, r.right, r.bottom);
-    }
-    else {	/* fixme for SBT_OWNERDRAW, SBT_RTLREADING */
-	
-    }
+      if(style==SBT_POPOUT)
+	border = BDR_RAISEDOUTER;
+      else if(style==SBT_NOBORDERS)
+	border = 0;
+      else
+	border = BDR_SUNKENOUTER;
 
-    /* now draw text */
-    if ((style != SBT_OWNERDRAW) && text) {
+      DrawEdge32(hdc, &r, border, BF_RECT | BF_ADJUST | BF_MIDDLE);
+
+      /* now draw text */
+      if (text) {
 	SelectObject32(hdc, sysColorObjects.hpenWindowText);
 	oldbkmode = SetBkMode32(hdc, TRANSPARENT);
 	rt = r;
@@ -77,8 +72,10 @@ void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
 		    &rt, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	if (oldbkmode != TRANSPARENT)
-	    SetBkMode32(hdc, oldbkmode);
+	  SetBkMode32(hdc, oldbkmode);
+      }
     }
+
 }
 
 static BOOL32 SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )

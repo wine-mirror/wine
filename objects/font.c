@@ -804,11 +804,12 @@ BOOL32 WINAPI GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
     }
 
     if (!dc->funcs->pGetTextMetrics ||
-        !dc->funcs->pGetTextMetrics( dc,metrics ))
+        !dc->funcs->pGetTextMetrics( dc, metrics ))
         return FALSE;
-    /* map them from device to logic coordinatesystem before returning.
-     * FIXME: should this be in the device driver?
-     */
+
+    /* device layer returns values in device units
+     * therefore we have to convert them to logical */
+
 #define WDPTOLP(x) ((x<0)?					\
 		(-abs((x)*dc->wndExtX/dc->vportExtX)):		\
 		(abs((x)*dc->wndExtX/dc->vportExtX)))

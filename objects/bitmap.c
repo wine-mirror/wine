@@ -49,6 +49,80 @@ static int XPutImage_wrapper( const struct XPutImage_descr *descr )
                       descr->image, 0, 0, 0, 0, descr->width, descr->height );
 }
 
+/***********************************************************************
+ *           BITMAP_GetBitsPadding
+ *
+ * Return number of bytes to pad a scanline of 16-bit aligned Windows DDB data.
+ */
+INT32 BITMAP_GetBitsPadding( int bmWidth, int bpp )
+{
+    INT32 pad;
+
+    switch (bpp) 
+    {
+    case 1:
+	if (!(bmWidth & 15)) pad = 0;
+	else pad = ((16 - (bmWidth & 15)) + 7) / 8;
+	break;
+
+    case 8:
+	pad = (2 - (bmWidth & 1)) & 1;
+	break;
+
+    case 24:
+	pad = (bmWidth*3) & 1;
+	break;
+
+    case 32:
+    case 16:
+    case 15:
+	pad = 0; /* we have 16bit alignment already */
+	break;
+
+    case 4:
+	if (!(bmWidth & 3)) pad = 0;
+	else pad = ((4 - (bmWidth & 3)) + 1) / 2;
+	break;
+
+    default:
+	fprintf(stderr,"GetBitsPadding: unknown depth %d, please report.\n", bpp );
+        return -1;
+    }
+    return pad;
+}
+
+/***********************************************************************
+ *           BITMAP_GetBitsWidth
+ *
+ * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB data.
+ */
+INT32 BITMAP_GetBitsWidth( int bmWidth, int bpp )
+{
+    switch(bpp)
+    {
+    case 1:
+	return 2 * ((bmWidth+15) >> 4);
+
+    case 24:
+	bmWidth *= 3; /* fall through */
+    case 8:
+	return bmWidth + (bmWidth & 1);
+
+    case 32:
+	return bmWidth * 4;
+
+    case 16:
+    case 15:
+	return bmWidth * 2;
+
+    case 4:
+	return 2 * ((bmWidth+3) >> 2);
+
+    default:
+	fprintf(stderr,"GetBitsPadding: unknown depth %d, please report.\n", bpp );
+    }
+    return -1;
+}
 
 /***********************************************************************
  *           CreateBitmap16    (GDI.48)
@@ -200,44 +274,17 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
       /* Only get entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
+
     dprintf_bitmap(stddeb, "GetBitmapBits: %dx%d %d colors %p fetched height: %ld\n",
 	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	    1 << bmp->bitmap.bmBitsPixel, buffer, height );
-    if (!height) 
+
+    pad = BITMAP_GetBitsPadding( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+
+    if (!height || (pad == -1))
     {
       GDI_HEAP_UNLOCK( hbitmap );
       return 0;
-    }
-
-    switch (bmp->bitmap.bmBitsPixel) {
-    case 1:
-	if (!(bmp->bitmap.bmWidth & 15))
-		pad = 0;
-	else
-		pad = ((16 - (bmp->bitmap.bmWidth & 15)) + 7) / 8;
-    	break;
-    case 4:
-	if (!(bmp->bitmap.bmWidth & 3))
-	    pad = 0;
-	else
-	    pad = ((4 - (bmp->bitmap.bmWidth & 3)) + 1) / 2;
-	break;
-    case 8:
-    	pad = (2 - (bmp->bitmap.bmWidth & 1)) & 1;
-    	break;
-    case 15:
-    case 16:
-    	pad = 0; /* we have 16bit alignment already */
-	break;
-    case 24:
-    	pad = (bmp->bitmap.bmWidth*3) & 1;
-    	break;
-    default:
-	fprintf(stderr,"GetBitMapBits32: unknown depth %d, please report.\n",
-		bmp->bitmap.bmBitsPixel
-	);
-	GDI_HEAP_UNLOCK( hbitmap );
-	return 0;
     }
 
     /* Hack: change the bitmap height temporarily to avoid */
@@ -354,41 +401,15 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
       /* Only set entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
-    if (!height) 
+
+    pad = BITMAP_GetBitsPadding( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+
+    if (!height || (pad == -1)) 
     {
       GDI_HEAP_UNLOCK( hbitmap );
       return 0;
     }
 	
-    switch (bmp->bitmap.bmBitsPixel) {
-    case 1:
-	if (!(bmp->bitmap.bmWidth & 15))
-		pad = 0;
-	else
-		pad = ((16 - (bmp->bitmap.bmWidth & 15)) + 7) / 8;
-    	break;
-    case 4:
-	if (!(bmp->bitmap.bmWidth & 3))
-	    pad = 0;
-	else
-	    pad = ((4 - (bmp->bitmap.bmWidth & 3)) + 1) / 2;
-	break;
-    case 8:
-    	pad = (2 - (bmp->bitmap.bmWidth & 1)) & 1;
-    	break;
-    case 15:
-    case 16:
-    	pad = 0; /* we have 16bit alignment already */
-	break;
-    case 24:
-    	pad = (bmp->bitmap.bmWidth*3) & 1;
-    	break;
-    default:
-	fprintf(stderr,"SetBitMapBits32: unknown depth %d, please report.\n",
-		bmp->bitmap.bmBitsPixel
-	);
-	return 0;
-    }
     sbuf = (LPBYTE)buffer;
 
     widthbytes	= DIB_GetXImageWidthBytes(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
@@ -493,6 +514,29 @@ HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
 		return LoadIcon32A(hinst,name);
 	case IMAGE_CURSOR:
 		return LoadCursor32A(hinst,name);
+	}
+	return 0;
+}
+
+HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
+                              INT32 desiredx, INT32 desiredy, UINT32 loadflags)
+{
+	if (HIWORD(name)) {
+		dprintf_resource(stddeb,"LoadImage32W(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+			hinst,name,type,desiredx,desiredy,loadflags
+		);
+	} else {
+		dprintf_resource(stddeb,"LoadImage32W(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+			hinst,name,type,desiredx,desiredy,loadflags
+		);
+	}
+	switch (type) {
+	case IMAGE_BITMAP:
+		return LoadBitmap32W(hinst,name);
+	case IMAGE_ICON:
+		return LoadIcon32W(hinst,name);
+	case IMAGE_CURSOR:
+		return LoadCursor32W(hinst,name);
 	}
 	return 0;
 }

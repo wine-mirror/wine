@@ -61,7 +61,7 @@ typedef struct tagWND
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     HWND32         hwndSelf;      /* Handle of this window */
-    HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
+    HINSTANCE32    hInstance;     /* Window hInstance (from CreateWindow) */
     RECT32         rectClient;    /* Client area rel. to parent client area */
     RECT32         rectWindow;    /* Whole window rel. to parent client area */
     LPSTR          text;          /* Window text */
@@ -119,14 +119,12 @@ extern Window WIN_GetXWindow( HWND32 hwnd );
 extern BOOL32 WIN_UnlinkWindow( HWND32 hwnd );
 extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
 extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
-extern void   WIN_SendParentNotify( HWND32 hwnd, WORD event,
-                                    WORD idChild, LPARAM lValue );
-extern void   WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew );
+extern BOOL32 WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew);
 extern BOOL32 WIN_CreateDesktopWindow(void);
 extern HWND32 WIN_GetTopParent( HWND32 hwnd );
 extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
-extern HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd );
+extern HINSTANCE32 WIN_GetWindowInstance( HWND32 hwnd );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT32 bwa, UINT32* pnum );
 
 extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );		      /* windows/defwnd.c */

@@ -11,6 +11,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "handle32.h"
+#include "pe_image.h"
 #include "task.h"
 
 /* Process handle entry */
@@ -71,7 +72,7 @@ typedef struct _PDB32
     ENVDB           *env_db;           /* 40 Environment database */
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
     struct _PDB32   *parent;           /* 48 Parent process */
-    void            *modref_list;      /* 4c MODREF list */
+    PE_MODREF       *modref_list;      /* 4c MODREF list */
     void            *thread_list;      /* 50 List of threads */
     void            *debuggee_CB;      /* 54 Debuggee context block */
     void            *local_heap_free;  /* 58 Head of local heap free list */
@@ -82,7 +83,7 @@ typedef struct _PDB32
     DWORD            tls_bits[2];      /* 88 TLS in-use bits */
     DWORD            process_dword;    /* 90 Unknown */
     struct _PDB32   *group;            /* 94 Process group */
-    void            *exe_modref;       /* 98 MODREF for the process EXE */
+    PE_MODREF       *exe_modref;       /* 98 MODREF for the process EXE */
     LPTOP_LEVEL_EXCEPTION_FILTER top_filter; /* 9c Top exception filter */
     DWORD            priority;         /* a0 Priority level */
     HANDLE32         heap_list;        /* a4 Head of process heap list */
@@ -101,7 +102,7 @@ extern HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags);
 extern K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type );
 extern BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags );
 
-extern PDB32 *PROCESS_Create( TDB *pTask );
+extern PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line );
 extern void PROCESS_Destroy( K32OBJ *ptr );
 
 extern PDB32 *pCurrentProcess;

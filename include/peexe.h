@@ -323,7 +323,7 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
 	DWORD	OffsetToData;
 	DWORD	Size;
 	DWORD	CodePage;
-	DWORD	Reserved;
+	DWORD	ResourceHandle;
 } IMAGE_RESOURCE_DATA_ENTRY,*LPIMAGE_RESOURCE_DATA_ENTRY;
 
 typedef struct _IMAGE_BASE_RELOCATION

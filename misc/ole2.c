@@ -17,8 +17,8 @@
  */
 DWORD WINAPI OleBuildVersion()
 {
-	dprintf_ole(stddeb,"OleBuildVersion()\n");
-	return (rmm<<16)+rup;
+    dprintf_ole(stddeb,"OleBuildVersion()\n");
+    return (rmm<<16)+rup;
 }
 
 /***********************************************************************
@@ -35,5 +35,14 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
  */
 void WINAPI OleUninitialize()
 {
-	dprintf_ole(stdnimp,"OleUninitialize()\n");
+    dprintf_ole(stdnimp,"OleUninitialize()\n");
 }
+
+/***********************************************************************
+ *           OleFlushClipboard   [OLE2.76]
+ */
+HRESULT WINAPI OleFlushClipboard()
+{
+    return S_OK;
+}
+

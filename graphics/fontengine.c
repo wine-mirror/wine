@@ -10,7 +10,7 @@
 /* GDI 300 */
 WORD WINAPI EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    printf("In engineEnumerateFont for %s\n",(fontname)?fontname:"NULL");
+    fprintf(stderr,"EngineEnumerateFont(%s,%p,%d),stub\n",fontname,proc,data);
     return 0;
 }
 #ifdef NOTDEF
@@ -23,7 +23,7 @@ WORD WINAPI EngineDeleteFont(LPFONTINFO16 lpFontInfo)
 /* GDI 302 */
 WORD WINAPI EngineRealizeFont(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
 {
-    printf("In EngineRealizeFont\n");
+    fprintf(stderr,"EngineRealizeFont(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
     
     return 0;
 }

@@ -1,4 +1,154 @@
 ----------------------------------------------------------------------
+Thu Sep 11 18:24:56 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [objects/dc.c]
+	In DC_SetupGCForPatBlt, replace R2_NOT by GXxor with (black xor white).
+
+Tue Sep  9 23:04:02 1997  U. Bonnes <bon@elektron.ikp.physik.th-darmstadt.de>
+
+	* [memory/virtual.c] 
+	Do not write debugging info unconditionally to stderr.
+
+	* [files/profile.c]
+	Call PROFILE_GetSection in PROFILE_GetString for key_name "" too.
+
+	* [misc/crtdll.c]
+	Many new functions.
+
+	* [include/windows.h] [windows/winpos.c]
+	ClientToScreen16 doesn't have a return value.
+
+Sun Sep  7 10:06:39 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [misc/main.c] [AUTHORS]
+	Update the list of contributors. Please let me know if I forgot
+	someone.
+
+	* [if1632/*.spec] [if1632/builtin.c] [tools/build.c]
+	Ordinal base for Win32 DLLs is now computed automatically from the
+	lowest ordinal found.
+
+	* [include/wintypes.h]
+	WINAPI is now defined as attribute((stdcall)). This will require
+	gcc to compile.
+
+	* [if1632/thunk.c]
+	Removed Win32 thunks (no longer needed with stdcall).
+
+	* [if1632/crtdll.spec] [misc/crtdll.c]
+	Make sure we only reference cdecl functions in the spec file.
+
+	* [objects/dc.c]
+	Use CapNotLast drawing style for 1-pixel wide lines.
+
+	* [tools/build.c]
+	Added 'double' argument type.
+	Added 'varargs' function type for Win32.
+	Made CallTo16_xxx functions stdcall.
+
+Fri Sep  5 14:50:49 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [tools/build.c] [windows/win.c] [windows/event.c] [windows/message.c]
+	More fixes to get message exchange closer to the original.
+
+	* [misc/spy.c]
+	Message logs now contain window names.
+
+	* [loader/resource.c] [loader/ne_resource.c] [loader/task.c]
+	  [objects/cursoricon.c] [windows/user.c]
+	Added some obscure features to fix memory leaks.
+
+Fri Sep  5 00:46:28 1997  Jan Willamowius <jan@janhh.shnet.org>
+
+	* [if1632/kernel32.spec] [win32/newfns.c]
+	Added stub for UTRegister() and UTUnRegister().
+
+Thu Sep  4 12:03:12 1997  Frans van Dorsselaer <dorssel@rulhmpc49.LeidenUniv.nl>
+	* [controls/edit.c]
+	Allow ASCII codes > 127 in WM_CHAR.
+
+Mon Sep  1 17:23:24 1997  Dimitrie O. Paun  <dimi@mail.cs.toronto.edu>
+
+	* [controls/widgets.c]
+	In InitCommonControls, remember the name of the class
+	because lpszClassName was made to point to a local array
+	Added the ProgressBar to the list of implemented controls.
+	Call InitCommonControls from WIDGETS_Init to register all
+	implemented Common Controls.
+	
+	* [include/commctrl.h]
+	Added misc decl for the Progress Bar.
+
+	* [controls/progress.c] [include/progress.h]
+	First attempt at implementiong the Progress Bar class.
+
+	* [objects/brush.h]
+	Implementation for GetSysColorBrush[16|32]
+
+	* [controls/status.c]
+	Use DrawEdge to draw the borders and fill the background
+
+	* [controls/uitools.c]
+	Added DrawDiagEdge32 and DrawRectEdge32
+
+	* [graphics/painting.c]
+	Implement DrawEdge[16|32]
+	Started DrawFrameControl32
+
+Mon Sep  1 10:07:09 1997  Lawson Whitney <lawson_whitney@juno.com>
+
+	* [misc/comm.c] [include/windows.h]
+	SetCommEventMask returns a SEGPTR.
+
+Sun Aug 31 23:28:32 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [loader/pe_image.c][loader/module.c][include/pe_image.h]
+	  [include/module.h]
+	Cleaned up the whole Win32 library mess (a bit).
+
+	* [debugger/stabs.c]
+	If 'wine' has no absolute path and isn't found, check $PATH too.
+
+	* [misc/ole2nls.c]
+	Some fixes.
+
+	* [misc/ver.c]
+	Added support for PE style version resources.
+
+	* [memory/string.c]
+	Check for NULL pointers to _lstr* functions, just as Windows95 does.
+
+	* [multimedia/time.c]
+	Made list of timers a simple linked list.
+
+	* [loader/resource.c]
+	Netscape 3 seems to pass NEGATIVE resource Ids (in an
+	unsigned int, yes). Don't know why, fixed it anyway.
+
+	* [objects/bitmap.c]
+	LoadImageW added.
+
+	* [include/win.h][windows/win.c]
+	Change wIDmenu from UINT16 to UINT32 and changed the
+	SetWindow(Long|Word) accordingly.
+
+Thu Aug 28 19:30:08 1997  Morten Welinder  <terra@diku.dk>
+
+	* [include/windows.h]
+	Add a few more colors defined for Win95.
+	Add a few more brush styles.
+
+	* [windows/syscolor.c]
+ 	Add error checks for SYSCOLOR_SetColor, SYSCOLOR_Init,
+	GetSysColor16, GetSysColor32.  Add support for above colors.
+
+Sun Aug 24 16:22:57 1997  Andrew Taylor <andrew@riscan.com>
+
+	* [multimedia/mmsystem.c]
+	Changed mmioDescend to use mmio functions for file I/O, neccessary
+	for memory files.
+
+----------------------------------------------------------------------
 Sat Aug 23 00:05:23 1997  Andreas Mohr <100.30936@germany.net>
 
 	* [if1632/kernel.spec] [if1632/mmsystem.spec]

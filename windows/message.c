@@ -55,6 +55,32 @@ BOOL32 MSG_CheckFilter(WORD uMsg, DWORD filter)
 }
 
 /***********************************************************************
+ *           MSG_SendParentNotify
+ *
+ * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
+ * the window has the WS_EX_NOPARENTNOTIFY style.
+ */
+static void MSG_SendParentNotify(WND* wndPtr, WORD event, WORD idChild, LPARAM lValue)
+{
+#define lppt ((LPPOINT16)&lValue)
+
+    /* pt has to be in the client coordinates of the parent window */
+
+    MapWindowPoints16( 0, wndPtr->hwndSelf, lppt, 1 );
+    while (wndPtr)
+    {
+	if (!(wndPtr->dwStyle & WS_CHILD) || (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY)) break;
+	lppt->x += wndPtr->rectClient.left;
+	lppt->y += wndPtr->rectClient.top;
+	wndPtr = wndPtr->parent;
+	SendMessage32A( wndPtr->hwndSelf, WM_PARENTNOTIFY,
+			MAKEWPARAM( event, idChild ), lValue );
+    }
+#undef lppt
+}
+
+
+/***********************************************************************
  *           MSG_TranslateMouseMsg
  *
  * Translate an mouse hardware event into a real mouse message.
@@ -192,8 +218,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
 	     * notification message is still WM_L/M/RBUTTONDOWN.
 	     */
 
-            WIN_SendParentNotify( hWnd, msg->message, 0,
-                              MAKELPARAM( screen_pt.x, screen_pt.y ) );
+            MSG_SendParentNotify( pWnd, msg->message, 0, MAKELPARAM(screen_pt.x, screen_pt.y) );
 
             /* Activate the window if needed */
 

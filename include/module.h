@@ -111,22 +111,25 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
                     ((NE_WIN32_EXTRAINFO *)((pModule) + 1))->pe_module : 0))
 
 /* module.c */
-extern NE_MODULE *MODULE_GetPtr( HMODULE16 hModule );
-extern void MODULE_DumpModule( HMODULE16 hmodule );
+extern NE_MODULE *MODULE_GetPtr( HMODULE32 hModule );
+extern HMODULE16 MODULE_HANDLEtoHMODULE16( HANDLE32 handle );
+extern HMODULE32 MODULE_HANDLEtoHMODULE32( HANDLE32 handle );
+extern void MODULE_DumpModule( HMODULE32 hmodule );
 extern void MODULE_WalkModules(void);
-extern int MODULE_OpenFile( HMODULE16 hModule );
-extern LPSTR MODULE_GetModuleName( HMODULE16 hModule );
+extern int MODULE_OpenFile( HMODULE32 hModule );
+extern LPSTR MODULE_GetModuleName( HMODULE32 hModule );
 extern void MODULE_RegisterModule( NE_MODULE *pModule );
-extern HMODULE16 MODULE_FindModule( LPCSTR path );
-extern HINSTANCE16 MODULE_GetInstance( HMODULE16 hModule );
-extern HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
-extern HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first );
-extern WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name );
-extern FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
-extern BOOL16 MODULE_SetEntryPoint( HMODULE16 hModule, WORD ordinal,
+extern HMODULE32 MODULE_FindModule( LPCSTR path );
+extern HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS* paramBlock );
+extern HINSTANCE16 MODULE_GetInstance( HMODULE32 hModule );
+extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
+extern HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 flags );
+extern WORD MODULE_GetOrdinal( HMODULE32 hModule, const char *name );
+extern FARPROC16 MODULE_GetEntryPoint( HMODULE32 hModule, WORD ordinal );
+extern BOOL16 MODULE_SetEntryPoint( HMODULE32 hModule, WORD ordinal,
                                     WORD offset );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
-extern FARPROC16 WIN32_GetProcAddress16( HMODULE16 hmodule, LPSTR name );
+extern FARPROC16 WIN32_GetProcAddress16( HMODULE32 hmodule, LPSTR name );
 
 /* builtin.c */
 extern BOOL16 BUILTIN_Init(void);

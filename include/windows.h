@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
 #include "wintypes.h"
 
 #pragma pack(1)
@@ -904,6 +905,16 @@ typedef DWORD COLORREF;
 #define COLOR_BTNTEXT		   18
 #define COLOR_INACTIVECAPTIONTEXT  19
 #define COLOR_BTNHIGHLIGHT         20
+#define COLOR_3DDKSHADOW           21
+#define COLOR_3DLIGHT              22
+#define COLOR_INFOTEXT             23
+#define COLOR_INFOBK               24
+#define COLOR_DESKTOP              COLOR_BACKGROUND
+#define COLOR_3DFACE               COLOR_BTNFACE
+#define COLOR_3DSHADOW             COLOR_BTNSHADOW
+#define COLOR_3DHIGHLIGHT          COLOR_BTNHIGHLIGHT
+#define COLOR_3DHILIGHT            COLOR_BTNHIGHLIGHT
+#define COLOR_BTNHILIGHT           COLOR_BTNHIGHLIGHT
 
   /* WM_CTLCOLOR values */
 #define CTLCOLOR_MSGBOX             0
@@ -968,6 +979,10 @@ DECL_WINELIB_TYPE(LPLOGBRUSH);
 #define BS_PATTERN	    3
 #define BS_INDEXED	    4
 #define	BS_DIBPATTERN	    5
+#define	BS_DIBPATTERNPT	    6
+#define BS_PATTERN8X8	    7
+#define	BS_DIBPATTERN8X8    8
+#define BS_MONOPATTERN      9
 
   /* Hatch styles */
 #define HS_HORIZONTAL       0
@@ -1874,6 +1889,15 @@ typedef struct
 #define DIB_RGB_COLORS   0
 #define DIB_PAL_COLORS   1
 #define CBM_INIT         4
+
+typedef struct 
+{
+	BITMAP32		dsBm;
+	BITMAPINFOHEADER	dsBmih;
+	DWORD			dsBitfields[3];
+	HANDLE32		dshSection;
+	DWORD			dsOffset;
+} DIBSECTION,*LPDIBSECTION;
 
 
   /* Cursors / Icons */
@@ -4618,6 +4642,15 @@ typedef struct {
 #define HELP_PARTIALKEY     0x0105
 #define HELP_MULTIKEY       0x0201
 #define HELP_SETWINPOS      0x0203
+#define HELP_CONTEXTMENU    0x000a
+#define HELP_FINDER	    0x000b
+#define HELP_WM_HELP	    0x000c
+#define HELP_SETPOPUP_POS   0x000d
+
+#define HELP_TCARD	    0x8000
+#define HELP_TCARD_DATA	    0x0010
+#define HELP_TCARD_OTHER_CALLER 0x0011
+
 
 /* ExitWindows() flags */
 #define EW_RESTARTWINDOWS   0x0042
@@ -5168,6 +5201,15 @@ typedef struct tagNMHDR
     UINT32  code;
 } NMHDR, *LPNMHDR;
 
+typedef struct
+{
+	UINT32	cbSize;
+	INT32	iTabLength;
+	INT32	iLeftMargin;
+	INT32	iRightMargin;
+	UINT32	uiLengthDrawn;
+} DRAWTEXTPARAMS,*LPDRAWTEXTPARAMS;
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -5260,9 +5302,13 @@ BOOL16      WINAPI IsGDIObject(HGDIOBJ16);
 BOOL16      WINAPI IsSharedSelector(HANDLE16);
 BOOL16      WINAPI IsTask(HTASK16);
 HTASK16     WINAPI IsTaskLocked(void);
+BOOL16      WINAPI IsUserIdle(void);
 BOOL16      WINAPI IsValidMetaFile(HMETAFILE16);
 VOID        WINAPI LogError(UINT16, LPVOID);
 VOID        WINAPI LogParamError(UINT16,FARPROC16,LPVOID);
+HGLOBAL16   WINAPI LoadCursorIconHandler(HGLOBAL16,HMODULE16,HRSRC16);
+HGLOBAL16   WINAPI LoadDIBCursorHandler(HGLOBAL16,HMODULE16,HRSRC16);
+HGLOBAL16   WINAPI LoadDIBIconHandler(HGLOBAL16,HMODULE16,HRSRC16);
 WORD        WINAPI LocalCountFree(void);
 WORD        WINAPI LocalHandleDelta(WORD);
 WORD        WINAPI LocalHeapSize(void);
@@ -5290,7 +5336,7 @@ WORD        WINAPI SelectorAccessRights(WORD,WORD,WORD);
 INT16       WINAPI SelectVisRgn(HDC16,HRGN16);
 DWORD       WINAPI SetBitmapDimension(HBITMAP16,INT16,INT16);
 DWORD       WINAPI SetBrushOrg(HDC16,INT16,INT16);
-UINT16*     WINAPI SetCommEventMask(INT16,UINT16);
+SEGPTR      WINAPI SetCommEventMask(INT16,UINT16);
 BOOL16      WINAPI SetDCHook(HDC16,FARPROC16,DWORD);
 DWORD       WINAPI SetDCOrg(HDC16,INT16,INT16);
 VOID        WINAPI SetDCState(HDC16,HDC16);
@@ -5582,7 +5628,11 @@ DWORD       WINAPI GetMenuCheckMarkDimensions(void);
 LONG        WINAPI GetMessageExtraInfo(void);
 DWORD       WINAPI GetMessagePos(void);
 LONG        WINAPI GetMessageTime(void);
+LANGID      WINAPI GetSystemDefaultLangID(void);
+LCID        WINAPI GetSystemDefaultLCID(void);
 DWORD       WINAPI GetTickCount(void);
+LANGID      WINAPI GetUserDefaultLangID(void);
+LCID        WINAPI GetUserDefaultLCID(void);
 ATOM        WINAPI GlobalDeleteAtom(ATOM);
 VOID        WINAPI LZDone(void);
 DWORD       WINAPI OemKeyScan(WORD);
@@ -5752,7 +5802,7 @@ BOOL32      WINAPI Chord32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32
 INT16       WINAPI ClearCommBreak16(INT16);
 BOOL32      WINAPI ClearCommBreak32(INT32);
 #define     ClearCommBreak WINELIB_NAME(ClearCommBreak)
-BOOL16      WINAPI ClientToScreen16(HWND16,LPPOINT16);
+VOID        WINAPI ClientToScreen16(HWND16,LPPOINT16);
 BOOL32      WINAPI ClientToScreen32(HWND32,LPPOINT32);
 #define     ClientToScreen WINELIB_NAME(ClientToScreen)
 BOOL16      WINAPI ClipCursor16(const RECT16*);
@@ -5889,6 +5939,9 @@ HDC32       WINAPI CreateIC32W(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODE32W*);
 HICON16     WINAPI CreateIcon16(HINSTANCE16,INT16,INT16,BYTE,BYTE,LPCVOID,LPCVOID);
 HICON32     WINAPI CreateIcon32(HINSTANCE32,INT32,INT32,BYTE,BYTE,LPCVOID,LPCVOID);
 #define     CreateIcon WINELIB_NAME(CreateIcon)
+HICON16     WINAPI CreateIconFromResourceEx16(LPBYTE,UINT16,BOOL16,DWORD,INT16,INT16,UINT16);
+HICON32     WINAPI CreateIconFromResourceEx32(LPBYTE,UINT32,BOOL32,DWORD,INT32,INT32,UINT32);
+#define     CreateIconFromResourceEx WINELIB_NAME(CreateIconFromResourceEx)
 HMENU16     WINAPI CreateMenu16(void);
 HMENU32     WINAPI CreateMenu32(void);
 #define     CreateMenu WINELIB_NAME(CreateMenu)
@@ -6477,7 +6530,7 @@ DWORD       WINAPI GetModuleFileName32W(HMODULE32,LPWSTR,DWORD);
 #define     GetModuleFileName WINELIB_NAME_AW(GetModuleFileName)
 HMODULE16   WINAPI GetModuleHandle16(LPCSTR);
 HMODULE32   WINAPI GetModuleHandle32A(LPCSTR);
-HMODULE32   WINAPI GetModuleHandle32W(LPCSTR);
+HMODULE32   WINAPI GetModuleHandle32W(LPCWSTR);
 #define     GetModuleHandle WINELIB_NAME_AW(GetModuleHandle)
 DWORD       WINAPI GetNearestColor16(HDC16,DWORD);
 DWORD       WINAPI GetNearestColor32(HDC32,DWORD);
@@ -6910,9 +6963,12 @@ HICON32     WINAPI LoadIcon32A(HINSTANCE32,LPCSTR);
 HICON32     WINAPI LoadIcon32W(HINSTANCE32,LPCWSTR);
 #define     LoadIcon WINELIB_NAME_AW(LoadIcon)
 HINSTANCE16 WINAPI LoadLibrary16(LPCSTR);
-HINSTANCE32 WINAPI LoadLibrary32A(LPCSTR);
-HINSTANCE32 WINAPI LoadLibrary32W(LPCWSTR);
+HMODULE32   WINAPI LoadLibrary32A(LPCSTR);
+HMODULE32   WINAPI LoadLibrary32W(LPCWSTR);
 #define     LoadLibrary WINELIB_NAME_AW(LoadLibrary)
+HMODULE32   WINAPI LoadLibraryEx32A(LPCSTR,HFILE32,DWORD);
+HMODULE32   WINAPI LoadLibraryEx32W(LPCWSTR,HFILE32,DWORD);
+#define     LoadLibraryEx WINELIB_NAME_AW(LoadLibraryEx)
 HMENU16     WINAPI LoadMenu16(HINSTANCE16,SEGPTR);
 HMENU32     WINAPI LoadMenu32A(HINSTANCE32,LPCSTR);
 HMENU32     WINAPI LoadMenu32W(HINSTANCE32,LPCWSTR);
@@ -7699,12 +7755,12 @@ INT32       WINAPIV wsprintf32A(LPSTR,LPCSTR,...);
 INT32       WINAPIV wsprintf32W(LPWSTR,LPCWSTR,...);
 #define     wsprintf WINELIB_NAME_AW(wsprintf)
 INT16       WINAPI wvsnprintf16(LPSTR,UINT16,LPCSTR,LPCVOID);
-INT32       WINAPI wvsnprintf32A(LPSTR,UINT32,LPCSTR,LPCVOID);
-INT32       WINAPI wvsnprintf32W(LPWSTR,UINT32,LPCWSTR,LPCVOID);
+INT32       WINAPI wvsnprintf32A(LPSTR,UINT32,LPCSTR,va_list);
+INT32       WINAPI wvsnprintf32W(LPWSTR,UINT32,LPCWSTR,va_list);
 #define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)
 INT16       WINAPI wvsprintf16(LPSTR,LPCSTR,LPCVOID);
-INT32       WINAPI wvsprintf32A(LPSTR,LPCSTR,LPCVOID);
-INT32       WINAPI wvsprintf32W(LPWSTR,LPCWSTR,LPCVOID);
+INT32       WINAPI wvsprintf32A(LPSTR,LPCSTR,va_list);
+INT32       WINAPI wvsprintf32W(LPWSTR,LPCWSTR,va_list);
 #define     wvsprintf WINELIB_NAME_AW(wvsprintf)
 LONG        WINAPI _hread16(HFILE16,LPVOID,LONG);
 LONG        WINAPI _hread32(HFILE32,LPVOID,LONG);

@@ -118,19 +118,19 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     UINT32 addr = view->base;
     BYTE prot = view->prot[0];
 
-    fprintf( stderr, "View: %08x - %08x%s",
+    dprintf_virtual( stddeb, "View: %08x - %08x%s",
              view->base, view->base + view->size - 1,
              (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
     if (view->mapping && view->mapping->file)
-        fprintf( stderr, " %s @ %08x\n",
+        dprintf_virtual( stddeb, " %s @ %08x\n",
                  view->mapping->file->unix_name, view->offset );
     else
-        fprintf( stderr, " (anonymous)\n");
+        dprintf_virtual( stddeb, " (anonymous)\n");
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
         if (view->prot[i] == prot) continue;
-        fprintf( stderr, "      %08x - %08x %s\n",
+        dprintf_virtual( stddeb, "      %08x - %08x %s\n",
                  addr, addr + (count << page_shift) - 1,
                  VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
@@ -138,7 +138,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
         count = 0;
     }
     if (count)
-        fprintf( stderr, "      %08x - %08x %s\n",
+        dprintf_virtual( stddeb, "      %08x - %08x %s\n",
                  addr, addr + (count << page_shift) - 1,
                  VIRTUAL_GetProtStr(prot) );
 }
@@ -150,7 +150,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 void VIRTUAL_Dump(void)
 {
     FILE_VIEW *view = VIRTUAL_FirstView;
-    fprintf( stderr, "\nDump of all virtual memory views:\n\n" );
+    dprintf_virtual( stddeb, "\nDump of all virtual memory views:\n\n" );
     while (view)
     {
         VIRTUAL_DumpView( view );

@@ -352,15 +352,15 @@ INT16 WINAPI Catch( LPCATCHBUF lpbuf )
      */
     /* FIXME: we need to save %si and %di */
 
-    lpbuf[0] = OFFSETOF(IF1632_Saved16_ss_sp);
-    lpbuf[1] = LOWORD(IF1632_Saved32_esp);
-    lpbuf[2] = HIWORD(IF1632_Saved32_esp);
-    lpbuf[3] = LOWORD(pFrame->saved_ss_sp);
-    lpbuf[4] = HIWORD(pFrame->saved_ss_sp);
-    lpbuf[5] = pFrame->ds;
-    lpbuf[6] = pFrame->bp;
-    lpbuf[7] = pFrame->ip;
-    lpbuf[8] = pFrame->cs;
+    lpbuf[0] = pFrame->ip;
+    lpbuf[1] = pFrame->cs;
+    lpbuf[2] = LOWORD(pFrame->saved_ss_sp);
+    lpbuf[3] = pFrame->bp;
+    lpbuf[4] = LOWORD(IF1632_Saved32_esp);
+    lpbuf[5] = HIWORD(IF1632_Saved32_esp);
+    lpbuf[6] = pFrame->ds;
+    lpbuf[7] = OFFSETOF(IF1632_Saved16_ss_sp);
+    lpbuf[8] = HIWORD(pFrame->saved_ss_sp);
     return 0;
 }
 
@@ -373,15 +373,15 @@ INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval )
     STACK16FRAME *pFrame;
     WORD es = CURRENT_STACK16->es;
 
-    IF1632_Saved16_ss_sp = MAKELONG( lpbuf[0] - sizeof(WORD),
+    IF1632_Saved16_ss_sp = MAKELONG( lpbuf[7] - sizeof(WORD),
                                      HIWORD(IF1632_Saved16_ss_sp) );
-    IF1632_Saved32_esp = MAKELONG( lpbuf[1], lpbuf[2] );
+    IF1632_Saved32_esp = MAKELONG( lpbuf[4], lpbuf[5] );
     pFrame = CURRENT_STACK16;
-    pFrame->saved_ss_sp = MAKELONG( lpbuf[3], lpbuf[4] );
-    pFrame->ds          = lpbuf[5];
-    pFrame->bp          = lpbuf[6];
-    pFrame->ip          = lpbuf[7];
-    pFrame->cs          = lpbuf[8];
+    pFrame->saved_ss_sp = MAKELONG( lpbuf[2], lpbuf[8] );
+    pFrame->ds          = lpbuf[6];
+    pFrame->bp          = lpbuf[3];
+    pFrame->ip          = lpbuf[0];
+    pFrame->cs          = lpbuf[1];
     pFrame->es          = es;
     if (debugging_relay)  /* Make sure we have a valid entry point address */
     {

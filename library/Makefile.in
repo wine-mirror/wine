@@ -9,8 +9,7 @@ LIBMODULE = library
 LIB_SRCS = \
 	arch.c \
 	libres.c \
-	miscstubs.c \
-	sup.c
+	miscstubs.c
 
 STUB_SRCS = winestub.c
 

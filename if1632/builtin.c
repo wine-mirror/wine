@@ -33,6 +33,7 @@ typedef struct
     int                 size;       /* Number of functions */
     const void         *code_start; /* Start of DLL code */
     const void        **functions;  /* Pointer to functions table */
+    const void        **nodbg_functions;  /* Pointer to funcs without debug */
     const char * const *names;      /* Pointer to names table */
 } WIN32_DESCRIPTOR;
 
@@ -395,8 +396,8 @@ LPCSTR BUILTIN_GetEntryPoint32( void *relay )
     relay = (BYTE *)relay - 11;  /* The relay entry point is 11 bytes long */
     funcs = dll->descr->u.win32.functions;
     for (i = 0; i < dll->descr->u.win32.size;i++) if (*funcs++ == relay) break;
-    sprintf( buffer, "%s.%d: %s",
-             dll->descr->name, i, dll->descr->u.win32.names[i] );
+    sprintf( buffer, "%s.%d: %s", dll->descr->name,
+             dll->descr->u.win32.base + i, dll->descr->u.win32.names[i] );
     return buffer;
 }
 
@@ -411,6 +412,7 @@ FARPROC32 BUILTIN_GetProcAddress32( NE_MODULE *pModule, LPCSTR function )
 {
     BUILTIN_DLL *dll = (BUILTIN_DLL *)pModule->pe_module;
     const WIN32_DESCRIPTOR *info = &dll->descr->u.win32;
+    WORD ordinal = 0;
 
     if (!dll) return NULL;
 
@@ -422,17 +424,25 @@ FARPROC32 BUILTIN_GetProcAddress32( NE_MODULE *pModule, LPCSTR function )
                         function, dll->descr->name );
         for (i = 0; i < info->size; i++)
             if (info->names[i] && !strcmp( function, info->names[i] ))
-                return (FARPROC32)info->functions[i];
+            {
+                ordinal = info->base + i;
+                break;
+            }
+        if (i >= info->size) return NULL;  /* not found */
     }
     else  /* Find function by ordinal */
     {
-        WORD ordinal = LOWORD(function);
+        ordinal = LOWORD(function);
         dprintf_module( stddeb, "Looking for ordinal %d in %s\n",
                         ordinal, dll->descr->name );
-        if (ordinal && ordinal < info->size)
-            return (FARPROC32)info->functions[ordinal - info->base];
+        if ((ordinal < info->base) || (ordinal >= info->base + info->size))
+            return NULL;  /* not found */
     }
-    return NULL;
+#if testing
+    if (!debugging_relay)
+        return (FARPROC32)info->nodbg_functions[ordinal - info->base];
+#endif
+    return (FARPROC32)info->functions[ordinal - info->base];
 }
 
 

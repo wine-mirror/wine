@@ -232,6 +232,16 @@ BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
     if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
 
     val.function = DC_XROPfunction[dc->w.ROPmode-1];
+    /*
+    ** Let's replace GXinvert by GXxor with (black xor white)
+    ** This solves the selection color and leak problems in excel
+    ** FIXME : Let's do that only if we work with X-pixels, not with Win-pixels
+    */
+    if (val.function == GXinvert)
+	{
+	val.foreground = BlackPixelOfScreen(screen) ^ WhitePixelOfScreen(screen);
+	val.function = GXxor;
+	}
     val.fill_style = dc->u.x.brush.fillStyle;
     switch(val.fill_style)
     {
@@ -338,7 +348,7 @@ BOOL32 DC_SetupGCForPen( DC * dc )
     }
     else val.line_style = LineSolid;
     val.line_width = dc->u.x.pen.width;
-    val.cap_style  = CapRound;
+    val.cap_style  = (val.line_width <= 1) ? CapNotLast : CapRound;
     val.join_style = JoinMiter;
     XChangeGC( display, dc->u.x.gc, 
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |

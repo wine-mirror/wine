@@ -17,6 +17,7 @@
 #include "miscemu.h"
 #include "dde_mem.h"
 #include "stackframe.h"
+#include "module.h"
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -206,6 +207,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
     {
 	ptr = HeapAlloc( SystemHeap, 0, size );
     }
+      /* FIXME: free discardable blocks and try again? */
     if (!ptr) return 0;
 
       /* Allocate the selector(s) */
@@ -274,7 +276,7 @@ HGLOBAL16 WINAPI GlobalAlloc16( UINT16 flags, DWORD size )
     HANDLE16 owner = GetCurrentPDB();
 
     if (flags & GMEM_DDESHARE)
-        owner = GetExePtr(owner);  /* Make it a module handle */
+        owner = MODULE_HANDLEtoHMODULE16(owner);  /* Make it a module handle */
     return GLOBAL_Alloc( flags, size, owner, FALSE, FALSE, FALSE );
 }
 
@@ -313,8 +315,11 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
             (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
         HeapFree( SystemHeap, 0, (void *)pArena->base );
         pArena->base = 0;
-        /* Note: we rely on the fact that SELECTOR_ReallocBlock won't */
-        /* change the selector if we are shrinking the block */
+
+        /* Note: we rely on the fact that SELECTOR_ReallocBlock won't 
+         * change the selector if we are shrinking the block.
+	 * FIXME: shouldn't we keep selectors until the block is deleted?
+	 */
         SELECTOR_ReallocBlock( sel, 0, 1, SEGMENT_DATA, 0, 0 );
         return handle;
     }
@@ -411,15 +416,20 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "WIN16_GlobalLock16(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
-    if (!handle) return 0;
+    if (handle)
+    {
+	if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
 
 #ifdef CONFIG_IPC
-    if (is_dde_handle(handle))
-        return PTR_SEG_OFF_TO_SEGPTR( DDE_GlobalHandleToSel(handle), 0 );
+	if (is_dde_handle(handle))
+	    return PTR_SEG_OFF_TO_SEGPTR( DDE_GlobalHandleToSel(handle), 0 );
 #endif  /* CONFIG_IPC */
 
-    if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
-    return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
+	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
+	return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
+	/* FIXME: put segment value in CX as well */
+    }
+    return (SEGPTR)0;
 }
 
 

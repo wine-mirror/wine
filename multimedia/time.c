@@ -32,7 +32,6 @@ typedef struct tagTIMERENTRY {
     WORD wTimerID;
     WORD wCurTime;
     struct tagTIMERENTRY *Next;
-    struct tagTIMERENTRY *Prev;
 } TIMERENTRY, *LPTIMERENTRY;
 
 static LPTIMERENTRY lpTimerList = NULL;
@@ -137,23 +136,16 @@ WORD WINAPI timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
 		  wDelay, wResol, lpFunc, dwUser, wFlags);
     if (!mmTimeStarted)
 	StartMMTime();
-    lpNewTimer = (LPTIMERENTRY) malloc(sizeof(TIMERENTRY));
+    lpNewTimer = (LPTIMERENTRY)xmalloc(sizeof(TIMERENTRY));
     if (lpNewTimer == NULL)
 	return 0;
     while (lpTimer != NULL) {
 	wNewID = MAX(wNewID, lpTimer->wTimerID);
-	if (lpTimer->Next == NULL)
-	    break;
 	lpTimer = lpTimer->Next;
     }
-    if (lpTimerList == NULL) {
-	lpTimerList = lpNewTimer;
-	lpNewTimer->Prev = NULL;
-    } else {
-	lpTimer->Next = lpNewTimer;
-	lpNewTimer->Prev = lpTimer;
-    }
-    lpNewTimer->Next = NULL;
+
+    lpNewTimer->Next = lpTimerList;
+    lpTimerList = lpNewTimer;
     lpNewTimer->wTimerID = wNewID + 1;
     lpNewTimer->wCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
@@ -173,19 +165,15 @@ WORD WINAPI timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
  */
 WORD WINAPI timeKillEvent(WORD wID)
 {
-    LPTIMERENTRY lpTimer = lpTimerList;
-    while (lpTimer != NULL) {
-	if (wID == lpTimer->wTimerID) {
-	    if (lpTimer->Prev != NULL)
-		lpTimer->Prev->Next = lpTimer->Next;
-	    if (lpTimer->Next != NULL)
-		lpTimer->Next->Prev = lpTimer->Prev;
-	    free(lpTimer);
-	    if (lpTimer==lpTimerList)
-	    	lpTimerList=NULL;
+    LPTIMERENTRY xlptimer,*lpTimer = &lpTimerList;
+    while (*lpTimer) {
+	if (wID == (*lpTimer)->wTimerID) {
+	    xlptimer = (*lpTimer)->Next;
+	    free(*lpTimer);
+	    *lpTimer = xlptimer;
 	    return TRUE;
 	}
-	lpTimer = lpTimer->Next;
+	lpTimer = &((*lpTimer)->Next);
     }
     return 0;
 }

@@ -18,6 +18,9 @@
 #define SPY_RESULT_OK32           0x0001
 #define SPY_RESULT_INVALIDHWND16  0x0002
 #define SPY_RESULT_INVALIDHWND32  0x0003
+#define SPY_RESULT_DEFWND16       0x0004
+#define SPY_RESULT_DEFWND32       0x0005
+
 
 extern const char *SPY_GetMsgName( UINT32 msg );
 extern void SPY_EnterMessage( INT32 iFlag, HWND32 hwnd, UINT32 msg,

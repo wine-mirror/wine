@@ -1,6 +1,5 @@
 name	wsock32
 type	win32
-base	0
 
 001 stdcall accept(long ptr ptr) WINSOCK_accept32
 002 stdcall bind(long ptr long) WINSOCK_bind32

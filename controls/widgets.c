@@ -9,8 +9,10 @@
 #include "win.h"
 #include "commctrl.h"
 #include "button.h"
+#include "progress.h"
 #include "static.h"
 #include "status.h"
+#include "updown.h"
 #include "scroll.h"
 #include "updown.h"
 #include "desktop.h"
@@ -104,7 +106,9 @@ static WNDCLASS32A WIDGETS_CommonControls32[] =
     { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, StatusWindowProc, 0,
       sizeof(STATUSWINDOWINFO), 0, 0, 0, 0, 0, STATUSCLASSNAME32A },
     { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, UpDownWindowProc, 0,
-      sizeof(UPDOWN_INFO), 0, 0, 0, 0, 0, UPDOWN_CLASS32A }
+      sizeof(UPDOWN_INFO), 0, 0, 0, 0, 0, UPDOWN_CLASS32A },
+    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, ProgressWindowProc, 0,
+      sizeof(PROGRESS_INFO), 0, 0, 0, 0, 0, PROGRESS_CLASS32A }
 };
 
 #define NB_COMMON_CONTROLS32 \
@@ -155,6 +159,8 @@ BOOL32 WIDGETS_Init(void)
         if (!(bicAtomTable[i] = RegisterClass32A( class32 ))) return FALSE;
     }
 
+    /* FIXME: hack to enable using built-in controls with Windows COMCTL32 */
+    InitCommonControls();
     SEGPTR_FREE(name);
     return TRUE;
 }
@@ -167,15 +173,18 @@ void WINAPI InitCommonControls(void)
 {
     int i;
     char name[30];
+    const char *old_name;
     WNDCLASS32A *class32 = WIDGETS_CommonControls32;
 
     for (i = 0; i < NB_COMMON_CONTROLS32; i++, class32++)
     {
         /* Just to make sure the string is > 0x10000 */
+        old_name = class32->lpszClassName;
         strcpy( name, (char *)class32->lpszClassName );
         class32->lpszClassName = name;
         class32->hCursor = LoadCursor16( 0, IDC_ARROW );
         RegisterClass32A( class32 );
+        class32->lpszClassName = old_name;	
     }
 }
 

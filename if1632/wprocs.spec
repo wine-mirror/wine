@@ -12,6 +12,7 @@ type	win16
 24 pascal16 TASK_Reschedule() TASK_Reschedule
 27 pascal EntryAddrProc(word word) EntryAddrProc
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment
+29 pascal DefResourceHandler(word word word) NE_DefResourceHandler
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc
  
 # Interrupt vectors 0-255 are ordinals 100-355

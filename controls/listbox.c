@@ -2462,7 +2462,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
-            fprintf(stderr,"Listbox %04x: unknown msg %04x wp %08x lp %08lx\n",
+            dprintf_listbox(stddeb,"Listbox %04x: unknown msg %04x wp %08x lp %08lx\n",
                     hwnd, msg, wParam, lParam );
         return DefWindowProc32A( hwnd, msg, wParam, lParam );
     }

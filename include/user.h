@@ -23,4 +23,6 @@ extern WORD USER_HeapSel;
 #define USER_HEAP_SEG_ADDR(handle)  \
          ((handle) ? PTR_SEG_OFF_TO_SEGPTR(USER_HeapSel, (handle)) : (SEGPTR)0)
 
+void USER_SignalProc(HANDLE16, UINT16, UINT16, HINSTANCE16, HQUEUE16);
+
 #endif  /* __WINE_USER_H */

@@ -1,6 +1,7 @@
 name winmm
 type win32
 
+0001 stub PlaySoundA
 0004 stub CloseDriver
 0005 stub DefDriverProc
 0006 stub DriverCallback
@@ -15,7 +16,6 @@ type win32
 0015 stub OpenDriver
 0016 stub OpenDriverA
 0017 stub PlaySound
-0001 stub PlaySoundA
 0018 stub PlaySoundW
 0019 stub SendDriverMessage
 0020 stub auxGetDevCapsA

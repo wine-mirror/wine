@@ -1,4 +1,4 @@
-/*
+ /*
  * DEC 93 Erik Bos <erik@xs4all.nl>
  *
  * Copyright 1996 Marcus Meissner
@@ -11,6 +11,9 @@
  *   IMHO, they are still wrong, but they at least implement the RXCHAR
  *   event and return I/O queue sizes, which makes the app I'm interested
  *   in (analog devices EZKIT DSP development system) work.
+ *
+ * August 12, 1997.  Take a bash at SetCommEventMask - Lawson Whitney
+ *                                     <lawson_whitney@juno.com>
  */
 
 #include <stdio.h>
@@ -38,7 +41,7 @@
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD
 #endif
-
+#define msr  35       /* offset in unknown structure commMask */
 /*
  * [RER] These are globals are wrong.  They should be in DosDeviceStruct
  * on a per port basis.
@@ -47,6 +50,7 @@ int commerror = 0, eventmask = 0;
 
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
+LPCVOID *unknown[MAX_PORTS];
 
 void COMM_Init(void)
 {
@@ -125,6 +129,18 @@ struct DosDeviceStruct *GetDeviceStruct(int fd)
 
 	return NULL;
 }
+
+int    GetCommPort(int fd)
+{
+        int x;
+        
+        for (x=0; x<MAX_PORTS; x++) {
+             if (COM[x].fd == fd)
+                 return x;
+       }
+       
+       return -1;
+} 
 
 int ValidCOMPort(int x)
 {
@@ -436,6 +452,8 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			commerror = WinError();
 			return -1;
 		} else {
+                        unknown[port] = SEGPTR_ALLOC(40);
+                        bzero(unknown[port],40);
 			COM[port].fd = fd;	
 			return fd;
 		}
@@ -470,15 +488,15 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
  */
 INT16 WINAPI CloseComm(INT16 fd)
 {
-	struct DosDeviceStruct *ptr;
-
+        int port;
     	dprintf_comm(stddeb,"CloseComm: fd %d\n", fd);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
+       	if ((port = GetCommPort(fd)) !=-1) {  /* [LW]       */
+    	        SEGPTR_FREE(unknown[port]); 
+    	        COM[port].fd = 0;       /*  my adaptation of RER's fix   */  
+        }  else {  	        
 		commerror = IE_BADID;
 		return -1;
 	}
-
-	ptr->fd = 0;	/* [RER] Really, -1 would be a better value */
 
 	if (close(fd) == -1) {
 		commerror = WinError();
@@ -738,7 +756,17 @@ INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
 	}
 }  
 
-/*****************************************************************************
+/********************************************************************
+ *      PurgeComm        (KERNEL32.557)
+ */
+BOOL32 WINAPI PurgeComm( HANDLE32 hFile, DWORD flags) 
+{
+    dprintf_comm(stdnimp, "PurgeComm(%08x %08lx) unimplemented stub\n",
+                 hFile, flags);
+    return 0;
+}
+
+/********************************************************************
  *	GetCommError	(USER.203)
  */
 INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
@@ -794,11 +822,26 @@ BOOL32 WINAPI ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
 /*****************************************************************************
  *	SetCommEventMask	(USER.208)
  */
-UINT16* WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
+SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
 {
+        unsigned char *stol;
+        int act;
+        int repid;
+        unsigned int mstat;
     	dprintf_comm(stddeb,"SetCommEventMask:fd %d,mask %d\n",fd,fuEvtMask);
 	eventmask |= fuEvtMask;
-	return (UINT16 *)&eventmask;	/* FIXME, should be SEGPTR */
+        if ((act = GetCommPort(fd)) == -1) {
+            dprintf_comm(stddeb," fd %d not comm port\n",act);
+            return NULL;}
+        stol =  unknown[act];
+        stol += msr;    
+	repid = ioctl(fd,TIOCMGET,&mstat);
+	dprintf_comm(stddeb,
+	" ioctl  %d, msr %x at %lx %lx\n",repid,mstat,stol,unknown[act]);
+	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
+	     else {*stol &=0x7f;}
+	dprintf_comm(stddeb," modem dcd construct %x\n",*stol);
+	return SEGPTR_GET(unknown[act]);	
 }
 
 /*****************************************************************************
@@ -844,6 +887,15 @@ UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 	return eventmask;
 #endif
 }
+
+/*****************************************************************************
+ *      SetupComm       (KERNEL32.676)
+ */
+BOOL32 WINAPI SetupComm( HANDLE32 hFile, DWORD insize, DWORD outsize)
+{
+        dprintf_comm(stdnimp, "SetupComm: insize %ld outsize %ld unimplemented stub\n", insize, outsize);
+       return FALSE;
+} 
 
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
@@ -1599,7 +1651,7 @@ INT16 WINAPI UngetCommChar(INT16 fd,CHAR chUnget)
  */
 INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
 {
-	int status, length;
+	int status, x, length;
 	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,
@@ -1634,6 +1686,9 @@ INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
                         return length;
                 }
  	} else {
+                for (x=0; x < length+status; x++)  	
+ 	        dprintf_comm(stddeb,"%c",*(lpvBuf+x));
+ 	        dprintf_comm(stddeb,"\nthus  endeth\n");
 		commerror = 0;
 		return length + status;
 	}
@@ -1661,7 +1716,7 @@ INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 	
 	for (x=0; x != cbWrite ; x++)
         dprintf_comm(stddeb,"%c", *(lpvBuf + x) );
-
+        dprintf_comm(stddeb,"\n");
 	length = write(fd, (void *) lpvBuf, cbWrite);
 	
 	if (length == -1) {

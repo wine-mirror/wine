@@ -52,11 +52,12 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 	switch(wCommand)
 	{
 		case HELP_CONTEXT:
-		case HELP_CONTENTS:
 		case HELP_SETCONTENTS:
+		case HELP_CONTENTS:
 		case HELP_CONTEXTPOPUP:
 		case HELP_FORCEFILE:
 		case HELP_HELPONHELP:
+		case HELP_FINDER:
 		case HELP_QUIT:
 			dsize=0;
 			break;

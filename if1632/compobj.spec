@@ -18,9 +18,9 @@ type	win16
 15 pascal CoDisconnectObject(ptr long) CoDisconnectObject
 16 stub CORELEASEMARSHALDATA
 17 stub COFREEUNUSEDLIBRARIES
-18 stub ISEQUALGUID
-19 pascal STRINGFROMCLSID(ptr ptr) StringFromCLSID
-20 pascal CLSIDFROMSTRING(str ptr) CLSIDFromString
+18 pascal16 IsEqualGUID(ptr ptr) IsEqualGUID
+19 pascal StringFromCLSID(ptr ptr) StringFromCLSID
+20 pascal CLSIDFromString(str ptr) CLSIDFromString
 21 stub ISVALIDPTRIN
 22 stub ISVALIDPTROUT
 23 stub ISVALIDINTERFACE

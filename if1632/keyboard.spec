@@ -12,8 +12,8 @@ type	win16
 #126	pascal	GetTableSeg
 #127	pascal	NewTable
 128 pascal   OemKeyScan(word) OemKeyScan
-129 pascal16 VkKeyScan(byte) VkKeyScan16
-130 pascal16 GetKeyboardType(byte) GetKeyboardType16
+129 pascal16 VkKeyScan(word) VkKeyScan16
+130 pascal16 GetKeyboardType(word) GetKeyboardType16
 131 pascal16 MapVirtualKey(word word) MapVirtualKey16
 132 pascal16 GetKBCodePage() GetKBCodePage16
 133 pascal16 GetKeyNameText(long ptr word) GetKeyNameText16

@@ -61,16 +61,14 @@ by the ordinal number corresponding to the function.
 - "register" for a function using CPU register to pass arguments
 - "stdcall" for a normal Win32 function
 - "cdecl" for a Win32 function using the C calling convention
+- "varargs" for a Win32 function taking a variable number of arguments
 
 "ARGTYPE" should be one of:
-- "byte"
 - "word"
 - "long"
 - "ptr" (linear pointer)
 - "str" (linear pointer to a null-terminated string)
-- "s_byte" (signed byte)
 - "s_word" (signed word)
-- "s_long" (signed long)
 - "segptr" (segmented pointer).
 - "segstr" (segmented pointer to a null-terminated string)
 
@@ -91,11 +89,11 @@ call (the ordinal 100 is just an example):
 
 	100 pascal GetFocus() WIN_GetFocus()
 
-To declare a function using a variable number of arguments, specify
-the function as taking no arguments. In this special case, in Win32
-the called function will be passed a pointer to the first arg; in
-Win16, the args are available with CURRENT_STACK16->args. See the
-wsprintf* functions in user.spec and user32.spec for an example.
+To declare a function using a variable number of arguments in Win16,
+specify the function as taking no arguments. The arguments are then
+available with CURRENT_STACK16->args. In Win32, specify the function
+as 'varargs' and declare it with a '...' parameter in the C file.  See
+the wsprintf* functions in user.spec and user32.spec for an example.
 
 Stub ordinals:
 ==============

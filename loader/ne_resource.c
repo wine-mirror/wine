@@ -3,6 +3,7 @@
  *
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995 Alexandre Julliard
+ *	     1997 Alex Korobka
  */
 
 #include <stdio.h>
@@ -22,6 +23,8 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#define  NEXT_TYPEINFO(pTypeInfo) ((NE_TYPEINFO *)((char*)((pTypeInfo) + 1) + \
+                                   (pTypeInfo)->count * sizeof(NE_NAMEINFO)))
 
 /***********************************************************************
  *           NE_FindNameTableId
@@ -29,29 +32,26 @@
  * Find the type and resource id from their names.
  * Return value is MAKELONG( typeId, resId ), or 0 if not found.
  */
-static DWORD NE_FindNameTableId( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
+static DWORD NE_FindNameTableId( NE_MODULE *pModule, SEGPTR typeId, SEGPTR resId )
 {
-    NE_MODULE *pModule;
-    NE_TYPEINFO *pTypeInfo;
+    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     NE_NAMEINFO *pNameInfo;
     HGLOBAL16 handle;
     WORD *p;
     DWORD ret = 0;
     int count;
 
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     for (; pTypeInfo->type_id != 0;
-             pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
-                                       pTypeInfo->count * sizeof(NE_NAMEINFO)))
+	   pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
+					pTypeInfo->count * sizeof(NE_NAMEINFO)))
     {
-        if (pTypeInfo->type_id != 0x800f) continue;
-        pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
-        for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
-        {
+	if (pTypeInfo->type_id != 0x800f) continue;
+	pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
+	for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
+	{
             dprintf_resource( stddeb, "NameTable entry: type=%04x id=%04x\n",
                               pTypeInfo->type_id, pNameInfo->id );
-            handle = LoadResource16( hModule, 
+            handle = LoadResource16( pModule->self, 
 				   (HRSRC16)((int)pNameInfo - (int)pModule) );
             for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
@@ -89,11 +89,56 @@ static DWORD NE_FindNameTableId( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId 
             }
             FreeResource16( handle );
             if (ret) return ret;
-        }
+	}
     }
     return 0;
 }
 
+/***********************************************************************
+ *           NE_FindTypeSection
+ *
+ * Find header struct for a particular resource type.
+ */
+static NE_TYPEINFO* NE_FindTypeSection( NE_MODULE *pModule, 
+					NE_TYPEINFO *pTypeInfo, SEGPTR typeId )
+{
+    /* start from pTypeInfo */
+
+    if (HIWORD(typeId) != 0)  /* Named type */
+    {
+	char *str = (char *)PTR_SEG_TO_LIN( typeId );
+	BYTE len = strlen( str );
+	while (pTypeInfo->type_id)
+	{
+	    if (!(pTypeInfo->type_id & 0x8000))
+	    {
+		BYTE *p = (BYTE*)pModule + pModule->res_table + pTypeInfo->type_id;
+		if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
+		{
+		    dprintf_resource( stddeb, "  Found type '%s'\n", str );
+		    return pTypeInfo;
+		}
+	    }
+	    dprintf_resource( stddeb, "  Skipping type %04x\n", pTypeInfo->type_id );
+	    pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
+	}
+    }
+    else  /* Numeric type id */
+    {
+	WORD id = LOWORD(typeId) | 0x8000;
+	while (pTypeInfo->type_id)
+	{
+            if (pTypeInfo->type_id == id)
+	    {
+		dprintf_resource( stddeb, "  Found type %04x\n", id );
+		return pTypeInfo;
+	    }
+	    dprintf_resource( stddeb, "  Skipping type %04x\n", pTypeInfo->type_id );
+	    pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
+	}
+    }
+    return NULL;
+}
 
 /***********************************************************************
  *           NE_FindResourceFromType
@@ -131,6 +176,83 @@ static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
 
 
 /***********************************************************************
+ *           NE_DefResourceHandler
+ *
+ * This is the default LoadProc() function. 
+ */
+HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
+                                        HRSRC16 hRsrc )
+{
+    int  fd;
+    NE_MODULE* pModule = MODULE_GetPtr( hModule );
+    if ( pModule && (fd = MODULE_OpenFile( hModule )) >= 0)
+    {
+	HGLOBAL16 handle;
+	WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+	NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+
+        dprintf_resource( stddeb, "NEResourceHandler: loading, pos=%d, len=%d\n",
+                         (int)pNameInfo->offset << sizeShift,
+                         (int)pNameInfo->length << sizeShift );
+	if( hMemObj )
+	    handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
+	else
+	    handle = NE_AllocResource( hModule, hRsrc, 0 );
+
+	if( handle )
+	{
+            lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+            read( fd, GlobalLock16( handle ), (int)pNameInfo->length << sizeShift );
+	}
+	return handle;
+    }
+    return (HGLOBAL16)0;
+}
+
+/***********************************************************************
+ *           NE_InitResourceHandler
+ *
+ * Fill in 'resloader' fields in the resource table.
+ */
+BOOL32 NE_InitResourceHandler( HMODULE16 hModule )
+{
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
+    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+
+    dprintf_resource(stddeb,"InitResourceHandler[%04x]\n", hModule );
+
+    while(pTypeInfo->type_id)
+    {
+	pTypeInfo->resloader = (DWORD)&NE_DefResourceHandler;
+	pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           NE_SetResourceHandler
+ */
+FARPROC32 NE_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, 
+				 FARPROC32 resourceHandler )
+{
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
+    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+    FARPROC32  prevHandler = NULL;
+
+    do
+    {
+	pTypeInfo = NE_FindTypeSection( pModule, pTypeInfo, typeId );
+        if( pTypeInfo )
+        {
+	    prevHandler = (FARPROC32)pTypeInfo->resloader;
+	    pTypeInfo->resloader = (DWORD)resourceHandler;
+	    pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
+        }
+    } while( pTypeInfo );
+    return prevHandler;
+}
+
+/***********************************************************************
  *           NE_FindResource
  */
 HRSRC16 NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
@@ -142,10 +264,12 @@ HRSRC16 NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
     if (!pModule || !pModule->res_table) return 0;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
-    if (HIWORD(typeId) || HIWORD(resId))
+    if ((pModule->expected_version < 0x030a) && (HIWORD(typeId) || HIWORD(resId)))
     {
-        /* Search the names in the nametable */
-        DWORD id = NE_FindNameTableId( hModule, typeId, resId );
+        /* Search the names in the nametable (which is not present 
+         * since Windows 3.1).  */
+
+        DWORD id = NE_FindNameTableId( pModule, typeId, resId );
         if (id)  /* found */
         {
             typeId = LOWORD(id);
@@ -153,58 +277,25 @@ HRSRC16 NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
         }
     }
 
-    if (HIWORD(typeId) != 0)  /* Named type */
+    do
     {
-        char *str = (char *)PTR_SEG_TO_LIN( typeId );
-        BYTE len = strlen( str );
-        while (pTypeInfo->type_id)
-        {
-            if (!(pTypeInfo->type_id & 0x8000))
-            {
-                BYTE *p = (BYTE*)pModule+pModule->res_table+pTypeInfo->type_id;
-                if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
-                {
-                    dprintf_resource( stddeb, "  Found type '%s'\n", str );
-                    hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, resId);
-                    if (hRsrc)
-                    {
-                        dprintf_resource( stddeb, "    Found id %08lx\n", resId );
-                        return hRsrc;
-                    }
-                    dprintf_resource( stddeb, "    Not found, going on\n" );
-                }
-            }
-            dprintf_resource( stddeb, "  Skipping type %04x\n",
-                              pTypeInfo->type_id );
-            pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
-                                       pTypeInfo->count * sizeof(NE_NAMEINFO));
-        }
-    }
-    else  /* Numeric type id */
-    {
-        WORD id = LOWORD(typeId) | 0x8000;
-        while (pTypeInfo->type_id)
-        {
-            if (pTypeInfo->type_id == id)
-            {
-                dprintf_resource( stddeb, "  Found type %04x\n", id );
-                hRsrc = NE_FindResourceFromType( pModule, pTypeInfo, resId );
-                if (hRsrc)
-                {
-                    dprintf_resource( stddeb, "    Found id %08lx\n", resId );
-                    return hRsrc;
-                }
-                dprintf_resource( stddeb, "    Not found, going on\n" );
-            }
-            dprintf_resource( stddeb, "  Skipping type %04x\n",
-                              pTypeInfo->type_id );
-            pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
-                                       pTypeInfo->count * sizeof(NE_NAMEINFO));
-        }
-    }
+	pTypeInfo = NE_FindTypeSection( pModule, pTypeInfo, typeId );
+        if( pTypeInfo )
+	{
+	    hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, resId);
+	    if( hRsrc )
+	    {
+		dprintf_resource( stddeb, "    Found id %08lx\n", resId );
+		return hRsrc;
+	    }
+	    dprintf_resource( stddeb, "    Not found, going on\n" );
+	    pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
+	}
+    } while( pTypeInfo );
+
+    dprintf_resource( stddeb, "failed!\n");
     return 0;
 }
-
 
 
 /***********************************************************************
@@ -273,33 +364,67 @@ DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC16 hRsrc )
  */
 HGLOBAL16 NE_LoadResource( HMODULE16 hModule,  HRSRC16 hRsrc )
 {
-    NE_NAMEINFO *pNameInfo=NULL;
-    WORD sizeShift;
-    int fd;
-
+    NE_TYPEINFO *pTypeInfo;
+    NE_NAMEINFO *pNameInfo = NULL;
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
-    if (!pModule || !pModule->res_table) return 0;
+    int d;
+
+    if (!hRsrc || !pModule || !pModule->res_table) return 0;
+
+    /* First, verify hRsrc (just an offset from pModule to the needed pNameInfo) */
+
+    d = pModule->res_table + 2;
+    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + d);
 #ifndef WINELIB
-    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-#endif
-    if (pNameInfo->handle)
+    while( hRsrc > d )
     {
-        pNameInfo->usage++;
-        dprintf_resource( stddeb, "  Already loaded, new count=%d\n",
-                          pNameInfo->usage );
-        return pNameInfo->handle;
+	if (pTypeInfo->type_id == 0)
+		break; /* terminal entry */
+	d += sizeof(NE_TYPEINFO) + pTypeInfo->count * sizeof(NE_NAMEINFO);
+	if (hRsrc < d)
+	{
+	    if( ((d - hRsrc)%sizeof(NE_NAMEINFO)) == 0 )
+	    {
+		pNameInfo = (NE_NAMEINFO *)(((char *)pModule) + hRsrc);
+		break;
+	    }
+	    else 
+		break; /* NE_NAMEINFO boundary mismatch */
+	}
+	pTypeInfo = (NE_TYPEINFO *)(((char *)pModule) + d);
     }
-    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
-    dprintf_resource( stddeb, "  Loading, pos=%d, len=%d\n",
-                      (int)pNameInfo->offset << sizeShift,
-                      (int)pNameInfo->length << sizeShift );
-    if ((fd = MODULE_OpenFile( hModule )) == -1) return 0;
-    pNameInfo->handle = NE_AllocResource( hModule, hRsrc, 0 );
-    pNameInfo->usage = 1;
-    lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
-    read( fd, GlobalLock16( pNameInfo->handle ),
-          (int)pNameInfo->length << sizeShift );
-    return pNameInfo->handle;
+#endif
+    if (pNameInfo)
+    {
+	RESOURCEHANDLER16 __r16loader;
+	if (pNameInfo->handle
+	    && !(GlobalFlags16(pNameInfo->handle) & GMEM_DISCARDED))
+	{
+	    pNameInfo->usage++;
+	    dprintf_resource( stddeb, "  Already loaded, new count=%d\n",
+			      pNameInfo->usage );
+	}
+	else
+	{
+	    if (pTypeInfo->resloader)
+	  	__r16loader = (RESOURCEHANDLER16)pTypeInfo->resloader;
+	    else /* this is really bad */
+	    {
+		fprintf( stderr, "[%04x]: Missing resource handler!!!...\n", hModule);
+		__r16loader = NE_DefResourceHandler;
+	    }
+
+	    /* Finally call resource loader */
+
+	    if ((pNameInfo->handle = __r16loader(pNameInfo->handle, hModule, hRsrc)))
+	    {
+		pNameInfo->usage++;
+		pNameInfo->flags |= NE_SEGFLAGS_LOADED;
+	    }
+	}
+	return pNameInfo->handle;
+    }
+    return 0;
 }
 
 
@@ -324,7 +449,7 @@ BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
     WORD count;
 
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
-    if (!pModule || !pModule->res_table) return handle;
+    if (!handle || !pModule || !pModule->res_table) return handle;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     while (pTypeInfo->type_id)
     {
@@ -345,7 +470,10 @@ BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
         }
         pTypeInfo = (NE_TYPEINFO *)pNameInfo;
     }
-    fprintf( stderr, "NE_FreeResource: %04x %04x not found!\n", hModule, handle );
+
+    dprintf_resource(stddeb, "NE_FreeResource[%04x]: no intrinsic resource for %04x\n", 
+			      hModule, handle );
+    GlobalFree16( handle ); /* it could have been DirectResAlloc()'ed */
     return handle;
 }
 #endif /* WINELIB */

@@ -16,6 +16,7 @@
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "task.h"
 #include "global.h"
 #include "heap.h"
 #include "instance.h"
@@ -333,7 +334,7 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
     if (start == 0) {
       /* Check if the segment is the DGROUP of a module */
 
-	if ((pModule = MODULE_GetPtr( GetExePtr( selector ) )))
+	if ((pModule = MODULE_GetPtr( selector )))
 	{
 	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
 	    if (pModule->dgroup && (pSeg->selector == selector)) {
@@ -1582,7 +1583,6 @@ DWORD WINAPI GetHeapSpaces( HMODULE16 module )
     NE_MODULE *pModule;
     WORD ds;
 
-    module = GetExePtr( module );
     if (!(pModule = MODULE_GetPtr( module ))) return 0;
     ds = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
     return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );

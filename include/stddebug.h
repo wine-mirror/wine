@@ -133,6 +133,7 @@
 #undef DEBUG_OLE
 #undef DEBUG_PALETTE
 #undef DEBUG_PROFILE
+#undef DEBUG_PROGRESS
 #undef DEBUG_PROP
 #undef DEBUG_REG
 #undef DEBUG_REGION
@@ -218,6 +219,7 @@
 #define DEBUG_OLE
 #define DEBUG_PALETTE
 #define DEBUG_PROFILE
+#define DEBUG_PROGRESS
 #define DEBUG_PROP
 #define DEBUG_REG
 #define DEBUG_REGION

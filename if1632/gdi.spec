@@ -38,7 +38,7 @@ file	gdi.exe
 30  pascal16 SaveDC(word) SaveDC16
 31  pascal   SetPixel(word s_word s_word long) SetPixel16
 32  pascal16 OffsetClipRgn(word s_word s_word) OffsetClipRgn16
-33  pascal16 TextOut(word s_word s_word ptr word) TextOut16
+33  pascal16 TextOut(word s_word s_word str word) TextOut16
 34  pascal16 BitBlt( word s_word s_word s_word s_word word s_word s_word long)
              BitBlt16
 35  pascal16 StretchBlt(word s_word s_word s_word s_word word s_word s_word
@@ -236,7 +236,7 @@ file	gdi.exe
                    s_word s_word) Chord16
 349 pascal SetMapperFlags(word long) SetMapperFlags16
 350 pascal16 GetCharWidth(word word word ptr) GetCharWidth16
-351 pascal16 ExtTextOut(word s_word s_word word ptr ptr word ptr) ExtTextOut16
+351 pascal16 ExtTextOut(word s_word s_word word ptr str word ptr) ExtTextOut16
 352 stub GetPhysicalFontHandle
 353 stub GetAspectRatioFilter
 354 stub ShrinkGDIHeap

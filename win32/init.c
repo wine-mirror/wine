@@ -19,35 +19,6 @@
 #include "xmalloc.h"
   
 /***********************************************************************
- *              GetModuleHandle         (KERNEL32.237)
- */
-HMODULE32 WINAPI WIN32_GetModuleHandleA(char *module)
-{
-    HMODULE32 hModule;
-
-    dprintf_win32(stddeb, "GetModuleHandleA: %s\n", module ? module : "NULL");
-/* Freecell uses the result of GetModuleHandleA(0) as the hInstance in
-all calls to e.g. CreateWindowEx. */
-    if (module == NULL) {
-	TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-	hModule = pTask->hInstance;
-    } else
-	hModule = GetModuleHandle16(module);
-    dprintf_win32(stddeb, "GetModuleHandleA: returning %d\n", hModule );
-    return hModule;
-}
-
-HMODULE32 WINAPI WIN32_GetModuleHandleW(LPCWSTR module)
-{
-    HMODULE32 hModule;
-    LPSTR modulea = HEAP_strdupWtoA( GetProcessHeap(), 0, module );
-    hModule = WIN32_GetModuleHandleA( modulea );
-    HeapFree( GetProcessHeap(), 0, modulea );
-    return hModule;
-}
-
-
-/***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
  */
 VOID WINAPI GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)

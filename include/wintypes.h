@@ -66,26 +66,19 @@
 
 /* Calling conventions definitions */
 
-#ifdef not_used_yet
-
 #ifdef __i386__
 # if defined(__GNUC__) && (__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)
 #  define __stdcall __attribute__((__stdcall__))
 #  define __cdecl   __attribute__((__cdecl__))
+#  define __RESTORE_ES  __asm__ __volatile__("pushw %ds\n\tpopw %es")
 # else
 #  error You need gcc >= 2.7 to build Wine on a 386
 # endif  /* __GNUC__ */
 #else  /* __i386__ */
-#  define __stdcall /* nothing */
-#  define __cdecl   /* nothing */
+# define __stdcall
+# define __cdecl
+# define __RESTORE_ES
 #endif  /* __i386__ */
-
-#else  /* not_used_yet */
-
-# define __stdcall /* nothing */
-# define __cdecl   /* nothing */
-
-#endif  /* not_used_yet */
 
 #define CALLBACK    __stdcall
 #define WINAPI      __stdcall
@@ -131,6 +124,7 @@ typedef HANDLE32        HHOOK;
 typedef HANDLE32        HKEY;
 typedef HANDLE32        HMIXEROBJ;
 typedef DWORD           LCID;
+typedef WORD            LANGID;
 typedef DWORD           LCTYPE;
 
 /* Pointers types. These are the same for emulator and library. */
@@ -195,6 +189,7 @@ DECLARE_HANDLE(HWAVE);
 DECLARE_HANDLE(HWAVEIN);
 DECLARE_HANDLE(HWAVEOUT);
 DECLARE_HANDLE(HWND);
+DECLARE_HANDLE(HKL);
 #undef DECLARE_HANDLE
 
 /* Callback function pointers types */

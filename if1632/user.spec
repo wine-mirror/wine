@@ -86,7 +86,7 @@ file	user.exe
 82  pascal16 InvertRect(word ptr) InvertRect16
 83  pascal16 FrameRect(word ptr word) FrameRect16
 84  pascal16 DrawIcon(word s_word s_word word) DrawIcon16
-85  pascal16 DrawText(word ptr s_word ptr word) DrawText16
+85  pascal16 DrawText(word str s_word ptr word) DrawText16
 87  pascal16 DialogBox(word segstr word segptr) DialogBox16
 88  pascal16 EndDialog(word s_word) EndDialog16
 89  pascal16 CreateDialog(word segstr word segptr) CreateDialog16
@@ -207,13 +207,13 @@ file	user.exe
 203 pascal16 GetCommError(word ptr) GetCommError
 204 pascal16 ReadComm(word ptr word) ReadComm
 205 pascal16 WriteComm(word ptr word) WriteComm
-206 pascal16 TransmitCommChar(word byte) TransmitCommChar16
+206 pascal16 TransmitCommChar(word word) TransmitCommChar16
 207 pascal16 CloseComm(word) CloseComm
 208 pascal   SetCommEventMask(word word) SetCommEventMask
 209 pascal16 GetCommEventMask(word word) GetCommEventMask
 210 pascal16 SetCommBreak(word) SetCommBreak16
 211 pascal16 ClearCommBreak(word) ClearCommBreak16
-212 pascal16 UngetCommChar(word byte) UngetCommChar
+212 pascal16 UngetCommChar(word word) UngetCommChar
 213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB16
 214 pascal   EscapeCommFunction(word word) EscapeCommFunction16
 215 pascal16 FlushComm(word word) FlushComm
@@ -305,7 +305,7 @@ file	user.exe
 #306 BEAR306
 308 pascal   DefDlgProc(word word word long) DefDlgProc16
 309 pascal16 GetClipCursor(ptr) GetClipCursor16
-314 stub SignalProc
+314 pascal16 SignalProc(word word word word word) USER_SignalProc
 319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word) ScrollWindowEx16
 320 stub SysErrorBox
 321 stub SetEventHook
@@ -316,19 +316,19 @@ file	user.exe
 326 pascal16 GetControlBrush(word word word) GetControlBrush
 331 pascal16 EnableHardwareInput(word) EnableHardwareInput
 332 pascal16 UserYield() UserYield
-333 stub IsUserIdle
+333 pascal16 IsUserIdle() IsUserIdle
 334 pascal   GetQueueStatus(word) GetQueueStatus16
 335 pascal16 GetInputState() GetInputState16
-336 stub LoadCursorIconHandler
+336 pascal16 LoadCursorIconHandler(word word word) LoadCursorIconHandler
 337 pascal   GetMouseEventProc() GetMouseEventProc
 #341 _FFFE_FARFRAME
 343 stub GetFilePortName
-356 stub LoadDIBCursorHandler
-357 stub LoadDIBIconHandler
+356 pascal16 LoadDIBCursorHandler(word word word) LoadDIBCursorHandler
+357 pascal16 LoadDIBIconHandler(word word word) LoadDIBIconHandler
 358 pascal16 IsMenu(word) IsMenu16
 359 pascal16 GetDCEx(word word long) GetDCEx16
 362 pascal16 DCHook(word word long long) DCHook
-364 stub LookupIconIDFromDirectoryEx
+364 pascal16 LookupIconIdFromDirectoryEx(ptr word word word word) LookupIconIdFromDirectoryEx16
 368 pascal16 CopyIcon(word word) CopyIcon16
 369 pascal16 CopyCursor(word word) CopyCursor16
 370 pascal16 GetWindowPlacement(word ptr) GetWindowPlacement16
@@ -381,10 +381,10 @@ file	user.exe
 430 pascal16 lstrcmp(str str) lstrcmp16
 431 pascal   AnsiUpper(segstr) AnsiUpper16
 432 pascal   AnsiLower(segstr) AnsiLower16
-433 pascal16 IsCharAlpha(byte) IsCharAlpha16
-434 pascal16 IsCharAlphaNumeric(byte) IsCharAlphaNumeric16
-435 pascal16 IsCharUpper(byte) IsCharUpper16
-436 pascal16 IsCharLower(byte) IsCharLower16
+433 pascal16 IsCharAlpha(word) IsCharAlpha16
+434 pascal16 IsCharAlphaNumeric(word) IsCharAlphaNumeric16
+435 pascal16 IsCharUpper(word) IsCharUpper16
+436 pascal16 IsCharLower(word) IsCharLower16
 437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff16
 438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff16
 441 pascal16 InsertMenuItem(word word word ptr) InsertMenuItem16
@@ -394,7 +394,7 @@ file	user.exe
 447 pascal   DefMDIChildProc(word word word long) DefMDIChildProc16
 448 stub DrawAnimatedRects
 449 stub DrawState
-450 stub CreateIconFromResourceEx
+450 pascal16 CreateIconFromResourceEx(ptr long word long word word word) CreateIconFromResourceEx16
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel16
 452 pascal16 CreateWindowEx(long str str long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx16
@@ -442,7 +442,7 @@ file	user.exe
 509 pascal16 WNetUnwatchQueue(word ptr ptr word) WNetUnwatchQueue
 510 pascal16 WNetLockQueueData(ptr ptr ptr) WNetLockQueueData
 511 pascal16 WNetUnlockQueueData(ptr) WNetUnlockQueueData
-512 pascal16 WNetGetConnection(ptr ptr ptr) WNetGetConnection
+512 pascal16 WNetGetConnection(ptr ptr ptr) WNetGetConnection16
 513 pascal16 WNetGetCaps(word) WNetGetCaps
 514 pascal16 WNetDeviceMode(word) WNetDeviceMode
 515 pascal16 WNetBrowseDialog(word word ptr) WNetBrowseDialog

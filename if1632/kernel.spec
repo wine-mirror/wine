@@ -39,7 +39,7 @@ file	krnl386.exe
 35  pascal16 GetTaskQueue(word) GetTaskQueue
 36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB
-38  pascal   SetTaskSignalProc(word segptr) SetTaskSignalProc
+38  pascal   SetTaskSignalProc(word segptr) THUNK_SetTaskSignalProc
 41  return EnableDos 0 0
 42  return DisableDos 0 0
 45  pascal16 LoadModule(str ptr) LoadModule16
@@ -64,7 +64,7 @@ file	krnl386.exe
 64  pascal16 AccessResource(word word) AccessResource16
 65  pascal SizeofResource(word word) SizeofResource16
 66  pascal16 AllocResource(word word long) AllocResource16
-67  pascal SetResourceHandler(word segstr ptr) SetResourceHandler
+67  pascal SetResourceHandler(word segstr segptr) THUNK_SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable16
 69  pascal16 FindAtom(segstr) FindAtom16
 70  pascal16 AddAtom(segstr) AddAtom16
@@ -89,12 +89,12 @@ file	krnl386.exe
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
 91  register InitTask() InitTask
-92  pascal   GetTempDrive(byte) WIN16_GetTempDrive
+92  pascal   GetTempDrive(word) WIN16_GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
 94  stub DefineHandleTable
 95  pascal16 LoadLibrary(str) LoadLibrary16
 96  pascal16 FreeLibrary(word) FreeLibrary16
-97  pascal16 GetTempFileName(byte str word ptr) GetTempFileName16
+97  pascal16 GetTempFileName(word str word ptr) GetTempFileName16
 98  return GetLastDiskChange 0 0
 99  stub GetLPErrMode
 100 return ValidateCodeSegments 0 0
@@ -135,7 +135,7 @@ file	krnl386.exe
 133 pascal16 GetExePtr(word) GetExePtr
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
-136 pascal16 GetDriveType(byte) GetDriveType16
+136 pascal16 GetDriveType(word) GetDriveType16
 137 pascal16 FatalAppExit(word str) FatalAppExit16
 138 pascal GetHeapSpaces(word) GetHeapSpaces
 139 stub DoSignal

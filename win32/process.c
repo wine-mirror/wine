@@ -364,56 +364,6 @@ BOOL32 WINAPI DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, 
 	return TRUE;
 }
 
-HINSTANCE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
-{
-    fprintf(stderr,"LoadLibraryEx32A(%s,%d,0x%08lx)\n",libname,hfile,flags);
-    return LoadLibrary32A(libname);
-}
-
-/***********************************************************************
- *           LoadLibraryA         (KERNEL32.365)
- * copied from LoadLibrary
- * This does not currently support built-in libraries
- */
-HINSTANCE32 WINAPI LoadLibrary32A(LPCSTR libname)
-{
-	HINSTANCE32 handle;
-	dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
-	handle = LoadModule16( libname, (LPVOID)-1 );
-	if (handle == (HINSTANCE32) -1)
-	{
-		char buffer[256];
-		strcpy( buffer, libname );
-		strcat( buffer, ".dll" );
-		handle = LoadModule16( buffer, (LPVOID)-1 );
-	}
-	/* Obtain module handle and call initialization function */
-#ifndef WINELIB
-	if (handle >= (HINSTANCE32)32) PE_InitializeDLLs( GetExePtr(handle), DLL_PROCESS_ATTACH, NULL);
-#endif
-	return handle;
-}
-
-/***********************************************************************
- *           LoadLibrary32W         (KERNEL32.368)
- */
-HINSTANCE32 WINAPI LoadLibrary32W(LPCWSTR libnameW)
-{
-    LPSTR libnameA = HEAP_strdupWtoA( GetProcessHeap(), 0, libnameW );
-    HINSTANCE32 ret = LoadLibrary32A( libnameA );
-    HeapFree( GetProcessHeap(), 0, libnameA );
-    return ret;
-}
-
-/***********************************************************************
- *           FreeLibrary
- */
-BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
-{
-	fprintf(stderr,"FreeLibrary: empty stub\n");
-	return TRUE;
-}
-
 /**********************************************************************
  *          GetProcessAffinityMask
  */
@@ -462,7 +412,9 @@ BOOL32 WINAPI CreateProcess32A(
 		appname,cmdline,processattributes,threadattributes,
 		inherithandles,creationflags,env,curdir,startupinfo,processinfo
 	);
-	return TRUE;
+	/* make from lcc uses system as fallback if CreateProcess returns
+	   FALSE, so return false */
+	return FALSE;
 }
 
 BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {

@@ -83,7 +83,7 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
                                 LPSTR pDeviceName, LPDEVMODE32A pDevModeOutput,
                                   LPDEVMODE32A pDevModeInput,DWORD fMode )
 {
-    fprintf(stderr,"DocumentPropertiesA(%d,%d,%s,%p,%p,%d)\n",
+    fprintf(stderr,"DocumentPropertiesA(%d,%d,%s,%p,%p,%ld)\n",
 	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
     );
     return 1;

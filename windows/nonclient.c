@@ -709,23 +709,23 @@ static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
 
 	lpt[4].x = lpt[0].x = rect->left;
 	lpt[5].x = lpt[1].x = rect->left + width;
-	lpt[6].x = lpt[2].x = rect->right - width - 1;
-	lpt[7].x = lpt[3].x = rect->right - 1;
+	lpt[6].x = lpt[2].x = rect->right - 1;
+	lpt[7].x = lpt[3].x = rect->right - width - 1;
 
 	lpt[0].y = lpt[1].y = lpt[2].y = lpt[3].y = 
 		  rect->top + SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
 	lpt[4].y = lpt[5].y = lpt[6].y = lpt[7].y =
-		  rect->bottom - 1 - SYSMETRICS_CYFRAME - SYSMETRICS_CYSIZE;
+		  rect->bottom - SYSMETRICS_CYFRAME - SYSMETRICS_CYSIZE;
 
         lpt[8].x = lpt[9].x = lpt[10].x = lpt[11].x =
 		  rect->left + SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
 	lpt[12].x = lpt[13].x = lpt[14].x = lpt[15].x = 
-		  rect->right - 1 - SYSMETRICS_CXFRAME - SYSMETRICS_CYSIZE;
+		  rect->right - SYSMETRICS_CXFRAME - SYSMETRICS_CYSIZE;
 
 	lpt[12].y = lpt[8].y = rect->top; 
 	lpt[13].y = lpt[9].y = rect->top + height;
-	lpt[14].y = lpt[10].y = rect->bottom - height - 1; 
-	lpt[15].y = lpt[11].y = rect->bottom - 1;
+	lpt[14].y = lpt[10].y = rect->bottom - 1;
+	lpt[15].y = lpt[11].y = rect->bottom - height - 1;
 
 	GRAPH_DrawLines( hdc, lpt, 8, (HPEN32)0 );	/* 8 is the maximum */
 	InflateRect32( rect, -width - 1, -height - 1 );
@@ -868,7 +868,7 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
     }
 
     MoveTo( hdc, r.left, r.bottom );
-    LineTo32( hdc, r.right-1, r.bottom );
+    LineTo32( hdc, r.right, r.bottom );
 
     if (style & WS_SYSMENU)
     {

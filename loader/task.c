@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "windows.h"
-#include "task.h"
+#include "user.h"
 #include "callback.h"
 #include "file.h"
 #include "global.h"
@@ -40,9 +40,9 @@
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
 
-extern INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* pwsi );
-extern void  USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
-extern void  PE_InitTls( PE_MODULE *module );
+extern INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* );
+extern BOOL32 MODULE_FreeModule( HMODULE16 hModule, TDB* ptaskContext );
+extern void PE_InitTls( PDB32 *pdb32 );
 
   /* Saved 16-bit stack for current process (Win16 only) */
 DWORD IF1632_Saved16_ss_sp = 0;
@@ -370,12 +370,16 @@ static void TASK_CallToStart(void)
 
         extern void InitTask( CONTEXT *context );
 
+        FARPROC32 entry = (FARPROC32)(pCurrentProcess->exe_modref->load_addr + 
+                 pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
+
         InitTask( NULL );
         InitApp( pTask->hModule );
         __asm__ __volatile__("movw %w0,%%fs"::"r" (pCurrentThread->teb_sel));
-        PE_InitializeDLLs( pTask->hModule, DLL_PROCESS_ATTACH, (LPVOID)-1 );
-        exit_code = CallTaskStart32((FARPROC32)(pModule->pe_module->load_addr + 
-                pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint) );
+
+        PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, (LPVOID)-1 );
+        dprintf_relay( stddeb, "CallTo32(entryproc=%p)\n", entry );
+        exit_code = entry();
         TASK_KillCurrentTask( exit_code );
     }
     else
@@ -437,6 +441,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     STACK32FRAME *frame32;
 #ifndef WINELIB32
     extern DWORD CALLTO16_RetAddr_word;
+    extern void CALLTO16_Restore();
 #endif
     
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
@@ -546,18 +551,21 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     /* Create the Win32 part of the task */
 
-    pdb32 = PROCESS_Create( pTask );
+    pCurrentProcess = pdb32 = PROCESS_Create( pTask, cmdLine );
     pdb32->task = hTask;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
+    /*
         LPTHREAD_START_ROUTINE start =
-            (LPTHREAD_START_ROUTINE)(pModule->pe_module->load_addr +
-            pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
-        pTask->thdb = THREAD_Create( pdb32, 0, start );
+            (LPTHREAD_START_ROUTINE)(
+	    	pCurrentProcess->exe_modref->load_addr +
+		pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
+     */
+        pTask->thdb = THREAD_Create( pdb32, 0, 0 );
 #ifndef WINELIB
         /* FIXME: should not be done here */
         pCurrentThread = pTask->thdb;
-        PE_InitTls( pModule->pe_module );
+        PE_InitTls( pdb32 );
 #endif
     }
     else
@@ -575,6 +583,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame32->ebx = 0;
     frame32->ebp = 0;
 #ifndef WINELIB
+    frame32->restore_addr = (DWORD)CALLTO16_Restore;
     frame32->retaddr = (DWORD)TASK_CallToStart;
     frame32->codeselector = WINE_CODE_SELECTOR;
 #endif
@@ -613,10 +622,12 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     {
         if (pModule->flags & NE_FFLAGS_WIN32)
         {
-            DBG_ADDR addr = { NULL, 0, pModule->pe_module->load_addr + 
-                              pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint };
+	/*
+            DBG_ADDR addr = { NULL, 0, pCurrentProcess->exe_modref->load_addr + 
+                              pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint };
             fprintf( stderr, "Win32 task '%s': ", name );
             DEBUG_AddBreakpoint( &addr );
+	 */
         }
         else
         {
@@ -656,7 +667,7 @@ static void TASK_DeleteTask( HTASK16 hTask )
 
     /* Free the task module */
 
-    FreeModule16( pTask->hModule );
+    MODULE_FreeModule( pTask->hModule, pTask );
 
     /* Free the selector aliases */
 
@@ -691,17 +702,16 @@ void TASK_KillCurrentTask( INT16 exitCode )
 
     dprintf_task(stddeb, "Killing task %04x\n", hCurrentTask );
 
-    /* Clean up sockets */
+    /* Delete active sockets */
 
-    if( pTask->pwsi ) 
-    {
-	dprintf_task(stddeb, "\tremoving socket table\n");
+    if( pTask->pwsi )
 	WINSOCK_DeleteTaskWSI( pTask, pTask->pwsi );
-    }
 
     /* Perform USER cleanup */
 
-    USER_AppExit( hCurrentTask, pTask->hInstance, pTask->hQueue );
+    if (pTask->userhandler)
+        pTask->userhandler( hCurrentTask, USIG_TERMINATION, 0,
+                            pTask->hInstance, pTask->hQueue );
 
     if (hTaskToKill && (hTaskToKill != hCurrentTask))
     {
@@ -867,6 +877,8 @@ void TASK_YieldToSystem(TDB* pTask)
 
 /***********************************************************************
  *           InitTask  (KERNEL.91)
+ *
+ * Called by the application startup code.
  */
 void WINAPI InitTask( CONTEXT *context )
 {
@@ -880,7 +892,13 @@ void WINAPI InitTask( CONTEXT *context )
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
 
+    /* This is a hack to install task USER signal handler before 
+     * implicitly loaded DLLs are initialized (see windows/user.c) */
+
+    pTask->userhandler = (USERSIGNALPROC)&USER_SignalProc;
+
 #ifndef WINELIB
+    /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );
 #endif
 
@@ -1374,6 +1392,8 @@ BOOL16 WINAPI IsTask( HTASK16 hTask )
 
 /***********************************************************************
  *           SetTaskSignalProc   (KERNEL.38)
+ *
+ * Real 16-bit interface is provided by the THUNK_SetTaskSignalProc.
  */
 FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 {
@@ -1382,8 +1402,8 @@ FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 
     if (!hTask) hTask = hCurrentTask;
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return NULL;
-    oldProc = pTask->userhandler;
-    pTask->userhandler = proc;
+    oldProc = (FARPROC16)pTask->userhandler;
+    pTask->userhandler = (USERSIGNALPROC)proc;
     return oldProc;
 }
 
@@ -1463,7 +1483,6 @@ HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
     }
     return 0;
 }
-
 
 /***********************************************************************
  *           TaskFirst   (TOOLHELP.63)

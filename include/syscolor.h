@@ -32,6 +32,10 @@ struct SysColorObjects
                                      /* COLOR_BTNTEXT             */
                                      /* COLOR_INACTIVECAPTIONTEXT */
     HBRUSH32 hbrushBtnHighlight;     /* COLOR_BTNHIGHLIGHT        */
+                                     /* COLOR_3DDKSHADOW          */
+                                     /* COLOR_3DLIGHT             */
+                                     /* COLOR_INFOTEXT            */
+                                     /* COLOR_INFOBK              */
 };
 
 extern void SYSCOLOR_Init(void);

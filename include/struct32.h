@@ -23,45 +23,4 @@ void STRUCT32_MDICREATESTRUCT32Ato16( const MDICREATESTRUCT32A*,
                                       MDICREATESTRUCT16*);
 void STRUCT32_MDICREATESTRUCT16to32A( const MDICREATESTRUCT16*,
                                       MDICREATESTRUCT32A*);
-
-#pragma pack(1)
-
-typedef struct {
-	BYTE   bWidth;
-	BYTE   bHeight;
-	BYTE   bColorCount;
-	BYTE   bReserved;
-	WORD   wPlanes;
-	WORD   wBitCount;
-	DWORD  dwBytesInRes;
-	WORD   wResId WINE_PACKED;
-	/*WORD   padding;	Spec is wrong, no padding here*/
-} ICONDIRENTRY32;
-
-typedef struct {
-	WORD   wWidth;
-	WORD   wHeight;
-	WORD   wPlanes;
-	WORD   wBitCount;
-	DWORD  dwBytesInRes;
-	WORD   wResId WINE_PACKED;
-	/*WORD   padding;*/
-} CURSORDIRENTRY32;
-
-typedef union{
-	ICONDIRENTRY32	icon;
-	CURSORDIRENTRY32	cursor;
-} CURSORICONDIRENTRY32;
-
-typedef struct {
-	WORD    idReserved;
-	WORD    idType;
-	WORD    idCount;
-	/*WORD	padding;*/
-	CURSORICONDIRENTRY32	idEntries[1];
-} CURSORICONDIR32;
-
-
-#pragma pack(4)
-
 #endif  /* __WINE_STRUCT32_H */

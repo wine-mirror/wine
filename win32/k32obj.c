@@ -90,6 +90,80 @@ void K32OBJ_DecCount( K32OBJ *ptr )
 
 
 /***********************************************************************
+ *           K32OBJ_AddHead
+ *
+ * Add an object at the head of the list and increment its ref count.
+ */
+void K32OBJ_AddHead( K32OBJ_LIST *list, K32OBJ *ptr )
+{
+    K32OBJ_ENTRY *entry = HeapAlloc( SystemHeap, 0, sizeof(*entry) );
+    assert(entry);
+    K32OBJ_IncCount( ptr );
+    entry->obj = ptr;
+    if ((entry->next = list->head) != NULL) entry->next->prev = entry;
+    else list->tail = entry;
+    entry->prev = NULL;
+    list->head = entry;
+}
+
+
+/***********************************************************************
+ *           K32OBJ_AddTail
+ *
+ * Add an object at the tail of the list and increment its ref count.
+ */
+void K32OBJ_AddTail( K32OBJ_LIST *list, K32OBJ *ptr )
+{
+    K32OBJ_ENTRY *entry = HeapAlloc( SystemHeap, 0, sizeof(*entry) );
+    assert(entry);
+    K32OBJ_IncCount( ptr );
+    entry->obj = ptr;
+    if ((entry->prev = list->tail) != NULL) entry->prev->next = entry;
+    else list->head = entry;
+    entry->next = NULL;
+    list->tail = entry;
+}
+
+
+/***********************************************************************
+ *           K32OBJ_Remove
+ *
+ * Remove an object from the list and decrement its ref count.
+ */
+void K32OBJ_Remove( K32OBJ_LIST *list, K32OBJ *ptr )
+{
+    K32OBJ_ENTRY *entry = list->head;
+    while ((entry && (entry->obj != ptr))) entry = entry->next;
+    assert(entry);
+    if (entry->next) entry->next->prev = entry->prev;
+    else list->tail = entry->prev;
+    if (entry->prev) entry->prev->next = entry->next;
+    else list->head = entry->next;
+    HeapFree( SystemHeap, 0, entry );
+    K32OBJ_DecCount( ptr );
+}
+
+
+/***********************************************************************
+ *           K32OBJ_RemoveHead
+ *
+ * Remove the head of the list; its ref count is NOT decremented.
+ */
+K32OBJ *K32OBJ_RemoveHead( K32OBJ_LIST *list )
+{
+    K32OBJ *ptr;
+    K32OBJ_ENTRY *entry = list->head;
+    assert(entry);
+    assert(!entry->prev);
+    if ((list->head = entry->next) != NULL) entry->next->prev = NULL;
+    else list->tail = NULL;
+    ptr = entry->obj;
+    HeapFree( SystemHeap, 0, entry );
+    return ptr;
+}
+
+
+/***********************************************************************
  *           K32OBJ_AddName
  *
  * Add a name entry for an object. We don't check for duplicates here.

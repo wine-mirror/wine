@@ -342,7 +342,11 @@ void WINSOCK_Shutdown()
 
 INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
 {
-    /* WSACleanup() backend, called on task termination as well. */
+    /* WSACleanup() backend, called on task termination as well.
+     * Real DLL would have registered its own signal handler with
+     * TaskSetSignalHandler() and waited until USIG_TERMINATION/USIG_GPF
+     * but this scheme is much more straightforward.
+     */
 
     int	i, j, n;
 

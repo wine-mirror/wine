@@ -153,8 +153,8 @@ int WINAPI WNetUnlockQueueData(LPSTR szQueue)
 /**************************************************************************
  *				WNetGetConnection	[USER.512]
  */
-int WINAPI WNetGetConnection(LPSTR lpLocalName, 
-                             LPSTR lpRemoteName, UINT16 *cbRemoteName)
+int WINAPI WNetGetConnection16(LPSTR lpLocalName, 
+                               LPSTR lpRemoteName, UINT16 *cbRemoteName)
 {
     const char *path;
 
@@ -402,4 +402,11 @@ UINT16 WINAPI WNetOpenEnum(DWORD dwScope, DWORD dwType,
 }
 
 
-
+DWORD
+WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
+{
+	UINT16	x;
+	DWORD	ret = WNetGetConnection16(localname,remotename,&x);
+	*buflen = x;
+	return ret;
+}

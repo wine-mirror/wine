@@ -125,6 +125,7 @@ static struct tagLOCALE_NAME2ID {
 	LOCALE_ENTRY(IPOSSEPBYSPACE),
 	LOCALE_ENTRY(INEGSYMPRECEDES),
 	LOCALE_ENTRY(INEGSEPBYSPACE),
+/*	LOCALE_ENTRY(FONTSIGNATURE),*/
 	{NULL,0},
 };
 
@@ -183,7 +184,7 @@ const struct map_lcid2str {
 /***********************************************************************
  *           GetUserDefaultLCID       (OLE2NLS.1)
  */
-DWORD WINAPI GetUserDefaultLCID()
+LCID WINAPI GetUserDefaultLCID()
 {
 /* Default sorting, neutral sublanguage */
     switch(Options.language)
@@ -224,7 +225,7 @@ DWORD WINAPI GetUserDefaultLCID()
 /***********************************************************************
  *         GetSystemDefaultLCID       (OLE2NLS.2)
  */
-DWORD WINAPI GetSystemDefaultLCID()
+LCID WINAPI GetSystemDefaultLCID()
 {
 	return GetUserDefaultLCID();
 }
@@ -232,7 +233,7 @@ DWORD WINAPI GetSystemDefaultLCID()
 /***********************************************************************
  *         GetUserDefaultLangID       (OLE2NLS.3)
  */
-WORD WINAPI GetUserDefaultLangID()
+LANGID WINAPI GetUserDefaultLangID()
 {
 	return (WORD)GetUserDefaultLCID();
 }
@@ -240,7 +241,7 @@ WORD WINAPI GetUserDefaultLangID()
 /***********************************************************************
  *         GetSystemDefaultLangID     (OLE2NLS.4)
  */
-WORD WINAPI GetSystemDefaultLangID()
+LANGID WINAPI GetSystemDefaultLangID()
 {
 	return GetUserDefaultLangID();
 }
@@ -261,6 +262,9 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 
 	dprintf_ole(stddeb,"GetLocaleInfo32A(%8lX,%8lX,%p,%4X)\n",
 			lcid,LCType,buf,len);
+
+	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
+
 	/* As an option, we could obtain the value from win.ini.
 	   This would not match the Wine compile-time option.
 	   Also, not all identifiers are available from win.ini */
@@ -303,8 +307,8 @@ LOCVAL(LOCALE_SABBREVCTRYNAME,"De")
 LOCVAL(LOCALE_SNATIVECTRYNAME,"Deutschland")
 LOCVAL(LOCALE_IDEFAULTLANGUAGE,"9")
 LOCVAL(LOCALE_IDEFAULTCOUNTRY,"49")
+LOCVAL(LOCALE_IDEFAULTCODEPAGE,"851")
 /* Dunno
-LOCVAL(LOCALE_IDEFAULTCODEPAGE)
 LOCVAL(LOCALE_IDEFAULTANSICODEPAGE)
 */
 LOCVAL(LOCALE_SLIST,";")
@@ -522,8 +526,6 @@ LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
 
     case LANG_En:
     	switch (LCType) {
-/* This definitions apply to Germany only. Users in Austria 
-   or Switzerland might want to modify them */
 LOCVAL(LOCALE_ILANGUAGE,"9")
 LOCVAL(LOCALE_SLANGUAGE,"English")
 LOCVAL(LOCALE_SENGLANGUAGE,"English")
@@ -536,8 +538,8 @@ LOCVAL(LOCALE_SABBREVCTRYNAME,"De")
 LOCVAL(LOCALE_SNATIVECTRYNAME,"Deutschland")
 LOCVAL(LOCALE_IDEFAULTLANGUAGE,"9")
 LOCVAL(LOCALE_IDEFAULTCOUNTRY,"49")
+LOCVAL(LOCALE_IDEFAULTCODEPAGE,"437")
 /* Dunno
-LOCVAL(LOCALE_IDEFAULTCODEPAGE)
 LOCVAL(LOCALE_IDEFAULTANSICODEPAGE)
 */
 LOCVAL(LOCALE_SLIST,";")
@@ -1685,7 +1687,8 @@ LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
 	if(!found) {
 		fprintf(stderr,"'%s' not supported for your language.\n",
 			retString);
-		return 0;
+		retString = "<WINE-NLS-unknown>";
+		/*return 0;*/
 	}
 	if (buf)
 		lstrcpyn32A(buf,retString,len);
@@ -2029,3 +2032,59 @@ DWORD WINAPI VerLanguageName32W(UINT32 langid,LPWSTR langname,
 	return strlen(languages[i].langname); /* same as strlenW(langname); */
 }
 
+
+INT32 WINAPI LCMapString32A(
+	LCID lcid,DWORD mapflags,LPCSTR srcstr,INT32 srclen,LPSTR dststr,
+	INT32 dstlen
+) {
+	int	i,len;
+
+	fprintf(stderr,"LCMapStringA(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+		lcid,mapflags,srcstr,srclen,dststr,dstlen
+	);
+	if (!dstlen || !dststr) {
+		dststr = srcstr;
+	}
+	if (!srclen) srclen = strlen(srcstr);
+	if (!dstlen) dstlen = strlen(dststr);
+	len = dstlen;
+	if (srclen < len)
+		len = srclen;
+	if (mapflags & LCMAP_LOWERCASE) {
+		for (i=0;i<len;i++)
+			dststr[i]=tolower(srcstr[i]);
+		mapflags &= ~LCMAP_LOWERCASE;
+	}
+	if (mapflags)
+		fprintf(stderr,"	unimplemented flags: 0x%08lx\n",mapflags);
+	return len;
+}
+
+/* FIXME: implement everyhting & correct */
+
+INT32 WINAPI LCMapString32W(
+	LCID lcid,DWORD mapflags,LPCWSTR srcstr,INT32 srclen,LPWSTR dststr,
+	INT32 dstlen
+) {
+	int	i,len;
+
+	fprintf(stderr,"LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+		lcid,mapflags,srcstr,srclen,dststr,dstlen
+	);
+	if (!dstlen || !dststr) {
+		dststr = srcstr;
+	}
+	if (!srclen) srclen = strlen(srcstr);
+	if (!dstlen) dstlen = strlen(dststr);
+	len = dstlen;
+	if (srclen < len)
+		len = srclen;
+	if (mapflags & LCMAP_LOWERCASE) {
+		for (i=0;i<len;i++)
+			dststr[i]=tolower(srcstr[i]);
+		mapflags &= ~LCMAP_LOWERCASE;
+	}
+	if (mapflags)
+		fprintf(stderr,"	unimplemented flags: 0x%08lx\n",mapflags);
+	return len;
+}

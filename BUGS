@@ -5,9 +5,14 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of June 1997 -
+As of Sept 1997 -
 
 General:
+
+ * LoadAccelerators() must not create any objects apart
+   from loading the resource.
+
+ * Catch/Throw() do not save SI and DI registers (quite fatal).
 
  * We need to do InsertMenuItem32[AW] and then code most of the other
    inserting function in terms of this.  Without this, we cannot support
@@ -35,6 +40,17 @@ General:
           on the www.microsoft.com (go to 'search').
 
 Miscellaneous:
+
+ * nBytesWidth in CURSORICONINFO is bogus for some bpp
+   (doesn't reflect the fact that bits are packed and 16-bit aligned).
+
+ * Progman and AOL complain about being unable to convert bitmaps
+   (probably because of bytes width stuff).
+
+ * Netscape displays partially downloaded inline graphics with
+   wrong offsets. Bitmap is missing in the splash-window.
+
+ * BCW 4.5 crashes after SwitchStackBack().
 
  * Text alignment problems in Word and Write (variable pitch fonts).
 

@@ -24,7 +24,8 @@ LPCSTR WINAPI GetCommandLine32A(void)
     char *cp;
     PDB *pdb = (PDB *)GlobalLock16( GetCurrentPDB() );
 
-    lstrcpyn32A( buffer, MODULE_GetModuleName( GetExePtr(GetCurrentTask()) ),
+    /* FIXME: should use pCurrentProcess->env_db->cmd_line here */
+    lstrcpyn32A( buffer, MODULE_GetModuleName(GetCurrentTask()),
                  sizeof(buffer) - 1 );
     cp = buffer + strlen(buffer);
     if (pdb->cmdLine[0])

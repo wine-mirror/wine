@@ -40,8 +40,27 @@ typedef struct
     DWORD         refcount;
 } K32OBJ;
 
+/* Kernel object list entry */
+typedef struct _K32OBJ_ENTRY
+{
+    K32OBJ               *obj;
+    struct _K32OBJ_ENTRY *next;
+    struct _K32OBJ_ENTRY *prev;
+} K32OBJ_ENTRY;
+
+/* Kernel object list */
+typedef struct
+{
+    K32OBJ_ENTRY *head;
+    K32OBJ_ENTRY *tail;
+} K32OBJ_LIST;
+
 extern void K32OBJ_IncCount( K32OBJ *ptr );
 extern void K32OBJ_DecCount( K32OBJ *ptr );
+extern void K32OBJ_AddHead( K32OBJ_LIST *list, K32OBJ *ptr );
+extern void K32OBJ_AddTail( K32OBJ_LIST *list, K32OBJ *ptr );
+extern void K32OBJ_Remove( K32OBJ_LIST *list, K32OBJ *ptr );
+extern K32OBJ *K32OBJ_RemoveHead( K32OBJ_LIST *list );
 extern BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name );
 extern K32OBJ *K32OBJ_FindName( LPCSTR name );
 extern K32OBJ *K32OBJ_FindNameType( LPCSTR name, K32OBJ_TYPE type );

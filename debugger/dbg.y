@@ -553,7 +553,7 @@ static void DEBUG_Main( int signal )
  */
 void DebugBreak32( CONTEXT *regs )
 {
-    const char *module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
+    const char *module = MODULE_GetModuleName( GetCurrentTask() );
     fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
     DEBUG_context = *regs;
     DEBUG_Main( SIGTRAP );
@@ -564,7 +564,7 @@ void DebugBreak32( CONTEXT *regs )
  */
 void DebugBreak16( CONTEXT *regs )
 {
-    const char *module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
+    const char *module = MODULE_GetModuleName( GetCurrentTask() );
     fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
     DEBUG_context = *regs;
     DEBUG_Main( SIGTRAP );

@@ -17,11 +17,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include "windows.h"
 #include "winbase.h"
 #include "callback.h"
 #include "neexe.h"
 #include "peexe.h"
+#include "process.h"
 #include "pe_image.h"
 #include "module.h"
 #include "global.h"
@@ -33,8 +36,7 @@
 #include "debugger.h"
 #include "xmalloc.h"
 
-static void PE_InitDLL(HMODULE16 hModule, DWORD type, LPVOID lpReserved);
-
+static void PE_InitDLL(PE_MODREF* modref, DWORD type, LPVOID lpReserved);
 
 /* convert PE image VirtualAddress to Real Address */
 #define RVA(x) ((unsigned int)load_addr+(unsigned int)(x))
@@ -91,25 +93,40 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
  */
 FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 {
-	IMAGE_EXPORT_DIRECTORY * exports = pe->pe_export;
-	unsigned load_addr = pe->load_addr;
-	u_short * ordinal;
-	u_long * function;
-	u_char ** name, *ename;
-	int i;
+	IMAGE_EXPORT_DIRECTORY 		*exports;
+	unsigned			load_addr;
+	u_short				* ordinal;
+	u_long				* function;
+	u_char				** name, *ename;
+	int				i;
+	PDB32				*process=(PDB32*)GetCurrentProcessId();
+	PE_MODREF			*pem;
+
+	pem = process->modref_list;
+	while (pem && (pem->pe_module != pe))
+		pem=pem->next;
+	if (!pem) {
+		fprintf(stderr,"No MODREF found for PE_MODULE %p in process %p\n",pe,process);
+		return NULL;
+	}
+	load_addr	= pem->load_addr;
+	exports		= pem->pe_export;
 
 	if (HIWORD(funcName))
 		dprintf_win32(stddeb,"PE_FindExportedFunction(%s)\n",funcName);
 	else
 		dprintf_win32(stddeb,"PE_FindExportedFunction(%d)\n",(int)funcName);
-	if (!exports)
+	if (!exports) {
+		fprintf(stderr,"Module %p/MODREF %p doesn't have a exports table.\n",pe,pem);
 		return NULL;
-	ordinal=(u_short*) RVA(exports->AddressOfNameOrdinals);
-	function=(u_long*) RVA(exports->AddressOfFunctions);
-	name=(u_char **) RVA(exports->AddressOfNames);
+	}
+	ordinal	= (u_short*)  RVA(exports->AddressOfNameOrdinals);
+	function= (u_long*)   RVA(exports->AddressOfFunctions);
+	name	= (u_char **) RVA(exports->AddressOfNames);
+
 	if (HIWORD(funcName)) {
 		for(i=0; i<exports->NumberOfNames; i++) {
-			ename=(char*) RVA(*name);
+			ename=(char*)RVA(*name);
 			if(!strcmp(ename,funcName))
 				return (FARPROC32) RVA(function[*ordinal]);
 			ordinal++;
@@ -127,18 +144,17 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 }
 
 void 
-fixup_imports (struct pe_data *pe, HMODULE16 hModule)
+fixup_imports (PDB32 *process,PE_MODREF *pem)
 {
-    IMAGE_IMPORT_DESCRIPTOR *pe_imp;
-    int	fixup_failed = 0;
-    unsigned int load_addr = pe->load_addr;
-    int i;
-    NE_MODULE *ne_mod;
-    HMODULE16 *mod_ptr;
-    char *modname;
+    PE_MODULE			*pe = pem->pe_module;
+    IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
+    int	fixup_failed		= 0;
+    unsigned int load_addr	= pem->load_addr;
+    int				i;
+    char			*modname;
     
-    if (pe->pe_export)
-    	modname = (char*) RVA(pe->pe_export->Name);
+    if (pem->pe_export)
+    	modname = (char*) RVA(pem->pe_export->Name);
     else
         modname = "<unknown>";
 
@@ -146,40 +162,77 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
     dprintf_win32 (stddeb, "\nDumping imports list\n");
 
     /* first, count the number of imported non-internal modules */
-    pe_imp = pe->pe_import;
+    pe_imp = pem->pe_import;
+    if (!pe_imp) 
+    	fprintf(stderr,"no import directory????\n");
 
     /* FIXME: should terminate on 0 Characteristics */
     for (i = 0; pe_imp->Name; pe_imp++)
 	i++;
 
-    /* Now, allocate memory for dlls_to_init */
-    ne_mod = GlobalLock16 (hModule);
-    ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT, (i+1)*sizeof(HMODULE16),
-                                        hModule, FALSE, FALSE, FALSE);
-    mod_ptr = GlobalLock16 (ne_mod->dlls_to_init);
-    /* load the modules and put their handles into the list */
+    /* load the imported modules. They are automatically 
+     * added to the modref list of the process.
+     */
  
-     /* FIXME: should terminate on 0 Characteristics */
-     for (i = 0, pe_imp = pe->pe_import; pe_imp->Name; pe_imp++) {
+    /* FIXME: should terminate on 0 Characteristics */
+    for (i = 0, pe_imp = pem->pe_import; pe_imp->Name; pe_imp++) {
+    	HMODULE32	res;
+	PE_MODREF	*xpem,**ypem;
+
+
  	char *name = (char *) RVA(pe_imp->Name);
-	mod_ptr[i] = MODULE_Load( name, (LPVOID)-1, FALSE );
-	if (mod_ptr[i] <= (HMODULE16) 32) {
+
+	/* don't use MODULE_Load, Win32 creates new task differently */
+	res = PE_LoadLibraryEx32A( name, 0, 0 );
+	if (res <= (HMODULE32) 32) {
 	    char *p, buffer[256];
 
 	    /* Try with prepending the path of the current module */
-	    GetModuleFileName16 (hModule, buffer, sizeof (buffer));
+	    GetModuleFileName32A (pe->mappeddll, buffer, sizeof (buffer));
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    mod_ptr[i] = MODULE_Load( buffer, (LPVOID)-1, FALSE );
+	    res = PE_LoadLibraryEx32A( buffer, 0, 0 );
 	}
-	if (mod_ptr[i] <= (HMODULE16) 32) {
+	if (res <= (HMODULE32) 32) {
 	    fprintf (stderr, "Module %s not found\n", name);
 	    exit (0);
 	}
+	res = MODULE_HANDLEtoHMODULE32(res);
+	xpem = pem->next;
+	while (xpem) {
+		if (xpem->pe_module->mappeddll == res)
+			break;
+		xpem = xpem->next;
+	}
+	if (xpem) {
+		/* it has been loaded *BEFORE* us, so we have to init
+		 * it before us. we just swap the two modules which should
+		 * work.
+		 */
+		/* unlink xpem from chain */
+		ypem = &(process->modref_list);
+		while (*ypem) {
+			if ((*ypem)==xpem)
+				break;
+			ypem = &((*ypem)->next);
+		}
+		*ypem		= xpem->next;
+
+		/* link it directly before pem */
+		ypem		= &(process->modref_list);
+		while (*ypem) {
+			if ((*ypem)==pem)
+				break;
+			ypem = &((*ypem)->next);
+		}
+		*ypem		= xpem;
+		xpem->next	= pem;
+		
+	}
 	i++;
     }
-    pe_imp = pe->pe_import;
+    pe_imp = pem->pe_import;
     while (pe_imp->Name) {
 	char			*Module;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
@@ -269,9 +322,9 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
     if (fixup_failed) exit(1);
 }
 
-static void calc_vma_size(struct pe_data *pe)
+static int calc_vma_size(struct pe_data *pe)
 {
-  int i;
+  int i,vma_size = 0;
 
   dprintf_win32(stddeb, "Dump of segment table\n");
   dprintf_win32(stddeb, "   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
@@ -288,19 +341,21 @@ static void calc_vma_size(struct pe_data *pe)
 	     pe->pe_seg[i].NumberOfRelocations,
 	     pe->pe_seg[i].NumberOfLinenumbers,
 	     pe->pe_seg[i].Characteristics);
-	  pe->vma_size = MAX(pe->vma_size,
+	  vma_size = MAX(vma_size,
 	  		pe->pe_seg[i].VirtualAddress + 
 			pe->pe_seg[i].SizeOfRawData);
     }
+    return vma_size;
 }
 
-static void do_relocations(struct pe_data *pe)
+static void do_relocations(PE_MODREF *pem)
 {
-	int delta = pe->load_addr - pe->base_addr;
-	unsigned int load_addr = pe->load_addr;
-	IMAGE_BASE_RELOCATION	*r = pe->pe_reloc;
-	int hdelta = (delta >> 16) & 0xFFFF;
-	int ldelta = delta & 0xFFFF;
+	int delta = pem->load_addr - pem->pe_module->pe_header->OptionalHeader.ImageBase;
+
+	unsigned int			load_addr= pem->load_addr;
+	IMAGE_BASE_RELOCATION		*r = pem->pe_reloc;
+	int				hdelta = (delta >> 16) & 0xFFFF;
+	int				ldelta = delta & 0xFFFF;
 
 	/* int reloc_size = */
 
@@ -360,27 +415,47 @@ static void do_relocations(struct pe_data *pe)
 
 /**********************************************************************
  *			PE_LoadImage
- * Load one PE format executable into memory
+ * Load one PE format DLL/EXE into memory
+ * 
+ * Unluckily we can't just mmap the sections where we want them, for 
+ * (at least) Linux does only support offset with are multiples of the
+ * underlying filesystemblocksize, but PE DLLs usually have alignments of 512
+ * byte. This fails for instance when you try to map from CDROM (bsize 2048).
+ *
+ * BUT we have to map the whole image anyway, for Win32 programs sometimes
+ * want to access them. (HMODULE32 point to the start of it)
  */
-static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WORD offset, OFSTRUCT *ofs )
+static PE_MODULE *PE_LoadImage( int fd )
 {
 	struct pe_data		*pe;
-	int			i, result;
-	int			load_addr;
-	IMAGE_DATA_DIRECTORY	dir;
-	char			buffer[200];
 	DBG_ADDR		daddr;
-	char			*modname;
+	struct stat		stbuf;
 
 	daddr.seg=0;
 	daddr.type = NULL;
+	if (-1==fstat(fd,&stbuf)) {
+		perror("PE_LoadImage:fstat");
+		return NULL;
+	}
 	pe = xmalloc(sizeof(struct pe_data));
 	memset(pe,0,sizeof(struct pe_data));
-	pe->pe_header = xmalloc(sizeof(IMAGE_NT_HEADERS));
 
-	/* read PE header */
-	lseek( fd, offset, SEEK_SET);
-	read( fd, pe->pe_header, sizeof(IMAGE_NT_HEADERS));
+	/* map the PE image somewhere */
+	pe->mappeddll = (HMODULE32)mmap(NULL,stbuf.st_size,PROT_READ,MAP_SHARED,fd,0);
+	if (!pe->mappeddll || pe->mappeddll==-1) {
+		perror("PE_LoadImage:mmap");
+		free(pe);
+		return NULL;
+	}
+	/* link PE header */
+	pe->pe_header = (IMAGE_NT_HEADERS*)(pe->mappeddll+(((IMAGE_DOS_HEADER*)pe->mappeddll)->e_lfanew));
+	if (pe->pe_header->Signature!=IMAGE_NT_SIGNATURE) {
+		fprintf(stderr,"image doesn't have PE signature, but 0x%08lx\n",
+			pe->pe_header->Signature
+		);
+		free(pe);
+		return NULL;
+	}
 
 	if (pe->pe_header->FileHeader.Machine != IMAGE_FILE_MACHINE_I386) {
 		fprintf(stderr,"trying to load PE image for unsupported architecture (");
@@ -403,48 +478,66 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 			fprintf(stderr,"Unknown-%04x",pe->pe_header->FileHeader.Machine);break;
 		}
 		fprintf(stderr,")\n");
-		return;
+		return NULL;
 	}
-/* FIXME: this is a *horrible* hack to make COMDLG32.DLL load OK. The
- * problem needs to be fixed properly at some stage 
+	pe->pe_seg = (IMAGE_SECTION_HEADER*)(((LPBYTE)(pe->pe_header+1))-
+		 (16 - pe->pe_header->OptionalHeader.NumberOfRvaAndSizes) * sizeof(IMAGE_DATA_DIRECTORY));
+
+/* FIXME: the (16-...) is a *horrible* hack to make COMDLG32.DLL load OK. The
+ * problem needs to be fixed properly at some stage.
  */
-	if (pe->pe_header->OptionalHeader.NumberOfRvaAndSizes != 16) {
-		printf("Short PE Header!!!\n");
-		lseek( fd, -(16 - pe->pe_header->OptionalHeader.NumberOfRvaAndSizes) * sizeof(IMAGE_DATA_DIRECTORY), SEEK_CUR);
+ 	return pe;
+}
+
+/**********************************************************************
+ * This maps a loaded PE dll into the address space of the specified process.
+ */
+void
+PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
+	PE_MODREF		*pem;
+	int			i, result;
+	int			load_addr;
+	IMAGE_DATA_DIRECTORY	dir;
+	char			buffer[200];
+	DBG_ADDR		daddr;
+	char			*modname;
+	int			vma_size;
+	
+	pem		= (PE_MODREF*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*pem));
+	/* NOTE: fixup_imports takes care of the correct order */
+	pem->next	= process->modref_list;
+	process->modref_list = pem;
+
+	pem->pe_module	= pe;
+	if (!(pe->pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL)) {
+		if (process->exe_modref)
+			fprintf(stderr,"overwriting old exe_modref... arrgh\n");
+		process->exe_modref = pem;
 	}
 
-	/* read sections */
-	pe->pe_seg = xmalloc(sizeof(IMAGE_SECTION_HEADER) * 
-				   pe->pe_header->FileHeader.NumberOfSections);
-	read( fd, pe->pe_seg, sizeof(IMAGE_SECTION_HEADER) * 
-			pe->pe_header->FileHeader.NumberOfSections);
-
-	load_addr = pe->pe_header->OptionalHeader.ImageBase;
-	pe->base_addr=load_addr;
-	pe->vma_size=0;
+	load_addr 	= pe->pe_header->OptionalHeader.ImageBase;
 	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
-	calc_vma_size(pe);
-	load_addr = (int) VirtualAlloc( (void*)pe->base_addr, pe->vma_size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-        pe->load_addr = load_addr;
+	vma_size = calc_vma_size(pe);
+	load_addr 	= (int) VirtualAlloc( (void*)load_addr, vma_size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+        pem->load_addr	= load_addr;
 
-	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
-		pe->load_addr, pe->vma_size);
+	dprintf_win32(stddeb, "Load addr is really %lx, range %x\n",
+		pem->load_addr, vma_size);
 	
 
 	for(i=0; i < pe->pe_header->FileHeader.NumberOfSections; i++)
 	{
-		/* load only non-BSS segments */
-		if(!(pe->pe_seg[i].Characteristics & 
-			IMAGE_SCN_CNT_UNINITIALIZED_DATA))
-                {
-                    if(lseek(fd,pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
-                       || read(fd,(char*)RVA(pe->pe_seg[i].VirtualAddress),
-                               pe->pe_seg[i].SizeOfRawData) != pe->pe_seg[i].SizeOfRawData)
-                    {
-			fprintf(stderr,"Failed to load section %x\n", i);
-			exit(0);
-                    }
-                }
+		/* memcpy only non-BSS segments */
+		/* FIXME: this should be done by mmap(..MAP_PRIVATE|MAP_FIXED..)
+		 * but it is not possible for (at least) Linux needs an offset
+		 * aligned to a block on the filesystem.
+		 */
+		if(!(pe->pe_seg[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA))
+		    memcpy((char*)RVA(pe->pe_seg[i].VirtualAddress),
+		    	(char*)(pe->mappeddll+pe->pe_seg[i].PointerToRawData),
+			pe->pe_seg[i].SizeOfRawData
+		    );
+
 		result = RVA (pe->pe_seg[i].VirtualAddress);
 #if 1
 		/* not needed, memory is zero */
@@ -456,16 +549,16 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 #endif
 
 		if(strcmp(pe->pe_seg[i].Name, ".idata") == 0)
-			pe->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) result;
+			pem->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) result;
 
 		if(strcmp(pe->pe_seg[i].Name, ".edata") == 0)
-			pe->pe_export = (LPIMAGE_EXPORT_DIRECTORY) result;
+			pem->pe_export = (LPIMAGE_EXPORT_DIRECTORY) result;
 
 		if(strcmp(pe->pe_seg[i].Name, ".rsrc") == 0)
-			pe->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) result;
+			pem->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) result;
 
 		if(strcmp(pe->pe_seg[i].Name, ".reloc") == 0)
-			pe->pe_reloc = (LPIMAGE_BASE_RELOCATION) result;
+			pem->pe_reloc = (LPIMAGE_BASE_RELOCATION) result;
 	}
 
 	/* There is word that the actual loader does not care about the
@@ -473,26 +566,26 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
 	if(dir.Size)
 	{
-		if(pe->pe_export && (int)pe->pe_export!=RVA(dir.VirtualAddress))
+		if(pem->pe_export && (int)pem->pe_export!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong export directory??\n");
 		/* always trust the directory */
-		pe->pe_export = (LPIMAGE_EXPORT_DIRECTORY) RVA(dir.VirtualAddress);
+		pem->pe_export = (LPIMAGE_EXPORT_DIRECTORY) RVA(dir.VirtualAddress);
 	}
 
 	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
 	if(dir.Size)
 	{
-		if(pe->pe_import && (int)pe->pe_import!=RVA(dir.VirtualAddress))
+		if(pem->pe_import && (int)pem->pe_import!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong import directory??\n");
-		pe->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) RVA(dir.VirtualAddress);
+		pem->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) RVA(dir.VirtualAddress);
 	}
 
 	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
 	if(dir.Size)
 	{
-		if(pe->pe_resource && (int)pe->pe_resource!=RVA(dir.VirtualAddress))
+		if(pem->pe_resource && (int)pem->pe_resource!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong resource directory??\n");
-		pe->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) RVA(dir.VirtualAddress);
+		pem->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) RVA(dir.VirtualAddress);
 	}
 
 	if(pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size)
@@ -506,15 +599,15 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
 	if(dir.Size)
 	{
-		if(pe->pe_reloc && (int)pe->pe_reloc!= RVA(dir.VirtualAddress))
+		if(pem->pe_reloc && (int)pem->pe_reloc!= RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong relocation list??\n");
-		pe->pe_reloc = (void *) RVA(dir.VirtualAddress);
+		pem->pe_reloc = (void *) RVA(dir.VirtualAddress);
 	}
 
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_DEBUG].Size)
 	  {
-	    DEBUG_RegisterDebugInfo(fd, pe, load_addr, 
+	    DEBUG_RegisterDebugInfo(pe, load_addr, 
 			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
 			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
 	  }
@@ -549,18 +642,12 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 	if(pe->pe_header->OptionalHeader.DataDirectory[15].Size)
 		dprintf_win32(stdnimp,"Unknown directory 15 ignored\n");
 
-	if(pe->pe_reloc) do_relocations(pe);
-
-	/* Do exports before imports because fixup_imports
-	 * may load a module that references this module.
-	 */
-
-	if(pe->pe_export) dump_exports(pe->pe_export,load_addr);
-	*ret_pe = pe;	/* make export list available for GetProcAddress */
-	if(pe->pe_import) fixup_imports(pe, hModule);
+	if(pem->pe_reloc)	do_relocations(pem);
+	if(pem->pe_export)	dump_exports(pem->pe_export,load_addr);
+	if(pem->pe_import)	fixup_imports(process,pem);
   		
-	if (pe->pe_export)
-		modname = (char*)RVA(pe->pe_export->Name);
+	if (pem->pe_export)
+		modname = (char*)RVA(pem->pe_export->Name);
 	else {
 		char *s;
 		modname = s = ofs->szPathName;
@@ -587,31 +674,70 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 
 HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
 
+/******************************************************************************
+ * The PE Library Loader frontend. 
+ * FIXME: handle the flags.
+ */
+HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
+	OFSTRUCT	ofs;
+	HMODULE32	hModule;
+	NE_MODULE	*pModule;
+
+	if ((hModule = MODULE_FindModule( name )))
+		return hModule;
+
+	/* try to load builtin, enabled modules first */
+	if ((hModule = BUILTIN_LoadModule( name, FALSE )))
+		return hModule;
+
+	/* try to open the specified file */
+	if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
+		/* Now try the built-in even if disabled */
+		if ((hModule = BUILTIN_LoadModule( name, TRUE ))) {
+			fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
+			return hModule;
+		}
+		return 1;
+	}
+	if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {
+		_lclose32(hFile);
+		return hModule;
+	}
+
+	pModule		= (NE_MODULE *)GlobalLock16( hModule );
+	pModule->flags	= NE_FFLAGS_WIN32;
+
+	/* FIXME: check if pe image loaded already ... */
+	pModule->pe_module = PE_LoadImage( FILE_GetUnixHandle(hFile) );
+	_lclose32(hFile);
+	if (!pModule->pe_module)
+		return 21;
+	/* recurse */
+	PE_MapImage(pModule->pe_module,(PDB32*)GetCurrentProcessId(),&ofs,flags);
+	return pModule->pe_module->mappeddll;
+}
+
+/*****************************************************************************
+ * Load the PE main .EXE. All other loading is done by PE_LoadLibraryEx32A
+ * FIXME: this function should use PE_LoadLibraryEx32A, but currently can't
+ * due to the TASK_CreateTask stuff.
+ */
 HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
 {
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
-    IMAGE_DOS_HEADER mz_header;
-    int fd;
 
     if ((hModule = MODULE_CreateDummyModule( ofs )) < 32) return hModule;
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->flags = NE_FFLAGS_WIN32;
 
-    /* FIXME: Hack because PE_LoadModule is recursive */
-    fd = dup( FILE_GetUnixHandle(hFile) );
-    _lclose32( hFile );
-    lseek( fd, 0, SEEK_SET );
-    read( fd, &mz_header, sizeof(mz_header) );
-
-    PE_LoadImage( &pModule->pe_module, fd, hModule, mz_header.e_lfanew, ofs );
+    pModule->pe_module = PE_LoadImage( FILE_GetUnixHandle(hFile) );
+    _lclose32(hFile);
     if (!pModule->pe_module)
     	return 21;
-    close( fd );
 
     hInstance = MODULE_CreateInstance( hModule, params );
-
     if (!(pModule->pe_module->pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
         TASK_CreateTask( hModule, hInstance, 0,
@@ -619,10 +745,11 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
                          (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
                          *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
     }
+    PE_MapImage(pModule->pe_module,(PDB32*)GetCurrentProcessId(),ofs,0);
     return hInstance;
 }
 
-int PE_UnloadImage( HMODULE16 hModule )
+int PE_UnloadImage( HMODULE32 hModule )
 {
 	printf("PEunloadImage() called!\n");
 	/* free resources, image, unmap */
@@ -634,19 +761,13 @@ int PE_UnloadImage( HMODULE16 hModule )
  * DLL_PROCESS_ATTACH. Only new created threads do DLL_THREAD_ATTACH
  * (SDK)
  */
-static void PE_InitDLL(HMODULE16 hModule, DWORD type,LPVOID lpReserved)
+static void PE_InitDLL(PE_MODREF *pem, DWORD type,LPVOID lpReserved)
 {
-    NE_MODULE *pModule;
-    PE_MODULE *pe;
-    unsigned int load_addr;
+    PE_MODULE		*pe = pem->pe_module;
+    unsigned int	load_addr = pem->load_addr;
 
-    hModule = GetExePtr(hModule);
-    if (!(pModule = MODULE_GetPtr(hModule))) return;
-    if (!(pModule->flags & NE_FFLAGS_WIN32) || !(pe = pModule->pe_module))
-        return;
-
-    load_addr = pe->load_addr;
-
+    if (type==DLL_PROCESS_ATTACH)
+	pem->flags |= PE_MODREF_PROCESS_ATTACHED;
 #ifndef WINELIB
     if (Options.debug) {
             DBG_ADDR addr = { NULL, 0, RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint) };
@@ -666,58 +787,81 @@ static void PE_InitDLL(HMODULE16 hModule, DWORD type,LPVOID lpReserved)
     if (	(pe->pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
 		(pe->pe_header->OptionalHeader.AddressOfEntryPoint)
     ) {
-	printf("InitPEDLL() called!\n");
-	CallDLLEntryProc32( 
-	    (FARPROC32)RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint),
-	    hModule,
-	    type,
-	    (DWORD)lpReserved
-	);
+        FARPROC32 entry = (FARPROC32)RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
+        dprintf_relay( stddeb, "CallTo32(entryproc=%p,module=%d,type=%ld,res=%p)\n",
+                       entry, pe->mappeddll, type, lpReserved );
+        entry( pe->mappeddll, type, lpReserved );
     }
 }
 
-void PE_InitializeDLLs(HMODULE16 hModule,DWORD type,LPVOID lpReserved)
-{
-	NE_MODULE *pModule;
-	HMODULE16 *pDLL;
-	pModule = MODULE_GetPtr( GetExePtr(hModule) );
-	if (pModule->dlls_to_init)
-	{
-		HGLOBAL16 to_init = pModule->dlls_to_init;
-		pModule->dlls_to_init = 0;
-	
-		for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
-		{
-                    PE_InitializeDLLs( *pDLL, type, lpReserved);
+/* Call the DLLentry function of all dlls used by that process.
+ * (NOTE: this may recursively call this function (if a library calls
+ * LoadLibrary) ... but it won't matter)
+ */
+void PE_InitializeDLLs(PDB32 *process,DWORD type,LPVOID lpReserved) {
+	PE_MODREF	*pem;
+
+	pem = process->modref_list;
+	while (pem) {
+		if (pem->flags & PE_MODREF_NO_DLL_CALLS) {
+			pem = pem->next;
+			continue;
 		}
-		GlobalFree16( to_init );
+		if (type==DLL_PROCESS_ATTACH) {
+			if (pem->flags & PE_MODREF_PROCESS_ATTACHED) {
+				pem = pem->next;
+				continue;
+			}
+		}
+		PE_InitDLL( pem, type, lpReserved );
+		pem = pem->next;
 	}
-	PE_InitDLL( hModule, type, lpReserved );
 }
 
-void PE_InitTls( PE_MODULE *module )
+void PE_InitTls(PDB32 *pdb)
 {
-   /* FIXME: tls callbacks ??? */
-   DWORD  index;
-   DWORD  datasize;
-   DWORD  size;
-   LPVOID mem;
-   LPIMAGE_TLS_DIRECTORY pdir;
+	/* FIXME: tls callbacks ??? */
+	PE_MODREF		*pem;
+	IMAGE_NT_HEADERS	*peh;
+	DWORD			size,datasize,index;
+	LPVOID			mem;
+	LPIMAGE_TLS_DIRECTORY	pdir;
 
-    if (!module->pe_header->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
-        return;
+	pem = pdb->modref_list;
+	while (pem) {
+		peh = pem->pe_module->pe_header;
+		if (!peh->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress) {
+			pem = pem->next;
+			continue;
+		}
+		pdir = (LPVOID)(pem->load_addr + peh->OptionalHeader.
+			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
+		index	= TlsAlloc();
+		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
+		size	= datasize + pdir->SizeOfZeroFill;
+		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+		memcpy(mem,(LPVOID) pdir->StartAddressOfRawData, datasize);
+		TlsSetValue(index,mem);
+		*(pdir->AddressOfIndex)=index;   
+		pem=pem->next;
+	}
+}
 
-    pdir = (LPVOID)(module->load_addr + module->pe_header->OptionalHeader.
-               DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
-    index = TlsAlloc();
-    datasize = pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
-    size     = datasize + pdir->SizeOfZeroFill;
-        
-    mem = VirtualAlloc(0,size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
-    
-    memcpy(mem,(LPVOID) pdir->StartAddressOfRawData, datasize);
-    TlsSetValue(index,mem);
-    *(pdir->AddressOfIndex)=index;   
+/****************************************************************************
+ *		DisableThreadLibraryCalls (KERNEL32.74)
+ * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
+ */
+BOOL32 WINAPI DisableThreadLibraryCalls(HMODULE32 hModule)
+{
+	PDB32	*process = (PDB32*)GetCurrentProcessId();
+	PE_MODREF	*pem = process->modref_list;
+
+	while (pem) {
+		if (pem->pe_module->mappeddll == hModule)
+			pem->flags|=PE_MODREF_NO_DLL_CALLS;
+		pem = pem->next;
+	}
+	return TRUE;
 }
 
 #endif /* WINELIB */

@@ -39,7 +39,11 @@ static const char * const DefSysColors[] =
     "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */
     "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
     "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
-    "ButtonHilight", "255 255 255"   /* COLOR_BTNHIGHLIGHT        */
+    "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
+    "3DDarkShadow", "32 32 32",      /* COLOR_3DDKSHADOW          */
+    "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
+    "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
+    "InfoBackground", "255 255 192"  /* COLOR_INFOBK              */
 };
 
 static const char * const DefSysColors95[] =
@@ -64,11 +68,15 @@ static const char * const DefSysColors95[] =
     "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */
     "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
     "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
-    "ButtonHilight", "255 255 255"   /* COLOR_BTNHIGHLIGHT        */
+    "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
+    "3DDarkShadow", "32 32 32",      /* COLOR_3DDKSHADOW          */
+    "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
+    "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
+    "InfoBackground", "255 255 192"  /* COLOR_INFOBK              */
 };
 
 
-#define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
+#define NUM_SYS_COLORS     (COLOR_INFOBK+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 
@@ -80,6 +88,7 @@ static COLORREF SysColors[NUM_SYS_COLORS];
  */
 static void SYSCOLOR_SetColor( int index, COLORREF color )
 {
+    if (index < 0 || index >= NUM_SYS_COLORS) return;
     SysColors[index] = color;
     switch(index)
     {
@@ -149,6 +158,11 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	DeleteObject32( sysColorObjects.hbrushBtnHighlight );
 	sysColorObjects.hbrushBtnHighlight = CreateSolidBrush32( color );
 	break;
+    case COLOR_3DDKSHADOW:
+    case COLOR_3DLIGHT:
+    case COLOR_INFOTEXT:
+    case COLOR_INFOBK:
+	break;
     }
 }
 
@@ -166,7 +180,7 @@ void SYSCOLOR_Init(void)
 	 i < NUM_SYS_COLORS; i++, p += 2)
     {
 	GetProfileString32A( "colors", p[0], p[1], buffer, 100 );
-	if (!sscanf( buffer, " %d %d %d", &r, &g, &b )) r = g = b = 0;
+	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) != 3) r = g = b = 0;
 	SYSCOLOR_SetColor( i, RGB(r,g,b) );
     }
 }
@@ -177,7 +191,7 @@ void SYSCOLOR_Init(void)
  */
 COLORREF WINAPI GetSysColor16( INT16 nIndex )
 {
-    return SysColors[nIndex];
+    return GetSysColor32 (nIndex);
 }
 
 
@@ -186,15 +200,19 @@ COLORREF WINAPI GetSysColor16( INT16 nIndex )
  */
 COLORREF WINAPI GetSysColor32( INT32 nIndex )
 {
-    return SysColors[nIndex];
+    if (nIndex >= 0 && nIndex < NUM_SYS_COLORS)
+	return SysColors[nIndex];
+    else
+	return 0;
 }
 
 
 /*************************************************************************
  *             SetSysColors16   (USER.181)
  */
+/* FIXME -- check return type and insert comment if correct.  */
 VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
-                            const COLORREF *lpColorValues )
+			    const COLORREF *lpColorValues )
 {
     int i;
 

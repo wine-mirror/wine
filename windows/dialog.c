@@ -486,11 +486,14 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 
       /* Load menu */
 
-    if (template.menuName)
-    {
-        LPSTR str = SEGPTR_STRDUP( template.menuName );  /* FIXME: win32 */
-        hMenu = LoadMenu16( hInst, SEGPTR_GET(str) );
-        SEGPTR_FREE( str );
+    if (template.menuName) {
+	if (!HIWORD(hInst)) /* win32 modules always have hiword set */
+        {
+            LPSTR str = SEGPTR_STRDUP( template.menuName );
+	    hMenu = LoadMenu16( hInst, SEGPTR_GET(str) );
+            SEGPTR_FREE( str );
+	} else /* win32 modules always have hiword set */
+	    hMenu = LoadMenu32A( hInst, template.menuName );
     }
 
       /* Create custom font if needed */
@@ -566,7 +569,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
                                  rect.left, rect.top, rect.right, rect.bottom,
                                  owner, hMenu, hInst, NULL );
     else
-        hwnd = CreateWindowEx16(template.exStyle, template.className,
+        hwnd = CreateWindowEx32A(template.exStyle, template.className,
                                 template.caption, template.style & ~WS_VISIBLE,
                                 rect.left, rect.top, rect.right, rect.bottom,
                                 owner, hMenu, hInst, NULL );
@@ -602,12 +605,17 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     {
        /* Send initialisation messages and set focus */
 
-       dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
-       if (SendMessage32A( hwnd, WM_INITDIALOG,
-                           (WPARAM32)dlgInfo->hwndFocus, param ))
-           SetFocus32( dlgInfo->hwndFocus );
-       if (template.style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
-       return hwnd;
+	dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
+
+	if (SendMessage32A( hwnd, WM_INITDIALOG, (WPARAM32)dlgInfo->hwndFocus, param ))
+            SetFocus32( dlgInfo->hwndFocus );
+
+	if (template.style & WS_VISIBLE && !(wndPtr->dwStyle & WS_VISIBLE)) 
+	{
+	   ShowWindow32( hwnd, SW_SHOWNORMAL );	/* SW_SHOW doesn't always work */
+	   UpdateWindow32( hwnd );
+	}
+	return hwnd;
     }
 
     if( IsWindow32(hwnd) ) DestroyWindow32( hwnd );

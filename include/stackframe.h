@@ -37,9 +37,10 @@ typedef struct
     DWORD   edx;
     DWORD   ecx;
     DWORD   ebx;
+    DWORD   restore_addr;   /* return address for restoring code selector */
+    DWORD   codeselector;   /* code selector to restore */
     DWORD   ebp;            /* saved 32-bit frame pointer */
-    DWORD   retaddr;        /* return address */
-    DWORD   codeselector;   /* code selector for return address */
+    DWORD   retaddr;        /* actual return address */
     DWORD   args[1];        /* arguments to 16-bit function */
 } STACK32FRAME;
 

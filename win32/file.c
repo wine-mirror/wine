@@ -239,7 +239,7 @@ BOOL32 WINAPI SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
  */
 VOID WINAPI SetFileApisToOEM(void)
 {
-    fprintf(stdnimp,"SetFileApisToOEM(),stub!\n");
+    /*fprintf(stdnimp,"SetFileApisToOEM(),stub!\n");*/
 }
 
 
@@ -248,7 +248,7 @@ VOID WINAPI SetFileApisToOEM(void)
  */
 VOID WINAPI SetFileApisToANSI(void)
 {
-    fprintf(stdnimp,"SetFileApisToANSI(),stub!\n");
+    /*fprintf(stdnimp,"SetFileApisToANSI(),stub!\n");*/
 }
 
 

@@ -299,13 +299,13 @@ static void DIB_SetImageBits_4( DWORD lines, const BYTE *srcbits,
 
     while (lines--)
     {
-	for (i = srcwidth/2, x = 0; i > 0; i--)
+	for (i = dstwidth/2, x = 0; i > 0; i--)
 	{
 	    BYTE pix = *bits++;
 	    XPutPixel( bmpImage, x++, lines, colors[pix >> 4] );
 	    XPutPixel( bmpImage, x++, lines, colors[pix & 0x0f] );
 	}
-        if (srcwidth & 1) XPutPixel( bmpImage, x, lines, colors[*bits >> 4] );
+        if (dstwidth & 1) XPutPixel( bmpImage, x, lines, colors[*bits >> 4] );
         srcbits += linebytes;
         bits	 = srcbits;
     }
@@ -1125,3 +1125,15 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
         SetDIBits32( hdc, handle, 0, height, bits, data, coloruse );
     return handle;
 }
+
+HBITMAP32 CreateDIBSection(
+	HDC32 hdc,BITMAPINFO *bmi,UINT32 usage, LPVOID **bits,HANDLE32 section,
+	DWORD offset
+) {
+	fprintf(stderr,"CreateDIBSection(%d,[w=%ld,h=%ld],%d,%p,0x%08x,%ld),stub\n",
+		hdc,bmi->bmiHeader.biWidth,bmi->bmiHeader.biHeight,usage,bits,section,offset
+	);
+	*bits = 0xCafeBabe;
+	return 0;
+}
+

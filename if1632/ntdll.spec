@@ -1,6 +1,5 @@
 name	ntdll
 type	win32
-base	0
 
 001 stub CsrAllocateCaptureBuffer
 002 stub CsrAllocateCapturePointer
@@ -873,82 +872,82 @@ base	0
 869 stub _snprintf
 870 stub _snwprintf
 871 stub _splitpath
-872 stub _strcmpi
-873 stdcall _stricmp(ptr ptr) lstrcmpi32A
+872 cdecl _strcmpi(ptr ptr) CRTDLL__strcmpi
+873 cdecl _stricmp(ptr ptr) CRTDLL__strcmpi
 874 stub _strlwr
-875 stub _strnicmp
-876 stdcall _strupr(ptr) CRTDLL__strupr
+875 cdecl _strnicmp(ptr ptr long) CRTDLL__strnicmp
+876 cdecl _strupr(ptr) CRTDLL__strupr
 877 stub _ultoa
 878 stub _vsnprintf
-879 stdcall _wcsicmp(ptr ptr) lstrcmpi32W
-880 stdcall _wcslwr(ptr) CRTDLL__wcslwr
-881 stdcall _wcsnicmp(ptr ptr long) lstrncmpi32W
-882 stdcall _wcsupr(ptr) CRTDLL__wcsupr
+879 cdecl _wcsicmp(ptr ptr) CRTDLL__wcsicmp
+880 cdecl _wcslwr(ptr) CRTDLL__wcslwr
+881 cdecl _wcsnicmp(ptr ptr long) CRTDLL__wcsnicmp
+882 cdecl _wcsupr(ptr) CRTDLL__wcsupr
 883 stub abs
 884 stub atan
-885 stdcall atoi(ptr) CRTDLL_atoi
-886 stdcall atol(ptr) CRTDLL_atol
+885 cdecl atoi(ptr) atoi
+886 cdecl atol(ptr) atol
 887 stub ceil
 888 stub cos
 889 stub fabs
 890 stub floor
-891 stdcall isalpha(long) CRTDLL_isalpha
-892 stdcall isdigit(long) CRTDLL_isdigit
-893 stdcall islower(long) CRTDLL_islower
-894 stdcall isprint(long) CRTDLL_isprint
-895 stdcall isspace(long) CRTDLL_isspace
-896 stdcall isupper(long) CRTDLL_isupper
+891 cdecl isalpha(long) isalpha
+892 cdecl isdigit(long) isdigit
+893 cdecl islower(long) islower
+894 cdecl isprint(long) isprint
+895 cdecl isspace(long) isspace
+896 cdecl isupper(long) isupper
 897 stub iswalpha
 898 stub iswctype
-899 stdcall isxdigit(long) CRTDLL_isxdigit
+899 cdecl isxdigit(long) isxdigit
 900 stub labs
 901 stub log
 902 stub mbstowcs
-903 stub memchr
-904 stub memcmp
-905 stub memcpy
-906 stdcall memmove(ptr ptr long) memmove
-907 stub memset
+903 cdecl memchr(ptr long long) memchr
+904 cdecl memcmp(ptr ptr long) memcmp
+905 cdecl memcpy(ptr ptr long) memcpy
+906 cdecl memmove(ptr ptr long) memmove
+907 cdecl memset(ptr long long) memset
 908 stub pow
 909 stub qsort
 910 stub sin
-911 stdcall sprintf() CRTDLL_sprintf
+911 varargs sprintf() wsprintf32A
 912 stub sqrt
-913 stdcall sscanf() CRTDLL_sscanf
-914 stub strcat
-915 stdcall strchr(ptr long) strchr
-916 stdcall strcmp(ptr ptr) lstrcmp32A
-917 stdcall strcpy(ptr ptr) lstrcpy32A
-918 stub strcspn
-919 stdcall strlen(ptr) lstrlen32A
-920 stub strncat
-921 stub strncmp
-922 stub strncpy
-923 stub strpbrk
-924 stdcall strrchr(ptr long) strrchr
-925 stub strspn
-926 stub strstr
-927 stdcall swprintf() CRTDLL_swprintf
+913 varargs sscanf() sscanf
+914 cdecl strcat(ptr ptr) strcat
+915 cdecl strchr(ptr long) strchr
+916 cdecl strcmp(ptr ptr) strcmp
+917 cdecl strcpy(ptr ptr) strcpy
+918 cdecl strcspn(ptr ptr) strcspn
+919 cdecl strlen(ptr) strlen
+920 cdecl strncat(ptr ptr long) strncat
+921 cdecl strncmp(ptr ptr long) strncmp
+922 cdecl strncpy(ptr ptr long) strncpy
+923 cdecl strpbrk(ptr ptr long) strpbrk
+924 cdecl strrchr(ptr long) strrchr
+925 cdecl strspn(ptr ptr) strspn
+926 cdecl strstr(ptr ptr) strstr
+927 varargs swprintf() wsprintf32W
 928 stub tan
-929 stdcall tolower(long) CRTDLL_tolower
-930 stdcall toupper(long) CRTDLL_toupper
+929 cdecl tolower(long) tolower
+930 cdecl toupper(long) toupper
 931 stub towlower
 932 stub towupper
-933 stub vsprintf
-934 stdcall wcscat(ptr ptr) lstrcat32W
-935 stdcall wcschr(ptr long) CRTDLL_wcschr
+933 cdecl vsprintf(ptr ptr ptr) CRTDLL_vsprintf
+934 cdecl wcscat(ptr ptr) CRTDLL_wcscat
+935 cdecl wcschr(ptr long) CRTDLL_wcschr
 936 stub wcscmp
-937 stdcall wcscpy(ptr ptr) lstrcpy32W
+937 cdecl wcscpy(ptr ptr) CRTDLL_wcscpy
 938 stub wcscspn
-939 stdcall wcslen(ptr) lstrlen32W
+939 cdecl wcslen(ptr) CRTDLL_wcslen
 940 stub wcsncat
 941 stub wcsncmp
-942 stdcall wcsncpy(ptr ptr long) lstrcpyn32W
+942 cdecl wcsncpy(ptr ptr long) CRTDLL_wcsncpy
 943 stub wcspbrk
-944 stdcall wcsrchr(ptr long) CRTDLL_wcsrchr
+944 cdecl wcsrchr(ptr long) CRTDLL_wcsrchr
 945 stub wcsspn
-946 stdcall wcsstr(ptr ptr) CRTDLL_wcsstr
+946 cdecl wcsstr(ptr ptr) CRTDLL_wcsstr
 947 stub wcstok
 948 stub wcstol
-949 stdcall wcstombs(ptr ptr) lstrcpyWtoA
+949 cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
 950 stub wcstoul

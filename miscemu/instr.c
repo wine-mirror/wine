@@ -187,7 +187,9 @@ static BYTE *INSTR_GetOperandAddr( SIGCONTEXT *context, BYTE *instr,
     }
     if (segprefix != -1) seg = segprefix;
 
-    /* FIXME: should check limit of the segment here */
+    /* Make sure the segment and offset are valid */
+    if (((seg & 7) != 7) || IS_SELECTOR_FREE(seg)) return NULL;
+    if (GET_SEL_LIMIT(seg) < (base + (index << ss))) return NULL;
     return (BYTE *)PTR_SEG_OFF_TO_LIN( seg, (base + (index << ss)) );
 #undef GET_VAL
 }

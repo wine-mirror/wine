@@ -290,6 +290,25 @@ void EVENT_DestroyWindow( WND *pWnd )
    while( XCheckWindowEvent(display, pWnd->window, NoEventMask, &xe) );
 }
 
+
+/***********************************************************************
+ *           IsUserIdle		(USER.333)
+ *
+ * Check if we have pending X events.
+ */
+BOOL16 WINAPI IsUserIdle(void)
+{
+    struct timeval timeout = {0, 0};
+    fd_set check_set;
+
+    FD_ZERO(&check_set);
+    FD_SET(__event_x_connection, &check_set);
+    if( select(__event_x_connection + 1, &check_set, NULL, NULL, &timeout) > 0 )
+	return TRUE;
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           EVENT_WaitNetEvent
  *

@@ -102,15 +102,6 @@ static BYTE *GetCurrentDTA(void)
 }
 
 
-static void ChopOffWhiteSpace(char *string)
-{
-	int length;
-
-	for (length = strlen(string) ; length ; length--)
-		if (string[length] == ' ')
-			string[length] = '\0';
-}
-
 void CreateBPB(int drive, BYTE *data)
 {
 	if (drive > 1) {
@@ -760,87 +751,11 @@ static int INT21_FindNextFCB( CONTEXT *context )
 static void DeleteFileFCB( CONTEXT *context )
 {
     fprintf( stderr, "DeleteFileFCB: not implemented yet\n" );
-#if 0
-	BYTE *fcb = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	struct dosdirent *dp;
-	char temp[256], *ptr;
-        int drive = DOS_GET_DRIVE( *fcb );
-
-	DumpFCB( fcb );
-
-        temp[0] = '\\';
-	strcpy(temp+1, DRIVE_GetDosCwd(drive));
-	strcat(temp, "\\");
-	strncat(temp, fcb + 1, 8);
-	ChopOffWhiteSpace(temp);
-	strncat(temp, fcb + 9, 3);
-	ChopOffWhiteSpace(temp);
-
-	if ((dp = DOS_opendir(temp)) == NULL) {
-		Error(InvalidDrive, EC_MediaError , EL_Disk);
-		AX_reg(context) = 0xff;
-		return;
-	}
-
-        temp[0] = '\\';
-	strcpy(temp+1, DRIVE_GetDosCwd(drive) );
-	strcat(temp, "\\");
-	
-	ptr = temp + strlen(temp);
-	
-	while (DOS_readdir(dp) != NULL)
-	{
-		strcpy(ptr, dp->filename);
-		dprintf_int(stddeb, "int21: delete file %s\n", temp);
-		/* unlink(DOS_GetUnixFileName(temp)); */
-	}
-	DOS_closedir(dp);
-	AX_reg(context) = 0;
-#endif
 }
 
 static void RenameFileFCB( CONTEXT *context )
 {
     fprintf( stderr, "RenameFileFCB: not implemented yet\n" );
-#if 0
-	BYTE *fcb = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	struct dosdirent *dp;
-	char temp[256], oldname[256], newname[256], *oldnameptr, *newnameptr;
-        int drive = DOS_GET_DRIVE( *fcb );
-
-	DumpFCB( fcb );
-
-        temp[0] = '\\';
-	strcpy(temp+1, DRIVE_GetDosCwd(drive) );
-	strcat(temp, "\\");
-	strncat(temp, fcb + 1, 8);
-	ChopOffWhiteSpace(temp);
-	strncat(temp, fcb + 9, 3);
-	ChopOffWhiteSpace(temp);
-
-	if ((dp = DOS_opendir(temp)) == NULL) {
-		Error(InvalidDrive, EC_MediaError , EL_Disk);
-		AX_reg(context) = 0xff;
-		return;
-	}
-
-        oldname[0] = '\\';
-	strcpy(oldname+1, DRIVE_GetDosCwd(drive) );
-	strcat(oldname, "\\");
-        strcpy( newname, oldname );
-	oldnameptr = oldname + strlen(oldname);
-	newnameptr = newname + strlen(newname);
-	
-	while (DOS_readdir(dp) != NULL)
-	{
-		strcpy(oldnameptr, dp->filename);
-		strcpy(newnameptr, fcb + 1);
-		dprintf_int(stddeb, "int21: renamefile %s -> %s\n",
-			oldname, newname);
-	}
-	DOS_closedir(dp);
-	AX_reg(context) = 0;
-#endif
 }
 
 
@@ -1627,6 +1542,14 @@ void WINAPI DOS3Call( CONTEXT *context )
 	    }
 	    break;
         case 0x41:  /* Delete file */
+	    if (!DeleteFile32A(PTR_SEG_OFF_TO_LIN(
+	    				DS_reg(context),
+					DX_reg(context))
+	    )) {
+		SET_CFLAG(context);
+		AL_reg(context) = DOS_ExtendedError;
+	    }
+	    break;
         case 0x56:  /* Move (rename) file */
         default:
             fprintf( stderr, "Unimplemented int21 long file name function:\n");

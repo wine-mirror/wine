@@ -270,41 +270,6 @@ HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
 
 
 /***********************************************************************
- *           WIN_SendParentNotify
- *
- * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
- * the window has the WS_EX_NOPARENTNOTIFY style.
- */
-void WIN_SendParentNotify(HWND32 hwnd, WORD event, WORD idChild, LPARAM lValue)
-{
-    LPPOINT16 lppt = (LPPOINT16)&lValue;
-    WND     *wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL32 bMouse = ((event <= WM_MOUSELAST) && (event >= WM_MOUSEFIRST));
-
-    /* if lValue contains cursor coordinates they have to be
-     * mapped to the client area of parent window */
-
-    if (bMouse) MapWindowPoints16( 0, hwnd, lppt, 1 );
-
-    while (wndPtr)
-    {
-        if ((wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) ||
-	   !(wndPtr->dwStyle & WS_CHILD)) break;
-
-        if (bMouse)
-        {
-	    lppt->x += wndPtr->rectClient.left;
-	    lppt->y += wndPtr->rectClient.top;
-        }
-
-        wndPtr = wndPtr->parent;
-	SendMessage32A( wndPtr->hwndSelf, WM_PARENTNOTIFY, 
-                        MAKEWPARAM( event, idChild ), lValue );
-    }
-}
-
-
-/***********************************************************************
  *           WIN_DestroyWindow
  *
  * Destroy storage associated to a window. "Internals" p.358
@@ -377,20 +342,50 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
 /***********************************************************************
  *           WIN_ResetQueueWindows
+ *
+ * Reset the queue of all the children of a given window.
+ * Return TRUE if something was done.
  */
-void WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
+BOOL32 WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
 {
-    WND* next;
+    BOOL32 ret = FALSE;
 
-    while (wnd)
+    if (hNew)  /* Set a new queue */
     {
-        next = wnd->next;
-        if (wnd->hmemTaskQ == hQueue)
-	   if( hNew ) wnd->hmemTaskQ = hNew;
-	   else DestroyWindow32( wnd->hwndSelf );
-        else WIN_ResetQueueWindows( wnd->child, hQueue, hNew );
-        wnd = next;
+        for (wnd = wnd->child; (wnd); wnd = wnd->next)
+        {
+            if (wnd->hmemTaskQ == hQueue)
+            {
+                wnd->hmemTaskQ = hNew;
+                ret = TRUE;
+            }
+            if (wnd->child)
+                ret |= WIN_ResetQueueWindows( wnd->child, hQueue, hNew );
+        }
     }
+    else  /* Queue is being destroyed */
+    {
+        while (wnd->child)
+        {
+            WND *tmp = wnd->child;
+            ret = FALSE;
+            while (tmp)
+            {
+                if (tmp->hmemTaskQ == hQueue)
+                {
+                    DestroyWindow32( tmp->hwndSelf );
+                    ret = TRUE;
+                    break;
+                }
+                if (tmp->child && WIN_ResetQueueWindows(tmp->child,hQueue,0))
+                    ret = TRUE;
+                else
+                    tmp = tmp->next;
+            }
+            if (!ret) break;
+        }
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -465,7 +460,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     WND *wndPtr;
     HWND16 hwnd, hwndLinkAfter;
     POINT32 maxSize, maxPos, minTrack, maxTrack;
-    LRESULT (*localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
+    LRESULT (WINAPI *localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
 
     dprintf_win( stddeb, "CreateWindowEx: " );
     if (HIWORD(cs->lpszName)) dprintf_win( stddeb, "'%s' ", cs->lpszName );
@@ -495,9 +490,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     }
 
     /* Find the window class */
-
-    if (!(classPtr = CLASS_FindClassByAtom( classAtom,
-                                            GetExePtr(cs->hInstance) )))
+    if (!(classPtr = CLASS_FindClassByAtom( classAtom, win32?cs->hInstance:GetExePtr(cs->hInstance) )))
     {
         char buffer[256];
         GlobalGetAtomName32A( classAtom, buffer, sizeof(buffer) );
@@ -703,8 +696,11 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                        LoadMenu(cs->hInstance,SEGPTR_GET(classPtr->menuNameA)):
                        LoadMenu(cs->hInstance,(SEGPTR)classPtr->menuNameA);
 #else
-            SEGPTR menuName = (SEGPTR)GetClassLong16( hwnd, GCL_MENUNAME );
-            if (menuName) cs->hMenu = LoadMenu16( cs->hInstance, menuName );
+	    SEGPTR menuName = (SEGPTR)GetClassLong16( hwnd, GCL_MENUNAME );
+	    if (HIWORD(cs->hInstance))
+	    	cs->hMenu = LoadMenu32A(cs->hInstance,PTR_SEG_TO_LIN(menuName));
+	    else
+	    	cs->hMenu = LoadMenu16(cs->hInstance,menuName);
 #endif
         }
         if (cs->hMenu) SetMenu32( hwnd, cs->hMenu );
@@ -732,6 +728,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             if (!(wndPtr->flags & WIN_NEED_SIZE))
             {
                 /* send it anyway */
+
                 SendMessage32A( hwnd, WM_SIZE, SIZE_RESTORED,
                                 MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
                                          wndPtr->rectClient.bottom-wndPtr->rectClient.top));
@@ -740,27 +737,27 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                                           wndPtr->rectClient.top ) );
             }
 
-            WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LPARAM)hwnd );
-            if (!IsWindow32(hwnd)) return 0;
-
             /* Show the window, maximizing or minimizing if needed */
 
-            if (wndPtr->dwStyle & WS_MINIMIZE)
+            if (wndPtr->dwStyle & (WS_MINIMIZE | WS_MAXIMIZE))
             {
 		RECT16 newPos;
+		UINT16 swFlag = (wndPtr->dwStyle & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
                 wndPtr->dwStyle &= ~(WS_MAXIMIZE | WS_MINIMIZE);
-		WINPOS_MinMaximize( wndPtr, SW_MINIMIZE, &newPos );
-                SetWindowPos32( hwnd, 0, newPos.left, newPos.top, newPos.right, newPos.bottom,
-                                SWP_FRAMECHANGED | ((GetActiveWindow32())? SWP_NOACTIVATE : 0));
+		WINPOS_MinMaximize( wndPtr, swFlag, &newPos );
+		swFlag = ((wndPtr->dwStyle & WS_CHILD) || GetActiveWindow32()) ? SWP_NOACTIVATE : 0;
+                SetWindowPos32( hwnd, 0, newPos.left, newPos.top, 
+					 newPos.right, newPos.bottom, SWP_FRAMECHANGED | swFlag );
             }
-            else if (wndPtr->dwStyle & WS_MAXIMIZE)
-            {
-		RECT16 newPos;
-		wndPtr->dwStyle &= ~(WS_MAXIMIZE | WS_MINIMIZE);
-		WINPOS_MinMaximize( wndPtr, SW_MAXIMIZE, &newPos );
-                SetWindowPos32( hwnd, 0, newPos.left, newPos.top, newPos.right, newPos.bottom,
-                    ((GetActiveWindow32())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
-            }
+
+	    if( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
+	    {
+		/* Notify the parent window only */
+
+		SendMessage32A( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
+				MAKEWPARAM(WM_CREATE, wndPtr->wIDmenu), (LPARAM)hwnd );
+		if( !IsWindow32(hwnd) ) return 0;
+	    }
 
             if (cs->style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
 
@@ -1000,8 +997,13 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
     }
 
     if( !QUEUE_IsExitingQueue(wndPtr->hmemTaskQ) )
-	 WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LPARAM)hwnd );
-    if (!IsWindow32(hwnd)) return TRUE;
+	if( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
+	{
+	    /* Notify the parent window only */
+	    SendMessage32A( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
+			    MAKEWPARAM(WM_DESTROY, wndPtr->wIDmenu), (LPARAM)hwnd );
+	    if( !IsWindow32(hwnd) ) return TRUE;
+	}
 
     if( wndPtr->window ) CLIPBOARD_DisOwn( wndPtr ); /* before window is unmapped */
 
@@ -1020,7 +1022,7 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
     if( !(wndPtr->dwStyle & WS_CHILD) )
     {
       /* make sure top menu popup doesn't get destroyed */
-      MENU_PatchResidentPopup( TRUE, wndPtr );
+      MENU_PatchResidentPopup( (HQUEUE16)0xFFFF, wndPtr );
 
       for (;;)
       {
@@ -1214,7 +1216,7 @@ HWND32 WINAPI FindWindowEx32A( HWND32 parent, HWND32 child,
         /* with this name exists either. */
         if (!(atom = GlobalFindAtom32A( className ))) return 0;
     }
-    return WIN_FindWindow( 0, 0, atom, title );
+    return WIN_FindWindow( parent, child, atom, title );
 }
 
 
@@ -1235,7 +1237,7 @@ HWND32 WINAPI FindWindowEx32W( HWND32 parent, HWND32 child,
         if (!(atom = GlobalFindAtom32W( className ))) return 0;
     }
     buffer = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
-    hwnd = WIN_FindWindow( 0, 0, atom, buffer );
+    hwnd = WIN_FindWindow( parent, child, atom, buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
     return hwnd;
 }
@@ -1388,9 +1390,15 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
     }
     switch(offset)
     {
-    case GWW_ID:         return (WORD)wndPtr->wIDmenu;
+    case GWW_ID:         
+    	if (HIWORD(wndPtr->wIDmenu))
+    		fprintf(stderr,"GetWindowWord32(GWW_ID) discards high bits of 0x%08x!\n",wndPtr->wIDmenu);
+    	return (WORD)wndPtr->wIDmenu;
     case GWW_HWNDPARENT: return wndPtr->parent ? wndPtr->parent->hwndSelf : 0;
-    case GWW_HINSTANCE:  return (WORD)wndPtr->hInstance;
+    case GWW_HINSTANCE:  
+    	if (HIWORD(wndPtr->hInstance))
+    		fprintf(stderr,"GetWindowWord32(GWW_HINSTANCE) discards high bits of 0x%08x!\n",wndPtr->hInstance);
+   	return (WORD)wndPtr->hInstance;
     default:
         fprintf( stderr, "GetWindowWord: invalid offset %d\n", offset );
         return 0;
@@ -1401,10 +1409,10 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
 /**********************************************************************
  *	     WIN_GetWindowInstance
  */
-HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd )
+HINSTANCE32 WIN_GetWindowInstance( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return (HINSTANCE16)0;
+    if (!wndPtr) return (HINSTANCE32)0;
     return wndPtr->hInstance;
 }
 
@@ -1483,7 +1491,7 @@ static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
                                                            type );
         case GWL_HWNDPARENT: return wndPtr->parent ?
                                         (HWND32)wndPtr->parent->hwndSelf : 0;
-        case GWL_HINSTANCE:  return (HINSTANCE32)wndPtr->hInstance;
+        case GWL_HINSTANCE:  return wndPtr->hInstance;
         default:
             fprintf( stderr, "GetWindowLong: unknown offset %d\n", offset );
     }
@@ -1501,6 +1509,7 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
 {
     LONG *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+
     if (!wndPtr) return 0;
     if (offset >= 0)
     {
@@ -1522,8 +1531,10 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
     else switch(offset)
     {
         case GWL_ID:
+	    ptr = (DWORD*)&wndPtr->wIDmenu;
+	    break;
         case GWL_HINSTANCE:
-            return SetWindowWord32( hwnd, offset, (WORD)newval );
+            return SetWindowWord32( hwnd, offset, newval );
 	case GWL_WNDPROC:
             retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
             WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 

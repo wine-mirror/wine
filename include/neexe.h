@@ -88,6 +88,10 @@ typedef struct
 #define NE_FFLAGS_MULTIPLEDATA	0x0002
 #define NE_FFLAGS_WIN32         0x0010
 #define NE_FFLAGS_BUILTIN       0x0020  /* Wine built-in module */
+#define NE_FFLAGS_IMPLICIT	0x0040
+#define NE_FFLAGS_FRAMEBUF	0x0100  /* OS/2 fullscreen app */
+#define NE_FFLAGS_CONSOLE	0x0200  /* OS/2 console app */
+#define NE_FFLAGS_GUI		0x0300	/* right, (NE_FFLAGS_FRAMEBUF | NE_FFLAGS_CONSOLE) */
 #define NE_FFLAGS_SELFLOAD	0x0800
 #define NE_FFLAGS_LINKERROR	0x2000
 #define NE_FFLAGS_CALLWEP       0x4000
@@ -225,7 +229,7 @@ struct resource_typeinfo_s
 {
     unsigned short type_id;	/* Type identifier */
     unsigned short count;	/* Number of resources of this type */
-    unsigned long  reserved;
+    DWORD	   resloader;	/* SetResourceHandler() */
     /*
      * Name info array.
      */
@@ -243,8 +247,5 @@ struct resource_typeinfo_s
 #define NE_RSCTYPE_MENU			0x8004
 #define NE_RSCTYPE_RCDATA		0x800a
 #define NE_RSCTYPE_STRING		0x8006
-
-int  load_typeinfo  (int, struct resource_typeinfo_s *);
-int  load_nameinfo  (int, struct resource_nameinfo_s *);
 
 #endif  /* __WINE_NEEXE_H */

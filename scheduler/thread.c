@@ -16,6 +16,7 @@
 #include "stddebug.h"
 
 THDB *pCurrentThread = NULL;
+static K32OBJ_LIST THREAD_List;
 
 /***********************************************************************
  *           THREAD_GetPtr
@@ -29,11 +30,24 @@ static THDB *THREAD_GetPtr( HANDLE32 handle )
 
     if (handle == 0xfffffffe)  /* Self-thread handle */
     {
-        thread = (THDB *)GetCurrentThreadId();
+        thread = THREAD_Current();
         K32OBJ_IncCount( &thread->header );
     }
     else thread = (THDB *)PROCESS_GetObjPtr( handle, K32OBJ_THREAD );
     return thread;
+}
+
+
+/***********************************************************************
+ *           THREAD_Current
+ *
+ * Return the current thread THDB pointer.
+ */
+THDB *THREAD_Current(void)
+{
+    /* FIXME: should probably use %fs register here */
+    assert( pCurrentThread );
+    return pCurrentThread;
 }
 
 
@@ -88,6 +102,10 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->context.Eip     = (DWORD)start_addr;
     thdb->context.Esp     = (DWORD)thdb->teb.stack_top;
 
+    /* Add the thread to the linked list */
+
+    K32OBJ_AddTail( &THREAD_List, &thdb->header );
+
     return thdb;
 
 error:
@@ -104,10 +122,42 @@ error:
 void THREAD_Destroy( K32OBJ *ptr )
 {
     THDB *thdb = (THDB *)ptr;
+
     assert( ptr->type == K32OBJ_THREAD );
     ptr->type = K32OBJ_UNKNOWN;
+
+    /* Note: when we get here, the thread has already been removed */
+    /* from the thread list */
+
+    /* Free the associated memory */
+
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
+
+}
+
+
+/***********************************************************************
+ *           THREAD_SwitchThread
+ *
+ * Return the thread we want to switch to, and switch the contexts.
+ */
+THDB *THREAD_SwitchThread( CONTEXT *context )
+{
+    K32OBJ *cur;
+    THDB *next;
+    if (!pCurrentThread) return NULL;
+    cur = K32OBJ_RemoveHead( &THREAD_List );
+    K32OBJ_AddTail( &THREAD_List, cur );
+    K32OBJ_DecCount( cur );
+    next = (THDB *)THREAD_List.head;
+    if (next != pCurrentThread)
+    {
+        pCurrentThread->context = *context;
+        pCurrentThread = next;
+        *context = pCurrentThread->context;
+    }
+    return pCurrentThread;
 }
 
 
@@ -150,9 +200,7 @@ HANDLE32 WINAPI GetCurrentThread(void)
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
-    /* FIXME: should probably use %fs register here */
-    assert( pCurrentThread );
-    return (DWORD)pCurrentThread;
+    return (DWORD)THREAD_Current();
 }
 
 
@@ -161,7 +209,7 @@ DWORD WINAPI GetCurrentThreadId(void)
  */
 DWORD WINAPI GetLastError(void)
 {
-    THDB *thread = (THDB *)GetCurrentThreadId();
+    THDB *thread = THREAD_Current();
     return thread->last_error;
 }
 
@@ -173,7 +221,7 @@ void WINAPI SetLastError( DWORD error )
 {
     THDB *thread;
     if (!pCurrentThread) return;  /* FIXME */
-    thread = (THDB *)GetCurrentThreadId();
+    thread = THREAD_Current();
     thread->last_error = error;
 }
 
@@ -194,7 +242,7 @@ void WINAPI SetLastErrorEx( DWORD error, DWORD type )
 DWORD WINAPI TlsAlloc(void)
 {
     DWORD i, mask, ret = 0;
-    THDB *thread = (THDB *)GetCurrentThreadId();
+    THDB *thread = THREAD_Current();
     DWORD *bits = thread->process->tls_bits;
     EnterCriticalSection( &thread->process->crit_section );
     if (*bits == 0xffffffff)
@@ -221,7 +269,7 @@ DWORD WINAPI TlsAlloc(void)
 BOOL32 WINAPI TlsFree( DWORD index )
 {
     DWORD mask;
-    THDB *thread = (THDB *)GetCurrentThreadId();
+    THDB *thread = THREAD_Current();
     DWORD *bits = thread->process->tls_bits;
     if (index >= 64)
     {
@@ -250,7 +298,7 @@ BOOL32 WINAPI TlsFree( DWORD index )
  */
 LPVOID WINAPI TlsGetValue( DWORD index )
 {
-    THDB *thread = (THDB *)GetCurrentThreadId();
+    THDB *thread = THREAD_Current();
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -266,7 +314,7 @@ LPVOID WINAPI TlsGetValue( DWORD index )
  */
 BOOL32 WINAPI TlsSetValue( DWORD index, LPVOID value )
 {
-    THDB *thread = (THDB *)GetCurrentThreadId();
+    THDB *thread = THREAD_Current();
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -335,3 +383,26 @@ BOOL32 WINAPI TerminateThread(DWORD threadid,DWORD exitcode)
     fprintf(stdnimp,"TerminateThread(0x%08lx,%ld), STUB!\n",threadid,exitcode);
     return TRUE;
 }
+
+/**********************************************************************
+ *           GetExitCodeThread   (KERNEL32)
+ */
+BOOL32 WINAPI GetExitCodeThread(HANDLE32 hthread,LPDWORD exitcode)
+{
+    THDB *thread;
+    
+    if (!(thread = THREAD_GetPtr( hthread ))) return FALSE;
+    if (exitcode) *exitcode = thread->exit_code;
+    K32OBJ_DecCount( &thread->header );
+    return TRUE;
+}
+
+/**********************************************************************
+ *           ResumeThread   (KERNEL32)
+ */
+BOOL32 WINAPI ResumeThread(DWORD threadid)
+{
+    fprintf(stdnimp,"ResumeThread(0x%08lx), STUB!\n",threadid);
+    return TRUE;
+}
+

@@ -1,166 +1,165 @@
 name	ole32
 type	win32
-base	1
 
-0 stub BindMoniker
-1 stub CLSIDFromProgID
-2 stub CLSIDFromString
-3 stub CoBuildVersion
-4 stub CoCreateFreeThreadedMarshaler
-5 stub CoCreateGuid
-6 stub CoCreateInstance
-7 stub CoDisconnectObject
-8 stub CoDosDateTimeToFileTime
-9 stub CoFileTimeNow
-10 stub CoFileTimeToDosDateTime
-11 stub CoFreeAllLibraries
-12 stub CoFreeLibrary
-13 stub CoFreeUnusedLibraries
-14 stub CoGetCallerTID
-15 stub CoGetClassObject
-16 stub CoGetCurrentLogicalThreadId
-17 stub CoGetCurrentProcess
-18 stub CoGetInterfaceAndReleaseStream
-19 stub CoGetMalloc
-20 stub CoGetMarshalSizeMax
-21 stub CoGetPSClsid
-22 stub CoGetStandardMarshal
-23 stub CoGetState
-24 stub CoGetTreatAsClass
-25 stub CoInitialize
-26 stub CoInitializeWOW
-27 stub CoIsHandlerConnected
-28 stub CoIsOle1Class
-29 stub CoLoadLibrary
-30 stub CoLockObjectExternal
-31 stub CoMarshalHresult
-32 stub CoMarshalInterThreadInterfaceInStream
-33 stub CoMarshalInterface
-34 stub CoQueryReleaseObject
-35 stub CoRegisterClassObject
-36 stub CoRegisterMallocSpy
-37 stub CoRegisterMessageFilter
-38 stub CoReleaseMarshalData
-39 stub CoRevokeClassObject
-40 stub CoRevokeMallocSpy
-41 stub CoSetState
-42 stub CoTaskMemAlloc
-43 stub CoTaskMemFree
-44 stub CoTaskMemRealloc
-45 stub CoTreatAsClass
-46 stub CoUninitialize
-47 stub CoUnloadingWOW
-48 stub CoUnmarshalHresult
-49 stub CoUnmarshalInterface
-50 stub CreateAntiMoniker
-51 stub CreateBindCtx
-52 stub CreateDataAdviseHolder
-53 stub CreateDataCache
-54 stub CreateFileMoniker
-55 stub CreateGenericComposite
-56 stub CreateILockBytesOnHGlobal
-57 stub CreateItemMoniker
-58 stub CreateOleAdviseHolder
-59 stub CreatePointerMoniker
-60 stub CreateStreamOnHGlobal
-61 stub DllDebugObjectRPCHook
-62 stub DllGetClassObject
-63 stub DllGetClassObjectWOW
-64 stub DoDragDrop
-65 stub EnableHookObject
-66 stub GetClassFile
-67 stub GetConvertStg
-68 stub GetDocumentBitStg
-69 stub GetHGlobalFromILockBytes
-70 stub GetHGlobalFromStream
-71 stub GetHookInterface
-72 stub GetRunningObjectTable
-73 stub IIDFromString
-74 stub IsAccelerator
-75 stub IsEqualGUID
-76 stub IsValidIid
-77 stub IsValidInterface
-78 stub IsValidPtrIn
-79 stub IsValidPtrOut
-80 stub MkParseDisplayName
-81 stub MonikerCommonPrefixWith
-82 stub MonikerRelativePathTo
-83 stub OleBuildVersion
-84 stub OleConvertIStorageToOLESTREAM
-85 stub OleConvertIStorageToOLESTREAMEx
-86 stub OleConvertOLESTREAMToIStorage
-87 stub OleConvertOLESTREAMToIStorageEx
-88 stub OleCreate
-89 stub OleCreateDefaultHandler
-90 stub OleCreateEmbeddingHelper
-91 stub OleCreateFromData
-92 stub OleCreateFromFile
-93 stub OleCreateLink
-94 stub OleCreateLinkFromData
-95 stub OleCreateLinkToFile
-96 stub OleCreateMenuDescriptor
-97 stub OleCreateStaticFromData
-98 stub OleDestroyMenuDescriptor
-99 stub OleDoAutoConvert
-100 stub OleDraw
-101 stub OleDuplicateData
-102 stub OleFlushClipboard
-103 stub OleGetAutoConvert
-104 stub OleGetClipboard
-105 stub OleGetIconOfClass
-106 stub OleGetIconOfFile
-107 return OleInitialize 4 0
-108 stub OleInitializeWOW
-109 stub OleIsCurrentClipboard
-110 stub OleIsRunning
-111 stub OleLoad
-112 stub OleLoadFromStream
-113 stub OleLockRunning
-114 stub OleMetafilePictFromIconAndLabel
-115 stub OleNoteObjectVisible
-116 stub OleQueryCreateFromData
-117 stub OleQueryLinkFromData
-118 stub OleRegEnumFormatEtc
-119 stub OleRegEnumVerbs
-120 stub OleRegGetMiscStatus
-121 stub OleRegGetUserType
-122 stub OleRun
-123 stub OleSave
-124 stub OleSaveToStream
-125 stub OleSetAutoConvert
-126 stub OleSetClipboard
-127 stub OleSetContainedObject
-128 stub OleSetMenuDescriptor
-129 stub OleTranslateAccelerator
-130 return OleUninitialize 0 0
-131 stub OpenOrCreateStream
-132 stub ProgIDFromCLSID
-133 stub ReadClassStg
-134 stub ReadClassStm
-135 stub ReadFmtUserTypeStg
-136 stub ReadOleStg
-137 stub ReadStringStream
-138 stub RegisterDragDrop
-139 stub ReleaseStgMedium
-140 stub RevokeDragDrop
-141 stub SetConvertStg
-142 stub SetDocumentBitStg
-143 stub StgCreateDocfile
-144 stub StgCreateDocfileOnILockBytes
-145 stub StgIsStorageFile
-146 stub StgIsStorageILockBytes
-147 stub StgOpenStorage
-148 stub StgOpenStorageOnILockBytes
-149 stub StgSetTimes
-150 stub StringFromCLSID
-151 stub StringFromGUID2
-152 stub StringFromIID
-153 stub UtConvertDvtd16toDvtd32
-154 stub UtConvertDvtd32toDvtd16
-155 stub UtGetDvtd16Info
-156 stub UtGetDvtd32Info
-157 stub WriteClassStg
-158 stub WriteClassStm
-159 stub WriteFmtUserTypeStg
-160 stub WriteOleStg
-161 stub WriteStringStream
+  1 stub BindMoniker
+  2 stub CLSIDFromProgID
+  3 stub CLSIDFromString
+  4 stub CoBuildVersion
+  5 stub CoCreateFreeThreadedMarshaler
+  6 stub CoCreateGuid
+  7 stub CoCreateInstance
+  8 stub CoDisconnectObject
+  9 stub CoDosDateTimeToFileTime
+ 10 stub CoFileTimeNow
+ 11 stub CoFileTimeToDosDateTime
+ 12 stub CoFreeAllLibraries
+ 13 stub CoFreeLibrary
+ 14 stub CoFreeUnusedLibraries
+ 15 stub CoGetCallerTID
+ 16 stub CoGetClassObject
+ 17 stub CoGetCurrentLogicalThreadId
+ 18 stub CoGetCurrentProcess
+ 19 stub CoGetInterfaceAndReleaseStream
+ 20 stub CoGetMalloc
+ 21 stub CoGetMarshalSizeMax
+ 22 stub CoGetPSClsid
+ 23 stub CoGetStandardMarshal
+ 24 stub CoGetState
+ 25 stub CoGetTreatAsClass
+ 26 stub CoInitialize
+ 27 stub CoInitializeWOW
+ 28 stub CoIsHandlerConnected
+ 29 stub CoIsOle1Class
+ 30 stub CoLoadLibrary
+ 31 stub CoLockObjectExternal
+ 32 stub CoMarshalHresult
+ 33 stub CoMarshalInterThreadInterfaceInStream
+ 34 stub CoMarshalInterface
+ 35 stub CoQueryReleaseObject
+ 36 stub CoRegisterClassObject
+ 37 stub CoRegisterMallocSpy
+ 38 stub CoRegisterMessageFilter
+ 39 stub CoReleaseMarshalData
+ 40 stub CoRevokeClassObject
+ 41 stub CoRevokeMallocSpy
+ 42 stub CoSetState
+ 43 stub CoTaskMemAlloc
+ 44 stub CoTaskMemFree
+ 45 stub CoTaskMemRealloc
+ 46 stub CoTreatAsClass
+ 47 stub CoUninitialize
+ 48 stub CoUnloadingWOW
+ 49 stub CoUnmarshalHresult
+ 50 stub CoUnmarshalInterface
+ 51 stub CreateAntiMoniker
+ 52 stub CreateBindCtx
+ 53 stub CreateDataAdviseHolder
+ 54 stub CreateDataCache
+ 55 stub CreateFileMoniker
+ 56 stub CreateGenericComposite
+ 57 stub CreateILockBytesOnHGlobal
+ 58 stub CreateItemMoniker
+ 59 stub CreateOleAdviseHolder
+ 60 stub CreatePointerMoniker
+ 61 stub CreateStreamOnHGlobal
+ 62 stub DllDebugObjectRPCHook
+ 63 stub DllGetClassObject
+ 64 stub DllGetClassObjectWOW
+ 65 stub DoDragDrop
+ 66 stub EnableHookObject
+ 67 stub GetClassFile
+ 68 stub GetConvertStg
+ 69 stub GetDocumentBitStg
+ 70 stub GetHGlobalFromILockBytes
+ 71 stub GetHGlobalFromStream
+ 72 stub GetHookInterface
+ 73 stub GetRunningObjectTable
+ 74 stub IIDFromString
+ 75 stub IsAccelerator
+ 76 stub IsEqualGUID
+ 77 stub IsValidIid
+ 78 stub IsValidInterface
+ 79 stub IsValidPtrIn
+ 80 stub IsValidPtrOut
+ 81 stub MkParseDisplayName
+ 82 stub MonikerCommonPrefixWith
+ 83 stub MonikerRelativePathTo
+ 84 stub OleBuildVersion
+ 85 stub OleConvertIStorageToOLESTREAM
+ 86 stub OleConvertIStorageToOLESTREAMEx
+ 87 stub OleConvertOLESTREAMToIStorage
+ 88 stub OleConvertOLESTREAMToIStorageEx
+ 89 stub OleCreate
+ 90 stub OleCreateDefaultHandler
+ 91 stub OleCreateEmbeddingHelper
+ 92 stub OleCreateFromData
+ 93 stub OleCreateFromFile
+ 94 stub OleCreateLink
+ 95 stub OleCreateLinkFromData
+ 96 stub OleCreateLinkToFile
+ 97 stub OleCreateMenuDescriptor
+ 98 stub OleCreateStaticFromData
+ 99 stub OleDestroyMenuDescriptor
+100 stub OleDoAutoConvert
+101 stub OleDraw
+102 stub OleDuplicateData
+103 stub OleFlushClipboard
+104 stub OleGetAutoConvert
+105 stub OleGetClipboard
+106 stub OleGetIconOfClass
+107 stub OleGetIconOfFile
+108 return OleInitialize 4 0
+109 stub OleInitializeWOW
+110 stub OleIsCurrentClipboard
+111 stub OleIsRunning
+112 stub OleLoad
+113 stub OleLoadFromStream
+114 stub OleLockRunning
+115 stub OleMetafilePictFromIconAndLabel
+116 stub OleNoteObjectVisible
+117 stub OleQueryCreateFromData
+118 stub OleQueryLinkFromData
+119 stub OleRegEnumFormatEtc
+120 stub OleRegEnumVerbs
+121 stub OleRegGetMiscStatus
+122 stub OleRegGetUserType
+123 stub OleRun
+124 stub OleSave
+125 stub OleSaveToStream
+126 stub OleSetAutoConvert
+127 stub OleSetClipboard
+128 stub OleSetContainedObject
+129 stub OleSetMenuDescriptor
+130 stub OleTranslateAccelerator
+131 return OleUninitialize 0 0
+132 stub OpenOrCreateStream
+133 stub ProgIDFromCLSID
+134 stub ReadClassStg
+135 stub ReadClassStm
+136 stub ReadFmtUserTypeStg
+137 stub ReadOleStg
+138 stub ReadStringStream
+139 stub RegisterDragDrop
+140 stub ReleaseStgMedium
+141 stub RevokeDragDrop
+142 stub SetConvertStg
+143 stub SetDocumentBitStg
+144 stub StgCreateDocfile
+145 stub StgCreateDocfileOnILockBytes
+146 stub StgIsStorageFile
+147 stub StgIsStorageILockBytes
+148 stub StgOpenStorage
+149 stub StgOpenStorageOnILockBytes
+150 stub StgSetTimes
+151 stub StringFromCLSID
+152 stub StringFromGUID2
+153 stub StringFromIID
+154 stub UtConvertDvtd16toDvtd32
+155 stub UtConvertDvtd32toDvtd16
+156 stub UtGetDvtd16Info
+157 stub UtGetDvtd32Info
+158 stub WriteClassStg
+159 stub WriteClassStm
+160 stub WriteFmtUserTypeStg
+161 stub WriteOleStg
+162 stub WriteStringStream

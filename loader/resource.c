@@ -18,6 +18,7 @@
 #include "global.h"
 #include "heap.h"
 #include "neexe.h"
+#include "task.h"
 #include "accel.h"
 #include "module.h"
 #include "resource.h"
@@ -33,6 +34,11 @@
 
 extern WORD WINE_LanguageId;
 
+/* error message when 16-bit resource function is called for Win32 module */
+static const char* NEWin32FailureString = "fails with Win32 module\n";
+/* error message when 32-bit resource function is called for Win16 module */
+static const char* PEWin16FailureString = "fails with Win16 module\n";
+
 /**********************************************************************
  *	    FindResource16    (KERNEL.60)
  */
@@ -40,9 +46,10 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 {
     NE_MODULE *pModule;
 
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE16( hModule ); 
     dprintf_resource(stddeb, "FindResource16: module=%04x type=", hModule );
     PrintId( type );
+
     if (HIWORD(name))  /* Check for '#xxx' name */
     {
 	char *ptr = PTR_SEG_TO_LIN( name );
@@ -50,20 +57,23 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 	    if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
 	}
     }
+
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
     dprintf_resource( stddeb, "\n" );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-#ifndef WINELIB
-    if (pModule->flags & NE_FFLAGS_WIN32)
+
+    if ((pModule = MODULE_GetPtr( hModule )))
     {
-        fprintf(stderr,"Don't know how to FindResource16() for Win32 module\n");
-        return 0;
-    }
-    return NE_FindResource( hModule, type, name );
+#ifndef WINELIB
+	if (pModule->flags & NE_FFLAGS_WIN32)
+	    fprintf(stderr,"FindResource16: %s", NEWin32FailureString);
+	else
+	    return NE_FindResource( hModule, type, name );
 #else
-    return LIBRES_FindResource16( hModule, name, type );
+	return LIBRES_FindResource16( hModule, name, type );
 #endif
+    }
+    return 0;
 }
 
 
@@ -109,7 +119,7 @@ HRSRC32 WINAPI FindResourceEx32W( HINSTANCE32 hModule, LPCWSTR name,
     NE_MODULE *pModule;
 
     if (!hModule) hModule = GetTaskDS();
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE32( hModule );
     dprintf_resource(stddeb, "FindResource32W: module=%08x type=", hModule );
     if (HIWORD(type))
     	dprintf_resource(stddeb,"%p",type);
@@ -145,21 +155,22 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
     NE_MODULE *pModule;
 
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE16( hModule );
     dprintf_resource(stddeb, "LoadResource16: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-#ifndef WINELIB
-    if (pModule->flags & NE_FFLAGS_WIN32)
+    if ((pModule = MODULE_GetPtr( hModule )))
     {
-        fprintf(stderr,"Don't know how to LoadResource16() for Win32 module\n");
-        return 0;
-    }
-    return NE_LoadResource( hModule, hRsrc );
+#ifndef WINELIB
+	if (pModule->flags & NE_FFLAGS_WIN32)
+	    fprintf(stderr,"LoadResource16: %s", NEWin32FailureString);
+	else
+	    return NE_LoadResource( hModule, hRsrc );
 #else
-    return LIBRES_LoadResource( hModule, hRsrc );
+	return LIBRES_LoadResource( hModule, hRsrc );
 #endif
+    }
+    return 0;
 }
 
 /**********************************************************************
@@ -171,7 +182,7 @@ HGLOBAL32 WINAPI LoadResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
     NE_MODULE *pModule;
 
     if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE32( hModule );
     dprintf_resource(stddeb, "LoadResource32: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
@@ -179,7 +190,7 @@ HGLOBAL32 WINAPI LoadResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32))
     {
-    	fprintf(stderr,"LoadResource32: tried to load a non win32 resource.\n");
+    	fprintf(stderr,"LoadResource32: %s", PEWin16FailureString );
    	return 0;  /* FIXME? */
     }
     return PE_LoadResource32(hModule,hRsrc);
@@ -201,11 +212,11 @@ SEGPTR WINAPI WIN16_LockResource16(HGLOBAL16 handle)
 
     dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return (SEGPTR)0;
-    hModule = GetExePtr( handle );
+    hModule = MODULE_HANDLEtoHMODULE16( handle );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        fprintf(stderr,"Don't know how to LockResource() for Win32 module\n");
+        fprintf(stderr,"LockResource16: %s", NEWin32FailureString);
         return 0;
     }
     return NE_LockResource( hModule, handle );
@@ -223,11 +234,11 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 
     dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return NULL;
-    hModule = GetExePtr( handle );
+    hModule = MODULE_HANDLEtoHMODULE16( handle );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        fprintf(stderr,"Don't know how to LockResource16() for Win32 module\n");
+        fprintf(stderr,"LockResource16: %s", NEWin32FailureString);
         return 0;
     }
     return (LPSTR)PTR_SEG_TO_LIN( NE_LockResource( hModule, handle ) );
@@ -257,11 +268,11 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 
     dprintf_resource(stddeb, "FreeResource16: handle=%04x\n", handle );
     if (!handle) return FALSE;
-    hModule = GetExePtr( handle );
+    hModule = MODULE_HANDLEtoHMODULE16( handle );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        fprintf(stderr,"Don't know how to FreeResource16() for Win32 module\n");
+        fprintf(stderr,"FreeResource16: %s", NEWin32FailureString);
         return 0;
     }
     return NE_FreeResource( hModule, handle );
@@ -287,7 +298,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 {
     NE_MODULE *pModule;
 
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE16( hModule );
     dprintf_resource(stddeb, "AccessResource16: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
@@ -295,7 +306,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        fprintf(stderr,"Don't know how to AccessResource16() for Win32 module\n");
+        fprintf(stderr,"AccessResource16: %s", NEWin32FailureString);
         return 0;
     }
     return NE_AccessResource( hModule, hRsrc );
@@ -310,7 +321,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
  */
 INT32 WINAPI AccessResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE32( hModule );
     dprintf_resource(stddeb, "AccessResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
@@ -326,14 +337,14 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
     NE_MODULE *pModule;
 
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE16( hModule );
     dprintf_resource(stddeb, "SizeofResource16: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        fprintf(stderr,"Don't know how to SizeOfResource16() for Win32 module\n");
+        fprintf(stderr,"SizeOfResource16: %s", NEWin32FailureString);
         return 0;
     }
     return NE_SizeofResource( hModule, hRsrc );
@@ -348,7 +359,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
  */
 DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE32( hModule );
     dprintf_resource(stddeb, "SizeofResource32: module=%04x res=%04x\n",
                      hModule, hRsrc );
 #ifndef WINELIB
@@ -367,7 +378,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 {
     NE_MODULE *pModule;
 
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    hModule = MODULE_HANDLEtoHMODULE16( hModule );
     dprintf_resource(stddeb, "AllocResource: module=%04x res=%04x size=%ld\n",
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
@@ -375,7 +386,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        fprintf(stderr,"Don't know how to AllocResource() for Win32 module\n");
+        fprintf(stderr,"AllocResource16: %s", NEWin32FailureString);
         return 0;
     }
     return NE_AllocResource( hModule, hRsrc, size );
@@ -394,7 +405,7 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
 {
     dprintf_resource(stddeb,"DirectResAlloc(%04x,%04x,%04x)\n",
                      hInstance, wType, wSize );
-    hInstance = GetExePtr(hInstance);
+    hInstance = MODULE_HANDLEtoHMODULE16(hInstance);
     if(!hInstance)return 0;
     if(wType != 0x10)	/* 0x10 is the only observed value, passed from
                            CreateCursorIndirect. */
@@ -405,6 +416,9 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
 
 /**********************************************************************
  *			LoadAccelerators16	[USER.177]
+ *
+ * FIXME: this code leaks memory because HACCEL must be a result of LoadResource()
+ *        (see TWIN for hints).
  */
 HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 {
@@ -578,6 +592,8 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
     int string_num;
     int i;
 
+    if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
+	resource_id = (UINT32)(-((INT32)resource_id));
     dprintf_resource(stddeb, "LoadString: instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
@@ -747,15 +763,24 @@ INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
 /**********************************************************************
  *	SetResourceHandler	(KERNEL.43)
  */
-FARPROC16 WINAPI SetResourceHandler( HINSTANCE16 instance, SEGPTR s,
-                                     FARPROC16 farproc )
+FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR s,
+                                     FARPROC16 resourceHandler )
 {
-    if (HIWORD(s))
-	fprintf(stderr,"SetResourceHandler(%04x,%s,%p), empty STUB!\n",
-		instance,(char*)PTR_SEG_TO_LIN(s),farproc);
-    else
-	fprintf(stderr,"SetResourceHandler(%04x,0x%04x,%p), empty STUB!\n",
-		instance,LOWORD(s),farproc);
+    NE_MODULE *pModule;
+
+    hModule = GetExePtr( hModule );
+
+    dprintf_resource(stddeb, "SetResourceHandler: module=%04x type=", hModule );
+    PrintId( s );
+    dprintf_resource( stddeb, "\n" );
+
+    if ((pModule = MODULE_GetPtr( hModule )))
+    {
+	if (pModule->flags & NE_FFLAGS_WIN32)
+	    fprintf(stderr,"SetResourceHandler: %s", NEWin32FailureString);
+	else if (pModule->res_table)
+	    return NE_SetResourceHandler( hModule, s, resourceHandler );
+    }
     return NULL;
 }
 
