@@ -1646,6 +1646,7 @@ dlls/shlwapi/Makefile
 dlls/shlwapi/tests/Makefile
 dlls/snmpapi/Makefile
 dlls/sti/Makefile
+dlls/strmiids/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
 dlls/twain/Makefile

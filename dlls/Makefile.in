@@ -172,6 +172,7 @@ SUBDIRS = \
 	glu32 \
 	glut32 \
 	opengl32 \
+	strmiids \
 	uuid \
 	wined3d \
 	x11drv
@@ -291,6 +292,7 @@ SYMLINKS_SO = \
 	libdxerr8.a \
 	libdxerr9.a \
 	libdxguid.a \
+	libstrmiids.a \
 	libuuid.a \
 	lz32.dll.so \
 	mapi32.dll.so \
@@ -950,6 +952,9 @@ libdxerr9.a: dxerr9/libdxerr9.a
 libdxguid.a: dxguid/libdxguid.a
 	$(RM) $@ && $(LN_S) dxguid/libdxguid.a $@
 
+libstrmiids.a: strmiids/libstrmiids.a
+	$(RM) $@ && $(LN_S) strmiids/libstrmiids.a $@
+
 libuuid.a: uuid/libuuid.a
 	$(RM) $@ && $(LN_S) uuid/libuuid.a $@
 
@@ -1083,6 +1088,7 @@ IMPORT_LIBS = \
 	libdxerr8.a \
 	libdxerr9.a \
 	libdxguid.a \
+	libstrmiids.a \
 	libuuid.a
 
 implib: $(IMPORT_LIBS)
@@ -1986,6 +1992,7 @@ x11drv/x11drv.dll.so: x11drv
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid
+strmiids/libstrmiids.a: strmiids
 uuid/libuuid.a: uuid
 
 # Rules for auto documentation
