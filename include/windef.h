@@ -142,8 +142,12 @@ extern "C" {
 #define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
 
+#ifndef _declspec
 #define _declspec(x)
+#endif
+#ifndef __declspec
 #define __declspec(x)
+#endif
 
 #define CONST       const
 
