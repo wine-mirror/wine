@@ -534,15 +534,12 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 	int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
 	int height, width_int;
 
-	TRACE("Glyph : %d\n", glyph);
+	TRACE("Glyph : %3d / List : %ld\n", glyph, listBase);
 	if (needed_size == GDI_ERROR) {
 	    TRACE("  - needed size : %d (GDI_ERROR)\n", needed_size);
 	    goto error;
 	} else {
 	    TRACE("  - needed size : %d\n", needed_size);
-	    if (needed_size == 0) {
-		continue;
-	    }
 	}
 
 	if (needed_size > size) {
@@ -557,42 +554,54 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 	    unsigned int height, width, bitmask;
 	    unsigned char *bitmap_ = (unsigned char *) bitmap;
 	    
-	    DPRINTF("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-	    DPRINTF("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
-	    DPRINTF("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
-	    DPRINTF("  - bitmap : \n");
-	    for (height = 0; height < gm.gmBlackBoxY; height++) {
-		DPRINTF("      ");
-		for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
-		    if (bitmask == 0) {
-			bitmap_ += 1;
-			bitmask = 0x80;
+	    TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
+	    TRACE("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+	    TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
+	    if (needed_size != 0) {
+		TRACE("  - bitmap : \n");
+		for (height = 0; height < gm.gmBlackBoxY; height++) {
+		    TRACE("      ");
+		    for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
+			if (bitmask == 0) {
+			    bitmap_ += 1;
+			    bitmask = 0x80;
+			}
+			if (*bitmap_ & bitmask)
+			    DPRINTF("*");
+			else
+			    DPRINTF(" ");
 		    }
-		    if (*bitmap_ & bitmask)
-			DPRINTF("*");
-		    else
-			DPRINTF(" ");
+		    bitmap_ += (4 - (((unsigned int) bitmap_) & 0x03));
+		    DPRINTF("\n");
 		}
-		bitmap_ += (4 - (((unsigned int) bitmap_) & 0x03));
-		DPRINTF("\n");
 	    }
 	}
 	
-	/* For some obscure reasons, I seem to need to rotate the glyph for OpenGL to be happy.
-	   As Wine does not seem to support the MAT2 field, I need to do it myself.... */
-	width_int = (gm.gmBlackBoxX + 31) / 32;
-	for (height = 0; height < gm.gmBlackBoxY; height++) {
-	    int width;
-	    for (width = 0; width < width_int; width++) {
-		((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
-		    ((int *) bitmap)[height * width_int + width];
+	/* In OpenGL, the bitmap is drawn from the bottom to the top... So we need to invert the
+	 * glyph for it to be drawn properly.
+	 */
+	if (needed_size != 0) {
+	    width_int = (gm.gmBlackBoxX + 31) / 32;
+	    for (height = 0; height < gm.gmBlackBoxY; height++) {
+		int width;
+		for (width = 0; width < width_int; width++) {
+		    ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
+			((int *) bitmap)[height * width_int + width];
+		}
 	    }
 	}
 	
 	ENTER_GL();
 	glNewList(listBase++, GL_COMPILE);
-	glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY, gm.gmptGlyphOrigin.x,
-		 gm.gmBlackBoxY - gm.gmptGlyphOrigin.y, gm.gmCellIncX, gm.gmCellIncY, gl_bitmap);
+	if (needed_size != 0) {
+	    glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
+		     0 - gm.gmptGlyphOrigin.x, gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
+		     gm.gmCellIncX, gm.gmCellIncY,
+		     gl_bitmap);
+	} else {
+	    /* This is the case of 'empty' glyphs like the space character */
+	    glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
+	}
 	glEndList();
 	LEAVE_GL();
     }
