@@ -820,6 +820,15 @@ HRESULT WINAPI HGLOBALStreamImpl_Clone(
 		  IStream*     iface,
 		  IStream**    ppstm) /* [out] */
 {
-  FIXME("not implemented!\n");
-  return E_NOTIMPL;
+  ULARGE_INTEGER dummy;
+  LARGE_INTEGER offset;
+  HRESULT hr;
+  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  TRACE(" Cloning %p (deleteOnRelease=%d seek position=%ld)\n",iface,This->deleteOnRelease,(long)This->currentPosition.QuadPart);
+  hr=CreateStreamOnHGlobal(This->supportHandle, FALSE, ppstm);
+  if(FAILED(hr))
+    return hr;
+  offset.QuadPart=(LONGLONG)This->currentPosition.QuadPart;
+  HGLOBALStreamImpl_Seek(*ppstm,offset,STREAM_SEEK_SET,&dummy);
+  return S_OK;
 }
