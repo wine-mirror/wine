@@ -1147,7 +1147,8 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    break;
 	
 	  case LVN_GETDISPINFOA:
-	    TRACE("-- LVN_GETDISPINFOA %p\n",This);
+          case LVN_GETDISPINFOW:
+	    TRACE("-- LVN_GETDISPINFO %p\n",This);
 	    pidl = (LPITEMIDLIST)lpdi->item.lParam;
 
 	    if(lpdi->item.mask & LVIF_TEXT)	/* text requested */
@@ -1156,8 +1157,16 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      {
 	        SHELLDETAILS sd;
 	        IShellFolder2_GetDetailsOf(This->pSF2Parent, pidl, lpdi->item.iSubItem, &sd);
-	        StrRetToStrNA( lpdi->item.pszText, lpdi->item.cchTextMax, &sd.str, NULL);
-	        TRACE("-- text=%s\n",lpdi->item.pszText);		
+                if (lpnmh->code == LVN_GETDISPINFOA)
+                {
+                    StrRetToStrNA( lpdi->item.pszText, lpdi->item.cchTextMax, &sd.str, NULL);
+                    TRACE("-- text=%s\n",lpdi->item.pszText);
+                }
+                else /* LVN_GETDISPINFOW */
+                {
+                    StrRetToStrNW( lpdi->item.pszText, lpdi->item.cchTextMax, &sd.str, NULL);
+                    TRACE("-- text=%s\n",debugstr_w((WCHAR*)(lpdi->item.pszText)));
+                }
 	      }
 	      else
 	      {
