@@ -21,7 +21,6 @@ AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
 AC_ARG_WITH(nptl,      AC_HELP_STRING([--with-nptl],[use glibc NPTL threading support]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
-AC_SUBST(OPTIONS)
 AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
 AC_SUBST(WIN16_INSTALL,"\$(WIN16_INSTALL)")
 if test "x$enable_win16" = "xno"
@@ -642,9 +641,10 @@ fi
 
 dnl **** Check for gcc specific options ****
 
+AC_SUBST(EXTRACFLAGS,"")
 if test "x${GCC}" = "xyes"
 then
-  CFLAGS="$CFLAGS -Wall"
+  EXTRACFLAGS=-Wall
 
   dnl Check for strength-reduce bug
   AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
@@ -665,7 +665,7 @@ int main(void) {
     ac_cv_c_gcc_strength_bug="yes") )
   if test "$ac_cv_c_gcc_strength_bug" = "yes"
   then
-    CFLAGS="$CFLAGS -fno-strength-reduce"
+    EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
   fi
 
   dnl Check for -mpreferred-stack-boundary
@@ -674,7 +674,7 @@ int main(void) {
                       ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")])
   if test "$ac_cv_c_gcc_stack_boundary" = "yes"
   then
-    CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
+    EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
   fi
 
   dnl Check for -gstabs+ option
@@ -682,7 +682,7 @@ int main(void) {
       [WINE_TRY_CFLAGS([-gstabs+],ac_cv_c_gcc_gstabs="yes", ac_cv_c_gcc_gstabs="no")])
   if test "$ac_cv_c_gcc_gstabs" = "yes"
   then
-    CFLAGS="$CFLAGS -gstabs+"
+    EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
   fi
 
   dnl Check for noisy string.h
@@ -694,7 +694,7 @@ int main(void) {
   CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
-    CFLAGS="$CFLAGS -Wpointer-arith"
+    EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
 fi
 
@@ -773,7 +773,7 @@ fi
 dnl **** Check for working dll ****
 
 AC_SUBST(DLLEXT,"")
-AC_SUBST(DLLFLAGS,"")
+AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(DLLIBS,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDSHARED,"")
@@ -803,7 +803,7 @@ case $host_os in
 
     if test "$LIBEXT" = "so"
     then
-      DLLFLAGS="-fPIC"
+      DLLFLAGS="$DLLFLAGS -fPIC"
       DLLEXT=".so"
       AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
           [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic],
@@ -1537,21 +1537,6 @@ then
   echo "*** X support, which currently does not work, and would probably not be"
   echo "*** what you want anyway. You will need to install devel packages of"
   echo "*** Xlib/Xfree86 at the very least."
-fi
-
-if test "$ac_cv_lib_ncurses_resizeterm" = "no" -a "$ac_cv_lib_ncurses_waddch" = "yes"
-then
-  echo
-  echo "*** Warning: resizeterm not found in ncurses. Wine will be built without"
-  echo "*** terminal resize support. Consider upgrading ncurses."
-fi
-
-if test "$wine_cv_libc_reentrant" = "no"
-then
-  echo
-  echo "*** Warning: non-reentrant libc detected. Wine will be built without"
-  echo "*** threading support. Consider upgrading libc to a more recent"
-  echo "*** reentrant version of libc."
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"

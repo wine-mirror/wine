@@ -23,8 +23,7 @@
 SHELL     = /bin/sh
 CC        = @CC@
 CPP       = @CPP@
-CFLAGS    = @CFLAGS@ $(EXTRACFLAGS)
-OPTIONS   = @OPTIONS@ -D_REENTRANT
+CFLAGS    = @CFLAGS@
 LIBS      = @LIBS@
 YACC      = @YACC@
 LEX       = @LEX@
@@ -45,8 +44,6 @@ WINDRES   = @WINDRES@
 LN        = @LN@
 LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
-DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
-ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(DEFS) $(OPTIONS)
 AS        = @AS@
 LD        = @LD@
 LDFLAGS   = @LDFLAGS@
@@ -56,8 +53,11 @@ MV        = mv
 C2MAN     = @C2MAN@
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
-ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
-MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs
+INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
+EXTRACFLAGS  = @EXTRACFLAGS@
+ALLCFLAGS    = $(INCLUDES) $(DEFS) $(EXTRACFLAGS) $(CFLAGS)
+ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
+MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 WINEWRAPPER  = $(TOPSRCDIR)/tools/winewrapper
 RUNTEST      = $(TOPSRCDIR)/tools/runtest
@@ -66,7 +66,7 @@ MAKEDEP      = $(TOOLSDIR)/tools/makedep
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
 WIDL         = $(TOOLSDIR)/tools/widl/widl
-WRCFLAGS     = --nostdinc $(EXTRAWRCFLAGS)
+WRCFLAGS     = --nostdinc $(INCLUDES) $(EXTRAWRCFLAGS)
 LDPATH       = @LDPATH@
 DLLDIR       = $(TOPOBJDIR)/dlls
 LIBPORT      = -L$(TOPOBJDIR)/libs/port -lwine_port
@@ -120,7 +120,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ $<
+	$(LDPATH) $(WRC) $(WRCFLAGS) -o $@ $<
 
 .res.res.o:
 	$(WINDRES) -i $< -o $@
@@ -188,7 +188,7 @@ $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
 depend: $(MAKEDEP) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(EXTRA_SRCS)
+	$(MAKEDEP) $(INCLUDES) -C$(SRCDIR) $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(EXTRA_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)
 

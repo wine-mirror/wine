@@ -120,12 +120,12 @@ mouse.spec.c: mouse.spec resources/mouse.res
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --res resources/mouse.res --spec $(SRCDIR)/mouse.spec
 
 resources/display.res: resources/display.rc
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -O res16 $(SRCDIR)/resources/display.rc
+	$(LDPATH) $(WRC) $(WRCFLAGS) -o $@ -O res16 $(SRCDIR)/resources/display.rc
 
 resources/mouse.res: resources/mouse.rc
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -O res16 $(SRCDIR)/resources/mouse.rc
+	$(LDPATH) $(WRC) $(WRCFLAGS) -o $@ -O res16 $(SRCDIR)/resources/mouse.rc
 
 resources/version16.res: resources/version16.rc
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -O res16 $(SRCDIR)/resources/version16.rc
+	$(LDPATH) $(WRC) $(WRCFLAGS) -o $@ -O res16 $(SRCDIR)/resources/version16.rc
 
 ### Dependencies:

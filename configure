@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS OPTIONS WIN16_FILES WIN16_INSTALL LIBPTHREAD build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN C2MAN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL LIBPTHREAD build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN C2MAN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -1357,7 +1357,6 @@ if test "${with_wine_tools+set}" = set; then
   withval="$with_wine_tools"
 
 fi;
-
 
 WIN16_FILES="\$(WIN16_FILES)"
 
@@ -10683,9 +10682,11 @@ _ACEOF
 fi
 
 
+EXTRACFLAGS=""
+
 if test "x${GCC}" = "xyes"
 then
-  CFLAGS="$CFLAGS -Wall"
+  EXTRACFLAGS=-Wall
 
     echo "$as_me:$LINENO: checking for gcc strength-reduce bug" >&5
 echo $ECHO_N "checking for gcc strength-reduce bug... $ECHO_C" >&6
@@ -10742,7 +10743,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_strength_bug" >&5
 echo "${ECHO_T}$ac_cv_c_gcc_strength_bug" >&6
   if test "$ac_cv_c_gcc_strength_bug" = "yes"
   then
-    CFLAGS="$CFLAGS -fno-strength-reduce"
+    EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
   fi
 
     echo "$as_me:$LINENO: checking for gcc -mpreferred-stack-boundary=2 support" >&5
@@ -10794,7 +10795,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_stack_boundary" >&5
 echo "${ECHO_T}$ac_cv_c_gcc_stack_boundary" >&6
   if test "$ac_cv_c_gcc_stack_boundary" = "yes"
   then
-    CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
+    EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
   fi
 
     echo "$as_me:$LINENO: checking for gcc -gstabs+ support" >&5
@@ -10846,7 +10847,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_gstabs" >&5
 echo "${ECHO_T}$ac_cv_c_gcc_gstabs" >&6
   if test "$ac_cv_c_gcc_gstabs" = "yes"
   then
-    CFLAGS="$CFLAGS -gstabs+"
+    EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
   fi
 
     saved_CFLAGS="$CFLAGS"
@@ -10898,7 +10899,7 @@ echo "${ECHO_T}$ac_cv_c_string_h_warnings" >&6
   CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
-    CFLAGS="$CFLAGS -Wpointer-arith"
+    EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
 fi
 
@@ -11284,7 +11285,7 @@ fi
 
 DLLEXT=""
 
-DLLFLAGS=""
+DLLFLAGS="-D_REENTRANT"
 
 DLLIBS=""
 
@@ -11763,7 +11764,7 @@ done
 
     if test "$LIBEXT" = "so"
     then
-      DLLFLAGS="-fPIC"
+      DLLFLAGS="$DLLFLAGS -fPIC"
       DLLEXT=".so"
       echo "$as_me:$LINENO: checking whether we can build a GNU style ELF dll" >&5
 echo $ECHO_N "checking whether we can build a GNU style ELF dll... $ECHO_C" >&6
@@ -16763,7 +16764,6 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
-s,@OPTIONS@,$OPTIONS,;t t
 s,@WIN16_FILES@,$WIN16_FILES,;t t
 s,@WIN16_INSTALL@,$WIN16_INSTALL,;t t
 s,@LIBPTHREAD@,$LIBPTHREAD,;t t
@@ -16840,6 +16840,7 @@ s,@ARTSLIBS@,$ARTSLIBS,;t t
 s,@ARTSINCL@,$ARTSINCL,;t t
 s,@ALSALIBS@,$ALSALIBS,;t t
 s,@AUDIOIOLIBS@,$AUDIOIOLIBS,;t t
+s,@EXTRACFLAGS@,$EXTRACFLAGS,;t t
 s,@DLLEXT@,$DLLEXT,;t t
 s,@DLLFLAGS@,$DLLFLAGS,;t t
 s,@DLLIBS@,$DLLIBS,;t t
@@ -17460,21 +17461,6 @@ then
   echo "*** X support, which currently does not work, and would probably not be"
   echo "*** what you want anyway. You will need to install devel packages of"
   echo "*** Xlib/Xfree86 at the very least."
-fi
-
-if test "$ac_cv_lib_ncurses_resizeterm" = "no" -a "$ac_cv_lib_ncurses_waddch" = "yes"
-then
-  echo
-  echo "*** Warning: resizeterm not found in ncurses. Wine will be built without"
-  echo "*** terminal resize support. Consider upgrading ncurses."
-fi
-
-if test "$wine_cv_libc_reentrant" = "no"
-then
-  echo
-  echo "*** Warning: non-reentrant libc detected. Wine will be built without"
-  echo "*** threading support. Consider upgrading libc to a more recent"
-  echo "*** reentrant version of libc."
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
