@@ -27,19 +27,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
+static const WCHAR mciaviW[] = {'M','C','I','A','V','I',0};
+
 static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hWnd, uMsg, wParam, lParam);
 
     switch (uMsg) {
     case WM_CREATE:
-	SetWindowLongA(hWnd, 0, (LPARAM)((CREATESTRUCTA*)lParam)->lpCreateParams);
-	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+        SetWindowLongW(hWnd, 0, (LPARAM)((CREATESTRUCTW *)lParam)->lpCreateParams);
+        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 
     case WM_DESTROY:
-        MCIAVI_mciClose(GetWindowLongA(hWnd, 0), MCI_WAIT, NULL);
-	SetWindowLongA(hWnd, 0, 0);
-	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+        MCIAVI_mciClose(GetWindowLongW(hWnd, 0), MCI_WAIT, NULL);
+        SetWindowLongW(hWnd, 0, 0);
+        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 
     case WM_ERASEBKGND:
 	{
@@ -51,10 +53,10 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
     case WM_PAINT:
         {
-            WINE_MCIAVI *wma = (WINE_MCIAVI *)mciGetDriverData(GetWindowLongA(hWnd, 0));
+            WINE_MCIAVI *wma = (WINE_MCIAVI *)mciGetDriverData(GetWindowLongW(hWnd, 0));
 
             if (!wma)
-                return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+                return DefWindowProcW(hWnd, uMsg, wParam, lParam);
             
             EnterCriticalSection(&wma->cs);
 
@@ -63,7 +65,7 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
             {
                 LeaveCriticalSection(&wma->cs);
 		/* default paint handling */
-	    	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+                return DefWindowProcW(hWnd, uMsg, wParam, lParam);
             }
 
             if (wParam)
@@ -81,34 +83,38 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
        return 1;
 
     default:
-	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
 BOOL MCIAVI_UnregisterClass(void)
 {
-    return UnregisterClassA("MCIAVI", MCIAVI_hInstance);
+    return UnregisterClassW(mciaviW, MCIAVI_hInstance);
 }
 
 BOOL MCIAVI_RegisterClass(void)
 {
-    WNDCLASSA 	wndClass;
+    WNDCLASSW wndClass;
 
-    ZeroMemory(&wndClass, sizeof(WNDCLASSA));
+    ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style         = CS_DBLCLKS;
-    wndClass.lpfnWndProc   = (WNDPROC)MCIAVI_WindowProc;
+    wndClass.lpfnWndProc   = MCIAVI_WindowProc;
     wndClass.cbWndExtra    = sizeof(MCIDEVICEID);
     wndClass.hInstance     = MCIAVI_hInstance;
-    wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
-    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-    wndClass.lpszClassName = "MCIAVI";
+    wndClass.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+    wndClass.lpszClassName = mciaviW;
 
-    return RegisterClassA(&wndClass);
+    if (RegisterClassW(&wndClass)) return TRUE;
+    if (GetLastError() == ERROR_CLASS_ALREADY_EXISTS) return TRUE;
+
+    return FALSE;
 }
 
 BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms)
 {
+    static const WCHAR captionW[] = {'W','i','n','e',' ','M','C','I','-','A','V','I',' ','p','l','a','y','e','r',0};
     HWND	hParent = 0;
     DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
     int		p = CW_USEDEFAULT;
@@ -127,7 +133,7 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     rc.bottom = (wma->hic ? wma->outbih : wma->inbih)->biHeight;
     AdjustWindowRect(&rc, dwStyle, FALSE);
 
-    wma->hWnd = CreateWindowA("MCIAVI", "Wine MCI-AVI player",
+    wma->hWnd = CreateWindowW(mciaviW, captionW,
                              dwStyle, rc.left, rc.top,
                              rc.right, rc.bottom,
                              hParent, 0, MCIAVI_hInstance,
