@@ -1459,7 +1459,7 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     SCROLLINFO horzInfo, vertInfo;
 
     if (infoPtr->dwStyle & LVS_NOSCROLL) return;
-    /*if (!is_redrawing(infoPtr)) return;*/
+    if (!is_redrawing(infoPtr)) return;
 
     ZeroMemory(&horzInfo, sizeof(SCROLLINFO));
     horzInfo.cbSize = sizeof(SCROLLINFO);
@@ -3915,7 +3915,7 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     }
 
     /* do not update screen if not in report mode */
-    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return;
+    if (!is_redrawing(infoPtr) || (infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return;
     
     /* if we have a focus, must first erase the focus rect */
     if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
@@ -4029,7 +4029,7 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     POINT Origin;
 
     /* if we don't refresh, what's the point of scrolling? */
-    /*if (!is_redrawing(infoPtr)) return;*/
+    if (!is_redrawing(infoPtr)) return;
     
     assert (abs(dir) == 1);
 
@@ -7681,6 +7681,7 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
 	
 	infoPtr->bFirstPaint = FALSE;
+	LISTVIEW_UpdateSize(infoPtr);
 	LISTVIEW_UpdateItemSize(infoPtr);
 	if (uView == LVS_ICON || uView == LVS_SMALLICON)
 	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
@@ -7930,10 +7931,18 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
  */
 static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
 {
+    UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
+    
     infoPtr->bRedraw = bRedraw;
-    if(bRedraw)
-        RedrawWindow(infoPtr->hwndSelf, NULL, 0,
-            RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN | RDW_ERASENOW);
+
+    if(!bRedraw) return 0;
+    
+    LISTVIEW_UpdateSize(infoPtr);
+    if (uView == LVS_ICON || uView == LVS_SMALLICON)
+	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+    LISTVIEW_UpdateScroll(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr);
+
     return 0;
 }
 
@@ -7956,6 +7965,8 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 
     TRACE("(width=%d, height=%d)\n", Width, Height);
 
+    if (!is_redrawing(infoPtr)) return 0;
+    
     if (!LISTVIEW_UpdateSize(infoPtr)) return 0;
     
     if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_SMALLICON || uView == LVS_ICON))
@@ -8589,9 +8600,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return LISTVIEW_MouseWheel(infoPtr, (short int)HIWORD(wParam));
 
   case WM_WINDOWPOSCHANGED:
-      if (!(((WINDOWPOS *)lParam)->flags & SWP_NOSIZE)) {
+      if (!(((WINDOWPOS *)lParam)->flags & SWP_NOSIZE)) 
+      {
 	  SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE |
 		       SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
+	  /* FIXME: why do we need this here? */
 	  LISTVIEW_UpdateSize(infoPtr);
 	  LISTVIEW_UpdateScroll(infoPtr);
       }
