@@ -39,7 +39,7 @@ DEFAULT_DEBUG_CHANNEL(font)
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
 
-#define MAX_FONT_FAMILIES	128
+#define MAX_FONT_FAMILIES	1024
 #define MAX_LFD_LENGTH		256
 
 #define MAX_FONT_SIZE           1000    /* Max size in pixels */
@@ -115,9 +115,10 @@ static LPSTR	suffx_iso[] = { "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8",
 static LPSTR	suffx_iso646[] = { "-irv", NULL };
 static LPSTR	suffx_microsoft[] = { "-cp1252", "-cp1251", "-cp1250", "-cp1253", "-cp1254", "-cp1255",
 				      "-cp1256", "-cp1257", "-fontspecific", "-symbol", NULL };
+static LPSTR    suffx_windows[] = { "-1252", "-1251", "-1250", "-1253", "-1254", 
+                                    "-1256", "-1257", NULL };
 static LPSTR	suffx_viscii[] = { "-1", NULL };
 static LPSTR	suffx_ansi[] = { "-0", NULL };
-static LPSTR	suffx_koi8[] = { "-ru", "-r", NULL };
 static LPSTR	suffx_null[] = { NULL };
 
 /* charset mapping tables, have to have the same number of entries as corresponding suffix tables */
@@ -131,7 +132,8 @@ static BYTE	chset_microsoft[] = { ANSI_CHARSET, RUSSIAN_CHARSET, EE_CHARSET, GRE
 				      HEBREW_CHARSET, ARABIC_CHARSET, BALTIC_CHARSET, SYMBOL_CHARSET, SYMBOL_CHARSET, 
 				      SYMBOL_CHARSET };
 static BYTE	chset_ansi[] = { ANSI_CHARSET, ANSI_CHARSET };
-static BYTE	chset_koi8[] = { KOI8_CHARSET, KOI8_CHARSET, KOI8_CHARSET };
+static BYTE     chset_windows[] = { ANSI_CHARSET, RUSSIAN_CHARSET, EE_CHARSET, GREEK_CHARSET, TURKISH_CHARSET,
+                                    HEBREW_CHARSET, ARABIC_CHARSET, BALTIC_CHARSET, BALTIC_CHARSET}; 
 static BYTE	chset_tcvn[] = { TCVN_CHARSET, TCVN_CHARSET };
 static BYTE	chset_tis620[] = { THAI_CHARSET, THAI_CHARSET };
 static BYTE	chset_fontspecific[] = { SYMBOL_CHARSET };
@@ -156,7 +158,7 @@ static fontEncodingTemplate __fETTable[10] = {
 			{ "ansi", &suffx_ansi, &chset_ansi, &__fETTable[4] },
 			{ "ascii", &suffx_ansi, &chset_ansi, &__fETTable[5] },
 			{ "fontspecific", &suffx_null, &chset_fontspecific, &__fETTable[6] },
-			{ "koi8", &suffx_koi8, &chset_koi8, &__fETTable[7] },
+			{ "windows", &suffx_windows, &chset_windows, &__fETTable[7] },
 			{ "tcvn", &suffx_ansi, &chset_tcvn, &__fETTable[8] },
 			{ "tis620.2533", &suffx_ansi, &chset_tis620, &__fETTable[9] },
 			{ "viscii1.1", &suffx_viscii, &chset_viscii, NULL }
