@@ -25,14 +25,35 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wine/debug.h"
 #include "gdi.h"
 #include "x11drv.h"
-#include "wine_gl.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 #ifdef HAVE_OPENGL
+
+#undef APIENTRY
+#undef CALLBACK
+#undef WINAPI
+
+#define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
+#include <GL/gl.h>
+#include <GL/glx.h>
+#ifdef HAVE_GL_GLEXT_H
+# include <GL/glext.h>
+#endif
+#undef  XMD_H
+
+#undef APIENTRY
+#undef CALLBACK
+#undef WINAPI
+
+/* Redefines the constants */
+#define CALLBACK    __stdcall
+#define WINAPI      __stdcall
+#define APIENTRY    WINAPI
+
 
 static void dump_PIXELFORMATDESCRIPTOR(PIXELFORMATDESCRIPTOR *ppfd) {
   DPRINTF("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
@@ -123,7 +144,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   /*   ADD2(GLX_AUX_BUFFERS, ppfd->cAuxBuffers); */
   att_list[att_pos] = None;
 
-  ENTER_GL(); {
+  wine_tsx11_lock(); {
     /*
        This command cannot be used as we need to use the default visual...
        Let's hope it at least contains some OpenGL functionnalities
@@ -138,7 +159,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 
     TRACE("Found visual : %p - returns %d\n", vis, physDev->used_visuals + 1);
   }
-  LEAVE_GL();
+  wine_tsx11_unlock();
 
   if (vis == NULL) {
     ERR("No visual found !\n");
@@ -199,9 +220,9 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
 
     /* Create a 'standard' X Visual */
-    ENTER_GL();
+    wine_tsx11_lock();
     vis = glXChooseVisual(gdi_display, DefaultScreen(gdi_display), dblBuf);
-    LEAVE_GL();
+    wine_tsx11_unlock();
 
     WARN("Uninitialized Visual. Creating standard (%p) !\n", vis);
 
@@ -222,7 +243,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   /* These flags are always the same... */
   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_ACCELERATED;
   /* Now the flags extraced from the Visual */
-  ENTER_GL();
+  wine_tsx11_lock();
   glXGetConfig(gdi_display, vis, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
   glXGetConfig(gdi_display, vis, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
 
@@ -272,7 +293,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   glXGetConfig( gdi_display, vis, GLX_STENCIL_SIZE, &value );
   ppfd->cStencilBits = value;
 
-  LEAVE_GL();
+  wine_tsx11_unlock();
 
   /* Aux : to do ... */
 
@@ -316,11 +337,35 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   TRACE("(%p)\n", physDev);
 
-  ENTER_GL();
+  wine_tsx11_lock();
   glXSwapBuffers(gdi_display, physDev->drawable);
-  LEAVE_GL();
+  wine_tsx11_unlock();
 
   return TRUE;
+}
+
+/***********************************************************************
+ *		X11DRV_setup_opengl_visual
+ *
+ * Setup the default visual used for OpenGL and Direct3D, and the desktop
+ * window (if it exists).  If OpenGL isn't available, the visual is simply
+ * set to the default visual for the display
+ */
+XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
+{
+    int err_base, evt_base;
+    XVisualInfo *visual = NULL;
+
+    /* In order to support OpenGL or D3D, we require a double-buffered
+     * visual */
+    wine_tsx11_lock();
+    if (glXQueryExtension(display, &err_base, &evt_base) == True)
+    {
+        int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+        visual = glXChooseVisual(display, DefaultScreen(display), dblBuf);
+    }
+    wine_tsx11_unlock();
+    return visual;
 }
 
 #else  /* defined(HAVE_OPENGL) */
@@ -359,6 +404,11 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   ERR("No OpenGL support compiled in.\n");
 
   return FALSE;
+}
+
+XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
+{
+  return NULL;
 }
 
 #endif /* defined(HAVE_OPENGL) */

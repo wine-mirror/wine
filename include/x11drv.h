@@ -436,5 +436,6 @@ extern void X11DRV_sync_window_style( Display *display, WND *win );
 extern int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder );
 extern int X11DRV_sync_client_window_position( Display *display, WND *win );
 extern void X11DRV_set_wm_hints( Display *display, WND *win );
+extern XVisualInfo *X11DRV_setup_opengl_visual( Display *display );
 
 #endif  /* __WINE_X11DRV_H */

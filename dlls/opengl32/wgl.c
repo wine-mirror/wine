@@ -26,7 +26,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine_gl.h"
 #include "x11drv.h"
 
 #include "wgl.h"
@@ -34,6 +33,9 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
+
+void (*wine_tsx11_lock_ptr)(void) = NULL;
+void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 static GLXContext default_cx = NULL;
 static Display *default_display;  /* display to use for default context */
@@ -586,12 +588,16 @@ static BOOL process_attach(void)
   HDC hdc;
   XVisualInfo *vis = NULL;
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
+  HMODULE mod = GetModuleHandleA( "x11drv.dll" );
 
-  if (!root)
+  if (!root || !mod)
   {
       ERR("X11DRV not loaded. Cannot create default context.\n");
       return FALSE;
   }
+
+  wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
+  wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
 
   hdc = GetDC(0);
   default_display = get_display( hdc );

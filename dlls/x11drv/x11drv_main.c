@@ -41,7 +41,6 @@
 #include "gdi.h"
 #include "user.h"
 #include "win.h"
-#include "wine_gl.h"
 #include "x11drv.h"
 #include "xvidmode.h"
 #include "dga2.h"
@@ -137,17 +136,17 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
 }
 
 /***********************************************************************
- *		lock_tsx11
+ *		X11DRV_tsx11_lock   (X11DRV.@)
  */
-static void lock_tsx11(void)
+void X11DRV_tsx11_lock(void)
 {
     EnterCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
- *		unlock_tsx11
+ *		X11DRV_tsx11_unlock   (X11DRV.@)
  */
-static void unlock_tsx11(void)
+void X11DRV_tsx11_unlock(void)
 {
     LeaveCriticalSection( &X11DRV_CritSection );
 }
@@ -262,36 +261,6 @@ static void setup_options(void)
 
 
 /***********************************************************************
- *		setup_opengl_visual
- *
- * Setup the default visual used for OpenGL and Direct3D, and the desktop
- * window (if it exists).  If OpenGL isn't available, the visual is simply
- * set to the default visual for the display
- */
-#ifdef HAVE_OPENGL
-static void setup_opengl_visual( Display *display )
-{
-    int err_base, evt_base;
-
-    /* In order to support OpenGL or D3D, we require a double-buffered
-     * visual */
-    wine_tsx11_lock();
-    if (glXQueryExtension(display, &err_base, &evt_base) == True) {
-	  int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-
-	  desktop_vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
-    }
-    wine_tsx11_unlock();
-
-    if (desktop_vi != NULL) {
-      visual       = desktop_vi->visual;
-      screen       = ScreenOfDisplay(display, desktop_vi->screen);
-      screen_depth = desktop_vi->depth;
-    }
-}
-#endif /* HAVE_OPENGL */
-
-/***********************************************************************
  *           X11DRV process initialisation routine
  */
 static void process_attach(void)
@@ -304,8 +273,8 @@ static void process_attach(void)
     /* setup TSX11 locking */
     old_tsx11_lock    = wine_tsx11_lock;
     old_tsx11_unlock  = wine_tsx11_unlock;
-    wine_tsx11_lock   = lock_tsx11;
-    wine_tsx11_unlock = unlock_tsx11;
+    wine_tsx11_lock   = X11DRV_tsx11_lock;
+    wine_tsx11_unlock = X11DRV_tsx11_unlock;
 
     /* Open display */
 
@@ -338,9 +307,12 @@ static void process_attach(void)
     else screen_depth = DefaultDepthOfScreen( screen );
 
     /* If OpenGL is available, change the default visual, etc as necessary */
-#ifdef HAVE_OPENGL
-    setup_opengl_visual( display );
-#endif /* HAVE_OPENGL */
+    if ((desktop_vi = X11DRV_setup_opengl_visual( display )))
+    {
+        visual       = desktop_vi->visual;
+        screen       = ScreenOfDisplay(display, desktop_vi->screen);
+        screen_depth = desktop_vi->depth;
+    }
 
     /* tell the libX11 that we will do input method handling ourselves
      * that keep libX11 from doing anything whith dead keys, allowing Wine

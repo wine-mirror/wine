@@ -2,7 +2,7 @@
 /* Auto-generated file... Do not edit ! */
 
 #include "config.h"
-#include "wine_gl.h"
+#include "opengl_ext.h"
 #include "wine/debug.h"
 
 typedef const GLubyte * GLstring;

@@ -2,12 +2,10 @@
 /* Auto-generated file... Do not edit ! */
 
 #include "config.h"
-#include "wine_gl.h"
+#include "opengl_ext.h"
 #include "wine/debug.h"
 
 typedef const GLubyte * GLstring;
-
-#include "opengl_ext.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 

@@ -99,3 +99,7 @@ init	X11DRV_Init
 @ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
 @ cdecl IsSelectionOwner() X11DRV_IsSelectionOwner
 @ cdecl ResetSelectionOwner(ptr long) X11DRV_ResetSelectionOwner
+
+# X11 locks
+@ cdecl -norelay wine_tsx11_lock() X11DRV_tsx11_lock
+@ cdecl -norelay wine_tsx11_unlock() X11DRV_tsx11_unlock

@@ -43,6 +43,9 @@ static const ddraw_driver* DDRAW_drivers[MAX_DDRAW_DRIVERS];
 static int DDRAW_num_drivers; /* = 0 */
 static int DDRAW_default_driver;
 
+void (*wine_tsx11_lock_ptr)(void) = NULL;
+void (*wine_tsx11_unlock_ptr)(void) = NULL;
+
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /**********************************************************************/
@@ -502,6 +505,16 @@ BOOL WINAPI DDRAW_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 
     DDRAW_HAL_Init(hInstDLL, fdwReason, lpv);
     DDRAW_User_Init(hInstDLL, fdwReason, lpv);
+
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+        HMODULE mod = GetModuleHandleA( "x11drv.dll" );
+        if (mod)
+        {
+            wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
+            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
+        }
+    }
 
     if (DDRAW_num_drivers > 0)
 	DDRAW_default_driver = DDRAW_ChooseDefaultDriver();

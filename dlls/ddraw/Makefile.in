@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw.dll
 IMPORTS   = user32 gdi32 kernel32
-EXTRALIBS = $(LIBUUID) $(LIBTSX11) $(X_LIBS) $(XLIB)
+EXTRALIBS = $(LIBUUID) $(X_LIBS) $(XLIB)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
