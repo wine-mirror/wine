@@ -813,6 +813,7 @@ static void TAB_DrawItem(
     HPEN   holdPen;
     INT    oldBkMode;
     INT    cx,cy; 
+    BOOL   deleteBrush;
 
     if (lStyle & TCS_BUTTONS)
     {
@@ -830,8 +831,20 @@ static void TAB_DrawItem(
          */
         if (!(lStyle & TCS_OWNERDRAWFIXED))
 	{
+              COLORREF bk = GetSysColor(COLOR_3DHILIGHT);
 	  DeleteObject(hbr);
-          hbr = CreateSolidBrush(GetSysColor(COLOR_3DHILIGHT));    
+              hbr = GetSysColorBrush(COLOR_SCROLLBAR);
+              SetTextColor(hdc, GetSysColor(COLOR_3DFACE));
+              SetBkColor(hdc, bk);
+
+              /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT
+               * we better use 0x55aa bitmap brush to make scrollbar's background
+               * look different from the window background.
+               */
+              if (bk == GetSysColor(COLOR_WINDOW))
+                  hbr = CACHE_GetPattern55AABrush();
+
+              deleteBrush = FALSE;
 	}
 
         /*
@@ -997,7 +1010,7 @@ static void TAB_DrawItem(
     SetBkMode(hdc, oldBkMode);
     SelectObject(hdc, holdPen);
     DeleteObject(hfocusPen);
-    DeleteObject(hbr);
+    if (deleteBrush) DeleteObject(hbr);
   }
 }
 
