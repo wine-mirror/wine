@@ -2005,6 +2005,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dmsynth.dll,1
 11,,dmusic.dll,1
 11,,dplayx.dll,1
+11,,dpnet.dll,1
 11,,dsound.dll,1
 11,,dswave.dll,1
 11,,msi.dll,1

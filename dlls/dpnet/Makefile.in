@@ -1,0 +1,21 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dpnet.dll
+IMPORTS   = ole32 user32 advapi32 kernel32
+EXTRALIBS = -ldxguid -luuid
+
+C_SRCS = \
+	address.c \
+	client.c \
+	dpnet_main.c \
+	peer.c \
+	regsvr.c \
+	server.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

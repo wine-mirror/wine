@@ -1532,6 +1532,7 @@ dlls/dmusic/Makefile
 dlls/dmusic32/Makefile
 dlls/dplay/Makefile
 dlls/dplayx/Makefile
+dlls/dpnet/Makefile
 dlls/dpnhpast/Makefile
 dlls/dsound/Makefile
 dlls/dsound/tests/Makefile

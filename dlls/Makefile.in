@@ -47,6 +47,7 @@ BASEDIRS = \
 	dmusic32 \
 	dplay \
 	dplayx \
+	dpnet \
 	dpnhpast \
 	dsound \
 	dswave \
@@ -261,6 +262,7 @@ SYMLINKS_SO = \
 	dmusic32.dll.so \
 	dplay.dll.so \
 	dplayx.dll.so \
+	dpnet.dll.so \
 	dpnhpast.dll.so \
 	dsound.dll.so \
 	dswave.dll.so \
@@ -497,6 +499,9 @@ dplay.dll.so: dplay/dplay.dll.so
 
 dplayx.dll.so: dplayx/dplayx.dll.so
 	$(RM) $@ && $(LN_S) dplayx/dplayx.dll.so $@
+
+dpnet.dll.so: dpnet/dpnet.dll.so
+	$(RM) $@ && $(LN_S) dpnet/dpnet.dll.so $@
 
 dpnhpast.dll.so: dpnhpast/dpnhpast.dll.so
 	$(RM) $@ && $(LN_S) dpnhpast/dpnhpast.dll.so $@
@@ -953,6 +958,7 @@ IMPORT_LIBS = \
 	libdmusic32 \
 	libdplay \
 	libdplayx \
+	libdpnet \
 	libdpnhpast \
 	libdsound \
 	libdswave \
@@ -1219,6 +1225,11 @@ libdplayx.def: dplayx/dplayx.spec.def
 	$(RM) $@ && $(LN_S) dplayx/dplayx.spec.def $@
 libdplayx.a: dplayx/dplayx.spec.def
 	$(DLLTOOL) -k -l $@ -d dplayx/dplayx.spec.def
+
+libdpnet.def: dpnet/dpnet.spec.def
+	$(RM) $@ && $(LN_S) dpnet/dpnet.spec.def $@
+libdpnet.a: dpnet/dpnet.spec.def
+	$(DLLTOOL) -k -l $@ -d dpnet/dpnet.spec.def
 
 libdpnhpast.def: dpnhpast/dpnhpast.spec.def
 	$(RM) $@ && $(LN_S) dpnhpast/dpnhpast.spec.def $@
@@ -1665,6 +1676,7 @@ dmusic/dmusic.spec.def: $(WINEBUILD)
 dmusic32/dmusic32.spec.def: $(WINEBUILD)
 dplay/dplay.spec.def: $(WINEBUILD)
 dplayx/dplayx.spec.def: $(WINEBUILD)
+dpnet/dpnet.spec.def: $(WINEBUILD)
 dpnhpast/dpnhpast.spec.def: $(WINEBUILD)
 dsound/dsound.spec.def: $(WINEBUILD)
 dswave/dswave.spec.def: $(WINEBUILD)
@@ -1788,6 +1800,7 @@ dmusic/dmusic.dll.so: dmusic
 dmusic32/dmusic32.dll.so: dmusic32
 dplay/dplay.dll.so: dplay
 dplayx/dplayx.dll.so: dplayx
+dpnet/dpnet.dll.so: dpnet
 dpnhpast/dpnhpast.dll.so: dpnhpast
 dsound/dsound.dll.so: dsound
 dswave/dswave.dll.so: dswave
