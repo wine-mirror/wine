@@ -2,7 +2,7 @@
  * WineCfg resources
  * Portuguese Language Support
  *
- * Copyright 2003 Marcelo Duarte
+ * Copyright 2003-2004 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,8 +26,8 @@ IDD_ABOUTCFG DIALOGEX 0, 0, 260, 250
 STYLE WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Versão do Wine:",IDC_STATIC,119,17,45,8
-    LTEXT           "CVS",IDC_WINEVER,169,17,56,8
+    LTEXT           "Versão do Wine:",IDC_STATIC,119,17,55,8
+    LTEXT           "CVS",IDC_WINEVER,179,17,56,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
@@ -46,19 +46,19 @@ BEGIN
     CONTROL         "Aplicações",IDC_APP_TREEVIEW,"SysTreeView32",WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,40,142,145
     PUSHBUTTON	    "Adiconar aplicação...",IDC_APP_ADDAPP, 163,40,82,60
     PUSHBUTTON	    "Remover aplicação",IDC_APP_REMOVEAPP, 163,125,82,60
-    LTEXT           "Versão do Windows:",IDC_STATIC,17,192,58,8
-    LTEXT           "Versão do DOS:",IDC_STATIC,17,211,57,8
-    LTEXT           "Aparência do Windows:",IDC_STATIC,17,229,58,8
-    COMBOBOX        IDC_WINVER,83,190,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_DOSVER,83,208,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Versão do Windows:",IDC_STATIC,17,192,65,8
+    LTEXT           "Versão do DOS:",IDC_STATIC,17,211,65,8
+    LTEXT           "Aparência do Windows:",IDC_STATIC,17,229,85,8
+    COMBOBOX        IDC_WINVER,108,190,138,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_DOSVER,108,208,138,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT	    "Profundidade de cores: ",IDC_STATIC,8,10,90,30
-    COMBOBOX	    IDC_SCREEN_DEPTH,70,8,180,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Profundidade de cores: ",IDC_STATIC,8,10,80,30
+    COMBOBOX	    IDC_SCREEN_DEPTH,85,8,165,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL	    "Programas DirectX podem impedir que o mouse deixe a janela?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Permitir buffer duplo do desktop",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
@@ -86,17 +86,17 @@ BEGIN
     LTEXT           "Bibliotecas podem ser especificadas individualmente como 'builtin' ou 'native'. Uma entrada DLL como ""*"" é pertinente a todas as DLLs não especificadas explicitamente."
                     ,  IDC_STATIC,15,17,228,32
     CONTROL         "Sobreescrever DLLs", IDC_TREE_DLLS, "SysTreeView32", WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,50,142,187
-    LTEXT           "Ordem de carga:",IDC_STATIC,163,65,37,8
-    CONTROL         "Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,163,80,57,10
-    CONTROL         "Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,72,10
-    CONTROL         "Builtin, Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,57,10
-    CONTROL         "Native, Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,163,110,72,10
-    CONTROL         "Desabilitada",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,163,125,72,10
-    PUSHBUTTON	    "Adicionar uma aplicação...",IDC_DLLS_ADDAPP,163,144,82,14
+    LTEXT           "Ordem de carga:",IDC_STATIC,163,50,60,8
+    CONTROL         "Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,163,65,75,10
+    CONTROL         "Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,163,80,75,10
+    CONTROL         "Builtin, Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,75,10
+    CONTROL         "Native, Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,163,110,75,10
+    CONTROL         "Desabilitada",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,163,125,75,10
+    PUSHBUTTON	    "Adicionar aplicação...",IDC_DLLS_ADDAPP,163,144,82,14
     PUSHBUTTON	    "Remover aplicação",IDC_DLLS_REMOVEAPP, 163,164,82,14
-    PUSHBUTTON	    "Adicionar ordem de carga de DLL:",IDC_DLLS_ADDDLL, 163,184,82,14
-    COMBOBOX        IDC_DLLLIST,163,174,82,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON	    "Remover ordem de carga de DLL",IDC_DLLS_REMOVEDLL,163,224,82,14
+    PUSHBUTTON	    "Adicionar carga de DLL:",IDC_DLLS_ADDDLL, 163,184,82,14
+    COMBOBOX        IDC_DLLLIST,163,204,82,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON	    "Remover carga de DLL",IDC_DLLS_REMOVEDLL,163,224,82,14
 END
 
 IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -168,7 +168,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT	"Driver de áudio: ",IDC_STATIC,10,20,60,8
     COMBOBOX	IDC_AUDIO_DRIVER,70,18,85,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON	"Autodetectar",IDC_AUDIO_AUTODETECT,170,15,45,18
+    PUSHBUTTON	"Autodetectar",IDC_AUDIO_AUTODETECT,170,20,49,14
 END
 
 STRINGTABLE DISCARDABLE 
