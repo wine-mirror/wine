@@ -31,36 +31,3 @@ void *xmalloc( size_t size )
     memset(res,0,size);
     return res;
 }
-
-void *xcalloc( size_t size )
-{
-    void *res;
-
-    res = xmalloc (size);
-    memset(res,0,size);
-    return res;
-}
-
-
-void *xrealloc( void *ptr, size_t size )
-{
-    void *res = realloc (ptr, size);
-    if ((res == NULL) && size)
-    {
-        MESSAGE("Virtual memory exhausted.\n");
-        exit (1);
-    }
-    return res;
-}
-
-
-char *xstrdup( const char *str )
-{
-    char *res = strdup( str );
-    if (!res)
-    {
-        MESSAGE("Virtual memory exhausted.\n");
-        exit (1);
-    }
-    return res;
-}

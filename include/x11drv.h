@@ -191,7 +191,7 @@ extern void _XInitImageFuncPtrs(XImage *);
 { \
     int width_bytes = X11DRV_DIB_GetXImageWidthBytes( (width), (bpp) ); \
     (image) = TSXCreateImage(display, DefaultVisualOfScreen(X11DRV_GetXScreen()), \
-                           (bpp), ZPixmap, 0, xcalloc( (height)*width_bytes ),\
+                           (bpp), ZPixmap, 0, calloc( (height), width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }
 
@@ -250,8 +250,6 @@ typedef struct
 
 } X11DRV_DIB_IMAGEBITS_DESCR;
 
-extern int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr );
-extern int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr );
 extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );

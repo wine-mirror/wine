@@ -24,7 +24,6 @@
 #include "winerror.h"
 #include "file.h"
 #include "process.h"
-#include "xmalloc.h"
 #include "global.h"
 #include "server.h"
 #include "debugtools.h"

@@ -30,7 +30,6 @@
 #include "server.h"
 #include "winerror.h"
 #include "options.h"
-#include "xmalloc.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
@@ -305,7 +304,8 @@ static void start_server( const char *oldcwd )
             execl( BINDIR "/wineserver", "wineserver", NULL );
             if (oldcwd) chdir( oldcwd );
             /* now try the dir we were launched from */
-            path = xmalloc( strlen(argv0) + 20 );
+            if (!(path = malloc( strlen(argv0) + 20 )))
+                fatal_error( "out of memory\n" );
             if ((p = strrchr( strcpy( path, argv0 ), '/' )))
             {
                 strcpy( p, "/wineserver" );
@@ -396,7 +396,7 @@ int CLIENT_InitServer(void)
     /* retrieve the current directory */
     for (size = 512; ; size *= 2)
     {
-        oldcwd = xmalloc( size );
+        if (!(oldcwd = malloc( size ))) break;
         if (getcwd( oldcwd, size )) break;
         free( oldcwd );
         if (errno == ERANGE) continue;
@@ -407,7 +407,8 @@ int CLIENT_InitServer(void)
     /* get the server directory name */
     if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
     configdir = PROFILE_GetConfigDir();
-    serverdir = xmalloc( strlen(configdir) + strlen(SERVERDIR) + strlen(hostname) + 1 );
+    serverdir = malloc( strlen(configdir) + strlen(SERVERDIR) + strlen(hostname) + 1 );
+    if (!serverdir) fatal_error( "out of memory\n" );
     strcpy( serverdir, configdir );
     strcat( serverdir, SERVERDIR );
     strcat( serverdir, hostname );

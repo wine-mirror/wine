@@ -27,7 +27,6 @@
 #include "stackframe.h"
 #include "builtin16.h"
 #include "debugtools.h"
-#include "xmalloc.h"
 #include "toolhelp.h"
 
 DECLARE_DEBUG_CHANNEL(dll)
@@ -138,8 +137,14 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	 but may be missing something. If you have any doc please either send
 	 it to me or fix the code yourself. gfm@werple.mira.net.au
       */
-      char* buff = xmalloc(size);
+      char* buff = HeapAlloc(GetProcessHeap(), 0, size);
       char* curr = buff;
+
+      if(buff == NULL) {
+          WARN_(dll)("Memory exausted!");
+          return FALSE;
+      }
+
       ReadFile(hf, buff, size, &res, NULL);
       while(curr < buff + size) {
 	unsigned int rept = *((short*) curr)++;
@@ -152,7 +157,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	}
 	curr += len;
       }
-      free(buff);
+      HeapFree(GetProcessHeap(), 0, buff);
     }
 
     pSeg->flags |= NE_SEGFLAGS_LOADED;
@@ -175,7 +180,11 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->hSeg );
 
-    reloc_entries = (struct relocation_entry_s *)xmalloc(count * sizeof(struct relocation_entry_s));
+    reloc_entries = (struct relocation_entry_s *)HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
+    if(reloc_entries == NULL) {
+        WARN_(fixup)("Not enough memory for relocation entries!");
+        return FALSE;
+    }
     if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
         (res != count * sizeof(struct relocation_entry_s)))
     {
@@ -362,7 +371,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         }
     }
 
-    free(reloc_entries);
+    HeapFree(GetProcessHeap(), 0, reloc_entries);
     return TRUE;
 
 unknown:
@@ -370,7 +379,7 @@ unknown:
          "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
          i + 1, rep->address_type, rep->relocation_type, 
          rep->offset, rep->target1, rep->target2);
-    free(reloc_entries);
+    HeapFree(GetProcessHeap(), 0, reloc_entries);
     return FALSE;
 }
 

@@ -5,7 +5,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "xmalloc.h"
 
 extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
@@ -33,7 +32,11 @@ int main( int argc, char *argv [] )
 
   /* Alloc szCmdParam */
   for (i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
-  lpszCmdParam = (LPSTR) xmalloc(len + 1);
+  lpszCmdParam = (LPSTR) malloc(len + 1);
+  if(lpszCmdParam == NULL) {
+    MESSAGE("Not enough memory to store command parameters!");
+    return 1;
+  }
   /* Concatenate arguments */
   if (argc > 1) strcpy(lpszCmdParam, argv[1]);
   else lpszCmdParam[0] = '\0';

@@ -66,7 +66,7 @@ BOOL TTYDRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName )
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_IsSelectionowner
+ *		TTYDRV_CLIPBOARD_IsSelectionowner
  *
  * Returns: TRUE - We(WINE) own the selection, FALSE - Selection not owned by us
  */

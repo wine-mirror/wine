@@ -77,7 +77,7 @@ void TTYDRV_KEYBOARD_Beep()
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_GetDIState
+ *		TTYDRV_KEYBOARD_GetDIState
  */
 BOOL TTYDRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr)
 {

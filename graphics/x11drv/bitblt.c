@@ -22,7 +22,6 @@
 #include "options.h"
 #include "x11drv.h"
 #include "debugtools.h"
-#include "xmalloc.h" /* for XCREATEIMAGE macro */
 
 DEFAULT_DEBUG_CHANNEL(bitblt)
 

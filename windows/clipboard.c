@@ -33,7 +33,6 @@
 #include "task.h"
 #include "queue.h"
 #include "clipboard.h"
-#include "xmalloc.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(clipboard)
@@ -1042,13 +1041,21 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     /* allocate storage for new format entry */
 
-    lpNewFormat = (LPWINE_CLIPFORMAT)xmalloc(sizeof(WINE_CLIPFORMAT));
+    lpNewFormat = (LPWINE_CLIPFORMAT)HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CLIPFORMAT));
+    if(lpNewFormat == NULL) {
+        WARN("No more memory for a new format!");
+        return 0;
+    }
     lpFormat->NextFormat = lpNewFormat;
     lpNewFormat->wFormatID = LastRegFormat;
     lpNewFormat->wRefCount = 1;
 
-    lpNewFormat->Name = (LPSTR)xmalloc(strlen(FormatName) + 1);
-    strcpy(lpNewFormat->Name, FormatName);
+    lpNewFormat->Name = (LPSTR)HEAP_strdupA(GetProcessHeap(), 0, FormatName);
+    if(lpNewFormat->Name == NULL) {
+        WARN("No more memory for the new format name!");
+        HeapFree(GetProcessHeap(), 0, lpNewFormat);
+        return 0;
+    }
 
     lpNewFormat->wDataPresent = 0;
     lpNewFormat->hData16 = 0;

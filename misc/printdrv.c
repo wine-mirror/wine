@@ -23,7 +23,6 @@
 #include "gdi.h"
 #include "dc.h"
 #include "callback.h"
-#include "xmalloc.h"
 #include "options.h"
 #include "heap.h"
 
@@ -345,7 +344,7 @@ INT16 WINAPI ExtractPQ16(HPQ16 hPQ)
             prev->next = queue->next;
         else
             hpqueue = queue->next;
-        free(queue);
+        HeapFree(GetProcessHeap(), 0, queue);
     }
     
     TRACE("%x got tag %d key %d\n", hPQ, tag, key); 
@@ -359,7 +358,11 @@ INT16 WINAPI ExtractPQ16(HPQ16 hPQ)
  */
 INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key) 
 {
-    struct hpq *queueItem = xmalloc(sizeof(struct hpq));
+    struct hpq *queueItem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct hpq));
+    if(queueItem == NULL) {
+        ERR("Memory exausted!");
+        return FALSE;
+    }
     queueItem->next = hpqueue;
     hpqueue = queueItem;
     queueItem->key = key;
@@ -487,10 +490,10 @@ static int FreePrintJob(HANDLE16 hJob)
     if (pPrintJob != NULL)
     {
 	gPrintJobsTable[pPrintJob->nIndex] = NULL;
-	free(pPrintJob->pszOutput);
-	free(pPrintJob->pszTitle);
+	HeapFree(GetProcessHeap(), 0, pPrintJob->pszOutput);
+	HeapFree(GetProcessHeap(), 0, pPrintJob->pszTitle);
 	if (pPrintJob->fd >= 0) close(pPrintJob->fd);
-	free(pPrintJob);
+	HeapFree(GetProcessHeap(), 0, pPrintJob);
 	nRet = SP_OK;
     }
     return nRet;
@@ -516,14 +519,17 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 	fd = CreateSpoolFile(lpOutput);
 	if (fd >= 0)
 	{
-	    hHandle = 1;
+	    pPrintJob = HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTJOB));
+            if(pPrintJob == NULL) {
+                WARN("Memory exausted!");
+                return hHandle;
+            }
+            
+            hHandle = 1;
 
-	    pPrintJob = xmalloc(sizeof(PRINTJOB));
-	    memset(pPrintJob, 0, sizeof(PRINTJOB));
-
-	    pPrintJob->pszOutput = strdup(lpOutput);
+	    pPrintJob->pszOutput = HEAP_strdupA(GetProcessHeap(), 0, lpOutput);
 	    if(lpTitle)
-	        pPrintJob->pszTitle = strdup(lpTitle);
+	        pPrintJob->pszTitle = HEAP_strdupA(GetProcessHeap(), 0, lpTitle);
 	    pPrintJob->hDC = hDC;
 	    pPrintJob->fd = fd;
 	    pPrintJob->nIndex = 0;

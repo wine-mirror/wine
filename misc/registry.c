@@ -44,7 +44,6 @@
 #include "file.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "xmalloc.h"
 #include "options.h"
 #include "winreg.h"
 #include "server.h"
@@ -73,6 +72,17 @@ static void REGISTRY_Init(void);
 #define UNICONVMASK	((1<<REG_SZ)|(1<<REG_MULTI_SZ)|(1<<REG_EXPAND_SZ))
 
 
+static void *xmalloc( size_t size )
+{
+    void *res;
+ 
+    res = malloc (size ? size : 1);
+    if (res == NULL) {
+        WARN("Virtual memory exhausted.\n");
+        exit (1);
+    }
+    return res;
+}                                                                              
 
 /*
  * QUESTION
@@ -404,8 +414,13 @@ static int _wine_read_line( FILE *F, char **buf, int *len )
 			if (NULL==(s=strchr(curread,'\n'))) {
 				/* buffer wasn't large enough */
 				curoff	= strlen(*buf);
-				*buf	= xrealloc(*buf,*len*2);
-				curread	= *buf + curoff;
+				curread	= realloc(*buf,*len*2);
+                                if(curread == NULL) {
+                                    WARN("Out of memory");
+                                    return 0;
+                                }
+                                *buf	= curread;
+				curread+= curoff;
 				mylen	= *len;	/* we filled up the buffer and 
 						 * got new '*len' bytes to fill
 						 */

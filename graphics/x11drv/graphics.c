@@ -40,7 +40,6 @@
 #include "region.h"
 #include "struct32.h"
 #include "debugtools.h"
-#include "xmalloc.h"
 
 DEFAULT_DEBUG_CHANNEL(graphics)
 
@@ -977,11 +976,15 @@ X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
 
     if((oldwidth = physDev->pen.width) == 0) physDev->pen.width = 1;
 
-    points = (XPoint *) xmalloc (sizeof (XPoint) * (count));
+    if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * count )))
+    {
+        WARN("No memory to convert POINTs to XPoints!\n");
+        return FALSE;
+    }
     for (i = 0; i < count; i++)
     {
-    points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
-    points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
+        points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
+        points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
     }
 
     if (X11DRV_SetupGCForPen ( dc ))
@@ -996,7 +999,7 @@ X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
     	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
     }
 
-    free( points );
+    HeapFree( GetProcessHeap(), 0, points );
     physDev->pen.width = oldwidth;
     return TRUE;
 }
@@ -1013,7 +1016,11 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     BOOL update = FALSE;
 
-    points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
+    if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (count+1) )))
+    {
+        WARN("No memory to convert POINTs to XPoints!\n");
+        return FALSE;
+    }
     for (i = 0; i < count; i++)
     {
 	points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
@@ -1040,7 +1047,7 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     /* Update the DIBSection from the pixmap */
     if (update) X11DRV_DIB_UpdateDIBSection(dc, TRUE);
 
-    free( points );
+    HeapFree( GetProcessHeap(), 0, points );
     return TRUE;
 }
 
@@ -1072,8 +1079,11 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
  
 	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
-	points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
-
+        if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (max+1) )))
+        {
+            WARN("No memory to convert POINTs to XPoints!\n");
+            return FALSE;
+        }
 	for (i = 0; i < polygons; i++)
 	{
 	    for (j = 0; j < counts[i]; j++)
@@ -1090,7 +1100,7 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 	/* Update the DIBSection of the dc's bitmap */
 	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
 
-	free( points );
+	HeapFree( GetProcessHeap(), 0, points );
     }
     return TRUE;
 }
@@ -1113,8 +1123,11 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
     	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
  
         for (i = 0; i < polylines; i++) if (counts[i] > max) max = counts[i];
-        points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
-
+        if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (max+1) )))
+        {
+            WARN("No memory to convert POINTs to XPoints!\n");
+            return FALSE;
+        }
         for (i = 0; i < polylines; i++)
         {
             for (j = 0; j < counts[i]; j++)
@@ -1131,7 +1144,7 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
 	/* Update the DIBSection of the dc's bitmap */
     	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
 
-        free( points );
+	HeapFree( GetProcessHeap(), 0, points );
     }
     return TRUE;
 }

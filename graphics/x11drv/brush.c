@@ -16,7 +16,6 @@
 #include "color.h"
 #include "x11drv.h"
 #include "debugtools.h"
-#include "xmalloc.h" /* for XCREATEIMAGE macro */
 #include "monitor.h"
 #include "local.h"
 

@@ -32,7 +32,6 @@
 #include "builtin32.h"
 #include "debugtools.h"
 #include "debugdefs.h"
-#include "xmalloc.h"
 #include "module.h"
 #include "version.h"
 #include "winnls.h"

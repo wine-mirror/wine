@@ -18,7 +18,6 @@
 #include "gdi.h"
 #include "color.h"
 #include "palette.h"
-#include "xmalloc.h"
 #include "debugtools.h"
 #include "winerror.h"
 
@@ -64,15 +63,14 @@ HPALETTE16 PALETTE_Init(void)
         palPtr->palPalEntry[i].peFlags = 0;
     }
     hpalette = CreatePalette16( palPtr );
+    HeapFree( GetProcessHeap(), 0, palPtr );
 
     palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (palObj)
     {
-        palObj->mapping = xmalloc( sizeof(int) * 20 );
-
+        if (!(palObj->mapping = HeapAlloc( GetProcessHeap(), 0, sizeof(int) * 20 )))
+            ERR("Can not create palette mapping -- out of memory!");
         GDI_HEAP_UNLOCK( hpalette );
-
-        HeapFree( GetProcessHeap(), 0, palPtr );
     }
     	
     return hpalette;
@@ -335,8 +333,19 @@ BOOL WINAPI ResizePalette(
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
     if( !palPtr ) return FALSE;
 
-    if( mapping )
-        palPtr->mapping = (int*) xrealloc( mapping, cEntries * sizeof(int) );
+    if( mapping ) 
+    {
+        int *newMap = (int*) HeapReAlloc(GetProcessHeap(), 0, 
+                                    mapping, cEntries * sizeof(int) );
+	if(newMap == NULL) 
+        {
+            ERR("Can not resize mapping -- out of memory!");
+            GDI_HEAP_UNLOCK( hPal );
+            return FALSE;
+        }
+        palPtr->mapping = newMap;
+    }
+
     if( cEntries > cPrevEnt ) 
     {
 	if( mapping )

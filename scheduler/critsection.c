@@ -115,20 +115,21 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
  */
 BOOL WINAPI TryEnterCriticalSection( CRITICAL_SECTION *crit )
 {
-    if (InterlockedIncrement( &crit->LockCount ))
+    BOOL ret = FALSE;
+    if (InterlockedCompareExchange( (PVOID *)&crit->LockCount,
+                                    (PVOID)0L, (PVOID)-1L ) == (PVOID)-1L)
     {
-        if (crit->OwningThread == GetCurrentThreadId())
-        {
-            crit->RecursionCount++;
-            return TRUE;
-        }
-        /* FIXME: this doesn't work */
-        InterlockedDecrement( &crit->LockCount );
-        return FALSE;
+        crit->OwningThread   = GetCurrentThreadId();
+        crit->RecursionCount = 1;
+        ret = TRUE;
     }
-    crit->OwningThread   = GetCurrentThreadId();
-    crit->RecursionCount = 1;
-    return TRUE;
+    else if (crit->OwningThread == GetCurrentThreadId())
+    {
+	InterlockedIncrement( &crit->LockCount );
+	crit->RecursionCount++;
+	ret = TRUE;
+    }
+    return ret;
 }
 
 

@@ -21,6 +21,7 @@
 # endif
 #endif /* defined(HAVE_LIBXXSHM) */
 
+#include <stdlib.h>
 #include "windef.h"
 #include "bitmap.h"
 #include "x11drv.h"
@@ -30,7 +31,6 @@
 #include "callback.h"
 #include "selectors.h"
 #include "global.h"
-#include "xmalloc.h" /* for XCREATEIMAGE macro */
 
 DEFAULT_DEBUG_CHANNEL(bitmap)
 DECLARE_DEBUG_CHANNEL(x11drv)
@@ -2510,7 +2510,12 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				 DefaultVisualOfScreen(X11DRV_GetXScreen()),
 				 descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
-	bmpImage->data = xcalloc( bmpImage->bytes_per_line * lines );
+	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
+        if(bmpImage->data == NULL) {
+            ERR("Out of memory!");
+            XDestroyImage( bmpImage );
+            return lines;
+        }
     }
 
       /* Transfer the pixels */
@@ -2610,8 +2615,12 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				 DefaultVisualOfScreen(X11DRV_GetXScreen()),
 				 descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
-	bmpImage->data = xcalloc( bmpImage->bytes_per_line * lines );
-    }
+	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
+        if(bmpImage->data == NULL) {
+            ERR("Out of memory!");
+            XDestroyImage( bmpImage );
+            return lines;
+        }                                                                           }
 
     XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
                   descr->width, descr->height, AllPlanes, ZPixmap,

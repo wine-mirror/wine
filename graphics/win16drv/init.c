@@ -13,7 +13,6 @@
 #include "heap.h"
 #include "font.h"
 #include "options.h"
-#include "xmalloc.h"
 #include "debugtools.h"
 #include "dc.h"
 
@@ -225,8 +224,12 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* Now Get the device capabilities from the printer driver */
     
-    printerDevCaps = (DeviceCaps *) xmalloc(sizeof(DeviceCaps));
-    memset(printerDevCaps, 0, sizeof(DeviceCaps));
+    printerDevCaps = (DeviceCaps *) calloc(1, sizeof(DeviceCaps));
+    if(printerDevCaps == NULL) {
+        ERR("No memory to read the device capabilities!");
+        HeapFree( GetProcessHeap(), 0, physDev );
+        return FALSE;
+    }
 
     if(!output) output = "LPT1:";
     /* Get GDIINFO which is the same as a DeviceCaps structure */
