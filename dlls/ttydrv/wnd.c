@@ -414,22 +414,23 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     HRGN hrgnVisible = 0;
-    POINT org;
+    struct ttydrv_escape_set_drawable escape;
 
     if (!wndPtr) return FALSE;
 
     if(flags & DCX_WINDOW)
     {
-        org.x = wndPtr->rectWindow.left;
-        org.y = wndPtr->rectWindow.top;
+        escape.org.x = wndPtr->rectWindow.left;
+        escape.org.y = wndPtr->rectWindow.top;
     }
     else
     {
-        org.x = wndPtr->rectClient.left;
-        org.y = wndPtr->rectClient.top;
+        escape.org.x = wndPtr->rectClient.left;
+        escape.org.y = wndPtr->rectClient.top;
     }
 
-    SetDCOrg16( HDC_16(hdc), org.x, org.y );
+    escape.code = TTYDRV_SET_DRAWABLE;
+    ExtEscape( hdc, TTYDRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
     if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ) ||  /* DC was dirty */
         ( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ))
@@ -463,7 +464,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         else
         {
             hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
-            OffsetRgn( hrgnVisible, org.x, org.y );
+            OffsetRgn( hrgnVisible, escape.org.x, escape.org.y );
         }
 
         /* apply additional region operation (if any) */

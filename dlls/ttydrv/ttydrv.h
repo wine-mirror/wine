@@ -100,6 +100,18 @@ INT TTYDRV_DC_SetDIBitsToDevice(TTYDRV_PDEVICE *physDev, INT xDest, INT yDest, D
 
 extern BOOL TTYDRV_PALETTE_Initialize(void);
 
+#define TTYDRV_ESCAPE 6999
+enum ttydrv_escape_codes
+{
+    TTYDRV_SET_DRAWABLE      /* set current drawable for a DC */
+};
+
+struct ttydrv_escape_set_drawable
+{
+    enum ttydrv_escape_codes code;         /* escape code (TTYDRV_SET_DRAWABLE) */
+    POINT                    org;          /* origin of DC relative to drawable */
+};
+
 /**************************************************************************
  * TTY USER driver
  */

@@ -183,3 +183,43 @@ DWORD TTYDRV_SetDCOrg( TTYDRV_PDEVICE *physDev, INT x, INT y )
     physDev->org.y = y;
     return ret;
 }
+
+
+/**********************************************************************
+ *           ExtEscape  (X11DRV.@)
+ */
+INT TTYDRV_ExtEscape( TTYDRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID in_data,
+                      INT out_count, LPVOID out_data )
+{
+    switch(escape)
+    {
+    case QUERYESCSUPPORT:
+        if (in_data)
+        {
+            switch (*(const INT *)in_data)
+            {
+            case TTYDRV_ESCAPE:
+                return TRUE;
+            }
+        }
+        break;
+
+    case TTYDRV_ESCAPE:
+        if (in_data && in_count >= sizeof(enum ttydrv_escape_codes))
+        {
+            switch(*(const enum ttydrv_escape_codes *)in_data)
+            {
+            case TTYDRV_SET_DRAWABLE:
+                if (in_count >= sizeof(struct ttydrv_escape_set_drawable))
+                {
+                    const struct ttydrv_escape_set_drawable *data = (const struct ttydrv_escape_set_drawable *)in_data;
+                    physDev->org = data->org;
+                    return TRUE;
+                }
+                break;
+            }
+        }
+        break;
+    }
+    return 0;
+}
