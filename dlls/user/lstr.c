@@ -22,6 +22,8 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
+#include "msvcrt/excpt.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);

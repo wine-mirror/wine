@@ -16,6 +16,7 @@
 #include "msvcrt.h"
 
 #include "msvcrt/setjmp.h"
+#include "msvcrt/excpt.h"
 
 
 #include "wine/debug.h"

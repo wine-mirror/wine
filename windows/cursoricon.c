@@ -46,6 +46,7 @@
 #include "input.h"
 #include "message.h"
 #include "winerror.h"
+#include "msvcrt/excpt.h"
 
 DECLARE_DEBUG_CHANNEL(cursor);
 DECLARE_DEBUG_CHANNEL(icon);

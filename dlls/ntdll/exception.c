@@ -18,6 +18,7 @@
 #include "miscemu.h"
 #include "wine/server.h"
 #include "debugtools.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(seh);
 

@@ -2220,23 +2220,6 @@ __DEFINE_SET_SEG(gs)
 
 
 /*
- * Return values from the actual exception handlers
- */
-
-#define ExceptionContinueExecution 0
-#define ExceptionContinueSearch    1
-#define ExceptionNestedException   2
-#define ExceptionCollidedUnwind    3
- 
-/*
- * Return values from filters in except() and from UnhandledExceptionFilter
- */
- 
-#define EXCEPTION_EXECUTE_HANDLER        1
-#define EXCEPTION_CONTINUE_SEARCH        0
-#define EXCEPTION_CONTINUE_EXECUTION    -1
-
-/*
  * From OS/2 2.0 exception handling
  * Win32 seems to use the same flags as ExceptionFlags in an EXCEPTION_RECORD
  */

@@ -14,6 +14,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/exception.h"
+#include "msvcrt/excpt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);

@@ -16,6 +16,7 @@
 #include "wincon.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "msvcrt/excpt.h"
 
 #include "winreg.h"
 

@@ -35,6 +35,7 @@
 #include "ntddk.h"
 #include "options.h"
 #include "wine/server.h"
+#include "msvcrt/excpt.h"
 
 #include "debugtools.h"
 

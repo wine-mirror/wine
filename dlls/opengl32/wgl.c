@@ -17,6 +17,7 @@
 #include "wine_gl.h"
 #include "x11drv.h"
 #include "x11font.h"
+#include "msvcrt/excpt.h"
 
 #include "wgl.h"
 #include "opengl_ext.h"

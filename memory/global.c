@@ -25,6 +25,7 @@
 #include "module.h"
 #include "debugtools.h"
 #include "winerror.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(global);
 

@@ -34,6 +34,7 @@
 #include "dosvm.h"
 #include "stackframe.h"
 #include "debugtools.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(int);
 DECLARE_DEBUG_CHANNEL(module);

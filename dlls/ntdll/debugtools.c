@@ -16,6 +16,7 @@
 #include "winnt.h"
 #include "ntddk.h"
 #include "wtypes.h"
+#include "msvcrt/excpt.h"
 
 DECLARE_DEBUG_CHANNEL(tid);
 

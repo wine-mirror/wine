@@ -15,6 +15,7 @@
 #include "wine/unicode.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "msvcrt/excpt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(string);

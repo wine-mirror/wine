@@ -23,6 +23,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);
 

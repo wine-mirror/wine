@@ -29,6 +29,7 @@
 #include "wine/exception.h"
 #include "debugtools.h"
 #include "options.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(console);
 

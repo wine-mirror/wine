@@ -18,6 +18,7 @@
 #include "wine/exception.h"
 #include "debugger.h"
 #include "expr.h"
+#include "msvcrt/excpt.h"
 
 extern FILE * yyin;
 

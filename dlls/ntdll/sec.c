@@ -21,6 +21,7 @@
 #include "ntddk.h"
 #include "winreg.h"
 #include "ntdll_misc.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
 

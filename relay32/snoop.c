@@ -15,6 +15,7 @@
 #include "stackframe.h"
 #include "debugtools.h"
 #include "wine/exception.h"
+#include "msvcrt/excpt.h"
 
 DEFAULT_DEBUG_CHANNEL(snoop);
 

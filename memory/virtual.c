@@ -30,6 +30,7 @@
 #include "file.h"
 #include "global.h"
 #include "wine/server.h"
+#include "msvcrt/excpt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(virtual);

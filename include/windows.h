@@ -10,7 +10,7 @@
 #else /* RC_INVOKED && !NOWINRES */
 
 /* All the basic includes */
-/* #include "excpt.h" */
+#include "msvcrt/excpt.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
