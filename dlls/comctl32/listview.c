@@ -3102,7 +3102,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
 	/* a virtual listview we stores only selection and focus */
-	if ((lpLVItem->mask & ~LVIF_STATE) || (lpLVItem->stateMask & ~(LVIS_FOCUSED | LVIS_SELECTED)))
+	if (lpLVItem->mask & ~LVIF_STATE)
 	    return FALSE;
 	lpItem = NULL;
     }
@@ -3170,7 +3170,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     if (uChanged & LVIF_STATE)
     {
-	if (lpLVItem->stateMask & ~infoPtr->uCallbackMask & ~(LVIS_FOCUSED | LVIS_SELECTED))
+	if (lpItem && (lpLVItem->stateMask & ~infoPtr->uCallbackMask & ~(LVIS_FOCUSED | LVIS_SELECTED)))
 	{
 	    lpItem->state &= ~lpLVItem->stateMask;
 	    lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
