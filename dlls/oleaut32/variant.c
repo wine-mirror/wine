@@ -1743,6 +1743,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
           dwState |= B_LEADING_ZERO;
           cchUsed++;
           lpszStr++;
+          pNumprs->nPwr10--;
         }
       }
     }
@@ -1823,11 +1824,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       } else {
         while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
         {
-          if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
-            pNumprs->nPwr10--;
-          else
-            pNumprs->nPwr10++;
-
+          pNumprs->nPwr10++;
           pNumprs->cDig--;
         }
       }
@@ -1837,11 +1834,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
     /* Remove trailing zeros from the last (whole number or decimal) part */
     while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
     {
-      if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
-        pNumprs->nPwr10--;
-      else
-        pNumprs->nPwr10++;
-
+      pNumprs->nPwr10++;
       pNumprs->cDig--;
     }
   }
@@ -2339,7 +2332,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
 
     while (divisor10 > 10)
     {
-      if (whole < dblMinimums[10])
+      if (whole < dblMinimums[10] && whole != 0)
       {
         dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY); /* Underflow */
         bOverflow = TRUE;
@@ -2350,7 +2343,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     }
     if (divisor10)
     {
-      if (whole < dblMinimums[divisor10])
+      if (whole < dblMinimums[divisor10] && whole != 0)
       {
         dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY); /* Underflow */
         bOverflow = TRUE;

@@ -1050,10 +1050,20 @@ static void test_VarParseNumFromStr(void)
   EXPECT2(5,1);
 
   /* Keep trailing zeros on whole number part of a decimal */
-  CONVERT("40.1", NUMPRS_STD);
+  CONVERT("10.1", NUMPRS_STD);
   EXPECT(3,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-1);
-  EXPECT2(4,0);
+  EXPECT2(1,0);
   EXPECTRGB(2,1);
+
+  /* Zeros after decimal sign */
+  CONVERT("0.01", NUMPRS_STD);
+  EXPECT(1,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-2);
+  EXPECT2(1,FAILDIG);
+
+  /* Trailing zeros after decimal part */
+  CONVERT("0.10", NUMPRS_STD);
+  EXPECT(1,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-1);
+  EXPECT2(1,0);
 }
 
 static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
@@ -1160,6 +1170,11 @@ static void test_VarNumFromParseNum(void)
   /* Except that rounding is done first, so -0.5 to 0 are accepted as 0 */
   /* -0.5 */
   SETRGB(0, 5); CONVERT(1,0,NUMPRS_NEG,1,0,~0u, VTBIT_UI1); EXPECT_UI1(0);
+
+  /* Floating point zero is OK */
+  /* 0.00000000E0 */
+  SETRGB(0, 0); CONVERT(1,0,NUMPRS_DECIMAL|NUMPRS_EXPONENT,12,0,-8, VTBIT_R8);
+  EXPECT_R8(0.0);
 
   /* Float is acceptable for an integer input value */
   SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_R4); EXPECT_R4(1.0f);
