@@ -132,7 +132,7 @@ typedef struct
 static HBITMAP hBmpClose   = 0;
 
 /* ----------------- declarations ----------------- */
-static void MDI_UpdateFrameText( HWND, HWND, BOOL, LPCWSTR);
+static void MDI_UpdateFrameText( HWND, HWND, LPCWSTR);
 static BOOL MDI_AugmentFrameMenu( HWND, HWND );
 static BOOL MDI_RestoreFrameMenu( HWND, HWND );
 static LONG MDI_ChildActivate( HWND, HWND );
@@ -592,7 +592,7 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
             MDI_RestoreFrameMenu(frame, child);
     }
 
-    MDI_UpdateFrameText(frame, client, TRUE, NULL);
+    MDI_UpdateFrameText(frame, client, NULL);
 
     /* check if we have any children left */
     if( !child )
@@ -929,13 +929,12 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
  *
  * Note: lpTitle can be NULL
  */
-static void MDI_UpdateFrameText( HWND frame, HWND hClient,
-                                 BOOL repaint, LPCWSTR lpTitle )
+static void MDI_UpdateFrameText( HWND frame, HWND hClient, LPCWSTR lpTitle )
 {
     WCHAR   lpBuffer[MDI_MAXTITLELENGTH+1];
     MDICLIENTINFO *ci = get_client_info( hClient );
 
-    TRACE("repaint %i, frameText %s\n", repaint, debugstr_w(lpTitle));
+    TRACE("frameText %s\n", debugstr_w(lpTitle));
 
     if (!ci) return;
 
@@ -984,9 +983,6 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient,
 	lpBuffer[0] = '\0';
 
     DefWindowProcW( frame, WM_SETTEXT, 0, (LPARAM)lpBuffer );
-    if( repaint )
-        SetWindowPos( frame, 0,0,0,0,0, SWP_FRAMECHANGED |
-                      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
 }
 
 
@@ -1255,7 +1251,7 @@ LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
                 DWORD len = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, NULL, 0 );
                 LPWSTR text = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
                 MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, text, len );
-                MDI_UpdateFrameText(hwnd, hwndMDIClient, TRUE, text );
+                MDI_UpdateFrameText( hwnd, hwndMDIClient, text );
                 HeapFree( GetProcessHeap(), 0, text );
             }
             return 1; /* success. FIXME: check text length */
@@ -1329,7 +1325,7 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
 	    break;
 
         case WM_SETTEXT:
-            MDI_UpdateFrameText(hwnd, hwndMDIClient, TRUE, (LPWSTR)lParam );
+            MDI_UpdateFrameText( hwnd, hwndMDIClient, (LPWSTR)lParam );
 	    return 1; /* success. FIXME: check text length */
 
         case WM_SETFOCUS:
@@ -1387,7 +1383,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     case WM_SETTEXT:
 	DefWindowProcA(hwnd, message, wParam, lParam);
 	if( ci->hwndActiveChild == hwnd && IsZoomed(ci->hwndActiveChild) )
-	    MDI_UpdateFrameText( GetParent(client), client, TRUE, NULL );
+	    MDI_UpdateFrameText( GetParent(client), client, NULL );
         return 1; /* success. FIXME: check text length */
 
     case WM_GETMINMAXINFO:
@@ -1426,7 +1422,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
     case WM_SETTEXT:
         DefWindowProcW(hwnd, message, wParam, lParam);
         if( ci->hwndActiveChild == hwnd && IsZoomed(ci->hwndActiveChild) )
-            MDI_UpdateFrameText( GetParent(client), client, TRUE, NULL );
+            MDI_UpdateFrameText( GetParent(client), client, NULL );
         return 1; /* success. FIXME: check text length */
 
     case WM_GETMINMAXINFO:
@@ -1480,7 +1476,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         if( hwnd == ci->hwndActiveChild && wParam != SIZE_MAXIMIZED )
         {
             MDI_RestoreFrameMenu( GetParent(client), hwnd );
-            MDI_UpdateFrameText( GetParent(client), client, TRUE, NULL );
+            MDI_UpdateFrameText( GetParent(client), client, NULL );
         }
 
         if( wParam == SIZE_MAXIMIZED )
@@ -1488,7 +1484,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
             TRACE("maximizing child %p\n", hwnd );
 
             MDI_AugmentFrameMenu( GetParent(client), hwnd );
-            MDI_UpdateFrameText( GetParent(client), client, TRUE, NULL );
+            MDI_UpdateFrameText( GetParent(client), client, NULL );
         }
 
         if( wParam == SIZE_MINIMIZED )
