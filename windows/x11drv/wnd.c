@@ -267,7 +267,8 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
   /* Create the X window (only for top-level windows, and then only */
   /* when there's no desktop window) */
   
-  if (!(cs->style & WS_CHILD) && (X11DRV_GetXRootWindow() == DefaultRootWindow(display)))
+  if ((X11DRV_GetXRootWindow() == DefaultRootWindow(display))
+      && (wndPtr->parent->hwndSelf == GetDesktopWindow()))
   {
       Window    wGroupLeader;
       XWMHints* wm_hints;
@@ -446,7 +447,6 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 
             if( pWndParent == pDesktop )
             {
-                wndPtr->dwStyle &= ~WS_CHILD;
                 if( X11DRV_GetXRootWindow() == DefaultRootWindow(display) )
                 {
                     CREATESTRUCTA cs;
@@ -474,7 +474,6 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
             {
                 if( !( wndPtr->dwStyle & WS_CHILD ) )
                 {
-                    wndPtr->dwStyle |= WS_CHILD;
                     if( wndPtr->wIDmenu != 0)
                     {
                         DestroyMenu( (HMENU) wndPtr->wIDmenu );
