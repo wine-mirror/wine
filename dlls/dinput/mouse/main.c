@@ -136,6 +136,9 @@ struct SysMouseAImpl
 	Wine_InternalMouseData          m_state;
 };
 
+/* FIXME: This is ugly and not thread safe :/ */
+static IDirectInputDevice8A* current_lock = NULL;
+
 static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
   0x9e573ed8,
   0x7734,
@@ -143,21 +146,33 @@ static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 *
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-/* FIXME: This is ugly and not thread safe :/ */
-static IDirectInputDevice8A* current_lock = NULL;
+static void fill_mouse_dideviceinstancea(LPDIDEVICEINSTANCEA lpddi) {
+    DWORD dwSize;
+    DIDEVICEINSTANCEA ddi;
+    
+    dwSize = lpddi->dwSize;
 
+    TRACE("%ld %p\n", dwSize, lpddi);
+    
+    memset(lpddi, 0, dwSize);
+    memset(&ddi, 0, sizeof(ddi));
+
+    ddi.dwSize = dwSize;
+    ddi.guidInstance = GUID_SysMouse;/* DInput's GUID */
+    ddi.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
+    ddi.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
+    strcpy(ddi.tszInstanceName, "Mouse");
+    strcpy(ddi.tszProductName, "Wine Mouse");
+
+    memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
+}
 
 static BOOL mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
 {
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_MOUSE)) {
     TRACE("Enumerating the mouse device\n");
 
-    /* Return mouse */
-    lpddi->guidInstance = GUID_SysMouse;/* DInput's GUID */
-    lpddi->guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
-    lpddi->dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
-    strcpy(lpddi->tszInstanceName, "Mouse");
-    strcpy(lpddi->tszProductName, "Wine Mouse");
+    fill_mouse_dideviceinstancea(lpddi);
 
     return TRUE;
   }
@@ -315,13 +330,10 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
     TRACE("df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
   }
 
-  /* Check if the mouse is in absolute or relative mode */
-  if (df->dwFlags == DIDF_ABSAXIS)
-    This->absolute = 1;
-  else if (df->dwFlags == DIDF_RELAXIS)
-    This->absolute = 0;
-  else
-    ERR("Neither absolute nor relative flag set\n");
+  /* Tests under windows show that a call to SetDataFormat always sets the mouse
+     in relative mode whatever the dwFlags value (DIDF_ABSAXIS/DIDF_RELAXIS).
+     To switch in absolute mode, SetProperty must be used. */
+  This->absolute = 0;
 
   /* Store the new data format */
   This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
@@ -934,6 +946,25 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
   return DI_OK;
 }
 
+/******************************************************************************
+  *     GetDeviceInfo : get information about a device's identity
+  */
+static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
+	LPDIRECTINPUTDEVICE8A iface,
+	LPDIDEVICEINSTANCEA pdidi)
+{
+    ICOM_THIS(SysMouseAImpl,iface);
+    TRACE("(this=%p,%p)\n", This, pdidi);
+
+    if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
+        WARN(" dinput3 not supporte yet...\n");
+	return DI_OK;
+    }
+
+    fill_mouse_dideviceinstancea(pdidi);
+    
+    return DI_OK;
+}
 
 static ICOM_VTABLE(IDirectInputDevice8A) SysMouseAvt =
 {
@@ -953,7 +984,7 @@ static ICOM_VTABLE(IDirectInputDevice8A) SysMouseAvt =
 	SysMouseAImpl_SetEventNotification,
 	SysMouseAImpl_SetCooperativeLevel,
 	IDirectInputDevice2AImpl_GetObjectInfo,
-	IDirectInputDevice2AImpl_GetDeviceInfo,
+	SysMouseAImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
 	IDirectInputDevice2AImpl_CreateEffect,
