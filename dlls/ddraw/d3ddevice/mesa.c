@@ -105,10 +105,22 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
     DWORD opt_bitmap = 0x00000000;
     
+    if (gl_d3d_dev->current_bound_texture[1] != NULL) {
+	if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE1_WINE) {
+	    GL_extensions.glActiveTexture(GL_TEXTURE1_WINE);
+	    gl_d3d_dev->current_active_tex_unit = GL_TEXTURE1_WINE;
+	}
+	/* 'unbound' texture level 1 in that case to disable multi-texturing */
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+    }
     if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE0_WINE) {
 	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
 	gl_d3d_dev->current_active_tex_unit = GL_TEXTURE0_WINE;
     }
+    if ((gl_d3d_dev->current_bound_texture[0] == NULL) ||
+	(d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE))
+	glEnable(GL_TEXTURE_2D);
     if (gl_d3d_dev->unlock_tex == 0) {
         glGenTextures(1, &gl_d3d_dev->unlock_tex);
 	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
@@ -132,18 +144,6 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     }
     
     if (gl_d3d_dev->depth_test != FALSE) glDisable(GL_DEPTH_TEST);
-    if ((gl_d3d_dev->current_bound_texture[0] == NULL) ||
-	(d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE))
-	glEnable(GL_TEXTURE_2D);
-    if (gl_d3d_dev->current_bound_texture[1] != NULL) {
-	if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE1_WINE) {
-	    GL_extensions.glActiveTexture(GL_TEXTURE1_WINE);
-	    gl_d3d_dev->current_active_tex_unit = GL_TEXTURE1_WINE;
-	}
-	/* 'unbound' texture level 1 in that case to disable multi-texturing */
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
-    }
     glEnable(GL_SCISSOR_TEST);
     if ((d3d_dev->active_viewport.dvMinZ != 0.0) ||
 	(d3d_dev->active_viewport.dvMaxZ != 1.0)) {

@@ -907,6 +907,8 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     }
     glPixelStorei(GL_UNPACK_ROW_LENGTH, current_storage_width);
 
+    TRACE(" initialized texture upload for level %d with conversion %d.\n", current_level, convert_type);
+    
     return DD_OK;
 }
 
@@ -933,8 +935,6 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     /* Used when converting stuff */
     line_increase = src_d->u1.lPitch - (width * bpp);
 
-    TRACE(" uploading texture to memory using conversion %d.\n", convert_type);
-    
     switch (convert_type) {
         case CONVERT_PALETTED: {
 	    IDirectDrawPaletteImpl* pal = current_surface->palette;
