@@ -71,7 +71,7 @@ BEGIN
         MENUITEM "検索(&F)\tCtrl+F",               ID_EDIT_FIND, GRAYED
         MENUITEM "次の検索候補(&x)\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
-    POPUP "&View"
+    POPUP "表示(&V)"
     BEGIN
         MENUITEM "ステータスバー(&B)",                 ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
@@ -79,14 +79,14 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "リフレッシュ(&R)\tF5",                ID_VIEW_REFRESH
     END
-    POPUP "&Favourites"
+    POPUP "お気に入り(&F)"
     BEGIN
         MENUITEM "お気に入りに追加(&A)",          ID_FAVOURITES_ADDTOFAVOURITES
         , GRAYED
         MENUITEM "お気に入りから削除(&R)",           ID_FAVOURITES_REMOVEFAVOURITE
         , GRAYED
     END
-    POPUP "&Help"
+    POPUP "ヘルプ(&H)"
     BEGIN
         MENUITEM "ヘルプ(&H)\tF1",            ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
