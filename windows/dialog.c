@@ -1045,11 +1045,12 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
         do
         {
             wndPtr = WIN_FindWndPtr( hwndControl );
-            if (wndPtr != NULL && wndPtr->text != NULL && 
-                    (wndPtr->dwStyle & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE)
+            if ( (wndPtr != NULL) && 
+                 ((wndPtr->dwStyle & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE) )
             {
                 dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
-                if (dlgCode & (DLGC_BUTTON | DLGC_STATIC))
+                if ( (dlgCode & (DLGC_BUTTON | DLGC_STATIC)) && 
+                     (wndPtr->text!=NULL))
                 {
                     /* find the accelerator key */
                     LPSTR p = wndPtr->text - 2;
