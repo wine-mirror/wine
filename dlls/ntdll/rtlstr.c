@@ -198,9 +198,9 @@ WINAPI RtlAnsiStringToUnicodeString(
 	uni->Length = len;
 	if (doalloc) 
 	{
+	  uni->MaximumLength = len + sizeof(WCHAR);
 	  uni->Buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->MaximumLength);
 	  if (!uni->Buffer) return STATUS_NO_MEMORY;
-	  uni->MaximumLength = len + sizeof(WCHAR);
 	}
 	else if (len+sizeof(WCHAR) > uni->MaximumLength)
 	{
