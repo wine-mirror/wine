@@ -2,6 +2,18 @@
  * Enhanced metafile functions
  * Copyright 1998 Douglas Ridgway
  *           1999 Huw D M Davies 
+ *
+ * 
+ * The enhanced format consists of the following elements: 
+ *
+ *    A header 
+ *    A table of handles to GDI objects 
+ *    A private palette 
+ *    An array of metafile records 
+ *
+ * 
+ *  The standard format consists of a header and an array of metafile records. 
+ *
  */ 
 
 #include <string.h>
@@ -13,8 +25,14 @@
 #include "enhmetafile.h"
 #include "debugtools.h"
 #include "heap.h"
+#include "metafile.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile)
+
+/* Prototypes */
+BOOL WINAPI EnumEnhMetaFile( HDC hdc, HENHMETAFILE hmf, ENHMFENUMPROC callback,
+                             LPVOID data, const RECT *rect );
+
 
 /****************************************************************************
  *          EMF_Create_HENHMETAFILE
@@ -243,6 +261,19 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
     return EMF_Create_HENHMETAFILE( emh, 0, 0 );
 }
 
+INT CALLBACK cbCountSizeOfEnhMetaFile( HDC a, 
+                                       LPHANDLETABLE b,
+                                       LPENHMETARECORD lpEMR, 
+                                       INT c, 
+                                       LPVOID lpData )
+{
+  LPUINT uSizeOfRecordData = (LPUINT)lpData;
+
+  uSizeOfRecordData += lpEMR->nSize;
+
+  return TRUE;
+}
+
 /*****************************************************************************
  *  GetEnhMetaFileBits (GDI32.175)
  *
@@ -251,8 +282,43 @@ UINT WINAPI GetEnhMetaFileBits(
     HENHMETAFILE hmf, 
     UINT bufsize, 
     LPBYTE buf  
-) {
-  return 0;
+) 
+{
+  LPENHMETAHEADER lpEnhMetaFile;
+  UINT uEnhMetaFileSize = 0;
+
+  FIXME( "(%04x,%u,%p): untested\n", hmf, bufsize, buf );
+
+  /* Determine the required buffer size */
+  /* Enumerate all records and count their size */ 
+  if( !EnumEnhMetaFile( 0, hmf, cbCountSizeOfEnhMetaFile, &uEnhMetaFileSize, NULL ) )
+  {
+    ERR( "Unable to enumerate enhanced metafile!\n" );
+    return 0;
+  }
+
+  if( buf == NULL )
+  {
+    return uEnhMetaFileSize;
+  }
+
+  /* Copy the lesser of the two byte counts */
+  uEnhMetaFileSize = MIN( uEnhMetaFileSize, bufsize );
+
+  /* Copy everything */
+  lpEnhMetaFile = EMF_GetEnhMetaHeader( hmf );
+
+  if( lpEnhMetaFile == NULL )
+  {
+    return 0;
+  }
+
+  /* Use memmove just in case they overlap */
+  memmove(buf, lpEnhMetaFile, bufsize);
+
+  EMF_ReleaseEnhMetaHeader( hmf ); 
+
+  return bufsize;
 }
 
 /*****************************************************************************
@@ -678,26 +744,363 @@ UINT WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE hemf,
 					     UINT cEntries,
 					     LPPALETTEENTRY lppe)
 {
+    FIXME( "(%04x,%d,%p):stub\n", hemf, cEntries, lppe ); 
     return 0;
 }
-
 
 /******************************************************************
  *         SetWinMetaFileBits   (GDI32.343)
  *      
  *         Translate from old style to new style.
+ *
+ * BUGS: - This doesn't take the DC and scaling into account
+ *       - Most record conversions aren't implemented
+ *       - Handle slot assignement is primative and most likely doesn't work
  */
-
 HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST BYTE *lpbBuffer,
 					   HDC hdcRef,
 					   CONST METAFILEPICT *lpmfp
 					   ) 
 {
-     FIXME("Stub\n");
-     return 0;
-}
+     HENHMETAFILE    hMf;
+     LPVOID          lpNewEnhMetaFileBuffer = NULL;
+     UINT            uNewEnhMetaFileBufferSize = 0;
+     BOOL            bFoundEOF = FALSE;
 
+     FIXME( "(%d,%p,%04x,%p):stub\n", cbBuffer, lpbBuffer, hdcRef, lpmfp );
+
+     /* 1. Get the header - skip over this and get straight to the records  */
+
+     uNewEnhMetaFileBufferSize = sizeof( ENHMETAHEADER );
+     lpNewEnhMetaFileBuffer = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, 
+                                         uNewEnhMetaFileBufferSize );
+
+     if( lpNewEnhMetaFileBuffer == NULL )
+     {
+       goto error; 
+     }
+
+     /* Fill in the header record */ 
+     {
+       LPENHMETAHEADER lpNewEnhMetaFileHeader = (LPENHMETAHEADER)lpNewEnhMetaFileBuffer;
+
+       lpNewEnhMetaFileHeader->iType = EMR_HEADER;
+       lpNewEnhMetaFileHeader->nSize = sizeof( ENHMETAHEADER );
+
+       /* FIXME: Not right. Must be able to get this from the DC */
+       lpNewEnhMetaFileHeader->rclBounds.left   = 0;
+       lpNewEnhMetaFileHeader->rclBounds.right  = 0;
+       lpNewEnhMetaFileHeader->rclBounds.top    = 0;
+       lpNewEnhMetaFileHeader->rclBounds.bottom = 0;
+
+       /* FIXME: Not right. Must be able to get this from the DC */
+       lpNewEnhMetaFileHeader->rclFrame.left   = 0;
+       lpNewEnhMetaFileHeader->rclFrame.right  = 0;
+       lpNewEnhMetaFileHeader->rclFrame.top    = 0;
+       lpNewEnhMetaFileHeader->rclFrame.bottom = 0;
+
+       lpNewEnhMetaFileHeader->nHandles = 0; /* No handles yet */
+
+       /* FIXME: Add in the rest of the fields to the header */
+       /* dSignature
+          nVersion
+          nRecords
+          sReserved
+          nDescription
+          offDescription
+          nPalEntries
+          szlDevice
+          szlMillimeters
+          cbPixelFormat
+          offPixelFormat,
+          bOpenGL */
+     } 
+
+     (char*)lpbBuffer += ((METAHEADER*)lpbBuffer)->mtHeaderSize * 2; /* Point past the header - FIXME: metafile quirk? */ 
+
+     /* 2. Enum over individual records and convert them to the new type of records */
+     while( !bFoundEOF )
+     { 
+
+        LPMETARECORD lpMetaRecord = (LPMETARECORD)lpbBuffer;
+
+#define EMF_ReAllocAndAdjustPointers( a , b ) \
+                                        { \
+                                          LPVOID lpTmp; \
+                                          lpTmp = HeapReAlloc( SystemHeap, 0, \
+                                                               lpNewEnhMetaFileBuffer, \
+                                                               uNewEnhMetaFileBufferSize + (b) ); \
+                                          if( lpTmp == NULL ) { ERR( "No memory!\n" ); goto error; } \
+                                          lpNewEnhMetaFileBuffer = lpTmp; \
+                                          lpRecord = (a)( (char*)lpNewEnhMetaFileBuffer + uNewEnhMetaFileBufferSize ); \
+                                          uNewEnhMetaFileBufferSize += (b); \
+                                        }
+
+        switch( lpMetaRecord->rdFunction )
+        {
+          case META_EOF:  
+          { 
+             PEMREOF lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMREOF,uRecord);
+              
+             /* Fill the new record - FIXME: This is not right */
+             lpRecord->emr.iType = EMR_EOF; 
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+             lpRecord->nPalEntries = 0;     /* FIXME */
+             lpRecord->offPalEntries = 0;   /* FIXME */ 
+             lpRecord->nSizeLast = 0;       /* FIXME */
+
+             /* No more records after this one */
+             bFoundEOF = TRUE;
+
+             FIXME( "META_EOF conversion not correct\n" );
+             break;
+          }
+
+          case META_SETMAPMODE:
+          {  
+             PEMRSETMAPMODE lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRSETMAPMODE,uRecord);
+
+             lpRecord->emr.iType = EMR_SETMAPMODE;
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->iMode = lpMetaRecord->rdParm[0];
+
+             break;
+          }
+
+          case META_DELETEOBJECT: /* Select and Delete structures are the same */
+          case META_SELECTOBJECT: 
+          {
+            PEMRDELETEOBJECT lpRecord;
+            size_t uRecord = sizeof(*lpRecord);
+
+            EMF_ReAllocAndAdjustPointers(PEMRDELETEOBJECT,uRecord);
+
+            if( lpMetaRecord->rdFunction == META_DELETEOBJECT )
+            {
+              lpRecord->emr.iType = EMR_DELETEOBJECT;
+            }
+            else
+            {
+              lpRecord->emr.iType = EMR_SELECTOBJECT;
+            }
+            lpRecord->emr.nSize = sizeof( *lpRecord );
+
+            lpRecord->ihObject = lpMetaRecord->rdParm[0]; /* FIXME: Handle */
+
+            break;
+          }
+
+          case META_POLYGON: /* This is just plain busted. I don't know what I'm doing */
+          {
+             PEMRPOLYGON16 lpRecord; /* FIXME: Should it be a poly or poly16? */  
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRPOLYGON16,uRecord);
+
+             /* FIXME: This is mostly all wrong */
+             lpRecord->emr.iType = 
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->rclBounds.left   = 0;
+             lpRecord->rclBounds.right  = 0;
+             lpRecord->rclBounds.top    = 0;
+             lpRecord->rclBounds.bottom = 0;
+
+             lpRecord->cpts = 0;
+             lpRecord->apts[0].x = 0;
+             lpRecord->apts[0].y = 0;
+
+             FIXME( "META_POLYGON conversion not correct\n" );
+
+             break;
+          }
+
+          case META_SETPOLYFILLMODE:
+          {
+             PEMRSETPOLYFILLMODE lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRSETPOLYFILLMODE,uRecord);
+
+             lpRecord->emr.iType = EMR_SETPOLYFILLMODE;
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->iMode = lpMetaRecord->rdParm[0];
+             
+             break;
+          }
+
+          case META_SETWINDOWORG:
+          {
+             PEMRSETWINDOWORGEX lpRecord; /* Seems to be the closest thing */
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRSETWINDOWORGEX,uRecord);
+
+             lpRecord->emr.iType = EMR_SETWINDOWORGEX;
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->ptlOrigin.x = lpMetaRecord->rdParm[1];
+             lpRecord->ptlOrigin.y = lpMetaRecord->rdParm[0];
+
+             break;
+          }
+
+          case META_SETWINDOWEXT:  /* Structure is the same for SETWINDOWEXT & SETVIEWPORTEXT */
+          case META_SETVIEWPORTEXT:
+          {
+             PEMRSETWINDOWEXTEX lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRSETWINDOWEXTEX,uRecord);
+
+             if ( lpMetaRecord->rdFunction == META_SETWINDOWEXT )
+             {
+               lpRecord->emr.iType = EMR_SETWINDOWORGEX;
+             }
+             else
+             {
+               lpRecord->emr.iType = EMR_SETVIEWPORTEXTEX;
+             }
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->szlExtent.cx = lpMetaRecord->rdParm[1];
+             lpRecord->szlExtent.cy = lpMetaRecord->rdParm[0];
+
+             break;
+          }
+
+          case META_CREATEBRUSHINDIRECT:
+          {
+             PEMRCREATEBRUSHINDIRECT lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRCREATEBRUSHINDIRECT,uRecord);
+
+             lpRecord->emr.iType = EMR_CREATEBRUSHINDIRECT;
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->ihBrush    = ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nHandles;
+             lpRecord->lb.lbStyle = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbStyle; 
+             lpRecord->lb.lbColor = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbColor; 
+             lpRecord->lb.lbHatch = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbHatch; 
+             
+             ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nHandles += 1; /* New handle */
+
+             break;
+          }
+
+
+          /* These are all unimplemented and as such are intended to fall through to the default case */
+          case META_SETBKCOLOR:
+          case META_SETBKMODE:
+          case META_SETROP2:
+          case META_SETRELABS:
+          case META_SETSTRETCHBLTMODE:
+          case META_SETTEXTCOLOR:
+          case META_SETVIEWPORTORG:
+          case META_OFFSETWINDOWORG:
+          case META_SCALEWINDOWEXT:
+          case META_OFFSETVIEWPORTORG:
+          case META_SCALEVIEWPORTEXT:
+          case META_LINETO:
+          case META_MOVETO:
+          case META_EXCLUDECLIPRECT:
+          case META_INTERSECTCLIPRECT:
+          case META_ARC:
+          case META_ELLIPSE:
+          case META_FLOODFILL:
+          case META_PIE:
+          case META_RECTANGLE:
+          case META_ROUNDRECT:
+          case META_PATBLT:
+          case META_SAVEDC:
+          case META_SETPIXEL:
+          case META_OFFSETCLIPRGN:
+          case META_TEXTOUT:
+          case META_POLYPOLYGON:
+          case META_POLYLINE:
+          case META_RESTOREDC:  
+          case META_CHORD:
+          case META_CREATEPATTERNBRUSH:
+          case META_CREATEPENINDIRECT:
+          case META_CREATEFONTINDIRECT:
+          case META_CREATEPALETTE:
+          case META_SETTEXTALIGN:
+          case META_SELECTPALETTE:
+          case META_SETMAPPERFLAGS:
+          case META_REALIZEPALETTE:
+          case META_ESCAPE:
+          case META_EXTTEXTOUT:
+          case META_STRETCHDIB:
+          case META_DIBSTRETCHBLT:
+          case META_STRETCHBLT:
+          case META_BITBLT:
+          case META_CREATEREGION:
+          case META_FILLREGION:
+          case META_FRAMEREGION:
+          case META_INVERTREGION:
+          case META_PAINTREGION:
+          case META_SELECTCLIPREGION:
+          case META_DIBCREATEPATTERNBRUSH:
+          case META_DIBBITBLT:
+          case META_SETTEXTCHAREXTRA:
+          case META_SETTEXTJUSTIFICATION:
+          case META_EXTFLOODFILL:
+          case META_SETDIBTODEV:
+          case META_DRAWTEXT:
+          case META_ANIMATEPALETTE:
+          case META_SETPALENTRIES:
+          case META_RESIZEPALETTE:
+          case META_RESETDC:
+          case META_STARTDOC:
+          case META_STARTPAGE:
+          case META_ENDPAGE:
+          case META_ABORTDOC:
+          case META_ENDDOC:
+          case META_CREATEBRUSH:
+          case META_CREATEBITMAPINDIRECT:
+          case META_CREATEBITMAP:    
+          /* Fall through to unimplemented */
+          default:
+          {
+            /* Not implemented yet */
+            FIXME( "Conversion of record type 0x%x not implemented.\n", lpMetaRecord->rdFunction );
+            break;
+          }
+       }
+
+       /* Move to the next record */
+       (char*)lpbBuffer += ((LPMETARECORD)lpbBuffer)->rdSize * 2; /* FIXME: Seem to be doing this in metafile.c */ 
+
+#undef ReAllocAndAdjustPointers
+     } 
+
+     /* We know the last of the header information now */
+     ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nBytes = uNewEnhMetaFileBufferSize;
+
+     /* Create the enhanced metafile */
+     hMf = SetEnhMetaFileBits( uNewEnhMetaFileBufferSize, (const BYTE*)lpNewEnhMetaFileBuffer ); 
+
+     if( !hMf )
+       ERR( "Problem creating metafile. Did the conversion fail somewhere?\n" );
+
+     return hMf;
+
+error:
+     /* Free the data associated with our copy since it's been copied */
+     HeapFree( SystemHeap, 0, lpNewEnhMetaFileBuffer ); 
+
+     return 0;  
+}
 
 
 
