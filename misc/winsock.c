@@ -92,12 +92,19 @@ static LPWSINFO         _wsi_list = NULL;
 static INT         _ws_sock_ops[] =
        { WS_SO_DEBUG, WS_SO_REUSEADDR, WS_SO_KEEPALIVE, WS_SO_DONTROUTE,
          WS_SO_BROADCAST, WS_SO_LINGER, WS_SO_OOBINLINE, WS_SO_SNDBUF,
-         WS_SO_RCVBUF, WS_SO_ERROR, WS_SO_TYPE, WS_SO_DONTLINGER, 0 };
+         WS_SO_RCVBUF, WS_SO_ERROR, WS_SO_TYPE, WS_SO_DONTLINGER,
+#ifdef SO_RCVTIMEO
+	 WS_SO_RCVTIMEO,
+#endif
+	 0 };
 static int           _px_sock_ops[] =
        { SO_DEBUG, SO_REUSEADDR, SO_KEEPALIVE, SO_DONTROUTE, SO_BROADCAST,
          SO_LINGER, SO_OOBINLINE, SO_SNDBUF, SO_RCVBUF, SO_ERROR, SO_TYPE,
-	 SO_LINGER };
-
+	 SO_LINGER,
+#ifdef SO_RCVTIMEO
+	 SO_RCVTIMEO,
+#endif
+	};
 
 static INT _ws_tcp_ops[] = {
 #ifdef TCP_NODELAY
