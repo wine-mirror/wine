@@ -70,8 +70,13 @@ static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
 
 static const char Printers[] =
 "System\\CurrentControlSet\\control\\Print\\Printers\\";
-static const char Drivers[] =
-"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers\\";
+
+static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
+                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                  'c','o','n','t','r','o','l','\\',
+                                  'P','r','i','n','t','\\',
+                                  'E','n','v','i','r','o','n','m','e','n','t','s','\\',
+                                  '%','s','\\','D','r','i','v','e','r','s','\\',0 };
 
 static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 
@@ -1155,49 +1160,56 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
  *    NULL on error
  */
 static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
-{   HKEY  retval;
-    LPSTR lpKey, p = NULL;
+{   
+    static const WCHAR WinNTW[] = { 'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0 };
+    static const WCHAR Win40W[] = { 'W','i','n','d','o','w','s',' ','4','.','0',0 };
+    HKEY  retval;
+    LPWSTR lpKey, buffer = NULL;
+    LPCWSTR pEnvW;
 
     TRACE("%s\n",
 	  (unicode) ? debugstr_w(pEnvironment) : debugstr_a(pEnvironment));
 
-    if(pEnvironment)
-        p = (unicode) ? HEAP_strdupWtoA( GetProcessHeap(), 0, pEnvironment) :
-                        pEnvironment;
-    else {
-        OSVERSIONINFOA ver;
-        ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    if(pEnvironment) {
+        if (unicode) {
+            pEnvW = pEnvironment;
+        } else {
+            INT len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, NULL, 0);
+            buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (buffer) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, buffer, len);
+            pEnvW = buffer;
+        }
+    } else {
+        OSVERSIONINFOW ver;
+        ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
 
-        if(!GetVersionExA( &ver))
+        if(!GetVersionExW( &ver))
             return 0;
 
         switch (ver.dwPlatformId) {
              case VER_PLATFORM_WIN32s:
                   ERR("win32 style printing used with 16 bits app, try specifying 'win95' Windows version\n");
                   return 0;
-
              case VER_PLATFORM_WIN32_NT:
-                  p = "Windows NT x86";
+                  pEnvW = WinNTW;
                   break;
              default:
-                  p = "Windows 4.0";
+                  pEnvW = Win40W;
                   break;
         }
-        TRACE("set environment to %s\n", p);
+        TRACE("set environment to %s\n", debugstr_w(pEnvW));
     }
 
     lpKey = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       strlen(p) + strlen(Drivers));
-    sprintf( lpKey, Drivers, p);
+                       (strlenW(pEnvW) + strlenW(DriversW) + 1) * sizeof(WCHAR));
+    wsprintfW( lpKey, DriversW, pEnvW);
 
-    TRACE("%s\n", lpKey);
+    TRACE("%s\n", debugstr_w(lpKey));
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, lpKey, &retval) !=
-       ERROR_SUCCESS)
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, lpKey, &retval) != ERROR_SUCCESS)
        retval = 0;
 
-    if(pEnvironment && unicode)
-       HeapFree( GetProcessHeap(), 0, p);
+    HeapFree( GetProcessHeap(), 0, buffer);
     HeapFree( GetProcessHeap(), 0, lpKey);
 
     return retval;
