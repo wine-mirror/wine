@@ -203,6 +203,16 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 	    }
 	    break;
 
+        case WM_COMMAND :
+	    TRACE("WM_COMMAND wParam=0x%X lParam=0x%lX\n",
+		   wParam, lParam);
+	    /* WM_COMMAND is not invalid since it is documented
+	     * in the windows api reference. So don't output
+             * any FIXME for WM_COMMAND
+             */
+	    WARN("We don't care about the WM_COMMAND\n");
+	    break;
+
 	default:
 	    FIXME("Invalid Message 0x%x!\n", uMsg);
 	    break;
