@@ -59,7 +59,7 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintRectfn,      /* SS_BLACKFRAME */
     STATIC_PaintRectfn,      /* SS_GRAYFRAME */
     STATIC_PaintRectfn,      /* SS_WHITEFRAME */
-    NULL,                    /* Not defined */
+    NULL,                    /* SS_USERITEM */
     STATIC_PaintTextfn,      /* SS_SIMPLE */
     STATIC_PaintTextfn,      /* SS_LEFTNOWORDWRAP */
     STATIC_PaintOwnerDrawfn, /* SS_OWNERDRAW */
