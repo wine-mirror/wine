@@ -172,11 +172,11 @@ static void test_enum_providers(void)
 	
 	/* check pdwReserved flag for NULL */
 	result = CryptEnumProviders(dwIndex, &notNull, 0, &type, NULL, &providerLen);
-	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 	
 	/* check dwFlags == 0 */
 	result = CryptEnumProviders(dwIndex, NULL, notZeroFlags, &type, NULL, &providerLen);
-	ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==NTE_BAD_FLAGS, "%ld\n", GetLastError());
 	
 	/* alloc provider to half the size required
 	 * cbName holds the size required */
@@ -185,8 +185,8 @@ static void test_enum_providers(void)
 		return;
 
 	result = CryptEnumProviders(dwIndex, NULL, 0, &type, provider, &providerLen);
-	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %08x, got %08x\n",
-		ERROR_MORE_DATA, (unsigned int)GetLastError());
+	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %i, got %ld\n",
+		ERROR_MORE_DATA, GetLastError());
 
 	LocalFree(provider);
 
@@ -203,8 +203,8 @@ static void test_enum_providers(void)
 	 * ERROR_NO_MORE_ITEMS */
 	for (count = 0; count < provCount + 1; count++)
 		result = CryptEnumProviders(count, NULL, 0, &type, NULL, &providerLen);
-	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %08x, got %08x\n", 
-			ERROR_NO_MORE_ITEMS, (unsigned int)GetLastError());
+	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %i, got %ld\n", 
+			ERROR_NO_MORE_ITEMS, GetLastError());
 	
 	/* check expected versus actual values returned */
 	result = CryptEnumProviders(dwIndex, NULL, 0, &type, NULL, &providerLen);
@@ -213,11 +213,237 @@ static void test_enum_providers(void)
 		return;
 		
 	result = CryptEnumProviders(dwIndex, NULL, 0, &type, provider, &providerLen);
-	ok(result && type==dwType, "expected %i, got %i\n", 
-		(unsigned int)dwType, (unsigned int)type);
+	ok(result && type==dwType, "expected %ld, got %ld\n", 
+		dwType, type);
 	ok(result && !strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
-	ok(result && cbName==providerLen, "expected %i, got %i\n", 
-		(unsigned int)cbName, (unsigned int)providerLen);
+	ok(result && cbName==providerLen, "expected %ld, got %ld\n", 
+		cbName, providerLen);
+}
+
+static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTypeName, 
+				 DWORD *pcbTypeName, DWORD *pdwTypeCount)
+{
+	HKEY hKey;
+	HKEY hSubKey;
+	PSTR ch;
+	
+	if (RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types", &hKey))
+		return FALSE;
+	
+	RegQueryInfoKey(hKey, NULL, NULL, NULL, pdwTypeCount, pcbTypeName, NULL,
+			NULL, NULL, NULL, NULL, NULL);
+	(*pcbTypeName)++;
+	
+	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
+		return FALSE;
+	
+	RegEnumKeyEx(hKey, dwIndex, *pszTypeName, pcbTypeName, NULL, NULL, NULL, NULL);
+	(*pcbTypeName)++;
+	ch = *pszTypeName + strlen(*pszTypeName);
+	/* Convert "Type 000" to 0, etc/ */
+	*pdwProvType = *(--ch) - '0';
+	*pdwProvType += (*(--ch) - '0') * 10;
+	*pdwProvType += (*(--ch) - '0') * 100;
+	
+	RegOpenKey(hKey, *pszTypeName, &hSubKey);
+	LocalFree(*pszTypeName);
+	
+	RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName);
+	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
+		return FALSE;
+	
+	RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, *pszTypeName, pcbTypeName);
+	
+	RegCloseKey(hSubKey);
+	RegCloseKey(hKey);
+	
+	return TRUE;
+}
+
+static void test_enum_provider_types()
+{
+	/* expected values */
+	DWORD dwProvType;
+	LPSTR pszTypeName = NULL;
+	DWORD cbTypeName;
+	DWORD dwTypeCount;
+	
+	/* actual values */
+	DWORD index = 0;
+	DWORD provType;
+	LPSTR typeName = NULL;
+	DWORD typeNameSize;
+	DWORD typeCount;
+	DWORD result;
+	DWORD notNull = 5;
+	DWORD notZeroFlags = 5;
+	
+	if (!FindProvTypesRegVals(index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
+		return;
+	
+	/* check pdwReserved for NULL */
+	result = CryptEnumProviderTypes(index, &notNull, 0, &provType, typeName, &typeNameSize);
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %ld\n", 
+		ERROR_INVALID_PARAMETER, GetLastError());
+	
+	/* check dwFlags == zero */
+	result = CryptEnumProviderTypes(index, NULL, notZeroFlags, &provType, typeName, &typeNameSize);
+	ok(!result && GetLastError()==NTE_BAD_FLAGS, "expected %i, got %ld\n",
+		ERROR_INVALID_PARAMETER, GetLastError());
+	
+	/* alloc provider type to half the size required
+	 * cbTypeName holds the size required */
+	typeNameSize = cbTypeName / 2;
+	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
+		return;
+
+	result = CryptEnumProviderTypes(index, NULL, 0, &provType, typeName, &typeNameSize);
+	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %i, got %ld\n",
+		ERROR_MORE_DATA, GetLastError());
+	
+	LocalFree(typeName);
+	
+	/* loop through the provider types to get the number of provider types 
+	 * after loop ends, count should be dwTypeCount + 1 so subtract 1
+	 * to get actual number of provider types */
+	typeCount = 0;
+	while(CryptEnumProviderTypes(typeCount++, NULL, 0, &provType, NULL, &typeNameSize))
+		;
+	typeCount--;
+	ok(typeCount==dwTypeCount, "expected %ld, got %ld\n", dwTypeCount, typeCount);
+	
+	/* loop past the actual number of provider types to get the error
+	 * ERROR_NO_MORE_ITEMS */
+	for (typeCount = 0; typeCount < dwTypeCount + 1; typeCount++)
+		result = CryptEnumProviderTypes(typeCount, NULL, 0, &provType, NULL, &typeNameSize);
+	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %i, got %ld\n", 
+			ERROR_NO_MORE_ITEMS, GetLastError());
+	
+
+	/* check expected versus actual values returned */
+	result = CryptEnumProviderTypes(index, NULL, 0, &provType, NULL, &typeNameSize);
+	ok(result && typeNameSize==cbTypeName, "expected %ld, got %ld\n", cbTypeName, typeNameSize);
+	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
+		return;
+		
+	result = CryptEnumProviderTypes(index, NULL, 0, &provType, typeName, &typeNameSize);
+	ok(result && provType==dwProvType, "expected %ld, got %ld\n", dwProvType, provType);
+	ok(result && !strcmp(pszTypeName, typeName), "expected %s, got %s\n", pszTypeName, typeName);
+	ok(result && typeNameSize==cbTypeName, "expected %ld, got %ld\n", cbTypeName, typeNameSize);
+}
+
+static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvName, DWORD *pcbProvName)
+{
+	HKEY hKey;
+	PSTR keyname;
+	PSTR ptr;
+	DWORD user = dwFlags & CRYPT_USER_DEFAULT;
+	
+	LPSTR MACHINESTR = "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types\\Type XXX";
+	LPSTR USERSTR = "Software\\Microsoft\\Cryptography\\Provider Type XXX";
+	
+	keyname = LocalAlloc(LMEM_ZEROINIT, (user ? strlen(USERSTR) : strlen(MACHINESTR)) + 1);
+	if (keyname)
+	{
+		user ? strcpy(keyname, USERSTR) : strcpy(keyname, MACHINESTR);
+		ptr = keyname + strlen(keyname);
+		*(--ptr) = (dwProvType % 10) + '0';
+		*(--ptr) = ((dwProvType / 10) % 10) + '0';
+		*(--ptr) = (dwProvType / 100) + '0';
+	} else
+		return FALSE;
+	
+	if (RegOpenKey((dwFlags & CRYPT_USER_DEFAULT) ?  HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE ,keyname, &hKey))
+	{
+		LocalFree(keyname);
+		return FALSE;
+	}
+	LocalFree(keyname);
+	
+	if (RegQueryValueEx(hKey, "Name", NULL, NULL, *pszProvName, pcbProvName))
+	{
+		if (GetLastError() != ERROR_MORE_DATA)
+			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		return FALSE;
+	}
+	
+	if (!(*pszProvName = LocalAlloc(LMEM_ZEROINIT, *pcbProvName)))
+		return FALSE;
+	
+	if (RegQueryValueEx(hKey, "Name", NULL, NULL, *pszProvName, pcbProvName))
+	{
+		if (GetLastError() != ERROR_MORE_DATA)
+			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		return FALSE;
+	}
+	
+	RegCloseKey(hKey);
+	
+	return TRUE;
+}
+
+static void test_get_default_provider()
+{
+	/* expected results */
+	DWORD dwProvType = PROV_RSA_FULL;
+	DWORD dwFlags = CRYPT_MACHINE_DEFAULT;
+	LPSTR pszProvName = NULL;
+	DWORD cbProvName;
+	
+	/* actual results */
+	DWORD provType = PROV_RSA_FULL;
+	DWORD flags = CRYPT_MACHINE_DEFAULT;
+	LPSTR provName = NULL;
+	DWORD provNameSize;
+	DWORD result;
+	DWORD notNull = 5;
+	
+	FindDfltProvRegVals(dwProvType, dwFlags, &pszProvName, &cbProvName);
+	
+	/* check pdwReserved for NULL */
+	result = CryptGetDefaultProvider(provType, &notNull, flags, provName, &provNameSize);
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %ld\n",
+		ERROR_INVALID_PARAMETER, GetLastError());
+	
+	/* check for invalid flag */
+	flags = 0xdeadbeef;
+	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	ok(!result && GetLastError()==NTE_BAD_FLAGS, "expected %ld, got %ld\n",
+		NTE_BAD_FLAGS, GetLastError());
+	flags = CRYPT_MACHINE_DEFAULT;
+	
+	/* check for invalid prov type */
+	provType = 0xdeadbeef;
+	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "expected %ld, got %ld\n",
+		NTE_BAD_PROV_TYPE, GetLastError());
+	provType = PROV_RSA_FULL;
+	
+	SetLastError(0);
+	
+	/* alloc provName to half the size required
+	 * cbProvName holds the size required */
+	provNameSize = cbProvName / 2;
+	if (!(provName = LocalAlloc(LMEM_ZEROINIT, provNameSize)))
+		return;
+	
+	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %i, got %ld\n",
+		ERROR_MORE_DATA, GetLastError());
+		
+	LocalFree(provName);
+	
+	/* check expected versus actual values returned */
+	result = CryptGetDefaultProvider(provType, NULL, flags, NULL, &provNameSize);
+	ok(result && provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
+	provNameSize = cbProvName;
+	
+	if (!(provName = LocalAlloc(LMEM_ZEROINIT, provNameSize)))
+		return;
+	
+	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	ok(result && !strcmp(pszProvName, provName), "expected %s, got %s\n", pszProvName, provName);
+	ok(result && provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
 }
 
 static void test_set_provider_ex()
@@ -258,5 +484,8 @@ START_TEST(crypt)
 	clean_up_environment();
 	
 	test_enum_providers();
+	test_enum_provider_types();
+	test_get_default_provider();
+	test_set_provider_ex();
 	test_set_provider_ex();
 }
