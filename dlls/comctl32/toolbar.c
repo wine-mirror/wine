@@ -109,6 +109,9 @@ typedef struct
     INT      nButtonDown;
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
+    DWORD    dwBaseCustDraw;  /* CDRF_ response (w/o TBCDRF_) from PREPAINT */
+    DWORD    dwItemCustDraw;  /* CDRF_ response (w/o TBCDRF_) from ITEMPREP */
+    DWORD    dwItemCDFlag;    /* TBCDRF_ flags from last ITEMPREPAINT    */
     SIZE     szPadding;       /* padding values around button */
     HFONT    hDefaultFont;
     HFONT    hFont;           /* text font */
@@ -470,85 +473,36 @@ TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, INT colorRef)
  */
 static void
 TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
-		    HDC hdc, INT nState, DWORD dwStyle)
+		    HDC hdc, INT nState, DWORD dwStyle,
+                    RECT *rcText, LPWSTR lpText, NMTBCUSTOMDRAW *tbcd)
 {
-    RECT   rcText = btnPtr->rect;
-    HFONT  hOldFont;
-    COLORREF clrOld;
-    LPWSTR lpText = NULL;
-    HIMAGELIST himl = infoPtr->himlDef;
-
-    TRACE ("iString: %x\n", btnPtr->iString);
-
-    /* get a pointer to the text */
-    lpText = TOOLBAR_GetText(infoPtr, btnPtr);
-
-    TRACE ("Stringtext: %s\n", debugstr_w(lpText));
+    HFONT  hOldFont = 0;
+    COLORREF clrOld = 0;
 
     /* draw text */
     if (lpText) {
-
-	InflateRect (&rcText, -3, -3);
-
-	if (himl && TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
-	        /* The following test looked like this before
-		 * I changed it. IE4 "Links" toolbar would not
-		 * draw correctly with the original code.  - GA 8/01
-		 *   ((dwStyle & TBSTYLE_LIST) &&
-		 *    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
-		 *       (btnPtr->iBitmap != I_IMAGENONE))
-		 */ 
-	        if (dwStyle & TBSTYLE_LIST) {
-		    /* LIST style w/ ICON offset is by matching native. */
-		    /* Matches IE4 "Links" bar.   - GA 8/01             */
-		    rcText.left += (infoPtr->nBitmapWidth + 2);
-		}
-		else {
-		    rcText.top += infoPtr->nBitmapHeight + 1;
-		}
-	}
-	else {
-	        if (dwStyle & TBSTYLE_LIST) {
-		    /* LIST style w/o ICON offset is by matching native. */
-		    /* Matches IE4 "menu" bar.   - GA  8/01              */
-		    rcText.left += 4;
-		}
-	}
-
-	if (nState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
-	    OffsetRect (&rcText, 1, 1);
-
 	TRACE("string rect=(%d,%d)-(%d,%d)\n",
-	      rcText.left, rcText.top, rcText.right, rcText.bottom);
+	      rcText->left, rcText->top, rcText->right, rcText->bottom);
 
 	hOldFont = SelectObject (hdc, infoPtr->hFont);
 	if (!(nState & TBSTATE_ENABLED)) {
-	    clrOld = SetTextColor (hdc, comctl32_color.clr3dHilight);
-	    OffsetRect (&rcText, 1, 1);
-	    DrawTextW (hdc, lpText, -1, &rcText, infoPtr->dwDTFlags);
+	    clrOld = SetTextColor (hdc, tbcd->clrBtnHighlight);
+	    OffsetRect (rcText, 1, 1);
+	    DrawTextW (hdc, lpText, -1, rcText, infoPtr->dwDTFlags);
 	    SetTextColor (hdc, comctl32_color.clr3dShadow);
-	    OffsetRect (&rcText, -1, -1);
+	    OffsetRect (rcText, -1, -1);
 	}
 	else if (nState & TBSTATE_INDETERMINATE) {
 	    clrOld = SetTextColor (hdc, comctl32_color.clr3dShadow);
 	}
-#if 0
-	/*************************************************************
-	 * we cannot do this till we implement NM_CUSTOMDRAW for     *
-	 * each item. Whether the "hot" item is drawn raised, or     *
-	 * drawn with a blue background and white text is determined *
-	 * by the flags returned on the notification. Till then      *
-	 * this is commented out.                                    *
-	 *************************************************************/
-	else if (btnPtr->bHot)
-	    clrOld = SetTextColor (hdc, comctl32_color.clrHighlightText);
+	else if (btnPtr->bHot && (infoPtr->dwItemCDFlag & TBCDRF_HILITEHOTTRACK )) {
+	    clrOld = SetTextColor (hdc, tbcd->clrTextHighlight);
 	}
-#endif
 	else {
-	    clrOld = SetTextColor (hdc, comctl32_color.clrBtnText);
+	    clrOld = SetTextColor (hdc, tbcd->clrText);
 	}
 
-	DrawTextW (hdc, lpText, -1, &rcText, infoPtr->dwDTFlags);
+	DrawTextW (hdc, lpText, -1, rcText, infoPtr->dwDTFlags);
 	SetTextColor (hdc, clrOld);
 	SelectObject (hdc, hOldFont);
     }
@@ -611,6 +565,23 @@ TOOLBAR_DrawMasked (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 }
 
 
+static UINT
+TOOLBAR_TranslateState(TBUTTON_INFO *btnPtr)
+{
+    UINT retstate = 0;
+
+    retstate |= (btnPtr->fsState & TBSTATE_CHECKED) ? CDIS_CHECKED  : 0;
+    retstate |= (btnPtr->fsState & TBSTATE_PRESSED) ? CDIS_SELECTED : 0;
+    retstate |= (btnPtr->fsState & TBSTATE_ENABLED) ? 0 : CDIS_DISABLED;
+    retstate |= (btnPtr->fsState & TBSTATE_MARKED ) ? CDIS_MARKED   : 0;
+    retstate |= (btnPtr->bHot                     ) ? CDIS_HOT      : 0;
+    retstate |= (btnPtr->fsState & TBSTATE_INDETERMINATE) ? CDIS_INDETERMINATE : 0;
+    /* FIXME: don't set CDIS_GRAYED, CDIS_FOCUS, CDIS_DEFAULT       */
+    /*        don't test TBSTATE_HIDDEN                             */
+    return retstate;
+}
+
+
 static void
 TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 {
@@ -618,17 +589,23 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     BOOL hasDropDownArrow = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
 	                    (btnPtr->fsStyle & TBSTYLE_DROPDOWN);
-    RECT rc, rcArrow, rcBitmap;
+    RECT rc, rcArrow, rcBitmap, rcText, rcFill;
+    LPWSTR lpText = NULL;
+    NMTBCUSTOMDRAW tbcd;
+    DWORD ntfret;
+    INT offset;
 
     if (btnPtr->fsState & TBSTATE_HIDDEN)
 	return;
 
     rc = btnPtr->rect;
+    CopyRect (&rcFill, &rc);
     CopyRect (&rcArrow, &rc);
     CopyRect(&rcBitmap, &rc);
+    CopyRect(&rcText, &rc);
 
-    if (!infoPtr->bBtnTranspnt)
-	FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
+    /* get a pointer to the text */
+    lpText = TOOLBAR_GetText(infoPtr, btnPtr);
 
     if (hasDropDownArrow)
     {
@@ -645,7 +622,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     else
 	rcBitmap.left+=(infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2;
 
-    if(TOOLBAR_HasText(infoPtr, btnPtr))
+    if(lpText)
         rcBitmap.top+=2; /* this looks to be the correct value from vmware comparison - cmm */
     else
         rcBitmap.top+=(infoPtr->nButtonHeight - infoPtr->nBitmapHeight) / 2;
@@ -653,6 +630,92 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     TRACE("iBitmap: %d, start=(%d,%d) w=%d, h=%d\n", 
 	  btnPtr->iBitmap, rcBitmap.left, rcBitmap.top,
 	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
+    TRACE ("iString: %x\n", btnPtr->iString);
+    TRACE ("Stringtext: %s\n", debugstr_w(lpText));
+
+    /* draw text */
+    if (lpText) {
+
+	InflateRect (&rcText, -3, -3);
+
+	if (infoPtr->himlDef && 
+            TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
+	        /* The following test looked like this before
+		 * I changed it. IE4 "Links" toolbar would not
+		 * draw correctly with the original code.  - GA 8/01
+		 *   ((dwStyle & TBSTYLE_LIST) &&
+		 *    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
+		 *       (btnPtr->iBitmap != I_IMAGENONE))
+		 */ 
+	        if (dwStyle & TBSTYLE_LIST) {
+		    /* LIST style w/ ICON offset is by matching native. */
+		    /* Matches IE4 "Links" bar.   - GA 8/01             */
+		    rcText.left += (infoPtr->nBitmapWidth + 2);
+		}
+		else {
+		    rcText.top += infoPtr->nBitmapHeight + 1;
+		}
+	}
+	else {
+	        if (dwStyle & TBSTYLE_LIST) {
+		    /* LIST style w/o ICON offset is by matching native. */
+		    /* Matches IE4 "menu" bar.   - GA  8/01              */
+		    rcText.left += 4;
+		}
+	}
+
+	if (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
+	    OffsetRect (&rcText, 1, 1);
+    }
+
+    /* Initialize fields in all cases, because we use these later */
+    ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
+    tbcd.clrText = comctl32_color.clrBtnText;
+    tbcd.clrTextHighlight = comctl32_color.clrHighlightText;
+    tbcd.clrBtnFace = comctl32_color.clrBtnFace;
+    tbcd.clrBtnHighlight = comctl32_color.clrBtnHighlight;
+    tbcd.clrMark = comctl32_color.clrHighlight;
+    tbcd.clrHighlightHotTrack = 0;
+    tbcd.nStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
+    tbcd.nHLStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
+    /* MSDN says that this is the text rectangle.              */
+    /* But (why always a but) tracing of v5.7 of native shows  */
+    /* that this is really a *relative* rectangle based on the */
+    /* the nmcd.rc. Also the left and top are always 0 ignoring*/
+    /* any bitmap that might be present.                       */
+    tbcd.rcText.left = 0;
+    tbcd.rcText.top = 0;
+    tbcd.rcText.right = rcText.right - rc.left;
+    tbcd.rcText.bottom = rcText.bottom - rc.top;
+
+    /* FIXME: what should these be set to ????? */
+    tbcd.hbrMonoDither = 0;
+    tbcd.hbrLines = 0;
+    tbcd.hpenLines = 0;
+
+    /* Issue Item Prepaint notify */ 
+    infoPtr->dwItemCustDraw = 0;
+    infoPtr->dwItemCDFlag = 0;
+    if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYITEMDRAW)
+    {
+	tbcd.nmcd.dwDrawStage = CDDS_ITEMPREPAINT;
+	tbcd.nmcd.hdc = hdc;
+	tbcd.nmcd.rc = rc;
+	tbcd.nmcd.dwItemSpec = btnPtr->idCommand;
+	tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr);
+	tbcd.nmcd.lItemlParam = btnPtr->dwData;
+	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+	infoPtr->dwItemCustDraw = ntfret & 0xffff;
+	infoPtr->dwItemCDFlag = ntfret & 0xffff0000;
+	if (infoPtr->dwItemCustDraw & CDRF_SKIPDEFAULT) 
+	    return;
+	/* save the only part of the rect that the user can change */
+	rcText.right = tbcd.rcText.right + rc.left;
+	rcText.bottom = tbcd.rcText.bottom + rc.top;
+    }
+
+    if (!infoPtr->bBtnTranspnt)
+	FillRect( hdc, &rcFill, GetSysColorBrush(COLOR_BTNFACE));
 
     /* separator */
     if (btnPtr->fsStyle & TBSTYLE_SEP) {
@@ -671,12 +734,12 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    FIXME("Draw some kind of separator: fsStyle=%x\n",
 		  btnPtr->fsStyle);
 	}
-	return;
+	goto FINALNOTIFY;
     }
 
     /* disabled */
     if (!(btnPtr->fsState & TBSTATE_ENABLED)) {
-	if (!(dwStyle & TBSTYLE_FLAT))
+	if (!(dwStyle & TBSTYLE_FLAT) && !(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
 	{
 	    DrawEdge (hdc, &rc, EDGE_RAISED,
 		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
@@ -696,45 +759,52 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 				   ILD_NORMAL))
 	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rcBitmap.left, rcBitmap.top);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
-	return;
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle, &rcText, lpText, &tbcd);
+	goto FINALNOTIFY;
     }
 
     /* pressed TBSTYLE_BUTTON */
     if (btnPtr->fsState & TBSTATE_PRESSED) {
-	if (dwStyle & TBSTYLE_FLAT)
+	offset = (infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
+	if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
 	{
-	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
-            if (hasDropDownArrow)
-	    DrawEdge (hdc, &rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
-	}
-	else
-	{
-	    DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
-            if (hasDropDownArrow)
-	    DrawEdge (hdc, &rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	    if (dwStyle & TBSTYLE_FLAT)
+	    {
+		DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
+		if (hasDropDownArrow)
+		    DrawEdge (hdc, &rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
+	    }
+	    else
+	    {
+		DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
+		if (hasDropDownArrow)
+		    DrawEdge (hdc, &rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	    }
 	}
 
         if (hasDropDownArrow)
 	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_WINDOWFRAME);
 
 	TOOLBAR_DrawImageList (infoPtr, btnPtr, infoPtr->himlDef,
-			       hdc, rcBitmap.left+1, rcBitmap.top+1, 
+			       hdc, rcBitmap.left+offset, rcBitmap.top+offset, 
 			       ILD_NORMAL);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
-	return;
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle, &rcText, lpText, &tbcd);
+	goto FINALNOTIFY;
     }
 
     /* checked TBSTYLE_CHECK */
     if ((btnPtr->fsStyle & TBSTYLE_CHECK) &&
 	(btnPtr->fsState & TBSTATE_CHECKED)) {
-	if (dwStyle & TBSTYLE_FLAT)
-	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER,
-			BF_RECT | BF_ADJUST);
-	else
-	    DrawEdge (hdc, &rc, EDGE_SUNKEN,
-			BF_RECT | BF_MIDDLE | BF_ADJUST);
+	if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
+	{
+	    if (dwStyle & TBSTYLE_FLAT)
+		DrawEdge (hdc, &rc, BDR_SUNKENOUTER,
+			  BF_RECT | BF_ADJUST);
+	    else
+		DrawEdge (hdc, &rc, EDGE_SUNKEN,
+			  BF_RECT | BF_MIDDLE | BF_ADJUST);
+	}
 
 	TOOLBAR_DrawPattern (hdc, &rc);
         
@@ -742,19 +812,20 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 			       hdc, rcBitmap.left+1, rcBitmap.top+1, 
 			       ILD_NORMAL);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
-	return;
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle, &rcText, lpText, &tbcd);
+	goto FINALNOTIFY;
     }
 
     /* indeterminate */	
     if (btnPtr->fsState & TBSTATE_INDETERMINATE) {
-	DrawEdge (hdc, &rc, EDGE_RAISED,
-		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+	if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
+	    DrawEdge (hdc, &rc, EDGE_RAISED,
+		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
 	TOOLBAR_DrawPattern (hdc, &rc);
 	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rcBitmap.left, rcBitmap.top);
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
-	return;
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle, &rcText, lpText, &tbcd);
+	goto FINALNOTIFY;
     }
 
     /* normal state */
@@ -762,30 +833,24 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     {
 	if (btnPtr->bHot)
 	{
-#if 0
-	    /*************************************************************
-	     * we cannot do this till we implement NM_CUSTOMDRAW for     *
-	     * each item. Whether the "hot" item is drawn raised, or     *
-	     * drawn with a blue background and white text is determined *
-	     * by the flags returned on the notification. Till then      *
-	     * this is commented out.                                    *
-	     *************************************************************/
-	    if ( ???? )
+	    if ( infoPtr->dwItemCDFlag & TBCDRF_HILITEHOTTRACK )
 	    {
 		COLORREF oldclr;
 
-		oldclr = SetBkColor(hdc, comctl32_color.clrHighlight);
+		oldclr = SetBkColor(hdc, tbcd.clrHighlightHotTrack);
 		ExtTextOutA(hdc, 0, 0, ETO_OPAQUE, &rc, NULL, 0, 0);
 		if (hasDropDownArrow)
 		    ExtTextOutA(hdc, 0, 0, ETO_OPAQUE, &rcArrow, NULL, 0, 0);
 		SetBkColor(hdc, oldclr);
 	    }
 	    else
-#endif
 	    {
-		DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT);
-		if (hasDropDownArrow)
-		    DrawEdge (hdc, &rcArrow, BDR_RAISEDINNER, BF_RECT);
+		if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
+		{
+		    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT);
+		    if (hasDropDownArrow)
+			DrawEdge (hdc, &rcArrow, BDR_RAISEDINNER, BF_RECT);
+		}
 	    }
 	}
 #if 1
@@ -820,22 +885,40 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     }
     else
     {
-	DrawEdge (hdc, &rc, EDGE_RAISED,
-		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+	if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
+	    DrawEdge (hdc, &rc, EDGE_RAISED,
+		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
         if (hasDropDownArrow)
 	{
-	    DrawEdge (hdc, &rcArrow, EDGE_RAISED,
-		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+	    if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
+		DrawEdge (hdc, &rcArrow, EDGE_RAISED,
+			  BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_WINDOWFRAME);
 	}
 
 	TOOLBAR_DrawImageList (infoPtr, btnPtr, infoPtr->himlDef,
 			       hdc, rcBitmap.left, rcBitmap.top,
-			       ILD_NORMAL);
+			       ILD_NORMAL);}
+    
+
+    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle, &rcText, lpText, &tbcd);
+
+ FINALNOTIFY:
+    if (infoPtr->dwItemCustDraw & CDRF_NOTIFYPOSTPAINT)
+    {
+	tbcd.nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
+	tbcd.nmcd.hdc = hdc;
+	tbcd.nmcd.rc = rc;
+	tbcd.nmcd.dwItemSpec = btnPtr->idCommand;
+	tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr);
+	tbcd.nmcd.lItemlParam = btnPtr->dwData;
+	tbcd.rcText = rcText;
+	tbcd.nStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
+	tbcd.nHLStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
+	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
     }
 
-    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 }
 
 
@@ -846,6 +929,8 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     TBUTTON_INFO *btnPtr;
     INT i, oldBKmode = 0;
     RECT rcTemp;
+    NMTBCUSTOMDRAW tbcd;
+    DWORD ntfret;
 
     /* if imagelist belongs to the app, it can be changed
        by the app after setting it */
@@ -853,6 +938,14 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
         infoPtr->nNumBitmaps = ImageList_GetImageCount(infoPtr->himlDef);
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
+
+    /* Send initial notify */
+    ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
+    tbcd.nmcd.dwDrawStage = CDDS_PREPAINT;
+    tbcd.nmcd.hdc = hdc;
+    tbcd.nmcd.rc = ps->rcPaint;
+    ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+    infoPtr->dwBaseCustDraw = ntfret & 0xffff;
 
     if (infoPtr->bBtnTranspnt)
 	oldBKmode = SetBkMode (hdc, TRANSPARENT);
@@ -867,6 +960,15 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 
     if (infoPtr->bBtnTranspnt && (oldBKmode != TRANSPARENT))
 	SetBkMode (hdc, oldBKmode);
+
+    if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYPOSTPAINT)
+    {
+	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
+	tbcd.nmcd.dwDrawStage = CDDS_POSTPAINT;
+	tbcd.nmcd.hdc = hdc;
+	tbcd.nmcd.rc = ps->rcPaint;
+	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+    }
 }
 
 /***********************************************************************
@@ -4419,22 +4521,25 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     NMTBCUSTOMDRAW tbcd;
-    INT ret = FALSE, ntfret;
+    INT ret = FALSE;
+    DWORD ntfret;
 
     if (dwStyle & TBSTYLE_CUSTOMERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_PREERASE;
 	tbcd.nmcd.hdc = (HDC)wParam;
 	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+	infoPtr->dwBaseCustDraw = ntfret & 0xffff;
+
 	/* FIXME: in general the return flags *can* be or'ed together */
-	switch (ntfret) 
+	switch (infoPtr->dwBaseCustDraw) 
 	    {
 	    case CDRF_DODEFAULT:
 		break;
 	    case CDRF_SKIPDEFAULT:
 		return TRUE;
 	    default:
-		FIXME("[%04x] response %d not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		FIXME("[%04x] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
 		      hwnd, ntfret);
 	    }
     }
@@ -4458,19 +4563,21 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (!ret)
 	ret = DefWindowProcA (hwnd, WM_ERASEBKGND, wParam, lParam);
 
-    if (dwStyle & TBSTYLE_CUSTOMERASE) {
+    if ((dwStyle & TBSTYLE_CUSTOMERASE) && 
+	(infoPtr->dwBaseCustDraw & CDRF_NOTIFYPOSTERASE)) { 
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_POSTERASE;
 	tbcd.nmcd.hdc = (HDC)wParam;
 	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
-	switch (ntfret) 
+	infoPtr->dwBaseCustDraw = ntfret & 0xffff;
+	switch (infoPtr->dwBaseCustDraw) 
 	    {
 	    case CDRF_DODEFAULT:
 		break;
 	    case CDRF_SKIPDEFAULT:
 		return TRUE;
 	    default:
-		FIXME("[%04x] response %d not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		FIXME("[%04x] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
 		      hwnd, ntfret);
 	    }
     }
