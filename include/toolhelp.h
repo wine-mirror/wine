@@ -6,9 +6,7 @@
 
 #define MAX_DATA	11
 #define MAX_MODULE_NAME	9
-#ifndef MAX_PATH
-#define MAX_PATH	255
-#endif
+#define MAX_PATH16	255
 #define MAX_CLASSNAME	255
 
 #pragma pack(1)
@@ -206,7 +204,7 @@ typedef struct
     char       szModule[MAX_MODULE_NAME + 1];
     HMODULE16  hModule;
     WORD       wcUsage;
-    char       szExePath[MAX_PATH + 1];
+    char       szExePath[MAX_PATH16 + 1];
     HANDLE16   wNext;
 } MODULEENTRY, *LPMODULEENTRY;
 

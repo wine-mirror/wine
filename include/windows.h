@@ -12,14 +12,10 @@ extern "C" {
 #include "wintypes.h"
 #include "winbase.h"  
 
-/* FIXME: Maybe MAX_PATH and _MAX_PATH should be computed from the Unix headers instead
- * and by the way, _MAX_PATH should be defined in stdlib.h and MAX_PATH in windef.h 
+/* FIXME: _MAX_PATH should be defined in stdlib.h and MAX_PATH in windef.h 
  * and mapiwin.h
  */
-#define _MAX_PATH 260
-#ifndef MAX_PATH
 #define MAX_PATH 260
-#endif
 
 #ifndef DONT_INCLUDE_WINGDI
 #include "winbase.h"
