@@ -10,6 +10,7 @@ EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_
 C_SRCS = \
 	device.c \
 	directx.c \
+	indexbuffer.c \
 	resource.c \
 	stateblock.c \
 	utils.c \

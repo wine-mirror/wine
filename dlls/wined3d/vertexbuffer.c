@@ -116,7 +116,7 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *if
 
     TRACE("(%p)\n", This);
     pDesc->Format = This->currentDesc.Format;
-    pDesc->Type   = This->currentDesc.Type;
+    pDesc->Type   = This->resource.resourceType;
     pDesc->Usage  = This->currentDesc.Usage;
     pDesc->Pool   = This->currentDesc.Pool;
     pDesc->Size   = This->currentDesc.Size;

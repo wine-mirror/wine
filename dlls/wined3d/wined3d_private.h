@@ -196,6 +196,23 @@ typedef struct IWineD3DVertexBufferImpl
 extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 
 /*****************************************************************************
+ * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)
+ */
+typedef struct IWineD3DIndexBufferImpl
+{
+    /* IUnknown & WineD3DResource Information     */
+    IWineD3DIndexBufferVtbl *lpVtbl;
+    IWineD3DResourceClass     resource;
+
+    /* WineD3DVertexBuffer specifics */
+    BYTE                     *allocatedMemory;
+    D3DINDEXBUFFER_DESC       currentDesc;
+
+} IWineD3DIndexBufferImpl;
+
+extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
+
+/*****************************************************************************
  * IWineD3DStateBlock implementation structure
  */
 

@@ -68,6 +68,33 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, 
+                                                    D3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
+                                                    HANDLE *sharedHandle, IUnknown *parent) {
+    IWineD3DIndexBufferImpl *object;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DIndexBufferImpl));
+    object->lpVtbl = &IWineD3DIndexBuffer_Vtbl;
+    object->resource.wineD3DDevice = iface;
+    object->resource.resourceType  = D3DRTYPE_INDEXBUFFER;
+    object->resource.parent        = parent;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.ref = 1;
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Length);
+    object->currentDesc.Usage = Usage;
+    object->currentDesc.Pool  = Pool;
+    object->currentDesc.Format= Format;
+    object->currentDesc.Size  = Length;
+
+    TRACE("(%p) : Len=%d, Use=%lx, Format=(%u,%s), Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage, Format, 
+                           debug_d3dformat(Format), Pool, object, object->allocatedMemory);
+    *ppIndexBuffer = (IWineD3DIndexBuffer *) object;
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock, IUnknown *parent) {
   
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
@@ -200,6 +227,7 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_Release,
     IWineD3DDeviceImpl_GetParent,
     IWineD3DDeviceImpl_CreateVertexBuffer,
+    IWineD3DDeviceImpl_CreateIndexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
     IWineD3DDeviceImpl_SetFVF,
     IWineD3DDeviceImpl_GetFVF,

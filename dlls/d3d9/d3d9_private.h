@@ -639,7 +639,6 @@ struct IDirect3DVertexBuffer9Impl
 
     /* IDirect3DResource9 fields */
     IWineD3DVertexBuffer   *wineD3DVertexBuffer;
-    IDirect3DDevice9Impl   *device;
 };
 
 /* IUnknown: */
@@ -682,12 +681,7 @@ struct IDirect3DIndexBuffer9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DIndexBuffer9 fields */
-    void                   *allocatedMemory;
-    D3DINDEXBUFFER_DESC     myDesc;
+    IWineD3DIndexBuffer    *wineD3DIndexBuffer;
 };
 
 /* IUnknown: */

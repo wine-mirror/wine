@@ -1,7 +1,7 @@
 /*
  * IDirect3DIndexBuffer9 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2004 Jason Edmeades
  *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
@@ -43,15 +43,15 @@ HRESULT WINAPI IDirect3DIndexBuffer9Impl_QueryInterface(LPDIRECT3DINDEXBUFFER9 i
 ULONG WINAPI IDirect3DIndexBuffer9Impl_AddRef(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI IDirect3DIndexBuffer9Impl_Release(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        IWineD3DIndexBuffer_Release(This->wineD3DIndexBuffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -65,61 +65,54 @@ HRESULT WINAPI IDirect3DIndexBuffer9Impl_GetDevice(LPDIRECT3DINDEXBUFFER9 iface,
 
 HRESULT WINAPI IDirect3DIndexBuffer9Impl_SetPrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DIndexBuffer_SetPrivateData(This->wineD3DIndexBuffer, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DIndexBuffer9Impl_GetPrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DIndexBuffer_GetPrivateData(This->wineD3DIndexBuffer, refguid, pData, pSizeOfData);
 }
 
-HRESULT  WINAPI IDirect3DIndexBuffer9Impl_FreePrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid) {
+HRESULT WINAPI IDirect3DIndexBuffer9Impl_FreePrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DIndexBuffer_FreePrivateData(This->wineD3DIndexBuffer, refguid);
 }
 
 DWORD WINAPI IDirect3DIndexBuffer9Impl_SetPriority(LPDIRECT3DINDEXBUFFER9 iface, DWORD PriorityNew) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    return IDirect3DResource9Impl_SetPriority((LPDIRECT3DRESOURCE9) This, PriorityNew);
+    return IWineD3DIndexBuffer_SetPriority(This->wineD3DIndexBuffer, PriorityNew);
 }
 
 DWORD WINAPI IDirect3DIndexBuffer9Impl_GetPriority(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    return IDirect3DResource9Impl_GetPriority((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DIndexBuffer_GetPriority(This->wineD3DIndexBuffer);
 }
 
 void WINAPI IDirect3DIndexBuffer9Impl_PreLoad(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IWineD3DIndexBuffer_PreLoad(This->wineD3DIndexBuffer);
     return ;
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DIndexBuffer9Impl_GetType(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    return IDirect3DResource9Impl_GetType((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DIndexBuffer_GetType(This->wineD3DIndexBuffer);
 }
 
 /* IDirect3DIndexBuffer9 Interface follow: */
 HRESULT WINAPI IDirect3DIndexBuffer9Impl_Lock(LPDIRECT3DINDEXBUFFER9 iface, UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DIndexBuffer_Lock(This->wineD3DIndexBuffer, OffsetToLock, SizeToLock, (BYTE **)ppbData, Flags);
 }
 
 HRESULT WINAPI IDirect3DIndexBuffer9Impl_Unlock(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DIndexBuffer_Unlock(This->wineD3DIndexBuffer);
 }
 
 HRESULT  WINAPI        IDirect3DIndexBuffer9Impl_GetDesc(LPDIRECT3DINDEXBUFFER9 iface, D3DINDEXBUFFER_DESC *pDesc) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
-    TRACE("(%p) : copying into %p\n", This, pDesc);
-    memcpy(pDesc, &This->myDesc, sizeof(D3DINDEXBUFFER_DESC));
-    return D3D_OK;
+    return IWineD3DIndexBuffer_GetDesc(This->wineD3DIndexBuffer, pDesc);
 }
 
 
@@ -146,30 +139,16 @@ IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl =
 HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9 iface, 
 						      UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, 
 						      IDirect3DIndexBuffer9** ppIndexBuffer, HANDLE* pSharedHandle) {
+    
     IDirect3DIndexBuffer9Impl *object;
-
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-
-    /*TRACE("(%p) : Len=%d, Use=%lx, Format=(%u,%s), Pool=%d\n", This, Length, Usage, Format, debug_d3dformat(Format), Pool);*/
-
+    
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DIndexBuffer9Impl));
     object->lpVtbl = &Direct3DIndexBuffer9_Vtbl;
     object->ref = 1;
-    object->Device = This;
-
-    object->ResourceType = D3DRTYPE_INDEXBUFFER;
-
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Length);
-    object->myDesc.Type   = D3DRTYPE_INDEXBUFFER;
-    object->myDesc.Usage  = Usage;
-    object->myDesc.Pool   = Pool;
-    object->myDesc.Format = Format;
-    object->myDesc.Size   = Length;
-
-    TRACE("(%p) : Iface@%p allocatedMem @ %p\n", This, object, object->allocatedMemory);
+    IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage, Format, Pool, &(object->wineD3DIndexBuffer), pSharedHandle, (IUnknown *)object);
 
     *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER9) object;
-
     return D3D_OK;
 }
