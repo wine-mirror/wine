@@ -3334,6 +3334,8 @@ typedef struct NMLVSCROLL
     int dy;
 } NMLVSCROLL, *LPNMLVSCROLL;
 
+#define ListView_SetItemCount(hwnd,count) \
+    (BOOL)SNDMSGA((hwnd),LVM_SETITEMCOUNT,(WPARAM)(INT)(count),0)
 #define ListView_SetTextBkColor(hwnd,clrBk) \
     (BOOL)SNDMSGA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_SetTextColor(hwnd,clrBk) \
