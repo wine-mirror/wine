@@ -816,7 +816,8 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    }
 
 	    SIC_Initialize();
-
+	    SYSTRAY_Init();
+	    
 	    break;
 
 	  case DLL_THREAD_ATTACH:

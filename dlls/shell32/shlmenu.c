@@ -1,7 +1,6 @@
 /*
  * see www.geocities.com/SiliconValley/4942/filemenu.html
  */
-#include <assert.h>
 #include <string.h>
 
 #include "wine/obj_base.h"
@@ -61,7 +60,11 @@ LPFMINFO FM_GetMenuInfo(HMENU hmenu)
 
 	menudata = (LPFMINFO)MenuInfo.dwMenuData;
 
-	assert ((menudata != 0) && (MenuInfo.cbSize == sizeof(MENUINFO)));
+	if ((menudata == 0) || (MenuInfo.cbSize != sizeof(MENUINFO)))
+	{
+	  ERR("menudata corrupt: %p %lu\n", menudata, MenuInfo.cbSize);
+	  return 0;
+	}
 	
 	return menudata;
 
@@ -122,7 +125,11 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 
 	menudata = (LPFMINFO)MenuInfo.dwMenuData;
 	
-	assert ((menudata != 0) && (MenuInfo.cbSize == sizeof(MENUINFO)));
+	if ((menudata == 0) || (MenuInfo.cbSize != sizeof(MENUINFO)))
+	{
+	  ERR("menudata corrupt: %p %lu\n", menudata, MenuInfo.cbSize);
+	  return 0;
+	}
 	
 	if (menudata->bInitialized)
 	  return 0;
@@ -334,7 +341,12 @@ BOOL WINAPI FileMenu_AppendItemA(
 	  return FALSE;
 
 	menudata = (LPFMINFO)MenuInfo.dwMenuData;
-	assert ((menudata != 0) && (MenuInfo.cbSize == sizeof(MENUINFO)));
+	if ((menudata == 0) || (MenuInfo.cbSize != sizeof(MENUINFO)))
+	{
+	  ERR("menudata corrupt: %p %lu\n", menudata, MenuInfo.cbSize);
+	  return 0;
+	}
+
 	menudata->bFixedItems = TRUE;
 	SetMenuInfo(hMenu, &MenuInfo);
 

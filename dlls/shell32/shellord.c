@@ -1454,3 +1454,14 @@ BOOL WINAPI Win32DeleteFile(LPSTR fName)
 
   return TRUE;
 }
+/*
+LPSTR WINAPI StrCpyNA(LPSTR psz1, LPCSTR psz2, int cchMax)
+{
+	return lstrcpynA(psz1, psz2, cchMax);
+}
+
+LPWSTR WINAPI StrCpyNW(LPWSTR psz1, LPCWSTR psz2, int cchMax)
+{
+	return lstrcpynW(psz1, psz2, cchMax);
+}
+*/

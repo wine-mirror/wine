@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "heap.h"
 #include "shellapi.h"
 #include "shell32_main.h"
 #include "windows.h"
@@ -420,6 +421,23 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
   return flag;
 }
 
+/*************************************************************************
+ * Shell_NotifyIconA			[SHELL32.297]
+ */
+BOOL WINAPI Shell_NotifyIconW (DWORD dwMessage, PNOTIFYICONDATAW pnid )
+{
+	BOOL ret;
+
+	PNOTIFYICONDATAA p = HeapAlloc(GetProcessHeap(),0,sizeof(NOTIFYICONDATAA));
+	memcpy(p, pnid, sizeof(NOTIFYICONDATAA));
+	if (*(pnid->szTip))
+	  lstrcpynWtoA (p->szTip, pnid->szTip, 64 );
+
+	ret = Shell_NotifyIconA(dwMessage, p );
+
+	HeapFree(GetProcessHeap(),0,p);
+	return ret;
+}
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]
  */

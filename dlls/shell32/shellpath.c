@@ -651,9 +651,11 @@ VOID WINAPI PathUnquoteSpacesW(LPWSTR str)
 	return;
 }
 VOID WINAPI PathUnquoteSpacesAW(LPVOID str) 
-{	if(VERSION_OsIsUnicode())
+{
+	if(VERSION_OsIsUnicode())
 	  PathUnquoteSpacesW(str);
-	PathUnquoteSpacesA(str);
+	else
+	  PathUnquoteSpacesA(str);
 }
 
 
@@ -890,7 +892,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	  case CSIDL_PROGRAMS:
 	    hRootKey = HKEY_CURRENT_USER;
 	    strcpy(szValueName, "Programs");
-	    strcpy(szDefaultPath, "StatrMenu\\Programs");
+	    strcpy(szDefaultPath, "StartMenu\\Programs");
 	    break;
 
 	  case CSIDL_COMMON_PROGRAMS:
@@ -1012,31 +1014,22 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
  *
  */
 
-LPSTR WINAPI PathRemoveBackslashA(
-    LPSTR lpPath
-    )
+LPSTR WINAPI PathRemoveBackslashA( LPSTR lpPath )
 {
-	LPSTR temp = lpPath;
-	LPSTR prev = lpPath;
+	LPSTR p = lpPath;
 	
-	while (*temp)
-	{
-		prev = temp++;
-	}
-	if ( *prev == (CHAR)'\\')
-	{
-		*prev = (CHAR)'\0';
-	}
-
-	return prev;
+	while (*lpPath) p = lpPath++;
+	if ( *p == (CHAR)'\\') *p = (CHAR)'\0';
+	return p;
 }
 
-LPWSTR WINAPI PathRemoveBackslashW(
-    LPWSTR lpPath
-    )
+LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpPath )
 {
-    FIXME("(%p),stub!\n", lpPath);
-	return lpPath;
+	LPWSTR p = lpPath;
+	
+	while (*lpPath); p = lpPath++;
+	if ( *p == (WCHAR)'\\') *p = (WCHAR)'\0';
+	return p;
 }
 
 /*

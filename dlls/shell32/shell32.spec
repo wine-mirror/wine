@@ -77,7 +77,7 @@ init	Shell32LibMain
   69 stub SHGetNetResource
   70 stdcall SHCreateDefClassObject(long long long long long)SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
-  72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexA # ASCII!!!
+  72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
   73 stdcall SHShellFolderView_Message(long long long) SHShellFolderView_Message 
   74 stub SHCreateStdEnumFmtEtc
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueNameA
@@ -304,7 +304,7 @@ init	Shell32LibMain
  295 stub ShellHookProc   # exported by name
  296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
  297 stdcall Shell_NotifyIconA(long ptr) Shell_NotifyIconA
- 298 stub Shell_NotifyIconW   # exported by name
+ 298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
  299 stub Shl1632_ThunkData32
  300 stub Shl3216_ThunkData32
  301 stub StrChrA # proper ordinal unknown
