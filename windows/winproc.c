@@ -2867,9 +2867,12 @@ LRESULT WINAPI CallWindowProcA(
     WPARAM wParam, /* [in] message dependent parameter */
     LPARAM lParam  /* [in] message dependent parameter */
 ) {
-    WINDOWPROC *proc = WINPROC_GetPtr( func );
+    WINDOWPROC *proc;
 
-    if (!proc) return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+    if (!func) return 0;
+
+    if (!(proc = WINPROC_GetPtr( func )))
+        return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_32A );
@@ -2903,9 +2906,12 @@ LRESULT WINAPI CallWindowProcA(
 LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
                                   WPARAM wParam, LPARAM lParam )
 {
-    WINDOWPROC *proc = WINPROC_GetPtr( func );
+    WINDOWPROC *proc;
 
-    if (!proc) return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+    if (!func) return 0;
+
+    if (!(proc = WINPROC_GetPtr( (WNDPROC)func )))
+        return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_32W );
