@@ -10,7 +10,6 @@
 #include <assert.h>
 #include "wine/winbase16.h"
 #include "heap.h"
-#include "user.h"	/* should be removed asap; used in MMDRV_(Get|Alloc|Free) */
 #include "winver.h"
 #include "winemm.h"
 #include "debugtools.h"
@@ -68,6 +67,8 @@ typedef struct tagWINE_LLTYPE {
 } WINE_LLTYPE;
 
 static WINE_MM_DRIVER	MMDrvs[3];
+static LPWINE_MLD	MM_MLDrvs[40];
+#define MAX_MM_MLDRVS	(sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]))
 
 /* ### start build ### */
 extern WORD CALLBACK MMDRV_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
@@ -1977,11 +1978,21 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
 {
     LPWINE_MLD	mld;
 
-    if ((*hndl = USER_HEAP_ALLOC(size)) == 0) 
-	return NULL;
-    
-    mld = (LPWINE_MLD) USER_HEAP_LIN_ADDR(*hndl);
+    mld = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (!mld)	return NULL;
+
+    /* find an empty slot in MM_MLDrvs table */
+    for (*hndl = 0; *hndl < MAX_MM_MLDRVS; (*hndl)++) {
+	if (!MM_MLDrvs[*hndl]) break;
+    }
+    if (*hndl == MAX_MM_MLDRVS) {
+	/* the MM_MLDrvs table could be made growable in the future if needed */
+	ERR("Too many open drivers\n");
+	return NULL;
+    }
+    MM_MLDrvs[*hndl] = mld;
+    *hndl |= 0x8000;
+
     mld->type = type;
     if ((UINT)*hndl < MMDRV_GetNum(type) || HIWORD(*hndl) != 0) {
 	/* FIXME: those conditions must be fulfilled so that:
@@ -2008,7 +2019,15 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
  */
 void	MMDRV_Free(HANDLE hndl, LPWINE_MLD mld)
 {
-    USER_HEAP_FREE(hndl);
+    if (hndl & 0x8000) {
+	unsigned idx = hndl & ~0x8000;
+	if (idx < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
+	    MM_MLDrvs[idx] = NULL;
+	    HeapFree(GetProcessHeap(), 0, mld);
+	    return;
+	}
+    }
+    ERR("Bad Handle %08x at %p (not freed)\n", hndl, mld);
 }
 
 /**************************************************************************
@@ -2085,9 +2104,14 @@ LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID)
     assert(type < MMDRV_MAX);
 
     if ((UINT)hndl >= llTypes[type].wMaxId) {
-	mld = (LPWINE_MLD)USER_HEAP_LIN_ADDR(hndl);
-	
-	if (!IsBadWritePtr(mld, sizeof(*mld)) && mld->type != type) mld = NULL;
+	if (hndl & 0x8000) {
+	    hndl &= ~0x8000;
+	    if (hndl < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
+		mld = MM_MLDrvs[hndl];
+		if (!mld || !HeapValidate(GetProcessHeap(), 0, mld) || mld->type != type)
+		    mld = NULL;
+	    }
+	}
     }
     if (mld == NULL && bCanBeID) {
 	mld = MMDRV_GetByID((UINT)hndl, type);
