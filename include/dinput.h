@@ -457,9 +457,9 @@ typedef const DIPROPRANGE *LPCDIPROPRANGE;
 
 typedef struct DIPROPCAL {
 	DIPROPHEADER diph;
-	LONG    lMin;
-	LONG    lCenter;
-	LONG    lMax;
+	LONG	lMin;
+	LONG	lCenter;
+	LONG	lMax;
 } DIPROPCAL, *LPDIPROPCAL;
 typedef const DIPROPCAL *LPCDIPROPCAL;
 
@@ -635,13 +635,102 @@ typedef BOOL (CALLBACK * LPDIENUMEFFECTSCALLBACKA)(LPCDIEFFECTINFOA, LPVOID);
 typedef BOOL (CALLBACK * LPDIENUMEFFECTSCALLBACKW)(LPCDIEFFECTINFOW, LPVOID);
 
 typedef struct DIEFFESCAPE {
-	DWORD			dwSize;
-	DWORD			dwCommand;
-	LPVOID			lpvInBuffer;
-	DWORD			cbInBuffer;
-	LPVOID			lpvOutBuffer;
-	DWORD			cbOutBuffer;
+	DWORD	dwSize;
+	DWORD	dwCommand;
+	LPVOID	lpvInBuffer;
+	DWORD	cbInBuffer;
+	LPVOID	lpvOutBuffer;
+	DWORD	cbOutBuffer;
 } DIEFFESCAPE, *LPDIEFFESCAPE;
+
+typedef struct DIJOYSTATE {
+	LONG	lX;
+	LONG	lY;
+	LONG	lZ;
+	LONG	lRx;
+	LONG	lRy;
+	LONG	lRz;
+	LONG	rglSlider[2];
+	DWORD	rgdwPOV[4];
+	BYTE	rgbButtons[32];
+} DIJOYSTATE, *LPDIJOYSTATE;
+
+typedef struct DIJOYSTATE2 {
+	LONG	lX;
+	LONG	lY;
+	LONG	lZ;
+	LONG	lRx;
+	LONG	lRy;
+	LONG	lRz;
+	LONG	rglSlider[2];
+	DWORD	rgdwPOV[4];
+	BYTE	rgbButtons[128];
+	LONG	lVX;		/* 'v' as in velocity */
+	LONG	lVY;
+	LONG	lVZ;
+	LONG	lVRx;
+	LONG	lVRy;
+	LONG	lVRz;
+	LONG	rglVSlider[2];
+	LONG	lAX;		/* 'a' as in acceleration */
+	LONG	lAY;
+	LONG	lAZ;
+	LONG	lARx;
+	LONG	lARy;
+	LONG	lARz;
+	LONG	rglASlider[2];
+	LONG	lFX;		/* 'f' as in force */
+	LONG	lFY;
+	LONG	lFZ;
+	LONG	lFRx;		/* 'fr' as in rotational force aka torque */
+	LONG	lFRy;
+	LONG	lFRz;
+	LONG	rglFSlider[2];
+} DIJOYSTATE2, *LPDIJOYSTATE2;
+
+#define DIJOFS_X		FIELD_OFFSET(DIJOYSTATE, lX)
+#define DIJOFS_Y		FIELD_OFFSET(DIJOYSTATE, lY)
+#define DIJOFS_Z		FIELD_OFFSET(DIJOYSTATE, lZ)
+#define DIJOFS_RX		FIELD_OFFSET(DIJOYSTATE, lRx)
+#define DIJOFS_RY		FIELD_OFFSET(DIJOYSTATE, lRy)
+#define DIJOFS_RZ		FIELD_OFFSET(DIJOYSTATE, lRz)
+#define DIJOFS_SLIDER(n)	(FIELD_OFFSET(DIJOYSTATE, rglSlider) + \
+                                                        (n) * sizeof(LONG))
+#define DIJOFS_POV(n)		(FIELD_OFFSET(DIJOYSTATE, rgdwPOV) + \
+                                                        (n) * sizeof(DWORD))
+#define DIJOFS_BUTTON(n)	(FIELD_OFFSET(DIJOYSTATE, rgbButtons) + (n))
+#define DIJOFS_BUTTON0		DIJOFS_BUTTON(0)
+#define DIJOFS_BUTTON1		DIJOFS_BUTTON(1)
+#define DIJOFS_BUTTON2		DIJOFS_BUTTON(2)
+#define DIJOFS_BUTTON3		DIJOFS_BUTTON(3)
+#define DIJOFS_BUTTON4		DIJOFS_BUTTON(4)
+#define DIJOFS_BUTTON5		DIJOFS_BUTTON(5)
+#define DIJOFS_BUTTON6		DIJOFS_BUTTON(6)
+#define DIJOFS_BUTTON7		DIJOFS_BUTTON(7)
+#define DIJOFS_BUTTON8		DIJOFS_BUTTON(8)
+#define DIJOFS_BUTTON9		DIJOFS_BUTTON(9)
+#define DIJOFS_BUTTON10		DIJOFS_BUTTON(10)
+#define DIJOFS_BUTTON11		DIJOFS_BUTTON(11)
+#define DIJOFS_BUTTON12		DIJOFS_BUTTON(12)
+#define DIJOFS_BUTTON13		DIJOFS_BUTTON(13)
+#define DIJOFS_BUTTON14		DIJOFS_BUTTON(14)
+#define DIJOFS_BUTTON15		DIJOFS_BUTTON(15)
+#define DIJOFS_BUTTON16		DIJOFS_BUTTON(16)
+#define DIJOFS_BUTTON17		DIJOFS_BUTTON(17)
+#define DIJOFS_BUTTON18		DIJOFS_BUTTON(18)
+#define DIJOFS_BUTTON19		DIJOFS_BUTTON(19)
+#define DIJOFS_BUTTON20		DIJOFS_BUTTON(20)
+#define DIJOFS_BUTTON21		DIJOFS_BUTTON(21)
+#define DIJOFS_BUTTON22		DIJOFS_BUTTON(22)
+#define DIJOFS_BUTTON23		DIJOFS_BUTTON(23)
+#define DIJOFS_BUTTON24		DIJOFS_BUTTON(24)
+#define DIJOFS_BUTTON25		DIJOFS_BUTTON(25)
+#define DIJOFS_BUTTON26		DIJOFS_BUTTON(26)
+#define DIJOFS_BUTTON27		DIJOFS_BUTTON(27)
+#define DIJOFS_BUTTON28		DIJOFS_BUTTON(28)
+#define DIJOFS_BUTTON29		DIJOFS_BUTTON(29)
+#define DIJOFS_BUTTON30		DIJOFS_BUTTON(30)
+#define DIJOFS_BUTTON31		DIJOFS_BUTTON(31)
 
 /*****************************************************************************
  * IDirectInputEffect interface

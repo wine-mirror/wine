@@ -506,6 +506,7 @@ AC_CHECK_HEADERS(\
 	float.h \
 	libio.h \
 	linux/cdrom.h \
+	linux/joystick.h \
 	linux/ucdrom.h \
 	ncurses.h \
 	net/if.h \
@@ -540,6 +541,27 @@ AC_C_CONST()
 AC_C_INLINE()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
+
+if test "$ac_cv_header_linux_joystick_h" = "yes"
+then
+   AC_CACHE_CHECK("whether linux/joystick.h uses the Linux 2.2+ API",
+   	wine_cv_linux_joystick_22_api,
+	AC_TRY_COMPILE([
+	#include <sys/ioctl.h>
+	#include <linux/joystick.h>
+
+	struct js_event blub;
+	],/*empty*/,
+	wine_cv_linux_joystick_22_api=yes,
+	wine_cv_linux_joystick_22_api=no,
+	wine_cv_linux_joystick_22_api=no
+	)
+   )
+   if test "$wine_cv_linux_joystick_22_api"
+   then
+      AC_DEFINE(HAVE_LINUX_22_JOYSTICK_API)
+   fi
+fi
 
 dnl **** statfs checks ****
 

@@ -124,6 +124,9 @@
 /* Define if the system has dynamic link library support with the dl* API */
 #undef HAVE_DL_API
 
+/* Define if <linux/joystick.h> defines the Linux 2.2 joystick API */
+#undef HAVE_LINUX_22_JOYSTICK_API
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
@@ -225,6 +228,9 @@
 
 /* Define if you have the <linux/cdrom.h> header file.  */
 #undef HAVE_LINUX_CDROM_H
+
+/* Define if you have the <linux/joystick.h> header file.  */
+#undef HAVE_LINUX_JOYSTICK_H
 
 /* Define if you have the <linux/ucdrom.h> header file.  */
 #undef HAVE_LINUX_UCDROM_H

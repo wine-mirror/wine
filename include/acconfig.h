@@ -95,3 +95,6 @@
 
 /* Define if the system has dynamic link library support with the dl* API */
 #undef HAVE_DL_API
+
+/* Define if <linux/joystick.h> defines the Linux 2.2 joystick API */
+#undef HAVE_LINUX_22_JOYSTICK_API
