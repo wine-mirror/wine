@@ -849,11 +849,13 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
     {
         char	buffer[260];
 
-	/* 4 == strlen(".dll") */
-	strncpy(buffer, name, sizeof(buffer) - 1 - 4);
-	strcat(buffer, ".dll");
-	if ((hFile = OpenFile16( buffer, &ofs, OF_READ )) == HFILE_ERROR16) {
-	    return 2;  /* File not found */
+	if(implicit)
+	{
+	    /* 4 == strlen(".dll") */
+	    strncpy(buffer, name, sizeof(buffer) - 1 - 4);
+	    strcat(buffer, ".dll");
+	    if ((hFile = OpenFile16( buffer, &ofs, OF_READ )) == HFILE_ERROR16)
+		return 2;  /* File not found */
 	}
     }
 
