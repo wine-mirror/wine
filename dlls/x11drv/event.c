@@ -578,13 +578,13 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
  *           EVENT_SelectionRequest_AddTARGETS
  *  Utility function for EVENT_SelectionRequest_TARGETS.
  */
-static void EVENT_SelectionRequest_AddTARGETS(Atom* targets, unsigned long* cTargets, Atom prop)
+static BOOL EVENT_SelectionRequest_AddTARGETS(Atom* targets, unsigned long cTargets, Atom prop)
 {
     int i;
     BOOL bExists;
 
     /* Scan through what we have so far to avoid duplicates */
-    for (i = 0, bExists = FALSE; i < *cTargets; i++)
+    for (i = 0, bExists = FALSE; i < cTargets; i++)
     {
         if (targets[i] == prop)
         {
@@ -594,7 +594,9 @@ static void EVENT_SelectionRequest_AddTARGETS(Atom* targets, unsigned long* cTar
     }
 
     if (!bExists)
-        targets[(*cTargets)++] = prop;
+        targets[cTargets] = prop;
+
+    return !bExists;
 }
 
 
@@ -613,7 +615,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     /*
      * Count the number of items we wish to expose as selection targets.
-     * We include the TARGETS item, and propery aliases
+     * We include the TARGETS item, and property aliases
      */
     cTargets = X11DRV_CountClipboardFormats() + 1;
 
@@ -629,6 +631,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
             if (X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData))
                 cTargets++;
         }
+        /* else most likely unregistered format such as CF_PRIVATE or CF_GDIOBJ */
     }
 
     TRACE_(clipboard)(" found %ld formats\n", cTargets);
@@ -644,13 +647,22 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
     {
         lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
 
-        if (lpFormat->lpDrvExportFunc)
-        EVENT_SelectionRequest_AddTARGETS(targets, &cTargets, lpFormat->drvData);
+        if (lpFormat)
+        {
+            if (lpFormat->lpDrvExportFunc)
+            {
+                if (EVENT_SelectionRequest_AddTARGETS(targets, cTargets, lpFormat->drvData))
+                   cTargets++;
+            }
 
-	/* Check if any alias should be listed */
-	alias = X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData);
-	if (alias)
-            EVENT_SelectionRequest_AddTARGETS(targets, &cTargets, alias);
+            /* Check if any alias should be listed */
+            alias = X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData);
+            if (alias)
+            {
+                if (EVENT_SelectionRequest_AddTARGETS(targets, cTargets, alias))
+                   cTargets++;
+            }
+        }
     }
 
     wine_tsx11_lock();
