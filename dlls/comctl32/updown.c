@@ -951,9 +951,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
  *
  * Registers the updown window class.
  */
-
-VOID
-UPDOWN_Register(void)
+void UPDOWN_Register(void)
 {
     WNDCLASSW wndClass;
 
@@ -975,10 +973,7 @@ UPDOWN_Register(void)
  *
  * Unregisters the updown window class.
  */
-
-VOID
-UPDOWN_Unregister (void)
+void UPDOWN_Unregister (void)
 {
     UnregisterClassW (UPDOWN_CLASSW, (HINSTANCE)NULL);
 }
-
