@@ -393,6 +393,34 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
 
 
 /***********************************************************************
+ *           PROFILE_DeleteAllKeys
+ *
+ * Delete all keys from a profile tree.
+ */
+void PROFILE_DeleteAllKeys( LPCSTR section_name)
+{
+    PROFILESECTION **section= &CurProfile->section;
+    while (*section)
+    {
+        if ((*section)->name && !strcasecmp( (*section)->name, section_name ))
+        {
+            PROFILEKEY **key = &(*section)->key;
+            while (*key)
+            {
+                PROFILEKEY *to_del = *key;
+		*key = to_del->next;
+		if (to_del->name) HeapFree( GetProcessHeap(), 0, to_del->name );
+		if (to_del->value) HeapFree( GetProcessHeap(), 0, to_del->value);
+		HeapFree( GetProcessHeap(), 0, to_del );
+		CurProfile->changed =TRUE;
+            }
+        }
+        section = &(*section)->next;
+    }
+}
+
+
+/***********************************************************************
  *           PROFILE_Find
  *
  * Find a key in a profile tree, optionally creating it.
@@ -1386,9 +1414,13 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
     if (PROFILE_Open( filename )) {
         if (!section && !string && !filename)
             PROFILE_ReleaseFile();  /* always return FALSE in this case */
+        else if (!string) /* delete the named section*/
+	    ret = PROFILE_SetString(section,NULL,NULL);
         else {
-            while(*string){
-                LPSTR buf=HEAP_strdupA( GetProcessHeap(), 0, string );
+	    PROFILE_DeleteAllKeys(section);
+	    ret = TRUE;
+	    while(*string) {
+	        LPSTR buf=HEAP_strdupA( GetProcessHeap(), 0, string );
                 if((p=strchr( buf, '='))){
                     *p='\0';
                     ret = PROFILE_SetString( section, buf, p+1 );
