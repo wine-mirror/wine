@@ -55,13 +55,14 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 {
     WCHAR *buffer;
     BOOL ret;
+    DWORD sizeW = *lpSize * 2;
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, *lpSize * 2 * sizeof(WCHAR) )))
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeW * sizeof(WCHAR) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
-    ret = GetUserNameW( buffer, *lpSize * 2 );
+    ret = GetUserNameW( buffer, &sizeW );
     if (ret)
     {
         if (!(*lpSize = WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpszName, *lpSize, NULL, NULL )))
@@ -71,6 +72,7 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
             ret = FALSE;
         }
     }
+    else *lpSize = sizeW * 2;
     HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
 }
