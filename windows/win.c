@@ -1514,11 +1514,7 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
                     wndPtr->wIDmenu);
     	return (WORD)wndPtr->wIDmenu;
     case GWW_HWNDPARENT: 
-    	return wndPtr->parent ?
-		wndPtr->parent->hwndSelf : (
-			wndPtr->owner ?
-			 wndPtr->owner->hwndSelf : 
-			 0);
+    	return GetParent32( hwnd );
     case GWW_HINSTANCE:  
     	if (HIWORD(wndPtr->hInstance))
     		WARN(win,"GWW_HINSTANCE: discards high bits of 0x%08x!\n",
@@ -1614,8 +1610,7 @@ static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
         case GWL_ID:         return (LONG)wndPtr->wIDmenu;
         case GWL_WNDPROC:    return (LONG)WINPROC_GetProc( wndPtr->winproc,
                                                            type );
-        case GWL_HWNDPARENT: return wndPtr->parent ?
-                                        (HWND32)wndPtr->parent->hwndSelf : 0;
+        case GWL_HWNDPARENT: return GetParent32(hwnd);
         case GWL_HINSTANCE:  return wndPtr->hInstance;
         default:
             WARN( win, "Unknown offset %d\n", offset );
