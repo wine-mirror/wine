@@ -1,0 +1,8 @@
+#include "windef.h"
+#include "winuser.h"
+#include "winnls.h"
+#include "commctrl.h"
+#include "wineconsole_res.h"
+
+#include "wineconsole_En.rc"
+#include "wineconsole_Fr.rc"

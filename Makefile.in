@@ -28,7 +28,8 @@ PROGRAMS = \
 
 # Programs that link with libwine
 LIBPROGRAMS = \
-	debugger/winedbg
+	debugger/winedbg \
+	programs/wineconsole/wineconsole
 
 # Libraries (not dlls) to build
 LIBRARIES = \
@@ -59,6 +60,7 @@ INSTALLSUBDIRS = \
 	include \
 	library \
 	ole \
+	programs/wineconsole \
 	server \
 	tools \
 	tsx11 \

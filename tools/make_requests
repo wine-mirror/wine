@@ -9,6 +9,7 @@
 %formats =
 (
     "int"           => "%d",
+    "short int"     => "%d",
     "char"          => "%c",
     "unsigned char" => "%02x",
     "unsigned short"=> "%04x",

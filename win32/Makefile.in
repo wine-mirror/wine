@@ -1,4 +1,4 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__ -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -8,6 +8,7 @@ MODULE    = win32
 C_SRCS = \
 	console.c \
 	device.c \
+	editline.c \
 	except.c \
 	file.c \
 	init.c \

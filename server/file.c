@@ -494,7 +494,7 @@ DECL_HANDLER(alloc_file_handle)
     if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                     0, DRIVE_UNKNOWN )))
     {
-        req->handle = alloc_handle( current->process, file, req->access, 0 );
+        req->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
     }
 }

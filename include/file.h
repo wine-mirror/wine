@@ -71,7 +71,7 @@ inline static int FILE_contains_path (LPCSTR name)
 extern int FILE_strcasecmp( const char *str1, const char *str2 );
 extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
 extern void FILE_SetDosError(void);
-extern HANDLE FILE_DupUnixHandle( int fd, DWORD access );
+extern HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit );
 extern int FILE_GetUnixHandle( HANDLE handle, DWORD access );
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );

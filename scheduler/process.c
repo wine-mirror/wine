@@ -20,6 +20,7 @@
 #include "file.h"
 #include "thread.h"
 #include "winerror.h"
+#include "wincon.h"
 #include "wine/server.h"
 #include "options.h"
 #include "callback.h"
@@ -216,29 +217,6 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule )
         Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
 }
 
-
-/***********************************************************************
- *           set_console_handles
- *
- * Set the console handles to use stdin/stdout.
- */
-static void set_console_handles( HANDLE console )
-{
-    wine_server_send_fd( 0 );
-    wine_server_send_fd( 1 );
-
-    SERVER_START_REQ( set_console_fd )
-    {
-        req->handle = console;
-        req->fd_in  = 0;
-        req->fd_out = 1;
-        req->pid    = 0;
-        SERVER_CALL();
-    }
-    SERVER_END_REQ;
-}
-
-
 /***********************************************************************
  *           process_init
  *
@@ -287,14 +265,27 @@ static BOOL process_init( char *argv[] )
     SERVER_END_VAR_REQ;
     if (!ret) return FALSE;
 
-    SetStdHandle( STD_INPUT_HANDLE,  current_startupinfo.hStdInput );
-    SetStdHandle( STD_OUTPUT_HANDLE, current_startupinfo.hStdOutput );
-    SetStdHandle( STD_ERROR_HANDLE,  current_startupinfo.hStdError );
-    if (create_flags & CREATE_NEW_CONSOLE)
-        set_console_handles( current_startupinfo.hStdOutput );
-
     /* Create the process heap */
     current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
+
+    if (create_flags == 0 &&
+	current_startupinfo.hStdInput  == 0 &&
+	current_startupinfo.hStdOutput == 0 && 
+	current_startupinfo.hStdError  == 0)
+    {
+	/* no parent, and no new console requested, create a simple console with bare handles to
+	 * unix stdio input & output streams (aka simple console)
+	 */
+	SetStdHandle( STD_INPUT_HANDLE,  FILE_DupUnixHandle( 0, GENERIC_READ, TRUE ));
+	SetStdHandle( STD_OUTPUT_HANDLE, FILE_DupUnixHandle( 1, GENERIC_WRITE, TRUE ));
+	SetStdHandle( STD_ERROR_HANDLE,  FILE_DupUnixHandle( 1, GENERIC_WRITE, TRUE ));
+    }
+    else if (!(create_flags & (DETACHED_PROCESS|CREATE_NEW_CONSOLE)))
+    {
+	SetStdHandle( STD_INPUT_HANDLE,  current_startupinfo.hStdInput  );
+	SetStdHandle( STD_OUTPUT_HANDLE, current_startupinfo.hStdOutput );
+	SetStdHandle( STD_ERROR_HANDLE,  current_startupinfo.hStdError  );
+    }
 
     /* Now we can use the pthreads routines */
     PTHREAD_init_done();
@@ -305,7 +296,11 @@ static BOOL process_init( char *argv[] )
     /* Parse command line arguments */
     OPTIONS_ParseOptions( argv );
 
-    return MAIN_MainInit();
+    ret = MAIN_MainInit();
+
+    if (create_flags & CREATE_NEW_CONSOLE)
+	AllocConsole();
+    return ret;
 }
 
 

@@ -577,6 +577,7 @@ struct alloc_file_handle_request
 {
     struct request_header __header;
     unsigned int access;
+    int          inherit;
     int          fd;
     handle_t     handle;
 };
@@ -755,8 +756,9 @@ struct alloc_console_request
     struct request_header __header;
     unsigned int access;
     int          inherit;
+    void*        pid;
     handle_t     handle_in;
-    handle_t     handle_out;
+    handle_t     event;
 };
 
 
@@ -767,25 +769,69 @@ struct free_console_request
 };
 
 
+#define CONSOLE_RENDERER_NONE_EVENT        0x00
+#define CONSOLE_RENDERER_TITLE_EVENT       0x01
+#define CONSOLE_RENDERER_ACTIVE_SB_EVENT   0x02
+#define CONSOLE_RENDERER_SB_RESIZE_EVENT   0x03
+#define CONSOLE_RENDERER_UPDATE_EVENT      0x04
+#define CONSOLE_RENDERER_CURSOR_POS_EVENT  0x05
+#define CONSOLE_RENDERER_CURSOR_GEOM_EVENT 0x06
+#define CONSOLE_RENDERER_DISPLAY_EVENT     0x07
+#define CONSOLE_RENDERER_EXIT_EVENT        0x08
+struct console_renderer_event
+{
+    short event;
+    union
+    {
+        struct update
+        {
+            short top;
+            short bottom;
+        } update;
+        struct resize
+        {
+            short width;
+            short height;
+        } resize;
+        struct cursor_pos
+        {
+            short x;
+            short y;
+        } cursor_pos;
+        struct cursor_geom
+        {
+            short visible;
+            short size;
+        } cursor_geom;
+        struct display
+        {
+            short left;
+            short top;
+            short width;
+            short height;
+        } display;
+    } u;
+};
 
-struct open_console_request
+
+struct get_console_renderer_events_request
 {
     struct request_header __header;
-    int          output;
-    unsigned int access;
-    int          inherit;
     handle_t     handle;
+    /* VARARG(data,bytes); */
 };
 
 
 
-struct set_console_fd_request
+struct open_console_request
 {
     struct request_header __header;
+    int          from;
+
+    unsigned int access;
+    int          inherit;
+    int          share;
     handle_t     handle;
-    int          fd_in;
-    int          fd_out;
-    int          pid;
 };
 
 
@@ -808,29 +854,112 @@ struct set_console_mode_request
 
 
 
-struct set_console_info_request
+struct set_console_input_info_request
 {
     struct request_header __header;
     handle_t     handle;
     int          mask;
-    int          cursor_size;
-    int          cursor_visible;
-    /* VARARG(title,string); */
+    handle_t     active_sb;
+    int          history_mode;
+    int          history_size;
+    /* VARARG(title,unicode_str); */
 };
-#define SET_CONSOLE_INFO_CURSOR 0x01
-#define SET_CONSOLE_INFO_TITLE  0x02
+#define SET_CONSOLE_INPUT_INFO_ACTIVE_SB        0x01
+#define SET_CONSOLE_INPUT_INFO_TITLE            0x02
+#define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
+#define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
 
 
-struct get_console_info_request
+
+struct get_console_input_info_request
 {
     struct request_header __header;
     handle_t     handle;
-    int          cursor_size;
-    int          cursor_visible;
-    int          pid;
-    /* VARARG(title,string); */
+    int          history_mode;
+    int          history_size;
+    int          history_index;
+    /* VARARG(title,unicode_str); */
 };
 
+
+
+struct append_console_input_history_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    /* VARARG(line,unicode_str); */
+};
+
+
+
+struct get_console_input_history_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    int          index;
+    /* VARARG(line,unicode_str); */
+};
+
+
+
+struct create_console_output_request
+{
+    struct request_header __header;
+    handle_t     handle_in;
+    int          access;
+    int          share;
+    int          inherit;
+    handle_t     handle_out;
+};
+
+
+
+struct set_console_output_info_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    int          mask;
+    short int    cursor_size;
+    short int    cursor_visible;
+    short int    cursor_x;
+    short int    cursor_y;
+    short int    width;
+    short int    height;
+    short int    attr;
+    short int    win_left;
+    short int    win_top;
+    short int    win_right;
+    short int    win_bottom;
+    short int    max_width;
+    short int    max_height;
+};
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x01
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x02
+#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x04
+#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x08
+#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x10
+#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x20
+
+
+
+struct get_console_output_info_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    short int    cursor_size;
+    short int    cursor_visible;
+    short int    cursor_x;
+    short int    cursor_y;
+    short int    width;
+    short int    height;
+    short int    attr;
+    short int    win_left;
+    short int    win_top;
+    short int    win_right;
+    short int    win_bottom;
+    short int    max_width;
+    short int    max_height;
+};
 
 
 struct write_console_input_request
@@ -842,6 +971,7 @@ struct write_console_input_request
 };
 
 
+
 struct read_console_input_request
 {
     struct request_header __header;
@@ -849,6 +979,53 @@ struct read_console_input_request
     int          flush;
     int          read;
     /* VARARG(rec,input_records); */
+};
+
+
+
+struct write_console_output_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    int          mode;
+
+    short int    x;
+    short int    y;
+    /* VARARG(data,bytes); */
+    int          written;
+};
+#define WRITE_CONSOLE_MODE_TEXT         0x00
+#define WRITE_CONSOLE_MODE_ATTR         0x01
+#define WRITE_CONSOLE_MODE_TEXTATTR     0x02
+#define WRITE_CONSOLE_MODE_TEXTSTDATTR  0x03
+#define WRITE_CONSOLE_MODE_UNIFORM      0x04
+
+
+
+struct read_console_output_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    short int    x;
+    short int    y;
+    short int    w;
+    short int    h;
+    short int    eff_w;
+    short int    eff_h;
+    /* VARARG(data,bytes); */
+};
+
+
+struct move_console_output_request
+{
+    struct request_header __header;
+    handle_t     handle;
+    short int    x_src;
+    short int    y_src;
+    short int    x_dst;
+    short int    y_dst;
+    short int    w;
+    short int    h;
 };
 
 
@@ -1843,14 +2020,22 @@ enum request
     REQ_enable_socket_event,
     REQ_alloc_console,
     REQ_free_console,
+    REQ_get_console_renderer_events,
     REQ_open_console,
-    REQ_set_console_fd,
     REQ_get_console_mode,
     REQ_set_console_mode,
-    REQ_set_console_info,
-    REQ_get_console_info,
+    REQ_set_console_input_info,
+    REQ_get_console_input_info,
+    REQ_append_console_input_history,
+    REQ_get_console_input_history,
+    REQ_create_console_output,
+    REQ_set_console_output_info,
+    REQ_get_console_output_info,
     REQ_write_console_input,
     REQ_read_console_input,
+    REQ_write_console_output,
+    REQ_read_console_output,
+    REQ_move_console_output,
     REQ_create_change_notification,
     REQ_create_mapping,
     REQ_open_mapping,
@@ -1990,14 +2175,22 @@ union generic_request
     struct enable_socket_event_request enable_socket_event;
     struct alloc_console_request alloc_console;
     struct free_console_request free_console;
+    struct get_console_renderer_events_request get_console_renderer_events;
     struct open_console_request open_console;
-    struct set_console_fd_request set_console_fd;
     struct get_console_mode_request get_console_mode;
     struct set_console_mode_request set_console_mode;
-    struct set_console_info_request set_console_info;
-    struct get_console_info_request get_console_info;
+    struct set_console_input_info_request set_console_input_info;
+    struct get_console_input_info_request get_console_input_info;
+    struct append_console_input_history_request append_console_input_history;
+    struct get_console_input_history_request get_console_input_history;
+    struct create_console_output_request create_console_output;
+    struct set_console_output_info_request set_console_output_info;
+    struct get_console_output_info_request get_console_output_info;
     struct write_console_input_request write_console_input;
     struct read_console_input_request read_console_input;
+    struct write_console_output_request write_console_output;
+    struct read_console_output_request read_console_output;
+    struct move_console_output_request move_console_output;
     struct create_change_notification_request create_change_notification;
     struct create_mapping_request create_mapping;
     struct open_mapping_request open_mapping;
@@ -2080,6 +2273,6 @@ union generic_request
     struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 64
+#define SERVER_PROTOCOL_VERSION 65
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

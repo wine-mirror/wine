@@ -1,0 +1,19 @@
+EXTRADEFS = -DSTRICT -DUNICODE
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wineconsole
+
+C_SRCS = \
+	dialog.c \
+	user.c \
+        wineconsole.c
+
+RC_SRCS = \
+        wineconsole_res.rc
+
+@MAKE_PROG_RULES@
+
+
+### Dependencies:

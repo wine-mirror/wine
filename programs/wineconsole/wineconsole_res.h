@@ -1,0 +1,44 @@
+/* wineconsole resource definitions */
+
+/* strings */
+#define IDS_EDIT		0x100
+#define IDS_DEFAULT		0x101
+#define IDS_PROPERTY		0x102
+
+#define IDS_MARK		0x110
+#define IDS_COPY		0x111
+#define IDS_PASTE		0x112
+#define IDS_SELECTALL		0x113
+#define IDS_SCROLL		0x114
+#define IDS_SEARCH		0x115
+
+#define IDS_FNT_DISPLAY		0x200
+#define IDS_FNT_PREVIEW_1	0x201
+#define IDS_FNT_PREVIEW_2	0x202
+
+#define IDD_OPTION		0x0100
+#define IDD_FONT		0x0200
+#define IDD_CONFIG		0x0300
+
+/* dialog boxes */
+#define IDC_OPT_CURSOR_SMALL	0x0101
+#define IDC_OPT_CURSOR_MEDIUM	0x0102
+#define IDC_OPT_CURSOR_LARGE	0x0103
+#define IDC_OPT_HIST_SIZE	0x0104
+#define IDC_OPT_HIST_SIZE_UD	0x0105
+#define IDC_OPT_HIST_DOUBLE	0x0106
+
+#define IDC_FNT_LIST_FONT	0x0201
+#define IDC_FNT_LIST_SIZE	0x0202
+#define IDC_FNT_FONT_INFO	0x0203
+#define IDC_FNT_PREVIEW		0x0204
+
+#define IDC_CNF_SB_WIDTH	0x0301
+#define IDC_CNF_SB_WIDTH_UD	0x0302
+#define IDC_CNF_SB_HEIGHT	0x0303
+#define IDC_CNF_SB_HEIGHT_UD	0x0304
+#define IDC_CNF_WIN_WIDTH	0x0305
+#define IDC_CNF_WIN_WIDTH_UD	0x0306
+#define IDC_CNF_WIN_HEIGHT	0x0307
+#define IDC_CNF_WIN_HEIGHT_UD	0x0308
+

@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "Aug 5, 2001" "Version 20010731" "Windows On Unix"
+.TH WINE 1 "Oct 13, 2001" "Version 20011004" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -19,6 +19,16 @@ For debugging wine, use
 .B winedbg
 .I program
 instead.
+.PP
+For running CUI executables (Windows console programs), use
+.B wineconsole
+instead of
+.B wine
+. This will display all the output in a separate windows (this requires X11 to
+run). Not using
+.B wineconsole
+for CUI programs will only provide very limited console support, and your
+program might not function properly.
 .PP
 .B wine 
 currently runs a growing list of applications written for all kinds of
@@ -349,6 +359,11 @@ development, you might want to subscribe to the
 The 
 .B wine 
 program loader.
+.TP
+.I @prefix@/bin/wineconsole
+The 
+.B wine 
+program loader for CUI (console) applications.
 .TP
 .I @prefix@/bin/dosmod
 The DOS program loader.

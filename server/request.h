@@ -118,14 +118,22 @@ DECL_HANDLER(get_socket_event);
 DECL_HANDLER(enable_socket_event);
 DECL_HANDLER(alloc_console);
 DECL_HANDLER(free_console);
+DECL_HANDLER(get_console_renderer_events);
 DECL_HANDLER(open_console);
-DECL_HANDLER(set_console_fd);
 DECL_HANDLER(get_console_mode);
 DECL_HANDLER(set_console_mode);
-DECL_HANDLER(set_console_info);
-DECL_HANDLER(get_console_info);
+DECL_HANDLER(set_console_input_info);
+DECL_HANDLER(get_console_input_info);
+DECL_HANDLER(append_console_input_history);
+DECL_HANDLER(get_console_input_history);
+DECL_HANDLER(create_console_output);
+DECL_HANDLER(set_console_output_info);
+DECL_HANDLER(get_console_output_info);
 DECL_HANDLER(write_console_input);
 DECL_HANDLER(read_console_input);
+DECL_HANDLER(write_console_output);
+DECL_HANDLER(read_console_output);
+DECL_HANDLER(move_console_output);
 DECL_HANDLER(create_change_notification);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(open_mapping);
@@ -264,14 +272,22 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_enable_socket_event,
     (req_handler)req_alloc_console,
     (req_handler)req_free_console,
+    (req_handler)req_get_console_renderer_events,
     (req_handler)req_open_console,
-    (req_handler)req_set_console_fd,
     (req_handler)req_get_console_mode,
     (req_handler)req_set_console_mode,
-    (req_handler)req_set_console_info,
-    (req_handler)req_get_console_info,
+    (req_handler)req_set_console_input_info,
+    (req_handler)req_get_console_input_info,
+    (req_handler)req_append_console_input_history,
+    (req_handler)req_get_console_input_history,
+    (req_handler)req_create_console_output,
+    (req_handler)req_set_console_output_info,
+    (req_handler)req_get_console_output_info,
     (req_handler)req_write_console_input,
     (req_handler)req_read_console_input,
+    (req_handler)req_write_console_output,
+    (req_handler)req_read_console_output,
+    (req_handler)req_move_console_output,
     (req_handler)req_create_change_notification,
     (req_handler)req_create_mapping,
     (req_handler)req_open_mapping,

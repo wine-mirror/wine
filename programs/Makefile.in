@@ -17,6 +17,7 @@ SUBDIRS = \
 	uninstaller \
 	view \
 	wcmd \
+	wineconsole \
 	winemine \
 	winetest \
 	winhelp \

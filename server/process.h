@@ -30,6 +30,7 @@ struct process
     struct object        obj;             /* object header */
     struct process      *next;            /* system-wide process list */
     struct process      *prev;
+    struct process      *parent;          /* parent process */
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */
     struct object       *handles;         /* handle entries */
@@ -41,8 +42,7 @@ struct process
     int                  affinity;        /* process affinity mask */
     int                  suspend;         /* global process suspend count */
     int                  create_flags;    /* process creation flags */
-    struct object       *console_in;      /* console input */
-    struct object       *console_out;     /* console output */
+    struct console_input*console;         /* console input */
     struct event        *init_event;      /* event for init done */
     struct event        *idle_event;      /* event for input idle */
     struct msg_queue    *queue;           /* main message queue */
@@ -55,7 +55,6 @@ struct process
 struct process_snapshot
 {
     struct process *process;  /* process ptr */
-    struct process *parent;   /* process parent */
     int             count;    /* process refcount */
     int             threads;  /* number of threads */
     int             priority; /* priority class */

@@ -355,6 +355,7 @@ struct object *get_handle_obj( struct process *process, handle_t handle,
         if (!(entry = get_handle( process, handle ))) return NULL;
         if ((entry->access & access) != access)
         {
+            fprintf( stderr, "handle %d access %08x denied (%08x)\n", handle, access, entry->access );
             set_error( STATUS_ACCESS_DENIED );
             return NULL;
         }
@@ -376,6 +377,7 @@ int get_handle_fd( struct process *process, handle_t handle, unsigned int access
     if (!(entry = get_handle( process, handle ))) return -1;
     if ((entry->access & access) != access)
     {
+        fprintf( stderr, "handle %d access %08x denied (%08x)\n", handle, access, entry->access );
         set_error( STATUS_ACCESS_DENIED );
         return -1;
     }

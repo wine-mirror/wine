@@ -533,6 +533,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Allocate a file handle for a Unix fd */
 @REQ(alloc_file_handle)
     unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
     int          fd;            /* file descriptor on the client side */
 @REPLY
     handle_t     handle;        /* handle to the file */
@@ -685,13 +686,14 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
-/* Allocate a console for the current process */
+/* Allocate a console (only used by a console renderer) */
 @REQ(alloc_console)
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
+    void*        pid;           /* pid of process which shall be attached to the console */
 @REPLY
     handle_t     handle_in;     /* handle to console input */
-    handle_t     handle_out;    /* handle to console output */
+    handle_t     event;         /* handle to renderer events change notification */
 @END
 
 
@@ -700,22 +702,67 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
-/* Open a handle to the process console */
-@REQ(open_console)
-    int          output;        /* input or output? */
-    unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+#define CONSOLE_RENDERER_NONE_EVENT        0x00
+#define CONSOLE_RENDERER_TITLE_EVENT       0x01
+#define CONSOLE_RENDERER_ACTIVE_SB_EVENT   0x02
+#define CONSOLE_RENDERER_SB_RESIZE_EVENT   0x03
+#define CONSOLE_RENDERER_UPDATE_EVENT      0x04
+#define CONSOLE_RENDERER_CURSOR_POS_EVENT  0x05
+#define CONSOLE_RENDERER_CURSOR_GEOM_EVENT 0x06
+#define CONSOLE_RENDERER_DISPLAY_EVENT     0x07
+#define CONSOLE_RENDERER_EXIT_EVENT        0x08
+struct console_renderer_event
+{
+    short event;
+    union
+    {
+        struct update
+        {
+            short top;
+            short bottom;
+        } update;
+        struct resize
+        {
+            short width;
+            short height;
+        } resize;
+        struct cursor_pos
+        {
+            short x;
+            short y;
+        } cursor_pos;
+        struct cursor_geom
+        {
+            short visible;
+            short size;
+        } cursor_geom;
+        struct display
+        {
+            short left;
+            short top;
+            short width;
+            short height;
+        } display;
+    } u;
+};
+
+/* retrieve console events for the renderer */
+@REQ(get_console_renderer_events)
+    handle_t     handle;        /* handle to console input events */
 @REPLY
-    handle_t     handle;        /* handle to the console */
+    VARARG(data,bytes);         /* the various console_renderer_events */
 @END
 
 
-/* Set a console file descriptor */
-@REQ(set_console_fd)
+/* Open a handle to the process console */
+@REQ(open_console)
+    int          from;          /* 0 (resp 1) input (resp output) of current process console */
+                                /* otherwise console_in handle to get active screen buffer? */
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+    int          share;         /* share mask (only for output handles) */
+@REPLY
     handle_t     handle;        /* handle to the console */
-    int          fd_in;         /* file descriptor to use as input */
-    int          fd_out;        /* file descriptor to use as output */
-    int          pid;           /* pid of xterm (hack) */
 @END
 
 
@@ -734,27 +781,103 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
+/* Set info about a console (input only) */
+@REQ(set_console_input_info)
+    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    int          mask;          /* setting mask (see below) */
+    handle_t     active_sb;     /* active screen buffer */
+    int          history_mode;  /* whether we duplicate lines in history */
+    int          history_size;  /* number of lines in history */
+    VARARG(title,unicode_str);  /* console title */
+@END
+#define SET_CONSOLE_INPUT_INFO_ACTIVE_SB        0x01
+#define SET_CONSOLE_INPUT_INFO_TITLE            0x02
+#define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
+#define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
+
+
+/* Get info about a console (input only) */
+@REQ(get_console_input_info)
+    handle_t     handle;        /* handle to console input, or 0 for process' console */
+@REPLY
+    int          history_mode;  /* whether we duplicate lines in history */
+    int          history_size;  /* number of lines in history */
+    int          history_index; /* number of used lines in history */
+    VARARG(title,unicode_str);  /* console title */
+@END
+
+
+/* appends a string to console's history */
+@REQ(append_console_input_history)
+    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    VARARG(line,unicode_str);   /* line to add */
+@END
+
+
+/* appends a string to console's history */
+@REQ(get_console_input_history)
+    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    int          index;         /* index to get line from */
+@REPLY
+    VARARG(line,unicode_str);   /* line to add */
+@END
+
+
+/* creates a new screen buffer on process' console */
+@REQ(create_console_output)
+    handle_t     handle_in;     /* handle to console input, or 0 for process' console */
+    int          access;        /* wanted access rights */
+    int          share;         /* sharing credentials */
+    int          inherit;       /* inherit flag */
+@REPLY
+    handle_t     handle_out;    /* handle to the screen buffer */
+@END
+
+
 /* Set info about a console (output only) */
-@REQ(set_console_info)
+@REQ(set_console_output_info)
     handle_t     handle;        /* handle to the console */
     int          mask;          /* setting mask (see below) */
-    int          cursor_size;   /* size of cursor (percentage filled) */
-    int          cursor_visible;/* cursor visibility flag */
-    VARARG(title,string);       /* console title */
+    short int    cursor_size;   /* size of cursor (percentage filled) */
+    short int    cursor_visible;/* cursor visibility flag */
+    short int    cursor_x;      /* position of cursor (x, y) */
+    short int    cursor_y;
+    short int    width;         /* width of the screen buffer */
+    short int    height;        /* height of the screen buffer */
+    short int    attr;          /* default attribute */
+    short int    win_left;      /* window actually displayed by renderer */
+    short int    win_top;       /* the rect area is expressed withing the */
+    short int    win_right;     /* boundaries of the screen buffer */
+    short int    win_bottom;
+    short int    max_width;     /* maximum size (width x height) for the window */
+    short int    max_height;
 @END
-#define SET_CONSOLE_INFO_CURSOR 0x01
-#define SET_CONSOLE_INFO_TITLE  0x02
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x01
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x02
+#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x04
+#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x08
+#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x10
+#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x20
+
 
 /* Get info about a console (output only) */
-@REQ(get_console_info)
+@REQ(get_console_output_info)
     handle_t     handle;        /* handle to the console */
 @REPLY
-    int          cursor_size;   /* size of cursor (percentage filled) */
-    int          cursor_visible;/* cursor visibility flag */
-    int          pid;           /* pid of xterm (hack) */
-    VARARG(title,string);       /* console title */
+    short int    cursor_size;   /* size of cursor (percentage filled) */
+    short int    cursor_visible;/* cursor visibility flag */
+    short int    cursor_x;      /* position of cursor (x, y) */
+    short int    cursor_y;
+    short int    width;         /* width of the screen buffer */
+    short int    height;        /* height of the screen buffer */
+    short int    attr;          /* default attribute */
+    short int    win_left;      /* window actually displayed by renderer */
+    short int    win_top;       /* the rect area is expressed withing the */
+    short int    win_right;     /* boundaries of the screen buffer */
+    short int    win_bottom;
+    short int    max_width;     /* maximum size (width x height) for the window */
+    short int    max_height;
 @END
-
 
 /* Add input records to a console input queue */
 @REQ(write_console_input)
@@ -764,6 +887,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          written;       /* number of records written */
 @END
 
+
 /* Fetch input records from a console input queue */
 @REQ(read_console_input)
     handle_t     handle;        /* handle to the console input */
@@ -771,6 +895,49 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REPLY
     int          read;          /* number of records read */
     VARARG(rec,input_records);  /* input records */
+@END
+
+
+/* write data (chars and/or attributes) in a screen buffer */
+@REQ(write_console_output)
+    handle_t     handle;        /* handle to the console input */
+    int          mode;          /* 0 for text, 1, for attributes, 2 for both */
+                                /* bit3 (4) set if uniform pattern in data */
+    short int    x;             /* position where to start writing */
+    short int    y;
+    VARARG(data,bytes);         /* info to write */
+@REPLY
+    int          written;       /* number of bytes actually written */
+@END
+#define WRITE_CONSOLE_MODE_TEXT         0x00
+#define WRITE_CONSOLE_MODE_ATTR         0x01
+#define WRITE_CONSOLE_MODE_TEXTATTR     0x02
+#define WRITE_CONSOLE_MODE_TEXTSTDATTR  0x03
+#define WRITE_CONSOLE_MODE_UNIFORM      0x04
+
+
+/* read data (chars and/or attrubutes) from a screen buffer */
+@REQ(read_console_output)
+    handle_t     handle;        /* handle to the console input */
+    short int    x;             /* position (x,y) where to start reading from */
+    short int    y;
+    short int    w;             /* size of area to read from (width x height) */
+    short int    h;
+@REPLY
+    short int    eff_w;         /* effective width read */
+    short int    eff_h;         /* effective height read */
+    VARARG(data,bytes);
+@END
+
+/* move a rect (of data) in screen buffer content */
+@REQ(move_console_output)
+    handle_t     handle;        /* handle to the console output */
+    short int    x_src;         /* position (x, y) of rect to start moving from */
+    short int    y_src;
+    short int    x_dst;         /* position (x, y) of rect to move to */
+    short int    y_dst;
+    short int    w;             /* size of the rect (width, height) to move */
+    short int    h;
 @END
 
 

@@ -26,6 +26,7 @@
 #include "process.h"
 #include "thread.h"
 #include "request.h"
+#include "console.h"
 
 /* process structure */
 
@@ -101,12 +102,18 @@ static int set_process_console( struct process *process, struct process *parent,
 {
     if (process->create_flags & CREATE_NEW_CONSOLE)
     {
-        if (!alloc_console( process )) return 0;
+        /* let the process init do the allocation */
+        return 1;
     }
     else if (parent && !(process->create_flags & DETACHED_PROCESS))
     {
-        if (parent->console_in) process->console_in = grab_object( parent->console_in );
-        if (parent->console_out) process->console_out = grab_object( parent->console_out );
+        /* FIXME: some better error checking should be done...
+         * like if hConOut and hConIn are console handles, then they should be on the same
+         * physical console
+         */
+        inherit_console( parent, process,
+                         (info->inherit_all || (info->start_flags & STARTF_USESTDHANDLES)) ?
+                         info->hstdin : 0 );
     }
     if (parent)
     {
@@ -129,13 +136,20 @@ static int set_process_console( struct process *process, struct process *parent,
     }
     else
     {
-        /* no parent, use handles to the console for stdio */
-        req->hstdin  = alloc_handle( process, process->console_in,
-                                     GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-        req->hstdout = alloc_handle( process, process->console_out,
-                                     GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-        req->hstderr = alloc_handle( process, process->console_out,
-                                     GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+        if (process->console)
+        {
+            req->hstdin  = alloc_handle( process, process->console,
+                                         GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+            req->hstdout = alloc_handle( process, process->console->active,
+                                         GENERIC_READ | GENERIC_WRITE, 1 );
+            req->hstderr = alloc_handle( process, process->console->active,
+                                         GENERIC_READ | GENERIC_WRITE, 1 );
+        }
+        else
+        {
+            /* no parent, let the caller decide what to do */
+            req->hstdin = req->hstdout = req->hstderr = 0;
+        }
     }
     /* some handles above may have been invalid; this is not an error */
     if (get_error() == STATUS_INVALID_HANDLE) clear_error();
@@ -152,6 +166,7 @@ struct thread *create_process( int fd )
     if (!(process = alloc_object( &process_ops, fd ))) return NULL;
     process->next            = NULL;
     process->prev            = NULL;
+    process->parent          = NULL;
     process->thread_list     = NULL;
     process->debugger        = NULL;
     process->handles         = NULL;
@@ -161,8 +176,7 @@ struct thread *create_process( int fd )
     process->affinity        = 1;
     process->suspend         = 0;
     process->create_flags    = 0;
-    process->console_in      = NULL;
-    process->console_out     = NULL;
+    process->console         = NULL;
     process->init_event      = NULL;
     process->idle_event      = NULL;
     process->queue           = NULL;
@@ -173,6 +187,7 @@ struct thread *create_process( int fd )
     process->exe.file        = NULL;
     process->exe.dbg_offset  = 0;
     process->exe.dbg_size    = 0;
+
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
     first_process = process;
@@ -222,10 +237,11 @@ static void init_process( int ppid, struct init_process_request *req )
             fatal_protocol_error( current, "init_process: called twice?\n" );
             return;
         }
+        process->parent = (struct process *)grab_object( parent );
     }
 
     /* set the process flags */
-    process->create_flags = info ? info->create_flags : CREATE_NEW_CONSOLE;
+    process->create_flags = info ? info->create_flags : 0;
 
     /* create the handle table */
     if (parent && info->inherit_all)
@@ -288,6 +304,8 @@ static void process_destroy( struct object *obj )
 
     /* we can't have a thread remaining */
     assert( !process->thread_list );
+    if (process->console) release_object( process->console );
+    if (process->parent) release_object( process->parent );
     if (process->next) process->next->prev = process->prev;
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
@@ -304,9 +322,8 @@ static void process_dump( struct object *obj, int verbose )
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );
 
-    fprintf( stderr, "Process next=%p prev=%p console=%p/%p handles=%p\n",
-             process->next, process->prev, process->console_in, process->console_out,
-             process->handles );
+    fprintf( stderr, "Process next=%p prev=%p handles=%p\n",
+             process->next, process->prev, process->handles );
 }
 
 static int process_signaled( struct object *obj, struct thread *thread )
@@ -418,6 +435,25 @@ static void process_unload_dll( struct process *process, void *base )
     set_error( STATUS_INVALID_PARAMETER );
 }
 
+/* kill all processes being attached to a console renderer */
+static void kill_console_processes( struct process *renderer, int exit_code )
+{
+    for (;;)  /* restart from the beginning of the list every time */
+    {
+        struct process *process = first_process;
+
+        /* find the first process being attached to 'renderer' and still running */
+        while (process &&
+               (process == renderer || !process->console ||
+                process->console->renderer != renderer || !process->running_threads))
+        {
+            process = process->next;
+        }
+        if (!process) break;
+        kill_process( process, NULL, exit_code );
+    }
+}
+
 /* a process has been killed (i.e. its last thread died) */
 static void process_killed( struct process *process )
 {
@@ -425,7 +461,13 @@ static void process_killed( struct process *process )
     gettimeofday( &process->end_time, NULL );
     if (process->handles) release_object( process->handles );
     process->handles = NULL;
+
+    /* close the console attached to this process, if any */
     free_console( process );
+
+    /* close the processes using process as renderer, if any */
+    kill_console_processes( process, 0 );
+
     while (process->exe.next)
     {
         struct process_dll *dll = process->exe.next;
@@ -508,6 +550,7 @@ void resume_process( struct process *process )
 void kill_process( struct process *process, struct thread *skip, int exit_code )
 {
     struct thread *thread = process->thread_list;
+
     while (thread)
     {
         struct thread *next = thread->proc_next;
@@ -531,6 +574,7 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
         kill_process( process, NULL, exit_code );
     }
 }
+
 
 /* get all information about a process */
 static void get_process_info( struct process *process, struct get_process_info_request *req )

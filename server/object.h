@@ -155,11 +155,6 @@ extern void file_set_error(void);
 
 int get_serial_async_timeout(struct object *obj, int type, int count);
 
-/* console functions */
-
-extern int alloc_console( struct process *process );
-extern int free_console( struct process *process );
-
 /* debugger functions */
 
 extern int set_process_debugger( struct process *process, struct thread *debugger );

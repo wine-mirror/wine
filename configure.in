@@ -1336,6 +1336,7 @@ programs/regtest/Makefile
 programs/uninstaller/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
+programs/wineconsole/Makefile
 programs/winemine/Makefile
 programs/winetest/Makefile
 programs/winhelp/Makefile

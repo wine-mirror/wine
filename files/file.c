@@ -182,7 +182,7 @@ void FILE_SetDosError(void)
  * Duplicate a Unix handle into a task handle.
  * Returns 0 on failure.
  */
-HANDLE FILE_DupUnixHandle( int fd, DWORD access )
+HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit )
 {
     HANDLE ret;
 
@@ -191,6 +191,7 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access )
     SERVER_START_REQ( alloc_file_handle )
     {
         req->access  = access;
+        req->inherit = inherit;
         req->fd      = fd;
         SERVER_CALL();
         ret = req->handle;
@@ -255,14 +256,15 @@ int FILE_GetUnixHandle( HANDLE handle, DWORD access )
  * Open a handle to the current process console.
  * Returns 0 on failure.
  */
-static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
+static HANDLE FILE_OpenConsole( BOOL output, DWORD access, DWORD sharing, LPSECURITY_ATTRIBUTES sa )
 {
     HANDLE ret;
 
     SERVER_START_REQ( open_console )
     {
-        req->output  = output;
+        req->from    = output;
         req->access  = access;
+	req->share   = sharing;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         SetLastError(0);
         SERVER_CALL_ERR();
@@ -477,12 +479,12 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     /* Open a console for CONIN$ or CONOUT$ */
     if (!strcasecmp(filename, "CONIN$"))
     {
-        ret = FILE_OpenConsole( FALSE, access, sa );
+        ret = FILE_OpenConsole( FALSE, access, sharing, sa );
         goto done;
     }
     if (!strcasecmp(filename, "CONOUT$"))
     {
-        ret = FILE_OpenConsole( TRUE, access, sa );
+        ret = FILE_OpenConsole( TRUE, access, sharing, sa );
         goto done;
     }
 
@@ -1452,15 +1454,14 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (!bytesToRead) return TRUE;
 
     unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type );
-    if (unix_handle == -1)
-        return FALSE;
 
-    switch(type)
+    switch (type)
     {
     case FD_TYPE_OVERLAPPED:
-        if(!overlapped)
+	if (unix_handle == -1) return FALSE;
+        if (!overlapped)
         {
-            close(unix_handle);
+	    close(unix_handle);
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
@@ -1493,23 +1494,28 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         SetLastError(ERROR_IO_PENDING);
         return FALSE;
 
+    case FD_TYPE_CONSOLE:
+	return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
     default:
-        if(overlapped)
-        {
-            close(unix_handle);
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-        break;
+	/* normal unix files */
+	if (unix_handle == -1)
+	    return FALSE;    
+	if (overlapped)
+	{
+	    close(unix_handle);
+	    SetLastError(ERROR_INVALID_PARAMETER);
+	    return FALSE;
+	}
+	break;
     }
 
     /* code for synchronous reads */
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
-        if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        if ((errno == EFAULT) && !IsBadWritePtr( buffer, bytesToRead )) continue;
-        FILE_SetDosError();
-        break;
+	if ((errno == EAGAIN) || (errno == EINTR)) continue;
+	if ((errno == EFAULT) && !IsBadWritePtr( buffer, bytesToRead )) continue;
+	FILE_SetDosError();
+	break;
     }
     close( unix_handle );
     if (result == -1) return FALSE;
@@ -1648,6 +1654,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
     int unix_handle, result;
+    DWORD type;
 
     TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite, 
           bytesWritten, overlapped );
@@ -1659,8 +1666,18 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if ( overlapped )
         return WriteFileEx(hFile, buffer, bytesToWrite, overlapped, NULL);
 
-    unix_handle = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
-    if (unix_handle == -1) return FALSE;
+    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type );
+
+    switch (type)
+    {
+    case FD_TYPE_CONSOLE:
+	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite, 
+	      bytesWritten, overlapped );
+	return WriteConsoleA(hFile, buffer, bytesToWrite, bytesWritten, NULL);
+    default:
+	if (unix_handle == -1)
+	    return FALSE;
+    }
 
     /* synchronous file write */
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)

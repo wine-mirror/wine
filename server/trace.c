@@ -721,6 +721,7 @@ static void dump_create_file_reply( const struct create_file_request *req )
 static void dump_alloc_file_handle_request( const struct alloc_file_handle_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " fd=%d", req->fd );
 }
 
@@ -881,37 +882,42 @@ static void dump_enable_socket_event_request( const struct enable_socket_event_r
 static void dump_alloc_console_request( const struct alloc_console_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " pid=%p", req->pid );
 }
 
 static void dump_alloc_console_reply( const struct alloc_console_request *req )
 {
     fprintf( stderr, " handle_in=%d,", req->handle_in );
-    fprintf( stderr, " handle_out=%d", req->handle_out );
+    fprintf( stderr, " event=%d", req->event );
 }
 
 static void dump_free_console_request( const struct free_console_request *req )
 {
 }
 
+static void dump_get_console_renderer_events_request( const struct get_console_renderer_events_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_get_console_renderer_events_reply( const struct get_console_renderer_events_request *req )
+{
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
+}
+
 static void dump_open_console_request( const struct open_console_request *req )
 {
-    fprintf( stderr, " output=%d,", req->output );
+    fprintf( stderr, " from=%d,", req->from );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " share=%d", req->share );
 }
 
 static void dump_open_console_reply( const struct open_console_request *req )
 {
     fprintf( stderr, " handle=%d", req->handle );
-}
-
-static void dump_set_console_fd_request( const struct set_console_fd_request *req )
-{
-    fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " fd_in=%d,", req->fd_in );
-    fprintf( stderr, " fd_out=%d,", req->fd_out );
-    fprintf( stderr, " pid=%d", req->pid );
 }
 
 static void dump_get_console_mode_request( const struct get_console_mode_request *req )
@@ -930,28 +936,102 @@ static void dump_set_console_mode_request( const struct set_console_mode_request
     fprintf( stderr, " mode=%d", req->mode );
 }
 
-static void dump_set_console_info_request( const struct set_console_info_request *req )
+static void dump_set_console_input_info_request( const struct set_console_input_info_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mask=%d,", req->mask );
+    fprintf( stderr, " active_sb=%d,", req->active_sb );
+    fprintf( stderr, " history_mode=%d,", req->history_mode );
+    fprintf( stderr, " history_size=%d,", req->history_size );
+    fprintf( stderr, " title=" );
+    cur_pos += dump_varargs_unicode_str( req );
+}
+
+static void dump_get_console_input_info_request( const struct get_console_input_info_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_get_console_input_info_reply( const struct get_console_input_info_request *req )
+{
+    fprintf( stderr, " history_mode=%d,", req->history_mode );
+    fprintf( stderr, " history_size=%d,", req->history_size );
+    fprintf( stderr, " history_index=%d,", req->history_index );
+    fprintf( stderr, " title=" );
+    cur_pos += dump_varargs_unicode_str( req );
+}
+
+static void dump_append_console_input_history_request( const struct append_console_input_history_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " line=" );
+    cur_pos += dump_varargs_unicode_str( req );
+}
+
+static void dump_get_console_input_history_request( const struct get_console_input_history_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " index=%d", req->index );
+}
+
+static void dump_get_console_input_history_reply( const struct get_console_input_history_request *req )
+{
+    fprintf( stderr, " line=" );
+    cur_pos += dump_varargs_unicode_str( req );
+}
+
+static void dump_create_console_output_request( const struct create_console_output_request *req )
+{
+    fprintf( stderr, " handle_in=%d,", req->handle_in );
+    fprintf( stderr, " access=%d,", req->access );
+    fprintf( stderr, " share=%d,", req->share );
+    fprintf( stderr, " inherit=%d", req->inherit );
+}
+
+static void dump_create_console_output_reply( const struct create_console_output_request *req )
+{
+    fprintf( stderr, " handle_out=%d", req->handle_out );
+}
+
+static void dump_set_console_output_info_request( const struct set_console_output_info_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " mask=%d,", req->mask );
     fprintf( stderr, " cursor_size=%d,", req->cursor_size );
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
-    fprintf( stderr, " title=" );
-    cur_pos += dump_varargs_string( req );
+    fprintf( stderr, " cursor_x=%d,", req->cursor_x );
+    fprintf( stderr, " cursor_y=%d,", req->cursor_y );
+    fprintf( stderr, " width=%d,", req->width );
+    fprintf( stderr, " height=%d,", req->height );
+    fprintf( stderr, " attr=%d,", req->attr );
+    fprintf( stderr, " win_left=%d,", req->win_left );
+    fprintf( stderr, " win_top=%d,", req->win_top );
+    fprintf( stderr, " win_right=%d,", req->win_right );
+    fprintf( stderr, " win_bottom=%d,", req->win_bottom );
+    fprintf( stderr, " max_width=%d,", req->max_width );
+    fprintf( stderr, " max_height=%d", req->max_height );
 }
 
-static void dump_get_console_info_request( const struct get_console_info_request *req )
+static void dump_get_console_output_info_request( const struct get_console_output_info_request *req )
 {
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_get_console_info_reply( const struct get_console_info_request *req )
+static void dump_get_console_output_info_reply( const struct get_console_output_info_request *req )
 {
     fprintf( stderr, " cursor_size=%d,", req->cursor_size );
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
-    fprintf( stderr, " pid=%d,", req->pid );
-    fprintf( stderr, " title=" );
-    cur_pos += dump_varargs_string( req );
+    fprintf( stderr, " cursor_x=%d,", req->cursor_x );
+    fprintf( stderr, " cursor_y=%d,", req->cursor_y );
+    fprintf( stderr, " width=%d,", req->width );
+    fprintf( stderr, " height=%d,", req->height );
+    fprintf( stderr, " attr=%d,", req->attr );
+    fprintf( stderr, " win_left=%d,", req->win_left );
+    fprintf( stderr, " win_top=%d,", req->win_top );
+    fprintf( stderr, " win_right=%d,", req->win_right );
+    fprintf( stderr, " win_bottom=%d,", req->win_bottom );
+    fprintf( stderr, " max_width=%d,", req->max_width );
+    fprintf( stderr, " max_height=%d", req->max_height );
 }
 
 static void dump_write_console_input_request( const struct write_console_input_request *req )
@@ -977,6 +1057,49 @@ static void dump_read_console_input_reply( const struct read_console_input_reque
     fprintf( stderr, " read=%d,", req->read );
     fprintf( stderr, " rec=" );
     cur_pos += dump_varargs_input_records( req );
+}
+
+static void dump_write_console_output_request( const struct write_console_output_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mode=%d,", req->mode );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
+}
+
+static void dump_write_console_output_reply( const struct write_console_output_request *req )
+{
+    fprintf( stderr, " written=%d", req->written );
+}
+
+static void dump_read_console_output_request( const struct read_console_output_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " w=%d,", req->w );
+    fprintf( stderr, " h=%d", req->h );
+}
+
+static void dump_read_console_output_reply( const struct read_console_output_request *req )
+{
+    fprintf( stderr, " eff_w=%d,", req->eff_w );
+    fprintf( stderr, " eff_h=%d,", req->eff_h );
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
+}
+
+static void dump_move_console_output_request( const struct move_console_output_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " x_src=%d,", req->x_src );
+    fprintf( stderr, " y_src=%d,", req->y_src );
+    fprintf( stderr, " x_dst=%d,", req->x_dst );
+    fprintf( stderr, " y_dst=%d,", req->y_dst );
+    fprintf( stderr, " w=%d,", req->w );
+    fprintf( stderr, " h=%d", req->h );
 }
 
 static void dump_create_change_notification_request( const struct create_change_notification_request *req )
@@ -1955,14 +2078,22 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_enable_socket_event_request,
     (dump_func)dump_alloc_console_request,
     (dump_func)dump_free_console_request,
+    (dump_func)dump_get_console_renderer_events_request,
     (dump_func)dump_open_console_request,
-    (dump_func)dump_set_console_fd_request,
     (dump_func)dump_get_console_mode_request,
     (dump_func)dump_set_console_mode_request,
-    (dump_func)dump_set_console_info_request,
-    (dump_func)dump_get_console_info_request,
+    (dump_func)dump_set_console_input_info_request,
+    (dump_func)dump_get_console_input_info_request,
+    (dump_func)dump_append_console_input_history_request,
+    (dump_func)dump_get_console_input_history_request,
+    (dump_func)dump_create_console_output_request,
+    (dump_func)dump_set_console_output_info_request,
+    (dump_func)dump_get_console_output_info_request,
     (dump_func)dump_write_console_input_request,
     (dump_func)dump_read_console_input_request,
+    (dump_func)dump_write_console_output_request,
+    (dump_func)dump_read_console_output_request,
+    (dump_func)dump_move_console_output_request,
     (dump_func)dump_create_change_notification_request,
     (dump_func)dump_create_mapping_request,
     (dump_func)dump_open_mapping_request,
@@ -2098,14 +2229,22 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_alloc_console_reply,
     (dump_func)0,
+    (dump_func)dump_get_console_renderer_events_reply,
     (dump_func)dump_open_console_reply,
-    (dump_func)0,
     (dump_func)dump_get_console_mode_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)dump_get_console_info_reply,
+    (dump_func)dump_get_console_input_info_reply,
+    (dump_func)0,
+    (dump_func)dump_get_console_input_history_reply,
+    (dump_func)dump_create_console_output_reply,
+    (dump_func)0,
+    (dump_func)dump_get_console_output_info_reply,
     (dump_func)dump_write_console_input_reply,
     (dump_func)dump_read_console_input_reply,
+    (dump_func)dump_write_console_output_reply,
+    (dump_func)dump_read_console_output_reply,
+    (dump_func)0,
     (dump_func)dump_create_change_notification_reply,
     (dump_func)dump_create_mapping_reply,
     (dump_func)dump_open_mapping_reply,
@@ -2241,14 +2380,22 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "enable_socket_event",
     "alloc_console",
     "free_console",
+    "get_console_renderer_events",
     "open_console",
-    "set_console_fd",
     "get_console_mode",
     "set_console_mode",
-    "set_console_info",
-    "get_console_info",
+    "set_console_input_info",
+    "get_console_input_info",
+    "append_console_input_history",
+    "get_console_input_history",
+    "create_console_output",
+    "set_console_output_info",
+    "get_console_output_info",
     "write_console_input",
     "read_console_input",
+    "write_console_output",
+    "read_console_output",
+    "move_console_output",
     "create_change_notification",
     "create_mapping",
     "open_mapping",

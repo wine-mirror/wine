@@ -1052,10 +1052,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Warn if unsupported features are used */
 
-    if (dwCreationFlags & DETACHED_PROCESS)
-        FIXME("(%s,...): DETACHED_PROCESS ignored\n", name);
-    if (dwCreationFlags & CREATE_NEW_CONSOLE)
-        FIXME("(%s,...): CREATE_NEW_CONSOLE ignored\n", name);
     if (dwCreationFlags & NORMAL_PRIORITY_CLASS)
         FIXME("(%s,...): NORMAL_PRIORITY_CLASS ignored\n", name);
     if (dwCreationFlags & IDLE_PRIORITY_CLASS)

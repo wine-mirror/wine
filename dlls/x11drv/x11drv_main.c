@@ -444,7 +444,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (synchronous) XSynchronize( data->display, True );
     wine_tsx11_unlock();
     data->display_fd = FILE_DupUnixHandle( ConnectionNumber(data->display),
-                                           GENERIC_READ | SYNCHRONIZE );
+                                           GENERIC_READ | SYNCHRONIZE, FALSE );
     data->process_event_count = 0;
     NtCurrentTeb()->driver_data = data;
     return data;
