@@ -1002,9 +1002,132 @@ QueryServiceConfigA( SC_HANDLE hService,
                      LPQUERY_SERVICE_CONFIGA lpServiceConfig,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p %ld %p\n", hService, lpServiceConfig,
+    static const CHAR szDisplayName[] = "DisplayName";
+    static const CHAR szType[] = "Type";
+    static const CHAR szStart[] = "Start";
+    static const CHAR szError[] = "ErrorControl";
+    static const CHAR szImagePath[] = "ImagePath";
+    static const CHAR szGroup[] = "Group";
+    static const CHAR szDependencies[] = "Dependencies";
+    HKEY hKey = ((struct sc_handle*) hService)->u.service.hkey;
+    CHAR str_buffer[ MAX_PATH ];
+    LONG r;
+    DWORD type, val, sz, total, n;
+    LPBYTE p;
+
+    TRACE("%p %p %ld %p\n", hService, lpServiceConfig,
            cbBufSize, pcbBytesNeeded);
-    return FALSE;
+
+    /* calculate the size required first */
+    total = sizeof (QUERY_SERVICE_CONFIGA);
+
+    sz = sizeof(str_buffer);
+    r = RegQueryValueExA( hKey, szImagePath, 0, &type, str_buffer, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
+    {
+        sz = ExpandEnvironmentStringsA(str_buffer,NULL,0);
+        if( 0 == sz ) return FALSE;
+
+        total += sz;
+    }
+    else
+    {
+        /* FIXME: set last error */
+        return FALSE;
+    }
+
+    sz = 0;
+    r = RegQueryValueExA( hKey, szGroup, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExA( hKey, szDependencies, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_MULTI_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExA( hKey, szStart, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExA( hKey, szDisplayName, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    /* if there's not enough memory, return an error */
+    if( total > *pcbBytesNeeded )
+    {
+        *pcbBytesNeeded = total;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    *pcbBytesNeeded = total;
+    ZeroMemory( lpServiceConfig, total );
+
+    sz = sizeof val;
+    r = RegQueryValueExA( hKey, szType, 0, &type, (LPBYTE)&val, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+        lpServiceConfig->dwServiceType = val;
+
+    sz = sizeof val;
+    r = RegQueryValueExA( hKey, szStart, 0, &type, (LPBYTE)&val, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+        lpServiceConfig->dwStartType = val;
+
+    sz = sizeof val;
+    r = RegQueryValueExA( hKey, szError, 0, &type, (LPBYTE)&val, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+        lpServiceConfig->dwErrorControl = val;
+
+    /* now do the strings */
+    p = (LPBYTE) &lpServiceConfig[1];
+    n = total - sizeof (QUERY_SERVICE_CONFIGA);
+
+    sz = sizeof(str_buffer);
+    r = RegQueryValueExA( hKey, szImagePath, 0, &type, str_buffer, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
+    {
+        sz = ExpandEnvironmentStringsA(str_buffer, p, n);
+        if( 0 == sz || sz > n ) return FALSE;
+
+        lpServiceConfig->lpBinaryPathName = (LPSTR) p;
+        p += sz;
+        n -= sz;
+    }
+    else
+    {
+        /* FIXME: set last error */
+        return FALSE;
+    }
+
+    sz = n;
+    r = RegQueryValueExA( hKey, szGroup, 0, &type, p, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    {
+        lpServiceConfig->lpLoadOrderGroup = (LPSTR) p;
+        p += sz;
+        n -= sz;
+    }
+
+    sz = n;
+    r = RegQueryValueExA( hKey, szDependencies, 0, &type, p, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    {
+        lpServiceConfig->lpDependencies = (LPSTR) p;
+        p += sz;
+        n -= sz;
+    }
+
+    if( n < 0 )
+        ERR("Buffer overflow!\n");
+
+    TRACE("Image path = %s\n", lpServiceConfig->lpBinaryPathName );
+    TRACE("Group      = %s\n", lpServiceConfig->lpLoadOrderGroup );
+
+    return TRUE;
 }
 
 /******************************************************************************
