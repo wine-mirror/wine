@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = rundll32.exe
+APPMODE   = cui
+IMPORTS   = kernel32
+
+C_SRCS = \
+	rundll32.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

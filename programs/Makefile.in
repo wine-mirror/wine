@@ -17,6 +17,7 @@ SUBDIRS = \
 	regedit \
 	regsvr32 \
 	regtest \
+	rundll32 \
 	uninstaller \
 	view \
 	wcmd \
@@ -38,6 +39,7 @@ INSTALLSUBDIRS = \
 	progman \
 	regedit \
 	regsvr32 \
+	rundll32 \
 	uninstaller \
 	wcmd \
 	wineconsole \
