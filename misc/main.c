@@ -982,6 +982,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		{
 		    LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
 		
+		    /* clear the struct, so we have 'sane' members */
+		    memset(
+			(char*)lpvParam+sizeof(lpnm->cbSize),
+			0,
+			lpnm->cbSize-sizeof(lpnm->cbSize)
+		    );
+
 		    /* FIXME: initialize geometry entries */
 		    /* FIXME: As these values are presumably in device units,
 		     *  we should calculate the defaults based on the screen dpi
@@ -1207,6 +1214,12 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 #define lpnm ((LPNONCLIENTMETRICS16)lpvParam)
 		    if( lpnm->cbSize == sizeof(NONCLIENTMETRICS16) )
 		    {
+			/* clear the struct, so we have 'sane' members */
+			memset(
+			    (char*)lpvParam+sizeof(lpnm->cbSize),
+			    0,
+			    lpnm->cbSize-sizeof(lpnm->cbSize)
+			);
 			/* FIXME: initialize geometry entries */
 			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0, 
 							(LPVOID)&(lpnm->lfCaptionFont),0);
@@ -1304,6 +1317,11 @@ BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
 	/* FIXME: implement correctly */
 	LPNONCLIENTMETRICSW	lpnm=(LPNONCLIENTMETRICSW)lpvParam;
 
+	/* clear the struct, so we have 'sane' members */
+	memset((char*)lpvParam+sizeof(lpnm->cbSize),
+		0,
+		lpnm->cbSize-sizeof(lpnm->cbSize)
+	);
 	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
 	lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfSmCaptionFont),0);
