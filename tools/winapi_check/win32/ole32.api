@@ -84,7 +84,6 @@ REFGUID
 REFIID
 SNB
 STGMEDIUM *
-WCHAR *
 WORD *
 void *
 void **

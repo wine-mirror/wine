@@ -50,9 +50,7 @@ BEGIN {
 	exit 1;
     }
 
-    push @INC, ($winapi_check_dir, $winapi_dir) if $tool eq "winapi_check";
-    push @INC, ($winapi_dir, $winapi_check_dir) if $tool eq "winapi_extract";
-    push @INC, ($winapi_dir, $winapi_check_dir) if $tool eq "winapi_fixup";
+    push @INC, ($winapi_dir, $winapi_check_dir);
 }
 
 1;

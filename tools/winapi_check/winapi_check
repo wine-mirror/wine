@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# Copyright 1999-2000 Patrik Stridvall
+# Copyright 1999-2001 Patrik Stridvall
 
 # Note that winapi_check are using heuristics quite heavily.
 # So always remember that:
@@ -20,10 +20,8 @@ BEGIN {
 }
 
 use config qw(
-    &file_absolutize &file_normalize
-    &file_type &files_filter
-    &file_skip &files_skip 
-    &get_spec_files
+    &file_type &files_filter &files_skip
+    &get_h_files	      
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use modules;
@@ -66,31 +64,42 @@ if($options->global) {
 
 my $nativeapi = 'nativeapi'->new($options, $output, "$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
-my %includes;
+my %declared_functions;
+
+my %include2info;
 {   
-    my @files = map {
-	s/^.\/(.*)$/$1/;
-	$_; 
-    } split(/\n/, `find . -name \\*.h`);
-    
+    my @files = get_h_files("winelib");
+
+    my $progress_current = 0;
+    my $progress_max = scalar(@files);   
+
     foreach my $file (@files) {
+	$progress_current++;
+	if($options->progress) {
+	    $output->lazy_progress("$file: file $progress_current of $progress_max");
+	}
+
 	my $file_dir = $file;
-	if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
+	if(!($file_dir =~ s%(.*?)/[^/]+$%$1%)) {
 	    $file_dir = ".";
 	}
-   
-	$includes{$file} = { name => $file };
 
-	open(IN, "< $file");
+	$include2info{$file} = { name => $file };
+
+	open(IN, "< $wine_dir/$file");
 	while(<IN>) {
 	    if(/^\s*\#\s*include\s*\"(.*?)\"/) {
 		my $header = $1;
-		if(-e "$file_dir/$header") {
-		    $includes{$file}{includes}{"$file_dir/$header"}++;
-		} elsif(-e "$file_dir/../$header") { # FIXME: This is not correct
-		    $includes{$file}{includes}{"$file_dir/../$header"}++; # FIXME: This is not correct
+		if(-e "$wine_dir/$file_dir/$header") {
+		    $include2info{$file}{includes}{"$file_dir/$header"}++;
+		} elsif(-e "$wine_dir/$file_dir/../$header") {
+		    if($file_dir =~ m%^(.*?)/[^/]+$%) {
+			$include2info{$file}{includes}{"$1/$header"}++;
+		    } else {
+			$include2info{$file}{includes}{"$header"}++;
+		    }
 		} elsif(-e "$wine_dir/include/$header") {
-		    $includes{$file}{includes}{"include/$header"}++;
+		    $include2info{$file}{includes}{"include/$header"}++;
 		} else {
 		    $output->write("$file: #include \"$header\" is not a local include\n");
 		}
@@ -102,18 +111,20 @@ my %includes;
     my @files2 = ("acconfig.h", "poppack.h", "pshpack1.h", "pshpack2.h", "pshpack4.h", "pshpack8.h",
                   "storage.h", "ver.h");
     foreach my $file2 (@files2) {
-	$includes{"include/$file2"}{used}++;
+	$include2info{"include/$file2"}{used}++;
     }    
 }
 
-my %declared_functions;
+my @c_files = $options->c_files;
+@c_files = files_skip(@c_files);
+@c_files = files_filter("winelib", @c_files);
 
-my @c_files = files_skip($options->c_files);
-my @h_files = files_skip($options->h_files);
+my @h_files = $options->h_files;
+@h_files = files_skip(@h_files);
+@h_files = files_filter("winelib", @h_files);
 
-my $progress_output;
-my $progress_current=0;
-my $progress_max=scalar(@c_files);
+my $progress_current = 0;
+my $progress_max = scalar(@c_files);
 
 if($options->headers) {
     $progress_max += scalar(@h_files);
@@ -125,77 +136,52 @@ if($options->headers) {
 	if($options->progress) {
 	    $output->progress("$file: file $progress_current of $progress_max");
 	}
-	
+
 	my $found_function = sub {
 	    my $function = shift;
 
-	    my $documentation_line = $function->documentation_line;
-	    my $documentation = $function->documentation;
+	    $output->prefix($function->prefix);
+
 	    my $function_line = $function->function_line;
-	    my $linkage = $function->linkage;
-	    my $return_type = $function->return_type;
-	    my $calling_convention = $function->calling_convention;
 	    my $internal_name = $function->internal_name;
-	    my @argument_types = @{$function->argument_types};
-	    my @argument_names = @{$function->argument_names};
-	    my @argument_documentations = @{$function->argument_documentations};
 	    my $statements = $function->statements;
-	    
-	    foreach my $winapi (@winapis) {
-		my $module = $winapi->function_internal_module($internal_name);
-		if(!defined($module)) { next }
 
-		# FIXME: Not correct
-		my $external_name = $winapi->function_external_name($internal_name);
+	    if($options->headers_misplaced &&
+	       !($function->is_win16 && $function->is_win32) &&
+	       (($function->is_win16 && $file =~ /^include\/[^\/]*$/) ||
+		($function->is_win32 && $file =~ /^include\/wine\/[^\/]*$/)))
+	    {
+		$output->write("declaration misplaced\n");
+	    }
 
-		if(defined($external_name)) {
-		    $external_name = (split(/\s*&\s*/, $external_name))[0];
-		}
-
-		# FIXME: Kludge because of the THUNK variants
-		if(!defined($external_name)) {
-		    next;
-		}
-
-		my $output_function = sub {
-		    my $message = shift;
-
-		    $output->write("$file: $module: $return_type ");
-		    $output->write("$calling_convention ") if $calling_convention;
-		    $output->write("$internal_name(" . join(",", @argument_types) . "): $message\n");
-		};
-		
-		if(!defined($declared_functions{$winapi->name}{$external_name})) {
-		    $declared_functions{$winapi->name}{$external_name} = "$file";
+	    if(!defined($statements)) {
+		my $previous_function = $declared_functions{$internal_name};
+		if(!defined($previous_function)) {
+		    $declared_functions{$internal_name} = $function;
 		} elsif($options->headers_duplicated) {
-		    my $message = "declared more than once";
-		    if($file ne $declared_functions{$winapi->name}{$external_name}) {
-			$message .= ", first declaration in '" . $declared_functions{$winapi->name}{$external_name} . "'";
-		    }
-	            &$output_function("$message");
-		}
-
-		if($options->headers_misplaced) {
-		    if($file =~ /^include\/[^\/]*$/ && $winapi->name eq "win16") {
-			&$output_function("declaration misplaced");
-		    } elsif($file =~ /^include\/wine\/[^\/]*$/ && $winapi->name eq "win32") {
-			&$output_function("declaration misplaced");
-		    }
+		    my $file = $previous_function->file;
+		    my $function_line = $previous_function->function_line;
+		    $output->write("duplicate declaration (first declaration at $file:$function_line)\n");
 		}
 	    }
 	};
-	
+
 	my $found_preprocessor = sub {
 	    my $directive = shift;
 	    my $argument = shift;
 	};
-	
+
         winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
     }
 }
 
+my %module2functions = ();
+my %type_found = ();
+
 foreach my $file (@c_files) {
     my %functions = ();
+    my @includes = ();
+    my %needed_includes = ();
 
     my $file_module16 = $modules->allowed_modules_in_file("$current_dir/$file");
     my $file_module32 = $modules->allowed_modules_in_file("$current_dir/$file");
@@ -210,13 +196,15 @@ foreach my $file (@c_files) {
 	$file_dir = ".";
     }
    
-    my $file_type = file_type($file);
-
     my $found_function = sub {
 	my $function = shift;
 
+	$output->prefix($function->prefix);
+
 	my $internal_name = $function->internal_name;
 	$functions{$internal_name} = $function;
+
+	my $declared_function = $declared_functions{$internal_name};
 
 	my $documentation_line = $function->documentation_line;
 	my $documentation = $function->documentation;
@@ -228,41 +216,36 @@ foreach my $file (@c_files) {
 	my @argument_documentations = @{$function->argument_documentations};
 	my $statements = $function->statements;
 
+	my $module16 = $function->module16;
+	my $module32 = $function->module32;
+
 	my $external_name16 = $function->external_name16;
 	my $external_name32 = $function->external_name32;
 
-	if($options->global) {
-	    $win16api->found_type($return_type) if $options->win16;
-	    $win32api->found_type($return_type) if $options->win32;
-	    for my $argument (@argument_types) {
-		$win16api->found_type($argument) if $options->win16;
-		$win32api->found_type($argument) if $options->win32;
+	foreach my $module ($function->modules) {
+	    $module2functions{$module}{$internal_name} = $function;
+	    for my $type ($return_type, @argument_types) {
+		$type_found{$module}{$type}++;
 	    }
 	}
 
-	if($options->declared) {
-	    $win16api->found_internal_function($internal_name) if $options->win16;
-	    $win32api->found_internal_function($internal_name) if $options->win32;
+	foreach my $module ($function->modules) {
+	    $modules->found_module_in_dir($module, $file_dir);
 	}
 
-	if($file_type eq "winelib") {
-	    my $module16 = $function->module16;
-	    my $module32 = $function->module32;
-
-	    foreach my $module ($function->modules) {
-		$modules->found_module_in_dir($module, $file_dir);
+	if($options->shared) {
+	    if($win16api->is_shared_internal_function($internal_name) || 
+	       $win32api->is_shared_internal_function($internal_name)) 
+	    {
+		$output->write("is shared between Win16 and Win32\n");
 	    }
+	}
 
-	    $output->prefix("$file: " . $function->prefix);
+	if(defined($declared_function)) {
+	    $needed_includes{$declared_function->file}++;
+	}
 
-	    if($options->shared) {
-		if($win16api->is_shared_internal_function($internal_name) || 
-		   $win32api->is_shared_internal_function($internal_name)) 
-		{
-		    $output->write("is shared between Win16 and Win32\n");
-		}
-	    }
-
+	if(1) {
 	    # FIXME: Not correct
 	    if(defined($external_name16)) {
 		$external_name16 = (split(/\s*&\s*/, $external_name16))[0];
@@ -307,20 +290,15 @@ foreach my $file (@c_files) {
 
 	    if($options->local && $options->headers && $options->prototype) {
 		if($options->win16 && $options->report_module($module16)) {
-		    if(!defined($external_name16) || (!$nativeapi->is_function($external_name16) && 
-		       !defined($declared_functions{$win16api->name}{$external_name16})))
+		    if(!$nativeapi->is_function($internal_name) && 
+		       !defined($declared_functions{$internal_name}))
 		    {
-			if(!defined($external_name16) || ($external_name16 !~ /^DllEntryPoint$/ &&
-			    $internal_name !~ /^I(?:Malloc|Storage)16_fn/ &&
-			    $internal_name !~ /^(?:\Q$module16\E|THUNK|WIN16)_\Q$external_name16\E(?:16)?$/))
-			{
-			    $output->write("no prototype\n");
-			}
+			$output->write("no prototype\n");
 		    }
 		}
 
 		if($options->win32 && $options->report_module($module32)) {
-		    if(!defined($external_name32) || (!$nativeapi->is_function($external_name32) && 						          !defined($declared_functions{$win32api->name}{$external_name32})))
+		    if(!defined($external_name32) || (!$nativeapi->is_function($external_name32) && 						          !defined($declared_functions{$external_name32})))
 		    {
 			if(!defined($external_name32) || ($external_name32 !~ /^Dll(?:
 			   Install|CanUnloadNow|GetClassObject|GetVersion|
@@ -379,17 +357,15 @@ foreach my $file (@c_files) {
 	$nativeapi->found_conditional($_);
 
 	if($options->config) {
-	    if($file_type ne "application") {
-		if(!$nativeapi->is_conditional($_)) {
-		    if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
-		    {
-			$output->write("$file: $_ is not declared as a conditional\n");
-		    }
-		} else {
-		    $conditional++;
-		    if(!$config) {
-			$output->write("$file: conditional $_ used but config.h is not included\n");
-		    }
+	    if(!$nativeapi->is_conditional($_)) {
+		if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
+		{
+		    $output->write("$file: $_ is not declared as a conditional\n");
+		}
+	    } else {
+		$conditional++;
+		if(!$config) {
+		    $output->write("$file: conditional $_ used but config.h is not included\n");
 		}
 	    }
 	}
@@ -407,21 +383,41 @@ foreach my $file (@c_files) {
 		my $check_protection;
 		my $check_local;
 		if($argument =~ /^<(.*?)>$/) {
-		   $header = $1;
-		   if($file_type ne "application") {
-		       $check_protection = 1;
-		   } else {
-		       $check_protection = 0;
-		   }
-		   $check_local = 0;
-		} elsif($argument =~ /^"(.*?)"$/) {
-		   $header = $1;
-		   $check_protection = 0;
-		   $check_local = 1;
+		    $header = $1;
+		    $check_protection = 1;
+		    $check_local = 0;
+		} elsif($argument =~ /^\"(.*?)\"$/) {
+		    $header = $1;
+		    $check_protection = 0;
+		    $check_local = 1;
+		} else {
+		    $output->write("$file: #$directive $argument: is unparsable\n");
+
+		    $header = undef;
+		    $check_protection = 0;
+		    $check_local = 0;
 		}
 
-		if($check_protection) {
-		    if((-e "$wine_dir/include/$header" || -e "$file_dir/$header")) {
+		if(defined($header)) {
+		    if(-e "$wine_dir/include/$header") {
+			push @includes, "include/$header";
+		    } elsif(-e "$file_dir/$header") {
+			push @includes, "$file_dir/$header";
+		    } elsif(-e "$file_dir/../$header") {
+			if($file_dir =~ m%^(.*?)/[^/]+$%) {
+			    push @includes, "$1/$header";
+			} else {
+			    push @includes, "$header";
+			}
+		    } elsif($header eq "controls.h") { # FIXME: Kludge
+			push @includes, "dlls/user/controls.h";
+		    } elsif($check_local) {
+			$output->write("$file: #include \"$header\": file not found\n");
+		    }
+		}
+
+		if($check_protection && $header) {
+		    if((-e "$wine_dir/include/$header" || -e "$wine_dir/$file_dir/$header")) {
 			if($header !~ /^ctype.h$/) {
 			    $output->write("$file: #include \<$header\> is a local include\n");
 			}
@@ -448,26 +444,40 @@ foreach my $file (@c_files) {
 		    }
 		}
 
-		if($check_local) {
+		if($check_local && $header) {
 		    if(-e "$file_dir/$header") {
-			$includes{"$file_dir/$header"}{used}++;
-			foreach my $name (keys(%{$includes{"$file_dir/$header"}{includes}})) {
-			    $includes{$name}{used}++;
+			if($file_dir ne ".") {
+			    $include2info{"$file_dir/$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$file_dir/$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
+			} else {
+			    $include2info{"$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
 			}
-		    } elsif(-e "$file_dir/../$header") { # FIXME: Kludge
-			$includes{"$file_dir/../$header"}{used}++; # FIXME: This is not correct
-			foreach my $name (keys(%{$includes{"$file_dir/../$header"}{includes}})) { # FIXME: This is not correct
-			    $includes{$name}{used}++;
+		    } elsif(-e "$wine_dir/$file_dir/../$header") {
+			if($file_dir =~ m%^(.*?)/[^/]+$%) {
+			    $include2info{"$1/$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$1/$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
+			} else {
+			    $include2info{"$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
 			}
 		    } elsif($header eq "controls.h") { # FIXME: Kludge
-			$includes{"dlls/user/$header"}{used}++;
-			foreach my $name (keys(%{$includes{"dlls/user/$header"}{includes}})) {
-			    $includes{$name}{used}++;
+			$include2info{"dlls/user/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
 			}
 		    } elsif(-e "$wine_dir/include/$header") {
-			$includes{"include/$header"}{used}++;
-			foreach my $name (keys(%{$includes{"include/$header"}{includes}})) {
-			    $includes{$name}{used}++;
+			$include2info{"include/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"include/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
 			}
 		    } else {
 			$output->write("$file: #include \"$header\" is not a local include\n");
@@ -481,9 +491,31 @@ foreach my $file (@c_files) {
     
     if($options->config_unnessary) {
 	if($config && $conditional == 0) {
-	    $output->write("$file: includes config.h but do not use any conditionals\n");
+	    $output->write("$file: include2info config.h but do not use any conditionals\n");
 	}
     }
+
+    if($options->headers_needed) {
+	my %includes2;
+	foreach my $include (@includes) {
+	    $includes2{$include}++;
+	    foreach my $include (keys(%{$include2info{$include}{includes}})) {
+		$includes2{$include}++;
+	    }
+	}
+	foreach my $needed_include (sort(keys(%needed_includes))) {
+	    my $found = 0;
+	    foreach my $include (sort(keys(%includes2))) {
+		if($needed_include eq $include) {
+		    $found = 1;
+		}
+	    }
+	    if(!$found) {
+		$output->write("$file: file '$needed_include' needed but not included\n");
+	    }
+	}
+    }
+	
 
     winapi_local::check_file $options, $output, $file, \%functions;
 }
@@ -523,8 +555,14 @@ if($options->declared) {
 	    if($options->declared) {
 		foreach my $winapi (@winapis) {
 		    if(!$winapi->is_module($module)) { next; }
+		    my $functions = $module2functions{$module};
 		    foreach my $internal_name ($winapi->all_internal_functions_in_module($module)) {
-			if(!$winapi->internal_function_found($internal_name)) {
+			my $function = $functions->{$internal_name};
+			if(!defined($function) && !$nativeapi->is_function($internal_name) &&
+			   !($module eq "user" && $internal_name =~
+			     /^(?:GlobalAddAtomA|GlobalDeleteAtom|GlobalFindAtomA|
+				GlobalGetAtomNameA|lstrcmpiA)$/x))
+			{
 			    $output->write("*.c: $module: $internal_name: " .
 					   "function declared but not implemented or declared external\n");
 			}
@@ -538,9 +576,9 @@ if($options->declared) {
 if($options->global) {
     winapi_documentation::report_documentation $options, $output;
 
-    if($options->headers) {
-	foreach my $name (sort(keys(%includes))) {
-	    if(!$includes{$name}{used}) {
+    if($options->headers_unused) {
+	foreach my $name (sort(keys(%include2info))) {
+	    if(!$include2info{$name}{used}) {
 		if($options->include) {
 		    $output->write("*.c: $name: include file is never used\n");
 		}
@@ -548,8 +586,8 @@ if($options->global) {
 	}
     }
 
-    winapi_global::check $options, $output, $win16api, $nativeapi if $options->win16;
-    winapi_global::check $options, $output, $win32api, $nativeapi if $options->win32;
+    winapi_global::check $options, $output, $win16api, $nativeapi, \%type_found if $options->win16;
+    winapi_global::check $options, $output, $win32api, $nativeapi, \%type_found if $options->win32;
 
     $modules->global_report;
     $nativeapi->global_report;

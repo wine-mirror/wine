@@ -118,9 +118,12 @@ my %options = (
     "implemented" => { default => 0, parent => "local", description => "implemented checking" },
     "implemented-win32" => { default => 0, parent => "implemented", description => "implemented as win32 checking" },
     "include" => { default => 1, parent => "global", description => "include checking" },
-    "headers" => { default => 0, parent => "global", description => "headers checking" },
+
+    "headers" => { default => 0, description => "headers checking" },
     "headers-duplicated" => { default => 0, parent => "headers", description => "duplicated function declarations checking" },
     "headers-misplaced" => { default => 0, parent => "headers", description => "misplaced function declarations checking" },
+    "headers-needed" => { default => 1, parent => "headers", description => "headers needed checking" },
+    "headers-unused" => { default => 0, parent => "headers", description => "headers unused checking" },
 );
 
 my %short_options = (
@@ -147,6 +150,7 @@ sub new {
     my $h_files = \@{$self->{H_FILES}};
     my $module = \${$self->{MODULE}};
     my $global = \${$self->{GLOBAL}};
+    my $headers = \${$self->{HEADERS}};
 
     my @files;
 
@@ -285,11 +289,14 @@ sub new {
 	}
     }
 
+    if($#h_files >= 0) {
+	$$headers = 1;
+    }
+
     if($#c_files == -1 && $#h_files == -1 &&
        ($#paths == -1 || ($#paths == 0 && $paths[0] eq $wine_dir)))
     {
 	@paths = ".";
-	push @h_files, "$wine_dir/include";
     } else {
 	$$global = 0;
     }
@@ -308,8 +315,8 @@ sub new {
 	} split(/\n/, `$c_command`));
     }
 
-    if($#h_files != -1) {
-	my $h_command = "find " . join(" ", @h_files) . " -name \\*.h";
+    if($#paths != -1 || $#h_files != -1) {
+	my $h_command = "find " . join(" ", @paths, @h_files) . " -name \\*.h";
 	my %found;
 
 	@$h_files = sort(map {

@@ -7,12 +7,13 @@ sub check {
     my $output = shift;
     my $winapi = shift;
     my $nativeapi = shift;
+    my $type_found = shift;
 
     my $winver = $winapi->name;
 
     if($options->argument) {
 	foreach my $type ($winapi->all_declared_types) {
-	    if(!$winapi->type_found($type) && !$winapi->is_limited_type($type) && $type ne "CONTEXT86 *") {
+	    if(!$$type_found{$type} && !$winapi->is_limited_type($type) && $type ne "CONTEXT86 *") {
 		$output->write("*.c: $winver: ");
 		$output->write("type ($type) not used\n");
 	    }

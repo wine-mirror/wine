@@ -26,6 +26,10 @@ sub new {
     $$name = shift;
     my $path = shift;
 
+    if($$options->progress) {
+	$$output->progress("$path: searching for *.api");
+    }
+
     my @files = map {
 	s%^\./%%;
 	$_; 
@@ -33,6 +37,11 @@ sub new {
   
     foreach my $file (@files) {
 	my $module = $file;
+
+	if($$options->progress) {
+	    $$output->lazy_progress("$file");
+	}
+
 	$module =~ s/.*?\/([^\/]*?)\.api$/$1/;
 	$self->parse_api_file($file,$module);
     }   
@@ -289,7 +298,7 @@ sub parse_spec_file {
     my $module_file;
 
     if($$options->progress) {
-	$$output->progress("$file");
+	$$output->lazy_progress("$file");
     }
 
     open(IN, "< $file") || die "$file: $!\n";
@@ -585,24 +594,6 @@ sub all_declared_types {
     return sort(keys(%$translate_argument));
 }
 
-sub found_type {
-    my $self = shift;
-    my $type_found = \%{$self->{TYPE_FOUND}};
-
-    my $name = shift;
-
-    $$type_found{$name}++;
-}
-
-sub type_found {
-    my $self = shift;
-    my $type_found= \%{$self->{TYPE_FOUND}};
-
-    my $name = shift;
-
-    return $$type_found{$name};
-}
-
 sub is_allowed_type_format {
     my $self = shift;
     my $type_format = \%{$self->{TYPE_FORMAT}};
@@ -732,13 +723,6 @@ sub all_functions_stub_in_module {
     my $module = shift;
 
     return sort(keys(%{$$function_stub{$module}}));
-}
-
-sub all_internal_functions_found {
-    my $self = shift;
-    my $function_found = \%{$self->{FUNCTION_FOUND}};
-
-    return sort(keys(%$function_found));
 }
 
 sub function_internal_ordinal {
@@ -890,24 +874,6 @@ sub is_function_stub_in_module {
     my $name = shift;
 
     return $$function_stub{$module}{$name};
-}
-
-sub found_internal_function {
-    my $self = shift;
-    my $function_found = \%{$self->{FUNCTION_FOUND}};
-
-    my $name = shift;
-
-    $$function_found{$name}++;
-}
-
-sub internal_function_found {
-    my $self = shift;
-    my $function_found = \%{$self->{FUNCTION_FOUND}};
-
-    my $name = shift;
-
-    return $$function_found{$name};
 }
 
 ########################################################################

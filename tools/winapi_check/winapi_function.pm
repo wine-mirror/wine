@@ -22,6 +22,13 @@ sub new {
 }
 
 ########################################################################
+# is_win
+#
+
+sub is_win16 { my $self = shift; return defined($self->_module($win16api, @_)); }
+sub is_win32 { my $self = shift; return defined($self->_module($win32api, @_)); }
+
+########################################################################
 # external_name
 #
 
@@ -190,6 +197,7 @@ sub prefix {
     my $module32 = $self->module32;
 
     my $file = $self->file;
+    my $function_line = $self->function_line;
     my $return_type = $self->return_type;
     my $internal_name = $self->internal_name;
     my $calling_convention = $self->calling_convention;
@@ -208,7 +216,12 @@ sub prefix {
 	push @modules, $module;
 	$used{$module}++;
     }
-    $prefix .= "$file: ";
+    $prefix .= "$file:";
+    if(defined($function_line)) {
+	$prefix .= "$function_line: ";
+    } else {
+	$prefix .= "<>: ";
+    }
     if($#modules >= 0) {
 	$prefix .= join(" & ", @modules) . ": ";
     } else {

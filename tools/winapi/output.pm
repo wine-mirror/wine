@@ -34,11 +34,13 @@ sub new {
 
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
+    my $last_time = \${$self->{LAST_TIME}};
     my $progress_count = \${$self->{PROGRESS_COUNT}};
     my $prefix = \${$self->{PREFIX}};
 
     $$progress = "";
     $$last_progress = "";
+    $$last_time = 0;
     $$progress_count = 0;
     $$prefix = "";
 
@@ -107,10 +109,26 @@ sub update_progress {
 sub progress {
     my $self = shift;
     my $progress = \${$self->{PROGRESS}};
+    my $last_time = \${$self->{LAST_TIME}};
 
     $$progress = shift;
 
     $self->update_progress;
+    $$last_time = 0;
+}
+
+sub lazy_progress {
+    my $self = shift;
+    my $progress = \${$self->{PROGRESS}};
+    my $last_time = \${$self->{LAST_TIME}};
+
+    $$progress = shift;
+
+    my $time = time();
+    if($time - $$last_time > 0) {
+	$self->update_progress;
+    	$$last_time = $time;
+    }
 }
 
 sub prefix {

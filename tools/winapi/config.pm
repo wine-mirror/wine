@@ -12,7 +12,7 @@ require Exporter;
     &file_absolutize &file_normalize
     &file_type &files_filter
     &file_skip &files_skip 
-    &get_spec_files
+    &get_c_files &get_h_files &get_spec_files
 );
 @EXPORT_OK = qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
@@ -98,20 +98,27 @@ sub file_normalize {
     return $_;
 }
 
-sub get_spec_files {
-    $output->progress("$wine_dir: searching for *.spec");
+sub _get_files {
+    my $extension = shift;
+    my $type = shift;
 
-    my @spec_files = map {
+    $output->progress("$wine_dir: searching for *.$extension");
+
+    my @files = map {
 	s%^\./%%;
 	s%^$wine_dir/%%;
-	if(file_type($_) eq "winelib") {
+	if(file_type($_) eq $type) {
 	    $_;
 	} else {
 	    ();
 	}
-    } split(/\n/, `find $wine_dir -name \\*.spec`);
+    } split(/\n/, `find $wine_dir -name \\*.$extension`);
 
-    return @spec_files;
+    return @files;
 }
+
+sub get_c_files { return _get_files("c", @_); }
+sub get_h_files { return _get_files("h", @_); }
+sub get_spec_files { return _get_files("spec", @_); }
 
 1;

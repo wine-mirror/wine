@@ -89,6 +89,10 @@ REFCLSID
 REFIID
 UINT *
 
+%ptr # --forbidden
+
+int *
+
 %str
 
 LPCSTR

@@ -62,8 +62,9 @@ sub parse_c_file {
 
 	$function->file($file);
 	$function->debug_channels([@$debug_channels]);
-	$function->documentation($documentation);
 	$function->documentation_line($documentation_line);
+	$function->documentation($documentation);
+	$function->function_line($function_line);
 	$function->linkage($linkage);
 	$function->return_type($return_type); 
 	$function->calling_convention($calling_convention);
@@ -255,8 +256,8 @@ sub parse_c_file {
 	    if($internal_name && $level == 0) {
 		&$function_end;
 	    }
-	    next;	    
-	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))
+	    next;
+	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
             ((__cdecl|__stdcall|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
 	    (\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/sx)
         {

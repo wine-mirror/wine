@@ -55,7 +55,7 @@ my %module2type;
 {
     local $_;
 
-    foreach my $spec_file (get_spec_files) {
+    foreach my $spec_file (get_spec_files("winelib")) {
 	my $module;
 	my $type;
 
@@ -177,13 +177,15 @@ sub statements_stub {
     }
 }
 
-my @files = files_skip($options->c_files);
+my @c_files = $options->c_files;
+@c_files = files_skip(@c_files);
+@c_files = files_filter("winelib", @c_files);
 
 my $progress_output;
 my $progress_current = 0;
-my $progress_max = scalar(@files);
+my $progress_max = scalar(@c_files);
 
-foreach my $file (@files) {
+foreach my $file (@c_files) {
     my %functions;
 
     $progress_current++;

@@ -133,6 +133,10 @@ sub is_allowed_module_in_file {
     my $dir = $file;
     $dir =~ s/\/[^\/]*$//;
 
+    if($dir =~ m%^include%) {
+	return 1;
+    }
+
     foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
 	if($$spec_file2module{$spec_file} eq $module) {
 	    return 1;
