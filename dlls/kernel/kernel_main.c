@@ -83,6 +83,9 @@ static BOOL process_attach(void)
     /* Create 16-bit task */
     TASK_CreateMainTask();
 
+    /* Create the shared heap for broken win95 native dlls */
+    HeapCreate( HEAP_SHARED, 0, 0 );
+
     return TRUE;
 }
 

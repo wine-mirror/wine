@@ -1074,8 +1074,8 @@ HANDLE WINAPI HeapCreate(
     SUBHEAP *subheap;
 
     if ( flags & HEAP_SHARED ) {
-        WARN( "Shared Heap requested, returning system heap.\n" );
         if (!systemHeap) HEAP_CreateSystemHeap();
+        else WARN( "Shared Heap requested, returning system heap.\n" );
         return (HANDLE)systemHeap;
     }
 
