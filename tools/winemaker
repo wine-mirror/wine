@@ -2635,7 +2635,7 @@ else
 fi])
 if test -n "$WINE_ROOT"
 then
-  WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine"
+  WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine:$WINE_ROOT/include/wine/windows:$WINE_ROOT/include/windows"
   WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/library"
   WINE_UNICODE_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/unicode"
   WINE_UUID_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/ole"
@@ -2695,7 +2695,7 @@ fi
 
 if test -z "$WINE_INCLUDE_ROOT"
 then
-  WINE_INCLUDE_ROOT=":/usr/include/wine:/usr/local/include/wine:/opt/wine/include:/opt/wine/include/wine";
+  WINE_INCLUDE_ROOT=":/usr/include/wine/windows:/usr/include/wine:/usr/local/include/wine/windows:/opt/wine/include/windows:/opt/wine/include/wine";
 else
   AC_PATH_FILE(WINE_INCLUDE_ROOT,[windef.h],[
     AC_MSG_ERROR([Could not find the Wine headers (windef.h)])
@@ -3080,7 +3080,7 @@ DISTCLEAN_FILES = config.* Makefile Make.rules
 	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
+	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ $<
 
 .PHONY: all install uninstall clean distclean depend dummy
 
