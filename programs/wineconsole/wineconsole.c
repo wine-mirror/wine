@@ -410,28 +410,89 @@ void     WINECON_SetConfig(struct inner_data* data,
         data->curcfg.def_attr = cfg->def_attr;
         SetConsoleTextAttribute(data->hConOut, cfg->def_attr);
     }
-    if (force || data->curcfg.sb_width != cfg->sb_width ||
-        data->curcfg.sb_height != cfg->sb_height)
+    /* now let's look at the window / sb size changes...
+     * since the server checks that sb is always bigger than window, 
+     * we have to take care of doing the operations in the right order
+     */
+    /* a set of macros to make things easier to read 
+     * The Test<A><B> macros test if the <A> (width/height) needs to be changed 
+     * for <B> (window / ScreenBuffer) 
+     * The Change<A><B> actually modify the <B> dimension of <A>.
+     */
+#define TstSBfWidth()   (force || data->curcfg.sb_width != cfg->sb_width)
+#define TstWinWidth()   (force || data->curcfg.win_width != cfg->win_width)
+
+#define ChgSBfWidth()   do {c.X = cfg->sb_width; \
+                            c.Y = data->curcfg.sb_height;\
+                            SetConsoleScreenBufferSize(data->hConOut, c);\
+                        } while (0)
+#define ChgWinWidth()   do {pos.Left = pos.Top = 0; \
+                            pos.Right = cfg->win_width - 1; \
+                            pos.Bottom = data->curcfg.win_height - 1; \
+                            SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
+                        } while (0)
+#define TstSBfHeight()  (force || data->curcfg.sb_height != cfg->sb_height)
+#define TstWinHeight()  (force || data->curcfg.win_height != cfg->win_height)
+
+/* since we're going to apply height after width is done, we use width as defined 
+ * in cfg, and not in data->curcfg because if won't be updated yet */
+#define ChgSBfHeight()  do {c.X = cfg->sb_width; c.Y = cfg->sb_height; \
+                            SetConsoleScreenBufferSize(data->hConOut, c); \
+                        } while (0)
+#define ChgWinHeight()  do {pos.Left = pos.Top = 0; \
+                            pos.Right = cfg->win_width - 1; \
+                            pos.Bottom = cfg->win_height - 1; \
+                            SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
+                        } while (0)
+
+    do
     {
         COORD       c;
-
-        c.X = cfg->sb_width;
-        c.Y = cfg->sb_height;
-
-        /* this shall update (through notif) curcfg */
-        SetConsoleScreenBufferSize(data->hConOut, c);
-    }
-    if (force || data->curcfg.win_width != cfg->win_width ||
-        data->curcfg.win_height != cfg->win_height)
-    {
         SMALL_RECT  pos;
 
-        pos.Left = pos.Top = 0;
-        pos.Right = cfg->win_width - 1;
-        pos.Bottom = cfg->win_height - 1;
-        /* this shall update (through notif) curcfg */
-        SetConsoleWindowInfo(data->hConOut, FALSE, &pos);
-    }
+        if (TstSBfWidth())            
+        {
+            if (TstWinWidth())
+            {
+                /* we're changing both at the same time, do it in the right order */
+                if (cfg->sb_width >= data->curcfg.win_width)
+                {
+                    ChgSBfWidth(); ChgWinWidth();
+                }
+                else
+                {
+                    ChgWinWidth(); ChgSBfWidth();
+                }
+            }
+            else ChgSBfWidth();
+        }
+        else if (TstWinWidth()) ChgWinWidth();
+        if (TstSBfHeight())
+        {
+            if (TstWinHeight())
+            {
+                if (cfg->sb_height >= data->curcfg.win_height)
+                {
+                    ChgSBfHeight(); ChgWinHeight();
+                }
+                else
+                {
+                    ChgWinHeight(); ChgSBfHeight();
+                }
+            }
+            else ChgSBfHeight();
+        }
+        else if (TstWinHeight()) ChgWinHeight();
+    } while (0);
+#undef TstSBfWidth
+#undef TstWinWidth
+#undef ChgSBfWidth
+#undef ChgWinWidth
+#undef TstSBfHeight
+#undef TstWinHeight
+#undef ChgSBfHeight
+#undef ChgWinHeight
+
     data->curcfg.exit_on_die = cfg->exit_on_die;
     if (force || data->curcfg.edition_mode != cfg->edition_mode)
     {
