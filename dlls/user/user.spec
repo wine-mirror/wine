@@ -298,13 +298,13 @@ rsrc	resources/version16.res
 286 pascal16 GetDesktopWindow() GetDesktopWindow16
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup16
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
-289 register keybd_event() keybd_event16
+289 pascal -register keybd_event() keybd_event16
 290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
 291 pascal   SetWindowsHookEx(s_word segptr word word) SetWindowsHookEx16
 292 pascal16 UnhookWindowsHookEx(segptr) UnhookWindowsHookEx16
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
 294 pascal16 LockWindowUpdate(word) LockWindowUpdate16
-299 register mouse_event() mouse_event16
+299 pascal -register mouse_event() mouse_event16
 300 stub UnloadInstalledDrivers # W1.1: USER_FARFRAME
 301 stub EDITWNDPROC # BOZOSLIVEHERE :-))
 302 stub STATICWNDPROC
@@ -575,3 +575,7 @@ rsrc	resources/version16.res
 930 pascal16 MessageBoxEx(word str str word word) MessageBoxEx16
 1000 pascal16 SetProcessDefaultLayout(long) SetProcessDefaultLayout16
 1001 pascal16 GetProcessDefaultLayout(ptr) GetProcessDefaultLayout16
+
+# Wine internal functions
+1010 pascal __wine_call_wndproc_32A(word word word long long) __wine_call_wndproc_32A
+1011 pascal __wine_call_wndproc_32W(word word word long long) __wine_call_wndproc_32W
