@@ -669,7 +669,7 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 {
     WORD 		 index = 0;
-    HPALETTE16		 hPal = (dc)? dc->w.hPalette: STOCK_DEFAULT_PALETTE;
+    HPALETTE16		 hPal = (dc)? dc->w.hPalette: GetStockObject(DEFAULT_PALETTE);
     unsigned char	 spec_type = color >> 24;
     PALETTEOBJ* 	 palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 

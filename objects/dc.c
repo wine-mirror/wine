@@ -34,12 +34,12 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->hClipRgn            = 0;
     win_dc_info->hVisRgn             = 0;
     win_dc_info->hGCClipRgn          = 0;
-    win_dc_info->hPen                = STOCK_BLACK_PEN;
-    win_dc_info->hBrush              = STOCK_WHITE_BRUSH;
-    win_dc_info->hFont               = STOCK_SYSTEM_FONT;
+    win_dc_info->hPen                = GetStockObject( BLACK_PEN );
+    win_dc_info->hBrush              = GetStockObject( WHITE_BRUSH );
+    win_dc_info->hFont               = GetStockObject( SYSTEM_FONT );
     win_dc_info->hBitmap             = 0;
     win_dc_info->hDevice             = 0;
-    win_dc_info->hPalette            = STOCK_DEFAULT_PALETTE;
+    win_dc_info->hPalette            = GetStockObject( DEFAULT_PALETTE );
     win_dc_info->ROPmode             = R2_COPYPEN;
     win_dc_info->polyFillMode        = ALTERNATE;
     win_dc_info->stretchBltMode      = BLACKONWHITE;
@@ -739,9 +739,9 @@ BOOL WINAPI DeleteDC( HDC hdc )
     
     if (!(dc->w.flags & DC_SAVED))
     {
-	SelectObject( hdc, STOCK_BLACK_PEN );
-	SelectObject( hdc, STOCK_WHITE_BRUSH );
-	SelectObject( hdc, STOCK_SYSTEM_FONT );
+	SelectObject( hdc, GetStockObject(BLACK_PEN) );
+	SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
+	SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }
 

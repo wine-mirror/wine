@@ -1683,7 +1683,7 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
 {
     WORD wBkgPalette = 1;
 
-    if (!bForceBackground && (hPal != STOCK_DEFAULT_PALETTE))
+    if (!bForceBackground && (hPal != GetStockObject(DEFAULT_PALETTE)))
     {
         HWND hwnd = WindowFromDC( hDC );
         if (hwnd)

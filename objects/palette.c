@@ -385,7 +385,7 @@ BOOL WINAPI AnimatePalette(
 {
     TRACE("%04x (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
 
-    if( hPal != STOCK_DEFAULT_PALETTE ) 
+    if( hPal != GetStockObject(DEFAULT_PALETTE) )
     {
         PALETTEOBJ* palPtr = (PALETTEOBJ *)GDI_GetObjPtr(hPal, PALETTE_MAGIC);
         if (!palPtr) return FALSE;
@@ -578,7 +578,7 @@ COLORREF WINAPI GetNearestColor(
 
     if ( (dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC )) )
     {
-        HPALETTE hpal = (dc->w.hPalette)? dc->w.hPalette : STOCK_DEFAULT_PALETTE;
+        HPALETTE hpal = (dc->w.hPalette)? dc->w.hPalette : GetStockObject( DEFAULT_PALETTE );
         palObj = GDI_GetObjPtr( hpal, PALETTE_MAGIC );
         if (!palObj) {
             GDI_ReleaseObj( hdc );
@@ -672,7 +672,7 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
     
     if(dc->w.hPalette != hLastRealizedPalette )
     {
-	if( dc->w.hPalette == STOCK_DEFAULT_PALETTE ) {
+	if( dc->w.hPalette == GetStockObject( DEFAULT_PALETTE )) {
             realized = RealizeDefaultPalette16( hdc );
 	    GDI_ReleaseObj( hdc );
 	    return (UINT16)realized;
@@ -690,7 +690,7 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
         realized = PALETTE_Driver->
 	  pSetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
 		      (dc->w.hPalette != hPrimaryPalette) ||
-		      (dc->w.hPalette == STOCK_DEFAULT_PALETTE));
+		      (dc->w.hPalette == GetStockObject( DEFAULT_PALETTE )));
 	hLastRealizedPalette = dc->w.hPalette;
 	GDI_ReleaseObj( dc->w.hPalette );
     }
@@ -718,12 +718,12 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 
     if (!(dc->w.flags & DC_MEMORY))
     {
-        palPtr = (PALETTEOBJ*)GDI_GetObjPtr(STOCK_DEFAULT_PALETTE, PALETTE_MAGIC );
+        palPtr = (PALETTEOBJ*)GDI_GetObjPtr( GetStockObject(DEFAULT_PALETTE), PALETTE_MAGIC );
         if (palPtr)
         {
             /* lookup is needed to account for SetSystemPaletteUse() stuff */
             ret = PALETTE_Driver->pUpdateMapping(palPtr);
-            GDI_ReleaseObj( STOCK_DEFAULT_PALETTE );
+            GDI_ReleaseObj( GetStockObject(DEFAULT_PALETTE) );
         }
     }
     GDI_ReleaseObj( hdc );
