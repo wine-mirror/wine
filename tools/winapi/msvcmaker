@@ -87,7 +87,7 @@ sub read_spec_file {
     }
 }
 
-my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv graphics objects);
+my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv objects);
 my @ntdll_dirs = qw(files misc);
 my @user32_dirs = qw(controls dlls/user/dde windows);
 
