@@ -35,7 +35,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* if you use OWN_WINDOW, don't use SYNC_UPDATE, or you may get trouble */
 /* #define SYNC_UPDATE */
-#define OWN_WINDOW
+/*
+ * FIXME: This does not work any more because the created window has its own 
+ *        thread queue that cannot be manipulated by application threads.
+ * #define OWN_WINDOW 
+ */
 
 #ifdef OWN_WINDOW
 static void User_create_own_window(IDirectDrawSurfaceImpl* This);
