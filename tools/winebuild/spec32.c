@@ -389,7 +389,7 @@ static void output_register_funcs( FILE *outfile )
         name = make_internal_name( odp, "regs" );
         fprintf( outfile,
                  "asm(\".align 4\\n\\t\"\n"
-                 "    \".type " PREFIX "%s,@function\\n\\t\"\n"
+                 "    \"" __ASM_FUNC("%s") "\\n\\t\"\n"
                  "    \"" PREFIX "%s:\\n\\t\"\n"
                  "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
                  "    \".long " PREFIX "%s\\n\\t\"\n"

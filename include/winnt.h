@@ -722,16 +722,16 @@ typedef HANDLE *PHANDLE;
 #endif
 
 #ifdef NEED_TYPE_IN_DEF
-# define __ASM_TYPE(name) ".def " __ASM_NAME(#name) "; .scl 2; .type 32; .endef\n"
+# define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
 #else
-# define __ASM_TYPE(name) ".type " __ASM_NAME(#name) ",@function\n"
+# define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
 #endif
 
 #ifdef __GNUC__
 # define __ASM_GLOBAL_FUNC(name,code) \
       __asm__( ".align 4\n\t" \
                ".globl " __ASM_NAME(#name) "\n\t" \
-               __ASM_TYPE(name) \
+               __ASM_FUNC(#name) "\n" \
                __ASM_NAME(#name) ":\n\t" \
                code );
 #else  /* __GNUC__ */
@@ -739,7 +739,7 @@ typedef HANDLE *PHANDLE;
       void __asm_dummy_##name(void) { \
           asm( ".align 4\n\t" \
                ".globl " __ASM_NAME(#name) "\n\t" \
-               __ASM_TYPE(name) \
+               __ASM_FUNC(#name) "\n" \
                __ASM_NAME(#name) ":\n\t" \
                code ); \
       }

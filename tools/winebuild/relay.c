@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "winnt.h"
 #include "thread.h"
 #include "stackframe.h"
@@ -94,7 +95,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 #ifdef USE_STABS
     fprintf( outfile, ".stabs \"__wine_call_from_16_%s:F1\",36,0,0," PREFIX "__wine_call_from_16_%s\n", name, name);
 #endif
-    fprintf( outfile, "\t.type " PREFIX "__wine_call_from_16_%s,@function\n", name );
+    fprintf( outfile, "\t" __ASM_FUNC("__wine_call_from_16_%s") "\n", name );
     fprintf( outfile, "\t.globl " PREFIX "__wine_call_from_16_%s\n", name );
     fprintf( outfile, PREFIX "__wine_call_from_16_%s:\n", name );
 
@@ -452,7 +453,7 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     fprintf( outfile, ".stabs \"wine_call_to_16_%s:F1\",36,0,0," PREFIX "wine_call_to_16_%s\n", 
 	     name, name);
 #endif
-    fprintf( outfile, "\t.type " PREFIX "wine_call_to_16_%s,@function\n", name );
+    fprintf( outfile, "\t" __ASM_FUNC("wine_call_to_16_%s") "\n", name );
     fprintf( outfile, "\t.globl " PREFIX "wine_call_to_16_%s\n", name );
     fprintf( outfile, PREFIX "wine_call_to_16_%s:\n", name );
 
@@ -688,7 +689,7 @@ static void BuildRet16Func( FILE *outfile )
      *        run-time relocation of the SYSLEVEL_Win16CurrentTeb symbol
      */
 
-    fprintf( outfile, "\n\t.type " PREFIX "CallTo16_Ret,@function\n" );
+    fprintf( outfile, "\n\t" __ASM_FUNC("CallTo16_Ret") "\n" );
     fprintf( outfile, "\t.globl " PREFIX "CallTo16_Ret\n" );
     fprintf( outfile, PREFIX "CallTo16_Ret:\n" );
 

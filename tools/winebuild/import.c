@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "winnt.h"
 #include "build.h"
 
@@ -324,7 +325,7 @@ int output_imports( FILE *outfile )
     {
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
-            fprintf( outfile, "    \"\\t.type " PREFIX "%s,@function\\n\"\n",
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
                      dll_imports[i]->imports[j] );
             fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
                      dll_imports[i]->imports[j] );
