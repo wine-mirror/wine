@@ -558,14 +558,18 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
  */
 RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
 {
-  TRACE("\n");
+  RPC_STATUS rslt = RPC_S_OK;
 
-  RPCRT4_start_listen();
-  while (listen_count > -1) {
+  TRACE("\n");
+  if (!std_listen)
+    if ( (rslt = RpcServerListen(1, 0, TRUE)) != RPC_S_OK )
+      return rslt;
+  
+  while (std_listen) {
     WaitForSingleObject(mgr_event, 1000);
   }
 
-  return RPC_S_OK;
+  return rslt;
 }
 
 /***********************************************************************
