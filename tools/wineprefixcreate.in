@@ -91,12 +91,22 @@ else
 fi
 
 WINEPREFIX=`cd "$WINEPREFIX" && pwd`
-CROOT="$WINEPREFIX/drive_c"
+
+# Create the drive symlinks
+
+if [ ! -d "$WINEPREFIX/dosdevices" ]
+then
+    mkdir "$WINEPREFIX/dosdevices"
+    [ -d "$WINEPREFIX/drive_c" ] || mkdir "$WINEPREFIX/drive_c"
+    ln -s "../drive_c" "$WINEPREFIX/dosdevices/c:"
+    ln -s "/" "$WINEPREFIX/dosdevices/z:"
+fi
+
+CROOT="$WINEPREFIX/dosdevices/c:"
 
 # Create the directory tree
 
 for i in \
-    "$CROOT" \
     "$CROOT/windows" \
     "$CROOT/windows/command" \
     "$CROOT/windows/fonts" \
@@ -113,15 +123,6 @@ for i in \
 do
     [ -d "$i" ] || mkdir "$i"
 done
-
-# Create the drive symlinks
-
-if [ ! -d "$WINEPREFIX/dosdevices" ]
-then
-    mkdir "$WINEPREFIX/dosdevices"
-    ln -s "../drive_c" "$WINEPREFIX/dosdevices/c:"
-    ln -s "/" "$WINEPREFIX/dosdevices/z:"
-fi
 
 # Create the application symlinks
 

@@ -26,10 +26,8 @@ sysconfdir=$prefix/etc        # where wine.conf and the global registry are supp
 bindir=$prefix/bin            # where winelib apps will be (or are) installed
 libdir=$prefix/lib            # where libwine.so will be (or is) installed
 exdir=documentation/samples   # where the sample system.ini resides
-GCONF=$sysconfdir/wine.conf   # default path of the wine.conf global config file
 LCONF=~/.wine/config          # default path of the local config file
 BINDIST=no                    # whether called from a binary package config script
-DOGLOBALCONF=auto             # whether to autogenerate wine.conf
 DOLOCALCONF=auto              # whether to autogenerate localconf
 DOWCHK=auto                   # whether to autoconfigure existing-windows installation
 DOWINE=auto                   # whether to autoconfigure no-windows installation
@@ -42,8 +40,6 @@ WINECONF=tools/wineconf       # path to the wineconf perl script
 
 # this is only for no-windows installs
 WINEINI=$exdir/config         # path to the default wine config file (also used by wineconf)
-RUNDLL32=programs/rundll32/rundll32       # path to the rundll32 winelib application
-INFSCRIPT=tools/wine.inf      # path to the default .inf script
 # CROOT=/var/wine             # path of the fake Drive C (asks user if not set)
 #--- end of defaults
 
@@ -90,54 +86,6 @@ function conf_yesno_answer {
 function conf_string_answer {
   echo -n "$1"
   read ANSWER
-}
-
-function create_windows_directories {
-  for tdir in "$CROOT/windows" "$CROOT/windows/system" \
-              "$CROOT/windows/command" \
-              "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
-              "$CROOT/Program Files" "$CROOT/Program Files/Common Files" \
-              "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator" \
-              "$CROOT/windows/Fonts" "$CROOT/windows/Start Menu/Programs/Startup"
-  do [ -d "$tdir" ] || mkdir "$tdir"
-  done
-  cp $INFSCRIPT "$CROOT/windows/system/wine.inf"
-}
-
-#creates symbolic link in windows directory to installed winelib application
-#parameters:
-# - name of the installed winelib application
-# - full path to application in the winelib directory
-function link_app {
-  if [ "$WINEINSTALLED" = 'no' ]
-  then {
-    ln -sf $PWD/programs/$1/$1.exe.so $2
-  }
-  else {
-    ln -sf $libdir/wine/$1.exe.so $2
-  }
-  fi
-}
-
-#puts windows applications replacements to windows directories,
-#configures them
-function configure_wine_applications {
-  link_app start        "$CROOT/windows/command/start.exe"
-  link_app notepad      "$CROOT/windows/notepad.exe"
-  link_app regedit      "$CROOT/windows/regedit.exe"
-  link_app rundll32     "$CROOT/windows/rundll32.exe"
-  link_app wcmd         "$CROOT/windows/system/wcmd.exe"
-  link_app control      "$CROOT/windows/system/control.exe"
-  link_app winhelp      "$CROOT/windows/system/help.exe"
-  link_app notepad      "$CROOT/windows/system/notepad.exe"
-  link_app progman      "$CROOT/windows/system/progman.exe"
-  link_app regsvr32     "$CROOT/windows/system/regsvr32.exe"
-  link_app winemine     "$CROOT/windows/system/winmine.exe"
-  link_app winver       "$CROOT/windows/system/winver.exe"
-  link_app uninstaller  "$CROOT/windows/uninstall.exe"
-  link_app winhelp      "$CROOT/windows/winhelp.exe"
-  link_app winhelp      "$CROOT/windows/winhlp32.exe"
-  link_app winebrowser  "$CROOT/windows/winebrowser.exe"
 }
 
 # startup...
@@ -356,25 +304,6 @@ then {
 fi # BINDIST
 
 # now check whether we should generate wine.conf
-if [ -z "$DOGLOBALCONF" ]
-then
-  DOGLOBALCONF=auto
-fi
-
-if [ "$DOGLOBALCONF" = 'auto' ]
-then {
-  # see if we already have a system wine.conf
-  if [ ! -f $GCONF ] && [ `whoami` = 'root' ]
-  then
-    DOGLOBALCONF=no
-    echo "Creation of a global config file is not supported in wineinstall at this"
-    echo "time.  When the configuration architecture is cleaned up this functionality"
-    echo "will be restored to wineinstall."
-    echo
-  fi
-}
-fi
-
 if [ "$DOLOCALCONF" = 'auto' ]
 then {
   # see if the user is root, if so, explicitly ask them if they want a
@@ -491,7 +420,7 @@ if [ "$DOWINE" = 'yes' ]
 then {
   # set an appropriate DCROOT
   if [ `whoami` != 'root' ]
-  then DCROOT=~/c
+  then DCROOT=~/.wine/drive_c
   else DCROOT=/c
   fi
 
@@ -519,8 +448,23 @@ then {
   done
   echo "Configuring Wine for a no-windows install in $CROOT..."
 
-    create_windows_directories
-    configure_wine_applications
+  if [ ! -d ~/.wine/dosdevices ]
+  then
+    mkdir ~/.wine/dosdevices
+    ln -s /mnt/fd0 ~/.wine/dosdevices/a:
+    ln -s $CROOT ~/.wine/dosdevices/c:
+    ln -s /cdrom ~/.wine/dosdevices/d:
+    ln -s /tmp ~/.wine/dosdevices/e:
+    ln -s ~ ~/.wine/dosdevices/f:
+    ln -s / ~/.wine/dosdevices/z:
+  fi
+
+  if [ "$WINEINSTALLED" = 'no' ]
+  then
+      tools/wineprefixcreate --update --use-wine-tree .
+  else
+      wineprefixcreate --update
+  fi
 
   # create $LCONF using the default config file $WINEINI
   if [ "$DOLOCALCONF" = 'yes' ]
@@ -551,83 +495,6 @@ then
   cp $TMPCONF $LCONF > /dev/null
 else
   DOREG=no
-fi
-
-#install the global config file $GCONF
-if [ "$DOGLOBALCONF" = 'yes' ]
-then
-  if [ ! -f $sysconfdir ]
-  then
-    mkdir -p $sysconfdir
-  fi
-
-  cp $TMPCONF $GCONF > /dev/null
-fi
-
-# check whether we need to install default registry
-# (not to be done if windows registry exists)
-if [ "$DOREG" = 'auto' ]
-then {
-  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^\"Path\" = \"\(.*\)\"/\1/p' $LCONF`
-  echo "Checking for real Windows registry..."
-  if [ -f "$CROOT/windows/system.dat" ]
-  then DOREG=no
-  elif [ -f "$CROOT/windows/system32/config/system" ]
-  then DOREG=no
-  elif [ -f "$CROOT/WINNT/system32/config/system" ]
-  then DOREG=no
-  else DOREG=yes
-  fi
-  if [ "$DOREG" = 'yes' ]
-  then echo "Not found, default Wine registry will be installed."
-  else echo "Windows registry found, will not install default Wine registry."
-  fi
-  echo
-}
-fi
-
-# install default registry entries
-if [ "$DOREG" = 'yes' ]
-then {
-  if [ "$BINDIST" = 'no' ]
-  then {
-    echo "Compiling rundll32..."
-    (cd programs/rundll32; make)
-    echo
-  }
-  fi
-  echo "Preparing to install default Wine registry entries..."
-
-  # Check if dosdevices exists and create it if necessary
-  if [ ! -d ~/.wine/dosdevices ]
-  then
-    mkdir ~/.wine/dosdevices
-    ln -s /mnt/fd0 ~/.wine/dosdevices/a:
-    ln -s $CROOT ~/.wine/dosdevices/c:
-    ln -s /cdrom ~/.wine/dosdevices/d:
-    ln -s /tmp ~/.wine/dosdevices/e:
-    ln -s ~ ~/.wine/dosdevices/f:
-    ln -s / ~/.wine/dosdevices/z:
-  fi
-
-  echo "Installing default Wine registry entries..."
-  echo
-  if ! $RUNDLL32 setupapi.dll,InstallHinfSection DefaultInstall 128 $INFSCRIPT > /dev/null
-  then {
-    echo "Registry install failed."
-    conf_reset_question regedit_error
-    conf_question high regedit_error
-    exit 1
-  }
-  else {
-    echo
-    echo "Registry entries successfully installed."
-  }
-  fi
-  if [ "$SYSREG" = 'auto' ]
-  then SYSREG=yes
-  fi
-}
 fi
 
 # make root's registry global, if desired
