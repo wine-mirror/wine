@@ -4293,34 +4293,40 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
     if (lpmii->fMask & MIIM_TYPE) {
 	lpmii->fType = menu->fType;
 	switch (MENU_ITEM_TYPE(menu->fType)) {
-		case MF_STRING:
-		    if (menu->text && lpmii->dwTypeData && lpmii->cch) {
-			if (unicode) {
-			    lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text, lpmii->cch);
-			    lpmii->cch = lstrlenW((LPWSTR)menu->text);
-			} else {
-			    lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
-			    lpmii->cch = lstrlenA(menu->text);
-			}
-		    }
-		    break;
-		case MF_OWNERDRAW:
-		case MF_BITMAP:
-		    lpmii->dwTypeData = menu->text;
-		    /* fall through */
-		default:
-		    lpmii->cch = 0;
+	case MF_STRING:
+ 	    if (menu->text) {
+	        int len = lstrlenA(menu->text);
+	        if(lpmii->dwTypeData && lpmii->cch) {
+		    if (unicode)
+		        lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text,
+				     lpmii->cch);
+		    else
+		        lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
+		    /* if we've copied a substring we return its length */
+		    if(lpmii->cch <= len)
+		        lpmii->cch--;
+		} else /* return length of string */
+		    lpmii->cch = len;
+	    }
+	    break;
+	case MF_OWNERDRAW:
+	case MF_BITMAP:
+	    lpmii->dwTypeData = menu->text;
+	    /* fall through */
+	default:
+	    lpmii->cch = 0;
 	}
     }
 
     if (lpmii->fMask & MIIM_STRING) {
-	if (unicode) {
-	    lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text, lpmii->cch);
-	    lpmii->cch = lstrlenW((LPWSTR)menu->text);
-	} else {
-	    lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
-	    lpmii->cch = lstrlenA(menu->text);
+        if(lpmii->dwTypeData && lpmii->cch) {
+	    if (unicode)
+	        lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text,
+			     lpmii->cch);
+	    else
+	        lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
 	}
+	lpmii->cch = lstrlenA(menu->text);
     }
 
     if (lpmii->fMask & MIIM_FTYPE)
