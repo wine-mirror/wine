@@ -114,6 +114,13 @@ BEGIN
             MENUITEM "&Dana binarna",         ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&Dana liczbowa (DWORD)",ID_EDIT_NEW_DWORDVALUE
         END
+        MENUITEM SEPARATOR
+        MENUITEM "U&suñ\tDel",                  ID_EDIT_DELETE
+        MENUITEM "Z&mieñ nazwê\tF2",          ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopiuj nazwê klucza",         ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Znajd<9f>...\tCtrl+F",          ID_EDIT_FIND, GRAYED
   END
 END
 

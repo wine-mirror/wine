@@ -115,6 +115,13 @@ BEGIN
             MENUITEM "&Binarní polo¾ka",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD polo¾ka",                ID_EDIT_NEW_DWORDVALUE
         END
+        MENUITEM SEPARATOR
+        MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
+        MENUITEM "Pøe&jmenovat\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopírovat název klíèe",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Najít\tCtrl+F",               ID_EDIT_FIND, GRAYED
   END
 END
 

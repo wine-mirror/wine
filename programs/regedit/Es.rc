@@ -114,6 +114,13 @@ BEGIN
 		MENUITEM "Valor &binario",      ID_EDIT_NEW_BINARYVALUE
 		MENUITEM "Valor &DWORD",        ID_EDIT_NEW_DWORDVALUE
 	END
+        MENUITEM SEPARATOR
+        MENUITEM "&Eliminar\tDel",              ID_EDIT_DELETE
+        MENUITEM "&Renombrar\tF2",              ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Copiar valor de la clave",   ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Buscar\tCtrl+F",             ID_EDIT_FIND, GRAYED
   END
 END
 
