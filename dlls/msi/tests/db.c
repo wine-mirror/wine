@@ -41,6 +41,9 @@ static void test_msidatabase(void)
 
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database" );
+
+    res = DeleteFile( szName );
+    ok( res == TRUE, "Falled to delete database\n" );
 }
 
 void test_msiinsert(void)
