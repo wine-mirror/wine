@@ -1100,6 +1100,77 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
     TRACE("End\n");    
 }
 
+#define CPNT(cpnt,i,n,type) ((type*)(lpD3DDrawPrimStrideData->cpnt.lpvData+i*lpD3DDrawPrimStrideData->cpnt.dwStride))[n]
+
+static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
+			     D3DPRIMITIVETYPE d3dptPrimitiveType,
+			     DWORD d3dvtVertexType,
+			     LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+			     DWORD dwVertexCount,
+			     LPWORD dwIndices,
+			     DWORD dwIndexCount,
+			     DWORD dwFlags)
+{
+    IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
+    if (TRACE_ON(ddraw)) {
+        TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
+    }
+
+    ENTER_GL();
+    draw_primitive_handle_GL_state(glThis,
+				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
+				   (d3dvtVertexType & D3DFVF_NORMAL) == 0);
+    draw_primitive_start_GL(d3dptPrimitiveType);
+
+    /* Some fast paths first before the generic case.... */
+    if (d3dvtVertexType == D3DFVF_VERTEX) {
+	int index;
+	
+	for (index = 0; index < dwIndexCount; index++) {
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	  
+	    glNormal3f(CPNT(normal,i,0,D3DVALUE),CPNT(normal,i,1,D3DVALUE),CPNT(normal,i,2,D3DVALUE));
+	    glTexCoord2f(CPNT(textureCoords[1],i,0,D3DVALUE),CPNT(textureCoords[1],i,1,D3DVALUE));
+	    glVertex3f(CPNT(position,i,0,D3DVALUE),CPNT(position,i,1,D3DVALUE),CPNT(position,i,2,D3DVALUE));
+	    TRACE(" %f %f %f / %f %f %f (%f %f)\n",
+		  CPNT(position,i,0,D3DVALUE),CPNT(position,i,1,D3DVALUE),CPNT(position,i,2,D3DVALUE),
+		  CPNT(normal,i,0,D3DVALUE),CPNT(normal,i,1,D3DVALUE),CPNT(normal,i,2,D3DVALUE),
+		  CPNT(textureCoords[1],i,0,D3DVALUE),CPNT(textureCoords[1],i,1,D3DVALUE));
+	    
+	}
+    } else if (d3dvtVertexType == D3DFVF_LVERTEX) {
+	int index;
+	
+	for (index = 0; index < dwIndexCount; index++) {
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	    
+	    glColor4ub((CPNT(diffuse,i,0,DWORD) >> 24) & 0xFF,
+		       (CPNT(diffuse,i,0,DWORD) >> 16) & 0xFF,
+		       (CPNT(diffuse,i,0,DWORD) >>  8) & 0xFF,
+		       (CPNT(diffuse,i,0,DWORD) >>  0) & 0xFF);
+	    /* Todo : handle specular... */
+	    glTexCoord2f(CPNT(textureCoords[1],i,0,D3DVALUE),CPNT(textureCoords[1],i,1,D3DVALUE));
+	    glVertex3f(CPNT(position,i,0,D3DVALUE),CPNT(position,i,1,D3DVALUE),CPNT(position,i,2,D3DVALUE));
+	    TRACE(" %f %f %f  / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
+		  CPNT(position,i,0,D3DVALUE),CPNT(position,i,1,D3DVALUE),CPNT(position,i,2,D3DVALUE),
+		  (CPNT(diffuse,i,0,DWORD) >> 24) & 0xFF,
+		  (CPNT(diffuse,i,0,DWORD) >> 16) & 0xFF,
+		  (CPNT(diffuse,i,0,DWORD) >>  8) & 0xFF,
+		  (CPNT(diffuse,i,0,DWORD) >>  0) & 0xFF,
+		  (CPNT(specular,i,0,DWORD) >> 24) & 0xFF,
+		  (CPNT(specular,i,0,DWORD) >> 16) & 0xFF,
+		  (CPNT(specular,i,0,DWORD) >>  8) & 0xFF,
+		  (CPNT(specular,i,0,DWORD) >>  0) & 0xFF,
+		  CPNT(textureCoords[0],i,0,D3DVALUE),CPNT(textureCoords[0],i,1,D3DVALUE));
+	} 
+    }
+    
+    glEnd();
+    LEAVE_GL();
+    TRACE("End\n");    
+}
+
+#undef CPNT
 
 HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_3T_DrawPrimitive(LPDIRECT3DDEVICE7 iface,
@@ -1132,6 +1203,36 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive(LPDIRECT3DDEVICE7 iface,
 
     draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
     
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
+                                                   D3DPRIMITIVETYPE d3dptPrimitiveType,
+                                                   DWORD dwVertexType,
+                                                   LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+                                                   DWORD dwVertexCount,
+                                                   DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, dwFlags);
+    draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, NULL, dwVertexCount, dwFlags);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
+                                                          D3DPRIMITIVETYPE d3dptPrimitiveType,
+                                                          DWORD dwVertexType,
+                                                          LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+                                                          DWORD dwVertexCount,
+                                                          LPWORD lpIndex,
+                                                          DWORD dwIndexCount,
+                                                          DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
+    draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
     return DD_OK;
 }
 
@@ -1315,8 +1416,8 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(DrawIndexedPrimitive) GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive,
     XCAST(SetClipStatus) Main_IDirect3DDeviceImpl_7_3T_2T_SetClipStatus,
     XCAST(GetClipStatus) Main_IDirect3DDeviceImpl_7_3T_2T_GetClipStatus,
-    XCAST(DrawPrimitiveStrided) Main_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided,
-    XCAST(DrawIndexedPrimitiveStrided) Main_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided,
+    XCAST(DrawPrimitiveStrided) GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided,
+    XCAST(DrawIndexedPrimitiveStrided) GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided,
     XCAST(DrawPrimitiveVB) Main_IDirect3DDeviceImpl_7_DrawPrimitiveVB,
     XCAST(DrawIndexedPrimitiveVB) Main_IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility,
