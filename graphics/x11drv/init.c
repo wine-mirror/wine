@@ -145,7 +145,7 @@ DeviceCaps X11DRV_DevCaps = {
 /* version */		0, 
 /* technology */	DT_RASDISPLAY,
 /* size, resolution */	0, 0, 0, 0, 0, 
-/* device objects */	1, 16 + 6, 16, 0, 0, 100, 0,	
+/* device objects */	1, -1, -1, 0, 0, -1, 1152,	
 /* curve caps */	CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
 			CC_WIDE | CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT,
 /* line caps */		LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
