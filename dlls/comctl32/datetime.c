@@ -91,7 +91,8 @@ extern int MONTHCAL_MonthLength(int month, int year);
 #define TWOLETTERAMPM   0x62
 #define ONEDIGITYEAR    0x71
 #define TWODIGITYEAR    0x72
-#define FULLYEAR        0x73
+#define INVALIDFULLYEAR 0x73      /* FIXME - yyy is not valid - we'll treat it as yyyy */
+#define FULLYEAR        0x74
 #define FORMATCALLBACK  0x81      /* -> maximum of 0x80 callbacks possible */
 #define FORMATCALLMASK  0x80
 #define DT_STRING 	0x0100
@@ -109,7 +110,7 @@ static BOOL DATETIME_SendSimpleNotify (HWND hwnd, UINT code);
 static BOOL DATETIME_SendDateTimeChangeNotify (HWND hwnd);
 extern void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to);
 static const char *allowedformatchars = {"dhHmMstyX'"};
-static const int maxrepetition [] = {4,2,2,2,4,2,2,3,-1,-1};
+static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1,-1};
 
 
 static LRESULT
@@ -123,7 +124,7 @@ DATETIME_GetSystemTime (HWND hwnd, WPARAM wParam, LPARAM lParam )
   if (!lParam) return GDT_NONE;
 
   if ((dwStyle & DTS_SHOWNONE) &&
-       (SendMessageA (infoPtr->hwndCheckbut, BM_GETCHECK, 0, 0)))
+       (SendMessageA (infoPtr->hwndCheckbut, BM_GETCHECK, 0, 0) == BST_UNCHECKED))
         return GDT_NONE;
 
   MONTHCAL_CopyTime (&infoPtr->date, lprgSysTimeArray);
@@ -138,15 +139,22 @@ DATETIME_SetSystemTime (HWND hwnd, WPARAM wParam, LPARAM lParam )
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
   SYSTEMTIME *lprgSysTimeArray=(SYSTEMTIME *) lParam;
 
-  TRACE("%04x %08lx\n",wParam,lParam);
+  TRACE("%p %04x %08lx\n",hwnd, wParam, lParam);
   if (!lParam) return 0;
 
-  if (lParam==GDT_VALID)
-  	MONTHCAL_CopyTime (lprgSysTimeArray, &infoPtr->date);
-  if (lParam==GDT_NONE) {
-	infoPtr->dateValid=FALSE;
-    SendMessageA (infoPtr->hwndCheckbut, BM_SETCHECK, 0, 0);
-	}
+  TRACE("%04d/%02d/%02d %02d:%02d:%02d)\n",
+        lprgSysTimeArray->wYear, lprgSysTimeArray->wMonth, lprgSysTimeArray->wDay,
+        lprgSysTimeArray->wHour, lprgSysTimeArray->wMinute, lprgSysTimeArray->wSecond);
+
+  if (wParam==GDT_VALID) {
+      infoPtr->dateValid = TRUE;
+      MONTHCAL_CopyTime (lprgSysTimeArray, &infoPtr->date);
+      SendMessageA (infoPtr->hwndCheckbut, BM_SETCHECK, BST_CHECKED, 0);
+  } else if (wParam==GDT_NONE) {
+      infoPtr->dateValid = FALSE;
+      SendMessageA (infoPtr->hwndCheckbut, BM_SETCHECK, BST_UNCHECKED, 0);
+  }
+  InvalidateRect(hwnd, NULL, TRUE);
   return 1;
 }
 
@@ -470,6 +478,7 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result, int resultS
 	case TWODIGITYEAR:
 		sprintf (result,"%.2d",date.wYear-100* (int) floor(date.wYear/100));
 		break;
+        case INVALIDFULLYEAR:
 	case FULLYEAR:
 		sprintf (result,"%d",date.wYear);
 		break;
@@ -926,6 +935,41 @@ DATETIME_Paint (HWND hwnd, WPARAM wParam)
 
 
 static LRESULT
+DATETIME_Button_Command (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr(hwnd);
+
+    switch(HIWORD(wParam)) {
+    case BN_CLICKED:
+    {
+        DWORD state = SendMessageA((HWND)lParam, BM_GETCHECK, 0, 0);
+        if(state == BST_CHECKED)
+            infoPtr->dateValid = TRUE;
+        else
+            infoPtr->dateValid = FALSE;
+        InvalidateRect(hwnd, NULL, TRUE);
+        return 0;
+    }
+    default:
+        return 0;
+    }
+}
+          
+        
+        
+static LRESULT
+DATETIME_Command (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr(hwnd);
+
+    TRACE("%08x %08lx\n", wParam, lParam);
+    TRACE("hwndbutton = %p\n", infoPtr->hwndCheckbut);
+    if(infoPtr->hwndCheckbut == (HWND)lParam)
+        return DATETIME_Button_Command(hwnd, wParam, lParam);
+    return 0;
+}
+
+static LRESULT
 DATETIME_ParentNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
@@ -1283,6 +1327,9 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
 	return DATETIME_Destroy (hwnd, wParam, lParam);
+
+    case WM_COMMAND:
+        return DATETIME_Command (hwnd, wParam, lParam);
 
     default:
 	if ((uMsg >= WM_USER) && (uMsg < WM_APP))
