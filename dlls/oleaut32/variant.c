@@ -4640,3 +4640,35 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
 
     return i;
 }
+
+
+/**********************************************************************
+ *              VarBstrCmp [OLEAUT32.440]
+ *
+ * flags can be: 
+ *   NORM_IGNORECASE, NORM_IGNORENONSPACE, NORM_IGNORESYMBOLS
+ *   NORM_IGNORESTRINGWIDTH, NORM_IGNOREKANATYPE, NORM_IGNOREKASHIDA
+ *
+ */
+HRESULT WINAPI VarBstrCmp(BSTR left, BSTR right, LCID lcid, DWORD flags)
+{
+    DWORD r;
+
+    FIXME("( %s %s %ld %lx ) partial stub\n", debugstr_w(left), debugstr_w(right), lcid, flags);
+
+    if((!left) || (!right))
+        return VARCMP_NULL;
+
+    if(flags&NORM_IGNORECASE)
+        r = lstrcmpiW(left,right);
+    else
+        r = lstrcmpW(left,right);
+
+    if(r<0)
+        return VARCMP_LT;
+    if(r>0)
+        return VARCMP_GT;
+
+    return VARCMP_EQ;
+}
+
