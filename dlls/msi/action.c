@@ -160,6 +160,8 @@ static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
 static UINT ACTION_CreateShortcuts(MSIPACKAGE *package);
 static UINT ACTION_PublishProduct(MSIPACKAGE *package);
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package);
+static UINT ACTION_SelfRegModules(MSIPACKAGE *package);
+static UINT ACTION_PublishFeatures(MSIPACKAGE *package);
 
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -175,7 +177,8 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, const LPWSTR source,
 static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data);
 static LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name,
                            BOOL source, BOOL set_prop, MSIFOLDER **folder);
-
+static UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name, 
+                            LPWSTR *FilePath);
 static int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
  
 /*
@@ -226,6 +229,10 @@ const static WCHAR szPublishProduct[] =
 {'P','u','b','l','i','s','h','P','r','o','d','u','c','t',0};
 const static WCHAR szWriteIniValues[] = 
 {'W','r','i','t','e','I','n','i','V','a','l','u','e','s',0};
+const static WCHAR szSelfRegModules[] = 
+{'S','e','l','f','R','e','g','M','o','d','u','l','e','s',0};
+const static WCHAR szPublishFeatures[] = 
+{'P','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -767,6 +774,10 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     WCHAR buffer[10];
     UINT rc;
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
+    static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
+    static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
+
+    MSI_SetPropertyW(package, szAction, szInstall);
 
     if (szPackagePath)   
     {
@@ -1225,6 +1236,10 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
         rc = ACTION_PublishProduct(package);
     else if (strcmpW(action,szWriteIniValues)==0)
         rc = ACTION_WriteIniValues(package);
+    else if (strcmpW(action,szSelfRegModules)==0)
+        rc = ACTION_SelfRegModules(package);
+    else if (strcmpW(action,szPublishFeatures)==0)
+        rc = ACTION_PublishFeatures(package);
 
     /*
      Called during iTunes but unimplemented and seem important
@@ -1411,6 +1426,8 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, const LPWSTR source,
 }
 
 typedef UINT __stdcall CustomEntry(MSIHANDLE);
+typedef UINT __stdcall DllRegisterServer();
+
 typedef struct 
 {
         MSIPACKAGE *package;
@@ -2684,7 +2701,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                     WCHAR filever[0x100];
                     VS_FIXEDFILEINFO *lpVer;
 
-                    FIXME("Version comparison.. \n");
+                    TRACE("Version comparison.. \n");
                     versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
                     version = HeapAlloc(GetProcessHeap(),0,versize);
                     GetFileVersionInfoW(file->TargetPath, 0, versize, version);
@@ -3694,9 +3711,10 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
     DWORD size=0;
     DWORD chunk=0;
     WCHAR key[0x100];
-    LPWSTR value;
+    LPWSTR value = NULL;
     DWORD sz;
     UINT rc;
+    INT index;
 
     if (ptr==NULL)
     {
@@ -3741,14 +3759,59 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
     mark++;
     TRACE("Current %s .. %s\n",debugstr_w(*data),debugstr_w(mark));
     sz = 0;
-    rc = MSI_GetPropertyW(package, key, NULL, &sz);
-    if ((rc == ERROR_SUCCESS) || (rc == ERROR_MORE_DATA))
+    /* expand what we can deformat... Again, this should become a bison file */
+    switch (key[0])
+    {
+        case '~':
+            ERR("UNHANDLED DEFORMAT.. [~] should be NULL\n");
+            rc = ERROR_FUNCTION_FAILED;
+            break;
+        case '$':
+            ERR("POORLY HANDLED DEFORMAT.. [$componentkey] \n");
+            index = get_loaded_component(package,&key[1]);
+            if (index >= 0)
+            {
+                value = resolve_folder(package, 
+                                       package->components[index].Directory, 
+                                       FALSE, FALSE, NULL);
+                rc = 0;
+            }
+            else
+                rc = ERROR_FUNCTION_FAILED;
+            break;
+        case '#':
+            index = get_loaded_file(package,&key[1]);
+            if (index >=0)
+            {
+                sz = strlenW(package->files[index].TargetPath);
+                value = dupstrW(package->files[index].TargetPath);
+                rc= ERROR_SUCCESS;
+            }
+            else
+                rc = ERROR_FUNCTION_FAILED;
+            break;
+        case '\\':
+            value = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*2);
+            value[0] =  key[1];
+            rc = ERROR_SUCCESS;
+            break;
+        case '%':
+            sz  = GetEnvironmentVariableW(&key[1],NULL,0);
+            sz++;
+            value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+            GetEnvironmentVariableW(&key[1],value,sz);
+            rc = ERROR_SUCCESS;
+            break;
+        default:
+            rc = MSI_GetPropertyW(package, key, NULL, &sz);
+            sz++;
+            value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+            MSI_GetPropertyW(package, key, value, &sz);
+            break;
+    }
+    if (((rc == ERROR_SUCCESS) || (rc == ERROR_MORE_DATA))&& value!=NULL)
     {
         LPWSTR newdata;
-
-        sz++;
-        value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
-        MSI_GetPropertyW(package, key, value, &sz);
 
         chunk = (strlenW(value)+1) * sizeof(WCHAR);
         size+=chunk;   
@@ -3875,9 +3938,12 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
 
         if (MSI_EvaluateConditionW(package,cond) != MSICONDITION_TRUE)
         {
+            LPWSTR deformated;
             message = load_dynamic_stringW(row,2);
-            MessageBoxW(NULL,message,title,MB_OK);
+            deformat_string(package,message,&deformated); 
+            MessageBoxW(NULL,deformated,title,MB_OK);
             HeapFree(GetProcessHeap(),0,message);
+            HeapFree(GetProcessHeap(),0,deformated);
             rc = ERROR_FUNCTION_FAILED;
         }
         HeapFree(GetProcessHeap(),0,cond);
@@ -3898,9 +3964,71 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         LPWSTR p = resolve_folder(package,cmp->Directory,FALSE,FALSE,NULL);
         return p;
     }
-    if ((cmp->Attributes & 0x4) || (cmp->Attributes & 0x20))
+    if (cmp->Attributes & 0x4)
     {
-        FIXME("UNIMPLEMENTED keypath as Registry or ODBC Source\n");
+        MSIQUERY * view;
+        MSIRECORD * row = 0;
+        UINT rc,root,len;
+        LPWSTR key,deformated,buffer,name,deformated_name;
+        static const WCHAR ExecSeqQuery[] = {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ','R','e','g','i','s','t','r','y',' ',
+'w','h','e','r','e',' ','R','e','g','i','s','t','r','y',' ','=',' '
+,'`','%','s','`',0 };
+        static const WCHAR fmt[]={'%','0','2','i',':','%','s',0};
+        static const WCHAR fmt2[]={'%','0','2','i',':','%','s','\\','%','s',0};
+
+        rc = ACTION_OpenQuery(package->db,&view,ExecSeqQuery,cmp->KeyPath);
+
+        if (rc!=ERROR_SUCCESS)
+            return NULL;
+
+        rc = MSI_ViewExecute(view, 0);
+        if (rc != ERROR_SUCCESS)
+        {
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            return NULL;
+        }
+
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            return NULL;
+        }
+
+        root = MSI_RecordGetInteger(row,2);
+        key = load_dynamic_stringW(row, 3);
+        name = load_dynamic_stringW(row, 4);
+        deformat_string(package, key , &deformated);
+        deformat_string(package, name, &deformated_name);
+
+        len = strlenW(deformated) + 5;
+        if (deformated_name)
+            len+=strlenW(deformated_name);
+
+        buffer = HeapAlloc(GetProcessHeap(),0, len *sizeof(WCHAR));
+
+        if (deformated_name)
+            sprintfW(buffer,fmt2,root,deformated,deformated_name);
+        else
+            sprintfW(buffer,fmt,root,deformated);
+
+        HeapFree(GetProcessHeap(),0,key);
+        HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,name);
+        HeapFree(GetProcessHeap(),0,deformated_name);
+        msiobj_release(&row->hdr);
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+
+        return buffer;
+    }
+    else if (cmp->Attributes & 0x20)
+    {
+        FIXME("UNIMPLEMENTED keypath as ODBC Source\n");
         return NULL;
     }
     else
@@ -3940,8 +4068,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
          'W','i','n','d','o','w','s','\\',
          'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
          'I','n','s','t','a','l','l','e','r',0 };
-    static const WCHAR szFeatures[] = {
-         'F','e','a','t','u','r','e','s',0 };
     static const WCHAR szComponents[] = {
          'C','o','m','p','o','n','e','n','t','s',0 };
 
@@ -3957,48 +4083,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
     if (rc != ERROR_SUCCESS)
         goto end;
-
-    rc = RegCreateKeyW(hkey,szFeatures,&hkey2);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hkey2,squished_pc,&hkey3);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    /* here the guids are base 85 encoded */
-    for (i = 0; i < package->loaded_features; i++)
-    {
-        LPWSTR data = NULL;
-        GUID clsid;
-        int j;
-        INT size;
-
-        size = package->features[i].ComponentCount*21*sizeof(WCHAR);
-        data = HeapAlloc(GetProcessHeap(), 0, size);
-
-        data[0] = 0;
-        for (j = 0; j < package->features[i].ComponentCount; j++)
-        {
-            WCHAR buf[21];
-            TRACE("From %s\n",debugstr_w(package->components
-                            [package->features[i].Components[j]].ComponentId));
-            CLSIDFromString(package->components
-                            [package->features[i].Components[j]].ComponentId,
-                            &clsid);
-            encode_base85_guid(&clsid,buf);
-            TRACE("to %s\n",debugstr_w(buf));
-            strcatW(data,buf);
-        }
-
-        size = strlenW(data)*sizeof(WCHAR);
-        RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,
-                       (LPSTR)data,size);
-        HeapFree(GetProcessHeap(),0,data);
-    }
-
-    RegCloseKey(hkey3);
-    RegCloseKey(hkey2);
 
     rc = RegCreateKeyW(hkey,szComponents,&hkey2);
     if (rc != ERROR_SUCCESS)
@@ -4418,9 +4502,12 @@ end:
     return rc;
 }
 
-static UINT register_progid_base(MSIRECORD * row, LPWSTR clsid)
+static UINT register_progid_base(MSIPACKAGE* package, MSIRECORD * row, 
+                                LPWSTR clsid)
 {
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
+    static const WCHAR szDefaultIcon[] = {
+        'D','e','f','a','u','l','t','I','c','o','n',0};
     HKEY hkey,hkey2;
     WCHAR buffer[0x100];
     DWORD sz;
@@ -4458,7 +4545,25 @@ static UINT register_progid_base(MSIRECORD * row, LPWSTR clsid)
         return ERROR_FUNCTION_FAILED;
     }
     if (!MSI_RecordIsNull(row,5))
-        FIXME ("UNHANDLED icon in Progid\n");
+    {
+        INT index = MSI_RecordGetInteger(row,6); 
+        LPWSTR FileName = load_dynamic_stringW(row,5);
+        LPWSTR FilePath,IconPath;
+        static const WCHAR fmt[] = {'%','s',',','%','i',0};
+
+        RegCreateKeyW(hkey,szDefaultIcon,&hkey2);
+        build_icon_path(package,FileName,&FilePath);
+       
+        IconPath = HeapAlloc(GetProcessHeap(),0,(strlenW(FilePath)+5)*
+                    sizeof(WCHAR));
+
+        sprintfW(IconPath,fmt,FilePath,index);
+        RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)IconPath,
+                           (strlenW(IconPath)+1) * sizeof(WCHAR));
+        HeapFree(GetProcessHeap(),0,FilePath);
+        HeapFree(GetProcessHeap(),0,FileName);
+        RegCloseKey(hkey2);
+    }
     return ERROR_SUCCESS;
 }
 
@@ -4511,13 +4616,15 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
     UINT rc = ERROR_SUCCESS; 
 
     if (MSI_RecordIsNull(row,2))
-        rc = register_progid_base(row,clsid);
+        rc = register_progid_base(package,row,clsid);
     else
     {
         WCHAR buffer[0x1000];
         DWORD sz, disp;
         HKEY hkey,hkey2;
         static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
+        static const WCHAR szDefaultIcon[] = {
+                'D','e','f','a','u','l','t','I','c','o','n',0};
 
         /* check if already registered */
         sz = 0x100;
@@ -4530,6 +4637,11 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
             RegCloseKey(hkey);
             return rc;
         }
+
+        sz = 0x100;
+        MSI_RecordGetStringW(row,2,buffer,&sz);
+        rc = register_parent_progid(package,buffer,clsid);
+
         /* clsid is same as parent */
         RegCreateKeyW(hkey,szCLSID,&hkey2);
         RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)clsid, (strlenW(clsid)+1) *
@@ -4537,9 +4649,6 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
 
         RegCloseKey(hkey2);
 
-        sz = 0x100;
-        MSI_RecordGetStringW(row,2,buffer,&sz);
-        rc = register_parent_progid(package,buffer,clsid);
 
         if (!MSI_RecordIsNull(row,4))
         {
@@ -4550,7 +4659,17 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
         }
 
         if (!MSI_RecordIsNull(row,5))
-            FIXME ("UNHANDLED icon in Progid\n");
+        {
+            LPWSTR FileName = load_dynamic_stringW(row,5);
+            LPWSTR FilePath;
+            RegCreateKeyW(hkey,szDefaultIcon,&hkey2);
+            build_icon_path(package,FileName,&FilePath);
+            RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)FilePath,
+                           (strlenW(FilePath)+1) * sizeof(WCHAR));
+            HeapFree(GetProcessHeap(),0,FilePath);
+            HeapFree(GetProcessHeap(),0,FileName);
+            RegCloseKey(hkey2);
+        }
 
         RegCloseKey(hkey);
     }
@@ -4847,6 +4966,29 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         'S','E','L','E','C','T',' ','*',' ',
         'f','r','o','m',' ','I','c','o','n',0};
     DWORD sz;
+    /* for registry stuff */
+    LPWSTR productcode;
+    WCHAR squished_pc[0x100];
+    HKEY hkey=0,hkey2=0,hkey3=0;
+    HKEY hukey=0,hukey2=0,hukey3=0;
+    static const WCHAR szProductCode[]=
+         {'P','r','o','d','u','c','t','C','o','d','e',0};
+    static const WCHAR szInstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR szUserInstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR szProducts[] = {
+         'P','r','o','d','u','c','t','s',0};
+    static const WCHAR szProductName[] = {
+         'P','r','o','d','u','c','t','N','a','m','e',0};
+    LPWSTR buffer;
+    DWORD size;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4924,6 +5066,53 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
+
+    /* ok there is alot more done here but i need to figure out what */
+    productcode = load_dynamic_property(package,szProductCode,&rc);
+    if (!productcode)
+        return rc;
+
+    squash_guid(productcode,squished_pc);
+
+    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(HKEY_CURRENT_USER,szUserInstaller,&hukey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey,szProducts,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hukey,szProducts,&hukey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey2,squished_pc,&hkey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hukey2,squished_pc,&hukey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    buffer = load_dynamic_property(package,szProductName,NULL);
+    size = strlenW(buffer)*sizeof(WCHAR);
+    RegSetValueExW(hukey3,szProductName,0,REG_SZ, (LPSTR)buffer,size);
+    HeapFree(GetProcessHeap(),0,buffer);
+ 
+end:
+
+    HeapFree(GetProcessHeap(),0,productcode);    
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
+    RegCloseKey(hkey);
+    RegCloseKey(hukey3);
+    RegCloseKey(hukey2);
+    RegCloseKey(hukey);
+
     return rc;
 
 }
@@ -5069,6 +5258,188 @@ cleanup:
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
+    return rc;
+}
+
+static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    MSIRECORD * row = 0;
+    static const WCHAR ExecSeqQuery[] = {'S','e','l','e','c','t',' ','*',' ',
+'f','r','o','m',' ','S','e','l','f','R','e','g',0};
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+    {
+        TRACE("no SelfReg table\n");
+        return ERROR_SUCCESS;
+    }
+
+    rc = MSI_ViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+        return rc;
+    }
+
+    while (1)
+    {
+        LPWSTR filename;
+        INT index;
+        HMODULE dll;
+        DllRegisterServer* regfunc;
+
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        filename = load_dynamic_stringW(row,1);
+        index = get_loaded_file(package,filename);
+
+        if (index < 0)
+        {
+            ERR("Unable to find file id %s\n",debugstr_w(filename));
+            HeapFree(GetProcessHeap(),0,filename);
+            msiobj_release(&row->hdr);
+            continue;
+        }
+        HeapFree(GetProcessHeap(),0,filename);
+
+        dll = LoadLibraryW(package->files[index].TargetPath);
+        if (!dll)
+        {
+            ERR("Unable to load dll %s\n",
+                    debugstr_w(package->files[index].TargetPath));
+            msiobj_release(&row->hdr);
+            continue;
+        }
+
+        regfunc = (DllRegisterServer*)GetProcAddress(dll,"DllRegisterServer");
+
+        if (regfunc)
+            regfunc();
+
+        msiobj_release(&row->hdr);
+    }
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+    return rc;
+}
+
+static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
+{
+    LPWSTR productcode;
+    WCHAR squished_pc[0x100];
+    UINT rc;
+    DWORD i;
+    HKEY hkey=0,hkey2=0,hkey3=0;
+    HKEY hukey=0,hukey2=0,hukey3=0;
+    static const WCHAR szProductCode[]=
+         {'P','r','o','d','u','c','t','C','o','d','e',0};
+    static const WCHAR szInstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR szUserInstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR szFeatures[] = {
+         'F','e','a','t','u','r','e','s',0 };
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    productcode = load_dynamic_property(package,szProductCode,&rc);
+    if (!productcode)
+        return rc;
+
+    squash_guid(productcode,squished_pc);
+    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(HKEY_CURRENT_USER,szUserInstaller,&hukey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey,szFeatures,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hukey,szFeatures,&hukey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey2,squished_pc,&hkey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hukey2,squished_pc,&hukey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    /* here the guids are base 85 encoded */
+    for (i = 0; i < package->loaded_features; i++)
+    {
+        LPWSTR data = NULL;
+        GUID clsid;
+        int j;
+        INT size;
+
+        size = package->features[i].ComponentCount*21;
+        size +=1;
+        if (package->features[i].Feature_Parent[0])
+            size += strlenW(package->features[i].Feature_Parent)+2;
+
+        data = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+
+        data[0] = 0;
+        for (j = 0; j < package->features[i].ComponentCount; j++)
+        {
+            WCHAR buf[21];
+            memset(buf,0,sizeof(buf));
+            TRACE("From %s\n",debugstr_w(package->components
+                            [package->features[i].Components[j]].ComponentId));
+            CLSIDFromString(package->components
+                            [package->features[i].Components[j]].ComponentId,
+                            &clsid);
+            encode_base85_guid(&clsid,buf);
+            TRACE("to %s\n",debugstr_w(buf));
+            strcatW(data,buf);
+        }
+        if (package->features[i].Feature_Parent[0])
+        {
+            static const WCHAR sep[] = {'\2',0};
+            strcatW(data,sep);
+            strcatW(data,package->features[i].Feature_Parent);
+        }
+
+        size = (strlenW(data)+2)*sizeof(WCHAR);
+        RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,
+                       (LPSTR)data,size);
+        HeapFree(GetProcessHeap(),0,data);
+
+        size = strlenW(package->features[i].Feature_Parent)*sizeof(WCHAR);
+        RegSetValueExW(hukey3,package->features[i].Feature,0,REG_SZ,
+                       (LPSTR)package->features[i].Feature_Parent,size);
+    }
+
+    RegCloseKey(hkey3);
+    RegCloseKey(hukey3);
+end:
+    HeapFree(GetProcessHeap(), 0, productcode);
+    RegCloseKey(hkey2);
+    RegCloseKey(hukey2);
+    RegCloseKey(hkey);
+    RegCloseKey(hukey);
     return rc;
 }
 
@@ -5554,21 +5925,21 @@ static UINT ACTION_Template(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = {0};
 
-    rc = MsiDatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    rc = MsiViewExecute(view, 0);
+    rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
     {
-        MsiViewClose(view);
+        MSI_ViewClose(view);
         msiobj_release(&view->hdr);
         return rc;
     }
 
     while (1)
     {
-        rc = MsiViewFetch(view,&row);
+        rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
         {
             rc = ERROR_SUCCESS;
@@ -5577,7 +5948,7 @@ static UINT ACTION_Template(MSIPACKAGE *package)
 
         msiobj_release(&row->hdr);
     }
-    MsiViewClose(view);
+    MSI_ViewClose(view);
     msiobj_release(&view->hdr);
     return rc;
 }
