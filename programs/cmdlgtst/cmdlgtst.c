@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <stdio.h>
-#include "cmdlgr.h"
+#include "cmdlgtst.h"
 
 // This structure is to set up flag / control associations for the custom
 // requesters.  The ft_id is the id for the control (usually generated

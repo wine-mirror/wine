@@ -9,7 +9,7 @@ originally produced by Borland Resource Workshop, and then heavily edited
 *****************************************************************************/
 
 #include <windows.h>
-#include "cmdlgr.h"
+#include "cmdlgtst.h"
 
 TestCommdlgMenu MENU 
 {
