@@ -1067,3 +1067,4 @@ IDI_DRAGARROW ICON LOADONCALL DISCARDABLE
 #include "comctl_Pt.rc"
 #include "comctl_Ru.rc"
 #include "comctl_Si.rc"
+#include "comctl_Th.rc"
