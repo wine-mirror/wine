@@ -191,24 +191,32 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         for (i = ndlo; i < ndhi; i++) {
             /* first try with same stereo/mono option as source */
             wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(96000, 16);
+            TRY(48000, 16);
             TRY(44100, 16);
             TRY(22050, 16);
             TRY(11025, 16);
 
             /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
             wfx.nChannels ^= 3;
+            TRY(96000, 16);
+            TRY(48000, 16);
             TRY(44100, 16);
             TRY(22050, 16);
             TRY(11025, 16);
 
             /* first try with same stereo/mono option as source */
             wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(96000, 8);
+            TRY(48000, 8);
             TRY(44100, 8);
             TRY(22050, 8);
             TRY(11025, 8);
 
             /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
             wfx.nChannels ^= 3;
+            TRY(96000, 8);
+            TRY(48000, 8);
             TRY(44100, 8);
             TRY(22050, 8);
             TRY(11025, 8);
