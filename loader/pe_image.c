@@ -667,6 +667,12 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
     {
+        if (hFile)
+        {
+            UINT drive_type = GetDriveTypeA( wm->short_filename );
+            /* don't keep the file handle open on removable media */
+            if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) hFile = 0;
+        }
         SERVER_START_REQ( load_dll )
         {
             req->handle     = hFile;

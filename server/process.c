@@ -788,8 +788,9 @@ DECL_HANDLER(init_process)
 /* signal the end of the process initialization */
 DECL_HANDLER(init_process_done)
 {
-    struct file *file;
+    struct file *file = NULL;
     struct process *process = current->process;
+
     if (!process->init_event)
     {
         fatal_protocol_error( current, "init_process_done: no event\n" );
@@ -798,11 +799,10 @@ DECL_HANDLER(init_process_done)
     process->exe.base = req->module;
     process->exe.name = req->name;
 
-    if (req->exe_file && (file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
-    {
-        if (process->exe.file) release_object( process->exe.file );
-        process->exe.file = file;
-    }
+    if (req->exe_file) file = get_file_obj( current->process, req->exe_file, GENERIC_READ );
+    if (process->exe.file) release_object( process->exe.file );
+    process->exe.file = file;
+
     generate_startup_debug_events( current->process, req->entry );
     set_event( process->init_event );
     release_object( process->init_event );

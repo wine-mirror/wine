@@ -319,12 +319,20 @@ static void start_process(void)
     int debugged, console_app;
     LPTHREAD_START_ROUTINE entry;
     WINE_MODREF *wm;
+    HFILE main_file = main_exe_file;
 
     /* use original argv[0] as name for the main module */
     if (!main_exe_name[0])
     {
         if (!GetLongPathNameA( full_argv0, main_exe_name, sizeof(main_exe_name) ))
             lstrcpynA( main_exe_name, full_argv0, sizeof(main_exe_name) );
+    }
+
+    if (main_file)
+    {
+        UINT drive_type = GetDriveTypeA( main_exe_name );
+        /* don't keep the file handle open on removable media */
+        if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) main_file = 0;
     }
 
     /* Retrieve entry point address */
@@ -340,7 +348,7 @@ static void start_process(void)
         req->entry    = entry;
         /* API requires a double indirection */
         req->name     = &main_exe_name_ptr;
-        req->exe_file = main_exe_file;
+        req->exe_file = main_file;
         req->gui      = !console_app;
         SERVER_CALL();
         debugged = req->debugged;
@@ -356,6 +364,8 @@ static void start_process(void)
     if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, 0, FALSE )))
         goto error;
     wm->refCount++;
+
+    if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
 
     RtlAcquirePebLock();
     PE_InitTls();
