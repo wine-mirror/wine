@@ -88,12 +88,11 @@ static void test_StrRetToStringNW(void)
     ok(ret == TRUE && !strcmpW(buff, szTestW),
        "STRRET_OFFSET: dup failed, ret=%d\n", ret);
 
-    /* Invalid dest - returns FALSE */
+    /* Invalid dest - should return FALSE, except NT4 does not, so we don't check. */
     strret.uType = STRRET_WSTR;
     strret.u.pOleStr = CoDupStrW("Test");
-    ret = pStrRetToStrNAW(NULL, sizeof(buff)/sizeof(WCHAR), &strret, NULL);
-    ok(ret == FALSE, "NULL dest: expected FALSE, ret=%d\n", ret);
-
+    pStrRetToStrNAW(NULL, sizeof(buff)/sizeof(WCHAR), &strret, NULL);
+    trace("NULL dest: ret=%d\n", ret);
 }
 
 START_TEST(string)
