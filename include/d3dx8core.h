@@ -107,18 +107,18 @@ ICOM_DEFINE(ID3DXFont,IUnknown)
 /*************************************************************************************
  * Define entrypoints 
  */
-HRESULT D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer);
-HRESULT D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont);
-UINT D3DXGetFVFVertexSize(DWORD FVF);
-HRESULT D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags, 
+HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer);
+HRESULT WINAPI D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont);
+UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF);
+HRESULT WINAPI D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags, 
 			   LPD3DXBUFFER* ppConstants, 
 			   LPD3DXBUFFER* ppCompiledShader,
 			   LPD3DXBUFFER* ppCompilationErrors);
-HRESULT D3DXAssembleShaderFromFileA(LPSTR pSrcFile, DWORD Flags,
+HRESULT WINAPI D3DXAssembleShaderFromFileA(LPSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors);
-HRESULT D3DXAssembleShaderFromFileW(LPSTR pSrcFile, DWORD Flags,
+HRESULT WINAPI D3DXAssembleShaderFromFileW(LPSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors);

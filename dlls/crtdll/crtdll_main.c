@@ -19,9 +19,12 @@
  */
 
 #include "config.h"
+
+#include <sys/stat.h>
+
 #include "windef.h"
 #include "winbase.h"
-#include "sys/stat.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crtdll);

@@ -34,7 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-HRESULT D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
+HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
   ID3DXBufferImpl *object;
 
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXBufferImpl));
@@ -55,17 +55,17 @@ HRESULT D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
   return D3D_OK;
 }
 
-HRESULT D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont) {
+HRESULT WINAPI D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont) {
   FIXME("(void): stub\n");
   return D3D_OK;
 }
 
-UINT D3DXGetFVFVertexSize(DWORD FVF) {
+UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF) {
   FIXME("(void): stub\n");
   return 0;
 }
 
-HRESULT D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags, 
+HRESULT WINAPI D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags, 
 			   LPD3DXBUFFER* ppConstants, 
 			   LPD3DXBUFFER* ppCompiledShader,
 			   LPD3DXBUFFER* ppCompilationErrors) {
@@ -73,7 +73,7 @@ HRESULT D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags,
   return D3D_OK;
 }
 
-HRESULT D3DXAssembleShaderFromFileA(LPSTR pSrcFile, DWORD Flags,
+HRESULT WINAPI D3DXAssembleShaderFromFileA(LPSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors) {
@@ -81,7 +81,7 @@ HRESULT D3DXAssembleShaderFromFileA(LPSTR pSrcFile, DWORD Flags,
   return D3D_OK;
 }
 
-HRESULT D3DXAssembleShaderFromFileW(LPSTR pSrcFile, DWORD Flags,
+HRESULT WINAPI D3DXAssembleShaderFromFileW(LPSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors) {

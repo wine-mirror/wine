@@ -787,11 +787,17 @@ DWORD vshader_decl_parse(VERTEXSHADER8* vshader) {
   return len * sizeof(DWORD);
 }
 
+/***********************************************************************
+ *		ValidateVertexShader (D3D8.@)
+ */
 BOOL WINAPI ValidateVertexShader(LPVOID what, LPVOID toto) {
   FIXME("(void): stub: %p\n", what);
   return TRUE;
 }
 
+/***********************************************************************
+ *		ValidatePixelShader (D3D8.@)
+ */
 BOOL WINAPI ValidatePixelShader(LPVOID what, LPVOID toto) {
   FIXME("(void): stub: %p\n", what);
   return TRUE;

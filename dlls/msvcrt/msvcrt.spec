@@ -327,7 +327,7 @@
 @ cdecl _lrotr(long long) _lrotr
 @ cdecl _lsearch(ptr ptr long long ptr) _lsearch
 @ cdecl _lseek(long long long) _lseek
-@ cdecl -ret64 _lseeki64(long long long) _lseeki64
+@ cdecl -ret64 _lseeki64(long long long long) _lseeki64
 @ forward _ltoa ntdll._ltoa
 @ cdecl _ltow(long ptr long) _ltow
 @ cdecl _makepath(str str str str str) _makepath
