@@ -30,7 +30,7 @@ void WCMD_echo (char *);
 void WCMD_for (char *);
 void WCMD_give_help (char *command);
 void WCMD_goto (void);
-void WCMD_if (void);
+void WCMD_if (char *);
 void WCMD_move (void);
 void WCMD_output (char *format, ...);
 void WCMD_parse (char *s, char *q, char *p1, char *p2);
@@ -55,7 +55,7 @@ void WCMD_version (void);
 int  WCMD_volume (int mode, char *command);
 
 char *WCMD_fgets (char *s, int n, HANDLE stream);
-char *WCMD_parameter (char *s, int n);
+char *WCMD_parameter (char *s, int n, char **where);
 char *WCMD_strtrim_leading_spaces (char *string);
 void WCMD_strtrim_trailing_spaces (char *string);
 

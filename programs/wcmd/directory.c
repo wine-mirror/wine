@@ -23,7 +23,6 @@ char * WCMD_filesize32 (int n);
 char * WCMD_strrev (char *buff);
 
 
-extern HANDLE STDin, STDout;
 extern char nyi[];
 extern char newline[];
 extern char version_string[];
@@ -144,7 +143,7 @@ __int64 byte_count;
     if (line_count > 23) {
       line_count = 0;
       WCMD_output (anykey);
-      ReadFile (STDin, string, sizeof(string), &count, NULL);
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     }
   }
   for (i=0; i<entry_count; i++) {
@@ -170,7 +169,7 @@ __int64 byte_count;
       if (++line_count > 23) {
         line_count = 0;
         WCMD_output (anykey);
-        ReadFile (STDin, string, sizeof(string), &count, NULL);
+        ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
       }
     }
   }
@@ -184,7 +183,7 @@ __int64 byte_count;
     if (++line_count > 23) {
       line_count = 0;
       WCMD_output (anykey);
-      ReadFile (STDin, string, sizeof(string), &count, NULL);
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     }
   }
   byte_total = byte_total + byte_count;
@@ -196,7 +195,7 @@ __int64 byte_count;
     if (++line_count > 23) {
       line_count = 0;
       WCMD_output (anykey);
-      ReadFile (STDin, string, sizeof(string), &count, NULL);
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     }
   }
   for (i=0; i<entry_count; i++) {

@@ -10,18 +10,13 @@ WHAT'S INCLUDED
 - A Makefile for Borland C++ (needs editing for directories).
 
 WHAT'S MISSING
-- Redirection, shell parameters and pipes
+- Pipes
 - Command-line qualifiers for most builtin commands
-- MOVE command
-- IF and FOR commands
-- Wildcards and relative paths in COPY and RENAME
+- Wildcards and relative paths in COPY, MOVE and RENAME
 - Set functionality in DATE, TIME, ATTRIB, LABEL
 - Full internationalisation of the text (and commands?).
 
 WHAT DOESN'T WORK
-- At present it is not possible to launch Windows GDI programs from the command
-line. This is result of the way the CreateProcess() API call is implemented in
-Wine, and will be fixed in a later Wine release.
 - The ATTRIB command reports all files having their Archive flag set, and the
 READONLY setting depends on the Unix file permissions. All other flags are
 always clear. The Wine attributes API calls map to the Unix stat() function
@@ -38,6 +33,12 @@ free space are computed to 64 bits.
 but one does exist in a lower directory.
 - Copy, rename, move, need the source and destination to be specified fully
 with an absolute or relative path but no wildcards or partial filenames.
+- The IF ERRORLEVEL construct is not implemented.
+- Redirection is implemented as a command line is parsed. This means that ">"
+and "<" symbols cannot appear in command arguments even within quotes.
+- In many cases parsing and syntax checking is less rigorous than DOS. Thus an
+existing DOS batch file will probably run unchanged under Wcmd but the reverse
+may not be the case.
 
 WINE OR WIN32 BINARY?
 Wcmd can be built as a Wine binary, or (using a Win32 compiler) as a Win32 .EXE

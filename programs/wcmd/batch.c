@@ -10,7 +10,6 @@
 
 void WCMD_batch_command (char *line);
 
-extern HANDLE STDin, STDout;
 extern char nyi[];
 extern char newline[];
 extern char version_string[];
@@ -106,12 +105,13 @@ int i;
     WCMD_print_error ();
     return;
   }
+
   p = cmd;
   while ((p = strchr(p, '%'))) {
     i = *(p+1) - '0';
     if ((i >= 0) && (i <= 9)) {
       s = strdup (p+2);
-      t = WCMD_parameter (context -> command, i + context -> shift_count);
+      t = WCMD_parameter (context -> command, i + context -> shift_count, NULL);
       strcpy (p, t);
       strcat (p, s);
       free (s);
@@ -126,9 +126,10 @@ int i;
  *	Returns the 'n'th space-delimited parameter on the command line (zero-based).
  *	Parameter is in static storage overwritten on the next call.
  *	Parameters in quotes (and brackets) are handled.
+ *	Also returns a pointer to the location of the parameter in the command line.
  */
 
-char *WCMD_parameter (char *s, int n) {
+char *WCMD_parameter (char *s, int n, char **where) {
 
 int i = 0;
 static char param[MAX_PATH];
@@ -141,6 +142,7 @@ char *p;
 	s++;
 	break;
       case '"':
+        if (where != NULL) *where = s;
 	s++;
 	while ((*s != '\0') && (*s != '"')) {
 	  *p++ = *s++;
@@ -149,13 +151,13 @@ char *p;
           *p = '\0';
           return param;
         }
-        else {
+	if (*s == '"') s++;
           param[0] = '\0';
           i++;
-        }
-	if (*s == '"') s++;
+        p = param;
 	break;
       case '(':
+        if (where != NULL) *where = s;
 	s++;
 	while ((*s != '\0') && (*s != ')')) {
 	  *p++ = *s++;
@@ -164,15 +166,15 @@ char *p;
           *p = '\0';
           return param;
         }
-        else {
+	if (*s == ')') s++;
           param[0] = '\0';
           i++;
-        }
-	if (*s == '"') s++;
+        p = param;
 	break;
       case '\0':
         return param;
       default:
+        if (where != NULL) *where = s;
 	while ((*s != '\0') && (*s != ' ')) {
 	  *p++ = *s++;
 	}
@@ -180,11 +182,9 @@ char *p;
           *p = '\0';
           return param;
         }
-        else {
           param[0] = '\0';
-          p = param;
           i++;
-        }
+        p = param;
     }
   }
 }

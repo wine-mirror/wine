@@ -1,3 +1,10 @@
+v0.12 - 4 July 1999
+FOR and IF commands added.
+MOVE command added, but no wildcard support.
+Redirection added.
+Fixed TIME (was reporting in GMT).
+More help text.
+
 v0.11 - 20 June 1999
 Batch command parameters (and the SHIFT command) added.
 GOTO added.

@@ -10,7 +10,7 @@
 
 /*
  * FIXME:
- * - No support for redirection, pipes, shell parameters
+ * - No support for pipes, shell parameters
  * - 32-bit limit on file sizes in DIR command
  * - Lots of functionality missing from builtins
  * - Messages etc need international support
@@ -18,7 +18,8 @@
 
 #include "wcmd.h"
 
-extern HANDLE STDin, STDout;
+void WCMD_execute (char *orig_command, char *parameter, char *substitution);
+
 extern HINSTANCE hinst;
 extern char *inbuilt[];
 extern char nyi[];
@@ -83,7 +84,7 @@ char string[8], outpath[MAX_PATH];
     if (hff != INVALID_HANDLE_VALUE) {
       FindClose (hff);
       WCMD_output (overwrite);
-      ReadFile (STDin, string, sizeof(string), &count, NULL);
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
       if (toupper(string[0]) == 'Y') force = TRUE;
     }
     else force = TRUE;
@@ -185,21 +186,83 @@ int count;
 
 }
 
-/****************************************************************************
+/**************************************************************************
  * WCMD_for
  *
  * Batch file loop processing.
+ * FIXME: We don't exhaustively check syntax. Any command which works in MessDOS
+ * will probably work here, but the reverse is not necessarily the case...
  */
 
 void WCMD_for (char *p) {
 
-  if (lstrcmpi (WCMD_parameter (p, 1), "in") || lstrcmpi (WCMD_parameter (p, 3), "do")) {
+WIN32_FIND_DATA fd;
+HANDLE hff;
+char *cmd, *item;
+char set[MAX_PATH], param[MAX_PATH];
+int i;
+
+  if (lstrcmpi (WCMD_parameter (p, 1, NULL), "in")
+	|| lstrcmpi (WCMD_parameter (p, 3, NULL), "do")
+	|| (param1[0] != '%')) {
     WCMD_output ("Syntax error\n");
     return;
   }
-  WCMD_output (nyi);
+  lstrcpyn (set, WCMD_parameter (p, 2, NULL), sizeof(set));
+  WCMD_parameter (p, 4, &cmd);
+  lstrcpy (param, param1);
 
+/*
+ *	If the parameter within the set has a wildcard then search for matching files
+ *	otherwise do a literal substitution.
+ */
+
+  i = 0;
+  while (*(item = WCMD_parameter (set, i, NULL))) {
+    if (strpbrk (item, "*?")) {
+      hff = FindFirstFile (item, &fd);
+      if (hff == INVALID_HANDLE_VALUE) {
+	return;
+      }
+      do {
+	WCMD_execute (cmd, param, fd.cFileName);
+      } while (FindNextFile(hff, &fd) != 0);
+      FindClose (hff);
 }
+    else {
+      WCMD_execute (cmd, param, item);
+    }
+    i++;
+  }
+}
+
+/*
+ *	Execute a command after substituting variable text for the supplied parameter
+ */
+
+void WCMD_execute (char *orig_cmd, char *param, char *subst) {
+
+char *new_cmd, *p, *s, *dup;
+int size;
+
+  size = lstrlen (orig_cmd);
+  new_cmd = (char *) LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, size);
+  dup = s = strdup (orig_cmd);
+
+  while ((p = strstr (s, param))) {
+    *p = '\0';
+    size += lstrlen (subst);
+    new_cmd = (char *) LocalReAlloc ((HANDLE)new_cmd, size, 0);
+    strcat (new_cmd, s);
+    strcat (new_cmd, subst);
+    s = p + lstrlen (param);
+  }
+  strcat (new_cmd, s);
+  WCMD_process_command (new_cmd);
+  free (dup);
+  LocalFree ((HANDLE)new_cmd);
+}
+
 
 /**************************************************************************
  * WCMD_give_help
@@ -259,23 +322,67 @@ char string[MAX_PATH];
  * WCMD_if
  *
  * Batch file conditional.
+ * FIXME: The "errorlevel" version is not supported.
+ * FIXME: Much more syntax checking needed!
  */
 
-void WCMD_if () {
+void WCMD_if (char *p) {
 
-  WCMD_output (nyi);
+HANDLE h;
+int negate = 0, test = 0;
+char condition[MAX_PATH], *command, *s;
 
+  if (!lstrcmpi (param1, "not")) {
+    negate = 1;
+    lstrcpy (condition, param2);
+}
+  else {
+    lstrcpy (condition, param1);
+  }
+  if (!lstrcmpi (condition, "errorlevel")) {
+    WCMD_output (nyi);
+    return;
+  }
+  else if (!lstrcmpi (condition, "exist")) {
+    if ((h = CreateFile (WCMD_parameter (p, 1+negate, NULL), GENERIC_READ, 0, NULL,
+	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)) != INVALID_HANDLE_VALUE) {
+      CloseHandle (h);
+      test = 1;
+    }
+  }
+  else if ((s = strstr (p, "=="))) {
+    s += 2;
+    if (!lstrcmpi (condition, WCMD_parameter (s, 0, NULL))) test = 1;
+  }
+  else {
+    WCMD_output ("Syntax error\n");
+    return;
+  }
+  if (test != negate) {
+    WCMD_parameter (p, 2+negate, &s);
+    command = strdup (s);
+    WCMD_process_command (command);
+    free (command);
+  }
 }
 
 /****************************************************************************
  * WCMD_move
  *
  * Move a file, directory tree or wildcarded set of files.
+ * FIXME: Needs input and output files to be fully specified.
  */
 
 void WCMD_move () {
 
-  WCMD_output (nyi);
+int status;
+
+  if ((strchr(param1,'*') != NULL) || (strchr(param1,'%') != NULL)) {
+    WCMD_output ("Wildcards not yet supported\n");
+    return;
+}
+  status = MoveFile (param1, param2);
+  if (!status) WCMD_print_error ();
 }
 
 /****************************************************************************
@@ -290,7 +397,7 @@ DWORD count;
 char string[32];
 
   WCMD_output (anykey);
-  ReadFile (STDin, string, sizeof(string), &count, NULL);
+  ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
 }
 
 /****************************************************************************
@@ -338,6 +445,8 @@ static char *dirmsg = "Input file is a directory. Use the MOVE command\n\n";
  * As a result only the Readonly flag is correctly reported, the Archive bit
  * is always set and the rest are not implemented. We do the Right Thing anyway.
  *
+ * FIXME: No SET functionality.
+ *
  */
 
 void WCMD_setshow_attrib () {
@@ -346,6 +455,11 @@ DWORD count;
 HANDLE hff;
 WIN32_FIND_DATA fd;
 char flags[9] = {"        "};
+
+  if (param1[0] == '-') {
+    WCMD_output (nyi);
+    return;
+  }
 
   if (lstrlen(param1) == 0) {
     GetCurrentDirectory (sizeof(param1), param1);
@@ -427,7 +541,7 @@ DWORD count;
     if (GetDateFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL,
   		curdate, sizeof(curdate))) {
       WCMD_output ("Current Date is %s\nEnter new date: ", curdate);
-      ReadFile (STDin, buffer, sizeof(buffer), &count, NULL);
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
       if (count > 2) {
         WCMD_output (nyi);
       }
@@ -534,12 +648,14 @@ void WCMD_setshow_time () {
 
 char curtime[64], buffer[64];
 DWORD count;
+SYSTEMTIME st;
 
   if (strlen(param1) == 0) {
-    if (GetTimeFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL,
+    GetLocalTime(&st);
+    if (GetTimeFormat (LOCALE_USER_DEFAULT, 0, &st, NULL,
   		curtime, sizeof(curtime))) {
       WCMD_output ("Current Time is %s\nEnter new time: ", curtime);
-      ReadFile (STDin, buffer, sizeof(buffer), &count, NULL);
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
       if (count > 2) {
         WCMD_output (nyi);
       }
@@ -583,7 +699,7 @@ DWORD count;
   }
   while (ReadFile (h, buffer, sizeof(buffer), &count, NULL)) {
     if (count == 0) break;	/* ReadFile reports success on EOF! */
-    WriteFile (STDout, buffer, count, &count, NULL);
+    WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), buffer, count, &count, NULL);
   }
   CloseHandle (h);
 }
@@ -654,7 +770,7 @@ static char syntax[] = "Syntax Error\n\n";
   }
   else {
     if ((path[1] != ':') || (lstrlen(path) != 2)) {
-      WriteFile (STDout, syntax, strlen(syntax), &count, NULL);
+      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), syntax, strlen(syntax), &count, NULL);
       return 0;
     }
     wsprintf (curdir, "%s\\", path);
@@ -669,7 +785,11 @@ static char syntax[] = "Syntax Error\n\n";
     	curdir[0], label, HIWORD(serial), LOWORD(serial));
   if (mode) {
     WCMD_output ("Volume label (11 characters, ENTER for none)?");
-    ReadFile (STDin, string, sizeof(string), &count, NULL);
+    ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
+    if (count > 1) {
+      string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
+      if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
+    }
     if (lstrlen(path) != 0) {
       if (!SetVolumeLabel (curdir, string)) WCMD_print_error ();
     }

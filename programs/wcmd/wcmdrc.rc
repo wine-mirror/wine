@@ -4,7 +4,15 @@
 STRINGTABLE
 {
   WCMD_ATTRIB, "Help about ATTRIB\n"
-  WCMD_CALL,   "Help about CALL\n"
+  WCMD_CALL,
+"CALL <batchfilename> is used within a batch file to execute commands \
+from another batch file. When the batch file exits, control returns to \
+the file which called it. The CALL command may supply parameters to the \
+called procedure. \
+ \
+Changes to default directory, environment variables etc made within a \
+called procedure are inherited by the caller.\n"
+
   WCMD_CD,     "Help about CD\n"
   WCMD_CHDIR,  "Help about CHDIR\n"
 
@@ -28,14 +36,51 @@ default). The ECHO OFF command can be prevented from displaying by\
 preceding it with an @ sign.\n"
 
   WCMD_ERASE,  "Help about ERASE\n"
-  WCMD_FOR,    "Help about FOR\n"
-  WCMD_GOTO,   "Help about GOTO\n"
+
+  WCMD_FOR,
+"The FOR command is used to execute a command for each of a set of files. \
+ \
+Syntax: FOR %variable IN (set) DO command \
+ \
+The requirement to double the % sign when using FOR in a batch file does \
+not exist in wcmd.\n"
+
+  WCMD_GOTO,
+"The GOTO command transfers execution to another statement within a \
+batch file. \
+ \
+The label which is the target of a GOTO may be up to 255 characters \
+long but may not include spaces (this is different to other operating \
+systems). If two or more identical labels exist in a batch file the \
+first one will always be executed. Attempting to GOTO a non-existent \
+label terminates the batch file execution. \
+ \
+GOTO has no effect when used interactively.\n"
+
   WCMD_HELP,   "Help about HELP\n"
-  WCMD_IF,     "Help about IF\n"
+
+  WCMD_IF,
+"IF is used to conditionally execute a command.\
+ \
+Syntax:	IF [NOT] EXIST filename command \
+	IF [NOT] string1==string2 command \
+ \
+In the second form of the command, string1 and string2 must be in double \
+quotes. The comparison is not case-sensitive.\
+ \
+The form IF [NOT] ERRORLEVEL number is not implemented in Wcmd.\n"
+
   WCMD_LABEL,  "Help about LABEL\n"
   WCMD_MD,     "Help about MD\n"
   WCMD_MKDIR,  "Help about MKDIR\n"
-  WCMD_MOVE,   "Help about MOVE\n"
+  WCMD_MOVE,
+"MOVE relocates a file or directory to a new point within the file system. \
+ \
+If the item being moved is a directory then all the files and subdirectories \
+below the item are moved as well. \
+ \
+MOVE fails if the old and new locations are on different DOS drive letters.\n"
+
   WCMD_PATH,
 "PATH displays or changes the wcmd search path. \
  \
@@ -100,14 +145,25 @@ included into the Win32 environment, there will generally therefore be\
 many more values than in a native Win32 implementation. Note that it is\
 not possible to affect the operating system environment from within wcmd.\n"
 
-  WCMD_SHIFT,  "Help about SHIFT\n"
+  WCMD_SHIFT,
+"SHIFT is used in a batch file to remove one parameter from the head of \
+the list, so parameter 2 becomes parameter 1 and so on. It has no effect \
+if called from the command line.\n"
+
   WCMD_TIME,   "Help about TIME\n"
 
   WCMD_TYPE,
 "TYPE <filename> copies <filename> to the console device (or elsewhere\
 if redirected). No check is made that the file is readable text.\n"
 
-  WCMD_VERIFY, "Help about VERIFY\n"
+  WCMD_VERIFY,
+"VERIFY is used to set, clear or test the verify flag. Valid forms are: \
+ \
+VERIFY ON	Set the flag \
+VERIFY OFF	Clear the flag \
+VERIFY		Displays ON or OFF as appropriate. \
+ \
+The verify flag has no function in Wine.\n"
 
   WCMD_VER,
 "VER displays the version of wcmd you are running\n"

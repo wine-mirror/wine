@@ -6,7 +6,7 @@
 
 /*
  * FIXME:
- * - No support for redirection, pipes
+ * - No support for pipes
  * - 32-bit limit on file sizes in DIR command
  * - Cannot handle parameters in quotes
  * - Lots of functionality missing from builtins
@@ -29,12 +29,11 @@ char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
 		"TIME", "TYPE", "VERIFY", "VER", "VOL", "EXIT"};
 
-HANDLE STDin, STDout;
 HINSTANCE hinst;
 int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
-char version_string[] = "WCMD Version 0.11\n\n";
+char version_string[] = "WCMD Version 0.12\n\n";
 char anykey[] = "Press any key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
@@ -79,9 +78,7 @@ HANDLE h;
   if (!status) WCMD_print_error();
   status = AllocConsole();
   if (!status) WCMD_print_error();
-  STDout = GetStdHandle (STD_OUTPUT_HANDLE);
-  STDin = GetStdHandle (STD_INPUT_HANDLE);
-  SetConsoleMode (STDin, ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT |
+  SetConsoleMode (GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT |
   	ENABLE_PROCESSED_INPUT);
 
 /*
@@ -119,7 +116,7 @@ HANDLE h;
   WCMD_version ();
   while (TRUE) {
     WCMD_show_prompt ();
-    ReadFile (STDin, string, sizeof(string), &count, NULL);
+    ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     if (count > 1) {
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
@@ -143,15 +140,12 @@ char cmd[1024];
 char *p;
 int status, i;
 DWORD count;
+HANDLE old_stdin = 0, old_stdout = 0, h;
 
 /*
  *	Throw away constructs we don't support yet
  */
 
-    if ((strchr(command,'<') != NULL) || (strchr(command,'>') != NULL)) {
-      WCMD_output ("Redirection not yet implemented\n");
-      return;
-    }
     if (strchr(command,'|') != NULL) {
       WCMD_output ("Pipes not yet implemented\n");
       return;
@@ -177,6 +171,33 @@ DWORD count;
       return;
     }
     WCMD_output (newline);
+
+/*
+ *	Redirect stdin and/or stdout if required.
+ */
+
+    if ((p = strchr(cmd,'<')) != NULL) {
+      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_READ, 0, NULL, OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, 0);
+      if (h == INVALID_HANDLE_VALUE) {
+	WCMD_print_error ();
+	return;
+      }
+      old_stdin = GetStdHandle (STD_INPUT_HANDLE);
+      SetStdHandle (STD_INPUT_HANDLE, h);
+    }
+    if ((p = strchr(cmd,'>')) != NULL) {
+      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL, 0);
+      if (h == INVALID_HANDLE_VALUE) {
+	WCMD_print_error ();
+	return;
+      }
+      old_stdout = GetStdHandle (STD_OUTPUT_HANDLE);
+      SetStdHandle (STD_OUTPUT_HANDLE, h);
+      *--p = '\0';
+    }
+    if ((p = strchr(cmd,'<')) != NULL) *p = '\0';
 
 /*
  *	Check if the command entered is internal. If it is, pass the rest of the
@@ -237,7 +258,7 @@ DWORD count;
         WCMD_give_help (p);
 	break;
       case WCMD_IF:
-        WCMD_if ();
+	WCMD_if (p);
         break;
       case WCMD_LABEL:
         WCMD_volume (1, p);
@@ -294,6 +315,14 @@ DWORD count;
       default:
         WCMD_run_program (cmd);
     };
+    if (old_stdin) {
+      CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
+      SetStdHandle (STD_INPUT_HANDLE, old_stdin);
+    }
+    if (old_stdout) {
+      CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
+      SetStdHandle (STD_OUTPUT_HANDLE, old_stdout);
+    }
   }
 
 /******************************************************************************
@@ -524,7 +553,7 @@ DWORD count;
 
   va_start(ap,format);
   vsprintf (string, format, ap);
-  WriteFile (STDout, string, lstrlen(string), &count, NULL);
+  WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), string, lstrlen(string), &count, NULL);
   va_end(ap);
 }
 
