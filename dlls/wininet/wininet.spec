@@ -35,8 +35,8 @@
 @ stdcall FtpCreateDirectoryW(ptr wstr)
 @ stdcall FtpDeleteFileA(ptr str)
 @ stub FtpDeleteFileW
-@ stdcall FtpFindFirstFileA(ptr str str long long)
-@ stdcall FtpFindFirstFileW(ptr wstr wstr long long)
+@ stdcall FtpFindFirstFileA(ptr str ptr long long)
+@ stdcall FtpFindFirstFileW(ptr wstr ptr long long)
 @ stdcall FtpGetCurrentDirectoryA(ptr str ptr)
 @ stdcall FtpGetCurrentDirectoryW(ptr wstr ptr)
 @ stdcall FtpGetFileA(ptr str str long long long long)

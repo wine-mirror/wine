@@ -2521,83 +2521,137 @@ BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIE
         pszToken = strtok(pszLine, " \t" );
 
         /* HACK! If this is not a file listing skip the line */
-        if (!pszToken || 10 != strlen(pszToken) || nBufLen <= MIN_LEN_DIR_ENTRY)
+        if (!pszToken || nBufLen <= MIN_LEN_DIR_ENTRY)
 	{
             nBufLen = MAX_REPLY_LEN;
             continue;
 	}
+	if (10 == strlen(pszToken)) {
+	    /* Unix way of parsing ... */
+	    FTP_ParsePermission(pszToken, curFileProp);
+	    
+	    nTokenToSkip = 3;
+	    nCount = 0;
+	    do {
+		pszToken = strtok( NULL, " \t" );
+		nCount++;
+	    } while( nCount <= nTokenToSkip );
+	    
+	    /* Store the size of the file in the param list. */
+	    TRACE("nSize-> %s\n", pszToken);
+	    if (pszToken != NULL)
+		curFileProp->nSize = atol(pszToken);
+	    
+	    /* Parse last modified time. */
+	    nSeconds = 0;
+	    nMinutes = 0;
+	    nHour    = 0;
+	    nDay     = 0;
+	    nMonth   = 0;
+	    nYear    = 0;
+	    
+	    pszToken = strtok( NULL, " \t" );
+	    strncpy(pszMonth, pszToken, MAX_MONTH_LEN);
+	    CharUpperA(pszMonth);
+	    pszMatch = strstr(szMonths, pszMonth);
+	    if( pszMatch != NULL )
+		nMonth = (pszMatch - szMonths) / 3;
+	    
+	    pszToken = strtok(NULL, " \t");
+	    TRACE("nDay -> %s\n", pszToken);
+	    if (pszToken != NULL)
+		nDay = atoi(pszToken);
+	    
+	    pszToken = strtok(NULL, " \t");
+	    pszMinutes = strchr(pszToken, ':');
+	    if( pszMinutes != NULL ) {
+		pszMinutes++;
+		nMinutes = atoi(pszMinutes);
+		pszHour = pszMinutes - 3;
+		if (pszHour != NULL)
+		    nHour = atoi(pszHour);
+		time(&aTime);
+		apTM = localtime( &aTime );
+		nYear = apTM->tm_year;
+	    } else {
+		nYear  = atoi(pszToken);
+		nYear -= 1900;
+		nHour  = 12;
+	    }
 
-        FTP_ParsePermission(pszToken, curFileProp);
+	    curFileProp->tmLastModified.tm_sec  = nSeconds;
+	    curFileProp->tmLastModified.tm_min  = nMinutes;
+	    curFileProp->tmLastModified.tm_hour = nHour;
+	    curFileProp->tmLastModified.tm_mday = nDay;
+	    curFileProp->tmLastModified.tm_mon  = nMonth;
+	    curFileProp->tmLastModified.tm_year = nYear;
+	    
+	    pszToken = strtok(NULL, " \t");
+	    if(pszToken != NULL) {
+		curFileProp->lpszName = FTP_strdup(pszToken);
+		TRACE(": %s\n", curFileProp->lpszName);
+	    }
+	    
+	    nBufLen = MAX_REPLY_LEN;
+	    indexFilePropArray++;
+	} else if (8 == strlen(pszToken)) {
+	    /* NT way of parsing ... :
+	       
+	          07-13-03  08:55PM       <DIR>          sakpatch
+		  05-09-03  06:02PM             12656686 2003-04-21bgm_cmd_e.rgz
+	    */
 
-        nTokenToSkip = 3;
-        nCount = 0;
-        do
-        {
-            pszToken = strtok( NULL, " \t" );
-            nCount++;
-        } while( nCount <= nTokenToSkip );
+	    curFileProp->permissions = 0xFFFF; /* No idea, put full permission :-) */
+	    
+	    sscanf(pszToken, "%d-%d-%d",
+		   &curFileProp->tmLastModified.tm_mon,
+		   &curFileProp->tmLastModified.tm_mday,
+		   &curFileProp->tmLastModified.tm_year); /* Do we check for Y2K problems ? */
+	    
+	    pszToken = strtok(NULL, " \t");
+	    if (pszToken == NULL) {
+		nBufLen = MAX_REPLY_LEN;
+		continue;
+	    }
+	    sscanf(pszToken, "%d:%d",
+		   &curFileProp->tmLastModified.tm_hour,
+		   &curFileProp->tmLastModified.tm_min);
+	    if ((pszToken[5] == 'P') && (pszToken[6] == 'M')) {
+		curFileProp->tmLastModified.tm_hour += 12;
+	    }
+	    curFileProp->tmLastModified.tm_sec = 0;
 
-        /* Store the size of the file in the param list. */
-        TRACE("nSize-> %s\n", pszToken);
-        if (pszToken != NULL)
-            curFileProp->nSize = atol(pszToken);
-
-        /* Parse last modified time. */
-        nSeconds = 0;
-        nMinutes = 0;
-        nHour    = 0;
-        nDay     = 0;
-        nMonth   = 0;
-        nYear    = 0;
-
-        pszToken = strtok( NULL, " \t" );
-        strncpy(pszMonth, pszToken, MAX_MONTH_LEN);
-        CharUpperA(pszMonth);
-        pszMatch = strstr(szMonths, pszMonth);
-        if( pszMatch != NULL )
-            nMonth = (pszMatch - szMonths) / 3;
-
-        pszToken = strtok(NULL, " \t");
-        TRACE("nDay -> %s\n", pszToken);
-        if (pszToken != NULL)
-            nDay = atoi(pszToken);
-
-        pszToken = strtok(NULL, " \t");
-        pszMinutes = strchr(pszToken, ':');
-        if( pszMinutes != NULL )
-        {
-            pszMinutes++;
-            nMinutes = atoi(pszMinutes);
-            pszHour = pszMinutes - 3;
-            if (pszHour != NULL)
-                nHour = atoi(pszHour);
-            time(&aTime);
-            apTM = localtime( &aTime );
-            nYear = apTM->tm_year;
-        }
-        else
-        {
-            nYear  = atoi(pszToken);
-            nYear -= 1900;
-            nHour  = 12;
-        }
-
-        curFileProp->tmLastModified.tm_sec  = nSeconds;
-        curFileProp->tmLastModified.tm_min  = nMinutes;
-        curFileProp->tmLastModified.tm_hour = nHour;
-        curFileProp->tmLastModified.tm_mday = nDay;
-        curFileProp->tmLastModified.tm_mon  = nMonth;
-        curFileProp->tmLastModified.tm_year = nYear;
-
-        pszToken = strtok(NULL, " \t");
-        if(pszToken != NULL)
-        {
-            curFileProp->lpszName = FTP_strdup(pszToken);
-            TRACE(": %s\n", curFileProp->lpszName);
-        }
-
-        nBufLen = MAX_REPLY_LEN;
-        indexFilePropArray++;
+	    TRACE("Mod time: %2d:%2d:%2d  %2d/%2d/%2d\n",
+		  curFileProp->tmLastModified.tm_hour, curFileProp->tmLastModified.tm_min, curFileProp->tmLastModified.tm_sec,
+		  curFileProp->tmLastModified.tm_year, curFileProp->tmLastModified.tm_mon, curFileProp->tmLastModified.tm_mday);
+	    
+	    pszToken = strtok(NULL, " \t");
+	    if (pszToken == NULL) {
+		nBufLen = MAX_REPLY_LEN;
+		continue;
+	    }
+	    if (!strcasecmp(pszToken, "<DIR>")) {
+		curFileProp->bIsDirectory = TRUE;
+		TRACE("Is directory\n");
+	    } else {
+		curFileProp->bIsDirectory = FALSE;
+		curFileProp->nSize = atol(pszToken);
+		TRACE("nSize: %ld\n", curFileProp->nSize);
+	    }
+	    
+	    pszToken = strtok(NULL, " \t");
+	    if (pszToken == NULL) {
+		nBufLen = MAX_REPLY_LEN;
+		continue;
+	    }
+	    curFileProp->lpszName = FTP_strdup(pszToken);
+	    TRACE("Name: %s\n", curFileProp->lpszName);
+	    
+	    nBufLen = MAX_REPLY_LEN;
+	    indexFilePropArray++;	    
+	} else {
+	    nBufLen = MAX_REPLY_LEN;
+	}
     }
 
     if (bSuccess && indexFilePropArray)
