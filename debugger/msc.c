@@ -48,13 +48,13 @@ static void LocateDebugInfoFile(char *filename, char *dbg_filename)
     file = strrchr(filename, '\\');
     if( file == NULL ) file = filename; else file++;
 
-    if (GetEnvironmentVariableA("_NT_SYMBOL_PATH", str1, sizeof(str1)))
-	if (SearchPathA(str1, file, NULL, sizeof(str2), str2, &name_part))
+    if (GetEnvironmentVariableA("_NT_SYMBOL_PATH", str1, MAX_PATHNAME_LEN))
+	if (SearchPathA(str1, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))
 	    goto ok;
-    if (GetEnvironmentVariableA("_NT_ALT_SYMBOL_PATH", str1, sizeof(str1)))
-	if (SearchPathA(str1, file, NULL, sizeof(str2), str2, &name_part))
+    if (GetEnvironmentVariableA("_NT_ALT_SYMBOL_PATH", str1, MAX_PATHNAME_LEN))
+	if (SearchPathA(str1, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))
 	    goto ok;
-    if (SearchPathA(NULL, file, NULL, sizeof(str2), str2, &name_part))
+    if (SearchPathA(NULL, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))
 	goto ok;
     else
     {
