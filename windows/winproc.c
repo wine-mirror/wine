@@ -954,7 +954,7 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
  * Map a message from Unicode to Ansi.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
+static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
 {
     switch(msg)
     {
@@ -980,41 +980,6 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
 
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            CREATESTRUCTA *cs = (CREATESTRUCTA *)HeapAlloc( GetProcessHeap(), 0,
-                                                                sizeof(*cs) );
-            if (!cs) return -1;
-            *cs = *(CREATESTRUCTA *)*plparam;
-            if (HIWORD(cs->lpszName))
-                cs->lpszName  = HEAP_strdupWtoA( GetProcessHeap(), 0,
-                                                 (LPCWSTR)cs->lpszName );
-            if (HIWORD(cs->lpszClass))
-                cs->lpszClass = HEAP_strdupWtoA( GetProcessHeap(), 0,
-                                                 (LPCWSTR)cs->lpszClass);
-
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)HeapAlloc(GetProcessHeap(), 0,
-                                                                         sizeof(*mdi_cs));
-                if (!mdi_cs)
-                {
-                    HeapFree(GetProcessHeap(), 0, cs);
-                    return -1;
-                }
-                *mdi_cs = *(MDICREATESTRUCTA *)cs->lpCreateParams;
-                if (HIWORD(mdi_cs->szTitle))
-                    mdi_cs->szTitle = HEAP_strdupWtoA(GetProcessHeap(), 0,
-                                                      (LPCWSTR)mdi_cs->szTitle);
-                if (HIWORD(mdi_cs->szClass))
-                    mdi_cs->szClass = HEAP_strdupWtoA(GetProcessHeap(), 0,
-                                                      (LPCWSTR)mdi_cs->szClass);
-                cs->lpCreateParams = (LPVOID)mdi_cs;
-            }
-            *plparam = (LPARAM)cs;
-        }
-        return 1;
     case WM_MDICREATE:
         {
             MDICREATESTRUCTA *cs =
@@ -1126,7 +1091,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
  *
  * Unmap a message that was mapped from Unicode to Ansi.
  */
-LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT result )
+static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT result )
 {
     switch(msg)
     {
@@ -1154,27 +1119,6 @@ LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case LB_ADDFILE:
     case EM_REPLACESEL:
         HeapFree( GetProcessHeap(), 0, (void *)lParam );
-        break;
-
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
-            if (HIWORD(cs->lpszName))
-                HeapFree( GetProcessHeap(), 0, (LPVOID)cs->lpszName );
-            if (HIWORD(cs->lpszClass))
-                HeapFree( GetProcessHeap(), 0, (LPVOID)cs->lpszClass );
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs->lpCreateParams;
-                if (HIWORD(mdi_cs->szTitle))
-                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szTitle);
-                if (HIWORD(mdi_cs->szClass))
-                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szClass);
-                HeapFree(GetProcessHeap(), 0, mdi_cs);
-            }
-            HeapFree( GetProcessHeap(), 0, cs );
-        }
         break;
 
     case WM_MDICREATE:
@@ -2879,6 +2823,78 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
 
 
 /**********************************************************************
+ *	     WINPROC_CallProc32WTo32A_fast
+ *
+ */
+static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
+                                           UINT msg, WPARAM wParam,
+                                           LPARAM lParam, LRESULT *result )
+{
+    switch(msg)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        {   /* csW->lpszName and csW->lpszClass are NOT supposed to be atoms
+             * at this point.
+             */
+            char buffer[1024];
+            char *cls = buffer, *name;
+            CREATESTRUCTW *csW = (CREATESTRUCTW *)lParam;
+            CREATESTRUCTA csA = *(CREATESTRUCTA *)csW;
+            DWORD name_lenA, name_lenW, class_lenA, class_lenW;
+
+            class_lenW = strlenW(csW->lpszClass) * sizeof(WCHAR);
+            RtlUnicodeToMultiByteSize(&class_lenA, csW->lpszClass, class_lenW);
+
+            if (csW->lpszName)
+            {
+                name_lenW = strlenW(csW->lpszName) * sizeof(WCHAR);
+                RtlUnicodeToMultiByteSize(&name_lenA, csW->lpszName, name_lenW);
+            }
+            else
+                name_lenW = name_lenA = 0;
+
+            if (class_lenA + name_lenA + 2 > sizeof(buffer))
+            {
+                cls = HeapAlloc(GetProcessHeap(), 0, class_lenA + name_lenA + 2);
+                if (!cls) return FALSE;
+            }
+
+            RtlUnicodeToMultiByteN(cls, class_lenA, NULL, csW->lpszClass, class_lenW);
+            cls[class_lenA] = 0;
+            csA.lpszClass = cls;
+
+            if (csW->lpszName)
+            {
+                name = cls + class_lenA + 1;
+                RtlUnicodeToMultiByteN(name, name_lenA, NULL, csW->lpszName, name_lenW);
+                name[name_lenA] = 0;
+                csA.lpszName = name;
+            }
+
+            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                MDICREATESTRUCTA mdi_cs;
+
+                mdi_cs = *(MDICREATESTRUCTA *)csW->lpCreateParams;
+                mdi_cs.szTitle = csA.lpszName;
+                mdi_cs.szClass = csA.lpszClass;
+                csA.lpCreateParams = &mdi_cs;
+            }
+
+            lParam = (LPARAM)&csA;
+            *result = WINPROC_CallWndProc(func, hwnd, msg, wParam, lParam);
+
+            if (cls != buffer) HeapFree(GetProcessHeap(), 0, cls);
+        }
+        return TRUE;
+
+    default:
+        return FALSE;
+    }
+}
+
+/**********************************************************************
  *	     WINPROC_CallProc32WTo32A
  *
  * Call a window procedure, translating args from Unicode to Ansi.
@@ -2892,6 +2908,9 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
 	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+
+    if (WINPROC_CallProc32WTo32A_fast( func, hwnd, msg, wParam, lParam, &result ))
+        return result;
 
     if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
