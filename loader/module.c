@@ -70,20 +70,14 @@ MODULE32_LookupHMODULE(PDB32 *process,HMODULE32 hmod) {
  *  from itself, but also via LoadLibrary from one of the called initialization
  *  routines.)
  */
-void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
-                            DWORD type, LPVOID lpReserved )
+static void MODULE_DoInitializeDLLs( PDB32 *process, WINE_MODREF *wm,
+                                     DWORD type, LPVOID lpReserved )
 {
-    WINE_MODREF *wm = MODULE32_LookupHMODULE( process, root );
     int i;
 
-    if (!wm) return;
-
-    /* If called for main EXE, check for invalid recursion */
-    if ( !root && wm->initDone )
-    {
-        FIXME(module, "Invalid recursion!\n");
-        return;
-    }
+    assert( wm && !wm->initDone );
+    TRACE( module, "(%p,%08x,%ld,%p) - START\n", 
+           process, wm->module, type, lpReserved );
 
     /* Tag current MODREF to prevent recursive loop */
     wm->initDone = TRUE;
@@ -91,8 +85,8 @@ void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
     /* Recursively initialize all child DLLs */
     for ( i = 0; i < wm->nDeps; i++ )
         if ( wm->deps[i] && !wm->deps[i]->initDone )
-            MODULE_InitializeDLLs( process, 
-                                   wm->deps[i]->module, type, lpReserved );
+            MODULE_DoInitializeDLLs( process, 
+                                     wm->deps[i], type, lpReserved );
 
     /* Now we can call the initialization routine */
     switch ( wm->type )
@@ -106,15 +100,72 @@ void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
         break;
     }
 
-    /* If called for main EXE, reset recursion flags */
-    if ( !root )
-        for ( wm = process->modref_list; wm; wm = wm->next )
-        {
-            if (!wm->initDone)
-                FIXME(module, "Orphaned module in modref_list?\n");
+    TRACE( module, "(%p,%08x,%ld,%p) - END\n", 
+           process, wm->module, type, lpReserved );
+}
 
-            wm->initDone = FALSE;
+void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
+                            DWORD type, LPVOID lpReserved )
+{
+    BOOL32 inProgress = FALSE;
+    WINE_MODREF *wm;
+
+    /* Grab the process critical section to protect the recursion flags */
+    /* FIXME: This is probably overkill! */
+    EnterCriticalSection( &process->crit_section );
+
+    TRACE( module, "(%p,%08x,%ld,%p) - START\n", process, root, type, lpReserved );
+
+    /* First, check whether initialization is currently in progress */
+    for ( wm = process->modref_list; wm; wm = wm->next )
+        if ( wm->initDone )
+        {
+            inProgress = TRUE;
+            break;
         }
+
+    if ( inProgress )
+    {
+        /* 
+         * If this a LoadLibrary call from within an initialization routine,
+         * treat it analogously to an implicitly referenced DLL.
+         * Anything else may not happen at this point!
+         */
+        if ( root )
+        {
+            wm = MODULE32_LookupHMODULE( process, root );
+            if ( wm && !wm->initDone )
+                MODULE_DoInitializeDLLs( process, wm, type, lpReserved );
+        }
+        else
+            FIXME(module, "Invalid recursion!\n");
+    }
+    else
+    {
+        /* If we arrive here, this is the start of an initialization run */
+        if ( !root )
+        {
+            /* If called for main EXE, initialize all DLLs */
+            for ( wm = process->modref_list; wm; wm = wm->next )
+                if ( !wm->initDone )
+                    MODULE_DoInitializeDLLs( process, wm, type, lpReserved );
+        }
+        else
+        {
+            /* If called for a specific DLL, initialize only it and its children */
+            wm = MODULE32_LookupHMODULE( process, root );
+            if (wm) MODULE_DoInitializeDLLs( process, wm, type, lpReserved );
+        }
+
+        /* We're finished, so we reset all recursion flags */
+        for ( wm = process->modref_list; wm; wm = wm->next )
+            wm->initDone = FALSE;
+    }
+
+    TRACE( module, "(%p,%08x,%ld,%p) - END\n", process, root, type, lpReserved );
+
+    /* Release critical section */
+    LeaveCriticalSection( &process->crit_section );
 }
 
 
@@ -745,7 +796,15 @@ HMODULE32 WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
  */
 HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 {
-	return MODULE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
+    HMODULE32 hmod;
+    hmod = MODULE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
+
+    /* initialize DLL just loaded */
+    if ( hmod >= 32 )
+        MODULE_InitializeDLLs( PROCESS_Current(), hmod, 
+                               DLL_PROCESS_ATTACH, (LPVOID)-1 );
+
+    return hmod;
 }
 
 HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,PDB32*process,HFILE32 hfile,DWORD flags)
@@ -764,9 +823,6 @@ HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,PDB32*process,HFILE32 hfile,DWO
 	strcat( buffer, ".dll" );
 	hmod = PE_LoadLibraryEx32A(buffer,process,hfile,flags);
     }
-    /* initialize DLL just loaded */
-    if (hmod >= 32)
-        MODULE_InitializeDLLs( PROCESS_Current(), hmod, DLL_PROCESS_ATTACH, NULL);
     return hmod;
 }
 
