@@ -2225,7 +2225,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     strcatW((WCHAR*)cp, style_nameW);
     ret = needed;
 
-    if(needed <= cbSize)
+    if(potm && needed <= cbSize)
         memcpy(potm, font->potm, font->potm->otmSize);
 
 end:
