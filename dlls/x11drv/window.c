@@ -559,6 +559,22 @@ int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder )
         else
         {
             HWND next = GetWindow( win->hwndSelf, GW_HWNDNEXT );
+
+            if (root_window != DefaultRootWindow(display))
+            {
+                /* in desktop mode we need the sibling to belong to the same process */
+                while (next)
+                {
+                    WND *ptr = WIN_GetPtr( next );
+                    if (ptr != WND_OTHER_PROCESS)
+                    {
+                        WIN_ReleasePtr( ptr );
+                        break;
+                    }
+                    next = GetWindow( next, GW_HWNDNEXT );
+                }
+            }
+
             if (!next)  /* bottom child */
             {
                 changes.stack_mode = Below;
