@@ -95,7 +95,7 @@
 #define DIALOG_SYMBOL_FILE           "&Nome del file:"
 #define DIALOG_SYMBOL_CURRENT        "I&cona corrente:"
 
-#define DIALOG_EXECUTE_CAPTION       "Execute Program"
+#define DIALOG_EXECUTE_CAPTION       "Esegui programma"
 #define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
 #define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
 

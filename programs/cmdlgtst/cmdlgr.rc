@@ -22,6 +22,7 @@
 #include "cmdlgtst.h"
 
 #include "En.rc"
+#include "It.rc"
 #include "Pt.rc"
 
 LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL
