@@ -289,10 +289,24 @@ static int DOSFS_MatchShort( const char *mask, const char *name )
  *           DOSFS_MatchLong
  *
  * Check a long file name against a mask.
+ *
+ * Tests (done in W95 DOS shell - case insensitive):
+ * *.txt			test1.test.txt				*
+ * *st1*			test1.txt				*
+ * *.t??????.t*			test1.ta.tornado.txt			*
+ * *tornado*			test1.ta.tornado.txt			*
+ * t*t				test1.ta.tornado.txt			*
+ * ?est*			test1.txt				*
+ * ?est???			test1.txt				-
+ * *test1.txt*			test1.txt				* 
+ * h?l?o*t.dat			hellothisisatest.dat			*
  */
 static int DOSFS_MatchLong( const char *mask, const char *name,
                             int case_sensitive )
 {
+    const char *lastjoker = NULL;
+    const char *next_to_retry = NULL;
+
     if (!strcmp( mask, "*.*" )) return 1;
     while (*name && *mask)
     {
@@ -300,23 +314,62 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
         {
             mask++;
             while (*mask == '*') mask++;  /* Skip consecutive '*' */
-            if (!*mask) return 1;
+            lastjoker = mask;
+            if (!*mask) return 1; /* end of mask is all '*', so match */
+
+            /* skip to the next match after the joker(s) */
             if (case_sensitive) while (*name && (*name != *mask)) name++;
             else while (*name && (toupper(*name) != toupper(*mask))) name++;
+
             if (!*name) break;
+            next_to_retry = name;
         }
         else if (*mask != '?')
         {
+            int mismatch = 0;
             if (case_sensitive)
             {
-                if (*mask != *name) return 0;
+                if (*mask != *name) mismatch = 1;
             }
-            else if (toupper(*mask) != toupper(*name)) return 0;
+            else
+            {
+                if (toupper(*mask) != toupper(*name)) mismatch = 1;
+            }
+            if (!mismatch)
+            {
+                mask++;
+                name++;
+                if (*mask == '\0')
+                {
+                    if (*name == '\0')
+                        return 1;
+                    if (lastjoker)
+                        mask = lastjoker;
+                }
+            }
+            else /* mismatch ! */
+            {
+                if (lastjoker) /* we had an '*', so we can try unlimitedly */
+                {
+                    mask = lastjoker;
+
+                    /* this scan sequence was a mismatch, so restart
+                     * 1 char after the first char we checked last time */
+                    next_to_retry++;
+                    name = next_to_retry;
+                }
+                else
+                    return 0; /* bad luck */
+            }
         }
-        mask++;
-        name++;
+        else /* '?' */
+        {
+            mask++;
+            name++;
+        }
     }
-    if (*mask == '.') mask++;  /* Ignore trailing '.' in mask */
+    while ((*mask == '.') || (*mask == '*'))
+        mask++;  /* Ignore trailing '.' or '*' in mask */
     return (!*name && !*mask);
 }
 
