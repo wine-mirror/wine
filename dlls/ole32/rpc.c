@@ -410,7 +410,7 @@ HRESULT RPC_RegisterInterface(REFIID riid)
     {
         TRACE("Creating new interface\n");
 
-        rif = HeapAlloc(GetProcessHeap(), 0, sizeof(*rif));
+        rif = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rif));
         if (rif)
         {
             RPC_STATUS status;
@@ -419,10 +419,9 @@ HRESULT RPC_RegisterInterface(REFIID riid)
             rif->If.Length = sizeof(RPC_SERVER_INTERFACE);
             /* RPC interface ID = COM interface ID */
             rif->If.InterfaceId.SyntaxGUID = *riid;
-            /* COM objects always have a version of 0.0 */
-            rif->If.InterfaceId.SyntaxVersion.MajorVersion = 0;
-            rif->If.InterfaceId.SyntaxVersion.MinorVersion = 0;
             rif->If.DispatchTable = &rpc_dispatch;
+            /* all other fields are 0, including the version asCOM objects
+             * always have a version of 0.0 */
             status = RpcServerRegisterIfEx(
                 (RPC_IF_HANDLE)&rif->If,
                 NULL, NULL,
@@ -539,8 +538,10 @@ static HRESULT create_server(REFCLSID rclsid)
 
     if (!CreateProcessW(exe, command, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo)) {
         WARN("failed to run local server %s\n", debugstr_w(exe));
-        return E_FAIL;
+        return HRESULT_FROM_WIN32(GetLastError());
     }
+    CloseHandle(pinfo.hProcess);
+    CloseHandle(pinfo.hThread);
 
     return S_OK;
 }
