@@ -1237,7 +1237,7 @@ HRESULT WINAPI FileMonikerImpl_ParseDisplayName(IMoniker* iface,
 }
 
 /******************************************************************************
- *        FileMoniker_IsSystemMonker
+ *        FileMoniker_IsSystemMoniker
  ******************************************************************************/
 HRESULT WINAPI FileMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 {

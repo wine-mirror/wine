@@ -267,7 +267,7 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectBound(IBindCtx* iface, IUnknown* punk)
 
     IUnknown_Release(This->bindCtxTable[index].pObj);
     
-    /* left-shift all elements in the rigth side of the curent revoked object */
+    /* left-shift all elements in the right side of the current revoked object */
     for(j=index; j<This->bindCtxTableLastIndex-1; j++)
         This->bindCtxTable[j]= This->bindCtxTable[j+1];
     

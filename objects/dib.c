@@ -362,7 +362,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 /* FIXME the following two structs should be combined with __sysPalTemplate in
    objects/color.c - this should happen after de-X11-ing both of these
    files.
-   NB. RGBQUAD and PALETTENTRY have different orderings of red, green
+   NB. RGBQUAD and PALETTEENTRY have different orderings of red, green
    and blue - sigh */
 
 static RGBQUAD EGAColors[16] = { 
@@ -519,7 +519,7 @@ INT WINAPI GetDIBits(
 
     if (bits && lines)
     {
-        /* If the bitmap object already have a dib section that contains image data, get the bits from it*/
+        /* If the bitmap object already have a dib section that contains image data, get the bits from it */
         if(bmp->dib && bmp->dib->dsBm.bmBitsPixel >= 15 && info->bmiHeader.biBitCount >= 15)
         {
             /*FIXME: Only RGB dibs supported for now */

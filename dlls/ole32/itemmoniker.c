@@ -876,7 +876,7 @@ HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,
 }
 
 /******************************************************************************
- *        ItemMoniker_IsSystemMonker
+ *        ItemMoniker_IsSystemMoniker
  ******************************************************************************/
 HRESULT WINAPI ItemMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 {

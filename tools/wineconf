@@ -9,7 +9,7 @@ $RCS_ID = '$Id$ ';
 # This program examines the contents of the DOS filesystems and
 # attempts to generate a sensible wine.conf file.  This is output
 # to STDOUT.
-# It reads /etc/FSTAB to find mounting locations of the hard disk drives
+# It reads /etc/fstab to find mounting locations of the hard disk drives
 # It uses the correct algorithm for ordering DOS drives, with the
 # exception of the case of multiple drive controller types, where I don't
 # know what DOS's algorithm is.

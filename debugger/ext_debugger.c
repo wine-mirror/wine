@@ -78,7 +78,7 @@ void DEBUG_ExternalDebugger(void)
       dbg_sleep_secs = DBG_SLEEPTIME_DEFAULT;
   }
 
-  /* get the curent process id */
+  /* get the current process id */
   attach_pid = getpid();
 
   /* create new process */

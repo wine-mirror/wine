@@ -361,17 +361,19 @@ static DWORD CALLBACK ANIMATE_AnimationThread(LPVOID ptr_)
         if(GetWindowLongA(infoPtr->hWnd, GWL_STYLE) & ACS_TRANSPARENT) 
         {
             hDC = GetDC(infoPtr->hWnd);
+	    /* sometimes the animation window will be destroyed in between
+	     * by the main program, so a ReleaseDC() error msg is possible */
             infoPtr->hbrushBG = SendMessageA(GetParent(infoPtr->hWnd),WM_CTLCOLORSTATIC,hDC, infoPtr->hWnd);
             ReleaseDC(infoPtr->hWnd,hDC);
         }
         
-    EnterCriticalSection(&infoPtr->cs);
-    ANIMATE_DrawFrame(infoPtr);
-    LeaveCriticalSection(&infoPtr->cs);
+        EnterCriticalSection(&infoPtr->cs);
+        ANIMATE_DrawFrame(infoPtr);
+        LeaveCriticalSection(&infoPtr->cs);
     
         /* time is in microseconds, we should convert it to milliseconds */
         Sleep((infoPtr->mah.dwMicroSecPerFrame+500)/1000);
-}
+    }
     return TRUE;
 }
 

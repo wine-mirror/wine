@@ -114,7 +114,7 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(IEnumMoniker* iface,REFIID 
 static ULONG   WINAPI EnumMonikerImpl_AddRef(IEnumMoniker* iface);
 static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface);
 
-/* IEnumMonker prototype functions */
+/* IEnumMoniker prototype functions */
 static HRESULT WINAPI EnumMonikerImpl_Next(IEnumMoniker* iface,ULONG celt,IMoniker** rgelt,ULONG* pceltFetched);
 static HRESULT WINAPI EnumMonikerImpl_Skip(IEnumMoniker* iface,ULONG celt);
 static HRESULT WINAPI EnumMonikerImpl_Reset(IEnumMoniker* iface);
@@ -727,7 +727,7 @@ HRESULT WINAPI CompositeMonikerImpl_Reduce(IMoniker* iface,
 
     else{
 
-        /* separate the copmosite moniker in to left and wrigth moniker */
+        /* separate the composite moniker in to left and right moniker */
         IMoniker_Enum(iface,FALSE,&enumMoniker);
         IEnumMoniker_Next(enumMoniker,1,&mostRigthMk,NULL);
         IEnumMoniker_Release(enumMoniker);
@@ -1184,7 +1184,7 @@ VOID WINAPI GetAfterCommonPrefix(IMoniker* pGenMk,IMoniker* commonMk,IMoniker** 
     *restMk=0;
 
     /* to create an enumerator for pGenMk with current position pointed on the first element after common  */
-    /* prefix: enum the two monikers (left-wrigth) then compare these enumerations (left-wrigth) and stop  */
+    /* prefix: enum the two monikers (left-right) then compare these enumerations (left-right) and stop  */
     /* on the first difference. */
     IMoniker_Enum(pGenMk,TRUE,&enumMoniker1);
 
@@ -1385,12 +1385,12 @@ HRESULT WINAPI CompositeMonikerImpl_ParseDisplayName(IMoniker* iface,
     /* This method recursively calls IMoniker::ParseDisplayName on the rightmost component of the composite,*/
     /* passing everything else as the pmkToLeft parameter for that call. */
 
-    /* get the most rigth moniker */
+    /* get the most right moniker */
     IMoniker_Enum(iface,FALSE,&enumMoniker);
     IEnumMoniker_Next(enumMoniker,1,&mostRigthMk,NULL);
     IEnumMoniker_Release(enumMoniker);
 
-    /* get the left  moniker */
+    /* get the left moniker */
     CreateAntiMoniker(&antiMk);
     IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
     IMoniker_Release(antiMk);
@@ -1399,7 +1399,7 @@ HRESULT WINAPI CompositeMonikerImpl_ParseDisplayName(IMoniker* iface,
 }
 
 /******************************************************************************
- *        CompositeMoniker_IsSystemMonker
+ *        CompositeMoniker_IsSystemMoniker
  ******************************************************************************/
 HRESULT WINAPI CompositeMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 {

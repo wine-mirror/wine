@@ -1069,7 +1069,7 @@ BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
 /***********************************************************************
  *           GetDiskFreeSpaceExA   (KERNEL32.871)
  *
- *  This function is used to aquire the size of the available and
+ *  This function is used to acquire the size of the available and
  *  total space on a logical volume.
  *
  * RETURNS

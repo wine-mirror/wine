@@ -555,7 +555,7 @@ HRESULT WINAPI AntiMonikerImpl_ParseDisplayName(IMoniker* iface,
 }
 
 /******************************************************************************
- *        AntiMoniker_IsSystemMonker
+ *        AntiMoniker_IsSystemMoniker
  ******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 {
