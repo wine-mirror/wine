@@ -2245,7 +2245,7 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
     TRACE("(%p,%p)\n",iface,pDesc);
     memcpy(pDesc, &(WOutDev[This->wDevID].ds_desc), sizeof(DSDRIVERDESC));
     pDesc->dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
-	DSDDESC_USESYSTEMMEMORY;
+	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK;
     pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
     pDesc->wReserved		= 0;
