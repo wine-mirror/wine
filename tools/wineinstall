@@ -194,6 +194,7 @@ function link_app {
 function configure_wine_applications {
   link_app notepad      "$CROOT/windows/notepad.exe"
   link_app regedit      "$CROOT/windows/regedit.exe"
+  link_app rundll32     "$CROOT/windows/rundll32.exe"
   link_app wcmd         "$CROOT/windows/system32/cmd.exe"
   link_app control      "$CROOT/windows/system32/control.exe"
   link_app winhelp      "$CROOT/windows/system32/help.exe"
