@@ -254,6 +254,11 @@ LPWSTR WINAPI PathAddBackslash32W(LPWSTR path);
 #define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
 LPVOID  WINAPI PathAddBackslash32AW(LPVOID path);	
 
+BOOL32  WINAPI PathQualify32A(LPCSTR path);	
+BOOL32 WINAPI PathQualify32W(LPCWSTR path);	
+#define  PathQualify WINELIB_NAME_AW(PathQualify)
+BOOL32  WINAPI PathQualify32AW(LPCVOID path);	
+
 LPSTR  WINAPI PathQuoteSpaces32A(LPCSTR path);	
 LPWSTR WINAPI PathQuoteSpaces32W(LPCWSTR path);	
 #define  PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)

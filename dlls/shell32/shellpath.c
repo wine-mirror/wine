@@ -517,6 +517,24 @@ BOOL32 WINAPI PathSetDlgItemPath32AW(HWND32 hDlg, int id, LPCVOID pszPath)
 }
 
 /*************************************************************************
+ * PathQualify32AW [SHELL32.49]
+ */
+
+BOOL32 WINAPI PathQualify32A(LPCSTR pszPath) 
+{	TRACE(shell,"%s\n",pszPath);
+	return 0;
+}
+BOOL32 WINAPI PathQualify32W(LPCWSTR pszPath) 
+{	TRACE(shell,"%s\n",debugstr_w(pszPath));
+	return 0;
+}
+BOOL32 WINAPI PathQualify32AW(LPCVOID pszPath) 
+{	if (VERSION_OsIsUnicode())
+	  return PathQualify32W(pszPath);
+	return PathQualify32A(pszPath);
+}
+
+/*************************************************************************
  * PathResolve [SHELL32.51]
  */
 DWORD WINAPI PathResolve(LPCSTR s,DWORD x2,DWORD x3) {

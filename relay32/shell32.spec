@@ -54,7 +54,7 @@ init	Shell32LibMain
   46 stdcall PathMatchSpec (str str) PathMatchSpec32AW
   47 stub PathMakeUniqueName@20
   48 stdcall PathSetDlgItemPath (long long ptr) PathSetDlgItemPath32AW
-  49 stub PathQualify@4
+  49 stdcall PathQualify (ptr) PathQualify32AW
   50 stub PathStripToRoot@4
   51 stdcall PathResolve(str long long) PathResolve
   52 stdcall PathGetArgs(str) PathGetArgs32AW
