@@ -181,6 +181,26 @@ BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len)
 }
 
 /******************************************************************
+ *		WINECON_SetEditionMode
+ *
+ *
+ */
+static BOOL WINECON_SetEditionMode(HANDLE hConIn, int edition_mode)
+{
+    BOOL ret;
+
+    SERVER_START_REQ( set_console_input_info )
+    {
+        req->handle = (obj_handle_t)hConIn;
+        req->mask = SET_CONSOLE_INPUT_INFO_EDITION_MODE;
+        req->edition_mode = edition_mode;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/******************************************************************
  *		WINECON_GrabChanges
  *
  * A change occurs, try to figure out which
@@ -413,6 +433,11 @@ void     WINECON_SetConfig(struct inner_data* data,
         SetConsoleWindowInfo(data->hConOut, FALSE, &pos);
     }
     data->curcfg.exit_on_die = cfg->exit_on_die;
+    if (force || data->curcfg.edition_mode != cfg->edition_mode)
+    {
+        data->curcfg.edition_mode = cfg->edition_mode;
+        WINECON_SetEditionMode(data->hConIn, cfg->edition_mode);
+    }
     /* we now need to gather all events we got from the operations above,
      * in order to get data correctly updated
      */

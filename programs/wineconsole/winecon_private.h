@@ -42,6 +42,7 @@ struct config_data {
     unsigned	win_height;
     COORD	win_pos;	/* position (in cells) of visible part of screen buffer in window */
     BOOL        exit_on_die;    /* whether the wineconsole should quit if server destroys the console */
+    unsigned    edition_mode;   /* edition mode flavor while line editing */
     WCHAR*      registry;       /* <x> part of HKLU\\<x>\\Console where config is read from (NULL if default settings) */
 };
 

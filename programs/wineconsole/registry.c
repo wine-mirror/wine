@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 static const WCHAR wszConsole[]           = {'C','o','n','s','o','l','e',0};
 static const WCHAR wszCursorSize[]        = {'C','u','r','s','o','r','S','i','z','e',0};
 static const WCHAR wszCursorVisible[]     = {'C','u','r','s','o','r','V','i','s','i','b','l','e',0};
+static const WCHAR wszEditionMode[]       = {'E','d','i','t','i','o','n','M','o','d','e',0};
 static const WCHAR wszExitOnDie[]         = {'E','x','i','t','O','n','D','i','e',0};
 static const WCHAR wszFaceName[]          = {'F','a','c','e','N','a','m','e',0};
 static const WCHAR wszFontSize[]          = {'F','o','n','t','S','i','z','e',0};
@@ -44,11 +45,12 @@ static const WCHAR wszWindowSize[]        = {'W','i','n','d','o','w','S','i','z'
 
 void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
 {
-    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02lx font=%s/%lu hist=%lu/%d flags=%c%c msk=%08lx sb=(%u,%u) win=(%u,%u)x(%u,%u) registry=%s\n",
+    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02lx font=%s/%lu hist=%lu/%d flags=%c%c msk=%08lx sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
                pfx, cfg->cell_width, cfg->cell_height, cfg->cursor_size, cfg->cursor_visible, cfg->def_attr,
                wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size, cfg->history_nodup ? 1 : 2,
                cfg->quick_edit ? 'Q' : 'q', cfg->exit_on_die ? 'X' : 'x',
                cfg->menu_mask, cfg->sb_width, cfg->sb_height, cfg->win_pos.X, cfg->win_pos.Y, cfg->win_width, cfg->win_height,
+               cfg->edition_mode,
                wine_dbgstr_w(cfg->registry));
 }
 
@@ -89,6 +91,10 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
     count = sizeof(val);
     if (!RegQueryValueEx(hConKey, wszCursorVisible, 0, &type, (char*)&val, &count))
         cfg->cursor_visible = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszEditionMode, 0, &type, (char*)&val, &count))
+        cfg->edition_mode = val;
 
     count = sizeof(val);
     if (!RegQueryValueEx(hConKey, wszExitOnDie, 0, &type, (char*)&val, &count))
@@ -173,6 +179,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->def_attr = 0x000F;
     cfg->win_height = 25;
     cfg->win_width  = 80;
+    cfg->edition_mode = 0;
     cfg->registry = NULL;
 
     /* then read global settings */
@@ -212,6 +219,9 @@ static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 
     val = cfg->cursor_visible;
     RegSetValueEx(hConKey, wszCursorVisible, 0, REG_DWORD, (char*)&val, sizeof(val));
+
+    val = cfg->edition_mode;
+    RegSetValueEx(hConKey, wszEditionMode, 0, REG_DWORD, (char*)&val, sizeof(val));
 
     val = cfg->exit_on_die;
     RegSetValueEx(hConKey, wszExitOnDie, 0, REG_DWORD, (char*)&val, sizeof(val));
