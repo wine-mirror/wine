@@ -140,6 +140,8 @@ int main(int argc, char *argv[])
 	LPSTR Transforms = HeapAlloc(GetProcessHeap(), 0, 1);
 	LANGID Language = 0;
 
+	INSTALLUILEVEL InstallUILevel = 0, retInstallUILevel;
+
 	LPSTR DllName = NULL;
 
 	Properties[0] = 0;
@@ -382,12 +384,44 @@ int main(int argc, char *argv[])
 		}
 		else if(!strncasecmp(argv[i], "/q", 2))
 		{
-			i++;
-			if(i >= argc)
-				ShowUsage(1);
-			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			WINE_FIXME("User interface not yet implemented\n");
-			ExitProcess(1);
+			if(strlen(argv[i]) == 2 || !strcasecmp(argv[i]+2, "n"))
+			{
+				InstallUILevel = INSTALLUILEVEL_NONE;
+			}
+			else if(!strcasecmp(argv[i]+2, "b"))
+			{
+				InstallUILevel = INSTALLUILEVEL_BASIC;
+			}
+			else if(!strcasecmp(argv[i]+2, "r"))
+			{
+				InstallUILevel = INSTALLUILEVEL_REDUCED;
+			}
+			else if(!strcasecmp(argv[i]+2, "f"))
+			{
+				InstallUILevel = INSTALLUILEVEL_FULL|INSTALLUILEVEL_ENDDIALOG;
+			}
+			else if(!strcasecmp(argv[i]+2, "n+"))
+			{
+				InstallUILevel = INSTALLUILEVEL_NONE|INSTALLUILEVEL_ENDDIALOG;
+			}
+			else if(!strcasecmp(argv[i]+2, "b+"))
+			{
+				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG;
+			}
+			else if(!strcasecmp(argv[i]+2, "b-"))
+			{
+				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY;
+			}
+			else
+			{
+				fprintf(stderr, "Unknown option \"%s\" for UI level\n", argv[i]+2);
+			}
+			retInstallUILevel = MsiSetInternalUI(InstallUILevel, NULL);
+			if(retInstallUILevel == INSTALLUILEVEL_NOCHANGE)
+			{
+				fprintf(stderr, "Setting the UI level to 0x%x failed.\n", InstallUILevel);
+				ExitProcess(1);
+			}
 		}
 		else if(!strcasecmp(argv[i], "/y"))
 		{
