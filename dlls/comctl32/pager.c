@@ -837,6 +837,9 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPRECT lpRect = (LPRECT)lParam;
     RECT rcChildw, rcmyw, wnrc, lbrc, rbrc;
     POINT cursor;
+    BOOL resizeClient = FALSE;
+    BOOL repaintBtns = FALSE;
+    INT scrollRange;
 
     /*
      * lParam points to a RECT struct.  On entry, the struct
@@ -855,6 +858,16 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	MapWindowPoints (0, hwnd, (LPPOINT)&rcChildw, 2);
 	GetCursorPos (&cursor);
 	GetWindowRect (hwnd, &rcmyw);
+
+	/* Reset buttons and hide any grey ones */
+	scrollRange = infoPtr->nWidth - (rcmyw.right - rcmyw.bottom);
+
+	TRACE("nPos=%d, scrollrange=%d, nWidth=%d, myw=(%d,%d)-(%d,%d)\n",
+	      infoPtr->nPos, scrollRange, infoPtr->nWidth,
+	      rcmyw.left, rcmyw.top, rcmyw.right, rcmyw.bottom);
+	PAGER_GrayAndRestoreBtns(infoPtr, scrollRange, &resizeClient, &repaintBtns);
+	PAGER_HideGrayBtns(infoPtr, &resizeClient);
+
 	if (PtInRect (&rcmyw, cursor)) {
 	    GetWindowRect (hwnd, &wnrc);
 	    lbrc = wnrc;
@@ -892,6 +905,17 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	MapWindowPoints (0, hwnd, (LPPOINT)&rcChildw, 2);
 	GetCursorPos (&cursor);
 	GetWindowRect (hwnd, &rcmyw);
+
+	/* Reset buttons and hide any grey ones */
+	scrollRange = infoPtr->nHeight - (rcmyw.bottom - rcmyw.top);
+
+	TRACE("nPos=%d, scrollrange=%d, nHeigth=%d, myw=(%d,%d)-(%d,%d)\n",
+	      infoPtr->nPos, scrollRange, infoPtr->nHeight,
+	      rcmyw.left, rcmyw.top,
+	      rcmyw.right, rcmyw.bottom);
+	PAGER_GrayAndRestoreBtns(infoPtr, scrollRange, &resizeClient, &repaintBtns);
+	PAGER_HideGrayBtns(infoPtr, &resizeClient);
+
 	if (PtInRect (&rcmyw, cursor)) {
 
 	    /* native does:
@@ -926,10 +950,10 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    lpRect->bottom = infoPtr->nHeight;
     }
 
-    TRACE("[%04x] client rect set to %dx%d at (%d,%d)\n", hwnd,
-                lpRect->right-lpRect->left,
-                lpRect->bottom-lpRect->top,
-                lpRect->left, lpRect->top);
+    TRACE("[%04x] client rect set to %dx%d at (%d,%d) BtnState[%d,%d]\n", 
+	  hwnd, lpRect->right-lpRect->left, lpRect->bottom-lpRect->top,
+	  lpRect->left, lpRect->top,
+	  infoPtr->TLbtnState, infoPtr->BRbtnState);
 
     return 0;
 }
