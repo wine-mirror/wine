@@ -354,8 +354,7 @@ LONG OSS_WaveInit(void)
 /**************************************************************************
  * 			OSS_NotifyClient			[internal]
  */
-static DWORD OSS_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, 
-			      DWORD dwParam2)
+static DWORD OSS_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     TRACE("wDevID = %04X wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
     
@@ -1759,10 +1758,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
         {
             lpWaveHdr = wwi->lpQueuePtr;
 
-
 	    ioctl(wwi->unixdev, SNDCTL_DSP_GETISPACE, &info);
             TRACE("info={frag=%d fsize=%d ftotal=%d bytes=%d}\n", info.fragments, info.fragsize, info.fragstotal, info.bytes);
-
 
             /* read all the fragments accumulated so far */
             while ((info.fragments > 0) && (wwi->lpQueuePtr))
@@ -1786,17 +1783,20 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			/* buffer is full. notify client */
 			if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
 			{
+			    /* must copy the value of next waveHdr, because we have no idea of what
+			     * will be done with the content of lpWaveHdr in callback
+			     */
+			    LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+
 			    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 			    lpWaveHdr->dwFlags |=  WHDR_DONE;
 
-			    if (OSS_NotifyClient(uDevID, 
-						 WIM_DATA, 
-						 (DWORD)lpWaveHdr, 
-                                                 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
+			    if (OSS_NotifyClient(uDevID, WIM_DATA, 
+						 (DWORD)lpWaveHdr, 0) != MMSYSERR_NOERROR) 
 			    {
 				WARN("can't notify client !\n");
 			    }
-			    lpWaveHdr = wwi->lpQueuePtr = lpWaveHdr->lpNext;
+			    lpWaveHdr = wwi->lpQueuePtr = lpNext;
 			}
                     }
                 }
@@ -1826,28 +1826,27 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                         /* client buffer is full. notify client */
                         if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
                         {
+			    /* must copy the value of next waveHdr, because we have no idea of what
+			     * will be done with the content of lpWaveHdr in callback
+			     */
+			    LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+			    TRACE("lpNext=%p\n", lpNext);
+
                             lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
                             lpWaveHdr->dwFlags |=  WHDR_DONE;
 
-                            if (OSS_NotifyClient(uDevID, 
-                                                 WIM_DATA, 
-                                                 (DWORD)lpWaveHdr, 
-                                                 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
+                            if (OSS_NotifyClient(uDevID, WIM_DATA, 
+                                                 (DWORD)lpWaveHdr, 0) != MMSYSERR_NOERROR) 
                             {
                                 WARN("can't notify client !\n");
                             }
 				   
-                            if (lpWaveHdr->lpNext)
-                            {	
-                                lpWaveHdr = lpWaveHdr->lpNext;
-                                wwi->lpQueuePtr = lpWaveHdr;
-                            }
-                            else
-                            {
+			    wwi->lpQueuePtr = lpWaveHdr = lpNext;
+			    if (!lpNext && bytesRead) {
                                 /* no more buffer to copy data to, but we did read more. 
                                  * what hasn't been copied will be dropped
                                  */ 
-                                if (bytesRead) WARN("buffer over run! %lu bytes dropped.\n", bytesRead);
+                                WARN("buffer under run! %lu bytes dropped.\n", bytesRead);
                                 wwi->lpQueuePtr = NULL;
                                 break;
                             }
@@ -1910,8 +1909,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		    lpWaveHdr->dwFlags |= WHDR_DONE;
 	
-		    if (OSS_NotifyClient(uDevID, WIM_DATA, (DWORD)lpWaveHdr, 
-					 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) {
+		    if (OSS_NotifyClient(uDevID, WIM_DATA, 
+					 (DWORD)lpWaveHdr, 0) != MMSYSERR_NOERROR) {
 			WARN("can't notify client !\n");
 		    }
 		}
