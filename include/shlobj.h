@@ -18,14 +18,10 @@
 #include "commctrl.h"
 #include "prsht.h"
 
-#define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
-#define STDMETHOD_(type,xfn) type (CALLBACK *fn##xfn)
-#define PURE
-#define FAR
-#define THIS_ THIS,
-
-/* foreward declaration of the objects*/
-typedef struct tagSHELLICON	*LPSHELLICON,	IShellIcon;
+/*****************************************************************************
+ * Predeclare interfaces
+ */
+typedef struct IShellIcon IShellIcon, *LPSHELLICON;
 
 
 /*****************************************************************************
@@ -67,42 +63,6 @@ extern UINT cfFileContents;
 #define CFSTR_PASTESUCCEEDED    "Paste Succeeded"
 #define CFSTR_INDRAGLOOP        "InShellDragLoop"
 
-/**************************************************************************
- *  IDLList "Item ID List List"
- *
- *  NOTES
- *   interal data holder for IDataObject
- */
-typedef struct tagLPIDLLIST	*LPIDLLIST,	IDLList;
-
-#define THIS LPIDLLIST me
-
-typedef enum
-{	State_UnInit=1,
-	State_Init=2,
-	State_OutOfMem=3
-} IDLListState;
- 
-typedef struct IDLList_VTable
-{	STDMETHOD_(UINT, GetState)(THIS);
-	STDMETHOD_(LPITEMIDLIST, GetElement)(THIS_ UINT nIndex);
-	STDMETHOD_(UINT, GetCount)(THIS);
-	STDMETHOD_(BOOL, StoreItem)(THIS_ LPITEMIDLIST pidl);
-	STDMETHOD_(BOOL, AddItems)(THIS_ LPITEMIDLIST *apidl, UINT cidl);
-	STDMETHOD_(BOOL, InitList)(THIS);
-	STDMETHOD_(void, CleanList)(THIS);
-} IDLList_VTable,*LPIDLLIST_VTABLE;
-
-struct tagLPIDLLIST
-{	LPIDLLIST_VTABLE	lpvtbl;
-	HDPA	dpa;
-	UINT	uStep;
-};
-
-extern LPIDLLIST IDLList_Constructor (UINT uStep);
-extern void IDLList_Destructor(LPIDLLIST me);
-#undef THIS
-
 
 /************************************************************************
 * IShellView interface
@@ -119,23 +79,23 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
  * IShellIcon interface
  */
 
-#define THIS LPSHELLICON me
+#define ICOM_INTERFACE IShellIcon
+#define IShellIcon_METHODS \
+    ICOM_METHOD3(HRESULT, GetIconOf,     LPCITEMIDLIST,pidl, UINT,flags, LPINT,lpIconIndex)
+#define IShellIcon_IMETHODS \
+    IUnknown_IMETHODS \
+    IShellIcon_METHODS
+ICOM_DEFINE(IShellIcon, IUnknown)
+#undef ICOM_INTERFACE
 
-typedef struct IShellIcon_VTable
-{ /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-  STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-  STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-  /*** IShellIcon methods ***/
-  STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT flags, LPINT lpIconIndex) PURE;
-} IShellIcon_VTable,*LPSHELLICON_VTABLE;
-
-struct tagSHELLICON
-{ LPSHELLICON_VTABLE lpvtbl;
-  DWORD ref;
-};
-#undef THIS
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IShellIcon_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
+#define IShellIcon_AddRef(p)                  ICOM_CALL (AddRef,p)
+#define IShellIcon_Release(p)                 ICOM_CALL (Release,p)
+/*** IShellIcon methods ***/
+#define IShellIcon_GetIconOf(p,a,b,c)         ICOM_CALL3(GetIconOf,p,a,b,c)
+#endif
 
 /****************************************************************************
  * Shell Execute API
@@ -437,12 +397,5 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx);
 #define SSF_HIDEICONS			0x4000
 
 /**********************************************************************/
-
-#undef PURE
-#undef FAR
-#undef THIS
-#undef THIS_
-#undef STDMETHOD
-#undef STDMETHOD_
 
 #endif /* __WINE_SHLOBJ_H */
