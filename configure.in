@@ -38,13 +38,12 @@ AC_SUBST(OPTIONS)
 
 if test "$DEBUG_MSGS" = "no"
 then
-    AC_DEFINE(NO_DEBUG_MSGS)
-    AC_DEFINE(NO_TRACE_MSGS)
-else
-    if test "$TRACE_MSGS" = "no"
-    then
-        AC_DEFINE(NO_TRACE_MSGS)
-    fi
+    AC_DEFINE(NO_DEBUG_MSGS, 1, [Define if all debug messages are to be compiled out])
+fi
+
+if test "$TRACE_MSGS" = "no" -o "$DEBUG_MSGS" = "no"
+then
+    AC_DEFINE(NO_TRACE_MSGS, 1, [Define if TRACE messages are to be compiled out])
 fi
 
 dnl **** Check for some programs ****
@@ -114,16 +113,15 @@ AC_CHECK_FUNCS(openpty,,
 	))
 
 AC_CHECK_HEADERS(dlfcn.h,
-	AC_CHECK_FUNCS(dlopen,
-		AC_DEFINE(HAVE_DL_API),
-    		AC_CHECK_LIB(dl,dlopen,
-			AC_DEFINE(HAVE_DL_API)
-			LIBS="$LIBS -ldl",
-			LIBEXT="a"
-		)
-	),
-	LIBEXT="a"
-)
+    AC_CHECK_FUNCS(dlopen,,
+        AC_CHECK_LIB(dl,dlopen,
+                     AC_DEFINE(HAVE_DLOPEN)
+                     LIBS="$LIBS -ldl",
+                     LIBEXT="a")
+ 	),
+ 	LIBEXT="a"
+    )
+
 AC_SUBST(XLIB)
 AC_SUBST(X_DLLS)
 X_DLLS=""
@@ -147,7 +145,8 @@ then
     AC_CHECK_HEADERS(X11/xpm.h,
       [ dnl *** If X11/xpm.h exists...
         AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,
-          [ AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm"],,
+          [ AC_DEFINE(HAVE_LIBXXPM, 1, [Define if you have the Xpm library])
+            X_PRE_LIBS="$X_PRE_LIBS -lXpm"],,
           $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
         )
       ],
@@ -174,7 +173,7 @@ then
         AC_CHECK_HEADERS(X11/XKBlib.h,
             [ dnl *** If X11/XKBlib.h exists...
               AC_CHECK_LIB(X11, XkbQueryExtension,
-              AC_DEFINE(HAVE_XKB),,
+              AC_DEFINE(HAVE_XKB, 1, [Define if you have the XKB extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
             ],
             AC_MSG_WARN([XKB extension not found!!])
@@ -184,7 +183,7 @@ then
         AC_CHECK_HEADERS(X11/extensions/XShm.h,
             [ dnl *** If X11/extensions/XShm.h exists...
               AC_CHECK_LIB(Xext, XShmQueryExtension,
-              AC_DEFINE(HAVE_LIBXXSHM),,
+              AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
             ],
             AC_MSG_WARN([Xshm extension not found!!])
@@ -194,7 +193,7 @@ then
         AC_CHECK_HEADERS(X11/extensions/shape.h,
             [ dnl *** If X11/extensions/shape.h exists...
               AC_CHECK_LIB(Xext,XShapeQueryExtension,
-	      AC_DEFINE(HAVE_LIBXSHAPE),,
+	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	    ],
 	    AC_MSG_WARN([XShape extension not found!!])
@@ -206,14 +205,15 @@ then
               dnl *** for XDGAQueryExtension()...
               AC_CHECK_LIB(Xxf86dga, XDGAQueryExtension,
                 [ dnl *** If found...
-                  AC_DEFINE(HAVE_LIBXXF86DGA2)
-                  AC_DEFINE(HAVE_LIBXXF86DGA)
+                  AC_DEFINE(HAVE_LIBXXF86DGA2, 1,
+                            [Define if you have the Xxf86dga library version 2])
                   X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
                ],
                 [ dnl *** If not found, look for XF86DGAQueryExtension()
                   dnl *** instead (DGA 2.0 not found)...
                   AC_CHECK_LIB(Xxf86dga, XF86DGAQueryExtension,
-                    [ AC_DEFINE(HAVE_LIBXXF86DGA)
+                    [ AC_DEFINE(HAVE_LIBXXF86DGA, 1,
+                                [Define if you have the Xxf86dga library version 1])
                       X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
                     ],,
                     $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
@@ -229,7 +229,7 @@ then
         AC_CHECK_HEADERS(X11/extensions/xf86vmode.h,
             [ dnl *** If X11/extensions/xf86vmode.h exists...
                 AC_CHECK_LIB(Xxf86vm, XF86VidModeQueryExtension,
-                  [ AC_DEFINE(HAVE_LIBXXF86VM)
+                  [ AC_DEFINE(HAVE_LIBXXF86VM, 1, [Define if you have the Xxf86vm library])
                      X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm"
                   ],,
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
@@ -242,7 +242,7 @@ then
         AC_CHECK_HEADERS(X11/extensions/Xvlib.h,
             [ dnl *** If X11/extensions/Xvlib.h exists...
                 AC_CHECK_LIB(Xv, XvShmCreateImage,
-                  [ AC_DEFINE(HAVE_XVIDEO)
+                  [ AC_DEFINE(HAVE_XVIDEO, 1, [Define if the X libraries support XVideo])
                      X_PRE_LIBS="$X_PRE_LIBS -lXv"
                   ],,
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
@@ -293,9 +293,12 @@ then
 		then
 
 			OPENGLFILES='$(OPENGLFILES)'
-			AC_DEFINE(HAVE_OPENGL)
+			AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])
 
-			AC_CHECK_LIB(GL,glXGetProcAddressARB,AC_DEFINE(HAVE_GLX_GETPROCADDRESS),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+			AC_CHECK_LIB(GL,glXGetProcAddressARB,
+                                     AC_DEFINE(HAVE_GLX_GETPROCADDRESS, 1,
+                                               [Define if the OpenGL library supports the glXGetProcAddressARB call]),,
+                                     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
 			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"
 			then
@@ -312,7 +315,8 @@ then
 				)
 				if test $wine_cv_extension_prototypes = "yes"
 				then
-					AC_DEFINE(HAVE_GLEXT_PROTOTYPES)
+				    AC_DEFINE(HAVE_GLEXT_PROTOTYPES, 1,
+                                              [Define if the OpenGL headers define extension typedefs])
 				fi
 
 				OPENGL32_DLL=opengl32
@@ -320,12 +324,10 @@ then
 
                         AC_CHECK_HEADERS(GL/osmesa.h,
                             [ dnl *** If GL/osmesa.h exists...
-                                AC_CHECK_LIB(GL, OSMesaCreateContext,
-                                  AC_DEFINE(HAVE_OSMESA),
+                                AC_CHECK_LIB(GL, OSMesaCreateContext,,
                                   AC_CHECK_LIB(OSMesa, OSMesaCreateContext,
-                                  [ AC_DEFINE(HAVE_OSMESA)
-                                    X_PRE_LIBS="$X_PRE_LIBS -lOSMesa"
-                                  ],,-lGL $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS),
+                                               X_PRE_LIBS="$X_PRE_LIBS -lOSMesa",,
+                                               -lGL $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS),
                                   $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
                                 )
                             ]
@@ -355,27 +357,10 @@ fi
 dnl **** Check which curses lib to use ***
 if test "$CURSES" = "yes"
 then
-    AC_CHECK_HEADERS(ncurses.h)
-    if test "$ac_cv_header_ncurses_h" = "yes"
-    then 
-        AC_CHECK_LIB(ncurses,waddch)
-    fi
-    if test "$ac_cv_lib_ncurses_waddch" = "yes"
-    then
-        AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
-        AC_CHECK_LIB(ncurses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
-    else
-        AC_CHECK_HEADERS(curses.h)
-        if test "$ac_cv_header_curses_h" = "yes"
-        then    
-            AC_CHECK_LIB(curses,waddch)
-            if test "$ac_cv_lib_curses_waddch" = "yes"
-            then
-                AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
-                AC_CHECK_LIB(curses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
-            fi
-        fi
-    fi
+    AC_CHECK_HEADERS(ncurses.h,
+        AC_CHECK_LIB(ncurses,waddch),
+        AC_CHECK_HEADERS(curses.h,AC_CHECK_LIB(curses,waddch)))
+    AC_CHECK_FUNCS(getbkgd resizeterm)
 fi
 
 CUPSLIBS=""
@@ -383,7 +368,7 @@ dnl **** Check for CUPS ****
 wine_cv_warn_cups_h=no
 AC_CHECK_LIB(cups,cupsGetPPD,
 	AC_CHECK_HEADER(cups/cups.h,
-	    AC_DEFINE(HAVE_CUPS)
+	    AC_DEFINE(HAVE_CUPS, 1, [Define if we have CUPS])
 	    CUPSLIBS="-lcups",
             wine_cv_warn_cups_h=yes)
 )
@@ -412,7 +397,7 @@ else
 	FREETYPEINCL=""
 	wine_cv_msg_freetype=yes
     else
-    	AC_DEFINE(HAVE_FREETYPE)
+    	AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
 	FREETYPELIBS=`$ft_devel --libs`
 	FREETYPEINCL=`$ft_devel --cflags`
 	ac_save_CPPFLAGS="$CPPFLAGS"
@@ -440,7 +425,7 @@ AC_CACHE_CHECK("for parport header/ppdev.h", ac_cv_c_ppdev,
  )
 if test "$ac_cv_c_ppdev" = "yes"
 then
-    AC_DEFINE(HAVE_PPDEV,1,[Define if we can use ppdev.h for parallel port access])
+    AC_DEFINE(HAVE_PPDEV, 1, [Define if we can use ppdev.h for parallel port access])
 fi
 
 dnl **** Check for IPX (currently Linux only) ****
@@ -454,7 +439,7 @@ AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
  )
 if test "$ac_cv_c_ipx_gnu" = "yes"
 then
-    AC_DEFINE(HAVE_IPX_GNU)
+    AC_DEFINE(HAVE_IPX_GNU, 1, [Define if IPX should use netipx/ipx.h from libc])
 fi
 
 if test "$ac_cv_c_ipx_gnu" = "no"
@@ -470,7 +455,7 @@ then
   )
   if test "$ac_cv_c_ipx_linux" = "yes"
   then
-      AC_DEFINE(HAVE_IPX_LINUX)
+      AC_DEFINE(HAVE_IPX_LINUX, 1, [Define if IPX includes are taken from Linux kernel])
   fi
 fi
 
@@ -497,7 +482,7 @@ AC_CACHE_CHECK("for Open Sound System",
 
 if test "$ac_cv_c_opensoundsystem" = "yes"
 then
-    AC_DEFINE(HAVE_OSS)
+    AC_DEFINE(HAVE_OSS, 1, [Define if you have the Open Sound system])
 fi
 
 AC_CACHE_CHECK("for Open Sound System/MIDI interface",
@@ -520,7 +505,7 @@ AC_CACHE_CHECK("for Open Sound System/MIDI interface",
 
 if test "$ac_cv_c_opensoundsystem_midi" = "yes"
 then
-    AC_DEFINE(HAVE_OSS_MIDI)
+    AC_DEFINE(HAVE_OSS_MIDI, 1, [Define if you have the Open Sound system (MIDI interface)])
 fi
 
 dnl **** If ln -s doesn't work, use cp instead ****
@@ -621,7 +606,7 @@ AC_TRY_LINK(,,ac_cv_c_type_in_def="yes",ac_cv_c_type_in_def="no")
 LIBS=$saved_libs])
 if test "$ac_cv_c_type_in_def" = "yes"
 then
-  AC_DEFINE(NEED_TYPE_IN_DEF)
+  AC_DEFINE(NEED_TYPE_IN_DEF, 1, [Define if .type asm directive must be inside a .def directive])
 fi
  
 dnl **** Check for underscore on external symbols ****
@@ -640,7 +625,8 @@ AC_TRY_LINK([extern int ac_test;],[if (ac_test) return 1],
 LIBS=$saved_libs])
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
-  AC_DEFINE(NEED_UNDERSCORE_PREFIX)
+  AC_DEFINE(NEED_UNDERSCORE_PREFIX, 1,
+            [Define if symbols declared in assembly code need an underscore prefix])
 fi
 
 dnl **** Check for .string in assembler ****
@@ -656,7 +642,7 @@ AC_TRY_LINK(,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no")
 LIBS=$saved_libs])
 if test "$ac_cv_c_asm_string" = "yes"
 then
-  AC_DEFINE(HAVE_ASM_STRING)
+  AC_DEFINE(HAVE_ASM_STRING, 1, [Define to use .string instead of .ascii])
 fi
 
 dnl **** Check for working dll ****
@@ -791,7 +777,8 @@ WINE_CHECK_ERRNO(__errno)
 
 if test "$wine_cv_libc_reentrant" != "no" 
 then
-  AC_DEFINE_UNQUOTED(ERRNO_LOCATION,$wine_cv_libc_reentrant)
+  AC_DEFINE_UNQUOTED(ERRNO_LOCATION,$wine_cv_libc_reentrant,
+	             [Define to the name of the function returning errno for reentrant libc])
 fi
 
 dnl **** Check for reentrant X libraries ****
@@ -834,7 +821,8 @@ else
 fi
 if test "$wine_cv_x_reentrant" = "no"
 then
-  AC_DEFINE(NO_REENTRANT_X11)
+  AC_DEFINE(NO_REENTRANT_X11, 1,
+            [Define if X libraries are not reentrant (compiled without -D_REENTRANT)])
 fi
 
 
@@ -959,7 +947,8 @@ AC_CACHE_CHECK("whether linux/input.h is for real",
     )
     if test "$wine_cv_linux_input_h" = "yes"
     then
-        AC_DEFINE(HAVE_CORRECT_LINUXINPUT_H)
+        AC_DEFINE(HAVE_CORRECT_LINUXINPUT_H, 1,
+                  [Define if we have linux/input.h AND it contains the INPUT event API])
     fi
 
    
@@ -986,7 +975,8 @@ AC_CACHE_CHECK("whether we can use re-entrant gethostbyname_r Linux style",
    )
    if test "$wine_cv_linux_gethostbyname_r_6" = "yes"
    then
-      AC_DEFINE(HAVE_LINUX_GETHOSTBYNAME_R_6)
+      AC_DEFINE(HAVE_LINUX_GETHOSTBYNAME_R_6, 1,
+                [Define if Linux-style gethostbyname_r and gethostbyaddr_r are available])
    fi
 
 if test "$ac_cv_header_linux_joystick_h" = "yes"
@@ -1009,7 +999,8 @@ then
    )
    if test "$wine_cv_linux_joystick_22_api" = "yes"
    then
-      AC_DEFINE(HAVE_LINUX_22_JOYSTICK_API)
+      AC_DEFINE(HAVE_LINUX_22_JOYSTICK_API, 1,
+                [Define if <linux/joystick.h> defines the Linux 2.2 joystick API])
    fi
 fi
 
@@ -1034,7 +1025,8 @@ then
     )
     if test "$wine_cv_sys_vfs_has_statfs" = "yes"
     then
-      AC_DEFINE(STATFS_DEFINED_BY_SYS_VFS)
+      AC_DEFINE(STATFS_DEFINED_BY_SYS_VFS, 1,
+                [Define if the struct statfs is defined by <sys/vfs.h>])
     fi
 fi
 
@@ -1055,7 +1047,8 @@ then
     )
     if test "$wine_cv_sys_statfs_has_statfs" = "yes"
     then
-      AC_DEFINE(STATFS_DEFINED_BY_SYS_STATFS)
+      AC_DEFINE(STATFS_DEFINED_BY_SYS_STATFS, 1,
+                [Define if the struct statfs is defined by <sys/statfs.h>])
     fi
 fi
 
@@ -1076,7 +1069,8 @@ then
     )
     if test "$wine_cv_sys_mount_has_statfs" = "yes"
     then
-      AC_DEFINE(STATFS_DEFINED_BY_SYS_MOUNT)
+      AC_DEFINE(STATFS_DEFINED_BY_SYS_MOUNT, 1,
+                [Define if the struct statfs is defined by <sys/mount.h>])
     fi
 fi
 
@@ -1112,7 +1106,7 @@ AC_CACHE_CHECK( "for statfs.f_bfree", wine_cv_statfs_bfree,
     fi ] )
 if test "$wine_cv_statfs_bfree" = "yes"
 then
-  AC_DEFINE(STATFS_HAS_BFREE)
+  AC_DEFINE(STATFS_HAS_BFREE, 1, [Define if the struct statfs has the member bfree])
 fi
 
 AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
@@ -1145,7 +1139,7 @@ AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
     fi ] )
 if test "$wine_cv_statfs_bavail" = "yes"
 then
-  AC_DEFINE(STATFS_HAS_BAVAIL)
+  AC_DEFINE(STATFS_HAS_BAVAIL, 1, [Define if the struct statfs has the member bavail])
 fi
 
 dnl *** check for file descriptor passing with msg_accrights
@@ -1156,7 +1150,7 @@ AC_CACHE_CHECK("for msg_accrights in struct msghdr", ac_cv_c_msg_accrights,
                 ac_cv_c_msg_accrights="yes", ac_cv_c_msg_accrights="no"))
 if test "$ac_cv_c_msg_accrights" = "yes"
 then
-    AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS)
+    AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS, 1, [Define if struct msghdr contains msg_accrights])
 fi
 
 dnl *** Check for the sun_len member in struct sockaddr_un
@@ -1168,7 +1162,7 @@ AC_CACHE_CHECK("for sun_len in struct sockaddr_un", ac_cv_c_sun_len,
                 ac_cv_c_sun_len="yes", ac_cv_c_sun_len="no"))
 if test "$ac_cv_c_sun_len" = "yes"
 then
-    AC_DEFINE(HAVE_SOCKADDR_SUN_LEN)
+    AC_DEFINE(HAVE_SOCKADDR_SUN_LEN, 1, [Define if struct sockaddr_un contains sun_len])
 fi
 
 dnl *** check for the need to define __i386__

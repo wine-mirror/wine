@@ -140,7 +140,7 @@ extern void *wine_dlopen( const char *filename, int flag, char *error, int error
 extern void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize );
 extern int wine_dlclose( void *handle, char *error, int errorsize );
 
-#ifdef HAVE_DL_API
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
 #else
 #define RTLD_LAZY	0x001

@@ -26,8 +26,6 @@
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
-#ifdef HAVE_DL_API
-
 typedef struct {
 	WORD	popl	WINE_PACKED;	/* 0x8f 0x05 */
 	DWORD	addr_popped WINE_PACKED;/* ...  */
@@ -268,12 +266,3 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-first_stub,fun);
 	return (FARPROC)fun;
 }
-
-#else  /* HAVE_DL_API */
-
-WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
-{
-	return NULL;
-}
-
-#endif  /* HAVE_DL_API */

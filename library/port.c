@@ -40,9 +40,6 @@
 #ifdef HAVE_LIBUTIL_H
 # include <libutil.h>
 #endif
-#ifdef HAVE_DL_API
-# include <dlfcn.h>
-#endif
 
 
 /***********************************************************************
@@ -449,7 +446,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
  */
 void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
 {
-#ifdef HAVE_DL_API
+#ifdef HAVE_DLOPEN
     void *ret;
     char *s;
     dlerror(); dlerror();
@@ -477,7 +474,7 @@ void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
  */
 void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
 {
-#ifdef HAVE_DL_API
+#ifdef HAVE_DLOPEN
     void *ret;
     char *s;
     dlerror(); dlerror();
@@ -505,7 +502,7 @@ void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
  */
 int wine_dlclose( void *handle, char *error, int errorsize )
 {
-#ifdef HAVE_DL_API
+#ifdef HAVE_DLOPEN
     int ret;
     char *s;
     dlerror(); dlerror();
