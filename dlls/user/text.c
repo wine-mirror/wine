@@ -394,7 +394,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	if (!(flags & DT_CALCRECT))
 	{
            if (!ExtTextOutW( hdc, x, y,
-                    ( (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED )  |  ( (flags & DT_RTLREADING) ? 0 : ETO_RTLREADING ),
+                             ((flags & DT_NOCLIP) ? 0 : ETO_CLIPPED) |
+                             ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
                     rect, line, len, NULL ))  return 0;
             if (prefix_offset != -1)
             {
