@@ -13,7 +13,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "debug.h"
-#include "print.h"
+#include "winspool.h"
 
 static char PrinterModel[]	= "Printer Model";
 static char DefaultDevMode[]	= "Default DevMode";

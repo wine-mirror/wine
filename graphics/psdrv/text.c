@@ -8,7 +8,7 @@
 #include "windows.h"
 #include "psdrv.h"
 #include "debug.h"
-#include "print.h"
+#include "winspool.h"
 
 /***********************************************************************
  *           PSDRV_ExtTextOut

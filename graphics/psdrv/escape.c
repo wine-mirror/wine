@@ -6,7 +6,7 @@
 #include "wine/winuser16.h"
 #include "psdrv.h"
 #include "debug.h"
-#include "print.h"
+#include "winspool.h"
 
 
 INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 

@@ -9,7 +9,7 @@
 #include <string.h>
 #include "windows.h"
 #include "psdrv.h"
-#include "print.h"
+#include "winspool.h"
 #include "debug.h"
 
 static char psheader[] = /* title llx lly urx ury orientation */

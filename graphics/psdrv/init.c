@@ -11,7 +11,7 @@
 #include "debug.h"
 #include "heap.h"
 #include "winreg.h"
-#include "print.h"
+#include "winspool.h"
 #include "winerror.h"
 
 static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,

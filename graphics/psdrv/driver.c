@@ -15,7 +15,7 @@
 #include "debug.h"
 #include "resource.h"
 #include "win.h"
-#include "print.h"
+#include "winspool.h"
 
 static LONG Resolutions[][2] = { {600,600} };
 

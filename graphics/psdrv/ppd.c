@@ -12,7 +12,7 @@
 #include "heap.h"
 #include "debug.h"
 #include "psdrv.h"
-#include "print.h"
+#include "winspool.h"
 
 typedef struct {
 char	*key;

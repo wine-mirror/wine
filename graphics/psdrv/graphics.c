@@ -9,7 +9,7 @@
 #include "windows.h"
 #include "psdrv.h"
 #include "debug.h"
-#include "print.h"
+#include "winspool.h"
 #ifndef PI
 #define PI M_PI
 #endif
