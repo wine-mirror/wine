@@ -1824,7 +1824,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
         pFT_Select_Charmap(ret->ft_face, ft_encoding_apple_roman);
     }
 
-    ret->orientation = lf.lfOrientation;
+    ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
     ret->name = strdupW(family->FamilyName);
     ret->underline = lf.lfUnderline ? 0xff : 0;
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;

@@ -1004,7 +1004,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         y = pt.y;
     }
 
+    GetTextMetricsW(hdc, &tm);
     GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+
+    if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
+        lf.lfEscapement = 0;
+
     if(lf.lfEscapement != 0) {
         cosEsc = cos(lf.lfEscapement * M_PI / 1800);
 	sinEsc = sin(lf.lfEscapement * M_PI / 1800);
@@ -1105,8 +1110,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     width = X11DRV_XWStoDS(physDev, width);
     xwidth = width * cosEsc;
     ywidth = width * sinEsc;
-
-    GetTextMetricsW(hdc, &tm);
 
     tm.tmAscent = abs(X11DRV_YWStoDS(physDev, tm.tmAscent));
     tm.tmDescent = abs(X11DRV_YWStoDS(physDev, tm.tmDescent));
