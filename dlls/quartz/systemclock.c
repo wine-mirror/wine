@@ -186,13 +186,13 @@ static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMs
 IReferenceClockVtbl SystemClock_Vtbl;
 
 static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   TRACE("(%p): AddRef from %ld\n", This, This->ref);
   return ++(This->ref);
 }
 
 static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock* iface, REFIID riid, void** ppobj) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   TRACE("(%p, %s,%p)\n", This, debugstr_guid(riid), ppobj);
   
   if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -207,7 +207,7 @@ static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock* iface, REF
 }
 
 static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   ULONG ref = --This->ref;
   TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
   if (ref == 0) {
@@ -222,7 +222,7 @@ static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
 }
 
 static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock* iface, REFERENCE_TIME* pTime) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   DWORD curTimeTickCount;
   HRESULT hr = S_OK;
 
@@ -247,7 +247,7 @@ static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock* iface, REFERENCE_
 }
 
 static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock* iface, REFERENCE_TIME rtBaseTime, REFERENCE_TIME rtStreamTime, HEVENT hEvent, DWORD_PTR* pdwAdviseCookie) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   SystemClockAdviseEntry* pEntry = NULL;
 
   TRACE("(%p, %lld, %lld, %ld, %p)\n", This, rtBaseTime, rtStreamTime, hEvent, pdwAdviseCookie);
@@ -281,7 +281,7 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock* iface, REFEREN
 }
 
 static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface, REFERENCE_TIME rtStartTime, REFERENCE_TIME rtPeriodTime, HSEMAPHORE hSemaphore, DWORD_PTR* pdwAdviseCookie) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   SystemClockAdviseEntry* pEntry = NULL;
 
   TRACE("(%p, %lld, %lld, %ld, %p)\n", This, rtStartTime, rtPeriodTime, hSemaphore, pdwAdviseCookie);
@@ -315,7 +315,7 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface, REF
 }
 
 static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock* iface, DWORD_PTR dwAdviseCookie) {
-  ICOM_THIS(SystemClockImpl,iface);
+  SystemClockImpl *This = (SystemClockImpl *)iface;
   SystemClockAdviseEntry* pEntry = NULL;
   SystemClockAdviseEntry* it = NULL;
   HRESULT ret = S_OK;

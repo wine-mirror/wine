@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* IDirect3D9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3D9Impl_QueryInterface(LPDIRECT3D9 iface, REFIID riid, LPVOID* ppobj)
 {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3D9)) {
@@ -52,13 +52,13 @@ HRESULT WINAPI IDirect3D9Impl_QueryInterface(LPDIRECT3D9 iface, REFIID riid, LPV
 }
 
 ULONG WINAPI IDirect3D9Impl_AddRef(LPDIRECT3D9 iface) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3D9Impl_Release(LPDIRECT3D9 iface) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0)
@@ -68,38 +68,38 @@ ULONG WINAPI IDirect3D9Impl_Release(LPDIRECT3D9 iface) {
 
 /* IDirect3D9 Interface follow: */
 HRESULT  WINAPI  IDirect3D9Impl_RegisterSoftwareDevice(LPDIRECT3D9 iface, void* pInitializeFunction) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p)->(%p): stub\n", This, pInitializeFunction);
     return D3D_OK;
 }
 
 UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(LPDIRECT3D9 iface) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     /* FIXME: Set to one for now to imply the display */
     TRACE("(%p): Mostly stub, only returns primary display\n", This);
     return 1;
 }
 
 HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9* pIdentifier) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
 
 UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return 0;
 }
 
 HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9 iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
@@ -107,7 +107,7 @@ HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9 iface, UINT Adap
 HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9 iface,
 					      UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
 					      D3DFORMAT BackBufferFormat, BOOL Windowed) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
@@ -115,7 +115,7 @@ HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9 iface,
 HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9 iface,
 						  UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						  DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
@@ -123,7 +123,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9 iface,
 HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9 iface,
 							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
@@ -131,26 +131,26 @@ HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9 iface,
 HRESULT  WINAPI  IDirect3D9Impl_CheckDepthStencilMatch(LPDIRECT3D9 iface, 
 						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
 
 
 HRESULT  WINAPI  IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
 
 HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapter) {
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return NULL;
 }
@@ -159,7 +159,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
 					     DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, 
 					     IDirect3DDevice9** ppReturnedDeviceInterface) {
 
-    ICOM_THIS(IDirect3D9Impl,iface);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }

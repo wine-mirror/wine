@@ -141,7 +141,7 @@ error:
 
 static HRESULT AVIDec_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -352,7 +352,7 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
 static HRESULT WINAPI AVIDec_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -379,14 +379,14 @@ static HRESULT WINAPI AVIDec_QueryInterface(IBaseFilter * iface, REFIID riid, LP
 
 static ULONG WINAPI AVIDec_AddRef(IBaseFilter * iface)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
     TRACE("(%p/%p)->()\n", This, iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI AVIDec_Release(IBaseFilter * iface)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
     TRACE("(%p/%p)->()\n", This, iface);
     if (!InterlockedDecrement(&This->refCount))
     {
@@ -417,7 +417,7 @@ static ULONG WINAPI AVIDec_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI AVIDec_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pClsid);
 
@@ -430,7 +430,7 @@ static HRESULT WINAPI AVIDec_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 
 static HRESULT WINAPI AVIDec_Stop(IBaseFilter * iface)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)\n", This, iface);
 
@@ -445,7 +445,7 @@ static HRESULT WINAPI AVIDec_Stop(IBaseFilter * iface)
 
 static HRESULT WINAPI AVIDec_Pause(IBaseFilter * iface)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
     
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -461,7 +461,7 @@ static HRESULT WINAPI AVIDec_Pause(IBaseFilter * iface)
 static HRESULT WINAPI AVIDec_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
@@ -478,7 +478,7 @@ static HRESULT WINAPI AVIDec_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
 static HRESULT WINAPI AVIDec_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%ld, %p)\n", This, iface, dwMilliSecsTimeout, pState);
 
@@ -493,7 +493,7 @@ static HRESULT WINAPI AVIDec_GetState(IBaseFilter * iface, DWORD dwMilliSecsTime
 
 static HRESULT WINAPI AVIDec_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pClock);
 
@@ -512,7 +512,7 @@ static HRESULT WINAPI AVIDec_SetSyncSource(IBaseFilter * iface, IReferenceClock 
 
 static HRESULT WINAPI AVIDec_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppClock);
 
@@ -531,7 +531,7 @@ static HRESULT WINAPI AVIDec_GetSyncSource(IBaseFilter * iface, IReferenceClock 
 static HRESULT WINAPI AVIDec_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
     ENUMPINDETAILS epd;
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
@@ -542,7 +542,7 @@ static HRESULT WINAPI AVIDec_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 
 static HRESULT WINAPI AVIDec_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, debugstr_w(Id), ppPin);
 
@@ -555,7 +555,7 @@ static HRESULT WINAPI AVIDec_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppP
 
 static HRESULT WINAPI AVIDec_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
 
@@ -571,7 +571,7 @@ static HRESULT WINAPI AVIDec_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *p
 static HRESULT WINAPI AVIDec_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
 
     TRACE("(%p/%p)->(%p, %s)\n", This, iface, pGraph, debugstr_w(pName));
 
@@ -590,7 +590,7 @@ static HRESULT WINAPI AVIDec_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *
 
 static HRESULT WINAPI AVIDec_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
 {
-    ICOM_THIS(AVIDecImpl, iface);
+    AVIDecImpl *This = (AVIDecImpl *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, pVendorInfo);
     return E_NOTIMPL;
 }
@@ -638,7 +638,7 @@ static const IPinVtbl AVIDec_InputPin_Vtbl =
 
 HRESULT WINAPI AVIDec_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
     ENUMMEDIADETAILS emd;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);

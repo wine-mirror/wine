@@ -91,14 +91,14 @@ static HRESULT WINAPI IEnumFiltersImpl_QueryInterface(IEnumFilters * iface, REFI
 
 static ULONG WINAPI IEnumFiltersImpl_AddRef(IEnumFilters * iface)
 {
-    ICOM_THIS(IEnumFiltersImpl, iface);
+    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
     TRACE("(%p)->()\n", iface);
     return ++This->refCount;
 }
 
 static ULONG WINAPI IEnumFiltersImpl_Release(IEnumFilters * iface)
 {
-    ICOM_THIS(IEnumFiltersImpl, iface);
+    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
     TRACE("(%p)->()\n", iface);
     if (!--This->refCount)
     {
@@ -114,7 +114,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Next(IEnumFilters * iface, ULONG cFilters
 {
     ULONG cFetched; 
     ULONG i;
-    ICOM_THIS(IEnumFiltersImpl, iface);
+    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
 
     cFetched = min(This->nFilters, This->uIndex + cFilters) - This->uIndex;
 
@@ -138,7 +138,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Next(IEnumFilters * iface, ULONG cFilters
 
 static HRESULT WINAPI IEnumFiltersImpl_Skip(IEnumFilters * iface, ULONG cFilters)
 {
-    ICOM_THIS(IEnumFiltersImpl, iface);
+    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
 
     TRACE("(%p)->(%lu)\n", iface, cFilters);
 
@@ -152,7 +152,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Skip(IEnumFilters * iface, ULONG cFilters
 
 static HRESULT WINAPI IEnumFiltersImpl_Reset(IEnumFilters * iface)
 {
-    ICOM_THIS(IEnumFiltersImpl, iface);
+    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
 
     TRACE("(%p)->()\n", iface);
 
@@ -163,7 +163,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Reset(IEnumFilters * iface)
 static HRESULT WINAPI IEnumFiltersImpl_Clone(IEnumFilters * iface, IEnumFilters ** ppEnum)
 {
     HRESULT hr;
-    ICOM_THIS(IEnumFiltersImpl, iface);
+    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
 
     TRACE("(%p)->(%p)\n", iface, ppEnum);
 

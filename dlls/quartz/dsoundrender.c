@@ -107,7 +107,7 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
     AM_MEDIA_TYPE amt;
     WAVEFORMATEX* format;
     DSBUFFERDESC buf_desc;
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
     if (FAILED(hr)) {
@@ -214,7 +214,7 @@ static DWORD DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, DW
 
 static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -331,7 +331,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
 static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     TRACE("(%p, %p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -360,14 +360,14 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
 
 static ULONG WINAPI DSoundRender_AddRef(IBaseFilter * iface)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     TRACE("(%p/%p)->()\n", This, iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     TRACE("(%p/%p)->()\n", This, iface);
     if (!InterlockedDecrement(&This->refCount))
     {
@@ -394,7 +394,7 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI DSoundRender_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, pClsid);
 
     *pClsid = CLSID_DSoundRender;
@@ -407,7 +407,7 @@ static HRESULT WINAPI DSoundRender_GetClassID(IBaseFilter * iface, CLSID * pClsi
 static HRESULT WINAPI DSoundRender_Stop(IBaseFilter * iface)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -423,7 +423,7 @@ static HRESULT WINAPI DSoundRender_Stop(IBaseFilter * iface)
 static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -439,7 +439,7 @@ static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
 static HRESULT WINAPI DSoundRender_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
@@ -455,7 +455,7 @@ static HRESULT WINAPI DSoundRender_Run(IBaseFilter * iface, REFERENCE_TIME tStar
 
 static HRESULT WINAPI DSoundRender_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%ld, %p)\n", This, iface, dwMilliSecsTimeout, pState);
 
@@ -470,7 +470,7 @@ static HRESULT WINAPI DSoundRender_GetState(IBaseFilter * iface, DWORD dwMilliSe
 
 static HRESULT WINAPI DSoundRender_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pClock);
 
@@ -489,7 +489,7 @@ static HRESULT WINAPI DSoundRender_SetSyncSource(IBaseFilter * iface, IReference
 
 static HRESULT WINAPI DSoundRender_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppClock);
 
@@ -508,7 +508,7 @@ static HRESULT WINAPI DSoundRender_GetSyncSource(IBaseFilter * iface, IReference
 static HRESULT WINAPI DSoundRender_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
     ENUMPINDETAILS epd;
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
@@ -519,7 +519,7 @@ static HRESULT WINAPI DSoundRender_EnumPins(IBaseFilter * iface, IEnumPins **ppE
 
 static HRESULT WINAPI DSoundRender_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_w(Id), ppPin);
     
@@ -532,7 +532,7 @@ static HRESULT WINAPI DSoundRender_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin
 
 static HRESULT WINAPI DSoundRender_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
 
@@ -548,7 +548,7 @@ static HRESULT WINAPI DSoundRender_QueryFilterInfo(IBaseFilter * iface, FILTER_I
 static HRESULT WINAPI DSoundRender_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
     HRESULT hr;
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p, %s)\n", This, iface, pGraph, debugstr_w(pName));
 
@@ -569,7 +569,7 @@ static HRESULT WINAPI DSoundRender_JoinFilterGraph(IBaseFilter * iface, IFilterG
 
 static HRESULT WINAPI DSoundRender_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
 {
-    ICOM_THIS(DSoundRenderImpl, iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, pVendorInfo);
     return E_NOTIMPL;
 }

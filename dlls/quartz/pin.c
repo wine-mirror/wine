@@ -57,7 +57,7 @@ static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
 /* NOTE: not part of standard interface */
 static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    ICOM_THIS(OutputPin, iface);
+    OutputPin *This = (OutputPin *)iface;
     HRESULT hr;
     IMemAllocator * pMemAlloc = NULL;
     ALLOCATOR_PROPERTIES actual; /* FIXME: should we put the actual props back in to This? */
@@ -215,7 +215,7 @@ HRESULT OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *pro
 
 ULONG WINAPI IPinImpl_AddRef(IPin * iface)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
     
     TRACE("()\n");
     
@@ -225,7 +225,7 @@ ULONG WINAPI IPinImpl_AddRef(IPin * iface)
 HRESULT WINAPI IPinImpl_Disconnect(IPin * iface)
 {
     HRESULT hr;
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("()\n");
 
@@ -248,7 +248,7 @@ HRESULT WINAPI IPinImpl_Disconnect(IPin * iface)
 HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 {
     HRESULT hr;
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
 /*  TRACE("(%p)\n", ppPin);*/
 
@@ -271,7 +271,7 @@ HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
 {
     HRESULT hr;
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
 
@@ -295,7 +295,7 @@ HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
 
 HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
 
@@ -306,7 +306,7 @@ HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
 
 HRESULT WINAPI IPinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pPinDir);
 
@@ -317,7 +317,7 @@ HRESULT WINAPI IPinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir)
 
 HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, Id);
 
@@ -332,7 +332,7 @@ HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id)
 
 HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
 
@@ -341,7 +341,7 @@ HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 
 HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
     ENUMMEDIADETAILS emd;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
@@ -355,7 +355,7 @@ HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 
 HRESULT WINAPI IPinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
 {
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, apPin, cPin);
 
@@ -366,7 +366,7 @@ HRESULT WINAPI IPinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, UL
 
 HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(InputPin, iface);
+    InputPin *This = (InputPin *)iface;
 
     TRACE("(%p)->(%s, %p)\n", iface, qzdebugstr_guid(riid), ppv);
 
@@ -392,7 +392,7 @@ HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 
 ULONG WINAPI InputPin_Release(IPin * iface)
 {
-    ICOM_THIS(InputPin, iface);
+    InputPin *This = (InputPin *)iface;
     
     TRACE("()\n");
     
@@ -418,7 +418,7 @@ HRESULT WINAPI InputPin_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_
 
 HRESULT WINAPI InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    ICOM_THIS(InputPin, iface);
+    InputPin *This = (InputPin *)iface;
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
 
@@ -478,7 +478,7 @@ HRESULT WINAPI InputPin_EndFlush(IPin * iface)
 
 HRESULT WINAPI InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    ICOM_THIS(InputPin, iface);
+    InputPin *This = (InputPin *)iface;
 
     TRACE("(%lx%08lx, %lx%08lx, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
 
@@ -626,7 +626,7 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
 
 HRESULT WINAPI OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(OutputPin, iface);
+    OutputPin *This = (OutputPin *)iface;
 
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
@@ -650,7 +650,7 @@ HRESULT WINAPI OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 
 ULONG WINAPI OutputPin_Release(IPin * iface)
 {
-    ICOM_THIS(OutputPin, iface);
+    OutputPin *This = (OutputPin *)iface;
     
     TRACE("(%p/%p)->()\n", This, iface);
     
@@ -666,7 +666,7 @@ ULONG WINAPI OutputPin_Release(IPin * iface)
 HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     HRESULT hr;
-    ICOM_THIS(OutputPin, iface);
+    OutputPin *This = (OutputPin *)iface;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
@@ -744,7 +744,7 @@ HRESULT WINAPI OutputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, con
 HRESULT WINAPI OutputPin_Disconnect(IPin * iface)
 {
     HRESULT hr;
-    ICOM_THIS(OutputPin, iface);
+    OutputPin *This = (OutputPin *)iface;
 
     TRACE("()\n");
 
@@ -1021,7 +1021,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 {
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
-    ICOM_THIS(PullPin, iface);
+    PullPin *This = (PullPin *)iface;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
@@ -1079,7 +1079,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(PullPin, iface);
+    PullPin *This = (PullPin *)iface;
 
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
@@ -1103,7 +1103,7 @@ HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 
 ULONG WINAPI PullPin_Release(IPin * iface)
 {
-    ICOM_THIS(PullPin, iface);
+    PullPin *This = (PullPin *)iface;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1128,7 +1128,7 @@ static DWORD WINAPI PullPin_Thread_Main(LPVOID pv)
 
 static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 {
-    ICOM_THIS(PullPin, iface);
+    PullPin *This = (PullPin *)iface;
     HRESULT hr;
 
     REFERENCE_TIME rtCurrent;
@@ -1178,7 +1178,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
 static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
 {
-    ICOM_THIS(PullPin, iface);
+    PullPin *This = (PullPin *)iface;
 
     TRACE("(%p/%p)->()\n", This, (LPVOID)iface);
 

@@ -184,7 +184,7 @@ HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 static HRESULT WINAPI FilterMapper2_QueryInterface(IFilterMapper2 * iface, REFIID riid, LPVOID *ppv)
 {
-    ICOM_THIS(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -209,7 +209,7 @@ static HRESULT WINAPI FilterMapper2_QueryInterface(IFilterMapper2 * iface, REFII
 
 static ULONG WINAPI FilterMapper2_AddRef(IFilterMapper2 * iface)
 {
-    ICOM_THIS(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
 
     TRACE("(%p)->()\n", iface);
 
@@ -218,7 +218,7 @@ static ULONG WINAPI FilterMapper2_AddRef(IFilterMapper2 * iface)
 
 static ULONG WINAPI FilterMapper2_Release(IFilterMapper2 * iface)
 {
-    ICOM_THIS(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
 
     TRACE("(%p)->()\n", iface);
 

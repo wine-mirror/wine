@@ -74,7 +74,7 @@ static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID rii
 
 static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 {
-    ICOM_THIS(IEnumPinsImpl, iface);
+    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     TRACE("()\n");
 
@@ -83,7 +83,7 @@ static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 
 static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 {
-    ICOM_THIS(IEnumPinsImpl, iface);
+    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     TRACE("()\n");
     
@@ -99,7 +99,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
 {
     ULONG cFetched; 
-    ICOM_THIS(IEnumPinsImpl, iface);
+    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     cFetched = min(This->enumPinDetails.cPins, This->uIndex + cPins) - This->uIndex;
 
@@ -126,7 +126,7 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
 
 static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 {
-    ICOM_THIS(IEnumPinsImpl, iface);
+    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     TRACE("(%lu)\n", cPins);
 
@@ -140,7 +140,7 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 
 static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
 {
-    ICOM_THIS(IEnumPinsImpl, iface);
+    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     TRACE("IEnumPinsImpl::Reset()\n");
 
@@ -151,7 +151,7 @@ static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
 static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum)
 {
     HRESULT hr;
-    ICOM_THIS(IEnumPinsImpl, iface);
+    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     TRACE("(%p)\n", ppEnum);
 

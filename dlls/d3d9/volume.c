@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DVolume9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFIID riid, LPVOID* ppobj) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVolume9)) {
@@ -51,13 +51,13 @@ HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFI
 }
 
 ULONG WINAPI IDirect3DVolume9Impl_AddRef(LPDIRECT3DVOLUME9 iface) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -69,7 +69,7 @@ ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
 
 /* IDirect3DVolume9 Interface follow: */
 HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, IDirect3DDevice9** ppDevice) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
 
@@ -81,25 +81,25 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, IDirect3D
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_SetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID riid, void** ppContainer) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Container);
     *ppContainer = This->Container;
     IUnknown_AddRef(This->Container);
@@ -107,20 +107,20 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_DESC* pDesc) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
     memcpy(pDesc, &This->myDesc, sizeof(D3DVOLUME_DESC));
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_LockBox(LPDIRECT3DVOLUME9 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
-    ICOM_THIS(IDirect3DVolume9Impl,iface);
+    IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }

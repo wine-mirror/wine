@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 /* IDirect3DVolume IUnknown parts follow: */
 HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DSurface8)) {
@@ -54,13 +54,13 @@ HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface,REF
 }
 
 ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -72,7 +72,7 @@ ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
 
 /* IDirect3DSurface8: */
 HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect3DDevice8** ppDevice) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
     /**
@@ -84,25 +84,25 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void** ppContainer) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     HRESULT res;
     res = IUnknown_QueryInterface(This->Container, riid, ppContainer);
     if (E_NOINTERFACE == res) { 
@@ -118,7 +118,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFI
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
     TRACE("(%p) : copying into %p\n", This, pDesc);
     memcpy(pDesc, &This->myDesc, sizeof(D3DSURFACE_DESC));
@@ -127,7 +127,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFAC
 
 HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     HRESULT hr;
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
   
     /* fixme: should we really lock as such? */
     if (This->inTexture && This->inPBuffer) {
@@ -287,7 +287,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
 HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     GLint skipBytes = 0;
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
     if (FALSE == This->locked) {
       ERR("trying to Unlock an unlocked surf@%p\n", This);  
@@ -478,7 +478,7 @@ IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
 
 
 HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
-  ICOM_THIS(IDirect3DSurface8Impl,iface);
+  IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
   if (This->inTexture)
     return D3D_OK;
@@ -645,7 +645,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, const char* filename) {
   FILE* f = NULL;
   ULONG i;
-  ICOM_THIS(IDirect3DSurface8Impl,iface);
+  IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
   f = fopen(filename, "w+");
   if (NULL == f) {
@@ -722,7 +722,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, cons
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_CleanDirtyRect(LPDIRECT3DSURFACE8 iface) {
-  ICOM_THIS(IDirect3DSurface8Impl,iface);
+  IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
   This->Dirty = FALSE;
   This->dirtyRect.left   = This->myDesc.Width;
   This->dirtyRect.top    = This->myDesc.Height;
@@ -736,7 +736,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_CleanDirtyRect(LPDIRECT3DSURFACE8 iface) {
  *   very stupid way to handle multiple dirty rects but it works :)
  */
 extern HRESULT WINAPI IDirect3DSurface8Impl_AddDirtyRect(LPDIRECT3DSURFACE8 iface, CONST RECT* pDirtyRect) {
-  ICOM_THIS(IDirect3DSurface8Impl,iface);
+  IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
   This->Dirty = TRUE;
   if (NULL != pDirtyRect) {
     This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);

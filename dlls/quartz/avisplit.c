@@ -183,7 +183,7 @@ static HRESULT AVISplitter_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCA
 
 static HRESULT WINAPI AVISplitter_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
     TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -210,14 +210,14 @@ static HRESULT WINAPI AVISplitter_QueryInterface(IBaseFilter * iface, REFIID rii
 
 static ULONG WINAPI AVISplitter_AddRef(IBaseFilter * iface)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
     TRACE("()\n");
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI AVISplitter_Release(IBaseFilter * iface)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
     TRACE("()\n");
     if (!InterlockedDecrement(&This->refCount))
     {
@@ -257,7 +257,7 @@ static HRESULT WINAPI AVISplitter_GetClassID(IBaseFilter * iface, CLSID * pClsid
 static HRESULT WINAPI AVISplitter_Stop(IBaseFilter * iface)
 {
     HRESULT hr;
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("()\n");
 
@@ -275,7 +275,7 @@ static HRESULT WINAPI AVISplitter_Pause(IBaseFilter * iface)
 {
     HRESULT hr = S_OK;
     BOOL bInit;
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
     
     TRACE("()\n");
 
@@ -321,7 +321,7 @@ static HRESULT WINAPI AVISplitter_Pause(IBaseFilter * iface)
 static HRESULT WINAPI AVISplitter_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 
@@ -337,7 +337,7 @@ static HRESULT WINAPI AVISplitter_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 
 static HRESULT WINAPI AVISplitter_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%ld, %p)\n", dwMilliSecsTimeout, pState);
 
@@ -359,7 +359,7 @@ static HRESULT WINAPI AVISplitter_GetState(IBaseFilter * iface, DWORD dwMilliSec
 
 static HRESULT WINAPI AVISplitter_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%p)\n", pClock);
 
@@ -378,7 +378,7 @@ static HRESULT WINAPI AVISplitter_SetSyncSource(IBaseFilter * iface, IReferenceC
 
 static HRESULT WINAPI AVISplitter_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%p)\n", ppClock);
 
@@ -397,7 +397,7 @@ static HRESULT WINAPI AVISplitter_GetSyncSource(IBaseFilter * iface, IReferenceC
 static HRESULT WINAPI AVISplitter_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
     ENUMPINDETAILS epd;
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%p)\n", ppEnum);
 
@@ -417,7 +417,7 @@ static HRESULT WINAPI AVISplitter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin 
 
 static HRESULT WINAPI AVISplitter_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%p)\n", pInfo);
 
@@ -433,7 +433,7 @@ static HRESULT WINAPI AVISplitter_QueryFilterInfo(IBaseFilter * iface, FILTER_IN
 static HRESULT WINAPI AVISplitter_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
 
     TRACE("(%p, %s)\n", pGraph, debugstr_w(pName));
 
@@ -494,7 +494,7 @@ static HRESULT AVISplitter_NextChunk(LONGLONG * pllCurrentChunkOffset, RIFFCHUNK
 
 static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    ICOM_THIS(AVISplitter, iface);
+    AVISplitter *This = (AVISplitter *)iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -886,7 +886,7 @@ static HRESULT AVISplitter_RemoveOutputPins(AVISplitter * This)
 /* FIXME: fix leaks on failure here */
 static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
 {
-    ICOM_THIS(PullPin, iface);
+    PullPin *This = (PullPin *)iface;
     HRESULT hr;
     RIFFLIST list;
     LONGLONG pos = 0; /* in bytes */
@@ -1068,7 +1068,7 @@ static const IMediaSeekingVtbl AVISplitter_Seeking_Vtbl =
 
 HRESULT WINAPI AVISplitter_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(AVISplitter_OutputPin, iface);
+    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
 
     TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
 
@@ -1094,7 +1094,7 @@ HRESULT WINAPI AVISplitter_OutputPin_QueryInterface(IPin * iface, REFIID riid, L
 
 static ULONG WINAPI AVISplitter_OutputPin_Release(IPin * iface)
 {
-    ICOM_THIS(AVISplitter_OutputPin, iface);
+    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
     
     TRACE("()\n");
     
@@ -1112,7 +1112,7 @@ static ULONG WINAPI AVISplitter_OutputPin_Release(IPin * iface)
 static HRESULT WINAPI AVISplitter_OutputPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
     ENUMMEDIADETAILS emd;
-    ICOM_THIS(AVISplitter_OutputPin, iface);
+    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
 
     TRACE("(%p)\n", ppEnum);
 
@@ -1125,7 +1125,7 @@ static HRESULT WINAPI AVISplitter_OutputPin_EnumMediaTypes(IPin * iface, IEnumMe
 
 static HRESULT AVISplitter_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    ICOM_THIS(AVISplitter_OutputPin, iface);
+    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
 
     TRACE("()\n");
     dump_AM_MEDIA_TYPE(pmt);
@@ -1185,7 +1185,7 @@ static HRESULT AVISplitter_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEP
 static HRESULT WINAPI AVISplitter_InputPin_Disconnect(IPin * iface)
 {
     HRESULT hr;
-    ICOM_THIS(IPinImpl, iface);
+    IPinImpl *This = (IPinImpl *)iface;
 
     TRACE("()\n");
 

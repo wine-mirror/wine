@@ -110,7 +110,7 @@ Main_DirectDrawPalette_GetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 				  DWORD dwStart, DWORD dwCount,
 				  LPPALETTEENTRY palent)
 {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
 
     TRACE("(%p)->GetEntries(%08lx,%ld,%ld,%p)\n",This,dwFlags,dwStart,dwCount,
 	  palent);
@@ -138,7 +138,7 @@ Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 				  DWORD dwStart, DWORD dwCount,
 				  LPPALETTEENTRY palent)
 {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
 
     TRACE("(%p)->SetEntries(%08lx,%ld,%ld,%p)\n",This,dwFlags,dwStart,dwCount,
 	  palent);
@@ -207,7 +207,7 @@ void Main_DirectDrawPalette_ForceDestroy(IDirectDrawPaletteImpl* This)
 ULONG WINAPI
 Main_DirectDrawPalette_Release(LPDIRECTDRAWPALETTE iface)
 {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--This->ref)
@@ -220,7 +220,7 @@ Main_DirectDrawPalette_Release(LPDIRECTDRAWPALETTE iface)
 }
 
 ULONG WINAPI Main_DirectDrawPalette_AddRef(LPDIRECTDRAWPALETTE iface) {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
     return ++This->ref;
 }
@@ -230,7 +230,7 @@ Main_DirectDrawPalette_Initialize(LPDIRECTDRAWPALETTE iface,
 				  LPDIRECTDRAW ddraw, DWORD dwFlags,
 				  LPPALETTEENTRY palent)
 {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     TRACE("(%p)->(%p,%ld,%p)\n", This, ddraw, dwFlags, palent);
     return DDERR_ALREADYINITIALIZED;
 }
@@ -238,7 +238,7 @@ Main_DirectDrawPalette_Initialize(LPDIRECTDRAWPALETTE iface,
 HRESULT WINAPI
 Main_DirectDrawPalette_GetCaps(LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps)
 {
-   ICOM_THIS(IDirectDrawPaletteImpl,iface);
+   IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
    TRACE("(%p)->(%p)\n",This,lpdwCaps);
 
    *lpdwCaps = This->global.dwFlags;
@@ -250,7 +250,7 @@ HRESULT WINAPI
 Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
 				      REFIID refiid, LPVOID *obj)
 {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 
     if (IsEqualGUID(refiid, &IID_IUnknown)

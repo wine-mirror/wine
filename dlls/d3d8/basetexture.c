@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* IDirect3DBaseTexture8 (Inherited from IUnknown) */
 HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) : QueryInterface\n", This);
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DResource8)
@@ -50,13 +50,13 @@ HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 i
 }
 
 ULONG WINAPI IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0)
@@ -66,7 +66,7 @@ ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
 
 /* IDirect3DBaseTexture8 (Inherited from IDirect3DResource8) */
 HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8** ppDevice) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
     /**
@@ -77,50 +77,50 @@ HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return 0;
 }
 DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return 0;
 }
 void     WINAPI        IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);
 }
 D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     /*TRACE("(%p) : returning %d\n", This, This->ResourceType);*/
     return This->ResourceType;
 }
 
 /* IDirect3DBaseTexture8 */
 DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return 0;
 }
 DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return 0;
 }
 DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) : returning %d\n", This, This->levels);    
     return This->levels;
 }
@@ -144,13 +144,13 @@ IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
 };
 
 BOOL WINAPI IDirect3DBaseTexture8Impl_IsDirty(LPDIRECT3DBASETEXTURE8 iface) {
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     return This->Dirty;
 }
 
 BOOL WINAPI IDirect3DBaseTexture8Impl_SetDirty(LPDIRECT3DBASETEXTURE8 iface, BOOL dirty) {
     BOOL old;
-    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     
     old = This->Dirty;
     This->Dirty = dirty;

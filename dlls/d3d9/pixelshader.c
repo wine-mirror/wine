@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /* IDirect3DPixelShader9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DPixelShader9Impl_QueryInterface(LPDIRECT3DPIXELSHADER9 iface, REFIID riid, LPVOID* ppobj) {
-    ICOM_THIS(IDirect3DPixelShader9Impl,iface);
+    IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DPixelShader9)) {
@@ -51,13 +51,13 @@ HRESULT WINAPI IDirect3DPixelShader9Impl_QueryInterface(LPDIRECT3DPIXELSHADER9 i
 }
 
 ULONG WINAPI IDirect3DPixelShader9Impl_AddRef(LPDIRECT3DPIXELSHADER9 iface) {
-    ICOM_THIS(IDirect3DPixelShader9Impl,iface);
+    IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 iface) {
-    ICOM_THIS(IDirect3DPixelShader9Impl,iface);
+    IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
     ULONG ref = --This->ref;
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
@@ -69,7 +69,7 @@ ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 iface) {
 
 /* IDirect3DPixelShader9 Interface follow: */
 HRESULT WINAPI IDirect3DPixelShader9Impl_GetDevice(LPDIRECT3DPIXELSHADER9 iface, IDirect3DDevice9** ppDevice) {
-    ICOM_THIS(IDirect3DPixelShader9Impl,iface);
+    IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
     IDirect3DDevice9Impl_AddRef(*ppDevice);
@@ -77,7 +77,7 @@ HRESULT WINAPI IDirect3DPixelShader9Impl_GetDevice(LPDIRECT3DPIXELSHADER9 iface,
 }
 
 HRESULT WINAPI IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
-    ICOM_THIS(IDirect3DPixelShader9Impl,iface);
+    IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
     FIXME("(%p): stub\n", This);
     return D3D_OK;
 }
@@ -95,13 +95,13 @@ IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DPixelShader9 Methods follow:  */
 HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, CONST DWORD* pFunction, IDirect3DPixelShader9** ppShader) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(LPDIRECT3DDEVICE9 iface, IDirect3DPixelShader9* pShader) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
     This->UpdateStateBlock->PixelShader = pShader;
     This->UpdateStateBlock->Changed.pixelShader = TRUE;
@@ -119,7 +119,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDirect3DPixelShader9** ppShader) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) : GetPixelShader returning %p\n", This, This->StateBlock->PixelShader);
     *ppShader = This->StateBlock->PixelShader;
     IDirect3DPixelShader9Impl_AddRef(*ppShader);
@@ -127,7 +127,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   if (Register + Vector4fCount > D3D_VSHADER_MAX_CONSTANTS) {
     ERR("(%p) : SetPixelShaderConstant C[%u] invalid\n", This, Register);
@@ -154,7 +154,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9 if
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, float* pConstantData, UINT Vector4fCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   TRACE("(%p) : C[%u] count=%u\n", This, Register, Vector4fCount);
   if (Register + Vector4fCount > D3D_VSHADER_MAX_CONSTANTS) {
@@ -168,7 +168,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantF(LPDIRECT3DDEVICE9 if
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, CONST int* pConstantData, UINT Vector4iCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   if (Register + Vector4iCount > D3D_VSHADER_MAX_CONSTANTS) {
     ERR("(%p) : SetPixelShaderConstantI C[%u] invalid\n", This, Register);
@@ -195,7 +195,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantI(LPDIRECT3DDEVICE9 if
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, int* pConstantData, UINT Vector4iCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   TRACE("(%p) : C[%u] count=%u\n", This, Register, Vector4iCount);
   if (Register + Vector4iCount > D3D_VSHADER_MAX_CONSTANTS) {
@@ -209,7 +209,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantI(LPDIRECT3DDEVICE9 if
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, CONST BOOL* pConstantData, UINT BoolCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
   UINT i;
 
   if (Register + BoolCount > D3D_VSHADER_MAX_CONSTANTS) {
@@ -237,7 +237,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantB(LPDIRECT3DDEVICE9 if
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, BOOL* pConstantData, UINT BoolCount) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }

@@ -61,7 +61,7 @@ BOOL initializeFVF(LPDIRECT3DDEVICE8 iface,
                    BOOL *useVertexShaderFunction)  /* Should we use the vertex shader              */
 {
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* The first thing to work out is if we are using the fixed function pipeline 
        which is either SetVertexShader with < VS_HIGHESTFIXEDFXF - in which case this
@@ -165,7 +165,7 @@ DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
 void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
 
     BOOL requires_material_reset = FALSE;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied == TRUE) {
         /* If we have not set up the material color tracking, do it now as required */
@@ -230,7 +230,7 @@ static GLfloat invymat[16]={
 BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_lit, BOOL useVS) {
 
     BOOL isLightingOn = FALSE;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* If no normals, DISABLE lighting otherwise, don't touch lighing as it is
        set by the appropriate render state. Note Vertex Shader output is already lit */
@@ -368,7 +368,7 @@ void primitiveConvertToStridedData(LPDIRECT3DDEVICE8 iface, Direct3DVertexStride
     int           coordIdxInfo = 0x00;    /* Information on number of coords supplied */
     int           numCoords[8];           /* Holding place for D3DFVF_TEXTUREFORMATx  */
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* OK, Now to setup the data locations 
        For the non-created vertex shaders, the VertexShader var holds the real 
@@ -523,7 +523,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
 {
     unsigned int textureNo;
     float s, t, r, q;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* Diffuse -------------------------------- */
     if (isDiffuse == TRUE) {
@@ -668,7 +668,7 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     unsigned int textureNo   = 0;
     GLenum       glPrimType  = GL_POINTS;
     int          NumVertexes = NumPrimitives;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     TRACE("Using fast vertex array code\n");
 
@@ -940,7 +940,7 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     float ptSize = 0.0f;                   /* Point size                 */
     DWORD diffuseColor = 0xFFFFFFFF;       /* Diffuse Color              */
     DWORD specularColor = 0;               /* Specular Color             */
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     TRACE("Using slow vertex array code\n");
 
@@ -1249,7 +1249,7 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
     float ptSize = 0.0f;                   /* Point size                 */
     D3DVECTOR_4 texcoords[8];              /* Texture Coords             */
     int   numcoords[8];                    /* Number of coords           */
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     IDirect3DVertexShaderImpl* vertex_shader = NULL;
 
@@ -1378,7 +1378,7 @@ void drawStridedHardwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
     int                        glPrimType;
     int                        maxAttribs;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("Drawing with hardware vertex shaders\n");
 
     /* Retrieve the VS information */
@@ -1466,7 +1466,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     unsigned int                  i;
     int                           useHW = FALSE;
 

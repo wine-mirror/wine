@@ -117,7 +117,7 @@ static HRESULT VideoRenderer_CreatePrimarySurface(IBaseFilter * iface)
     HRESULT hr;
     DDSURFACEDESC sdesc;
     DDSCAPS ddscaps;
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 	
     hr = DirectDrawCreate(NULL, &This->ddraw, NULL);
 
@@ -245,7 +245,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 
 static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -361,7 +361,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
 static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -392,14 +392,14 @@ static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID r
 
 static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
     TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
     TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
     if (!InterlockedDecrement(&This->refCount))
     {
@@ -424,7 +424,7 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI VideoRenderer_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pClsid);
 
@@ -437,7 +437,7 @@ static HRESULT WINAPI VideoRenderer_GetClassID(IBaseFilter * iface, CLSID * pCls
 
 static HRESULT WINAPI VideoRenderer_Stop(IBaseFilter * iface)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -452,7 +452,7 @@ static HRESULT WINAPI VideoRenderer_Stop(IBaseFilter * iface)
 
 static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
     
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -467,7 +467,7 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
 
 static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
@@ -483,7 +483,7 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
 
 static HRESULT WINAPI VideoRenderer_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%ld, %p)\n", This, iface, dwMilliSecsTimeout, pState);
 
@@ -498,7 +498,7 @@ static HRESULT WINAPI VideoRenderer_GetState(IBaseFilter * iface, DWORD dwMilliS
 
 static HRESULT WINAPI VideoRenderer_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pClock);
 
@@ -517,7 +517,7 @@ static HRESULT WINAPI VideoRenderer_SetSyncSource(IBaseFilter * iface, IReferenc
 
 static HRESULT WINAPI VideoRenderer_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppClock);
 
@@ -536,7 +536,7 @@ static HRESULT WINAPI VideoRenderer_GetSyncSource(IBaseFilter * iface, IReferenc
 static HRESULT WINAPI VideoRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
     ENUMPINDETAILS epd;
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
@@ -547,7 +547,7 @@ static HRESULT WINAPI VideoRenderer_EnumPins(IBaseFilter * iface, IEnumPins **pp
 
 static HRESULT WINAPI VideoRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, debugstr_w(Id), ppPin);
 
@@ -560,7 +560,7 @@ static HRESULT WINAPI VideoRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPi
 
 static HRESULT WINAPI VideoRenderer_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
 
@@ -575,7 +575,7 @@ static HRESULT WINAPI VideoRenderer_QueryFilterInfo(IBaseFilter * iface, FILTER_
 
 static HRESULT WINAPI VideoRenderer_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p, %s)\n", This, iface, pGraph, debugstr_w(pName));
 
@@ -594,7 +594,7 @@ static HRESULT WINAPI VideoRenderer_JoinFilterGraph(IBaseFilter * iface, IFilter
 
 static HRESULT WINAPI VideoRenderer_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
 {
-    ICOM_THIS(VideoRendererImpl, iface);
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, pVendorInfo);
     return E_NOTIMPL;
 }

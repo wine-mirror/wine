@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DVolume IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface, REFIID riid, LPVOID* ppobj) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVolume8)) {
@@ -51,13 +51,13 @@ HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface, REFI
 }
 
 ULONG WINAPI IDirect3DVolume8Impl_AddRef(LPDIRECT3DVOLUME8 iface) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -69,7 +69,7 @@ ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface) {
 
 /* IDirect3DVolume8: */
 HRESULT WINAPI IDirect3DVolume8Impl_GetDevice(LPDIRECT3DVOLUME8 iface, IDirect3DDevice8** ppDevice) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
 
@@ -81,25 +81,25 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetDevice(LPDIRECT3DVOLUME8 iface, IDirect3D
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_SetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID riid, void** ppContainer) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Container);
     *ppContainer = This->Container;
     IUnknown_AddRef(This->Container);
@@ -107,14 +107,14 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_DESC* pDesc) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
     memcpy(pDesc, &This->myDesc, sizeof(D3DVOLUME_DESC));
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     FIXME("(%p) : pBox=%p stub\n", This, pBox);    
 
     /* fixme: should we really lock as such? */
@@ -173,7 +173,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
-    ICOM_THIS(IDirect3DVolume8Impl,iface);
+    IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     if (FALSE == This->locked) {
       ERR("trying to lock unlocked volume@%p\n", This);  
       return D3DERR_INVALIDCALL;
@@ -202,7 +202,7 @@ IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
 
 
 HRESULT WINAPI IDirect3DVolume8Impl_CleanDirtyBox(LPDIRECT3DVOLUME8 iface) {
-  ICOM_THIS(IDirect3DVolume8Impl,iface);
+  IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
   This->Dirty = FALSE;
   This->lockedBox.Left   = This->myDesc.Width;
   This->lockedBox.Top    = This->myDesc.Height;
@@ -218,7 +218,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_CleanDirtyBox(LPDIRECT3DVOLUME8 iface) {
  *   very stupid way to handle multiple dirty box but it works :)
  */
 HRESULT WINAPI IDirect3DVolume8Impl_AddDirtyBox(LPDIRECT3DVOLUME8 iface, CONST D3DBOX* pDirtyBox) {
-  ICOM_THIS(IDirect3DVolume8Impl,iface);
+  IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
   This->Dirty = TRUE;
    if (NULL != pDirtyBox) {
     This->lockedBox.Left   = min(This->lockedBox.Left,   pDirtyBox->Left);

@@ -475,7 +475,7 @@ static const struct object_creation_info object_creation[] =
 static HRESULT WINAPI
 DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
     
@@ -492,7 +492,7 @@ DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 }
 
 static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->() incrementing from %ld.\n", This, This->ref);
     
@@ -500,7 +500,7 @@ static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface) {
 }
 
 static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->() decrementing from %ld.\n", This, This->ref);
 
@@ -514,7 +514,7 @@ static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI DDCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
@@ -522,7 +522,7 @@ static HRESULT WINAPI DDCF_CreateInstance(
 }
 
 static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }

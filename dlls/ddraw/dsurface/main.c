@@ -122,7 +122,7 @@ void Main_DirectDrawSurface_ForceDestroy(IDirectDrawSurfaceImpl* This)
 
 ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(): decreasing from %ld\n", This, This->ref);
     
@@ -142,7 +142,7 @@ ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface)
 
 ULONG WINAPI Main_DirectDrawSurface_AddRef(LPDIRECTDRAWSURFACE7 iface)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(): increasing from %ld\n", This, This->ref);
     
@@ -153,7 +153,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 				      LPVOID* ppObj)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppObj);
 
     *ppObj = NULL;
@@ -322,7 +322,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_AddAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 					  LPDIRECTDRAWSURFACE7 pAttach)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl* surf = ICOM_OBJECT(IDirectDrawSurfaceImpl,
 					       IDirectDrawSurface7, pAttach);
 
@@ -390,7 +390,7 @@ Main_DirectDrawSurface_BltBatch(LPDIRECTDRAWSURFACE7 iface,
 HRESULT WINAPI
 Main_DirectDrawSurface_ChangeUniquenessValue(LPDIRECTDRAWSURFACE7 iface)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     volatile IDirectDrawSurfaceImpl* vThis = This;
 
     TRACE("(%p)\n",This);
@@ -419,7 +419,7 @@ Main_DirectDrawSurface_DeleteAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 					     DWORD dwFlags,
 					     LPDIRECTDRAWSURFACE7 pAttach)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl* surf = ICOM_OBJECT(IDirectDrawSurfaceImpl,
 					       IDirectDrawSurface7, pAttach);
 
@@ -455,7 +455,7 @@ Main_DirectDrawSurface_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE7 iface,
 					    LPVOID context,
 					    LPDDENUMSURFACESCALLBACK7 cb)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl* surf;
 
     TRACE("(%p)->(%p,%p)\n",This,context,cb);
@@ -528,7 +528,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
 			    LPDIRECTDRAWSURFACE7 override, DWORD dwFlags)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl* target;
     HRESULT hr;
 
@@ -677,7 +677,7 @@ static PrivateData* find_private_data(IDirectDrawSurfaceImpl *This,
 HRESULT WINAPI
 Main_DirectDrawSurface_FreePrivateData(LPDIRECTDRAWSURFACE7 iface, REFGUID tag)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     PrivateData *data;
 
     data = find_private_data(This, tag);
@@ -706,7 +706,7 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 					  LPDDSCAPS2 pCaps,
 					  LPDIRECTDRAWSURFACE7* ppSurface)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl* surf;
     IDirectDrawSurfaceImpl* found = NULL;
     DDSCAPS2 our_caps;
@@ -792,7 +792,7 @@ Main_DirectDrawSurface_GetBltStatus(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags)
 HRESULT WINAPI
 Main_DirectDrawSurface_GetCaps(LPDIRECTDRAWSURFACE7 iface, LPDDSCAPS2 pCaps)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pCaps);
     *pCaps = This->surface_desc.ddsCaps;
@@ -803,7 +803,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_GetClipper(LPDIRECTDRAWSURFACE7 iface,
 				  LPDIRECTDRAWCLIPPER* ppClipper)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,ppClipper);
     if (This->clipper == NULL)
@@ -823,7 +823,7 @@ Main_DirectDrawSurface_GetColorKey(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags,
      * isn't there? That's like saying that an int isn't there. (Which MS
      * has done in other docs.) */
 
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%08lx,%p)\n",This,dwFlags,pCKey);
     if (TRACE_ON(ddraw)) {
@@ -862,7 +862,7 @@ Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC)
 {
     DDSURFACEDESC2 ddsd;
     HRESULT hr;
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,phDC);
     CHECK_LOST(This);
@@ -903,7 +903,7 @@ Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC)
 HRESULT WINAPI
 Main_DirectDrawSurface_GetDDInterface(LPDIRECTDRAWSURFACE7 iface, LPVOID* pDD)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pDD);
     *pDD = ICOM_INTERFACE(This->ddraw_owner, IDirectDraw7);
@@ -931,7 +931,7 @@ Main_DirectDrawSurface_GetFlipStatus(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags)
 HRESULT WINAPI
 Main_DirectDrawSurface_GetLOD(LPDIRECTDRAWSURFACE7 iface, LPDWORD pdwMaxLOD)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pdwMaxLOD);
     CHECK_TEXTURE(This);
@@ -951,7 +951,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_GetPalette(LPDIRECTDRAWSURFACE7 iface,
 				  LPDIRECTDRAWPALETTE* ppPalette)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,ppPalette);
     if (This->palette == NULL)
@@ -968,7 +968,7 @@ Main_DirectDrawSurface_GetPixelFormat(LPDIRECTDRAWSURFACE7 iface,
 				      LPDDPIXELFORMAT pDDPixelFormat)
 {
     /* What is DDERR_INVALIDSURFACETYPE for here? */
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pDDPixelFormat);
     DD_STRUCT_COPY_BYSIZE(pDDPixelFormat,&This->surface_desc.u4.ddpfPixelFormat);
@@ -979,7 +979,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_GetPriority(LPDIRECTDRAWSURFACE7 iface,
 				   LPDWORD pdwPriority)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pdwPriority);
     CHECK_TEXTURE(This);
@@ -993,7 +993,7 @@ Main_DirectDrawSurface_GetPrivateData(LPDIRECTDRAWSURFACE7 iface,
 				      REFGUID tag, LPVOID pBuffer,
 				      LPDWORD pcbBufferSize)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     PrivateData* data;
 
     data = find_private_data(This, tag);
@@ -1027,7 +1027,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_GetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 				      LPDDSURFACEDESC2 pDDSD)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pDDSD);
     if ((pDDSD->dwSize < sizeof(DDSURFACEDESC)) ||
@@ -1047,7 +1047,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_GetUniquenessValue(LPDIRECTDRAWSURFACE7 iface,
 					  LPDWORD pValue)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pValue);
     *pValue = This->uniqueness_value;
@@ -1065,7 +1065,7 @@ Main_DirectDrawSurface_Initialize(LPDIRECTDRAWSURFACE7 iface,
 HRESULT WINAPI
 Main_DirectDrawSurface_IsLost(LPDIRECTDRAWSURFACE7 iface)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p) is%s lost\n",This, (This->lost ? "" : " not"));
     return This->lost ? DDERR_SURFACELOST : DD_OK;
@@ -1078,7 +1078,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 			    LPDDSURFACEDESC2 pDDSD, DWORD flags, HANDLE h)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     if (TRACE_ON(ddraw)) {
         TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,prect,pDDSD,flags,(DWORD)h);
@@ -1163,7 +1163,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_ReleaseDC(LPDIRECTDRAWSURFACE7 iface, HDC hDC)
 {
     HRESULT hr;
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,hDC);
 
@@ -1187,7 +1187,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_SetClipper(LPDIRECTDRAWSURFACE7 iface,
 				  LPDIRECTDRAWCLIPPER pDDClipper)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,pDDClipper);
     if (pDDClipper == ICOM_INTERFACE(This->clipper, IDirectDrawClipper))
@@ -1209,7 +1209,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_SetColorKey(LPDIRECTDRAWSURFACE7 iface,
 				   DWORD dwFlags, LPDDCOLORKEY pCKey)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     
     TRACE("(%p)->(%08lx,%p)\n",This,dwFlags,pCKey);
 
@@ -1283,7 +1283,7 @@ Main_DirectDrawSurface_SetColorKey(LPDIRECTDRAWSURFACE7 iface,
 HRESULT WINAPI
 Main_DirectDrawSurface_SetLOD(LPDIRECTDRAWSURFACE7 iface, DWORD dwMaxLOD)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%08lx)\n",This,dwMaxLOD);
     CHECK_TEXTURE(This);
@@ -1303,7 +1303,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
 				  LPDIRECTDRAWPALETTE pPalette)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawPalette *pal_to_rel = NULL;
 
     TRACE("(%p)->(%p)\n",This,pPalette);
@@ -1339,7 +1339,7 @@ HRESULT WINAPI
 Main_DirectDrawSurface_SetPriority(LPDIRECTDRAWSURFACE7 iface,
 				   DWORD dwPriority)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->(%08lx)\n",This,dwPriority);
     CHECK_TEXTURE(This);
@@ -1356,7 +1356,7 @@ Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
 				      DWORD cbSize, DWORD dwFlags)
 {
     PrivateData* data;
-    ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     data = find_private_data(This, tag);
     if (data == NULL)
@@ -1409,7 +1409,7 @@ Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
 HRESULT WINAPI
 Main_DirectDrawSurface_Unlock(LPDIRECTDRAWSURFACE7 iface, LPRECT pRect)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     TRACE("(%p)->Unlock(%p)\n",This,pRect);
 

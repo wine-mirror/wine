@@ -89,7 +89,7 @@ HAL_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 				 DWORD dwStart, DWORD dwCount,
 				 LPPALETTEENTRY palent)
 {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     LPDDRAWI_DIRECTDRAW_GBL dd_gbl = This->local.lpDD_lcl->lpGbl;
     DDHAL_SETENTRIESDATA data;
 

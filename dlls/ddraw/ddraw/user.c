@@ -454,7 +454,7 @@ User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 #undef FX_CAPS
 #undef ROPS
 
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     TRACE("(%p)->(%p,%p)\n",This,pDriverCaps,pHELCaps);
 
@@ -495,7 +495,7 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 			       DWORD dwHeight, DWORD dwBPP,
 			       DWORD dwRefreshRate, DWORD dwFlags)
 {
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     const DDPIXELFORMAT* pixelformat;
     DEVMODEW devmode;

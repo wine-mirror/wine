@@ -483,7 +483,7 @@ HAL_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
 HRESULT WINAPI
 HAL_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface)
 {
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     HRESULT hr;
 
     TRACE("(%p)\n", iface);
@@ -504,7 +504,7 @@ HAL_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 			      DWORD dwHeight, DWORD dwBPP,
 			      DWORD dwRefreshRate, DWORD dwFlags)
 {
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     HRESULT hr;
 
@@ -526,7 +526,7 @@ HAL_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 			       LPDWORD pCodes)
 {
     unsigned int i;
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     if (*pNumCodes)
 	*pNumCodes=dd_gbl.dwNumFourCC;
     if (pCodes && dd_gbl.dwNumFourCC)

@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /* IDirect3DVertexShader9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9 iface, REFIID riid, LPVOID* ppobj) {
-    ICOM_THIS(IDirect3DVertexShader9Impl,iface);
+    IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVertexShader9)) {
@@ -51,13 +51,13 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9
 }
 
 ULONG WINAPI IDirect3DVertexShader9Impl_AddRef(LPDIRECT3DVERTEXSHADER9 iface) {
-    ICOM_THIS(IDirect3DVertexShader9Impl,iface);
+    IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
-    ICOM_THIS(IDirect3DVertexShader9Impl,iface);
+    IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     ULONG ref = --This->ref;
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
@@ -69,7 +69,7 @@ ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
 
 /* IDirect3DVertexShader9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 iface, IDirect3DDevice9** ppDevice) {
-    ICOM_THIS(IDirect3DVertexShader9Impl,iface);
+    IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
     IDirect3DDevice9Impl_AddRef(*ppDevice);
@@ -77,7 +77,7 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 ifac
 }
 
 HRESULT WINAPI IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DVERTEXSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
-    ICOM_THIS(IDirect3DVertexShader9Impl,iface);
+    IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
@@ -95,13 +95,13 @@ IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DVertexShader9 Methods follow: */
 HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9 iface, CONST DWORD* pFunction, IDirect3DVertexShader9** ppShader) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(LPDIRECT3DDEVICE9 iface, IDirect3DVertexShader9* pShader) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
     This->UpdateStateBlock->VertexShader = pShader;
     This->UpdateStateBlock->Changed.vertexShader = TRUE;
@@ -119,7 +119,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(LPDIRECT3DDEVICE9 iface, IDirect3DVertexShader9** ppShader) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) : GetVertexShader returning %p\n", This, This->StateBlock->VertexShader);
     *ppShader = This->StateBlock->VertexShader;
     IDirect3DVertexShader9Impl_AddRef(*ppShader);
@@ -127,7 +127,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   if (Register + Vector4fCount > D3D_VSHADER_MAX_CONSTANTS) {
     ERR("(%p) : SetVertexShaderConstant C[%u] invalid\n", This, Register);
@@ -154,7 +154,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantF(LPDIRECT3DDEVICE9 i
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, float* pConstantData, UINT Vector4fCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   TRACE("(%p) : C[%u] count=%u\n", This, Register, Vector4fCount);
   if (Register + Vector4fCount > D3D_VSHADER_MAX_CONSTANTS) {
@@ -168,7 +168,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantF(LPDIRECT3DDEVICE9 i
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, CONST int* pConstantData, UINT Vector4iCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   if (Register + Vector4iCount > D3D_VSHADER_MAX_CONSTANTS) {
     ERR("(%p) : SetVertexShaderConstantI C[%u] invalid\n", This, Register);
@@ -195,7 +195,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantI(LPDIRECT3DDEVICE9 i
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, int* pConstantData, UINT Vector4iCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
   TRACE("(%p) : C[%u] count=%u\n", This, Register, Vector4iCount);
   if (Register + Vector4iCount > D3D_VSHADER_MAX_CONSTANTS) {
@@ -209,7 +209,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantI(LPDIRECT3DDEVICE9 i
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, CONST BOOL* pConstantData, UINT BoolCount) {
-  ICOM_THIS(IDirect3DDevice9Impl,iface);
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
   UINT i;
 
   if (Register + BoolCount > D3D_VSHADER_MAX_CONSTANTS) {
@@ -237,7 +237,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantB(LPDIRECT3DDEVICE9 i
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, BOOL* pConstantData, UINT BoolCount) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }

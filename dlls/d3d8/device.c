@@ -72,7 +72,7 @@ do {                                                                            
 
 /* Apply the current values to the specified texture stage */
 void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     int i = 0;
     float col[4];
     BOOL changeTexture = TRUE;
@@ -154,7 +154,7 @@ void setup_light(LPDIRECT3DDEVICE8 iface, LONG Index, PLIGHTINFOEL *lightInfo) {
 
     float quad_att;
     float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
     glMatrixMode(GL_MODELVIEW);
@@ -282,7 +282,7 @@ static void set_texture_matrix(float *smat, DWORD flags)
 /* IDirect3D IUnknown parts follow: */
 HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DDevice8)) {
@@ -296,13 +296,13 @@ HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFII
 }
 
 ULONG WINAPI IDirect3DDevice8Impl_AddRef(LPDIRECT3DDEVICE8 iface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -314,13 +314,13 @@ ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
 
 /* IDirect3DDevice Interface follow: */
 HRESULT  WINAPI  IDirect3DDevice8Impl_TestCooperativeLevel(LPDIRECT3DDEVICE8 iface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : stub\n", This);    /* No way of notifying yet! */
     return D3D_OK;
 }
 
 UINT     WINAPI  IDirect3DDevice8Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE8 iface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : stub, emulating 32Mb for now\n", This);
     /*
      * pretend we have 32MB of any type of memory queried.
@@ -329,12 +329,12 @@ UINT     WINAPI  IDirect3DDevice8Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE8 i
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_ResourceManagerDiscardBytes(LPDIRECT3DDEVICE8 iface, DWORD Bytes) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetDirect3D(LPDIRECT3DDEVICE8 iface, IDirect3D8** ppD3D8) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->direct3d8);
 
     /* Inc ref count */
@@ -344,7 +344,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDirect3D(LPDIRECT3DDEVICE8 iface, IDire
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetDeviceCaps(LPDIRECT3DDEVICE8 iface, D3DCAPS8* pCaps) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub, calling idirect3d for now\n", This);
     IDirect3D8Impl_GetDeviceCaps((LPDIRECT3D8) This->direct3d8, This->adapterNo, This->devType, pCaps);
     return D3D_OK;
@@ -354,7 +354,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDisplayMode(LPDIRECT3DDEVICE8 iface, D3
     HDC hdc;
     int bpp = 0;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
     pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
     pMode->RefreshRate  = 85; /*FIXME: How to identify? */
@@ -378,14 +378,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDisplayMode(LPDIRECT3DDEVICE8 iface, D3
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetCreationParameters(LPDIRECT3DDEVICE8 iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) copying to %p\n", This, pParameters);    
     memcpy(pParameters, &This->CreateParms, sizeof(D3DDEVICE_CREATION_PARAMETERS));
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8 iface, UINT XHotSpot, UINT YHotSpot, IDirect3DSurface8* pCursorBitmap) {
     IDirect3DSurface8Impl* pSur = (IDirect3DSurface8Impl*) pCursorBitmap;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
     if (D3DFMT_A8R8G8B8 != pSur->myDesc.Format) {
@@ -402,21 +402,21 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8 ifac
     return D3D_OK;
 }
 void     WINAPI  IDirect3DDevice8Impl_SetCursorPosition(LPDIRECT3DDEVICE8 iface, UINT XScreenSpace, UINT YScreenSpace, DWORD Flags) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : SetPos to (%u,%u)\n", This, XScreenSpace, YScreenSpace);
     This->xScreenSpace = XScreenSpace;
     This->yScreenSpace = YScreenSpace;
     return;
 }
 BOOL     WINAPI  IDirect3DDevice8Impl_ShowCursor(LPDIRECT3DDEVICE8 iface, BOOL bShow) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : visible(%d)\n", This, bShow); 
     This->bCursorVisible = bShow;
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DSwapChain8** pSwapChain) {
     IDirect3DSwapChain8Impl* object;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice8Impl));
@@ -480,14 +480,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, 
 					      CONST RECT* pSourceRect, CONST RECT* pDestRect, 
 					      HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : complete stub!\n", This);
 
     ENTER_GL();
@@ -562,7 +562,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface,
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     *ppBackBuffer = (LPDIRECT3DSURFACE8) This->backBuffer;
     TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
 
@@ -577,13 +577,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UIN
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRasterStatus(LPDIRECT3DDEVICE8 iface, D3DRASTER_STATUS* pRasterStatus) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 void     WINAPI  IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWORD Flags, CONST D3DGAMMARAMP* pRamp) {
     HDC hDC;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     FIXME("(%p) : pRamp@%p\n", This, pRamp);
     hDC = GetDC(This->win_handle);
@@ -593,7 +593,7 @@ void     WINAPI  IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWOR
 }
 void     WINAPI  IDirect3DDevice8Impl_GetGammaRamp(LPDIRECT3DDEVICE8 iface, D3DGAMMARAMP* pRamp) {
     HDC hDC;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     FIXME("(%p) : pRamp@%p\n", This, pRamp);
     hDC = GetDC(This->win_handle);
@@ -608,7 +608,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     UINT tmpW;
     UINT tmpH;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* Allocate the storage for the device */
     TRACE("(%p) : W(%d) H(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%d)\n", This, Width, Height, Levels, Usage, Format, debug_d3dformat(Format), Pool);
@@ -672,7 +672,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     UINT tmpH;
     UINT tmpD;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* Allocate the storage for it */
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height, Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -758,7 +758,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
                                                         D3DFORMAT Format, D3DPOOL Pool, IDirect3DCubeTexture8** ppCubeTexture) {
 
     IDirect3DCubeTexture8Impl *object;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     unsigned int i,j;
     UINT tmpW;
 
@@ -815,7 +815,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer) {
     IDirect3DVertexBuffer8Impl *object;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer8Impl));
@@ -838,7 +838,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DIndexBuffer8** ppIndexBuffer) {
     IDirect3DIndexBuffer8Impl *object;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : Len=%d, Use=%lx, Format=(%u,%s), Pool=%d\n", This, Length, Usage, Format, debug_d3dformat(Format), Pool);
 
     /* Allocate the storage for the device */
@@ -864,7 +864,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, IDirect3DSurface8** ppSurface) {
     IDirect3DSurface8Impl *object;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     
     object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
     if (NULL == object) {
@@ -903,7 +903,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, IDirect3DSurface8** ppSurface) {
     IDirect3DSurface8Impl *object;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
     if (NULL == object) {
@@ -942,7 +942,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, IDirect3DSurface8** ppSurface) {
     IDirect3DSurface8Impl *object;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
     *ppSurface = (LPDIRECT3DSURFACE8) object;
@@ -990,7 +990,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
     IDirect3DSurface8Impl* src = (IDirect3DSurface8Impl*) pSourceSurface;
     IDirect3DSurface8Impl* dst = (IDirect3DSurface8Impl*) pDestinationSurface;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) pSrcSur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", This,
           pSourceSurface, pSourceRectsArray, cRects, pDestinationSurface, pDestPointsArray);
 
@@ -1095,7 +1095,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDi
     D3DRESOURCETYPE srcType;
     D3DRESOURCETYPE dstType;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : first try\n", This);
 
     srcType = IDirect3DBaseTexture8Impl_GetType(pSourceTexture);
@@ -1170,7 +1170,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     GLint  prev_store;
     GLenum prev_read;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     FIXME("(%p) : Should return whole screen, only returns GL context window in top left corner\n", This);
 
@@ -1226,7 +1226,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
     HRESULT      hr = D3D_OK;
     D3DVIEWPORT8 viewport;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* If pRenderTarget == NULL, it seems to default to back buffer */
     if (pRenderTarget == NULL) pRenderTarget = (IDirect3DSurface8*)This->backBuffer;
@@ -1261,7 +1261,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppRenderTarget) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     TRACE("(%p)->returning (%p) default is backbuffer=(%p)\n", This, This->renderTarget, This->backBuffer);
     
@@ -1272,7 +1272,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderTarget(LPDIRECT3DDEVICE8 iface, I
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppZStencilSurface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     TRACE("(%p)->(%p) default(%p)\n", This, This->stencilBufferTarget, This->depthStencilBuffer);
     
@@ -1284,7 +1284,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 i
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : stub\n", This);
     return D3D_OK;
 }
@@ -1292,7 +1292,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface) {
 HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     IDirect3DBaseTexture8* cont = NULL;
     HRESULT hr;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p)\n", This);
 
     ENTER_GL();
@@ -1351,7 +1351,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count, CONST D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* TODO: From MSDN This method fails if you specify the D3DCLEAR_ZBUFFER or D3DCLEAR_STENCIL flags when the
       render target does not have an attached depth buffer. Similarly, if you specify the D3DCLEAR_STENCIL flag
@@ -1463,7 +1463,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     unsigned int k;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
@@ -1578,7 +1578,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
 
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State,D3DMATRIX* pMatrix) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : for State %d\n", This, State);
     memcpy(pMatrix, &This->StateBlock->transforms[State], sizeof(D3DMATRIX));
     return D3D_OK;
@@ -1591,7 +1591,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_MultiplyTransform(LPDIRECT3DDEVICE8 iface,
     /* Note: Using UpdateStateBlock means it would be recorded in a state block change,
         but works regardless of recording being on. 
         If this is found to be wrong, change to StateBlock.                             */
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : For state %u\n", This, State);
 
     if (State < HIGHEST_TRANSFORMSTATE)
@@ -1627,7 +1627,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_MultiplyTransform(LPDIRECT3DDEVICE8 iface,
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST D3DVIEWPORT8* pViewport) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     TRACE("(%p)\n", This);
     This->UpdateStateBlock->Changed.viewport = TRUE;
@@ -1658,14 +1658,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST
 
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetViewport(LPDIRECT3DDEVICE8 iface, D3DVIEWPORT8* pViewport) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p)\n", This);
     memcpy(pViewport, &This->StateBlock->viewport, sizeof(D3DVIEWPORT8));
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetMaterial(LPDIRECT3DDEVICE8 iface, CONST D3DMATERIAL8* pMaterial) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     This->UpdateStateBlock->Changed.material = TRUE;
     This->UpdateStateBlock->Set.material = TRUE;
@@ -1707,7 +1707,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetMaterial(LPDIRECT3DDEVICE8 iface, CONST
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetMaterial(LPDIRECT3DDEVICE8 iface, D3DMATERIAL8* pMaterial) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     memcpy(pMaterial, &This->UpdateStateBlock->material, sizeof (D3DMATERIAL8));
     TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g, pMaterial->Diffuse.b, pMaterial->Diffuse.a);
     TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g, pMaterial->Ambient.b, pMaterial->Ambient.a);
@@ -1727,7 +1727,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     float rho;
     PLIGHTINFOEL *object, *temp;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
 
     /* If recording state block, just add to end of lights chain */
@@ -1871,7 +1871,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight) {
     PLIGHTINFOEL *lightInfo = NULL;
-    ICOM_THIS(IDirect3DDevice8Impl,iface); 
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface; 
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
     
     /* Locate the light in the live lights */
@@ -1888,7 +1888,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD In
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL Enable) {
     PLIGHTINFOEL *lightInfo = NULL;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : Idx(%ld), enable? %d\n", This, Index, Enable);
 
     /* If recording state block, just add to end of lights chain with changedEnable set to true */
@@ -2115,7 +2115,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL* pEnable) {
 
     PLIGHTINFOEL *lightInfo = NULL;
-    ICOM_THIS(IDirect3DDevice8Impl,iface); 
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface; 
     TRACE("(%p) : for idx(%ld)\n", This, Index);
     
     /* Locate the light in the live lights */
@@ -2130,7 +2130,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DW
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST float* pPlane) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : for idx %ld, %p\n", This, Index, pPlane);
 
     /* Validate Index */
@@ -2176,7 +2176,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,float* pPlane) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : for idx %ld\n", This, Index);
 
     /* Validate Index */
@@ -2196,7 +2196,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 	DWORD d;
 	float f;
     } tmpvalue;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     DWORD OldValue = This->StateBlock->renderstate[State];
         
     TRACE("(%p)->state = %s(%d), value = %ld\n", This, debug_d3drenderstate(State), State, Value);
@@ -3068,13 +3068,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD* pValue) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) for State %d = %ld\n", This, State, This->UpdateStateBlock->renderstate[State]);
     *pValue = This->StateBlock->renderstate[State];
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_BeginStateBlock(LPDIRECT3DDEVICE8 iface) {
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
   
   TRACE("(%p)\n", This);
   
@@ -3082,7 +3082,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_BeginStateBlock(LPDIRECT3DDEVICE8 iface) {
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface, DWORD* pToken) {
   IDirect3DStateBlockImpl* pSB;
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
   HRESULT res;
 
   TRACE("(%p)\n", This);
@@ -3094,7 +3094,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface, DWO
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
   IDirect3DStateBlockImpl* pSB = (IDirect3DStateBlockImpl*) Token;
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   TRACE("(%p)\n", This);
 
@@ -3103,7 +3103,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
   IDirect3DStateBlockImpl* pSB = (IDirect3DStateBlockImpl*) Token;
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   TRACE("(%p)\n", This);
 
@@ -3111,7 +3111,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
   IDirect3DStateBlockImpl* pSB = (IDirect3DStateBlockImpl*) Token;
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   TRACE("(%p)\n", This);
 
@@ -3120,7 +3120,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 iface, 
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, D3DSTATEBLOCKTYPE Type, DWORD* pToken) {
   IDirect3DStateBlockImpl* pSB;
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
   HRESULT res;
 
   TRACE("(%p) : for type %d\n", This, Type);
@@ -3131,7 +3131,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, 
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipStatus(LPDIRECT3DDEVICE8 iface, CONST D3DCLIPSTATUS8* pClipStatus) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);
     if (NULL == pClipStatus) {
       return D3DERR_INVALIDCALL;
@@ -3141,7 +3141,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipStatus(LPDIRECT3DDEVICE8 iface, CON
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipStatus(LPDIRECT3DDEVICE8 iface, D3DCLIPSTATUS8* pClipStatus) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     if (NULL == pClipStatus) {
       return D3DERR_INVALIDCALL;
@@ -3151,7 +3151,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipStatus(LPDIRECT3DDEVICE8 iface, D3D
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8** ppTexture) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : returning %p for stage %ld\n", This, This->UpdateStateBlock->textures[Stage], Stage);
     *ppTexture = (LPDIRECT3DBASETEXTURE8) This->UpdateStateBlock->textures[Stage];
     if (*ppTexture)
@@ -3165,7 +3165,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     INT oldTextureDimensions = -1;
     DWORD reapplyFlags = 0;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     D3DRESOURCETYPE textureType;
 
     oldTxt = This->UpdateStateBlock->textures[Stage];
@@ -3292,14 +3292,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage,D3DTEXTURESTAGESTATETYPE Type,DWORD* pValue) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : requesting Stage %ld, Type %d getting %ld\n", This, Stage, Type, This->UpdateStateBlock->texture_state[Stage][Type]);
     *pValue = This->UpdateStateBlock->texture_state[Stage][Type];
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     union {
 	float f;
 	DWORD d;
@@ -3818,17 +3818,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_ValidateDevice(LPDIRECT3DDEVICE8 iface, DWORD* pNumPasses) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : stub\n", This);    /* FIXME: Needs doing, but called often and is harmless */
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetInfo(LPDIRECT3DDEVICE8 iface, DWORD DevInfoID, void* pDevInfoStruct, DWORD DevInfoStructSize) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : setting p[%u] <= RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
           pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
     if (PaletteNumber >= MAX_PALETTES) {
@@ -3838,7 +3838,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface,
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     if (PaletteNumber >= MAX_PALETTES) {
         return D3DERR_INVALIDCALL;
     }
@@ -3848,7 +3848,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface,
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : Setting to (%u)\n", This, PaletteNumber);
     if (PaletteNumber >= MAX_PALETTES) {
         return D3DERR_INVALIDCALL;
@@ -3877,14 +3877,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT *PaletteNumber) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     *PaletteNumber = This->currentPalette;
     FIXME("(%p) : Returning (%u)\n", This, *PaletteNumber);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) {
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     This->StateBlock->streamIsUP = FALSE;
 
     TRACE("(%p) : Type=(%d,%s), Start=%d, Count=%d\n", This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType), StartVertex, PrimitiveCount);
@@ -3898,7 +3898,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
     IDirect3DIndexBuffer8      *pIB;
     D3DINDEXBUFFER_DESC         IdxBufDsc;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     pIB = This->StateBlock->pIndexData;
     This->StateBlock->streamIsUP = FALSE;
 
@@ -3919,7 +3919,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT PrimitiveCount,CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     TRACE("(%p) : Type=(%d,%s), pCount=%d, pVtxData=%p, Stride=%d\n", This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType), 
           PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
@@ -3942,7 +3942,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE8 i
                                                              D3DFORMAT IndexDataFormat,CONST void* pVertexStreamZeroData,
                                                              UINT VertexStreamZeroStride) {
     int idxStride;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : Type=(%d,%s), MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n", This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
           MinVertexIndex, NumVertexIndices, PrimitiveCount, pIndexData,  IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
@@ -3967,11 +3967,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE8 i
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 iface, UINT SrcStartIndex,UINT DestIndex,UINT VertexCount,IDirect3DVertexBuffer8* pDestBuffer,DWORD Flags) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* pHandle, DWORD Usage) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DVertexShaderImpl* object;
     IDirect3DVertexShaderDeclarationImpl* attached_decl;
     HRESULT res;
@@ -4002,7 +4002,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     This->UpdateStateBlock->VertexShader = Handle;
     This->UpdateStateBlock->Changed.vertexShader = TRUE;
@@ -4030,14 +4030,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, D
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE_(d3d_shader)("(%p) : GetVertexShader returning %ld\n", This, This->StateBlock->VertexShader);
     *pHandle = This->StateBlock->VertexShader;
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DVertexShaderImpl* object; 
     IDirect3DVertexShaderDeclarationImpl* attached_decl;
 
@@ -4079,7 +4079,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, CONST void* pConstantData, DWORD ConstantCount) {
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
     ERR_(d3d_shader)("(%p) : SetVertexShaderConstant C[%lu] invalid\n", This, Register);
@@ -4105,7 +4105,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   TRACE_(d3d_shader)("(%p) : C[%lu] count=%ld\n", This, Register, ConstantCount);
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
@@ -4118,7 +4118,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 
   return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
-  /*ICOM_THIS(IDirect3DDevice8Impl,iface);*/
+  /*IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;*/
   IDirect3DVertexShaderDeclarationImpl* attached_decl;
   
   attached_decl = VERTEX_SHADER_DECL(Handle);
@@ -4128,7 +4128,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3DDEVIC
   return IDirect3DVertexShaderDeclarationImpl_GetDeclaration8(attached_decl, pData, (UINT*) pSizeOfData);
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
-  /*ICOM_THIS(IDirect3DDevice8Impl,iface);*/
+  /*IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;*/
   IDirect3DVertexShaderImpl* object;
   
   object = VERTEX_SHADER(Handle);
@@ -4139,7 +4139,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData, UINT BaseVertexIndex) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DIndexBuffer8 *oldIdxs;
 
     TRACE("(%p) : Setting to %p, base %d\n", This, pIndexData, BaseVertexIndex);
@@ -4161,7 +4161,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirec
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8** ppIndexData,UINT* pBaseVertexIndex) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);
 
     *ppIndexData = This->StateBlock->pIndexData;
@@ -4172,7 +4172,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirec
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction, DWORD* pHandle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DPixelShaderImpl* object;
     HRESULT res;
     UINT i;
@@ -4198,7 +4198,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface,
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     This->UpdateStateBlock->PixelShader = Handle;
     This->UpdateStateBlock->Changed.pixelShader = TRUE;
@@ -4220,14 +4220,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DW
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE_(d3d_shader)("(%p) : GetPixelShader returning %ld\n", This, This->StateBlock->PixelShader);
     *pHandle = This->StateBlock->PixelShader;
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DPixelShaderImpl* object;   
 
     if (Handle <= VS_HIGHESTFIXEDFXF) { /* only delete user defined shaders */
@@ -4251,7 +4251,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface,
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, CONST void* pConstantData, DWORD ConstantCount) {
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   if (Register + ConstantCount > D3D8_PSHADER_MAX_CONSTANTS) {
     ERR_(d3d_shader)("(%p) : SetPixelShaderConstant C[%lu] invalid\n", This, Register);
@@ -4277,7 +4277,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 i
   return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   TRACE_(d3d_shader)("(%p) : C[%lu] count=%ld\n", This, Register, ConstantCount);
   if (Register + ConstantCount > D3D8_PSHADER_MAX_CONSTANTS) {
@@ -4299,21 +4299,21 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderFunction(LPDIRECT3DDEVICE8 i
     return IDirect3DPixelShaderImpl_GetFunction(object, pData, (UINT*) pSizeOfData);
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DRECTPATCH_INFO* pRectPatchInfo) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawTriPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DTRIPATCH_INFO* pTriPatchInfo) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePatch(LPDIRECT3DDEVICE8 iface, UINT Handle) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetStreamSource(LPDIRECT3DDEVICE8 iface, UINT StreamNumber,IDirect3DVertexBuffer8* pStreamData,UINT Stride) {
     IDirect3DVertexBuffer8 *oldSrc;
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     oldSrc = This->StateBlock->stream_source[StreamNumber];
     TRACE("(%p) : StreamNo: %d, OldStream (%p), NewStream (%p), NewStride %d\n", This, StreamNumber, oldSrc, pStreamData, Stride);
@@ -4334,7 +4334,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetStreamSource(LPDIRECT3DDEVICE8 iface, U
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 iface, UINT StreamNumber,IDirect3DVertexBuffer8** pStream,UINT* pStride) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->StateBlock->stream_source[StreamNumber], This->StateBlock->stream_stride[StreamNumber]);
     *pStream = This->StateBlock->stream_source[StreamNumber];
     *pStride = This->StateBlock->stream_stride[StreamNumber];
@@ -4447,7 +4447,7 @@ IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 HRESULT WINAPI IDirect3DDevice8Impl_CleanRender(LPDIRECT3DDEVICE8 iface)
 {
 #if defined(GL_VERSION_1_3) /* @see comments on ActiveRender */
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
   ENTER_GL();
 
@@ -4492,7 +4492,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
   UINT Height = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Height;
   IDirect3DSurface8Impl* tmp;
 
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
  
 #define PUSH1(att)        attribs[nAttribs++] = (att); 
 #define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);

@@ -119,14 +119,14 @@ static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface
 
 static ULONG WINAPI IEnumMediaTypesImpl_AddRef(IEnumMediaTypes * iface)
 {
-    ICOM_THIS(IEnumMediaTypesImpl, iface);
+    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
     TRACE("()\n");
     return ++This->refCount;
 }
 
 static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
 {
-    ICOM_THIS(IEnumMediaTypesImpl, iface);
+    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
     TRACE("()\n");
     if (!--This->refCount)
     {
@@ -141,7 +141,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
 static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cMediaTypes, AM_MEDIA_TYPE ** ppMediaTypes, ULONG * pcFetched)
 {
     ULONG cFetched; 
-    ICOM_THIS(IEnumMediaTypesImpl, iface);
+    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
 
     cFetched = min(This->enumMediaDetails.cMediaTypes, This->uIndex + cMediaTypes) - This->uIndex;
 
@@ -168,7 +168,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cM
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cMediaTypes)
 {
-    ICOM_THIS(IEnumMediaTypesImpl, iface);
+    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
 
     TRACE("(%lu)\n", cMediaTypes);
 
@@ -182,7 +182,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cM
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
 {
-    ICOM_THIS(IEnumMediaTypesImpl, iface);
+    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
 
     TRACE("()\n");
 
@@ -193,7 +193,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
 static HRESULT WINAPI IEnumMediaTypesImpl_Clone(IEnumMediaTypes * iface, IEnumMediaTypes ** ppEnum)
 {
     HRESULT hr;
-    ICOM_THIS(IEnumMediaTypesImpl, iface);
+    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
 
     TRACE("(%p)\n", ppEnum);
 

@@ -490,7 +490,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 			  LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
 			  DWORD dwFlags, LPDDBLTFX lpbltfx)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     RECT		xdst,xsrc;
     DDSURFACEDESC2	ddesc,sdesc;
     HRESULT		ret = DD_OK;
@@ -961,7 +961,7 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 			      DWORD dsty, LPDIRECTDRAWSURFACE7 src,
 			      LPRECT rsrc, DWORD trans)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     int			bpp, w, h, x, y;
     DDSURFACEDESC2	ddesc,sdesc;
     HRESULT		ret = DD_OK;
@@ -1302,7 +1302,7 @@ HRESULT WINAPI
 DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 				     LPDDSURFACEDESC2 pDDSD, DWORD dwFlags)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     DIB_PRIV_VAR(priv, This);
     HRESULT hr = DD_OK;
     DWORD flags = pDDSD->dwFlags;

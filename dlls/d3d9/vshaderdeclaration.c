@@ -66,19 +66,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
  */
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 iface, CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9* pDecl) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9** ppDecl) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }

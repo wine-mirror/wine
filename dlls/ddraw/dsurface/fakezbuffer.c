@@ -170,7 +170,7 @@ FakeZBuffer_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 				  LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
 				  DWORD dwFlags, LPDDBLTFX lpbltfx)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     if (TRACE_ON(ddraw)) {
         TRACE("(%p)->(%p,%p,%p,%08lx,%p)\n", This,rdst,src,rsrc,dwFlags,lpbltfx);
@@ -212,7 +212,7 @@ FakeZBuffer_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 				      DWORD dsty, LPDIRECTDRAWSURFACE7 src,
 				      LPRECT rsrc, DWORD trans)
 {
-    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     if (TRACE_ON(ddraw)) {
 	FIXME("(%p)->(%ld,%ld,%p,%p,%08lx)\n",

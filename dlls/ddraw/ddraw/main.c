@@ -148,7 +148,7 @@ void Main_DirectDraw_final_release(IDirectDrawImpl* This)
 /* There is no Main_DirectDraw_Create. */
 
 ULONG WINAPI Main_DirectDraw_AddRef(LPDIRECTDRAW7 iface) {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
 
     return ++This->ref;
@@ -156,7 +156,7 @@ ULONG WINAPI Main_DirectDraw_AddRef(LPDIRECTDRAW7 iface) {
 
 ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface) {
     ULONG ref;
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     ref = --This->ref;
@@ -180,7 +180,7 @@ ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface) {
 HRESULT WINAPI Main_DirectDraw_QueryInterface(
     LPDIRECTDRAW7 iface,REFIID refiid,LPVOID *obj
 ) {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(refiid), obj);
 
     /* According to COM docs, if the QueryInterface fails, obj should be set to NULL */
@@ -268,7 +268,7 @@ HRESULT WINAPI Main_DirectDraw_CreateClipper(LPDIRECTDRAW7 iface,
 					     LPDIRECTDRAWCLIPPER *ppClipper,
 					     IUnknown *pUnkOuter)
 {
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     HRESULT hr;
 
     TRACE("(%p)->(0x%lx, %p, %p)\n", iface, dwFlags, ppClipper, pUnkOuter);
@@ -295,7 +295,7 @@ Main_DirectDraw_CreatePalette(LPDIRECTDRAW7 iface, DWORD dwFlags,
 			      LPDIRECTDRAWPALETTE* ppPalette,
 			      LPUNKNOWN pUnknown)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     LPDIRECTDRAWPALETTE pPalette;
     HRESULT hr;
 
@@ -631,7 +631,7 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
 			      IUnknown *pUnkOuter)
 {
     HRESULT hr;
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     TRACE("(%p)->(%p,%p,%p)\n",This,pDDSD,ppSurf,pUnkOuter);
     if (TRACE_ON(ddraw)) {
@@ -709,7 +709,7 @@ HRESULT WINAPI
 Main_DirectDraw_DuplicateSurface(LPDIRECTDRAW7 iface, LPDIRECTDRAWSURFACE7 src,
 				 LPDIRECTDRAWSURFACE7* dst)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     IDirectDrawSurfaceImpl *pSrc = ICOM_OBJECT(IDirectDrawSurfaceImpl,
 					       IDirectDrawSurface7, src);
@@ -896,7 +896,7 @@ Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
 			     LPDDSURFACEDESC2 lpDDSD2, LPVOID context,
 			     LPDDENUMSURFACESCALLBACK7 callback)
 {
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(0x%lx, %p, %p, %p)\n", iface, dwFlags, lpDDSD2, context,
 	  callback);
 
@@ -925,7 +925,7 @@ Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
 HRESULT WINAPI
 Main_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface,DWORD a,DWORD* b)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     FIXME("(%p)->() stub\n", This);
 
     return DD_OK;
@@ -934,7 +934,7 @@ Main_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface,DWORD a,DWORD* b)
 HRESULT WINAPI
 Main_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->()\n",This);
     return DD_OK;
 }
@@ -943,7 +943,7 @@ HRESULT WINAPI
 Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 			LPDDCAPS pHELCaps)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p,%p,%p)\n",This,pDriverCaps,pHELCaps);
     if (pDriverCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&This->caps);
@@ -970,7 +970,7 @@ HRESULT WINAPI
 Main_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 			       LPDWORD pCodes)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     if (*pNumCodes) {
 	    *pNumCodes=0;
     }
@@ -982,7 +982,7 @@ HRESULT WINAPI
 Main_DirectDraw_GetGDISurface(LPDIRECTDRAW7 iface,
 			      LPDIRECTDRAWSURFACE7 *lplpGDIDDSSurface)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(%p)\n", This, lplpGDIDDSSurface);
     TRACE("returning primary (%p)\n", This->primary_surface);
     *lplpGDIDDSSurface = ICOM_INTERFACE(This->primary_surface, IDirectDrawSurface7);
@@ -994,7 +994,7 @@ Main_DirectDraw_GetGDISurface(LPDIRECTDRAW7 iface,
 HRESULT WINAPI
 Main_DirectDraw_GetMonitorFrequency(LPDIRECTDRAW7 iface,LPDWORD freq)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     FIXME("(%p)->(%p) returns 60 Hz always\n",This,freq);
     *freq = 60*100; /* 60 Hz */
     return DD_OK;
@@ -1003,7 +1003,7 @@ Main_DirectDraw_GetMonitorFrequency(LPDIRECTDRAW7 iface,LPDWORD freq)
 HRESULT WINAPI
 Main_DirectDraw_GetScanLine(LPDIRECTDRAW7 iface, LPDWORD lpdwScanLine)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     FIXME("(%p)->(%p)\n", This, lpdwScanLine);
 
     *lpdwScanLine = 1;
@@ -1015,7 +1015,7 @@ HRESULT WINAPI
 Main_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hdc,
 				 LPDIRECTDRAWSURFACE7 *lpDDS)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     FIXME("(%p)->(%08ld,%p)\n", This, (DWORD) hdc, lpDDS);
 
     return DD_OK;
@@ -1024,7 +1024,7 @@ Main_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hdc,
 HRESULT WINAPI
 Main_DirectDraw_GetVerticalBlankStatus(LPDIRECTDRAW7 iface, LPBOOL status)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(%p)\n",This,status);
     *status = TRUE;
     return DD_OK;
@@ -1043,7 +1043,7 @@ Main_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID lpGuid)
 HRESULT WINAPI
 Main_DirectDraw_RestoreAllSurfaces(LPDIRECTDRAW7 iface)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     IDirectDrawSurfaceImpl* surf;
 
     TRACE("(%p)->()\n", This);
@@ -1069,7 +1069,7 @@ HRESULT WINAPI
 Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
 				    DWORD cooplevel)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
@@ -1131,7 +1131,7 @@ Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     short screenX;
     short screenY;
 
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     TRACE("(%p)->SetDisplayMode(%ld,%ld)\n",This,dwWidth,dwHeight);
 
@@ -1164,7 +1164,7 @@ Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 HRESULT WINAPI
 Main_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     TRACE("(%p)\n",This);
     if (!(This->cooperative_level & DDSCL_EXCLUSIVE))
@@ -1189,7 +1189,7 @@ HRESULT WINAPI
 Main_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
 				     HANDLE h)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     FIXME("(%p)->(flags=0x%08lx,handle=%p)\n",This,dwFlags,h);
     return DD_OK;
 }
@@ -1197,7 +1197,7 @@ Main_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
 HRESULT WINAPI
 Main_DirectDraw_GetDisplayMode(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->GetDisplayMode(%p)\n",This,pDDSD);
 
     pDDSD->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_PIXELFORMAT|DDSD_REFRESHRATE;
@@ -1227,7 +1227,7 @@ HRESULT WINAPI
 Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
 				   LPDWORD total, LPDWORD free)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(%p,%p,%p)\n", This,ddscaps,total,free);
 
     if (TRACE_ON(ddraw)) {
@@ -1247,7 +1247,7 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
 }
 
 HRESULT WINAPI Main_DirectDraw_TestCooperativeLevel(LPDIRECTDRAW7 iface) {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(): stub\n", This);
 
     return DD_OK;
@@ -1257,7 +1257,7 @@ HRESULT WINAPI
 Main_DirectDraw_StartModeTest(LPDIRECTDRAW7 iface, LPSIZE pModes,
 			      DWORD dwNumModes, DWORD dwFlags)
 {
-    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     FIXME("(%p)->() stub\n", This);
 
     return DD_OK;
@@ -1460,7 +1460,7 @@ static HRESULT WINAPI
 Uninit_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID pDeviceGuid)
 {
     const ddraw_driver* driver;
-    ICOM_THIS(IDirectDrawImpl, iface);
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
     TRACE("(%p)->(%p)\n", iface, pDeviceGuid);
 

@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DVertexDeclaration9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(LPDIRECT3DVERTEXDECLARATION9 iface, REFIID riid, LPVOID* ppobj) {
-    ICOM_THIS(IDirect3DVertexDeclaration9Impl,iface);
+    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVertexDeclaration9)) {
@@ -52,13 +52,13 @@ HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(LPDIRECT3DVERTEXDE
 }
 
 ULONG WINAPI IDirect3DVertexDeclaration9Impl_AddRef(LPDIRECT3DVERTEXDECLARATION9 iface) {
-    ICOM_THIS(IDirect3DVertexDeclaration9Impl,iface);
+    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION9 iface) {
-    ICOM_THIS(IDirect3DVertexDeclaration9Impl,iface);
+    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -69,7 +69,7 @@ ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION
 
 /* IDirect3DVertexDeclaration9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEXDECLARATION9 iface, IDirect3DDevice9** ppDevice) {
-    ICOM_THIS(IDirect3DVertexDeclaration9Impl,iface);
+    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
     IDirect3DDevice9Impl_AddRef(*ppDevice);
@@ -77,7 +77,7 @@ HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEXDECLARA
 }
 
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDECLARATION9 iface, D3DVERTEXELEMENT9* pDecl, UINT* pNumElements) {
-    ICOM_THIS(IDirect3DVertexDeclaration9Impl,iface);
+    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
@@ -95,19 +95,19 @@ IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DVertexDeclaration9 Methods follow: */
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 iface, CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9* pDecl) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9** ppDecl) {
-    ICOM_THIS(IDirect3DDevice9Impl,iface);
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }

@@ -86,7 +86,7 @@ HRESULT DDRAW_CreateDirectDrawClipper(IUnknown* pUnkOuter, REFIID riid,
 HRESULT WINAPI Main_DirectDrawClipper_SetHwnd(
     LPDIRECTDRAWCLIPPER iface, DWORD dwFlags, HWND hWnd
 ) {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
     TRACE("(%p)->SetHwnd(0x%08lx,0x%08lx)\n",This,dwFlags,(DWORD)hWnd);
     if( dwFlags ) {
@@ -113,7 +113,7 @@ void Main_DirectDrawClipper_ForceDestroy(IDirectDrawClipperImpl* This)
 }
 
 ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface) {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (--This->ref == 0)
@@ -145,7 +145,7 @@ HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
     LPDIRECTDRAWCLIPPER iface, LPRECT lpRect, LPRGNDATA lpClipList,
     LPDWORD lpdwSize)
 {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
 	TRACE("(%p,%p,%p,%p)\n", This, lpRect, lpClipList, lpdwSize);
 
@@ -195,7 +195,7 @@ HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
 HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
     LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,DWORD dwFlag
 ) {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     static int warned = 0;
     if (warned++ < 10 || lprgn == NULL)
         FIXME("(%p,%p,%ld),stub!\n",This,lprgn,dwFlag);
@@ -205,7 +205,7 @@ HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
 HRESULT WINAPI Main_DirectDrawClipper_QueryInterface(
     LPDIRECTDRAWCLIPPER iface, REFIID riid, LPVOID* ppvObj
 ) {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
     if (IsEqualGUID(&IID_IUnknown, riid)
 	|| IsEqualGUID(&IID_IDirectDrawClipper, riid))
@@ -222,7 +222,7 @@ HRESULT WINAPI Main_DirectDrawClipper_QueryInterface(
 
 ULONG WINAPI Main_DirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER iface )
 {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
     return ++This->ref;
 }
@@ -230,7 +230,7 @@ ULONG WINAPI Main_DirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER iface )
 HRESULT WINAPI Main_DirectDrawClipper_GetHWnd(
     LPDIRECTDRAWCLIPPER iface, HWND* hWndPtr
 ) {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     FIXME("(%p)->(%p),stub!\n",This,hWndPtr);
 
     *hWndPtr = This->hWnd;
@@ -242,7 +242,7 @@ HRESULT WINAPI Main_DirectDrawClipper_Initialize(
      LPDIRECTDRAWCLIPPER iface, LPDIRECTDRAW lpDD, DWORD dwFlags
 ) {
     IDirectDrawImpl* pOwner;
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     FIXME("(%p)->(%p,0x%08lx),stub!\n",This,lpDD,dwFlags);
 
     if (This->ddraw_owner != NULL) return DDERR_ALREADYINITIALIZED;
@@ -257,7 +257,7 @@ HRESULT WINAPI Main_DirectDrawClipper_Initialize(
 HRESULT WINAPI Main_DirectDrawClipper_IsClipListChanged(
     LPDIRECTDRAWCLIPPER iface, BOOL* lpbChanged
 ) {
-    ICOM_THIS(IDirectDrawClipperImpl,iface);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     FIXME("(%p)->(%p),stub!\n",This,lpbChanged);
 
     /* XXX What is safest? */

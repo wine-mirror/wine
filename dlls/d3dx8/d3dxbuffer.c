@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* ID3DXBuffer IUnknown parts follow: */
 HRESULT WINAPI ID3DXBufferImpl_QueryInterface(LPD3DXBUFFER iface, REFIID riid, LPVOID* ppobj) {
-  ICOM_THIS(ID3DXBufferImpl,iface);
+  ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   
   if (IsEqualGUID(riid, &IID_IUnknown)
       || IsEqualGUID(riid, &IID_ID3DXBuffer)) {
@@ -50,13 +50,13 @@ HRESULT WINAPI ID3DXBufferImpl_QueryInterface(LPD3DXBUFFER iface, REFIID riid, L
 }
 
 ULONG WINAPI ID3DXBufferImpl_AddRef(LPD3DXBUFFER iface) {
-  ICOM_THIS(ID3DXBufferImpl,iface);
+  ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   TRACE("(%p) : AddRef from %ld\n", This, This->ref);
   return ++(This->ref);
 }
 
 ULONG WINAPI ID3DXBufferImpl_Release(LPD3DXBUFFER iface) {
-  ICOM_THIS(ID3DXBufferImpl,iface);
+  ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   ULONG ref = --This->ref;
   TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
   if (ref == 0) {
@@ -68,12 +68,12 @@ ULONG WINAPI ID3DXBufferImpl_Release(LPD3DXBUFFER iface) {
 
 /* ID3DXBuffer Interface follow: */
 LPVOID WINAPI ID3DXBufferImpl_GetBufferPointer(LPD3DXBUFFER iface) {
-  ICOM_THIS(ID3DXBufferImpl,iface);
+  ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   return This->buffer;
 }
 
 DWORD WINAPI ID3DXBufferImpl_GetBufferSize(LPD3DXBUFFER iface) {
-  ICOM_THIS(ID3DXBufferImpl,iface);
+  ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   return This->bufferSize;
 }
 

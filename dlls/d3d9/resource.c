@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DResource9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DResource9Impl_QueryInterface(LPDIRECT3DRESOURCE9 iface, REFIID riid, LPVOID* ppobj) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DResource9)) {
@@ -51,13 +51,13 @@ HRESULT WINAPI IDirect3DResource9Impl_QueryInterface(LPDIRECT3DRESOURCE9 iface, 
 }
 
 ULONG WINAPI IDirect3DResource9Impl_AddRef(LPDIRECT3DRESOURCE9 iface) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DResource9Impl_Release(LPDIRECT3DRESOURCE9 iface) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -68,7 +68,7 @@ ULONG WINAPI IDirect3DResource9Impl_Release(LPDIRECT3DRESOURCE9 iface) {
 
 /* IDirect3DResource9 Interface follow: */
 HRESULT WINAPI IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDirect3DDevice9** ppDevice) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
     IDirect3DDevice9Impl_AddRef(*ppDevice);
@@ -76,42 +76,42 @@ HRESULT WINAPI IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDire
 }
 
 HRESULT WINAPI IDirect3DResource9Impl_SetPrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DResource9Impl_GetPrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DResource9Impl_FreePrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
 DWORD  WINAPI IDirect3DResource9Impl_SetPriority(LPDIRECT3DRESOURCE9 iface, DWORD PriorityNew) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return 0;
 }
 
 DWORD WINAPI IDirect3DResource9Impl_GetPriority(LPDIRECT3DRESOURCE9 iface) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return 0;
 }
 
 void WINAPI IDirect3DResource9Impl_PreLoad(LPDIRECT3DRESOURCE9 iface) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     FIXME("(%p) : stub\n", This);
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DResource9Impl_GetType(LPDIRECT3DRESOURCE9 iface) {
-    ICOM_THIS(IDirect3DResource9Impl,iface);
+    IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     TRACE("(%p) : returning %d\n", This, This->ResourceType);
     return This->ResourceType;
 }

@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* IDirect3DSwapChain IUnknown parts follow: */
 HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IDirect3DSwapChain8Impl,iface);
+    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DSwapChain8)) {
@@ -49,13 +49,13 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface
 }
 
 ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface) {
-    ICOM_THIS(IDirect3DSwapChain8Impl,iface);
+    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
-    ICOM_THIS(IDirect3DSwapChain8Impl,iface);
+    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -66,13 +66,13 @@ ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
 
 /* IDirect3DSwapChain parts follow: */
 HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion) {
-    ICOM_THIS(IDirect3DSwapChain8Impl,iface);
+    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
-    ICOM_THIS(IDirect3DSwapChain8Impl,iface);
+    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     *ppBackBuffer = (LPDIRECT3DSURFACE8) This->backBuffer;
     TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
 

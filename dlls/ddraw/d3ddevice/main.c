@@ -966,7 +966,7 @@ Main_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface,
 HRESULT  WINAPI  
 Main_IDirect3DDeviceImpl_7_GetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, D3DVALUE* pPlaneEquation)
 {
-    ICOM_THIS(IDirect3DDeviceImpl,iface);
+    IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
 
     TRACE("(%p)->(%ld,%p)\n", This, dwIndex, pPlaneEquation);
 

@@ -54,7 +54,7 @@ HRESULT MediaSeekingImpl_Init(LPVOID pUserData, CHANGEPROC fnChangeStop, CHANGEP
 
 HRESULT WINAPI MediaSeekingImpl_GetCapabilities(IMediaSeeking * iface, DWORD * pCapabilities)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p)\n", pCapabilities);
 
@@ -65,7 +65,7 @@ HRESULT WINAPI MediaSeekingImpl_GetCapabilities(IMediaSeeking * iface, DWORD * p
 
 HRESULT WINAPI MediaSeekingImpl_CheckCapabilities(IMediaSeeking * iface, DWORD * pCapabilities)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
     HRESULT hr;
     DWORD dwCommonCaps;
 
@@ -121,7 +121,7 @@ HRESULT WINAPI MediaSeekingImpl_SetTimeFormat(IMediaSeeking * iface, const GUID 
 
 HRESULT WINAPI MediaSeekingImpl_GetDuration(IMediaSeeking * iface, LONGLONG * pDuration)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p)\n", pDuration);
 
@@ -132,7 +132,7 @@ HRESULT WINAPI MediaSeekingImpl_GetDuration(IMediaSeeking * iface, LONGLONG * pD
 
 HRESULT WINAPI MediaSeekingImpl_GetStopPosition(IMediaSeeking * iface, LONGLONG * pStop)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p)\n", pStop);
 
@@ -143,7 +143,7 @@ HRESULT WINAPI MediaSeekingImpl_GetStopPosition(IMediaSeeking * iface, LONGLONG 
 
 HRESULT WINAPI MediaSeekingImpl_GetCurrentPosition(IMediaSeeking * iface, LONGLONG * pCurrent)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p)\n", pCurrent);
 
@@ -182,7 +182,7 @@ __inline LONGLONG Adjust(LONGLONG value, LONGLONG * pModifier, DWORD dwFlags)
 
 HRESULT WINAPI MediaSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, DWORD dwCurrentFlags, LONGLONG * pStop, DWORD dwStopFlags)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
     BOOL bChangeStart = FALSE, bChangeStop = FALSE;
     LONGLONG llNewStart, llNewStop;
 
@@ -214,7 +214,7 @@ HRESULT WINAPI MediaSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * p
 
 HRESULT WINAPI MediaSeekingImpl_GetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, LONGLONG * pStop)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p, %p)\n", pCurrent, pStop);
 
@@ -226,7 +226,7 @@ HRESULT WINAPI MediaSeekingImpl_GetPositions(IMediaSeeking * iface, LONGLONG * p
 
 HRESULT WINAPI MediaSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * pEarliest, LONGLONG * pLatest)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p, %p)\n", pEarliest, pLatest);
 
@@ -238,7 +238,7 @@ HRESULT WINAPI MediaSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * p
 
 HRESULT WINAPI MediaSeekingImpl_SetRate(IMediaSeeking * iface, double dRate)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
     BOOL bChangeRate = (dRate != This->dRate);
 
     TRACE("(%e)\n", dRate);
@@ -253,7 +253,7 @@ HRESULT WINAPI MediaSeekingImpl_SetRate(IMediaSeeking * iface, double dRate)
 
 HRESULT WINAPI MediaSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate)
 {
-    ICOM_THIS(MediaSeekingImpl, iface);
+    MediaSeekingImpl *This = (MediaSeekingImpl *)iface;
 
     TRACE("(%p)\n", dRate);
 

@@ -2496,7 +2496,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -2514,7 +2514,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
 
 static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface)
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -2522,7 +2522,7 @@ static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface)
 
 static ULONG WINAPI IDsDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface)
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -2544,7 +2544,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_Get(
     ULONG cbPropertyData,
     PULONG pcbReturnedData )
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
     FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
     return DSERR_UNSUPPORTED;
 }
@@ -2557,7 +2557,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_Set(
     LPVOID pPropertyData,
     ULONG cbPropertyData )
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
     FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData);
     return DSERR_UNSUPPORTED;
 }
@@ -2568,7 +2568,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QuerySupport(
     ULONG PropertyId,
     PULONG pSupport )
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
     FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,pSupport);
     return DSERR_UNSUPPORTED;
 }
@@ -2592,7 +2592,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    IDsDriverNotifyImpl *This = (IDsDriverNotifyImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -2610,7 +2610,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
 
 static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    IDsDriverNotifyImpl *This = (IDsDriverNotifyImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -2618,7 +2618,7 @@ static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
 
 static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    IDsDriverNotifyImpl *This = (IDsDriverNotifyImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -2638,7 +2638,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
     DWORD howmuch,
     LPCDSBPOSITIONNOTIFY notify)
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    IDsDriverNotifyImpl *This = (IDsDriverNotifyImpl *)iface;
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
     if (!notify) {
@@ -2742,7 +2742,7 @@ static HRESULT DSDB_UnmapBuffer(IDsDriverBufferImpl *dsdb)
 
 static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     TRACE("(%p,%s,%p)\n",iface,debugstr_guid(riid),*ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -2785,7 +2785,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
 
 static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
 {
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -2793,7 +2793,7 @@ static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
 
 static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
 {
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -2834,7 +2834,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
 					       DWORD dwWritePosition,DWORD dwWriteLen,
 					       DWORD dwFlags)
 {
-    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    /* IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface; */
     /* since we (GetDriverDesc flags) have specified DSDDESC_DONTNEEDPRIMARYLOCK,
      * and that we don't support secondary buffers, this method will never be called */
     TRACE("(%p): stub\n",iface);
@@ -2845,7 +2845,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
 						 LPVOID pvAudio1,DWORD dwLen1,
 						 LPVOID pvAudio2,DWORD dwLen2)
 {
-    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    /* IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface; */
     TRACE("(%p): stub\n",iface);
     return DSERR_UNSUPPORTED;
 }
@@ -2853,7 +2853,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
 static HRESULT WINAPI IDsDriverBufferImpl_SetFormat(PIDSDRIVERBUFFER iface,
 						    LPWAVEFORMATEX pwfx)
 {
-    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    /* IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface; */
 
     TRACE("(%p,%p)\n",iface,pwfx);
     /* On our request (GetDriverDesc flags), DirectSound has by now used
@@ -2867,7 +2867,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFormat(PIDSDRIVERBUFFER iface,
 
 static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, DWORD dwFreq)
 {
-    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    /* IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface; */
     TRACE("(%p,%ld): stub\n",iface,dwFreq);
     return DSERR_UNSUPPORTED;
 }
@@ -2875,7 +2875,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, D
 static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, PDSVOLUMEPAN pVolPan)
 {
     DWORD vol;
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     TRACE("(%p,%p)\n",This,pVolPan);
 
     vol = pVolPan->dwTotalLeftAmpFactor | (pVolPan->dwTotalRightAmpFactor << 16);
@@ -2890,7 +2890,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, P
 
 static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
 {
-    /* ICOM_THIS(IDsDriverImpl,iface); */
+    /* IDsDriverImpl *This = (IDsDriverImpl *)iface; */
     TRACE("(%p,%ld): stub\n",iface,dwNewPos);
     return DSERR_UNSUPPORTED;
 }
@@ -2898,7 +2898,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DW
 static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 						      LPDWORD lpdwPlay, LPDWORD lpdwWrite)
 {
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     count_info info;
     DWORD ptr;
 
@@ -2929,7 +2929,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
 static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
 {
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     int enable;
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
     WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
@@ -2959,7 +2959,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
 static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 {
-    ICOM_THIS(IDsDriverBufferImpl,iface);
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     int enable;
     TRACE("(%p)\n",iface);
     /* no more playing */
@@ -3005,7 +3005,7 @@ static IDsDriverBufferVtbl dsdbvt =
 
 static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -3024,7 +3024,7 @@ static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid
 
 static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -3032,7 +3032,7 @@ static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
 
 static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -3047,7 +3047,7 @@ static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
 static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface,
                                                   PDSDRIVERDESC pDesc)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p,%p)\n",iface,pDesc);
 
     /* copy version from driver */
@@ -3072,7 +3072,7 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface,
 
 static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     int enable;
     TRACE("(%p)\n",iface);
 
@@ -3088,7 +3088,7 @@ static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
 
 static HRESULT WINAPI IDsDriverImpl_Close(PIDSDRIVER iface)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p)\n",iface);
     if (This->primary) {
 	ERR("problem with DirectSound: primary not released\n");
@@ -3099,7 +3099,7 @@ static HRESULT WINAPI IDsDriverImpl_Close(PIDSDRIVER iface)
 
 static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCaps)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p,%p)\n",iface,pCaps);
     memcpy(pCaps, &(WOutDev[This->wDevID].ossdev->ds_caps), sizeof(DSDRIVERCAPS));
     return DS_OK;
@@ -3113,7 +3113,7 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
                                               LPBYTE *ppbBuffer,
                                               LPVOID *ppvObj)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;
@@ -3179,7 +3179,7 @@ static HRESULT WINAPI DSD_CreateSecondaryBuffer(PIDSDRIVER iface,
                                                 LPBYTE *ppbBuffer,
                                                 LPVOID *ppvObj)
 {
-    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverImpl *This = (IDsDriverImpl *)iface;
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
     FIXME("(%p,%p,%lx,%lx,%p,%p,%p): stub\n",This,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
 
@@ -3207,7 +3207,7 @@ static HRESULT WINAPI IDsDriverImpl_DuplicateSoundBuffer(PIDSDRIVER iface,
 							 PIDSDRIVERBUFFER pBuffer,
 							 LPVOID *ppvObj)
 {
-    /* ICOM_THIS(IDsDriverImpl,iface); */
+    /* IDsDriverImpl *This = (IDsDriverImpl *)iface; */
     TRACE("(%p,%p): stub\n",iface,pBuffer);
     return DSERR_INVALIDCALL;
 }
@@ -4131,7 +4131,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
+    IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -4150,7 +4150,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QueryInterface(
 static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(
     PIDSDRIVERPROPERTYSET iface)
 {
-    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
+    IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -4159,7 +4159,7 @@ static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(
 static ULONG WINAPI IDsCaptureDriverPropertySetImpl_Release(
     PIDSDRIVERPROPERTYSET iface)
 {
-    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
+    IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -4182,7 +4182,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Get(
     ULONG cbPropertyData,
     PULONG pcbReturnedData )
 {
-    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
+    IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,
           cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
     return DSERR_UNSUPPORTED;
@@ -4196,7 +4196,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Set(
     LPVOID pPropertyData,
     ULONG cbPropertyData )
 {
-    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
+    IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,
           cbPropertyParams,pPropertyData,cbPropertyData);
     return DSERR_UNSUPPORTED;
@@ -4208,7 +4208,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QuerySupport(
     ULONG PropertyId,
     PULONG pSupport )
 {
-    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
+    IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,
           pSupport);
     return DSERR_UNSUPPORTED;
@@ -4233,7 +4233,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -4252,7 +4252,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(
 static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(
     PIDSDRIVERNOTIFY iface)
 {
-    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -4261,7 +4261,7 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(
 static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(
     PIDSDRIVERNOTIFY iface)
 {
-    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -4280,7 +4280,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     DWORD howmuch,
     LPCDSBPOSITIONNOTIFY notify)
 {
-    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
     if (!notify) {
@@ -4358,7 +4358,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     *ppobj = 0;
@@ -4398,7 +4398,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
 
 static ULONG WINAPI IDsCaptureDriverBufferImpl_AddRef(PIDSCDRIVERBUFFER iface)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -4406,7 +4406,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_AddRef(PIDSCDRIVERBUFFER iface)
 
 static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -4431,7 +4431,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(
     DWORD dwWriteLen,
     DWORD dwFlags)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     FIXME("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx): stub!\n",This,ppvAudio1,pdwLen1,
           ppvAudio2,pdwLen2,dwWritePosition,dwWriteLen,dwFlags);
     return DS_OK;
@@ -4444,7 +4444,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(
     LPVOID pvAudio2,
     DWORD dwLen2)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     FIXME("(%p,%p,%ld,%p,%ld): stub!\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
     return DS_OK;
 }
@@ -4454,7 +4454,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(
     LPDWORD lpdwCapture,
     LPDWORD lpdwRead)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     count_info info;
     DWORD ptr;
     TRACE("(%p,%p,%p)\n",This,lpdwCapture,lpdwRead);
@@ -4495,7 +4495,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetStatus(
     PIDSCDRIVERBUFFER iface,
     LPDWORD lpdwStatus)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     TRACE("(%p,%p)\n",This,lpdwStatus);
 
     if (This->is_capturing) {
@@ -4513,7 +4513,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(
     PIDSCDRIVERBUFFER iface,
     DWORD dwFlags)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     int enable;
     TRACE("(%p,%lx)\n",This,dwFlags);
 
@@ -4554,7 +4554,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     int enable;
     TRACE("(%p)\n",This);
 
@@ -4590,7 +4590,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(
     PIDSCDRIVERBUFFER iface,
     LPWAVEFORMATEX pwfx)
 {
-    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     FIXME("(%p): stub!\n",This);
     return DSERR_UNSUPPORTED;
 }
@@ -4614,7 +4614,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
@@ -4633,7 +4633,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(
 
 static ULONG WINAPI IDsCaptureDriverImpl_AddRef(PIDSCDRIVER iface)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     return InterlockedIncrement(&(This->ref));
@@ -4641,7 +4641,7 @@ static ULONG WINAPI IDsCaptureDriverImpl_AddRef(PIDSCDRIVER iface)
 
 static ULONG WINAPI IDsCaptureDriverImpl_Release(PIDSCDRIVER iface)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -4657,7 +4657,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(
     PIDSCDRIVER iface,
     PDSDRIVERDESC pDesc)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p,%p)\n",This,pDesc);
 
     if (!pDesc) {
@@ -4685,14 +4685,14 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(
 
 static HRESULT WINAPI IDsCaptureDriverImpl_Open(PIDSCDRIVER iface)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p)\n",This);
     return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_Close(PIDSCDRIVER iface)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p)\n",This);
     if (This->capture_buffer) {
         ERR("problem with DirectSound: capture buffer not released\n");
@@ -4705,7 +4705,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(
     PIDSCDRIVER iface,
     PDSCDRIVERCAPS pCaps)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p,%p)\n",This,pCaps);
     memcpy(pCaps, &(WInDev[This->wDevID].ossdev->dsc_caps), sizeof(DSCDRIVERCAPS));
     return DS_OK;
@@ -4720,7 +4720,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     LPBYTE *ppbBuffer,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     IDsCaptureDriverBufferImpl** ippdscdb = (IDsCaptureDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;

@@ -321,7 +321,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
 static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
 
@@ -351,7 +351,7 @@ static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID rii
 
 static ULONG WINAPI AsyncReader_AddRef(IBaseFilter * iface)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
     
     TRACE("()\n");
     
@@ -360,7 +360,7 @@ static ULONG WINAPI AsyncReader_AddRef(IBaseFilter * iface)
 
 static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
     
     TRACE("()\n");
     
@@ -392,7 +392,7 @@ static HRESULT WINAPI AsyncReader_GetClassID(IBaseFilter * iface, CLSID * pClsid
 
 static HRESULT WINAPI AsyncReader_Stop(IBaseFilter * iface)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("()\n");
 
@@ -403,7 +403,7 @@ static HRESULT WINAPI AsyncReader_Stop(IBaseFilter * iface)
 
 static HRESULT WINAPI AsyncReader_Pause(IBaseFilter * iface)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("()\n");
 
@@ -414,7 +414,7 @@ static HRESULT WINAPI AsyncReader_Pause(IBaseFilter * iface)
 
 static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("(%lx%08lx)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
 
@@ -425,7 +425,7 @@ static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 
 static HRESULT WINAPI AsyncReader_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("(%lu, %p)\n", dwMilliSecsTimeout, pState);
 
@@ -436,7 +436,7 @@ static HRESULT WINAPI AsyncReader_GetState(IBaseFilter * iface, DWORD dwMilliSec
 
 static HRESULT WINAPI AsyncReader_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
-/*    ICOM_THIS(AsyncReader, iface);*/
+/*    AsyncReader *This = (AsyncReader *)iface;*/
 
     TRACE("(%p)\n", pClock);
 
@@ -445,7 +445,7 @@ static HRESULT WINAPI AsyncReader_SetSyncSource(IBaseFilter * iface, IReferenceC
 
 static HRESULT WINAPI AsyncReader_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-/*    ICOM_THIS(AsyncReader, iface);*/
+/*    AsyncReader *This = (AsyncReader *)iface;*/
 
     TRACE("(%p)\n", ppClock);
 
@@ -457,7 +457,7 @@ static HRESULT WINAPI AsyncReader_GetSyncSource(IBaseFilter * iface, IReferenceC
 static HRESULT WINAPI AsyncReader_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
     ENUMPINDETAILS epd;
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("(%p)\n", ppEnum);
 
@@ -475,7 +475,7 @@ static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin 
 
 static HRESULT WINAPI AsyncReader_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("(%p)\n", pInfo);
 
@@ -490,7 +490,7 @@ static HRESULT WINAPI AsyncReader_QueryFilterInfo(IBaseFilter * iface, FILTER_IN
 
 static HRESULT WINAPI AsyncReader_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
 
     TRACE("(%p, %s)\n", pGraph, debugstr_w(pName));
 
@@ -689,7 +689,7 @@ typedef struct FileAsyncReader
 
 static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
 {
-    ICOM_THIS(AsyncReader, iface);
+    AsyncReader *This = (AsyncReader *)iface;
     
     FIXME("(%p, %p)\n", iface, pmt);
 
@@ -705,7 +705,7 @@ static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
 
 static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS(FileAsyncReader, iface);
+    FileAsyncReader *This = (FileAsyncReader *)iface;
     TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -730,7 +730,7 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID rii
 
 static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
 {
-    ICOM_THIS(FileAsyncReader, iface);
+    FileAsyncReader *This = (FileAsyncReader *)iface;
     
     TRACE("()\n");
     
@@ -754,7 +754,7 @@ static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
 static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
     ENUMMEDIADETAILS emd;
-    ICOM_THIS(FileAsyncReader, iface);
+    FileAsyncReader *This = (FileAsyncReader *)iface;
 
     TRACE("(%p)\n", ppEnum);
 
@@ -792,7 +792,7 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
  * doesn't need the IMemInputPin interface on the receiving pin */
 static HRESULT FileAsyncReaderPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    ICOM_THIS(OutputPin, iface);
+    OutputPin *This = (OutputPin *)iface;
     HRESULT hr;
 
     TRACE("(%p, %p)\n", pReceivePin, pmt);

@@ -748,7 +748,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	GLenum scal_target;
 	GLenum opr=0, invopr, src3_target, opr3_target;
         BOOL Handled = FALSE;
-        ICOM_THIS(IDirect3DDevice8Impl,iface);
+        IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
         TRACE("Alpha?(%d), Stage:%d Op(%d), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, op, arg1, arg2, arg3);
 

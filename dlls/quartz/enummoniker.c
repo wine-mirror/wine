@@ -81,7 +81,7 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(EnumMonikerImpl, iface);
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
     if (This == NULL || ppvObj == NULL) return E_POINTER;
@@ -103,7 +103,7 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(
  */
 static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface)
 {
-    ICOM_THIS(EnumMonikerImpl, iface);
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
     TRACE("\n");
 
@@ -117,7 +117,7 @@ static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface)
  */
 static ULONG WINAPI EnumMonikerImpl_Release(LPENUMMONIKER iface)
 {
-    ICOM_THIS(EnumMonikerImpl, iface);
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
     TRACE("\n");
 
@@ -134,7 +134,7 @@ static ULONG WINAPI EnumMonikerImpl_Release(LPENUMMONIKER iface)
 static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMoniker ** rgelt, ULONG * pceltFetched)
 {
     ULONG fetched;
-    ICOM_THIS(EnumMonikerImpl, iface);
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
     TRACE("(%ld, %p, %p)\n", celt, rgelt, pceltFetched);
 
@@ -157,7 +157,7 @@ static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMon
 
 static HRESULT WINAPI EnumMonikerImpl_Skip(LPENUMMONIKER iface, ULONG celt)
 {
-    ICOM_THIS(EnumMonikerImpl, iface);
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
     TRACE("(%ld)\n", celt);
 
@@ -168,7 +168,7 @@ static HRESULT WINAPI EnumMonikerImpl_Skip(LPENUMMONIKER iface, ULONG celt)
 
 static HRESULT WINAPI EnumMonikerImpl_Reset(LPENUMMONIKER iface)
 {
-    ICOM_THIS(EnumMonikerImpl, iface);
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
     TRACE("()\n");
 
