@@ -37,8 +37,10 @@ static char     resfile[MAX_PATH];
 static int      myARGC;
 static char**   myARGV;
 
-/* as some environment variables get very long on Unix, we only test for
- * the first 127 bytes
+/* As some environment variables get very long on Unix, we only test for
+ * the first 127 bytes.
+ * Note that increasing this value past 256 may exceed the buffer size
+ * limitations of the *Profile functions (at least on Wine).
  */
 #define MAX_LISTED_ENV_VAR      128
 
@@ -175,7 +177,7 @@ static void     get_file_name(char* buf)
 static void     childPrintf(HANDLE h, const char* fmt, ...)
 {
     va_list     valist;
-    char        buffer[2048];
+    char        buffer[1024+4*MAX_LISTED_ENV_VAR];
     DWORD       w;
 
     va_start(valist, fmt);
@@ -345,7 +347,7 @@ static void     doChild(const char* file, const char* option)
 
             ok(ReadFile(hStdIn, buf, sizeof(buf), &r, NULL) && r > 0, "Reading message from input pipe");
             childPrintf(hFile, "[StdHandle]\nmsg=%s\n\n", encodeA(buf));
-            ok(WriteFile(hStdOut, buf, r, &w, NULL) && w == r, "Writting message to output pipe");
+            ok(WriteFile(hStdOut, buf, r, &w, NULL) && w == r, "Writing message to output pipe");
         }
     }
 
@@ -361,7 +363,7 @@ static void     doChild(const char* file, const char* option)
 
 static char* getChildString(const char* sect, const char* key)
 {
-    char        buf[1024];
+    char        buf[1024+4*MAX_LISTED_ENV_VAR];
     char*       ret;
 
     GetPrivateProfileStringA(sect, key, "-", buf, sizeof(buf), resfile);
@@ -1127,7 +1129,7 @@ static void test_Console(void)
     ok(CloseHandle(hChildOutInh), "Closing handle");
 
     msg_len = strlen(msg) + 1;
-    ok(WriteFile(hParentOut, msg, msg_len, &w, NULL), "Writting to child");
+    ok(WriteFile(hParentOut, msg, msg_len, &w, NULL), "Writing to child");
     ok(w == msg_len, "Should have written %u bytes, actually wrote %lu", msg_len, w);
     memset(buffer, 0, sizeof(buffer));
     ok(ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL), "Reading from child");
