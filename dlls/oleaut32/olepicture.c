@@ -1264,6 +1264,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   case 0x0000: { /* ICON , first word is dwReserved */
     HICON hicon;
     CURSORICONFILEDIR	*cifd = (CURSORICONFILEDIR*)xbuf;
+    HDC hdcRef;
     int	i;
 
     /*
@@ -1309,8 +1310,12 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     } else {
 	This->desc.picType = PICTYPE_ICON;
 	This->desc.u.icon.hicon = hicon;
-	This->himetricWidth = cifd->idEntries[i].bWidth;
-	This->himetricHeight = cifd->idEntries[i].bHeight;
+	This->origWidth = cifd->idEntries[i].bWidth;
+	This->origHeight = cifd->idEntries[i].bHeight;
+	hdcRef = CreateCompatibleDC(0);
+	This->himetricWidth =(cifd->idEntries[i].bWidth *2540)/GetDeviceCaps(hdcRef, LOGPIXELSX);
+	This->himetricHeight=(cifd->idEntries[i].bHeight*2540)/GetDeviceCaps(hdcRef, LOGPIXELSY);
+	DeleteDC(hdcRef);
 	hr = S_OK;
     }
     break;
