@@ -123,7 +123,31 @@ struct statvfs
 
 #ifndef S_ISLNK
 # define S_ISLNK(mod) (0)
-#endif /* S_ISLNK */
+#endif
+
+#ifndef S_ISSOCK
+# define S_ISSOCK(mod) (0)
+#endif
+
+#ifndef S_ISDIR
+# define S_ISDIR(mod) (((mod) & _S_IFMT) == _S_IFDIR)
+#endif
+
+#ifndef S_ISCHR
+# define S_ISCHR(mod) (((mod) & _S_IFMT) == _S_IFCHR)
+#endif
+
+#ifndef S_ISFIFO
+# define S_ISFIFO(mod) (((mod) & _S_IFMT) == _S_IFIFO)
+#endif
+
+#ifndef S_ISREG
+# define S_ISREG(mod) (((mod) & _S_IFMT) == _S_IFREG)
+#endif
+
+#ifndef S_IWUSR
+# define S_IWUSR 0
+#endif
 
 /* So we open files in 64 bit access mode on Linux */
 #ifndef O_LARGEFILE
@@ -132,6 +156,10 @@ struct statvfs
 
 #ifndef O_NONBLOCK
 # define O_NONBLOCK 0
+#endif
+
+#ifndef O_BINARY
+# define O_BINARY 0
 #endif
 
 #if !defined(S_IXUSR) && defined(S_IEXEC)
