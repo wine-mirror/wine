@@ -7,7 +7,7 @@
 
 #include "psdrv.h"
 #include "brush.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "gdi.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
@@ -20,7 +20,7 @@ HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     HBRUSH prevbrush = dc->w.hBrush;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
-    TRACE(psdrv, "hbrush = %08x\n", hbrush);
+    TRACE("hbrush = %08x\n", hbrush);
     dc->w.hBrush = hbrush;
 
     switch(brush->logbrush.lbStyle) {
@@ -39,11 +39,11 @@ HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
         break;
 
     case BS_PATTERN:
-        FIXME(psdrv, "Unsupported brush style %d\n", brush->logbrush.lbStyle);
+        FIXME("Unsupported brush style %d\n", brush->logbrush.lbStyle);
 	break;
 
     default:
-        FIXME(psdrv, "Unrecognized brush style %d\n", brush->logbrush.lbStyle);
+        FIXME("Unrecognized brush style %d\n", brush->logbrush.lbStyle);
 	break;
     }
 
@@ -63,7 +63,7 @@ static BOOL PSDRV_SetBrush(DC *dc)
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
 
     if(!brush) {
-        ERR(psdrv, "Can't get BRUSHOBJ\n");
+        ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
     }
     
@@ -123,7 +123,7 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
 
     if(!brush) {
-        ERR(psdrv, "Can't get BRUSHOBJ\n");
+        ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
     }
 
@@ -182,7 +182,7 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	    break;
 
 	default:
-	    ERR(psdrv, "Unknown hatch style\n");
+	    ERR("Unknown hatch style\n");
 	    return FALSE;
 	}
 	return TRUE;

@@ -14,7 +14,7 @@
 #include "wine/winbase16.h"
 #include "process.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "neexe.h"
 #include "winversion.h"
 
@@ -97,10 +97,10 @@ void VERSION_ParseWinVersion( const char *arg )
             return;
         }
     }
-    MSG("Invalid winver value '%s' specified.\n", arg );
-    MSG("Valid versions are:" );
+    MESSAGE("Invalid winver value '%s' specified.\n", arg );
+    MESSAGE("Valid versions are:" );
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
-        MSG(" '%s'%c", WinVersionNames[i],
+        MESSAGE(" '%s'%c", WinVersionNames[i],
 	    (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
 }
 
@@ -143,7 +143,7 @@ WINDOWS_VERSION VERSION_GetImageVersion(PDB *pdb)
 		peheader = PE_HEADER(pdb->exe_modref->module);
 #define OPTHD peheader->OptionalHeader
 
-		TRACE(ver, "%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
+		TRACE("%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
 			  OPTHD.MajorLinkerVersion,
 			  OPTHD.MinorLinkerVersion,
 			  OPTHD.MajorOperatingSystemVersion,
@@ -191,7 +191,7 @@ WINDOWS_VERSION VERSION_GetImageVersion(PDB *pdb)
 				}
 			default:
 				if (OPTHD.MajorSubsystemVersion)
-				ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
+				ERR("unknown subsystem version: %04x.%04x, please report.\n",
 					OPTHD.MajorSubsystemVersion,
 					OPTHD.MinorSubsystemVersion );
 				return defaultWinVersion;
@@ -285,7 +285,7 @@ char *VERSION_GetVersionName()
     case NT40:
       return "Windows NT 4.0";
     default:
-      FIXME(ver,"Windows version %d not named",ver);
+      FIXME("Windows version %d not named",ver);
       return "Windows <Unknown>";
     }
 }
@@ -318,7 +318,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
     {
-        WARN(ver,"wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app");
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -338,7 +338,7 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA))
     {
-        WARN(ver,"wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app");
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -359,7 +359,7 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 
     if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFOW))
     {
-        WARN(ver,"wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app");
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -398,7 +398,7 @@ DWORD WINAPI GetWinFlags16(void)
       break;
 
   default:
-      ERR(ver, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
+      ERR("Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
       break;
   }
   if (si.wProcessorLevel >= 4) result |= WF_HASCPUID;
@@ -415,7 +415,7 @@ DWORD WINAPI GetWinFlags16(void)
  */
 BOOL16 WINAPI GetWinDebugInfo16(WINDEBUGINFO *lpwdi, UINT16 flags)
 {
-    FIXME(ver, "(%8lx,%d): stub returning 0\n",
+    FIXME("(%8lx,%d): stub returning 0\n",
 	  (unsigned long)lpwdi, flags);
     /* 0 means not in debugging mode/version */
     /* Can this type of debugging be used in wine ? */
@@ -429,7 +429,7 @@ BOOL16 WINAPI GetWinDebugInfo16(WINDEBUGINFO *lpwdi, UINT16 flags)
  */
 BOOL16 WINAPI SetWinDebugInfo16(WINDEBUGINFO *lpwdi)
 {
-    FIXME(ver, "(%8lx): stub returning 0\n", (unsigned long)lpwdi);
+    FIXME("(%8lx): stub returning 0\n", (unsigned long)lpwdi);
     /* 0 means not in debugging mode/version */
     /* Can this type of debugging be used in wine ? */
     /* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
@@ -477,7 +477,7 @@ UINT WINAPI OaBuildVersion()
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
 
-    FIXME(ver, "Please report to a.mohr@mailto.de if you get version error messages !\n");
+    FIXME("Please report to a.mohr@mailto.de if you get version error messages !\n");
     switch(VersionData[ver].getVersion32)
     {
         case 0x80000a03: /* Win 3.1 */
@@ -485,7 +485,7 @@ UINT WINAPI OaBuildVersion()
         case 0xc0000004: /* Win 95 */
 		return 0x1e10a9; /* some older version: 0x0a0bd3 */
         case 0x04213303: /* NT 3.51 */
-		FIXME(ver, "NT 3.51 version value unknown !\n");
+		FIXME("NT 3.51 version value unknown !\n");
 		return 0x1e10a9; /* value borrowed from Win95 */
         case 0x05650004: /* NT 4.0 */
 		return 0x141016;

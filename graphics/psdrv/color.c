@@ -6,7 +6,7 @@
  */
 
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -32,7 +32,7 @@ BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2)
 	    return TRUE;
 	break;
     default:
-        ERR(psdrv, "Unknown colour type %d\n", col1->type);
+        ERR("Unknown colour type %d\n", col1->type);
     }
     return FALSE;
 }
@@ -58,7 +58,7 @@ BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
 	break;
 
     default:
-        ERR(psdrv, "Unknown colour type %d\n", col1->type);
+        ERR("Unknown colour type %d\n", col1->type);
 	return FALSE;
     }
 
@@ -81,7 +81,7 @@ void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
     float r, g, b;
 
     if(ctype != 0)
-        FIXME(psdrv, "Colour is %08lx\n", wincolor);
+        FIXME("Colour is %08lx\n", wincolor);
 
     r = (wincolor & 0xff) / 256.0;
     g = ((wincolor >> 8) & 0xff) / 256.0;

@@ -11,7 +11,7 @@
 #include "pen.h"
 #include "color.h"
 #include "x11drv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 static const char PEN_dash[]       = { 5,3 };      /* -----   -----   -----  */
 static const char PEN_dot[]        = { 1,1 };      /* --  --  --  --  --  -- */

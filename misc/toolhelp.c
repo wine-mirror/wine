@@ -17,7 +17,7 @@
 #include "toolhelp.h"
 #include "heap.h"
 #include "server.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(toolhelp)
 
@@ -42,7 +42,7 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
 {
     int	i;
 
-    TRACE(toolhelp, "(%x,%lx,%x) called.\n",
+    TRACE("(%x,%lx,%x) called.\n",
                       htask, (DWORD)lpfnCallback, wFlags );
     if (!htask) htask = GetCurrentTask();
     for (i=0;i<nrofnotifys;i++)
@@ -68,7 +68,7 @@ BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
     int	i;
     
-    TRACE(toolhelp, "(%x) called.\n", htask );
+    TRACE("(%x) called.\n", htask );
     if (!htask) htask = GetCurrentTask();
     for (i=nrofnotifys;i--;)
         if (notifys[i].htask==htask)
@@ -118,9 +118,9 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
 {
     struct create_snapshot_request *req = get_req_buffer();
 
-    TRACE( toolhelp, "%lx,%lx\n", flags, process );
+    TRACE("%lx,%lx\n", flags, process );
     if (flags & (TH32CS_SNAPHEAPLIST|TH32CS_SNAPMODULE|TH32CS_SNAPTHREAD))
-        FIXME( toolhelp, "flags %lx not implemented\n", flags );
+        FIXME("flags %lx not implemented\n", flags );
     if (!(flags & TH32CS_SNAPPROCESS))
     {
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
@@ -147,7 +147,7 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL fir
     if (lppe->dwSize < sizeof (PROCESSENTRY))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        ERR (toolhelp, "Result buffer too small\n");
+        ERR("Result buffer too small\n");
         return FALSE;
     }
     req->handle = handle;
@@ -193,7 +193,7 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY lppe)
  */
 BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY lpme)
 {
-    FIXME(toolhelp,"(%d,%p),stub!\n",hSnapshot,lpme);
+    FIXME("(%d,%p),stub!\n",hSnapshot,lpme);
     return FALSE;
 }
 
@@ -204,7 +204,7 @@ BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY lpme)
  */
 BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY lpme)
 {
-    FIXME(toolhelp,"(%d,%p),stub!\n",hSnapshot,lpme);
+    FIXME("(%d,%p),stub!\n",hSnapshot,lpme);
     return FALSE;
 }
 
@@ -220,6 +220,6 @@ BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY lpme)
  */
 DWORD WINAPI GlobalMasterHandle16(void)
 {
-    FIXME(toolhelp,": stub\n");
+    FIXME(": stub\n");
     return 0;
 }

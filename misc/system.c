@@ -7,7 +7,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "services.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(system)
 
@@ -91,10 +91,10 @@ DWORD WINAPI InquireSystem16( WORD code, WORD arg )
         return MAKELONG( drivetype, drivetype );
 
     case 2:  /* Enable one-drive logic */
-        FIXME(system, "Case %d: set single-drive %d not supported\n", code, arg );
+        FIXME("Case %d: set single-drive %d not supported\n", code, arg );
         return 0;
     }
-    WARN(system, "Unknown code %d\n", code );
+    WARN("Unknown code %d\n", code );
     return 0;
 }
 

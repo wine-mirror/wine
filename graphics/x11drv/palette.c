@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "color.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "gdi.h"
 #include "monitor.h"
 #include "options.h"
@@ -104,7 +104,7 @@ BOOL X11DRV_PALETTE_Init(void)
 
     Visual *visual = DefaultVisual( display, DefaultScreen(display) );
 
-    TRACE(palette, "initializing palette manager...\n");
+    TRACE("initializing palette manager...\n");
 
     white = WhitePixelOfScreen( X11DRV_GetXScreen() );
     black = BlackPixelOfScreen( X11DRV_GetXScreen() );
@@ -179,7 +179,7 @@ BOOL X11DRV_PALETTE_Init(void)
     }
     }
 
-    TRACE(palette," visual class %i (%i)\n",  visual->class, monoPlane);
+    TRACE(" visual class %i (%i)\n",  visual->class, monoPlane);
 
     memset(X11DRV_PALETTE_freeList, 0, 256*sizeof(unsigned char));
 
@@ -256,7 +256,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap(void)
 
     COLOR_sysPal = (PALETTEENTRY*)xmalloc(sizeof(PALETTEENTRY)*X11DRV_DevCaps.sizePalette);
 
-    TRACE(palette,"Building private map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
+    TRACE("Building private map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
 
       /* Allocate system palette colors */ 
 
@@ -319,9 +319,9 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
    COLOR_max = PROFILE_GetWineIniInt( "options", "AllocSystemColors", 256);
    if (COLOR_max > 256) COLOR_max = 256;
    else if (COLOR_max < 20) COLOR_max = 20;
-   TRACE(palette,"%d colors configured.\n", COLOR_max);
+   TRACE("%d colors configured.\n", COLOR_max);
    
-   TRACE(palette,"Building shared map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
+   TRACE("Building shared map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
 
    /* Be nice and allocate system colors as read-only */
 
@@ -338,7 +338,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	     
              if( !warn++ ) 
 	     {
-		  WARN(palette, "Not enough colors for the full system palette.\n");
+		  WARN("Not enough colors for the full system palette.\n");
 
 	          bp = BlackPixel(display, DefaultScreen(display));
 	          wp = WhitePixel(display, DefaultScreen(display));
@@ -376,7 +376,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
         sysPixel[i] = color.pixel;
 
-        TRACE(palette,"syscolor(%lx) -> pixel %i\n",
+        TRACE("syscolor(%lx) -> pixel %i\n",
 		      *(COLORREF*)(COLOR_sysPalTemplate+i), (int)color.pixel);
 
         /* Set EGA mapping if color in the first or last eight */
@@ -393,7 +393,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
      {
 	int c_min = 0, c_max = X11DRV_DevCaps.sizePalette, c_val;
 
-	TRACE(palette,"Dynamic colormap... \n");
+	TRACE("Dynamic colormap... \n");
 
 	/* comment this out if you want to debug palette init */
 
@@ -427,7 +427,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	  if( !TSXAllocColorCells(display, X11DRV_PALETTE_PaletteXColormap, False,
                                 plane_masks, 0, pixDynMapping, c_min) )
 	    {
-	      WARN(palette,"Inexplicable failure during colorcell allocation.\n");
+	      WARN("Inexplicable failure during colorcell allocation.\n");
 	      c_min = 0;
 	    }
 
@@ -435,7 +435,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
 	TSXUngrabServer(display);
 
-	TRACE(palette,"adjusted size %i colorcells\n", X11DRV_DevCaps.sizePalette);
+	TRACE("adjusted size %i colorcells\n", X11DRV_DevCaps.sizePalette);
      }
    else if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL ) 
 	{
@@ -444,12 +444,12 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	   * to maintain compatibility
 	   */
 	  X11DRV_DevCaps.sizePalette = 256;
-	  TRACE(palette,"Virtual colorspace - screendepth %i\n", MONITOR_GetDepth(&MONITOR_PrimaryMonitor));
+	  TRACE("Virtual colorspace - screendepth %i\n", MONITOR_GetDepth(&MONITOR_PrimaryMonitor));
 	}
    else X11DRV_DevCaps.sizePalette = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
 
-   TRACE(palette,"Shared system palette uses %i colors.\n", X11DRV_DevCaps.sizePalette);
+   TRACE("Shared system palette uses %i colors.\n", X11DRV_DevCaps.sizePalette);
 
    /* set gap to account for pixel shortage. It has to be right in the center
     * of the system palette because otherwise raster ops get screwed. */
@@ -503,7 +503,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
            else
              X11DRV_PALETTE_PaletteToXPixel[i] = i;
 
-      TRACE(palette,"index %i -> pixel %i\n", i, X11DRV_PALETTE_PaletteToXPixel[i]);
+      TRACE("index %i -> pixel %i\n", i, X11DRV_PALETTE_PaletteToXPixel[i]);
 
       if( X11DRV_PALETTE_XPixelToPalette )
           X11DRV_PALETTE_XPixelToPalette[X11DRV_PALETTE_PaletteToXPixel[i]] = i;
@@ -675,7 +675,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 
             if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
             {
-                WARN(palette, "RGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
+                WARN("RGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
 		GDI_HEAP_UNLOCK( hPal );
                 return 0;
             }
@@ -728,7 +728,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 
 	if( !palPtr ) return 0;
 	else if( !palPtr->mapping ) 
-            WARN(palette, "Palette %04x is not realized\n", dc->w.hPalette);
+            WARN("Palette %04x is not realized\n", dc->w.hPalette);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{
@@ -754,7 +754,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 		index = color & 0xffff;
 
 	        if( index >= palPtr->logpalette.palNumEntries )
-		    WARN(palette, "RGB(%lx) : index %i is out of bounds\n", color, index); 
+		    WARN("RGB(%lx) : index %i is out of bounds\n", color, index); 
 		else if( palPtr->mapping ) index = palPtr->mapping[index];
 
 		/*  TRACE(palette,"PALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
@@ -870,7 +870,7 @@ int X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNum, BOOL 
             index = *(WORD*)(palPtr->logpalette.palPalEntry + uStart);
             if( index > 255 || (index >= COLOR_gapStart && index <= COLOR_gapEnd) ) 
             {
-                WARN(palette,"PC_EXPLICIT: idx %d out of system palette, assuming black.\n", index); 
+                WARN("PC_EXPLICIT: idx %d out of system palette, assuming black.\n", index); 
                 index = 0;
             }
             break;
@@ -927,7 +927,7 @@ int X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNum, BOOL 
         if( !prevMapping || palPtr->mapping[uStart] != index ) iRemapped++;
         palPtr->mapping[uStart] = index;
 
-        TRACE(palette,"entry %i (%lx) -> pixel %i\n", uStart, 
+        TRACE("entry %i (%lx) -> pixel %i\n", uStart, 
 				*(COLORREF*)(palPtr->logpalette.palPalEntry + uStart), index);
 	
     }

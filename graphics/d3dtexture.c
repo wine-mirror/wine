@@ -12,7 +12,7 @@
 #include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "d3d_private.h"
 
@@ -133,7 +133,7 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
   int bpp;
   GLuint current_texture;
   
-  TRACE(ddraw, "(%p) : colorkey callback\n", texture);
+  TRACE("(%p) : colorkey callback\n", texture);
 
   /* Get the texture description */
   tex_d = &(texture->surface->s.surface_desc);
@@ -147,17 +147,17 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
 
   /* If the GetHandle was not done yet, it's an error */
   if (texture->tex_name == 0) {
-    ERR(ddraw, "Unloaded texture !\n");
+    ERR("Unloaded texture !\n");
     LEAVE_GL();
     return DD_OK;
   }
   glBindTexture(GL_TEXTURE_2D, texture->tex_name);
 
   if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
-    FIXME(ddraw, "Todo Paletted\n");
+    FIXME("Todo Paletted\n");
   } else if (tex_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
     if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 8) {
-      FIXME(ddraw, "Todo 3_3_2_0\n");
+      FIXME("Todo 3_3_2_0\n");
     } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 16) {
       if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000000) {
 	/* Now transform the 5_6_5 into a 5_5_5_1 surface to support color keying */
@@ -192,21 +192,21 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
 	/* Frees the temporary surface */
 	HeapFree(GetProcessHeap(),0,dest);
       } else if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000001) {
-	FIXME(ddraw, "Todo 5_5_5_1\n");
+	FIXME("Todo 5_5_5_1\n");
       } else if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x0000000F) {
-	FIXME(ddraw, "Todo 4_4_4_4\n");
+	FIXME("Todo 4_4_4_4\n");
       } else {
-	ERR(ddraw, "Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+	ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
       }
     } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 24) {
-      FIXME(ddraw, "Todo 8_8_8_0\n");
+      FIXME("Todo 8_8_8_0\n");
     } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 32) {
-      FIXME(ddraw, "Todo 8_8_8_8\n");
+      FIXME("Todo 8_8_8_8\n");
     } else {
-      ERR(ddraw, "Unhandled texture format (bad RGB count)\n");
+      ERR("Unhandled texture format (bad RGB count)\n");
     }
   } else {
-    ERR(ddraw, "Unhandled texture format (neither RGB nor INDEX)\n");
+    ERR("Unhandled texture format (neither RGB nor INDEX)\n");
   }
   LEAVE_GL();
 
@@ -225,7 +225,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 if
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
@@ -235,7 +235,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 if
 static ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
   
   return ++(This->ref);
 }
@@ -245,7 +245,7 @@ static ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
 static ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
+  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
     /* Delete texture from OpenGL */
@@ -270,7 +270,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
   IDirect3DDeviceImpl* ilpD3DDevice=(IDirect3DDeviceImpl*)lpD3DDevice;
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, ilpD3DDevice, lpHandle);
+  FIXME("(%p)->(%p,%p): stub\n", This, ilpD3DDevice, lpHandle);
 
   *lpHandle = (D3DTEXTUREHANDLE) This;
   
@@ -282,7 +282,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
     glGenTextures(1, &(This->tex_name));
   LEAVE_GL();
 
-  TRACE(ddraw, "OpenGL texture handle is : %d\n", This->tex_name);
+  TRACE("OpenGL texture handle is : %d\n", This->tex_name);
   
   return D3D_OK;
 }
@@ -292,7 +292,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
 						  LPDIRECTDRAWSURFACE lpSurface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
-  TRACE(ddraw, "(%p)->(%p,%p)\n", This, lpD3DDevice, lpSurface);
+  TRACE("(%p)->(%p,%p)\n", This, lpD3DDevice, lpSurface);
 
   return DDERR_ALREADYINITIALIZED;
 }
@@ -300,7 +300,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
 static HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
-  FIXME(ddraw, "(%p)->(): stub\n", This);
+  FIXME("(%p)->(): stub\n", This);
 
   return D3D_OK;
 }
@@ -312,7 +312,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
   IDirect3DDevice2Impl* ilpD3DDevice2=(IDirect3DDevice2Impl*)lpD3DDevice2;
-  TRACE(ddraw, "(%p)->(%p,%p)\n", This, ilpD3DDevice2, lpHandle);
+  TRACE("(%p)->(%p,%p)\n", This, ilpD3DDevice2, lpHandle);
 
   /* For 32 bits OSes, handles = pointers */
   *lpHandle = (D3DTEXTUREHANDLE) This;
@@ -325,7 +325,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
   glGenTextures(1, &(This->tex_name));
   LEAVE_GL();
 
-  TRACE(ddraw, "OpenGL texture handle is : %d\n", This->tex_name);
+  TRACE("OpenGL texture handle is : %d\n", This->tex_name);
   
   return D3D_OK;
 }
@@ -336,7 +336,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(LPDIRECT3DTEXTURE2 if
 						       DWORD dwCount)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
-  FIXME(ddraw, "(%p)->(%8ld,%8ld): stub\n", This, dwStart, dwCount);
+  FIXME("(%p)->(%8ld,%8ld): stub\n", This, dwStart, dwCount);
 
   return D3D_OK;
 }
@@ -349,9 +349,9 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
   ICOM_THIS(IDirect3DTexture2Impl,iface);
   IDirect3DTexture2Impl* ilpD3DTexture2=(IDirect3DTexture2Impl*)lpD3DTexture2;
   DDSURFACEDESC	*src_d, *dst_d;
-  TRACE(ddraw, "(%p)->(%p)\n", This, ilpD3DTexture2);
+  TRACE("(%p)->(%p)\n", This, ilpD3DTexture2);
 
-  TRACE(ddraw, "Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
+  TRACE("Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
 
   /* Suppress the ALLOCONLOAD flag */
   This->surface->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
@@ -366,7 +366,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
   
   if ((src_d->dwWidth != dst_d->dwWidth) || (src_d->dwHeight != dst_d->dwHeight)) {
     /* Should also check for same pixel format, lPitch, ... */
-    ERR(ddraw, "Error in surface sizes\n");
+    ERR("Error in surface sizes\n");
     return D3DERR_TEXTURE_LOAD_FAILED;
   } else {
     /* LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) This->D3Ddevice; */
@@ -400,7 +400,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
       int i;
       
       if (pal == NULL) {
-	ERR(ddraw, "Palettized texture Loading with a NULL palette !\n");
+	ERR("Palettized texture Loading with a NULL palette !\n");
 	LEAVE_GL();
 	return D3DERR_TEXTURE_LOAD_FAILED;
       }
@@ -489,7 +489,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		       GL_UNSIGNED_SHORT_4_4_4_4,
 		       src_d->y.lpSurface);
 	} else {
-	  ERR(ddraw, "Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+	  ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
 	}
       } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 24) {
 	glTexImage2D(GL_TEXTURE_2D,
@@ -510,10 +510,10 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		     GL_UNSIGNED_BYTE,
 		     src_d->y.lpSurface);
       } else {
-	ERR(ddraw, "Unhandled texture format (bad RGB count)\n");
+	ERR("Unhandled texture format (bad RGB count)\n");
       }
     } else {
-      ERR(ddraw, "Unhandled texture format (neither RGB nor INDEX)\n");
+      ERR("Unhandled texture format (neither RGB nor INDEX)\n");
     }
 
     glBindTexture(GL_TEXTURE_2D, current_texture);
@@ -563,12 +563,12 @@ static ICOM_VTABLE(IDirect3DTexture) texture_vtable =
 
 /* These function should never be called if MesaGL is not present */
 LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 
 LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 

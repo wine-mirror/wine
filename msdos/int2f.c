@@ -21,7 +21,7 @@
 #include "dosexe.h"
 #include "heap.h"
 /* #define DEBUG_INT */
-#include "debug.h"
+#include "debugtools.h"
 #include "cdrom.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
@@ -39,7 +39,7 @@ static void MSCDEX_Handler( CONTEXT86 *context );
  */
 void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 {
-    TRACE(int,"Subfunction 0x%X\n", AX_reg(context));
+    TRACE("Subfunction 0x%X\n", AX_reg(context));
 
     switch(AH_reg(context))
     {
@@ -87,7 +87,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
                 DI_reg(context) = 0x0000;
                 break;
             case 0x08:
-                FIXME(int, "No real-mode handler for errors yet! (bye!)");
+                FIXME("No real-mode handler for errors yet! (bye!)");
                 break;
             default:
                 INT_BARF(context, 0x2f);
@@ -115,7 +115,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	switch (AL_reg(context))
 	{
 	case 0x00:   /* XMS v2+ installation check */
-	    WARN(int,"XMS is not fully implemented\n");
+	    WARN("XMS is not fully implemented\n");
 	    AL_reg(context) = 0x80;
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
@@ -137,7 +137,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	    INT_BARF( context, 0x2f );
 	}
 #else
-    	FIXME(int,"check for XMS (not supported)\n");
+    	FIXME("check for XMS (not supported)\n");
 	AL_reg(context) = 0x42; /* != 0x80 */
 #endif
     	break;
@@ -184,7 +184,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	case 0x03:
 	case 0x04:
 	case 0x05:
-	    FIXME(int,"Task Switcher - not implemented\n");
+	    FIXME("Task Switcher - not implemented\n");
 	    break;
 	default:
 	    INT_BARF( context, 0x2f );
@@ -248,7 +248,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	case 0x01: /* Quarterdeck RPCI - QEMM/QRAM - PCL-838.EXE functions */
 	    if(BX_reg(context) == 0x5145 && CX_reg(context) == 0x4D4D 
 	      && DX_reg(context) == 0x3432)
-		TRACE(int, "Check for QEMM v5.0+ (not installed)\n");
+		TRACE("Check for QEMM v5.0+ (not installed)\n");
 		break;
 	default:
 	    INT_BARF( context, 0x2f );
@@ -272,7 +272,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	case 0x01:   /* Quarterdeck QDPMI.SYS - DESQview */
 	    if(BX_reg(context) == 0x4450 && CX_reg(context) == 0x4d49 
 	      && DX_reg(context) == 0x8f4f)
-		TRACE(int, "Check for QDPMI.SYS (not installed)\n");
+		TRACE("Check for QDPMI.SYS (not installed)\n");
 		break;
 	default:
 	    INT_BARF( context, 0x2f );
@@ -315,7 +315,7 @@ static void do_int2f_16( CONTEXT86 *context )
 
     case 0x11:  /* Get Shell Parameters - (SHELL= in CONFIG.SYS) */
         /* We can mock this up. But not today... */ 
-        FIXME(int, "Get Shell Parameters\n");       
+        FIXME("Get Shell Parameters\n");       
         break;
 
     case 0x80:  /* Release time-slice */
@@ -344,7 +344,7 @@ static void do_int2f_16( CONTEXT86 *context )
                                         VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {
-	    ERR(int, "Accessing unknown VxD %04x - Expect a failure now.\n",
+	    ERR("Accessing unknown VxD %04x - Expect a failure now.\n",
                      BX_reg(context) );
         }
 	ES_reg(context) = SELECTOROF(addr);
@@ -437,7 +437,7 @@ static	void	MSCDEX_Dump(char* pfx, BYTE* req, int dorealmode)
 	}
 	break;
     }
-    TRACE(int, "%s\n", buf);
+    TRACE("%s\n", buf);
 }
 #else
 #define MSCDEX_Dump(pfx, req, drm)
@@ -466,7 +466,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		break;
 	    }
 	}
-	TRACE(int, "Installation check: %d cdroms, starting at %d\n", count, drive);
+	TRACE("Installation check: %d cdroms, starting at %d\n", count, drive);
 	BX_reg(context) = count;
 	CX_reg(context) = (drive < MAX_DOS_DRIVES) ? drive : 0;
 	break;
@@ -478,7 +478,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	
     case 0x0C: /* get version */
 	BX_reg(context) = 0x020a;
-	TRACE(int, "Version number => %04x\n", BX_reg(context));
+	TRACE("Version number => %04x\n", BX_reg(context));
 	break;
 	
     case 0x0D: /* get drive letters */
@@ -487,7 +487,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	for (drive = 0; drive < MAX_DOS_DRIVES; drive++) {
 	    if (DRIVE_GetType(drive) == TYPE_CDROM) *p++ = drive;
 	}
-	TRACE(int, "Get drive letters\n");
+	TRACE("Get drive letters\n");
 	break;
 	
     case 0x10: /* direct driver acces */
@@ -504,8 +504,8 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    
 	    if (!driver_request) {
 		/* FIXME - to be deleted ?? */
-		ERR(int, "ES:BX==0 ! SEGFAULT ?\n");
-		ERR(int, "-->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n",
+		ERR("ES:BX==0 ! SEGFAULT ?\n");
+		ERR("-->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n",
 		    BX_reg(context), ES_reg(context), DS_reg(context), CX_reg(context));
 		driver_request[4] |= 0x80;
 		driver_request[3] = 5;	/* bad request length */
@@ -517,14 +517,14 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	     */
 	    if (wcda.unixdev <= 0) 
 		CDAUDIO_Open(&wcda);
-	    TRACE(int, "CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
+	    TRACE("CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
 	    for (drive = 0; 
 		 drive < MAX_DOS_DRIVES && DRIVE_GetType(drive) != TYPE_CDROM; 
 		 drive++);
 	    /* drive contains the first CD ROM */
 	    if (CX_reg(context) != drive) {
-		WARN(int, "Request made doesn't match a CD ROM drive (%d/%d)\n", CX_reg(context), drive);
+		WARN("Request made doesn't match a CD ROM drive (%d/%d)\n", CX_reg(context), drive);
 		driver_request[4] |= 0x80;
 		driver_request[3] = 1;	/* unknown unit */
 		return;
@@ -542,7 +542,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(driver_request, 14, WORD), PTR_AT(driver_request, 16, WORD))) :
 			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
 		
-		TRACE(int, " --> IOCTL INPUT <%d>\n", io_stru[0]); 
+		TRACE(" --> IOCTL INPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {
 #if 0
 		case 0: /* Get device Header */
@@ -580,10 +580,10 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			MSCDEX_StoreMSF(wcda.dwCurFrame, io_stru + 2);
 			break;
 		    default:
-			ERR(int, "CDRom-Driver: Unsupported addressing mode !!\n");
+			ERR("CDRom-Driver: Unsupported addressing mode !!\n");
 			Error = 0x0c;
 		    }	
-		    TRACE(int, " ----> HEAD LOCATION <%ld>\n", PTR_AT(io_stru, 2, DWORD)); 
+		    TRACE(" ----> HEAD LOCATION <%ld>\n", PTR_AT(io_stru, 2, DWORD)); 
 		    break;
 		    
 		case 4: /* Audio channel info */
@@ -595,7 +595,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    io_stru[6] = 0;
 		    io_stru[7] = 3;
 		    io_stru[8] = 0;
-		    TRACE(int, " ----> AUDIO CHANNEL INFO\n"); 
+		    TRACE(" ----> AUDIO CHANNEL INFO\n"); 
 		    break;
 		    
 		case 6: /* device status */
@@ -616,18 +616,18 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		     */
 		    if (wcda.cdaMode == WINE_CDA_OPEN)
 			io_stru[1] |= 1;
-		    TRACE(int, " ----> DEVICE STATUS <0x%08lx>\n", PTR_AT(io_stru, 1, DWORD));
+		    TRACE(" ----> DEVICE STATUS <0x%08lx>\n", PTR_AT(io_stru, 1, DWORD));
 		    break;
 		    
 		case 8: /* Volume size */
 		    PTR_AT(io_stru, 1, DWORD) = wcda.dwTotalLen;
-		    TRACE(int, " ----> VOLUME SIZE <%ld>\n", PTR_AT(io_stru, 1, DWORD));
+		    TRACE(" ----> VOLUME SIZE <%ld>\n", PTR_AT(io_stru, 1, DWORD));
 		    break;
 		    
 		case 9: /* media changed ? */
 		    /* answers don't know... -1/1 for yes/no would be better */
 		    io_stru[1] = 0; /* FIXME? 1? */
-		    TRACE(int, " ----> MEDIA CHANGED <%d>\n", io_stru[1]); 
+		    TRACE(" ----> MEDIA CHANGED <%d>\n", io_stru[1]); 
 		    break;
 		    
 		case 10: /* audio disk info */
@@ -635,7 +635,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    io_stru[2] = wcda.nLastTrack;  /* ending track */
 		    MSCDEX_StoreMSF(wcda.dwTotalLen, io_stru + 3);
 		    
-		    TRACE(int, " ----> AUDIO DISK INFO <%d-%d/%08lx>\n",
+		    TRACE(" ----> AUDIO DISK INFO <%d-%d/%08lx>\n",
 			  io_stru[1], io_stru[2], PTR_AT(io_stru, 3, DWORD));
 		    break;
 		    
@@ -649,7 +649,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			PTR_AT(io_stru, 2, DWORD) = 0;
 			io_stru[6] = 0;
 		    }
-		    TRACE(int, " ----> AUDIO TRACK INFO[%d] = [%08lx:%d]\n",
+		    TRACE(" ----> AUDIO TRACK INFO[%d] = [%08lx:%d]\n",
 			  io_stru[1], PTR_AT(io_stru, 2, DWORD), io_stru[6]); 
 		    break;
 		    
@@ -674,7 +674,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			io_stru[10] = bTmp[0];
 			io_stru[11] = 0;
 		    }		    
-		    TRACE(int, "Q-Channel info: Ctrl/adr=%02x TNO=%02x X=%02x rtt=%02x:%02x:%02x rtd=%02x:%02x:%02x (cf=%08lx, tp=%08lx)\n",
+		    TRACE("Q-Channel info: Ctrl/adr=%02x TNO=%02x X=%02x rtt=%02x:%02x:%02x rtd=%02x:%02x:%02x (cf=%08lx, tp=%08lx)\n",
 			  io_stru[ 1], io_stru[ 2], io_stru[ 3], 
 			  io_stru[ 4], io_stru[ 5], io_stru[ 6], 
 			  io_stru[ 8], io_stru[ 9], io_stru[10],
@@ -691,12 +691,12 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			PTR_AT(io_stru, 3, DWORD) = wcda.lpdwTrackPos[0];
 			PTR_AT(io_stru, 7, DWORD) = wcda.lpdwTrackPos[wcda.nTracks - 1];
 		    }
-		    TRACE(int, "Audio status info: status=%04x startLoc=%ld endLoc=%ld\n",
+		    TRACE("Audio status info: status=%04x startLoc=%ld endLoc=%ld\n",
 			  PTR_AT(io_stru, 1, WORD), PTR_AT(io_stru, 3, DWORD), PTR_AT(io_stru, 7, DWORD));
 		    break;
 		    
 		default:
-		    FIXME(int, "IOCTL INPUT: Unimplemented <%d>!!\n", io_stru[0]); 
+		    FIXME("IOCTL INPUT: Unimplemented <%d>!!\n", io_stru[0]); 
 		    Error = 0x0c; 
 		    break;	
 		}	
@@ -707,25 +707,25 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(driver_request, 14, WORD), PTR_AT(driver_request, 16, WORD))) :
 			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
 		
-		TRACE(int, " --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
+		TRACE(" --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {
 		case 0: /* eject */ 
 		    CDAUDIO_SetDoor(&wcda, 1);
-		    TRACE(int, " ----> EJECT\n"); 
+		    TRACE(" ----> EJECT\n"); 
 		    break;
 		case 2: /* reset drive */
 		    CDAUDIO_Reset(&wcda);
-		    TRACE(int, " ----> RESET\n"); 
+		    TRACE(" ----> RESET\n"); 
 		    break;
 		case 3: /* Audio Channel Control */
-		    FIXME(int, " ----> AUDIO CHANNEL CONTROL (NIY)\n");
+		    FIXME(" ----> AUDIO CHANNEL CONTROL (NIY)\n");
 		    break;
 		case 5: /* close tray */
 		    CDAUDIO_SetDoor(&wcda, 0);
-		    TRACE(int, " ----> CLOSE TRAY\n"); 
+		    TRACE(" ----> CLOSE TRAY\n"); 
 		    break;
 		default:
-		    FIXME(int, " IOCTL OUPUT: Unimplemented <%d>!!\n", io_stru[0]); 
+		    FIXME(" IOCTL OUPUT: Unimplemented <%d>!!\n", io_stru[0]); 
 		    Error = 0x0c;
 		    break;	
 		}	
@@ -737,7 +737,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    
 		    at = PTR_AT(driver_request, 20, DWORD);
 		    
-		    TRACE(int, " --> SEEK AUDIO mode :<0x%02X>, [%ld]\n", 
+		    TRACE(" --> SEEK AUDIO mode :<0x%02X>, [%ld]\n", 
 			  (BYTE)driver_request[13], at);
 		    
 		    switch (driver_request[13]) {
@@ -753,7 +753,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			CDAUDIO_Seek(&wcda, at);
 			break;
 		    default:
-			ERR(int, "Unsupported address mode !!\n");
+			ERR("Unsupported address mode !!\n");
 			Error = 0x0c;
 			break;
 		    }
@@ -767,7 +767,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    beg = end = PTR_AT(driver_request, 14, DWORD);
 		    end += PTR_AT(driver_request, 18, DWORD);
 		    
-		    TRACE(int, " --> PLAY AUDIO mode :<0x%02X>, [%ld-%ld]\n", 
+		    TRACE(" --> PLAY AUDIO mode :<0x%02X>, [%ld-%ld]\n", 
 			  (BYTE)driver_request[13], beg, end);
 		    
 		    switch (driver_request[13]) {
@@ -786,7 +786,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			CDAUDIO_Play(&wcda, beg, end);
 			break;
 		    default:
-			ERR(int, "Unsupported address mode !!\n");
+			ERR("Unsupported address mode !!\n");
 			Error = 0x0c;
 			break;
 		    }
@@ -796,20 +796,20 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    case 133:
 		if (wcda.cdaMode == WINE_CDA_PLAY) {
 		    CDAUDIO_Pause(&wcda, 1);
-		    TRACE(int, " --> STOP AUDIO (Paused)\n");
+		    TRACE(" --> STOP AUDIO (Paused)\n");
 		} else {
 		    CDAUDIO_Stop(&wcda);
-		    TRACE(int, " --> STOP AUDIO (Stopped)\n");
+		    TRACE(" --> STOP AUDIO (Stopped)\n");
 		}
 		break;
 		
 	    case 136:
-		TRACE(int, " --> RESUME AUDIO\n");
+		TRACE(" --> RESUME AUDIO\n");
 		CDAUDIO_Pause(&wcda, 0);
 		break;
 		
 	    default:
-		FIXME(int, " ioctl uninplemented <%d>\n", driver_request[2]); 
+		FIXME(" ioctl uninplemented <%d>\n", driver_request[2]); 
 		Error = 0x0c;	
 	    }
 	    
@@ -829,7 +829,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	}
 	break;
     default:
-	FIXME(int, "Unimplemented MSCDEX function 0x%02X.\n", AL_reg(context));
+	FIXME("Unimplemented MSCDEX function 0x%02X.\n", AL_reg(context));
 	break;
     }
 }

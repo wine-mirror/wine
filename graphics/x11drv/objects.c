@@ -15,7 +15,7 @@
 #include "font.h"
 #include "pen.h"
 #include "local.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -39,7 +39,7 @@ HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
     HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
-    TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );
+    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {
@@ -80,7 +80,7 @@ BOOL X11DRV_DeleteObject( HGDIOBJ handle )
 	break;
 
     default:
-        ERR(gdi, "Shouldn't be here!\n");
+        ERR("Shouldn't be here!\n");
 	ret = FALSE;
 	break;
     }

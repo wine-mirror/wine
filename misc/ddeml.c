@@ -16,7 +16,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "shm_semaph.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "tchar.h"
 #include "winnt.h"
 
@@ -217,7 +217,7 @@ static void InsertHSZNode( HSZ hsz )
              * so set the global list pointer to it.
              */
             reference_inst->Node_list = pNew;
-	    TRACE(ddeml,"HSZ node list entry added\n");
+	    TRACE("HSZ node list entry added\n");
         }
     }
 }
@@ -245,12 +245,12 @@ static void InsertHSZNode( HSZ hsz )
 	{
 		if ( reference_inst->Instance_id == InstId )
 		{
-			TRACE(ddeml,"Instance entry found\n");
+			TRACE("Instance entry found\n");
 			return reference_inst;
         }
 		reference_inst = reference_inst->Next_Entry;
     }
-	TRACE(ddeml,"Instance entry missing\n");
+	TRACE("Instance entry missing\n");
 	return NULL;
 }
 
@@ -277,12 +277,12 @@ static void InsertHSZNode( HSZ hsz )
 	{
 		if ( reference_name->hsz == Service_Name )
 		{
-			TRACE(ddeml,"Service Name found\n");
+			TRACE("Service Name found\n");
 			return reference_name;
         }
 		reference_name = reference_name->next;
     }
-	TRACE(ddeml,"Service name missing\n");
+	TRACE("Service name missing\n");
 	return NULL;
 }
 
@@ -308,7 +308,7 @@ static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL releas
 	ReleaseMutex(mutex);
         if ( (err_no=GetLastError()) != 0 )
         {
-                ERR(ddeml,"ReleaseMutex failed - %s mutex %li\n",mutex_name,err_no);
+                ERR("ReleaseMutex failed - %s mutex %li\n",mutex_name,err_no);
                 HeapFree(SystemHeap, 0, this_instance);
 		if ( release_handle_m )
 		{
@@ -354,13 +354,13 @@ DWORD IncrementInstanceId()
 	}
 	if ( (err_no=GetLastError()) != 0 )
 	{
-		ERR(ddeml,"CreateMutex failed - inst_count %li\n",err_no);
+		ERR("CreateMutex failed - inst_count %li\n",err_no);
 		err_no=Release_reserved_mutex (handle_mutex,"handle_mutex",0,1);
 		return DMLERR_SYS_ERROR;
 	}
 	DDE_Max_Assigned_Instance++;
 	this_instance->Instance_id = DDE_Max_Assigned_Instance;
-        TRACE(ddeml,"New instance id %ld allocated\n",DDE_Max_Assigned_Instance);
+        TRACE("New instance id %ld allocated\n",DDE_Max_Assigned_Instance);
 	if (Release_reserved_mutex(inst_count_mutex,"instance_count",1,0)) return DMLERR_SYS_ERROR;
 	return DMLERR_NO_ERROR;
 }
@@ -462,7 +462,7 @@ void DdeReleaseAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
 UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
                                DWORD afCmd, DWORD ulRes)
 {
-    TRACE(ddeml,"DdeInitialize16 called - calling DdeInitializeA\n");
+    TRACE("DdeInitialize16 called - calling DdeInitializeA\n");
     return (UINT16)DdeInitializeA(pidInst,(PFNCALLBACK)pfnCallback,
                                     afCmd, ulRes);
 }
@@ -474,7 +474,7 @@ UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    TRACE(ddeml,"DdeInitializeA called - calling DdeInitializeW\n");
+    TRACE("DdeInitializeA called - calling DdeInitializeW\n");
     return DdeInitializeW(pidInst,pfnCallback,afCmd,ulRes);
 }
 
@@ -516,8 +516,8 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
     if( ulRes )
     {
-        ERR(ddeml, "Reserved value not zero?  What does this mean?\n");
-        FIXME(ddeml, "(%p,%p,0x%lx,%ld): stub\n", pidInst, pfnCallback,
+        ERR("Reserved value not zero?  What does this mean?\n");
+        FIXME("(%p,%p,0x%lx,%ld): stub\n", pidInst, pfnCallback,
 	      afCmd,ulRes);
         /* trap this and no more until we know more */
         return DMLERR_NO_ERROR;
@@ -529,7 +529,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 
         /* can't set up the instance with nothing to act as a callback */
-        TRACE(ddeml,"No callback provided\n");
+        TRACE("No callback provided\n");
         return DMLERR_INVALIDPARAMETER; /* might be DMLERR_DLL_USAGE */
      }
 
@@ -539,7 +539,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
      if ( this_instance == NULL )
      {
 	/* catastrophe !! warn user & abort */
-	ERR (ddeml, "Instance create failed - out of memory\n");
+	ERR("Instance create failed - out of memory\n");
 	return DMLERR_SYS_ERROR;
      }
      this_instance->Next_Entry = NULL;
@@ -570,11 +570,11 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 			==CBF_FAIL_ALLSVRXACTIONS;
      }
 
-     TRACE(ddeml,"instance created - checking validity \n");
+     TRACE("instance created - checking validity \n");
 
     if( *pidInst == 0 ) {
         /*  Initialisation of new Instance Identifier */
-        TRACE(ddeml,"new instance, callback %p flags %lX\n",pfnCallback,afCmd);
+        TRACE("new instance, callback %p flags %lX\n",pfnCallback,afCmd);
         if ( DDE_Max_Assigned_Instance == 0 )
         {
                 /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
@@ -585,7 +585,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	handle_mutex = CreateMutexW(s_att,1,DDEHandleAccess);
 	if ( (err_no=GetLastError()) != 0 )
 	{
-		ERR(ddeml,"CreateMutex failed - handle list  %li\n",err_no);
+		ERR("CreateMutex failed - handle list  %li\n",err_no);
                 HeapFree(SystemHeap, 0, this_instance);
 		return DMLERR_SYS_ERROR;
 	}
@@ -596,12 +596,12 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
         	{
                 	/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 	
-                	ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+                	ERR("WaitForSingleObject failed - handle list %li\n",err_no);
                 	return DMLERR_SYS_ERROR;
         	}
 	}
 
-	TRACE(ddeml,"Handle Mutex created/reserved\n");
+	TRACE("Handle Mutex created/reserved\n");
         if (DDE_Handle_Table_Base == NULL ) 
 	{
                 /* can't be another instance in this case, assign to the base pointer */
@@ -617,14 +617,14 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		*/
 
 		this_instance->CBF_Flags=this_instance->CBF_Flags|APPCMD_FILTERINITS;
- 		TRACE(ddeml,"First application instance detected OK\n");
+ 		TRACE("First application instance detected OK\n");
 		/*	allocate new instance ID */
 		if ((err_no = IncrementInstanceId()) ) return err_no;
    	} else {
                 /* really need to chain the new one in to the latest here, but after checking conditions
                  *	such as trying to start a conversation from an application trying to monitor */
                 reference_inst =  DDE_Handle_Table_Base;
-		TRACE(ddeml,"Subsequent application instance - starting checks\n");
+		TRACE("Subsequent application instance - starting checks\n");
                 while ( reference_inst->Next_Entry != NULL ) 
 		{
 			/*
@@ -667,23 +667,23 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                 }
 		/*  All cleared, add to chain */
 
-		TRACE(ddeml,"Application Instance checks finished\n");
+		TRACE("Application Instance checks finished\n");
                 if ((err_no = IncrementInstanceId())) return err_no;
 		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,0)) return DMLERR_SYS_ERROR;
 		reference_inst->Next_Entry = this_instance;
         }
 	*pidInst = this_instance->Instance_id;
-	TRACE(ddeml,"New application instance processing finished OK\n");
+	TRACE("New application instance processing finished OK\n");
      } else {
         /* Reinitialisation situation   --- FIX  */
-        TRACE(ddeml,"reinitialisation of (%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+        TRACE("reinitialisation of (%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
 	WaitForSingleObject(handle_mutex,1000);
         if ( (err_no=GetLastError()) != 0 )
             {
 
 	     /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-                    ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+                    ERR("WaitForSingleObject failed - handle list %li\n",err_no);
                     HeapFree(SystemHeap, 0, this_instance);
                     return DMLERR_SYS_ERROR;
         }
@@ -769,7 +769,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
  */
 BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
 {
-    FIXME(ddeml," stub calling DdeUninitialize\n");
+    FIXME(" stub calling DdeUninitialize\n");
     return (BOOL16)DdeUninitialize( idInst );
 }
 
@@ -802,10 +802,10 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
         {
     		/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-               	ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+               	ERR("WaitForSingleObject failed - handle list %li\n",err_no);
                	return DMLERR_SYS_ERROR;
 	}
-  	TRACE(ddeml,"Handle Mutex created/reserved\n");
+  	TRACE("Handle Mutex created/reserved\n");
   	/*  First check instance 
   	*/
   	this_instance = Find_Instance_Entry(idInst);
@@ -817,7 +817,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
 		*/
 		return FALSE;
         }
-    	FIXME(ddeml, "(%ld): partial stub\n", idInst);
+    	FIXME("(%ld): partial stub\n", idInst);
 
 	/*   FIXME	++++++++++++++++++++++++++++++++++++++++++
 	 *	Needs to de-register all service names
@@ -887,7 +887,7 @@ HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 HCONVLIST WINAPI DdeConnectList( DWORD idInst, HSZ hszService, HSZ hszTopic,
                  HCONVLIST hConvList, LPCONVCONTEXT pCC )
 {
-    FIXME(ddeml, "(%ld,%ld,%ld,%ld,%p): stub\n", idInst, hszService, hszTopic,
+    FIXME("(%ld,%ld,%ld,%ld,%p): stub\n", idInst, hszService, hszTopic,
           hConvList,pCC);
     return 1;
 }
@@ -907,7 +907,7 @@ HCONV WINAPI DdeQueryNextServer16( HCONVLIST hConvList, HCONV hConvPrev )
  */
 HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 {
-    FIXME(ddeml, "(%ld,%ld): stub\n",hConvList,hConvPrev);
+    FIXME("(%ld,%ld): stub\n",hConvList,hConvPrev);
     return 0;
 }
 
@@ -929,7 +929,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     DWORD ret = 0;
     CHAR pString[MAX_BUFFER_LEN];
 
-    FIXME(ddeml,
+    FIXME(
          "(%ld, 0x%lx, %p, %ld, %d): partial stub\n",
          idInst,
          hsz,
@@ -947,11 +947,11 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
   {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
 	  /*  needs something for DdeGetLAstError even if the manual doesn't say so */
           return FALSE;
   }
-  TRACE(ddeml,"Handle Mutex created/reserved\n");
+  TRACE("Handle Mutex created/reserved\n");
 
   /*  First check instance 
   */
@@ -980,7 +980,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
   } else {
   	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
     }
-   TRACE(ddeml,"returning pointer\n"); 
+   TRACE("returning pointer\n"); 
     return ret;
 }
 
@@ -1003,7 +1003,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     WCHAR pString[MAX_BUFFER_LEN];
     int factor = 1;
 
-    FIXME(ddeml,
+    FIXME(
          "(%ld, 0x%lx, %p, %ld, %d): stub\n",
          idInst,
          hsz,
@@ -1045,7 +1045,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
 
 DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
 {
-	FIXME(ddeml,"(%ld, 0x%lx, %p, %ld, %d): stub \n", 
+	FIXME("(%ld, 0x%lx, %p, %ld, %d): stub \n", 
          idInst,
          hsz,
          lpsz, 
@@ -1074,7 +1074,7 @@ BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
 BOOL WINAPI DdeDisconnectList(
     HCONVLIST hConvList) /* [in] Handle to conversation list */
 {
-    FIXME(ddeml, "(%ld): stub\n", hConvList);
+    FIXME("(%ld): stub\n", hConvList);
     return TRUE;
 }
 
@@ -1085,7 +1085,7 @@ BOOL WINAPI DdeDisconnectList(
 HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT16 pCC )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return 0;
 }
 
@@ -1096,7 +1096,7 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 HCONV WINAPI DdeConnect( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT pCC )
 {
-    FIXME(ddeml, "(0x%lx,%ld,%ld,%p): stub\n",idInst,hszService,hszTopic,
+    FIXME("(0x%lx,%ld,%ld,%p): stub\n",idInst,hszService,hszTopic,
           pCC);
     return 0;
 }
@@ -1115,7 +1115,7 @@ BOOL16 WINAPI DdeDisconnect16( HCONV hConv )
  */
 BOOL16 WINAPI DdeSetUserHandle16( HCONV hConv, DWORD id, DWORD hUser )
 {
-    FIXME( ddeml, "(%ld,%ld,%ld): stub\n",hConv,id, hUser );
+    FIXME("(%ld,%ld,%ld): stub\n",hConv,id, hUser );
     return 0;
 }
 
@@ -1142,7 +1142,7 @@ HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb,
                                        DWORD cbOff, HSZ hszItem, UINT wFmt, 
                                        UINT afCmd )
 {
-    FIXME( ddeml,
+    FIXME(
           "(%ld,%p,%ld,%ld,0x%lx,%d,%d): stub\n",
           idInst,
           pSrc,
@@ -1160,7 +1160,7 @@ HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb,
  */
 BOOL WINAPI DdeDisconnect( HCONV hConv )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return 0;
 }
 
@@ -1170,7 +1170,7 @@ BOOL WINAPI DdeDisconnect( HCONV hConv )
  */
 HCONV WINAPI DdeReconnect( HCONV hConv )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return 0;
 }
 
@@ -1194,7 +1194,7 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
     {
     return DdeCreateStringHandleA( idInst, str, codepage );
      } else {
-  	TRACE(ddeml,"Default codepage supplied\n");
+  	TRACE("Default codepage supplied\n");
 	 return DdeCreateStringHandleA( idInst, str, CP_WINANSI);
      }
 }
@@ -1220,7 +1220,7 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 {
   HSZ hsz = 0;
-  TRACE(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_a(psz),codepage);
+  TRACE("(%ld,%s,%d): partial stub\n",idInst,debugstr_a(psz),codepage);
   
 
   if ( DDE_Max_Assigned_Instance == 0 )
@@ -1233,10 +1233,10 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
   {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
           return DMLERR_SYS_ERROR;
   }
-  TRACE(ddeml,"Handle Mutex created/reserved\n");
+  TRACE("Handle Mutex created/reserved\n");
 
   /*  First check instance 
   */
@@ -1256,19 +1256,19 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
-      TRACE(ddeml,"added atom %s with HSZ 0x%lx, \n",debugstr_a(psz),hsz);
+      TRACE("added atom %s with HSZ 0x%lx, \n",debugstr_a(psz),hsz);
       InsertHSZNode( hsz );
       if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) 
 	{
 		reference_inst->Last_Error = DMLERR_SYS_ERROR;
 		return 0;
 	}
-      TRACE(ddeml,"Returning pointer\n");
+      TRACE("Returning pointer\n");
       return hsz;
   } else {
   	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
   }
-    TRACE(ddeml,"Returning error\n");
+    TRACE("Returning error\n");
     return 0;  
 }
 
@@ -1297,7 +1297,7 @@ HSZ WINAPI DdeCreateStringHandleW(
 {
   HSZ hsz = 0;
 
-   TRACE(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
+   TRACE("(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
   
 
   if ( DDE_Max_Assigned_Instance == 0 )
@@ -1310,10 +1310,10 @@ HSZ WINAPI DdeCreateStringHandleW(
   {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
           return DMLERR_SYS_ERROR;
   }
-  TRACE(ddeml,"CreateString - Handle Mutex created/reserved\n");
+  TRACE("CreateString - Handle Mutex created/reserved\n");
   
   /*  First check instance 
   */
@@ -1327,7 +1327,7 @@ HSZ WINAPI DdeCreateStringHandleW(
 	return 0;
   }
 
-    FIXME(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
+    FIXME("(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
 
   if (codepage==CP_WINUNICODE)
   /*
@@ -1344,12 +1344,12 @@ HSZ WINAPI DdeCreateStringHandleW(
 		reference_inst->Last_Error = DMLERR_SYS_ERROR;
 		return 0;
 	}
-      TRACE(ddeml,"Returning pointer\n");
+      TRACE("Returning pointer\n");
       return hsz;
    } else {
   	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
 }
-    TRACE(ddeml,"Returning error\n");
+    TRACE("Returning error\n");
   return 0;
 }
 
@@ -1359,7 +1359,7 @@ HSZ WINAPI DdeCreateStringHandleW(
  */
 BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 {
-	FIXME(ddeml,"idInst %ld hsz 0x%lx\n",idInst,hsz);
+	FIXME("idInst %ld hsz 0x%lx\n",idInst,hsz);
     return (BOOL)DdeFreeStringHandle( idInst, hsz );
 }
 
@@ -1381,7 +1381,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
  */
 BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
 {
-    TRACE(ddeml, "(%ld,%ld): \n",idInst,hsz);
+    TRACE("(%ld,%ld): \n",idInst,hsz);
   if ( DDE_Max_Assigned_Instance == 0 )
 {
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
@@ -1390,17 +1390,17 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
   if ( ( prev_err = GetLastError()) != 0 )
   {
 	/*	something earlier failed !! */
-	ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",prev_err);
+	ERR("Error %li before WaitForSingleObject - trying to continue\n",prev_err);
   }
   WaitForSingleObject(handle_mutex,1000);
   if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
   {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
           return DMLERR_SYS_ERROR;
   }
-  TRACE(ddeml,"Handle Mutex created/reserved\n");
+  TRACE("Handle Mutex created/reserved\n");
 
   /*  First check instance 
   */
@@ -1437,7 +1437,7 @@ BOOL16 WINAPI DdeFreeDataHandle16( HDDEDATA hData )
  */
 BOOL WINAPI DdeFreeDataHandle( HDDEDATA hData )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return TRUE;
 }
 
@@ -1472,7 +1472,7 @@ BOOL16 WINAPI DdeKeepStringHandle16( DWORD idInst, HSZ hsz )
 BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
 {
 
-   TRACE(ddeml, "(%ld,%ld): \n",idInst,hsz);
+   TRACE("(%ld,%ld): \n",idInst,hsz);
   if ( DDE_Max_Assigned_Instance == 0 )
   {
           /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
@@ -1481,17 +1481,17 @@ BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
   if ( ( prev_err = GetLastError()) != 0 )
   {
         /*      something earlier failed !! */
-        ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",prev_err);
+        ERR("Error %li before WaitForSingleObject - trying to continue\n",prev_err);
   }
   WaitForSingleObject(handle_mutex,1000);
   if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
   {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
           return FALSE;
   }
-  TRACE(ddeml,"Handle Mutex created/reserved\n");
+  TRACE("Handle Mutex created/reserved\n");
 
   /*  First check instance
   */
@@ -1530,7 +1530,7 @@ HDDEDATA WINAPI DdeClientTransaction( LPBYTE pData, DWORD cbData,
                                         UINT wType, DWORD dwTimeout,
                                         LPDWORD pdwResult )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return 0;
 }
 
@@ -1542,7 +1542,7 @@ HDDEDATA WINAPI DdeClientTransaction( LPBYTE pData, DWORD cbData,
 BOOL16 WINAPI DdeAbandonTransaction16( DWORD idInst, HCONV hConv, 
                                      DWORD idTransaction )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return TRUE;
 }
 
@@ -1562,7 +1562,7 @@ BOOL16 WINAPI DdeAbandonTransaction16( DWORD idInst, HCONV hConv,
 BOOL WINAPI DdeAbandonTransaction( DWORD idInst, HCONV hConv, 
                                      DWORD idTransaction )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return TRUE;
 }
 
@@ -1587,7 +1587,7 @@ BOOL WINAPI DdePostAdvise(
     HSZ hszTopic, /* [in] Handle to topic name string */
     HSZ hszItem)  /* [in] Handle to item name string */
 {
-    FIXME(ddeml, "(%ld,%ld,%ld): stub\n",idInst,hszTopic,hszItem);
+    FIXME("(%ld,%ld,%ld): stub\n",idInst,hszTopic,hszItem);
     return TRUE;
 }
 
@@ -1598,7 +1598,7 @@ BOOL WINAPI DdePostAdvise(
 HDDEDATA WINAPI DdeAddData16( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
                             DWORD cbOff )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return 0;
 }
 
@@ -1617,7 +1617,7 @@ HDDEDATA WINAPI DdeAddData16( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
 HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
                             DWORD cbOff )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return 0;
 }
 
@@ -1637,7 +1637,7 @@ HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
 
 BOOL WINAPI DdeImpersonateClient( HCONV hConv)
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return TRUE;
 }
 
@@ -1658,7 +1658,7 @@ BOOL WINAPI DdeImpersonateClient( HCONV hConv)
 BOOL WINAPI DdeSetQualityOfService( HWND hwndClient, CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
 					PSECURITY_QUALITY_OF_SERVICE pqosPrev)
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return TRUE;
 }
 
@@ -1677,7 +1677,7 @@ BOOL WINAPI DdeSetQualityOfService( HWND hwndClient, CONST SECURITY_QUALITY_OF_S
 
 BOOL WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser)
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME("empty stub\n" );
     return TRUE;
 }
 
@@ -1693,7 +1693,7 @@ DWORD WINAPI DdeGetData(
     DWORD cbMax,    /* [in] Amount of data to copy */
     DWORD cbOff)    /* [in] Offset to beginning of data */
 {
-    FIXME(ddeml, "(%ld,%p,%ld,%ld): stub\n",hData,pDst,cbMax,cbOff);
+    FIXME("(%ld,%p,%ld,%ld): stub\n",hData,pDst,cbMax,cbOff);
     return cbMax;
 }
 
@@ -1724,7 +1724,7 @@ LPBYTE WINAPI DdeAccessData16( HDDEDATA hData, LPDWORD pcbDataSize )
  */
 LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
 {
-     FIXME( ddeml, "(%ld,%p): stub\n", hData, pcbDataSize);
+     FIXME("(%ld,%p): stub\n", hData, pcbDataSize);
      return 0;
 }
 
@@ -1741,7 +1741,7 @@ BOOL16 WINAPI DdeUnaccessData16( HDDEDATA hData )
  */
 BOOL WINAPI DdeUnaccessData( HDDEDATA hData )
 {
-     FIXME( ddeml, "(0x%lx): stub\n", hData);
+     FIXME("(0x%lx): stub\n", hData);
 
      return 0;
 }
@@ -1759,7 +1759,7 @@ BOOL16 WINAPI DdeEnableCallback16( DWORD idInst, HCONV hConv, UINT16 wCmd )
  */
 BOOL WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT wCmd )
 {
-     FIXME( ddeml, "(%ld, 0x%lx, %d) stub\n", idInst, hConv, wCmd);
+     FIXME("(%ld, 0x%lx, %d) stub\n", idInst, hConv, wCmd);
 
      return 0;
 }
@@ -1808,7 +1808,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
   CHAR SNameBuffer[MAX_BUFFER_LEN];
   UINT rcode;
   this_service = NULL;
-    FIXME(ddeml, "(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
+    FIXME("(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
   if ( DDE_Max_Assigned_Instance == 0 )
   {
           /*  Nothing has been initialised - exit now ! 
@@ -1820,10 +1820,10 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
    {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
           return DMLERR_SYS_ERROR;
 }
-   TRACE(ddeml,"Handle Mutex created/reserved\n");
+   TRACE("Handle Mutex created/reserved\n");
 
    /*  First check instance
    */
@@ -1831,7 +1831,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
    this_instance = reference_inst;
    if  (reference_inst == NULL)
    {
-	TRACE(ddeml,"Instance not found as initialised\n");
+	TRACE("Instance not found as initialised\n");
         if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
           return FALSE;
@@ -1844,7 +1844,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 	 */
 	reference_inst->Last_Error = DMLERR_INVALIDPARAMETER;
   	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
-	FIXME(ddeml,"Reserved parameter no-zero !!\n");
+	FIXME("Reserved parameter no-zero !!\n");
 	return FALSE;
   }
   if ( hsz1 == 0L )
@@ -1857,7 +1857,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 		/*	don't know if we should check this but it makes sense
 		 *	why supply REGISTER or filter flags if de-registering all
 		 */
-   		TRACE(ddeml,"General unregister unexpected flags\n");
+   		TRACE("General unregister unexpected flags\n");
 		reference_inst->Last_Error = DMLERR_DLL_USAGE;
   		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
 		return FALSE;
@@ -1868,7 +1868,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 	{
 		/*  None to unregister !!  
 		 */
-		TRACE(ddeml,"General de-register - nothing registered\n");
+		TRACE("General de-register - nothing registered\n");
 		reference_inst->Last_Error = DMLERR_DLL_USAGE;
   		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
 		return FALSE;
@@ -1883,12 +1883,12 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
         		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
 		}
         	HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
-		TRACE(ddeml,"General de-register - finished\n");
+		TRACE("General de-register - finished\n");
 	}
   	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
   	return TRUE;
   }
-  TRACE(ddeml,"Specific name action detected\n");
+  TRACE("Specific name action detected\n");
   reference_service = Find_Service_Name(hsz1,reference_inst);
   if (( Cmd_flags && DNS_REGISTER ) == DNS_REGISTER )
   {
@@ -1905,7 +1905,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 	{
 		/*	easy one - nothing else there
 		 */
-  		TRACE(ddeml,"Adding 1st service name\n");
+  		TRACE("Adding 1st service name\n");
 		reference_inst->ServiceNames = this_service;
 		GlobalAddAtomA(SNameBuffer);
 	} else
@@ -1918,12 +1918,12 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 			 *	 what do we do ? 
 			 */
         		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
-        		FIXME(ddeml,"Trying to register already registered service  !!\n");
+        		FIXME("Trying to register already registered service  !!\n");
 		} else
 		{
 			/*	Add this one into the chain
 			 */
-  			TRACE(ddeml,"Adding subsequent service name\n");
+  			TRACE("Adding subsequent service name\n");
 			this_service->next = reference_inst->ServiceNames;
 			reference_inst->ServiceNames = this_service;
 			GlobalAddAtomA(SNameBuffer);
@@ -1949,7 +1949,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
                         /*      Service name not  registered !!
                          *       what do we do ?
                          */
-                        FIXME(ddeml,"Trying to de-register unregistered service  !!\n");
+                        FIXME("Trying to de-register unregistered service  !!\n");
                 } else
                 {
                         /*      Delete this one from the chain
@@ -2049,7 +2049,7 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
 UINT WINAPI DdeGetLastError( DWORD idInst )
 {
     DWORD	error_code;
-    FIXME(ddeml, "(%ld): stub\n",idInst);
+    FIXME("(%ld): stub\n",idInst);
     if ( DDE_Max_Assigned_Instance == 0 )
     {
           /*  Nothing has been initialised - exit now ! */
@@ -2058,17 +2058,17 @@ UINT WINAPI DdeGetLastError( DWORD idInst )
    if ( ( prev_err = GetLastError()) != 0 )
    {
         /*      something earlier failed !! */
-        ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",prev_err);
+        ERR("Error %li before WaitForSingleObject - trying to continue\n",prev_err);
    }
    WaitForSingleObject(handle_mutex,1000);
    if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
    {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
-          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          ERR("WaitForSingleObject failed - handle list %li\n",err_no);
           return DMLERR_SYS_ERROR;
    }
-   TRACE(ddeml,"Handle Mutex created/reserved\n");
+   TRACE("Handle Mutex created/reserved\n");
 
    /*  First check instance
    */
@@ -2113,7 +2113,7 @@ int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
     int ret = 0;
     int ret1, ret2;
 
-    TRACE( ddeml, "handle 1, handle 2\n" );
+    TRACE("handle 1, handle 2\n" );
 
     ret1 = GlobalGetAtomNameA( hsz1, psz1, MAX_BUFFER_LEN );
     ret2 = GlobalGetAtomNameA( hsz2, psz2, MAX_BUFFER_LEN );
@@ -2169,7 +2169,7 @@ int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
  */
 UINT WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 {
-    FIXME(ddeml, "stub.\n");
+    FIXME("stub.\n");
     return 0;
 }
 
@@ -2184,7 +2184,7 @@ UINT WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 UINT WINAPI UnpackDDElParam(UINT msg, UINT lParam,
                               UINT *uiLo, UINT *uiHi)
 {
-    FIXME(ddeml, "stub.\n");
+    FIXME("stub.\n");
     return 0;
 }
 
@@ -2198,7 +2198,7 @@ UINT WINAPI UnpackDDElParam(UINT msg, UINT lParam,
  */
 UINT WINAPI FreeDDElParam(UINT msg, UINT lParam)
 {
-    FIXME(ddeml, "stub.\n");
+    FIXME("stub.\n");
     return 0;
 }
 
@@ -2209,7 +2209,7 @@ UINT WINAPI FreeDDElParam(UINT msg, UINT lParam)
 UINT WINAPI ReuseDDElParam(UINT lParam, UINT msgIn, UINT msgOut,
                              UINT uiLi, UINT uiHi)
 {
-    FIXME(ddeml, "stub.\n");
+    FIXME("stub.\n");
     return 0;
 } 
 
@@ -2219,7 +2219,7 @@ UINT WINAPI ReuseDDElParam(UINT lParam, UINT msgIn, UINT msgOut,
  */
 UINT16 WINAPI DdeQueryConvInfo16( HCONV hconv, DWORD idTransaction , LPCONVINFO16 lpConvInfo)
 {
-	FIXME(ddeml,"stub.\n");
+	FIXME("stub.\n");
 	return 0;
 }
 
@@ -2230,6 +2230,6 @@ UINT16 WINAPI DdeQueryConvInfo16( HCONV hconv, DWORD idTransaction , LPCONVINFO1
  */
 UINT WINAPI DdeQueryConvInfo( HCONV hconv, DWORD idTransaction , LPCONVINFO lpConvInfo)
 {
-	FIXME(ddeml,"stub.\n");
+	FIXME("stub.\n");
 	return 0;
 }

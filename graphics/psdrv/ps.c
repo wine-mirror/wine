@@ -9,7 +9,7 @@
 #include <string.h>
 #include "psdrv.h"
 #include "winspool.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -280,7 +280,7 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
 
     titlebuf = (char *)HeapAlloc( PSDRV_Heap, 0, len+1 );
     if(!titlebuf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
         return 0;
     }
     memcpy(titlebuf, title, len);
@@ -288,7 +288,7 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
 
     buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) + len + 30);
     if(!buf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
 	HeapFree( PSDRV_Heap, 0, titlebuf );
         return 0;
     }
@@ -311,7 +311,7 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
-        WARN(psdrv, "WriteSpool error\n");
+        WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, titlebuf );
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
@@ -378,7 +378,7 @@ INT PSDRV_WriteFooter( DC *dc )
 
     buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psfooter) + 100 );
     if(!buf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
         return 0;
     }
 
@@ -386,7 +386,7 @@ INT PSDRV_WriteFooter( DC *dc )
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
-        WARN(psdrv, "WriteSpool error\n");
+        WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
@@ -402,7 +402,7 @@ INT PSDRV_WriteEndPage( DC *dc )
 
     if( WriteSpool16( physDev->job.hJob, psendpage, sizeof(psendpage)-1 ) != 
 	                                             sizeof(psendpage)-1 ) {
-        WARN(psdrv, "WriteSpool error\n");
+        WARN("WriteSpool error\n");
 	return 0;
     }
     return 1;
@@ -422,7 +422,7 @@ INT PSDRV_WriteNewPage( DC *dc )
 
     buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psnewpage) + 200 );
     if(!buf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
         return 0;
     }
 
@@ -447,7 +447,7 @@ INT PSDRV_WriteNewPage( DC *dc )
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
-        WARN(psdrv, "WriteSpool error\n");
+        WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
@@ -520,7 +520,7 @@ BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI)
 	     sizeof(pssetfont) + strlen(physDev->font.afm->FontName) + 40);
 
     if(!buf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
         return FALSE;
     }
 
@@ -528,7 +528,7 @@ BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI)
 	      strlen(physDev->font.afm->FontName) + sizeof(encodingext));
 
     if(!newbuf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
 	HeapFree(PSDRV_Heap, 0, buf);
         return FALSE;
     }
@@ -567,7 +567,7 @@ BOOL PSDRV_WriteSetColor(DC *dc, PSCOLOR *color)
 	return PSDRV_WriteSpool(dc, buf, strlen(buf));
 	
     default:
-        ERR(psdrv, "Unkonwn colour type %d\n", color->type);
+        ERR("Unkonwn colour type %d\n", color->type);
 	break;
     }
 
@@ -600,7 +600,7 @@ BOOL PSDRV_WriteReencodeFont(DC *dc)
 			     + sizeof(encodingext));
 
     if(!buf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
         return FALSE;
     }
 
@@ -608,7 +608,7 @@ BOOL PSDRV_WriteReencodeFont(DC *dc)
 	      strlen(physDev->font.afm->FontName) + sizeof(encodingext));
 
     if(!newbuf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
 	HeapFree(PSDRV_Heap, 0, buf);
         return FALSE;
     }

@@ -12,7 +12,7 @@
 #include "cursoricon.h"
 #include "user.h"
 #include "queue.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "win.h"
 
 DEFAULT_DEBUG_CHANNEL(relay)
@@ -42,7 +42,7 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
  */
 static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT86 *context, INT offset)
 {
-    ERR(relay, "Cannot call a register proc in Winelib\n" );
+    ERR("Cannot call a register proc in Winelib\n" );
     assert( FALSE );
     return 0;
 }
@@ -142,7 +142,7 @@ static HGLOBAL16 WINAPI CALLBACK_CallResourceHandlerProc( FARPROC16 proc,
                                                           HMODULE16 hModule,
                                                           HRSRC16 hRsrc )
 {
-    ERR( relay, "Cannot call a 16-bit resource handler in Winelib\n" );
+    ERR("Cannot call a 16-bit resource handler in Winelib\n" );
     assert( FALSE );
     return 0;
 }
@@ -239,7 +239,7 @@ static BOOL WINAPI CALLBACK_CallWOWCallback16Ex(
 	    );
 	    break;
     default:
-	    WARN(relay,"(%ld) arguments not supported.\n",cbArgs);
+	    WARN("(%ld) arguments not supported.\n",cbArgs);
 	    if (dwFlags == WCB16_CDECL)
 		HeapFree(GetProcessHeap(),0,args);
 	    return FALSE;
@@ -256,7 +256,7 @@ static BOOL WINAPI CALLBACK_CallWOWCallback16Ex(
  */
 static DWORD WINAPI CALLBACK_CallUTProc( FARPROC16 proc, DWORD w1, DWORD w2 )
 {
-    ERR( relay, "Cannot call a UT thunk proc in Winelib\n" );
+    ERR("Cannot call a UT thunk proc in Winelib\n" );
     assert( FALSE );
     return 0;
 }

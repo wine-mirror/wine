@@ -11,7 +11,7 @@
 #include "font.h"
 #include "enhmetafiledrv.h"
 #include "pen.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile)
@@ -82,11 +82,11 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
       break;
 
     case BS_PATTERN:
-        FIXME(enhmetafile, "Unsupported style %x\n",
+        FIXME("Unsupported style %x\n",
 	      brushObj->logbrush.lbStyle);
         break;
     default:
-        FIXME(enhmetafile, "Unknown style %x\n", brushObj->logbrush.lbStyle);
+        FIXME("Unknown style %x\n", brushObj->logbrush.lbStyle);
 	return FALSE;
     }
     GDI_HEAP_UNLOCK( hBrush );
@@ -236,7 +236,7 @@ HGDIOBJ EMFDRV_SelectObject( DC *dc, HGDIOBJ handle )
     HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
-    TRACE(enhmetafile, "hdc=%04x %04x\n", dc->hSelf, handle );
+    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {

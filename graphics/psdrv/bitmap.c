@@ -7,7 +7,7 @@
 
 #include "gdi.h"
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "bitmap.h"
 #include "winbase.h"
 
@@ -77,7 +77,7 @@ static BOOL PSDRV_WriteImageHeader(DC *dc, const BITMAPINFO *info, INT xDst,
       }
 
     default:
-        FIXME(psdrv, "Not implemented yet\n");
+        FIXME("Not implemented yet\n");
 	return FALSE;
 	break;
     }
@@ -108,7 +108,7 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
     const char *ptr;
     INT line;
 
-    TRACE(psdrv, "%08x (%d,%d %dx%d) -> (%d,%d %dx%d)\n", dc->hSelf,
+    TRACE("%08x (%d,%d %dx%d) -> (%d,%d %dx%d)\n", dc->hSelf,
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
 
     DIB_GetBitmapInfo((const BITMAPINFOHEADER *)info, &fullSrcWidth,
@@ -116,12 +116,12 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 
     widthbytes = DIB_GetDIBWidthBytes(fullSrcWidth, bpp);
 
-    TRACE(psdrv, "full size=%ldx%d bpp=%d compression=%d\n", fullSrcWidth,
+    TRACE("full size=%ldx%d bpp=%d compression=%d\n", fullSrcWidth,
 	  fullSrcHeight, bpp, compression);
 
 
     if(compression != BI_RGB) {
-        FIXME(psdrv, "Compression not supported\n");
+        FIXME("Compression not supported\n");
 	return FALSE;
     }
 
@@ -139,7 +139,7 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	ptr = bits;
 	ptr += (ySrc * widthbytes);
 	if(xSrc & 7 || widthSrc & 7)
-	    FIXME(psdrv, "This won't work...\n");
+	    FIXME("This won't work...\n");
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteBytes(dc, ptr + xSrc/8, widthSrc/8);
 	break;
@@ -151,7 +151,7 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	ptr = bits;
 	ptr += (ySrc * widthbytes);
 	if(xSrc & 1 || widthSrc & 1)
-	    FIXME(psdrv, "This won't work...\n");
+	    FIXME("This won't work...\n");
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteBytes(dc, ptr + xSrc/2, widthSrc/2);
 	break;
@@ -201,7 +201,7 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	break;
 
     default:
-        FIXME(psdrv, "Unsupported depth\n");
+        FIXME("Unsupported depth\n");
 	return FALSE;
 
     }

@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "xmalloc.h"
-#include "debug.h"
+#include "debugtools.h"
 
 void *xmalloc( int size )
 {
@@ -25,7 +25,7 @@ void *xmalloc( int size )
     res = malloc (size ? size : 1);
     if (res == NULL)
     {
-        MSG("Virtual memory exhausted.\n");
+        MESSAGE("Virtual memory exhausted.\n");
         exit (1);
     }
     memset(res,0,size);
@@ -47,7 +47,7 @@ void *xrealloc( void *ptr, int size )
     void *res = realloc (ptr, size);
     if ((res == NULL) && size)
     {
-        MSG("Virtual memory exhausted.\n");
+        MESSAGE("Virtual memory exhausted.\n");
         exit (1);
     }
     return res;
@@ -59,7 +59,7 @@ char *xstrdup( const char *str )
     char *res = strdup( str );
     if (!res)
     {
-        MSG("Virtual memory exhausted.\n");
+        MESSAGE("Virtual memory exhausted.\n");
         exit (1);
     }
     return res;

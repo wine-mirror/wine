@@ -12,7 +12,7 @@
 #include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "d3d_private.h"
 
@@ -58,10 +58,10 @@ void _dump_d3dstatus(LPD3DSTATUS lpStatus) {
 }
 
 void _dump_executedata(LPD3DEXECUTEDATA lpData) {
-  DUMP("dwSize : %ld\n", lpData->dwSize);
-  DUMP("Vertex      Offset : %ld  Count  : %ld\n", lpData->dwVertexOffset, lpData->dwVertexCount);
-  DUMP("Instruction Offset : %ld  Length : %ld\n", lpData->dwInstructionOffset, lpData->dwInstructionLength);
-  DUMP("HVertex     Offset : %ld\n", lpData->dwHVertexOffset);
+  DPRINTF("dwSize : %ld\n", lpData->dwSize);
+  DPRINTF("Vertex      Offset : %ld  Count  : %ld\n", lpData->dwVertexOffset, lpData->dwVertexCount);
+  DPRINTF("Instruction Offset : %ld  Length : %ld\n", lpData->dwInstructionOffset, lpData->dwInstructionLength);
+  DPRINTF("HVertex     Offset : %ld\n", lpData->dwHVertexOffset);
   _dump_d3dstatus(&(lpData->dsStatus));
 }
 
@@ -77,7 +77,7 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
 	     vx[index].z,							\
 	     vx[index].w);							\
 										\
-  TRACE(ddraw, "   V: %f %f %f %f (%f %f %f) (%f %f)\n",			\
+  TRACE("   V: %f %f %f %f (%f %f %f) (%f %f)\n",			\
 	vx[index].x, vx[index].y, vx[index].z, vx[index].w,			\
 	vx[index].nx, vx[index].ny, vx[index].nz,				\
 	vx[index].u, vx[index].v);						\
@@ -97,7 +97,7 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
 	     l_vx[index].z,							\
 	     l_vx[index].w);							\
   										\
-  TRACE(ddraw, "  LV: %f %f %f %f (%02lx %02lx %02lx) (%f %f)\n",		\
+  TRACE("  LV: %f %f %f %f (%02lx %02lx %02lx) (%f %f)\n",		\
 	l_vx[index].x, l_vx[index].y, l_vx[index].z, l_vx[index].w,		\
 	((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),	\
 	l_vx[index].u, l_vx[index].v);						\
@@ -121,7 +121,7 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
                vx->y.sy / vx->r.rhw,						\
                vx->z.sz / vx->r.rhw,						\
                1.0 / vx->r.rhw);						\
-  TRACE(ddraw, " TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",		\
+  TRACE(" TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",		\
         vx->x.sx, vx->y.sy, vx->z.sz,						\
         ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),	\
         vx->u.tu, vx->v.tv, vx->r.rhw);						\
@@ -133,28 +133,28 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
     for (i = 0; i < count; i++) {			\
       LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;		\
       							\
-      TRACE(ddraw, "  v1: %d  v2: %d  v3: %d\n",	\
+      TRACE("  v1: %d  v2: %d  v3: %d\n",	\
 	    ci->v1.v1, ci->v2.v2, ci->v3.v3);		\
-      TRACE(ddraw, "  Flags : ");			\
+      TRACE("  Flags : ");			\
       if (TRACE_ON(ddraw)) {				\
 	/* Wireframe */					\
 	if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)	\
-	  DUMP("EDGEENABLE1 ");				\
+	  DPRINTF("EDGEENABLE1 ");				\
 	if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)	\
-	  DUMP("EDGEENABLE2 ");				\
+	  DPRINTF("EDGEENABLE2 ");				\
 	if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)	\
-	  DUMP("EDGEENABLE3 ");				\
+	  DPRINTF("EDGEENABLE3 ");				\
 							\
 	/* Strips / Fans */				\
 	if (ci->wFlags == D3DTRIFLAG_EVEN)		\
-	  DUMP("EVEN ");				\
+	  DPRINTF("EVEN ");				\
 	if (ci->wFlags == D3DTRIFLAG_ODD)		\
-	  DUMP("ODD ");					\
+	  DPRINTF("ODD ");					\
 	if (ci->wFlags == D3DTRIFLAG_START)		\
-	  DUMP("START ");				\
+	  DPRINTF("START ");				\
 	if ((ci->wFlags > 0) && (ci->wFlags < 30))	\
-	  DUMP("STARTFLAT(%d) ", ci->wFlags);		\
-	DUMP("\n");					\
+	  DPRINTF("STARTFLAT(%d) ", ci->wFlags);		\
+	DPRINTF("\n");					\
       }							\
 							\
       /* Draw the triangle */				\
@@ -182,7 +182,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
   void *instr = ilpBuff->desc.lpData + is;
   OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) dev;
   
-  TRACE(ddraw, "ExecuteData : \n");
+  TRACE("ExecuteData : \n");
   if (TRACE_ON(ddraw))
   _dump_executedata(&(ilpBuff->data));
   
@@ -199,13 +199,13 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
     
     switch (current->bOpcode) {
     case D3DOP_POINT: {
-      TRACE(ddraw, "POINT-s          (%d)\n", count);
+      TRACE("POINT-s          (%d)\n", count);
 
       instr += count * size;
     } break;
       
     case D3DOP_LINE: {
-      TRACE(ddraw, "LINE-s           (%d)\n", count);
+      TRACE("LINE-s           (%d)\n", count);
 
       instr += count * size;
     } break;
@@ -223,7 +223,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       OGL_LVertex *l_vx  = (OGL_LVertex *) ilpBuff->vertex_data;
       D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) ilpBuff->vertex_data;
       
-      TRACE(ddraw, "TRIANGLE         (%d)\n", count);
+      TRACE("TRIANGLE         (%d)\n", count);
 
       switch (ilpBuff->vertex_type) {
       case D3DVT_VERTEX:
@@ -235,9 +235,9 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       glLoadIdentity(); /* The model transformation was done during the
 			   transformation phase */
       glMatrixMode(GL_PROJECTION);
-	TRACE(ddraw, "  Projection Matrix : (%p)\n", odev->proj_mat);
+	TRACE("  Projection Matrix : (%p)\n", odev->proj_mat);
 	dump_mat(odev->proj_mat);
-	TRACE(ddraw, "  View       Matrix : (%p)\n", odev->view_mat);
+	TRACE("  View       Matrix : (%p)\n", odev->view_mat);
 	dump_mat(odev->view_mat);
 
 	glLoadMatrixf((float *) z_inv_matrix);
@@ -255,9 +255,9 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 			     transformation phase */
 	glMatrixMode(GL_PROJECTION);
 
-	TRACE(ddraw, "  Projection Matrix : (%p)\n", odev->proj_mat);
+	TRACE("  Projection Matrix : (%p)\n", odev->proj_mat);
 	dump_mat(odev->proj_mat);
-	TRACE(ddraw, "  View       Matrix : (%p)\n", odev->view_mat);
+	TRACE("  View       Matrix : (%p)\n", odev->view_mat);
 	dump_mat(odev->view_mat);
 
 	glLoadMatrixf((float *) z_inv_matrix);
@@ -278,7 +278,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
         glLoadIdentity();
         
         if (ivp == NULL) {
-          ERR(ddraw, "No current viewport !\n");
+          ERR("No current viewport !\n");
           /* Using standard values */
           height = 640.0;
           width = 480.0;
@@ -301,7 +301,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       } break;
 	
       default:
-	ERR(ddraw, "Unhandled vertex type !\n");
+	ERR("Unhandled vertex type !\n");
 	break;
       }
 
@@ -319,20 +319,20 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	break;
 	
       default:
-	ERR(ddraw, "Unhandled vertex type !\n");
+	ERR("Unhandled vertex type !\n");
       }
       
     } break;
     
     case D3DOP_MATRIXLOAD: {
-      TRACE(ddraw, "MATRIXLOAD-s     (%d)\n", count);
+      TRACE("MATRIXLOAD-s     (%d)\n", count);
 
       instr += count * size;
     } break;
       
     case D3DOP_MATRIXMULTIPLY: {
       int i;
-      TRACE(ddraw, "MATRIXMULTIPLY   (%d)\n", count);
+      TRACE("MATRIXMULTIPLY   (%d)\n", count);
 
       for (i = 0; i < count; i++) {
 	LPD3DMATRIXMULTIPLY ci = (LPD3DMATRIXMULTIPLY) instr;
@@ -340,7 +340,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	LPD3DMATRIX b = (LPD3DMATRIX) ci->hSrcMatrix1;
 	LPD3DMATRIX c = (LPD3DMATRIX) ci->hSrcMatrix2;
 	
-	TRACE(ddraw, "  Dest : %08lx  Src1 : %08lx  Src2 : %08lx\n",
+	TRACE("  Dest : %08lx  Src1 : %08lx  Src2 : %08lx\n",
 	      ci->hDestMatrix, ci->hSrcMatrix1, ci->hSrcMatrix2);
 
 	/* Do the multiplication..
@@ -361,7 +361,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       
     case D3DOP_STATETRANSFORM: {
       int i;
-      TRACE(ddraw, "STATETRANSFORM   (%d)\n", count);
+      TRACE("STATETRANSFORM   (%d)\n", count);
 
       for (i = 0; i < count; i++) {
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
@@ -369,22 +369,22 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	/* Handle the state transform */
 	switch (ci->t.dtstTransformStateType) {
 	case D3DTRANSFORMSTATE_WORLD: {
-	  TRACE(ddraw, "  WORLD (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
+	  TRACE("  WORLD (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
 	  odev->world_mat = (D3DMATRIX*) ci->v.dwArg[0];
 	} break;
 
 	case D3DTRANSFORMSTATE_VIEW: {
-	  TRACE(ddraw, "  VIEW (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
+	  TRACE("  VIEW (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
 	  odev->view_mat = (D3DMATRIX*) ci->v.dwArg[0];
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
-    	  TRACE(ddraw, "  PROJECTION (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
+    	  TRACE("  PROJECTION (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
 	  odev->proj_mat = (D3DMATRIX*) ci->v.dwArg[0];
 	} break;
 
 	default:
-	  ERR(ddraw, "  Unhandled state transformation !! (%d)\n", (int) ci->t.dtstTransformStateType);
+	  ERR("  Unhandled state transformation !! (%d)\n", (int) ci->t.dtstTransformStateType);
 	  break;
 	  
 	}
@@ -395,7 +395,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       
     case D3DOP_STATELIGHT: {
       int i;
-      TRACE(ddraw, "STATELIGHT       (%d)\n", count);
+      TRACE("STATELIGHT       (%d)\n", count);
 
       for (i = 0; i < count; i++) {
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
@@ -404,19 +404,19 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	switch (ci->t.dlstLightStateType) {
 	case D3DLIGHTSTATE_MATERIAL: {
 	  IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) ci->v.dwArg[0];
-	  TRACE(ddraw, "  MATERIAL\n");
+	  TRACE("  MATERIAL\n");
 	  
 	  if (mat != NULL) {
 	    mat->activate(mat);
 	  } else {
-	    TRACE(ddraw, "    bad Material Handle\n");
+	    TRACE("    bad Material Handle\n");
 	  }
 	} break ;
 	  
 	case D3DLIGHTSTATE_AMBIENT: {
 	  float light[4];
 	  DWORD dwLightState = ci->v.dwArg[0];
-	  TRACE(ddraw, "  AMBIENT\n");
+	  TRACE("  AMBIENT\n");
 	  
 	  light[0] = ((dwLightState >> 16) & 0xFF) / 255.0;
 	  light[1] = ((dwLightState >>  8) & 0xFF) / 255.0;
@@ -424,7 +424,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  light[3] = 1.0;
 	  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (float *) light);
 
-	  TRACE(ddraw, "    R:%02lx G:%02lx B:%02lx A:%02lx\n",
+	  TRACE("    R:%02lx G:%02lx B:%02lx A:%02lx\n",
 		((dwLightState >> 16) & 0xFF),
 		((dwLightState >>  8) & 0xFF),
 		((dwLightState >>  0) & 0xFF),
@@ -432,27 +432,27 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	} break ;
 	  
 	case D3DLIGHTSTATE_COLORMODEL: {
-	  TRACE(ddraw, "  COLORMODEL\n");
+	  TRACE("  COLORMODEL\n");
 	} break ;
 	  
 	case D3DLIGHTSTATE_FOGMODE: {
-	  TRACE(ddraw, "  FOGMODE\n");
+	  TRACE("  FOGMODE\n");
 	} break ;
 	  
 	case D3DLIGHTSTATE_FOGSTART: {
-	  TRACE(ddraw, "  FOGSTART\n");
+	  TRACE("  FOGSTART\n");
 	} break ;
 	  
 	case D3DLIGHTSTATE_FOGEND: {
-	  TRACE(ddraw, "  FOGEND\n");
+	  TRACE("  FOGEND\n");
 	} break ;
 	  
 	case D3DLIGHTSTATE_FOGDENSITY: {
-	  TRACE(ddraw, "  FOGDENSITY\n");
+	  TRACE("  FOGDENSITY\n");
 	} break ;
 	  
 	default:
-	  ERR(ddraw, "  Unhandled light state !! (%d)\n", (int) ci->t.dlstLightStateType);
+	  ERR("  Unhandled light state !! (%d)\n", (int) ci->t.dlstLightStateType);
 	  break;
 	}
 	instr += size;
@@ -461,7 +461,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       
     case D3DOP_STATERENDER: {
       int i;
-      TRACE(ddraw, "STATERENDER      (%d)\n", count);
+      TRACE("STATERENDER      (%d)\n", count);
       
       for (i = 0; i < count; i++) {
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
@@ -475,28 +475,28 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       
     case D3DOP_PROCESSVERTICES: {
       int i;
-      TRACE(ddraw, "PROCESSVERTICES  (%d)\n", count);
+      TRACE("PROCESSVERTICES  (%d)\n", count);
       
       for (i = 0; i < count; i++) {
 	LPD3DPROCESSVERTICES ci = (LPD3DPROCESSVERTICES) instr;
 	
-	TRACE(ddraw, "  Start : %d Dest : %d Count : %ld\n",
+	TRACE("  Start : %d Dest : %d Count : %ld\n",
 	      ci->wStart, ci->wDest, ci->dwCount);
-	TRACE(ddraw, "  Flags : ");
+	TRACE("  Flags : ");
 	if (TRACE_ON(ddraw)) {
 	  if (ci->dwFlags & D3DPROCESSVERTICES_COPY)
-	    DUMP("COPY ");
+	    DPRINTF("COPY ");
 	  if (ci->dwFlags & D3DPROCESSVERTICES_NOCOLOR)
-	    DUMP("NOCOLOR ");
+	    DPRINTF("NOCOLOR ");
 	  if (ci->dwFlags == D3DPROCESSVERTICES_OPMASK)
-	    DUMP("OPMASK ");
+	    DPRINTF("OPMASK ");
 	  if (ci->dwFlags & D3DPROCESSVERTICES_TRANSFORM)
-	    DUMP("TRANSFORM ");
+	    DPRINTF("TRANSFORM ");
 	  if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT)
-	    DUMP("TRANSFORMLIGHT ");
+	    DPRINTF("TRANSFORMLIGHT ");
 	  if (ci->dwFlags & D3DPROCESSVERTICES_UPDATEEXTENTS)
-	    DUMP("UPDATEEXTENTS ");
-	  DUMP("\n");
+	    DPRINTF("UPDATEEXTENTS ");
+	  DPRINTF("\n");
 	}
 
 	/* This is where doing Direct3D on top on OpenGL is quite difficult.
@@ -532,7 +532,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  OGL_Vertex *dst = ((OGL_Vertex *) (ilpBuff->vertex_data)) + ci->wDest;
 	  D3DMATRIX *mat = odev->world_mat;
 
-	  TRACE(ddraw, "  World Matrix : (%p)\n", mat);
+	  TRACE("  World Matrix : (%p)\n", mat);
 	  dump_mat(mat);
 
 	  ilpBuff->vertex_type = D3DVT_VERTEX;
@@ -561,7 +561,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  OGL_LVertex *dst = ((OGL_LVertex *) (ilpBuff->vertex_data)) + ci->wDest;
 	  D3DMATRIX *mat = odev->world_mat;
 
-	  TRACE(ddraw, "  World Matrix : (%p)\n", mat);
+	  TRACE("  World Matrix : (%p)\n", mat);
 	  dump_mat(mat);
 
 	  ilpBuff->vertex_type = D3DVT_LVERTEX;
@@ -589,7 +589,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  
 	  memcpy(dst, src, ci->dwCount * sizeof(D3DTLVERTEX));
 	} else {
-	  ERR(ddraw, "Unhandled vertex processing !\n");
+	  ERR("Unhandled vertex processing !\n");
 	}
 	
 	instr += size;
@@ -597,13 +597,13 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
     } break;
       
     case D3DOP_TEXTURELOAD: {
-      TRACE(ddraw, "TEXTURELOAD-s    (%d)\n", count);
+      TRACE("TEXTURELOAD-s    (%d)\n", count);
 
       instr += count * size;
     } break;
       
     case D3DOP_EXIT: {
-      TRACE(ddraw, "EXIT             (%d)\n", count);
+      TRACE("EXIT             (%d)\n", count);
       /* We did this instruction */
       instr += size;
       /* Exit this loop */
@@ -612,18 +612,18 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       
     case D3DOP_BRANCHFORWARD: {
       int i;
-      TRACE(ddraw, "BRANCHFORWARD    (%d)\n", count);
+      TRACE("BRANCHFORWARD    (%d)\n", count);
 
       for (i = 0; i < count; i++) {
 	LPD3DBRANCH ci = (LPD3DBRANCH) instr;
 	
 	if ((ilpBuff->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
 	  if (!ci->bNegate) {
-	    TRACE(ddraw," Should branch to %ld\n", ci->dwOffset);
+	    TRACE(" Should branch to %ld\n", ci->dwOffset);
 	  }
 	} else {
 	  if (ci->bNegate) {
-	    TRACE(ddraw," Should branch to %ld\n", ci->dwOffset);
+	    TRACE(" Should branch to %ld\n", ci->dwOffset);
 	  }
 	}
 
@@ -632,14 +632,14 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
     } break;
       
     case D3DOP_SPAN: {
-      TRACE(ddraw, "SPAN-s           (%d)\n", count);
+      TRACE("SPAN-s           (%d)\n", count);
 
       instr += count * size;
     } break;
       
     case D3DOP_SETSTATUS: {
       int i;
-      TRACE(ddraw, "SETSTATUS        (%d)\n", count);
+      TRACE("SETSTATUS        (%d)\n", count);
 
       for (i = 0; i < count; i++) {
 	LPD3DSTATUS ci = (LPD3DSTATUS) instr;
@@ -651,7 +651,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
     } break;
 
     default:
-      ERR(ddraw, "Unhandled OpCode !!!\n");
+      ERR("Unhandled OpCode !!!\n");
       /* Try to save ... */
       instr += count * size;
       break;
@@ -715,7 +715,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_QueryInterface(LPDIRECT3DEXECUT
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
@@ -725,7 +725,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_QueryInterface(LPDIRECT3DEXECUT
 static ULONG WINAPI IDirect3DExecuteBufferImpl_AddRef(LPDIRECT3DEXECUTEBUFFER iface)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
   
   return ++(This->ref);
 }
@@ -735,7 +735,7 @@ static ULONG WINAPI IDirect3DExecuteBufferImpl_AddRef(LPDIRECT3DEXECUTEBUFFER if
 static ULONG WINAPI IDirect3DExecuteBufferImpl_Release(LPDIRECT3DEXECUTEBUFFER iface)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
+  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
     if ((This->desc.lpData != NULL) && This->need_free)
@@ -756,7 +756,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_Initialize(LPDIRECT3DEXECUTEBUF
 							LPD3DEXECUTEBUFFERDESC lpDesc)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lpDirect3DDevice, lpDesc);
+  FIXME("(%p)->(%p,%p): stub\n", This, lpDirect3DDevice, lpDesc);
   
   return DD_OK;
 }
@@ -765,7 +765,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_Lock(LPDIRECT3DEXECUTEBUFFER if
 						  LPD3DEXECUTEBUFFERDESC lpDesc)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpDesc);
+  TRACE("(%p)->(%p)\n", This, lpDesc);
 
   /* Copies the buffer description */
   *lpDesc = This->desc;
@@ -776,7 +776,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_Lock(LPDIRECT3DEXECUTEBUFFER if
 static HRESULT WINAPI IDirect3DExecuteBufferImpl_Unlock(LPDIRECT3DEXECUTEBUFFER iface)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  TRACE(ddraw, "(%p)->()\n", This);
+  TRACE("(%p)->()\n", This);
 
   return DD_OK;
 }
@@ -787,7 +787,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_SetExecuteData(LPDIRECT3DEXECUT
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
   DWORD nbvert;
 
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpData);
+  TRACE("(%p)->(%p)\n", This, lpData);
 
   This->data = *lpData;
 
@@ -811,7 +811,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_GetExecuteData(LPDIRECT3DEXECUT
 							    LPD3DEXECUTEDATA lpData)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  TRACE(ddraw, "(%p)->(%p): stub\n", This, lpData);
+  TRACE("(%p)->(%p): stub\n", This, lpData);
 
   *lpData = This->data;
   
@@ -825,7 +825,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_Validate(LPDIRECT3DEXECUTEBUFFE
 						      DWORD dwReserved)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  TRACE(ddraw, "(%p)->(%p,%p,%p,%lu)\n", This, lpdwOffset, lpFunc, lpUserArg, dwReserved);
+  TRACE("(%p)->(%p,%p,%p,%lu)\n", This, lpdwOffset, lpFunc, lpUserArg, dwReserved);
 
   return DD_OK;
 }
@@ -834,7 +834,7 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_Optimize(LPDIRECT3DEXECUTEBUFFE
 						      DWORD dwReserved)
 {
   ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
-  TRACE(ddraw, "(%p)->(%lu)\n", This, dwReserved);
+  TRACE("(%p)->(%lu)\n", This, dwReserved);
 
   return DD_OK;
 }

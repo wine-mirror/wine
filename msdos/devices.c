@@ -10,7 +10,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "dosexe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "pshpack1.h"
 

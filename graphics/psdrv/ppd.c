@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "psdrv.h"
 #include "winspool.h"
 
@@ -88,7 +88,7 @@ static char *PSDRV_PPDDecodeHex(char *str)
 	    else {
 	        int i;
 	        if(!isxdigit(*in) || !isxdigit(*(in + 1))) {
-		    ERR(psdrv, "Invalid hex char in hex string\n");
+		    ERR("Invalid hex char in hex string\n");
 		    HeapFree(PSDRV_Heap, 0, buf);
 		    return NULL;
 		}
@@ -224,7 +224,7 @@ static BOOL PSDRV_PPDGetStringValue(char *str, PPDTuple *tuple)
  */
 static BOOL PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
 {
-    FIXME(psdrv, "Stub\n");
+    FIXME("Stub\n");
     return FALSE;
 }
 
@@ -251,7 +251,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
     } while(1);
 
     if(line[strlen(line)-1] != '\n') {
-        ERR(psdrv, "Line too long.\n");
+        ERR("Line too long.\n");
 	return FALSE;
     }
 
@@ -276,7 +276,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 	    opt++;
         cp = strpbrk(opt, ":/");
 	if(!cp) {
-	    ERR(psdrv, "Error in line '%s'?\n", line);
+	    ERR("Error in line '%s'?\n", line);
 	    return FALSE;
 	}
 	tuple->option = HeapAlloc( PSDRV_Heap, 0, cp - opt + 1 );
@@ -288,7 +288,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 	    trans = cp + 1;
 	    cp = strchr(trans, ':');
 	    if(!cp) {
-	        ERR(psdrv, "Error in line '%s'?\n", line);
+	        ERR("Error in line '%s'?\n", line);
 		return FALSE;
 	    }
 	    buf = HeapAlloc( PSDRV_Heap, 0, cp - trans + 1 );
@@ -399,16 +399,16 @@ PPD *PSDRV_ParsePPD(char *fname)
     PPD *ppd;
     PPDTuple tuple;
 
-    TRACE(psdrv, "%s\n", fname);
+    TRACE("%s\n", fname);
 
     if((fp = fopen(fname, "r")) == NULL) {
-        WARN(psdrv, "Couldn't open ppd file '%s'\n", fname);
+        WARN("Couldn't open ppd file '%s'\n", fname);
         return NULL;
     }
 
     ppd = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*ppd));
     if(!ppd) {
-        ERR(psdrv, "Unable to allocate memory for ppd\n");
+        ERR("Unable to allocate memory for ppd\n");
 	fclose(fp);
 	return NULL;
     }
@@ -419,24 +419,24 @@ PPD *PSDRV_ParsePPD(char *fname)
 	if(!strcmp("*NickName", tuple.key)) {
 	    ppd->NickName = tuple.value;
 	    tuple.value = NULL;
-	    TRACE(psdrv, "NickName = '%s'\n", ppd->NickName);
+	    TRACE("NickName = '%s'\n", ppd->NickName);
 	}
 
 	else if(!strcmp("*LanguageLevel", tuple.key)) {
 	    sscanf(tuple.value, "%d", &(ppd->LanguageLevel));
-	    TRACE(psdrv, "LanguageLevel = %d\n", ppd->LanguageLevel);
+	    TRACE("LanguageLevel = %d\n", ppd->LanguageLevel);
 	}
 
 	else if(!strcmp("*ColorDevice", tuple.key)) {
 	    if(!strcasecmp(tuple.value, "true"))
 	        ppd->ColorDevice = TRUE;
-	    TRACE(psdrv, "ColorDevice = %d\n", (int)ppd->ColorDevice);
+	    TRACE("ColorDevice = %d\n", (int)ppd->ColorDevice);
 	}
 
 	else if((!strcmp("*DefaultResolution", tuple.key)) ||
 		(!strcmp("*DefaultJCLResolution", tuple.key))) {
 	    sscanf(tuple.value, "%d", &(ppd->DefaultResolution));
-	    TRACE(psdrv, "DefaultResolution = %d\n", ppd->DefaultResolution);
+	    TRACE("DefaultResolution = %d\n", ppd->DefaultResolution);
 	}
 
 	else if(!strcmp("*Font", tuple.key)) {
@@ -494,7 +494,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		    }
 		}
 		if(!page->WinPage)
-		    FIXME(psdrv, "Can't find Windows page type for '%s'\n",
+		    FIXME("Can't find Windows page type for '%s'\n",
 			  page->Name);
 	    }
 	    if(!page->FullName) {
@@ -559,7 +559,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	    /* anything else, namely 'any', leaves value at 0 */
 
-	    TRACE(psdrv, "LandscapeOrientation = %d\n", 
+	    TRACE("LandscapeOrientation = %d\n", 
 		  ppd->LandscapeOrientation);
 	}
 	
@@ -610,7 +610,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		}
 	    }
 	    if(!slot->WinBin)
-	        FIXME(psdrv, "Can't find Windows bin type for '%s'\n",
+	        FIXME("Can't find Windows bin type for '%s'\n",
 			  slot->Name);
 
 	}   
@@ -633,35 +633,35 @@ PPD *PSDRV_ParsePPD(char *fname)
 	OPTIONENTRY *optionEntry;
 
 	for(fn = ppd->InstalledFonts; fn; fn = fn->next)
-	    TRACE(psdrv, "'%s'\n", fn->Name);
+	    TRACE("'%s'\n", fn->Name);
 	
 	for(page = ppd->PageSizes; page; page = page->next) {
-	    TRACE(psdrv, "'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,
+	    TRACE("'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,
 	      page->FullName, page->WinPage, page->InvocationString);
 	    if(page->ImageableArea)
-	        TRACE(psdrv, "Area = %.2f,%.2f - %.2f, %.2f\n", 
+	        TRACE("Area = %.2f,%.2f - %.2f, %.2f\n", 
 		      page->ImageableArea->llx, page->ImageableArea->lly,
 		      page->ImageableArea->urx, page->ImageableArea->ury);
 	    if(page->PaperDimension)
-	        TRACE(psdrv, "Dimension = %.2f x %.2f\n", 
+	        TRACE("Dimension = %.2f x %.2f\n", 
 		      page->PaperDimension->x, page->PaperDimension->y);
 	}
 
 	for(con = ppd->Constraints; con; con = con->next)
-	    TRACE(psdrv, "CONSTRAINTS@ %s %s %s %s\n", con->Feature1,
+	    TRACE("CONSTRAINTS@ %s %s %s %s\n", con->Feature1,
 		  con->Value1, con->Feature2, con->Value2);
 
 	for(option = ppd->InstalledOptions; option; option = option->next) {
-	    TRACE(psdrv, "OPTION: %s %s %s\n", option->OptionName,
+	    TRACE("OPTION: %s %s %s\n", option->OptionName,
 		  option->FullName, option->DefaultOption);
 	    for(optionEntry = option->Options; optionEntry;
 		optionEntry = optionEntry->next)
-	        TRACE(psdrv, "\tOPTIONENTRY: %s %s %s\n", optionEntry->Name,
+	        TRACE("\tOPTIONENTRY: %s %s %s\n", optionEntry->Name,
 		      optionEntry->FullName, optionEntry->InvocationString);
 	}
 
 	for(slot = ppd->InputSlots; slot; slot = slot->next)
-	    TRACE(psdrv, "INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
+	    TRACE("INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
 		  slot->Name, slot->FullName, slot->WinBin, 
 		  slot->InvocationString);
     }

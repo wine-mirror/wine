@@ -10,7 +10,7 @@
 #include "brush.h"
 #include "font.h"
 #include "pen.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -33,7 +33,7 @@ HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle )
     HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
-    TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );
+    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {
@@ -44,7 +44,7 @@ HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle )
         ret = WIN16DRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );	  
         break;
     case BITMAP_MAGIC:
-        FIXME(gdi, "WIN16DRV_SelectObject for BITMAP not implemented\n");
+        FIXME("WIN16DRV_SelectObject for BITMAP not implemented\n");
         ret = 1;
         break;
     case FONT_MAGIC:

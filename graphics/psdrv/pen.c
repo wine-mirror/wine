@@ -7,7 +7,7 @@
 
 #include "pen.h"
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -25,7 +25,7 @@ extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     HPEN prevpen = dc->w.hPen;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
-    TRACE(psdrv, "hpen = %08x colour = %08lx\n", hpen, pen->logpen.lopnColor);
+    TRACE("hpen = %08x colour = %08lx\n", hpen, pen->logpen.lopnColor);
     dc->w.hPen = hpen;
 
     physDev->pen.width = XLSTODS(dc, pen->logpen.lopnWidth.x);

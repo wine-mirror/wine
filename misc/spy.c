@@ -12,7 +12,7 @@
 #include "win.h"
 #include "module.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "spy.h"
 
 DEFAULT_DEBUG_CHANNEL(message)
@@ -670,22 +670,22 @@ void SPY_DumpStructure (UINT msg, LPARAM structure)
 	{
 	    case WM_DRAWITEM:
 		{   DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) structure;
-		    TRACE(message, "DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpdis->CtlType, lpdis->CtlID);
-		    TRACE(message, "itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", lpdis->itemID, lpdis->itemAction, lpdis->itemState);
-		    TRACE(message, "hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
+		    TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpdis->CtlType, lpdis->CtlID);
+		    TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", lpdis->itemID, lpdis->itemAction, lpdis->itemState);
+		    TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
 		    lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, lpdis->rcItem.right, lpdis->rcItem.bottom, lpdis->itemData);
 		}
 		break;
 	    case WM_MEASUREITEM:
 		{   MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) structure;
-		    TRACE(message, "MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpmis->CtlType, lpmis->CtlID);
-		    TRACE(message, "itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
-		    TRACE(message, "itemData=0x%08lx\n", lpmis->itemData);
+		    TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpmis->CtlType, lpmis->CtlID);
+		    TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
+		    TRACE("itemData=0x%08lx\n", lpmis->itemData);
 		}
 		break;
 	    case WM_NOTIFY:
 		{   NMHDR * pnmh = (NMHDR*) structure;
-		    TRACE(message, "NMHDR hwndFrom=0x%08x idFrom=0x%08x code=0x%08x\n", pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
+		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=0x%08x\n", pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
 		}
 	    default:
 		break;
@@ -707,14 +707,14 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     {
     case SPY_DISPATCHMESSAGE16:
 	pname = SPY_GetWndName(hWnd);
-        TRACE(message,"%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
+        TRACE("%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
                         wParam, lParam);
         break;
 
     case SPY_DISPATCHMESSAGE:
 	pname = SPY_GetWndName(hWnd);
-        TRACE(message,"%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
+        TRACE("%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
                         wParam, lParam);
         break;
@@ -735,11 +735,11 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 	    pname = SPY_GetWndName(hWnd);
 
             if (iFlag == SPY_SENDMESSAGE16)
-                TRACE(message, "%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
+                TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
 			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 			     taskName, wParam, lParam );
             else
-            {   TRACE(message, "%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
+            {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
 			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 			     taskName, wParam, lParam );
 		SPY_DumpStructure(msg, lParam);
@@ -749,14 +749,14 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 
     case SPY_DEFWNDPROC16:
 	if( SPY_ExcludeDWP ) return;
-        TRACE(message, "%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
+        TRACE("%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
                         msg, wParam, lParam );
         break;
 
     case SPY_DEFWNDPROC:
 	if( SPY_ExcludeDWP ) return;
-        TRACE(message, "%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
+        TRACE("%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
                         msg, wParam, lParam );
         break;
@@ -781,39 +781,39 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn )
     switch(iFlag)
     {
     case SPY_RESULT_DEFWND16:
-	TRACE(message," %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
+	TRACE(" %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
     case SPY_RESULT_DEFWND:
-	TRACE(message," %*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
+	TRACE(" %*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
     case SPY_RESULT_OK16:
 	pname = SPY_GetWndName(hWnd);
-        TRACE(message," %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
+        TRACE(" %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break;
 
     case SPY_RESULT_OK:
 	pname = SPY_GetWndName(hWnd);
-        TRACE(message," %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
+        TRACE(" %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
 	pname = SPY_GetWndName(hWnd);
-        WARN(message, " %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
+        WARN(" %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ) );
         break;
 
     case SPY_RESULT_INVALIDHWND:
 	pname = SPY_GetWndName(hWnd);
-        WARN(message, " %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
+        WARN(" %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ) );
         break;
@@ -834,7 +834,7 @@ int SPY_Init(void)
     PROFILE_GetWineIniString( "Spy", "Include", "", buffer, sizeof(buffer) );
     if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))
     {
-        TRACE(message, "Include=%s\n", buffer );
+        TRACE("Include=%s\n", buffer );
         for (i = 0; i <= SPY_MAX_MSGNUM; i++)
             SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
     }
@@ -842,7 +842,7 @@ int SPY_Init(void)
     PROFILE_GetWineIniString( "Spy", "Exclude", "", buffer, sizeof(buffer) );
     if (buffer[0])
     {
-        TRACE(message, "Exclude=%s\n", buffer );
+        TRACE("Exclude=%s\n", buffer );
         if (!strcmp( buffer, "EXCLUDEALL" ))
             for (i = 0; i <= SPY_MAX_MSGNUM; i++) SPY_Exclude[i] = TRUE;
         else

@@ -67,7 +67,7 @@
 #include "task.h"
 #include "message.h"
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(winsock)
 
@@ -372,7 +372,7 @@ static HANDLE16	__WSAsyncDBQuery(
 HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
                                INT16 len, INT16 type, SEGPTR sbuf, INT16 buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, addr %08x[%i]\n",
+	TRACE("hwnd %04x, msg %04x, addr %08x[%i]\n",
 	       hWnd, uMsg, (unsigned)addr , len );
 	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,(void*)sbuf,buflen,AQ_NUMBER|AQ_WIN16|AQ_GETHOST);
 }
@@ -383,7 +383,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
 HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
                                INT len, INT type, LPSTR sbuf, INT buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, addr %08x[%i]\n",
+	TRACE("hwnd %04x, msg %04x, addr %08x[%i]\n",
 	       hWnd, uMsg, (unsigned)addr , len );
 	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,sbuf,buflen,AQ_NUMBER|AQ_WIN32|AQ_GETHOST);
 }
@@ -394,7 +394,7 @@ HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                       SEGPTR sbuf, INT16 buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, host %s, buffer %i\n", hWnd, uMsg, (name)?name:"<null>", (int)buflen );
+	TRACE("hwnd %04x, msg %04x, host %s, buffer %i\n", hWnd, uMsg, (name)?name:"<null>", (int)buflen );
 
 	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,(void*)sbuf,buflen,AQ_NAME|AQ_WIN16|AQ_GETHOST);
 }                     
@@ -405,7 +405,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name, 
 					LPSTR sbuf, INT buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %08x, host %s, buffer %i\n", 
+	TRACE("hwnd %04x, msg %08x, host %s, buffer %i\n", 
 	       (HWND16)hWnd, uMsg, (name)?name:"<null>", (int)buflen );
 	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,AQ_NAME|AQ_WIN32|AQ_GETHOST);
 }
@@ -416,7 +416,7 @@ HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
 HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                          SEGPTR sbuf, INT16 buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %08x, protocol %s\n",
+	TRACE("hwnd %04x, msg %08x, protocol %s\n",
 	       (HWND16)hWnd, uMsg, (name)?name:"<null>" );
 	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,(void*)sbuf,buflen,AQ_GETPROTO|AQ_NAME|AQ_WIN16);
 }
@@ -427,7 +427,7 @@ HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                          LPSTR sbuf, INT buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %08x, protocol %s\n",
+	TRACE("hwnd %04x, msg %08x, protocol %s\n",
 	       (HWND16)hWnd, uMsg, (name)?name:"<null>" );
 	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,AQ_GETPROTO|AQ_NAME|AQ_WIN32);
 }
@@ -439,7 +439,7 @@ HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
 HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
                                            SEGPTR sbuf, INT16 buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
+	TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
 	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,(void*)sbuf,buflen,AQ_GETPROTO|AQ_NUMBER|AQ_WIN16);
 }
 
@@ -449,7 +449,7 @@ HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
 HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
                                            LPSTR sbuf, INT buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
+	TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
 
 	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,sbuf,buflen,AQ_GETPROTO|AQ_NUMBER|AQ_WIN32);
 }
@@ -460,7 +460,7 @@ HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
 HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                         LPCSTR proto, SEGPTR sbuf, INT16 buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, name %s, proto %s\n",
+	TRACE("hwnd %04x, msg %04x, name %s, proto %s\n",
 	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>" );
 
 	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,(void*)sbuf,buflen,AQ_GETSERV|AQ_NAME|AQ_WIN16);
@@ -472,7 +472,7 @@ HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, name %s, proto %s\n",
+	TRACE("hwnd %04x, msg %04x, name %s, proto %s\n",
 	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>" );
 	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,sbuf,buflen,AQ_GETSERV|AQ_NAME|AQ_WIN32);
 }
@@ -483,7 +483,7 @@ HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
 HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port, 
                                         LPCSTR proto, SEGPTR sbuf, INT16 buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, port %i, proto %s\n",
+	TRACE("hwnd %04x, msg %04x, port %i, proto %s\n",
 	       hWnd, uMsg, port, (proto)?proto:"<null>" );
 	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,(void*)sbuf,buflen,AQ_GETSERV|AQ_NUMBER|AQ_WIN16);
 }
@@ -494,7 +494,7 @@ HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
 HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
 {
-	TRACE(winsock, "hwnd %04x, msg %04x, port %i, proto %s\n",
+	TRACE("hwnd %04x, msg %04x, port %i, proto %s\n",
 	       hWnd, uMsg, port, (proto)?proto:"<null>" );
 	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,sbuf,buflen,AQ_GETSERV|AQ_NUMBER|AQ_WIN32);
 }
@@ -504,7 +504,7 @@ HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
  */
 INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 {
-    FIXME(winsock, "(%08x),stub\n", hAsyncTaskHandle);
+    FIXME("(%08x),stub\n", hAsyncTaskHandle);
     return 0;
 }
 

@@ -9,7 +9,7 @@
 #include "dc.h"
 #include "enhmetafiledrv.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile)
 
@@ -212,7 +212,7 @@ EMFDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     EMRELLIPSE emr;
     INT temp;
 
-    TRACE(enhmetafile, "%d,%d - %d,%d\n", left, top, right, bottom);
+    TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
     if(left == right || top == bottom) return FALSE;
 
@@ -242,7 +242,7 @@ EMFDRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     EMRRECTANGLE emr;
     INT temp;
 
-    TRACE(enhmetafile, "%d,%d - %d,%d\n", left, top, right, bottom);
+    TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
     if(left == right || top == bottom) return FALSE;
 

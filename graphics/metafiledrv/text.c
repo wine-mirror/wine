@@ -7,7 +7,7 @@
 
 #include "windef.h"
 #include "metafiledrv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile)
@@ -25,7 +25,7 @@ static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
     METARECORD *mr;
     
     if((!flags && rect) || (flags && !rect))
-	WARN(metafile, "Inconsistent flags and rect\n");
+	WARN("Inconsistent flags and rect\n");
     len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
 	    + sizeof(UINT16);
     if(rect)

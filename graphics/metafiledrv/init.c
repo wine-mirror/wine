@@ -11,7 +11,7 @@
 #include "global.h"
 #include "metafile.h"
 #include "metafiledrv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile)
 
@@ -170,7 +170,7 @@ HDC16 WINAPI CreateMetaFile16(
     METAFILEDRV_PDEVICE *physDev;
     HFILE hFile;
 
-    TRACE(metafile, "'%s'\n", filename );
+    TRACE("'%s'\n", filename );
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
@@ -196,7 +196,7 @@ HDC16 WINAPI CreateMetaFile16(
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
 	
-    TRACE(metafile, "returning %04x\n", dc->hSelf);
+    TRACE("returning %04x\n", dc->hSelf);
     return dc->hSelf;
 }
 
@@ -236,7 +236,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
     
-    TRACE(metafile, "(%04x)\n", hdc );
+    TRACE("(%04x)\n", hdc );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
@@ -343,12 +343,12 @@ BOOL MFDRV_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
 	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
         break;
     case METAFILE_DISK:
-        TRACE(metafile,"Writing record to disk\n");
+        TRACE("Writing record to disk\n");
 	if (!WriteFile(physDev->hFile, (char *)mr, rlen, NULL, NULL))
 	    return FALSE;
         break;
     default:
-        ERR(metafile, "Unknown metafile type %d\n", physDev->mh->mtType );
+        ERR("Unknown metafile type %d\n", physDev->mh->mtType );
         return FALSE;
     }
 

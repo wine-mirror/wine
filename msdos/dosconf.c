@@ -12,7 +12,7 @@
 #include <ctype.h>
 #include "winbase.h"
 #include "msdos.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "options.h"
 #include "file.h"
 
@@ -133,7 +133,7 @@ static int DOSCONF_Device(char **confline)
 	/* FIXME: get DEVICEHIGH parameters if avail ? */
     }
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE(profile, "Loading device '%s'\n", *confline);
+    TRACE("Loading device '%s'\n", *confline);
 #if 0
     DOSMOD_LoadDevice(*confline, loadhigh);
 #endif
@@ -160,7 +160,7 @@ static int DOSCONF_Dos(char **confline)
         else (*confline)++;
 	DOSCONF_JumpToEntry(confline, ',');
     }
-    TRACE(profile, "DOSCONF_Dos: HIGH is %d, UMB is %d\n",
+    TRACE("DOSCONF_Dos: HIGH is %d, UMB is %d\n",
     	(DOSCONF_config.flags & DOSCONF_MEM_HIGH) != 0, (DOSCONF_config.flags & DOSCONF_MEM_UMB) != 0);
     return 1;
 }
@@ -172,10 +172,10 @@ static int DOSCONF_Fcbs(char **confline)
     DOSCONF_config.fcbs = atoi(*confline);
     if (DOSCONF_config.fcbs > 255)
     {
-		MSG("The FCBS value in the config.sys file is too high ! Setting to 255.\n");
+		MESSAGE("The FCBS value in the config.sys file is too high ! Setting to 255.\n");
 		DOSCONF_config.fcbs = 255;
     }
-    TRACE(profile, "DOSCONF_Fcbs returning %d\n", DOSCONF_config.fcbs);
+    TRACE("DOSCONF_Fcbs returning %d\n", DOSCONF_config.fcbs);
     return 1;
 }
 
@@ -185,7 +185,7 @@ static int DOSCONF_Break(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     if (!(strcasecmp(*confline, "ON")))
         DOSCONF_config.brk_flag = 1;
-    TRACE(profile, "BREAK is %d\n", DOSCONF_config.brk_flag);
+    TRACE("BREAK is %d\n", DOSCONF_config.brk_flag);
     return 1;
 }
 
@@ -196,15 +196,15 @@ static int DOSCONF_Files(char **confline)
     DOSCONF_config.files = atoi(*confline);
     if (DOSCONF_config.files > 255)
     {
-    	MSG("The FILES value in the config.sys file is too high ! Setting to 255.\n");
+    	MESSAGE("The FILES value in the config.sys file is too high ! Setting to 255.\n");
         DOSCONF_config.files = 255;
     }
     if (DOSCONF_config.files < 8)
     {
-    	MSG("The FILES value in the config.sys file is too low ! Setting to 8.\n");
+    	MESSAGE("The FILES value in the config.sys file is too low ! Setting to 8.\n");
         DOSCONF_config.files = 8;
     }
-    TRACE(profile, "DOSCONF_Files returning %d\n", DOSCONF_config.files);
+    TRACE("DOSCONF_Files returning %d\n", DOSCONF_config.files);
     return 1;
 }
 
@@ -216,7 +216,7 @@ static int DOSCONF_Install(char **confline)
 
     *confline += 7; /* strlen("INSTALL") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE(profile, "Installing '%s'\n", *confline);
+    TRACE("Installing '%s'\n", *confline);
 #if 0
     DOSMOD_Install(*confline, loadhigh);
 #endif
@@ -228,7 +228,7 @@ static int DOSCONF_Lastdrive(char **confline)
     *confline += 9; /* strlen("LASTDRIVE") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     DOSCONF_config.lastdrive = toupper(**confline);
-    TRACE(profile, "Lastdrive %c\n", DOSCONF_config.lastdrive);
+    TRACE("Lastdrive %c\n", DOSCONF_config.lastdrive);
     return 1;
 }
 
@@ -236,7 +236,7 @@ static int DOSCONF_Country(char **confline)
 {
     *confline += 7; /* strlen("COUNTRY") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE(profile, "Country '%s'\n", *confline);
+    TRACE("Country '%s'\n", *confline);
     if (DOSCONF_config.country == NULL)
 		DOSCONF_config.country = malloc(strlen(*confline) + 1);
     strcpy(DOSCONF_config.country, *confline);
@@ -249,7 +249,7 @@ static int DOSCONF_Numlock(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     if (!(strcasecmp(*confline, "ON")))
         DOSCONF_config.flags |= DOSCONF_NUMLOCK;
-    TRACE(profile, "NUMLOCK is %d\n", (DOSCONF_config.flags & DOSCONF_NUMLOCK) != 0);
+    TRACE("NUMLOCK is %d\n", (DOSCONF_config.flags & DOSCONF_NUMLOCK) != 0);
     return 1;
 }
 
@@ -266,7 +266,7 @@ static int DOSCONF_Switches(char **confline)
 	    DOSCONF_config.flags |= DOSCONF_KEYB_CONV;
     }
     while ((p = strtok(NULL, "/")));
-    TRACE(profile, "'Force conventional keyboard' is %d\n",
+    TRACE("'Force conventional keyboard' is %d\n",
 		(DOSCONF_config.flags & DOSCONF_KEYB_CONV) != 0);
     return 1;
 }
@@ -275,7 +275,7 @@ static int DOSCONF_Shell(char **confline)
 {
     *confline += 5; /* strlen("SHELL") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE(profile, "Shell '%s'\n", *confline);
+    TRACE("Shell '%s'\n", *confline);
     if (DOSCONF_config.shell == NULL)
 		DOSCONF_config.shell = malloc(strlen(*confline) + 1);
     strcpy(DOSCONF_config.shell, *confline);
@@ -289,7 +289,7 @@ static int DOSCONF_Stacks(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     DOSCONF_config.stacks_nr = atoi(strtok(*confline, ","));
     DOSCONF_config.stacks_sz = atoi((strtok(NULL, ",")));
-    TRACE(profile, "%d stacks of size %d\n",
+    TRACE("%d stacks of size %d\n",
           DOSCONF_config.stacks_nr, DOSCONF_config.stacks_sz);
     return 1;
 }
@@ -304,7 +304,7 @@ static int DOSCONF_Buffers(char **confline)
     DOSCONF_config.buf = atoi(p);
     if ((p = strtok(NULL, ",")))
         DOSCONF_config.buf2 = atoi(p);
-    TRACE(profile, "%d primary buffers, %d secondary buffers\n",
+    TRACE("%d primary buffers, %d secondary buffers\n",
           DOSCONF_config.buf, DOSCONF_config.buf2);
     return 1;
 }
@@ -352,7 +352,7 @@ static int DOSCONF_Include(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     fgetpos(cfg_fd, &oldpos);
     fseek(cfg_fd, 0, SEEK_SET);
-    TRACE(profile, "Including menu '%s'\n", *confline);
+    TRACE("Including menu '%s'\n", *confline);
     temp = malloc(strlen(*confline) + 1);
     strcpy(temp, *confline);
     DOSCONF_Parse(temp);
@@ -403,7 +403,7 @@ static void DOSCONF_Parse(char *menuname)
 		if (!(strncasecmp(p, tag_entries[i].tag_name,
 		   strlen(tag_entries[i].tag_name))))
 		{
-		    TRACE(profile, "tag '%s'\n", tag_entries[i].tag_name);
+		    TRACE("tag '%s'\n", tag_entries[i].tag_name);
 		    if (tag_entries[i].tag_handler != NULL)
 			    tag_entries[i].tag_handler(&p);
 			break;
@@ -435,7 +435,7 @@ int DOSCONF_ReadConfig(void)
     }
     else
     {
-        MSG("Couldn't open config.sys file given as \"%s\" in" \
+        MESSAGE("Couldn't open config.sys file given as \"%s\" in" \
             " wine.conf or .winerc, section [wine] !\n", filename);
         ret = 0;
     }

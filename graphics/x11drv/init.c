@@ -14,7 +14,7 @@
 
 #include "bitmap.h"
 #include "color.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "ldt.h"
 #include "local.h"
 #include "monitor.h"
@@ -171,7 +171,7 @@ BOOL X11DRV_GDI_Initialize(void)
     /* Finish up device caps */
 
 #if 0
-    TRACE(x11drv, "Height = %-4i pxl, %-4i mm, Width  = %-4i pxl, %-4i mm\n",
+    TRACE("Height = %-4i pxl, %-4i mm, Width  = %-4i pxl, %-4i mm\n",
 	  HeightOfScreen(X11DRV_GetXScreen()), HeightMMOfScreen(X11DRV_GetXScreen()),
 	  WidthOfScreen(X11DRV_GetXScreen()), WidthMMOfScreen(X11DRV_GetXScreen()) );
 #endif
@@ -222,7 +222,7 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     dc->physDev = physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 				       sizeof(*physDev) );
     if(!physDev) {
-        ERR(x11drv, "Can't allocate physDev\n");
+        ERR("Can't allocate physDev\n");
 	return FALSE;
     }
 

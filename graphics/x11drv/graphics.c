@@ -40,7 +40,7 @@
 #include "color.h"
 #include "region.h"
 #include "struct32.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "xmalloc.h"
 
 DEFAULT_DEBUG_CHANNEL(graphics)
@@ -295,7 +295,7 @@ BOOL X11DRV_SetupGCForText( DC * dc )
 		   GCFont, &val );
 	return TRUE;
     } 
-    WARN(graphics, "Physical font failure\n" );
+    WARN("Physical font failure\n" );
     return FALSE;
 }
 
@@ -577,7 +577,7 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     INT width, oldwidth, oldjoinstyle;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    TRACE(graphics, "(%d %d %d %d)\n", 
+    TRACE("(%d %d %d %d)\n", 
     	left, top, right, bottom);
 
     left   = XLPTODP( dc, left );
@@ -637,7 +637,7 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
     INT width, oldwidth, oldendcap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    TRACE(graphics, "(%d %d %d %d  %d %d\n", 
+    TRACE("(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
 
     left   = XLPTODP( dc, left );
@@ -1192,7 +1192,7 @@ X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
     BOOL result;
     struct FloodFill_params params;
 
-    TRACE(graphics, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
+    TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n",
                       x, y, color, fillType );
 
     params.dc = dc;
@@ -1384,14 +1384,14 @@ X11DRV_PolyBezier(DC *dc, POINT start, const POINT* BezierPoints, DWORD count)
     XPoint* xpoints;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    TRACE(graphics, "dc=%p count=%ld %ld,%ld - %ld,%ld - %ld,%ld - %ld,%ld\n", 
+    TRACE("dc=%p count=%ld %ld,%ld - %ld,%ld - %ld,%ld - %ld,%ld\n", 
             dc, count,
             start.x, start.y,
             (Points+0)->x, (Points+0)->y, 
             (Points+1)->x, (Points+1)->y, 
             (Points+2)->x, (Points+2)->y); 
     if(!count || count % 3){/* paranoid */
-        WARN(graphics," bad value for count : %ld\n", count);
+        WARN(" bad value for count : %ld\n", count);
         return FALSE; 
     }
     xpoints=(XPoint*) xmalloc( sizeof(XPoint)*BEZMAXPOINTS);

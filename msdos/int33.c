@@ -6,7 +6,7 @@
 #include "winuser.h"
 #include "miscemu.h"
 #include "dosexe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 
@@ -27,20 +27,20 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
 
   switch (AX_reg(context)) {
   case 0x00:
-    TRACE(int,"Reset mouse driver and request status\n");
+    TRACE("Reset mouse driver and request status\n");
     AX_reg(context) = 0xFFFF; /* installed */
     BX_reg(context) = 3;      /* # of buttons */
     sys = calloc(1,sizeof(MOUSESYSTEM));
     DOSVM_SetSystemData(0x33, sys);
     break;
   case 0x03:
-    TRACE(int,"Return mouse position and button status\n");
+    TRACE("Return mouse position and button status\n");
     BX_reg(context) = sys->but;
     CX_reg(context) = sys->x;
     DX_reg(context) = sys->y;
     break;
   case 0x0C: /* Define interrupt subroutine */
-    TRACE(int,"Define mouse interrupt subroutine\n");
+    TRACE("Define mouse interrupt subroutine\n");
     sys->callmask = CX_reg(context);
     sys->callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(ES_reg(context), DX_reg(context));
     break;

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "heap.h"
 #include "win16drv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv)
 
@@ -62,9 +62,9 @@ WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     BOOL bRet = 0;
     POINT16 points[2];
 
-    TRACE(win16drv, "In WIN16DRV_Rectangle, x %d y %d DCOrgX %d y %d\n",
+    TRACE("In WIN16DRV_Rectangle, x %d y %d DCOrgX %d y %d\n",
            left, top, dc->w.DCOrgX, dc->w.DCOrgY);
-    TRACE(win16drv, "In WIN16DRV_Rectangle, VPortOrgX %d y %d\n",
+    TRACE("In WIN16DRV_Rectangle, VPortOrgX %d y %d\n",
            dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
     points[0].y = YLPTODP(dc, top);
@@ -154,9 +154,9 @@ WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom)
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     BOOL bRet = 0;
     POINT16 points[2];
-    TRACE(win16drv, "In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
+    TRACE("In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
            left, top, dc->w.DCOrgX, dc->w.DCOrgY);
-    TRACE(win16drv, "In WIN16DRV_Ellipse, VPortOrgX %d y %d\n",
+    TRACE("In WIN16DRV_Ellipse, VPortOrgX %d y %d\n",
            dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
     points[0].y = YLPTODP(dc, top);

@@ -8,7 +8,7 @@
 #include "wine/obj_base.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "d3d_private.h"
 
@@ -106,7 +106,7 @@ static void _dump_renderstate(D3DRENDERSTATETYPE type,
     "D3DRENDERSTATE_STIPPLEPATTERN31"
   };
 
-  DUMP(" %s = 0x%08lx\n", states[type], value);
+  DPRINTF(" %s = 0x%08lx\n", states[type], value);
 }
 
 
@@ -120,7 +120,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
   /* First, all the stipple patterns */
   if ((dwRenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00) && 
       (dwRenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)) {
-    ERR(ddraw, "Unhandled stipple !\n");
+    ERR("Unhandled stipple !\n");
   } else {
     ENTER_GL();
     
@@ -134,7 +134,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
       } else {
-	TRACE(ddraw, "setting OpenGL texture handle : %d\n", tex->tex_name);
+	TRACE("setting OpenGL texture handle : %d\n", tex->tex_name);
 	glEnable(GL_TEXTURE_2D);
 	/* Default parameters */
 	glBindTexture(GL_TEXTURE_2D, tex->tex_name);
@@ -165,7 +165,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 
       default:
-	ERR(ddraw, "Unhandled fill mode !\n");
+	ERR("Unhandled fill mode !\n");
       }
       break;
 
@@ -180,7 +180,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 
       default:
-	ERR(ddraw, "Unhandled shade mode !\n");
+	ERR("Unhandled shade mode !\n");
       }
       break;
       
@@ -202,7 +202,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 	
       default:
-	ERR(ddraw, "Unhandled texture mag !\n");
+	ERR("Unhandled texture mag !\n");
       }
       break;
 
@@ -217,7 +217,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 	
       default:
-	ERR(ddraw, "Unhandled texture min !\n");
+	ERR("Unhandled texture min !\n");
       }
       break;
       
@@ -228,7 +228,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 
       default:
-	ERR(ddraw, "Unhandled blend mode !\n");
+	ERR("Unhandled blend mode !\n");
       }
       
       glBlendFunc(rs->src, rs->dst);
@@ -241,7 +241,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 	
       default:
-	ERR(ddraw, "Unhandled blend mode !\n");
+	ERR("Unhandled blend mode !\n");
       }
       
       glBlendFunc(rs->src, rs->dst);
@@ -255,7 +255,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 
       default:
-	ERR(ddraw, "Unhandled texture environment !\n");
+	ERR("Unhandled texture environment !\n");
       }
       break;
       
@@ -276,7 +276,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 	
       default:
-	ERR(ddraw, "Unhandled cull mode !\n");
+	ERR("Unhandled cull mode !\n");
       }
       break;
       
@@ -308,7 +308,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	break;
 
       default:
-	ERR(ddraw, "Unexpected value\n");
+	ERR("Unexpected value\n");
       }
       break;
       
@@ -337,7 +337,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       break;
       
     default:
-      ERR(ddraw, "Unhandled Render State\n");
+      ERR("Unhandled Render State\n");
       break;
     }
 

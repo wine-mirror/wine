@@ -18,7 +18,7 @@
 #include "gdi.h"
 #include "heap.h"
 #include "x11font.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(text)
 
@@ -53,7 +53,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     lfUnderline = (pfo->fo_flags & FO_SYNTH_UNDERLINE) ? 1 : 0;
     lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
-    TRACE(text,"hdc=%04x df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
+    TRACE("hdc=%04x df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
 	  dc->hSelf, (UINT16)(physDev->font), x, y,
 	  debugstr_an (str, count), count, flags, lpDx);
 
@@ -62,7 +62,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
        terminating newlines seems ok.  MW, April 1998.  */
     if (count > 0 && str[count - 1] == '\n') count--;
 
-    if (lprect != NULL) TRACE(text, "\trect=(%d,%d - %d,%d)\n",
+    if (lprect != NULL) TRACE("\trect=(%d,%d - %d,%d)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
       /* Setup coordinates */
@@ -101,7 +101,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     x = XLPTODP( dc, x );
     y = YLPTODP( dc, y );
 
-    TRACE(text,"\treal coord: x=%i, y=%i, rect=(%d,%d - %d,%d)\n",
+    TRACE("\treal coord: x=%i, y=%i, rect=(%d,%d - %d,%d)\n",
 			  x, y, rect.left, rect.top, rect.right, rect.bottom);
 
       /* Draw the rectangle */

@@ -14,7 +14,7 @@
  #define PI M_PI
 #endif
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winspool.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(psdrv)
  */
 BOOL PSDRV_MoveToEx(DC *dc, INT x, INT y, LPPOINT pt)
 {
-    TRACE(psdrv, "%d %d\n", x, y);
+    TRACE("%d %d\n", x, y);
     if (pt)
     {
 	pt->x = dc->w.CursPosX;
@@ -42,7 +42,7 @@ BOOL PSDRV_MoveToEx(DC *dc, INT x, INT y, LPPOINT pt)
  */
 BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
 {
-    TRACE(psdrv, "%d %d\n", x, y);
+    TRACE("%d %d\n", x, y);
 
     PSDRV_SetPen(dc);
     PSDRV_WriteMoveTo(dc, XLPTODP(dc, dc->w.CursPosX),
@@ -66,7 +66,7 @@ BOOL PSDRV_Rectangle( DC *dc, INT left, INT top, INT right,
     INT height = YLSTODS(dc, bottom - top);
 
 
-    TRACE(psdrv, "%d %d - %d %d\n", left, top, right, bottom);
+    TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
     PSDRV_WriteRectangle(dc, XLPTODP(dc, left), YLPTODP(dc, top),
 			     width, height);
@@ -202,7 +202,7 @@ BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom)
 {
     INT x, y, w, h;
 
-    TRACE(psdrv, "%d %d - %d %d\n", left, top, right, bottom);
+    TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
     x = XLPTODP(dc, (left + right)/2);
     y = YLPTODP(dc, (top + bottom)/2);
@@ -227,7 +227,7 @@ BOOL PSDRV_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 {
     DWORD polyline, line;
     const POINT* pt;
-    TRACE(psdrv, "\n");
+    TRACE("\n");
 
     pt = pts;
     for(polyline = 0; polyline < polylines; polyline++) {
@@ -261,7 +261,7 @@ BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
 {
     DWORD polygon, line;
     const POINT* pt;
-    TRACE(psdrv, "\n");
+    TRACE("\n");
 
     pt = pts;
     for(polygon = 0; polygon < polygons; polygon++) {

@@ -9,7 +9,7 @@
 #include "miscemu.h"
 #include "dispdib.h"
 #include "vga.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "wine/wingdi16.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
@@ -132,7 +132,7 @@ WORD WINAPI DisplayDib(
         DISPDIB_Show(&(lpbi->bmiHeader),lpBits,wFlags);
     }
     if (!(wFlags&DISPLAYDIB_NOWAIT)) {
-        FIXME(ddraw,"wait not implemented\n");
+        FIXME("wait not implemented\n");
     }
     if (!dispdib_multi) DISPDIB_End();
     return DISPLAYDIB_NOERROR;

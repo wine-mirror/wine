@@ -8,7 +8,7 @@
 #include "bitmap.h"
 #include "color.h"
 #include "dc.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "palette.h"
 #include "ttydrv.h"
@@ -181,7 +181,7 @@ void TTYDRV_GDI_Finalize(void)
 BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
 			    LPCSTR output, const DEVMODEA *initData)
 {
-  FIXME(ttydrv, "(%p, %s, %s, %s, %p): semistub\n",
+  FIXME("(%p, %s, %s, %s, %p): semistub\n",
     dc, debugstr_a(driver), debugstr_a(device), 
     debugstr_a(output), initData
   );
@@ -190,7 +190,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
 			   sizeof(TTYDRV_PDEVICE) );
   
   if(!dc->physDev) {
-    ERR(ttydrv, "Can't allocate physDev\n");
+    ERR("Can't allocate physDev\n");
     return FALSE;
   }
 
@@ -205,7 +205,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
  */
 BOOL TTYDRV_DC_DeleteDC(DC *dc)
 {
-  FIXME(ttydrv, "(%p): semistub\n", dc);
+  FIXME("(%p): semistub\n", dc);
 
   HeapFree( GetProcessHeap(), 0, dc->physDev );
   dc->physDev = NULL;

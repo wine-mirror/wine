@@ -10,7 +10,7 @@
 #include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "x11drv.h"
 
 #include "d3d_private.h"
@@ -91,7 +91,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(LPDIRECT3DVIEWPORT2 
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
@@ -101,7 +101,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(LPDIRECT3DVIEWPORT2 
 static ULONG WINAPI IDirect3DViewport2Impl_AddRef(LPDIRECT3DVIEWPORT2 iface)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
   
   return ++(This->ref);
 }
@@ -111,7 +111,7 @@ static ULONG WINAPI IDirect3DViewport2Impl_AddRef(LPDIRECT3DVIEWPORT2 iface)
 static ULONG WINAPI IDirect3DViewport2Impl_Release(LPDIRECT3DVIEWPORT2 iface)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
+  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
     HeapFree(GetProcessHeap(),0,This);
@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_Initialize(LPDIRECT3DVIEWPORT2 ifac
 						    LPDIRECT3D d3d)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p): stub\n", This, d3d);
+  FIXME("(%p)->(%p): stub\n", This, d3d);
   
   return DD_OK;
 }
@@ -135,7 +135,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetViewport(LPDIRECT3DVIEWPORT2 ifa
 						     LPD3DVIEWPORT lpvp)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpvp);
+  FIXME("(%p)->(%p): stub\n", This, lpvp);
   
   if (This->use_vp2 != 0)
     return DDERR_INVALIDPARAMS;
@@ -149,20 +149,20 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetViewport(LPDIRECT3DVIEWPORT2 ifa
 						     LPD3DVIEWPORT lpvp)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpvp);
+  FIXME("(%p)->(%p): stub\n", This, lpvp);
 
   This->use_vp2 = 0;
   This->viewport.vp1 = *lpvp;
   
-  TRACE(ddraw, "dwSize = %ld   dwX = %ld   dwY = %ld\n",
+  TRACE("dwSize = %ld   dwX = %ld   dwY = %ld\n",
 	lpvp->dwSize, lpvp->dwX, lpvp->dwY);
-  TRACE(ddraw, "dwWidth = %ld   dwHeight = %ld\n",
+  TRACE("dwWidth = %ld   dwHeight = %ld\n",
 	lpvp->dwWidth, lpvp->dwHeight);
-  TRACE(ddraw, "dvScaleX = %f   dvScaleY = %f\n",
+  TRACE("dvScaleX = %f   dvScaleY = %f\n",
 	lpvp->dvScaleX, lpvp->dvScaleY);
-  TRACE(ddraw, "dvMaxX = %f   dvMaxY = %f\n",
+  TRACE("dvMaxX = %f   dvMaxY = %f\n",
 	lpvp->dvMaxX, lpvp->dvMaxY);
-  TRACE(ddraw, "dvMinZ = %f   dvMaxZ = %f\n",
+  TRACE("dvMinZ = %f   dvMaxZ = %f\n",
 	lpvp->dvMinZ, lpvp->dvMaxZ);
 
   
@@ -176,7 +176,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_TransformVertices(LPDIRECT3DVIEWPOR
 							   LPDWORD lpOffScreen)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%8ld,%p,%08lx,%p): stub\n",
+  FIXME("(%p)->(%8ld,%p,%08lx,%p): stub\n",
 	This, dwVertexCount, lpData, dwFlags, lpOffScreen);
   
   return DD_OK;
@@ -187,7 +187,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_LightElements(LPDIRECT3DVIEWPORT2 i
 						       LPD3DLIGHTDATA lpData)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%8ld,%p): stub\n", This, dwElementCount, lpData);
+  FIXME("(%p)->(%8ld,%p): stub\n", This, dwElementCount, lpData);
   
   return DD_OK;
 }
@@ -196,7 +196,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetBackground(LPDIRECT3DVIEWPORT2 i
 						       D3DMATERIALHANDLE hMat)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%08lx): stub\n", This, (DWORD) hMat);
+  FIXME("(%p)->(%08lx): stub\n", This, (DWORD) hMat);
   
   return DD_OK;
 }
@@ -206,7 +206,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetBackground(LPDIRECT3DVIEWPORT2 i
 						       LPBOOL lpValid)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lphMat, lpValid);
+  FIXME("(%p)->(%p,%p): stub\n", This, lphMat, lpValid);
   
   return DD_OK;
 }
@@ -215,7 +215,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetBackgroundDepth(LPDIRECT3DVIEWPO
 							    LPDIRECTDRAWSURFACE lpDDSurface)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpDDSurface);
+  FIXME("(%p)->(%p): stub\n", This, lpDDSurface);
   
   return DD_OK;
 }
@@ -225,7 +225,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetBackgroundDepth(LPDIRECT3DVIEWPO
 							    LPBOOL lpValid)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lplpDDSurface, lpValid);
+  FIXME("(%p)->(%p,%p): stub\n", This, lplpDDSurface, lpValid);
   
   return DD_OK;
 }
@@ -237,7 +237,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_Clear(LPDIRECT3DVIEWPORT2 iface,
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
   GLboolean ztest;
-  FIXME(ddraw, "(%p)->(%8ld,%p,%08lx): stub\n", This, dwCount, lpRects, dwFlags);
+  FIXME("(%p)->(%8ld,%p,%08lx): stub\n", This, dwCount, lpRects, dwFlags);
 
   /* For the moment, ignore the rectangles */
   if (This->device.active_device1 != NULL) {
@@ -264,7 +264,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_AddLight(LPDIRECT3DVIEWPORT2 iface,
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
   IDirect3DLightImpl* ilpLight=(IDirect3DLightImpl*)lpLight;
-  FIXME(ddraw, "(%p)->(%p): stub\n", This, ilpLight);
+  FIXME("(%p)->(%p): stub\n", This, ilpLight);
 
   /* Add the light in the 'linked' chain */
   ilpLight->next = This->lights;
@@ -290,7 +290,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_DeleteLight(LPDIRECT3DVIEWPORT2 ifa
 						     LPDIRECT3DLIGHT lpLight)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpLight);
+  FIXME("(%p)->(%p): stub\n", This, lpLight);
   
   return DD_OK;
 }
@@ -301,7 +301,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_NextLight(LPDIRECT3DVIEWPORT2 iface
 						   DWORD dwFlags)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p,%p,%08lx): stub\n", This, lpLight, lplpLight, dwFlags);
+  FIXME("(%p)->(%p,%p,%08lx): stub\n", This, lpLight, lplpLight, dwFlags);
   
   return DD_OK;
 }
@@ -311,7 +311,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetViewport2(LPDIRECT3DVIEWPORT2 if
 						      LPD3DVIEWPORT2 lpViewport2)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpViewport2);
+  TRACE("(%p)->(%p)\n", This, lpViewport2);
 
   if (This->use_vp2 != 1)
     return DDERR_INVALIDPARAMS;
@@ -325,17 +325,17 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetViewport2(LPDIRECT3DVIEWPORT2 if
 						      LPD3DVIEWPORT2 lpViewport2)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpViewport2);
+  TRACE("(%p)->(%p)\n", This, lpViewport2);
 
-  TRACE(ddraw, "dwSize = %ld   dwX = %ld   dwY = %ld\n",
+  TRACE("dwSize = %ld   dwX = %ld   dwY = %ld\n",
 	lpViewport2->dwSize, lpViewport2->dwX, lpViewport2->dwY);
-  TRACE(ddraw, "dwWidth = %ld   dwHeight = %ld\n",
+  TRACE("dwWidth = %ld   dwHeight = %ld\n",
 	lpViewport2->dwWidth, lpViewport2->dwHeight);
-  TRACE(ddraw, "dvClipX = %f   dvClipY = %f\n",
+  TRACE("dvClipX = %f   dvClipY = %f\n",
 	lpViewport2->dvClipX, lpViewport2->dvClipY);
-  TRACE(ddraw, "dvClipWidth = %f   dvClipHeight = %f\n",
+  TRACE("dvClipWidth = %f   dvClipHeight = %f\n",
 	lpViewport2->dvClipWidth, lpViewport2->dvClipHeight);
-  TRACE(ddraw, "dvMinZ = %f   dvMaxZ = %f\n",
+  TRACE("dvMinZ = %f   dvMaxZ = %f\n",
 	lpViewport2->dvMinZ, lpViewport2->dvMaxZ);
 
   This->viewport.vp2 = *lpViewport2;
@@ -377,12 +377,12 @@ static ICOM_VTABLE(IDirect3DViewport2) viewport2_vtable =
 #else /* HAVE_MESAGL */
 
 LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 
 LPDIRECT3DVIEWPORT2 d3dviewport2_create(IDirect3D2Impl* d3d2) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 

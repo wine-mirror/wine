@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int19)
 
@@ -16,5 +16,5 @@ DEFAULT_DEBUG_CHANNEL(int19)
  */
 void WINAPI INT_Int19Handler( CONTEXT86 *context )
 {
-    WARN(int19, "Attempted Reboot\n");
+    WARN("Attempted Reboot\n");
 }

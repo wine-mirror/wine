@@ -13,7 +13,7 @@
 #include "cache.h"
 #include "region.h"
 #include "path.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
@@ -462,7 +462,7 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
  */
 INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
 {
-    FIXME(gdi, "(%d,%p): stub\n",hdc,ppfd);
+    FIXME("(%d,%p): stub\n",hdc,ppfd);
     return 1;
 }
 
@@ -481,7 +481,7 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
 BOOL WINAPI SetPixelFormat( HDC hdc, int iPixelFormat, 
                               const PIXELFORMATDESCRIPTOR* ppfd)
 {
-    FIXME(gdi, "(%d,%d,%p): stub\n",hdc,iPixelFormat,ppfd);
+    FIXME("(%d,%d,%p): stub\n",hdc,iPixelFormat,ppfd);
     return TRUE;
 }
 
@@ -499,7 +499,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, int iPixelFormat,
  */
 int WINAPI GetPixelFormat( HDC hdc )
 {
-    FIXME(gdi, "(%d): stub\n",hdc);
+    FIXME("(%d): stub\n",hdc);
     return 1;
 }
 
@@ -521,7 +521,7 @@ int WINAPI GetPixelFormat( HDC hdc )
 int WINAPI DescribePixelFormat( HDC hdc, int iPixelFormat, UINT nBytes,
                                 LPPIXELFORMATDESCRIPTOR ppfd )
 {
-    FIXME(gdi, "(%d,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
+    FIXME("(%d,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
     ppfd->nSize = nBytes;
     ppfd->nVersion = 1;
     return 3;
@@ -539,7 +539,7 @@ int WINAPI DescribePixelFormat( HDC hdc, int iPixelFormat, UINT nBytes,
  */
 BOOL WINAPI SwapBuffers( HDC hdc )
 {
-    FIXME(gdi, "(%d): stub\n",hdc);
+    FIXME("(%d): stub\n",hdc);
     return TRUE;
 }
 
@@ -908,7 +908,7 @@ BOOL WINAPI DrawAnimatedRects( HWND hwnd, int idAni,
                                    const RECT* lprcFrom,
                                    const RECT* lprcTo )
 {
-    FIXME(gdi,"(0x%x,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
+    FIXME("(0x%x,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
     return TRUE;
 }
 
@@ -1198,7 +1198,7 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
     DC * dc = DC_GetDCPtr( hdc );
     if(!dc) return FALSE;
     if(dc && PATH_IsPathOpen(dc->w.path))
-        FIXME(gdi, "PATH_PolyBezier is not implemented!\n");
+        FIXME("PATH_PolyBezier is not implemented!\n");
 /*        if(!PATH_PolyBezier(hdc, x, y))
 	   return FALSE; */
     return dc->funcs->pPolyBezier&&
@@ -1225,7 +1225,7 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
     pt.x=dc->w.CursPosX;
     pt.y=dc->w.CursPosY;
     if(dc && PATH_IsPathOpen(dc->w.path))
-        FIXME(gdi, "PATH_PolyBezierTo is not implemented!\n");
+        FIXME("PATH_PolyBezierTo is not implemented!\n");
 /*        if(!PATH_PolyBezier(hdc, x, y))
 	   return FALSE; */
     ret= dc->funcs->pPolyBezier &&
@@ -1242,7 +1242,7 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius,
                        FLOAT eStartAngle, FLOAT eSweepAngle)
 {
-        FIXME(gdi,"AngleArc, stub\n");
+        FIXME("AngleArc, stub\n");
         return 0;
 }
 
@@ -1253,6 +1253,6 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius,
 BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)
 {
-        FIXME(gdi,"PolyDraw, stub\n");
+        FIXME("PolyDraw, stub\n");
         return 0;
 }

@@ -9,7 +9,7 @@
 #include "win16drv.h"
 #include "dc.h"
 #include "gdi.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv)
 
@@ -32,7 +32,7 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     if (count == 0)
       return FALSE;
 
-    TRACE(win16drv, "%04x %d %d %x %p %*s %p\n",
+    TRACE("%04x %d %d %x %p %*s %p\n",
 	   dc->hSelf, x, y, flags,  lprect, count > 0 ? count : 8, str, lpDx);
 
 
@@ -55,7 +55,7 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
             
         }
         
-	TRACE(win16drv, "textalign = %d\n", dc->w.textAlign);
+	TRACE("textalign = %d\n", dc->w.textAlign);
 
 	if (dc->w.textAlign & TA_UPDATECP)
 	{

@@ -8,7 +8,7 @@
 
 #include "gdi.h"
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "winreg.h"
 #include "winspool.h"
@@ -202,7 +202,7 @@ static LOGFONTA DefaultLogFont = {
  */
 BOOL PSDRV_Init(void)
 {
-    TRACE(psdrv, "\n");
+    TRACE("\n");
     PSDRV_Heap = HeapCreate(0, 0x10000, 0);
     PSDRV_GetFontMetrics();
     PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
@@ -229,12 +229,12 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     }
     pi = PSDRV_FindPrinterInfo(device);
         
-    TRACE(psdrv, "(%s %s %s %p)\n", driver, device, output, initData);
+    TRACE("(%s %s %s %p)\n", driver, device, output, initData);
 
     if(!pi) return FALSE;
 
     if(!pi->Fonts) {
-        MSG("To use WINEPS you need to install some AFM files.\n");
+        MESSAGE("To use WINEPS you need to install some AFM files.\n");
 	return FALSE;
     }
 
@@ -312,7 +312,7 @@ static BOOL PSDRV_DeleteDC( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     
-    TRACE(psdrv, "\n");
+    TRACE("\n");
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
     HeapFree( PSDRV_Heap, 0, physDev->job.output );
@@ -337,7 +337,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     FONTNAME *font;
     AFM *afm;
 
-    TRACE(psdrv, "'%s'\n", name);
+    TRACE("'%s'\n", name);
     
     for( ; pi; last = &pi->next, pi = pi->next) {
         if(!strcmp(pi->FriendlyName, name))
@@ -368,7 +368,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         HeapFree(PSDRV_Heap, 0, pi->Devmode);
         HeapFree(PSDRV_Heap, 0, pi);
 	*last = NULL;
-	MSG("Couldn't find PPD file '%s', expect a crash now!\n",
+	MESSAGE("Couldn't find PPD file '%s', expect a crash now!\n",
 	    pi->Devmode->dmDrvPrivate.ppdFileName);
 	return NULL;
     }
@@ -379,7 +379,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     for(font = pi->ppd->InstalledFonts; font; font = font->next) {
         afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
 	if(!afm) {
-	    MSG(
+	    MESSAGE(
 	 "Couldn't find AFM file for installed printer font '%s' - ignoring\n",
 	 font->Name);
 	} else {

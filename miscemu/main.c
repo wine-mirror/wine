@@ -18,7 +18,7 @@
 #include "task.h"
 #include "stackframe.h"
 #include "wine/exception.h"
-#include "debug.h"
+#include "debugtools.h"
 
 static int MAIN_argc;
 static char **MAIN_argv;
@@ -100,12 +100,12 @@ void MAIN_EmulatorRun( void )
     {
         if ((handle = WinExec( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
         {
-            MSG("wine: can't exec '%s': ", MAIN_argv[i]);
+            MESSAGE("wine: can't exec '%s': ", MAIN_argv[i]);
             switch (handle)
             {
-            case 2: MSG("file not found\n" ); break;
-            case 11: MSG("invalid exe file\n" ); break;
-            default: MSG("error=%d\n", handle ); break;
+            case 2: MESSAGE("file not found\n" ); break;
+            case 11: MESSAGE("invalid exe file\n" ); break;
+            default: MESSAGE("error=%d\n", handle ); break;
             }
         }
         else tasks++;
@@ -113,7 +113,7 @@ void MAIN_EmulatorRun( void )
 
     if (!tasks)
     {
-        MSG("wine: no executable file found.\n" );
+        MESSAGE("wine: no executable file found.\n" );
         ExitProcess( 0 );
     }
 
@@ -177,6 +177,6 @@ int main( int argc, char *argv[] )
     /* Switch stacks and jump to MAIN_EmulatorRun */
     CALL32_Init( &IF1632_CallLargeStack, MAIN_EmulatorRun, NtCurrentTeb()->stack_top );
 
-    MSG( "main: Should never happen: returned from CALL32_Init()\n" );
+    MESSAGE( "main: Should never happen: returned from CALL32_Init()\n" );
     return 0;
 }

@@ -12,7 +12,7 @@
 #include "stackframe.h"
 #include "module.h"
 #include "global.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(string)
 
@@ -448,7 +448,7 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec,
         maxlen -= len;
     }
     *p = 0;
-    TRACE(string,"%s\n",buffer);
+    TRACE("%s\n",buffer);
     return (maxlen > 1) ? (INT)(p - buffer) : -1;
 }
 
@@ -533,7 +533,7 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
  */
 INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 {
-    TRACE(string,"for %p got:\n",buffer);
+    TRACE("for %p got:\n",buffer);
     return wvsnprintf16( buffer, 0xffff, spec, args );
 }
 
@@ -543,7 +543,7 @@ INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
  */
 INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, va_list args )
 {
-    TRACE(string,"for %p got:\n",buffer);
+    TRACE("for %p got:\n",buffer);
     return wvsnprintfA( buffer, 0xffffffff, spec, args );
 }
 
@@ -553,7 +553,7 @@ INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, va_list args )
  */
 INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, va_list args )
 {
-    TRACE(string,"for %p got:\n",buffer);
+    TRACE("for %p got:\n",buffer);
     return wvsnprintfW( buffer, 0xffffffff, spec, args );
 }
 
@@ -567,7 +567,7 @@ INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, ... )
     va_list valist;
     INT16 res;
 
-    TRACE(string,"for %p got:\n",buffer);
+    TRACE("for %p got:\n",buffer);
     va_start( valist, spec );
     /* Note: we call the 32-bit version, because the args are 32-bit */
     res = (INT16)wvsnprintfA( buffer, 0xffffffff, spec, valist );
@@ -585,7 +585,7 @@ INT16 WINAPIV WIN16_wsprintf16(void)
     VA_START16( valist );
     buffer = VA_ARG16( valist, SEGPTR );
     spec   = VA_ARG16( valist, SEGPTR );
-    TRACE(string,"got:\n");
+    TRACE("got:\n");
     res = wvsnprintf16( (LPSTR)PTR_SEG_TO_LIN(buffer), 0xffff,
                         (LPCSTR)PTR_SEG_TO_LIN(spec), valist );
     VA_END16( valist );
@@ -601,7 +601,7 @@ INT WINAPIV wsprintfA( LPSTR buffer, LPCSTR spec, ... )
     va_list valist;
     INT res;
 
-    TRACE(string,"for %p got:\n",buffer);
+    TRACE("for %p got:\n",buffer);
     va_start( valist, spec );
     res = wvsnprintfA( buffer, 0xffffffff, spec, valist );
     va_end( valist );
@@ -617,7 +617,7 @@ INT WINAPIV wsprintfW( LPWSTR buffer, LPCWSTR spec, ... )
     va_list valist;
     INT res;
 
-    TRACE(string,"wsprintfW for %p\n",buffer);
+    TRACE("wsprintfW for %p\n",buffer);
     va_start( valist, spec );
     res = wvsnprintfW( buffer, 0xffffffff, spec, valist );
     va_end( valist );

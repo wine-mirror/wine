@@ -14,7 +14,7 @@
 #include "font.h"
 #include "options.h"
 #include "xmalloc.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "dc.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv)
@@ -184,12 +184,12 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
                              printerEnabled, sizeof(printerEnabled) );
     if (lstrcmpiA(printerEnabled,"on"))
     {
-        MSG("Printing disabled in wine.conf or .winerc file\n");
-        MSG("Use \"printer=on\" in the \"[wine]\" section to enable it.\n");
+        MESSAGE("Printing disabled in wine.conf or .winerc file\n");
+        MESSAGE("Use \"printer=on\" in the \"[wine]\" section to enable it.\n");
         return FALSE;
     }
 
-    TRACE(win16drv, "In creatdc for (%s,%s,%s) initData 0x%p\n",
+    TRACE("In creatdc for (%s,%s,%s) initData 0x%p\n",
 	  driver, device, output, initData);
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( SystemHeap, 0, sizeof(*physDev) );
@@ -199,11 +199,11 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     pLPD = LoadPrinterDriver(driver);
     if (pLPD == NULL)
     {
-	WARN(win16drv, "Failed to find printer driver\n");
+	WARN("Failed to find printer driver\n");
         HeapFree( SystemHeap, 0, physDev );
         return FALSE;
     }
-    TRACE(win16drv, "windevCreateDC pLPD 0x%p\n", pLPD);
+    TRACE("windevCreateDC pLPD 0x%p\n", pLPD);
 
     /* Now Get the device capabilities from the printer driver */
     
@@ -218,7 +218,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
     dc->w.bitsPerPixel = dc->w.devCaps->bitsPixel;
     
-    TRACE(win16drv, "Got devcaps width %d height %d bits %d planes %d\n",
+    TRACE("Got devcaps width %d height %d bits %d planes %d\n",
 	  dc->w.devCaps->horzRes, dc->w.devCaps->vertRes, 
 	  dc->w.devCaps->bitsPixel, dc->w.devCaps->planes);
 
@@ -237,7 +237,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     pPDH = (PDEVICE_HEADER *)((BYTE*)PTR_SEG_TO_LIN(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
     pPDH->pLPD = pLPD;
     
-    TRACE(win16drv, "PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
+    TRACE("PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
     
     /* Now get the printer driver to initialise this data */
     wRet = PRTDRV_Enable((LPVOID)physDev->segptrPDEVICE, INITPDEVICE, device, driver, output, NULL); 
@@ -287,11 +287,11 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	switch(nEscape)
           {
 	  case ENABLEPAIRKERNING:
-	    FIXME(win16drv,"Escape: ENABLEPAIRKERNING ignored.\n");
+	    FIXME("Escape: ENABLEPAIRKERNING ignored.\n");
             nRet = 1;
 	    break;
 	  case GETPAIRKERNTABLE:
-	    FIXME(win16drv,"Escape: GETPAIRKERNTABLE ignored.\n");
+	    FIXME("Escape: GETPAIRKERNTABLE ignored.\n");
             nRet = 0;
 	    break;
           case SETABORTPROC: {
@@ -357,7 +357,7 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	}
     }
     else
-	WARN(win16drv, "Escape(nEscape = %04x) - ???\n", nEscape);      
+	WARN("Escape(nEscape = %04x) - ???\n", nEscape);      
     return nRet;
 }
 

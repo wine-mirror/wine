@@ -18,7 +18,7 @@
 #include "winerror.h"
 
 #include "dc.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "path.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
@@ -247,7 +247,7 @@ BOOL WINAPI CloseFigure(HDC hdc)
 INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
    INT16 nSize)
 {
-   FIXME(gdi, "(%d,%p,%p): stub\n",hdc,pPoints,pTypes);
+   FIXME("(%d,%p,%p): stub\n",hdc,pPoints,pTypes);
 
    return 0;
 }
@@ -1132,7 +1132,7 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[],
  */
 BOOL WINAPI FlattenPath(HDC hdc)
 {
-        FIXME(gdi, "FlattenPath, stub\n");
+        FIXME("FlattenPath, stub\n");
         return 0;
 }
 
@@ -1143,7 +1143,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
  */
 BOOL WINAPI StrokeAndFillPath(HDC hdc)
 {
-        FIXME(gdi, "StrokeAndFillPath, stub\n");
+        FIXME("StrokeAndFillPath, stub\n");
         return 0;
 }
 
@@ -1154,7 +1154,7 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
  */
 BOOL WINAPI StrokePath(HDC hdc)
 {
-        FIXME(gdi, "StrokePath, stub\n");
+        FIXME("StrokePath, stub\n");
         return 0;
 }
 
@@ -1165,7 +1165,7 @@ BOOL WINAPI StrokePath(HDC hdc)
  */
 BOOL WINAPI WidenPath(HDC hdc)
 {
-        FIXME(gdi, "WidenPath, stub\n");
+        FIXME("WidenPath, stub\n");
         return 0;
 }
    

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 
@@ -29,7 +29,7 @@ struct Win87EmInfoStruct
 
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
-    TRACE(int, "(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
+    TRACE("(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
                  (WORD)CS_reg(context), EIP_reg(context),
                  (WORD)ES_reg(context), BX_reg(context),
                  AX_reg(context), DX_reg(context) );
@@ -70,7 +70,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
              */
            __asm__ __volatile__("frndint");
            __asm__ __volatile__("fist %0;wait" : "=m" (dw) : : "memory");
-            TRACE(int,"On top of stack is %ld\n",dw);
+            TRACE("On top of stack is %ld\n",dw);
         }
         break;
 
@@ -84,7 +84,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
              */
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
-            TRACE(int,"On top of stack was %ld\n",dw);
+            TRACE("On top of stack was %ld\n",dw);
             AX_reg(context) = LOWORD(dw);
             DX_reg(context) = HIWORD(dw);
         }
@@ -109,7 +109,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         break;
 
     default: /* error. Say that loud and clear */
-        FIXME(int,"unhandled switch %d\n",BX_reg(context));
+        FIXME("unhandled switch %d\n",BX_reg(context));
         AX_reg(context) = DX_reg(context) = 0xFFFF;
         break;
     }
@@ -119,18 +119,18 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
                               int cbWin87EmInfoStruct)
 {
-  TRACE(int, "(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
+  TRACE("(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
 }
 
 void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
                                  int cbWin87EmSaveArea)
 {
-  TRACE(int, "(%p,%d)\n",
+  TRACE("(%p,%d)\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
 
 void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
-  TRACE(int, "(%p,%d)\n",
+  TRACE("(%p,%d)\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }

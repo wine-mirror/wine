@@ -7,7 +7,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 /* #define DEBUG_INT */
-#include "debug.h"
+#include "debugtools.h"
 
 /**********************************************************************
  *          INT_Int3dHandler

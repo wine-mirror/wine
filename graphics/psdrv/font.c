@@ -7,7 +7,7 @@
 #include <string.h>
 #include "winspool.h"
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -29,7 +29,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     char FaceName[LF_FACESIZE];
 
 
-    TRACE(psdrv, "FaceName = '%s' Height = %d Italic = %d Weight = %d\n",
+    TRACE("FaceName = '%s' Height = %d Italic = %d Weight = %d\n",
 	  lf->lfFaceName, lf->lfHeight, lf->lfItalic, lf->lfWeight);
 
     dc->w.hFont = hfont;
@@ -71,7 +71,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 	}
     }
 
-    TRACE(psdrv, "Trying to find facename '%s'\n", FaceName);
+    TRACE("Trying to find facename '%s'\n", FaceName);
 
     for(family = physDev->pi->Fonts; family; family = family->next) {
         if(!strcmp(FaceName, family->FamilyName))
@@ -80,7 +80,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     if(!family)
         family = physDev->pi->Fonts;
 
-    TRACE(psdrv, "Got family '%s'\n", family->FamilyName);
+    TRACE("Got family '%s'\n", family->FamilyName);
 
     for(afmle = family->afmlist; afmle; afmle = afmle->next) {
         if( (bd == (afmle->afm->Weight == FW_BOLD)) && 
@@ -97,7 +97,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     if(physDev->font.tm.tmHeight < 0) {
         physDev->font.tm.tmHeight *= - (afm->FullAscender - afm->Descender) /
 				       (afm->Ascender - afm->Descender);
-	TRACE(psdrv, "Fixed -ve height to %ld\n", physDev->font.tm.tmHeight);
+	TRACE("Fixed -ve height to %ld\n", physDev->font.tm.tmHeight);
     }
     physDev->font.size = physDev->font.tm.tmHeight * 1000.0 /
 				(afm->FullAscender - afm->Descender);
@@ -131,10 +131,10 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 
     physDev->font.set = FALSE;
 
-    TRACE(psdrv, "Selected PS font '%s' size %d weight %ld.\n", 
+    TRACE("Selected PS font '%s' size %d weight %ld.\n", 
 	  physDev->font.afm->FontName, physDev->font.size,
 	  physDev->font.tm.tmWeight );
-    TRACE(psdrv, "H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n",
+    TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n",
 	  physDev->font.tm.tmHeight, physDev->font.tm.tmAscent,
 	  physDev->font.tm.tmDescent, physDev->font.tm.tmInternalLeading,
 	  physDev->font.tm.tmExternalLeading);
@@ -172,7 +172,7 @@ BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
 /*	TRACE(psdrv, "Width after %dth char '%c' = %f\n", i, str[i], width);*/
     }
     width *= physDev->font.scale;
-    TRACE(psdrv, "Width after scale (%f) is %f\n", physDev->font.scale, width);
+    TRACE("Width after scale (%f) is %f\n", physDev->font.scale, width);
     size->cx = XDSTOLS(dc, width);
 
     return TRUE;
@@ -188,7 +188,7 @@ BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     UINT i;
 
-    TRACE(psdrv, "first = %d last = %d\n", firstChar, lastChar);
+    TRACE("first = %d last = %d\n", firstChar, lastChar);
 
     if(lastChar > 0xff) return FALSE;
     for( i = firstChar; i <= lastChar; i++ )
@@ -278,7 +278,7 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     PSDRV_PDEVICE	*physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     if( plf->lfFaceName[0] ) {
-        TRACE(psdrv, "lfFaceName = '%s'\n", plf->lfFaceName);
+        TRACE("lfFaceName = '%s'\n", plf->lfFaceName);
         for(family = physDev->pi->Fonts; family; family = family->next) {
             if(!strncmp(plf->lfFaceName, family->FamilyName, 
 			strlen(family->FamilyName)))
@@ -286,7 +286,7 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 	}
 	if(family) {
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
-	        TRACE(psdrv, "Got '%s'\n", afmle->afm->FontName);
+	        TRACE("Got '%s'\n", afmle->afm->FontName);
 		if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
 			PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ),
 				  lp )) )
@@ -296,10 +296,10 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 	}
     } else {
 
-        TRACE(psdrv, "lfFaceName = NULL\n");
+        TRACE("lfFaceName = NULL\n");
         for(family = physDev->pi->Fonts; family; family = family->next) {
 	    afmle = family->afmlist;
-	    TRACE(psdrv, "Got '%s'\n", afmle->afm->FontName);
+	    TRACE("Got '%s'\n", afmle->afm->FontName);
 	    if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
 		   PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ), 
 			      lp )) )

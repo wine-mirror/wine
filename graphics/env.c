@@ -10,7 +10,7 @@
 #include <string.h>
 #include "config.h"
 #include "gdi.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
@@ -82,7 +82,7 @@ INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nMaxSi
     ENVTABLE *env;
     WORD size;
 
-    TRACE(gdi, "('%s', %p, %d)\n", lpPortName, lpdev, nMaxSize);
+    TRACE("('%s', %p, %d)\n", lpPortName, lpdev, nMaxSize);
 
     if (!(atom = PortNameToAtom(lpPortName, FALSE)))
 	return 0;
@@ -112,7 +112,7 @@ INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nCount
     ENVTABLE *env;
     HGLOBAL16 handle;
 
-    TRACE(gdi, "('%s', %p, %d)\n", lpPortName, lpdev, nCount);
+    TRACE("('%s', %p, %d)\n", lpPortName, lpdev, nCount);
 
     if ((atom = PortNameToAtom(lpPortName, FALSE))) {
 	if (atom == GDI_GetNullPortAtom()) {

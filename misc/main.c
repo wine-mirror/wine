@@ -30,7 +30,7 @@
 #include "options.h"
 #include "desktop.h"
 #include "builtin32.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugdefs.h"
 #include "xmalloc.h"
 #include "module.h"
@@ -143,7 +143,7 @@ static char szUsage[] =
  */
 void MAIN_Usage( char *name )
 {
-    MSG( szUsage, WINE_RELEASE_INFO, name );
+    MESSAGE( szUsage, WINE_RELEASE_INFO, name );
     exit(1);
 }
 
@@ -290,28 +290,28 @@ BOOL MAIN_ParseDebugOptions(char *options)
     return TRUE;
 
  error:  
-  MSG("%s: Syntax: -debugmsg [class]+xxx,...  or "
+  MESSAGE("%s: Syntax: -debugmsg [class]+xxx,...  or "
       "-debugmsg [class]-xxx,...\n",Options.argv[0]);
-  MSG("Example: -debugmsg +all,warn-heap\n"
+  MESSAGE("Example: -debugmsg +all,warn-heap\n"
       "  turn on all messages except warning heap messages\n");
-  MSG("Special case: -debugmsg +relay=DLL:DLL.###:FuncName\n"
+  MESSAGE("Special case: -debugmsg +relay=DLL:DLL.###:FuncName\n"
       "  turn on -debugmsg +relay only as specified\n"
       "Special case: -debugmsg -relay=DLL:DLL.###:FuncName\n"
       "  turn on -debugmsg +relay except as specified\n"
       "Also permitted, +snoop=..., -snoop=... as with relay.\n\n");
   
-  MSG("Available message classes:\n");
+  MESSAGE("Available message classes:\n");
   for(i=0;i<DEBUG_CLASS_COUNT;i++)
-    MSG( "%-9s", debug_cl_name[i]);
-  MSG("\n\n");
+    MESSAGE( "%-9s", debug_cl_name[i]);
+  MESSAGE("\n\n");
   
-  MSG("Available message types:\n");
-  MSG("%-9s ","all");
+  MESSAGE("Available message types:\n");
+  MESSAGE("%-9s ","all");
   for(i=0;i<DEBUG_CHANNEL_COUNT;i++)
     if(debug_ch_name[i])
-      MSG("%-9s%c",debug_ch_name[i],
+      MESSAGE("%-9s%c",debug_ch_name[i],
 	  (((i+2)%8==0)?'\n':' '));
-  MSG("\n\n");
+  MESSAGE("\n\n");
   exit(1);
 }
 
@@ -680,9 +680,9 @@ void MAIN_ParseLanguageOption( char *arg )
     const WINE_LANGUAGE_DEF *p = Languages;
 
 /* for compatibility whith non-iso names previously used */
-    if (!strcmp("Sw",arg)) { strcpy(arg,"Sv"); FIXME(system,"use 'Sv' instead of 'Sw'\n");}
-    if (!strcmp("Cz",arg)) { strcpy(arg,"Cs"); FIXME(system,"use 'Cs' instead of 'Cz'\n");}
-    if (!strcmp("Po",arg)) { strcpy(arg,"Pt"); FIXME(system,"use 'Pt' instead of 'Po'\n");}
+    if (!strcmp("Sw",arg)) { strcpy(arg,"Sv"); FIXME_(system)("use 'Sv' instead of 'Sw'\n");}
+    if (!strcmp("Cz",arg)) { strcpy(arg,"Cs"); FIXME_(system)("use 'Cs' instead of 'Cz'\n");}
+    if (!strcmp("Po",arg)) { strcpy(arg,"Pt"); FIXME_(system)("use 'Pt' instead of 'Po'\n");}
 
     Options.language = LANG_Xx;  /* First (dummy) language */
     for (;p->name;p++)
@@ -694,9 +694,9 @@ void MAIN_ParseLanguageOption( char *arg )
 	}
         Options.language++;
     }
-    MSG( "Invalid language specified '%s'. Supported languages are: ", arg );
-    for (p = Languages; p->name; p++) MSG( "%s ", p->name );
-    MSG( "\n" );
+    MESSAGE( "Invalid language specified '%s'. Supported languages are: ", arg );
+    for (p = Languages; p->name; p++) MESSAGE( "%s ", p->name );
+    MESSAGE( "\n" );
     exit(1);
 }
 
@@ -712,8 +712,8 @@ void MAIN_ParseModeOption( char *arg )
     else if (!lstrcmpiA("standard", arg)) Options.mode = MODE_STANDARD;
     else
     {
-        MSG( "Invalid mode '%s' specified.\n", arg);
-        MSG( "Valid modes are: 'standard', 'enhanced' (default).\n");
+        MESSAGE( "Invalid mode '%s' specified.\n", arg);
+        MESSAGE( "Valid modes are: 'standard', 'enhanced' (default).\n");
 	exit(1);
     }
 }
@@ -744,7 +744,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     {
         if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
         {
-            MSG( "%s\n", WINE_RELEASE_INFO );
+            MESSAGE( "%s\n", WINE_RELEASE_INFO );
             exit(0);
         }
         if (!strcmp( argv[i], "-h" ) || !strcmp( argv[i], "-help" ))
@@ -784,11 +784,11 @@ BOOL MAIN_WineInit( int *argc, char *argv[] )
     mcheck(NULL);
     if (!(trace = getenv("MALLOC_TRACE")))
     {       
-        MSG( "MALLOC_TRACE not set. No trace generated\n" );
+        MESSAGE( "MALLOC_TRACE not set. No trace generated\n" );
     }
     else
     {
-        MSG( "malloc trace goes to %s\n", trace );
+        MESSAGE( "malloc trace goes to %s\n", trace );
         mtrace();
     }
 #endif
@@ -1031,7 +1031,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
                 LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)lpvParam;
  
                 /* Do nothing */
-                WARN(system, "SPI_SETANIMATION ignored.\n");
+                WARN_(system)("SPI_SETANIMATION ignored.\n");
                 lpAnimInfo->cbSize = sizeof(ANIMATIONINFO);
                 uParam = sizeof(ANIMATIONINFO);
                 break;
@@ -1041,7 +1041,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
         {
                 LPHIGHCONTRASTA lpHighContrastA = (LPHIGHCONTRASTA)lpvParam;
 
-                FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
+                FIXME_(system)("SPI_GETHIGHCONTRAST not fully implemented\n");
 
                 if ( lpHighContrastA->cbSize == sizeof( HIGHCONTRASTA ) )
                 {
@@ -1224,7 +1224,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		case SPI_SETFASTTASKSWITCH:
 		case SPI_SETKEYBOARDDELAY:
 		case SPI_SETKEYBOARDSPEED:
-			WARN(system, "Option %d ignored.\n", uAction);
+			WARN_(system)("Option %d ignored.\n", uAction);
 			break;
 
                 case SPI_GETWORKAREA:
@@ -1234,7 +1234,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		default:
-			WARN(system, "Unknown option %d.\n", uAction);
+			WARN_(system)("Unknown option %d.\n", uAction);
 			break;
 	}
 	return 1;
@@ -1307,7 +1307,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
     {
        LPHIGHCONTRASTW lpHighContrastW = (LPHIGHCONTRASTW)lpvParam;
 
-       FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
+       FIXME_(system)("SPI_GETHIGHCONTRAST not fully implemented\n");
 
        if ( lpHighContrastW->cbSize == sizeof( HIGHCONTRASTW ) )
        {
@@ -1336,6 +1336,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
 */
 FARPROC16 WINAPI FileCDR16(FARPROC16 x)
 {
-	FIXME(file,"(0x%8x): stub\n", (int) x);
+	FIXME_(file)("(0x%8x): stub\n", (int) x);
 	return (FARPROC16)TRUE;
 }

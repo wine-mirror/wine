@@ -12,7 +12,7 @@
 
 #include "wine/winuser16.h"
 #include "bitmap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "ldt.h"
 #include "monitor.h"
 #include "palette.h"
@@ -45,7 +45,7 @@ typedef enum WING_DITHER_TYPE
  */
 HDC16 WINAPI WinGCreateDC16(void)
 {
-    TRACE(wing, "(void)\n");
+    TRACE("(void)\n");
 	return CreateCompatibleDC16(0);
 }
 
@@ -54,7 +54,7 @@ HDC16 WINAPI WinGCreateDC16(void)
  */
 BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 {
-    TRACE(wing, "(%p)\n", bmpi);
+    TRACE("(%p)\n", bmpi);
     if (!bmpi)
 	return FALSE;
 
@@ -79,8 +79,8 @@ BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
                                     SEGPTR *bits)
 {
-    TRACE(wing, "(%d,%p,%p)\n", hdc, bmpi, bits);
-    TRACE(wing, ": create %ldx%ldx%d bitmap\n", bmpi->bmiHeader.biWidth,
+    TRACE("(%d,%p,%p)\n", hdc, bmpi, bits);
+    TRACE(": create %ldx%ldx%d bitmap\n", bmpi->bmiHeader.biWidth,
 	  bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
     return CreateDIBSection16(hdc, bmpi, 0, bits, 0, 0);
 		} 
@@ -92,11 +92,11 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
   BITMAPOBJ*	bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
 
-    TRACE(wing, "(%d,%p)\n", hWinGBitmap, bmpi);
+    TRACE("(%d,%p)\n", hWinGBitmap, bmpi);
     if (!bmp) return (SEGPTR)NULL;
 
     if (bmpi)
-	FIXME(wing, ": Todo - implement setting BITMAPINFO\n");
+	FIXME(": Todo - implement setting BITMAPINFO\n");
 
 #ifndef X_DISPLAY_MISSING
     return PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
@@ -111,7 +111,7 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
                                      RGBQUAD *colors)
 {
-    TRACE(wing, "(%d,%d,%d,%p)\n", hdc, start, num, colors);
+    TRACE("(%d,%d,%d,%p)\n", hdc, start, num, colors);
     return SetDIBColorTable16(hdc, start, num, colors);
 }
 
@@ -121,7 +121,7 @@ UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 				     RGBQUAD *colors)
 {
-    TRACE(wing, "(%d,%d,%d,%p)\n", hdc, start, num, colors);
+    TRACE("(%d,%d,%d,%p)\n", hdc, start, num, colors);
     return GetDIBColorTable16(hdc, start, num, colors);
 }
 
@@ -130,7 +130,7 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
-    TRACE(wing, "(void)\n");
+    TRACE("(void)\n");
     return CreateHalftonePalette16(GetDC16(0));
 }
 
@@ -140,7 +140,7 @@ HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
 {
-    TRACE(wing, "(%d,%ld,%d)\n", winDC, col, type);
+    TRACE("(%d,%ld,%d)\n", winDC, col, type);
     return CreateSolidBrush16(col);
 }
 
@@ -152,7 +152,7 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                                HDC16 srcDC, INT16 xSrc, INT16 ySrc,
                                INT16 widSrc, INT16 heiSrc)
 {
-    TRACE(wing, "(%d,%d,...)\n", destDC, srcDC);
+    TRACE("(%d,%d,...)\n", destDC, srcDC);
     return StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
 			xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
 }
@@ -164,7 +164,7 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                            INT16 widDest, INT16 heiDest, HDC16 srcDC,
                            INT16 xSrc, INT16 ySrc)
 {
-    TRACE(wing, "(%d,%d,...)\n", destDC, srcDC);
+    TRACE("(%d,%d,...)\n", destDC, srcDC);
     return BitBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
 		    xSrc, ySrc, SRCCOPY);
 }

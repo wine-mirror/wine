@@ -5,7 +5,7 @@
  */
 
 #include "dc.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -124,7 +124,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     if (!dc) return 0;
     if (dc->funcs->pSetMapMode) return dc->funcs->pSetMapMode( dc, mode );
 
-    TRACE(gdi, "%04x %d\n", hdc, mode );
+    TRACE("%04x %d\n", hdc, mode );
     
     prevMode = dc->w.MapMode;
     switch(mode)

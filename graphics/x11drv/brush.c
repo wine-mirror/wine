@@ -15,7 +15,7 @@
 #include "bitmap.h"
 #include "color.h"
 #include "x11drv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 #include "monitor.h"
 #include "local.h"
@@ -186,7 +186,7 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 	    return 0;
 
     if(bmp->DDBitmap->funcs != dc->funcs) {
-        WARN(gdi, "Trying to select non-X11 DDB into an X11 dc\n");
+        WARN("Trying to select non-X11 DDB into an X11 dc\n");
 	return 0;
     }
 
@@ -235,7 +235,7 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     HBRUSH16 prevHandle = dc->w.hBrush;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     
-    TRACE(gdi, "hdc=%04x hbrush=%04x\n",
+    TRACE("hdc=%04x hbrush=%04x\n",
                 dc->hSelf,hbrush);
 
     dc->w.hBrush = hbrush;
@@ -250,16 +250,16 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     switch(brush->logbrush.lbStyle)
     {
       case BS_NULL:
-	TRACE(gdi,"BS_NULL\n" );
+	TRACE("BS_NULL\n" );
 	break;
 
       case BS_SOLID:
-        TRACE(gdi,"BS_SOLID\n" );
+        TRACE("BS_SOLID\n" );
 	BRUSH_SelectSolidBrush( dc, brush->logbrush.lbColor );
 	break;
 	
       case BS_HATCHED:
-	TRACE(gdi, "BS_HATCHED\n" );
+	TRACE("BS_HATCHED\n" );
 	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, brush->logbrush.lbColor );
 	physDev->brush.pixmap = TSXCreateBitmapFromData( display, X11DRV_GetXRootWindow(),
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
@@ -267,12 +267,12 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	break;
 	
       case BS_PATTERN:
-	TRACE(gdi, "BS_PATTERN\n");
+	TRACE("BS_PATTERN\n");
 	BRUSH_SelectPatternBrush( dc, (HBRUSH16)brush->logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
-	TRACE(gdi, "BS_DIBPATTERN\n");
+	TRACE("BS_DIBPATTERN\n");
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );

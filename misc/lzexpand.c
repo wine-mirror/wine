@@ -16,7 +16,7 @@
 #include "file.h"
 #include "heap.h"
 #include "lzexpand.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(file)
 
@@ -121,7 +121,7 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
  */
 INT16 WINAPI LZStart16(void)
 {
-    TRACE(file,"(void)\n");
+    TRACE("(void)\n");
     return 1;
 }
 
@@ -131,7 +131,7 @@ INT16 WINAPI LZStart16(void)
  */
 INT WINAPI LZStart(void)
 {
-    TRACE(file,"(void)\n");
+    TRACE("(void)\n");
     return 1;
 }
 
@@ -167,7 +167,7 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 	DWORD	ret;
         int i;
 
-	TRACE(file,"(%d)\n",hfSrc);
+	TRACE("(%d)\n",hfSrc);
 	ret=read_header(hfSrc,&head);
 	if (ret<=0) {
 		_llseek(hfSrc,0,SEEK_SET);
@@ -199,7 +199,7 @@ HFILE WINAPI LZInit( HFILE hfSrc )
  */
 void WINAPI LZDone(void)
 {
-    TRACE(file,"(void)\n");
+    TRACE("(void)\n");
 }
 
 
@@ -231,7 +231,7 @@ INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
 	INT		fnislowercased,ret,len;
 	LPSTR		s,t;
 
-	TRACE(file,"(%s)\n",in);
+	TRACE("(%s)\n",in);
 	fd=OpenFile(in,&ofs,OF_READ);
 	if (fd==HFILE_ERROR)
 		return (INT)(INT16)LZERROR_BADINHANDLE;
@@ -253,7 +253,7 @@ INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
 	/* now mangle the basename */
 	if (!*s) {
 		/* FIXME: hmm. shouldn't happen? */
-		WARN(file,"Specified a directory or what? (%s)\n",in);
+		WARN("Specified a directory or what? (%s)\n",in);
 		_lclose(fd);
 		return 1;
 	}
@@ -328,7 +328,7 @@ INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 	struct	lzstate	*lzs;
 
 	buf=(LPBYTE)vbuf;
-	TRACE(file,"(%d,%p,%d)\n",fd,buf,toread);
+	TRACE("(%d,%p,%d)\n",fd,buf,toread);
 	howmuch=toread;
 	if (!(lzs = GET_LZ_STATE(fd))) return _lread(fd,buf,toread);
 
@@ -427,7 +427,7 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 	struct	lzstate	*lzs;
 	LONG	newwanted;
 
-	TRACE(file,"(%d,%ld,%d)\n",fd,off,type);
+	TRACE("(%d,%ld,%d)\n",fd,off,type);
 	/* not compressed? just use normal _llseek() */
         if (!(lzs = GET_LZ_STATE(fd))) return _llseek(fd,off,type);
 	newwanted = lzs->realwanted;
@@ -495,7 +495,7 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 
 	_readfun	xread;
 
-	TRACE(file,"(%d,%d)\n",src,dest);
+	TRACE("(%d,%d)\n",src,dest);
 	if (!IS_LZ_HANDLE(src)) {
 		src = LZInit(src);
                 if ((INT)src <= 0) return 0;
@@ -570,7 +570,7 @@ HFILE WINAPI LZOpenFileA( LPCSTR fn, LPOFSTRUCT ofs, UINT mode )
 {
 	HFILE	fd,cfd;
 
-	TRACE(file,"(%s,%p,%d)\n",fn,ofs,mode);
+	TRACE("(%s,%p,%d)\n",fn,ofs,mode);
 	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
 	fd=OpenFile(fn,ofs,mode);
 	if (fd==HFILE_ERROR)
@@ -628,7 +628,7 @@ void WINAPI LZClose( HFILE fd )
 {
 	struct lzstate *lzs;
 
-	TRACE(file,"(%d)\n",fd);
+	TRACE("(%d)\n",fd);
         if (!(lzs = GET_LZ_STATE(fd))) _lclose(fd);
         else
         {
@@ -644,7 +644,7 @@ void WINAPI LZClose( HFILE fd )
  */
 LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 {
-    TRACE(file,"(%d,%d)\n",src,dest);
+    TRACE("(%d,%d)\n",src,dest);
     return LZCopy16(src,dest);
 }
 
@@ -657,6 +657,6 @@ LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
  */
 LONG WINAPI CopyLZFile( HFILE src, HFILE dest )
 {
-    TRACE(file,"(%d,%d)\n",src,dest);
+    TRACE("(%d,%d)\n",src,dest);
     return LZCopy(src,dest);
 }

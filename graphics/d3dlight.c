@@ -11,7 +11,7 @@
 #include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "d3d_private.h"
 
@@ -36,18 +36,18 @@ static const float zero_value[] = {
 static void update(IDirect3DLightImpl* This) {
   switch (This->light.dltType) {
   case D3DLIGHT_POINT:         /* 1 */
-    TRACE(ddraw, "Activating POINT\n");
+    TRACE("Activating POINT\n");
     break;
     
   case D3DLIGHT_SPOT:          /* 2 */
-    TRACE(ddraw, "Activating SPOT\n");
+    TRACE("Activating SPOT\n");
     break;
     
   case D3DLIGHT_DIRECTIONAL: {  /* 3 */
     float direction[4];
     
-    TRACE(ddraw, "Activating DIRECTIONAL\n");
-    TRACE(ddraw, "  direction : %f %f %f\n",
+    TRACE("Activating DIRECTIONAL\n");
+    TRACE("  direction : %f %f %f\n",
 	  This->light.dvDirection.x.x,
 	  This->light.dvDirection.y.y,
 	  This->light.dvDirection.z.z);
@@ -71,11 +71,11 @@ static void update(IDirect3DLightImpl* This) {
   } break;
     
   case D3DLIGHT_PARALLELPOINT:  /* 4 */
-    TRACE(ddraw, "Activating PARRALLEL-POINT\n");
+    TRACE("Activating PARRALLEL-POINT\n");
     break;
 
   default:
-    TRACE(ddraw, "Not a know Light Type\n");
+    TRACE("Not a know Light Type\n");
     break;
   }
 }
@@ -147,7 +147,7 @@ static HRESULT WINAPI IDirect3DLightImpl_QueryInterface(LPDIRECT3DLIGHT iface,
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
@@ -157,7 +157,7 @@ static HRESULT WINAPI IDirect3DLightImpl_QueryInterface(LPDIRECT3DLIGHT iface,
 static ULONG WINAPI IDirect3DLightImpl_AddRef(LPDIRECT3DLIGHT iface)
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
   
   return ++(This->ref);
 }
@@ -167,7 +167,7 @@ static ULONG WINAPI IDirect3DLightImpl_AddRef(LPDIRECT3DLIGHT iface)
 static ULONG WINAPI IDirect3DLightImpl_Release(LPDIRECT3DLIGHT iface)
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
+  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
     HeapFree(GetProcessHeap(),0,This);
@@ -187,7 +187,7 @@ static HRESULT WINAPI IDirect3DLightImpl_GetLight(LPDIRECT3DLIGHT iface,
 					      LPD3DLIGHT lpLight)
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpLight);
+  TRACE("(%p)->(%p)\n", This, lpLight);
   if (TRACE_ON(ddraw))
     dump_light(lpLight);
   
@@ -208,7 +208,7 @@ static HRESULT WINAPI IDirect3DLightImpl_SetLight(LPDIRECT3DLIGHT iface,
 					      LPD3DLIGHT lpLight)
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpLight);
+  TRACE("(%p)->(%p)\n", This, lpLight);
   if (TRACE_ON(ddraw))
     dump_light(lpLight);
   
@@ -235,7 +235,7 @@ static HRESULT WINAPI IDirect3DLightImpl_Initialize(LPDIRECT3DLIGHT iface,
 
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpDirect3D);
+  TRACE("(%p)->(%p)\n", This, lpDirect3D);
 
   return DDERR_ALREADYINITIALIZED;
 }
@@ -261,12 +261,12 @@ static ICOM_VTABLE(IDirect3DLight) light_vtable =
 
 /* These function should never be called if MesaGL is not present */
 LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 
 LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 

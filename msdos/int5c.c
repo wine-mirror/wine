@@ -6,7 +6,7 @@
 
 #include "ldt.h"
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 
@@ -20,7 +20,7 @@ void WINAPI NetBIOSCall16( CONTEXT86 *context )
 {
     BYTE* ptr;
     ptr = (BYTE*) PTR_SEG_OFF_TO_LIN(ES_reg(context),BX_reg(context));
-    FIXME(int,"(%p): command code %02x (ignored)\n",context, *ptr);
+    FIXME("(%p): command code %02x (ignored)\n",context, *ptr);
     AL_reg(context) = *(ptr+0x01) = 0xFB; /* NetBIOS emulator not found */
 }
 

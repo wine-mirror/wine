@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dll)
 
@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(dll)
  */
 void WINAPI WinNotify16(CONTEXT86 *context)
 {
-	FIXME(dll, "(AX=%04x):stub.\n", AX_reg(context));
+	FIXME("(AX=%04x):stub.\n", AX_reg(context));
 	switch (AX_reg(context))
 	{
 		case 0x000D:

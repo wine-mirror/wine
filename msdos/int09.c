@@ -7,7 +7,7 @@
 #include "winuser.h"
 #include "miscemu.h"
 #include "input.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "dosexe.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
@@ -32,7 +32,7 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
     /* as in TranslateMessage, windows/input.c */
     cnt = ToAscii(vkey, scan&0x7f, QueueKeyStateTable, (LPWORD)ch, 0);
     if (cnt==1) {
-      FIXME(int,"enter character %c into console input, not implemented\n",ch[0]);
+      FIXME("enter character %c into console input, not implemented\n",ch[0]);
     }
   }
   DOSVM_PIC_ioport_out(0x20, 0x20); /* send EOI */

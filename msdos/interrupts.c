@@ -8,7 +8,7 @@
 #include "windef.h"
 #include "miscemu.h"
 #include "msdos.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 
@@ -33,7 +33,7 @@ FARPROC16 INT_GetPMHandler( BYTE intnum )
  */
 void INT_SetPMHandler( BYTE intnum, FARPROC16 handler )
 {
-    TRACE(int, "Set protected mode interrupt vector %02x <- %04x:%04x\n",
+    TRACE("Set protected mode interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
     INT_Vectors[intnum] = handler;
 }
@@ -57,7 +57,7 @@ FARPROC16 INT_GetRMHandler( BYTE intnum )
  */
 void INT_SetRMHandler( BYTE intnum, FARPROC16 handler )
 {
-    TRACE(int, "Set real mode interrupt vector %02x <- %04x:%04x\n",
+    TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
     ((FARPROC16*)DOSMEM_MemoryBase(0))[intnum] = handler;
 }
@@ -85,7 +85,7 @@ FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum )
 void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler )
 {
     if (ISV86(context)) {
-        TRACE(int, "Set real mode interrupt vector %02x <- %04x:%04x\n",
+        TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
                      intnum, HIWORD(handler), LOWORD(handler) );
         ((FARPROC16*)V86BASE(context))[intnum] = handler;
     } else
@@ -152,7 +152,7 @@ int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
             INT_Int33Handler(context);
             break;
         default:
-            FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);
+            FIXME("Unknown Interrupt in DOS mode: 0x%x\n", intnum);
             return 1;
     }
     return 0;

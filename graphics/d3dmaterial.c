@@ -10,7 +10,7 @@
 #include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "d3d_private.h"
 
@@ -25,7 +25,7 @@ static ICOM_VTABLE(IDirect3DMaterial) material_vtable;
  *				Matrial2 static functions
  */
 static void activate(IDirect3DMaterial2Impl* This) {
-  TRACE(ddraw, "Activating material %p\n", This);
+  TRACE("Activating material %p\n", This);
   
   ENTER_GL();
   /* First, set the rendering context */
@@ -52,10 +52,10 @@ static void activate(IDirect3DMaterial2Impl* This) {
 	       GL_EMISSION,
 	       (float *) &(This->mat.d.emissive));
   
-  TRACE(ddraw, "Size  : %ld\n", This->mat.dwSize);
-  TRACE(ddraw, "Power : %f\n", This->mat.e.power);
+  TRACE("Size  : %ld\n", This->mat.dwSize);
+  TRACE("Power : %f\n", This->mat.e.power);
 
-  TRACE(ddraw, "Texture handle : %08lx\n", (DWORD)This->mat.hTexture);
+  TRACE("Texture handle : %08lx\n", (DWORD)This->mat.hTexture);
   LEAVE_GL();
   
   return ;
@@ -108,7 +108,7 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_QueryInterface(LPDIRECT3DMATERIAL2 
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_QueryInterface(LPDIRECT3DMATERIAL2 
 static ULONG WINAPI IDirect3DMaterial2Impl_AddRef(LPDIRECT3DMATERIAL2 iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
   
   return ++(This->ref);
 }
@@ -128,7 +128,7 @@ static ULONG WINAPI IDirect3DMaterial2Impl_AddRef(LPDIRECT3DMATERIAL2 iface)
 static ULONG WINAPI IDirect3DMaterial2Impl_Release(LPDIRECT3DMATERIAL2 iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
+  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
     HeapFree(GetProcessHeap(),0,This);
@@ -148,7 +148,7 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_GetMaterial(LPDIRECT3DMATERIAL2 ifa
 						     LPD3DMATERIAL lpMat)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpMat);
+  TRACE("(%p)->(%p)\n", This, lpMat);
   if (TRACE_ON(ddraw))
     dump_material(lpMat);
   
@@ -162,7 +162,7 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_SetMaterial(LPDIRECT3DMATERIAL2 ifa
 						     LPD3DMATERIAL lpMat)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpMat);
+  TRACE("(%p)->(%p)\n", This, lpMat);
   if (TRACE_ON(ddraw))
     dump_material(lpMat);
   
@@ -178,7 +178,7 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_GetHandle(LPDIRECT3DMATERIAL2 iface
 
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lpD3DDevice2, lpMatHandle);
+  FIXME("(%p)->(%p,%p): stub\n", This, lpD3DDevice2, lpMatHandle);
 
   if (This->use_d3d2)
     This->device.active_device2 = (IDirect3DDevice2Impl*)lpD3DDevice2;
@@ -193,7 +193,7 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_GetHandle(LPDIRECT3DMATERIAL2 iface
 static HRESULT WINAPI IDirect3DMaterialImpl_Reserve(LPDIRECT3DMATERIAL iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  FIXME(ddraw, "(%p)->(): stub\n", This);
+  FIXME("(%p)->(): stub\n", This);
 
   return DDERR_INVALIDPARAMS;
 }
@@ -201,7 +201,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Reserve(LPDIRECT3DMATERIAL iface)
 static HRESULT WINAPI IDirect3DMaterialImpl_Unreserve(LPDIRECT3DMATERIAL iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  FIXME(ddraw, "(%p)->(): stub\n", This);
+  FIXME("(%p)->(): stub\n", This);
 
   return DDERR_INVALIDPARAMS;
 }
@@ -211,7 +211,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Initialize(LPDIRECT3DMATERIAL iface,
 
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  TRACE(ddraw, "(%p)->(%p)\n", This, lpDirect3D);
+  TRACE("(%p)->(%p)\n", This, lpDirect3D);
   
   return DDERR_ALREADYINITIALIZED;
 }
@@ -256,12 +256,12 @@ static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable =
 #else /* HAVE_MESAGL */
 
 LPDIRECT3DMATERIAL d3dmaterial_create(IDirect3DImpl* d3d1) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 
 LPDIRECT3DMATERIAL2 d3dmaterial2_create(IDirect3D2Impl* d3d2) {
-  ERR(ddraw, "Should not be called...\n");
+  ERR("Should not be called...\n");
   return NULL;
 }
 

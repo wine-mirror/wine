@@ -5,7 +5,7 @@
  */
 #include "wine/winuser16.h"
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winspool.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
@@ -24,20 +24,20 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    physDev->job.banding = TRUE;
 	    SetRect16( r, 0, 0, dc->w.devCaps->horzRes,
 		                     dc->w.devCaps->vertRes );
-	    TRACE(psdrv, "NEXTBAND returning %d,%d - %d,%d\n", r->left,
+	    TRACE("NEXTBAND returning %d,%d - %d,%d\n", r->left,
 		  r->top, r->right, r->bottom );
 	    return 1;
 	}
         SetRect16( r, 0, 0, 0, 0 );
-	TRACE(psdrv, "NEXTBAND rect to 0,0 - 0,0\n" );
+	TRACE("NEXTBAND rect to 0,0 - 0,0\n" );
 	physDev->job.banding = FALSE;
     }	/* Fall through */
 
     case NEWFRAME:
-        TRACE(psdrv, "NEWFRAME\n");
+        TRACE("NEWFRAME\n");
 
         if(!physDev->job.hJob) {
-	    FIXME(psdrv, "hJob == 0. Now what?\n");
+	    FIXME("hJob == 0. Now what?\n");
 	    return 0;
 	}
 
@@ -49,11 +49,11 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
           
     case QUERYESCSUPPORT:
         if(cbInput != 2) {
-	    WARN(psdrv, "cbInput != 2 (=%d) for QUERYESCSUPPORT\n", cbInput);
+	    WARN("cbInput != 2 (=%d) for QUERYESCSUPPORT\n", cbInput);
 	    return 0;
 	} else {
 	    UINT16 num = *(UINT16 *)PTR_SEG_TO_LIN(lpInData);
-	    TRACE(psdrv, "QUERYESCSUPPORT for %d\n", num);	   
+	    TRACE("QUERYESCSUPPORT for %d\n", num);	   
 
 	    switch(num) {
 	    case NEWFRAME:
@@ -81,23 +81,23 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	}
 
     case SETABORTPROC:
-        FIXME(psdrv, "SETABORTPROC: Ignoring\n");
+        FIXME("SETABORTPROC: Ignoring\n");
 
 /*	dc->w.lpfnPrint = (FARPROC16)lpInData;
  */
 	return 1;
 
     case STARTDOC:
-        TRACE(psdrv, "STARTDOC\n");
+        TRACE("STARTDOC\n");
         if(physDev->job.hJob) {
-	    FIXME(psdrv, "hJob != 0. Now what?\n");
+	    FIXME("hJob != 0. Now what?\n");
 	    return 0;
 	}
 
 	physDev->job.hJob = OpenJob16(physDev->job.output,
 				    PTR_SEG_TO_LIN(lpInData), dc->hSelf);
 	if(!physDev->job.hJob) {
-	    WARN(psdrv, "OpenJob failed\n");
+	    WARN("OpenJob failed\n");
 	    return 0;
 	}
 	physDev->job.banding = FALSE;
@@ -111,9 +111,9 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	return 1;
 
     case ENDDOC:
-        TRACE(psdrv, "ENDDOC\n");
+        TRACE("ENDDOC\n");
         if(!physDev->job.hJob) {
-	    FIXME(psdrv, "hJob == 0. Now what?\n");
+	    FIXME("hJob == 0. Now what?\n");
 	    return 0;
 	}
 
@@ -123,7 +123,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    return 0;
 
         if( CloseJob16( physDev->job.hJob ) == SP_ERROR ) {
-	    WARN(psdrv, "CloseJob error\n");
+	    WARN("CloseJob error\n");
 	    return 0;
 	}
 	physDev->job.hJob = 0;
@@ -135,7 +135,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    
 	    p->x = dc->w.devCaps->horzRes;
 	    p->y = dc->w.devCaps->vertRes;
-	    TRACE(psdrv, "GETPHYSPAGESIZE: returning %dx%d\n", p->x, p->y);
+	    TRACE("GETPHYSPAGESIZE: returning %dx%d\n", p->x, p->y);
 	    return 1;
 	}
 
@@ -144,7 +144,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    POINT16 *p = (POINT16 *)PTR_SEG_TO_LIN(lpOutData);
         
 	    p->x = p->y = 0;
-	    TRACE(psdrv, "GETPRINTINGOFFSET: returning %dx%d\n", p->x, p->y);
+	    TRACE("GETPRINTINGOFFSET: returning %dx%d\n", p->x, p->y);
 	    return 1;
 	}
       
@@ -153,7 +153,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    POINT16 *p = (POINT16 *)PTR_SEG_TO_LIN(lpOutData);
         
 	    p->x = p->y = 0;
-	    TRACE(psdrv, "GETSCALINGFACTOR: returning %dx%d\n", p->x, p->y);
+	    TRACE("GETSCALINGFACTOR: returning %dx%d\n", p->x, p->y);
 	    return 1;
 	}
 
@@ -162,10 +162,10 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    INT16 *NumCopies = (INT16 *)PTR_SEG_TO_LIN(lpInData);
 	    INT16 *ActualCopies = (INT16 *)PTR_SEG_TO_LIN(lpOutData);
 	    if(cbInput != 2) {
-	        WARN(psdrv, "cbInput != 2 (=%d) for SETCOPYCOUNT\n", cbInput);
+	        WARN("cbInput != 2 (=%d) for SETCOPYCOUNT\n", cbInput);
 		return 0;
 	    }
-	    TRACE(psdrv, "SETCOPYCOUNT %d\n", *NumCopies);
+	    TRACE("SETCOPYCOUNT %d\n", *NumCopies);
 	    *ActualCopies = 1;
 	    return 1;
 	}
@@ -182,10 +182,10 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         {
 	    INT16 newCap = *(INT16 *)PTR_SEG_TO_LIN(lpInData);
 	    if(cbInput != 2) {
-	        WARN(psdrv, "cbInput != 2 (=%d) for SETLINECAP\n", cbInput);
+	        WARN("cbInput != 2 (=%d) for SETLINECAP\n", cbInput);
 		return 0;
 	    }	        	
-	    TRACE(psdrv, "SETLINECAP %d\n", newCap);
+	    TRACE("SETLINECAP %d\n", newCap);
 	    return 0;
 	}
 	    
@@ -193,10 +193,10 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         {
 	    INT16 newJoin = *(INT16 *)PTR_SEG_TO_LIN(lpInData);
 	    if(cbInput != 2) {
-	        WARN(psdrv, "cbInput != 2 (=%d) for SETLINEJOIN\n", cbInput);
+	        WARN("cbInput != 2 (=%d) for SETLINEJOIN\n", cbInput);
 		return 0;
 	    }	        
-	    TRACE(psdrv, "SETLINEJOIN %d\n", newJoin);
+	    TRACE("SETLINEJOIN %d\n", newJoin);
 	    return 0;
 	}
 
@@ -204,10 +204,10 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         {
 	    INT16 newLimit = *(INT16 *)PTR_SEG_TO_LIN(lpInData);
 	    if(cbInput != 2) {
-	        WARN(psdrv, "cbInput != 2 (=%d) for SETMITERLIMIT\n", cbInput);
+	        WARN("cbInput != 2 (=%d) for SETMITERLIMIT\n", cbInput);
 		return 0;
 	    }	        
-	    TRACE(psdrv, "SETMITERLIMIT %d\n", newLimit);
+	    TRACE("SETMITERLIMIT %d\n", newLimit);
 	    return 0;
 	}
 
@@ -234,11 +234,11 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         {
 	    UINT16 cap = *(UINT16 *)PTR_SEG_TO_LIN(lpInData);
 	    if(cbInput != 2) {
-	        WARN(psdrv, "cbInput != 2 (=%d) for EXT_DEVICE_CAPS\n",
+	        WARN("cbInput != 2 (=%d) for EXT_DEVICE_CAPS\n",
 		     cbInput);
 		return 0;
 	    }	        
-	    TRACE(psdrv, "EXT_DEVICE_CAPS %d\n", cap);
+	    TRACE("EXT_DEVICE_CAPS %d\n", cap);
 	    return 0;
 	}
 
@@ -246,16 +246,16 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         {
 	    RECT16 *r = (RECT16 *)PTR_SEG_TO_LIN(lpInData);
 	    if(cbInput != 8) {
-	        WARN(psdrv, "cbInput != 8 (=%d) for SET_BOUNDS\n", cbInput);
+	        WARN("cbInput != 8 (=%d) for SET_BOUNDS\n", cbInput);
 		return 0;
 	    }	        
-	    TRACE(psdrv, "SET_BOUNDS (%d,%d) - (%d,%d)\n", r->left, r->top,
+	    TRACE("SET_BOUNDS (%d,%d) - (%d,%d)\n", r->left, r->top,
 		  r->right, r->bottom);
 	    return 0;
 	}
 
     default:
-        FIXME(psdrv, "Unimplemented code 0x%x\n", nEscape);
+        FIXME("Unimplemented code 0x%x\n", nEscape);
 	return 0;
     }
 }

@@ -11,7 +11,7 @@
 #include "xmalloc.h"
 #include "metafiledrv.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile)
 
@@ -233,7 +233,7 @@ static INT16 MFDRV_CreateRegion(DC *dc, HRGN hrgn)
 
     len = GetRegionData( hrgn, 0, NULL );
     if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
-        WARN(metafile, "Can't alloc rgndata buffer\n");
+        WARN("Can't alloc rgndata buffer\n");
 	return -1;
     }
     GetRegionData( hrgn, len, rgndata );
@@ -243,7 +243,7 @@ static INT16 MFDRV_CreateRegion(DC *dc, HRGN hrgn)
      */
     len = sizeof(METARECORD) + 20 + (rgndata->rdh.nCount * 12);
     if( !(mr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, len )) ) {
-        WARN(metafile, "Can't alloc METARECORD buffer\n");
+        WARN("Can't alloc METARECORD buffer\n");
 	HeapFree( SystemHeap, 0, rgndata );
 	return -1;
     }
@@ -296,7 +296,7 @@ static INT16 MFDRV_CreateRegion(DC *dc, HRGN hrgn)
     HeapFree( SystemHeap, 0, rgndata );
     if(!ret) 
     {
-        WARN(metafile, "MFDRV_WriteRecord failed\n");
+        WARN("MFDRV_WriteRecord failed\n");
 	return -1;
     }
     return MFDRV_AddHandleDC( dc );

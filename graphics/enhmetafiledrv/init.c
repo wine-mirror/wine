@@ -12,7 +12,7 @@
 #include "enhmetafile.h"
 #include "enhmetafiledrv.h"
 #include "wine/winestring.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include <string.h>
 
@@ -129,7 +129,7 @@ BOOL EMFDRV_WriteRecord( DC *dc, EMR *emr )
     physDev->emh->nRecords++;
 
     if(physDev->hFile) {
-        TRACE(enhmetafile,"Writing record to disk\n");
+        TRACE("Writing record to disk\n");
 	if (!WriteFile(physDev->hFile, (char *)emr, emr->nSize, NULL, NULL))
 	    return FALSE;
     } else {
@@ -230,7 +230,7 @@ HDC WINAPI CreateEnhMetaFileW(
     HFILE hFile;
     DWORD size = 0, length = 0;
 
-    TRACE(enhmetafile, "'%s'\n", debugstr_w(filename) );
+    TRACE("'%s'\n", debugstr_w(filename) );
 
     if (!(dc = DC_AllocDC( &EMFDRV_Funcs ))) return 0;
     dc->header.wMagic = ENHMETAFILE_DC_MAGIC;
@@ -286,7 +286,7 @@ HDC WINAPI CreateEnhMetaFileW(
 	physDev->hFile = hFile;
     }
 	
-    TRACE(enhmetafile, "returning %04x\n", dc->hSelf);
+    TRACE("returning %04x\n", dc->hSelf);
     return dc->hSelf;
 
 }
@@ -302,7 +302,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc /* metafile DC */ )
     EMREOF emr;
     HANDLE hMapping = 0;
 
-    TRACE(enhmetafile, "(%04x)\n", hdc );
+    TRACE("(%04x)\n", hdc );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, ENHMETAFILE_DC_MAGIC ))) return 0;
     physDev = (EMFDRV_PDEVICE *)dc->physDev;
@@ -329,9 +329,9 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc /* metafile DC */ )
 	HeapFree( SystemHeap, 0, physDev->emh );
         hMapping = CreateFileMappingA(physDev->hFile, NULL, PAGE_READONLY, 0,
 				      0, NULL);
-	TRACE(enhmetafile, "hMapping = %08x\n", hMapping );
+	TRACE("hMapping = %08x\n", hMapping );
 	physDev->emh = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-	TRACE(enhmetafile, "view = %p\n", physDev->emh );
+	TRACE("view = %p\n", physDev->emh );
     }
 
 

@@ -7,7 +7,7 @@
 #include "gdi.h"
 #include "metafiledrv.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "bitmap.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile)
@@ -45,7 +45,7 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
     *(mr->rdParm + 9) = BM.bmWidthBytes;
     *(mr->rdParm +10) = BM.bmPlanes;
     *(mr->rdParm +11) = BM.bmBitsPixel;
-    TRACE(metafile,"len = %ld  rop=%lx  \n",len,rop);
+    TRACE("len = %ld  rop=%lx  \n",len,rop);
     if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
                         mr->rdParm +12))
     {
@@ -110,7 +110,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
     lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
-    TRACE(metafile,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
+    TRACE("MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
                len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
     if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
                   (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
@@ -126,7 +126,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
     *(mr->rdParm +12) = BM.bmWidthBytes;
     *(mr->rdParm +13) = BM.bmPlanes;
     *(mr->rdParm +14) = BM.bmBitsPixel;
-    TRACE(metafile,"len = %ld  rop=%lx  \n",len,rop);
+    TRACE("len = %ld  rop=%lx  \n",len,rop);
     if (GetBitmapBits( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
                          mr->rdParm +15))
 #endif    

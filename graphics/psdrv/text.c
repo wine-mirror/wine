@@ -6,7 +6,7 @@
  */
 #include <string.h>
 #include "psdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winspool.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
@@ -22,12 +22,12 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     char *strbuf;
     SIZE sz;
 
-    TRACE(psdrv, "(x=%d, y=%d, flags=0x%08x, str='%.*s', count=%d)\n", x, y,
+    TRACE("(x=%d, y=%d, flags=0x%08x, str='%.*s', count=%d)\n", x, y,
 	  flags, (int)count, str, count);
 
     strbuf = (char *)HeapAlloc( PSDRV_Heap, 0, count + 1);
     if(!strbuf) {
-        WARN(psdrv, "HeapAlloc failed\n");
+        WARN("HeapAlloc failed\n");
         return FALSE;
     }
 
@@ -94,7 +94,7 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
         SIZE size;
         INT escapement =  physDev->font.escapement;
 
-        TRACE(psdrv, "Position = %f Thickness %f Escapement %d\n",
+        TRACE("Position = %f Thickness %f Escapement %d\n",
               pos, thick, escapement);
 
         /* Get the width of the text */

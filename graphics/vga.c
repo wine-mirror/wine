@@ -12,7 +12,7 @@
 #include "miscemu.h"
 #include "vga.h"
 #include "ddraw.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
 
@@ -30,11 +30,11 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     if (!lpddraw) {
         DirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
-            ERR(ddraw,"DirectDraw is not available\n");
+            ERR("DirectDraw is not available\n");
             return 1;
         }
         if (IDirectDraw_SetDisplayMode(lpddraw,Xres,Yres,Depth)) {
-            ERR(ddraw,"DirectDraw does not support requested display mode\n");
+            ERR("DirectDraw does not support requested display mode\n");
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return 1;
@@ -45,7 +45,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 	sdesc.dwFlags = DDSD_CAPS;
 	sdesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
         if (IDirectDraw_CreateSurface(lpddraw,&sdesc,&lpddsurf,NULL)||(!lpddsurf)) {
-            ERR(ddraw,"DirectDraw surface is not available\n");
+            ERR("DirectDraw surface is not available\n");
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return 1;
@@ -109,7 +109,7 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
     if (!lpddraw) return NULL;
     if (!lpddsurf) return NULL;
     if (IDirectDrawSurface_Lock(lpddsurf,NULL,&sdesc,0,0)) {
-        ERR(ddraw,"could not lock surface!\n");
+        ERR("could not lock surface!\n");
         return NULL;
     }
     if (Pitch) *Pitch=sdesc.lPitch;

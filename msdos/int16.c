@@ -10,7 +10,7 @@
 #include "module.h"
 #include "console.h"
 #include "wincon.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winuser.h"
 #include "miscemu.h"
 
@@ -34,7 +34,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
    case 0x00: /* Get Keystroke */
       /* Returns: AH = Scan code
                   AL = ASCII character */   
-      TRACE(int16, "Get Keystroke\n");
+      TRACE("Get Keystroke\n");
       CONSOLE_GetKeystroke(&AH_reg(context), &AL_reg(context));
       break;
 
@@ -42,7 +42,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       /* Returns: ZF set if no keystroke */
       /*          AH = Scan code */
       /*          AL = ASCII character */
-      TRACE(int16, "Check for Keystroke\n");
+      TRACE("Check for Keystroke\n");
       if (!CONSOLE_CheckForKeystroke(&AH_reg(context), &AL_reg(context)))
       {
           SET_ZFLAG(context);
@@ -72,25 +72,25 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
           AL_reg(context) |= 0x40;
       if (GetAsyncKeyState(VK_INSERT))
           AL_reg(context) |= 0x80;
-      TRACE(int16, "Get Shift Flags: returning 0x%02x\n", AL_reg(context));
+      TRACE("Get Shift Flags: returning 0x%02x\n", AL_reg(context));
       break;
 
    case 0x03: /* Set Typematic Rate and Delay */
-      FIXME(int16, "Set Typematic Rate and Delay - Not Supported\n");
+      FIXME("Set Typematic Rate and Delay - Not Supported\n");
       break;
 
    case 0x09: /* Get Keyboard Functionality */
-      FIXME(int16, "Get Keyboard Functionality - Not Supported\n");
+      FIXME("Get Keyboard Functionality - Not Supported\n");
       /* As a temporary measure, say that "nothing" is supported... */
       AL_reg(context) = 0;
       break;
 
    case 0x0a: /* Get Keyboard ID */
-      FIXME(int16, "Get Keyboard ID - Not Supported\n");
+      FIXME("Get Keyboard ID - Not Supported\n");
       break;
 
    case 0x10: /* Get Enhanced Keystroke */
-      TRACE(int16, "Get Enhanced Keystroke - Partially supported\n");
+      TRACE("Get Enhanced Keystroke - Partially supported\n");
       /* Returns: AH = Scan code
                   AL = ASCII character */   
       CONSOLE_GetKeystroke(&AH_reg(context), &AL_reg(context));
@@ -101,7 +101,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       /* Returns: ZF set if no keystroke */
       /*          AH = Scan code */
       /*          AL = ASCII character */
-      TRACE(int16, "Check for Enhanced Keystroke - Partially supported\n");
+      TRACE("Check for Enhanced Keystroke - Partially supported\n");
       if (!CONSOLE_CheckForKeystroke(&AH_reg(context), &AL_reg(context)))
       {
           SET_ZFLAG(context);
@@ -113,11 +113,11 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       break;
 
    case 0x12: /* Get Extended Shift States */
-      FIXME(int16, "Get Extended Shift States - Not Supported\n");
+      FIXME("Get Extended Shift States - Not Supported\n");
       break;
  
    default:
-      FIXME(int16, "Unknown INT 16 function - 0x%x\n", AH_reg(context));   
+      FIXME("Unknown INT 16 function - 0x%x\n", AH_reg(context));   
       break;
 
    }

@@ -9,7 +9,7 @@
 #include "ldt.h"
 #include "miscemu.h"
 #include "drive.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 
@@ -43,7 +43,7 @@ void WINAPI INT_Int26Handler( CONTEXT86 *context )
         length = CX_reg(context);
     }
 		
-    TRACE(int,"int26: abs diskwrite, drive %d, sector %ld, "
+    TRACE("int26: abs diskwrite, drive %d, sector %ld, "
                  "count %ld, buffer %p\n",
                  AL_reg(context), begin, length, dataptr );
 

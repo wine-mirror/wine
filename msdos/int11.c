@@ -6,7 +6,7 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "drive.h"
-#include "debug.h"
+#include "debugtools.h"
 
 /**********************************************************************
  *	    INT_Int11Handler

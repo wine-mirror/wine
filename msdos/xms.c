@@ -13,7 +13,7 @@
 #include "module.h"
 #include "miscemu.h"
 #include "toolhelp.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "selectors.h"
 
 DEFAULT_DEBUG_CHANNEL(int31)
@@ -44,7 +44,7 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
     switch(AH_reg(context))
     {
     case 0x00:   /* Get XMS version number */
-        TRACE(int31, "get XMS version number\n");
+        TRACE("get XMS version number\n");
         AX_reg(context) = 0x0200; /* 2.0 */
         BX_reg(context) = 0x0000; /* internal revision */
         DX_reg(context) = 0x0001; /* HMA exists */
@@ -53,16 +53,16 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
     {
 	MEMMANINFO mmi;
 
-        TRACE(int31, "query free extended memory\n");
+        TRACE("query free extended memory\n");
 	mmi.dwSize = sizeof(mmi);
 	MemManInfo16(&mmi);
         AX_reg(context) = mmi.dwLargestFreeBlock >> 10;
 	    DX_reg(context) = (mmi.dwFreePages * VIRTUAL_GetPageSize()) >> 10;
-        TRACE(int31, "returning largest %dK, total %dK\n", AX_reg(context), DX_reg(context));
+        TRACE("returning largest %dK, total %dK\n", AX_reg(context), DX_reg(context));
     }
     break;
     case 0x09:   /* Allocate Extended Memory Block */
-        TRACE(int31, "allocate extended memory block (%dK)\n",
+        TRACE("allocate extended memory block (%dK)\n",
             DX_reg(context));
 	DX_reg(context) = GlobalAlloc16(GMEM_MOVEABLE,
 	    (DWORD)DX_reg(context)<<10);
@@ -70,7 +70,7 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
 	if (!DX_reg(context)) BL_reg(context) = 0xA0; /* out of memory */
 	break;
     case 0x0a:   /* Free Extended Memory Block */
-	TRACE(int31, "free extended memory block %04x\n",DX_reg(context));
+	TRACE("free extended memory block %04x\n",DX_reg(context));
 	GlobalFree16(DX_reg(context));
 	break;
     case 0x0b:   /* Move Extended Memory Block */
@@ -78,7 +78,7 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
 	MOVESTRUCT*move=CTX_SEG_OFF_TO_LIN(context,
 	    DS_reg(context),ESI_reg(context));
         BYTE*src,*dst;
-        TRACE(int31, "move extended memory block\n");
+        TRACE("move extended memory block\n");
         src=XMS_Offset(&move->Source);
         dst=XMS_Offset(&move->Dest);
 	memcpy(dst,src,move->Length);

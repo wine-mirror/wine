@@ -10,7 +10,7 @@
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "psdrv.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
@@ -39,7 +39,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
     for(i = 0; i < afm->NumofMetrics; i++) {
 
         if(!fgets(line, sizeof(line), fp)) {
-	   ERR(psdrv, "Unexpected EOF\n");
+	   ERR("Unexpected EOF\n");
 	   return;
 	}
 
@@ -102,7 +102,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	}
 
 #if 0	
-	TRACE(psdrv, "Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
+	TRACE("Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
 	      metric->N, metric->WX, metric->B.llx, metric->B.lly,
 	      metric->B.urx, metric->B.ury);
 #endif
@@ -129,10 +129,10 @@ static AFM *PSDRV_AFMParse(char const *file)
     AFM *afm;
     char *cp;
 
-    TRACE(psdrv, "parsing '%s'\n", file);
+    TRACE("parsing '%s'\n", file);
 
     if((fp = fopen(file, "r")) == NULL) {
-        MSG("Can't open AFM file '%s'. Please check wine.conf .\n", file);
+        MESSAGE("Can't open AFM file '%s'. Please check wine.conf .\n", file);
         return NULL;
     }
 
@@ -181,7 +181,7 @@ static AFM *PSDRV_AFMParse(char const *file)
 	    else if(!strncmp("Light", value, 5))
 	        afm->Weight = FW_LIGHT;
 	    else {
-  	        FIXME(psdrv, "Unkown AFM Weight '%s'\n", value);
+  	        FIXME("Unkown AFM Weight '%s'\n", value);
 	        afm->Weight = FW_NORMAL;
 	    }
 	    continue;
@@ -373,7 +373,7 @@ static void PSDRV_ReencodeCharWidths(AFM *afm)
 	    }
 	}
 	if(!metric) {
-	    WARN(psdrv, "Couldn't find glyph '%s' in font '%s'\n",
+	    WARN("Couldn't find glyph '%s' in font '%s'\n",
 		 PSDRV_ANSIVector[i], afm->FontName);
 	    afm->CharWidths[i] = 0.0;
 	}
@@ -418,9 +418,9 @@ static void PSDRV_DumpFontList(void)
     AFMLISTENTRY *afmle;
 
     for(family = PSDRV_AFMFontList; family; family = family->next) {
-        TRACE(psdrv, "Family '%s'\n", family->FamilyName);
+        TRACE("Family '%s'\n", family->FamilyName);
 	for(afmle = family->afmlist; afmle; afmle = afmle->next) {
-	    TRACE(psdrv, "\tFontName '%s'\n", afmle->afm->FontName);
+	    TRACE("\tFontName '%s'\n", afmle->afm->FontName);
 	}
     }
     return;

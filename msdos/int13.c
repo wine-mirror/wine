@@ -13,7 +13,7 @@
 #endif
 #include "miscemu.h"
 /* #define DEBUG_INT */
-#include "debug.h"
+#include "debugtools.h"
 #include "drive.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
@@ -79,7 +79,7 @@ void WINAPI INT_Int13Handler( CONTEXT86 *context )
 
                         if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_NONBLOCK)) == -1)
                         {
-                                WARN(int, "(GET DRIVE PARAMETERS): Can't determine floppy geometry !\n");
+                                WARN("(GET DRIVE PARAMETERS): Can't determine floppy geometry !\n");
                                 BX_reg(context) = 0;
                                 CX_reg(context) = 0;
                                 DH_reg(context) = 0;

@@ -32,7 +32,7 @@
 #include "winuser.h"
 #include "tweak.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(tweak)
 
@@ -65,13 +65,13 @@ int TWEAK_Init (void)
     if (strncmp (szIniString, "TestString", 10)) {
 	if (PROFILE_GetWineIniBool ("Tweak.Layout", "Win95Look", 0)) {
 	    TWEAK_WineLook = WIN95_LOOK;
-	    TRACE (tweak, "Using Win95 look and feel.\n");
+	    TRACE("Using Win95 look and feel.\n");
 	}
 	else {
 	    TWEAK_WineLook = WIN31_LOOK;
-	    TRACE (tweak, "Using Win3.1 look and feel.\n");
+	    TRACE("Using Win3.1 look and feel.\n");
 	}
-	ERR (tweak,
+	ERR(
 	     "Replace \"Win95Look\" by \"WineLook\" in your \"wine.ini\"!\n");
     }
 
@@ -80,19 +80,19 @@ int TWEAK_Init (void)
 
     if (!strncasecmp (szIniString, "Win31", 5)) {
 	TWEAK_WineLook = WIN31_LOOK;
-	TRACE (tweak, "Using Win3.1 look and feel.\n");
+	TRACE("Using Win3.1 look and feel.\n");
     }
     else if (!strncasecmp (szIniString, "Win95", 5)) {
 	TWEAK_WineLook = WIN95_LOOK;
-	TRACE (tweak, "Using Win95 look and feel.\n");
+	TRACE("Using Win95 look and feel.\n");
     }
     else if (!strncasecmp (szIniString, "Win98", 5)) {
 	TWEAK_WineLook = WIN98_LOOK;
-	TRACE (tweak, "Using Win98 look and feel.\n");
+	TRACE("Using Win98 look and feel.\n");
     }
     else {
 	TWEAK_WineLook = WIN31_LOOK;
-	TRACE (tweak, "Using Win3.1 look and feel.\n");
+	TRACE("Using Win3.1 look and feel.\n");
     }
 
     return 1;

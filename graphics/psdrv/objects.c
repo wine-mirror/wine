@@ -10,7 +10,7 @@
 #include "pen.h"
 #include "brush.h"
 #include "bitmap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(psdrv)
 static HBITMAP16 PSDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
                                             BITMAPOBJ * bmp )
 {
-    FIXME(psdrv, "stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
@@ -34,7 +34,7 @@ HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
     HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
-    TRACE(psdrv, "hdc=%04x %04x\n", dc->hSelf, handle );
+    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {
@@ -54,7 +54,7 @@ HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
 	  break;
       default:
-	  ERR(psdrv, "Unknown object magic %04x\n", ptr->wMagic);
+	  ERR("Unknown object magic %04x\n", ptr->wMagic);
 	  break;
     }
     GDI_HEAP_UNLOCK( handle );

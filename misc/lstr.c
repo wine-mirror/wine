@@ -31,7 +31,7 @@
 #include "ldt.h"
 #include "stackframe.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource)
 
@@ -520,10 +520,10 @@ DWORD WINAPI FormatMessageA(
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 	DWORD	nolinefeed = 0;
 
-	TRACE(resource, "(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
 	if (width) 
-		FIXME(resource,"line wrapping not supported.\n");
+		FIXME("line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
 		from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
@@ -657,7 +657,7 @@ DWORD WINAPI FormatMessageA(
 	if (nSize && talloced<nSize) {
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	}
-    TRACE(resource,"-- %s\n",debugstr_a(target));
+    TRACE("-- %s\n",debugstr_a(target));
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
 		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced);
@@ -696,10 +696,10 @@ DWORD WINAPI FormatMessageW(
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 	DWORD	nolinefeed = 0;
 
-	TRACE(resource, "(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
 	if (width) 
-		FIXME(resource,"line wrapping not supported.\n");
+		FIXME("line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
 		from = HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)lpSource);

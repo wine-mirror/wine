@@ -17,13 +17,13 @@
 #include "task.h"
 #include "process.h"
 #include "file.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(vxd)
 
 
 #define VXD_BARF(context,name) \
-    DUMP( "vxd %s: unknown/not implemented parameters:\n" \
+    DPRINTF( "vxd %s: unknown/not implemented parameters:\n" \
                      "vxd %s: AX %04x, BX %04x, CX %04x, DX %04x, " \
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
              (name), (name), AX_reg(context), BX_reg(context), \
@@ -44,7 +44,7 @@ void VXD_VMM ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] VMM  \n", (UINT16)service);
+    TRACE("[%04x] VMM  \n", (UINT16)service);
 
     switch(service)
     {
@@ -73,18 +73,18 @@ void WINAPI VXD_PageFile( CONTEXT86 *context )
 
     /* taken from Ralf Brown's Interrupt List */
 
-    TRACE(vxd,"[%04x] PageFile\n", (UINT16)service );
+    TRACE("[%04x] PageFile\n", (UINT16)service );
 
     switch(service)
     {
     case 0x00: /* get version, is this windows version? */
-	TRACE(vxd,"returning version\n");
+	TRACE("returning version\n");
         AX_reg(context) = VXD_WinVersion();
 	RESET_CFLAG(context);
 	break;
 
     case 0x01: /* get swap file info */
-	TRACE(vxd,"VxD PageFile: returning swap file info\n");
+	TRACE("VxD PageFile: returning swap file info\n");
 	AX_reg(context) = 0x00; /* paging disabled */
 	ECX_reg(context) = 0;   /* maximum size of paging file */	
 	/* FIXME: do I touch DS:SI or DS:DI? */
@@ -92,12 +92,12 @@ void WINAPI VXD_PageFile( CONTEXT86 *context )
 	break;
 
     case 0x02: /* delete permanent swap on exit */
-	TRACE(vxd,"VxD PageFile: supposed to delete swap\n");
+	TRACE("VxD PageFile: supposed to delete swap\n");
 	RESET_CFLAG(context);
 	break;
 
     case 0x03: /* current temporary swap file size */
-	TRACE(vxd,"VxD PageFile: what is current temp. swap size\n");
+	TRACE("VxD PageFile: what is current temp. swap size\n");
 	RESET_CFLAG(context);
 	break;
 
@@ -117,7 +117,7 @@ void VXD_Reboot ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] VMM  \n", (UINT16)service);
+    TRACE("[%04x] VMM  \n", (UINT16)service);
 
     switch(service)
     {
@@ -138,7 +138,7 @@ void VXD_VDD ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] VDD  \n", (UINT16)service);
+    TRACE("[%04x] VDD  \n", (UINT16)service);
 
     switch(service)
     {
@@ -159,7 +159,7 @@ void VXD_VMD ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] VMD  \n", (UINT16)service);
+    TRACE("[%04x] VMD  \n", (UINT16)service);
 
     switch(service)
     {
@@ -180,12 +180,12 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 {
     unsigned	service = DX_reg(context);
 
-    TRACE(vxd,"[%04x] Shell\n", (UINT16)service);
+    TRACE("[%04x] Shell\n", (UINT16)service);
 
     switch (service) /* Ralf Brown says EDX, but I use DX instead */
     {
     case 0x0000:
-	TRACE(vxd,"returning version\n");
+	TRACE("returning version\n");
         AX_reg(context) = VXD_WinVersion();
 	EBX_reg(context) = 1; /* system VM Handle */
 	break;
@@ -215,7 +215,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 	break;
 
     case 0x0006: /* SHELL_Get_VM_State */
-	TRACE(vxd,"VxD Shell: returning VM state\n");
+	TRACE("VxD Shell: returning VM state\n");
 	/* Actually we don't, not yet. We have to return a structure
          * and I am not to sure how to set it up and return it yet,
          * so for now let's do nothing. I can (hopefully) get this
@@ -254,7 +254,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 	break;
 
     case 0x0106:   /* install timeout callback */
-	TRACE( vxd, "VxD Shell: ignoring shell callback (%ld sec.)\n",
+	TRACE("VxD Shell: ignoring shell callback (%ld sec.)\n",
                     EBX_reg( context ) );
 	SET_CFLAG(context);
 	break;
@@ -274,12 +274,12 @@ void WINAPI VXD_Comm( CONTEXT86 *context )
 {
     unsigned	service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] Comm\n", (UINT16)service);
+    TRACE("[%04x] Comm\n", (UINT16)service);
 
     switch (service)
     {
     case 0x0000: /* get version */
-	TRACE(vxd,"returning version\n");
+	TRACE("returning version\n");
         AX_reg(context) = VXD_WinVersion();
 	RESET_CFLAG(context);
 	break;
@@ -299,7 +299,7 @@ void VXD_Timer( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] Virtual Timer\n", (UINT16)service);
+    TRACE("[%04x] Virtual Timer\n", (UINT16)service);
 
     switch(service)
     {
@@ -335,7 +335,7 @@ void VXD_TimerAPI ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] TimerAPI  \n", (UINT16)service);
+    TRACE("[%04x] TimerAPI  \n", (UINT16)service);
 
     switch(service)
     {
@@ -368,7 +368,7 @@ void VXD_ConfigMG ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] ConfigMG  \n", (UINT16)service);
+    TRACE("[%04x] ConfigMG  \n", (UINT16)service);
 
     switch(service)
     {
@@ -389,7 +389,7 @@ void VXD_Enable ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] Enable  \n", (UINT16)service);
+    TRACE("[%04x] Enable  \n", (UINT16)service);
 
     switch(service)
     {
@@ -410,7 +410,7 @@ void VXD_APM ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] APM  \n", (UINT16)service);
+    TRACE("[%04x] APM  \n", (UINT16)service);
 
     switch(service)
     {
@@ -501,7 +501,7 @@ void VXD_Win32s( CONTEXT86 *context )
          *               1 if VMCPD VxD not found
          */
 
-        TRACE(vxd, "GetVersion()\n");
+        TRACE("GetVersion()\n");
         
 	EAX_reg(context) = VXD_WinVersion() | (200 << 16);
         EBX_reg(context) = 0;
@@ -577,7 +577,7 @@ void VXD_Win32s( CONTEXT86 *context )
 
                 if (found == 3 && retv)
                 {
-                    TRACE(vxd, "PERF130 hack: "
+                    TRACE("PERF130 hack: "
                                "Replacing byte %02X at offset %04X:%04X\n",
                                *(retv+1), SELECTOROF(func1), 
                                           OFFSETOF(func1) + retv+1-start);
@@ -613,7 +613,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 0 if OK
          */
 
-        TRACE(vxd, "[0001] EBX=%lx ECX=%lx EDX=%lx ESI=%lx EDI=%lx\n", 
+        TRACE("[0001] EBX=%lx ECX=%lx EDX=%lx ESI=%lx EDI=%lx\n", 
                    EBX_reg(context), ECX_reg(context), EDX_reg(context),
                    ESI_reg(context), EDI_reg(context));
 
@@ -636,7 +636,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: Size of area changed
          */
 
-        TRACE(vxd, "[0002] EBX=%lx ECX=%lx EDX=%lx\n", 
+        TRACE("[0002] EBX=%lx ECX=%lx EDX=%lx\n", 
                    EBX_reg(context), ECX_reg(context), EDX_reg(context));
 
         /* FIXME */
@@ -654,7 +654,7 @@ void VXD_Win32s( CONTEXT86 *context )
          *               Bit 1: Read-Write if set, Read-Only if clear
          */
 
-        TRACE(vxd, "[0003] EDX=%lx\n", EDX_reg(context));
+        TRACE("[0003] EDX=%lx\n", EDX_reg(context));
 
         /* FIXME */
 
@@ -673,7 +673,7 @@ void VXD_Win32s( CONTEXT86 *context )
 
     if (!EDX_reg(context) || CX_reg(context) == 0xFFFF)
     {
-        TRACE(vxd, "MapModule: Initialization call\n");
+        TRACE("MapModule: Initialization call\n");
         EAX_reg(context) = 0;
     }
     else
@@ -711,7 +711,7 @@ void VXD_Win32s( CONTEXT86 *context )
         BOOL error = (image == INVALID_HANDLE_VALUE);
         UINT i;
 
-        TRACE(vxd, "MapModule: Loading %s\n", module->pathName);
+        TRACE("MapModule: Loading %s\n", module->pathName);
 
         for (i = 0; 
              !error && i < nt_header->FileHeader.NumberOfSections; 
@@ -722,7 +722,7 @@ void VXD_Win32s( CONTEXT86 *context )
                 DWORD  len  = pe_seg->SizeOfRawData;
                 LPBYTE addr = module->baseAddr + pe_seg->VirtualAddress;
 
-                TRACE(vxd, "MapModule: "
+                TRACE("MapModule: "
                            "Section %d at %08lx from %08lx len %08lx\n", 
                            i, (DWORD)addr, off, len);
 
@@ -734,7 +734,7 @@ void VXD_Win32s( CONTEXT86 *context )
         _lclose(image);
 
         if (error)
-            ERR(vxd, "MapModule: Unable to load %s\n", module->pathName);
+            ERR("MapModule: Unable to load %s\n", module->pathName);
 
         else if (module->relocDelta != 0)
         {
@@ -743,14 +743,14 @@ void VXD_Win32s( CONTEXT86 *context )
             IMAGE_BASE_RELOCATION *r = (IMAGE_BASE_RELOCATION *)
                 (dir->Size? module->baseAddr + dir->VirtualAddress : 0);
 
-            TRACE(vxd, "MapModule: Reloc delta %08lx\n", module->relocDelta);
+            TRACE("MapModule: Reloc delta %08lx\n", module->relocDelta);
 
             while (r && r->VirtualAddress)
             {
                 LPBYTE page  = module->baseAddr + r->VirtualAddress;
                 int    count = (r->SizeOfBlock - 8) / 2;
 
-                TRACE(vxd, "MapModule: %d relocations for page %08lx\n", 
+                TRACE("MapModule: %d relocations for page %08lx\n", 
                            count, (DWORD)page);
 
                 for(i = 0; i < count; i++)
@@ -771,7 +771,7 @@ void VXD_Win32s( CONTEXT86 *context )
                         *(DWORD*)(page+offset) += module->relocDelta;
                         break;
                     default:
-                        WARN(vxd, "MapModule: Unsupported fixup type\n");
+                        WARN("MapModule: Unsupported fixup type\n");
                         break;
                     }
                 }
@@ -793,7 +793,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 1 if OK
          */
         
-        TRACE(vxd, "UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET));
+        TRACE("UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET));
 
         /* As we didn't map anything, there's nothing to unmap ... */
 
@@ -824,18 +824,18 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  prot   = stack[4];
         DWORD  result;
 
-        TRACE(vxd, "VirtualAlloc(%lx, %lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualAlloc(%lx, %lx, %lx, %lx, %lx)\n", 
                    (DWORD)retv, (DWORD)base, size, type, prot);
 
         if (type & 0x80000000)
         {
-            WARN(vxd, "VirtualAlloc: strange type %lx\n", type);
+            WARN("VirtualAlloc: strange type %lx\n", type);
             type &= 0x7fffffff;
         }
 
         if (!base && (type & MEM_COMMIT) && prot == PAGE_READONLY)
         {
-            WARN(vxd, "VirtualAlloc: NLS hack, allowing write access!\n");
+            WARN("VirtualAlloc: NLS hack, allowing write access!\n");
             prot = PAGE_READWRITE;
         }
 
@@ -872,7 +872,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  type   = stack[3];
         DWORD  result;
 
-        TRACE(vxd, "VirtualFree(%lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualFree(%lx, %lx, %lx, %lx)\n", 
                    (DWORD)retv, (DWORD)base, size, type);
 
         result = VirtualFree(base, size, type);
@@ -910,7 +910,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD *old_prot = (DWORD *)W32S_APP2WINE(stack[4], W32S_OFFSET);
         DWORD  result;
 
-        TRACE(vxd, "VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n", 
                    (DWORD)retv, (DWORD)base, size, new_prot, (DWORD)old_prot);
 
         result = VirtualProtect(base, size, new_prot, old_prot);
@@ -947,7 +947,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  len    = stack[3];
         DWORD  result;
 
-        TRACE(vxd, "VirtualQuery(%lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualQuery(%lx, %lx, %lx, %lx)\n", 
                    (DWORD)retv, (DWORD)base, (DWORD)info, len);
 
         result = VirtualQuery(base, info, len);
@@ -967,7 +967,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
 
-        TRACE(vxd, "[000a] ECX=%lx EDX=%lx\n",
+        TRACE("[000a] ECX=%lx EDX=%lx\n",
                    ECX_reg(context), EDX_reg(context));
 
         /* FIXME */
@@ -983,7 +983,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
 
-        TRACE(vxd, "[000b] ECX=%lx\n", ECX_reg(context));
+        TRACE("[000b] ECX=%lx\n", ECX_reg(context));
 
         /* FIXME */
 
@@ -998,7 +998,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  EDX: Previous Debug Flags
          */
 
-        FIXME(vxd, "[000c] EDX=%lx\n", EDX_reg(context));
+        FIXME("[000c] EDX=%lx\n", EDX_reg(context));
 
         /* FIXME */
 
@@ -1035,13 +1035,13 @@ void VXD_Win32s( CONTEXT86 *context )
         HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
-        TRACE(vxd, "NtCreateSection(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
+        TRACE("NtCreateSection(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, flags1, atom, (DWORD)size, protect, flags2,
                    (DWORD)hFile, psp);
 
         if (!atom || GlobalGetAtomNameA(atom, name, sizeof(name)))
         {
-            TRACE(vxd, "NtCreateSection: name=%s\n", atom? name : NULL);
+            TRACE("NtCreateSection: name=%s\n", atom? name : NULL);
 
             result = CreateFileMappingA(hFile, NULL, protect, 
                                           size? size->HighPart : 0, 
@@ -1050,9 +1050,9 @@ void VXD_Win32s( CONTEXT86 *context )
         }
 
         if (result == INVALID_HANDLE_VALUE)
-            WARN(vxd, "NtCreateSection: failed!\n");
+            WARN("NtCreateSection: failed!\n");
         else
-            TRACE(vxd, "NtCreateSection: returned %lx\n", (DWORD)result);
+            TRACE("NtCreateSection: returned %lx\n", (DWORD)result);
 
         if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
@@ -1083,20 +1083,20 @@ void VXD_Win32s( CONTEXT86 *context )
         HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
-        TRACE(vxd, "NtOpenSection(%lx, %lx, %lx)\n", 
+        TRACE("NtOpenSection(%lx, %lx, %lx)\n", 
                    (DWORD)retv, protect, atom);
 
         if (atom && GlobalGetAtomNameA(atom, name, sizeof(name)))
         {
-            TRACE(vxd, "NtOpenSection: name=%s\n", name);
+            TRACE("NtOpenSection: name=%s\n", name);
 
             result = OpenFileMappingA(protect, FALSE, name);
         }
 
         if (result == INVALID_HANDLE_VALUE)
-            WARN(vxd, "NtOpenSection: failed!\n");
+            WARN("NtOpenSection: failed!\n");
         else
-            TRACE(vxd, "NtOpenSection: returned %lx\n", (DWORD)result);
+            TRACE("NtOpenSection: returned %lx\n", (DWORD)result);
 
         if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
@@ -1122,7 +1122,7 @@ void VXD_Win32s( CONTEXT86 *context )
         HANDLE handle = stack[0];
         DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
-        TRACE(vxd, "NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
+        TRACE("NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
 
         CloseHandle(handle);
         if (id) *id = 0; /* FIXME */
@@ -1145,7 +1145,7 @@ void VXD_Win32s( CONTEXT86 *context )
         HANDLE handle = stack[0];
         HANDLE new_handle;
 
-        TRACE(vxd, "NtDupSection(%lx)\n", (DWORD)handle);
+        TRACE("NtDupSection(%lx)\n", (DWORD)handle);
  
         DuplicateHandle( GetCurrentProcess(), handle,
                          GetCurrentProcess(), &new_handle,
@@ -1200,12 +1200,12 @@ void VXD_Win32s( CONTEXT86 *context )
             case PAGE_EXECUTE_WRITECOPY:  access = FILE_MAP_COPY;  break;
         }
 
-        TRACE(vxd, "NtMapViewOfSection"
+        TRACE("NtMapViewOfSection"
                    "(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)SectionHandle, ProcessHandle, (DWORD)BaseAddress, 
                    ZeroBits, CommitSize, (DWORD)SectionOffset, (DWORD)ViewSize,
                    InheritDisposition, AllocationType, Protect);
-        TRACE(vxd, "NtMapViewOfSection: "
+        TRACE("NtMapViewOfSection: "
                    "base=%lx, offset=%lx, size=%lx, access=%lx\n", 
                    (DWORD)address, SectionOffset? SectionOffset->LowPart : 0, 
                    ViewSize? *ViewSize : 0, access);
@@ -1215,7 +1215,7 @@ void VXD_Win32s( CONTEXT86 *context )
                             SectionOffset? SectionOffset->LowPart  : 0,
                             ViewSize? *ViewSize : 0, address);
 
-        TRACE(vxd, "NtMapViewOfSection: result=%lx\n", result);
+        TRACE("NtMapViewOfSection: result=%lx\n", result);
 
         if (W32S_WINE2APP(result, W32S_OFFSET))
         {
@@ -1242,7 +1242,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  ProcessHandle  = stack[0]; /* ignored */
         LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
-        TRACE(vxd, "NtUnmapViewOfSection(%lx, %lx)\n", 
+        TRACE("NtUnmapViewOfSection(%lx, %lx)\n", 
                    ProcessHandle, (DWORD)BaseAddress);
 
         UnmapViewOfFile(BaseAddress);
@@ -1273,10 +1273,10 @@ void VXD_Win32s( CONTEXT86 *context )
         LPBYTE address = (LPBYTE)(BaseAddress? W32S_APP2WINE(*BaseAddress, W32S_OFFSET) : 0);
         DWORD  size    = ViewSize? *ViewSize : 0;
 
-        TRACE(vxd, "NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n", 
+        TRACE("NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n", 
                    ProcessHandle, (DWORD)BaseAddress, (DWORD)ViewSize, 
                    (DWORD)unknown);
-        TRACE(vxd, "NtFlushVirtualMemory: base=%lx, size=%lx\n", 
+        TRACE("NtFlushVirtualMemory: base=%lx, size=%lx\n", 
                    (DWORD)address, size);
 
         FlushViewOfFile(address, size);
@@ -1297,7 +1297,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        FIXME(vxd, "[0014] ECX=%lx EDX=%lx\n", 
+        FIXME("[0014] ECX=%lx EDX=%lx\n", 
                    ECX_reg(context), EDX_reg(context));
 
         /* FIXME */
@@ -1311,7 +1311,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        TRACE(vxd, "[0015] EDX=%lx\n", EDX_reg(context));
+        TRACE("[0015] EDX=%lx\n", EDX_reg(context));
 
         /* We don't care, as we always have a coprocessor anyway */
         break;
@@ -1351,7 +1351,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        FIXME(vxd, "[0017] EBX=%lx CX=%x\n", 
+        FIXME("[0017] EBX=%lx CX=%x\n", 
                    EBX_reg(context), CX_reg(context));
 
         /* FIXME */
@@ -1377,7 +1377,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  size   = stack[2];
         DWORD  result;
 
-        TRACE(vxd, "VirtualLock(%lx, %lx, %lx)\n", 
+        TRACE("VirtualLock(%lx, %lx, %lx)\n", 
                    (DWORD)retv, (DWORD)base, size);
 
         result = VirtualLock(base, size);
@@ -1411,7 +1411,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  size   = stack[2];
         DWORD  result;
 
-        TRACE(vxd, "VirtualUnlock(%lx, %lx, %lx)\n", 
+        TRACE("VirtualUnlock(%lx, %lx, %lx)\n", 
                    (DWORD)retv, (DWORD)base, size);
 
         result = VirtualUnlock(base, size);
@@ -1434,7 +1434,7 @@ void VXD_Win32s( CONTEXT86 *context )
          *          EDX:  End of sparse memory arena
          */
 
-        TRACE(vxd, "KGetSystemInfo()\n");
+        TRACE("KGetSystemInfo()\n");
         
         /*
          * Note: Win32s reserves 0GB - 2GB for Win 3.1 and uses 2GB - 4GB as 
@@ -1471,7 +1471,7 @@ void VXD_Win32s( CONTEXT86 *context )
         struct Win32sMemoryInfo *info = 
                        (struct Win32sMemoryInfo *)W32S_APP2WINE(ESI_reg(context), W32S_OFFSET);
 
-        FIXME(vxd, "KGlobalMemStat(%lx)\n", (DWORD)info);
+        FIXME("KGlobalMemStat(%lx)\n", (DWORD)info);
 
         /* FIXME */
     }
@@ -1485,7 +1485,7 @@ void VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        TRACE(vxd, "[001c] ECX=%lx\n", ECX_reg(context));
+        TRACE("[001c] ECX=%lx\n", ECX_reg(context));
 
         /* FIXME */
         break;
@@ -1512,12 +1512,12 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  prot   = stack[3];
         DWORD  result;
 
-        TRACE(vxd, "VirtualAlloc16(%lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualAlloc16(%lx, %lx, %lx, %lx)\n", 
                    (DWORD)base, size, type, prot);
 
         if (type & 0x80000000)
         {
-            WARN(vxd, "VirtualAlloc16: strange type %lx\n", type);
+            WARN("VirtualAlloc16: strange type %lx\n", type);
             type &= 0x7fffffff;
         }
 
@@ -1529,7 +1529,7 @@ void VXD_Win32s( CONTEXT86 *context )
         else
             EDX_reg(context) = 0,
             EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
-	TRACE(vxd, "VirtualAlloc16: returning base %lx\n", EDX_reg(context));
+	TRACE("VirtualAlloc16: returning base %lx\n", EDX_reg(context));
     }
     break;
 
@@ -1553,7 +1553,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD  type   = stack[2];
         DWORD  result;
 
-        TRACE(vxd, "VirtualFree16(%lx, %lx, %lx)\n", 
+        TRACE("VirtualFree16(%lx, %lx, %lx)\n", 
                    (DWORD)base, size, type);
 
         result = VirtualFree(base, size, type);
@@ -1581,7 +1581,7 @@ void VXD_Win32s( CONTEXT86 *context )
         DWORD *ptr = (DWORD *)W32S_APP2WINE(ECX_reg(context), W32S_OFFSET);
         BOOL set = EDX_reg(context);
         
-        TRACE(vxd, "FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
+        TRACE("FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
 
         if (set)
             /* We do it differently ... */;

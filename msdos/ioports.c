@@ -21,7 +21,7 @@
 #include "dosexe.h"
 #include "options.h"
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "miscemu.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
@@ -80,7 +80,7 @@ static void IO_FixCMOSCheckSum(void)
 		sum += cmosimage[i];
 	cmosimage[0x2e] = sum >> 8; /* yes, this IS hi byte !! */
 	cmosimage[0x2f] = sum & 0xff;
-	TRACE(int, "calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
+	TRACE("calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
 }
 
 static void set_timer_maxval(unsigned timer, unsigned maxval)
@@ -90,13 +90,13 @@ static void set_timer_maxval(unsigned timer, unsigned maxval)
             DOSVM_SetTimer(maxval);
             break;
         case 1: /* RAM refresh */
-            FIXME(int, "RAM refresh counter handling not implemented !");
+            FIXME("RAM refresh counter handling not implemented !");
             break;
         case 2: /* cassette & speaker */
             /* speaker on ? */
             if (((BYTE)parport_8255[1] & 3) == 3)
             {
-                TRACE(int, "Beep (freq: %d) !\n", 1193180 / maxval );
+                TRACE("Beep (freq: %d) !\n", 1193180 / maxval );
                 Beep(1193180 / maxval, 20);
             }
             break;
@@ -138,7 +138,7 @@ static void do_IO_port_init_read_or_write(char* temp, char rw)
 {
 	int val, val1, i, len;
 	if (!strcasecmp(temp, "all")) {
-		MSG("Warning!!! Granting FULL IO port access to"
+		MESSAGE("Warning!!! Granting FULL IO port access to"
 			" windoze programs!\nWarning!!! "
 			"*** THIS IS NOT AT ALL "
 			"RECOMMENDED!!! ***\n");
@@ -253,7 +253,7 @@ DWORD IO_inport( int port, int size )
 {
     DWORD res = 0;
 
-    TRACE(int, "%d-byte value from port 0x%02x\n", size, port );
+    TRACE("%d-byte value from port 0x%02x\n", size, port );
 
 #ifdef DIRECT_IO_ACCESS    
     if ((do_direct_port_access)
@@ -267,7 +267,7 @@ DWORD IO_inport( int port, int size )
         case 2: res = inw( port ); break;
         case 4: res = inl( port ); break;
         default:
-            ERR(int, "invalid data size %d\n", size);
+            ERR("invalid data size %d\n", size);
         }
         iopl(0);
         return res;
@@ -347,11 +347,11 @@ DWORD IO_inport( int port, int size )
         res = 0xffffffff; /* no joystick */
         break;
     default:
-        WARN( int, "Direct I/O read attempted from port %x\n", port);
+        WARN("Direct I/O read attempted from port %x\n", port);
         res = 0xffffffff;
         break;
     }
-    TRACE(int, "  returning ( 0x%lx )\n", res );
+    TRACE("  returning ( 0x%lx )\n", res );
     return res;
 }
 
@@ -361,7 +361,7 @@ DWORD IO_inport( int port, int size )
  */
 void IO_outport( int port, int size, DWORD value )
 {
-    TRACE(int, "IO: 0x%lx (%d-byte value) to port 0x%02x\n",
+    TRACE("IO: 0x%lx (%d-byte value) to port 0x%02x\n",
                  value, size, port );
 
 #ifdef DIRECT_IO_ACCESS
@@ -376,7 +376,7 @@ void IO_outport( int port, int size, DWORD value )
         case 2: outw( LOWORD(value), port ); break;
         case 4: outl( value, port ); break;
         default:
-            WARN(int, "Invalid data size %d\n", size);
+            WARN("Invalid data size %d\n", size);
         }
         iopl(0);
         return;
@@ -442,7 +442,7 @@ void IO_outport( int port, int size, DWORD value )
         /* ctrl byte for specific timer channel */
           tmr_8253_ctrlbyte_ch[chan] = (BYTE)value;
           if (chan == 3) {
-            FIXME(int,"8254 timer readback not implemented yet\n");
+            FIXME("8254 timer readback not implemented yet\n");
             }
           else
           if (((BYTE)value&0x30)==0) { /* latch timer */
@@ -463,7 +463,7 @@ void IO_outport( int port, int size, DWORD value )
         parport_8255[1] = (BYTE)value;
         if ((((BYTE)parport_8255[1] & 3) == 3) && (tmr_8253_countmax[2] != 1))
         {
-            TRACE(int, "Beep (freq: %d) !\n", 1193180 / tmr_8253_countmax[2]);
+            TRACE("Beep (freq: %d) !\n", 1193180 / tmr_8253_countmax[2]);
             Beep(1193180 / tmr_8253_countmax[2], 20);
         }
         break;
@@ -474,7 +474,7 @@ void IO_outport( int port, int size, DWORD value )
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
         break;
     default:
-        WARN(int, "Direct I/O write attempted to port %x\n", port );
+        WARN("Direct I/O write attempted to port %x\n", port );
         break;
     }
 }

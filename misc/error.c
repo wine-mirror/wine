@@ -9,7 +9,7 @@
 
 #include "windef.h"
 #include "stackframe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #define ErrorString(manifest) { manifest, # manifest }
 
@@ -140,7 +140,7 @@ static const char *GetParamErrorString(UINT16 uErr) {
 */
 VOID WINAPI LogError16(UINT16 uErr, LPVOID lpvInfo)
 {
-	MSG("(%s, %p)\n", GetErrorString(uErr), lpvInfo);
+	MESSAGE("(%s, %p)\n", GetErrorString(uErr), lpvInfo);
 }
 
 
@@ -152,7 +152,7 @@ void WINAPI LogParamError16(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 	/* FIXME: is it possible to get the module name/function
 	 * from the lpfn param?
 	 */
-	MSG("(%s, %p, %p)\n", GetParamErrorString(uErr), lpfn, lpvParam);
+	MESSAGE("(%s, %p, %p)\n", GetParamErrorString(uErr), lpfn, lpvParam);
 }
 
 /***********************************************************************

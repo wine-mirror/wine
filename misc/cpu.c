@@ -15,7 +15,7 @@
 #include "winnt.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(reg)
 
@@ -76,7 +76,7 @@ VOID WINAPI GetSystemInfo(
 
         /* Create this registry key for all systems */
 	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) {
-            WARN(reg,"Unable to register CPU information\n");
+            WARN("Unable to register CPU information\n");
         }
 
 #ifdef linux

@@ -42,7 +42,7 @@ AJ 990101:
 #include "winuser.h"
 #include "winerror.h"
 #include "ntddk.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "module.h"
 #include "heap.h"
 #include "crtdll.h"
@@ -106,7 +106,7 @@ CRTDLL_FILE * __cdecl CRTDLL__fdopen(INT handle, LPCSTR mode);
  */
 BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	TRACE(crtdll,"(0x%08x,%ld,%p)\n",hinstDLL,fdwReason,lpvReserved);
+	TRACE("(0x%08x,%ld,%p)\n",hinstDLL,fdwReason,lpvReserved);
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		CRTDLL__fdopen(0,"r");
@@ -127,12 +127,12 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	int	xargc,i,afterlastspace;
 	DWORD	version;
 
-	TRACE(crtdll,"(%p,%p,%p,%ld).\n",
+	TRACE("(%p,%p,%p,%ld).\n",
 		argc,argv,environ,flag
 	);
 	CRTDLL_acmdln_dll = cmdline = HEAP_strdupA( GetProcessHeap(), 0,
                                                     GetCommandLineA() );
- 	TRACE(crtdll,"got '%s'\n", cmdline);
+ 	TRACE("got '%s'\n", cmdline);
 
 	version	= GetVersion();
 	CRTDLL_osver_dll       = version >> 16;
@@ -174,7 +174,7 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	CRTDLL_argv_dll	= xargv;
 	*argv		= xargv;
 
-	TRACE(crtdll,"found %d arguments\n",
+	TRACE("found %d arguments\n",
 		CRTDLL_argc_dll);
 	CRTDLL_environ_dll = *environ = GetEnvironmentStringsA();
 	return 0;
@@ -200,7 +200,7 @@ struct find_t
  */
 DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,  struct find_t * x2)
 {
-  FIXME(crtdll, ":(%s,%p): stub\n",fname,x2);
+  FIXME(":(%s,%p): stub\n",fname,x2);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -213,7 +213,7 @@ DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,  struct find_t * x2)
  */
 INT __cdecl CRTDLL__findnext(DWORD hand, struct find_t * x2)
 {
-  FIXME(crtdll, ":(%ld,%p): stub\n",hand,x2);
+  FIXME(":(%ld,%p): stub\n",hand,x2);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -226,7 +226,7 @@ INT __cdecl CRTDLL__findnext(DWORD hand, struct find_t * x2)
  */
 int __cdecl CRTDLL__fstat(int file, struct stat* buf)
 {
-  FIXME(crtdll, ":(%d,%p): stub\n",file,buf);
+  FIXME(":(%d,%p): stub\n",file,buf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -238,7 +238,7 @@ DWORD __cdecl CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 {
 	_INITTERMFUN	*current;
 
-	TRACE(crtdll,"(%p,%p)\n",start,end);
+	TRACE("(%p,%p)\n",start,end);
 	current=start;
 	while (current<end) {
 		if (*current) (*current)();
@@ -273,7 +273,7 @@ CRTDLL_FILE * __cdecl CRTDLL__fdopen(INT handle, LPCSTR mode)
         file->handle = handle;
         break;
     }
-  TRACE(crtdll, "open handle %d mode %s  got file %p\n",
+  TRACE("open handle %d mode %s  got file %p\n",
 	       handle, mode, file);
   return file;
 }
@@ -292,7 +292,7 @@ void __cdecl CRTDLL__global_unwind2( PEXCEPTION_FRAME frame )
  */
 void __cdecl CRTDLL__local_unwind2( PEXCEPTION_FRAME endframe, DWORD nr )
 {
-    TRACE(crtdll,"(%p,%ld)\n",endframe,nr);
+    TRACE("(%p,%ld)\n",endframe,nr);
 }
 /*********************************************************************
  *                  _read     (CRTDLL.256)
@@ -302,7 +302,7 @@ void __cdecl CRTDLL__local_unwind2( PEXCEPTION_FRAME endframe, DWORD nr )
  */
 INT __cdecl CRTDLL__read(INT fd, LPVOID buf, UINT count)
 {
-  FIXME(crtdll,":(%d,%p,%d): stub\n",fd,buf,count);
+  FIXME(":(%d,%p,%d): stub\n",fd,buf,count);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -318,7 +318,7 @@ CRTDLL_FILE * __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
   DOS_FULL_NAME full_name;
   
   if (!DOSFS_GetFullName( path, FALSE, &full_name )) {
-    WARN(crtdll, "file %s bad name\n",path);
+    WARN("file %s bad name\n",path);
    return 0;
   }
   
@@ -359,7 +359,7 @@ CRTDLL_FILE * __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
       file = HeapAlloc( GetProcessHeap(), 0, sizeof(*file) );
       file->handle = handle;
   }
-  TRACE(crtdll, "file %s mode %s got handle %d file %p\n",
+  TRACE("file %s mode %s got handle %d file %p\n",
 		 path,mode,handle,file);
   return file;
 }
@@ -378,7 +378,7 @@ DWORD __cdecl CRTDLL_fread(LPVOID ptr, INT size, INT nmemb, CRTDLL_FILE *file)
      known binary extensions must be unchanged */
   while ( (i < (nmemb*size)) && (ret==1)) {
     ret=fread(temp,1,1,file);
-    TRACE(crtdll, "got %c 0x%02x ret %d\n",
+    TRACE("got %c 0x%02x ret %d\n",
 		 (isalpha(*(unsigned char*)temp))? *(unsigned char*)temp:
 		 ' ',*(unsigned char*)temp, ret);
     if (*(unsigned char*)temp != 0xd) { /* skip CR */
@@ -386,21 +386,21 @@ DWORD __cdecl CRTDLL_fread(LPVOID ptr, INT size, INT nmemb, CRTDLL_FILE *file)
       i++;
     }
     else
-      TRACE(crtdll, "skipping ^M\n");
+      TRACE("skipping ^M\n");
   }
-  TRACE(crtdll, "0x%08x items of size %d from file %p to %p\n",
+  TRACE("0x%08x items of size %d from file %p to %p\n",
 	       nmemb,size,file,ptr,);
   if(i!=nmemb)
-    WARN(crtdll, " failed!\n");
+    WARN(" failed!\n");
 
   return i;
 #else
   DWORD ret;
 
-  TRACE(crtdll, "0x%08x items of size %d from file %p to %p\n",
+  TRACE("0x%08x items of size %d from file %p to %p\n",
 	       nmemb,size,file,ptr);
   if (!ReadFile( file->handle, ptr, size * nmemb, &ret, NULL ))
-      WARN(crtdll, " failed!\n");
+      WARN(" failed!\n");
 
   return ret / size;
 #endif
@@ -413,7 +413,7 @@ DWORD __cdecl CRTDLL_fread(LPVOID ptr, INT size, INT nmemb, CRTDLL_FILE *file)
  */
 DWORD __cdecl CRTDLL_freopen(LPCSTR path, LPCSTR mode, LPVOID stream)
 {
-  FIXME(crtdll, ":(%s,%s,%p): stub\n", path, mode, stream);
+  FIXME(":(%s,%s,%p): stub\n", path, mode, stream);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -434,7 +434,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE *stream, LPSTR format, ... )
     va_end( valist );
     return res;
 #endif
-    FIXME(crtdll,"broken\n");
+    FIXME("broken\n");
     return 0;
 }
 
@@ -443,13 +443,13 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE *stream, LPSTR format, ... )
  */
 LONG __cdecl CRTDLL_fseek( CRTDLL_FILE *file, LONG offset, INT whence)
 {
-  TRACE(crtdll, "file %p to 0x%08lx pos %s\n",
+  TRACE("file %p to 0x%08lx pos %s\n",
         file,offset,(whence==SEEK_SET)?"SEEK_SET":
         (whence==SEEK_CUR)?"SEEK_CUR":
         (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
   if (SetFilePointer( file->handle, offset, NULL, whence ) != 0xffffffff)
       return 0;
-  WARN(crtdll, " failed!\n");
+  WARN(" failed!\n");
   return -1;
 }
   
@@ -458,7 +458,7 @@ LONG __cdecl CRTDLL_fseek( CRTDLL_FILE *file, LONG offset, INT whence)
  */
 INT __cdecl CRTDLL_fsetpos( CRTDLL_FILE *file, INT *pos )
 {
-    TRACE(crtdll, "file %p pos %d\n", file, *pos );
+    TRACE("file %p pos %d\n", file, *pos );
     return CRTDLL_fseek(file, *pos, SEEK_SET);
 }
 
@@ -477,12 +477,12 @@ DWORD __cdecl CRTDLL_fwrite( LPVOID ptr, INT size, INT nmemb, CRTDLL_FILE *file 
 {
     DWORD ret;
 
-    TRACE(crtdll, "0x%08x items of size %d to file %p(%d) from %p\n",
+    TRACE("0x%08x items of size %d to file %p(%d) from %p\n",
           nmemb,size,file,file-(CRTDLL_FILE*)CRTDLL_iob,ptr);
 	
     
     if (!WriteFile( file->handle, ptr, size * nmemb, &ret, NULL ))
-        WARN(crtdll, " failed!\n");
+        WARN(" failed!\n");
     return ret / size;
 }
 
@@ -491,7 +491,7 @@ DWORD __cdecl CRTDLL_fwrite( LPVOID ptr, INT size, INT nmemb, CRTDLL_FILE *file 
  */
 INT __cdecl CRTDLL_setbuf(CRTDLL_FILE *file, LPSTR buf)
 {
-  TRACE(crtdll, "(file %p buf %p)\n", file, buf);
+  TRACE("(file %p buf %p)\n", file, buf);
   /* this doesn't work:"void value not ignored as it ought to be" 
   return setbuf(file,buf); 
   */
@@ -522,7 +522,7 @@ HFILE handle;
 	default:
 	  return (-1);
 	}
-	TRACE(crtdll, "(handle %08lx,flags %d) return %d\n",
+	TRACE("(handle %08lx,flags %d) return %d\n",
 		     osfhandle,flags,handle);
 	return handle;
 	
@@ -598,7 +598,7 @@ clock_t __cdecl CRTDLL_clock(void)
  */
 BOOL __cdecl CRTDLL__isatty(DWORD x)
 {
-	TRACE(crtdll,"(%ld)\n",x);
+	TRACE("(%ld)\n",x);
 	return TRUE;
 }
 
@@ -615,7 +615,7 @@ INT __cdecl CRTDLL__write(INT fd,LPCVOID buf,UINT count)
 	  len = (UINT)write(fd,buf,(LONG)count);
 	else
 	  len = _lwrite(fd,buf,count);
-	TRACE(crtdll,"%d/%d byte to dfh %d from %p,\n",
+	TRACE("%d/%d byte to dfh %d from %p,\n",
 		       len,count,fd,buf);
 	return len;
 }
@@ -635,7 +635,7 @@ INT __cdecl CRTDLL__write(INT fd,LPCVOID buf,UINT count)
  */
 void __cdecl CRTDLL__cexit(INT ret)
 {
-        TRACE(crtdll,"(%d)\n",ret);
+        TRACE("(%d)\n",ret);
 	ExitProcess(ret);
 }
 
@@ -645,7 +645,7 @@ void __cdecl CRTDLL__cexit(INT ret)
  */
 void __cdecl CRTDLL_exit(DWORD ret)
 {
-        TRACE(crtdll,"(%ld)\n",ret);
+        TRACE("(%ld)\n",ret);
 	ExitProcess(ret);
 }
 
@@ -655,7 +655,7 @@ void __cdecl CRTDLL_exit(DWORD ret)
  */
 INT __cdecl CRTDLL__abnormal_termination(void)
 {
-        TRACE(crtdll,"(void)\n");
+        TRACE("(void)\n");
 	return 0;
 }
 
@@ -720,7 +720,7 @@ INT __cdecl CRTDLL_fputc( INT c, CRTDLL_FILE *file )
 {
     char ch = (char)c;
     DWORD res;
-    TRACE(crtdll, "%c to file %p\n",c,file);
+    TRACE("%c to file %p\n",c,file);
     if (!WriteFile( file->handle, &ch, 1, &res, NULL )) return -1;
     return c;
 }
@@ -732,7 +732,7 @@ INT __cdecl CRTDLL_fputc( INT c, CRTDLL_FILE *file )
 INT __cdecl CRTDLL_fputs( LPCSTR s, CRTDLL_FILE *file )
 {
     DWORD res;
-    TRACE(crtdll, "%s to file %p\n",s,file);
+    TRACE("%s to file %p\n",s,file);
     if (!WriteFile( file->handle, s, strlen(s), &res, NULL )) return -1;
     return res;
 }
@@ -743,7 +743,7 @@ INT __cdecl CRTDLL_fputs( LPCSTR s, CRTDLL_FILE *file )
  */
 INT __cdecl CRTDLL_puts(LPCSTR s)
 {
-    TRACE(crtdll, "%s \n",s);
+    TRACE("%s \n",s);
     return puts(s);
 }
 
@@ -799,7 +799,7 @@ CHAR* __cdecl CRTDLL_fgets( LPSTR s, INT size, CRTDLL_FILE *file )
 
     *s = '\0';
 
-    TRACE(crtdll,"got '%s'\n", buf_start);
+    TRACE("got '%s'\n", buf_start);
     return buf_start;
 }
 
@@ -821,7 +821,7 @@ LPSTR __cdecl CRTDLL_gets(LPSTR buf)
 
     *buf = '\0';
 
-    TRACE(crtdll,"got '%s'\n", buf_start);
+    TRACE("got '%s'\n", buf_start);
     return buf_start;
 }
 
@@ -833,7 +833,7 @@ UINT __cdecl CRTDLL__rotl(UINT x,INT shift)
 {
    unsigned int ret = (x >> shift)|( x >>((sizeof(x))-shift));
 
-   TRACE(crtdll, "got 0x%08x rot %d ret 0x%08x\n",
+   TRACE("got 0x%08x rot %d ret 0x%08x\n",
 		  x,shift,ret);
    return ret;
     
@@ -845,7 +845,7 @@ DWORD __cdecl CRTDLL__lrotl(DWORD x,INT shift)
 {
    unsigned long ret = (x >> shift)|( x >>((sizeof(x))-shift));
 
-   TRACE(crtdll, "got 0x%08lx rot %d ret 0x%08lx\n",
+   TRACE("got 0x%08lx rot %d ret 0x%08lx\n",
 		  x,shift,ret);
    return ret;
     
@@ -902,7 +902,7 @@ INT __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args )
  */
 unsigned char* __cdecl CRTDLL__mbscpy(unsigned char *x,unsigned char *y)
 {
-    TRACE(crtdll,"CRTDLL_mbscpy %s and %s\n",x,y);
+    TRACE("CRTDLL_mbscpy %s and %s\n",x,y);
     return strcpy(x,y);
 }
 
@@ -943,13 +943,13 @@ LPSTR __cdecl CRTDLL__strlwr(LPSTR x)
 {
   unsigned char *y =x;
   
-  TRACE(crtdll, "CRTDLL_strlwr got %s\n", x);
+  TRACE("CRTDLL_strlwr got %s\n", x);
   while (*y) {
     if ((*y > 0x40) && (*y< 0x5b))
       *y = *y + 0x20;
     y++;
   }
-  TRACE(crtdll, "   returned %s\n", x);
+  TRACE("   returned %s\n", x);
 		 
   return x;
 }
@@ -976,7 +976,7 @@ INT __cdecl CRTDLL_system(LPSTR x)
   }
   /* If buffer too short, exit.  */
   if (i > SYSBUF_LENGTH) {
-    TRACE(crtdll,"_system buffer to small\n");
+    TRACE("_system buffer to small\n");
     return 127;
   }
   
@@ -993,7 +993,7 @@ INT __cdecl CRTDLL_system(LPSTR x)
   }
   *bp++ = '"';
   *bp = 0;
-  TRACE(crtdll, "_system got '%s', executing '%s'\n",x,buffer);
+  TRACE("_system got '%s', executing '%s'\n",x,buffer);
 
   return system(buffer);
 }
@@ -1046,7 +1046,7 @@ LPWSTR __cdecl CRTDLL__wcslwr(LPWSTR x)
  */
 VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)
 {
-    FIXME(crtdll,"CRTDLL_longjmp semistup, expect crash\n");
+    FIXME("CRTDLL_longjmp semistup, expect crash\n");
     longjmp(env, val);
 }
 
@@ -1132,7 +1132,7 @@ LPWSTR __cdecl CRTDLL__wcsdup(LPCWSTR ptr)
  */
 INT __cdecl CRTDLL_fclose( CRTDLL_FILE *file )
 {
-    TRACE(crtdll,"%p\n", file );
+    TRACE("%p\n", file );
     if (!CloseHandle( file->handle )) return -1;
     HeapFree( GetProcessHeap(), 0, file );
     return 0;
@@ -1147,15 +1147,15 @@ INT __cdecl CRTDLL__unlink(LPCSTR pathname)
     DOS_FULL_NAME full_name;
 
     if (!DOSFS_GetFullName( pathname, FALSE, &full_name )) {
-      WARN(crtdll, "CRTDLL_unlink file %s bad name\n",pathname);
+      WARN("CRTDLL_unlink file %s bad name\n",pathname);
       return EOF;
     }
   
     ret=unlink(full_name.long_name);
-    TRACE(crtdll,"(%s unix %s)\n",
+    TRACE("(%s unix %s)\n",
 		   pathname,full_name.long_name);
     if(ret)
-      WARN(crtdll, " Failed!\n");
+      WARN(" Failed!\n");
 
     return ret;
 }
@@ -1197,13 +1197,13 @@ int __cdecl CRTDLL__stat(const char * filename, struct win_stat * buf)
 
     if (!DOSFS_GetFullName( filename, TRUE, &full_name ))
     {
-      WARN(crtdll, "CRTDLL__stat filename %s bad name\n",filename);
+      WARN("CRTDLL__stat filename %s bad name\n",filename);
       return -1;
     }
     ret=stat(full_name.long_name,&mystat);
-    TRACE(crtdll,"CRTDLL__stat %s\n", filename);
+    TRACE("CRTDLL__stat %s\n", filename);
     if(ret) 
-      WARN(crtdll, " Failed!\n");
+      WARN(" Failed!\n");
 
     /* FIXME: should check what Windows returns */
 
@@ -1260,14 +1260,14 @@ HFILE __cdecl CRTDLL__open(LPCSTR path,INT flags)
             creation = OPEN_EXISTING;
     }
     if (flags & 0x0008) /* O_APPEND */
-        FIXME(crtdll, "O_APPEND not supported\n" );
+        FIXME("O_APPEND not supported\n" );
     if (flags & 0xf0f4) 
-      TRACE(crtdll,"CRTDLL_open file unsupported flags 0x%04x\n",flags);
+      TRACE("CRTDLL_open file unsupported flags 0x%04x\n",flags);
     /* End Fixme */
 
     ret = CreateFileA( path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
                          NULL, creation, FILE_ATTRIBUTE_NORMAL, -1 );
-    TRACE(crtdll,"CRTDLL_open file %s mode 0x%04x got handle %d\n", path,flags,ret);
+    TRACE("CRTDLL_open file %s mode 0x%04x got handle %d\n", path,flags,ret);
     return ret;
 }
 
@@ -1278,9 +1278,9 @@ INT __cdecl CRTDLL__close(HFILE fd)
 {
     int ret=_lclose(fd);
 
-    TRACE(crtdll,"(%d)\n",fd);
+    TRACE("(%d)\n",fd);
     if(ret)
-      WARN(crtdll, " Failed!\n");
+      WARN(" Failed!\n");
 
     return ret;
 }
@@ -1290,7 +1290,7 @@ INT __cdecl CRTDLL__close(HFILE fd)
  */
 INT __cdecl CRTDLL_feof( CRTDLL_FILE *file )
 {
-    FIXME(crtdll,"stub\n" );
+    FIXME("stub\n" );
     return 0;
 }
 
@@ -1310,7 +1310,7 @@ LPSTR __cdecl CRTDLL_setlocale(INT category,LPCSTR locale)
 	case CRTDLL_LC_TIME: categorystr="LC_TIME";break;
 	default: categorystr = "UNKNOWN?";break;
 	}
-	FIXME(crtdll,"(%s,%s),stub!\n",categorystr,locale);
+	FIXME("(%s,%s),stub!\n",categorystr,locale);
 	return "C";
 }
 
@@ -1528,7 +1528,7 @@ INT __cdecl CRTDLL__setmode( INT fh,INT mode)
 #define O_TEXT     0x4000
 #define O_BINARY   0x8000
 
-	FIXME(crtdll, "on fhandle %d mode %s, STUB.\n",
+	FIXME("on fhandle %d mode %s, STUB.\n",
 		      fh,(mode=O_TEXT)?"O_TEXT":
 		      (mode=O_BINARY)?"O_BINARY":"UNKNOWN");
 	return -1;
@@ -1539,7 +1539,7 @@ INT __cdecl CRTDLL__setmode( INT fh,INT mode)
  */
 VOID __cdecl CRTDLL__fpreset(void)
 {
-       FIXME(crtdll," STUB.\n");
+       FIXME(" STUB.\n");
 }
 
 /*********************************************************************
@@ -1547,7 +1547,7 @@ VOID __cdecl CRTDLL__fpreset(void)
  */
 INT __cdecl CRTDLL_atexit(LPVOID x)
 {
-	FIXME(crtdll,"(%p), STUB.\n",x);
+	FIXME("(%p), STUB.\n",x);
 	return 0; /* successful */
 }
 
@@ -1567,7 +1567,7 @@ WCHAR  __cdecl CRTDLL_mblen(CHAR *mb,INT size)
     else if (!(*mb))
       ret =0;
       
-    TRACE(crtdll,"CRTDLL_mlen %s for max %d bytes ret %d\n",mb,size,ret);
+    TRACE("CRTDLL_mlen %s for max %d bytes ret %d\n",mb,size,ret);
 
     return ret;
 }
@@ -1594,7 +1594,7 @@ INT __cdecl CRTDLL_mbstowcs(LPWSTR wcs, LPCSTR mbs, INT size)
     p++;
     ret = (p -wcs);
           
-    TRACE(crtdll,"CRTDLL_mbstowcs %s for %d chars put %d wchars\n",
+    TRACE("CRTDLL_mbstowcs %s for %d chars put %d wchars\n",
 		   mbs,size,ret);
     return ret;
 }
@@ -1622,7 +1622,7 @@ WCHAR __cdecl CRTDLL_mbtowc(WCHAR* wc,CHAR* mb,INT size)
      else
        ret = -1;
    
-   TRACE(crtdll,"CRTDLL_mbtowc %s for %d chars\n",mb,size);
+   TRACE("CRTDLL_mbtowc %s for %d chars\n",mb,size);
          
    return ret;
 }
@@ -1686,7 +1686,7 @@ LPSTR __cdecl CRTDLL__fullpath(LPSTR buf, LPCSTR name, INT size)
   }
   if (!DOSFS_GetFullName( name, FALSE, &full_name )) return NULL;
   lstrcpynA(buf,full_name.short_name,size);
-  TRACE(crtdll,"CRTDLL_fullpath got %s\n",buf);
+  TRACE("CRTDLL_fullpath got %s\n",buf);
   return buf;
 }
 
@@ -1702,7 +1702,7 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
      */
   char * drivechar,*dirchar,*namechar;
 
-  TRACE(crtdll,"CRTDLL__splitpath got %s\n",path);
+  TRACE("CRTDLL__splitpath got %s\n",path);
 
   drivechar  = strchr(path,':');
   dirchar    = strrchr(path,'/');
@@ -1746,7 +1746,7 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
 	}
     }
 
-  TRACE(crtdll,"CRTDLL__splitpath found %s %s %s %s\n",drive,directory,filename,extension);
+  TRACE("CRTDLL__splitpath found %s %s %s %s\n",drive,directory,filename,extension);
   
 }
 
@@ -1760,7 +1760,7 @@ VOID __cdecl CRTDLL__makepath(LPSTR path, LPCSTR drive,
 			      LPCSTR extension )
 {
 	char ch;
-	TRACE(crtdll,"CRTDLL__makepath got %s %s %s %s\n", drive, directory, 
+	TRACE("CRTDLL__makepath got %s %s %s %s\n", drive, directory, 
 	      filename, extension);
 
 	if ( !path )
@@ -1791,7 +1791,7 @@ VOID __cdecl CRTDLL__makepath(LPSTR path, LPCSTR drive,
 			}
 		}
 	
-	TRACE(crtdll,"CRTDLL__makepath returns %s\n",path);  
+	TRACE("CRTDLL__makepath returns %s\n",path);  
 }
 
 /*********************************************************************
@@ -1820,7 +1820,7 @@ CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT size)
   if (len > size)
     {
       /* set error to ERANGE */
-      TRACE(crtdll,"CRTDLL_getcwd buffer to small\n");
+      TRACE("CRTDLL_getcwd buffer to small\n");
       return NULL;
     }
   return buf;
@@ -1835,7 +1835,7 @@ CHAR* __cdecl CRTDLL__getdcwd(INT drive,LPSTR buf, INT size)
   char test[1];
   int len;
 
-  FIXME(crtdll,"(\"%c:\",%s,%d)\n",drive+'A',buf,size);
+  FIXME("(\"%c:\",%s,%d)\n",drive+'A',buf,size);
   len = size;
   if (!buf) {
     if (size < 0) /* allocate as big as nescessary */
@@ -1854,7 +1854,7 @@ CHAR* __cdecl CRTDLL__getdcwd(INT drive,LPSTR buf, INT size)
   if (len > size)
     {
       /* set error to ERANGE */
-      TRACE(crtdll,"buffer to small\n");
+      TRACE("buffer to small\n");
       return NULL;
     }
   return buf;
@@ -1915,25 +1915,25 @@ LPSTR __cdecl CRTDLL__tempnam(LPCSTR dir, LPCSTR prefix)
      DOS_FULL_NAME tempname;
      
      if ((ret = tempnam(dir,prefix))==NULL) {
-       WARN(crtdll, "Unable to get unique filename\n");
+       WARN("Unable to get unique filename\n");
        return NULL;
      }
      if (!DOSFS_GetFullName(ret,FALSE,&tempname))
      {
-       TRACE(crtdll, "Wrong path?\n");
+       TRACE("Wrong path?\n");
        return NULL;
      }
      free(ret);
      if ((ret = CRTDLL_malloc(strlen(tempname.short_name)+1)) == NULL) {
-	 WARN(crtdll, "CRTDL_malloc for shortname failed\n");
+	 WARN("CRTDL_malloc for shortname failed\n");
 	 return NULL;
      }
      if ((ret = strcpy(ret,tempname.short_name)) == NULL) { 
-       WARN(crtdll, "Malloc for shortname failed\n");
+       WARN("Malloc for shortname failed\n");
        return NULL;
      }
      
-     TRACE(crtdll,"dir %s prefix %s got %s\n",
+     TRACE("dir %s prefix %s got %s\n",
 		    dir,prefix,ret);
      return ret;
 
@@ -1949,18 +1949,18 @@ LPSTR __cdecl CRTDLL_tmpnam(LPSTR s)
      char *ret;
 
      if ((ret =tmpnam(s))== NULL) {
-       WARN(crtdll, "Unable to get unique filename\n");
+       WARN("Unable to get unique filename\n");
        return NULL;
      }
      if (!DOSFS_GetFullName(ret,FALSE,&CRTDLL_tmpname))
      {
-       TRACE(crtdll, "Wrong path?\n");
+       TRACE("Wrong path?\n");
        return NULL;
      }
      strcat(CRTDLL_tmpname.short_name,".");
-     TRACE(crtdll,"for buf %p got %s\n",
+     TRACE("for buf %p got %s\n",
 		    s,CRTDLL_tmpname.short_name);
-     TRACE(crtdll,"long got %s\n",
+     TRACE("long got %s\n",
 		    CRTDLL_tmpname.long_name);
      if ( s != NULL) 
        return strcpy(s,CRTDLL_tmpname.short_name);
@@ -1984,7 +1984,7 @@ LPSTR  __cdecl CRTDLL__itoa(INT x,LPSTR buf,INT buflen)
 LPSTR  __cdecl CRTDLL__ltoa(long x,LPSTR buf,INT radix)
 {
     switch(radix) {
-        case  2: FIXME(crtdll, "binary format not implemented !\n");
+        case  2: FIXME("binary format not implemented !\n");
                  break;
         case  8: wsnprintfA(buf,0x80,"%o",x);
                  break;
@@ -1992,7 +1992,7 @@ LPSTR  __cdecl CRTDLL__ltoa(long x,LPSTR buf,INT radix)
                  break;
         case 16: wsnprintfA(buf,0x80,"%x",x);
                  break;
-        default: FIXME(crtdll, "radix %d not implemented !\n", radix);
+        default: FIXME("radix %d not implemented !\n", radix);
     }
     return buf;
 }
@@ -2003,7 +2003,7 @@ LPSTR  __cdecl CRTDLL__ltoa(long x,LPSTR buf,INT radix)
 LPSTR  __cdecl CRTDLL__ultoa(long x,LPSTR buf,INT radix)
 {
     switch(radix) {
-        case  2: FIXME(crtdll, "binary format not implemented !\n");
+        case  2: FIXME("binary format not implemented !\n");
                  break;
         case  8: wsnprintfA(buf,0x80,"%lo",x);
                  break;
@@ -2011,7 +2011,7 @@ LPSTR  __cdecl CRTDLL__ultoa(long x,LPSTR buf,INT radix)
                  break;
         case 16: wsnprintfA(buf,0x80,"%lx",x);
                  break;
-        default: FIXME(crtdll, "radix %d not implemented !\n", radix);
+        default: FIXME("radix %d not implemented !\n", radix);
     }
     return buf;
 }
@@ -2023,7 +2023,7 @@ typedef VOID (*sig_handler_type)(VOID);
  */
 VOID __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
 {
-    FIXME(crtdll, "(%d %p):stub.\n", sig, ptr);
+    FIXME("(%d %p):stub.\n", sig, ptr);
 }
 
 /*********************************************************************
@@ -2039,7 +2039,7 @@ LONG __cdecl CRTDLL__ftol(void) {
 }
 #else
 LONG __cdecl CRTDLL__ftol(double fl) {
-	FIXME(crtdll,"should be register function\n");
+	FIXME("should be register function\n");
 	return (LONG)fl;
 }
 #endif
@@ -2056,7 +2056,7 @@ LONG __cdecl CRTDLL__CIpow(void) {
 }
 #else
 LONG __cdecl CRTDLL__CIpow(double x,double y) {
-	FIXME(crtdll,"should be register function\n");
+	FIXME("should be register function\n");
 	return pow(x,y);
 }
 #endif
@@ -2066,7 +2066,7 @@ LONG __cdecl CRTDLL__CIpow(double x,double y) {
  */
 VOID __cdecl CRTDLL__sleep(unsigned long timeout) 
 {
-  TRACE(crtdll,"CRTDLL__sleep for %ld milliseconds\n",timeout);
+  TRACE("CRTDLL__sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
 }
 
@@ -2091,7 +2091,7 @@ LPSTR __cdecl CRTDLL_getenv(const char *name)
      if ((pp)&& (pos)) 
        {
 	 pp = pos+1;
-	 TRACE(crtdll,"got %s\n",pp);
+	 TRACE("got %s\n",pp);
        }
      FreeEnvironmentStringsA( environ );
      return pp;
@@ -2133,7 +2133,7 @@ INT __cdecl CRTDLL__memicmp(
  */
 VOID __cdecl CRTDLL__dllonexit ()
 {	
-	FIXME(crtdll,"stub\n");
+	FIXME("stub\n");
 }
 
 /*********************************************************************
@@ -2176,7 +2176,7 @@ INT __cdecl CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base) {
  *                  strdate           (CRTDLL.283)
  */
 LPSTR __cdecl CRTDLL__strdate (LPSTR date)
-{	FIXME (crtdll,"%p stub\n", date);
+{	FIXME("%p stub\n", date);
 	return 0;
 }
 
@@ -2184,6 +2184,6 @@ LPSTR __cdecl CRTDLL__strdate (LPSTR date)
  *                  strtime           (CRTDLL.299)
  */
 LPSTR __cdecl CRTDLL__strtime (LPSTR date)
-{	FIXME (crtdll,"%p stub\n", date);
+{	FIXME("%p stub\n", date);
 	return 0;
 }

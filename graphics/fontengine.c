@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include "winbase.h"
 #include "font.h"
-#include "debug.h"     
+#include "debugtools.h"     
 
 DEFAULT_DEBUG_CHANNEL(font)
 
@@ -22,7 +22,7 @@ DEFAULT_DEBUG_CHANNEL(font)
 WORD WINAPI 
 EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    FIXME(font,"(%s,%p,%lx),stub\n",fontname,proc,data);
+    FIXME("(%s,%p,%lx),stub\n",fontname,proc,data);
     return 0;
 }
 
@@ -57,7 +57,7 @@ WORD WINAPI EngineDeleteFont16(LPFONTINFO16 lpFontInfo)
  */
 WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
 {
-    FIXME(font,"(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
+    FIXME("(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
     
     return 0;
 }
@@ -70,7 +70,7 @@ WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE l
     int i;
 
     for (i = firstChar; i <= lastChar; i++)
-       FIXME(font, " returns font's average width for range %d to %d\n", firstChar, lastChar);
+       FIXME(" returns font's average width for range %d to %d\n", firstChar, lastChar);
 	*buffer++ = lpFontInfo->dfAvgWidth; /* insert some charwidth functionality here; use average width for now */
     return 1;
 }
@@ -80,7 +80,7 @@ WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE l
  */
 WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
 {
-   FIXME(font, "stub?\n");
+   FIXME("stub?\n");
 	return 0;
 }
 
@@ -89,7 +89,7 @@ WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
  */
 WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD w2, LPSTR string, DWORD dword, /*LPBITMAPMETRICS16*/ LPVOID metrics)
 {
-   FIXME(font, "stub?\n");
+   FIXME("stub?\n");
     return 0;
 }
 
@@ -98,7 +98,7 @@ WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD 
  */
 DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
 {
-   FIXME(font, " stub! (always fails)\n");
+   FIXME(" stub! (always fails)\n");
     return -1; /* error */
     
 }
@@ -109,6 +109,6 @@ DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
 
 WORD WINAPI EngineExtTextOut()
 {
-   FIXME(font, "stub!\n");
+   FIXME("stub!\n");
     return 0;
 }

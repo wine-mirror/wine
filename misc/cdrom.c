@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "cdrom.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(cdaudio)
 
@@ -33,7 +33,7 @@ int	CDAUDIO_Open(WINE_CDAUDIO* wcda)
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     wcda->unixdev = open(CDAUDIO_DEV, O_RDONLY | O_NONBLOCK, 0);
     if (wcda->unixdev == -1) {
-	WARN(cdaudio,"can't open '%s'!.  errno=%d\n", CDAUDIO_DEV, errno);
+	WARN("can't open '%s'!.  errno=%d\n", CDAUDIO_DEV, errno);
 	return -1;
     }
     wcda->cdaMode = WINE_CDA_OPEN;	/* to force reading tracks info */
@@ -86,7 +86,7 @@ UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 	if (ioctl(wcda->unixdev, CDIOREADTOCHEADER, &hdr))
 #endif
 	{
-	    WARN(cdaudio, "(%p) -- Error occured (%d)!\n", wcda, errno);
+	    WARN("(%p) -- Error occured (%d)!\n", wcda, errno);
 	    return (WORD)-1;
 	}
 #ifdef linux
@@ -123,7 +123,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
     if (wcda->nTracks == 0) {
 	if (CDAUDIO_GetNumberOfTracks(wcda) == (WORD)-1) return FALSE;
     }
-    TRACE(cdaudio,"nTracks=%u\n", wcda->nTracks);
+    TRACE("nTracks=%u\n", wcda->nTracks);
     
     if (wcda->lpdwTrackLen != NULL) 
 	free(wcda->lpdwTrackLen);
@@ -136,7 +136,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
     wcda->lpbTrackFlags = (LPBYTE)malloc((wcda->nTracks + 1) * sizeof(BYTE));
     if (wcda->lpdwTrackLen == NULL || wcda->lpdwTrackPos == NULL ||
 	wcda->lpbTrackFlags == NULL) {
-	WARN(cdaudio, "error allocating track table !\n");
+	WARN("error allocating track table !\n");
 	return FALSE;
     }
     memset(wcda->lpdwTrackLen, 0, (wcda->nTracks + 1) * sizeof(DWORD));
@@ -170,7 +170,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	if (ioctl(wcda->unixdev, CDIOREADTOCENTRYS, &entry))
 #endif
 	{
-	    WARN(cdaudio, "error read entry (%d)\n", errno);
+	    WARN("error read entry (%d)\n", errno);
 	    /* update status according to new status */
 	    CDAUDIO_GetCDStatus(wcda);
 
@@ -188,7 +188,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	if (i == 0) {
 	    last_start = start;
 	    wcda->dwFirstOffset = start;
-	    TRACE(cdaudio, "dwFirstOffset=%u\n", start);
+	    TRACE("dwFirstOffset=%u\n", start);
 	} else {
 	    length = start - last_start;
 	    last_start = start;
@@ -196,7 +196,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	    total_length += length;
 	    wcda->lpdwTrackLen[i - 1] = length;
 	    wcda->lpdwTrackPos[i - 1] = start;
-	    TRACE(cdaudio, "track #%u start=%u len=%u\n", i, start, length);
+	    TRACE("track #%u start=%u len=%u\n", i, start, length);
 	}
 #ifdef linux
 	wcda->lpbTrackFlags[i] =
@@ -205,10 +205,10 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	wcda->lpbTrackFlags[i] =
 	    (toc_buffer.addr_type << 4) | (toc_buffer.control & 0x0f);
 #endif 
-	TRACE(cdaudio, "track #%u flags=%02x\n", i + 1, wcda->lpbTrackFlags[i]);
+	TRACE("track #%u flags=%02x\n", i + 1, wcda->lpbTrackFlags[i]);
     }
     wcda->dwTotalLen = total_length;
-    TRACE(cdaudio,"total_len=%u\n", total_length);
+    TRACE("total_len=%u\n", total_length);
     return TRUE;
 #else
     return FALSE;
@@ -239,7 +239,7 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
     if (ioctl(wcda->unixdev, CDIOCREADSUBCHANNEL, &read_sc))
 #endif
     {
-	TRACE(cdaudio,"opened or no_media (%d)!\n", errno);
+	TRACE("opened or no_media (%d)!\n", errno);
 	wcda->cdaMode = WINE_CDA_OPEN; /* was NOT_READY */
 	return TRUE;
     }
@@ -255,7 +255,7 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
 #else
     case CD_AS_AUDIO_INVALID:
 #endif
-	WARN(cdaudio, "device doesn't support status.\n");
+	WARN("device doesn't support status.\n");
 	wcda->cdaMode = WINE_CDA_DONTKNOW;
 	break;
 #ifdef linux
@@ -264,7 +264,7 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
     case CD_AS_NO_STATUS:
 #endif
 	wcda->cdaMode = WINE_CDA_STOP;
-	TRACE(cdaudio,"WINE_CDA_STOP !\n");
+	TRACE("WINE_CDA_STOP !\n");
 	break;
 #ifdef linux
     case CDROM_AUDIO_PLAY: 
@@ -279,14 +279,14 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
     case CD_AS_PLAY_PAUSED:
 #endif
 	wcda->cdaMode = WINE_CDA_PAUSE;
-	TRACE(cdaudio,"WINE_CDA_PAUSE !\n");
+	TRACE("WINE_CDA_PAUSE !\n");
 	break;
     default:
 #ifdef linux
-	TRACE(cdaudio,"status=%02X !\n",
+	TRACE("status=%02X !\n",
 	      wcda->sc.cdsc_audiostatus);
 #else
-	TRACE(cdaudio,"status=%02X !\n",
+	TRACE("status=%02X !\n",
 	      wcda->sc.header.audio_status);
 #endif
     }
@@ -304,13 +304,13 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
 	wcda->sc.what.position.absaddr.msf.frame;
 #endif
 #ifdef linux
-    TRACE(cdaudio,"%02u-%02u:%02u:%02u \n",
+    TRACE("%02u-%02u:%02u:%02u \n",
 	  wcda->sc.cdsc_trk,
 	  wcda->sc.cdsc_absaddr.msf.minute,
 	  wcda->sc.cdsc_absaddr.msf.second,
 	  wcda->sc.cdsc_absaddr.msf.frame);
 #else
-    TRACE(cdaudio,"%02u-%02u:%02u:%02u \n",
+    TRACE("%02u-%02u:%02u:%02u \n",
 	  wcda->sc.what.position.track_number,
 	  wcda->sc.what.position.absaddr.msf.minute,
 	  wcda->sc.what.position.absaddr.msf.second,
@@ -319,7 +319,7 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
     
     if (oldmode != wcda->cdaMode && oldmode == WINE_CDA_OPEN) {
 	if (!CDAUDIO_GetTracksInfo(wcda)) {
-	    WARN(cdaudio, "error updating TracksInfo !\n");
+	    WARN("error updating TracksInfo !\n");
 	    return FALSE;
 	}
     }
@@ -362,7 +362,7 @@ int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD end)
     if (ioctl(wcda->unixdev, CDIOCSTART, NULL))
 #endif
     {
-	WARN(cdaudio, "motor doesn't start !\n");
+	WARN("motor doesn't start !\n");
 	return -1;
     }
 #ifdef linux
@@ -371,15 +371,15 @@ int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD end)
     if (ioctl(wcda->unixdev, CDIOCPLAYMSF, &msf))
 #endif
     {
-	WARN(cdaudio, "device doesn't play !\n");
+	WARN("device doesn't play !\n");
 	return -1;
     }
 #ifdef linux
-    TRACE(cdaudio,"msf = %d:%d:%d %d:%d:%d\n",
+    TRACE("msf = %d:%d:%d %d:%d:%d\n",
 	  msf.cdmsf_min0, msf.cdmsf_sec0, msf.cdmsf_frame0,
 	  msf.cdmsf_min1, msf.cdmsf_sec1, msf.cdmsf_frame1);
 #else
-    TRACE(cdaudio,"msf = %d:%d:%d %d:%d:%d\n",
+    TRACE("msf = %d:%d:%d %d:%d:%d\n",
 	  msf.start_m, msf.start_s, msf.start_f,
 	  msf.end_m,   msf.end_s,   msf.end_f);
 #endif
@@ -440,7 +440,7 @@ int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
    /* FIXME: the current end for play is lost 
     * use end of CD ROM instead
     */
-   FIXME(cdaudio, "Could a BSD expert implement the seek function ?\n");
+   FIXME("Could a BSD expert implement the seek function ?\n");
    CDAUDIO_Play(wcda, at, wcda->lpdwTrackPos[wcda->nTracks] + wcda->lpdwTrackLen[wcda->nTracks]);
    
 #endif

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "options.h"
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 
@@ -58,7 +58,7 @@ void WINAPI INT_Int1aHandler( CONTEXT86 *context )
             CX_reg(context) = HIWORD(ticks);
             DX_reg(context) = LOWORD(ticks);
             AX_reg(context) = 0;  /* No midnight rollover */
-            TRACE(int,"int1a: AH=00 -- ticks=%ld\n", ticks);
+            TRACE("int1a: AH=00 -- ticks=%ld\n", ticks);
             break;
 		
 	case 0x02: 

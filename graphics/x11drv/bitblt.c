@@ -21,7 +21,7 @@
 #include "metafile.h"
 #include "options.h"
 #include "x11drv.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 
 DEFAULT_DEBUG_CHANNEL(bitblt)
@@ -1143,12 +1143,12 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     widthDst  = widthDst * dcDst->vportExtX / dcDst->wndExtX;
     heightDst = heightDst * dcDst->vportExtY / dcDst->wndExtY;
 
-    TRACE(bitblt, "    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
+    TRACE("    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
                     dcDst->vportOrgX, dcDst->vportOrgY,
                     dcDst->vportExtX, dcDst->vportExtY,
                     dcDst->wndOrgX, dcDst->wndOrgY,
                     dcDst->wndExtX, dcDst->wndExtY );
-    TRACE(bitblt, "    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
+    TRACE("    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
                     xDst, yDst, widthDst, heightDst,
                     dcDst->w.DCOrgX, dcDst->w.DCOrgY );
 
@@ -1159,19 +1159,19 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         widthSrc  = widthSrc * dcSrc->vportExtX / dcSrc->wndExtX;
         heightSrc = heightSrc * dcSrc->vportExtY / dcSrc->wndExtY;
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
-        TRACE(bitblt,"    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
+        TRACE("    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
                         dcSrc->vportOrgX, dcSrc->vportOrgY,
                         dcSrc->vportExtX, dcSrc->vportExtY,
                         dcSrc->wndOrgX, dcSrc->wndOrgY,
                         dcSrc->wndExtX, dcSrc->wndExtY );
-        TRACE(bitblt, "    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
+        TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
                         xSrc, ySrc, widthSrc, heightSrc,
                         dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
-        TRACE(bitblt, "    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
+        TRACE("    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
                         visRectSrc.left, visRectSrc.top,
                         visRectSrc.right, visRectSrc.bottom,
                         visRectDst.left, visRectDst.top,
@@ -1183,7 +1183,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
-        TRACE(bitblt, "    vissrc=none visdst=%d,%d-%d,%d\n",
+        TRACE("    vissrc=none visdst=%d,%d-%d,%d\n",
                         visRectDst.left, visRectDst.top,
                         visRectDst.right, visRectDst.bottom );
     }

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "msdos.h"
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 
 /**********************************************************************
  *	    INT_Int2aHandler
