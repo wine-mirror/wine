@@ -984,7 +984,7 @@ INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
 
 
 /***********************************************************************
- *           EndDialog16   (USER32.173)
+ *           EndDialog16   (USER.88)
  */
 BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
 {
@@ -993,7 +993,7 @@ BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
 
 
 /***********************************************************************
- *           EndDialog32   (USER.88)
+ *           EndDialog32   (USER32.173)
  */
 BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 {
@@ -1007,6 +1007,13 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
         dlgInfo->idResult = retval;
         dlgInfo->flags |= DF_END;
     }
+
+    /* Paint Shop Pro 4.14 calls EndDialog for a CreateDialog* dialog,
+     * which isn't "normal". Only DialogBox* dialogs may be EndDialog()ed.
+     * Just hide the window as windows does it...
+     */
+    ShowWindow(hwnd, SW_HIDE);
+
     WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
