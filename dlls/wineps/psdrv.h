@@ -170,7 +170,6 @@ typedef struct {
       int dummy;
     }				dmDocPrivate;
     struct _tagdrvprivate {
-      char	ppdFileName[256]; /* Hack */
       UINT	numInstalledOptions; /* Options at end of struct */
     }				dmDrvPrivate;
 
@@ -274,7 +273,7 @@ extern BOOL PSDRV_GetFontMetrics(void);
 extern PPD *PSDRV_ParsePPD(char *fname);
 extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name);
 extern AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
-extern void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm);
+extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);

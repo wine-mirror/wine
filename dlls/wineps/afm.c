@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "winnt.h" /* HEAP_ZERO_MEMORY */
+#include <limits.h> 	/* INT_MIN */
+#include <float.h>  	/* FLT_MAX */
+#include "winnt.h"  	/* HEAP_ZERO_MEMORY */
 #include "psdrv.h"
 #include "options.h"
 #include "debugtools.h"
@@ -22,6 +24,58 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 /* ptr to fonts for which we have afm files */
 FONTFAMILY *PSDRV_AFMFontList = NULL;
 
+/*******************************************************************************
+ *  	CheckMetrics
+ *
+ *  Check an AFMMETRICS structure to make sure all elements have been properly
+ *  filled in.
+ *
+ */
+static const AFMMETRICS badMetrics =
+{
+    INT_MIN,	    	    	    	    	/* C */
+    FLT_MAX,	    	    	    	    	/* WX */
+    NULL,   	    	    	    	    	/* N */
+    { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX }, 	/* B */
+    NULL    	    	    	    	    	/* L */
+};
+
+inline static BOOL CheckMetrics(const AFMMETRICS *metrics)
+{
+    if (    metrics->C	    == badMetrics.C  	||
+    	    metrics->WX     == badMetrics.WX  	||
+	    metrics->N	    == badMetrics.N    	||
+	    metrics->B.llx  == badMetrics.B.llx	||
+	    metrics->B.lly  == badMetrics.B.lly	||
+	    metrics->B.urx  == badMetrics.B.urx	||
+	    metrics->B.ury  == badMetrics.B.ury	)
+	return FALSE;
+	
+    return TRUE;
+}
+
+/*******************************************************************************
+ *  	FreeAFM
+ *
+ *  Free an AFM structure and any subsidiary objects that have been allocated
+ *
+ */
+static void FreeAFM(AFM *afm)
+{
+    if (afm->FontName != NULL)
+    	HeapFree(PSDRV_Heap, 0, afm->FontName);
+    if (afm->FullName != NULL)
+    	HeapFree(PSDRV_Heap, 0, afm->FullName);
+    if (afm->FamilyName != NULL)
+    	HeapFree(PSDRV_Heap, 0, afm->FamilyName);
+    if (afm->EncodingScheme != NULL)
+    	HeapFree(PSDRV_Heap, 0, afm->EncodingScheme);
+    if (afm->Metrics != NULL)
+    	HeapFree(PSDRV_Heap, 0, afm->Metrics);
+	
+    HeapFree(PSDRV_Heap, 0, afm);
+}
+
 
 /***********************************************************
  *
@@ -32,21 +86,28 @@ FONTFAMILY *PSDRV_AFMFontList = NULL;
  * Actually only collects the widths of numbered chars and puts then in
  * afm->CharWidths.
  */
-static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
+static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 {
     unsigned char line[256], valbuf[256];
     unsigned char *cp, *item, *value, *curpos, *endpos;
     int i;
     AFMMETRICS *metric;
 
-    afm->Metrics = metric = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
+    afm->Metrics = metric = HeapAlloc( PSDRV_Heap, 0,
                                        afm->NumofMetrics * sizeof(AFMMETRICS) );
+    if (metric == NULL)
+        return FALSE;
+				       
     for(i = 0; i < afm->NumofMetrics; i++, metric++) {
+    
+    	*metric = badMetrics;
 
 	do {
             if(!fgets(line, sizeof(line), fp)) {
 		ERR("Unexpected EOF\n");
-		return;
+		HeapFree(PSDRV_Heap, 0, afm->Metrics);
+		afm->Metrics = NULL;
+		return FALSE;
 	    }
 	    cp = line + strlen(line);
 	    do {
@@ -61,11 +122,21 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    while(isspace(*item))
 	        item++;
 	    value = strpbrk(item, " \t");
-	    if (!value) { ERR("No whitespace found.\n");return;}
+	    if (!value) {
+	    	ERR("No whitespace found.\n");
+		HeapFree(PSDRV_Heap, 0, afm->Metrics);
+		afm->Metrics = NULL;
+		return FALSE;
+	    }
 	    while(isspace(*value))
 	        value++;
 	    cp = endpos = strchr(value, ';');
-	    if (!cp) { ERR("missing ;, failed. [%s]\n", line); return; }
+	    if (!cp) {
+	    	ERR("missing ;, failed. [%s]\n", line);
+		HeapFree(PSDRV_Heap, 0, afm->Metrics);
+		afm->Metrics = NULL;
+		return FALSE;
+	    }
 	    while(isspace(*--cp))
 	        ;
 	    memcpy(valbuf, value, cp - value + 1);
@@ -104,13 +175,20 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 
 	    curpos = endpos + 1;
 	}
+	
+	if (CheckMetrics(metric) == FALSE) {
+	    ERR("Error parsing character metrics\n");
+	    HeapFree(PSDRV_Heap, 0, afm->Metrics);
+	    afm->Metrics = NULL;
+	    return FALSE;
+	}
 
 	TRACE("Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
 	      metric->N->sz, metric->WX, metric->B.llx, metric->B.lly,
 	      metric->B.urx, metric->B.ury);
     }
 
-    return;
+    return TRUE;
 }
 
 /***********************************************************
@@ -123,6 +201,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
  *
  * This is not complete (we don't handle kerning yet) and not efficient
  */
+
 static AFM *PSDRV_AFMParse(char const *file)
 {
     FILE *fp;
@@ -178,16 +257,31 @@ static AFM *PSDRV_AFMParse(char const *file)
 
 	if(!strncmp("FontName", buf, 8)) {
 	    afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->FontName == NULL) {
+	    	fclose(fp);
+		FreeAFM(afm);
+		return NULL;
+	    }
 	    continue;
 	}
 
 	if(!strncmp("FullName", buf, 8)) {
 	    afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->FullName == NULL) {
+	    	fclose(fp);
+		FreeAFM(afm);
+		return NULL;
+	    }
 	    continue;
 	}
 
 	if(!strncmp("FamilyName", buf, 10)) {
 	    afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->FamilyName == NULL) {
+	    	fclose(fp);
+		FreeAFM(afm);
+		return NULL;
+	    }
 	    continue;
 	}
 	
@@ -264,12 +358,21 @@ static AFM *PSDRV_AFMParse(char const *file)
 
 	if(!strncmp("StartCharMetrics", buf, 16)) {
 	    sscanf(value, "%d", &(afm->NumofMetrics) );
-	    PSDRV_AFMGetCharMetrics(afm, fp);
+	    if (PSDRV_AFMGetCharMetrics(afm, fp) == FALSE) {
+	    	fclose(fp);
+		FreeAFM(afm);
+		return NULL;
+	    }
 	    continue;
 	}
 
 	if(!strncmp("EncodingScheme", buf, 14)) {
 	    afm->EncodingScheme = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->EncodingScheme == NULL) {
+	    	fclose(fp);
+		FreeAFM(afm);
+		return NULL;
+	    }
 	    continue;
 	}
 
@@ -284,11 +387,21 @@ static AFM *PSDRV_AFMParse(char const *file)
     if(afm->FontName == NULL) {
         WARN("%s contains no FontName.\n", file);
 	afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, "nofont");
+	if (afm->FontName == NULL) {
+	    FreeAFM(afm);
+	    return NULL;
+	}
     }
+    
     if(afm->FullName == NULL)
         afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
     if(afm->FamilyName == NULL)
-        afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);      
+        afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
+    if (afm->FullName == NULL || afm->FamilyName == NULL) {
+    	FreeAFM(afm);
+	return NULL;
+    }
+    
     if(afm->Ascender == 0.0)
         afm->Ascender = afm->FontBBox.ury;
     if(afm->Descender == 0.0)
@@ -351,7 +464,7 @@ AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name)
  * Adds an afm to the list whose head is pointed to by head. Creates new
  * family node if necessary and always creates a new AFMLISTENTRY.
  */
-void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
+BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 {
     FONTFAMILY *family = *head;
     FONTFAMILY **insert = head;
@@ -359,6 +472,9 @@ void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 
     newafmle = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY,
 			   sizeof(*newafmle));
+    if (newafmle == NULL)
+    	return FALSE;
+	
     newafmle->afm = afm;
 
     while(family) {
@@ -371,11 +487,20 @@ void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
     if(!family) {
         family = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY,
 			   sizeof(*family));
+	if (family == NULL) {
+	    HeapFree(PSDRV_Heap, 0, newafmle);
+	    return FALSE;
+	}
 	*insert = family;
 	family->FamilyName = HEAP_strdupA(PSDRV_Heap, 0,
 					  afm->FamilyName);
+	if (family->FamilyName == NULL) {
+	    HeapFree(PSDRV_Heap, 0, family);
+	    HeapFree(PSDRV_Heap, 0, newafmle);
+	    return FALSE;
+	}
 	family->afmlist = newafmle;
-	return;
+	return TRUE;
     }
     
     tmpafmle = family->afmlist;
@@ -384,7 +509,7 @@ void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 
     tmpafmle->next = newafmle;
 
-    return;
+    return TRUE;
 }
 
 /**********************************************************
@@ -446,11 +571,13 @@ static void PSDRV_DumpFontList(void)
  *
  *	PSDRV_GetFontMetrics
  *
- * Only exported function in this file. Parses all afm files listed in
- * [afmfiles] and [afmdirs] of wine.conf .
+ * Parses all afm files listed in [afmfiles] and [afmdirs] of wine.conf
+ *
+ * If this function fails, PSDRV_Init will destroy PSDRV_Heap, so don't worry
+ * about freeing all the memory that's been allocated.
  */
 
-static void PSDRV_ReadAFMDir(const char* afmdir) {
+static BOOL PSDRV_ReadAFMDir(const char* afmdir) {
     DIR *dir;
     AFM	*afm;
 
@@ -461,7 +588,12 @@ static void PSDRV_ReadAFMDir(const char* afmdir) {
 	    if (strstr(dent->d_name,".afm")) {
 		char *afmfn;
 
-		afmfn=(char*)HeapAlloc(GetProcessHeap(),0,strlen(afmdir)+strlen(dent->d_name)+2);
+		afmfn=(char*)HeapAlloc(PSDRV_Heap,0, 
+		    	strlen(afmdir)+strlen(dent->d_name)+2);
+		if (afmfn == NULL) {
+		    closedir(dir);
+		    return FALSE;
+		}
 		strcpy(afmfn,afmdir);
 		strcat(afmfn,"/");
 		strcat(afmfn,dent->d_name);
@@ -472,13 +604,25 @@ static void PSDRV_ReadAFMDir(const char* afmdir) {
 		       !strcmp(afm->EncodingScheme,"AdobeStandardEncoding")) {
 			PSDRV_ReencodeCharWidths(afm);
 		    }
-		    PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
+		    if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
+		    	closedir(dir);
+			FreeAFM(afm);
+			return FALSE;
+		    }
 		}
-		HeapFree(GetProcessHeap(),0,afmfn);
+		else {
+		    WARN("Error parsing %s\n", afmfn);
+		}
+		HeapFree(PSDRV_Heap,0,afmfn);
 	    }
 	}
 	closedir(dir);
     }
+    else {
+    	WARN("Error opening %s\n", afmdir);
+    }
+    
+    return TRUE;
 }
 
 BOOL PSDRV_GetFontMetrics(void)
@@ -490,22 +634,29 @@ BOOL PSDRV_GetFontMetrics(void)
     if (PSDRV_GlyphListInit() != 0)
 	return FALSE;
 
-    while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key), value, sizeof(value)))
+    while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key),
+    	    value, sizeof(value)))
     {
         AFM* afm = PSDRV_AFMParse(value);
-        if (afm)
-        {
+	
+        if (afm) {
             if(afm->EncodingScheme && 
                !strcmp(afm->EncodingScheme, "AdobeStandardEncoding")) {
                 PSDRV_ReencodeCharWidths(afm);
             }
-            PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
+            if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
+	    	return FALSE;
+	    }
         }
+	else {
+	    WARN("Error parsing %s\n", value);
+	}
     }
 
     for (idx = 0; PROFILE_EnumWineIniString ("afmdirs", idx, key, sizeof (key),
 	    value, sizeof (value)); ++idx)
-	PSDRV_ReadAFMDir (value);
+	if (PSDRV_ReadAFMDir (value) == FALSE)
+	    return FALSE;
 
     PSDRV_DumpGlyphList();
     PSDRV_DumpFontList();

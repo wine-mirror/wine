@@ -219,7 +219,6 @@ static PSDRV_DEVMODEA DefaultDevmode =
     /* dummy */ 0
   },
   { /* dmDrvPrivate */
-    /* ppdfilename */         "default.ppd", 
     /* numInstalledOptions */ 0 
   }
 };
@@ -467,27 +466,43 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     AFM *afm;
     HANDLE hPrinter;
     const char *ppd = NULL;
+    char ppdFileName[256];
 
     TRACE("'%s'\n", name);
     
+    /*
+     *	If this loop completes, last will point to the 'next' element of the
+     *	final PRINTERINFO in the list
+     */    
     for( ; pi; last = &pi->next, pi = pi->next)
         if(!strcmp(pi->FriendlyName, name))
 	    return pi;
 
-    pi = *last = HeapAlloc( PSDRV_Heap, 0, sizeof(*pi) );
+    pi = *last = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
+    if (pi == NULL)
+    	return NULL;
+	
     pi->FriendlyName = HEAP_strdupA( PSDRV_Heap, 0, name );
+    if (pi->FriendlyName == NULL)
+    	goto fail;
+	
+    /* Use Get|SetPrinterDataExA instead? */
+    
     res = DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
 			    NULL, 0, &needed );
 
     if(res == ERROR_INVALID_PRINTER_NAME || needed != sizeof(DefaultDevmode)) {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
+	if (pi->Devmode == NULL)
+	    goto cleanup;	    
 	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
 	strcpy(pi->Devmode->dmPublic.dmDeviceName,name);
 	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
 		 REG_BINARY, (LPBYTE)&DefaultDevmode, sizeof(DefaultDevmode) );
 
 	/* need to do something here AddPrinter?? */
-    } else {
+    }
+    else {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, needed );
 	DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
 			  (LPBYTE)pi->Devmode, needed, &needed);
@@ -497,29 +512,48 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	ERR ("OpenPrinterA failed with code %li\n", GetLastError ());
 	goto cleanup;
     }
-    pi->Devmode->dmDrvPrivate.ppdFileName[0]='\0';
+    
+    ppdFileName[0]='\0';
+    
 #ifdef HAVE_CUPS
     {
 	ppd = cupsGetPPD(name);
 
 	if (ppd) {
-		strcpy(pi->Devmode->dmDrvPrivate.ppdFileName,ppd);
-		res = ERROR_SUCCESS;
-		/* we should unlink() that file later */
-	} else {
+	    strncpy(ppdFileName, ppd, sizeof(ppdFileName));
+	    res = ERROR_SUCCESS;
+	    /* we should unlink() that file later */
+	}
+	else {
 		ERR("Did not find ppd for %s\n",name);
 	}
     }
 #endif
-    if (!pi->Devmode->dmDrvPrivate.ppdFileName[0]) {
-        res = GetPrinterDataA (hPrinter, "PPD File", NULL,
-	    pi->Devmode->dmDrvPrivate.ppdFileName, 256, &needed);
+
+    if (!ppdFileName[0]) {
+        res = GetPrinterDataA (hPrinter, "PPD File", NULL, ppdFileName,
+	    	sizeof(ppdFileName), &needed);
     }
+    
     if (res != ERROR_SUCCESS) {
 	ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
 	goto closeprinter;
     }
-
+    
+    ppdFileName[sizeof(ppdFileName) - 1] = '\0';
+    
+    pi->ppd = PSDRV_ParsePPD(ppdFileName);
+    if(!pi->ppd) {
+	MESSAGE("Couldn't find PPD file '%s', expect a crash now!\n",
+	    ppdFileName);
+	goto closeprinter;
+    }
+    
+    /*
+     *	This is a hack.  The default paper size should be read in as part of
+     *	the Devmode structure, but Wine doesn't currently provide a convenient
+     *	way to configure printers.
+     */
     res = GetPrinterDataA (hPrinter, "Paper Size", NULL, (LPBYTE) &dwPaperSize,
 	    sizeof (DWORD), &needed);
     if (res == ERROR_SUCCESS)
@@ -533,10 +567,10 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 
     res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable", NULL,
 	    0, &needed, &pi->FontSubTableSize);
-    if (res == ERROR_SUCCESS)
+    if (res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND) {
 	TRACE ("No 'FontSubTable' for printer '%s'\n", name);
-    else if (res == ERROR_MORE_DATA)
-    {
+    }
+    else if (res == ERROR_MORE_DATA) {
 	pi->FontSubTable = HeapAlloc (PSDRV_Heap, 0, needed);
 	if (pi->FontSubTable == NULL) {
 	    ERR ("Failed to allocate %li bytes from heap\n", needed);
@@ -550,20 +584,14 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	    ERR ("EnumPrinterDataExA returned %li\n", res);
 	    goto closeprinter;
 	}
-    } else {
-	FIXME ("EnumPrinterDataExA returned %li\n", res);
-	/* ignore error */
+    }
+    else {
+	ERR("EnumPrinterDataExA returned %li\n", res);
+	goto closeprinter;
     }
 
     if (ClosePrinter (hPrinter) == 0) {
 	ERR ("ClosePrinter failed with code %li\n", GetLastError ());
-	goto cleanup;
-    }
-
-    pi->ppd = PSDRV_ParsePPD(pi->Devmode->dmDrvPrivate.ppdFileName);
-    if(!pi->ppd) {
-	MESSAGE("Couldn't find PPD file '%s', expect a crash now!\n",
-	    pi->Devmode->dmDrvPrivate.ppdFileName);
 	goto cleanup;
     }
 
@@ -572,10 +600,16 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 
     for(font = pi->ppd->InstalledFonts; font; font = font->next) {
         afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
-	if(!afm)
-	    TRACE( "Couldn't find AFM file for installed printer font '%s' - ignoring\n", font->Name);
-	else
-	    PSDRV_AddAFMtoList(&pi->Fonts, afm);
+	if(!afm) {
+	    TRACE( "Couldn't find AFM file for installed printer font '%s' - "
+	    	    "ignoring\n", font->Name);
+	}
+	else {
+	    if (PSDRV_AddAFMtoList(&pi->Fonts, afm) == FALSE) {
+	    	PSDRV_FreeAFMList(pi->Fonts);
+		goto cleanup;
+	    }
+	}
 
     }
     if (ppd) unlink(ppd);
@@ -584,9 +618,13 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 closeprinter:
     ClosePrinter(hPrinter);
 cleanup:
-    HeapFree (PSDRV_Heap, 0, pi->FontSubTable);
-    HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
-    HeapFree(PSDRV_Heap, 0, pi->Devmode);
+    if (pi->FontSubTable)
+    	HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
+    if (pi->FriendlyName)
+    	HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
+    if (pi->Devmode)
+    	HeapFree(PSDRV_Heap, 0, pi->Devmode);
+fail:
     HeapFree(PSDRV_Heap, 0, pi);
     if (ppd) unlink(ppd);
     *last = NULL;
