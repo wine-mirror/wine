@@ -1335,10 +1335,9 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     TRACE("file %d to buf %p num %ld %p func %p\n",
 	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
 
-    /* check that there is an overlapped struct with an event flag */
-    if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
+    /* check that there is an overlapped struct */
+    if (overlapped==NULL)
     {
-        TRACE("Overlapped not specified or invalid event flag\n");
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -1391,13 +1390,12 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 			 LPOVERLAPPED overlapped, 
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-    /* FIXME: MS docs say we shouldn't set overlapped->hEvent */
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
     return FILE_ReadFileEx(hFile,buffer,bytesToRead,overlapped,lpCompletionRoutine);
 }
 
-static VOID CALLBACK FILE_TimeoutComplete(DWORD status, DWORD count, LPOVERLAPPED ov)
+static VOID CALLBACK FILE_OverlappedComplete(DWORD status, DWORD count, LPOVERLAPPED ov)
 {
     NtSetEvent(ov->hEvent,NULL);
 }
@@ -1412,7 +1410,7 @@ static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPD
     ZeroMemory(&ov, sizeof (OVERLAPPED));
     if(STATUS_SUCCESS==NtCreateEvent(&ov.hEvent, SYNCHRONIZE, NULL, 0, 0))
     {
-        if(ReadFileEx(hFile, buffer, bytesToRead, &ov, FILE_TimeoutComplete))
+        if(ReadFileEx(hFile, buffer, bytesToRead, &ov, FILE_OverlappedComplete))
         {
             r = GetOverlappedResult(hFile, &ov, bytesRead, TRUE);
         }
@@ -1442,8 +1440,9 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     {
     case FD_TYPE_OVERLAPPED:
 	if (unix_handle == -1) return FALSE;
-        if (!overlapped)
+        if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
         {
+            TRACE("Overlapped not specified or invalid event flag\n");
 	    close(unix_handle);
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
@@ -1476,7 +1475,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         overlapped->Internal     = STATUS_PENDING;
         overlapped->InternalHigh = result;
         
-        if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL))
+        if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, FILE_OverlappedComplete))
             return FALSE;
 
         /* fail on return, with ERROR_IO_PENDING */
@@ -1573,7 +1572,7 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     TRACE("file %d to buf %p num %ld %p func %p stub\n",
 	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
 
-    if ( (overlapped == NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
+    if (overlapped == NULL)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -1638,14 +1637,22 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
-    /* this will only have impact if the overlappd structure is specified */
-    if ( overlapped )
-        return WriteFileEx(hFile, buffer, bytesToWrite, overlapped, NULL);
-
     unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type );
 
     switch (type)
     {
+    case FD_TYPE_OVERLAPPED:
+	if (unix_handle == -1) return FALSE;
+        if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
+        {
+            TRACE("Overlapped not specified or invalid event flag\n");
+	    close(unix_handle);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        /* FIXME: try write immediately before starting overlapped operation */
+        return WriteFileEx(hFile, buffer, bytesToWrite, overlapped, FILE_OverlappedComplete);
+
     case FD_TYPE_CONSOLE:
 	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite, 
 	      bytesWritten, overlapped );

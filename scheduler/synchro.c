@@ -70,7 +70,6 @@ static void finish_async(async_private *ovp, DWORD status)
     ovp->prev=NULL;
 
     close(ovp->fd);
-    NtSetEvent(ovp->lpOverlapped->hEvent,NULL);
     if(!ovp->completion_func) HeapFree(GetProcessHeap(), 0, ovp);
 }
 
