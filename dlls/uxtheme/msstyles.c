@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
  * Defines and global variables
  */
 
+BOOL UXTHEME_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
+
 extern HINSTANCE hDllInst;
 
 #define MSSTYLES_VERSION 0x0003
@@ -588,7 +590,37 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
 
     while((lpName=UXINI_GetNextSection(ini, &dwLen))) {
         if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, lpName, dwLen, szSysMetrics, -1) == CSTR_EQUAL) {
-            FIXME("Process system metrics\n");
+            int colorCount = 0;
+            int colorElements[TMT_LASTCOLOR-TMT_FIRSTCOLOR];
+            COLORREF colorRgb[TMT_LASTCOLOR-TMT_FIRSTCOLOR];
+            LPCWSTR lpValueEnd;
+
+            while((lpName=UXINI_GetNextValue(ini, &dwLen, &lpValue, &dwValueLen))) {
+                lstrcpynW(szPropertyName, lpName, min(dwLen+1, sizeof(szPropertyName)/sizeof(szPropertyName[0])));
+                if(MSSTYLES_LookupProperty(szPropertyName, &iPropertyPrimitive, &iPropertyId)) {
+                    if(iPropertyId >= TMT_FIRSTCOLOR && iPropertyId <= TMT_LASTCOLOR) {
+                        int r,g,b;
+                        lpValueEnd = lpValue + dwValueLen;
+                        UXTHEME_GetNextInteger(lpValue, lpValueEnd, &lpValue, &r);
+                        UXTHEME_GetNextInteger(lpValue, lpValueEnd, &lpValue, &g);
+                        if(UXTHEME_GetNextInteger(lpValue, lpValueEnd, &lpValue, &b)) {
+                            colorElements[colorCount] = iPropertyId - TMT_FIRSTCOLOR;
+                            colorRgb[colorCount++] = RGB(r,g,b);
+                        }
+                        else {
+                            FIXME("Invalid color value for %s\n", debugstr_w(szPropertyName));
+                        }
+                    }
+                    else {
+                        /* FIXME: Handle non-color metrics */
+                    }
+                }
+                else {
+                    TRACE("Unknown system metric %s\n", debugstr_w(szPropertyName));
+                }
+            }
+            if(colorCount > 0)
+                SetSysColors(colorCount, colorElements, colorRgb);
             continue;
         }
         if(MSSTYLES_ParseIniSectionName(lpName, dwLen, szAppName, szClassName, &iPartId, &iStateId)) {
