@@ -9,6 +9,7 @@ CTESTS = \
 	alloc.c \
 	atom.c \
 	codepage.c \
+	console.c \
 	directory.c \
 	drive.c \
 	environ.c \
