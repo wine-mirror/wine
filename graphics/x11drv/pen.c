@@ -4,8 +4,13 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "pen.h"
 #include "color.h"
+#include "x11drv.h"
 #include "debug.h"
 
 static const char PEN_dash[]       = { 5,3 };      /* -----   -----   -----  */
@@ -63,3 +68,5 @@ HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
     
     return prevHandle;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */

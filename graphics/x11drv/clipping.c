@@ -4,6 +4,10 @@
  * Copyright 1998 Huw Davies
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "ts_xlib.h"
 
 #include <stdio.h>
@@ -12,6 +16,7 @@
 #include "region.h"
 #include "debug.h"
 #include "heap.h"
+#include "local.h"
 
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
@@ -65,3 +70,6 @@ void X11DRV_SetDeviceClipping( DC * dc )
 
     GDI_HEAP_UNLOCK( dc->w.hGCClipRgn );
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */
+

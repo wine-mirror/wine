@@ -4,12 +4,17 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "bitmap.h"
 #include "brush.h"
 #include "font.h"
 #include "pen.h"
+#include "local.h"
 #include "debug.h"
 
 
@@ -80,3 +85,5 @@ BOOL32 X11DRV_DeleteObject( HGDIOBJ32 handle )
     GDI_HEAP_UNLOCK( handle );
     return ret;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */

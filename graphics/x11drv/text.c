@@ -4,17 +4,20 @@
  * Copyright 1993,1994 Alexandre Julliard
  */
 
-#include <stdlib.h>
-#include "ts_xlib.h"
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include <X11/Xatom.h>
-#include "windows.h"
+#include "ts_xlib.h"
+
+#include <stdlib.h>
+#include "wintypes.h"
 #include <math.h>
 #include "dc.h"
 #include "gdi.h"
-/*#include "callback.h"*/
 #include "heap.h"
 #include "x11font.h"
-#include "debugstr.h"
 #include "debug.h"
 
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
@@ -347,3 +350,4 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     return TRUE;
 }
 
+#endif /* !defined(X_DISPLAY_MISSING) */

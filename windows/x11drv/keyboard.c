@@ -19,6 +19,7 @@
 #include "ts_xutil.h"
 
 #include "debug.h"
+#include "keyboard.h"
 #include "message.h"
 #include "wintypes.h"
 #include "x11drv.h"
@@ -168,7 +169,7 @@ void KEYBOARD_UpdateOneState ( int vkey, int state )
 }
 
 /***********************************************************************
- *           KEYBOARD_UpdateState
+ *           X11DRV_KEYBOARD_UpdateState
  *
  * Update modifiers state (Ctrl, Alt, Shift)
  * when window is activated (called by EVENT_FocusIn in event.c)
@@ -178,7 +179,7 @@ void KEYBOARD_UpdateOneState ( int vkey, int state )
  * Toggle keys are handled in HandleEvent. (because XQueryKeymap says nothing
  *  about them)
  */
-void KEYBOARD_UpdateState ( void )
+void X11DRV_KEYBOARD_UpdateState ( void )
 {
 /* extract a bit from the char[32] bit suite */
 #define KeyState(keycode) ((keys_return[keycode/8] & (1<<(keycode%8)))!=0)
@@ -199,11 +200,11 @@ void KEYBOARD_UpdateState ( void )
 }
 
 /***********************************************************************
- *           KEYBOARD_HandleEvent
+ *           X11DRV_KEYBOARD_HandleEvent
  *
  * Handle a X key event
  */
-void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
+void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 {
     char Str[24]; 
     XComposeStatus cs; 
@@ -229,11 +230,11 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	{
 	TRACE(key, "Alt Gr key event received\n");
 	event->keycode = kcControl; /* Simulate Control */
-	KEYBOARD_HandleEvent( pWnd, event );
+	X11DRV_KEYBOARD_HandleEvent( pWnd, event );
 
 	event->keycode = kcAlt; /* Simulate Alt */
 	force_extended = TRUE;
-	KEYBOARD_HandleEvent( pWnd, event );
+	X11DRV_KEYBOARD_HandleEvent( pWnd, event );
 	force_extended = FALSE;
 	return;
 	}

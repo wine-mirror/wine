@@ -15,34 +15,26 @@
 #include "ts_xutil.h"
 
 #include <assert.h>
-#include <ctype.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <errno.h>
-#include "windows.h"
-#include "winnt.h"
-#include "gdi.h"
-#include "heap.h"
-#include "queue.h"
-#include "class.h"
-#include "dce.h"
-#include "module.h"
-#include "options.h"
-#include "winpos.h"
-#include "drive.h"
-#include "shell.h"
 #include "callback.h"
-#include "keyboard.h"
-#include "mouse.h"
-#include "debug.h"
+#include "class.h"
+#include "clipboard.h"
+#include "dce.h"
 #include "dde_proc.h"
-#include "winsock.h"
+#include "debug.h"
+#include "drive.h"
+#include "heap.h"
+#include "keyboard.h"
+#include "message.h"
 #include "mouse.h"
+#include "options.h"
+#include "queue.h"
+#include "shell.h"
+#include "winpos.h"
+#include "winsock.h"
+#include "wintypes.h"
 #include "x11drv.h"
-
+  
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
 
@@ -50,6 +42,9 @@ extern Atom wmProtocols;
 extern Atom wmDeleteWindow;
 extern Atom dndProtocol;
 extern Atom dndSelection;
+
+extern void X11DRV_KEYBOARD_UpdateState(void);
+extern void X11DRV_KEYBOARD_HandleEvent(WND *pWnd, XKeyEvent *event);
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 
@@ -339,7 +334,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       Window   	root, child;
       int      	root_x, root_y, child_x, child_y;
       unsigned	u;
-      TSXQueryPointer( display, rootWindow, &root, &child,
+      TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
 		       &root_x, &root_y, &child_x, &child_y, &u);
       if (TSXFindContext( display, child, winContext, (char **)&pWnd ) != 0)
 	return;
@@ -585,7 +580,7 @@ BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
   int rootX, rootY, winX, winY;
   unsigned int xstate;
   
-  if (!TSXQueryPointer( display, rootWindow, &root, &child,
+  if (!TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
 			&rootX, &rootY, &winX, &winY, &xstate )) 
     return FALSE;
   
@@ -647,7 +642,7 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
  */
 static void EVENT_Key( WND *pWnd, XKeyEvent *event )
 {
-  KEYBOARD_HandleEvent( pWnd, event );
+  X11DRV_KEYBOARD_HandleEvent( pWnd, event );
 }
 
 
@@ -788,7 +783,7 @@ static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
       if (hwnd != GetActiveWindow32()) 
         {
 	  WINPOS_ChangeActiveWindow( hwnd, FALSE );
-	  KEYBOARD_UpdateState();
+	  X11DRV_KEYBOARD_UpdateState();
         }
       if ((hwnd != GetFocus32()) && !IsChild32( hwnd, GetFocus32()))
             SetFocus32( hwnd );
@@ -845,7 +840,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
   
   if (!TSXGetGeometry( display, win, &root, px, py, pwidth, pheight,
                        &border, &depth )) return;
-  if (win == rootWindow)
+  if (win == X11DRV_GetXRootWindow())
     {
       *px = *py = 0;
       return;
@@ -856,7 +851,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
       if (!TSXQueryTree(display, win, &root, &parent, &children, &nb_children))
 	return;
       TSXFree( children );
-      if (parent == rootWindow) break;
+      if (parent == X11DRV_GetXRootWindow()) break;
       win = parent;
       if (!TSXGetGeometry( display, win, &root, &xpos, &ypos,
                            &width, &height, &border, &depth )) return;
@@ -1209,7 +1204,7 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
     }
     
     if( drop_len && drop_len < 65535 ) {
-      TSXQueryPointer( display, rootWindow, &u.w_aux, &u.w_aux, 
+      TSXQueryPointer( display, X11DRV_GetXRootWindow(), &u.w_aux, &u.w_aux, 
 		       &x, &y, &u.i, &u.i, &u.i);
       pDropWnd = WIN_FindWndPtr( pWnd->hwndSelf );
       
@@ -1342,9 +1337,9 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 #if 0
 void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 {
-  if( !Options.managed && rootWindow == DefaultRootWindow(display) &&
+  if( !Options.managed && X11DRV_GetXRootWindow() == DefaultRootWindow(display) &&
       (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus32() )
-    TSXInstallColormap( display, COLOR_GetColormap() );
+    TSXInstallColormap( display, X11DRV_COLOR_GetColormap() );
 }
 #endif
 
@@ -1370,6 +1365,3 @@ BOOL32 X11DRV_EVENT_Pending()
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */
-
-
-

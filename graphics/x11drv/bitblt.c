@@ -4,8 +4,12 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
-#include "ts_xlib.h"
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include <X11/Intrinsic.h>
+#include "ts_xlib.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -18,7 +22,7 @@
 #include "options.h"
 #include "x11drv.h"
 #include "debug.h"
-#include "xmalloc.h"
+#include "xmalloc.h" /* for XCREATEIMAGE macro */
 
 
 #define DST 0   /* Destination drawable */
@@ -1203,8 +1207,8 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
                 /* Xor is much better when we do not have full colormap.   */
                 /* Using white^black ensures that we invert at least black */
                 /* and white. */
-                Pixel xor_pix = (WhitePixelOfScreen(screen) ^
-                                 BlackPixelOfScreen(screen));
+                Pixel xor_pix = (WhitePixelOfScreen(X11DRV_GetXScreen()) ^
+                                 BlackPixelOfScreen(X11DRV_GetXScreen()));
                 XSetFunction( display, physDevDst->gc, GXxor );
                 XSetForeground( display, physDevDst->gc, xor_pix);
                 XSetFillStyle( display, physDevDst->gc, FillSolid ); 
@@ -1286,11 +1290,11 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     }
 
     tmpGC = XCreateGC( display, physDevDst->drawable, 0, NULL );
-    pixmaps[DST] = XCreatePixmap( display, rootWindow, width, height,
+    pixmaps[DST] = XCreatePixmap( display, X11DRV_GetXRootWindow(), width, height,
                                   dcDst->w.bitsPerPixel );
     if (useSrc)
     {
-        pixmaps[SRC] = XCreatePixmap( display, rootWindow, width, height,
+        pixmaps[SRC] = XCreatePixmap( display, X11DRV_GetXRootWindow(), width, height,
                                       dcDst->w.bitsPerPixel );
         if (fStretch)
             BITBLT_GetSrcAreaStretch( dcSrc, dcDst, pixmaps[SRC], tmpGC,
@@ -1315,7 +1319,7 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         case OP_ARGS(DST,TMP):
         case OP_ARGS(SRC,TMP):
             if (!pixmaps[TMP])
-                pixmaps[TMP] = XCreatePixmap( display, rootWindow,
+                pixmaps[TMP] = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                               width, height,
                                               dcDst->w.bitsPerPixel );
             /* fall through */
@@ -1330,7 +1334,7 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 
         case OP_ARGS(PAT,TMP):
             if (!pixmaps[TMP] && !fNullBrush)
-                pixmaps[TMP] = XCreatePixmap( display, rootWindow,
+                pixmaps[TMP] = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                               width, height,
                                               dcDst->w.bitsPerPixel );
             /* fall through */
@@ -1439,3 +1443,5 @@ BOOL32 X11DRV_StretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     DIB_UpdateDIBSection( dcDst, TRUE );
     return result;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */

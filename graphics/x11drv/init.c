@@ -4,6 +4,10 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "ts_xlib.h"
 
 #include <string.h>
@@ -11,7 +15,10 @@
 #include "color.h"
 #include "bitmap.h"
 #include "winnt.h"
+#include "local.h"
 #include "debug.h"
+#include "ldt.h"
+#include "monitor.h"
 
 static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
@@ -129,16 +136,16 @@ BOOL32 X11DRV_Init(void)
 
 #if 0
     TRACE(x11drv, "Height = %-4i pxl, %-4i mm, Width  = %-4i pxl, %-4i mm\n",
-	  HeightOfScreen(screen), HeightMMOfScreen(screen),
-	  WidthOfScreen(screen), WidthMMOfScreen(screen) );
+	  HeightOfScreen(X11DRV_GetXScreen()), HeightMMOfScreen(X11DRV_GetXScreen()),
+	  WidthOfScreen(X11DRV_GetXScreen()), WidthMMOfScreen(X11DRV_GetXScreen()) );
 #endif
 
     X11DRV_DevCaps.version = 0x300;
-    X11DRV_DevCaps.horzSize = WidthMMOfScreen(screen) * screenWidth / WidthOfScreen(screen);
-    X11DRV_DevCaps.vertSize = HeightMMOfScreen(screen) * screenHeight / HeightOfScreen(screen);
-    X11DRV_DevCaps.horzRes = screenWidth;
-    X11DRV_DevCaps.vertRes = screenHeight;
-    X11DRV_DevCaps.bitsPixel = screenDepth;
+    X11DRV_DevCaps.horzSize = WidthMMOfScreen(X11DRV_GetXScreen()) * MONITOR_GetWidth(&MONITOR_PrimaryMonitor) / WidthOfScreen(X11DRV_GetXScreen());
+    X11DRV_DevCaps.vertSize = HeightMMOfScreen(X11DRV_GetXScreen()) * MONITOR_GetHeight(&MONITOR_PrimaryMonitor) / HeightOfScreen(X11DRV_GetXScreen());
+    X11DRV_DevCaps.horzRes = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    X11DRV_DevCaps.vertRes = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    X11DRV_DevCaps.bitsPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
 
     if( COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL ) 
 	X11DRV_DevCaps.sizePalette = 0;
@@ -205,14 +212,14 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     }
     else
     {
-        physDev->drawable  = rootWindow;
+        physDev->drawable  = X11DRV_GetXRootWindow();
         physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
-        dc->w.bitsPerPixel = screenDepth;
+        dc->w.bitsPerPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
 
         dc->w.totalExtent.left   = 0;
         dc->w.totalExtent.top    = 0;
-        dc->w.totalExtent.right  = screenWidth;
-        dc->w.totalExtent.bottom = screenHeight;
+        dc->w.totalExtent.right  = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+        dc->w.totalExtent.bottom = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
         dc->w.hVisRgn            = CreateRectRgnIndirect32( &dc->w.totalExtent );
     }
 
@@ -261,3 +268,4 @@ static INT32 X11DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
     return 0;
 }
 
+#endif /* !defined(X_DISPLAY_MISSING) */

@@ -4,20 +4,24 @@
  * Copyright 1993,1994 Alexandre Julliard
  */
 
-
 /*
  * FIXME: none of these functions obey the GM_ADVANCED
  * graphics mode
  */
+
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+#include <X11/Intrinsic.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 
 #include <math.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
 #endif
 #include <stdlib.h>
-#include "ts_xlib.h"
-#include "ts_xutil.h"
-#include <X11/Intrinsic.h>
 #ifndef PI
 #define PI M_PI
 #endif
@@ -28,6 +32,7 @@
 #include "bitmap.h"
 #include "gdi.h"
 #include "dc.h"
+#include "monitor.h"
 #include "bitmap.h"
 #include "callback.h"
 #include "metafile.h"
@@ -107,7 +112,7 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
     */
     if (val.function == GXinvert)
 	{
-	val.foreground = BlackPixelOfScreen(screen) ^ WhitePixelOfScreen(screen);
+	val.foreground = BlackPixelOfScreen(X11DRV_GetXScreen()) ^ WhitePixelOfScreen(X11DRV_GetXScreen());
 	val.function = GXxor;
 	}
     val.fill_style = physDev->brush.fillStyle;
@@ -126,7 +131,10 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
             register int x, y;
             XImage *image;
             EnterCriticalSection( &X11DRV_CritSection );
-            pixmap = XCreatePixmap( display, rootWindow, 8, 8, screenDepth );
+            pixmap = XCreatePixmap( display, 
+				    X11DRV_GetXRootWindow(), 
+				    8, 8, 
+				    MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
             image = XGetImage( display, physDev->brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
             for (y = 0; y < 8; y++)
@@ -189,11 +197,11 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
     switch (dc->w.ROPmode)
     {
     case R2_BLACK :
-	val.foreground = BlackPixelOfScreen( screen );
+	val.foreground = BlackPixelOfScreen( X11DRV_GetXScreen() );
 	val.function = GXcopy;
 	break;
     case R2_WHITE :
-	val.foreground = WhitePixelOfScreen( screen );
+	val.foreground = WhitePixelOfScreen( X11DRV_GetXScreen() );
 	val.function = GXcopy;
 	break;
     case R2_XORPEN :
@@ -201,8 +209,8 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
 	/* It is very unlikely someone wants to XOR with 0 */
 	/* This fixes the rubber-drawings in paintbrush */
 	if (val.foreground == 0)
-	    val.foreground = BlackPixelOfScreen( screen )
-			    ^ WhitePixelOfScreen( screen );
+	    val.foreground = BlackPixelOfScreen( X11DRV_GetXScreen() )
+			    ^ WhitePixelOfScreen( X11DRV_GetXScreen() );
 	val.function = GXxor;
 	break;
     default :
@@ -854,7 +862,7 @@ X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
     {
         /* If we are reading from the screen, use a temporary copy */
         /* to avoid a BadMatch error */
-        if (!pixmap) pixmap = XCreatePixmap( display, rootWindow,
+        if (!pixmap) pixmap = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                              1, 1, dc->w.bitsPerPixel );
         XCopyArea( display, physDev->drawable, pixmap, BITMAP_colorGC,
                    x, y, 1, 1, 0, 0 );
@@ -1427,3 +1435,5 @@ X11DRV_SetTextColor( DC *dc, COLORREF color )
 
     return oldColor;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */

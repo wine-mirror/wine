@@ -4,15 +4,21 @@
  * Copyright 1993,1994  Alexandre Julliard
  */
 
-#include "windows.h"
-#include "bitmap.h"
-#include "x11drv.h"
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
+
+#include "wintypes.h"
+#include "bitmap.h"
+#include "x11drv.h"
 #include "debug.h"
 #include "dc.h"
 #include "color.h"
 #include "callback.h"
+#include "xmalloc.h" /* for XCREATEIMAGE macro */
 
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
 static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
@@ -27,7 +33,7 @@ BOOL32 X11DRV_DIB_Init(void)
 
     for( i = 0; bitmapDepthTable[i]; i++ )
     {
-	 testimage = TSXCreateImage(display, DefaultVisualOfScreen(screen),
+	 testimage = TSXCreateImage(display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
 			 bitmapDepthTable[i], ZPixmap, 0, NULL, 1, 1, 32, 20 );
 	 if( testimage ) ximageDepthTable[i] = testimage->bits_per_pixel;
 	 else return FALSE;
@@ -1151,3 +1157,5 @@ INT32 X11DRV_SetDIBitsToDevice( DC *dc, INT32 xDest, INT32 yDest, DWORD cx,
     HeapFree(GetProcessHeap(), 0, descr.colorMap);
     return result;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */

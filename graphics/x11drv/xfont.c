@@ -7,6 +7,14 @@
  *	 have to be changed for that), dynamic font loading (FreeType).
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+#include <X11/Xatom.h>
+#include "ts_xlib.h"
+#include "x11font.h"
+#endif /* !defined(X_DISPLAY_MISSING) */
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,15 +24,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "ts_xlib.h"
-#include <X11/Xatom.h>
 #include <math.h>
 #include <assert.h>
 #include "heap.h"
 #include "options.h"
-#include "x11font.h"
 #include "font.h"
 #include "debug.h"
+#include "ldt.h"
+
+#ifndef X_DISPLAY_MISSING
 
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
@@ -2687,6 +2695,8 @@ BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
     return FALSE;
 }
 
+#endif /* !defined(X_DISPLAY_MISSING) */
+
 /***********************************************************************
  *								       *
  *           Font Resource API					       *
@@ -2779,5 +2789,4 @@ BOOL32 WINAPI RemoveFontResource32W( LPCWSTR str )
     FIXME(font, "(%s): stub\n", debugres_w(str) );
     return TRUE;
 }
-
 

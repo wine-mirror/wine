@@ -4,18 +4,26 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include "gdi.h"
 #include "callback.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
+#include "monitor.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "local.h"
 #include "x11drv.h"
+#include "wine/winuser16.h"
 
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
@@ -30,16 +38,22 @@ BOOL32 X11DRV_BITMAP_Init(void)
     
       /* Create the necessary GCs */
     
-    if ((tmpPixmap = TSXCreatePixmap( display, rootWindow, 1, 1, 1 )))
+    if ((tmpPixmap = TSXCreatePixmap(display, 
+				     X11DRV_GetXRootWindow(), 
+				     1, 1, 
+				     1)))
     {
 	BITMAP_monoGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
 	TSXSetGraphicsExposures( display, BITMAP_monoGC, False );
 	TSXFreePixmap( display, tmpPixmap );
     }
 
-    if (screenDepth != 1)
+    if (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) != 1)
     {
-	if ((tmpPixmap = TSXCreatePixmap(display, rootWindow, 1,1,screenDepth)))
+	if ((tmpPixmap = TSXCreatePixmap(display, 
+					 X11DRV_GetXRootWindow(),
+					 1, 1,
+					 MONITOR_GetDepth(&MONITOR_PrimaryMonitor))))
 	{
 	    BITMAP_colorGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
 	    TSXSetGraphicsExposures( display, BITMAP_colorGC, False );
@@ -180,7 +194,7 @@ BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
       /* Check parameters */
     if (bmp->bitmap.bmPlanes != 1) return 0;
     if ((bmp->bitmap.bmBitsPixel != 1) && 
-	(bmp->bitmap.bmBitsPixel != screenDepth)) {
+	(bmp->bitmap.bmBitsPixel != MONITOR_GetDepth(&MONITOR_PrimaryMonitor))) {
         ERR(x11drv, "Trying to make bitmap with planes=%d, bpp=%d\n",
 	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
         GDI_HEAP_UNLOCK( hbitmap );
@@ -194,7 +208,7 @@ BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
     if(!pbitmap) return FALSE;
 
       /* Create the pixmap */
-    pbitmap->pixmap = TSXCreatePixmap(display, rootWindow, bmp->bitmap.bmWidth,
+    pbitmap->pixmap = TSXCreatePixmap(display, X11DRV_GetXRootWindow(), bmp->bitmap.bmWidth,
 			      bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
     if (!pbitmap->pixmap) {
         WARN(x11drv, "Can't create Pixmap\n");
@@ -380,7 +394,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     height = count / bmp->bitmap.bmWidthBytes;
 
     EnterCriticalSection( &X11DRV_CritSection );
-    image = XCreateImage( display, DefaultVisualOfScreen(screen),
+    image = XCreateImage( display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
                           bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
                           bmp->bitmap.bmWidth, height, 32, 0 );
     image->data = (LPBYTE)xmalloc(image->bytes_per_line * height);
@@ -510,3 +524,5 @@ BOOL32 X11DRV_BITMAP_DeleteObject( HBITMAP32 hbitmap, BITMAPOBJ * bmp )
 
     return TRUE;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */

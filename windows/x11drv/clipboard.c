@@ -12,13 +12,11 @@
 #include <X11/Xatom.h>
 #include "ts_xlib.h"
 
-#include "windows.h"
-#include "wintypes.h"
-
 #include "clipboard.h"
 #include "debug.h"
 #include "message.h"
 #include "win.h"
+#include "wintypes.h"
 #include "x11drv.h"
 
 extern HWND32 hWndClipOwner;

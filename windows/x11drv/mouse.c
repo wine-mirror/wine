@@ -10,16 +10,18 @@
 
 #include "ts_xlib.h"
 
-#include "debug.h"
 #include "callback.h"
+#include "debug.h"
+#include "display.h"
+#include "win.h"
 #include "wintypes.h"
 #include "x11drv.h"
 
 /**********************************************************************/
 
-Cursor DISPLAY_XCursor = None;    /* Current X cursor */
+Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */
 
-BOOL32 DISPLAY_DisableWarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
+BOOL32 X11DRV_MOUSE_DisableWarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
 
 /***********************************************************************
  *		X11DRV_MOUSE_DoSetCursor
@@ -35,7 +37,7 @@ static BOOL32 X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
         static const char data[] = { 0 };
 
         bg.red = bg.green = bg.blue = 0x0000;
-        pixmapBits = XCreateBitmapFromData( display, rootWindow, data, 1, 1 );
+        pixmapBits = XCreateBitmapFromData( display, X11DRV_GetXRootWindow(), data, 1, 1 );
         if (pixmapBits)
         {
             cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
@@ -60,9 +62,9 @@ static BOOL32 X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
          *       as the Windows cursor data). Perhaps use a more generic
          *       algorithm here.
          */
-        pixmapAll = XCreatePixmap( display, rootWindow,
+        pixmapAll = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                    ptr->nWidth, ptr->nHeight * 2, 1 );
-        image = XCreateImage( display, DefaultVisualOfScreen(screen),
+        image = XCreateImage( display, DefaultVisualOfScreen(X11DRV_GetXScreen()),
                               1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
                               ptr->nHeight * 2, 16, ptr->nWidthBytes);
         if (image)
@@ -80,9 +82,9 @@ static BOOL32 X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
 
         /* Now create the 2 pixmaps for bits and mask */
 
-        pixmapBits = XCreatePixmap( display, rootWindow,
+        pixmapBits = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                     ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMask = XCreatePixmap( display, rootWindow,
+        pixmapMask = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                     ptr->nWidth, ptr->nHeight, 1 );
 
         /* Make sure everything went OK so far */
@@ -136,13 +138,13 @@ static BOOL32 X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
     }
 
     if (cursor == None) return FALSE;
-    if (DISPLAY_XCursor != None) XFreeCursor( display, DISPLAY_XCursor );
-    DISPLAY_XCursor = cursor;
+    if (X11DRV_MOUSE_XCursor != None) XFreeCursor( display, X11DRV_MOUSE_XCursor );
+    X11DRV_MOUSE_XCursor = cursor;
 
-    if (rootWindow != DefaultRootWindow(display) || !WIN_GetDesktop())
+    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display) || !WIN_GetDesktop())
     {
         /* Set the cursor on the desktop window */
-        XDefineCursor( display, rootWindow, cursor );
+        XDefineCursor( display, X11DRV_GetXRootWindow(), cursor );
     }
     else
     {
@@ -198,9 +200,9 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
   int rootX, rootY, winX, winY;
   unsigned int xstate;
   
-  if (DISPLAY_DisableWarpPointer) return;
+  if (X11DRV_MOUSE_DisableWarpPointer) return;
 
-  if (!TSXQueryPointer( display, rootWindow, &root, &child,
+  if (!TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
 			&rootX, &rootY, &winX, &winY, &xstate ))
     return;
   
@@ -209,7 +211,8 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
   
   TRACE( cursor, "(%d,%d): moving from (%d,%d)\n", wAbsX, wAbsY, winX, winY );
   
-  TSXWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, wAbsX, wAbsY );
+  TSXWarpPointer( display, X11DRV_GetXRootWindow(), X11DRV_GetXRootWindow(), 
+		  0, 0, 0, 0, wAbsX, wAbsY );
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

@@ -4,6 +4,10 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "ts_xlib.h"
 
 #include <stdlib.h>
@@ -12,6 +16,9 @@
 #include "color.h"
 #include "x11drv.h"
 #include "debug.h"
+#include "xmalloc.h" /* for XCREATEIMAGE macro */
+#include "monitor.h"
+#include "local.h"
 
 static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
 {
@@ -94,7 +101,7 @@ static XImage *ditherImage = NULL;
  */
 BOOL32 X11DRV_BRUSH_Init(void)
 {
-    XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, screenDepth );
+    XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
     return (ditherImage != NULL);
 }
 
@@ -130,8 +137,8 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 	prevColor = color;
     }
     
-    pixmap = XCreatePixmap( display, rootWindow,
-                            MATRIX_SIZE, MATRIX_SIZE, screenDepth );
+    pixmap = XCreatePixmap( display, X11DRV_GetXRootWindow(),
+                            MATRIX_SIZE, MATRIX_SIZE, MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
     XPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -146,7 +153,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if ((dc->w.bitsPerPixel > 1) && (screenDepth <= 8) && !COLOR_IsSolid( color ))
+    if ((dc->w.bitsPerPixel > 1) && (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) <= 8) && !COLOR_IsSolid( color ))
     {
 	  /* Dithered brush */
 	physDev->brush.pixmap = BRUSH_DitherColor( dc, color );
@@ -186,14 +193,14 @@ static BOOL32 BRUSH_SelectPatternBrush( DC * dc, HBITMAP32 hbitmap )
     if ((dc->w.bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
-        physDev->brush.pixmap = TSXCreatePixmap( display, rootWindow, 8, 8, 1);
+        physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(), 8, 8, 1);
         /* FIXME: should probably convert to monochrome instead */
         TSXCopyPlane( display, pbitmap->pixmap, physDev->brush.pixmap,
                     BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
     }
     else
     {
-        physDev->brush.pixmap = TSXCreatePixmap( display, rootWindow,
+        physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(),
 					       8, 8, bmp->bitmap.bmBitsPixel );
         TSXCopyArea( display, pbitmap->pixmap, physDev->brush.pixmap,
                    BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
@@ -252,7 +259,7 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
       case BS_HATCHED:
 	TRACE(gdi, "BS_HATCHED\n" );
 	physDev->brush.pixel = COLOR_ToPhysical( dc, brush->logbrush.lbColor );
-	physDev->brush.pixmap = TSXCreateBitmapFromData( display, rootWindow,
+	physDev->brush.pixmap = TSXCreateBitmapFromData( display, X11DRV_GetXRootWindow(),
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
 	physDev->brush.fillStyle = FillStippled;
 	break;
@@ -281,3 +288,6 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
     
     return prevHandle;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */
+

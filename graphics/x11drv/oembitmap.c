@@ -5,20 +5,33 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
+
+#ifdef HAVE_LIBXXPM
 #include "ts_xpm.h"
-#include "gdi.h"
-#include "x11drv.h"
+#else /* defined(HAVE_LIBXXPM) */
+typedef unsigned long Pixel;
+#endif /* defined(HAVE_LIBXXPM) */
+
+#include <stdlib.h>
+#include <string.h>
+
 #include "bitmap.h"
 #include "callback.h"
 #include "color.h"
 #include "cursoricon.h"
-#include "heap.h"
-#include "tweak.h"
 #include "debug.h"
+#include "gdi.h"
+#include "heap.h"
+#include "local.h"
+#include "monitor.h"
+#include "tweak.h"
+#include "x11drv.h"
 
   /* Include OEM pixmaps */
 #include "bitmaps/obm_cdrom"
@@ -234,14 +247,17 @@ static HGLOBAL16 OBM_Cursors[NB_CURSORS];
   /* palette indexes, but system colors that will be converted to    */
   /* indexes later on.                                               */
 
-#if 0
-static const struct
+#ifdef HAVE_LIBXXPM
+static XpmColorSymbol
+#else /* defined(HAVE_LIBXXPM) */
+static struct
 {
-    char *   name;
-    COLORREF color;
-} OBM_SymbolicColors[] =
-#endif
-static XpmColorSymbol OBM_Colors[] =
+    char  *name;
+    char  *value;
+    Pixel  pixel;
+} 
+#endif /* defined(HAVE_LIBXXPM) */
+OBM_Colors[] =
 {
     { "black",            NULL, (Pixel)RGB(0,0,0) },
     { "white",            NULL, (Pixel)RGB(255,255,255) },
@@ -269,11 +285,14 @@ static XpmColorSymbol OBM_Colors[] =
   /* This is needed to make sure that black is always 0 and */
   /* white always 1, as required by Windows.                */
 
+#ifdef HAVE_LIBXXPM
 static XpmColorSymbol OBM_BlackAndWhite[2] =
 {
     { "black", NULL, 0 },
     { "white", NULL, 0xffffffff }
 };
+#endif /* defined(HAVE_LIBXXPM) */
+
 
 /* This structure holds the arguments for OBM_CreateBitmaps() */
 typedef struct
@@ -315,6 +334,7 @@ static BOOL32 OBM_InitColorSymbols()
  *
  * Allocate a GDI bitmap.
  */
+#ifdef HAVE_LIBXXPM
 static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
                                  WORD bpp, Pixmap pixmap )
 {
@@ -346,7 +366,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
 }
-
+#endif /* defined(HAVE_LIBXXPM) */
 
 /***********************************************************************
  *           OBM_CreateBitmaps
@@ -357,6 +377,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
  */
 static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
 {
+#ifdef HAVE_LIBXXPM
     Pixmap pixmap, pixmask;
     XpmAttributes *attrs;
     int err;
@@ -364,12 +385,12 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     attrs = (XpmAttributes *)HEAP_xalloc( GetProcessHeap(), 0,
                                           XpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
-    attrs->colormap     = COLOR_GetColormap();
-    attrs->depth        = descr->color ? screenDepth : 1;
+    attrs->colormap     = X11DRV_COLOR_GetColormap();
+    attrs->depth        = descr->color ? MONITOR_GetDepth(&MONITOR_PrimaryMonitor) : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
         
-    err = XpmCreatePixmapFromData( display, rootWindow, descr->data,
+    err = XpmCreatePixmapFromData( display, X11DRV_GetXRootWindow(), descr->data,
                                    &pixmap, &pixmask, attrs );
 
     if (err != XpmSuccess)
@@ -394,6 +415,13 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
         return FALSE;
     }
     else return TRUE;
+#else /* defined(HAVE_LIBXXPM) */
+    FIXME(x11drv,
+        "Xpm support not in the binary, "
+	"please install Xpm and recompile\n"
+    );
+    return FALSE;
+#endif /* defined(HAVE_LIBXXPM) */
 }
 
 
@@ -595,3 +623,5 @@ BOOL32 X11DRV_OBM_Init(void)
 
     return 1;
 }
+
+#endif /* !defined(X_DISPLAY_MISSING) */
