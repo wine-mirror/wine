@@ -362,10 +362,11 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *pdwDefaultLayout )
 {
     if ( !pdwDefaultLayout ) {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
+        return FALSE;
+     }
+    FIXME( "( %p ): No BiDi\n", pdwDefaultLayout );
     *pdwDefaultLayout = 0;
- return TRUE;
+    return TRUE;
 }
 
 
@@ -384,6 +385,10 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *pdwDefaultLayout )
  */
 BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
 {
-    return ( dwDefaultLayout == 0 );
+    if ( dwDefaultLayout == 0 )
+        return TRUE;
+    FIXME( "( %08lx ): No BiDi\n", dwDefaultLayout );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
 
