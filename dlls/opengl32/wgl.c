@@ -73,22 +73,14 @@ static WINE_EXCEPTION_FILTER(page_fault)
 /***********************************************************************
  *		wglCreateContext
  */
-HGLRC WINAPI wglCreateContext(HDC hdc) {
-  DC * dc = DC_GetDCPtr( hdc );
-  X11DRV_PDEVICE *physDev;
+HGLRC WINAPI wglCreateContext(HDC hdc)
+{
   XVisualInfo *vis;
   Wine_GLContext *ret;
   int num;
   XVisualInfo template;
 
   TRACE("(%08x)\n", hdc);
-
-  if (dc == NULL) {
-    ERR("Null DC !!!\n");
-    return NULL;
-  }
-  
-  physDev = (X11DRV_PDEVICE *)dc->physDev;
 
   /* First, get the visual in use by the X11DRV */
   template.visualid = XVisualIDFromVisual(X11DRV_GetVisual());
@@ -97,7 +89,6 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   if (vis == NULL) {
     ERR("NULL visual !!!\n");
     /* Need to set errors here */
-    GDI_ReleaseObj( hdc );
     return NULL;
   }
 
@@ -109,8 +100,6 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   ret->vis = vis;
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
-  
-  GDI_ReleaseObj( hdc );
   return (HGLRC) ret;
 }
 

@@ -41,7 +41,6 @@ struct SysKeyboardAImpl
 	
         /* SysKeyboardAImpl */
         BYTE                            keystate[256];
-	KEYBOARD_CONFIG                 initial_config;
 	int                             acquired;
 };
 
@@ -172,17 +171,6 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 	TRACE("(this=%p)\n",This);
 	
 	if (This->acquired == 0) {
-#if 0
-	  KEYBOARD_CONFIG no_auto;
-	  
-	  /* Save the original config */
-	  USER_Driver.pGetKeyboardConfig(&(This->initial_config));
-
-	  /* Now, remove auto-repeat */
-	  no_auto.auto_repeat = FALSE;
-	  USER_Driver.pSetKeyboardConfig(&no_auto, WINE_KEYBOARD_CONFIG_AUTO_REPEAT);
-#endif
-
 	  This->acquired = 1;
 	}
 	
@@ -195,10 +183,6 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 	TRACE("(this=%p)\n",This);
 
 	if (This->acquired == 1) {
-#if 0
-	  /* Restore the original configuration */
-	  USER_Driver.pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
-#endif
 	  This->acquired = 0;
 	} else {
 	  ERR("Unacquiring a not-acquired device !!!\n");

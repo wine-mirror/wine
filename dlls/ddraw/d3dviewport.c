@@ -11,7 +11,6 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "debugtools.h"
-#include "x11drv.h"
 
 #include "d3d_private.h"
 #include "mesa_private.h"
