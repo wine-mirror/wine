@@ -79,12 +79,15 @@ static enum dllmode string_to_mode(char *in)
 /* Convert a dllmode to a registry string. */
 static char* mode_to_string(enum dllmode mode)
 {
-    if (mode == NATIVE) return "native";
-    if (mode == BUILTIN) return "builtin";
-    if (mode == NATIVE_BUILTIN) return "native,builtin";
-    if (mode == BUILTIN_NATIVE) return "builtin,native";
-    if (mode == DISABLE) return "";
-    assert(FALSE);
+    switch( mode )
+    {
+        case NATIVE: return "native";
+        case BUILTIN: return "builtin";
+        case NATIVE_BUILTIN: return "native,builtin";
+        case BUILTIN_NATIVE: return "builtin,native";
+        case DISABLE: return "";
+        default: assert(FALSE); return "";
+    }
 }
 
 /* Convert a dllmode to a pretty string for display. TODO: use translations. */
@@ -97,23 +100,29 @@ static char* mode_to_label(enum dllmode mode)
 /* Convert a control id (IDC_ constant) to a dllmode */
 static enum dllmode id_to_mode(DWORD id)
 {
-    if (id == IDC_RAD_BUILTIN) return BUILTIN;
-    if (id == IDC_RAD_NATIVE) return NATIVE;
-    if (id == IDC_RAD_NATIVE_BUILTIN) return NATIVE_BUILTIN;
-    if (id == IDC_RAD_BUILTIN_NATIVE) return BUILTIN_NATIVE;
-    if (id == IDC_RAD_DISABLE) return DISABLE;
-    assert( FALSE ); /* should not be reached  */
+    switch( id )
+    {
+        case IDC_RAD_BUILTIN: return BUILTIN;
+        case IDC_RAD_NATIVE: return NATIVE;
+        case IDC_RAD_NATIVE_BUILTIN: return NATIVE_BUILTIN;
+        case IDC_RAD_BUILTIN_NATIVE: return BUILTIN_NATIVE;
+        case IDC_RAD_DISABLE: return DISABLE;
+        default: assert( FALSE ); return 0; /* should not be reached  */
+    }
 }
 
 /* Convert a dllmode to a control id (IDC_ constant) */
 static DWORD mode_to_id(enum dllmode mode)
 {
-    if (mode == BUILTIN) return IDC_RAD_BUILTIN;
-    if (mode == NATIVE) return IDC_RAD_NATIVE;
-    if (mode == NATIVE_BUILTIN) return IDC_RAD_NATIVE_BUILTIN;
-    if (mode == BUILTIN_NATIVE) return IDC_RAD_BUILTIN_NATIVE;
-    if (mode == DISABLE) return IDC_RAD_DISABLE;
-    assert( FALSE ); /* should not be reached  */
+    switch( mode )
+    {
+        case BUILTIN: return IDC_RAD_BUILTIN;
+        case NATIVE: return IDC_RAD_NATIVE;
+        case NATIVE_BUILTIN: return IDC_RAD_NATIVE_BUILTIN;
+        case BUILTIN_NATIVE: return IDC_RAD_BUILTIN_NATIVE;
+        case DISABLE: return IDC_RAD_DISABLE;
+        default: assert( FALSE ); return 0; /* should not be reached  */
+    }
 }
 
 static void set_controls_from_selection(HWND dialog)
