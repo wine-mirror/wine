@@ -822,6 +822,7 @@ static RANGE LISTVIEW_GetVisibleRange(LISTVIEW_INFO *infoPtr)
     }
     else
     {
+	/* FIXME: this is correct only in autoarrange mode */
 	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr) + 1;
 	nPerRow = LISTVIEW_GetCountPerRow(infoPtr) + 1;
     }
@@ -1267,8 +1268,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
 
 	/* do indent */
-	if (lvItem.iIndent > 0 && infoPtr->iconSize.cx > 0)
-	    nIndent = infoPtr->iconSize.cx * lvItem.iIndent;
+	nIndent = infoPtr->iconSize.cx * lvItem.iIndent;
     }
 
     /************************************************************/
@@ -1358,15 +1358,15 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
       Icon.bottom = Icon.top + infoPtr->nItemHeight;
 
       if (infoPtr->himlState != NULL)
-	  Icon.left += infoPtr->iconSize.cx;
+	  Icon.left += infoPtr->iconStateSize.cx;
 
+      Icon.right = Icon.left;
       if (infoPtr->himlSmall != NULL)
-	  Icon.right = Icon.left + infoPtr->iconSize.cx;
-      else
-	  Icon.right = Icon.left;
+	  Icon.right += infoPtr->iconSize.cx;
   }
   else /* LVS_LIST or LVS_REPORT */
   {
+	/* FIXME: why is the one above relative to origin??? */
         Icon.left = Position.x;
         Icon.top = Position.y;
         Icon.bottom = Icon.top + infoPtr->nItemHeight;
@@ -1375,7 +1375,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	    Icon.left += nIndent;
 
         if (infoPtr->himlState != NULL)
-	    Icon.left += infoPtr->iconSize.cx;
+	    Icon.left += infoPtr->iconStateSize.cx;
 
         Icon.right = Icon.left;
         if (infoPtr->himlSmall != NULL)
@@ -1433,7 +1433,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
       Label.bottom = Label.top + infoPtr->nItemHeight;
 
       if (infoPtr->himlState != NULL)
-	  Label.left += infoPtr->iconSize.cx;
+	  Label.left += infoPtr->iconStateSize.cx;
 
       if (infoPtr->himlSmall != NULL)
 	  Label.left += infoPtr->iconSize.cx;
@@ -1743,7 +1743,7 @@ static INT LISTVIEW_CalculateWidth(LISTVIEW_INFO *infoPtr, INT nItem)
         if (!nItemWidth)  return DEFAULT_COLUMN_WIDTH;
         nItemWidth += WIDTH_PADDING;
         if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx; 
-        if (infoPtr->himlState) nItemWidth += infoPtr->iconSize.cx; /*FIXME: is this correct */
+        if (infoPtr->himlState) nItemWidth += infoPtr->iconStateSize.cx;
 	if (nItem == -1) nItemWidth = max(DEFAULT_COLUMN_WIDTH, nItemWidth);
     }
 
@@ -1812,11 +1812,16 @@ static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *infoPtr)
 
     if (LISTVIEW_GetType(infoPtr) == LVS_ICON)
 	nItemHeight = infoPtr->iconSpacing.cy;
-    else if(infoPtr->himlState || infoPtr->himlSmall)
-	nItemHeight = max(infoPtr->ntmHeight, infoPtr->iconSize.cy) + HEIGHT_PADDING;
     else
-	nItemHeight = infoPtr->ntmHeight;
-
+    {
+	nItemHeight = infoPtr->ntmHeight; 
+	if (infoPtr->himlState)
+	    nItemHeight = max(nItemHeight, infoPtr->iconStateSize.cy);
+	if (infoPtr->himlSmall)
+	    nItemHeight = max(nItemHeight, infoPtr->iconSize.cy);
+	if (infoPtr->himlState || infoPtr->himlSmall)
+	    nItemHeight += HEIGHT_PADDING;
+    }
     return nItemHeight;
 }
 
@@ -6898,6 +6903,19 @@ static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
     return oldspacing;
 }
 
+inline void update_icon_size(HIMAGELIST himl, SIZE *size)
+{
+    INT cx, cy;
+    
+    if (himl && ImageList_GetIconSize(himl, &cx, &cy))
+    {
+	size->cx = cx;
+	size->cy = cy;
+    }
+    else
+	size->cx = size->cy = 0;
+}
+
 /***
  * DESCRIPTION:
  * Sets image lists.
@@ -6913,45 +6931,42 @@ static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
  */
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAGELIST himl)
 {
-  HIMAGELIST himlOld = 0;
-  INT oldHeight;
-  UINT uView = LISTVIEW_GetType(infoPtr);
+    UINT uView = LISTVIEW_GetType(infoPtr);
+    INT oldHeight = infoPtr->nItemHeight;
+    HIMAGELIST himlOld = 0;
 
-  switch (nType)
-  {
-  case LVSIL_NORMAL:
-    himlOld = infoPtr->himlNormal;
-    infoPtr->himlNormal = himl;
-    if(himl && (LVS_ICON == uView))
+    switch (nType)
     {
-        INT cx, cy;
-        ImageList_GetIconSize(himl, &cx, &cy);
-	TRACE("icon old size=(%ld,%ld), new size=(%d,%d)\n",
-	      infoPtr->iconSize.cx, infoPtr->iconSize.cy, cx, cy);
-        infoPtr->iconSize.cx = cx;
-        infoPtr->iconSize.cy = cy;
-        LISTVIEW_SetIconSpacing(infoPtr,0);
+    case LVSIL_NORMAL:
+        himlOld = infoPtr->himlNormal;
+        infoPtr->himlNormal = himl;
+        if (uView == LVS_ICON) update_icon_size(himl, &infoPtr->iconSize);
+        LISTVIEW_SetIconSpacing(infoPtr, 0);
+    break;
+
+    case LVSIL_SMALL:
+        himlOld = infoPtr->himlSmall;
+        infoPtr->himlSmall = himl;
+         if (uView != LVS_ICON) update_icon_size(himl, &infoPtr->iconSize);
+    break;
+
+    case LVSIL_STATE:
+        himlOld = infoPtr->himlState;
+        infoPtr->himlState = himl;
+        update_icon_size(himl, &infoPtr->iconStateSize);
+        ImageList_SetBkColor(infoPtr->himlState, CLR_NONE);
+    break;
+
+    default:
+        ERR("Unknown icon type=%d\n", nType);
+	return NULL;
     }
-    break;
 
-  case LVSIL_SMALL:
-    himlOld = infoPtr->himlSmall;
-    infoPtr->himlSmall = himl;
-    break;
+    infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+    if (infoPtr->nItemHeight != oldHeight)
+        LISTVIEW_UpdateScroll(infoPtr);
 
-  case LVSIL_STATE:
-    himlOld = infoPtr->himlState;
-    infoPtr->himlState = himl;
-    ImageList_SetBkColor(infoPtr->himlState, CLR_NONE);
-    break;
-  }
-
-  oldHeight = infoPtr->nItemHeight;
-  infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
-  if (infoPtr->nItemHeight != oldHeight)
-    LISTVIEW_UpdateScroll(infoPtr);
-
-  return himlOld;
+    return himlOld;
 }
 
 /***
