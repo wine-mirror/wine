@@ -1360,7 +1360,8 @@ static void convert_0888_to_888_asis_src_byteswap(int width, int height,
             DWORD srcval;
             srcval=*srcpixel++;
             FLIP_DWORD(&srcval);
-            *((WORD*)dstbyte)++=srcval;                 /* h, g */
+            *((WORD*)dstbyte)=srcval;                   /* h, g */
+            dstbyte+=sizeof(WORD);
             *dstbyte++=srcval >> 16;                    /* l */
         }
         srcbits = (char*)srcbits + srclinebytes;
@@ -1405,7 +1406,8 @@ static void convert_0888_to_888_reverse_src_byteswap(int width, int height,
         for (x=0; x<oddwidth; x++) {
             DWORD srcval;
             srcval=*srcpixel++;
-            *((WORD*)dstbyte)++=((srcval >> 8) & 0xffff); /* g, h */
+            *((WORD*)dstbyte)=((srcval >> 8) & 0xffff); /* g, h */
+            dstbyte+=sizeof(WORD);
             *dstbyte++= srcval >> 24;                     /* l */
         }
         srcbits = (char*)srcbits + srclinebytes;
