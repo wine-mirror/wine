@@ -13,6 +13,7 @@ C_SRCS = \
 	devices.c \
 	dma.c \
 	dosaspi.c \
+	dosconf.c \
 	dosvm.c \
 	fpu.c \
 	himem.c \

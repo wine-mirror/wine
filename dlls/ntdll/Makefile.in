@@ -45,7 +45,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/misc/system.c \
 	$(TOPOBJDIR)/misc/version.c \
-	$(TOPOBJDIR)/msdos/dosconf.c \
 	$(TOPOBJDIR)/msdos/dosmem.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
 	$(TOPOBJDIR)/msdos/int21.c \
@@ -74,8 +73,8 @@ C_SRCS = \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \
-	exception.c \
 	error.c \
+	exception.c \
 	file.c \
 	heap.c \
 	large_int.c \
@@ -86,17 +85,17 @@ C_SRCS = \
 	path.c \
 	reg.c \
 	rtl.c \
-	rtlstr.c \
 	rtlbitmap.c \
-	string.c \
+	rtlstr.c \
 	sec.c \
 	signal_i386.c \
 	signal_powerpc.c \
 	signal_sparc.c \
+	string.c \
 	sync.c \
 	thread.c \
-	virtual.c \
 	time.c \
+	virtual.c \
 	wcstring.c
 
 ASM_SRCS = \

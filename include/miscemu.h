@@ -25,9 +25,6 @@
 #include "selectors.h"
 #include "wine/windef16.h"
 
-/* msdos/dosconf.c */
-extern int DOSCONF_ReadConfig(void);
-
 /* msdos/dosmem.c */
 #include "pshpack1.h"
 

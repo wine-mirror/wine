@@ -30,10 +30,10 @@
 #include <ctype.h>
 
 #include "winbase.h"
+#include "winreg.h"
 
 #include "file.h"
-#include "miscemu.h"
-#include "msdos.h"
+#include "dosexe.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -58,7 +58,7 @@ static int DOSCONF_Stacks(char **confline);
 static int DOSCONF_Buffers(char **confline);
 static void DOSCONF_Parse(char *menuname);
 
-DOSCONF DOSCONF_config =
+static DOSCONF DOSCONF_config =
 {
     'E',  /* lastdrive */
     0,    /* brk_flag */
@@ -73,6 +73,8 @@ DOSCONF DOSCONF_config =
     NULL  /* country */
 };
 
+static BOOL DOSCONF_loaded = FALSE;
+
 typedef struct {
     const char *tag_name;
     int (*tag_handler)(char **p);
@@ -86,7 +88,7 @@ typedef struct {
  * http://www.csulb.edu/~murdock/dosindex.html
  */
 
-static const TAG_ENTRY tag_entries[] =
+static const TAG_ENTRY DOSCONF_tag_entries[] =
 {
     { ";", NULL },
     { "REM ", NULL },
@@ -95,7 +97,6 @@ static const TAG_ENTRY tag_entries[] =
     { "SUBMENU", NULL },
     { "MENUDEFAULT", DOSCONF_Menu },
     { "INCLUDE", DOSCONF_Include },
-
     { "INSTALL", DOSCONF_Install },
     { "DOS", DOSCONF_Dos },
     { "FCBS", DOSCONF_Fcbs },
@@ -110,12 +111,11 @@ static const TAG_ENTRY tag_entries[] =
     { "LASTDRIVE", DOSCONF_Lastdrive }
 };
 
-static FILE *cfg_fd;
+static FILE *DOSCONF_fd = NULL;
 
-static char *menu_default = NULL;
-static int menu_in_listing = 0;		/* we are in the [menu] section */
-static int menu_skip = 0;				/* the current menu gets skipped */
-
+static char *DOSCONF_menu_default = NULL;
+static int   DOSCONF_menu_in_listing = 0; /* we are in the [menu] section */
+static int   DOSCONF_menu_skip = 0;	  /* the current menu gets skipped */
 
 static void DOSCONF_skip(char **pconfline)
 {
@@ -135,7 +135,8 @@ static int DOSCONF_JumpToEntry(char **pconfline, char separator)
 
     if (*p != separator)
 	return 0;
-    else p++;
+    else 
+        p++;
 
     while ( (*p == ' ') || (*p == '\t') ) p++;
     *pconfline = p;
@@ -172,17 +173,21 @@ static int DOSCONF_Dos(char **confline)
 	    DOSCONF_config.flags |= DOSCONF_MEM_HIGH;
 	    *confline += 4;
 	}
-	else
-	if (!(strncasecmp(*confline, "UMB", 3)))
+	else if (!(strncasecmp(*confline, "UMB", 3)))
 	{
 	    DOSCONF_config.flags |= DOSCONF_MEM_UMB;
 	    *confline += 3;
 	}
-        else (*confline)++;
+        else 
+        {
+            (*confline)++;
+        }
+
 	DOSCONF_JumpToEntry(confline, ',');
     }
-    TRACE("DOSCONF_Dos: HIGH is %d, UMB is %d\n",
-    	(DOSCONF_config.flags & DOSCONF_MEM_HIGH) != 0, (DOSCONF_config.flags & DOSCONF_MEM_UMB) != 0);
+    TRACE( "DOSCONF_Dos: HIGH is %d, UMB is %d\n",
+           (DOSCONF_config.flags & DOSCONF_MEM_HIGH) != 0, 
+           (DOSCONF_config.flags & DOSCONF_MEM_UMB) != 0 );
     return 1;
 }
 
@@ -193,10 +198,10 @@ static int DOSCONF_Fcbs(char **confline)
     DOSCONF_config.fcbs = atoi(*confline);
     if (DOSCONF_config.fcbs > 255)
     {
-		MESSAGE("The FCBS value in the config.sys file is too high ! Setting to 255.\n");
-		DOSCONF_config.fcbs = 255;
+        WARN( "The FCBS value in the config.sys file is too high! Setting to 255.\n" );
+        DOSCONF_config.fcbs = 255;
     }
-    TRACE("DOSCONF_Fcbs returning %d\n", DOSCONF_config.fcbs);
+    TRACE( "DOSCONF_Fcbs returning %d\n", DOSCONF_config.fcbs );
     return 1;
 }
 
@@ -206,7 +211,7 @@ static int DOSCONF_Break(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     if (!(strcasecmp(*confline, "ON")))
         DOSCONF_config.brk_flag = 1;
-    TRACE("BREAK is %d\n", DOSCONF_config.brk_flag);
+    TRACE( "BREAK is %d\n", DOSCONF_config.brk_flag );
     return 1;
 }
 
@@ -217,15 +222,15 @@ static int DOSCONF_Files(char **confline)
     DOSCONF_config.files = atoi(*confline);
     if (DOSCONF_config.files > 255)
     {
-    	MESSAGE("The FILES value in the config.sys file is too high ! Setting to 255.\n");
+    	WARN( "The FILES value in the config.sys file is too high! Setting to 255.\n" );
         DOSCONF_config.files = 255;
     }
     if (DOSCONF_config.files < 8)
     {
-    	MESSAGE("The FILES value in the config.sys file is too low ! Setting to 8.\n");
+    	WARN( "The FILES value in the config.sys file is too low! Setting to 8.\n" );
         DOSCONF_config.files = 8;
     }
-    TRACE("DOSCONF_Files returning %d\n", DOSCONF_config.files);
+    TRACE( "DOSCONF_Files returning %d\n", DOSCONF_config.files );
     return 1;
 }
 
@@ -237,7 +242,7 @@ static int DOSCONF_Install(char **confline)
 
     *confline += 7; /* strlen("INSTALL") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE("Installing '%s'\n", *confline);
+    TRACE( "Installing '%s'\n", *confline );
 #if 0
     DOSMOD_Install(*confline, loadhigh);
 #endif
@@ -249,7 +254,7 @@ static int DOSCONF_Lastdrive(char **confline)
     *confline += 9; /* strlen("LASTDRIVE") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     DOSCONF_config.lastdrive = toupper(**confline);
-    TRACE("Lastdrive %c\n", DOSCONF_config.lastdrive);
+    TRACE( "Lastdrive %c\n", DOSCONF_config.lastdrive );
     return 1;
 }
 
@@ -257,9 +262,9 @@ static int DOSCONF_Country(char **confline)
 {
     *confline += 7; /* strlen("COUNTRY") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE("Country '%s'\n", *confline);
+    TRACE( "Country '%s'\n", *confline );
     if (DOSCONF_config.country == NULL)
-		DOSCONF_config.country = malloc(strlen(*confline) + 1);
+        DOSCONF_config.country = malloc(strlen(*confline) + 1);
     strcpy(DOSCONF_config.country, *confline);
     return 1;
 }
@@ -270,7 +275,8 @@ static int DOSCONF_Numlock(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     if (!(strcasecmp(*confline, "ON")))
         DOSCONF_config.flags |= DOSCONF_NUMLOCK;
-    TRACE("NUMLOCK is %d\n", (DOSCONF_config.flags & DOSCONF_NUMLOCK) != 0);
+    TRACE( "NUMLOCK is %d\n", 
+           (DOSCONF_config.flags & DOSCONF_NUMLOCK) != 0 );
     return 1;
 }
 
@@ -287,8 +293,8 @@ static int DOSCONF_Switches(char **confline)
 	    DOSCONF_config.flags |= DOSCONF_KEYB_CONV;
     }
     while ((p = strtok(NULL, "/")));
-    TRACE("'Force conventional keyboard' is %d\n",
-		(DOSCONF_config.flags & DOSCONF_KEYB_CONV) != 0);
+    TRACE( "'Force conventional keyboard' is %d\n",
+           (DOSCONF_config.flags & DOSCONF_KEYB_CONV) != 0 );
     return 1;
 }
 
@@ -296,9 +302,9 @@ static int DOSCONF_Shell(char **confline)
 {
     *confline += 5; /* strlen("SHELL") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    TRACE("Shell '%s'\n", *confline);
+    TRACE( "Shell '%s'\n", *confline );
     if (DOSCONF_config.shell == NULL)
-		DOSCONF_config.shell = malloc(strlen(*confline) + 1);
+        DOSCONF_config.shell = malloc(strlen(*confline) + 1);
     strcpy(DOSCONF_config.shell, *confline);
     return 1;
 }
@@ -310,8 +316,8 @@ static int DOSCONF_Stacks(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     DOSCONF_config.stacks_nr = atoi(strtok(*confline, ","));
     DOSCONF_config.stacks_sz = atoi((strtok(NULL, ",")));
-    TRACE("%d stacks of size %d\n",
-          DOSCONF_config.stacks_nr, DOSCONF_config.stacks_sz);
+    TRACE( "%d stacks of size %d\n",
+           DOSCONF_config.stacks_nr, DOSCONF_config.stacks_sz );
     return 1;
 }
 
@@ -325,42 +331,46 @@ static int DOSCONF_Buffers(char **confline)
     DOSCONF_config.buf = atoi(p);
     if ((p = strtok(NULL, ",")))
         DOSCONF_config.buf2 = atoi(p);
-    TRACE("%d primary buffers, %d secondary buffers\n",
-          DOSCONF_config.buf, DOSCONF_config.buf2);
+    TRACE( "%d primary buffers, %d secondary buffers\n",
+           DOSCONF_config.buf, DOSCONF_config.buf2 );
     return 1;
 }
 
 static int DOSCONF_Menu(char **confline)
 {
     if (!(strncasecmp(*confline, "[MENU]", 6)))
-	menu_in_listing = 1;
-    else
-    if ((!(strncasecmp(*confline, "[COMMON]", 8)))
-    || (!(strncasecmp(*confline, "[WINE]", 6))))
-	menu_skip = 0;
-    else
-    if (**confline == '[')
+    {
+	DOSCONF_menu_in_listing = 1;
+    }
+    else if ((!(strncasecmp(*confline, "[COMMON]", 8)))
+             || (!(strncasecmp(*confline, "[WINE]", 6))))
+    {
+	DOSCONF_menu_skip = 0;
+    }
+    else if (**confline == '[')
     {
 	(*confline)++;
-	if ((menu_default)
-	&& (!(strncasecmp(*confline, menu_default, strlen(menu_default)))))
-    {
-		free(menu_default);
-		menu_default = NULL;
-	    menu_skip = 0;
+	if ((DOSCONF_menu_default)
+            && (!(strncasecmp(*confline, DOSCONF_menu_default, 
+                              strlen(DOSCONF_menu_default)))))
+        {
+            free(DOSCONF_menu_default);
+            DOSCONF_menu_default = NULL;
+            DOSCONF_menu_skip = 0;
+        }
+        else
+	    DOSCONF_menu_skip = 1;
+	DOSCONF_menu_in_listing = 0;
     }
-	else
-	    menu_skip = 1;
-	menu_in_listing = 0;
-    }
-    else
-    if (!(strncasecmp(*confline, "menudefault", 11)) && (menu_in_listing))
+    else if (!(strncasecmp(*confline, "menudefault", 11)) 
+             && (DOSCONF_menu_in_listing))
     {
 	if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    *confline = strtok(*confline, ",");
-    menu_default = malloc(strlen(*confline) + 1);
-	strcpy(menu_default, *confline);
+        *confline = strtok(*confline, ",");
+        DOSCONF_menu_default = malloc(strlen(*confline) + 1);
+	strcpy(DOSCONF_menu_default, *confline);
     }
+
     return 1;
 }
 
@@ -371,26 +381,26 @@ static int DOSCONF_Include(char **confline)
 
     *confline += 7; /* strlen("INCLUDE") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
-    fgetpos(cfg_fd, &oldpos);
-    fseek(cfg_fd, 0, SEEK_SET);
-    TRACE("Including menu '%s'\n", *confline);
+    fgetpos(DOSCONF_fd, &oldpos);
+    fseek(DOSCONF_fd, 0, SEEK_SET);
+    TRACE( "Including menu '%s'\n", *confline );
     temp = malloc(strlen(*confline) + 1);
     strcpy(temp, *confline);
     DOSCONF_Parse(temp);
-	free(temp);
-    fsetpos(cfg_fd, &oldpos);
+    free(temp);
+    fsetpos(DOSCONF_fd, &oldpos);
     return 1;
 }
 
 static void DOSCONF_Parse(char *menuname)
 {
-   char confline[256];
-   char *p, *trail;
-   int i;
+    char confline[256];
+    char *p, *trail;
+    int i;
 
     if (menuname != NULL) /* we need to jump to a certain sub menu */
     {
-	while (fgets(confline, 255, cfg_fd))
+	while (fgets(confline, 255, DOSCONF_fd))
 	{
 	     p = confline;
 	     DOSCONF_skip(&p);
@@ -405,61 +415,86 @@ static void DOSCONF_Parse(char *menuname)
 	}
     }
 
-    while (fgets(confline, 255, cfg_fd))
+    while (fgets(confline, 255, DOSCONF_fd))
     {
 	p = confline;
 	DOSCONF_skip(&p);
 
 	if ((menuname) && (*p == '['))
-	    /* we were handling a specific sub menu, but now next menu begins */
+	    /*
+             * we were handling a specific sub menu, 
+             * but now next menu begins 
+             */
 	    break;
 
 	if ((trail = strrchr(confline, '\n')))
-		*trail = '\0';
+            *trail = '\0';
 	if ((trail = strrchr(confline, '\r')))
-		*trail = '\0';
-	if (!(menu_skip))
+            *trail = '\0';
+	if (!(DOSCONF_menu_skip))
 	{
-	    for (i = 0; i < sizeof(tag_entries) / sizeof(TAG_ENTRY); i++)
-		if (!(strncasecmp(p, tag_entries[i].tag_name,
-		   strlen(tag_entries[i].tag_name))))
-		{
-		    TRACE("tag '%s'\n", tag_entries[i].tag_name);
-		    if (tag_entries[i].tag_handler != NULL)
-			    tag_entries[i].tag_handler(&p);
-			break;
+	    for (i = 0; i < sizeof(DOSCONF_tag_entries) / sizeof(TAG_ENTRY); 
+                 i++)
+		if (!(strncasecmp(p, DOSCONF_tag_entries[i].tag_name,
+                                  strlen(DOSCONF_tag_entries[i].tag_name))))
+                {
+		    TRACE( "tag '%s'\n", DOSCONF_tag_entries[i].tag_name );
+		    if (DOSCONF_tag_entries[i].tag_handler != NULL)
+                        DOSCONF_tag_entries[i].tag_handler(&p);
+                    break;
 		}
 	}
-	else /* the current menu gets skipped */
-	DOSCONF_Menu(&p);
+	else
+        { 
+            /* the current menu gets skipped */
+            DOSCONF_Menu(&p);
+        }
     }
 }
 
-int DOSCONF_ReadConfig(void)
+DOSCONF *DOSCONF_GetConfig(void)
 {
-    WCHAR filename[MAX_PATH];
-    DOS_FULL_NAME fullname;
-    WCHAR *p;
-    int ret = 1;
-    static const WCHAR wineW[] = {'w','i','n','e',0};
-    static const WCHAR config_sysW[] = {'c','o','n','f','i','g','.','s','y','s',0};
-    static const WCHAR empty_strW[] = { 0 };
+    HKEY hkey;
+    CHAR filename[MAX_PATH];
 
-    PROFILE_GetWineIniString( wineW, config_sysW, empty_strW, filename, MAX_PATH );
-    if ((p = strchrW(filename, ','))) *p = 0;
-    if (!filename[0]) return ret;
+    if (DOSCONF_loaded)
+        return &DOSCONF_config;
 
-    DOSFS_GetFullName(filename, FALSE, &fullname);
-    if ((cfg_fd = fopen(fullname.long_name, "r")))
+    /* default value */
+    strcpy( filename, "*" );
+
+    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
+                     "Software\\Wine\\Wine\\Config\\wine", 
+                     &hkey))
     {
-        DOSCONF_Parse(NULL);
-        fclose(cfg_fd);
+        DWORD type;
+        DWORD count = sizeof(filename);
+
+        RegQueryValueExA(hkey, "config.sys", 0, &type, filename, &count);
+        RegCloseKey(hkey);
     }
-    else
+
+    if (strcmp(filename, "*") && *filename != '\0')
     {
-        MESSAGE("Couldn't open config.sys file given as %s in" \
-            " wine.conf or .winerc, section [wine] !\n", debugstr_w(filename));
-        ret = 0;
+        CHAR fullname[MAX_PATH];
+
+        if (wine_get_unix_file_name(filename, fullname, sizeof(fullname)))
+            DOSCONF_fd = fopen(fullname, "r");
+
+        if (DOSCONF_fd)
+        {
+            DOSCONF_Parse(NULL);
+            fclose(DOSCONF_fd);
+            DOSCONF_fd = NULL;
+        }
+        else
+        {
+            WARN( "Couldn't open config.sys file given as %s in"
+                  " configuration file, section [wine]!\n", 
+                  filename );
+        }
     }
-    return ret;
+
+    DOSCONF_loaded = TRUE;
+    return &DOSCONF_config;
 }

@@ -1602,8 +1602,55 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
-    case 0x33: /* MULTIPLEXED */
         INT_Int21Handler( context );
+        break;
+
+    case 0x33: /* MULTIPLEXED */
+        switch (AL_reg(context))
+        {
+        case 0x00: /* GET CURRENT EXTENDED BREAK STATE */
+            TRACE("GET CURRENT EXTENDED BREAK STATE\n");
+            SET_DL( context, DOSCONF_GetConfig()->brk_flag );
+            break;
+
+        case 0x01: /* SET EXTENDED BREAK STATE */
+            TRACE("SET CURRENT EXTENDED BREAK STATE\n");
+            DOSCONF_GetConfig()->brk_flag = (DL_reg(context) > 0) ? 1 : 0;
+            break;
+
+        case 0x02: /* GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE*/
+            TRACE("GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE\n");
+            /* ugly coding in order to stay reentrant */
+            if (DL_reg(context))
+            {
+                SET_DL( context, DOSCONF_GetConfig()->brk_flag );
+                DOSCONF_GetConfig()->brk_flag = 1;
+            }
+            else
+            {
+                SET_DL( context, DOSCONF_GetConfig()->brk_flag );
+                DOSCONF_GetConfig()->brk_flag = 0;
+            }
+            break;
+
+        case 0x05: /* GET BOOT DRIVE */
+            TRACE("GET BOOT DRIVE\n");
+            SET_DL( context, 3 );
+            /* c: is Wine's bootdrive (a: is 1)*/
+            break;
+
+        case 0x06: /* GET TRUE VERSION NUMBER */
+            TRACE("GET TRUE VERSION NUMBER\n");
+            SET_BL( context, HIBYTE(HIWORD(GetVersion16())) ); /* major */
+            SET_BH( context, LOBYTE(HIWORD(GetVersion16())) ); /* minor */
+            SET_DL( context, 0x00 ); /* revision */
+            SET_DH( context, 0x08 ); /* DOS is in ROM */
+            break;
+
+        default:
+            INT_BARF( context, 0x21 );
+            break;
+        }
         break;
 
     case 0x34: /* GET ADDRESS OF INDOS FLAG */
