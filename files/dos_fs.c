@@ -1806,16 +1806,15 @@ BOOL WINAPI FindClose( HANDLE handle )
 {
     FIND_FIRST_INFO *info;
 
-    if ((handle == INVALID_HANDLE_VALUE) ||
-        !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
+    if (handle == INVALID_HANDLE_VALUE) goto error;
+
     __TRY
     {
-        if (info->dir) DOSFS_CloseDir( info->dir );
-        if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
+        if ((info = (FIND_FIRST_INFO *)GlobalLock( handle )))
+        {
+            if (info->dir) DOSFS_CloseDir( info->dir );
+            if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
+        }
     }
     __EXCEPT(page_fault)
     {
@@ -1824,9 +1823,14 @@ BOOL WINAPI FindClose( HANDLE handle )
         return FALSE;
     }
     __ENDTRY
+    if (!info) goto error;
     GlobalUnlock( handle );
     GlobalFree( handle );
     return TRUE;
+
+ error:
+    SetLastError( ERROR_INVALID_HANDLE );
+    return FALSE;
 }
 
 /***********************************************************************
