@@ -1076,6 +1076,7 @@ AC_CHECK_FUNCS(\
 	chsize \
 	clone \
 	epoll_create \
+	ffs \
 	finite \
 	fork \
 	fpclass \

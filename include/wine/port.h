@@ -282,6 +282,10 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
                              const struct option *__longopts, int *__longind);
 #endif  /* HAVE_GETOPT_LONG */
 
+#ifndef HAVE_FFS
+int ffs( int x );
+#endif
+
 #ifndef HAVE_FUTIMES
 struct timeval;
 int futimes(int fd, const struct timeval tv[2]);
@@ -431,6 +435,7 @@ extern long interlocked_xchg_add( long *dest, long incr );
 
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
+#define ffs                     __WINE_NOT_PORTABLE(ffs)
 #define fstatvfs                __WINE_NOT_PORTABLE(fstatvfs)
 #define futimes                 __WINE_NOT_PORTABLE(futimes)
 #define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
