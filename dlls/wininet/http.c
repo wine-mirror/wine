@@ -26,6 +26,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H

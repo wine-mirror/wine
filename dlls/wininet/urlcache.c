@@ -24,6 +24,7 @@
 
 #define COM_NO_WINDOWS_H
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdio.h>
