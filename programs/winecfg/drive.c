@@ -180,6 +180,15 @@ void load_drives()
     {
         drives[i].letter = 'A' + i;
         drives[i].in_use = FALSE;
+
+        HeapFree(GetProcessHeap(), 0, drives[i].unixpath);
+        drives[i].unixpath = NULL;
+
+        HeapFree(GetProcessHeap(), 0, drives[i].label);
+        drives[i].label = NULL;
+
+        HeapFree(GetProcessHeap(), 0, drives[i].serial);
+        drives[i].serial = NULL;
     }
 
     /* work backwards through the result of GetLogicalDriveStrings  */
@@ -472,12 +481,6 @@ void apply_drive_changes()
             {
                 WINE_TRACE("  CreateFile() error with file '%s'\n", filename);
             }
-        }
-
-        /* if this drive is in use we should free it up */
-        if(drives[i].in_use)
-        {
-            delete_drive(&drives[i]); /* free up the string memory */
         }
     }
 }
