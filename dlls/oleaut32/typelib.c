@@ -3186,6 +3186,8 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeComp(
  * and path, and the context identifier for the library Help topic in the Help
  * file.
  *
+ * On a successful return all non-null BSTR pointers will have been set,
+ * possibly to NULL.
  */
 static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
     ITypeLib2 *iface,
@@ -3209,32 +3211,36 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
    
     if(index<0)
     { 
-       /* documentation for the typelib */
-       if(pBstrName && This->Name)
-       {
-           *pBstrName = SysAllocString(This->Name);
-
-           if (!(*pBstrName)) return STG_E_INSUFFICIENTMEMORY;
-       }
-       if(pBstrDocString && This->DocString)
-       {
-           *pBstrDocString = SysAllocString(This->DocString);
-
-           if (!(*pBstrDocString)) return STG_E_INSUFFICIENTMEMORY;
-       }
-    
-       if(pdwHelpContext)
-       {
+        /* documentation for the typelib */
+        if(pBstrName)
+        {
+            if (This->Name)
+                if(!(*pBstrName = SysAllocString(This->Name))) goto memerr1;else;
+            else
+                *pBstrName = NULL;
+        }
+        if(pBstrDocString)
+        {
+            if (This->DocString)
+                if(!(*pBstrDocString = SysAllocString(This->DocString))) goto memerr2;else;
+            else if (This->Name)
+                if(!(*pBstrDocString = SysAllocString(This->Name))) goto memerr2;else;
+            else
+                *pBstrDocString = NULL;
+        }
+        if(pdwHelpContext)
+        {
             *pdwHelpContext = This->dwHelpContext;
-       }
-       if(pBstrHelpFile && This->HelpFile)
-       {
-            *pBstrHelpFile = SysAllocString(This->HelpFile);
+        }
+        if(pBstrHelpFile)
+        {
+            if (This->HelpFile)
+                if(!(*pBstrHelpFile = SysAllocString(This->HelpFile))) goto memerr3;else;
+            else
+                *pBstrHelpFile = NULL;
+        }
 
-            if (!(*pBstrHelpFile)) return STG_E_INSUFFICIENTMEMORY;
-       }
-
-       result = S_OK;
+        result = S_OK;
     }
     else 
     {
@@ -3253,6 +3259,12 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         }
     }
     return result;
+memerr3:
+    if (pBstrDocString) SysFreeString (*pBstrDocString);
+memerr2:
+    if (pBstrName) SysFreeString (*pBstrName);
+memerr1:
+    return STG_E_INSUFFICIENTMEMORY;
 }
 
 /* ITypeLib::IsName
