@@ -77,6 +77,7 @@ my $module_declarations = {
     "EqualSid" => ["long",  ["ptr", "ptr"]],
     "FreeSid" => ["ptr",  ["ptr"]],
     "GetAce" => ["long",  ["ptr", "long", "ptr"]],
+    "GetCurrentHwProfileA" => ["long",  ["ptr"]],
     "GetFileSecurityA" => ["long",  ["str", "long", "ptr", "long", "ptr"]],
     "GetFileSecurityW" => ["long",  ["wstr", "long", "ptr", "long", "ptr"]],
     "GetLengthSid" => ["long",  ["ptr"]],

@@ -41,6 +41,7 @@ my $module_declarations = {
     "InternetGetCookieA" => ["long",  ["str", "str", "str", "ptr"]],
     "InternetGetLastResponseInfoA" => ["long",  ["ptr", "str", "ptr"]],
     "InternetOpenA" => ["long",  ["str", "long", "str", "str", "long"]],
+    "InternetOpenUrlA" => ["long",  ["long", "str", "str", "long", "long", "long"]],
     "InternetQueryOptionA" => ["long",  ["long", "long", "ptr", "ptr"]],
     "InternetReadFile" => ["long",  ["long", "ptr", "long", "ptr"]],
     "InternetSetCookieA" => ["long",  ["str", "str", "str"]],

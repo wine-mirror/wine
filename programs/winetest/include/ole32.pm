@@ -141,6 +141,7 @@ my $module_declarations = {
     "GetErrorInfo" => ["long",  ["long", "ptr"]],
     "PropVariantCopy" => ["long",  ["ptr", "ptr"]],
     "SetErrorInfo" => ["long",  ["long", "ptr"]],
+    "CoInitializeSecurity" => ["long",  ["ptr", "long", "undef", "ptr", "long", "long", "ptr", "long", "ptr"]],
     "DllEntryPoint" => ["long",  ["long", "long", "ptr"]]
 };
 

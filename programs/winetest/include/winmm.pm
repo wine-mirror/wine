@@ -25,7 +25,6 @@ my $module_declarations = {
     "GetDriverModuleHandle" => ["long",  ["long"]],
     "OpenDriver" => ["long",  ["wstr", "wstr", "long"]],
     "OpenDriverA" => ["long",  ["str", "str", "long"]],
-    "PlaySound" => ["long",  ["str", "long", "long"]],
     "PlaySoundA" => ["long",  ["str", "long", "long"]],
     "PlaySoundW" => ["long",  ["wstr", "long", "long"]],
     "SendDriverMessage" => ["long",  ["long", "long", "long", "long"]],

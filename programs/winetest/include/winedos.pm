@@ -15,7 +15,7 @@ my $module_declarations = {
     "ASPIHandler" => ["void",  ["ptr"]],
     "AllocRMCB" => ["void",  ["ptr"]],
     "CallRMInt" => ["void",  ["ptr"]],
-    "CallRMProc" => ["void",  ["undef"]],
+    "CallRMProc" => ["void",  ["ptr"]],
     "Enter" => ["long",  ["ptr"]],
     "FreeRMCB" => ["void",  ["ptr"]],
     "GetTimer" => ["long",  []],
@@ -23,6 +23,7 @@ my $module_declarations = {
     "LoadDosExe" => ["void",  ["str", "long"]],
     "OutPIC" => ["void",  ["long", "long"]],
     "QueueEvent" => ["void",  ["long", "long", "undef", "ptr"]],
+    "RawModeSwitch" => ["void",  ["ptr"]],
     "SetTimer" => ["void",  ["long"]],
     "Wait" => ["void",  ["long", "long"]]
 };

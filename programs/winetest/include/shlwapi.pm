@@ -128,6 +128,9 @@ my $module_declarations = {
     "PathUnquoteSpacesA" => ["void",  ["str"]],
     "PathUnquoteSpacesW" => ["void",  ["wstr"]],
     "SHCreateShellPalette" => ["long",  ["long"]],
+    "SHCreateStreamOnFileA" => ["long",  ["str", "long", "ptr"]],
+    "SHCreateStreamOnFileEx" => ["long",  ["wstr", "long", "long", "long", "ptr", "ptr"]],
+    "SHCreateStreamOnFileW" => ["long",  ["wstr", "long", "ptr"]],
     "SHDeleteEmptyKeyA" => ["long",  ["long", "str"]],
     "SHDeleteEmptyKeyW" => ["long",  ["long", "wstr"]],
     "SHDeleteKeyA" => ["long",  ["long", "str"]],
@@ -234,7 +237,9 @@ my $module_declarations = {
     "UrlIsW" => ["long",  ["wstr", "long"]],
     "UrlUnescapeA" => ["long",  ["str", "str", "ptr", "long"]],
     "UrlUnescapeW" => ["long",  ["wstr", "wstr", "ptr", "long"]],
-    "_SHGetInstanceExplorer\@4" => ["long",  ["ptr"]]
+    "_SHGetInstanceExplorer\@4" => ["long",  ["ptr"]],
+    "wvnsprintfA" => ["long",  ["str", "long", "str", "ptr"]],
+    "wvnsprintfW" => ["long",  ["wstr", "long", "wstr", "ptr"]]
 };
 
 &wine::declare("shlwapi",%$module_declarations);

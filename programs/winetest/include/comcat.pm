@@ -1,4 +1,4 @@
-package shdocvw;
+package comcat;
 
 use strict;
 
@@ -12,14 +12,12 @@ use vars qw(@ISA @EXPORT @EXPORT_OK);
 @EXPORT_OK = qw();
 
 my $module_declarations = {
-    "DllCanUnloadNow" => ["long",  []],
+    "DllCanUnloadNow" => ["long",  ["undef"]],
     "DllGetClassObject" => ["long",  ["ptr", "ptr", "ptr"]],
-    "DllGetVersion" => ["long",  ["ptr"]],
-    "DllInstall" => ["long",  ["long", "wstr"]],
     "DllRegisterServer" => ["long",  ["undef"]],
     "DllUnregisterServer" => ["long",  ["undef"]]
 };
 
-&wine::declare("shdocvw",%$module_declarations);
+&wine::declare("comcat",%$module_declarations);
 push @EXPORT, map { "&" . $_; } sort(keys(%$module_declarations));
 1;

@@ -12,6 +12,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK);
 @EXPORT_OK = qw();
 
 my $module_declarations = {
+    "DllRegisterServer" => ["long",  []],
     "NdrDllCanUnloadNow" => ["long",  ["ptr"]],
     "NdrDllGetClassObject" => ["long",  ["ptr", "ptr", "ptr", "ptr", "ptr", "ptr"]],
     "NdrDllRegisterProxy" => ["long",  ["long", "ptr", "ptr"]],
@@ -33,6 +34,8 @@ my $module_declarations = {
     "RpcStringFreeA" => ["long",  ["ptr"]],
     "UuidCreate" => ["long",  ["ptr"]],
     "UuidCreateSequential" => ["long",  ["ptr"]],
+    "UuidFromStringA" => ["long",  ["ptr", "ptr"]],
+    "UuidFromStringW" => ["long",  ["ptr", "ptr"]],
     "UuidHash" => ["ptr",  ["ptr", "ptr"]],
     "UuidToStringA" => ["long",  ["ptr", "ptr"]]
 };

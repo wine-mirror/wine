@@ -1,4 +1,4 @@
-package shdocvw;
+package dinput8;
 
 use strict;
 
@@ -12,14 +12,13 @@ use vars qw(@ISA @EXPORT @EXPORT_OK);
 @EXPORT_OK = qw();
 
 my $module_declarations = {
+    "DirectInput8Create" => ["long",  ["long", "long", "ptr", "ptr", "ptr"]],
     "DllCanUnloadNow" => ["long",  []],
     "DllGetClassObject" => ["long",  ["ptr", "ptr", "ptr"]],
-    "DllGetVersion" => ["long",  ["ptr"]],
-    "DllInstall" => ["long",  ["long", "wstr"]],
-    "DllRegisterServer" => ["long",  ["undef"]],
-    "DllUnregisterServer" => ["long",  ["undef"]]
+    "DllRegisterServer" => ["long",  []],
+    "DllUnregisterServer" => ["long",  []]
 };
 
-&wine::declare("shdocvw",%$module_declarations);
+&wine::declare("dinput8",%$module_declarations);
 push @EXPORT, map { "&" . $_; } sort(keys(%$module_declarations));
 1;
