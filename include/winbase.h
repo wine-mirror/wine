@@ -25,9 +25,8 @@
 
 #include "basetsd.h"
 #include "windef.h"
-
-#ifndef RC_INVOKED
-#include <stdarg.h>
+#ifndef __WINE__
+#include "winerror.h"
 #endif
 
 #ifdef __cplusplus
