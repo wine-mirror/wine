@@ -981,6 +981,7 @@ dlls/ddraw/ddraw \
 dlls/ddraw/direct3d \
 dlls/ddraw/dpalette \
 dlls/ddraw/dsurface \
+dlls/kernel/messages \
 "
 for i in $extra_subdirs; do [ -d $i ] || (echo "creating $i" && mkdir $i); done ])
 
