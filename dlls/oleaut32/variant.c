@@ -113,7 +113,7 @@ static const double DAYS_IN_ONE_YEAR = 365.2425;
  * the tm struct, tm_sec, tm_min, tm_hour, tm_year, tm_day, tm_mon.
  *
  ******************************************************************************/
-static BOOL DateTimeStringToTm( OLECHAR* strIn, LCID lcid, struct tm* pTm )
+static BOOL DateTimeStringToTm( OLECHAR* strIn, DWORD dwFlags, struct tm* pTm )
 {
 	BOOL res = FALSE;
 	double		fsec;
@@ -139,7 +139,7 @@ static BOOL DateTimeStringToTm( OLECHAR* strIn, LCID lcid, struct tm* pTm )
 		{
 			if( ParseDateTime( strDateTime, lowstr, field, ftype, MAXDATEFIELDS, &nf) == 0 )
 			{
-				if( lcid & VAR_DATEVALUEONLY )
+				if( dwFlags & VAR_DATEVALUEONLY )
 				{
 					/* Get the date information.
 					 * It returns 0 if date information was
@@ -157,7 +157,7 @@ static BOOL DateTimeStringToTm( OLECHAR* strIn, LCID lcid, struct tm* pTm )
 						res = TRUE;
 					}
 				}
-				if( lcid & VAR_TIMEVALUEONLY )
+				if( dwFlags & VAR_TIMEVALUEONLY )
 				{
 					/* Get time information only.
 					 */
@@ -330,7 +330,7 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
  *
  * Returns TRUE if successful.
  */
-static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
+static BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
 {
 	/* Do not process dates smaller than January 1, 1900.
 	 * Which corresponds to 2.0 in the windows DATE format.
@@ -354,7 +354,7 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 		wholePart = (double) floor( dateIn );
 		decimalPart = fmod( dateIn, wholePart );
 
-		if( !(lcid & VAR_TIMEVALUEONLY) )
+		if( !(dwFlags & VAR_TIMEVALUEONLY) )
 		{
 			int nDay = 0;
 			int leapYear = 0;
@@ -446,7 +446,7 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 				pTm->tm_mon = 11;
 			}
 		}
-		if( !(lcid & VAR_DATEVALUEONLY) )
+		if( !(dwFlags & VAR_DATEVALUEONLY) )
 		{
 			/* find the number of seconds in this day.
 			 * fractional part times, hours, minutes, seconds.
@@ -3084,7 +3084,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
 
     TRACE("( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
 
-    if( DateTimeStringToTm( strIn, lcid, &TM ) )
+    if( DateTimeStringToTm( strIn, dwFlags, &TM ) )
     {
         if( TmToDATE( &TM, pdateOut ) == FALSE )
         {
@@ -3278,7 +3278,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
 
     TRACE("( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
 
-    if( DateToTm( dateIn, lcid, &TM ) == FALSE )
+    if( DateToTm( dateIn, dwFlags, &TM ) == FALSE )
 			{
         return E_INVALIDARG;
 		}
@@ -4344,7 +4344,7 @@ INT WINAPI VariantTimeToDosDateTime(DATE pvtime, USHORT *wDosDate, USHORT *wDosT
 
     TRACE("( 0x%x, 0x%x, 0x%p ), stub\n", *wDosDate, *wDosTime, &pvtime );
 
-    if (DateToTm(pvtime, (LCID)NULL, &t) < 0) return 0;
+    if (DateToTm(pvtime, 0, &t) < 0) return 0;
 
     *wDosTime = *wDosTime | (t.tm_sec / 2);
     *wDosTime = *wDosTime | (t.tm_min << 5);
@@ -4427,7 +4427,7 @@ HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime
     if (vtime >= 0)
     {
 
-        if (DateToTm(vtime, (LCID)NULL, &r ) <= 0) return 0;
+        if (DateToTm(vtime, 0, &r ) <= 0) return 0;
 
         lpSystemTime->wSecond = r.tm_sec;
         lpSystemTime->wMinute = r.tm_min;
@@ -4446,7 +4446,7 @@ HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime
     {
         vtime = -1*vtime;
 
-        if (DateToTm(vtime, (LCID)NULL, &r ) <= 0) return 0;
+        if (DateToTm(vtime, 0, &r ) <= 0) return 0;
 
         lpSystemTime->wSecond = r.tm_sec;
         lpSystemTime->wMinute = r.tm_min;
