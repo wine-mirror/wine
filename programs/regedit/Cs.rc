@@ -1,0 +1,289 @@
+/*
+ * Regedit Czech resources
+ *
+ * Copyright 2002 Robert Dickenson
+ * Copyright 2004 David Kredba
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+/*
+ * Menu
+ */
+
+IDC_REGEDIT MENU DISCARDABLE
+BEGIN
+    POPUP "&Soubor"
+    BEGIN
+        MENUITEM "&Konec",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Nápovìda"
+    BEGIN
+        MENUITEM "&O aplikaci ...",                  ID_HELP_ABOUT
+    END
+END
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Registr"
+    BEGIN
+        MENUITEM "&Importovat soubor registru...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Exportovat soubor registru...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Pøipojit registr v síti...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "O&dpojit sí»ový registr...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Tisk\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Konec",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Úpravy"
+    BEGIN
+        MENUITEM "Z&mìnit",                     ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Nový"
+        BEGIN
+            MENUITEM "&Klíè",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "Ø&etìzcová polo¾ka",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binární polo¾ka",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD polo¾ka",                ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
+        MENUITEM "Pøe&jmenovat\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopírovat název klíèe",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Najít\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Najít &dal¹í\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Zobrazit"
+    BEGIN
+        MENUITEM "P&anel Status",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Rozdì&lit",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "Pøek&reslit\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&Oblíbené"
+    BEGIN
+        MENUITEM "Pøid&at k oblíbeným",          ID_FAVOURITES_ADDTOFAVOURITES
+        , GRAYED
+        MENUITEM "Odeb&rat oblíbené",           ID_FAVOURITES_REMOVEFAVOURITE
+        , GRAYED
+    END
+    POPUP "&Nápovìda"
+    BEGIN
+        MENUITEM "Obsa&h\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&O aplikaci Registry Editor",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Upravit",                     ID_EDIT_MODIFY
+	MENUITEM "Upravit binární data",          ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
+	MENUITEM "&Pøejmenovat",                     ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Nový"
+        BEGIN
+            MENUITEM "&Klíè",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "Ø&etìzcová polo¾ka",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binarní polo¾ka",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD polo¾ka",                ID_EDIT_NEW_DWORDVALUE
+        END
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "O aplikaci"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
+    LTEXT           "ReactOS regedit verze 1.0",IDC_STATIC,49,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Copyright (C) 2002 ReactOS Team",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Úprava øetìzce"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Název:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Obsah:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
+    PUSHBUTTON   "Storno",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Úprava DWORD"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Název:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Obsah:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Základ", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "¹estnáctkový", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Desitkový", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Storno",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Název"
+    IDS_LIST_COLUMN_TYPE    "Typ"
+    IDS_LIST_COLUMN_DATA    "Obsah"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Editor registru"
+    IDC_REGEDIT             "REGEDIT"
+    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Obsahuje pøíkazy pro práci se syrovým registrem"
+    ID_EDIT_MENU            "Obsahuje pøíkazy pro editaci klíèù a polo¾ek"
+    ID_VIEW_MENU            "Obsahuje pøíkazy pro úpravu vzhledu okna regeditu"
+    ID_FAVOURITES_MENU      "Obsahuje pøíkazy pro pøístup k èasto u¾ívaným klíèùm"
+    ID_HELP_MENU            "Obsahuje pøíkazy pro zobrazení nápovìdy a informacío editoru registru"
+    ID_EDIT_NEW_MENU        "Obsahuje pøíkazy pro vytváøení nových klíèù a polo¾ek"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Zmìní data"
+    ID_EDIT_NEW_KEY         "Pøidá nový klíè"
+    ID_EDIT_NEW_STRINGVALUE "Pøidá novou øetìzcovou polo¾ku"
+    ID_EDIT_NEW_BINARYVALUE "Pøidá novou binární polo¾ku"
+    ID_EDIT_NEW_DWORDVALUE  "Pøidá novou DWORD polo¾ku"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Importuje textový soubor registru"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Exportuje celý registr nebo jeho èást do textového souboru"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Pøipojí se k registru na jiném poèítaèi"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Odpojí se od vzdálenì pøipojeného registru"
+    ID_REGISTRY_PRINT       "Vytiskne èást nebo celý registr"
+/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
+    ID_HELP_ABOUT           "Zobrazí informace o programu, jeho verzi a copyright"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Ukonèí regedit"
+    ID_FAVOURITES_ADDTOFAVOURITES "Pøidá klíè k oblíbeným"
+    ID_FAVOURITES_REMOVEFAVOURITE "Odebere klíè z oblíbených"
+    ID_VIEW_STATUSBAR       "Uká¾e nebo skryje status bar"
+    ID_VIEW_SPLIT           "Change position of split between two panes"
+    ID_VIEW_REFRESH         "Pøekreslí okno"
+    ID_EDIT_DELETE          "Sma¾e vybrané"
+    ID_EDIT_RENAME          "Pøejmenuje vybrané"
+    ID_EDIT_COPYKEYNAME     "Vlo¾í název vybraného klíèe do schránky"
+    ID_EDIT_FIND            "Najde textový øetìzec v klíèi, polo¾ce nebo datech"
+    ID_EDIT_FINDNEXT        "Najde dal¹í výskyt textu"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Chyba"
+    IDS_BAD_KEY		    "Nelze najít klíè '%s'"
+    IDS_BAD_VALUE           "Nelze najít polo¾ku '%s'"
+    IDS_UNSUPPORTED_TYPE    "Nemohu upravit klíèe tohoto typu (%ld)"
+    IDS_TOO_BIG_VALUE       "Hodnota je pøíli¹ velká (%ld)"
+    IDS_DELETE_BOX_TITLE    "Potvrïte smazání polo¾ky"
+    IDS_DELETE_BOX_TEXT     "Opravdu chcete smazat polo¾ku '%s'?"
+    IDS_NEWKEY              "Nový klíè #%d"
+    IDS_NEWVALUE            "Nová polo¾ka #%d"
+END
+
+/*****************************************************************/
+
+
+/*
+ * Dialog
+ */
+
+IDD_DIALOG1 DIALOG DISCARDABLE  50, 50, 268, 98
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,130,7,50,14
+    PUSHBUTTON      "Storno",IDCANCEL,130,24,50,14
+END
+
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
+ *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
+ *END
+ */
+
+/*****************************************************************/

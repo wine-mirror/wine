@@ -4,6 +4,7 @@
  * Copyright 2000 Andreas Mohr <andi@lisas.de>
  * Copyright 2003 Vincent Béron
  * Copyright 2003 Ivan Leo Puoti
+ * Copyright 2004 David Kredba
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -75,6 +76,15 @@ UNINSTALLER ICON MOVEABLE uninstaller.ico
  '00 03 C0 00 00 03 C0 00 00 0F C0 00 00 07 C0 00'
  '00 03 80 00 00 31 1F FF FF F8 3F FF FF FC'
 } */
+
+/* Czech Resources */
+LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Deinstalátor"
+
+     }
+/* End of Czech Resources */
 
 /* English-US Resources */
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL

@@ -21,6 +21,7 @@
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+#include "Cs.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Es.rc"

@@ -1,5 +1,9 @@
 /*
- * Copyright 1996 Ulrich Schmid
+ * Clock (Czech resources)
+ *
+ * Copyright 1998 Marcel Baur
+ * Copyright 2002 Sylvain Petreolle
+ * Copyright 2004 David Kredba
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,26 +20,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <windows.h>
-#include "progman.h"
-#include "accel.rc"
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
-#include "Cs.rc"
-/* #include "Da.rc" */
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-/* #include "Fi.rc" */
-#include "Fr.rc"
-#include "Hu.rc"
-#include "It.rc"
-/* #include "Ko.rc" */
-#include "Nl.rc"
-#include "Pt.rc"
-#include "Ru.rc"
-#include "Si.rc"
-/* #include "Sk.rc" */
-/* #include "Sw.rc" */
-/* #include "Va.rc" */
-/* #include "Wa.rc" */
-#include "Zh.rc"
+MAIN_MENU MENU 
+{
+ POPUP "&Vlastnosti" {
+  MENUITEM "Ana&logové", IDM_ANALOG
+  MENUITEM "Digi&tální", IDM_DIGITAL
+  MENUITEM SEPARATOR
+  MENUITEM "&Font...", IDM_FONT
+  MENUITEM SEPARATOR
+  MENUITEM "B&ez menu", IDM_NOTITLE
+  MENUITEM SEPARATOR
+  MENUITEM "&Sekund", IDM_SECONDS
+  MENUITEM "&Datum", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "V¾dy n&a vrchu", IDM_ONTOP
+ }
+ POPUP "&O aplikaci" {
+  MENUITEM "&Licence...", IDM_LICENSE
+  MENUITEM "&BEZ ZÁRUKY...", IDM_NOWARRANTY
+  MENUITEM "O &aplikaci...", IDM_ABOUT
+ }
+}
+
+STRINGTABLE DISCARDABLE
+{
+IDS_CLOCK, "Hodiny"
+}

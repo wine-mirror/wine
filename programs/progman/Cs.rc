@@ -1,0 +1,222 @@
+/*
+ * Program Manager Czech resources
+ *
+ * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
+ * Copyright 2004 David Kredba
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/* Menu */
+
+MAIN_MENU MENU LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+{
+ POPUP "&Soubor" {
+   MENUITEM "&Nový...",              PM_NEW
+   MENUITEM "O&tevøít\tEnter",             PM_OPEN
+   MENUITEM "Pø&esunout...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Kopírovat...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "S&mazat\tEntf",           PM_DELETE
+   MENUITEM "&Atributy...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "Sp&ustit...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "&Konec Windows...",             PM_EXIT
+ }
+ POPUP "&Nastavení" {
+   MENUITEM "&Uspoøádat automaticky",  PM_AUTO_ARRANGE
+   MENUITEM "&Minimalizovat za bìhu",    PM_MIN_ON_RUN
+   MENUITEM "U&lo¾it nastavení pøi ukonèení", PM_SAVE_SETTINGS
+ }
+ POPUP "&Okna" {
+   MENUITEM "&Pøekrývající se\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Vedle sebe\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&Zarovnat ikony",       PM_ARRANGE
+ }
+ 
+POPUP "&Nápovìda" {
+   MENUITEM "&Obsah",         PM_CONTENTS
+   MENUITEM "&Najít...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&Pomoc s nápovìdou",     PM_HELPONHELP
+   MENUITEM "&Tutorial",         PM_TUTORIAL
+   MENUITEM SEPARATOR
+
+   POPUP "O &aplikaci..." {
+     MENUITEM "&Licence",        PM_LICENSE
+     MENUITEM "&BEZ ZÁRUKY",    PM_NO_WARRANTY
+     MENUITEM "&O WINE",     PM_ABOUT_WINE
+   }
+ }
+}
+
+/* Dialog `New' */
+
+DIALOG_NEW DIALOG 0, 0, 170, 65
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Nový"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "Programová &skupina",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Program", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Move' */
+
+DIALOG_MOVE DIALOG 0, 0, 250, 65
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Pøesun programu"
+{
+LTEXT         "Pøesunout program:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "ze skupiny:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&do skupiny:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Copy' */
+
+DIALOG_COPY DIALOG 0, 0, 250, 65
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Kopírování programu"
+{
+LTEXT         "Kopírovat program:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "ze skupiny:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&do skupiny:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Group attributes' */
+
+DIALOG_GROUP DIALOG 0, 0, 230, 65
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Vlastnosti programové skupiny"
+{
+LTEXT     "&Popis:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Soubor skupiny:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Program attributes' */
+
+DIALOG_PROGRAM DIALOG 0, 0, 250, 105
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Vlastnosti programu"
+{
+LTEXT         "&Popis:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "Pøí&kazová øádka:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "P&racovní adresáø:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Klávesová zkratka:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "Spustit &minimalizovaný",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pro&cházet...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Zmìnit &ikonu...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Symbol' */
+
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Zmìna ikony"
+{
+LTEXT     "&Název souboru:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "Souèasná &ikona:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Procházet...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Spustit program"
+{
+LTEXT     "Pøíkazová øá&dka:", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "&Spustit minimalizovanì",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Storno",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Procházet...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Nápovìda",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
+
+/* Strings */
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+{
+IDS_PROGRAM_MANAGER,		"Program manager"
+IDS_ERROR,			"CHYBA"
+IDS_WARNING,			"VAROVÁNÍ"
+IDS_INFO,			"Informace"
+IDS_DELETE,			"Smazat"
+IDS_DELETE_GROUP_s,		"Smazat skupinu `%s' ?"
+IDS_DELETE_PROGRAM_s,		"Smazat program `%s' ?"
+IDS_NOT_IMPLEMENTED,		"Není podporováno"
+IDS_FILE_READ_ERROR_s,		"Chyba pøi ètení `%s'."
+IDS_FILE_WRITE_ERROR_s,		"Chyba pøi zápisu `%s'."
+IDS_GRPFILE_READ_ERROR_s,	"\
+Soubor skupiny `%s' nemù¾e být otevøen.\n\
+Mám to zkusit znovu ?"
+IDS_OUT_OF_MEMORY,		"Do¹la pamì»."
+IDS_WINHELP_ERROR,		"Nápovìda není dostupná."
+IDS_UNKNOWN_FEATURE_s,		"Neznámá vlastnost v %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Soubor `%s' existuje. Nebude pøepsán."
+IDS_SAVE_GROUP_AS_s,		"Ulo¾it skupinu jako `%s', aby nebyly pøepsán originální soubory."
+IDS_NO_HOT_KEY,			"®ádná klávesová zkratka."
+IDS_ALL_FILES,			"V¹echny soubory (*.*)"
+IDS_PROGRAMS,			"Programy"
+IDS_LIBRARIES_DLL,		"Knihovny (*.dll)"
+IDS_SYMBOL_FILES,		"Soubory ikon"
+IDS_SYMBOLS_ICO,		"Ikony (*.ico)"
+}
