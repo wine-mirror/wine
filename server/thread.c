@@ -49,6 +49,8 @@ static void destroy_thread( struct object *obj );
 static const struct object_ops thread_ops =
 {
     dump_thread,
+    add_queue,
+    remove_queue,
     thread_signaled,
     thread_satisfied,
     destroy_thread
@@ -200,8 +202,9 @@ int send_reply( struct thread *thread, int pass_fd, int n,
 }
 
 /* add a thread to an object wait queue; return 1 if OK, 0 on error */
-static void add_queue( struct object *obj, struct wait_queue_entry *entry )
+void add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
+    grab_object( obj );
     entry->obj    = obj;
     entry->prev   = obj->tail;
     entry->next   = NULL;
@@ -211,10 +214,8 @@ static void add_queue( struct object *obj, struct wait_queue_entry *entry )
 }
 
 /* remove a thread from an object wait queue */
-static void remove_queue( struct wait_queue_entry *entry )
+void remove_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    struct object *obj = entry->obj;
-
     if (entry->next) entry->next->prev = entry->prev;
     else obj->tail = entry->prev;
     if (entry->prev) entry->prev->next = entry->next;
@@ -230,9 +231,9 @@ static void end_wait( struct thread *thread )
     int i;
 
     assert( wait );
-    for (i = 0, entry = wait->queues; i < wait->count; i++)
-        remove_queue( entry++ );
-    if (wait->flags & SELECT_TIMEOUT) set_timeout( thread->client_fd, NULL );
+    for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
+        entry->obj->ops->remove_queue( entry->obj, entry );
+    if (wait->flags & SELECT_TIMEOUT) set_select_timeout( thread->client_fd, NULL );
     free( wait );
     thread->wait = NULL;
 }
@@ -280,7 +281,8 @@ static int wait_on( struct thread *thread, int count,
             return 0;
         }
         entry->thread = thread;
-        add_queue( obj, entry );
+        obj->ops->add_queue( obj, entry );
+        release_object( obj );
     }
     return 1;
 }
@@ -342,7 +344,7 @@ void sleep_on( struct thread *thread, int count, int *handles, int flags, int ti
     {
         /* we need to wait */
         if (flags & SELECT_TIMEOUT)
-            set_timeout( thread->client_fd, &thread->wait->timeout );
+            set_select_timeout( thread->client_fd, &thread->wait->timeout );
         return;
     }
     end_wait( thread );

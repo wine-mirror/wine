@@ -6,8 +6,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -37,15 +35,6 @@ enum state
     READING    /* reading our reply */
 };
 
-/* client timeout */
-struct timeout
-{
-    struct timeval  when;    /* timeout expiry (absolute time) */
-    struct timeout *next;    /* next in sorted list */
-    struct timeout *prev;    /* prev in sorted list */
-    int             client;  /* client id */
-};
-
 /* client structure */
 struct client
 {
@@ -56,17 +45,9 @@ struct client
     int                count;        /* bytes sent/received so far */
     int                pass_fd;      /* fd to pass to and from the client */
     struct thread     *self;         /* client thread (opaque pointer) */
-    struct timeout     timeout;      /* client timeout */
 };
 
-
-static struct client *clients[FD_SETSIZE];  /* clients array */
-static fd_set read_set, write_set;          /* current select sets */
-static int nb_clients;                      /* current number of clients */
-static int max_fd;                          /* max fd in use */
 static int initial_client_fd;               /* fd of the first client */
-static struct timeout *timeout_head;        /* sorted timeouts list head */
-static struct timeout *timeout_tail;        /* sorted timeouts list tail */
 
 /* exit code passed to remove_client */
 #define OUT_OF_MEMORY  -1
@@ -85,11 +66,9 @@ static void protocol_error( int client_fd, const char *err, ... )
     va_end( args );
 }
 
-
 /* send a message to a client that is ready to receive something */
-static void do_write( int client_fd )
+static void do_write( struct client *client, int client_fd )
 {
-    struct client *client = clients[client_fd];
     struct iovec vec[2];
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS,
@@ -146,15 +125,13 @@ static void do_write( int client_fd )
     client->count = 0;
     client->state = RUNNING;
     client->seq++;
-    FD_CLR( client_fd, &write_set );
-    FD_SET( client_fd, &read_set );
+    set_select_events( client_fd, READ_EVENT );
 }
 
 
 /* read a message from a client that has something to say */
-static void do_read( int client_fd )
+static void do_read( struct client *client, int client_fd )
 {
-    struct client *client = clients[client_fd];
     struct iovec vec;
     int pass_fd = -1;
 #ifdef HAVE_MSGHDR_ACCRIGHTS
@@ -254,89 +231,47 @@ static void do_read( int client_fd )
     }
 }
 
-
 /* handle a client timeout */
-static void do_timeout( int client_fd )
+static void client_timeout( int client_fd, void *private )
 {
-    struct client *client = clients[client_fd];
-    set_timeout( client_fd, 0 );  /* Remove the timeout */
+    struct client *client = (struct client *)private;
+    set_select_timeout( client_fd, 0 );  /* Remove the timeout */
     call_timeout_handler( client->self );
 }
 
-
-/* server main loop */
-void server_main_loop( int fd )
+/* handle a client event */
+static void client_event( int client_fd, int event, void *private )
 {
-    int i, ret;
-
-    setsid();
-    signal( SIGPIPE, SIG_IGN );
-
-    /* special magic to create the initial thread */
-    initial_client_fd = fd;
-    add_client( initial_client_fd, NULL );
-
-    while (nb_clients)
-    {
-        fd_set read = read_set, write = write_set;
-#if 0
-        printf( "select: " );
-        for (i = 0; i <= max_fd; i++) printf( "%c", FD_ISSET( i, &read_set ) ? 'r' :
-                                                    (FD_ISSET( i, &write_set ) ? 'w' : '-') );
-        printf( "\n" );
-#endif
-        if (timeout_head)
-        {
-            struct timeval tv, now;
-            gettimeofday( &now, NULL );
-            if ((timeout_head->when.tv_sec < now.tv_sec) ||
-                ((timeout_head->when.tv_sec == now.tv_sec) &&
-                 (timeout_head->when.tv_usec < now.tv_usec)))
-            {
-                do_timeout( timeout_head->client );
-                continue;
-            }
-            tv.tv_sec = timeout_head->when.tv_sec - now.tv_sec;
-            if ((tv.tv_usec = timeout_head->when.tv_usec - now.tv_usec) < 0)
-            {
-                tv.tv_usec += 1000000;
-                tv.tv_sec--;
-            }
-            ret = select( max_fd + 1, &read, &write, NULL, &tv );
-        }
-        else  /* no timeout */
-        {
-            ret = select( max_fd + 1, &read, &write, NULL, NULL );
-        }
-
-        if (!ret) continue;
-        if (ret == -1) perror("select");
-
-        for (i = 0; i <= max_fd; i++)
-        {
-            if (FD_ISSET( i, &write ))
-            {
-                if (clients[i]) do_write( i );
-            }
-            else if (FD_ISSET( i, &read ))
-            {
-                if (clients[i]) do_read( i );
-            }
-        }
-    }
+    struct client *client = (struct client *)private;
+    if (event & WRITE_EVENT)
+        do_write( client, client_fd );
+    if (event & READ_EVENT)
+        do_read( client, client_fd );
 }
 
+static const struct select_ops client_ops =
+{
+    client_event,
+    client_timeout
+};
 
 /*******************************************************************/
 /* server-side exported functions                                  */
 
+/* server initialization */
+void server_init( int fd )
+{
+    /* special magic to create the initial thread */
+    initial_client_fd = fd;
+    add_client( initial_client_fd, NULL );
+}
+
+
 /* add a client */
 int add_client( int client_fd, struct thread *self )
 {
-    int flags;
     struct client *client = malloc( sizeof(*client) );
     if (!client) return -1;
-    assert( !clients[client_fd] );
 
     client->state                = RUNNING;
     client->seq                  = 0;
@@ -346,36 +281,26 @@ int add_client( int client_fd, struct thread *self )
     client->data                 = NULL;
     client->self                 = self;
     client->pass_fd              = -1;
-    client->timeout.when.tv_sec  = 0;
-    client->timeout.when.tv_usec = 0;
-    client->timeout.client       = client_fd;
 
-    flags = fcntl( client_fd, F_GETFL, 0 );
-    fcntl( client_fd, F_SETFL, flags | O_NONBLOCK );
-
-    clients[client_fd] = client;
-    FD_SET( client_fd, &read_set );
-    if (client_fd > max_fd) max_fd = client_fd;
-    nb_clients++;
+    if (add_select_user( client_fd, READ_EVENT, &client_ops, client ) == -1)
+    {
+        free( client );
+        return -1;
+    }
     return client_fd;
 }
 
 /* remove a client */
 void remove_client( int client_fd, int exit_code )
 {
-    struct client *client = clients[client_fd];
+    struct client *client = (struct client *)get_select_private_data( &client_ops, client_fd );
     assert( client );
 
     call_kill_handler( client->self, exit_code );
 
-    set_timeout( client_fd, 0 );
-    clients[client_fd] = NULL;
-    FD_CLR( client_fd, &read_set );
-    FD_CLR( client_fd, &write_set );
-    if (max_fd == client_fd) while (max_fd && !clients[max_fd]) max_fd--;
+    remove_select_user( client_fd );
     if (initial_client_fd == client_fd) initial_client_fd = -1;
     close( client_fd );
-    nb_clients--;
 
     /* Purge messages */
     if (client->data) free( client->data );
@@ -390,53 +315,6 @@ int get_initial_client_fd(void)
     return initial_client_fd;
 }
 
-/* set a client timeout */
-void set_timeout( int client_fd, struct timeval *when )
-{
-    struct timeout *tm, *pos;
-    struct client *client = clients[client_fd];
-    assert( client );
-
-    tm = &client->timeout;
-    if (tm->when.tv_sec || tm->when.tv_usec)
-    {
-        /* there is already a timeout */
-        if (tm->next) tm->next->prev = tm->prev;
-        else timeout_tail = tm->prev;
-        if (tm->prev) tm->prev->next = tm->next;
-        else timeout_head = tm->next;
-        tm->when.tv_sec = tm->when.tv_usec = 0;
-    }
-    if (!when) return;  /* no timeout */
-    tm->when = *when;
-
-    /* Now insert it in the linked list */
-
-    for (pos = timeout_head; pos; pos = pos->next)
-    {
-        if (pos->when.tv_sec > tm->when.tv_sec) break;
-        if ((pos->when.tv_sec == tm->when.tv_sec) &&
-            (pos->when.tv_usec > tm->when.tv_usec)) break;
-    }
-
-    if (pos)  /* insert it before 'pos' */
-    {
-        if ((tm->prev = pos->prev)) tm->prev->next = tm;
-        else timeout_head = tm;
-        tm->next = pos;
-        pos->prev = tm;
-    }
-    else  /* insert it at the tail */
-    {
-        tm->next = NULL;
-        if (timeout_tail) timeout_tail->next = tm;
-        else timeout_head = tm;
-        tm->prev = timeout_tail;
-        timeout_tail = tm;
-    }
-}
-
-
 /* send a reply to a client */
 int send_reply_v( int client_fd, int type, int pass_fd,
                   struct iovec *vec, int veclen )
@@ -444,7 +322,7 @@ int send_reply_v( int client_fd, int type, int pass_fd,
     int i;
     unsigned int len;
     char *p;
-    struct client *client = clients[client_fd];
+    struct client *client = (struct client *)get_select_private_data( &client_ops, client_fd );
 
     assert( client );
     assert( client->state == WAITING );
@@ -469,7 +347,6 @@ int send_reply_v( int client_fd, int type, int pass_fd,
     }
 
     client->state = READING;
-    FD_CLR( client_fd, &read_set );
-    FD_SET( client_fd, &write_set );
+    set_select_events( client_fd, WRITE_EVENT );
     return 0;
 }

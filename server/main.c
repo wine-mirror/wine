@@ -16,7 +16,6 @@
 int main( int argc, char *argv[] )
 {
     int fd;
-    extern void server_main_loop( int fd );
 
     if (argc != 2) goto error;
     if (!isdigit( *argv[1] )) goto error;
@@ -27,7 +26,8 @@ int main( int argc, char *argv[] )
     debug_level = 1;
 
     if (debug_level) printf( "Server: starting (pid=%d)\n", getpid() );
-    server_main_loop( fd );
+    server_init( fd );
+    select_loop();
     if (debug_level) printf( "Server: exiting (pid=%d)\n", getpid() );
     exit(0);
 

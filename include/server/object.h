@@ -20,13 +20,22 @@
 struct object;
 struct object_name;
 struct thread;
+struct wait_queue_entry;
 
 struct object_ops
 {
-    void (*dump)(struct object *,int);                  /* dump the object (for debugging) */
-    int  (*signaled)(struct object *,struct thread *);  /* is object signaled? */
-    int  (*satisfied)(struct object *,struct thread *); /* wait satisfied; return 1 if abandoned */
-    void (*destroy)(struct object *);                   /* destroy on refcount == 0 */
+    /* dump the object (for debugging) */
+    void (*dump)(struct object *,int);
+    /* add a thread to the object wait queue */
+    void (*add_queue)(struct object *,struct wait_queue_entry *);
+    /* remove a thread from the object wait queue */
+    void (*remove_queue)(struct object *,struct wait_queue_entry *);
+    /* is object signaled? */
+    int  (*signaled)(struct object *,struct thread *);
+    /* wait satisfied; return 1 if abandoned */
+    int  (*satisfied)(struct object *,struct thread *);
+    /* destroy on refcount == 0 */
+    void (*destroy)(struct object *);
 };
 
 struct object
@@ -65,8 +74,27 @@ extern void trace_kill( int exit_code );
 extern void trace_reply( struct thread *thread, int type, int pass_fd,
                          struct iovec *vec, int veclen );
 
+/* select functions */
+
+#define READ_EVENT    1
+#define WRITE_EVENT   2
+
+struct select_ops
+{
+    void (*event)( int fd, int event, void *private );
+    void (*timeout)( int fd, void *private );
+};
+
+extern int add_select_user( int fd, int events, const struct select_ops *ops, void *private );
+extern void remove_select_user( int fd );
+extern void set_select_timeout( int fd, struct timeval *when );
+extern void set_select_events( int fd, int events );
+extern void *get_select_private_data( const struct select_ops *ops, int fd );
+extern void select_loop(void);
+
 /* socket functions */
 
+extern void server_init( int fd );
 extern int add_client( int client_fd, struct thread *self );
 extern void remove_client( int client_fd, int exit_code );
 extern int get_initial_client_fd(void);

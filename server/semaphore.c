@@ -27,6 +27,8 @@ static void destroy_semaphore( struct object *obj );
 static const struct object_ops semaphore_ops =
 {
     dump_semaphore,
+    add_queue,
+    remove_queue,
     semaphore_signaled,
     semaphore_satisfied,
     destroy_semaphore

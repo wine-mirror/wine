@@ -64,6 +64,8 @@ static int copy_handle_table( struct process *process, struct process *parent );
 static const struct object_ops process_ops =
 {
     dump_process,
+    add_queue,
+    remove_queue,
     process_signaled,
     process_satisfied,
     destroy_process

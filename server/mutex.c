@@ -30,6 +30,8 @@ static void destroy_mutex( struct object *obj );
 static const struct object_ops mutex_ops =
 {
     dump_mutex,
+    add_queue,
+    remove_queue,
     mutex_signaled,
     mutex_satisfied,
     destroy_mutex

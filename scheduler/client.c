@@ -226,7 +226,8 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
     struct new_thread_reply reply;
     int len, fd[2];
     extern BOOL32 THREAD_InitDone;
-    extern void server_main_loop( int fd );
+    extern void server_init( int fd );
+    extern void select_loop(void);
 
     if (!THREAD_InitDone)  /* first thread -> start the server */
     {
@@ -251,7 +252,8 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
             execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
             execl( "./server/wineserver", "wineserver", buffer, NULL );
 #endif
-            server_main_loop( tmpfd[1] );
+            server_init( tmpfd[1] );
+            select_loop();
             exit(0);
         default:  /* parent */
             close( tmpfd[1] );

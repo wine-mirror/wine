@@ -52,6 +52,8 @@ extern void get_thread_info( struct thread *thread,
                              struct get_thread_info_reply *reply );
 extern int send_reply( struct thread *thread, int pass_fd,
                        int n, ... /* arg_1, len_1, ..., arg_n, len_n */ );
+extern void add_queue( struct object *obj, struct wait_queue_entry *entry );
+extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int exit_code );
 extern void thread_killed( struct thread *thread, int exit_code );
 extern void thread_timeout(void);

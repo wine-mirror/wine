@@ -27,6 +27,8 @@ static void destroy_event( struct object *obj );
 static const struct object_ops event_ops =
 {
     dump_event,
+    add_queue,
+    remove_queue,
     event_signaled,
     event_satisfied,
     destroy_event

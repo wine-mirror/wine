@@ -11,6 +11,7 @@ C_SRCS = \
 	object.c \
 	process.c \
 	request.c \
+	select.c \
 	semaphore.c \
 	socket.c \
 	thread.c \
