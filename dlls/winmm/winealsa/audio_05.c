@@ -693,7 +693,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
     HANDLE		ev;
 
     while (ALSA_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-//        TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+        TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
 
 	switch (msg) {
 	case WINE_WM_PAUSING:
@@ -1229,7 +1229,9 @@ static DWORD wodBreakLoop(WORD wDevID)
  */
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
+#if 0
     int 	mixer;
+#endif
     int		volume;
     DWORD	left, right;
 
@@ -1248,6 +1250,8 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
+#else
+    volume = 0x2020;
 #endif
     left = LOBYTE(volume);
     right = HIBYTE(volume);
@@ -1261,7 +1265,9 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
+#if 0
     int 	mixer;
+#endif
     int		volume;
     DWORD	left, right;
 
