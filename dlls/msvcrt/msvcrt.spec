@@ -164,7 +164,7 @@
 @ cdecl _amsg_exit(long) MSVCRT__amsg_exit
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl
-@ stub _atoi64 #(str)
+@ forward _atoi64 ntdll._atoi64
 @ stub _atoldbl
 @ cdecl _beep(long long) _beep
 @ cdecl _beginthread (ptr long ptr) _beginthread
@@ -271,8 +271,8 @@
 @ stub _heapused #(ptr ptr)
 @ cdecl _heapwalk(ptr) _heapwalk
 @ cdecl _hypot(double double) hypot
-@ stub _i64toa #(long str long)
-@ stub _i64tow #(long wstr long)
+@ forward _i64toa ntdll._i64toa
+@ forward _i64tow ntdll._i64tow
 @ cdecl _initterm(ptr ptr) _initterm
 @ stub _inp #(long) -i386
 @ stub _inpd #(long) -i386
@@ -311,7 +311,7 @@
 @ cdecl _ismbstrail(ptr ptr) _ismbstrail
 @ cdecl _isnan( double ) _isnan
 @ forward _itoa ntdll._itoa
-@ cdecl _itow(long wstr long) _itow
+@ forward _itow ntdll._itow
 @ cdecl _j0(double) j0
 @ cdecl _j1(double) j1
 @ cdecl _jn(long double) jn
@@ -329,7 +329,7 @@
 @ cdecl _lseek(long long long) _lseek
 @ cdecl -ret64 _lseeki64(long long long long) _lseeki64
 @ forward _ltoa ntdll._ltoa
-@ cdecl _ltow(long ptr long) _ltow
+@ forward _ltow ntdll._ltow
 @ cdecl _makepath(str str str str str) _makepath
 @ cdecl _matherr(ptr) _matherr
 @ cdecl _mbbtombc(long) _mbbtombc
@@ -474,8 +474,8 @@
 @ cdecl _toupper(long) MSVCRT__toupper
 @ stub _tzname
 @ cdecl _tzset() tzset
-@ stub _ui64toa #(long str long)
-@ stub _ui64tow #(long wstr long)
+@ forward _ui64toa ntdll._ui64toa
+@ forward _ui64tow ntdll._ui64tow
 @ forward _ultoa ntdll._ultoa
 @ forward _ultow ntdll._ultow
 @ cdecl _umask(long) _umask
@@ -559,9 +559,9 @@
 @ stub _wsystem #(wstr)
 @ cdecl _wtempnam(wstr wstr) _wtempnam
 @ stub _wtmpnam #(wstr)
-@ forward _wtoi NTDLL._wtoi
-@ stub _wtoi64 #(wstr)
-@ forward _wtol NTDLL._wtol
+@ forward _wtoi ntdll._wtoi
+@ forward _wtoi64 ntdll._wtoi64
+@ forward _wtol ntdll._wtol
 @ cdecl _wunlink(wstr) _wunlink
 @ cdecl _wutime(wstr ptr) _wutime
 @ cdecl _y0(double) _y0

@@ -363,25 +363,3 @@ INT MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 {
     return isxdigitW( wc );
 }
-
-/*********************************************************************
- *		_itow (MSVCRT.@)
- */
-MSVCRT_wchar_t* _itow(int value,MSVCRT_wchar_t* out,int base)
-{
-  char buf[64];
-  _itoa(value, buf, base);
-  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, buf, -1, out, 128);
-  return out;
-}
-
-/*********************************************************************
- *		_ltow (MSVCRT.@)
- */
-MSVCRT_wchar_t* _ltow(long value,MSVCRT_wchar_t* out,int base)
-{
-  char buf[128];
-  _ltoa(value, buf, base);
-  MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, buf, -1, out, 128);
-  return out;
-}
