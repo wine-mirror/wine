@@ -9,6 +9,7 @@ CTESTS = \
 	alloc.c \
 	atom.c \
 	directory.c \
+	drive.c \
 	environ.c \
 	file.c \
 	format_msg.c \

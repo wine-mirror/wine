@@ -795,6 +795,169 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     test_FunnyChars(curdir,"Long File :" ,0,0,"check-7");
 }
 
+static void test_GetTempPathA(void)
+{
+    UINT len, len_with_null;
+    char buf[MAX_PATH];
+
+    lstrcpyA(buf, "foo");
+    len = GetTempPathA(MAX_PATH, buf);
+    ok(len <= MAX_PATH, "should fit into MAX_PATH");
+    ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
+    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
+    ok(buf[len - 1] == '\\', "should add back slash");
+
+    len_with_null = lstrlenA(buf) + 1;
+
+    /* this one is different from unicode version: ANSI version doesn't
+     * touch the buffer, unicode version truncates the buffer to zero size
+     */
+    lstrcpyA(buf, "foo");
+    len = GetTempPathA(1, buf);
+    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
+    /* win2000 adds excessive 0 when TMP variable does not specify full path,
+     * and buffer is not large enough to hold path with backslash.
+     */
+    /* FIXME: replace ok by xfail below when it's implemeted */
+    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
+
+    /* this one is different from unicode version: ANSI version doesn't
+     * touch the buffer, unicode version returns path without backslash
+     */
+    lstrcpyA(buf, "foo");
+    len = GetTempPathA(len_with_null - 1, buf);
+    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
+    /* win2000 adds excessive 0 when TMP variable does not specify full path,
+     * and buffer is not large enough to hold path with backslash.
+     */
+    /* FIXME: replace ok by xfail below when it's implemeted */
+    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
+
+    lstrcpyA(buf, "foo");
+    len = GetTempPathA(len_with_null, buf);
+    ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
+    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
+    ok(buf[len - 1] == '\\', "should add back slash");
+    ok(len == (len_with_null - 1), "should return length without terminating 0");
+
+    len = GetTempPathA(0, NULL);
+    /* win2000 adds excessive 0 when TMP variable does not specify full path,
+     * and buffer is not large enough to hold path with backslash.
+     */
+    /* FIXME: replace ok by xfail below when it's implemeted */
+    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
+}
+
+static void test_GetTempPathW(void)
+{
+    UINT len, len_with_null;
+    WCHAR buf[MAX_PATH];
+    WCHAR sample[MAX_PATH];
+    static const WCHAR fooW[] = {'f','o','o',0};
+
+    lstrcpyW(buf, fooW);
+    len = GetTempPathW(MAX_PATH, buf);
+    ok(len <= MAX_PATH, "should fit into MAX_PATH");
+    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
+    ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
+    ok(buf[len - 1] == '\\', "should add back slash");
+
+    len_with_null = lstrlenW(buf) + 1;
+    lstrcpyW(sample, buf);
+    sample[len_with_null - 2] = 0;
+
+    /* this one is different from ANSI version: ANSI version doesn't
+     * touch the buffer, unicode version truncates the buffer to zero size
+     */
+    lstrcpyW(buf, fooW);
+    len = GetTempPathW(1, buf);
+    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
+    /* win2000 adds excessive 0 when TMP variable does not specify full path,
+     * and buffer is not large enough to hold path with backslash.
+     */
+    /* FIXME: replace ok by xfail below when it's implemeted */
+    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
+    ok(buf[0] == 0, "unicode version should truncate the buffer to zero size");
+
+    /* this one is different from ANSI version: ANSI version doesn't
+     * touch the buffer, unicode version returns path without backslash
+     */
+    lstrcpyW(buf, fooW);
+    len = GetTempPathW(len_with_null - 1, buf);
+    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
+    /* win2000 adds excessive 0 when TMP variable does not specify full path,
+     * and buffer is not large enough to hold path with backslash.
+     */
+    /* FIXME: replace ok by xfail below when it's implemeted */
+    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
+    /* win2000 fails here when TMP variable does not specify full path,
+     * but buffer is large enough to hold path without backslash.
+     */
+    if(len_with_null > 4) /* not the drive root: just do not add backslash */
+        /* FIXME: replace ok by xfail below when it's implemeted */
+	ok(lstrcmpW(sample, buf) == 0, "win2000 BUG: should return path without terminating back slash");
+    else /* drive root: truncate, to avoid returning ambiguous "X:" */
+        /* FIXME: replace ok by xfail below when it's implemeted */
+	ok(buf[0] == 0, "should truncate the buffer to zero size");
+
+    lstrcpyW(buf, fooW);
+    len = GetTempPathW(len_with_null, buf);
+    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
+    ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
+    ok(buf[len - 1] == '\\', "should add back slash");
+    ok(len == (len_with_null - 1), "should return length without terminating 0");
+
+    len = GetTempPathW(0, NULL);
+    /* win2000 adds excessive 0 when TMP variable does not specify full path,
+     * and buffer is not large enough to hold path with backslash.
+     * Therefore simple (len == len_with_null) fails.
+     */
+    ok(len >= len_with_null, "should reserve space for terminating 0");
+}
+
+static void test_GetTempPath(void)
+{
+    char save_TMP[MAX_PATH];
+    char windir[MAX_PATH];
+    char buf[MAX_PATH];
+
+    GetEnvironmentVariableA("TMP", save_TMP, sizeof(save_TMP));
+
+    /* test default configuration */
+    trace("TMP=%s\n", save_TMP);
+    test_GetTempPathA();
+    test_GetTempPathW();
+
+    /* TMP=C:\WINDOWS */
+    GetWindowsDirectoryA(windir, sizeof(windir));
+    SetEnvironmentVariableA("TMP", windir);
+    GetEnvironmentVariableA("TMP", buf, sizeof(buf));
+    trace("TMP=%s\n", buf);
+    test_GetTempPathA();
+    test_GetTempPathW();
+
+    /* TMP=C:\ */
+    GetWindowsDirectoryA(windir, sizeof(windir));
+    windir[3] = 0;
+    SetEnvironmentVariableA("TMP", windir);
+    GetEnvironmentVariableA("TMP", buf, sizeof(buf));
+    trace("TMP=%s\n", buf);
+    test_GetTempPathA();
+    test_GetTempPathW();
+
+    /* TMP=C: i.e. use current working directory of the specified drive */
+    GetWindowsDirectoryA(windir, sizeof(windir));
+    SetCurrentDirectoryA(windir);
+    windir[2] = 0;
+    SetEnvironmentVariableA("TMP", windir);
+    GetEnvironmentVariableA("TMP", buf, sizeof(buf));
+    trace("TMP=%s\n", buf);
+    test_GetTempPathA();
+    test_GetTempPathW();
+
+    SetEnvironmentVariableA("TMP", save_TMP);
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -806,4 +969,5 @@ START_TEST(path)
     test_CurrentDirectoryA(origdir,curdir);
     test_PathNameA(curdir, curDrive, otherDrive);
     test_CleanupPathA(origdir,curdir);
+    test_GetTempPath();
 }

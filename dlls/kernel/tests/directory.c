@@ -20,7 +20,7 @@
 
 #include "wine/test.h"
 #include "winbase.h"
-
+#include "winerror.h"
 
 /* If you change something in these tests, please do the same
  * for GetSystemDirectory tests.
@@ -119,10 +119,98 @@ static void test_GetSystemDirectoryW(void)
     ok(len == (len_with_null - 1), "should return length without terminating 0");
 }
 
+static void test_CreateDirectoryA(void)
+{
+    char tmpdir[MAX_PATH];
+    BOOL ret;
+
+    ret = CreateDirectoryA(NULL, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create NULL path");
+
+    ret = CreateDirectoryA("", NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create empty path");
+
+    ret = GetSystemDirectoryA(tmpdir, MAX_PATH);
+    ok(ret < MAX_PATH, "System directory should fit into MAX_PATH");
+
+    ret = SetCurrentDirectoryA(tmpdir);
+    ok(ret == TRUE, "could not chdir to the System directory");
+
+    ret = CreateDirectoryA(".", NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ALREADY_EXISTS, "should not create existing path");
+
+    ret = CreateDirectoryA("..", NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ALREADY_EXISTS, "should not create existing path");
+
+    GetTempPathA(MAX_PATH, tmpdir);
+    tmpdir[3] = 0; /* truncate the path */
+    ret = CreateDirectoryA(tmpdir, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ACCESS_DENIED, "should deny access to the drive root");
+
+    GetTempPathA(MAX_PATH, tmpdir);
+    lstrcatA(tmpdir, "Please Remove Me");
+    ret = CreateDirectoryA(tmpdir, NULL);
+    ok(ret == TRUE, "CreateDirectoryA should always succeed");
+
+    ret = CreateDirectoryA(tmpdir, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ALREADY_EXISTS, "should not create existing path");
+
+    ret = RemoveDirectoryA(tmpdir);
+    ok(ret == TRUE, "RemoveDirectoryA should always succeed");
+}
+
+static void test_CreateDirectoryW(void)
+{
+    WCHAR tmpdir[MAX_PATH];
+    BOOL ret;
+    static const WCHAR empty_strW[] = { 0 };
+    static const WCHAR tmp_dir_name[] = {'P','l','e','a','s','e',' ','R','e','m','o','v','e',' ','M','e',0};
+    static const WCHAR dotW[] = {'.',0};
+    static const WCHAR dotdotW[] = {'.','.',0};
+
+    ret = CreateDirectoryW(NULL, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create NULL path");
+
+    ret = CreateDirectoryW(empty_strW, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create empty path");
+
+    ret = GetSystemDirectoryW(tmpdir, MAX_PATH);
+    ok(ret < MAX_PATH, "System directory should fit into MAX_PATH");
+
+    ret = SetCurrentDirectoryW(tmpdir);
+    ok(ret == TRUE, "could not chdir to the System directory");
+
+    ret = CreateDirectoryW(dotW, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ALREADY_EXISTS, "should not create existing path");
+
+    ret = CreateDirectoryW(dotdotW, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ALREADY_EXISTS, "should not create existing path");
+
+    GetTempPathW(MAX_PATH, tmpdir);
+    tmpdir[3] = 0; /* truncate the path */
+    ret = CreateDirectoryW(tmpdir, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ACCESS_DENIED, "should deny access to the drive root");
+
+    GetTempPathW(MAX_PATH, tmpdir);
+    lstrcatW(tmpdir, tmp_dir_name);
+    ret = CreateDirectoryW(tmpdir, NULL);
+    ok(ret == TRUE, "CreateDirectoryW should always succeed");
+
+    ret = CreateDirectoryW(tmpdir, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_ALREADY_EXISTS, "should not create existing path");
+
+    ret = RemoveDirectoryW(tmpdir);
+    ok(ret == TRUE, "RemoveDirectoryW should always succeed");
+}
+
 START_TEST(directory)
 {
     test_GetWindowsDirectoryA();
     test_GetWindowsDirectoryW();
+
     test_GetSystemDirectoryA();
     test_GetSystemDirectoryW();
+
+    test_CreateDirectoryA();
+    test_CreateDirectoryW();
 }

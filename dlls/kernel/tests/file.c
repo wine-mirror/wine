@@ -463,6 +463,176 @@ static void test__lwrite( void )
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
+void test_CopyFileA(void)
+{
+    char temp_path[MAX_PATH];
+    char source[MAX_PATH], dest[MAX_PATH];
+    static const char prefix[] = "pfx";
+    DWORD ret;
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathA error %ld", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, source);
+    ok(ret != 0, "GetTempFileNameA error %ld", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, dest);
+    ok(ret != 0, "GetTempFileNameA error %ld", GetLastError());
+
+    ret = CopyFileA(source, dest, TRUE);
+    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+       "CopyFileA: unexpected error %ld\n", GetLastError());
+
+    ret = CopyFileA(source, dest, FALSE);
+    ok(ret,  "CopyFileA: error %ld\n", GetLastError());
+
+    ret = DeleteFileA(source);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+    ret = DeleteFileA(dest);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+}
+
+void test_CopyFileW(void)
+{
+    WCHAR temp_path[MAX_PATH];
+    WCHAR source[MAX_PATH], dest[MAX_PATH];
+    static const WCHAR prefix[] = {'p','f','x',0};
+    DWORD ret;
+
+    ret = GetTempPathW(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathW error %ld", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, source);
+    ok(ret != 0, "GetTempFileNameW error %ld", GetLastError());
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, dest);
+    ok(ret != 0, "GetTempFileNameW error %ld", GetLastError());
+
+    ret = CopyFileW(source, dest, TRUE);
+    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+       "CopyFileW: unexpected error %ld\n", GetLastError());
+
+    ret = CopyFileW(source, dest, FALSE);
+    ok(ret,  "CopyFileW: error %ld\n", GetLastError());
+
+    ret = DeleteFileW(source);
+    ok(ret, "DeleteFileW: error %ld\n", GetLastError());
+    ret = DeleteFileW(dest);
+    ok(ret, "DeleteFileW: error %ld\n", GetLastError());
+}
+
+void test_CreateFileA(void)
+{
+    HANDLE hFile;
+    char temp_path[MAX_PATH];
+    char filename[MAX_PATH];
+    static const char prefix[] = "pfx";
+    DWORD ret;
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathA error %ld", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, filename);
+    ok(ret != 0, "GetTempFileNameA error %ld", GetLastError());
+
+    hFile = CreateFileA(filename, GENERIC_READ, 0, NULL,
+                        CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_EXISTS,
+        "CREATE_NEW should fail if file exists and last error value should be ERROR_FILE_EXISTS");
+
+    ret = DeleteFileA(filename);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+}
+
+void test_CreateFileW(void)
+{
+    HANDLE hFile;
+    WCHAR temp_path[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    static const WCHAR prefix[] = {'p','f','x',0};
+    DWORD ret;
+
+    ret = GetTempPathW(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathW error %ld", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, filename);
+    ok(ret != 0, "GetTempFileNameW error %ld", GetLastError());
+
+    hFile = CreateFileW(filename, GENERIC_READ, 0, NULL,
+                        CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_EXISTS,
+        "CREATE_NEW should fail if file exists and last error value should be ERROR_FILE_EXISTS");
+
+    ret = DeleteFileW(filename);
+    ok(ret, "DeleteFileW: error %ld\n", GetLastError());
+}
+
+#define PATTERN_OFFSET	0x10
+
+void test_offset_in_overlapped_structure(void)
+{
+    HANDLE hFile;
+    OVERLAPPED ov;
+    DWORD done;
+    BYTE buf[256], pattern[] = "TeSt";
+    UINT i;
+    char temp_path[MAX_PATH], temp_fname[MAX_PATH];
+
+    ok(GetTempPathA(MAX_PATH, temp_path) != 0, "GetTempPathA error %ld", GetLastError());
+    ok(GetTempFileNameA(temp_path, "pfx", 0, temp_fname) != 0, "GetTempFileNameA error %ld", GetLastError());
+
+    /*** Write File *****************************************************/
+
+    hFile = CreateFileA(temp_fname, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA error %ld", GetLastError());
+
+    for(i = 0; i < sizeof(buf); i++) buf[i] = i;
+    ok(WriteFile(hFile, buf, sizeof(buf), &done, NULL), "WriteFile error %ld", GetLastError());
+    ok(done == sizeof(buf), "expected number of bytes written %lu", done);
+
+    memset(&ov, 0, sizeof(ov));
+    ov.Offset = PATTERN_OFFSET;
+    ov.OffsetHigh = 0;
+    ok(WriteFile(hFile, pattern, sizeof(pattern), &done, &ov), "WriteFile error %ld", GetLastError());
+    ok(done == sizeof(pattern), "expected number of bytes written %lu", done);
+    trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
+    ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
+       "expected file offset %d", PATTERN_OFFSET + sizeof(pattern));
+
+    ov.Offset = sizeof(buf) * 2;
+    ov.OffsetHigh = 0;
+    ok(WriteFile(hFile, pattern, sizeof(pattern), &done, &ov), "WriteFile error %ld", GetLastError());
+    ok(done == sizeof(pattern), "expected number of bytes written %lu", done);
+    /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
+    ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (sizeof(buf) * 2 + sizeof(pattern)),
+       "expected file offset %d", sizeof(buf) * 2 + sizeof(pattern));
+
+    CloseHandle(hFile);
+
+    /*** Read File *****************************************************/
+
+    hFile = CreateFileA(temp_fname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA error %ld", GetLastError());
+
+    memset(buf, 0, sizeof(buf));
+    memset(&ov, 0, sizeof(ov));
+    ov.Offset = PATTERN_OFFSET;
+    ov.OffsetHigh = 0;
+    ok(ReadFile(hFile, buf, sizeof(pattern), &done, &ov), "ReadFile error %ld", GetLastError());
+    ok(done == sizeof(pattern), "expected number of bytes read %lu", done);
+    trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
+    ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
+       "expected file offset %d", PATTERN_OFFSET + sizeof(pattern));
+    ok(!memcmp(buf, pattern, sizeof(pattern)), "pattern match failed");
+
+    CloseHandle(hFile);
+
+    ok(DeleteFileA(temp_fname), "DeleteFileA error %ld\n", GetLastError());
+}
 
 START_TEST(file)
 {
@@ -474,4 +644,9 @@ START_TEST(file)
     test__llopen(  );
     test__lread(  );
     test__lwrite(  );
+    test_CopyFileA();
+    test_CopyFileW();
+    test_CreateFileA();
+    test_CreateFileW();
+    test_offset_in_overlapped_structure();
 }

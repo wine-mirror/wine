@@ -2,6 +2,7 @@ Makefile
 alloc.ok
 atom.ok
 directory.ok
+drive.ok
 environ.ok
 file.ok
 format_msg.ok
