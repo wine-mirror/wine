@@ -44,6 +44,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
+extern ULONG dll_count;
+
 /*****************************************************************************/
 
 typedef struct {
@@ -78,17 +80,19 @@ static ULONG WINAPI ITS_IMonikerImpl_AddRef(
 {
     ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
     TRACE("%p\n", This);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ITS_IMonikerImpl_Release(
     IMoniker* iface)
 {
     ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    if (ref == 0)
-	HeapFree(GetProcessHeap(), 0, This);
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
+    }
 
     return ref;
 }
@@ -365,6 +369,7 @@ static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPWSTR name, DWORD n )
     TRACE("-> %p %s %s\n", itsmon,
           debugstr_w(itsmon->szFile), debugstr_w(itsmon->szHtml) );
     *ppObj = (IMoniker*) itsmon;
+    InterlockedIncrement(&dll_count);
 
     return S_OK;
 }
@@ -400,17 +405,19 @@ static ULONG WINAPI ITS_IParseDisplayNameImpl_AddRef(
 {
     ITS_IParseDisplayNameImpl *This = (ITS_IParseDisplayNameImpl *)iface;
     TRACE("%p\n", This);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ITS_IParseDisplayNameImpl_Release(
     IParseDisplayName* iface)
 {
     ITS_IParseDisplayNameImpl *This = (ITS_IParseDisplayNameImpl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    if (ref == 0)
-	HeapFree(GetProcessHeap(), 0, This);
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
+    }
 
     return ref;
 }
@@ -470,6 +477,7 @@ HRESULT ITS_IParseDisplayName_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("-> %p\n", its);
     *ppObj = (LPVOID) its;
+    InterlockedIncrement(&dll_count);
 
     return S_OK;
 }

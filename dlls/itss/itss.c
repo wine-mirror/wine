@@ -53,6 +53,8 @@ DEFINE_GUID(IID_IITStorage, 0x88cc31de, 0x27ab, 0x11d0, 0x9d, 0xf9, 0x0, 0xa0, 0
 
 static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
+ULONG dll_count = 0;
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
@@ -117,8 +119,10 @@ static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface)
 
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    if (ref == 0)
-	HeapFree(GetProcessHeap(), 0, This);
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
+    }
 
     return ref;
 }
@@ -193,6 +197,7 @@ HRESULT WINAPI ITSS_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
 
     *ppv = &(factory->ITF_IClassFactory);
+    InterlockedIncrement(&dll_count);
 
     TRACE("(%p) <- %p\n", ppv, &(factory->ITF_IClassFactory) );
 
@@ -239,8 +244,10 @@ ULONG WINAPI ITStorageImpl_Release(
     ITStorageImpl *This = (ITStorageImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    if (ref == 0)
-	HeapFree(GetProcessHeap(), 0, This);
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
+    }
 
     return ref;
 }
@@ -393,6 +400,7 @@ static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("-> %p\n", its);
     *ppObj = (LPVOID) its;
+    InterlockedIncrement(&dll_count);
 
     return S_OK;
 }
@@ -405,9 +413,8 @@ HRESULT WINAPI ITSS_DllRegisterServer(void)
     return S_OK;
 }
 
-BOOL WINAPI ITSS_DllCanUnloadNow(void)
+HRESULT WINAPI ITSS_DllCanUnloadNow(void)
 {
-    FIXME("\n");
-
-    return FALSE;
+    TRACE("dll_count = %lu\n", dll_count);
+    return dll_count ? S_FALSE : S_OK;
 }

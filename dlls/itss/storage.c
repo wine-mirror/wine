@@ -45,6 +45,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
+extern ULONG dll_count;
+
 /************************************************************************/
 
 typedef struct _ITSS_IStorageImpl
@@ -107,7 +109,7 @@ static ULONG WINAPI ITSS_IEnumSTATSTG_AddRef(
     IEnumSTATSTG* iface)
 {
     IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ITSS_IEnumSTATSTG_Release(
@@ -115,7 +117,7 @@ static ULONG WINAPI ITSS_IEnumSTATSTG_Release(
 {
     IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
 
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
     {
@@ -125,7 +127,8 @@ static ULONG WINAPI ITSS_IEnumSTATSTG_Release(
             HeapFree( GetProcessHeap(), 0, This->first );
             This->first = t;
         }
-	HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
     }
 
     return ref;
@@ -251,6 +254,7 @@ static IEnumSTATSTG_Impl *ITSS_create_enum( void )
     stgenum->first = NULL;
     stgenum->last = NULL;
     stgenum->current = NULL;
+    InterlockedIncrement(&dll_count);
 
     TRACE(" -> %p\n", stgenum );
 
@@ -282,7 +286,7 @@ ULONG WINAPI ITSS_IStorageImpl_AddRef(
     IStorage* iface)
 {
     ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI ITSS_IStorageImpl_Release(
@@ -290,11 +294,12 @@ ULONG WINAPI ITSS_IStorageImpl_Release(
 {
     ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
 
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
     {
-	HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
     }
 
     return ref;
@@ -569,6 +574,7 @@ static HRESULT ITSS_create_chm_storage(
     strcpyW( stg->dir, dir );
 
     *ppstgOpen = (IStorage*) stg;
+    InterlockedIncrement(&dll_count);
 
     return S_OK;
 }
@@ -619,7 +625,7 @@ static ULONG WINAPI ITSS_IStream_AddRef(
     IStream* iface)
 {
     IStream_Impl *This = (IStream_Impl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ITSS_IStream_Release(
@@ -627,12 +633,13 @@ static ULONG WINAPI ITSS_IStream_Release(
 {
     IStream_Impl *This = (IStream_Impl *)iface;
 
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
     {
         IStorage_Release( (IStorage*) This->stg );
 	HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
     }
 
     return ref;
@@ -818,6 +825,7 @@ static IStream_Impl *ITSS_create_stream(
     memcpy( &stm->ui, ui, sizeof stm->ui );
     stm->stg = stg;
     IStorage_AddRef( (IStorage*) stg );
+    InterlockedIncrement(&dll_count);
 
     TRACE(" -> %p\n", stm );
 
