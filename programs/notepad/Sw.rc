@@ -23,49 +23,49 @@
 MAIN_MENU MENU LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
  POPUP "&Arkiv" {
-  MENUITEM "&Ny...", 0x100
-  MENUITEM "Ö&ppna", 0x101
-  MENUITEM "&Spara", 0x102
-  MENUITEM "Spara &som...", 0x103
-  MENUITEM "&Skriv ut", 0x104
-  MENUITEM "Sid La&yout...", 0x105
-  MENUITEM "Skrivar &inställningar...", 0x106
+  MENUITEM "&Ny...",            CMD_NEW
+  MENUITEM "Ö&ppna",            CMD_OPEN
+  MENUITEM "&Spara",            CMD_SAVE
+  MENUITEM "Spara &som...",     CMD_SAVE_AS
+  MENUITEM "&Skriv ut",         CMD_PRINT
+  MENUITEM "Sid La&yout...",    CMD_PAGE_SETUP
+  MENUITEM "Skrivar &inställningar...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Avsluta", 0x108
+  MENUITEM "&Avsluta",          CMD_EXIT
  }
 POPUP "&Redigera" {
-  MENUITEM "&Undo\tCtrl+Z", 0x110
+  MENUITEM "&Undo\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "Klippa\tCtrl+X", 0x111
-  MENUITEM "&Kopiera\tCtrl+C", 0x112
-  MENUITEM "&Klistra in\tCtrl+V", 0x113
-  MENUITEM "&Ta bort\tDel", 0x114
+  MENUITEM "Klippa\tCtrl+X",    CMD_CUT
+  MENUITEM "&Kopiera\tCtrl+C",  CMD_COPY
+  MENUITEM "&Klistra in\tCtrl+V",       CMD_PASTE
+  MENUITEM "&Ta bort\tDel",     CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Markera &allt", 0x116
-  MENUITEM "&Tid/Datum\tF5", 0x117
+  MENUITEM "Markera &allt",     CMD_SELECT_ALL
+  MENUITEM "&Tid/Datum\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Dela långa meningar", 0x119
+  MENUITEM "&Dela långa meningar",      CMD_WRAP
  }
 POPUP "&Sök" {
-  MENUITEM "Sök...", 0x120
-  MENUITEM "&Sök nästa\tF3", 0x121
+  MENUITEM "Sök...",            CMD_SEARCH
+  MENUITEM "&Sök nästa\tF3",    CMD_SEARCH_NEXT
  }
 POPUP "&Hjälp" {
-  MENUITEM "&Innehåll", 0x130
-  MENUITEM "&Sök...", 0x131
-  MENUITEM "Användningen &av hjälp", 0x132
+  MENUITEM "&Innehåll",         CMD_HELP_CONTENTS
+  MENUITEM "&Sök...",           CMD_HELP_SEARCH
+  MENUITEM "Användningen &av hjälp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&ormation..." {
-   MENUITEM "&Licens", 0x135
-   MENUITEM "&INGEN GARANTI", 0x136
-   MENUITEM "&Om Wine", 0x137
+   MENUITEM "&Licens",          CMD_LICENSE
+   MENUITEM "&INGEN GARANTI",   CMD_NO_WARRANTY
+   MENUITEM "&Om Wine",         CMD_ABOUT_WINE
   }
  }
 }
 
 /* Dialog `Page setup' */
 
-DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"
@@ -93,33 +93,33 @@ PUSHBUTTON    "&Hjälp",       0x153,                180, 39, 40, 15, WS_TABSTOP
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
-STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
-STRING_PAGESETUP_FOOTERVALUE,	"Page &s"   /* FIXME */
-STRING_PAGESETUP_LEFTVALUE,		"20 mm"     /* FIXME */
-STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
-STRING_PAGESETUP_TOPVALUE,		"25 mm"     /* FIXME */
-STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
+STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,   "Page &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,             "20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
 
-STRING_NOTEPAD,					"Anteckningar"
-STRING_ERROR,					"FEL"
-STRING_WARNING,					"WARNING"
-STRING_INFO,					"Information"
+STRING_NOTEPAD,                                 "Anteckningar"
+STRING_ERROR,                                   "FEL"
+STRING_WARNING,                                 "WARNING"
+STRING_INFO,                                    "Information"
 
-STRING_UNTITLED,				"(untitled)"
+STRING_UNTITLED,                                "(untitled)"
 
-STRING_ALL_FILES,				"Alla filer (*.*)"
-STRING_TEXT_FILES_TXT,			"Text filer (*.txt)"
+STRING_ALL_FILES,                               "Alla filer (*.*)"
+STRING_TEXT_FILES_TXT,                  "Text filer (*.txt)"
 
-STRING_TOOLARGE,				"Filen '%s' är för stor för notepad.\n \
+STRING_TOOLARGE,                                "Filen '%s' är för stor för notepad.\n \
 Använd en annan editor."
-STRING_NOTEXT,					"Du skrev inte in någon text. \
+STRING_NOTEXT,                                  "Du skrev inte in någon text. \
 \nSkriv något och försök sedan igen"
-STRING_DOESNOTEXIST,				"File '%s'\ndoes not exist\n\n \
+STRING_DOESNOTEXIST,                            "File '%s'\ndoes not exist\n\n \
 Do you want to create a new file ?"
-STRING_NOTSAVED,				"File '%s'\nhas been modified\n\n \
+STRING_NOTSAVED,                                "File '%s'\nhas been modified\n\n \
 Would you like to save the changes ?"
-STRING_NOTFOUND,					"'%s' hittades inte."
-STRING_OUT_OF_MEMORY,			"Inte tillräkligt med minne för att slutföra \
+STRING_NOTFOUND,                                        "'%s' hittades inte."
+STRING_OUT_OF_MEMORY,                   "Inte tillräkligt med minne för att slutföra \
 den här uppgiften. \nAvsluta ett eller flera program för att öka mängden \nfritt \
 minne."
 

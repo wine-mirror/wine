@@ -22,49 +22,49 @@
 MAIN_MENU MENU LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 {
  POPUP "&Arquivo" {
-  MENUITEM "&Novo...", 0x100
-  MENUITEM "A&brir", 0x101
-  MENUITEM "&Salvar", 0x102
-  MENUITEM "Salvar &como...", 0x103
-  MENUITEM "&Imprimir", 0x104
-  MENUITEM "C&onfigurar Página...", 0x105
-  MENUITEM "Configurar I&mpressora...", 0x106
+  MENUITEM "&Novo...",		CMD_NEW
+  MENUITEM "A&brir",		CMD_OPEN
+  MENUITEM "&Salvar",		CMD_SAVE
+  MENUITEM "Salvar &como...",	CMD_SAVE_AS
+  MENUITEM "&Imprimir",		CMD_PRINT
+  MENUITEM "C&onfigurar Página...",	CMD_PAGE_SETUP
+  MENUITEM "Configurar I&mpressora...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Sair", 0x108
+  MENUITEM "&Sair",		CMD_EXIT
  }
 POPUP "&Editar" {
-  MENUITEM "&Desfazer\tCtrl+Z", 0x110
+  MENUITEM "&Desfazer\tCtrl+Z", CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "C&ortar\tCtrl+X", 0x111
-  MENUITEM "&Copiar\tCtrl+C", 0x112
-  MENUITEM "Co&lar\tCtrl+V", 0x113
-  MENUITEM "&Delete\tDel", 0x114
+  MENUITEM "C&ortar\tCtrl+X",	CMD_CUT
+  MENUITEM "&Copiar\tCtrl+C",	CMD_COPY
+  MENUITEM "Co&lar\tCtrl+V",	CMD_PASTE
+  MENUITEM "&Delete\tDel",	CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Selecionar &Tudo", 0x116
-  MENUITEM "&Data/Hora\tF5", 0x117
+  MENUITEM "Selecionar &Tudo",	CMD_SELECT_ALL
+  MENUITEM "&Data/Hora\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Quebrar linhas longas", 0x119
+  MENUITEM "&Quebrar linhas longas",	CMD_WRAP
  }
 POPUP "&Pesquisa" {
-  MENUITEM "Pesquisar...", 0x120
-  MENUITEM "&Procurar Próxima\tF3", 0x121
+  MENUITEM "Pesquisar...",	CMD_SEARCH
+  MENUITEM "&Procurar Próxima\tF3",	CMD_SEARCH_NEXT
  }
 POPUP "&Ajuda" {
-  MENUITEM "&Conteúdo", 0x130
-  MENUITEM "&Procurar...", 0x131
-  MENUITEM "&Ajuda na ajuda", 0x132
+  MENUITEM "&Conteúdo",		CMD_HELP_CONTENTS
+  MENUITEM "&Procurar...",	CMD_HELP_SEARCH
+  MENUITEM "&Ajuda na ajuda",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&ormações..." {
-   MENUITEM "&Licença", 0x135
-   MENUITEM "&SEM GARANTIA", 0x136
-   MENUITEM "&Sobre Wine", 0x137
+   MENUITEM "&Licença",		CMD_LICENSE
+   MENUITEM "&SEM GARANTIA",	CMD_NO_WARRANTY
+   MENUITEM "&Sobre Wine",	CMD_ABOUT_WINE
   }
  }
 }
 
 /* Dialog `Page setup' */
 
-DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"

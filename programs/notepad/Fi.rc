@@ -22,49 +22,49 @@
 MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 {
  POPUP "&Tiedosto" {
-  MENUITEM "&Uusi...", 0x100
-  MENUITEM "&Avaa", 0x101
-  MENUITEM "Ta&lleta", 0x102
-  MENUITEM "Talleta &nimellä...", 0x103
-  MENUITEM "T&ulosta", 0x104
-  MENUITEM "&Sivun asetukset...", 0x105
-  MENUITEM "&Kirjoittimen asetukset...", 0x106
+  MENUITEM "&Uusi...",		CMD_NEW
+  MENUITEM "&Avaa",		CMD_OPEN
+  MENUITEM "Ta&lleta",		CMD_SAVE
+  MENUITEM "Talleta &nimellä...",	CMD_SAVE_AS
+  MENUITEM "T&ulosta",		CMD_PRINT
+  MENUITEM "&Sivun asetukset...",	CMD_PAGE_SETUP
+  MENUITEM "&Kirjoittimen asetukset...",	CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Poistu", 0x108
+  MENUITEM "&Poistu",		CMD_EXIT
  }
 POPUP "&Muokkaa" {
-  MENUITEM "&Palauta\tCtrl+Z", 0x110
+  MENUITEM "&Palauta\tCtrl+Z",	CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "&Leikkaa\tCtrl+X", 0x111
-  MENUITEM "&Kopioi\tCtrl+C", 0x112
-  MENUITEM "L&iitä\tCtrl+V", 0x113
-  MENUITEM "P&oista\tDel", 0x114
+  MENUITEM "&Leikkaa\tCtrl+X",	CMD_CUT
+  MENUITEM "&Kopioi\tCtrl+C",	CMD_COPY
+  MENUITEM "L&iitä\tCtrl+V",	CMD_PASTE
+  MENUITEM "P&oista\tDel",	CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "&Valitse kaikki", 0x116
-  MENUITEM "&Aika/Päivämäärä\tF5", 0x117
+  MENUITEM "&Valitse kaikki",	CMD_SELECT_ALL
+  MENUITEM "&Aika/Päivämäärä\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "Ka&tkaise pitkä rivi", 0x119
+  MENUITEM "Ka&tkaise pitkä rivi",	CMD_WRAP
  }
 POPUP "&Etsi" {
-  MENUITEM "Etsi...", 0x120
-  MENUITEM "Etsi &seuraava\tF3", 0x121
+  MENUITEM "Etsi...",		CMD_SEARCH
+  MENUITEM "Etsi &seuraava\tF3",	CMD_SEARCH_NEXT
  }
 POPUP "&Apua" {
-  MENUITEM "&Sisältö", 0x130
-  MENUITEM "&Etsi...", 0x131
-  MENUITEM "Apua &Opastuksesta", 0x132
+  MENUITEM "&Sisältö",		CMD_HELP_CONTENTS
+  MENUITEM "&Etsi...",		CMD_HELP_SEARCH
+  MENUITEM "Apua &Opastuksesta",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&o..." {
-   MENUITEM "&Lisenssi", 0x135
-   MENUITEM "&EI TAKUUTA", 0x136
-   MENUITEM "&Tietoja Wine:ista", 0x137
+   MENUITEM "&Lisenssi",	CMD_LICENSE
+   MENUITEM "&EI TAKUUTA",	CMD_NO_WARRANTY
+   MENUITEM "&Tietoja Wine:ista",	CMD_ABOUT_WINE
   }
  }
 }
 
 /* Dialog `Page setup' */
 
-DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"

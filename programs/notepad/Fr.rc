@@ -23,49 +23,49 @@
 MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
  POPUP "&Fichier" {
-  MENUITEM "&Nouveau...", 0x100
-  MENUITEM "&Ouvrir", 0x101
-  MENUITEM "&Enregistrer", 0x102
-  MENUITEM "Enregistrer &sous...", 0x103
-  MENUITEM "Im&primer", 0x104
-  MENUITEM "&Mise en page...", 0x105
-  MENUITEM "&Configuration de l'imprimante...", 0x106
+  MENUITEM "&Nouveau...",       CMD_NEW
+  MENUITEM "&Ouvrir",           CMD_OPEN
+  MENUITEM "&Enregistrer",      CMD_SAVE
+  MENUITEM "Enregistrer &sous...",      CMD_SAVE_AS
+  MENUITEM "Im&primer",         CMD_PRINT
+  MENUITEM "&Mise en page...",  CMD_PAGE_SETUP
+  MENUITEM "&Configuration de l'imprimante...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Quitter", 0x108
+  MENUITEM "&Quitter",          CMD_EXIT
  }
 POPUP "&Edition" {
-  MENUITEM "&Annuler\tCtrl+Z", 0x110
+  MENUITEM "&Annuler\tCtrl+Z",  CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "Co&uper\tCtrl+X", 0x111
-  MENUITEM "&Copier\tCtrl+C", 0x112
-  MENUITEM "&Coller\tCtrl+V", 0x113
-  MENUITEM "&Effacer\tDel", 0x114
+  MENUITEM "Co&uper\tCtrl+X",   CMD_CUT
+  MENUITEM "&Copier\tCtrl+C",   CMD_COPY
+  MENUITEM "&Coller\tCtrl+V",   CMD_PASTE
+  MENUITEM "&Effacer\tDel",     CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Tout &sélectionner", 0x116
-  MENUITEM "&Heure/Date\tF5", 0x117
+  MENUITEM "Tout &sélectionner",        CMD_SELECT_ALL
+  MENUITEM "&Heure/Date\tF5",   CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Retour à la ligne", 0x119
+  MENUITEM "&Retour à la ligne",        CMD_WRAP
  }
 POPUP "&Rechercher" {
-  MENUITEM "&Rechercher", 0x120
-  MENUITEM "&Suivant\tF3", 0x121
+  MENUITEM "&Rechercher",       CMD_SEARCH
+  MENUITEM "&Suivant\tF3",      CMD_SEARCH_NEXT
  }
 POPUP "&Aide" {
-  MENUITEM "&Sommaire", 0x130
-  MENUITEM "&Rechercher...", 0x131
-  MENUITEM "&Aide sur l'aide", 0x132
+  MENUITEM "&Sommaire",         CMD_HELP_CONTENTS
+  MENUITEM "&Rechercher...",    CMD_HELP_SEARCH
+  MENUITEM "&Aide sur l'aide",  CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&o..." {
-   MENUITEM "&Licence", 0x135
-   MENUITEM "&AUCUNE GARANTIE", 0x136
-   MENUITEM "&A propos de Wine", 0x137
+   MENUITEM "&Licence",         CMD_LICENSE
+   MENUITEM "&AUCUNE GARANTIE", CMD_NO_WARRANTY
+   MENUITEM "&A propos de Wine",        CMD_ABOUT_WINE
   }
  }
 }
 
 /* Dialog `Page setup' */
 
-DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"
@@ -93,33 +93,33 @@ PUSHBUTTON    "&Aide",       0x153,                180, 39, 40, 15, WS_TABSTOP
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
-STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
-STRING_PAGESETUP_FOOTERVALUE,	"Page &s"   /* FIXME */
-STRING_PAGESETUP_LEFTVALUE,		"20 mm"     /* FIXME */
-STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
-STRING_PAGESETUP_TOPVALUE,		"25 mm"     /* FIXME */
-STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
+STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,   "Page &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,             "20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
 
-STRING_NOTEPAD,					"Notepad"
-STRING_ERROR,					"ERREUR"
-STRING_WARNING,					"ATTENTION"
-STRING_INFO,					"Information"
+STRING_NOTEPAD,                                 "Notepad"
+STRING_ERROR,                                   "ERREUR"
+STRING_WARNING,                                 "ATTENTION"
+STRING_INFO,                                    "Information"
 
-STRING_UNTITLED,				"(sans-titre)"
+STRING_UNTITLED,                                "(sans-titre)"
 
-STRING_ALL_FILES,				"Tous fichiers (*.*)"
-STRING_TEXT_FILES_TXT,			"Fichiers texte (*.txt)"
+STRING_ALL_FILES,                               "Tous fichiers (*.*)"
+STRING_TEXT_FILES_TXT,                  "Fichiers texte (*.txt)"
 
-STRING_TOOLARGE,				"Le fichier '%s' est trop grand pour le bloc-notes.\n \
+STRING_TOOLARGE,                                "Le fichier '%s' est trop grand pour le bloc-notes.\n \
 Veuillez utiliser un autre éditeur."
-STRING_NOTEXT,					"Vous n'avez pas entré de texte. Veuillez taper quelque chose et recommencer\
+STRING_NOTEXT,                                  "Vous n'avez pas entré de texte. Veuillez taper quelque chose et recommencer\
 \n"
-STRING_DOESNOTEXIST,			"Le fichier '%s'\n\'existe pas.\n\n \
+STRING_DOESNOTEXIST,                    "Le fichier '%s'\n\'existe pas.\n\n \
 Voulez vous créer un nouveau fichier ?"
-STRING_NOTSAVED,				"Le fichier '%s'\na été modifié\n\n \
+STRING_NOTSAVED,                                "Le fichier '%s'\na été modifié\n\n \
 Voulez vous enregistrer vos modifications ?"
-STRING_NOTFOUND,				"'%s' non trouvé."
-STRING_OUT_OF_MEMORY,			"Pas assez de mémoire pour finir cette tâche.  \
+STRING_NOTFOUND,                                "'%s' non trouvé."
+STRING_OUT_OF_MEMORY,                   "Pas assez de mémoire pour finir cette tâche.  \
 task. \n Fermez une ou plusier applications pour libérer\n\
 de la mémoire."
 

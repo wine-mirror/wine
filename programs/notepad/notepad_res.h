@@ -1,7 +1,8 @@
 /*
- *  Notepad (String defines)
+ *  Constants, used in resources.
  *
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ *  Copyright 2002 Andriy Palamarchuk
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +19,39 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define MAIN_MENU 0x10F
+#define MAIN_MENU               0x201
+#define DIALOG_PAGESETUP        0x202
+
+/* Commands */
+#define CMD_NEW                 0x100
+#define CMD_OPEN                0x101
+#define CMD_SAVE                0x102
+#define CMD_SAVE_AS             0x103
+#define CMD_PRINT               0x104
+#define CMD_PAGE_SETUP          0x105
+#define CMD_PRINTER_SETUP       0x106
+#define CMD_EXIT                0x108
+
+#define CMD_UNDO                0x110
+#define CMD_CUT                 0x111
+#define CMD_COPY                0x112
+#define CMD_PASTE               0x113
+#define CMD_DELETE              0x114
+#define CMD_SELECT_ALL          0x116
+#define CMD_TIME_DATE           0x117
+#define CMD_WRAP                0x119
+
+#define CMD_SEARCH              0x120
+#define CMD_SEARCH_NEXT         0x121
+
+#define CMD_HELP_CONTENTS       0x130
+#define CMD_HELP_SEARCH         0x131
+#define CMD_HELP_ON_HELP        0x132
+#define CMD_LICENSE             0x135
+#define CMD_NO_WARRANTY         0x136
+#define CMD_ABOUT_WINE          0x137
+
+/* Strings */
 #define STRING_PAGESETUP_HEADERVALUE 0x160
 #define STRING_PAGESETUP_FOOTERVALUE 0x161
 #define STRING_PAGESETUP_LEFTVALUE 0x162

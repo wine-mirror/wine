@@ -23,49 +23,49 @@
 MAIN_MENU MENU LANGUAGE LANG_SLOVAK, SUBLANG_NEUTRAL
 {
  POPUP "&File" {
-  MENUITEM "&New...", 0x100
-  MENUITEM "&Open", 0x101
-  MENUITEM "&Save", 0x102
-  MENUITEM "Save &as...", 0x103
-  MENUITEM "&Print", 0x104
-  MENUITEM "Page Se&tup...", 0x105
-  MENUITEM "P&rinter Setup...", 0x106
+  MENUITEM "&New...",		CMD_NEW
+  MENUITEM "&Open",		CMD_OPEN
+  MENUITEM "&Save",		CMD_SAVE
+  MENUITEM "Save &as...",	CMD_SAVE_AS
+  MENUITEM "&Print",		CMD_PRINT
+  MENUITEM "Page Se&tup...",	CMD_PAGE_SETUP
+  MENUITEM "P&rinter Setup...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Exit", 0x108
+  MENUITEM "&Exit",		CMD_EXIT
  }
 POPUP "&Edit" {
-  MENUITEM "&Undo\tCtrl+Z", 0x110
+  MENUITEM "&Undo\tCtrl+Z",	CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "Cu&t\tCtrl+X", 0x111
-  MENUITEM "&Copy\tCtrl+C", 0x112
-  MENUITEM "&Paste\tCtrl+V", 0x113
-  MENUITEM "&Delete\tDel", 0x114
+  MENUITEM "Cu&t\tCtrl+X",	CMD_CUT
+  MENUITEM "&Copy\tCtrl+C",	CMD_COPY
+  MENUITEM "&Paste\tCtrl+V",	CMD_PASTE
+  MENUITEM "&Delete\tDel",	CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Select &all", 0x116
-  MENUITEM "&Time/Date\tF5", 0x117
+  MENUITEM "Select &all",	CMD_SELECT_ALL
+  MENUITEM "&Time/Date\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Wrap long lines", 0x119
+  MENUITEM "&Wrap long lines",	CMD_WRAP
  }
 POPUP "&Search" {
-  MENUITEM "&Search", 0x120
-  MENUITEM "&Search next\tF3", 0x121
+  MENUITEM "&Search", CMD_SEARCH
+  MENUITEM "&Search next\tF3",	CMD_SEARCH_NEXT
  }
 POPUP "&Help" {
-  MENUITEM "&Contents", 0x130
-  MENUITEM "&Search...", 0x131
-  MENUITEM "&Help on help", 0x132
+  MENUITEM "&Contents",		CMD_HELP_CONTENTS
+  MENUITEM "&Search...",	CMD_HELP_SEARCH
+  MENUITEM "&Help on help",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&o..." {
-   MENUITEM "&License", 0x135
-   MENUITEM "&NO WARRANTY", 0x136
-   MENUITEM "&About Wine", 0x137
+   MENUITEM "&License",		CMD_LICENSE
+   MENUITEM "&NO WARRANTY",	CMD_NO_WARRANTY
+   MENUITEM "&About Wine",	CMD_ABOUT_WINE
   }
  }
 }
 
 /* Dialog `Page setup' */
 
-DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 LANGUAGE LANG_SLOVAK, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"

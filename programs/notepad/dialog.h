@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
-
 VOID DIALOG_FileNew(VOID);
 VOID DIALOG_FileOpen(VOID);
 VOID DIALOG_FileSave(VOID);
@@ -51,3 +49,7 @@ VOID DIALOG_HelpAboutWine(VOID);
 VOID DIALOG_PageSetup(VOID);
 VOID DIALOG_TimeDate(VOID);
 
+/* utility functions */
+BOOL FileExists(LPSTR szFilename);
+BOOL DoCloseFile(void);
+void DoOpenFile(LPSTR szFileName);

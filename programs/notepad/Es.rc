@@ -24,49 +24,49 @@
 MAIN_MENU MENU LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 {
  POPUP "&Archivo" {
-  MENUITEM "&Nuevo", 0x100
-  MENUITEM "&Abrir", 0x101
-  MENUITEM "&Guardar", 0x102
-  MENUITEM "Guardar co&mo...", 0x103
-  MENUITEM "&Imprimir", 0x104
-  MENUITEM "&Configurar página...", 0x105
-  MENUITEM "&Configuración impresora...", 0x106
+  MENUITEM "&Nuevo",            CMD_NEW
+  MENUITEM "&Abrir",            CMD_OPEN
+  MENUITEM "&Guardar",          CMD_SAVE
+  MENUITEM "Guardar co&mo...",  CMD_SAVE_AS
+  MENUITEM "&Imprimir",         CMD_PRINT
+  MENUITEM "&Configurar página...",     CMD_PAGE_SETUP
+  MENUITEM "&Configuración impresora...",       CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Salir", 0x108
+  MENUITEM "&Salir",            CMD_EXIT
  }
 POPUP "&Editar" {
-  MENUITEM "&Deshacer\tCtrl+Z", 0x110
+  MENUITEM "&Deshacer\tCtrl+Z", CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "Cor&tar\tCtrl+X", 0x111
-  MENUITEM "&Copiar\tCtrl+C", 0x112
-  MENUITEM "&Pegar\tCtrl+V", 0x113
-  MENUITEM "&Borrar\tDel", 0x114
+  MENUITEM "Cor&tar\tCtrl+X",   CMD_CUT
+  MENUITEM "&Copiar\tCtrl+C",   CMD_COPY
+  MENUITEM "&Pegar\tCtrl+V",    CMD_PASTE
+  MENUITEM "&Borrar\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Seleccionar t&odo", 0x116
-  MENUITEM "&Hora y Fecha\tF5", 0x117
+  MENUITEM "Seleccionar t&odo", CMD_SELECT_ALL
+  MENUITEM "&Hora y Fecha\tF5", CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Ajuste de línea automático", 0x119
+  MENUITEM "&Ajuste de línea automático",       CMD_WRAP
  }
 POPUP "&Buscar" {
-  MENUITEM "&Buscar...", 0x120
-  MENUITEM "Buscar &siguiente\tF3", 0x121
+  MENUITEM "&Buscar...",        CMD_SEARCH
+  MENUITEM "Buscar &siguiente\tF3",     CMD_SEARCH_NEXT
  }
 POPUP "&Ayuda" {
-  MENUITEM "&Indice", 0x130
-  MENUITEM "&Buscar...", 0x131
-  MENUITEM "Ayuda sobre la ayuda", 0x132
+  MENUITEM "&Indice",           CMD_HELP_CONTENTS
+  MENUITEM "&Buscar...",        CMD_HELP_SEARCH
+  MENUITEM "Ayuda sobre la ayuda",      CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&ormación..." {
-   MENUITEM "&Licencia", 0x135
-   MENUITEM "SIN &GARANTÍA", 0x136
-   MENUITEM "&Acerca de Wine", 0x137
+   MENUITEM "&Licencia",        CMD_LICENSE
+   MENUITEM "SIN &GARANTÍA",    CMD_NO_WARRANTY
+   MENUITEM "&Acerca de Wine",  CMD_ABOUT_WINE
   }
  }
 }
 
 /* Dialog `Page setup' */
 
-DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"
@@ -94,33 +94,33 @@ PUSHBUTTON    "&Ayuda",       0x153,                180, 39, 40, 15, WS_TABSTOP
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 {
-STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
-STRING_PAGESETUP_FOOTERVALUE,	"Página &s"   /* FIXME */
-STRING_PAGESETUP_LEFTVALUE,		"20 mm"     /* FIXME */
-STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
-STRING_PAGESETUP_TOPVALUE,		"25 mm"     /* FIXME */
-STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
+STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,   "Página &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,             "20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
 
-STRING_NOTEPAD,					"Bloc de Notas"
-STRING_ERROR,					"ERROR"
-STRING_WARNING,					"CUIDADO"
-STRING_INFO,					"Información"
+STRING_NOTEPAD,                                 "Bloc de Notas"
+STRING_ERROR,                                   "ERROR"
+STRING_WARNING,                                 "CUIDADO"
+STRING_INFO,                                    "Información"
 
-STRING_UNTITLED,				"(sin título)"
+STRING_UNTITLED,                                "(sin título)"
 
-STRING_ALL_FILES,				"Todos los archivos (*.*)"
-STRING_TEXT_FILES_TXT,			"Documentos de texto (*.txt)"
+STRING_ALL_FILES,                               "Todos los archivos (*.*)"
+STRING_TEXT_FILES_TXT,                  "Documentos de texto (*.txt)"
 
-STRING_TOOLARGE,				"El archivo '%s' es demasiado grande para el bloc de notas.\n \
+STRING_TOOLARGE,                                "El archivo '%s' es demasiado grande para el bloc de notas.\n \
 Use otro editor."
-STRING_NOTEXT,					"Ud. no escribió nada. \
+STRING_NOTEXT,                                  "Ud. no escribió nada. \
 \nPor favor escriba algo y pruebe de nuevo"
-STRING_DOESNOTEXIST,				"File '%s'\ndoes not exist\n\n \
+STRING_DOESNOTEXIST,                            "File '%s'\ndoes not exist\n\n \
 Do you want to create a new file ?"
-STRING_NOTSAVED,				"El texto en el archivo '%s' ha cambiado\n\n \
+STRING_NOTSAVED,                                "El texto en el archivo '%s' ha cambiado\n\n \
 ¿Desea guardar los cambios?"
-STRING_NOTFOUND,					"no se encontró '%s'."
-STRING_OUT_OF_MEMORY,			"No hay suficiente memoria para terminar \
+STRING_NOTFOUND,                                        "no se encontró '%s'."
+STRING_OUT_OF_MEMORY,                   "No hay suficiente memoria para terminar \
 esta tarea. \nCierre una o más aplicaciones para aumentar la cantidad \nde \
 memoria libre."
 

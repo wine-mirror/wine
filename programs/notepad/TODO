@@ -1,9 +1,0 @@
-
- - Logfile feature
-   if Notepad opens a file with ".LOG" (really?) in the first line, the
-   current date/time should automatically be inserted into the last line
-   of the file at startup.
-
- - Notepad segfaults when selecting "Find" button in "Search" dialog.
- 
- - create new *.rc files for all languages you know.
