@@ -496,8 +496,166 @@ DWORD WINAPI FormatMessage16(
     WORD   nSize,
     LPDWORD args /* va_list *args */
 ) {
-    return FormatMessageA(dwFlags, lpSource, (DWORD)dwMessageId, (DWORD)dwLanguageId, lpBuffer, (DWORD)nSize, args);
+#ifdef __i386__
+/* This implementation is completely dependant on the format of the va_list on x86 CPUs */
+    LPSTR	target,t;
+    DWORD	talloced;
+    LPSTR	from,f;
+    DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
+    DWORD	nolinefeed = 0;
+
+    TRACE("(0x%lx,%p,%d,0x%x,%p,%d,%p)\n",
+	  dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
+    if (width) 
+        FIXME("line wrapping not supported.\n");
+    from = NULL;
+    if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
+        from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
+    if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
+        from = HeapAlloc( GetProcessHeap(),0,200 );
+	sprintf(from,"Systemmessage, messageid = 0x%08x\n",dwMessageId);
+    }
+    if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
+        INT	bufsize;
+
+	dwMessageId &= 0xFFFF;
+	bufsize=LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,NULL,100);
+	if (bufsize) {
+	    from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
+	    LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
+	}
+    }
+    target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
+    t	= target;
+    talloced= 100;
+
+#define ADD_TO_T(c) \
+	*t++=c;\
+	if (t-target == talloced) {\
+		target	= (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
+		t	= target+talloced;\
+		talloced*=2;\
+	}
+
+    if (from) {
+        f=from;
+	while (*f && !nolinefeed) {
+	    if (*f=='%') {
+	        int	insertnr;
+		char	*fmtstr,*sprintfbuf,*x,*lastf;
+		DWORD	*argliststart;
+
+		fmtstr = NULL;
+		lastf = f;
+		f++;
+		if (!*f) {
+		    ADD_TO_T('%');
+		    continue;
+		}
+		switch (*f) {
+		case '1':case '2':case '3':case '4':case '5':
+		case '6':case '7':case '8':case '9':
+		    insertnr=*f-'0';
+		    switch (f[1]) {
+		    case '0':case '1':case '2':case '3':
+		    case '4':case '5':case '6':case '7':
+		    case '8':case '9':
+		        f++;
+			insertnr=insertnr*10+*f-'0';
+			f++;
+			break;
+		    default:
+		        f++;
+			break;
+		    }
+		    if (*f=='!') {
+		        f++;
+			if (NULL!=(x=strchr(f,'!'))) {
+			    *x='\0';
+			    fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
+			    sprintf(fmtstr,"%%%s",f);
+			    f=x+1;
+			} else {
+			    fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f));
+			    sprintf(fmtstr,"%%%s",f);
+			    f+=strlen(f); /*at \0*/
+			}
+		    } else
+		        if(!args) 
+			    break;
+			else
+			  fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
+		    if (args) {
+		        argliststart=args+insertnr-1;
+			if (fmtstr[strlen(fmtstr)-1]=='s')
+			    sprintfbuf=HeapAlloc(GetProcessHeap(),0,
+				 strlen(PTR_SEG_TO_LIN(argliststart[0]))+1);
+			else
+			    sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
+			
+			/* CMF - This makes a BIG assumption about va_list */
+			wvsprintf16(sprintfbuf, fmtstr, (va_list) argliststart);
+			x=sprintfbuf;
+			while (*x) {
+			    ADD_TO_T(*x++);
+			}
+			HeapFree(GetProcessHeap(),0,sprintfbuf);
+		    } else {
+		        /* NULL args - copy formatstr 
+			 * (probably wrong)
+			 */
+		        while ((lastf<f)&&(*lastf)) {
+			    ADD_TO_T(*lastf++);
+			}
+		    }
+		    HeapFree(GetProcessHeap(),0,fmtstr);
+		    break;
+		case 'n':
+		    /* FIXME: perhaps add \r too? */
+		    ADD_TO_T('\n');
+		    f++;
+		    break;
+		case '0':
+		    nolinefeed=1;
+		    f++;
+		    break;
+		default:
+		    ADD_TO_T(*f++);
+		    break;
+
+		}
+	    } else {
+	        ADD_TO_T(*f++);
+	    }
+	}
+	*t='\0';
+    }
+    if (!nolinefeed) {
+        /* add linefeed */
+        if(t==target || t[-1]!='\n')
+	    ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
+    }
+    talloced = strlen(target)+1;
+    if (nSize && talloced<nSize) {
+        target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
+    }
+    TRACE("-- %s\n",debugstr_a(target));
+    if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
+        /* nSize is the MINIMUM size */
+        *((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced);
+	memcpy(*(LPSTR*)lpBuffer,target,talloced);
+    } else
+        strncpy(lpBuffer,target,nSize);
+    HeapFree(GetProcessHeap(),0,target);
+    if (from) HeapFree(GetProcessHeap(),0,from);
+    return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
+        strlen(*(LPSTR*)lpBuffer):
+	strlen(lpBuffer);
+#else
+	return 0;
+#endif /* __i386__ */
 }
+#undef ADD_TO_T
 
 /***********************************************************************
  *           FormatMessage32A   (KERNEL32.138)
