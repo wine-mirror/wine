@@ -1089,7 +1089,7 @@ static void TAB_SetItemBounds (HWND hwnd)
        
         iCount = iIndexEnd-iIndexStart; 
 
-        if (iCount)
+        if (iCount>1)
         {
            INT iIndex;
            remainder = widthDiff % iCount;
