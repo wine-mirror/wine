@@ -387,10 +387,8 @@ static void *DSOUND_tmpbuffer(size_t len)
 
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
-	INT	i, len, ilen, temp, field, nBlockAlign;
-	INT	advance = dsb->dsound->wfx.wBitsPerSample >> 3;
-	BYTE	*buf, *ibuf, *obuf;
-	INT16	*ibufs, *obufs;
+	INT	i, len, ilen, temp, field, nBlockAlign, todo;
+	BYTE	*buf, *ibuf;
 
 	TRACE("(%p,%ld,%ld)\n",dsb,writepos,fraglen);
 
@@ -423,31 +421,70 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	    (dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
 		DSOUND_MixerVol(dsb, ibuf, len);
 
-	obuf = dsb->dsound->buffer + writepos;
-	for (i = 0; i < len; i += advance) {
-		obufs = (INT16 *) obuf;
-		ibufs = (INT16 *) ibuf;
-		if (dsb->dsound->wfx.wBitsPerSample == 8) {
+	if (dsb->dsound->wfx.wBitsPerSample == 8) {
+		BYTE	*obuf = dsb->dsound->buffer + writepos;
+
+		if ((writepos + len) <= dsb->dsound->buflen)
+			todo = len;
+		else
+			todo = dsb->dsound->buflen - writepos;
+
+		for (i = 0; i < todo; i++) {
 			/* 8-bit WAV is unsigned */
-			field = (*ibuf - 128);
+			field = (*ibuf++ - 128);
 			field += (*obuf - 128);
-			field = field > 127 ? 127 : field;
-			field = field < -128 ? -128 : field;
-			*obuf = field + 128;
-		} else {
-			/* 16-bit WAV is signed */
-			field = *ibufs;
-			field += *obufs;
-			field = field > 32767 ? 32767 : field;
-			field = field < -32768 ? -32768 : field;
-			*obufs = field;
+			if (field > 127) field = 127;
+			else if (field < -128) field = -128;
+			*obuf++ = field + 128;
 		}
-		ibuf += advance;
-		obuf += advance;
-		if (obuf >= (BYTE *)(dsb->dsound->buffer + dsb->dsound->buflen))
+ 
+		if (todo < len) {
+			todo = len - todo;
 			obuf = dsb->dsound->buffer;
-	}
-	/* free(buf); */
+
+			for (i = 0; i < todo; i++) {
+				/* 8-bit WAV is unsigned */
+				field = (*ibuf++ - 128);
+				field += (*obuf - 128);
+				if (field > 127) field = 127;
+				else if (field < -128) field = -128;
+				*obuf++ = field + 128;
+			}
+		}
+        } else {
+		INT16	*ibufs, *obufs;
+
+		ibufs = (INT16 *) ibuf;
+		obufs = (INT16 *)(dsb->dsound->buffer + writepos);
+
+		if ((writepos + len) <= dsb->dsound->buflen)
+			todo = len / 2;
+		else
+			todo = (dsb->dsound->buflen - writepos) / 2;
+
+		for (i = 0; i < todo; i++) {
+			/* 16-bit WAV is signed */
+			field = *ibufs++;
+			field += *obufs;
+			if (field > 32767) field = 32767;
+			else if (field < -32768) field = -32768;
+			*obufs++ = field;
+		}
+
+		if (todo < (len / 2)) {
+			todo = (len / 2) - todo;
+			obufs = (INT16 *)dsb->dsound->buffer;
+
+			for (i = 0; i < todo; i++) {
+				/* 16-bit WAV is signed */
+				field = *ibufs++;
+				field += *obufs;
+				if (field > 32767) field = 32767;
+				else if (field < -32768) field = -32768;
+				*obufs++ = field;
+			}
+		}
+        }
 
 	if (dsb->leadin && (dsb->startpos > dsb->buf_mixpos) && (dsb->startpos <= dsb->buf_mixpos + ilen)) {
 		/* HACK... leadin should be reset when the PLAY position reaches the startpos,
@@ -474,10 +511,9 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len)
 {
-	INT     i, ilen, field, nBlockAlign;
-	INT     advance = dsb->dsound->wfx.wBitsPerSample >> 3;
-	BYTE	*buf, *ibuf, *obuf;
-	INT16	*ibufs, *obufs;
+	INT     i, ilen, field, nBlockAlign, todo;
+	BYTE	*buf, *ibuf;
+
 	TRACE("(%p,%ld,%ld)\n",dsb,writepos,len);
 
 	nBlockAlign = dsb->dsound->wfx.nBlockAlign;
@@ -496,31 +532,70 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 		DSOUND_MixerVol(dsb, ibuf, len);
 
 	/* subtract instead of add, to phase out premixed data */
-	obuf = dsb->dsound->buffer + writepos;
-	for (i = 0; i < len; i += advance) {
-		obufs = (INT16 *) obuf;
-		ibufs = (INT16 *) ibuf;
-		if (dsb->dsound->wfx.wBitsPerSample == 8) {
+	if (dsb->dsound->wfx.wBitsPerSample == 8) {
+		BYTE	*obuf = dsb->dsound->buffer + writepos;
+
+		if ((writepos + len) <= dsb->dsound->buflen)
+			todo = len;
+		else
+			todo = dsb->dsound->buflen - writepos;
+
+		for (i = 0; i < todo; i++) {
 			/* 8-bit WAV is unsigned */
-			field = (*ibuf - 128);
+			field = (*ibuf++ - 128);
 			field -= (*obuf - 128);
-			field = field > 127 ? 127 : field;
-			field = field < -128 ? -128 : field;
-			*obuf = field + 128;
-		} else {
-			/* 16-bit WAV is signed */
-			field = *ibufs;
-			field -= *obufs;
-			field = field > 32767 ? 32767 : field;
-			field = field < -32768 ? -32768 : field;
-			*obufs = field;
+			if (field > 127) field = 127;
+			else if (field < -128) field = -128;
+			*obuf++ = field + 128;
 		}
-		ibuf += advance;
-		obuf += advance;
-		if (obuf >= (BYTE *)(dsb->dsound->buffer + dsb->dsound->buflen))
+ 
+		if (todo < len) {
+			todo = len - todo;
 			obuf = dsb->dsound->buffer;
-	}
-	/* free(buf); */
+
+			for (i = 0; i < todo; i++) {
+				/* 8-bit WAV is unsigned */
+				field = (*ibuf++ - 128);
+				field -= (*obuf - 128);
+				if (field > 127) field = 127;
+				else if (field < -128) field = -128;
+				*obuf++ = field + 128;
+			}
+		}
+        } else {
+		INT16	*ibufs, *obufs;
+
+		ibufs = (INT16 *) ibuf;
+		obufs = (INT16 *)(dsb->dsound->buffer + writepos);
+
+		if ((writepos + len) <= dsb->dsound->buflen)
+			todo = len / 2;
+		else
+			todo = (dsb->dsound->buflen - writepos) / 2;
+
+		for (i = 0; i < todo; i++) {
+			/* 16-bit WAV is signed */
+			field = *ibufs++;
+			field -= *obufs;
+			if (field > 32767) field = 32767;
+			else if (field < -32768) field = -32768;
+			*obufs++ = field;
+		}
+
+		if (todo < (len / 2)) {
+			todo = (len / 2) - todo;
+			obufs = (INT16 *)dsb->dsound->buffer;
+
+			for (i = 0; i < todo; i++) {
+				/* 16-bit WAV is signed */
+				field = *ibufs++;
+				field -= *obufs;
+				if (field > 32767) field = 32767;
+				else if (field < -32768) field = -32768;
+				*obufs++ = field;
+			}
+		}
+        }
 }
 
 static void DSOUND_MixCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, BOOL cancel)
