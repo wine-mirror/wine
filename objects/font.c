@@ -1975,9 +1975,43 @@ GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
 			 INT nMaxExtent, GCP_RESULTSW *lpResults,
 			 DWORD dwFlags)
 {
-    /* return value 0 is correct for most cases anyway */
-    FIXME(":stub!\n");
-    return 0;
+    DWORD ret=0;
+    SIZE size;
+
+    TRACE("%s 0x%08x 0x%08x 0x%08lx:partial stub!\n",
+          debugstr_w(lpString), uCount, nMaxExtent, dwFlags);
+
+    TRACE("lpOrder=%p lpDx=%p lpCaretPos=%p lpClass=%p "
+          "lpOutString=%p lpGlyphs=%p\n",
+          lpResults->lpOrder, lpResults->lpDx, lpResults->lpCaretPos,
+          lpResults->lpClass, lpResults->lpOutString, lpResults->lpGlyphs);
+
+    if(dwFlags)			FIXME("flags 0x%08lx ignored\n", dwFlags);
+    if(lpResults->lpOrder)	FIXME("reordering not implemented\n");
+    if(lpResults->lpCaretPos)	FIXME("caret positions not implemented\n");
+    if(lpResults->lpClass)	FIXME("classes not implemented\n");
+    if(lpResults->lpGlyphs)	FIXME("glyphs not implemented\n");
+
+    /* copy will do if the GCP_REORDER flag is not set */
+    if(lpResults->lpOutString)
+    {
+      lstrcpynW(lpResults->lpOutString, lpString, uCount);
+    }
+
+    if (lpResults->lpDx)
+    {
+      int i, c;
+      for (i=0; i<uCount;i++)
+      { 
+        if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
+          lpResults->lpDx[i]= c;
+      }
+    }
+
+    if (GetTextExtentPoint32W(hdc, lpString, uCount, &size))
+      ret = MAKELONG(size.cx, size.cy);
+
+    return ret;
 }
 
 /*************************************************************************
