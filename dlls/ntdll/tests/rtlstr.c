@@ -33,41 +33,39 @@ static STRING str;
 static HMODULE hntdll = 0;
 static VOID (WINAPI *pRtlInitAnsiString)(PSTRING,LPCSTR);
 static VOID (WINAPI *pRtlInitString)(PSTRING, LPCSTR);
-static VOID (WINAPI *pRtlFreeAnsiString)(PSTRING);
-static VOID (WINAPI *pRtlFreeOemString)(PSTRING);
+/*static VOID (WINAPI *pRtlFreeAnsiString)(PSTRING);*/
+/*static VOID (WINAPI *pRtlFreeOemString)(PSTRING);*/
 static VOID (WINAPI *pRtlCopyString)(STRING *, const STRING *);
 static VOID (WINAPI *pRtlInitUnicodeString)(PUNICODE_STRING,LPCWSTR);
 static BOOLEAN (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING,LPCWSTR);
-static BOOLEAN (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING,LPCSTR);
-static VOID (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
-static VOID (WINAPI *pRtlCopyUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *);
-static VOID (WINAPI *pRtlEraseUnicodeString)(UNICODE_STRING *);
-static LONG (WINAPI *pRtlCompareString)(const STRING *,const STRING *,BOOLEAN);
-static LONG (WINAPI *pRtlCompareUnicodeString)(const UNICODE_STRING *,const UNICODE_STRING *,BOOLEAN);
-static BOOLEAN (WINAPI *pRtlEqualString)(const STRING *,const STRING *,BOOLEAN);
-static BOOLEAN (WINAPI *pRtlEqualUnicodeString)(const UNICODE_STRING *,const UNICODE_STRING *,BOOLEAN);
-static BOOLEAN (WINAPI *pRtlPrefixString)(const STRING *, const STRING *, BOOLEAN);
-static BOOLEAN (WINAPI *pRtlPrefixUnicodeString)(const UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlOemStringToUnicodeString)(PUNICODE_STRING, const STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlUnicodeStringToOemString)(STRING *, const UNICODE_STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);
-static NTSTATUS (WINAPI *pRtlOemToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);
-static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);
-static NTSTATUS (WINAPI *pRtlUpcaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlUpcaseUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlUpcaseUnicodeStringToOemString)(STRING *, const UNICODE_STRING *, BOOLEAN);
-static NTSTATUS (WINAPI *pRtlUpcaseUnicodeToMultiByteN)(LPSTR, DWORD, LPDWORD, LPCWSTR, DWORD);
-static NTSTATUS (WINAPI *pRtlUpcaseUnicodeToOemN)(LPSTR, DWORD, LPDWORD, LPCWSTR, DWORD);
-static UINT (WINAPI *pRtlOemToUnicodeSize)(const STRING *);
-static DWORD (WINAPI *pRtlAnsiStringToUnicodeSize)(const STRING *);
-static NTSTATUS (WINAPI *pRtlOemToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);
-static NTSTATUS (WINAPI *pRtlOemToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);
+/*static BOOLEAN (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING,LPCSTR);*/
+/*static VOID (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);*/
+/*static VOID (WINAPI *pRtlCopyUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *);*/
+/*static VOID (WINAPI *pRtlEraseUnicodeString)(UNICODE_STRING *);*/
+/*static LONG (WINAPI *pRtlCompareString)(const STRING *,const STRING *,BOOLEAN);*/
+/*static LONG (WINAPI *pRtlCompareUnicodeString)(const UNICODE_STRING *,const UNICODE_STRING *,BOOLEAN);*/
+/*static BOOLEAN (WINAPI *pRtlEqualString)(const STRING *,const STRING *,BOOLEAN);*/
+/*static BOOLEAN (WINAPI *pRtlEqualUnicodeString)(const UNICODE_STRING *,const UNICODE_STRING *,BOOLEAN);*/
+/*static BOOLEAN (WINAPI *pRtlPrefixString)(const STRING *, const STRING *, BOOLEAN);*/
+/*static BOOLEAN (WINAPI *pRtlPrefixUnicodeString)(const UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlOemStringToUnicodeString)(PUNICODE_STRING, const STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlUnicodeStringToOemString)(STRING *, const UNICODE_STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);*/
+/*static NTSTATUS (WINAPI *pRtlOemToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);*/
+/*static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);*/
+/*static NTSTATUS (WINAPI *pRtlUpcaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlUpcaseUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlUpcaseUnicodeStringToOemString)(STRING *, const UNICODE_STRING *, BOOLEAN);*/
+/*static NTSTATUS (WINAPI *pRtlUpcaseUnicodeToMultiByteN)(LPSTR, DWORD, LPDWORD, LPCWSTR, DWORD);*/
+/*static NTSTATUS (WINAPI *pRtlUpcaseUnicodeToOemN)(LPSTR, DWORD, LPDWORD, LPCWSTR, DWORD);*/
+/*static UINT (WINAPI *pRtlOemToUnicodeSize)(const STRING *);*/
+/*static DWORD (WINAPI *pRtlAnsiStringToUnicodeSize)(const STRING *);*/
 
 /* more function pointers here */
 
-static DWORD (WINAPI *pRtlIsTextUnicode)(LPVOID, DWORD, DWORD *);
+/*static DWORD (WINAPI *pRtlIsTextUnicode)(LPVOID, DWORD, DWORD *);*/
 static NTSTATUS (WINAPI *pRtlUnicodeStringToInteger)(const UNICODE_STRING *, int, int *);
 
 static void InitFunctionPtrs()
