@@ -492,3 +492,31 @@ void WINAPI RtlAssert(LPVOID x1,LPVOID x2,DWORD x3, DWORD x4)
 {
 	FIXME("(%p,%p,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4);
 }
+
+/******************************************************************************
+ *  RtlGetNtVersionNumbers       [NTDLL.@]
+ *
+ * Introduced in Windows XP (NT5.1)
+ */
+void WINAPI RtlGetNtVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
+{
+	OSVERSIONINFOEXW versionInfo;
+	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+	GetVersionExW((OSVERSIONINFOW*)&versionInfo);
+
+	if (major)
+	{
+		*major = versionInfo.dwMajorVersion;
+	}
+
+	if (minor)
+	{
+		*minor = versionInfo.dwMinorVersion;
+	}
+
+	if (build)
+	{
+		/* FIXME: Does anybody know the real formula? */
+		*build = (0xF0000000 | versionInfo.dwBuildNumber);
+	}
+}
