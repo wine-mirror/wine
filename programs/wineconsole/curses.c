@@ -30,6 +30,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +45,7 @@
 #include <winnls.h>
 #include "winecon_private.h"
 
+#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -52,6 +54,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 #define PRIVATE(data)   ((struct inner_data_curse*)((data)->private))
 
 #if defined(HAVE_CURSES_H) || defined(HAVE_NCURSES_H)
+
+#ifdef HAVE_NCURSES_H
+ #define CURSES_NAME "ncurses"
+#else
+ #define CURSES_NAME "curses"
+#endif
 
 struct inner_data_curse 
 {
@@ -62,6 +70,146 @@ struct inner_data_curse
     int                 allow_scroll;
 };
 
+
+static void *nc_handle = NULL;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p_##f;
+
+MAKE_FUNCPTR(curs_set)
+MAKE_FUNCPTR(delwin)
+MAKE_FUNCPTR(endwin)
+MAKE_FUNCPTR(getmouse)
+MAKE_FUNCPTR(has_colors)
+MAKE_FUNCPTR(init_pair)
+#ifndef initscr
+MAKE_FUNCPTR(initscr)
+#endif
+#ifndef intrflush
+MAKE_FUNCPTR(intrflush)
+#endif
+MAKE_FUNCPTR(keypad)
+MAKE_FUNCPTR(mouseinterval)
+MAKE_FUNCPTR(mousemask)
+MAKE_FUNCPTR(newpad)
+#ifndef nodelay
+MAKE_FUNCPTR(nodelay)
+#endif
+#ifndef noecho
+MAKE_FUNCPTR(noecho)
+#endif
+MAKE_FUNCPTR(prefresh)
+MAKE_FUNCPTR(raw)
+MAKE_FUNCPTR(start_color)
+MAKE_FUNCPTR(stdscr)
+MAKE_FUNCPTR(waddchnstr)
+MAKE_FUNCPTR(wmove)
+MAKE_FUNCPTR(wgetch)
+
+#undef MAKE_FUNCPTR
+
+/**********************************************************************/
+
+typedef struct {
+    LPVOID lpCallback;
+    LPVOID lpContext;
+} DirectDrawEnumerateProcData;
+
+static BOOL WCCURSES_bind_libcurses(void)
+{
+#ifdef HAVE_NCURSES_H
+    static const char *ncname = SONAME_LIBNCURSES;
+#else
+    static const char *ncname = SONAME_LIBCURSES;
+#endif
+
+    nc_handle = wine_dlopen(ncname, RTLD_NOW, NULL, 0);
+    if(!nc_handle)
+    {
+        WINE_MESSAGE("Wine cannot find the " CURSES_NAME " library (%s).\n",
+                     ncname);
+        return FALSE;
+    }
+
+#define LOAD_FUNCPTR(f)                                      \
+    if((p_##f = wine_dlsym(nc_handle, #f, NULL, 0)) == NULL) \
+    {                                                        \
+        WINE_WARN("Can't find symbol %s\n", #f);             \
+        goto sym_not_found;                                  \
+    }
+
+    LOAD_FUNCPTR(curs_set)
+    LOAD_FUNCPTR(delwin)
+    LOAD_FUNCPTR(endwin)
+    LOAD_FUNCPTR(getmouse)
+    LOAD_FUNCPTR(has_colors)
+    LOAD_FUNCPTR(init_pair)
+#ifndef initscr
+    LOAD_FUNCPTR(initscr)
+#endif
+#ifndef intrflush
+    LOAD_FUNCPTR(intrflush)
+#endif
+    LOAD_FUNCPTR(keypad)
+    LOAD_FUNCPTR(mouseinterval)
+    LOAD_FUNCPTR(mousemask)
+    LOAD_FUNCPTR(newpad)
+#ifndef nodelay
+    LOAD_FUNCPTR(nodelay)
+#endif
+#ifndef noecho
+    LOAD_FUNCPTR(noecho)
+#endif
+    LOAD_FUNCPTR(prefresh)
+    LOAD_FUNCPTR(raw)
+    LOAD_FUNCPTR(start_color)
+    LOAD_FUNCPTR(stdscr)
+    LOAD_FUNCPTR(waddchnstr)
+    LOAD_FUNCPTR(wmove)
+    LOAD_FUNCPTR(wgetch)
+
+#undef LOAD_FUNCPTR
+
+    return TRUE;
+
+sym_not_found:
+    WINE_MESSAGE(
+      "Wine cannot find certain functions that it needs inside the "
+       CURSES_NAME "\nlibrary.  To enable Wine to use " CURSES_NAME 
+      " please upgrade your " CURSES_NAME "\nlibraries\n");
+    wine_dlclose(nc_handle, NULL, 0);
+    nc_handle = NULL;
+    return FALSE;
+}
+
+#define curs_set p_curs_set
+#define delwin p_delwin
+#define endwin p_endwin
+#define getmouse p_getmouse
+#define has_colors p_has_colors
+#define init_pair p_init_pair
+#ifndef initscr
+#define initscr p_initscr
+#endif
+#ifndef intrflush
+#define intrflush p_intrflush
+#endif
+#define keypad p_keypad
+#define mouseinterval p_mouseinterval
+#define mousemask p_mousemask
+#define newpad p_newpad
+#ifndef nodelay
+#define nodelay p_nodelay
+#endif
+#ifndef noecho
+#define noecho p_noecho
+#endif
+#define prefresh p_prefresh
+#define raw p_raw
+#define start_color p_start_color
+#define stdscr (*p_stdscr)
+#define waddchnstr p_waddchnstr
+#define wmove p_wmove
+#define wgetch p_wgetch
 
 /******************************************************************
  *		WCCURSES_ResizeScreenBuffer
@@ -719,6 +867,9 @@ static int WCCURSES_MainLoop(struct inner_data* data)
  */
 enum init_return WCCURSES_InitBackend(struct inner_data* data)
 {
+    if( !WCCURSES_bind_libcurses() )
+        return init_failed;
+
     data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_curse));
     if (!data->private) return init_failed;
 

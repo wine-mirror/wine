@@ -923,6 +923,8 @@ then
   WINE_GET_SONAME(jack,jack_client_new)
   WINE_GET_SONAME(ssl,SSL_library_init)
   WINE_GET_SONAME(crypto,BIO_new_socket)
+  WINE_GET_SONAME(ncurses,waddch)
+  WINE_GET_SONAME(curses,waddch)
 fi
 
 
