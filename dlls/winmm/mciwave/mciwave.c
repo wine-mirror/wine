@@ -8,7 +8,6 @@
 /*
  * FIXME:
  *	- record/play should and must be done asynchronous
- *	- segmented/linear pointer problems (lpData in waveheaders,W*_DONE cbs)
  */
 
 #include "winuser.h"
@@ -25,7 +24,6 @@ typedef struct {
     int				nUseCount;	/* Incremented for each shared open */
     BOOL			fShareable;	/* TRUE if first open was shareable */
     WORD			wNotifyDeviceID;/* MCI device ID with a pending notification */
-    HANDLE			hCallback;	/* Callback handle for pending notification */
     HMMIO			hFile;		/* mmio file handle open as Element */
     MCI_WAVE_OPEN_PARMSA 	openParms;
     LPWAVEFORMATEX		lpWaveFormat;
@@ -35,6 +33,8 @@ typedef struct {
     DWORD			dwFileOffset;   /* Offset of chunk in mmio file */
     DWORD			dwLength;	/* number of bytes in chunk for playing */
     DWORD			dwPosition;	/* position in bytes in chunk for playing */
+    HANDLE			hEvent;		/* for synchronization */
+    DWORD			dwEventCount;	/* for synchronization */
 } WINE_MCIWAVE;
 
 /* ===================================================================
@@ -414,30 +414,40 @@ static DWORD WAVE_mciCue(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
  */
 static DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    DWORD 		dwRet;
+    DWORD 		dwRet = 0;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
     
-    wmw->dwStatus = MCI_MODE_STOP;
+    /* wait for playback thread (if any) to exit before processing further */
+    switch (wmw->dwStatus) {
+    case MCI_MODE_PAUSE:
+    case MCI_MODE_PLAY:
+    case MCI_MODE_RECORD:
+	{
+	    int oldStat = wmw->dwStatus;
+	    wmw->dwStatus = MCI_MODE_NOT_READY;
+	    if (oldStat == MCI_MODE_PAUSE)
+		dwRet = (wmw->fInput) ? waveInReset(wmw->hWave) : waveOutReset(wmw->hWave);
+	}
+	while (((volatile WINE_MCIWAVE*)wmw)->dwStatus != MCI_MODE_STOP)
+	    Sleep(10);
+	break;
+    }
+
     wmw->dwPosition = 0;
-    TRACE("wmw->dwStatus=%d\n", wmw->dwStatus);
+
+    /* sanity resets */
+    wmw->dwStatus = MCI_MODE_STOP;
     
-    if (wmw->fInput)
-	dwRet = waveInReset(wmw->hWave);
-    else
-	dwRet = waveOutReset(wmw->hWave);
-    
-    if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+    if ((dwFlags & MCI_NOTIFY) && lpParms) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     
-    return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
+    return dwRet;
 }
 
 /**************************************************************************
@@ -459,26 +469,58 @@ static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
     wmw->nUseCount--;
     
     if (wmw->nUseCount == 0) {
-	DWORD	mmRet;
 	if (wmw->hFile != 0) {
 	    mmioClose(wmw->hFile, 0);
 	    wmw->hFile = 0;
 	}
-	mmRet = (wmw->fInput) ? waveInClose(wmw->hWave) : waveOutClose(wmw->hWave);
-	
-	if (mmRet != MMSYSERR_NOERROR) dwRet = MCIERR_INTERNAL;
     }
     
     HeapFree(GetProcessHeap(), 0, wmw->lpWaveFormat);
     wmw->lpWaveFormat = NULL;
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			wmw->wNotifyDeviceID,
 			(dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
     }
+
     return 0;
+}
+
+/**************************************************************************
+ * 				WAVE_mciPlayCallback		[internal]
+ */
+static	void	CALLBACK WAVE_mciPlayCallback(HWAVEOUT hwo, UINT uMsg, 
+					      DWORD dwInstance,  
+					      DWORD dwParam1, DWORD dwParam2)
+{
+    WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)dwInstance;
+
+    switch (uMsg) {
+    case WOM_OPEN:
+    case WOM_CLOSE:
+	break;
+    case WOM_DONE:
+	InterlockedIncrement(&wmw->dwEventCount);
+	TRACE("Returning waveHdr=%lx\n", dwParam1);
+	SetEvent(wmw->hEvent);
+	break;
+    default:
+	ERR("Unknown uMsg=%d\n", uMsg);
+    }
+}
+
+static void WAVE_mciPlayWaitDone(WINE_MCIWAVE* wmw)
+{
+    for (;;) {
+	ResetEvent(wmw->hEvent);
+	if (InterlockedDecrement(&wmw->dwEventCount) >= 0) {
+	    break;
+	}
+	InterlockedIncrement(&wmw->dwEventCount);
+	
+	WaitForSingleObject(wmw->hEvent, INFINITE);
+    }
 }
 
 /**************************************************************************
@@ -488,8 +530,8 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     DWORD		end;
     LONG		bufsize, count, left;
-    DWORD		dwRet;
-    LPWAVEHDR		waveHdr;
+    DWORD		dwRet = 0;
+    LPWAVEHDR		waveHdr = NULL;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     int			whidx;
 
@@ -546,15 +588,19 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
      * and to start sending to hWave when dwPosition is reached)
      */
     mmioSeek(wmw->hFile, wmw->dwFileOffset + wmw->dwPosition, SEEK_SET); /* >= 0 */
-    
+
     /* By default the device will be opened for output, the MCI_CUE function is there to
      * change from output to input and back
      */
     /* FIXME: how to choose between several output channels ? here mapper is forced */
-    dwRet = waveOutOpen(&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat, 0L, 0L, CALLBACK_NULL);
+    dwRet = waveOutOpen(&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat, 
+			(DWORD)WAVE_mciPlayCallback, (DWORD)wmw, CALLBACK_FUNCTION);
+
     if (dwRet != 0) {
 	TRACE("Can't open low level audio device %ld\n", dwRet);
-	return MCIERR_DEVICE_OPEN;
+	dwRet = MCIERR_DEVICE_OPEN;
+	wmw->hWave = 0;
+	goto cleanUp;
     }
 
     /* make it so that 3 buffers per second are needed */
@@ -563,62 +609,75 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     waveHdr = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(WAVEHDR) + 2 * bufsize);
     waveHdr[0].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR);
     waveHdr[1].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR) + bufsize;
-    waveHdr[0].dwUser  = waveHdr[1].dwUser = 0L;
-    waveHdr[0].dwLoops = waveHdr[1].dwLoops = 0L;
+    waveHdr[0].dwUser         = waveHdr[1].dwUser         = 0L;
+    waveHdr[0].dwLoops        = waveHdr[1].dwLoops        = 0L;
+    waveHdr[0].dwFlags        = waveHdr[1].dwFlags        = 0L;
+    waveHdr[0].dwBufferLength = waveHdr[1].dwBufferLength = bufsize;
+    if (waveOutPrepareHeader(wmw->hWave, &waveHdr[0], sizeof(WAVEHDR)) || 
+	waveOutPrepareHeader(wmw->hWave, &waveHdr[1], sizeof(WAVEHDR))) {
+	dwRet = MCIERR_INTERNAL;
+	goto cleanUp;
+    }
 
-    wmw->dwStatus = MCI_MODE_PLAY;
-    
     whidx = 0;
     left = MIN(wmw->dwLength, end - wmw->dwPosition);
+    wmw->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wmw->dwEventCount = 1L; /* for first buffer */
 
     TRACE("Playing (normalized) from byte=%lu for %lu bytes\n", wmw->dwPosition, left);
-
+    wmw->dwStatus = MCI_MODE_PLAY;
+    
     /* FIXME: this doesn't work if wmw->dwPosition != 0 */
-    while (left > 0 && wmw->dwStatus != MCI_MODE_STOP) {
-	waveHdr[whidx].dwFlags = 0L;
+    while (left > 0 && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
 	count = mmioRead(wmw->hFile, waveHdr[whidx].lpData, MIN(bufsize, left));
 	TRACE("mmioRead bufsize=%ld count=%ld\n", bufsize, count);
 	if (count < 1) 
 	    break;
-	left -= count;
+	/* count is always <= bufsize, so this is correct regarding the 
+	 * waveOutPrepareHeader function 
+	 */
 	waveHdr[whidx].dwBufferLength = count;
-	dwRet = waveOutPrepareHeader(wmw->hWave, &waveHdr[whidx], sizeof(WAVEHDR));
-/* EPP 	waveHdr[whidx].dwBytesRecorded = 0; */
+	waveHdr[whidx].dwFlags &= ~WHDR_DONE;
 	TRACE("before WODM_WRITE lpWaveHdr=%p dwBufferLength=%lu dwBytesRecorded=%lu\n",
 	      &waveHdr[whidx], waveHdr[whidx].dwBufferLength, 
 	      waveHdr[whidx].dwBytesRecorded);
 	dwRet = waveOutWrite(wmw->hWave, &waveHdr[whidx], sizeof(WAVEHDR));
+	left -= count;
 	wmw->dwPosition += count;
 	TRACE("after WODM_WRITE dwPosition=%lu\n", wmw->dwPosition);
 
+	WAVE_mciPlayWaitDone(wmw);
 	whidx ^= 1;
-	if (waveHdr[whidx].dwFlags & WHDR_PREPARED) {
-	    /* FIXME: should use callback mechanisms from audio driver */
-	    while (!(waveHdr[whidx].dwFlags & WHDR_DONE))
-		Sleep(100);
-	    dwRet = waveOutUnprepareHeader(wmw->hWave, &waveHdr[whidx], sizeof(WAVEHDR));
-	}
     }
-    whidx ^= 1;
-    if (waveHdr[whidx].dwFlags & WHDR_PREPARED) {
-	/* test if waveHdr[whidx] has been prepared, if so it has been queued for playing */
-	while (!(waveHdr[whidx].dwFlags & WHDR_DONE))
-	    Sleep(100);
-	waveOutUnprepareHeader(wmw->hWave, &waveHdr[whidx], sizeof(WAVEHDR));
-    }
-    
+
+    WAVE_mciPlayWaitDone(wmw); /* to balance first buffer */
+
+    /* just to get rid of some race conditions between play, stop and pause */
+    waveOutReset(wmw->hWave);
+
+    waveOutUnprepareHeader(wmw->hWave, &waveHdr[0], sizeof(WAVEHDR));
+    waveOutUnprepareHeader(wmw->hWave, &waveHdr[1], sizeof(WAVEHDR));
+
+    dwRet = 0;
+
+cleanUp:    
     HeapFree(GetProcessHeap(), 0, waveHdr);
 
-    waveOutReset(wmw->hWave);
-    waveOutClose(wmw->hWave);
+    if (wmw->hWave) {
+	waveOutClose(wmw->hWave);
+	wmw->hWave = 0;
+    }
+    CloseHandle(wmw->hEvent);
+
+    if (lpParms && (dwFlags & MCI_NOTIFY)) {
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+			wmw->wNotifyDeviceID, 
+			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
+    }
 
     wmw->dwStatus = MCI_MODE_STOP;
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
+
+    return dwRet;
 }
 
 /**************************************************************************
@@ -675,7 +734,6 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     HeapFree(GetProcessHeap(), 0, waveHdr.lpData);
 
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -715,14 +773,12 @@ static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
     
     if (wmw->dwStatus == MCI_MODE_PAUSE) {
 	wmw->dwStatus = MCI_MODE_PLAY;
     } 
     
-    /* FIXME: I doubt WIDM_START is correct */
     if (wmw->fInput)	dwRet = waveInStart(wmw->hWave);
     else		dwRet = waveOutRestart(wmw->hWave);
     return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
@@ -759,7 +815,6 @@ static DWORD WAVE_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	TRACE("Seeking to position=%lu bytes\n", wmw->dwPosition);
 	
 	if (dwFlags & MCI_NOTIFY) {
-	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	    mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			    wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
@@ -990,7 +1045,6 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	}
     }
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
