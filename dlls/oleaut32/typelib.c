@@ -1565,7 +1565,7 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
                 if(!strcmp(astr,pFInfo->pParamDesc[i].Name))
                     goto ITypeLib2_fnIsName_exit;
         }
-        for(pVInfo=pTInfo->varlist;pVInfo;pVInfo=pVInfo->next) ;
+        for(pVInfo=pTInfo->varlist;pVInfo;pVInfo=pVInfo->next)
             if(!strcmp(astr,pVInfo->Name)) goto ITypeLib2_fnIsName_exit;
        
     }
