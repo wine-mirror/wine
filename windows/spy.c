@@ -1573,7 +1573,6 @@ static const SPY_NOTIFY *end_spnfy_array;     /* ptr to last good entry in array
 
 static BOOL16 SPY_Exclude[SPY_MAX_MSGNUM+1];
 static BOOL16 SPY_ExcludeDWP = 0;
-static int SPY_IndentLevel  = 0;
 
 #define SPY_EXCLUDE(msg) \
     (SPY_Exclude[(msg) > SPY_MAX_MSGNUM ? SPY_MAX_MSGNUM : (msg)])
@@ -1593,6 +1592,25 @@ typedef struct
 
 /* This is defined so that the external entry point can return the addr */
 static SPY_INSTANCE ext_sp_e;
+
+static int indent_tls_index;
+
+/***********************************************************************
+ *           get_indent_level
+ */
+inline static int get_indent_level(void)
+{
+    return (int)TlsGetValue( indent_tls_index );
+}
+
+
+/***********************************************************************
+ *           set_indent_level
+ */
+inline static void set_indent_level( int level )
+{
+    TlsSetValue( indent_tls_index, (void *)level );
+}
 
 
 /***********************************************************************
@@ -1934,6 +1952,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
                        WPARAM wParam, LPARAM lParam )
 {
     SPY_INSTANCE sp_e;
+    int indent;
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg)) return;
 
@@ -1943,19 +1962,20 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     sp_e.wParam = wParam;
     SPY_GetWndName(&sp_e);
     SPY_GetMsgStuff(&sp_e);
+    indent = get_indent_level();
 
     /* each SPY_SENDMESSAGE must be complemented by call to SPY_ExitMessage */
     switch(iFlag)
     {
     case SPY_DISPATCHMESSAGE16:
         TRACE("%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
-              SPY_IndentLevel, "", WIN_Handle16(hWnd),
+              indent, "", WIN_Handle16(hWnd),
               debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name, wParam, lParam);
         break;
 
     case SPY_DISPATCHMESSAGE:
         TRACE("%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg, 
+                        indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg, 
                         sp_e.msg_name, wParam, lParam);
         break;
 
@@ -1975,11 +1995,11 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
-                      SPY_IndentLevel, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
+                      indent, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
                       sp_e.msg_name, taskName, wParam, lParam );
             else
             {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
-			     SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
+			     indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
 			     sp_e.msg_name, taskName, wParam, lParam );
 		SPY_DumpStructure(&sp_e, TRUE);
 	    }
@@ -1989,17 +2009,17 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_DEFWNDPROC16:
 	if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
-              SPY_IndentLevel, "", WIN_Handle16(hWnd), sp_e.msg_name, msg, wParam, lParam );
+              indent, "", WIN_Handle16(hWnd), sp_e.msg_name, msg, wParam, lParam );
         break;
 
     case SPY_DEFWNDPROC:
 	if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, sp_e.msg_name,
+                        indent, "", hWnd, sp_e.msg_name,
                         msg, wParam, lParam );
         break;
-    }  
-    SPY_IndentLevel += SPY_INDENT_UNIT;
+    }
+    set_indent_level( indent + SPY_INDENT_UNIT );
 }
 
 
@@ -2010,6 +2030,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
                        WPARAM wParam, LPARAM lParam )
 {
     SPY_INSTANCE sp_e;
+    int indent;
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg) ||
 	(SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND)) )
@@ -2022,41 +2043,45 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
     SPY_GetWndName(&sp_e);
     SPY_GetMsgStuff(&sp_e);
 
-    if (SPY_IndentLevel) SPY_IndentLevel -= SPY_INDENT_UNIT;
+    if ((indent = get_indent_level()))
+    {
+        indent -= SPY_INDENT_UNIT;
+        set_indent_level( indent );
+    }
 
     switch(iFlag)
     {
     case SPY_RESULT_DEFWND16:
 	TRACE(" %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
-              SPY_IndentLevel, "", WIN_Handle16(hWnd), sp_e.msg_name, msg, lReturn );
+              indent, "", WIN_Handle16(hWnd), sp_e.msg_name, msg, lReturn );
 	break;
 
     case SPY_RESULT_DEFWND:
 	TRACE(" %*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
-			SPY_IndentLevel, "", hWnd, sp_e.msg_name, msg, lReturn );
+			indent, "", hWnd, sp_e.msg_name, msg, lReturn );
 	break;
 
     case SPY_RESULT_OK16:
         TRACE(" %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
-              SPY_IndentLevel, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
+              indent, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
               sp_e.msg_name, lReturn );
         break;
 
     case SPY_RESULT_OK:
         TRACE(" %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
-                        SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
+                        indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name, lReturn );
 	SPY_DumpStructure(&sp_e, FALSE);
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
         WARN(" %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
-             SPY_IndentLevel, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name );
+             indent, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name );
         break;
 
     case SPY_RESULT_INVALIDHWND:
         WARN(" %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
-                        SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
+                        indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name );
         break;
    }
@@ -2076,6 +2101,7 @@ int SPY_Init(void)
 
     if (!TRACE_ON(message)) return TRUE;
 
+    indent_tls_index = TlsAlloc();
     buffer[0] = 0;
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
     {
