@@ -25,6 +25,9 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 /* ptr to fonts for which we have afm files */
 FONTFAMILY *PSDRV_AFMFontList = NULL;
 
+/* qsort/bsearch callback functions */
+typedef int (*compar_callback_fn) (const void *, const void *);
+
 /*******************************************************************************
  *  	CheckMetrics
  *
@@ -683,7 +686,7 @@ static BOOL SortFontMetrics()
 			    
 		    qsort(aglCopy, PSDRV_AdobeGlyphList.size,
 		    	    sizeof(UNICODEGLYPH),
-			    (__compar_fn_t)UnicodeGlyphByNameIndex);
+			    (compar_callback_fn)UnicodeGlyphByNameIndex);
 		}
 		
 		for (i = 0; i < afm->NumofMetrics; ++i)
@@ -695,7 +698,7 @@ static BOOL SortFontMetrics()
 		    
 		    pug = bsearch(&ug, aglCopy, PSDRV_AdobeGlyphList.size,
 		    	    sizeof(UNICODEGLYPH),
-			    (__compar_fn_t)UnicodeGlyphByNameIndex);
+			    (compar_callback_fn)UnicodeGlyphByNameIndex);
 		    if (pug == NULL)
 		    {
 		    	WARN("Glyph '%s' in font '%s' does not have a UV\n",
@@ -715,7 +718,8 @@ static BOOL SortFontMetrics()
 		
 		/* typecast avoids compiler warning */
     	    	qsort((void *)(afm->Encoding->glyphs), afm->Encoding->size,
-		    	sizeof(UNICODEGLYPH), (__compar_fn_t)UnicodeGlyphByUV);
+		    	sizeof(UNICODEGLYPH),
+			(compar_callback_fn)UnicodeGlyphByUV);
 			
 		for (i = 0; i < afm->Encoding->size; ++i)
 		    if (afm->Encoding->glyphs[i].UV >= 0)
@@ -726,7 +730,7 @@ static BOOL SortFontMetrics()
 	    }
 	    
 	    qsort(afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS),
-	    	    (__compar_fn_t)AFMMetricsByUV);
+	    	    (compar_callback_fn)AFMMetricsByUV);
 		    
 	    for (i = 0; i < afm->NumofMetrics; ++i)
 	    	if (afm->Metrics[i].UV >= 0)
