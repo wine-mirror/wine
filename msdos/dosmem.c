@@ -169,9 +169,9 @@ struct _DOS_LISTOFLISTS * DOSMEM_LOL()
  */
 static void DOSMEM_FillBiosSegments(void)
 {
-    BYTE *pBiosSys = (BYTE *)GlobalLock16( DOSMEM_BiosSysSeg );
+    BYTE *pBiosSys = DOSMEM_BiosSys();
     BYTE *pBiosROMTable = pBiosSys+0xe6f5;
-    BIOSDATA *pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosDataSeg );
+    BIOSDATA *pBiosData = DOSMEM_BiosData();
 
     /* bogus 0xe0xx addresses !! Adapt int 0x10/0x1b if change needed */
     VIDEOFUNCTIONALITY *pVidFunc = (VIDEOFUNCTIONALITY *)(pBiosSys+0xe000);
