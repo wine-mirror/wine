@@ -180,14 +180,12 @@ Use a desktop window of the given geometry, e.g. "640x480"
 .I --display name
 Use the specified X display
 .TP
-.I --dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][+...]
+.I --dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]][+...]
 Selects the override type and load order of dll used in the loading process
 for any dll. The default is set in @sysconfdir@/wine.conf or ~/.winerc. There
-are currently four types of libraries that can be loaded into a process' address
+are currently three types of libraries that can be loaded into a process' address
 space: Native windows dlls (
 .I native
-), ELF encapsulated windows dlls (
-.I elfdll
 ), native ELF libraries (
 .I so
 )and 
@@ -195,7 +193,7 @@ space: Native windows dlls (
 internal dlls (
 .I builtin
 ). The type may be abbreviated with the first letter of the type (
-.I n, e, s, b
+.I n, s, b
 ). Each sequence of orders must be separated by commas.
 .br
 Each dll may have its own specific load order. The load order determines
@@ -218,10 +216,10 @@ the builtin version if the native load fails.
 Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
 an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
 .br
-.I --dll comdlg32,commdlg=e,n:shell,shell32=b+comctl32,commctrl=n
+.I --dll comdlg32,commdlg=b,n:shell,shell32=b+comctl32,commctrl=n
 .br
-Try to load comdlg32 and commdlg as elfdll first and try the native version
-if the elfdll load fails; load shell32/shell always as builtin and
+Try to load comdlg32 and commdlg as builtin first and try the native version
+if the builtin load fails; load shell32/shell always as builtin and
 comctl32/commctrl always as native.
 .br
 Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
@@ -311,7 +309,7 @@ appropriate syntax for your shell to enter environment variables you need.
 .I WINEPREFIX
 If set, the content of this variable is taken as the name of the directory where
 .B wine
-stores its data (usually 
+stores its data (the default is 
 .I $HOME/.wine
 ). This directory contains also the socket, which is used to communicate with the
 .I wineserver.
@@ -327,6 +325,27 @@ to different values for different
 processes, it is possible to run a number of truly independent 
 .B wine
 processes. 
+.TP
+.I WINESERVER
+Specifies the path and name of the
+.B wineserver
+binary. If not set, a file named "wineserver" is searched in the
+path and in a few other likely locations.
+.TP
+.I WINELOADER
+Specifies the path and name of the
+.B wine
+binary to use to launch new Windows processes. If not set, a binary
+named "wine" is searched in the path and in a few other likely
+locations.
+.TP
+.I WINEDLLPATH
+Specifies the path(s) in which to search for builtin dll files. This
+is a list of directories separated by ":". Builtin dlls are also
+searched in the directories specified by the standard
+.I LD_LIBRARY_PATH
+if they are not found in the directories listed in
+.I WINEDLLPATH.
 
 .SH CONFIGURATION FILE
 .B wine
@@ -349,6 +368,12 @@ option.
 is available thanks to the work of many developers. For a listing
 of the authors, please see the file 
 .B AUTHORS
+in the top-level directory of the source distribution.
+.SH COPYRIGHT
+.B wine
+can be distributed under the terms of the X11 license. A copy of the
+license is in the file
+.B LICENSE
 in the top-level directory of the source distribution.
 .SH BUGS
 .PP
@@ -415,6 +440,11 @@ The
 .B wine 
 server 
 .TP 
+.I @prefix@/bin/winedbg
+The 
+.B wine 
+debugger
+.TP 
 .I @prefix@/bin/wineclpsrv
 The 
 .B wine 
@@ -435,10 +465,6 @@ User-specific configuration file
 .I ~/.wine
 Directory containing user specific data managed by 
 .B wine. 
-.TP
-.I @prefix@/lib/wine.sym
-Global symbol table (used in debugger)
-.SH "SEE ALSO"
-.BR wine.conf (5),
-.BR clone (2)
 
+.SH "SEE ALSO"
+.BR wine.conf (5)

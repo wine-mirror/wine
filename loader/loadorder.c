@@ -42,9 +42,9 @@ static struct tagDllOverride {
 	{"w32skrnl,wow32",		"builtin"},
 	{"advapi32,crtdll,ntdll",	"builtin,native"},
 	{"lz32,lzexpand",		"builtin,native"},
-	{"version,ver",			"elfdll,builtin,native"},
+	{"version,ver",			"builtin,native"},
 	/* "new" interface */
-	{"comdlg32,commdlg",		"elfdll,builtin,native"},
+	{"comdlg32,commdlg",		"builtin,native"},
 	{"shell32,shell",		"builtin,native"},
 	{"shlwapi",			"native,builtin"},
 	{"shfolder",                    "builtin,native"},
@@ -149,6 +149,7 @@ static char *get_tok(const char *str, const char *delim)
  */
 static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 {
+    static int warn;
 	char *cptr;
 	int n = 0;
 
@@ -171,8 +172,9 @@ static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 		case 'n': type = MODULE_LOADORDER_DLL; break;
 
 		case 'E':	/* Elfdll */
-		case 'e': type = MODULE_LOADORDER_ELFDLL; break;
-
+		case 'e':
+                    if (!warn++) MESSAGE("Load order 'elfdll' no longer support, ignored\n");
+                    break;
 		case 'S':	/* So */
 		case 's': type = MODULE_LOADORDER_SO; break;
 
@@ -337,24 +339,23 @@ endit:
  * The path will be appended to any existing LD_LIBRARY_PATH from the 
  * environment (see note in code below).
  *
- *	DefaultLoadOrder=native,elfdll,so,builtin
+ *	DefaultLoadOrder=native,so,builtin
  * A comma separated list of module types to try to load in that specific
  * order. The DefaultLoadOrder key is used as a fallback when a module is
  * not specified explicitly. If the DefaultLoadOrder key is not found, 
- * then the order "dll,elfdll,so,bi" is used
+ * then the order "dll,so,bi" is used
  * The possible module types are:
  *	- native	Native windows dll files
- *	- elfdll	Dlls encapsulated in .so libraries
  *	- so		Native .so libraries mapped to dlls
  *	- builtin	Built-in modules
  *
  * Case is not important and only the first letter of each type is enough to
- * identify the type n[ative], e[lfdll], s[o], b[uiltin]. Also whitespace is
+ * identify the type n[ative], s[o], b[uiltin]. Also whitespace is
  * ignored.
  * E.g.:
- * 	n,el	,s , b
+ * 	n,s , b
  * is equal to:
- *	native,elfdll,so,builtin
+ *	native,so,builtin
  *
  * Section:
  *	[DllOverrides]
@@ -367,9 +368,9 @@ endit:
  * Examples:
  * kernel32, gdi32, user32 = builtin
  * kernel, gdi, user = builtin
- * comdlg32 = elfdll, native, builtin
+ * comdlg32 = native, builtin
  * commdlg = native, builtin
- * version, ver = elfdll, native, builtin
+ * version, ver = native, builtin
  *
  */
 
@@ -395,7 +396,7 @@ BOOL MODULE_InitLoadOrder(void)
 #endif
 
 	/* Get the default load order */
-	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,b,e,s", buffer, sizeof(buffer));
+	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,b,s", buffer, sizeof(buffer));
 	if(!nbuffer)
 	{
 		MESSAGE("MODULE_InitLoadOrder: mysteriously read nothing from default loadorder\n");
@@ -431,9 +432,9 @@ BOOL MODULE_InitLoadOrder(void)
 	/* Add the commandline overrides to the pool */
 	if(!ParseCommandlineOverrides())
 	{
-		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][+...]\n"
+		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]][+...]\n"
 			"    - 'name' is the name of any dll without extension\n"
-			"    - the order of loading (native, elfdll, so and builtin) can be abbreviated\n"
+			"    - the order of loading (native, so and builtin) can be abbreviated\n"
 			"      with the first letter\n"
 			"    - different loadorders for different dlls can be specified by seperating the\n"
 			"      commandline entries with a '+'\n"
@@ -462,7 +463,7 @@ BOOL MODULE_InitLoadOrder(void)
 	if(TRACE_ON(module))
 	{
 		int i, j;
-		static char types[6] = "-NESB";
+		static char types[] = "-NSB";
 
 		for(i = 0; i < nmodule_loadorder; i++)
 		{

@@ -20,7 +20,6 @@
 #include "debugtools.h"
 #include "callback.h"
 #include "loadorder.h"
-#include "elfdll.h"
 #include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
@@ -1377,12 +1376,6 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		case MODULE_LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", filename);
 			pwm = PE_LoadLibraryExA(filename, flags);
-			break;
-
-		case MODULE_LOADORDER_ELFDLL:
-			TRACE("Trying elfdll '%s'\n", filename);
-			if (!(pwm = BUILTIN32_LoadLibraryExA(filename, flags)))
-                            pwm = ELFDLL_LoadLibraryExA(filename, flags);
 			break;
 
 		case MODULE_LOADORDER_SO:

@@ -150,47 +150,43 @@ debugger.
 .I format: EXTRA_LD_LIBRARY_PATH=@prefix@/lib/wine[:/more/path/to/search[:...]]
 .br
 The path will be appended to any existing LD_LIBRARY_PATH from the 
-environment for the search of elfdlls and .so libraries.
+environment for the search of .so libraries.
 .PP
-.I format: DefaultLoadOrder=native,elfdll,so,builtin
+.I format: DefaultLoadOrder=native,so,builtin
 .br
 A comma separated list of module-types to try to load in that specific
 order. The DefaultLoadOrder key is used as a fallback when a module is
 not specified explicitely. If the DefaultLoadOrder key is not found, 
-then the order "native,elfdll,so,builtin" is used.
+then the order "native,builtin,so" is used.
 .br
-Case is not (yet) important and only the first letter of each type is enough
-to identify the type n[ative], e[lfdll], s[o], b[uiltin]. Also whitespace is
-ignored. Keep everything in lower case to be sure that your entries keep the
-same meaning. See also commandline option
+Case is not (yet) important and only the first letter of each type is
+enough to identify the type n[ative], s[o], b[uiltin]. Also whitespace
+is ignored. Keep everything in lower case to be sure that your entries
+keep the same meaning. See also commandline option
 .I --dll
 for details about the allowable types.
 .PP
 .B [DllOverrides]
 .br
-There are no explicit keys defined other than module/library names. A comma
-separated list of modules is followed by an assignment of the load order
-for these specific modules. See above for possible types. You should not
-specify an extension.
+There are no explicit keys defined other than module/library names. A
+module namd is followed by an assignment of the load order for this
+specific module. See above for possible types. You should not specify
+an extension.
 .br
 Examples:
 .br
-.I kernel32, gdi32, user32 = builtin
+.I kernel32 = builtin
 .br
-.I kernel, gdi, user = builtin
+.I kernel = builtin
 .br
-.I comdlg32 = elfdll, native, builtin
+.I comdlg32 = native, builtin
 .br
 .I commdlg = native, builtin
-.br
-.I version, ver = elfdll, native, builtin
 .br
 Changing the load order of kernel/kernel32 and gdi/gdi32 to
 anything other than builtin will cause wine to fail because wine cannot
 use native versions for these libraries (gdi[32] might work native someday,
-but kernel[32] will never work native). These libraries are also the last
-to be converted to elfdlls and will live as builtins for quite some time
-to come.
+but kernel[32] will never work native).
 Note that using the native versions of user[32] isn't recommended right now,
 as these modules face nearly the same problems as kernel/gdi and we only
 just managed to make them work partially. But trying to use it might get
@@ -199,30 +195,6 @@ your program running.
 Always make sure that you have some kind of strategy in mind when you start
 fiddling with the current defaults and needless to say that you must know
 what you are doing.
-.PP
-.B [DllPairs]
-.br
-This is a simple pairing in the form 'name1 = name2'. It is supposed to
-identify the dlls that cannot live without eachother unless they are
-loaded in the same format. Examples are common dialogs and controls,
-shell, kernel, gdi, user, etc...
-.br
-The code will issue a warning if the loadorder of these pairs are different
-and might cause hard-to-find bugs due to incompatible pairs loaded at
-run-time. Note that this pairing gives
-.B no
-guarantee that the pairs
-actually get loaded as the same type, nor that the correct versions are
-loaded (might be implemented later). It merely notes obvious trouble.
-.br
-Examples:
-.br
-.I kernel = kernel32
-.br
-.I commdlg = comdlg32
-.br
-The implementation will probably change in a later stage to force pairs to
-be loaded correctly, but there are also drawbacks with such an approach.
 .PP
 .B [serialports]
 .br

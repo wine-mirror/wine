@@ -26,7 +26,6 @@
 #include "stackframe.h"
 #include "debugtools.h"
 #include "loadorder.h"
-#include "elfdll.h"
 #include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
@@ -942,7 +941,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 		/* Fall through */
 
 		case MODULE_LOADORDER_SO:	/* This is not supported for NE modules */
-		case MODULE_LOADORDER_ELFDLL:	/* This is not supported for NE modules */
 		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
 			hinst = 2;
 			break;

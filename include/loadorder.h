@@ -11,10 +11,9 @@
 
 #define MODULE_LOADORDER_INVALID	0	/* Must be 0 */
 #define MODULE_LOADORDER_DLL		1	/* Native DLLs */
-#define MODULE_LOADORDER_ELFDLL		2	/* Elf-dlls */
-#define MODULE_LOADORDER_SO		3	/* Native .so libraries */
-#define MODULE_LOADORDER_BI		4	/* Built-in modules */
-#define MODULE_LOADORDER_NTYPES		4
+#define MODULE_LOADORDER_SO		2	/* Native .so libraries */
+#define MODULE_LOADORDER_BI		3	/* Built-in modules */
+#define MODULE_LOADORDER_NTYPES		3
 
 typedef struct module_loadorder {
 	char	*modulename;
