@@ -1792,6 +1792,8 @@ QueryServiceConfigW( SC_HANDLE hService,
     r = RegQueryValueExW( hKey, szDependencies, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_MULTI_SZ ) )
         total += sz;
+    else
+	total += sizeof(WCHAR);
 
     sz = 0;
     r = RegQueryValueExW( hKey, szStart, 0, &type, NULL, &sz );
@@ -1862,11 +1864,17 @@ QueryServiceConfigW( SC_HANDLE hService,
 
     sz = n;
     r = RegQueryValueExW( hKey, szDependencies, 0, &type, p, &sz );
+    lpServiceConfig->lpDependencies = (LPWSTR) p;
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
-        lpServiceConfig->lpDependencies = (LPWSTR) p;
         p += sz;
         n -= sz;
+    }
+    else
+    {
+	*(WCHAR *) p = 0;
+	p += sizeof(WCHAR);
+	n -= sizeof(WCHAR);
     }
 
     if( n < 0 )
