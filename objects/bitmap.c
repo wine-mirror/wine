@@ -140,7 +140,8 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     bmp->bitmap.bmWidthBytes = BITMAP_GetWidthBytes( width, bpp );
     bmp->bitmap.bmBits = NULL;
 
-    bmp->DDBitmap = NULL;
+    bmp->funcs = NULL;
+    bmp->physBitmap = NULL;
     bmp->dib = NULL;
 
     if (bits) /* Set bitmap bits */
@@ -273,12 +274,11 @@ LONG WINAPI GetBitmapBits(
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
-    if(bmp->DDBitmap) { 
+    if(bmp->funcs) { 
 
         TRACE("Calling device specific BitmapBits\n");
-	if(bmp->DDBitmap->funcs->pBitmapBits)
-	    ret = bmp->DDBitmap->funcs->pBitmapBits(hbitmap, bits, count,
-						    DDB_GET);
+	if(bmp->funcs->pBitmapBits)
+	    ret = bmp->funcs->pBitmapBits(hbitmap, bits, count, DDB_GET);
 	else {
 	    ERR("BitmapBits == NULL??\n");
 	    ret = 0;
@@ -342,12 +342,11 @@ LONG WINAPI SetBitmapBits(
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
-    if(bmp->DDBitmap) {
+    if(bmp->funcs) {
 
         TRACE("Calling device specific BitmapBits\n");
-	if(bmp->DDBitmap->funcs->pBitmapBits)
-	    ret = bmp->DDBitmap->funcs->pBitmapBits(hbitmap, (void *) bits,
-						    count, DDB_SET);
+	if(bmp->funcs->pBitmapBits)
+	    ret = bmp->funcs->pBitmapBits(hbitmap, (void *) bits, count, DDB_SET);
 	else {
 	    ERR("BitmapBits == NULL??\n");
 	    ret = 0;
@@ -403,10 +402,8 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
  */
 BOOL BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
 {
-    if( bmp->DDBitmap ) {
-        if( bmp->DDBitmap->funcs->pDeleteObject )
-	    bmp->DDBitmap->funcs->pDeleteObject( hbitmap );
-    }
+    if (bmp->funcs && bmp->funcs->pDeleteObject)
+        bmp->funcs->pDeleteObject( hbitmap );
 
     if( bmp->bitmap.bmBits )
         HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );

@@ -30,7 +30,7 @@ static BOOL X11DRV_DeleteDC( DC *dc );
 static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
                             SEGPTR lpInData, SEGPTR lpOutData );
 
-static const DC_FUNCTIONS X11DRV_Funcs =
+const DC_FUNCTIONS X11DRV_DC_Funcs =
 {
     NULL,                            /* pAbortDoc */
     NULL,                            /* pAbortPath */
@@ -210,7 +210,7 @@ BOOL X11DRV_GDI_Initialize(void)
 
     if (!X11DRV_FONT_Init( &X11DRV_DevCaps )) return FALSE;
 
-    return DRIVER_RegisterDriver( "DISPLAY", &X11DRV_Funcs );
+    return DRIVER_RegisterDriver( "DISPLAY", &X11DRV_DC_Funcs );
 }
 
 /**********************************************************************
@@ -239,12 +239,10 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     dc->w.devCaps      = &X11DRV_DevCaps;
     if (dc->w.flags & DC_MEMORY)
     {
-        X11DRV_PHYSBITMAP *pbitmap;
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap,
                                                       BITMAP_MAGIC );
 	X11DRV_CreateBitmap( dc->w.hBitmap );
-	pbitmap            = bmp->DDBitmap->physBitmap;
-        physDev->drawable  = pbitmap->pixmap;
+        physDev->drawable  = (Pixmap)bmp->physBitmap;
         physDev->gc        = TSXCreateGC(display, physDev->drawable, 0, NULL);
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
 

@@ -174,35 +174,32 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
  */
 static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 {
-    X11DRV_PHYSBITMAP *pbitmap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
-   if(!bmp->DDBitmap)
+   if(!bmp->physBitmap)
         if(!X11DRV_CreateBitmap(hbitmap))
 	    return 0;
 
-    if(bmp->DDBitmap->funcs != dc->funcs) {
+    if(bmp->funcs != dc->funcs) {
         WARN("Trying to select non-X11 DDB into an X11 dc\n");
 	return 0;
     }
-
-    pbitmap = bmp->DDBitmap->physBitmap;
 
     if ((dc->w.bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
         physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(), 8, 8, 1);
         /* FIXME: should probably convert to monochrome instead */
-        TSXCopyPlane( display, pbitmap->pixmap, physDev->brush.pixmap,
+        TSXCopyPlane( display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
                     BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
     }
     else
     {
         physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(),
 					       8, 8, bmp->bitmap.bmBitsPixel );
-        TSXCopyArea( display, pbitmap->pixmap, physDev->brush.pixmap,
+        TSXCopyArea( display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
                    BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
     }
     

@@ -24,19 +24,13 @@ TTYDRV_PHYSBITMAP *TTYDRV_DC_AllocBitmap(BITMAPOBJ *bitmap)
 {
   TTYDRV_PHYSBITMAP *physBitmap;
   
-  if(!(bitmap->DDBitmap = HeapAlloc(GetProcessHeap(), 0, sizeof(DDBITMAP)))) {
-    ERR("Can't alloc DDBITMAP\n");
-    return NULL;
-  }
- 
   if(!(physBitmap = HeapAlloc(GetProcessHeap(), 0, sizeof(TTYDRV_PHYSBITMAP)))) {
     ERR("Can't alloc TTYDRV_PHYSBITMAP\n");
-    HeapFree(GetProcessHeap(), 0, bitmap->DDBitmap);
     return NULL;
   }
 
-  bitmap->DDBitmap->physBitmap = physBitmap;
-  bitmap->DDBitmap->funcs = DRIVER_FindDriver("DISPLAY");
+  bitmap->physBitmap = physBitmap;
+  bitmap->funcs = DRIVER_FindDriver("DISPLAY");
 
   return physBitmap;
 }
@@ -102,10 +96,10 @@ BOOL TTYDRV_DC_BITMAP_DeleteObject(HBITMAP hbitmap, BITMAPOBJ *bitmap)
 {
   TRACE("(0x%04x, %p)\n", hbitmap, bitmap);
 
-  HeapFree(GetProcessHeap(), 0, bitmap->DDBitmap->physBitmap);
-  HeapFree(GetProcessHeap(), 0, bitmap->DDBitmap);
-  bitmap->DDBitmap = NULL;
-  
+  HeapFree(GetProcessHeap(), 0, bitmap->physBitmap);
+  bitmap->physBitmap = NULL;
+  bitmap->funcs = NULL;
+
   return TRUE;
 }
 
@@ -134,10 +128,10 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
     return 0;
 
   /* Assure that the bitmap device dependent */
-  if(!bitmap->DDBitmap && !TTYDRV_DC_CreateBitmap(hbitmap))
+  if(!bitmap->physBitmap && !TTYDRV_DC_CreateBitmap(hbitmap))
     return 0;
 
-  if(bitmap->DDBitmap->funcs != dc->funcs) {
+  if(bitmap->funcs != dc->funcs) {
     ERR("Trying to select a non-TTY DDB into a TTY DC\n");
     return 0;
   }

@@ -2781,7 +2781,6 @@ INT X11DRV_DIB_SetDIBits(
   UINT coloruse, HBITMAP hbitmap)
 {
   X11DRV_DIB_IMAGEBITS_DESCR descr;
-  X11DRV_PHYSBITMAP *pbitmap;
   int height, tmpheight;
   INT result;
 
@@ -2834,17 +2833,15 @@ INT X11DRV_DIB_SetDIBits(
   }
 
   /* HACK for now */
-  if(!bmp->DDBitmap)
+  if(!bmp->physBitmap)
     X11DRV_CreateBitmap(hbitmap);
 
-  pbitmap = bmp->DDBitmap->physBitmap;
-  
   descr.bits      = bits;
   descr.image     = NULL;
   descr.palentry  = NULL;
   descr.lines     = tmpheight >= 0 ? lines : -lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
-  descr.drawable  = pbitmap->pixmap;
+  descr.drawable  = (Pixmap)bmp->physBitmap;
   descr.gc        = BITMAP_GC(bmp);
   descr.xSrc      = 0;
   descr.ySrc      = 0;
@@ -2873,7 +2870,6 @@ INT X11DRV_DIB_GetDIBits(
 {
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
-  X11DRV_PHYSBITMAP *pbitmap;
   PALETTEOBJ * palette;
   
   TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
@@ -2914,17 +2910,16 @@ INT X11DRV_DIB_GetDIBits(
   }
 
   /* Hack for now */
-  if(!bmp->DDBitmap)
+  if(!bmp->physBitmap)
     X11DRV_CreateBitmap(hbitmap);
 
-  pbitmap = bmp->DDBitmap->physBitmap;
 
   descr.dc        = dc;
   descr.palentry  = palette->logpalette.palPalEntry;
   descr.bits      = bits;
   descr.lines     = lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
-  descr.drawable  = pbitmap->pixmap;
+  descr.drawable  = (Pixmap)bmp->physBitmap;
   descr.gc        = BITMAP_GC(bmp);
   descr.xSrc      = 0;
   descr.ySrc      = startscan;
@@ -3018,7 +3013,7 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
   }
 
   /* Hack for now */
-  descr.drawable  = ((X11DRV_PHYSBITMAP *)bmp->DDBitmap->physBitmap)->pixmap;
+  descr.drawable  = (Pixmap)bmp->physBitmap;
   descr.gc        = BITMAP_GC(bmp);
   descr.xSrc      = 0;
   descr.ySrc      = 0;
@@ -3375,7 +3370,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 	    {
 	      bmp->dib = (DIBSECTION *) dib;
 	      /* HACK for now */
-	      if(!bmp->DDBitmap)
+	      if(!bmp->physBitmap)
 		X11DRV_CreateBitmap(res); 
 	    }
 	}
@@ -3496,12 +3491,9 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
      */
     if (!bDeletePixmap)
     {
-        /* Manually free the DDBitmap internals to prevent the Pixmap 
-         * from being deleted by DeleteObject.
-         */
-        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap->physBitmap );
-        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap );
-        pBmp->DDBitmap = NULL;
+        /* Clear the physBitmap to prevent the Pixmap from being deleted by DeleteObject */
+        pBmp->physBitmap = NULL;
+        pBmp->funcs = NULL;
     }
     DeleteObject(hBmp);  
     
@@ -3550,17 +3542,10 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
      
     pBmp = (BITMAPOBJ *) GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
 
-    if (pBmp->DDBitmap && pBmp->DDBitmap->physBitmap)
-    {
-        pixmap = ((X11DRV_PHYSBITMAP *)(pBmp->DDBitmap->physBitmap))->pixmap;
-        if (!pixmap)
-            TRACE("NULL Pixmap in DDBitmap->physBitmap!\n");
-        
-        /* Manually free the BITMAPOBJ internals so that we can steal its pixmap */
-        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap->physBitmap );
-        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap );
-        pBmp->DDBitmap = NULL;   /* Its not a DDB anymore */
-    }
+    pixmap = (Pixmap)pBmp->physBitmap;
+    /* clear the physBitmap so that we can steal its pixmap */
+    pBmp->physBitmap = NULL;
+    pBmp->funcs = NULL;
 
     /* Delete the DDB we created earlier now that we have stolen its pixmap */
     DeleteObject(hBmp);

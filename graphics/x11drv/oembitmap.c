@@ -345,7 +345,6 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
 {
     HBITMAP16 hbitmap;
     BITMAPOBJ * bmpObjPtr;
-    X11DRV_PHYSBITMAP *pbitmap;
 
     if (!pixmap) return 0;
 
@@ -364,9 +363,8 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->bitmap.bmBits       = NULL;
     bmpObjPtr->dib                 = NULL;
 
-    pbitmap = X11DRV_AllocBitmap(bmpObjPtr);
-
-    pbitmap->pixmap  = pixmap;
+    bmpObjPtr->funcs = &X11DRV_DC_Funcs;
+    bmpObjPtr->physBitmap = (void *)pixmap;
 
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
@@ -532,11 +530,10 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 
     if (descr.mask)
     {
-        X11DRV_PHYSBITMAP *pbitmapAnd = bmpAnd->DDBitmap->physBitmap;
           /* Invert the mask */
 
         TSXSetFunction( display, BITMAP_monoGC, GXinvert );
-        TSXFillRectangle( display, pbitmapAnd->pixmap, BITMAP_monoGC, 0, 0,
+        TSXFillRectangle( display, (Pixmap)bmpAnd->physBitmap, BITMAP_monoGC, 0, 0,
                         bmpAnd->bitmap.bmWidth, bmpAnd->bitmap.bmHeight );
         TSXSetFunction( display, BITMAP_monoGC, GXcopy );
 
@@ -544,14 +541,13 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 
         if (bmpXor->bitmap.bmBitsPixel != 1)
         {
-	    X11DRV_PHYSBITMAP *pbitmapXor = bmpXor->DDBitmap->physBitmap;
             TSXSetForeground( display, BITMAP_colorGC,
                             X11DRV_PALETTE_ToPhysical( NULL, RGB(0,0,0) ));
             TSXSetBackground( display, BITMAP_colorGC, 0 );
             TSXSetFunction( display, BITMAP_colorGC, GXor );
-            TSXCopyPlane(display, pbitmapAnd->pixmap, pbitmapXor->pixmap, BITMAP_colorGC,
-                       0, 0, bmpXor->bitmap.bmWidth, bmpXor->bitmap.bmHeight,
-                       0, 0, 1 );
+            TSXCopyPlane(display, (Pixmap)bmpAnd->physBitmap, (Pixmap)bmpXor->physBitmap,
+                         BITMAP_colorGC, 0, 0, bmpXor->bitmap.bmWidth, bmpXor->bitmap.bmHeight,
+                         0, 0, 1 );
             TSXSetFunction( display, BITMAP_colorGC, GXcopy );
         }
     }

@@ -18,20 +18,14 @@ struct tagGDI_BITMAP_DRIVER;
 #define DDB_COPY		4
 #define DDB_SETWITHFILLER	8
 
-typedef struct {
-    const struct tagDC_FUNCS *funcs; /* DC function table */
-    void	 *physBitmap; /* ptr to device specific data */
-} DDBITMAP;
-
   /* GDI logical bitmap object */
 typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR   header;
     BITMAP      bitmap;
     SIZE        size;   /* For SetBitmapDimension() */
-
-    DDBITMAP   *DDBitmap;
-
+    const struct tagDC_FUNCS *funcs; /* DC function table */
+    void	*physBitmap; /* ptr to device specific data */
     /* For device-independent bitmaps: */
     DIBSECTION *dib;
 } BITMAPOBJ;

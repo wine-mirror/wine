@@ -73,22 +73,19 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 {
     HRGN hrgn;
     HBITMAP prevHandle = dc->w.hBitmap;
-    X11DRV_PHYSBITMAP *pbitmap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
 
     if (!(dc->w.flags & DC_MEMORY)) return 0;
 
-    if(!bmp->DDBitmap)
+    if(!bmp->physBitmap)
         if(!X11DRV_CreateBitmap(hbitmap))
 	    return 0;
 
-    if(bmp->DDBitmap->funcs != dc->funcs) {
+    if(bmp->funcs != dc->funcs) {
         WARN("Trying to select non-X11 DDB into an X11 dc\n");
 	return 0;
     }
-
-    pbitmap = bmp->DDBitmap->physBitmap;
 
     dc->w.totalExtent.left   = 0;
     dc->w.totalExtent.top    = 0;
@@ -105,7 +102,7 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
        dc->w.hVisRgn    = hrgn;
     }
 
-    physDev->drawable = pbitmap->pixmap;
+    physDev->drawable = (Pixmap)bmp->physBitmap;
     dc->w.hBitmap     = hbitmap;
 
       /* Change GC depth if needed */
@@ -139,38 +136,8 @@ struct XPutImage_descr
 
 static int XPutImage_wrapper( const struct XPutImage_descr *descr )
 {
-    return XPutImage( display,
-	       ((X11DRV_PHYSBITMAP *)descr->bmp->DDBitmap->physBitmap)->pixmap,
-	       BITMAP_GC(descr->bmp),
-	       descr->image, 0, 0, 0, 0, descr->width, descr->height );
-}
-
-
-/***************************************************************************
- *
- *	X11DRV_AllocBitmap
- *
- * Allocate DDBitmap and physBitmap
- *
- */
-X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( BITMAPOBJ *bmp )
-{
-    X11DRV_PHYSBITMAP *pbitmap;
-
-    if(!(bmp->DDBitmap = HeapAlloc(GetProcessHeap(), 0, sizeof(DDBITMAP)))) {
-        WARN("Can't alloc DDBITMAP\n");
-	return NULL;
-    }
-
-    if(!(pbitmap = HeapAlloc(GetProcessHeap(), 0,sizeof(X11DRV_PHYSBITMAP)))) {
-        WARN("Can't alloc X11DRV_PHYSBITMAP\n");
-        HeapFree(GetProcessHeap(), 0, bmp->DDBitmap);
-	return NULL;
-    }
-
-    bmp->DDBitmap->physBitmap = pbitmap;
-    bmp->DDBitmap->funcs = DRIVER_FindDriver( "DISPLAY" );
-    return pbitmap;
+    return XPutImage( display, (Pixmap)descr->bmp->physBitmap, BITMAP_GC(descr->bmp),
+                      descr->image, 0, 0, 0, 0, descr->width, descr->height );
 }
 
 
@@ -186,7 +153,6 @@ X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( BITMAPOBJ *bmp )
 
 BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
 {
-    X11DRV_PHYSBITMAP *pbitmap;
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
 
     if(!bmp) {
@@ -208,19 +174,16 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
     TRACE("(%08x) %dx%d %d bpp\n", hbitmap, bmp->bitmap.bmWidth,
 	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
-    pbitmap = X11DRV_AllocBitmap( bmp );
-    if(!pbitmap) return FALSE;
-
       /* Create the pixmap */
-    pbitmap->pixmap = TSXCreatePixmap(display, X11DRV_GetXRootWindow(), bmp->bitmap.bmWidth,
-			      bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
-    if (!pbitmap->pixmap) {
+    if (!(bmp->physBitmap = (void *)TSXCreatePixmap(display, X11DRV_GetXRootWindow(),
+                                                    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                                                    bmp->bitmap.bmBitsPixel)))
+    {
         WARN("Can't create Pixmap\n");
-        HeapFree(GetProcessHeap(), 0, bmp->DDBitmap->physBitmap);
-        HeapFree(GetProcessHeap(), 0, bmp->DDBitmap);
 	GDI_HEAP_UNLOCK( hbitmap );
 	return FALSE;
     }
+    bmp->funcs = &X11DRV_DC_Funcs;
 
     if (bmp->bitmap.bmBits) /* Set bitmap bits */
 	X11DRV_BitmapBits( hbitmap, bmp->bitmap.bmBits,
@@ -239,8 +202,7 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
  */
 XImage *X11DRV_BITMAP_GetXImage( const BITMAPOBJ *bmp )
 {
-    return XGetImage( display,
-		      ((X11DRV_PHYSBITMAP *)bmp->DDBitmap->physBitmap)->pixmap,
+    return XGetImage( display, (Pixmap)bmp->physBitmap,
 		      0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 		      AllPlanes, ZPixmap );
 }
@@ -521,14 +483,9 @@ LONG X11DRV_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
  */
 BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bmp )
 {
-    X11DRV_PHYSBITMAP *pbitmap = bmp->DDBitmap->physBitmap;
-
-    TSXFreePixmap( display, pbitmap->pixmap );
-
-    HeapFree( GetProcessHeap(), 0, bmp->DDBitmap->physBitmap );
-    HeapFree( GetProcessHeap(), 0, bmp->DDBitmap );
-    bmp->DDBitmap = NULL;
-
+    TSXFreePixmap( display, (Pixmap)bmp->physBitmap );
+    bmp->physBitmap = NULL;
+    bmp->funcs = NULL;
     return TRUE;
 }
 
@@ -543,7 +500,6 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
 {
     HBITMAP hBmp = 0;
     BITMAPOBJ *pBmp = NULL;
-    X11DRV_PHYSBITMAP *pPhysBmp = NULL;
     Window root;
     int x,y;               /* Unused */
     unsigned border_width; /* Unused */
@@ -563,20 +519,10 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
      */
     hBmp = CreateBitmap( width, height, 1, depth, NULL );
 
-    /* Allocate DDBitmap and physBitmap structures in BITMAPOBJ.
-     * The hBmp is just a filled in BITMAPOBJ header at this point.
-     */
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
-    pPhysBmp = X11DRV_AllocBitmap( pBmp );
-    if( !pPhysBmp )
-    {
-        DeleteObject(hBmp);
-        hBmp = NULL;
-        goto END;
-    }
     
-    /* Point to our Pixmap in the physical bitmap structure */
-    pPhysBmp->pixmap = pixmap;
+    pBmp->funcs = &X11DRV_DC_Funcs;
+    pBmp->physBitmap = (void *)pixmap;
 
 END:
     TRACE("\tReturning HBITMAP %x\n", hBmp);
@@ -615,13 +561,11 @@ HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap)
      */
     if (!bDeletePixmap)
     {
-        /* Manually free the DDBitmap internals to prevent the Pixmap 
+        /* Manually clear the bitmap internals to prevent the Pixmap 
          * from being deleted by DeleteObject.
          */
-        pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
-        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap->physBitmap );
-        HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap );
-        pBmp->DDBitmap = NULL;
+        pBmp->physBitmap = NULL;
+        pBmp->funcs = NULL;
     }
     DeleteObject(hBmp);  
 
@@ -663,10 +607,10 @@ Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc )
  *
  * This function exists solely for x11 driver of the window system.
  */
-BOOL X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
+Pixmap X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
 {
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    return ((X11DRV_PHYSBITMAP *)(bmp->DDBitmap->physBitmap))->pixmap;
+    return (Pixmap)bmp->physBitmap;
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

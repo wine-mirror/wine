@@ -70,10 +70,6 @@ typedef struct
 } X11DRV_PDEVICE;
 
 
-typedef struct {
-    Pixmap	pixmap;
-} X11DRV_PHYSBITMAP;
-
   /* GCs used for B&W and color bitmap operations */
 extern GC BITMAP_monoGC, BITMAP_colorGC;
 
@@ -83,6 +79,8 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 extern DeviceCaps X11DRV_DevCaps;
 
 /* Wine driver X11 functions */
+
+extern const DC_FUNCTIONS X11DRV_DC_Funcs;
 
 extern BOOL X11DRV_BitBlt( struct tagDC *dcDst, INT xDst, INT yDst,
                              INT width, INT height, struct tagDC *dcSrc,
@@ -167,7 +165,6 @@ struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
 extern BOOL X11DRV_DIB_Init(void);
-extern X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( struct tagBITMAPOBJ *bmp );
 extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
 extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap);
