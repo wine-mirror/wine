@@ -358,7 +358,7 @@ void InitDLL(struct w_files *wpnt)
 		rv = CallTo16(cs_reg << 16 | ip_reg, ds_reg);
 		printf ("rv = %x\n", rv);
 	    } else
-		printf("%s skipped\n");
+		printf("%s skipped\n", wpnt->name);
 	}
 }
 
@@ -399,4 +399,9 @@ void InitializeLoadedDLLs(struct w_files *wpnt)
     for( ; wpnt != final_wpnt; wpnt = wpnt->next)
 	InitDLL(wpnt);
 }
+#else /* #ifndef WINELIB */
+void InitDLL(struct w_files *wpnt)
+{
+}
+
 #endif /* #ifndef WINELIB */

@@ -22,6 +22,7 @@ extern LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
+extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos ); /* winpos.c */
 extern void NC_TrackSysMenu( HWND hwnd ); /* menu.c */
 extern BOOL ActivateMenuBarFocus(HWND hWnd); /* menu.c */
 
@@ -125,6 +126,9 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_ACTIVATE:
 	if (wParam) SetFocus( hwnd );
 	break;
+
+    case WM_WINDOWPOSCHANGING:
+	return WINPOS_HandleWindowPosChanging( (WINDOWPOS *)lParam );
 
     case WM_WINDOWPOSCHANGED:
 	{

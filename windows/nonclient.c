@@ -27,6 +27,7 @@ static HBITMAP hbitmapRestoreD = 0;
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
+extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth ); /* menu.c */
 
 
   /* Some useful macros */
@@ -117,13 +118,17 @@ LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params )
 
     if (!wndPtr) return 0;
 
-    NC_AdjustRect( &tmpRect, wndPtr->dwStyle,
-		   HAS_MENU(wndPtr), wndPtr->dwExStyle );
-    
+    NC_AdjustRect( &tmpRect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle );
     params->rgrc[0].left   -= tmpRect.left;
     params->rgrc[0].top    -= tmpRect.top;
     params->rgrc[0].right  -= tmpRect.right;
     params->rgrc[0].bottom -= tmpRect.bottom;
+
+    if (HAS_MENU(wndPtr))
+    {
+	params->rgrc[0].top += MENU_GetMenuBarHeight( hwnd,
+				params->rgrc[0].right - params->rgrc[0].left );
+    }
     return 0;
 }
 

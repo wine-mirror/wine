@@ -4,3 +4,5 @@
 - MDI does not send WM_GETMINMAX message.
 - InitializeLoadedDLLs() can't init LZEXPAND.DLL. (cs:ip => 0:0)
 - LoadCursor does not correctly handle bitmap cursors
+- AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple times.
+- Dialogs don't support resources which are referred to as integers.

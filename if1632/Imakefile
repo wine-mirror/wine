@@ -3,10 +3,16 @@
 
 MODULE = if1632
 
+#ifdef WINELIB
+SRCS = \
+	callback.c \
+	relay.c
+#else
 SRCS = \
 	call.S \
 	callback.c \
 	relay.c
+#endif
 
 DLLOBJS = \
 	dll_gdi.o \
@@ -22,6 +28,10 @@ DLLOBJS = \
 	dll_user.o \
 	dll_win87em.o \
 	dll_winsock.o
+
+#ifdef WINELIB
+DLLOBJS=
+#endif
 
 OBJS1= $(SRCS:.S=.o)
 

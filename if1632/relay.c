@@ -24,24 +24,31 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #define DEBUG_RELAY /* */
 
+#ifdef WINELIB
+#define WineLibSkip(x) 0
+#else
+#define WineLibSkip(x) x
+#endif
+
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
-    { "KERNEL",  KERNEL_table, 	410, 1 },
-    { "USER",    USER_table, 	540, 2 },
-    { "GDI",     GDI_table, 	490, 3 },
-    { "UNIXLIB", UNIXLIB_table,  10, 4 },
-    { "WIN87EM", WIN87EM_table,  10, 5 },
-    { "SHELL",   SHELL_table,   256, 6 },
-    { "SOUND",   SOUND_table,    20, 7 },
-    { "KEYBOARD",KEYBOARD_table,137, 8 },
-    { "WINSOCK", WINSOCK_table, 155, 9 },
-    { "STRESS",  STRESS_table,   15, 10},
-    { "MMSYSTEM",MMSYSTEM_table,1226,11},
-    { "SYSTEM",  SYSTEM_table,   20 ,12},
-    { "TOOLHELP",TOOLHELP_table, 83, 13},
+    { "KERNEL",  WineLibSkip(KERNEL_table), 	410, 1 },
+    { "USER",    WineLibSkip(USER_table), 	540, 2 },
+    { "GDI",     WineLibSkip(GDI_table), 	490, 3 },
+    { "UNIXLIB", WineLibSkip(UNIXLIB_table),  10, 4 },
+    { "WIN87EM", WineLibSkip(WIN87EM_table),  10, 5 },
+    { "SHELL",   WineLibSkip(SHELL_table),   103, 6 },
+    { "SOUND",   WineLibSkip(SOUND_table),    20, 7 },
+    { "KEYBOARD",WineLibSkip(KEYBOARD_table),137, 8 },
+    { "WINSOCK", WineLibSkip(WINSOCK_table), 155, 9 },
+    { "STRESS",  WineLibSkip(STRESS_table),   15, 10},
+    { "MMSYSTEM",WineLibSkip(MMSYSTEM_table),1226,11},
+    { "SYSTEM",  WineLibSkip(SYSTEM_table),   20 ,12},
+    { "TOOLHELP",WineLibSkip(TOOLHELP_table), 83, 13},
 };
 /* don't forget to increase N_BUILTINS in dll.h if you add a dll */
 
+#ifndef WINELIB
 unsigned short *Stack16Frame;
 
 extern unsigned long  IF1632_Saved16_esp;
@@ -211,6 +218,7 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
     Stack16Frame = saved_Stack16Frame;
     return ret_val;
 }
+#endif
 
 /**********************************************************************
  *					FindDLLTable
@@ -222,8 +230,11 @@ FindDLLTable(char *dll_name)
 
     for (i = 0; i < N_BUILTINS; i++)
 	if (strcasecmp(dll_builtin_table[i].dll_name, dll_name) == 0)
+#ifdef WINELIB
+	    return dll_builtin_table[i].dll_number;
+#else
 	    return dll_builtin_table[i].dll_table;
-    
+#endif
     return NULL;
 }
 
@@ -258,6 +269,7 @@ ReturnArg(int arg)
     return arg;
 }
 
+#ifndef WINELIB
 #ifdef WINESTAT
 void winestat(){
 	int i, j;
@@ -294,3 +306,4 @@ void winestat(){
 	printf("TOTAL: %d of %d implemented (%3.1f %%)\n",timplemented, tused, perc);
 }
 #endif /* WINESTAT */
+#endif /* !WINELIB */

@@ -291,6 +291,7 @@ length	540
 278 pascal GetDeskTopHwnd() GetDesktopWindow()
 #279 OLDSETDESKPATTERN
 #280 SETSYSTEMMENU
+281 pascal GetSysColorBrush(word) GetSysColorBrush(1)
 282 pascal SelectPalette(word word word) SelectPalette(1 2 3)
 283 pascal RealizePalette(word) RealizePalette(1)
 284 pascal GetFreeSystemResources(word) GetFreeSystemResources(1)

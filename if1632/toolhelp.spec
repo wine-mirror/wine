@@ -11,10 +11,10 @@ length	83
 # 56   1  090e  LOCALINFO exported, shared data
 # 57   1  095e  LOCALFIRST exported, shared data
 # 58   1  09e9  LOCALNEXT exported, shared data
-#59 pascal ModuleFirst(ptr) ModuleFirst(1)
-#60 pascal ModuleNext(ptr) ModuleNext(1)
-#61 pascal ModuleFindName(ptr ptr) ModuleFindName(1 2)
-#62 pascal ModuleFindHandle(ptr word) ModuleFindHandle(1 2)
+59 pascal ModuleFirst(ptr) ModuleFirst(1)
+60 pascal ModuleNext(ptr) ModuleNext(1)
+61 pascal ModuleFindName(ptr ptr) ModuleFindName(1 2)
+62 pascal ModuleFindHandle(ptr word) ModuleFindHandle(1 2)
 # 63   1  0caa  TASKFIRST exported, shared data
 # 64   1  0ced  TASKNEXT exported, shared data
 # 65   1  0d2e  TASKFINDHANDLE exported, shared data

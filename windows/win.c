@@ -24,6 +24,11 @@ extern Colormap COLOR_WinColormap;
 extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );  /* cursor.c */
 extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
+extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
+				   RECT *newWindowRect, RECT *oldWindowRect,
+				   RECT *oldClientRect, WINDOWPOS *winpos,
+				   RECT *newClientRect );  /* winpos.c */
+
 extern HMENU CopySysMenu(); /* menu.c */
 extern LONG MDIClientWndProc(HWND hwnd, WORD message, 
 			     WORD wParam, LONG lParam); /* mdi.c */
@@ -453,19 +458,8 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (!wmcreate) wmcreate = -1;
     else
     {
-	  /* Send WM_NCCALCSIZE message */
-	NCCALCSIZE_PARAMS *params;
-	HANDLE hparams;
-	hparams = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(*params) );
-	if (hparams)
-	{
-	    params = (NCCALCSIZE_PARAMS *) USER_HEAP_ADDR( hparams );
-	    params->rgrc[0] = wndPtr->rectWindow;
-	    params->lppos = NULL;
-	    SendMessage( hwnd, WM_NCCALCSIZE, FALSE, (LONG)params );
-	    wndPtr->rectClient = params->rgrc[0];
-	    USER_HEAP_FREE( hparams );
-	}	
+	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
+			       NULL, NULL, NULL, &wndPtr->rectClient );
 	wmcreate = SendMessage( hwnd, WM_CREATE, 0, (LONG)createStruct );
     }
 

@@ -212,6 +212,9 @@ void FreeLibrary(HANDLE hLib)
  */
 FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 {
+#ifdef WINELIB
+    WINELIB_UNIMP ("GetProcAddress");
+#else
     int		i, sel, addr, ret;
     register struct w_files *w = wine_files;
     int 	ordinal, len;
@@ -312,6 +315,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
     sel = (ret >> 16);
     printf("GetProcAddress // ret=%08X sel=%04X addr=%04X\n", ret, sel, addr);
     return (FARPROC) ret;
+#endif /* WINELIB */
 }
 
 /* internal dlls */

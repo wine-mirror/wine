@@ -90,8 +90,15 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 
 	/* First take care of a few preliminaries */
 #ifdef linux
-    if(signal != SIGSEGV && signal != SIGTRAP) 
+    if(signal != SIGSEGV 
+       && signal != SIGILL 
+#ifdef SIGBUS
+       && signal != SIGBUS 
+#endif
+       && signal != SIGTRAP) 
+    {
 	exit(1);
+    }
 
     /* And back up over the int3 instruction. */
     if(signal == SIGTRAP) {
@@ -151,6 +158,14 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 	    scp->sc_eip++;
             break;
 
+      case 0xfa: /* cli, ignored */
+	    scp->sc_eip++;
+            break;
+
+      case 0xfb: /* sti, ignored */
+	    scp->sc_eip++;
+            break;
+
       default:
 		fprintf(stderr, "Unexpected Windows program segfault"
 			" - opcode = %x\n", *instr);
@@ -191,6 +206,10 @@ int init_wine_signals(void)
 	segv_act.sa_restorer = 
 		(void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
 	wine_sigaction(SIGSEGV, &segv_act, NULL);
+	wine_sigaction(SIGILL, &segv_act, NULL);
+#ifdef SIGBUS
+	wine_sigaction(SIGBUS, &segv_act, NULL);
+#endif
 	wine_sigaction(SIGTRAP, &segv_act, NULL); /* For breakpoints */
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)

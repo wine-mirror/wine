@@ -121,7 +121,7 @@ char *LocalLock (HANDLE hMem)
 #ifdef DEBUG_HEAP
     printf (">%d->%p\n", hMem, *m);
 #endif
-    return *m;
+    return m ? *m : 0;
 }
 
 HANDLE LocalReAlloc (HANDLE hMem, WORD flags, WORD bytes)
@@ -194,6 +194,16 @@ char *GlobalLinearLock (HANDLE hMem)
 HANDLE GlobalLinearUnlock (HANDLE hMem)
 {
     return GlobalUnlock (hMem);
+}
+
+int HEAP_LocalSize ()
+{
+    return 0;
+}
+
+int HEAP_LocalFindHeap ()
+{
+    return 0;
 }
 
 #ifdef UNIMPLEMENTED

@@ -1,4 +1,98 @@
 ----------------------------------------------------------------------
+Thu Jul 14 17:50:45 1994  Bob Amstadt  (bob@pooh)
+
+	* [Configure]
+	Autodetects Linux version (if running Linux).
+
+	* [loader/signal.c]
+	New signals for Linux.
+
+	* [loader/ldtlib.c]
+	New structure field in sys call.
+
+Sun Jul 10 19:31:34 1994  Olaf Flebbe  (olaf@dragon)
+
+        * [load/resource.c] 
+          fixed Memory (Resource) Leak.
+
+        * [load/main.c] 
+          fixed a printf.
+
+Tue Jul 12 18:50:34 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/desktop.c]
+	Implemented desktop wallpaper (only 16 colors for now).
+
+	* [controls/menu.c] [windows/nonclient.c]
+	Preliminary work to allow multi-line menus.
+
+	* [misc/main.c]
+	No backing store on desktop window (not useful).
+
+	* [objects/text.c]
+	A few fixes to DrawText() to make underlines under mnemonic
+	letters to look better.
+
+	* [windows/graphics.c]
+	More fixes to GRAPH_DrawArc(), and some fixes to Polygon().
+	Implemented PolyPolygon() (partially working).
+
+	* [windows/winpos.c]
+	New function WINPOS_SendNCCalcSize().
+	Cleaned up SetWindowPos() and added preliminary support for
+	multi-line menus.
+
+Mon Jul 11 19:15:51 1994  Miguel de Icaza  (miguel@sphinx)
+
+	* [controls/edit.c]
+	Changes to work as a library.
+
+	* [if1632/callback.c] 
+	Ifdefed module.
+
+	* [if1632/relay.c]
+	Changes to allow linking with WineLib.
+
+	* [include/windows.h]
+	Added macro WINELIB_UNIMP
+
+	* [loader/library.c]
+	When compiling WineLib, GetProcAddress is not implemented yet.
+
+	* [loader/main.c]
+	Added empty InitDLL when using WineLib.
+
+	* [loader/ne_image.c]
+	Some parts of the loader are needed for WineLib, ifdefed correctly
+
+	* [misc/{audio.c,mcicda.c,mmaux.c,mmsystem.c]
+	Disable compilation of module when compiling WineLib.
+
+	* [toolkit/heap.c]
+	Fixed small bug.  When passed an invalid handle WineLib would
+	crash, now return NULL.
+
+	* [toolkit/winmain.c]
+	Call CreateNewTask in _WinMain.
+
+Sun Jul 10 09:08:02 1994  David Metcalfe <david@prism.demon.co.uk>
+
+	* [controls/edit.c] [controls/widget.c]
+	More changes to improve compatibility with Windows' edit
+	control.  Finished off tab stop support.
+
+Mon Jul 11 21:05:02 MET DST 1994  Erik Bos <erik@hacktic.nl>
+
+	* [if1632/relay.c]
+	# of ordinals in shell.dll changed to 103.
+
+	* [loader/signal.c]
+	sti, cli will now be ignored.
+
+	* [objects/brush.c]
+	Added stub for GetSysColorBrush().
+
+----------------------------------------------------------------------
 Sun, 3 Jul 1994 20:15:56 +0100 (BST)  David Metcalfe <david@prism.demon.co.uk>
 
 	* [controls/edit.c]

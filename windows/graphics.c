@@ -105,8 +105,8 @@ BOOL MoveToEx( HDC hdc, short x, short y, LPPOINT pt )
 BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 		    int xstart, int ystart, int xend, int yend, int lines )
 {
-    int xcenter, ycenter;
-    double start_angle, end_angle, diff_angle;
+    int xcenter, ycenter, istart_angle, idiff_angle;
+    double start_angle, end_angle;
     XPoint points[3];
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -151,16 +151,15 @@ BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 			 (double)(xstart-xcenter)*(bottom-top) );
     end_angle   = atan2( (double)(ycenter-yend)*(right-left),
 			 (double)(xend-xcenter)*(bottom-top) );
-    diff_angle  = end_angle - start_angle;
-    if (diff_angle < 0.0) diff_angle += 2*PI;
+    istart_angle = (int)(start_angle * 180 * 64 / PI);
+    idiff_angle  = (int)((end_angle - start_angle) * 180 * 64 / PI );
+    if (idiff_angle <= 0) idiff_angle += 360 * 64;
     if (left > right) swap_int( &left, &right );
     if (top > bottom) swap_int( &top, &bottom );
 
     XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-	      right-left-1, bottom-top-1,
-	      (int)(start_angle * 180 * 64 / PI),
-	      (int)(diff_angle * 180 * 64 / PI) );
+	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
     if (!lines) return TRUE;
 
     points[0].x = dc->w.DCOrgX + xcenter + (int)(cos(start_angle) * (right-left) / 2);
@@ -656,7 +655,7 @@ BOOL Polygon (HDC hdc, LPPOINT pt, int count)
 {
     register int i;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    XPoint *points = (XPoint *) malloc (sizeof (XPoint) * count+1);
+    XPoint *points = (XPoint *) malloc (sizeof (XPoint) * (count+1));
 
     if (!dc) 
     {
@@ -666,28 +665,77 @@ BOOL Polygon (HDC hdc, LPPOINT pt, int count)
 	return TRUE;
     }
 
-    if (DC_SetupGCForBrush( dc ))
+    for (i = 0; i < count; i++)
     {
-    		
-	for (i = 0; i < count; i++)
-	{
-	    points [i].x = dc->w.DCOrgX + XLPTODP(dc, pt [i].x);
-	    points [i].y = dc->w.DCOrgY + YLPTODP(dc, pt [i].y);
-	}
-	points [count] = points [0];
-		
-	XFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
-		     points, count, Complex, CoordModeOrigin);
-		
-	if (DC_SetupGCForPen ( dc ))
-	{
-	    XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-		       points, count, CoordModeOrigin );
-	}
+	points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
+	points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
     }
-    free ((void *) points);
-    return (TRUE);
+    points[count] = points[0];
+
+    if (DC_SetupGCForBrush( dc ))
+	XFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
+		     points, count+1, Complex, CoordModeOrigin);
+
+    if (DC_SetupGCForPen ( dc ))
+	XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+		   points, count+1, CoordModeOrigin );
+
+    free( points );
+    return TRUE;
 }
+
+
+/**********************************************************************
+ *          PolyPolygon  (GDI.450)
+ */
+BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT counts, WORD polygons )
+{
+    int i;
+    HRGN hrgn;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	/* MF_MetaPoly(dc, META_POLYGON, pt, count); */
+	return TRUE;
+    }
+      /* The points should be converted to device coords before */
+      /* creating the region. But as CreatePolyPolygonRgn is not */
+      /* really correct either, it doesn't matter much... */
+      /* At least the outline will be correct :-) */
+    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, dc->w.polyFillMode );
+    PaintRgn( hdc, hrgn );
+    DeleteObject( hrgn );
+
+      /* Draw the outline of the polygons */
+
+    if (DC_SetupGCForPen ( dc ))
+    {
+	int i, j, max = 0;
+	XPoint *points;
+
+	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
+	points = (XPoint *) malloc( sizeof(XPoint) * (max+1) );
+
+	for (i = 0; i < polygons; i++)
+	{
+	    for (j = 0; j < counts[i]; j++)
+	    {
+		points[j].x = dc->w.DCOrgX + XLPTODP( dc, pt->x );
+		points[j].y = dc->w.DCOrgY + YLPTODP( dc, pt->y );
+		pt++;
+	    }
+	    points[j] = points[0];
+	    XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+		        points, j + 1, CoordModeOrigin );
+	}
+	free( points );
+    }
+    return TRUE;
+}
+
 
 /**********************************************************************
  *          FloodFill_rec -- FloodFill helper function

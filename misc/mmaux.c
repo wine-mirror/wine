@@ -3,7 +3,7 @@
  *
  * Copyright 1994 Martin Ayotte
  */
-
+#ifndef WINELIB
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 #include "stdio.h"
@@ -114,3 +114,4 @@ DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 
+#endif /* !WINELIB */

@@ -1038,6 +1038,15 @@ typedef struct tagLOGPEN
 typedef struct { BYTE rgbBlue, rgbGreen, rgbRed, rgbReserved; } RGBQUAD;
 typedef struct { BYTE rgbtBlue, rgbtGreen, rgbtRed; } RGBTRIPLE;
 
+typedef struct
+{
+    UINT    bfType;
+    DWORD   bfSize WINE_PACKED;
+    UINT    bfReserved1 WINE_PACKED;
+    UINT    bfReserved2 WINE_PACKED;
+    DWORD   bfOffBits WINE_PACKED;
+} BITMAPFILEHEADER;
+
 typedef struct tagBITMAPINFOHEADER
 {
     DWORD 	biSize;
@@ -2899,7 +2908,7 @@ Fd(BOOL,FloodFill,HDC,a,short,b,short,c,DWORD,d)
 Fd(BOOL,GetCharWidth,HDC,a,WORD,b,WORD,c,LPINT,d)
 Fd(BOOL,HiliteMenuItem,HWND,a,HMENU,b,WORD,c,WORD,d)
 Fd(BOOL,MoveToEx,HDC,a,short,b,short,c,LPPOINT,d)
-Fd(BOOL,PolyPolygon,HDC,a,LPPOINT,b,LPINT,c,int,d)
+Fd(BOOL,PolyPolygon,HDC,a,LPPOINT,b,LPINT,c,WORD,d)
 Fd(BOOL,PostAppMessage,HANDLE,a,WORD,b,WORD,c,LONG,d)
 Fd(BOOL,RedrawWindow,HWND,a,LPRECT,b,HRGN,c,UINT,d)
 Fd(BOOL,SetBitmapDimensionEx,HBITMAP,a,short,b,short,c,LPSIZE,d)
@@ -3022,4 +3031,7 @@ Fl(int,SetDIBitsToDevice,HDC,a,short,b,short,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,
 Fm(int,StretchDIBits,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l,DWORD,m)
 Fn(HFONT,CreateFont,int,a,int,b,int,c,int,d,int,e,BYTE,f,BYTE,g,BYTE,h,BYTE,i,BYTE,j,BYTE,k,BYTE,l,BYTE,m,LPSTR,n)
 
+#ifdef WINELIB
+#define WINELIB_UNIMP(x) fprintf (stderr, "WineLib: Unimplemented %s\n", x)
+#endif
 #endif  /* WINDOWS_H */

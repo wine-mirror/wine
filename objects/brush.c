@@ -143,6 +143,13 @@ DWORD SetBrushOrg( HDC hdc, short x, short y )
     return retval;
 }
 
+/***********************************************************************
+ *           GetSysColorBrush    (USER.281)
+ */
+WORD GetSysColorBrush(WORD x)
+{
+	return GetStockObject(GRAY_BRUSH);
+}
 
 /***********************************************************************
  *           BRUSH_DeleteObject

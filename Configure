@@ -47,11 +47,25 @@ else
     NEWBUILD=''
 fi
 
+if [ -f /usr/include/linux/ldt.h ]
+then
+	if grep -q seg_not_present /usr/include/linux/ldt.h
+	then
+		NEWLINUXLDT='#define NewLinuxLdt -DNEW_LDT_STRUCT'
+		ALLDEFINES="$ALLDEFINES -DNEW_LDT_STRUCT"
+	else
+		NEWLINUXLDT=''
+	fi
+else
+	NEWLINUXLDT=''
+fi
+
 echo '/* autoconf.h generated automatically.  Run Configure. */' > autoconf.h
 echo $WINELIB >> autoconf.h
 echo $SHORTNAMES >> autoconf.h
 echo $NEWBUILD >> autoconf.h
 echo $WINE_INI_GLOBAL >> autoconf.h
+echo $NEWLINUXLDT >> autoconf.h
 echo "#define AutoDefines  $ALLDEFINES" >> autoconf.h
 
 xmkmf -a

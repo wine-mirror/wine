@@ -74,7 +74,7 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 	case PREFIX:
 	    if (!(format & DT_NOPREFIX))
 	    {
-		prefix_offset = j + 1;
+		prefix_offset = j;
 		i++;
 	    }
 	    else
@@ -177,7 +177,7 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
     SIZE size;
     char *strPtr;
     static char line[1024];
-    int len, lh, prefix_x, prefix_len;
+    int len, lh, prefix_x, prefix_end;
     TEXTMETRIC tm;
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
@@ -214,10 +214,10 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 
 	if (prefix_offset != -1)
 	{
-	    GetTextExtentPoint(hdc, line, prefix_offset - 1, &size);
+	    GetTextExtentPoint(hdc, line, prefix_offset, &size);
 	    prefix_x = size.cx;
-	    GetTextExtentPoint(hdc, line + prefix_offset, 1, &size);
-	    prefix_len = size.cx;
+	    GetTextExtentPoint(hdc, line, prefix_offset + 1, &size);
+	    prefix_end = size.cx - 1;
 	}
 
 	if (!GetTextExtentPoint(hdc, line, len, &size)) return 0;
@@ -235,8 +235,8 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    if (!TextOut(hdc, x, y, line, len)) return 0;
 	if (prefix_offset != -1)
 	{
-	    MoveTo(hdc, x + prefix_x, y + size.cy);
-	    LineTo(hdc, x + prefix_x + prefix_len, y + size.cy);
+	    MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
+	    LineTo(hdc, x + prefix_end, y + tm.tmAscent + 1 );
 	}
 
 	if (strPtr)

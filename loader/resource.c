@@ -948,6 +948,7 @@ HANDLE FreeResource(HANDLE hResData)
 	    GlobalFree(r->info_mem);
 	    return 0;
 	}
+	rp = r;
     }
     
     return hResData;

@@ -13,6 +13,8 @@ typedef struct
 {
     HBRUSH   hbrushPattern;
     HBITMAP  hbitmapWallPaper;
+    SIZE     bitmapSize;
+    BOOL     fTileWallPaper;
 } DESKTOPINFO;
 
 extern BOOL DESKTOP_SetPattern(char *pattern );

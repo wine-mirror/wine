@@ -156,7 +156,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 									hwnd, lppop->Width, lppop->Height);
 #endif
 			SetWindowPos(hwnd, 0, 0, 0, lppop->Width + 2, lppop->Height, 
-									SWP_NOZORDER | SWP_NOMOVE);
+									SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE );
 #ifdef DEBUG_MENU
 			printf("PopupMenuWndProc // End of WM_SHOWWINDOW !\n");
 #endif
@@ -1135,7 +1135,7 @@ void MenuBarCalcSize(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop)
 #endif
 	hOldFont = SelectObject(hDC, GetStockObject(SYSTEM_FONT));
 	lppop->CheckWidth = 0;
-	LineHeight = OldHeight = SYSMETRICS_CYMENU + 2;
+	LineHeight = OldHeight = SYSMETRICS_CYMENU + 1;
 	SetRect(&rect, lprect->left, lprect->top, 0, lprect->top + LineHeight);
 	lpitem2 = lppop->firstItem;
 	while (lpitem != NULL) {
@@ -1199,6 +1199,29 @@ void MenuBarCalcSize(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop)
 	SelectObject(hDC, hOldFont);
 }
 
+
+
+/***********************************************************************
+ *           MENU_GetMenuBarHeight
+ *
+ * Compute the size of the menu bar height. Used by NC_HandleNCCalcSize().
+ */
+WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth )
+{
+    HDC hdc;
+    RECT rectBar;
+    WND *wndPtr;
+    LPPOPUPMENU lppop;
+
+    if (!(lppop = PopupMenuGetWindowAndStorage( hwnd, &wndPtr ))) return 0;
+    if (!wndPtr) return 0;
+    hdc = GetDC( hwnd );
+    SetRect( &rectBar, 0, 0, menubarWidth, SYSMETRICS_CYMENU );
+    MenuBarCalcSize( hdc, &rectBar, lppop );
+    ReleaseDC( hwnd, hdc );
+    printf( "MENU_GetMenuBarHeight: returning %d\n", lppop->Height );
+    return lppop->Height;
+}
 
 
 /***********************************************************************
@@ -1844,7 +1867,7 @@ BOOL TrackPopupMenu(HMENU hMenu, WORD wFlags, short x, short y,
 			}
 		}
 	else {
-		ShowWindow(lppop->hWnd, SW_SHOW);
+		ShowWindow(lppop->hWnd, SW_SHOWNOACTIVATE);
 		}
 	if (!lppop->BarFlag) {
 		PopupMenuCalcSize(lppop->hWnd);
@@ -1853,7 +1876,7 @@ BOOL TrackPopupMenu(HMENU hMenu, WORD wFlags, short x, short y,
 			x, y, lppop->Width, lppop->Height); 
 #endif
 		SetWindowPos(lppop->hWnd, 0, x, y, lppop->Width + 2, lppop->Height, 
-			SWP_NOZORDER);
+			SWP_NOACTIVATE | SWP_NOZORDER);
 		}
 	SetFocus(lppop->hWnd);
 	if (!MenuHasFocus) {
@@ -2208,7 +2231,7 @@ BOOL SetMenu(HWND hWnd, HMENU hMenu)
 #endif
 	if (GetCapture() == hWnd) ReleaseCapture();
 	if (wndPtr->window != 0) {
-		flags = SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED;
+		flags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED;
 /*		if (!IsWindowVisible(hWnd)) flags |= SWP_NOREDRAW; */
 		flags |= SWP_NOREDRAW;
 		if (hMenu == 0) {

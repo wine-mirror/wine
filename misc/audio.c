@@ -3,7 +3,7 @@
  *
  * Copyright 1994 Martin Ayotte
  */
-
+#ifndef WINELIB
 #define DEBUG_MCIWAVE
 
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
@@ -1507,3 +1507,4 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 
+#endif /* !WINELIB */

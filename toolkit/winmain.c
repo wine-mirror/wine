@@ -8,6 +8,7 @@ _WinMain (int argc, char *argv [])
 {
     int ret_val;
     char filename [4096];
+    HANDLE hTaskMain;
     
     GetPrivateProfileString("wine", "SystemResources", "sysres.dll", 
 			    filename, sizeof(filename), WINE_INI);
@@ -18,6 +19,7 @@ _WinMain (int argc, char *argv [])
 	printf("System Resources Loaded // hSysRes='%04X'\n", hSysRes);
 
     USER_InitApp (hSysRes);
+    hTaskMain = CreateNewTask (1); /* This is not correct */
     ret_val = WinMain (1,		/* hInstance */
 		       0,		/* hPrevInstance */
 		       "",		/* lpszCmdParam */

@@ -3,7 +3,7 @@
  *
  * Copyright 1993 Martin Ayotte
  */
-
+#ifndef WINELIB
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 
 #include "stdio.h"
@@ -614,9 +614,14 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lpParms)
 		printf("MCI_OPEN // wDeviceID=%04X !\n", lpParms->wDeviceID);
 		switch(dwDevTyp) {
 			case MCI_DEVTYPE_CD_AUDIO:
-				return CDAUDIO_DriverProc(0, 0, MCI_OPEN_DRIVER, 
+#ifdef WINELIB
+		    WINELIB_UNIMP ("CDAUDIO_DriverProc");
+#else
+				return CDAUDIO_DriverProc(0, 0, MCI_OPEN_DRIVER,
+
 									dwParam, (DWORD)lpParms);
-			case MCI_DEVTYPE_WAVEFORM_AUDIO:
+#endif
+		case MCI_DEVTYPE_WAVEFORM_AUDIO:
 				return WAVE_DriverProc(0, 0, MCI_OPEN_DRIVER, 
 									dwParam, (DWORD)lpParms);
 			case MCI_DEVTYPE_SEQUENCER:
@@ -646,8 +651,10 @@ DWORD mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 	printf("mciClose(%u, %08X, %08X)\n", wDevID, dwParam, lpParms);
 	switch(mciDrv[wDevID].wType) {
 		case MCI_DEVTYPE_CD_AUDIO:
+#ifndef WINELIB
 			dwRet = CDAUDIO_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
 						MCI_CLOSE, dwParam, (DWORD)lpParms);
+#endif
 			break;
 		case MCI_DEVTYPE_WAVEFORM_AUDIO:
 			dwRet = WAVE_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
@@ -692,8 +699,11 @@ DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 		default:
 			switch(mciDrv[wDevID].wType) {
 				case MCI_DEVTYPE_CD_AUDIO:
+#ifndef WINELIB
 					return CDAUDIO_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
 											wMsg, dwParam1, dwParam2);
+#endif
+					
 				case MCI_DEVTYPE_WAVEFORM_AUDIO:
 					return WAVE_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
 											wMsg, dwParam1, dwParam2);
@@ -1984,7 +1994,9 @@ LRESULT WINAPI DrvSendMessage(HDRVR hDriver, WORD msg, LPARAM lParam1, LPARAM lP
 	DWORD 	dwDevID = 0;
 	printf("DrvSendMessage(%04X, %04X, %08X, %08X);\n",
 					hDriver, msg, lParam1, lParam2);
+#ifndef WINELIB
 	return CDAUDIO_DriverProc(dwDevID, hDriver, msg, lParam1, lParam2);
+#endif
 }
 
 /**************************************************************************
@@ -2007,3 +2019,4 @@ LRESULT DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 
 
 
+#endif

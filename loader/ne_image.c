@@ -51,6 +51,7 @@ void load_ne_header (int fd, struct ne_header_s *ne_header)
 	myerror("Unable to read NE header from file");
     }
 }
+#endif
 
 /**********************************************************************
  *			LoadNEImage
@@ -68,6 +69,7 @@ HINSTANCE LoadNEImage(struct w_files *wpnt)
     status = lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
     load_ne_header (wpnt->fd, wpnt->ne_header);
 
+#ifndef WINELIB
     /*
      * Create segment selectors.
      */
@@ -83,7 +85,7 @@ HINSTANCE LoadNEImage(struct w_files *wpnt)
     wpnt->hinstance = (wpnt->
 		       selector_table[wpnt->ne_header->auto_data_seg-1].
 		       selector);
-
+#endif
     /* Get the lookup  table.  This is used for looking up the addresses
        of functions that are exported */
 
@@ -131,6 +133,7 @@ HINSTANCE LoadNEImage(struct w_files *wpnt)
       if (strcasecmp(buff, wpnt->name) != 0 )
 	LoadImage(buff, DLL, 0);
     }
+#ifndef WINELIB
     /* fixup references */
 
     for (segment = 0; segment < wpnt->ne_header->n_segment_tab; segment++)
@@ -139,7 +142,7 @@ HINSTANCE LoadNEImage(struct w_files *wpnt)
 
     FixupFunctionPrologs(wpnt);
     InitializeLoadedDLLs(wpnt);
-
+#endif
     return(wpnt->hinstance);
 }
 
@@ -197,6 +200,7 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
 }
 
 
+#ifndef WINELIB
 /**********************************************************************
  *					FixupSegment
  */
@@ -458,4 +462,4 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     return 0;
 }
 
-#endif
+#endif /* !WINELIB */

@@ -64,6 +64,9 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
     ldt_info.contents       = contents;
     ldt_info.read_exec_only = read_only_flag;
     ldt_info.limit_in_pages = limit_in_pages_flag;
+#ifdef NEW_LDT_STRUCT
+    ldt_info.seg_not_present = 0;
+#endif
 
     return modify_ldt(1, &ldt_info, sizeof(ldt_info));
 #endif

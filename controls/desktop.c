@@ -6,10 +6,56 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include "win.h"
 #include "desktop.h"
+#include "prototypes.h"
+
+
+/***********************************************************************
+ *           DESKTOP_LoadBitmap
+ *
+ * Load a bitmap from a file. Used by SetDeskWallPaper().
+ */
+static HBITMAP DESKTOP_LoadBitmap( HDC hdc, char *filename )
+{
+    BITMAPFILEHEADER *fileHeader;
+    BITMAPINFO *bitmapInfo;
+    HBITMAP hbitmap;
+    char *unixFileName, *buffer;
+    int file;
+    long size;
+
+      /* Read all the file into memory */
+
+    if (!(unixFileName = GetUnixFileName( filename ))) return 0;
+    if ((file = open( unixFileName, O_RDONLY )) == -1) return 0;
+    size = lseek( file, 0, SEEK_END );
+    if (!(buffer = (char *)malloc( size )))
+    {
+	close( file );
+	return 0;
+    }
+    lseek( file, 0, SEEK_SET );
+    size = read( file, buffer, size );
+    close( file );
+    fileHeader = (BITMAPFILEHEADER *)buffer;
+    bitmapInfo = (BITMAPINFO *)(buffer + sizeof(BITMAPFILEHEADER));
+    
+      /* Check header content */
+    if ((fileHeader->bfType != 0x4d42) || (size < fileHeader->bfSize))
+    {
+	free( buffer );
+	return 0;
+    }
+    hbitmap = CreateDIBitmap( hdc, &bitmapInfo->bmiHeader, CBM_INIT,
+			      buffer + fileHeader->bfOffBits,
+			      bitmapInfo, DIB_RGB_COLORS );
+    free( buffer );
+    return hbitmap;
+}
 
 
 /***********************************************************************
@@ -20,12 +66,49 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 {
     RECT rect;
-
-      /* Set colors in case pattern is a monochrome bitmap */
-    SetBkColor( hdc, RGB(0,0,0) );
-    SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
     GetClientRect( hwnd, &rect );    
-    FillRect( hdc, &rect, infoPtr->hbrushPattern );
+
+    /* Paint desktop pattern (only if wall paper does not cover everything) */
+
+    if (!infoPtr->hbitmapWallPaper || 
+	(!infoPtr->fTileWallPaper && (infoPtr->bitmapSize.cx < rect.right) &&
+	 (infoPtr->bitmapSize.cy < rect.bottom)))
+    {
+	  /* Set colors in case pattern is a monochrome bitmap */
+	SetBkColor( hdc, RGB(0,0,0) );
+	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
+	FillRect( hdc, &rect, infoPtr->hbrushPattern );
+    }
+
+      /* Paint wall paper */
+
+    if (infoPtr->hbitmapWallPaper)
+    {
+	int x, y;
+	HDC hdcmem;
+
+	hdcmem = CreateCompatibleDC( hdc );
+	SelectObject( hdcmem, infoPtr->hbitmapWallPaper );
+	if (infoPtr->fTileWallPaper)
+	{
+	    for (y = 0; y < rect.bottom; y += infoPtr->bitmapSize.cy)
+		for (x = 0; x < rect.right; x += infoPtr->bitmapSize.cx)
+		    BitBlt( hdc, x, y,
+			    infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy,
+			    hdcmem, 0, 0, SRCCOPY );
+	}
+	else
+	{
+	    x = (rect.left + rect.right - infoPtr->bitmapSize.cx) / 2;
+	    y = (rect.top + rect.bottom - infoPtr->bitmapSize.cy) / 2;
+	    if (x < 0) x = 0;
+	    if (y < 0) y = 0;
+	    BitBlt( hdc, x, y, infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy,
+		    hdcmem, 0, 0, SRCCOPY );
+	}
+	DeleteDC( hdcmem );
+    }
+
     return 1;
 }
 
@@ -50,6 +133,7 @@ LONG DesktopWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	infoPtr->hbrushPattern = 0;
 	infoPtr->hbitmapWallPaper = 0;
 	SetDeskPattern();
+	SetDeskWallPaper( (LPSTR)-1 );
 	break;
 	
     case WM_ERASEBKGND:
@@ -77,6 +161,30 @@ BOOL SetDeskPattern()
  */
 BOOL SetDeskWallPaper( LPSTR filename )
 {
+    HBITMAP hbitmap;
+    HDC hdc;
+    char buffer[256];
+    WND *wndPtr = WIN_FindWndPtr( GetDesktopWindow() );
+    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+
+    if (filename == (LPSTR)-1)
+    {
+	GetProfileString( "desktop", "WallPaper", "(None)", buffer, 256 );
+	filename = buffer;
+    }
+    hdc = GetDC( 0 );
+    hbitmap = DESKTOP_LoadBitmap( hdc, filename );
+    ReleaseDC( 0, hdc );
+    if (infoPtr->hbitmapWallPaper) DeleteObject( infoPtr->hbitmapWallPaper );
+    infoPtr->hbitmapWallPaper = hbitmap;
+    infoPtr->fTileWallPaper = GetProfileInt( "desktop", "TileWallPaper", 0 );
+    if (hbitmap)
+    {
+	BITMAP bmp;
+	GetObject( hbitmap, sizeof(bmp), (LPSTR)&bmp );
+	infoPtr->bitmapSize.cx = (bmp.bmWidth != 0) ? bmp.bmWidth : 1;
+	infoPtr->bitmapSize.cy = (bmp.bmHeight != 0) ? bmp.bmHeight : 1;
+    }
     return TRUE;
 }
 

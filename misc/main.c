@@ -287,16 +287,10 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
 			 StructureNotifyMask;
     win_attr.cursor = XCreateFontCursor( display, XC_top_left_arrow );
 
-    if (Options.nobackingstore)
-       win_attr.backing_store = NotUseful;
-    else
-       win_attr.backing_store = Always;
-
     rootWindow = XCreateWindow( display, DefaultRootWindow(display),
 			        desktopX, desktopY, width, height, 0,
 			        CopyFromParent, InputOutput, CopyFromParent,
-			        CWEventMask | CWCursor |
-			        CWBackingStore, &win_attr );
+			        CWEventMask | CWCursor, &win_attr );
 
       /* Set window manager properties */
 

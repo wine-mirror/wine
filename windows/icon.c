@@ -26,8 +26,8 @@ ICON_Iconify(HWND hwnd)
 	WND *parwPtr;
 	
 #ifdef DEBUG_ICON
-#endif
 	printf("ICON_Iconify %d\n", hwnd);
+#endif
 
 	parwPtr = WIN_FindWndPtr(wndPtr->hwndParent);
 	if (parwPtr == NULL) {
@@ -40,8 +40,10 @@ ICON_Iconify(HWND hwnd)
 		printf("argh, couldn't find icon\n");
 		exit(1);
 	}
+#ifdef DEBUG_ICON
 	printf("parent edge values are %d, %d\n",  parwPtr->rectWindow.left,
 				parwPtr->rectWindow.bottom);
+#endif
 	wndPtr->ptIconPos.x = parwPtr->rectWindow.left + 10;
 	wndPtr->ptIconPos.y = parwPtr->rectWindow.bottom - 80;
 
@@ -68,7 +70,9 @@ ICON_Iconify(HWND hwnd)
 	XMapWindow(display, wndPtr->icon);
 
 	SendMessage(hwnd, WM_PAINTICON, 0, 0);
+#ifdef DEBUG_ICON
         printf("done with iconify\n");
+#endif
 }
 
 
@@ -94,7 +98,7 @@ BOOL ICON_isAtPoint(HWND hwnd, POINT pt)
       		iconWidth = 64;
       		iconHeight = 64;
     	}	
-#define DEBUG_ICON 1
+
 #ifdef DEBUG_ICON
         printf("icon x,y is %d,%d\n",
 		wndPtr->ptIconPos.x, wndPtr->ptIconPos.y);
@@ -124,7 +128,9 @@ BOOL ICON_isAtPoint(HWND hwnd, POINT pt)
             (wndPtr->dwStyle & WS_VISIBLE) &&
             !(wndPtr->dwExStyle & WS_EX_TRANSPARENT))
         {
+#ifdef DEBUG_ICON
 		printf("got a winner!\n");
+#endif
 		return 1;
         } 
  
@@ -142,10 +148,14 @@ HWND ICON_findIconFromPoint(POINT pt)
 
         	if ( !(wndPtr=WIN_FindWndPtr(hwnd)))  return 0;
       		if (ICON_isAtPoint(hwnd, pt))  {
+#ifdef DEBUG_ICON
 			printf("returning\n");
+#endif
 			return hwndRet = hwnd;
 		} else {
+#ifdef DEBUG_ICON
 			printf("checking child\n");
+#endif
       			hwnd = wndPtr->hwndChild;
 		}
     	}
@@ -157,7 +167,9 @@ ICON_Deiconify(HWND hwnd)
 {
 	WND *wndPtr = WIN_FindWndPtr( hwnd );
 
+#ifdef DEBUG_ICON
 	printf("deiconifying\n");
+#endif
 	XUnmapWindow(display, wndPtr->icon); 
 	wndPtr->dwStyle &= ~WS_MINIMIZE;
 /*	wndPtr->rectNormal = myrect;

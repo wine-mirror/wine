@@ -273,7 +273,7 @@ length	490
 	   CreateRoundRectRgn(1 2 3 4 5 6)
 445 pascal CreateDIBPatternBrush(word word) CreateDIBPatternBrush(1 2)
 #449 pascal DEVICECOLORMATCH
-#450 pascal POLYPOLYGON
+450 pascal PolyPolygon(word ptr ptr word) PolyPolygon(1 2 3 4)
 451 pascal CreatePolyPolygonRgn(ptr ptr word word)
 	   CreatePolyPolygonRgn(1 2 3 4)
 #452 pascal GDISEEGDIDO
