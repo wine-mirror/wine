@@ -794,7 +794,11 @@ BOOL WIN_CreateDesktopWindow(void)
     WIN_SetRectangles( hwndDesktop, &rect, &rect );
     WIN_SetStyle( hwndDesktop, WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 
-    if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE )) return FALSE;
+    if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE ))
+    {
+        WIN_ReleaseWndPtr( pWndDesktop );
+        return FALSE;
+    }
 
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     WIN_ReleaseWndPtr( pWndDesktop );
