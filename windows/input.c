@@ -931,6 +931,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
 {
     int i = 0;
     POINT pos;
+    POINT posClient;
     HWND hwnd;
     INT hoverwidth = 0, hoverheight = 0;
 
@@ -970,8 +971,11 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
             /* has the mouse hovered long enough? */
             if(TrackingList[i].iHoverTime <= TrackingList[i].tme.dwHoverTime)
              {
+		posClient.x = pos.x;
+		posClient.y = pos.y;
+		ScreenToClient(hwnd, &posClient);
                 PostMessageW(TrackingList[i].tme.hwndTrack, WM_MOUSEHOVER,
-                             get_key_state(), MAKELPARAM( pos.x, pos.y ));
+                             get_key_state(), MAKELPARAM( posClient.x, posClient.y ));
 
                 /* stop tracking mouse hover */
                 TrackingList[i].tme.dwFlags ^= TME_HOVER;
