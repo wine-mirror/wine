@@ -225,10 +225,18 @@ static void DEBUG_DoBackTrace(int noisy)
 
     next_switch = THREAD_Current()->cur_stack;
     if (is16) {
+      if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
+	 fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
+	 return;
+      }
       cur_switch = (DWORD)((STACK32FRAME*)next_switch)->frame16;
       sw_addr.seg = SELECTOROF(cur_switch);
       sw_addr.off = OFFSETOF(cur_switch);
     } else {
+      if (IsBadReadPtr((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch), sizeof(STACK16FRAME))) {
+	 fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch) );
+	 return;
+      }
       cur_switch = (DWORD)((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch))->frame32;
       sw_addr.seg = ss;
       sw_addr.off = cur_switch;
@@ -245,7 +253,15 @@ static void DEBUG_DoBackTrace(int noisy)
          * yes, I know this is confusing, it gave me a headache too */
         if (is16) {
           STACK32FRAME *frame = (STACK32FRAME*)next_switch;
-          DBG_ADDR code = { NULL, 0, frame->retaddr };
+          DBG_ADDR code;
+
+	  if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
+	    fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
+	    return;
+	  }
+	  code.type = NULL;
+	  code.seg  = 0;
+	  code.off  = frame->retaddr;
 
           cs = 0;
           addr.seg = 0;
@@ -253,6 +269,10 @@ static void DEBUG_DoBackTrace(int noisy)
           DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy );
 
           next_switch = cur_switch;
+	  if (IsBadReadPtr((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch), sizeof(STACK16FRAME))) {
+	    fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch) );
+	    return;
+	  }
           cur_switch = (DWORD)((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch))->frame32;
           sw_addr.seg = 0;
           sw_addr.off = cur_switch;
@@ -260,7 +280,16 @@ static void DEBUG_DoBackTrace(int noisy)
           is16 = FALSE;
         } else {
           STACK16FRAME *frame = (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch);
-          DBG_ADDR code = { NULL, frame->cs, frame->ip };
+          DBG_ADDR code;
+
+	  if (IsBadReadPtr((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch), sizeof(STACK16FRAME))) {
+	    fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch) );
+	    return;
+	  }
+
+	  code.type = NULL;
+	  code.seg  = frame->cs;
+	  code.off  = frame->ip;
 
           cs = frame->cs;
           addr.seg = SELECTOROF(next_switch);
@@ -268,6 +297,10 @@ static void DEBUG_DoBackTrace(int noisy)
           DEBUG_ForceFrame( &addr, &code, ++frameno, 16, noisy );
 
           next_switch = cur_switch;
+	  if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
+	    fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
+	    return;
+	  }
           cur_switch = (DWORD)((STACK32FRAME*)next_switch)->frame16;
           sw_addr.seg = SELECTOROF(cur_switch);
           sw_addr.off = OFFSETOF(cur_switch);
