@@ -539,15 +539,19 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
     if( wndParent->flags & WIN_ISWIN32 )
     {
         WIN_ReleaseWndPtr( wndParent );
+        /* FIXME: CreateWindowEx must be called with WS_EX_MDICHILD set, but
+         * it requires to move MDI specific child creation to CreateWindowEx
+         * and do child tracking in MDICLIENT using WM_PARENTNOTIFY.
+         */
 	if(unicode)
 	{
 	    MDICREATESTRUCTW *csW = (MDICREATESTRUCTW *)cs;
-	    hwnd = CreateWindowW( csW->szClass, csW->szTitle, style,
+	    hwnd = CreateWindowExW( 0, csW->szClass, csW->szTitle, style,
                                 csW->x, csW->y, csW->cx, csW->cy, parent,
                                 (HMENU)wIDmenu, csW->hOwner, csW );
 	}
 	else
-	    hwnd = CreateWindowA( cs->szClass, cs->szTitle, style,
+	    hwnd = CreateWindowExA( 0, cs->szClass, cs->szTitle, style,
                                 cs->x, cs->y, cs->cx, cs->cy, parent,
                                 (HMENU)wIDmenu, cs->hOwner, cs );
     }
@@ -561,7 +565,7 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
         cs16.szTitle = title = MapLS( cs->szTitle );
         cs16.szClass = cls = MapLS( cs->szClass );
         seg_cs16 = MapLS( &cs16 );
-        hwnd = WIN_Handle32( CreateWindow16( cs->szClass, cs->szTitle, style,
+        hwnd = WIN_Handle32( CreateWindowEx16( 0, cs->szClass, cs->szTitle, style,
                                              cs16.x, cs16.y, cs16.cx, cs16.cy,
                                              HWND_16(parent), (HMENU16)wIDmenu,
                                              cs16.hOwner, (LPVOID)seg_cs16 ));

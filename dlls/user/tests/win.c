@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Bill Medland
  * Copyright 2002 Alexandre Julliard
+ * Copyright 2003 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -684,6 +685,165 @@ static void test_shell_window()
     DestroyWindow(hwnd5);
 }
 
+/************** MDI test ****************/
+
+static const char mdi_lParam_test_message[] = "just a test string";
+
+static void test_MDI_create(HWND parent, HWND mdi_client)
+{
+    MDICREATESTRUCTA mdi_cs;
+    HWND mdi_child;
+
+    mdi_cs.szClass = "MDI_child_Class_1";
+    mdi_cs.szTitle = "MDI child 1";
+    mdi_cs.hOwner = GetModuleHandle(0);
+    mdi_cs.x = 0;
+    mdi_cs.y = 0;
+    mdi_cs.cx = CW_USEDEFAULT;
+    mdi_cs.cy = CW_USEDEFAULT;
+    mdi_cs.style = WS_CAPTION | WS_CHILD /*| WS_VISIBLE*/;
+    mdi_cs.lParam = (LPARAM)mdi_lParam_test_message;
+    mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
+    assert(mdi_child);
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child 2",
+                                 WS_CAPTION | WS_CHILD /*| WS_VISIBLE*/,
+                                 10, 10, CW_USEDEFAULT, CW_USEDEFAULT,
+                                 mdi_client, GetModuleHandle(0),
+                                 (LPARAM)mdi_lParam_test_message);
+    assert(mdi_child);
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child 3",
+                                WS_CAPTION | WS_CHILD /*| WS_VISIBLE*/,
+                                20, 20, CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    assert(mdi_child);
+    DestroyWindow(mdi_child);
+}
+
+static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_CREATE:
+        {
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+            MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs->lpCreateParams;
+
+todo_wine /* apparently Windows has a common code for MDI and other windows */
+{
+            ok(cs->dwExStyle & WS_EX_MDICHILD, "WS_EX_MDICHILD should be set\n");
+}
+            ok(mdi_cs->lParam == (LPARAM)mdi_lParam_test_message, "wrong mdi_cs->lParam\n");
+            break;
+        }
+    }
+    return DefMDIChildProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_CREATE:
+        {
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+
+            ok(!(cs->dwExStyle & WS_EX_MDICHILD), "WS_EX_MDICHILD should not be set\n");
+            ok(cs->lpCreateParams == mdi_lParam_test_message, "wrong cs->lpCreateParams\n");
+            break;
+        }
+    }
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static HWND mdi_client;
+
+    switch (msg)
+    {
+        case WM_CREATE:
+        {
+            CLIENTCREATESTRUCT client_cs;
+            RECT rc;
+
+            GetClientRect(hwnd, &rc);
+
+            client_cs.hWindowMenu = 0;
+            client_cs.idFirstChild = 1;
+
+            mdi_client = CreateWindowExA(0, "mdiclient",
+                                         NULL,
+                                         WS_CHILD | WS_CLIPCHILDREN /*| WS_VISIBLE*/,
+                                         0, 0, rc.right, rc.bottom,
+                                         hwnd, 0, GetModuleHandle(0),
+                                         (LPVOID)&client_cs);
+            assert(mdi_client);
+
+            test_MDI_create(hwnd, mdi_client);
+            break;
+        }
+
+        case WM_CLOSE:
+            PostQuitMessage(0);
+            break;
+    }
+    return DefFrameProcA(hwnd, mdi_client, msg, wparam, lparam);
+}
+
+static BOOL mdi_RegisterWindowClasses(void)
+{
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = mdi_main_wnd_procA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "MDI_parent_Class";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = mdi_child_wnd_proc_1;
+    cls.lpszClassName = "MDI_child_Class_1";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = mdi_child_wnd_proc_2;
+    cls.lpszClassName = "MDI_child_Class_2";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    return TRUE;
+}
+
+static void test_mdi(void)
+{
+    HWND mdi_hwndMain;
+    /*MSG msg;*/
+
+    if (!mdi_RegisterWindowClasses()) assert(0);
+
+    mdi_hwndMain = CreateWindowExA(0, "MDI_parent_Class", "MDI parent window",
+                                   WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                                   WS_MAXIMIZEBOX /*| WS_VISIBLE*/,
+                                   100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                   GetDesktopWindow(), 0,
+                                   GetModuleHandle(0), NULL);
+    assert(mdi_hwndMain);
+/*
+    while(GetMessage(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+*/
+}
 
 START_TEST(win)
 {
@@ -709,5 +869,8 @@ START_TEST(win)
 
     test_parent_owner();
     test_shell_window();
+
+    test_mdi();
+
     UnhookWindowsHookEx(hhook);
 }
