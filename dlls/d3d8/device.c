@@ -34,8 +34,6 @@
 /*#define GL_GLEXT_PROTOTYPES*/
 /*#undef  GLX_GLXEXT_LEGACY*/
 #include "d3d8_private.h"
-#include <GL/glext.h>
-#include <GL/glxext.h>
 
 /** currently desactiving 1_4 support as mesa doesn't implement all 1_4 support while defining it */
 #undef GL_VERSION_1_4
@@ -1949,6 +1947,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface) {
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
+    IDirect3DBaseTexture8* cont = NULL;
+    HRESULT hr;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p)\n", This);
 
@@ -1986,8 +1986,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
 	vcheckGLcall("glReadBuffer");
       }
 
-      IDirect3DBaseTexture8* cont = NULL;
-      HRESULT hr;
       hr = IDirect3DSurface8_GetContainer((LPDIRECT3DSURFACE8) This->renderTarget, &IID_IDirect3DBaseTexture8, (void**) &cont);
       if (SUCCEEDED(hr) && NULL != cont) {
 	/** always dirtify for now. we must find a better way to see that surface have been modified */

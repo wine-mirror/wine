@@ -536,16 +536,16 @@ void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum*
 
 /* Set texture operations up - The following avoids lots of ifdefs in this routine!*/
 #if defined (GL_VERSION_1_3)
-  #define useext(A) A
-  #define combine_ext 1
+# define useext(A) A
+# define combine_ext 1
 #elif defined (GL_EXT_texture_env_combine)
-  #define useext(A) A##_EXT
-  #define combine_ext 1
+# define useext(A) A##_EXT
+# define combine_ext 1
 #elif defined (GL_ARB_texture_env_combine)
-  #define useext(A) A##_ARB
-  #define combine_ext 1
+# define useext(A) A##_ARB
+# define combine_ext 1
 #else
-  #undef combine_ext
+# undef combine_ext
 #endif
 
 #if !defined(combine_ext)
@@ -579,7 +579,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		opr0_target = useext(GL_OPERAND0_ALPHA);
 		opr1_target = useext(GL_OPERAND1_ALPHA);
 		opr2_target = useext(GL_OPERAND2_ALPHA);
-		scal_target = useext(GL_ALPHA_SCALE);
+		scal_target = GL_ALPHA_SCALE;
 	}
 	else {
 		comb_target = useext(GL_COMBINE_RGB);
@@ -713,8 +713,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		checkGLcall("GL_TEXTURE_ENV, scal_target, 2");
 		break;
         case D3DTOP_SUBTRACT:
-#if defined(GL_VERSION_1_3) || defined (GL_ARB_texture_env_combine)
-		glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_SUBTRACT));
+	  if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE)) {
+		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_SUBTRACT);
 		checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_SUBTRACT)");
 		glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
@@ -726,10 +726,11 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
 		glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 		checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
-#else
+	  } else {
                 FIXME("This version of opengl does not support GL_SUBTRACT\n");
-#endif
-		break;
+	  }
+	  break;
+
 	case D3DTOP_BLENDDIFFUSEALPHA:
 		glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
 		checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
@@ -741,7 +742,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
 		glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
 		checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-		glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_PRIMARY_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, src2_target, useext(GL_PRIMARY_COLOR));
 		checkGLcall("GL_TEXTURE_ENV, src2_target, GL_PRIMARY_COLOR");
 		glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
 		checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
@@ -777,7 +778,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
 		glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
 		checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-		glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_CONSTANT);
+		glTexEnvi(GL_TEXTURE_ENV, src2_target, useext(GL_CONSTANT));
 		checkGLcall("GL_TEXTURE_ENV, src2_target, GL_CONSTANT");
 		glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
 		checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
@@ -795,7 +796,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
 		glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
 		checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-		glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_PREVIOUS);
+		glTexEnvi(GL_TEXTURE_ENV, src2_target, useext(GL_PREVIOUS));
 		checkGLcall("GL_TEXTURE_ENV, src2_target, GL_PREVIOUS");
 		glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
 		checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
@@ -803,18 +804,12 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
 		break;
         case D3DTOP_DOTPRODUCT3: 
-#if defined(GL_EXT_texture_env_dot3) 
-		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_EXT);
-		checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_EXT");
-#elif defined(GL_ARB_texture_env_dot3)
-		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB);
-		checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB");
-#elif defined (GL_VERSION_1_3)
-		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA);
-		checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA");
-#else
-                FIXME("This version of opengl does not support GL_DOT3\n");
-#endif
+	       if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3)) {
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA");
+		} else {
+		  FIXME("This version of opengl does not support GL_DOT3\n");
+		}
 		glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
 		glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);

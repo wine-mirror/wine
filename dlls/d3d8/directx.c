@@ -600,7 +600,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 
     pCaps->MaxPrimitiveCount = 0xFFFFFFFF;
     pCaps->MaxVertexIndex = 0xFFFFFFFF;
-    pCaps->MaxStreams = 2; /* HACK: Some games want at least 2 */ 
+    pCaps->MaxStreams = MAX_STREAMS;
     pCaps->MaxStreamStride = 1024;
 
 #if 1
@@ -698,9 +698,14 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
 	  FIXME(" FOUND: ARB Texture Compression support\n");
 	  This->gl_info.supported[ARB_TEXTURE_COMPRESSION] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_ARB_texture_env_combine") == 0) {
+	  FIXME(" FOUND: EXT Texture Env combine support\n");
+	  This->gl_info.supported[ARB_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
-	  FIXME(" FOUND: EXT Dot3 support\n");
-	  This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
+	  if (FALSE == This->gl_info.supported[ARB_TEXTURE_ENV_DOT3]) {
+	    FIXME(" FOUND: EXT Dot3 support\n");
+	    This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
+	  }
 	} else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
 	  This->gl_info.vs_arb_version = VS_VERSION_11;
 	  FIXME(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
@@ -724,6 +729,11 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
 	  FIXME(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
+	  if (FALSE == This->gl_info.supported[ARB_TEXTURE_ENV_DOT3]) {
+	    FIXME(" FOUND: EXT Dot3 support\n");
+	    This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
+	  }
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
 	  FIXME(" FOUND: EXT Texture Anisotropic filter support\n");
 	  This->gl_info.supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
@@ -788,6 +798,11 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         if (*GLX_Extensions == ' ') GLX_Extensions++;
       }
     }
+
+#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB(#pfn);
+    GLX_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
+
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,

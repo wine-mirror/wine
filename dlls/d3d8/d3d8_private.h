@@ -194,8 +194,10 @@ typedef struct _GL_Info {
   
   BOOL supported[30];
 
-  /** ext functions ptr */
+  /** OpenGL EXT and ARB functions ptr */
   GL_EXT_FUNCS_GEN;
+  /** OpenGL GLX functions ptr */
+  GLX_EXT_FUNCS_GEN;
   /**/
 } GL_Info;
 #undef USE_GL_FUNC
