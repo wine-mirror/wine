@@ -193,9 +193,11 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
     /*Decrement destruction monitoring value*/
      wndPtr->irefCount--;
     /* Check if it's time to release the memory*/
-     if(wndPtr->irefCount == 0)
+     /* Check if it's time to release the memory*/
+     if(wndPtr->irefCount == 0 && !wndPtr->dwMagic)
      {
-         /*Add memory releasing code here*/
+         /* Release memory */
+         USER_HEAP_FREE( wndPtr->hwndSelf);
      }
      else if(wndPtr->irefCount < 0)
      {
@@ -530,7 +532,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     WIN_UpdateWndPtr(&pWnd,wndPtr->next);
 
     wndPtr->pDriver->pFinalize(wndPtr);
-    USER_HEAP_FREE( hwnd );
+
     return pWnd;
 }
 
