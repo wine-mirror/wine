@@ -21,7 +21,7 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #ifdef HAVE_LIBXSHAPE
 #include <X11/IntrinsicP.h>
 #include <X11/extensions/shape.h>
@@ -804,7 +804,9 @@ static void set_visible_style( HWND hwnd, BOOL set )
             X11DRV_sync_window_style( display, win );
             X11DRV_set_wm_hints( display, win );
             TRACE( "mapping win %p\n", hwnd );
-            TSXMapWindow( display, get_whole_window(win) );
+            wine_tsx11_lock();
+            XMapWindow( display, get_whole_window(win) );
+            wine_tsx11_unlock();
         }
     }
     else
@@ -814,7 +816,9 @@ static void set_visible_style( HWND hwnd, BOOL set )
         if (!IsRectEmpty( &win->rectWindow ) && get_whole_window(win) && is_window_top_level(win))
         {
             TRACE( "unmapping win %p\n", hwnd );
-            TSXUnmapWindow( thread_display(), get_whole_window(win) );
+            wine_tsx11_lock();
+            XUnmapWindow( thread_display(), get_whole_window(win) );
+            wine_tsx11_unlock();
         }
     }
  done:
@@ -851,12 +855,16 @@ void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
                     X11DRV_sync_window_style( display, wndPtr );
                     X11DRV_set_wm_hints( display, wndPtr );
                 }
-                TSXMapWindow( display, get_whole_window(wndPtr) );
+                wine_tsx11_lock();
+                XMapWindow( display, get_whole_window(wndPtr) );
+                wine_tsx11_unlock();
             }
             else if (!is_window_top_level(wndPtr))  /* don't unmap managed windows */
             {
                 TRACE( "unmapping win %p\n", hwnd );
-                TSXUnmapWindow( display, get_whole_window(wndPtr) );
+                wine_tsx11_lock();
+                XUnmapWindow( display, get_whole_window(wndPtr) );
+                wine_tsx11_unlock();
             }
         }
     }
@@ -974,7 +982,9 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         {
             /* resizing to zero size -> unmap */
             TRACE( "unmapping zero size win %p\n", winpos->hwnd );
-            TSXUnmapWindow( display, get_whole_window(wndPtr) );
+            wine_tsx11_lock();
+            XUnmapWindow( display, get_whole_window(wndPtr) );
+            wine_tsx11_unlock();
         }
 
         wine_tsx11_lock();
@@ -1430,19 +1440,22 @@ static Window __get_common_ancestor( Display *display, Window A, Window B,
     Window      root, *childrenB;
     unsigned    totalB;
 
+    wine_tsx11_lock();
     while( A != B && A && B )
     {
-      TSXQueryTree( display, A, &root, &A, children, total );
-      TSXQueryTree( display, B, &root, &B, &childrenB, &totalB );
-      if( childrenB ) TSXFree( childrenB );
-      if( *children ) TSXFree( *children ), *children = NULL;
+      XQueryTree( display, A, &root, &A, children, total );
+      XQueryTree( display, B, &root, &B, &childrenB, &totalB );
+      if( childrenB ) XFree( childrenB );
+      if( *children ) XFree( *children ), *children = NULL;
     }
 
     if( A && B )
     {
-        TSXQueryTree( display, A, &root, &B, children, total );
+        XQueryTree( display, A, &root, &B, children, total );
+        wine_tsx11_unlock();
         return A;
     }
+    wine_tsx11_unlock();
     return 0 ;
 }
 
@@ -1451,12 +1464,14 @@ static Window __get_top_decoration( Display *display, Window w, Window ancestor 
     Window*     children, root, prev = w, parent = w;
     unsigned    total;
 
+    wine_tsx11_lock();
     do
     {
         w = parent;
-        TSXQueryTree( display, w, &root, &parent, &children, &total );
-        if( children ) TSXFree( children );
+        XQueryTree( display, w, &root, &parent, &children, &total );
+        if( children ) XFree( children );
     } while( parent && parent != ancestor );
+    wine_tsx11_unlock();
     TRACE("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
     return ( parent ) ? w : 0 ;
 }
@@ -1524,7 +1539,9 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
             }
         }
     }
-    if( children ) TSXFree( children );
+    wine_tsx11_lock();
+    if( children ) XFree( children );
+    wine_tsx11_unlock();
 
  done:
     HeapFree( GetProcessHeap(), 0, list );

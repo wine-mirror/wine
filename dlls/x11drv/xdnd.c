@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -123,15 +122,17 @@ int X11DRV_XDND_Event(HWND hWnd, XClientMessageEvent *event)
         {
             unsigned int i = 0;
 
+            wine_tsx11_lock();
             for (; i < count; i++)
             {
                 if (xdndtypes[i] != 0)
                 {
-                    char * pn = TSXGetAtomName(event->display, xdndtypes[i]);
+                    char * pn = XGetAtomName(event->display, xdndtypes[i]);
                     TRACE("XDNDEnterAtom %ld: %s\n", xdndtypes[i], pn);
-                    TSXFree(pn);
+                    XFree(pn);
                 }
             }
+            wine_tsx11_unlock();
         }
 
         /* Do a one-time data read and cache results */
@@ -275,7 +276,9 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
         wine_tsx11_unlock();
 
         entries += X11DRV_XDND_MapFormat(types[i], data, icount * (actfmt / 8));
-        TSXFree(data);
+        wine_tsx11_lock();
+        XFree(data);
+        wine_tsx11_unlock();
     }
 
     *count = entries;

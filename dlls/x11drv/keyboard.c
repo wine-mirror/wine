@@ -27,8 +27,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
-
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #ifdef HAVE_XKB
@@ -1108,7 +1107,9 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     if ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
          keysym == XK_Mode_switch)
     {
-        TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
+        wine_tsx11_lock();
+        TRACE("Ignoring %s keyboard event\n", XKeysymToString(keysym));
+        wine_tsx11_unlock();
         return;
     }
 
@@ -1130,7 +1131,9 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     if (TRACE_ON(key)){
 	char	*ksname;
 
-	ksname = TSXKeysymToString(keysym);
+        wine_tsx11_lock();
+        ksname = XKeysymToString(keysym);
+        wine_tsx11_unlock();
 	if (!ksname)
 	  ksname = "No Name";
 	TRACE_(key)("%s : keysym=%lX (%s), # of chars=%d / 0x%02x / '%s'\n",
@@ -1662,12 +1665,14 @@ SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     keysym = (unsigned char)cChar; /* (!) cChar is signed */
     if (keysym <= 27) keysym += 0xFF00; /* special chars : return, backspace... */
 
-    keycode = TSXKeysymToKeycode(display, keysym);  /* keysym -> keycode */
+    wine_tsx11_lock();
+    keycode = XKeysymToKeycode(display, keysym);  /* keysym -> keycode */
     if (!keycode)
     { /* It didn't work ... let's try with deadchar code. */
         TRACE("retrying with | 0xFE00\n");
-        keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
+        keycode = XKeysymToKeycode(display, keysym | 0xFE00);
     }
+    wine_tsx11_unlock();
 
     TRACE("'%c'(%#lx, %lu): got keycode %#.2x (%d)\n",
             cChar, keysym, keysym, keycode, keycode);
@@ -1682,14 +1687,16 @@ SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     }
 
     index = -1;
+    wine_tsx11_lock();
     for (i = 0; i < 4; i++) /* find shift state */
     {
-        if (TSXKeycodeToKeysym(display, keycode, i) == keysym)
+        if (XKeycodeToKeysym(display, keycode, i) == keysym)
         {
             index = i;
             break;
         }
     }
+    wine_tsx11_unlock();
 
     switch (index)
     {
@@ -1894,9 +1901,11 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
          break;
   if (keyi <= max_keycode)
   {
+      wine_tsx11_lock();
       keyc = (KeyCode) keyi;
-      keys = TSXKeycodeToKeysym(thread_display(), keyc, 0);
-      name = TSXKeysymToString(keys);
+      keys = XKeycodeToKeysym(thread_display(), keyc, 0);
+      name = XKeysymToString(keys);
+      wine_tsx11_unlock();
       TRACE("found scan=%04x keyc=%04x keysym=%04x string=%s\n",
             scanCode, keyc, (int)keys, name);
       if (lpBuffer && nSize && name)
@@ -2130,7 +2139,9 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	    {
 	    char	*ksname;
 
-	    ksname = TSXKeysymToString(keysym);
+            wine_tsx11_lock();
+	    ksname = XKeysymToString(keysym);
+            wine_tsx11_unlock();
 	    if (!ksname)
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)

@@ -28,7 +28,7 @@
 # include <unistd.h>
 #endif
 
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 
@@ -977,7 +977,9 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     if (!create_whole_window( display, wndPtr )) goto failed;
     if (!create_client_window( display, wndPtr )) goto failed;
-    TSXSync( display, False );
+    wine_tsx11_lock();
+    XSync( display, False );
+    wine_tsx11_unlock();
 
     SetPropA( hwnd, whole_window_atom, (HANDLE)data->whole_window );
     SetPropA( hwnd, client_window_atom, (HANDLE)data->client_window );

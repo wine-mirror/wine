@@ -24,10 +24,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <X11/Xatom.h>
-
-#include "ts_xlib.h"
-
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -441,15 +437,14 @@ static UINT16   __genericCheckSum( const void *ptr, int size )
  *
  * These functions also do TILDE to HYPHEN conversion
  */
-static LFD* LFD_Parse(LPSTR lpFont)
+static BOOL LFD_Parse(LPSTR lpFont, LFD *lfd)
 {
-    LFD* lfd;
     char *lpch = lpFont, *lfd_fld[LFD_FIELDS], *field_start;
     int i;
     if (*lpch != HYPHEN)
     {
         WARN("font '%s' doesn't begin with '%c'\n", lpFont, HYPHEN);
-	return NULL;
+        return FALSE;
     }
 
     field_start = ++lpch;
@@ -482,25 +477,21 @@ static LFD* LFD_Parse(LPSTR lpFont)
     if (*lpch)
 	WARN("Extra ignored in font '%s'\n", lpFont);
 
-    lfd = HeapAlloc( GetProcessHeap(), 0, sizeof(LFD) );
-    if (lfd)
-    {
-	lfd->foundry = lfd_fld[0];
-	lfd->family = lfd_fld[1];
-	lfd->weight = lfd_fld[2];
-	lfd->slant = lfd_fld[3];
-	lfd->set_width = lfd_fld[4];
-	lfd->add_style = lfd_fld[5];
-	lfd->pixel_size = lfd_fld[6];
-	lfd->point_size = lfd_fld[7];
-	lfd->resolution_x = lfd_fld[8];
-	lfd->resolution_y = lfd_fld[9];
-	lfd->spacing = lfd_fld[10];
-	lfd->average_width = lfd_fld[11];
-	lfd->charset_registry = lfd_fld[12];
-	lfd->charset_encoding = lfd_fld[13];
-    }
-    return lfd;
+    lfd->foundry = lfd_fld[0];
+    lfd->family = lfd_fld[1];
+    lfd->weight = lfd_fld[2];
+    lfd->slant = lfd_fld[3];
+    lfd->set_width = lfd_fld[4];
+    lfd->add_style = lfd_fld[5];
+    lfd->pixel_size = lfd_fld[6];
+    lfd->point_size = lfd_fld[7];
+    lfd->resolution_x = lfd_fld[8];
+    lfd->resolution_y = lfd_fld[9];
+    lfd->spacing = lfd_fld[10];
+    lfd->average_width = lfd_fld[11];
+    lfd->charset_registry = lfd_fld[12];
+    lfd->charset_encoding = lfd_fld[13];
+    return TRUE;
 }
 
 
@@ -1064,15 +1055,18 @@ static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
     if( pEL ) *pEL = 0;
 
     if(XFT) {
-	if(TSXGetFontProperty((XFontStruct*)x_fs, x11drv_atom(RAW_CAP_HEIGHT), &height))
+        wine_tsx11_lock();
+	if(XGetFontProperty((XFontStruct*)x_fs, x11drv_atom(RAW_CAP_HEIGHT), &height))
 	    *pIL = XFT->ascent -
                             (INT)(XFT->pixelsize / 1000.0 * height);
 	else
 	    *pIL = 0;
+        wine_tsx11_unlock();
 	return;
     }
 
-    if( TSXGetFontProperty((XFontStruct*)x_fs, XA_CAP_HEIGHT, &height) == FALSE )
+    wine_tsx11_lock();
+    if( XGetFontProperty((XFontStruct*)x_fs, XA_CAP_HEIGHT, &height) == FALSE )
     {
         if( x_fs->per_char )
 	    if( bIsLatin && ((unsigned char)'X' <= (max - min)) )
@@ -1089,6 +1083,7 @@ static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
 	else
 	    height = x_fs->min_bounds.ascent;
     }
+    wine_tsx11_unlock();
 
     *pIL = x_fs->ascent - height;
 }
@@ -1464,17 +1459,15 @@ static void XFONT_LoadDefault(LPCSTR ini, LPCSTR fonttype)
 
 	if (*buffer)
 	{
-	    LFD* lfd;
+	    LFD lfd;
 	    char* pch = buffer;
 	    while( *pch && isspace(*pch) ) pch++;
 
 	    TRACE("Using '%s' as default %sfont\n", pch, fonttype);
-	    lfd = LFD_Parse(pch);
-	    if (lfd && lfd->foundry && lfd->family)
-		XFONT_LoadDefaultLFD(lfd, fonttype);
+	    if (LFD_Parse(pch, &lfd) && lfd.foundry && lfd.family)
+		XFONT_LoadDefaultLFD(&lfd, fonttype);
 	    else
 		WARN("Ini section [%s]%s is malformed\n", INIFontSection, ini);
-	    HeapFree(GetProcessHeap(), 0, lfd);
 	}
     }
 }
@@ -1659,7 +1652,7 @@ static void XFONT_LoadAliases(void)
     char *lpResource;
     char buffer[MAX_LFD_LENGTH];
     int i = 0;
-    LFD* lfd;
+    LFD lfd;
     HKEY hkey;
 
     /* built-ins first */
@@ -1671,16 +1664,14 @@ static void XFONT_LoadAliases(void)
 	RegCloseKey(hkey);
     }
     TRACE("Using '%s' as default serif font\n", buffer);
-    lfd = LFD_Parse(buffer);
-    /* NB XFONT_InitialCapitals should not change these standard aliases */
-    if (lfd)
+    if (LFD_Parse(buffer, &lfd))
     {
-	XFONT_LoadAlias( lfd, "Tms Roman", FALSE);
-	XFONT_LoadAlias( lfd, "MS Serif", FALSE);
-	XFONT_LoadAlias( lfd, "Times New Roman", FALSE);
+        /* NB XFONT_InitialCapitals should not change these standard aliases */
+        XFONT_LoadAlias( &lfd, "Tms Roman", FALSE);
+        XFONT_LoadAlias( &lfd, "MS Serif", FALSE);
+        XFONT_LoadAlias( &lfd, "Times New Roman", FALSE);
 
-	XFONT_LoadDefaultLFD( lfd, "serif ");
-	HeapFree(GetProcessHeap(), 0, lfd);
+        XFONT_LoadDefaultLFD( &lfd, "serif ");
     }
 
     strcpy(buffer, "-adobe-helvetica-");
@@ -1691,17 +1682,15 @@ static void XFONT_LoadAliases(void)
 	RegCloseKey(hkey);
     }
     TRACE("Using '%s' as default sans serif font\n", buffer);
-    lfd = LFD_Parse(buffer);
-    if (lfd)
+    if (LFD_Parse(buffer, &lfd))
     {
-	XFONT_LoadAlias( lfd, "Helv", FALSE);
-	XFONT_LoadAlias( lfd, "MS Sans Serif", FALSE);
-	XFONT_LoadAlias( lfd, "MS Shell Dlg", FALSE);
-	XFONT_LoadAlias( lfd, "System", FALSE);
-	XFONT_LoadAlias( lfd, "Arial", FALSE);
+        XFONT_LoadAlias( &lfd, "Helv", FALSE);
+        XFONT_LoadAlias( &lfd, "MS Sans Serif", FALSE);
+        XFONT_LoadAlias( &lfd, "MS Shell Dlg", FALSE);
+        XFONT_LoadAlias( &lfd, "System", FALSE);
+        XFONT_LoadAlias( &lfd, "Arial", FALSE);
 
-	XFONT_LoadDefaultLFD( lfd, "sans serif ");
-	HeapFree(GetProcessHeap(), 0, lfd);
+        XFONT_LoadDefaultLFD( &lfd, "sans serif ");
     }
 
     /* then user specified aliases */
@@ -1727,12 +1716,7 @@ static void XFONT_LoadAliases(void)
 	bSubst = (XFONT_GetStringItem( lpResource )) ? TRUE : FALSE;
 	if( lpResource && *lpResource )
 	{
-	    lfd = LFD_Parse(lpResource);
-	    if (lfd)
-	    {
-		XFONT_LoadAlias(lfd, buffer, bSubst);
-		HeapFree(GetProcessHeap(), 0, lfd);
-	    }
+            if (LFD_Parse(lpResource, &lfd)) XFONT_LoadAlias(&lfd, buffer, bSubst);
 	}
 	else
 	    WARN("malformed font alias '%s'\n", buffer );
@@ -1810,13 +1794,13 @@ void XFONT_RemoveFontResource( fontResource** ppfr )
 static void XFONT_LoadIgnore(char* lfdname)
 {
     fontResource** ppfr;
+    LFD lfd;
 
-    LFD* lfd = LFD_Parse(lfdname);
-    if (lfd && lfd->foundry && lfd->family)
+    if (LFD_Parse(lfdname, &lfd) && lfd.foundry && lfd.family)
     {
 	for( ppfr = &fontList; *ppfr ; ppfr = &((*ppfr)->next))
 	{
-	    if( XFONT_SameFoundryAndFamily( (*ppfr)->resource, lfd) )
+	    if( XFONT_SameFoundryAndFamily( (*ppfr)->resource, &lfd) )
 	    {
 		TRACE("Ignoring '-%s-%s-'\n",
 		      (*ppfr)->resource->foundry, (*ppfr)->resource->family  );
@@ -1828,8 +1812,6 @@ static void XFONT_LoadIgnore(char* lfdname)
     }
     else
 	WARN("Malformed font resource\n");
-
-    HeapFree(GetProcessHeap(), 0, lfd);
 }
 
 static void XFONT_LoadIgnores(void)
@@ -2047,7 +2029,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
     for( i = 0; i < x_count; i++ )
     {
 	char*         typeface;
-	LFD*          lfd;
+	LFD           lfd;
 	int           j;
 	char          buffer[MAX_LFD_LENGTH];
 	char*	      lpstr;
@@ -2058,8 +2040,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	strcpy( typeface, x_pattern[i] );
 	if (i % 10 == 0) MESSAGE("Font metrics: %.1f%% done\n", 100.0 * i / x_count);
 
-	lfd = LFD_Parse(typeface);
-	if (!lfd)
+        if (!LFD_Parse(typeface, &lfd))
 	{
 	    HeapFree(GetProcessHeap(), 0, typeface);
 	    continue;
@@ -2069,14 +2050,14 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 
 	for( pfr = NULL, fr = fontList; fr; fr = fr->next )
 	{
-	    if( XFONT_SameFoundryAndFamily(fr->resource, lfd))
+	    if( XFONT_SameFoundryAndFamily(fr->resource, &lfd))
 		break;
 	    pfr = fr;
 	}
 
 	if( !fi ) fi = (fontInfo*) HeapAlloc(GetProcessHeap(), 0, sizeof(fontInfo));
 
-	if( !LFD_InitFontInfo( fi, lfd, x_pattern[i]) )
+	if( !LFD_InitFontInfo( fi, &lfd, x_pattern[i]) )
 	    goto nextfont;
 
 	if( !fr ) /* add new family */
@@ -2090,11 +2071,11 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 		fr->resource = (LFD*) HeapAlloc(GetProcessHeap(), 0, sizeof(LFD));
 		memset(fr->resource, 0, sizeof(LFD));
 
-		TRACE("family: -%s-%s-\n", lfd->foundry, lfd->family );
-		fr->resource->foundry = HeapAlloc(GetProcessHeap(), 0, strlen(lfd->foundry)+1);
-		strcpy( (char *)fr->resource->foundry, lfd->foundry );
-		fr->resource->family = HeapAlloc(GetProcessHeap(), 0, strlen(lfd->family)+1);
-		strcpy( (char *)fr->resource->family, lfd->family );
+		TRACE("family: -%s-%s-\n", lfd.foundry, lfd.family );
+		fr->resource->foundry = HeapAlloc(GetProcessHeap(), 0, strlen(lfd.foundry)+1);
+		strcpy( (char *)fr->resource->foundry, lfd.foundry );
+		fr->resource->family = HeapAlloc(GetProcessHeap(), 0, strlen(lfd.family)+1);
+		strcpy( (char *)fr->resource->family, lfd.family );
 		fr->resource->weight = "";
 
 		if( pfr ) pfr->next = fr;
@@ -2125,7 +2106,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    sprintf(pxl_string, "%d", fi->lfd_height);
 	    sprintf(res_string, "%d", fi->lfd_resolution);
 
-	    lfd1 = *lfd;
+	    lfd1 = lfd;
 	    lfd1.pixel_size = pxl_string;
 	    lfd1.point_size = "*";
 	    lfd1.resolution_x = res_string;
@@ -2141,7 +2122,9 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	if ((x_fs = safe_XLoadQueryFont(gdi_display, lpstr)) != 0)
 	{
 	    XFONT_SetFontMetric( fi, fr, x_fs );
-	    TSXFreeFont( gdi_display, x_fs );
+            wine_tsx11_lock();
+            XFreeFont( gdi_display, x_fs );
+            wine_tsx11_unlock();
 
 	    XFONT_FixupPointSize(fi);
 
@@ -2157,7 +2140,6 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    XFONT_CheckFIList( fr, fi, UNMARK_SUBSETS );
 	}
     nextfont:
-	HeapFree(GetProcessHeap(), 0, lfd);
 	HeapFree(GetProcessHeap(), 0, typeface);
     }
     if( fi ) HeapFree(GetProcessHeap(), 0, fi);
@@ -2294,7 +2276,12 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 			{
 			    size_t len = strlen(lpch) + 1;
 			    TRACE("\t%s, %i instances\n", lpch, pfr->fi_count );
-			    pfr->resource = LFD_Parse(lpch);
+			    pfr->resource = HeapAlloc(GetProcessHeap(),0,sizeof(LFD));
+                            if (!LFD_Parse(lpch, pfr->resource))
+                            {
+                                HeapFree( GetProcessHeap(), 0, pfr->resource );
+                                pfr->resource = NULL;
+                            }
 			    lpch += len;
 			    offset += len;
 			    if (offset > length)
@@ -2857,7 +2844,9 @@ static fontObject* XFONT_GetCacheEntry(void)
 	    if(fontCache[j].lpX11Trans)
 	        HeapFree( GetProcessHeap(), 0, fontCache[j].lpX11Trans );
 
-	    TSXFreeFont( gdi_display, fontCache[j].fs );
+            wine_tsx11_lock();
+            XFreeFont( gdi_display, fontCache[j].fs );
+            wine_tsx11_unlock();
 
 	    memset( fontCache + j, 0, sizeof(fontObject) );
 	    return (fontCache + j);
@@ -3040,31 +3029,25 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
 {
   char *fontName;
   Atom nameAtom;
-  LFD* lfd;
+  LFD lfd;
 
-  TSXGetFontProperty( pfo->fs, XA_FONT, &nameAtom );
-  fontName = TSXGetAtomName( gdi_display, nameAtom );
-  lfd = LFD_Parse(fontName);
-  if (!lfd)
+  wine_tsx11_lock();
+  XGetFontProperty( pfo->fs, XA_FONT, &nameAtom );
+  fontName = XGetAtomName( gdi_display, nameAtom );
+  if (!LFD_Parse(fontName, &lfd) || lfd.pixel_size[0] != '[')
   {
-      TSXFree(fontName);
+      XFree(fontName);
+      wine_tsx11_unlock();
       return FALSE;
   }
-
-  if (lfd->pixel_size[0] != '[') {
-      HeapFree(GetProcessHeap(), 0, lfd);
-      TSXFree(fontName);
-      return FALSE;
-  }
-
 #define PX pfo->lpX11Trans
 
-  sscanf(lfd->pixel_size, "[%f%f%f%f]", &PX->a, &PX->b, &PX->c, &PX->d);
-  TSXFree(fontName);
-  HeapFree(GetProcessHeap(), 0, lfd);
+  sscanf(lfd.pixel_size, "[%f%f%f%f]", &PX->a, &PX->b, &PX->c, &PX->d);
+  XFree(fontName);
 
-  TSXGetFontProperty( pfo->fs, x11drv_atom(RAW_ASCENT), &PX->RAW_ASCENT );
-  TSXGetFontProperty( pfo->fs, x11drv_atom(RAW_DESCENT), &PX->RAW_DESCENT );
+  XGetFontProperty( pfo->fs, x11drv_atom(RAW_ASCENT), &PX->RAW_ASCENT );
+  XGetFontProperty( pfo->fs, x11drv_atom(RAW_DESCENT), &PX->RAW_DESCENT );
+  wine_tsx11_unlock();
 
   PX->pixelsize = hypot(PX->a, PX->b);
   PX->ascent = PX->pixelsize / 1000.0 * PX->RAW_ASCENT;

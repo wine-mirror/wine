@@ -24,7 +24,7 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
 
 #include "x11drv.h"
@@ -126,7 +126,9 @@ void X11DRV_XF86DGA2_Init(void)
 
 void X11DRV_XF86DGA2_Cleanup(void)
 {
-  if (modes) TSXFree(modes);
+    wine_tsx11_lock();
+    if (modes) XFree(modes);
+    wine_tsx11_unlock();
 }
 
 static XDGADevice *dga_dev;

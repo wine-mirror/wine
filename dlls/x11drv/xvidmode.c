@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 
 #ifdef HAVE_LIBXXF86VM
 #define XMD_H
@@ -216,7 +216,9 @@ void X11DRV_XF86VM_Init(void)
 
 void X11DRV_XF86VM_Cleanup(void)
 {
-  if (real_xf86vm_modes) TSXFree(real_xf86vm_modes);
+  wine_tsx11_lock();
+  if (real_xf86vm_modes) XFree(real_xf86vm_modes);
+  wine_tsx11_unlock();
 }
 
 void X11DRV_XF86VM_SetExclusiveMode(int lock)

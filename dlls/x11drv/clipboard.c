@@ -73,7 +73,6 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "ts_xlib.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -1351,11 +1350,13 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
 
         selectionAcquired  = S_NOSELECTION;
 
-        if (TSXGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
+        wine_tsx11_lock();
+        if (XGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
 	    selectionAcquired |= S_PRIMARY;
 
-        if (TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
+        if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
 	    selectionAcquired |= S_CLIPBOARD;
+        wine_tsx11_unlock();
 
         if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
         {
@@ -1386,28 +1387,36 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
     /*
      * Query the selection owner for the TARGETS property
      */
-    if (TSXGetSelectionOwner(display,XA_PRIMARY) ||
-        TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
+    wine_tsx11_lock();
+    if (XGetSelectionOwner(display,XA_PRIMARY) ||
+        XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
-    if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe))
-        selectionCacheSrc = XA_PRIMARY;
-    else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), &xe))
-        selectionCacheSrc = x11drv_atom(CLIPBOARD);
-    else
+        wine_tsx11_unlock();
+        if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe))
+            selectionCacheSrc = XA_PRIMARY;
+        else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), &xe))
+            selectionCacheSrc = x11drv_atom(CLIPBOARD);
+        else
             return -1;
     }
     else /* No selection owner so report 0 targets available */
+    {
+        wine_tsx11_unlock();
         return 0;
+    }
 
     /* Read the TARGETS property contents */
-    if(TSXGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
+    wine_tsx11_lock();
+    if(XGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
         0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
         &remain, (unsigned char**)&targetList) != Success)
     {
+        wine_tsx11_unlock();
         WARN("Failed to read TARGETS property\n");
     }
     else
     {
+        wine_tsx11_unlock();
        TRACE("Type %lx,Format %d,nItems %ld, Remain %ld\n",
              atype, aformat, cSelectionTargets, remain);
        /*
@@ -1472,7 +1481,9 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
        }
 
        /* Free the list of targets */
-       TSXFree(targetList);
+       wine_tsx11_lock();
+       XFree(targetList);
+       wine_tsx11_unlock();
     }
 
     return cSelectionTargets;
@@ -1608,9 +1619,11 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
     /*
      * First request a zero length in order to figure out the request size.
      */
-    if(TSXGetWindowProperty(display,w,prop,0,0,False, AnyPropertyType,
+    wine_tsx11_lock();
+    if(XGetWindowProperty(display,w,prop,0,0,False, AnyPropertyType,
         &atype, &aformat, &nitems, &itemSize, &val) != Success)
     {
+        wine_tsx11_unlock();
         WARN("Failed to get property size\n");
         return bRet;
     }
@@ -1618,7 +1631,7 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
     /* Free zero length return data if any */
     if (val)
     {
-       TSXFree(val);
+       XFree(val);
        val = NULL;
     }
 
@@ -1628,9 +1641,10 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
     bwc = aformat/8;
 
     /* Read property in 4K blocks */
-    if (TSXGetWindowProperty(display,w,prop,0,4096,False, AnyPropertyType/*reqType*/, 
+    if (XGetWindowProperty(display,w,prop,0,4096,False, AnyPropertyType/*reqType*/, 
         &atype, &aformat, &nitems, &remain, &buffer) != Success)
     {
+        wine_tsx11_unlock();
         WARN("Failed to read property\n");
         return bRet;
     }
@@ -1638,14 +1652,15 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
     val = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nitems*bwc);
     memcpy(val,buffer,nitems*bwc);
 
-    TSXFree(buffer);
+    XFree(buffer);
 
     for (total = nitems*bwc, val_cnt = 0; remain;)
     {
        val_cnt +=nitems*bwc;
-       if (TSXGetWindowProperty(display, w, prop, (total / 4), 4096, False,
+       if (XGetWindowProperty(display, w, prop, (total / 4), 4096, False,
            AnyPropertyType, &atype, &aformat, &nitems, &remain, &buffer) != Success)
        {
+           wine_tsx11_unlock();
            WARN("Failed to read property\n");
            HeapFree(GetProcessHeap(), 0, val);
            return bRet;
@@ -1654,8 +1669,9 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
        total += nitems*bwc;
        HeapReAlloc(GetProcessHeap(),0,val, total);
        memcpy(&val[val_cnt], buffer, nitems*(aformat/8));
-       TSXFree(buffer);
+       XFree(buffer);
     }
+    wine_tsx11_unlock();
 
     bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, 0, lpData->lpDrvImportFunc(val, total), 0);
 
@@ -1801,26 +1817,30 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                       if ((selType == x11drv_atom(CLIPBOARD)) && (selectionAcquired & S_PRIMARY))
                       {
 		          TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
-                          if (selectionWindow == TSXGetSelectionOwner(display,XA_PRIMARY))
+                          wine_tsx11_lock();
+                          if (selectionWindow == XGetSelectionOwner(display,XA_PRIMARY))
                           {
 		             TRACE("We still own PRIMARY. Releasing PRIMARY.\n");
                              XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
                           }
 		          else
 		             TRACE("We no longer own PRIMARY\n");
+                          wine_tsx11_unlock();
                       }
 
                       /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
                       if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
                       {
 		          TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
-                          if (selectionWindow == TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
+                          wine_tsx11_lock();
+                          if (selectionWindow == XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
                           {
 		              TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
                               XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), None, CurrentTime);
                           }
 		          else
 		              TRACE("We no longer own CLIPBOARD\n");
+                          wine_tsx11_unlock();
                       }
 
                       /* Destroy private objects */
@@ -1943,19 +1963,21 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 
         owner = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
 
+        wine_tsx11_lock();
         /* Grab PRIMARY selection if not owned */
         if (!(selectionAcquired & S_PRIMARY))
-            TSXSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
+            XSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
 
         /* Grab CLIPBOARD selection if not owned */
         if (!(selectionAcquired & S_CLIPBOARD))
-            TSXSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
+            XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
 
-        if (TSXGetSelectionOwner(display,XA_PRIMARY) == owner)
+        if (XGetSelectionOwner(display,XA_PRIMARY) == owner)
 	    selectionAcquired |= S_PRIMARY;
 
-        if (TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
+        if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
 	    selectionAcquired |= S_CLIPBOARD;
+        wine_tsx11_unlock();
 
         if (selectionAcquired)
         {
@@ -1969,11 +1991,13 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 
         selectionAcquired  = S_NOSELECTION;
 
-        if (TSXGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
+        wine_tsx11_lock();
+        if (XGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
 	    selectionAcquired |= S_PRIMARY;
 
-        if (TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
+        if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
 	    selectionAcquired |= S_CLIPBOARD;
+        wine_tsx11_unlock();
 
         if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
 	{
@@ -2251,19 +2275,21 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
         TRACE("\tswitching selection from %08x to %08x\n",
                     (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
 
+        wine_tsx11_lock();
+
         /* Assume ownership for the PRIMARY and CLIPBOARD selection */
         if (saveSelectionState & S_PRIMARY)
-            TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
+            XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
 
-        TSXSetSelectionOwner(display, x11drv_atom(CLIPBOARD), selectionWindow, CurrentTime);
+        XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), selectionWindow, CurrentTime);
 
         /* Restore the selection masks */
         selectionAcquired = saveSelectionState;
 
         /* Lose the selection if something went wrong */
         if (((saveSelectionState & S_PRIMARY) &&
-           (TSXGetSelectionOwner(display, XA_PRIMARY) != selectionWindow)) || 
-           (TSXGetSelectionOwner(display, x11drv_atom(CLIPBOARD)) != selectionWindow))
+           (XGetSelectionOwner(display, XA_PRIMARY) != selectionWindow)) || 
+           (XGetSelectionOwner(display, x11drv_atom(CLIPBOARD)) != selectionWindow))
         {
             bLostSelection = TRUE;
         }
@@ -2275,6 +2301,7 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
 
             ClipboardSelectionOwner = selectionWindow;
         }
+        wine_tsx11_unlock();
     }
     else
     {

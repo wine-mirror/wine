@@ -24,8 +24,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
-
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #ifdef HAVE_LIBXXF86DGA2
@@ -632,6 +631,8 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
             EVENT_SelectionRequest_AddTARGETS(targets, &cTargets, alias);
     }
 
+    wine_tsx11_lock();
+
     if (TRACE_ON(clipboard))
     {
         int i;
@@ -639,17 +640,18 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
         {
             if (targets[i])
             {
-                char *itemFmtName = TSXGetAtomName(display, targets[i]);
+                char *itemFmtName = XGetAtomName(display, targets[i]);
                 TRACE_(clipboard)("\tAtom# %d:  Property %ld Type %s\n", i, targets[i], itemFmtName);
-                TSXFree(itemFmtName);
+                XFree(itemFmtName);
             }
         }
     }
 
     /* We may want to consider setting the type to xaTargets instead,
      * in case some apps expect this instead of XA_ATOM */
-    TSXChangeProperty(display, requestor, rprop, XA_ATOM, 32, 
-        PropModeReplace, (unsigned char *)targets, cTargets);
+    XChangeProperty(display, requestor, rprop, XA_ATOM, 32,
+                    PropModeReplace, (unsigned char *)targets, cTargets);
+    wine_tsx11_unlock();
 
     HeapFree(GetProcessHeap(), 0, targets);
 
@@ -678,7 +680,6 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
     unsigned long  remain;
     Atom*	   targetPropList=NULL;
     unsigned long  cTargetPropList = 0;
-/*  Atom           xAtomPair = TSXInternAtom(display, "ATOM_PAIR", False); */
 
    /* If the specified property is None the requestor is an obsolete client.
     * We support these by using the specified target atom as the reply property.
@@ -692,15 +693,20 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
     /* Read the MULTIPLE property contents. This should contain a list of
      * (target,property) atom pairs.
      */
-    if(TSXGetWindowProperty(display, pevent->requestor, rprop,
+    wine_tsx11_lock();
+    if(XGetWindowProperty(display, pevent->requestor, rprop,
                             0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
                             &cTargetPropList, &remain,
                             (unsigned char**)&targetPropList) != Success)
+    {
+        wine_tsx11_unlock();
         TRACE("\tCouldn't read MULTIPLE property\n");
+    }
     else
     {
        TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
-             TSXGetAtomName(display, atype), aformat, cTargetPropList, remain);
+             XGetAtomName(display, atype), aformat, cTargetPropList, remain);
+       wine_tsx11_unlock();
 
        /*
         * Make sure we got what we expect.
@@ -723,12 +729,15 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
 
               if (TRACE_ON(event))
               {
-                  char *targetName = TSXGetAtomName(display, targetPropList[i]);
-                  char *propName = TSXGetAtomName(display, targetPropList[i+1]);
+                  char *targetName, *propName;
+                  wine_tsx11_lock();
+                  targetName = XGetAtomName(display, targetPropList[i]);
+                  propName = XGetAtomName(display, targetPropList[i+1]);
                   TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
                         i/2, targetName, propName);
-                  TSXFree(targetName);
-                  TSXFree(propName);
+                  XFree(targetName);
+                  XFree(propName);
+                  wine_tsx11_unlock();
               }
 
               /* We must have a non "None" property to service a MULTIPLE target atom */
@@ -751,7 +760,9 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
        }
 
        /* Free the list of targets/properties */
-       TSXFree(targetPropList);
+       wine_tsx11_lock();
+       XFree(targetPropList);
+       wine_tsx11_unlock();
     }
 
 END:
@@ -829,18 +840,15 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
                   TRACE_(clipboard)("\tUpdating property %s, %ld bytes\n",
                       lpFormat->Name, cBytes);
 
-                  TSXChangeProperty(display, request, rprop, event->target, 
+                  wine_tsx11_lock();
+                  XChangeProperty(display, request, rprop, event->target,
                       8, PropModeReplace, (unsigned char *)lpClipData, cBytes);
+                  wine_tsx11_unlock();
 
                   GlobalUnlock(hClipData);
 		  GlobalFree(hClipData);
               }
           }
-      }
-      else
-      {
-          TRACE_(clipboard)("Request for property %s (%ld) failed\n",
-                            TSXGetAtomName(display, event->target), event->target);
       }
   }
 
@@ -887,15 +895,15 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
   {
     case PropertyDelete:
     {
-      TRACE("\tPropertyDelete for atom %s on window %ld\n",
-            TSXGetAtomName(event->display, event->atom), (long)event->window);
+      TRACE("\tPropertyDelete for atom %ld on window %ld\n",
+            event->atom, (long)event->window);
       break;
     }
 
     case PropertyNewValue:
     {
-      TRACE("\tPropertyNewValue for atom %s on window %ld\n\n",
-            TSXGetAtomName(event->display, event->atom), (long)event->window);
+      TRACE("\tPropertyNewValue for atom %ld on window %ld\n\n",
+            event->atom, (long)event->window);
       break;
     }
 
@@ -980,9 +988,11 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
     pWnd = WIN_FindWndPtr(hWnd);
 
-    TSXQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
-                     &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
-                     (unsigned int*)&aux_long);
+    wine_tsx11_lock();
+    XQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
+                   &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
+                   (unsigned int*)&aux_long);
+    wine_tsx11_unlock();
 
     /* find out drop point and drop window */
     if( x < 0 || y < 0 ||
@@ -1013,10 +1023,12 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
     if (!bAccept) return;
 
-    TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
-                          x11drv_atom(DndSelection), 0, 65535, FALSE,
-                          AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
-                          &data_length, &aux_long, &p_data);
+    wine_tsx11_lock();
+    XGetWindowProperty( event->display, DefaultRootWindow(event->display),
+                        x11drv_atom(DndSelection), 0, 65535, FALSE,
+                        AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
+                        &data_length, &aux_long, &p_data);
+    wine_tsx11_unlock();
 
     if( !aux_long && p_data)  /* don't bother if > 64K */
     {
@@ -1073,7 +1085,9 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
             }
         }
     }
-    if( p_data ) TSXFree(p_data);
+    wine_tsx11_lock();
+    if( p_data ) XFree(p_data);
+    wine_tsx11_unlock();
 }
 
 /**********************************************************************
@@ -1102,10 +1116,12 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 
   if (!(GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
 
-  TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
-			x11drv_atom(DndSelection), 0, 65535, FALSE,
-			AnyPropertyType, &u.atom_aux, &u.i,
-			&data_length, &aux_long, &p_data);
+  wine_tsx11_lock();
+  XGetWindowProperty( event->display, DefaultRootWindow(event->display),
+                      x11drv_atom(DndSelection), 0, 65535, FALSE,
+                      AnyPropertyType, &u.atom_aux, &u.i,
+                      &data_length, &aux_long, &p_data);
+  wine_tsx11_unlock();
   if (aux_long)
     WARN("property too large, truncated!\n");
   TRACE("urls=%s\n", p_data);
@@ -1130,8 +1146,10 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
     }
 
     if( drop_len && drop_len < 65535 ) {
-      TSXQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
-		       &x, &y, &u.i, &u.i, &u.i);
+      wine_tsx11_lock();
+      XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
+                     &x, &y, &u.i, &u.i, &u.i);
+      wine_tsx11_unlock();
 
       drop_len += sizeof(DROPFILES) + 1;
       hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
@@ -1183,7 +1201,9 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
         PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
       }
     }
-    if( p_data ) TSXFree(p_data);
+    wine_tsx11_lock();
+    if( p_data ) XFree(p_data);
+    wine_tsx11_unlock();
   }
 }
 
@@ -1223,10 +1243,12 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 	int            	i;
 	Atom		atom;
       } u; /* unused */
-      TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
+      wine_tsx11_lock();
+      XGetWindowProperty( event->display, DefaultRootWindow(event->display),
 			    dndSelection, 0, 65535, FALSE,
 			    AnyPropertyType, &u.atom, &u.i,
 			    &u.l, &u.l, &p_data);
+      wine_tsx11_unlock();
       TRACE("message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
 	    event->message_type, event->data.l[0], event->data.l[1],
 	    event->data.l[2], event->data.l[3], event->data.l[4],

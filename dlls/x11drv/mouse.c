@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #ifdef HAVE_LIBXXF86DGA2
 #include <X11/extensions/xf86dga.h>
 #endif
@@ -527,15 +527,17 @@ void X11DRV_GetCursorPos(LPPOINT pos)
   int rootX, rootY, winX, winY;
   unsigned int xstate;
 
-  if (!TSXQueryPointer( display, root_window, &root, &child,
-                        &rootX, &rootY, &winX, &winY, &xstate ))
-    return;
-
-  update_key_state( xstate );
-  update_button_state( xstate );
-  TRACE("pointer at (%d,%d)\n", winX, winY );
-  pos->x = winX;
-  pos->y = winY;
+  wine_tsx11_lock();
+  if (XQueryPointer( display, root_window, &root, &child,
+                     &rootX, &rootY, &winX, &winY, &xstate ))
+  {
+      update_key_state( xstate );
+      update_button_state( xstate );
+      TRACE("pointer at (%d,%d)\n", winX, winY );
+      pos->x = winX;
+      pos->y = winY;
+  }
+  wine_tsx11_unlock();
 }
 
 /***********************************************************************
