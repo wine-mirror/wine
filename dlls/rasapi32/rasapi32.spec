@@ -41,8 +41,8 @@
 @ stdcall RasGetEntryDialParamsW(wstr ptr ptr)
 @ stdcall RasGetEntryPropertiesA(str str ptr ptr ptr ptr)
 @ stdcall RasGetEntryPropertiesW(wstr wstr ptr ptr ptr ptr)
-@ stdcall RasGetErrorStringA(long str long)
-@ stdcall RasGetErrorStringW(long wstr long)
+@ stdcall RasGetErrorStringA(long ptr long)
+@ stdcall RasGetErrorStringW(long ptr long)
 @ stub RasGetErrorStringWow
 @ stub RasGetHport
 @ stdcall RasGetProjectionInfoA(ptr ptr ptr ptr)

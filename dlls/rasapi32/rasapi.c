@@ -449,13 +449,13 @@ DWORD WINAPI RasGetEntryPropertiesW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry, LP
 
 DWORD WINAPI RasGetErrorStringA(UINT uErrorValue, LPSTR lpszErrorString, DWORD cBufSize)
 {
-    FIXME("(0x%08x,%s,0x%08lx), stub!\n", uErrorValue, debugstr_a(lpszErrorString), cBufSize);
+    FIXME("(0x%08x,%p,0x%08lx), stub!\n", uErrorValue, lpszErrorString, cBufSize);
     return 1;
 }
 
 DWORD WINAPI RasGetErrorStringW(UINT uErrorValue, LPWSTR lpszErrorString, DWORD cBufSize)
 {
-    FIXME("(0x%08x,%s,0x%08lx), stub!\n", uErrorValue, debugstr_w(lpszErrorString), cBufSize);
+    FIXME("(0x%08x,%p,0x%08lx), stub!\n", uErrorValue, lpszErrorString, cBufSize);
     return 1;
 }
 
