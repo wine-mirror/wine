@@ -656,13 +656,14 @@ static void test_ScCountProps(void)
     GUID iids[4], *iid = iids;
     SCODE res;
     ULONG pt, exp, ulRet;
+    int success = 1;
 
     pScCountProps = (void*)GetProcAddress(hMapi32, "ScCountProps@12");
 
     if (!pScCountProps)
         return;
 
-    for (pt = 0; pt < PROP_ID_INVALID; pt++)
+    for (pt = 0; pt < PROP_ID_INVALID && success; pt++)
     {
         SPropValue pv;
 
@@ -771,12 +772,16 @@ static void test_ScCountProps(void)
 
         ulRet = 0xffffffff;
         res = pScCountProps(1, &pv, &ulRet);
-        if (!exp)
-            ok(res == MAPI_E_INVALID_PARAMETER && ulRet == 0xffffffff,
-               "pt= %ld: Expected failure, got %ld, ret=0x%08lX\n", pt, ulRet, res);
-        else
-            ok(res == S_OK && ulRet == exp, "pt= %ld: Expected %ld, got %ld, ret=0x%08lX\n", 
+        if (!exp) {
+            success = res == MAPI_E_INVALID_PARAMETER && ulRet == 0xffffffff;
+            ok(success, "pt= %ld: Expected failure, got %ld, ret=0x%08lX\n",
+               pt, ulRet, res);
+        }
+        else {
+            success = res == S_OK && ulRet == exp;
+            ok(success, "pt= %ld: Expected %ld, got %ld, ret=0x%08lX\n", 
                pt, exp, ulRet, res);
+        }
     }
 
 }
