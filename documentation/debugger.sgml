@@ -430,16 +430,12 @@ winedbg "hl.exe -windowed"
         <title>Program hangs, nothing happens</title>
 
         <para>
-          <emphasis>Fix me - this is out of date </emphasis>
-          Switch to UNIX shell, get the process-ID using <command>ps -a |
-            grep wine</command>, and do a <command>kill -HUP
-            &lt;pid></command> (without the &lt; and >). Wine will
-          then enter its internal debugger and you can proceed as
-          explained above. Also, you can use
-          <parameter>--debug</parameter> switch and then you can get into
-          internal debugger by pressing
-          <keycombo><keycap>Ctrl</keycap><keycap>C</keycap></keycombo> in
-          the terminal where you run Wine.
+          Start the program with <command>winedbg</command> instead of
+          <command>wine</command>. When the program locks up switch to the 
+          winedbg terminal and press 
+          <keycombo><keycap>Ctrl</keycap><keycap>C</keycap></keycombo>. this
+          will stop the program and let you debug the program as you would for
+          a crash. 
         </para>
       </sect2>
 
@@ -664,11 +660,11 @@ wine --debugmsg +relay program
               to get a listing of the functions the program calls in its start function.
               Now you do a
               <programlisting>
-wine --debug winfile.exe
+winedbg winfile.exe
               </programlisting>
             </para>
             <para>
-              This way, you get into <command>Wine-dbg</command>. Now you
+              This way, you get into <command>winedbg</command>. Now you
               can set a breakpoint on any function the program calls in
               the start function and just type <userinput>c</userinput>
               to bypass the eventual calls of Winfile to this function
