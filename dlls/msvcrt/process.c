@@ -41,12 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/* FIXME: Check file extensions for app to run */
-static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';
-static const unsigned int BAT = 'b' << 16 | 'a' << 8 | 't';
-static const unsigned int CMD = 'c' << 16 | 'm' << 8 | 'd';
-static const unsigned int COM = 'c' << 16 | 'o' << 8 | 'm';
-
 /* INTERNAL: Spawn a child process */
 static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
 {
