@@ -1027,8 +1027,16 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     TRACE("\tstatus flags = %04x\n", winpos->flags & SWP_AGG_STATUSFLAGS);
 
     if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE))
-        SendMessageA( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
-        /* WM_WINDOWPOSCHANGED is send even if SWP_NOSENDCHANGING is set */
+    {
+        /* WM_WINDOWPOSCHANGED is sent even if SWP_NOSENDCHANGING is set
+           and always contains final window position.
+         */
+        winpos->x = newWindowRect.left;
+        winpos->y = newWindowRect.top;
+        winpos->cx = newWindowRect.right - newWindowRect.left;
+        winpos->cy = newWindowRect.bottom - newWindowRect.top;
+        SendMessageW( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
+    }
 
     return TRUE;
 }
