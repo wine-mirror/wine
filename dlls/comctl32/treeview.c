@@ -1986,25 +1986,39 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			wineItem->upsibling=sibItem->hItem;
 			break;
 		default:
-			while ((sibItem->sibling) && (sibItem->hItem!=ptdi->hInsertAfter))
+                    {
+                        TREEVIEW_ITEM  *localsibItem = sibItem;
+			while ((localsibItem->sibling) && 
+                               (localsibItem->hItem!=ptdi->hInsertAfter))
 				{
-				prevsib=sibItem;
-                sibItem=&infoPtr->items [(INT)sibItem->sibling];
+				prevsib=localsibItem;
+                localsibItem=&infoPtr->items [(INT)localsibItem->sibling];
               }
-			if (sibItem->hItem!=ptdi->hInsertAfter) {
-			 ERR("tried to insert item after nonexisting handle %d.\n",
+			if (localsibItem->hItem!=ptdi->hInsertAfter) {
+			 WARN("tried to insert item after nonexisting handle %d treating as TVI_LAST.\n",
                       (INT) ptdi->hInsertAfter);
-			 break;
+                       /* 
+                        * retry placing it last 
+                        */
+			if (sibItem==wineItem) break;
+			 while (sibItem->sibling) {
+				 prevsib=sibItem;
+				 sibItem=&infoPtr->items [(INT)sibItem->sibling];
+			 }
+			 sibItem->sibling=(HTREEITEM)iItem;
+			 wineItem->upsibling=sibItem->hItem;
+              		  break;
 			}
-			prevsib=sibItem;
-			if (sibItem->sibling) {
-            	sibItem=&infoPtr->items [(INT)sibItem->sibling];
-				sibItem->upsibling=(HTREEITEM)iItem;
-				wineItem->sibling=sibItem->hItem;
+			prevsib=localsibItem;
+			if (localsibItem->sibling) {
+            	localsibItem=&infoPtr->items [(INT)localsibItem->sibling];
+				localsibItem->upsibling=(HTREEITEM)iItem;
+				wineItem->sibling=localsibItem->hItem;
 			}
 			prevsib->sibling=(HTREEITEM)iItem;
 			wineItem->upsibling=prevsib->hItem;
 			break;
+             }
    	}
    }	
 
