@@ -4130,9 +4130,6 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
     case TVGN_CARET:
 	prevSelect = infoPtr->selectedItem;
 
-	if (prevSelect == newSelect)
-	    return FALSE;
-
 	if (TREEVIEW_SendTreeviewNotify(infoPtr,
 					TVN_SELCHANGINGW,
 					cause,
