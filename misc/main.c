@@ -1216,6 +1216,8 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 							(LPVOID)&(lpnm->lfCaptionFont),0);
 		    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfSmCaptionFont),0);
+		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMenuFont),0);
 		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfStatusFont),0);
@@ -1425,6 +1427,8 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 							(LPVOID)&(lpnm->lfCaptionFont),0);
 			lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfSmCaptionFont),0);
+			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMenuFont),0);
 			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfStatusFont),0);
@@ -1514,6 +1518,7 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
 	lpnm->lfCaptionFont.lfWeight = FW_BOLD;
+	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfSmCaptionFont),0);
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
