@@ -3551,18 +3551,21 @@ TOOLBAR_Indeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
     INT nIndex;
+    DWORD oldState;
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
     btnPtr = &infoPtr->buttons[nIndex];
+    oldState = btnPtr->fsState;
     if (LOWORD(lParam) == FALSE)
 	btnPtr->fsState &= ~TBSTATE_INDETERMINATE;
     else
 	btnPtr->fsState |= TBSTATE_INDETERMINATE;
 
-    InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
+    if(oldState != btnPtr->fsState)
+        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
 
     return TRUE;
 }
@@ -3867,18 +3870,21 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
     INT nIndex;
+    DWORD oldState;
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
     btnPtr = &infoPtr->buttons[nIndex];
+    oldState = btnPtr->fsState;
     if (LOWORD(lParam) == FALSE)
 	btnPtr->fsState &= ~TBSTATE_PRESSED;
     else
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-    InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
+    if(oldState != btnPtr->fsState)
+        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
 
     return TRUE;
 }
