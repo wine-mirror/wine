@@ -131,14 +131,14 @@ BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir)
 	return (IDOK == MessageBoxW(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
 }
 
-static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minlen)
+static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChars)
 {
 	DWORD len = MultiByteToWideChar(CP_ACP, 0, aPath, -1, NULL, 0);
 
-	if (len < minlen)
-	  len = minlen;
+	if (len < minChars)
+	  len = minChars;
 
-	*wPath = HeapAlloc(GetProcessHeap(), 0, len);
+	*wPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 	if (*wPath)
 	{
 	  MultiByteToWideChar(CP_ACP, 0, aPath, -1, *wPath, len);
