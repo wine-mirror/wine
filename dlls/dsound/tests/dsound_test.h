@@ -60,3 +60,4 @@ extern void test_buffer(LPDIRECTSOUND,LPDIRECTSOUNDBUFFER,
 extern void test_buffer8(LPDIRECTSOUND8,LPDIRECTSOUNDBUFFER,
                          BOOL,BOOL,LONG,BOOL,LONG,BOOL,double,BOOL,
                          LPDIRECTSOUND3DLISTENER,BOOL,BOOL);
+extern const char * getDSBCAPS(DWORD xmask);

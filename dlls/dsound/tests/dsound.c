@@ -339,6 +339,7 @@ static HRESULT test_primary(LPGUID lpGuid)
     LPDIRECTSOUNDBUFFER primary=NULL,second=NULL,third=NULL;
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
+    WAVEFORMATEX wfx;
     int ref;
 
     /* Create the DirectSound object */
@@ -391,6 +392,18 @@ static HRESULT test_primary(LPGUID lpGuid)
         goto EXIT;
 
     /* Testing the primary buffer */
+    primary=NULL;
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_CTRLVOLUME;
+    bufdesc.lpwfxFormat = &wfx;
+    init_format(&wfx,WAVE_FORMAT_PCM,11025,8,2);
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSound_CreateSoundBuffer() should have "
+       "returned DSERR_INVALIDPARAM, returned: %s\n", DXGetErrorString8(rc));
+    if (rc==DS_OK && primary!=NULL)
+        IDirectSoundBuffer_Release(primary);
+
     primary=NULL;
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
@@ -640,6 +653,18 @@ static HRESULT test_secondary(LPGUID lpGuid)
         for (f=0;f<NB_FORMATS;f++) {
             init_format(&wfx,WAVE_FORMAT_PCM,formats[f][0],formats[f][1],
                         formats[f][2]);
+            secondary=NULL;
+            ZeroMemory(&bufdesc, sizeof(bufdesc));
+            bufdesc.dwSize=sizeof(bufdesc);
+            bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
+            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DSERR_INVALIDPARAM,"IDirectSound_CreateSoundBuffer() "
+               "should have returned DSERR_INVALIDPARAM, returned: %s\n",
+               DXGetErrorString8(rc));
+            if (rc==DS_OK && secondary!=NULL)
+                IDirectSoundBuffer_Release(secondary);
+
             secondary=NULL;
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);

@@ -577,14 +577,16 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
                 /* DSOUND: Error: Invalid buffer */
                 rc=IDirectSound3DListener_GetAllParameters(listener,0);
                 ok(rc==DSERR_INVALIDPARAM,
-                   "IDirectSound3dListener_GetAllParameters() failed: %s\n",
+                   "IDirectSound3dListener_GetAllParameters() should have "
+                   "returned DSERR_INVALIDPARAM, returned: %s\n",
                    DXGetErrorString8(rc));
 
                 /* DSOUND: Error: Invalid buffer */
                 rc=IDirectSound3DListener_GetAllParameters(listener,
                                                            &listener_param);
                 ok(rc==DSERR_INVALIDPARAM,
-                   "IDirectSound3dListener_GetAllParameters() failed: %s\n",
+                   "IDirectSound3dListener_GetAllParameters() should have "
+                   "returned DSERR_INVALIDPARAM, returned: %s\n",
                    DXGetErrorString8(rc));
 
                 listener_param.dwSize=sizeof(listener_param);
@@ -605,10 +607,22 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
         if (has_3d)
             bufdesc.dwFlags|=DSBCAPS_CTRL3D;
         else
-            bufdesc.dwFlags|=(DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|
-                              DSBCAPS_CTRLPAN);
+            bufdesc.dwFlags|=
+                (DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
+        if (has_3d) {
+            /* a stereo 3D buffer should fail */
+            rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DSERR_INVALIDPARAM,
+               "IDirectSound8_CreateSoundBuffer(secondary) should have "
+               "returned DSERR_INVALIDPARAM, returned %s\n",
+               DXGetErrorString8(rc));
+            if (secondary)
+                ref=IDirectSoundBuffer_Release(secondary);
+            init_format(&wfx,WAVE_FORMAT_PCM,22050,16,1);
+        }
+
         if (winetest_interactive) {
             trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d\n",
                   has_3dbuffer?"3D ":"",
@@ -622,12 +636,18 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
         }
         rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"IDirectSound8_CreateSoundBuffer() "
-           "failed to create a 3D secondary buffer: %s\n",
-           DXGetErrorString8(rc));
+           "failed to create a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d (%s): %s\n",
+           has_3dbuffer?"3D ":"", has_duplicate?"duplicated ":"",
+           listener!=NULL||move_sound?"with ":"", move_listener?"moving ":"",
+           listener!=NULL?"listener ":"",
+           listener&&move_sound?"and moving sound ":move_sound?
+           "moving sound ":"",
+           wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+           getDSBCAPS(bufdesc.dwFlags),DXGetErrorString8(rc));
         if (rc==DS_OK && secondary!=NULL) {
-            if (!has_3d)
-            {
-                LONG refvol,refpan,vol,pan;
+            if (!has_3d) {
+                DWORD refpan,pan;
+                LONG refvol,vol;
 
                 /* Check the initial secondary buffer's volume and pan */
                 rc=IDirectSoundBuffer_GetVolume(secondary,&vol);

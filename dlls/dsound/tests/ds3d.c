@@ -71,6 +71,47 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
     return buf;
 }
 
+const char * getDSBCAPS(DWORD xmask) {
+    static struct {
+        DWORD   mask;
+        char    *name;
+    } flags[] = {
+#define FE(x) { x, #x },
+        FE(DSBCAPS_PRIMARYBUFFER)
+        FE(DSBCAPS_STATIC)
+        FE(DSBCAPS_LOCHARDWARE)
+        FE(DSBCAPS_LOCSOFTWARE)
+        FE(DSBCAPS_CTRL3D)
+        FE(DSBCAPS_CTRLFREQUENCY)
+        FE(DSBCAPS_CTRLPAN)
+        FE(DSBCAPS_CTRLVOLUME)
+        FE(DSBCAPS_CTRLPOSITIONNOTIFY)
+        FE(DSBCAPS_CTRLALL)
+        FE(DSBCAPS_STICKYFOCUS)
+        FE(DSBCAPS_GLOBALFOCUS)
+        FE(DSBCAPS_GETCURRENTPOSITION2)
+        FE(DSBCAPS_MUTE3DATMAXDISTANCE)
+#undef FE
+    };
+    static char buffer[512];
+    int i;
+    BOOL first = TRUE;
+
+    buffer[0] = 0;
+
+    for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++) {
+        if ((flags[i].mask & xmask) == flags[i].mask) {
+            if (first)
+                first = FALSE;
+            else
+                strcat(buffer, "|");
+            strcat(buffer, flags[i].name);
+        }
+    }
+
+    return buffer;
+}
+
 HWND get_hwnd()
 {
     HWND hwnd=GetForegroundWindow();
@@ -616,14 +657,15 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
     else
         bufdesc.dwFlags|=(DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok(rc==DS_OK && primary!=NULL,"IDirectSound_CreateSoundBuffer() failed "
-       "to create a %sprimary buffer: %s\n",has_3d?"3D ":"",
+    ok(rc==DS_OK && primary!=NULL,"IDirectSound_CreateSoundBuffer() "
+       "failed to create a %sprimary buffer: %s\n",has_3d?"3D ":"",
         DXGetErrorString8(rc));
 
     if (rc==DS_OK && primary!=NULL) {
         if (has_listener) {
             rc=IDirectSoundBuffer_QueryInterface(primary,
-                &IID_IDirectSound3DListener,(void **)&listener);
+                                                 &IID_IDirectSound3DListener,
+                                                 (void **)&listener);
             ok(rc==DS_OK && listener!=NULL,
                "IDirectSoundBuffer_QueryInterface() failed to get a 3D "
                "listener: %s\n",DXGetErrorString8(rc));
@@ -636,14 +678,16 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                 /* DSOUND: Error: Invalid buffer */
                 rc=IDirectSound3DListener_GetAllParameters(listener,0);
                 ok(rc==DSERR_INVALIDPARAM,
-                   "IDirectSound3dListener_GetAllParameters() failed: %s\n",
+                   "IDirectSound3dListener_GetAllParameters() should have "
+                   "returned DSERR_INVALIDPARAM, returned: %s\n",
                    DXGetErrorString8(rc));
 
                 /* DSOUND: Error: Invalid buffer */
                 rc=IDirectSound3DListener_GetAllParameters(listener,
                                                            &listener_param);
                 ok(rc==DSERR_INVALIDPARAM,
-                   "IDirectSound3dListener_GetAllParameters() failed: %s\n",
+                   "IDirectSound3dListener_GetAllParameters() should have "
+                   "returned DSERR_INVALIDPARAM, returned: %s\n",
                    DXGetErrorString8(rc));
 
                 listener_param.dwSize=sizeof(listener_param);
@@ -681,11 +725,16 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         }
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"IDirectSound_CreateSoundBuffer() "
-           "failed to create a 3D secondary buffer: %s\n",
-           DXGetErrorString8(rc));
+           "failed to create a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d (%s): %s\n",
+           has_3dbuffer?"3D ":"", has_duplicate?"duplicated ":"",
+           listener!=NULL||move_sound?"with ":"", move_listener?"moving ":"",
+           listener!=NULL?"listener ":"",
+           listener&&move_sound?"and moving sound ":move_sound?
+           "moving sound ":"",
+           wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+           getDSBCAPS(bufdesc.dwFlags),DXGetErrorString8(rc));
         if (rc==DS_OK && secondary!=NULL) {
-            if (!has_3d)
-            {
+            if (!has_3d) {
                 DWORD refpan,pan;
                 LONG refvol,vol;
 
@@ -749,24 +798,25 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
 
                 /* DSOUND: Error: Invalid source buffer */
                 rc=IDirectSound_DuplicateSoundBuffer(dso,0,0);
-                ok(rc==DSERR_INVALIDPARAM,"IDirectSound_DuplicateSoundBuffer() "
-                   "should have returned DSERR_INVALIDPARAM, returned: %s\n",
-                   DXGetErrorString8(rc));
+                ok(rc==DSERR_INVALIDPARAM,
+                   "IDirectSound_DuplicateSoundBuffer() should have returned "
+                   "DSERR_INVALIDPARAM, returned: %s\n",DXGetErrorString8(rc));
 
                 /* DSOUND: Error: Invalid dest buffer */
                 rc=IDirectSound_DuplicateSoundBuffer(dso,secondary,0);
-                ok(rc==DSERR_INVALIDPARAM,"IDirectSound_DuplicateSoundBuffer() "
-                   "should have returned DSERR_INVALIDPARAM, returned: %s\n",
-                   DXGetErrorString8(rc));
+                ok(rc==DSERR_INVALIDPARAM,
+                   "IDirectSound_DuplicateSoundBuffer() should have returned "
+                   "DSERR_INVALIDPARAM, returned: %s\n",DXGetErrorString8(rc));
 
                 /* DSOUND: Error: Invalid source buffer */
                 rc=IDirectSound_DuplicateSoundBuffer(dso,0,&duplicated);
-                ok(rc==DSERR_INVALIDPARAM,"IDirectSound_DuplicateSoundBuffer() "
-                  "should have returned DSERR_INVALIDPARAM, returned: %s\n",
-                   DXGetErrorString8(rc));
+                ok(rc==DSERR_INVALIDPARAM,
+                  "IDirectSound_DuplicateSoundBuffer() should have returned "
+                  "DSERR_INVALIDPARAM, returned: %s\n",DXGetErrorString8(rc));
 
                 duplicated=NULL;
-                rc=IDirectSound_DuplicateSoundBuffer(dso,secondary,&duplicated);
+                rc=IDirectSound_DuplicateSoundBuffer(dso,secondary,
+                                                     &duplicated);
                 ok(rc==DS_OK && duplicated!=NULL,
                    "IDirectSound_DuplicateSoundBuffer() failed to duplicate "
                    "a secondary buffer: %s\n",DXGetErrorString8(rc));

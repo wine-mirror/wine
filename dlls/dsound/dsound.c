@@ -320,7 +320,19 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
     LPUNKNOWN lpunk)
 {
     ICOM_THIS(IDirectSoundImpl,iface);
-    LPWAVEFORMATEX  wfex;
+    TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
+    FIXME("shouldn't be called directly\n");
+    return DSERR_GENERIC;
+}
+
+static HRESULT WINAPI DSOUND_CreateSoundBuffer(
+    LPDIRECTSOUND8 iface,
+    LPCDSBUFFERDESC dsbd,
+    LPLPDIRECTSOUNDBUFFER ppdsb,
+    LPUNKNOWN lpunk,
+    BOOL from8)
+{
+    ICOM_THIS(IDirectSoundImpl,iface);
     HRESULT hres = DS_OK;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
 
@@ -339,7 +351,8 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
         return DSERR_INVALIDPARAM;
     }
 
-    if (dsbd->dwSize != sizeof(DSBUFFERDESC) && dsbd->dwSize != sizeof(DSBUFFERDESC1)) {
+    if (dsbd->dwSize != sizeof(DSBUFFERDESC) &&
+        dsbd->dwSize != sizeof(DSBUFFERDESC1)) {
         WARN("invalid parameter: dsbd\n");
         return DSERR_INVALIDPARAM;
     }
@@ -358,16 +371,13 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
         TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
     }
 
-    wfex = dsbd->lpwfxFormat;
-
-    if (wfex)
-        TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
-        "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-        wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
-        wfex->nAvgBytesPerSec, wfex->nBlockAlign,
-        wfex->wBitsPerSample, wfex->cbSize);
-
     if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (dsbd->lpwfxFormat != NULL) {
+            WARN("invalid parameter: dsbd->lpwfxFormat must be NULL for "
+                 "primary buffer\n");
+            return DSERR_INVALIDPARAM;
+        }
+
         if (This->primary) {
             WARN("Primary Buffer already created\n");
             IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(This->primary));
@@ -383,6 +393,26 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
         }
     } else {
         IDirectSoundBufferImpl * dsb;
+
+        if (dsbd->lpwfxFormat == NULL) {
+            WARN("invalid parameter: dsbd->lpwfxFormat can't be NULL for "
+                 "secondary buffer\n");
+            return DSERR_INVALIDPARAM;
+        }
+
+        TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
+              "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+              dsbd->lpwfxFormat->wFormatTag, dsbd->lpwfxFormat->nChannels,
+              dsbd->lpwfxFormat->nSamplesPerSec,
+              dsbd->lpwfxFormat->nAvgBytesPerSec,
+              dsbd->lpwfxFormat->nBlockAlign,
+              dsbd->lpwfxFormat->wBitsPerSample, dsbd->lpwfxFormat->cbSize);
+
+        if (from8 && (dsbd->dwFlags & DSBCAPS_CTRL3D) && (dsbd->lpwfxFormat->nChannels != 1)) {
+            WARN("invalid parameter: 3D buffer format must be mono\n");
+            return DSERR_INVALIDPARAM;
+        } 
+
         hres = IDirectSoundBufferImpl_Create(This, (IDirectSoundBufferImpl**)&dsb, dsbd);
         if (dsb) {
             hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
@@ -1073,7 +1103,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_CreateSoundBuffer(
 {
     ICOM_THIS(IDirectSound_IDirectSound,iface);
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
-    return IDirectSoundImpl_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk);
+    return DSOUND_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk,FALSE);
 }
 
 static HRESULT WINAPI IDirectSound_IDirectSound_GetCaps(
@@ -1312,7 +1342,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_CreateSoundBuffer(
 {
     ICOM_THIS(IDirectSound8_IDirectSound,iface);
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
-    return IDirectSoundImpl_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk);
+    return DSOUND_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk,TRUE);
 }
 
 static HRESULT WINAPI IDirectSound8_IDirectSound_GetCaps(
@@ -1473,7 +1503,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_CreateSoundBuffer(
 {
     ICOM_THIS(IDirectSound8_IDirectSound8,iface);
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
-    return IDirectSoundImpl_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk);
+    return DSOUND_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk,TRUE);
 }
 
 static HRESULT WINAPI IDirectSound8_IDirectSound8_GetCaps(
