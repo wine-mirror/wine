@@ -428,7 +428,13 @@ static void check_flushed( void *arg )
         server->flush_poll = add_timeout_user( &tv, check_flushed, server );
     }
     else
-        notify_empty( server );
+    {
+        /* notify_empty( server ); */
+        server->flush_poll = NULL;
+        set_event( server->event );
+        release_object( server->event );
+        server->event = NULL;
+    }
 }
 
 static int pipe_server_flush( struct fd *fd, struct event **event )
