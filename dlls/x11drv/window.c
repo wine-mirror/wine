@@ -742,7 +742,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 
         /* allocate new buffer for window text */
         count = WideCharToMultiByte(text_cp, 0, text, -1, NULL, 0, NULL, NULL);
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WCHAR) )))
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count )))
         {
             ERR("Not enough memory for window text\n");
             WIN_ReleaseWndPtr( wndPtr );
