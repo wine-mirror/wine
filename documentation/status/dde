@@ -1,0 +1,51 @@
+This is the status for DDE (i.e. raw dde messages) and ddeml.
+
+DDE was implemented by Micheal Veksler some time ago, it has been reported as broken
+by changes in the server and related parts of wine.  AFAIK no-one has tried to fix these
+and I have not tried to test them.
+
+ddeml was untouched until December 1998 when some of the Corel/Macadamian team started
+writing bits that were needed by Corel for the Wordperfect Suite port. These were mainly
+around string handling and have been identified in the change history for each routine.
+They were written to cope with a single instance only. About a week later I started 
+looking at ddeml as a whole.
+
+The initialisation was tackled first, then the routines produced by Corel/Macadamian
+were modified to cope with multiple instances of dde client/server and a first cut at
+the un-initialise routine. 
+
+Once these are satisfactory then DdeNameService must be tackled, followed by the main
+message reception routine and the invoking of the callback. Serious testing from this
+point may well depend on Wine thread handling settling down.
+
+The strategy so far has been to tackle the Unicode versions first. Once they have been
+accepted as close to complete then the 32-bit ASCII routines then the 16-bit routines.
+
+It is recognised that the solutions adopted may well not be suitable for wine-OS2, since
+that OS has its own DDE rotuines intermediate in integration between raw DDE and ddeml,
+also O/S 2 users may well want programs running under Wine to talk to native O/S 2 programs.
+I do not have knowledge of MacOS or the internals of BeOS, but these may suffer from the
+same problems.
+
+TO DO
+
+Complete initialisation, some of the 2nd call validation conditions have not been worked out
+yet and the code for enabling the message loop needs writing.
+
+Complete unitialize.
+
+Add true Unicode handling to CreateStringHandle, QueryString, CmpStringHandles. Also find
+out why Initialize needs ASCII and Unicode variants.
+
+Add reference count handling to CreateStringHAndle, FreeStringHandle etc.
+
+Add DdeGetLAstError and related handling in all other modules. Also find out what to do about
+storing errors that result in the instance failing to initialise in some way.
+
+
+Just about all the rest
+
+More specific items are commented in the code.
+
+
+Keith Matthews
