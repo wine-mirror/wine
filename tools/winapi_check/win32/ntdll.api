@@ -110,6 +110,7 @@ void *
 EXCEPTION_FRAME **
 GUID *
 WCHAR *
+WCHAR ***
 char *
 char ***
 enum __DEBUG_CLASS

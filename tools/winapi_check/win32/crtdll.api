@@ -17,6 +17,7 @@ UCHAR
 clock_t
 size_t
 time_t
+unsigned char
 
 %long # --forbidden
 
@@ -32,6 +33,8 @@ LONGLONG
 
 CHAR *
 CRTDLL_FILE *
+CRTDLL_fpos_t *
+LPCSTR *
 LPCVOID
 LPDWORD
 LPDWORD *
@@ -44,6 +47,7 @@ PCONTEXT
 PEXCEPTION_FRAME
 PEXCEPTION_FRAME *
 PEXCEPTION_RECORD
+PINT
 VOID *
 WCHAR *
 _INITTERMFUN *
@@ -56,7 +60,6 @@ time_t *
 struct _heapinfo *
 struct _utimbuf *
 struct _exception *
-fpos_t *
 diskfree_t *
 unsigned char *
 va_list

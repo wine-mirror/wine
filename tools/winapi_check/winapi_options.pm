@@ -73,7 +73,7 @@ my %options = (
     "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
     "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
     "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },
-    "documentation-arguments" => { default => 0, parent => "documentation", description => "check for arguments documentation inconsistances\n" },
+    "documentation-arguments" => { default => 1, parent => "documentation", description => "check for arguments documentation inconsistances\n" },
     "prototype" => { default => 0, parent => ["local", "headers"], description => "prototype checking" },
 
     "global" => { default => 1, description => "global checking" },

@@ -150,7 +150,7 @@ my %includes;
 		    $includes{$file}{includes}{"$file_dir/$header"}++;
 		} elsif(-e "$wine_dir/include/$header") {
 		    $includes{$file}{includes}{"include/$header"}++;
-		} else {		   
+		} else {
 		    $output->write("$file: #include \"$header\" is not a local include\n");
 		}
 	    }
@@ -616,6 +616,11 @@ foreach my $file ($options->c_files) {
 		    } elsif(-e "$file_dir/../$header") { # FIXME: Kludge
 			$includes{"$file_dir/../$header"}{used}++; # FIXME: This is not correct
 			foreach my $name (keys(%{$includes{"$file_dir/../$header"}{includes}})) { # FIXME: This is not correct
+			    $includes{$name}{used}++;
+			}
+		    } elsif($header eq "controls.h") { # FIXME: Kludge
+			$includes{"dlls/user/$header"}{used}++;
+			foreach my $name (keys(%{$includes{"dlls/user/$header"}{includes}})) {
 			    $includes{$name}{used}++;
 			}
 		    } elsif(-e "$wine_dir/include/$header") {

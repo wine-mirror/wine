@@ -1,17 +1,17 @@
 %long
 
 DWORD
+LPARAM
 
 %ptr
 
+HINF16 *
 LPBYTE
 LPDWORD
-
-%ptr # --forbidden
-
-HINF16 *
 LPHKEY
-LPWORD
+LPLOGDISKDESC
+LPLPDEVICE_INFO16
+VIFPROC
 
 %str
 
@@ -22,7 +22,7 @@ LPSTR
 
 void
 
-%word # --forbidden
+%word
 
 INT16
 LOGDISKID16

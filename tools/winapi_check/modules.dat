@@ -83,6 +83,10 @@ dlls/icmp
 
 dlls/imagehlp
 
+% dlls/imm32/imm.spec
+
+dlls/imm32
+
 % dlls/imm32/imm32.spec
 
 dlls/imm32
@@ -429,7 +433,14 @@ dlls/winmm
 % dlls/winmm/winmm.spec
 
 dlls/winmm
-windows
+
+% dlls/winnls/winnls.spec
+
+dlls/winnls
+
+% dlls/winnls/winnls32.spec
+
+dlls/winnls
 
 % dlls/winsock/winsock.spec
 
