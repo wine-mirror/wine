@@ -55,7 +55,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 typedef struct StdGITEntry
 {
   DWORD cookie;
-  IID iid;      /* IID of the interface */
+  IID iid;         /* IID of the interface */
   IStream* stream; /* Holds the marshalled interface */
 
   struct StdGITEntry* next;
@@ -107,13 +107,11 @@ static ICOM_VTABLE(IGlobalInterfaceTable) StdGlobalInterfaceTableImpl_Vtbl =
 void* StdGlobalInterfaceTable_Construct() {
   StdGlobalInterfaceTableImpl* newGIT;
 
-  TRACE("constructing\n");
-
   newGIT = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGlobalInterfaceTableImpl));
   if (newGIT == 0) return newGIT;
 
   newGIT->lpVtbl = &StdGlobalInterfaceTableImpl_Vtbl;
-  newGIT->ref = 0;      /* Initialise the reference count */
+  newGIT->ref = 1;      /* Initialise the reference count */
   newGIT->firstEntry = NULL; /* we start with an empty table   */
   newGIT->lastEntry  = NULL;
   newGIT->nextCookie = 0xf100; /* that's where windows starts, so that's where we start */
@@ -128,6 +126,7 @@ void StdGlobalInterfaceTable_Destroy(void* self) {
   FIXME("Revoke held interfaces here\n");
   
   HeapFree(GetProcessHeap(), 0, self);
+  StdGlobalInterfaceTableInstance = NULL;
 }
 
 /***
@@ -169,21 +168,21 @@ HRESULT WINAPI StdGlobalInterfaceTable_QueryInterface(IGlobalInterfaceTable* ifa
   } else return E_NOINTERFACE;
 
   /* Now inc the refcount */
-  /* we don't use refcounts for now: StdGlobalInterfaceTable_AddRef(iface); */
+  StdGlobalInterfaceTable_AddRef(iface);
   return S_OK;
 }
 
 ULONG WINAPI StdGlobalInterfaceTable_AddRef(IGlobalInterfaceTable* iface) {
   StdGlobalInterfaceTableImpl* const self = (StdGlobalInterfaceTableImpl*) iface;
 
-  self->ref++;
+  /* self->ref++; */
   return self->ref;
 }
 
 ULONG WINAPI StdGlobalInterfaceTable_Release(IGlobalInterfaceTable* iface) {
   StdGlobalInterfaceTableImpl* const self = (StdGlobalInterfaceTableImpl*) iface;
 
-  self->ref--;
+  /* self->ref--; */
   if (self->ref == 0) {
     /* Hey ho, it's time to go, so long again 'till next weeks show! */
     StdGlobalInterfaceTable_Destroy(self);
@@ -208,6 +207,7 @@ HRESULT WINAPI StdGlobalInterfaceTable_RegisterInterfaceInGlobal(IGlobalInterfac
   if (pUnk == NULL) return E_INVALIDARG;
   
   /* marshal the interface */
+  TRACE("About to marshal the interface\n");
   hres = CoMarshalInterThreadInterfaceInStream(riid, pUnk, &stream);
   if (hres) return hres;
   entry = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGITEntry));
@@ -260,10 +260,14 @@ HRESULT WINAPI StdGlobalInterfaceTable_GetInterfaceFromGlobal(IGlobalInterfaceTa
   
   entry = StdGlobalInterfaceTable_FindEntry(iface, dwCookie);
   if (entry == NULL) return E_INVALIDARG;
-  if (!IsEqualIID(&entry->iid, &riid)) return E_INVALIDARG;
-
+  if (!IsEqualIID(&entry->iid, riid)) {
+    WARN("entry->iid (%s) != riid\n", debugstr_guid(&entry->iid));
+    return E_INVALIDARG;
+  }
+  TRACE("entry=%p\n", entry);
+  
   /* unmarshal the interface */
-  hres = CoGetInterfaceAndReleaseStream(entry->stream, riid, *ppv);
+  hres = CoGetInterfaceAndReleaseStream(entry->stream, riid, ppv);
   if (hres) return hres;
   
   return S_OK;
