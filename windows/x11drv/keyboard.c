@@ -14,6 +14,7 @@
 #ifndef X_DISPLAY_MISSING
 
 #include <ctype.h>
+#include <string.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include "ts_xlib.h"
