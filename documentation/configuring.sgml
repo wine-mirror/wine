@@ -484,6 +484,8 @@ And here is a setup for Drive X, a generic floppy drive:
           still have this in your <filename>wine.conf</filename> or
           <filename>~/.wine/config</filename>, you may safely delete it.
           </para>
+	</sect3>
+
         <sect3>
           <title>The [DllOverrides] Section</title>
           <para>
