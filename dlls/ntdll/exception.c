@@ -394,7 +394,7 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION
 
     RtlUnwind( frame, 0, record, 0 );
     __wine_pop_frame( frame );
-    longjmp( wine_frame->jmp, 1 );
+    siglongjmp( wine_frame->jmp, 1 );
 }
 
 

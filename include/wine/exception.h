@@ -89,7 +89,7 @@
              __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
              __wine_push_frame( &__f.frame ); \
-             if (setjmp( __f.jmp)) { \
+             if (sigsetjmp( __f.jmp, 1 )) { \
                  const __WINE_FRAME * const __eptr WINE_UNUSED = &__f; \
                  do {
 
@@ -135,7 +135,7 @@ typedef struct __tagWINE_FRAME
         /* finally data */
         __WINE_FINALLY finally_func;
     } u;
-    jmp_buf jmp;
+    sigjmp_buf jmp;
     /* hack to make GetExceptionCode() work in handler */
     DWORD ExceptionCode;
     const struct __tagWINE_FRAME *ExceptionRecord;

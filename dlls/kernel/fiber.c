@@ -39,7 +39,7 @@ struct fiber_data
     void                 *stack_base;        /* 08 top of fiber stack */
     void                 *stack_limit;       /* 0c fiber stack low-water mark */
     void                 *stack_allocation;  /* 10 base of the fiber stack allocation */
-    jmp_buf               jmpbuf;            /* 14 setjmp buffer (on Windows: CONTEXT) */
+    sigjmp_buf            jmpbuf;            /* 14 setjmp buffer (on Windows: CONTEXT) */
     DWORD                 flags;             /*    fiber flags */
     LPFIBER_START_ROUTINE start;             /*    start routine */
 };
@@ -185,7 +185,7 @@ void WINAPI SwitchToFiber( LPVOID fiber )
     /* stack_allocation and stack_base never change */
 
     /* FIXME: should save floating point context if requested in fiber->flags */
-    if (!setjmp( current_fiber->jmpbuf ))
+    if (!sigsetjmp( current_fiber->jmpbuf, 1 ))
     {
         NtCurrentTeb()->Tib.u.FiberData   = new_fiber;
         NtCurrentTeb()->Tib.ExceptionList = new_fiber->except;
@@ -195,6 +195,6 @@ void WINAPI SwitchToFiber( LPVOID fiber )
         if (new_fiber->start)  /* first time */
             wine_switch_to_stack( start_fiber, new_fiber, new_fiber->stack_base );
         else
-            longjmp( new_fiber->jmpbuf, 1 );
+            siglongjmp( new_fiber->jmpbuf, 1 );
     }
 }
