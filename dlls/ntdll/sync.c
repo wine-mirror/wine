@@ -38,6 +38,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include "winternl.h"
 #include "async.h"
 #include "thread.h"
