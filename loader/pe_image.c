@@ -554,9 +554,9 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Check entrypoint address */
     aoep = nt->OptionalHeader.AddressOfEntryPoint;
     if (aoep && (aoep < lowest_va))
-        FIXME("WARNING: '%s' has an invalid entrypoint (0x%08lx) "
+        FIXME("VIRUS WARNING: '%s' has an invalid entrypoint (0x%08lx) "
                       "below the first virtual address (0x%08x) "
-                      "(possible Virus Infection or broken binary)!\n",
+                      "(possibly infected by Tchernobyl/SpaceFiller virus)!\n",
                        filename, aoep, lowest_va );
 
 
