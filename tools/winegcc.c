@@ -116,8 +116,17 @@ void clean_temp_files()
 
 char *get_temp_file(const char *suffix)
 {
-    char *tmp = strmake("%s%s", tempnam(0, "wgcc"), suffix);
-
+    char *tmp = strmake("wgcc.XXXXXX%s", suffix);
+    int fd = mkstemps( tmp, strlen(suffix) );
+    if (fd == -1)
+    {
+        /* could not create it in current directory, try in /tmp */
+        free(tmp);
+        tmp = strmake("/tmp/wgcc.XXXXXX%s", suffix);
+        fd = mkstemps( tmp, strlen(suffix) );
+        if (fd == -1) error( "could not create temp file" );
+    }
+    close( fd );
     tmp_files = realloc( tmp_files, (nb_tmp_files+1) * sizeof(*tmp_files) );
     tmp_files[nb_tmp_files++] = tmp;
 
