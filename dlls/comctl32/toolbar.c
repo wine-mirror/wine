@@ -3242,6 +3242,9 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *hotBtnPtr;
 
+    if (infoPtr->nOldHit < 0)
+      return TRUE;
+
     hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
 
     /* Redraw the button if the last button we were over is the hot button and it
@@ -3299,7 +3302,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
 	/* Remove the effect of an old hot button if the button was enabled and was
 	   drawn with the hot button effect */
-	if(infoPtr->nOldHit == infoPtr->nHotItem && 
+	if(infoPtr->nOldHit >= 0 && infoPtr->nOldHit == infoPtr->nHotItem && 
 		(infoPtr->buttons[infoPtr->nOldHit].fsState & TBSTATE_ENABLED))
 	{
 	    oldBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
