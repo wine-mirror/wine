@@ -17,24 +17,14 @@
  */
 
 #include <windows.h>
-#include "resource.h"
-
-/*
 #include <windowsx.h>
-   Wine doesn't have windowsx.h, so we use this
-*/
-#define       GET_WM_COMMAND_ID(wp,lp)        LOWORD(wp)
-
-/* Wine seems to need this */
-#include <commdlg.h>
+#include "resource.h"
 
 #include "globals.h"
 #include <stdio.h>
 
 BOOL FileIsPlaceable( LPCSTR szFileName );
 HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName );
-
-#define FN_LENGTH 80
 
 HMETAFILE hmf;
 int deltax = 0, deltay = 0;
@@ -69,11 +59,12 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	PAINTSTRUCT ps;
 	BeginPaint(hwnd, &ps);
 	SetMapMode(ps.hdc, MM_ANISOTROPIC);
+	/* Set the window extent to a sane value in case the metafile doesn't */
+	SetWindowExtEx(ps.hdc, width, height, NULL);
 	SetViewportExtEx(ps.hdc, width, height, NULL);
 	SetViewportOrgEx(ps.hdc, deltax, deltay, NULL);
 	if(hmf) PlayMetaFile(ps.hdc, hmf);
 	EndPaint(hwnd, &ps);
-
       }
       break;
 
@@ -86,8 +77,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 
 	case IDM_OPEN:
 	  {
-	    char filename[FN_LENGTH];
-	    if (FileOpen(hwnd, filename, FN_LENGTH)) {
+	    char filename[MAX_PATH];
+	    if (FileOpen(hwnd, filename, sizeof(filename))) {
 	      isAldus = FileIsPlaceable(filename);
 	      if (isAldus) {
 		hmf = GetPlaceableMetaFile(hwnd, filename);
@@ -178,6 +169,7 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   HFILE	fh;
   HMETAFILE hmf;
   WORD checksum, *p;
+  HDC hdc;
   int i;
 
   if( (fh = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR ) return 0;
@@ -218,8 +210,10 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   height = APMHeader.bbox.Bottom - APMHeader.bbox.Top;
 
   /*      printf("Ok! width %d height %d inch %d\n", width, height, APMHeader.inch);  */
-  width = width*96/APMHeader.inch;
-  height = height*96/APMHeader.inch;
+  hdc = GetDC(hwnd);
+  width = width * GetDeviceCaps(hdc, LOGPIXELSX)/APMHeader.inch;
+  height = height * GetDeviceCaps(hdc,LOGPIXELSY)/APMHeader.inch;
+  ReleaseDC(hwnd, hdc);
 
   deltax = 0;
   deltay = 0 ;
