@@ -438,7 +438,7 @@ BOOL WINAPI IsEqualGUID32(
 
 /******************************************************************************
  *		CLSIDFromString16	[COMPOBJ.20]
- * Converts a unique identifier from it's string representation into 
+ * Converts a unique identifier from its string representation into 
  * the GUID struct.
  *
  * Class id: DWORD-WORD-WORD-BYTES[2]-BYTES[6] 
@@ -731,8 +731,12 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 
 /******************************************************************************
  *		CLSIDFromString	[OLE32.3]
- * Converts a unique identifier from it's string representation into 
+ * Converts a unique identifier from its string representation into 
  * the GUID struct.
+ *
+ * UNDOCUMENTED
+ *      If idstr is not a valid CLSID string then it gets treated as a ProgID
+ *
  * RETURNS
  *	the converted GUID
  */
@@ -744,6 +748,9 @@ HRESULT WINAPI CLSIDFromString(
     OLESTATUS       ret = CLSIDFromString16(xid,id);
 
     HeapFree(GetProcessHeap(),0,xid);
+    if(ret != S_OK) { /* It appears a ProgID is also valid */
+        ret = CLSIDFromProgID(idstr, id);
+    }
     return ret;
 }
 
@@ -1220,7 +1227,7 @@ HRESULT WINAPI CoRegisterClassObject(
   newClass->nextClass       = firstRegisteredClass;
 
   /*
-   * Since we're making a copy of the object pointer, we have to increase it's
+   * Since we're making a copy of the object pointer, we have to increase its
    * reference count.
    */
   newClass->classObject     = pUnk;
@@ -1391,7 +1398,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	}
 
 	/*
-	 * Ask the DLL for it's class object. (there was a note here about class
+	 * Ask the DLL for its class object. (there was a note here about class
 	 * factories but this is good.
 	 */
 	return DllGetClassObject(rclsid, iid, ppv);
@@ -1591,7 +1598,7 @@ HRESULT WINAPI CoCreateInstanceEx(
   }
 
   /*
-   * Get the object and get it's IUnknown pointer.
+   * Get the object and get its IUnknown pointer.
    */
   hr = CoCreateInstance(rclsid, 
 			pUnkOuter,
