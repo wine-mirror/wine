@@ -340,3 +340,44 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 					       lpbi->hwndOwner,
 					       BrsFolderDlgProc, (INT)lpbi );
 }
+
+/*************************************************************************
+ * SHBrowseForFolderW [SHELL32.@]
+ */
+LPITEMIDLIST WINAPI SHBrowseForFolderW (LPBROWSEINFOW lpbi)
+{
+  char szDisplayName[MAX_PATH], szTitle[MAX_PATH];
+  BROWSEINFOA bi;
+
+  TRACE("((%p->{lpszTitle=%s,owner=%i})\n", lpbi,
+        lpbi ? debugstr_w(lpbi->lpszTitle): NULL, lpbi ? lpbi->hwndOwner: 0);
+
+  if (!lpbi)
+    return NULL;
+
+  bi.hwndOwner = lpbi->hwndOwner;
+  bi.pidlRoot = lpbi->pidlRoot;
+  if (lpbi->pszDisplayName)
+  {
+    WideCharToMultiByte(CP_ACP, 0, lpbi->pszDisplayName, -1, szDisplayName, MAX_PATH, 0, NULL);
+    bi.pszDisplayName = szDisplayName;
+  }
+  else
+    bi.pszDisplayName = NULL;
+
+  if (lpbi->lpszTitle)
+  {
+    WideCharToMultiByte(CP_ACP, 0, lpbi->lpszTitle, -1, szTitle, MAX_PATH, 0, NULL);
+    bi.lpszTitle = szTitle;
+  }
+  else
+    bi.lpszTitle = NULL;
+
+  bi.ulFlags = lpbi->ulFlags;
+  bi.lpfn = lpbi->lpfn;
+  bi.lParam = lpbi->lParam;
+  bi.iImage = lpbi->iImage;
+  return (LPITEMIDLIST) DialogBoxParamA(shell32_hInstance,
+                                        "SHBRSFORFOLDER_MSGBOX", lpbi->hwndOwner,
+                                        BrsFolderDlgProc, (INT)lpbi);
+}

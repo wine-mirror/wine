@@ -355,7 +355,7 @@ init	Shell32LibMain
 @ stdcall SHAppBarMessage(long ptr) SHAppBarMessage
 @ stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA
 @ stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA
-@ stub SHBrowseForFolderW@4
+@ stdcall SHBrowseForFolderW(ptr) SHBrowseForFolderW
 @ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW
 @ stub ShellHookProc
 @ stub SHEmptyRecycleBinA@12
