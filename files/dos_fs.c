@@ -1086,102 +1086,121 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
  *
  * Implementation of GetFullPathNameA/W.
  *
- * Known discrepancies to Win95 OSR2 bon 000118
- * "g:..\test should return G:\test
- * "..\..\..\..\test should return (Current drive):test
- *              even when test is not existant
+ * bon@elektron 000331:
+ * A test for GetFullPathName with many patholotical case 
+ * gives now identical output for Wine and OSR2
  */
 static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
                                       BOOL unicode )
 {
-    char buffer[MAX_PATHNAME_LEN];
-    int drive;
-    char *p;
-    char namelast;
     DWORD ret;
-    
-    /* Address of the last byte in the buffer */
-    char *endbuf = buffer + sizeof(buffer) - 1;
-    
-    TRACE("converting '%s'\n", name );
+    DOS_FULL_NAME full_name;
+    char *p,*q;
+    const char * root;
+    char drivecur[]="c:.";
+    char driveletter=0;
+    int namelen,drive=0;
 
-    if (!name || ((drive = DOSFS_GetPathDrive( &name )) == -1) )
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    p = buffer;
-    *p++ = 'A' + drive;
-    *p++ = ':';
-    *p++ = '\\';
-    if ((*name!='/') && (*name!='\\'))
-    {
-        /* Relative path or empty path */
-        lstrcpynA( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 4 );
-        if ( *p )
-        {
-            p += strlen(p);
-	    *p++ = '\\';
-        }
-    }
-
-    while (*name)
-    {
-        while ((*name == '\\') || (*name == '/'))
-	    name++;
-        if (*name == '.')
-        {
-            if (IS_END_OF_NAME(name[1]))
-            {
-                name++;
-                continue;
-            }
-            else if ((name[1] == '.') && IS_END_OF_NAME(name[2]))
-            {
-		if (p == buffer + 3) {
-                    /* no previous dir component */
-                    SetLastError( ERROR_PATH_NOT_FOUND );
-                    return 0;
-                }
-                /* skip previously added '\\' */
-		p-=2;
-		/* skip previous dir component */
-                while (*p != '\\')
-                    p--;
-                p++;
-
-                name += 2;
-                continue;
-            }
-        }
-        while (!IS_END_OF_NAME(*name) && (p<endbuf) )
-            *p++ = *name++;
-        if ((p<endbuf) && ((*name == '\\') || (*name == '/'))) {
-            *p++='\\';
-            name++;
-        }
-        if ( p==endbuf && *name )
-        {
-            SetLastError( ERROR_PATH_NOT_FOUND );
-            return 0;
-        }
-    }
-    *p = '\0';
-    /* Only return a trailing \\ if name does end in \\ // or :*/
-    namelast= name[strlen(name)-1];
-    if ( (namelast != '\\') && (namelast != '/')&& (namelast != ':') )
+    if ((strlen(name) >1)&& (name[1]==':'))
+      /*drive letter given */
       {
-	if(*(p-1) == '\\')
-	  *(p-1) = '\0';
+	driveletter = name[0];
+      }
+    if ((strlen(name) >2)&& (name[1]==':') &&
+	     ((name[2]=='\\') || (name[2]=='/')))
+      /*absolue path given */
+      {
+	lstrcpynA(full_name.short_name,name,MAX_PATHNAME_LEN);
+      }
+    else
+      {
+	if (driveletter)
+	  drivecur[0]=driveletter;
+	else
+	  strcpy(drivecur,".");
+	if (!DOSFS_GetFullName( drivecur, FALSE, &full_name ))
+	  {
+	    FIXME("internal: error getting drive/path\n");
+	    return 0;
+	  }
+	/* find path that drive letter substitutes*/
+	drive = (int)toupper(full_name.short_name[0]) -0x41;
+	root= DRIVE_GetRoot(drive);
+	p= full_name.long_name +strlen(root);
+	/* append long name (= unix name) to drive */
+	lstrcpynA(full_name.short_name+2,p,MAX_PATHNAME_LEN-3);
+	/* append name to treat */
+	namelen= strlen(full_name.short_name);
+	p = (char*)name;
+	if (driveletter)
+	  p += +2; /* skip drive name when appending */
+	if (namelen +2  + strlen(p) > MAX_PATHNAME_LEN)
+	  {
+	    FIXME("internal error: buffer too small\n");
+	     return 0;
+	  }
+	full_name.short_name[namelen++] ='\\';
+	full_name.short_name[namelen] = 0;
+	lstrcpynA(full_name.short_name +namelen,p,MAX_PATHNAME_LEN-namelen);
+      }
+    /* reverse all slashes */
+    for (p=full_name.short_name;
+	 p < full_name.short_name+strlen(full_name.short_name);
+	 p++)
+      {
+	if ( *p == '/' )
+	  *p = '\\';
+      }
+     /* Use memmove, as areas overlap*/
+     /* Delete .. */
+    while ((p = strstr(full_name.short_name,"\\..\\")))
+      {
+	if (p > full_name.short_name+2)
+	  {
+	    *p = 0;
+	    q = strrchr(full_name.short_name,'\\');
+	    memmove(q+1,p+4,strlen(p+4)+1);
+	  }
+	else
+	  {
+	    memmove(full_name.short_name+3,p+4,strlen(p+4)+1);
+	  }
+      }
+    if ((full_name.short_name[2]=='.')&&(full_name.short_name[3]=='.'))
+	{
+	  /* This case istn't treated yet : c:..\test */
+	  memmove(full_name.short_name+2,full_name.short_name+4,
+		  strlen(full_name.short_name+4)+1);
+	}
+     /* Delete . */
+    while ((p = strstr(full_name.short_name,"\\.\\")))
+      {
+	*(p+1) = 0;
+	memmove(p+1,p+3,strlen(p+3));
       }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
-      CharUpperA( buffer );
+      CharUpperA( full_name.short_name );
+    namelen=strlen(full_name.short_name);
+    if (!strcmp(full_name.short_name+namelen-3,"\\.."))
+	{
+	  /* one more starnge case: "c:\test\test1\.." 
+	   return "c:\test"*/
+	  *(full_name.short_name+namelen-3)=0;
+	  q = strrchr(full_name.short_name,'\\');
+	  *q =0;
+	}
+    if (full_name.short_name[namelen-1]=='.')
+	full_name.short_name[(namelen--)-1] =0;
+    if (!driveletter)
+      if (full_name.short_name[namelen-1]=='\\')
+	full_name.short_name[(namelen--)-1] =0;
+    TRACE("got %s\n",full_name.short_name);
+
     /* If the lpBuffer buffer is too small, the return value is the 
     size of the buffer, in characters, required to hold the path 
     plus the terminating \0 (tested against win95osr, bon 001118)
     . */
-    ret = strlen(buffer);
+    ret = strlen(full_name.short_name);
     if (ret >= len )
       {
 	/* don't touch anything when the buffer is not large enough */
@@ -1191,12 +1210,12 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if (result)
     {
 	if (unicode)
-	    lstrcpynAtoW( (LPWSTR)result, buffer, len );
+	    lstrcpynAtoW( (LPWSTR)result, full_name.short_name, len );
 	else
-	    lstrcpynA( result, buffer, len );
+	    lstrcpynA( result, full_name.short_name, len );
     }
 
-    TRACE("returning '%s'\n", buffer );
+    TRACE("returning '%s'\n", full_name.short_name );
     return ret;
 }
 
