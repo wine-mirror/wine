@@ -57,9 +57,6 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
 
 extern const GUID IID_D3DDEVICE_OpenGL;
-extern const GUID IID_D3DDEVICE2_OpenGL;
-extern const GUID IID_D3DDEVICE3_OpenGL;
-extern const GUID IID_D3DDEVICE7_OpenGL;
 
 typedef struct render_state {
     /* This is used for the device mode */
@@ -123,9 +120,9 @@ extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3D
 extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface);
 
 /* Used for Direct3D to request the device to enumerate itself */
-extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD interface_version) ;
+extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
-extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice, DWORD interface_version);
+extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
 
 /* Some helper functions.. Would need to put them in a better place */
 extern void dump_flexible_vertex(DWORD d3dvtVertexType);

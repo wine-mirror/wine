@@ -170,29 +170,9 @@ Main_IDirect3DImpl_3_2T_1T_CreateViewport(LPDIRECT3D3 iface,
 }
 
 HRESULT WINAPI
-Main_IDirect3DImpl_1_FindDevice(LPDIRECT3D iface,
-                                LPD3DFINDDEVICESEARCH lpD3DDFS,
-                                LPD3DFINDDEVICERESULT lplpD3DDevice)
-{
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D, iface);
-    FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpD3DDFS, lplpD3DDevice);
-    return D3D_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DImpl_2_FindDevice(LPDIRECT3D2 iface,
-				LPD3DFINDDEVICESEARCH lpD3DDFS,
-				LPD3DFINDDEVICERESULT lpD3DFDR)
-{
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D2, iface);
-    FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpD3DDFS, lpD3DFDR);
-    return D3D_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DImpl_3_FindDevice(LPDIRECT3D3 iface,
-				LPD3DFINDDEVICESEARCH lpD3DDFS,
-				LPD3DFINDDEVICERESULT lpD3DFDR)
+Main_IDirect3DImpl_3_2T_1T_FindDevice(LPDIRECT3D3 iface,
+				      LPD3DFINDDEVICESEARCH lpD3DDFS,
+				      LPD3DFINDDEVICERESULT lpD3DFDR)
 {
     ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
     FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpD3DDFS, lpD3DFDR);
@@ -496,4 +476,26 @@ Thunk_IDirect3DImpl_3_CreateVertexBuffer(LPDIRECT3D3 iface,
     TRACE(" returning interface %p.\n", *lplpD3DVertBuf);
     
     return ret;
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DImpl_1_FindDevice(LPDIRECT3D iface,
+				 LPD3DFINDDEVICESEARCH lpD3DDFS,
+				 LPD3DFINDDEVICERESULT lplpD3DDevice)
+{
+    TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", iface, lpD3DDFS, lplpD3DDevice);
+    return IDirect3D3_FindDevice(COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D, IDirect3D3, iface),
+				 lpD3DDFS,
+				 lplpD3DDevice);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DImpl_2_FindDevice(LPDIRECT3D2 iface,
+				 LPD3DFINDDEVICESEARCH lpD3DDFS,
+				 LPD3DFINDDEVICERESULT lpD3DFDR)
+{
+    TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", iface, lpD3DDFS, lpD3DFDR);
+    return IDirect3D3_FindDevice(COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D, IDirect3D3, iface),
+				 lpD3DDFS,
+				 lpD3DFDR);
 }

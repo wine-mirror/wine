@@ -43,45 +43,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 #define MAX_LIGHTS 8
 
 HRESULT WINAPI
-GL_IDirect3DImpl_1_EnumDevices(LPDIRECT3D iface,
-			       LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
-			       LPVOID lpUserArg)
-{
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D, iface);
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
-
-    /* Call functions defined in d3ddevices.c */
-    if (d3ddevice_enumerate(lpEnumDevicesCallback, lpUserArg, 1) != D3DENUMRET_OK)
-	return D3D_OK;
-
-    return D3D_OK;
-}
-
-HRESULT WINAPI
-GL_IDirect3DImpl_2_EnumDevices(LPDIRECT3D2 iface,
-			       LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
-			       LPVOID lpUserArg)
-{
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D2, iface);
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
-
-    /* Call functions defined in d3ddevices.c */
-    if (d3ddevice_enumerate(lpEnumDevicesCallback, lpUserArg, 2) != D3DENUMRET_OK)
-	return D3D_OK;
-
-    return D3D_OK;
-}
-
-HRESULT WINAPI
-GL_IDirect3DImpl_3_EnumDevices(LPDIRECT3D3 iface,
-			       LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
-			       LPVOID lpUserArg)
+GL_IDirect3DImpl_3_2T_1T_EnumDevices(LPDIRECT3D3 iface,
+				     LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
+				     LPVOID lpUserArg)
 {
     ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
 
     /* Call functions defined in d3ddevices.c */
-    if (d3ddevice_enumerate(lpEnumDevicesCallback, lpUserArg, 3) != D3DENUMRET_OK)
+    if (d3ddevice_enumerate(lpEnumDevicesCallback, lpUserArg) != D3DENUMRET_OK)
 	return D3D_OK;
 
     return D3D_OK;
@@ -160,48 +130,29 @@ create_device_helper(IDirect3DImpl *This,
     ret_value = d3ddevice_create(&lpd3ddev, This, lpDDS);
     if (FAILED(ret_value)) return ret_value;
     
-    if (IsEqualGUID( &IID_D3DDEVICE_OpenGL, iid )) {
-	*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice);
-        TRACE(" returning OpenGL D3DDevice %p\n", *obj);
-	return D3D_OK;
-    }
-    if (IsEqualGUID( &IID_D3DDEVICE2_OpenGL, iid )) {
-	*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice2);
-        TRACE(" returning OpenGL D3DDevice2 %p\n", *obj);
-	return D3D_OK;
-    }
-    if (IsEqualGUID( &IID_D3DDEVICE3_OpenGL, iid )) {
-	*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice3);
-        TRACE(" returning OpenGL D3DDevice3 %p\n", *obj);
-	return D3D_OK;
-    }
-    if (IsEqualGUID( &IID_D3DDEVICE7_OpenGL, iid )) {
-	*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice7);
-        TRACE(" returning OpenGL D3DDevice7 %p\n", *obj);
-	return D3D_OK;
-    }
     if ((iid == NULL) ||
+	(IsEqualGUID(&IID_D3DDEVICE_OpenGL, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DHALDevice, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DTnLHalDevice, iid))) {
         switch (interface) {
 	    case 1:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice);
-	        TRACE(" returning OpenGL D3DDevice %p via default / HAL interface\n", *obj);
+	        TRACE(" returning OpenGL D3DDevice %p.\n", *obj);
 		return D3D_OK;
 
 	    case 2:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice2);
-	        TRACE(" returning OpenGL D3DDevice2 %p via default / HAL interface\n", *obj);
+	        TRACE(" returning OpenGL D3DDevice2 %p.\n", *obj);
 		return D3D_OK;
 
 	    case 3:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice3);
-	        TRACE(" returning OpenGL D3DDevice3 %p via default / HAL interface\n", *obj);
+	        TRACE(" returning OpenGL D3DDevice3 %p.\n", *obj);
 		return D3D_OK;
 
 	    case 7:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice7);
-	        TRACE(" returning OpenGL D3DDevice7 %p via default / HAL interface\n", *obj);
+	        TRACE(" returning OpenGL D3DDevice7 %p.\n", *obj);
 		return D3D_OK;
         }
     }
@@ -239,33 +190,13 @@ GL_IDirect3DImpl_3_CreateDevice(LPDIRECT3D3 iface,
 }
 
 HRESULT WINAPI
-GL_IDirect3DImpl_1_FindDevice(LPDIRECT3D iface,
-			      LPD3DFINDDEVICESEARCH lpD3DDFS,
-			      LPD3DFINDDEVICERESULT lplpD3DDevice)
-{
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D, iface);
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpD3DDFS, lplpD3DDevice);
-    return d3ddevice_find(This, lpD3DDFS, lplpD3DDevice, 1);
-}
-
-HRESULT WINAPI
-GL_IDirect3DImpl_2_FindDevice(LPDIRECT3D2 iface,
-			      LPD3DFINDDEVICESEARCH lpD3DDFS,
-			      LPD3DFINDDEVICERESULT lpD3DFDR)
-{
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D2, iface);
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpD3DDFS, lpD3DFDR);
-    return d3ddevice_find(This, lpD3DDFS, lpD3DFDR, 2);
-}
-
-HRESULT WINAPI
-GL_IDirect3DImpl_3_FindDevice(LPDIRECT3D3 iface,
-			      LPD3DFINDDEVICESEARCH lpD3DDFS,
-			      LPD3DFINDDEVICERESULT lpD3DFDR)
+GL_IDirect3DImpl_3_2T_1T_FindDevice(LPDIRECT3D3 iface,
+				    LPD3DFINDDEVICESEARCH lpD3DDFS,
+				    LPD3DFINDDEVICERESULT lpD3DFDR)
 {
     ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpD3DDFS, lpD3DFDR);
-    return d3ddevice_find(This, lpD3DDFS, lpD3DFDR, 3);
+    return d3ddevice_find(This, lpD3DDFS, lpD3DFDR);
 }
 
 HRESULT WINAPI
@@ -381,11 +312,11 @@ ICOM_VTABLE(IDirect3D3) VTABLE_IDirect3D3 =
     XCAST(QueryInterface) Thunk_IDirect3DImpl_3_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_3_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_3_Release,
-    XCAST(EnumDevices) GL_IDirect3DImpl_3_EnumDevices,
+    XCAST(EnumDevices) GL_IDirect3DImpl_3_2T_1T_EnumDevices,
     XCAST(CreateLight) GL_IDirect3DImpl_3_2T_1T_CreateLight,
     XCAST(CreateMaterial) GL_IDirect3DImpl_3_2T_1T_CreateMaterial,
     XCAST(CreateViewport) GL_IDirect3DImpl_3_2T_1T_CreateViewport,
-    XCAST(FindDevice) GL_IDirect3DImpl_3_FindDevice,
+    XCAST(FindDevice) GL_IDirect3DImpl_3_2T_1T_FindDevice,
     XCAST(CreateDevice) GL_IDirect3DImpl_3_CreateDevice,
     XCAST(CreateVertexBuffer) Thunk_IDirect3DImpl_3_CreateVertexBuffer,
     XCAST(EnumZBufferFormats) Thunk_IDirect3DImpl_3_EnumZBufferFormats,
@@ -409,11 +340,11 @@ ICOM_VTABLE(IDirect3D2) VTABLE_IDirect3D2 =
     XCAST(QueryInterface) Thunk_IDirect3DImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_2_Release,
-    XCAST(EnumDevices) GL_IDirect3DImpl_2_EnumDevices,
+    XCAST(EnumDevices) Thunk_IDirect3DImpl_2_EnumDevices,
     XCAST(CreateLight) Thunk_IDirect3DImpl_2_CreateLight,
     XCAST(CreateMaterial) Thunk_IDirect3DImpl_2_CreateMaterial,
     XCAST(CreateViewport) Thunk_IDirect3DImpl_2_CreateViewport,
-    XCAST(FindDevice) GL_IDirect3DImpl_2_FindDevice,
+    XCAST(FindDevice) Thunk_IDirect3DImpl_2_FindDevice,
     XCAST(CreateDevice) GL_IDirect3DImpl_2_CreateDevice,
 };
 
@@ -435,11 +366,11 @@ ICOM_VTABLE(IDirect3D) VTABLE_IDirect3D =
     XCAST(AddRef) Thunk_IDirect3DImpl_1_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_1_Release,
     XCAST(Initialize) Main_IDirect3DImpl_1_Initialize,
-    XCAST(EnumDevices) GL_IDirect3DImpl_1_EnumDevices,
+    XCAST(EnumDevices) Thunk_IDirect3DImpl_1_EnumDevices,
     XCAST(CreateLight) Thunk_IDirect3DImpl_1_CreateLight,
     XCAST(CreateMaterial) Thunk_IDirect3DImpl_1_CreateMaterial,
     XCAST(CreateViewport) Thunk_IDirect3DImpl_1_CreateViewport,
-    XCAST(FindDevice) GL_IDirect3DImpl_1_FindDevice,
+    XCAST(FindDevice) Thunk_IDirect3DImpl_1_FindDevice,
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)

@@ -45,27 +45,6 @@ const GUID IID_D3DDEVICE_OpenGL = {
   { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfa }
 };
 
-const GUID IID_D3DDEVICE2_OpenGL = {
-  0x31416d44,
-  0x86ae,
-  0x11d2,
-  { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfb }
-};
-
-const GUID IID_D3DDEVICE3_OpenGL = {
-  0x31416d44,
-  0x86ae,
-  0x11d2,
-  { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfc }
-};
-
-const GUID IID_D3DDEVICE7_OpenGL = {
-  0x31416d44,
-  0x86ae,
-  0x11d2,
-  { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfd }
-};
-
 /* Define this variable if you have an unpatched Mesa 3.0 (patches are available
    on Mesa's home page) or version 3.1b.
 
@@ -275,26 +254,15 @@ static void fill_device_capabilities(IDirectDrawImpl* ddraw)
 
 
 
-HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD interface_version)
+HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context)
 {
     D3DDEVICEDESC d1, d2;
-    char buf[256];
-    const void *iid = NULL;
-
-    switch (interface_version) {
-        case 1: iid = &IID_D3DDEVICE_OpenGL; break;
-	case 2: iid = &IID_D3DDEVICE2_OpenGL; break;
-	case 3: iid = &IID_D3DDEVICE3_OpenGL; break;
-	case 7: iid = &IID_D3DDEVICE7_OpenGL; break;
-    }
-    strcpy(buf, "WINE Direct3DX using OpenGL");
-    buf[13] = '0' + interface_version;
 
     fill_opengl_caps(&d1);
     d2 = d1;
 
-    TRACE(" enumerating OpenGL D3DDevice%ld interface (IID %s).\n", interface_version, debugstr_guid(iid));
-    return cb((LPGUID) iid, buf, "direct3d", &d1, &d2, context);
+    TRACE(" enumerating OpenGL D3DDevice interface (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
+    return cb((LPIID) &IID_D3DDEVICE_OpenGL, "WINE Direct3DX using OpenGL", "direct3d", &d1, &d2, context);
 }
 
 HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context)
@@ -462,8 +430,7 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
 HRESULT
 d3ddevice_find(IDirect3DImpl *d3d,
 	       LPD3DFINDDEVICESEARCH lpD3DDFS,
-	       LPD3DFINDDEVICERESULT lplpD3DDevice,
-	       DWORD interface_version)
+	       LPD3DFINDDEVICERESULT lplpD3DDevice)
 {
     DWORD dwSize;
     D3DDEVICEDESC desc;
@@ -476,23 +443,14 @@ d3ddevice_find(IDirect3DImpl *d3d,
     if (lpD3DDFS->dwFlags & D3DFDS_GUID) {
         TRACE(" trying to match guid %s.\n", debugstr_guid(&(lpD3DDFS->guid)));
 	if ((IsEqualGUID( &IID_D3DDEVICE_OpenGL, &(lpD3DDFS->guid)) == 0) &&
-	    (IsEqualGUID( &IID_D3DDEVICE2_OpenGL, &(lpD3DDFS->guid)) == 0) &&
-	    (IsEqualGUID( &IID_D3DDEVICE3_OpenGL, &(lpD3DDFS->guid)) == 0) &&
-	    (IsEqualGUID( &IID_D3DDEVICE7_OpenGL, &(lpD3DDFS->guid)) == 0) &&
 	    (IsEqualGUID(&IID_IDirect3DHALDevice, &(lpD3DDFS->guid)) == 0)) {
 	    TRACE(" no match for this GUID.\n");
 	    return DDERR_INVALIDPARAMS;
 	}
     }
 
-    /* Now return our own GUIDs according to Direct3D version */
-    if (interface_version == 1) {
-        lplpD3DDevice->guid = IID_D3DDEVICE_OpenGL;
-    } else if (interface_version == 2) {
-        lplpD3DDevice->guid = IID_D3DDEVICE2_OpenGL;
-    } else if (interface_version == 3) {
-        lplpD3DDevice->guid = IID_D3DDEVICE3_OpenGL;
-    }
+    /* Now return our own GUID */
+    lplpD3DDevice->guid = IID_D3DDEVICE_OpenGL;
     fill_opengl_caps(&desc);
     dwSize = lplpD3DDevice->ddHwDesc.dwSize;
     memset(&(lplpD3DDevice->ddHwDesc), 0, dwSize);
