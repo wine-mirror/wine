@@ -149,7 +149,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
             init_async_queue (&file->read_q);
             init_async_queue (&file->write_q);
         }
-        if (!(file->fd = alloc_fd( &file_fd_ops, fd, &file->obj )))
+        if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj )))
         {
             release_object( file );
             return NULL;
@@ -165,9 +165,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
 {
     struct file *file;
     int hash, flags;
-    struct stat st;
     char *name;
-    int fd = -1;
     mode_t mode;
 
     if (!(name = mem_alloc( len + 1 ))) return NULL;
@@ -200,31 +198,38 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
         (!strcasecmp( name + len - 4, ".exe" ) || !strcasecmp( name + len - 4, ".com" )))
         mode |= 0111;
 
-    /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
-    if ((fd = open( name, flags | O_NONBLOCK | O_LARGEFILE, mode )) == -1 )
-        goto file_error;
-    /* refuse to open a directory */
-    if (fstat( fd, &st ) == -1) goto file_error;
-    if (S_ISDIR(st.st_mode))
+    if (!(file = alloc_object( &file_ops ))) goto error;
+
+    file->access     = access;
+    file->flags      = attrs;
+    file->sharing    = sharing;
+    file->drive_type = drive_type;
+    file->name       = name;
+    file->next       = file_hash[hash];
+    file_hash[hash]  = file;
+    if (file->flags & FILE_FLAG_OVERLAPPED)
     {
-        set_error( STATUS_ACCESS_DENIED );
-        goto error;
+        init_async_queue (&file->read_q);
+        init_async_queue (&file->write_q);
     }
 
-    if (!(file = create_file_for_fd( fd, access, sharing, attrs, drive_type )))
+    /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
+    if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
+        !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE, &mode )))
     {
-        free( name );
+        release_object( file );
         return NULL;
     }
-    file->name = name;
-    file->next = file_hash[hash];
-    file_hash[hash] = file;
+    /* refuse to open a directory */
+    if (S_ISDIR(mode))
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        release_object( file );
+        return NULL;
+    }
     return file;
 
- file_error:
-    file_set_error();
  error:
-    if (fd != -1) close( fd );
     free( name );
     return NULL;
 }
@@ -241,29 +246,20 @@ int get_file_drive_type( struct file *file )
     return file->drive_type;
 }
 
-/* Create an anonymous Unix file */
-int create_anonymous_file(void)
+/* create a temp file for anonymous mappings */
+struct file *create_temp_file( int access )
 {
-    char tmpfn[21];
+    char tmpfn[16];
     int fd;
 
-    sprintf(tmpfn,"/tmp/anonmap.XXXXXX");
+    sprintf( tmpfn, "anonmap.XXXXXX" );  /* create it in the server directory */
     fd = mkstemp(tmpfn);
     if (fd == -1)
     {
         file_set_error();
-        return -1;
+        return NULL;
     }
     unlink( tmpfn );
-    return fd;
-}
-
-/* Create a temp file for anonymous mappings */
-struct file *create_temp_file( int access )
-{
-    int fd;
-
-    if ((fd = create_anonymous_file()) == -1) return NULL;
     return create_file_for_fd( fd, access, 0, 0, DRIVE_FIXED );
 }
 

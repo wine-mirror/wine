@@ -616,7 +616,7 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     sock->message = 0;
     sock->wparam  = 0;
     sock->deferred = NULL;
-    if (!(sock->fd = alloc_fd( &sock_fd_ops, sockfd, &sock->obj )))
+    if (!(sock->fd = create_anonymous_fd( &sock_fd_ops, sockfd, &sock->obj )))
     {
         release_object( sock );
         return NULL;
@@ -686,7 +686,7 @@ static struct sock *accept_socket( obj_handle_t handle )
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
         acceptsock->flags = sock->flags;
         acceptsock->deferred = 0;
-        if (!(acceptsock->fd = alloc_fd( &sock_fd_ops, acceptfd, &acceptsock->obj )))
+        if (!(acceptsock->fd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj )))
         {
             release_object( acceptsock );
             release_object( sock );

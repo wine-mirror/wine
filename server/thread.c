@@ -170,7 +170,7 @@ struct thread *create_thread( int fd, struct process *process )
         release_object( thread );
         return NULL;
     }
-    if (!(thread->request_fd = alloc_fd( &thread_fd_ops, fd, &thread->obj )))
+    if (!(thread->request_fd = create_anonymous_fd( &thread_fd_ops, fd, &thread->obj )))
     {
         release_object( thread );
         return NULL;
@@ -840,8 +840,8 @@ DECL_HANDLER(init_thread)
         fatal_protocol_error( current, "bad wait fd\n" );
         goto error;
     }
-    current->reply_fd = alloc_fd( &thread_fd_ops, reply_fd, &current->obj );
-    current->wait_fd  = alloc_fd( &thread_fd_ops, wait_fd, &current->obj );
+    current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj );
+    current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj );
     if (!current->reply_fd || !current->wait_fd) return;
 
     current->unix_pid = req->unix_pid;

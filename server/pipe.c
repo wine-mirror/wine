@@ -85,7 +85,7 @@ static struct pipe *create_pipe_side( int fd, int side )
         pipe->other  = NULL;
         pipe->side   = side;
     }
-    if (!(pipe->fd = alloc_fd( &pipe_fd_ops, fd, &pipe->obj )))
+    if (!(pipe->fd = create_anonymous_fd( &pipe_fd_ops, fd, &pipe->obj )))
     {
         release_object( pipe );
         return NULL;

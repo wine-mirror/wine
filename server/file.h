@@ -42,7 +42,10 @@ struct fd_ops
 
 /* file descriptor functions */
 
-extern struct fd *alloc_fd( const struct fd_ops *fd_ops, int unix_fd, struct object *user );
+extern struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user );
+extern struct fd *open_fd( struct fd *fd, const char *name, int flags, int *mode );
+extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
+                                       int unix_fd, struct object *user );
 extern void *get_fd_user( struct fd *fd );
 extern int get_unix_fd( struct fd *fd );
 extern void fd_poll_event( struct fd *fd, int event );
@@ -85,7 +88,6 @@ extern int get_file_unix_fd( struct file *file );
 extern int is_same_file( struct file *file1, struct file *file2 );
 extern int get_file_drive_type( struct file *file );
 extern int grow_file( struct file *file, int size_high, int size_low );
-extern int create_anonymous_file(void);
 extern struct file *create_temp_file( int access );
 extern void file_set_error(void);
 

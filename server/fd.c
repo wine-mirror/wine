@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +30,7 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -40,14 +42,25 @@
 #include "request.h"
 #include "console.h"
 
+/* file descriptor object */
+
+/* closed_fd is used to keep track of the unix fd belonging to a closed fd object */
+struct closed_fd
+{
+    struct closed_fd *next;   /* next fd in close list */
+    int               fd;     /* the unix file descriptor */
+};
+
 struct fd
 {
-    struct object        obj;        /* object header */
-    const struct fd_ops *fd_ops;     /* file descriptor operations */
-    struct object       *user;       /* object using this file descriptor */
-    int                  unix_fd;    /* unix file descriptor */
-    int                  poll_index; /* index of fd in poll array */
-    int                  mode;       /* file protection mode */
+    struct object        obj;         /* object header */
+    const struct fd_ops *fd_ops;      /* file descriptor operations */
+    struct inode        *inode;       /* inode that this fd belongs to */
+    struct list          inode_entry; /* entry in inode fd list */
+    struct closed_fd    *closed;      /* structure to store the unix fd at destroy time */
+    struct object       *user;        /* object using this file descriptor */
+    int                  unix_fd;     /* unix file descriptor */
+    int                  poll_index;  /* index of fd in poll array */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -64,6 +77,42 @@ static const struct object_ops fd_ops =
     no_get_fd,                /* get_fd */
     fd_destroy                /* destroy */
 };
+
+/* inode object */
+
+struct inode
+{
+    struct object       obj;        /* object header */
+    struct list         entry;      /* inode hash list entry */
+    unsigned int        hash;       /* hashing code */
+    dev_t               dev;        /* device number */
+    ino_t               ino;        /* inode number */
+    struct list         open;       /* list of open file descriptors */
+    struct closed_fd   *closed;     /* list of file descriptors to close at destroy time */
+};
+
+static void inode_dump( struct object *obj, int verbose );
+static void inode_destroy( struct object *obj );
+
+static const struct object_ops inode_ops =
+{
+    sizeof(struct inode),     /* size */
+    inode_dump,               /* dump */
+    no_add_queue,             /* add_queue */
+    NULL,                     /* remove_queue */
+    NULL,                     /* signaled */
+    NULL,                     /* satisfied */
+    no_get_fd,                /* get_fd */
+    inode_destroy             /* destroy */
+};
+
+#define DUMP_LONG_LONG(val) do { \
+    if (sizeof(val) > sizeof(unsigned long) && (val) > ~0UL) \
+        fprintf( stderr, "%lx%08lx", (unsigned long)((val) >> 32), (unsigned long)(val) ); \
+    else \
+        fprintf( stderr, "%lx", (unsigned long)(val) ); \
+  } while (0)
+
 
 
 /****************************************************************/
@@ -311,21 +360,104 @@ void main_loop(void)
     }
 }
 
+
+/****************************************************************/
+/* inode functions */
+
+#define HASH_SIZE 37
+
+static struct list inode_hash[HASH_SIZE];
+
+
+static void inode_dump( struct object *obj, int verbose )
+{
+    struct inode *inode = (struct inode *)obj;
+    fprintf( stderr, "Inode dev=" );
+    DUMP_LONG_LONG( inode->dev );
+    fprintf( stderr, " ino=" );
+    DUMP_LONG_LONG( inode->ino );
+    fprintf( stderr, "\n" );
+}
+
+static void inode_destroy( struct object *obj )
+{
+    struct inode *inode = (struct inode *)obj;
+
+    assert( !list_head(&inode->open) );
+
+    list_remove( &inode->entry );
+    while (inode->closed)
+    {
+        struct closed_fd *fd = inode->closed;
+        inode->closed = fd->next;
+        close( fd->fd );
+        free( fd );
+    }
+}
+
+/* retrieve the inode object for a given fd, creating it if needed */
+static struct inode *get_inode( dev_t dev, ino_t ino )
+{
+    struct list *ptr;
+    struct inode *inode;
+    unsigned int hash = (dev ^ ino) % HASH_SIZE;
+
+    if (inode_hash[hash].next)
+    {
+        LIST_FOR_EACH( ptr, &inode_hash[hash] )
+        {
+            inode = LIST_ENTRY( ptr, struct inode, entry );
+            if (inode->dev == dev && inode->ino == ino)
+                return (struct inode *)grab_object( inode );
+        }
+    }
+    else list_init( &inode_hash[hash] );
+
+    /* not found, create it */
+    if ((inode = alloc_object( &inode_ops )))
+    {
+        inode->hash   = hash;
+        inode->dev    = dev;
+        inode->ino    = ino;
+        inode->closed = NULL;
+        list_init( &inode->open );
+        list_add_head( &inode_hash[hash], &inode->entry );
+    }
+    return inode;
+}
+
+/* add fd to the indoe list of file descriptors to close */
+static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
+{
+    fd->next = inode->closed;
+    inode->closed = fd;
+}
+
+
 /****************************************************************/
 /* file descriptor functions */
 
 static void fd_dump( struct object *obj, int verbose )
 {
     struct fd *fd = (struct fd *)obj;
-    fprintf( stderr, "Fd unix_fd=%d mode=%06o user=%p\n", fd->unix_fd, fd->mode, fd->user );
+    fprintf( stderr, "Fd unix_fd=%d user=%p\n", fd->unix_fd, fd->user );
 }
 
 static void fd_destroy( struct object *obj )
 {
     struct fd *fd = (struct fd *)obj;
 
+    list_remove( &fd->inode_entry );
     if (fd->poll_index != -1) remove_poll_user( fd, fd->poll_index );
-    close( fd->unix_fd );
+    if (fd->inode)
+    {
+        inode_add_closed_fd( fd->inode, fd->closed );
+        release_object( fd->inode );
+    }
+    else  /* no inode, close it right away */
+    {
+        if (fd->unix_fd != -1) close( fd->unix_fd );
+    }
 }
 
 /* set the events that select waits for on this fd */
@@ -346,29 +478,92 @@ void set_fd_events( struct fd *fd, int events )
     }
 }
 
-/* allocate an fd object */
-/* if the function fails the unix fd is closed */
-struct fd *alloc_fd( const struct fd_ops *fd_user_ops, int unix_fd, struct object *user )
+/* allocate an fd object, without setting the unix fd yet */
+struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
 {
     struct fd *fd = alloc_object( &fd_ops );
 
-    if (!fd)
-    {
-        close( unix_fd );
-        return NULL;
-    }
+    if (!fd) return NULL;
+
     fd->fd_ops     = fd_user_ops;
     fd->user       = user;
-    fd->unix_fd    = unix_fd;
+    fd->inode      = NULL;
+    fd->closed     = NULL;
+    fd->unix_fd    = -1;
     fd->poll_index = -1;
-    fd->mode       = 0;
+    list_init( &fd->inode_entry );
 
-    if ((unix_fd != -1) && ((fd->poll_index = add_poll_user( fd )) == -1))
+    if ((fd->poll_index = add_poll_user( fd )) == -1)
     {
         release_object( fd );
         return NULL;
     }
     return fd;
+}
+
+/* open() wrapper using a struct fd */
+/* the fd must have been created with alloc_fd */
+/* on error the fd object is released */
+struct fd *open_fd( struct fd *fd, const char *name, int flags, int *mode )
+{
+    struct stat st;
+    struct closed_fd *closed_fd;
+
+    assert( fd->unix_fd == -1 );
+
+    if (!(closed_fd = mem_alloc( sizeof(*closed_fd) )))
+    {
+        release_object( fd );
+        return NULL;
+    }
+    if ((fd->unix_fd = open( name, flags, *mode )) == -1)
+    {
+        file_set_error();
+        release_object( fd );
+        free( closed_fd );
+        return NULL;
+    }
+    closed_fd->fd = fd->unix_fd;
+    fstat( fd->unix_fd, &st );
+    *mode = st.st_mode;
+
+    if (S_ISREG(st.st_mode))  /* only bother with an inode for normal files */
+    {
+        struct inode *inode = get_inode( st.st_dev, st.st_ino );
+
+        if (!inode)
+        {
+            /* we can close the fd because there are no others open on the same file,
+             * otherwise we wouldn't have failed to allocate a new inode
+             */
+            release_object( fd );
+            free( closed_fd );
+            return NULL;
+        }
+        fd->inode = inode;
+        fd->closed = closed_fd;
+        list_add_head( &inode->open, &fd->inode_entry );
+    }
+    else
+    {
+        free( closed_fd );
+    }
+    return fd;
+}
+
+/* create an fd for an anonymous file */
+/* if the function fails the unix fd is closed */
+struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops, int unix_fd, struct object *user )
+{
+    struct fd *fd = alloc_fd( fd_user_ops, user );
+
+    if (fd)
+    {
+        fd->unix_fd = unix_fd;
+        return fd;
+    }
+    close( unix_fd );
+    return NULL;
 }
 
 /* retrieve the object that is using an fd */

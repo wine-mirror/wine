@@ -361,8 +361,8 @@ DECL_HANDLER(open_named_pipe)
 
         if(!socketpair(PF_UNIX, SOCK_STREAM, 0, fds))
         {
-            user->fd = alloc_fd( &pipe_user_fd_ops, fds[1], &user->obj );
-            partner->fd = alloc_fd( &pipe_user_fd_ops, fds[0], &partner->obj );
+            user->fd = create_anonymous_fd( &pipe_user_fd_ops, fds[1], &user->obj );
+            partner->fd = create_anonymous_fd( &pipe_user_fd_ops, fds[0], &partner->obj );
             if (user->fd && partner->fd)
             {
                 notify_waiter(partner,STATUS_SUCCESS);

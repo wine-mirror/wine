@@ -302,7 +302,7 @@ struct thread *create_process( int fd )
     first_process = process;
 
     if (!(process->id = alloc_ptid( process ))) goto error;
-    if (!(process->msg_fd = alloc_fd( &process_fd_ops, fd, &process->obj ))) goto error;
+    if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj ))) goto error;
 
     /* create the main thread */
     if (pipe( request_pipe ) == -1)

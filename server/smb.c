@@ -167,22 +167,21 @@ DECL_HANDLER(create_smb)
         return;
     }
 
-    smb = alloc_object( &smb_ops );
-    if (smb)
+    if (!(smb = alloc_object( &smb_ops )))
     {
-        smb->tree_id = req->tree_id;
-        smb->user_id = req->user_id;
-        smb->dialect = req->dialect;
-        smb->file_id = req->file_id;
-        smb->offset = 0;
-        if (!(smb->fd = alloc_fd( &smb_fd_ops, fd, &smb->obj )))
-        {
-            release_object( smb );
-            return;
-        }
-        reply->handle = alloc_handle( current->process, smb, GENERIC_READ, 0);
-        release_object( smb );
+        close( fd );
+        return;
     }
+    smb->tree_id = req->tree_id;
+    smb->user_id = req->user_id;
+    smb->dialect = req->dialect;
+    smb->file_id = req->file_id;
+    smb->offset = 0;
+    if ((smb->fd = create_anonymous_fd( &smb_fd_ops, fd, &smb->obj )))
+    {
+        reply->handle = alloc_handle( current->process, smb, GENERIC_READ, 0);
+    }
+    release_object( smb );
 }
 
 DECL_HANDLER(get_smb_info)

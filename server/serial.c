@@ -150,25 +150,27 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
        if(0>fcntl(fd, F_SETFL, 0))
            perror("fcntl");
 
-    if ((serial = alloc_object( &serial_ops )))
+    if (!(serial = alloc_object( &serial_ops )))
     {
-        serial->attrib       = attributes;
-        serial->access       = access;
-        serial->readinterval = 0;
-        serial->readmult     = 0;
-        serial->readconst    = 0;
-        serial->writemult    = 0;
-        serial->writeconst   = 0;
-        serial->eventmask    = 0;
-        serial->commerror    = 0;
-        init_async_queue(&serial->read_q);
-        init_async_queue(&serial->write_q);
-        init_async_queue(&serial->wait_q);
-        if (!(serial->fd = alloc_fd( &serial_fd_ops, fd, &serial->obj )))
-        {
-            release_object( serial );
-            return NULL;
-        }
+        close( fd );
+        return NULL;
+    }
+    serial->attrib       = attributes;
+    serial->access       = access;
+    serial->readinterval = 0;
+    serial->readmult     = 0;
+    serial->readconst    = 0;
+    serial->writemult    = 0;
+    serial->writeconst   = 0;
+    serial->eventmask    = 0;
+    serial->commerror    = 0;
+    init_async_queue(&serial->read_q);
+    init_async_queue(&serial->write_q);
+    init_async_queue(&serial->wait_q);
+    if (!(serial->fd = create_anonymous_fd( &serial_fd_ops, fd, &serial->obj )))
+    {
+        release_object( serial );
+        return NULL;
     }
     return serial;
 }
