@@ -23,6 +23,7 @@
 
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(win32);
+DECLARE_DEBUG_CHANNEL(loaddll);
 
 WINE_MODREF *MODULE_modref_list = NULL;
 
@@ -1306,6 +1307,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	int i;
 	module_loadorder_t *plo;
 	LPSTR filename, p;
+        const char *filetype = "";
 
 	if ( !libname ) return NULL;
 
@@ -1396,16 +1398,19 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		case MODULE_LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", filename);
 			pwm = PE_LoadLibraryExA(filename, flags);
+                        filetype = "native";
 			break;
 
 		case MODULE_LOADORDER_SO:
 			TRACE("Trying so-library '%s'\n", filename);
                         pwm = ELF_LoadLibraryExA(filename, flags);
+                        filetype = "so";
 			break;
 
 		case MODULE_LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", filename);
 			pwm = BUILTIN32_LoadLibraryExA(filename, flags);
+                        filetype = "builtin";
 			break;
 
 		default:
@@ -1421,7 +1426,8 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		{
 			/* Initialize DLL just loaded */
 			TRACE("Loaded module '%s' at 0x%08x, \n", filename, pwm->module);
-
+                        if (!TRACE_ON(module))
+                            TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
 			/* Set the refCount here so that an attach failure will */
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
 			pwm->refCount++;

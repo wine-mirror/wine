@@ -28,6 +28,7 @@
 #include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
+DECLARE_DEBUG_CHANNEL(loaddll);
 
 /*
  * Segment table entry
@@ -896,6 +897,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 	HINSTANCE16 hinst;
 	int i;
 	module_loadorder_t *plo;
+        const char *filetype = "";
 
 	plo = MODULE_GetLoadOrder(libname, FALSE);
 
@@ -906,11 +908,13 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 		case MODULE_LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", libname);
 			hinst = NE_LoadModule(libname, lib_only);
+                        filetype = "native";
 			break;
 
 		case MODULE_LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", libname);
 			hinst = BUILTIN_LoadModule(libname);
+                        filetype = "builtin";
 			break;
 
 		default:
@@ -947,6 +951,8 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 				}
 
 				TRACE("Loaded module '%s' at 0x%04x.\n", libname, hinst);
+                                if (!TRACE_ON(module))
+                                    TRACE_(loaddll)("Loaded module '%s' : %s\n", libname, filetype);
 
 				/*
 				 * Call initialization routines for all loaded DLLs. Note that
