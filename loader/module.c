@@ -1389,12 +1389,14 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 		case MODULE_LOADORDER_ELFDLL:
 			TRACE("Trying elfdll '%s'\n", libname);
-			pwm = ELFDLL_LoadLibraryExA(libname, flags);
+			if (!(pwm = BUILTIN32_LoadLibraryExA(libname, flags)))
+                            pwm = ELFDLL_LoadLibraryExA(libname, flags);
 			break;
 
 		case MODULE_LOADORDER_SO:
 			TRACE("Trying so-library '%s'\n", libname);
-			pwm = ELF_LoadLibraryExA(libname, flags);
+			if (!(pwm = BUILTIN32_LoadLibraryExA(libname, flags)))
+                            pwm = ELF_LoadLibraryExA(libname, flags);
 			break;
 
 		case MODULE_LOADORDER_BI:
