@@ -1543,8 +1543,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 	    PERQDATA_SetActiveWnd( pOldActiveQueue->pQData, 0 );
 
     /* send palette messages */
-    if (hWnd && SendMessage16( hWnd, WM_QUERYNEWPALETTE, 0, 0L))
-	SendMessage16((HWND16)-1, WM_PALETTEISCHANGING, (WPARAM16)hWnd, 0L );
+    if (hWnd && SendMessageW( hWnd, WM_QUERYNEWPALETTE, 0, 0L))
+        SendMessageW( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0 );
 
     /* if prev wnd is minimized redraw icon title */
     if( IsIconic( hwndPrevActive ) ) WINPOS_RedrawIconTitle(hwndPrevActive);

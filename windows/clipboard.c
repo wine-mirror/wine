@@ -30,7 +30,6 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "heap.h"
-#include "message.h"
 #include "user.h"
 #include "clipboard.h"
 #include "debugtools.h"
@@ -411,8 +410,7 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
        * data requested into the clipboard.
        */
       TRACE("Sending WM_RENDERFORMAT message\n");
-      SendMessage16(hWndClipOwner,WM_RENDERFORMAT,
-                    (WPARAM16)lpFormat->wFormatID,0L);
+      SendMessageW( hWndClipOwner, WM_RENDERFORMAT, (WPARAM)lpFormat->wFormatID, 0 );
     }
     else
     {
@@ -770,8 +768,7 @@ BOOL WINAPI CloseClipboard(void)
     {
 	hWndClipWindow = 0;
 
-        if (bCBHasChanged && hWndViewer) 
-	    SendMessage16(hWndViewer, WM_DRAWCLIPBOARD, 0, 0L);
+        if (bCBHasChanged && hWndViewer) SendMessageW( hWndViewer, WM_DRAWCLIPBOARD, 0, 0 );
 	hClipLock = 0;
     }
     return TRUE;
@@ -803,8 +800,7 @@ BOOL WINAPI EmptyClipboard(void)
     
     /* destroy private objects */
 
-    if (hWndClipOwner)
-	SendMessage16(hWndClipOwner, WM_DESTROYCLIPBOARD, 0, 0L);
+    if (hWndClipOwner) SendMessageW( hWndClipOwner, WM_DESTROYCLIPBOARD, 0, 0 );
 
     /* empty the cache */
     CLIPBOARD_EmptyCache(TRUE);
@@ -1368,8 +1364,7 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
     FIXME("(0x%04x, 0x%04x): stub?\n", hWnd, hWndNext);
 
     if( hWndViewer )
-	bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN,
-                             (WPARAM16)hWnd, (LPARAM)hWndNext);   
+        bRet = !SendMessageW( hWndViewer, WM_CHANGECBCHAIN, (WPARAM)hWnd, (LPARAM)hWndNext );
     else
 	WARN("hWndViewer is lost\n");
 

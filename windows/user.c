@@ -203,7 +203,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     {
         /* Make sure that the window still exists */
         if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-	if (!SendMessage16( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
+        if (!SendMessageW( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
             break;
     }
     result = !(*ppWnd);
@@ -213,7 +213,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     for (ppWnd = list; i > 0; i--, ppWnd++)
     {
         if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-	SendMessage16( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
+        SendMessageW( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
     }
     WIN_ReleaseWinArray(list);
 

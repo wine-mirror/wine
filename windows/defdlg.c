@@ -26,11 +26,11 @@ static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 
     if (IsChild( hwndDlg, hwndPrev ))
     {
-        if (SendMessage16( hwndPrev, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
-            SendMessage16( hwndPrev, EM_SETSEL16, TRUE, MAKELONG( -1, 0 ) );
+        if (SendMessageW( hwndPrev, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
+            SendMessageW( hwndPrev, EM_SETSEL, -1, 0 );
     }
-    if (SendMessage16( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
-        SendMessage16( hwndCtrl, EM_SETSEL16, FALSE, MAKELONG( 0, -1 ) );
+    if (SendMessageW( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
+        SendMessageW( hwndCtrl, EM_SETSEL, 0, -1 );
     SetFocus( hwndCtrl );
 }
 
@@ -77,7 +77,7 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
     HWND hwndChild = GetWindow( hwndDlg, GW_CHILD );
     while (hwndChild)
     {
-        if (SendMessage16( hwndChild, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
+        if (SendMessageW( hwndChild, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
             break;
         hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
     }
@@ -94,7 +94,7 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
                                    HWND hwndNew )
 {
     if (hwndNew &&
-        !(SendMessage16(hwndNew, WM_GETDLGCODE, 0, 0 ) & DLGC_UNDEFPUSHBUTTON))
+        !(SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 ) & DLGC_UNDEFPUSHBUTTON))
         return FALSE;  /* Destination is not a push button */
     
     if (dlgInfo->idResult)  /* There's already a default pushbutton */

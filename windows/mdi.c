@@ -1547,8 +1547,8 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 		    case SC_CLOSE:
 		    case SC_RESTORE:
 		       if( ci->hwndChildMaximized )
-			   return SendMessage16( ci->hwndChildMaximized, WM_SYSCOMMAND,
-					       wParam, lParam);
+                           return SendMessageW( ci->hwndChildMaximized, WM_SYSCOMMAND,
+                                                wParam, lParam);
 		  }
 	      }
 	    else
@@ -1565,13 +1565,12 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 
                 WIN_ReleaseWndPtr(wndPtr);
  	    	if( childHwnd )
-	            SendMessage16(hwndMDIClient, WM_MDIACTIVATE,
-                                  (WPARAM16)childHwnd , 0L);
+                    SendMessageW( hwndMDIClient, WM_MDIACTIVATE, (WPARAM)childHwnd, 0 );
 	      }
 	    break;
 
 	  case WM_NCACTIVATE:
-	    SendMessage16(hwndMDIClient, message, wParam, lParam);
+	    SendMessageW(hwndMDIClient, message, wParam, lParam);
 	    break;
 
 	  case WM_SETTEXT:
@@ -1744,7 +1743,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
         goto END;
 
       case WM_CLOSE:
-	SendMessage16(ci->self,WM_MDIDESTROY,(WPARAM16)hwnd,0L);
+          SendMessageW( ci->self, WM_MDIDESTROY, (WPARAM)hwnd, 0 );
         retvalue = 0;
         goto END;
 
@@ -1782,8 +1781,8 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 		case SC_MAXIMIZE:
 		     if( ci->hwndChildMaximized == hwnd) 
                      {
-		          retvalue = SendMessage16( clientWnd->parent->hwndSelf,
-                                             message, wParam, lParam);
+                         retvalue = SendMessageW( clientWnd->parent->hwndSelf,
+                                                  message, wParam, lParam);
                           goto END;
                      }
                      tmpWnd = WIN_FindWndPtr(hwnd);
@@ -1791,11 +1790,11 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
                      WIN_ReleaseWndPtr(tmpWnd);
 		     break;
 		case SC_NEXTWINDOW:
-		     SendMessage16( ci->self, WM_MDINEXT, 0, 0);
+		     SendMessageW( ci->self, WM_MDINEXT, 0, 0);
                      retvalue = 0;
                      goto END;
 		case SC_PREVWINDOW:
-		     SendMessage16( ci->self, WM_MDINEXT, 0, 1);
+		     SendMessageW( ci->self, WM_MDINEXT, 0, 1);
                      retvalue = 0;
                      goto END;
 	}
@@ -1838,12 +1837,12 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 
 	    if( hMaxChild)
 	    {	    
-	        SendMessage16( hMaxChild, WM_SETREDRAW, FALSE, 0L );
+	        SendMessageW( hMaxChild, WM_SETREDRAW, FALSE, 0 );
 
 	        MDI_RestoreFrameMenu( clientWnd->parent, hMaxChild);
 	        ShowWindow16( hMaxChild, SW_SHOWNOACTIVATE);
 
-	        SendMessage16( hMaxChild, WM_SETREDRAW, TRUE, 0L );
+	        SendMessageW( hMaxChild, WM_SETREDRAW, TRUE, 0 );
 	    }
 
 	    TRACE("maximizing child %04x\n", hwnd );
@@ -1868,7 +1867,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 	    HWND16 switchTo = MDI_GetWindow(clientWnd, hwnd, TRUE, WS_MINIMIZE);
 
 	    if( switchTo )
-	        SendMessage16( switchTo, WM_CHILDACTIVATE, 0, 0L);
+	        SendMessageW( switchTo, WM_CHILDACTIVATE, 0, 0);
 	}
 	 
 	MDI_PostUpdate(clientWnd->hwndSelf, ci, SB_BOTH+1);
@@ -1900,8 +1899,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
       case WM_SYSCHAR:
       	   if (wParam == '-')
 	   {
-	   	SendMessage16(hwnd,WM_SYSCOMMAND,
-			(WPARAM16)SC_KEYMENU, (LPARAM)(DWORD)VK_SPACE);
+               SendMessageW(hwnd,WM_SYSCOMMAND, SC_KEYMENU, (LPARAM)(DWORD)VK_SPACE);
                 retvalue = 0;
                 goto END;
 	   }
@@ -2156,11 +2154,17 @@ HWND WINAPI CreateMDIWindowW(
  */
 BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 {
-    MSG msg32;
- 
-    STRUCT32_MSG16to32(msg, &msg32);
-    /* MDICLIENTINFO is still the same for win32 and win16 ... */
-    return TranslateMDISysAccel(hwndClient, &msg32);
+    if (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)
+    {
+        MSG msg32;
+        msg32.hwnd    = msg->hwnd;
+        msg32.message = msg->message;
+        msg32.wParam  = msg->wParam;
+        msg32.lParam  = msg->lParam;
+        /* MDICLIENTINFO is still the same for win32 and win16 ... */
+        return TranslateMDISysAccel(hwndClient, &msg32);
+    }
+    return 0;
 }
 
 /**********************************************************************

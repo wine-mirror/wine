@@ -1693,7 +1693,7 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
+LONG NC_HandleNCActivate( WND *wndPtr, WPARAM wParam )
 {
     /* Lotus Notes draws menu descriptions in the caption of its main
      * window. When it wants to restore original "system" view, it just
@@ -1720,7 +1720,7 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
 
@@ -2052,7 +2052,7 @@ END:
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM wParam, LPARAM lParam )
 {
     HWND hwnd = pWnd->hwndSelf;
 
@@ -2062,7 +2062,7 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 	 hwnd = WIN_GetTopParent(hwnd);
 
 	 if( WINPOS_SetActiveWindow(hwnd, TRUE, TRUE) || (GetActiveWindow() == hwnd) )
-		SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
+		SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
 	 break;
 
     case HTSYSMENU:
@@ -2077,20 +2077,20 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 		    NC_DrawSysButton95( hwnd, hDC, TRUE );
 		ReleaseDC( hwnd, hDC );
 	     }
-	     SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
+	     SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
 	 }
 	 break;
 
     case HTMENU:
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
+	SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
 	break;
 
     case HTHSCROLL:
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
+	SendMessageW( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
 	break;
 
     case HTVSCROLL:
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
+	SendMessageW( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
 	break;
 
     case HTMINBUTTON:
@@ -2115,7 +2115,7 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
     case HTBOTTOMLEFT:
     case HTBOTTOMRIGHT:
 	/* make sure hittest fits into 0xf and doesn't overlap with HTSYSMENU */
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - 2, lParam);
+	SendMessageW( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - 2, lParam);
 	break;
 
     case HTBORDER:
@@ -2130,7 +2130,7 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
@@ -2138,7 +2138,7 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
      */
     if (pWnd->dwStyle & WS_MINIMIZE)
     {
-        SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, lParam );
+        SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, lParam );
         return 0;
     } 
 
@@ -2147,24 +2147,21 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
     case HTCAPTION:
         /* stop processing if WS_MAXIMIZEBOX is missing */
         if (pWnd->dwStyle & WS_MAXIMIZEBOX)
-            SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND,
-                      (pWnd->dwStyle & WS_MAXIMIZE) ? SC_RESTORE : SC_MAXIMIZE,
-                      lParam );
+            SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND,
+                          (pWnd->dwStyle & WS_MAXIMIZE) ? SC_RESTORE : SC_MAXIMIZE, lParam );
 	break;
 
     case HTSYSMENU:
         if (!(GetClassWord(pWnd->hwndSelf, GCW_STYLE) & CS_NOCLOSE))
-            SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
+            SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
 	break;
 
     case HTHSCROLL:
-	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL,
-		       lParam );
+        SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
 	break;
 
     case HTVSCROLL:
-	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL,
-		       lParam );
+        SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
 	break;
     }
     return 0;

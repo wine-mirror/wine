@@ -2186,8 +2186,7 @@ HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
  * Helper function for DlgDirSelect*
  */
 static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
-                                   INT id, BOOL win32, BOOL unicode,
-                                   BOOL combo )
+                                 INT id, BOOL unicode, BOOL combo )
 {
     char *buffer, *ptr;
     INT item, size;
@@ -2196,33 +2195,15 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
 
     TRACE("%04x '%s' %d\n", hwnd, str, id );
     if (!listbox) return FALSE;
-    if (win32)
-    {
-        item = SendMessageA(listbox, combo ? CB_GETCURSEL
-                                             : LB_GETCURSEL, 0, 0 );
-        if (item == LB_ERR) return FALSE;
-        size = SendMessageA(listbox, combo ? CB_GETLBTEXTLEN
-                                             : LB_GETTEXTLEN, 0, 0 );
-        if (size == LB_ERR) return FALSE;
-    }
-    else
-    {
-        item = SendMessageA(listbox, combo ? CB_GETCURSEL16
-                                             : LB_GETCURSEL16, 0, 0 );
-        if (item == LB_ERR) return FALSE;
-        size = SendMessageA(listbox, combo ? CB_GETLBTEXTLEN16
-                                             : LB_GETTEXTLEN16, 0, 0 );
-        if (size == LB_ERR) return FALSE;
-    }
 
-    if (!(buffer = SEGPTR_ALLOC( size+1 ))) return FALSE;
+    item = SendMessageA(listbox, combo ? CB_GETCURSEL : LB_GETCURSEL, 0, 0 );
+    if (item == LB_ERR) return FALSE;
+    size = SendMessageA(listbox, combo ? CB_GETLBTEXTLEN : LB_GETTEXTLEN, 0, 0 );
+    if (size == LB_ERR) return FALSE;
 
-    if (win32)
-        SendMessageA( listbox, combo ? CB_GETLBTEXT : LB_GETTEXT,
-                        item, (LPARAM)buffer );
-    else
-        SendMessage16( listbox, combo ? CB_GETLBTEXT16 : LB_GETTEXT16,
-                       item, (LPARAM)SEGPTR_GET(buffer) );
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size+1 ))) return FALSE;
+
+    SendMessageA( listbox, combo ? CB_GETLBTEXT : LB_GETTEXT, item, (LPARAM)buffer );
 
     if ((ret = (buffer[0] == '[')))  /* drive or directory */
     {
@@ -2246,7 +2227,7 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
             ((LPWSTR)str)[len-1] = 0;
     }
     else lstrcpynA( str, ptr, len );
-    SEGPTR_FREE( buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
     TRACE("Returning %d '%s'\n", ret, str );
     return ret;
 }
@@ -2383,7 +2364,7 @@ BOOL16 WINAPI DlgDirSelectComboBox16( HWND16 hwnd, LPSTR str, INT16 id )
  */
 BOOL16 WINAPI DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
 {
-    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, FALSE, FALSE );
+    return DlgDirSelectExA( hwnd, str, len, id );
 }
 
 
@@ -2392,7 +2373,7 @@ BOOL16 WINAPI DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
  */
 BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
 {
-    return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE, FALSE );
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, FALSE );
 }
 
 
@@ -2401,7 +2382,7 @@ BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
  */
 BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 {
-    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, FALSE );
+    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, FALSE );
 }
 
 
@@ -2411,7 +2392,7 @@ BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
                                         INT16 id )
 {
-    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, FALSE, TRUE );
+    return DlgDirSelectComboBoxExA( hwnd, str, len, id );
 }
 
 
@@ -2421,7 +2402,7 @@ BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
 BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
                                          INT id )
 {
-    return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE, TRUE );
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, TRUE );
 }
 
 
@@ -2431,7 +2412,7 @@ BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
 BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
                                          INT id)
 {
-    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, TRUE );
+    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE );
 }
 
 

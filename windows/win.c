@@ -2164,7 +2164,7 @@ BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
  */
 INT16 WINAPI GetWindowTextLength16( HWND16 hwnd )
 {
-    return (INT16)SendMessage16( hwnd, WM_GETTEXTLENGTH, 0, 0 );
+    return (INT16)GetWindowTextLengthA( hwnd );
 }
 
 
@@ -2985,7 +2985,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         {
             HDC hDC = GetDC(hWnd);
             
-            if (!SendMessage16( hWnd, WM_ERASEBKGND, (WPARAM16)hDC, 0 ))
+            if (!SendMessageW( hWnd, WM_ERASEBKGND, (WPARAM16)hDC, 0 ))
                 wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
             
             ReleaseDC( hWnd, hDC );
@@ -3005,7 +3005,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
         else wparam = (hWnd == GetActiveWindow());
 
-        SendMessage16( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
+        SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
         WIN_ReleaseWndPtr(wndPtr);
         return wparam;
     }
