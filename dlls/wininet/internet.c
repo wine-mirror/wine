@@ -1842,9 +1842,16 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
        {
            INTERNET_CONNECTED_INFO * pCi = (INTERNET_CONNECTED_INFO *)lpBuffer;
            FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
-           pCi->dwConnectedState = INTERNET_STATE_CONNECTED;
-           pCi->dwFlags = 0;
-           bSuccess = TRUE;
+
+           if (*lpdwBufferLength < sizeof(INTERNET_CONNECTED_INFO))
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+           else
+           {
+               pCi->dwConnectedState = INTERNET_STATE_CONNECTED;
+               pCi->dwFlags = 0;
+               *lpdwBufferLength = sizeof(INTERNET_CONNECTED_INFO);
+               bSuccess = TRUE;
+           }
            break;
        }
        case INTERNET_OPTION_SECURITY_FLAGS:

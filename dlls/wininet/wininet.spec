@@ -21,14 +21,14 @@
 @ stdcall CommitUrlCacheEntryA(str str long long long long long str long str str)
 @ stdcall CommitUrlCacheEntryW(wstr wstr long long long long long wstr long wstr wstr)
 @ stdcall CreateMD5SSOHash(wstr wstr wstr ptr)
-@ stub CreateUrlCacheContainerA
-@ stub CreateUrlCacheContainerW
+@ stdcall CreateUrlCacheContainerA(long long long long long long long long)
+@ stdcall CreateUrlCacheContainerW(long long long long long long long long)
 @ stdcall CreateUrlCacheEntryA(str long str ptr long)
 @ stdcall CreateUrlCacheEntryW(wstr long wstr ptr long)
 @ stdcall CreateUrlCacheGroup(long ptr)
 @ stdcall DeleteIE3Cache(ptr ptr str long)
-@ stub DeleteUrlCacheContainerA
-@ stub DeleteUrlCacheContainerW
+@ stdcall DeleteUrlCacheContainerA(long long)
+@ stdcall DeleteUrlCacheContainerW(long long)
 @ stdcall DeleteUrlCacheEntry(str) DeleteUrlCacheEntryA
 @ stdcall DeleteUrlCacheEntryA(str)
 @ stdcall DeleteUrlCacheEntryW(wstr)
@@ -36,15 +36,15 @@
 @ stdcall DetectAutoProxyUrl(str long long)
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stdcall FindCloseUrlCache(long)
-@ stub FindFirstUrlCacheContainerA
-@ stub FindFirstUrlCacheContainerW
+@ stdcall FindFirstUrlCacheContainerA(ptr ptr ptr long)
+@ stdcall FindFirstUrlCacheContainerW(ptr ptr ptr long)
 @ stdcall FindFirstUrlCacheEntryA(str ptr ptr)
 @ stdcall FindFirstUrlCacheEntryExA(str long long double ptr ptr ptr ptr ptr)
 @ stdcall FindFirstUrlCacheEntryExW(wstr long long double ptr ptr ptr ptr ptr)
 @ stdcall FindFirstUrlCacheEntryW(wstr ptr ptr)
 @ stdcall FindFirstUrlCacheGroup(long long ptr long ptr ptr)
-@ stub FindNextUrlCacheContainerA
-@ stub FindNextUrlCacheContainerW
+@ stdcall FindNextUrlCacheContainerA(long ptr ptr)
+@ stdcall FindNextUrlCacheContainerW(long ptr ptr)
 @ stdcall FindNextUrlCacheEntryA(long ptr ptr)
 @ stdcall FindNextUrlCacheEntryExA(long ptr ptr ptr ptr ptr)
 @ stdcall FindNextUrlCacheEntryExW(long ptr ptr ptr ptr ptr)

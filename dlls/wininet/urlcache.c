@@ -2162,14 +2162,83 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     return TRUE;
 }
 
+BOOL DeleteUrlCacheContainerA(DWORD d1, DWORD d2)
+{
+    FIXME("(0x%08lx, 0x%08lx) stub\n", d1, d2);
+    return TRUE;
+}
+
+BOOL DeleteUrlCacheContainerW(DWORD d1, DWORD d2)
+{
+    FIXME("(0x%08lx, 0x%08lx) stub\n", d1, d2);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           CreateCacheContainerA (WININET.@)
+ */
+BOOL WINAPI CreateUrlCacheContainerA(DWORD d1, DWORD d2, DWORD d3, DWORD d4,
+                                     DWORD d5, DWORD d6, DWORD d7, DWORD d8)
+{
+    FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx) stub\n",
+          d1, d2, d3, d4, d5, d6, d7, d8);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           CreateCacheContainerW (WININET.@)
+ */
+BOOL WINAPI CreateUrlCacheContainerW(DWORD d1, DWORD d2, DWORD d3, DWORD d4,
+                                     DWORD d5, DWORD d6, DWORD d7, DWORD d8)
+{
+    FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx) stub\n",
+          d1, d2, d3, d4, d5, d6, d7, d8);
+    return TRUE;
+}
+
 /***********************************************************************
  *           FindCloseUrlCache (WININET.@)
- *
  */
 BOOL WINAPI FindCloseUrlCache(HANDLE hEnumHandle)
 {
     FIXME("(%p) stub\n", hEnumHandle);
     return TRUE;
+}
+
+/***********************************************************************
+ *           FindFirstUrlCacheContainerA (WININET.@)
+ */
+HANDLE WINAPI FindFirstUrlCacheContainerA( LPVOID p1, LPVOID p2, LPVOID p3, DWORD d1 )
+{
+    FIXME("(%p, %p, %p, 0x%08lx) stub\n", p1, p2, p3, d1 );
+    return NULL;
+}
+
+/***********************************************************************
+ *           FindFirstUrlCacheContainerW (WININET.@)
+ */
+HANDLE WINAPI FindFirstUrlCacheContainerW( LPVOID p1, LPVOID p2, LPVOID p3, DWORD d1 )
+{
+    FIXME("(%p, %p, %p, 0x%08lx) stub\n", p1, p2, p3, d1 );
+    return NULL;
+}
+
+/***********************************************************************
+ *           FindNextUrlCacheContainerA (WININET.@)
+ */
+BOOL WINAPI FindNextUrlCacheContainerA( HANDLE handle, LPVOID p1, LPVOID p2 )
+{
+    FIXME("(%p, %p, %p) stub\n", handle, p1, p2 );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           FindNextUrlCacheContainerW (WININET.@)
+ */
+BOOL WINAPI FindNextUrlCacheContainerW( HANDLE handle, LPVOID p1, LPVOID p2 )
+{
+    FIXME("(%p, %p, %p) stub\n", handle, p1, p2 );
+    return FALSE;
 }
 
 HANDLE WINAPI FindFirstUrlCacheEntryExA(
