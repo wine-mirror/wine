@@ -36,6 +36,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -43,6 +46,9 @@
 #include "winnt.h"
 #include "winbase.h"
 #include "wincon.h"
+#include "wine/library.h"
+
+#include "handle.h"
 #include "thread.h"
 #include "process.h"
 #define WANT_REQUEST_HANDLERS
@@ -53,10 +59,9 @@
 #define SCM_RIGHTS 1
 #endif
 
- /* path names for server master Unix socket */
-#define CONFDIR    "/.wine"        /* directory for Wine config relative to $HOME */
-#define SERVERDIR  "wineserver-"   /* server socket directory (hostname appended) */
-#define SOCKETNAME "socket"        /* name of the socket file */
+/* path names for server master Unix socket */
+static const char * const server_socket_name = "socket";   /* name of the socket file */
+static const char * const server_lock_name = "lock";       /* name of the server lock file */
 
 struct master_socket
 {
@@ -399,9 +404,12 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
 
     if (ret >= 0)
     {
-        if (ret > 0)
-            fprintf( stderr, "Protocol error: process %p: partial sendmsg %d\n", process, ret );
+        fprintf( stderr, "Protocol error: process %p: partial sendmsg %d\n", process, ret );
         kill_process( process, NULL, 1 );
+    }
+    else if (errno == EPIPE)
+    {
+        kill_process( process, NULL, 0 );
     }
     else
     {
@@ -461,84 +469,136 @@ static void master_socket_poll_event( struct object *obj, int event )
 static void socket_cleanup(void)
 {
     static int do_it_once;
-    if (!do_it_once++) unlink( SOCKETNAME );
+    if (!do_it_once++) unlink( server_socket_name );
 }
 
-/* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
-const char *get_config_dir(void)
+/* create a directory and check its permissions */
+static void create_dir( const char *name, struct stat *st )
 {
-    static char *confdir;
-    if (!confdir)
+    if (lstat( name, st ) == -1)
     {
-        const char *prefix = getenv( "WINEPREFIX" );
-        if (prefix)
-        {
-            int len = strlen(prefix);
-            if (!(confdir = strdup( prefix ))) fatal_error( "out of memory\n" );
-            if (len > 1 && confdir[len-1] == '/') confdir[len-1] = 0;
-        }
-        else
-        {
-            const char *home = getenv( "HOME" );
-            if (!home)
-            {
-                struct passwd *pwd = getpwuid( getuid() );
-                if (!pwd) fatal_error( "could not find your home directory\n" );
-                home = pwd->pw_dir;
-            }
-            if (!(confdir = malloc( strlen(home) + strlen(CONFDIR) + 1 )))
-                fatal_error( "out of memory\n" );
-            strcpy( confdir, home );
-            strcat( confdir, CONFDIR );
-        }
+        if (errno != ENOENT) fatal_perror( "lstat %s", name );
+        if (mkdir( name, 0700 ) == -1) fatal_perror( "mkdir %s", name );
+        if (lstat( name, st ) == -1) fatal_perror( "lstat %s", name );
     }
-    return confdir;
+    if (!S_ISDIR(st->st_mode)) fatal_error( "%s is not a directory\n", name );
+    if (st->st_uid != getuid()) fatal_error( "%s is not owned by you\n", name );
+    if (st->st_mode & 077) fatal_error( "%s must not be accessible by other users\n", name );
 }
 
 /* create the server directory and chdir to it */
 static void create_server_dir(void)
 {
-    char hostname[64];
-    char *serverdir;
-    const char *confdir = get_config_dir();
-    struct stat st;
+    char *p, *server_dir;
+    struct stat st, st2;
 
-    if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
+    if (!(server_dir = strdup( wine_get_server_dir() ))) fatal_error( "out of memory\n" );
 
-    if (!(serverdir = malloc( strlen(SERVERDIR) + strlen(hostname) + 1 )))
-        fatal_error( "out of memory\n" );
+    /* first create the base directory if needed */
 
-    if (chdir( confdir ) == -1) fatal_perror( "chdir %s", confdir );
+    p = strrchr( server_dir, '/' );
+    *p = 0;
+    create_dir( server_dir, &st );
 
-    strcpy( serverdir, SERVERDIR );
-    strcat( serverdir, hostname );
+    /* now create the server directory */
 
-    if (chdir( serverdir ) == -1)
-    {
-        if (errno != ENOENT) fatal_perror( "chdir %s", serverdir );
-        if (mkdir( serverdir, 0700 ) == -1) fatal_perror( "mkdir %s", serverdir );
-        if (chdir( serverdir ) == -1) fatal_perror( "chdir %s", serverdir );
-    }
-    if (stat( ".", &st ) == -1) fatal_perror( "stat %s", serverdir );
-    if (!S_ISDIR(st.st_mode)) fatal_error( "%s is not a directory\n", serverdir );
-    if (st.st_uid != getuid()) fatal_error( "%s is not owned by you\n", serverdir );
-    if (st.st_mode & 077) fatal_error( "%s must not be accessible by other users\n", serverdir );
+    *p = '/';
+    create_dir( server_dir, &st );
+
+    if (chdir( server_dir ) == -1) fatal_perror( "chdir %s", server_dir );
+    if (stat( ".", &st2 ) == -1) fatal_perror( "stat %s", server_dir );
+    if (st.st_dev != st2.st_dev || st.st_ino != st2.st_ino)
+        fatal_error( "chdir did not end up in %s\n", server_dir );
+
+    free( server_dir );
 }
 
-/* open the master server socket and start waiting for new clients */
-void open_master_socket(void)
+/* wait for the server lock */
+int wait_for_lock(void)
 {
-    struct sockaddr_un addr;
-    int fd, slen;
-
-    /* make sure no request is larger than the maximum size */
-    assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
-    assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
+    int fd, r;
+    struct flock fl;
 
     create_server_dir();
+    if ((fd = open( server_lock_name, O_TRUNC|O_WRONLY, 0600 )) == -1)
+        return -1;
+
+    fl.l_type   = F_WRLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start  = 0;
+    fl.l_len    = 1;
+    r = fcntl( fd, F_SETLKW, &fl );
+    close(fd);
+
+    return r;
+}
+
+/* acquire the main server lock */
+static void acquire_lock(void)
+{
+    const char *server_dir_name = wine_get_server_dir();
+    struct sockaddr_un addr;
+    struct stat st;
+    struct flock fl;
+    int fd, slen, got_lock = 0;
+
+    if (lstat( server_lock_name, &st ) == -1)
+    {
+        if (errno != ENOENT)
+            fatal_perror( "lstat %s/%s", server_dir_name, server_lock_name );
+    }
+    else
+    {
+        if (!S_ISREG(st.st_mode))
+            fatal_error( "%s/%s is not a regular file\n", server_dir_name, server_lock_name );
+    }
+
+    if ((fd = open( server_lock_name, O_CREAT|O_TRUNC|O_WRONLY, 0600 )) == -1)
+        fatal_perror( "error creating %s/%s", server_dir_name, server_lock_name );
+
+    fl.l_type   = F_WRLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start  = 0;
+    fl.l_len    = 1;
+    if (fcntl( fd, F_SETLK, &fl ) != -1)
+    {
+        /* check for crashed server */
+        if (stat( server_socket_name, &st ) != -1 &&   /* there is a leftover socket */
+            stat( "core", &st ) != -1 && st.st_size)   /* and there is a non-empty core file */
+        {
+            fprintf( stderr,
+                     "Warning: a previous instance of the wine server seems to have crashed.\n"
+                     "Please run 'gdb %s %s/core',\n"
+                     "type 'backtrace' at the gdb prompt and report the results. Thanks.\n\n",
+                     server_argv0, server_dir_name );
+        }
+        unlink( server_socket_name ); /* we got the lock, we can safely remove the socket */
+        got_lock = 1;
+        /* in that case we reuse fd without closing it, this ensures
+         * that we hold the lock until the process exits */
+    }
+    else
+    {
+        switch(errno)
+        {
+        case ENOLCK:
+            break;
+        case EACCES:
+            /* check whether locks work at all on this file system */
+            if (fcntl( fd, F_GETLK, &fl ) == -1) break;
+            /* fall through */
+        case EAGAIN:
+            exit(2); /* we didn't get the lock, exit with special status */
+        default:
+            fatal_perror( "fcntl %s/%s", server_dir_name, server_lock_name );
+        }
+        /* it seems we can't use locks on this fs, so we will use the socket existence as lock */
+        close( fd );
+    }
+
     if ((fd = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     addr.sun_family = AF_UNIX;
-    strcpy( addr.sun_path, SOCKETNAME );
+    strcpy( addr.sun_path, server_socket_name );
     slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
 #ifdef HAVE_SOCKADDR_SUN_LEN
     addr.sun_len = slen;
@@ -546,19 +606,65 @@ void open_master_socket(void)
     if (bind( fd, (struct sockaddr *)&addr, slen ) == -1)
     {
         if ((errno == EEXIST) || (errno == EADDRINUSE))
-            exit(0);  /* pretend we succeeded to start */
-        else
-            fatal_perror( "bind" );
+        {
+            if (got_lock)
+                fatal_error( "couldn't bind to the socket even though we hold the lock\n" );
+            exit(2); /* we didn't get the lock, exit with special status */
+        }
+        fatal_perror( "bind" );
     }
     atexit( socket_cleanup );
-
-    chmod( SOCKETNAME, 0600 );  /* make sure no other user can connect */
+    chmod( server_socket_name, 0600 );  /* make sure no other user can connect */
     if (listen( fd, 5 ) == -1) fatal_perror( "listen" );
 
     if (!(master_socket = alloc_object( &master_socket_ops, fd )))
         fatal_error( "out of memory\n" );
     master_socket->timeout = NULL;
     set_select_events( &master_socket->obj, POLLIN );
+}
+
+/* open the master server socket and start waiting for new clients */
+void open_master_socket(void)
+{
+    int pid, status, sync_pipe[2];
+    char dummy;
+
+    /* make sure no request is larger than the maximum size */
+    assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
+    assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
+
+    create_server_dir();
+    if (pipe( sync_pipe ) == -1) fatal_perror( "pipe" );
+
+    pid = fork();
+    switch( pid )
+    {
+    case 0:  /* child */
+        setsid();
+        close( sync_pipe[0] );
+
+        acquire_lock();
+
+        /* signal parent */
+        write( sync_pipe[1], &dummy, 1 );
+        close( sync_pipe[1] );
+        break;
+
+    case -1:
+        fatal_perror( "fork" );
+        break;
+
+    default:  /* parent */
+        close( sync_pipe[1] );
+
+        /* wait for child to signal us and then exit */
+        if (read( sync_pipe[0], &dummy, 1 ) == 1) _exit(0);
+
+        /* child terminated, propagate exit status */
+        wait4( pid, &status, 0, NULL );
+        if (WIFEXITED(status)) _exit( WEXITSTATUS(status) );
+        _exit(1);
+    }
 
     /* setup msghdr structure constant fields */
     msghdr.msg_name    = NULL;
@@ -568,26 +674,28 @@ void open_master_socket(void)
 
     /* init startup ticks */
     server_start_ticks = get_tick_count();
-
-    /* go in the background */
-    switch(fork())
-    {
-    case -1:
-        fatal_perror( "fork" );
-    case 0:
-        setsid();
-        break;
-    default:
-        _exit(0);  /* do not call atexit functions */
-    }
 }
 
 /* master socket timer expiration handler */
 static void close_socket_timeout( void *arg )
 {
+    master_socket->timeout = NULL;
+    flush_registry();
+
     /* if a new client is waiting, we keep on running */
-    if (!check_select_events( master_socket->obj.fd, POLLIN ))
-        release_object( master_socket );
+    if (check_select_events( master_socket->obj.fd, POLLIN )) return;
+
+    if (debug_level) fprintf( stderr, "wineserver: exiting (pid=%ld)\n", (long) getpid() );
+
+#ifdef DEBUG_OBJECTS
+    /* shut down everything properly */
+    release_object( master_socket );
+    close_global_handles();
+    close_registry();
+    close_atom_table();
+#else
+    exit(0);
+#endif
 }
 
 /* close the master socket and stop waiting for new clients */

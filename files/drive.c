@@ -56,16 +56,17 @@
 #include "ntddk.h"
 #include "wine/winbase16.h"   /* for GetCurrentTask */
 #include "winerror.h"
+#include "winioctl.h"
+#include "ntddstor.h"
+#include "ntddcdrm.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
 #include "task.h"
-#include "wine/debug.h"
+#include "wine/library.h"
 #include "wine/server.h"
-#include "winioctl.h"
-#include "ntddstor.h"
-#include "ntddcdrm.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosfs);
 WINE_DECLARE_DEBUG_CHANNEL(file);
@@ -197,7 +198,7 @@ int DRIVE_Init(void)
             else
             {
                 /* relative paths are relative to config dir */
-                const char *config = get_config_dir();
+                const char *config = wine_get_config_dir();
                 drive->root = HeapAlloc( GetProcessHeap(), 0, strlen(config) + strlen(path) + 2 );
                 sprintf( drive->root, "%s/%s", config, path );
             }

@@ -191,7 +191,7 @@ struct thread *create_process( int fd )
     struct thread *thread = NULL;
     int request_pipe[2];
 
-    if (!(process = alloc_object( &process_ops, fd ))) return NULL;
+    if (!(process = alloc_object( &process_ops, fd ))) goto error;
     process->next            = NULL;
     process->prev            = NULL;
     process->parent          = NULL;
@@ -230,7 +230,12 @@ struct thread *create_process( int fd )
         file_set_error();
         goto error;
     }
-    send_client_fd( process, request_pipe[1], 0 );
+    if (send_client_fd( process, request_pipe[1], 0 ) == -1)
+    {
+        close( request_pipe[0] );
+        close( request_pipe[1] );
+        goto error;
+    }
     close( request_pipe[1] );
     if (!(thread = create_thread( request_pipe[0], process ))) goto error;
 
@@ -239,8 +244,9 @@ struct thread *create_process( int fd )
     return thread;
 
  error:
-    if (thread) release_object( thread );
-    release_object( process );
+    if (process) release_object( process );
+    /* if we failed to start our first process, close everything down */
+    if (!running_processes) close_master_socket();
     return NULL;
 }
 
@@ -502,13 +508,7 @@ static void process_killed( struct process *process )
     if (process->exe.file) release_object( process->exe.file );
     process->exe.file = NULL;
     wake_up( &process->obj, 0 );
-    if (!--running_processes)
-    {
-        /* last process died, close global handles */
-        close_global_handles();
-        /* this will cause the select loop to terminate */
-        close_master_socket();
-    }
+    if (!--running_processes) close_master_socket();
 }
 
 /* add a thread to a process running threads list */

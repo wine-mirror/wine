@@ -38,8 +38,9 @@
 #include "winreg.h"
 #include "file.h"
 #include "heap.h"
-#include "wine/debug.h"
 #include "wine/server.h"
+#include "wine/library.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(profile);
 
@@ -544,7 +545,7 @@ static BOOL PROFILE_FlushFile(void)
     {
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
-        strcpy( buffer, get_config_dir() );
+        strcpy( buffer, wine_get_config_dir() );
         p = buffer + strlen(buffer);
         *p++ = '/';
         strcpy( p, strrchr( CurProfile->dos_name, '\\' ) + 1 );
@@ -681,7 +682,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
     /* Try to open the profile file, first in $HOME/.wine */
 
     /* FIXME: this will need a more general solution */
-    strcpy( buffer, get_config_dir() );
+    strcpy( buffer, wine_get_config_dir() );
     p = buffer + strlen(buffer);
     *p++ = '/';
     strcpy( p, strrchr( newdos_name, '\\' ) + 1 );
@@ -1046,7 +1047,7 @@ int PROFILE_LoadWineIni(void)
     }
     RtlFreeUnicodeString( &nameW );
 
-    if (!CLIENT_IsBootThread()) return 1;  /* already loaded */
+    if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
 
     if ((p = getenv( "HOME" )) != NULL)
     {
@@ -1055,36 +1056,23 @@ int PROFILE_LoadWineIni(void)
         if ((f = fopen( buffer, "r" )) != NULL)
         {
 	    lstrcpynA(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN);
-            goto found;
+
+            /* convert to the new format */
+            sprintf( buffer, "%s/config", wine_get_config_dir() );
+            convert_config( f, buffer );
+            fclose( f );
+
+            MESSAGE( "The '%s' configuration file has been converted\n"
+                     "to the new format and saved as '%s'.\n", PROFILE_WineIniUsed, buffer );
+            MESSAGE( "You should verify that the contents of the new file are correct,\n"
+                     "and then remove the old one and restart Wine.\n" );
+            ExitProcess(0);
         }
     }
     else WARN("could not get $HOME value for config file.\n" );
 
-    if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
-
-    MESSAGE( "Can't open configuration file %s/config\n",get_config_dir() );
+    MESSAGE( "Can't open configuration file %s/config\n", wine_get_config_dir() );
     return 0;
-
- found:
-
-    if (disp == REG_OPENED_EXISTING_KEY)
-    {
-        MESSAGE( "Warning: configuration loaded by the server from '%s/config',\n"
-                 "         file '%s' was ignored.\n", get_config_dir(), PROFILE_WineIniUsed );
-        fclose( f );
-        return 1;
-    }
-
-    /* convert to the new format */
-    sprintf( buffer, "%s/config", get_config_dir() );
-    convert_config( f, buffer );
-    fclose( f );
-
-    MESSAGE( "The '%s' configuration file has been converted\n"
-             "to the new format and saved as '%s'.\n", PROFILE_WineIniUsed, buffer );
-    MESSAGE( "You should verify that the contents of the new file are correct,\n"
-             "and then remove the old one and restart Wine.\n" );
-    ExitProcess(0);
 }
 
 
@@ -1099,7 +1087,7 @@ void PROFILE_UsageWineIni(void)
 {
     MESSAGE("Perhaps you have not properly edited or created "
 	"your Wine configuration file.\n");
-    MESSAGE("This is (supposed to be) '%s/config'\n", get_config_dir());
+    MESSAGE("This is (supposed to be) '%s/config'\n", wine_get_config_dir());
     /* RTFM, so to say */
 }
 

@@ -10,6 +10,7 @@ SONAME    = libwine.so
 EXTRALIBS = @DLLIBS@
 
 C_SRCS = \
+	config.c \
 	debug.c \
 	errno.c \
 	ldt.c \

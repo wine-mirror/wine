@@ -24,6 +24,11 @@
 #include <sys/types.h>
 #include "winbase.h"
 
+/* configuration */
+
+extern const char *wine_get_config_dir(void);
+extern const char *wine_get_server_dir(void);
+
 /* dll loading */
 
 typedef void (*load_dll_callback_t)( void *, const char * );

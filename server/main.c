@@ -34,16 +34,18 @@
 /* command-line options */
 int debug_level = 0;
 int master_socket_timeout = 3;  /* master socket timeout in seconds, default is 3 s */
+const char *server_argv0;
 
 /* parse-line args */
 /* FIXME: should probably use getopt, and add a (more complete?) help option */
 
-static void usage(const char *exeName)
+static void usage(void)
 {
-    fprintf(stderr, "\nusage: %s [options]\n\n", exeName);
+    fprintf(stderr, "\nusage: %s [options]\n\n", server_argv0);
     fprintf(stderr, "options:\n");
     fprintf(stderr, "   -d<n>  set debug level to <n>\n");
     fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
+    fprintf(stderr, "   -w     wait until the current wineserver terminates\n");
     fprintf(stderr, "   -h     display this help message\n");
     fprintf(stderr, "\n");
 }
@@ -51,6 +53,8 @@ static void usage(const char *exeName)
 static void parse_args( int argc, char *argv[] )
 {
     int i;
+
+    server_argv0 = argv[0];
     for (i = 1; i < argc; i++)
     {
         if (argv[i][0] == '-')
@@ -62,23 +66,26 @@ static void parse_args( int argc, char *argv[] )
                 else debug_level++;
                 break;
             case 'h':
-                usage( argv[0] );
+                usage();
                 exit(0);
                 break;
             case 'p':
                 if (isdigit(argv[i][2])) master_socket_timeout = atoi( argv[i] + 2 );
                 else master_socket_timeout = -1;
                 break;
+            case 'w':
+                wait_for_lock();
+                exit(0);
             default:
-                fprintf( stderr, "Unknown option '%s'\n", argv[i] );
-                usage( argv[0] );
+                fprintf( stderr, "wineserver: unknown option '%s'\n", argv[i] );
+                usage();
                 exit(1);
             }
         }
         else
         {
-            fprintf( stderr, "Unknown argument '%s'. Your version of wine may be too old.\n", argv[i] );
-            usage(argv[0]);
+            fprintf( stderr, "wineserver: unknown argument '%s'.\n", argv[i] );
+            usage();
             exit(1);
         }
     }
@@ -107,16 +114,12 @@ int main( int argc, char *argv[] )
     open_master_socket();
     setvbuf( stderr, NULL, _IOLBF, 0 );
 
-    if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
+    if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
     init_registry();
     select_loop();
-    close_registry();
-    if (debug_level) fprintf( stderr, "Server: exiting (pid=%ld)\n", (long) getpid() );
 
 #ifdef DEBUG_OBJECTS
-    close_atom_table();
     dump_objects();  /* dump any remaining objects */
 #endif
-
     return 0;
 }

@@ -46,6 +46,7 @@
 #include <stdarg.h>
 
 #include "thread.h"
+#include "wine/library.h"
 #include "wine/server.h"
 #include "winerror.h"
 #include "options.h"
@@ -55,9 +56,8 @@
 #define SCM_RIGHTS 1
 #endif
 
-#define CONFDIR    "/.wine"        /* directory for Wine config relative to $HOME */
-#define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
 #define SOCKETNAME "socket"        /* name of the socket file */
+#define LOCKNAME   "lock"          /* name of the lock file */
 
 #ifndef HAVE_MSGHDR_ACCRIGHTS
 /* data structure used to pass an fd with sendmsg/recvmsg */
@@ -74,8 +74,13 @@ static void *boot_thread_id;
 static sigset_t block_set;  /* signals to block during server calls */
 static int fd_socket;  /* socket to exchange file descriptors with the server */
 
+#ifdef __GNUC__
+static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
+static void fatal_perror( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
+static void server_connect_error( const char *serverdir ) __attribute__((noreturn));
+#endif
+
 /* die on a fatal error; use only during initialization */
-static void fatal_error( const char *err, ... ) WINE_NORETURN;
 static void fatal_error( const char *err, ... )
 {
     va_list args;
@@ -88,7 +93,6 @@ static void fatal_error( const char *err, ... )
 }
 
 /* die on a fatal error; use only during initialization */
-static void fatal_perror( const char *err, ... ) WINE_NORETURN;
 static void fatal_perror( const char *err, ... )
 {
     va_list args;
@@ -434,42 +438,6 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
 
 
 /***********************************************************************
- *           get_config_dir
- *
- * Return the configuration directory ($WINEPREFIX or $HOME/.wine)
- */
-const char *get_config_dir(void)
-{
-    static char *confdir;
-    if (!confdir)
-    {
-        const char *prefix = getenv( "WINEPREFIX" );
-        if (prefix)
-        {
-            int len = strlen(prefix);
-            if (!(confdir = strdup( prefix ))) fatal_error( "out of memory\n" );
-            if (len > 1 && confdir[len-1] == '/') confdir[len-1] = 0;
-        }
-        else
-        {
-            const char *home = getenv( "HOME" );
-            if (!home)
-            {
-                struct passwd *pwd = getpwuid( getuid() );
-                if (!pwd) fatal_error( "could not find your home directory\n" );
-                home = pwd->pw_dir;
-            }
-            if (!(confdir = malloc( strlen(home) + strlen(CONFDIR) + 1 )))
-                fatal_error( "out of memory\n" );
-            strcpy( confdir, home );
-            strcat( confdir, CONFDIR );
-        }
-    }
-    return confdir;
-}
-
-
-/***********************************************************************
  *           start_server
  *
  * Start a new wine server.
@@ -495,7 +463,7 @@ static void start_server( const char *oldcwd )
                     sprintf( path, "%s/%s", oldcwd, p );
                     p = path;
                 }
-                execl( p, "wineserver", NULL );
+                execl( p, p, NULL );
                 fatal_perror( "could not exec the server '%s'\n"
                               "    specified in the WINESERVER environment variable", p );
             }
@@ -511,7 +479,7 @@ static void start_server( const char *oldcwd )
                 if ((p = strrchr( strcpy( path, full_argv0 ), '/' )))
                 {
                     strcpy( p, "/wineserver" );
-                    execl( path, "wineserver", NULL );
+                    execl( path, path, NULL );
                 }
                 free(path);
             }
@@ -520,12 +488,47 @@ static void start_server( const char *oldcwd )
             execlp( "wineserver", "wineserver", NULL );
             fatal_error( "could not exec wineserver\n" );
         }
-        started = 1;
         waitpid( pid, &status, 0 );
         status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+        if (status == 2) return;  /* server lock held by someone else, will retry later */
         if (status) exit(status);  /* server failed */
+        started = 1;
     }
 }
+
+
+/***********************************************************************
+ *           server_connect_error
+ *
+ * Try to display a meaningful explanation of why we couldn't connect
+ * to the server.
+ */
+static void server_connect_error( const char *serverdir )
+{
+    int fd;
+    struct flock fl;
+
+    if ((fd = open( LOCKNAME, O_WRONLY )) == -1)
+        fatal_error( "for some mysterious reason, the wine server never started.\n" );
+
+    fl.l_type   = F_WRLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start  = 0;
+    fl.l_len    = 1;
+    if (fcntl( fd, F_GETLK, &fl ) != -1)
+    {
+        if (fl.l_type == F_WRLCK)  /* the file is locked */
+            fatal_error( "a wine server seems to be running, but I cannot connect to it.\n"
+                         "   You probably need to kill that process (it might be pid %d).\n",
+                         (int)fl.l_pid );
+        fatal_error( "for some mysterious reason, the wine server failed to run.\n" );
+    }
+    fatal_error( "the file system of '%s' doesn't support locks,\n"
+          "   and there is a 'socket' file in that directory that prevents wine from starting.\n"
+          "   You should make sure no wine server is running, remove that file and try again.\n",
+                 serverdir );
+}
+
 
 /***********************************************************************
  *           server_connect
@@ -552,17 +555,20 @@ static int server_connect( const char *oldcwd, const char *serverdir )
     if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", serverdir );
     if (st.st_mode & 077) fatal_error( "'%s' must not be accessible by other users\n", serverdir );
 
-    for (retry = 0; retry < 3; retry++)
+    for (retry = 0; retry < 6; retry++)
     {
-        /* if not the first try, wait a bit to leave the server time to exit */
-        if (retry) usleep( 100000 * retry * retry );
-
-        /* check for an existing socket */
-        if (lstat( SOCKETNAME, &st ) == -1)
+        /* if not the first try, wait a bit to leave the previous server time to exit */
+        if (retry)
+        {
+            usleep( 100000 * retry * retry );
+            start_server( oldcwd );
+            if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
+        }
+        else if (lstat( SOCKETNAME, &st ) == -1) /* check for an already existing socket */
         {
             if (errno != ENOENT) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
             start_server( oldcwd );
-            if (lstat( SOCKETNAME, &st ) == -1) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
+            if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
         }
 
         /* make sure the socket is sane (ISFIFO needed for Solaris) */
@@ -586,10 +592,7 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         }
         close( s );
     }
-    fatal_error( "file '%s/%s' exists,\n"
-                 "   but I cannot connect to it; maybe the wineserver has crashed?\n"
-                 "   If this is the case, you should remove this socket file and try again.\n",
-                 serverdir, SOCKETNAME );
+    server_connect_error( serverdir );
 }
 
 
@@ -601,9 +604,7 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 void CLIENT_InitServer(void)
 {
     int size;
-    char hostname[64];
-    char *oldcwd, *serverdir;
-    const char *configdir;
+    char *oldcwd;
     obj_handle_t dummy_handle;
 
     /* retrieve the current directory */
@@ -631,17 +632,8 @@ void CLIENT_InitServer(void)
         }
     }
 
-    /* get the server directory name */
-    if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
-    configdir = get_config_dir();
-    serverdir = malloc( strlen(configdir) + strlen(SERVERDIR) + strlen(hostname) + 1 );
-    if (!serverdir) fatal_error( "out of memory\n" );
-    strcpy( serverdir, configdir );
-    strcat( serverdir, SERVERDIR );
-    strcat( serverdir, hostname );
-
     /* connect to the server */
-    fd_socket = server_connect( oldcwd, serverdir );
+    fd_socket = server_connect( oldcwd, wine_get_server_dir() );
 
     /* switch back to the starting directory */
     if (oldcwd)

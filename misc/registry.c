@@ -53,6 +53,7 @@
 #include "winreg.h"
 
 #include "wine/winbase16.h"
+#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "file.h"
@@ -1030,7 +1031,7 @@ static void _set_registry_levels(int level,int saving,int period)
 /* _save_at_exit [Internal] */
 static void _save_at_exit(HKEY hkey,LPCSTR path)
 {
-    LPCSTR confdir = get_config_dir();
+    LPCSTR confdir = wine_get_config_dir();
 
     SERVER_START_REQ( save_registry_atexit )
     {
@@ -1547,7 +1548,7 @@ static void _load_global_registry(void)
 /* load home registry files (stored in ~/.wine) [Internal] */
 static void _load_home_registry( HKEY hkey_users_default )
 {
-    LPCSTR confdir = get_config_dir();
+    LPCSTR confdir = wine_get_config_dir();
     LPSTR tmp = _xmalloc(strlen(confdir)+20);
 
     strcpy(tmp,confdir);
