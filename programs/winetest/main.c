@@ -17,6 +17,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * This program is dedicated to Anna Lindh,
  * Swedish Minister of Foreign Affairs.
@@ -36,8 +37,7 @@
 #include <windows.h>
 
 #include "winetest.h"
-
-#define TESTRESOURCE "USERDATA"
+#include "resource.h"
 
 struct wine_test
 {
@@ -174,7 +174,7 @@ void extract_rev_infos ()
 	}
 	memset(rev_infos + i, 0, sizeof(rev_infos[i]));
 
-        len = LoadStringA (module, i + 30000, revinfo, sizeof(revinfo));
+        len = LoadStringA (module, REV_INFO+i, revinfo, sizeof(revinfo));
         if (len == 0) break; /* end of revision info */
 	if (len >= sizeof(revinfo) - 1) 
 	    report (R_FATAL, "Revision info too long.");
@@ -186,18 +186,17 @@ void extract_rev_infos ()
     }
 }
 
-void* extract_rcdata (int id, DWORD* size)
+void* extract_rcdata (int id, int type, DWORD* size)
 {
     HRSRC rsrc;
     HGLOBAL hdl;
-    LPVOID addr = NULL;
+    LPVOID addr;
     
-    if (!(rsrc = FindResource (0, (LPTSTR)id, TESTRESOURCE)) ||
+    if (!(rsrc = FindResource (NULL, (LPTSTR)id, MAKEINTRESOURCE(type))) ||
         !(*size = SizeofResource (0, rsrc)) ||
         !(hdl = LoadResource (0, rsrc)) ||
         !(addr = LockResource (hdl)))
-        report (R_FATAL, "Can't extract test file of id %d: %d",
-                id, GetLastError ());
+        return NULL;
     return addr;
 }
 
@@ -211,7 +210,9 @@ extract_test (struct wine_test *test, const char *dir, int id)
     int strlen, bufflen = 128;
     char *exepos;
 
-    code = extract_rcdata (id, &size);
+    code = extract_rcdata (id, TESTRES, &size);
+    if (!code) report (R_FATAL, "Can't find test resource %d: %d",
+                       id, GetLastError ());
     test->name = xmalloc (bufflen);
     while ((strlen = LoadStringA (NULL, id, test->name, bufflen))
            == bufflen - 1) {
@@ -406,10 +407,28 @@ run_tests (char *logname, const char *tag, const char *url)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
     char *tempdir;
-    FILE *logfile;
-    char build_tag[128];
+    int logfile;
+    char *strres, *eol, *nextline;
+    DWORD strsize;
 
     SetErrorMode (SEM_NOGPFAULTERRORBOX);
+
+    if (!logname) {
+        logname = tempnam (0, "res");
+        if (!logname) report (R_FATAL, "Can't name logfile.");
+    }
+    report (R_OUT, logname);
+
+    logfile = open (logname, O_WRONLY | O_CREAT | O_EXCL | O_APPEND,
+                    0666);
+    if (-1 == logfile) {
+        if (EEXIST == errno)
+            report (R_FATAL, "File %s already exists.");
+        else report (R_FATAL, "Could not open logfile: %d", errno);
+    }
+    if (-1 == dup2 (logfile, 1))
+        report (R_FATAL, "Can't redirect stdout: %d", errno);
+    close (logfile);
 
     tempdir = tempnam (0, "wct");
     if (!tempdir)
@@ -418,35 +437,37 @@ run_tests (char *logname, const char *tag, const char *url)
     if (!CreateDirectory (tempdir, NULL))
         report (R_FATAL, "Could not create directory: %s", tempdir);
 
-    if (!logname) {
-        logname = tempnam (0, "res");
-        if (!logname) report (R_FATAL, "Can't name logfile.");
-    }
-    report (R_OUT, logname);
-
-    logfile = fopen (logname, "a");
-    if (!logfile) report (R_FATAL, "Could not open logfile.");
-    if (-1 == dup2 (fileno (logfile), 1))
-        report (R_FATAL, "Can't redirect stdout.");
-    fclose (logfile);
-
     xprintf ("Version 3\n");
-    i = LoadStringA (GetModuleHandle (NULL), 0,
-                     build_tag, sizeof build_tag);
-    if (i == 0) report (R_FATAL, "Build descriptor not found: %d",
-                        GetLastError ());
-    if (i >= sizeof build_tag)
-        report (R_FATAL, "Build descriptor too long.");
-    xprintf ("Tests from build %s\n", build_tag);
-    xprintf ("Archive: %s\n", url?url:"");
+    strres = extract_rcdata (WINE_BUILD, STRINGRES, &strsize);
+    xprintf ("Tests from build ");
+    if (strres) xprintf ("%.*s", strsize, strres);
+    else xprintf ("-\n");
+    strres = extract_rcdata (TESTS_URL, STRINGRES, &strsize);
+    xprintf ("Archive: ");
+    if (strres) xprintf ("%.*s", strsize, strres);
+    else xprintf ("-\n");
     xprintf ("Tag: %s\n", tag?tag:"");
     xprintf ("Build info:\n");
+    strres = extract_rcdata (BUILD_INFO, STRINGRES, &strsize);
+    while (strres) {
+        eol = memchr (strres, '\n', strsize);
+        if (!eol) {
+            nextline = NULL;
+            eol = strres + strsize;
+        } else {
+            strsize -= eol - strres + 1;
+            nextline = strsize?eol+1:NULL;
+            if (eol > strres && *(eol-1) == '\r') eol--;
+        }
+        xprintf ("    %.*s\n", eol-strres, strres);
+        strres = nextline;
+    }
     xprintf ("Operating system version:\n");
     print_version ();
     xprintf ("Test output:\n" );
 
     report (R_STATUS, "Counting tests");
-    if (!EnumResourceNames (NULL, TESTRESOURCE,
+    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES),
                             EnumTestFileProc, (LPARAM)&nr_of_files))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
@@ -455,7 +476,7 @@ run_tests (char *logname, const char *tag, const char *url)
     report (R_STATUS, "Extracting tests");
     report (R_PROGRESS, 0, nr_of_files);
     for (i = 0; i < nr_of_files; i++) {
-        get_subtests (tempdir, wine_tests+i, i+1);
+        get_subtests (tempdir, wine_tests+i, i);
         nr_of_tests += wine_tests[i].subtest_count;
     }
     report (R_DELTA, 0, "Extracting: Done");

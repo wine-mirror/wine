@@ -1,5 +1,5 @@
 /*
- * GUI resource definitions
+ * Resource definitions
  *
  * Copyright 2004 Ferenc Wagner
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- *
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #define IDI_WINE 1
@@ -37,3 +37,17 @@
 
 #define IDC_EDIT  4000
 #define IDC_ABOUT 4001
+
+/* Resource types */
+
+#define TESTRES   1000
+#define STRINGRES 1001
+
+/* String resources */
+
+#define WINE_BUILD 10000
+#define BUILD_INFO 10001
+#define TESTS_URL  10002
+
+/* Revision info strings start from this index: */
+#define REV_INFO 30000

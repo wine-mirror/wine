@@ -13,9 +13,9 @@ C_SRCS = \
 	util.c
 
 RC_SRCS = \
-	gui.rc
+	winetest.rc
 
-RC_BINSRC = gui.rc
+RC_BINSRC = winetest.rc
 RC_BINARIES = wine.ico 
 
 TESTS = \
@@ -44,17 +44,34 @@ TESTS = \
 
 TESTBINS = $(TESTS:%=%_test.exe$(DLLEXT))
 
-winetest.rc: maketest Makefile.in
+tests.rc: maketest Makefile.in
 	$(SRCDIR)/maketest $(TOPSRCDIR) $(TESTBINS) > $@ || ( $(RM) $@ && exit 1 )
 
-gui.res: winetest.rc $(TESTBINS)
+winetest.res: $(TESTBINS)
 
 clean::
-	$(RM) winetest.rc $(TESTBINS)
+	$(RM) tests.rc dist.res winetest-dist winetest-dist.exe $(TESTBINS)
 
-depend: winetest.rc
+depend: tests.rc
 
-# rules for stripping the test executables
+# Rules for building distributable executable
+
+.PHONY: dist
+
+dist: winetest-dist.exe$(DLLEXT) winetest-dist$(EXEEXT)
+
+winetest-dist.exe.so: $(ALL_OBJS) dist.res Makefile.in
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(ALL_OBJS) dist.res -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+
+winetest-dist: $(WINEWRAPPER)
+	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
+
+winetest-dist.exe: $(ALL_OBJS) dist.res.o Makefile.in
+	$(CC) $(APPMODE) $(ALL_OBJS) dist.res.o -o $@ $(DELAYIMPORTS:%=-l%) $(ALL_LIBS)
+
+dist.res: winetest.rc tests.rc build.id build.nfo tests.url $(TESTBINS) $(RC_BINARIES)
+
+# Rules for stripping the test executables
 
 advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@

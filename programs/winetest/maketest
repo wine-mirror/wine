@@ -1,31 +1,26 @@
 #!/bin/sh
 
-if [ -z "$WINE_BUILD" ]; then
-    WINE_BUILD="`date +%Y%m%d.%H%M-auto`"
-    echo "warning: using automatically generated BUILD tag: $WINE_BUILD" 1>&2
-fi
-
 TOPSRCDIR="$1"
 shift
 
 echo "/* Automatically generated -- do not edit! */"
+echo "#include \"resource.h\""
 echo "STRINGTABLE {"
-echo "0 \"$WINE_BUILD\""
 
 i=0
 for test
 do
-    i=`expr $i + 1`
     echo "$i \"$test\""
+    i=`expr $i + 1`
 done
 
-i=30000
+i=0
 cd $TOPSRCDIR
 for dir in dlls/*/tests; do
     sed -ne "s|^/\([^.]*.c\)/\([^/]*\).*|$dir/\1:\2|p" $dir/CVS/Entries 2>/dev/null
 done |\
 while read; do
-    echo "$i \"$REPLY\""
+    echo "REV_INFO+$i \"$REPLY\""
     i=`expr $i + 1`
 done
 
@@ -34,6 +29,6 @@ echo "}"
 i=0
 for test
 do
+    echo "$i TESTRES \"$test\""
     i=`expr $i + 1`
-    echo "$i USERDATA \"$test\""
 done

@@ -1,6 +1,6 @@
 Makefile
-gui.res
+dist.res
+tests.rc
 wine.ico
 winetest.exe.dbg.c
-winetest.rc
 winetest.res
