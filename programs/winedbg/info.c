@@ -366,10 +366,11 @@ static void info_window(HWND hWnd, int indent)
         if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
             strcpy(wndName, "-- Empty --");
 
-        dbg_printf("%*s%08x%*s %-17.17s %08lx %08lx %.14s\n",
+        dbg_printf("%*s%08x%*s %-17.17s %08lx %08lx %08lx %.14s\n",
                    indent, "", (UINT)hWnd, 12 - indent, "",
                    clsName, GetWindowLong(hWnd, GWL_STYLE),
-                   GetWindowLong(hWnd, GWL_WNDPROC), wndName);
+                   GetWindowLong(hWnd, GWL_WNDPROC),
+                   GetWindowThreadProcessId(hWnd, NULL), wndName);
 
         if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
             info_window(child, indent + 1);
@@ -389,8 +390,8 @@ void info_win32_window(HWND hWnd, BOOL detailed)
 
     if (!detailed)
     {
-        dbg_printf("%-20.20s %-17.17s %-8.8s %-8.8s %s\n",
-                   "Window handle", "Class Name", "Style", "WndProc", "Text");
+        dbg_printf("%-20.20s %-17.17s %-8.8s %-8.8s %-8.8s %s\n",
+                   "Window handle", "Class Name", "Style", "WndProc", "Thread", "Text");
         info_window(hWnd, 0);
         return;
     }
