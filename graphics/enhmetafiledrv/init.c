@@ -13,6 +13,7 @@
 #include "enhmetafiledrv.h"
 #include "wine/winestring.h"
 #include "debugtools.h"
+#include "winuser.h"
 
 #include <string.h>
 
@@ -241,6 +242,7 @@ HDC WINAPI CreateEnhMetaFileW(
     )
 {
     DC *dc;
+    HDC hRefDC = hdc ? hdc : GetDC(0); /* If no ref, use current display */
     EMFDRV_PDEVICE *physDev;
     HFILE hFile;
     DWORD size = 0, length = 0;
@@ -276,15 +278,31 @@ HDC WINAPI CreateEnhMetaFileW(
 
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;
+
+    physDev->emh->rclBounds.left = physDev->emh->rclBounds.top = 0;
+    physDev->emh->rclBounds.right = physDev->emh->rclBounds.bottom = -1;
+
     physDev->emh->dSignature = ENHMETA_SIGNATURE;
     physDev->emh->nVersion = 0x10000;
     physDev->emh->nBytes = physDev->emh->nSize;
     physDev->emh->nRecords = 1;
     physDev->emh->nHandles = 1;
-    physDev->emh->rclBounds.left = physDev->emh->rclBounds.top = 0;
-    physDev->emh->rclBounds.right = physDev->emh->rclBounds.bottom = -1;
+
+    physDev->emh->sReserved = 0; /* According to docs, this is reserved and must be 0 */
     physDev->emh->nDescription = length / 2;
+
     physDev->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
+
+    physDev->emh->nPalEntries = 0; /* I guess this should start at 0 */
+  
+    /* Size in pixels */
+    physDev->emh->szlDevice.cx = GetDeviceCaps( hRefDC, HORZRES );
+    physDev->emh->szlDevice.cy = GetDeviceCaps( hRefDC, VERTRES );
+
+    /* Size in millimeters */
+    physDev->emh->szlMillimeters.cx = GetDeviceCaps( hRefDC, HORZSIZE );
+    physDev->emh->szlMillimeters.cy = GetDeviceCaps( hRefDC, VERTSIZE );
+
     memcpy((char *)physDev->emh + sizeof(ENHMETAHEADER), description, length);
 
     if (filename)  /* disk based metafile */
@@ -300,6 +318,9 @@ HDC WINAPI CreateEnhMetaFileW(
 	}
 	physDev->hFile = hFile;
     }
+
+    if( !hdc )
+      ReleaseDC( 0, hRefDC );
 	
     TRACE("returning %04x\n", dc->hSelf);
     return dc->hSelf;
