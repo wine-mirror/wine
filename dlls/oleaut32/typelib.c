@@ -315,6 +315,9 @@ HRESULT WINAPI LoadTypeLibEx(
 
     TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
 
+    /* by default try and load using LoadLibrary (for builtin stdole32.tlb) */
+    memcpy(szPath, szFile, (strlenW(szFile)+1)*sizeof(WCHAR));
+    
     *pptLib = NULL;
     if(!SearchPathW(NULL,szFile,NULL,sizeof(szPath)/sizeof(WCHAR),szPath,
 		    NULL)) {
@@ -331,9 +334,6 @@ HRESULT WINAPI LoadTypeLibEx(
 	        return TYPE_E_CANTLOADLIBRARY;
 	    if (GetFileAttributesW(szFileCopy) & FILE_ATTRIBUTE_DIRECTORY)
 		return TYPE_E_CANTLOADLIBRARY;
-	} else {
-	    TRACE("Wanted to load %s as typelib, but file was not found.\n",debugstr_w(szFile));
-	    return TYPE_E_CANTLOADLIBRARY;
 	}
     }
 
@@ -2209,8 +2209,13 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
       }
       CloseHandle(hFile);
     }
+    else
+    {
+      TRACE("not found, trying to load %s as library\n", debugstr_w(pszFileName));
+    }
 
-    if( (WORD)dwSignature == IMAGE_DOS_SIGNATURE )
+    /* if the file is a DLL or not found, try loading it with LoadLibrary */
+    if (((WORD)dwSignature == IMAGE_DOS_SIGNATURE) || (dwSignature == 0))
     {
       /* find the typelibrary resource*/
       HINSTANCE hinstDLL = LoadLibraryExW(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES|
