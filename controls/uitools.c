@@ -30,7 +30,7 @@ static const signed char LTInnerNormal[] = {
 
 static const signed char LTOuterNormal[] = {
     -1,                 COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
-    COLOR_BTNHIGHLIGHT, COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
+    COLOR_BTNHIGHLIGHT, COLOR_BTNHIGHLIGHT,COLOR_BTNSHADOW, -1,
     COLOR_3DDKSHADOW,   COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
     -1,                 COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1
 };
@@ -679,7 +679,7 @@ static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
         }
         else
         {
-            UITOOLS95_DrawRectEdge(dc, r, edge, (uFlags&DFCS_FLAT) | BF_MIDDLE |BF_SOFT| BF_RECT);
+            UITOOLS95_DrawRectEdge(dc, r, edge, (uFlags&DFCS_FLAT) | BF_MIDDLE | BF_RECT);
         }
     }
 
@@ -914,6 +914,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     HBRUSH hbsave;
     HPEN hpsave;
     HFONT hfsave, hf;
+    int colorIdx = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
     int xc = (myr.left+myr.right)/2;
     int yc = (myr.top+myr.bottom)/2;
     int edge, move;
@@ -928,19 +929,59 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     switch(uFlags & 0xff)
     {
     case DFCS_CAPTIONCLOSE:
-        edge = 328*SmallDiam/1000;
-        move = 95*SmallDiam/1000;
-        Line1[0].x = Line2[0].x = Line1[1].x = Line2[1].x = xc - edge;
-        Line1[2].y = Line2[5].y = Line1[1].y = Line2[4].y = yc - edge;
-        Line1[3].x = Line2[3].x = Line1[4].x = Line2[4].x = xc + edge;
-        Line1[5].y = Line2[2].y = Line1[4].y = Line2[1].y = yc + edge;
-        Line1[2].x = Line2[2].x = Line1[1].x + move;
-        Line1[0].y = Line2[3].y = Line1[1].y + move;
-        Line1[5].x = Line2[5].x = Line1[4].x - move;
-        Line1[3].y = Line2[0].y = Line1[4].y - move;
-        Line1N = 6;
-        Line2N = 6;
-        break;
+    {
+        /* The "X" is made by drawing a series of lines.  
+         * The number of lines drawn depends on the size 
+         * of the bounding rect.  e.g. For a 6x5 inside rect,
+         * two lines are drawn from top-left to bottom-right,
+         * and two lines from top-right to bottom-left.
+         *
+         * 0 1 2 3 4 5       0 1 2 3 4 5
+         * 1 * *                     * *
+         * 2   * *                 * *
+         * 3     * *             * *
+         * 4       * *         * *
+         *
+         * Drawing one line for every 6 pixels in width
+         * seems to provide the best proportions.
+         */
+
+        POINT start, oldPos;
+        INT width = myr.right - myr.left - 5;
+        INT height = myr.bottom - myr.top - 6;
+        INT numLines = (width / 6) + 1;
+
+        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(colorIdx));
+
+        start.x = myr.left + 2;
+        start.y = myr.top + 2;
+
+        if (width < 6)
+            height = width;
+        else
+            start.y++;
+
+        if (uFlags & DFCS_PUSHED)
+        {
+            start.x++;
+			start.y++;
+        }
+
+        /* now use the width of each line */
+        width -= numLines - 1;
+
+        for (i = 0; i < numLines; i++)
+        {
+            MoveToEx(dc, start.x + i, start.y, &oldPos);
+            LineTo(dc, start.x + i + width, start.y + height);
+
+            MoveToEx(dc, start.x + i, start.y + height - 1, &oldPos);
+            LineTo(dc, start.x + i + width, start.y - 1);
+        }
+
+        SelectObject(dc, hpsave);
+        return TRUE;
+    }
 
     case DFCS_CAPTIONHELP:
         /* This one breaks the flow */
@@ -960,7 +1001,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
             SetTextColor(dc, GetSysColor(COLOR_BTNHIGHLIGHT));
             TextOutA(dc, xc-size.cx/2+1, yc-size.cy/2+1, str, 1);
         }
-        SetTextColor(dc, GetSysColor(uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT));
+        SetTextColor(dc, GetSysColor(colorIdx));
         TextOutA(dc, xc-size.cx/2, yc-size.cy/2, str, 1);
 
         SelectObject(dc, hfsave);
@@ -1059,9 +1100,8 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     }
 
     /* Make the final picture */
-    i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
-    hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-    hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+    hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(colorIdx));
+    hpsave = (HPEN)SelectObject(dc, GetSysColorPen(colorIdx));
 
     Polygon(dc, Line1, Line1N);
     if(Line2N > 0)
