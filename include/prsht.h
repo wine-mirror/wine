@@ -54,8 +54,8 @@ typedef struct _PROPSHEETPAGEA
     LPARAM             lParam;
     LPFNPSPCALLBACKA pfnCallback;
     UINT*            pcRefParent;
-    LPCWSTR            pszHeaderTitle;
-    LPCWSTR            pszHeaderSubTitle;
+    LPCSTR             pszHeaderTitle;
+    LPCSTR             pszHeaderSubTitle;
 } PROPSHEETPAGEA, *LPPROPSHEETPAGEA;
 
 typedef const PROPSHEETPAGEA *LPCPROPSHEETPAGEA;
