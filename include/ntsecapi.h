@@ -75,6 +75,57 @@ extern "C" {
    POLICY_VIEW_LOCAL_INFORMATION | \
    POLICY_LOOKUP_NAMES)
 
+#define POLICY_AUDIT_EVENT_UNCHANGED 0x00000000L
+#define POLICY_AUDIT_EVENT_SUCCESS   0x00000001L
+#define POLICY_AUDIT_EVENT_FAILURE   0x00000002L
+#define POLICY_AUDIT_EVENT_NONE      0x00000004L
+
+#define POLICY_AUDIT_EVENT_MASK (POLICY_AUDIT_EVENT_SUCCESS | \
+                                 POLICY_AUDIT_EVENT_FAILURE | \
+                                 POLICY_AUDIT_EVENT_NONE)
+
+/* logon rights names */
+#define SE_BATCH_LOGON_NAME \
+ TEXT("SeBatchLogonRight")
+#define SE_INTERACTIVE_LOGON_NAME \
+ TEXT("SeInteractiveLogonRight")
+#define SE_NETWORK_LOGON_NAME \
+ TEXT("SeNetworkLogonRight")
+#define SE_REMOTE_INTERACTIVE_LOGON_NAME \
+ TEXT("SeRemoteInteractiveLogonRight")
+#define SE_SERVICE_LOGON_NAME \
+ TEXT("SeServiceLogonRight")
+#define SE_DENY_BATCH_LOGON_NAME \
+ TEXT("SeDenyBatchLogonRight")
+#define SE_DENY_INTERACTIVE_LOGON_NAME \
+ TEXT("SeDenyInteractiveLogonRight")
+#define SE_DENY_NETWORK_LOGON_NAME \
+ TEXT("SeDenyNetworkLogonRight")
+#define SE_DENY_REMOTE_INTERACTIVE_LOGON_NAME \
+ TEXT("SeDenyRemoteInteractiveLogonRight")
+#define SE_DENY_SERVICE_LOGON_NAME \
+ TEXT("SeDenyServiceLogonRight")
+
+typedef enum _SECURITY_LOGON_TYPE
+{
+    Interactive = 2,
+    Network,
+    Batch,
+    Service,
+    Proxy
+} SECURITY_LOGON_TYPE, *PSECURITY_LOGON_TYPE;
+
+typedef enum _POLICY_AUDIT_EVENT_TYPE
+{
+    AuditCategorySystem,
+    AuditCategoryLogon,
+    AuditCategoryObjectAccess,
+    AuditCategoryPrivilegeUse,
+    AuditCategoryDetailedTracking,
+    AuditCategoryPolicyChange,
+    AuditCategoryAccountManagement
+} POLICY_AUDIT_EVENT_TYPE, *PPOLICY_AUDIT_EVENT_TYPE;
+
 typedef UNICODE_STRING LSA_UNICODE_STRING, *PLSA_UNICODE_STRING;
 typedef STRING LSA_STRING, *PLSA_STRING;
 typedef OBJECT_ATTRIBUTES LSA_OBJECT_ATTRIBUTES, *PLSA_OBJECT_ATTRIBUTES;
@@ -150,6 +201,7 @@ NTSTATUS WINAPI LsaEnumerateTrustedDomains(LSA_HANDLE,PLSA_ENUMERATION_HANDLE,PV
 NTSTATUS WINAPI LsaFreeMemory(PVOID);
 NTSTATUS WINAPI LsaLookupNames(LSA_HANDLE,ULONG Count,PLSA_UNICODE_STRING,PLSA_REFERENCED_DOMAIN_LIST*,
                                PLSA_TRANSLATED_SID*);
+NTSTATUS WINAPI LsaLookupSids(LSA_HANDLE,ULONG,PSID *,PLSA_REFERENCED_DOMAIN_LIST *,PLSA_TRANSLATED_NAME *);
 ULONG WINAPI LsaNtStatusToWinError(NTSTATUS);
 NTSTATUS WINAPI LsaOpenPolicy(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
 NTSTATUS WINAPI LsaQueryInformationPolicy(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
