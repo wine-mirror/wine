@@ -19,6 +19,9 @@
  */
 
 #include <assert.h>
+
+#define COBJMACROS
+
 #include "wine/test.h"
 #include "uuids.h"
 #include "dshow.h"
@@ -76,4 +79,3 @@ START_TEST(filtergraph)
 #endif
     releasefiltergraph();
 }
-
