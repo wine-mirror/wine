@@ -3,10 +3,10 @@
  11 stdcall MAPILogonEx@20(long ptr ptr long ptr) MAPILogonEx
  12 stdcall MAPIAllocateBuffer(long ptr)
  13 stdcall MAPIAllocateBuffer@8(long ptr) MAPIAllocateBuffer
- 14 stub MAPIAllocateMore
- 15 stub MAPIAllocateMore@12
- 16 stub MAPIFreeBuffer
- 17 stub MAPIFreeBuffer@4
+ 14 stdcall MAPIAllocateMore(long ptr ptr)
+ 15 stdcall MAPIAllocateMore@12(long ptr ptr) MAPIAllocateMore
+ 16 stdcall MAPIFreeBuffer(ptr)
+ 17 stdcall MAPIFreeBuffer@4(ptr) MAPIFreeBuffer
  18 stub MAPIAdminProfiles
  19 stub MAPIAdminProfiles@8
  20 stdcall MAPIInitialize(ptr)
@@ -22,18 +22,18 @@
  30 stub MAPIOpenFormMgr@8
  31 stub MAPIOpenLocalFormContainer
  32 stub MAPIOpenLocalFormContainer@4
- 33 stub ScInitMapiUtil@4
+ 33 stdcall ScInitMapiUtil@4(long) ScInitMapiUtil
  34 stdcall DeinitMapiUtil@0() DeinitMapiUtil
  35 stub ScGenerateMuid@4
  36 stub HrAllocAdviseSink@12
  41 stub WrapProgress@20
- 42 stub HrThisThreadAdviseSink@8
+ 42 stdcall HrThisThreadAdviseSink@8(ptr ptr) HrThisThreadAdviseSink
  43 stub ScBinFromHexBounded@12
  44 stub FBinFromHex@8
  45 stub HexFromBin@12
  46 stub BuildDisplayTable@40
- 47 stub SwapPlong@8
- 48 stub SwapPword@8
+ 47 stdcall SwapPlong@8(ptr long) SwapPlong
+ 48 stdcall SwapPword@8(ptr long) SwapPword
  49 stub MAPIInitIdle@4
  50 stub MAPIDeinitIdle@0
  51 stub InstallFilterHook@4
@@ -44,41 +44,41 @@
  59 stub MAPIGetDefaultMalloc@0
  60 stub CreateIProp@24
  61 stub CreateTable@36
- 62 stub MNLS_lstrlenW@4
- 63 stub MNLS_lstrcmpW@8
- 64 stub MNLS_lstrcpyW@8
- 65 stub MNLS_CompareStringW@24
- 66 stub MNLS_MultiByteToWideChar@24
- 67 stub MNLS_WideCharToMultiByte@32
- 68 stub MNLS_IsBadStringPtrW@8
+ 62 stdcall MNLS_lstrlenW@4(wstr) MNLS_lstrlenW
+ 63 stdcall MNLS_lstrcmpW@8(wstr wstr) MNLS_lstrcmpW
+ 64 stdcall MNLS_lstrcpyW@8(ptr wstr) MNLS_lstrcpyW
+ 65 stdcall MNLS_CompareStringW@24(long wstr wstr) MNLS_CompareStringW
+ 66 stdcall MNLS_MultiByteToWideChar@24(long long str long ptr long) kernel32.MultiByteToWideChar
+ 67 stdcall MNLS_WideCharToMultiByte@32(long long wstr long ptr long ptr ptr) kernel32.WideCharToMultiByte
+ 68 stdcall MNLS_IsBadStringPtrW@8(ptr long) kernel32.IsBadStringPtrW
  72 stub FEqualNames@8
  73 stub WrapStoreEntryID@24
  74 stub IsBadBoundedStringPtr@8
  75 stub HrQueryAllRows@24
- 76 stub PropCopyMore@16
- 77 stub UlPropSize@4
- 78 stub FPropContainsProp@12
- 79 stub FPropCompareProp@12
- 80 stub LPropCompareProp@8
+ 76 stdcall PropCopyMore@16(ptr ptr ptr ptr) PropCopyMore
+ 77 stdcall UlPropSize@4(ptr) UlPropSize
+ 78 stdcall FPropContainsProp@12(ptr ptr long) FPropContainsProp
+ 79 stdcall FPropCompareProp@12(ptr long ptr) FPropCompareProp
+ 80 stdcall LPropCompareProp@8(ptr ptr) LPropCompareProp
  81 stub HrAddColumns@16
  82 stub HrAddColumnsEx@20
-121 stub FtAddFt@16
+121 stdcall -ret64 FtAddFt@16(long long long long) MAPI32_FtAddFt
 122 stub FtAdcFt@20
-123 stub FtSubFt@16
-124 stub FtMulDw@12
-125 stub FtMulDwDw@8
-126 stub FtNegFt@8
+123 stdcall -ret64 FtSubFt@16(long long long long) MAPI32_FtSubFt
+124 stdcall -ret64 FtMulDw@12(long long long) MAPI32_FtMulDw
+125 stdcall -ret64 FtMulDwDw@8(long long) MAPI32_FtMulDwDw
+126 stdcall -ret64 FtNegFt@8(long long) MAPI32_FtNegFt
 127 stub FtDivFtBogus@20
-128 stub UlAddRef@4
-129 stub UlRelease@4
-130 stub SzFindCh@8
-131 stub SzFindLastCh@8
-132 stub SzFindSz@8
+128 stdcall UlAddRef@4(ptr) UlAddRef
+129 stdcall UlRelease@4(ptr) UlRelease
+130 stdcall SzFindCh@8(str long) shlwapi.StrChrA
+131 stdcall SzFindLastCh@8(str str long) shlwapi.StrRChrA
+132 stdcall SzFindSz@8(str str) shlwapi.StrStrA
 133 stub UFromSz@4
 135 stub HrGetOneProp@12
 136 stub HrSetOneProp@8
 137 stub FPropExists@8
-138 stub PpropFindProp@12
+138 stdcall PpropFindProp@12(ptr long long) PpropFindProp
 139 stub FreePadrlist@4
 140 stub FreeProws@4
 141 stub HrSzFromEntryID@12
@@ -87,8 +87,8 @@
 144 stub HrDecomposeEID@28
 145 stub HrComposeMsgID@24
 146 stub HrDecomposeMsgID@24
-147 stub OpenStreamOnFile@24
-148 stub OpenStreamOnFile
+147 stdcall OpenStreamOnFile@24(ptr ptr ptr ptr ptr ptr) OpenStreamOnFile
+148 stdcall OpenStreamOnFile(ptr ptr ptr ptr ptr ptr)
 149 stub OpenTnefStream@28
 150 stub OpenTnefStream
 151 stub OpenTnefStreamEx@32
@@ -107,19 +107,19 @@
 164 stub ScCountNotifications@12
 165 stub ScCopyNotifications@16
 166 stub ScRelocNotifications@20
-170 stub ScCountProps@12
+170 stdcall ScCountProps@12(long ptr ptr) ScCountProps
 171 stub ScCopyProps@16
 172 stub ScRelocProps@20
-173 stub LpValFindProp@12
+173 stdcall LpValFindProp@12(long long ptr) LpValFindProp
 174 stub ScDupPropset@16
-175 stub FBadRglpszA@8
-176 stub FBadRglpszW@8
-177 stub FBadRowSet@4
+175 stdcall FBadRglpszA@8(ptr long) FBadRglpszA
+176 stdcall FBadRglpszW@8(ptr long) FBadRglpszW
+177 stdcall FBadRowSet@4(ptr) FBadRowSet
 178 stub FBadRglpNameID@8
-179 stub FBadPropTag@4
-180 stub FBadRow@4
-181 stub FBadProp@4
-182 stub FBadColumnSet@4
+179 stdcall FBadPropTag@4(long) FBadPropTag
+180 stdcall FBadRow@4(ptr) FBadRow
+181 stdcall FBadProp@4(ptr) FBadProp
+182 stdcall FBadColumnSet@4(ptr) FBadColumnSet
 183 stub RTFSync@12
 184 stub RTFSync
 185 stub WrapCompressedRTFStream@12

@@ -23,8 +23,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "mapi.h"
-#include "mapicode.h"
+#include "objbase.h"
+#include "mapix.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
@@ -35,33 +35,22 @@ HRESULT WINAPI MAPIInitialize ( LPVOID lpMapiInit )
     return MAPI_E_NOT_INITIALIZED;
 }
 
-HRESULT WINAPI MAPIAllocateBuffer ( ULONG cvSize, LPVOID *lppBuffer )
-{
-    ERR("Stub\n");
-    *lppBuffer = NULL;
-    return MAPI_E_NOT_INITIALIZED;
-}
-
 ULONG WINAPI MAPILogon(ULONG ulUIParam, LPSTR lpszProfileName, LPSTR
 lpszPassword, FLAGS flFlags, ULONG ulReserver, LPLHANDLE lplhSession)
 {
     ERR("Stub\n");
-    return MAPI_E_FAILURE;
+    return MAPI_E_LOGON_FAILED;
 }
 
-HRESULT WINAPI MAPILogonEx( ULONG ulUIParam, LPSTR lpszProfileName, LPSTR
-lpszPassword, FLAGS flFlags, VOID* lppSession)
+HRESULT WINAPI MAPILogonEx(ULONG_PTR ulUIParam, LPWSTR lpszProfileName,
+                           LPWSTR lpszPassword, ULONG flFlags,
+                           LPMAPISESSION *lppSession)
 {
     ERR("Stub\n");
-    return MAPI_E_LOGON_FAILURE;
+    return MAPI_E_LOGON_FAILED;
 }
 
 VOID WINAPI MAPIUninitialize(void)
-{
-    ERR("Stub\n");
-}
-
-VOID WINAPI DeinitMapiUtil(void)
 {
     ERR("Stub\n");
 }
