@@ -189,6 +189,318 @@ HRSRC WINAPI FindResourceW( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 
 
 /**********************************************************************
+ *	EnumResourceTypesA	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG_PTR lparam )
+{
+    int i;
+    BOOL ret = FALSE;
+    LPSTR type = NULL;
+    DWORD len = 0, newlen;
+    NTSTATUS status;
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+    const IMAGE_RESOURCE_DIR_STRING_U *str;
+
+    TRACE( "%p %p %lx\n", hmod, lpfun, lparam );
+
+    if (!hmod) hmod = GetModuleHandleA( NULL );
+
+    if ((status = LdrFindResourceDirectory_U( hmod, NULL, 0, &resdir )) != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
+    {
+        if (et[i].u1.s1.NameIsString)
+        {
+            str = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s1.NameOffset);
+            newlen = WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
+            if (newlen + 1 > len)
+            {
+                len = newlen + 1;
+                if (type) HeapFree( GetProcessHeap(), 0, type );
+                if (!(type = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
+            }
+            WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, type, len, NULL, NULL);
+            type[newlen] = 0;
+            ret = lpfun(hmod,type,lparam);
+        }
+        else
+        {
+            ret = lpfun( hmod, (LPSTR)(int)et[i].u1.s2.Id, lparam );
+        }
+        if (!ret) break;
+    }
+    if (type) HeapFree( GetProcessHeap(), 0, type );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	EnumResourceTypesW	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG_PTR lparam )
+{
+    int i;
+    BOOL ret = FALSE;
+    DWORD len = 0;
+    LPWSTR type = NULL;
+    NTSTATUS status;
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+    const IMAGE_RESOURCE_DIR_STRING_U *str;
+
+    TRACE( "%p %p %lx\n", hmod, lpfun, lparam );
+
+    if (!hmod) hmod = GetModuleHandleW( NULL );
+
+    if ((status = LdrFindResourceDirectory_U( hmod, NULL, 0, &resdir )) != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+    {
+        if (et[i].u1.s1.NameIsString)
+        {
+            str = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s1.NameOffset);
+            if (str->Length + 1 > len)
+            {
+                len = str->Length + 1;
+                if (type) HeapFree( GetProcessHeap(), 0, type );
+                if (!(type = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+            }
+            memcpy(type, str->NameString, str->Length * sizeof (WCHAR));
+            type[str->Length] = 0;
+            ret = lpfun(hmod,type,lparam);
+        }
+        else
+        {
+            ret = lpfun( hmod, (LPWSTR)(int)et[i].u1.s2.Id, lparam );
+        }
+        if (!ret) break;
+    }
+    if (type) HeapFree( GetProcessHeap(), 0, type );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	EnumResourceNamesA	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfun, LONG_PTR lparam )
+{
+    int i;
+    BOOL ret = FALSE;
+    DWORD len = 0, newlen;
+    LPSTR name = NULL;
+    NTSTATUS status;
+    UNICODE_STRING typeW;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+    const IMAGE_RESOURCE_DIR_STRING_U *str;
+
+    TRACE( "%p %s %p %lx\n", hmod, debugstr_a(type), lpfun, lparam );
+
+    if (!hmod) hmod = GetModuleHandleA( NULL );
+    typeW.Buffer = NULL;
+    if ((status = LdrFindResourceDirectory_U( hmod, NULL, 0, &basedir )) != STATUS_SUCCESS)
+        goto done;
+    if ((status = get_res_nameA( type, &typeW )) != STATUS_SUCCESS)
+        goto done;
+    info.Type = (ULONG)typeW.Buffer;
+    if ((status = LdrFindResourceDirectory_U( hmod, &info, 1, &resdir )) != STATUS_SUCCESS)
+        goto done;
+
+    et = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
+    {
+        if (et[i].u1.s1.NameIsString)
+        {
+            str = (IMAGE_RESOURCE_DIR_STRING_U *) ((LPBYTE) basedir + et[i].u1.s1.NameOffset);
+            newlen = WideCharToMultiByte(CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
+            if (newlen + 1 > len)
+            {
+                len = newlen + 1;
+                if (name) HeapFree( GetProcessHeap(), 0, name );
+                if (!(name = HeapAlloc(GetProcessHeap(), 0, len + 1 )))
+                {
+                    ret = FALSE;
+                    break;
+                }
+            }
+            WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, name, len, NULL, NULL );
+            name[newlen] = 0;
+            ret = lpfun(hmod,type,name,lparam);
+        }
+        else
+        {
+            ret = lpfun( hmod, type, (LPSTR)(int)et[i].u1.s2.Id, lparam );
+        }
+        if (!ret) break;
+    }
+done:
+    if (name) HeapFree( GetProcessHeap(), 0, name );
+    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	EnumResourceNamesW	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpfun, LONG_PTR lparam )
+{
+    int i;
+    BOOL ret = FALSE;
+    LPWSTR name = NULL;
+    DWORD len = 0;
+    NTSTATUS status;
+    UNICODE_STRING typeW;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+    const IMAGE_RESOURCE_DIR_STRING_U *str;
+
+    TRACE( "%p %s %p %lx\n", hmod, debugstr_w(type), lpfun, lparam );
+
+    if (!hmod) hmod = GetModuleHandleW( NULL );
+    typeW.Buffer = NULL;
+    if ((status = LdrFindResourceDirectory_U( hmod, NULL, 0, &basedir )) != STATUS_SUCCESS)
+        goto done;
+    if ((status = get_res_nameW( type, &typeW )) != STATUS_SUCCESS)
+        goto done;
+    info.Type = (ULONG)typeW.Buffer;
+    if ((status = LdrFindResourceDirectory_U( hmod, &info, 1, &resdir )) != STATUS_SUCCESS)
+        goto done;
+
+    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
+    {
+        if (et[i].u1.s1.NameIsString)
+        {
+            str = (IMAGE_RESOURCE_DIR_STRING_U *) ((LPBYTE) basedir + et[i].u1.s1.NameOffset);
+            if (str->Length + 1 > len)
+            {
+                len = str->Length + 1;
+                if (name) HeapFree( GetProcessHeap(), 0, name );
+                if (!(name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+                {
+                    ret = FALSE;
+                    break;
+                }
+            }
+            memcpy(name, str->NameString, str->Length * sizeof (WCHAR));
+            name[str->Length] = 0;
+            ret = lpfun(hmod,type,name,lparam);
+        }
+        else
+        {
+            ret = lpfun( hmod, type, (LPWSTR)(int)et[i].u1.s2.Id, lparam );
+        }
+        if (!ret) break;
+    }
+done:
+    if (name) HeapFree( GetProcessHeap(), 0, name );
+    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	EnumResourceLanguagesA	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
+                                    ENUMRESLANGPROCA lpfun, LONG_PTR lparam )
+{
+    int i;
+    BOOL ret = FALSE;
+    NTSTATUS status;
+    UNICODE_STRING typeW, nameW;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+
+    TRACE( "%p %s %s %p %lx\n", hmod, debugstr_a(type), debugstr_a(name), lpfun, lparam );
+
+    if (!hmod) hmod = GetModuleHandleA( NULL );
+    typeW.Buffer = nameW.Buffer = NULL;
+    if ((status = LdrFindResourceDirectory_U( hmod, NULL, 0, &basedir )) != STATUS_SUCCESS)
+        goto done;
+    if ((status = get_res_nameA( type, &typeW )) != STATUS_SUCCESS)
+        goto done;
+    if ((status = get_res_nameA( name, &nameW )) != STATUS_SUCCESS)
+        goto done;
+    info.Type = (ULONG)typeW.Buffer;
+    info.Name = (ULONG)nameW.Buffer;
+    if ((status = LdrFindResourceDirectory_U( hmod, &info, 2, &resdir )) != STATUS_SUCCESS)
+        goto done;
+
+    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+    {
+        ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
+        if (!ret) break;
+    }
+done:
+    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	EnumResourceLanguagesW	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
+                                    ENUMRESLANGPROCW lpfun, LONG_PTR lparam )
+{
+    int i;
+    BOOL ret = FALSE;
+    NTSTATUS status;
+    UNICODE_STRING typeW, nameW;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+
+    TRACE( "%p %s %s %p %lx\n", hmod, debugstr_w(type), debugstr_w(name), lpfun, lparam );
+
+    if (!hmod) hmod = GetModuleHandleW( NULL );
+    typeW.Buffer = nameW.Buffer = NULL;
+    if ((status = LdrFindResourceDirectory_U( hmod, NULL, 0, &basedir )) != STATUS_SUCCESS)
+        goto done;
+    if ((status = get_res_nameW( type, &typeW )) != STATUS_SUCCESS)
+        goto done;
+    if ((status = get_res_nameW( name, &nameW )) != STATUS_SUCCESS)
+        goto done;
+    info.Type = (ULONG)typeW.Buffer;
+    info.Name = (ULONG)nameW.Buffer;
+    if ((status = LdrFindResourceDirectory_U( hmod, &info, 2, &resdir )) != STATUS_SUCCESS)
+        goto done;
+
+    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+    {
+        ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
+        if (!ret) break;
+    }
+done:
+    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/**********************************************************************
  *	    LoadResource     (KERNEL32.@)
  */
 HGLOBAL WINAPI LoadResource( HINSTANCE hModule, HRSRC hRsrc )
