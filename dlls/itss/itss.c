@@ -146,10 +146,15 @@ static HRESULT WINAPI ITSSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOut
     return hres;
 }
 
-static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    TRACE("(%p)->(%d)\n", iface, dolock);
+
+    if(dolock)
+        InterlockedIncrement(&dll_count);
+    else
+        InterlockedDecrement(&dll_count);
+
     return S_OK;
 }
 
