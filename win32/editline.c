@@ -664,7 +664,7 @@ static	KeyEntry Win32KeyMapExtended[] =
     {/*VK_END*/  0x23,	WCEL_MoveToEnd 		},
     {/*VK_UP*/   0x26, 	WCEL_MoveToPrevHist 	},
     {/*VK_DOWN*/ 0x28,	WCEL_MoveToNextHist	},
-    {/*VK_DEL*/  0x2e,	WCEL_FindPrevInHist /*L_DeleteCurrChar*/	},
+    {/*VK_DEL*/  0x2e,	WCEL_DeleteCurrChar	},
     {	0,		NULL 			}
 };
 
