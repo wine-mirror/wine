@@ -82,7 +82,6 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     lpcur = (CURSORALLOC *)GlobalLock(hCursor);
     memset(lpcur, 0, sizeof(CURSORALLOC));
     if (instance == (HANDLE)NULL) {
-	instance = hSysRes;
 	switch((LONG)cursor_name) {
 	    case IDC_ARROW:
 		lpcur->xcursor = XCreateFontCursor(display, XC_top_left_arrow);

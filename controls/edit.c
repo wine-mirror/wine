@@ -278,7 +278,10 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_SETHANDLE:
+	HideCaret(hwnd);
 	EDIT_SetHandleMsg(hwnd, wParam);
+	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
+	ShowCaret(hwnd);
 	break;
 
     case EM_SETMODIFY:
@@ -431,7 +434,13 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
 	ShowCaret(hwnd);
 	break;
-
+#if 0
+    case WM_SETREDRAW:
+	dprintf_edit(stddeb, "WM_SETREDRAW: hwnd=%d, wParam=%x\n",
+		     hwnd, wParam);
+	lResult = 0;
+	break;
+#endif
     case WM_SETTEXT:
 	EDIT_SetTextMsg(hwnd, lParam);
 	break;
@@ -548,11 +557,14 @@ long EDIT_CreateMsg(HWND hwnd, LONG lParam)
     char *text;
 
     /* initialize state variable structure */
-    /* --- char width array */
     hdc = GetDC(hwnd);
+
+    /* --- char width array                                        */
+    /*     only initialise chars <= 32 as X returns strange widths */
+    /*     for other chars                                         */
     charWidths = (short *)EDIT_HeapAddr(hwnd, es->hCharWidths);
     memset(charWidths, 0, 256 * sizeof(short));
-    GetCharWidth(hdc, 0, 255, charWidths);
+    GetCharWidth(hdc, 32, 254, &charWidths[32]);
 
     /* --- other structure variables */
     GetTextMetrics(hdc, &tm);
@@ -737,7 +749,7 @@ HANDLE EDIT_GetTextLine(HWND hwnd, int selection)
     dprintf_edit(stddeb,"GetTextLine %d\n", selection);
     cp = cp1 = EDIT_TextLine(hwnd, selection);
     /* advance through line */
-    while (*cp && *cp != '\n')
+    while (*cp && *cp != '\r')
     {
 	len++;
 	cp++;
@@ -804,7 +816,7 @@ int EDIT_LineLength(HWND hwnd, int num)
     char *cp1;
 
     if(!cp)return 0;
-    cp1 = strchr(cp, '\n');
+    cp1 = strchr(cp, '\r');
     return cp1 ? (int)(cp1 - cp) : strlen(cp);
 }
 
@@ -1094,7 +1106,7 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
 
     dprintf_edit(stddeb,"EDIT_GetStr lp='%s'  off=%d  len=%d\n", lp, off, len);
 
-    if (off<0) off=0;
+    if (off < 0) off = 0;
     while (i < off)
     {
 	s_i = i;
@@ -1111,6 +1123,8 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
     ch1 = ch;
     while (i < len + off)
     {
+	if (*(lp + ch) == '\r' || *(lp + ch) == '\n')
+	    break;
 	i += EDIT_CharWidth(hwnd, (BYTE)(*(lp + ch)), i);
 	ch++;
     }
@@ -1191,8 +1205,9 @@ void EDIT_KeyTyped(HWND hwnd, short ch)
     if (*currchar == '\0' && IsMultiLine())
     {
 	/* insert a newline at end of text */
-	*currchar = '\n';
-	*(currchar + 1) = '\0';
+	*currchar = '\r';
+	*(currchar + 1) = '\n';
+	*(currchar + 2) = '\0';
 	EDIT_BuildTextPointers(hwnd);
     }
 
@@ -1220,9 +1235,19 @@ void EDIT_KeyTyped(HWND hwnd, short ch)
 	currchar = CurrChar;
     }
     /* make space for new character and put char in buffer */
-    memmove(currchar + 1, currchar, strlen(currchar) + 1);
-    *currchar = ch;
-    EDIT_ModTextPointers(hwnd, es->CurrLine + 1, 1);
+    if (ch == '\n')
+    {
+	memmove(currchar + 2, currchar, strlen(currchar) + 1);
+	*currchar = '\r';
+	*(currchar + 1) = '\n';
+	EDIT_ModTextPointers(hwnd, es->CurrLine + 1, 2);
+    }
+    else
+    {
+	memmove(currchar + 1, currchar, strlen(currchar) + 1);
+	*currchar = ch;
+	EDIT_ModTextPointers(hwnd, es->CurrLine + 1, 1);
+    }
     es->TextChanged = TRUE;
     NOTIFY_PARENT(hwnd, EN_UPDATE);
 
@@ -1347,7 +1372,7 @@ void EDIT_Forward(HWND hwnd)
     if (*CurrChar == '\0')
 	return;
 
-    if (*CurrChar == '\n')
+    if (*CurrChar == '\r')
     {
 	EDIT_Home(hwnd);
 	EDIT_Downward(hwnd);
@@ -1465,7 +1490,7 @@ void EDIT_End(HWND hwnd)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-    while (*CurrChar && *CurrChar != '\n')
+    while (*CurrChar && *CurrChar != '\r')
     {
 	es->WndCol += EDIT_CharWidth(hwnd, (BYTE)(*CurrChar), es->WndCol + es->wleft);
 	es->CurrCol++;
@@ -2557,7 +2582,7 @@ void EDIT_ExtendSel(HWND hwnd, int x, int y)
     if (es->WndCol > EDIT_StrLength(hwnd, cp, len, 0) - es->wleft || end)
 	es->WndCol = EDIT_StrLength(hwnd, cp, len, 0) - es->wleft;
     es->CurrCol = EDIT_PixelToChar(hwnd, es->CurrLine, &(es->WndCol));
-    es->SelEndCol = es->CurrCol - 1;
+    es->SelEndCol = es->CurrCol;
 
     bel = es->SelEndLine;
     bec = es->SelEndCol;
@@ -2622,10 +2647,15 @@ void EDIT_WriteSel(HWND hwnd, int y, int start, int end)
     if (end == -1)
 	end = EDIT_LineLength(hwnd, y);
 
+    /* For some reason Rectangle, when called with R2_XORPEN filling,
+     * appears to leave a 2 pixel gap between characters and between
+     * lines.  I have kludged this by adding on two pixels to ecol and
+     * to the line height in the call to Rectangle.
+     */
     scol = EDIT_StrLength(hwnd, cp, start, 0);
     if (scol > rc.right) return;
     if (scol < rc.left) scol = rc.left;
-    ecol = EDIT_StrLength(hwnd, cp, end, 0);
+    ecol = EDIT_StrLength(hwnd, cp, end, 0) + 2;   /* ??? */
     if (ecol < rc.left) return;
     if (ecol > rc.right) ecol = rc.right;
 
@@ -2633,7 +2663,7 @@ void EDIT_WriteSel(HWND hwnd, int y, int start, int end)
     hbrush = GetStockObject(BLACK_BRUSH);
     holdbrush = (HBRUSH)SelectObject(hdc, (HANDLE)hbrush);
     olddm = SetROP2(hdc, R2_XORPEN);
-    Rectangle(hdc, scol, y * es->txtht, ecol, (y + 1) * es->txtht);
+    Rectangle(hdc, scol, y * es->txtht, ecol, (y + 1) * es->txtht + 2);
     SetROP2(hdc, olddm);
     SelectObject(hdc, (HANDLE)holdbrush);
     ReleaseDC(hwnd, hdc);
@@ -3054,7 +3084,7 @@ void EDIT_SetHandleMsg(HWND hwnd, WORD wParam)
     if (IsMultiLine())
     {
 	es->hText = wParam;
-	es->MaxTextLen = EDIT_HeapSize(hwnd, es->hText);
+	es->textlen = EDIT_HeapSize(hwnd, es->hText);
 	es->wlines = 0;
 	es->wtop = es->wleft = 0;
 	es->CurrLine = es->CurrCol = 0;
@@ -3063,7 +3093,10 @@ void EDIT_SetHandleMsg(HWND hwnd, WORD wParam)
 	es->textwidth = 0;
 	es->SelBegLine = es->SelBegCol = 0;
 	es->SelEndLine = es->SelEndCol = 0;
+	dprintf_edit(stddeb, "EDIT_SetHandleMsg: textlen=%d\n",
+                                                es->textlen);
 
+	EDIT_BuildTextPointers(hwnd);
 	es->PaintBkgd = TRUE;
 	InvalidateRect(hwnd, NULL, TRUE);
 	UpdateWindow(hwnd);

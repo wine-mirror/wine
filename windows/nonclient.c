@@ -110,6 +110,82 @@ void AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 }
 
 
+/*******************************************************************
+ *         NC_GetMinMaxInfo
+ *
+ * Get the minimized and maximized information for a window.
+ */
+void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
+                       POINT *minTrack, POINT *maxTrack )
+{
+    HANDLE minmaxHandle;
+    MINMAXINFO MinMax, *pMinMax;
+    short xinc, yinc;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+      /* Compute default values */
+
+    MinMax.ptMaxSize.x = SYSMETRICS_CXSCREEN;
+    MinMax.ptMaxSize.y = SYSMETRICS_CYSCREEN;
+    MinMax.ptMinTrackSize.x = SYSMETRICS_CXMINTRACK;
+    MinMax.ptMinTrackSize.y = SYSMETRICS_CYMINTRACK;
+    MinMax.ptMaxTrackSize.x = SYSMETRICS_CXSCREEN;
+    MinMax.ptMaxTrackSize.y = SYSMETRICS_CYSCREEN;
+
+    if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    {
+        xinc = SYSMETRICS_CXDLGFRAME;
+        yinc = SYSMETRICS_CYDLGFRAME;
+    }
+    else
+    {
+        xinc = yinc = 0;
+	if (HAS_THICKFRAME(wndPtr->dwStyle))
+        {
+            xinc += SYSMETRICS_CXFRAME;
+            yinc += SYSMETRICS_CYFRAME;
+        }
+	if (wndPtr->dwStyle & WS_BORDER)
+        {
+            xinc += SYSMETRICS_CXBORDER;
+            yinc += SYSMETRICS_CYBORDER;
+        }
+    }
+    MinMax.ptMaxSize.x += 2 * xinc;
+    MinMax.ptMaxSize.y += 2 * yinc;
+
+    if ((wndPtr->ptMaxPos.x != -1) || (wndPtr->ptMaxPos.y != -1))
+        MinMax.ptMaxPosition = wndPtr->ptMaxPos;
+    else
+    {
+        MinMax.ptMaxPosition.x = -xinc;
+        MinMax.ptMaxPosition.y = -yinc;
+    }
+
+    minmaxHandle = USER_HEAP_ALLOC( LMEM_MOVEABLE, sizeof(MINMAXINFO) );
+    if (minmaxHandle)
+    {
+	pMinMax = (MINMAXINFO *) USER_HEAP_ADDR( minmaxHandle );
+	memcpy( pMinMax, &MinMax, sizeof(MinMax) );	
+	SendMessage( hwnd, WM_GETMINMAXINFO, 0, (LONG)pMinMax );
+    }
+    else pMinMax = &MinMax;
+
+      /* Some sanity checks */
+
+    pMinMax->ptMaxTrackSize.x = max( pMinMax->ptMaxTrackSize.x,
+				     pMinMax->ptMinTrackSize.x );
+    pMinMax->ptMaxTrackSize.y = max( pMinMax->ptMaxTrackSize.y,
+				     pMinMax->ptMinTrackSize.y );
+    
+    if (maxSize) *maxSize = pMinMax->ptMaxSize;
+    if (maxPos) *maxPos = pMinMax->ptMaxPosition;
+    if (minTrack) *minTrack = pMinMax->ptMinTrackSize;
+    if (maxTrack) *maxTrack = pMinMax->ptMaxTrackSize;
+    if (minmaxHandle) USER_HEAP_FREE( minmaxHandle );
+}
+
+
 /***********************************************************************
  *           NC_HandleNCCalcSize
  *
@@ -841,7 +917,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
       /* Get min/max info */
 
-    WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
+    NC_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect( wndPtr->hwndParent, &mouseRect );
@@ -1162,7 +1238,8 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam )
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, lParam );
+        SendMessage( hwnd, WM_SYSCOMMAND,
+                     IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, lParam );
 	break;
 
     case HTSYSMENU:
@@ -1239,7 +1316,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
 	{   extern char sysres_DIALOG_2[];
-	    DialogBoxIndirectPtr( hSysRes, sysres_DIALOG_2,
+	    DialogBoxIndirectPtr( wndPtr->hInstance, sysres_DIALOG_2,
 		       hwnd, (WNDPROC)AboutWine_Proc );
         }
 	break;

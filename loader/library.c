@@ -203,7 +203,8 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     if (read(wpnt->fd, wpnt->mz_header, sizeof(struct mz_header_s)) !=
 	sizeof(struct mz_header_s))
     {
-	myerror("Unable to read MZ header from file");
+	fprintf(stderr, "Unable to read MZ header from file '%s'\n", buffer);
+        exit(1);
     }
 
       /* This field is ignored according to "Windows Internals", p.242 */

@@ -896,8 +896,6 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
     }
     SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
                  | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-      /* FIXME: Hack until SetWindowPos works correctly */
-    InvalidateRect( hwnd, NULL, TRUE );
 }
 
 

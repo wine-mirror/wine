@@ -22,8 +22,6 @@ typedef struct
 
 extern HWND WINPOS_NextWindowFromPoint( HWND hwnd, POINT pt );
 extern HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
-extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
-			    POINT *minTrack, POINT *maxTrack );
 extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 				   RECT *newWindowRect, RECT *oldWindowRect,
 				   RECT *oldClientRect, WINDOWPOS *winpos,

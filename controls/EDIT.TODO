@@ -1,0 +1,23 @@
+-  Find all the remaining bugs!
+
+-  ES_LEFT, ES_RIGHT and ES_CENTER.  ES_RIGHT and ES_CENTER cannot be
+   used with single line edit controls or be combined with ES_AUTOHSCROLL.
+
+-  Hide selection when window loses focus and ES_NOHIDESEL to disable
+   this functionality.
+
+-  ES_LOWERCASE and ES_UPPERCASE.
+
+-  ES_PASSWORD and EM_PASSWORDCHAR.
+
+-  ES_OEMCONVERT.  Probably won't do anything very much.
+
+-  ES_READONLY.
+
+-  ES_WANTRETURN and Ctrl-Enter to move to next line when this
+   functionality is enabled.
+
+-  Implement undo buffer correctly.  Windows allows the user to undo
+   entered text as well as deleted text.  You can also undo an undo.
+
+-  Add word wrap - this is a very big change!

@@ -757,8 +757,10 @@ int main(int argc, char **argv)
 
     sprintf(filename, "dll_%s.S", LowerDLLName);
     fp = fopen(filename, "w");
+#ifdef __ELF__
     fprintf (fp, "#define __ASSEMBLY__\n");
     fprintf (fp, "#include <asm/segment.h>\n");
+#endif
     fprintf(fp, "\t.globl " PREFIX "%s_Dispatch\n", UpperDLLName);
     fprintf(fp, PREFIX "%s_Dispatch:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");

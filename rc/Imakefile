@@ -23,6 +23,7 @@ WineRelocatableTarget($(MODULE),,$(RCOBJS))
 $(RCOBJS): winerc $(TOP)/include/windows.h
 
 includes::
+	touch $(RCSRCS:.rc=.h)
 
 clean::
 	$(RM) $(RCSRCS:.rc=.c) $(RCSRCS:.rc=.h)

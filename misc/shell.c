@@ -14,60 +14,88 @@
 /* #define DEBUG_REG */
 #include "debug.h"
 
-LPKEYSTRUCT	lphRootKey = NULL;
+LPKEYSTRUCT	lphRootKey = NULL,lphTopKey = NULL;
+
+static char RootKeyName[]=".classes", TopKeyName[] = "(null)";
+
+/*************************************************************************
+ *                        SHELL_RegCheckForRoot()     internal use only
+ */
+static LONG SHELL_RegCheckForRoot()
+{
+    HKEY hNewKey;
+
+    if (lphRootKey == NULL){
+      hNewKey = GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
+      lphRootKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
+      if (lphRootKey == NULL) {
+        printf("SHELL_RegCheckForRoot: Couldn't allocate root key!\n");
+        return ERROR_OUTOFMEMORY;
+      }
+      lphRootKey->hKey = 1;
+      lphRootKey->lpSubKey = RootKeyName;
+      lphRootKey->dwType = 0;
+      lphRootKey->lpValue = NULL;
+      lphRootKey->lpSubLvl = lphRootKey->lpNextKey = lphRootKey->lpPrevKey = NULL;
+
+      hNewKey = GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
+      lphTopKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
+      if (lphTopKey == NULL) {
+        printf("SHELL_RegCheckForRoot: Couldn't allocate top key!\n");
+        return ERROR_OUTOFMEMORY;
+      }
+      lphTopKey->hKey = 0;
+      lphTopKey->lpSubKey = TopKeyName;
+      lphTopKey->dwType = 0;
+      lphTopKey->lpValue = NULL;
+      lphTopKey->lpSubLvl = lphRootKey; lphTopKey->lpNextKey = lphTopKey->lpPrevKey = NULL;
+
+      dprintf_reg(stddeb,"SHELL_RegCheckForRoot: Root/Top created\n");
+    }
+    return ERROR_SUCCESS;
+}
 
 /*************************************************************************
  *				RegOpenKey		[SHELL.1]
  */
 LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 {
-	LPKEYSTRUCT	lpKey = lphRootKey;
-	LPSTR		ptr;
+	LPKEYSTRUCT	lpKey;
+	LPCSTR		ptr;
 	char		str[128];
+	LONG            dwRet;
 
+        dwRet = SHELL_RegCheckForRoot();
+        if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegOpenKey(%08lX, %p='%s', %p)\n",
 						hKey, lpSubKey, lpSubKey, lphKey);
-	if (lpKey == NULL) return ERROR_BADKEY;
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
-	if (hKey != HKEY_CLASSES_ROOT) {
-		dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", hKey);
-		lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
-		}
-	while ( (ptr = strchr(lpSubKey, '\\')) != NULL ) {
-		strncpy(str, lpSubKey, (LONG)ptr - (LONG)lpSubKey);
-		str[(LONG)ptr - (LONG)lpSubKey] = '\0';
-		lpSubKey = ptr + 1;
-		dprintf_reg(stddeb,"RegOpenKey // next level '%s' !\n", str);
-		while(TRUE) {
-			dprintf_reg(stddeb,"RegOpenKey // '%s' <-> '%s' !\n", str, lpKey->lpSubKey);
-			if (lpKey->lpSubKey != NULL && lpKey->lpSubKey[0] != '\0' &&
-				strcmp(lpKey->lpSubKey, str) == 0) {
-				lpKey = lpKey->lpSubLvl;
-				if (lpKey == NULL) {
-					printf("RegOpenKey // can't find subkey '%s' !\n", str);
-					return ERROR_BADKEY;
-					}
-				break;
-				}
-			if (lpKey->lpNextKey == NULL) {
-				printf("RegOpenKey // can't find subkey '%s' !\n", str);
-				return ERROR_BADKEY;
-				}
-			lpKey = lpKey->lpNextKey;
-			}
-		}
-	while(TRUE) {
-		if (lpKey->lpSubKey != NULL && 
-			strcmp(lpKey->lpSubKey, lpSubKey) == 0)	break;
-		if (lpKey->lpNextKey == NULL) {
-			printf("RegOpenKey // can't find subkey '%s' !\n", str);
-			return ERROR_BADKEY;
-			}
-		lpKey = lpKey->lpNextKey;
-		}
-	*lphKey = lpKey->hKey;
-	dprintf_reg(stddeb,"RegOpenKey // return hKey=%08lX !\n", lpKey->hKey);
+        switch(hKey) {
+	case 0: 
+	  lpKey = lphTopKey; break;
+        case HKEY_CLASSES_ROOT: /* == 1 */
+          lpKey = lphRootKey; break;
+        default: 
+	  dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", hKey);
+	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
+        }
+        while(*lpSubKey) {
+          ptr = strchr(lpSubKey,'\\');
+          if (!ptr) ptr = lpSubKey + strlen(lpSubKey);
+          strncpy(str,lpSubKey,ptr-lpSubKey);
+          str[ptr-lpSubKey] = 0;
+          lpSubKey = ptr; 
+          if (*lpSubKey) lpSubKey++;
+	  
+	  lpKey = lpKey->lpSubLvl;
+          while(lpKey != NULL && strcmp(lpKey->lpSubKey, str) != 0) { lpKey = lpKey->lpNextKey; }
+          if (lpKey == NULL) {
+	    dprintf_reg(stddeb,"RegOpenKey: key %s not found!\n",str);
+	    return ERROR_BADKEY;
+	  }	    
+	}
+        *lphKey = lpKey->hKey;
 	return ERROR_SUCCESS;
 }
 
@@ -79,86 +107,69 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 {
 	HKEY		hNewKey;
 	LPKEYSTRUCT	lpNewKey;
-	LPKEYSTRUCT	lpKey = lphRootKey;
+	LPKEYSTRUCT	lpKey;
 	LPKEYSTRUCT	lpPrevKey;
 	LONG		dwRet;
-	LPSTR		ptr;
+	LPCSTR		ptr;
 	char		str[128];
+
+	dwRet = SHELL_RegCheckForRoot();
+        if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegCreateKey(%08lX, '%s', %p)\n",	hKey, lpSubKey, lphKey);
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
-	if (hKey != HKEY_CLASSES_ROOT) {
-		dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", hKey);
-		lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
-		}
-	while ( (ptr = strchr(lpSubKey, '\\')) != NULL ) {
-		strncpy(str, lpSubKey, (LONG)ptr - (LONG)lpSubKey);
-		str[(LONG)ptr - (LONG)lpSubKey] = '\0';
-		lpSubKey = ptr + 1;
-		dprintf_reg(stddeb,"RegCreateKey // next level '%s' !\n", str);
-		lpPrevKey = lpKey;
-		while(TRUE) {
-			dprintf_reg(stddeb,"RegCreateKey // '%s' <-> '%s' !\n", str, lpKey->lpSubKey);
-			if (lpKey->lpSubKey != NULL &&
-				strcmp(lpKey->lpSubKey, str) == 0) {
-				if (lpKey->lpSubLvl == NULL) {
-					dprintf_reg(stddeb,"RegCreateKey // '%s' found !\n", str);
-					if ( (ptr = strchr(lpSubKey, '\\')) != NULL ) {
-						strncpy(str, lpSubKey, (LONG)ptr - (LONG)lpSubKey);
-						str[(LONG)ptr - (LONG)lpSubKey] = '\0';
-						lpSubKey = ptr + 1;
-						}
-					else
-						strcpy(str, lpSubKey);
-					dwRet = RegCreateKey(lpKey->hKey, str, &hNewKey);
-					if (dwRet != ERROR_SUCCESS) {
-						printf("RegCreateKey // can't create subkey '%s' !\n", str);
-						return dwRet;
-						}
-					lpKey->lpSubLvl = (LPKEYSTRUCT)GlobalLock(hNewKey);
-					}
-				lpKey = lpKey->lpSubLvl;
-				break;
-				}
-			if (lpKey->lpNextKey == NULL) {
-				dwRet = RegCreateKey(lpPrevKey->hKey, str, &hNewKey);
-				if (dwRet != ERROR_SUCCESS) {
-					printf("RegCreateKey // can't create subkey '%s' !\n", str);
-					return dwRet;
-					}
-				lpKey = (LPKEYSTRUCT)GlobalLock(hNewKey);
-				break;
-				}
-			lpKey = lpKey->lpNextKey;
-			}
-		}
-	hNewKey = GlobalAlloc(GMEM_MOVEABLE, sizeof(KEYSTRUCT));
-	lpNewKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
-	if (lpNewKey == NULL) {
-		printf("RegCreateKey // Can't alloc new key !\n");
-		return ERROR_OUTOFMEMORY;
-		}
-	if (lphRootKey == NULL) {
-		lphRootKey = lpNewKey;
-		lpNewKey->lpPrevKey = NULL;
-		}
-	else {
-		lpKey->lpNextKey = lpNewKey;
-		lpNewKey->lpPrevKey = lpKey;
-		}
-	lpNewKey->hKey = hNewKey;
-	lpNewKey->lpSubKey = malloc(strlen(lpSubKey) + 1);
-	if (lpNewKey->lpSubKey == NULL) {
-		printf("RegCreateKey // Can't alloc key string !\n");
-		return ERROR_OUTOFMEMORY;
-		}
-	strcpy(lpNewKey->lpSubKey, lpSubKey);
-	lpNewKey->dwType = 0;
-	lpNewKey->lpValue = NULL;
-	lpNewKey->lpNextKey = NULL;
-	lpNewKey->lpSubLvl = NULL;
-	*lphKey = hNewKey;
-	dprintf_reg(stddeb,"RegCreateKey // successful '%s' key=%08lX !\n", lpSubKey, hNewKey);
+        switch(hKey) {
+	case 0: 
+	  lpKey = lphTopKey; break;
+        case HKEY_CLASSES_ROOT: /* == 1 */
+          lpKey = lphRootKey; break;
+        default: 
+	  dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", hKey);
+	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
+        }
+        while (*lpSubKey) {
+          dprintf_reg(stddeb, "RegCreateKey: Looking for subkey %s\n", lpSubKey);
+          ptr = strchr(lpSubKey,'\\');
+          if (!ptr) ptr = lpSubKey + strlen(lpSubKey);
+          strncpy(str,lpSubKey,ptr-lpSubKey);
+          str[ptr-lpSubKey] = 0;
+          lpSubKey = ptr; 
+          if (*lpSubKey) lpSubKey++;
+	  
+	  lpPrevKey = lpKey;
+	  lpKey = lpKey->lpSubLvl;
+          while(lpKey != NULL && strcmp(lpKey->lpSubKey, str) != 0) { 
+	    lpKey = lpKey->lpNextKey; 
+	  }
+          if (lpKey == NULL) {
+	    hNewKey = GlobalAlloc(GMEM_MOVEABLE, sizeof(KEYSTRUCT));
+	    lpNewKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
+	    if (lpNewKey == NULL) {
+	      printf("RegCreateKey // Can't alloc new key !\n");
+	      return ERROR_OUTOFMEMORY;
+	    }
+	    lpNewKey->hKey = hNewKey;
+	    lpNewKey->lpSubKey = malloc(strlen(str) + 1);
+	    if (lpNewKey->lpSubKey == NULL) {
+	      printf("RegCreateKey // Can't alloc key string !\n");
+	      return ERROR_OUTOFMEMORY;
+	    }
+	    strcpy(lpNewKey->lpSubKey, str);
+	    lpNewKey->lpNextKey = lpPrevKey->lpSubLvl;
+	    lpNewKey->lpPrevKey = NULL;
+            lpPrevKey->lpSubLvl = lpNewKey;
+
+	    lpNewKey->dwType = 0;
+	    lpNewKey->lpValue = NULL;
+	    lpNewKey->lpSubLvl = NULL;
+	    *lphKey = hNewKey;
+	    dprintf_reg(stddeb,"RegCreateKey // successful '%s' key=%08lX !\n", str, hNewKey);
+	    lpKey = lpNewKey;
+	  } else {
+            *lphKey = lpKey->hKey;
+	    dprintf_reg(stddeb,"RegCreateKey // found '%s', key=%08lX\n", str, *lphKey);
+	  }
+	}
 	return ERROR_SUCCESS;
 }
 
@@ -198,7 +209,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
 	if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
-		dprintf_reg(stddeb, "RegSetValue // key not found ... so create it !\n");
+	        dprintf_reg(stddeb, "RegSetValue // key not found ... so create it !\n");
 		if ((dwRet = RegCreateKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
 			fprintf(stderr, "RegSetValue // key creation error %08lX !\n", dwRet);
 			return dwRet;
@@ -209,7 +220,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
 	if (lpKey->lpValue != NULL) free(lpKey->lpValue);
 	lpKey->lpValue = malloc(strlen(lpVal) + 1);
 	strcpy(lpKey->lpValue, lpVal);
-	dprintf_reg(stddeb,"RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpVal);
+	dprintf_reg(stddeb,"RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpKey->lpValue);
 	return ERROR_SUCCESS;
 }
 
@@ -228,6 +239,8 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpcb == NULL) return ERROR_INVALID_PARAMETER;
+        if (!*lpcb) return ERROR_INVALID_PARAMETER;
+
 	if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
 		fprintf(stderr, "RegQueryValue // key not found !\n");
 		return dwRet;
@@ -235,14 +248,17 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 	lpKey = (LPKEYSTRUCT)GlobalLock(hRetKey);
 	if (lpKey == NULL) return ERROR_BADKEY;
 	if (lpKey->lpValue != NULL) {
-		size = min(strlen(lpKey->lpValue), *lpcb);
-		strncpy(lpVal, lpKey->lpValue, size);
-		*lpcb = (LONG)size;
-		}
-	else {
-		lpVal[0] = '\0';
-		*lpcb = (LONG)0;
-		}
+          if ((size = strlen(lpKey->lpValue)+1) > *lpcb){
+            strncpy(lpVal,lpKey->lpValue,*lpcb-1);
+            lpVal[*lpcb-1] = 0;
+	  } else {
+            strcpy(lpVal,lpKey->lpValue);
+            *lpcb = size;
+          }
+	} else {
+	  *lpVal = 0;
+	  *lpcb = (LONG)1;
+	}
 	dprintf_reg(stddeb,"RegQueryValue // return '%s' !\n", lpVal);
 	return ERROR_SUCCESS;
 }
@@ -253,7 +269,37 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
  */
 LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 {
-	dprintf_reg(stdnimp, "RegEnumKey : Empty Stub !!!\n");
+	LPKEYSTRUCT	lpKey;
+	LONG		dwRet;
+	LONG            len;
+
+	dwRet = SHELL_RegCheckForRoot();
+        if (dwRet != ERROR_SUCCESS) return dwRet;
+	dprintf_reg(stddeb, "RegEnumKey(%08lX, %ld)\n", hKey, dwSubKey);
+	if (lpBuf == NULL) return ERROR_INVALID_PARAMETER;
+        switch(hKey) {
+	case 0: 
+	  lpKey = lphTopKey; break;
+        case HKEY_CLASSES_ROOT: /* == 1 */
+          lpKey = lphRootKey; break;
+        default: 
+	  dprintf_reg(stddeb,"RegEnumKey // specific key = %08lX !\n", hKey);
+	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
+        }
+
+        lpKey = lpKey->lpSubLvl;
+        while(lpKey != NULL){
+          if (!dwSubKey){
+            len = min(dwSize-1,strlen(lpKey->lpSubKey));
+	    strncpy(lpBuf,lpKey->lpSubKey,len);
+	    lpBuf[len] = 0;
+            dprintf_reg(stddeb, "RegEnumKey: found %s\n",lpBuf);
+	    return ERROR_SUCCESS;
+	  }
+          dwSubKey--;
+	  lpKey = lpKey->lpNextKey;
+        }
+	dprintf_reg(stddeb, "RegEnumKey: key not found!\n");
 	return ERROR_INVALID_PARAMETER;
 }
 
@@ -340,7 +386,9 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 	else
 		*AppMisc = 0;
 
-	return DialogBoxIndirectPtr(hSysRes, sysres_DIALOG_SHELL_ABOUT_MSGBOX, hWnd, (WNDPROC)AboutDlgProc);
+	return DialogBoxIndirectPtr( GetWindowWord(hWnd, GWW_HINSTANCE),
+                                     sysres_DIALOG_SHELL_ABOUT_MSGBOX,
+                                     hWnd, (WNDPROC)AboutDlgProc);
 }
 
 

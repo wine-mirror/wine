@@ -1,7 +1,7 @@
 /*
  * Window painting functions
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994, 1995 Alexandre Julliard
  */
 
 #include <stdio.h>
@@ -104,12 +104,22 @@ void PaintRect(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush, LPRECT rect)
 
 
 /***********************************************************************
+ *           GetControlBrush    (USER.326)
+ */
+HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
+{
+    return (HBRUSH)SendMessage( GetParent(hwnd), WM_CTLCOLOR,
+                                hdc, MAKELONG( hwnd, control ) );
+}
+
+
+/***********************************************************************
  *           RedrawWindow    (USER.290)
  */
 BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 {
-    HRGN tmpRgn, hrgn = 0;
-    RECT rectClient, rectWindow;
+    HRGN tmpRgn, hrgn;
+    RECT rectClient;
     WND * wndPtr;
 
     if (!hwnd) hwnd = GetDesktopWindow();
@@ -129,111 +139,68 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
                      hwnd, hrgnUpdate, flags);
     }
     GetClientRect( hwnd, &rectClient );
-    rectWindow = wndPtr->rectWindow;
-    OffsetRect(&rectWindow, -wndPtr->rectClient.left, -wndPtr->rectClient.top);
 
     if (flags & RDW_INVALIDATE)  /* Invalidate */
     {
-	if (hrgnUpdate)  /* Invalidate a region */
-	{
-	    if (flags & RDW_FRAME) tmpRgn = CreateRectRgnIndirect(&rectWindow);
-	    else tmpRgn = CreateRectRgnIndirect( &rectClient );
-	    if (!tmpRgn) return FALSE;
-	    hrgn = CreateRectRgn( 0, 0, 0, 0 );
-	    if (CombineRgn( hrgn, hrgnUpdate, tmpRgn, RGN_AND ) == NULLREGION)
-	    {
-		DeleteObject( hrgn );
-		hrgn = 0;
-	    }
-	    DeleteObject( tmpRgn );
-	}
-	else  /* Invalidate a rectangle */
-	{
-	    RECT rect;
-	    if (flags & RDW_FRAME)
-	    {
-		if (rectUpdate) IntersectRect( &rect, rectUpdate, &rectWindow);
-		else rect = rectWindow;
-	    }
-	    else
-	    {
-		if (rectUpdate) IntersectRect( &rect, rectUpdate, &rectClient);
-		else rect = rectClient;
-	    }
-	    if (!IsRectEmpty(&rect)) hrgn = CreateRectRgnIndirect( &rect );
-	}
-
-	  /* Set update region */
-
-	if (hrgn)
-	{
-	    if (!wndPtr->hrgnUpdate)
-	    {
-		wndPtr->hrgnUpdate = hrgn;
-		if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
-		    MSG_IncPaintCount( wndPtr->hmemTaskQ );
-	    }
-	    else
-	    {
-		tmpRgn = CreateRectRgn( 0, 0, 0, 0 );
-		CombineRgn( tmpRgn, wndPtr->hrgnUpdate, hrgn, RGN_OR );
-		DeleteObject( wndPtr->hrgnUpdate );
-		DeleteObject( hrgn );
-		wndPtr->hrgnUpdate = tmpRgn;
-	    }
-	}
+        if (wndPtr->hrgnUpdate)  /* Is there already an update region? */
+        {
+            tmpRgn = CreateRectRgn( 0, 0, 0, 0 );
+            if ((hrgn = hrgnUpdate) == 0)
+                hrgn = CreateRectRgnIndirect( rectUpdate ? rectUpdate :
+                                              &rectClient );
+            CombineRgn( tmpRgn, wndPtr->hrgnUpdate, hrgn, RGN_OR );
+            DeleteObject( wndPtr->hrgnUpdate );
+            wndPtr->hrgnUpdate = tmpRgn;
+            if (!hrgnUpdate) DeleteObject( hrgn );
+        }
+        else  /* No update region yet */
+        {
+            if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
+                MSG_IncPaintCount( wndPtr->hmemTaskQ );
+            if (hrgnUpdate)
+            {
+                wndPtr->hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
+                CombineRgn( wndPtr->hrgnUpdate, hrgnUpdate, 0, RGN_COPY );
+            }
+            else wndPtr->hrgnUpdate = CreateRectRgnIndirect( rectUpdate ?
+                                                    rectUpdate : &rectClient );
+        }
         if (flags & RDW_FRAME) wndPtr->flags |= WIN_NEEDS_NCPAINT;
         if (flags & RDW_ERASE) wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
 	flags |= RDW_FRAME;  /* Force invalidating the frame of children */
     }
     else if (flags & RDW_VALIDATE)  /* Validate */
     {
-	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-	if (!(hrgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
-
-	  /* Remove frame from update region */
-
-	if (wndPtr->hrgnUpdate && (flags & RDW_NOFRAME))
-	{
-	    if (!(tmpRgn = CreateRectRgnIndirect( &rectClient )))
-		return FALSE;
-	    if (CombineRgn(hrgn,tmpRgn,wndPtr->hrgnUpdate,RGN_AND) == NULLREGION)
-	    {
-		DeleteObject( hrgn );
-		hrgn = 0;
-	    }
-	    DeleteObject( tmpRgn );
-	    DeleteObject( wndPtr->hrgnUpdate );
-	    wndPtr->hrgnUpdate = hrgn;
-	    hrgn = CreateRectRgn( 0, 0, 0, 0 );
-	}
-
-	  /* Set update region */
-
-	if (wndPtr->hrgnUpdate)
-	{
-	    int res;
-	    if (hrgnUpdate)  /* Validate a region */
-	    {
-		res = CombineRgn(hrgn,wndPtr->hrgnUpdate,hrgnUpdate,RGN_DIFF);
-	    }
-	    else  /* Validate a rectangle */
-	    {
-		if (rectUpdate) tmpRgn = CreateRectRgnIndirect( rectUpdate );
-		else tmpRgn = CreateRectRgnIndirect( &rectWindow );
-		res = CombineRgn( hrgn, wndPtr->hrgnUpdate, tmpRgn, RGN_DIFF );
-		DeleteObject( tmpRgn );
-	    }
-	    DeleteObject( wndPtr->hrgnUpdate );
-	    if (res == NULLREGION)
-	    {
-		DeleteObject( hrgn );
-		wndPtr->hrgnUpdate = 0;
+          /* We need an update region in order to validate anything */
+        if (wndPtr->hrgnUpdate)
+        {
+            if (!hrgnUpdate && !rectUpdate)
+            {
+                  /* Special case: validate everything */
+                DeleteObject( wndPtr->hrgnUpdate );
+                wndPtr->hrgnUpdate = 0;
+            }
+            else
+            {
+                tmpRgn = CreateRectRgn( 0, 0, 0, 0 );
+                if ((hrgn = hrgnUpdate) == 0)
+                    hrgn = CreateRectRgnIndirect( rectUpdate );
+                if (CombineRgn( tmpRgn, wndPtr->hrgnUpdate,
+                                hrgn, RGN_DIFF ) == NULLREGION)
+                {
+                    DeleteObject( tmpRgn );
+                    tmpRgn = 0;
+                }
+                DeleteObject( wndPtr->hrgnUpdate );
+                wndPtr->hrgnUpdate = tmpRgn;
+                if (!hrgnUpdate) DeleteObject( hrgn );
+            }
+            if (!wndPtr->hrgnUpdate)  /* No more update region */
 		if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
 		    MSG_DecPaintCount( wndPtr->hmemTaskQ );
-	    }
-	    else wndPtr->hrgnUpdate = hrgn;
-	}
+        }
+        if (flags & RDW_NOFRAME) wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
+	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
     }
 
       /* Set/clear internal paint flag */
@@ -393,7 +360,6 @@ BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
  */
 int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
-    HRGN hrgnClip;
     int retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return ERROR;
@@ -403,13 +369,8 @@ int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
         SetRectRgn( hrgn, 0, 0, 0, 0 );
         return NULLREGION;
     }
-    hrgnClip = CreateRectRgn( 0, 0,
-                             wndPtr->rectClient.right-wndPtr->rectClient.left,
-                             wndPtr->rectClient.bottom-wndPtr->rectClient.top);
-    if (!hrgnClip) return ERROR;
-    retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, hrgnClip, RGN_AND );
+    retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
     if (erase) RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
-    DeleteObject( hrgnClip );
     return retval;
 }
 

@@ -47,10 +47,11 @@ then
 fi
 
 echo
-echo -n 'Use the XPM library (Y/N) [N]? '
+echo -n 'Use the XPM library (Y/N) [Y]? '
 read input
-if [ "$input" = 'y' -o "$input" = 'Y' ]
-then
+if [ "$input" = 'n' -o "$input" = 'N' ]
+then :
+else
 	XPM='#define USE_XPM'
 	ALLDEFINES="$ALLDEFINES -DUSE_XPM"
 fi

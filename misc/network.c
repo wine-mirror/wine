@@ -4,7 +4,6 @@
 
 #include "stdio.h"
 #include "windows.h"
-#include "win.h"
 #include "user.h"
 
 #define WN_SUCCESS       			0x0000

@@ -283,23 +283,13 @@ LONG MDIMaximizeChild(HWND parent, HWND child, MDICLIENTINFO *ci)
 LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
 {
     HWND    child;
-    WND    *w      = WIN_FindWndPtr(parent);
-    LPRECT  lprect = &ci->rectRestore;
 
     dprintf_mdi(stddeb,"restoring mdi child\n");
 
     child = ci->hwndActiveChild;
-    
-    w->dwStyle &= ~WS_MAXIMIZE;
-    SetWindowPos(child, 0, lprect->left, lprect->top, 
-		 lprect->right - lprect->left + 1, 
-		 lprect->bottom - lprect->top + 1,
-		 SWP_NOACTIVATE | SWP_NOZORDER);
-    
     ci->flagChildMaximized = FALSE;
 
     ShowWindow(child, SW_RESTORE);		/* display the window */
-    SendMessage(GetParent(parent), WM_NCPAINT, 0, 0);
     MDIBringChildToTop(parent, child, FALSE, FALSE);
 
     return 0;

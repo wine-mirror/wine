@@ -320,7 +320,7 @@ length	540
 #323 GETMESSAGE2
 324 pascal FillWindow(word word word word) FillWindow(1 2 3 4)
 325 pascal PaintRect(word word word word ptr) PaintRect(1 2 3 4 5)
-#326 GETCONTROLBRUSH
+326 pascal16 GetControlBrush(word word word) GetControlBrush(1 2 3)
 331 pascal EnableHardwareInput(word) EnableHardwareInput(1)
 332 return UserYield 0 0
 #333 ISUSERIDLE

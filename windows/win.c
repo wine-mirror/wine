@@ -400,7 +400,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
       /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
-    WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
+    NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
 
     if ( maxSize.x < width)
       {
@@ -532,6 +532,21 @@ BOOL DestroyWindow( HWND hwnd )
 	ReleaseCapture();
     WIN_SendParentNotify( hwnd, WM_DESTROY, MAKELONG(hwnd, wndPtr->wIDmenu) );
 
+      /* Recursively destroy owned windows */
+
+    for (;;)
+    {
+        HWND hwndSibling = GetWindow( hwnd, GW_HWNDFIRST );
+        while (hwndSibling)
+        {
+            WND *siblingPtr = WIN_FindWndPtr( hwndSibling );
+            if (siblingPtr->hwndOwner == hwnd) break;
+            hwndSibling = siblingPtr->hwndNext;
+        }
+        if (hwndSibling) DestroyWindow( hwndSibling );
+        else break;
+    }
+
       /* Send destroy messages and destroy children */
 
     SendMessage( hwnd, WM_DESTROY, 0, 0 );
@@ -560,7 +575,6 @@ void CloseWindow(HWND hWnd)
 }
 
  
- 
 /***********************************************************************
  *           OpenIcon   (USER.44)
  */
@@ -571,7 +585,6 @@ BOOL OpenIcon(HWND hWnd)
     return(TRUE);
 }
 
- 
  
 /***********************************************************************
  *           FindWindow   (USER.50)

@@ -1,4 +1,33 @@
 ----------------------------------------------------------------------
+Wed Feb  1 19:27:55 1995  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [windows/nonclient.c] [windows/winpos.c]
+	Implemented maximized windows.
+	Implemented icon positioning and ArrangeIconicWindows().
+	Bug fixes in SetWindowPos().
+
+	* [windows/painting.c]
+	Implemented GetControlBrush().
+	Window frame is no longer contained in the update region.
+
+	* [windows/win.c]
+	Destroy owned windows upon DestroyWindow().
+
+Sun Jan 29 16:17:22 1995  David Metcalfe <david@prism.demon.co.uk>
+
+	* [controls/edit.c]
+	Changed line terminator to \r\n to be compatible with
+	Windows.  Fixed bug in text selection.
+
+Sun Jan 29 14:10:22 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+       * [misc/shell.c]
+       Rewrote RegCreateKey and RegOpenKey, since they were completely broken.
+       Fixed a bug in RegQueryKeyValue. Implemented RegEnumKey
+       These functions now work somewhat more the way Windows programs expect
+       them to work.
+
+----------------------------------------------------------------------
 Sun Jan 22 18:55:33 1995  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
 	* [loader/resource.c] [objects/dib.c]
