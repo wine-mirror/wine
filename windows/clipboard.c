@@ -57,7 +57,7 @@ static HWND hWndViewer     = 0;   /* start of viewers chain */
 static WORD LastRegFormat = CF_REGFORMATBASE;
 
 /* Clipboard cache initial data.
- * WARNING: This data ordering is dependendent on the WINE_CLIPFORMAT structure
+ * WARNING: This data ordering is dependent on the WINE_CLIPFORMAT structure
  * declared in clipboard.h
  */
 WINE_CLIPFORMAT ClipFormats[]  = {
@@ -390,8 +390,9 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
 {
   /*
    * If WINE is not the selection owner, and the format is available
-   * we must ask the the driver to render the data to the clipboard cache.
+   * we must ask the driver to render the data to the clipboard cache.
    */
+  TRACE("enter format=%d\n", lpFormat->wFormatID);
   if ( !USER_Driver.pIsSelectionOwner() 
        && USER_Driver.pIsClipboardFormatAvailable( lpFormat->wFormatID ) )
   {
@@ -492,8 +493,9 @@ static INT CLIPBOARD_ConvertText(WORD src_fmt, void const *src, INT src_size,
 static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 {
     LPWINE_CLIPFORMAT lpSource = ClipFormats; 
-    LPWINE_CLIPFORMAT lpTarget;
-    
+    LPWINE_CLIPFORMAT lpTarget = NULL;
+    BOOL foundData = FALSE;
+ 
     /* Asked for CF_TEXT but not available - always attempt to convert
        from CF_UNICODETEXT or CF_OEMTEXT */
     if( wFormat == CF_TEXT && !ClipFormats[CF_TEXT-1].wDataPresent )
@@ -503,7 +505,7 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    /* Convert UNICODETEXT -> TEXT */
 	    lpSource = &ClipFormats[CF_UNICODETEXT-1];
 	    lpTarget = &ClipFormats[CF_TEXT-1];
-
+            foundData = TRUE;
 	    TRACE("\tUNICODETEXT -> TEXT\n");
 	}
 	else if(ClipFormats[CF_OEMTEXT-1].wDataPresent)
@@ -511,11 +513,9 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    /* Convert OEMTEXT -> TEXT */
 	    lpSource = &ClipFormats[CF_OEMTEXT-1];
 	    lpTarget = &ClipFormats[CF_TEXT-1];
-
+            foundData = TRUE;
 	    TRACE("\tOEMTEXT -> TEXT\n");
 	}
-	else
-	    lpSource = NULL; /* Conversion format is not available */
     }
     /* Asked for CF_OEMTEXT but not available - always attempt to convert
        from CF_UNICODETEXT or CF_TEXT */
@@ -526,7 +526,7 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    /* Convert UNICODETEXT -> OEMTEXT */
 	    lpSource = &ClipFormats[CF_UNICODETEXT-1];
 	    lpTarget = &ClipFormats[CF_OEMTEXT-1];
-
+	    foundData = TRUE;
 	    TRACE("\tUNICODETEXT -> OEMTEXT\n");
 	}
 	else if(ClipFormats[CF_TEXT-1].wDataPresent)
@@ -534,11 +534,9 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    /* Convert TEXT -> OEMTEXT */
 	    lpSource = &ClipFormats[CF_TEXT-1];
 	    lpTarget = &ClipFormats[CF_OEMTEXT-1];
-
+            foundData = TRUE;
 	    TRACE("\tTEXT -> OEMTEXT\n");
 	}
-	else
-	    lpSource = NULL; /* Conversion format is not available */
     }
     /* Asked for CF_UNICODETEXT but not available - always attempt to convert
        from CF_TEXT or CF_OEMTEXT */
@@ -549,7 +547,7 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    /* Convert TEXT -> UNICODETEXT */
 	    lpSource = &ClipFormats[CF_TEXT-1];
 	    lpTarget = &ClipFormats[CF_UNICODETEXT-1];
-
+            foundData = TRUE;
 	    TRACE("\tTEXT -> UNICODETEXT\n");
 	}
 	else if(ClipFormats[CF_OEMTEXT-1].wDataPresent)
@@ -557,17 +555,22 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    /* Convert OEMTEXT -> UNICODETEXT */
 	    lpSource = &ClipFormats[CF_OEMTEXT-1];
 	    lpTarget = &ClipFormats[CF_UNICODETEXT-1];
-
+            foundData = TRUE;
 	    TRACE("\tOEMTEXT -> UNICODETEXT\n");
 	}
-	else
-	    lpSource = NULL; /* Conversion format is not available */
     }
-    /* Text format requested is available - no conversion necessary */
-    else
-    {
-	lpSource = __lookup_format( ClipFormats, wFormat );
-	lpTarget = lpSource;
+    if (!foundData)
+    {   
+        if ((wFormat == CF_TEXT) || (wFormat == CF_OEMTEXT))
+        {
+            lpSource = &ClipFormats[CF_UNICODETEXT-1];
+            lpTarget = __lookup_format( ClipFormats, wFormat );
+        }
+        else
+        {
+	    lpSource = __lookup_format( ClipFormats, wFormat );
+	    lpTarget = lpSource;
+        }
     }
 
     /* First render the source text format */
@@ -632,6 +635,62 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 
     return (lpTarget->hData16 || lpTarget->hData32) ? lpTarget : NULL;
 }
+
+/**************************************************************************
+ *            CLIPBOARD_EnumClipboardFormats   (internal)
+ */
+static UINT CLIPBOARD_EnumClipboardFormats( UINT wFormat )
+{
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+    BOOL bFormatPresent;
+
+    if (wFormat == 0) /* start from the beginning */
+	lpFormat = ClipFormats;
+    else
+    {
+	/* walk up to the specified format record */
+
+	if( !(lpFormat = __lookup_format( lpFormat, wFormat )) ) 
+	    return 0;
+	lpFormat = lpFormat->NextFormat; /* right */
+    }
+
+    while(TRUE) 
+    {
+	if (lpFormat == NULL) return 0;
+
+	if(CLIPBOARD_IsPresent(lpFormat->wFormatID))
+	    break;
+
+        /* Query the driver if not yet in the cache */
+        if (!USER_Driver.pIsSelectionOwner())
+        {
+	    if(lpFormat->wFormatID == CF_UNICODETEXT ||
+	       lpFormat->wFormatID == CF_TEXT ||
+	       lpFormat->wFormatID == CF_OEMTEXT)
+	    {
+		if(USER_Driver.pIsClipboardFormatAvailable(CF_UNICODETEXT) ||
+		   USER_Driver.pIsClipboardFormatAvailable(CF_TEXT) ||
+		   USER_Driver.pIsClipboardFormatAvailable(CF_OEMTEXT))
+		    bFormatPresent = TRUE;
+		else
+		    bFormatPresent = FALSE;
+	    }
+	    else
+		bFormatPresent = USER_Driver.pIsClipboardFormatAvailable(lpFormat->wFormatID);
+
+	    if(bFormatPresent)
+		break;
+        }
+
+	lpFormat = lpFormat->NextFormat;
+    }
+
+    TRACE("Next available format %d\n", lpFormat->wFormatID);
+
+    return lpFormat->wFormatID;
+}
+
 
 /**************************************************************************
  *                WIN32 Clipboard implementation 
@@ -1074,7 +1133,6 @@ INT WINAPI CountClipboardFormats(void)
     return FormatCount;
 }
 
-
 /**************************************************************************
  *		EnumClipboardFormats (USER.144)
  */
@@ -1089,9 +1147,6 @@ UINT16 WINAPI EnumClipboardFormats16( UINT16 wFormat )
  */
 UINT WINAPI EnumClipboardFormats( UINT wFormat )
 {
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
-    BOOL bFormatPresent;
-
     TRACE("(%04X)\n", wFormat);
 
     if (CLIPBOARD_IsLocked())
@@ -1100,51 +1155,7 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
         return 0;
     }
 
-    if (wFormat == 0) /* start from the beginning */
-	lpFormat = ClipFormats;
-    else
-    {
-	/* walk up to the specified format record */
-
-	if( !(lpFormat = __lookup_format( lpFormat, wFormat )) ) 
-	    return 0;
-	lpFormat = lpFormat->NextFormat; /* right */
-    }
-
-    while(TRUE) 
-    {
-	if (lpFormat == NULL) return 0;
-
-	if(CLIPBOARD_IsPresent(lpFormat->wFormatID))
-	    break;
-
-        /* Query the driver if not yet in the cache */
-        if (!USER_Driver.pIsSelectionOwner())
-        {
-	    if(lpFormat->wFormatID == CF_UNICODETEXT ||
-	       lpFormat->wFormatID == CF_TEXT ||
-	       lpFormat->wFormatID == CF_OEMTEXT)
-	    {
-		if(USER_Driver.pIsClipboardFormatAvailable(CF_UNICODETEXT) ||
-		   USER_Driver.pIsClipboardFormatAvailable(CF_TEXT) ||
-		   USER_Driver.pIsClipboardFormatAvailable(CF_OEMTEXT))
-		    bFormatPresent = TRUE;
-		else
-		    bFormatPresent = FALSE;
-	    }
-	    else
-		bFormatPresent = USER_Driver.pIsClipboardFormatAvailable(lpFormat->wFormatID);
-
-	    if(bFormatPresent)
-		break;
-        }
-
-	lpFormat = lpFormat->NextFormat;
-    }
-
-    TRACE("Next available format %d\n", lpFormat->wFormatID);
-
-    return lpFormat->wFormatID;
+    return CLIPBOARD_EnumClipboardFormats(wFormat);
 }
 
 
@@ -1368,8 +1379,13 @@ BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
     if (wFormat == 0)  /* Reject this case quickly */
         bRet = FALSE;
     else
-	bRet = EnumClipboardFormats(wFormat - 1) == wFormat;
-
+    {
+        UINT iret = CLIPBOARD_EnumClipboardFormats(wFormat - 1);
+        if ((wFormat == CF_TEXT) || (wFormat == CF_OEMTEXT) || (wFormat == CF_UNICODETEXT))
+            bRet = ((iret == CF_TEXT) || (iret == CF_OEMTEXT) || (iret == CF_UNICODETEXT));
+        else
+	    bRet = iret == wFormat;
+    }
     TRACE("(%04X)- ret(%d)\n", wFormat, bRet);
     return bRet;
 }

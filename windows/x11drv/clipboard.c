@@ -192,7 +192,7 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
 /**************************************************************************
  *	        X11DRV_CLIPBOARD_IsNativeProperty
  *
- *  Checks if a property is a native property type
+ *  Checks if a property is a native Wine property type
  */
 BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
 {
@@ -332,6 +332,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     Window         w;
     Window         ownerSelection = 0;
         
+    TRACE("enter\n");
     /*
      * Empty the clipboard cache 
      */
@@ -379,7 +380,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     if ( (xe.xselection.target != aTargets)
           || (xe.xselection.property == None) )
     {
-        TRACE("\tCould not retrieve TARGETS\n");
+        TRACE("\tExit, could not retrieve TARGETS\n");
         return cSelectionTargets;
     }
 
@@ -444,7 +445,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
        /* Free the list of targets */
        TSXFree(targetList);
     }
-    
+
     return cSelectionTargets;
 }
 
@@ -890,7 +891,7 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
     Window ownerPrimary = TSXGetSelectionOwner(display,XA_PRIMARY);
     Window ownerClipboard = TSXGetSelectionOwner(display,xaClipboard);
 
-    TRACE("%d\n", wFormat);
+    TRACE("enter for %d\n", wFormat);
 
     /*
      * If the selection has not been previously cached, or the selection has changed,
@@ -915,9 +916,13 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
     /* Exit if there is no selection */
     if ( !ownerClipboard && !ownerPrimary )
     {
-	TRACE("There is no selection\n");
+	TRACE("There is no selection owner\n");
         return FALSE;
     }
+   
+    /* Check if the format is available in the clipboard cache */
+    if ( CLIPBOARD_IsPresent(wFormat) )
+        return TRUE;
 
     /*
      * Many X client apps (such as XTerminal) don't support being queried
