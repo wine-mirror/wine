@@ -392,7 +392,7 @@ HRESULT WINAPI RegisterTypeLib(
         {
             CHAR buf[20];
             /* FIXME: is %u correct? */
-            snprintf(buf, strlen(buf), "%u", attr->wLibFlags);
+            snprintf(buf, sizeof(buf), "%u", attr->wLibFlags);
             if (RegSetValueExA(subKey, NULL, 0, REG_SZ,
                 buf, lstrlenA(buf) + 1) != ERROR_SUCCESS)
                 res = E_FAIL;
@@ -621,11 +621,92 @@ static void TLB_DoRefType(TLBContext *pcx, int offset, TLBRefType ** pprtd);
 /*
  debug
 */
+static void dump_VarType(VARTYPE vt,char *szVarType) {
+    /* FIXME : we could have better trace here, depending on the VARTYPE
+     * of the variant
+     */
+    switch(vt) {
+    case VT_UI1: sprintf(szVarType, "VT_UI"); break;
+    case VT_I2: sprintf(szVarType, "VT_I2"); break;
+    case VT_I4: sprintf(szVarType, "VT_I4"); break;
+    case VT_R4: sprintf(szVarType, "VT_R4"); break;
+    case VT_R8: sprintf(szVarType, "VT_R8"); break;
+    case VT_BOOL: sprintf(szVarType, "VT_BOOL"); break;
+    case VT_ERROR: sprintf(szVarType, "VT_ERROR"); break;
+    case VT_CY: sprintf(szVarType, "VT_CY"); break;
+    case VT_DATE: sprintf(szVarType, "VT_DATE"); break;
+    case VT_BSTR: sprintf(szVarType, "VT_BSTR"); break;
+    case VT_BYREF: case VT_UNKNOWN: sprintf(szVarType, "VT_BYREF"); break;
+    case VT_DISPATCH: sprintf(szVarType, "VT_DISPATCH"); break;
+    case VT_ARRAY: sprintf(szVarType, "VT_ARRAY"); break;
+    case VT_I1: sprintf(szVarType, "VT_I2"); break;
+    case VT_UI2: sprintf(szVarType, "VT_UI2"); break;
+    case VT_UI4: sprintf(szVarType, "VT_UI4"); break;
+    case VT_INT: sprintf(szVarType, "VT_INT"); break;
+    case VT_UINT: sprintf(szVarType, "VT_UINT"); break;
+    default: sprintf(szVarType, "unknown");break;
+    }
+}
+static void dump_ELEMDESC(ELEMDESC *edesc) {
+  char buf[200];
+  dump_VarType(edesc->tdesc.vt,buf);
+  MESSAGE("\t\ttdesc.vartype %d (%s)\n",edesc->tdesc.vt,buf);
+  MESSAGE("\t\tu.parmadesc.flags %x\n",edesc->u.paramdesc.wParamFlags);
+  MESSAGE("\t\tu.parmadesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
+}
+static void dump_FUNCDESC(FUNCDESC *funcdesc) {
+  int i;
+  MESSAGE("memid is %d\n",(int)funcdesc->memid);
+  for (i=0;i<funcdesc->cParams;i++)
+      MESSAGE("Param %d:\n",i);dump_ELEMDESC(funcdesc->lprgelemdescParam+i);
+  MESSAGE("\tfunckind: %d (",funcdesc->funckind);
+  switch (funcdesc->funckind) {
+  case FUNC_VIRTUAL: MESSAGE("virtual");break;
+  case FUNC_PUREVIRTUAL: MESSAGE("pure virtual");break;
+  case FUNC_NONVIRTUAL: MESSAGE("nonvirtual");break;
+  case FUNC_STATIC: MESSAGE("static");break;
+  case FUNC_DISPATCH: MESSAGE("dispatch");break;
+  default: MESSAGE("unknown");break;
+  }
+  MESSAGE(")\n\tinvkind: %d (",funcdesc->invkind);
+  switch (funcdesc->invkind) {
+  case INVOKE_FUNC: MESSAGE("func");break;
+  case INVOKE_PROPERTYGET: MESSAGE("property get");break;
+  case INVOKE_PROPERTYPUT: MESSAGE("property put");break;
+  case INVOKE_PROPERTYPUTREF: MESSAGE("property put ref");break;
+  }
+  MESSAGE(")\n\tcallconv: %d (",funcdesc->callconv);
+  switch (funcdesc->callconv) {
+  case CC_CDECL: MESSAGE("cdecl");break;
+  case CC_PASCAL: MESSAGE("pascal");break;
+  case CC_STDCALL: MESSAGE("stdcall");break;
+  case CC_SYSCALL: MESSAGE("syscall");break;
+  default:break;
+  }
+  MESSAGE(")\n\toVft: %d\n", funcdesc->oVft);
+  MESSAGE("\tcParamsOpt: %d\n", funcdesc->cParamsOpt);
+  MESSAGE("\twFlags: %x\n", funcdesc->wFuncFlags);
+}
+static void dump_TLBFuncDescOne(TLBFuncDesc * pfd)
+{
+  int i;
+  if (!TRACE_ON(typelib))
+      return;
+  MESSAGE("%s(%u)\n", debugstr_w(pfd->Name), pfd->funcdesc.cParams);
+  for (i=0;i<pfd->funcdesc.cParams;i++)
+      MESSAGE("\tparm%d: %s\n",i,debugstr_w(pfd->pParamDesc[i].Name));
+
+
+  dump_FUNCDESC(&(pfd->funcdesc));
+
+  MESSAGE("\thelpstring: %s\n", debugstr_w(pfd->HelpString));
+  MESSAGE("\tentry: %s\n", debugstr_w(pfd->Entry));
+}
 static void dump_TLBFuncDesc(TLBFuncDesc * pfd)
 {
 	while (pfd)
 	{
-	  TRACE_(typelib)("%s(%u)\n", debugstr_w(pfd->Name), pfd->funcdesc.cParams);
+	  dump_TLBFuncDescOne(pfd);
 	  pfd = pfd->next;
 	};
 }
@@ -660,82 +741,8 @@ static void dump_Variant(VARIANT * pvar)
     /* FIXME : we could have better trace here, depending on the VARTYPE
      * of the variant
      */
-    switch(V_VT(pvar))
-    {
-        case VT_UI1:
-            sprintf(szVarType, "VT_UI");
-            break;
-            
-        case VT_I2:
-            sprintf(szVarType, "VT_I2");
-            break;
- 
-        case VT_I4:
-            sprintf(szVarType, "VT_I4");
-            break;
- 
-        case VT_R4:
-            sprintf(szVarType, "VT_R4");
-            break;
- 
-        case VT_R8:
-            sprintf(szVarType, "VT_R8");
-            break;
- 
-        case VT_BOOL:
-            sprintf(szVarType, "VT_BOOL");
-            break;
- 
-        case VT_ERROR:
-            sprintf(szVarType, "VT_ERROR");
-            break;
-            
-        case VT_CY:
-            sprintf(szVarType, "VT_CY");
-            break;
-            
-        case VT_DATE:
-            sprintf(szVarType, "VT_DATE");
-            break;
-            
-        case VT_BSTR:
-            sprintf(szVarType, "VT_BSTR");
-            break;
-            
-        case VT_BYREF:
-            case VT_UNKNOWN:
-            sprintf(szVarType, "VT_BYREF");
-            break;
-            
-        case VT_DISPATCH:
-            sprintf(szVarType, "VT_DISPATCH");
-            break;
-            
-        case VT_ARRAY:
-            sprintf(szVarType, "VT_ARRAY");
-            break;
-            
-        case VT_I1:
-            sprintf(szVarType, "VT_I2");
-            break;
-            
-        case VT_UI2:
-            sprintf(szVarType, "VT_UI2");
-            break;
-            
-        case VT_UI4:
-            sprintf(szVarType, "VT_UI4");
-            break;
-            
-        case VT_INT:
-            sprintf(szVarType, "VT_INT");
-            break;
-            
-        case VT_UINT:
-            sprintf(szVarType, "VT_UINT");
-            break;
-    }
-        
+    dump_VarType(V_VT(pvar),szVarType);
+
     TRACE("VARTYPE: %s\n", szVarType);
     
     switch (V_VT(pvar))
@@ -1459,7 +1466,7 @@ ITypeInfoImpl * TLB_DoTypeInfo(
     ptiRet->pTypeLib = pLibInfo;
     ptiRet->index=count;
 /* fill in the typeattr fields */
-    FIXME("Assign constructor/destrutor memid\n");
+    FIXME("Assign constructor/destructor memid\n");
 
     TLB_ReadGuid(&ptiRet->TypeAttr.guid, tiBase.posguid, pcx);
     ptiRet->TypeAttr.lcid=pLibInfo->LibAttr.lcid;   /* FIXME: correct? */
@@ -2846,21 +2853,188 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
  * Invokes a method, or accesses a property of an object, that implements the
  * interface described by the type description.
  */
+static DWORD _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
+    DWORD res;
+
+    if (TRACE_ON(ole)) {
+	int i;
+	MESSAGE("Calling %p(",func);
+	for (i=0;i<nrargs;i++) MESSAGE("%08lx,",args[i]);
+	MESSAGE(")\n");
+    }
+
+    switch (callconv) {
+    case CC_STDCALL:
+
+	switch (nrargs) {
+	case 0: {
+		DWORD (WINAPI *xfunc)() = func;
+		res = xfunc();
+		break;
+	}
+	case 1: {
+		DWORD (WINAPI *xfunc)(DWORD) = func;
+		res = xfunc(args[0]);
+		break;
+	}
+	case 2: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1]);
+		break;
+	}
+	case 3: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2]);
+		break;
+	}
+	default:
+		FIXME("unsupported number of arguments %d in stdcall\n",nrargs);
+		res = -1;
+		break;
+	}
+	break;
+    default:
+	FIXME("unsupported calling convention %d\n",callconv);
+	res = -1;
+	break;
+    }
+    TRACE("returns %08lx\n",res);
+    return res;
+}
+
 static HRESULT WINAPI ITypeInfo_fnInvoke(
-	ITypeInfo2 *iface,
-	VOID  *pIUnk,
-        MEMBERID memid,
-	UINT16 dwFlags,
-	DISPPARAMS  *pDispParams,
-        VARIANT  *pVarResult,
-	EXCEPINFO  *pExcepInfo,
-	UINT  *pArgErr)
+    ITypeInfo2 *iface,
+    VOID  *pIUnk,
+    MEMBERID memid,
+    UINT16 dwFlags,
+    DISPPARAMS  *pDispParams,
+    VARIANT  *pVarResult,
+    EXCEPINFO  *pExcepInfo,
+    UINT  *pArgErr)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
-    FIXME("(%p)(%p,id=0x%08lx,0x%08x,%p,%p,%p,%p) stub!\n",
-      This, pIUnk, memid, dwFlags, pDispParams, pVarResult, pExcepInfo, pArgErr );
+    TLBFuncDesc * pFDesc; 
+    TLBVarDesc * pVDesc; 
+    int i;
+
+    TRACE("(%p)(%p,id=%ld,flags=0x%08x,%p,%p,%p,%p) partial stub!\n",
+      This,pIUnk,memid,dwFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
+    );
     dump_DispParms(pDispParams);
-    return S_OK;
+
+    for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next)
+	if (pFDesc->funcdesc.memid == memid) {
+	    if (pFDesc->funcdesc.invkind & (dwFlags & ~DISPATCH_METHOD))
+		break;
+	}
+    if (pFDesc) {
+	dump_TLBFuncDescOne(pFDesc);
+	switch (pFDesc->funcdesc.funckind) {
+	case FUNC_PUREVIRTUAL:
+	case FUNC_VIRTUAL: {
+	    DWORD res;
+	    DWORD *args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*(pFDesc->funcdesc.cParams+1));
+	    DWORD *args2 = (DWORD*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD)*(pFDesc->funcdesc.cParams));
+	    args[0] = (DWORD)pIUnk;
+
+	    for (i=0;i<pFDesc->funcdesc.cParams;i++) {
+		if (i<pDispParams->cArgs) {
+		    TRACE("set %d to disparg type %d vs %d\n",i,
+			    pDispParams->rgvarg[i].vt,
+			    pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt
+		    );
+		    args[i+1] = pDispParams->rgvarg[i].u.lVal;
+		} else {
+		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
+		    TRACE("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
+		    /*FIXME: give pointers for the rest, so propertyget works*/
+		    args[i+1] = (DWORD)&args2[i];
+
+		    /* If pointer to variant, pass reference to variant
+		     * in result variant array.
+		     */
+		    if ((tdesc->vt == VT_PTR) &&
+			(tdesc->u.lptdesc->vt == VT_VARIANT) &&
+			pVarResult
+		    )
+			args[i+1] = (DWORD)(pVarResult+(i-pDispParams->cArgs));
+		}
+	    }
+	    if (pFDesc->funcdesc.cParamsOpt)
+		FIXME("Does not support optional parameters (%d)\n",
+			pFDesc->funcdesc.cParamsOpt
+		);
+
+	    res = _invoke((*(DWORD***)pIUnk)[pFDesc->funcdesc.oVft/4],
+		    pFDesc->funcdesc.callconv,
+		    pFDesc->funcdesc.cParams+1,
+		    args
+	    );
+	    if (pVarResult && (dwFlags & (DISPATCH_PROPERTYGET))) {
+		for (i=0;i<pFDesc->funcdesc.cParams-pDispParams->cArgs;i++) {
+		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
+		    /* If we are a pointer to a variant, we are done already */
+		    if ((tdesc->vt==VT_PTR)&&(tdesc->u.lptdesc->vt==VT_VARIANT))
+			continue;
+
+		    VariantInit(&pVarResult[i]);
+		    pVarResult[i].u.intVal = args2[i];
+
+		    if (tdesc->vt == VT_PTR)
+			tdesc = tdesc->u.lptdesc;
+		    pVarResult[i].vt = tdesc->vt;
+
+		    /* HACK: VB5 likes this.
+		     * I do not know why. There is 1 example in MSDN which uses
+		     * this which appears broken (mixes int vals and
+		     * IDispatch*.).
+		     */
+		    if ((tdesc->vt == VT_PTR) && (dwFlags & DISPATCH_METHOD))
+			pVarResult[i].vt = VT_DISPATCH;
+		    TRACE("storing into variant: [%d] type %d, val %08x\n",
+			    i,pVarResult[i].vt,pVarResult[i].u.intVal
+		    );
+		}
+	    }
+	    HeapFree(GetProcessHeap(),0,args2);
+	    HeapFree(GetProcessHeap(),0,args);
+	    return S_OK;
+	}
+	case FUNC_DISPATCH:  {
+	   IDispatch *disp;
+	   HRESULT hr;
+
+	   hr = IUnknown_QueryInterface((LPUNKNOWN)pIUnk,&IID_IDispatch,(LPVOID*)&disp);
+	   if (hr) {
+	       FIXME("FUNC_DISPATCH used on object without IDispatch iface?\n");
+	       return hr;
+	   }
+	   FIXME("Calling Invoke in IDispatch iface. untested!\n");
+	   hr = IDispatch_Invoke(
+	       disp,memid,&IID_NULL,LOCALE_USER_DEFAULT,dwFlags,pDispParams,
+	       pVarResult,pExcepInfo,pArgErr
+	   );
+	   if (hr)
+	       FIXME("IDispatch::Invoke failed with %08lx. (Could be not a real error?)\n",hr);
+	   IDispatch_Release(disp);
+	   return hr;
+	}
+	default:
+	   FIXME("Unknown function invocation type %d\n",pFDesc->funcdesc.funckind);
+	   return E_FAIL;
+	}
+    } else {
+	FIXME("variable based invoking not supported yet.\n");
+	for(pVDesc=This->varlist; pVDesc; pVDesc=pVDesc->next) {
+	    if (pVDesc->vardesc.memid == memid) {
+		FIXME("varseek: Found memid name %s\n",debugstr_w(((LPWSTR)pVDesc->Name)));
+		dump_TLBVarDesc(pVDesc);
+		break;
+	    }
+	}
+    }
+    FIXME("Did not find member id %d!\n",(int)memid);
+    return DISP_E_MEMBERNOTFOUND;
 }
 
 /* ITypeInfo::GetDocumentation
