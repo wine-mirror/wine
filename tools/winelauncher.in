@@ -37,7 +37,7 @@
 WINEBIN=@bindir@
 WINELIB=@libdir@
 WINESERVER=
-WINELIBDLLS=@libdir@
+WINEDLLPATH=@dlldir@
 
 #------------------------------------------------------------------------------
 #  Establish Color Scheme
@@ -145,18 +145,19 @@ if [ -x $WINEBIN/server/wineserver ] ; then
     WINESERVER=$WINEBIN/server/wineserver
 fi
 
-if [ -r $WINELIB/dlls/libntdll.so ] ; then
-    WINELIBDLLS=$WINELIB/dlls
+if [ -r $WINELIB/dlls/ntdll.dll.so ] ; then
+    WINEDLLPATH=$WINELIB/dlls
 fi
 
 
 #------------------------------------------------------------------------------
 #  Okay, set the paths and move on.
 #------------------------------------------------------------------------------
-export LD_LIBRARY_PATH=$WINELIB:$WINELIBDLLS:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$WINELIB:$LD_LIBRARY_PATH
 export PATH=$WINEBIN:$PATH
-export WINEDLLPATH=$WINELIBDLLS
 export WINELOADER=$WINEBIN/$WINE_BIN_NAME
+export WINEDLLPATH
+export WINESERVER
 
 info_flag=~/.wine/.no_prelaunch_window_flag
 debug_flag=~/.wine/.no_debug_window_flag
