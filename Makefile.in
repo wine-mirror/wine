@@ -33,16 +33,16 @@ LIBPROGRAMS = \
 # Libraries (not dlls) to build
 LIBRARIES = \
 	library/libwine.$(LIBEXT) \
-	ole/libuuid.a \
+	ole/libwine_uuid.a \
 	tsx11/libwine_tsx11.$(LIBEXT) \
 	unicode/libwine_unicode.$(LIBEXT)
 
 # Libraries symlinks to create at the top level
 LIBSYMLINKS = \
-	libuuid.a \
 	libwine.$(LIBEXT) \
 	libwine_tsx11.$(LIBEXT) \
-	libwine_unicode.$(LIBEXT)
+	libwine_unicode.$(LIBEXT) \
+	libwine_uuid.a
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
@@ -104,8 +104,8 @@ libwine_tsx11.$(LIBEXT): tsx11/libwine_tsx11.$(LIBEXT)
 libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
 	$(RM) $@ && $(LN_S) unicode/libwine_unicode.$(LIBEXT) $@
 
-libuuid.a: ole/libuuid.a
-	$(RM) $@ && $(LN_S) ole/libuuid.a $@
+libwine_uuid.a: ole/libwine_uuid.a
+	$(RM) $@ && $(LN_S) ole/libwine_uuid.a $@
 
 # Dependencies between directories
 

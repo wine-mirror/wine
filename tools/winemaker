@@ -2249,7 +2249,7 @@ then
 fi
 
 CFLAGS="$CFLAGS -fPIC"
-DLL_LINK="\$(WINE_LIBRARY_PATH) \$(LIBRARY_PATH) \$(LIBRARIES:%=-l%) -lwine -lwine_unicode -luuid"
+DLL_LINK="\$(WINE_LIBRARY_PATH) \$(LIBRARY_PATH) \$(LIBRARIES:%=-l%) -lwine -lwine_unicode -lwine_uuid"
 
 AC_SUBST(DLL_LINK)
 AC_SUBST(LDSHARED)
