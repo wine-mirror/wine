@@ -141,7 +141,8 @@ struct _common_directdrawsurface
 {
     IDirectDrawPaletteImpl*     palette;
     IDirectDraw2Impl*           ddraw;
-    IDirectDrawSurface4Impl*    backbuffer;
+
+    struct _surface_chain 	*chain;
 
     DDSURFACEDESC               surface_desc;
 
@@ -232,6 +233,11 @@ struct IDirectDrawSurface4Impl
 	struct _xlib_directdrawsurface	xlib;
     } t;
 } ;
+
+struct _surface_chain {
+	IDirectDrawSurface4Impl	**surfaces;
+	int			nrofsurfaces;
+};
 
 /*****************************************************************************
  * IDirectDrawColorControl implementation structure

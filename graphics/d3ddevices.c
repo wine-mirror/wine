@@ -193,7 +193,6 @@ int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2I
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
 #else
     /* First get the correct visual */
-    TRACE("Backbuffer : %d\n", surface->s.backbuffer == NULL);
     /* if (surface->s.backbuffer == NULL)
        attributeList[3] = None; */
     ENTER_GL();
@@ -216,8 +215,13 @@ int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2I
     
     /* Now override the surface's Flip method (if in double buffering) */
     surface->s.d3d_device = (void *) odev;
-    if (surface->s.backbuffer != NULL)
-      surface->s.backbuffer->s.d3d_device = (void *) odev;
+    {
+	int i;
+	struct _surface_chain *chain = surface->s.chain;
+	for (i=0;i<chain->nrofsurfaces;i++)
+	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
+	      chain->surfaces[i]->s.d3d_device = (void *) odev;
+    }
 #endif
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
@@ -1253,7 +1257,6 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
 #else
     /* First get the correct visual */
-    TRACE("Backbuffer : %d\n", surface->s.backbuffer == NULL);
     /* if (surface->s.backbuffer == NULL)
        attributeList[3] = None; */
     ENTER_GL();
@@ -1273,8 +1276,13 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     
     /* Now override the surface's Flip method (if in double buffering) */
     surface->s.d3d_device = (void *) odev;
-    if (surface->s.backbuffer != NULL)
-      surface->s.backbuffer->s.d3d_device = (void *) odev;
+    {
+	int i;
+	struct _surface_chain *chain = surface->s.chain;
+	for (i=0;i<chain->nrofsurfaces;i++)
+	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
+	      chain->surfaces[i]->s.d3d_device = (void *) odev;
+    }
 #endif
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
