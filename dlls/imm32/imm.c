@@ -10,7 +10,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "winversion.h"
 #include "imm.h"
 
 DEFAULT_DEBUG_CHANNEL(imm);
@@ -222,19 +221,20 @@ BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 LONG WINAPI ImmGetCompositionStringA(
   HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen)
 {
+  OSVERSIONINFOA version;
   FIXME("(0x%08x, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  switch(VERSION_GetVersion())
-    {
-    default:
-      FIXME("%s not supported",VERSION_GetVersionName());
-    case WIN95:
-      return 0xffffffff;
-    case NT40:
-      return 0;
-    }
+  GetVersionExA( &version );
+  switch(version.dwPlatformId)
+  {
+  case VER_PLATFORM_WIN32_WINDOWS: return -1;
+  case VER_PLATFORM_WIN32_NT: return 0;
+  default:
+      FIXME("%ld not supported",version.dwPlatformId);
+      return -1;
+  }
 }
 
 /***********************************************************************
@@ -244,19 +244,20 @@ LONG WINAPI ImmGetCompositionStringW(
   HIMC hIMC, DWORD dwIndex, 
   LPVOID lpBuf, DWORD dwBufLen)
 {
+  OSVERSIONINFOA version;
   FIXME("(0x%08x, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  switch(VERSION_GetVersion())
-    {
-    default:
-      FIXME("%s not supported",VERSION_GetVersionName());
-    case WIN95:
-      return 0xffffffff;
-    case NT40:
-      return 0;
-    }
+  GetVersionExA( &version );
+  switch(version.dwPlatformId)
+  {
+  case VER_PLATFORM_WIN32_WINDOWS: return -1;
+  case VER_PLATFORM_WIN32_NT: return 0;
+  default:
+      FIXME("%ld not supported",version.dwPlatformId);
+      return -1;
+  }
 }
 
 /***********************************************************************
@@ -465,17 +466,20 @@ BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
  */
 UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 {
+  OSVERSIONINFOA version;
   FIXME("(0x%08x): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  switch(VERSION_GetVersion())
-    {
-    default:
-      FIXME("%s not supported", VERSION_GetVersionName());
-    case WIN95:
+  GetVersionExA( &version );
+  switch(version.dwPlatformId)
+  {
+  case VER_PLATFORM_WIN32_WINDOWS:
       return VK_PROCESSKEY;
-    case NT40:
+  case VER_PLATFORM_WIN32_NT:
       return 0;
-    }
+  default:
+      FIXME("%ld not supported",version.dwPlatformId);
+      return VK_PROCESSKEY;
+  }
 }
 
 /***********************************************************************

@@ -19,10 +19,19 @@
 #include "options.h"
 #include "debugtools.h"
 #include "neexe.h"
-#include "winversion.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(ver)
+DEFAULT_DEBUG_CHANNEL(ver);
+
+typedef enum
+{
+    WIN31, /* Windows 3.1 */
+    WIN95,   /* Windows 95 */
+    WIN98,   /* Windows 98 */
+    NT351,   /* Windows NT 3.51 */
+    NT40,    /* Windows NT 4.0 */  
+    NB_WINDOWS_VERSIONS
+} WINDOWS_VERSION;
 
 typedef struct
 {
@@ -30,7 +39,6 @@ typedef struct
     LONG             getVersion32;
     OSVERSIONINFOA getVersionEx;
 } VERSION_DATA;
-
 
 /* FIXME: compare values below with original and fix */
 static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
@@ -309,7 +317,7 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
  * is called by EVERY GetVersion*() API !
  *
  */
-WINDOWS_VERSION VERSION_GetVersion(void)
+static WINDOWS_VERSION VERSION_GetVersion(void)
 {
         static WORD winver = 0xffff;
 
@@ -325,56 +333,6 @@ WINDOWS_VERSION VERSION_GetVersion(void)
 	return winver;
 }
 
-/**********************************************************************
- *         VERSION_AppWinVer
- * Returns the window version in case Wine emulates a later version
- * of windows then the application expects.
- * 
- * In a number of cases when windows runs an application that was
- * designed for an earlier windows version, windows reverts
- * to "old" behaviour of that earlier version.
- * 
- * An example is a disabled  edit control that needs to be painted. 
- * Old style behaviour is to send a WM_CTLCOLOREDIT message. This was 
- * changed in Win95, NT4.0 by a WM_CTLCOLORSTATIC message _only_ for 
- * applications with an expected version 0f 4.0 or higher.
- * 
- */
-DWORD VERSION_AppWinVer(void)
-{
-    WINDOWS_VERSION ver = VERSION_GetVersion();
-    DWORD dwEmulatedVersion=MAKELONG( VersionData[ver].getVersionEx.dwMinorVersion, 
-                    VersionData[ver].getVersionEx.dwMajorVersion);
-    /* fixme: this may not be 100% correct; see discussion on the
-     * wine developer list in Nov 1999 */
-    DWORD dwProcVersion = GetProcessVersion(0);
-    return dwProcVersion < dwEmulatedVersion ? dwProcVersion : dwEmulatedVersion; 
-}
-
-
-/**********************************************************************
- *         VERSION_GetVersionName
- */
-char *VERSION_GetVersionName()
-{
-  WINDOWS_VERSION ver = VERSION_GetVersion();
-  switch(ver)
-    {
-    case WIN31:
-      return "Windows 3.1";
-    case WIN95:  
-      return "Windows 95";
-    case WIN98:
-      return "Windows 98";
-    case NT351:
-      return "Windows NT 3.51";
-    case NT40:
-      return "Windows NT 4.0";
-    default:
-      FIXME("Windows version %d not named",ver);
-      return "Windows <Unknown>";
-    }
-}
 
 /***********************************************************************
  *         GetVersion16   (KERNEL.3)
@@ -544,23 +502,4 @@ void WINAPI DiagOutput16(LPCSTR str)
 {
         /* FIXME */
 	DPRINTF("DIAGOUTPUT:%s\n", debugstr_a(str));
-}
-
-/***********************************************************************
- *        VERSION_OsIsUnicode	[internal]
- *
- * NOTES
- *   some functions getting sometimes LPSTR sometimes LPWSTR...
- *
- */
-BOOL VERSION_OsIsUnicode(void)
-{
-    switch(VERSION_GetVersion())
-    {
-    case NT351:
-    case NT40:
-        return TRUE;
-    default:
-        return FALSE;
-    }
 }

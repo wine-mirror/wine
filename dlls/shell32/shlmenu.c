@@ -10,7 +10,6 @@
 
 #include "heap.h"
 #include "debugtools.h"
-#include "winversion.h"
 #include "shell32_main.h"
 #include "shlguid.h"
 
@@ -365,7 +364,7 @@ BOOL WINAPI FileMenu_AppendItemAW(
 	BOOL ret;
 	LPSTR lpszText=NULL;
 
-	if (VERSION_OsIsUnicode() && (lpText!=FM_SEPARATOR))
+	if (SHELL_OsIsUnicode() && (lpText!=FM_SEPARATOR))
 	  lpszText = HEAP_strdupWtoA ( GetProcessHeap(),0, lpText);
 
 	ret = FileMenu_AppendItemA(hMenu, (lpszText) ? lpszText : lpText, uID, icon, hMenuPopup, nItemHeight);

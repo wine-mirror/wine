@@ -7,7 +7,6 @@
 #include "winreg.h"
 #include "debugtools.h"
 #include "winnls.h"
-#include "winversion.h"
 #include "heap.h"
 
 #include "shellapi.h"

@@ -10,7 +10,6 @@
 #include "ntddk.h"
 #include "ntsecapi.h"
 #include "debugtools.h"
-#include "winversion.h"
 
 DEFAULT_DEBUG_CHANNEL(advapi);
 

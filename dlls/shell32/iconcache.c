@@ -16,7 +16,6 @@
 #include "module.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "winversion.h"
 
 #include "shellapi.h"
 #include "shlguid.h"
@@ -808,7 +807,7 @@ INT WINAPI Shell_GetCachedImageIndexW(LPCWSTR szPath, INT nIndex, BOOL bSimulate
 }
 
 INT WINAPI Shell_GetCachedImageIndexAW(LPCVOID szPath, INT nIndex, BOOL bSimulateDoc)
-{	if( VERSION_OsIsUnicode())
+{	if( SHELL_OsIsUnicode())
 	  return Shell_GetCachedImageIndexW(szPath, nIndex, bSimulateDoc);
 	return Shell_GetCachedImageIndexA(szPath, nIndex, bSimulateDoc);
 }
@@ -817,7 +816,7 @@ INT WINAPI Shell_GetCachedImageIndexAW(LPCVOID szPath, INT nIndex, BOOL bSimulat
  * ExtractIconEx			[shell32.189]
  */
 HICON WINAPI ExtractIconExAW ( LPCVOID lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
-{	if (VERSION_OsIsUnicode())
+{	if (SHELL_OsIsUnicode())
 	  return ExtractIconExW ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 	return ExtractIconExA ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }

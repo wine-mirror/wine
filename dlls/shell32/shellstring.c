@@ -6,10 +6,10 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "winversion.h"
 #include "heap.h"
 
 #include "shellapi.h"
+#include "shell32_main.h"
 #include "wine/undocshell.h"
 #include "wine/unicode.h"
 
@@ -37,7 +37,7 @@ HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST
 
 HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
-	if(VERSION_OsIsUnicode())
+	if(SHELL_OsIsUnicode())
 	  return StrRetToStrNW (dest, len, src, pidl);
 	return StrRetToStrNA (dest, len, src, pidl);
 }
@@ -61,15 +61,13 @@ int WINAPI StrToOleStrW (LPWSTR lpWideCharStr, LPCWSTR lpWString)
 	TRACE("(%p, %p %s)\n",
 	lpWideCharStr, lpWString, debugstr_w(lpWString));
 
-	if (lstrcpyW (lpWideCharStr, lpWString ))
-	{ return lstrlenW (lpWideCharStr);
-	}
-	return 0;
+	strcpyW (lpWideCharStr, lpWString );
+	return strlenW(lpWideCharStr);
 }
 
 BOOL WINAPI StrToOleStrAW (LPWSTR lpWideCharStr, LPCVOID lpString)
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return StrToOleStrW (lpWideCharStr, lpString);
 	return StrToOleStrA (lpWideCharStr, lpString);
 }
@@ -96,7 +94,7 @@ BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr)
 
 BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr) 
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return StrToOleStrNW (lpWide, nWide, lpStr, nStr);
 	return StrToOleStrNA (lpWide, nWide, lpStr, nStr);
 }
@@ -122,7 +120,7 @@ BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle)
 
 BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn) 
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return OleStrToStrNW (lpOut, nOut, lpIn, nIn);
 	return OleStrToStrNA (lpOut, nOut, lpIn, nIn);
 }

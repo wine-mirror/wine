@@ -11,12 +11,11 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
-#include "winversion.h"
 #include "heap.h"
 #include "ldt.h"
 #include "syslevel.h"
 
-DEFAULT_DEBUG_CHANNEL(win)
+DEFAULT_DEBUG_CHANNEL(win);
 
 
 /**********************************************************************
@@ -28,7 +27,17 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
   BOOL ret;
   /* We might call WinExec() */
   SYSLEVEL_ReleaseWin16Lock();
-  ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)PTR_SEG_TO_LIN(dwData) );
+
+  if (!(ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)PTR_SEG_TO_LIN(dwData) )))
+  {
+      /* try to start the 16-bit winhelp */
+      if (WinExec( "winhelp.exe -x", SW_SHOWNORMAL ) >= 32)
+      {
+          Yield16();
+          ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)PTR_SEG_TO_LIN(dwData) );
+      }
+  }
+
   SYSLEVEL_RestoreWin16Lock();
   return ret;
 }
@@ -44,7 +53,6 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 	HWND hDest;
 	LPWINHELP lpwh;
 	HGLOBAL16 hwh;
-	HINSTANCE winhelp;
 	int size,dsize,nlen;
 
 
@@ -57,17 +65,8 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 
 	hDest = FindWindowA( "MS_WINHELP", NULL );
 	if(!hDest) {
-	  if(wCommand == HELP_QUIT)
-	    return TRUE;
-	  else
-	    if ( VERSION_GetVersion() == WIN31 ) {
-	      winhelp = WinExec ( "winhelp.exe -x", SW_SHOWNORMAL );
-	      Yield16();
-	    }
-	    else {
-	      winhelp = WinExec ( "winhlp32.exe -x", SW_SHOWNORMAL );
-	    }	  
-	  if ( winhelp <= 32 ) return FALSE;
+	  if(wCommand == HELP_QUIT) return TRUE;
+          if (WinExec ( "winhlp32.exe -x", SW_SHOWNORMAL ) < 32) return FALSE;
 	  if ( ! ( hDest = FindWindowA ( "MS_WINHELP", NULL ) )) return FALSE;
         }
 

@@ -11,7 +11,6 @@
 #include "winreg.h"
 #include "debugtools.h"
 #include "winnls.h"
-#include "winversion.h"
 #include "heap.h"
 
 #include "shellapi.h"
@@ -75,7 +74,7 @@ DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len)
  */
 DWORD WINAPI ParseFieldAW(LPCVOID src, DWORD nField, LPVOID dst, DWORD len) 
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return ParseFieldW(src, nField, dst, len);
 	return ParseFieldA(src, nField, dst, len);
 }
@@ -99,7 +98,7 @@ BOOL WINAPI GetFileNameFromBrowse(
 
     /* puts up a Open Dialog and requests input into targetbuf */
     /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
-    lstrcpyA(lpstrFile,"x:\\dummy.exe");
+    strcpy(lpstrFile,"x:\\dummy.exe");
     return 1;
 }
 
@@ -485,7 +484,7 @@ HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
  *
  */
 BOOL WINAPI ShellExecuteExAW (LPVOID sei)
-{	if (VERSION_OsIsUnicode())
+{	if (SHELL_OsIsUnicode())
 	  return ShellExecuteExW (sei);
 	return ShellExecuteExA (sei);
 }
@@ -941,7 +940,7 @@ HRESULT WINAPI DoEnvironmentSubstW(LPWSTR x, LPWSTR y)
  */
 HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return DoEnvironmentSubstW(x, y);
 	return DoEnvironmentSubstA(x, y);
 }

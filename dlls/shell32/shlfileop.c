@@ -5,7 +5,6 @@
 #include "debugtools.h"
 #include "shellapi.h"
 #include "shell32_main.h"
-#include "winversion.h"
 
 #include "shlobj.h"
 #include "shresdef.h"
@@ -140,7 +139,7 @@ DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)
  */
 DWORD WINAPI SHFileOperationAW(LPVOID lpFileOp)
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return SHFileOperationW(lpFileOp);
 	return SHFileOperationA(lpFileOp);
 }

@@ -17,15 +17,14 @@
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "winversion.h"
 #include "shell32_main.h"
 #include "shellapi.h"
 
 #include "pidl.h"
 #include "wine/undocshell.h"
 
-DEFAULT_DEBUG_CHANNEL(pidl)
-DECLARE_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(pidl);
+DECLARE_DEBUG_CHANNEL(shell);
 
 void pdump (LPCITEMIDLIST pidl)
 {
@@ -316,7 +315,7 @@ HRESULT WINAPI SHILCreateFromPathW (LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * 
 }
 HRESULT WINAPI SHILCreateFromPathAW (LPCVOID path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {
-	if ( VERSION_OsIsUnicode())
+	if ( SHELL_OsIsUnicode())
 	  return SHILCreateFromPathW (path, ppidl, attributes);
 	return SHILCreateFromPathA (path, ppidl, attributes);
 }
@@ -727,7 +726,7 @@ LPITEMIDLIST WINAPI ILCreateFromPathW (LPCWSTR path)
 }
 LPITEMIDLIST WINAPI ILCreateFromPathAW (LPCVOID path) 
 {
-	if ( VERSION_OsIsUnicode())
+	if ( SHELL_OsIsUnicode())
 	  return ILCreateFromPathW (path);
 	return ILCreateFromPathA (path);
 }
@@ -772,7 +771,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPCWSTR lpszPath)
 
 LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPCVOID lpszPath)
 {
-	if ( VERSION_OsIsUnicode())
+	if ( SHELL_OsIsUnicode())
 	  return SHSimpleIDListFromPathW (lpszPath);
 	return SHSimpleIDListFromPathA (lpszPath);
 }
@@ -1064,7 +1063,7 @@ BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
 {
 	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
 
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return SHGetPathFromIDListW(pidl,pszPath);
 	return SHGetPathFromIDListA(pidl,pszPath);
 }

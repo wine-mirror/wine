@@ -14,9 +14,8 @@
 #include "msacm.h"
 #include "msacmdrv.h"
 #include "wineacm.h"
-#include "winversion.h"
 
-DEFAULT_DEBUG_CHANNEL(msacm)
+DEFAULT_DEBUG_CHANNEL(msacm);
 	
 /**********************************************************************/
 	
@@ -66,14 +65,17 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
  */
 DWORD WINAPI acmGetVersion(void)
 {
-    switch (VERSION_GetVersion()) {
-    default: 
-	FIXME("%s not supported\n", VERSION_GetVersionName());
-    case WIN95:
-	return 0x04000000; /* 4.0.0 */
-    case NT40:
+    OSVERSIONINFOA version;
+    GetVersionExA( &version );
+    switch(version.dwPlatformId)
+    {
+    case VER_PLATFORM_WIN32_NT:
 	return 0x04000565; /* 4.0.1381 */
-    }
+    default:
+        FIXME("%ld not supported",version.dwPlatformId);
+    case VER_PLATFORM_WIN32_WINDOWS:
+	return 0x04000000; /* 4.0.0 */
+  }
 }
 
 /***********************************************************************

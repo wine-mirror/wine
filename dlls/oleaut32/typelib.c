@@ -34,7 +34,6 @@
 #include "heap.h"
 #include "wine/obj_base.h"
 #include "debugtools.h"
-#include "winversion.h"
 #include "typelib.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -294,15 +293,15 @@ HRESULT WINAPI UnRegisterTypeLib(
 DWORD WINAPI OaBuildVersion16(void)
 {
     FIXME("Please report to a.mohr@mailto.de if you get version error messages !\n");
-    switch(VERSION_GetVersion())
+    switch(GetVersion() & 0x8000ffff)  /* mask off build number */
     {
-      case WIN31:
+    case 0x80000a03:  /* WIN31 */
 		return MAKELONG(3027, 3); /* WfW 3.11 */
-	case WIN95:
+    case 0x80000004:  /* WIN95 */
 		return MAKELONG(700, 23); /* Win95A */
-	case WIN98:
+    case 0x80000a04:  /* WIN98 */
 		return MAKELONG(3024, 10); /* W98 SE */
-      default:
+    default:
 	FIXME_(ole)("Version value not known yet. Please investigate it !");
 		return 0;
     }

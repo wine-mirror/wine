@@ -18,14 +18,13 @@
 #include "wine/obj_extracticon.h"
 
 #include "shlguid.h"
-#include "winversion.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "debugtools.h"
 
 #include "shell32_main.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 DWORD WINAPI SHCLSIDFromStringA (LPSTR clsid, CLSID *id);
 extern IShellFolder * IShellFolder_Constructor(
@@ -135,7 +134,7 @@ DWORD WINAPI SHCLSIDFromStringW (LPWSTR clsid, CLSID *id)
 }
 DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
 {
-	if (VERSION_OsIsUnicode())
+	if (SHELL_OsIsUnicode())
 	  return SHCLSIDFromStringW (clsid, id);
 	return SHCLSIDFromStringA (clsid, id);
 }
@@ -587,7 +586,7 @@ UINT WINAPI DragQueryFileA(
 	  }
 	}
     
-	i = lstrlenA(lpDrop);
+	i = strlen(lpDrop);
 	i++;
 	if (!lpszFile ) goto end;   /* needed buffer size */
 	i = (lLength > i) ? i : lLength;

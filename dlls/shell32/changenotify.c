@@ -10,7 +10,6 @@
 #include "debugtools.h"
 #include "pidl.h"
 #include "shell32_main.h"
-#include "winversion.h"
 #include "wine/undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
@@ -274,7 +273,7 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
  */
 void WINAPI SHChangeNotifyAW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
-	if(VERSION_OsIsUnicode())
+	if(SHELL_OsIsUnicode())
 	  SHChangeNotifyW (wEventId, uFlags, dwItem1, dwItem2);
 	else
 	  SHChangeNotifyA (wEventId, uFlags, dwItem1, dwItem2);

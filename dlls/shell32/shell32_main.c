@@ -18,7 +18,6 @@
 #include "debugtools.h"
 #include "winreg.h"
 #include "authors.h"
-#include "winversion.h"
 
 #include "shellapi.h"
 #include "pidl.h"
@@ -296,7 +295,7 @@ DWORD WINAPI SHGetFileInfoAW(
 	UINT sizeofpsfi,
 	UINT flags)
 {
-	if(VERSION_OsIsUnicode())
+	if(SHELL_OsIsUnicode())
 	  return SHGetFileInfoW(path, dwFileAttributes, psfi, sizeofpsfi, flags );
 	return SHGetFileInfoA(path, dwFileAttributes, psfi, sizeofpsfi, flags );
 }

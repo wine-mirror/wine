@@ -164,4 +164,11 @@ void FreeChangeNotifications(void);
 
 /* file operation */
 BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
+
+inline static BOOL SHELL_OsIsUnicode(void)
+{
+    /* if high-bit of version is 0, we are emulating NT */
+    return !(GetVersion() & 0x80000000);
+}
+
 #endif

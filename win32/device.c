@@ -26,7 +26,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "winversion.h"
 #include "file.h"
 #include "process.h"
 #include "heap.h"
@@ -989,32 +988,8 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
     {
     case 0x0000: /* GetVersion */
     {
-        DWORD vers = VERSION_GetVersion();
-	switch (vers)
-	{
-	case WIN31:
-	  return(0x0301);  /* Windows 3.1 */
-	  break;
-
-	case WIN95:
-	  return(0x0400);  /* Win95 aka 4.0 */
-	  break;
-
-	case WIN98:
-	  return(0x040a);  /* Win98 aka 4.10 */
-	  break;
-
-	case NT351:
-        case NT40:
-	  ERR("VxDCall when emulating NT???\n");
-	  break;
-
-	default:
-	  WARN("Unknown version %lx\n", vers);
-	  break;
-	}
-
-	return(0x040a); /* default to win98 */
+        DWORD vers = GetVersion();
+        return (LOBYTE(vers) << 8) | HIBYTE(vers);
     }
     break;
 
