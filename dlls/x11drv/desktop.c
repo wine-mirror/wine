@@ -176,6 +176,7 @@ int X11DRV_resize_desktop( unsigned int width, unsigned int height )
     if (!size_hints)
     {
         ERR("Not enough memory for window manager hints.\n" );
+        wine_tsx11_unlock();
         return 0;
     }
     size_hints->min_width = size_hints->max_width = width;
