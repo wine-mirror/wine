@@ -1,3 +1,4 @@
 Makefile
+cmdlgr.h
 cmdlgr.s
 cmdlgtst
