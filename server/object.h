@@ -172,6 +172,10 @@ extern void file_set_error(void);
 
 int get_serial_async_timeout(struct object *obj, int type, int count);
 
+/* socket functions */
+
+extern void sock_init(void);
+
 /* debugger functions */
 
 extern int set_process_debugger( struct process *process, struct thread *debugger );

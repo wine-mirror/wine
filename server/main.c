@@ -111,6 +111,7 @@ int main( int argc, char *argv[] )
 {
     parse_args( argc, argv );
     signal_init();
+    sock_init();
     open_master_socket();
     setvbuf( stderr, NULL, _IOLBF, 0 );
 

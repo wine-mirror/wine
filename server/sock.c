@@ -67,6 +67,8 @@ struct sock
     unsigned int        hmask;       /* held (blocked) events */
     unsigned int        pmask;       /* pending events */
     unsigned int        flags;       /* socket flags */
+    unsigned short      type;        /* socket type */
+    unsigned short      family;      /* socket family */
     struct event       *event;       /* event object */
     user_handle_t       window;      /* window to send the message to */
     unsigned int        message;     /* message to send */
@@ -124,6 +126,62 @@ static const int event_bitorder[FD_MAX_EVENTS] =
     6, 7, 8, 9  /* leftovers */
 };
 
+/* Flags that make sense only for SOCK_STREAM sockets */
+#define STREAM_FLAG_MASK ((unsigned int) (FD_CONNECT | FD_ACCEPT | FD_WINE_LISTENING | FD_WINE_CONNECTED))
+
+typedef enum {
+    SOCK_SHUTDOWN_ERROR = -1,
+    SOCK_SHUTDOWN_EOF = 0,
+    SOCK_SHUTDOWN_POLLHUP = 1
+} sock_shutdown_t;
+
+static sock_shutdown_t sock_shutdown_type = SOCK_SHUTDOWN_ERROR;
+
+static sock_shutdown_t sock_check_pollhup (void)
+{
+    sock_shutdown_t ret = SOCK_SHUTDOWN_ERROR;
+    int fd[2], n;
+    struct pollfd pfd;
+    char dummy;
+
+    if ( socketpair ( AF_UNIX, SOCK_STREAM, 0, fd ) ) goto out;
+    if ( shutdown ( fd[0], 1 ) ) goto out;
+
+    pfd.fd = fd[1];
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+
+    n = poll ( &pfd, 1, 0 );
+    if ( n != 1 ) goto out; /* error or timeout */
+    if ( pfd.revents & POLLHUP )
+        ret = SOCK_SHUTDOWN_POLLHUP;
+    else if ( pfd.revents & POLLIN &&
+              read ( fd[1], &dummy, 1 ) == 0 )
+        ret = SOCK_SHUTDOWN_EOF;
+
+out:
+    close ( fd[0] );
+    close ( fd[1] );
+    return ret;
+}
+
+void sock_init(void)
+{
+    sock_shutdown_type = sock_check_pollhup ();
+
+    switch ( sock_shutdown_type )
+    {
+    case SOCK_SHUTDOWN_EOF:
+        if (debug_level) fprintf ( stderr, "sock_init: shutdown() causes EOF\n" );
+        break;
+    case SOCK_SHUTDOWN_POLLHUP:
+        if (debug_level) fprintf ( stderr, "sock_init: shutdown() causes POLLHUP\n" );
+        break;
+    default:
+        fprintf ( stderr, "sock_init: ERROR in sock_check_pollhup()\n" );
+        sock_shutdown_type = SOCK_SHUTDOWN_EOF;
+    }
+}
 
 static int sock_reselect( struct sock *sock )
 {
@@ -222,7 +280,7 @@ inline static int sock_error(int s)
 static void sock_poll_event( struct object *obj, int event )
 {
     struct sock *sock = (struct sock *)obj;
-    int empty_recv = 0;
+    int hangup_seen = 0;
 
     assert( sock->obj.ops == &sock_ops );
     if (debug_level)
@@ -270,7 +328,7 @@ static void sock_poll_event( struct object *obj, int event )
     } else
     {
         /* normal data flow */
-        if (event & POLLIN)
+        if ( sock->type == SOCK_STREAM && ( event & POLLIN ) )
         {
             char dummy;
             int nr;
@@ -288,7 +346,7 @@ static void sock_poll_event( struct object *obj, int event )
                     fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
             }
             else if ( nr == 0 )
-                empty_recv = 1;
+                hangup_seen = 1;
             else
             {
                 /* EAGAIN can happen if an async recv() falls between the server's poll()
@@ -304,7 +362,19 @@ static void sock_poll_event( struct object *obj, int event )
             }
 
         }
-        else if (event & POLLHUP) empty_recv = 1;
+        else if ( sock_shutdown_type == SOCK_SHUTDOWN_POLLHUP && (event & POLLHUP) )
+        {
+            hangup_seen = 1;
+        }
+        else if ( event & POLLIN ) /* POLLIN for non-stream socket */
+        {
+            sock->pmask |= FD_READ;
+            sock->hmask |= (FD_READ|FD_CLOSE);
+            sock->errors[FD_READ_BIT] = 0;
+            if (debug_level)
+                fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
+
+        }
 
         if (event & POLLOUT)
         {
@@ -323,12 +393,12 @@ static void sock_poll_event( struct object *obj, int event )
                 fprintf(stderr, "socket %d got OOB data\n", sock->obj.fd);
         }
         /* According to WS2 specs, FD_CLOSE is only delivered when there is
-           no more data to be read (i.e. empty_recv = 1) */
-        else if ( empty_recv && (sock->state & (FD_READ|FD_WRITE) ))
+           no more data to be read (i.e. hangup_seen = 1) */
+        else if ( hangup_seen && (sock->state & (FD_READ|FD_WRITE) ))
         {
             sock->errors[FD_CLOSE_BIT] = sock_error( sock->obj.fd );
-            if ( event & POLLERR)
-                 sock->state &= ~(FD_WINE_CONNECTED|FD_WRITE);
+            if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
+                sock->state &= ~(FD_WINE_CONNECTED|FD_WRITE);
             sock->pmask |= FD_CLOSE;
             sock->hmask |= FD_CLOSE;
             if (debug_level)
@@ -390,8 +460,8 @@ static int sock_get_poll_events( struct object *obj )
         ev |= POLLIN | POLLPRI;
     if (mask & FD_WRITE || (sock->flags & WSA_FLAG_OVERLAPPED && IS_READY (sock->write_q)))
         ev |= POLLOUT;
-    /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication. */
-    if (sock->mask & ~sock->hmask & FD_CLOSE)
+    /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
+    if ( sock->type == SOCK_STREAM && ( sock->mask & ~sock->hmask & FD_CLOSE) )
         ev |= POLLIN;
 
     return ev;
@@ -526,6 +596,8 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     sock->hmask   = 0;
     sock->pmask   = 0;
     sock->flags   = flags;
+    sock->type    = type;
+    sock->family  = family;
     sock->event   = NULL;
     sock->window  = 0;
     sock->message = 0;
@@ -586,6 +658,8 @@ static struct sock *accept_socket( obj_handle_t handle )
         acceptsock->mask    = sock->mask;
         acceptsock->hmask   = 0;
         acceptsock->pmask   = 0;
+        acceptsock->type    = sock->type;
+        acceptsock->family  = sock->family;
         acceptsock->event   = NULL;
         acceptsock->window  = sock->window;
         acceptsock->message = sock->message;
@@ -794,6 +868,7 @@ DECL_HANDLER(enable_socket_event)
         sock->hmask &= ~FD_CLOSE;
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
+    if ( sock->type != SOCK_STREAM ) sock->state &= ~STREAM_FLAG_MASK;
 
     pollev = sock_reselect( sock );
     if ( pollev ) sock_try_event ( sock, pollev );
