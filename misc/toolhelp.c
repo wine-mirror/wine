@@ -12,10 +12,10 @@
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
+#include "process.h"
 #include "tlhelp32.h"
 #include "toolhelp.h"
 #include "heap.h"
-#include "process.h"
 #include "k32obj.h"
 #include "debug.h"
 
