@@ -2011,7 +2011,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
                     {
 		  srcpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line);
 
-                        for (x = 0; x < quotient; x++) {     /* do 4 dwords source, 3 dwords dest at a time*/
+                        for (x = 0; x < quotient; x++) {     /* do 4 dwords source, 3 dwords dest at a time */
 			  buf = ((*srcpixel++)&0x00ffffff);      /* b1, g1, r1*/
 			  *ptr++ = buf | ((*srcpixel)<<24);      /* b2 */
 			  buf = ((*srcpixel++>>8)&0x0000ffff);   /* g2, r2 */
@@ -3466,6 +3466,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     {
       dib->dibSection.dsBm = bm;
       dib->dibSection.dsBmih = *bi;
+      dib->dibSection.dsBmih.biSizeImage = totalSize;
 
       /* Set dsBitfields values */
        if ( usage == DIB_PAL_COLORS || bi->biBitCount <= 8)
