@@ -254,7 +254,7 @@ static UINT ICO_ExtractIconExW(
 	UINT *pIconId,
 	UINT flags)
 {
-	UINT		ret = 0xFFFFFFFF;
+	UINT		ret = 0;
 	UINT		cx1, cx2, cy1, cy2;
 	LPBYTE		pData;
 	DWORD		sig;
@@ -267,29 +267,26 @@ static UINT ICO_ExtractIconExW(
 
 	TRACE("%s, %d, %d %p 0x%08x\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons, pIconId, flags);
 
-	hFile = CreateFileW( lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+	hFile = CreateFileW(lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
 	if (hFile == INVALID_HANDLE_VALUE) return ret;
 	fsizel = GetFileSize(hFile,&fsizeh);
 
 	/* Map the file */
-	fmapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
-	CloseHandle( hFile );
+	fmapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
+	CloseHandle(hFile);
 	if (!fmapping)
 	{
 	  WARN("CreateFileMapping error %ld\n", GetLastError() );
-	  return ret;
+	  return 0xFFFFFFFF;
 	}
 
-	if ( !(peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0)))
+	if (!(peimage = MapViewOfFile(fmapping, FILE_MAP_READ, 0, 0, 0)))
 	{
 	  WARN("MapViewOfFile error %ld\n", GetLastError() );
-	  CloseHandle( fmapping );
-	  return ret;
+	  CloseHandle(fmapping);
+	  return 0xFFFFFFFF;
 	}
-	CloseHandle( fmapping );
-
-	/* Initialize return value to 0 to indicate extraction error */
-	ret = 0;
+	CloseHandle(fmapping);
 
 	cx1 = LOWORD(cxDesired);
 	cx2 = HIWORD(cxDesired) ? HIWORD(cxDesired) : cx1;
@@ -302,10 +299,10 @@ static UINT ICO_ExtractIconExW(
 	if (!pIconId) /* if no icon identifier array present use the icon handle array as intermediate storage */
 	  pIconId = (UINT*)RetPtr;
 
-	sig = USER32_GetResourceTable(peimage,fsizel,&pData);
+	sig = USER32_GetResourceTable(peimage, fsizel, &pData);
 
-/* ico file */
-	if( sig==IMAGE_OS2_SIGNATURE || sig==1 ) /* .ICO file */
+/* ico file or NE exe/dll*/
+	if (sig==IMAGE_OS2_SIGNATURE || sig==1) /* .ICO file */
 	{
 	  BYTE		*pCIDir = 0;
 	  NE_TYPEINFO	*pTInfo = (NE_TYPEINFO*)(pData + 2);
@@ -315,25 +312,24 @@ static UINT ICO_ExtractIconExW(
 
 	  TRACE("-- OS2/icon Signature (0x%08lx)\n", sig);
 
-	  if( pData == (BYTE*)-1 )
+	  if (pData == (BYTE*)-1)
 	  {
-	    /* FIXME: pCIDir is allocated on the heap - memory leak */
 	    pCIDir = ICO_GetIconDirectory(peimage, &lpiID, &uSize);	/* check for .ICO file */
-	    if( pCIDir )
+	    if (pCIDir)
 	    {
 	      iconDirCount = 1; iconCount = lpiID->idCount;
 	      TRACE("-- icon found %p 0x%08lx 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
 	    }
 	  }
-	  else while( pTInfo->type_id && !(pIconStorage && pIconDir) )
+	  else while (pTInfo->type_id && !(pIconStorage && pIconDir))
 	  {
-	    if( pTInfo->type_id == NE_RSCTYPE_GROUP_ICON )	/* find icon directory and icon repository */
+	    if (pTInfo->type_id == NE_RSCTYPE_GROUP_ICON)	/* find icon directory and icon repository */
 	    {
 	      iconDirCount = pTInfo->count;
 	      pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
 	      TRACE("\tfound directory - %i icon families\n", iconDirCount);
 	    }
-	    if( pTInfo->type_id == NE_RSCTYPE_ICON )
+	    if (pTInfo->type_id == NE_RSCTYPE_ICON)
 	    {
 	      iconCount = pTInfo->count;
 	      pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
@@ -342,37 +338,41 @@ static UINT ICO_ExtractIconExW(
 	    pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
 	  }
 
-	  if( (pIconStorage && pIconDir) || lpiID )	  /* load resources and create icons */
+	  if ((pIconStorage && pIconDir) || lpiID)	  /* load resources and create icons */
 	  {
-	    if( nIcons == 0 )
+	    if (nIcons == 0)
 	    {
 	      ret = iconDirCount;
+	      if (lpiID && pCIDir)	/* *.ico file, deallocate heap pointer*/
+	        HeapFree(GetProcessHeap(), 0, pCIDir);
 	    }
-	    else if( nIconIndex < iconDirCount )
+	    else if (nIconIndex < iconDirCount)
 	    {
 	      UINT16   i, icon;
-	      if( nIcons > iconDirCount - nIconIndex )
+	      if (nIcons > iconDirCount - nIconIndex)
 	        nIcons = iconDirCount - nIconIndex;
 
 	      for (i = 0; i < nIcons; i++)
 	      {
 	        /* .ICO files have only one icon directory */
-	        if( lpiID == NULL )	/* *.ico */
-	          pCIDir = USER32_LoadResource(peimage, pIconDir + i + nIconIndex , *(WORD*)pData, &uSize);
+	        if (lpiID == NULL)	/* not *.ico */
+	          pCIDir = USER32_LoadResource(peimage, pIconDir + i + nIconIndex, *(WORD*)pData, &uSize);
 	        pIconId[i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE, (i & 1) ? cx2 : cx1, (i & 1) ? cy2 : cy1, flags);
 	      }
+	      if (lpiID && pCIDir)	/* *.ico file, deallocate heap pointer*/
+	        HeapFree(GetProcessHeap(), 0, pCIDir);
 
 	      for (icon = 0; icon < nIcons; icon++)
 	      {
 	        pCIDir = NULL;
-	        if( lpiID )
+	        if (lpiID)
 	          pCIDir = ICO_LoadIcon(peimage, lpiID->idEntries + (int)pIconId[icon], &uSize);
 	        else
 	          for (i = 0; i < iconCount; i++)
 	            if (pIconStorage[i].id == ((int)pIconId[icon] | 0x8000) )
 	              pCIDir = USER32_LoadResource(peimage, pIconStorage + i, *(WORD*)pData, &uSize);
 
-	        if( pCIDir )
+	        if (pCIDir)
 	          RetPtr[icon] = (HICON)CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
 	                                                         (icon & 1) ? cx2 : cx1, (icon & 1) ? cy2 : cy1, flags);
 	        else
@@ -394,11 +394,12 @@ static UINT ICO_ExtractIconExW(
 	  const IMAGE_RESOURCE_DIRECTORY *rootresdir,*iconresdir,*icongroupresdir;
 	  const IMAGE_RESOURCE_DATA_ENTRY *idataent,*igdataent;
 	  const IMAGE_RESOURCE_DIRECTORY_ENTRY *xresent;
-	  int			i,j;
+	  UINT	i, j;
 
 	  dheader = (PIMAGE_DOS_HEADER)peimage;
 	  pe_header = (PIMAGE_NT_HEADERS)(peimage+dheader->e_lfanew);	  /* it is a pe header, USER32_GetResourceTable checked that */
-	  pe_sections = (PIMAGE_SECTION_HEADER)(((char*)pe_header)+sizeof(*pe_header));	/* probably makes problems with short PE headers...*/
+	  pe_sections = (PIMAGE_SECTION_HEADER)(((char*)pe_header) + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER)
+	                                        + pe_header->FileHeader.SizeOfOptionalHeader);
 	  rootresdir = NULL;
 
 	  /* search for the root resource directory */
