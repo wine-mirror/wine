@@ -961,6 +961,8 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
     HRGN hVisRgn;
     DCE *dce;
+    DC  *dc;
+    WND *wndPtr;
 
     /* Grab the windows lock before doing anything else  */
     WIN_LockWnds();
@@ -984,6 +986,13 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
            if( dce->DCXflags & DCX_DCEBUSY )
  	   {
+
+               /* Update stale DC in DCX */
+               wndPtr = WIN_FindWndPtr( dce->hwndCurrent);
+	       dc = (DC *) GDI_GetObjPtr( dce->hDC, DC_MAGIC);
+	       if( dc && wndPtr)
+		 wndPtr->pDriver->pSetDrawable( wndPtr, dc,dce->DCXflags,TRUE);
+
 	       SetHookFlags16(hDC, DCHF_VALIDATEVISRGN);
 	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags, 0, 0);
 
