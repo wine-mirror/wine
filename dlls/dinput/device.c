@@ -498,9 +498,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Escape(
 HRESULT WINAPI IDirectInputDevice2AImpl_Poll(
 	LPDIRECTINPUTDEVICE2A iface)
 {
-	FIXME("(this=%p): stub!\n",
-	      iface);
-	return DI_OK;
+	/* Because wine devices do not need to be polled, just return DI_NOEFFECT */
+	return DI_NOEFFECT;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_SendDeviceData(
