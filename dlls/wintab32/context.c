@@ -343,10 +343,41 @@ static VOID TABLET_BlankPacketData(LPOPENCONTEXT context, LPVOID lpPkt, INT n)
  */
 UINT WINAPI WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
+    UINT result;
     if (gLoaded == FALSE)
          LoadTablet();
 
-    return pWTInfoA( wCategory, nIndex, lpOutput );
+    /*
+     *  Handle system extents here, as we can use user32.dll code to set them.
+     */
+    if(wCategory == WTI_DEFSYSCTX)
+    {
+        switch(nIndex)
+        {
+            case CTX_SYSEXTX:
+                if(lpOutput != NULL)
+                    *(LONG*)lpOutput = GetSystemMetrics(SM_CXSCREEN);
+                return sizeof(LONG);
+            case CTX_SYSEXTY:
+                if(lpOutput != NULL)
+                    *(LONG*)lpOutput = GetSystemMetrics(SM_CYSCREEN);
+                return sizeof(LONG);
+           /* No action, delegate to X11Drv */
+        }
+    }
+
+    result =  pWTInfoA( wCategory, nIndex, lpOutput );
+
+    /*
+     *  Handle system extents here, as we can use user32.dll code to set them.
+     */
+    if(wCategory == WTI_DEFSYSCTX && nIndex == 0)
+    {
+        LPLOGCONTEXTA lpCtx = (LPLOGCONTEXTA)lpOutput;
+        lpCtx->lcSysExtX = GetSystemMetrics(SM_CXSCREEN);
+        lpCtx->lcSysExtY = GetSystemMetrics(SM_CYSCREEN);
+    }
+    return result;
 }
 
 /***********************************************************************
