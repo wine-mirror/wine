@@ -89,8 +89,12 @@ static int DIR_GetPath( HKEY hkey, LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAM
         (!(GetLongPathNameW(full_name->short_name, longname, longname_len))) )
     {
         if (warn)
+        {
             MESSAGE("Invalid path %s for %s directory: %s.\n",
                     debugstr_w(path), debugstr_w(keyname), mess);
+            MESSAGE("Perhaps you have not properly edited your Wine configuration file (%s/config)\n",
+                    wine_get_config_dir());
+        }
         return 0;
     }
     return 1;
@@ -170,7 +174,6 @@ int DIR_Init(void)
         !(DIR_GetPath( hkey, systemW, system_dirW, &DIR_System, longpath, MAX_PATHNAME_LEN, TRUE )) ||
         !(DIR_GetPath( hkey, tempW, windows_dirW, &tmp_dir, longpath, MAX_PATHNAME_LEN, TRUE )))
     {
-	PROFILE_UsageWineIni();
         if (hkey) NtClose( hkey );
         return 0;
     }
@@ -178,8 +181,9 @@ int DIR_Init(void)
     {
     	if (errno==EACCES)
 	{
-		MESSAGE("Warning: the temporary directory '%s' (specified in wine configuration file) is not writeable.\n", tmp_dir.long_name);
-		PROFILE_UsageWineIni();
+		MESSAGE("Warning: the temporary directory '%s' specified in your\n"
+                        "configuration file (%s) is not writeable.\n",
+                        tmp_dir.long_name, wine_get_config_dir() );
 	}
 	else
 		MESSAGE("Warning: access to temporary directory '%s' failed (%s).\n",
@@ -219,8 +223,7 @@ int DIR_Init(void)
 
         if (strchrW(path, '/'))
         {
-            MESSAGE("Fix your wine config to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n");
-            PROFILE_UsageWineIni();
+            MESSAGE("Fix your wine config (%s/config) to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n", wine_get_config_dir() );
             ExitProcess(1);
         }
         SetEnvironmentVariableW( path_capsW, path );

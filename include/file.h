@@ -106,9 +106,6 @@ extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            const char *long_mask, int drive, BYTE attr,
                            int skip, WIN32_FIND_DATAA *entry );
 
-/* profile.c */
-extern void PROFILE_UsageWineIni(void);
-
 /* win32/device.c */
 extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 

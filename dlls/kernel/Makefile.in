@@ -38,6 +38,7 @@ C_SRCS = \
 	ne_segment.c \
 	powermgnt.c \
 	process.c \
+	profile.c \
 	relay16.c \
 	resource.c \
 	resource16.c \

@@ -751,7 +751,6 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
     }
     if (fd == -1) {
 	ERR("Can't read drive volume info ! Either pre-set it or make sure the device to read it from is accessible !\n");
-	PROFILE_UsageWineIni();
 	return -1;
     }
 

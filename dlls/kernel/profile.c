@@ -867,21 +867,6 @@ static BOOL PROFILE_SetString( LPCWSTR section_name, LPCWSTR key_name,
 }
 
 
-/***********************************************************************
- *           PROFILE_UsageWineIni
- *
- * Explain the wine.ini file to those who don't read documentation.
- * Keep below one screenful in length so that error messages above are
- * noticed.
- */
-void PROFILE_UsageWineIni(void)
-{
-    MESSAGE("Perhaps you have not properly edited or created "
-	"your Wine configuration file,\n");
-    MESSAGE("which is (supposed to be) '%s/config'.\n", wine_get_config_dir());
-}
-
-
 /********************* API functions **********************************/
 
 /***********************************************************************
