@@ -21,6 +21,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * TODO
+ * Use the file flag hints O_SEQUENTIAL, O_RANDOM, O_SHORT_LIVED
  */
 
 #include "config.h"
@@ -1276,6 +1279,7 @@ MSVCRT_wchar_t *_wmktemp(MSVCRT_wchar_t *pattern)
 static unsigned split_oflags(unsigned oflags)
 {
     int         wxflags = 0;
+    unsigned unsupp; /* until we support everything */
 
     if (oflags & MSVCRT__O_APPEND)              wxflags |= WX_APPEND;
     if (oflags & MSVCRT__O_BINARY)              ;
@@ -1284,10 +1288,14 @@ static unsigned split_oflags(unsigned oflags)
     else                                        wxflags |= WX_TEXT; /* default to TEXT*/
     if (oflags & MSVCRT__O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
 
-    if (oflags & ~(MSVCRT__O_BINARY|MSVCRT__O_TEXT|MSVCRT__O_APPEND|MSVCRT__O_TRUNC|
-                   MSVCRT__O_EXCL|MSVCRT__O_CREAT|MSVCRT__O_RDWR|MSVCRT__O_WRONLY|
-                   MSVCRT__O_TEMPORARY|MSVCRT__O_NOINHERIT))
-        ERR(":unsupported oflags 0x%04x\n",oflags);
+    if ((unsupp = oflags & ~(
+                    MSVCRT__O_BINARY|MSVCRT__O_TEXT|MSVCRT__O_APPEND|
+                    MSVCRT__O_TRUNC|MSVCRT__O_EXCL|MSVCRT__O_CREAT|
+                    MSVCRT__O_RDWR|MSVCRT__O_WRONLY|MSVCRT__O_TEMPORARY|
+                    MSVCRT__O_NOINHERIT|
+                    MSVCRT__O_SEQUENTIAL|MSVCRT__O_RANDOM|MSVCRT__O_SHORT_LIVED
+                    )))
+        ERR(":unsupported oflags 0x%04x\n",unsupp);
 
     return wxflags;
 }
