@@ -31,10 +31,10 @@ typedef struct {
 	int iLevel;			/* indentation level:0=root level */
 	COLORREF clrText;
 	
-	int parent;	    /* handle to parent or 0 if at root*/
-	int firstChild;     /* handle to first child or 0 if no child*/
-	int sibling;        /* handle to next item in list, 0 if last */
-	int upsibling;      /* handle to previous item in list, 0 if first */
+	HTREEITEM parent;	    /* handle to parent or 0 if at root*/
+	HTREEITEM firstChild;     /* handle to first child or 0 if no child*/
+	HTREEITEM sibling;        /* handle to next item in list, 0 if last */
+	HTREEITEM upsibling;      /* handle to previous item in list, 0 if first */
 	int visible;
     RECT32 rect;
 	RECT32 text;
@@ -49,7 +49,7 @@ typedef struct tagTREEVIEW_INFO
 	INT32	Timer;
     UINT32  uNumItems;	/* number of valid TREEVIEW_ITEMs */
     UINT32	uNumPtrsAlloced; 
-    UINT32	uMaxHandle;	/* needed for delete_item */
+    HTREEITEM	uMaxHandle;	/* needed for delete_item */
     HTREEITEM 	TopRootItem;	/* handle to first item in treeview */
 	INT32	cdmode;		/* last custom draw setting */
 

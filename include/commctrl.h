@@ -1676,10 +1676,10 @@ typedef struct
 #define TVIF_INTEGRAL         0x0080
 #define TVIF_DI_SETITEM		  0x1000
 
-#define TVI_ROOT              0xffff0000      /* -65536 */
-#define TVI_FIRST             0xffff0001      /* -65535 */
-#define TVI_LAST              0xffff0002      /* -65534 */
-#define TVI_SORT              0xffff0003      /* -65533 */
+#define TVI_ROOT              ((HTREEITEM)0xffff0000)     /* -65536 */
+#define TVI_FIRST             ((HTREEITEM)0xffff0001)     /* -65535 */
+#define TVI_LAST              ((HTREEITEM)0xffff0002)     /* -65534 */
+#define TVI_SORT              ((HTREEITEM)0xffff0003)     /* -65533 */
 
 #define TVIS_FOCUSED          0x0001
 #define TVIS_SELECTED         0x0002
@@ -1748,7 +1748,7 @@ typedef struct
 #define TVC_BYKEYBOARD        0x02
 
 
-typedef HANDLE32 HTREEITEM;
+typedef struct _TREEITEM *HTREEITEM;
 
 typedef struct {
       UINT32 mask;
