@@ -932,3 +932,9 @@ static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 	}
 	return TRUE;
 }
+
+DWORD	WINAPI	OpenVxDHandle(DWORD pmt)
+{
+	FIXME(win32, "(0x%08lx) stub!\n", pmt);
+	return 0;
+}

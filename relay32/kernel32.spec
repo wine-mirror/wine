@@ -562,7 +562,7 @@ init	MAIN_KernelInit
 544 stub OpenProfileUserMapping
 545 stdcall OpenSemaphoreA(long long str) OpenSemaphoreA
 546 stdcall OpenSemaphoreW(long long wstr) OpenSemaphoreW
-547 stub OpenVxDHandle
+547 stdcall OpenVxDHandle(long) OpenVxDHandle
 548 stdcall OutputDebugStringA(str) OutputDebugStringA
 549 stdcall OutputDebugStringW(wstr) OutputDebugStringW
 550 stdcall PeekConsoleInputA(ptr ptr long ptr) PeekConsoleInputA
