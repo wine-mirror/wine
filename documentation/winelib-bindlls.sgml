@@ -135,7 +135,7 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
  *
  * Copyright (c) The copyright holder.
  *
- * Basic WINE wrapper for the linux &lt;3rd party library&gt; so that it can be
+ * Basic Wine wrapper for the Linux &lt;3rd party library&gt; so that it can be
  * used by &lt;the application&gt;
  *
  * Currently this file makes no attempt to be a full wrapper for the &lt;3rd

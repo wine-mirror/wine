@@ -3,7 +3,7 @@
 
     <para>
       This file contains information about the implementation of the
-      multimedia layer of WINE.
+      multimedia layer of Wine.
     </para>
 
     <para>
@@ -67,8 +67,8 @@
 
       <para>
 	Please note that native low level drivers are not currently supported
-	in WINE, because they either access hardware components or require
-	VxDs to be loaded; WINE does not correctly supports those two so far.
+	in Wine, because they either access hardware components or require
+	VxDs to be loaded; Wine does not correctly supports those two so far.
       </para>
 
       <para>
@@ -476,7 +476,7 @@
       <para>
 	The mid level drivers are represented by some common API functions,
 	mostly mciSendCommand and mciSendString. See status in chapter 3 for
-	more information. WINE implements several MCI mid level drivers
+	more information. Wine implements several MCI mid level drivers
 	(status is given for both built-in and native implementation):
       </para>
 
@@ -746,7 +746,7 @@
 	The rest (basically the MMSYSTEM and WINMM DLLs entry points). It also
 	provides the skeleton for the core functionality for multimedia
 	rendering. Note that native MMSYSTEM and WINMM do not currently work
-	under WINE and there is no plan to support them (it would require to
+	under Wine and there is no plan to support them (it would require to
 	also fully support VxD, which is not done yet).
         Moreover, native DLLs require 16 bit MCI and low level drivers. Wine
         implements them as 32 bit drivers.
@@ -800,7 +800,7 @@
         </para>
 
         <para>
-	  MCI drivers are seen as regular WINE modules, and can be loaded (with
+	  MCI drivers are seen as regular Wine modules, and can be loaded (with
 	  a correct load order between built-in, native, elfdll, so), as any
 	  other DLL. Please note, that MCI drivers module names must bear the
 	  .drv extension to be correctly understood.
@@ -810,7 +810,7 @@
 	  The list of available MCI drivers is obtained as follows:
 	  1. key 'mci' in [option] section from .winerc (or wineconf)
 	  mci=CDAUDIO:SEQUENCER gives the list of MCI drivers (names, in
-	  uppercase only) to be used in WINE.
+	  uppercase only) to be used in Wine.
 	  2. This list, when defined, supersedes the mci key in
 	  c:\windows\system.ini
        </para>

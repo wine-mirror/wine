@@ -1277,7 +1277,7 @@
             <listitem>
               <para>Building the package</para>
               <para>
-                WINE is configured the usual way (depending on your
+                Wine is configured the usual way (depending on your
                 build environment). The "prefix" is chosen using your
                 application placement policy
                 (<filename>/usr/</filename>,
@@ -1311,13 +1311,13 @@ mv $BR/usr/X11R6/lib/lib* $BR/usr/X11R6/lib/wine/
 # the clipboard server is started on demand.
 install -m 755 dlls/x11drv/wineclipsrv $BR/usr/X11R6/bin/
 
-# The WINE server is needed.
+# The Wine server is needed.
 install -m 755 server/wineserver $BR/usr/X11R6/bin/
               </screen>
               <para>
                 Here we unfortunately do need to create
                 <filename>wineuser.reg</filename> and
-                <filename>winesystem.reg</filename> from the WINE
+                <filename>winesystem.reg</filename> from the Wine
                 distributed <filename>winedefault.reg</filename>. This
                 can be done using <command>./regapi</command> once for
                 one example user and then reusing his
@@ -1376,7 +1376,7 @@ fi
               <para>
                 For the rationales of needing as less input from the
                 user as possible arises the need for a very good
-                configuration file. The one supplied with WINE is
+                configuration file. The one supplied with Wine is
                 currently lacking. We need:
               </para>
               <itemizedlist>
@@ -1493,7 +1493,7 @@ Path=/
               <para>Add this prepared configuration file to the package.</para>
             </listitem>
             <listitem>
-              <para>Installing WINE for the system administrator</para>
+              <para>Installing Wine for the system administrator</para>
               <para>
                 Install the package using the usual packager
                 <command>rpm -i wine.rpm</command>. You may edit
@@ -1521,10 +1521,10 @@ Path=/
               </para>
             </listitem>
             <listitem>
-              <para>Installing WINE for the user</para>
+              <para>Installing Wine for the user</para>
               <para>
                 The user will need to run a setup script before the
-                first invocation of WINE. This script should:
+                first invocation of Wine. This script should:
               </para>
 
 
@@ -1718,7 +1718,7 @@ Label=ROOT
 Filesystem=win95
 
 ;
-; Standard Windows path entries. WINE will not work if they are incorrect.
+; Standard Windows path entries. Wine will not work if they are incorrect.
 ;
 [wine]
 ;
@@ -1846,7 +1846,7 @@ LPT2:=|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -
 LPT3:=/dev/lp3
 
 ;
-; Allow port access to WINE started by the root user. Useful for some
+; Allow port access to Wine started by the root user. Useful for some
 ; supported devices, but it can make the system unstable.
 ; Read /usr/doc/wine-cvs-xxxxx/ioport-trace-hints.
 ;
@@ -1870,14 +1870,14 @@ Exclude=WM_SIZE;WM_TIMER;
 ;
 ; Layout/Look modifications. Here you can switch with a single line between
 ; windows 3.1 and windows 95 style.
-; This does not change WINE behaviour or reported versions, just the look!
+; This does not change Wine behaviour or reported versions, just the look!
 ;
 [Tweak.Layout]
 ;; WineLook=xxx  (supported styles are 'Win31'(default), 'Win95', 'Win98')
 WineLook=Win95
 
 ;
-; What programs to start on WINE startup. (you should probably leave it empty)
+; What programs to start on Wine startup. (you should probably leave it empty)
 ;
 [programs]
 Default=

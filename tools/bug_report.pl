@@ -24,7 +24,7 @@
 ##Changelog:
 ##August 29, 1999 - Work around for debugger exit (or lack thereof)
 ##                - Should now put debugging output in correct place
-##April 19, 1999 - Much nicer way to select wine's location
+##April 19, 1999 - Much nicer way to select Wine's location
 ##               - Option to disable creation of a debugging output
 ##               - Now places debugging output where it was started
 ##April 4, 1999 - Sanity check for file locations/wine strippedness
@@ -50,10 +50,10 @@ sub do_var {
 open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT";
 $ENV{'SHELL'}="/bin/bash";
 $var0 = qq{
-	What is your level of WINE expertise? 1-newbie 2-intermediate 3-advanced
+	What is your level of Wine expertise? 1-newbie 2-intermediate 3-advanced
 
-	1 - Makes a debug report as defined in the WINE documentation. Best
-	    for new WINE users. If you're not sure what -debugmsg is, then
+	1 - Makes a debug report as defined in the Wine documentation. Best
+	    for new Wine users. If you're not sure what -debugmsg is, then
 	    use this mode.
 	2 - Makes a debug report that is more customizable (Example: you can
 	    choose what -debugmsg 's to use). You are asked more questions in
@@ -63,14 +63,14 @@ $var0 = qq{
 };
 print do_var($var0)."\n";
 until ($debuglevel >= 1 and $debuglevel <= 3) {
-	print "Enter your level of WINE expertise (1-3): ";
+	print "Enter your level of Wine expertise (1-3): ";
 	$debuglevel=<STDIN>;
 	chomp $debuglevel;
 }
 
 if ($debuglevel < 3) {
 	$var1 = qq{
-	This program will make a debug report for WINE developers. It generates
+	This program will make a debug report for Wine developers. It generates
 	two files. The first one has everything asked for by the bugreports guide;
 	the second has *all* of the debug output, which can go to thousands of
 	lines.
@@ -199,7 +199,7 @@ while ($ifstrip =~ /no symbols/) {
 }
 while ($ifstrip =~ /not recognized/) {
 	$var26 = qq{
-	Looks like you gave me something that isn't a wine binary (It could be a
+	Looks like you gave me something that isn't a Wine binary (It could be a
 	text file). Try again.
 	};
 	print do_var($var26);
@@ -208,7 +208,7 @@ while ($ifstrip =~ /not recognized/) {
 	$ifstrip = `nm $wineloc 2>&1`;
 }
 
-print "\nWhat version of windows are you using with wine?\n\n".
+print "\nWhat version of Windows are you using with Wine?\n\n".
       "0 - None\n".
       "1 - Windows 3.x\n".
       "2 - Windows 95\n".
@@ -220,7 +220,7 @@ print "\nWhat version of windows are you using with wine?\n\n".
       "8 - Other\n\n";
 do
 	{
-	print "Enter the number that corresponds to your windows version: ";
+	print "Enter the number that corresponds to your Windows version: ";
 	$winver=<STDIN>;
 	chomp $winver;
 	}
@@ -349,7 +349,7 @@ if ($debuglevel > 1) {
 }
 if ($debuglevel > 1) {
 	$var15 = qq{
-	Enter any extra options you want to pass to WINE.
+	Enter any extra options you want to pass to Wine.
 	};
 	print do_var($var15);
 	$extraops=<STDIN>;
@@ -367,13 +367,13 @@ if ($debuglevel > 1) {
 		$var16 = qq{
 		When you ran ./configure to build wine, were there any special options
 		you used to do so (Example: --enable-dll)? If you didn't use any special
-		options or didn't compile WINE on your own, just hit enter:
+		options or didn't compile Wine on your own, just hit enter:
 		};
 		print do_var($var16);
 	} elsif ($debuglevel =~ 3) {
 		$var17 = qq{
-		Enter any special options you used when running ./configure for WINE
-		(Default is none, use if you didn't compile wine yourself):
+		Enter any special options you used when running ./configure for Wine
+		(Default is none, use if you didn't compile Wine yourself):
 		};
 		print do_var($var17);
 	}
@@ -388,7 +388,7 @@ if ($debuglevel > 1) {
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
 		$var18 = qq{
-		Is your wine version CVS or from a .tar.gz file? As in... did you download it
+		Is your Wine version CVS or from a .tar.gz file? As in... did you download it
 		off a website/ftpsite or did you/have you run cvs on it to update it?
 		For CVS: YYMMDD, where YY is the year (99), MM is the month (01), and DD
 		is the day (14), that you last updated it (Example: 990114).
@@ -397,7 +397,7 @@ if ($debuglevel > 1) {
 		print do_var($var18);
 	} elsif ($debuglevel =~ 3) {
 		$var19 = qq{
-		Is your wine from CVS? Enter the last CVS update date for it here, in
+		Is your Wine from CVS? Enter the last CVS update date for it here, in
 		YYMMDD form (If it's from a tarball, just hit enter):
 		};
 		print do_var($var19);
@@ -427,18 +427,18 @@ chomp $ostype;
 $wineneeds=`ldd $wineloc`;
 if ($debuglevel < 3) {
 	$var20 = qq{
-	OK, now I'm going to run WINE. I will close it for you once the wine
+	OK, now I'm going to run Wine. I will close it for you once the Wine
 	debugger comes up. NOTE: You won't see ANY debug messages. Don't
 	worry, they are being output to a file. Since there are so many, it's
 	not a good idea to have them all output to a terminal (Speed slowdown
 	mainly).
-	WINE will still run much slower than normal, because there will be so
+	Wine will still run much slower than normal, because there will be so
 	many debug messages being output to file.
 	};
 	print do_var($var20);
 } elsif ($debuglevel =~ 3) {
 	$var21 = qq{
-	OK, now it's time to run WINE. I will close down WINE for you after
+	OK, now it's time to run Wine. I will close down Wine for you after
 	the debugger is finished doing its thing.
 	};
 	print do_var($var21);
@@ -446,7 +446,7 @@ if ($debuglevel < 3) {
 $bashver=qw("/bin/bash -version");
 if ($bashver =~ /2\./) { $outflags = "2>" }
 else { $outflags = ">\&" }
-print "Hit enter to start wine!\n";
+print "Hit enter to start Wine!\n";
 $blank=<STDIN>;
 $dir=$program;
 $dir=~m#(.*)/#;
@@ -570,7 +570,7 @@ Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
 $var30 = qq{
 Having problems with the script?
 Submit a bug report to Wine bugtracking system at http://bugs.winehq.com or
-tell the wine newsgroup (comp.emulators.ms-windows.wine).
+tell the Wine newsgroup (comp.emulators.ms-windows.wine).
 };
 print do_var($var22);
 print do_var($var28) if $outfile ne "no file";

@@ -802,7 +802,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
     </sect1>
 
     <sect1 id="arch-dlls">
-      <title>WINE/WINDOWS DLLs</title>
+      <title>Wine/Windows DLLs</title>
 
       <para>
         Based upon various messages on wine-devel especially by Ulrich
@@ -829,21 +829,21 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
           routines they implement. For example, using the native USER
           DLL would maintain a virtually perfect and Windows 95-like
           look for window borders, dialog controls, and so on. Using
-          the built-in WINE version of this library, on the other
+          the built-in Wine version of this library, on the other
           hand, would produce a display that does not precisely mimic
           that of Windows 95.  Such subtle differences can be
           engendered in other important DLLs, such as the common
           controls library COMMCTRL or the common dialogs library
-          COMMDLG, when built-in WINE DLLs outrank other types in load
+          COMMDLG, when built-in Wine DLLs outrank other types in load
           order.
         </para>
         <para>
           More significant, less aesthetically-oriented problems can
-          result if the built-in WINE version of the SHELL DLL is
+          result if the built-in Wine version of the SHELL DLL is
           loaded before the native version of this library. SHELL
           contains routines such as those used by installer utilities
           to create desktop shortcuts. Some installers might fail when
-          using WINE's built-in SHELL.
+          using Wine's built-in SHELL.
         </para>
       </sect2>
 
@@ -857,16 +857,16 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
           work much worse than the corresponding built-in one, if at
           all. For example, the native Windows GDI library must be
           paired with a Windows display driver, which of course is not
-          present under Intel Unix and WINE.
+          present under Intel Unix and Wine.
         </para>
         <para>
-          Finally, occassionally built-in WINE DLLs implement more
+          Finally, occassionally built-in Wine DLLs implement more
           features than the corresponding native Windows DLLs.
           Probably the most important example of such behavior is the
-          integration of Wine with X provided by WINE's built-in USER
+          integration of Wine with X provided by Wine's built-in USER
           DLL. Should the native Windows USER library take load-order
           precedence, such features as the ability to use the
-          clipboard or drag-and- drop between Wine windows and X
+          clipboard or drag-and-drop between Wine windows and X
           windows will be lost.
         </para>
       </sect2>
@@ -923,7 +923,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
           pairs. In general, these are DLLs for either 16-bit or
           32-bit applications. In most cases in Windows, the 32-bit
           version cannot be used without its 16-bit counterpart. For
-          WINE, it is customary that the 16-bit implementations rely
+          Wine, it is customary that the 16-bit implementations rely
           on the 32-bit implementations and cast the results back to
           16-bit arguments. Changing anything in this section is bound
           to result in errors.
@@ -943,7 +943,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
         <para>
           The following list briefly describes each of the DLLs
           commonly found in Windows whose load order may be modified
-          during the configuration and compilation of WINE.
+          during the configuration and compilation of Wine.
         </para>
         <para>
           (See also <filename>./DEVELOPER-HINTS</filename> or the

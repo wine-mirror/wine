@@ -140,7 +140,7 @@ printer=on
 	    printers and also configured mostly automatic.
 	  </para>
 	  <para>
-	    Since WINE cannot find out what type of printer this is, you
+	    Since Wine cannot find out what type of printer this is, you
 	    need to specify a PPD file in the [ppd] section of
 	    <filename>~/.wine/config</filename>. Either use the shortcut
 	    name and make the entry look like:

@@ -399,7 +399,7 @@ winedbg "hl.exe -windowed"
               into the functions you find relevant. See The section on Debug 
               Logging in this guide for more information. You might
               also try to run the program in <command>gdb</command>
-              instead of using the WINE-debugger. If you do that, use
+              instead of using the Wine debugger. If you do that, use
               <parameter>handle SIGSEGV nostop noprint</parameter> to
               disable the handling of seg faults inside
               <command>gdb</command> (needed for Win16). 
@@ -474,14 +474,14 @@ winedbg "hl.exe -windowed"
         </para>
         <para>
           The best, freely available, disassembler for Win16 programs is
-          <application>Windows Codeback</application>, archivename
+          <application>Windows Codeback</application>, archive name
           <filename>wcbxxx.zip</filename>, which usually can be found in
-          the <filename>Cica-Mirror</filename> subdirectory on the WINE
-          ftpsites. (See <filename>ANNOUNCE</filename>).
+          the <filename>Cica-Mirror</filename> subdirectory on the Wine
+          ftp sites. (See <filename>ANNOUNCE</filename>).
         </para>
         <para>
           Disassembling win32 programs is possible using
-          <application>Windows Disassembler 32</application>, archivename
+          <application>Windows Disassembler 32</application>, archive name
           something like <filename>w32dsm87.zip</filename> (or similar)
           on <systemitem class="systemname">ftp.winsite.com</systemitem>
           and mirrors.  The shareware version does not allow saving of

@@ -138,7 +138,7 @@ WORD   cmd;
             Accelerators in NE resources. These have a size of 5 byte
             and do not have any padding. This is also the internal
             layout of the global handle <type>HACCEL</type> (16 and
-            32) in Windows 95 and WINE. Exposed to the user as Win16
+            32) in Windows 95 and Wine. Exposed to the user as Win16
             global handles <type>HACCEL16</type> and
             <type>HACCEL32</type> by the Win16/Win32 API.
           </para>

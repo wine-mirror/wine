@@ -233,7 +233,7 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
     </sect1>
 
     <sect1 id="os2-wine">
-      <title>Running & Compiling WINE in OS/2</title>
+      <title>Running & Compiling Wine in OS/2</title>
 
       <para>
         Written by &name-robert-pouliot; <email>&email-robert-pouliot;</email>,
@@ -244,7 +244,7 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
       </para>
 
       <para>
-        If you want to help the port of WINE to OS/2, send me a
+        If you want to help the port of Wine to OS/2, send me a
         message at <email>krynos@clic.net</email> I currently don't
         want beta testers. It must work before we can test it.
       </para>
