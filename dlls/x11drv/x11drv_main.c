@@ -281,7 +281,7 @@ BOOL X11DRV_GetScreenSaveActive(void)
 {
     int timeout, temp;
     TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
-    return timeout != NULL;
+    return timeout != 0;
 }
 
 /***********************************************************************

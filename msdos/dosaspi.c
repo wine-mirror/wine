@@ -178,7 +178,7 @@ void ASPI_DOS_HandleInt(CONTEXT86 *context)
 		if( hWNASPI32 == INVALID_HANDLE_VALUE )
 		{
 			TRACE("Loading WNASPI32\n");
-			hWNASPI32 = LoadLibraryExA("WNASPI32", NULL, 0);
+			hWNASPI32 = LoadLibraryExA("WNASPI32", 0, 0);
 		}
 
 		if( hWNASPI32 == INVALID_HANDLE_VALUE )

@@ -585,8 +585,8 @@ END:
  */
 Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc )
 {
-    HGLOBAL hPackedDIB = NULL;
-    Pixmap pixmap = NULL;
+    HGLOBAL hPackedDIB = 0;
+    Pixmap pixmap = 0;
 
     /*
      * Create a packed DIB from the bitmap passed to us.

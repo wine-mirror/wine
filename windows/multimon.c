@@ -29,7 +29,7 @@ HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
     {
         return xPRIMARY_MONITOR;
     }
-        return NULL;
+    return (HMONITOR)0;
 }
 
 /***********************************************************************
@@ -45,7 +45,7 @@ HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
     {
         return xPRIMARY_MONITOR;
     }
-    return NULL;
+    return (HMONITOR)0;
 }
 
 /***********************************************************************
@@ -65,7 +65,7 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
         return MonitorFromRect(&wp.rcNormalPosition, dwFlags);
     }
 
-    return NULL;
+    return (HMONITOR)0;
 }
 
 /***********************************************************************
