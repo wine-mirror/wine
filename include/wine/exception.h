@@ -94,7 +94,7 @@
              (func)(1); \
              break; \
          } else { \
-             __f.frame.Handler = (PEXCEPTION_HANDLER)WINE_finally_handler; \
+             __f.frame.Handler = (PEXCEPTION_HANDLER)__wine_finally_handler; \
              __f.u.finally_func = (func); \
              __wine_push_frame( &__f.frame ); \
              __first = 0; \
