@@ -208,7 +208,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 			 1,
 			 D3DFmt2GLFmt(This->Device, This->myDesc.Format), 
                          D3DFmt2GLType(This->Device, This->myDesc.Format), 
-                         pLockedRect->pBits + j * pLockedRect->Pitch);
+                         (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
 	    vcheckGLcall("glReadPixels");
 	  }
 	}
@@ -507,7 +507,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
       char buffer[4096];
       ++gen;
       if ((gen % 10) == 0) {
-	snprintf(buffer, sizeof(buffer), "/tmp/surface%u_level%u_%u.png", gl_target, gl_level, gen);
+	snprintf(buffer, sizeof(buffer), "/tmp/surface%u_level%u_%u.ppm", gl_target, gl_level, gen);
 	IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This, buffer);
       }
     }
@@ -520,7 +520,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 #include <errno.h>
 HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, const char* filename) {
   FILE* f = NULL;
-  int i;
+  ULONG i;
   ICOM_THIS(IDirect3DSurface8Impl,iface);
 
   f = fopen(filename, "w+");
