@@ -24,10 +24,10 @@
 #include <string.h>
 #include <math.h>
 #if defined(HAVE_FLOAT_H)
- #include <float.h>
+# include <float.h>
 #endif
 #if !defined(PI)
- #define PI M_PI
+# define PI M_PI
 #endif
 #include "psdrv.h"
 #include "wine/debug.h"

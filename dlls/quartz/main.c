@@ -205,15 +205,16 @@ HRESULT WINAPI QUARTZ_DllCanUnloadNow()
 }
 
 
+#define OUR_GUID_ENTRY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } , #name },
+
 static struct {
 	const GUID	riid;
 	const char 	*name;
 } InterfaceDesc[] =
 {
-    #define OUR_GUID_ENTRY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-    { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } , #name },
-        #include "uuids.h"
-	{ { 0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0} }, NULL }
+#include "uuids.h"
+    { { 0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0} }, NULL }
 };
 
 /***********************************************************************

@@ -352,7 +352,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
        lpInfo->dwZpos   = jstck->z + 32767;
     if (lpInfo->dwFlags & JOY_RETURNR)
        lpInfo->dwRpos   = jstck->r + 32767;
-    #ifdef BODGE_THE_HAT
+# ifdef BODGE_THE_HAT
     else if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
     {
          if (jstck->r > 0)
@@ -360,10 +360,10 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
          else if (jstck->r < 0)
             lpInfo->dwButtons |= 1<<8;
     }
-    #endif
+# endif
     if (lpInfo->dwFlags & JOY_RETURNU)
 	lpInfo->dwUpos   = jstck->u + 32767;
-    #ifdef BODGE_THE_HAT
+# ifdef BODGE_THE_HAT
     else if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
     {
        if (jstck->u > 0)
@@ -371,7 +371,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
         else if (jstck->u < 0)
           lpInfo->dwButtons |= 1<<10;
     }
-    #endif
+# endif
     if (lpInfo->dwFlags & JOY_RETURNV)
        lpInfo->dwVpos   = jstck->v + 32767;
 

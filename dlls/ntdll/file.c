@@ -1441,9 +1441,9 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                     break;
                 }
 #elif defined (__APPLE__)
-                #include <IOKit/IOKitLib.h>
-                #include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
-                #include <paths.h>
+# include <IOKit/IOKitLib.h>
+# include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
+# include <paths.h>
                 struct statfs stfs;
                 
                 info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;

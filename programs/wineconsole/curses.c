@@ -61,9 +61,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(curses);
 #if defined(HAVE_CURSES_H) || defined(HAVE_NCURSES_H)
 
 #ifdef HAVE_NCURSES_H
- #define CURSES_NAME "ncurses"
+# define CURSES_NAME "ncurses"
 #else
- #define CURSES_NAME "curses"
+# define CURSES_NAME "curses"
 #endif
 
 struct inner_data_curse 

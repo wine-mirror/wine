@@ -91,13 +91,13 @@ typedef struct tagBOARD
     POINT press;
 
     /* defines for mb */
-    #define MB_NONE 0
-    #define MB_LEFTDOWN 1
-    #define MB_LEFTUP 2
-    #define MB_RIGHTDOWN 3
-    #define MB_RIGHTUP 4
-    #define MB_BOTHDOWN 5
-    #define MB_BOTHUP 6
+#define MB_NONE 0
+#define MB_LEFTDOWN 1
+#define MB_LEFTUP 2
+#define MB_RIGHTDOWN 3
+#define MB_RIGHTUP 4
+#define MB_BOTHDOWN 5
+#define MB_BOTHUP 6
     unsigned mb;
 
     FACE_BMP face_bmp;
@@ -111,10 +111,10 @@ typedef struct tagBOARD
     } box [MAX_COLS + 2] [MAX_ROWS + 2];
 
     /* defines for FlagType */
-    #define NORMAL 0
-    #define QUESTION 1
-    #define FLAG 2
-    #define COMPLETE 3
+#define NORMAL 0
+#define QUESTION 1
+#define FLAG 2
+#define COMPLETE 3
 
 } BOARD;
 

@@ -176,11 +176,11 @@ void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
     {
         switch (pnmh->code)
         {
-        #if 0
+#if 0
         case LVN_ITEMCHANGED:
             ProcessPageUpdate();
             break;
-        #endif
+#endif
             
         case LVN_GETDISPINFO:
 

@@ -68,7 +68,7 @@ static BOOL MSCMS_init_lcms()
         }
     }
 
-    #define LOAD_FUNCPTR(f) \
+#define LOAD_FUNCPTR(f) \
             if ((p##f = wine_dlsym( lcmshandle, #f, NULL, 0 )) == NULL) \
                 goto sym_not_found;
 

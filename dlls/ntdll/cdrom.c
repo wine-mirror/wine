@@ -92,10 +92,10 @@
    lack the following constants. */
 
 #ifndef CD_SECS
-  #define CD_SECS              60 /* seconds per minute */
+# define CD_SECS              60 /* seconds per minute */
 #endif
 #ifndef CD_FRAMES
-  #define CD_FRAMES            75 /* frames per second */
+# define CD_FRAMES            75 /* frames per second */
 #endif
 
 /* definitions taken from libdvdcss */

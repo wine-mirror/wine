@@ -86,25 +86,25 @@
 
     /*  SDH - 05/05/95 - TWUNK */
     /*  For common code between 16 and 32 bits.  */
-    #ifdef  WIN32
-        #define TW_HUGE
-    #else   /* WIN32 */
-        #define TW_HUGE    huge
-    #endif  /* WIN32 */
+# ifdef  WIN32
+#  define TW_HUGE
+# else   /* WIN32 */
+#  define TW_HUGE    huge
+# endif  /* WIN32 */
     typedef BYTE TW_HUGE * HPBYTE;
     typedef void TW_HUGE * HPVOID;
 #endif  /* _MSWIN_ */
 
 #ifdef  _MAC_
-    #define PASCAL         pascal
-    #define FAR
+#define PASCAL         pascal
+#define FAR
     typedef Handle         TW_HANDLE;
     typedef char          *TW_MEMREF;
 #endif  /* _MAC_ */
 
 #ifdef  _UNIX_
 /*    #define PASCAL         pascal */
-    #define FAR
+#define FAR
     typedef unsigned char *TW_HANDLE;
     typedef unsigned char *TW_MEMREF;
 #endif  /* _UNIX_ */
@@ -1827,19 +1827,19 @@ typedef TW_UINT16 (*DSMENTRYPROC)(pTW_IDENTITY, pTW_IDENTITY,
 extern "C" {
 #endif  /* __cplusplus */
 #ifdef  _MSWIN_
-  #ifdef _WIN32
+# ifdef _WIN32
      __declspec(dllexport) TW_UINT16 FAR PASCAL DS_Entry (pTW_IDENTITY pOrigin,
                                                           TW_UINT32    DG,
                                                           TW_UINT16    DAT,
                                                           TW_UINT16    MSG,
                                                           TW_MEMREF    pData);
-  #else   /* _WIN32 */
+# else   /* _WIN32 */
      TW_UINT16 FAR PASCAL DS_Entry (pTW_IDENTITY pOrigin,
                                     TW_UINT32    DG,
                                     TW_UINT16    DAT,
                                     TW_UINT16    MSG,
                                     TW_MEMREF    pData);
-  #endif  /* _WIN32 */
+# endif  /* _WIN32 */
 
   typedef TW_UINT16 (FAR PASCAL *DSENTRYPROC) (pTW_IDENTITY pOrigin,
                                                TW_UINT32    DG,

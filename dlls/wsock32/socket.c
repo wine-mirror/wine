@@ -589,7 +589,7 @@ DWORD WINAPI WsControl(DWORD protocol,
    case WSCNTL_TCPIP_ICMP_ECHO:
    {
       unsigned int addr = *(unsigned int*)pRequestInfo;
-      #if 0
+#if 0
          int timeout= *(unsigned int*)(inbuf+4);
          short x1 = *(unsigned short*)(inbuf+8);
          short sendbufsize = *(unsigned short*)(inbuf+10);
@@ -597,7 +597,7 @@ DWORD WINAPI WsControl(DWORD protocol,
          char ttl = *(unsigned char*)(inbuf+13);
          char service = *(unsigned char*)(inbuf+14);
          char type= *(unsigned char*)(inbuf+15); /* 0x2: don't fragment*/
-      #endif
+#endif
 
       FIXME("(ICMP_ECHO) to 0x%08x stub \n", addr);
       break;

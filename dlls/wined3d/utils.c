@@ -327,7 +327,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 /* Setup the texture operations texture stage states */
 void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
 {
-        #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
+#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
         GLenum src1, src2, src3;
         GLenum opr1, opr2, opr3;
         GLenum comb_target;

@@ -82,7 +82,7 @@
 
 /* For CoGetMalloc (MEMCTX_TASK is currently ignored) */
 #ifndef MEMCTX_TASK
-  #define MEMCTX_TASK -1
+# define MEMCTX_TASK -1
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);

@@ -2335,10 +2335,10 @@ BOOL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
                 {
                     FIXME("\timplement function CopyMetaFilePict32to16\n");
                     FIXME("\tin the appropriate file.\n");
-  #ifdef SOMEONE_IMPLEMENTED_ME
+#ifdef SOMEONE_IMPLEMENTED_ME
                     CopyMetaFilePict32to16(GlobalLock16(lpRender->hData16),
                         GlobalLock(lpRender->hData32));
-  #endif
+#endif
                 }
                 else
                 {

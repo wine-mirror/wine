@@ -349,11 +349,11 @@ BOOL PerfDataGetImageName(ULONG Index, LPTSTR lpImageName, int nMaxCount)
     EnterCriticalSection(&PerfDataCriticalSection);
 
     if (Index < ProcessCount) {
-        #ifdef _UNICODE
+#ifdef _UNICODE
             wcsncpy(lpImageName, pPerfData[Index].ImageName, nMaxCount);
-        #else
+#else
             WideCharToMultiByte(CP_ACP, 0, pPerfData[Index].ImageName, -1, lpImageName, nMaxCount, NULL, NULL);
-        #endif
+#endif
 
         bSuccessful = TRUE;
     } else {
@@ -386,11 +386,11 @@ BOOL PerfDataGetUserName(ULONG Index, LPTSTR lpUserName, int nMaxCount)
     EnterCriticalSection(&PerfDataCriticalSection);
 
     if (Index < ProcessCount) {
-        #ifdef _UNICODE
+#ifdef _UNICODE
             wcsncpy(lpUserName, pPerfData[Index].UserName, nMaxCount);
-        #else
+#else
             WideCharToMultiByte(CP_ACP, 0, pPerfData[Index].UserName, -1, lpUserName, nMaxCount, NULL, NULL);
-        #endif
+#endif
 
         bSuccessful = TRUE;
     } else {

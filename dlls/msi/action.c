@@ -6020,10 +6020,10 @@ static LPWSTR load_ttfname_from(LPCWSTR filename)
         USHORT uStringLength;
         USHORT uStringOffset; /* from start of storage area */
     }TT_NAME_RECORD;
-   
-    #define SWAPWORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
-    #define SWAPLONG(x) MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
-   
+
+#define SWAPWORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+#define SWAPLONG(x) MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
+
     handle = CreateFileW(filename ,GENERIC_READ, 0, NULL, OPEN_EXISTING,
                     FILE_ATTRIBUTE_NORMAL, 0 );
     if (handle != INVALID_HANDLE_VALUE)

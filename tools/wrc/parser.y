@@ -735,11 +735,11 @@ dlginit	: tDLGINIT loadmemopts file_raw	{ $$ = new_dlginit($3, $2); }
 
 /* ------------------------------ UserType ------------------------------ */
 userres	: usertype loadmemopts file_raw		{
-		#ifdef WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 			if(pedantic && byteorder != WRC_BO_LITTLE)
-		#else
+#else
 			if(pedantic && byteorder == WRC_BO_BIG)
-		#endif
+#endif
 				yywarning("Byteordering is not little-endian and type cannot be interpreted");
 			$$ = new_user($1, $3, $2);
 		}

@@ -92,17 +92,17 @@ long RPCSS_GetMaxLazyTimeout(void)
 static SYSTEMTIME lazy_timeout_time;
 
 #if defined(NONAMELESSSTRUCT)
-  #define FILETIME_TO_ULARGEINT(filetime, ularge) \
+# define FILETIME_TO_ULARGEINT(filetime, ularge) \
     ( ularge.u.LowPart = filetime.dwLowDateTime, \
       ularge.u.HighPart = filetime.dwHighDateTime )
-  #define ULARGEINT_TO_FILETIME(ularge, filetime) \
+# define ULARGEINT_TO_FILETIME(ularge, filetime) \
     ( filetime.dwLowDateTime = ularge.u.LowPart, \
       filetime.dwHighDateTime = ularge.u.HighPart )
 #else
-  #define FILETIME_TO_ULARGEINT(filetime, ularge) \
+# define FILETIME_TO_ULARGEINT(filetime, ularge) \
     ( ularge.LowPart = filetime.dwLowDateTime, \
       ularge.HighPart = filetime.dwHighDateTime )
-  #define ULARGEINT_TO_FILETIME(ularge, filetime) \
+# define ULARGEINT_TO_FILETIME(ularge, filetime) \
     ( filetime.dwLowDateTime = ularge.LowPart, \
       filetime.dwHighDateTime = ularge.HighPart )
 #endif /* NONAMELESSSTRUCT */

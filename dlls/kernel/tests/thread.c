@@ -43,13 +43,13 @@
    Anyhow, the check is currently commented out
 */
 #if CHECK_STACK
-  #ifdef __try
-    #define __TRY __try
-    #define __EXCEPT __except
-    #define __ENDTRY
-  #else
-    #include "wine/exception.h"
-  #endif
+# ifdef __try
+#  define __TRY __try
+#  define __EXCEPT __except
+#  define __ENDTRY
+# else
+#  include "wine/exception.h"
+# endif
 #endif
 
 typedef BOOL (WINAPI *GetThreadPriorityBoost_t)(HANDLE,PBOOL);

@@ -95,9 +95,9 @@ typedef struct
  */
 
 #ifdef ALLOW_UNALIGNED_ACCESS
-  #define MOVEABLE_PREFIX sizeof(HLOCAL16)
+# define MOVEABLE_PREFIX sizeof(HLOCAL16)
 #else
-  #define MOVEABLE_PREFIX sizeof(int)
+# define MOVEABLE_PREFIX sizeof(int)
 #endif
 
 
