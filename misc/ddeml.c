@@ -815,11 +815,11 @@ UINT32 WINAPI DdeGetLastError32( DWORD idInst )
  */
 int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
 {
-     return DdeCmpStringHandles32A(hsz1, hsz2);
+     return DdeCmpStringHandles32(hsz1, hsz2);
 }
 
 /*****************************************************************
- *            DdeCmpStringHandles32A (USER32.91)
+ *            DdeCmpStringHandles32 (USER32.91)
  *
  * Compares the value of two string handles.  This comparison is
  * not case sensitive.
@@ -829,7 +829,7 @@ int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
  * 0  The values of hsz 1 and 2 are the same or both zero.
  * 1  The value of hsz2 is zero of less than hsz1
  */
-int WINAPI DdeCmpStringHandles32A( HSZ hsz1, HSZ hsz2 )
+int WINAPI DdeCmpStringHandles32( HSZ hsz1, HSZ hsz2 )
 {
     CHAR psz1[MAX_BUFFER_LEN];
     CHAR psz2[MAX_BUFFER_LEN];
@@ -882,79 +882,6 @@ int WINAPI DdeCmpStringHandles32A( HSZ hsz1, HSZ hsz2 )
 
     return ret;
 }
-
-/*****************************************************************
- *            DdeCmpStringHandles32W (USER32.623)
- *
- * Compares the value of two string handles.  This comparison is
- * not case sensitive.
- *
- * Returns:
- * -1 The value of hsz1 is zero or less than hsz2
- * 0  The values of hsz 1 and 2 are the same or both zero.
- * 1  The value of hsz2 is zero of less than hsz1
- */
-int WINAPI DdeCmpStringHandles32W( HSZ hsz1, HSZ hsz2 )
-{
-    WCHAR pwsz1[MAX_BUFFER_LEN];
-    WCHAR pwsz2[MAX_BUFFER_LEN];
-    int ret = 0;
-    int ret1, ret2;
-
-    TRACE( ddeml, "handle 1, handle 2\n" );
-
-    ret1 = GlobalGetAtomName32W( hsz1, pwsz1, MAX_BUFFER_LEN );
-    ret2 = GlobalGetAtomName32W( hsz2, pwsz2, MAX_BUFFER_LEN );
-    /* Make sure we found both strings.
-     */
-    if( ret1 == 0 && ret2 == 0 )
-    {
-        /* If both are not found, return both  "zero strings".
-         */
-        ret = 0;
-    }
-    else if( ret1 == 0 )
-    {
-        /* If hsz1 is a not found, return hsz1 is "zero string".
-         */
-        ret = -1;
-    }
-    else if( ret2 == 0 )
-    {
-        /* If hsz2 is a not found, return hsz2 is "zero string".
-         */
-        ret = 1;
-    }
-    else
-    {
-        LPSTR psz1, psz2;
-        psz1 = HEAP_strdupWtoA( GetProcessHeap(), 0, pwsz1 );
-        psz2 = HEAP_strdupWtoA( GetProcessHeap(), 0, pwsz2 );
-        if( psz1 != NULL && psz2 != NULL )
-        {
-            /* Compare the two strings we got ( case insensitive ).
-             */
-            ret = strcasecmp( psz1, psz2 );
-            /* Since strcmp returns any number smaller than
-             * 0 when the first string is found to be less than
-             * the second one we must make sure we are returning
-             * the proper values.
-             */
-            if( ret < 0 )
-            {
-                ret = -1;
-            }
-            else if( ret > 0 )
-            {
-                ret = 1;
-            }
-        }
-        HeapFree( GetProcessHeap(), 0, psz1 );
-        HeapFree( GetProcessHeap(), 0, psz2 );
-    }
-    return ret;
-}
-
 
 /*****************************************************************
  *            PackDDElParam (USER32.414)

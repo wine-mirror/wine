@@ -115,9 +115,8 @@ BOOL16    WINAPI DdeEnableCallback16(DWORD,HCONV,UINT16);
 BOOL32    WINAPI DdeEnableCallback32(DWORD,HCONV,UINT32);
 #define   DdeEnableCallback WINELIB_NAME(DdeEnableCallback)
 int       WINAPI DdeCmpStringHandles16(HSZ,HSZ);
-int       WINAPI DdeCmpStringHandles32A(HSZ,HSZ);
-int       WINAPI DdeCmpStringHandles32W(HSZ,HSZ);
-#define   DdeCmpStringHandles WINELIB_NAME_AW(DdeCmpStringHandles)
+int       WINAPI DdeCmpStringHandles32(HSZ,HSZ);
+#define   DdeCmpStringHandles WINELIB_NAME(DdeCmpStringHandles)
 
 HDDEDATA  WINAPI DdeNameService16(DWORD,HSZ,HSZ,UINT16);
 HDDEDATA  WINAPI DdeNameService32(DWORD,HSZ,HSZ,UINT32);
