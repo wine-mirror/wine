@@ -1,0 +1,2146 @@
+	   Installations- und Bedienungsanleitung für WINE
+			     Peter Ganten
+			   peter@ganten.org
+			     7. Juli 2000
+
+
+1. Zusammenfassung
+
+Dieser Text beschreibt die Installation, Einrichtung und Bedienung von
+WINE. WINE ist eine Laufzeitumgebung zum Ausführen von Programmen für
+MS-Windows unter GNU/Linux und anderen UNIX-kompatiblen
+Betriebssystemen auf Intel-x386-kompatiblen Computern, das Programm kann
+außerdem dazu genutzt werden, den Quellcode existierender
+Windows-Programme nach UNIX zu portieren. In diesem Text geht es in
+erster Linie jedoch um die Installation und Konfiguration der
+Laufzeitumgebung für Windows-Programme. Der Text wurde
+ursprünglich als Begleitmatierial für einen Vortrag über WINE und die
+Integration von Windows-Anwendungen unter GNU/Linux auf dem LinuxTag
+2000 vom 30. Juni bis zum 2. Juli 2000 in Stuttgart geschrieben. 
+
+2. Einleitung
+                                        
+Mit WINE wird ein umfassender Ansatz zur Integration von
+Windows-Anwendungen unter GNU/Linux verfolgt. WINE besteht u.a. aus
+einem Loader, mit dem Windows- und DOS-Programme unter Linux in den
+Speicher geladen und vom Prozessor des Rechners ausgeführt werden
+können. Außerdem stellt das Programm einen großen Teil der
+Schnittstellen (APIs) Windows-basierter Betriebssysteme zur Verfügung.
+Diese Schnittstellen werden von Windows-Programmen, die mit WINE
+ausgeführt werden, benutzt, so dass solche Programme die selbe,
+erwartete Umgebung vorfinden, wie unter Windows. Weil diese
+Schnittstellen mit WINE vorhanden sind und deren Definitionen in Form
+von Header-Dateien vorliegen, kann WINE auch benutzt werden, um den
+Quellcode von Windows-Programmen nach GNU/Linux oder anderen
+UNIX-basierten Betriebssystemen zu portieren. Es entstehen dann echte
+UNIX/Linux-Programme, welche die selbe Funktionalität haben, wie ihre
+äquivalenten Programme unter Windows. Die Verwendung eines
+einheitlichen APIs unter Windows und Linux hat für Softwarehersteller
+den Vorteil, dass nur eine einzige Version des Quellcodes gepflegt und
+weiterentwickelt werden muss, die sich unter beiden
+Betriebssystemfamilien verwenden lässt.
+
+Das WINE-Projekt wurde 1993 gestartet, es wird im wesentlichen von
+Freiwilligen getragen, die über Mailinglisten miteinander
+kommunizieren. In letzter Zeit hat WINE zusätzliche Unterstützung
+durch mehrere kommerzielle Unternehmen erfahren, die WINE dazu
+einsetzen, ihre Windows-Programme nach GNU/Linux zu portieren. WINE
+ist heute in der Lage einen großen Teil der existierenden
+Windows-Programme (16- und 32bit) unter Linux auszuführen, in einem
+begrenzten Umfang können auch DOS-Programme mit WINE benutzt
+werden. WINE führt Windows-Programme direkt unter Linux aus, es
+benötigt dazu keine speziellen Kernelerweiterungen, keine besonderen
+Rechte und keine existierende Windows-Installation. Das Design erlaubt
+es, die betreffenden Programme unter Linux genauso schnell
+auszuführen, wie unter Windows, weil keine Emulation im Sinne einer
+Interpretation von Prozessoranweisungen stattfindet. Zur Ausführung
+eines bestimmten Programms werden unter GNU/Linux mit WINE theoretisch
+die selben Systemressourcen benötigt, wie unter Windows. Optional kann
+WINE eine bestehende Windows-Installation verwenden. Es ist dann
+möglich, die Einstellungen dieser Installation für Windows-Programme
+zu übernehmen und einige Original-Bestandteile von Windows mit WINE zu
+verwenden, welche in WINE noch nicht in ausreichendem Umfang zur
+Verfügung stehen.
+   
+Im folgenden wird beschrieben, wie WINE auf einem GNU/Linux-System
+installiert und eingerichtet werden kann. Ausgegangen wird dabei von
+der Linux-Distribution Debian GNU/Linux 2.2 (potato) und der
+WINE-Version 20000614. Bei Verwendung einer anderen Linux-Distribution
+oder einer anderen WINE-Version sind die beschriebenen Schritte
+entsprechend anzupassen.
+   
+3. Binärpaket oder Quellcode?
+
+In den meisten Linux-Distributionen sind heute WINE-Pakete
+enthalten. Hierbei handelt es sich um Binärpakete, die WINE in einer
+Form enthalten, in der es direkt ausgeführt werden kann. Aktuelle
+Versionen solcher Pakete lassen sich auch von verschiedenen
+Internetseiten herunterladen. Theoretisch sollte WINE nach der
+Installation eines Binärpakets sinnvoll konfiguriert und sofort
+benutzbar sein. Tatsächlich ist es in vielen Fällen jedoch notwendig, 
+die mit dem Paket installierte Konfiguration zu überarbeiten. 
+
+Aufgrund der schnellen Entwicklung von WINE wird zur Zeit empfohlen,
+an Stelle eines Binärpakets den aktuellen Quellcode zu verwenden. Der
+Quellcode muss, nachdem man ihn sich beschafft hat, entpackt,
+konfiguriert und kompiliert (übersetzt) werden. Dabei entsteht dann
+eine Binärdatei, die genau an das eigene System angepasst ist und
+deshalb eine höhere Wahrscheinlichkeit für optimale Ergebnisse bietet,
+als Binärpakete, die u.U. für ein anders konfiguriertes System
+erstellt wurden. Die Verwendung des Quellcodes bietet außerdem die
+Möglichkeit, das Programm relativ einfach aktualisieren zu können,
+wobei nicht immer wieder das komplette Paket heruntergeladen werden
+muss. Darüberhinaus kann mit der Verwendung des aktuellen Quellcodes 
+sichergestellt werden, dass evtl. auftretende Fehler wirklich in WINE
+vorhanden sind und nicht bereits behoben worden sind. Dadurch wird die
+Möglichkeit gesteigert, sinnvolle Fehlerberichte an die
+WINE-Entwickler schicken zu können. 
+
+Die Installation von Binärpaketen ist abhängig vom eingesetzten
+Paketformat der Distribution (zumeist wird das Redhat- oder
+Debian-Format benutzt) sowie der Distribution selbst. Die hierzu
+benötigten Informationen sollten sich in der Dokumentation der von
+Ihnen eingesetzten Distribution finden. In diesem Text wird die
+Installation aus dem Quellcode von WINE beschrieben. 
+
+4.0 Systemvoraussetzungen
+
+Damit WINE auf dem System übersetzt und ausgeführt werden kann, müssen
+die folgenden Programme und Dateien installiert sein:
+
+    1. Linux-Kernel der Versionsfamilie 2.2.x. (WINE lässt sich auch
+       unter Linux-Kernels der Versionsfamilie 2.0.x ausführen,
+       allerdings unterstützen diese Kernels bestimmte von WINE benötigte
+       Eigenschaften nicht. Dies macht sich insbesondere dann bemerkbar,
+       wenn 32Bit-Windowsprogramme mit WINE ausgeführt werden sollen, bei
+       denen mehrere Threads gleichzeitig ausgeführt werden.) Die
+       Versionsnummer des aktuell ausgeführten Linux-Kernels wird
+       angezeigt, wenn der folgenden Befehl an der Kommandozeile
+       eingegeben wird:
+
+       uname -r 
+
+    2. Es wird empfohlen, die GNU C-Bibliothek (libc6) ab Version 2.1
+       einzusetzen. Die Versionsnummer der aktuell eingesetzten
+       C-Bibliothek kann angezeigt werden, indem der folgende 
+       Befehl benutzt wird:
+
+       ls -l /lib/libc.so.* 
+
+       Auf einigen Systemen ist sowohl die ältere C-Bibliothek libc5,
+       als auch die neuere Bibliothek libc6 vorhanden. Entscheidend
+       ist dann in der Regel die neuere Version. Die C-Bibliothek muss
+       Reentrant sein, damit WINE Multithreading unterstützen
+       kann. Dies ist bei allen neueren Linux-Distributionen der
+       Fall. Die C-Bibliothek befindet sich im Paket libc6. Um WINE zu
+       übersetzen werden zusätzlich die Entwicklerdateien zur
+       C-Bibliothek benötigt. Diese befinden sich unter Debian im
+       Paket libc6-dev.
+
+    3. Weil WINE das X Window System benutzt, werden die X-Bibliotheken
+       und, wenn WINE übersetzt werden soll, die Entwicklerdateien für
+       X benötigt. Die Bibliotheken sind unter Debian im Paket xlib6g
+       und die Entwicklerdateien im Paket xlib6g-dev enthalten.
+
+    4. Darüberhinaus benötigt WINE die XPM-Bibliothek (Paket xpm4g),
+       damit das Programm übersetzt werden kann, werden die
+       Entwicklerdateien für XPM benötigt, diese befinden sich im Paket
+       xpm4g-dev.
+
+    5. Für Programme, die im Textmodus ausgeführt werden, kann WINE die
+       Bibliothek libncurses verwenden. Damit die Unterstützung dafür in
+       das Programm eingebunden wird, müssen die Entwicklerdateien für
+       diese Bibliothek installiert sein (Paket libncurses5-dev). Die
+       Verwendung der ncurses-Bibliothek ist jedoch optional.
+
+    6. Ebenfalls optional ist die Unterstützung einer OpenGL-kompatiblen
+       Bibliothek, wie z.B. Mesa. Wenn die Unterstützung für OpenGL in
+       das Programm eingebunden werden soll, müssen die
+       OpenGL-Entwicklerdateien auf dem System installiert sein, wie sie
+       z.B. durch das Paket mesag-dev bereitgestellt werden. Zusätzlich
+       sind dann natürlich die OpenGL-Bibliotheken selbst erforderlich.
+
+    7. Um WINE zu übersetzen, muss der GNU-C-Compiler benutzt werden.
+       Empfohlen wird zur Zeit Version 2.95. Weiter werden einige
+       Standardwerkzeuge wie make, yacc und bison benötigt, die auf den
+       meisten Linuxsystemen bereits installiert sein sollten.
+       
+   Je nachdem, ob in dem zu erzeugenden Binärcode Debug-Informationen
+   enthalten sein sollen, werden für die Übersetzung und die
+   Installation von WINE zwischen ca. 100 MB und ca. 250 MB
+   Speicherplatz auf der Festplatte benötigt. An den Prozessor des
+   Rechners werden keine besonderen Anforderungen gestellt, so ist ein
+   Prozessor der Pentium-Klasse mit 133 Mhz ausreichend, um mit WINE
+   beispielsweise Textverarbeitungsprogramme auszuführen. Für Spiele
+   und andere Multimedia-Anwendungen wird allerdings in der Regel ein
+   schnellerer Rechner benötigt. Wichtig ist, dass sich in dem Rechner
+   ausreichend Arbeitsspeicher (RAM) befindet. Zur Ausführung größerer
+   Windows-Programme sollte der Rechner mit 64 MB RAM ausgestattet
+   sein.
+   
+5.0 Beschaffung und Installation des Quellcodes
+
+   WINE kann von verschiedenen Servern im Internet per FTP oder HTTP
+   heruntergeladen werden. Normalerweise kann der jeweils aktuelle
+   Quellcode u.a. von den folgenden Adressen bezogen werden:
+
+     * ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/
+     * ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/
+     * ftp://orcus.progsoc.uts.edu.au/pub/wine/development/
+     * http://metalab.unc.edu/pub/Linux/ALPHA/wine/development/
+       
+   Bei der Entwicklung von WINE werden zur Zeit noch keine
+   Versionsnummern benutzt. An Stelle dessen trägt jede Ausgabe eine
+   Zahl, welche nach dem Schema Jahreszahl, Monat, Tag dem Datum
+   entspricht, an welchem die betreffende Version herausgegeben wurde.
+   Die Datei Wine-20000614.tar.gz in einem der oben aufgeführten
+   Verzeichnisse enthält also die Version von WINE. die am 14. Juni
+   2000 herausgegeben wurde. Prinzipiell ist es zu empfehlen, die
+   jeweils neueste Version zu verwenden. Nachdem der Quellcode
+   heruntergeladen worden ist, kann er durch die Eingabe des folgenden
+   Befehls im aktuellen Arbeitsverzeichnis entpackt werden:
+   
+   tar -xvzf Wine-20000614.tar.gz
+   
+   Dabei ist Wine-20000614.tar.gz natürlich durch den Namen der
+   heruntergeladenen Datei zu ersetzen. Der Quellcode wird dann in ein
+   Unterverzeichnis des aktuellen Verzeichnisses entpackt, dessen Name
+   sich aus der Bezeichnung wine und, getrennt von einem Bindestrich,
+   dem Herausgabedatum der benutzten Version zusammensetzt, also
+   beispielsweise wine-20000614. Normalerweise empfiehlt es sich,
+   dieses Verzeichnis in wine umzubenennen, wie es durch Eingabe des
+   folgenden Befehls geschehen kann:
+   
+   mv wine-20000614 wine
+   
+  5.1 Aktualisieren des Quellcodes mit Patchdateien
+  
+   Neben den komprimierten Tar-Archiven, welche den Quellcode von WINE
+   beinhalten, befinden sich in den aufgeführten Verzeichnissen auch
+   so genannte Patch-Dateien, welche lediglich die Änderungen
+   enthalten, die zwischen zwei Ausgaben an WINE vorgenommen
+   wurden. Diese Dateien sind normalerweise viel kleiner als der
+   komplette Quellcode, so dass es sich empfiehlt, sie zu verwenden,
+   wenn das Programm von einer Version auf die nächste aktualisiert
+   werden soll. Falls auf einem Rechner beispielsweise Wine-20000614
+   installiert ist und auf WINE-20000614 aktualisiert werden soll, so
+   wäre die Datei WINE-20000614.diff.gz herunterzuladen. Die in der
+   Datei beschrieben Veränderungen können auf den installierten
+   Quellcode angewandt werden, indem zunächst in das Basisverzeichnis
+   des Quellcodes (also in das Verzeichnis wine, welches durch die
+   oben beschriebenen Schritte entstanden ist) gewechselt wird und
+   dann das Programm patch wie folgt aufgerufen wird:
+   
+   gunzip -c ../Wine-20000526.diff.gz | patch -p1
+   
+   Hier wird davon ausgegangen, dass sich die Patch-Datei in dem
+   Verzeichnis befindet, welches dem WINE-Verzeichnis (wine)
+   übergeordnet ist und den Namen Wine-20000526.diff.gz trägt. Der
+   Dateiname ist entsprechend anzupassen, wenn eine Datei mit einem
+   anderen Namen oder aus einem anderen Verzeichnis benutzt wird.
+   
+  5.2 Herunterladen und Aktualisieren von WINE mit CVS
+  
+   Alternativ kann der Quellcode vom CVS-Server des WINE-Projektes
+   installiert werden. Der Vorteil dieses Verfahrens besteht darin,
+   dass es jederzeit unkompliziert möglich ist, den eigenen Quellcode
+   an den Entwicklungsstand des Projekts anzupassen ohne dass auf eine
+   neue Ausgabe des Programms gewartet werden muss. Für jeden, der
+   plant, selbst an dem Projekt mitzuarbeiten, ist die Verwendung von
+   CVS normalerweise erforderlich. Damit CVS benutzt werden kann, muss
+   das Programm cvs natürlich installiert sein. Unter Debian ist es in
+   dem gleichnamigen Paket enthalten. Wenn dies sichergestellt ist,
+   kann durch die Umgebungsvariable CVSROOT eingestellt werden, von wo
+   der Quellcode bezogen, bzw. aktualisiert werden soll. Bei
+   Verwendung der Bash kann dazu der folgende Befehl eingegeben
+   werden:
+   
+   export CVSROOT=:pserver:cvs@cvs.winehq.com:/home/wine
+   
+   Danach kann man sich bei dem CVS-Server anmelden. Hierzu dient
+   dieser Befehl:
+   
+   cvs login
+   
+   Das Programm erfragt dann ein Passwort für den Zugriff auf den
+   Server.  Hier ist das Passwort cvs zu verwenden. Nun kann der
+   Quellcode vom Server heruntergeladen werden, indem der nächste
+   Befehl eingegeben wird:
+   
+   cvs -z 3 checkout wine
+   
+   Im aktuellen Arbeitsverzeichnis wird dann ein Unterverzeichnis mit
+   der Bezeichnung wine angelegt. Sobald der Befehl abgeschlossen ist,
+   befinden sich in diesem Verzeichnis der aktuelle Quellcode des
+   Projekts und einige zusätzliche Dateien, die von CVS benötigt
+   werden.
+   
+   Um den Quellcode auf den neuesten Stand zu bringen, kann dieser
+   Befehl benutzt werden:
+   
+   cvs -z 3 update -PAd WINE
+   
+   Informationen über die hier verwendeten Parameter beim Aufruf von
+   CVS und über weitere Möglichkeiten des Programms befinden sich
+   u.a. in der Manualseite zu cvs(1) sowie auf der CVS-Homepage, die
+   unter http://www.sourcegear.com/CVS zu erreichen ist. Weitere
+   Hinweise im Hinblick auf CVS und WINE sind unter der Adresse
+   http://www.winehq.com/dev.html verfügbar.
+   
+6.0 Konfiguration und Übersetzung des Quellcodes
+
+   Vorausgesetzt, der Quellcode befindet sich im Unterverzeichnis wine
+   des aktuellen Arbeitsverzeichnisses, ist zunächst in dieses
+   Verzeichnis zu wechseln, um alle weiteren Schritte durchzuführen:
+   
+   cd wine
+   
+   Dann kann das Skript configure aufgerufen werden. Dieses Skript
+   führt eine Reihe von Tests durch, die u.a. untersuchen, ob das
+   System alle notwendigen Eigenschaften erfüllt und die benötigten
+   Entwicklerdateien installiert sind. Daraufhin erzeugt es die
+   Dateien, durch welche die Übersetzung des Quellcodes gesteuert
+   wird. Dem Skript können verschiedene Parameter übergeben werden,
+   mit denen sich beispielsweise bestimmen lässt, dass in den zu
+   erzeugenden Programmen und Bibliotheken keine Debug-Mitteilungen
+   enthalten sein sollen. Die vollständige Liste der verfügbaren
+   Optionen für configure wird angezeigt, wenn das Skript mit der
+   Option --help aufgerufen wird.  Normalerweise reicht es aus, das
+   Skript folgendermaßen aufzurufen:
+   
+   ./configure
+   
+   Falls wichtige Dateien oder Eigenschaften des Systems von configure
+   nicht gefunden werden können, erfolgt unter Umständen eine Warn-
+   oder Fehlermeldung. Solche Fehler sollten behoben werden, bevor mit
+   der Übersetzung des Quellcodes fortgefahren wird.
+   
+   Im nächsten Schritt wird der Quellcode übersetzt. Dazu sind
+   hintereinander die folgenden beiden Befehle zu benutzen:
+   
+   make depend
+   
+   make
+   
+   Auf der Partition, auf welcher sich das Verzeichnis mit dem
+   Quellcode befindet, werden für die komplette Übersetzung zur Zeit
+   ungefähr 230 MB Speicherplatz benötigt. Der größte Teil dieses
+   Speicherplatzes wird dabei von den Debug-Informationen in den
+   Objektdateien, die beim Übersetzen erzeugt werden, benötigt. Falls
+   nicht beabsichtigt wird, irgendwelche Fehler in WINE zu
+   untersuchen, können die Binärdateien auch ohne Debug-Informationen
+   erzeugt werden, dazu ist der letzte der beiden oben genannten
+   Befehle durch den nächsten Befehl zu ersetzen (für die Übersetzung
+   werden dann nur noch ungefähr 80 MB Speicherplatz benötigt).
+   
+   make CFLAGS="-O2"
+   
+   Nun kann WINE auf dem System installiert werden. Hierzu ist mit den
+   Rechten des Administrators der folgende Befehl einzugeben:
+   
+   make install
+   
+   Dadurch werden die ausführbaren Programme von WINE standardmäßig in
+   das Verzeichnis /usr/local/bin, die Programmbibliotheken in das
+   Verzeichnis /usr/local/lib, die Manualseiten unterhalb des
+   Verzeichnisses /usr/local/man und einige Header-Dateien in das
+   Verzeichnis /usr/local/include/wine installiert. 
+
+   Achtung:
+   Standardmäßig wird bei einigen Distributionen (z.B. bei Debian
+   GNU/Linux) in dem Verzeichnis /usr/local/lib nicht nach
+   Programmbibliotheken gesucht. Falls beim Start von WINE gemeldet wird,
+   dass bestimmte Bibliotheken nicht geladen werden können, sollte der
+   Name dieses Verzeichnisses in die Datei /etc/ld.so.conf (in eine
+   eigene Zeile) eingetragen und danach das Programm ldconfig aufgerufen
+   werden.
+   
+7.0 Konfiguration
+
+   Wie viele UNIX-Programme kann WINE entweder über eine systemweit
+   gültige Konfigurationsdatei oder über eine benutzerspezifische
+   Datei im Heimatverzeichnis des betreffenden Benutzers konfiguriert
+   werden.  Die benutzerspezifische Konfigurationsdatei trägt den
+   Namen .winerc.  Wenn diese Datei existiert, wird die systemweit
+   gültige Konfigurationsdatei (standardmäßig
+   /usr/local/etc/wine.conf) nicht beachtet und es werden alle
+   Einstellungen aus der Konfigurationsdatei des betreffenden
+   Benutzers gelesen. Für den Anfang ist es zu empfehlen, mit einer
+   benutzerspezifischen Konfigurationsdatei zu beginnen.
+   
+  7.1 Aufbau der Konfigurationsdatei   
+
+   Von Ihrem Aufbau und den Möglichkeiten zur Konfiguration
+   unterscheidet sich die globale Konfigurationsdatei nicht von der
+   benutzerspezifischen. Das Format orientiert sich an den von Windows
+   her bekannten *.ini-Dateien, die Datei besteht aus einzelnen
+   Blöcken, welche durch Bezeichner eingeleitet werden, die in eckigen
+   Klammern und in einer eigenen Zeile stehen. Innerhalb eines Blockes
+   befinden sich Paare von Variablen und Werten, die durch ein
+   Gleichheitszeichen miteinander verbunden sind. Diese Paare stehen
+   ebenfalls jeweils in einer Zeile. Kommentare werden in der Datei
+   durch ein Semikolon eingeleitet. Außerdem dürfen leere Zeilen
+   benutzt werden, um die Datei zu strukturieren. Ein Beispiel für
+   einen solchen Block wäre also:
+
+   [Drive C]
+   Path=/home/karl
+   Type=hd
+   Label=Laufw.C
+   Filesystem=win95
+
+   Außerdem ist es möglich, innerhalb der Konfigurationsdatei mit
+   Werten von Umgebungsvariablen zu arbeiten. Dazu ist an Stelle eines
+   Wertes der Name der zu verwendenden Umgebungsvariablen in
+   geschweiften Klammern und mit einem vorangestellten Dollarzeichen
+   anzugeben. Soll beispielsweise der Variablen Path aus dem obigen
+   Beispiel der Wert zugeordnet werden, den die Umgebungsvariable HOME
+   zur Zeit der Ausführung von WINE hat, so wäre die entsprechende
+   Zeile folgendermaßen zu schreiben:
+
+   Path=${HOME}
+
+   Im Basisverzeichnis des WINE-Quellcodes befindet sich in der Datei
+   wine.ini ein Beispiel als Vorlage für die Erstellung einer eigenen
+   Konfigurationsdatei. Die Datei enthält alle wichtigen Blöcke und
+   Variablen, sie muss jedoch an die eigene Konfiguration angepasst
+   werden, bevor WINE das erste Mal benutzt wird. Angenommen, das
+   Basisverzeichnis des WINE-Quellcodes trägt den Namen wine und ist
+   ein Unterverzeichnis des eigenen Heimatverzeichnisses, dann kann
+   diese Vorlage durch den folgenden Befehl an den richtigen Platz
+   kopiert werden:
+   
+   cp ~/wine/wine.ini ~/.winerc
+   
+   Die Werte, welche Variablen in der Konfigurationsdatei zugewiesen
+   werden, lassen sich in drei Typen einteilen: Zeichenketten, Zahlen
+   und Boolsche Werte. Im Fall von Boolschen Werten lässt sich
+   entweder true oder false, 1 oder 0 beziehungsweise yes oder no
+   angeben. In den folgenden Beispielen wird die true / false
+   -Schreibweise benutzt.
+   
+  7.2 Konfiguration von Laufwerksbuchstaben
+  
+   Zwischen UNIX/Linux auf der einen und DOS bzw. Windows auf der
+   anderen Seite gibt es einige Unterschiede in der Art, wie
+   Datenträger und Dateien bezeichnet werden. Unter UNIX/Linux gibt es
+   ein Dateisystem mit einem Wurzelpunkt (/), in das unterschiedliche
+   Datenträger durch einen speziellen Befehl (mount) eingebunden
+   werden. Alle Dateien auf eingebundenen Datenträgern können deswegen
+   innerhalb dieses Dateisystems angesprochen werden. DOS und Windows
+   verwenden jedoch für jeden erkannten Datenträger ein eigenes
+   Dateisystem. Um eine bestimmte Datei eindeutig zu bezeichnen, ist
+   es bei diesen Betriebssystemen deswegen notwendig, neben dem Pfad-
+   und Dateinamen einen so genannten Laufwerksbuchstaben
+   anzugeben. Üblicherweise entspricht dabei der Laufwerksbuchstabe A
+   dem ersten Diskettenlaufwerk und der Buchstabe C der ersten
+   Festplattenpartition des Systems.
+   
+   Weil Programme, die für DOS oder Windows geschrieben sind,
+   Laufwerksbuchstaben verwenden, um Dateien zu bezeichnen, muss WINE
+   diese Buchstaben auf das UNIX-Dateisystem abbilden. Das Problem ist
+   auf die folgende Art gelöst: In der Konfigurationsdatei (.winerc
+   oder /usr/local/etc/wine.conf) wird jedem Laufwerksbuchstaben ein
+   Verzeichnis im UNIX-Dateisystem zugeordnet. Dieses Verzeichnis
+   stellt dann (aus Sicht der Windows-Programme) das Basisverzeichnis
+   des entsprechenden Laufwerks dar. Ist also beispielsweise das
+   Verzeichnis /var/winroot dem Laufwerksbuchstaben C zugeordnet und
+   würde ein Windows-Programm unter WINE versuchen, die Datei
+   C:\Dokumente\finanzamt.doc zu öffnen, so würde in Wirklichkeit die
+   Datei /var/winroot/Dokumente/finanzamt.doc geöffnet werden,
+   vorrausgesetzt, diese Datei existiert tatsächlich. Durch diesen
+   Mechanismus kann auch erreicht werden, dass von Windows-Programmen,
+   die unter WINE ausgeführt werden, nur auf einen Teil des
+   UNIX-Dateisystems zugegriffen werden kann.
+   
+   Ein weiterer Unterschied zwischen den Dateisystemen unter DOS und
+   Windows auf der einen und UNIX/Linux auf der anderen Seite besteht
+   in der Berücksichtigung von Groß- und Kleinschreibung bei
+   Dateinamen.  Während es unter Linux durchaus möglich ist, dass sich
+   in einem Verzeichnis gleichzeitig Dateien mit den Namen brief.txt,
+   Brief.txt und brief.TXT befinden, ist dies unter Windows
+   ausgeschlossen, hier wird beispielsweise die Datei brief.txt
+   geöffnet, falls diese existiert, aber eigentlich die Datei
+   Brief.txt angefordert wurde. Die meisten Programme, die für DOS
+   oder 16Bit-Windows geschrieben wurden, erwarten darüberhinaus, dass
+   Dateinamen aus nicht mehr als acht Zeichen zuzüglich einer drei
+   Zeichen langen Erweiterung bestehen. WINE muss aus diesen Gründen
+   entscheiden, welche Datei tatsächlich geöffnet wird, wenn es
+   aufgrund von Groß- und Kleinschreibung unterschiedliche
+   Möglichkeiten gibt. Außerdem muss es die Dateinamen in acht Zeichen
+   lange Namen übersetzen, falls sie von 16bit-Programmen abgefragt
+   werden.
+   
+   Wenn WINE mit einer bestehenden Windows-Installation benutzt werden
+   soll, sollte darauf geachtet werden, dass die Laufwerksbuchstaben
+   unter Windows und WINE übereinstimmen. Befindet sich die
+   Windows-Installation also beispielsweise auf der Partition
+   /dev/hda1, welche unter Windows über den Laufwerksbuchstaben C
+   angesprochen wird, so sollte diese Partition unter GNU/Linux in ein
+   beliebiges Verzeichnis eingebunden werden und dieses Verzeichnis in
+   der Konfigurationsdatei von WINE wieder dem Laufwerksbuchstaben C
+   zugeordnet werden.
+   
+   Ein Beispiel für die Zuordnung von UNIX-Verzeichnissen und
+   Laufwerksbuchstaben in der Konfigurationsdatei wurde weiter oben
+   bereits gebracht. Eine solche Definition besteht aus einem Block,
+   dessen Name sich aus dem Schlüsselwort Drive und dem Buchstaben des
+   Laufwerks zusammensetzt, für das die Definition gelten soll. Ein
+   Beispiel wäre also [Drive C]. Darauf folgen verschiedene Variablen,
+   mit denen die Eigenschaften des Laufwerkes festgelegt werden. Die
+   wichtigste dieser Variablen ist Path. Hiermit wird bestimmt,
+   welchem UNIX-Verzeichnis das Laufwerk entsprechen soll (Beispiele:
+   Path=/home/karl, Path=${HOME}). Die weiteren Variablen haben die
+   folgende Bedeutung:
+   
+   Type
+          Windows kann Anwendungen mitteilen, von welchem Typ
+          (Festplatte, CDROM usw.) ein bestimmter Datenträger ist. Mit
+          dieser Variablen wird WINE mitgeteilt, welchen Typ das
+          entsprechende Laufwerk haben soll. Mögliche Werte sind
+          floppy (Diskettenlaufwerk), hd (Festplattenpartition), cdrom
+          (CDROM-Laufwerk) und network (Netzwerklaufwerk). Im
+          allgemeinen empfiehlt es sich, hier den Typ anzugeben, der
+          dem UNIX-Verzeichnis, welches dem Laufwerk zugeordnet ist,
+          entspricht. Beispiel: Type=floppy.
+          
+   Label
+          Unter DOS und Windows können Laufwerke eine so genannte
+          Datenträgerbezeichnung haben. Diese Bezeichnung kann von
+          Windows-Anwendungen abgefragt werden. Mit dieser Variable
+          kann angegeben werden, welchen Datenträgerbezeichnung WINE
+          zurückliefern soll, falls eine Anwendung diese für das
+          Laufwerk abfragt. Die Datenträgerbezeichnung darf aus nicht
+          mehr als 11 Buchstaben bestehen. Beispiel: Label=Platte1.
+          
+   Serial
+          Jedes Laufwerk hat unter Windows eine so genannte
+          Seriennummer, die ebenfalls von Windows-Programmen abgefragt
+          werden kann. Mit dieser Variablen lässt sich in Form eine
+          acht-stelligen hexadezimalen Zahl angeben, welche
+          Seriennummer in solchen Fällen zurückgeliefert werden
+          soll. Beispiel: Serial=23f78a6b.
+          
+   Filesystem
+          Hiermit wird bestimmt, welche Eigenschaften das emulierte
+          Dateisystem auf dem betreffenden Laufwerk haben soll. Es
+          sind die folgenden Werte möglich:
+          
+        msdos
+                Auf dem Laufwerk sind nur Dateinamen mit einer Länge
+                von acht Zeichen und einer Erweiterung, die aus drei
+                Zeichen besteht, zugelassen. Unterschiede in Groß- und
+                Kleinschreibung werden nicht
+                berücksichtigt. Alternativ für msdos können die
+                Bezeichnungen dos oder fat für diesen Dateisystemtyp
+                benutzt werden.
+                
+        win95
+                Auf dem Laufwerk sind lange Dateinamen zugelassen. DOS
+                und 16bit-Windowsprogramme können jedoch weiterhin
+                kurze Dateinamen benutzen. Unterschiede in Groß- und
+                Kleinschreibung werden nicht berücksichtigt. Dies ist
+                die empfohlenen Einstellung für fast alle Anwendungen.
+                Alternativ für win95 kann dieser Dateisystemtyp auch
+                als vfat bezeichnet werden.
+                
+        unix
+                Das Dateisystem auf dem Laufwerk verhält sich ähnlich
+                wie ein typisches UNIX-Dateisystem, d.h. Dateinamen
+                können die normalerweise erlaubte Länge haben und die
+                Groß- und Kleinschreibung ist bedeutsam. Mit dieser
+                Einstellung kommen die meisten Windows-Programme nicht
+                zurecht.  Probleme treten beispielsweise dann auf,
+                wenn ein Windows-Programm eine Datei zunächst unter
+                dem Namen Daten speichert und dann unter dem Namen
+                DATEN wieder öffnen will.
+                
+          Achtung: 
+	  Es ist zu beachten, dass mit dieser Einstellung nicht
+	  angegeben wird, welche Eigenschaften das zugrunde liegende
+	  UNIX-Dateisystem hat, sondern welche Eigenschaften von WINE
+	  für das entsprechende Laufwerk emuliert werden sollen. Es
+	  ist also durch aus möglich (und in den meisten Fällen
+	  erforderlich) für ein Laufwerk, das sich auf einem
+	  UNIX-Dateisystem befindet, die Einstellung win95 zu
+	  verwenden. Falls es sich bei dem Datenträger, auf dem sich
+	  das dem Laufwerk zugeordnete Verzeichnis befindet,
+	  allerdings um ein FAT-Dateisystem handelt, welches mit dem
+	  FAT-Treiber von Linux (und nicht, wie üblich, mit dem
+	  VFAT-Treiber) betrieben wird, dann muss hier der
+	  Dateisystemtyp msdos benutzt werden, weil es sonst passieren
+	  könnte, dass WINE versucht, auf dem betreffenden Datenträger
+	  Dateien mit langen Namen anzulegen, was dann zu einem Fehler
+	  führen würde. Beispiel: Filesystem=win95.
+          
+   Device
+          In besonderen Fällen ist es notwendig, dass die
+          Windows-Programme direkt, also unter Umgehung des
+          Dateisystems, auf den Datenträger schreiben oder von ihm
+          lesen. Damit dies auch mit WINE möglich ist, kann hier der
+          Name der Gerätedatei angegeben werden, welcher den
+          Datenträger unter Linux repräsentiert. Dies ist nur dann
+          sinnvoll, wenn das dem betreffenden Laufwerk zugeordnete
+          Verzeichnis dem Mountpunkt des hier angegebenen Datenträgers
+          entspricht. Der direkte Gerätezugriff sollte normalerweise
+          nur für solche Datenträger gestattet werden, deren Inhalt
+          nicht besonders geschützt werden muss (u.U. Disketten) oder
+          von denen ohnehin nur gelesen werden kann
+          (z.B. CDROMs). Damit auf den Datenträger geschrieben werden
+          kann, ist es zusätzlich natürlich notwendig, dass die Rechte
+          an der betreffenden Gerätedatei ausreichend sind.  Beispiel:
+          Device=/dev/fd0.
+          
+   FailReadOnly
+
+          Eine Reihe von Windows-Programmen öffnen Dateien prinzipiell
+          zum Lesen und Schreiben, auch wenn aus den betreffenden
+          Dateien lediglich gelesen werden soll. Dieses Verhalten
+          führt normalerweise dazu, dass Dateien, in die von WINE
+          nicht geschrieben werden darf oder die sich auf Datenträgern
+          befinden, auf die nicht geschrieben werden kann (etwa
+          CDROMs), nicht geöffnet werden können. Aus diesem Grund
+          öffnet WINE Dateien standardmäßig zum Lesen, falls eine
+          Datei nicht zum Lesen und zum Schreiben geöffnet werden
+          konnte. Wenn die Variable FailReadOnly auf den Wert true
+          gesetzt wird, verhält sich WINE so wie unter UNIX üblich und
+          liefert eine Fehlermeldung an das Windows-Programm, falls
+          eine Datei nicht zum Schreiben geöffnet werden kann. In der
+          Regel empfiehlt es sich, hier die Standardeinstellung zu
+          übernehmen.  Beispiel: FailReadOnly=true.
+          
+   ReadVolInfo
+          Wenn der Wert dieser Variablen auf true gesetzt ist,
+          versucht WINE, die Seriennummer und die
+          Datenträgerbezeichnung des betreffenden Laufwerks direkt von
+          dem Datenträger zu lesen.  Dazu muss dem Laufwerk eine
+          Gerätedatei zugeordnet sein (Variable device). Diese
+          Einstellung ist vor allem für solche Programme sinnvoll, die
+          nur dann funktionieren, wenn sich beispielsweise die
+          richtige CDROM im Laufwerk befindet und die dies anhand der
+          Seriennummer oder der Datenträgerbezeichnung
+          feststellen. Beispiel: ReadVolInfo=true
+          
+  7.3 Allgemeine Einstellungen
+  
+   Im Abschnitt [wine] der Konfigurationsdatei werden die wichtigsten
+   allgemeinen Einstellungen vorgenommen. Im wesentlichen handelt es
+   sich dabei um Verzeichnisangaben. Es ist zu beachten, dass diese
+   Verzeichnisangaben in der unter DOS und Windows üblichen Weise zu
+   erfolgen haben. D.h., jedem Verzeichnis muss ein Laufwerksbuchstabe
+   vorangestellt werden. Laufwerksbuchstaben und Verzeichnis werden
+   durch einen Doppelpunkt voneinander getrennt, außerdem werden
+   einzelne Verzeichnisse nicht durch einen normalen Schrägstrich,
+   sondern durch einen umgekehrten Schrägstrich (Backslash)
+   voneinander separiert. Die Angaben werden durch die im vorherigen
+   Abschnitt beschriebenen Zuordnungen von Laufwerksbuchstaben in
+   UNIX-Dateinamen übersetzt.
+   
+   Windows
+          Unter Windows spielt das Windows-Verzeichnis eine besondere
+          Rolle. Programme legen hier oft Initialisierungsdateien ab
+          und Installationsprogramme kopieren gelegentlich
+          verschiedene Dateien in dieses Verzeichnis. Mit der
+          Variablen Windows wird eingestellt, welches Verzeichnis von
+          den unter WINE ausgeführten Programmen als
+          Windows-Verzeichnis behandelt werden soll. Das hier
+          angegebene Verzeichnis muss existieren, bevor WINE das erste
+          Mal gestartet wird. Wenn WINE eine bestehende
+          Windows-Installation verwenden soll, muss hier das
+          Verzeichnis angegeben werden, in dem sich die Installation
+          befindet. 
+
+          Falls WINE mit einer existierenden Windows-Installation
+          verwendet werden soll und diese Installation sich auf der
+          Festplattenpartition befindet, die unter Windows den
+          Laufwerksbuchstaben C: trägt und unter Linux durch die
+          Gerätedatei /dev/hda1 repräsentiert wird, so könnte diese
+          Partition beispielsweise unter Linux beispielsweise in das
+          Verzeichnis /Windows eingebunden werden. Diesem Verzeichnis
+          wäre dann im Abschnitt, welcher die
+          Laufwerksbuchstabenkonfiguration enthält der
+          Laufwerksbuchstabe C: zuzuordnen:
+ 
+          [Drive C] 
+          Path=/Windows 
+          Type=hd 
+          Label=windows 
+          Filesystem=win95
+
+          Wenn weiter der Name des Windows-Verzeichnisses dieser
+          Installation windows lautet (unter Windows also C:\windows
+          und unter Linux /Windows/windows), so wäre im Abschnitt
+          [wine] der Konfigurationsdatei folgende Angabe vorzunehmen:
+    
+          Windows=C:\Windows
+
+          Soll WINE jedoch ohne existierende Windows-Installation
+          benutzt werden, so kann ein beliebiges Verzeichnis als
+          Wurzelverzeichnis für das Laufwerk dienen, welches das
+          Windows-Verzeichnis beinhaltet, beispielsweise könnte
+          hierfür das Verzeichnis /Windows angelegt werden. In diesem
+          Verzeichnis müsste nun das Windows-Verzeichnis erzeugt
+          werden, welches daraufhin wie oben beschrieben im Abschnitt
+          [wine] als Windows-Verzeichnis deklariert werden müsste.
+          
+   System
+          Das System-Verzeichnis hat eine ähnliche Bedeutung wie das
+          Windows-Verzeichnis. Unter Windows befinden sich in diesem
+          Verzeichnis im wesentlichen die Programmbibliotheken, es ist
+          normalerweise ein Unterverzeichnis des
+          Windows-Verzeichnisses.  Dieses Verzeichnis muss ebenfalls
+          existieren, bevor WINE das erste Mal gestartet wird. Auch
+          hier muss das System-Verzeichnis der bestehenden
+          Windows-Installation angegeben werden, falls eine solche
+          benutzt werden soll. Unter Windows 95/98 trägt dieses
+          Verzeichnis normalerweise den Namen system und unter Windows
+          NT den Namen system32. Beispiel: System=C:\Windows\System.
+          
+   Temp
+          Das Temp-Verzeichnis wird von vielen Windows-Programmen dazu
+          benutzt, temporäre Dateien abzulegen. Damit dies gelingt,
+          muss hier ein Verzeichnis angegeben werden, welches sich auf
+          einem Laufwerk befindet, das einem UNIX-Verzeichnis
+          entspricht, in dem Schreibberechtigung besteht. Beispiel:
+          Temp=D:\tmp.
+          
+   Path
+          Diese Variable hat die gleiche Bedeutung wie die
+          Umgebungsvariable PATH unter UNIX. Ihr Wert besteht aus
+          einer Kette einzelner Verzeichnisnamen, die nach einem
+          auszuführenden Programm durchsucht wird, wenn der Name eines
+          solchen Programms nicht mit Verzeichnisnamen angegeben
+          wurde. Es ist zu beachten, dass die einzelnen Elemente diese
+          Variable unter Windows nicht durch einen Doppelpunkt sondern
+          durch ein Semikolon voneinander getrennt werden, außerdem
+          erwarten viele Windows-Programme, dass das Windows- und das
+          System-Verzeichnis in dieser Variablen enthalten
+          sind. Beispiel:
+          Path=C:\Windows;C:\Windows\System;D:\Winstuff.
+          
+   Profile
+          Diese Variable wird von WINE benutzt, um den
+          benutzerspezifischen Teil der Systemregistratur einer
+          bestehenden Windows-Installation zu laden. Falls es sich bei
+          der bestehenden Installation um Windows 95/98 handelt, das
+          nicht mit mehreren Benutzern betrieben wird oder ohne eine
+          bestehende Windows-Installation gearbeitet werden soll,
+          braucht die Variable Profile nicht gesetzt zu werden. Wenn
+          jedoch eine Windows NT- oder eine Windows 95/98-Installation
+          mit mehreren Benutzern eingesetzt wird, muss hier angegeben
+          werden, aus welchem Verzeichnis WINE die benutzerspezifische
+          Registrationsdaten laden soll. Diese Verzeichnisse befinden
+          sich normalerweise im Unterverzeichnis Profiles des
+          Windows-Verzeichnis und tragen den Namen des Benutzers,
+          dessen Konfigurationsdaten sie beherbergen. Beispiel:
+          Profile=C:\Windows\Profiles\Peter.
+          
+   GraphicsDriver
+          WINE kann unterschiedliche Treiber für die graphische
+          Ausgabe verwenden. Welcher Treiber zu verwenden ist, wird
+          mit dieser Variablen festgelegt. Zur Zeit stehen zwei
+          Treiber zur Verfügung, nämlich x11drv für die Verwendung des
+          X Window Systems und ttydrv für die Verwendung von WINE an
+          der Konsole.  Der Treiber ttydrv ist zur Zeit nicht voll
+          funktionsfähig, weswegen sich hier nur die Verwendung des
+          Treibers x11drv empfiehlt, dies ist auch die
+          Standardeinstellung, wenn die Variable nicht gesetzt
+          wird. Beispiel: GraphicsDriver=x11drv.
+          
+  7.4 Konfiguration der zu verwendenden Bibliotheken
+  
+   Wie UNIX/Linux-Programme bestehen Windows-Programme in der Regel
+   aus der eigentlichen Programmdatei und einer Reihe von
+   Programmbibliotheken, die beim Laden des Programms oder später mit
+   dem Programm verbunden werden. Eine Reihe der Programmbibliotheken
+   unter Windows stellt dabei gleichzeitig die Schnittstelle zum
+   Betriebssystem dar. Neben dem eigentlichen Windows-Programm werden
+   also die Bibliotheken benötigt, um das Programm ausführen zu
+   können.
+   
+   WINE stellt eine großen Anzahl der normalerweise unter Windows
+   verfügbaren Bibliotheken zur Verfügung. Diese Bibliotheken liegen
+   entweder in Form eigener Dateien vor, welche sich standardmäßig im
+   Verzeichnis /usr/local/lib befinden oder sie sind direkt in der
+   Programmdatei wine enthalten. WINE ist jedoch auch in der Lage, die
+   normalen Windows-Bibliotheken zu verwenden, dies ist beispielsweise
+   dann notwendig, wenn von einem Programm eine Bibliothek benötigt
+   wird, bei der es sich nicht um eine standardmäßige
+   Windows-Bibliothek handelt, sondern um eine, die dem System während
+   der Installation des betreffenden Programms hinzugefügt worden
+   ist. Solche Bibliotheken werden normalerweise nicht von WINE zur
+   Verfügung gestellt.
+   
+   Falls WINE mit einer bestehenden Windows-Installation benutzt wird,
+   bietet es sich u.U. an, in einigen Fällen an Stelle der von WINE
+   zur Verfügung gestellten Bibliotheken die Bibliotheken der
+   Windows-Installation zu verwenden. Diese sind in vielen Fällen
+   vollständiger und können dem auszuführenden Programm deswegen eher
+   die erwartete Funktionalität zur Verfügung stellen. Dabei ist
+   jedoch zu beachten, dass dies nur mit solchen Bibliotheken möglich
+   ist, die keine Betriebssystemfunktionen beinhalten. Bibliotheken,
+   die lediglich einfachen Programmcode, wie beispielsweise den für
+   häufig benötigte Dialoge, beinhalten, können hingegen problemlos
+   aus einer bestehenden Windows-Installation benutzt werden.
+   
+   Die meisten Bibliotheken stehen unter Windows (95/98) in zwei
+   verschiedenen Versionen zur Verfügung, einer 32Bit Version, die von
+   32Bit-Programmen geladen werden kann und einer 16Bit-Version, die
+   von 16Bit-Programmen benutzt werden kann. Beide Versionen benutzen
+   in der Regel Programmcode aus der jeweils zugehörigen anderen
+   Version (Unter Windows 95/98 befindet sich die eigentliche
+   Funktionalität meist in den 16Bit-Bibliotheken, die von den
+   32Bit-Versionen geladen und aufgerufen werden). Deswegen ist es
+   erforderlich, dass immer jeweils beide Versionen einer Bibliothek
+   als Windows- oder als WINE-Bibliothek geladen werden, andere
+   Einstellungen führen in der Regel direkt nach dem Aufruf von WINE
+   zu Fehlern. Die folgende Tabelle zeigt, welche der wichtigsten 16-
+   und 32-Bit Bibliotheken zusammen gehören und gibt Auskunft darüber,
+   ob diese Bibliotheken aus einer bestehenden Windows-Installation
+   geladen werden können oder unbedingt von WINE zur Verfügung
+   gestellt werden müssen. Es wird jeweils zunächst die 16-Bit Version
+   und dann die 32-Bit Version genannte
+   
+   krnl386 
+   kernel32 
+   Diese Bibliothek stellt die Schnittstelle zu den grundlegenden
+   Funktionen, wie Dateizugriff, Ein- und Ausgabe oder
+   Prozesssynchronisation, von Windows-Betriebssystemen zur Verfügung.
+   Deswegen können hier nicht die Bibliotheken einer
+   Windows-Installation benutzt werden.
+
+   - 
+   ntdll 
+   Diese Bibliothek enthält die Schnittstelle zu dem Betriebssystem
+   Windows NT. Es muss deswegen die WINE-Version benutzt werden.
+
+   - 
+   advapi32 
+   Hier befinden sich u.a. Funktionen zum Zugriff auf die
+   Windows-Registratur sowie Sicherheitsfunktionen und
+   kryptographische Funktionen. In der Regel empfiehlt es sich, WINEs
+   Version dieser Bibliothek zu verwenden.
+
+   winsock 
+   wsock32 
+   Hier befindet sich die Internet Protokoll (IP) Schnittstelle von
+   Windows. Mit WINE wird die IP-Funktionalität des Betriebssystems
+   (Linux) benutzt, so dass hier die WINE-Versionen dieser
+   Bibliotheken benutzt werden müssen, welche die IP-Aufrufe von
+   Windows-Programmen an Linux weiterleiten.
+
+   gdi 
+   gdi32 
+   GDI steht für Graphic Device Interface. Die Bibliothek stellt eine
+   einheitliche Schnittstelle zur Bildschirmausgabe und zu Druckern
+   dar. Auch hier müssen die WINE-Versionen benutzt werden.  
+
+   user
+   user32 
+   User stellt u.a. Funktionen zur Fensterverwaltung, zu Menüs oder
+   zur Bedienung der Zwischenablage bereit. Die Windows 95/98
+   Versionen dieser Bibliotheken können theoretisch unter bestimmten
+   Bedingungen mit WINE benutzt werden. Die USER-Bibliotheken von
+   Windows NT rufen in der Regel Funktionen im NT-Kernel auf und
+   können deswegen nicht mit WINE benutzt werden. Normalerweise
+   empfiehlt es sich, die User-Bibliotheken von WINE zu verwenden.
+
+   lzexpand 
+   lz32 
+   Diese beiden Bibliotheken stellen Funktionen zum dekomprimierieren
+   von LZ-Archiven zur Verfügung. Solche Funktionen werden im
+   wesentlichen von Installationsprogrammen benötigt. Die zu Windows
+   gehörenden Versionen dieser Bibliotheken benutzen einige Funktionen
+   aus der Kernel-Bibliothek, die in WINE zur Zeit nicht implementiert
+   sind. Es müssen deswegen die von WINE bereitgestellten Versionen
+   benutzt werden.
+
+   commctrl 
+   comctl32 
+   Diese Bibliothek (common controls) stellt Funktionen zur Erzeugung
+   oft benutzter Fensterelemente, wie Werkzeugleisten oder
+   Statusanzeigen, zur Verfügung. Es können sowohl die Version von
+   WINE als auch die Windows-Version der Bibliothek benutzt werden.
+
+   commdlg 
+   comdlg32 
+   Hier befinden sich komplette Dialoge, die oft von
+   Windows-Programmen benutzt werden (Farbauswahl, Auswahl der
+   Schriftart, Suchen und Ersetzen usw.). Auch hier können wahlweise
+   die Windows- oder WINE-Versionen benutzt werden.
+
+   shell 
+   shell32 
+   Die Shell-Bibliothek beinhaltet den größten Teil der
+   Benutzerschnittstellen von Windows. Sie wird unter Windows
+   besonders vom Explorer (dem Dateimanager) und vielen anderen
+   Anwendungen benutzt, die Funktionen wie beispielsweise
+   Drag-and-Drop unterstützen.  Prinzipiell kann sowohl die Windows-
+   als auch die WINE-Version benutzt werden.
+
+   - 
+   crtdll 
+   Dies ist die standardmäßige C-Laufzeitbibliothek von Windows. Zur
+   Zeit ist die Windows-Version vollständiger, weswegen einige
+   Programme mit der WINE-Version nicht richtig funktionieren.
+   
+   Neben den hier genannten wichtigsten Systembibliotheken stellt WINE
+   eine Reihe weiterer Bibliotheken zur Verfügung, beispielsweise zur
+   Unterstützung von Multimedia-Anwendungen. Falls eine
+   Windows-Installation zur Verfügung steht, empfiehlt es sich in
+   vielen Fällen, auszuprobieren ob ein Programm besser mit den
+   WINE-Versionen oder den Windows-Versionen dieser Bibliotheken
+   funktioniert. 
+
+   In der Datei .winerc bzw. wine.conf gibt es zwei Abschnitte mit
+   denen bestimmt wird, welche Bibliotheken aus einer
+   Windows-Installation geladen werden sollen. Darüberhinaus können
+   diese Einstellungen beim Aufruf von WINE an der Kommandozeile
+   überschrieben werden. Im allgemeinen empfiehlt es sich, die
+   Einstellungen in der Beispielversion der Konfigurationsdatei
+   (wine.ini) zu übernehmen und diese nur dann zu verändern, falls
+   bestimmte Programme mit den Voreinstellungen nicht richtig
+   funktionieren. Falls die Bibliotheken einer Windows-Installation
+   benutzt werden sollen, ist darauf zu achten, dass diese auch von
+   WINE gefunden werden können. Dies setzt in der Regel voraus, dass
+   mit den Variablen Windows und System im allgemeinen Teil der
+   Konfiguration auf das Windows- bzw. das Systemverzeichnis einer
+   gültigen Windows-Installation gezeigt wird und dass diese beiden
+   Verzeichnisse im Wert der Variablen Path genannt werden.
+   
+   Im Abschnitt [DllDefaults] können die folgenden beiden Einstellungen
+   vorgenommen werden:
+   
+   EXTRA_LD_LIBRARY_PATH
+          Mit dieser Variablen können, durch Doppelpunkte voneinander
+          getrennt, UNIX-Verzeichnisse angegeben werden, in denen WINE
+          zusätzlich zu den normalerweise nach dynamisch ladbaren
+          Bibliotheken durchsuchten Verzeichnissen, nach Bibliotheken
+          suchen soll. Die Variable beeinflusst nur die Suche nach den
+          WINE-Versionen der Bibliotheken und nicht die Suche nach
+          Windows-Bibliotheken. Beispiel:
+          EXTRA_LD_LIBRARY_PATH=/home/peter/WINE_libs:/usr/local/WINE/libs.
+          
+   DefaultLoadOrder
+          Hiermit wird bestimmt, welche Reihenfolge WINE standardmäßig
+          benutzen soll, wenn versucht wird, eine Bibliothek zu laden.
+          Diese Reihenfolge wird durch die folgenden Schlüsselwörter
+          definiert:
+          
+        native
+                Es soll versucht werden, die Windows-Version der
+                betreffenden Bibliothek zu laden.
+                
+        builtin
+                Es soll versucht werden, die WINE-Version der
+                betreffenden Bibliothek zu laden.
+                
+        elfdll
+                Elfdlls sind eine besondere Form von
+                Windows-Bibliotheken, welche von WINE zur Verfügung
+                gestellt werden. Sie sind ursprünglich geplant worden,
+                um die eingebauten Bibliotheken abzulösen, allerdings
+                haben die eingebauten Bibliotheken mit der Zeit viele
+                der für Elfdlls geplanten Funktionen bekommen, so dass
+                diese Form von Bibliotheken zur Zeit keine besondere
+                Bedeutung hat.
+                
+        so
+                In einigen Fällen gibt es von einer Bibliothek Linux-
+                und Windows-Versionen, die sich sowohl hinsichtlich
+                ihrer Funktionalität als auch hinsichtlich der
+                aufrufbaren Funktionen in der Bibliothek nicht
+                unterscheiden. Falls ein Windows-Programm die
+                Windows-Version einer solchen Bibliothek laden will,
+                kann WINE versuchen, an Stelle dessen die Linux-Version
+                zu laden und die Funktionen dieser Version an Stelle
+                der in der Windows-Version aufrufen. Mit dem
+                Schlüsselwort so kann dieses Verhalten hervorgerufen
+                werden.
+                
+          Durch die Reihenfolge, mit der diese Schlüsselwörter der
+          Variablen DefaultLoadOrder zugeordnet werden, wird
+          festgelegt, in welcher Reihenfolge WINE die einzelnen
+          Strategien benutzt.  Wurde beispielsweise DefaultLoadOrder =
+          native, builtin, so angegeben, so versucht WINE, wenn eine
+          Bibliothek geladen werden muss, zunächst die
+          Windows-Version zu laden. Wenn dies nicht funktioniert (in
+          der Regel, weil die Bibliothek nicht vorhanden ist oder
+          nicht gefunden werden kann), wird versucht, die WINE-Version
+          der Bibliothek zu verwenden und falls auch eine solche nicht
+          vorhanden ist, wird versucht, direkt die UNIX-Version der
+          entsprechenden Bibliothek zu laden.
+          
+   Im Abschnitt [DllOverrides] lässt sich das im vorherigen Abschnitt
+   spezifizierte Verhalten für einzelne Bibliotheken wieder
+   überschreiben. Während es nämlich im allgemeinen eine gute
+   Strategie ist, zunächst zu versuchen, die Windows-Versionen von
+   Bibliotheken zu laden, darf dies (wie oben beschrieben) bei
+   bestimmten Bibliotheken auf keinen Fall geschehen und es müssen in
+   jedem Fall die WINE-Versionen benutzt werden. Als Variablen werden
+   in diesem Abschnitt die Bibliotheken genannt, für die eine
+   spezielle Reihenfolge gelten soll. Hinter dem Gleichheitszeichen
+   wird dann die für diese Bibliotheken gewünschte Reihenfolge in der
+   gleichen Form angegeben, wie es im vorherigen Abschnitt beschrieben
+   ist. Beispiel:
+
+   [DllOverrides]
+   krnl386, kernel32 = builtin
+   gdi, gdi32        = builtin
+   user, user32      = builtin
+   shell,shell32     = native, builtin
+
+
+  7.5 Konfiguration des X11 Graphiktreibers
+  
+   Der X11 Graphiktreiber stellt die Schnittstelle zwischen den
+   Graphikfunktionen der Windows-Betriebssysteme und dem X Window
+   System dar. Er ermöglicht es also, dass Windows-Programme unter
+   WINE das X Window System ähnlich benutzen können, wie sie unter
+   echtem Windows eine normale Graphikkarte benutzen. Das Verhalten
+   des Treibers wird im Abschnitt x11drv der Konfigurationsdatei
+   eingestellt. Dort stehen die folgenden Variablen zur Verfügung:
+   
+   PrivateColorMap
+          Wenn diese Variable auf true gesetzt ist, verwendet WINE
+          eine eigene Farbpalette. Bei X-Servern die mit eine
+          Farbtiefen von 256 Farben (8bpp) oder weniger betrieben
+          werden, hat das zur Folge, dass andere Fenster u.U. in
+          falschen Farben dargestellt werden, wenn zu WINE gehörende
+          Fenster in den Vordergrund geschaltet sind. Dafür kann WINE
+          jedoch Farben besser darstellen als ohne diese
+          Einstellung. Falls der X Server mit einer Farbtiefe von mehr
+          als 256 Farben betrieben wird, ist die Einstellung
+          wirkungslos.
+          
+   AllocSystemColors
+          Wenn WINE keine eigene Farbpalette verwendet, kann hier
+          angegeben werden, wieviele Farben von der systemweit
+          geteilten Palette maximal von WINE benutzt werden
+          dürfen. Der höchstmögliche Wert ist hier 256, weil bei
+          besseren Farbtiefen keine Palette benutzt wird. Beispiel:
+          AllocSystemColors = 100.
+          
+   PerfectGraphics
+          An einigen Stellen hat WINE die Möglichkeit,
+          Graphikoperationen entweder so durchzuführen, dass sie
+          besonders schnell sind oder so, dass sie besonders korrekt
+          ausgeführt werden. Wenn diese Variable auf den Wert true
+          gesetzt wird, wird der Genauigkeit Vorzug gegeben. Beispiel:
+          PerfectGraphics = false.
+          
+   UseDGA
+          DGA (Direct Graphics Access) ist eine Erweiterung von
+          XFree86, welche den direkten Zugriff auf den Speicher der
+          Graphikkarte ermöglicht. Dadurch lassen sich
+          Graphikoperationen wesentlich schneller durchführen als
+          normalerweise. Die DirectDraw-Bibliothek (DirectX) von WINE
+          kann diese Erweiterung benutzen, wodurch sich insbesondere
+          Spiele mit einer ähnlichen Geschwindigkeit wie unter Windows
+          ausführen lassen. Weil DGA den direkten Hardwarezugriff
+          erfordert, sind dazu in der Regel Administratorrechte
+          erforderlich. Die Verwendung von DGA wird mit UseDGA = true
+          ein- und mit UseDGA = false ausgeschaltet.
+
+          Achtung: 
+          Anwendungen, die DirectDraw benutzen, versuchen
+          normalerweise den Bildschirm in eine bestimmte Auflösung und
+          Farbtiefe zu schalten. WINE kann die Auflösung zwar
+          verändern, falls sich in der Datei XF86Config eine
+          Definition für den angeforderten Modus befindet, weil das X
+          Window System jedoch nicht den Wechsel der Farbtiefe
+          unterstützt, ist es oft erforderlich, den X-Server in der
+          benötigten Farbtiefe zu starten, bevor WINE gestartet wird.
+          
+   UseXShm
+          Hierbei handelt es sich um eine andere Erweiterung des X
+          Window Systems, die schnellere Graphikoperationen
+          ermöglicht.  Beispiel: UseXShm = true.
+          
+   DXGrab
+          Diese Option bewirkt, dass der Mauszeiger - bei der
+          Verwendung von DirectDraw (DirectX) - das von DirectDraw
+          gesteuerte Fenster nicht verlassen kann. Dies ist notwendig,
+          um einige Programme richtig bedienen zu können, allerdings
+          wird dadurch verhindert, mit der Maus in ein anderes Fenster
+          zu schalten, beispielsweise um WINE zu beenden. Beispiel:
+          DXGrab = false.
+          
+   ScreenDepth
+          Einige X-Server unterstützen unterschiedliche Farbtiefen auf
+          dem selben Bildschirm. Mit dieser Variable kann ausgewählt
+          werden, welche Farbtiefe in einem solchen Fall benutzt
+          werden soll.
+
+   Managed
+          WINE kann von Windows-Programmen dargestellte Fenster
+          u.a. unabhängig vom eingesetzten Window-Manager anzeigen
+          oder sie unter die Kontrolle des Window-Managers
+          stellen. Das zweite Verfahren bietet eine bessere
+          Integration von Windows-Programmen in die Arbeitsumgebung
+          unter Linux, weil die Fenster dann genauso wie die von
+          Linux-Programmen erscheinen und zu steuern sind. Welcher der
+          verfügbaren Anzeigemodi verwendet werden soll, wird
+          normalerweise an der Kommandozeile beim Aufruf von WINE
+          angegeben. Durch diese Variable in der Konfigurationsdatei
+          lässt sich festlegen, ob von WINE gesteuerte Fenster
+          standardmäßig den Window-Manager verwenden sollen (Managed =
+          true).
+
+   DesktopDoubleBuffered
+          Diese Option sollte auf den Wert true gesetzt werden, wenn
+          mit WINE Programme benutzt werden, die OpenGL
+          benutzen. Hierdurch wird die Darstellung solcher Anwendungen
+          verbessert.
+          
+  7.6 Konfiguration der zu verwendenden Schriftarten
+  
+   Der X11-Graphiktreiber x11drv verwendet zur Darstellung von Schrift
+   die Schriftarten, die dem X-Server direkt oder über einen Fontserver
+   zur Verfügung stehen. Eine Reihe von Windows-Anwendungen erwarten
+   allerdings ganz bestimmte Schriften, die unter Windows in der Regel
+   verfügbar sind und viele Anwendungen werden anders als unter Windows
+   dargestellt, falls andere Schriftarten benutzt werden müssen.
+   
+   Windows verwendet normalerweise zwei unterschiedliche Typen von
+   Schriftarten, nämlich so genannten TrueType-Schriften und einfache
+   Bitmap-Schriftarten. Beide Schrifttypen können von XFree86 in der
+   Versionsfamilie 3.x standardmäßig nicht zur Verfügung gestellt
+   werden. Allerdings ist es möglich, Windows-Bitmap-Schriftarten in
+   ein Format zu übersetzen, welches von XFree86 eingebunden werden
+   kann. TrueType-Schriftarten können über spezielle
+   TrueType-Fontserver, die mittlerweile in den meisten Distributionen
+   enthalten sind, eingebunden werden. Falls eine Windows-Installation
+   zur Verfügung steht, empfiehlt es sich im allgemeinen, die dort
+   vorhandenen Schriftarten auch unter Linux einzubinden, damit unter
+   WINE ausgeführte Windows-Anwendungen die erwarteten Schriftarten
+   vorfinden. Wenn WINE ohne Windows-Schriftarten benutzt wird,
+   versucht das Programm, die angeforderten Schriften durch die
+   Schriften des X Window Systems zu ersetzen, wodurch sich
+   Veränderungen im Erscheinungsbild der Anwendungen ergeben können.
+   
+    7.6.1 Einbinden von Bitmap-Schriften
+    
+   Windows Bitmap-Schriftarten befinden sich normalerweise im
+   Unterverzeichnis fonts des Windows-Verzeichnisses und haben die
+   Dateinamensendung .fon. Es ist aber auch möglich, dass sie in
+   ausführbaren Dateien oder in Bibliotheken enthalten sind. Im
+   Unterverzeichnis tools des Basisverzeichnisses mit dem
+   WINE-Quellcode befindet sich das Programm fnt2bdf, mit dem die
+   Fonts aus diesen Dateien extrahiert und in das Bitmap Distribution
+   Format (.bdf) umgewandelt werden können. Dazu ist das Programm
+   folgendermassen aufzurufen:
+   
+   fnt2bdf -o Basisname Schriftdatei
+
+   Dabei ist für Schriftdatei der Name der Datei anzugeben, in der
+   sich die zu extrahierenden Schriften befinden und für Basisname
+   eine Bezeichnung, mit der die Namen der zu extrahierenden Dateien
+   beginnen sollen. Es ist zu beachten, dass sich in der Regel in
+   einer Windows-Schriftartendatei mehrere Schriftarten befinden, die
+   in unterschiedliche Dateien extrahiert werden. Bei einigen
+   Schriftarten ist es notwendig, dem Programm mitzuteilen, wie die
+   Schriftarten kodiert sind. Hierzu ist die Option -c zu verwenden
+   und dahinter die Bezeichnung der Kodierung anzugeben. Eine
+   Übersicht über alle von dem Programm unterstützten Optionen wird
+   ausgegeben, wenn es ohne Parameter aufgerufen wird. Um also
+   beispielsweise die Bitmap-Schriften aus der Datei SERIFF.FON in
+   Dateien zu extrahieren, deren Namen mit der Bezeichnung seriff
+   beginnen, wäre das Programm so aufzurufen:
+   
+   fnt2bdf -o seriff SERIFF.FON
+   
+   Es werden dann eine Reihe von Dateien mit unterschiedlichen Fonts
+   aus der Originaldatei erzeugt. Im nächsten Schritt sind diese
+   Dateien mit dem Programm bdftopcf(1) in das so genannte Portable
+   Compiled Format zu übersetzen. Dieses Programm sollte Bestandteil
+   jeder X11-Installation sein und ist durch eine Manualseite
+   dokumentiert. Um beispielsweise die Datei seriff_r400-23.bdf zu
+   übersetzen und das Ergebnis in die Datei seriff_r400-23.pcf zu
+   schreiben, könnte das Programm so aufgerufen werden:
+   
+   bdftopcf -o seriff_r400-23.pcf seriff_r400-23.bdf
+   
+   Die auf diese Weise erzeugten Dateien können nun in eines der, von
+   dem X-Server oder einem Fontserver benutzten, Font-Verzeichnis
+   kopiert werden. In diesem Verzeichnis ist danach der Befehl
+   mkfontdir aufzurufen, damit der dort befindlich Fontindex neu
+   erzeugt wird.  Bevor die Schriften dann tatsächlich unter X zur
+   Verfügung stehen und damit von WINE benutzt werden können, muss X
+   neu gestartet oder der folgende Befehl an der Kommandozeile
+   eingegeben werden:
+   
+   xset fp +rehash
+   
+   Im Unterverzeichnis tools des WINE-Quellcodeverzeichnisses befindet
+   sich ein Shellskript mit dem Namen font_convert.sh, welches die
+   oben genannten Schritte automatisch durchführt und alle unterhalb
+   eines Verzeichnisses befindlichen Bitmap-Schriftarten automatisch
+   konvertiert und installiert.
+   
+    7.6.2 Einbinden von TrueType-Schriften
+    
+   Wie bereits erwähnt, können die X-Server von XFree86 in der
+   Versionsfamilie 3.x keine TrueType-Schriften darstellen. Seit
+   XFree86 4.0 hat sich dies allerdings geändert, so dass solche
+   Schriften zukünftig problemlos unter X - und damit auch mit WINE -
+   zur Verfügung gestellt werden können. Leider können über das
+   X-Font-Protokoll nicht alle von manchen Windows-Programmen
+   benötigten Informationen über TrueType-Fonts dargestellt werden, so
+   dass manche Windows-Programme auch dann noch nicht richtig
+   funktionieren, wenn die benötigten Fonts zur Verfügung gestellt
+   worden sind. Mit XFree86 3.x bietet sich der Einsatz eines
+   TrueType-Fontservers an. Zur Zeit stehen drei unterschiedliche
+   solcher Programme zur Verfügung, nämlich: xfs-xtt (Debian-Paket:
+   xfs-xtt), xfstt (Debian-Paket xfstt) und xfsft (im Internet unter
+   der Adresse http://www.dcs.ed.ac.uk/home/jec/programs/xfsft/
+   verfügbar).
+   
+   Der Autor hat mit dem Programm xfsft die besten Ergebnisse erzielt.
+   Dieser Server lässt sich leicht konfigurieren und ist kompatibel zu
+   herkömmlichen Fontservern, so dass nicht zwei verschiedene
+   Fontserver auf einem Rechner ausgeführt werden müssen. Dieses
+   Programm diente auch als Grundlage für die Integration der
+   TrueType-Unterstützung in XFree86 4.0.
+   
+   Um die von einem Fontserver zur Verfügung gestellten Schriften zu
+   verwenden, muss dem X-Server die Adresse des Fontservers mitgeteilt
+   werden. Dies kann entweder in der Datei /etc/X11/XF86Config oder
+   durch Eingabe dieses Befehls geschehen:
+   
+   xset fp+ tcp/localhost:7100
+   
+   Dabei muss localhost u.U. gegen den Namen des Rechners ausgetauscht
+   werden, auf dem der Fontserver ausgeführt werden und 7100 durch den
+   Port, der vom Fontserver benutzt wird. Wenn der Fontserver auf dem
+   selben Rechner ausgeführt wird wie der X-Server, dann können zur
+   Kommunikation zwischen X-Server und Fontserver auch
+   UNIX-Domain-Sockets benutzt werden. Der entsprechende Befehl könnte
+   dann folgendermaßen aussehen:
+   
+   xset fp+ unix/:7100
+   
+    7.6.3 Font-Einstellungen in der WINEs Konfigurationsdatei
+    
+   In der Konfigurationsdatei .winerc bzw. wine.conf stehen die
+   folgenden Variablen zur Verfügung, mit denen WINEs Umgang mit
+   Schriftarten beeinflusst werden kann:
+   
+   Resolution
+          Unter Windows können Programme die Größe eines zu
+          verwendenden Fonts in Punkten (an Stelle von Pixeln)
+          angeben. Damit die Schriftart dann in der richtigen Größe
+          angezeigt werden kann, muss die tatsächliche Größe des
+          Bildschirms bekannt sein, was unter X nicht unbedingt der
+          Fall ist. Mit der Variable Resolution kann deswegen justiert
+          werden, welche Schriftgrößen in solchen Fällen von WINE
+          ausgewählt werden. Der Standardwert ist 96, sinnvolle Werte
+          liegen zwischen 60 und 120. Beispiel: Resolution = 100.
+          
+   Default
+          Mit dieser Variable wird angegeben, welche Schriftart WINE
+          als Standard verwenden soll. Die dabei anzugebende
+          Zeichenkette besteht aus der Herstellerbezeichnung der zu
+          verwendenden Schriftart und ihrem Namen, diese Bezeichnungen
+          werden durch ein Minuszeichen miteinander verbunden,
+          außerdem muss sich zu Beginn und am Ende der Zeichenkette
+          ein Minuszeichen befinden.  Die unter X11 verfügbaren Fonts
+          können beispielsweise mit den Programmen xfontsel(1) oder
+          xlsfonts(1) ausgewählt werden.  
+          Beispiel: Default =  -adobe-times-
+          
+   DefaultFixed
+          Hiermit wird festgelegt, welchen Font WINE als
+          standardmäßige Schriftart mit gleichmäßiger Buchstabenbreite
+          verwenden soll.  Der Name der gewünschten Schrift ist wie
+          bei der Variablen Default anzugeben. Beispiel:
+          DefaultFixed = -sony-fixed-
+          
+   DefaultSerif
+          Hiermit wird festgelegt, welchen Font WINE als
+          standardmäßige Schriftart mit Serifen verwenden
+          soll. Beispiel: DefaultSerif = -adobe-times-
+          
+   DefaultSansSerif
+          Hiermit wird bestimmt, welchen Font WINE als standardmäßige
+          Schriftart ohne Serifen verwenden soll. Beispiel:
+          DefaultSansSerif = -adobe-helvetica-
+          
+   Fontmetric
+          Wenn WINE das erste Mal gestartet wird, fragt es vom
+          X-Server die Eigenschaften der verfügbaren Fonts ab.  Weil
+          diese Operation recht zeitaufwendig ist, wird das Ergebnis
+          der Abfrage in einer Datei im Heimatverzeichnis des
+          betreffenden Benutzers gespeichert. Die Abfrage braucht dann
+          bei einem späteren Aufruf des Programms nur ausgeführt zu
+          werden, falls sich die verfügbaren Fonts geändert haben. Mit
+          dieser Variablen kann angegeben werden, in welcher Datei die
+          Fontdaten zwischengespeichert werden sollen. Dadurch lässt
+          sich beispielsweise vermeiden, dass die Abfrage für jeden
+          Benutzer erneut ausgeführt werden muss. Beispiel:
+          Fontmetric=/var/lib/WINE/font.cache.
+          
+   Alias
+          Wie weiter oben bereits angesprochen, kann es vorkommen,
+          dass Windows-Anwendungen bestimmte Schriftarten benutzen
+          wollen, die vom X-Server nicht zur Verfügung gestellt
+          werden. Mit der Variable Alias können solchen Fontnamen
+          anderen, unter X verfügbaren Schriftarten zugeordnet
+          werden. Werte, die dieser Variablen zugeordnet werden,
+          bestehen aus drei Elementen, die durch Kommata voneinander
+          zu trennen sind. Das erste Element ist der Name der zu
+          ersetzenden Schriftart, das zweite Element der Name der X
+          Schriftart, in der Form, wie sie auch bei der Definition der
+          Variablen Default anzugeben ist. Als drittes Element kann
+          optional das Schlüsselwort subst angegeben werden.  Dieses
+          Schlüsselwort bewirkt, dass durch die Aliasdefinition eine
+          bereits vorhandene Definition (die von WINE automatisch
+          erstellt wurde) überschrieben wird. Weil es möglich ist,
+          mehrere Alias-Definitionen vorzunehmen, muss der
+          Variablenbezeichnung Alias jeweils eine Zahl nachgestellt
+          werden, mit der angegeben wird, um die wievielte
+          Alias-Definition es sich handelt. Dabei ist mit der Zahl
+          Null zu beginnen, es darf keine Zahl ausgelassen
+          werden. Beispiel: Alias0 = System, --international-, subst
+          
+  7.7 Konfiguration von Schnittstellen und Hardwarezugriff
+  
+   WINE kann Anwendungen den direkten Zugriff auf serielle und
+   parallele Schnittstellen sowie auf weitere beliebige Ein- und
+   Ausgabeadressen gestatten. Grundsätzlich ist dabei zu bedenken,
+   dass der betreffende WINE-Prozess mit ausreichenden Privilegien
+   ausgestattet sein muss, damit ein solcher Zugriff tatsächlich
+   möglich wird. Wird WINE mit gewöhnlichen Benutzerrechten (und nicht
+   mit den Privilegien des Administrators) ausgeführt, bedeutet dies
+   in der Regel, dass die Zugriffsrechte auf die Gerätedateien, welche
+   Geräte repräsentieren, auf die Windows-Programmen der Zugriff
+   gestattet werden soll, überprüft werden müssen. Der direkte Zugriff
+   auf Ein- und Ausgabeadressen ist unter Linux ausschließlich dem
+   Administrator gestattet.
+   
+   Zur Konfiguration der seriellen Schnittstellen dient der Abschnitt
+   [serialports] in der Konfigurationsdatei. Die einzelnen Variablen in
+   diesem Abschnitt bezeichnen die seriellen Schnittstellen so wie es
+   unter DOS und Windows üblich ist (Com1, Com2 usw.). Als Wert wird
+   diesen Variablen der Name der Gerätedatei übergeben, welche die
+   entsprechende Schnittstelle unter Linux repräsentiert. Falls also
+   Windows-Anwendungen unter WINE über die Schnittstelle Com1 auf das
+   Gerät zugreifen sollen, dass unter Linux durch die Gerätedatei
+   /dev/ttyS0 repräsentiert wird, so muss in der Konfigurationsdatei
+   der folgende Abschnitt zu finden sein:
+
+   [serialports]
+   Com1=/dev/ttyS0
+
+
+   Die Konfiguration paralleler Schnittstellen erfolgt analog zur
+   Konfiguration serieller. Der Name des entsprechenden Abschnitts
+   lautet [parallelports] und die Namen paralleler Schnittstellen
+   unter DOS und Windows lauten Lpt1, lpt2 usw. Wenn also von
+   Windows-Programmen unter WINE über den Namen Lpt1 auf die parallele
+   Schnittstelle zugegriffen werden soll, welche unter Linux durch die
+   Gerätedatei /dev/lp0 repräsentiert wird, so wäre in die
+   Konfigurationsdatei dieser Abschnitt aufzunehmen.
+
+   [parallelports]
+   Lpt1=/dev/lp0
+
+   Um den Zugriff auf bestimmte Ein- und Ausgageadressen zu ermöglichen
+   sind die gewünschten Adressen in hexadezimaler Schreibweise im
+   Abschnitt [ports] anzugeben. Als Adressen lassen sich entweder
+   einzelne Adressen (Beispiel: 0x779) oder Adressbereiche angeben. Bei
+   Adressbereichen werden die untere und obere Adresse des gewünschten
+   Bereichs, verbunden durch einen Bindestrich angegeben (Beispiel:
+   0x280-0x2a0). Wenn mehrere Adressen oder Adressbereiche konfiguriert
+   werden sollen, sind diese hintereinander - durch Kommata getrennt -
+   anzugeben. Adressen, von denen gelesen werden soll, sind der Variablen
+   read zuzuordnen und solche, auf die geschrieben werden soll, der
+   Variablen write. Falls auf eine bestimmte Adresse sowohl lesend als
+   auch schreibend zugegriffen werden soll, ist sie beiden Variablen
+   zuzuordnen. Beispiel:
+
+   [ports]
+   read=0x378,0x379,0x220-0x2a0
+   write=0x379,0x220-0x2a0
+
+
+    7.7.1 Zugriff auf SCSI-Geräte
+    
+   WINE ermöglicht auch den direkten Zugriff auf SCSI-Geräte (über die
+   ASPI-Schnittstelle). Hierzu sind keine speziellen Angaben in der
+   Konfiguration notwendig, allerdings muss der Kernel des Systems so
+   konfiguriert worden sein, dass er die Unterstützung für generischen
+   SCSI-Zugriff enthält. Außerdem müssen die Gerätedateien, welche die
+   generischen SCSI-Geräte repräsentieren (normalerweise /dev/sg0,
+   /dev/sg1 usw.) mit ausreichenden Rechten für den Zugriff
+   ausgestattet sein.
+   
+  7.8 Konfiguration der Windows-Systemregistratur
+  
+   Windows-Betriebssysteme stellen eine Datenbank zur Verfügung, in
+   der Programme u.a. Konfigurationsdaten ablegen und später wieder
+   auslesen können. Diese so genannte Registratur wird von WINE
+   ebenfalls bereitgestellt. WINE ist ferner in der Lage, die
+   Registratur einer bestehenden Windows-Installation zu importieren,
+   damit den mit WINE ausgeführten Programmen alle Daten zur Verfügung
+   stehen, die auch unter Windows verfügbar sind. Dies ist
+   insbesondere dann von Bedeutung, wenn Programme unter Windows
+   installiert worden sind und unter WINE ausgeführt werden. Es ist zu
+   beachten, dass WINE die Registratur einer bestehenden
+   Windows-Installation niemals verändert.  Falls Programme also unter
+   WINE Daten in die Registratur schreiben, stehen diese unter Windows
+   nicht zur Verfügung. WINE speichert die Registratur vielmehr in
+   eigenen Dateien, welche sich üblicherweise unterhalb des
+   Heimatverzeichnisses des betreffenden Benutzers befinden. Neben den
+   benutzerspezifischen Registraturdaten können vom Administrator
+   systemweit gültige Dateien bereit gestellt werden. Diese befinden
+   sich üblicherweise in dem gleichen Verzeichnis wie die systemweit
+   gültige Konfigurationsdatei, also in /etc oder in /usr/local/etc,
+   wenn WINE mit den Standardeinstellungen übersetzt wurde. Im
+   Abschnitt [registry] der Konfigurationsdatei stehen die folgenden
+   Variablen zur Verfügung, mit denen u.a. bestimmt werden kann, ob
+   eine bestehenden Registratur importiert werden soll und wo WINE die
+   eigene Registratur ablegen soll.
+   
+   LoadGlobalRegistryFiles
+          Wenn diese Variable auf den Wert true gesetzt ist, liest
+          WINE die systemweit gültigen Registraturdaten ein. Dies ist
+          die Standardeinstellung. Beispiel: LoadGlobalRegistryFiles =
+          true
+          
+   LoadHomeRegistryFiles
+          Wenn diese Variable auf den Wert true gesetzt ist, liest
+          WINE die Registraturdaten aus dem Verzeichnis .wine im
+          Heimatverzeichnis des aufrufenden Benutzers ein. Die
+          Registraturdaten des Benutzers werden nach den systemweit
+          gültigen Daten geladen, so dass Benutzer die
+          Voreinstellungen aus der globalen Registratur mit eigenen
+          Werten überschreiben können. Beispiel:
+          LoadHomeRegistryFiles = true 
+          
+   LoadWindowsRegistryFiles
+          Mit dieser Variablen wird bestimmt, ob die Registratur einer
+          bestehenden Windows-Installation geladen werden soll. Wenn
+          die Variable auf den Wert true gesetzt ist, stellt WINE
+          selbstständig fest, um welche Version von Windows es sich
+          bei der bestehenden Installation handelt und liest die
+          Registraturdaten der Installation ein, Es ist zu beachten,
+          dass dies nur funktioniert, wenn das Windows- und das
+          Systemverzeichnis im allgemeinen Teil der
+          Konfigurationsdatei richtig angegeben worden sind und der
+          bestehenden Installation entsprechen. Außerdem ist es
+          u.U. notwendig, die Variable Profile im allgemeinen Teil
+          richtig zu setzen. Beispiel: LoadWindowsRegistryFiles = true.
+          
+   WriteToHomeRegistryFiles
+          Wird diese Variable auf den Wert true gesetzt, versucht WINE
+          alle Änderungen, die während der Laufzeit von WINE an der
+          Registratur vorgenommen werden in die Registraturdateien im
+          Verzeichnis .wine des aufrufenden Benutzers zu
+          schreiben. Dies ist in der Regel notwendig, damit
+          Windows-Programme (insbesondere Installationsprogramme)
+          Änderungen an der Konfiguration abspeichern
+          können. Beispiel: WriteToHomeRegistryFiles = true.
+                    
+   PeriodicSave
+          Wenn Veränderungen an der Registratur von WINE gespeichert
+          werden sollen, geschieht dies normalerweise automatisch,
+          während WINE beendet wird. Allerdings werden die Änderungen
+          dann nicht gespeichert, wenn WINE aufgrund eines Fehlers
+          nicht korrekt beendet werden kann. Deswegen ist es möglich,
+          mit dieser Variablen anzugeben, in welchem Zeitintervall das
+          Programm die Registratur automatisch sichern soll. Die
+          dieser Variablen übergebene Zahl wird als Zeitintervall in
+          Sekunden interpretiert. Damit die Registratur also
+          beispielsweise alle 10 Minuten automatisch abgespeichert
+          wird, wäre diese Variable so zu setzen: PeriodicSave = 600.
+          
+   SaveOnlyUpdatedKeys
+          Mit dieser Variablen kann bestimmt werden, ob WINE lediglich
+          solche Teile der Registratur sichern soll, die sich während
+          der Laufzeit verändert haben oder ob immer die gesamte
+          Registratur gespeichert werden soll. Das folgende Beispiel
+          speichert die Registratur komplett:
+          SaveOnlyUpdatedKeys=false.
+          
+   Hinweis: 
+   Weil das Importieren einer großen Windows-Registratur ein relativ
+   zeitaufwendiger Vorgang ist, empfiehlt es sich, die
+   Windows-Registratur nur beim ersten Start von WINE zu importieren
+   (LoadWindowsRegistryFiles=true) und diese dann komplett von WINE
+   speichern zu lassen (SaveOnleUpdatedKeys=false). Danach liegt die
+   Registratur vollständig in WINEs eigenem Format vor, so dass bei
+   späteren Starts von WINE auf den Import der Windows-Registratur
+   verzichtet werden kann (LoadWindowsRegistryFiles=false).
+   
+  7.9 Einstellung des Look and Feel
+  
+   Im Abschnitt Tweak.Layout der Registratur lässt sich durch die
+   Variable WINELook bestimmen, welches Look and Feel von Windows
+   durch WINE nachempfunden werden soll. Der Wert Win31 bewirkt, dass
+   WINE alle Fensterelemente in dem Erscheinungsbild erzeugt, wie es
+   von Windows 3.11 bekannt ist. Analog dazu bewirken die Werte Win95
+   und Win98 ein moderneres Erscheinungsbild. Beispiel:
+
+   [Tweak.Layout]
+   WINELook=Win98
+
+
+  7.10 Konfiguration der Windows-Console
+  
+   Im Gegensatz 16-Bit-Windows-Versionen ist es mit dem Win32 API wie
+   unter UNIX möglich, Programme für den Textmodus zu erstellen, die
+   unter Windows normalerweise in einem so genannten "MS-DOS-Fenster"
+   ausgeführt werden (obwohl diese Programme nicht viel mit MS-DOS zu
+   tun haben). Unter WINE verwenden solche Programme standardmäßig die
+   Standardeingabe und -Ausgabe des Terminals, von dem aus WINE
+   gestartet wurde. Im Abschnitt [Console] der Konfigurationsdatei ist
+   es möglich die Eigenschaften der Konsole für Windows-Programme
+   näher zu bestimmen.
+   
+   Drivers
+          Hermit wird festgelegt, wie die Konsole zur Verfügung
+          gestellt werden soll. WINE kann dazu das mit dem
+          WINE-Prozess verbundene Terminal verwenden oder für jedes
+          Windows-Programm, welches eine neue Konsole anfordert ein
+          neues Terminalfenster (wie z.B. xterm) starten. Im
+          allgemeinen ist es zu empfehlen, für jede Konsole ein
+          eigenes Terminalfenster zu verwenden, weil es zu
+          unerwünschten Nebeneffekten kommen kann, wenn verschiedene
+          Windows-Prozesse und WINE selbst das selbe Terminal
+          verwenden. Es ist ferner möglich, die ncurses-Bibliothek zu
+          benutzen, um bestimmte Eigenschaften, wie die Darstellung
+          unterschiedlicher Farben, zu benutzen. Der Variablen Drivers
+          kann zur Zeit eine Kombination aus den folgenden
+          Schlüsselwörtern übergeben werden: tty, xterm und
+          ncurses. Wenn mehrere diese Schlüsselwörter benutzt werden,
+          sind diese durch das Plus-Zeichen voneinander zu
+          trennen. Die Angabe tty bewirkt, dass WINE das Terminal für
+          die Konsole verwendet, mit welchem der WINE-Prozess
+          verbunden ist. Durch die Angabe xterm wird ein neues
+          Terminalfenster geöffnet, wenn ein Windows-Programm eine
+          neue Konsole anfordert. Die Angabe ncurses bewirkt, dass die
+          ncurses-Bibliothek benutzt wird. Dies funktioniert nur, wenn
+          die Unterstützung dafür beim Übersetzen des Programms
+          aktiviert wurde. Beispiel: Drivers=ncurses+xterm
+          
+   XtermProg
+          Hiermit lässt sich angeben, welches Programm aufgerufen
+          werden soll, um die Konsole in einem eigenen Fenster
+          darzustellen (z.B. bei Drivers=xterm). Es lassen sich alle
+          Terminalemulationsprogramme verwenden, welche die von xterm
+          her bekannten Kommandozeilenargumente verstehen. Beispiel:
+          XtermProg=wterm.
+          
+   InitialRows
+          Mit der Variablen wird angegeben, wieviele Zeilen die
+          Konsole nach ihrem Start haben soll. Beispiel:
+          InitialRows=24.
+          
+   InitialColumns
+          Mit der Variablen wird angegeben, wieviele Spalten die
+          Konsole nach ihrem Start haben soll. Beispiel:
+          InitialColumns=80.
+          
+   TerminalType
+          Hiermit lässt sich festlegen, von welchem Terminaltyp die
+          ncurses-Bibliothek ausgehen soll. Typische Werte sind xterm
+          oder linux.
+          
+  7.11 Die Zwischenablage
+  
+   Das Konzept der Zwischenablage unterscheidet sich zwischen Windows
+   und dem X Window System etwas. Um beispielsweise einen Text in die
+   Zwischenablage zu stellen, wird dieser unter Windows normalerweise
+   zunächst markiert und dann über einen Menübefehl in die
+   Zwischenablage kopiert oder verschoben. Unter X stehen mindestens
+   zwei Typen von Zwischenablage zur Verfügung. Nachdem ein Text dort
+   markiert worden ist, steht er als so genannte primäre Auswahl zur
+   Verfügung; er kann dann sofort in andere Anwendungen eingefügt
+   werden (etwa durch Betätigung der mittleren Maustaste). Die
+   Zwischenablage ist eine weitere Auswahl in die Texte oder andere
+   Daten von vielen X-Anwendungen aus kopiert und von dort aus wieder
+   eingefügt werden können. Im Abschnitt [clipboard] der
+   Konfigurationsdatei lässt sich bestimmen, wie die
+   Windows-Zwischenablage mit der Zwischenablage des X Window Systems
+   interagiert.
+   
+   ClearAllSelections
+          Wenn diese Variable auf true gesetzt ist, wird der Inhalt
+          der Windows-Zwischenablage gelöscht und durch den Inhalt der
+          Zwischenablage des X Window Systems ersetzt, falls in einer
+          anderen X Anwendung etwas in die primäre Auswahl gestellt
+          wird.  Wird bei Verwendung dieser Einstellung also zunächst
+          etwas mit einem Windows-Programm in die Zwischenablage
+          gestellt und danach mit der Maus ein Text in einer X
+          Anwendung markiert, so geht der ursprüngliche Inhalt der
+          Windows-Zwischenablage verloren und es steht dort der mit
+          der Maus markierte Text zur Verfügung. Falls die Variable
+          auf false gesetzt ist, bleibt der Inhalt der Zwischenablage
+          durch die Veränderung der primären Auswahl unberührt. Um
+          dann beispielsweise einen Text von XEmacs nach Word zu
+          kopieren, reicht es nicht aus, den Text in XEmacs zu
+          markieren, sondern er muss dort explizit in die
+          Zwischenablage kopiert werden, falls sich dort vorher eine
+          Auswahl befand, die von einer Windows-Anwendung aus
+          vorgenommen wurde. Beispiel: ClearAllSelections=true
+          
+   PersistantSelection
+          Nachdem WINE beendet worden ist, kann der Inhalt der
+          Zwischenablage anderen X Programmen normalerweise nicht mehr
+          zur Verfügung gestellt werden. Wenn diese Variable auf true
+          gesetzt ist, startet WINE deswegen ein kleines
+          Hintergrundprogramm (wineclipsrv) welches den Inhalt der
+          Zwischenablage so lange verfügbar hält, bis dieser durch ein
+          anderes Programm ersetzt wird und sich dann
+          beendet. Beispiel: PersistantSelection=true
+          
+  7.12 Konfiguration des PostScript-Druckertreibers
+  
+   WINE kann zwei Typen von Druckertreibern verwenden, nämlich echte
+   16bit Windows-Druckertreiber, wie Sie von Windows 3.11 oder Windows
+   95/98 benutzt werden oder einen eigenen PostScript- Druckertreiber,
+   mit dem sich aus den meisten Windows-Anwendungen heraus im
+   PostScript-Format drucken lässt. Diese PostScript-Ausgabe kann dann
+   über die Spooler-Software des Systems (normalerweise lpr/lpd) auf
+   einen direkt angeschlossenen oder fernen Drucker ausgegeben werden.
+   
+   Hinweise zur Verwendung von 16bit Windows-Druckertreiber finden
+   sich u.a. in der Datei printing im Unterverzeichnis documentation
+   des WINE-Quellcodeverzeichnisses. Im folgenden soll lediglich auf
+   die Konfiguration des eingebauten PostScript-Druckertreibers
+   eingegangen werden.
+   
+   Zunächst ist das Vorhandensein des Druckertreibers anzumelden. Dazu
+   sind in der Datei win.ini im Windows-Verzeichnis die folgenden
+   Änderungen vorzunehmen:
+
+   [windows]
+   device=WINE PostScript Driver,WINEPS,LPT1:
+
+   [devices]
+   WINE PostScript Driver=WINEPS,LPT1:
+
+   Falls Sie WINE ohne eine bestehende Windows-Installation verwenden,
+   kann es sein, dass die Datei win.ini noch nicht existiert. In
+   diesem Fall kann die Datei neu angelegt und die oben gezeigten
+   Zeilen dort eingetragen werden. Falls die Datei bereits vorhanden
+   ist, müssen die Abschnitte [devices] und [windows] in der Datei
+   lokalisiert und um die oben gezeigten Zeilen ergänzt
+   werden. Keinesfalls sollten die Abschnitte devices oder windows
+   mehrmals in der Datei vorhanden sein.
+   
+   Damit auch von 32bit Programmen aus gedruckt werden kann, ist es
+   notwendig, einige Einträge in der Registratur vorzunehmen. Diese
+   Einträge sind in der Datei psdrv.reg im Unterverzeichnis
+   documentation des WINE-Quellcodeverzeichnisses vorhanden und lassen
+   sich mit dem Programm regapi, welches sich im Unterverzeichnis
+   programs/regapi des Quellcodeverzeichnisses befindet,
+   importieren. Falls noch nicht geschehen ist regapi dazu zunächst zu
+   übersetzen. Zu diesem Zweck ist in das Verzeichnis programs/regapi
+   zu wechseln und dort der Befehl make einzugeben. (Dies setzt
+   voraus, dass WINE bereits erfolgreich übersetzt wurde) Danach
+   können die erforderlichen Schlüssel durch die Eingabe des folgenden
+   Befehls importiert werden:
+   
+   ./regapi setValue < ../../documentation/psdrv.reg
+   
+   Achtung:
+   Bei dem Programm regapi handelt es sich um ein so genanntes
+   WineLib-Programm. Solche Programme benutzen WINE, um
+   Windows-spezifische Funktionen verwenden zu können. Damit sie
+   ausgeführt werden können, muss bereits eine funktionsfähige
+   WINE-Konfiguration vorhanden sein. Dieser Schritt sollte also nicht
+   durchgeführt werden, bevor die Erstellung der Konfigurationsdatei
+   abgeschlossen und die Funktionsfähigkeit von WINE getestet worden
+   ist.
+   
+   Weiter wird eine so genannte PPD-Datei benötigt. Eine solche Datei
+   beschreibt verschiedene Eigenschaften des Druckers und wird
+   benötigt, damit WINE beispielsweise entscheiden kann, ob in Farbe
+   oder in Schwarz-Weiß gedruckt werden kann. Wenn kein
+   PostScript-fähiger Drucker benutzt wird, dann benötigt man eine
+   PPD-Datei, welche die Eigenschaften des ghostscript-Treibers für
+   den eingesetzten Drucker beschreibt, weil dieses Programm in der
+   Regel zur Umwandlung von PostScript in das Druckerformat benutzt
+   wird. Mit Debian stehen solche Dateien in dem Paket ppd-gs zur
+   Verfügung. Wird dieses Paket benutzt, sollte vorher die Datei
+   /usr/doc/ppd-gs/README gelesen werden.
+   
+   Eine Reihe von PPD-Dateien stehen unter der Adresse
+   ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/ppdfiles/ zur
+   Verfügung. In dem Verzeichnis befinden sich selbstauspackende
+   ZIP-Archive, die PPD-Dateien für Drucker verschiedener Hersteller
+   enthalten. Diese Archive können mit dem Programm unzip(1) entpackt
+   werden. Um beispielsweise die Datei hp.exe auszupacken, wäre
+   folgender Befehl einzugeben:
+   
+   unzip -L hp.exe
+   
+   Danach ist die gewünschte PPD-Datei auszuwählen, hierbei muss
+   u.U. ein wenig experimentiert werden, um optimale Ergebnisse zu
+   erzielen. Die Datei kann dann beispielsweise in das Verzeichnis
+   /usr/local/etc/ kopiert werden und muss WINE durch den folgenden
+   Eintrag in der Konfigurationsdatei bekannt gemacht werden:
+
+   [psdrv]
+   ppdfile=/usr/local/etc/HP4M3_V1.PPD
+
+   Falls sich die Datei in einem anderen Verzeichnis befindet oder
+   einen anderen Namen trägt, ist der Wert für die Variable ppdfile
+   natürlich entsprechend anzupassen.
+   
+   Schließlich benötigt WINE die Fontmetric-Dateien der Schriftarten,
+   die auf dem Drucker (oder mit ghostscript) zur Verfügung
+   stehen. Eine Reihe solcher Fontmetric-Dateien lassen sich unter
+   Debian beispielsweise mit dem Paket tetex-extra installieren. Sie
+   befinden sich nach der Installation unterhalb des Verzeichnisses
+   /usr/share/texmf/fonts/afm. Sie haben normalerweise die
+   Dateinamensendung .afm (Adobe FontMetric). Die zu verwendenden
+   Dateien sind im Abschnitt [afmfiles] der Konfigurationsdatei
+   anzugeben. Der Name jeder Datei ist dabei einer Variablen
+   zuzuordnen, deren Name sich aus der Zeichenkette file und einer
+   fortlaufenden Ziffer zusammensetzt.  Bei der Auswahl der
+   AFM-Dateien ist zu beachten, dass nur die Dateien angegeben werden
+   brauchen, für die der entsprechende Font tatsächlich in der vorher
+   definierten PPD-Datei genannt wurde. Die Bezeichnungen der Fonts
+   befinden sich normalerweise in den Fontmetric-Dateien, die mit
+   einem Texteditor betrachtet werden können. Der Anfang des
+   entsprechenden Abschnitts in der Konfigurationsdatei könnte
+   beispielsweise folgendermaßen aussehen:
+
+   [afmfiles]
+   file1=/usr/share/texmf/fonts/afm/adobe/times/ptmb8a.afm
+   file2=/usr/share/texmf/fonts/afm/adobe/times/ptmbi8a.afm
+   file3=/usr/share/texmf/fonts/afm/adobe/times/ptmr8a.afm
+   file4=/usr/share/texmf/fonts/afm/adobe/times/ptmri8a.afm
+   file5=/usr/share/texmf/fonts/afm/adobe/helvetic/phvbo8an.afm
+   file6=/usr/share/texmf/fonts/afm/adobe/helvetic/phvb8a.afm
+   file7=/usr/share/texmf/fonts/afm/adobe/helvetic/phvb8an.afm
+   file8=/usr/share/texmf/fonts/afm/adobe/helvetic/phvbo8a.afm
+   file9=/usr/share/texmf/fonts/afm/adobe/helvetic/phvro8an.afm
+   file10=/usr/share/texmf/fonts/afm/adobe/helvetic/phvr8a.afm
+   file11=/usr/share/texmf/fonts/afm/adobe/helvetic/phvr8an.afm
+   file12=/usr/share/texmf/fonts/afm/adobe/helvetic/phvro8a.afm
+
+   Auch hier sind die Dateinamen natürlich an die tatsächlich
+   benutzten Fontmetric-Dateien anzupassen. Der Druckertreiber sollte
+   dann als WINE PostScriptDriver in den Druckdialogen der
+   Windows-Anwendungen zur Verfügung stehen.
+   
+  7.13 Konfiguration des Spoolers
+  
+   Standardmäßig werden Druckdaten in eine Datei im aktuellen
+   Arbeitsverzeichnis ausgegeben, deren Name der Bezeichnung des
+   Druckeranschlusses unter Windows, auf den gedruckt wurde, entspricht.
+   Im Abschnitt [spooler] der Konfigurationsdatei lässt sich die Ausgabe in
+   eine andere Datei umlenken oder an ein anderes Programm weiterleiten.
+   Dazu ist in dem Abschnitt der Name des Anschlusses als
+   Variablenbezeichnung anzugeben (Beispiel: LPT1:) und dieser Variable
+   der Name der Datei zu übergeben, in welche die Druckausgabe gelenkt
+   werden soll. Um die Ausgabe an die Standardeingabe eines Programms zu
+   übergeben, ist der Name des gewünschten Programms hinter dem
+   Pipe-Zeichen (|) anzugeben.
+   
+   Wenn also beispielsweise die Ausgabe auf den Anschluss LPT1: an das
+   Programm lpr übergeben werden soll, um sie dem Spooler zuzuführen,
+   wäre in die Konfigurationsdatei folgender Abschnitt aufzunehmen:
+
+   [spooler]
+   LPT1:|lpr
+
+
+  7.14 Multimedia Konfiguration
+  
+   Die Multimedia-Architektur unter Windows besteht aus verschiedenen
+   Typen von Treibern und Schnittstellen, die von Windows-Programmen
+   benutzt werden können. Diese Architektur wird von WINE
+   nachgebildet, wobei unterschiedliche Bestandteile mehr oder weniger
+   vollständig vorhanden sind. Eine ausführliche Beschreibung der
+   Multimedia-Architektur von WINE befindet sich in der Datei
+   multimedia um Unterverzeichnis documentation/status des
+   WINE-Quellcodes.
+   
+   WINE stellt einen eigenen Treiber zur Ansteuerung der Soundhardware
+   zur Verfügung. Diese Ansteuerung geschieht über die Gerätedateien
+   /dev/dsp, /dev/audio, /dev/mixer usw. Deswegen muss darauf geachtet
+   werden, dass Schreib und Leseberechtigung für diese Dateien
+   besteht, falls die Soundunterstützung von WINE benutzt werden
+   soll. Der Treiber setzt auf die OSS- (Open SoundSystem) Treiber
+   auf, die standardmäßig Bestandteil des Linux-Kernels sind.
+   
+   Bis auf die Bibliotheken winmm und mmsystem lassen sich alle
+   anderen Komponenten des Multimediasystems auch aus einer
+   bestehenden Windows-Installation verwenden. Dies ist vor allem bei
+   einigen MCI-Treibern hilfreich, die in WINE noch nicht vollständig
+   implementiert sind. MCI-Treiber werden geladen, wenn im Abschnitt
+   [mci] der Datei system.ini im Windows-Verzeichnis Anweisungen in der
+   folgenden Form stehen:
+
+   [mci]
+   cdaudio=mcicda.drv
+   sequencer=mciseq.drv
+
+   Bei Verwendung einer bestehenden Windows-Installation sollten sich
+   die entsprechenden Anweisungen dort bereits befinden. Wird ohne
+   eine bestehende Windows-Installation gearbeitet, kann die Datei
+   system.ini im Unterverzeichnis documentation/samples des
+   WINE-Quellcodeverzeichnisses als Vorlage dienen. Durch die Variable
+   mci im Abschnitt [options] der Konfigurationsdatei von WINE lassen
+   sich die Definitionen aus der Datei system.ini überschreiben. Das
+   ist sinnvoll, um bestimmte Treiber nicht zu laden, die in der Datei
+   system.ini angegeben sind, weil diese Treiber mit WINE nicht
+   richtig funktionieren. Dies ist zur Zeit mit dem MCI-Treiber
+   videodisk der Fall. Um alle MCI-Treiber (bis auf videodisk) zu
+   laden, könnte in die Konfigurationsdatei der also der folgende
+   Abschnitt aufgenommen werden:
+
+   [options]
+   mci=CDAUDIO:SEQUENCER:WAVEAUDIO:AVIVIDEO:MPEGVIDEO
+
+   Ob ein Treiber aus einer bestehenden Windows-Installation geladen
+   oder der von WINE zur Verfügung gestellte Treiber benutzt werden
+   soll, kann wie bei Bibliotheken im Abschnitt DllOverrides der
+   Konfigurationsdatei festgelegt werden, wie es weiter oben
+   beschrieben wurde. Dabei ist zu beachten, dass die
+   Dateinamensendung .drv bei Treibern - im Gegensatz zu Bibliotheken
+   - mit anzugeben ist. Um beispielsweise die MCI-Treiber mciavi und
+   mcianim aus einer bestehenden Installation zu laden und die übrigen
+   Treiber von WINE zu verwenden, wären dem Abschnitt [DllOverrides]
+   die folgenden Zeilen zuzufügen:
+
+   mciavi.drv, mcianim.drv = native, builtin
+   mcicda.drv, mciseq.drv  = builtin, native
+   msacm.drv, midimap.drv  = builtin, native
+   mciwave.drv             = builtin, native
+
+
+  7.15 Einrichten der Registratur
+  
+   Eine Reihe von Windows-Programmen und WINE selbst benötigen
+   bestimmte Einträge in der Registratur, damit sie richtig
+   funktionieren. Wenn WINE ohne eine bestehende Windows-Installation
+   benutzt wird oder die Windows-Registratur nicht importiert werden
+   soll, sind diese Einträge noch nicht vorhanden und müssen mit dem
+   weiter oben bereits erwähnten Programm regapi importiert
+   werden. Als Vorlage kann dazu die Datei winedefault.reg im
+   Quellcodeverzeichnis von WINE dienen. Die Datei sollte jedoch
+   daraufhin überprüft werden, ob alle dort angegebenen
+   Laufwerksbuchstaben und Pfade stimmen, bevor sie importiert wird.
+   Außerdem sollte in der Konfigurationsdatei natürlich festgelegt
+   sein, dass die Registratur bei Beendigung des Programms gespeichert
+   wird, damit die importierten Daten auch beim nächsten Aufruf von
+   WINE zur Verfügung stehen. Danach kann in das Unterverzeichnis
+   programs/regapi des Quellcodeverzeichnisses gewechselt werden. Dort
+   ist das Programm zunächst durch Eingabe des Befehls make zu
+   erstellen, falls dies noch nicht geschehen ist. Danach können die
+   erforderlichen Daten mit dem folgenden Befehl importiert werden:
+   
+   ./regapi setValue ../../WINEdefault.reg
+   
+8 Aufruf von WINE und Kommandozeilenoptionen
+
+   WINE lässt sich wie jedes andere Programm von der Kommandozeile aus
+   aufrufen. Der Name des auszuführenden Windows-Programms ist WINE
+   dabei an der Kommandozeile angeben. Programme, die sich in einem
+   Verzeichnis befinden, das in der Variablen Path im Abschnitt WINE
+   der Konfigurationsdatei aufgeführt ist, können dabei ohne Angabe
+   des Pfadnamens aufgerufen werden. Die Angabe der Dateinamensendung
+   .exe ist optional. Falls WINE also gestartet und das
+   Windows-Programm winmine (Minesweeper) geladen werden soll, wäre
+   der folgende Befehl einzugeben, vorausgesetzt, die Datei
+   winmine.exe würde sich in einem Verzeichnis befinden, welches in
+   der Variablen Path aufgeführt ist.
+   
+   wine winmine.exe
+   
+   Sollen Programme gestartet werden, die sich in Verzeichnissen
+   befinden, welche nicht in der Variablen Path befinden, ist es
+   erforderlich, den Pfadnamen mit anzugeben. Hier kann entweder der
+   DOS-/Windows-Pfadname oder der UNIX-Pfadname benutzt werden. Die
+   beiden folgenden Befehle würden also das gleiche bewirken, falls
+   das Laufwerk C: dem UNIX-Verzeichnis /var/winroot zugeordnet wäre.
+
+   wine c:\\windows\\winmine.exe
+   wine /var/winroot/windows/winmine.exe
+
+   Der Rückwärts-Schrägstrich hat für die Shell Bash eine besondere
+   Bedeutung und wird deswegen normalerweise nicht an WINE
+   übergeben. Durch die doppelte Angabe dieses Zeichens wird bewirkt,
+   dass ein einfacher Schrägstrich übergeben wird. Datei- und
+   Verzeichnisnamen enthalten unter Windows gelegentlich
+   Leerzeichen. Auch hier ist es notwendig einen Trick anzuwenden,
+   damit die Leerzeichen nicht dazu führen, dass die Shell die
+   einzelnen Teile der Namen in verschiedenen Argumente zerlegt. Der
+   folgende Befehl würde beispielsweise nicht zum gewünschten Ergebnis
+   führen:
+   
+   WINE /var/winroot/Programme/Microsoft Games/RoA Trial Version/PACDEMO.EXE
+   
+   Hier würde die Shell WINE vier Argumente übergeben, nämlich
+   /var/winroot/Programme/Microsoft, Games/RoA, Trial und
+   Version/PACDEMO.EXE, woraufhin das zu startende Programm nicht mehr
+   gefunden werden würde. Damit die Shell bei Leerzeichen keine
+   Trennung durchführt, ist den betreffenden Leerzeichen ebenfalls ein
+   rückwärtsgerichteter Schrägstrich voranzustellen:
+   
+   WINE /var/winroot/Programme/Microsoft\ Games/RoA\ Trial\ Version/PACDEMO.EXE
+   
+   Argumente, die den zu startenden Windows-Programmen übergeben
+   werden sollen, sind dem Programmnamen, getrennt durch Leerzeichen,
+   nachzustellen. Um beispielsweise das Programm notepad.exe zu
+   starten und diesem Programm das Argument readme.1st zu übergeben,
+   wäre WINE so aufzurufen:
+   
+   wine notepad readme.1st
+   
+   Wenn mehrere Windows-Programme hintereinander gestartet werden sollen,
+   muss WINE mehrmals hintereinander mit den entsprechenden Programmnamen
+   als Argument aufgerufen werden.
+   
+  8.1 Kommandozeilenoptionen
+  
+   Neben den Namen der zu startenden Programme versteht WINE eine Reihe
+   von Optionen, mit denen die Operation des Programms global beeinflusst
+   werden kann. Diese Optionen werden direkt von WINE interpretiert
+   und nicht an das aufzurufende Windows-Programm übergeben.
+   
+   --managed
+          Standardmäßig laufen Windows-Programme mit WINE unabhängig
+          vom eingesetzten Windows-Manager. Dies kann zu Problemen bei
+          der gleichzeitigen Verwendung normaler X Programme und von
+          Windows-Programmen führen. Durch Verwendung der Option
+          --managed werden auch Windows-Programme vom Window-Manager
+          verwaltet, sie erhalten dann die gleichen Verzierungen wie
+          normale X Programme (siehe auch Abschnitt 7.5)
+          
+   --desktop BreitexHöhe
+          Mit diesem Parameter werden alle Fenster von
+          Windows-Programmen in einem eigenen Fenster dargestellt. Die
+          Größe dieses Fensters wird in Bildpunkten mit Breite und
+          Höhe angegeben. Beispiel: --desktop 800x600. Dieser Modus
+          wird für die Verwendung solcher Programme benötigt, die den
+          Bildschirm selbst komplett verwalten wollen, wie es
+          z.B. beim Windows-Explorer der Fall ist. Der Modus ist auch
+          erforderlich, um WINE mit den Bibliotheken user und user32
+          aus einer bestehenden Windows-Installation zu verwenden.
+          
+   --config Dateiname
+          Hiermit kann WINE angewiesen werden, eine andere
+          Konfigurationsdatei zu verwenden.
+          
+   --display Displaybezeichnung
+          Wie alle X-Programme verwendet WINE normalerweise den
+          X-Server, der mit der Umgebungsvariablen DISPLAY angegeben
+          ist. Um einen anderen Server zu verwenden, ist diese Option
+          zu benutzen.  Beispiel: --display workstation:0.
+          
+   --winver Version
+          Viele Windows-Programme funktionieren nur mit bestimmten
+          Versionen von Windows oder verhalten sich unterschiedlich,
+          je nachdem mit welcher Version von Windows sie ausgeführt
+          werden.  Dieser Parameter dient dazu, WINE anzuweisen, als
+          welche Windows-Version es sich ausgeben soll, wenn Programme
+          dies erfragen. Standardmäßig versucht WINE selbst
+          herauszufinden, welche Version von einem bestimmten Programm
+          erwartet wird. Mit Version kann folgendes angegeben werden:
+          win31 (Windows 3.1), win95 (Windows 95), win98 (Windows 98),
+          nt351 (Windows NT 3.51) oder nt40 (Windows NT 4.0). Im
+          Zweifelsfall empfiehlt sich win95, weil WINE zur Zeit die
+          meisten Gemeinsamkeiten mit dieser Windows-Version
+          aufweist. Beispiel: --winver win95.
+          
+   --dosver Version
+          Wenn DOS-Programme mit Windows ausgeführt werden, erwarten
+          diese gelegentlich eine bestimmte Version von MS-DOS. Dazu
+          ist mit dem Parameter --dosver die gewünschte Version, in
+          der Form x.xx anzugeben. Beispiel: --dosver 7.10 (diese
+          Version entspricht Windows 95b).
+          
+   --language Sprache
+          Während Windows in Versionen für verschiedene Sprachen
+          verfügbar ist, befindet sich die Unterstützung für eine
+          Reihe von Sprachen direkt in WINE. Welche Sprache benutzt werden
+          soll kann mit diesem Parameter angegeben werden. Um die
+          deutsche Sprache auszuwählen, ist für Sprache De
+          anzugeben. Es ist zu beachten, dass einige Anwendungen nur
+          mit bestimmten Sprachen funktionieren. Wenn Anwendungen
+          irgendwelche Bibliotheken nicht finden können, kann das
+          daran liegen, dass sie solche Bibliotheken suchen, die für
+          die Sprache entwickelt wurden, mit der WINE arbeitet und
+          diese nicht verfügbar sind. Hier hilft es, die richtige
+          Sprache anzugeben. Beispiel: --language De.
+          
+   --help
+          Die Option bewirkt, dass eine Übersicht über die verfügbaren
+          Optionen ausgegeben wird.
+          
+   --version
+          Die Option bewirkt, dass die Versionsnummer von WINE
+          angezeigt wird.
+          
+   --dll Bibliothek[,Bibliothek ...]=b|n[:Bibliothek[,Bibliothek,...]=b|n]
+          Mit dieser Option lassen sich die Einstellungen aus dem
+          Abschnitt [DllOverrides] aus der Konfigurationsdatei
+          überschreiben, es kann also angegeben werdem, welche
+          Bibliotheken aus einer bestehenden Windows-Installation
+          geladen und welche direkt von WINE zu Verfügung gestellt
+          werden sollen.  Der Option ist ein Ausdruck zu übergeben,
+          welcher aus den Namen der betreffenden Bibliotheken besteht,
+          die durch Kommata (ohne Leerzeichen) voneinander getrennt
+          werden. Danach folgt ein Gleichheitszeichen und daraufhin
+          entweder der Buchstabe b, um zu bestimmen, dass die
+          angegebenen Bibliotheken von WINE zur Verfügung gestellt
+          werden sollen, oder der Buchstabe n, damit versucht wird,
+          die Bibliotheken aus einer bestehenden Installation zu
+          laden. Solche Ausdrucke können wiederholt angegeben werden,
+          sie sind dann durch einen Doppelpunkt (ohne Leerzeichen)
+          voneinander zu trennen. Sollen beispielsweise die
+          Bibliotheken shell, commdlg und commctrl mit ihren
+          zugehörigen 32bit Bibliotheken aus einer bestehenden
+          Installation geladen werden und die Bibliothek advapi32 von
+          WINE zur Verfügung gestellt werden, obwohl dies in der
+          Konfigurationsdatei anders angegeben ist, so könnte man die
+          Option so einsetzen:
+
+          --dll commdlg,comdlg32,commctrl,comctl32,shell,shell32=n:advapi32=b.
+          
+   --debugmsg +|-foo,+|-bar
+          Diese Option dient dazu, zu kontrollieren, welche Art von
+          Informationen WINE zur Fehler- und Ablaufverfolgung ausgeben
+          soll. Es stehen eine Reihe so genannter Kanäle zur Verfügung,
+          deren Namen angezeigt werden, wenn die Option ohne weitere Angaben
+          benutzt wird. Die einzelnen Kanäle entsprechen normalerweise
+          unterschiedlichen Teilbereichen von WINE, deren Verhalten durch
+          die Ausgabe bestimmter Informationen überprüft werden kann. Um
+          beispielsweise die Meldungen für den Kanal file einzuschalten,
+          wäre die Option --debugmsg +file zu benutzen. Wenn die
+          Meldungen der Kanäle file und dosfs ausgegeben werden sollen,
+          wäre --debugmsg +file,+dosfs anzugeben. Weitere Informationen
+          hierzu befinden sich in der Datei debug-msg im Unterverzeichnis
+          documentation des WINE-Quellcodeverzeichnisses. Zwei besonders
+          wichtige Kanäle sind relay und snoop. Wenn der Kanal relay
+          eingeschaltet ist, wird ausgegeben, welche Funktionen in WINE
+          von Windows-Programmen mit welchen Parametern aufgerufen werden
+          und welche Rückkehrwerte diese Funktionen liefern. Der Kanal
+          snoop zeigt an, welche Funktionen aus echten
+          Windows-Bibliotheken aufgerufen werden. Die Ausgabe des Kanals
+          relay dient WINE-Entwicklern oft dazu, festzustellen, wo ein
+          Fehler aufgetreten ist. Deswegen ist es ratsam, bei
+          Fehlerberichten in die WINE-Newsgroup die letzten 200 Zeilen
+          der Ausgabe von WINE mitzuschicken, die bei dem Aufruf des
+          Programms mit der Option --debugmsg +relay vor Auftreten des
+          Fehlers entstanden sind.
+          
+9 Fehlerquellen
+
+   WINE befindet sich zur Zeit noch mitten in der Entwicklung, weswegen
+   viele Windows-Programme nur teilweise oder überhaupt nicht damit
+   funktionieren. Mit großer Wahrscheinlichkeit werden einige Programme
+   sogar nie mit WINE funktionieren, beispielsweise weil sie eigene
+   Windows-Treiber brauchen, die unter Linux nicht geladen werden können.
+   Trotzdem funktionieren viele Windows-Programme ausgesprochen gut mit
+   WINE und die Anzahl funktionierender Programme erhöht sich relativ
+   schnell. Wenn ein Programm nicht wie gewünscht funktioniert, kann es
+   deswegen hilfreich sein, die folgenden Fragen zu untersuchen:
+   
+   WINE funktioniert überhaupt nicht
+          In bestimmten Paketversionen der C-Bibliothek (Version
+          2.1.3) liegt ein Fehler vor, der dazu führt, dass WINE
+          direkt nach dem Start mit Fehlermeldungen abbricht. Sie
+          können das Problem beheben, indem Sie eine neuere Version
+          der C-Bibliothek installieren oder die Variable LANG auf
+          einen Wert setzen. Bei Verwendung der Bash kann dies
+          beispielsweise durch Eingabe des folgenden Befehls
+          geschehen: export LANG=de_DE.
+          
+   WINE funktioniert immer noch nicht
+          Wenn Sie WINE auf die beschriebene Art installiert haben,
+          sollten Sie überprüfen, dass sich nicht gleichzeitig noch
+          eine andere, ältere Version des Programms auf dem Rechner
+          befindet, welches u.U. von Ihrer Distribution mitinstalliert
+          wurde. Dies könnte nämlich dazu führen, dass versucht wird,
+          inkompatible Bibliotheken zu laden.
+          
+   Windows- und Windows/system-Verzeichnis sind nicht richtig angegeben
+          Die Meldung Invalid path 'c:\windows' for windows directory
+          besagt, dass im Abschnitt WINE der Konfigurationsdatei mit
+          der Variablen Windows ein Windows-Verzeichnis angegeben
+          wurde, welches nicht existiert. Es ist dann zu überprüfen,
+          ob das Windows-Verzeichnis vorhanden ist und ob das
+          Laufwerk, auf dem es sich befindet, dem richtigen
+          UNIX-Verzeichnis zugeordnet ist.
+          
+   Die Zuordnungen der Laufwerksbuchstaben stimmen nicht
+          Wenn beim Start von WINE Meldungen wie Warning:
+          /var/winroot/windows/sol.exe not accessible from a DOS drive
+          ausgegeben werden, teilt WINE mit, dass das auszuführende
+          Programm sich in einem Verzeichnis befindet, dass aufgrund
+          der Zuordnungen in der Konfigurationsdatei mit keinem
+          Laufwerk assoziiert ist. Es sollten dann die
+          Laufwerkszuordnungen überprüft werden.
+          
+   Windows-Programme finden Einstellungen und Bibliotheken nicht
+          Wenn WINE mit einer bestehenden Windows-Installation benutzt
+          wird, ist es erforderlich, dass die Laufwerksbuchstaben
+          unter Windows und WINE übereinstimmten. Falls ein Programm
+          nämlich beispielsweise in der Registratur gespeichert hat,
+          dass sich eine bestimmte Komponente im Verzeichnis
+          C:\Windows\System befindet, dann ist es erforderlich, dass
+          dieses Programm die Komponente auch unter WINE in dem selben
+          Verzeichnis findet. Es ist jedoch möglich mit WINE
+          zusätzliche Laufwerke zu verwenden (also z.B. das eigene
+          Heimatverzeichnis einem Laufwerksbuchstaben zuzuordnen), die
+          unter Windows nicht vorhanden sind.
+          
+   Spiele werden im Fenster dargestellt, obwohl Vollbild ausgewählt wurde
+   und sind zu langsam
+
+          Die meisten Spiele benutzen einen bestimmte Farbtiefe, in
+          die Windows umschaltet, wenn das betreffende Spiel gestartet
+          wird.  Mit dem X Window System ist es leider nicht möglich
+          die Farbtiefe während des laufenden Betriebs zu ändern,
+          weswegen WINE die gewünschte Farbtiefe in einem Fenster
+          emulieren muss, falls der X-Server nicht in der richtigen
+          Farbtiefe läuft.  Dadurch wird sehr viel Rechenleistung
+          benötigt und außerdem kann nicht in einen Vollbildmodus
+          geschaltet werden. Abhilfe schafft hier nur, den X-Server in
+          der richtigen Farbtiefe zu starten, bevor WINE aufgerufen
+          wird. Hierzu dienen die Optionen -bpp, bei X-Servern des
+          XFree86-Projekts der Versionsfamilie 3.3.x bzw. -depth in
+          der Versionsfamilie 4.0) Gelegentlich empfiehlt es sich
+          auch, einen zweiten X-Server zu starten, was am einfachsten
+          mit dem Befehl xinit(1) geschehen kann. Um beispielsweise
+          das Programm q2test.exe mit WINE auf einem zweiten X-Server
+          mit einer Farbtiefe von 8 Bit pro Pixel aus dem aktuellen
+          Arbeitsverzeichnis zu starten, könnte der folgende Befehl
+          benutzt werden:
+          
+          xinit /usr/local/bin/WINE q2test.exe --display :1 -- -bpp 8 :1
+        
+          Falls sich WINE in einem anderen Verzeichnis als
+          /usr/local/bin befindet, ist der Befehl natürlich
+          entsprechend anzupassen.
+          
+   Der DGA-Modus funktioniert nicht, obwohl X in der richtigen
+   Farbtiefe ausgeführt wird; Spiele sind immer noch langsam
+          Die Verwendung von DGA ist normalerweise nur dem
+          Systemadministrator gestattet, das betreffende Programm muss
+          also mit dessen Rechten ausgeführt werden. Alternativ dazu
+          reicht es auch aus, Benutzern Schreib- und Leserechte auf
+          die Gerätedatei /dev/kmem zu erteilen.
+          
+   Es ist kein Sound zu hören
+          Zunächst sollte überprüft werden, ob die Soundunterstützung
+          des Linux-Kernels richtig funktioniert, also ob es möglich
+          ist, mit anderen Linux-Programmen die Soundkarte zu
+          verwenden. Im nächsten Schritt kann überprüft werden, ob die
+          Sound-Hardware von einem anderen Programm benutzt wird und
+          WINE deswegen nicht darauf zugreifen kann.
+          
+Weiterführende Informationen
+
+   Die zentrale Web-Adresse für Informationen zu WINE ist
+   http://www.winehq.com. Dort befinden sich Links zu vielen weiteren
+   Dokumenten, wie einem WINE-FAQ, einem WINE-HOWTO, einer Anleitung zum
+   Erstellen von Fehlerberichten und vieles mehr.
