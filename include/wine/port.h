@@ -77,6 +77,10 @@ int getsockopt(int socket, int level, int option_name, void *option_value, size_
 void *memmove(void *dest, const void *src, unsigned int len);
 #endif /* !defined(HAVE_MEMMOVE) */
 
+#ifndef HAVE_GETPAGESIZE
+size_t getpagesize(void);
+#endif  /* HAVE_GETPAGESIZE */
+
 #ifndef HAVE_INET_NETWORK
 unsigned long inet_network(const char *cp);
 #endif /* !defined(HAVE_INET_NETWORK) */

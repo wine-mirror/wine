@@ -23,6 +23,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 #ifdef HAVE_LIBIO_H
 # include <libio.h>
 #endif
@@ -102,6 +105,22 @@ const char *strerror( int err )
     return sys_errlist[err];
 }
 #endif  /* HAVE_STRERROR */
+
+
+/***********************************************************************
+ *		getpagesize
+ */
+#ifndef HAVE_GETPAGESIZE
+size_t getpagesize(void)
+{
+# ifdef __svr4__
+    return sysconf(_SC_PAGESIZE);
+# else
+#  error Cannot get the page size on this platform
+# endif
+}
+#endif  /* HAVE_GETPAGESIZE */
+
 
 /***********************************************************************
  *		clone
@@ -339,3 +358,35 @@ int statfs(const char *name, struct statfs *info)
 #endif /* defined(__BEOS__) */
 }
 #endif /* !defined(HAVE_STATFS) */
+
+
+/***********************************************************************
+ *		wine_anon_mmap
+ *
+ * Portable wrapper for anonymous mmaps
+ */
+void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
+{
+    static int fdzero = -1;
+
+#ifdef MAP_ANON
+    flags |= MAP_ANON;
+#else
+    if (fdzero == -1)
+    {
+        if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
+        {
+            perror( "/dev/zero: open" );
+            exit(1);
+        }
+    }
+#endif  /* MAP_ANON */
+    /* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
+#ifdef MAP_SHARED
+    flags &= ~MAP_SHARED;
+#endif
+#ifdef MAP_PRIVATE
+    flags |= MAP_PRIVATE;
+#endif
+    return mmap( start, size, prot, flags, fdzero, 0 );
+}

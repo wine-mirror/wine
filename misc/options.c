@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include "winbase.h"
+#include "wine/library.h"
 #include "main.h"
 #include "options.h"
 #include "version.h"
@@ -160,7 +161,6 @@ static void do_config( const char *arg )
 
 static void do_debugmsg( const char *arg )
 {
-    extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );
     static const char * const debug_class_names[__DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
 
     char *opt, *options = strdup(arg);

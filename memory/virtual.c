@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
+#include "wine/library.h"
+#include "wine/port.h"
 #include "winerror.h"
 #include "file.h"
 #include "process.h"
@@ -433,10 +435,10 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     /* zero-map the whole range */
 
-    if ((ptr = VIRTUAL_mmap( -1, base, total_size, 0,
+    if ((ptr = wine_anon_mmap( base, total_size,
                              PROT_READ | PROT_WRITE | PROT_EXEC, 0 )) == (char *)-1)
     {
-        ptr = VIRTUAL_mmap( -1, NULL, total_size, 0,
+        ptr = wine_anon_mmap( NULL, total_size,
                             PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
         if (ptr == (char *)-1)
         {
@@ -580,15 +582,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 #ifndef page_mask
 DECL_GLOBAL_CONSTRUCTOR(VIRTUAL_Init)
 {
-# ifdef HAVE_GETPAGESIZE
     page_size = getpagesize();
-# else
-#  ifdef __svr4__
-    page_size = sysconf(_SC_PAGESIZE);
-#  else
-#   error Cannot get the page size on this platform
-#  endif
-# endif
     page_mask = page_size - 1;
     /* Make sure we have a power of 2 */
     assert( !(page_size & page_mask) );
@@ -668,39 +662,13 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
  * Wrapper for mmap() that handles anonymous mappings portably,
  * and falls back to read if mmap of a file fails.
  */
-LPVOID VIRTUAL_mmap( int unix_handle, LPVOID start, DWORD size,
+LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
                      DWORD offset, int prot, int flags )
 {
-    int fd = -1;
     int pos;
     LPVOID ret;
 
-    if (unix_handle == -1)
-    {
-#ifdef MAP_ANON
-        flags |= MAP_ANON;
-#else
-        static int fdzero = -1;
-
-        if (fdzero == -1)
-        {
-            if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
-            {
-                perror( "/dev/zero: open" );
-                ExitProcess(1);
-            }
-        }
-        fd = fdzero;
-#endif  /* MAP_ANON */
-        /* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
-#ifdef MAP_SHARED
-        flags &= ~MAP_SHARED;
-#endif
-#ifdef MAP_PRIVATE
-        flags |= MAP_PRIVATE;
-#endif
-    }
-    else fd = unix_handle;
+    if (fd == -1) return wine_anon_mmap( start, size, prot, flags );
 
     if ((ret = mmap( start, size, prot, flags, fd, offset )) != (LPVOID)-1)
         return ret;
@@ -709,7 +677,6 @@ LPVOID VIRTUAL_mmap( int unix_handle, LPVOID start, DWORD size,
     /* page-aligned (EINVAL), or because the underlying filesystem */
     /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
 
-    if (unix_handle == -1) return ret;
     if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return ret;
     if (prot & PROT_WRITE)
     {
@@ -723,7 +690,7 @@ LPVOID VIRTUAL_mmap( int unix_handle, LPVOID start, DWORD size,
     }
 
     /* Reserve the memory with an anonymous mmap */
-    ret = VIRTUAL_mmap( -1, start, size, 0, PROT_READ | PROT_WRITE, flags );
+    ret = wine_anon_mmap( start, size, PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1) return ret;
     /* Now read in the file */
     if ((pos = lseek( fd, offset, SEEK_SET )) == -1)
@@ -814,8 +781,7 @@ LPVOID WINAPI VirtualAlloc(
         if (type & MEM_SYSTEM)
              ptr = base;
         else
-            ptr = (UINT)VIRTUAL_mmap( -1, (LPVOID)base, view_size, 0,
-                                      VIRTUAL_GetUnixProt( vprot ), 0 );
+            ptr = (UINT)wine_anon_mmap( (LPVOID)base, view_size, VIRTUAL_GetUnixProt( vprot ), 0 );
         if (ptr == (UINT)-1)
         {
             SetLastError( ERROR_OUTOFMEMORY );
@@ -941,8 +907,7 @@ BOOL WINAPI VirtualFree(
 
     /* Decommit the pages by remapping zero-pages instead */
 
-    if (VIRTUAL_mmap( -1, (LPVOID)base, size, 0, VIRTUAL_GetUnixProt( 0 ),
-                      MAP_FIXED ) != (LPVOID)base)
+    if (wine_anon_mmap( (LPVOID)base, size, VIRTUAL_GetUnixProt(0), MAP_FIXED ) != (LPVOID)base)
         ERR( "Could not remap pages, expect trouble\n" );
     return VIRTUAL_SetProt( view, base, size, 0 );
 }
