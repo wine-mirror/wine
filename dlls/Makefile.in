@@ -69,6 +69,7 @@ DLLFILES = \
 	winmm/midimap/libmidimap.drv.@LIBEXT@ \
 	winmm/wavemap/libmsacm.drv.@LIBEXT@ \
 	winmm/wineoss/libwineoss.drv.@LIBEXT@ \
+	winnls/libwinnls32.@LIBEXT@ \
 	winsock/libws2_32.@LIBEXT@ \
 	winspool/libwinspool.drv.@LIBEXT@ \
 	wow32/libwow32.@LIBEXT@ \
@@ -84,6 +85,7 @@ EXTRADLLNAMES = \
 	dispdib \
 	display \
 	gdi \
+	imm \
 	kernel \
 	keyboard \
 	lzexpand \
@@ -117,6 +119,7 @@ EXTRADLLNAMES = \
 	windebug \
 	wineps16 \
 	wing \
+	winnls \
 	winsock \
 	wprocs
 
@@ -179,6 +182,7 @@ SUBDIRS = \
 	winmm/midimap \
 	winmm/wavemap \
 	winmm/wineoss \
+	winnls \
 	winsock \
 	winspool \
 	wow32 \
@@ -233,7 +237,7 @@ libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
 libimagehlp.@LIBEXT@: imagehlp/libimagehlp.@LIBEXT@
 	$(RM) $@ && $(LN_S) imagehlp/libimagehlp.@LIBEXT@ $@
 
-libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
+libimm32.@LIBEXT@ libimm.@LIBEXT@: imm32/libimm32.@LIBEXT@
 	$(RM) $@ && $(LN_S) imm32/libimm32.@LIBEXT@ $@
 
 libjoystick.drv.@LIBEXT@: winmm/joystick/libjoystick.drv.@LIBEXT@
@@ -366,6 +370,9 @@ libwininet.@LIBEXT@: wininet/libwininet.@LIBEXT@
 libwinmm.@LIBEXT@ libmmsystem.@LIBEXT@ libsound.@LIBEXT@: winmm/libwinmm.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/libwinmm.@LIBEXT@ $@
 
+libwinnls32.@LIBEXT@ libwinnls.@LIBEXT@: winnls/libwinnls32.@LIBEXT@
+	$(RM) $@ && $(LN_S) winnls/libwinnls32.@LIBEXT@ $@
+
 libwinspool.drv.@LIBEXT@: winspool/libwinspool.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winspool/libwinspool.drv.@LIBEXT@ $@
 
@@ -443,6 +450,7 @@ winmm/mciwave/libmciwave.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libk
 winmm/midimap/libmidimap.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/wavemap/libmsacm.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/wineoss/libwineoss.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winnls/libwinnls32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winsock/libws2_32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winspool/libwinspool.drv.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 wow32/libwow32.@LIBEXT@: libkernel32.@LIBEXT@

@@ -6670,6 +6670,7 @@ dlls/winmm/mciwave/Makefile
 dlls/winmm/midimap/Makefile
 dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
+dlls/winnls/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
 dlls/wow32/Makefile
@@ -6909,6 +6910,7 @@ dlls/winmm/mciwave/Makefile
 dlls/winmm/midimap/Makefile
 dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
+dlls/winnls/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
 dlls/wow32/Makefile

@@ -2,14 +2,14 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = imm32
-ALTNAMES  = imm
+MODULE    = winnls32
+ALTNAMES  = winnls
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	imm.c
+	winnls.c
 
 @MAKE_DLL_RULES@
 

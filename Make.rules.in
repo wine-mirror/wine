@@ -154,6 +154,7 @@ DLLS = \
 	wineps \
 	wininet \
 	winmm \
+	winnls32 \
 	winspool.drv \
 	wnaspi32 \
 	wow32 \
