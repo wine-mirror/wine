@@ -2,10 +2,10 @@
 @ stub ConvertINetReset
 @ stdcall ConvertINetString(ptr long long ptr ptr ptr ptr)
 @ stdcall ConvertINetUnicodeToMultiByte(ptr long ptr ptr ptr ptr)
-@ stdcall DllCanUnloadNow() MLANG_DllCanUnloadNow
-@ stdcall DllGetClassObject(ptr ptr ptr) MLANG_DllGetClassObject
-@ stdcall DllRegisterServer() MLANG_DllRegisterServer
-@ stdcall DllUnregisterServer() MLANG_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow() MLANG_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(ptr ptr ptr) MLANG_DllGetClassObject
+@ stdcall -private DllRegisterServer() MLANG_DllRegisterServer
+@ stdcall -private DllUnregisterServer() MLANG_DllUnregisterServer
 @ stub GetGlobalFontLinkObject
 @ stdcall IsConvertINetStringAvailable(long long)
 @ stdcall LcidToRfc1766A(long ptr long)
