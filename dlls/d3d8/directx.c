@@ -712,10 +712,12 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         } else if (strcmp(ThisExtn, "GL_EXT_fog_coord") == 0) {
 	  FIXME(" FOUND: EXT Fog coord support\n");
 	  This->gl_info.supported[EXT_FOG_COORD] = TRUE;
-        } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) {
-	  /* handle paletted texture extensions */
+        } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) { /* handle paletted texture extensions */
 	  FIXME(" FOUND: EXT Paletted texture support\n");
 	  This->gl_info.supported[EXT_PALETTED_TEXTURE] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_EXT_point_parameters") == 0) {
+	  FIXME(" FOUND: EXT Point parameters support\n");
+	  This->gl_info.supported[EXT_POINT_PARAMETERS] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
 	  FIXME(" FOUND: EXT Secondary coord support\n");
 	  This->gl_info.supported[EXT_SECONDARY_COLOR] = TRUE;

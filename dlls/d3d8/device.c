@@ -1340,7 +1340,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* Allocate the storage for it */
-    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%d)\n", This, Width, Height, Depth, Levels, Usage, Format, debug_d3dformat(Format), Pool);
+    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height, Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture8Impl));
     object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
     object->ResourceType = D3DRTYPE_VOLUMETEXTURE;
@@ -1399,6 +1399,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth;
         volume->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->myDesc.Size);
 
+	volume->lockable = TRUE;
+	volume->locked = FALSE;
+	memset(&volume->lockedBox, 0, sizeof(D3DBOX));
+	volume->Dirty = FALSE;
+	IDirect3DVolume8Impl_CleanDirtyBox((LPDIRECT3DVOLUME8) volume);
+
         TRACE("(%p) : Volume at w(%d) h(%d) d(%d) fmt(%u,%s) surf@%p, surfmem@%p, %d bytes\n", 
               This, Width, Height, Depth, Format, debug_d3dformat(Format),
               volume, volume->allocatedMemory, volume->myDesc.Size);
@@ -1420,7 +1426,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     UINT tmpW;
 
     /* Allocate the storage for it */
-    TRACE("(%p) : Len(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%d)\n", This, EdgeLength, Levels, Usage, Format, debug_d3dformat(Format), Pool);
+    TRACE("(%p) : Len(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, EdgeLength, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DCubeTexture8Impl));
     object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
     object->ref = 1;
@@ -1466,7 +1472,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     }
 
     TRACE("(%p) : Iface@%p\n", This, object);
-    *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8)object;
+    *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8) object;
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer) {
@@ -1488,7 +1494,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface
 
     TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->allocatedMemory, object);
 
-    *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER8)object;
+    *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER8) object;
 
     return D3D_OK;
 }
@@ -1515,7 +1521,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
 
     TRACE("(%p) : Iface@%p allocatedMem @ %p\n", This, object, object->allocatedMemory);
 
-    *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER8)object;
+    *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER8) object;
 
     return D3D_OK;
 }
@@ -1547,7 +1553,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = Lockable;
     object->locked = FALSE;
-    
+    memset(&object->lockedRect, 0, sizeof(RECT));
+    IDirect3DSurface8Impl_CleanDirtyRect((LPDIRECT3DSURFACE8) object);
+
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;
 }
@@ -1580,7 +1588,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = (D3DFMT_D16_LOCKABLE == Format) ? TRUE : FALSE;
     object->locked = FALSE;
-        
+    memset(&object->lockedRect, 0, sizeof(RECT));
+    IDirect3DSurface8Impl_CleanDirtyRect((LPDIRECT3DSURFACE8) object);
+
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;
 }
@@ -1608,6 +1618,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = TRUE;
     object->locked = FALSE;
+    memset(&object->lockedRect, 0, sizeof(RECT));
+    IDirect3DSurface8Impl_CleanDirtyRect((LPDIRECT3DSURFACE8) object);
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;

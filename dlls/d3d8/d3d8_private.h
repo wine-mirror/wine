@@ -495,6 +495,12 @@ struct IDirect3DVolume8Impl
     BYTE                   *allocatedMemory;
     UINT                    textureName;
     UINT                    bytesPerPixel;
+
+    BOOL                    lockable;
+    BOOL                    locked;
+    D3DBOX                  lockedBox;
+    D3DBOX                  dirtyBox;
+    BOOL                    Dirty;
 };
 
 /* IUnknown: */
@@ -509,9 +515,12 @@ extern HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(LPDIRECT3DVOLUME8 ifac
 extern HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid);
 extern HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID riid, void** ppContainer);
 extern HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_DESC* pDesc);
-extern HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox, DWORD Flags);
+extern HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags);
 extern HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface);
 
+/* internal Interfaces */
+extern HRESULT WINAPI IDirect3DVolume8Impl_CleanDirtyBox(LPDIRECT3DVOLUME8 iface);
+extern HRESULT WINAPI IDirect3DVolume8Impl_AddDirtyBox(LPDIRECT3DVOLUME8 iface, CONST D3DBOX* pDirtyBox);
 
 /* ------------------- */
 /* IDirect3DSwapChain8 */
@@ -540,7 +549,6 @@ struct IDirect3DSwapChain8Impl
     /* OpenGL/GLX related */
     GLXContext              swap_ctx;
     Drawable                swap_drawable;
-    
 };
 
 /* IUnknown: */
@@ -584,8 +592,8 @@ struct IDirect3DSurface8Impl
     BOOL                    lockable;
     BOOL                    locked;
     RECT                    lockedRect;
+    RECT                    dirtyRect;
     BOOL                    Dirty;
-
 };
 
 /* IUnknown: */
@@ -606,7 +614,8 @@ extern HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface)
 /* internal Interfaces */
 extern HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level);
 extern HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, const char* filename);
-
+extern HRESULT WINAPI IDirect3DSurface8Impl_CleanDirtyRect(LPDIRECT3DSURFACE8 iface);
+extern HRESULT WINAPI IDirect3DSurface8Impl_AddDirtyRect(LPDIRECT3DSURFACE8 iface, CONST RECT* pDirtyRect);
 
 /* ------------------ */
 /* IDirect3DResource8 */

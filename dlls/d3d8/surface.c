@@ -235,7 +235,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
        * Dirtify on lock
        * as seen in msdn docs
        */
-      This->Dirty = TRUE;
+      IDirect3DSurface8Impl_AddDirtyRect(iface, &This->lockedRect);
+
       /** Dirtify Container if needed */
       if (NULL != This->Container) {
 	IDirect3DBaseTexture8* cont = NULL;
@@ -348,7 +349,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	vcheckGLcall("glRasterPos3iv");
 	LEAVE_GL();
 
-	This->Dirty = FALSE;
+	/** restore clean dirty state */
+	IDirect3DSurface8Impl_CleanDirtyRect(iface);
 
       } else {
 	FIXME("unsupported unlocking to Rendering surface surf@%p usage(%lu)\n", This, This->myDesc.Usage);
@@ -368,6 +370,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 
 unlock_end:
     This->locked = FALSE;
+    memset(&This->lockedRect, 0, sizeof(RECT));
     return D3D_OK;
 }
 
@@ -581,5 +584,29 @@ HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, cons
     FIXME("Unimplemented dump mode format(%u,%s)\n", This->myDesc.Format, debug_d3dformat(This->myDesc.Format));
   }
   fclose(f);
+  return D3D_OK;
+}
+
+HRESULT WINAPI IDirect3DSurface8Impl_CleanDirtyRect(LPDIRECT3DSURFACE8 iface) {
+  ICOM_THIS(IDirect3DSurface8Impl,iface);
+  This->Dirty = FALSE;
+  This->dirtyRect.left   = This->myDesc.Width;
+  This->dirtyRect.top    = This->myDesc.Height;
+  This->dirtyRect.right  = 0;
+  This->dirtyRect.bottom = 0;
+  return D3D_OK;
+}
+
+/**
+ * Raphael:
+ *   very stupid way to handle multiple dirty rects but it works :)
+ */
+extern HRESULT WINAPI IDirect3DSurface8Impl_AddDirtyRect(LPDIRECT3DSURFACE8 iface, CONST RECT* pDirtyRect) {
+  ICOM_THIS(IDirect3DSurface8Impl,iface);
+  This->Dirty = TRUE;
+  This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);
+  This->dirtyRect.top    = min(This->dirtyRect.top,    pDirtyRect->top);
+  This->dirtyRect.right  = max(This->dirtyRect.right,  pDirtyRect->right);
+  This->dirtyRect.bottom = max(This->dirtyRect.bottom, pDirtyRect->bottom);
   return D3D_OK;
 }

@@ -135,28 +135,6 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
 	}
 
 	IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) This->surfaces[i], GL_TEXTURE_2D, i); 
-#if 0
-	TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-	      GL_TEXTURE_2D, 
-              i, 
-              D3DFmt2GLIntFmt(This->format),
-	      This->surfaces[i]->myDesc.Width, 
-              This->surfaces[i]->myDesc.Height, 
-	      0, 
-              D3DFmt2GLFmt(This->format), 
-              D3DFmt2GLType(This->format),
-	      This->surfaces[i]->allocatedMemory);
-	glTexImage2D(GL_TEXTURE_2D, 
-		     i,
-		     D3DFmt2GLIntFmt(This->format),
-		     This->surfaces[i]->myDesc.Width,
-		     This->surfaces[i]->myDesc.Height,
-		     0,
-		     D3DFmt2GLFmt(This->format),
-		     D3DFmt2GLType(This->format),
-		     This->surfaces[i]->allocatedMemory);
-	checkGLcall("glTexImage2D");
-#endif
 	/* Removed glTexParameterf now TextureStageStates are initialized at startup */
 	This->Dirty = FALSE;
       }
@@ -187,7 +165,7 @@ DWORD    WINAPI        IDirect3DTexture8Impl_GetLevelCount(LPDIRECT3DTEXTURE8 if
 }
 
 /* IDirect3DTexture8 */
-HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 iface, UINT Level,D3DSURFACE_DESC* pDesc) {
+HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 iface, UINT Level, D3DSURFACE_DESC* pDesc) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
 
     if (Level < This->levels) {
@@ -199,7 +177,7 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 ifa
     }
     return D3D_OK;
 }
-HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level,IDirect3DSurface8** ppSurfaceLevel) {
+HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level, IDirect3DSurface8** ppSurfaceLevel) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     *ppSurfaceLevel = (LPDIRECT3DSURFACE8)This->surfaces[Level];
     IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->surfaces[Level]);
@@ -239,8 +217,8 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_UnlockRect(LPDIRECT3DTEXTURE8 iface
 HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 iface, CONST RECT* pDirtyRect) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    TRACE("(%p) : dirtyfication of surface Level (0)\n", This);    
+    return IDirect3DSurface8Impl_AddDirtyRect((LPDIRECT3DSURFACE8) This->surfaces[0], pDirtyRect);
 }
 
 

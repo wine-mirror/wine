@@ -175,28 +175,6 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 	for (j = 0; j < 6; j++) {
 	  IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) This->surfaces[j][i], cube_targets[j], i); 
 #if 0
-	  TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, glFmt=%x, glType=%x, Mem=%p\n",
-		cube_targets[j], 
-		i, 
-		fmt2glintFmt(This->format), 
-		This->surfaces[j][i]->myDesc.Width, 
-		This->surfaces[j][i]->myDesc.Height, 
-		0, 
-		fmt2glFmt(This->format), 
-		fmt2glType(This->format),
-		This->surfaces[j][i]->allocatedMemory);
-	  glTexImage2D(cube_targets[j],
-		       i,
-		       fmt2glintFmt(This->format),
-		       This->surfaces[j][i]->myDesc.Width,
-		       This->surfaces[j][i]->myDesc.Height,
-		       0,
-		       fmt2glFmt(This->format),
-		       fmt2glType(This->format),
-		       This->surfaces[j][i]->allocatedMemory);
-	  checkGLcall("glTexImage2D");
-#endif
-#if 0
 	  static int gen = 0;
 	  char buffer[4096];
 	  snprintf(buffer, sizeof(buffer), "/tmp/cube%d_face%d_level%d_%d.png", This->surfaces[0][0]->textureName, j, i, ++gen);
@@ -266,7 +244,7 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBETEXTURE8
        * Not dirtified while Surfaces don't notify dirtification
        * This->Dirty = TRUE;
        */
-      hr = IDirect3DSurface8_LockRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
+      hr = IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
       TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
@@ -278,8 +256,8 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTUR
     HRESULT hr;
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     if (Level < This->levels) {
-      hr = IDirect3DSurface8_UnlockRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level]);
-      FIXME("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
+      hr = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level]);
+      TRACE("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
       return D3DERR_INVALIDCALL;
@@ -289,8 +267,8 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTUR
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);    
+    return IDirect3DSurface8Impl_AddDirtyRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][0], pDirtyRect);
 }
 
 

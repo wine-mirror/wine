@@ -230,20 +230,22 @@ HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTU
     return hr;
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level) {
+    HRESULT hr;
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     if (Level < This->levels) {
-      TRACE("(%p) level(%d) stub\n", This, Level);
+      hr = IDirect3DVolume8Impl_UnlockBox((LPDIRECT3DVOLUME8) This->volumes[Level]);
+      TRACE("(%p) -> level(%d) success(%lu)\n", This, Level, hr);
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
       return D3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    return hr;
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE8 iface, CONST D3DBOX* pDirtyBox) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    TRACE("(%p) : dirtyfication of volume Level (0)\n", This);    
+    return IDirect3DVolume8Impl_AddDirtyBox((LPDIRECT3DVOLUME8) This->volumes[0], pDirtyBox);
 }
 
 

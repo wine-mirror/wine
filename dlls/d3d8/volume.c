@@ -116,12 +116,24 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
     if (!pBox) {
         TRACE("No box supplied - all is ok\n");
         pLockedVolume->pBits = This->allocatedMemory;
+	This->lockedBox.Left   = 0;
+	This->lockedBox.Top    = 0;
+	This->lockedBox.Front  = 0;
+	This->lockedBox.Right  = This->myDesc.Width;
+	This->lockedBox.Bottom = This->myDesc.Height;
+	This->lockedBox.Back   = This->myDesc.Depth;
     } else {
         TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
         pLockedVolume->pBits = This->allocatedMemory + 
-            (pLockedVolume->SlicePitch * pBox->Front) + /* FIXME: is front < back or vica versa? */
-            (pLockedVolume->RowPitch * pBox->Top) + 
-            (pBox->Left * This->bytesPerPixel);
+	  (pLockedVolume->SlicePitch * pBox->Front) + /* FIXME: is front < back or vica versa? */
+	  (pLockedVolume->RowPitch * pBox->Top) + 
+	  (pBox->Left * This->bytesPerPixel);
+	This->lockedBox.Left   = pBox->Left;
+	This->lockedBox.Top    = pBox->Top;
+	This->lockedBox.Front  = pBox->Front;
+	This->lockedBox.Right  = pBox->Right;
+	This->lockedBox.Bottom = pBox->Bottom;
+	This->lockedBox.Back   = pBox->Back;
     }
     
     if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
@@ -131,6 +143,8 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
        * Dirtify on lock
        * as seen in msdn docs
        */
+      IDirect3DVolume8Impl_AddDirtyBox(iface, &This->lockedBox);
+
       /**  Dirtify Container if needed */
       if (NULL != This->Container) {
         IDirect3DVolumeTexture8* cont = (IDirect3DVolumeTexture8*) This->Container;	
@@ -144,24 +158,19 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
       }
     }
 
+    This->locked = TRUE;
     TRACE("returning memory@%p rpitch(%d) spitch(%d)\n", pLockedVolume->pBits, pLockedVolume->RowPitch, pLockedVolume->SlicePitch);
     return D3D_OK;
 }
 HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
-    TRACE("(%p) : stub\n", This);
-#if 0
-    if (This->Container) {
-        IDirect3DVolumeTexture8* cont = (IDirect3DVolumeTexture8*) This->Container;
-        D3DRESOURCETYPE containerType = IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) cont);
-        if (containerType == D3DRTYPE_VOLUMETEXTURE) {
-            IDirect3DTexture8Impl* pTexture = (IDirect3DTexture8Impl*) cont;
-            pTexture->Dirty = TRUE;
-        } else {
-            FIXME("Set dirty on container type %d\n", containerType);
-        }
+    if (FALSE == This->locked) {
+      ERR("trying to lock unlocked volume@%p\n", This);  
+      return D3DERR_INVALIDCALL;
     }
-#endif
+    TRACE("(%p) : unlocking volume\n", This);
+    This->locked = FALSE;
+    memset(&This->lockedBox, 0, sizeof(RECT));
     return D3D_OK;
 }
 
@@ -181,3 +190,31 @@ ICOM_VTABLE(IDirect3DVolume8) Direct3DVolume8_Vtbl =
     IDirect3DVolume8Impl_LockBox,
     IDirect3DVolume8Impl_UnlockBox
 };
+
+HRESULT WINAPI IDirect3DVolume8Impl_CleanDirtyBox(LPDIRECT3DVOLUME8 iface) {
+  ICOM_THIS(IDirect3DVolume8Impl,iface);
+  This->Dirty = FALSE;
+  This->lockedBox.Left   = This->myDesc.Width;
+  This->lockedBox.Top    = This->myDesc.Height;
+  This->lockedBox.Front  = This->myDesc.Depth;  
+  This->lockedBox.Right  = 0;
+  This->lockedBox.Bottom = 0;
+  This->lockedBox.Back   = 0;
+  return D3D_OK;
+}
+
+/**
+ * Raphael:
+ *   very stupid way to handle multiple dirty box but it works :)
+ */
+HRESULT WINAPI IDirect3DVolume8Impl_AddDirtyBox(LPDIRECT3DVOLUME8 iface, CONST D3DBOX* pDirtyBox) {
+  ICOM_THIS(IDirect3DVolume8Impl,iface);
+  This->Dirty = TRUE;
+  This->lockedBox.Left   = min(This->lockedBox.Left,   pDirtyBox->Left);
+  This->lockedBox.Top    = min(This->lockedBox.Top,    pDirtyBox->Top);
+  This->lockedBox.Front  = min(This->lockedBox.Front,  pDirtyBox->Front);
+  This->lockedBox.Right  = max(This->lockedBox.Right,  pDirtyBox->Right);
+  This->lockedBox.Bottom = max(This->lockedBox.Bottom, pDirtyBox->Bottom);
+  This->lockedBox.Back   = max(This->lockedBox.Back,   pDirtyBox->Back);
+  return D3D_OK;
+}
