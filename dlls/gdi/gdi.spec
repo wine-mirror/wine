@@ -62,7 +62,7 @@ rsrc	version16.res
 50  pascal16 CreateBrushIndirect(ptr) CreateBrushIndirect16
 51  pascal16 CreateCompatibleBitmap(word word word) CreateCompatibleBitmap16
 52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC16
-53  pascal16 CreateDC(ptr ptr ptr ptr) CreateDC16
+53  pascal16 CreateDC(str str str ptr) CreateDC16
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn16
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
 56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
@@ -218,9 +218,9 @@ rsrc	version16.res
 233 pascal16 InsertPQ(word word word) InsertPQ16
 234 pascal16 SizePQ(word word) SizePQ16
 235 pascal16 DeletePQ(word) DeletePQ16
-240 pascal16 OpenJob(ptr ptr word) OpenJob16
+240 pascal16 OpenJob(str str word) OpenJob16
 241 pascal16 WriteSpool(word ptr word) WriteSpool16
-242 pascal16 WriteDialog(word ptr word) WriteDialog16
+242 pascal16 WriteDialog(word str word) WriteDialog16
 243 pascal16 CloseJob(word) CloseJob16
 244 pascal16 DeleteJob(word word) DeleteJob16
 245 pascal   GetSpoolJob(word ptr) GetSpoolJob16
@@ -238,10 +238,10 @@ rsrc	version16.res
 272 stub EndDocPrinter
 274 stub ClosePrinter
 280 stub GetRealDriverInfo
-281 pascal   DrvSetPrinterData(ptr ptr long ptr long) DrvSetPrinterData16
-282 pascal   DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData16
+281 pascal   DrvSetPrinterData(str str long ptr long) DrvSetPrinterData16
+282 pascal   DrvGetPrinterData(str str ptr ptr long ptr) DrvGetPrinterData16
 299 stub ENGINEGETCHARWIDTHEX
-300 pascal   EngineEnumerateFont(ptr segptr long) EngineEnumerateFont16
+300 pascal   EngineEnumerateFont(str segptr long) EngineEnumerateFont16
 301 pascal16 EngineDeleteFont(ptr) EngineDeleteFont16
 302 pascal   EngineRealizeFont(ptr ptr ptr) EngineRealizeFont16
 303 pascal16 EngineGetCharWidth(ptr word word ptr) EngineGetCharWidth16
