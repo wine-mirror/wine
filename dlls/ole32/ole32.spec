@@ -233,7 +233,7 @@
 @ stub SNB_UserUnmarshal
 @ stdcall StgCreateDocfile(wstr long long ptr)
 @ stdcall StgCreateDocfileOnILockBytes(ptr long long ptr)
-@ stub StgCreateStorageEx
+@ stdcall StgCreateStorageEx(wstr long long long ptr ptr ptr ptr)
 @ stub StgGetIFillLockBytesOnFile
 @ stub StgGetIFillLockBytesOnILockBytes
 @ stdcall StgIsStorageFile(wstr)

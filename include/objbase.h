@@ -495,7 +495,16 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot
 #define STGM_NOSCRATCH		0x00100000
 #define STGM_NOSNAPSHOT		0x00200000
 
+typedef struct tagSTGOPTIONS
+{
+    USHORT usVersion;
+    USHORT reserved;
+    ULONG ulSectorSize;
+    const WCHAR* pwcsTemplateFile;
+} STGOPTIONS;
+
 HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,IStorage **ppstgOpen);
+HRESULT WINAPI StgCreateStorageEx(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,void*,REFIID,void**);
 HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
 HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
 HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
