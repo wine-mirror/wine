@@ -456,8 +456,7 @@ void PROCESS_Start(void)
     LPTHREAD_START_ROUTINE entry;
     THDB *thdb = THREAD_Current();
     PDB *pdb = thdb->process;
-    TDB *pTask = (TDB *)GlobalLock16( pdb->task );
-    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+    NE_MODULE *pModule = NE_GetPtr( pdb->module );
     OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
     IMAGE_OPTIONAL_HEADER *header = &PE_HEADER(pModule->module32)->OptionalHeader;
 
@@ -467,7 +466,6 @@ void PROCESS_Start(void)
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
 
     /* Initialize the critical section */
-
     InitializeCriticalSection( &pdb->crit_section );
 
 #if 0
@@ -479,15 +477,15 @@ void PROCESS_Start(void)
 #endif
 
     /* Create the environment db */
-
     if (!PROCESS_CreateEnvDB()) goto error;
 
-#if 0
+    /* Create a task for this process */
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
     if (!TASK_Create( thdb, pModule, 0, 0, cmdShow )) goto error;
 
-#endif
+    /* Link the task in the task list */
+    TASK_StartTask( pdb->task );
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
 
@@ -499,8 +497,8 @@ void PROCESS_Start(void)
     if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
 
     /* Increment EXE refcount */
-    assert( PROCESS_Current()->exe_modref );
-    PROCESS_Current()->exe_modref->refCount++;
+    assert( pdb->exe_modref );
+    pdb->exe_modref->refCount++;
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );   /* FIXME: correct location? */
 
@@ -576,8 +574,19 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     info->hProcess    = reply.handle;
     info->dwProcessId = (DWORD)pdb->server_pid;
 
+    /* Call USER signal proc */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
+
     if (pModule->module32)
     {
+        /* Create the main thread */
+        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
+        if (!(thdb = THREAD_Create( pdb, 0L, size, TRUE, tsa, &server_thandle ))) 
+            goto error;
+        info->hThread     = server_thandle;
+        info->dwThreadId  = (DWORD)thdb->server_tid;
+        thdb->startup     = PROCESS_Start;
+
         /* Create the heap */
 	size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
 	commit = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapCommit;
@@ -587,23 +596,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         /* Inherit the env DB from the parent */
         if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
 
-        /* Call USER signal proc */
-        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
-
-        /* Create the main thread */
-        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
-        if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
-            goto error;
-        info->hThread     = server_thandle;
-        info->dwThreadId  = (DWORD)thdb->server_tid;
-        thdb->startup     = PROCESS_Start;
-
-        /* Create a Win16 task for this process */
-        if (startup->dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup->wShowWindow;
-        if (!TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow )) goto error;
-
-        /* Start the task */
-        TASK_StartTask( pdb->task );
+        /* Set the process module (FIXME: hack) */
+        pdb->module = pModule->self;
         SYSDEPS_SpawnThread( thdb );
     }
     else  /* Create a 16-bit process */
@@ -619,9 +613,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
         /* Inherit the env DB from the parent */
         if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
-
-        /* Call USER signal proc */
-        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
 
         /* Create the main thread */
         if (!(thdb = THREAD_Create( pdb, 0L, 0, hInstance == 0, tsa, &server_thandle ))) 
