@@ -79,6 +79,11 @@ static int init_environment(void)
 
 static void clean_up_environment(void)
 {
+    BOOL result;
+
+    result = CryptReleaseContext(hProv, 1);
+    ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08lx\n", GetLastError());
+		
     CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 

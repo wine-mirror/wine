@@ -2630,6 +2630,11 @@ BOOL WINAPI RSAENH_CPReleaseContext(HCRYPTPROV hProv, DWORD dwFlags)
         return FALSE;
     }
 
+    if (dwFlags) {
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
+    
     return TRUE;
 }
 
