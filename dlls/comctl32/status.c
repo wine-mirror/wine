@@ -426,6 +426,10 @@ STATUSBAR_GetTextLength (STATUSWINDOWINFO *infoPtr, INT nPart)
     DWORD result;
 
     TRACE("part %d\n", nPart);
+
+    /* MSDN says: "simple parts use index of 0", so this check is ok. */
+    if (nPart < 0 || nPart >= infoPtr->numParts) return 0;
+
     if (infoPtr->simple)
 	part = &infoPtr->part0;
     else
@@ -627,7 +631,10 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
     STATUSWINDOWPART *part=NULL;
     BOOL changed = FALSE;
 
-    TRACE("part %d, text %s\n", nPart, debugstr_t(text, isW));
+    if (style & SBT_OWNERDRAW) {    
+         TRACE("part %d, text %x\n",nPart,text);
+    }
+    else TRACE("part %d, text %s\n", nPart, debugstr_t(text, isW));
 
     /* MSDN says: "If the parameter is set to SB_SIMPLEID (255), the status
      * window is assumed to be a simple window */
