@@ -773,7 +773,8 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 
     /* Handle the code for pre-vertex material properties */
     if (vertex_transformed == FALSE) {
-        if (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) {
+        if ((This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) &&
+	    (This->state_block.render_state[D3DRENDERSTATE_COLORVERTEX - 1] == TRUE)) {
 	    if ((This->state_block.render_state[D3DRENDERSTATE_DIFFUSEMATERIALSOURCE - 1] != D3DMCS_MATERIAL) ||
 		(This->state_block.render_state[D3DRENDERSTATE_AMBIENTMATERIALSOURCE - 1] != D3DMCS_MATERIAL) ||
 		(This->state_block.render_state[D3DRENDERSTATE_EMISSIVEMATERIALSOURCE - 1] != D3DMCS_MATERIAL) ||
@@ -935,7 +936,8 @@ inline static void handle_specular_base(STATEBLOCK *sb, DWORD *color) {
 
 inline static void handle_diffuse(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted) {
     if ((lighted == FALSE) &&
-	(sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE)) {
+	(sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) &&
+	(sb->render_state[D3DRENDERSTATE_COLORVERTEX - 1] == TRUE)) {
         if (sb->render_state[D3DRENDERSTATE_DIFFUSEMATERIALSOURCE - 1] == D3DMCS_COLOR1) {
 	    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 	    handle_diffuse_base(sb, color);
@@ -960,7 +962,8 @@ inline static void handle_diffuse(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted)
 
 inline static void handle_specular(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted) {
     if ((lighted == FALSE) &&
-	(sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE)) {
+	(sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) &&
+	(sb->render_state[D3DRENDERSTATE_COLORVERTEX - 1] == TRUE)) {
         if (sb->render_state[D3DRENDERSTATE_DIFFUSEMATERIALSOURCE - 1] == D3DMCS_COLOR2) {
 	    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 	    handle_specular_base(sb, color);

@@ -432,6 +432,10 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (float *) light);
 	    } break;
 
+	    case D3DRENDERSTATE_COLORVERTEX:          /* 141 */
+	          /* Nothing to do here.. Only storage matters */
+	          break;
+		  
 	    case D3DRENDERSTATE_LOCALVIEWER:          /* 142 */
 	        if (dwRenderState)
 		    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
