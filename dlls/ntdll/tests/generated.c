@@ -1073,13 +1073,6 @@ static void test_pack_PEXCEPTION_RECORD(void)
     TEST_TYPE_POINTER(PEXCEPTION_RECORD, 80, 4);
 }
 
-static void test_pack_PEXCEPTION_REGISTRATION_RECORD(void)
-{
-    /* PEXCEPTION_REGISTRATION_RECORD */
-    TEST_TYPE(PEXCEPTION_REGISTRATION_RECORD, 4, 4);
-    TEST_TYPE_POINTER(PEXCEPTION_REGISTRATION_RECORD, 8, 4);
-}
-
 static void test_pack_PFLOATING_SAVE_AREA(void)
 {
     /* PFLOATING_SAVE_AREA */
@@ -2194,7 +2187,6 @@ static void test_pack(void)
     test_pack_PEXCEPTION_HANDLER();
     test_pack_PEXCEPTION_POINTERS();
     test_pack_PEXCEPTION_RECORD();
-    test_pack_PEXCEPTION_REGISTRATION_RECORD();
     test_pack_PFLOATING_SAVE_AREA();
     test_pack_PGENERIC_MAPPING();
     test_pack_PHANDLE();

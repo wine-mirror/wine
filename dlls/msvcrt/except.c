@@ -123,7 +123,7 @@ __ASM_GLOBAL_FUNC(_EH_prolog,
 /*******************************************************************
  *		_global_unwind2 (MSVCRT.@)
  */
-void _global_unwind2(PEXCEPTION_REGISTRATION_RECORD frame)
+void _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
 {
     TRACE("(%p)\n",frame);
     RtlUnwind( frame, 0, 0, 0 );
@@ -165,9 +165,9 @@ void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
  *		_except_handler2 (MSVCRT.@)
  */
 int _except_handler2(PEXCEPTION_RECORD rec,
-                     PEXCEPTION_REGISTRATION_RECORD frame,
+                     EXCEPTION_REGISTRATION_RECORD* frame,
                      PCONTEXT context,
-                     PEXCEPTION_REGISTRATION_RECORD* dispatcher)
+                     EXCEPTION_REGISTRATION_RECORD** dispatcher)
 {
   FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -227,7 +227,7 @@ int _except_handler3(PEXCEPTION_RECORD rec,
         if (retval == EXCEPTION_EXECUTE_HANDLER)
         {
           /* Unwind all higher frames, this one will handle the exception */
-          _global_unwind2((PEXCEPTION_REGISTRATION_RECORD)frame);
+          _global_unwind2((EXCEPTION_REGISTRATION_RECORD*)frame);
           _local_unwind2(frame, trylevel);
 
           /* Set our trylevel to the enclosing block, and call the __finally
