@@ -3288,6 +3288,12 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
     if (dwFlags & WAVE_FORMAT_QUERY) {
 	TRACE(mmsys, "End of WAVE_FORMAT_QUERY !\n");
 	dwRet = waveOutClose(hWaveOut);
+	if (lphWaveOut) *lphWaveOut = 0;
+    }
+    else if (dwRet != MMSYSERR_NOERROR)
+    {
+	USER_HEAP_FREE(hWaveOut);
+	if (lphWaveOut) *lphWaveOut = 0;
     }
     return dwRet;
 }
@@ -3306,12 +3312,15 @@ UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
 UINT16 WINAPI waveOutClose16(HWAVEOUT16 hWaveOut)
 {
     LPWAVEOPENDESC	lpDesc;
+    DWORD		dwRet = 0;
     
     TRACE(mmsys, "(%04X)\n", hWaveOut);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    return wodMessage(lpDesc->uDeviceID, WODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    dwRet =  wodMessage(lpDesc->uDeviceID, WODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    USER_HEAP_FREE(hWaveOut);
+    return dwRet;
 }
 
 /**************************************************************************
