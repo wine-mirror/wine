@@ -220,7 +220,7 @@ static const strarray* get_translator(struct options* opts)
     error("Unknown processor");
 }
 
-static void compile(struct options* opts)
+static void compile(struct options* opts, const char* lang)
 {
     strarray* comp_args = strarray_alloc();
     int j, gcc_defs = 0;
@@ -313,14 +313,21 @@ static void compile(struct options* opts)
     for ( j = 0 ; j < opts->compiler_args->size ; j++ ) 
         strarray_add(comp_args, opts->compiler_args->base[j]);
 
+    /* the language option, if any */
+    if (lang && strcmp(lang, "-xnone"))
+	strarray_add(comp_args, lang);
+
     /* last, but not least, the files */
     for ( j = 0; j < opts->files->size; j++ )
-	strarray_add(comp_args, opts->files->base[j]);
+    {
+	if (opts->files->base[j][0] != '-')
+	    strarray_add(comp_args, opts->files->base[j]);
+    }
 
     spawn(opts->prefix, comp_args);
 }
 
-static const char* compile_to_object(struct options* opts, const char* file)
+static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
 {
     struct options copts;
     char* base_name;
@@ -329,12 +336,11 @@ static const char* compile_to_object(struct options* opts, const char* file)
     /* a shallow copy is exactly what we want in this case */
     base_name = get_basename(file);
     copts = *opts;
-    copts.processor = proc_cc;
     copts.output_name = get_temp_file(base_name, ".o");
     copts.compile_only = 1;
     copts.files = strarray_alloc();
     strarray_add(copts.files, file);
-    compile(&copts);
+    compile(&copts, lang);
     strarray_free(copts.files);
     free(base_name);
 
@@ -345,10 +351,10 @@ static void build(struct options* opts)
 {
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     strarray *lib_dirs, *files;
-    strarray *spec_args, *comp_args, *link_args;
+    strarray *spec_args, *link_args;
     char *output_file;
     const char *spec_c_name, *spec_o_name;
-    const char *output_name, *spec_file;
+    const char *output_name, *spec_file, *lang;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
     int j;
@@ -360,6 +366,7 @@ static void build(struct options* opts)
      *    -oxxx:  xxx is an object (.o)
      *    -rxxx:  xxx is a resource (.res)
      *    -sxxx:  xxx is a shared lib (.so)
+     *    -xlll:  lll is the language (c, c++, etc.)
      */
 
     if (!winebuild) winebuild = "winebuild";
@@ -403,7 +410,7 @@ static void build(struct options* opts)
     }
 
     /* mark the files with their appropriate type */
-    spec_file = 0;
+    spec_file = lang = 0;
     files = strarray_alloc();
     for ( j = 0; j < opts->files->size; j++ )
     {
@@ -440,7 +447,7 @@ static void build(struct options* opts)
 		    error("File does not exist: %s", file);
 		    break;
 	        default:
-		    file = compile_to_object(opts, file);
+		    file = compile_to_object(opts, file, lang);
 		    strarray_add(files, strmake("-o%s", file));
 		    break;
 	    }
@@ -466,6 +473,8 @@ static void build(struct options* opts)
 	    }
 	    free(fullname);
 	}
+	else if (file[1] == 'x')
+	    lang = file;
     }
     if (opts->shared && !spec_file)
 	error("A spec file is currently needed in shared mode");
@@ -535,8 +544,7 @@ static void build(struct options* opts)
     spawn(opts->prefix, spec_args);
 
     /* compile the .spec.c file into a .spec.o file */
-    comp_args = strarray_alloc();
-    spec_o_name = compile_to_object(opts, spec_c_name);
+    spec_o_name = compile_to_object(opts, spec_c_name, 0);
     
     /* link everything together now */
     link_args = strarray_alloc();
@@ -678,6 +686,7 @@ int main(int argc, char **argv)
     int raw_compiler_arg, raw_linker_arg;
     const char* option_arg;
     struct options opts;
+    char* lang = 0;
     char* str;
 
     /* setup tmp file removal at exit */
@@ -839,6 +848,12 @@ int main(int argc, char **argv)
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
                     break;
+		case 'x':
+		    lang = strmake("-x%s", option_arg);
+		    strarray_add(opts.files, lang);
+		    /* we'll pass these flags ourselves, explicitely */
+                    raw_compiler_arg = raw_linker_arg = 0;
+		    break;
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)
                         linking = -1;
@@ -873,7 +888,7 @@ int main(int argc, char **argv)
 
     if (opts.files->size == 0) forward(argc, argv, &opts);
     else if (linking) build(&opts);
-    else compile(&opts);
+    else compile(&opts, lang);
 
     return 0;
 }
