@@ -210,6 +210,9 @@ int DOSVM_Enter( PCONTEXT context )
      it will be killed automatically when the current task terminates */
  } else lpDosTask=pModule->lpDosTask;
 
+ /* allocate standard DOS handles */
+ FILE_InitProcessDosHandles(); 
+
  if (context) {
 #define CP(x,y) VM86.regs.x = y##_reg(context)
   CV;

@@ -976,6 +976,27 @@ HFILE32 WINAPI OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
 
 
 /***********************************************************************
+ *           FILE_InitProcessDosHandles
+ *
+ * Allocates the default DOS handles for a process. Called either by
+ * AllocDosHandle below or by the DOSVM stuff.
+ */
+BOOL32 FILE_InitProcessDosHandles( void ) {
+	HANDLE32 *ptr;
+
+        if (!(ptr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
+                               sizeof(*ptr) * DOS_TABLE_SIZE )))
+            return FALSE;
+        PROCESS_Current()->dos_handles = ptr;
+        ptr[0] = GetStdHandle(STD_INPUT_HANDLE);
+        ptr[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+        ptr[2] = GetStdHandle(STD_ERROR_HANDLE);
+        ptr[3] = GetStdHandle(STD_ERROR_HANDLE);
+        ptr[4] = GetStdHandle(STD_ERROR_HANDLE);
+	return TRUE;
+}
+
+/***********************************************************************
  *           FILE_AllocDosHandle
  *
  * Allocate a DOS handle for a Win32 handle. The Win32 handle is no
@@ -989,17 +1010,10 @@ HFILE16 FILE_AllocDosHandle( HANDLE32 handle )
     if (!handle || (handle == INVALID_HANDLE_VALUE32))
         return INVALID_HANDLE_VALUE16;
 
-    if (!ptr)
-    {
-        if (!(ptr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
-                               sizeof(*ptr) * DOS_TABLE_SIZE )))
-            goto error;
-        PROCESS_Current()->dos_handles = ptr;
-        ptr[0] = GetStdHandle(STD_INPUT_HANDLE);
-        ptr[1] = GetStdHandle(STD_OUTPUT_HANDLE);
-        ptr[2] = GetStdHandle(STD_ERROR_HANDLE);
-        ptr[3] = GetStdHandle(STD_ERROR_HANDLE);
-        ptr[4] = GetStdHandle(STD_ERROR_HANDLE);
+    if (!ptr) {
+    	if (!FILE_InitProcessDosHandles())
+	    goto error;
+	ptr = PROCESS_Current()->dos_handles;
     }
 
     for (i = 0; i < DOS_TABLE_SIZE; i++, ptr++)

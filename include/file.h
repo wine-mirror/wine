@@ -47,6 +47,7 @@ extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
                            int prot, int flags );
 extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
 extern HFILE16 FILE_AllocDosHandle( HANDLE32 handle );
+extern BOOL32 FILE_InitProcessDosHandles( void );
 extern HANDLE32 FILE_GetHandle32( HFILE16 hfile );
 extern HFILE16 _lcreat16_uniq( LPCSTR path, INT32 attr );
 
