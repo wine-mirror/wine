@@ -15,6 +15,7 @@
 
 DEFAULT_DEBUG_CHANNEL(static)
 
+static void STATIC_PaintOwnerDrawfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc );
@@ -41,7 +42,7 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     NULL,                    /* Not defined */
     STATIC_PaintTextfn,      /* SS_SIMPLE */
     STATIC_PaintTextfn,      /* SS_LEFTNOWORDWRAP */
-    NULL,                    /* SS_OWNERDRAW */
+    STATIC_PaintOwnerDrawfn, /* SS_OWNERDRAW */
     STATIC_PaintBitmapfn,    /* SS_BITMAP */
     NULL,                    /* SS_ENHMETAFILE */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDHORIZ */
@@ -334,6 +335,25 @@ END:
     return lResult;
 }
 
+static void STATIC_PaintOwnerDrawfn( WND *wndPtr, HDC hdc )
+{
+  DRAWITEMSTRUCT dis;
+
+  dis.CtlType    = ODT_STATIC;
+  dis.CtlID      = wndPtr->wIDmenu;
+  dis.itemID     = 0;
+  dis.itemAction = ODA_DRAWENTIRE;
+  dis.itemState  = 0;
+  dis.hwndItem   = wndPtr->hwndSelf;
+  dis.hDC        = hdc;
+  dis.itemData   = 0;
+  GetClientRect( wndPtr->hwndSelf, &dis.rcItem );
+
+  SendMessageA( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC, 
+		hdc, wndPtr->hwndSelf );    
+  SendMessageA( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
+		wndPtr->wIDmenu, (LPARAM)&dis );
+}
 
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 {
