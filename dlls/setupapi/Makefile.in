@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = setupapi
 SOVERSION = 1.0
 ALTNAMES  = setupx
-IMPORTS   = ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

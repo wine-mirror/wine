@@ -19,7 +19,7 @@ HINF16 IP_curr_handle = 0;
 
 RETERR16 IP_OpenInf(LPCSTR lpInfFileName, HINF16 *lphInf)
 {
-    HFILE16 hFile = _lopen16(lpInfFileName, OF_READ);
+    HFILE hFile = _lopen(lpInfFileName, OF_READ);
 
     if (!lphInf)
 	return IP_ERROR;
@@ -28,7 +28,7 @@ RETERR16 IP_OpenInf(LPCSTR lpInfFileName, HINF16 *lphInf)
     if (IP_curr_handle == 0xffff) 
 	return ERR_IP_OUT_OF_HANDLES; 
 
-    if (hFile != HFILE_ERROR16)
+    if (hFile != HFILE_ERROR)
     {
 	InfList = HeapReAlloc(GetProcessHeap(), 0, InfList, InfNumEntries+1);
 	InfList[InfNumEntries].hInf = IP_curr_handle++;
@@ -73,11 +73,11 @@ RETERR16 IP_CloseInf(HINF16 hInf)
 {
     int i;
     WORD n;
-    HFILE16 res = ERR_IP_INVALID_HINF;
+    RETERR16 res = ERR_IP_INVALID_HINF;
 
     if (IP_FindInf(hInf, &n))
     {
-	_lclose16(InfList[n].hInfFile);
+	_lclose(InfList[n].hInfFile);
 	HeapFree(GetProcessHeap(), 0, InfList[n].lpInfFileName);
 	for (i=n; i < InfNumEntries-1; i++)
 	    InfList[i] = InfList[i+1];

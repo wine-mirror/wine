@@ -65,7 +65,7 @@ enum _IP_ERR {
 
 typedef struct {
     HINF16 hInf;
-    HFILE16 hInfFile;
+    HFILE hInfFile;
     LPSTR lpInfFileName;
 } INF_FILE;
 
