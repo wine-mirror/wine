@@ -341,7 +341,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     count = write (WOutDev[wDevID].unixdev, lpData, lpWaveHdr->dwBufferLength);
     TRACE(wave,"write returned count %u !\n",count);
     if (count != lpWaveHdr->dwBufferLength) {
-	WARN(wave, " error writting !\n");
+	WARN(wave, " error writing !\n");
 	return MMSYSERR_NOTENABLED;
     }
     WOutDev[wDevID].dwTotalPlayed += count;

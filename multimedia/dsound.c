@@ -2099,12 +2099,12 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
 	audiofd = open("/dev/audio",O_WRONLY);
 	if (audiofd == -1) {
 		if (errno == ENODEV) {
-			TRACE(dsound, "No sound hardware\n");
+			MSG("No sound hardware found.\n");
 			return DSERR_NODRIVER;
 		} else if (errno == EBUSY) {
-			TRACE(dsound, "Sound device busy, will keep trying\n");
+			MSG("Sound device busy, will keep trying.\n");
 		} else {
-			TRACE(dsound, "Unexpected error while checking for sound support\n");
+			MSG("Unexpected error while checking for sound support.\n");
 			return DSERR_GENERIC;
 		}
 	} else {
