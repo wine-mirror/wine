@@ -260,8 +260,8 @@ static HRESULT test_dsound8(LPGUID lpGuid)
 
     /* Create the DirectSound8 object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -371,8 +371,8 @@ static HRESULT test_primary8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -513,8 +513,8 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -650,8 +650,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -748,6 +748,8 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc = test_dsound8(lpGuid);
     if (rc == DSERR_NODRIVER)
         trace("  No Driver\n");
+    else if (rc == DSERR_ALLOCATED)
+        trace("  Already In Use\n");
     else {
         test_primary8(lpGuid);
         test_primary_secondary8(lpGuid);

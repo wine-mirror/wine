@@ -789,8 +789,8 @@ static HRESULT test_for_driver8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -1070,6 +1070,9 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc = test_for_driver8(lpGuid);
     if (rc == DSERR_NODRIVER) {
         trace("  No Driver\n");
+        return 1;
+    } else if (rc == DSERR_ALLOCATED) {
+        trace("  Already In Use\n");
         return 1;
     }
 

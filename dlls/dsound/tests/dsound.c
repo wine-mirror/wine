@@ -249,8 +249,8 @@ static HRESULT test_dsound(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -349,8 +349,8 @@ static HRESULT test_primary(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -491,8 +491,8 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -628,8 +628,8 @@ static HRESULT test_secondary(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -725,7 +725,9 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
     rc = test_dsound(lpGuid);
     if (rc == DSERR_NODRIVER)
-        trace(" No Driver\n");
+        trace("  No Driver\n");
+    else if (rc == DSERR_ALLOCATED)
+        trace("  Already In Use\n");
     else {
         test_primary(lpGuid);
         test_primary_secondary(lpGuid);

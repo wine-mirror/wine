@@ -268,11 +268,13 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
 
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
-       DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK) {
         if (rc==DSERR_NODRIVER)
             trace("  No Driver\n");
+        else if (rc == DSERR_ALLOCATED)
+            trace("  Already In Use\n");
         goto EXIT;
     }
 
