@@ -240,7 +240,7 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr )
             ERR("Module (file) %s (which is needed by %s) not found\n",
                 name, current_modref->filename);
         else
-            ERR("Loading module (file) %s (which is needed by %s) failed (error %ld).\n",
+            ERR("Loading module (file) %s (which is needed by %s) failed (error %lx).\n",
                 name, current_modref->filename, status);
         return NULL;
     }
@@ -1126,7 +1126,7 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
 
         if (nts != STATUS_NO_SUCH_FILE)
         {
-            WARN("Loading of %s DLL %s failed (status %ld).\n",
+            WARN("Loading of %s DLL %s failed (status %lx).\n",
                  filetype, filename, nts);
             break;
         }
@@ -1139,7 +1139,7 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
         libdir = NULL;
     }
     RtlLeaveCriticalSection( &loader_section );
-    WARN("Failed to load module '%s'; status=%ld\n", filename, nts);
+    WARN("Failed to load module '%s'; status=%lx\n", filename, nts);
     RtlFreeHeap( ntdll_get_process_heap(), 0, filename );
     return nts;
 }
