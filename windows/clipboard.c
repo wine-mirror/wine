@@ -495,11 +495,17 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
     LPWINE_CLIPFORMAT lpTarget = NULL;
     BOOL foundData = FALSE;
  
-    /* Asked for CF_TEXT but not available - always attempt to convert
-       from CF_UNICODETEXT or CF_OEMTEXT */
-    if( wFormat == CF_TEXT && !ClipFormats[CF_TEXT-1].wDataPresent )
+    /* Asked for CF_TEXT */
+    if( wFormat == CF_TEXT)
     {
-	if(ClipFormats[CF_UNICODETEXT-1].wDataPresent)
+        if(ClipFormats[CF_TEXT-1].wDataPresent)
+        {
+            lpSource = &ClipFormats[CF_TEXT-1];
+            lpTarget = &ClipFormats[CF_TEXT-1];
+            foundData = TRUE;
+            TRACE("\t TEXT -> TEXT\n");
+        }
+	else if(ClipFormats[CF_UNICODETEXT-1].wDataPresent)
 	{
 	    /* Convert UNICODETEXT -> TEXT */
 	    lpSource = &ClipFormats[CF_UNICODETEXT-1];
@@ -516,11 +522,17 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    TRACE("\tOEMTEXT -> TEXT\n");
 	}
     }
-    /* Asked for CF_OEMTEXT but not available - always attempt to convert
-       from CF_UNICODETEXT or CF_TEXT */
-    else if( wFormat == CF_OEMTEXT && !ClipFormats[CF_OEMTEXT-1].wDataPresent )
+    /* Asked for CF_OEMTEXT  */
+    else if( wFormat == CF_OEMTEXT)
     {
-	if(ClipFormats[CF_UNICODETEXT-1].wDataPresent)
+        if(ClipFormats[CF_OEMTEXT-1].wDataPresent)
+        {
+   	    lpSource = &ClipFormats[CF_OEMTEXT-1];
+	    lpTarget = &ClipFormats[CF_OEMTEXT-1];
+	    foundData = TRUE;
+	    TRACE("\tOEMTEXT -> OEMTEXT\n");
+        }
+	else if(ClipFormats[CF_UNICODETEXT-1].wDataPresent)
 	{
 	    /* Convert UNICODETEXT -> OEMTEXT */
 	    lpSource = &ClipFormats[CF_UNICODETEXT-1];
@@ -537,11 +549,17 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	    TRACE("\tTEXT -> OEMTEXT\n");
 	}
     }
-    /* Asked for CF_UNICODETEXT but not available - always attempt to convert
-       from CF_TEXT or CF_OEMTEXT */
-    else if( wFormat == CF_UNICODETEXT && !ClipFormats[CF_UNICODETEXT-1].wDataPresent )
+    /* Asked for CF_UNICODETEXT */
+    else if( wFormat == CF_UNICODETEXT )
     {
-	if(ClipFormats[CF_TEXT-1].wDataPresent)
+	if(ClipFormats[CF_UNICODETEXT-1].wDataPresent)
+	{
+	    lpSource = &ClipFormats[CF_UNICODETEXT-1];
+	    lpTarget = &ClipFormats[CF_UNICODETEXT-1];
+            foundData = TRUE;
+	    TRACE("\tUNICODETEXT -> UNICODETEXT\n");
+	}
+        else if(ClipFormats[CF_TEXT-1].wDataPresent)
 	{
 	    /* Convert TEXT -> UNICODETEXT */
 	    lpSource = &ClipFormats[CF_TEXT-1];
