@@ -165,6 +165,16 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *f
 #endif
 }
 
+
+/* Wine-specific exceptions codes */
+
+/* unhandled return status from vm86 mode */
+#define EXCEPTION_VM86_SIGNAL     0x80000100
+#define EXCEPTION_VM86_INTx       0x80000101
+#define EXCEPTION_VM86_STI        0x80000102
+#define EXCEPTION_VM86_PICRETURN  0x80000103
+
+
 #ifdef __WINE__
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 extern BOOL SIGNAL_Init(void);
