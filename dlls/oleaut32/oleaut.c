@@ -667,7 +667,7 @@ HRESULT WINAPI OleTranslateColor(
       /*
        * Validate GetSysColor index.
        */
-      if ((index < COLOR_SCROLLBAR) || (index > COLOR_GRADIENTINACTIVECAPTION))
+      if ((index < COLOR_SCROLLBAR) || (index > COLOR_MENUBAR))
         return E_INVALIDARG;
 
       *pColorRef =  GetSysColor(index);
