@@ -93,7 +93,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr);
 BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR lpsztmp );
 void HTTP_CloseConnection(LPWININETHTTPREQW lpwhr);
-BOOL HTTP_InterpretHttpHeader(LPWSTR buffer, LPWSTR field, INT fieldlen, LPWSTR value, INT valuelen);
+LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
 INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField);
 BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
 INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
@@ -168,7 +168,6 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
     LPWSTR lpszStart;
     LPWSTR lpszEnd;
     LPWSTR buffer;
-    WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
     BOOL bSuccess = FALSE;
     DWORD len;
 
@@ -186,6 +185,8 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
 
     do
     {
+        LPWSTR * pFieldAndValue;
+
         lpszEnd = lpszStart;
 
         while (*lpszEnd != '\0')
@@ -204,11 +205,15 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
             lpszEnd += 2; /* Jump over \r\n */
         }
         TRACE("interpreting header %s\n", debugstr_w(lpszStart));
-        if (HTTP_InterpretHttpHeader(lpszStart, field, MAX_FIELD_LEN, value, MAX_FIELD_VALUE_LEN))
-            bSuccess = HTTP_ProcessHeader(lpwhr, field, value, dwModifier | HTTP_ADDHDR_FLAG_REQ);
+        pFieldAndValue = HTTP_InterpretHttpHeader(lpszStart);
+        if (pFieldAndValue)
+        {
+            bSuccess = HTTP_ProcessHeader(lpwhr, pFieldAndValue[0],
+                pFieldAndValue[1], dwModifier | HTTP_ADDHDR_FLAG_REQ);
+            HTTP_FreeTokens(pFieldAndValue);
+        }
 
         lpszStart = lpszEnd;
-
     } while (bSuccess);
 
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -1981,7 +1986,6 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     DWORD buflen = MAX_REPLY_LEN;
     BOOL bSuccess = FALSE;
     INT  rc = 0;
-    WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
     static const WCHAR szCrLf[] = {'\r','\n',0};
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code, status_text;
@@ -2046,7 +2050,9 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     {
 	buflen = MAX_REPLY_LEN;
         if (NETCON_getNextLine(&lpwhr->netConnection, bufferA, &buflen))
-	{
+        {
+            LPWSTR * pFieldAndValue;
+
             TRACE("got line %s, now interpretting\n", debugstr_a(bufferA));
             MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
 
@@ -2061,10 +2067,14 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
             cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
             lpszRawHeaders[cchRawHeaders] = '\0';
 
-            if (!HTTP_InterpretHttpHeader(buffer, field, MAX_FIELD_LEN, value, MAX_FIELD_VALUE_LEN))
+            pFieldAndValue = HTTP_InterpretHttpHeader(buffer);
+            if (!pFieldAndValue)
                 break;
 
-            HTTP_ProcessHeader(lpwhr, field, value, (HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE));
+            HTTP_ProcessHeader(lpwhr, pFieldAndValue[0], pFieldAndValue[1], 
+                HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+
+            HTTP_FreeTokens(pFieldAndValue);
 	}
 	else
 	{
@@ -2089,6 +2099,26 @@ lend:
 }
 
 
+static void strip_spaces(LPWSTR start)
+{
+    LPWSTR str = start;
+    LPWSTR end;
+
+    while (*str == ' ' && *str != '\0')
+        str++;
+
+    if (str != start)
+        memmove(start, str, sizeof(WCHAR) * (strlenW(str) + 1));
+
+    end = start + strlenW(start) - 1;
+    while (end >= start && *end == ' ')
+    {
+        *end = '\0';
+        end--;
+    }
+}
+
+
 /***********************************************************************
  *           HTTP_InterpretHttpHeader (internal)
  *
@@ -2096,59 +2126,50 @@ lend:
  *
  * RETURNS
  *
- *   TRUE  on success
- *   FALSE on error
+ *   Pointer to array of field, value, NULL on success.
+ *   NULL on error.
  */
-static INT stripSpaces(LPCWSTR lpszSrc, LPWSTR lpszStart, INT *len)
+LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
 {
-    LPCWSTR lpsztmp;
-    INT srclen;
+    LPWSTR * pTokenPair;
+    LPWSTR pszColon;
+    INT len;
 
-    srclen = 0;
+    pTokenPair = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pTokenPair)*3);
 
-    while (*lpszSrc == ' ' && *lpszSrc != '\0')
-	lpszSrc++;
-
-    lpsztmp = lpszSrc;
-    while(*lpsztmp != '\0')
+    pszColon = strchrW(buffer, ':');
+    /* must have two tokens */
+    if (!pszColon)
     {
-        if (*lpsztmp != ' ')
-	    srclen = lpsztmp - lpszSrc + 1;
-
-	lpsztmp++;
+        HTTP_FreeTokens(pTokenPair);
+        return NULL;
     }
 
-    *len = min(*len, srclen);
-    strncpyW(lpszStart, lpszSrc, *len);
-    lpszStart[*len] = '\0';
-
-    return *len;
-}
-
-
-BOOL HTTP_InterpretHttpHeader(LPWSTR buffer, LPWSTR field, INT fieldlen, LPWSTR value, INT valuelen)
-{
-    WCHAR *pd;
-    BOOL bSuccess = FALSE;
-
-    TRACE("\n");
-
-    *field = '\0';
-    *value = '\0';
-
-    pd = strchrW(buffer, ':');
-    if (pd)
+    pTokenPair[0] = HeapAlloc(GetProcessHeap(), 0, (pszColon - buffer + 1) * sizeof(WCHAR));
+    if (!pTokenPair[0])
     {
-	*pd = '\0';
-	if (stripSpaces(buffer, field, &fieldlen) > 0)
-	{
-	    if (stripSpaces(pd+1, value, &valuelen) > 0)
-		bSuccess = TRUE;
-	}
+        HTTP_FreeTokens(pTokenPair);
+        return NULL;
     }
+    memcpy(pTokenPair[0], buffer, (pszColon - buffer) * sizeof(WCHAR));
+    pTokenPair[0][pszColon - buffer] = '\0';
 
-    TRACE("%d: field(%s) Value(%s)\n", bSuccess, debugstr_w(field), debugstr_w(value));
-    return bSuccess;
+    /* skip colon */
+    pszColon++;
+    len = strlenW(pszColon);
+    pTokenPair[1] = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    if (!pTokenPair[1])
+    {
+        HTTP_FreeTokens(pTokenPair);
+        return NULL;
+    }
+    memcpy(pTokenPair[1], pszColon, (len + 1) * sizeof(WCHAR));
+
+    strip_spaces(pTokenPair[0]);
+    strip_spaces(pTokenPair[1]);
+
+    TRACE("field(%s) Value(%s)\n", debugstr_w(pTokenPair[0]), debugstr_w(pTokenPair[1]));
+    return pTokenPair;
 }
 
 
@@ -2530,7 +2551,7 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField)
     if (index >= lpwhr->nCustHeaders)
 	index = -1;
 
-    TRACE("Return: %lu\n", index);
+    TRACE("Return: %ld\n", index);
     return index;
 }
 
