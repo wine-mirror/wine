@@ -4414,26 +4414,6 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, DWORD style, HWND hwndParent, BOOL un
 
         es->bEnableState = !(style & WS_DISABLED);
 
-	/*
-	 * In Win95 look and feel, the WS_BORDER style is replaced by the 
-	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit 
-	 * control a non client area.  Not always.  This coordinates in some
-         * way with the window creation code in dialog.c  When making 
-         * modifications please ensure that the code still works for edit
-         * controls created directly with style 0x50800000, exStyle 0 (
-         * which should have a single pixel border)
-	 */
-	if (TWEAK_WineLook != WIN31_LOOK)
-	{
-	  es->style      &= ~WS_BORDER;
-	}
-	else
-	{
-	  if ((es->style & WS_BORDER) && !(es->style & WS_DLGFRAME))
-              SetWindowLongA( hwnd, GWL_STYLE,
-                              GetWindowLongA( hwnd, GWL_STYLE ) & ~WS_BORDER );
-	}
-
 	/* Save parent, which will be notified by EN_* messages */
 	es->hwndParent = hwndParent;
 
@@ -4500,6 +4480,26 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, DWORD style, HWND hwndParent, BOOL un
 		if (!(es->first_line_def = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LINEDEF))))
 			return FALSE;
 	es->line_count = 1;
+
+	/*
+	 * In Win95 look and feel, the WS_BORDER style is replaced by the 
+	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit 
+	 * control a non client area.  Not always.  This coordinates in some
+         * way with the window creation code in dialog.c  When making 
+         * modifications please ensure that the code still works for edit
+         * controls created directly with style 0x50800000, exStyle 0 (
+         * which should have a single pixel border)
+	 */
+	if (TWEAK_WineLook != WIN31_LOOK)
+	{
+	  es->style      &= ~WS_BORDER;
+	}
+	else
+	{
+	  if ((es->style & WS_BORDER) && !(es->style & WS_DLGFRAME))
+              SetWindowLongA( hwnd, GWL_STYLE,
+                              GetWindowLongA( hwnd, GWL_STYLE ) & ~WS_BORDER );
+	}
 
 	return TRUE;
 }
