@@ -2580,7 +2580,7 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 {
     DC *dc;
 
-    FIXME("(0x%lx 0x%lx 0x%lx): empty stub!\n",
+    FIXME("(%08x %08x %lx): empty stub!\n",
 	   hDC, hRgn, dwCode);
 
     switch (dwCode)
