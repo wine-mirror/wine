@@ -142,7 +142,9 @@ START_TEST(shlfolder)
 	return;
 
     CreateFilesFolders();
-    SHGetDesktopFolder(&IDesktopFolder);
+    
+    if(!SUCCEEDED(SHGetDesktopFolder(&IDesktopFolder)))
+        return;
 
     if (SUCCEEDED(IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0)))
     {
