@@ -19,6 +19,7 @@
  *
  */
 #include <windows.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include "winetest.h"
@@ -39,26 +40,14 @@ void *xrealloc (void *op, size_t len)
     return p;
 }
 
-void xprintf (const char *fmt, ...)
+char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
 {
-    va_list ap;
-
-    va_start (ap, fmt);
-    if (vprintf (fmt, ap) < 0)
-        report (R_FATAL, "Can't write logs: %d", errno);
-    va_end (ap);
-}
-
-char *vstrmake (size_t *lenp, va_list ap)
-{
-    char *fmt;
     size_t size = 1000;
     char *p, *q;
     int n;
 
     p = malloc (size);
     if (!p) return NULL;
-    fmt = va_arg (ap, char*);
     while (1) {
         n = vsnprintf (p, size, fmt, ap);
         if (n < 0) size *= 2;   /* Windows */
@@ -75,6 +64,14 @@ char *vstrmake (size_t *lenp, va_list ap)
     return p;
 }
 
+char *vstrmake (size_t *lenp, va_list ap)
+{
+    const char *fmt;
+
+    fmt = va_arg (ap, const char*);
+    return vstrfmtmake (lenp, fmt, ap);
+}
+
 char *strmake (size_t *lenp, ...)
 {
     va_list ap;
@@ -85,6 +82,26 @@ char *strmake (size_t *lenp, ...)
     if (!p) report (R_FATAL, "Out of memory.");
     va_end (ap);
     return p;
+}
+
+void xprintf (const char *fmt, ...)
+{
+    va_list ap;
+    size_t size;
+    ssize_t written;
+    char *buffer, *head;
+
+    va_start (ap, fmt);
+    buffer = vstrfmtmake (&size, fmt, ap);
+    head = buffer;
+    va_end (ap);
+    while ((written = write (1, head, size)) != size) {
+        if (written == -1)
+            report (R_FATAL, "Can't write logs: %d", errno);
+        head += written;
+        size -= written;
+    }
+    free (buffer);
 }
 
 char *

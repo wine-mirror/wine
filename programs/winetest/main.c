@@ -335,8 +335,6 @@ run_tests (char *logname, const char *tag)
     SetErrorMode (SEM_FAILCRITICALERRORS);
 
     if (!(wineloader = getenv("WINELOADER"))) wineloader = "wine";
-    if (setvbuf (stdout, NULL, _IONBF, 0))
-        report (R_FATAL, "Can't unbuffer output.");
 
     tempdir = tempnam (0, "wct");
     if (!tempdir)
