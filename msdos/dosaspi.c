@@ -22,12 +22,12 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 	LPSRB16 lpSRB16;
 
 
-	memcpy(&ptrSRB,(LPBYTE)(lpPRB+1)+lpPRB->SRB_SenseLen,sizeof(DWORD));
+	memcpy(&ptrSRB,lpPRB->SenseArea + lpPRB->SRB_SenseLen,sizeof(DWORD));
 	TRACE("Copying data back to DOS client at 0x%8lx\n",ptrSRB);
 	lpSRB16 = DOSMEM_MapRealToLinear(ptrSRB);
 	lpSRB16->cmd.SRB_TargStat = lpPRB->SRB_TargStat;
 	lpSRB16->cmd.SRB_HaStat = lpPRB->SRB_HaStat;
-	memcpy((LPBYTE)(lpSRB16+1)+lpSRB16->cmd.SRB_CDBLen,&lpPRB->SenseArea[0],lpSRB16->cmd.SRB_SenseLen);
+	memcpy(lpSRB16->cmd.CDBByte + lpSRB16->cmd.SRB_CDBLen,lpPRB->SenseArea,lpSRB16->cmd.SRB_SenseLen);
 
 	/* Now do posting */
 	if( lpPRB->SRB_Status == SS_SECURITY_VIOLATION )
@@ -135,7 +135,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 		lpPRB->SRB_PostProc = &DOSASPI_PostProc;
 
 		/* Stick the DWORD after all the sense info */
-		memcpy((LPBYTE)(lpPRB+1)+lpPRB->SRB_SenseLen,&ptrSRB,sizeof(DWORD));
+		memcpy(lpPRB->SenseArea + lpPRB->SRB_SenseLen,&ptrSRB,sizeof(DWORD));
 		retval = (*pSendASPI32Command)((LPSRB)lpPRB);
 		break;
 	case SC_ABORT_SRB:

@@ -3238,7 +3238,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice, 
 			   MM_MOM_POSITIONCB, lpwm->mod.dwInstance, (LPARAM)lpMidiHdr, 0L);
 	}
-	lpMidiHdr->dwOffset += sizeof(MIDIEVENT);
+	lpMidiHdr->dwOffset += sizeof(MIDIEVENT) - sizeof(me->dwParms);
 	if (me->dwEvent & MEVT_F_LONG) 
 	    lpMidiHdr->dwOffset += (MEVT_EVENTPARM(me->dwEvent) + 3) & ~3;
 	if (lpMidiHdr->dwOffset >= lpMidiHdr->dwBufferLength) {

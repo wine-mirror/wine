@@ -186,7 +186,7 @@ static void
 ASPI_PrintSenseArea(SRB_ExecSCSICmd *prb)
 {
   int	i;
-  BYTE	*rqbuf = &prb->CDBByte[16];
+  BYTE	*rqbuf = prb->SenseArea;
 
   if (TRACE_ON(aspi))
   {
@@ -387,7 +387,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
       sense_len = 16;
 
     /* CDB is fixed in WNASPI32 */
-    memcpy(&lpPRB->CDBByte[16], &sg_reply_hdr->sense_buffer[0], sense_len);
+    memcpy(lpPRB->SenseArea, &sg_reply_hdr->sense_buffer[0], sense_len);
 
     TRACE("CDB is %d bytes long\n", lpPRB->SRB_CDBLen );
     ASPI_PrintSenseArea(lpPRB);

@@ -562,7 +562,7 @@ typedef struct {
 			 * event and the current event. */
     DWORD dwStreamID;	/* Reserved; must be zero. */ 
     DWORD dwEvent;  	/* event => see MEVT_XXX macros */
-    DWORD dwParms[0];	/* extra pmts to dwEvent if F_LONG is set */
+    DWORD dwParms[1];	/* extra pmts to dwEvent if F_LONG is set */
 } MIDIEVENT, *LPMIDIEVENT;
           
 #define MEVT_EVENTTYPE(x) ((BYTE) (((x)>>24)&0xFF))

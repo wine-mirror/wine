@@ -136,7 +136,7 @@ typedef struct tagSRB32_ExecSCSICmd {
   void        *SRB_Rsvd2;         /* Reserved */
   BYTE        SRB_Rsvd3[16];      /* Reserved for expansion */
   BYTE        CDBByte[16];        /* SCSI CDB */
-  BYTE        SenseArea[0];       /* Request sense buffer - var length */
+  BYTE        SenseArea[SENSE_LEN+2];  /* Request sense buffer - var length */
 } SRB_ExecSCSICmd, *PSRB_ExecSCSICmd;
 
 /* SRB - ABORT AN ARB - SC_ABORT_SRB */

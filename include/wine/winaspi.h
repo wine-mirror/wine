@@ -66,7 +66,7 @@ typedef struct tagSRB16_ExecSCSICmd {
   BYTE        SRB_TargStat;           /* Target Status		      (R)  */
   FARPROC16   SRB_PostProc;	      /* Post routine		      (W)  */
   BYTE        SRB_Rsvd2[34];          /* Reserved, MUST = 0                */
-  BYTE		CDBByte[0];	      /* SCSI CBD - variable length   (W)  */
+  BYTE		CDBByte[1];	      /* SCSI CBD - variable length   (W)  */
   /* variable example for 6 byte cbd
    * BYTE        CDBByte[6];             * SCSI CDB                    (W) *
    * BYTE        SenseArea6[SENSE_LEN];  * Request Sense buffer 	(R) *
