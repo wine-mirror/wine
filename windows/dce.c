@@ -713,12 +713,11 @@ BOOL16 WINAPI LockWindowUpdate16( HWND16 hwnd )
     return LockWindowUpdate( hwnd );
 }
 
-
 /***********************************************************************
  *		LockWindowUpdate (USER32.@)
  */
 BOOL WINAPI LockWindowUpdate( HWND hwnd )
 {
-    FIXME("DCX_LOCKWINDOWUPDATE is unimplemented\n");
+    FIXME("(%x), stub!\n",hwnd);
     return TRUE;
 }
