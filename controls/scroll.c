@@ -1408,6 +1408,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 	}
 	return 0;
 
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         {
 	    POINT pt;
