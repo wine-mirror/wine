@@ -245,8 +245,57 @@ UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 
 UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
 {
-    FIXME("%s %p\n",debugstr_w(szProduct), phProduct);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    const WCHAR szKey[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'U','n','i','n','s','t','a','l','l',0 };
+    const WCHAR szLocalPackage[] = {
+        'L','o','c','a','l','P','a','c','k','a','g','e', 0
+    };
+    LPWSTR path = NULL;
+    UINT r;
+    HKEY hKeyProduct = NULL, hKeyUninstall = NULL;
+    DWORD count, type;
+
+    TRACE("%s %p\n",debugstr_w(szProduct), phProduct);
+
+    r = RegOpenKeyW( HKEY_LOCAL_MACHINE, szKey, &hKeyUninstall );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = RegOpenKeyW( hKeyUninstall, szProduct, &hKeyProduct );
+    if( r != ERROR_SUCCESS )
+        goto end;
+
+    /* find the size of the path */
+    type = count = 0;
+    r = RegQueryValueExW( hKeyProduct, szLocalPackage,
+                          NULL, &type, NULL, &count );
+    if( r != ERROR_SUCCESS )
+        goto end;
+
+    /* now alloc and fetch the path of the database to open */
+    path = HeapAlloc( GetProcessHeap(), 0, count );
+    if( !path )
+        goto end;
+
+    r = RegQueryValueExW( hKeyProduct, szLocalPackage,
+                          NULL, &type, (LPBYTE) path, &count );
+    if( r != ERROR_SUCCESS )
+        goto end;
+
+    r = MsiOpenPackageW( path, phProduct );
+
+end:
+    if( path )
+        HeapFree( GetProcessHeap(), 0, path );
+    if( hKeyProduct )
+        RegCloseKey( hKeyProduct );
+    RegCloseKey( hKeyUninstall );
+
+    return r;
 }
 
 UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
