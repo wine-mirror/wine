@@ -1534,13 +1534,21 @@ void SHELL_LoadRegistry( void )
       *  map HLM\System\ControlSet001 to HLM\System\CurrentControlSet
       */
 
-      strcpy(path, windir);
-      strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
+      if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM", &hkey))
+      {
+	strcpy(path, windir);
+	strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
+	NativeRegLoadKey(hkey, path, 1);
+        RegCloseKey(hkey);
+      }
 
-      strcpy(path, windir);
-      strncat(path, "\\system32\\config\\software", MAX_PATHNAME_LEN - strlen(path) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
+      if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE", &hkey))
+      {
+	strcpy(path, windir);
+	strncat(path, "\\system32\\config\\software", MAX_PATHNAME_LEN - strlen(path) - 1);
+	NativeRegLoadKey(hkey, path, 1);
+        RegCloseKey(hkey);
+      }
 
       strcpy(path, windir);
       strncat(path, "\\system32\\config\\sam", MAX_PATHNAME_LEN - strlen(path) - 1);
