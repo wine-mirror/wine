@@ -5,6 +5,9 @@
 #ifndef __WINE_WINE_OBJ_OLEAUT_H
 #define __WINE_WINE_OBJ_OLEAUT_H
 
+
+DEFINE_OLEGUID(IID_StdOle, 0x00020430,0,0);
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -295,6 +298,32 @@ typedef struct tagTYPEATTR
 	TYPEDESC tdescAlias;
 	IDLDESC idldescType;
 } TYPEATTR, *LPTYPEATTR;
+
+#define TYPEFLAG_NONE                     (0x00)
+#define TYPEFLAG_FAPPOBJECT               (0x01)
+#define TYPEFLAG_FCANCREATE               (0x02)
+#define TYPEFLAG_FLICENSED                (0x04)
+#define TYPEFLAG_FPREDECLID               (0x08) 
+#define TYPEFLAG_FHIDDEN                  (0x0f) 
+#define TYPEFLAG_FCONTROL                 (0x20)  
+#define TYPEFLAG_FDUAL                    (0x40)  
+#define TYPEFLAG_FNONEXTENSIBLE           (0x80)           
+#define TYPEFLAG_FOLEAUTOMATION           (0x100)  
+#define TYPEFLAG_FRESTRICTED              (0x200)  
+#define TYPEFLAG_FAGGREGATABLE            (0x400)  
+#define TYPEFLAG_FREPLACEABLE             (0x800)  
+#define TYPEFLAG_FDISPATCHABLE            (0x1000)  
+#define TYPEFLAG_FREVERSEBIND             (0x2000) 
+#define TYPEFLAG_FPROXY                   (0x4000)
+#define TYPEFLAG_DEFAULTFILTER            (0x8000) 
+#define TYPEFLAG_COCLASSATTRIBUTES        (0x63f)
+#define TYPEFLAG_INTERFACEATTRIBUTES      (0x7bd0)
+#define TYPEFLAG_DISPATCHATTRIBUTES       (0x5a90)
+#define TYPEFLAG_ALIASATTRIBUTES          (0x210)
+#define TYPEFLAG_MODULEATTRIBUTES         (0x210) 
+#define TYPEFLAG_ENUMATTRIBUTES           (0x210) 
+#define TYPEFLAG_RECORDATTRIBUTES         (0x210) 
+#define TYPEFLAG_UNIONATTRIBUTES          (0x210) 
 
 typedef struct tagARRAYDESC
 {

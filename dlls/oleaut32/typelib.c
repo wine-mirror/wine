@@ -3,20 +3,37 @@
  *
  *	Copyright 1997	Marcus Meissner
  *		      1999  Rein Klazes
- * there is much left to do here before it can be useful for real world
- * programs
- * known problems:
+ *		      2000  Francois Jacques
+ * --------------------------------------------------------------------------------------
+ * Known problems (2000, Francois Jacques)
+ *
+ * - Tested using OLEVIEW (Platform SDK tool) only.
+ *   
+ * - dual interface dispinterfaces. vtable-interface ITypeInfo instances are 
+ *   creating by doing a straight copy of the dispinterface instance and just changing 
+ *   its typekind. Pointed structures aren't copied - only the address of the pointers.
+ *   So when you release the dispinterface, you delete the vtable-interface structures
+ *   as well... fortunately, clean up of structures is not implemented.
+ * 
+ * - locale stuff is partially implemented but hasn't been tested.
+ *
+ * - imported typelib should be stored together in a linked list instead of having
+ *   independant TLBImpLib strucutures in each ITypeInfo. This way, imported libraries
+ *   are just imported once (major optimization)
+ *
+ * - typelib file is still read it's in entirety, but it is released now.
+ * - some garbage is read from function names on some very rare occasion
+ *
+ * --------------------------------------------------------------------------------------
+ *  Known problems left from previous implementation (1999, Rein Klazes) :
+ *
  * -. Only one format of typelibs is supported
- * -. All testing so far is done using special written windows programs
  * -. Data structures are straightforward, but slow for look-ups.
  * -. (related) nothing is hashed
- * -. a typelib is always read in its entirety into memory and never released.
  * -. there are a number of stubs in ITypeLib and ITypeInfo interfaces. Most
  *      of them I don't know yet how to implement them.
  * -. Most error return values are just guessed not checked with windows
  *      behaviour.
- * -. all locale stuff ignored
- * -. move stuff to wine/dlls
  * -. didn't bother with a c++ interface
  * -. lousy fatal error handling
  * -. some methods just return pointers to internal data structures, this is
@@ -371,6 +388,12 @@ typedef struct tagTLBImpLib
     int offset;                 /* offset in the file */
     GUID guid;                  /* libid */
     BSTR name;                  /* name; */
+
+	LCID lcid;					/* lcid of imported typelib */
+
+	WORD wVersionMajor;         /* major version number */
+    WORD wVersionMinor;         /* minor version number */
+
     struct tagITypeLibImpl *pImpTypeLib; /* pointer to loaded typelib */
     struct tagTLBImpLib * next;
 } TLBImpLib;
@@ -405,12 +428,26 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib, DWORD dwTLBLength);
 
 /*======================= ITypeInfo implementation =======================*/
 
+/* data for refernced types in a coclass, or an inherited interface */
+typedef struct tagTLBRefType
+{
+    GUID guid;              /* guid of the referenced type */
+                            /* (important if its a imported type) */
+    HREFTYPE reference;
+    int flags;
+    int ctCustData;
+    TLBCustData * pCustData;/* linked list to custom data; */
+    TLBImpLib *pImpTLInfo;
+    struct tagTLBRefType * next;
+} TLBRefType;
+
 /* internal Parameter data */
 typedef struct tagTLBParDesc
 {
     BSTR Name;
     int ctCustData;
     TLBCustData * pCustData;        /* linked list to cust data; */
+	TLBRefType * pRefType;			/* linked list to referenced types */
 } TLBParDesc;
 
 /* internal Function data */
@@ -440,19 +477,6 @@ typedef struct tagTLBVarDesc
     TLBCustData * pCustData;/* linked list to cust data; */
     struct tagTLBVarDesc * next; 
 } TLBVarDesc;
-
-/* data for refernced types in a coclass, or an inherited interface */
-typedef struct tagTLBRefType
-{
-    GUID guid;              /* guid of the referenced type */
-                            /* (important if its a imported type) */
-    HREFTYPE reference;
-    int flags;
-    int ctCustData;
-    TLBCustData * pCustData;/* linked list to custom data; */
-    TLBImpLib *pImpTLInfo;
-    struct tagTLBRefType * next;
-} TLBRefType;
 
 /* internal TypeInfo data */
 typedef struct tagITypeInfoImpl
@@ -496,6 +520,9 @@ typedef struct tagTLBContext
 	TLBSegDir * pTblDir;
 	ITypeLibImpl* pLibInfo;
 } TLBContext;
+
+
+static void TLB_DoRefType(TLBContext *pcx, int offset, TLBRefType ** pprtd);
 
 /*
  debug
@@ -917,13 +944,45 @@ static void TLB_DoFuncs(TLBContext *pcx, int cFuncs, int cVars,
             TLB_Read(&paraminfo,sizeof(paraminfo), pcx, recoffset+reclength -
                 pFuncRec->nrargs * sizeof(TLBParameterInfo));
             for(j=0;j<pFuncRec->nrargs;j++){
+				TYPEDESC* lpArgTypeDesc = 0;
+				
                 TLB_GetTdesc(pcx, paraminfo.DataType,   
                     &(*pptfd)->funcdesc.lprgelemdescParam[j].tdesc) ;
                 V_UNION(&((*pptfd)->funcdesc.lprgelemdescParam[j]),
                     paramdesc.wParamFlags) = paraminfo.Flags;
                 (*pptfd)->pParamDesc[j].Name=(void *)paraminfo.oName;
-                TLB_Read(&paraminfo,sizeof(TLBParameterInfo), pcx,
-                        DO_NOT_SEEK);
+
+				/* SEEK value = jump to offset, from there jump to the end of record,
+				 * go back by (j-1) arguments
+				 */
+				TLB_Read(&paraminfo,sizeof(TLBParameterInfo), pcx,
+                        recoffset+reclength - 
+						((pFuncRec->nrargs - j - 1) * sizeof(TLBParameterInfo)));
+
+                lpArgTypeDesc = & ((*pptfd)->funcdesc.lprgelemdescParam[j].tdesc) ;
+
+                while (lpArgTypeDesc != NULL)
+                {
+                   switch (lpArgTypeDesc->vt)
+                   {
+                     case VT_PTR:
+                       lpArgTypeDesc = lpArgTypeDesc->u.lptdesc;
+                       break;
+                     
+                     case VT_CARRAY:
+                       lpArgTypeDesc = & (lpArgTypeDesc->u.lpadesc->tdescElem);
+                       break;
+               
+                     case VT_USERDEFINED:
+                       (*pptfd)->pParamDesc[j].pRefType = TLB_Alloc(sizeof(TLBRefType));
+                       TLB_DoRefType(pcx, lpArgTypeDesc->u.hreftype, &((*pptfd)->pParamDesc[j].pRefType));
+                       lpArgTypeDesc = NULL;
+                       break;
+                     
+                     default:
+                       lpArgTypeDesc = NULL;
+                   }
+                }
             }
             /* second time around */
             for(j=0;j<pFuncRec->nrargs;j++){
@@ -1016,12 +1075,15 @@ static void TLB_DoRefType(TLBContext *pcx,
 {
     int j;
 
-    TRACE("\n");
+	TRACE("TLB context %p, TLB offset %x\n", pcx, offset);
 
     if(!HREFTYPE_INTHISFILE( offset)) {
         /* external typelib */
         TLBImpInfo impinfo;
         TLBImpLib *pImpLib=(pcx->pLibInfo->pImpLibs);
+
+        TRACE("offset %x, masked offset %x\n", offset, offset + (offset & 0xfffffffc));
+		
         TLB_Read(&impinfo, sizeof(impinfo), pcx, 
             pcx->pTblDir->pImpInfo.offset + (offset & 0xfffffffc));
         for(j=0;pImpLib;j++){   /* search the known offsets of all import libraries */
@@ -1126,13 +1188,47 @@ ITypeInfoImpl * TLB_DoTypeInfo(
         TLB_DoVars(pcx, ptiRet->TypeAttr.cFuncs ,ptiRet->TypeAttr.cVars, 
         tiBase.memoffset, & ptiRet->varlist);
     if(ptiRet->TypeAttr.cImplTypes >0 ){
-        if(ptiRet->TypeAttr.typekind == TKIND_COCLASS)
+        switch(ptiRet->TypeAttr.typekind)
+		{
+		case TKIND_COCLASS:
             TLB_DoImplTypes(pcx, ptiRet->TypeAttr.cImplTypes , 
                 tiBase.datatype1, & ptiRet->impltypelist);
-        else if(ptiRet->TypeAttr.typekind != TKIND_DISPATCH){
+			break;
+		case TKIND_DISPATCH:
             ptiRet->impltypelist=TLB_Alloc(sizeof(TLBRefType));
+            
+            if (tiBase.datatype1 != -1)
+            {
+              TLB_DoRefType(pcx, tiBase.datatype1, & ptiRet->impltypelist);
+            }
+            else
+            {
+              char* szStdOle     = "stdole2.tlb\0";
+              int   nStdOleLen = strlen(szStdOle);
+                            
+              ptiRet->impltypelist->guid             = IID_IDispatch;
+              ptiRet->impltypelist->reference        = -1;
+              ptiRet->impltypelist->pImpTLInfo       = TLB_Alloc(sizeof(TLBImpLib));
+              ptiRet->impltypelist->pImpTLInfo->guid = IID_StdOle;             
+              ptiRet->impltypelist->pImpTLInfo->name = SysAllocStringLen(NULL, nStdOleLen  + 1);
+              
+              MultiByteToWideChar(CP_ACP,
+                                  MB_PRECOMPOSED,
+                                  szStdOle,
+                                  -1,
+                                  ptiRet->impltypelist->pImpTLInfo->name,
+                                  SysStringLen(ptiRet->impltypelist->pImpTLInfo->name));
+                                  
+              ptiRet->impltypelist->pImpTLInfo->lcid          = 0;
+              ptiRet->impltypelist->pImpTLInfo->wVersionMajor = 2;
+              ptiRet->impltypelist->pImpTLInfo->wVersionMinor = 0;
+            }
+			break;
+		default:
+			ptiRet->impltypelist=TLB_Alloc(sizeof(TLBRefType));
             TLB_DoRefType(pcx, tiBase.datatype1, & ptiRet->impltypelist);
-        }
+			break;
+		}
     }
     ptiRet->ctCustData=
         TLB_CustData(pcx, tiBase.oCustData, &ptiRet->pCustData);
@@ -1441,14 +1537,17 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib, DWORD dwTLBLength)
             *ppImpLib = TLB_Alloc(sizeof(TLBImpLib));
             (*ppImpLib)->offset = offset - tlbSegDir.pImpFiles.offset;
             TLB_Read(&oGuid, sizeof(INT), &cx, offset);
-            TLB_ReadGuid(&(*ppImpLib)->guid, oGuid, &cx);
 
-            /* we are skipping some unknown info here */
-            TLB_Read(& size,sizeof(UINT16), &cx, offset+3*(sizeof(INT)));
+			TLB_Read(&(*ppImpLib)->lcid,          sizeof(LCID),   &cx, DO_NOT_SEEK);
+            TLB_Read(&(*ppImpLib)->wVersionMajor, sizeof(WORD),   &cx, DO_NOT_SEEK);
+            TLB_Read(&(*ppImpLib)->wVersionMinor, sizeof(WORD),   &cx, DO_NOT_SEEK);
+            TLB_Read(& size,                      sizeof(UINT16), &cx, DO_NOT_SEEK);
+
             size >>= 2;
             (*ppImpLib)->name = TLB_Alloc(size+1);
             TLB_Read((*ppImpLib)->name, size, &cx, DO_NOT_SEEK);
-            offset = (offset + 3 * (sizeof(INT)) + sizeof(UINT16) + size + 3) & 0xfffffffc;
+            TLB_ReadGuid(&(*ppImpLib)->guid, oGuid, &cx);
+            offset = (offset + sizeof(INT) + sizeof(DWORD) + sizeof(LCID) + sizeof(UINT16) + size + 3) & 0xfffffffc;
 
             ppImpLib = &(*ppImpLib)->next;
         }
@@ -1460,9 +1559,11 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib, DWORD dwTLBLength)
         /*pTypeLibImpl->TypeInfoCount=tlbHeader.nrtypeinfos; */
         ITypeInfoImpl **ppTI = &(pTypeLibImpl->pTypeInfo);
         int i;
+
         for(i = 0; i<(int)tlbHeader.nrtypeinfos; i++)
-	{
+		{
             *ppTI = TLB_DoTypeInfo(&cx, i, pTypeLibImpl);
+
             ppTI = &((*ppTI)->next);
             (pTypeLibImpl->TypeInfoCount)++;
         }
@@ -1524,8 +1625,33 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
     {
       /* fixme destroy child objects */
 
-      TRACE(" destroying ITypeLib(%p)\n",This); 
+      TRACE(" destroying ITypeLib(%p)\n",This);
 
+	  if (This->Name)
+	  {
+	 	  SysFreeString(This->Name);
+		  This->Name = NULL;
+	  }
+
+	  if (This->DocString)
+	  {
+		  SysFreeString(This->DocString);
+		  This->DocString = NULL;
+	  }
+
+	  if (This->HelpFile)
+	  {
+		  SysFreeString(This->HelpFile);
+		  This->HelpFile = NULL;
+	  }
+
+	  if (This->HelpStringDll)
+	  {
+		  SysFreeString(This->HelpStringDll);
+		  This->HelpStringDll = NULL;
+	  }
+	
+  	  ITypeInfo_Release((ITypeInfo*) This->pTypeInfo);
       HeapFree(GetProcessHeap(),0,This);
       return 0;
     }
@@ -1917,7 +2043,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation2(
 	{
           result = ITypeInfo2_GetDocumentation2(pTInfo2, MEMBERID_NIL, lcid,
                 pbstrHelpString, pdwHelpStringContext, pbstrHelpStringDll);
-          ITypeInfo2_Release(pTInfo);
+          ITypeInfo2_Release(pTInfo2);
 	}
         ITypeInfo_Release(pTInfo);
       }
@@ -2023,7 +2149,6 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
     TRACE("(%p)->ref is %u\n",This, This->ref);
-    ITypeLib2_AddRef((ITypeLib*)This->pTypeLib);
     return ++(This->ref);
 }
 
@@ -2032,16 +2157,30 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 static ULONG WINAPI ITypeInfo_fnRelease( ITypeInfo2 *iface)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
-    FIXME("(%p)->ref is %u:   stub\n",This, This->ref);
     TRACE("(%p)->(%u)\n",This, This->ref);
 
-    ITypeLib2_Release((ITypeLib*)This->pTypeLib);
-
+	
     if (!--(This->ref))
     {
-      /* fixme destroy child objects */
+      FIXME("destroy child objects\n");
 
       TRACE(" destroying ITypeInfo(%p)\n",This); 
+	  if (This->Name)
+	  {
+		  SysFreeString(This->Name);
+		  This->Name = 0;
+	  }
+	  
+	  if (This->DocString)
+	  {
+	      SysFreeString(This->DocString);
+		  This->DocString = 0;
+	  }
+
+	  if (This->next)
+	  {
+		ITypeInfo_Release((ITypeInfo*)This->next);
+	  }
 
       HeapFree(GetProcessHeap(),0,This);
       return 0;
@@ -2206,31 +2345,40 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
 
     TRACE("(%p) index %d\n", This, index);
     dump_TypeInfo(This);
-    
-    if (!pIref)
-    {
-       *pRefType = 0;      
-       return S_OK;
-    }
+
 
     if(index==(UINT)-1)
     {
-      /* get the retated interface for this dispinterface */
+      /* only valid on dual interfaces;
+         retrieve the associated TKIND_INTERFACE handle for the current TKIND_DISPATCH
+      */
       if( This->TypeAttr.typekind != TKIND_DISPATCH) return E_INVALIDARG;
-      FIXME("TKIND_INTERFACE expected\n");
-      return TYPE_E_ELEMENTNOTFOUND;
+      
+      if (This->TypeAttr.wTypeFlags & TYPEFLAG_FDISPATCHABLE &&
+          This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL )
+      {
+        *pRefType = -1;
+      }
+      else
+      {
+        *pRefType = pIref->reference;
+      }
+    }
+    else
+    {
+      /* get element n from linked list */
+      for(i=0; i<index; i++)
+      {
+        if (!pIref) return TYPE_E_ELEMENTNOTFOUND;
+        pIref = pIref->next;
+      }
+      
+      *pRefType = pIref->reference;
     }
     
-    /* get element n from linked list */
-    for(i=0; i<index; i++)
-    {
-      if (!pIref) return TYPE_E_ELEMENTNOTFOUND;
-      pIref = pIref->next;
-    }
-
-    *pRefType = pIref->reference;
     TRACE("-- 0x%08lx %s\n",pIref->reference, debugstr_guid(&pIref->guid) );
     return S_OK;
+   
 }
 
 /* ITypeInfo::GetImplTypeFlags
@@ -2396,7 +2544,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	ITypeInfo  **ppTInfo)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
-    HRESULT result;
+    HRESULT result = E_FAIL;
 
     if(HREFTYPE_INTHISFILE(hRefType))
     {
@@ -2408,41 +2556,124 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         result=ITypeLib2_GetTypeInfo(pTLib, HREFTYPE_INDEX(hRefType), ppTInfo);
         ITypeLib2_Release(pTLib );
       }
-    } 
+    }
+	else if (hRefType == -1 && 
+             (((ITypeInfoImpl*) This)->TypeAttr.typekind   == TKIND_DISPATCH) &&
+             (((ITypeInfoImpl*) This)->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
+    {
+	  /* when we meet a DUAL dispinterface, we must create the interface 
+	  * version of it.
+	  */
+	  ITypeInfoImpl* pTypeInfoImpl = (ITypeInfoImpl*) ITypeInfo_Constructor();
+
+		
+	  /* the interface version contains the same information as the dispinterface
+	   * copy the contents of the structs.
+	   */
+	  *pTypeInfoImpl = *This;
+	  pTypeInfoImpl->ref = 1;
+		
+	  /* change the type to interface */
+	  pTypeInfoImpl->TypeAttr.typekind = TKIND_INTERFACE;
+		
+      *ppTInfo = (ITypeInfo*) pTypeInfoImpl;
+
+	  ITypeInfo_AddRef((ITypeInfo*) pTypeInfoImpl);
+
+      result = S_OK;
+	}
     else
     {
       /* imported type lib */
-      TLBRefType * pRefType;
-      ITypeLibImpl *pTypeLib;
-      for( pRefType=This->impltypelist; pRefType &&
-               pRefType->reference != hRefType; pRefType=pRefType->next);
+      TLBRefType   *pRefType     = NULL;
+      
+      /* search in implemented types */
+      for( pRefType = This->impltypelist; 
+           pRefType && (pRefType->reference != hRefType);
+           pRefType = pRefType->next);
+      
       if(!pRefType)
-        return TYPE_E_ELEMENTNOTFOUND; /* FIXME : correct? */
-
-      pTypeLib = pRefType->pImpTLInfo->pImpTypeLib;
-      if(pTypeLib) /* typelib already loaded */
-      {
-        result=ITypeLib2_GetTypeInfoOfGuid(
-                    (LPTYPELIB)pTypeLib, &pRefType->guid, ppTInfo);
-      }
-      else
-      {
-        result = LoadRegTypeLib( &pRefType->pImpTLInfo->guid,
-                    0,0,0, /* FIXME */
-                    (LPTYPELIB *)&pTypeLib);
-        if(!SUCCEEDED(result))
-	{
-          BSTR libnam=SysAllocString(pRefType->pImpTLInfo->name);
-          result=LoadTypeLib(libnam, (LPTYPELIB *)&pTypeLib);
-          SysFreeString(libnam);
+      {                       
+        TYPEATTR*       pMyTypeAttr  = &This->TypeAttr;
+        unsigned short  cFuncs       = pMyTypeAttr->cFuncs;
+        unsigned short  cVars        = pMyTypeAttr->cVars;
+        
+        /* search in arguments */      
+        if (cFuncs > 0)
+        {
+          unsigned short  cFuncIndex   = 0;
+  
+          TLBFuncDesc*    pCurrFunc    = This->funclist;
+          
+          for (cFuncIndex = 0; !pRefType && cFuncIndex < cFuncs ; ++cFuncIndex)
+          {
+            FUNCDESC*  pCurrFuncDesc = &pCurrFunc->funcdesc;
+            
+            short      cParams       = pCurrFuncDesc->cParams;
+            short      cParamIndex   = 0;
+              
+            for (cParamIndex = 0 ; 
+                 !pRefType && cParamIndex < cParams ; 
+                 ++cParamIndex)
+            {
+              TLBParDesc* pCurrParamDesc = &(pCurrFunc->pParamDesc[cParamIndex]);
+             
+              if ( pCurrParamDesc->pRefType && pCurrParamDesc->pRefType->reference == hRefType)
+              {
+                pRefType = pCurrParamDesc->pRefType;
+                break; /* also break from outer loop since pRefType != 0 */
+              }
+            }
+            
+            pCurrFunc = pCurrFunc->next;
+          }
         }
-        if(SUCCEEDED(result))
-	{
-          result=ITypeLib2_GetTypeInfoOfGuid((LPTYPELIB)pTypeLib, &pRefType->guid, ppTInfo);
-          pRefType->pImpTLInfo->pImpTypeLib = pTypeLib;
+        /* search in variables */
+        else if (cVars > 0)
+        {
+          FIXME("search hreftype in variables, if any\n");
+          result = E_INVALIDARG; // FIXME : correct?
+        }
+      }
+      
+      /* href-referenced typeinfo found! */
+      if (pRefType || hRefType == -1)
+      {
+        ITypeLibImpl *pTypeLib = pRefType->pImpTLInfo->pImpTypeLib;
+        
+        if(pTypeLib) 
+        {
+          TRACE("typeinfo in imported typelib that is already loaded\n");
+          
+          result = ITypeLib2_GetTypeInfoOfGuid((LPTYPELIB)pTypeLib, 
+                                           &pRefType->guid, 
+                                           ppTInfo);
+        }
+        else
+        {
+          result = LoadRegTypeLib( &pRefType->pImpTLInfo->guid,
+                      pRefType->pImpTLInfo->wVersionMajor,
+                      pRefType->pImpTLInfo->wVersionMinor,
+                      pRefType->pImpTLInfo->lcid,
+                      (LPTYPELIB *)&pTypeLib);
+          
+          if(!SUCCEEDED(result))
+	  	  {
+            BSTR libnam=SysAllocString(pRefType->pImpTLInfo->name);
+            TRACE("typeinfo in imported typelib that isn't already loaded\n");
+            result=LoadTypeLib(libnam, (LPTYPELIB *)&pTypeLib);
+            SysFreeString(libnam);
+          } 
+          if(SUCCEEDED(result))
+          {
+            result=ITypeLib2_GetTypeInfoOfGuid((LPTYPELIB)pTypeLib, &pRefType->guid, ppTInfo);
+            pRefType->pImpTLInfo->pImpTypeLib = pTypeLib;
+			ITypeLib2_AddRef((ITypeLib*) pTypeLib);
+          }        
         }
       }
     }
+
     TRACE("(%p) hreftype 0x%04lx loaded %s (%p)\n", This, hRefType,
           SUCCEEDED(result)? "SUCCESS":"FAILURE", *ppTInfo);
     return result;
