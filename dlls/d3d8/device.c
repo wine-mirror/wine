@@ -39,6 +39,9 @@
 /** currently desactiving 1_4 support as mesa doesn't implement all 1_4 support while defining it */
 #undef GL_VERSION_1_4
 
+/* Uncomment the next line to get extra traces, important but impact speed */
+/* #define EXTRA_TRACES */
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
@@ -4340,7 +4343,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 
   cfgs = glXChooseFBConfig(This->display, DefaultScreen(This->display), attribs, &nCfgs);
   if (NULL != cfgs) {
-#if 0
+#ifdef EXTRA_TRACES
     int i;
     for (i = 0; i < nCfgs; ++i) {
       TRACE("for (%u,%s)/(%u,%s) found config[%d]@%p\n", BackBufferFormat, debug_d3dformat(BackBufferFormat), StencilBufferFormat, debug_d3dformat(StencilBufferFormat), i, cfgs[i]);
@@ -4352,7 +4355,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
       glFlush();
       vcheckGLcall("glFlush");
 
-#if 0
+#ifdef EXTRA_TRACES
       /** very very usefull debug code */
       glXSwapBuffers(This->display, This->drawable);   
       printf("Hit Enter to get next frame ...\n");
