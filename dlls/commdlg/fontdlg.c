@@ -29,9 +29,6 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
-#include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "wine/debug.h"
@@ -617,7 +614,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
                 strcpy( name, "[color name]" );
             }
             j=SendDlgItemMessageA(hDlg, cmb4, CB_ADDSTRING, 0, (LPARAM)name);
-            SendDlgItemMessageA(hDlg, cmb4, CB_SETITEMDATA16, j, textcolors[j]);
+            SendDlgItemMessageA(hDlg, cmb4, CB_SETITEMDATA, j, textcolors[j]);
             /* look for a fitting value in color combobox */
             if (textcolors[j]==lpcf->rgbColors)
                 SendDlgItemMessageA(hDlg,cmb4, CB_SETCURSEL,j,0);
