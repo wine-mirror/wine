@@ -8,11 +8,12 @@
  */
 
 #include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winestring.h"
+#include "wine/unicode.h"
 #include "debugtools.h"
 #include "mmsystem.h"
 #include "msacm.h"
@@ -279,7 +280,8 @@ MMRESULT WINAPI acmFormatDetailsA(HACMDRIVER had, PACMFORMATDETAILSA pafd,
     if (mmr == MMSYSERR_NOERROR) {
 	pafd->dwFormatTag = afdw.dwFormatTag; 
 	pafd->fdwSupport = afdw.fdwSupport; 
-	lstrcpyWtoA(pafd->szFormat, afdw.szFormat);
+        WideCharToMultiByte( CP_ACP, 0, afdw.szFormat, -1,
+                             pafd->szFormat, sizeof(pafd->szFormat), NULL, NULL );
     }
     return mmr;
 }
@@ -344,8 +346,9 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 	    wsprintfW(pafd->szFormat + lstrlenW(pafd->szFormat), fmt2, 
 		      pafd->pwfx->wBitsPerSample);
 	}
-	lstrcpyAtoW(pafd->szFormat + lstrlenW(pafd->szFormat),
-		    (pafd->pwfx->nChannels == 1) ? "; Mono" : "; Stereo");
+        MultiByteToWideChar( CP_ACP, 0, (pafd->pwfx->nChannels == 1) ? "; Mono" : "; Stereo", -1,
+                             pafd->szFormat + strlenW(pafd->szFormat),
+                             sizeof(pafd->szFormat)/sizeof(WCHAR) - strlenW(pafd->szFormat) );
     }
 
     TRACE("=> %d\n", mmr);
@@ -370,7 +373,8 @@ static BOOL CALLBACK MSACM_FormatEnumCallbackWtoA(HACMDRIVERID hadid,
     pafei->pafda->dwFormatIndex = pafdw->dwFormatIndex; 
     pafei->pafda->dwFormatTag = pafdw->dwFormatTag; 
     pafei->pafda->fdwSupport = pafdw->fdwSupport; 
-    lstrcpyWtoA(pafei->pafda->szFormat, pafdw->szFormat);
+    WideCharToMultiByte( CP_ACP, 0, pafdw->szFormat, -1,
+                         pafei->pafda->szFormat, sizeof(pafei->pafda->szFormat), NULL, NULL );
 
     return (pafei->fnCallback)(hadid, pafei->pafda, 
 			       pafei->dwInstance, fdwSupport);
@@ -577,7 +581,8 @@ MMRESULT WINAPI acmFormatTagDetailsA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftd
 	paftda->cbFormatSize = aftdw.cbFormatSize; 
 	paftda->fdwSupport = aftdw.fdwSupport; 
 	paftda->cStandardFormats = aftdw.cStandardFormats; 
-	lstrcpyWtoA(paftda->szFormatTag, aftdw.szFormatTag);
+        WideCharToMultiByte( CP_ACP, 0, aftdw.szFormatTag, -1, paftda->szFormatTag,
+                             sizeof(paftda->szFormatTag), NULL, NULL );
     }
     return mmr;
 }
@@ -662,7 +667,8 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 
     if (mmr == MMSYSERR_NOERROR && 
 	paftd->dwFormatTag == WAVE_FORMAT_PCM && paftd->szFormatTag[0] == 0)
-	lstrcpyAtoW(paftd->szFormatTag, "PCM");
+        MultiByteToWideChar( CP_ACP, 0, "PCM", -1, paftd->szFormatTag,
+                             sizeof(paftd->szFormatTag)/sizeof(WCHAR) );
 
     return mmr;
 }
@@ -687,7 +693,8 @@ static BOOL CALLBACK MSACM_FormatTagEnumCallbackWtoA(HACMDRIVERID hadid,
     paftei->paftda->cbFormatSize = paftdw->cbFormatSize; 
     paftei->paftda->fdwSupport = paftdw->fdwSupport; 
     paftei->paftda->cStandardFormats = paftdw->cStandardFormats; 
-    lstrcpyWtoA(paftei->paftda->szFormatTag, paftdw->szFormatTag);
+    WideCharToMultiByte( CP_ACP, 0, paftdw->szFormatTag, -1, paftei->paftda->szFormatTag,
+                         sizeof(paftei->paftda->szFormatTag), NULL, NULL );
 
     return (paftei->fnCallback)(hadid, paftei->paftda, 
 				paftei->dwInstance, fdwSupport);

@@ -9,12 +9,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "windef.h"
+#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
@@ -629,7 +629,7 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
     WCHAR tmpstr2[BUFFILE];
 
     GetCurrentDirectoryW(BUFFILE, tmpstr2);
-    lenstr2 = lstrlenW(tmpstr2);
+    lenstr2 = strlenW(tmpstr2);
     if (lenstr2 > 3)
         tmpstr2[lenstr2++]='\\';
     lstrcpynW(tmpstr2+lenstr2, tmpstr, BUFFILE-lenstr2);
@@ -646,13 +646,18 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
     /* update the real client structures if any */
     if (lfs->ofn16)
     {
-        lstrcpynWtoA(PTR_SEG_TO_LIN(lfs->ofn16->lpstrFile), ofnW->lpstrFile, ofnW->nMaxFile);
+        char *dest = PTR_SEG_TO_LIN(lfs->ofn16->lpstrFile);
+        if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
+                                  dest, ofnW->nMaxFile, NULL, NULL ))
+            dest[ofnW->nMaxFile-1] = 0;
         lfs->ofn16->nFileOffset = ofnW->nFileOffset;
         lfs->ofn16->nFileExtension = ofnW->nFileExtension;
     }
     if (lfs->ofnA)
     {
-        lstrcpynWtoA(lfs->ofnA->lpstrFile, ofnW->lpstrFile, ofnW->nMaxFile);
+        if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
+                                  lfs->ofnA->lpstrFile, ofnW->nMaxFile, NULL, NULL ))
+            lfs->ofnA->lpstrFile[ofnW->nMaxFile-1] = 0;
         lfs->ofnA->nFileOffset = ofnW->nFileOffset;
         lfs->ofnA->nFileExtension = ofnW->nFileExtension;
     }
@@ -673,11 +678,18 @@ void FILEDLG_UpdateFileTitle(LFSPRIVATE lfs)
     SendDlgItemMessageW(lfs->hwnd, lst1, LB_GETTEXT, lRet,
                              (LPARAM)ofnW->lpstrFileTitle );
     if (lfs->ofn16)
-        lstrcpynWtoA(PTR_SEG_TO_LIN(lfs->ofn16->lpstrFileTitle),ofnW->lpstrFileTitle,
-                    ofnW->nMaxFileTitle);
+    {
+        char *dest = PTR_SEG_TO_LIN(lfs->ofn16->lpstrFileTitle);
+        if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFileTitle, -1,
+                                  dest, ofnW->nMaxFileTitle, NULL, NULL ))
+            dest[ofnW->nMaxFileTitle-1] = 0;
+    }
     if (lfs->ofnA)
-        lstrcpynWtoA(lfs->ofnA->lpstrFileTitle,ofnW->lpstrFileTitle,
-                    ofnW->nMaxFileTitle);
+    {
+        if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFileTitle, -1,
+                                  lfs->ofnA->lpstrFileTitle, ofnW->nMaxFileTitle, NULL, NULL ))
+            lfs->ofnA->lpstrFileTitle[ofnW->nMaxFileTitle-1] = 0;
+    }
   }
 }
 
@@ -1017,8 +1029,8 @@ void FILEDLG_MapDrawItemStruct(LPDRAWITEMSTRUCT16 lpdis16, LPDRAWITEMSTRUCT lpdi
 LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
 {
     LPCSTR s;
-    LPWSTR x, y;
-    int n;
+    LPWSTR x;
+    int n, len;
 
     s = strA;
     while (*s)
@@ -1027,15 +1039,10 @@ LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
     n = s - strA;
     if (n < size) n = size;
 
-    x = y = HeapAlloc(GetProcessHeap(),0, n * sizeof(WCHAR));
-    s = strA;
-    while (*s) {
-        lstrcpyAtoW(x, s);
-        x += lstrlenW(x)+1;
-        s += strlen(s)+1;
-	}
-    *x = 0;
-    return y;
+    len = MultiByteToWideChar( CP_ACP, 0, strA, n, NULL, 0 );
+    x = HeapAlloc(GetProcessHeap(),0, len * sizeof(WCHAR));
+    MultiByteToWideChar( CP_ACP, 0, strA, n, x, len );
+    return x;
 }
 
 
@@ -1043,19 +1050,19 @@ LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
  *                              FILEDLG_DupToW                  [internal]
  *      duplicates an Ansi string to unicode, with a buffer size
  */
-LPWSTR FILEDLG_DupToW(LPCSTR str, UINT size)
+LPWSTR FILEDLG_DupToW(LPCSTR str, DWORD *size)
 {
-    LPWSTR strW;
-    if (str && (size > 0))
+    LPWSTR strW = NULL;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    if (str && (len > 0))
     {
-        strW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        lstrcpynAtoW(strW, str, size);
-        return strW;
+        strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (strW) MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
     }
-    else
-        return NULL;
+    if (size) *size = len;
+    return strW;
 }
- 
+
 
 /************************************************************************
  *                              FILEDLG_MapOfnStructA          [internal]
@@ -1077,10 +1084,8 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
         ofnW->lpstrCustomFilter = FILEDLG_MapStringPairsToW(ofnA->lpstrCustomFilter, ofnA->nMaxCustFilter);
     ofnW->nMaxCustFilter = ofnA->nMaxCustFilter;
     ofnW->nFilterIndex = ofnA->nFilterIndex;
-    ofnW->lpstrFile = FILEDLG_DupToW(ofnA->lpstrFile, ofnA->nMaxFile);
-    ofnW->nMaxFile = ofnA->nMaxFile;
-    ofnW->lpstrFileTitle = FILEDLG_DupToW(ofnA->lpstrFileTitle, ofnA->nMaxFileTitle);
-    ofnW->nMaxFileTitle = ofnA->nMaxFileTitle;
+    ofnW->lpstrFile = FILEDLG_DupToW(ofnA->lpstrFile, &ofnW->nMaxFile);
+    ofnW->lpstrFileTitle = FILEDLG_DupToW(ofnA->lpstrFileTitle, &ofnW->nMaxFileTitle);
     if (ofnA->lpstrInitialDir)
         ofnW->lpstrInitialDir = HEAP_strdupAtoW(GetProcessHeap(),0,ofnA->lpstrInitialDir);
     if (ofnA->lpstrTitle)
@@ -1092,7 +1097,7 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
     ofnW->Flags = ofnA->Flags;
     ofnW->nFileOffset = ofnA->nFileOffset;
     ofnW->nFileExtension = ofnA->nFileExtension;
-    ofnW->lpstrDefExt = FILEDLG_DupToW(ofnA->lpstrDefExt, 3);
+    ofnW->lpstrDefExt = FILEDLG_DupToW(ofnA->lpstrDefExt, NULL);
     if ((ofnA->Flags & OFN_ENABLETEMPLATE) && (ofnA->lpTemplateName))
     {
         if (HIWORD(ofnA->lpTemplateName))

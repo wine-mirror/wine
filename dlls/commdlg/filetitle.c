@@ -7,8 +7,8 @@
 
 #include <string.h>
 
-#include "wine/winestring.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "commdlg.h"
 #include "debugtools.h"
 
@@ -79,7 +79,8 @@ short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
 
 	ret = GetFileTitleA(file, title, cbBuf);
 
-	lstrcpynAtoW(lpTitle, title, cbBuf);
+        if (cbBuf > 0 && !MultiByteToWideChar( CP_ACP, 0, title, -1, lpTitle, cbBuf ))
+            lpTitle[cbBuf-1] = 0;
 	HeapFree(GetProcessHeap(), 0, file);
 	HeapFree(GetProcessHeap(), 0, title);
 	return ret;

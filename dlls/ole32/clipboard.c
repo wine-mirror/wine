@@ -51,7 +51,6 @@
 #include "winuser.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 #include "ole2.h"
 #include "debugtools.h"
 #include "olestd.h"
@@ -996,7 +995,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
         ReadClassStg(std.u.pstg, &clsID);
         ProgIDFromCLSID(&clsID, &strProgID);
 
-        lstrcpyWtoA(strOleTypeName, strProgID);
+        WideCharToMultiByte( CP_ACP, 0, strProgID, -1, strOleTypeName, sizeof(strOleTypeName), NULL, NULL );
         OLECONVERT_CreateOleStream(std.u.pstg);
         OLECONVERT_CreateCompObjStream(std.u.pstg, strOleTypeName);
       }

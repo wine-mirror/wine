@@ -41,7 +41,6 @@
 #include "winbase.h"
 #include "ntddk.h"
 #include "wine/winbase16.h"   /* for GetCurrentTask */
-#include "wine/winestring.h"  /* for lstrcpyAtoW */
 #include "winerror.h"
 #include "drive.h"
 #include "cdrom.h"
@@ -1286,7 +1285,7 @@ UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
 {
     LPSTR xpath = HeapAlloc( GetProcessHeap(), 0, buflen+1 );
     UINT ret = GetCurrentDirectoryA( buflen, xpath );
-    if (ret < buflen) lstrcpyAtoW ( buf, xpath );
+    if (ret < buflen) ret = MultiByteToWideChar( CP_ACP, 0, xpath, -1, buf, buflen ) - 1;
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
@@ -1495,8 +1494,8 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
                                           fsname_len );
     if (ret)
     {
-        if (label) lstrcpyAtoW( label, xvolname );
-        if (fsname) lstrcpyAtoW( fsname, xfsname );
+        if (label) MultiByteToWideChar( CP_ACP, 0, xvolname, -1, label, label_len );
+        if (fsname) MultiByteToWideChar( CP_ACP, 0, xfsname, -1, fsname, fsname_len );
     }
     HeapFree( GetProcessHeap(), 0, xroot );
     HeapFree( GetProcessHeap(), 0, xvolname );

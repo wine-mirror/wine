@@ -11,7 +11,6 @@
 
 #include "winreg.h"
 #include "winver.h"
-#include "wine/winestring.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
@@ -212,7 +211,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
                 wLength, wValueLength, bText, lpValue, child32 );
 
     /* Convert key */
-    lstrcpyWtoA( info16->szKey, info32->szKey );
+    WideCharToMultiByte( CP_ACP, 0, info32->szKey, -1, info16->szKey, 0x7fffffff, NULL, NULL );
 
     TRACE("Copied key from %p to %p: %s\n", info32->szKey, info16->szKey,
                 debugstr_a(info16->szKey) );
@@ -225,8 +224,9 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
     }
     else if ( bText )
     {
-        info16->wValueLength = lstrlenW( (LPCWSTR)lpValue ) + 1;
-        lstrcpyWtoA( VersionInfo16_Value( info16 ), (LPCWSTR)lpValue );
+        info16->wValueLength = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1, NULL, 0, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1,
+                             VersionInfo16_Value( info16 ), info16->wValueLength, NULL, NULL );
 
         TRACE("Copied value from %p to %p: %s\n", lpValue, 
                     VersionInfo16_Value( info16 ), 

@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#include "wine/winestring.h"
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winnls.h"

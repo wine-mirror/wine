@@ -10,7 +10,7 @@
 #include "gdi.h"
 #include "debugtools.h"
 #include "winbase.h"
-#include "wine/winestring.h"
+#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
 
@@ -27,7 +27,7 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     RECT16 	 opaqueRect;
     RECT16 	*lpOpaqueRect = NULL; 
     WORD wOptions = 0;
-    WORD wCount = count;
+    DWORD len;
     INT16 width;
     char *str;
     DWORD dwRet;
@@ -38,8 +38,9 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     TRACE("%04x %d %d %x %p %s %p\n",
 	  dc->hSelf, x, y, flags, lprect, debugstr_wn(wstr, count), lpDx);
 
-    str = HeapAlloc( GetProcessHeap(), 0, count+1 );
-    lstrcpynWtoA( str, wstr, count+1 );
+    len = WideCharToMultiByte( CP_ACP, 0, wstr, count, NULL, 0, NULL, NULL );
+    str = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, wstr, count, str, len, NULL, NULL );
 
     clipRect.left = 0;
     clipRect.top = 0;
@@ -65,7 +66,7 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     y = YLPTODP( dc, y );
 
     dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-			      NULL, str, -count,  physDev->FontInfo, 
+			      NULL, str, -len,  physDev->FontInfo, 
 			      win16drv_SegPtr_DrawMode,
 			      win16drv_SegPtr_TextXForm,
 			      NULL, NULL, 0);
@@ -99,7 +100,7 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     }
 
     dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 
-			      x, y, &clipRect, str, wCount,
+			      x, y, &clipRect, str, (WORD)len,
 			      physDev->FontInfo, win16drv_SegPtr_DrawMode, 
 			      win16drv_SegPtr_TextXForm, NULL, lpOpaqueRect,
 			      wOptions);

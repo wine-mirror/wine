@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "wine/winestring.h"
 #include "wine/unicode.h"
 #include "heap.h"
 #include "winnls.h"

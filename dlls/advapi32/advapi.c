@@ -11,8 +11,8 @@
 
 #include "winbase.h"
 #include "windef.h"
+#include "winnls.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 
 #include "debugtools.h"
 
@@ -53,7 +53,9 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 	DWORD	size = *lpSize;
 	BOOL res = GetUserNameA(name,lpSize);
 
-	lstrcpynAtoW(lpszName,name,size);
+        /* FIXME: should set lpSize in WCHARs */
+        if (size && !MultiByteToWideChar( CP_ACP, 0, name, -1, lpszName, size ))
+            lpszName[size-1] = 0;
         HeapFree( GetProcessHeap(), 0, name );
 	return res;
 }

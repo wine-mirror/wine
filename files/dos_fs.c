@@ -23,9 +23,9 @@
 
 #include "windef.h"
 #include "ntddk.h"
+#include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
@@ -1079,8 +1079,8 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
     shortpathA = HeapAlloc ( GetProcessHeap(), 0, shortlen );
 
     ret = GetShortPathNameA ( longpathA, shortpathA, shortlen );
-    lstrcpynAtoW ( shortpath, shortpathA, shortlen );
-
+    if (shortlen > 0 && !MultiByteToWideChar( CP_ACP, 0, shortpathA, -1, shortpath, shortlen ))
+        shortpath[shortlen-1] = 0;
     HeapFree( GetProcessHeap(), 0, longpathA );
     HeapFree( GetProcessHeap(), 0, shortpathA );
 
@@ -1158,7 +1158,9 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
     if (DOSFS_GetFullName( shortpathA, TRUE, &full_name ))
     {
         ret = strlen( full_name.short_name );
-        lstrcpynAtoW( longpath, full_name.long_name, longlen );
+        if (longlen > 0 && !MultiByteToWideChar( CP_ACP, 0, full_name.long_name, -1,
+                                                 longpath, longlen ))
+            longpath[longlen-1] = 0;
     }
     HeapFree( GetProcessHeap(), 0, shortpathA );
     return ret;
@@ -1308,7 +1310,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if (result)
     {
 	if (unicode)
-	    lstrcpynAtoW( (LPWSTR)result, full_name.short_name, len );
+            MultiByteToWideChar( CP_ACP, 0, full_name.short_name, -1, (LPWSTR)result, len );
 	else
 	    lstrcpynA( result, full_name.short_name, len );
     }
@@ -2138,18 +2140,15 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
     TRACE("(%s,...)\n", devname ? devname : "<null>");
     if (!devname) {
 	/* return known MSDOS devices */
-	strcpy(buffer,"CON COM1 COM2 LPT1 NUL ");
-	while ((s=strchr(buffer,' ')))
-		*s='\0';
-
-	lstrcpynA(target,buffer,bufsize);
-	return strlen(buffer);
+        static const char devices[24] = "CON\0COM1\0COM2\0LPT1\0NUL\0\0";
+        memcpy( target, devices, min(bufsize,sizeof(devices)) );
+        return min(bufsize,sizeof(devices));
     }
     strcpy(buffer,"\\DEV\\");
     strcat(buffer,devname);
     if ((s=strchr(buffer,':'))) *s='\0';
     lstrcpynA(target,buffer,bufsize);
-    return strlen(buffer);
+    return strlen(buffer)+1;
 }
 
 
@@ -2164,7 +2163,7 @@ DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
     LPSTR targetA = (LPSTR)HeapAlloc(GetProcessHeap(),0,bufsize);
     DWORD ret = QueryDosDeviceA(devnameA,targetA,bufsize);
 
-    lstrcpynAtoW(target,targetA,bufsize);
+    ret = MultiByteToWideChar( CP_ACP, 0, targetA, ret, target, bufsize );
     if (devnameA) HeapFree(GetProcessHeap(),0,devnameA);
     if (targetA) HeapFree(GetProcessHeap(),0,targetA);
     return ret;

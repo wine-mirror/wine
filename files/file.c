@@ -35,7 +35,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "drive.h"
 #include "file.h"
 #include "global.h"
@@ -841,7 +840,7 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
     patha   = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
     prefixa = HEAP_strdupWtoA( GetProcessHeap(), 0, prefix );
     ret     = FILE_GetTempFileName( patha, prefixa, unique, buffera, FALSE );
-    lstrcpyAtoW( buffer, buffera );
+    MultiByteToWideChar( CP_ACP, 0, buffera, -1, buffer, MAX_PATH );
     HeapFree( GetProcessHeap(), 0, patha );
     HeapFree( GetProcessHeap(), 0, prefixa );
     return ret;

@@ -16,7 +16,7 @@
  */
 
 #include <assert.h>
-#include "wine/winestring.h"
+#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -697,10 +697,14 @@ static	LRESULT PCM_DriverDetails(PACMDRIVERDETAILSW add)
     add->cFormatTags = 1;
     add->cFilterTags = 0;
     add->hicon = (HICON)0;
-    lstrcpyAtoW(add->szShortName, "WINE-PCM");
-    lstrcpyAtoW(add->szLongName,  "Wine PCM converter");
-    lstrcpyAtoW(add->szCopyright, "Brought to you by the Wine team...");
-    lstrcpyAtoW(add->szLicensing, "Refer to LICENSE file");
+    MultiByteToWideChar( CP_ACP, 0, "WINE-PCM", -1,
+                         add->szShortName, sizeof(add->szShortName)/sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, "Wine PCM converter", -1,
+                         add->szLongName, sizeof(add->szLongName)/sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, "Brought to you by the Wine team...", -1,
+                         add->szCopyright, sizeof(add->szCopyright)/sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, "Refer to LICENSE file", -1,
+                         add->szLicensing, sizeof(add->szLicensing)/sizeof(WCHAR) );
     add->szFeatures[0] = 0;
     
     return MMSYSERR_NOERROR;

@@ -18,7 +18,6 @@
 #include "winbase.h" /* for lstrlenW() and the likes */
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "debugtools.h"
 
 #include "storage32.h"
@@ -2229,9 +2228,9 @@ HRESULT StorageImpl_Construct(
      * Initialize the property chain
      */
     memset(&rootProp, 0, sizeof(rootProp));
-    lstrcpyAtoW(rootProp.name, rootPropertyName);
-
-    rootProp.sizeOfNameString = (lstrlenW(rootProp.name)+1) * sizeof(WCHAR);
+    MultiByteToWideChar( CP_ACP, 0, rootPropertyName, -1, rootProp.name,
+                         sizeof(rootProp.name)/sizeof(WCHAR) );
+    rootProp.sizeOfNameString = (strlenW(rootProp.name)+1) * sizeof(WCHAR);
     rootProp.propertyType     = PROPTYPE_ROOT;
     rootProp.previousProperty = PROPERTY_NULL;
     rootProp.nextProperty     = PROPERTY_NULL;

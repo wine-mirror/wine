@@ -21,7 +21,6 @@
 
 #include "winbase.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "commctrl.h"
 #include "comctl32.h"
 #include "imagelist.h"

@@ -12,7 +12,6 @@
 
 #include "winbase.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -136,7 +135,7 @@ STATUSBAR_DrawPart (HDC hdc, STATUSWINDOWPART *part)
 	}
       }
       r.left += 3;
-      DrawTextW (hdc, p, lstrlenW (p), &r, align|DT_VCENTER|DT_SINGLELINE);
+      DrawTextW (hdc, p, -1, &r, align|DT_VCENTER|DT_SINGLELINE);
       if (oldbkmode != TRANSPARENT)
 	SetBkMode(hdc, oldbkmode);
     }
@@ -393,10 +392,11 @@ STATUSBAR_GetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (part->style & SBT_OWNERDRAW)
 	result = (LRESULT)part->text;
     else {
-	result = part->text ? lstrlenW (part->text) : 0;
-	result |= (part->style << 16);
-	if (lParam && LOWORD(result))
-	    lstrcpyWtoA ((LPSTR)lParam, part->text);
+        DWORD len = part->text ? WideCharToMultiByte( CP_ACP, 0, part->text, -1,
+                                                      NULL, 0, NULL, NULL ) - 1 : 0;
+        result = MAKELONG( len, part->style );
+        if (lParam && len)
+            WideCharToMultiByte( CP_ACP, 0, part->text, -1, (LPSTR)lParam, len+1, NULL, NULL );
     }
     return result;
 }
@@ -419,7 +419,7 @@ STATUSBAR_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (part->style & SBT_OWNERDRAW)
 	result = (LRESULT)part->text;
     else {
-	result = part->text ? lstrlenW (part->text) : 0;
+	result = part->text ? strlenW (part->text) : 0;
 	result |= (part->style << 16);
 	if (part->text && lParam)
 	    strcpyW ((LPWSTR)lParam, part->text);
@@ -444,7 +444,7 @@ STATUSBAR_GetTextLength (HWND hwnd, WPARAM wParam)
 	part = &infoPtr->parts[part_num];
 
     if (part->text)
-	result = lstrlenW(part->text);
+	result = strlenW(part->text);
     else
 	result = 0;
 
@@ -689,8 +689,9 @@ STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	/* check if text is unchanged -> no need to redraw */
 	if (text) {
-	    LPWSTR tmptext = COMCTL32_Alloc((lstrlenA(text)+1)*sizeof(WCHAR));
-	    lstrcpyAtoW (tmptext, text);
+            DWORD len = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
+	    LPWSTR tmptext = COMCTL32_Alloc(len*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, text, -1, tmptext, len );
 
 	    if (!changed && part->text && !lstrcmpW(tmptext,part->text)) {
 		COMCTL32_Free(tmptext);
@@ -754,7 +755,7 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
 	if(part->text) COMCTL32_Free(part->text);
 
-        len = lstrlenW(text);
+        len = strlenW(text);
         part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	strcpyW(part->text, text);
         bRedraw = TRUE;
@@ -886,16 +887,18 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (IsWindowUnicode (hwnd)) {
 	self->bUnicode = TRUE;
 	if (lpCreate->lpszName &&
-	    (len = lstrlenW ((LPCWSTR)lpCreate->lpszName))) {
+	    (len = strlenW ((LPCWSTR)lpCreate->lpszName))) {
 	    self->parts[0].text = COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
 	    strcpyW (self->parts[0].text, (LPCWSTR)lpCreate->lpszName);
 	}
     }
     else {
 	if (lpCreate->lpszName &&
-	    (len = lstrlenA ((LPCSTR)lpCreate->lpszName))) {
-	    self->parts[0].text = COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyAtoW (self->parts[0].text, (LPCSTR)lpCreate->lpszName);
+	    (len = strlen((LPCSTR)lpCreate->lpszName))) {
+            DWORD lenW = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lpCreate->lpszName, -1, NULL, 0 );
+	    self->parts[0].text = COMCTL32_Alloc (lenW*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lpCreate->lpszName, -1,
+                                 self->parts[0].text, lenW );
 	}
     }
 
@@ -993,12 +996,17 @@ STATUSBAR_WMGetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (!(infoPtr->parts[0].text))
         return 0;
-    len = lstrlenW (infoPtr->parts[0].text);
+    if (infoPtr->bUnicode)
+        len = strlenW (infoPtr->parts[0].text);
+    else
+        len = WideCharToMultiByte( CP_ACP, 0, infoPtr->parts[0].text, -1, NULL, 0, NULL, NULL )-1;
+
     if (wParam > len) {
 	if (infoPtr->bUnicode)
 	    strcpyW ((LPWSTR)lParam, infoPtr->parts[0].text);
 	else
-	    lstrcpyWtoA ((LPSTR)lParam, infoPtr->parts[0].text);
+            WideCharToMultiByte( CP_ACP, 0, infoPtr->parts[0].text, -1,
+                                 (LPSTR)lParam, len+1, NULL, NULL );
 	return len;
     }
 
@@ -1102,15 +1110,16 @@ STATUSBAR_WMSetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
         COMCTL32_Free (part->text);
     part->text = 0;
     if (infoPtr->bUnicode) {
-	if (lParam && (len = lstrlenW((LPCWSTR)lParam))) {
+	if (lParam && (len = strlenW((LPCWSTR)lParam))) {
 	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	    strcpyW (part->text, (LPCWSTR)lParam);
 	}
     }
     else {
 	if (lParam && (len = lstrlenA((LPCSTR)lParam))) {
-	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-	    lstrcpyAtoW (part->text, (LPCSTR)lParam);
+            DWORD lenW = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lParam, -1, NULL, 0 );
+            part->text = COMCTL32_Alloc (lenW*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lParam, -1, part->text, lenW );
 	}
     }
 

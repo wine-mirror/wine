@@ -14,12 +14,11 @@
 #include <pwd.h>
 #include <unistd.h>
 
+#include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
-#include "windef.h"
-#include "winnls.h"
 #include "winreg.h"
 #include "file.h"
 #include "heap.h"
@@ -1226,7 +1225,8 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
     LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, len );
     INT ret = GetPrivateProfileStringA( sectionA, entryA, def_valA,
                                             bufferA, len, filenameA );
-    lstrcpynAtoW( buffer, bufferA, len );
+    if (len > 0 && !MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, len ))
+        buffer[len-1] = 0;
     HeapFree( GetProcessHeap(), 0, sectionA );
     HeapFree( GetProcessHeap(), 0, entryA );
     HeapFree( GetProcessHeap(), 0, filenameA );
@@ -1603,7 +1603,8 @@ DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
    LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, size);
 
    INT ret = GetPrivateProfileSectionNames16 (bufferA, size, filenameA);
-   lstrcpynAtoW( buffer, bufferA, size);   
+   if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, size ))
+        buffer[size-1] = 0;
    HeapFree( GetProcessHeap(), 0, bufferA);
    HeapFree( GetProcessHeap(), 0, filenameA );
 
@@ -1707,7 +1708,8 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 
     INT ret = GetPrivateProfileStructA( sectionA, keyA, bufferA,
 					len, filenameA );
-    lstrcpynAtoW( buffer, bufferA, len );
+    if (len > 0 && !MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, len ))
+        ((LPWSTR)buffer)[len-1] = 0;
     HeapFree( GetProcessHeap(), 0, bufferA);
     HeapFree( GetProcessHeap(), 0, sectionA );
     HeapFree( GetProcessHeap(), 0, keyA );

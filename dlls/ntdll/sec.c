@@ -12,7 +12,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/exception.h"
-#include "wine/winestring.h"
 #include "file.h"
 #include "heap.h"
 #include "winnls.h"

@@ -20,7 +20,6 @@
 #include "shlguid.h"
 
 #include "pidl.h"
-#include "wine/winestring.h"
 #include "wine/obj_base.h"
 #include "wine/obj_dragdrop.h"
 #include "wine/obj_shellfolder.h"
@@ -654,7 +653,7 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	  szNext = GetNextElementW(lpszDisplayName, szElement, MAX_PATH);
 
 	  /* build the full pathname to the element */
-	  lstrcpynWtoA(szTempA, szElement, lstrlenW(szElement) + 1);
+          WideCharToMultiByte( CP_ACP, 0, szElement, -1, szTempA, MAX_PATH, NULL, NULL );
 	  strcpy(szPath, This->sMyPath);
 	  PathAddBackslashA(szPath);
 	  strcat(szPath, szTempA);
@@ -1184,8 +1183,8 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf(
 	strcpy(szDest, This->sMyPath);
 	PathAddBackslashA(szDest);
 	len = strlen (szDest);
-	lstrcpynWtoA(szDest+len, lpName, MAX_PATH-len);
-	
+        WideCharToMultiByte( CP_ACP, 0, lpName, -1, szDest+len, MAX_PATH-len, NULL, NULL );
+        szDest[MAX_PATH-1] = 0;
 	TRACE("src=%s dest=%s\n", szSrc, szDest);
 	if ( MoveFileA(szSrc, szDest) )
 	{
@@ -2129,7 +2128,7 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName(
 	    lpszDisplayName[2] == (WCHAR)'\\')
 	{
 	  szNext = GetNextElementW(lpszDisplayName, szElement, MAX_PATH);
-	  lstrcpynWtoA(szTempA, szElement, lstrlenW(szElement) + 1);
+          WideCharToMultiByte( CP_ACP, 0, szElement, -1, szTempA, MAX_PATH, NULL, NULL );
 	  pidlTemp = _ILCreateDrive(szTempA);
 
 	  if (szNext && *szNext)

@@ -10,11 +10,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "windef.h"
+#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
@@ -216,7 +216,10 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
     CF_ENABLETEMPLATEHANDLE)) FIXME(": unimplemented flag (ignored)\n");
   memcpy(&cf32a, lpChFont, sizeof(cf32a));
   memcpy(&lf32a, lpChFont->lpLogFont, sizeof(LOGFONTA));
-  lstrcpynWtoA(lf32a.lfFaceName, lpChFont->lpLogFont->lfFaceName, LF_FACESIZE);
+
+  WideCharToMultiByte( CP_ACP, 0, lpChFont->lpLogFont->lfFaceName, -1,
+                       lf32a.lfFaceName, LF_FACESIZE, NULL, NULL );
+  lf32a.lfFaceName[LF_FACESIZE-1] = 0;
   cf32a.lpLogFont=&lf32a;
   cf32a.lpszStyle=HEAP_strdupWtoA(GetProcessHeap(), 0, lpChFont->lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)&cf32a;
@@ -225,7 +228,9 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   HeapFree(GetProcessHeap(), 0, cf32a.lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)cf32a.lpTemplateName;
   memcpy(lpChFont->lpLogFont, &lf32a, sizeof(CHOOSEFONTA));
-  lstrcpynAtoW(lpChFont->lpLogFont->lfFaceName, lf32a.lfFaceName, LF_FACESIZE);
+  MultiByteToWideChar( CP_ACP, 0, lf32a.lfFaceName, -1,
+                       lpChFont->lpLogFont->lfFaceName, LF_FACESIZE );
+  lpChFont->lpLogFont->lfFaceName[LF_FACESIZE-1] = 0;
   return bRet;
 }
 

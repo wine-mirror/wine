@@ -7,9 +7,9 @@
 #include <stdio.h>
 
 #include "windef.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winestring.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -87,20 +87,23 @@ static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPI
 	    break;
 
 	  case STRRET_CSTRA:
-	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
+            if (len && !MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, (LPWSTR)dest, len ))
+                ((LPWSTR)dest)[len-1] = 0;
 	    break;
 
 	  case STRRET_OFFSETA:
 	    if (pidl)
 	    {
-	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+                if (len && !MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset,
+                                                 -1, (LPWSTR)dest, len ))
+                    ((LPWSTR)dest)[len-1] = 0;
 	    }
 	    break;
 
 	  default:
 	    FIXME("unknown type!\n");
 	    if (len)
-	    { *(LPSTR)dest = '\0';
+	    { *(LPWSTR)dest = '\0';
 	    }
 	    return(FALSE);
 	}

@@ -35,11 +35,11 @@
 #include <signal.h>
 #include <assert.h>
 
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "wine/keyboard16.h"
 #include "thread.h"
 #include "file.h"
@@ -49,7 +49,6 @@
 #include "heap.h"
 #include "server.h"
 #include "debugtools.h"
-#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(console);
 
@@ -813,9 +812,9 @@ DWORD WINAPI GetConsoleTitleW( LPWSTR title, DWORD size )
     char *tmp;
     DWORD ret;
 
-    if (!(tmp = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
-    ret = GetConsoleTitleA( tmp, size );
-    lstrcpyAtoW( title, tmp );
+    if (!(tmp = HeapAlloc( GetProcessHeap(), 0, size*sizeof(WCHAR) ))) return 0;
+    GetConsoleTitleA( tmp, size*sizeof(WCHAR) );
+    ret = MultiByteToWideChar( CP_ACP, 0, tmp, -1, title, size );
     HeapFree( GetProcessHeap(), 0, tmp );
     return ret;
 }
@@ -1056,7 +1055,8 @@ BOOL WINAPI ReadConsoleW( HANDLE hConsoleInput,
 	lpReserved
     );
     if (ret)
-    	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
+        MultiByteToWideChar( CP_ACP, 0, buf, -1, lpBuffer, nNumberOfCharsToRead );
+
     HeapFree( GetProcessHeap(), 0, buf );
     return ret;
 }

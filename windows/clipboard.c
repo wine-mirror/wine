@@ -28,7 +28,6 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "heap.h"
 #include "message.h"
 #include "task.h"
@@ -1131,7 +1130,9 @@ INT WINAPI GetClipboardFormatNameW( UINT wFormat, LPWSTR retStr, INT maxlen )
     if(p == NULL) return 0; /* FIXME: is this the correct failure value? */
     
     ret = GetClipboardFormatNameA( wFormat, p, maxlen );
-    lstrcpynAtoW( retStr, p, maxlen );
+
+    if (maxlen > 0 && !MultiByteToWideChar( CP_ACP, 0, p, -1, retStr, maxlen ))
+        retStr[maxlen-1] = 0;
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }

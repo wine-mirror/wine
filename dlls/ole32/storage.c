@@ -15,7 +15,6 @@
 #include "windef.h"
 #include "ntddk.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 #include "wine/winbase16.h"
 #include "wingdi.h"
 #include "wtypes.h"
@@ -361,7 +360,7 @@ void
 STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
     char	name[33];
 
-	lstrcpyWtoA(name,stde->pps_rawname);
+    WideCharToMultiByte( CP_ACP, 0, stde->pps_rawname, -1, name, sizeof(name), NULL, NULL);
 	if (!stde->pps_sizeofname)
 		return;
 	DPRINTF("name: %s\n",name);
@@ -416,8 +415,9 @@ STORAGE_init_storage(HFILE hf) {
 	/* block 1 is the root directory entry */
 	memset(block,0x00,sizeof(block));
 	stde = (struct storage_pps_entry*)block;
-	lstrcpyAtoW(stde->pps_rawname,"RootEntry");
-	stde->pps_sizeofname	= lstrlenW(stde->pps_rawname)*2+2;
+        MultiByteToWideChar( CP_ACP, 0, "RootEntry", -1, stde->pps_rawname,
+                             sizeof(stde->pps_rawname)/sizeof(WCHAR));
+	stde->pps_sizeofname	= (strlenW(stde->pps_rawname)+1) * sizeof(WCHAR);
 	stde->pps_type		= 5;
 	stde->pps_dir		= -1;
 	stde->pps_next		= -1;
@@ -1351,8 +1351,9 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 	}
 	assert(STORAGE_put_pps_entry(lpstg->hf,x,&stde));
 	assert(1==STORAGE_get_pps_entry(lpstg->hf,ppsent,&(lpstg->stde)));
-	lstrcpyAtoW(lpstg->stde.pps_rawname,pwcsName);
-	lpstg->stde.pps_sizeofname = strlen(pwcsName)*2+2;
+        MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, lpstg->stde.pps_rawname,
+                             sizeof(lpstg->stde.pps_rawname)/sizeof(WCHAR));
+	lpstg->stde.pps_sizeofname = (strlenW(lpstg->stde.pps_rawname)+1)*sizeof(WCHAR);
 	lpstg->stde.pps_next	= -1;
 	lpstg->stde.pps_prev	= -1;
 	lpstg->stde.pps_dir	= -1;
@@ -1404,8 +1405,9 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 	stde.pps_next = ppsent;
 	assert(STORAGE_put_pps_entry(lpstr->hf,x,&stde));
 	assert(1==STORAGE_get_pps_entry(lpstr->hf,ppsent,&(lpstr->stde)));
-	lstrcpyAtoW(lpstr->stde.pps_rawname,pwcsName);
-	lpstr->stde.pps_sizeofname = strlen(pwcsName)*2+2;
+        MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, lpstr->stde.pps_rawname,
+                             sizeof(lpstr->stde.pps_rawname)/sizeof(WCHAR));
+	lpstr->stde.pps_sizeofname = (strlenW(lpstr->stde.pps_rawname)+1) * sizeof(WCHAR);
 	lpstr->stde.pps_next	= -1;
 	lpstr->stde.pps_prev	= -1;
 	lpstr->stde.pps_dir	= -1;
@@ -1439,7 +1441,7 @@ HRESULT WINAPI IStorage16_fnOpenStorage(
 	lpstg = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstg);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstg->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
-	lstrcpyAtoW(name,pwcsName);
+        MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
 	newpps = STORAGE_look_for_named_pps(lpstg->hf,This->stde.pps_dir,name);
 	if (newpps==-1) {
 		IStream16_fnRelease((IStream16*)lpstg);
@@ -1474,7 +1476,7 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
-	lstrcpyAtoW(name,pwcsName);
+        MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
 	newpps = STORAGE_look_for_named_pps(lpstr->hf,This->stde.pps_dir,name);
 	if (newpps==-1) {
 		IStream16_fnRelease((IStream16*)lpstr);

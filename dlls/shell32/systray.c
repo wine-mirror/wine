@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wine/winestring.h"
+#include "winnls.h"
 #include "shlobj.h"
 #include "shellapi.h"
 #include "shell32_main.h"
@@ -365,8 +365,8 @@ BOOL WINAPI Shell_NotifyIconW (DWORD dwMessage, PNOTIFYICONDATAW pnid )
 
 	PNOTIFYICONDATAA p = HeapAlloc(GetProcessHeap(),0,sizeof(NOTIFYICONDATAA));
 	memcpy(p, pnid, sizeof(NOTIFYICONDATAA));
-	if (*(pnid->szTip))
-	  lstrcpynWtoA (p->szTip, pnid->szTip, 64 );
+        WideCharToMultiByte( CP_ACP, 0, pnid->szTip, -1, p->szTip, sizeof(p->szTip), NULL, NULL );
+        p->szTip[sizeof(p->szTip)-1] = 0;
 
 	ret = Shell_NotifyIconA(dwMessage, p );
 

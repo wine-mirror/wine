@@ -12,12 +12,12 @@
 
 #include "winbase.h"
 #include "windef.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "vfw.h"
 #include "vfw16.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "debugtools.h"
 #include "ldt.h"
 #include "heap.h"
@@ -546,10 +546,9 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			COPY(ici,dwFlags);
 			COPY(ici,dwVersion);
 			COPY(ici,dwVersionICM);
-			lstrcpynAtoW(ici->szName,ici16->szName,16);
-			lstrcpynAtoW(ici->szDescription,ici16->szDescription,128);
-			lstrcpynAtoW(ici->szDriver,ici16->szDriver,128);
-
+                        MultiByteToWideChar( CP_ACP, 0, ici16->szName, -1, ici->szName, 16 );
+                        MultiByteToWideChar( CP_ACP, 0, ici16->szDescription, -1, ici->szDescription, 128 );
+                        MultiByteToWideChar( CP_ACP, 0, ici16->szDriver, -1, ici->szDriver, 128 );
 			*lParam1 = (DWORD)(ici);
 			*lParam2 = sizeof(ICINFO);
 		}
@@ -718,8 +717,12 @@ void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPDWORD lP
 			UNCOPY(ici,dwFlags);
 			UNCOPY(ici,dwVersion);
 			UNCOPY(ici,dwVersionICM);
-			lstrcpynWtoA(ici16->szName,ici->szName,16);
-			lstrcpynWtoA(ici16->szDescription,ici->szDescription,128);
+                        WideCharToMultiByte( CP_ACP, 0, ici->szName, -1, ici16->szName,
+                                             sizeof(ici16->szName), NULL, NULL );
+                        ici16->szName[sizeof(ici16->szName)-1] = 0;
+                        WideCharToMultiByte( CP_ACP, 0, ici->szDescription, -1, ici16->szDescription,
+                                             sizeof(ici16->szDescription), NULL, NULL );
+                        ici16->szDescription[sizeof(ici16->szDescription)-1] = 0;
 			/* This just gives garbage for some reason - BB
 			   lstrcpynWtoA(ici16->szDriver,ici->szDriver,128);*/
 

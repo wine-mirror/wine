@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
-#include "wine/winestring.h"
+#include "winnls.h"
+#include "winerror.h"
 #include "process.h"
 #include "heap.h"
 #include "selectors.h"
-#include "winerror.h"
 
 /* Format of an environment block:
  * ASCIIZ   string 1 (xx=yy format)
@@ -259,7 +259,8 @@ DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
     HeapFree( GetProcessHeap(), 0, name );
     if (val)
     {
-        lstrcpynAtoW( valW, val, size );
+        if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, val, -1, valW, size ))
+            valW[size-1] = 0;
         HeapFree( GetProcessHeap(), 0, val );
     }
     return res;
@@ -416,7 +417,7 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     DWORD ret  = ExpandEnvironmentStringsA( srcA, dstA, len );
     if (dstA)
     {
-        lstrcpyAtoW( dst, dstA );
+        ret = MultiByteToWideChar( CP_ACP, 0, dstA, -1, dst, len );
         HeapFree( GetProcessHeap(), 0, dstA );
     }
     HeapFree( GetProcessHeap(), 0, srcA );

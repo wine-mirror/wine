@@ -7,15 +7,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "wine/winestring.h"
+#include "winerror.h"
+#include "winnls.h"
 #include "font.h"
 #include "heap.h"
 #include "metafile.h"
 #include "options.h"
 #include "debugtools.h"
-#include "winerror.h"
 #include "gdi.h"
-#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(font);
 DECLARE_DEBUG_CHANNEL(gdi);
@@ -126,7 +125,9 @@ void FONT_LogFont32WTo16( const LOGFONTW* font32, LPLOGFONT16 font16 )
     font16->lfClipPrecision = font32->lfClipPrecision;
     font16->lfQuality = font32->lfQuality;
     font16->lfPitchAndFamily = font32->lfPitchAndFamily;
-    lstrcpynWtoA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
+    WideCharToMultiByte( CP_ACP, 0, font32->lfFaceName, -1,
+                         font16->lfFaceName, LF_FACESIZE, NULL, NULL );
+    font16->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
 void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
@@ -162,7 +163,8 @@ void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
     font32->lfClipPrecision = font16->lfClipPrecision;
     font32->lfQuality = font16->lfQuality;
     font32->lfPitchAndFamily = font16->lfPitchAndFamily;
-    lstrcpynAtoW( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
+    MultiByteToWideChar( CP_ACP, 0, font16->lfFaceName, -1, font32->lfFaceName, LF_FACESIZE );
+    font32->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
 void FONT_EnumLogFontEx16To32A( const LPENUMLOGFONTEX16 font16, LPENUMLOGFONTEXA font32 )
@@ -176,9 +178,13 @@ void FONT_EnumLogFontEx16To32A( const LPENUMLOGFONTEX16 font16, LPENUMLOGFONTEXA
 void FONT_EnumLogFontEx16To32W( const LPENUMLOGFONTEX16 font16, LPENUMLOGFONTEXW font32 )
 {
     FONT_LogFont16To32W( (LPLOGFONT16)font16, (LPLOGFONTW)font32);
-    lstrcpynAtoW( font32->elfFullName, font16->elfFullName, LF_FULLFACESIZE );
-    lstrcpynAtoW( font32->elfStyle, font16->elfStyle, LF_FACESIZE );
-    lstrcpynAtoW( font32->elfScript, font16->elfScript, LF_FACESIZE );
+
+    MultiByteToWideChar( CP_ACP, 0, font16->elfFullName, -1, font32->elfFullName, LF_FULLFACESIZE );
+    font32->elfFullName[LF_FULLFACESIZE-1] = 0;
+    MultiByteToWideChar( CP_ACP, 0, font16->elfStyle, -1, font32->elfStyle, LF_FACESIZE );
+    font32->elfStyle[LF_FACESIZE-1] = 0;
+    MultiByteToWideChar( CP_ACP, 0, font16->elfScript, -1, font32->elfScript, LF_FACESIZE );
+    font32->elfScript[LF_FACESIZE-1] = 0;
 }
 
 /***********************************************************************
@@ -603,7 +609,11 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCEXW efp
 	if( plf->lfFaceName[0] )
 	{
 	    if( dwUnicode )
-		lstrcpynWtoA( lf16.lfFaceName, plf->lfFaceName, LF_FACESIZE );
+            {
+                WideCharToMultiByte( CP_ACP, 0, plf->lfFaceName, -1,
+                                     lf16.lfFaceName, LF_FACESIZE, NULL, NULL );
+                lf16.lfFaceName[LF_FACESIZE-1] = 0;
+            }
 	    else
 		lstrcpynA( lf16.lfFaceName, (LPCSTR)plf->lfFaceName, LF_FACESIZE );
 	}
@@ -846,7 +856,7 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 {
     LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, count );
     INT res = GetTextFaceA(hdc,count,nameA);
-    if (name) lstrcpyAtoW( name, nameA );
+    if (name) res = MultiByteToWideChar( CP_ACP, 0, nameA, -1, name, count );
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;
 }
@@ -973,15 +983,12 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
 				   INT maxExt, LPINT lpnFit,
 				   LPINT alpDx, LPSIZE size )
 {
-    LPWSTR p;
     BOOL ret;
 
-  /* Docs say str should be 0 terminated here, but we'll use count just in case
-   */ 
-
-    p = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(WCHAR) );
-    lstrcpynAtoW(p, str, count+1);
-    ret = GetTextExtentExPointW( hdc, p, count, maxExt, lpnFit, alpDx, size);
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
+    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, str, count, p, len );
+    ret = GetTextExtentExPointW( hdc, p, len, maxExt, lpnFit, alpDx, size);
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }

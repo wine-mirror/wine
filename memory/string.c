@@ -307,33 +307,6 @@ INT WINAPI lstrlenW( LPCWSTR str )
 
 
 /***********************************************************************
- *           lstrcpynAtoW   (Not a Windows API)
- * Note: this function differs from the UNIX strncpy, it _always_ writes
- * a terminating \0
- */
-LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT n )
-{
-    if (n > 0 && !MultiByteToWideChar( CP_ACP, 0, src, -1, dst, n )) dst[n-1] = 0;
-    return dst;
-}
-
-
-/***********************************************************************
- *           lstrcpynWtoA   (Not a Windows API)
- * Note: this function differs from the UNIX strncpy, it _always_ writes
- * a terminating \0
- *
- * The terminating zero should be written at the end of the string, not
- * the end of the buffer, as some programs specify the wrong size for 
- * the buffer (eg. winnt's sol.exe)
- */
-LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT n )
-{
-    if (n > 0 && !WideCharToMultiByte( CP_ACP, 0, src, -1, dst, n, NULL, NULL )) dst[n-1] = 0;
-    return dst;
-}
-
-/***********************************************************************
  *           UnicodeToAnsi   (KERNEL.434)
  */
 INT16 WINAPI UnicodeToAnsi16( LPCWSTR src, LPSTR dst, INT16 codepage )

@@ -8,7 +8,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "debugtools.h"
 #include "objbase.h"
 #include "wine/obj_storage.h"
@@ -336,7 +335,7 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
     HRESULT res;
     LPOLESTR filePathW=This->filePathName;
     CHAR*     filePathA;
-    DWORD  len=1+lstrlenW(filePathW);
+    DWORD  len;
 
     DWORD  constant1 = 0xDEADFFFF; /* these constants are detected after analysing the data structure writen by */
     WORD   constant2 = 0x3;        /* FileMoniker_Save function in a windows program system */
@@ -355,11 +354,12 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
     res=IStream_Write(pStm,&zero,sizeof(WORD),NULL);
 
     /* write length of filePath string ( "\0" included )*/
+    len = WideCharToMultiByte( CP_ACP, 0, filePathW, -1, NULL, 0, NULL, NULL );
     res=IStream_Write(pStm,&len,sizeof(DWORD),NULL);
 
     /* write filePath string type A */
     filePathA=HeapAlloc(GetProcessHeap(),0,len);
-    lstrcpyWtoA(filePathA,filePathW);
+    WideCharToMultiByte( CP_ACP, 0, filePathW, -1, filePathA, len, NULL, NULL );
     res=IStream_Write(pStm,filePathA,len,NULL);
     HeapFree(GetProcessHeap(),0,filePathA);
 

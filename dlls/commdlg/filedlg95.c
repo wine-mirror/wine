@@ -40,7 +40,7 @@
 
 #include "winbase.h"
 #include "ntddk.h"
-#include "wine/winestring.h"
+#include "winnls.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
@@ -49,7 +49,6 @@
 #include "debugtools.h"
 #include "cderr.h"
 #include "tweak.h"
-#include "winnls.h"
 #include "shellapi.h"
 #include "shlguid.h"
 #include "filedlgbrowser.h"
@@ -336,9 +335,10 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 #define AllocInArgWtoA(arg, save) \
   if(arg) \
   { \
+    DWORD _len = WideCharToMultiByte( CP_ACP, 0, arg, -1, NULL, 0, NULL, NULL ); \
     save = arg; \
-    arg =  MemAlloc(lstrlenW(arg)); \
-    lstrcpyWtoA((LPSTR)arg, save); \
+    arg =  MemAlloc(_len); \
+    WideCharToMultiByte( CP_ACP, 0, save, -1, (LPSTR)arg, _len, NULL, NULL ); \
   }
 
 #define FreeInArg(arg, save) \
@@ -359,7 +359,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 #define FreeOutArg(arg, save, len) \
   if(arg) \
   { \
-    lstrcpynAtoW(save, (LPCSTR)arg, len); \
+    MultiByteToWideChar( CP_ACP, 0, (LPCSTR)(arg), -1, (save), (len) ); \
     MemFree(arg); \
     arg = save; \
   }
@@ -396,26 +396,20 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   if (ofn->lpstrFilter)
   {
     LPCWSTR  s;
-    LPSTR x, y;
-    int n;
+    LPSTR y;
+    int n, len;
 
     lpstrFilter = ofn->lpstrFilter;
 
     /* filter is a list...  title\0ext\0......\0\0 */
     s = ofn->lpstrFilter;
     
-    while (*s) s = s+lstrlenW(s)+1;
+    while (*s) s = s+strlenW(s)+1;
     s++;
     n = s - ofn->lpstrFilter; /* already divides by 2. ptr magic */
-    x = y = (LPSTR)MemAlloc(n);
-    s = (LPWSTR)ofn->lpstrFilter;
-    while (*s)
-    {
-      lstrcpyWtoA(x,s);
-      x+=strlen(x)+1;
-      s+=lstrlenW(s)+1;
-    }
-    *x=0;
+    len = WideCharToMultiByte( CP_ACP, 0, ofn->lpstrFilter, n, NULL, 0, NULL, NULL );
+    y = (LPSTR)MemAlloc(len);
+    WideCharToMultiByte( CP_ACP, 0, ofn->lpstrFilter, n, y, len, NULL, NULL );
     (LPSTR)ofn->lpstrFilter = y;
   }
 
@@ -423,24 +417,18 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   if (ofn->lpstrCustomFilter)
   {
     LPWSTR  s;
-    LPSTR x,y;
-    int n;
+    LPSTR y;
+    int n, len;
 
     lpstrCustomFilter = ofn->lpstrCustomFilter;
     /* filter is a list...  title\0ext\0......\0\0 */
     s = ofn->lpstrCustomFilter;
-    while (*s) s = s+lstrlenW(s)+1;
+    while (*s) s = s+strlenW(s)+1;
     s++;
     n = s - ofn->lpstrCustomFilter;
-    x = y = (LPSTR)MemAlloc(n);
-    s = ofn->lpstrCustomFilter;
-    while (*s)
-    {
-      lstrcpyWtoA(x,s);
-      x+=strlen(x)+1;
-      s+=lstrlenW(s)+1;
-    }
-    *x=0;
+    len = WideCharToMultiByte( CP_ACP, 0, ofn->lpstrCustomFilter, n, NULL, 0, NULL, NULL );
+    y = (LPSTR)MemAlloc(len);
+    WideCharToMultiByte( CP_ACP, 0, ofn->lpstrCustomFilter, n, y, len, NULL, NULL );
     (LPSTR)ofn->lpstrCustomFilter = y;
   }
 
@@ -1362,10 +1350,15 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       if (!lpszTemp) break; /* end of path */
 
       if(*lpszTemp)
-        lstrcpynAtoW(lpwstrTemp, lpszTemp1, lpszTemp - lpszTemp1);
+      {
+          DWORD len = MultiByteToWideChar( CP_ACP, 0, lpszTemp1, lpszTemp - lpszTemp1,
+                                           lpwstrTemp, MAX_PATH );
+          lpwstrTemp[len] = 0;
+      }
       else
       {
-        lstrcpyAtoW(lpwstrTemp, lpszTemp1);	/* last element */
+          MultiByteToWideChar( CP_ACP, 0, lpszTemp1, -1,
+                               lpwstrTemp, sizeof(lpwstrTemp)/sizeof(WCHAR) );
 
 	/* if the last element is a wildcard do a search */
         if(strpbrk(lpszTemp1, "*?") != NULL)
@@ -1450,12 +1443,15 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       {
         int iPos;
         LPSTR lpszTemp = COMDLG32_PathFindFileNameA(lpstrPathAndFile);
+        DWORD len;
 
         /* replace the current filter */
         if(fodInfos->ShellInfos.lpstrCurrentFilter)
 	  MemFree((LPVOID)fodInfos->ShellInfos.lpstrCurrentFilter);
-        fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc((strlen(lpszTemp)+1)*sizeof(WCHAR));
- 	lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter, lpszTemp);
+        len = MultiByteToWideChar( CP_ACP, 0, lpszTemp, -1, NULL, 0 );
+        fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc(len * sizeof(WCHAR));
+        MultiByteToWideChar( CP_ACP, 0, lpszTemp, -1,
+                             fodInfos->ShellInfos.lpstrCurrentFilter, len );
 
         /* set the filter cb to the extension when possible */
         if(-1 < (iPos = FILEDLG95_FILETYPE_SearchExt(fodInfos->DlgInfos.hwndFileTypeCB, lpszTemp)))
@@ -1755,9 +1751,12 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
 
     if(lpstrFilter)
     {
+      DWORD len;
       _strlwr(lpstrFilter);	/* lowercase */
-      fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc((strlen(lpstrFilter)+1)*2);
-      lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter, lpstrFilter);
+      len = MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1, NULL, 0 );
+      fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc( len * sizeof(WCHAR) );
+      MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1,
+                           fodInfos->ShellInfos.lpstrCurrentFilter, len );
     }
   }
   return NOERROR;
@@ -1793,9 +1792,13 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
                                              iItem);
       if((int)lpstrFilter != CB_ERR)
       {
-        fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc((strlen(lpstrFilter)+1)*2);
-        lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter,_strlwr(lpstrFilter));
-        SendCustomDlgNotificationMessage(hwnd,CDN_TYPECHANGE);
+          DWORD len;
+          _strlwr(lpstrFilter); /* lowercase */
+          len = MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1, NULL, 0 );
+          fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc( len * sizeof(WCHAR) );
+          MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1,
+                               fodInfos->ShellInfos.lpstrCurrentFilter, len );
+          SendCustomDlgNotificationMessage(hwnd,CDN_TYPECHANGE);
       }
 
       /* Refresh the actual view to display the included items*/

@@ -16,11 +16,11 @@
 #include <assert.h>
 
 #include "windef.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "wine/keyboard16.h"
 #include "win.h"
 #include "heap.h"
@@ -734,9 +734,9 @@ INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
  */
 INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
-	char buf[9];
+        char buf[KL_NAMELENGTH];
 	int res = GetKeyboardLayoutNameA(buf);
-	lstrcpyAtoW(pwszKLID,buf);
+        MultiByteToWideChar( CP_ACP, 0, buf, -1, pwszKLID, KL_NAMELENGTH );
 	return res;
 }
 
@@ -758,7 +758,8 @@ INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 	if(buf == NULL) return 0; /* FIXME: is this the correct failure value?*/
 	res = GetKeyNameTextA(lParam,buf,nSize);
 
-	lstrcpynAtoW(lpBuffer,buf,nSize);
+        if (nSize > 0 && !MultiByteToWideChar( CP_ACP, 0, buf, -1, lpBuffer, nSize ))
+            lpBuffer[nSize-1] = 0;
 	HeapFree( GetProcessHeap(), 0, buf );
 	return res;
 }
@@ -876,7 +877,7 @@ HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
     char buf[9];
     
-    lstrcpynWtoA(buf,pwszKLID,8);
+    WideCharToMultiByte( CP_ACP, 0, pwszKLID, -1, buf, sizeof(buf), NULL, NULL );
     buf[8] = 0;
     return LoadKeyboardLayoutA(buf, Flags);
 }

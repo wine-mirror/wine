@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "windef.h"
-#include "wine/winestring.h"
 #include "metafiledrv.h"
 #include "debugtools.h"
 #include "heap.h"
@@ -69,6 +68,7 @@ MFDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     BOOL	ret;
     int		i;
     LPSTR       ascii;
+    DWORD len;
 
     if(lpDx)
         lpdx16 = HeapAlloc( GetProcessHeap(), 0, sizeof(INT16)*count );
@@ -76,9 +76,10 @@ MFDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     if (lpdx16)
         for (i=count;i--;)
 	    lpdx16[i]=lpDx[i];
-    ascii = HeapAlloc( GetProcessHeap(), 0, count+1 );
-    lstrcpynWtoA(ascii, str, count+1);
-    ret = MFDRV_MetaExtTextOut(dc,x,y,flags,lprect?&rect16:NULL,ascii,count,
+    len = WideCharToMultiByte( CP_ACP, 0, str, count, NULL, 0, NULL, NULL );
+    ascii = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, str, count, ascii, len, NULL, NULL );
+    ret = MFDRV_MetaExtTextOut(dc,x,y,flags,lprect?&rect16:NULL,ascii,len,
 			       lpdx16);
     HeapFree( GetProcessHeap(), 0, ascii );
     if (lpdx16)	HeapFree( GetProcessHeap(), 0, lpdx16 );

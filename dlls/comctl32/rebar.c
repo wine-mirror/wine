@@ -44,7 +44,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -1567,7 +1566,11 @@ REBAR_GetBandInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
       if (lpBand->lpText && (lpBand->fMask & RBBIM_TEXT))
-	lstrcpynWtoA (lprbbi->lpText, lpBand->lpText, lprbbi->cch);
+      {
+          if (!WideCharToMultiByte( CP_ACP, 0, lpBand->lpText, -1,
+                                    lprbbi->lpText, lprbbi->cch, NULL, NULL ))
+              lprbbi->lpText[lprbbi->cch-1] = 0;
+      }
       else 
 	*lprbbi->lpText = 0;
     }
@@ -1958,10 +1961,10 @@ REBAR_InsertBandA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     REBAR_CommonSetupBand (hwnd, lprbbi, lpBand);
     lpBand->lpText = NULL;
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
-	INT len = lstrlenA (lprbbi->lpText);
-	if (len > 0) {
-	    lpBand->lpText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyAtoW (lpBand->lpText, lprbbi->lpText);
+        INT len = MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, NULL, 0 );
+        if (len > 1) {
+            lpBand->lpText = (LPWSTR)COMCTL32_Alloc (len*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, lpBand->lpText, len );
 	}
     }
 
@@ -2121,9 +2124,9 @@ REBAR_SetBandInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    lpBand->lpText = NULL;
 	}
 	if (lprbbi->lpText) {
-	    INT len = lstrlenA (lprbbi->lpText);
-	    lpBand->lpText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyAtoW (lpBand->lpText, lprbbi->lpText);
+            INT len = MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, NULL, 0 );
+            lpBand->lpText = (LPWSTR)COMCTL32_Alloc (len*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, lpBand->lpText, len );
 	}
     }
 

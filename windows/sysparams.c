@@ -9,10 +9,10 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winreg.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "winerror.h"
 
 #include "keyboard.h"
@@ -73,7 +73,8 @@ static void SYSPARAMS_LogFont32ATo32W( const LOGFONTA* font32A, LPLOGFONTW font3
     font32W->lfClipPrecision = font32A->lfClipPrecision;
     font32W->lfQuality = font32A->lfQuality;
     font32W->lfPitchAndFamily = font32A->lfPitchAndFamily;
-    lstrcpynAtoW( font32W->lfFaceName, font32A->lfFaceName, LF_FACESIZE );
+    MultiByteToWideChar( CP_ACP, 0, font32A->lfFaceName, -1, font32W->lfFaceName, LF_FACESIZE );
+    font32W->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
 static void SYSPARAMS_NonClientMetrics32ATo16( const NONCLIENTMETRICSA* lpnm32, LPNONCLIENTMETRICS16 lpnm16 )
@@ -639,7 +640,9 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
 	char buffer[256];
 	if (pvParam)
-	    lstrcpynWtoA( buffer, (LPWSTR)pvParam, sizeof(buffer) );
+            if (!WideCharToMultiByte( CP_ACP, 0, (LPWSTR)pvParam, -1,
+                                      buffer, sizeof(buffer), NULL, NULL ))
+                buffer[sizeof(buffer)-1] = 0;
 	ret = SystemParametersInfoA( uiAction, uiParam, pvParam ? buffer : NULL, fuWinIni );
 	break;
     }

@@ -9,7 +9,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "module.h"
 #include "debugtools.h"
 
@@ -47,7 +46,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
     case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
                   *((WORD *)dialog16)++ = *((WORD *)p)++; break;
-    default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
+    default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                   ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                   ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
                   break;
@@ -59,14 +58,14 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
     case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
                   *((WORD *)dialog16)++ = *((WORD *)p)++; break;
-    default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
+    default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                   ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                   ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
                   break;
     }
 
     /* Transfer window caption */
-    lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
+    WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
     ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
     ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
 
@@ -79,7 +78,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
             *((WORD *)dialog16)++ = *((WORD *)p)++; /* weight */
             *((WORD *)dialog16)++ = *((WORD *)p)++; /* italic */
         }
-        lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );  /* faceName */
+        WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );  /* faceName */
         ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
         ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
     }
@@ -121,7 +120,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
         case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
         case 0xffff:  ((WORD *)p)++; 
                       *((BYTE *)dialog16)++ = (BYTE)*((WORD *)p)++; break;
-        default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
+        default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                       ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                       ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
                       break;
@@ -133,7 +132,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
         case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
         case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
                       *((WORD *)dialog16)++ = *((WORD *)p)++; break;
-        default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
+        default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                       ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                       ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
                       break;
@@ -296,7 +295,7 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
             else
                 level++;
        
-            lstrcpyWtoA( (LPSTR)menu16, (LPWSTR)p );
+            WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)menu16, 0x7fffffff, NULL,NULL );
             ((LPSTR)menu16) += strlen( (LPSTR)menu16 ) + 1;
             ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
 
@@ -310,7 +309,7 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
             *((WORD *)menu16)++ = (WORD)*((DWORD *)p)++; /* ID */
             flags = *((BYTE *)menu16)++ = (BYTE)*((WORD *)p)++;  
        
-            lstrcpyWtoA( (LPSTR)menu16, (LPWSTR)p );
+            WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)menu16, 0x7fffffff, NULL,NULL );
             ((LPSTR)menu16) += strlen( (LPSTR)menu16 ) + 1;
             ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
 

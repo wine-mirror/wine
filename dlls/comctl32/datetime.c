@@ -18,7 +18,6 @@
 
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winestring.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -307,10 +306,10 @@ DATETIME_SetFormatW (HWND hwnd, WPARAM wParam, LPARAM lParam)
  if (lParam) {
 	LPSTR buf;
 	int retval;
- 	int len = lstrlenW ((LPWSTR) lParam)+1;
+        int len = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1, NULL, 0, NULL, NULL );
 
  	buf = (LPSTR) COMCTL32_Alloc (len);
- 	lstrcpyWtoA (buf, (LPWSTR) lParam);
+        WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1, buf, len, NULL, NULL );
 	retval=DATETIME_SetFormat (hwnd, 0, (LPARAM) buf);
 	COMCTL32_Free (buf);
 	return retval;

@@ -11,13 +11,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "windef.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "windowsx.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "dialog.h"
 #include "drive.h"
 #include "heap.h"
@@ -2196,7 +2196,11 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
     }
     else ptr = buffer;
 
-    if (unicode) lstrcpynAtoW( (LPWSTR)str, ptr, len );
+    if (unicode)
+    {
+        if (len > 0 && !MultiByteToWideChar( CP_ACP, 0, ptr, -1, (LPWSTR)str, len ))
+            ((LPWSTR)str)[len-1] = 0;
+    }
     else lstrcpynA( str, ptr, len );
     SEGPTR_FREE( buffer );
     TRACE("Returning %d '%s'\n", ret, str );
@@ -2317,7 +2321,7 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
         LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
         INT ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic,
                                        attrib, combo );
-        lstrcpyAtoW( spec, specA );
+        MultiByteToWideChar( CP_ACP, 0, specA, -1, spec, 0x7fffffff );
         HeapFree( GetProcessHeap(), 0, specA );
         return ret;
     }

@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "winerror.h"
 #include "heap.h"
 #include "neexe.h"
@@ -1212,7 +1211,8 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
 {
     LPSTR fnA = (char*)HeapAlloc( GetProcessHeap(), 0, size );
     DWORD res = GetModuleFileNameA( hModule, fnA, size );
-    lstrcpynAtoW( lpFileName, fnA, size );
+    if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, fnA, -1, lpFileName, size ))
+        lpFileName[size-1] = 0;
     HeapFree( GetProcessHeap(), 0, fnA );
     return res;
 }

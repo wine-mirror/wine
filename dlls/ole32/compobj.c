@@ -18,7 +18,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 #include "wownt32.h"
 #include "ole2ver.h"
 #include "debugtools.h"
@@ -632,8 +631,9 @@ HRESULT WINAPI StringFromCLSID(
 
 	ret=WINE_StringFromCLSID(id,buf);
 	if (!ret) {
-		*idstr = IMalloc_Alloc(mllc,strlen(buf)*2+2);
-		lstrcpyAtoW(*idstr,buf);
+            DWORD len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
+            *idstr = IMalloc_Alloc( mllc, len * sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, buf, -1, *idstr, len );
 	}
 	return ret;
 }
@@ -655,10 +655,7 @@ StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
 
   if (WINE_StringFromCLSID(id,xguid))
   	return 0;
-  if (strlen(xguid)>=cmax)
-  	return 0;
-  lstrcpyAtoW(str,xguid);
-  return strlen(xguid) + 1;
+  return MultiByteToWideChar( CP_ACP, 0, xguid, -1, str, cmax );
 }
 
 /******************************************************************************
@@ -701,8 +698,9 @@ HRESULT WINAPI ProgIDFromCLSID(
         ret = E_OUTOFMEMORY;
       else
       {
-        *lplpszProgID = IMalloc_Alloc(mllc, (buf2len+1)*2);
-        lstrcpyAtoW(*lplpszProgID, buf2);
+          DWORD len = MultiByteToWideChar( CP_ACP, 0, buf2, -1, NULL, 0 );
+          *lplpszProgID = IMalloc_Alloc(mllc, len * sizeof(WCHAR) );
+          MultiByteToWideChar( CP_ACP, 0, buf2, -1, *lplpszProgID, len );
       }
     }
     HeapFree(GetProcessHeap(), 0, buf2);
@@ -2003,7 +2001,7 @@ HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
   if (RegQueryValueA(hkey,"AutoConvertTo",buf,&len))
       return REGDB_E_KEYMISSING;
   RegCloseKey(hkey);
-  lstrcpyAtoW(wbuf,buf);
+  MultiByteToWideChar( CP_ACP, 0, buf, -1, wbuf, sizeof(wbuf)/sizeof(WCHAR) );
   CLSIDFromString(wbuf,pClsidNew);
   return S_OK;
 }

@@ -13,7 +13,6 @@
 #include "global.h"
 #include "enhmetafile.h"
 #include "enhmetafiledrv.h"
-#include "wine/winestring.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile);
@@ -211,7 +210,7 @@ HDC WINAPI CreateEnhMetaFileA(
     LPWSTR filenameW = NULL;
     LPWSTR descriptionW = NULL;
     HDC hReturnDC;
-    DWORD len1, len2;
+    DWORD len1, len2, total;
 
     if(filename) 
         filenameW = HEAP_strdupAtoW( GetProcessHeap(), 0, filename );
@@ -219,10 +218,9 @@ HDC WINAPI CreateEnhMetaFileA(
     if(description) {
         len1 = strlen(description);
 	len2 = strlen(description + len1 + 1);
-	descriptionW = HeapAlloc( GetProcessHeap(), 0, (len1 + len2 + 3) * 2);
-	lstrcpyAtoW(descriptionW, description );
-	lstrcpyAtoW(descriptionW + len1 + 1 , description + len1 + 1);
-	*(descriptionW + len1 + len2 + 2) = 0;
+        total = MultiByteToWideChar( CP_ACP, 0, description, len1 + len2 + 3, NULL, 0 );
+	descriptionW = HeapAlloc( GetProcessHeap(), 0, total * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, description, len1 + len2 + 3, descriptionW, total );
     }
 
     hReturnDC = CreateEnhMetaFileW(hdc, filenameW, rect, descriptionW);

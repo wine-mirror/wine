@@ -16,7 +16,6 @@
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "wine/winestring.h"
 #include "wine/undocshell.h"
 #include "shell32_main.h"
 #include "shellapi.h"
@@ -290,7 +289,8 @@ HRESULT WINAPI SHILCreateFromPathA (LPCSTR path, LPITEMIDLIST * ppidl, DWORD * a
 	
 	TRACE_(shell)("%s %p 0x%08lx\n",path,ppidl,attributes?*attributes:0);
 
-	lstrcpynAtoW(lpszDisplayName, path, MAX_PATH);
+        if (!MultiByteToWideChar( CP_ACP, 0, path, -1, lpszDisplayName, MAX_PATH ))
+            lpszDisplayName[MAX_PATH-1] = 0;
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
@@ -764,7 +764,8 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPCWSTR lpszPath)
 	char	lpszTemp[MAX_PATH];
 	TRACE("path=%s\n",debugstr_w(lpszPath));
 
-	lstrcpynWtoA(lpszTemp, lpszPath, MAX_PATH);	
+        if (!WideCharToMultiByte( CP_ACP, 0, lpszPath, -1, lpszTemp, sizeof(lpszTemp), NULL, NULL ))
+            lpszTemp[sizeof(lpszTemp)-1] = 0;
 
 	return SHSimpleIDListFromPathA (lpszTemp);
 }
@@ -927,8 +928,12 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	       _ILGetFileDateTime( pidl, &(pfd->ftLastWriteTime));
 	       pfd->dwFileAttributes = _ILGetFileAttributes(pidl, NULL, 0);
 	       pfd->nFileSizeLow = _ILGetFileSize ( pidl, NULL, 0);
-	       lstrcpynAtoW(pfd->cFileName,_ILGetTextPointer(pidl), MAX_PATH);
-	       lstrcpynAtoW(pfd->cAlternateFileName,_ILGetSTextPointer(pidl), 14);
+               if (!MultiByteToWideChar( CP_ACP, 0, _ILGetTextPointer(pidl), -1,
+                                         pfd->cFileName, MAX_PATH ))
+                   pfd->cFileName[MAX_PATH-1] = 0;
+               if (!MultiByteToWideChar( CP_ACP, 0, _ILGetSTextPointer(pidl), -1,
+                                         pfd->cAlternateFileName, 14 ))
+                   pfd->cFileName[13] = 0;
 	    }
 	    return NOERROR;
 	  case SHGDFIL_NETRESOURCE:
@@ -1002,7 +1007,7 @@ BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
 	TRACE_(shell)("(pidl=%p)\n", pidl);
 
 	SHGetPathFromIDListA (pidl, sTemp);
-	lstrcpyAtoW(pszPath, sTemp);
+        MultiByteToWideChar( CP_ACP, 0, sTemp, -1, pszPath, MAX_PATH );
 
 	TRACE_(shell)("-- (%s)\n",debugstr_w(pszPath));
 

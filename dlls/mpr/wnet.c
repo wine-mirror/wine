@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #include "winbase.h"
-#include "wine/winestring.h"
 #include "winnetwk.h"
 #include "drive.h"
 #include "heap.h"
@@ -370,14 +369,21 @@ DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName,
 DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName, 
                                  LPWSTR lpRemoteName, LPDWORD lpBufferSize )
 {
-    DWORD x;
     CHAR  buf[200];
+    DWORD x = sizeof(buf);
     LPSTR lnA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpLocalName );
     DWORD ret = WNetGetConnectionA( lnA, buf, &x );
-
-    lstrcpyAtoW( lpRemoteName, buf );
-    *lpBufferSize=lstrlenW( lpRemoteName );
     HeapFree( GetProcessHeap(), 0, lnA );
+    if (ret == WN_SUCCESS)
+    {
+        x = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
+        if (x > *lpBufferSize)
+        {
+            *lpBufferSize = x;
+            return WN_MORE_DATA;
+        }
+        *lpBufferSize = MultiByteToWideChar( CP_ACP, 0, buf, -1, lpRemoteName, *lpBufferSize );
+    }
     return ret;
 }
 

@@ -6,7 +6,7 @@
 
 #include "config.h"
 
-#include "wine/winestring.h"
+#include "winnls.h"
 #include "gdi.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -365,6 +365,7 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
   LPSTR ascii;
+  DWORD len;
 
   TRACE("(%p, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
 	dc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
@@ -383,9 +384,10 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
   
   row = (dc->DCOrgY + y) / physDev->cellHeight;
   col = (dc->DCOrgX + x) / physDev->cellWidth;
-  ascii = HeapAlloc( GetProcessHeap(), 0, count+1 );
-  lstrcpynWtoA(ascii, str, count+1);
-  mvwaddnstr(physDev->window, row, col, ascii, count);
+  len = WideCharToMultiByte( CP_ACP, 0, str, count, NULL, 0, NULL, NULL );
+  ascii = HeapAlloc( GetProcessHeap(), 0, len );
+  WideCharToMultiByte( CP_ACP, 0, str, count, ascii, len, NULL, NULL );
+  mvwaddnstr(physDev->window, row, col, ascii, len);
   HeapFree( GetProcessHeap(), 0, ascii );
   wrefresh(physDev->window);
 

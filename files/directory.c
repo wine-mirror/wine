@@ -20,7 +20,6 @@
 
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
@@ -272,8 +271,13 @@ UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
  */
 UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
-    if (path) lstrcpynAtoW( path, DIR_Windows.short_name, count );
-    return strlen( DIR_Windows.short_name );
+    UINT len = MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, NULL, 0 );
+    if (path && count)
+    {
+        if (!MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, path, count ))
+            path[count-1] = 0;
+    }
+    return len;
 }
 
 
@@ -319,8 +323,13 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
  */
 UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
-    if (path) lstrcpynAtoW( path, DIR_System.short_name, count );
-    return strlen( DIR_System.short_name );
+    UINT len = MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, NULL, 0 );
+    if (path && count)
+    {
+        if (!MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, path, count ))
+            path[count-1] = 0;
+    }
+    return len;
 }
 
 
@@ -711,13 +720,18 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
     HeapFree( GetProcessHeap(), 0, pathA );
     if (!ret) return 0;
 
-    lstrcpynAtoW( buffer, full_name.short_name, buflen );
+    if (buflen > 0 && !MultiByteToWideChar( CP_ACP, 0, full_name.short_name, -1, buffer, buflen ))
+        buffer[buflen-1] = 0;
     res = full_name.long_name +
               strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
     while (*res == '/') res++;
     if (buflen)
     {
-        if (buflen > 3) lstrcpynAtoW( buffer + 3, res, buflen - 3 ); 
+        if (buflen > 3)
+        {
+            if (!MultiByteToWideChar( CP_ACP, 0, res, -1, buffer+3, buflen-3 ))
+                buffer[buflen-1] = 0;
+        }
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart)
         {

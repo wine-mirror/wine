@@ -15,7 +15,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "process.h"
 #include "options.h"
 #include "debugtools.h"
@@ -450,7 +449,8 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
     v->dwMinorVersion = VersionData[ver].getVersionEx.dwMinorVersion;
     v->dwBuildNumber  = VersionData[ver].getVersionEx.dwBuildNumber;
     v->dwPlatformId   = VersionData[ver].getVersionEx.dwPlatformId;
-    lstrcpyAtoW( v->szCSDVersion, VersionData[ver].getVersionEx.szCSDVersion );
+    MultiByteToWideChar( CP_ACP, 0, VersionData[ver].getVersionEx.szCSDVersion, -1,
+                         v->szCSDVersion, sizeof(v->szCSDVersion)/sizeof(WCHAR) );
     return TRUE;
 }
 

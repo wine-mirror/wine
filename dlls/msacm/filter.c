@@ -7,8 +7,8 @@
  */
 
 #include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
@@ -57,7 +57,8 @@ MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd,
     if (mmr == MMSYSERR_NOERROR) {
 	pafd->dwFilterTag = afdw.dwFilterTag; 
 	pafd->fdwSupport = afdw.fdwSupport; 
-	lstrcpyWtoA(pafd->szFilter, afdw.szFilter);
+        WideCharToMultiByte( CP_ACP, 0, afdw.szFilter, -1, pafd->szFilter,
+                             sizeof(pafd->szFilter), NULL, NULL );
     }
     return mmr;
 }
@@ -136,7 +137,8 @@ static BOOL CALLBACK MSACM_FilterEnumCallbackWtoA(HACMDRIVERID hadid,
     pafei->pafda->dwFilterIndex = pafdw->dwFilterIndex; 
     pafei->pafda->dwFilterTag = pafdw->dwFilterTag; 
     pafei->pafda->fdwSupport = pafdw->fdwSupport; 
-    lstrcpyWtoA(pafei->pafda->szFilter, pafdw->szFilter);
+    WideCharToMultiByte( CP_ACP, 0, pafdw->szFilter, -1, pafei->pafda->szFilter,
+                         sizeof(pafei->pafda->szFilter), NULL, NULL );
 
     return (pafei->fnCallback)(hadid, pafei->pafda, 
 			       pafei->dwInstance, fdwSupport);
@@ -263,7 +265,8 @@ MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftd
 	paftda->cbFilterSize = aftdw.cbFilterSize; 
 	paftda->fdwSupport = aftdw.fdwSupport; 
 	paftda->cStandardFilters = aftdw.cStandardFilters; 
-	lstrcpyWtoA(paftda->szFilterTag, aftdw.szFilterTag);
+        WideCharToMultiByte( CP_ACP, 0, aftdw.szFilterTag, -1, paftda->szFilterTag,
+                             sizeof(paftda->szFilterTag), NULL, NULL );
     }
     return mmr;
 }
@@ -348,7 +351,8 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 
     if (mmr == MMSYSERR_NOERROR && 
 	paftd->dwFilterTag == WAVE_FORMAT_PCM && paftd->szFilterTag[0] == 0)
-	lstrcpyAtoW(paftd->szFilterTag, "PCM");
+        MultiByteToWideChar( CP_ACP, 0, "PCM", -1, paftd->szFilterTag,
+                             sizeof(paftd->szFilterTag)/sizeof(WCHAR) );
 
     return mmr;
 }
@@ -373,7 +377,8 @@ static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
     paftei->paftda->cbFilterSize = paftdw->cbFilterSize; 
     paftei->paftda->fdwSupport = paftdw->fdwSupport; 
     paftei->paftda->cStandardFilters = paftdw->cStandardFilters; 
-    lstrcpyWtoA(paftei->paftda->szFilterTag, paftdw->szFilterTag);
+    WideCharToMultiByte( CP_ACP, 0, paftdw->szFilterTag, -1, paftei->paftda->szFilterTag,
+                         sizeof(paftei->paftda->szFilterTag), NULL, NULL );
 
     return (paftei->fnCallback)(hadid, paftei->paftda, 
 				paftei->dwInstance, fdwSupport);

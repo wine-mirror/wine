@@ -26,14 +26,14 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winerror.h"
+#include "winnls.h"
 #include "servprov.h"
 #include "shlguid.h"
 #include "shlobj.h"
 #include "wine/undocshell.h"
 #include "shresdef.h"
 #include "debugtools.h"
-#include "winerror.h"
-#include "wine/winestring.h"
 
 #include "docobj.h"
 #include "pidl.h"
@@ -1242,7 +1242,8 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		ListView_GetItemA(This->hWndList, &lvItem);
 		
 		pidl = (LPITEMIDLIST)lpdi->item.lParam;
-		lstrcpynAtoW(wszNewName, lpdi->item.pszText, MAX_PATH);
+                if (!MultiByteToWideChar( CP_ACP, 0, lpdi->item.pszText, -1, wszNewName, MAX_PATH ))
+                    wszNewName[MAX_PATH-1] = 0;
 	        hr = IShellFolder_SetNameOf(This->pSFParent, 0, pidl, wszNewName, SHGDN_INFOLDER, &pidl);
 		
 		if(SUCCEEDED(hr) && pidl)

@@ -10,7 +10,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "dlgs.h"
 #include "heap.h"
 #include "ldt.h"
@@ -389,13 +388,9 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
 INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
     MSGBOXPARAMSA	msgboxa;
-    WARN("Messagebox\n");
-
     memcpy(&msgboxa,msgbox,sizeof(msgboxa));
-    if (msgbox->lpszCaption)	
-      lstrcpyWtoA((LPSTR)msgboxa.lpszCaption,msgbox->lpszCaption);
-    if (msgbox->lpszText)	
-      lstrcpyWtoA((LPSTR)msgboxa.lpszText,msgbox->lpszText);
-
+    msgboxa.lpszCaption = HEAP_strdupWtoA( GetProcessHeap(), 0, msgbox->lpszCaption );
+    msgboxa.lpszText = HEAP_strdupWtoA( GetProcessHeap(), 0, msgbox->lpszText );
+    msgboxa.lpszIcon = HEAP_strdupWtoA( GetProcessHeap(), 0, msgbox->lpszIcon );
     return MessageBoxIndirectA(&msgboxa);
 }

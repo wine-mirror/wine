@@ -11,7 +11,6 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -353,7 +352,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     TRACE("(%d,%p,%ld)\n",hSCManager, lpServiceName,
           dwDesiredAccess);
 
-    lstrcpyAtoW(lpServiceKey,str);
+    MultiByteToWideChar( CP_ACP, 0, str, -1, lpServiceKey, sizeof(lpServiceKey)/sizeof(WCHAR) );
     strcatW(lpServiceKey,lpServiceName);
 
     TRACE("Opening reg key %s\n", debugstr_w(lpServiceKey));

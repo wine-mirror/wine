@@ -14,7 +14,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winestring.h"
 #include "debugtools.h"
 #include "heap.h"
 #include "mmsystem.h"
@@ -127,11 +126,16 @@ MMRESULT WINAPI acmDriverDetailsA(HACMDRIVERID hadid, PACMDRIVERDETAILSA padd, D
 	padd->cFormatTags = addw.cFormatTags; 
 	padd->cFilterTags = addw.cFilterTags; 
 	padd->hicon = addw.hicon; 
-	lstrcpyWtoA(padd->szShortName, addw.szShortName);
-	lstrcpyWtoA(padd->szLongName, addw.szLongName);
-	lstrcpyWtoA(padd->szCopyright, addw.szCopyright);
-	lstrcpyWtoA(padd->szLicensing, addw.szLicensing);
-	lstrcpyWtoA(padd->szFeatures, addw.szFeatures);
+        WideCharToMultiByte( CP_ACP, 0, addw.szShortName, -1, padd->szShortName,
+                             sizeof(padd->szShortName), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szLongName, -1, padd->szLongName,
+                             sizeof(padd->szLongName), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szCopyright, -1, padd->szCopyright,
+                             sizeof(padd->szCopyright), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szLicensing, -1, padd->szLicensing,
+                             sizeof(padd->szLicensing), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szFeatures, -1, padd->szFeatures,
+                             sizeof(padd->szFeatures), NULL, NULL );
     }
     return mmr;
 }

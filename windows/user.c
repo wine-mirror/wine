@@ -10,7 +10,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winestring.h"
 #include "heap.h"
 #include "user.h"
 #include "task.h"
@@ -469,8 +468,10 @@ BOOL WINAPI EnumDisplayDevicesW(
 	if (i)
 		return FALSE;
 	FIXME_(system)("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
-	lstrcpyAtoW(lpDisplayDevice->DeviceName,"X11");
-	lstrcpyAtoW(lpDisplayDevice->DeviceString,"X 11 Windowing System");
+        MultiByteToWideChar( CP_ACP, 0, "X11", -1, lpDisplayDevice->DeviceName,
+                             sizeof(lpDisplayDevice->DeviceName)/sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, "X11 Windowing System", -1, lpDisplayDevice->DeviceString,
+                             sizeof(lpDisplayDevice->DeviceString)/sizeof(WCHAR) );
 	lpDisplayDevice->StateFlags =
 			DISPLAY_DEVICE_ATTACHED_TO_DESKTOP	|
 			DISPLAY_DEVICE_PRIMARY_DEVICE		|

@@ -18,9 +18,9 @@
 
 #include <string.h>
 #include <assert.h>
+#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winestring.h"
 #include "winerror.h"
 #include "enhmetafile.h"
 #include "debugtools.h"
@@ -197,29 +197,26 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
     )
 {
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
-     INT first, first_A;
- 
+     DWORD len;
+     WCHAR *descrW;
+
      if(!emh) return FALSE;
      if(emh->nDescription == 0 || emh->offDescription == 0) {
          EMF_ReleaseEnhMetaHeader(hmf);
  	return 0;
      }
+     descrW = (WCHAR *) ((char *) emh + emh->offDescription);
+     len = WideCharToMultiByte( CP_ACP, 0, descrW, emh->nDescription, NULL, 0, NULL, NULL );
+
      if (!buf || !size ) {
          EMF_ReleaseEnhMetaHeader(hmf);
- 	return emh->nDescription;
+         return len;
      }
- 
-     first = lstrlenW( (WCHAR *) ((char *) emh + emh->offDescription));
- 
-     lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription), size);
-     first_A = strlen( buf );
-     buf += first_A + 1;
-     lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription+2*(first+1)),
- 		 size - first_A - 1); /* i18n ready */
-     first_A += strlen(buf) + 1;
- 
+
+     len = min( size, len );
+     WideCharToMultiByte( CP_ACP, 0, descrW, emh->nDescription, buf, len, NULL, NULL );
      EMF_ReleaseEnhMetaHeader(hmf);
-     return min(size, first_A);
+     return len;
 }
 
 /*****************************************************************************
@@ -250,7 +247,7 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
      }
  
      memmove(buf, (char *) emh + emh->offDescription, 
- 	    min(size,emh->nDescription));
+ 	    min(size,emh->nDescription)*sizeof(WCHAR));
      EMF_ReleaseEnhMetaHeader(hmf);
      return min(size, emh->nDescription);
 }

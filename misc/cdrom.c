@@ -13,11 +13,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include "winnls.h"
 #include "cdrom.h"
 #include "drive.h"
 #include "debugtools.h"
 #include "winbase.h"
-#include "wine/winestring.h"
 
 DEFAULT_DEBUG_CHANNEL(cdrom);
 
@@ -812,7 +812,8 @@ DWORD CDROM_Data_GetLabel(WINE_CDAUDIO* wcda, char *label, int parentdev)
 		     ch = label_read[i];
 		     label_read[i] = (ch << 8) | (ch >> 8);
 		}
-		lstrcpynWtoA(label, label_read, 11);
+                WideCharToMultiByte( CP_ACP, 0, label_read, -1, label, 12, NULL, NULL );
+                label[11] = 0;
 	    }
 	    else
 	    {

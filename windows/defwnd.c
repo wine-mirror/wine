@@ -23,7 +23,6 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
 
@@ -601,8 +600,10 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            lstrcpynWtoA( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
-            result = (LRESULT)strlen( (LPSTR)PTR_SEG_TO_LIN(lParam) );
+            LPSTR dest = PTR_SEG_TO_LIN(lParam);
+            if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1, dest, wParam, NULL, NULL ))
+                dest[wParam-1] = 0;
+            result = strlen(dest);
         }
         break;
 
@@ -665,7 +666,9 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            lstrcpynWtoA( (LPSTR)lParam, wndPtr->text, wParam );
+            if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1,
+                                      (LPSTR)lParam, wParam, NULL, NULL ))
+                ((LPSTR)lParam)[wParam-1] = 0;
             result = (LRESULT)strlen( (LPSTR)lParam );
         }
         break;

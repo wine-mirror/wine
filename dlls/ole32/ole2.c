@@ -21,7 +21,6 @@
 #include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
-#include "wine/winestring.h"
 #include "debugtools.h"
 #include "ole2ver.h"
 #include "winreg.h"
@@ -486,7 +485,7 @@ HRESULT WINAPI OleRegGetUserType(
   }
   else
   {
-    lstrcpyAtoW(*pszUserType, buffer);
+    MultiByteToWideChar( CP_ACP, 0, buffer, -1, *pszUserType, cbData /*FIXME*/ );
     retVal = S_OK;
   }
   HeapFree(GetProcessHeap(), 0, buffer);

@@ -7,8 +7,8 @@
 #include <assert.h>
 #include "winerror.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "debugtools.h"
-#include "wine/winestring.h"
 #include "wine/obj_base.h"
 #include "wine/obj_misc.h"
 #include "wine/obj_storage.h"
@@ -234,7 +234,7 @@ HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 
     ICOM_THIS(ItemMonikerImpl,iface);
     HRESULT res;
-    DWORD delimiterLength,nameLength;
+    DWORD delimiterLength,nameLength,lenW;
     CHAR *itemNameA,*itemDelimiterA;
     ULONG bread;
 
@@ -246,16 +246,24 @@ HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         return E_FAIL;
 
     /* read item delimiter string */
-    itemDelimiterA=HeapAlloc(GetProcessHeap(),0,delimiterLength);
+    if (!(itemDelimiterA=HeapAlloc(GetProcessHeap(),0,delimiterLength)))
+        return E_OUTOFMEMORY;
     res=IStream_Read(pStm,itemDelimiterA,delimiterLength,&bread);
     if (bread != delimiterLength)
+    {
+        HeapFree( GetProcessHeap(), 0, itemDelimiterA );
         return E_FAIL;
+    }
 
-    This->itemDelimiter=HeapReAlloc(GetProcessHeap(),0,This->itemDelimiter,delimiterLength*sizeof(WCHAR));
+    lenW = MultiByteToWideChar( CP_ACP, 0, itemDelimiterA, -1, NULL, 0 );
+    This->itemDelimiter=HeapReAlloc(GetProcessHeap(),0,This->itemDelimiter,lenW*sizeof(WCHAR));
     if (!This->itemDelimiter)
+    {
+        HeapFree( GetProcessHeap(), 0, itemDelimiterA );
         return E_OUTOFMEMORY;
-    
-    lstrcpyAtoW(This->itemDelimiter,itemDelimiterA);
+    }
+    MultiByteToWideChar( CP_ACP, 0, itemDelimiterA, -1, This->itemDelimiter, lenW );
+    HeapFree( GetProcessHeap(), 0, itemDelimiterA );
 
     /* read item name string length + 1*/
     res=IStream_Read(pStm,&nameLength,sizeof(DWORD),&bread);
@@ -263,16 +271,24 @@ HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         return E_FAIL;
 
     /* read item name string */
-    itemNameA=HeapAlloc(GetProcessHeap(),0,nameLength);
+    if (!(itemNameA=HeapAlloc(GetProcessHeap(),0,nameLength)))
+        return E_OUTOFMEMORY;
     res=IStream_Read(pStm,itemNameA,nameLength,&bread);
     if (bread != nameLength)
+    {
+        HeapFree( GetProcessHeap(), 0, itemNameA );
         return E_FAIL;
+    }
 
-    This->itemName=HeapReAlloc(GetProcessHeap(),0,This->itemName,nameLength*sizeof(WCHAR));
+    lenW = MultiByteToWideChar( CP_ACP, 0, itemNameA, -1, NULL, 0 );
+    This->itemName=HeapReAlloc(GetProcessHeap(),0,This->itemName,lenW*sizeof(WCHAR));
     if (!This->itemName)
+    {
+        HeapFree( GetProcessHeap(), 0, itemNameA );
         return E_OUTOFMEMORY;
-    
-    lstrcpyAtoW(This->itemName,itemNameA);
+    }
+    MultiByteToWideChar( CP_ACP, 0, itemNameA, -1, This->itemName, lenW );
+    HeapFree( GetProcessHeap(), 0, itemNameA );
 
     return res;
 }
@@ -286,8 +302,6 @@ HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface,
 {
     ICOM_THIS(ItemMonikerImpl,iface);
     HRESULT res;
-    DWORD delimiterLength=lstrlenW(This->itemDelimiter)+1;
-    DWORD nameLength=lstrlenW(This->itemName)+1;
     CHAR *itemNameA,*itemDelimiterA;
 
     /* data writen by this function are : 1) DWORD : size of item delimiter string ('\0' included ) */
@@ -295,10 +309,12 @@ HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface,
     /*                                    3) DWORD : size of item name string ('\0' included)       */
     /*                                    4) String (type A): item name string ('\0' included)               */
 
+    DWORD nameLength = WideCharToMultiByte( CP_ACP, 0, This->itemName, -1, NULL, 0, NULL, NULL);
+    DWORD delimiterLength = WideCharToMultiByte( CP_ACP, 0, This->itemDelimiter, -1, NULL, 0, NULL, NULL);
     itemNameA=HeapAlloc(GetProcessHeap(),0,nameLength);
     itemDelimiterA=HeapAlloc(GetProcessHeap(),0,delimiterLength);
-    lstrcpyWtoA(itemNameA,This->itemName);
-    lstrcpyWtoA(itemDelimiterA,This->itemDelimiter);
+    WideCharToMultiByte( CP_ACP, 0, This->itemName, -1, itemNameA, nameLength, NULL, NULL);
+    WideCharToMultiByte( CP_ACP, 0, This->itemDelimiter, -1, itemDelimiterA, delimiterLength, NULL, NULL);
 
     res=IStream_Write(pStm,&delimiterLength,sizeof(DWORD),NULL);
     res=IStream_Write(pStm,itemDelimiterA,delimiterLength * sizeof(CHAR),NULL);

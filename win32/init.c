@@ -8,8 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "winnls.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 #include "wine/exception.h"
 #include "heap.h"
 #include "task.h"
@@ -55,7 +55,8 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
 {
     LPSTR nameA = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *size);
     BOOL ret = GetComputerNameA(nameA,size);
-    if (ret) lstrcpynAtoW(name,nameA,*size+1);
+    /* FIXME: should set *size in Unicode chars */
+    if (ret) MultiByteToWideChar( CP_ACP, 0, nameA, -1, name, *size+1 );
     HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }

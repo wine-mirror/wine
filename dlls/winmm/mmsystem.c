@@ -24,7 +24,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "heap.h"
 #include "winemm.h"
 #include "selectors.h"
@@ -815,7 +814,8 @@ UINT WINAPI mixerGetDevCapsW(UINT devid, LPMIXERCAPSW mixcaps, UINT size)
 	mixcaps->wMid           = micA.wMid;
 	mixcaps->wPid           = micA.wPid;
 	mixcaps->vDriverVersion = micA.vDriverVersion;
-	lstrcpyAtoW(mixcaps->szPname, micA.szPname);
+        MultiByteToWideChar( CP_ACP, 0, micA.szPname, -1, mixcaps->szPname,
+                             sizeof(mixcaps->szPname)/sizeof(WCHAR) );
 	mixcaps->fdwSupport     = micA.fdwSupport;
 	mixcaps->cDestinations  = micA.cDestinations;
     }
@@ -1098,9 +1098,12 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
 	    lpmlcW->pamxctrl[i].dwControlType = mlcA.pamxctrl[i].dwControlType;
 	    lpmlcW->pamxctrl[i].fdwControl = mlcA.pamxctrl[i].fdwControl;
 	    lpmlcW->pamxctrl[i].cMultipleItems = mlcA.pamxctrl[i].cMultipleItems;
-	    lstrcpyAtoW(lpmlcW->pamxctrl[i].szShortName, 
-			mlcA.pamxctrl[i].szShortName);
-	    lstrcpyAtoW(lpmlcW->pamxctrl[i].szName, mlcA.pamxctrl[i].szName);
+            MultiByteToWideChar( CP_ACP, 0, mlcA.pamxctrl[i].szShortName, -1,
+                                 lpmlcW->pamxctrl[i].szShortName,
+                                 sizeof(lpmlcW->pamxctrl[i].szShortName)/sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, mlcA.pamxctrl[i].szName, -1,
+                                 lpmlcW->pamxctrl[i].szName,
+                                 sizeof(lpmlcW->pamxctrl[i].szName)/sizeof(WCHAR) );
 	    /* sizeof(lpmlcW->pamxctrl[i].Bounds) == 
 	     * sizeof(mlcA.pamxctrl[i].Bounds) */
 	    memcpy(&lpmlcW->pamxctrl[i].Bounds, &mlcA.pamxctrl[i].Bounds, 
@@ -1226,7 +1229,7 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW,
 	mliA.Target.wMid = lpmliW->Target.wMid;
 	mliA.Target.wPid = lpmliW->Target.wPid;
 	mliA.Target.vDriverVersion = lpmliW->Target.vDriverVersion;
-	lstrcpyWtoA(mliA.Target.szPname, lpmliW->Target.szPname);
+        WideCharToMultiByte( CP_ACP, 0, lpmliW->Target.szPname, -1, mliA.Target.szPname, sizeof(mliA.Target.szPname), NULL, NULL);
 	break;
     default:
 	FIXME("Unsupported fdwControls=0x%08lx\n", fdwInfo);
@@ -1243,14 +1246,17 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW,
     lpmliW->cChannels = mliA.cChannels;
     lpmliW->cConnections = mliA.cConnections;
     lpmliW->cControls = mliA.cControls;
-    lstrcpyAtoW(lpmliW->szShortName, mliA.szShortName);
-    lstrcpyAtoW(lpmliW->szName, mliA.szName);
+    MultiByteToWideChar( CP_ACP, 0, mliA.szShortName, -1, lpmliW->szShortName,
+                         sizeof(lpmliW->szShortName)/sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, mliA.szName, -1, lpmliW->szName,
+                         sizeof(lpmliW->szName)/sizeof(WCHAR) );
     lpmliW->Target.dwType = mliA.Target.dwType;
     lpmliW->Target.dwDeviceID = mliA.Target.dwDeviceID;
     lpmliW->Target.wMid = mliA.Target.wMid;
     lpmliW->Target.wPid = mliA.Target.wPid;
     lpmliW->Target.vDriverVersion = mliA.Target.vDriverVersion;
-    lstrcpyAtoW(lpmliW->Target.szPname, mliA.Target.szPname);
+    MultiByteToWideChar( CP_ACP, 0, mliA.Target.szPname, -1, lpmliW->Target.szPname,
+                         sizeof(lpmliW->Target.szPname)/sizeof(WCHAR) );
 
     return ret;
 }
@@ -1398,7 +1404,8 @@ UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
     lpCaps->wMid = acA.wMid;
     lpCaps->wPid = acA.wPid;
     lpCaps->vDriverVersion = acA.vDriverVersion;
-    lstrcpyAtoW(lpCaps->szPname, acA.szPname);
+    MultiByteToWideChar( CP_ACP, 0, acA.szPname, -1, lpCaps->szPname,
+                         sizeof(lpCaps->szPname)/sizeof(WCHAR) );
     lpCaps->wTechnology = acA.wTechnology;
     lpCaps->dwSupport = acA.dwSupport;
     return ret;
@@ -1538,7 +1545,7 @@ BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
     LPSTR	bufstr = HeapAlloc(GetProcessHeap(), 0, uLength);
     BOOL	ret = mciGetErrorStringA(wError, bufstr, uLength);
     
-    lstrcpyAtoW(lpstrBuffer, bufstr);
+    MultiByteToWideChar( CP_ACP, 0, bufstr, -1, lpstrBuffer, uLength );
     HeapFree(GetProcessHeap(), 0, bufstr);
     return ret;
 }
@@ -1956,7 +1963,8 @@ UINT WINAPI midiOutGetDevCapsW(UINT uDeviceID, LPMIDIOUTCAPSW lpCaps,
     lpCaps->wMid		= mocA.wMid;
     lpCaps->wPid		= mocA.wPid;
     lpCaps->vDriverVersion	= mocA.vDriverVersion;
-    lstrcpyAtoW(lpCaps->szPname, mocA.szPname);
+    MultiByteToWideChar( CP_ACP, 0, mocA.szPname, -1, lpCaps->szPname,
+                         sizeof(lpCaps->szPname)/sizeof(WCHAR) );
     lpCaps->wTechnology	        = mocA.wTechnology;
     lpCaps->wVoices		= mocA.wVoices;
     lpCaps->wNotes		= mocA.wNotes;
@@ -2051,7 +2059,7 @@ UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     UINT	ret;
     
     ret = MIDI_GetErrorText(uError, xstr, uSize);
-    lstrcpyAtoW(lpText, xstr);
+    MultiByteToWideChar( CP_ACP, 0, xstr, -1, lpText, uSize );
     HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
 }
@@ -2537,7 +2545,8 @@ UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 	lpCaps->wMid = micA.wMid;
 	lpCaps->wPid = micA.wPid;
 	lpCaps->vDriverVersion = micA.vDriverVersion;
-	lstrcpyAtoW(lpCaps->szPname, micA.szPname);
+        MultiByteToWideChar( CP_ACP, 0, micA.szPname, -1, lpCaps->szPname,
+                             sizeof(lpCaps->szPname)/sizeof(WCHAR) );
 	lpCaps->dwSupport = micA.dwSupport;
     }
     return ret;
@@ -2586,7 +2595,7 @@ UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret = MIDI_GetErrorText(uError, xstr, uSize);
 
-    lstrcpyAtoW(lpText, xstr);
+    MultiByteToWideChar( CP_ACP, 0, xstr, -1, lpText, uSize );
     HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
 }
@@ -3765,7 +3774,8 @@ UINT WINAPI waveOutGetDevCapsW(UINT uDeviceID, LPWAVEOUTCAPSW lpCaps,
 	lpCaps->wMid = wocA.wMid;
 	lpCaps->wPid = wocA.wPid;
 	lpCaps->vDriverVersion = wocA.vDriverVersion;
-	lstrcpyAtoW(lpCaps->szPname, wocA.szPname);
+        MultiByteToWideChar( CP_ACP, 0, wocA.szPname, -1, lpCaps->szPname,
+                             sizeof(lpCaps->szPname)/sizeof(WCHAR) );
 	lpCaps->dwFormats = wocA.dwFormats;
 	lpCaps->wChannels = wocA.wChannels;
 	lpCaps->dwSupport = wocA.dwSupport;
@@ -3822,7 +3832,7 @@ UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret = WAVE_GetErrorText(uError, xstr, uSize);
     
-    lstrcpyAtoW(lpText, xstr);
+    MultiByteToWideChar( CP_ACP, 0, xstr, -1, lpText, uSize );
     HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
 }
@@ -4394,7 +4404,8 @@ UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 	lpCaps->wMid = wicA.wMid;
 	lpCaps->wPid = wicA.wPid;
 	lpCaps->vDriverVersion = wicA.vDriverVersion;
-	lstrcpyAtoW(lpCaps->szPname, wicA.szPname);
+        MultiByteToWideChar( CP_ACP, 0, wicA.szPname, -1, lpCaps->szPname,
+                             sizeof(lpCaps->szPname)/sizeof(WCHAR) );
 	lpCaps->dwFormats = wicA.dwFormats;
 	lpCaps->wChannels = wicA.wChannels;
     }
@@ -4455,7 +4466,7 @@ UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     LPSTR txt = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret = WAVE_GetErrorText(uError, txt, uSize);
     
-    lstrcpyAtoW(lpText, txt);
+    MultiByteToWideChar( CP_ACP, 0, txt, -1, lpText, uSize );
     HeapFree(GetProcessHeap(), 0, txt);
     return ret;
 }

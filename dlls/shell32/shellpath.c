@@ -7,14 +7,13 @@
 #include <string.h>
 #include <ctype.h>
 #include "debugtools.h"
+#include "windef.h"
 #include "winnls.h"
 #include "winreg.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"
-#include "windef.h"
 #include "options.h"
-#include "wine/winestring.h"
 #include "wine/undocshell.h"
 #include "wine/unicode.h"
 #include "shlwapi.h"
@@ -849,8 +848,9 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 	
 	if (SHGetSpecialFolderPathA(hwndOwner, szTemp, csidl, bCreate))
 	{
-	  lstrcpynAtoW(szPath, szTemp, MAX_PATH);
-	}
+            if (!MultiByteToWideChar( CP_ACP, 0, szTemp, -1, szPath, MAX_PATH ))
+                szPath[MAX_PATH-1] = 0;
+        }
 
 	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 

@@ -6,8 +6,8 @@
  */
 
 #include <string.h>
+#include "winnls.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "win16drv.h"
 #include "module.h"
 #include "font.h"
@@ -25,17 +25,19 @@ BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR wstr, INT count,
 				  LPSIZE size )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    DWORD dwRet;
+    DWORD dwRet, len;
     char *str;
 
     TRACE("%04x %s %d %p\n",
 	  dc->hSelf, debugstr_wn(wstr, count), count, size);
 
-    str = HeapAlloc( GetProcessHeap(), 0, count+1 );
-    lstrcpynWtoA( str, wstr, count+1 );
+
+    len = WideCharToMultiByte( CP_ACP, 0, wstr, count, NULL, 0, NULL, NULL );
+    str = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, wstr, count, str, len, NULL, NULL );
+
     dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-			      NULL, str, 
-			      -count,  physDev->FontInfo, 
+                              NULL, str, -len,  physDev->FontInfo,
 			      win16drv_SegPtr_DrawMode, 
 			      win16drv_SegPtr_TextXForm, NULL, NULL, 0);
     size->cx = XDSTOLS(dc,LOWORD(dwRet));

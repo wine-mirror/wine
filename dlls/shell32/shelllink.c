@@ -21,7 +21,6 @@
 #include "winnls.h"
 
 #include "shlobj.h"
-#include "wine/winestring.h"
 #include "wine/undocshell.h"
 #include "bitmaps/wine.xpm"
 
@@ -1200,7 +1199,7 @@ static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(pfile=%p len=%u find_data=%p flags=%lu)\n",This, pszFile, cchMaxPath, pfd, fFlags);
-	lstrcpynAtoW(pszFile,"c:\\foo.bar", cchMaxPath);
+        MultiByteToWideChar( CP_ACP, 0, "c:\\foo.bar", -1, pszFile, cchMaxPath );
 	return NOERROR;
 }
 
@@ -1226,7 +1225,7 @@ static HRESULT WINAPI IShellLinkW_fnGetDescription(IShellLinkW * iface, LPWSTR p
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(%p len=%u)\n",This, pszName, cchMaxName);
-	lstrcpynAtoW(pszName,"Description, FIXME",cchMaxName);
+        MultiByteToWideChar( CP_ACP, 0, "Description, FIXME", -1, pszName, cchMaxName );
 	return NOERROR;
 }
 
@@ -1249,7 +1248,7 @@ static HRESULT WINAPI IShellLinkW_fnGetWorkingDirectory(IShellLinkW * iface, LPW
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->()\n",This);
-	lstrcpynAtoW(pszDir,"c:\\", cchMaxPath);
+        MultiByteToWideChar( CP_ACP, 0, "c:\\", -1, pszDir, cchMaxPath );
 	return NOERROR;
 }
 
@@ -1272,7 +1271,7 @@ static HRESULT WINAPI IShellLinkW_fnGetArguments(IShellLinkW * iface, LPWSTR psz
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(%p len=%u)\n",This, pszArgs, cchMaxPath);
-	lstrcpynAtoW(pszArgs, "", cchMaxPath);
+        pszArgs[0] = 0;
 	return NOERROR;
 }
 
@@ -1329,7 +1328,7 @@ static HRESULT WINAPI IShellLinkW_fnGetIconLocation(IShellLinkW * iface, LPWSTR 
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(%p len=%u iicon=%p)\n",This, pszIconPath, cchIconPath, piIcon);
-	lstrcpynAtoW(pszIconPath,"shell32.dll",cchIconPath);
+        MultiByteToWideChar( CP_ACP, 0, "shell32.dll", -1, pszIconPath, cchIconPath );
 	*piIcon=1;
 	return NOERROR;
 }

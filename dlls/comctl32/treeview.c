@@ -31,7 +31,6 @@
 
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winestring.h"
 #include "commctrl.h"
 #include "comctl32.h"
 #include "debugtools.h"
@@ -1210,11 +1209,11 @@ TREEVIEW_InsertItemW(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     {
 	if (tvisW->DUMMYUNIONNAME.item.pszText != LPSTR_TEXTCALLBACKW)
 	{
-	    int len = lstrlenW(tvisW->DUMMYUNIONNAME.item.pszText) + 1;
-
+            int len = WideCharToMultiByte( CP_ACP, 0, tvisW->DUMMYUNIONNAME.item.pszText, -1,
+                                           NULL, 0, NULL, NULL );
 	    tvisA.DUMMYUNIONNAME.item.pszText = COMCTL32_Alloc(len);
-	    lstrcpyWtoA(tvisA.DUMMYUNIONNAME.item.pszText,
-			tvisW->DUMMYUNIONNAME.item.pszText);
+            WideCharToMultiByte( CP_ACP, 0, tvisW->DUMMYUNIONNAME.item.pszText, -1,
+                                 tvisA.DUMMYUNIONNAME.item.pszText, len, NULL, NULL );
 	}
 	else
 	{

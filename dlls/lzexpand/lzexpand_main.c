@@ -14,7 +14,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "wine/unicode.h"
 #include "lzexpand.h"
 #include "debugtools.h"

@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 
 #include "heap.h"
 #include "debugtools.h"
@@ -90,7 +89,7 @@ static INT load_messageA( HMODULE instance, UINT id, WORD lang,
 	return slen;
     if (i>0) {
 	if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
-	    lstrcpynWtoA(buffer, (LPWSTR)mre->Text, i);
+            WideCharToMultiByte( CP_ACP, 0, (LPWSTR)mre->Text, -1, buffer, i, NULL, NULL );
 	else
 	    lstrcpynA(buffer, (LPSTR)mre->Text, i);
 	buffer[i]=0;
@@ -538,10 +537,15 @@ DWORD WINAPI FormatMessageW(
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
-		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced*2+2);
-		lstrcpynAtoW(*(LPWSTR*)lpBuffer,target,talloced);
-	} else
-		lstrcpynAtoW(lpBuffer,target,nSize);
+            DWORD len = MultiByteToWideChar( CP_ACP, 0, target, -1, NULL, 0 );
+            *((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,len*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, target, -1, *(LPWSTR*)lpBuffer, len );
+        }
+        else
+        {
+            if (nSize > 0 && !MultiByteToWideChar( CP_ACP, 0, target, -1, lpBuffer, nSize ))
+                lpBuffer[nSize-1] = 0;
+        }
 	HeapFree(GetProcessHeap(),0,target);
 	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 

@@ -6,7 +6,6 @@
 
 #include "windef.h"
 #include "winerror.h"
-#include "wine/winestring.h"
 #include "heap.h"
 #include "ntddk.h"
 #include "ntsecapi.h"
@@ -569,8 +568,8 @@ LookupAccountSidA(
 	IN OUT LPDWORD domainSize,
 	OUT PSID_NAME_USE name_use )
 {
-	char * ac = "Administrator";
-	char * dm = "DOMAIN";
+	static const char ac[] = "Administrator";
+	static const char dm[] = "DOMAIN";
 	FIXME("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
 	      debugstr_a(system),sid,
 	      account,accountSize,accountSize?*accountSize:0,
@@ -611,21 +610,21 @@ LookupAccountSidW(
 	IN OUT LPDWORD domainSize,
 	OUT PSID_NAME_USE name_use )
 {
-	char * ac = "Administrator";
-	char * dm = "DOMAIN";
+    static const WCHAR ac[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r',0};
+    static const WCHAR dm[] = {'D','O','M','A','I','N',0};
 	FIXME("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
 	      debugstr_w(system),sid,
 	      account,accountSize,accountSize?*accountSize:0,
 	      domain,domainSize,domainSize?*domainSize:0,
 	      name_use);
 
-	if (accountSize) *accountSize = strlen(ac)+1;
-	if (account && (*accountSize > strlen(ac)))
-	  lstrcpyAtoW(account, ac);
+	if (accountSize) *accountSize = strlenW(ac)+1;
+	if (account && (*accountSize > strlenW(ac)))
+            strcpyW(account, ac);
 
-	if (domainSize) *domainSize = strlen(dm)+1;
-	if (domain && (*domainSize > strlen(dm)))
-	  lstrcpyAtoW(domain,dm);
+	if (domainSize) *domainSize = strlenW(dm)+1;
+	if (domain && (*domainSize > strlenW(dm)))
+            strcpyW(domain,dm);
 
 	if (name_use) *name_use = SidTypeUser;
 	return TRUE;

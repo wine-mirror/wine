@@ -18,10 +18,11 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
+#include "wine/unicode.h"
 #include "win.h"
 #include "task.h"
 #include "heap.h"
@@ -31,7 +32,6 @@
 #include "message.h"
 #include "queue.h"
 #include "tweak.h"
-#include "wine/unicode.h"
 
 #include "debugtools.h"
 
@@ -3464,7 +3464,8 @@ INT WINAPI GetMenuStringA(
     if (!IS_STRING_ITEM(item->fType)) return 0;
     if (!str || !nMaxSiz) return strlenW(item->text);
     str[0] = '\0';
-    lstrcpynWtoA( str, item->text, nMaxSiz );
+    if (!WideCharToMultiByte( CP_ACP, 0, item->text, -1, str, nMaxSiz, NULL, NULL ))
+        str[nMaxSiz-1] = 0;
     TRACE("returning '%s'\n", str );
     return strlen(str);
 }
@@ -4405,21 +4406,7 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 	lpmii->fType = menu->fType;
 	switch (MENU_ITEM_TYPE(menu->fType)) {
 	case MF_STRING:
- 	    if (menu->text) {
-	        int len = strlenW(menu->text);
-	        if(lpmii->dwTypeData && lpmii->cch) {
-		    if (unicode)
-		        lstrcpynW(lpmii->dwTypeData, menu->text,
-				     lpmii->cch);
-		    else
-		        lstrcpynWtoA((LPSTR)lpmii->dwTypeData, menu->text, lpmii->cch);
-		    /* if we've copied a substring we return its length */
-		    if(lpmii->cch <= len)
-		        lpmii->cch--;
-		} else /* return length of string */
-		    lpmii->cch = len;
-	    }
-	    break;
+            break;  /* will be done below */
 	case MF_OWNERDRAW:
 	case MF_BITMAP:
 	    lpmii->dwTypeData = menu->text;
@@ -4429,15 +4416,32 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 	}
     }
 
-    if (lpmii->fMask & MIIM_STRING) {
-        if(lpmii->dwTypeData && lpmii->cch) {
-	    if (unicode)
-	        lstrcpynW((LPWSTR) lpmii->dwTypeData, menu->text,
-			     lpmii->cch);
-	    else
-	        lstrcpynWtoA((LPSTR)lpmii->dwTypeData, menu->text, lpmii->cch);
-	}
-	lpmii->cch = strlenW(menu->text);
+    /* copy the text string */
+    if ((lpmii->fMask & (MIIM_TYPE|MIIM_STRING)) &&
+         (MENU_ITEM_TYPE(menu->fType) == MF_STRING) && menu->text)
+    {
+        int len;
+        if (unicode)
+        {
+            len = strlenW(menu->text);
+            if(lpmii->dwTypeData && lpmii->cch)
+                lstrcpynW(lpmii->dwTypeData, menu->text, lpmii->cch);
+        }
+        else
+        {
+            len = WideCharToMultiByte( CP_ACP, 0, menu->text, -1, NULL, 0, NULL, NULL );
+            if(lpmii->dwTypeData && lpmii->cch)
+                if (!WideCharToMultiByte( CP_ACP, 0, menu->text, -1,
+                                          (LPSTR)lpmii->dwTypeData, lpmii->cch, NULL, NULL ))
+                    ((LPSTR)lpmii->dwTypeData)[lpmii->cch-1] = 0;
+        }
+        /* if we've copied a substring we return its length */
+        if(lpmii->dwTypeData && lpmii->cch)
+        {
+            if (lpmii->cch <= len) lpmii->cch--;
+        }
+        else /* return length of string */
+            lpmii->cch = len;
     }
 
     if (lpmii->fMask & MIIM_FTYPE)

@@ -16,9 +16,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winestring.h"
 #include "winemm.h"
 #include "debugtools.h"
 
@@ -144,7 +144,8 @@ MMRESULT WINAPI joyGetDevCapsW(UINT wID, LPJOYCAPSW lpCaps, UINT wSize)
     if (ret != JOYERR_NOERROR) return ret;
     lpCaps->wMid = jca.wMid;
     lpCaps->wPid = jca.wPid;
-    lstrcpyAtoW(lpCaps->szPname, jca.szPname);
+    MultiByteToWideChar( CP_ACP, 0, jca.szPname, -1, lpCaps->szPname,
+                         sizeof(lpCaps->szPname)/sizeof(WCHAR) );
     lpCaps->wXmin = jca.wXmin;
     lpCaps->wXmax = jca.wXmax;
     lpCaps->wYmin = jca.wYmin;
@@ -166,8 +167,10 @@ MMRESULT WINAPI joyGetDevCapsW(UINT wID, LPJOYCAPSW lpCaps, UINT wSize)
 	lpCaps->wMaxAxes = jca.wMaxAxes;
 	lpCaps->wNumAxes = jca.wNumAxes;
 	lpCaps->wMaxButtons = jca.wMaxButtons;
-	lstrcpyAtoW(lpCaps->szRegKey, jca.szRegKey);
-	lstrcpyAtoW(lpCaps->szOEMVxD, jca.szOEMVxD);
+        MultiByteToWideChar( CP_ACP, 0, jca.szRegKey, -1, lpCaps->szRegKey,
+                         sizeof(lpCaps->szRegKey)/sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, jca.szOEMVxD, -1, lpCaps->szOEMVxD,
+                         sizeof(lpCaps->szOEMVxD)/sizeof(WCHAR) );
     }
     
     return ret;

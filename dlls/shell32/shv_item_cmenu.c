@@ -10,7 +10,6 @@
 
 #include "pidl.h"
 #include "shlguid.h"
-#include "wine/winestring.h"
 #include "wine/obj_base.h"
 #include "wine/obj_contextmenu.h"
 #include "wine/obj_shellbrowser.h"
@@ -485,7 +484,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	  case GCS_VERBW:
 	    switch(idCommand)
 	    { case FCIDM_SHVIEW_RENAME:
-	        lstrcpyAtoW((LPWSTR)lpszName, "rename");
+                MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
 	        hr = NOERROR;
 	        break;
 	    }

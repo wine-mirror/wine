@@ -42,7 +42,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
-#include "wine/winestring.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "comctl32.h"
@@ -532,7 +531,7 @@ TOOLBAR_MeasureString(HWND hwnd, INT index, LPSIZE lpSize)
          (btnPtr->iString < infoPtr->nNumStrings)) 
     {
         LPWSTR lpText = infoPtr->strings[btnPtr->iString];
-        GetTextExtentPoint32W (hdc, lpText, lstrlenW (lpText), lpSize);
+        GetTextExtentPoint32W (hdc, lpText, strlenW (lpText), lpSize);
     }
 
     SelectObject (hdc, hOldFont);
@@ -1792,7 +1791,7 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if ((wParam) && (HIWORD(lParam) == 0)) {
 	char szString[256];
-	INT len;
+	INT len, lenW;
 	TRACE("adding string from resource!\n");
 
 	len = LoadStringA ((HINSTANCE)wParam, (UINT)lParam,
@@ -1813,14 +1812,15 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    COMCTL32_Free (oldStrings);
 	}
 
-	infoPtr->strings[infoPtr->nNumStrings] =
-	    COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	lstrcpyAtoW (infoPtr->strings[infoPtr->nNumStrings], szString);
+        lenW = MultiByteToWideChar( CP_ACP, 0, szString, -1, NULL, 0 );
+        infoPtr->strings[infoPtr->nNumStrings] = COMCTL32_Alloc (sizeof(WCHAR)*lenW);
+        MultiByteToWideChar( CP_ACP, 0, szString, -1,
+                             infoPtr->strings[infoPtr->nNumStrings], lenW );
 	infoPtr->nNumStrings++;
     }
     else {
 	LPSTR p = (LPSTR)lParam;
-	INT len;
+	INT len, lenW;
 
 	if (p == NULL)
 	    return -1;
@@ -1828,7 +1828,7 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	nIndex = infoPtr->nNumStrings;
 	while (*p) {
-	    len = lstrlenA (p);
+	    len = strlen (p);
 	    TRACE("len=%d \"%s\"\n", len, p);
 
 	    if (infoPtr->nNumStrings == 0) {
@@ -1844,9 +1844,10 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		COMCTL32_Free (oldStrings);
 	    }
 
-	    infoPtr->strings[infoPtr->nNumStrings] =
-		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	    lstrcpyAtoW (infoPtr->strings[infoPtr->nNumStrings], p);
+            lenW = MultiByteToWideChar( CP_ACP, 0, p, -1, NULL, 0 );
+            infoPtr->strings[infoPtr->nNumStrings] = COMCTL32_Alloc (sizeof(WCHAR)*lenW);
+            MultiByteToWideChar( CP_ACP, 0, p, -1,
+                                 infoPtr->strings[infoPtr->nNumStrings], lenW );
 	    infoPtr->nNumStrings++;
 
 	    p += (len+1);
@@ -1935,7 +1936,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("adding string(s) from array!\n");
 	nIndex = infoPtr->nNumStrings;
 	while (*p) {
-	    len = lstrlenW (p);
+	    len = strlenW (p);
 
 	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
 	    if (infoPtr->nNumStrings == 0) {
@@ -2360,9 +2361,9 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
      if (lpTbInfo->dwMask & TBIF_TEXT) {
          if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
          {	
-             lstrcpynWtoA (lpTbInfo->pszText,
-                           (LPWSTR)infoPtr->strings[btnPtr->iString],
-                           lpTbInfo->cchText);
+             if (!WideCharToMultiByte( CP_ACP, 0, (LPWSTR)infoPtr->strings[btnPtr->iString], -1,
+                                       lpTbInfo->pszText, lpTbInfo->cchText, NULL, NULL ))
+                 lpTbInfo->pszText[lpTbInfo->cchText-1] = 0;
          }
          else lpTbInfo->pszText[0]=0;
     }
@@ -2444,9 +2445,8 @@ TOOLBAR_GetButtonTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lParam == 0)
 	return -1;
 
-    lstrcpyWtoA ((LPSTR)lParam, (LPWSTR)infoPtr->strings[nStringIndex]);
-
-    return lstrlenW ((LPWSTR)infoPtr->strings[nStringIndex]);
+    return WideCharToMultiByte( CP_ACP, 0, (LPWSTR)infoPtr->strings[nStringIndex], -1,
+                                (LPSTR)lParam, 0x7fffffff, NULL, NULL ) - 1;
 }
 
 
@@ -2472,7 +2472,7 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     strcpyW ((LPWSTR)lParam, (LPWSTR)infoPtr->strings[nStringIndex]);
 
-    return lstrlenW ((LPWSTR)infoPtr->strings[nStringIndex]);
+    return strlenW ((LPWSTR)infoPtr->strings[nStringIndex]);
 }
 
 
@@ -2775,7 +2775,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
        LPSTR	ptr;
 
        if(lpTbb->iString) {
-           len = lstrlenA((char*)lpTbb->iString) + 2;
+           len = strlen((char*)lpTbb->iString) + 2;
            ptr = COMCTL32_Alloc(len);
            nIndex = infoPtr->nNumButtons;
            strcpy(ptr, (char*)lpTbb->iString);

@@ -7,10 +7,10 @@
 
 #include <string.h>
 #include "windef.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/winestring.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "heap.h"
@@ -700,7 +700,9 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpynWtoA( (LPSTR)*ptr, (LPWSTR)lParam, wParam );
+            if (wParam > 0 && !WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
+                                                    (LPSTR)*ptr, wParam, NULL, NULL ))
+                ((LPSTR)*ptr)[wParam-1] = 0;
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
@@ -755,7 +757,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case LB_GETTEXT:
         { if ( WINPROC_TestLBForStr( hwnd ))
           { LPARAM *ptr = (LPARAM *)lParam - 1;
-	    lstrcpyWtoA( (LPSTR)*ptr, (LPWSTR)(lParam) );
+            WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1, (LPSTR)*ptr, 0x7fffffff, NULL, NULL );
             HeapFree( GetProcessHeap(), 0, ptr );
 	  }
         }
@@ -771,7 +773,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case CB_GETLBTEXT:
         { if ( WINPROC_TestCBForStr( hwnd ))
 	  { LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpyWtoA( (LPSTR)*ptr, (LPWSTR)(lParam) );
+            WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1, (LPSTR)*ptr, 0x7fffffff, NULL, NULL );
             HeapFree( GetProcessHeap(), 0, ptr );
 	  }
         }
@@ -781,7 +783,9 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case EM_GETLINE:
         { LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lParam */
 	  WORD len = *(WORD *) lParam;
-          lstrcpynWtoA( (LPSTR)*ptr , (LPWSTR)lParam, len );
+          if (len > 0 && !WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
+                                               (LPSTR)*ptr, len, NULL, NULL ))
+              ((LPSTR)*ptr)[len-1] = 0;
           HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
@@ -937,7 +941,11 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpynAtoW( (LPWSTR)*ptr, (LPSTR)lParam, wParam );
+            if (wParam)
+            {
+                if (!MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, wParam ))
+                    ((LPWSTR)*ptr)[wParam-1] = 0;
+            }
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
@@ -987,11 +995,11 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case LB_GETTEXT:
-        { if ( WINPROC_TestLBForStr( hwnd ))
-          { LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpyAtoW( (LPWSTR)*ptr, (LPSTR)(lParam) );
+        if ( WINPROC_TestLBForStr( hwnd ))
+        {
+            LPARAM *ptr = (LPARAM *)lParam - 1;
+            MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, 0x7fffffff );
             HeapFree( GetProcessHeap(), 0, ptr );
-	  }
         }
         break;
 
@@ -1003,11 +1011,11 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case CB_GETLBTEXT:
-        { if ( WINPROC_TestCBForStr( hwnd ))
-          { LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpyAtoW( (LPWSTR)*ptr, (LPSTR)(lParam) );
+        if ( WINPROC_TestCBForStr( hwnd ))
+        {
+            LPARAM *ptr = (LPARAM *)lParam - 1;
+            MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, 0x7fffffff );
             HeapFree( GetProcessHeap(), 0, ptr );
-	  }
         }
         break;
 
@@ -1015,7 +1023,11 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case EM_GETLINE:
         { LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lparam */
 	  WORD len = *(WORD *)ptr;
-          lstrcpynAtoW( (LPWSTR) *ptr, (LPSTR)lParam, len );
+          if (len)
+          {
+              if (!MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, len ))
+                  ((LPWSTR)*ptr)[len-1] = 0;
+          }
           HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
@@ -2291,7 +2303,7 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         {
             LPSTR str = (LPSTR)PTR_SEG_TO_LIN(p16->lParam);
             p16->lParam = *((LPARAM *)str - 1);
-            lstrcpyAtoW( (LPWSTR)(p16->lParam), str );
+            MultiByteToWideChar( CP_ACP, 0, str, -1, (LPWSTR)p16->lParam, 0x7fffffff );
             SEGPTR_FREE( (LPARAM *)str - 1 );
         }
         break;
@@ -2300,7 +2312,7 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         if ( WINPROC_TestLBForStr( hwnd ))
         {
             LPSTR str = (LPSTR)PTR_SEG_TO_LIN(p16->lParam);
-            lstrcpyAtoW( (LPWSTR)lParam, str );
+            MultiByteToWideChar( CP_ACP, 0, str, -1, (LPWSTR)lParam, 0x7fffffff );
             SEGPTR_FREE( (LPARAM *) str );
         }
         break;
