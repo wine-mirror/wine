@@ -59,6 +59,19 @@ inline static void *get_stack( CONTEXT86 *context )
     return wine_ldt_get_ptr( context->SegSs, context->Esp );
 }
 
+
+/***********************************************************************
+ *           timer_thread
+ */
+static DWORD CALLBACK timer_thread( void *dummy )
+{
+    for (;;)
+    {
+        Sleep(55);
+        DOSMEM_Tick( 0 );
+    }
+}
+
 /***********************************************************************
  *           INSTR_ReplaceSelector
  *
@@ -86,9 +99,13 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 
     if (*sel == 0x40)
     {
+#if 0  /* hack until this is moved to kernel */
         static WORD sys_timer = 0;
         if (!sys_timer)
             sys_timer = CreateSystemTimer( 55, DOSMEM_Tick );
+#endif
+        static HANDLE sys_thread;
+        if (!sys_thread) sys_thread = CreateThread( NULL, 0, timer_thread, NULL, 0, NULL );
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }

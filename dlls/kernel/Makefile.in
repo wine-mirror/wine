@@ -47,7 +47,8 @@ C_SRCS = \
 	wowthunk.c
 
 C_SRCS16 = \
-	registry16.c
+	registry16.c \
+	system.c
 
 RC_SRCS = kernel.rc
 

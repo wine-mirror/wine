@@ -38,7 +38,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/main.c \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
-	$(TOPOBJDIR)/misc/system.c \
 	$(TOPOBJDIR)/misc/version.c \
 	$(TOPOBJDIR)/msdos/dosmem.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
