@@ -114,16 +114,9 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
 	{
-#ifdef MZ_SUPPORTED
-            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-            NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-            GlobalUnlock16( GetCurrentTask() );
+            LPDOSTASK lpDosTask = MZ_Current();
 
-            if (pModule && pModule->lpDosTask)
-                ES_reg(context) = pModule->lpDosTask->xms_seg;
-            else
-#endif
-                ES_reg(context) = 0;
+            ES_reg(context) = lpDosTask ? lpDosTask->xms_seg : 0;
             BX_reg(context) = 0;
             break;
 	}
@@ -355,12 +348,7 @@ static void do_int2f_16( CONTEXT86 *context )
 #endif
         {
 	    SYSTEM_INFO si;
-#ifdef MZ_SUPPORTED
-            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-            NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-
-            GlobalUnlock16( GetCurrentTask() );
-#endif
+	    LPDOSTASK lpDosTask = MZ_Current();
 
 	    GetSystemInfo(&si);
 	    AX_reg(context) = 0x0000; /* DPMI Installed */
@@ -368,13 +356,8 @@ static void do_int2f_16( CONTEXT86 *context )
             CL_reg(context) = si.wProcessorLevel;
             DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
             SI_reg(context) = 0;      /* # of para. of DOS extended private data */
-#ifdef MZ_SUPPORTED                   /* ES:DI is DPMI switch entry point */
-            if (pModule && pModule->lpDosTask)
-                ES_reg(context) = pModule->lpDosTask->dpmi_seg;
-            else
-#endif
-                ES_reg(context) = 0;
-            DI_reg(context) = 0;
+            ES_reg(context) = lpDosTask ? lpDosTask->dpmi_seg : 0;
+            DI_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
             break;
         }
     case 0x8a:  /* DPMI get vendor-specific API entry point. */

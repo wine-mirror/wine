@@ -947,29 +947,19 @@ INT21_networkfunc (CONTEXT86 *context)
 
 static void INT21_SetCurrentPSP(WORD psp)
 {
-#ifdef MZ_SUPPORTED
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-    
-    GlobalUnlock16( GetCurrentTask() );
-    if (pModule->lpDosTask)
-        pModule->lpDosTask->psp_seg = psp;
+    LPDOSTASK lpDosTask = MZ_Current();
+    if (lpDosTask)
+        lpDosTask->psp_seg = psp;
     else
-#endif
         ERR("Cannot change PSP for non-DOS task!\n");
 }
     
 static WORD INT21_GetCurrentPSP()
 {
-#ifdef MZ_SUPPORTED
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-        
-    GlobalUnlock16( GetCurrentTask() );
-    if (pModule->lpDosTask)
-        return pModule->lpDosTask->psp_seg;
+    LPDOSTASK lpDosTask = MZ_Current();
+    if (lpDosTask)
+        return lpDosTask->psp_seg;
     else
-#endif
         return GetCurrentPDB16();
 }
 
