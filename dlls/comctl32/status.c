@@ -77,9 +77,9 @@ STATUSBAR_DrawPart (HDC hdc, STATUSWINDOWPART *part)
     RECT r = part->bound;
     UINT border = BDR_SUNKENOUTER;
 
-    if (part->style==SBT_POPOUT)
+    if (part->style & SBT_POPOUT)
       border = BDR_RAISEDOUTER;
-    else if (part->style==SBT_NOBORDERS)
+    else if (part->style & SBT_NOBORDERS)
       border = 0;
 
     DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
@@ -133,7 +133,7 @@ STATUSBAR_RefreshPart (HWND hwnd, STATUSWINDOWPART *part, HDC hdc)
 
     hOldFont = SelectObject (hdc, self->hFont ? self->hFont : self->hDefaultFont);
 
-    if (part->style == SBT_OWNERDRAW) {
+    if (part->style & SBT_OWNERDRAW) {
 	DRAWITEMSTRUCT dis;
 
 	dis.CtlID = GetWindowLongA (hwnd, GWL_ID);
@@ -189,7 +189,7 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
     }
     else {
 	for (i = 0; i < infoPtr->numParts; i++) {
-	    if (infoPtr->parts[i].style == SBT_OWNERDRAW) {
+	    if (infoPtr->parts[i].style & SBT_OWNERDRAW) {
 		DRAWITEMSTRUCT dis;
 
 		dis.CtlID = GetWindowLongA (hwnd, GWL_ID);
@@ -362,7 +362,7 @@ STATUSBAR_GetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	part = &self->parts[nPart];
 
-    if (part->style == SBT_OWNERDRAW)
+    if (part->style & SBT_OWNERDRAW)
 	result = (LRESULT)part->text;
     else {
 	result = part->text ? lstrlenW (part->text) : 0;
@@ -388,7 +388,7 @@ STATUSBAR_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	part = &infoPtr->parts[nPart];
 
-    if (part->style == SBT_OWNERDRAW)
+    if (part->style & SBT_OWNERDRAW)
 	result = (LRESULT)part->text;
     else {
 	result = part->text ? lstrlenW (part->text) : 0;
@@ -568,7 +568,7 @@ STATUSBAR_SetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
     parts = (LPINT) lParam;
     if (oldNumParts > self->numParts) {
 	for (i = self->numParts ; i < oldNumParts; i++) {
-	    if (self->parts[i].text && (self->parts[i].style != SBT_OWNERDRAW))
+	    if (self->parts[i].text && !(self->parts[i].style & SBT_OWNERDRAW))
 		COMCTL32_Free (self->parts[i].text);
 	}
     }
@@ -648,7 +648,7 @@ STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	part = &self->parts[part_num];
     if (!part) return FALSE;
     part->style = style;
-    if (style == SBT_OWNERDRAW) {
+    if (style & SBT_OWNERDRAW) {
 	part->text = (LPWSTR)text;
     }
     else {
@@ -689,7 +689,7 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	part = &self->parts[part_num];
     if (!part) return FALSE;
     part->style = style;
-    if (style == SBT_OWNERDRAW) {
+    if (style & SBT_OWNERDRAW) {
 	part->text = text;
     }
     else {
@@ -892,10 +892,10 @@ STATUSBAR_WMDestroy (HWND hwnd)
     int	i;
 
     for (i = 0; i < self->numParts; i++) {
-	if (self->parts[i].text && (self->parts[i].style != SBT_OWNERDRAW))
+	if (self->parts[i].text && !(self->parts[i].style & SBT_OWNERDRAW))
 	    COMCTL32_Free (self->parts[i].text);
     }
-    if (self->part0.text && (self->part0.style != SBT_OWNERDRAW))
+    if (self->part0.text && !(self->part0.style & SBT_OWNERDRAW))
 	COMCTL32_Free (self->part0.text);
     COMCTL32_Free (self->parts);
 

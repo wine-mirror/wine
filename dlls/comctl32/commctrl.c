@@ -355,9 +355,9 @@ DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
     RECT r = *lprc;
     UINT border = BDR_SUNKENOUTER;
 
-    if (style == SBT_POPOUT)
+    if (style & SBT_POPOUT)
       border = BDR_RAISEDOUTER;
-    else if (style == SBT_NOBORDERS)
+    else if (style & SBT_NOBORDERS)
       border = 0;
 
     DrawEdge (hdc, &r, border, BF_RECT|BF_ADJUST|BF_MIDDLE);
