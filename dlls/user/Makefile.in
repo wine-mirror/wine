@@ -56,7 +56,11 @@ SUBDIRS = \
 
 EXTRASUBDIRS = \
 	dde \
-	resources
+	resources \
+	tests
+
+CTESTS = \
+	tests/sysparams.c
 
 @MAKE_DLL_RULES@
 
