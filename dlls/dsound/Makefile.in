@@ -18,6 +18,8 @@ C_SRCS = \
 	propset.c \
 	sound3d.c
 
+RC_SRCS = version.rc
+
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@
