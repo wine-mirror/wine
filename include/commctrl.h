@@ -939,6 +939,7 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBSTYLE_EX_UNDOC1               0x00000004 /* similar to TBSTYLE_WRAPABLE */
 #define TBSTYLE_EX_MIXEDBUTTONS         0x00000008
 #define TBSTYLE_EX_HIDECLIPPEDBUTTONS   0x00000010 /* don't show partially obscured buttons */
+#define TBSTYLE_EX_DOUBLEBUFFER         0x00000080 /* Double Buffer the toolbar ??? */
 
 #define TBIF_IMAGE              0x00000001
 #define TBIF_TEXT               0x00000002
@@ -1106,6 +1107,19 @@ typedef struct _NMTBCUSTOMDRAW
     int nStringBkMode;
     int nHLStringBkMode;
 } NMTBCUSTOMDRAW, *LPNMTBCUSTOMDRAW;
+
+/* return flags for Toolbar NM_CUSTOMDRAW notifications */
+#define TBCDRF_NOEDGES        0x00010000  /* Don't draw button edges       */
+#define TBCDRF_HILITEHOTTRACK 0x00020000  /* Use color of the button bkgnd */
+                                          /* when hottracked               */
+#define TBCDRF_NOOFFSET       0x00040000  /* No offset button if pressed   */
+#define TBCDRF_NOMARK         0x00080000  /* Don't draw default highlight  */
+                                          /* for TBSTATE_MARKED            */
+#define TBCDRF_NOETCHEDEFFECT 0x00100000  /* No etched effect for          */
+                                          /* disabled items                */
+#define TBCDRF_BLENDICON      0x00200000  /* ILD_BLEND50 on the icon image */
+#define TBCDRF_NOBACKGROUND   0x00400000  /* ILD_BLEND50 on the icon image */
+
 
 /* This is just for old CreateToolbar. */
 /* Don't use it in new programs. */
@@ -1326,6 +1340,17 @@ typedef struct
 	UINT      nIDNew;
 	INT       nButtons;
 } TBREPLACEBITMAP, *LPTBREPLACEBITMAP;
+
+#define HICF_OTHER          0x00000000
+#define HICF_MOUSE          0x00000001   /* Triggered by mouse             */
+#define HICF_ARROWKEYS      0x00000002   /* Triggered by arrow keys        */
+#define HICF_ACCELERATOR    0x00000004   /* Triggered by accelerator       */
+#define HICF_DUPACCEL       0x00000008   /* This accelerator is not unique */
+#define HICF_ENTERING       0x00000010   /* idOld is invalid               */
+#define HICF_LEAVING        0x00000020   /* idNew is invalid               */
+#define HICF_RESELECT       0x00000040   /* hot item reselected            */
+#define HICF_LMOUSE         0x00000080   /* left mouse button selected     */
+#define HICF_TOGGLEDROPDOWN 0x00000100   /* Toggle button's dropdown state */
 
 typedef struct 
 {
