@@ -2556,7 +2556,8 @@ VOID INTERNET_ExecuteWork()
         req = &workRequest.u.FtpFindFirstFileW;
         FTP_FtpFindFirstFileW(workRequest.handle, req->lpszSearchFile,
            req->lpFindFileData, req->dwFlags, req->dwContext);
-	HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
+	if (req->lpszSearchFile != NULL)
+	    HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
         }
 	break;
 

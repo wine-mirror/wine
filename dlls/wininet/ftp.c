@@ -606,7 +606,7 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
         workRequest.asyncall = FTPFINDFIRSTFILEW;
 	workRequest.handle = hConnect;
         req = &workRequest.u.FtpFindFirstFileW;
-        req->lpszSearchFile = WININET_strdupW(lpszSearchFile);
+        req->lpszSearchFile = (lpszSearchFile == NULL) ? NULL : WININET_strdupW(lpszSearchFile);
 	req->lpFindFileData = lpFindFileData;
 	req->dwFlags = dwFlags;
 	req->dwContext= dwContext;
@@ -2659,7 +2659,7 @@ HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR l
     LPWININETFINDNEXTW lpwfn = NULL;
     HINTERNET handle = 0;
 
-    TRACE("(%p,%d,%p,%ld)\n", lpwfs, nSocket, lpFindFileData, dwContext);
+    TRACE("(%p,%d,%s,%p,%ld)\n", lpwfs, nSocket, debugstr_w(lpszSearchFile), lpFindFileData, dwContext);
 
     if (FTP_ParseDirectory(lpwfs, nSocket, lpszSearchFile, &lpafp, &dwSize))
     {
@@ -2878,7 +2878,8 @@ BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW lp
         }
         
         if(lpfp->lpszName) {
-            if(PathMatchSpecW(lpfp->lpszName, lpszSearchFile)) {
+            if((lpszSearchFile == NULL) ||
+	       (PathMatchSpecW(lpfp->lpszName, lpszSearchFile))) {
                 found = TRUE;
                 TRACE("Matched: %s\n", debugstr_w(lpfp->lpszName));
             }
