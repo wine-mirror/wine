@@ -219,29 +219,6 @@ typedef struct
   WORD			internal_charset;
 } fontMatch;
 
-typedef struct
-{
-  LPLOGFONT16		lpLogFontParam;
-  FONTENUMPROC16	lpEnumFunc;
-  LPARAM		lpData;
-
-  LPNEWTEXTMETRICEX16	lpTextMetric;
-  LPENUMLOGFONTEX16	lpLogFont;
-  SEGPTR		segTextMetric;
-  SEGPTR		segLogFont;
-} fontEnum16;
-
-typedef struct
-{
-  LPLOGFONTW		lpLogFontParam;
-  FONTENUMPROCEXW	lpEnumFunc;
-  LPARAM		lpData;
-
-  NEWTEXTMETRICEXW   *lpTextMetric;
-  LPENUMLOGFONTEXW    lpLogFont;
-  DWORD			dwFlags;
-} fontEnum32;
-
 extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont );
 extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
 extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );

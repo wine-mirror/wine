@@ -63,7 +63,7 @@ typedef struct
 typedef struct
 {
   LPLOGFONT16           lpLogFontParam;
-  FONTENUMPROCEX16      lpEnumFunc;
+  FONTENUMPROC16        lpEnumFunc;
   LPARAM                lpData;
 
   LPNEWTEXTMETRICEX16   lpTextMetric;
@@ -78,7 +78,7 @@ typedef struct
 typedef struct
 {
   LPLOGFONTW          lpLogFontParam;
-  FONTENUMPROCEXW     lpEnumFunc;
+  FONTENUMPROCW       lpEnumFunc;
   LPARAM              lpData;
   DWORD               dwFlags;
   HDC                 hdc;
@@ -132,7 +132,7 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
 };
 
 /* ### start build ### */
-extern WORD CALLBACK FONT_CallTo16_word_llwl(FONTENUMPROCEX16,LONG,LONG,WORD,LONG);
+extern WORD CALLBACK FONT_CallTo16_word_llwl(FONTENUMPROC16,LONG,LONG,WORD,LONG);
 /* ### stop build ### */
 
 /***********************************************************************
@@ -564,7 +564,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
         }
         GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
 
-        ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
+        ret = pfe->lpEnumFunc( &plf->elfLogFont, (TEXTMETRICW *)ptm, fType, pfe->lpData );
 
         /* get the lock again and make sure the DC is still valid */
         dc = DC_GetDCPtr( pfe->hdc );
@@ -582,7 +582,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
  *              EnumFontFamiliesEx	(GDI.613)
  */
 INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
-                                   FONTENUMPROCEX16 efproc, LPARAM lParam,
+                                   FONTENUMPROC16 efproc, LPARAM lParam,
                                    DWORD dwFlags)
 {
     fontEnum16 fe16;
@@ -622,7 +622,7 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
  *		FONT_EnumFontFamiliesEx
  */
 static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
-				    FONTENUMPROCEXW efproc,
+				    FONTENUMPROCW efproc,
 				    LPARAM lParam, DWORD dwUnicode)
 {
     INT ret = 1, ret2;
@@ -667,7 +667,7 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
  *              EnumFontFamiliesExW	(GDI32.@)
  */
 INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
-                                    FONTENUMPROCEXW efproc,
+                                    FONTENUMPROCW efproc,
                                     LPARAM lParam, DWORD dwFlags )
 {
     return  FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam, ENUM_UNICODE );
@@ -677,14 +677,13 @@ INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
  *              EnumFontFamiliesExA	(GDI32.@)
  */
 INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
-                                    FONTENUMPROCEXA efproc,
+                                    FONTENUMPROCA efproc,
                                     LPARAM lParam, DWORD dwFlags)
 {
     LOGFONTW lfW;
     FONT_LogFontAToW( plf, &lfW );
 
-    return  FONT_EnumFontFamiliesEx( hDC, &lfW,
-				     (FONTENUMPROCEXW)efproc, lParam, 0);
+    return FONT_EnumFontFamiliesEx( hDC, &lfW, (FONTENUMPROCW)efproc, lParam, 0);
 }
 
 /***********************************************************************
@@ -714,7 +713,7 @@ INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
     if( lpFamily ) lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = lf.lfFaceName[1] = '\0';
 
-    return EnumFontFamiliesExA( hDC, &lf, (FONTENUMPROCEXA)efproc, lpData, 0 );
+    return EnumFontFamiliesExA( hDC, &lf, efproc, lpData, 0 );
 }
 
 /***********************************************************************
@@ -729,7 +728,7 @@ INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
     if( lpFamily ) lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = 0;
 
-    return EnumFontFamiliesExW( hDC, &lf, (FONTENUMPROCEXW)efproc, lpData, 0 );
+    return EnumFontFamiliesExW( hDC, &lf, efproc, lpData, 0 );
 }
 
 /***********************************************************************
@@ -738,7 +737,7 @@ INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
 INT16 WINAPI EnumFonts16( HDC16 hDC, LPCSTR lpName, FONTENUMPROC16 efproc,
                           LPARAM lpData )
 {
-    return EnumFontFamilies16( hDC, lpName, (FONTENUMPROCEX16)efproc, lpData );
+    return EnumFontFamilies16( hDC, lpName, efproc, lpData );
 }
 
 /***********************************************************************
