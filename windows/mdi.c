@@ -633,6 +633,7 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
 END:
     WIN_ReleaseWndPtr(wndPtr);
     WIN_ReleaseWndPtr(wndPrev);
+    return retvalue;
 }
 
 /* -------------------- MDI client window functions ------------------- */
@@ -1554,6 +1555,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
     retvalue = DefWindowProc16(hwnd, message, wParam, lParam);
 END:
     WIN_ReleaseWndPtr(clientWnd);
+    return retvalue;
 }
 
 
