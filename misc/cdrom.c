@@ -612,21 +612,35 @@ int	CDROM_Reset(WINE_CDAUDIO* wcda, int parentdev)
     return ret;
 }
 
+/**************************************************************************
+ *                             CDROM_Data_FindBestVoldesc       [internal]
+ */
 WORD CDROM_Data_FindBestVoldesc(int fd)
 {
     BYTE cur_vd_type, max_vd_type = 0;
-    unsigned int offs, best_offs = 0;
+    unsigned int offs, best_offs=0, extra_offs = 0;
+    char sig[3];
+
 
     for (offs=0x8000; offs <= 0x9800; offs += 0x800)
     {
-        lseek(fd, offs, SEEK_SET);
+	/* if 'CDROM' occurs at position 8, this is a pre-iso9660 cd, and 
+	 * the volume label is displaced forward by 8
+	 */
+	lseek(fd, offs+11, SEEK_SET); /* check for non-ISO9660 signature */
+	read(fd, &sig, 3);
+	if ((sig[0]=='R')&&(sig[1]=='O')&&(sig[2]=='M'))
+	{
+	    extra_offs=8;
+	}
+        lseek(fd, offs+extra_offs, SEEK_SET);
         read(fd, &cur_vd_type, 1);
         if (cur_vd_type == 0xff) /* voldesc set terminator */
             break;
         if (cur_vd_type > max_vd_type)
         {
             max_vd_type = cur_vd_type;
-            best_offs = offs;
+            best_offs = offs + extra_offs;
         }
     }
     return best_offs;
@@ -858,6 +872,8 @@ DWORD CDROM_GetLabel(int drive, char *label)
 		if (!cdname) cdname = "XA 2.1";
 	    case CDS_XA_2_2:
 		if (!cdname) cdname = "XA 2.2";
+	    case CDS_MIXED:
+		if (!cdname) cdname = "Mixed mode";
 	    case -1:
 		if (!cdname) cdname = "Unknown/ISO file";
 
@@ -866,11 +882,6 @@ DWORD CDROM_GetLabel(int drive, char *label)
 		if (!CDROM_Data_GetLabel(&wcda, label, dev))
 			ret = 0;
 		break;
-
-	    case CDS_MIXED:
-		cdname = "Mixed mode";
-		FIXME("Need to get the label of a mixed mode CD: not implemented yet !\n");
-		/* fall through */
 
 	    case CDS_NO_INFO:
 		if (!cdname) cdname = "No_info";
