@@ -85,6 +85,10 @@ extern int WIN32_LastError;
 #define	NOERROR				0
 #define	S_OK				0
 
+#define DISP_E_BADVARTYPE   0x80020008L
+#define DISP_E_OVERFLOW     0x8002000AL
+#define DISP_E_TYPEMISMATCH 0x80020005L
+
 
 #define	E_UNEXPECTED			0x8000FFFF
 

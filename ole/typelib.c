@@ -97,7 +97,7 @@ QueryPathOfRegTypeLib32(
 /******************************************************************************
  * LoadTypeLib [TYPELIB.3]  Loads and registers a type library
  * NOTES
- *    Docs: OLECHAR FAR* szFile
+ *    Docs: OLECHAR32 FAR* szFile
  *    Docs: iTypeLib FAR* FAR* pptLib
  *
  * RETURNS
@@ -116,7 +116,7 @@ HRESULT WINAPI LoadTypeLib(
  *		LoadTypeLib32	[OLEAUT32.161]
  * Loads and registers a type library
  * NOTES
- *    Docs: OLECHAR FAR* szFile
+ *    Docs: OLECHAR32 FAR* szFile
  *    Docs: iTypeLib FAR* FAR* pptLib
  *
  * RETURNS
@@ -137,8 +137,8 @@ HRESULT WINAPI LoadTypeLib32(
  * Adds information about a type library to the System Registry           
  * NOTES
  *    Docs: ITypeLib FAR * ptlib
- *    Docs: OLECHAR FAR* szFullPath
- *    Docs: OLECHAR FAR* szHelpDir
+ *    Docs: OLECHAR32 FAR* szFullPath
+ *    Docs: OLECHAR32 FAR* szHelpDir
  *
  * RETURNS
  *    Success: S_OK
@@ -146,8 +146,8 @@ HRESULT WINAPI LoadTypeLib32(
  */
 HRESULT WINAPI RegisterTypeLib32(
      ITypeLib * ptlib,      /*[in] Pointer to the library*/
-     OLECHAR * szFullPath, /*[in] full Path of the library*/
-     OLECHAR * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/  
+     OLECHAR32 * szFullPath, /*[in] full Path of the library*/
+     OLECHAR32 * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/
 {   FIXME(ole, "(%p,%s,%s): stub\n",ptlib, szFullPath,szHelpDir);
     return S_OK;	/* FIXME: pretend everything is OK */
 }

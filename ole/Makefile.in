@@ -17,7 +17,8 @@ C_SRCS = \
 	oleobj.c \
 	olesvr.c \
 	storage.c \
-	typelib.c
+	typelib.c \
+	variant.c
 
 all: $(MODULE).o
 

@@ -1,0 +1,3600 @@
+/*
+ * VARIANT
+ *
+ * Copyright 1998 Jean-Claude Cote
+ *
+ * NOTES
+ *   This implements the low-level and hi-level APIs for manipulating VARIANTs.
+ *   The low-level APIs are used to do data coercion between different data types.
+ *   The hi-level APIs are built on top of these low-level APIs and handle
+ *   initialization, copying, destroying and changing the type of VARIANTs.
+ *
+ * TODO:
+ *   - The Variant APIs are do not support international languages, currency
+ *     types, number formating and calendar.  They only support U.S. English format.
+ *   - The Variant APIs do not the following types: IUknown, IDispatch, DECIMAL and SafeArray.
+ *     The prototypes for these are commented out in the oleauto.h file.  They need
+ *     to be implemented and cases need to be added to the switches of the  existing APIs.
+ *   - The parsing of date for the VarDateFromStr still needs to be done.  I'm currently
+ *     working on this.
+ */
+ 
+#include "oleauto.h"
+#include "heap.h"
+#include "debug.h"
+#include "winerror.h"
+
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+
+
+static const char CHAR_MAX = 127;
+static const char CHAR_MIN = -128;
+static const BYTE UI1_MAX = 255;
+static const BYTE UI1_MIN = 0;
+static const unsigned short UI2_MAX = 65535;
+static const unsigned short UI2_MIN = 0;
+static const short I2_MAX = 32767;
+static const short I2_MIN =  -32768;
+static const unsigned long UI4_MAX = 4294967295;
+static const unsigned long UI4_MIN = 0;
+static const long I4_MAX = 2147483647;
+static const long I4_MIN = -2147483648.0;
+static const DATE DATE_MIN = -657434;
+static const DATE DATE_MAX = 2958465;
+
+
+/* This mask is used to set a flag in wReserved1 of
+ * the VARIANTARG structure. The flag indicates if
+ * the API function is using an inner variant or not.
+ */
+#define PROCESSING_INNER_VARIANT 0x0001
+
+/* General use buffer.
+ */
+#define BUFFER_MAX 1024
+static char pBuffer[BUFFER_MAX];
+
+
+
+/******************************************************************************
+ *	   SizeOfVariantData   	[INTERNAL]
+ *
+ * This function finds the size of the data referenced by a Variant based
+ * the type "vt" of the Variant.
+ */
+static int SizeOfVariantData( VARIANT* parg )
+{
+    int size = 0;
+    switch( parg->vt & VT_TYPEMASK )
+    {
+    case( VT_I2 ):
+        size = sizeof(short);
+        break;
+    case( VT_INT ):
+        size = sizeof(int);
+        break;
+    case( VT_I4 ):
+        size = sizeof(long);
+        break;
+    case( VT_UI1 ):
+        size = sizeof(BYTE);
+        break;
+    case( VT_UI2 ):
+        size = sizeof(unsigned short);
+        break;
+    case( VT_UINT ):
+        size = sizeof(unsigned int);
+        break;
+    case( VT_UI4 ):
+        size = sizeof(unsigned long);
+        break;
+    case( VT_R4 ):
+        size = sizeof(float);
+        break;
+    case( VT_R8 ):
+        size = sizeof(double);
+        break;
+    case( VT_DATE ):
+        size = sizeof(DATE);
+        break;
+    case( VT_BOOL ):
+        size = sizeof(VARIANT_BOOL);
+        break;
+    case( VT_BSTR ):
+        size = sizeof(void*);
+        break;
+    case( VT_CY ):
+    case( VT_DISPATCH ):
+    case( VT_UNKNOWN ):
+    case( VT_DECIMAL ):
+    default:
+        FIXME(ole,"Add size information for type vt=%d\n", parg->vt & VT_TYPEMASK );
+        break;
+    }
+
+    return size;
+}
+/******************************************************************************
+ *	   StringDupAtoBstr		[INTERNAL]
+ * 
+ */
+static BSTR32 StringDupAtoBstr( char* strIn )
+{
+	BSTR32 bstr = NULL;
+	OLECHAR32* pNewString = NULL;
+	pNewString = HEAP_strdupAtoW( GetProcessHeap(), 0, strIn );
+	bstr = SysAllocString32( pNewString );
+	HeapFree( GetProcessHeap(), 0, pNewString );
+	return bstr;
+}
+
+/******************************************************************************
+ *		round		[INTERNAL]
+ *
+ * Round the double value to the nearest integer value.
+ */
+static double round( double d )
+{
+	double decimals = 0.0;
+	unsigned long integerValue = 0.0;
+    double roundedValue = 0.0;
+    BOOL32 bEvenNumber = FALSE;
+    int nSign = 0;
+
+    /* Save the sign of the number
+     */
+    nSign = d >= 0.0 ? 1 : -1;
+    d = fabs( d );
+    
+	/* Remove the decimals.
+	 */
+	integerValue = (unsigned long) d;
+
+    /* Set the Even flag.  This is used to round the number when
+     * the decimals are exactly 1/2.  If the integer part is
+     * odd the number is rounded up. If the integer part
+     * is even the number is rounded down.  Using this method
+     * numbers are rounded up|down half the time.
+     */
+    bEvenNumber = ((integerValue % 2) == 0) ? TRUE : FALSE;
+
+    /* Remove the integral part of the number.
+     */
+    decimals = d - integerValue;
+
+	/* Note: Ceil returns the smallest integer that is greater that x.
+	 * and floor returns the largest integer that is less than or equal to x.
+	 */
+    if( decimals > 0.5 )
+    {
+        /* If the decimal part is greater than 1/2
+         */
+        roundedValue = ceil( d );
+    }
+    else if( decimals < 0.5 )
+    {
+        /* If the decimal part is smaller than 1/2
+         */
+        roundedValue = floor( d );
+    }
+    else
+    {
+        /* the decimals are exactly 1/2 so round according to
+         * the bEvenNumber flag.
+         */
+        if( bEvenNumber )
+        {
+            roundedValue = floor( d );
+        }
+        else
+        {
+            roundedValue = ceil( d );
+        }
+    }
+
+	return roundedValue * nSign;
+}
+
+
+/******************************************************************************
+ *		RemoveCharacterFromString		[INTERNAL]
+ *
+ * Removes any of the characters in "strOfCharToRemove" from the "str" argument.
+ */
+static void RemoveCharacterFromString( LPSTR str, LPSTR strOfCharToRemove )
+{
+	LPSTR pNewString = NULL;
+	LPSTR strToken = NULL;
+
+
+	/* Check if we have a valid argument
+	 */
+	if( str != NULL )
+	{
+		pNewString = strdup( str );
+		str[0] = '\0';
+		strToken = strtok( pNewString, strOfCharToRemove );
+		while( strToken != NULL ) { 
+			strcat( str, strToken );
+			strToken = strtok( NULL, strOfCharToRemove );
+		}
+		free( pNewString );
+	}
+	return;
+}
+
+/******************************************************************************
+ *		GetValidRealString		[INTERNAL]
+ *
+ * Checks if the string is of proper format to be converted to a real value.
+ */
+static BOOL32 IsValidRealString( LPSTR strRealString )
+{
+	/* Real values that have a decimal point are required to either have
+	 * digits before or after the decimal point.  We will assume that
+	 * we do not have any digits at either position. If we do encounter
+	 * some we will disable this flag.
+	 */
+	BOOL32 bDigitsRequired = TRUE;
+	/* Processed fields in the string representation of the real number.
+	 */
+	BOOL32 bWhiteSpaceProcessed = FALSE;
+	BOOL32 bFirstSignProcessed = FALSE;
+	BOOL32 bFirstDigitsProcessed = FALSE;
+	BOOL32 bDecimalPointProcessed = FALSE;
+	BOOL32 bSecondDigitsProcessed = FALSE;
+	BOOL32 bExponentProcessed = FALSE;
+	BOOL32 bSecondSignProcessed = FALSE;
+	BOOL32 bThirdDigitsProcessed = FALSE;
+	/* Assume string parameter "strRealString" is valid and try to disprove it.
+	 */
+	BOOL32 bValidRealString = TRUE;
+
+	/* Used to count the number of tokens in the "strRealString".
+	 */
+	LPSTR strToken = NULL;
+	int nTokens = 0;
+	LPSTR pChar = NULL;
+	
+	/* Check if we have a valid argument
+	 */
+	if( strRealString == NULL )
+	{
+		bValidRealString = FALSE;
+	}
+
+	if( bValidRealString == TRUE )
+	{
+		/* Make sure we only have ONE token in the string.
+		 */
+		strToken = strtok( strRealString, " " );
+		while( strToken != NULL ) { 
+			nTokens++;		
+			strToken = strtok( NULL, " " );	
+		}
+
+		if( nTokens != 1 )
+		{
+			bValidRealString = FALSE;
+		}
+	}
+
+
+	/* Make sure this token contains only valid characters.
+	 * The string argument to atof has the following form:
+	 * [whitespace] [sign] [digits] [.digits] [ {d | D | e | E }[sign]digits]
+	 * Whitespace consists of space and|or <TAB> characters, which are ignored.
+     * Sign is either plus '+' or minus '-'.
+     * Digits are one or more decimal digits.
+     * Note: If no digits appear before the decimal point, at least one must
+     * appear after the decimal point.
+     * The decimal digits may be followed by an exponent.
+     * An Exponent consists of an introductory letter ( D, d, E, or e) and
+	 * an optionally signed decimal integer.
+	 */
+	pChar = strRealString;
+	while( bValidRealString == TRUE && *pChar != '\0' )
+	{
+		switch( *pChar )
+		{
+		/* If whitespace...
+		 */
+		case ' ':
+		case '\t':
+			if( bWhiteSpaceProcessed ||
+				bFirstSignProcessed ||
+				bFirstDigitsProcessed ||
+				bDecimalPointProcessed ||
+				bSecondDigitsProcessed ||
+				bExponentProcessed ||
+				bSecondSignProcessed ||
+				bThirdDigitsProcessed )
+			{
+				bValidRealString = FALSE;
+			}
+			break;
+		/* If sign...
+		 */
+		case '+':
+		case '-':
+			if( bFirstSignProcessed == FALSE )
+			{
+				if( bFirstDigitsProcessed ||
+					bDecimalPointProcessed ||
+					bSecondDigitsProcessed ||
+					bExponentProcessed ||
+					bSecondSignProcessed ||
+					bThirdDigitsProcessed )
+				{
+					bValidRealString = FALSE;
+				}
+				bWhiteSpaceProcessed = TRUE;
+				bFirstSignProcessed = TRUE;
+			}
+			else if( bSecondSignProcessed == FALSE )
+			{
+                /* Note: The exponent must be present in
+				 * order to accept the second sign...
+				 */
+				if( bExponentProcessed == FALSE ||
+					bThirdDigitsProcessed ||
+					bDigitsRequired )
+				{
+					bValidRealString = FALSE;
+				}
+				bFirstSignProcessed = TRUE;
+				bWhiteSpaceProcessed = TRUE;
+				bFirstDigitsProcessed = TRUE;
+				bDecimalPointProcessed = TRUE;
+				bSecondDigitsProcessed = TRUE;
+				bSecondSignProcessed = TRUE;
+			}
+			break;
+
+		/* If decimals...
+		 */
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9': 
+			if( bFirstDigitsProcessed == FALSE )
+			{
+				if( bDecimalPointProcessed ||
+					bSecondDigitsProcessed ||
+					bExponentProcessed ||
+					bSecondSignProcessed ||
+					bThirdDigitsProcessed )
+				{
+					bValidRealString = FALSE;
+				}
+				bFirstSignProcessed = TRUE;
+				bWhiteSpaceProcessed = TRUE;
+				/* We have found some digits before the decimal point
+				 * so disable the "Digits required" flag.
+				 */
+				bDigitsRequired = FALSE;
+			}
+			else if( bSecondDigitsProcessed == FALSE )
+			{
+				if( bExponentProcessed ||
+					bSecondSignProcessed ||
+					bThirdDigitsProcessed )
+				{
+					bValidRealString = FALSE;
+				}
+				bFirstSignProcessed = TRUE;
+				bWhiteSpaceProcessed = TRUE;
+				bFirstDigitsProcessed = TRUE;
+				bDecimalPointProcessed = TRUE;
+				/* We have found some digits after the decimal point
+				 * so disable the "Digits required" flag.
+				 */
+				bDigitsRequired = FALSE;
+			}
+			else if( bThirdDigitsProcessed == FALSE )
+			{
+				/* Getting here means everything else should be processed.
+                 * If we get anything else than a decimal following this
+                 * digit it will be flagged by the other cases, so
+				 * we do not really need to do anything in here.
+				 */
+			}
+			break;
+		/* If DecimalPoint...
+		 */
+		case '.': 
+			if( bDecimalPointProcessed ||
+				bSecondDigitsProcessed ||
+				bExponentProcessed ||
+				bSecondSignProcessed ||
+				bThirdDigitsProcessed )
+			{
+				bValidRealString = FALSE;
+			}
+			bFirstSignProcessed = TRUE;
+			bWhiteSpaceProcessed = TRUE;
+			bFirstDigitsProcessed = TRUE;
+			bDecimalPointProcessed = TRUE;
+			break;
+		/* If Exponent...
+		 */
+		case 'e':
+		case 'E':
+		case 'd':
+		case 'D':
+			if( bExponentProcessed ||
+				bSecondSignProcessed ||
+				bThirdDigitsProcessed ||
+				bDigitsRequired )
+			{
+				bValidRealString = FALSE;
+			}
+			bFirstSignProcessed = TRUE;
+			bWhiteSpaceProcessed = TRUE;
+			bFirstDigitsProcessed = TRUE;
+			bDecimalPointProcessed = TRUE;
+			bSecondDigitsProcessed = TRUE;
+			bExponentProcessed = TRUE;
+			break;
+		default:
+			bValidRealString = FALSE;
+			break;
+		}
+		/* Process next character.
+		 */
+		pChar++;
+	}
+
+	/* If the required digits were not present we have an invalid
+	 * string representation of a real number.
+	 */
+	if( bDigitsRequired == TRUE )
+	{
+		bValidRealString = FALSE;
+	}
+
+	return bValidRealString;
+}
+
+
+/******************************************************************************
+ *		Coerce	[INTERNAL]
+ *
+ * This function dispatches execution to the proper conversion API
+ * to do the necessary coercion.
+ */
+static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps, VARTYPE vt )
+{
+	HRESULT res = S_OK;
+	unsigned short vtFrom = 0;
+	vtFrom = ps->vt & VT_TYPEMASK;
+	
+    /* Note: Since "long" and "int" values both have 4 bytes and are both signed integers
+     * "int" will be treated as "long" in the following code.
+     * The same goes for there unsigned versions.
+	 */
+
+	switch( vt )
+	{
+
+    case( VT_EMPTY ):
+        res = VariantClear32( pd );
+        break;
+    case( VT_NULL ):
+        res = VariantClear32( pd );
+        if( res == S_OK )
+        {
+            pd->vt = VT_NULL;
+        }
+        break;
+	case( VT_I1 ):
+		switch( vtFrom )
+        {
+        case( VT_I1 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_I2 ):
+			res = VarI1FromI232( ps->u.iVal, &(pd->u.cVal) );
+			break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarI1FromI432( ps->u.lVal, &(pd->u.cVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarI1FromUI132( ps->u.bVal, &(pd->u.cVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarI1FromUI232( ps->u.uiVal, &(pd->u.cVal) );
+			break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarI1FromUI432( ps->u.ulVal, &(pd->u.cVal) );
+			break;
+		case( VT_R4 ):
+			res = VarI1FromR432( ps->u.fltVal, &(pd->u.cVal) );
+			break;
+		case( VT_R8 ):
+			res = VarI1FromR832( ps->u.dblVal, &(pd->u.cVal) );
+			break;
+		case( VT_DATE ):
+			res = VarI1FromDate32( ps->u.date, &(pd->u.cVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarI1FromBool32( ps->u.boolVal, &(pd->u.cVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarI1FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarI1FromCY32( ps->u.cyVal, &(pd->u.cVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.cVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarI1From32( ps->u.lVal, &(pd->u.cVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarI1FromDec32( ps->u.decVal, &(pd->u.cVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_I2 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarI2FromI132( ps->u.cVal, &(pd->u.iVal) );
+			break;
+        case( VT_I2 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarI2FromI432( ps->u.lVal, &(pd->u.iVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarI2FromUI132( ps->u.bVal, &(pd->u.iVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarI2FromUI232( ps->u.uiVal, &(pd->u.iVal) );
+			break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarI2FromUI432( ps->u.ulVal, &(pd->u.iVal) );
+			break;
+		case( VT_R4 ):
+			res = VarI2FromR432( ps->u.fltVal, &(pd->u.iVal) );
+			break;
+		case( VT_R8 ):
+			res = VarI2FromR832( ps->u.dblVal, &(pd->u.iVal) );
+			break;
+		case( VT_DATE ):
+			res = VarI2FromDate32( ps->u.date, &(pd->u.iVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarI2FromBool32( ps->u.boolVal, &(pd->u.iVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarI2FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.iVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarI2FromCY32( ps->u.cyVal, &(pd->u.iVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.iVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarI2From32( ps->u.lVal, &(pd->u.iVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarI2FromDec32( ps->u.deiVal, &(pd->u.iVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_INT ):
+	case( VT_I4 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarI4FromI132( ps->u.cVal, &(pd->u.lVal) );
+			break;
+		case( VT_I2 ):
+			res = VarI4FromI232( ps->u.iVal, &(pd->u.lVal) );
+            break;
+        case( VT_INT ):
+        case( VT_I4 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_UI1 ):
+			res = VarI4FromUI132( ps->u.bVal, &(pd->u.lVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarI4FromUI232( ps->u.uiVal, &(pd->u.lVal) );
+			break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarI4FromUI432( ps->u.ulVal, &(pd->u.lVal) );
+			break;
+		case( VT_R4 ):
+			res = VarI4FromR432( ps->u.fltVal, &(pd->u.lVal) );
+			break;
+		case( VT_R8 ):
+			res = VarI4FromR832( ps->u.dblVal, &(pd->u.lVal) );
+			break;
+		case( VT_DATE ):
+			res = VarI4FromDate32( ps->u.date, &(pd->u.lVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarI4FromBool32( ps->u.boolVal, &(pd->u.lVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarI4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.lVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarI4FromCY32( ps->u.cyVal, &(pd->u.lVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.lVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarI4From32( ps->u.lVal, &(pd->u.lVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarI4FromDec32( ps->u.deiVal, &(pd->u.lVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_UI1 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarUI1FromI132( ps->u.cVal, &(pd->u.bVal) );
+			break;
+		case( VT_I2 ):
+			res = VarUI1FromI232( ps->u.iVal, &(pd->u.bVal) );
+			break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarUI1FromI432( ps->u.lVal, &(pd->u.bVal) );
+			break;
+        case( VT_UI1 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_UI2 ):
+			res = VarUI1FromUI232( ps->u.uiVal, &(pd->u.bVal) );
+			break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarUI1FromUI432( ps->u.ulVal, &(pd->u.bVal) );
+			break;
+		case( VT_R4 ):
+			res = VarUI1FromR432( ps->u.fltVal, &(pd->u.bVal) );
+			break;
+		case( VT_R8 ):
+			res = VarUI1FromR832( ps->u.dblVal, &(pd->u.bVal) );
+			break;
+		case( VT_DATE ):
+			res = VarUI1FromDate32( ps->u.date, &(pd->u.bVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarUI1FromBool32( ps->u.boolVal, &(pd->u.bVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarUI1FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.bVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarUI1FromCY32( ps->u.cyVal, &(pd->u.bVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarUI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.bVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarUI1From32( ps->u.lVal, &(pd->u.bVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarUI1FromDec32( ps->u.deiVal, &(pd->u.bVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_UI2 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarUI2FromI132( ps->u.cVal, &(pd->u.uiVal) );
+			break;
+		case( VT_I2 ):
+			res = VarUI2FromI232( ps->u.iVal, &(pd->u.uiVal) );
+			break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarUI2FromI432( ps->u.lVal, &(pd->u.uiVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarUI2FromUI132( ps->u.bVal, &(pd->u.uiVal) );
+			break;
+        case( VT_UI2 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarUI2FromUI432( ps->u.ulVal, &(pd->u.uiVal) );
+			break;
+		case( VT_R4 ):
+			res = VarUI2FromR432( ps->u.fltVal, &(pd->u.uiVal) );
+			break;
+		case( VT_R8 ):
+			res = VarUI2FromR832( ps->u.dblVal, &(pd->u.uiVal) );
+			break;
+		case( VT_DATE ):
+			res = VarUI2FromDate32( ps->u.date, &(pd->u.uiVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarUI2FromBool32( ps->u.boolVal, &(pd->u.uiVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarUI2FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.uiVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarUI2FromCY32( ps->u.cyVal, &(pd->u.uiVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarUI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.uiVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarUI2From32( ps->u.lVal, &(pd->u.uiVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarUI2FromDec32( ps->u.deiVal, &(pd->u.uiVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_UINT ):
+	case( VT_UI4 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarUI4FromI132( ps->u.cVal, &(pd->u.ulVal) );
+			break;
+		case( VT_I2 ):
+			res = VarUI4FromI232( ps->u.iVal, &(pd->u.ulVal) );
+			break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarUI4FromI432( ps->u.lVal, &(pd->u.ulVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarUI4FromUI132( ps->u.bVal, &(pd->u.ulVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarUI4FromUI232( ps->u.uiVal, &(pd->u.ulVal) );
+			break;
+        case( VT_UI4 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_R4 ):
+			res = VarUI4FromR432( ps->u.fltVal, &(pd->u.ulVal) );
+			break;
+		case( VT_R8 ):
+			res = VarUI4FromR832( ps->u.dblVal, &(pd->u.ulVal) );
+			break;
+		case( VT_DATE ):
+			res = VarUI4FromDate32( ps->u.date, &(pd->u.ulVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarUI4FromBool32( ps->u.boolVal, &(pd->u.ulVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarUI4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.ulVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarUI4FromCY32( ps->u.cyVal, &(pd->u.ulVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarUI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.ulVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarUI4From32( ps->u.lVal, &(pd->u.ulVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarUI4FromDec32( ps->u.deiVal, &(pd->u.ulVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+		
+	case( VT_R4 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarR4FromI132( ps->u.cVal, &(pd->u.fltVal) );
+			break;
+		case( VT_I2 ):
+			res = VarR4FromI232( ps->u.iVal, &(pd->u.fltVal) );
+			break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarR4FromI432( ps->u.lVal, &(pd->u.fltVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarR4FromUI132( ps->u.bVal, &(pd->u.fltVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarR4FromUI232( ps->u.uiVal, &(pd->u.fltVal) );
+			break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarR4FromUI432( ps->u.ulVal, &(pd->u.fltVal) );
+			break;
+        case( VT_R4 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_R8 ):
+			res = VarR4FromR832( ps->u.dblVal, &(pd->u.fltVal) );
+			break;
+		case( VT_DATE ):
+			res = VarR4FromDate32( ps->u.date, &(pd->u.fltVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarR4FromBool32( ps->u.boolVal, &(pd->u.fltVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarR4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.fltVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarR4FromCY32( ps->u.cyVal, &(pd->u.fltVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarR4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.fltVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarR4From32( ps->u.lVal, &(pd->u.fltVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarR4FromDec32( ps->u.deiVal, &(pd->u.fltVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_R8 ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarR8FromI132( ps->u.cVal, &(pd->u.dblVal) );
+			break;
+		case( VT_I2 ):
+			res = VarR8FromI232( ps->u.iVal, &(pd->u.dblVal) );
+			break;
+		case( VT_INT ):
+		case( VT_I4 ):
+			res = VarR8FromI432( ps->u.lVal, &(pd->u.dblVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarR8FromUI132( ps->u.bVal, &(pd->u.dblVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarR8FromUI232( ps->u.uiVal, &(pd->u.dblVal) );
+			break;
+		case( VT_UINT ):
+		case( VT_UI4 ):
+			res = VarR8FromUI432( ps->u.ulVal, &(pd->u.dblVal) );
+			break;
+		case( VT_R4 ):
+			res = VarR8FromR432( ps->u.fltVal, &(pd->u.dblVal) );
+			break;
+        case( VT_R8 ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_DATE ):
+			res = VarR8FromDate32( ps->u.date, &(pd->u.dblVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarR8FromBool32( ps->u.boolVal, &(pd->u.dblVal) );
+			break;
+		case( VT_BSTR ):
+			res = VarR8FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.dblVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarR8FromCY32( ps->u.cyVal, &(pd->u.dblVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarR8FromDisp32( ps->u.pdispVal, lcid, &(pd->u.dblVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarR8From32( ps->u.lVal, &(pd->u.dblVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarR8FromDec32( ps->u.deiVal, &(pd->u.dblVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_DATE ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarDateFromI132( ps->u.cVal, &(pd->u.date) );
+			break;
+		case( VT_I2 ):
+			res = VarDateFromI232( ps->u.iVal, &(pd->u.date) );
+			break;
+		case( VT_INT ):
+			res = VarDateFromInt32( ps->u.intVal, &(pd->u.date) );
+			break;
+		case( VT_I4 ):
+			res = VarDateFromI432( ps->u.lVal, &(pd->u.date) );
+			break;
+		case( VT_UI1 ):
+			res = VarDateFromUI132( ps->u.bVal, &(pd->u.date) );
+			break;
+		case( VT_UI2 ):
+			res = VarDateFromUI232( ps->u.uiVal, &(pd->u.date) );
+			break;
+		case( VT_UINT ):
+			res = VarDateFromUint32( ps->u.uintVal, &(pd->u.date) );
+			break;
+		case( VT_UI4 ):
+			res = VarDateFromUI432( ps->u.ulVal, &(pd->u.date) );
+			break;
+		case( VT_R4 ):
+			res = VarDateFromR432( ps->u.fltVal, &(pd->u.date) );
+			break;
+		case( VT_R8 ):
+			res = VarDateFromR832( ps->u.dblVal, &(pd->u.date) );
+			break;
+        case( VT_DATE ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_BOOL ):
+			res = VarDateFromBool32( ps->u.boolVal, &(pd->u.date) );
+			break;
+		case( VT_BSTR ):
+			res = VarDateFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.date) );
+			break;
+		case( VT_CY ):
+			/*res = VarDateFromCY32( ps->u.cyVal, &(pd->u.date) );*/
+		case( VT_DISPATCH ):
+			/*res = VarDateFromDisp32( ps->u.pdispVal, lcid, &(pd->u.date) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarDateFrom32( ps->u.lVal, &(pd->u.date) );*/
+		case( VT_DECIMAL ):
+			/*res = VarDateFromDec32( ps->u.deiVal, &(pd->u.date) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_BOOL ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarBoolFromI132( ps->u.cVal, &(pd->u.boolVal) );
+			break;
+		case( VT_I2 ):
+			res = VarBoolFromI232( ps->u.iVal, &(pd->u.boolVal) );
+			break;
+		case( VT_INT ):
+			res = VarBoolFromInt32( ps->u.intVal, &(pd->u.boolVal) );
+			break;
+		case( VT_I4 ):
+			res = VarBoolFromI432( ps->u.lVal, &(pd->u.boolVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarBoolFromUI132( ps->u.bVal, &(pd->u.boolVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarBoolFromUI232( ps->u.uiVal, &(pd->u.boolVal) );
+			break;
+		case( VT_UINT ):
+			res = VarBoolFromUint32( ps->u.uintVal, &(pd->u.boolVal) );
+			break;
+		case( VT_UI4 ):
+			res = VarBoolFromUI432( ps->u.ulVal, &(pd->u.boolVal) );
+			break;
+		case( VT_R4 ):
+			res = VarBoolFromR432( ps->u.fltVal, &(pd->u.boolVal) );
+			break;
+		case( VT_R8 ):
+			res = VarBoolFromR832( ps->u.dblVal, &(pd->u.boolVal) );
+			break;
+		case( VT_DATE ):
+			res = VarBoolFromDate32( ps->u.date, &(pd->u.boolVal) );
+			break;
+        case( VT_BOOL ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_BSTR ):
+			res = VarBoolFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.boolVal) );
+			break;
+		case( VT_CY ):
+			/*res = VarBoolFromCY32( ps->u.cyVal, &(pd->u.boolVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarBoolFromDisp32( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarBoolFrom32( ps->u.lVal, &(pd->u.boolVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarBoolFromDec32( ps->u.deiVal, &(pd->u.boolVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	case( VT_BSTR ):
+		switch( vtFrom )
+		{
+		case( VT_I1 ):
+			res = VarBstrFromI132( ps->u.cVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_I2 ):
+			res = VarBstrFromI232( ps->u.iVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_INT ):
+			res = VarBstrFromInt32( ps->u.intVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_I4 ):
+			res = VarBstrFromI432( ps->u.lVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_UI1 ):
+			res = VarBstrFromUI132( ps->u.bVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_UI2 ):
+			res = VarBstrFromUI232( ps->u.uiVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_UINT ):
+			res = VarBstrFromUint32( ps->u.uintVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_UI4 ):
+			res = VarBstrFromUI432( ps->u.ulVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_R4 ):
+			res = VarBstrFromR432( ps->u.fltVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_R8 ):
+			res = VarBstrFromR832( ps->u.dblVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_DATE ):
+			res = VarBstrFromDate32( ps->u.date, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+		case( VT_BOOL ):
+			res = VarBstrFromBool32( ps->u.boolVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
+        case( VT_BSTR ):
+            res = VariantCopy32( pd, ps );
+            break;
+		case( VT_CY ):
+			/*res = VarBstrFromCY32( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+		case( VT_DISPATCH ):
+			/*res = VarBstrFromDisp32( ps->u.pdispVal, lcid, lcid, dwFlags, &(pd->u.bstrVal) );*/
+		case( VT_UNKNOWN ):
+			/*res = VarBstrFrom32( ps->u.lVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+		case( VT_DECIMAL ):
+			/*res = VarBstrFromDec32( ps->u.deiVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+		default:
+			res = DISP_E_TYPEMISMATCH;
+			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			break;
+		}
+		break;
+
+	default:
+		res = DISP_E_TYPEMISMATCH;
+		FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+		break;
+	}
+	
+	return res;
+}
+
+/******************************************************************************
+ *		ValidateVtRange	[INTERNAL]
+ *
+ * Used internally by the hi-level Variant API to determine
+ * if the vartypes are valid.
+ */
+static HRESULT ValidateVtRange( VARTYPE vt )
+{
+    /* if by value we must make sure it is in the
+     * range of the valid types.
+     */
+    if( ( vt & VT_TYPEMASK ) > VT_MAXVALIDTYPE )
+    {
+        return DISP_E_BADVARTYPE;
+    }
+    return S_OK;
+}
+
+
+/******************************************************************************
+ *		ValidateVartype	[INTERNAL]
+ *
+ * Used internally by the hi-level Variant API to determine
+ * if the vartypes are valid.
+ */
+static HRESULT ValidateVariantType( VARTYPE vt )
+{
+	HRESULT res = S_OK;
+
+	/* check if we have a valid argument.
+	 */
+	if( vt & VT_BYREF )
+    {
+        /* if by reference check that the type is in
+         * the valid range and that it is not of empty or null type
+         */
+        if( ( vt & VT_TYPEMASK ) == VT_EMPTY ||
+            ( vt & VT_TYPEMASK ) == VT_NULL ||
+			( vt & VT_TYPEMASK ) > VT_MAXVALIDTYPE )
+		{
+			res = E_INVALIDARG;
+		}
+			
+    }
+    else
+    {
+        res = ValidateVtRange( vt );
+    }
+		
+	return res;
+}
+
+/******************************************************************************
+ *		ValidateVt	[INTERNAL]
+ *
+ * Used internally by the hi-level Variant API to determine
+ * if the vartypes are valid.
+ */
+static HRESULT ValidateVt( VARTYPE vt )
+{
+	HRESULT res = S_OK;
+
+	/* check if we have a valid argument.
+	 */
+	if( vt & VT_BYREF )
+    {
+        /* if by reference check that the type is in
+         * the valid range and that it is not of empty or null type
+         */
+        if( ( vt & VT_TYPEMASK ) == VT_EMPTY ||
+            ( vt & VT_TYPEMASK ) == VT_NULL ||
+			( vt & VT_TYPEMASK ) > VT_MAXVALIDTYPE )
+		{
+			res = DISP_E_BADVARTYPE;
+		}
+			
+    }
+    else
+    {
+        res = ValidateVtRange( vt );
+    }
+		
+	return res;
+}
+
+
+
+
+
+/******************************************************************************
+ *		VariantInit32	[OLEAUT32.8]
+ *
+ * Initializes the Variant.  Unlike VariantClear it does not interpret the current
+ * contents of the Variant.
+ */
+void VariantInit32(VARIANTARG* pvarg)
+{
+	TRACE(ole,"(%p),stub\n",pvarg);
+
+	pvarg->vt = VT_EMPTY;
+	pvarg->wReserved1 = 0;
+	pvarg->wReserved2= 0;
+	pvarg->wReserved3= 0;
+
+	return;
+}
+
+/******************************************************************************
+ *		VariantClear32	[OLEAUT32.9]
+ *
+ * This function clears the VARIANT by setting the vt field to VT_EMPTY. It also
+ * sets the wReservedX field to 0.	The current contents of the VARIANT are
+ * freed.  If the vt is VT_BSTR the string is freed. If VT_DISPATCH the object is
+ * released. If VT_ARRAY the array is freed.
+ */
+HRESULT VariantClear32(VARIANTARG* pvarg)
+{
+	HRESULT res = S_OK;
+	TRACE(ole,"(%p),stub\n",pvarg);
+
+	res = ValidateVariantType( pvarg->vt );
+	if( res == S_OK )
+	{
+		if( !( pvarg->vt & VT_BYREF ) )
+		{
+			switch( pvarg->vt & VT_TYPEMASK )
+			{
+			case( VT_BSTR ):
+				SysFreeString32( pvarg->u.bstrVal );
+				break;
+			case( VT_DISPATCH ):
+				break;
+			case( VT_VARIANT ):
+				break;
+			case( VT_UNKNOWN ):
+				break;
+			case( VT_SAFEARRAY ):
+				break;
+			default:
+				break;
+			}
+		}
+		
+		/* Set the fields to empty.
+		 */
+		pvarg->wReserved1 = 0;
+		pvarg->wReserved2 = 0;
+		pvarg->wReserved3 = 0;
+		pvarg->vt = VT_EMPTY;
+	}
+
+	return res;
+}
+
+/******************************************************************************
+ *		VariantCopy32	[OLEAUT32.10]
+ *
+ * Frees up the designation variant and makes a copy of the source.
+ */
+HRESULT VariantCopy32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
+{
+	HRESULT res = S_OK;
+	TRACE(ole,"(%p, %p),stub\n", pvargDest, pvargSrc);
+
+	res = ValidateVariantType( pvargSrc->vt );
+	/* If the pointer are to the same variant we don't need
+	 * to do anything.
+	 */
+	if( pvargDest != pvargSrc && res == S_OK )
+	{
+		res = VariantClear32( pvargDest );
+		
+		if( res == S_OK )
+		{
+			if( pvargSrc->vt & VT_BYREF )
+			{
+				/* In the case of byreference we only need
+				 * to copy the pointer.
+				 */
+				pvargDest->u = pvargSrc->u;
+				pvargDest->vt = pvargSrc->vt;
+			}
+			else
+			{
+				/* In the case of by value we need to
+				 * copy the actuall value. In the case of
+				 * VT_BSTR a copy of the string is made,
+				 * if VT_ARRAY the entire array is copied
+				 * if VT_DISPATCH or VT_IUNKNOWN AddReff is
+				 * called to increment the object's reference count.
+				 */
+				switch( pvargSrc->vt & VT_TYPEMASK )
+				{
+				case( VT_BSTR ):
+				   pvargDest->u.bstrVal = SysAllocString32( pvargSrc->u.bstrVal );
+				   break;
+				case( VT_DISPATCH ):
+					break;
+				case( VT_VARIANT ):
+					break;
+				case( VT_UNKNOWN ):
+					break;
+				case( VT_SAFEARRAY ):
+					break;
+				default:
+					pvargDest->u = pvargSrc->u;
+					break;
+				}
+				pvargDest->vt = pvargSrc->vt;
+			}
+		
+		}
+	}
+	return res;
+}
+
+
+/******************************************************************************
+ *		VariantCopyInd32	[OLEAUT32.11]
+ *
+ * Frees up the destination variant and makes a copy of the source.  If
+ * the source is of type VT_BYREF it performs the necessary indirections.
+ */
+HRESULT VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
+{
+	HRESULT res = S_OK;
+	TRACE(ole,"(%p, %p),stub\n", pvargDest, pvargSrc);
+
+	res = ValidateVariantType( pvargSrc->vt );
+	if( res != S_OK )
+		return res;
+	
+	if( pvargSrc->vt & VT_BYREF )
+	{
+		VARIANTARG varg;
+		VariantInit32( &varg );
+		/* handle the in place copy.
+		 */
+		if( pvargDest == pvargSrc )
+		{
+			/* we will use a copy of the source instead.
+			 */
+			res = VariantCopy32( &varg, pvargSrc );
+			pvargSrc = &varg;
+		}
+		if( res == S_OK )
+		{
+			res = VariantClear32( pvargDest );
+			if( res == S_OK )
+			{
+				/* In the case of by reference we need
+				 * to copy the date pointed to by the variant.
+				 */
+				/* Get the variant type.
+				 */
+				switch( pvargSrc->vt & VT_TYPEMASK )
+				{
+				case( VT_BSTR ):
+				   pvargDest->u.bstrVal = SysAllocString32( *(pvargSrc->u.pbstrVal) );
+				   break;
+				case( VT_DISPATCH ):
+					break;
+				case( VT_VARIANT ):
+					{
+						/* Prevent from cycling.  According to tests on
+						 * VariantCopyInd in Windows and the documentation
+						 * this API dereferences the inner Variants to only on depth.
+						 * If the inner Variant itself contains an
+						 * other inner variant the E_INVALIDARG error is
+						 * returned. 
+						 */
+						if( pvargSrc->wReserved1 & PROCESSING_INNER_VARIANT )
+						{
+							/* If we get here we are attempting to deference
+							 * an inner variant that that is itself contained
+							 * in an inner variant so report E_INVALIDARG error.
+							 */
+							 res = E_INVALIDARG;
+						}
+						else
+						{
+							/* Set the processing inner variant flag.
+							 * We will set this flag in the inner variant
+							 * that will be passed to the VariantCopyInd function.
+							 */
+							(pvargSrc->u.pvarVal)->wReserved1 |= PROCESSING_INNER_VARIANT;
+							/* Dereference the inner variant.
+							 */
+							res = VariantCopyInd32( pvargDest, pvargSrc->u.pvarVal );
+						}
+					}
+					break;
+				case( VT_UNKNOWN ):
+					break;
+				case( VT_SAFEARRAY ):
+					break;
+				default:
+                    /* This is a by reference Variant which means that the union
+                     * part of the Variant contains a pointer to some data of
+                     * type "pvargSrc->vt & VT_TYPEMASK".
+                     * We will deference this data in a generic fashion using
+                     * the void pointer "Variant.u.byref".
+                     * We will copy this data into the union of the destination
+                     * Variant.
+					 */
+					memcpy( &pvargDest->u, pvargSrc->u.byref, SizeOfVariantData( pvargSrc ) );
+					break;
+				}
+				pvargDest->vt = pvargSrc->vt & VT_TYPEMASK;
+			}
+		}
+		/* this should not fail.
+		 */
+		VariantClear32( &varg );
+	}
+	else
+	{
+		res = VariantCopy32( pvargDest, pvargSrc );
+	}
+	return res;
+}
+
+/******************************************************************************
+ *		VariantChangeType32	[OLEAUT32.12]
+ */
+HRESULT VariantChangeType32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+							USHORT wFlags, VARTYPE vt)
+{
+	return VariantChangeTypeEx32( pvargDest, pvargSrc, 0, wFlags, vt );
+}
+
+/******************************************************************************
+ *		VariantChangeTypeEx32	[OLEAUT32.147]
+ */
+HRESULT VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+							  LCID lcid, USHORT wFlags, VARTYPE vt)
+{
+	HRESULT res = S_OK;
+	VARIANTARG varg;
+	VariantInit32( &varg );
+	
+	TRACE(ole,"(%p, %p, %ld, %u, %u),stub\n", pvargDest, pvargSrc, lcid, wFlags, vt);
+
+	/* validate our source argument.
+	 */
+	res = ValidateVariantType( pvargSrc->vt );
+
+	/* validate the vartype.
+	 */
+	if( res == S_OK )
+	{
+		res = ValidateVt( vt );
+	}
+
+	/* if we are doing an in-place conversion make a copy of the source.
+	 */
+	if( res == S_OK && pvargDest == pvargSrc )
+	{
+		res = VariantCopy32( &varg, pvargSrc );
+		pvargSrc = &varg;
+	}
+
+	if( res == S_OK )
+	{
+		/* free up the destination variant.
+		 */
+		res = VariantClear32( pvargDest );
+	}
+
+	if( res == S_OK )
+	{
+		if( pvargSrc->vt & VT_BYREF )
+		{
+			/* Convert the source variant to a "byvalue" variant.
+			 */
+			VARIANTARG Variant;
+			VariantInit32( &Variant );
+			res = VariantCopyInd32( &Variant, pvargSrc );
+			if( res == S_OK )
+			{
+				res = Coerce( pvargDest, lcid, wFlags, &Variant, vt );
+				/* this should not fail.
+				 */
+				VariantClear32( &Variant );
+			}
+	
+		}
+		else
+		{
+			/* Use the current "byvalue" source variant.
+			 */
+			res = Coerce( pvargDest, lcid, wFlags, pvargSrc, vt );
+		}
+	}
+	/* this should not fail.
+	 */
+	VariantClear32( &varg );
+	
+	return res;
+}
+
+
+
+
+/******************************************************************************
+ *		VarUI1FromI232		[OLEAUT32.130]
+ */
+HRESULT VarUI1FromI232(short sIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", sIn, pbOut );
+
+	/* Check range of value.
+	 */
+	if( sIn < UI1_MIN || sIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) sIn;
+	
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromI432		[OLEAUT32.131]
+ */
+HRESULT VarUI1FromI432(LONG lIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, pbOut );
+
+	/* Check range of value.
+	 */
+	if( lIn < UI1_MIN || lIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) lIn;
+	
+	return S_OK;
+}
+
+
+/******************************************************************************
+ *		VarUI1FromR432		[OLEAUT32.132]
+ */
+HRESULT VarUI1FromR432(FLOAT fltIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, pbOut );
+
+	/* Check range of value.
+     */
+    fltIn = round( fltIn );
+	if( fltIn < UI1_MIN || fltIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) fltIn;
+	
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromR832		[OLEAUT32.133]
+ */
+HRESULT VarUI1FromR832(double dblIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, pbOut );
+
+	/* Check range of value.
+     */
+    dblIn = round( dblIn );
+	if( dblIn < UI1_MIN || dblIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromDate32		[OLEAUT32.135]
+ */
+HRESULT VarUI1FromDate32(DATE dateIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, pbOut );
+
+	/* Check range of value.
+     */
+    dateIn = round( dateIn );
+	if( dateIn < UI1_MIN || dateIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromBool32		[OLEAUT32.138]
+ */
+HRESULT VarUI1FromBool32(VARIANT_BOOL boolIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, pbOut );
+
+	*pbOut = (BYTE) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromI132		[OLEAUT32.237]
+ */
+HRESULT VarUI1FromI132(CHAR cIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, pbOut );
+
+	*pbOut = cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromUI232		[OLEAUT32.238]
+ */
+HRESULT VarUI1FromUI232(USHORT uiIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pbOut );
+
+	/* Check range of value.
+	 */
+	if( uiIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI1FromUI432		[OLEAUT32.239]
+ */
+HRESULT VarUI1FromUI432(ULONG ulIn, BYTE* pbOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pbOut );
+
+	/* Check range of value.
+	 */
+	if( ulIn > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) ulIn;
+
+	return S_OK;
+}
+
+
+/******************************************************************************
+ *		VarUI1FromStr32		[OLEAUT32.54]
+ */
+HRESULT VarUI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, pbOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+	
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0 , pNewString );
+
+	/* Check range of value.
+     */
+    dValue = round( dValue );
+	if( dValue < UI1_MIN || dValue > UI1_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pbOut = (BYTE) dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromUI132		[OLEAUT32.48]
+ */
+HRESULT VarI2FromUI132(BYTE bIn, short* psOut)
+{
+	TRACE( ole, "( 0x%08x, %p ), stub\n", bIn, psOut );
+
+	*psOut = (short) bIn;
+	
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromI432		[OLEAUT32.49]
+ */
+HRESULT VarI2FromI432(LONG lIn, short* psOut)
+{
+	TRACE( ole, "( %lx, %p ), stub\n", lIn, psOut );
+
+	/* Check range of value.
+	 */
+	if( lIn < I2_MIN || lIn > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short) lIn;
+	
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromR432		[OLEAUT32.50]
+ */
+HRESULT VarI2FromR432(FLOAT fltIn, short* psOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, psOut );
+
+	/* Check range of value.
+     */
+    fltIn = round( fltIn );
+	if( fltIn < I2_MIN || fltIn > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromR832		[OLEAUT32.51]
+ */
+HRESULT VarI2FromR832(double dblIn, short* psOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, psOut );
+
+	/* Check range of value.
+     */
+    dblIn = round( dblIn );
+	if( dblIn < I2_MIN || dblIn > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromDate32		[OLEAUT32.53]
+ */
+HRESULT VarI2FromDate32(DATE dateIn, short* psOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, psOut );
+
+	/* Check range of value.
+     */
+    dateIn = round( dateIn );
+	if( dateIn < I2_MIN || dateIn > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromBool32		[OLEAUT32.56]
+ */
+HRESULT VarI2FromBool32(VARIANT_BOOL boolIn, short* psOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, psOut );
+
+	*psOut = (short) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromI132		[OLEAUT32.48]
+ */
+HRESULT VarI2FromI132(CHAR cIn, short* psOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, psOut );
+
+	*psOut = (short) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromUI232		[OLEAUT32.206]
+ */
+HRESULT VarI2FromUI232(USHORT uiIn, short* psOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, psOut );
+
+	/* Check range of value.
+	 */
+	if( uiIn > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromUI432		[OLEAUT32.49]
+ */
+HRESULT VarI2FromUI432(ULONG ulIn, short* psOut)
+{
+	TRACE( ole, "( %lx, %p ), stub\n", ulIn, psOut );
+
+	/* Check range of value.
+	 */
+	if( ulIn < I2_MIN || ulIn > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI2FromStr32		[OLEAUT32.54]
+ */
+HRESULT VarI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, short* psOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, psOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+	
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	/* Check range of value.
+     */
+    dValue = round( dValue );
+	if( dValue < I2_MIN || dValue > I2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*psOut = (short)  dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromUI132		[OLEAUT32.58]
+ */
+HRESULT VarI4FromUI132(BYTE bIn, LONG* plOut)
+{
+	TRACE( ole, "( %X, %p ), stub\n", bIn, plOut );
+
+	*plOut = (LONG) bIn;
+
+	return S_OK;
+}
+
+
+/******************************************************************************
+ *		VarI4FromR432		[OLEAUT32.60]
+ */
+HRESULT VarI4FromR432(FLOAT fltIn, LONG* plOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, plOut );
+
+	/* Check range of value.
+     */
+    fltIn = round( fltIn );
+	if( fltIn < I4_MIN || fltIn > I4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*plOut = (LONG) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromR832		[OLEAUT32.61]
+ */
+HRESULT VarI4FromR832(double dblIn, LONG* plOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, plOut );
+
+	/* Check range of value.
+     */
+    dblIn = round( dblIn );
+	if( dblIn < I4_MIN || dblIn > I4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*plOut = (LONG) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromDate32		[OLEAUT32.63]
+ */
+HRESULT VarI4FromDate32(DATE dateIn, LONG* plOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, plOut );
+
+	/* Check range of value.
+     */
+    dateIn = round( dateIn );
+	if( dateIn < I4_MIN || dateIn > I4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*plOut = (LONG) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromBool32		[OLEAUT32.66]
+ */
+HRESULT VarI4FromBool32(VARIANT_BOOL boolIn, LONG* plOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, plOut );
+
+	*plOut = (LONG) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromI132		[OLEAUT32.209]
+ */
+HRESULT VarI4FromI132(CHAR cIn, LONG* plOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, plOut );
+
+	*plOut = (LONG) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromUI232		[OLEAUT32.210]
+ */
+HRESULT VarI4FromUI232(USHORT uiIn, LONG* plOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, plOut );
+
+	*plOut = (LONG) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromUI432		[OLEAUT32.211]
+ */
+HRESULT VarI4FromUI432(ULONG ulIn, LONG* plOut)
+{
+	TRACE( ole, "( %lx, %p ), stub\n", ulIn, plOut );
+
+	/* Check range of value.
+	 */
+	if( ulIn < I4_MIN || ulIn > I4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*plOut = (LONG) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromI232		[OLEAUT32.59]
+ */
+HRESULT VarI4FromI232(short sIn, LONG* plOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", sIn, plOut );
+
+	*plOut = (LONG) sIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI4FromStr32		[OLEAUT32.64]
+ */
+HRESULT VarI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, LONG* plOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, plOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+	
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	/* Check range of value.
+     */
+    dValue = round( dValue );
+	if( dValue < I4_MIN || dValue > I4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*plOut = (LONG) dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromUI132		[OLEAUT32.68]
+ */
+HRESULT VarR4FromUI132(BYTE bIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %X, %p ), stub\n", bIn, pfltOut );
+
+	*pfltOut = (FLOAT) bIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromI232		[OLEAUT32.69]
+ */
+HRESULT VarR4FromI232(short sIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", sIn, pfltOut );
+
+	*pfltOut = (FLOAT) sIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromI432		[OLEAUT32.70]
+ */
+HRESULT VarR4FromI432(LONG lIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %lx, %p ), stub\n", lIn, pfltOut );
+
+	*pfltOut = (FLOAT) lIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromR832		[OLEAUT32.71]
+ */
+HRESULT VarR4FromR832(double dblIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, pfltOut );
+
+	/* Check range of value.
+	 */
+	if( dblIn < -(FLT_MAX) || dblIn > FLT_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pfltOut = (FLOAT) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromDate32		[OLEAUT32.73]
+ */
+HRESULT VarR4FromDate32(DATE dateIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, pfltOut );
+
+	/* Check range of value.
+	 */
+	if( dateIn < -(FLT_MAX) || dateIn > FLT_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pfltOut = (FLOAT) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromBool32		[OLEAUT32.76]
+ */
+HRESULT VarR4FromBool32(VARIANT_BOOL boolIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, pfltOut );
+
+	*pfltOut = (FLOAT) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromI132		[OLEAUT32.213]
+ */
+HRESULT VarR4FromI132(CHAR cIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, pfltOut );
+
+	*pfltOut = (FLOAT) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromUI232		[OLEAUT32.214]
+ */
+HRESULT VarR4FromUI232(USHORT uiIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pfltOut );
+
+	*pfltOut = (FLOAT) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromUI432		[OLEAUT32.215]
+ */
+HRESULT VarR4FromUI432(ULONG ulIn, FLOAT* pfltOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pfltOut );
+
+	*pfltOut = (FLOAT) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR4FromStr32		[OLEAUT32.74]
+ */
+HRESULT VarR4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfltOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pfltOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+	
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	/* Check range of value.
+	 */
+	if( dValue < -(FLT_MAX) || dValue > FLT_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pfltOut = (FLOAT) dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromUI132		[OLEAUT32.68]
+ */
+HRESULT VarR8FromUI132(BYTE bIn, double* pdblOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", bIn, pdblOut );
+
+	*pdblOut = (double) bIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromI232		[OLEAUT32.69]
+ */
+HRESULT VarR8FromI232(short sIn, double* pdblOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", sIn, pdblOut );
+
+	*pdblOut = (double) sIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromI432		[OLEAUT32.70]
+ */
+HRESULT VarR8FromI432(LONG lIn, double* pdblOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, pdblOut );
+
+	*pdblOut = (double) lIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromR432		[OLEAUT32.81]
+ */
+HRESULT VarR8FromR432(FLOAT fltIn, double* pdblOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, pdblOut );
+
+	*pdblOut = (double) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromDate32		[OLEAUT32.83]
+ */
+HRESULT VarR8FromDate32(DATE dateIn, double* pdblOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, pdblOut );
+
+	*pdblOut = (double) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromBool32		[OLEAUT32.86]
+ */
+HRESULT VarR8FromBool32(VARIANT_BOOL boolIn, double* pdblOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, pdblOut );
+
+	*pdblOut = (double) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromI132		[OLEAUT32.217]
+ */
+HRESULT VarR8FromI132(CHAR cIn, double* pdblOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, pdblOut );
+
+	*pdblOut = (double) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromUI232		[OLEAUT32.218]
+ */
+HRESULT VarR8FromUI232(USHORT uiIn, double* pdblOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pdblOut );
+
+	*pdblOut = (double) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromUI432		[OLEAUT32.219]
+ */
+HRESULT VarR8FromUI432(ULONG ulIn, double* pdblOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pdblOut );
+
+	*pdblOut = (double) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarR8FromStr32		[OLEAUT32.84]
+ */
+HRESULT VarR8FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, double* pdblOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pdblOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+	
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	*pdblOut = dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromUI132		[OLEAUT32.]
+ */
+HRESULT VarDateFromUI132(BYTE bIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", bIn, pdateOut );
+
+	*pdateOut = (DATE) bIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromI232		[OLEAUT32.222]
+ */
+HRESULT VarDateFromI232(short sIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", sIn, pdateOut );
+
+	*pdateOut = (DATE) sIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromI432		[OLEAUT32.90]
+ */
+HRESULT VarDateFromI432(LONG lIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, pdateOut );
+
+	if( lIn < DATE_MIN || lIn > DATE_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pdateOut = (DATE) lIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromR432		[OLEAUT32.91]
+ */
+HRESULT VarDateFromR432(FLOAT fltIn, DATE* pdateOut)
+{
+    unsigned long test = 0;
+
+    TRACE( ole, "( %f, %p ), stub\n", fltIn, pdateOut );
+
+    test = (unsigned long) fltIn;
+	if( test < DATE_MIN || test > DATE_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pdateOut = (DATE) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromR832		[OLEAUT32.92]
+ */
+HRESULT VarDateFromR832(double dblIn, DATE* pdateOut)
+{
+    unsigned long test = 0;
+
+    TRACE( ole, "( %f, %p ), stub\n", dblIn, pdateOut );
+
+    test = (unsigned long) dblIn;
+	if( test < DATE_MIN || test > DATE_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pdateOut = (DATE) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromStr32		[OLEAUT32.94]
+ * The string representing the date is composed of two parts, a date and time.
+ *
+ * The format of the time is has follows:
+ * hh[:mm][:ss][AM|PM]
+ * Whitespace can be inserted anywhere between these tokens.  A whitespace consists
+ * of space and/or tab characters, which are ignored.
+ *
+ * The formats for the date part are has follows:
+ * mm/[dd/][yy]yy 
+ * [dd/]mm/[yy]yy
+ * [yy]yy/mm/dd 
+ * January dd[,] [yy]yy
+ * dd January [yy]yy
+ * [yy]yy January dd
+ * Whitespace can be inserted anywhere between these tokens.
+ *
+ * The formats for the date and time string are has follows.
+ * date[whitespace][time] 
+ * [time][whitespace]date
+ *
+ * These are the only characters allowed in a string representing a date and time:
+ * [A-Z] [a-z] [0-9] ':' '-' '/' ',' ' ' '\t'
+ */
+HRESULT VarDateFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
+{
+	HRESULT ret = S_OK;
+
+    FIXME( ole, "( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
+
+	return ret;
+}
+
+/******************************************************************************
+ *		VarDateFromI132		[OLEAUT32.221]
+ */
+HRESULT VarDateFromI132(CHAR cIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, pdateOut );
+
+	*pdateOut = (DATE) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromUI232		[OLEAUT32.222]
+ */
+HRESULT VarDateFromUI232(USHORT uiIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pdateOut );
+
+	if( uiIn > DATE_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pdateOut = (DATE) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromUI432		[OLEAUT32.223]
+ */
+HRESULT VarDateFromUI432(ULONG ulIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pdateOut );
+
+	if( ulIn < DATE_MIN || ulIn > DATE_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pdateOut = (DATE) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarDateFromBool32		[OLEAUT32.96]
+ */
+HRESULT VarDateFromBool32(VARIANT_BOOL boolIn, DATE* pdateOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, pdateOut );
+
+	*pdateOut = (DATE) boolIn;
+
+	return S_OK;
+}
+
+
+/******************************************************************************
+ *		VarBstrFromUI132		[OLEAUT32.108]
+ */
+HRESULT VarBstrFromUI132(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", bVal, lcid, dwFlags, pbstrOut );
+	sprintf( pBuffer, "%d", bVal );
+
+	*pbstrOut =  StringDupAtoBstr( pBuffer );
+	
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromI232		[OLEAUT32.109]
+ */
+HRESULT VarBstrFromI232(short iVal, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", iVal, lcid, dwFlags, pbstrOut );
+	sprintf( pBuffer, "%d", iVal );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromI432		[OLEAUT32.110]
+ */
+HRESULT VarBstrFromI432(LONG lIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %ld, %ld, %ld, %p ), stub\n", lIn, lcid, dwFlags, pbstrOut );
+
+	sprintf( pBuffer, "%ld", lIn );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromR432		[OLEAUT32.111]
+ */
+HRESULT VarBstrFromR432(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", fltIn, lcid, dwFlags, pbstrOut );
+
+	sprintf( pBuffer, "%.7g", fltIn );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromR832		[OLEAUT32.112]
+ */
+HRESULT VarBstrFromR832(double dblIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", dblIn, lcid, dwFlags, pbstrOut );
+
+	sprintf( pBuffer, "%.15g", dblIn );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromDate32		[OLEAUT32.114]
+ *
+ * The date is implemented using an 8 byte floating-point number.
+ * Days are represented by whole numbers increments starting with 0.00 has
+ * being December 30 1899, midnight.
+ * The hours are expressed as the fractional part of the number.
+ * December 30 1899 at midnight = 0.00
+ * January 1 1900 at midnight = 2.00
+ * January 4 1900 at 6 AM = 5.25
+ * January 4 1900 at noon = 5.50
+ * December 29 1899 at midnight = -1.00
+ * December 18 1899 at midnight = -12.00
+ * December 18 1899 at 6AM = -12.25
+ * December 18 1899 at 6PM = -12.75
+ * December 19 1899 at midnight = -11.00
+ * The tm structure is as follows:
+ * struct tm {
+ *		  int tm_sec;	   seconds after the minute - [0,59]
+ *		  int tm_min;	   minutes after the hour - [0,59]
+ *		  int tm_hour;	   hours since midnight - [0,23]
+ *		  int tm_mday;	   day of the month - [1,31]
+ *		  int tm_mon;	   months since January - [0,11]
+ *		  int tm_year;	   years since 1900
+ *		  int tm_wday;	   days since Sunday - [0,6]
+ *		  int tm_yday;	   days since January 1 - [0,365]
+ *		  int tm_isdst;    daylight savings time flag
+ *		  };
+ */
+HRESULT VarBstrFromDate32(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	/* If the date is not after the 1900 return an error because
+	 * the tm structure does not allow such dates.
+	 */
+	if( dateIn >= 1.0 )
+	{
+		double decimalPart = 0.0;
+		double wholePart = 0.0;
+		struct tm TM = {0,0,0,0,0,0,0,0,0};
+	 
+		wholePart = (double) (long) dateIn;
+		decimalPart = fmod( dateIn, wholePart );
+
+		if( !(lcid & VAR_TIMEVALUEONLY) )
+		{
+			int nDay = 0;
+			int leapYear = 0;
+			/* find in what year the day in the "wholePart" falls into.
+			 */
+			TM.tm_year = (int) ( wholePart / 365.25 );
+			/* determine if this is a leap year.
+			 */
+			if( ( TM.tm_year % 4 ) == 0 )
+				leapYear = 1;
+			/* find what day of that year does the "wholePart" corresponds to.
+			 * the day is [1-366]
+			 */
+			nDay = (int) ( wholePart - ( TM.tm_year * 365.25 ) );
+			TM.tm_yday = nDay - 1;
+			/* find which mount this day corresponds to.
+			 */
+			if( nDay <= 31 )
+			{
+				TM.tm_mday = nDay;
+				TM.tm_mon = 0;
+			}
+			else if( nDay <= ( 59 + leapYear ) )
+			{
+				TM.tm_mday = nDay - 31;
+				TM.tm_mon = 1;
+			}
+			else if( nDay <= ( 90 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 59 + leapYear );
+				TM.tm_mon = 2;
+			}
+			else if( nDay <= ( 120 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 90 + leapYear );
+				TM.tm_mon = 3;
+			}
+			else if( nDay <= ( 151 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 120 + leapYear );
+				TM.tm_mon = 4;
+			}
+			else if( nDay <= ( 181 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 151 + leapYear );
+				TM.tm_mon = 5;
+			}
+			else if( nDay <= ( 212 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 181 + leapYear );
+				TM.tm_mon = 6;
+			}
+			else if( nDay <= ( 243 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 212 + leapYear );
+				TM.tm_mon = 7;
+			}
+			else if( nDay <= ( 273 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 243 + leapYear );
+				TM.tm_mon = 8;
+			}
+			else if( nDay <= ( 304 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 273 + leapYear );
+				TM.tm_mon = 9;
+			}
+			else if( nDay <= ( 334 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 304 + leapYear );
+				TM.tm_mon = 10;
+			}
+			else if( nDay <= ( 365 + leapYear ) )
+			{
+				TM.tm_mday = nDay - ( 334 + leapYear );
+				TM.tm_mon = 11;
+			}
+		}
+		if( !(lcid & VAR_DATEVALUEONLY) )
+		{
+			/* find the number of seconds in this day.
+			 * fractional part times, hours, minutes, seconds.
+			 */
+			TM.tm_hour = (int) ( decimalPart * 24 );
+			TM.tm_min = (int) ( ( ( decimalPart * 24 ) - TM.tm_hour ) * 60 );
+			TM.tm_sec = (int) ( ( ( decimalPart * 24 * 60 ) - ( TM.tm_hour * 60 ) - TM.tm_min ) * 60 );
+		}
+
+		if( lcid & VAR_DATEVALUEONLY )
+			strftime( pBuffer, BUFFER_MAX, "%x", &TM );
+		else if( lcid & VAR_TIMEVALUEONLY )
+			strftime( pBuffer, BUFFER_MAX, "%X", &TM );
+		else
+			strftime( pBuffer, 100, "%x %X", &TM );
+
+		*pbstrOut = StringDupAtoBstr( pBuffer );
+	}
+	else
+	{
+		FIXME( ole, "( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
+		return E_INVALIDARG;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromBool32		[OLEAUT32.116]
+ */
+HRESULT VarBstrFromBool32(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", boolIn, lcid, dwFlags, pbstrOut );
+
+	if( boolIn == VARIANT_FALSE )
+	{
+		sprintf( pBuffer, "False" );
+	}
+	else
+	{
+		sprintf( pBuffer, "True" );
+	}
+
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromI132		[OLEAUT32.229]
+ */
+HRESULT VarBstrFromI132(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %c, %ld, %ld, %p ), stub\n", cIn, lcid, dwFlags, pbstrOut );
+	sprintf( pBuffer, "%d", cIn );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromUI232		[OLEAUT32.230]
+ */
+HRESULT VarBstrFromUI232(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", uiIn, lcid, dwFlags, pbstrOut );
+	sprintf( pBuffer, "%d", uiIn );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBstrFromUI432		[OLEAUT32.231]
+ */
+HRESULT VarBstrFromUI432(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+{
+	TRACE( ole, "( %ld, %ld, %ld, %p ), stub\n", ulIn, lcid, dwFlags, pbstrOut );
+	sprintf( pBuffer, "%ld", ulIn );
+	*pbstrOut = StringDupAtoBstr( pBuffer );
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromUI132		[OLEAUT32.118]
+ */
+HRESULT VarBoolFromUI132(BYTE bIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", bIn, pboolOut );
+
+	if( bIn == 0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromI232		[OLEAUT32.119]
+ */
+HRESULT VarBoolFromI232(short sIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", sIn, pboolOut );
+
+	if( sIn == 0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromI432		[OLEAUT32.120]
+ */
+HRESULT VarBoolFromI432(LONG lIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, pboolOut );
+
+	if( lIn == 0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromR432		[OLEAUT32.121]
+ */
+HRESULT VarBoolFromR432(FLOAT fltIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, pboolOut );
+
+	if( fltIn == 0.0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromR832		[OLEAUT32.122]
+ */
+HRESULT VarBoolFromR832(double dblIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, pboolOut );
+
+	if( dblIn == 0.0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromDate32		[OLEAUT32.123]
+ */
+HRESULT VarBoolFromDate32(DATE dateIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, pboolOut );
+
+	if( dateIn == 0.0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromStr32		[OLEAUT32.125]
+ */
+HRESULT VarBoolFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL* pboolOut)
+{
+	HRESULT ret = S_OK;
+	char* pNewString = NULL;
+
+	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pboolOut );
+
+    pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+
+	if( pNewString == NULL || strlen( pNewString ) == 0 )
+	{
+		ret = DISP_E_TYPEMISMATCH;
+	}
+
+	if( ret == S_OK )
+	{
+		if( strncasecmp( pNewString, "True", strlen( pNewString ) ) == 0 )
+		{
+			*pboolOut = VARIANT_TRUE;
+		}
+		else if( strncasecmp( pNewString, "False", strlen( pNewString ) ) == 0 )
+		{
+			*pboolOut = VARIANT_FALSE;
+		}
+		else
+		{
+			/* Try converting the string to a floating point number.
+			 */
+			double dValue = 0.0;
+			HRESULT res = VarR8FromStr32( strIn, lcid, dwFlags, &dValue );
+			if( res != S_OK )
+			{
+				ret = DISP_E_TYPEMISMATCH;
+			}
+			else if( dValue == 0.0 )
+			{
+				*pboolOut = VARIANT_FALSE;
+			}
+			else
+			{
+				*pboolOut = VARIANT_TRUE;
+			}
+		}
+	}
+
+	HeapFree( GetProcessHeap(), 0, pNewString );
+	
+	return ret;
+}
+
+/******************************************************************************
+ *		VarBoolFromI132		[OLEAUT32.233]
+ */
+HRESULT VarBoolFromI132(CHAR cIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, pboolOut );
+
+	if( cIn == 0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromUI232		[OLEAUT32.234]
+ */
+HRESULT VarBoolFromUI232(USHORT uiIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pboolOut );
+
+	if( uiIn == 0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarBoolFromUI432		[OLEAUT32.235]
+ */
+HRESULT VarBoolFromUI432(ULONG ulIn, VARIANT_BOOL* pboolOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pboolOut );
+
+	if( ulIn == 0 )
+	{
+		*pboolOut = VARIANT_FALSE;
+	}
+	else
+	{
+		*pboolOut = VARIANT_TRUE;
+	}
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromUI132		[OLEAUT32.244]
+ */
+HRESULT VarI1FromUI132(BYTE bIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", bIn, pcOut );
+
+	/* Check range of value.
+	 */
+	if( bIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) bIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromI232		[OLEAUT32.245]
+ */
+HRESULT VarI1FromI232(short uiIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pcOut );
+
+	if( uiIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromI432		[OLEAUT32.246]
+ */
+HRESULT VarI1FromI432(LONG lIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, pcOut );
+
+	if( lIn < CHAR_MIN || lIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) lIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromR432		[OLEAUT32.247]
+ */
+HRESULT VarI1FromR432(FLOAT fltIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, pcOut );
+
+    fltIn = round( fltIn );
+	if( fltIn < CHAR_MIN || fltIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromR832		[OLEAUT32.248]
+ */
+HRESULT VarI1FromR832(double dblIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, pcOut );
+
+    dblIn = round( dblIn );
+    if( dblIn < CHAR_MIN || dblIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromDate32		[OLEAUT32.249]
+ */
+HRESULT VarI1FromDate32(DATE dateIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, pcOut );
+
+    dateIn = round( dateIn );
+	if( dateIn < CHAR_MIN || dateIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromStr32		[OLEAUT32.251]
+ */
+HRESULT VarI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pcOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+  
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	/* Check range of value.
+     */
+    dValue = round( dValue );
+	if( dValue < CHAR_MIN || dValue > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromBool32		[OLEAUT32.253]
+ */
+HRESULT VarI1FromBool32(VARIANT_BOOL boolIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, pcOut );
+
+	*pcOut = (CHAR) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromUI232		[OLEAUT32.254]
+ */
+HRESULT VarI1FromUI232(USHORT uiIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pcOut );
+
+	if( uiIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarI1FromUI432		[OLEAUT32.255]
+ */
+HRESULT VarI1FromUI432(ULONG ulIn, CHAR* pcOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pcOut );
+
+	if( ulIn > CHAR_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pcOut = (CHAR) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromUI132		[OLEAUT32.257]
+ */
+HRESULT VarUI2FromUI132(BYTE bIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", bIn, puiOut );
+
+	*puiOut = (USHORT) bIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromI232		[OLEAUT32.258]
+ */
+HRESULT VarUI2FromI232(short uiIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, puiOut );
+
+	if( uiIn < UI2_MIN )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromI432		[OLEAUT32.259]
+ */
+HRESULT VarUI2FromI432(LONG lIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, puiOut );
+
+	if( lIn < UI2_MIN || lIn > UI2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) lIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromR432		[OLEAUT32.260]
+ */
+HRESULT VarUI2FromR432(FLOAT fltIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", fltIn, puiOut );
+
+    fltIn = round( fltIn );
+	if( fltIn < UI2_MIN || fltIn > UI2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromR832		[OLEAUT32.261]
+ */
+HRESULT VarUI2FromR832(double dblIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, puiOut );
+
+    dblIn = round( dblIn );
+    if( dblIn < UI2_MIN || dblIn > UI2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromDate32		[OLEAUT32.262]
+ */
+HRESULT VarUI2FromDate32(DATE dateIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, puiOut );
+
+    dateIn = round( dateIn );
+	if( dateIn < UI2_MIN || dateIn > UI2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromStr32		[OLEAUT32.264]
+ */
+HRESULT VarUI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, USHORT* puiOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, puiOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+  
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	/* Check range of value.
+     */
+    dValue = round( dValue );
+	if( dValue < UI2_MIN || dValue > UI2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromBool32		[OLEAUT32.266]
+ */
+HRESULT VarUI2FromBool32(VARIANT_BOOL boolIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, puiOut );
+
+	*puiOut = (USHORT) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromI132		[OLEAUT32.267]
+ */
+HRESULT VarUI2FromI132(CHAR cIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, puiOut );
+
+	*puiOut = (USHORT) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI2FromUI432		[OLEAUT32.268]
+ */
+HRESULT VarUI2FromUI432(ULONG ulIn, USHORT* puiOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", ulIn, puiOut );
+
+	if( ulIn < UI2_MIN || ulIn > UI2_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*puiOut = (USHORT) ulIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromStr32		[OLEAUT32.277]
+ */
+HRESULT VarUI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, ULONG* pulOut)
+{
+	double dValue = 0.0;
+	LPSTR pNewString = NULL;
+
+	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pulOut );
+
+	/* Check if we have a valid argument
+	 */
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	RemoveCharacterFromString( pNewString, "," );
+	if( IsValidRealString( pNewString ) == FALSE )
+	{
+		return DISP_E_TYPEMISMATCH;
+	}
+
+	/* Convert the valid string to a floating point number.
+	 */
+	dValue = atof( pNewString );
+  
+	/* We don't need the string anymore so free it.
+	 */
+	HeapFree( GetProcessHeap(), 0, pNewString );
+
+	/* Check range of value.
+     */
+    dValue = round( dValue );
+	if( dValue < UI4_MIN || dValue > UI4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pulOut = (ULONG) dValue;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromUI132		[OLEAUT32.270]
+ */
+HRESULT VarUI4FromUI132(BYTE bIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", bIn, pulOut );
+
+	*pulOut = (USHORT) bIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromI232		[OLEAUT32.271]
+ */
+HRESULT VarUI4FromI232(short uiIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pulOut );
+
+	if( uiIn < UI4_MIN )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pulOut = (ULONG) uiIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromI432		[OLEAUT32.272]
+ */
+HRESULT VarUI4FromI432(LONG lIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %ld, %p ), stub\n", lIn, pulOut );
+
+	if( lIn < UI4_MIN )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pulOut = (ULONG) lIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromR432		[OLEAUT32.273]
+ */
+HRESULT VarUI4FromR432(FLOAT fltIn, ULONG* pulOut)
+{
+    fltIn = round( fltIn );
+    if( fltIn < UI4_MIN || fltIn > UI4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pulOut = (ULONG) fltIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromR832		[OLEAUT32.274]
+ */
+HRESULT VarUI4FromR832(double dblIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dblIn, pulOut );
+
+    dblIn = round( dblIn );
+	if( dblIn < UI4_MIN || dblIn > UI4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+    }
+
+	*pulOut = (ULONG) dblIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromDate32		[OLEAUT32.275]
+ */
+HRESULT VarUI4FromDate32(DATE dateIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %f, %p ), stub\n", dateIn, pulOut );
+
+    dateIn = round( dateIn );
+    if( dateIn < UI4_MIN || dateIn > UI4_MAX )
+	{
+		return DISP_E_OVERFLOW;
+	}
+
+	*pulOut = (ULONG) dateIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromBool32		[OLEAUT32.279]
+ */
+HRESULT VarUI4FromBool32(VARIANT_BOOL boolIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", boolIn, pulOut );
+
+	*pulOut = (ULONG) boolIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromI132		[OLEAUT32.280]
+ */
+HRESULT VarUI4FromI132(CHAR cIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %c, %p ), stub\n", cIn, pulOut );
+
+	*pulOut = (ULONG) cIn;
+
+	return S_OK;
+}
+
+/******************************************************************************
+ *		VarUI4FromUI232		[OLEAUT32.281]
+ */
+HRESULT VarUI4FromUI232(USHORT uiIn, ULONG* pulOut)
+{
+	TRACE( ole, "( %d, %p ), stub\n", uiIn, pulOut );
+
+	*pulOut = (ULONG) uiIn;
+
+	return S_OK;
+}
+
