@@ -1310,3 +1310,14 @@ BOOL WINAPI IsNetDrive(DWORD drive)
 	root[0] += (char)drive;
 	return (GetDriveTypeA(root) == DRIVE_REMOTE);
 }
+
+
+/*************************************************************************
+ * RealDriveType                [SHELL32.524]
+ */
+INT WINAPI RealDriveType(INT drive, BOOL bQueryNet)
+{
+    char root[] = "A:\\";
+    root[0] += (char)drive;
+    return GetDriveTypeA(root);
+}

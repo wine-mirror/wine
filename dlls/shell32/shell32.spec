@@ -282,7 +282,7 @@
  521 stdcall SHLockShared (long long)
  522 stdcall SHUnlockShared (long)
  523 stdcall SHFreeShared (long long)
- 524 stub RealDriveType
+ 524 stdcall RealDriveType (long long)
  525 stub RealDriveTypeFlags
 
  640 stdcall NTSHChangeNotifyRegister (long long long long long long)
