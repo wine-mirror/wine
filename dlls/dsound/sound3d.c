@@ -187,7 +187,6 @@ static inline D3DVALUE ProjectVector (LPD3DVECTOR a, LPD3DVECTOR p)
 static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 {
 	IDirectSound3DListenerImpl *dsl;
-	TRACE("(%p)\n",ds3db);
 
 	/* volume, at which the sound will be played after all calcs. */
 	D3DVALUE lVolume = 0;
@@ -205,6 +204,7 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	D3DVALUE flFreq, flBufferVel, flListenerVel;
 #endif
 
+	TRACE("(%p)\n",ds3db);
 	if (ds3db->dsb->dsound->listener == NULL)
 		return;	
 	dsl = ds3db->dsb->dsound->listener;
