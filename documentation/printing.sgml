@@ -119,7 +119,13 @@ LPT1:=foo.ps LPT2:=|lpr
 Wine PostScript Driver=WINEPS,LPT1:
         </screen>
         <para>
-          to the [devices] section of <filename>win.ini</filename> and to set it
+          to the [devices] section and
+        </para>
+        <screen>
+Wine PostScript Driver=WINEPS,LPT1:,15,45
+        </screen>
+        <para>
+          to the [PrinterPorts] section of <filename>win.ini</filename> and to set it
           as the default printer also add
         </para>
         <screen>
