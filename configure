@@ -13616,10 +13616,9 @@ fi
 
 
 case $host_cpu in
-  *i345678986* )
-    echo "$as_me:$LINENO: checking whether we need to define __i386__" >&5
+  *i[3456789]86*) echo "$as_me:$LINENO: checking whether we need to define __i386__" >&5
 echo $ECHO_N "checking whether we need to define __i386__... $ECHO_C" >&6
-if test "${ac_cv_cpp_def_i386+set}" = set; then
+if test "${ac_cv_cpp_def___i386__+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -13631,29 +13630,23 @@ yes
 _ACEOF
 if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "yes" >/dev/null 2>&1; then
-  ac_cv_cpp_def_i386="yes"
+  ac_cv_cpp_def___i386__=yes
 else
-  ac_cv_cpp_def_i386="no"
+  ac_cv_cpp_def___i386__=no
 fi
 rm -f conftest*
 
 fi
-echo "$as_me:$LINENO: result: $ac_cv_cpp_def_i386" >&5
-echo "${ECHO_T}$ac_cv_cpp_def_i386" >&6
-    ;;
-esac
-if test "$ac_cv_cpp_def_i386" = "yes"
-then
-    CFLAGS="$CFLAGS -D__i386__"
-    LINTFLAGS="$LINTFLAGS -D__i386__"
+echo "$as_me:$LINENO: result: $ac_cv_cpp_def___i386__" >&5
+echo "${ECHO_T}$ac_cv_cpp_def___i386__" >&6
+if test $ac_cv_cpp_def___i386__ = yes; then
+  CFLAGS="$CFLAGS -D__i386__"
+  LINTFLAGS="$LINTFLAGS -D__i386__"
 fi
-
-
-case $host_cpu in
-  *alpha* )
-    echo "$as_me:$LINENO: checking whether we need to define __ALPHA__" >&5
+ ;;
+  *alpha*)          echo "$as_me:$LINENO: checking whether we need to define __ALPHA__" >&5
 echo $ECHO_N "checking whether we need to define __ALPHA__... $ECHO_C" >&6
-if test "${ac_cv_cpp_def_alpha+set}" = set; then
+if test "${ac_cv_cpp_def___ALPHA__+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -13665,29 +13658,23 @@ yes
 _ACEOF
 if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "yes" >/dev/null 2>&1; then
-  ac_cv_cpp_def_alpha="yes"
+  ac_cv_cpp_def___ALPHA__=yes
 else
-  ac_cv_cpp_def_alpha="no"
+  ac_cv_cpp_def___ALPHA__=no
 fi
 rm -f conftest*
 
 fi
-echo "$as_me:$LINENO: result: $ac_cv_cpp_def_alpha" >&5
-echo "${ECHO_T}$ac_cv_cpp_def_alpha" >&6
-    ;;
-esac
-if test "$ac_cv_cpp_def_alpha" = "yes"
-then
-    CFLAGS="$CFLAGS -D__ALPHA__"
-    LINTFLAGS="$LINTFLAGS -D__ALPHA__"
+echo "$as_me:$LINENO: result: $ac_cv_cpp_def___ALPHA__" >&5
+echo "${ECHO_T}$ac_cv_cpp_def___ALPHA__" >&6
+if test $ac_cv_cpp_def___ALPHA__ = yes; then
+  CFLAGS="$CFLAGS -D__ALPHA__"
+  LINTFLAGS="$LINTFLAGS -D__ALPHA__"
 fi
-
-
-case $host_cpu in
-  *sparc* )
-    echo "$as_me:$LINENO: checking whether we need to define __sparc__" >&5
+ ;;
+  *sparc*)          echo "$as_me:$LINENO: checking whether we need to define __sparc__" >&5
 echo $ECHO_N "checking whether we need to define __sparc__... $ECHO_C" >&6
-if test "${ac_cv_cpp_def_sparc+set}" = set; then
+if test "${ac_cv_cpp_def___sparc__+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -13699,29 +13686,26 @@ yes
 _ACEOF
 if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "yes" >/dev/null 2>&1; then
-  ac_cv_cpp_def_sparc="yes"
+  ac_cv_cpp_def___sparc__=yes
 else
-  ac_cv_cpp_def_sparc="no"
+  ac_cv_cpp_def___sparc__=no
 fi
 rm -f conftest*
 
 fi
-echo "$as_me:$LINENO: result: $ac_cv_cpp_def_sparc" >&5
-echo "${ECHO_T}$ac_cv_cpp_def_sparc" >&6
-    ;;
-esac
-if test "$ac_cv_cpp_def_sparc" = "yes"
-then
-    CFLAGS="$CFLAGS -D__sparc__"
-    LINTFLAGS="$LINTFLAGS -D__sparc__"
+echo "$as_me:$LINENO: result: $ac_cv_cpp_def___sparc__" >&5
+echo "${ECHO_T}$ac_cv_cpp_def___sparc__" >&6
+if test $ac_cv_cpp_def___sparc__ = yes; then
+  CFLAGS="$CFLAGS -D__sparc__"
+  LINTFLAGS="$LINTFLAGS -D__sparc__"
 fi
-
+ ;;
+esac
 
 case $host_vendor in
-  *sun* )
-    echo "$as_me:$LINENO: checking whether we need to define __sun__" >&5
+  *sun*) echo "$as_me:$LINENO: checking whether we need to define __sun__" >&5
 echo $ECHO_N "checking whether we need to define __sun__... $ECHO_C" >&6
-if test "${ac_cv_cpp_def_sun+set}" = set; then
+if test "${ac_cv_cpp_def___sun__+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -13733,22 +13717,21 @@ yes
 _ACEOF
 if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "yes" >/dev/null 2>&1; then
-  ac_cv_cpp_def_sun="yes"
+  ac_cv_cpp_def___sun__=yes
 else
-  ac_cv_cpp_def_sun="no"
+  ac_cv_cpp_def___sun__=no
 fi
 rm -f conftest*
 
 fi
-echo "$as_me:$LINENO: result: $ac_cv_cpp_def_sun" >&5
-echo "${ECHO_T}$ac_cv_cpp_def_sun" >&6
-    ;;
-esac
-if test "$ac_cv_cpp_def_sun" = "yes"
-then
-    CFLAGS="$CFLAGS -D__sun__"
-    LINTFLAGS="$LINTFLAGS -D__sun__"
+echo "$as_me:$LINENO: result: $ac_cv_cpp_def___sun__" >&5
+echo "${ECHO_T}$ac_cv_cpp_def___sun__" >&6
+if test $ac_cv_cpp_def___sun__ = yes; then
+  CFLAGS="$CFLAGS -D__sun__"
+  LINTFLAGS="$LINTFLAGS -D__sun__"
 fi
+ ;;
+esac
 
 
 

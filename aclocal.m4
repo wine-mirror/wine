@@ -94,6 +94,22 @@ CFLAGS="$CFLAGS $1"
 AC_TRY_LINK([],[],[$2],[$3])
 CFLAGS=$ac_wine_try_cflags_saved])
 
+dnl **** Check whether we need to define a symbol on the compiler command line ****
+dnl
+dnl Usage: WINE_CHECK_DEFINE(name),[action-if-yes,[action-if-no]])
+dnl
+AC_DEFUN([WINE_CHECK_DEFINE],
+[AS_VAR_PUSHDEF([ac_var],[ac_cv_cpp_def_$1])dnl
+AC_CACHE_CHECK([whether we need to define $1],ac_var,
+    AC_EGREP_CPP(yes,[#ifndef $1
+yes
+#endif],
+    [AS_VAR_SET(ac_var,yes)],[AS_VAR_SET(ac_var,no)]))
+AS_IF([test AS_VAR_GET(ac_var) = yes],
+      [CFLAGS="$CFLAGS -D$1"
+  LINTFLAGS="$LINTFLAGS -D$1"])dnl
+AS_VAR_POPDEF([ac_var])])
+
 dnl **** Check for ln ****
 dnl
 dnl Usage: WINE_PROG_LN

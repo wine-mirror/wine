@@ -1292,73 +1292,17 @@ WINE_CHECK_STRUCT_MEMBER(sockaddr_un,sun_len,
 #endif],
     [AC_DEFINE(HAVE_SOCKADDR_SUN_LEN, 1, [Define if struct sockaddr_un contains sun_len])])
 
-dnl *** check for the need to define __i386__
+dnl *** check for the need to define platform-specific symbols
 
 case $host_cpu in
-  *i[3456789]86* )
-    AC_CACHE_CHECK([whether we need to define __i386__],ac_cv_cpp_def_i386,
-      AC_EGREP_CPP(yes,[#ifndef __i386__
-yes
-#endif],
- ac_cv_cpp_def_i386="yes", ac_cv_cpp_def_i386="no"))
-    ;;
+  *i[[3456789]]86*) WINE_CHECK_DEFINE([__i386__]) ;;
+  *alpha*)          WINE_CHECK_DEFINE([__ALPHA__]) ;;
+  *sparc*)          WINE_CHECK_DEFINE([__sparc__]) ;;
 esac
-if test "$ac_cv_cpp_def_i386" = "yes"
-then
-    CFLAGS="$CFLAGS -D__i386__"
-    LINTFLAGS="$LINTFLAGS -D__i386__"
-fi
-
-dnl *** check for the need to define __ALPHA__
-
-case $host_cpu in
-  *alpha* )
-    AC_CACHE_CHECK([whether we need to define __ALPHA__],ac_cv_cpp_def_alpha,
-      AC_EGREP_CPP(yes,[#ifndef __ALPHA__
-yes
-#endif],
- ac_cv_cpp_def_alpha="yes", ac_cv_cpp_def_alpha="no"))
-    ;;
-esac
-if test "$ac_cv_cpp_def_alpha" = "yes"
-then
-    CFLAGS="$CFLAGS -D__ALPHA__"
-    LINTFLAGS="$LINTFLAGS -D__ALPHA__"
-fi
-
-dnl *** check for the need to define __sparc__
-
-case $host_cpu in
-  *sparc* )
-    AC_CACHE_CHECK([whether we need to define __sparc__],ac_cv_cpp_def_sparc,
-      AC_EGREP_CPP(yes,[#ifndef __sparc__
-yes
-#endif],
- ac_cv_cpp_def_sparc="yes", ac_cv_cpp_def_sparc="no"))
-    ;;
-esac
-if test "$ac_cv_cpp_def_sparc" = "yes"
-then
-    CFLAGS="$CFLAGS -D__sparc__"
-    LINTFLAGS="$LINTFLAGS -D__sparc__"
-fi
-
-dnl *** check for the need to define __sun__
 
 case $host_vendor in
-  *sun* )
-    AC_CACHE_CHECK([whether we need to define __sun__],ac_cv_cpp_def_sun,
-      AC_EGREP_CPP(yes,[#ifndef __sun__
-yes
-#endif],
- ac_cv_cpp_def_sun="yes", ac_cv_cpp_def_sun="no"))
-    ;;
+  *sun*) WINE_CHECK_DEFINE([__sun__]) ;;
 esac
-if test "$ac_cv_cpp_def_sun" = "yes"
-then
-    CFLAGS="$CFLAGS -D__sun__"
-    LINTFLAGS="$LINTFLAGS -D__sun__"
-fi
 
 dnl **** Generate output files ****
 
