@@ -93,6 +93,16 @@ static BOOL argify(char* res, int len, const char* fmt, const char* lpFile)
                     }
                 }
                 break;
+            /*
+             * IE uses this alot for activating things such as windows media
+             * player. This is not verified to be fully correct but it appears
+             * to work just fine.
+             */
+            case 'L':
+                strcpy(res,lpFile);
+                res += strlen(lpFile);
+                break;
+
             default: FIXME("Unknown escape sequence %%%c\n", *fmt);
             }
             fmt++;
