@@ -2114,10 +2114,14 @@ static LRESULT
 TOOLTIPS_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+    DWORD dwExStyle = GetWindowLongA (hwnd, GWL_EXSTYLE);
 
     dwStyle &= 0x0000FFFF;
     dwStyle |= (WS_POPUP | WS_BORDER | WS_CLIPSIBLINGS);
     SetWindowLongA (hwnd, GWL_STYLE, dwStyle);
+
+    dwExStyle |= WS_EX_TOOLWINDOW;
+    SetWindowLongA (hwnd, GWL_EXSTYLE, dwExStyle);
 
     return TRUE;
 }
