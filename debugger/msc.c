@@ -120,7 +120,7 @@ static void	DEBUG_UnmapDebugInfoFile(HANDLE hFile, HANDLE hMap, void* addr)
 {
    if (addr) UnmapViewOfFile(addr);
    if (hMap) CloseHandle(hMap);
-   if (hFile) CloseHandle(hFile);
+   if (hFile!=INVALID_HANDLE_VALUE) CloseHandle(hFile);
 }
 
 
@@ -2898,7 +2898,7 @@ static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module,
 					      const char *filename, DWORD timestamp )
 {
     enum DbgInfoLoad dil = DIL_ERROR;
-    HANDLE hFile = 0, hMap = 0;
+    HANDLE hFile = INVALID_HANDLE_VALUE, hMap = 0;
     LPBYTE file_map = NULL;
     PIMAGE_SEPARATE_DEBUG_HEADER hdr;
     PIMAGE_DEBUG_DIRECTORY dbg; 
