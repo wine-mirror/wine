@@ -59,7 +59,11 @@ typedef struct {
  */
 static	DWORD	MCICDA_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    WINE_MCICDAUDIO*	wmcda = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  sizeof(WINE_MCICDAUDIO));
+    WINE_MCICDAUDIO*	wmcda;
+
+    if (!modp) return 0xFFFFFFFF;
+
+    wmcda = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  sizeof(WINE_MCICDAUDIO));
 
     if (!wmcda)
 	return 0;
@@ -82,7 +86,7 @@ static	DWORD	MCICDA_drvClose(DWORD dwDevID)
 	HeapFree(GetProcessHeap(), 0, wmcda);
 	mciSetDriverData(dwDevID, 0);
     }
-    return 0;
+    return (dwDevID == 0xFFFFFFFF) ? 1 : 0;
 }
 
 /**************************************************************************
@@ -118,10 +122,10 @@ static	DWORD    MCICDA_GetStatus(WINE_MCICDAUDIO* wmcda)
         {
         case AUDIO_STATUS_IN_PROGRESS:          mode = MCI_MODE_PLAY;   break;
         case AUDIO_STATUS_PAUSED:               mode = MCI_MODE_PAUSE;  break;
+        case AUDIO_STATUS_NO_STATUS:
         case AUDIO_STATUS_PLAY_COMPLETE:        mode = MCI_MODE_STOP;   break;
         case AUDIO_STATUS_PLAY_ERROR:
         case AUDIO_STATUS_NOT_SUPPORTED:
-        case AUDIO_STATUS_NO_STATUS:
         default:
             break;
         }
@@ -953,7 +957,11 @@ LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		MessageBoxA(0, "MCI audio CD driver !", "Wine Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-	
+    }
+    
+    if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
+
+    switch (wMsg) {
     case MCI_OPEN_DRIVER:	return MCICDA_Open(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
     case MCI_CLOSE_DRIVER:	return MCICDA_Close(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return MCICDA_GetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);

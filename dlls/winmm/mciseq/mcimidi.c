@@ -162,7 +162,11 @@ static DWORD MIDI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
  */
 static	DWORD	MIDI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    WINE_MCIMIDI*	wmm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIMIDI));
+    WINE_MCIMIDI*	wmm;
+
+    if (!modp) return 0xFFFFFFFF;
+
+    wmm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIMIDI));
 
     if (!wmm)
 	return 0;
@@ -186,7 +190,7 @@ static	DWORD	MIDI_drvClose(DWORD dwDevID)
 	mciSetDriverData(dwDevID, 0);
 	return 1;
     }
-    return 0;
+    return (dwDevID == 0xFFFFFFFF) ? 1 : 0;
 }
 
 /**************************************************************************
@@ -958,15 +962,18 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	MIDI_mciReadNextEvent(wmm, mmt); /* FIXME == 0 */
     }
     
+    dwRet = midiOutOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);
+    /*	dwRet = midiInOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);*/
+    if (dwRet != MMSYSERR_NOERROR) {
+	return dwRet;
+    }
+
     wmm->dwPulse = 0;
     wmm->dwTempo = 500000;
     wmm->dwStatus = MCI_MODE_PLAY;
     wmm->dwPositionMS = 0;
     wmm->wStartedPlaying = FALSE;
     
-    dwRet = midiOutOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);
-    /*	dwRet = midiInOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);*/
-
     while (wmm->dwStatus != MCI_MODE_STOP && wmm->dwStatus != MCI_MODE_NOT_READY) {
 	/* it seems that in case of multi-threading, gcc is optimizing just a little bit 
 	 * too much. Tell gcc not to optimize status value using volatile. 
@@ -1656,6 +1663,11 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_REMOVE:		return DRVCNF_RESTART;
     case DRV_OPEN:		return MIDI_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
     case DRV_CLOSE:		return MIDI_drvClose(dwDevID);
+    }
+
+    if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
+
+    switch (wMsg) {
     case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)     dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return MIDI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);

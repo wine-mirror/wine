@@ -133,9 +133,12 @@ BOOL WINAPI MCIAVI_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
  */
 static	DWORD	MCIAVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    WINE_MCIAVI*	wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIAVI));
+    WINE_MCIAVI*	wma;
     static WCHAR	mciAviWStr[] = {'M','C','I','A','V','I',0};
 
+    if (!modp) return 0xFFFFFFFF;
+
+    wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIAVI));
     if (!wma)
 	return 0;
     
@@ -160,7 +163,7 @@ static	DWORD	MCIAVI_drvClose(DWORD dwDevID)
 	HeapFree(GetProcessHeap(), 0, wma);	
 	return 1;
     }
-    return 0;
+    return (dwDevID == 0xFFFFFFFF) ? 1 : 0;
 }
 
 /**************************************************************************
@@ -947,7 +950,11 @@ LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		return MCIAVI_drvConfigure(dwDevID);
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-	
+    }
+    
+    if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
+
+    switch (wMsg) {
     case MCI_OPEN_DRIVER:	return MCIAVI_mciOpen      (dwDevID, dwParam1, (LPMCI_DGV_OPEN_PARMSA)     dwParam2);
     case MCI_CLOSE_DRIVER:	return MCIAVI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
     case MCI_PLAY:		return MCIAVI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)          dwParam2);

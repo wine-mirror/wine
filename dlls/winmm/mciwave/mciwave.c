@@ -132,7 +132,11 @@ static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
  */
 static	DWORD	WAVE_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    WINE_MCIWAVE*	wmw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIWAVE));
+    WINE_MCIWAVE*	wmw;
+
+    if (modp == NULL) return 0xFFFFFFFF;
+
+    wmw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIWAVE));
 
     if (!wmw)
 	return 0;
@@ -165,7 +169,7 @@ static	DWORD	WAVE_drvClose(DWORD dwDevID)
 	mciSetDriverData(dwDevID, 0);
 	return 1;
     }
-    return 0;
+    return (dwDevID == 0xFFFFFFFF) ? 1 : 0;
 }
 
 /**************************************************************************
@@ -1584,7 +1588,7 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n", 
 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     
-    switch(wMsg) {
+    switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
     case DRV_OPEN:		return WAVE_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
@@ -1595,6 +1599,11 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		MessageBoxA(0, "Sample MultiMedia Driver !", "OSS Driver", MB_OK);	return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
+    }
+
+    if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
+
+    switch (wMsg) {
     case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMSA)  dwParam2);
     case MCI_CLOSE_DRIVER:	return WAVE_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_CUE:		return WAVE_mciCue       (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);

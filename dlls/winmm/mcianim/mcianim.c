@@ -57,7 +57,11 @@ typedef struct {
  */
 static	DWORD	MCIANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    WINE_MCIANIM*	wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIANIM));
+    WINE_MCIANIM*	wma;
+
+    if (!modp) return 0xFFFFFFFF;
+
+    wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIANIM));
 
     if (!wma)
 	return 0;
@@ -80,7 +84,7 @@ static	DWORD	MCIANIM_drvClose(DWORD dwDevID)
 	HeapFree(GetProcessHeap(), 0, wma);
 	return 1;
     }
-    return 0;
+    return (dwDevID == 0xFFFFFFFF) ? 1 : 0;
 }
 
 /**************************************************************************
@@ -661,7 +665,11 @@ LONG WINAPI MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		MessageBoxA(0, "Sample MultiMedia Driver !", "Wine Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-	
+    }
+    
+    if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
+
+    switch (wMsg) {
     case MCI_OPEN_DRIVER:	return MCIANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2); 
     case MCI_CLOSE_DRIVER:	return MCIANIM_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return MCIANIM_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
