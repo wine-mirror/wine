@@ -507,8 +507,16 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     }
 
     if (!(wndPtr->dwStyle & WS_CHILD))
-       if (wndPtr->wIDmenu) DestroyMenu( (HMENU)wndPtr->wIDmenu );
-    if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
+       if (wndPtr->wIDmenu)
+       {
+	   DestroyMenu( wndPtr->wIDmenu );
+	   wndPtr->wIDmenu = 0;
+       }
+    if (wndPtr->hSysMenu)
+    {
+	DestroyMenu( wndPtr->hSysMenu );
+	wndPtr->hSysMenu = 0;
+    }
     wndPtr->pDriver->pDestroyWindow( wndPtr );
     DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
