@@ -391,7 +391,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'G','u','l','i','m','C','h','e'}, /* FIXME: Is this correct? */
+           {'G','u','l','i','m'},
         },
     },
     {   CHINESEBIG5_CHARSET,
