@@ -69,28 +69,6 @@ void STRUCT32_WINDOWPOS16to32( const WINDOWPOS16* from, WINDOWPOS* to )
     to->flags           = (UINT)from->flags;
 }
 
-void STRUCT32_NCCALCSIZE32to16Flat( const NCCALCSIZE_PARAMS* from,
-                                    NCCALCSIZE_PARAMS16* to, int validRects )
-{
-    CONV_RECT32TO16( &from->rgrc[0], &to->rgrc[0] );
-    if (validRects)
-    {
-        CONV_RECT32TO16( &from->rgrc[1], &to->rgrc[1] );
-        CONV_RECT32TO16( &from->rgrc[2], &to->rgrc[2] );
-    }
-}
-
-void STRUCT32_NCCALCSIZE16to32Flat( const NCCALCSIZE_PARAMS16* from,
-                                    NCCALCSIZE_PARAMS* to, int validRects )
-{
-    CONV_RECT16TO32( &from->rgrc[0], &to->rgrc[0] );
-    if (validRects)
-    {
-        CONV_RECT32TO16( &from->rgrc[1], &to->rgrc[1] );
-        CONV_RECT32TO16( &from->rgrc[2], &to->rgrc[2] );
-    }
-}
-
 /* The strings are not copied */
 void STRUCT32_CREATESTRUCT32Ato16( const CREATESTRUCTA* from,
                                    CREATESTRUCT16* to )

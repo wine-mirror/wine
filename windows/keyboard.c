@@ -25,11 +25,10 @@
 #include "callback.h"
 #include "builtin16.h"
 #include "debugtools.h"
-#include "struct32.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(keyboard)
-DECLARE_DEBUG_CHANNEL(event)
+DEFAULT_DEBUG_CHANNEL(keyboard);
+DECLARE_DEBUG_CHANNEL(event);
 
 /**********************************************************************/
 
