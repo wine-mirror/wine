@@ -116,7 +116,7 @@ static	BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen)
     if (_lread(hFile, &dw, 4) != 4)			E(("Can't read nr table offset\n"));
     if (_llseek(hFile, dw, SEEK_SET) < 0) 		E(("Can't seek to nr table %lu\n", dw));
     if (_lread(hFile, buf, 1) != 1)			E(("Can't read descr length\n"));
-    buflen = min((BYTE)buf[0], buflen - 1);
+    buflen = min((int)(unsigned)(BYTE)buf[0], buflen - 1);
     if (_lread(hFile, buf, buflen) != buflen)		E(("Can't read descr (%d)\n", buflen));
     buf[buflen] = '\0';
     ret = TRUE;
@@ -490,12 +490,11 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    *lpParam1 = (DWORD)mh32;
 	    *lpParam2 = sizeof(MIDIHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
-	    if (mh32->dwBufferLength < mh16->dwBufferLength) {
-		ERR("Size of buffer has been increased (%ld, %ld)\n",
+	    if (wMsg == MODM_LONGDATA && mh32->dwBufferLength < mh16->dwBufferLength) {
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    mh32->dwBufferLength, mh16->dwBufferLength);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    mh32->dwBufferLength = mh16->dwBufferLength;
+	    } else
+                mh32->dwBufferLength = mh16->dwBufferLength;
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
@@ -663,12 +662,11 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
                   *lpParam1, (DWORD)mh16->lpData, mh32->dwBufferLength, (DWORD)mh32->lpData);
 
 	    /* dwBufferLength can be reduced between prepare & write */
-	    if (mh16->dwBufferLength < mh32->dwBufferLength) {
-		ERR("Size of buffer has been increased (%ld, %ld)\n",
+	    if (wMsg == MODM_LONGDATA && mh16->dwBufferLength < mh32->dwBufferLength) {
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    mh16->dwBufferLength, mh32->dwBufferLength);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    mh16->dwBufferLength = mh32->dwBufferLength;
+	    } else
+                mh16->dwBufferLength = mh32->dwBufferLength;
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
@@ -935,12 +933,11 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    *lpParam1 = (DWORD)wh32;
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
-	    if (wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased (%ld, %ld)\n",
+	    if (wMsg == WIDM_ADDBUFFER && wh32->dwBufferLength < wh16->dwBufferLength) {
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    wh32->dwBufferLength, wh16->dwBufferLength);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    wh32->dwBufferLength = wh16->dwBufferLength;
+	    } else
+                wh32->dwBufferLength = wh16->dwBufferLength;
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
@@ -1144,12 +1141,11 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    *lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
-	    if (wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased (%ld, %ld)\n",
-		    wh32->dwBufferLength, wh16->dwBufferLength);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    wh32->dwBufferLength = wh16->dwBufferLength;
+	    if (wMsg == WIDM_ADDBUFFER && wh16->dwBufferLength < wh32->dwBufferLength) {
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		    wh16->dwBufferLength, wh32->dwBufferLength);
+	    } else
+                wh16->dwBufferLength = wh32->dwBufferLength;
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
@@ -1436,12 +1432,11 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    *lpParam1 = (DWORD)wh32;
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
-	    if (wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased (%ld, %ld)\n",
+	    if (wMsg == WODM_WRITE && wh32->dwBufferLength < wh16->dwBufferLength) {
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    wh32->dwBufferLength, wh16->dwBufferLength);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    wh32->dwBufferLength = wh16->dwBufferLength;
+	    } else
+                wh32->dwBufferLength = wh16->dwBufferLength;
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
@@ -1705,12 +1700,11 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    *lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
-	    if (wh16->dwBufferLength < wh32->dwBufferLength) {
-		ERR("Size of buffer has been increased (%ld, %ld)\n",
+	    if (wMsg == WODM_WRITE && wh16->dwBufferLength < wh32->dwBufferLength) {
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    wh16->dwBufferLength, wh32->dwBufferLength);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    wh16->dwBufferLength = wh32->dwBufferLength;
+	    } else
+                wh16->dwBufferLength = wh32->dwBufferLength;
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
