@@ -44,7 +44,6 @@ static FILE *input_file;
 static const char * const TypeNames[TYPE_NBTYPES] =
 {
     "variable",     /* TYPE_VARIABLE */
-    "pascal16",     /* TYPE_PASCAL_16 */
     "pascal",       /* TYPE_PASCAL */
     "equate",       /* TYPE_ABS */
     "stub",         /* TYPE_STUB */
@@ -58,6 +57,7 @@ static const char * const FlagNames[] =
 {
     "norelay",     /* FLAG_NORELAY */
     "noname",      /* FLAG_NONAME */
+    "ret16",       /* FLAG_RET16 */
     "ret64",       /* FLAG_RET64 */
     "i386",        /* FLAG_I386 */
     "register",    /* FLAG_REGISTER */
@@ -212,14 +212,9 @@ static int ParseExportFunction( ORDDEF *odp )
             error( "'stdcall' not supported for Win16\n" );
             return 0;
         }
-        if (odp->type == TYPE_VARARGS)
-        {
-            error( "'varargs' not supported for Win16\n" );
-            return 0;
-        }
         break;
     case SPEC_WIN32:
-        if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
+        if (odp->type == TYPE_PASCAL)
         {
             error( "'pascal' not supported for Win32\n" );
             return 0;
@@ -456,8 +451,17 @@ static int ParseOrdinal(int ordinal)
 
     if (odp->type >= TYPE_NBTYPES)
     {
-        error( "Expected type after ordinal, found '%s' instead\n", token );
-        goto error;
+        /* special case for backwards compatibility */
+        if (!strcmp( token, "pascal16" ))
+        {
+            odp->type = TYPE_PASCAL;
+            odp->flags |= FLAG_RET16;
+        }
+        else
+        {
+            error( "Expected type after ordinal, found '%s' instead\n", token );
+            goto error;
+        }
     }
 
     if (!(token = GetToken(0))) goto error;
@@ -473,7 +477,6 @@ static int ParseOrdinal(int ordinal)
     case TYPE_VARIABLE:
         if (!ParseVariable( odp )) goto error;
         break;
-    case TYPE_PASCAL_16:
     case TYPE_PASCAL:
     case TYPE_STDCALL:
     case TYPE_VARARGS:

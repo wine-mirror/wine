@@ -25,8 +25,8 @@
 
 #include "msvideo_private.h"
 #include "winver.h"
+#include "winnls.h"
 #include "vfw16.h"
-#include "stackframe.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
@@ -139,22 +139,12 @@ LRESULT WINAPI ICClose16(HIC16 hic)
 /***********************************************************************
  *		_ICMessage			[MSVIDEO.207]
  */
-LRESULT VFWAPIV ICMessage16(void)
+LRESULT VFWAPIV ICMessage16( HIC16 hic, UINT16 msg, UINT16 cb, VA_LIST16 valist )
 {
-    HIC16 hic;
-    UINT16 msg;
-    UINT16 cb;
     LPWORD lpData;
     SEGPTR segData;
     LRESULT ret;
     UINT16 i;
-
-    VA_LIST16 valist;
-
-    VA_START16(valist);
-    hic = VA_ARG16(valist, HIC16);
-    msg = VA_ARG16(valist, UINT16);
-    cb = VA_ARG16(valist, UINT16);
 
     lpData = HeapAlloc(GetProcessHeap(), 0, cb);
 
@@ -165,7 +155,6 @@ LRESULT VFWAPIV ICMessage16(void)
 	lpData[i] = VA_ARG16(valist, WORD);
     }
 
-    VA_END16(valist);
     segData = MapLS(lpData);
     ret = ICSendMessage16(hic, msg, segData, (DWORD) cb);
     UnMapLS(segData);

@@ -225,6 +225,9 @@ only).
 .B -noname
 The entry point will be imported by ordinal instead of by name.
 .TP
+.B -ret16
+The function returns a 16-bit value (Win16 only).
+.TP
 .B -ret64
 The function returns a 64-bit value (Win32 only).
 .TP
@@ -261,17 +264,21 @@ should be one of:
 .B stdcall
 for a normal Win32 function
 .TP
+.B pascal
+for a normal Win16 function
+.TP
 .B cdecl
-for a Win32 function using the C calling convention
+for a Win16 or Win32 function using the C calling convention
 .TP
 .B varargs
-for a Win32 function taking a variable number of arguments
-.TP
-.B pascal
-for a Win16 function returning a 32-bit value
+for a Win16 or Win32 function using the C calling convention with a
+variable number of arguments
 .TP
 .B pascal16
-for a Win16 function returning a 16-bit value.
+for a Win16 function returning a 16-bit value; this type is
+deprecated, use
+.B pascal -ret16
+instead
 .RE
 .PP
 .I args
@@ -331,13 +338,13 @@ shows how long lines can be split using a backslash:
 100 pascal CreateWindow(ptr ptr long s_word s_word s_word \\
     s_word word word word ptr) WIN_CreateWindow
 .PP
-To declare a function using a variable number of arguments in Win16,
-specify the function as taking no arguments. The arguments are then
-available with CURRENT_STACK16->args. In Win32, specify the function
-as
+To declare a function using a variable number of arguments, specify
+the function as
 .B varargs
-and declare it with a '...' parameter in the C file.  See the
-wsprintf* functions in user.exe.spec and user32.spec for an example.
+and declare it in the C file with a '...' parameter for a Win32
+function, or with an extra VA_LIST16 argument for a Win16 function.
+See the wsprintf* functions in user.exe.spec and user32.spec for an
+example.
 .SS "Variable ordinals"
 Syntax:
 .br

@@ -194,7 +194,7 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     if (!call) return; /* happens for the two snoop register relays */
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "%04lx:Call %s(",GetCurrentThreadId(),funstr);
-    VA_START16( args16 );
+    args16 = (char *)(frame + 1);
 
     if (call->lret == 0xcb66)  /* cdecl */
     {
@@ -276,7 +276,6 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     }
 
     DPRINTF( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
-    VA_END16( args16 );
 
     if (call->arg_types[0] & ARG_REGISTER)
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",

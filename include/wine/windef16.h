@@ -39,6 +39,14 @@ typedef UINT16         *LPUINT16;
 
 #define MAKESEGPTR(seg,off) ((SEGPTR)MAKELONG(off,seg))
 
+typedef WORD *VA_LIST16;
+
+#define __VA_ROUNDED16(type) \
+    ((sizeof(type) + sizeof(WORD) - 1) / sizeof(WORD) * sizeof(WORD))
+#define VA_ARG16(list,type) \
+    (((list) = (VA_LIST16)((char *)(list) + __VA_ROUNDED16(type))), \
+     *((type *)(void *)((char *)(list) - __VA_ROUNDED16(type))))
+
 #define HFILE_ERROR16   ((HFILE16)-1)
 
 #define DECLARE_HANDLE16(a) \

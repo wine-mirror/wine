@@ -45,7 +45,7 @@
 204 pascal ICClose(word) ICClose16
 205 pascal ICSendMessage(word word long long) ICSendMessage16
 206 pascal16 ICOpenFunction(long long word segptr) ICOpenFunction16
-207 pascal _ICMessage() ICMessage16
+207 varargs _ICMessage(word word word) ICMessage16
 212 pascal ICGetInfo(word segptr long) ICGetInfo16
 213 pascal16 ICLocate(long long ptr ptr word) ICLocate16
 224 cdecl _ICCompress(word long segptr segptr segptr segptr segptr segptr long long long segptr segptr) ICCompress16

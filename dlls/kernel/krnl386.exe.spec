@@ -267,7 +267,7 @@
 325 pascal16 LogParamError(word ptr ptr) LogParamError16
 326 pascal16 IsRomFile(word) IsRomFile16
 327 pascal -register K327() HandleParamError
-328 pascal16 _DebugOutput() _DebugOutput
+328 varargs -ret16 _DebugOutput(word str) _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
 332 variable THHOOK(0 0 0 0 0 0 0 0)
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr16

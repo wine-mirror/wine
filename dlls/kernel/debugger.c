@@ -347,26 +347,19 @@ BOOL WINAPI IsDebuggerPresent(void)
 /***********************************************************************
  *           _DebugOutput                    (KERNEL.328)
  */
-void WINAPIV _DebugOutput( void )
+void WINAPIV _DebugOutput( WORD flags, LPCSTR spec, VA_LIST16 valist )
 {
-    VA_LIST16 valist;
-    WORD flags;
-    SEGPTR spec;
     char caller[101];
 
     /* Decode caller address */
     if (!GetModuleName16( GetExePtr(CURRENT_STACK16->cs), caller, sizeof(caller) ))
         sprintf( caller, "%04X:%04X", CURRENT_STACK16->cs, CURRENT_STACK16->ip );
 
-    /* Build debug message string */
-    VA_START16( valist );
-    flags = VA_ARG16( valist, WORD );
-    spec  = VA_ARG16( valist, SEGPTR );
     /* FIXME: cannot use wvsnprintf16 from kernel */
-    /* wvsnprintf16( temp, sizeof(temp), MapSL(spec), valist ); */
+    /* wvsnprintf16( temp, sizeof(temp), spec, valist ); */
 
     /* Output */
-    FIXME("%s %04x %s\n", caller, flags, debugstr_a(MapSL(spec)) );
+    FIXME("%s %04x %s\n", caller, flags, debugstr_a(spec) );
 }
 
 /***********************************************************************

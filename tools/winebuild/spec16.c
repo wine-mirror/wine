@@ -250,7 +250,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 	{
         case TYPE_CDECL:
         case TYPE_PASCAL:
-        case TYPE_PASCAL_16:
+        case TYPE_VARARGS:
         case TYPE_STUB:
             selector = 1;  /* Code selector */
             break;
@@ -344,12 +344,14 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
     int short_ret = 0;
     int reg_func = 0;
     int usecdecl = 0;
+    int varargs = 0;
     const char *args = profile + 7;
     char *ret_type;
 
     /* Parse function type */
 
     if (!strncmp( "c_", profile, 2 )) usecdecl = 1;
+    else if (!strncmp( "v_", profile, 2 )) varargs = usecdecl = 1;
     else if (strncmp( "p_", profile, 2 ))
     {
         fprintf( stderr, "Invalid function name '%s', ignored\n", profile );
@@ -382,7 +384,8 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
 
     ret_type = reg_func? "void" : short_ret ? "unsigned short" : "unsigned int";
 
-    fprintf( outfile, "typedef %s (__stdcall *proc_%s_t)( ", ret_type, profile );
+    fprintf( outfile, "typedef %s (%s*proc_%s_t)( ",
+             ret_type, usecdecl ? "" : "__stdcall ", profile );
     args = profile + 7;
     for ( i = 0; args[i]; i++ )
     {
@@ -395,7 +398,7 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
         case 'p': case 't': fprintf( outfile, "void *" ); break;
         }
     }
-    if ( reg_func )
+    if (reg_func || varargs)
         fprintf( outfile, "%svoid *", i? ", " : "" );
     else if ( !i )
         fprintf( outfile, "void" );
@@ -447,6 +450,8 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
     }
     if ( reg_func )
         fprintf( outfile, "%s        context", i? ",\n" : "" );
+    else if (varargs)
+        fprintf( outfile, "%s        args + %d", i? ",\n" : "", argsize );
     fprintf( outfile, " );\n}\n\n" );
 }
 
@@ -459,10 +464,11 @@ static const char *get_function_name( const ORDDEF *odp )
     static char buffer[80];
 
     sprintf( buffer, "%s_%s_%s",
-             (odp->type == TYPE_CDECL) ? "c" : "p",
+             (odp->type == TYPE_PASCAL) ? "p" :
+             (odp->type == TYPE_VARARGS) ? "v" : "c",
              (odp->flags & FLAG_REGISTER) ? "regs" :
              (odp->flags & FLAG_INTERRUPT) ? "intr" :
-             (odp->type == TYPE_PASCAL_16) ? "word" : "long",
+             (odp->flags & FLAG_RET16) ? "word" : "long",
              odp->u.func.arg_types );
     return buffer;
 }
@@ -476,23 +482,20 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
     const ORDDEF *odp1 = *(const ORDDEF **)e1;
     const ORDDEF *odp2 = *(const ORDDEF **)e2;
     int retval;
+    int type1 = odp1->type;
+    int type2 = odp2->type;
 
-    int type1 = (odp1->type == TYPE_CDECL) ? 0
-              : (odp1->type == TYPE_PASCAL_16) ? 1 : 2;
+    if (type1 == TYPE_STUB) type1 = TYPE_CDECL;
+    if (type2 == TYPE_STUB) type2 = TYPE_CDECL;
 
-    int type2 = (odp2->type == TYPE_CDECL) ? 0
-              : (odp2->type == TYPE_PASCAL_16) ? 1 : 2;
+    if ((retval = type1 - type2) != 0) return retval;
 
-    if (odp1->flags & FLAG_REGISTER) type1 += 4;
-    if (odp1->flags & FLAG_INTERRUPT) type1 += 8;
-    if (odp2->flags & FLAG_REGISTER) type2 += 4;
-    if (odp2->flags & FLAG_INTERRUPT) type2 += 8;
+    type1 = odp1->flags & (FLAG_RET16|FLAG_REGISTER|FLAG_INTERRUPT);
+    type2 = odp2->flags & (FLAG_RET16|FLAG_REGISTER|FLAG_INTERRUPT);
 
-    retval = type1 - type2;
-    if ( !retval )
-        retval = strcmp( odp1->u.func.arg_types, odp2->u.func.arg_types );
+    if ((retval = type1 - type2) != 0) return retval;
 
-    return retval;
+    return strcmp( odp1->u.func.arg_types, odp2->u.func.arg_types );
 }
 
 
@@ -598,7 +601,7 @@ void BuildSpec16File( FILE *outfile )
         {
           case TYPE_CDECL:
           case TYPE_PASCAL:
-          case TYPE_PASCAL_16:
+          case TYPE_VARARGS:
           case TYPE_STUB:
             typelist[nFuncs++] = odp;
 
@@ -638,7 +641,7 @@ void BuildSpec16File( FILE *outfile )
         {
         case TYPE_CDECL:
         case TYPE_PASCAL:
-        case TYPE_PASCAL_16:
+        case TYPE_VARARGS:
             fprintf( outfile, "extern void %s();\n", odp->link_name );
             break;
         default:
@@ -682,7 +685,7 @@ void BuildSpec16File( FILE *outfile )
         int j, argsize = 0;
 
         strcpy( profile, get_function_name( typelist[i] ));
-        if ( typelist[i]->type != TYPE_CDECL )
+        if ( typelist[i]->type == TYPE_PASCAL )
             for ( arg = typelist[i]->u.func.arg_types; *arg; arg++ )
                 switch ( *arg )
                 {
@@ -717,13 +720,13 @@ void BuildSpec16File( FILE *outfile )
             arg_types[j / 10] |= type << (3 * (j % 10));
         }
         if (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) arg_types[0] |= ARG_REGISTER;
-        if (typelist[i]->type == TYPE_PASCAL_16) arg_types[0] |= ARG_RET16;
+        if (typelist[i]->flags & FLAG_RET16) arg_types[0] |= ARG_RET16;
 
 #ifdef __i386__
         fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
                  make_c_identifier(dll_file_name), profile,
                  (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
-                 typelist[i]->type == TYPE_PASCAL_16? "word" : "long" );
+                 (typelist[i]->flags & FLAG_RET16) ? "word" : "long" );
         if (argsize)
             fprintf( outfile, "      0x%04x, 0xca66, %d, { 0x%08x, 0x%08x } },\n",
                      code_selector, argsize, arg_types[0], arg_types[1] );
@@ -759,7 +762,7 @@ void BuildSpec16File( FILE *outfile )
 
           case TYPE_CDECL:
           case TYPE_PASCAL:
-          case TYPE_PASCAL_16:
+          case TYPE_VARARGS:
           case TYPE_STUB:
             type = bsearch( &odp, typelist, nTypes, sizeof(ORDDEF *), Spec16TypeCompare );
             assert( type );

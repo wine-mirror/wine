@@ -32,7 +32,6 @@
 
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "stackframe.h"
 
 #include "wine/debug.h"
 
@@ -284,8 +283,7 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
 /***********************************************************************
  *           wvsnprintf16   (Not a Windows API)
  */
-static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
-                           LPCVOID args )
+static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, VA_LIST16 args )
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
@@ -592,7 +590,7 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
 /***********************************************************************
  *           wvsprintf   (USER.421)
  */
-INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
+INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, VA_LIST16 args )
 {
     INT16 res;
 
@@ -625,17 +623,11 @@ INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, va_list args )
 /***********************************************************************
  *           _wsprintf   (USER.420)
  */
-INT16 WINAPIV wsprintf16(void)
+INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, VA_LIST16 valist )
 {
-    VA_LIST16 valist;
     INT16 res;
-    SEGPTR buffer, spec;
 
-    VA_START16( valist );
-    buffer = VA_ARG16( valist, SEGPTR );
-    spec   = VA_ARG16( valist, SEGPTR );
-    res = wvsnprintf16( MapSL(buffer), 1024, MapSL(spec), valist );
-    VA_END16( valist );
+    res = wvsnprintf16( buffer, 1024, spec, valist );
     return ( res == -1 ) ? 1024 : res;
 }
 

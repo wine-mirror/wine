@@ -73,15 +73,7 @@ typedef struct _STACK16FRAME
 #define CURRENT_DS           (CURRENT_STACK16->ds)
 
 /* varargs lists on the 16-bit stack */
-
-typedef void *VA_LIST16;
-
-#define __VA_ROUNDED16(type) \
-    ((sizeof(type) + sizeof(WORD) - 1) / sizeof(WORD) * sizeof(WORD))
 #define VA_START16(list) ((list) = (VA_LIST16)(CURRENT_STACK16 + 1))
-#define VA_ARG16(list,type) \
-    (((list) = (VA_LIST16)((char *)(list) + __VA_ROUNDED16(type))), \
-     *((type *)(void *)((char *)(list) - __VA_ROUNDED16(type))))
 #define VA_END16(list) ((void)0)
 
 

@@ -34,8 +34,7 @@
 typedef enum
 {
     TYPE_VARIABLE,     /* variable */
-    TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
-    TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
+    TYPE_PASCAL,       /* pascal function (Win16) */
     TYPE_ABS,          /* absolute value (Win16) */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
@@ -98,11 +97,12 @@ typedef struct
 /* entry point flags */
 #define FLAG_NORELAY   0x01  /* don't use relay debugging for this function */
 #define FLAG_NONAME    0x02  /* don't import function by name */
-#define FLAG_RET64     0x04  /* function returns a 64-bit value */
-#define FLAG_I386      0x08  /* function is i386 only */
-#define FLAG_REGISTER  0x10  /* use register calling convention */
-#define FLAG_INTERRUPT 0x20  /* function is an interrupt handler */
-#define FLAG_PRIVATE   0x40  /* function is private (cannot be imported) */
+#define FLAG_RET16     0x04  /* function returns a 16-bit value */
+#define FLAG_RET64     0x08  /* function returns a 64-bit value */
+#define FLAG_I386      0x10  /* function is i386 only */
+#define FLAG_REGISTER  0x20  /* use register calling convention */
+#define FLAG_INTERRUPT 0x40  /* function is an interrupt handler */
+#define FLAG_PRIVATE   0x80  /* function is private (cannot be imported) */
 
 #define FLAG_FORWARD   0x100 /* function is a forwarded name */
 
