@@ -177,10 +177,10 @@ ICOM_END(IPersistFile)
 #define IPersistFile_GetClassID(p,a) ICOM_ICALL1(IPersist,GetClassID,p,a)
 /*** IPersistFile methods ***/
 #define IPersistFile_IsDirty(p)         ICOM_CALL(IsDirty,p)
-#define IPersistFile_Load(p,a,b)        ICOM_CALL(Load,p,a,b)
-#define IPersistFile_Save(p,a,b)        ICOM_CALL(Save,p,a,b)
-#define IPersistFile_SaveCompleted(p,a) ICOM_CALL(SaveCompleted,p,a)
-#define IPersistFile_GetCurFile(p,a)    ICOM_CALL(GetCurFile,p,a)
+#define IPersistFile_Load(p,a,b)        ICOM_CALL2(Load,p,a,b)
+#define IPersistFile_Save(p,a,b)        ICOM_CALL2(Save,p,a,b)
+#define IPersistFile_SaveCompleted(p,a) ICOM_CALL1(SaveCompleted,p,a)
+#define IPersistFile_GetCurFile(p,a)    ICOM_CALL1(GetCurFile,p,a)
 #endif
 
 
@@ -193,7 +193,28 @@ ICOM_END(IPersistFile)
 /*****************************************************************************
  * IPersistStream interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IPersistStream
+ICOM_BEGIN(IPersistStream,IPersist);
+          ICOM_METHOD(HRESULT, IsDirty);
+          ICOM_METHOD1(HRESULT, Load, IStream32*, pStm);
+          ICOM_METHOD2(HRESULT, Save, IStream32*, pStm, BOOL32, fClearDirty);
+          ICOM_METHOD1(HRESULT, GetSizeMax, ULARGE_INTEGER*, pcbSize);
+ICOM_END(IPersistStream)
+#undef ICOM_INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IPersistStream_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
+#define IPersistStream_AddRef(p)             ICOM_ICALL(IUnknown,AddRef,p)
+#define IPersistStream_Release(p)            ICOM_ICALL(IUnknown,Release,p)
+/*** IPersist methods ***/
+#define IPersistStream_GetClassID(p,a)       ICOM_ICALL1(IPersist,GetClassID,p,a)
+/*** IPersistStream ***/
+#define IPersist_Stream_IsDirty(p)       ICOM_CALL(IsDirty,p)
+#define IPersist_Stream_Load(p,a)        ICOM_CALL1(Load,p,a)
+#define IPersist_Stream_Save(p,a,b)      ICOM_CALL2(Save,p,a,b)
+#define IPersist_Stream_GetSizeMax(p,a)  ICOM_CALL(GetSizeMax,p)
+#endif
 
 
 /*****************************************************************************

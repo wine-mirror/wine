@@ -90,23 +90,6 @@ HRESULT WINAPI OleInitializeWOW(DWORD x) {
         return 0;
 }
 
-/******************************************************************************
- *		GetRunningObjectTable16	[OLE2.30]
- */
-HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
-	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
-	return E_FAIL;
-}
-
-
-/***********************************************************************
- *           GetRunningObjectTable32 (OLE2.73)
- */
-HRESULT WINAPI GetRunningObjectTable32(DWORD reserved, LPVOID *pprot) {
-	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
-	return E_FAIL;
-}
-
 /***********************************************************************
  *           RegisterDragDrop16 (OLE2.35)
  */
@@ -162,17 +145,6 @@ HRESULT WINAPI OleRegGetUserType32(
 }
 
 /***********************************************************************
- * CreateBindCtx32 [OLE32.52]
- */
-HRESULT WINAPI CreateBindCtx32 (DWORD reserved,	LPVOID *ppbc)
-{
-    FIXME(ole,"(0x%08lx %p): stub!\n", reserved, ppbc);
-    *ppbc = 0;
-/*    return S_OK; */
-    return E_OUTOFMEMORY;
-}
-
-/***********************************************************************
  * DoDragDrop32 [OLE32.65]
  */
 HRESULT WINAPI DoDragDrop32 (
@@ -184,4 +156,3 @@ HRESULT WINAPI DoDragDrop32 (
   FIXME(ole,"(DataObject %p, DropSource %p): stub!\n", pDataObject, pDropSource);
   return DRAGDROP_S_DROP;
 }
-

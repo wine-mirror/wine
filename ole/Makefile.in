@@ -6,9 +6,12 @@ VPATH     = @srcdir@
 MODULE    = ole
 
 C_SRCS = \
+	bindctx.c \
 	compobj.c \
+	filemoniker.c \
 	guid.c \
 	ifs.c \
+	itemmoniker.c \
 	moniker.c \
 	ole2.c \
 	ole2disp.c \

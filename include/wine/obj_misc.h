@@ -30,7 +30,30 @@ typedef struct IMultiQI IMultiQI,*LPMULTIQI;
 /*****************************************************************************
  * IEnumString interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IEnumString
+ICOM_BEGIN(IEnumString,IUnknown)
+    ICOM_METHOD3 (HRESULT, Next, ULONG, celt, LPOLESTR32, rgelt, ULONG*, pceltFetched);
+    ICOM_METHOD1 (HRESULT, Skip, ULONG, celt);
+    ICOM_METHOD  (HRESULT, Reset);
+    ICOM_METHOD1 (HRESULT, Clone, IEnumString**, ppenum);
+ICOM_END(IEnumString)
+
+#undef ICOM_INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IEnumString_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
+#define IEnumString_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
+#define IEnumString_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+/* IBindCtx methods*/
+#define IEnumString_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c);
+#define IEnumString_Skip(p,a)             ICOM_CALL1(Skip,p,a);
+#define IEnumString_Reset(p,a)            ICOM_CALL(Reset,p);
+#define IEnumString_Clone(p,a)            ICOM_CALL1(Clone,p,a);
+#endif
+
+#define CreateEnumString WINELIB_NAME(CreateEnumString)
+
 
 
 /*****************************************************************************

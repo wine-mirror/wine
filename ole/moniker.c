@@ -2,6 +2,7 @@
  *	Monikers
  *
  *	Copyright 1998	Marcus Meissner
+ *      Copyright 1999  Noomen Hamza
  */
 
 #include <ctype.h>
@@ -15,43 +16,18 @@
 #include "debug.h"
 
 /******************************************************************************
- *		CreateFileMoniker16	[OLE2.28]
+ *		GetRunningObjectTable16	[OLE2.30]
  */
-HRESULT WINAPI
-CreateFileMoniker16(
-	LPCOLESTR16 lpszPathName,	/* [in] pathname */
-	LPMONIKER * ppmk		/* [out] new moniker object */
-) {
-	FIXME(ole,"(%s,%p),stub!\n",lpszPathName,ppmk);
-	*ppmk = NULL;
+HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
+	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
 	return E_FAIL;
 }
 
-/******************************************************************************
- *		CreateFileMoniker32	[OLE32.55]
- */
-HRESULT WINAPI
-CreateFileMoniker32(
-	LPCOLESTR32 lpszPathName,	/* [in] pathname */
-	LPMONIKER * ppmk		/* [out] new moniker object */
-) {
-	FIXME(ole,"(%s,%p),stub!\n",debugstr_w(lpszPathName),ppmk);
-	*ppmk = NULL;
-	return E_FAIL;
-}
 
-/******************************************************************************
- *		CreateItemMoniker32	[OLE32.58]
+/***********************************************************************
+ *           GetRunningObjectTable32 (OLE2.73)
  */
-HRESULT WINAPI
-CreateItemMoniker32(
-	LPCOLESTR32 lpszDelim,	/* [in] */
-	LPCOLESTR32 lpszItem,	/* [in] */
-	LPMONIKER * ppmk	/* [out] new moniker object */
-)
-{
-    FIXME (ole,"(%s %s %p),stub!\n",
-	   debugstr_w(lpszDelim), debugstr_w(lpszItem), ppmk);
+HRESULT WINAPI GetRunningObjectTable32(DWORD reserved, LPVOID *pprot) {
+	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
     return E_FAIL;
 }
-
