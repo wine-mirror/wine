@@ -137,35 +137,38 @@ RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPST
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   RPCRT4_strfree(Binding->Endpoint);
-  if (Binding->Endpoint) {
+  if (Endpoint) {
     Binding->Endpoint = RPCRT4_strdupA(Endpoint);
   } else {
     Binding->Endpoint = RPCRT4_strdupA("");
   }
+  if (!Binding->Endpoint) ERR("out of memory?\n");
 
   return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr, LPWSTR Endpoint, LPWSTR NetworkOptions)
 {
-
   TRACE("(RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding, 
    debugstr_w(NetworkAddr), debugstr_w(Endpoint), debugstr_w(NetworkOptions));
 
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupWtoA(NetworkAddr);
   RPCRT4_strfree(Binding->Endpoint);
-  if (Binding->Endpoint) {
+  if (Endpoint) {
     Binding->Endpoint = RPCRT4_strdupWtoA(Endpoint);
   } else {
     Binding->Endpoint = RPCRT4_strdupA("");
   }
+  if (!Binding->Endpoint) ERR("out of memory?\n");
 
   return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPSTR Endpoint)
 {
+  TRACE("(RpcBinding == ^%p, EndPoint == \"%s\"\n", Binding, Endpoint);
+
   RPCRT4_strfree(Binding->Endpoint);
   Binding->Endpoint = RPCRT4_strdupA(Endpoint);
 
