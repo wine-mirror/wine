@@ -1,5 +1,7 @@
 /*
- * Copyright 2000 Andreas Mohr <andi@lisas.de>
+ * Uninstaller resource definitions
+ *
+ * Copyright 2005 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,8 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <windows.h>
-
-#define IDS_APPNAME	1101
-
-LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#define IDD_UNINSTALLER                 101
+#define IDC_FILTER                      1001
+#define IDC_LIST                        1002
+#define IDC_UNINSTALL                   1003
+#define IDC_ABOUT                       1004
+#define IDC_EXIT                        1005
+#define IDC_PLEASESELECT                1006
+#define IDS_APPNAME                     1007
+#define IDS_ABOUT                       1008
+#define IDS_ABOUTTITLE                  1009
+#define IDS_REGISTRYKEYNOTAVAILABLE     1010
+#define IDS_UNINSTALLFAILED             1011
+#define MAX_STRING_LEN                  255

@@ -5,6 +5,7 @@
  * Copyright 2003 Vincent Béron
  * Copyright 2003 Ivan Leo Puoti
  * Copyright 2004 David Kredba
+ * Copyright 2005 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +23,8 @@
  */
 
 #include <windows.h>
-#include "main.h"
+#include "resource.h"
+#include "En.rc"
 
 /* BINRES uninstaller.ico */
 UNINSTALLER ICON MOVEABLE uninstaller.ico
@@ -76,66 +78,3 @@ UNINSTALLER ICON MOVEABLE uninstaller.ico
  '00 03 C0 00 00 03 C0 00 00 0F C0 00 00 07 C0 00'
  '00 03 80 00 00 31 1F FF FF F8 3F FF FF FC'
 } */
-
-/* Czech Resources */
-LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Deinstalátor"
-
-     }
-/* End of Czech Resources */
-
-/* English-US Resources */
-LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Uninstaller"
-
-}
-/* End of English-US Resources */
-
-/* French Resources */
-LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Désinstalleur"
-
-}
-/* End of French Resources */
-
-/* German Resources */
-LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Uninstaller"
-
-}
-/* End of German Resources */
-
-/* Italian Resources */
-LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Disinstallatore"
-
-}
-/* End of Italian Resources */
-
-/* Portuguese Resources */
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Desinstalador"
-
-}
-/* End of Portuguese Resources */
-
-/* Spanish Resources */
-LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Desinstalador"
-
-}
-/* End of Spanish Resources */
