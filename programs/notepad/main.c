@@ -127,7 +127,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         static const WCHAR editW[] = { 'e','d','i','t',0 };
         RECT rc;
         GetClientRect(hWnd, &rc);
-        Globals.hEdit = CreateWindow(editW, NULL,
+        Globals.hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, editW, NULL,
                              WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | WS_HSCROLL |
                              ES_AUTOVSCROLL | ES_MULTILINE,
                              0, 0, rc.right, rc.bottom, hWnd,
