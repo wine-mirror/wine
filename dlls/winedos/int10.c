@@ -36,11 +36,10 @@ static void scroll_window(int direction, char lines, char row1,
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
 
-/* FIXME: is row or column first? */
 static void BIOS_GetCursorPos(BIOSDATA*data,unsigned page,unsigned*X,unsigned*Y)
 {
-  *X = data->VideoCursorPos[page*2];
-  *Y = data->VideoCursorPos[page*2+1];
+  *X = data->VideoCursorPos[page*2];   /* column */
+  *Y = data->VideoCursorPos[page*2+1]; /* row */
 }
 
 static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
@@ -365,7 +364,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0x01: /* SET CURSOR SHAPE */
-        FIXME("Set Cursor Shape - Not Supported\n");
+        TRACE("Set Cursor Shape start %d end %d options %d\n", CH_reg(context) & 0x1f, CL_reg(context) & 0x1f, CH_reg(context) & 0xe0);
+        data->VideoCursorType = CX_reg(context); /* direct copy */
+	VGA_SetCursorShape(CH_reg(context), CL_reg(context));
         break;
 
     case 0x02: /* SET CURSOR POSITION */

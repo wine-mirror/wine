@@ -473,6 +473,21 @@ void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
     if (Yres) *Yres=info.dwSize.Y;
 }
 
+void VGA_SetCursorShape(unsigned char start_options, unsigned char end)
+{
+    CONSOLE_CURSOR_INFO cci;
+
+    /* standard cursor settings:
+     * 0x0607 == CGA, 0x0b0c == monochrome, 0x0d0e == EGA/VGA */
+
+    /* calculate percentage from bottom - assuming VGA (bottom 0x0e) */
+    cci.dwSize = ((end & 0x1f) - (start_options & 0x1f))/0x0e * 100; 
+    if (!cci.dwSize) cci.dwSize++; /* NULL cursor would make SCCI() fail ! */
+    cci.bVisible = ((start_options & 0x60) != 0x20); /* invisible ? */
+
+    SetConsoleCursorInfo(VGA_AlphaConsole(),&cci);
+}
+
 void VGA_SetCursorPos(unsigned X,unsigned Y)
 {
     COORD pos;

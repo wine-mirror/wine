@@ -60,7 +60,7 @@ typedef struct
     WORD  VideoColumns;              /* 4a: Number of columns */
     WORD  VideoPageSize;             /* 4c: Video page size in bytes */
     WORD  VideoPageStartAddr;        /* 4e: Video page start address */
-    BYTE  VideoCursorPos[16];        /* 50: Cursor position for 8 pages */
+    BYTE  VideoCursorPos[16];        /* 50: Cursor position for 8 pages, column/row order */
     WORD  VideoCursorType;           /* 60: Video cursor type */
     BYTE  VideoCurPage;              /* 62: Video current page */
     WORD  VideoCtrlAddr WINE_PACKED; /* 63: Video controller address */
