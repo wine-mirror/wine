@@ -568,7 +568,7 @@ BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
 /***********************************************************************
  *	RegisterSystemThread	(USER32.435)
  */
-void RegisterSystemThread(DWORD flags, DWORD reserved)
+void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 {
 	FIXME(win32, "(%08lx, %08lx)\n", flags, reserved);
 }
