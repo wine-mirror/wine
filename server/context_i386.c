@@ -224,7 +224,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
     if (flags & CONTEXT_FULL)
     {
         struct regs regs;
-        if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
+        if (ptrace( PTRACE_GETREGS, pid, (int) &regs, 0 ) == -1) goto error;
         if (flags & CONTEXT_INTEGER)
         {
             context->Eax = regs.r_eax;
@@ -259,7 +259,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
     {
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
-        if (ptrace( PTRACE_GETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
+        if (ptrace( PTRACE_GETFPREGS, pid, (int) &context->FloatSave, 0 ) == -1) goto error;
         context->FloatSave.Cr0NpxState = 0;  /* FIXME */
     }
     return;
@@ -278,7 +278,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
         if (((flags | CONTEXT_i386) & CONTEXT_FULL) != CONTEXT_FULL)
         {
             /* need to preserve some registers */
-            if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
+            if (ptrace( PTRACE_GETREGS, pid, (int) &regs, 0 ) == -1) goto error;
         }
         if (flags & CONTEXT_INTEGER)
         {
@@ -305,7 +305,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
             regs.r_fs = context->SegFs;
             regs.r_gs = context->SegGs;
         }
-        if (ptrace( PTRACE_SETREGS, pid, 0, (int) &regs ) == -1) goto error;
+        if (ptrace( PTRACE_SETREGS, pid, (int) &regs, 0 ) == -1) goto error;
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
@@ -315,7 +315,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
     {
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
-        if (ptrace( PTRACE_SETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
+        if (ptrace( PTRACE_SETFPREGS, pid, (int) &context->FloatSave, 0 ) == -1) goto error;
     }
     return;
  error:
@@ -332,7 +332,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
     if (flags & CONTEXT_FULL)
     {
         struct reg regs;
-        if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
+        if (ptrace( PTRACE_GETREGS, pid, (caddr_t) &regs, 0 ) == -1) goto error;
         if (flags & CONTEXT_INTEGER)
         {
             context->Eax = regs.r_eax;
@@ -367,7 +367,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
     {
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
-        if (ptrace( PTRACE_GETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
+        if (ptrace( PTRACE_GETFPREGS, pid, (caddr_t) &context->FloatSave, 0 ) == -1) goto error;
         context->FloatSave.Cr0NpxState = 0;  /* FIXME */
     }
     return;
@@ -386,7 +386,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
         if (((flags | CONTEXT_i386) & CONTEXT_FULL) != CONTEXT_FULL)
         {
             /* need to preserve some registers */
-            if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
+            if (ptrace( PTRACE_GETREGS, pid, (caddr_t) &regs, 0 ) == -1) goto error;
         }
         if (flags & CONTEXT_INTEGER)
         {
@@ -413,7 +413,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
             regs.r_fs = context->SegFs;
             regs.r_gs = context->SegGs;
         }
-        if (ptrace( PTRACE_SETREGS, pid, 0, (int) &regs ) == -1) goto error;
+        if (ptrace( PTRACE_SETREGS, pid, (caddr_t) &regs, 0 ) == -1) goto error;
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
@@ -423,7 +423,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
     {
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
-        if (ptrace( PTRACE_SETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
+        if (ptrace( PTRACE_SETFPREGS, pid, (caddr_t) &context->FloatSave, 0 ) == -1) goto error;
     }
     return;
  error:
