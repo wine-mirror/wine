@@ -2,7 +2,7 @@
  *
  * Copyright 1997-1999 Marcus Meissner
  * Copyright 1998 Lionel Ulmer (most of Direct3D stuff)
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
@@ -479,14 +479,8 @@ BOOL WINAPI DDRAW_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     /* If we were sufficiently cool, DDraw drivers would just be COM
      * objects, registered with a particular component category. */
 
+    DDRAW_HAL_Init(hInstDLL, fdwReason, lpv);
     DDRAW_User_Init(hInstDLL, fdwReason, lpv);
-
-#ifdef HAVE_LIBXXF86VM
-    DDRAW_XVidMode_Init(hInstDLL, fdwReason, lpv);
-#endif
-#ifdef HAVE_LIBXXF86DGA2
-    DDRAW_XF86DGA2_Init(hInstDLL, fdwReason, lpv);
-#endif
 
     if (DDRAW_num_drivers > 0)
 	DDRAW_default_driver = DDRAW_ChooseDefaultDriver();

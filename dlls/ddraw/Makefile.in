@@ -24,15 +24,18 @@ C_SRCS = \
 	convert.c \
 	dclipper/main.c \
 	ddraw/dga2.c \
+	ddraw/hal.c \
 	ddraw/main.c \
 	ddraw/thunks.c \
 	ddraw/user.c \
 	ddraw/xvidmode.c \
+	dpalette/hal.c \
 	dpalette/main.c \
 	dsurface/dga2.c \
 	dsurface/dib.c \
 	dsurface/fakezbuffer.c \
 	dsurface/gamma.c \
+	dsurface/hal.c \
 	dsurface/main.c \
 	dsurface/thunks.c \
 	dsurface/user.c \
