@@ -100,6 +100,14 @@ static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
 #define LIMIT_TO_USE_SMALL_BLOCK 0x1000
 #define NUM_BLOCKS_PER_DEPOT_BLOCK 128
 
+#define STGM_ACCESS_MODE(stgm)   ((stgm)&0x0000f)
+#define STGM_SHARE_MODE(stgm)    ((stgm)&0x000f0)
+#define STGM_CREATE_MODE(stgm)   ((stgm)&0x0f000)
+
+#define STGM_KNOWN_FLAGS (0xf0ff | \
+     STGM_TRANSACTED | STGM_CONVERT | STGM_PRIORITY | STGM_NOSCRATCH | \
+     STGM_NOSNAPSHOT | STGM_DIRECT_SWMR | STGM_DELETEONRELEASE | STGM_SIMPLE)
+
 /*
  * These are signatures to detect the type of Document file.
  */

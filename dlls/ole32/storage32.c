@@ -52,14 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 #define FILE_BEGIN 0
 
-#define STGM_ACCESS_MODE(stgm)   ((stgm)&0x0000f)
-#define STGM_SHARE_MODE(stgm)    ((stgm)&0x000f0)
-#define STGM_CREATE_MODE(stgm)   ((stgm)&0x0f000)
-
-#define STGM_KNOWN_FLAGS (0xf0ff | \
-     STGM_TRANSACTED | STGM_CONVERT | STGM_PRIORITY | STGM_NOSCRATCH | \
-     STGM_NOSNAPSHOT | STGM_DIRECT_SWMR | STGM_DELETEONRELEASE | STGM_SIMPLE)
-
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 #define OLESTREAM_ID 0x501
 #define OLESTREAM_MAX_STR_LEN 255
