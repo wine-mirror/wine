@@ -101,8 +101,8 @@ static BOOL32 find_ne_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Return resource data */
-    *resLen = nameInfo->length << *(WORD *)resTab;
-    *resOff = nameInfo->offset << *(WORD *)resTab;
+    if ( resLen ) *resLen = nameInfo->length << *(WORD *)resTab;
+    if ( resOff ) *resOff = nameInfo->offset << *(WORD *)resTab;
 
     HeapFree( GetProcessHeap(), 0, resTab );
     return TRUE;
@@ -233,9 +233,9 @@ static BOOL32 find_pe_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Return resource data */
-    *resLen = resData->Size;
-    *resOff = resData->OffsetToData - sections[i].VirtualAddress
-              + sections[i].PointerToRawData;
+    if ( resLen ) *resLen = resData->Size;
+    if ( resOff ) *resOff = resData->OffsetToData - sections[i].VirtualAddress
+                            + sections[i].PointerToRawData;
 
     HeapFree( GetProcessHeap(), 0, resSection );
     HeapFree( GetProcessHeap(), 0, sections );
