@@ -435,6 +435,11 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
     case CB_FINDSTRING32:
     case CB_FINDSTRINGEXACT32:
     case CB_SELECTSTRING32:
+    case LB_DIR32:
+    case LB_ADDFILE32:
+    case LB_FINDSTRING32:
+    case LB_SELECTSTRING32:
+    case EM_REPLACESEL32:
         *plparam = (LPARAM)HEAP_strdupAtoW( SystemHeap, 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
 
@@ -520,13 +525,8 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-    case EM_REPLACESEL32:
     case EM_SETPASSWORDCHAR32:
-    case LB_ADDFILE32:
-    case LB_DIR32:
-    case LB_FINDSTRING32:
-    case LB_SELECTSTRING32:
-        FIXME(msg, "message %s (0x%x) needs translation\n", SPY_GetMsgName(msg), msg );
+        FIXME(msg, "message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -579,6 +579,11 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
     case CB_FINDSTRING32:
     case CB_FINDSTRINGEXACT32:
     case CB_SELECTSTRING32:
+    case LB_DIR32:
+    case LB_ADDFILE32:
+    case LB_FINDSTRING32:
+    case LB_SELECTSTRING32:
+    case EM_REPLACESEL32:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
@@ -650,6 +655,11 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
     case CB_FINDSTRING32:
     case CB_FINDSTRINGEXACT32:
     case CB_SELECTSTRING32:
+    case LB_DIR32:
+    case LB_ADDFILE32:
+    case LB_FINDSTRING32:
+    case LB_SELECTSTRING32:
+    case EM_REPLACESEL32:
         *plparam = (LPARAM)HEAP_strdupWtoA( SystemHeap, 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
 
@@ -735,13 +745,8 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-    case EM_REPLACESEL32:
     case EM_SETPASSWORDCHAR32:
-    case LB_ADDFILE32:
-    case LB_DIR32:
-    case LB_FINDSTRING32:
-    case LB_SELECTSTRING32:
-        FIXME(msg, "message %04x needs translation\n",msg );
+        FIXME(msg, "message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -771,6 +776,11 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
     case CB_FINDSTRING32:
     case CB_FINDSTRINGEXACT32:
     case CB_SELECTSTRING32:
+    case LB_DIR32:
+    case LB_ADDFILE32:
+    case LB_FINDSTRING32:
+    case LB_SELECTSTRING32:
+    case EM_REPLACESEL32:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
