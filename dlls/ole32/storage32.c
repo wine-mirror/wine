@@ -298,7 +298,11 @@ ULONG WINAPI StorageBaseImpl_AddRef(
             IStorage* iface)
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  return InterlockedIncrement(&This->ref);
+  ULONG ref = InterlockedIncrement(&This->ref);
+
+  TRACE("(%p) AddRef to %ld\n", This, ref);
+
+  return ref;
 }
 
 /************************************************************************
@@ -317,6 +321,8 @@ ULONG WINAPI StorageBaseImpl_Release(
    * Decrease the reference count on this object.
    */
   ULONG ref = InterlockedDecrement(&This->ref);
+
+  TRACE("(%p) ReleaseRef to %ld\n", This, ref);
 
   /*
    * If the reference count goes down to 0, perform suicide.
