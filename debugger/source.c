@@ -106,96 +106,109 @@ DEBUG_NukePath(void)
   listhead = NULL;
 }
 
+static  void*   DEBUG_MapFile(const char* name, HANDLE* hMap, unsigned* size)
+{
+    HANDLE              hFile;
+
+    hFile = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL, 
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return (void*)-1;
+    if (size != NULL && (*size = GetFileSize(hFile, NULL)) == -1) return (void*)-1;
+    *hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(hFile);
+    if (!*hMap) return (void*)-1;
+    return MapViewOfFile(*hMap, FILE_MAP_READ, 0, 0, 0);
+}
+
+static void     DEBUG_UnmapFile(void* addr, HANDLE hMap)
+{
+    UnmapViewOfFile(addr);
+    CloseHandle(hMap);
+}
+
+static struct open_filelist*    DEBUG_SearchOpenFile(const char* name)
+{
+    struct open_filelist*       ol;
+
+    for (ol = ofiles; ol; ol = ol->next)
+    {
+        if (strcmp(ol->path, name) == 0) break;
+    }
+    return ol;
+}
+
 static
 int
 DEBUG_DisplaySource(char * sourcefile, int start, int end)
 {
-  char			      * addr;
-  char			        buffer[1024];
-  int				fd;
-  int				i;
-  struct open_filelist	      * ol;
-  int				nlines;
-  char			      * basename = NULL;
-  char			      * pnt;
-  int				rtn;
-  struct searchlist	      * sl;
-  struct stat			statbuf;
-  int				status;
-  char				tmppath[PATH_MAX];
-
-  /*
-   * First see whether we have the file open already.  If so, then
-   * use that, otherwise we have to try and open it.
-   */
-  for(ol = ofiles; ol; ol = ol->next)
+    char*                       addr;
+    int				i;
+    struct open_filelist*       ol;
+    int				nlines;
+    char*                       basename = NULL;
+    char*                       pnt;
+    int				rtn;
+    struct searchlist*          sl;
+    HANDLE                      hMap;
+    DWORD			status;
+    char			tmppath[PATH_MAX];
+    
+    /*
+     * First see whether we have the file open already.  If so, then
+     * use that, otherwise we have to try and open it.
+     */
+    ol = DEBUG_SearchOpenFile(sourcefile);
+    
+    if ( ol == NULL )
     {
-      if( strcmp(ol->path, sourcefile) == 0 )
-	{
-	  break;
-	}
+        /*
+         * Try again, stripping the path from the opened file.
+         */
+        basename = strrchr(sourcefile, '\\' );
+        if ( !basename )
+            basename = strrchr(sourcefile, '/' );
+        if ( !basename )
+            basename = sourcefile;
+        else
+            basename++;
+        
+        ol = DEBUG_SearchOpenFile(basename);
     }
-
-  if( ol == NULL )
+    
+    if ( ol == NULL )
     {
-      /*
-       * Try again, stripping the path from the opened file.
-       */
-      basename = strrchr(sourcefile, '\\' );
-      if ( !basename )
-          basename = strrchr(sourcefile, '/' );
-      if ( !basename )
-          basename = sourcefile;
-      else
-          basename++;
-
-      for(ol = ofiles; ol; ol = ol->next)
-	{
-          if( strcmp(ol->path, basename) == 0 )
-	    {
-	      break;
-	    }
-	}
-
-    }
-
-  if( ol == NULL )
-    {
-      /*
-       * Crapola.  We need to try and open the file.
-       */
-      status = stat(sourcefile, &statbuf);
-      if( status != -1 )
-	{
-	  strcpy(tmppath, sourcefile);
-	}
-      else if( (status = stat(basename, &statbuf)) != -1 )
-	{
-	  strcpy(tmppath, basename);
-	}
-      else
-	{
-	  for(sl = listhead; sl; sl = sl->next)
-	    {
-	      strcpy(tmppath, sl->path);
-	      if( tmppath[strlen(tmppath)-1] != '/' )
-		{
-		  strcat(tmppath, "/");
-		}
-	      /*
-	       * Now append the base file name.
-	       */
-	      strcat(tmppath, basename);
-
-	      status = stat(tmppath, &statbuf);
-	      if( status != -1 )
-		{
-		  break;
-		}
-	    }
-
-	  if( sl == NULL )
-	    {
+        /*
+         * Crapola.  We need to try and open the file.
+         */
+        status = GetFileAttributes(sourcefile);
+        if ( status != -1 )
+        {
+            strcpy(tmppath, sourcefile);
+        }
+        else if ( (status = GetFileAttributes(basename)) != -1 )
+        {
+            strcpy(tmppath, basename);
+        }
+        else
+        {
+            for (sl = listhead; sl; sl = sl->next)
+            {
+                strcpy(tmppath, sl->path);
+                if ( tmppath[strlen(tmppath)-1] != '/' && tmppath[strlen(tmppath)-1] != '\\' )
+                {
+                    strcat(tmppath, "/");
+                }
+                /*
+                 * Now append the base file name.
+                 */
+                strcat(tmppath, basename);
+                
+                status = GetFileAttributes(tmppath);
+                if ( status != -1 ) break;
+            }
+            
+            if ( sl == NULL )
+            {
                 if (DEBUG_InteractiveP)
                 {
                     char zbuf[256];
@@ -204,13 +217,13 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                      */
                     sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
                     DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath));
-
-                    if( tmppath[strlen(tmppath)-1] == '\n' )
+                    
+                    if ( tmppath[strlen(tmppath)-1] == '\n' )
                     {
                         tmppath[strlen(tmppath)-1] = '\0';
                     }
-
-                    if( tmppath[strlen(tmppath)-1] != '/' )
+                    
+                    if ( tmppath[strlen(tmppath)-1] != '/' )
                     {
                         strcat(tmppath, "/");
                     }
@@ -218,127 +231,112 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                      * Now append the base file name.
                      */
                     strcat(tmppath, basename);
-
-                    status = stat(tmppath, &statbuf);
+                    
+                    status = GetFileAttributes(tmppath);
                 }
-	      if( status == -1 )
-		{
-		  /*
-		   * OK, I guess the user doesn't really want to see it
-		   * after all.
-		   */
-		  ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
-		  ol->path = DBG_strdup(sourcefile);
-		  ol->real_path = NULL;
-		  ol->next = ofiles;
-		  ol->nlines = 0;
-		  ol->linelist = NULL;
-		  ofiles = ol;
-		  DEBUG_Printf(DBG_CHN_MESG,"Unable to open file %s\n", tmppath);
-		  return FALSE;
-		}
-	    }
-	}
-      /*
-       * Create header for file.
-       */
-      ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
-      ol->path = DBG_strdup(sourcefile);
-      ol->real_path = DBG_strdup(tmppath);
-      ol->next = ofiles;
-      ol->nlines = 0;
-      ol->linelist = NULL;
-      ol->size = statbuf.st_size;
-      ofiles = ol;
-
-      /*
-       * Now open and map the file.
-       */
-      fd = open(tmppath, O_RDONLY);
-      if( fd == -1 )
-	{
-	  return FALSE;
-	}
-
-      addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-      if( addr == (char *) -1 )
-	{
-	  return FALSE;
-	}
-
-      /*
-       * Now build up the line number mapping table.
-       */
-      ol->nlines = 1;
-      pnt = addr;
-      while(pnt < addr + ol->size )
-	{
-	  if( *pnt++ == '\n' )
-	    {
-	      ol->nlines++;
-	    }
-	}
-
-      ol->nlines++;
-      ol->linelist = (unsigned int*) DBG_alloc( ol->nlines * sizeof(unsigned int) );
-
-      nlines = 0;
-      pnt = addr;
-      ol->linelist[nlines++] = 0;
-      while(pnt < addr + ol->size )
-	{
-	  if( *pnt++ == '\n' )
-	    {
-	      ol->linelist[nlines++] = pnt - addr;
-	    }
-	}
-      ol->linelist[nlines++] = pnt - addr;
-
+                else
+                {
+                    status = -1;
+                    strcpy(tmppath, sourcefile);
+                }
+                
+                if ( status == -1 )
+                {
+                    /*
+                     * OK, I guess the user doesn't really want to see it
+                     * after all.
+                     */
+                    ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
+                    ol->path = DBG_strdup(sourcefile);
+                    ol->real_path = NULL;
+                    ol->next = ofiles;
+                    ol->nlines = 0;
+                    ol->linelist = NULL;
+                    ofiles = ol;
+                    DEBUG_Printf(DBG_CHN_MESG,"Unable to open file %s\n", tmppath);
+                    return FALSE;
+                }
+            }
+        }
+        /*
+         * Create header for file.
+         */
+        ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
+        ol->path = DBG_strdup(sourcefile);
+        ol->real_path = DBG_strdup(tmppath);
+        ol->next = ofiles;
+        ol->nlines = 0;
+        ol->linelist = NULL;
+        ol->size = 0;
+        ofiles = ol;
+        
+        addr = DEBUG_MapFile(tmppath, &hMap, &ol->size);
+        if ( addr == (char *) -1 )
+        {
+            return FALSE;
+        }
+        /*
+         * Now build up the line number mapping table.
+         */
+        ol->nlines = 1;
+        pnt = addr;
+        while (pnt < addr + ol->size )
+        {
+            if ( *pnt++ == '\n' )
+            {
+                ol->nlines++;
+            }
+        }
+        
+        ol->nlines++;
+        ol->linelist = (unsigned int*) DBG_alloc( ol->nlines * sizeof(unsigned int) );
+        
+        nlines = 0;
+        pnt = addr;
+        ol->linelist[nlines++] = 0;
+        while(pnt < addr + ol->size )
+        {
+            if( *pnt++ == '\n' )
+            {
+                ol->linelist[nlines++] = pnt - addr;
+            }
+        }
+        ol->linelist[nlines++] = pnt - addr;
+        
     }
-  else
+    else
     {
-      /*
-       * We know what the file is, we just need to reopen it and remap it.
-       */
-      fd = open(ol->real_path, O_RDONLY);
-      if( fd == -1 )
-	{
-	  return FALSE;
-	}
-
-      addr = mmap(0, ol->size, PROT_READ, MAP_PRIVATE, fd, 0);
-      if( addr == (char *) -1 )
-	{
-	  return FALSE;
-	}
+        addr = DEBUG_MapFile(ol->real_path, &hMap, NULL);
+        if ( addr == (char *) -1 )
+        {
+            return FALSE;
+        }
     }
-
-  /*
-   * All we need to do is to display the source lines here.
-   */
-  rtn = FALSE;
-  for(i=start - 1; i <= end - 1; i++)
+    /*
+     * All we need to do is to display the source lines here.
+     */
+    rtn = FALSE;
+    for (i = start - 1; i <= end - 1; i++)
     {
-      if( i < 0 || i >= ol->nlines - 1)
-	{
-	  continue;
-	}
+        char    buffer[1024];
 
-      rtn = TRUE;
-      memset(&buffer, 0, sizeof(buffer));
-      if( ol->linelist[i+1] != ol->linelist[i] )
+        if (i < 0 || i >= ol->nlines - 1)
 	{
-	  memcpy(&buffer, addr + ol->linelist[i],
-		 (ol->linelist[i+1] - ol->linelist[i]) - 1);
+            continue;
 	}
-      DEBUG_Printf(DBG_CHN_MESG,"%d\t%s\n", i + 1,  buffer);
+        
+        rtn = TRUE;
+        memset(&buffer, 0, sizeof(buffer));
+        if ( ol->linelist[i+1] != ol->linelist[i] )
+	{
+            memcpy(&buffer, addr + ol->linelist[i],
+                   (ol->linelist[i+1] - ol->linelist[i]) - 1);
+	}
+        DEBUG_Printf(DBG_CHN_MESG,"%d\t%s\n", i + 1,  buffer);
     }
-
-  munmap(addr, ol->size);
-  close(fd);
-
-  return rtn;
-
+    
+    DEBUG_UnmapFile(addr, hMap);
+    return rtn;
 }
 
 void
