@@ -74,7 +74,7 @@ inline static int is_data_file_module( HMODULE hmod )
 static inline int push_language( WORD *list, int pos, WORD lang )
 {
     int i;
-    for (i = 0; i < pos; i++) if (list[i] == lang) return;
+    for (i = 0; i < pos; i++) if (list[i] == lang) return pos;
     list[pos++] = lang;
     return pos;
 }
