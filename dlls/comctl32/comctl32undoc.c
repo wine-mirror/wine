@@ -1886,7 +1886,6 @@ DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
     if (!DPA_SetPtr(hdpa, hdpa->nItemCount, 0)) return -1;
     memmove (hdpa->ptrs + i + 1, hdpa->ptrs + i, (hdpa->nItemCount - i - 1) * sizeof(LPVOID));
     hdpa->ptrs[i] = p;
-    hdpa->nItemCount++;
     return i;
 }
 
