@@ -83,7 +83,7 @@ extern HBRUSH  COMCTL32_hPattern55AABrush;
 #define IDM_TODAY                      4163
 #define IDM_GOTODAY                    4164
 
-/* Treeview Checboxes */
+/* Treeview Checkboxes */
 
 #define IDT_CHECK        401
 
@@ -95,6 +95,10 @@ extern HBRUSH  COMCTL32_hPattern55AABrush;
 
 /* DragList icon */
 #define IDI_DRAGARROW                   150
+
+
+/* HOTKEY internal strings */
+#define HKY_NONE                        2048
 
 typedef struct
 {
