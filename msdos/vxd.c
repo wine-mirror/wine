@@ -40,7 +40,6 @@
 #include "wine/winuser16.h"
 #include "msdos.h"
 #include "miscemu.h"
-#include "module.h"
 #include "selectors.h"
 #include "task.h"
 #include "file.h"
