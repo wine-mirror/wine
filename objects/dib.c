@@ -902,7 +902,8 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
-        hbitmap = dc->funcs->pCreateDIBSection(dc->physDev, bmi, usage, bits, section, offset, ovr_pitch);
+        if(dc->funcs->pCreateDIBSection)
+            hbitmap = dc->funcs->pCreateDIBSection(dc->physDev, bmi, usage, bits, section, offset, ovr_pitch);
         GDI_ReleaseObj(hdc);
     }
 
