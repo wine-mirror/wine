@@ -133,7 +133,12 @@ int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     {
-        ret = i386_set_ldt(index, (union descriptor *)entry, 1);
+	LDT_ENTRY entry_copy = *entry;
+	/* The kernel will only let us set LDTs with user priority level */
+	if (entry_copy.HighWord.Bits.Pres
+	    && entry_copy.HighWord.Bits.Dpl != 3)
+		entry_copy.HighWord.Bits.Dpl = 3;
+        ret = i386_set_ldt(index, (union descriptor *)&entry_copy, 1);
         if (ret < 0)
         {
             perror("i386_set_ldt");
