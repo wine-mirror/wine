@@ -21,6 +21,11 @@
  *      ImageList_DrawIndirect. Since ImageList_DrawIndirect is still
  *      partially implemented, the functions mentioned above will be 
  *      limited in functionality too.
+ *
+ *    - Hotspot handling still not correct. The Hotspot passed to BeginDrag
+ *	is the offset of the image position relative to the actual mouse pointer
+ *	position. However the Hotspot passed to SetDragCursorImage is the
+ *	offset of the mouse messages sent to the application...
  */
 
 #include <stdlib.h>
@@ -53,9 +58,10 @@ typedef struct
     BOOL	bShow;
     /* saved background */
     HBITMAP	hbmBg;
+    BOOL	bHSPending;
 } INTERNALDRAG;
 
-static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0 };
+static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0, FALSE };
 
 
 
@@ -747,6 +753,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
     DeleteDC (hdcDst);
 
     InternalDrag.himl->cCurImage = 1;
+    InternalDrag.bHSPending = TRUE;
 
     return TRUE;
 }
@@ -1071,10 +1078,16 @@ ImageList_DragEnter (HWND hwndLock, INT x, INT y)
 BOOL WINAPI
 ImageList_DragLeave (HWND hwndLock)
 {
-    if (hwndLock)
+    /* As we don't save drag info in the window this can lead to problems if
+       an app does not supply the same window as DragEnter */
+    /* if (hwndLock)
 	InternalDrag.hwnd = hwndLock;
     else
-	InternalDrag.hwnd = GetDesktopWindow ();
+	InternalDrag.hwnd = GetDesktopWindow (); */
+    if(!hwndLock)
+	hwndLock = GetDesktopWindow();
+    if(InternalDrag.hwnd != hwndLock)
+	FIXME("DragLeave hWnd != DragEnter hWnd\n");
 
     ImageList_DragShowNolock (FALSE);
 
@@ -1489,6 +1502,7 @@ ImageList_EndDrag (void)
     InternalDrag.bShow = FALSE;
     DeleteObject(InternalDrag.hbmBg);
     InternalDrag.hbmBg = 0;
+    InternalDrag.bHSPending = FALSE;
 
     return TRUE;
 }
@@ -2600,8 +2614,14 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
      * dxHotspot, dyHotspot is the offset of THE Hotspot (there is only one
      * hotspot) to the origin of the second image.
      * See M$DN for details */
-    dx = InternalDrag.dxHotspot - dxHotspot;
-    dy = InternalDrag.dyHotspot - dyHotspot;
+    if(InternalDrag.bHSPending) {
+	dx = 0;
+	dy = 0;
+	InternalDrag.bHSPending = FALSE;
+    } else {
+	dx = InternalDrag.dxHotspot - dxHotspot;
+	dy = InternalDrag.dyHotspot - dyHotspot;
+    }
     himlTemp = ImageList_Merge (InternalDrag.himl, 0, himlDrag, iDrag, dx, dy);
 
     if (visible) {
@@ -2620,12 +2640,10 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 
     /* update the InternalDragOffset, if the origin of the
      * DragImage was changed by ImageList_Merge. */
-    if (dx > InternalDrag.dxHotspot) {
-	InternalDrag.dxHotspot = dx;
-    }
-    if (dy > InternalDrag.dyHotspot) {
-	InternalDrag.dyHotspot = dy;
-    }
+    if (dx <= 0)
+	InternalDrag.dxHotspot = dxHotspot;
+    if (dy <= 0)
+	InternalDrag.dyHotspot = dyHotspot;
 
     if (visible) {
 	/* show the drag image */
