@@ -77,9 +77,9 @@ typedef unsigned long Pixel;
 #include "bitmaps/obm_restore_95"
 #include "bitmaps/obm_restored_95"
 
-DECLARE_DEBUG_CHANNEL(bitmap)
-DECLARE_DEBUG_CHANNEL(cursor)
-DECLARE_DEBUG_CHANNEL(x11drv)
+DECLARE_DEBUG_CHANNEL(bitmap);
+DECLARE_DEBUG_CHANNEL(cursor);
+DECLARE_DEBUG_CHANNEL(x11drv);
 
 
 #define OBM_FIRST  OBM_CLOSED  /* First OEM bitmap */
@@ -441,7 +441,7 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color,
 #else /* defined(HAVE_LIBXXPM) */
     FIXME_(x11drv)(
         "Xpm support not in the binary, "
-	"please install Xpm and recompile\n"
+	"please install the Xpm and Xpm-devel packages and recompile\n"
     );
     return FALSE;
 #endif /* defined(HAVE_LIBXXPM) */
