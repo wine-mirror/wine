@@ -412,10 +412,10 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
 				count, &dir, &ascent, &descent, &info_width );
 
-	   size->cx = abs((info_width + dc->breakRem + count *
-			   dc->charExtra) * (int)dc->xformWorld2Vport.eM11);
-	   size->cy = abs((pfo->fs->ascent + pfo->fs->descent) *
-			  (int)dc->xformWorld2Vport.eM22);
+          size->cx = fabs((FLOAT)(info_width + dc->breakRem + count *
+                                  dc->charExtra) * dc->xformVport2World.eM11);
+          size->cy = fabs((FLOAT)(pfo->fs->ascent + pfo->fs->descent) *
+                          dc->xformVport2World.eM22);
 	} else {
 	    INT i;
 	    float x = 0.0, y = 0.0;
