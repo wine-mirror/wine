@@ -1567,6 +1567,18 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	  }
 	break;
 
+	case( VT_UNKNOWN ):
+	    if (vtFrom == VT_DISPATCH)
+	    {
+		res = IDispatch_QueryInterface(V_DISPATCH(ps), &IID_IUnknown, (LPVOID*)&V_UNKNOWN(pd));
+	    }
+	    else
+	    {
+		res = DISP_E_TYPEMISMATCH;
+		FIXME("Coercion from %d to %d\n", vtFrom, vt );
+	    }
+	    break;
+
 	default:
 		res = DISP_E_TYPEMISMATCH;
 		FIXME("Coercion from %d to %d\n", vtFrom, vt );
