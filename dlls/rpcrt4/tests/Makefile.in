@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = rpcrt4.dll
+IMPORTS   = rpcrt4
+
+CTESTS = \
+	rpc.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

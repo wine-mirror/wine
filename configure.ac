@@ -1435,6 +1435,7 @@ dlls/quartz/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
+dlls/rpcrt4/tests/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile
 dlls/shdocvw/Makefile
