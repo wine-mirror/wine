@@ -5280,15 +5280,14 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarIndexOfMemId( ITypeInfo2 * iface,
     for(i=0, pVarInfo=This->varlist; pVarInfo &&
             memid != pVarInfo->vardesc.memid; i++, pVarInfo=pVarInfo->next)
         ;
-    if(pVarInfo){
-        *pVarIndex=i;
-        result= S_OK;
-    }else{
-        *pVarIndex=0;
-        result=E_INVALIDARG;
-    }
+    if(pVarInfo) {
+        *pVarIndex = i;
+        result = S_OK;
+    } else
+        result = TYPE_E_ELEMENTNOTFOUND;
+
     TRACE("(%p) memid 0x%08lx -> %s\n", This,
-          memid, SUCCEEDED(result)? "SUCCES":"FAILED");
+          memid, SUCCEEDED(result) ? "SUCCESS" : "FAILED");
     return result;
 }
 
