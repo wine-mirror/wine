@@ -97,12 +97,12 @@ void X11DRV_GDI_Initialize( Display *display )
 {
     gdi_display = display;
 
+    /* Initialize XRender */
+    X11DRV_XRender_Init();
+
     palette_size = X11DRV_PALETTE_Init();
 
     X11DRV_BITMAP_Init();
-
-    /* Initialize XRender */
-    X11DRV_XRender_Init();
 
     /* Initialize device caps */
     log_pixels_x = log_pixels_y = get_dpi();

@@ -197,7 +197,22 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
             X11DRV_XRender_Installed = TRUE;
             TRACE("Xrender is up and running error_base = %d\n", error_base);
             screen_format = pXRenderFindVisualFormat(gdi_display, visual);
-            if(!screen_format) { /* This fails in buggy versions of libXrender.so */
+            if(!screen_format)
+            {
+                /* Xrender doesn't like DirectColor visuals, try to find a TrueColor one instead */
+                if (visual->class == DirectColor)
+                {
+                    XVisualInfo info;
+                    if (XMatchVisualInfo( gdi_display, DefaultScreen(gdi_display),
+                                          screen_depth, TrueColor, &info ))
+                    {
+                        screen_format = pXRenderFindVisualFormat(gdi_display, info.visual);
+                        if (screen_format) visual = info.visual;
+                    }
+                }
+            }
+            if(!screen_format) /* This fails in buggy versions of libXrender.so */
+            {
                 wine_tsx11_unlock();
                 WINE_MESSAGE(
                     "Wine has detected that you probably have a buggy version\n"
