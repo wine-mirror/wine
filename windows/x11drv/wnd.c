@@ -693,17 +693,60 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	    {
 	      WND*   insertPtr = WIN_FindWndPtr( winpos->hwndInsertAfter );
 	      Window stack[2];
-	      
-	      stack[0] = X11DRV_WND_FindDesktopXWindow( insertPtr );
-	      stack[1] = X11DRV_WND_FindDesktopXWindow( winposPtr );
-	      
-	      /* for stupid window managers (i.e. all of them) */
 
-          if (!X11DRV_WND_IsZeroSizeWnd(insertPtr))
+          /* If the window where we should do the insert is zero-sized (not mapped)
+             don't used this window since it will possibly crash the X server,
+             use the "non zero-sized" window above */ 
+	      if (X11DRV_WND_IsZeroSizeWnd(insertPtr))
           {
+              /* find the window on top of the zero sized window */ 
+              WND *pDesktop = WIN_GetDesktop();
+              WND *wndPrev = pDesktop->child;
+              WND *wndZeroSized = insertPtr;
+
+              while (1)
+              {
+                  if (wndPrev == wndZeroSized)
+                      break;  /* zero-sized window is on top */
+
+                  while (wndPrev && (wndPrev->next != wndZeroSized))
+                      wndPrev = wndPrev->next;
+
+                  /* check if the window found is not zero-sized */
+                  if (X11DRV_WND_IsZeroSizeWnd(wndPrev))
+                  {
+                      wndZeroSized = wndPrev; /* restart the search */
+                      wndPrev = pDesktop->child;
+                  }
+                  else
+                      break;   /* "above" window is found */
+              }
+              WIN_ReleaseDesktop();
+              
+              if (wndPrev == wndZeroSized)
+              {
+                  /* the zero-sized window is on top */
+                  /* so set the window on top */
+                  winChanges.stack_mode = Above;
+              }
+              else
+              {
+                  stack[0] = X11DRV_WND_FindDesktopXWindow( wndPrev );
+                  stack[1] = X11DRV_WND_FindDesktopXWindow( winposPtr );
+
+                  TSXRestackWindows(display, stack, 2);
+                  changeMask &= ~CWStackMode;
+              }
+          }
+          else  /* Normal behavior, windows are not zero-sized */
+          {
+              stack[0] = X11DRV_WND_FindDesktopXWindow( insertPtr );
+              stack[1] = X11DRV_WND_FindDesktopXWindow( winposPtr );
+	      
 	          TSXRestackWindows(display, stack, 2);
 	          changeMask &= ~CWStackMode;
           }
+
           WIN_ReleaseWndPtr(insertPtr);
 	    }
 	}
