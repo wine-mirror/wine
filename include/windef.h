@@ -197,10 +197,14 @@ typedef double          DATE;
 #endif  /* __WINESRC__ */
 
 
+/* Polymorphic types */
+
+typedef UINT_PTR        WPARAM;
+typedef LONG_PTR        LPARAM;
+typedef LONG_PTR        LRESULT;
+
 /* Integer types */
-typedef UINT            WPARAM;
-typedef LONG            LPARAM;
-typedef LONG            LRESULT;
+
 typedef WORD            ATOM;
 typedef WORD            CATCHBUF[9];
 typedef WORD           *LPCATCHBUF;
