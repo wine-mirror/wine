@@ -95,54 +95,35 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
-    my $spec_file_found = $self->read_module_file();
+    my $spec_file_found = $self->find_spec_files();
     $self->read_spec_files($spec_file_found);
 
     return $self;
 }
 
-sub read_module_file {
+sub find_spec_files {
     my $self = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};
 
-    my $module_file = "$winapi_check_dir/modules.dat";
-
-    $output->progress("modules.dat");
+    $output->progress("modules");
 
     my $spec_file_found = {};
     my $allowed_dir;
     my $spec_file;
 
-    open(IN, "< $module_file");
-    local $/ = "\n";
-    while(<IN>) {
-	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begining and end of line
-	s/^(.*?)\s*#.*$/$1/;  # remove comments
-	/^$/ && next;         # skip empty lines
+    my @spec_files = <{dlls/*/*.spec,dlls/*/*/*.spec}>;
 
-	if(/^%\s+(.*?)$/) {
-	    $spec_file = $1;
+    foreach $spec_file (@spec_files) {
+        $spec_file =~ /(.*)\/.*\.spec/;
 
-	    if(!-f "$wine_dir/$spec_file") {
-		$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
-	    }
+        $allowed_dir = $1;
 
-	    $$spec_file_found{$spec_file}++;
-	    $$spec_file2dir{$spec_file} = {};
-	    next;
-	} else {
-	    $allowed_dir = $1;
-	    $$spec_file2dir{$spec_file}{$allowed_dir}++;
-	}
-	$$dir2spec_file{$allowed_dir}{$spec_file}++;
-
-	if(!-d "$wine_dir/$allowed_dir") {
-	    $output->write("modules.dat: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
-	}
+        $$spec_file_found{$spec_file}++;
+        $$spec_file2dir{$spec_file}{$allowed_dir}++;
+        $$dir2spec_file{$allowed_dir}{$spec_file}++;
     }
-    close(IN);
 
     return $spec_file_found;
 }
@@ -192,7 +173,7 @@ sub read_spec_files {
 
     foreach my $spec_file (@spec_files) {
 	if(!$$spec_file_found{$spec_file} && $spec_file !~ m%tests/[^/]+$%) {
-	    $output->write("modules.dat: $spec_file: exists but is not specified\n");
+	    $output->write("modules: $spec_file: exists but is not specified\n");
 	}
     }
 }
@@ -359,7 +340,7 @@ sub global_report {
 	foreach my $module ($self->all_modules) {
 	    if(!$$used_module_dirs{$module}{$dir}) {
 		my $spec_file = $$module2spec_file{$module};
-		push @messages, "modules.dat: $spec_file: directory ($dir) is not used\n";
+		push @messages, "modules: $spec_file: directory ($dir) is not used\n";
 	    }
 	}
     }

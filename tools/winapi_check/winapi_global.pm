@@ -41,9 +41,10 @@ sub check_modules {
 		    next if $internal_name =~ /\./;
 		    my $function = $functions->{$internal_name};
 		    if(!defined($function) && !$nativeapi->is_function($internal_name) &&
-		       !($module eq "user" && $internal_name =~
-			 /^(?:GlobalAddAtomA|GlobalDeleteAtom|GlobalFindAtomA|
-			    GlobalGetAtomNameA|lstrcmpiA)$/x))
+               # FIXME: remove these when DLL separation is complete
+               !($module eq "user32" || $module eq "gdi32" || $module eq "kernel32" ||
+                 $module eq "user.exe" || $module eq "keyboard.drv" || $module eq "ddeml" ||
+                 $module eq "gdi.exe" || $module eq "dispdib" || $module eq "krnl386.exe"))
 		    {
 			$output->write("*.c: $module: $internal_name: " .
 				       "function declared but not implemented or declared external\n");
