@@ -2869,6 +2869,7 @@ static BOOL MENU_ExitTracking(HWND hWnd)
 
     SendMessageW( hWnd, WM_EXITMENULOOP, 0, 0 );
     ShowCaret(0);
+    top_popup = 0;
     return TRUE;
 }
 
