@@ -467,14 +467,12 @@ static void test_RtlFindLeastSignificantBit()
 
   for (i = 0; i < 64; i++)
   {
-    ulLong = 1ul;
-    ulLong <<= i;
+    ulLong = (ULONGLONG)1 << i;
 
     cPos = pRtlFindLeastSignificantBit(ulLong);
     ok (cPos == i, "didnt find LSB %llx %d %d", ulLong, i, cPos);
 
-    ulLong = 0xfffffffffffffffful;
-    ulLong <<= i;
+    ulLong = ~((ULONGLONG)0) << i;
 
     cPos = pRtlFindLeastSignificantBit(ulLong);
     ok (cPos == i, "didnt find LSB %llx %d %d", ulLong, i, cPos);
