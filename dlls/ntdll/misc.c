@@ -2,6 +2,7 @@
  * Helper functions for ntdll
  */
 #include <time.h>
+#include <math.h>
 
 #include "config.h"
 
