@@ -505,7 +505,7 @@ typedef struct IDirectPlay8LobbiedApplication	*PIDirectPlay8LobbiedApplication, 
 DECLARE_INTERFACE_(IDirectPlay8Client,IUnknown) { IDirectPlay8Client_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define	IDirectPlay8Client_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
 #define	IDirectPlay8Client_AddRef(p)                            (p)->lpVtbl->AddRef(p)
@@ -530,6 +530,31 @@ DECLARE_INTERFACE_(IDirectPlay8Client,IUnknown) { IDirectPlay8Client_METHODS };
 #define	IDirectPlay8Client_GetSPCaps(p,a,b,c)                   (p)->lpVtbl->GetSPCaps(p,a,b,c)
 #define	IDirectPlay8Client_GetConnectionInfo(p,a,b)             (p)->lpVtbl->GetConnectionInfo(p,a,b)
 #define	IDirectPlay8Client_RegisterLobby(p,a,b,c)               (p)->lpVtbl->RegisterLobby(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define	IDirectPlay8Client_QueryInterface(p,a,b)                (p)->QueryInterface(a,b)
+#define	IDirectPlay8Client_AddRef(p)                            (p)->AddRef()
+#define	IDirectPlay8Client_Release(p)                           (p)->Release()
+/*** IDirectPlay8Client methods ***/
+#define	IDirectPlay8Client_Initialize(p,a,b,c)                  (p)->Initialize(a,b,c)
+#define	IDirectPlay8Client_EnumServiceProviders(p,a,b,c,d,e,f)  (p)->EnumServiceProviders(a,b,c,d,e,f)
+#define	IDirectPlay8Client_EnumHosts(p,a,b,c,d,e,f,g,h,i,j,k)   (p)->EnumHosts(a,b,c,d,e,f,g,h,i,j,k)
+#define	IDirectPlay8Client_CancelAsyncOperation(p,a,b)          (p)->CancelAsyncOperation(a,b)
+#define	IDirectPlay8Client_Connect(p,a,b,c,d,e,f,g,h,i,j)       (p)->Connect(a,b,c,d,e,f,g,h,i,j)
+#define	IDirectPlay8Client_Send(p,a,b,c,d,e,f)                  (p)->Send(a,b,c,d,e,f)
+#define	IDirectPlay8Client_GetSendQueueInfo(p,a,b,c)            (p)->GetSendQueueInfo(a,b,c)
+#define	IDirectPlay8Client_GetApplicationDesc(p,a,b,c)          (p)->GetApplicationDesc(a,b,c)
+#define	IDirectPlay8Client_SetClientInfo(p,a,b,c,d)             (p)->SetClientInfo(a,b,c,d)
+#define	IDirectPlay8Client_GetServerInfo(p,a,b,c)               (p)->GetServerInfo(a,b,c)
+#define	IDirectPlay8Client_GetServerAddress(p,a,b)              (p)->GetServerAddress(a,b)
+#define	IDirectPlay8Client_Close(p,a)                           (p)->Close(a)
+#define	IDirectPlay8Client_ReturnBuffer(p,a,b)                  (p)->ReturnBuffer(a,b)
+#define	IDirectPlay8Client_GetCaps(p,a,b)                       (p)->GetCaps(a,b)
+#define	IDirectPlay8Client_SetCaps(p,a,b)                       (p)->SetCaps(a,b)
+#define	IDirectPlay8Client_SetSPCaps(p,a,b,c)                   (p)->SetSPCaps(a,b,c)
+#define	IDirectPlay8Client_GetSPCaps(p,a,b,c)                   (p)->GetSPCaps(a,b,c)
+#define	IDirectPlay8Client_GetConnectionInfo(p,a,b)             (p)->GetConnectionInfo(a,b)
+#define	IDirectPlay8Client_RegisterLobby(p,a,b,c)               (p)->RegisterLobby(a,b,c)
 #endif
 
 /*****************************************************************************
@@ -572,7 +597,7 @@ DECLARE_INTERFACE_(IDirectPlay8Client,IUnknown) { IDirectPlay8Client_METHODS };
 DECLARE_INTERFACE_(IDirectPlay8Server,IUnknown) { IDirectPlay8Server_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define	IDirectPlay8Server_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
 #define	IDirectPlay8Server_AddRef(p)                            (p)->lpVtbl->AddRef(p)
@@ -609,6 +634,43 @@ DECLARE_INTERFACE_(IDirectPlay8Server,IUnknown) { IDirectPlay8Server_METHODS };
 #define	IDirectPlay8Server_GetSPCaps(p,a,b,c)                   (p)->lpVtbl->GetSPCaps(p,a,b,c)
 #define	IDirectPlay8Server_GetConnectionInfo(p,a,b,c)           (p)->lpVtbl->GetConnectionInfo(p,a,b,c)
 #define	IDirectPlay8Server_RegisterLobby(p,a,b,c)               (p)->lpVtbl->RegisterLobby(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define	IDirectPlay8Server_QueryInterface(p,a,b)                (p)->QueryInterface(a,b)
+#define	IDirectPlay8Server_AddRef(p)                            (p)->AddRef()
+#define	IDirectPlay8Server_Release(p)                           (p)->Release()
+/*** IDirectPlay8Server methods ***/
+#define	IDirectPlay8Server_Initialize(p,a,b,c)                  (p)->Initialize(a,b,c)
+#define	IDirectPlay8Server_EnumServiceProviders(p,a,b,c,d,e,f)  (p)->EnumServiceProviders(a,b,c,d,e,f)
+#define	IDirectPlay8Server_CancelAsyncOperation(p,a,b)          (p)->CancelAsyncOperation(a,b)
+#define	IDirectPlay8Server_GetSendQueueInfo(p,a,b,c,d)          (p)->GetSendQueueInfo(a,b,c,d)
+#define	IDirectPlay8Server_GetApplicationDesc(p,a,b,c)          (p)->GetApplicationDesc(a,b,c)
+#define	IDirectPlay8Server_SetServerInfo(p,a,b,c,d)             (p)->SetServerInfo(a,b,c,d)
+#define	IDirectPlay8Server_GetClientInfo(p,a,b,c,d)             (p)->GetClientInfo(a,b,c,d)
+#define	IDirectPlay8Server_GetClientAddress(p,a,b,c)            (p)->GetClientAddress(a,b,c)
+#define	IDirectPlay8Server_GetLocalHostAddresses(p,a,b,c)       (p)->GetLocalHostAddresses(a,b,c)
+#define	IDirectPlay8Server_SetApplicationDesc(p,a,b)            (p)->SetApplicationDesc(a,b)
+#define	IDirectPlay8Server_Host(p,a,b,c,d,e,f,g)                (p)->Host(a,b,c,d,e,f,g)
+#define	IDirectPlay8Server_SendTo(p,a,b,c,d,e,f,g)              (p)->SendTo(a,b,c,d,e,f,g)
+#define	IDirectPlay8Server_CreateGroup(p,a,b,c,d,e)             (p)->CreateGroup(a,b,c,d,e)
+#define	IDirectPlay8Server_DestroyGroup(p,a,b,c,d)              (p)->DestroyGroup(a,b,c,d)
+#define	IDirectPlay8Server_AddPlayerToGroup(p,a,b,c,d,e)        (p)->AddPlayerToGroup(a,b,c,d,e)
+#define	IDirectPlay8Server_RemovePlayerFromGroup(p,a,b,c,d,e)   (p)->RemovePlayerFromGroup(a,b,c,d,e)
+#define	IDirectPlay8Server_SetGroupInfo(p,a,b,c,d,e)            (p)->SetGroupInfo(a,b,c,d,e)
+#define	IDirectPlay8Server_GetGroupInfo(p,a,b,c,d)              (p)->GetGroupInfo(a,b,c,d)
+#define	IDirectPlay8Server_EnumPlayersAndGroups(p,a,b,c)        (p)->EnumPlayersAndGroups(a,b,c)
+#define	IDirectPlay8Server_EnumGroupMembers(p,a,b,c,d)          (p)->EnumGroupMembers(a,b,c,d)
+#define	IDirectPlay8Server_Close(p,a)                           (p)->Close(a)
+#define	IDirectPlay8Server_DestroyClient(p,a,b,c,d)             (p)->DestroyClient(a,b,c,d)
+#define	IDirectPlay8Server_ReturnBuffer(p,a,b)                  (p)->ReturnBuffer(a,b)
+#define	IDirectPlay8Server_GetPlayerContext(p,a,b,c)            (p)->GetPlayerContext(a,b,c)
+#define	IDirectPlay8Server_GetGroupContext(p,a,b,c)             (p)->GetGroupContext(a,b,c)
+#define	IDirectPlay8Server_GetCaps(p,a,b)                       (p)->GetCaps(a,b)
+#define	IDirectPlay8Server_SetCaps(p,a,b)                       (p)->SetCaps(a,b)
+#define	IDirectPlay8Server_SetSPCaps(p,a,b,c)                   (p)->SetSPCaps(a,b,c)
+#define	IDirectPlay8Server_GetSPCaps(p,a,b,c)                   (p)->GetSPCaps(a,b,c)
+#define	IDirectPlay8Server_GetConnectionInfo(p,a,b,c)           (p)->GetConnectionInfo(a,b,c)
+#define	IDirectPlay8Server_RegisterLobby(p,a,b,c)               (p)->RegisterLobby(a,b,c)
 #endif
 
 /*****************************************************************************
@@ -654,7 +716,7 @@ DECLARE_INTERFACE_(IDirectPlay8Server,IUnknown) { IDirectPlay8Server_METHODS };
 DECLARE_INTERFACE_(IDirectPlay8Peer, IUnknown) { IDirectPlay8Peer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define	IDirectPlay8Peer_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
 #define	IDirectPlay8Peer_AddRef(p)                              (p)->lpVtbl->AddRef(p)
@@ -695,6 +757,47 @@ DECLARE_INTERFACE_(IDirectPlay8Peer, IUnknown) { IDirectPlay8Peer_METHODS };
 #define	IDirectPlay8Peer_GetConnectionInfo(p,a,b,c)             (p)->lpVtbl->GetConnectionInfo(p,a,b,c)
 #define	IDirectPlay8Peer_RegisterLobby(p,a,b,c)                 (p)->lpVtbl->RegisterLobby(p,a,b,c)
 #define	IDirectPlay8Peer_TerminateSession(p,a,b,c)              (p)->lpVtbl->TerminateSession(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define	IDirectPlay8Peer_QueryInterface(p,a,b)                  (p)->QueryInterface(a,b)
+#define	IDirectPlay8Peer_AddRef(p)                              (p)->AddRef()
+#define	IDirectPlay8Peer_Release(p)                             (p)->Release()
+/*** IDirectPlay8Peer methods ***/
+#define	IDirectPlay8Peer_Initialize(p,a,b,c)                    (p)->Initialize(a,b,c)
+#define	IDirectPlay8Peer_EnumServiceProviders(p,a,b,c,d,e,f)    (p)->EnumServiceProviders(a,b,c,d,e,f)
+#define	IDirectPlay8Peer_EnumHosts(p,a,b,c,d,e,f,g,h,i,j,k)     (p)->EnumHosts(a,b,c,d,e,f,g,h,i,j,k)
+#define	IDirectPlay8Peer_CancelAsyncOperation(p,a,b)            (p)->CancelAsyncOperation(a,b)
+#define	IDirectPlay8Peer_Connect(p,a,b,c,d,e,f,g,h,i,j,k)       (p)->Connect(a,b,c,d,e,f,g,h,i,j,k)
+#define	IDirectPlay8Peer_SendTo(p,a,b,c,d,e,f,g)                (p)->SendTo(a,b,c,d,e,f,g)
+#define	IDirectPlay8Peer_GetSendQueueInfo(p,a,b,c,d)            (p)->GetSendQueueInfo(a,b,c,d)
+#define	IDirectPlay8Peer_Host(p,a,b,c,d,e,f,g)                  (p)->Host(a,b,c,d,e,f,g)
+#define	IDirectPlay8Peer_GetApplicationDesc(p,a,b,c)            (p)->GetApplicationDesc(a,b,c)
+#define	IDirectPlay8Peer_SetApplicationDesc(p,a,b)              (p)->SetApplicationDesc(a,b)
+#define	IDirectPlay8Peer_CreateGroup(p,a,b,c,d,e)               (p)->CreateGroup(a,b,c,d,e)
+#define	IDirectPlay8Peer_DestroyGroup(p,a,b,c,d)                (p)->DestroyGroup(a,b,c,d)
+#define	IDirectPlay8Peer_AddPlayerToGroup(p,a,b,c,d,e)          (p)->AddPlayerToGroup(a,b,c,d,e)
+#define	IDirectPlay8Peer_RemovePlayerFromGroup(p,a,b,c,d,e)     (p)->RemovePlayerFromGroup(a,b,c,d,e)
+#define	IDirectPlay8Peer_SetGroupInfo(p,a,b,c,d,e)              (p)->SetGroupInfo(a,b,c,d,e)
+#define	IDirectPlay8Peer_GetGroupInfo(p,a,b,c,d)                (p)->GetGroupInfo(a,b,c,d)
+#define	IDirectPlay8Peer_EnumPlayersAndGroups(p,a,b,c)          (p)->EnumPlayersAndGroups(a,b,c)
+#define	IDirectPlay8Peer_EnumGroupMembers(p,a,b,c,d)            (p)->EnumGroupMembers(a,b,c,d)
+#define	IDirectPlay8Peer_SetPeerInfo(p,a,b,c,d)                 (p)->SetPeerInfo(a,b,c,d)
+#define	IDirectPlay8Peer_GetPeerInfo(p,a,b,c,d)                 (p)->GetPeerInfo(a,b,c,d)
+#define	IDirectPlay8Peer_GetPeerAddress(p,a,b,c)                (p)->GetPeerAddress(a,b,c)
+#define	IDirectPlay8Peer_GetLocalHostAddresses(p,a,b,c)         (p)->GetLocalHostAddresses(a,b,c)
+#define	IDirectPlay8Peer_Close(p,a)                             (p)->Close(a)
+#define	IDirectPlay8Peer_EnumHosts(p,a,b,c,d,e,f,g,h,i,j,k)     (p)->EnumHosts(a,b,c,d,e,f,g,h,i,j,k)
+#define	IDirectPlay8Peer_DestroyPeer(p,a,b,c,d)                 (p)->DestroyPeer(a,b,c,d)
+#define	IDirectPlay8Peer_ReturnBuffer(p,a,b)                    (p)->ReturnBuffer(a,b)
+#define	IDirectPlay8Peer_GetPlayerContext(p,a,b,c)              (p)->GetPlayerContext(a,b,c)
+#define	IDirectPlay8Peer_GetGroupContext(p,a,b,c)               (p)->GetGroupContext(a,b,c)
+#define	IDirectPlay8Peer_GetCaps(p,a,b)                         (p)->GetCaps(a,b)
+#define	IDirectPlay8Peer_SetCaps(p,a,b)                         (p)->SetCaps(a,b)
+#define	IDirectPlay8Peer_SetSPCaps(p,a,b,c)                     (p)->SetSPCaps(a,b,c)
+#define	IDirectPlay8Peer_GetSPCaps(p,a,b,c)                     (p)->GetSPCaps(a,b,c)
+#define	IDirectPlay8Peer_GetConnectionInfo(p,a,b,c)             (p)->GetConnectionInfo(a,b,c)
+#define	IDirectPlay8Peer_RegisterLobby(p,a,b,c)                 (p)->RegisterLobby(a,b,c)
+#define	IDirectPlay8Peer_TerminateSession(p,a,b,c)              (p)->TerminateSession(a,b,c)
 #endif
 
 #ifdef __cplusplus

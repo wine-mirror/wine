@@ -211,18 +211,30 @@ typedef DWORD D3DVIEWPORTHANDLE, *LPD3DVIEWPORTHANDLE;
 DECLARE_INTERFACE_(IDirect3D,IUnknown) { IDirect3D_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-	/*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3D_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3D_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3D_Release(p)            (p)->lpVtbl->Release(p)
-	/*** IDirect3D methods ***/
+/*** IDirect3D methods ***/
 #define IDirect3D_Initialize(p,a)       (p)->lpVtbl->Initialize(p,a)
 #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->EnumDevices(p,a,b)
 #define IDirect3D_CreateLight(p,a,b)    (p)->lpVtbl->CreateLight(p,a,b)
 #define IDirect3D_CreateMaterial(p,a,b) (p)->lpVtbl->CreateMaterial(p,a,b)
 #define IDirect3D_CreateViewport(p,a,b) (p)->lpVtbl->CreateViewport(p,a,b)
 #define IDirect3D_FindDevice(p,a,b)     (p)->lpVtbl->FindDevice(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirect3D_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3D_AddRef(p)             (p)->AddRef()
+#define IDirect3D_Release(p)            (p)->Release()
+/*** IDirect3D methods ***/
+#define IDirect3D_Initialize(p,a)       (p)->Initialize(a)
+#define IDirect3D_EnumDevices(p,a,b)    (p)->EnumDevices(a,b)
+#define IDirect3D_CreateLight(p,a,b)    (p)->CreateLight(a,b)
+#define IDirect3D_CreateMaterial(p,a,b) (p)->CreateMaterial(a,b)
+#define IDirect3D_CreateViewport(p,a,b) (p)->CreateViewport(a,b)
+#define IDirect3D_FindDevice(p,a,b)     (p)->FindDevice(a,b)
 #endif
 
 
@@ -241,7 +253,7 @@ DECLARE_INTERFACE_(IDirect3D,IUnknown) { IDirect3D_METHODS };
 DECLARE_INTERFACE_(IDirect3D2,IUnknown) { IDirect3D2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3D2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3D2_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -253,6 +265,18 @@ DECLARE_INTERFACE_(IDirect3D2,IUnknown) { IDirect3D2_METHODS };
 #define IDirect3D2_CreateViewport(p,a,b) (p)->lpVtbl->CreateViewport(p,a,b)
 #define IDirect3D2_FindDevice(p,a,b)     (p)->lpVtbl->FindDevice(p,a,b)
 #define IDirect3D2_CreateDevice(p,a,b,c) (p)->lpVtbl->CreateDevice(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define IDirect3D2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3D2_AddRef(p)             (p)->AddRef()
+#define IDirect3D2_Release(p)            (p)->Release()
+/*** IDirect3D2 methods ***/
+#define IDirect3D2_EnumDevices(p,a,b)    (p)->EnumDevices(a,b)
+#define IDirect3D2_CreateLight(p,a,b)    (p)->CreateLight(a,b)
+#define IDirect3D2_CreateMaterial(p,a,b) (p)->CreateMaterial(a,b)
+#define IDirect3D2_CreateViewport(p,a,b) (p)->CreateViewport(a,b)
+#define IDirect3D2_FindDevice(p,a,b)     (p)->FindDevice(a,b)
+#define IDirect3D2_CreateDevice(p,a,b,c) (p)->CreateDevice(a,b,c)
 #endif
 
 
@@ -274,7 +298,7 @@ DECLARE_INTERFACE_(IDirect3D2,IUnknown) { IDirect3D2_METHODS };
 DECLARE_INTERFACE_(IDirect3D3,IUnknown) { IDirect3D3_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3D3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3D3_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -289,6 +313,21 @@ DECLARE_INTERFACE_(IDirect3D3,IUnknown) { IDirect3D3_METHODS };
 #define IDirect3D3_CreateVertexBuffer(p,a,b,c,d) (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d)
 #define IDirect3D3_EnumZBufferFormats(p,a,b,c)   (p)->lpVtbl->EnumZBufferFormats(p,a,b,c)
 #define IDirect3D3_EvictManagedTextures(p)       (p)->lpVtbl->EvictManagedTextures(p)
+#else
+/*** IUnknown methods ***/
+#define IDirect3D3_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3D3_AddRef(p)             (p)->AddRef()
+#define IDirect3D3_Release(p)            (p)->Release()
+/*** IDirect3D3 methods ***/
+#define IDirect3D3_EnumDevices(p,a,b)            (p)->EnumDevices(a,b)
+#define IDirect3D3_CreateLight(p,a,b)            (p)->CreateLight(a,b)
+#define IDirect3D3_CreateMaterial(p,a,b)         (p)->CreateMaterial(a,b)
+#define IDirect3D3_CreateViewport(p,a,b)         (p)->CreateViewport(a,b)
+#define IDirect3D3_FindDevice(p,a,b)             (p)->FindDevice(a,b)
+#define IDirect3D3_CreateDevice(p,a,b,c,d)       (p)->CreateDevice(a,b,c,d)
+#define IDirect3D3_CreateVertexBuffer(p,a,b,c,d) (p)->CreateVertexBuffer(a,b,c,d)
+#define IDirect3D3_EnumZBufferFormats(p,a,b,c)   (p)->EnumZBufferFormats(a,b,c)
+#define IDirect3D3_EvictManagedTextures(p)       (p)->EvictManagedTextures()
 #endif
 
 /*****************************************************************************
@@ -305,7 +344,7 @@ DECLARE_INTERFACE_(IDirect3D3,IUnknown) { IDirect3D3_METHODS };
 DECLARE_INTERFACE_(IDirect3D7,IUnknown) { IDirect3D7_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3D7_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3D7_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -316,6 +355,17 @@ DECLARE_INTERFACE_(IDirect3D7,IUnknown) { IDirect3D7_METHODS };
 #define IDirect3D7_CreateVertexBuffer(p,a,b,c)   (p)->lpVtbl->CreateVertexBuffer(p,a,b,c)
 #define IDirect3D7_EnumZBufferFormats(p,a,b,c)   (p)->lpVtbl->EnumZBufferFormats(p,a,b,c)
 #define IDirect3D7_EvictManagedTextures(p)       (p)->lpVtbl->EvictManagedTextures(p)
+#else
+/*** IUnknown methods ***/
+#define IDirect3D7_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3D7_AddRef(p)             (p)->AddRef()
+#define IDirect3D7_Release(p)            (p)->Release()
+/*** IDirect3D3 methods ***/
+#define IDirect3D7_EnumDevices(p,a,b)            (p)->EnumDevices(a,b)
+#define IDirect3D7_CreateDevice(p,a,b,c)         (p)->CreateDevice(a,b,c)
+#define IDirect3D7_CreateVertexBuffer(p,a,b,c)   (p)->CreateVertexBuffer(a,b,c)
+#define IDirect3D7_EnumZBufferFormats(p,a,b,c)   (p)->EnumZBufferFormats(a,b,c)
+#define IDirect3D7_EvictManagedTextures(p)       (p)->EvictManagedTextures()
 #endif
 
 
@@ -331,7 +381,7 @@ DECLARE_INTERFACE_(IDirect3D7,IUnknown) { IDirect3D7_METHODS };
 DECLARE_INTERFACE_(IDirect3DLight,IUnknown) { IDirect3DLight_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DLight_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DLight_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -340,6 +390,15 @@ DECLARE_INTERFACE_(IDirect3DLight,IUnknown) { IDirect3DLight_METHODS };
 #define IDirect3DLight_Initialize(p,a) (p)->lpVtbl->Initialize(p,a)
 #define IDirect3DLight_SetLight(p,a)   (p)->lpVtbl->SetLight(p,a)
 #define IDirect3DLight_GetLight(p,a)   (p)->lpVtbl->GetLight(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DLight_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DLight_AddRef(p)             (p)->AddRef()
+#define IDirect3DLight_Release(p)            (p)->Release()
+/*** IDirect3DLight methods ***/
+#define IDirect3DLight_Initialize(p,a) (p)->Initialize(a)
+#define IDirect3DLight_SetLight(p,a)   (p)->SetLight(a)
+#define IDirect3DLight_GetLight(p,a)   (p)->GetLight(a)
 #endif
 
 
@@ -358,8 +417,8 @@ DECLARE_INTERFACE_(IDirect3DLight,IUnknown) { IDirect3DLight_METHODS };
 DECLARE_INTERFACE_(IDirect3DMaterial,IUnknown) { IDirect3DMaterial_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DMaterial_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DMaterial_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DMaterial_Release(p)            (p)->lpVtbl->Release(p)
@@ -370,6 +429,18 @@ DECLARE_INTERFACE_(IDirect3DMaterial,IUnknown) { IDirect3DMaterial_METHODS };
 #define IDirect3DMaterial_GetHandle(p,a,b) (p)->lpVtbl->GetHandle(p,a,b)
 #define IDirect3DMaterial_Reserve(p)       (p)->lpVtbl->Reserve(p)
 #define IDirect3DMaterial_Unreserve(p)     (p)->lpVtbl->Unreserve(p)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DMaterial_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DMaterial_AddRef(p)             (p)->AddRef()
+#define IDirect3DMaterial_Release(p)            (p)->Release()
+/*** IDirect3DMaterial methods ***/
+#define IDirect3DMaterial_Initialize(p,a)  (p)->Initialize(a)
+#define IDirect3DMaterial_SetMaterial(p,a) (p)->SetMaterial(a)
+#define IDirect3DMaterial_GetMaterial(p,a) (p)->GetMaterial(a)
+#define IDirect3DMaterial_GetHandle(p,a,b) (p)->GetHandle(a,b)
+#define IDirect3DMaterial_Reserve(p)       (p)->Reserve()
+#define IDirect3DMaterial_Unreserve(p)     (p)->Unreserve()
 #endif
 
 
@@ -385,15 +456,24 @@ DECLARE_INTERFACE_(IDirect3DMaterial,IUnknown) { IDirect3DMaterial_METHODS };
 DECLARE_INTERFACE_(IDirect3DMaterial2,IUnknown) { IDirect3DMaterial2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DMaterial2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DMaterial2_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DMaterial2_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DMaterial2 methods ***/
+/*** IDirect3DMaterial2 methods ***/
 #define IDirect3DMaterial2_SetMaterial(p,a) (p)->lpVtbl->SetMaterial(p,a)
 #define IDirect3DMaterial2_GetMaterial(p,a) (p)->lpVtbl->GetMaterial(p,a)
 #define IDirect3DMaterial2_GetHandle(p,a,b) (p)->lpVtbl->GetHandle(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DMaterial2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DMaterial2_AddRef(p)             (p)->AddRef()
+#define IDirect3DMaterial2_Release(p)            (p)->Release()
+/*** IDirect3DMaterial2 methods ***/
+#define IDirect3DMaterial2_SetMaterial(p,a) (p)->SetMaterial(a)
+#define IDirect3DMaterial2_GetMaterial(p,a) (p)->GetMaterial(a)
+#define IDirect3DMaterial2_GetHandle(p,a,b) (p)->GetHandle(a,b)
 #endif
 
 
@@ -409,15 +489,24 @@ DECLARE_INTERFACE_(IDirect3DMaterial2,IUnknown) { IDirect3DMaterial2_METHODS };
 DECLARE_INTERFACE_(IDirect3DMaterial3,IUnknown) { IDirect3DMaterial3_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DMaterial3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DMaterial3_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DMaterial3_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DMaterial3 methods ***/
+/*** IDirect3DMaterial3 methods ***/
 #define IDirect3DMaterial3_SetMaterial(p,a) (p)->lpVtbl->SetMaterial(p,a)
 #define IDirect3DMaterial3_GetMaterial(p,a) (p)->lpVtbl->GetMaterial(p,a)
 #define IDirect3DMaterial3_GetHandle(p,a,b) (p)->lpVtbl->GetHandle(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DMaterial3_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DMaterial3_AddRef(p)             (p)->AddRef()
+#define IDirect3DMaterial3_Release(p)            (p)->Release()
+/*** IDirect3DMaterial3 methods ***/
+#define IDirect3DMaterial3_SetMaterial(p,a) (p)->SetMaterial(a)
+#define IDirect3DMaterial3_GetMaterial(p,a) (p)->GetMaterial(a)
+#define IDirect3DMaterial3_GetHandle(p,a,b) (p)->GetHandle(a,b)
 #endif
 
 
@@ -435,17 +524,28 @@ DECLARE_INTERFACE_(IDirect3DMaterial3,IUnknown) { IDirect3DMaterial3_METHODS };
 DECLARE_INTERFACE_(IDirect3DTexture,IUnknown) { IDirect3DTexture_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DTexture_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DTexture_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DTexture_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DTexture methods ***/
+/*** IDirect3DTexture methods ***/
 #define IDirect3DTexture_Initialize(p,a,b,c) (p)->lpVtbl->Initialize(p,a,b,c)
 #define IDirect3DTexture_GetHandle(p,a,b,c) (p)->lpVtbl->GetHandle(p,a,b,c)
 #define IDirect3DTexture_PaletteChanged(p,a,b,c) (p)->lpVtbl->PaletteChanged(p,a,b,c)
 #define IDirect3DTexture_Load(p,a,b,c) (p)->lpVtbl->Load(p,a,b,c)
 #define IDirect3DTexture_Unload(p,a,b,c) (p)->lpVtbl->Unload(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DTexture_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DTexture_AddRef(p)             (p)->AddRef()
+#define IDirect3DTexture_Release(p)            (p)->Release()
+/*** IDirect3DTexture methods ***/
+#define IDirect3DTexture_Initialize(p,a,b,c) (p)->Initialize(a,b,c)
+#define IDirect3DTexture_GetHandle(p,a,b,c) (p)->GetHandle(a,b,c)
+#define IDirect3DTexture_PaletteChanged(p,a,b,c) (p)->PaletteChanged(a,b,c)
+#define IDirect3DTexture_Load(p,a,b,c) (p)->Load(a,b,c)
+#define IDirect3DTexture_Unload(p,a,b,c) (p)->Unload(a,b,c)
 #endif
 
 
@@ -461,15 +561,24 @@ DECLARE_INTERFACE_(IDirect3DTexture,IUnknown) { IDirect3DTexture_METHODS };
 DECLARE_INTERFACE_(IDirect3DTexture2,IUnknown) { IDirect3DTexture2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DTexture2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DTexture2_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DTexture2_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DTexture2 methods ***/
+/*** IDirect3DTexture2 methods ***/
 #define IDirect3DTexture2_GetHandle(p,a,b)      (p)->lpVtbl->GetHandle(p,a,b)
 #define IDirect3DTexture2_PaletteChanged(p,a,b) (p)->lpVtbl->PaletteChanged(p,a,b)
 #define IDirect3DTexture2_Load(p,a)             (p)->lpVtbl->Load(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DTexture2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DTexture2_AddRef(p)             (p)->AddRef()
+#define IDirect3DTexture2_Release(p)            (p)->Release()
+/*** IDirect3DTexture2 methods ***/
+#define IDirect3DTexture2_GetHandle(p,a,b)      (p)->GetHandle(a,b)
+#define IDirect3DTexture2_PaletteChanged(p,a,b) (p)->PaletteChanged(a,b)
+#define IDirect3DTexture2_Load(p,a)             (p)->Load(a)
 #endif
 
 
@@ -495,12 +604,12 @@ DECLARE_INTERFACE_(IDirect3DTexture2,IUnknown) { IDirect3DTexture2_METHODS };
 DECLARE_INTERFACE_(IDirect3DViewport,IUnknown) { IDirect3DViewport_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DViewport_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DViewport_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DViewport_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DViewport methods ***/
+/*** IDirect3DViewport methods ***/
 #define IDirect3DViewport_Initialize(p,a)              (p)->lpVtbl->Initialize(p,a)
 #define IDirect3DViewport_GetViewport(p,a)             (p)->lpVtbl->GetViewport(p,a)
 #define IDirect3DViewport_SetViewport(p,a)             (p)->lpVtbl->SetViewport(p,a)
@@ -514,6 +623,25 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown) { IDirect3DViewport_METHODS };
 #define IDirect3DViewport_AddLight(p,a)                (p)->lpVtbl->AddLight(p,a)
 #define IDirect3DViewport_DeleteLight(p,a)             (p)->lpVtbl->DeleteLight(p,a)
 #define IDirect3DViewport_NextLight(p,a,b,c)           (p)->lpVtbl->NextLight(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DViewport_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DViewport_AddRef(p)             (p)->AddRef()
+#define IDirect3DViewport_Release(p)            (p)->Release()
+/*** IDirect3DViewport methods ***/
+#define IDirect3DViewport_Initialize(p,a)              (p)->Initialize(a)
+#define IDirect3DViewport_GetViewport(p,a)             (p)->GetViewport(a)
+#define IDirect3DViewport_SetViewport(p,a)             (p)->SetViewport(a)
+#define IDirect3DViewport_TransformVertices(p,a,b,c,d) (p)->TransformVertices(a,b,c,d)
+#define IDirect3DViewport_LightElements(p,a,b)         (p)->LightElements(a,b)
+#define IDirect3DViewport_SetBackground(p,a)           (p)->SetBackground(a)
+#define IDirect3DViewport_GetBackground(p,a,b)         (p)->GetBackground(a,b)
+#define IDirect3DViewport_SetBackgroundDepth(p,a)      (p)->SetBackgroundDepth(a)
+#define IDirect3DViewport_GetBackgroundDepth(p,a,b)    (p)->GetBackgroundDepth(a,b)
+#define IDirect3DViewport_Clear(p,a,b,c)               (p)->Clear(a,b,c)
+#define IDirect3DViewport_AddLight(p,a)                (p)->AddLight(a)
+#define IDirect3DViewport_DeleteLight(p,a)             (p)->DeleteLight(a)
+#define IDirect3DViewport_NextLight(p,a,b,c)           (p)->NextLight(a,b,c)
 #endif
 
 
@@ -528,8 +656,8 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown) { IDirect3DViewport_METHODS };
 DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport) { IDirect3DViewport2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DViewport2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DViewport2_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DViewport2_Release(p)            (p)->lpVtbl->Release(p)
@@ -547,9 +675,31 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport) { IDirect3DViewport2_ME
 #define IDirect3DViewport2_AddLight(p,a)                (p)->lpVtbl->AddLight(p,a)
 #define IDirect3DViewport2_DeleteLight(p,a)             (p)->lpVtbl->DeleteLight(p,a)
 #define IDirect3DViewport2_NextLight(p,a,b,c)           (p)->lpVtbl->NextLight(p,a,b,c)
-  /*** IDirect3DViewport2 methods ***/
+/*** IDirect3DViewport2 methods ***/
 #define IDirect3DViewport2_GetViewport2(p,a) (p)->lpVtbl->GetViewport2(p,a)
 #define IDirect3DViewport2_SetViewport2(p,a) (p)->lpVtbl->SetViewport2(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DViewport2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DViewport2_AddRef(p)             (p)->AddRef()
+#define IDirect3DViewport2_Release(p)            (p)->Release()
+/*** IDirect3Viewport methods ***/
+#define IDirect3DViewport2_Initialize(p,a)              (p)->Initialize(a)
+#define IDirect3DViewport2_GetViewport(p,a)             (p)->GetViewport(a)
+#define IDirect3DViewport2_SetViewport(p,a)             (p)->SetViewport(a)
+#define IDirect3DViewport2_TransformVertices(p,a,b,c,d) (p)->TransformVertices(a,b,c,d)
+#define IDirect3DViewport2_LightElements(p,a,b)         (p)->LightElements(a,b)
+#define IDirect3DViewport2_SetBackground(p,a)           (p)->SetBackground(a)
+#define IDirect3DViewport2_GetBackground(p,a,b)         (p)->GetBackground(a,b)
+#define IDirect3DViewport2_SetBackgroundDepth(p,a)      (p)->SetBackgroundDepth(a)
+#define IDirect3DViewport2_GetBackgroundDepth(p,a,b)    (p)->GetBackgroundDepth(a,b)
+#define IDirect3DViewport2_Clear(p,a,b,c)               (p)->Clear(a,b,c)
+#define IDirect3DViewport2_AddLight(p,a)                (p)->AddLight(a)
+#define IDirect3DViewport2_DeleteLight(p,a)             (p)->DeleteLight(a)
+#define IDirect3DViewport2_NextLight(p,a,b,c)           (p)->NextLight(a,b,c)
+/*** IDirect3DViewport2 methods ***/
+#define IDirect3DViewport2_GetViewport2(p,a) (p)->GetViewport2(a)
+#define IDirect3DViewport2_SetViewport2(p,a) (p)->SetViewport2(a)
 #endif
 
 /*****************************************************************************
@@ -564,8 +714,8 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport) { IDirect3DViewport2_ME
 DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2) { IDirect3DViewport3_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DViewport3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DViewport3_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DViewport3_Release(p)            (p)->lpVtbl->Release(p)
@@ -583,13 +733,39 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2) { IDirect3DViewport3_M
 #define IDirect3DViewport3_AddLight(p,a)                (p)->lpVtbl->AddLight(p,a)
 #define IDirect3DViewport3_DeleteLight(p,a)             (p)->lpVtbl->DeleteLight(p,a)
 #define IDirect3DViewport3_NextLight(p,a,b,c)           (p)->lpVtbl->NextLight(p,a,b,c)
-  /*** IDirect3DViewport2 methods ***/
+/*** IDirect3DViewport2 methods ***/
 #define IDirect3DViewport3_GetViewport3(p,a) (p)->lpVtbl->GetViewport2(p,a)
 #define IDirect3DViewport3_SetViewport3(p,a) (p)->lpVtbl->SetViewport2(p,a)
-  /*** IDirect3DViewport3 methods ***/
+/*** IDirect3DViewport3 methods ***/
 #define IDirect3DViewport3_SetBackgroundDepth2(p,a)   (p)->lpVtbl->SetBackgroundDepth2(p,a)
 #define IDirect3DViewport3_GetBackgroundDepth2(p,a,b) (p)->lpVtbl->GetBackgroundDepth2(p,a,b)
 #define IDirect3DViewport3_Clear2(p,a,b,c,d,e,f)      (p)->lpVtbl->Clear2(p,a,b,c,d,e,f)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DViewport3_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DViewport3_AddRef(p)             (p)->AddRef()
+#define IDirect3DViewport3_Release(p)            (p)->Release()
+/*** IDirect3Viewport methods ***/
+#define IDirect3DViewport3_Initialize(p,a)              (p)->Initialize(a)
+#define IDirect3DViewport3_GetViewport(p,a)             (p)->GetViewport(a)
+#define IDirect3DViewport3_SetViewport(p,a)             (p)->SetViewport(a)
+#define IDirect3DViewport3_TransformVertices(p,a,b,c,d) (p)->TransformVertices(a,b,c,d)
+#define IDirect3DViewport3_LightElements(p,a,b)         (p)->LightElements(a,b)
+#define IDirect3DViewport3_SetBackground(p,a)           (p)->SetBackground(a)
+#define IDirect3DViewport3_GetBackground(p,a,b)         (p)->GetBackground(a,b)
+#define IDirect3DViewport3_SetBackgroundDepth(p,a)      (p)->SetBackgroundDepth(a)
+#define IDirect3DViewport3_GetBackgroundDepth(p,a,b)    (p)->GetBackgroundDepth(a,b)
+#define IDirect3DViewport3_Clear(p,a,b,c)               (p)->Clear(a,b,c)
+#define IDirect3DViewport3_AddLight(p,a)                (p)->AddLight(a)
+#define IDirect3DViewport3_DeleteLight(p,a)             (p)->DeleteLight(a)
+#define IDirect3DViewport3_NextLight(p,a,b,c)           (p)->NextLight(a,b,c)
+/*** IDirect3DViewport2 methods ***/
+#define IDirect3DViewport3_GetViewport3(p,a) (p)->GetViewport2(a)
+#define IDirect3DViewport3_SetViewport3(p,a) (p)->SetViewport2(a)
+/*** IDirect3DViewport3 methods ***/
+#define IDirect3DViewport3_SetBackgroundDepth2(p,a)   (p)->SetBackgroundDepth2(a)
+#define IDirect3DViewport3_GetBackgroundDepth2(p,a,b) (p)->GetBackgroundDepth2(a,b)
+#define IDirect3DViewport3_Clear2(p,a,b,c,d,e,f)      (p)->Clear2(a,b,c,d,e,f)
 #endif
 
 
@@ -610,12 +786,12 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2) { IDirect3DViewport3_M
 DECLARE_INTERFACE_(IDirect3DExecuteBuffer,IUnknown) { IDirect3DExecuteBuffer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DExecuteBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DExecuteBuffer_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DExecuteBuffer_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DExecuteBuffer methods ***/
+/*** IDirect3DExecuteBuffer methods ***/
 #define IDirect3DExecuteBuffer_Initialize(p,a,b)   (p)->lpVtbl->Initialize(p,a,b)
 #define IDirect3DExecuteBuffer_Lock(p,a)           (p)->lpVtbl->Lock(p,a)
 #define IDirect3DExecuteBuffer_Unlock(p)           (p)->lpVtbl->Unlock(p)
@@ -623,6 +799,19 @@ DECLARE_INTERFACE_(IDirect3DExecuteBuffer,IUnknown) { IDirect3DExecuteBuffer_MET
 #define IDirect3DExecuteBuffer_GetExecuteData(p,a) (p)->lpVtbl->GetExecuteData(p,a)
 #define IDirect3DExecuteBuffer_Validate(p,a,b,c,d) (p)->lpVtbl->Validate(p,a,b,c,d)
 #define IDirect3DExecuteBuffer_Optimize(p,a)       (p)->lpVtbl->Optimize(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DExecuteBuffer_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DExecuteBuffer_AddRef(p)             (p)->AddRef()
+#define IDirect3DExecuteBuffer_Release(p)            (p)->Release()
+/*** IDirect3DExecuteBuffer methods ***/
+#define IDirect3DExecuteBuffer_Initialize(p,a,b)   (p)->Initialize(a,b)
+#define IDirect3DExecuteBuffer_Lock(p,a)           (p)->Lock(a)
+#define IDirect3DExecuteBuffer_Unlock(p)           (p)->Unlock()
+#define IDirect3DExecuteBuffer_SetExecuteData(p,a) (p)->SetExecuteData(a)
+#define IDirect3DExecuteBuffer_GetExecuteData(p,a) (p)->GetExecuteData(a)
+#define IDirect3DExecuteBuffer_Validate(p,a,b,c,d) (p)->Validate(a,b,c,d)
+#define IDirect3DExecuteBuffer_Optimize(p,a)       (p)->Optimize(a)
 #endif
 
 
@@ -654,12 +843,12 @@ DECLARE_INTERFACE_(IDirect3DExecuteBuffer,IUnknown) { IDirect3DExecuteBuffer_MET
 DECLARE_INTERFACE_(IDirect3DDevice,IUnknown) { IDirect3DDevice_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DDevice_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DDevice_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DDevice_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DDevice methods ***/
+/*** IDirect3DDevice methods ***/
 #define IDirect3DDevice_Initialize(p,a,b,c)          (p)->lpVtbl->Initialize(p,a,b,c)
 #define IDirect3DDevice_GetCaps(p,a,b)               (p)->lpVtbl->GetCaps(p,a,b)
 #define IDirect3DDevice_SwapTextureHandles(p,a,b)    (p)->lpVtbl->SwapTextureHandles(p,a,b)
@@ -679,6 +868,31 @@ DECLARE_INTERFACE_(IDirect3DDevice,IUnknown) { IDirect3DDevice_METHODS };
 #define IDirect3DDevice_BeginScene(p)                (p)->lpVtbl->BeginScene(p)
 #define IDirect3DDevice_EndScene(p)                  (p)->lpVtbl->EndScene(p)
 #define IDirect3DDevice_GetDirect3D(p,a)             (p)->lpVtbl->GetDirect3D(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DDevice_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DDevice_AddRef(p)             (p)->AddRef()
+#define IDirect3DDevice_Release(p)            (p)->Release()
+/*** IDirect3DDevice methods ***/
+#define IDirect3DDevice_Initialize(p,a,b,c)          (p)->Initialize(a,b,c)
+#define IDirect3DDevice_GetCaps(p,a,b)               (p)->GetCaps(a,b)
+#define IDirect3DDevice_SwapTextureHandles(p,a,b)    (p)->SwapTextureHandles(a,b)
+#define IDirect3DDevice_CreateExecuteBuffer(p,a,b,c) (p)->CreateExecuteBuffer(a,b,c)
+#define IDirect3DDevice_GetStats(p,a)                (p)->GetStats(a)
+#define IDirect3DDevice_Execute(p,a,b,c)             (p)->Execute(a,b,c)
+#define IDirect3DDevice_AddViewport(p,a)             (p)->AddViewport(a)
+#define IDirect3DDevice_DeleteViewport(p,a)          (p)->DeleteViewport(a)
+#define IDirect3DDevice_NextViewport(p,a,b,c)        (p)->NextViewport(a,b,c)
+#define IDirect3DDevice_Pick(p,a,b,c,d)              (p)->Pick(a,b,c,d)
+#define IDirect3DDevice_GetPickRecords(p,a,b)        (p)->GetPickRecords(a,b)
+#define IDirect3DDevice_EnumTextureFormats(p,a,b)    (p)->EnumTextureFormats(a,b)
+#define IDirect3DDevice_CreateMatrix(p,a)            (p)->CreateMatrix(a)
+#define IDirect3DDevice_SetMatrix(p,a,b)             (p)->SetMatrix(a,b)
+#define IDirect3DDevice_GetMatrix(p,a,b)             (p)->GetMatrix(a,b)
+#define IDirect3DDevice_DeleteMatrix(p,a)            (p)->DeleteMatrix(a)
+#define IDirect3DDevice_BeginScene(p)                (p)->BeginScene()
+#define IDirect3DDevice_EndScene(p)                  (p)->EndScene()
+#define IDirect3DDevice_GetDirect3D(p,a)             (p)->GetDirect3D(a)
 #endif
 
 
@@ -722,12 +936,12 @@ DECLARE_INTERFACE_(IDirect3DDevice,IUnknown) { IDirect3DDevice_METHODS };
 DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown) { IDirect3DDevice2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DDevice2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DDevice2_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DDevice2_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DDevice2 methods ***/
+/*** IDirect3DDevice2 methods ***/
 #define IDirect3DDevice2_GetCaps(p,a,b)                        (p)->lpVtbl->GetCaps(p,a,b)
 #define IDirect3DDevice2_SwapTextureHandles(p,a,b)             (p)->lpVtbl->SwapTextureHandles(p,a,b)
 #define IDirect3DDevice2_GetStats(p,a)                         (p)->lpVtbl->GetStats(p,a)
@@ -758,6 +972,42 @@ DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown) { IDirect3DDevice2_METHODS };
 #define IDirect3DDevice2_DrawIndexedPrimitive(p,a,b,c,d,e,f,g) (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e,f,g)
 #define IDirect3DDevice2_SetClipStatus(p,a)                    (p)->lpVtbl->SetClipStatus(p,a)
 #define IDirect3DDevice2_GetClipStatus(p,a)                    (p)->lpVtbl->GetClipStatus(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DDevice2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DDevice2_AddRef(p)             (p)->AddRef()
+#define IDirect3DDevice2_Release(p)            (p)->Release()
+/*** IDirect3DDevice2 methods ***/
+#define IDirect3DDevice2_GetCaps(p,a,b)                        (p)->GetCaps(a,b)
+#define IDirect3DDevice2_SwapTextureHandles(p,a,b)             (p)->SwapTextureHandles(a,b)
+#define IDirect3DDevice2_GetStats(p,a)                         (p)->GetStats(a)
+#define IDirect3DDevice2_AddViewport(p,a)                      (p)->AddViewport(a)
+#define IDirect3DDevice2_DeleteViewport(p,a)                   (p)->DeleteViewport(a)
+#define IDirect3DDevice2_NextViewport(p,a,b,c)                 (p)->NextViewport(a,b,c)
+#define IDirect3DDevice2_EnumTextureFormats(p,a,b)             (p)->EnumTextureFormats(a,b)
+#define IDirect3DDevice2_BeginScene(p)                         (p)->BeginScene()
+#define IDirect3DDevice2_EndScene(p)                           (p)->EndScene()
+#define IDirect3DDevice2_GetDirect3D(p,a)                      (p)->GetDirect3D(a)
+#define IDirect3DDevice2_SetCurrentViewport(p,a)               (p)->SetCurrentViewport(a)
+#define IDirect3DDevice2_GetCurrentViewport(p,a)               (p)->GetCurrentViewport(a)
+#define IDirect3DDevice2_SetRenderTarget(p,a,b)                (p)->SetRenderTarget(a,b)
+#define IDirect3DDevice2_GetRenderTarget(p,a)                  (p)->GetRenderTarget(a)
+#define IDirect3DDevice2_Begin(p,a,b,c)                        (p)->Begin(a,b,c)
+#define IDirect3DDevice2_BeginIndexed(p,a,b,c,d,e)             (p)->BeginIndexed(a,b,c,d,e)
+#define IDirect3DDevice2_Vertex(p,a)                           (p)->Vertex(a)
+#define IDirect3DDevice2_Index(p,a)                            (p)->Index(a)
+#define IDirect3DDevice2_End(p,a)                              (p)->End(a)
+#define IDirect3DDevice2_GetRenderState(p,a,b)                 (p)->GetRenderState(a,b)
+#define IDirect3DDevice2_SetRenderState(p,a,b)                 (p)->SetRenderState(a,b)
+#define IDirect3DDevice2_GetLightState(p,a,b)                  (p)->GetLightState(a,b)
+#define IDirect3DDevice2_SetLightState(p,a,b)                  (p)->SetLightState(a,b)
+#define IDirect3DDevice2_SetTransform(p,a,b)                   (p)->SetTransform(a,b)
+#define IDirect3DDevice2_GetTransform(p,a,b)                   (p)->GetTransform(a,b)
+#define IDirect3DDevice2_MultiplyTransform(p,a,b)              (p)->MultiplyTransform(a,b)
+#define IDirect3DDevice2_DrawPrimitive(p,a,b,c,d,e)            (p)->DrawPrimitive(a,b,c,d,e)
+#define IDirect3DDevice2_DrawIndexedPrimitive(p,a,b,c,d,e,f,g) (p)->DrawIndexedPrimitive(a,b,c,d,e,f,g)
+#define IDirect3DDevice2_SetClipStatus(p,a)                    (p)->SetClipStatus(a)
+#define IDirect3DDevice2_GetClipStatus(p,a)                    (p)->GetClipStatus(a)
 #endif
 
 /*****************************************************************************
@@ -809,12 +1059,12 @@ DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown) { IDirect3DDevice2_METHODS };
 DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown) { IDirect3DDevice3_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DDevice3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DDevice3_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DDevice3_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DDevice3 methods ***/
+/*** IDirect3DDevice3 methods ***/
 #define IDirect3DDevice3_GetCaps(p,a,b)                        (p)->lpVtbl->GetCaps(p,a,b)
 #define IDirect3DDevice3_GetStats(p,a)                         (p)->lpVtbl->GetStats(p,a)
 #define IDirect3DDevice3_AddViewport(p,a)                      (p)->lpVtbl->AddViewport(p,a)
@@ -854,6 +1104,51 @@ DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown) { IDirect3DDevice3_METHODS };
 #define IDirect3DDevice3_GetTextureStageState(p,a,b,c)         (p)->lpVtbl->GetTextureStageState(p,a,b,c)
 #define IDirect3DDevice3_SetTextureStageState(p,a,b,c)         (p)->lpVtbl->SetTextureStageState(p,a,b,c)
 #define IDirect3DDevice3_ValidateDevice(p,a)                   (p)->lpVtbl->ValidateDevice(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DDevice3_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DDevice3_AddRef(p)             (p)->AddRef()
+#define IDirect3DDevice3_Release(p)            (p)->Release()
+/*** IDirect3DDevice3 methods ***/
+#define IDirect3DDevice3_GetCaps(p,a,b)                        (p)->GetCaps(a,b)
+#define IDirect3DDevice3_GetStats(p,a)                         (p)->GetStats(a)
+#define IDirect3DDevice3_AddViewport(p,a)                      (p)->AddViewport(a)
+#define IDirect3DDevice3_DeleteViewport(p,a)                   (p)->DeleteViewport(a)
+#define IDirect3DDevice3_NextViewport(p,a,b,c)                 (p)->NextViewport(a,b,c)
+#define IDirect3DDevice3_EnumTextureFormats(p,a,b)             (p)->EnumTextureFormats(a,b)
+#define IDirect3DDevice3_BeginScene(p)                         (p)->BeginScene()
+#define IDirect3DDevice3_EndScene(p)                           (p)->EndScene()
+#define IDirect3DDevice3_GetDirect3D(p,a)                      (p)->GetDirect3D(a)
+#define IDirect3DDevice3_SetCurrentViewport(p,a)               (p)->SetCurrentViewport(a)
+#define IDirect3DDevice3_GetCurrentViewport(p,a)               (p)->GetCurrentViewport(a)
+#define IDirect3DDevice3_SetRenderTarget(p,a,b)                (p)->SetRenderTarget(a,b)
+#define IDirect3DDevice3_GetRenderTarget(p,a)                  (p)->GetRenderTarget(a)
+#define IDirect3DDevice3_Begin(p,a,b,c)                        (p)->Begin(a,b,c)
+#define IDirect3DDevice3_BeginIndexed(p,a,b,c,d,e)             (p)->BeginIndexed(a,b,c,d,e)
+#define IDirect3DDevice3_Vertex(p,a)                           (p)->Vertex(a)
+#define IDirect3DDevice3_Index(p,a)                            (p)->Index(a)
+#define IDirect3DDevice3_End(p,a)                              (p)->End(a)
+#define IDirect3DDevice3_GetRenderState(p,a,b)                 (p)->GetRenderState(a,b)
+#define IDirect3DDevice3_SetRenderState(p,a,b)                 (p)->SetRenderState(a,b)
+#define IDirect3DDevice3_GetLightState(p,a,b)                  (p)->GetLightState(a,b)
+#define IDirect3DDevice3_SetLightState(p,a,b)                  (p)->SetLightState(a,b)
+#define IDirect3DDevice3_SetTransform(p,a,b)                   (p)->SetTransform(a,b)
+#define IDirect3DDevice3_GetTransform(p,a,b)                   (p)->GetTransform(a,b)
+#define IDirect3DDevice3_MultiplyTransform(p,a,b)              (p)->MultiplyTransform(a,b)
+#define IDirect3DDevice3_DrawPrimitive(p,a,b,c,d,e)            (p)->DrawPrimitive(a,b,c,d,e)
+#define IDirect3DDevice3_DrawIndexedPrimitive(p,a,b,c,d,e,f,g) (p)->DrawIndexedPrimitive(a,b,c,d,e,f,g)
+#define IDirect3DDevice3_SetClipStatus(p,a)                    (p)->SetClipStatus(a)
+#define IDirect3DDevice3_GetClipStatus(p,a)                    (p)->GetClipStatus(a)
+#define IDirect3DDevice3_DrawPrimitiveStrided(p,a,b,c,d,e)     (p)->DrawPrimitiveStrided(a,b,c,d,e)
+#define IDirect3DDevice3_DrawIndexedPrimitiveStrided(p,a,b,c,d,e,f,g) (p)->DrawIndexedPrimitiveStrided(a,b,c,d,e,f,g)
+#define IDirect3DDevice3_DrawPrimitiveVB(p,a,b,c,d,e)          (p)->DrawPrimitiveVB(a,b,c,d,e)
+#define IDirect3DDevice3_DrawIndexedPrimitiveVB(p,a,b,c,d,e)   (p)->DrawIndexedPrimitiveVB(a,b,c,d,e)
+#define IDirect3DDevice3_ComputeSphereVisibility(p,a,b,c,d,e)  (p)->ComputeSphereVisibility(a,b,c,d,e)
+#define IDirect3DDevice3_GetTexture(p,a,b)                     (p)->GetTexture(a,b)
+#define IDirect3DDevice3_SetTexture(p,a,b)                     (p)->SetTexture(a,b)
+#define IDirect3DDevice3_GetTextureStageState(p,a,b,c)         (p)->GetTextureStageState(a,b,c)
+#define IDirect3DDevice3_SetTextureStageState(p,a,b,c)         (p)->SetTextureStageState(a,b,c)
+#define IDirect3DDevice3_ValidateDevice(p,a)                   (p)->ValidateDevice(a)
 #endif
 
 /*****************************************************************************
@@ -911,10 +1206,12 @@ DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown) { IDirect3DDevice3_METHODS };
 DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown) { IDirect3DDevice7_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DDevice7_QueryInterface(p,a,b)                        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DDevice7_AddRef(p)                                    (p)->lpVtbl->AddRef(p)
 #define IDirect3DDevice7_Release(p)                                   (p)->lpVtbl->Release(p)
+/*** IDirect3DDevice7 methods ***/
 #define IDirect3DDevice7_GetCaps(p,a)                                 (p)->lpVtbl->GetCaps(p,a)
 #define IDirect3DDevice7_EnumTextureFormats(p,a,b)                    (p)->lpVtbl->EnumTextureFormats(p,a,b)
 #define IDirect3DDevice7_BeginScene(p)                                (p)->lpVtbl->BeginScene(p)
@@ -961,6 +1258,58 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown) { IDirect3DDevice7_METHODS };
 #define IDirect3DDevice7_SetClipPlane(p,a,b)                          (p)->lpVtbl->SetClipPlane(p,a,b)
 #define IDirect3DDevice7_GetClipPlane(p,a,b)                          (p)->lpVtbl->GetClipPlane(p,a,b)
 #define IDirect3DDevice7_GetInfo(p,a,b,c)                             (p)->lpVtbl->GetInfo(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DDevice7_QueryInterface(p,a,b)                        (p)->QueryInterface(a,b)
+#define IDirect3DDevice7_AddRef(p)                                    (p)->AddRef()
+#define IDirect3DDevice7_Release(p)                                   (p)->Release()
+/*** IDirect3DDevice7 methods ***/
+#define IDirect3DDevice7_GetCaps(p,a)                                 (p)->GetCaps(a)
+#define IDirect3DDevice7_EnumTextureFormats(p,a,b)                    (p)->EnumTextureFormats(a,b)
+#define IDirect3DDevice7_BeginScene(p)                                (p)->BeginScene()
+#define IDirect3DDevice7_EndScene(p)                                  (p)->EndScene()
+#define IDirect3DDevice7_GetDirect3D(p,a)                             (p)->GetDirect3D(a)
+#define IDirect3DDevice7_SetRenderTarget(p,a,b)                       (p)->SetRenderTarget(a,b)
+#define IDirect3DDevice7_GetRenderTarget(p,a)                         (p)->GetRenderTarget(a)
+#define IDirect3DDevice7_Clear(p,a,b,c,d,e,f)                         (p)->Clear(a,b,c,d,e,f)
+#define IDirect3DDevice7_SetTransform(p,a,b)                          (p)->SetTransform(a,b)
+#define IDirect3DDevice7_GetTransform(p,a,b)                          (p)->GetTransform(a,b)
+#define IDirect3DDevice7_SetViewport(p,a)                             (p)->SetViewport(a)
+#define IDirect3DDevice7_MultiplyTransform(p,a,b)                     (p)->MultiplyTransform(a,b)
+#define IDirect3DDevice7_GetViewport(p,a)                             (p)->GetViewport(a)
+#define IDirect3DDevice7_SetMaterial(p,a)                             (p)->SetMaterial(a)
+#define IDirect3DDevice7_GetMaterial(p,a)                             (p)->GetMaterial(a)
+#define IDirect3DDevice7_SetLight(p,a,b)                              (p)->SetLight(a,b)
+#define IDirect3DDevice7_GetLight(p,a,b)                              (p)->GetLight(a,b)
+#define IDirect3DDevice7_SetRenderState(p,a,b)                        (p)->SetRenderState(a,b)
+#define IDirect3DDevice7_GetRenderState(p,a,b)                        (p)->GetRenderState(a,b)
+#define IDirect3DDevice7_BeginStateBlock(p)                           (p)->BeginStateBlock()
+#define IDirect3DDevice7_EndStateBlock(p,a)                           (p)->EndStateBlock(a)
+#define IDirect3DDevice7_PreLoad(p,a)                                 (p)->PreLoad(a)
+#define IDirect3DDevice7_DrawPrimitive(p,a,b,c,d,e)                   (p)->DrawPrimitive(a,b,c,d,e)
+#define IDirect3DDevice7_DrawIndexedPrimitive(p,a,b,c,d,e,f,g)        (p)->DrawIndexedPrimitive(a,b,c,d,e,f,g)
+#define IDirect3DDevice7_SetClipStatus(p,a)                           (p)->SetClipStatus(a)
+#define IDirect3DDevice7_GetClipStatus(p,a)                           (p)->GetClipStatus(a)
+#define IDirect3DDevice7_DrawPrimitiveStrided(p,a,b,c,d,e)            (p)->DrawPrimitiveStrided(a,b,c,d,e)
+#define IDirect3DDevice7_DrawIndexedPrimitiveStrided(p,a,b,c,d,e,f,g) (p)->DrawIndexedPrimitiveStrided(a,b,c,d,e,f,g)
+#define IDirect3DDevice7_DrawPrimitiveVB(p,a,b,c,d,e)                 (p)->DrawPrimitiveVB(a,b,c,d,e)
+#define IDirect3DDevice7_DrawIndexedPrimitiveVB(p,a,b,c,d,e,f,g)      (p)->DrawIndexedPrimitiveVB(a,b,c,d,e,f,g)
+#define IDirect3DDevice7_ComputeSphereVisibility(p,a,b,c,d,e)         (p)->ComputeSphereVisibility(a,b,c,d,e)
+#define IDirect3DDevice7_GetTexture(p,a,b)                            (p)->GetTexture(a,b)
+#define IDirect3DDevice7_SetTexture(p,a,b)                            (p)->SetTexture(a,b)
+#define IDirect3DDevice7_GetTextureStageState(p,a,b,c)                (p)->GetTextureStageState(a,b,c)
+#define IDirect3DDevice7_SetTextureStageState(p,a,b,c)                (p)->SetTextureStageState(a,b,c)
+#define IDirect3DDevice7_ValidateDevice(p,a)                          (p)->ValidateDevice(a)
+#define IDirect3DDevice7_ApplyStateBlock(p,a)                         (p)->ApplyStateBlock(a)
+#define IDirect3DDevice7_CaptureStateBlock(p,a)                       (p)->CaptureStateBlock(a)
+#define IDirect3DDevice7_DeleteStateBlock(p,a)                        (p)->DeleteStateBlock(a)
+#define IDirect3DDevice7_CreateStateBlock(p,a,b)                      (p)->CreateStateBlock(a,b)
+#define IDirect3DDevice7_Load(p,a,b,c,d,e)                            (p)->Load(a,b,c,d,e)
+#define IDirect3DDevice7_LightEnable(p,a,b)                           (p)->LightEnable(a,b)
+#define IDirect3DDevice7_GetLightEnable(p,a,b)                        (p)->GetLightEnable(a,b)
+#define IDirect3DDevice7_SetClipPlane(p,a,b)                          (p)->SetClipPlane(a,b)
+#define IDirect3DDevice7_GetClipPlane(p,a,b)                          (p)->GetClipPlane(a,b)
+#define IDirect3DDevice7_GetInfo(p,a,b,c)                             (p)->GetInfo(a,b,c)
 #endif
 
 
@@ -979,17 +1328,28 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown) { IDirect3DDevice7_METHODS };
 DECLARE_INTERFACE_(IDirect3DVertexBuffer,IUnknown) { IDirect3DVertexBuffer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-  /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirect3DVertexBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DVertexBuffer_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DVertexBuffer_Release(p)            (p)->lpVtbl->Release(p)
-  /*** IDirect3DVertexBuffer methods ***/
+/*** IDirect3DVertexBuffer methods ***/
 #define IDirect3DVertexBuffer_Lock(p,a,b,c)                    (p)->lpVtbl->Lock(p,a,b,c)
 #define IDirect3DVertexBuffer_Unlock(p)                        (p)->lpVtbl->Unlock(p)
 #define IDirect3DVertexBuffer_ProcessVertices(p,a,b,c,d,e,f,g) (p)->lpVtbl->ProcessVertices(p,a,b,c,d,e,f,g)
 #define IDirect3DVertexBuffer_GetVertexBufferDesc(p,a)         (p)->lpVtbl->GetVertexBufferDesc(p,a)
 #define IDirect3DVertexBuffer_Optimize(p,a,b)                  (p)->lpVtbl->Optimize(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DVertexBuffer_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirect3DVertexBuffer_AddRef(p)             (p)->AddRef()
+#define IDirect3DVertexBuffer_Release(p)            (p)->Release()
+/*** IDirect3DVertexBuffer methods ***/
+#define IDirect3DVertexBuffer_Lock(p,a,b,c)                    (p)->Lock(a,b,c)
+#define IDirect3DVertexBuffer_Unlock(p)                        (p)->Unlock()
+#define IDirect3DVertexBuffer_ProcessVertices(p,a,b,c,d,e,f,g) (p)->ProcessVertices(a,b,c,d,e,f,g)
+#define IDirect3DVertexBuffer_GetVertexBufferDesc(p,a)         (p)->GetVertexBufferDesc(a)
+#define IDirect3DVertexBuffer_Optimize(p,a,b)                  (p)->Optimize(a,b)
 #endif
 
 /*****************************************************************************
@@ -1007,7 +1367,7 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer,IUnknown) { IDirect3DVertexBuffer_METHO
 DECLARE_INTERFACE_(IDirect3DVertexBuffer7,IUnknown) { IDirect3DVertexBuffer7_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DVertexBuffer7_QueryInterface(p,a,b)                   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirect3DVertexBuffer7_AddRef(p)                               (p)->lpVtbl->AddRef(p)
@@ -1019,6 +1379,18 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer7,IUnknown) { IDirect3DVertexBuffer7_MET
 #define IDirect3DVertexBuffer7_GetVertexBufferDesc(p,a)                (p)->lpVtbl->GetVertexBufferDesc(p,a)
 #define IDirect3DVertexBuffer7_Optimize(p,a,b)                         (p)->lpVtbl->Optimize(p,a,b)
 #define IDirect3DVertexBuffer7_ProcessVerticesStrided(p,a,b,c,d,e,f,g) (p)->lpVtbl->ProcessVerticesStrided(p,a,b,c,d,e,f,g)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DVertexBuffer7_QueryInterface(p,a,b)                   (p)->QueryInterface(a,b)
+#define IDirect3DVertexBuffer7_AddRef(p)                               (p)->AddRef()
+#define IDirect3DVertexBuffer7_Release(p)                              (p)->Release()
+/*** IDirect3DVertexBuffer7 methods ***/
+#define IDirect3DVertexBuffer7_Lock(p,a,b,c)                           (p)->Lock(a,b,c)
+#define IDirect3DVertexBuffer7_Unlock(p)                               (p)->Unlock()
+#define IDirect3DVertexBuffer7_ProcessVertices(p,a,b,c,d,e,f,g)        (p)->ProcessVertices(a,b,c,d,e,f,g)
+#define IDirect3DVertexBuffer7_GetVertexBufferDesc(p,a)                (p)->GetVertexBufferDesc(a)
+#define IDirect3DVertexBuffer7_Optimize(p,a,b)                         (p)->Optimize(a,b)
+#define IDirect3DVertexBuffer7_ProcessVerticesStrided(p,a,b,c,d,e,f,g) (p)->ProcessVerticesStrided(a,b,c,d,e,f,g)
 #endif
 
 #endif /* __WINE_D3D_H */

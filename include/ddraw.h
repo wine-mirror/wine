@@ -1211,16 +1211,26 @@ typedef struct tagDDDEVICEIDENTIFIER2 {
 DECLARE_INTERFACE_(IDirectDrawPalette,IUnknown) { IDirectDrawPalette_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawPalette_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawPalette_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawPalette_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDrawPalette methods ***/
+/*** IDirectDrawPalette methods ***/
 #define IDirectDrawPalette_GetCaps(p,a)          (p)->lpVtbl->GetCaps(p,a)
 #define IDirectDrawPalette_GetEntries(p,a,b,c,d) (p)->lpVtbl->GetEntries(p,a,b,c,d)
 #define IDirectDrawPalette_Initialize(p,a,b,c)   (p)->lpVtbl->Initialize(p,a,b,c)
 #define IDirectDrawPalette_SetEntries(p,a,b,c,d) (p)->lpVtbl->SetEntries(p,a,b,c,d)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawPalette_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawPalette_AddRef(p)             (p)->AddRef()
+#define IDirectDrawPalette_Release(p)            (p)->Release()
+/*** IDirectDrawPalette methods ***/
+#define IDirectDrawPalette_GetCaps(p,a)          (p)->GetCaps(a)
+#define IDirectDrawPalette_GetEntries(p,a,b,c,d) (p)->GetEntries(a,b,c,d)
+#define IDirectDrawPalette_Initialize(p,a,b,c)   (p)->Initialize(a,b,c)
+#define IDirectDrawPalette_SetEntries(p,a,b,c,d) (p)->SetEntries(a,b,c,d)
 #endif
 
 
@@ -1239,18 +1249,30 @@ DECLARE_INTERFACE_(IDirectDrawPalette,IUnknown) { IDirectDrawPalette_METHODS };
 DECLARE_INTERFACE_(IDirectDrawClipper,IUnknown) { IDirectDrawClipper_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawClipper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawClipper_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawClipper_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDrawClipper methods ***/
+/*** IDirectDrawClipper methods ***/
 #define IDirectDrawClipper_GetClipList(p,a,b,c)   (p)->lpVtbl->GetClipList(p,a,b,c)
 #define IDirectDrawClipper_GetHWnd(p,a)           (p)->lpVtbl->GetHWnd(p,a)
 #define IDirectDrawClipper_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
 #define IDirectDrawClipper_IsClipListChanged(p,a) (p)->lpVtbl->IsClipListChanged(p,a)
 #define IDirectDrawClipper_SetClipList(p,a,b)     (p)->lpVtbl->SetClipList(p,a,b)
 #define IDirectDrawClipper_SetHWnd(p,a,b)         (p)->lpVtbl->SetHWnd(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawClipper_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawClipper_AddRef(p)             (p)->AddRef()
+#define IDirectDrawClipper_Release(p)            (p)->Release()
+/*** IDirectDrawClipper methods ***/
+#define IDirectDrawClipper_GetClipList(p,a,b,c)   (p)->GetClipList(a,b,c)
+#define IDirectDrawClipper_GetHWnd(p,a)           (p)->GetHWnd(a)
+#define IDirectDrawClipper_Initialize(p,a,b)      (p)->Initialize(a,b)
+#define IDirectDrawClipper_IsClipListChanged(p,a) (p)->IsClipListChanged(a)
+#define IDirectDrawClipper_SetClipList(p,a,b)     (p)->SetClipList(a,b)
+#define IDirectDrawClipper_SetHWnd(p,a,b)         (p)->SetHWnd(a,b)
 #endif
 
 
@@ -1283,12 +1305,12 @@ DECLARE_INTERFACE_(IDirectDrawClipper,IUnknown) { IDirectDrawClipper_METHODS };
 DECLARE_INTERFACE_(IDirectDraw,IUnknown) { IDirectDraw_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDraw_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDraw_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDraw_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDraw methods ***/
+/*** IDirectDraw methods ***/
 #define IDirectDraw_Compact(p)                  (p)->lpVtbl->Compact(p)
 #define IDirectDraw_CreateClipper(p,a,b,c)      (p)->lpVtbl->CreateClipper(p,a,b,c)
 #define IDirectDraw_CreatePalette(p,a,b,c,d)    (p)->lpVtbl->CreatePalette(p,a,b,c,d)
@@ -1309,6 +1331,32 @@ DECLARE_INTERFACE_(IDirectDraw,IUnknown) { IDirectDraw_METHODS };
 #define IDirectDraw_SetCooperativeLevel(p,a,b)  (p)->lpVtbl->SetCooperativeLevel(p,a,b)
 #define IDirectDraw_SetDisplayMode(p,a,b,c)     (p)->lpVtbl->SetDisplayMode(p,a,b,c)
 #define IDirectDraw_WaitForVerticalBlank(p,a,b) (p)->lpVtbl->WaitForVerticalBlank(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDraw_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDraw_AddRef(p)             (p)->AddRef()
+#define IDirectDraw_Release(p)            (p)->Release()
+/*** IDirectDraw methods ***/
+#define IDirectDraw_Compact(p)                  (p)->Compact()
+#define IDirectDraw_CreateClipper(p,a,b,c)      (p)->CreateClipper(a,b,c)
+#define IDirectDraw_CreatePalette(p,a,b,c,d)    (p)->CreatePalette(a,b,c,d)
+#define IDirectDraw_CreateSurface(p,a,b,c)      (p)->CreateSurface(a,b,c)
+#define IDirectDraw_DuplicateSurface(p,a,b)     (p)->DuplicateSurface(a,b)
+#define IDirectDraw_EnumDisplayModes(p,a,b,c,d) (p)->EnumDisplayModes(a,b,c,d)
+#define IDirectDraw_EnumSurfaces(p,a,b,c,d)     (p)->EnumSurfaces(a,b,c,d)
+#define IDirectDraw_FlipToGDISurface(p)         (p)->FlipToGDISurface()
+#define IDirectDraw_GetCaps(p,a,b)              (p)->GetCaps(a,b)
+#define IDirectDraw_GetDisplayMode(p,a)         (p)->GetDisplayMode(a)
+#define IDirectDraw_GetFourCCCodes(p,a,b)       (p)->GetFourCCCodes(a,b)
+#define IDirectDraw_GetGDISurface(p,a)          (p)->GetGDISurface(a)
+#define IDirectDraw_GetMonitorFrequency(p,a)    (p)->GetMonitorFrequency(a)
+#define IDirectDraw_GetScanLine(p,a)            (p)->GetScanLine(a)
+#define IDirectDraw_GetVerticalBlankStatus(p,a) (p)->GetVerticalBlankStatus(a)
+#define IDirectDraw_Initialize(p,a)             (p)->Initialize(a)
+#define IDirectDraw_RestoreDisplayMode(p)       (p)->RestoreDisplayMode()
+#define IDirectDraw_SetCooperativeLevel(p,a,b)  (p)->SetCooperativeLevel(a,b)
+#define IDirectDraw_SetDisplayMode(p,a,b,c)     (p)->SetDisplayMode(a,b,c)
+#define IDirectDraw_WaitForVerticalBlank(p,a,b) (p)->WaitForVerticalBlank(a,b)
 #endif
 
 
@@ -1357,12 +1405,12 @@ DECLARE_INTERFACE_(IDirectDraw,IUnknown) { IDirectDraw_METHODS };
 DECLARE_INTERFACE_(IDirectDraw2,IUnknown) { IDirectDraw2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDraw2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDraw2_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDraw2_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDraw methods ***/
+/*** IDirectDraw methods ***/
 #define IDirectDraw2_Compact(p)                  (p)->lpVtbl->Compact(p)
 #define IDirectDraw2_CreateClipper(p,a,b,c)      (p)->lpVtbl->CreateClipper(p,a,b,c)
 #define IDirectDraw2_CreatePalette(p,a,b,c,d)    (p)->lpVtbl->CreatePalette(p,a,b,c,d)
@@ -1385,6 +1433,34 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown) { IDirectDraw2_METHODS };
 #define IDirectDraw2_WaitForVerticalBlank(p,a,b) (p)->lpVtbl->WaitForVerticalBlank(p,a,b)
 /*** IDirectDraw2 methods ***/
 #define IDirectDraw2_GetAvailableVidMem(p,a,b,c) (p)->lpVtbl->GetAvailableVidMem(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define IDirectDraw2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDraw2_AddRef(p)             (p)->AddRef()
+#define IDirectDraw2_Release(p)            (p)->Release()
+/*** IDirectDraw methods ***/
+#define IDirectDraw2_Compact(p)                  (p)->Compact()
+#define IDirectDraw2_CreateClipper(p,a,b,c)      (p)->CreateClipper(a,b,c)
+#define IDirectDraw2_CreatePalette(p,a,b,c,d)    (p)->CreatePalette(a,b,c,d)
+#define IDirectDraw2_CreateSurface(p,a,b,c)      (p)->CreateSurface(a,b,c)
+#define IDirectDraw2_DuplicateSurface(p,a,b)     (p)->DuplicateSurface(a,b)
+#define IDirectDraw2_EnumDisplayModes(p,a,b,c,d) (p)->EnumDisplayModes(a,b,c,d)
+#define IDirectDraw2_EnumSurfaces(p,a,b,c,d)     (p)->EnumSurfaces(a,b,c,d)
+#define IDirectDraw2_FlipToGDISurface(p)         (p)->FlipToGDISurface()
+#define IDirectDraw2_GetCaps(p,a,b)              (p)->GetCaps(a,b)
+#define IDirectDraw2_GetDisplayMode(p,a)         (p)->GetDisplayMode(a)
+#define IDirectDraw2_GetFourCCCodes(p,a,b)       (p)->GetFourCCCodes(a,b)
+#define IDirectDraw2_GetGDISurface(p,a)          (p)->GetGDISurface(a)
+#define IDirectDraw2_GetMonitorFrequency(p,a)    (p)->GetMonitorFrequency(a)
+#define IDirectDraw2_GetScanLine(p,a)            (p)->GetScanLine(a)
+#define IDirectDraw2_GetVerticalBlankStatus(p,a) (p)->GetVerticalBlankStatus(a)
+#define IDirectDraw2_Initialize(p,a)             (p)->Initialize(a)
+#define IDirectDraw2_RestoreDisplayMode(p)       (p)->RestoreDisplayMode()
+#define IDirectDraw2_SetCooperativeLevel(p,a,b)  (p)->SetCooperativeLevel(a,b)
+#define IDirectDraw2_SetDisplayMode(p,a,b,c,d,e) (p)->SetDisplayMode(a,b,c,d,e)
+#define IDirectDraw2_WaitForVerticalBlank(p,a,b) (p)->WaitForVerticalBlank(a,b)
+/*** IDirectDraw2 methods ***/
+#define IDirectDraw2_GetAvailableVidMem(p,a,b,c) (p)->GetAvailableVidMem(a,b,c)
 #endif
 
 
@@ -1424,12 +1500,12 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown) { IDirectDraw2_METHODS };
 DECLARE_INTERFACE_(IDirectDraw4,IUnknown) { IDirectDraw4_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDraw4_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDraw4_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDraw4_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDraw methods ***/
+/*** IDirectDraw methods ***/
 #define IDirectDraw4_Compact(p)                  (p)->lpVtbl->Compact(p)
 #define IDirectDraw4_CreateClipper(p,a,b,c)      (p)->lpVtbl->CreateClipper(p,a,b,c)
 #define IDirectDraw4_CreatePalette(p,a,b,c,d)    (p)->lpVtbl->CreatePalette(p,a,b,c,d)
@@ -1457,6 +1533,39 @@ DECLARE_INTERFACE_(IDirectDraw4,IUnknown) { IDirectDraw4_METHODS };
 #define IDirectDraw4_RestoreAllSurfaces(pc)     (p)->lpVtbl->RestoreAllSurfaces(p)
 #define IDirectDraw4_TestCooperativeLevel(p)    (p)->lpVtbl->TestCooperativeLevel(p)
 #define IDirectDraw4_GetDeviceIdentifier(p,a,b) (p)->lpVtbl->GetDeviceIdentifier(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDraw4_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDraw4_AddRef(p)             (p)->AddRef()
+#define IDirectDraw4_Release(p)            (p)->Release()
+/*** IDirectDraw methods ***/
+#define IDirectDraw4_Compact(p)                  (p)->Compact()
+#define IDirectDraw4_CreateClipper(p,a,b,c)      (p)->CreateClipper(a,b,c)
+#define IDirectDraw4_CreatePalette(p,a,b,c,d)    (p)->CreatePalette(a,b,c,d)
+#define IDirectDraw4_CreateSurface(p,a,b,c)      (p)->CreateSurface(a,b,c)
+#define IDirectDraw4_DuplicateSurface(p,a,b)     (p)->DuplicateSurface(a,b)
+#define IDirectDraw4_EnumDisplayModes(p,a,b,c,d) (p)->EnumDisplayModes(a,b,c,d)
+#define IDirectDraw4_EnumSurfaces(p,a,b,c,d)     (p)->EnumSurfaces(a,b,c,d)
+#define IDirectDraw4_FlipToGDISurface(p)         (p)->FlipToGDISurface()
+#define IDirectDraw4_GetCaps(p,a,b)              (p)->GetCaps(a,b)
+#define IDirectDraw4_GetDisplayMode(p,a)         (p)->GetDisplayMode(a)
+#define IDirectDraw4_GetFourCCCodes(p,a,b)       (p)->GetFourCCCodes(a,b)
+#define IDirectDraw4_GetGDISurface(p,a)          (p)->GetGDISurface(a)
+#define IDirectDraw4_GetMonitorFrequency(p,a)    (p)->GetMonitorFrequency(a)
+#define IDirectDraw4_GetScanLine(p,a)            (p)->GetScanLine(a)
+#define IDirectDraw4_GetVerticalBlankStatus(p,a) (p)->GetVerticalBlankStatus(a)
+#define IDirectDraw4_Initialize(p,a)             (p)->Initialize(a)
+#define IDirectDraw4_RestoreDisplayMode(p)       (p)->RestoreDisplayMode()
+#define IDirectDraw4_SetCooperativeLevel(p,a,b)  (p)->SetCooperativeLevel(a,b)
+#define IDirectDraw4_SetDisplayMode(p,a,b,c,d,e) (p)->SetDisplayMode(a,b,c,d,e)
+#define IDirectDraw4_WaitForVerticalBlank(p,a,b) (p)->WaitForVerticalBlank(a,b)
+/*** IDirectDraw2 methods ***/
+#define IDirectDraw4_GetAvailableVidMem(p,a,b,c) (p)->GetAvailableVidMem(a,b,c)
+/*** IDirectDraw4 methods ***/
+#define IDirectDraw4_GetSurfaceFromDC(p,a,b)    (p)->GetSurfaceFromDC(a,b)
+#define IDirectDraw4_RestoreAllSurfaces(pc)     (p)->RestoreAllSurfaces()
+#define IDirectDraw4_TestCooperativeLevel(p)    (p)->TestCooperativeLevel()
+#define IDirectDraw4_GetDeviceIdentifier(p,a,b) (p)->GetDeviceIdentifier(a,b)
 #endif
 
 
@@ -1502,12 +1611,12 @@ DECLARE_INTERFACE_(IDirectDraw4,IUnknown) { IDirectDraw4_METHODS };
 DECLARE_INTERFACE_(IDirectDraw7,IUnknown) { IDirectDraw7_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDraw7_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDraw7_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDraw7_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDraw methods ***/
+/*** IDirectDraw methods ***/
 #define IDirectDraw7_Compact(p)                  (p)->lpVtbl->Compact(p)
 #define IDirectDraw7_CreateClipper(p,a,b,c)      (p)->lpVtbl->CreateClipper(p,a,b,c)
 #define IDirectDraw7_CreatePalette(p,a,b,c,d)    (p)->lpVtbl->CreatePalette(p,a,b,c,d)
@@ -1538,6 +1647,42 @@ DECLARE_INTERFACE_(IDirectDraw7,IUnknown) { IDirectDraw7_METHODS };
 /*** added in IDirectDraw 7 ***/
 #define IDirectDraw7_StartModeTest(p,a,b,c)     (p)->lpVtbl->StartModeTest(p,a,b,c)
 #define IDirectDraw7_EvaluateMode(p,a,b)        (p)->lpVtbl->EvaluateMode(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDraw7_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDraw7_AddRef(p)             (p)->AddRef()
+#define IDirectDraw7_Release(p)            (p)->Release()
+/*** IDirectDraw methods ***/
+#define IDirectDraw7_Compact(p)                  (p)->Compact()
+#define IDirectDraw7_CreateClipper(p,a,b,c)      (p)->CreateClipper(a,b,c)
+#define IDirectDraw7_CreatePalette(p,a,b,c,d)    (p)->CreatePalette(a,b,c,d)
+#define IDirectDraw7_CreateSurface(p,a,b,c)      (p)->CreateSurface(a,b,c)
+#define IDirectDraw7_DuplicateSurface(p,a,b)     (p)->DuplicateSurface(a,b)
+#define IDirectDraw7_EnumDisplayModes(p,a,b,c,d) (p)->EnumDisplayModes(a,b,c,d)
+#define IDirectDraw7_EnumSurfaces(p,a,b,c,d)     (p)->EnumSurfaces(a,b,c,d)
+#define IDirectDraw7_FlipToGDISurface(p)         (p)->FlipToGDISurface()
+#define IDirectDraw7_GetCaps(p,a,b)              (p)->GetCaps(a,b)
+#define IDirectDraw7_GetDisplayMode(p,a)         (p)->GetDisplayMode(a)
+#define IDirectDraw7_GetFourCCCodes(p,a,b)       (p)->GetFourCCCodes(a,b)
+#define IDirectDraw7_GetGDISurface(p,a)          (p)->GetGDISurface(a)
+#define IDirectDraw7_GetMonitorFrequency(p,a)    (p)->GetMonitorFrequency(a)
+#define IDirectDraw7_GetScanLine(p,a)            (p)->GetScanLine(a)
+#define IDirectDraw7_GetVerticalBlankStatus(p,a) (p)->GetVerticalBlankStatus(a)
+#define IDirectDraw7_Initialize(p,a)             (p)->Initialize(a)
+#define IDirectDraw7_RestoreDisplayMode(p)       (p)->RestoreDisplayMode()
+#define IDirectDraw7_SetCooperativeLevel(p,a,b)  (p)->SetCooperativeLevel(a,b)
+#define IDirectDraw7_SetDisplayMode(p,a,b,c,d,e) (p)->SetDisplayMode(a,b,c,d,e)
+#define IDirectDraw7_WaitForVerticalBlank(p,a,b) (p)->WaitForVerticalBlank(a,b)
+/*** added in IDirectDraw2 ***/
+#define IDirectDraw7_GetAvailableVidMem(p,a,b,c) (p)->GetAvailableVidMem(a,b,c)
+/*** added in IDirectDraw4 ***/
+#define IDirectDraw7_GetSurfaceFromDC(p,a,b)    (p)->GetSurfaceFromDC(a,b)
+#define IDirectDraw7_RestoreAllSurfaces(p)     (p)->RestoreAllSurfaces()
+#define IDirectDraw7_TestCooperativeLevel(p)    (p)->TestCooperativeLevel()
+#define IDirectDraw7_GetDeviceIdentifier(p,a,b) (p)->GetDeviceIdentifier(a,b)
+/*** added in IDirectDraw 7 ***/
+#define IDirectDraw7_StartModeTest(p,a,b,c)     (p)->StartModeTest(a,b,c)
+#define IDirectDraw7_EvaluateMode(p,a,b)        (p)->EvaluateMode(a,b)
 #endif
 
 
@@ -1583,12 +1728,12 @@ DECLARE_INTERFACE_(IDirectDraw7,IUnknown) { IDirectDraw7_METHODS };
 DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown) { IDirectDrawSurface_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawSurface_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawSurface_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawSurface_Release(p)            (p)->lpVtbl->Release(p)
-    /*** IDirectDrawSurface methods ***/
+/*** IDirectDrawSurface methods ***/
 #define IDirectDrawSurface_AddAttachedSurface(p,a)      (p)->lpVtbl->AddAttachedSurface(p,a)
 #define IDirectDrawSurface_AddOverlayDirtyRect(p,a)     (p)->lpVtbl->AddOverlayDirtyRect(p,a)
 #define IDirectDrawSurface_Blt(p,a,b,c,d,e)             (p)->lpVtbl->Blt(p,a,b,c,d,e)
@@ -1622,6 +1767,45 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown) { IDirectDrawSurface_METHODS };
 #define IDirectDrawSurface_UpdateOverlay(p,a,b,c,d,e)   (p)->lpVtbl->UpdateOverlay(p,a,b,c,d,e)
 #define IDirectDrawSurface_UpdateOverlayDisplay(p,a)    (p)->lpVtbl->UpdateOverlayDisplay(p,a)
 #define IDirectDrawSurface_UpdateOverlayZOrder(p,a,b)   (p)->lpVtbl->UpdateOverlayZOrder(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawSurface_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawSurface_AddRef(p)             (p)->AddRef()
+#define IDirectDrawSurface_Release(p)            (p)->Release()
+/*** IDirectDrawSurface methods ***/
+#define IDirectDrawSurface_AddAttachedSurface(p,a)      (p)->AddAttachedSurface(a)
+#define IDirectDrawSurface_AddOverlayDirtyRect(p,a)     (p)->AddOverlayDirtyRect(a)
+#define IDirectDrawSurface_Blt(p,a,b,c,d,e)             (p)->Blt(a,b,c,d,e)
+#define IDirectDrawSurface_BltBatch(p,a,b,c)            (p)->BltBatch(a,b,c)
+#define IDirectDrawSurface_BltFast(p,a,b,c,d,e)         (p)->BltFast(a,b,c,d,e)
+#define IDirectDrawSurface_DeleteAttachedSurface(p,a,b) (p)->DeleteAttachedSurface(a,b)
+#define IDirectDrawSurface_EnumAttachedSurfaces(p,a,b)  (p)->EnumAttachedSurfaces(a,b)
+#define IDirectDrawSurface_EnumOverlayZOrders(p,a,b,c)  (p)->EnumOverlayZOrders(a,b,c)
+#define IDirectDrawSurface_Flip(p,a,b)                  (p)->Flip(a,b)
+#define IDirectDrawSurface_GetAttachedSurface(p,a,b)    (p)->GetAttachedSurface(a,b)
+#define IDirectDrawSurface_GetBltStatus(p,a)            (p)->GetBltStatus(a)
+#define IDirectDrawSurface_GetCaps(p,a)                 (p)->GetCaps(a)
+#define IDirectDrawSurface_GetClipper(p,a)              (p)->GetClipper(a)
+#define IDirectDrawSurface_GetColorKey(p,a,b)           (p)->GetColorKey(a,b)
+#define IDirectDrawSurface_GetDC(p,a)                   (p)->GetDC(a)
+#define IDirectDrawSurface_GetFlipStatus(p,a)           (p)->GetFlipStatus(a)
+#define IDirectDrawSurface_GetOverlayPosition(p,a,b)    (p)->GetOverlayPosition(a,b)
+#define IDirectDrawSurface_GetPalette(p,a)              (p)->GetPalette(a)
+#define IDirectDrawSurface_GetPixelFormat(p,a)          (p)->GetPixelFormat(a)
+#define IDirectDrawSurface_GetSurfaceDesc(p,a)          (p)->GetSurfaceDesc(a)
+#define IDirectDrawSurface_Initialize(p,a,b)            (p)->Initialize(a,b)
+#define IDirectDrawSurface_IsLost(p)                    (p)->IsLost()
+#define IDirectDrawSurface_Lock(p,a,b,c,d)              (p)->Lock(a,b,c,d)
+#define IDirectDrawSurface_ReleaseDC(p,a)               (p)->ReleaseDC(a)
+#define IDirectDrawSurface_Restore(p)                   (p)->Restore()
+#define IDirectDrawSurface_SetClipper(p,a)              (p)->SetClipper(a)
+#define IDirectDrawSurface_SetColorKey(p,a,b)           (p)->SetColorKey(a,b)
+#define IDirectDrawSurface_SetOverlayPosition(p,a,b)    (p)->SetOverlayPosition(a,b)
+#define IDirectDrawSurface_SetPalette(p,a)              (p)->SetPalette(a)
+#define IDirectDrawSurface_Unlock(p,a)                  (p)->Unlock(a)
+#define IDirectDrawSurface_UpdateOverlay(p,a,b,c,d,e)   (p)->UpdateOverlay(a,b,c,d,e)
+#define IDirectDrawSurface_UpdateOverlayDisplay(p,a)    (p)->UpdateOverlayDisplay(a)
+#define IDirectDrawSurface_UpdateOverlayZOrder(p,a,b)   (p)->UpdateOverlayZOrder(a,b)
 #endif
 
 
@@ -1674,8 +1858,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown) { IDirectDrawSurface_METHODS };
 DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown) { IDirectDrawSurface2_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawSurface2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawSurface2_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawSurface2_Release(p)            (p)->lpVtbl->Release(p)
@@ -1717,6 +1901,49 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown) { IDirectDrawSurface2_METHODS }
 #define IDirectDrawSurface2_GetDDInterface(p,a) (p)->lpVtbl->GetDDInterface(p,a)
 #define IDirectDrawSurface2_PageLock(p,a)       (p)->lpVtbl->PageLock(p,a)
 #define IDirectDrawSurface2_PageUnlock(p,a)     (p)->lpVtbl->PageUnlock(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawSurface2_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawSurface2_AddRef(p)             (p)->AddRef()
+#define IDirectDrawSurface2_Release(p)            (p)->Release()
+/*** IDirectDrawSurface methods (almost) ***/
+#define IDirectDrawSurface2_AddAttachedSurface(p,a)      (p)->AddAttachedSurface(a)
+#define IDirectDrawSurface2_AddOverlayDirtyRect(p,a)     (p)->AddOverlayDirtyRect(a)
+#define IDirectDrawSurface2_Blt(p,a,b,c,d,e)             (p)->Blt(a,b,c,d,e)
+#define IDirectDrawSurface2_BltBatch(p,a,b,c)            (p)->BltBatch(a,b,c)
+#define IDirectDrawSurface2_BltFast(p,a,b,c,d,e)         (p)->BltFast(a,b,c,d,e)
+#define IDirectDrawSurface2_DeleteAttachedSurface(p,a,b) (p)->DeleteAttachedSurface(a,b)
+#define IDirectDrawSurface2_EnumAttachedSurfaces(p,a,b)  (p)->EnumAttachedSurfaces(a,b)
+#define IDirectDrawSurface2_EnumOverlayZOrders(p,a,b,c)  (p)->EnumOverlayZOrders(a,b,c)
+#define IDirectDrawSurface2_Flip(p,a,b)                  (p)->Flip(a,b)
+#define IDirectDrawSurface2_GetAttachedSurface(p,a,b)    (p)->GetAttachedSurface(a,b)
+#define IDirectDrawSurface2_GetBltStatus(p,a)            (p)->GetBltStatus(a)
+#define IDirectDrawSurface2_GetCaps(p,a)                 (p)->GetCaps(a)
+#define IDirectDrawSurface2_GetClipper(p,a)              (p)->GetClipper(a)
+#define IDirectDrawSurface2_GetColorKey(p,a,b)           (p)->GetColorKey(a,b)
+#define IDirectDrawSurface2_GetDC(p,a)                   (p)->GetDC(a)
+#define IDirectDrawSurface2_GetFlipStatus(p,a)           (p)->GetFlipStatus(a)
+#define IDirectDrawSurface2_GetOverlayPosition(p,a,b)    (p)->GetOverlayPosition(a,b)
+#define IDirectDrawSurface2_GetPalette(p,a)              (p)->GetPalette(a)
+#define IDirectDrawSurface2_GetPixelFormat(p,a)          (p)->GetPixelFormat(a)
+#define IDirectDrawSurface2_GetSurfaceDesc(p,a)          (p)->GetSurfaceDesc(a)
+#define IDirectDrawSurface2_Initialize(p,a,b)            (p)->Initialize(a,b)
+#define IDirectDrawSurface2_IsLost(p)                    (p)->IsLost()
+#define IDirectDrawSurface2_Lock(p,a,b,c,d)              (p)->Lock(a,b,c,d)
+#define IDirectDrawSurface2_ReleaseDC(p,a)               (p)->ReleaseDC(a)
+#define IDirectDrawSurface2_Restore(p)                   (p)->Restore()
+#define IDirectDrawSurface2_SetClipper(p,a)              (p)->SetClipper(a)
+#define IDirectDrawSurface2_SetColorKey(p,a,b)           (p)->SetColorKey(a,b)
+#define IDirectDrawSurface2_SetOverlayPosition(p,a,b)    (p)->SetOverlayPosition(a,b)
+#define IDirectDrawSurface2_SetPalette(p,a)              (p)->SetPalette(a)
+#define IDirectDrawSurface2_Unlock(p,a)                  (p)->Unlock(a)
+#define IDirectDrawSurface2_UpdateOverlay(p,a,b,c,d,e)   (p)->UpdateOverlay(a,b,c,d,e)
+#define IDirectDrawSurface2_UpdateOverlayDisplay(p,a)    (p)->UpdateOverlayDisplay(a)
+#define IDirectDrawSurface2_UpdateOverlayZOrder(p,a,b)   (p)->UpdateOverlayZOrder(a,b)
+/*** IDirectDrawSurface2 methods ***/
+#define IDirectDrawSurface2_GetDDInterface(p,a) (p)->GetDDInterface(a)
+#define IDirectDrawSurface2_PageLock(p,a)       (p)->PageLock(a)
+#define IDirectDrawSurface2_PageUnlock(p,a)     (p)->PageUnlock(a)
 #endif
 
 
@@ -1771,8 +1998,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown) { IDirectDrawSurface2_METHODS }
 DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown) { IDirectDrawSurface3_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawSurface3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawSurface3_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawSurface3_Release(p)            (p)->lpVtbl->Release(p)
@@ -1816,6 +2043,51 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown) { IDirectDrawSurface3_METHODS }
 #define IDirectDrawSurface3_PageUnlock(p,a)     (p)->lpVtbl->PageUnlock(p,a)
 /*** IDirectDrawSurface3 methods ***/
 #define IDirectDrawSurface3_SetSurfaceDesc(p,a,b) (p)->lpVtbl->SetSurfaceDesc(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawSurface3_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawSurface3_AddRef(p)             (p)->AddRef()
+#define IDirectDrawSurface3_Release(p)            (p)->Release()
+/*** IDirectDrawSurface methods (almost) ***/
+#define IDirectDrawSurface3_AddAttachedSurface(p,a)      (p)->AddAttachedSurface(a)
+#define IDirectDrawSurface3_AddOverlayDirtyRect(p,a)     (p)->AddOverlayDirtyRect(a)
+#define IDirectDrawSurface3_Blt(p,a,b,c,d,e)             (p)->Blt(a,b,c,d,e)
+#define IDirectDrawSurface3_BltBatch(p,a,b,c)            (p)->BltBatch(a,b,c)
+#define IDirectDrawSurface3_BltFast(p,a,b,c,d,e)         (p)->BltFast(a,b,c,d,e)
+#define IDirectDrawSurface3_DeleteAttachedSurface(p,a,b) (p)->DeleteAttachedSurface(a,b)
+#define IDirectDrawSurface3_EnumAttachedSurfaces(p,a,b)  (p)->EnumAttachedSurfaces(a,b)
+#define IDirectDrawSurface3_EnumOverlayZOrders(p,a,b,c)  (p)->EnumOverlayZOrders(a,b,c)
+#define IDirectDrawSurface3_Flip(p,a,b)                  (p)->Flip(a,b)
+#define IDirectDrawSurface3_GetAttachedSurface(p,a,b)    (p)->GetAttachedSurface(a,b)
+#define IDirectDrawSurface3_GetBltStatus(p,a)            (p)->GetBltStatus(a)
+#define IDirectDrawSurface3_GetCaps(p,a)                 (p)->GetCaps(a)
+#define IDirectDrawSurface3_GetClipper(p,a)              (p)->GetClipper(a)
+#define IDirectDrawSurface3_GetColorKey(p,a,b)           (p)->GetColorKey(a,b)
+#define IDirectDrawSurface3_GetDC(p,a)                   (p)->GetDC(a)
+#define IDirectDrawSurface3_GetFlipStatus(p,a)           (p)->GetFlipStatus(a)
+#define IDirectDrawSurface3_GetOverlayPosition(p,a,b)    (p)->GetOverlayPosition(a,b)
+#define IDirectDrawSurface3_GetPalette(p,a)              (p)->GetPalette(a)
+#define IDirectDrawSurface3_GetPixelFormat(p,a)          (p)->GetPixelFormat(a)
+#define IDirectDrawSurface3_GetSurfaceDesc(p,a)          (p)->GetSurfaceDesc(a)
+#define IDirectDrawSurface3_Initialize(p,a,b)            (p)->Initialize(a,b)
+#define IDirectDrawSurface3_IsLost(p)                    (p)->IsLost()
+#define IDirectDrawSurface3_Lock(p,a,b,c,d)              (p)->Lock(a,b,c,d)
+#define IDirectDrawSurface3_ReleaseDC(p,a)               (p)->ReleaseDC(a)
+#define IDirectDrawSurface3_Restore(p)                   (p)->Restore()
+#define IDirectDrawSurface3_SetClipper(p,a)              (p)->SetClipper(a)
+#define IDirectDrawSurface3_SetColorKey(p,a,b)           (p)->SetColorKey(a,b)
+#define IDirectDrawSurface3_SetOverlayPosition(p,a,b)    (p)->SetOverlayPosition(a,b)
+#define IDirectDrawSurface3_SetPalette(p,a)              (p)->SetPalette(a)
+#define IDirectDrawSurface3_Unlock(p,a)                  (p)->Unlock(a)
+#define IDirectDrawSurface3_UpdateOverlay(p,a,b,c,d,e)   (p)->UpdateOverlay(a,b,c,d,e)
+#define IDirectDrawSurface3_UpdateOverlayDisplay(p,a)    (p)->UpdateOverlayDisplay(a)
+#define IDirectDrawSurface3_UpdateOverlayZOrder(p,a,b)   (p)->UpdateOverlayZOrder(a,b)
+/*** IDirectDrawSurface2 methods ***/
+#define IDirectDrawSurface3_GetDDInterface(p,a) (p)->GetDDInterface(a)
+#define IDirectDrawSurface3_PageLock(p,a)       (p)->PageLock(a)
+#define IDirectDrawSurface3_PageUnlock(p,a)     (p)->PageUnlock(a)
+/*** IDirectDrawSurface3 methods ***/
+#define IDirectDrawSurface3_SetSurfaceDesc(p,a,b) (p)->SetSurfaceDesc(a,b)
 #endif
 
 
@@ -1875,8 +2147,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown) { IDirectDrawSurface3_METHODS }
 DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown) { IDirectDrawSurface4_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawSurface4_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawSurface4_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawSurface4_Release(p)            (p)->lpVtbl->Release(p)
@@ -1926,6 +2198,57 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown) { IDirectDrawSurface4_METHODS }
 #define IDirectDrawSurface4_FreePrivateData(p,a)      (p)->lpVtbl->FreePrivateData(p,a)
 #define IDirectDrawSurface4_GetUniquenessValue(p,a)   (p)->lpVtbl->GetUniquenessValue(p,a)
 #define IDirectDrawSurface4_ChangeUniquenessValue(p)  (p)->lpVtbl->ChangeUniquenessValue(p)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawSurface4_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawSurface4_AddRef(p)             (p)->AddRef()
+#define IDirectDrawSurface4_Release(p)            (p)->Release()
+/*** IDirectDrawSurface (almost) methods ***/
+#define IDirectDrawSurface4_AddAttachedSurface(p,a)      (p)->AddAttachedSurface(a)
+#define IDirectDrawSurface4_AddOverlayDirtyRect(p,a)     (p)->AddOverlayDirtyRect(a)
+#define IDirectDrawSurface4_Blt(p,a,b,c,d,e)             (p)->Blt(a,b,c,d,e)
+#define IDirectDrawSurface4_BltBatch(p,a,b,c)            (p)->BltBatch(a,b,c)
+#define IDirectDrawSurface4_BltFast(p,a,b,c,d,e)         (p)->BltFast(a,b,c,d,e)
+#define IDirectDrawSurface4_DeleteAttachedSurface(p,a,b) (p)->DeleteAttachedSurface(a,b)
+#define IDirectDrawSurface4_EnumAttachedSurfaces(p,a,b)  (p)->EnumAttachedSurfaces(a,b)
+#define IDirectDrawSurface4_EnumOverlayZOrders(p,a,b,c)  (p)->EnumOverlayZOrders(a,b,c)
+#define IDirectDrawSurface4_Flip(p,a,b)                  (p)->Flip(a,b)
+#define IDirectDrawSurface4_GetAttachedSurface(p,a,b)    (p)->GetAttachedSurface(a,b)
+#define IDirectDrawSurface4_GetBltStatus(p,a)            (p)->GetBltStatus(a)
+#define IDirectDrawSurface4_GetCaps(p,a)                 (p)->GetCaps(a)
+#define IDirectDrawSurface4_GetClipper(p,a)              (p)->GetClipper(a)
+#define IDirectDrawSurface4_GetColorKey(p,a,b)           (p)->GetColorKey(a,b)
+#define IDirectDrawSurface4_GetDC(p,a)                   (p)->GetDC(a)
+#define IDirectDrawSurface4_GetFlipStatus(p,a)           (p)->GetFlipStatus(a)
+#define IDirectDrawSurface4_GetOverlayPosition(p,a,b)    (p)->GetOverlayPosition(a,b)
+#define IDirectDrawSurface4_GetPalette(p,a)              (p)->GetPalette(a)
+#define IDirectDrawSurface4_GetPixelFormat(p,a)          (p)->GetPixelFormat(a)
+#define IDirectDrawSurface4_GetSurfaceDesc(p,a)          (p)->GetSurfaceDesc(a)
+#define IDirectDrawSurface4_Initialize(p,a,b)            (p)->Initialize(a,b)
+#define IDirectDrawSurface4_IsLost(p)                    (p)->IsLost()
+#define IDirectDrawSurface4_Lock(p,a,b,c,d)              (p)->Lock(a,b,c,d)
+#define IDirectDrawSurface4_ReleaseDC(p,a)               (p)->ReleaseDC(a)
+#define IDirectDrawSurface4_Restore(p)                   (p)->Restore()
+#define IDirectDrawSurface4_SetClipper(p,a)              (p)->SetClipper(a)
+#define IDirectDrawSurface4_SetColorKey(p,a,b)           (p)->SetColorKey(a,b)
+#define IDirectDrawSurface4_SetOverlayPosition(p,a,b)    (p)->SetOverlayPosition(a,b)
+#define IDirectDrawSurface4_SetPalette(p,a)              (p)->SetPalette(a)
+#define IDirectDrawSurface4_Unlock(p,a)                  (p)->Unlock(a)
+#define IDirectDrawSurface4_UpdateOverlay(p,a,b,c,d,e)   (p)->UpdateOverlay(a,b,c,d,e)
+#define IDirectDrawSurface4_UpdateOverlayDisplay(p,a)    (p)->UpdateOverlayDisplay(a)
+#define IDirectDrawSurface4_UpdateOverlayZOrder(p,a,b)   (p)->UpdateOverlayZOrder(a,b)
+/*** IDirectDrawSurface2 methods ***/
+#define IDirectDrawSurface4_GetDDInterface(p,a) (p)->GetDDInterface(a)
+#define IDirectDrawSurface4_PageLock(p,a)       (p)->PageLock(a)
+#define IDirectDrawSurface4_PageUnlock(p,a)     (p)->PageUnlock(a)
+/*** IDirectDrawSurface3 methods ***/
+#define IDirectDrawSurface4_SetSurfaceDesc(p,a,b) (p)->SetSurfaceDesc(a,b)
+/*** IDirectDrawSurface4 methods ***/
+#define IDirectDrawSurface4_SetPrivateData(p,a,b,c,d) (p)->SetPrivateData(a,b,c,d)
+#define IDirectDrawSurface4_GetPrivateData(p,a,b,c)   (p)->GetPrivateData(a,b,c)
+#define IDirectDrawSurface4_FreePrivateData(p,a)      (p)->FreePrivateData(a)
+#define IDirectDrawSurface4_GetUniquenessValue(p,a)   (p)->GetUniquenessValue(a)
+#define IDirectDrawSurface4_ChangeUniquenessValue(p)  (p)->ChangeUniquenessValue()
 #endif
 
 
@@ -1988,8 +2311,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown) { IDirectDrawSurface4_METHODS }
 DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown) { IDirectDrawSurface7_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-    /*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawSurface7_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawSurface7_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawSurface7_Release(p)            (p)->lpVtbl->Release(p)
@@ -2044,6 +2367,62 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown) { IDirectDrawSurface7_METHODS }
 #define IDirectDrawSurface7_GetPriority(p,a)          (p)->lpVtbl->GetPriority(p,a)
 #define IDirectDrawSurface7_SetLOD(p,a)               (p)->lpVtbl->SetLOD(p,a)
 #define IDirectDrawSurface7_GetLOD(p,a)               (p)->lpVtbl->GetLOD(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawSurface7_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawSurface7_AddRef(p)             (p)->AddRef()
+#define IDirectDrawSurface7_Release(p)            (p)->Release()
+/*** IDirectDrawSurface (almost) methods ***/
+#define IDirectDrawSurface7_AddAttachedSurface(p,a)      (p)->AddAttachedSurface(a)
+#define IDirectDrawSurface7_AddOverlayDirtyRect(p,a)     (p)->AddOverlayDirtyRect(a)
+#define IDirectDrawSurface7_Blt(p,a,b,c,d,e)             (p)->Blt(a,b,c,d,e)
+#define IDirectDrawSurface7_BltBatch(p,a,b,c)            (p)->BltBatch(a,b,c)
+#define IDirectDrawSurface7_BltFast(p,a,b,c,d,e)         (p)->BltFast(a,b,c,d,e)
+#define IDirectDrawSurface7_DeleteAttachedSurface(p,a,b) (p)->DeleteAttachedSurface(a,b)
+#define IDirectDrawSurface7_EnumAttachedSurfaces(p,a,b)  (p)->EnumAttachedSurfaces(a,b)
+#define IDirectDrawSurface7_EnumOverlayZOrders(p,a,b,c)  (p)->EnumOverlayZOrders(a,b,c)
+#define IDirectDrawSurface7_Flip(p,a,b)                  (p)->Flip(a,b)
+#define IDirectDrawSurface7_GetAttachedSurface(p,a,b)    (p)->GetAttachedSurface(a,b)
+#define IDirectDrawSurface7_GetBltStatus(p,a)            (p)->GetBltStatus(a)
+#define IDirectDrawSurface7_GetCaps(p,a)                 (p)->GetCaps(a)
+#define IDirectDrawSurface7_GetClipper(p,a)              (p)->GetClipper(a)
+#define IDirectDrawSurface7_GetColorKey(p,a,b)           (p)->GetColorKey(a,b)
+#define IDirectDrawSurface7_GetDC(p,a)                   (p)->GetDC(a)
+#define IDirectDrawSurface7_GetFlipStatus(p,a)           (p)->GetFlipStatus(a)
+#define IDirectDrawSurface7_GetOverlayPosition(p,a,b)    (p)->GetOverlayPosition(a,b)
+#define IDirectDrawSurface7_GetPalette(p,a)              (p)->GetPalette(a)
+#define IDirectDrawSurface7_GetPixelFormat(p,a)          (p)->GetPixelFormat(a)
+#define IDirectDrawSurface7_GetSurfaceDesc(p,a)          (p)->GetSurfaceDesc(a)
+#define IDirectDrawSurface7_Initialize(p,a,b)            (p)->Initialize(a,b)
+#define IDirectDrawSurface7_IsLost(p)                    (p)->IsLost()
+#define IDirectDrawSurface7_Lock(p,a,b,c,d)              (p)->Lock(a,b,c,d)
+#define IDirectDrawSurface7_ReleaseDC(p,a)               (p)->ReleaseDC(a)
+#define IDirectDrawSurface7_Restore(p)                   (p)->Restore()
+#define IDirectDrawSurface7_SetClipper(p,a)              (p)->SetClipper(a)
+#define IDirectDrawSurface7_SetColorKey(p,a,b)           (p)->SetColorKey(a,b)
+#define IDirectDrawSurface7_SetOverlayPosition(p,a,b)    (p)->SetOverlayPosition(a,b)
+#define IDirectDrawSurface7_SetPalette(p,a)              (p)->SetPalette(a)
+#define IDirectDrawSurface7_Unlock(p,a)                  (p)->Unlock(a)
+#define IDirectDrawSurface7_UpdateOverlay(p,a,b,c,d,e)   (p)->UpdateOverlay(a,b,c,d,e)
+#define IDirectDrawSurface7_UpdateOverlayDisplay(p,a)    (p)->UpdateOverlayDisplay(a)
+#define IDirectDrawSurface7_UpdateOverlayZOrder(p,a,b)   (p)->UpdateOverlayZOrder(a,b)
+/*** IDirectDrawSurface2 methods ***/
+#define IDirectDrawSurface7_GetDDInterface(p,a) (p)->GetDDInterface(a)
+#define IDirectDrawSurface7_PageLock(p,a)       (p)->PageLock(a)
+#define IDirectDrawSurface7_PageUnlock(p,a)     (p)->PageUnlock(a)
+/*** IDirectDrawSurface3 methods ***/
+#define IDirectDrawSurface7_SetSurfaceDesc(p,a,b) (p)->SetSurfaceDesc(a,b)
+/*** IDirectDrawSurface4 methods ***/
+#define IDirectDrawSurface7_SetPrivateData(p,a,b,c,d) (p)->SetPrivateData(a,b,c,d)
+#define IDirectDrawSurface7_GetPrivateData(p,a,b,c)   (p)->GetPrivateData(a,b,c)
+#define IDirectDrawSurface7_FreePrivateData(p,a)      (p)->FreePrivateData(a)
+#define IDirectDrawSurface7_GetUniquenessValue(p,a)   (p)->GetUniquenessValue(a)
+#define IDirectDrawSurface7_ChangeUniquenessValue(p)  (p)->ChangeUniquenessValue()
+/*** IDirectDrawSurface7 methods ***/
+#define IDirectDrawSurface7_SetPriority(p,a)          (p)->SetPriority(a)
+#define IDirectDrawSurface7_GetPriority(p,a)          (p)->GetPriority(a)
+#define IDirectDrawSurface7_SetLOD(p,a)               (p)->SetLOD(a)
+#define IDirectDrawSurface7_GetLOD(p,a)               (p)->GetLOD(a)
 #endif
 
 /*****************************************************************************
@@ -2057,14 +2436,22 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown) { IDirectDrawSurface7_METHODS }
 DECLARE_INTERFACE_(IDirectDrawColorControl,IUnknown) { IDirectDrawColorControl_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-	/*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawColorControl_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawColorControl_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawColorControl_Release(p)            (p)->lpVtbl->Release(p)
-	/*** IDirectDrawColorControl methods ***/
+/*** IDirectDrawColorControl methods ***/
 #define IDirectDrawColorControl_GetColorControls(p,a) (p)->lpVtbl->GetColorControls(p,a)
 #define IDirectDrawColorControl_SetColorControls(p,a) (p)->lpVtbl->SetColorControls(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawColorControl_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawColorControl_AddRef(p)             (p)->AddRef()
+#define IDirectDrawColorControl_Release(p)            (p)->Release()
+/*** IDirectDrawColorControl methods ***/
+#define IDirectDrawColorControl_GetColorControls(p,a) (p)->GetColorControls(a)
+#define IDirectDrawColorControl_SetColorControls(p,a) (p)->SetColorControls(a)
 #endif
 
 /*****************************************************************************
@@ -2078,14 +2465,22 @@ DECLARE_INTERFACE_(IDirectDrawColorControl,IUnknown) { IDirectDrawColorControl_M
 DECLARE_INTERFACE_(IDirectDrawGammaControl,IUnknown) { IDirectDrawGammaControl_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
-	/*** IUnknown methods ***/
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectDrawGammaControl_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawGammaControl_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirectDrawGammaControl_Release(p)            (p)->lpVtbl->Release(p)
-	/*** IDirectDrawGammaControl methods ***/
+/*** IDirectDrawGammaControl methods ***/
 #define IDirectDrawGammaControl_GetGammaRamp(p,a,b)   (p)->lpVtbl->GetGammaRamp(p,a,b)
 #define IDirectDrawGammaControl_SetGammaRamp(p,a,b)   (p)->lpVtbl->SetGammaRamp(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDrawGammaControl_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDrawGammaControl_AddRef(p)             (p)->AddRef()
+#define IDirectDrawGammaControl_Release(p)            (p)->Release()
+/*** IDirectDrawGammaControl methods ***/
+#define IDirectDrawGammaControl_GetGammaRamp(p,a,b)   (p)->GetGammaRamp(a,b)
+#define IDirectDrawGammaControl_SetGammaRamp(p,a,b)   (p)->SetGammaRamp(a,b)
 #endif
 
 

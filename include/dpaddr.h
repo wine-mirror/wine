@@ -227,7 +227,7 @@ DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown) { IDirectPlay8Address_METHODS }
 #undef INTERFACE
 
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectPlay8Address_QueryInterface(p,a,b)               (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectPlay8Address_AddRef(p)                           (p)->lpVtbl->AddRef(p)
@@ -252,6 +252,31 @@ DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown) { IDirectPlay8Address_METHODS }
 #define IDirectPlay8Address_SetDevice(p,a)                      (p)->lpVtbl->SetDevice(p,a)
 #define IDirectPlay8Address_GetDevice(p,a)                      (p)->lpVtbl->GetDevice(p,a)
 #define IDirectPlay8Address_BuildFromDirectPlay4Address(p,a,b)  (p)->lpVtbl->BuildFromDirectPlay4Address(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectPlay8Address_QueryInterface(p,a,b)               (p)->QueryInterface(a,b)
+#define IDirectPlay8Address_AddRef(p)                           (p)->AddRef()
+#define IDirectPlay8Address_Release(p)                          (p)->Release()
+/*** IDirectPlay8Address methods ***/
+#define IDirectPlay8Address_BuildFromURLW(p,a)                  (p)->BuildFromURLW(a)
+#define IDirectPlay8Address_BuildFromURLA(p,a)                  (p)->BuildFromURLA(a)
+#define IDirectPlay8Address_Duplicate(p,a)                      (p)->Duplicate(a)
+#define IDirectPlay8Address_SetEqual(p,a)                       (p)->SetEqual(a)
+#define IDirectPlay8Address_IsEqual(p,a)                        (p)->IsEqual(a)
+#define IDirectPlay8Address_Clear(p)                            (p)->Clear()
+#define IDirectPlay8Address_GetURLW(p,a,b)                      (p)->GetURLW(a,b)
+#define IDirectPlay8Address_GetURLA(p,a,b)                      (p)->GetURLA(a,b)
+#define IDirectPlay8Address_GetSP(p,a)                          (p)->GetSP(a)
+#define IDirectPlay8Address_GetUserData(p,a,b)                  (p)->GetUserData(a,b)
+#define IDirectPlay8Address_SetSP(p,a)                          (p)->SetSP(a)
+#define IDirectPlay8Address_SetUserData(p,a,b)                  (p)->SetUserData(a,b)
+#define IDirectPlay8Address_GetNumComponents(p,a)               (p)->GetNumComponents(a)
+#define IDirectPlay8Address_GetComponentByName(p,a,b,c,d)       (p)->GetComponentByName(a,b,c,d)
+#define IDirectPlay8Address_GetComponentByIndex(p,a,b,c,d,e,f)  (p)->GetComponentByIndex(a,b,c,d,e,f)
+#define IDirectPlay8Address_AddComponent(p,a,b,c,d)             (p)->AddComponent(a,b,c,d)
+#define IDirectPlay8Address_SetDevice(p,a)                      (p)->SetDevice(a)
+#define IDirectPlay8Address_GetDevice(p,a)                      (p)->GetDevice(a)
+#define IDirectPlay8Address_BuildFromDirectPlay4Address(p,a,b)  (p)->BuildFromDirectPlay4Address(a,b)
 #endif
 
 /*****************************************************************************
@@ -269,7 +294,19 @@ DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown) { IDirectPlay8Address_METHODS }
 DECLARE_INTERFACE_(IDirectPlay8AddressIP,IUnknown) { IDirectPlay8AddressIP_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDirectPlay8AddressIP_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(a,b)
+#define IDirectPlay8AddressIP_AddRef(p)                     (p)->lpVtbl->AddRef()
+#define IDirectPlay8AddressIP_Release(p)                    (p)->lpVtbl->Release()
+/*** IDirectPlay8AddressIP methods ***/
+#define IDirectPlay8AddressIP_BuildFromSockAddr(p,a)        (p)->lpVtbl->BuildFromSockAddr(a)
+#define IDirectPlay8AddressIP_BuildAddress(p,a,b)           (p)->lpVtbl->BuildAddress(a,b)
+#define IDirectPlay8AddressIP_BuildLocalAddress(p,a,b)      (p)->lpVtbl->BuildLocalAddress(a,b)
+#define IDirectPlay8AddressIP_GetSockAddress(p,a,b)         (p)->lpVtbl->GetSockAddress(a,b)
+#define IDirectPlay8AddressIP_GetLocalAddress(p,a,b)        (p)->lpVtbl->GetLocalAddress(a,b)
+#define IDirectPlay8AddressIP_GetAddress(p,a,b,c)           (p)->lpVtbl->GetAddress(a,b,c)
+#else
 /*** IUnknown methods ***/
 #define IDirectPlay8AddressIP_QueryInterface(p,a,b)         (p)->QueryInterface(a,b)
 #define IDirectPlay8AddressIP_AddRef(p)                     (p)->AddRef()

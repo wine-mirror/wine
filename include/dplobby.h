@@ -408,26 +408,54 @@ DECLARE_INTERFACE_(IDirectPlayLobby2,IDirectPlayLobby) { IDirectPlayLobby2_METHO
 DECLARE_INTERFACE_(IDirectPlayLobby3,IDirectPlayLobby2) { IDirectPlayLobby3_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
 #define IDirectPlayLobby_QueryInterface(p,a,b)              (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectPlayLobby_AddRef(p)                          (p)->lpVtbl->AddRef(p)
 #define IDirectPlayLobby_Release(p)                         (p)->lpVtbl->Release(p)
+/*** IDirectPlayLobby methods ***/
 #define IDirectPlayLobby_Connect(p,a,b,c)                   (p)->lpVtbl->Connect(p,a,b,c)
-#define IDirectPlayLobby_ConnectEx(p,a,b,c,d)               (p)->lpVtbl->ConnectEx(p,a,b,c,d)
 #define IDirectPlayLobby_CreateAddress(p,a,b,c,d,e,f)       (p)->lpVtbl->CreateAddress(p,a,b,c,d,e,f)
-#define IDirectPlayLobby_CreateCompoundAddress(p,a,b,c,d)   (p)->lpVtbl->CreateCompoundAddress(p,a,b,c,d)
 #define IDirectPlayLobby_EnumAddress(p,a,b,c,d)             (p)->lpVtbl->EnumAddress(p,a,b,c,d)
 #define IDirectPlayLobby_EnumAddressTypes(p,a,b,c,d)        (p)->lpVtbl->EnumAddressTypes(p,a,b,c,d)
 #define IDirectPlayLobby_EnumLocalApplications(p,a,b,c)     (p)->lpVtbl->EnumLocalApplications(p,a,b,c)
 #define IDirectPlayLobby_GetConnectionSettings(p,a,b,c)     (p)->lpVtbl->GetConnectionSettings(p,a,b,c)
 #define IDirectPlayLobby_ReceiveLobbyMessage(p,a,b,c,d,e)   (p)->lpVtbl->ReceiveLobbyMessage(p,a,b,c,d,e)
-#define IDirectPlayLobby_RegisterApplication(p,a,b)         (p)->lpVtbl->RegisterApplication(p,a,b)
 #define IDirectPlayLobby_RunApplication(p,a,b,c,d)          (p)->lpVtbl->RunApplication(p,a,b,c,d)
 #define IDirectPlayLobby_SendLobbyMessage(p,a,b,c,d)        (p)->lpVtbl->SendLobbyMessage(p,a,b,c,d)
 #define IDirectPlayLobby_SetConnectionSettings(p,a,b,c)     (p)->lpVtbl->SetConnectionSettings(p,a,b,c)
 #define IDirectPlayLobby_SetLobbyMessageEvent(p,a,b,c)      (p)->lpVtbl->SetLobbyMessageEvent(p,a,b,c)
+/*** IDirectPlayLobby2 methods ***/
+#define IDirectPlayLobby_CreateCompoundAddress(p,a,b,c,d)   (p)->lpVtbl->CreateCompoundAddress(p,a,b,c,d)
+/*** IDirectPlayLobby3 methods ***/
+#define IDirectPlayLobby_ConnectEx(p,a,b,c,d)               (p)->lpVtbl->ConnectEx(p,a,b,c,d)
+#define IDirectPlayLobby_RegisterApplication(p,a,b)         (p)->lpVtbl->RegisterApplication(p,a,b)
 #define IDirectPlayLobby_UnregisterApplication(p,a,b)       (p)->lpVtbl->UnregisterApplication(p,a,b)
 #define IDirectPlayLobby_WaitForConnectionSettings(p,a)     (p)->lpVtbl->WaitForConnectionSettings(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirectPlayLobby_QueryInterface(p,a,b)              (p)->QueryInterface(a,b)
+#define IDirectPlayLobby_AddRef(p)                          (p)->AddRef()
+#define IDirectPlayLobby_Release(p)                         (p)->Release()
+/*** IDirectPlayLobby methods ***/
+#define IDirectPlayLobby_Connect(p,a,b,c)                   (p)->Connect(a,b,c)
+#define IDirectPlayLobby_CreateAddress(p,a,b,c,d,e,f)       (p)->CreateAddress(a,b,c,d,e,f)
+#define IDirectPlayLobby_EnumAddress(p,a,b,c,d)             (p)->EnumAddress(a,b,c,d)
+#define IDirectPlayLobby_EnumAddressTypes(p,a,b,c,d)        (p)->EnumAddressTypes(a,b,c,d)
+#define IDirectPlayLobby_EnumLocalApplications(p,a,b,c)     (p)->EnumLocalApplications(a,b,c)
+#define IDirectPlayLobby_GetConnectionSettings(p,a,b,c)     (p)->GetConnectionSettings(a,b,c)
+#define IDirectPlayLobby_ReceiveLobbyMessage(p,a,b,c,d,e)   (p)->ReceiveLobbyMessage(a,b,c,d,e)
+#define IDirectPlayLobby_RunApplication(p,a,b,c,d)          (p)->RunApplication(a,b,c,d)
+#define IDirectPlayLobby_SendLobbyMessage(p,a,b,c,d)        (p)->SendLobbyMessage(a,b,c,d)
+#define IDirectPlayLobby_SetConnectionSettings(p,a,b,c)     (p)->SetConnectionSettings(a,b,c)
+#define IDirectPlayLobby_SetLobbyMessageEvent(p,a,b,c)      (p)->SetLobbyMessageEvent(a,b,c)
+/*** IDirectPlayLobby2 methods ***/
+#define IDirectPlayLobby_CreateCompoundAddress(p,a,b,c,d)   (p)->CreateCompoundAddress(a,b,c,d)
+/*** IDirectPlayLobby3 methods ***/
+#define IDirectPlayLobby_ConnectEx(p,a,b,c,d)               (p)->ConnectEx(a,b,c,d)
+#define IDirectPlayLobby_RegisterApplication(p,a,b)         (p)->RegisterApplication(a,b)
+#define IDirectPlayLobby_UnregisterApplication(p,a,b)       (p)->UnregisterApplication(a,b)
+#define IDirectPlayLobby_WaitForConnectionSettings(p,a)     (p)->WaitForConnectionSettings(a)
 #endif
 
 /* Used for WaitForConnectionSettings */
