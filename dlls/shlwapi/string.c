@@ -2,7 +2,6 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <string.h>
-#include <wctype.h>
 
 #include "winerror.h"
 #include "windef.h"
@@ -377,7 +376,7 @@ LPWSTR WINAPI StrRChrIW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
     if (!lpEnd) lpEnd = lpStart + strlenW(lpStart);
 
     for(; lpStart < lpEnd; lpStart = CharNextW(lpStart))
-        if (towupper(*lpStart) == towupper(wMatch)) lpGotIt = lpStart;
+        if (toupperW(*lpStart) == toupperW(wMatch)) lpGotIt = lpStart;
 
     return (LPWSTR)lpGotIt;
 }
