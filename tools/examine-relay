@@ -8,33 +8,39 @@
 # list might be incorrect.  (It could be something else also.)
 #
 # Copyright 1997-1998 Morten Welinder (terra@diku.dk)
+#           2001      Eric Pouech
 #
 # -----------------------------------------------------------------------------
 
+use strict;
+
 my $srcfile = $ARGV[0];
-my @callstack = ();
+my %tid_callstack = ();
 my $newlineerror = 0;
 my $indentp = 1;
 
 open (IN, "<$srcfile") || die "Cannot open $srcfile for reading: $!\n";
 LINE:
 while (<IN>) {
-    if (/^Call ([A-Za-z0-9]+\.\d+): .*\)/) {
-	my $func = $1;
+
+    if (/^([0-9a-f]+):Call ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\((.*\)) .*/) {
+	my $tid = $1;
+	my $func = $2;
+
 	if (/ ret=(........)$/ ||
-	    / ret=(....:....) (ds=....)$/ ||
-	    / ret=(........) (fs=....)$/) {
+	    / ret=(....:....) (ds=....)$/) {
 	    my $retaddr = $1;
 	    my $segreg = $2;
 
 	    $segreg = "none" unless defined $segreg;
-	    push @callstack, [$func,$retaddr, $segreg];
+
+	    push @{$tid_callstack{$tid}}, [$func, $retaddr, $segreg];
 	    next;
 	} else {
 	    # Assume a line got cut by a line feed in a string.
 	    $_ .= scalar (<IN>);
 	    if (!$newlineerror) {
-		print "Error: string probably cut by newline.\n";
+		print "Err[$tid] string probably cut by newline.\n";
 		$newlineerror = 1;
 	    }	    
 	    # print "[$_]";
@@ -42,29 +48,34 @@ while (<IN>) {
 	}
     }
 
-
-    if (/^Ret  ([A-Za-z0-9]+\.\d+): .* ret=(........)$/ ||
-	/^Ret  ([A-Za-z0-9]+\.\d+): .* ret=(....:....) (ds=....)$/ ||
-	/^Ret  ([A-Za-z0-9]+\.\d+): .* ret=(........) (fs=....)$/) {
-	my $func = $1;
-	my $retaddr = $2;
-	my $segreg = $3;
+    if (/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........)$/ ||
+	/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(....:....) (ds=....)$/) {
+	my $tid = $1;
+	my $func = $2;
+	my $retaddr = $3;
+	my $segreg = $4;
 	my ($topfunc,$topaddr,$topseg);
+
+	if (!defined($tid_callstack{$tid}))
+	{
+	    print "Err[$tid]: unknown tid\n";
+	    next;
+	}
 
 	$segreg = "none" unless defined $segreg;
 
       POP:
 	while (1) {
-	    if ($#callstack == -1) {
-		print "Error: Return from $func to $retaddr with empty stack.\n";
+	    if ($#{$tid_callstack{$tid}} == -1) {
+		print "Err[$tid]: Return from $func to $retaddr with empty stack.\n";
 		next LINE;
 	    }
 
-	    ($topfunc,$topaddr,$topseg) = @{pop @callstack};
+	    ($topfunc,$topaddr,$topseg) = @{pop @{$tid_callstack{$tid}}};
 
 	    if ($topfunc ne $func) {
-		print "Error: Return from $topfunc, but call from $func.\n";
-		next POP 
+		print "Err[$tid]: Return from $topfunc, but call from $func.\n";
+		next POP;
 	    }
 	    last POP;
 	}
@@ -72,20 +83,22 @@ while (<IN>) {
 	my $addrok = ($topaddr eq $retaddr);
 	my $segok = ($topseg eq $segreg);
 	if ($addrok && $segok) {
-	    print "OK: ", ($indentp ? (' ' x (1 + $#callstack)) : '');
+	    print "Ok [$tid]: ", ($indentp ? (' ' x (1 + $#{$tid_callstack{$tid}})) : '');
 	    print "$func from $retaddr with $segreg.\n";
 	} else {
-	    print "Error: Return from $func is to $retaddr, not $topaddr.\n"
+	    print "Err[$tid]: Return from $func is to $retaddr, not $topaddr.\n"
 		if !$addrok;
-	    print "Error: Return from $func with segreg $segreg, not $topseg.\n"
+	    print "Err[$tid]: Return from $func with segreg $segreg, not $topseg.\n"
 		if !$segok;
 	}    
     }
 }
 
-while ($#callstack != -1) {
-    my ($topfunc,$topaddr) = @{pop @callstack};
-    print "Error: leftover call to $topfunc from $topaddr.\n";
+foreach my $tid (keys %tid_callstack) {
+    while ($#{$tid_callstack{$tid}} != -1) {
+	my ($topfunc,$topaddr,$topseg) = @{pop @{$tid_callstack{$tid}}};
+	print "Err[$tid]: leftover call to $topfunc from $topaddr.\n";
+    }
 }
 
 close (IN);
