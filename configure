@@ -16554,8 +16554,6 @@ esac
 
           ac_config_commands="$ac_config_commands graphics/x11drv"
 
-          ac_config_commands="$ac_config_commands if1632"
-
           ac_config_commands="$ac_config_commands include/wine"
 
           ac_config_commands="$ac_config_commands loader"
@@ -17337,7 +17335,6 @@ do
   "files" ) CONFIG_COMMANDS="$CONFIG_COMMANDS files" ;;
   "graphics" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics" ;;
   "graphics/x11drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics/x11drv" ;;
-  "if1632" ) CONFIG_COMMANDS="$CONFIG_COMMANDS if1632" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
   "loader" ) CONFIG_COMMANDS="$CONFIG_COMMANDS loader" ;;
   "loader/ne" ) CONFIG_COMMANDS="$CONFIG_COMMANDS loader/ne" ;;
@@ -18066,8 +18063,6 @@ echo "$as_me: creating files" >&6;} && mkdir "files") ;;
 echo "$as_me: creating graphics" >&6;} && mkdir "graphics") ;;
     graphics/x11drv ) test -d "graphics/x11drv" || ({ echo "$as_me:$LINENO: creating graphics/x11drv" >&5
 echo "$as_me: creating graphics/x11drv" >&6;} && mkdir "graphics/x11drv") ;;
-    if1632 ) test -d "if1632" || ({ echo "$as_me:$LINENO: creating if1632" >&5
-echo "$as_me: creating if1632" >&6;} && mkdir "if1632") ;;
     include/wine ) test -d "include/wine" || ({ echo "$as_me:$LINENO: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
     loader ) test -d "loader" || ({ echo "$as_me:$LINENO: creating loader" >&5
