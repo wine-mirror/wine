@@ -403,7 +403,7 @@ typedef struct linetranslateoutput_tag {
     DWORD dwTranslateResults;
 } LINETRANSLATEOUTPUT, *LPLINETRANSLATEOUTPUT;
 
-typedef void (CALLBACK * LINECALLBACK)(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
+typedef void CALLBACK (*LINECALLBACK)(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
 
 typedef struct _PHONEAPP {
   int dummy;
@@ -500,7 +500,7 @@ typedef struct phonestatus_tag {
     DWORD dwDevSpecificOffset;
 } PHONESTATUS, *LPPHONESTATUS;
 
-typedef void (CALLBACK * PHONECALLBACK)(HANDLE, DWORD, DWORD, DWORD, DWORD, DWORD);
+typedef void CALLBACK (*PHONECALLBACK)(HANDLE, DWORD, DWORD, DWORD, DWORD, DWORD);
 
 typedef struct varstring_tag {
     DWORD dwTotalSize;

@@ -34,7 +34,7 @@ typedef struct IViewObject2 IViewObject2, *LPVIEWOBJECT2;
 /*****************************************************************************
  * IViewObject interface
  */
-typedef BOOL    (CALLBACK* IVO_ContCallback)(DWORD);
+typedef BOOL    CALLBACK (*IVO_ContCallback)(DWORD);
 
 #define ICOM_INTERFACE IViewObject
 #define IViewObject_METHODS \

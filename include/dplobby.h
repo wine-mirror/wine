@@ -336,18 +336,18 @@ extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBYA*, IUnkno
 
 
 
-typedef BOOL (CALLBACK* LPDPENUMADDRESSCALLBACK)(
+typedef BOOL CALLBACK (*LPDPENUMADDRESSCALLBACK)(
     REFGUID         guidDataType,
     DWORD           dwDataSize,
     LPCVOID         lpData,
     LPVOID          lpContext );
 
-typedef BOOL (CALLBACK* LPDPLENUMADDRESSTYPESCALLBACK)(
+typedef BOOL CALLBACK (*LPDPLENUMADDRESSTYPESCALLBACK)(
     REFGUID         guidDataType,
     LPVOID          lpContext,
     DWORD           dwFlags );
 
-typedef BOOL (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
+typedef BOOL CALLBACK (*LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
     LPCDPLAPPINFO   lpAppInfo,
     LPVOID          lpContext,
     DWORD           dwFlags );

@@ -186,7 +186,7 @@ void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lp
 /****************************************************************************
  * SHBrowseForFolder API
  */
-typedef INT (CALLBACK* BFFCALLBACK)(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+typedef INT CALLBACK (*BFFCALLBACK)(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 
 typedef struct tagBROWSEINFOA {
     HWND        hwndOwner;
@@ -318,7 +318,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
 *  Look there for some clues on what to do here.
 */
 
-typedef HRESULT(CALLBACK *SHELLVIEWPROC)(DWORD dwUserParam,LPSHELLFOLDER psf,
+typedef HRESULT CALLBACK (*SHELLVIEWPROC)(DWORD dwUserParam,LPSHELLFOLDER psf,
                          HWND hwnd,UINT uMsg,UINT wParam,LPARAM lParam);
 
 /* NF valid values for the "viewmode" item of the SHELLTEMPLATE*/

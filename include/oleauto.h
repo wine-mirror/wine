@@ -47,8 +47,8 @@ SafeArrayAllocDescriptor(UINT cDims, struct tagSAFEARRAY **ppsaOut);
 HRESULT WINAPI 
 SafeArrayAllocData(struct tagSAFEARRAY *psa);
 
-struct tagSAFEARRAY* WINAPI 
-SafeArrayCreate(VARTYPE vt, UINT cDims, struct tagSAFEARRAYBOUND *rgsabound);
+struct tagSAFEARRAY WINAPI 
+*SafeArrayCreate(VARTYPE vt, UINT cDims, struct tagSAFEARRAYBOUND *rgsabound);
 
 HRESULT WINAPI 
 SafeArrayDestroyDescriptor(struct tagSAFEARRAY *psa);
@@ -98,8 +98,8 @@ SafeArrayDestroy(struct tagSAFEARRAY *psa);
 HRESULT WINAPI 
 SafeArrayCopy(struct tagSAFEARRAY *psa, struct tagSAFEARRAY **ppsaOut);
 
-struct tagSAFEARRAY* WINAPI
-SafeArrayCreateVector(VARTYPE vt, LONG lLbound, ULONG cElements);
+struct tagSAFEARRAY WINAPI
+*SafeArrayCreateVector(VARTYPE vt, LONG lLbound, ULONG cElements);
 
 HRESULT WINAPI 
 SafeArrayRedim(struct tagSAFEARRAY *psa, struct tagSAFEARRAYBOUND *psaboundNew);

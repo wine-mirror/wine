@@ -37,7 +37,7 @@ typedef struct tagKEYBOARD_CONFIG {
   BOOL auto_repeat;
 } KEYBOARD_CONFIG;
 
-typedef VOID (CALLBACK *LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
+typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 
 typedef struct tagUSER_DRIVER {
     /* event functions */

@@ -153,7 +153,7 @@ ICOM_DEFINE(IRpcProxyBuffer,IUnknown)
     ICOM_METHOD1 (HRESULT,        Connect,                   IUnknown*,pUnkServer) \
     ICOM_VMETHOD (                Disconnect) \
     ICOM_METHOD2 (HRESULT,        Invoke,                    RPCOLEMESSAGE*,_prpcmsg, IRpcChannelBuffer*,_pRpcChannelBuffer) \
-    ICOM_METHOD1 (IRpcStubBuffer*,IsIIDSupported,            REFIID,riid) \
+    ICOM_METHOD1 (LPRPCCHANNELBUFFER,IsIIDSupported,            REFIID,riid) \
     ICOM_METHOD  (ULONG,          CountRefs) \
     ICOM_METHOD1 (HRESULT,        DebugServerQueryInterface, void**,ppv) \
     ICOM_VMETHOD1(                DebugServerRelease,        void*,pv)

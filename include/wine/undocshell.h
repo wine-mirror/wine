@@ -381,7 +381,7 @@ BOOL WINAPI FileMenu_AppendItem(
 #define FMF_NO_PROGRAM_GROUPS  0x04
 
 /* FileMenu_InsertUsingPidl callback function */
-typedef void (CALLBACK *LPFNFMCALLBACK)(LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlFile);
+typedef void CALLBACK (*LPFNFMCALLBACK)(LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlFile);
 
 int WINAPI FileMenu_InsertUsingPidl(
 	HMENU hMenu,
@@ -910,7 +910,7 @@ BOOL WINAPI RegisterShellHook(
 	DWORD dwType);
 
 /* SHCreateDefClassObject callback function */
-typedef HRESULT (CALLBACK *LPFNCDCOCALLBACK)(
+typedef HRESULT CALLBACK (*LPFNCDCOCALLBACK)(
 	LPUNKNOWN pUnkOuter,
 	REFIID riidObject,
 	LPVOID *ppvObject);

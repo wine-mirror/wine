@@ -102,8 +102,8 @@
     } while (0);
 
 
-typedef DWORD (*CALLBACK __WINE_FILTER)(PEXCEPTION_POINTERS);
-typedef void (*CALLBACK __WINE_FINALLY)(BOOL);
+typedef DWORD CALLBACK (*__WINE_FILTER)(PEXCEPTION_POINTERS);
+typedef void CALLBACK (*__WINE_FINALLY)(BOOL);
 
 #define WINE_EXCEPTION_FILTER(func) DWORD WINAPI func( EXCEPTION_POINTERS *__eptr )
 #define WINE_FINALLY_FUNC(func) void WINAPI func( BOOL __normal )

@@ -1319,7 +1319,7 @@ extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
 
 /* get a pointer to the request buffer */
-static inline void * WINE_UNUSED get_req_buffer(void)
+static inline void WINE_UNUSED *get_req_buffer(void)
 {
     return NtCurrentTeb()->buffer;
 }

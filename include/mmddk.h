@@ -278,7 +278,7 @@ typedef struct joycalibrate_tag {
 typedef JOYCALIBRATE *LPJOYCALIBRATE;
 
 /* prototype for joystick message function */
-typedef UINT (CALLBACK JOYDEVMSGPROC)(DWORD dwID, UINT uMessage, LPARAM lParam1, LPARAM lParam2);
+typedef UINT CALLBACK (JOYDEVMSGPROC)(DWORD dwID, UINT uMessage, LPARAM lParam1, LPARAM lParam2);
 typedef JOYDEVMSGPROC *LPJOYDEVMSGPROC;
 
 /* messages sent to joystick driver's DriverProc() function */

@@ -1455,7 +1455,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define HBMMENU_POPUP_MINIMIZE	((HBITMAP) 11)
 
 /* DrawState defines ... */
-typedef BOOL (CALLBACK *DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
+typedef BOOL CALLBACK (*DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
 
 /* WM_H/VSCROLL commands */
 #define SB_LINEUP           0
@@ -1802,7 +1802,7 @@ typedef struct
     POINT	MousePos;	/* Mouse Position in screen co-ordinates */
 }  HELPINFO,*LPHELPINFO;
 
-typedef void (CALLBACK *MSGBOXCALLBACK)(LPHELPINFO lpHelpInfo);
+typedef void CALLBACK (*MSGBOXCALLBACK)(LPHELPINFO lpHelpInfo);
 
 typedef struct
 {
@@ -1906,7 +1906,7 @@ typedef struct tagMONITORINFOEXW
 DECL_WINELIB_TYPE_AW(MONITORINFOEX)
 DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
 
-typedef BOOL  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
+typedef BOOL  CALLBACK (*MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
 
 /* FIXME: use this instead of LPCVOID for CreateDialogIndirectParam
    and DialogBoxIndirectParam */

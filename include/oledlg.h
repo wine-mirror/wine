@@ -94,7 +94,7 @@ typedef struct IOleUIObjInfoW IOleUIObjInfoW, *POLEUIOBJINFOW, *LPOLEUIOBJINFOW;
 #define OPF_SHOWHELP                    0x00000004L
 #define OPF_DISABLECONVERT              0x00000008L
 
-typedef UINT (CALLBACK *LPFNOLEUIHOOK)(HWND, UINT, WPARAM, LPARAM);
+typedef UINT CALLBACK (*LPFNOLEUIHOOK)(HWND, UINT, WPARAM, LPARAM);
 
 /*****************************************************************************
  * INSERT OBJECT DIALOG

@@ -54,7 +54,7 @@ struct _WSINFO;
 struct _NE_MODULE;
 
   /* signal proc typedef */
-typedef void (CALLBACK *USERSIGNALPROC)(HANDLE16, UINT16, UINT16,
+typedef void CALLBACK (*USERSIGNALPROC)(HANDLE16, UINT16, UINT16,
                                         HINSTANCE16, HQUEUE16);
 
   /* Task database. See 'Windows Internals' p. 226.

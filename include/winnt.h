@@ -1109,7 +1109,7 @@ typedef struct __EXCEPTION_FRAME
  * function pointer to a exception filter
  */
 
-typedef LONG (CALLBACK *PTOP_LEVEL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS ExceptionInfo);
+typedef LONG CALLBACK (*PTOP_LEVEL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS ExceptionInfo);
 typedef PTOP_LEVEL_EXCEPTION_FILTER LPTOP_LEVEL_EXCEPTION_FILTER;
 
 DWORD WINAPI UnhandledExceptionFilter( PEXCEPTION_POINTERS epointers );
@@ -1141,15 +1141,15 @@ typedef struct _NT_TIB
 struct _TEB;
 
 #if defined(__i386__) && defined(__GNUC__)
-extern inline struct _TEB * WINAPI NtCurrentTeb(void);
-extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+extern inline struct _TEB WINAPI *NtCurrentTeb(void);
+extern inline struct _TEB WINAPI *NtCurrentTeb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
     return teb;
 }
 #else
-extern struct _TEB * WINAPI NtCurrentTeb(void);
+extern struct _TEB WINAPI *NtCurrentTeb(void);
 #endif
 
 
@@ -1974,7 +1974,7 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
 } IMAGE_RESOURCE_DATA_ENTRY,*PIMAGE_RESOURCE_DATA_ENTRY;
 
 
-typedef VOID (CALLBACK *PIMAGE_TLS_CALLBACK)(
+typedef VOID CALLBACK (*PIMAGE_TLS_CALLBACK)(
 	LPVOID DllHandle,DWORD Reason,LPVOID Reserved
 );
 

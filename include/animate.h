@@ -19,17 +19,17 @@ typedef struct tagANIMATE_INFO
     * storage instead, which is not efficient on memory usage, but
     * will lead to less bugs in the future
     */
-   HIC	  	(WINAPI*  fnICOpen)(DWORD, DWORD, UINT);
-   LRESULT	(WINAPI*  fnICClose)(HIC);
-   LRESULT	(WINAPI*  fnICSendMessage)(HIC, UINT, DWORD, DWORD);
-   DWORD	(WINAPIV* fnICDecompress)(HIC,DWORD,LPBITMAPINFOHEADER,LPVOID,LPBITMAPINFOHEADER,LPVOID);
+   HIC	  	WINAPI  (*fnICOpen)(DWORD, DWORD, UINT);
+   LRESULT	WINAPI  (*fnICClose)(HIC);
+   LRESULT	WINAPI  (*fnICSendMessage)(HIC, UINT, DWORD, DWORD);
+   DWORD	WINAPIV (*fnICDecompress)(HIC,DWORD,LPBITMAPINFOHEADER,LPVOID,LPBITMAPINFOHEADER,LPVOID);
 
-    HMMIO (WINAPI* fnmmioOpenA)(LPSTR,MMIOINFO*,DWORD);
-    MMRESULT (WINAPI * fnmmioClose)(HMMIO,UINT);
-    UINT (WINAPI * fnmmioAscend)(HMMIO,MMCKINFO*,UINT);
-    UINT (WINAPI * fnmmioDescend)(HMMIO,MMCKINFO*,const MMCKINFO*,UINT);
-    LONG (WINAPI * fnmmioSeek)(HMMIO,LONG,INT);
-    LONG (WINAPI * fnmmioRead)(HMMIO,HPSTR,LONG);
+    HMMIO WINAPI (*fnmmioOpenA)(LPSTR,MMIOINFO*,DWORD);
+    MMRESULT WINAPI (*fnmmioClose)(HMMIO,UINT);
+    UINT  WINAPI (*fnmmioAscend)(HMMIO,MMCKINFO*,UINT);
+    UINT  WINAPI (*fnmmioDescend)(HMMIO,MMCKINFO*,const MMCKINFO*,UINT);
+    LONG  WINAPI (*fnmmioSeek)(HMMIO,LONG,INT);
+    LONG  WINAPI (*fnmmioRead)(HMMIO,HPSTR,LONG);
 
    /* reference to input stream (file or resource) */
    HGLOBAL 		hRes;

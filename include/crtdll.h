@@ -27,7 +27,7 @@
 /* function prototypes used in crtdll.c */
 extern int LastErrorToErrno(DWORD);
 
-void * __cdecl CRTDLL_malloc( DWORD size );
+void   __cdecl *CRTDLL_malloc( DWORD size );
 void   __cdecl CRTDLL_free( void *ptr );
 
 LPSTR  __cdecl CRTDLL__mbsinc( LPCSTR str );

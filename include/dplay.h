@@ -328,14 +328,14 @@ typedef const DPCREDENTIALS *LPCDPCREDENTIALS;
 
 
 
-typedef BOOL (CALLBACK* LPDPENUMDPCALLBACKW)(
+typedef BOOL CALLBACK (*LPDPENUMDPCALLBACKW)(
     LPGUID      lpguidSP,
     LPWSTR      lpSPName,
     DWORD       dwMajorVersion,
     DWORD       dwMinorVersion,
     LPVOID      lpContext);
 
-typedef BOOL (CALLBACK* LPDPENUMDPCALLBACKA)(
+typedef BOOL CALLBACK (*LPDPENUMDPCALLBACKA)(
     LPGUID      lpguidSP,
     LPSTR       lpSPName,       /* ptr to str w/ driver description */
     DWORD       dwMajorVersion, /* Major # of driver spec in lpguidSP */
@@ -353,7 +353,7 @@ typedef const GUID   *LPCGUID;
 
 typedef const DPNAME *LPCDPNAME;
 
-typedef BOOL (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
+typedef BOOL CALLBACK (*LPDPENUMCONNECTIONSCALLBACK)(
     LPCGUID     lpguidSP,
     LPVOID      lpConnection,
     DWORD       dwConnectionSize,
@@ -361,7 +361,7 @@ typedef BOOL (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
     DWORD       dwFlags,
     LPVOID      lpContext);
 
-typedef BOOL (CALLBACK* LPDPENUMSESSIONSCALLBACK)(
+typedef BOOL CALLBACK (*LPDPENUMSESSIONSCALLBACK)(
     LPDPSESSIONDESC lpDPSessionDesc,
     LPVOID      lpContext,
     LPDWORD     lpdwTimeOut,
@@ -372,21 +372,21 @@ extern HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA, LPVOID );
 extern HRESULT WINAPI DirectPlayEnumerateW( LPDPENUMDPCALLBACKW, LPVOID );
 extern HRESULT WINAPI DirectPlayCreate( LPGUID lpGUID, LPDIRECTPLAY2 *lplpDP, IUnknown *pUnk);
 
-typedef BOOL (CALLBACK* LPDPENUMPLAYERSCALLBACK)(
+typedef BOOL CALLBACK (*LPDPENUMPLAYERSCALLBACK)(
     DPID   dpId,
     LPSTR  lpFriendlyName,
     LPSTR  lpFormalName,
     DWORD  dwFlags,
     LPVOID          lpContext );
 
-typedef BOOL (CALLBACK* LPDPENUMPLAYERSCALLBACK2)(
+typedef BOOL CALLBACK (*LPDPENUMPLAYERSCALLBACK2)(
     DPID            dpId,
     DWORD           dwPlayerType,
     LPCDPNAME       lpName,
     DWORD           dwFlags,
     LPVOID          lpContext );
 
-typedef BOOL (CALLBACK* LPDPENUMSESSIONSCALLBACK2)(
+typedef BOOL CALLBACK (*LPDPENUMSESSIONSCALLBACK2)(
     LPCDPSESSIONDESC2   lpThisSD,
     LPDWORD             lpdwTimeOut,
     DWORD               dwFlags,

@@ -157,7 +157,7 @@ extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCST
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 
-static inline PDB * WINE_UNUSED PROCESS_Current(void)
+static inline PDB WINE_UNUSED *PROCESS_Current(void)
 {
     return NtCurrentTeb()->process;
 }
