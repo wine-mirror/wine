@@ -10,6 +10,7 @@
 #include "dispdib.h"
 #include "vga.h"
 #include "debug.h"
+#include "wine/wingdi16.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
 

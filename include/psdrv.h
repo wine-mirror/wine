@@ -144,6 +144,7 @@ typedef struct {
 typedef struct {
     DEVMODE16			dmPublic;
     struct _tagdocprivate {
+      int dummy;
     }				dmDocPrivate;
     struct _tagdrvprivate {
       char	ppdFileName[100]; /* Hack */

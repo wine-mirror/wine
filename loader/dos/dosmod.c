@@ -32,7 +32,7 @@ asm(".org 0x110000");
 
 #define SYS_vm86   166
 
-static __inline__ int vm86plus( int func, struct vm86plus_struct *ptr )
+static inline int vm86plus( int func, struct vm86plus_struct *ptr )
 {
     int res;
 #ifdef __PIC__

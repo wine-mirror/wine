@@ -1118,7 +1118,7 @@ TOOLTIPS_GetMargin (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_GetMaxTipWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1169,7 +1169,7 @@ TOOLTIPS_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_GetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1177,7 +1177,7 @@ TOOLTIPS_GetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_GetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1185,7 +1185,7 @@ TOOLTIPS_GetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_GetToolCount (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1379,7 +1379,7 @@ TOOLTIPS_NewToolRectW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_Pop (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1503,7 +1503,7 @@ TOOLTIPS_SetMargin (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_SetMaxTipWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1515,7 +1515,7 @@ TOOLTIPS_SetMaxTipWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_SetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1526,7 +1526,7 @@ TOOLTIPS_SetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLTIPS_SetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);

@@ -17,13 +17,13 @@ typedef struct
     METAHEADER  *mh;
 } METAFILEOBJ;
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct {
     DWORD dw1, dw2, dw3;
     WORD w4;
     CHAR filename[0x100];
 } METAHEADERDISK;
-#pragma pack(4)
+#include "poppack.h"
 
 #define MFHEADERSIZE (sizeof(METAHEADER))
 #define MFVERSION 0x300

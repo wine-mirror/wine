@@ -39,7 +39,7 @@ typedef struct
 #define ATOM_OFS(idx) (main_block->atoms[idx])
 
 /* rot_left: rotate (with wrap-around) */
-static __inline__ int rot_left(unsigned var,int count)
+static inline int rot_left(unsigned var,int count)
 {
   return (var<<count) | (var>> (sizeof(var)-count));
 }

@@ -456,13 +456,17 @@ INT     WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, UINT lEvent);
 
 #define WS_AF_MAX          27
 
+#include "pshpack1.h"
+
 struct ws_sockaddr_ipx
 {
-	INT16		sipx_family	__attribute__((packed));
-	UINT		sipx_network	__attribute__((packed));
-	CHAR		sipx_node[6]	__attribute__((packed));
-	UINT16		sipx_port	__attribute__((packed));
+	INT16		sipx_family;
+	UINT		sipx_network;
+	CHAR		sipx_node[6];
+	UINT16		sipx_port;
 };
+
+#include "poppack.h"
 
 #ifdef __cplusplus
 }

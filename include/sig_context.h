@@ -82,7 +82,7 @@ typedef struct sigcontext SIGCONTEXT;
 
 #endif  /* FreeBSD */
 
-#if defined(__svr4__) || defined(_SCO_DS)
+#if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
 
 #include <signal.h>
 #ifdef _SCO_DS
@@ -174,7 +174,7 @@ typedef struct _CONTEXT		/* Note 1 */
 
 #endif  /* linux || __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
-#if defined(__svr4__) || defined(_SCO_DS)
+#if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
 
 #ifdef _SCO_DS
 #define gregs regs

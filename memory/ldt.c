@@ -30,7 +30,7 @@ struct modify_ldt_s
     unsigned int  seg_not_present : 1;
 };
 
-static __inline__ int modify_ldt( int func, struct modify_ldt_s *ptr,
+static inline int modify_ldt( int func, struct modify_ldt_s *ptr,
                                   unsigned long count )
 {
     int res;

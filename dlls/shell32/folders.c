@@ -34,7 +34,7 @@ static struct ICOM_VTABLE(IExtractIconA) eivt;
 static struct ICOM_VTABLE(IPersistFile) pfvt;
 
 #define _IPersistFile_Offset ((int)(&(((IExtractIconAImpl*)0)->lpvtblPersistFile)))
-#define _ICOM_THIS_From_IPersistFile(class, name) class* This = (class*)(((void*)name)-_IPersistFile_Offset);
+#define _ICOM_THIS_From_IPersistFile(class, name) class* This = (class*)(((char*)name)-_IPersistFile_Offset);
 
 /**************************************************************************
 *  IExtractIconA_Constructor

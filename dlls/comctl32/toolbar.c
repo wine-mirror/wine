@@ -1259,7 +1259,7 @@ TOOLBAR_GetBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 TOOLBAR_GetBitmapFlags (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     return (GetDeviceCaps (0, LOGPIXELSX) >= 120) ? TBBF_LARGE : 0;
@@ -1393,7 +1393,7 @@ TOOLBAR_GetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLBAR_GetExtendedStyle (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -1615,7 +1615,7 @@ TOOLBAR_HideButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLBAR_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     return TOOLBAR_InternalHitTest (hwnd, (LPPOINT)lParam);
@@ -2221,7 +2221,7 @@ TOOLBAR_SetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLBAR_SetToolTips (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -2565,7 +2565,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLBAR_NCActivate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 /*    if (wndPtr->dwStyle & CCS_NODIVIDER) */
@@ -2575,7 +2575,7 @@ TOOLBAR_NCActivate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLBAR_NCCalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     if (!(GetWindowLongA (hwnd, GWL_STYLE) & CCS_NODIVIDER))
@@ -2635,7 +2635,7 @@ TOOLBAR_NCPaint (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);

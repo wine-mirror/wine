@@ -281,7 +281,7 @@ STATUSBAR_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 STATUSBAR_GetBorders (LPARAM lParam)
 {
     LPINT out = (LPINT) lParam;
@@ -465,7 +465,7 @@ STATUSBAR_GetTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 STATUSBAR_GetUnicodeFormat (HWND hwnd)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
@@ -473,7 +473,7 @@ STATUSBAR_GetUnicodeFormat (HWND hwnd)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 STATUSBAR_IsSimple (HWND hwnd)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
@@ -753,7 +753,7 @@ STATUSBAR_SetTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 STATUSBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
@@ -913,7 +913,7 @@ STATUSBAR_WMDestroy (HWND hwnd)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 STATUSBAR_WMGetFont (HWND hwnd)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
@@ -942,7 +942,7 @@ STATUSBAR_WMGetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 STATUSBAR_WMMouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
@@ -978,7 +978,7 @@ STATUSBAR_WMNCHitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 STATUSBAR_WMNCLButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PostMessageA (GetParent (hwnd), WM_NCLBUTTONDOWN, wParam, lParam);
@@ -986,7 +986,7 @@ STATUSBAR_WMNCLButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 STATUSBAR_WMNCLButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PostMessageA (GetParent (hwnd), WM_NCLBUTTONUP, wParam, lParam);

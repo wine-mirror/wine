@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(pager)
 #define PAGER_GetInfoPtr(hwnd) ((PAGER_INFO *)GetWindowLongA(hwnd, 0))
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_ForwardMouse (HWND hwnd, WPARAM wParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -35,7 +35,7 @@ PAGER_ForwardMouse (HWND hwnd, WPARAM wParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_GetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -44,7 +44,7 @@ PAGER_GetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_GetBorder (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -53,7 +53,7 @@ PAGER_GetBorder (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_GetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -76,7 +76,7 @@ PAGER_GetButtonState (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /* << PAGER_GetDropTarget >> */
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_GetPos (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -113,7 +113,7 @@ PAGER_RecalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -127,7 +127,7 @@ PAGER_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_SetBorder (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -141,7 +141,7 @@ PAGER_SetBorder (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -157,7 +157,7 @@ PAGER_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
@@ -177,7 +177,7 @@ PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 PAGER_SetPos (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);

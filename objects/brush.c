@@ -222,12 +222,16 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
 )
 {
     BITMAPINFO *info=(BITMAPINFO*)data;
-    LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    LOGBRUSH logbrush;
     BITMAPINFO  *newInfo;
     INT size;
     
     TRACE(gdi, "%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
+
+    logbrush.lbStyle = BS_DIBPATTERN;
+    logbrush.lbColor = coloruse;
+    logbrush.lbHatch = 0;
 
       /* Make a copy of the bitmap */
 

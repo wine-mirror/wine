@@ -618,7 +618,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 
   curr_type = 0x1000;
 
-  ptr = (union any_size) (table + 16);
+  ptr.c = (table + 16);
   while( ptr.c - table < len )
     {
       type = (union codeview_type *) ptr.c;
@@ -1033,7 +1033,9 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
                 dbglist = deefer;
             }
 	  break;
+#if 0
 	default:
+#endif
 	}
     }
     DEBUG_next_index++;
@@ -1545,7 +1547,7 @@ DEBUG_SnarfLinetab(char			     * linetab,
   /*
    * Now get the important bits.
    */
-  pnt = (union any_size) linetab;
+  pnt.c = linetab;
   nfile = *pnt.s++;
   nseg = *pnt.s++;
 
@@ -1557,7 +1559,7 @@ DEBUG_SnarfLinetab(char			     * linetab,
   nseg = 0;
   for(i=0; i<nfile; i++)
     {
-      pnt2 = (union any_size) (linetab + filetab[i]);
+      pnt2.c = linetab + filetab[i];
       nseg += *pnt2.s;
     }
 
@@ -1588,7 +1590,7 @@ DEBUG_SnarfLinetab(char			     * linetab,
       /*
        * Get the pointer into the segment information.
        */
-      pnt2 = (union any_size) (linetab + filetab[i]);
+      pnt2.c = linetab + filetab[i];
       file_segcount = *pnt2.s;
 
       pnt2.ui++;
@@ -1605,7 +1607,7 @@ DEBUG_SnarfLinetab(char			     * linetab,
 
       for(k = 0; k < file_segcount; k++, this_seg++)
 	{
-	  pnt2 = (union any_size) (linetab + lt_ptr[k]);
+	  pnt2.c = linetab + lt_ptr[k];
 	  lt_hdr[this_seg].start      = start[k].start;
 	  lt_hdr[this_seg].end	      = start[k].end;
 	  lt_hdr[this_seg].sourcefile = fn;
@@ -1642,7 +1644,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
   char			  symname[PATH_MAX];
   struct name_hash	* thunk_sym = NULL;
 
-  ptr = (union any_size) cv_data;
+  ptr.c = cv_data;
   nsect = deefer->nsect;
   sectp = deefer->sectp;
 

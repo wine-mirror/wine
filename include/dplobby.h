@@ -3,8 +3,7 @@
 
 #include "dplay.h"
 
-
-#pragma pack(1)
+#include "pshpack1.h"
 
 /*****************************************************************************
  * Predeclare the interfaces
@@ -72,6 +71,7 @@ typedef BOOL (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
     LPVOID          lpContext,
     DWORD           dwFlags );
 
+#include "poppack.h"
 
 /*****************************************************************************
  * IDirectPlayLobby interface
@@ -147,8 +147,5 @@ ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
 /*** IDirectPlayLobby2 methods ***/
 #define IDirectPlayLobby2_CreateCompoundAddress(p,a,b,c,d) ICOM_CALL4(CreateCompoundAddress,p,a,b,c,d)
 #endif
-
-#pragma pack(4)
-
 
 #endif /* __WINE_DPLOBBY_H */

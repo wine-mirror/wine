@@ -183,11 +183,11 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
  	return emh->nDescription;
      }
  
-     first = lstrlenW( (void *)emh + emh->offDescription);
+     first = lstrlenW( (WCHAR *) ((char *) emh + emh->offDescription));
  
-     lstrcpynWtoA(buf, (void *)emh + emh->offDescription, size);
+     lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription), size);
      buf += first + 1;
-     lstrcpynWtoA(buf, (void *)emh + emh->offDescription+2*(first+1),
+     lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription+2*(first+1)),
  		 size - first - 1);
  
      EMF_ReleaseEnhMetaHeader(hmf);
@@ -220,7 +220,7 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
  	return emh->nDescription;
      }
  
-     memmove(buf, (void *)emh + emh->offDescription, 
+     memmove(buf, (char *) emh + emh->offDescription, 
  	    MIN(size,emh->nDescription));
      EMF_ReleaseEnhMetaHeader(hmf);
      return MIN(size, emh->nDescription);
@@ -555,7 +555,7 @@ BOOL WINAPI EnumEnhMetaFile(
     while (ret) {
         ret = (*callback)(hdc, ht, p, count, data); 
 	if (p->iType == EMR_EOF) break;
-	p = (void *) p + p->nSize;
+	p = (LPENHMETARECORD) ((char *) p + p->nSize);
     }
     HeapFree( GetProcessHeap(), 0, ht);
     EMF_ReleaseEnhMetaHeader(hmf);
@@ -591,7 +591,11 @@ BOOL WINAPI PlayEnhMetaFile(
 	  (lpRect->right - lpRect->left);
 	FLOAT yscale = (h->rclBounds.bottom - h->rclBounds.top) /
 	  (lpRect->bottom - lpRect->top);
-	XFORM xform = {xscale, 0, 0, yscale, 0, 0};
+	XFORM xform;
+	xform.eM11 = xscale;
+	xform.eM12 = 0;
+	xform.eM21 = 0;
+	xform.eM22 = yscale;
         xform.eDx = lpRect->left;
 	xform.eDy = lpRect->top; 
 	FIXME(enhmetafile, "play into rect doesn't work\n");
@@ -605,7 +609,7 @@ BOOL WINAPI PlayEnhMetaFile(
     while (1) {
         PlayEnhMetaFileRecord(hdc, ht, p, count);
 	if (p->iType == EMR_EOF) break;
-	p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
+	p = (LPENHMETARECORD) ((char *) p + p->nSize); /* casted so that arithmetic is in bytes */
     }
     HeapFree( GetProcessHeap(), 0, ht );
     EMF_ReleaseEnhMetaHeader(hmf);

@@ -598,7 +598,7 @@ REBAR_GetBandBorders (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_GetBandCount (HWND hwnd)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -792,7 +792,7 @@ REBAR_GetBarInfo (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_GetBkColor (HWND hwnd)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -844,7 +844,7 @@ REBAR_GetRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_GetRowCount (HWND hwnd)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -866,7 +866,7 @@ REBAR_GetRowHeight (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_GetTextColor (HWND hwnd)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -877,7 +877,7 @@ REBAR_GetTextColor (HWND hwnd)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_GetToolTips (HWND hwnd)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -885,7 +885,7 @@ REBAR_GetToolTips (HWND hwnd)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_GetUnicodeFormat (HWND hwnd)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -1495,7 +1495,7 @@ REBAR_SetTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /* << REBAR_SetTooltips >> */
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -1665,7 +1665,7 @@ REBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 #endif
 
 
-__inline__ static LRESULT
+inline static LRESULT
 REBAR_NCCalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     if (GetWindowLongA (hwnd, GWL_STYLE) & WS_BORDER) {

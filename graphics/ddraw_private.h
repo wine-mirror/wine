@@ -2,6 +2,7 @@
 #define __GRAPHICS_WINE_DDRAW_PRIVATE_H
 
 #include "ddraw.h"
+#include "winuser.h"
 
 /*****************************************************************************
  * Predeclare the interface implementation structures

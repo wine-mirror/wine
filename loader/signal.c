@@ -89,7 +89,7 @@ struct kernel_sigaction
 
 /* Similar to the sigaction function in libc, except it leaves alone the
    restorer field, which is used to specify the signal stack address */
-static __inline__ int wine_sigaction( int sig, struct kernel_sigaction *new,
+static inline int wine_sigaction( int sig, struct kernel_sigaction *new,
                                       struct kernel_sigaction *old )
 {
 #ifdef __PIC__

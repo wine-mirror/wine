@@ -1714,14 +1714,14 @@ static void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 /*	8-bit WAV is unsigned */
 /*	16-bit WAV is signed */
 
-static __inline__ INT16 cvtU8toS16(BYTE byte)
+static inline INT16 cvtU8toS16(BYTE byte)
 {
 	INT16	s = (byte - 128) << 8;
 
 	return s;
 }
 
-static __inline__ BYTE cvtS16toU8(INT16 word)
+static inline BYTE cvtS16toU8(INT16 word)
 {
 	BYTE	b = (word + 32768) >> 8;
 	
@@ -1732,7 +1732,7 @@ static __inline__ BYTE cvtS16toU8(INT16 word)
 /* We should be able to optimize these two inline functions */
 /* so that we aren't doing 8->16->8 conversions when it is */
 /* not necessary. But this is still a WIP. Optimize later. */
-static __inline__ void get_fields(const IDirectSoundBufferImpl *dsb, BYTE *buf, INT *fl, INT *fr)
+static inline void get_fields(const IDirectSoundBufferImpl *dsb, BYTE *buf, INT *fl, INT *fr)
 {
 	INT16	*bufs = (INT16 *) buf;
 
@@ -1765,7 +1765,7 @@ static __inline__ void get_fields(const IDirectSoundBufferImpl *dsb, BYTE *buf, 
 	return;
 }
 
-static __inline__ void set_fields(BYTE *buf, INT fl, INT fr)
+static inline void set_fields(BYTE *buf, INT fl, INT fr)
 {
 	INT16 *bufs = (INT16 *) buf;
 

@@ -4712,31 +4712,33 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
     LRESULT lret;
     LONG lStyle;
 
-    // set column width only if in report mode
+    /* set column width only if in report mode */
     lStyle = GetWindowLongA(hwnd, GWL_STYLE);
     if ((lStyle & LVS_TYPEMASK) != LVS_REPORT)
 	return (FALSE);
 
-    // make sure we can get the listview info
+    /* make sure we can get the listview info */
     if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
 	return (FALSE);  
-    if (!infoPtr->hwndHeader) // make sure we have a header
+    if (!infoPtr->hwndHeader) /* make sure we have a header */
 	return (FALSE);	
 	
-    // FIXME: currently ignoring LVSCW_AUTOSIZE (-1) and
-    // LVSCV_AUTOSIZE_USEHEADER (-2)
+    /*
+     * FIXME: currently ignoring LVSCW_AUTOSIZE (-1) and
+     * LVSCV_AUTOSIZE_USEHEADER (-2)
+     */
     if (cx < 0) 
 	return (FALSE);
 	
     hdi.mask = HDI_WIDTH;
     hdi.cxy = cx;
 
-    // call header to update the column change
+    /* call header to update the column change */
     lret = Header_SetItemA(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
 
     infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd, LVS_REPORT);
 
-    InvalidateRect(hwnd, NULL, TRUE); // force redraw of the listview
+    InvalidateRect(hwnd, NULL, TRUE); /* force redraw of the listview */
 
     return lret;
 }

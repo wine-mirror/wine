@@ -400,7 +400,7 @@ INT AddFontStyle(LPLOGFONTA lplf, UINT nFontType,
   int i;
   
   TRACE(commdlg,"(nFontType=%d)\n",nFontType);
-  TRACE(commdlg,"  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d"
+  TRACE(commdlg,"  %s h=%ld w=%ld e=%ld o=%ld wg=%ld i=%d u=%d s=%d"
 	       " ch=%d op=%d cp=%d q=%d pf=%xh\n",
 	       lplf->lfFaceName,lplf->lfHeight,lplf->lfWidth,
 	       lplf->lfEscapement,lplf->lfOrientation,

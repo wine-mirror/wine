@@ -219,7 +219,7 @@ static struct ICOM_VTABLE(IShellFolder) sfvt;
 static struct ICOM_VTABLE(IPersistFolder) psfvt;
 
 #define _IPersistFolder_Offset ((int)(&(((IGenericSFImpl*)0)->lpvtblPersistFolder))) 
-#define _ICOM_THIS_From_IPersistFolder(class, name) class* This = (class*)(((void*)name)-_IPersistFolder_Offset); 
+#define _ICOM_THIS_From_IPersistFolder(class, name) class* This = (class*)(((char*)name)-_IPersistFolder_Offset); 
 
 /**************************************************************************
 *	  IShellFolder_Constructor

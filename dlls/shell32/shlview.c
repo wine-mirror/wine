@@ -54,15 +54,15 @@ static struct ICOM_VTABLE(IShellView) svvt;
 
 static struct ICOM_VTABLE(IOleCommandTarget) ctvt;
 #define _IOleCommandTarget_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblOleCommandTarget))) 
-#define _ICOM_THIS_From_IOleCommandTarget(class, name) class* This = (class*)(((void*)name)-_IOleCommandTarget_Offset); 
+#define _ICOM_THIS_From_IOleCommandTarget(class, name) class* This = (class*)(((char*)name)-_IOleCommandTarget_Offset); 
 
 static struct ICOM_VTABLE(IDropTarget) dtvt;
 #define _IDropTarget_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblDropTarget))) 
-#define _ICOM_THIS_From_IDropTarget(class, name) class* This = (class*)(((void*)name)-_IDropTarget_Offset); 
+#define _ICOM_THIS_From_IDropTarget(class, name) class* This = (class*)(((char*)name)-_IDropTarget_Offset); 
 
 static struct ICOM_VTABLE(IViewObject) vovt;
 #define _IViewObject_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblViewObject))) 
-#define _ICOM_THIS_From_IViewObject(class, name) class* This = (class*)(((void*)name)-_IViewObject_Offset); 
+#define _ICOM_THIS_From_IViewObject(class, name) class* This = (class*)(((char*)name)-_IViewObject_Offset); 
 
 /*menu items */
 #define IDM_VIEW_FILES  (FCIDM_SHVIEWFIRST + 0x500)

@@ -36,12 +36,12 @@ static const int MonthLengths[2][MONSPERYEAR] =
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
-static __inline__ int IsLeapYear(int Year)
+static inline int IsLeapYear(int Year)
 {
 	return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0) ? 1 : 0;
 }
 
-static __inline__ void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryField,int Modulus)
+static inline void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryField,int Modulus)
 {
 	*FieldToNormalize = (CSHORT) (*FieldToNormalize - Modulus);
 	*CarryField = (CSHORT) (*CarryField + 1);

@@ -91,7 +91,7 @@ HOTKEY_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 HOTKEY_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr (hwnd);
@@ -163,7 +163,7 @@ HOTKEY_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 HOTKEY_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DWORD dwExStyle = GetWindowLongA (hwnd, GWL_EXSTYLE);
@@ -194,7 +194,7 @@ HOTKEY_SetFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 HOTKEY_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr (hwnd);

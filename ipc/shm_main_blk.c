@@ -9,7 +9,7 @@
  */
 #ifdef CONFIG_IPC
 
-#define inline __inline__
+#define inline inline
 #include <sys/types.h>
 #include <sys/sem.h>
 #include <time.h>

@@ -516,7 +516,7 @@ void detach_hash(HASH_CONTAINER *hash)
 
 
 /********** Hash usage *************/
-static __inline__ BOOL
+static inline BOOL
 correct_entry(HASH_ITEM *item, int key, HASH_VAL *seeked_data,
 	      HASH_ITEM_TEST *is_correct_item, BOOL skip_deleted)
 {
@@ -586,7 +586,7 @@ static HASH_ITEM *locate_entry(HASH_CONTAINER* hash, DWORD key,
     
 }
 
-static __inline__ void sync_shared_hash(HASH_CONTAINER *hash)
+static inline void sync_shared_hash(HASH_CONTAINER *hash)
 {
     HASH_SHARED *shared= hash->shared;
     

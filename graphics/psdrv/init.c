@@ -169,6 +169,7 @@ static PSDRV_DEVMODE16 DefaultDevmode =
 /* dmDisplayFrequency */ 0
   },
   { /* dmDocPrivate */
+    0 /* dummy */
   },
   { /* dmDrvPrivate */
 /* ppdfilename */	"default.ppd"

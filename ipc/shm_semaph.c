@@ -9,7 +9,7 @@
  */
 #ifdef CONFIG_IPC
 
-#define inline __inline__
+#define inline inline
 #include <assert.h>
 #include <unistd.h>
 #include <sys/sem.h>

@@ -659,7 +659,7 @@ HEADER_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 HEADER_GetItemCount (HWND hwnd)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -689,7 +689,7 @@ HEADER_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /* << HEADER_GetOrderArray >> */
 
 
-__inline__ static LRESULT
+inline static LRESULT
 HEADER_GetUnicodeFormat (HWND hwnd)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1074,7 +1074,7 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /* << HEADER_SetOrderArray >> */
 
 
-__inline__ static LRESULT
+inline static LRESULT
 HEADER_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1147,7 +1147,7 @@ HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static __inline__ LRESULT
+static inline LRESULT
 HEADER_GetFont (HWND hwnd)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);

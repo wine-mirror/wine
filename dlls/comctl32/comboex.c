@@ -31,7 +31,7 @@ DEFAULT_DEBUG_CHANNEL(comboex)
 /* << COMBOEX_DeleteItem >> */
 
 
-__inline__ static LRESULT
+inline static LRESULT
 COMBOEX_GetComboControl (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
@@ -42,7 +42,7 @@ COMBOEX_GetComboControl (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 COMBOEX_GetEditControl (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
@@ -56,7 +56,7 @@ COMBOEX_GetEditControl (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 COMBOEX_GetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
@@ -65,7 +65,7 @@ COMBOEX_GetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 COMBOEX_GetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
@@ -112,7 +112,7 @@ COMBOEX_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-__inline__ static LRESULT
+inline static LRESULT
 COMBOEX_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
@@ -141,7 +141,7 @@ COMBOEX_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /* << COMBOEX_SetItem32W >> */
 
 
-__inline__ static LRESULT
+inline static LRESULT
 COMBOEX_Forward (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);

@@ -246,7 +246,7 @@ static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* high
     return NULL;
 }
 
-__inline__ static int sock_error_p(int s)
+inline static int sock_error_p(int s)
 {
     unsigned int optval, optlen;
 

@@ -887,7 +887,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	dstheight = xdst.bottom - xdst.top;
 	dstwidth = xdst.right - xdst.left;
 	width = (xdst.right - xdst.left) * bpp;
-	dbuf = ddesc.y.lpSurface + (xdst.top * ddesc.lPitch) + (xdst.left * bpp);
+	dbuf = (BYTE *) ddesc.y.lpSurface + (xdst.top * ddesc.lPitch) + (xdst.left * bpp);
 
 	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
 	
@@ -941,7 +941,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 		LPBYTE sbase;
 		int sx, xinc, sy, yinc;
 
-		sbase = sdesc.y.lpSurface + (xsrc.top * sdesc.lPitch) + xsrc.left * bpp;
+		sbase = (BYTE *) sdesc.y.lpSurface + (xsrc.top * sdesc.lPitch) + xsrc.left * bpp;
 		xinc = (srcwidth << 16) / dstwidth;
 		yinc = (srcheight << 16) / dstheight;
 
@@ -1082,8 +1082,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
 	bpp = This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8;
-	sbuf = sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
-	dbuf = ddesc.y.lpSurface + (dsty      * ddesc.lPitch) + dstx       * bpp;
+	sbuf = (BYTE *) sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
+	dbuf = (BYTE *) ddesc.y.lpSurface + (dsty      * ddesc.lPitch) + dstx       * bpp;
 
 
 	h=rsrc->bottom-rsrc->top;
@@ -1110,8 +1110,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 
 #define COPYBOX_COLORKEY(type) { \
 	type *d = (type *)dbuf, *s = (type *)sbuf, tmp; \
-	s = sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp; \
-	d = ddesc.y.lpSurface + (dsty * ddesc.lPitch) + dstx * bpp; \
+	s = (type *) ((BYTE *) sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp); \
+	d = (type *) ((BYTE *) ddesc.y.lpSurface + (dsty * ddesc.lPitch) + dstx * bpp); \
 	for (y = 0; y < h; y++) { \
 		for (x = 0; x < w; x++) { \
 			tmp = s[x]; \

@@ -3,7 +3,7 @@
 
 #include "windef.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 /******************************************
  * DragObject
@@ -264,6 +264,6 @@ BOOL      WINAPI ShellAboutA(HWND,LPCSTR,LPCSTR,HICON);
 BOOL      WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
 #define     ShellAbout WINELIB_NAME_AW(ShellAbout)
 
-#pragma pack(4)
+#include "poppack.h"
 
 #endif /* _WINE_SHELLAPI_H */
