@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "ntdll.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/winbase16.h"

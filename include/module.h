@@ -153,6 +153,9 @@ extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 HMODULE MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags );
 
+/* resource.c */
+extern INT       WINAPI AccessResource(HMODULE,HRSRC); 
+
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
 extern void NE_DumpModule( HMODULE16 hModule );
@@ -178,7 +181,6 @@ extern HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle );
 extern NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR typeId );
 extern NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR resId );
-
 
 /* loader/ne/segment.c */
 extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
