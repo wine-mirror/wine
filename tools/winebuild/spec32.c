@@ -136,16 +136,17 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
     }
     fprintf( outfile, "  } exp;\n" );
 
-#ifdef __i386__
-    fprintf( outfile, "  struct {\n" );
-    fprintf( outfile, "    unsigned char  jmp;\n" );
-    fprintf( outfile, "    unsigned char  addr[4];\n" );
-    fprintf( outfile, "    unsigned char  ret;\n" );
-    fprintf( outfile, "    unsigned short args;\n" );
-    fprintf( outfile, "    func_ptr       orig;\n" );
-    fprintf( outfile, "    unsigned int   argtypes;\n" );
-    fprintf( outfile, "  } relay[%d];\n", nr_exports );
-#endif  /* __i386__ */
+    if (debugging)
+    {
+        fprintf( outfile, "  struct {\n" );
+        fprintf( outfile, "    unsigned char  jmp;\n" );
+        fprintf( outfile, "    unsigned char  addr[4];\n" );
+        fprintf( outfile, "    unsigned char  ret;\n" );
+        fprintf( outfile, "    unsigned short args;\n" );
+        fprintf( outfile, "    func_ptr       orig;\n" );
+        fprintf( outfile, "    unsigned int   argtypes;\n" );
+        fprintf( outfile, "  } relay[%d];\n", nr_exports );
+    }
 
     fprintf( outfile, "} exports = {\n  {\n" );
     fprintf( outfile, "    0,\n" );                 /* Characteristics */
@@ -248,57 +249,58 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
 
     /* output relays */
 
-#ifdef __i386__
-    fprintf( outfile, "  },\n  {\n" );
-    for (i = Base; i <= Limit; i++)
+    if (debugging)
     {
-        ORDDEF *odp = Ordinals[i];
-        unsigned int j, mask = 0;
-
-        /* skip non-existent entry points */
-        if (!odp) goto ignore;
-        /* skip non-functions */
-        if ((odp->type != TYPE_STDCALL) &&
-            (odp->type != TYPE_CDECL) &&
-            (odp->type != TYPE_REGISTER)) goto ignore;
-        /* skip norelay entry points */
-        if (odp->flags & FLAG_NORELAY) goto ignore;
-
-        for (j = 0; odp->u.func.arg_types[j]; j++)
+        fprintf( outfile, "  },\n  {\n" );
+        for (i = Base; i <= Limit; i++)
         {
-            if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
-            if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
-        }
-        if ((odp->flags & FLAG_RET64) && (j < 16)) mask |= 0x80000000;
+            ORDDEF *odp = Ordinals[i];
+            unsigned int j, mask = 0;
 
-        switch(odp->type)
-        {
-        case TYPE_STDCALL:
-            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc2, 0x%04x, %s, 0x%08x }",
-                     strlen(odp->u.func.arg_types) * sizeof(int),
-                     odp->u.func.link_name, mask );
-            break;
-        case TYPE_CDECL:
-            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
-                     strlen(odp->u.func.arg_types) * sizeof(int),
-                     odp->u.func.link_name, mask );
-            break;
-        case TYPE_REGISTER:
-            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
-                     0x8000 | (strlen(odp->u.func.arg_types) * sizeof(int)),
-                     make_internal_name( odp, "regs" ), mask );
-            break;
-        default:
-            assert(0);
-        }
-        goto done;
+            /* skip non-existent entry points */
+            if (!odp) goto ignore;
+            /* skip non-functions */
+            if ((odp->type != TYPE_STDCALL) &&
+                (odp->type != TYPE_CDECL) &&
+                (odp->type != TYPE_REGISTER)) goto ignore;
+            /* skip norelay entry points */
+            if (odp->flags & FLAG_NORELAY) goto ignore;
 
-    ignore:
-        fprintf( outfile, "    { 0, { 0,0,0,0 }, 0, 0, 0, 0 }" );
-    done:
-        if (i < Limit) fprintf( outfile, ",\n" );
+            for (j = 0; odp->u.func.arg_types[j]; j++)
+            {
+                if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
+                if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
+            }
+            if ((odp->flags & FLAG_RET64) && (j < 16)) mask |= 0x80000000;
+
+            switch(odp->type)
+            {
+            case TYPE_STDCALL:
+                fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc2, 0x%04x, %s, 0x%08x }",
+                         strlen(odp->u.func.arg_types) * sizeof(int),
+                         odp->u.func.link_name, mask );
+                break;
+            case TYPE_CDECL:
+                fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
+                         strlen(odp->u.func.arg_types) * sizeof(int),
+                         odp->u.func.link_name, mask );
+                break;
+            case TYPE_REGISTER:
+                fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
+                         0x8000 | (strlen(odp->u.func.arg_types) * sizeof(int)),
+                         make_internal_name( odp, "regs" ), mask );
+                break;
+            default:
+                assert(0);
+            }
+            goto done;
+
+        ignore:
+            fprintf( outfile, "    { 0, { 0,0,0,0 }, 0, 0, 0, 0 }" );
+        done:
+            if (i < Limit) fprintf( outfile, ",\n" );
+        }
     }
-#endif  /* __i386__ */
 
     fprintf( outfile, "  }\n};\n\n" );
 

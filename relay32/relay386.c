@@ -418,6 +418,7 @@ void RELAY_SetupDLL( const char *module )
         int on = 1;
 
         if (!debug->call) continue;  /* not a normal function */
+        if (debug->call != 0xe8 && debug->call != 0xe9) break; /* not a debug thunk at all */
 
         if ((name = find_exported_name( module, exports, i + exports->Base )))
         {

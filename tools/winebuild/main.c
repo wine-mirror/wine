@@ -28,9 +28,15 @@ int DLLHeapSize = 0;
 int UsePIC = 0;
 int nb_entry_points = 0;
 int nb_names = 0;
-int debugging = 1;
 int nb_debug_channels = 0;
 int nb_lib_paths = 0;
+
+/* we only support relay debugging on i386 */
+#if defined(__i386__) && !defined(NO_TRACE_MSGS)
+int debugging = 1;
+#else
+int debugging = 0;
+#endif
 
 char DLLName[80];
 char DLLFileName[80];
