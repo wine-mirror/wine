@@ -133,7 +133,6 @@ static DWORD   (WINAPI *pWNetGetLastErrorW)(LPVOID, LPVOID, LPVOID, LPVOID, LPVO
 static BOOL    (WINAPI *pPageSetupDlgW)(LPPAGESETUPDLGW);
 static BOOL    (WINAPI *pPrintDlgW)(LPPRINTDLGW);
 static BOOL    (WINAPI *pGetOpenFileNameW)(LPOPENFILENAMEW);
-static HRESULT (WINAPI *pSHGetInstanceExplorer)(LPUNKNOWN *);
 static DWORD   (WINAPI *pGetFileVersionInfoSizeW)(LPCWSTR,LPDWORD);
 static BOOL    (WINAPI *pGetFileVersionInfoW)(LPCWSTR,DWORD,DWORD,LPVOID);
 static WORD    (WINAPI *pVerQueryValueW)(LPVOID,LPCWSTR,LPVOID*,UINT*);
@@ -722,19 +721,6 @@ HRESULT WINAPI SHLWAPI_15 (
 	HeapFree(GetProcessHeap(), 0, mystr);
 	TRACE("language is %s\n", debugstr_w(langbuf));
 	return 0;
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.16]
- */
-HRESULT WINAPI SHLWAPI_16 (
-	LPVOID w,
-	LPVOID x,
-	LPVOID y,
-	LPWSTR z)
-{
-	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
-	return 0xabba1252;
 }
 
 /*************************************************************************
@@ -1525,41 +1511,6 @@ HRESULT WINAPI SHLWAPI_219 (
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.222]
- *
- * NOTES
- *  securityattributes missing
- */
-HANDLE WINAPI SHLWAPI_222 (LPCLSID guid)
-{
-	char lpstrName[80];
-
-        sprintf( lpstrName, "shell.{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-                 guid->Data1, guid->Data2, guid->Data3,
-                 guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-                 guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-	FIXME("(%s) stub\n", lpstrName);
-	return CreateSemaphoreA(NULL,0, 0x7fffffff, lpstrName);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.223]
- *
- * NOTES
- *  get the count of the semaphore
- */
-DWORD WINAPI SHLWAPI_223 (HANDLE handle)
-{
-	DWORD oldCount;
-
-	FIXME("(0x%08x) stub\n",handle);
-
-	ReleaseSemaphore( handle, 1, &oldCount);	/* +1 */
-	WaitForSingleObject( handle, 0 );		/* -1 */
-	return oldCount;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.236]
  */
 HMODULE WINAPI SHLWAPI_236 (REFIID lpUnknown)
@@ -1997,30 +1948,6 @@ WORD WINAPI SHLWAPI_352 (
     return pVerQueryValueW((char*)w+0x208, x, y, z);
 }
 
-/**************************************************************************
- *      @       [SHLWAPI.356]
- *
- *      mbc - this function is undocumented, The parameters are correct and
- *            the calls to InitializeSecurityDescriptor and
- *            SetSecurityDescriptorDacl are correct, but apparently some
- *            apps call this function with all zero parameters.
- */
-
-DWORD WINAPI SHLWAPI_356(PACL pDacl, PSECURITY_DESCRIPTOR pSD, LPCSTR *str)
-{
-  if(str != 0){
-    *str = 0;
-  }
-
-  if(!pDacl){
-    return 0;
-  }
-
-  if (!InitializeSecurityDescriptor(pSD, 1)) return 0;
-  return SetSecurityDescriptorDacl(pSD, 1, pDacl, 0);
-}
-
-
 /*************************************************************************
  *      @	[SHLWAPI.357]
  *
@@ -2271,42 +2198,6 @@ DWORD WINAPI SHLWAPI_413 (DWORD x)
 }
 
 /*************************************************************************
- *      SHGlobalCounterCreateNamedA	[SHLWAPI.422]
- */
-HANDLE WINAPI SHLWAPI_422 (LPCSTR pwName, int nInitialCount)
-{
-	CHAR pwCounterName[MAX_PATH];
-	HANDLE hSem;
-
-	lstrcpyA(pwCounterName,	"shell.");
-	lstrcatA(pwCounterName, pwName);
-	hSem = CreateSemaphoreA(NULL /* FIXME */, nInitialCount, MAXLONG, pwCounterName);
-	if (!hSem) {
-	  OpenSemaphoreA( SYNCHRONIZE | SEMAPHORE_MODIFY_STATE, 0, pwCounterName);
-	}
-	return hSem;
-}
-
-/*************************************************************************
- *      SHGlobalCounterCreateNamedW	[SHLWAPI.423]
- */
-HANDLE WINAPI SHLWAPI_423 (LPCWSTR pwName, int nInitialCount)
-{
-	WCHAR pwCounterName[MAX_PATH];
-	WCHAR pwShell[7] = {'s','h','e','l','l','.','\0'};
-	HANDLE hSem;
-
-	lstrcpyW(pwCounterName,	pwShell);
-	lstrcatW(pwCounterName, pwName);
-	hSem = CreateSemaphoreW(NULL /* FIXME */, nInitialCount, MAXLONG, pwCounterName);
-	if (!hSem) {
-	  OpenSemaphoreW( SYNCHRONIZE | SEMAPHORE_MODIFY_STATE, 0, pwCounterName);
-	}
-	return hSem;
-}
-
-
-/*************************************************************************
  *      @	[SHLWAPI.418]
  *
  * Function seems to do FreeLibrary plus other things.
@@ -2520,44 +2411,4 @@ INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
    nIter++;
  }
  return -1;
-}
-
-/*************************************************************************
- *      _SHGetInstanceExplorer@4	[SHLWAPI.@]
- *
- * Late bound call to shell32.SHGetInstanceExplorer.
- */
-HRESULT WINAPI _SHGetInstanceExplorer (LPUNKNOWN *lpUnknown)
-{
-  GET_FUNC(pSHGetInstanceExplorer, shell32, "SHGetInstanceExplorer", E_FAIL);
-  return pSHGetInstanceExplorer(lpUnknown);
-}
-
-/*************************************************************************
- *      SHGetThreadRef	[SHLWAPI.@]
- *
- * Retrieves the per-thread object reference set by SHSetThreadRef
- * "punk" - Address of a pointer to the IUnknown interface. Returns S_OK if
- *          successful or E_NOINTERFACE otherwise.
- */
-HRESULT WINAPI SHGetThreadRef (IUnknown ** ppunk)
-{
-    if (SHLWAPI_ThreadRef_index < 0) return E_NOINTERFACE;
-    *ppunk = (IUnknown *)TlsGetValue(SHLWAPI_ThreadRef_index);
-    return S_OK;
-}
-
-/*************************************************************************
- *      SHSetThreadRef	[SHLWAPI.@]
- *
- * Stores a per-thread reference to a COM object
- * "punk" - Pointer to the IUnknown interface of the object to
- *          which you want to store a reference. Returns S_OK if successful
- *          or an OLE error value.
- */
-HRESULT WINAPI SHSetThreadRef (IUnknown * punk)
-{
-    if (SHLWAPI_ThreadRef_index < 0) return E_NOINTERFACE;
-    TlsSetValue(SHLWAPI_ThreadRef_index, (LPVOID) punk);
-    return S_OK;
 }

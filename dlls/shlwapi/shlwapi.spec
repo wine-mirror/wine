@@ -15,7 +15,7 @@ init SHLWAPI_LibMain
 13  stdcall @(ptr ptr) SHLWAPI_13
 14  stdcall @(ptr ptr) SHLWAPI_14
 15  stdcall @(ptr ptr) SHLWAPI_15
-16  stdcall @(long long long long) SHLWAPI_16
+16  stdcall @(ptr ptr long ptr) SHCreateThread
 17  stdcall @ (ptr ptr) SHLWAPI_17
 18  stdcall @ (ptr ptr) SHLWAPI_18
 19  stdcall @ (ptr) SHLWAPI_19
@@ -223,7 +223,7 @@ init SHLWAPI_LibMain
 221 stub @
 222 stdcall @(long) SHLWAPI_222
 223 stdcall @(long) SHLWAPI_223
-224 stub @
+224 stdcall @(long) SHLWAPI_224
 225 stub @
 226 stub @
 227 stub @
@@ -355,7 +355,7 @@ init SHLWAPI_LibMain
 353 stub @
 354 stub @
 355 stub @
-356 stdcall @(long long long) SHLWAPI_356
+356 stdcall @(ptr ptr) SHLWAPI_356
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
 358 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_358
 359 forward @ kernel32.OpenEventW
@@ -423,7 +423,7 @@ init SHLWAPI_LibMain
 421 stub @
 422 stdcall @(str long) SHLWAPI_422
 423 stdcall @(wstr long) SHLWAPI_423
-424 stub @
+424 stdcall @(long) SHLWAPI_424
 425 stub @
 426 stub @
 427 stub @
@@ -712,13 +712,13 @@ init SHLWAPI_LibMain
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) SHCreateStreamOnFileW
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) SHCreateStreamOnFileEx
 @ stub    SHCreateStreamWrapper
-@ stub    SHCreateThread
 @ stdcall SHGetThreadRef (ptr) SHGetThreadRef
 @ stdcall SHRegDuplicateHKey (long) SHRegDuplicateHKey
 @ stdcall SHRegSetPathA(long str str str long) SHRegSetPathA
 @ stdcall SHRegSetPathW(long wstr wstr wstr long) SHRegSetPathW
 @ stub    SHRegisterValidateTemplate
 @ stdcall SHSetThreadRef (ptr) SHSetThreadRef
+@ stdcall SHReleaseThreadRef() SHReleaseThreadRef
 @ stub    SHSkipJunction
 @ stdcall SHStrDupA (str ptr) SHStrDupA
 @ stdcall SHStrDupW (wstr ptr) SHStrDupW
