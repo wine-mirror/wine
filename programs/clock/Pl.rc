@@ -1,7 +1,9 @@
 /*
- * Clock resources
+ * Clock (Polish resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 2004 LO3 Translation team
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,25 +20,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <windows.h>
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-#include "clock_res.h"
+MAIN_MENU MENU 
+{
+ POPUP "&Ustawienia" {
+  MENUITEM "Ana&logowy", IDM_ANALOG
+  MENUITEM "C&yfrowy", IDM_DIGITAL
+  MENUITEM SEPARATOR
+  MENUITEM "&Czcionka...", IDM_FONT
+  MENUITEM SEPARATOR
+  MENUITEM "&Bez paska tytu³owego", IDM_NOTITLE
+  MENUITEM SEPARATOR
+  MENUITEM "&Sekundy", IDM_SECONDS
+  MENUITEM "&Data", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Zawsze na wierzchu", IDM_ONTOP
+ }
+ POPUP "In&fo" {
+  MENUITEM "&Licencja...", IDM_LICENSE
+  MENUITEM "&BEZ GWARANCJI...", IDM_NOWARRANTY
+  MENUITEM "&O zegarze...", IDM_ABOUT
+ }
+}
 
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fi.rc"
-#include "Fr.rc"
-#include "Hu.rc"
-#include "It.rc"
-#include "Nl.rc"
-#include "Pl.rc"
-#include "Pt.rc"
-#include "Ru.rc"
-#include "Si.rc"
-#include "Sk.rc"
-#include "Sw.rc"
-#include "Th.rc"
-#include "Wa.rc"
-#include "Zh.rc"
+STRINGTABLE DISCARDABLE
+{
+IDS_CLOCK, "Zegar"
+}

@@ -80,7 +80,7 @@ CAPTION "Gratulacje!"
 DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Custom Game"
+CAPTION "Ustawienia U¿ytkownika"
 {
     LTEXT           "Wiersze",   IDIGNORE,   5,   5,  30,  10
     LTEXT           "Kolumny",   IDIGNORE,   5,  35,  30,  10
@@ -95,7 +95,7 @@ CAPTION "Custom Game"
 DLG_ABOUT DIALOG DISCARDABLE  0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "About"
+CAPTION "O Programie"
 {
     LTEXT                               "Winemine", IDIGNORE,  10,  10,  50,  10
     LTEXT         "Copyright 2000, Joshua Thielen", IDIGNORE,  35,  25, 115,  10
