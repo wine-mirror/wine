@@ -112,8 +112,8 @@ static void read_exported_symbols( const char *name, struct import *imp )
     if (!(ext = strrchr( name, '.' ))) ext = name + strlen(name);
 
     if (!(fullname = open_library( name ))) return;
-    cmdline = xmalloc( strlen(fullname) + 4 );
-    sprintf( cmdline, "nm %s", fullname );
+    cmdline = xmalloc( strlen(fullname) + 7 );
+    sprintf( cmdline, "nm -D %s", fullname );
     free( fullname );
 
     if (!(f = popen( cmdline, "r" )))
