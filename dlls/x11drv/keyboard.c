@@ -531,6 +531,15 @@ static const char main_key_TK[MAIN_LEN][4] =
 "zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:"
 };
 
+/*** Israeli keyboard layout */
+static const char main_key_IL[MAIN_LEN][4] =
+{
+ "`~;","1!1","2@2","3#3","4$4","5%5","6^6","7&7","8*8","9(9","0)0","-_-","=+=",
+ "qQ/","wW'","eE÷","rRø","tTà","yYè","uUå","iIï","oOí","pPô","[{[","]}]",
+ "aAù","sSã","dDâ","fFë","gGò","hHé","jJç","kKì","lLê",";:ó","\'\",","\\|\\",
+ "zZæ","xXñ","cCá","vVä","bBð","nNî","mMö",",<ú",".>õ","/?."
+};
+
 /*** VNC keyboard layout */
 static const WORD main_key_scan_vnc[MAIN_LEN] =
 {
@@ -600,6 +609,7 @@ static const struct {
  {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Turkish keyboard layout", 28599, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Israeli keyboard layout", 28598, &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"VNC keyboard layout", 28591, &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
@@ -989,7 +999,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
       for (i = 0; i < syms; i++) {
 	keysym = TSXKeycodeToKeysym (display, keyc, i);
 	/* Allow both one-byte and two-byte national keysyms */
-	if ((keysym < 0x800) && (keysym != ' '))
+	if ((keysym < 0x8000) && (keysym != ' '))
 	  ckey[i] = keysym & 0xFF;
 	else {
 	  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
