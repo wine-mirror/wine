@@ -332,6 +332,8 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
     table = handle_is_global(handle) ? global_table : process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
+    /* hack: windows seems to treat registry handles differently */
+    registry_close_handle( obj, handle );
     release_object( obj );
     return 1;
 }

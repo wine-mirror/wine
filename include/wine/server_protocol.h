@@ -1893,6 +1893,20 @@ struct set_registry_levels_reply
 };
 
 
+struct set_registry_notification_request
+{
+    struct request_header __header;
+    obj_handle_t hkey;
+    obj_handle_t event;
+    int          subtree;
+    unsigned int filter;
+};
+struct set_registry_notification_reply
+{
+    struct reply_header __header;
+};
+
+
 
 struct create_timer_request
 {
@@ -3044,6 +3058,7 @@ enum request
     REQ_save_registry,
     REQ_save_registry_atexit,
     REQ_set_registry_levels,
+    REQ_set_registry_notification,
     REQ_create_timer,
     REQ_open_timer,
     REQ_set_timer,
@@ -3220,6 +3235,7 @@ union generic_request
     struct save_registry_request save_registry_request;
     struct save_registry_atexit_request save_registry_atexit_request;
     struct set_registry_levels_request set_registry_levels_request;
+    struct set_registry_notification_request set_registry_notification_request;
     struct create_timer_request create_timer_request;
     struct open_timer_request open_timer_request;
     struct set_timer_request set_timer_request;
@@ -3394,6 +3410,7 @@ union generic_reply
     struct save_registry_reply save_registry_reply;
     struct save_registry_atexit_reply save_registry_atexit_reply;
     struct set_registry_levels_reply set_registry_levels_reply;
+    struct set_registry_notification_reply set_registry_notification_reply;
     struct create_timer_reply create_timer_reply;
     struct open_timer_reply open_timer_reply;
     struct set_timer_reply set_timer_reply;
@@ -3462,6 +3479,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 91
+#define SERVER_PROTOCOL_VERSION 92
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

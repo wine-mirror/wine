@@ -1358,6 +1358,14 @@ enum char_info_mode
 @END
 
 
+@REQ(set_registry_notification)
+    obj_handle_t hkey;         /* key to watch for changes */
+    obj_handle_t event;        /* event to set */
+    int          subtree;      /* should we watch the whole subtree? */
+    unsigned int filter;       /* things to watch */
+@END
+
+
 /* Create a waitable timer */
 @REQ(create_timer)
     int          inherit;       /* inherit flag */

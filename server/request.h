@@ -206,6 +206,7 @@ DECL_HANDLER(load_registry);
 DECL_HANDLER(save_registry);
 DECL_HANDLER(save_registry_atexit);
 DECL_HANDLER(set_registry_levels);
+DECL_HANDLER(set_registry_notification);
 DECL_HANDLER(create_timer);
 DECL_HANDLER(open_timer);
 DECL_HANDLER(set_timer);
@@ -381,6 +382,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_save_registry,
     (req_handler)req_save_registry_atexit,
     (req_handler)req_set_registry_levels,
+    (req_handler)req_set_registry_notification,
     (req_handler)req_create_timer,
     (req_handler)req_open_timer,
     (req_handler)req_set_timer,

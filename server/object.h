@@ -195,6 +195,7 @@ extern int get_page_size(void);
 extern void init_registry(void);
 extern void flush_registry(void);
 extern void close_registry(void);
+extern void registry_close_handle( struct object *obj, obj_handle_t hkey );
 
 /* atom functions */
 

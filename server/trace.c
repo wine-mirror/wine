@@ -1569,6 +1569,14 @@ static void dump_set_registry_levels_request( const struct set_registry_levels_r
     fprintf( stderr, " period=%d", req->period );
 }
 
+static void dump_set_registry_notification_request( const struct set_registry_notification_request *req )
+{
+    fprintf( stderr, " hkey=%p,", req->hkey );
+    fprintf( stderr, " event=%p,", req->event );
+    fprintf( stderr, " subtree=%d,", req->subtree );
+    fprintf( stderr, " filter=%08x", req->filter );
+}
+
 static void dump_create_timer_request( const struct create_timer_request *req )
 {
     fprintf( stderr, " inherit=%d,", req->inherit );
@@ -2445,6 +2453,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_save_registry_request,
     (dump_func)dump_save_registry_atexit_request,
     (dump_func)dump_set_registry_levels_request,
+    (dump_func)dump_set_registry_notification_request,
     (dump_func)dump_create_timer_request,
     (dump_func)dump_open_timer_request,
     (dump_func)dump_set_timer_request,
@@ -2612,6 +2621,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_key_value_reply,
     (dump_func)dump_enum_key_value_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
@@ -2789,6 +2799,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "save_registry",
     "save_registry_atexit",
     "set_registry_levels",
+    "set_registry_notification",
     "create_timer",
     "open_timer",
     "set_timer",

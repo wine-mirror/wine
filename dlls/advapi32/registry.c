@@ -1841,7 +1841,30 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
                                      DWORD fdwNotifyFilter, HANDLE hEvent,
                                      BOOL fAsync )
 {
-    FIXME("(%p,%i,%ld,%p,%i): stub\n",hkey,fWatchSubTree,fdwNotifyFilter,
+    LONG ret;
+
+    TRACE("(%p,%i,%ld,%p,%i)\n",hkey,fWatchSubTree,fdwNotifyFilter,
           hEvent,fAsync);
-    return ERROR_SUCCESS;
+
+    if( !fAsync )
+        hEvent = CreateEventA(NULL, 0, 0, NULL);
+
+    SERVER_START_REQ( set_registry_notification )
+    {
+        req->hkey    = hkey;
+        req->event   = hEvent;
+        req->subtree = fWatchSubTree;
+        req->filter  = fdwNotifyFilter;
+        ret = RtlNtStatusToDosError( wine_server_call(req) );
+    }
+    SERVER_END_REQ;
+ 
+    if( !fAsync )
+    {
+        if( ret == ERROR_SUCCESS )
+            WaitForSingleObject( hEvent, INFINITE );
+        CloseHandle( hEvent );
+    }
+
+    return ret;
 }

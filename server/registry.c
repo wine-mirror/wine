@@ -48,6 +48,16 @@
 #include "winternl.h"
 #include "wine/library.h"
 
+struct notify
+{
+    struct event     *event;    /* event to set when changing this key */
+    int               subtree;  /* true if subtree notification */
+    unsigned int      filter;   /* which events to notify on */
+    obj_handle_t      hkey;     /* hkey associated with this notification */
+    struct notify    *next;     /* list of notifications */
+    struct notify    *prev;     /* list of notifications */
+};
+
 /* a registry key */
 struct key
 {
@@ -64,6 +74,8 @@ struct key
     short             flags;       /* flags */
     short             level;       /* saving level */
     time_t            modif;       /* last modification time */
+    struct notify    *first_notify; /* list of notifications */
+    struct notify    *last_notify; /* list of notifications */
 };
 
 /* key flags */
@@ -284,6 +296,53 @@ static void key_dump( struct object *obj, int verbose )
     fprintf( stderr, "\n" );
 }
 
+/* notify waiter and maybe delete the notification */
+static void do_notification( struct key *key, struct notify *notify, int del )
+{
+    if( notify->event )
+    {
+        set_event( notify->event );
+        release_object( notify->event );
+        notify->event = NULL;
+    }
+
+    if ( !del )
+        return;
+    if( notify->next )
+        notify->next->prev = notify->prev;
+    else
+        key->last_notify = notify->prev;
+    if( notify->prev )
+        notify->prev->next = notify->next;
+    else
+        key->first_notify = notify->next;
+    free( notify );
+}
+
+static struct notify *find_notify( struct key *key, obj_handle_t hkey)
+{
+    struct notify *n;
+
+    for( n=key->first_notify; n; n = n->next)
+        if( n->hkey == hkey )
+            break;
+    return n;
+}
+
+/* close the notification associated with a handle */
+void registry_close_handle( struct object *obj, obj_handle_t hkey )
+{
+    struct key * key = (struct key *) obj;
+    struct notify *notify;
+
+    if( obj->ops != &key_ops )
+        return;
+    notify = find_notify( key, hkey );
+    if( !notify )
+        return;
+    do_notification( key, notify, 1 );
+}
+
 static void key_destroy( struct object *obj )
 {
     int i;
@@ -302,6 +361,9 @@ static void key_destroy( struct object *obj )
         key->subkeys[i]->parent = NULL;
         release_object( key->subkeys[i] );
     }
+    /* unconditionally notify everything waiting on this key */
+    while ( key->first_notify )
+        do_notification( key, key->first_notify, 1 );
 }
 
 /* duplicate a key path */
@@ -389,6 +451,8 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
         key->level       = current_level;
         key->modif       = modif;
         key->parent      = NULL;
+        key->first_notify = NULL;
+        key->last_notify  = NULL;
         if (!(key->name = strdupW( name )))
         {
             release_object( key );
@@ -420,12 +484,32 @@ static void make_clean( struct key *key )
     for (i = 0; i <= key->last_subkey; i++) make_clean( key->subkeys[i] );
 }
 
-/* update key modification time */
-static void touch_key( struct key *key )
+/* go through all the notifications and send them if necessary */
+void check_notify( struct key *key, unsigned int change, int not_subtree )
 {
+    struct notify *n = key->first_notify;
+    while (n)
+    {
+        struct notify *next = n->next;
+        if ( ( not_subtree || n->subtree ) && ( change & n->filter ) )
+            do_notification( key, n, 0 );
+        n = next;
+    }
+}
+
+/* update key modification time */
+static void touch_key( struct key *key, unsigned int change )
+{
+    struct key *k;
+
     key->modif = time(NULL);
     key->level = max( key->level, current_level );
     make_dirty( key );
+
+    /* do notifications */
+    check_notify( key, change, 1 );
+    for ( k = key->parent; k; k = k->parent )
+        check_notify( k, change & ~REG_NOTIFY_CHANGE_LAST_SET, 0 );
 }
 
 /* try to grow the array of subkeys; return 1 if OK, 0 on error */
@@ -583,6 +667,7 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
 
     if (!*path) goto done;
     *created = 1;
+    touch_key( key, REG_NOTIFY_CHANGE_NAME ); /* FIXME: is this right? */
     if (flags & KEY_DIRTY) make_dirty( key );
     base = key;
     base_idx = index;
@@ -718,7 +803,7 @@ static void delete_key( struct key *key )
     }
     if (debug_level > 1) dump_operation( key, NULL, "Delete" );
     free_subkey( parent, index );
-    touch_key( parent );
+    touch_key( parent, REG_NOTIFY_CHANGE_NAME );
 }
 
 /* try to grow the array of values; return 1 if OK, 0 on error */
@@ -821,7 +906,7 @@ static void set_value( struct key *key, WCHAR *name, int type, const void *data,
     value->type  = type;
     value->len   = len;
     value->data  = ptr;
-    touch_key( key );
+    touch_key( key, REG_NOTIFY_CHANGE_LAST_SET );
     if (debug_level > 1) dump_operation( key, value, "Set" );
 }
 
@@ -912,7 +997,7 @@ static void delete_value( struct key *key, const WCHAR *name )
     if (value->data) free( value->data );
     for (i = index; i < key->last_value; i++) key->values[i] = key->values[i + 1];
     key->last_value--;
-    touch_key( key );
+    touch_key( key, REG_NOTIFY_CHANGE_LAST_SET );
 
     /* try to shrink the array */
     nb_values = key->nb_values;
@@ -1814,6 +1899,55 @@ DECL_HANDLER(save_registry_atexit)
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS )))
     {
         register_branch_for_saving( key, get_req_data(), get_req_data_size() );
+        release_object( key );
+    }
+}
+
+/* add a registry key change notification */
+DECL_HANDLER(set_registry_notification)
+{
+    struct key *key;
+    struct event *event;
+    struct notify *notify;
+
+    key = get_hkey_obj( req->hkey, KEY_NOTIFY );
+    if( key )
+    {
+        event = get_event_obj( current->process, req->event, SYNCHRONIZE );
+        if( event )
+        {
+            notify = find_notify( key, req->hkey );
+            if( notify )
+            {
+                release_object( notify->event );
+                grab_object( event );
+                notify->event = event;
+            }
+            else
+            {
+                notify = (struct notify *) malloc (sizeof *notify);
+                if( notify )
+                {
+                    grab_object( event );
+                    notify->event   = event;
+                    notify->subtree = req->subtree;
+                    notify->filter  = req->filter;
+                    notify->hkey    = req->hkey;
+    
+                    /* add to linked list */
+                    notify->prev = NULL;
+                    notify->next = key->first_notify;
+                    if ( notify->next )
+                        notify->next->prev = notify;
+                    else
+                        key->last_notify = notify;
+                    key->first_notify = notify;
+                }
+                else
+                    set_error( STATUS_NO_MEMORY );
+            }
+            release_object( event );
+        }
         release_object( key );
     }
 }
