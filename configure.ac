@@ -95,18 +95,6 @@ AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lmmap for OS/2
 AC_CHECK_LIB(mmap,mmap)
 
-DLLIBS=""
-AC_SUBST(DLLIBS)
-AC_CHECK_HEADERS(dlfcn.h,
-    [AC_CHECK_FUNCS(dlopen,,
-        [AC_CHECK_LIB(dl,dlopen,
-                     [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
-                     DLLIBS="-ldl"],
-                     LIBEXT="a")]
- 	)],
- 	LIBEXT="a"
-    )
-
 JPEGLIB=""
 AC_SUBST(JPEGLIB)
 AC_CHECK_HEADERS(jpeglib.h,
@@ -710,19 +698,29 @@ dnl **** Check for working dll ****
 
 LDSHARED=""
 LDDLLFLAGS=""
-if test "$LIBEXT" = "so"
-then
-  case $target_os in
-    *cygwin*)
-      AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
-      if test "$DLLWRAP" = "dllwrap"; then
-        dnl FIXME - check whether dllwrap works correctly...
-        LIBEXT="dll"
-      else
-        LIBEXT="a"
-      fi
-      ;;
-    *)
+DLLIBS=""
+
+case $target_os in
+  cygwin|mingw32)
+    AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
+    if test "$DLLWRAP" = "dllwrap"; then
+      dnl FIXME - check whether dllwrap works correctly...
+      LIBEXT="dll"
+    else
+      LIBEXT="a"
+    fi
+    ;;
+  *)
+    AC_CHECK_HEADERS(dlfcn.h,
+        [AC_CHECK_FUNCS(dlopen,,
+            [AC_CHECK_LIB(dl,dlopen,
+                         [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
+                          DLLIBS="-ldl"],
+                         [LIBEXT="a"])])],
+        [LIBEXT="a"])
+
+    if test "$LIBEXT" = "so"
+    then
       AC_CACHE_CHECK([whether we can build a GNU style ELF dll],ac_cv_c_dll_gnuelf,
       [saved_cflags=$CFLAGS
       CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
@@ -747,9 +745,9 @@ then
           LDDLLFLAGS="-Wl,-B,symbolic"
         fi
       fi
-      ;;
-  esac
-fi
+    fi
+    ;;
+esac
 
 if test "$LIBEXT" = "a"; then
   AC_MSG_ERROR(
@@ -773,6 +771,7 @@ elif test "$LIBEXT" = "dll"; then
     LDPATH="PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$PATH\""
 fi
 
+AC_SUBST(DLLIBS)
 AC_SUBST(DLLFLAGS)
 AC_SUBST(DLLEXT)
 AC_SUBST(LDSHARED)
