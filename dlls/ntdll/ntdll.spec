@@ -532,7 +532,7 @@
 @ stdcall RtlTimeToSecondsSince1970(ptr ptr)
 @ stdcall RtlTimeToSecondsSince1980(ptr ptr)
 @ stdcall RtlTimeToTimeFields (long long)
-@ cdecl -i386 -norelay RtlUlongByteSwap()
+@ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
 @ cdecl -ret64 RtlUlonglongByteSwap(long long)
 @ stdcall RtlUnicodeStringToAnsiSize(ptr)
 @ stdcall RtlUnicodeStringToAnsiString(ptr ptr long)
@@ -558,7 +558,7 @@
 @ stdcall RtlUpperChar(long)
 @ stdcall RtlUpperString(ptr ptr)
 @ stub RtlUsageHeap
-@ cdecl -i386 -norelay RtlUshortByteSwap()
+@ cdecl -i386 -norelay RtlUshortByteSwap() NTDLL_RtlUshortByteSwap
 @ stub RtlValidAcl
 @ stdcall RtlValidSecurityDescriptor(ptr)
 @ stdcall RtlValidSid(ptr)

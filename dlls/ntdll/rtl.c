@@ -709,7 +709,7 @@ ULONGLONG __cdecl RtlUlonglongByteSwap(ULONGLONG i)
  *  ix86 version takes argument in %ecx. Other systems use the inline version.
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC(RtlUlongByteSwap,
+__ASM_GLOBAL_FUNC(NTDLL_RtlUlongByteSwap,
                   "movl %ecx,%eax\n\t"
                   "bswap %eax\n\t"
                   "ret");
@@ -724,7 +724,7 @@ __ASM_GLOBAL_FUNC(RtlUlongByteSwap,
  *  i386 version takes argument in %cx. Other systems use the inline version.
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC(RtlUshortByteSwap,
+__ASM_GLOBAL_FUNC(NTDLL_RtlUshortByteSwap,
                   "movb %ch,%al\n\t"
                   "movb %cl,%ah\n\t"
                   "ret");
