@@ -28,7 +28,6 @@
 #include "winproc.h"
 #include "task.h"
 #include "thread.h"
-#include "process.h"
 #include "winerror.h"
 #include "mdi.h"
 #include "local.h"
@@ -36,8 +35,8 @@
 #include "stackframe.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win)
-DECLARE_DEBUG_CHANNEL(msg)
+DEFAULT_DEBUG_CHANNEL(win);
+DECLARE_DEBUG_CHANNEL(msg);
 
 /**********************************************************************/
 
@@ -699,54 +698,39 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Fix the coordinates */
 
-    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
+    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16 ||
+        cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
     {
-        PDB *pdb = PROCESS_Current();
+        STARTUPINFOA info;
+        info.dwFlags = 0;
+        if (!(cs->style & (WS_CHILD | WS_POPUP))) GetStartupInfoA( &info );
 
-       /* Never believe Microsoft's documentation... CreateWindowEx doc says 
-        * that if an overlapped window is created with WS_VISIBLE style bit 
-        * set and the x parameter is set to CW_USEDEFAULT, the system ignores
-        * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
-        * reveals that
-        *
-        * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
-        * 2) it does not ignore the y parameter as the docs claim; instead, it 
-        *    uses it as second parameter to ShowWindow() unless y is either
-        *    CW_USEDEFAULT or CW_USEDEFAULT16.
-        * 
-        * The fact that we didn't do 2) caused bogus windows pop up when wine
-        * was running apps that were using this obscure feature. Example - 
-        * calc.exe that comes with Win98 (only Win98, it's different from 
-        * the one that comes with Win95 and NT)
-        */
-        if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) sw = cs->y;
-
-        /* We have saved cs->y, now we can trash it */
-        if (   !(cs->style & (WS_CHILD | WS_POPUP))
-            &&  (pdb->env_db->startup_info->dwFlags & STARTF_USEPOSITION) )
+        if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
         {
-            cs->x = pdb->env_db->startup_info->dwX;
-            cs->y = pdb->env_db->startup_info->dwY;
+            /* Never believe Microsoft's documentation... CreateWindowEx doc says 
+             * that if an overlapped window is created with WS_VISIBLE style bit 
+             * set and the x parameter is set to CW_USEDEFAULT, the system ignores
+             * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
+             * reveals that
+             *
+             * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
+             * 2) it does not ignore the y parameter as the docs claim; instead, it 
+             *    uses it as second parameter to ShowWindow() unless y is either
+             *    CW_USEDEFAULT or CW_USEDEFAULT16.
+             * 
+             * The fact that we didn't do 2) caused bogus windows pop up when wine
+             * was running apps that were using this obscure feature. Example - 
+             * calc.exe that comes with Win98 (only Win98, it's different from 
+             * the one that comes with Win95 and NT)
+             */
+            if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) sw = cs->y;
+            cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : 0;
+            cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : 0;
         }
-        else
+        if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
         {
-            cs->x = 0;
-            cs->y = 0;
-        }
-    }
-    if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
-    {
-        PDB *pdb = PROCESS_Current();
-        if (   !(cs->style & (WS_CHILD | WS_POPUP))
-            &&  (pdb->env_db->startup_info->dwFlags & STARTF_USESIZE) )
-        {
-            cs->cx = pdb->env_db->startup_info->dwXSize;
-            cs->cy = pdb->env_db->startup_info->dwYSize;
-        }
-        else
-        {
-            cs->cx = 600; /* FIXME */
-            cs->cy = 400;
+            cs->cx = (info.dwFlags & STARTF_USESIZE) ? info.dwXSize : 0;
+            cs->cy = (info.dwFlags & STARTF_USESIZE) ? info.dwYSize : 0;
         }
     }
 
@@ -2409,7 +2393,7 @@ HWND WINAPI SetParent( HWND hwndChild, HWND hwndNewParent )
      WM_WINDOWPOSCHANGED notification messages. 
   */
   SetWindowPos( hwndChild, HWND_TOPMOST, 0, 0, 0, 0,
-      SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+      SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
   /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
    * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 
