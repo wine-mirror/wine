@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT FONTFORGE LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPELIBS FREETYPEINCL FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS CAPI4LINUXLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDLIBWINEFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS WINE_BINARIES MAIN_BINARY LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT FONTFORGE LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPELIBS FREETYPEINCL FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDLIBWINEFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS WINE_BINARIES MAIN_BINARY LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -12050,8 +12050,6 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_CAPI4LINUX 1
 _ACEOF
 
-			CAPI4LINUXLIBS="-lcapi20"
-
 
 fi
 
@@ -15774,6 +15772,80 @@ if test "x$ac_cv_lib_soname_lcms" != xNONE
 then
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBLCMS "$ac_cv_lib_soname_lcms"
+_ACEOF
+fi
+
+echo "$as_me:$LINENO: checking for -lcapi20 soname" >&5
+echo $ECHO_N "checking for -lcapi20 soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_capi20+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lcapi20  $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char capi20_isinstalled ();
+int
+main ()
+{
+capi20_isinstalled ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_capi20=`$ac_cv_path_LDD conftest$ac_exeext | grep libcapi20\\.$LIBEXT | sed "s/^.*\(libcapi20\.$LIBEXT[^	 ]*\).*$/\1/"`
+  if test "x$ac_cv_lib_soname_capi20" = "x"
+  then
+     ac_cv_lib_soname_capi20="libcapi20.$LIBEXT"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_soname_capi20="libcapi20.$LIBEXT"
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_capi20" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_capi20" >&6
+if test "x$ac_cv_lib_soname_capi20" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBCAPI20 "$ac_cv_lib_soname_capi20"
 _ACEOF
 fi
 fi
@@ -20835,7 +20907,6 @@ s,@ARTSLIBS@,$ARTSLIBS,;t t
 s,@ARTSINCL@,$ARTSINCL,;t t
 s,@ALSALIBS@,$ALSALIBS,;t t
 s,@AUDIOIOLIBS@,$AUDIOIOLIBS,;t t
-s,@CAPI4LINUXLIBS@,$CAPI4LINUXLIBS,;t t
 s,@EXTRACFLAGS@,$EXTRACFLAGS,;t t
 s,@DLLEXT@,$DLLEXT,;t t
 s,@DLLFLAGS@,$DLLFLAGS,;t t
