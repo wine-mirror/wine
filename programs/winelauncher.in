@@ -148,30 +148,30 @@ fi
 #------------------------------------------------------------------------------
 WINE_BIN_NAME=wine.bin
 if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
-    WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+    WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -n 1`
 fi
 
 if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
-    WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+    WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -n 1`
 fi
 
 if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
     WINE_BIN_NAME=wine
     if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
-        WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+        WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -n 1`
     fi
 
     if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
-        WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+        WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -n 1`
     fi
 fi
 
 if [ ! -r $WINELIB/libwine.so ] ; then
-    WINELIB=`find $argv0_dir -maxdepth 2 -name 'libwine.so' -printf "%h\n" | head -1`
+    WINELIB=`find $argv0_dir -maxdepth 2 -name 'libwine.so' -printf "%h\n" | head -n 1`
 fi
 
 if [ ! -r $WINELIB/libwine.so ] ; then
-    WINELIB=`find $argv0_dir/../ -maxdepth 2 -name 'libwine.so' -printf "%h\n" | head -1`
+    WINELIB=`find $argv0_dir/../ -maxdepth 2 -name 'libwine.so' -printf "%h\n" | head -n 1`
 fi
 
 if [ -x $WINEBIN/wineserver ] ; then
