@@ -2477,31 +2477,38 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	{
 	    PWSTR p = szString + 1;
 
-	    nIndex = infoPtr->nNumStrings;
-	    while (*p != L'|') {
+            nIndex = infoPtr->nNumStrings;
+            while (*p != L'|' && *p != L'\0') {
+                PWSTR np;
 
-	    if (infoPtr->nNumStrings == 0) {
-		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(LPWSTR));
-	    }
-	    else {
-		LPWSTR *oldStrings = infoPtr->strings;
-		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-		memcpy (&infoPtr->strings[0], &oldStrings[0],
-			sizeof(LPWSTR) * infoPtr->nNumStrings);
-		COMCTL32_Free (oldStrings);
-	    }
+                if (infoPtr->nNumStrings == 0) {
+                    infoPtr->strings = COMCTL32_Alloc (sizeof(LPWSTR));
+                }
+                else
+                {
+                    LPWSTR *oldStrings = infoPtr->strings;
+                    infoPtr->strings = COMCTL32_Alloc(sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+                    memcpy(&infoPtr->strings[0], &oldStrings[0],
+                           sizeof(LPWSTR) * infoPtr->nNumStrings);
+                    COMCTL32_Free(oldStrings);
+                }
 
-	    len = COMCTL32_StrChrW (p, L'|') - p;
-	    TRACE("len=%d %s\n", len, debugstr_w(p));
-	    infoPtr->strings[infoPtr->nNumStrings] =
-		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	    lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len+1);
-	    infoPtr->nNumStrings++;
+                np=COMCTL32_StrChrW (p, L'|');
+                if (np!=NULL) {
+                    len = np - p;
+                    np++;
+                } else {
+                    len = strlenW(p);
+                    np = p + len;
+                }
+                TRACE("len=%d %s\n", len, debugstr_w(p));
+                infoPtr->strings[infoPtr->nNumStrings] =
+                    COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+                lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len+1);
+                infoPtr->nNumStrings++;
 
-		p += (len+1);
-	    }
+                p = np;
+            }
 	}
 	else
 	{
@@ -2982,6 +2989,9 @@ TOOLBAR_GetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return -1;
 
     btnPtr = &infoPtr->buttons[nIndex];
+
+    if(!btnPtr)
+        return -1;
 
     if (lpTbInfo->dwMask & TBIF_COMMAND)
 	lpTbInfo->idCommand = btnPtr->idCommand;
