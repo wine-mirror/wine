@@ -842,6 +842,12 @@ static void do_trap( CONTEXT *context, int trap_code )
         {
             context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
             NtGetContextThread(GetCurrentThread(), context);
+            /* do we really have a bp from a debug register ?
+             * if not, then someone did a kill(SIGTRAP) on us, and we
+             * shall return a breakpoint, not a single step exception
+             */
+            if (!(context->Dr6 & 0xf))
+                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         }
         break;
     case T_BPTFLT:   /* Breakpoint exception */
