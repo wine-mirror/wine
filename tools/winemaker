@@ -403,6 +403,45 @@ sub bsearch($$)
   }
 }
 
+##
+# Retrieves the contents of the specified directory.
+# We either get it from the directories hashtable which acts as a
+# cache, or use opendir, readdir, closedir and store the result
+# in the hashtable.
+sub get_directory_contents($)
+{
+  my $dirname=$_[0];
+  my $directory;
+
+  #print "getting the contents of $dirname\n";
+
+  # check for a cached version
+  $dirname =~ s+/$++;
+  if ($dirname eq "") {
+    $dirname=cwd;
+  }
+  $directory=$directories{$dirname};
+  if (defined $directory) {
+    #print "->@$directory\n";
+    return $directory;
+  }
+
+  # Read this directory
+  if (opendir(DIRECTORY, "$dirname")) {
+    my @files=readdir DIRECTORY;
+    closedir(DIRECTORY);
+    $directory=\@files;
+  } else {
+    # Return an empty list
+    #print "error: cannot open $dirname\n";
+    my @files;
+    $directory=\@files;
+  }
+  #print "->@$directory\n";
+  $directories{$dirname}=$directory;
+  return $directory;
+}
+
 
 
 #####
@@ -1022,45 +1061,6 @@ sub fix_file_and_directory_names($)
 # This maps a directory name to a reference to an array listing
 # its contents (files and directories)
 my %directories;
-
-##
-# Retrieves the contents of the specified directory.
-# We either get it from the directories hashtable which acts as a
-# cache, or use opendir, readdir, closedir and store the result
-# in the hashtable.
-sub get_directory_contents($)
-{
-  my $dirname=$_[0];
-  my $directory;
-
-  #print "getting the contents of $dirname\n";
-
-  # check for a cached version
-  $dirname =~ s+/$++;
-  if ($dirname eq "") {
-    $dirname=cwd;
-  }
-  $directory=$directories{$dirname};
-  if (defined $directory) {
-    #print "->@$directory\n";
-    return $directory;
-  }
-
-  # Read this directory
-  if (opendir(DIRECTORY, "$dirname")) {
-    my @files=readdir DIRECTORY;
-    closedir(DIRECTORY);
-    $directory=\@files;
-  } else {
-    # Return an empty list
-    #print "error: cannot open $dirname\n";
-    my @files;
-    $directory=\@files;
-  }
-  #print "->@$directory\n";
-  $directories{$dirname}=$directory;
-  return $directory;
-}
 
 ##
 # Try to find a file for the specified filename. The attempt is

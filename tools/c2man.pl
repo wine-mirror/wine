@@ -66,6 +66,23 @@ my $year = $datetime[5] + 1900;
 my $date = "$months[$datetime[4]] $year";
 
 
+sub output_api_comment($);
+sub output_api_footer($);
+sub output_api_header($);
+sub output_api_name($);
+sub output_api_synopsis($);
+sub output_close_api_file();
+sub output_comment($);
+sub output_html_index_files();
+sub output_html_stylesheet();
+sub output_open_api_file($);
+sub output_sgml_dll_file($);
+sub output_sgml_master_file($);
+sub output_spec($);
+sub process_comment($);
+sub process_extra_comment($);
+
+
 # Generate the list of exported entries for the dll
 sub process_spec_file($)
 {

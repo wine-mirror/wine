@@ -186,44 +186,6 @@ sub all_modules($) {
     return sort(keys(%$module2spec_file));
 }
 
-sub complete_modules($$) {
-    my $self = shift;
-
-    my $c_files = shift;
-
-    my %dirs;
-
-    foreach my $file (@$c_files) {
-	my $dir = file_directory("$current_dir/$file");
-	$dirs{$dir}++;
-    }
-
-    my @c_files = get_c_files("winelib");
-    @c_files = files_skip(@c_files);
-    foreach my $file (@c_files) {
-	my $dir = file_directory($file);
-	if(exists($dirs{$dir})) {
-	    $dirs{$dir}--;
-	}
-    }
-
-    my @complete_modules = ();
-    foreach my $module ($self->all_modules) {
-	my $index = -1;
-	my @dirs = $self->allowed_dirs_for_module($module);
-	foreach my $dir (@dirs) {
-	    if(exists($dirs{$dir}) && $dirs{$dir} == 0) {
-		$index++;
-	    }
-	}
-	if($index == $#dirs) {
-	    push @complete_modules, $module;
-	}
-    }
-
-    return @complete_modules;
-}
-
 sub is_allowed_module($$) {
     my $self = shift;
 
@@ -324,6 +286,44 @@ sub found_module_in_dir($$$) {
     $dir =~ s%/\.$%%;
 
     $$used_module_dirs{$module}{$dir}++;
+}
+
+sub complete_modules($$) {
+    my $self = shift;
+
+    my $c_files = shift;
+
+    my %dirs;
+
+    foreach my $file (@$c_files) {
+	my $dir = file_directory("$current_dir/$file");
+	$dirs{$dir}++;
+    }
+
+    my @c_files = get_c_files("winelib");
+    @c_files = files_skip(@c_files);
+    foreach my $file (@c_files) {
+	my $dir = file_directory($file);
+	if(exists($dirs{$dir})) {
+	    $dirs{$dir}--;
+	}
+    }
+
+    my @complete_modules = ();
+    foreach my $module ($self->all_modules) {
+	my $index = -1;
+	my @dirs = $self->allowed_dirs_for_module($module);
+	foreach my $dir (@dirs) {
+	    if(exists($dirs{$dir}) && $dirs{$dir} == 0) {
+		$index++;
+	    }
+	}
+	if($index == $#dirs) {
+	    push @complete_modules, $module;
+	}
+    }
+
+    return @complete_modules;
 }
 
 sub global_report($) {
