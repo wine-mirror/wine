@@ -69,6 +69,8 @@
 #include "options.h"
 #include "monitor.h"
 
+static char *ddProp = "WINE_DDRAW_Property";
+
 /* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"
 #include "d3d_private.h"
@@ -3035,8 +3037,6 @@ static ICOM_VTABLE(IDirect3D2) d3d2vt =
 /* Used in conjunction with cbWndExtra for storage of the this ptr for the window.
  * Please adjust allocation in Xlib_DirectDrawCreate if you store more data here.
  */
-static INT ddrawXlibThisOffset = 0;
-
 static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
 					       IDirectDrawSurfaceImpl* lpdsf)
 {
@@ -3547,8 +3547,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_SetCooperativeLevel(
 static void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
 	RECT	rect;
 
-	/* Do not destroy the application supplied cooperative window */
-	if (This->d.window && This->d.window != This->d.mainWindow) {
+	/* Do destroy only our window */
+	if (This->d.window && GetPropA(This->d.window,ddProp)) {
 		DestroyWindow(This->d.window);
 		This->d.window = 0;
 	}
@@ -3562,11 +3562,11 @@ static void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
 		GetWindowRect(This->d.mainWindow,&rect);
 		if ((((rect.right-rect.left) >= This->d.width)	&&
 		     ((rect.bottom-rect.top) >= This->d.height))
-		)
+		) {
 		    This->d.window = This->d.mainWindow;
-		/*SetWindowPos(This->d.mainWindow,HWND_TOPMOST,0,0,This->d.width,This->d.height,SWP_NOMOVE|SWP_NOOWNERZORDER);*/
-
-
+		    /* SetWindowPos(This->d.mainWindow,HWND_TOPMOST,0,0,This->d.width,This->d.height,SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER); */
+		    This->d.paintable = 1;
+		}
 	}
 	/* ... failed, create new one. */
 	if (!This->d.window) {
@@ -3584,7 +3584,7 @@ static void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
 		    NULL
 	    );
 	    /*Store THIS with the window. We'll use it in the window procedure*/
-	    SetWindowLongA(This->d.window,ddrawXlibThisOffset,(LONG)This);
+	    SetPropA(This->d.window,ddProp,(LONG)This);
 	    ShowWindow(This->d.window,TRUE);
 	    UpdateWindow(This->d.window);
 	}
@@ -3613,7 +3613,7 @@ static int _common_depth_to_pixelformat(DWORD depth,
 	if (vi[j].depth == pf[i].depth) {
 	  pixelformat->dwSize = sizeof(*pixelformat);
 	  if (depth == 8) {
-	    pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
+	    pixelformat->dwFlags = DDPF_PALETTEINDEXED8|DDPF_RGB;
 	    pixelformat->u1.dwRBitMask = 0;
 	    pixelformat->u2.dwGBitMask = 0;
 	    pixelformat->u3.dwBBitMask = 0;
@@ -3669,7 +3669,7 @@ static int _common_depth_to_pixelformat(DWORD depth,
 		pixelformat->dwSize = sizeof(*pixelformat);
 		pixelformat->dwFourCC = 0;
 		if (depth == 8) {
-		  pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
+		  pixelformat->dwFlags = DDPF_RGB|DDPF_PALETTEINDEXED8;
 		  pixelformat->u.dwRGBBitCount = 8;
 		  pixelformat->u1.dwRBitMask = 0;
 		  pixelformat->u2.dwGBitMask = 0;
@@ -3741,7 +3741,7 @@ static void _DGA_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
   pf->dwFourCC = 0;
   pf->u.dwRGBBitCount = This->e.dga.dev->mode.bitsPerPixel;
   if (This->e.dga.dev->mode.depth == 8) {
-    pf->dwFlags = DDPF_PALETTEINDEXED8;
+    pf->dwFlags = DDPF_PALETTEINDEXED8|DDPF_RGB;
     pf->u1.dwRBitMask = 0;
     pf->u2.dwGBitMask = 0;
     pf->u3.dwBBitMask = 0;
@@ -4343,7 +4343,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
                } else
 #endif /* defined(HAVE_LIBXXF86DGA2) */
 		 TSXF86DGADirectVideo(display,DefaultScreen(display),0);
-		if (This->d.window && (This->d.mainWindow != This->d.window))
+		if (This->d.window && GetPropA(This->d.window,ddProp))
 			DestroyWindow(This->d.window);
 #ifdef HAVE_LIBXXF86VM
 		if (orig_mode) {
@@ -4373,7 +4373,7 @@ static ULONG WINAPI Xlib_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
         TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
 	if (!--(This->ref)) {
-		if (This->d.window && (This->d.mainWindow != This->d.window))
+		if (This->d.window && GetPropA(This->d.window,ddProp))
 			DestroyWindow(This->d.window);
 		HeapFree(GetProcessHeap(),0,This);
 		return S_OK;
@@ -4592,7 +4592,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 	    ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
 	    ddsfd.ddpfPixelFormat.u.dwRGBBitCount = modes[i].bitsPerPixel;
 	    if (modes[i].depth == 8) {
-	      ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+	      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB|DDPF_PALETTEINDEXED8;
 	      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
 	      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
 	      ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
@@ -4739,7 +4739,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 
 	  ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	  ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
-	  ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+	  ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB|DDPF_PALETTEINDEXED8;
 	  ddsfd.ddpfPixelFormat.dwFourCC = 0;
 	  ddsfd.ddpfPixelFormat.u.dwRGBBitCount = 8;
 	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
@@ -4799,7 +4799,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 		    ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
 		    ddsfd.ddpfPixelFormat.dwFourCC = 0;
 		    if (depth == 8) {
-		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB|DDPF_PALETTEINDEXED8;
 		      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = 8;
 		      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
 		      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
@@ -4878,7 +4878,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->dwHeight = This->d.height;
 	lpddsfd->dwWidth = This->d.width;
 	lpddsfd->lPitch = This->e.dga.fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
-	lpddsfd->dwBackBufferCount = 1;
+	lpddsfd->dwBackBufferCount = 2;
 	lpddsfd->u.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
@@ -4898,7 +4898,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->dwHeight = This->d.height;
 	lpddsfd->dwWidth = This->d.width;
 	lpddsfd->lPitch = lpddsfd->dwWidth * PFGET_BPP(This->d.directdraw_pixelformat);
-	lpddsfd->dwBackBufferCount = 1;
+	lpddsfd->dwBackBufferCount = 2;
 	lpddsfd->u.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
@@ -5300,10 +5300,8 @@ static LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lPa
    /* FIXME(ddraw,"(0x%04x,%s,0x%08lx,0x%08lx),stub!\n",(int)hwnd,SPY_GetMsgName(msg),(long)wParam,(long)lParam); */
 
    SetLastError( ERROR_SUCCESS );
-   ddraw  = (IDirectDrawImpl*)GetWindowLongA( hwnd, ddrawXlibThisOffset );
-   if( (!ddraw)  &&
-       ( ( lastError = GetLastError() ) != ERROR_SUCCESS )
-     ) 
+   ddraw  = (IDirectDrawImpl*)GetPropA( hwnd, ddProp );
+   if( (!ddraw)  && ( ( lastError = GetLastError() ) != ERROR_SUCCESS )) 
    {
      ERR("Unable to retrieve this ptr from window. Error %08lx\n", lastError );
    }
@@ -5549,8 +5547,7 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	wc.style	= CS_GLOBALCLASS;
 	wc.lpfnWndProc	= Xlib_DDWndProc;
 	wc.cbClsExtra	= 0;
-	wc.cbWndExtra	= /* Defines extra mem for window. This is used for storing this */
-                          sizeof( LPDIRECTDRAW ); /*  ddrawXlibThisOffset */
+	wc.cbWndExtra	= 0;
 
         /* We can be a child of the desktop since we're really important */
         /*
