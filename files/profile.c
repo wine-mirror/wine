@@ -767,6 +767,9 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
+    if (key_name && !(key_name[0]))
+      /* Win95 returns 0 on keyname "". Tested with Likse32 bon 000227*/
+      return 0;
     if (section && section[0])
         return PROFILE_GetSection(CurProfile->section, section, buffer, len,
 				FALSE, FALSE);
