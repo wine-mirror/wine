@@ -22,12 +22,12 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winnls.h"
-#include "shlwapi.h"
-#include "wine/debug.h"
 #include "msi.h"
 #include "msipriv.h"
+
+#include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -35,19 +35,26 @@ static void MSI_ClosePreview( MSIOBJECTHDR *arg )
 {
     MSIPREVIEW *preview = (MSIPREVIEW *) arg;
 
-    msiobj_release( &preview->db->hdr );
+    msiobj_release( &preview->package->hdr );
 }
 
 MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE *db )
 {
-    MSIPREVIEW *preview;
+    MSIPREVIEW *preview = NULL;
+    MSIPACKAGE *package;
 
-    preview = alloc_msiobject( MSIHANDLETYPE_PREVIEW, sizeof (MSIPREVIEW),
-                               MSI_ClosePreview );
-    if( preview )
+    package = MSI_CreatePackage( db );
+    if( package )
     {
-        preview->db = db;
-        msiobj_addref( &db->hdr );
+        preview = alloc_msiobject( MSIHANDLETYPE_PREVIEW, sizeof (MSIPREVIEW),
+                               MSI_ClosePreview );
+        if( preview )
+        {
+            preview->package = package;
+            preview->dialog = 0;
+            msiobj_addref( &package->hdr );
+        }
+        msiobj_release( &package->hdr );
     }
     return preview;
 }
@@ -70,15 +77,54 @@ UINT WINAPI MsiEnableUIPreview( MSIHANDLE hdb, MSIHANDLE* phPreview )
         msiobj_release( &preview->hdr );
         r = ERROR_SUCCESS;
     }
-    msiobj_release( &db->hdr );
+
+    return r;
+}
+
+static VOID preview_event_handler( MSIPACKAGE *package, LPCWSTR event,
+                                   LPCWSTR argument, HWND dialog )
+{
+    MESSAGE("Preview dialog event '%s' (arg='%s')\n",
+            debugstr_w( event ), debugstr_w( argument ));
+}
+
+UINT MSI_PreviewDialogW( MSIPREVIEW *preview, LPCWSTR szDialogName )
+{
+    dialog_info *dialog = NULL;
+    UINT r = ERROR_SUCCESS;
+
+    if( preview->dialog )
+        msi_dialog_destroy( preview->dialog );
+
+    /* an empty name means we should just destroy the current preview dialog */
+    if( szDialogName )
+    {
+        dialog = msi_dialog_create( preview->package, szDialogName,
+                                    preview_event_handler );
+        if( !dialog )
+            r = ERROR_FUNCTION_FAILED;
+    }
+    preview->dialog = dialog;
 
     return r;
 }
 
 UINT WINAPI MsiPreviewDialogW( MSIHANDLE hPreview, LPCWSTR szDialogName )
 {
-    FIXME("%ld %s\n", hPreview, debugstr_w(szDialogName));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIPREVIEW *preview;
+    UINT r;
+
+    TRACE("%ld %s\n", hPreview, debugstr_w(szDialogName));
+
+    preview = msihandle2msiinfo( hPreview, MSIHANDLETYPE_PREVIEW );
+    if( !preview )
+        return ERROR_INVALID_HANDLE;
+
+    r = MSI_PreviewDialogW( preview, szDialogName );
+
+    msiobj_release( &preview->hdr );
+
+    return r;
 }
 
 UINT WINAPI MsiPreviewDialogA( MSIHANDLE hPreview, LPCSTR szDialogName )

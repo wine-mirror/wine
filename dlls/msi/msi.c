@@ -1467,8 +1467,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
+        msi_dialog_register_class();
         break;
     case DLL_PROCESS_DETACH:
+        msi_dialog_unregister_class();
         /* FIXME: Cleanup */
         break;
     }

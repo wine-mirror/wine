@@ -10,6 +10,7 @@ C_SRCS = \
 	action.c \
 	create.c \
 	custom.c \
+	dialog.c \
 	distinct.c \
 	format.c \
 	handle.c \

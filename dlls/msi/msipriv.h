@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2005 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -211,10 +211,14 @@ typedef struct tagMSIPACKAGE
     UINT CurrentInstallState;
 } MSIPACKAGE;
 
+struct tag_dialog_info;
+typedef struct tag_dialog_info dialog_info;
+
 typedef struct tagMSIPREVIEW
 {
     MSIOBJECTHDR hdr;
-    MSIDATABASE *db;
+    MSIPACKAGE *package;
+    dialog_info *dialog;
 } MSIPREVIEW;
 
 #define MSIHANDLETYPE_ANY 0
@@ -232,7 +236,7 @@ typedef struct tagMSIPREVIEW
 #define GUID_SIZE 39
 
 #define MSIHANDLE_MAGIC 0x4d434923
-#define MSIMAXHANDLES 0x80
+#define MSIMAXHANDLES 0xf0
 
 #define MSISUMINFO_OFFSET 0x30LL
 
@@ -325,33 +329,41 @@ extern UINT MSI_ViewFetch( MSIQUERY*, MSIRECORD ** );
 extern UINT MSI_ViewClose( MSIQUERY* );
 
 /* package internals */
-extern UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE ** );
-extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR);
+extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE * );
+extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE ** );
+extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
-extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD* );
-extern UINT MSI_GetPropertyW( MSIPACKAGE *, LPCWSTR, LPWSTR, DWORD*);
+extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * );
+extern UINT MSI_GetPropertyW( MSIPACKAGE *, LPCWSTR, LPWSTR, DWORD * );
 extern MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
-extern UINT MSI_GetComponentStateW(MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE *);
-extern UINT MSI_GetFeatureStateW(MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE *);
+extern UINT MSI_GetComponentStateW( MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE * );
+extern UINT MSI_GetFeatureStateW( MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE * );
 
 /* for deformating */
 extern UINT MSI_FormatRecordW(MSIPACKAGE* package, MSIRECORD* record, 
                               LPWSTR buffer, DWORD *size);
     
 /* registry data encoding/decoding functions */
-BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
-BOOL squash_guid(LPCWSTR in, LPWSTR out);
-BOOL encode_base85_guid(GUID *,LPWSTR);
-BOOL decode_base85_guid(LPCWSTR,GUID*);
-UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create);
-UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
-UINT MSIREG_OpenFeatures(HKEY* key);
-UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
-UINT MSIREG_OpenComponents(HKEY* key);
-UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create);
-UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
-UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
+extern BOOL squash_guid(LPCWSTR in, LPWSTR out);
+extern BOOL encode_base85_guid(GUID *,LPWSTR);
+extern BOOL decode_base85_guid(LPCWSTR,GUID*);
+extern UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenFeatures(HKEY* key);
+extern UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenComponents(HKEY* key);
+extern UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+
+/* msi dialog interface */
+typedef VOID (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, HWND );
+extern dialog_info *msi_dialog_create( MSIPACKAGE*, LPCWSTR, msi_dialog_event_handler );
+extern void msi_dialog_destroy( dialog_info* );
+extern void msi_dialog_register_class( void );
+extern void msi_dialog_unregister_class( void );
 
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;

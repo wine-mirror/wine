@@ -352,15 +352,14 @@ Privileged
     ReleaseDC(0, dc);
 }
 
-UINT MSI_CreatePackage(MSIDATABASE *db, MSIPACKAGE **pPackage)
+MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
 {
     static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
     static const WCHAR szpi[] = {'%','i',0};
     MSIPACKAGE *package = NULL;
     WCHAR uilevel[10];
-    UINT ret = ERROR_FUNCTION_FAILED;
 
-    TRACE("%p %p\n", db, pPackage);
+    TRACE("%p\n", db);
 
     package = alloc_msiobject( MSIHANDLETYPE_PACKAGE, sizeof (MSIPACKAGE),
                                MSI_FreePackage );
@@ -387,22 +386,15 @@ UINT MSI_CreatePackage(MSIDATABASE *db, MSIPACKAGE **pPackage)
         set_installer_properties(package);
         sprintfW(uilevel,szpi,gUILevel);
         MSI_SetPropertyW(package, szLevel, uilevel);
-
-        msiobj_addref( &package->hdr );
-        *pPackage = package;
-        ret = ERROR_SUCCESS;
     }
 
-    if( package )
-        msiobj_release( &package->hdr );
-
-    return ret;
+    return package;
 }
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     MSIDATABASE *db = NULL;
-    UINT ret = ERROR_FUNCTION_FAILED;
+    MSIPACKAGE *package;
     MSIHANDLE handle;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
@@ -416,32 +408,34 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     }
     else
     {
-        ret = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
-        if( ret != ERROR_SUCCESS )
-            return ret;
+        UINT r = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
+        if( r != ERROR_SUCCESS )
+            return r;
     }
 
-    ret = MSI_CreatePackage( db, pPackage );
+    package = MSI_CreatePackage( db );
+    msiobj_release( &db->hdr );
+    if( !package )
+        return ERROR_FUNCTION_FAILED;
 
     /* 
      * FIXME:  I don't think this is right.  Maybe we should be storing the
      * name of the database in the MSIDATABASE structure and fetching this
      * info from there, or maybe this is only relevant to cached databases.
      */
-    if( ret == ERROR_SUCCESS && szPackage[0] != '#' )
+    if( szPackage[0] != '#' )
     {
         static const WCHAR OriginalDatabase[] =
           {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
         static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
 
-        MSI_SetPropertyW(*pPackage, OriginalDatabase, szPackage);
-        MSI_SetPropertyW(*pPackage, Database, szPackage);
+        MSI_SetPropertyW( package, OriginalDatabase, szPackage );
+        MSI_SetPropertyW( package, Database, szPackage );
     }
 
-    if( db )
-        msiobj_release( &db->hdr );
+    *pPackage = package;
 
-    return ret;
+    return ERROR_SUCCESS;
 }
 
 UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
