@@ -40,7 +40,8 @@ typedef enum
     LANG_Ga,  /* Irish Gaelic */
     LANG_Gd,  /* Scots Gaelic */
     LANG_Gv,  /* Manx Gaelic */
-    LANG_Kw   /* Cornish */
+    LANG_Kw,  /* Cornish */
+    LANG_Ja   /* Japanese */
 } WINE_LANGUAGE;
 
 typedef struct

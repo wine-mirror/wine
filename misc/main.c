@@ -82,6 +82,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Kw",0x0491},	/* LANG_Kw */
     {"Cy",0x0492},	/* LANG_Cy */
     {"Br",0x0493},	/* LANG_Br  */
+    {"Ja",0x0411},	/* LANG_Ja */
     {NULL,0}
 };
 
@@ -126,7 +127,7 @@ static const char szUsage[] =
   "    -failreadonly   Read only files may not be opened in write mode\n"
   "    -help           Show this help message\n"
   "    -language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv\n"
-  "                    Hu,It,Ko,Kw,Nl,No,Pl,Pt,Sv,Ru,Wa)\n"
+  "                    Hu,It,Ja,Ko,Kw,Nl,No,Pl,Pt,Sv,Ru,Wa)\n"
   "    -managed        Allow the window manager to manage created windows\n"
   "    -name name      Set the application name\n"
   "    -nodga          Disable XFree86 DGA extensions\n"

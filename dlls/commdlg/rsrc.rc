@@ -43,3 +43,4 @@
 #include "cdlg_Ru.rc"
 #include "cdlg_Sv.rc"
 #include "cdlg_Wa.rc"
+#include "cdlg_Ja.rc"
