@@ -579,7 +579,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
                 }
             }
             *buffer = '\0';
-            if (len < 1)
+            if (len <= 1)
                 /*If either lpszSection or lpszKey is NULL and the supplied
                   destination buffer is too small to hold all the strings, 
                   the last string is truncated and followed by two null characters.
