@@ -3292,21 +3292,12 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR lpszFileName, UINT cchFi
 
 /******************************************************************************
  *              GetWindowInfo (USER32.@)
- * hwnd: in
- * pwi:  out.
- * MS Documentation mentions that pwi->cbSize must be set to SIZEOF(WINDOWINFO)
- *    this may be because this structure changed over time. If this is the
- *    the case, then please: FIXME.
- *    Using the structure described in MSDN for 98/ME/NT(4.0 SP3)/2000/XP.
+ *
+ * Note: tests show that Windows doesn't check cbSize of the structure.
  */
 BOOL WINAPI GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
 {
     if (!pwi) return FALSE;
-    if (pwi->cbSize != sizeof(WINDOWINFO))
-    {
-        FIXME("windowinfo->cbSize != sizeof(WINDOWINFO). Please report\n");
-        return FALSE;
-    }
     if (!IsWindow(hwnd)) return FALSE;
 
     GetWindowRect(hwnd, &pwi->rcWindow);

@@ -43,7 +43,9 @@
 #define ULONG_PTR UINT_PTR
 
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
+static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 
+static HWND hwndMessage;
 static HWND hwndMain, hwndMain2;
 static HHOOK hhook;
 
@@ -570,6 +572,43 @@ static BOOL RegisterWindowClasses(void)
     return TRUE;
 }
 
+static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_borders)
+{
+    RECT rcWindow, rcClient;
+    INT border;
+    DWORD status;
+
+    ok(IsWindow(hwnd), "bad window handle\n");
+
+    GetWindowRect(hwnd, &rcWindow);
+    ok(EqualRect(&rcWindow, &info->rcWindow), "wrong rcWindow\n");
+
+    GetClientRect(hwnd, &rcClient);
+    /* translate to screen coordinates */
+    MapWindowPoints(hwnd, 0, (LPPOINT)&rcClient, 2);
+    ok(EqualRect(&rcClient, &info->rcClient), "wrong rcClient\n");
+
+    ok(info->dwStyle == GetWindowLongA(hwnd, GWL_STYLE), "wrong dwStyle\n");
+    ok(info->dwExStyle == GetWindowLongA(hwnd, GWL_EXSTYLE), "wrong dwExStyle\n");
+    status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
+    ok(info->dwWindowStatus == status, "wrong dwWindowStatus\n");
+
+    if (test_borders && !IsRectEmpty(&rcWindow))
+    {
+	trace("rcWindow: %ld,%ld - %ld,%ld\n", rcWindow.left, rcWindow.top, rcWindow.right, rcWindow.bottom);
+	trace("rcClient: %ld,%ld - %ld,%ld\n", rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
+
+	ok(info->cxWindowBorders == rcClient.left - rcWindow.left,
+	    "wrong cxWindowBorders %d != %ld\n", info->cxWindowBorders, rcClient.left - rcWindow.left);
+	border = min(rcWindow.bottom - rcClient.bottom, rcClient.top - rcWindow.top);
+	ok(info->cyWindowBorders == border,
+	   "wrong cyWindowBorders %d != %d\n", info->cyWindowBorders, border);
+    }
+
+    ok(info->atomWindowType == GetClassLongA(hwnd, GCW_ATOM), "wrong atomWindowType\n");
+    ok(info->wCreatorVersion == 0x0400, "wrong wCreatorVersion %04x\n", info->wCreatorVersion);
+}
+
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
     static const char *CBT_code_name[10] = {
@@ -591,6 +630,10 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     {
 	case HCBT_CREATEWND:
 	{
+#if 0 /* Uncomment this once the test succeeds in all cases */
+	    static const RECT rc_null;
+	    RECT rc;
+#endif
 	    LONG style;
 	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
 	    trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08lx\n",
@@ -602,8 +645,69 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    ok(style == GetWindowLongA((HWND)wParam, GWL_STYLE),
 		"style of hwnd and style in the CREATESTRUCT do not match: %08lx != %08lx\n",
 		GetWindowLongA((HWND)wParam, GWL_STYLE), style);
+
+#if 0 /* Uncomment this once the test succeeds in all cases */
+	    if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+	    {
+		ok(GetParent((HWND)wParam) == hwndMessage,
+		   "wrong result from GetParent %p: message window %p\n",
+		   GetParent((HWND)wParam), hwndMessage);
+	    }
+	    else
+		ok(!GetParent((HWND)wParam), "GetParent should return 0 at this point\n");
+
+	    ok(!GetWindow((HWND)wParam, GW_OWNER), "GW_OWNER should be set to 0 at this point\n");
+#endif
+#if 0	    /* while NT assigns GW_HWNDFIRST/LAST some values at this point,
+	     * Win9x still has them set to 0.
+	     */
+	    ok(GetWindow((HWND)wParam, GW_HWNDFIRST) != 0, "GW_HWNDFIRST should not be set to 0 at this point\n");
+	    ok(GetWindow((HWND)wParam, GW_HWNDLAST) != 0, "GW_HWNDLAST should not be set to 0 at this point\n");
+#endif
+	    ok(!GetWindow((HWND)wParam, GW_HWNDPREV), "GW_HWNDPREV should be set to 0 at this point\n");
+	    ok(!GetWindow((HWND)wParam, GW_HWNDNEXT), "GW_HWNDNEXT should be set to 0 at this point\n");
+
+#if 0 /* Uncomment this once the test succeeds in all cases */
+	    if (pGetAncestor)
+	    {
+		ok(pGetAncestor((HWND)wParam, GA_PARENT) == hwndMessage, "GA_PARENT should be set to hwndMessage at this point\n");
+		ok(pGetAncestor((HWND)wParam, GA_ROOT) == (HWND)wParam,
+		   "GA_ROOT is set to %p, expected %p\n", pGetAncestor((HWND)wParam, GA_ROOT), (HWND)wParam);
+
+		if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+		    ok(pGetAncestor((HWND)wParam, GA_ROOTOWNER) == hwndMessage,
+		       "GA_ROOTOWNER should be set to hwndMessage at this point\n");
+		else
+		    ok(pGetAncestor((HWND)wParam, GA_ROOTOWNER) == (HWND)wParam,
+		       "GA_ROOTOWNER is set to %p, expected %p\n", pGetAncestor((HWND)wParam, GA_ROOTOWNER), (HWND)wParam);
+            }
+
+	    ok(GetWindowRect((HWND)wParam, &rc), "GetWindowRect failed\n");
+	    ok(EqualRect(&rc, &rc_null), "window rect should be set to 0 HCBT_CREATEWND\n");
+	    ok(GetClientRect((HWND)wParam, &rc), "GetClientRect failed\n");
+	    ok(EqualRect(&rc, &rc_null), "client rect should be set to 0 on HCBT_CREATEWND\n");
+#endif
 	    break;
 	}
+
+	case HCBT_DESTROYWND:
+	case HCBT_SETFOCUS:
+	    if (wParam && pGetWindowInfo)
+	    {
+		WINDOWINFO info;
+
+		info.cbSize = 0;
+		ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
+		/* win2k SP4 returns broken border info if GetWindowInfo
+		 * is being called from HCBT_DESTROYWND hook proc.
+		 */
+		verify_window_info((HWND)wParam, &info, nCode != HCBT_DESTROYWND);
+
+		info.cbSize = sizeof(WINDOWINFO) + 1;
+		ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
+		verify_window_info((HWND)wParam, &info, nCode != HCBT_DESTROYWND);
+	    }
+	    break;
     }
 
     return CallNextHookEx(hhook, nCode, wParam, lParam);
@@ -1506,6 +1610,22 @@ static void test_SetFocus(HWND hwnd)
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
+    pGetWindowInfo = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetWindowInfo" );
+
+    hwndMain = CreateWindowExA(0, "static", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, NULL);
+    if (hwndMain)
+    {
+        ok(!GetParent(hwndMain), "GetParent should return 0 for message only windows\n");
+        if (pGetAncestor)
+        {
+            hwndMessage = pGetAncestor(hwndMain, GA_PARENT);
+            ok(hwndMessage != 0, "GetAncestor(GA_PARENT) should not return 0 for message only windows\n");
+            trace("hwndMessage %p\n", hwndMessage);
+        }
+        DestroyWindow(hwndMain);
+    }
+    else
+        trace("CreateWindowExA with parent HWND_MESSAGE failed\n");
 
     if (!RegisterWindowClasses()) assert(0);
 
