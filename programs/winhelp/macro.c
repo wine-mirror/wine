@@ -286,7 +286,7 @@ VOID MACRO_FileOpen(VOID)
   openfilename.lpTemplateName    = 0;
 
   if (GetOpenFileName(&openfilename))
-    WINHELP_CreateHelpWindow(szPath, 0, "main", FALSE, NULL, NULL, SW_SHOWNORMAL);
+    WINHELP_CreateHelpWindow(szPath, 0, "main", FALSE, 0, NULL, SW_SHOWNORMAL);
 }
 
 VOID MACRO_Find(VOID)
@@ -375,7 +375,7 @@ BOOL MACRO_IsNotMark(LPCSTR str)
 
 VOID MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 {
-  WINHELP_CreateHelpWindow(lpszPath, 0, lpszWindow, FALSE, NULL, NULL, SW_NORMAL);
+  WINHELP_CreateHelpWindow(lpszPath, 0, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
 }
 
 VOID MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
@@ -385,7 +385,7 @@ VOID MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
 
 VOID MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 {
-  WINHELP_CreateHelpWindow(lpszPath, lHash, lpszWindow, FALSE, NULL, NULL, SW_NORMAL);
+  WINHELP_CreateHelpWindow(lpszPath, lHash, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
 }
 
 VOID MACRO_JumpHelpOn(VOID)

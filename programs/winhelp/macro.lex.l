@@ -161,7 +161,7 @@ UpdateWindow|UW		yylval = (YYSTYPE)MACRO_UpdateWindow;		return VOID_FUNCTION_2ST
 #include "winhelp.h"
 static CHAR szTestMacro[256];
 
-static LRESULT MACRO_TestDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK MACRO_TestDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   if (msg == WM_COMMAND && wParam == IDOK)
     {

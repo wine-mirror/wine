@@ -15,9 +15,9 @@
 #endif
 
 static BOOL    WINHELP_RegisterWinClasses();
-static LRESULT WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT WINHELP_TextWndProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT WINHELP_ButtonBoxWndProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK WINHELP_TextWndProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND, UINT, WPARAM, LPARAM);
 static VOID    WINHELP_CheckPopup(UINT);
 static BOOL    WINHELP_SplitLines(HWND hWnd, LPSIZE);
 static VOID    WINHELP_InitFonts(HWND hWnd);
@@ -328,7 +328,7 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
  *           WINHELP_MainWndProc
  */
 
-static LRESULT WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   WINHELP_WINDOW *win;
   WINHELP_BUTTON *button;
@@ -426,7 +426,7 @@ static LRESULT WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
  *           WINHELP_ButtonBoxWndProc
  */
 
-static LRESULT WINHELP_ButtonBoxWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WINHELP_ButtonBoxWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   WINDOWPOS      *winpos;
   WINHELP_WINDOW *win;
@@ -497,7 +497,7 @@ static LRESULT WINHELP_ButtonBoxWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPA
  *           WINHELP_TextWndProc
  */
 
-static LRESULT WINHELP_TextWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WINHELP_TextWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   WINHELP_WINDOW    *win;
   WINHELP_LINE      *line;
@@ -885,7 +885,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
       ptr    += sizeof(WINHELP_LINE_PART);
     }
 
-  hmemcpy16(ptr, text, textlen);
+  memcpy(ptr, text, textlen);
   part->rect.left     = line->rect.right + (*partp ? space->cx : 0);
   part->rect.right    = part->rect.left + textsize->cx;
   line->rect.right    = part->rect.right;

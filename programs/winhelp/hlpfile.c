@@ -706,7 +706,7 @@ static BYTE *HLPFILE_Uncompress1(BYTE *ptr, BYTE *end, BYTE *newptr)
 	      INT code   = GET_USHORT(ptr, 0);
 	      INT len    = 3 + (code >> 12);
 	      INT offset = code & 0xfff;
-	      hmemcpy16(newptr, newptr - offset - 1, len);
+	      memcpy(newptr, newptr - offset - 1, len);
 	      newptr += len;
 	      ptr    += 2;
 	    }
@@ -738,7 +738,7 @@ static BOOL HLPFILE_Uncompress1_Phrases()
   if (!phrases.hBuffer) return FALSE;
   newbuf = phrases.buf = GlobalLock(phrases.hBuffer);
 
-  hmemcpy16(newbuf, buf + 0x11, 2 * num + 2);
+  memcpy(newbuf, buf + 0x11, 2 * num + 2);
   HLPFILE_Uncompress1(buf + 0x13 + 2 * num, end, newbuf + 2 * num + 2);
 
   for (i = 0; i < num; i++)
@@ -856,7 +856,7 @@ static VOID HLPFILE_Uncompress2(BYTE **pptr, BYTE *end, BYTE *newptr)
 	  phptr = phrases.buf + GET_USHORT(phrases.buf, 2 * index);
 	  phend = phrases.buf + GET_USHORT(phrases.buf, 2 * index + 2);
 
-	  hmemcpy16(newptr, phptr, phend - phptr);
+	  memcpy(newptr, phptr, phend - phptr);
 	  newptr += phend - phptr;
 	  if (space) *newptr++ = ' ';
 
