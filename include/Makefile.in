@@ -93,6 +93,7 @@ WINDOWS_INCLUDES = \
 	dxdiag.h \
 	dxerr8.h \
 	dxerr9.h \
+	dxfile.h \
 	evcode.h \
 	excpt.h \
 	fci.h \

@@ -32,6 +32,7 @@ BASEDIRS = \
 	ctl3d \
 	d3dim \
 	d3drm \
+	d3dxof \
 	dbghelp \
 	dciman32 \
 	devenum \
@@ -250,6 +251,7 @@ SYMLINKS_SO = \
 	ctl3d32.dll.so \
 	d3dim.dll.so \
 	d3drm.dll.so \
+	d3dxof.dll.so \
 	dbghelp.dll.so \
 	dciman32.dll.so \
 	devenum.dll.so \
@@ -457,6 +459,9 @@ d3drm.dll.so: d3drm/d3drm.dll.so
 
 d3dx8.dll.so: d3dx8/d3dx8.dll.so
 	$(RM) $@ && $(LN_S) d3dx8/d3dx8.dll.so $@
+
+d3dxof.dll.so: d3dxof/d3dxof.dll.so
+	$(RM) $@ && $(LN_S) d3dxof/d3dxof.dll.so $@
 
 dbghelp.dll.so: dbghelp/dbghelp.dll.so
 	$(RM) $@ && $(LN_S) dbghelp/dbghelp.dll.so $@
@@ -957,6 +962,7 @@ IMPORT_LIBS = \
 	libd3dim \
 	libd3drm \
 	libd3dx8 \
+	libd3dxof \
 	libdbghelp \
 	libdciman32 \
 	libddraw \
@@ -1162,6 +1168,11 @@ libd3dx8.def: d3dx8/d3dx8.spec.def
 	$(RM) $@ && $(LN_S) d3dx8/d3dx8.spec.def $@
 libd3dx8.a: d3dx8/d3dx8.spec.def
 	$(DLLTOOL) -k -l $@ -d d3dx8/d3dx8.spec.def
+
+libd3dxof.def: d3dxof/d3dxof.spec.def
+	$(RM) $@ && $(LN_S) d3dxof/d3dxof.spec.def $@
+libd3dxof.a: d3dxof/d3dxof.spec.def
+	$(DLLTOOL) -k -l $@ -d d3dxof/d3dxof.spec.def
 
 libdbghelp.def: dbghelp/dbghelp.spec.def
 	$(RM) $@ && $(LN_S) dbghelp/dbghelp.spec.def $@
@@ -1687,6 +1698,7 @@ d3d9/d3d9.spec.def: $(WINEBUILD)
 d3dim/d3dim.spec.def: $(WINEBUILD)
 d3drm/d3drm.spec.def: $(WINEBUILD)
 d3dx8/d3dx8.spec.def: $(WINEBUILD)
+d3dxof/d3dxof.spec.def: $(WINEBUILD)
 dbghelp/dbghelp.spec.def: $(WINEBUILD)
 dciman32/dciman32.spec.def: $(WINEBUILD)
 ddraw/ddraw.spec.def: $(WINEBUILD)
@@ -1813,6 +1825,7 @@ d3d9/d3d9.dll.so: d3d9
 d3dim/d3dim.dll.so: d3dim
 d3drm/d3drm.dll.so: d3drm
 d3dx8/d3dx8.dll.so: d3dx8
+d3dxof/d3dxof.dll.so: d3dxof
 dbghelp/dbghelp.dll.so: dbghelp
 dciman32/dciman32.dll.so: dciman32
 ddraw/ddraw.dll.so: ddraw

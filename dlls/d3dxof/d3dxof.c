@@ -1,0 +1,699 @@
+/*
+ * Implementation of DirectX File Interfaces
+ *
+ * Copyright 2004 Christian Costa
+ *
+ * This file contains the (internal) driver registration functions,
+ * driver enumeration APIs and DirectDraw creation functions.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "config.h"
+#include "wine/debug.h"
+
+#include "winbase.h"
+#include "wingdi.h"
+
+#include "d3dxof_private.h"
+#include "dxfile.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
+
+static struct ICOM_VTABLE(IDirectXFile) IDirectXFile_Vtbl;
+static struct ICOM_VTABLE(IDirectXFileEnumObject) IDirectXFileEnumObject_Vtbl;
+static struct ICOM_VTABLE(IDirectXFileData) IDirectXFileData_Vtbl;
+
+HRESULT XF_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    IDirectXFileImpl* object; 
+
+    FIXME("(%p,%p)\n", pUnkOuter, ppObj);
+      
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileImpl));
+    
+    object->lpVtbl.lpVtbl = &IDirectXFile_Vtbl;
+    object->ref = 1;
+
+    *ppObj = object;
+    
+    return S_OK;
+}
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileImpl_QueryInterface(IDirectXFile* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFile))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileImpl_AddRef(IDirectXFile* iface)
+{
+  ICOM_THIS(IDirectXFileImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileImpl_Release(IDirectXFile* iface)
+{
+  ICOM_THIS(IDirectXFileImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+/*** IDirectXFile methods ***/
+static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPVOID pvSource, DXFILELOADOPTIONS dwLoadOptions, LPDIRECTXFILEENUMOBJECT* ppEnumObj)
+
+{
+  ICOM_THIS(IDirectXFileImpl, iface);
+  IDirectXFileEnumObjectImpl* object; 
+
+  FIXME("(%p/%p)->(%p,%lx,%p) stub!\n", This, iface, pvSource, dwLoadOptions, ppEnumObj); 
+
+  if (dwLoadOptions == 0)
+  {
+    FIXME("Source is a file '%s'\n", (char*)pvSource);
+  }
+
+  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileEnumObjectImpl));
+
+  object->lpVtbl.lpVtbl = &IDirectXFileEnumObject_Vtbl;
+  object->ref = 1;
+
+  *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
+    
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileImpl_CreateSaveObject(IDirectXFile* iface, LPCSTR szFileName, DXFILEFORMAT dwFileFormat, LPDIRECTXFILESAVEOBJECT* ppSaveObj)
+{
+  ICOM_THIS(IDirectXFileImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%lx,%p) stub!\n", This, iface, szFileName, dwFileFormat, ppSaveObj); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LPVOID pvData, DWORD cbSize)
+{
+  ICOM_THIS(IDirectXFileImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%ld) stub!\n", This, iface, pvData, cbSize); 
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFile) IDirectXFile_Vtbl =
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  IDirectXFileImpl_QueryInterface,
+  IDirectXFileImpl_AddRef,
+  IDirectXFileImpl_Release,
+  IDirectXFileImpl_CreateEnumObject,
+  IDirectXFileImpl_CreateSaveObject,
+  IDirectXFileImpl_RegisterTemplates
+};
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileBinaryImpl_QueryInterface(IDirectXFileBinary* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFileBinary))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileBinaryImpl_AddRef(IDirectXFileBinary* iface)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileBinaryImpl_Release(IDirectXFileBinary* iface)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+/*** IDirectXFileObject methods ***/
+static HRESULT WINAPI IDirectXFileBinaryImpl_GetName(IDirectXFileBinary* iface, LPSTR pstrNameBuf, LPDWORD pdwBufLen)
+
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileBinaryImpl_GetId(IDirectXFileBinary* iface, LPGUID pGuid)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
+
+  return S_FALSE;
+}
+
+/*** IDirectXFileBinary methods ***/
+static HRESULT WINAPI IDirectXFileBinaryImpl_GetSize(IDirectXFileBinary* iface, DWORD* pcbSize)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pcbSize); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileBinaryImpl_GetMimeType(IDirectXFileBinary* iface, LPCSTR* pszMimeType)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pszMimeType);
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileBinaryImpl_Read(IDirectXFileBinary* iface, LPVOID pvData, DWORD cbSize, LPDWORD pcbRead)
+{
+  ICOM_THIS(IDirectXFileBinaryImpl, iface);
+
+  FIXME("(%p/%p)->(%p, %ld, %p) stub!\n", This, iface, pvData, cbSize, pcbRead); 
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFileBinary) IDirectXFileBinary_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirectXFileBinaryImpl_QueryInterface,
+    IDirectXFileBinaryImpl_AddRef,
+    IDirectXFileBinaryImpl_Release,
+    IDirectXFileBinaryImpl_GetName,
+    IDirectXFileBinaryImpl_GetId,
+    IDirectXFileBinaryImpl_GetSize,
+    IDirectXFileBinaryImpl_GetMimeType,
+    IDirectXFileBinaryImpl_Read
+};
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileDataImpl_QueryInterface(IDirectXFileData* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFileData))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileDataImpl_AddRef(IDirectXFileData* iface)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileDataImpl_Release(IDirectXFileData* iface)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+/*** IDirectXFileObject methods ***/
+static HRESULT WINAPI IDirectXFileDataImpl_GetName(IDirectXFileData* iface, LPSTR pstrNameBuf, LPDWORD pdwBufLen)
+
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataImpl_GetId(IDirectXFileData* iface, LPGUID pGuid)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
+
+  return S_FALSE;
+}
+
+/*** IDirectXFileData methods ***/
+static HRESULT WINAPI IDirectXFileDataImpl_GetData(IDirectXFileData* iface, LPCSTR szMember, DWORD* pcbSize, void** ppvData)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p,%p) stub!\n", This, iface, szMember, pcbSize, ppvData); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataImpl_GetType(IDirectXFileData* iface, const GUID** pguid)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pguid); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface, LPDIRECTXFILEOBJECT* ppChildObj)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppChildObj); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataImpl_AddDataObject(IDirectXFileData* iface, LPDIRECTXFILEDATA pDataObj)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pDataObj); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataImpl_AddDataReference(IDirectXFileData* iface, LPCSTR szRef, const GUID* pguidRef)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p) stub!\n", This, iface, szRef, pguidRef); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataImpl_AddBinaryObject(IDirectXFileData* iface, LPCSTR szName, const GUID* pguid, LPCSTR szMimeType, LPVOID pvData, DWORD cbSize)
+{
+  ICOM_THIS(IDirectXFileDataImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p,%s,%p,%ld) stub!\n", This, iface, szName, pguid, szMimeType, pvData, cbSize);
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFileData) IDirectXFileData_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirectXFileDataImpl_QueryInterface,
+    IDirectXFileDataImpl_AddRef,
+    IDirectXFileDataImpl_Release,
+    IDirectXFileDataImpl_GetName,
+    IDirectXFileDataImpl_GetId,
+    IDirectXFileDataImpl_GetData,
+    IDirectXFileDataImpl_GetType,
+    IDirectXFileDataImpl_GetNextObject,
+    IDirectXFileDataImpl_AddDataObject,
+    IDirectXFileDataImpl_AddDataReference,
+    IDirectXFileDataImpl_AddBinaryObject
+};
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileDataReferenceImpl_QueryInterface(IDirectXFileDataReference* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFileDataReference))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileDataReferenceImpl_AddRef(IDirectXFileDataReference* iface)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileDataReferenceImpl_Release(IDirectXFileDataReference* iface)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+/*** IDirectXFileObject methods ***/
+static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetName(IDirectXFileDataReference* iface, LPSTR pstrNameBuf, LPDWORD pdwBufLen)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetId(IDirectXFileDataReference* iface, LPGUID pGuid)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
+
+  return S_FALSE;
+}
+
+/*** IDirectXFileDataReference ***/
+static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataReference* iface, LPDIRECTXFILEDATA* ppDataObj)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFileDataReference) IDirectXFileDataReference_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirectXFileDataReferenceImpl_QueryInterface,
+    IDirectXFileDataReferenceImpl_AddRef,
+    IDirectXFileDataReferenceImpl_Release,
+    IDirectXFileDataReferenceImpl_GetName,
+    IDirectXFileDataReferenceImpl_GetId,
+    IDirectXFileDataReferenceImpl_Resolve
+};
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileEnumObjectImpl_QueryInterface(IDirectXFileEnumObject* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileEnumObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFileEnumObject))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileEnumObjectImpl_AddRef(IDirectXFileEnumObject* iface)
+{
+  ICOM_THIS(IDirectXFileEnumObjectImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* iface)
+{
+  ICOM_THIS(IDirectXFileEnumObjectImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+/*** IDirectXFileEnumObject methods ***/
+static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileEnumObject* iface, LPDIRECTXFILEDATA* ppDataObj)
+{
+  ICOM_THIS(IDirectXFileEnumObjectImpl, iface);
+  IDirectXFileDataImpl* object;
+  
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
+
+  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileDataImpl));
+
+  object->lpVtbl.lpVtbl = &IDirectXFileData_Vtbl;
+  object->ref = 1;
+
+  *ppDataObj = (LPDIRECTXFILEDATA)object;
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectById(IDirectXFileEnumObject* iface, REFGUID rguid, LPDIRECTXFILEDATA* ppDataObj)
+{
+  ICOM_THIS(IDirectXFileEnumObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, rguid, ppDataObj); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectByName(IDirectXFileEnumObject* iface, LPCSTR szName, LPDIRECTXFILEDATA* ppDataObj)
+{
+  ICOM_THIS(IDirectXFileEnumObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p) stub!\n", This, iface, szName, ppDataObj); 
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFileEnumObject) IDirectXFileEnumObject_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirectXFileEnumObjectImpl_QueryInterface,
+    IDirectXFileEnumObjectImpl_AddRef,
+    IDirectXFileEnumObjectImpl_Release,
+    IDirectXFileEnumObjectImpl_GetNextDataObject,
+    IDirectXFileEnumObjectImpl_GetDataObjectById,
+    IDirectXFileEnumObjectImpl_GetDataObjectByName
+};
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileObjectImpl_QueryInterface(IDirectXFileObject* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFileObject))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileObjectImpl_AddRef(IDirectXFileObject* iface)
+{
+  ICOM_THIS(IDirectXFileObjectImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileObjectImpl_Release(IDirectXFileObject* iface)
+{
+  ICOM_THIS(IDirectXFileObjectImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+/*** IDirectXFileObject methods ***/
+static HRESULT WINAPI IDirectXFileObjectImpl_GetName(IDirectXFileObject* iface, LPSTR pstrNameBuf, LPDWORD pdwBufLen)
+{
+  ICOM_THIS(IDirectXFileDataReferenceImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileObjectImpl_GetId(IDirectXFileObject* iface, LPGUID pGuid)
+{
+  ICOM_THIS(IDirectXFileObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFileObject) IDirectXFileObject_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirectXFileObjectImpl_QueryInterface,
+    IDirectXFileObjectImpl_AddRef,
+    IDirectXFileObjectImpl_Release,
+    IDirectXFileObjectImpl_GetName,
+    IDirectXFileObjectImpl_GetId
+};
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirectXFileSaveObjectImpl_QueryInterface(IDirectXFileSaveObject* iface, REFIID riid, void** ppvObject)
+{
+  ICOM_THIS(IDirectXFileSaveObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+  if (IsEqualGUID(riid, &IID_IUnknown)
+      || IsEqualGUID(riid, &IID_IDirectXFileSaveObject))
+  {
+    IClassFactory_AddRef(iface);
+    *ppvObject = This;
+    return S_OK;
+  }
+
+  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectXFileSaveObjectImpl_AddRef(IDirectXFileSaveObject* iface)
+{
+  ICOM_THIS(IDirectXFileSaveObjectImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  This->ref++;
+  return S_OK;
+}
+
+static ULONG WINAPI IDirectXFileSaveObjectImpl_Release(IDirectXFileSaveObject* iface)
+{
+  ICOM_THIS(IDirectXFileSaveObjectImpl, iface);
+
+  FIXME("(%p/%p)\n", iface, This); 
+
+  if (!--This->ref)
+    HeapFree(GetProcessHeap(), 0, This);
+
+  return S_OK;
+}
+
+static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveTemplates(IDirectXFileSaveObject* iface, DWORD cTemplates, const GUID** ppguidTemplates)
+{
+  ICOM_THIS(IDirectXFileSaveObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%ld,%p) stub!\n", This, iface, cTemplates, ppguidTemplates); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileSaveObjectImpl_CreateDataObject(IDirectXFileSaveObject* iface, REFGUID rguidTemplate, LPCSTR szName, const GUID* pguid, DWORD cbSize, LPVOID pvData, LPDIRECTXFILEDATA* ppDataObj)
+{
+  ICOM_THIS(IDirectXFileSaveObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%p,%s,%p,%ld,%p,%p) stub!\n", This, iface, rguidTemplate, szName, pguid, cbSize, pvData, ppDataObj); 
+
+  return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveData(IDirectXFileSaveObject* iface, LPDIRECTXFILEDATA ppDataObj)
+{
+  ICOM_THIS(IDirectXFileSaveObjectImpl, iface);
+
+  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
+
+  return S_FALSE;
+}
+
+static ICOM_VTABLE(IDirectXFileSaveObject) IDirectXFileSaveObject_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirectXFileSaveObjectImpl_QueryInterface,
+    IDirectXFileSaveObjectImpl_AddRef,
+    IDirectXFileSaveObjectImpl_Release,
+    IDirectXFileSaveObjectImpl_SaveTemplates,
+    IDirectXFileSaveObjectImpl_CreateDataObject,
+    IDirectXFileSaveObjectImpl_SaveData
+};
