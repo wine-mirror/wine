@@ -300,7 +300,16 @@ BOOL IO_pp_outp(int port, DWORD* res)
          case 0:
            return IO_pp_do_access(idx,PPWDATA,res);
          case 2:
-           return IO_pp_do_access(idx,PPWCONTROL,res);
+	   { 
+	     /* We can't switch port direction via PPWCONTROL,
+		so do it via PPDATADIR
+	     */
+	     DWORD mode = *res & 0x20;
+	     IO_pp_do_access(idx,PPDATADIR,&mode);
+	     mode = (*res & ~0x20);
+	     return IO_pp_do_access(idx,PPWCONTROL,&mode);
+	   }
+
          case 1:
          case 0x400:
          case 0x402:
