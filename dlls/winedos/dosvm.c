@@ -85,6 +85,7 @@ typedef struct _DOSEVENT {
 static CRITICAL_SECTION qcrit = CRITICAL_SECTION_INIT("DOSVM");
 static struct _DOSEVENT *pending_event, *current_event;
 static int sig_sent;
+static HANDLE event_notifier;
 static CONTEXT86 *current_context;
 
 static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
@@ -210,6 +211,10 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     } else {
       TRACE("new event queued (time=%ld)\n", GetTickCount());
     }
+    
+    /* Wake up DOSVM_Wait so that it can serve pending events. */
+    SetEvent(event_notifier);
+
     LeaveCriticalSection(&qcrit);
   } else {
     /* DOS subsystem not running */
@@ -299,13 +304,14 @@ void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject )
 {
   MSG msg;
   DWORD waitret;
-  HANDLE objs[2];
+  HANDLE objs[3];
   int objc;
   BOOL got_msg = FALSE;
 
   objs[0]=GetStdHandle(STD_INPUT_HANDLE);
-  objs[1]=hObject;
-  objc=hObject?2:1;
+  objs[1]=event_notifier;
+  objs[2]=hObject;
+  objc=hObject?3:2;
   do {
     /* check for messages (waste time before the response check below) */
     if (PeekMessageA)
@@ -335,6 +341,7 @@ chk_console_input:
         IF_SET(&context);
         SET_PEND(&context);
         DOSVM_SendQueuedEvents(&context);
+        got_msg = TRUE;
       }
       if (got_msg) break;
     } else {
@@ -356,7 +363,7 @@ chk_console_input:
       ERR_(module)("dosvm wait error=%ld\n",GetLastError());
     }
     if ((read_pipe != -1) && hObject) {
-      if (waitret==(WAIT_OBJECT_0+1)) break;
+      if (waitret==(WAIT_OBJECT_0+2)) break;
     }
     if (waitret==WAIT_OBJECT_0)
       goto chk_console_input;
@@ -677,6 +684,10 @@ BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved 
         TRACE("Initializing DOS memory structures\n");
         DOSMEM_Init( TRUE );
         DOSDEV_InstallDOSDevices();
+        event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);
+        if(!event_notifier)
+          ERR("Failed to create event object!\n");
+
     }
     return TRUE;
 }
