@@ -1300,7 +1300,9 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 				   INT def_val, LPCSTR filename )
 {
     char buffer[20];
-    long result;
+    UINT result = 0;
+    char *p = buffer;
+    int negative = 0;
 
     if (!GetPrivateProfileStringA( section, entry, "",
                                    buffer, sizeof(buffer), filename ))
@@ -1312,11 +1314,22 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
      * else gets broken that way. */
     if (!buffer[0]) return (UINT)def_val;
 
-    /* Don't use strtol() here !
-     * (returns LONG_MAX/MIN on overflow instead of "proper" overflow)
-     YES, scan for unsigned format ! (otherwise compatibility error) */
-    if (!sscanf(buffer, "%lu", &result)) return 0;
-    return (UINT)result;
+    /* do the conversion by hand to make sure
+     * overflow is *not* handled properly ;-) */
+    while (*p && isspace(*p)) p++;
+    if (*p == '-')
+    {
+        negative = 1;
+        p++;
+    }
+    else if (*p == '+') p++;
+
+    while (*p && isdigit(*p))
+    {
+        result = result * 10 + *p - '0';
+        p++;
+    }
+    return negative ? (UINT)-result : result;
 }
 
 /***********************************************************************
