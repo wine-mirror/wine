@@ -852,7 +852,7 @@ OPTIONAL:
           <para>
             In both entries the functions may be specified either as a 
             function name or as a module and function.  In this latter
-            case specify an asterisk for the function name to include
+            case specify an asterisk for the function name to include/exclude
             all functions in the module.
           </para>
           <para>

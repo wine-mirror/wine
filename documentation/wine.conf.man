@@ -260,18 +260,46 @@ default: none
 .br
 Used to specify the devices which are used as LPT1 - LPT8.
 .PP
-.B [spy]
+.B [Debug]
 .br
-.I format: """exclude""=""<message names separated by semicolons>"""
+.I format: """SpyExclude""=""<message names separated by semicolons>"""
 .br
 default: none
 .br
 Used to specify which messages will be excluded from the logfile.
 .PP
-.I format: """include""=""<message names separated by semicolons>"""
+.I format: """SpyInclude""=""<message names separated by semicolons>"""
 .br
 default: none
 .br Used to specify which messages will be included in the logfile.
+.PP
+.I format: """RelayExclude""=""<function or dll.functions separated by semicolons>"""
+.br
+default: none
+.br
+Used to specify which function will be excluded from a relay debuglog.
+.PP
+.I format: """RelayInclude""=""<message names separated by semicolons>"""
+.br
+default: none
+.br 
+Used to specify which function will be included in relay debuglog.
+.PP
+.I format: """SnoopExclude""=""<message names separated by semicolons>"""
+.br
+default: none
+.br 
+Used to specify which function will be included in snoop debuglog.
+.PP
+.I format: """SnoopInclude""=""<message names separated by semicolons>"""
+.br
+default: none
+.br 
+Used to specify which function will be included in snoop debuglog.
+.PP
+For Relay and Snoop <dllname>.* includes or excludes the whole dll. Exclude
+entries overwrite Include Entries.
+.br
 .PP
 .B [Tweak.Layout]
 .br

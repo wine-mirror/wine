@@ -43,7 +43,7 @@ Read the README file in the Wine source distribution and the wine.conf
 man page to know what Wine requires and how it is installed from source.
 .SH OPTIONS
 .TP
-.I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
+.I --debugmsg [xxx]#name[,[xxx1]#name1]
 Turn debugging messages on or off.  
 .RS +7
 .PP
@@ -75,14 +75,9 @@ will turn on DLL warning messages and all heap messages.
 will turn off all FIXME messages, turn on cursor warning messages, and turn
 on all relay messages (API calls).
 .br 
-.I --debugmsg -relay=rtlleavecriticalsection:RtlEnterCriticalSection
-will turn on all relay messages except for RtlLeaveCriticalSection and
-RtlEnterCriticalSection.
-.br 
-.I --debugmsg +relay=advapi32
-will only turn on relay messages into the ADVAPI32 code.
-Never ever use simply --debugmsg +all ! Way too much info, and it crashes
-way too easily, thus confusing unexperienced users.
+.I --debugmsg -relay
+will turn on all relay messages. For more control on including or excluding
+functions and dlls look into the [Debug] section of the wine configuration file.
 .PP
 The full list of names is:
 all, accel, advapi, animate, aspi, atom, avifile, bitblt, bitmap, caret,
