@@ -305,8 +305,7 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
             tests will not compile with the regular Visual Studio headers. So
             to use this configuration, download and install a recent
             <ulink url="http://www.microsoft.com/msdownload/platformsdk/sdkupdate/">Platform SDK</>
-            (the download requires Internet Explorer!), as well as the latest
-            <ulink url="http://msdn.microsoft.com/library/default.asp?url=/downloads/list/directx.asp">DirectX SDK</>.
+            as well as the latest <ulink url="http://msdn.microsoft.com/library/default.asp?url=/downloads/list/directx.asp">DirectX SDK</>.
             Then, <ulink url="http://msdn.microsoft.com/library/default.asp?url=/library/EN-US/sdkintro/sdkintro/installing_the_platform_sdk_with_visual_studio.asp">configure Visual Studio</>
             to use these SDK's headers and libraries. Alternately you could go
             to the <menuchoice><guimenu>Project</> <guimenu>Settings...</></>
