@@ -20,6 +20,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* Protocol specification can be found here:
+ * http://sources.redhat.com/gdb/onlinedocs/gdb_32.html
+ */
+
 #include "config.h"
 
 #include <assert.h>
@@ -1788,6 +1792,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
     unsigned char       in_cksum, loc_cksum;
     char*               ptr;
     enum packet_return  ret = packet_error;
+    int                 num_packet = 0;
 
     while ((ret & packet_last_f) == 0)
     {
@@ -1814,49 +1819,68 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
         loc_cksum = checksum(gdbctx->in_buf + 1, plen);
         if (loc_cksum == in_cksum)
         {
-            int                 i;
-
-            ret = packet_error;
-
-            write(gdbctx->sock, "+", 1);
-            assert(plen);
-
-            /* FIXME: should use bsearch if packet_entries was sorted */
-            for (i = 0; i < sizeof(packet_entries)/sizeof(packet_entries[0]); i++)
-            {
-                if (packet_entries[i].key == gdbctx->in_buf[1]) break;
+            if (num_packet == 0) {
+                int                 i;
+                
+                ret = packet_error;
+                
+                write(gdbctx->sock, "+", 1);
+                assert(plen);
+                
+                /* FIXME: should use bsearch if packet_entries was sorted */
+                for (i = 0; i < sizeof(packet_entries)/sizeof(packet_entries[0]); i++)
+                {
+                    if (packet_entries[i].key == gdbctx->in_buf[1]) break;
+                }
+                if (i == sizeof(packet_entries)/sizeof(packet_entries[0]))
+                {
+                    if (gdbctx->trace & GDBPXY_TRC_PACKET)
+                        fprintf(stderr, "Unknown packet request %*.*s\n",
+                                plen, plen, &gdbctx->in_buf[1]);
+                }
+                else
+                {
+                    gdbctx->in_packet = gdbctx->in_buf + 2;
+                    gdbctx->in_packet_len = plen - 1;
+                    if (gdbctx->trace & GDBPXY_TRC_PACKET)
+                        fprintf(stderr, "Packet: %c%*.*s\n",
+                                gdbctx->in_buf[1],
+                                gdbctx->in_packet_len, gdbctx->in_packet_len,
+                                gdbctx->in_packet);
+                    ret = (packet_entries[i].handler)(gdbctx);
+                }
+                switch (ret & ~packet_last_f)
+                {
+                case packet_error:  packet_reply(gdbctx, "", 0); break;
+                case packet_ok:     packet_reply(gdbctx, "OK", 2); break;
+                case packet_done:   break;
+                }
+                if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
+                    fprintf(stderr, "reply-full: %*.*s\n",
+                            gdbctx->out_len, gdbctx->out_len, gdbctx->out_buf);
+                i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
+                assert(i == gdbctx->out_len);
+                /* if this fails, we'll have to use POLLOUT...
+                 */
+                gdbctx->out_len = 0;
+                num_packet++;
             }
-            if (i == sizeof(packet_entries)/sizeof(packet_entries[0]))
+            else 
             {
-                if (gdbctx->trace & GDBPXY_TRC_PACKET)
-                    fprintf(stderr, "Unknown packet request %*.*s\n",
-                            plen, plen, &gdbctx->in_buf[1]);
+                /* FIXME: if we have in our input buffer more than one packet, 
+                 * it's very likely that we took too long to answer to a given packet
+                 * and gdb is sending us again the same packet
+                 * We simply drop the second packet. This will lower the risk of error, 
+                 * but there's still some race conditions here
+                 * A better fix (yet not perfect) would be to have two threads:
+                 * - one managing the packets for gdb
+                 * - the second one managing the commands...
+                 * This would allow us also the reply with the '+' character (Ack of
+                 * the command) way sooner than what we do know
+                 */
+                if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
+                    fprintf(stderr, "dropping packet, I was too slow to respond\n");
             }
-            else
-            {
-                gdbctx->in_packet = gdbctx->in_buf + 2;
-                gdbctx->in_packet_len = plen - 1;
-                if (gdbctx->trace & GDBPXY_TRC_PACKET)
-                    fprintf(stderr, "Packet: %c%*.*s\n",
-                            gdbctx->in_buf[1],
-                            gdbctx->in_packet_len, gdbctx->in_packet_len,
-                            gdbctx->in_packet);
-                ret = (packet_entries[i].handler)(gdbctx);
-            }
-            switch (ret & ~packet_last_f)
-            {
-            case packet_error:  packet_reply(gdbctx, "", 0); break;
-            case packet_ok:     packet_reply(gdbctx, "OK", 2); break;
-            case packet_done:   break;
-            }
-            if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-                fprintf(stderr, "reply-full: %*.*s\n",
-                        gdbctx->out_len, gdbctx->out_len, gdbctx->out_buf);
-            i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
-            assert(i == gdbctx->out_len);
-            /* if this fails, we'll have to use POLLOUT...
-             */
-            gdbctx->out_len = 0;
         }
         else
         {
