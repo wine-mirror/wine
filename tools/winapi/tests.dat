@@ -584,6 +584,7 @@ windef.h
 
 %include
 
+ntstatus.h
 windows.h
 
 %type
@@ -870,8 +871,11 @@ shlobj.h
 
 stdarg.h
 windef.h
+winbase.h
 wtypes.h
 shellapi.h
+winuser.h
+wingdi.h
 shlobj.h
 
 %type
@@ -941,8 +945,11 @@ shlwapi.h
 
 %include
 
+stdarg.h
 windef.h
+winbase.h
 wtypes.h
+winreg.h
 shlwapi.h
 
 %type
@@ -972,7 +979,9 @@ urlmon.h
 
 %include
 
+stdarg.h
 windef.h
+winbase.h
 urlmon.h
 
 %type

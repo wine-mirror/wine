@@ -222,7 +222,7 @@ sub _find_align_kind_size {
     } elsif (/^(?:long\s+double)$/) {
 	$align = 4;
 	$kind = "float";
-	$size = 10; # ???
+	$size = 12;
     } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|MENU|METAFILE|WND)$/) {
 	$align = 4;
 	$kind = "unsigned";
@@ -245,10 +245,10 @@ sub _find_align_kind_size {
 	    $output->write("$type_name: can't parse type\n");
 	    $size_parse_reported{$_} = 1;
 	}
-    } elsif (/^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) { 
+    } elsif (/^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) {
 	$align = 4;
 	$kind = "pointer";
-	$size = 4;    
+	$size = 4;
     }
 
     my $align2;
@@ -368,11 +368,13 @@ foreach my $file (@files) {
 	my $begin_column = shift;
 	my $preprocessor = shift;
 
-	local $_ = $preprocessor;
-	if (/^\#\s*include\s+\"pshpack(\d+)\.h\"$/) {
+        #print "found_preprocessor: $begin_line: [$_]\n";
+	if ($preprocessor =~ /^\#\s*include\s+[\"<]pshpack(\d+)\.h[\">]$/) {
 	    push @packs, $1;
-	} elsif(/^\#\s*include\s+\"poppack\.h\"$/) {
+            #print "found pack $1 on line $begin_line\n";
+	} elsif($preprocessor =~ /^\#\s*include\s+[\"<]poppack\.h[\">]$/) {
 	    pop @packs;
+            #print "found poppack on line $begin_line\n";
 	}
 
 	return 1;
@@ -515,7 +517,7 @@ sub output_header {
     print OUT "#ifdef FIELD_ALIGNMENT\n";
     print OUT "# define TEST_FIELD_ALIGNMENT(type, field, align) \\\n";
     print OUT "   ok(FIELD_ALIGNMENT(type, field) == align, \\\n";
-    print OUT "       \"FIELD_ALIGNMENT(\" #type \", \" #field \") == %d (expected \" #align \")\", \\\n";
+    print OUT "       \"FIELD_ALIGNMENT(\" #type \", \" #field \") == %d (expected \" #align \")\\n\", \\\n";
     print OUT "           FIELD_ALIGNMENT(type, field))\n";
     print OUT "#else\n";
     print OUT "# define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)\n";
@@ -523,7 +525,7 @@ sub output_header {
     print OUT "\n";
     print OUT "#define TEST_FIELD_OFFSET(type, field, offset) \\\n";
     print OUT "    ok(FIELD_OFFSET(type, field) == offset, \\\n";
-    print OUT "        \"FIELD_OFFSET(\" #type \", \" #field \") == %ld (expected \" #offset \")\", \\\n";
+    print OUT "        \"FIELD_OFFSET(\" #type \", \" #field \") == %ld (expected \" #offset \")\\n\", \\\n";
     print OUT "             FIELD_OFFSET(type, field))\n";
     print OUT "\n";
     print OUT "#ifdef _TYPE_ALIGNMENT\n";
@@ -535,13 +537,13 @@ sub output_header {
     print OUT "\n";
     print OUT "#ifdef TYPE_ALIGNMENT\n";
     print OUT "#define TEST_TYPE_ALIGNMENT(type, align) \\\n";
-    print OUT "    ok(TYPE_ALIGNMENT(type) == align, \"TYPE_ALIGNMENT(\" #type \") == %d (expected \" #align \")\", TYPE_ALIGNMENT(type))\n";
+    print OUT "    ok(TYPE_ALIGNMENT(type) == align, \"TYPE_ALIGNMENT(\" #type \") == %d (expected \" #align \")\\n\", TYPE_ALIGNMENT(type))\n";
     print OUT "#else\n";
     print OUT "# define TEST_TYPE_ALIGNMENT(type, align) do { } while (0)\n";
     print OUT "#endif\n";
     print OUT "\n";
     print OUT "#define TEST_TYPE_SIZE(type, size) \\\n";
-    print OUT "    ok(sizeof(type) == size, \"sizeof(\" #type \") == %d (expected \" #size \")\", sizeof(type))\n";
+    print OUT "    ok(sizeof(type) == size, \"sizeof(\" #type \") == %d (expected \" #size \")\\n\", sizeof(type))\n";
     print OUT "\n";
     print OUT "/***********************************************************************\n";
     print OUT " * Test macros\n";
@@ -561,10 +563,10 @@ sub output_header {
     print OUT "    TEST_TYPE_SIZE(*(type)0, size)\n";
     print OUT "\n";
     print OUT "#define TEST_TYPE_SIGNED(type) \\\n";
-    print OUT "    ok((type) -1 < 0, \"(\" #type \") -1 < 0\");\n";
+    print OUT "    ok((type) -1 < 0, \"(\" #type \") -1 < 0\\n\");\n";
     print OUT "\n";
     print OUT "#define TEST_TYPE_UNSIGNED(type) \\\n";
-    print OUT "     ok((type) -1 > 0, \"(\" #type \") -1 > 0\");\n";
+    print OUT "     ok((type) -1 > 0, \"(\" #type \") -1 > 0\\n\");\n";
     print OUT "\n";
 }
 
@@ -623,7 +625,7 @@ sub output_test_pack_type {
 
 	    my @fields = $type->fields;
 	    my $type_name2 =$fields[0]->type_name;
-      
+
 	    if ($type_name2 =~ s/\s*\*$//) {
 		my $type2 = $$type_name2type{$type_name2};
 		if (defined($type2)) {
@@ -671,7 +673,7 @@ sub output_test_pack_type {
 	print OUT "    TEST_TYPE_UNSIGNED($type_name);\n";
     }
 }
-    
+
 sub output_test_pack_fields {
     local *OUT = shift;
 
