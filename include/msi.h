@@ -98,4 +98,8 @@ UINT WINAPI MsiVerifyPackageA(LPCSTR);
 UINT WINAPI MsiVerifyPackageW(LPCWSTR);
 #define     MsiVerifyPackage WINELIB_NAME_AW(MsiVerifyPackage)
 
+INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR);
+INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR);
+#define     MsiQueryProductState WINELIB_NAME_AW(MsiQueryProductState)
+
 #endif /* __WINE_MSI_H */

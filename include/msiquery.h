@@ -118,5 +118,9 @@ UINT WINAPI MsiGetComponentStateA(MSIHANDLE,LPSTR,INSTALLSTATE*,INSTALLSTATE*);
 UINT WINAPI MsiGetComponentStateW(MSIHANDLE,LPWSTR,INSTALLSTATE*,INSTALLSTATE*);
 #define     MsiGetComponentState WINELIB_NAME_AW(MsiGetComponentState)
 
+MSICONDITION WINAPI MsiEvaluateConditionA(MSIHANDLE,LPCSTR);
+MSICONDITION WINAPI MsiEvaluateConditionW(MSIHANDLE,LPCWSTR);
+#define     MsiEvaluateCondition WINELIB_NAME_AW(MsiEvaluateCondition)
+
 
 #endif /* __WINE_MSIQUERY_H */
