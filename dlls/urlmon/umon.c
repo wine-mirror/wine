@@ -36,6 +36,7 @@
 #include "ole2.h"
 #include "urlmon.h"
 #include "wininet.h"
+#include "shlwapi.h"
 #include "urlmon_main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
@@ -106,7 +107,7 @@ static HRESULT WINAPI URLMonikerImpl_IBinding_GetPriority(IBinding* iface, LONG*
 static HRESULT WINAPI URLMonikerImpl_IBinding_GetBindResult(IBinding* iface, CLSID* pclsidProtocol, DWORD* pdwResult, LPOLESTR* pszResult, DWORD* pdwReserved);
 
 /* Local function used by urlmoniker implementation */
-static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* iface, LPCOLESTR lpszURL);
+static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* iface, LPCOLESTR lpszLeftURL, LPCOLESTR lpszURL);
 static HRESULT URLMonikerImpl_Destroy(URLMonikerImpl* iface);
 
 /********************************************************************************/
@@ -337,11 +338,12 @@ static HRESULT WINAPI URLMonikerImpl_GetSizeMax(IMoniker* iface,
 /******************************************************************************
  *         URLMoniker_Construct (local function)
  *******************************************************************************/
-static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszURLName)
+static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeftURLName, LPCOLESTR lpszURLName)
 {
-    int sizeStr = strlenW(lpszURLName);
+    HRESULT hres;
+    DWORD sizeStr;
 
-    TRACE("(%p,%s)\n",This,debugstr_w(lpszURLName));
+    TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszLeftURLName),debugstr_w(lpszURLName));
     memset(This, 0, sizeof(*This));
 
     /* Initialize the virtual function table. */
@@ -349,12 +351,30 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszURLN
     This->lpvtbl2      = &VTBinding_URLMonikerImpl;
     This->ref          = 0;
 
-    This->URLName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr+1));
+    if(lpszLeftURLName) {
+        hres = UrlCombineW(lpszLeftURLName, lpszURLName, NULL, &sizeStr, 0);
+        if(FAILED(hres)) {
+            return hres;
+        }
+        sizeStr++;
+    }
+    else
+        sizeStr = lstrlenW(lpszURLName)+1;
+
+    This->URLName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr));
 
     if (This->URLName==NULL)
         return E_OUTOFMEMORY;
 
-    strcpyW(This->URLName,lpszURLName);
+    if(lpszLeftURLName) {
+        hres = UrlCombineW(lpszLeftURLName, lpszURLName, This->URLName, &sizeStr, 0);
+        if(FAILED(hres)) {
+            HeapFree(GetProcessHeap(), 0, This->URLName);
+            return hres;
+        }
+    }
+    else
+        strcpyW(This->URLName,lpszURLName);
 
     return S_OK;
 }
@@ -967,16 +987,25 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
     URLMonikerImpl *obj;
     HRESULT hres;
     IID iid = IID_IMoniker;
+    LPOLESTR lefturl = NULL;
 
     TRACE("(%p, %s, %p)\n", pmkContext, debugstr_w(szURL), ppmk);
-
-    if (NULL != pmkContext)
-	FIXME("Non-null pmkContext not implemented\n");
 
     if(!(obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj))))
 	return E_OUTOFMEMORY;
 
-    hres = URLMonikerImpl_Construct(obj, szURL);
+    if(pmkContext) {
+        CLSID clsid;
+        IBindCtx* bind;
+        IMoniker_GetClassID(pmkContext, &clsid);
+        if(IsEqualCLSID(&clsid, &CLSID_StdURLMoniker) && SUCCEEDED(CreateBindCtx(0, &bind))) {
+            URLMonikerImpl_GetDisplayName(pmkContext, bind, NULL, &lefturl);
+            IBindCtx_Release(bind);
+        }
+    }
+        
+    hres = URLMonikerImpl_Construct(obj, lefturl, szURL);
+    CoTaskMemFree(lefturl);
     if(SUCCEEDED(hres))
 	hres = URLMonikerImpl_QueryInterface((IMoniker*)obj, &iid, (void**)ppmk);
     else

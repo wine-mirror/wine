@@ -6,7 +6,8 @@ TESTDLL   = urlmon.dll
 IMPORTS   = urlmon
 
 CTESTS = \
-	generated.c
+	generated.c \
+	url.c
 
 @MAKE_TEST_RULES@
 
