@@ -1110,7 +1110,7 @@ BOOL WINAPI PathIsSameRootA(LPCSTR lpszPath1, LPCSTR lpszPath2)
 	  {
 	    if (lpszPath1[pos]=='\\') bsfound++;
 	    if (bsfound == 2) return TRUE;
-	    pos++; /* fixme: use CharNext*/
+	    pos++; /* FIXME: use CharNext*/
 	  }
 	  return (lpszPath1[pos] == lpszPath2[pos]);
 	}
@@ -1142,7 +1142,7 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
 	  {
 	    if (lpszPath1[pos]=='\\') bsfound++;
 	    if (bsfound == 2) return TRUE;
-	    pos++;/* fixme: use CharNext*/
+	    pos++;/* FIXME: use CharNext*/
 	  }
 	  return (lpszPath1[pos] == lpszPath2[pos]);
 	}
@@ -1773,9 +1773,15 @@ HRESULT WINAPI PathCreateFromUrlA(
 	LPDWORD pcchPath,
 	DWORD dwFlags)
 {
+    /* extracts thing prior to : in pszURL and checks against:
+     *   https
+     *   shell
+     *   local
+     *   about  - if match returns E_INVALIDARG
+     */
 	FIXME("%s %p %p 0x%08lx\n",
 	  pszUrl, pszPath, pcchPath, dwFlags);
-	return S_OK;
+	return E_INVALIDARG;
 }
 
 /*************************************************************************
@@ -1787,9 +1793,15 @@ HRESULT WINAPI PathCreateFromUrlW(
 	LPDWORD pcchPath,
 	DWORD dwFlags)
 {
+    /* extracts thing prior to : in pszURL and checks against:
+     *   https
+     *   shell
+     *   local
+     *   about  - if match returns E_INVALIDARG
+     */
 	FIXME("%s %p %p 0x%08lx\n",
 	  debugstr_w(pszUrl), pszPath, pcchPath, dwFlags);
-	return S_OK;
+	return E_INVALIDARG;
 }
 
 /*************************************************************************
