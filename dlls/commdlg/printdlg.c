@@ -894,6 +894,32 @@ static LRESULT PRINTDLG_WMInitDialog16(HWND hDlg, WPARAM wParam,
     } else
         PrintStructures->HelpMessageID = 0;
 
+    if (!(lppd->Flags & PD_PRINTSETUP)) {
+	/* We have a print quality combo box. What shall we do? */
+	if (GetDlgItem(hDlg,cmb1)) {
+	    char buf [20];
+
+	    FIXME("Print quality only displaying currently.\n");
+
+	    pdm = GlobalLock16(lppd->hDevMode);
+	    if(pdm) {
+		switch (pdm->dmPrintQuality) {
+		case DMRES_HIGH		: strcpy(buf,"High");break;
+		case DMRES_MEDIUM	: strcpy(buf,"Medium");break;
+		case DMRES_LOW		: strcpy(buf,"Low");break;
+		case DMRES_DRAFT	: strcpy(buf,"Draft");break;
+		case 0			: strcpy(buf,"Default");break;
+		default			: sprintf(buf,"%ddpi",pdm->dmPrintQuality);break;
+		}
+	        GlobalUnlock16(lppd->hDevMode);
+	    } else 
+		strcpy(buf,"Default");
+	    SendDlgItemMessageA(hDlg,cmb1,CB_ADDSTRING,0,(LPARAM)buf);
+	    SendDlgItemMessageA(hDlg,cmb1,CB_SETCURSEL,0,0);
+	    EnableWindow(GetDlgItem(hDlg,cmb1),FALSE);
+	}
+    }
+
     /* FIXME: I allow more freedom than either Win95 or WinNT,
      *        which do not agree to what errors should be thrown or not
      *        in case nToPage or nFromPage is out-of-range.
@@ -1005,6 +1031,22 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 	}
 	break;
 
+     case psh1:                       /* Print Setup */
+	{
+	    PRINTDLG16	pdlg;
+	    
+	    if (!PrintStructures->dlg.lpPrintDlg16) {
+		FIXME("The 32bit print dialog does not have this button!?\n");
+		break;
+	    }
+
+	    memcpy(&pdlg,PrintStructures->dlg.lpPrintDlg16,sizeof(pdlg));
+	    pdlg.Flags |= PD_PRINTSETUP;
+	    pdlg.hwndOwner = hDlg;
+	    if (!PrintDlg16(&pdlg))
+		break;
+	}
+	break;
      case psh2:                       /* Properties button */
        {
          HANDLE hPrinter;
@@ -1041,7 +1083,12 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
         }
         break;
             
-    case cmb1:
+    case cmb1: /* Printer Combobox in PRINT SETUP, quality combobox in PRINT */
+	 if (PrinterComboID != wParam) {
+	     FIXME("No handling for print quality combo box yet.\n");
+	     break;
+	 }
+	 /* FALLTHROUGH */
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
 	     char   PrinterName[256];
@@ -1077,6 +1124,9 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 	    if (IsDlgButtonChecked(hDlg, rad1) == BST_CHECKED) {
 	        if(lpdm->u1.s1.dmOrientation != DMORIENT_PORTRAIT) {
 		    lpdm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+		    SendDlgItemMessageA(hDlg, stc10, STM_SETIMAGE,
+					(WPARAM)IMAGE_ICON,
+					(LPARAM)PrintStructures->hPortraitIcon);
 		    SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE,
 					(WPARAM)IMAGE_ICON,
 					(LPARAM)PrintStructures->hPortraitIcon);
@@ -1084,6 +1134,9 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 	    } else {
 	        if(lpdm->u1.s1.dmOrientation != DMORIENT_LANDSCAPE) {
 	            lpdm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+		    SendDlgItemMessageA(hDlg, stc10, STM_SETIMAGE,
+					(WPARAM)IMAGE_ICON,
+					(LPARAM)PrintStructures->hLandscapeIcon);
 		    SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE,
 					(WPARAM)IMAGE_ICON,
 					(LPARAM)PrintStructures->hLandscapeIcon);
