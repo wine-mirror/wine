@@ -41,8 +41,10 @@ typedef struct
   DWORD             NrOfPrinterInfoEntries;
   LPPRINTDLGA       lpPrintDlg;
   UINT              HelpMessageID;
-  HICON             hCollateIcon;
-  HICON             hNoCollateIcon;
+  HICON             hCollateIcon;    /* PrintDlg only */
+  HICON             hNoCollateIcon;  /* PrintDlg only */
+  HICON             hPortraitIcon;   /* PrintSetupDlg only */
+  HICON             hLandscapeIcon;  /* PrintSetupDlg only */
 } PRINT_PTRA;
 
 
@@ -50,10 +52,23 @@ typedef struct
 static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, 
 						  PRINT_PTRA* PrintStructures);
 
+LRESULT WINAPI PrintSetupDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);
 
 
 /***********************************************************************
  *           PrintDlg16   (COMMDLG.20)
+ * 
+ *  Displays the the PRINT dialog box, which enables the user to specify
+ *  specific properties of the print job.
+ *
+ * RETURNS
+ *  nonzero if the user pressed the OK button
+ *  zero    if the user cancelled the window or an error occurred
+ *
+ * BUGS
+ *  * calls up to the 32-bit versions of the Dialogs, which look different
+ *  * Customizing is *not* implemented.
  */
 BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
 {
@@ -106,16 +121,19 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
  *  Displays the the PRINT dialog box, which enables the user to specify
  *  specific properties of the print job.
  *
- *  (Note: according to the MS Platform SDK, this call was in the past 
- *   also used to display some PRINT SETUP dialog. As this is superseded 
- *   by PageSetupDlg, this now results in an error!)
- *
  * RETURNS
  *  nonzero if the user pressed the OK button
  *  zero    if the user cancelled the window or an error occurred
  *
  * BUGS
- *  The Collate Icons do not display, even though they are in the code.
+ *  PrintDlg:
+ *  * The Collate Icons do not display, even though they are in the code.
+ *  * The Properties Button(s) should call DocumentPropertiesA().
+ *  PrintSetupDlg:
+ *  * The Paper Orientation Icons are not implemented yet.
+ *  * The Properties Button(s) should call DocumentPropertiesA().
+ *  * Settings are not yet taken from a provided DevMode or 
+ *    default printer settings.
  */
 BOOL WINAPI PrintDlgA(
 			 LPPRINTDLGA lppd /* ptr to PRINTDLG32 struct */
@@ -130,7 +148,7 @@ BOOL WINAPI PrintDlgA(
  * step 4: implement all other specs
  * step 5: allow customisation of the dialog box
  *
- * current implementation is in step 3.
+ * current implementation is in step 4.
  */ 
 
     HWND      hwndDialog;
@@ -142,23 +160,30 @@ BOOL WINAPI PrintDlgA(
     DWORD     CopyOfEnumBytesNeeded;
     PRINT_PTRA PrintStructures;
 
-    FIXME("KVG (%p): stub\n", lppd);
-    PrintStructures.lpPrintDlg = lppd;
-
-    /* load Dialog */
-    if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32", RT_DIALOGA)))
-    {
-	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-	return FALSE;
-    }
+    TRACE("(lppd: %p)\n", lppd);
+    PrintStructures.lpPrintDlg      = lppd;
+    
+    /* load Dialog resources, 
+     * depending on Flags indicates Print32 or Print32_setup dialog 
+     */
+    if (lppd->Flags & PD_PRINTSETUP)
+        hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32_SETUP", RT_DIALOGA);
+    else
+        hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32", RT_DIALOGA);
+    if (!hResInfo)
+      {
+	   COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	   return FALSE;
+      }
+    
     if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo )) ||
         !(ptr = LockResource( hDlgTmpl )))
-    {
-	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	return FALSE;
-    }
+      {
+       COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+       return FALSE;
+      }
 
-    /* load Collate ICON */
+    /* load Collate ICONs */
     PrintStructures.hCollateIcon = 
                               LoadIconA(COMDLG32_hInstance, "PD32_COLLATE");
     PrintStructures.hNoCollateIcon = 
@@ -170,14 +195,17 @@ BOOL WINAPI PrintDlgA(
 	return FALSE;
     }
 
+    /* load Paper Orientation ICON */
+        /* FIXME: not implemented yet */
+
     /*
      * if lppd->Flags PD_SHOWHELP is specified, a HELPMESGSTRING message
      * must be registered and the Help button must be shown.
      */
     if (lppd->Flags & PD_SHOWHELP)
        {
-        if((PrintStructures.HelpMessageID = RegisterWindowMessageA(HELPMSGSTRING)) 
-    			== 0)
+        if((PrintStructures.HelpMessageID = 
+                       RegisterWindowMessageA(HELPMSGSTRING)) == 0)
             {
              COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
              return FALSE;
@@ -186,13 +214,6 @@ BOOL WINAPI PrintDlgA(
     else
     	PrintStructures.HelpMessageID=0;
 	
-	if (lppd->Flags & PD_PRINTSETUP)
-		{
-		 FIXME(": PrintDlg was requested to display PrintSetup box.\n");
-		 COMDLG32_SetCommDlgExtendedError(PDERR_INITFAILURE); 
-		 return(FALSE);
-		}
-		
     /* Use EnumPrinters to obtain a list of PRINTER_INFO_2A's
      * and store a pointer to this list in our "global structure"
      * as reference for the rest of the PrintDlg routines
@@ -255,9 +276,17 @@ BOOL WINAPI PrintDlgA(
        }
 	
     /* and create & process the dialog 
-     */	
-    hwndDialog= DIALOG_CreateIndirect(hInst, ptr, TRUE, lppd->hwndOwner,
+     */
+	if (lppd->Flags & PD_PRINTSETUP)
+		{
+         hwndDialog= DIALOG_CreateIndirect(hInst, ptr, TRUE, lppd->hwndOwner,
+            (DLGPROC16)PrintSetupDlgProcA, (LPARAM)&PrintStructures, WIN_PROC_32A );
+        }
+    else
+		{
+         hwndDialog= DIALOG_CreateIndirect(hInst, ptr, TRUE, lppd->hwndOwner,
             (DLGPROC16)PrintDlgProcA, (LPARAM)&PrintStructures, WIN_PROC_32A );
+        }
     if (hwndDialog) 
         bRet = DIALOG_DoDialogBox(hwndDialog, lppd->hwndOwner);  
      
@@ -266,6 +295,7 @@ BOOL WINAPI PrintDlgA(
     free(PrintStructures.lpPrinterInfo);
     DeleteObject(PrintStructures.hCollateIcon);
     DeleteObject(PrintStructures.hNoCollateIcon);
+    /* FIXME: don't forget to delete the paper orientation icons here! */
 
   TRACE(" exit! (%d)", bRet);        
   return bRet;            
@@ -322,9 +352,129 @@ void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
     if (lpPi->pLocation != NULL && lpPi->pLocation[0]!='\0')
         SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)lpPi->pLocation);
     else                                        
-        SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0, (LPARAM)lpPi->pPortName);
+        SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)lpPi->pPortName);
     SendDlgItemMessageA(hDlg, stc13, WM_SETTEXT, 0, (LPARAM)lpPi->pComment);
 }
+
+/***********************************************************************
+ *        PRINTSETUP32DLG_ComboBox               [internal]
+ *
+ * Queries the DeviceCapabilities for a list of paper sizes / bin names
+ * and stores these in combobox cmb2 / cmb3.
+ * If there was already an item selected in the listbox,
+ * this item is looked up in the new list and reselected, 
+ * the accompanying ID (for BinNames, this is the dmDefaultSource value)
+ * is returned
+ *
+ * If any entries in the listbox existed, these are deleted
+ *
+ * RETURNS:
+ *   If an entry was selected and also exists in the new list,
+ *   its corresponding ID is returned.
+ * 
+ *   returns zero on not found, error or SelectedName==NULL.
+ *
+ *
+ * BUGS:
+ * * the lookup of a new entry shouldn't be done on stringname,
+ *   but on ID value, as some drivers name the same paper format 
+ *   differently (language differences, added paper size)
+ */
+short PRINTSETUP32DLG_UpdateComboBox(HWND hDlg,
+                                      int   nIDComboBox,
+                                      char* PrinterName, 
+                                      char* PortName)
+{
+    int     i;
+    DWORD   NrOfEntries;
+    char*   Names;
+    WORD*   Sizes;
+    HGLOBAL hTempMem;
+    short   returnvalue = 0;
+    char    SelectedName[256];
+    int     NamesSize;
+    int     fwCapability_Names;
+    int     fwCapability_Words;
+    
+    TRACE(" Printer: %s, ComboID: %d\n",PrinterName,nIDComboBox);
+    
+    /* query the dialog box for the current selected value */
+    GetDlgItemTextA(hDlg, nIDComboBox, SelectedName, 255);
+
+    if (nIDComboBox == cmb2)
+        {
+         NamesSize          = 64;
+         fwCapability_Names = DC_PAPERNAMES;
+         fwCapability_Words = DC_PAPERS;
+        }
+    else
+        {
+         nIDComboBox        = cmb3;
+         NamesSize          = 24;
+         fwCapability_Names = DC_BINNAMES;
+         fwCapability_Words = DC_BINS;
+        }
+    
+    /* for some printer drivers, DeviceCapabilities calls a VXD to obtain the 
+     * paper settings. As Wine doesn't allow VXDs, this results in a crash.
+     */
+    WARN(" if your printer driver uses VXDs, expect a crash now!\n");
+    NrOfEntries = DeviceCapabilitiesA(PrinterName, PortName,
+                                      fwCapability_Names, NULL, NULL);
+    if (NrOfEntries == 0)
+        {
+         WARN(" no Name Entries found!\n");
+        }
+    hTempMem = GlobalAlloc(GMEM_MOVEABLE, NrOfEntries*NamesSize);
+    if (hTempMem == 0)
+        {
+         ERR(" Not enough memory to store Paper Size Names!\n");
+         return(0);
+        }
+    Names = GlobalLock(hTempMem);
+    NrOfEntries = DeviceCapabilitiesA(PrinterName, PortName,
+                                      fwCapability_Names, Names, NULL);
+                                      
+    /* reset any current content in the combobox */
+    SendDlgItemMessageA(hDlg, nIDComboBox, CB_RESETCONTENT, 0, 0);
+    
+    /* store new content */
+    for (i=0; i<NrOfEntries; i++)
+      {
+       SendDlgItemMessageA(hDlg, nIDComboBox, CB_ADDSTRING, 0,
+                        (LPARAM)(&Names[i*NamesSize]) );
+      }
+                        
+    /* select first entry */                        
+    SendDlgItemMessageA(hDlg, nIDComboBox, CB_SELECTSTRING, 0, 
+                        (LPARAM)(&Names[0]) );
+
+    /* lookup SelectedName and select it, if found */
+    if (SelectedName[0] != '\0')
+       {
+        for (i=0; i<NrOfEntries; i++)
+            {
+             if (strcmp(&Names[i*NamesSize], SelectedName)==0)
+                {
+                 SendDlgItemMessageA(hDlg, nIDComboBox, CB_SELECTSTRING, 0, 
+                                     (LPARAM)(SelectedName));
+                 
+                 /* now, we need the i-th entry from the list of paper sizes */
+                 /* let's recycle the memory */
+                 DeviceCapabilitiesA(PrinterName, PortName, fwCapability_Words,
+                                     Names, NULL);
+                 Sizes = (WORD*) Names;
+                 returnvalue = Sizes[i];                 
+                 break; /* quit for loop */
+                }
+            }
+       }
+                        
+    GlobalUnlock(hTempMem);
+    GlobalFree(hTempMem);
+ return(returnvalue);
+}
+
 
 
 /***********************************************************************
@@ -480,6 +630,65 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
   return TRUE;
 }
 
+
+
+
+/***********************************************************************
+ *           PRINTSETUP32DLG_WMInitDialog                      [internal]
+ */
+static LRESULT PRINTSETUP32DLG_WMInitDialog(HWND hDlg, WPARAM wParam, 
+                     LPARAM lParam,
+				     PRINT_PTRA* PrintStructures)
+{
+ int               i;
+ LPPRINTDLGA       lppd     = PrintStructures->lpPrintDlg;
+ LPPRINTER_INFO_2A lppi     = PrintStructures->lpPrinterInfo;
+ 
+	SetWindowLongA(hDlg, DWL_USER, lParam); 
+	TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
+
+	if (lppd->lStructSize != sizeof(PRINTDLGA))
+	{
+		FIXME("structure size failure !!!\n");
+/*		EndDialog (hDlg, 0); 
+		return FALSE; 
+*/	}
+
+/* Fill Combobox 1 according to info from PRINTER_INFO2A
+ * structure inside PrintStructures,
+ * select the default printer and generate an
+ * update-message to have the rest of the dialog box updated.
+ */ 
+    for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
+	   SendDlgItemMessageA(hDlg, cmb1, CB_ADDSTRING, 0,
+                        (LPARAM)lppi[i].pPrinterName );
+    i=SendDlgItemMessageA(hDlg, cmb1, CB_SELECTSTRING, 
+        (WPARAM) -1,
+        (LPARAM) lppi[PrintStructures->CurrentPrinter].pPrinterName);
+    SendDlgItemMessageA(hDlg, cmb1, CB_SETCURSEL, 
+        (WPARAM)i, (LPARAM)0);
+    PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
+    
+/* 
+ * fill both ComboBoxes with their info
+ */
+  PRINTSETUP32DLG_UpdateComboBox(hDlg, cmb2,
+                lppi[PrintStructures->CurrentPrinter].pPrinterName,
+                lppi[PrintStructures->CurrentPrinter].pPortName);
+  PRINTSETUP32DLG_UpdateComboBox(hDlg, cmb3,
+                lppi[PrintStructures->CurrentPrinter].pPrinterName,
+                lppi[PrintStructures->CurrentPrinter].pPortName);
+                
+/* 
+ * set the correct radiobutton & icon for print orientation
+ */
+  /* this should be dependent on a incoming DevMode 
+   * (FIXME: not implemented yet) */
+  CheckRadioButton(hDlg, rad1, rad2, rad1);
+  /* also set the correct icon (FIXME: not implemented yet) */
+                
+  return TRUE;
+}
 
 
 /***********************************************************************
@@ -641,39 +850,105 @@ static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
 	 /* if one of the above flags was set, the application doesn't
 	   * (want to) support multiple copies or collate...
 	   */
-	 lppd->Flags &= ~PD_COLLATE;
-	 lppd->nCopies = 1;
+         lppd->Flags &= ~PD_COLLATE;
+         lppd->nCopies = 1;
 	  /* if the printer driver supports it... store info there
 	   * otherwise no collate & multiple copies !
 	   */
          if (pDevMode->dmFields & DM_COLLATE)
-	   {
-	    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
-	    	pDevMode->dmCollate = 1;	 
-	    else
-	    	pDevMode->dmCollate = 0;
-	   }
+          {
+           pDevMode->dmCollate = 0;
+           if (hDlg!=0)
+             if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
+	    	   pDevMode->dmCollate = 1;	 
+          }
          if (pDevMode->dmFields & DM_COPIES)
-	    {
-	     WORD nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
-	     pDevMode->dmCopies = nCopies; 	 
+          {
+           pDevMode->dmCopies = 1;
+           if (hDlg!=0)
+                pDevMode->dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+	      }
 	    }
-	}
     else
         {
-	 /* set Collate & nCopies according to dialog */
-         if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
-	    lppd->Flags |= PD_COLLATE;
-	 else
-	    lppd->Flags &= ~PD_COLLATE;
-	 lppd->nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
-	}
+         if (hDlg!=0)
+           {
+	        /* set Collate & nCopies according to dialog */
+            if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
+               lppd->Flags |= PD_COLLATE;
+            else
+               lppd->Flags &= ~PD_COLLATE;
+            lppd->nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+           }
+        else
+           {
+            /* stick to defaults */
+            lppd->Flags &= ~PD_COLLATE;
+            lppd->nCopies = 1;
+           }
+       }
 
 
     GlobalUnlock(lppd->hDevMode);
 
  return(TRUE);   
 }
+
+
+    
+/***********************************************************************
+ *      PRINTSETUP32DLG_ValidateAndDuplicateSettings          [internal]
+ *
+ *
+ *   updates the PrintDlg structure for returnvalues.
+ *   (yep, the name was chosen a bit stupid...)
+ *
+ *   if hDlg equals zero, only hDevModes and hDevNames are adapted.
+ *      
+ * RETURNS
+ *   FALSE if user is not allowed to close (i.e. wrong nTo or nFrom values)
+ *   TRUE  if succesful.
+ */
+static BOOL PRINTSETUP32DLG_ValidateAndDuplicateSettings(HWND hDlg, 
+						  PRINT_PTRA* PrintStructures)
+{
+ LPPRINTDLGA       lppd = PrintStructures->lpPrintDlg;
+ LPPRINTER_INFO_2A lppi = &(PrintStructures->lpPrinterInfo
+                                             [PrintStructures->CurrentPrinter]);
+ PDEVMODEA         pDevMode;
+
+   if (PRINTDLG_ValidateAndDuplicateSettings(0, PrintStructures)==FALSE)
+      return(FALSE);
+
+   pDevMode    = GlobalLock(lppd->hDevMode);
+
+   /* set bin type and paper size to DevMode */
+   if (pDevMode->dmFields & DM_PAPERSIZE)
+     {
+      pDevMode->u1.s1.dmPaperSize = PRINTSETUP32DLG_UpdateComboBox(hDlg, cmb2,
+                            lppi->pPrinterName,
+                            lppi->pPortName);
+      /* FIXME: should set dmPaperLength and dmPaperWidth also??? */
+     }                      
+   if (pDevMode->dmFields & DM_DEFAULTSOURCE)
+      pDevMode->dmDefaultSource = PRINTSETUP32DLG_UpdateComboBox(hDlg, cmb3,
+                            lppi->pPrinterName,
+                            lppi->pPortName);
+ 
+   /* set paper orientation to DevMode */
+   if (pDevMode->dmFields & DM_ORIENTATION)
+      {
+       if (IsDlgButtonChecked(hDlg, rad1) == BST_CHECKED)
+           pDevMode->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+       else
+           pDevMode->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+      }
+      
+   GlobalUnlock(lppd->hDevMode);
+   
+ return(TRUE);
+}
+
 
 
 /***********************************************************************
@@ -691,7 +966,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
     {
 	 case IDOK:
         TRACE(" OK button was hit\n");
-        if (PRINTDLG_ValidateAndDuplicateSettings(hDlg, PrintStructures) != TRUE)
+        if (PRINTDLG_ValidateAndDuplicateSettings(hDlg, PrintStructures)!=TRUE)
         	return(FALSE);
 	    DestroyWindow(hDlg);
 	    return(TRUE);
@@ -726,7 +1001,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
         break;
      case psh2:                         /* Properties button */
         {
-         HANDLE hPrinter;
+/*         HANDLE hPrinter;
          char   PrinterName[256];
          GetDlgItemTextA(hDlg, cmb4, PrinterName, 255);
          if (OpenPrinterA(PrinterName, &hPrinter, NULL))
@@ -737,6 +1012,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
          else
             WARN(" Call to OpenPrinter did not succeed!\n");
          break;
+*/       MessageBoxA(hDlg, "Not implemented yet!", "PRINT", MB_OK);
         }
      case cmb4:                         /* Printer combobox */
         if (HIWORD(wParam)==CBN_SELCHANGE)
@@ -791,6 +1067,71 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
     return FALSE;
 }    
 
+
+/***********************************************************************
+ *                  PRINTSETUP32DLG_WMCommand               [internal]
+ */
+static LRESULT PRINTSETUP32DLG_WMCommand(HWND hDlg, WPARAM wParam, 
+			LPARAM lParam, PRINT_PTRA* PrintStructures)
+{
+    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+    LPPRINTER_INFO_2A lppi = &(PrintStructures->lpPrinterInfo
+                                        [PrintStructures->CurrentPrinter]);
+    
+
+    switch (LOWORD(wParam)) 
+    {
+     case IDOK:
+        TRACE(" OK button was hit\n");
+        if (PRINTSETUP32DLG_ValidateAndDuplicateSettings(hDlg, PrintStructures) != TRUE)
+        	return(FALSE);
+        DestroyWindow(hDlg);
+        return(TRUE);
+     case IDCANCEL:
+        TRACE(" CANCEL button was hit\n");
+        EndDialog(hDlg, FALSE);
+        return(FALSE);
+     case pshHelp:
+        TRACE(" HELP button was hit\n");
+        SendMessageA(lppd->hwndOwner, PrintStructures->HelpMessageID, 
+        			(WPARAM) hDlg, (LPARAM) lppd);
+        break;
+     case psh2:                         /* Properties button */
+       MessageBoxA(hDlg, "Not implemented yet!", "PRINT SETUP", MB_OK);
+       break;
+     case cmb1:                         /* Printer combobox */
+        if (HIWORD(wParam)==CBN_SELCHANGE)
+           {
+            int i;
+        	char   Name[256];
+
+            /* look the newly selected Printer up in 
+             * our array Printer_Info2As
+             */
+        	GetDlgItemTextA(hDlg, cmb1, Name, 255);
+            for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
+           	   {
+                if (strcmp(PrintStructures->lpPrinterInfo[i].pPrinterName, 
+                           Name)==0)
+                     break;
+               }
+            PrintStructures->CurrentPrinter = i;   
+            PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
+            lppi = &(PrintStructures->
+                        lpPrinterInfo[PrintStructures->CurrentPrinter]);
+                    
+            /* Update both ComboBoxes to the items available for the new
+             * printer. Keep the same entry selected, if possible
+             */
+            PRINTSETUP32DLG_UpdateComboBox(hDlg, cmb2, lppi->pPrinterName,
+                                             lppi->pPortName);
+            PRINTSETUP32DLG_UpdateComboBox(hDlg, cmb3, lppi->pPrinterName,
+                                             lppi->pPortName);
+           }
+        break;
+    }
+    return FALSE;
+}    
 
 
 /***********************************************************************
@@ -883,6 +1224,49 @@ LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     }
   return FALSE;
 }
+
+
+/***********************************************************************
+ *           PrintSetupDlgProcA			[???]
+ *
+ *   FIXME:
+ *   note: I don't know whether this function actually is allowed
+ *         to exist (i.e. is exported/overrideable from the DLL)
+ *         For now, this function is local only.
+ *         If necessary, this call can be merged with PrintDlgProcA,
+ *         as it is very similar.
+ */
+LRESULT WINAPI PrintSetupDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam)
+{
+  PRINT_PTRA* PrintStructures;
+  LRESULT res=FALSE;
+  if (uMsg!=WM_INITDIALOG)
+  {
+   PrintStructures = (PRINT_PTRA*) GetWindowLongA(hDlg, DWL_USER);   
+   if (!PrintStructures)
+    return FALSE;
+}
+  else
+  {
+    PrintStructures=(PRINT_PTRA*) lParam;
+    if (!PRINTSETUP32DLG_WMInitDialog(hDlg, wParam, lParam, PrintStructures)) 
+    {
+      TRACE("PRINTSETUP32DLG_WMInitDialog returned FALSE\n");
+      return FALSE;
+    }  
+  }
+  switch (uMsg)
+  {
+  	case WM_COMMAND:
+       return PRINTSETUP32DLG_WMCommand(hDlg, wParam, lParam, PrintStructures);
+    case WM_DESTROY:
+	    return FALSE;
+  }
+  
+ return res;
+}
+
 
 
 
