@@ -351,8 +351,8 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream*iface,LONG start,LONG samples
 		return S_OK;
 	}
 
-	/* FIXME - is this data valid??? */
-	dwFrameLength = pIndexEntry[start].dwChunkLength + sizeof(DWORD)*2;
+	/* FIXME - no audio support. */
+	dwFrameLength = pIndexEntry[start].dwChunkLength;
 
 	if ( buffer == NULL )
 	{
@@ -368,7 +368,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream*iface,LONG start,LONG samples
 
 	hr = AVIFILE_IAVIFile_ReadMovieData(
 			This->paf,
-			pIndexEntry[start].dwChunkOffset,
+			pIndexEntry[start].dwChunkOffset + sizeof(DWORD)*2,
 			dwFrameLength, buffer );
 	if ( hr != S_OK )
 	{

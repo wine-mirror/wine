@@ -120,10 +120,11 @@ static LPVOID AVIFILE_IGetFrame_DecodeFrame(IGetFrameImpl* This,LONG lPos)
 	This->pbiICIn->bmiHeader.biSizeImage = lFrameLength;
 
 	TRACE( "call ICM_DECOMPRESS\n" );
-	icd.dwFlags = (*(BYTE*)This->pvICInDataBuf) == 'c' ?
-				      ICDECOMPRESS_NOTKEYFRAME : 0;
+	icd.dwFlags = 0;
+	if ( IAVIStream_FindSample(This->pas,lPos,FIND_PREV|FIND_KEY) != lPos )
+		icd.dwFlags = ICDECOMPRESS_NOTKEYFRAME;
 	icd.lpbiInput = &This->pbiICIn->bmiHeader;
-	icd.lpInput = (BYTE*)This->pvICInDataBuf + 8;
+	icd.lpInput = (BYTE*)This->pvICInDataBuf;
 	icd.lpbiOutput = &This->pbiICOut->bmiHeader;
 	icd.lpOutput = This->pvICOutBits;
 	icd.ckid = *((DWORD*)This->pvICInDataBuf);
