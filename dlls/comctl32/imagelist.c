@@ -2272,6 +2272,16 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
 
         StretchBlt (hdcImageList, i * himl->cx, 0, himl->cx, himl->cy,
                       hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+
+
+        /* Remove the background from the image
+        */
+        SelectObject (hdcImageList, himl->hbmImage);
+        StretchBlt (hdcImageList, 
+            i*himl->cx, 0, himl->cx, himl->cy,
+            hdcImage, 
+            0, 0, bmp.bmWidth, bmp.bmHeight, 
+            0x220326); /* NOTSRCAND */
     }
 
     DeleteDC (hdcImage);
