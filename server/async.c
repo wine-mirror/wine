@@ -47,6 +47,7 @@ struct async
     int                     count;
     int                     eventmask;
     struct async           *next;
+    struct timeval          tv;
     struct timeout_user    *timeout;
     struct wait_queue_entry wait;
     void                   *buffer;
@@ -61,6 +62,7 @@ static int async_get_poll_events( struct object *obj );
 static int async_get_fd( struct object *obj );
 static int async_get_info( struct object *obj, struct get_file_info_request *req );
 static void async_poll_event( struct object *obj, int event );
+static void overlapped_timeout (void *private);
 
 static const struct object_ops async_ops =
 {
@@ -95,8 +97,10 @@ static void async_destroy( struct object *obj )
     assert( obj->ops == &async_ops );
 
     if(ov->timeout)
+    {
         remove_timeout_user(ov->timeout);
-    ov->timeout = NULL;
+        ov->timeout = NULL;
+    }
 }
 
 struct async *get_async_obj( struct process *process, handle_t handle, unsigned int access )
@@ -198,9 +202,16 @@ DECL_HANDLER(create_async)
     ov->file    = obj;
     ov->buffer  = req->buffer;
     ov->count   = req->count;
+    ov->tv.tv_sec = 0;
+    ov->tv.tv_usec = 0;
 
     /* FIXME: this should be a function pointer */
     serial_async_setup(obj,ov);
+
+    if( ov->tv.tv_sec || ov->tv.tv_usec )
+    {
+        ov->timeout = add_timeout_user(&ov->tv, overlapped_timeout, ov);
+    }
 
     ov->obj.ops->add_queue(&ov->obj,&ov->wait);
 
@@ -216,6 +227,11 @@ static void async_poll_event( struct object *obj, int event )
 
     /* queue an APC in the client thread to do our dirty work */
     ov->obj.ops->remove_queue(&ov->obj,&ov->wait);
+    if(ov->timeout)
+    {
+        remove_timeout_user(ov->timeout);
+        ov->timeout = NULL;
+    }
 
     /* FIXME: this should be a function pointer */
     event = serial_async_poll_event(obj,event);
@@ -230,6 +246,7 @@ static void overlapped_timeout (void *private)
     struct async *ov = (struct async *) private;
 
     ov->obj.ops->remove_queue(&ov->obj,&ov->wait);
+    ov->timeout = NULL;
 
     thread_queue_apc(ov->thread, NULL, ov->func, APC_ASYNC, 1, 3,
                      ov->client_overlapped,ov->buffer, 0);
@@ -237,11 +254,11 @@ static void overlapped_timeout (void *private)
 
 void async_add_timeout(struct async *ov, int timeout)
 {
-    struct timeval tv;
-
-    gettimeofday(&tv,0);
-    add_timeout(&tv,timeout);
-    ov->timeout = add_timeout_user(&tv, overlapped_timeout, ov);
+    if(timeout)
+    {
+        gettimeofday(&ov->tv,0);
+        add_timeout(&ov->tv,timeout);
+    }
 }
 
 DECL_HANDLER(async_result)
@@ -254,6 +271,10 @@ DECL_HANDLER(async_result)
         if(ov->result == STATUS_PENDING)
         {
             ov->obj.ops->add_queue(&ov->obj,&ov->wait);
+            if( (ov->tv.tv_sec || ov->tv.tv_usec) && !ov->timeout)
+            {
+                ov->timeout = add_timeout_user(&ov->tv, overlapped_timeout, ov);
+            }
         }
         release_object( ov );
     }
