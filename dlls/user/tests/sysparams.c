@@ -1389,11 +1389,15 @@ static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERWIDTH\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERWIDTH, 0, &old_width, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    if (rc==0 && (GetLastError()==0xdeadbeef || 
+                  GetLastError()==ERROR_INVALID_SPI_VALUE ||
+                  GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
     {
         /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
          * what MSDN states (Verified on Win98SE)
+         * rc=0, LastError is not changed (Verified on Win98SE)
          */
         trace("SPI_{GET,SET}MOUSEHOVERWIDTH not supported on this platform\n");
         return;
@@ -1431,11 +1435,15 @@ static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERHEIGHT\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERHEIGHT, 0, &old_height, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    if (rc==0 && (GetLastError()==0xdeadbeef || 
+                  GetLastError()==ERROR_INVALID_SPI_VALUE ||
+                  GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
     {
         /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
          * what MSDN states (Verified on Win98SE)
+         * rc=0, LastError is not changed (Verified on Win98SE)
          */
         trace("SPI_{GET,SET}MOUSEHOVERHEIGHT not supported on this platform\n");
         return;
@@ -1477,11 +1485,15 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERTIME\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERTIME, 0, &old_time, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    if (rc==0 && (GetLastError()==0xdeadbeef || 
+                  GetLastError()==ERROR_INVALID_SPI_VALUE ||
+                  GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
     {
         /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
          * what MSDN states (Verified on Win98SE)
+         * rc=0, LastError is not changed (Verified on Win98SE)
          */
         trace("SPI_{GET,SET}MOUSEHOVERTIME not supported on this platform\n");
         return;
