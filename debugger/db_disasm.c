@@ -293,7 +293,7 @@ static const struct inst db_inst_0fbx[] = {
 
 /*b8*/	{ "",      FALSE, NONE,  0,	      0 },
 /*b9*/	{ "",      FALSE, NONE,  0,	      0 },
-/*ba*/	{ "",      TRUE,  LONG,  op2(Is, E),  (char *)db_Grp8 },
+/*ba*/	{ "",      TRUE,  LONG,  op2(Ib, E),  (char *)db_Grp8 },
 /*bb*/	{ "btc",   TRUE,  LONG,  op2(R, E),   0 },
 /*bc*/	{ "bsf",   TRUE,  LONG,  op2(E, R),   0 },
 /*bd*/	{ "bsr",   TRUE,  LONG,  op2(E, R),   0 },
