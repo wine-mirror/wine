@@ -23,6 +23,7 @@
 #include "debugger.h"
 #include "neexe.h"
 #include "process.h"
+#include "main.h"
 #include "ts_xlib.h"
 
 #include "expr.h"
@@ -56,13 +57,13 @@ extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
 }
 
 %token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
-%token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT
+%token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT tDEBUGMSG
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
-%token tEOL tSTRING
+%token tEOL tSTRING tDEBUGSTR
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR
 %token <string> tPATH
-%token <string> tIDENTIFIER tSTRING
+%token <string> tIDENTIFIER tSTRING tDEBUGSTR
 %token <integer> tNUM tFORMAT
 %token <reg> tREG
 
@@ -154,6 +155,7 @@ command:
     | tUNDISPLAY tEOL          { DEBUG_DelDisplay( -1 ); }
     | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
+    | tDEBUGMSG tDEBUGSTR tEOL { MAIN_ParseDebugOptions($2); }
     | list_command
     | disassemble_command
     | set_command

@@ -138,7 +138,7 @@ void DEBUG_Help(void)
 "  frame <n>                              finish",
 "  show dir                               dir <path>",
 "  display <expr>                         undisplay <disnum>",
-"  delete display <disnum>\n",
+"  delete display <disnum>                debugmsg <class>[-+]<type>\n",
 
 "Wine-specific commands:",
 "  mode [16,32]                           walk [wnd,class,queue,module]",

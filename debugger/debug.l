@@ -46,6 +46,7 @@ STRING     \"[^\n"]+\"
 %s WALK_CMD
 %s SHOW_CMD
 %s NOCMD
+%s DEBUGSTR
 
 %%
 
@@ -78,6 +79,7 @@ STRING     \"[^\n"]+\"
 <FORMAT_EXPECTED>"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
 {STRING} { yylval.string = make_symbol(yytext); return tSTRING; }
+<DEBUGSTR>[a-z+\-,]* { yylval.string = yytext; return tDEBUGSTR; }
 
 $pc     { yylval.reg = REG_EIP; return tREG; }
 $flags  { yylval.reg = REG_EFL; return tREG; }
@@ -112,6 +114,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
 <INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
 <INITIAL>enable|enabl|enab|ena		{ BEGIN(NOCMD); return tENABLE;}
+<INITIAL>debugmsg|debugms|debugm|debug|debu|deb { BEGIN(DEBUGSTR); return tDEBUGMSG;}
 <INITIAL>disable|disabl|disab|disa|dis  { BEGIN(NOCMD); return tDISABLE; }
 <INITIAL>disassemble|disassembl|disassemb|disassem|disasse|disass|disas { BEGIN(NOCMD); return tDISASSEMBLE; }
 <INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }

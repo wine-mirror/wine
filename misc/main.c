@@ -225,7 +225,7 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
  *  RETURNS
  *    TRUE if parsing was successful
  */
-static BOOL32 MAIN_ParseDebugOptions(char *options)
+BOOL32 MAIN_ParseDebugOptions(char *options)
 {
   /* defined in relay32/relay386.c */
   extern char **debug_relay_includelist;
@@ -235,8 +235,11 @@ static BOOL32 MAIN_ParseDebugOptions(char *options)
   extern char **debug_snoop_excludelist;
 
   int l, cls;
-  if (strlen(options)<3)
+
+  l = strlen(options);
+  if (l<3)
     return FALSE;
+  if (options[l-1]=='\n') options[l-1]='\0';
   do
   {
     if ((*options!='+')&&(*options!='-')){
