@@ -270,8 +270,8 @@
 @ stdcall EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsA(ptr long long)
 @ stdcall EnumTimeFormatsW(ptr long long)
-@ stub EnumUILanguagesA
-@ stub EnumUILanguagesW
+@ stdcall EnumUILanguagesA(ptr long long)
+@ stdcall EnumUILanguagesW(ptr long long)
 @ stdcall EraseTape(ptr long long)
 @ stdcall EscapeCommFunction(long long)
 @ stdcall ExitProcess(long)

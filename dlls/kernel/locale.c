@@ -3162,3 +3162,35 @@ BOOL WINAPI SetUserGeoID( GEOID GeoID )
     FIXME("%ld\n",GeoID);
     return FALSE;
 }
+
+/******************************************************************************
+ *           EnumUILanguagesA (KERNEL32.@)
+ */
+BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags, LONG_PTR lParam)
+{
+    static char value[] = "0409";
+
+    if(!pUILangEnumProc) return FALSE;
+
+    FIXME("%p, %lx, %lx calling pUILangEnumProc with %s\n",
+          pUILangEnumProc, dwFlags, lParam, debugstr_a(value));
+
+    pUILangEnumProc( value, lParam );
+    return(TRUE);
+}
+
+/******************************************************************************
+ *           EnumUILanguagesW (KERNEL32.@)
+ */
+BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags, LONG_PTR lParam)
+{
+    static WCHAR value[] = {'0','4','0','9',0};
+
+    if(!pUILangEnumProc) return FALSE;
+
+    FIXME("%p, %lx, %lx calling pUILangEnumProc with %s\n",
+          pUILangEnumProc, dwFlags, lParam, debugstr_w(value));
+
+    pUILangEnumProc( value, lParam );
+    return(TRUE);
+}
