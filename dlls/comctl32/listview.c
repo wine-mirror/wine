@@ -6242,24 +6242,9 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     /* now we have to actually adjust the data */
     if (!(infoPtr->dwStyle & LVS_OWNERDATA) && infoPtr->nItemCount > 0)
     {
-	SUBITEM_INFO *lpSubItem, *lpMainItem, **lpNewItems = 0;
+	SUBITEM_INFO *lpSubItem;
 	HDPA hdpaSubItems;
 	INT nItem, i;
-	
-	/* preallocate memory, so we can fail gracefully */
-	if (nNewColumn == 0)
-	{
-	    lpNewItems = COMCTL32_Alloc(sizeof(SUBITEM_INFO *) * infoPtr->nItemCount);
-	    if (!lpNewItems) goto fail;
-	    for (i = 0; i < infoPtr->nItemCount; i++)
-		if (!(lpNewItems[i] = COMCTL32_Alloc(sizeof(SUBITEM_INFO)))) break;
-	    if (i != infoPtr->nItemCount)
-	    {
-		for(; i >=0; i--) COMCTL32_Free(lpNewItems[i]);
-		COMCTL32_Free(lpNewItems);
-		goto fail;
-	    }
-	}
 	
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
@@ -6270,21 +6255,7 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 		if (lpSubItem->iSubItem >= nNewColumn)
 		    lpSubItem->iSubItem++;
 	    }
-
-	    /* for inserting column 0, we have to special-case the main item */	
-	    if (nNewColumn == 0)
-	    {
-		lpMainItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
-		lpSubItem = lpNewItems[nItem];
-		lpSubItem->hdr = lpMainItem->hdr;
-		lpSubItem->iSubItem = 1;
-		ZeroMemory(&lpMainItem->hdr, sizeof(lpMainItem->hdr));
-		lpMainItem->iSubItem = 0;
-		DPA_InsertPtr(hdpaSubItems, 1, lpSubItem);
-    	    }
 	}
-
-	COMCTL32_Free(lpNewItems);
     }
 
     /* make space for the new column */
