@@ -680,8 +680,13 @@ static void MSCDEX_Handler(CONTEXT* context)
 		case 15: /* Audio status info */
 		    /* !!!! FIXME FIXME FIXME !! */
 		    PTR_AT(io_stru, 1,  WORD) = 2 | ((wcda.cdaMode == WINE_CDA_PAUSE) ? 1 : 0);
-		    PTR_AT(io_stru, 3, DWORD) = wcda.lpdwTrackPos[0];
-		    PTR_AT(io_stru, 7, DWORD) = wcda.lpdwTrackPos[wcda.nTracks - 1];
+		    if (wcda.cdaMode == WINE_CDA_OPEN) {
+			PTR_AT(io_stru, 3, DWORD) = 0;
+			PTR_AT(io_stru, 7, DWORD) = 0;
+		    } else {
+			PTR_AT(io_stru, 3, DWORD) = wcda.lpdwTrackPos[0];
+			PTR_AT(io_stru, 7, DWORD) = wcda.lpdwTrackPos[wcda.nTracks - 1];
+		    }
 		    TRACE(int, "Audio status info: status=%04x startLoc=%ld endLoc=%ld\n",
 			  PTR_AT(io_stru, 1, WORD), PTR_AT(io_stru, 3, DWORD), PTR_AT(io_stru, 7, DWORD));
 		    break;
