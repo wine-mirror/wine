@@ -41,66 +41,83 @@ WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 /*************************************************************************
  *		ScrollDC   (X11DRV.@)
  *
- * Only the hrgnUpdate is returned in device coordinates.
- * rcUpdate must be returned in logical coordinates to comply with win API.
- * FIXME: the doc explicitly states the opposite, to be checked
+ * dx, dy, lprcScroll and lprcClip are all in logical coordinates (msdn is wrong)
+ * hrgnUpdate is returned in device coordinates with rcUpdate in logical coordinates.
+ *
  */
-BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
-                      const RECT *clipRect, HRGN hrgnUpdate, LPRECT rcUpdate )
+BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
+                      const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
 {
-    RECT rect, rClip, rDst;
+    RECT rSrc, rClipped_src, rClip, rDst, offset;
 
-    TRACE( "%p %d,%d hrgnUpdate=%p rcUpdate = %p\n", hdc, dx, dy, hrgnUpdate, rcUpdate );
-    if (clipRect) TRACE( "cliprc = (%ld,%ld,%ld,%ld)\n",
-                         clipRect->left, clipRect->top, clipRect->right, clipRect->bottom );
-    if (rc) TRACE( "rc = (%ld,%ld,%ld,%ld)\n", rc->left, rc->top, rc->right, rc->bottom );
+    TRACE( "%p %d,%d hrgnUpdate=%p lprcUpdate = %p\n", hdc, dx, dy, hrgnUpdate, lprcUpdate );
+    if (lprcClip) TRACE( "lprcClip = %s\n", wine_dbgstr_rect(lprcClip));
+    if (lprcScroll) TRACE( "lprcScroll = %s\n", wine_dbgstr_rect(lprcScroll));
 
     /* compute device clipping region (in device coordinates) */
 
-    if (rc) rect = *rc;
-    else GetClipBox( hdc, &rect );
+    if (lprcScroll) rSrc = *lprcScroll;
+    else GetClipBox( hdc, &rSrc );
+    LPtoDP(hdc, (LPPOINT)&rSrc, 2);
 
-    if (clipRect)
-    {
-        rClip = *clipRect;
-        IntersectRect( &rClip, &rect, &rClip );
-    }
-    else rClip = rect;
+    if (lprcClip) rClip = *lprcClip;
+    else GetClipBox( hdc, &rClip );
+    LPtoDP(hdc, (LPPOINT)&rClip, 2);
 
-    rDst = rClip;
-    OffsetRect( &rDst, dx,  dy );
+    IntersectRect( &rClipped_src, &rSrc, &rClip );
+    TRACE("rSrc %s rClip %s clipped rSrc %s\n", wine_dbgstr_rect(&rSrc),
+          wine_dbgstr_rect(&rClip), wine_dbgstr_rect(&rClipped_src));
+
+    rDst = rClipped_src;
+    SetRect(&offset, 0, 0, dx, dy);
+    LPtoDP(hdc, (LPPOINT)&offset, 2);
+    OffsetRect( &rDst, offset.right - offset.left,  offset.bottom - offset.top );
+    TRACE("rDst before clipping %s\n", wine_dbgstr_rect(&rDst));
     IntersectRect( &rDst, &rDst, &rClip );
+    TRACE("rDst after clipping %s\n", wine_dbgstr_rect(&rDst));
 
     if (!IsRectEmpty(&rDst))
     {
         /* copy bits */
-        if (!BitBlt( hdc, rDst.left, rDst.top,
-                     rDst.right - rDst.left, rDst.bottom - rDst.top,
-                     hdc, rDst.left - dx, rDst.top - dy, SRCCOPY))
+        RECT rDst_lp = rDst, rSrc_lp = rDst;
+
+        OffsetRect( &rSrc_lp, offset.left - offset.right, offset.top - offset.bottom );
+        DPtoLP(hdc, (LPPOINT)&rDst_lp, 2);
+        DPtoLP(hdc, (LPPOINT)&rSrc_lp, 2);
+
+        if (!BitBlt( hdc, rDst_lp.left, rDst_lp.top,
+                     rDst_lp.right - rDst_lp.left, rDst_lp.bottom - rDst_lp.top,
+                     hdc, rSrc_lp.left, rSrc_lp.top, SRCCOPY))
             return FALSE;
     }
 
-    /* compute update areas */
+    /* compute update areas.  This is the clipped source or'ed with the unclipped source translated minus the
+     clipped src translated (rDst) all clipped to rClip */
 
-    if (hrgnUpdate || rcUpdate)
+    if (hrgnUpdate || lprcUpdate)
     {
         HRGN hrgn = hrgnUpdate, hrgn2;
 
-        /* map everything to device coordinates */
-        LPtoDP( hdc, (LPPOINT)&rClip, 2 );
-        LPtoDP( hdc, (LPPOINT)&rDst, 2 );
+        if (hrgn) SetRectRgn( hrgn, rClipped_src.left, rClipped_src.top, rClipped_src.right, rClipped_src.bottom );
+        else hrgn = CreateRectRgn( rClipped_src.left, rClipped_src.top, rClipped_src.right, rClipped_src.bottom );
 
-        hrgn2 = CreateRectRgnIndirect( &rDst );
-        if (hrgn) SetRectRgn( hrgn, rClip.left, rClip.top, rClip.right, rClip.bottom );
-        else hrgn = CreateRectRgn( rClip.left, rClip.top, rClip.right, rClip.bottom );
+        hrgn2 = CreateRectRgnIndirect( &rSrc );
+        OffsetRgn(hrgn2, offset.right - offset.left,  offset.bottom - offset.top );
+        CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
+
+        SetRectRgn( hrgn2, rDst.left, rDst.top, rDst.right, rDst.bottom );
         CombineRgn( hrgn, hrgn, hrgn2, RGN_DIFF );
+        
+        SetRectRgn( hrgn2, rClip.left, rClip.top, rClip.right, rClip.bottom );
+        CombineRgn( hrgn, hrgn, hrgn2, RGN_AND );
 
-        if( rcUpdate )
+        if( lprcUpdate )
         {
-            GetRgnBox( hrgn, rcUpdate );
+            GetRgnBox( hrgn, lprcUpdate );
 
-            /* Put the rcUpdate in logical coordinate */
-            DPtoLP( hdc, (LPPOINT)rcUpdate, 2 );
+            /* Put the lprcUpdate in logical coordinate */
+            DPtoLP( hdc, (LPPOINT)lprcUpdate, 2 );
+            TRACE("returning lprcUpdate %s\n", wine_dbgstr_rect(lprcUpdate));
         }
         if (!hrgnUpdate) DeleteObject( hrgn );
         DeleteObject( hrgn2 );
