@@ -281,9 +281,6 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	yinc = (srcheight << 16) / dstheight;
 
 	if (!dwFlags) {
-	    assert(ddesc.lPitch >= width);
-	    assert(sdesc.lPitch >= width);
-
 	    /* No effects, we can cheat here */
 	    if (dstwidth == srcwidth) {
 		if (dstheight == srcheight) {
@@ -308,8 +305,6 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 		int last_sy = -1;
 		for (y = sy = 0; y < dstheight; y++, sy += yinc) {
 		    sbuf = sbase + (sy >> 16) * sdesc.lPitch;
-
-		    assert((sy>>16) < srcheight);
 
 		    if ((sy >> 16) == (last_sy >> 16)) {
 			/* this sourcerow is the same as last sourcerow -
