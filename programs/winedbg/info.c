@@ -40,7 +40,7 @@
  */
 void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 {
-    char        * default_format;
+    const char  * default_format;
     long long int res;
 
     assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
@@ -94,7 +94,7 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 
         if (strstr(default_format, "%S") != NULL)
         {
-            char* 	ptr;
+            const char* ptr;
             int	state = 0;
 
             /* FIXME: simplistic implementation for default_format being
@@ -631,8 +631,8 @@ void DEBUG_InfoVirtual(DWORD pid)
 {
     MEMORY_BASIC_INFORMATION    mbi;
     char*                       addr = 0;
-    char*                       state;
-    char*                       type;
+    const char*                 state;
+    const char*                 type;
     char                        prot[3+1];
     HANDLE                      hProc;
 

@@ -27,7 +27,7 @@
 #include "ntstatus.h"
 #include "wcmd.h"
 
-char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
+const char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"DATE", "DEL", "DIR", "ECHO", "ERASE", "FOR", "GOTO",
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
@@ -728,7 +728,7 @@ int p = 0;
  *
  */
 
-void WCMD_output (char *format, ...) {
+void WCMD_output (const char *format, ...) {
 
 va_list ap;
 char string[1024];
@@ -766,7 +766,7 @@ void WCMD_leave_paged_mode(void)
  *        without formatting eg. when message contains '%'
  */
 
-void WCMD_output_asis (char *message) {
+void WCMD_output_asis (const char *message) {
   DWORD count;
   char* ptr;
   char string[1024];

@@ -82,7 +82,7 @@ void processTransQueue();
  *   ACTION_SET -> this transaction will change a registry key, newValue is the replacement value
  *   ACTION_REMOVE -> this transaction will remove a registry key. In this case, newValue is ignored.
  */
-void addTransaction(char *section, char *key, enum transaction_action action, char *newValue);
+void addTransaction(const char *section, const char *key, enum transaction_action action, const char *newValue);
 
 /* frees the transaction structure, all fields, and removes it from the queue if in it */
 void destroyTransaction(struct transaction *trans);
@@ -91,10 +91,10 @@ void destroyTransaction(struct transaction *trans);
 int initialize(void);
 extern HKEY configKey;
 
-int setConfigValue (char *subkey, char *valueName, const char *value);
-char *getConfigValue (char *subkey, char *valueName, char *defaultResult);
-HRESULT doesConfigValueExist (char *subkey, char *valueName);
-HRESULT removeConfigValue (char *subkey, char *valueName);
+int setConfigValue (const char *subkey, const char *valueName, const char *value);
+char *getConfigValue (const char *subkey, const char *valueName, const char *defaultResult);
+HRESULT doesConfigValueExist (const char *subkey, const char *valueName);
+HRESULT removeConfigValue (const char *subkey, const char *valueName);
 
 /* X11DRV */
 

@@ -68,14 +68,14 @@ int initialize(void) {
 /*****************************************************************************
  * getConfigValue: Retrieves a configuration value from the registry
  *
- * char *subKey : the name of the config section
- * char *valueName : the name of the config value
- * char *defaultResult : if the key isn't found, return this value instead
+ * const char *subKey : the name of the config section
+ * const char *valueName : the name of the config value
+ * const char *defaultResult : if the key isn't found, return this value instead
  *
  * Returns a buffer holding the value if successful, NULL if not. Caller is responsible for freeing the result.
  *
  */
-char *getConfigValue (char *subkey, char *valueName, char *defaultResult)
+char *getConfigValue (const char *subkey, const char *valueName, const char *defaultResult)
 {
     char *buffer = NULL;
     DWORD dataLength;
@@ -129,14 +129,14 @@ end:
  * setConfigValue : Sets a configuration key in the registry. Section will be created if it doesn't already exist
  *
  * HKEY  hCurrent : the registry key that the configuration is rooted at
- * char *subKey : the name of the config section
- * char *valueName : the name of the config value
- * char *value : the value to set the configuration key to
+ * const char *subKey : the name of the config section
+ * const char *valueName : the name of the config value
+ * const char *value : the value to set the configuration key to
  *
  * Returns 0 on success, non-zero otherwise
  *
  */
-int setConfigValue (char *subkey, char *valueName, const char *value) {
+int setConfigValue (const char *subkey, const char *valueName, const char *value) {
     DWORD res = 1;
     HKEY key = NULL;
 
@@ -160,7 +160,7 @@ end:
 }
 
 /* returns 0 on success, an HRESULT from the registry funtions otherwise */
-HRESULT doesConfigValueExist(char *subkey, char *valueName) {
+HRESULT doesConfigValueExist(const char *subkey, const char *valueName) {
     HRESULT hr;
     HKEY key;
 
@@ -184,7 +184,7 @@ HRESULT doesConfigValueExist(char *subkey, char *valueName) {
 }
 
 /* removes the requested value from the registry, however, does not remove the section if empty. Returns S_OK (0) on success. */
-HRESULT removeConfigValue(char *subkey, char *valueName) {
+HRESULT removeConfigValue(const char *subkey, const char *valueName) {
     HRESULT hr;
     HKEY key;
     WINE_TRACE("subkey=%s, valueName=%s\n", subkey, valueName);
@@ -231,7 +231,7 @@ void destroyTransaction(struct transaction *trans) {
     free(trans);
 }
 
-void addTransaction(char *section, char *key, enum transaction_action action, char *newValue) {
+void addTransaction(const char *section, const char *key, enum transaction_action action, const char *newValue) {
     struct transaction *trans = calloc(sizeof(struct transaction),1);
     
     assert( section != NULL );

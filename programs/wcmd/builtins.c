@@ -101,7 +101,7 @@ DWORD count;
 WIN32_FIND_DATA fd;
 HANDLE hff;
 BOOL force, status;
-static char *overwrite = "Overwrite file (Y/N)?";
+static const char *overwrite = "Overwrite file (Y/N)?";
 char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
 
   if ((strchr(param1,'*') != NULL) && (strchr(param1,'%') != NULL)) {
@@ -207,9 +207,9 @@ char *p;
  * in DOS (try typing "ECHO ON AGAIN" for an example).
  */
 
-void WCMD_echo (char *command) {
+void WCMD_echo (const char *command) {
 
-static char *eon = "Echo is ON\n", *eoff = "Echo is OFF\n";
+static const char *eon = "Echo is ON\n", *eoff = "Echo is OFF\n";
 int count;
 
   count = strlen(command);
@@ -805,7 +805,7 @@ DWORD count;
 
 void WCMD_verify (char *command) {
 
-static char *von = "Verify is ON\n", *voff = "Verify is OFF\n";
+static const char *von = "Verify is ON\n", *voff = "Verify is OFF\n";
 int count;
 
   count = strlen(command);

@@ -60,15 +60,15 @@ struct datatype
 {
   enum	debug_type type;
   struct datatype * next;
-  char * name;
+  const char * name;
   union
   {
     struct
     {
-      char    basic_type;
-      char  * output_format;
-      char    basic_size;
-      unsigned b_signed:1;
+      char          basic_type;
+      const char  * output_format;
+      char          basic_size;
+      unsigned      b_signed:1;
     } basic;
     struct
     {
@@ -133,8 +133,8 @@ static unsigned int type_hash( const char * name )
 
 
 static struct datatype *
-DEBUG_InitBasic(int type, char * name, int size, int b_signed,
-			    char * output_format)
+DEBUG_InitBasic(int type, const char * name, int size, int b_signed,
+			    const char * output_format)
 {
   int hash;
 
@@ -346,13 +346,13 @@ DEBUG_InitTypes(void)
 }
 
 long long int
-DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
+DEBUG_GetExprValue(const DBG_VALUE* _value, const char** format)
 {
    long long int rtn;
    unsigned int rtn2;
    struct datatype * type2 = NULL;
    struct en_values * e;
-   char * def_format = "0x%x";
+   const char * def_format = "0x%x";
    DBG_VALUE value = *_value;
 
    assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
@@ -943,7 +943,7 @@ leave:
 
 static void DEBUG_DumpAType(struct datatype* dt, BOOL deep)
 {
-    char* name = (dt->name) ? dt->name : "--none--";
+    const char* name = (dt->name) ? dt->name : "--none--";
 
 /* EPP     DEBUG_Printf(DBG_CHN_MESG, "0x%08lx ", (unsigned long)dt); */
     switch (dt->type)

@@ -47,7 +47,7 @@ static int lastSel = 0; /* the last drive selected in the property sheet */
 
 
 /* returns NULL on failure. caller is responsible for freeing result */
-char *getDriveValue(char letter, char *valueName) {
+char *getDriveValue(char letter, const char *valueName) {
   HKEY hkDrive = 0;
   char *subKeyName;
   char *result = NULL;
@@ -76,7 +76,7 @@ end:
 }
 
 /* call with newValue == NULL to remove a value */
-void setDriveValue(char letter, char *valueName, char *newValue) {
+void setDriveValue(char letter, const char *valueName, const char *newValue) {
   char *driveSection = malloc(strlen("Drive X")+1);
   sprintf(driveSection, "Drive %c", letter);
   if (newValue)
@@ -226,8 +226,8 @@ int refreshDriveDlg (HWND hDlg)
 #define DRIVE_MASK_BIT(B) 1<<(toupper(B)-'A')
 
 typedef struct {
-  char *sCode;
-  char *sDesc;
+  const char *sCode;
+  const char *sDesc;
 } code_desc_pair;
 
 static code_desc_pair type_pairs[] = {

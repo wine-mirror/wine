@@ -1406,8 +1406,8 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
 {
     MEMORY_BASIC_INFORMATION    mbi;
     char*                       addr = 0;
-    char*                       state;
-    char*                       type;
+    const char*                 state;
+    const char*                 type;
     char                        prot[3+1];
     char                        buffer[128];
 
@@ -2015,10 +2015,10 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
             break;
         case 0: /* in child... and alive */
             {
-                char    buf[MAX_PATH];
-		int     fd;
-                char*   gdb_path;
-                FILE*   f;
+                char            buf[MAX_PATH];
+                int             fd;
+                const char*     gdb_path;
+                FILE*           f;
 
                 if (!(gdb_path = getenv("WINE_GDB"))) gdb_path = "gdb";
 		strcpy(buf,"/tmp/winegdb.XXXXXX");

@@ -1191,7 +1191,7 @@ static void db_task_printsym(unsigned int addr, int size)
     DEBUG_PrintAddress( &address, db_disasm_16 ? MODE_16 : MODE_32, TRUE );
 }
 
-void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
+void db_print_address(const char *seg, int size, struct i_addr *addrp, int byref)
 {
 	if (addrp->is_reg) {
 	    DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][addrp->disp]);
@@ -1237,7 +1237,7 @@ void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
  * and return updated location.
  */
 void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
-                    int size, char *seg )
+                    int size, const char *seg )
 {
 	int		regmodrm;
 	const struct finst *fp;
@@ -1327,7 +1327,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	int	inst;
 	int	size;
 	int	short_addr;
-	char *	seg;
+	const char *seg;
 	const struct inst *ip;
 	const char *i_name;
 	int	i_size;

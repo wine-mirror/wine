@@ -33,7 +33,7 @@
 #endif
 
 #ifdef __i386__
-static char * reg_name[] =
+static const char * reg_name[] =
 {
   "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"
 };
@@ -523,7 +523,8 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
     int mid, high, low;
     unsigned	int * ptr;
     int lineno;
-    char * lineinfo, *sourcefile;
+    const char * lineinfo;
+    char *sourcefile;
     int i;
     char linebuff[16];
     unsigned val;

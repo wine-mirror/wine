@@ -503,7 +503,7 @@ extern int DEBUG_GetObjectSize(struct datatype * dt);
 extern unsigned int DEBUG_ArrayIndex(const DBG_VALUE * addr, DBG_VALUE * result,
 				     int index);
 extern struct datatype * DEBUG_FindOrMakePointerType(struct datatype * reftype);
-extern long long int DEBUG_GetExprValue(const DBG_VALUE * addr, char ** format);
+extern long long int DEBUG_GetExprValue(const DBG_VALUE * addr, const char ** format);
 extern int DEBUG_SetBitfieldParams(struct datatype * dt, int offset,
 				   int nbits, struct datatype * dt2);
 extern int DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2);

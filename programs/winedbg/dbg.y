@@ -36,7 +36,7 @@
 
 static void mode_command(int);
 int yylex(void);
-int yyerror(char *);
+int yyerror(const char *);
 
 %}
 
@@ -479,7 +479,7 @@ void	DEBUG_Parser(LPCSTR filename)
     set_default_channels();
 }
 
-int yyerror(char* s)
+int yyerror(const char* s)
 {
    DEBUG_Printf(DBG_CHN_MESG, "%s\n", s);
    return 0;
