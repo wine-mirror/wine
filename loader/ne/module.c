@@ -1098,7 +1098,11 @@ BOOL NE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
 
     SYSLEVEL_EnterWin16Lock();
 
-    /* Special case: second instance of an already loaded NE module */
+    /* Special case: second instance of an already loaded NE module
+     * FIXME: maybe we should mark the module in a special way during
+     * "second instance" loading stage ?
+     * NE_CreateSegment and NE_LoadSegment might get confused without it,
+     * especially when it comes to self-loaders */
 
     if ( ( hModule = NE_GetModuleByFilename( filename ) ) != 0 )
     {
@@ -1173,6 +1177,8 @@ BOOL NE_InitProcess( NE_MODULE *pModule  )
                 NE_LoadSegment( pModule, pModule->dgroup );
 
         hInstance = NE_GetInstance( pModule );
+	TRACE("created second instance %04x[%d] of instance %04x.\n", hInstance, pModule->dgroup, hPrevInstance);
+
     }
     else
     {
@@ -1390,13 +1396,19 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
  *	    GetModuleFileName16    (KERNEL.49)
  *
  * Comment: see GetModuleFileNameA
+ *
+ * Even if invoked by second instance of a program,
+ * it still returns path of first one.
  */
 INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
                                   INT16 nSize )
 {
     NE_MODULE *pModule;
 
+    /* Win95 does not query hModule if set to 0 !
+     * Is this wrong or maybe Win3.1 only ? */
     if (!hModule) hModule = GetCurrentTask();
+
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
     if (pModule->expected_version >= 0x400)
 	GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, nSize);

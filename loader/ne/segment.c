@@ -81,8 +81,16 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     pSegTable = NE_SEG_TABLE( pModule );
     pSeg = pSegTable + segnum - 1;
 
-    if (pSeg->flags & NE_SEGFLAGS_LOADED) /* already loaded ? */
-        return TRUE;
+    if (pSeg->flags & NE_SEGFLAGS_LOADED)
+    {
+	/* self-loader ? -> already loaded it */
+	if (pModule->flags & NE_FFLAGS_SELFLOAD)
+	    return TRUE;
+
+	/* leave, except for DGROUP, as this may be the second instance */
+	if (segnum != pModule->dgroup)
+            return TRUE;
+    }
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
@@ -815,10 +823,10 @@ HINSTANCE16 NE_GetInstance( NE_MODULE *pModule )
         return pModule->self;
     else
     {
-        SEGTABLEENTRY *pSegment;
-        pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+        SEGTABLEENTRY *pSeg;
+        pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
 
-        return SEL(pSegment->hSeg);
+        return SEL(pSeg->hSeg);
     }
 }    
 
@@ -827,7 +835,7 @@ HINSTANCE16 NE_GetInstance( NE_MODULE *pModule )
  */
 BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
 {
-    SEGTABLEENTRY *pSegment = NE_SEG_TABLE( pModule ) + segnum - 1;
+    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + segnum - 1;
     int minsize;
 
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
@@ -838,21 +846,21 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
     if ( (pModule->flags & NE_FFLAGS_SELFLOAD) && segnum != 1 )
         return TRUE;    /* selfloader allocates segment itself */
 
-    if ( (pSegment->flags & NE_SEGFLAGS_ALLOCATED) && segnum != pModule->dgroup )
+    if ( (pSeg->flags & NE_SEGFLAGS_ALLOCATED) && segnum != pModule->dgroup )
         return TRUE;    /* all but DGROUP only allocated once */
 
-    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+    minsize = pSeg->minsize ? pSeg->minsize : 0x10000;
     if ( segnum == pModule->ss )     minsize += pModule->stack_size;
     if ( segnum == pModule->dgroup ) minsize += pModule->heap_size;
 
-    pSegment->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
+    pSeg->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSeg->flags),
                                    minsize, pModule->self,
-                                   !(pSegment->flags & NE_SEGFLAGS_DATA),
-                                    (pSegment->flags & NE_SEGFLAGS_32BIT) != 0,
-                            FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
-    if (!pSegment->hSeg) return FALSE;
+                                   !(pSeg->flags & NE_SEGFLAGS_DATA),
+                                    (pSeg->flags & NE_SEGFLAGS_32BIT) != 0,
+                            FALSE /*pSeg->flags & NE_SEGFLAGS_READONLY*/ );
+    if (!pSeg->hSeg) return FALSE;
 
-    pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
+    pSeg->flags |= NE_SEGFLAGS_ALLOCATED;
     return TRUE;
 }
 
