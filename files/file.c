@@ -1147,6 +1147,7 @@ BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
+        if ((errno == EFAULT) && VIRTUAL_HandleFault( buffer )) continue;
         FILE_SetDosError();
         break;
     }
@@ -1180,6 +1181,7 @@ BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
+        if ((errno == EFAULT) && VIRTUAL_HandleFault( buffer )) continue;
         FILE_SetDosError();
         break;
     }
