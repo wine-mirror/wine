@@ -95,43 +95,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "iptypes.h"
+#include "iphlpapi.h"
 #include "wine/unicode.h"
 #include "rpc.h"
 
 #include "ole2.h"
 #include "rpcndr.h"
 #include "rpcproxy.h"
-
-#ifdef HAVE_SYS_FILE_H
-# include <sys/file.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_SOCKIO_H
-# include <sys/sockio.h>
-#endif
-#ifdef HAVE_NET_IF_H
-# include <net/if.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
 
 #include "rpc_binding.h"
 #include "rpcss_np_client.h"
@@ -147,6 +123,15 @@ HANDLE RPCRT4_GetMasterMutex(void)
 {
     return master_mutex;
 }
+
+static CRITICAL_SECTION uuid_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &uuid_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": uuid_cs") }
+};
+static CRITICAL_SECTION uuid_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  * DllMain
@@ -226,26 +211,46 @@ void WINAPI RpcRaiseException(RPC_STATUS exception)
 /*************************************************************************
  * UuidCompare [RPCRT4.@]
  *
- * (an educated-guess implementation)
- *
  * PARAMS
  *     UUID *Uuid1        [I] Uuid to compare
  *     UUID *Uuid2        [I] Uuid to compare
  *     RPC_STATUS *Status [O] returns RPC_S_OK
  * 
  * RETURNS
- *     -1 if Uuid1 is less than Uuid2
+ *    -1  if Uuid1 is less than Uuid2
  *     0  if Uuid1 and Uuid2 are equal
  *     1  if Uuid1 is greater than Uuid2
  */
 int WINAPI UuidCompare(UUID *Uuid1, UUID *Uuid2, RPC_STATUS *Status)
 {
+  int i;
+
   TRACE("(%s,%s)\n", debugstr_guid(Uuid1), debugstr_guid(Uuid2));
+
   *Status = RPC_S_OK;
+
   if (!Uuid1) Uuid1 = &uuid_nil;
   if (!Uuid2) Uuid2 = &uuid_nil;
+
   if (Uuid1 == Uuid2) return 0;
-  return memcmp(Uuid1, Uuid2, sizeof(UUID));
+
+  if (Uuid1->Data1 != Uuid2->Data1)
+    return Uuid1->Data1 < Uuid2->Data1 ? -1 : 1;
+
+  if (Uuid1->Data2 != Uuid2->Data2)
+    return Uuid1->Data2 < Uuid2->Data2 ? -1 : 1;
+
+  if (Uuid1->Data3 != Uuid2->Data3)
+    return Uuid1->Data3 < Uuid2->Data3 ? -1 : 1;
+
+  for (i = 0; i < 8; i++) {
+    if (Uuid1->Data4[i] < Uuid2->Data4[i])
+      return -1;
+    if (Uuid1->Data4[i] > Uuid2->Data4[i])
+      return 1;
+  }
+
+  return 0;
 }
 
 /*************************************************************************
@@ -275,12 +280,11 @@ int WINAPI UuidEqual(UUID *Uuid1, UUID *Uuid2, RPC_STATUS *Status)
  * RETURNS
  *     TRUE/FALSE
  */
-int WINAPI UuidIsNil(UUID *uuid, RPC_STATUS *Status)
+int WINAPI UuidIsNil(UUID *Uuid, RPC_STATUS *Status)
 {
-  TRACE("(%s)\n", debugstr_guid(uuid));
-  *Status = RPC_S_OK;
-  if (!uuid) return TRUE;
-  return !memcmp(uuid, &uuid_nil, sizeof(UUID));
+  TRACE("(%s)\n", debugstr_guid(Uuid));
+  if (!Uuid) return TRUE;
+  return !UuidCompare(Uuid, &uuid_nil, Status);
 }
 
  /*************************************************************************
@@ -298,214 +302,164 @@ RPC_STATUS WINAPI UuidCreateNil(UUID *Uuid)
   return RPC_S_OK;
 }
 
+/* Number of 100ns ticks per clock tick. To be safe, assume that the clock
+   resolution is at least 1000 * 100 * (1/1000000) = 1/10 of a second */
+#define TICKS_PER_CLOCK_TICK 1000
+#define SECSPERDAY  86400
+#define TICKSPERSEC 10000000
+/* UUID system time starts at October 15, 1582 */
+#define SECS_15_OCT_1582_TO_1601  ((17 + 30 + 31 + 365 * 18 + 5) * SECSPERDAY)
+#define TICKS_15_OCT_1582_TO_1601 ((ULONGLONG)SECS_15_OCT_1582_TO_1601 * TICKSPERSEC)
+
+static void RPC_UuidGetSystemTime(ULONGLONG *time)
+{
+    FILETIME ft;
+
+    GetSystemTimeAsFileTime(&ft);
+
+    *time = ((ULONGLONG)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+    *time += TICKS_15_OCT_1582_TO_1601;
+}
+
+/* Assume that a hardware address is at least 6 bytes long */ 
+#define ADDRESS_BYTES_NEEDED 6
+
+static RPC_STATUS RPC_UuidGetNodeAddress(BYTE *address)
+{
+    int i;
+    DWORD status = RPC_S_OK;
+
+    ULONG buflen = sizeof(IP_ADAPTER_INFO);
+    PIP_ADAPTER_INFO adapter = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), 0, buflen);
+
+    if (GetAdaptersInfo(adapter, &buflen) == ERROR_BUFFER_OVERFLOW) {
+        HeapFree(GetProcessHeap(), 0, adapter);
+        adapter = (IP_ADAPTER_INFO *)HeapAlloc(GetProcessHeap(), 0, buflen);
+    }
+
+    if (GetAdaptersInfo(adapter, &buflen) == NO_ERROR) {
+        for (i = 0; i < ADDRESS_BYTES_NEEDED; i++) {
+            address[i] = adapter->Address[i];
+        }
+    }
+    /* We can't get a hardware address, just use random numbers.
+       Set the multicast bit to prevent conflicts with real cards. */
+    else {
+        for (i = 0; i < ADDRESS_BYTES_NEEDED; i++) {
+            address[i] = rand() & 0xff;
+        }
+
+        address[0] |= 0x80;
+        status = RPC_S_UUID_LOCAL_ONLY;
+    }
+
+    HeapFree(GetProcessHeap(), 0, adapter);
+    return status;
+}
+
 /*************************************************************************
  *           UuidCreate   [RPCRT4.@]
  *
  * Creates a 128bit UUID.
- * Implemented according the DCE specification for UUID generation.
- * Code is based upon uuid library in e2fsprogs by Theodore Ts'o.
- * Copyright (C) 1996, 1997 Theodore Ts'o.
  *
  * RETURNS
  *
- *  S_OK if successful.
+ *  RPC_S_OK if successful.
+ *  RPC_S_UUID_LOCAL_ONLY if UUID is only locally unique.
+ *
+ *  FIXME: No compensation for changes across reloading
+ *         this dll or across reboots (e.g. clock going 
+ *         backwards and swapped network cards). The RFC
+ *         suggests using NVRAM for storing persistent 
+ *         values.
  */
 RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
 {
-   static char has_init = 0;
-   static unsigned char a[6];
-   static int                      adjustment = 0;
-   static struct timeval           last = {0, 0};
-   static WORD                     clock_seq;
-   struct timeval                  tv;
-   unsigned long long              clock_reg;
-   DWORD clock_high, clock_low;
-   WORD temp_clock_seq, temp_clock_mid, temp_clock_hi_and_version;
-#ifdef HAVE_NET_IF_H
-   int             sd;
-   struct ifreq    ifr, *ifrp;
-   struct ifconf   ifc;
-   char buf[1024];
-   int             n, i;
-#endif
+    static int initialised, count;
 
-   /* Have we already tried to get the MAC address? */
-   if (!has_init) {
-#ifdef HAVE_NET_IF_H
-      /* BSD 4.4 defines the size of an ifreq to be
-       * max(sizeof(ifreq), sizeof(ifreq.ifr_name)+ifreq.ifr_addr.sa_len
-       * However, under earlier systems, sa_len isn't present, so
-       *  the size is just sizeof(struct ifreq)
-       */
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-#  ifndef max
-#   define max(a,b) ((a) > (b) ? (a) : (b))
-#  endif
-#  define ifreq_size(i) max(sizeof(struct ifreq),\
-sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
-# else
-#  define ifreq_size(i) sizeof(struct ifreq)
-# endif /* HAVE_STRUCT_SOCKADDR_SA_LEN */
+    ULONGLONG time;
+    static ULONGLONG timelast;
+    static WORD sequence;
 
-      sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-      if (sd < 0) {
-	 /* if we can't open a socket, just use random numbers */
-	 /* set the multicast bit to prevent conflicts with real cards */
-	 a[0] = (rand() & 0xff) | 0x80;
-	 a[1] = rand() & 0xff;
-	 a[2] = rand() & 0xff;
-	 a[3] = rand() & 0xff;
-	 a[4] = rand() & 0xff;
-	 a[5] = rand() & 0xff;
-      } else {
-	 memset(buf, 0, sizeof(buf));
-	 ifc.ifc_len = sizeof(buf);
-	 ifc.ifc_buf = buf;
-	 /* get the ifconf interface */
-	 if (ioctl (sd, SIOCGIFCONF, (char *)&ifc) < 0) {
-	    close(sd);
-	    /* no ifconf, so just use random numbers */
-	    /* set the multicast bit to prevent conflicts with real cards */
-	    a[0] = (rand() & 0xff) | 0x80;
-	    a[1] = rand() & 0xff;
-	    a[2] = rand() & 0xff;
-	    a[3] = rand() & 0xff;
-	    a[4] = rand() & 0xff;
-	    a[5] = rand() & 0xff;
-	 } else {
-	    /* loop through the interfaces, looking for a valid one */
-	    n = ifc.ifc_len;
-	    for (i = 0; i < n; i+= ifreq_size(ifr) ) {
-	       ifrp = (struct ifreq *)((char *) ifc.ifc_buf+i);
-	       strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
-	       /* try to get the address for this interface */
-# ifdef SIOCGIFHWADDR
-	       if (ioctl(sd, SIOCGIFHWADDR, &ifr) < 0)
-		   continue;
-	       memcpy(a, (unsigned char *)&ifr.ifr_hwaddr.sa_data, 6);
-# else
-#  ifdef SIOCGENADDR
-	       if (ioctl(sd, SIOCGENADDR, &ifr) < 0)
-		   continue;
-	       memcpy(a, (unsigned char *) ifr.ifr_enaddr, 6);
-#  else
-	       /* XXX we don't have a way of getting the hardware address */
-	       close(sd);
-	       a[0] = 0;
-	       break;
-#  endif /* SIOCGENADDR */
-# endif /* SIOCGIFHWADDR */
-	       /* make sure it's not blank */
-	       if (!a[0] && !a[1] && !a[2] && !a[3] && !a[4] && !a[5])
-		   continue;
+    static DWORD status;
+    static BYTE address[MAX_ADAPTER_ADDRESS_LENGTH];
 
-	       goto valid_address;
-	    }
-	    /* if we didn't find a valid address, make a random one */
-	    /* once again, set multicast bit to avoid conflicts */
-	    a[0] = (rand() & 0xff) | 0x80;
-	    a[1] = rand() & 0xff;
-	    a[2] = rand() & 0xff;
-	    a[3] = rand() & 0xff;
-	    a[4] = rand() & 0xff;
-	    a[5] = rand() & 0xff;
+    EnterCriticalSection(&uuid_cs);
 
-	    valid_address:
-	    close(sd);
-	 }
-      }
-#else
-      /* no networking info, so generate a random address */
-      a[0] = (rand() & 0xff) | 0x80;
-      a[1] = rand() & 0xff;
-      a[2] = rand() & 0xff;
-      a[3] = rand() & 0xff;
-      a[4] = rand() & 0xff;
-      a[5] = rand() & 0xff;
-#endif /* HAVE_NET_IF_H */
-      has_init = 1;
-   }
+    if (!initialised) {
+        RPC_UuidGetSystemTime(&timelast);
+        count = TICKS_PER_CLOCK_TICK;
 
-   /* generate time element of GUID */
+        sequence = ((rand() & 0xff) << 8) + (rand() & 0xff);
+        sequence &= 0x1fff;
 
-   /* Assume that the gettimeofday() has microsecond granularity */
-#define MAX_ADJUSTMENT 10
+        status = RPC_UuidGetNodeAddress(address);
+        initialised = 1;
+    }
 
-   try_again:
-   gettimeofday(&tv, 0);
-   if ((last.tv_sec == 0) && (last.tv_usec == 0)) {
-      clock_seq = ((rand() & 0xff) << 8) + (rand() & 0xff);
-      clock_seq &= 0x1FFF;
-      last = tv;
-      last.tv_sec--;
-   }
-   if ((tv.tv_sec < last.tv_sec) ||
-       ((tv.tv_sec == last.tv_sec) &&
-	(tv.tv_usec < last.tv_usec))) {
-      clock_seq = (clock_seq+1) & 0x1FFF;
-      adjustment = 0;
-   } else if ((tv.tv_sec == last.tv_sec) &&
-	      (tv.tv_usec == last.tv_usec)) {
-      if (adjustment >= MAX_ADJUSTMENT)
-	  goto try_again;
-      adjustment++;
-   } else
-       adjustment = 0;
+    /* Generate time element of the UUID. Account for going faster
+       than our clock as well as the clock going backwards. */
+    while (1) {
+        RPC_UuidGetSystemTime(&time);
+        if (time > timelast) {
+            count = 0;
+            break;
+        }
+        if (time < timelast) {
+            sequence = (sequence + 1) & 0x1fff;
+            count = 0;
+            break;
+        }
+        if (count < TICKS_PER_CLOCK_TICK) {
+            count++;
+            break;
+        }
+    }
 
-   clock_reg = tv.tv_usec*10 + adjustment;
-   clock_reg += ((unsigned long long) tv.tv_sec)*10000000;
-   clock_reg += (((unsigned long long) 0x01B21DD2) << 32) + 0x13814000;
+    timelast = time;
+    time += count;
 
-   clock_high = clock_reg >> 32;
-   clock_low = clock_reg;
-   temp_clock_seq = clock_seq | 0x8000;
-   temp_clock_mid = (WORD)clock_high;
-   temp_clock_hi_and_version = (clock_high >> 16) | 0x1000;
+    /* Pack the information into the UUID structure. */
 
-   /* pack the information into the GUID structure */
+    Uuid->Data1  = (unsigned long)(time & 0xffffffff);
+    Uuid->Data2  = (unsigned short)((time >> 32) & 0xffff);
+    Uuid->Data3  = (unsigned short)((time >> 48) & 0x0fff);
 
-   ((unsigned char*)&Uuid->Data1)[3] = (unsigned char)clock_low;
-   clock_low >>= 8;
-   ((unsigned char*)&Uuid->Data1)[2] = (unsigned char)clock_low;
-   clock_low >>= 8;
-   ((unsigned char*)&Uuid->Data1)[1] = (unsigned char)clock_low;
-   clock_low >>= 8;
-   ((unsigned char*)&Uuid->Data1)[0] = (unsigned char)clock_low;
+    /* This is a version 1 UUID */
+    Uuid->Data3 |= (1 << 12);
 
-   ((unsigned char*)&Uuid->Data2)[1] = (unsigned char)temp_clock_mid;
-   temp_clock_mid >>= 8;
-   ((unsigned char*)&Uuid->Data2)[0] = (unsigned char)temp_clock_mid;
+    Uuid->Data4[0]  = sequence & 0xff;
+    Uuid->Data4[1]  = (sequence & 0x3f00) >> 8;
+    Uuid->Data4[1] |= 0x80;
 
-   ((unsigned char*)&Uuid->Data3)[1] = (unsigned char)temp_clock_hi_and_version;
-   temp_clock_hi_and_version >>= 8;
-   ((unsigned char*)&Uuid->Data3)[0] = (unsigned char)temp_clock_hi_and_version;
+    Uuid->Data4[2] = address[0];
+    Uuid->Data4[3] = address[1];
+    Uuid->Data4[4] = address[2];
+    Uuid->Data4[5] = address[3];
+    Uuid->Data4[6] = address[4];
+    Uuid->Data4[7] = address[5];
 
-   ((unsigned char*)Uuid->Data4)[1] = (unsigned char)temp_clock_seq;
-   temp_clock_seq >>= 8;
-   ((unsigned char*)Uuid->Data4)[0] = (unsigned char)temp_clock_seq;
+    LeaveCriticalSection(&uuid_cs);
 
-   ((unsigned char*)Uuid->Data4)[2] = a[0];
-   ((unsigned char*)Uuid->Data4)[3] = a[1];
-   ((unsigned char*)Uuid->Data4)[4] = a[2];
-   ((unsigned char*)Uuid->Data4)[5] = a[3];
-   ((unsigned char*)Uuid->Data4)[6] = a[4];
-   ((unsigned char*)Uuid->Data4)[7] = a[5];
+    TRACE("%s\n", debugstr_guid(Uuid));
 
-   TRACE("%s\n", debugstr_guid(Uuid));
-
-   return RPC_S_OK;
+    return status;
 }
-
 
 /*************************************************************************
  *           UuidCreateSequential   [RPCRT4.@]
  *
- * Creates a 128bit UUID by calling UuidCreate.
- * New API in Win 2000
+ * Creates a 128bit UUID.
+ *
+ * RETURNS
+ *
+ *  RPC_S_OK if successful.
+ *  RPC_S_UUID_LOCAL_ONLY if UUID is only locally unique.
+ *
  */
 RPC_STATUS WINAPI UuidCreateSequential(UUID *Uuid)
 {
-   return UuidCreate (Uuid);
+   return UuidCreate(Uuid);
 }
 
 
