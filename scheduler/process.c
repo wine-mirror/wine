@@ -621,7 +621,11 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
             if (DOSFS_GetFullName( name, TRUE, &full_name )) name = full_name.long_name;
             CloseHandle( main_exe_file );
             main_exe_file = 0;
-            if (wine_dlopen( name, RTLD_NOW, error, sizeof(error) )) goto found;
+            if (wine_dlopen( name, RTLD_NOW, error, sizeof(error) ))
+            {
+                if ((p = strrchr( main_exe_name, '.' )) && !strcmp( p, ".so" )) *p = 0;
+                goto found;
+            }
             MESSAGE( "%s: could not load '%s': %s\n", argv0, main_exe_name, error );
             ExitProcess(1);
         }
