@@ -132,6 +132,21 @@ BEGIN
     DEFPUSHBUTTON   "Cancel",IDCANCEL,175,60,30,11,WS_GROUP
 END
 
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit String"
+FONT 8, "System"
+BEGIN
+    LTEXT           "Value name:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Value data:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Hexadecimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Decimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    DEFPUSHBUTTON   "Cancel",IDCANCEL,175,80,30,11,WS_GROUP
+END
 
 /*
  * String Table
@@ -201,6 +216,8 @@ BEGIN
     IDS_BAD_VALUE           "Can't query value '%s'"
     IDS_UNSUPPORTED_TYPE    "Can't edit keys of this type (%ld)"
     IDS_TOO_BIG_VALUE       "Value is too big (%ld)"
+    IDS_DELETE_BOX_TITLE    "Confirm Value Delete"
+    IDS_DELETE_BOX_TEXT     "Are you sure you want to delete value '%s'?"
     IDS_NEWKEY              "New Key"
 END
 

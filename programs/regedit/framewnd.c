@@ -441,12 +441,11 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     BOOL result = TRUE;
     LONG lRet;
 
-    keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-    valueName = GetValueName(g_pChildWnd->hListWnd);
-    if (keyPath) {
-        lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
+    if ((keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot))) {
+        lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_ALL_ACCESS, &hKey);
         if (lRet != ERROR_SUCCESS) hKey = 0;
     }
+    valueName = GetValueName(g_pChildWnd->hListWnd);
 
     switch (LOWORD(wParam)) {
     case ID_REGISTRY_IMPORTREGISTRYFILE:
@@ -461,6 +460,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_REGISTRY_PRINT:
         PrintRegistryHive(hWnd, _T(""));
+        break;
+    case ID_EDIT_DELETE:
+	if (DeleteValue(hWnd, hKey, valueName))
+	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
         break;
     case ID_EDIT_MODIFY:
         if (ModifyValue(hWnd, hKey, valueName))

@@ -35,31 +35,58 @@
 
 static const TCHAR* editValueName;
 static TCHAR* stringValueData;
+static BOOL isDecimal;
+
+INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
+{
+    TCHAR title[256];
+    TCHAR errfmt[1024];
+    TCHAR errstr[1024];
+
+    if (!LoadString(hInst, titleId, title, COUNT_OF(title)))
+        lstrcpy(title, "Error");
+
+    if (!LoadString(hInst, resId, errfmt, COUNT_OF(errfmt)))
+        lstrcpy(errfmt, "Unknown error string!");
+
+    _vsntprintf(errstr, COUNT_OF(errstr), errfmt, ap);
+
+    return MessageBox(hwnd, errstr, title, buttons);
+}
+
+INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
+{
+    va_list ap;
+    INT result;
+
+    va_start(ap, resId);
+    result = vmessagebox(hwnd, buttons, titleId, resId, ap);
+    va_end(ap);
+
+    return result;
+}
 
 void error(HWND hwnd, INT resId, ...)
 {
     va_list ap;
-    TCHAR title[256];
-    TCHAR errfmt[1024];
-    TCHAR errstr[1024];
-    HINSTANCE hInstance;
-
-    hInstance = GetModuleHandle(0);
-
-    if (!LoadString(hInstance, IDS_ERROR, title, COUNT_OF(title)))
-        lstrcpy(title, "Error");
-
-    if (!LoadString(hInstance, resId, errfmt, COUNT_OF(errfmt)))
-        lstrcpy(errfmt, "Unknown error string!");
 
     va_start(ap, resId);
-    _vsntprintf(errstr, COUNT_OF(errstr), errfmt, ap);
+    vmessagebox(hwnd, MB_OK | MB_ICONERROR, IDS_ERROR, resId, ap);
     va_end(ap);
-
-    MessageBox(hwnd, errstr, title, MB_OK | MB_ICONERROR);
 }
 
-INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
+{
+    TCHAR buf[128];
+    DWORD val;
+
+    if (!GetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf, COUNT_OF(buf))) return FALSE;
+    if (!_stscanf(buf, toHex ? "%ld" : "%lx", &val)) return FALSE;
+    wsprintf(buf, toHex ? "%lx" : "%ld", val);
+    return SetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf);    
+}
+
+INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TCHAR* valueData;
     HWND hwndValue;
@@ -69,9 +96,16 @@ INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
     case WM_INITDIALOG:
         SetDlgItemText(hwndDlg, IDC_VALUE_NAME, editValueName);
         SetDlgItemText(hwndDlg, IDC_VALUE_DATA, stringValueData);
+	CheckRadioButton(hwndDlg, IDC_DWORD_HEX, IDC_DWORD_DEC, isDecimal ? IDC_DWORD_DEC : IDC_DWORD_HEX);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
+        case IDC_DWORD_HEX:
+	    if (isDecimal && change_dword_base(hwndDlg, TRUE)) isDecimal = FALSE;
+	break;
+        case IDC_DWORD_DEC:
+	    if (!isDecimal && change_dword_base(hwndDlg, FALSE)) isDecimal = TRUE;
+	break;
         case IDOK:
             if ((hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA))) {
                 if ((len = GetWindowTextLength(hwndValue))) {
@@ -108,7 +142,7 @@ BOOL CreateKey(HKEY hKey)
     if (newKey[0] == 0) {
 	hInstance = GetModuleHandle(0);
 	if (!LoadString(hInstance, IDS_NEWKEY, newKey, COUNT_OF(newKey)))
-    	    lstrcpy(newKey, "new key");
+    	    lstrcpy(newKey, "New Key");
     }
     lstrcpy(keyName, newKey);
 
@@ -116,8 +150,8 @@ BOOL CreateKey(HKEY hKey)
 	We try it max 100 times. */
     lRet = RegOpenKey(hKey, keyName, &retKey);
     while (lRet == ERROR_SUCCESS && keyNum < 100) {
-	    sprintf(keyName, "%s %u", newKey, ++keyNum);
-	    lRet = RegOpenKey(hKey, keyName, &retKey);
+	wsprintf(keyName, "%s %u", newKey, ++keyNum);
+	lRet = RegOpenKey(hKey, keyName, &retKey);
     }
     if (lRet == ERROR_SUCCESS) return FALSE;
     
@@ -141,23 +175,31 @@ BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
         error(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
     }
+    if ( type == REG_DWORD ) valueDataLen = 128;
+    if (!(stringValueData = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
+        error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
+        goto done;
+    }
+    lRet = RegQueryValueEx(hKey, valueName, 0, 0, stringValueData, &valueDataLen);
+    if (lRet != ERROR_SUCCESS) {
+        error(hwnd, IDS_BAD_VALUE, valueName);
+        goto done;
+    }
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
-        if (!(stringValueData = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
-            error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
-            goto done;
-        }
-        lRet = RegQueryValueEx(hKey, valueName, 0, 0, stringValueData, &valueDataLen);
-        if (lRet != ERROR_SUCCESS) {
-            error(hwnd, IDS_BAD_VALUE, valueName);
-            goto done;
-        }
-        if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_string_dlgproc) == IDOK) {
+        if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
             lRet = RegSetValueEx(hKey, valueName, 0, type, stringValueData, lstrlen(stringValueData) + 1);
             if (lRet == ERROR_SUCCESS) result = TRUE;
         }
     } else if ( type == REG_DWORD ) {
-        MessageBox(hwnd, "Can't edit dwords for now", "Error", MB_OK | MB_ICONERROR);
+	wsprintf(stringValueData, isDecimal ? "%ld" : "%lx", *((DWORD*)stringValueData));
+	if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
+	     DWORD val;
+	     if (_stscanf(stringValueData, isDecimal ? "%ld" : "%lx", &val)) {
+		lRet = RegSetValueEx(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
+	        if (lRet == ERROR_SUCCESS) result = TRUE;
+	     }
+	}
     } else {
         error(hwnd, IDS_UNSUPPORTED_TYPE, type);
     }
@@ -167,4 +209,20 @@ done:
     stringValueData = NULL;
 
     return result;
+}
+
+BOOL DeleteValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
+{
+    LONG lRet;
+
+    if (!hKey || !valueName) return FALSE;
+
+    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, valueName) != IDYES)
+	return FALSE;
+
+    lRet = RegDeleteValue(hKey, valueName);
+    if (lRet != ERROR_SUCCESS) {
+        error(hwnd, IDS_BAD_VALUE, valueName);
+    }
+    return lRet == ERROR_SUCCESS;
 }
