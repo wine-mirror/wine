@@ -1868,7 +1868,7 @@ sub generate_project_files($)
   }
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(INSTALL_SCRIPT) \$\$i \$(bindir); done\n";
-    print FILEO "\t_list=\"$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(dlldir); done\n";
+    print FILEO "\t_list=\"\$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(dlldir); done\n";
   }
   print FILEO "\n";
   print FILEO "uninstall::\n";
@@ -1879,7 +1879,7 @@ sub generate_project_files($)
   }
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
-    print FILEO "\t_list=\"$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(dlldir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(dlldir)/\$\$i;done\n";
   }
   print FILEO "\n";
   print FILEO "clean::\n";
