@@ -1327,17 +1327,9 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
   HWND hwndHelp  = GetDlgItem(hwndDlg, IDHELP);
   NMHDR hdr;
 
-  /*
-   * Notify the current page.
-   */
   hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
 
   hdr.hwndFrom = hwndDlg;
-  hdr.code = PSN_KILLACTIVE;
-
-  if (SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr))
-    return FALSE;
-
   /*
    * hpage takes precedence over index.
    */
