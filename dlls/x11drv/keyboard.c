@@ -1183,7 +1183,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
     FIXME(
 	   "Your keyboard layout was not found!\n"
 	   "Using closest match instead (%s) for scancode mapping.\n"
-	   "Please define your layout in windows/x11drv/keyboard.c and submit them\n"
+	   "Please define your layout in dlls/x11drv/keyboard.c and submit them\n"
 	   "to us for inclusion into future Wine releases.\n"
 	   "See the Wine User Guide, chapter \"Keyboard\" for more information.\n",
 	   main_key_tab[kbd_layout].comment);
