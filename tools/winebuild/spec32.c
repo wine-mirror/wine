@@ -496,7 +496,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
 
-    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", dll_file_name );
+    fprintf( outfile, "const char dllname[] = \"%s\";\n\n", dll_file_name );
     fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );
 
 #ifdef __i386__
