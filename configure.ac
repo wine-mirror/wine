@@ -124,8 +124,6 @@ AC_SUBST(DB2TXT)
 
 dnl **** Check for some libraries ****
 
-dnl Check for -lm
-AC_CHECK_LIB(m,sqrt)
 dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lossaudio for NetBSD

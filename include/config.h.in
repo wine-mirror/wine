@@ -245,9 +245,6 @@
 /* Define if you have libjpeg including devel headers */
 #undef HAVE_LIBJPEG
 
-/* Define to 1 if you have the `m' library (-lm). */
-#undef HAVE_LIBM
-
 /* Define if you have the ncurses library (-lncurses) */
 #undef HAVE_LIBNCURSES
 
