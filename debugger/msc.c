@@ -1287,7 +1287,7 @@ DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs
     v_addr = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
     for(size = orig_size; size >= sizeof(dbg); size -= sizeof(dbg))
     {
-      if (!DEBUG_READ_MEM_VERBOSE((void*)(module->load_addr + v_addr), &dbg, sizeof(dbg))) continue;
+      if (!DEBUG_READ_MEM_VERBOSE((void*)((char *) module->load_addr + v_addr), &dbg, sizeof(dbg))) continue;
 
       switch(dbg.Type)
 	{
@@ -1302,7 +1302,7 @@ DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs
     v_addr = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
     for(size = orig_size; size >= sizeof(dbg); size -= sizeof(dbg))
     {
-      if (!DEBUG_READ_MEM_VERBOSE((void*)(module->load_addr + v_addr), &dbg, sizeof(dbg))) continue;
+      if (!DEBUG_READ_MEM_VERBOSE((void*)((char *)module->load_addr + v_addr), &dbg, sizeof(dbg))) continue;
 
       switch(dbg.Type)
 	{
@@ -1403,7 +1403,7 @@ int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, void* _nth, unsigned long n
 	nth->FileHeader.SizeOfOptionalHeader;
 
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
-      if (!DEBUG_READ_MEM_VERBOSE((void*)(module->load_addr + pe_seg_ofs), 
+      if (!DEBUG_READ_MEM_VERBOSE((void*)((char *)module->load_addr + pe_seg_ofs), 
 				  &pe_seg, sizeof(pe_seg)) ||
 	  !DEBUG_READ_MEM_VERBOSE((void*)pe_seg.Name, bufstr, sizeof(bufstr)))
 	  {fprintf(stderr, "err3\n");continue;}
@@ -1628,7 +1628,7 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	    }
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) (module->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
 
 	  if( curr_file->neps + 1 >= curr_file->neps_alloc )
 	    {
@@ -1668,7 +1668,7 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	    }
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) (module->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
 
 #if 0
 	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
@@ -1727,7 +1727,7 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	    }
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) (module->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
 
 #if 0
 	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
@@ -1977,7 +1977,7 @@ DEBUG_SnarfCodeView(      DBG_MODULE	      	      * module,
   nsect = MSC_INFO(module)->nsect;
   sectp = DBG_alloc(sizeof(*sectp) * nsect);
   if (!sectp || 
-      !DEBUG_READ_MEM_VERBOSE(module->load_addr + MSC_INFO(module)->sect_ofs, 
+      !DEBUG_READ_MEM_VERBOSE((char *)module->load_addr + MSC_INFO(module)->sect_ofs, 
 			      sectp, sizeof(*sectp) * nsect))
      return FALSE;
 
