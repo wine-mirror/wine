@@ -912,7 +912,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
-#define	STR_OF(_x) (((_x)&0xFF000000)?(char*)(_x):"?")
+#define	STR_OF(_x) (IsBadReadPtr((char*)_x,1)?"?":(char*)(_x))
     TRACE("[%d, %s, %08lx, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
 	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags, 
 	  data[0], STR_OF(data[0]), data[1], STR_OF(data[1]),
@@ -2343,11 +2343,11 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
 	if (bFrom32) {
 	    dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
 	} else {
-	    switch (MCI_MapMsg16To32A(0, wDevID, &dwParam2)) {
+	    switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
 	    case MCI_MAP_OK:
 	    case MCI_MAP_OKMEM:
 		dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
-		MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
+		MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
 		break;
 	    default: break; /* so that gcc doesnot  bark */
 	    }
@@ -2357,11 +2357,11 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
 	if (bFrom32) {
 	    dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
 	} else {
-	    switch (MCI_MapMsg16To32A(0, wDevID, &dwParam2)) {
+	    switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
 	    case MCI_MAP_OK:
 	    case MCI_MAP_OKMEM:
 		dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
-		MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
+		MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
 		break;
 	    default: break; /* so that gcc does not bark */
 	    }
