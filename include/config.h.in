@@ -187,6 +187,9 @@
 /* Define if you have the <X11/extensions/XShm.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
 
+/* Define if you have the <X11/extensions/Xrender.h> header file.  */
+#undef HAVE_X11_EXTENSIONS_XRENDER_H
+
 /* Define if you have the <X11/extensions/Xvlib.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_XVLIB_H
 
@@ -453,6 +456,9 @@
 
 /* Define if the X libraries support XVideo */
 #undef HAVE_XVIDEO
+
+/* Define if you have the XRender extension library */
+#undef HAVE_LIBXRENDER
 
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL

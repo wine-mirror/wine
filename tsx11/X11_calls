@@ -251,3 +251,16 @@ XvCreateImage
 XvPutImage
 XvShmPutImage
 XvShmCreateImage
+XRenderAddGlyphs
+XRenderCompositeString16
+XRenderCompositeString32
+XRenderCompositeString8
+XRenderCreateGlyphSet
+XRenderCreatePicture
+XRenderFillRectangle
+XRenderFindFormat
+XRenderFindVisualFormat
+XRenderFreeGlyphSet
+XRenderFreePicture
+XRenderQueryExtension
+XRenderSetPictureClipRectangles

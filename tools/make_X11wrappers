@@ -17,7 +17,7 @@
 $X11_include_dir = "/usr/X11/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape", "xvideo");
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape", "xvideo", "Xrender");
 
 # First read list of wanted function names.
 
@@ -92,6 +92,12 @@ foreach $name (@dolist) {
 	$pre_file = "#ifdef HAVE_XVIDEO\n";
 	$post_file = "#endif /* defined(HAVE_XVIDEO) */\n";
 	$inc_name = "Xvlib";
+    }
+    if($name eq "Xrender")  {
+    	$x11_incl = "#include <X11/Xlib.h>\n";
+	$extensions_dir = "extensions/";
+	$pre_file = "#ifdef HAVE_LIBXRENDER\n";
+	$post_file = "#endif /* defined(HAVE_LIBXRENDER) */\n";
     }
 
 
@@ -328,6 +334,73 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
 		"Display*a0,int a1,int a2,int a3",
 		"a0,a1,a2,a3"
 	);	
+    } elsif($name eq "Xrender") {
+    	output_fn("XRenderAddGlyphs","void",
+		"Display*,GlyphSet,Glyph*,XGlyphInfo*,int,char*,int",
+		"Display*a0,GlyphSet a1,Glyph*a2,XGlyphInfo*a3,int a4,char*a5,int a6",
+		"a0,a1,a2,a3,a4,a5,a6"
+	);
+    	output_fn("XRenderCompositeString8","void",
+		"Display*,int,Picture,Picture,XRenderPictFormat*,GlyphSet,int,int,int,int,char*,int",
+		"Display*a0,int a1,Picture a2,Picture a3,XRenderPictFormat*a4,GlyphSet a5,int a6,int a7,int a8,int a9,char*a10,int a11",
+		"a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11"
+        );
+    	output_fn("XRenderCompositeString16","void",
+		"Display*,int,Picture,Picture,XRenderPictFormat*,GlyphSet,int,int,int,int,unsigned short*,int",
+		"Display*a0,int a1,Picture a2,Picture a3,XRenderPictFormat*a4,GlyphSet a5,int a6,int a7,int a8,int a9,unsigned short*a10,int a11",
+		"a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11"
+        );
+    	output_fn("XRenderCompositeString32","void",
+		"Display*,int,Picture,Picture,XRenderPictFormat*,GlyphSet,int,int,int,int,unsigned int*,int",
+		"Display*a0,int a1,Picture a2,Picture a3,XRenderPictFormat*a4,GlyphSet a5,int a6,int a7,int a8,int a9,unsigned int*a10,int a11",
+		"a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11"
+        );
+    	output_fn("XRenderCreateGlyphSet",GlyphSet,
+		"Display*,XRenderPictFormat*",
+		"Display*a0,XRenderPictFormat*a1",
+		"a0,a1"
+        );
+    	output_fn("XRenderCreatePicture",Picture,
+		"Display*,Drawable,XRenderPictFormat*,unsigned long,XRenderPictureAttributes*",
+		"Display*a0,Drawable a1,XRenderPictFormat*a2,unsigned long a3,XRenderPictureAttributes*a4",
+		"a0,a1,a2,a3,a4"
+        );
+    	output_fn("XRenderFillRectangle","void",
+		"Display*,int,Picture,XRenderColor*,int,int,unsigned int, unsigned int",
+		"Display*a0,int a1,Picture a2,XRenderColor*a3,int a4,int a5,unsigned int a6,unsigned int a7",
+		"a0,a1,a2,a3,a4,a5,a6,a7"
+        );
+    	output_fn("XRenderFindFormat","XRenderPictFormat*",
+		"Display*,unsigned long,XRenderPictFormat*,int",
+		"Display*a0,unsigned long a1,XRenderPictFormat*a2,int a3",
+		"a0,a1,a2,a3"
+        );
+    	output_fn("XRenderFindVisualFormat","XRenderPictFormat*",
+		"Display*,Visual*",
+		"Display*a0,Visual*a1",
+		"a0,a1"
+        );
+    	output_fn("XRenderFreeGlyphSet","void",
+		"Display*,GlyphSet",
+		"Display*a0,GlyphSet a1",
+		"a0,a1"
+        );
+    	output_fn("XRenderFreePicture","void",
+		"Display*,Picture",
+		"Display*a0,Picture a1",
+		"a0,a1"
+        );
+    	output_fn("XRenderSetPictureClipRectangles","void",
+		"Display*,Picture,int,int,XRectangle*,int",
+		"Display*a0,Picture a1,int a2,int a3,XRectangle* a4,int a5",
+		"a0,a1,a2,a3,a4,a5"
+        );
+    	output_fn("XRenderQueryExtension",Bool,
+		"Display*,int*,int*",
+		"Display*a0,int*a1,int*a2",
+		"a0,a1,a2"
+        );
+	
     } else {
 	open(IN, 
 	     "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | " . 
@@ -404,6 +477,10 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
 		  "struct _XImage *, long",
 		  "struct _XImage *a0, long a1", "a0, a1");
 	output_fn("XUniqueContext", "XContext", "void", "void", "");
+	output_fn("XDeleteContext", "int",
+		  "Display*,XID,XContext",
+		  "Display*a0,XID a1,XContext a2",
+		  "a0,a1,a2");
     }
 
     print OUTH <<END;
