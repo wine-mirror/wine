@@ -1199,7 +1199,7 @@ sub parse_c_function {
 			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
-	if($match =~ /^extern|static$/) {
+	if($match =~ /^(?:extern|static)$/) {
 	    if(!$linkage) {
 		$linkage = $match;
 	    }
@@ -1956,13 +1956,13 @@ sub parse_c_variable {
 			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
-	if ($match =~ /^extern|static$/) {
+	if ($match =~ /^(?:extern|static)$/) {
 	    if (!$linkage) {
 		$linkage = $match;
 	    } else {
 		$self->_parse_c_warning($_, $line, $column, "repeated linkage (ignored): $match");
 	    }
-	} elsif ($match =~ /^signed|unsigned$/) {
+	} elsif ($match =~ /^(?:signed|unsigned)$/) {
 	    if (!$sign) {
 		$sign = "$match ";
 	    } else {

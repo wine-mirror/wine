@@ -103,15 +103,15 @@ sub line {
 	    $progress .= "$tool: ";
 	}
 
-	if($tool =~ /^cd|make$/) {
+	if($tool =~ /^(?:cd|make)$/) {
 	    # Nothing
-	} elsif($tool =~ /^ld$/) {
+	} elsif($tool eq "ld"/) {
 	    foreach my $file (@{$read_files}) {
 		$output->lazy_progress("${progress}reading '$file'");
 	    }
 	    my $file = $$write_files[0];
 	    $output->progress("$progress: writing '$file'");
-	} elsif($tool =~ /^rm$/) {
+	} elsif($tool eq "rm") {
 	    foreach my $file (@{$remove_files}) {
 		$output->lazy_progress("${progress}removing '$file'");
 	    }
@@ -160,13 +160,13 @@ sub line {
 	# Nothing
     } elsif($tool eq "gcc" && /^(?:In file included |\s*)from (.+?):(\d+)[,:]$/) {
 	# Nothing
-    } elsif($tool =~ /^gcc|ld$/ && s/^(.+?\.s?o)(?:\(.*?\))?:\s*//) {
+    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^(.+?\.s?o)(?:\(.*?\))?:\s*//) {
 	$tool = "ld";
 	ld_output($1, $_)
-    } elsif($tool =~ /^gcc|ld$/ && s/^(.*?)ld:\s*//) {
+    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^(.*?)ld:\s*//) {
 	$tool = "ld";
 	ld_output("", $_)
-    } elsif($tool =~ /^gcc|ld$/ && s/^collect2:\s*//) {
+    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^collect2:\s*//) {
 	$tool = "ld";
 	ld_output("collect2", $_);
     } elsif($tool eq "gcc" && s/^(.+?\.[chly]):\s*//) {

@@ -75,14 +75,14 @@ if($options->spec_files || $options->winetest) {
 	    /^$/ && next;         # skip empty lines
 
 	    if($header)  {
-	        if(/^\d+|@/) {
+	        if(/^(?:\d+|@)/) {
 		    $header = 0;
 		    $lookahead = 1;
 		}
 		next;
 	    }
 
-	    if(/^(@|\d+)\s+stdcall\s+(\w+)\s*\(\s*([^\)]*)\s*\)/) {
+	    if(/^(\d+|@)\s+stdcall\s+(\w+)\s*\(\s*([^\)]*)\s*\)/) {
 		my $ordinal = $1;
 		my $name = $2;
 		my @args = split(/\s+/, $3);
@@ -559,7 +559,7 @@ if($options->stub_statistics) {
              foreach my $external_name ($winapi->all_functions_in_module($module)) {
 		 my $external_calling_convention =
 		     $winapi->function_external_calling_convention_in_module($module, $external_name);
-		 if($external_calling_convention !~ /^forward|stub$/) {
+		 if($external_calling_convention !~ /^(?:forward|stub)$/) {
 		     if($module_pseudo_stub{$module}{$external_name}) {
 			 $external_calling_convention = "pseudo_stub";
 		     }

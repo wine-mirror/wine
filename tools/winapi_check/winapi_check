@@ -477,7 +477,7 @@ foreach my $file (@c_files) {
 
 	if($options->config) {
 	    if(!$nativeapi->is_conditional($_)) {
-		if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
+		if(/^HAVE_/ && !/^HAVE_(?:IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
 		{
 		    $output->write("$file: $_ is not declared as a conditional\n");
 		}
@@ -556,7 +556,7 @@ foreach my $file (@c_files) {
 
 		if($check_protection && $header) {
 		    if((-e "$wine_dir/include/$header" || -e "$wine_dir/$file_dir/$header")) {
-			if($header !~ /^(oleauto\.h|win(?:base|def|error|gdi|nls|nt|user)\.h)$/ &&
+			if($header !~ /^(?:oleauto\.h|win(?:base|def|error|gdi|nls|nt|user)\.h)$/ &&
 			   $file_dir !~ /tests$/)
 			{
 			    $output->write("$file: #include \<$header\> is a local include\n");

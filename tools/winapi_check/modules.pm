@@ -71,7 +71,7 @@ sub get_spec_file_type($) {
 	/^$/ && next;
 
 	if($header)  {
-	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
+	    if(/^(?:\d+|@)/) { $header = 0; $lookahead = 1; }
 	    next;
 	}
 

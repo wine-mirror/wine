@@ -442,7 +442,7 @@ sub parse_spec_file {
             } else {
                 $$module_external_calling_convention{$module}{"\@$ordinal"} = "extern";
             }
-	} elsif(/^(\d+|@)\s+(equate|variable)/) {
+	} elsif(/^(?:\d+|@)\s+(?:equate|variable)/) {
 	    # ignore
 	} else {
 	    my $next_line = <IN>;

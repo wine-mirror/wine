@@ -207,7 +207,7 @@ sub global_report($) {
 
     my @messages;
     foreach my $name (sort(keys(%$conditionals))) {
-	if($name =~ /^const|inline|size_t$/) { next; }
+	if($name =~ /^(?:const|inline|size_t)$/) { next; }
 
 	if(0 && !$$conditional_found{$name}) {
 	    push @messages, "config.h.in: conditional $name not used\n";

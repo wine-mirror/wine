@@ -108,39 +108,39 @@ sub _check_function($$$$$$) {
     }
 
     my $segmented = 0;
-    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^segptr|segstr$/) {
+    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^seg[sp]tr$/) {
 	$segmented = 1;
     }
 
     my $implemented_calling_convention;
     if($winapi->name eq "win16") {
-	if($calling_convention =~ /^__cdecl$/) {
+	if($calling_convention eq "__cdecl") {
 	    $implemented_calling_convention = "cdecl";
-	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
+	} elsif($calling_convention =~ /^(?:VFWAPIV|WINAPIV)$/) {
 	    $implemented_calling_convention = "varargs";
-	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
-	    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^s_word|word|void$/) {
+	} elsif($calling_convention =~ /^(?:__stdcall|VFWAPI|WINAPI|CALLBACK)$/) {
+	    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^(?:s_word|word|void)$/) {
 		$implemented_calling_convention = "pascal16";
 	    } else {
 		$implemented_calling_convention = "pascal";
 	    }
-	} elsif($calling_convention =~ /^__asm$/) {
+	} elsif($calling_convention eq "__asm") {
     	    $implemented_calling_convention = "asm";
 	} else {
     	    $implemented_calling_convention = "cdecl";
 	}
     } elsif($winapi->name eq "win32") {
-	if($calling_convention =~ /^__cdecl$/) {
+	if($calling_convention eq "__cdecl") {
 	    $implemented_calling_convention = "cdecl";
-	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
+	} elsif($calling_convention =~ /^(?:VFWAPIV|WINAPIV)$/) {
 	    $implemented_calling_convention = "varargs";
-	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
-	    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^longlong$/) {
+	} elsif($calling_convention =~ /^(?:__stdcall|VFWAPI|WINAPI|CALLBACK)$/) {
+	    if(defined($implemented_return_kind) && $implemented_return_kind eq "longlong") {
 		$implemented_calling_convention = "stdcall"; # FIXME: Check entry flags
 	    } else {
 		$implemented_calling_convention = "stdcall";
 	    }
-	} elsif($calling_convention =~ /^__asm$/) {
+	} elsif($calling_convention eq "__asm") {
     	    $implemented_calling_convention = "asm";
 	} else {
 	    $implemented_calling_convention = "cdecl";
@@ -166,7 +166,7 @@ sub _check_function($$$$$$) {
     elsif($implemented_calling_convention ne $declared_calling_convention &&
        $implemented_calling_convention ne "asm" &&
        !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
-       !($implemented_calling_convention =~ /^cdecl|varargs$/ && $declared_calling_convention =~ /^cdecl|varargs$/))
+       !($implemented_calling_convention =~ /^(?:cdecl|varargs)$/ && $declared_calling_convention =~ /^(?:cdecl|varargs)$/))
     {
 	if($options->calling_convention && (
             ($options->calling_convention_win16 && $winapi->name eq "win16") ||
@@ -203,7 +203,7 @@ sub _check_function($$$$$$) {
 	$#argument_types--;
     }
 
-    if($internal_name =~ /^NTDLL__ftol|NTDLL__CIpow$/) { # FIXME: Kludge
+    if($internal_name =~ /^(?:NTDLL__ftol|NTDLL__CIpow)$/) { # FIXME: Kludge
 	# ignore
     } else {
 	my $n = 0;
@@ -230,7 +230,7 @@ sub _check_function($$$$$$) {
 	    if(defined($kind) && $kind eq "struct16") {
 		$n+=4;
 		("long", "long", "long", "long");
-	    } elsif(defined($kind) && $kind =~ /^(?:longlong)$/) {
+	    } elsif(defined($kind) && $kind eq "longlong") {
 		$n+=2;
 		("long", "long");
 	    } else {
@@ -246,8 +246,8 @@ sub _check_function($$$$$$) {
 	for my $n (0..$#argument_kinds) {
 	    if(!defined($argument_kinds[$n]) || !defined($declared_argument_kinds[$n])) { next; }
 
-	    if($argument_kinds[$n] =~ /^segptr|segstr$/ ||
-	       $declared_argument_kinds[$n] =~ /^segptr|segstr$/)
+	    if($argument_kinds[$n] =~ /^seg[ps]tr$/ ||
+	       $declared_argument_kinds[$n] =~ /^seg[ps]tr$/)
 	    {
 		$segmented = 1;
 	    }
@@ -334,10 +334,10 @@ sub _check_statements($$$) {
 	    my $called_name = $1;
 	    my $channel = $2;
 	    my $called_arguments = $3;
-	    if($called_name =~ /^if|for|while|switch|sizeof$/) {
+	    if($called_name =~ /^(?:if|for|while|switch|sizeof)$/) {
 		# Nothing
-	    } elsif($called_name =~ /^ERR|FIXME|MSG|TRACE|WARN$/) {
-		if($first_debug_message && $called_name =~ /^FIXME|TRACE$/) {
+	    } elsif($called_name =~ /^(?:ERR|FIXME|MSG|TRACE|WARN)$/) {
+		if($first_debug_message && $called_name =~ /^(?:FIXME|TRACE)$/) {
 		    $first_debug_message = 0;
 		    if($called_arguments =~ /^\"\((.*?)\)(.*?)\"\s*,\s*(.*?)$/) {
 			my $formating = $1;

@@ -57,7 +57,7 @@ sub read_spec_file($) {
 	/^$/ && next;         # skip empty lines
 
 	if($header)  {
-	    if(/^\d+|@/) {
+	    if(/^(?:\d+|@)/) {
 		$header = 0;
 		$lookahead = 1;
 	    }
@@ -478,7 +478,7 @@ sub _generate_dsp($$) {
     my @header_files = @{$modules{$module}{header_files}};
     my @resource_files = @{$modules{$module}{resource_files}};
 
-    if ($project !~ /^(?:wine(?:_unicode)?|wine(?:build|runtests|test))$/ &&
+    if ($project !~ /^wine(?:_unicode|build|runtests|test)?$/ &&
         $project !~ /^(?:gdi32|ntdll|user32)_.+?$/ &&
         $project !~ /_test$/)
     {
@@ -489,7 +489,7 @@ sub _generate_dsp($$) {
 
     my $no_cpp = 1;
     my $no_msvc_headers = 1;
-    if ($project =~ /^(?:wine(?:runtests|test))$/ || $project =~ /_test$/) {
+    if ($project =~ /^wine(?:runtests|test)$/ || $project =~ /_test$/) {
 	$no_msvc_headers = 0;
     }
 
@@ -684,23 +684,23 @@ sub _generate_dsp($$) {
 	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir\\\"";
 	    push @defines2, qw(__i386__ _X86_);
 
-	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv|win16drv)$/) {
+	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv)$/) {
 		push @includes, "..";
 	    }
 
-	    if($project =~ /^user32_(?:windows)$/) {
+	    if($project eq "user32_windows") {
 		push @includes, "..\\dlls\\user";
 	    }
 
-	    if($project =~ /^user32_dde$/) {
+	    if($project eq "user32_dde") {
 		push @includes, "..";
 	    }
 
 	    if ($project =~ /_test$/) {
 		push @includes, "$msvc_wine_dir\\$output_dir";
-	    } 
+	    }
 
-	    if (!$msvc_headers || $project =~ /^winetest$/) {
+	    if (!$msvc_headers || $project eq "winetest") {
 		push @includes, $wine_include_dir;
 	    }
 	}

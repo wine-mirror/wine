@@ -304,15 +304,15 @@ sub calling_convention16($) {
     }
 
     local $_ = $self->calling_convention;
-    if(/^__cdecl$/) {
+    if($_ eq "__cdecl") {
 	return "cdecl";
-    } elsif(/^VFWAPIV|WINAPIV$/) {
+    } elsif(/^(?:VFWAPIV|WINAPIV)$/) {
 	if(!defined($suffix)) { return undef; }
 	return "pascal$suffix"; # FIXME: Is this correct?
-    } elsif(/^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
+    } elsif(/^(?:__stdcall|VFWAPI|WINAPI|CALLBACK)$/) {
 	if(!defined($suffix)) { return undef; }
 	return "pascal$suffix";
-    } elsif(/^__asm$/) {
+    } elsif($_ eq "__asm") {
 	return "asm";
     } else {
 	return "cdecl";
@@ -323,13 +323,13 @@ sub calling_convention32($) {
     my $self = shift;
 
     local $_ = $self->calling_convention;
-    if(/^__cdecl$/) {
+    if($_ eq "__cdecl") {
 	return "cdecl";
-    } elsif(/^VFWAPIV|WINAPIV$/) {
+    } elsif(/^(?:VFWAPIV|WINAPIV)$/) {
 	return "varargs";
-    } elsif(/^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
+    } elsif(/^(?:__stdcall|VFWAPI|WINAPI|CALLBACK)$/) {
 	return "stdcall";
-    } elsif(/^__asm$/) {
+    } elsif($_ eq "__asm") {
 	return "asm";
     } else {
 	return "cdecl";
