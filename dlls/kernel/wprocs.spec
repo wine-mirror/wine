@@ -2,7 +2,6 @@
 # The '-interrupt' keyword takes care of the flags pushed on the stack by the interrupt
 117 pascal -interrupt INT_Int11Handler() INT_Int11Handler
 121 pascal -interrupt INT_Int15Handler() INT_Int15Handler
-132 pascal -interrupt INT_Int20Handler() INT_Int20Handler
 133 pascal -interrupt INT_Int21Handler() DOS3Call
 # Note: int 25 and 26 don't pop the flags from the stack
 137 pascal -register  INT_Int25Handler() INT_Int25Handler

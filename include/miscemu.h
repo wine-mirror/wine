@@ -212,21 +212,8 @@ extern void IO_outport( int port, int count, DWORD value );
 /* msdos/int11.c */
 extern void WINAPI INT_Int11Handler(CONTEXT86*);
 
-/* msdos/int12.c */
-extern void WINAPI INT_Int12Handler(CONTEXT86*);
-
-/* msdos/int13.c */
-extern void WINAPI INT_Int13Handler(CONTEXT86*);
-
 /* msdos/int15.c */
 extern void WINAPI INT_Int15Handler(CONTEXT86*);
-
-/* msdos/int1a.c */
-extern DWORD INT1A_GetTicksSinceMidnight(void);
-extern void WINAPI INT_Int1aHandler(CONTEXT86*);
-
-/* msdos/int20.c */
-extern void WINAPI INT_Int20Handler(CONTEXT86*);
 
 /* msdos/int25.c */
 extern void WINAPI INT_Int25Handler(CONTEXT86*);
@@ -234,33 +221,11 @@ extern void WINAPI INT_Int25Handler(CONTEXT86*);
 /* msdos/int26.c */
 extern void WINAPI INT_Int26Handler(CONTEXT86*);
 
-/* msdos/int2a.c */
-extern void WINAPI INT_Int2aHandler(CONTEXT86*);
-
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
-/* msdos/int41.c */
-extern void WINAPI INT_Int41Handler(CONTEXT86*);
-
-/* msdos/int4b.c */
-extern void WINAPI INT_Int4bHandler(CONTEXT86*);
-
 /* msdos/int5c.c */
 extern void WINAPI NetBIOSCall16(CONTEXT86*);
-
-/* fpu.c */
-extern void WINAPI INT_Int34Handler(CONTEXT86*);
-extern void WINAPI INT_Int35Handler(CONTEXT86*);
-extern void WINAPI INT_Int36Handler(CONTEXT86*);
-extern void WINAPI INT_Int37Handler(CONTEXT86*);
-extern void WINAPI INT_Int38Handler(CONTEXT86*);
-extern void WINAPI INT_Int39Handler(CONTEXT86*);
-extern void WINAPI INT_Int3aHandler(CONTEXT86*);
-extern void WINAPI INT_Int3bHandler(CONTEXT86*);
-extern void WINAPI INT_Int3cHandler(CONTEXT86*);
-extern void WINAPI INT_Int3dHandler(CONTEXT86*);
-extern void WINAPI INT_Int3eHandler(CONTEXT86*);
 
 /* msdos/dpmi.c */
 extern BOOL DPMI_LoadDosSystem(void);
