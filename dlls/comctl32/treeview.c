@@ -1988,6 +1988,40 @@ TREEVIEW_GetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
 }
 
 static LRESULT
+TREEVIEW_SetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
+{
+    TVITEMEXA tvItemA;
+    INT len;
+    LRESULT rc;
+
+    tvItemA.mask = tvItem->mask;
+    tvItemA.hItem = tvItem->hItem;
+    tvItemA.state = tvItem->state;
+    tvItemA.stateMask = tvItem->stateMask;
+    len = WideCharToMultiByte(CP_ACP, 0, tvItem->pszText, -1,
+          NULL ,0 , NULL,NULL);
+    if (len)
+    {
+        len ++;
+        tvItemA.pszText = HeapAlloc(GetProcessHeap(),0,len);
+        len = WideCharToMultiByte(CP_ACP, 0, tvItem->pszText, -1,
+            tvItemA.pszText ,len , NULL,NULL);
+    }
+    else
+        tvItemA.pszText = NULL;
+    tvItemA.cchTextMax = tvItem->cchTextMax;
+    tvItemA.iImage = tvItem->iImage;
+    tvItemA.iSelectedImage = tvItem->iSelectedImage;
+    tvItemA.cChildren = tvItem->cChildren;
+    tvItemA.lParam = tvItem->lParam;
+    tvItemA.iIntegral = tvItem->iIntegral;
+
+    rc = TREEVIEW_SetItemA(infoPtr,&tvItemA);
+    HeapFree(GetProcessHeap(),0,tvItemA.pszText);
+    return rc;
+}
+
+static LRESULT
 TREEVIEW_GetItemState(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem, UINT mask)
 {
     TRACE("\n");
@@ -5043,7 +5077,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_SetItemA(infoPtr, (LPTVITEMEXA)lParam);
 
     case TVM_SETITEMW:
-	FIXME("Unimplemented msg TVM_SETITEMW\n");
+    return TREEVIEW_SetItemW(infoPtr, (LPTVITEMEXW)lParam);
 	return 0;
 
     case TVM_SETLINECOLOR:
