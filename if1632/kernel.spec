@@ -9,7 +9,7 @@ file	krnl386.exe
 2   stub ExitKernel
 3   pascal GetVersion() GetVersion16
 4   pascal16 LocalInit(word word word) LocalInit
-5   pascal16 LocalAlloc(word word) LocalAlloc16
+5   register LocalAlloc(word word) WIN16_LocalAlloc
 6   pascal16 LocalReAlloc(word word word) LocalReAlloc16
 7   pascal16 LocalFree(word) LocalFree16
 8   pascal LocalLock(word) LocalLock16

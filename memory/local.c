@@ -1522,6 +1522,19 @@ HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 
 
 /***********************************************************************
+ *           WIN16_LocalAlloc
+ */
+void WINAPI WIN16_LocalAlloc( CONTEXT *context )
+{
+    WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
+    UINT16 flags = (UINT16)stack[3];
+    WORD size = (WORD)stack[2];
+    TRACE(local,"WIN16LocalAlloc: %04x %d \n", flags, size);
+    AX_reg(context) = CX_reg(context) = LOCAL_Alloc( DS_reg(context), flags, size );
+}
+
+
+/***********************************************************************
  *           LocalReAlloc16   (KERNEL.6)
  */
 HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
