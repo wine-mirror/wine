@@ -84,3 +84,16 @@ char *strmake (size_t *lenp, ...)
     va_end (ap);
     return p;
 }
+
+char *
+badtagchar (char *tag)
+{
+    while (*tag)
+        if (('a'<=*tag && *tag<='z') ||
+            ('A'<=*tag && *tag<='Z') ||
+            ('0'<=*tag && *tag<='9') ||
+            *tag=='-' || *tag=='.')
+            tag++;
+        else return tag;
+    return NULL;
+}

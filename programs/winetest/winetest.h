@@ -33,6 +33,7 @@ void *xrealloc (void *op, size_t len);
 void xprintf (const char *fmt, ...);
 char *vstrmake (size_t *lenp, va_list ap);
 char *strmake (size_t *lenp, ...);
+char *badtagchar (char *tag);
 
 int send_file (const char *name);
 
@@ -47,9 +48,12 @@ enum report_type {
     R_DELTA,
     R_DIR,
     R_OUT,
-    R_FATAL,
     R_WARNING,
-    R_ASK
+    R_ERROR,
+    R_FATAL,
+    R_ASK,
+    R_TEXTMODE,
+    R_QUIET
 };
 
 int report (enum report_type t, ...);

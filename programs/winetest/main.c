@@ -138,6 +138,7 @@ extract_test (struct wine_test *test, const char *dir, int id)
     DWORD size;
     FILE* fout;
     int strlen, bufflen = 128;
+    char *exepos;
 
     code = extract_rcdata (id, &size);
     test->name = xmalloc (bufflen);
@@ -147,15 +148,18 @@ extract_test (struct wine_test *test, const char *dir, int id)
         test->name = xrealloc (test->name, bufflen);
     }
     if (!strlen) report (R_FATAL, "Can't read name of test %d.", id);
-    test->name = xrealloc (test->name, strlen+1);
+    test->exename = strmake (NULL, "%s/%s", dir, test->name);
+    exepos = strstr (test->name, ".exe");
+    if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
+    *exepos = 0;
+    test->name = xrealloc (test->name, exepos - test->name + 1);
     report (R_STEP, "Extracting: %s", test->name);
     test->is_elf = !memcmp (code+1, "ELF", 3);
-    test->exename = strmake (NULL, "%s/%s", dir, test->name);
 
     if (!(fout = fopen (test->exename, "wb")) ||
         (fwrite (code, size, 1, fout) != 1) ||
         fclose (fout)) report (R_FATAL, "Failed to write file %s.",
-                               test->name);
+                               test->exename);
 }
 
 void
@@ -254,11 +258,11 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
     return TRUE;
 }
 
-void
-run_tests ()
+static const char *
+run_tests (const char *logname, const char *tag)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
-    char *tempdir, *logname;
+    char *tempdir;
     FILE *logfile;
     char build_tag[128];
 
@@ -275,8 +279,10 @@ run_tests ()
     if (!CreateDirectory (tempdir, NULL))
         report (R_FATAL, "Could not create directory: %s", tempdir);
 
-    logname = tempnam (0, "res");
-    if (!logname) report (R_FATAL, "Can't name logfile.");
+    if (!logname) {
+        logname = tempnam (0, "res");
+        if (!logname) report (R_FATAL, "Can't name logfile.");
+    }
     report (R_OUT, logname);
 
     logfile = fopen (logname, "a");
@@ -285,13 +291,14 @@ run_tests ()
         report (R_FATAL, "Can't redirect stdout.");
     fclose (logfile);
 
-    xprintf ("Version 1\n");
+    xprintf ("Version 2\n");
     i = LoadStringA (GetModuleHandle (NULL), 0,
                      build_tag, sizeof build_tag);
     if (i == 0) report (R_FATAL, "Build descriptor not found.");
     if (i >= sizeof build_tag)
         report (R_FATAL, "Build descriptor too long.");
     xprintf ("Tests from build %s\n", build_tag);
+    xprintf ("Tag: %s", tag?tag:"");
     xprintf ("Operating system version:\n");
     print_version ();
     xprintf ("Test output:\n" );
@@ -331,21 +338,86 @@ run_tests ()
     free (tempdir);
     free (wine_tests);
 
-    if (report (R_ASK, MB_YESNO,
-                "Do you want to submit the test results?") == IDYES)
-        if (send_file (logname))
-            report (R_FATAL, "Can't submit logfile '%s'", logname);
+    return logname;
+}
 
-    if (remove (logname))
-        report (R_WARNING, "Can't remove logfile: %d.", errno);
-    free (logname);
+void
+usage ()
+{
+    fprintf (stderr, "\
+Usage: winetest [OPTION]...\n\n\
+  -c       console mode, no GUI\n\
+  -h       print this message and exit\n\
+  -q       quiet mode, no output at all\n\
+  -o FILE  put report into FILE, do not submit\n\
+  -s FILE  submit FILE, do not run tests\n\
+  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
 int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                     LPSTR cmdLine, int cmdShow)
 {
-    report (R_STATUS, "Starting up");
-    run_tests ();
-    report (R_STATUS, "Finished");
+    const char *logname = NULL;
+    char *tag = NULL, *cp;
+    char *submit = NULL;
+
+    cmdLine = strtok (cmdLine, " ");
+    while (cmdLine) {
+        if (*cmdLine == '-')
+            if (cmdLine[2]) {
+                report (R_ERROR, "Not a single letter option: %s",
+                        cmdLine);
+                usage ();
+                exit (2);
+            }
+            cmdLine++;
+            switch (*cmdLine) {
+            case 'c':
+                report (R_TEXTMODE);
+                break;
+            case 'h':
+                usage ();
+                exit (0);
+            case 'q':
+                report (R_QUIET);
+                break;
+            case 's':
+                submit = strtok (NULL, " ");
+                if (tag)
+                    report (R_WARNING, "ignoring tag for submit");
+                if (send_file (submit))
+                    report (R_ERROR, "can't submit file %s", submit);
+                break;
+            case 'o':
+                logname = strtok (NULL, " ");
+                run_tests (logname, tag);
+                break;
+            case 't':
+                tag = strtok (NULL, " ");
+                cp = badtagchar (tag);
+                if (cp) {
+                    report (R_ERROR, "invalid char in tag: %c", *cp);
+                    usage ();
+                    exit (2);
+                }
+                break;
+            default:
+                report (R_ERROR, "invalid option: -%c", *cmdLine);
+                usage ();
+                exit (2);
+            }
+        cmdLine = strtok (NULL, " ");
+    }
+    if (!logname && !submit) {
+        report (R_STATUS, "Starting up");
+        logname = run_tests (NULL, tag);
+        if (report (R_ASK, MB_YESNO,
+                    "Do you want to submit the test results?") == IDYES)
+            if (send_file (logname))
+                report (R_FATAL, "Can't submit logfile '%s'", logname);
+        if (remove (logname))
+            report (R_WARNING, "Can't remove logfile: %d.", errno);
+        report (R_STATUS, "Finished");
+    }
     exit (0);
 }

@@ -51,6 +51,21 @@ renderString (va_list ap)
     return buffer;
 }
 
+int
+MBdefault (int uType)
+{
+    static const int matrix[][4] = {{IDOK,    0,        0,        0},
+                                    {IDOK,    IDCANCEL, 0,        0},
+                                    {IDABORT, IDRETRY,  IDIGNORE, 0},
+                                    {IDYES,   IDNO,     IDCANCEL, 0},
+                                    {IDYES,   IDNO,     0,        0},
+                                    {IDRETRY, IDCANCEL, 0,        0}};
+    int type = uType & MB_TYPEMASK;
+    int def  = (uType & MB_DEFMASK) / MB_DEFBUTTON2;
+
+    return matrix[type][def];
+}
+
 /* report (R_STATUS, fmt, ...) */
 int
 textStatus (va_list ap)
@@ -204,39 +219,12 @@ guiOut (va_list ap)
     return 0;
 }
 
-/* report (R_FATAL, fmt, ...) */
-int
-textFatal (va_list ap)
-{
-    char *str = vstrmake (NULL, ap);
-
-    fputs ("Fatal error: ", stderr);
-    fputs (str, stderr);
-    fputc ('\n', stderr);
-    free (str);
-    exit (1);
-}
-
-int
-guiFatal (va_list ap)
-{
-    char *str = vstrmake (NULL, ap);
-
-    MessageBox (dialog, str, "Fatal Error", MB_ICONERROR | MB_OK);
-    free (str);
-    exit (1);
-}
-
 /* report (R_WARNING, fmt, ...) */
 int
 textWarning (va_list ap)
 {
-    char *str = vstrmake (NULL, ap);
-
     fputs ("Warning: ", stderr);
-    fputs (str, stderr);
-    fputc ('\n', stderr);
-    free (str);
+    textStatus (ap);
     return 0;
 }
 
@@ -250,17 +238,52 @@ guiWarning (va_list ap)
     return 0;
 }
 
+/* report (R_ERROR, fmt, ...) */
+int
+textError (va_list ap)
+{
+    fputs ("Error: ", stderr);
+    textStatus (ap);
+    return 0;
+}
+
+int
+guiError (va_list ap)
+{
+    char *str = vstrmake (NULL, ap);
+
+    MessageBox (dialog, str, "Error", MB_ICONERROR | MB_OK);
+    free (str);
+    return 0;
+}
+
+/* report (R_FATAL, fmt, ...) */
+int
+textFatal (va_list ap)
+{
+    textError (ap);
+    exit (1);
+}
+
+int
+guiFatal (va_list ap)
+{
+    guiError (ap);
+    exit (1);
+}
+
 /* report (R_ASK, type, fmt, ...) */
 int
 textAsk (va_list ap)
 {
     int uType = va_arg (ap, int);
+    int ret = MBdefault (uType);
     char *str = vstrmake (NULL, ap);
 
-    fprintf (stderr, "Question of type %d: %s\n!FIXME, stub\n",
-             uType, str);
+    fprintf (stderr, "Question of type %d: %s\n"
+             "Returning default: %d\n", uType, str, ret);
     free (str);
-    return 0;
+    return ret;
 }
 
 int
@@ -273,6 +296,25 @@ guiAsk (va_list ap)
 
     free (str);
     return ret;
+}
+
+/* Quiet functions */
+int
+qNoOp (va_list ap)
+{
+    return 0;
+}
+
+int
+qFatal (va_list ap)
+{
+    exit (1);
+}
+
+int
+qAsk (va_list ap)
+{
+    return MBdefault (va_arg (ap, int));
 }
 
 BOOL CALLBACK
@@ -362,7 +404,20 @@ report (enum report_type t, ...)
     static r_fun_t * const GUI_funcs[] =
         {guiStatus, guiProgress, guiStep, guiDelta,
          guiDir, guiOut, guiFatal, guiWarning, guiAsk};
+    static r_fun_t * const quiet_funcs[] =
+        {qNoOp, qNoOp, qNoOp, qNoOp,
+         qNoOp, qNoOp, qFatal, qNoOp, qAsk};
     static r_fun_t * const * funcs = NULL;
+
+    switch (t) {
+    case R_TEXTMODE:
+        funcs = text_funcs;
+        return 0;
+    case R_QUIET:
+        funcs = quiet_funcs;
+        return 0;
+    default:
+    }
 
     if (!funcs) {
         HANDLE DlgThread;
