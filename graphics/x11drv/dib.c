@@ -3008,6 +3008,7 @@ INT X11DRV_DIB_GetDIBits(
   descr.dc        = dc;
   descr.palentry  = palette->logpalette.palPalEntry;
   descr.bits      = bits;
+  descr.image     = NULL;
   descr.lines     = lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
   descr.drawable  = (Pixmap)bmp->physBitmap;
@@ -3027,7 +3028,6 @@ INT X11DRV_DIB_GetDIBits(
 
   EnterCriticalSection( &X11DRV_CritSection );
 
-  descr.image  = (XImage *)CALL_LARGE_STACK( X11DRV_BITMAP_GetXImage, bmp );
   CALL_LARGE_STACK( X11DRV_DIB_GetImageBits, &descr );
 
   LeaveCriticalSection( &X11DRV_CritSection );
