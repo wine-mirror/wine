@@ -347,7 +347,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 	else {
 	    NONCLIENTMETRICSW nclm;
 	    HFONT hNewFont;
-	    nclm.cbSize = sizeof(NONCLIENTMETRICSA);
+	    nclm.cbSize = sizeof(NONCLIENTMETRICSW);
 	    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
 	    hNewFont = CreateFontIndirectW ((uFlags & DC_SMALLCAP) ?
 		&nclm.lfSmCaptionFont : &nclm.lfCaptionFont);
