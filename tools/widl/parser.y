@@ -1069,9 +1069,23 @@ static type_t *reg_type(type_t *type, char *name, int t)
 /* determine pointer type from attrs */
 static unsigned char get_pointer_type( type_t *type )
 {
-    int t = get_attrv( type->attrs, ATTR_POINTERTYPE );
-    if( t ) return t;
-    return RPC_FC_FP;
+  int t;
+  if (is_attr( type->attrs, ATTR_STRING ))
+  {
+    type_t *t = type;
+    while( t->type == 0 && t->ref )
+      t = t->ref;
+    switch( t->type )
+    {
+    case RPC_FC_CHAR:
+      return RPC_FC_C_CSTRING;
+    case RPC_FC_WCHAR:
+      return RPC_FC_C_WSTRING;
+    }
+  }
+  t = get_attrv( type->attrs, ATTR_POINTERTYPE );
+  if (t) return t;
+  return RPC_FC_FP;
 }
 
 static type_t *reg_types(type_t *type, var_t *names, int t)
