@@ -2,6 +2,7 @@
  *  OLE 2 clipboard support
  *
  *      Copyright 1999  Noel Borthwick <noel@macadamian.com>
+ *      Copyright 2000  Abey George <abey@macadamian.com>
  *
  * NOTES:
  *    This file contains the implementation for the OLE Clipboard and its
@@ -51,7 +52,7 @@
 #include "winerror.h"
 #include "ole2.h"
 #include "debugtools.h"
-
+#include "olestd.h"
 
 #define HANDLE_ERROR(err) { hr = err; TRACE("(HRESULT=%lx)\n", (HRESULT)err); goto CLEANUP; }
 
@@ -129,6 +130,13 @@ typedef struct
   
 } IEnumFORMATETCImpl;
 
+typedef struct PresentationDataHeader
+{
+  BYTE unknown1[28];
+  DWORD dwObjectExtentX;
+  DWORD dwObjectExtentY;
+  DWORD dwSize;
+} PresentationDataHeader;
 
 /*
  * The one and only OLEClipbrd object which is created by OLEClipbrd_Initialize()
@@ -453,7 +461,6 @@ HRESULT WINAPI OleGetClipboard(IDataObject** ppDataObj)
  */
 
 HRESULT WINAPI OleFlushClipboard16(void)
-
 {
   return OleFlushClipboard();
 }
@@ -883,6 +890,7 @@ LRESULT CALLBACK OLEClipbrd_WndProc
   return 0;
 }
 
+#define MAX_CLIPFORMAT_NAME   80
 
 /***********************************************************************
  * OLEClipbrd_RenderFormat(LPFORMATETC)
@@ -892,21 +900,122 @@ LRESULT CALLBACK OLEClipbrd_WndProc
  */
 static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pFormatetc)
 {
-  STGMEDIUM medium;
+  STGMEDIUM std;
   HGLOBAL hDup;
   HRESULT hr = S_OK;
+  char szFmtName[MAX_CLIPFORMAT_NAME];
+  ILockBytes *ptrILockBytes = 0;
+  HGLOBAL hStorage = 0;
+
+  GetClipboardFormatNameA(pFormatetc->cfFormat, szFmtName, MAX_CLIPFORMAT_NAME);
+
+  /* If embed source */
+  if (!strcmp(szFmtName, CF_EMBEDSOURCE))
+  {
+    memset(&std, 0, sizeof(STGMEDIUM));
+    std.tymed = pFormatetc->tymed = TYMED_ISTORAGE;
+
+    hStorage = GlobalAlloc(GMEM_SHARE|GMEM_MOVEABLE, 0);
+    hr = CreateILockBytesOnHGlobal(hStorage, FALSE, &ptrILockBytes);
+    hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.u.pstg);
+
+    if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->pIDataObjectSrc, pFormatetc, &std)))
+    {
+      WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%lx)\n", hr);
+      return hr;
+    }
+
+    if (1) /* check whether the presentation data is already -not- present */
+    {
+      FORMATETC fmt2;
+      STGMEDIUM std2;
+      METAFILEPICT *mfp = 0;
+
+      fmt2.cfFormat = CF_METAFILEPICT;
+      fmt2.ptd = 0;
+      fmt2.dwAspect = DVASPECT_CONTENT;
+      fmt2.lindex = -1;
+      fmt2.tymed = TYMED_MFPICT;
+
+      memset(&std2, 0, sizeof(STGMEDIUM));
+      std2.tymed = TYMED_MFPICT;
+
+      /* Get the metafile picture out of it */
+
+      if (!FAILED(hr = IDataObject_GetData(theOleClipboard->pIDataObjectSrc, &fmt2, &std2)))
+      {
+        mfp = (METAFILEPICT *)GlobalLock(std2.u.hMetaFilePict);
+      }
+
+      if (mfp)
+      {
+        OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
+        IStream *pStream = 0;
+        void *mfBits;
+        PresentationDataHeader pdh;
+        INT nSize;
+        CLSID clsID;
+        LPOLESTR strProgID;
+        CHAR strOleTypeName[51];
+        BYTE OlePresStreamHeader [] =
+        {
+            0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00,
+            0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+            0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+        };
+
+        nSize = GetMetaFileBitsEx(mfp->hMF, 0, NULL);
+
+        memset(&pdh, 0, sizeof(PresentationDataHeader));
+        memcpy(&pdh, OlePresStreamHeader, sizeof(OlePresStreamHeader));
+
+        pdh.dwObjectExtentX = mfp->xExt;
+        pdh.dwObjectExtentY = mfp->yExt;
+        pdh.dwSize = nSize;
+
+        hr = IStorage_CreateStream(std.u.pstg, name, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &pStream);
+
+        hr = IStream_Write(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
+
+        mfBits = HeapAlloc(GetProcessHeap(), 0, nSize);
+        nSize = GetMetaFileBitsEx(mfp->hMF, nSize, mfBits);
+
+        hr = IStream_Write(pStream, mfBits, nSize, NULL);
+
+        IStream_Release(pStream);
+
+        HeapFree(GetProcessHeap(), 0, mfBits);
   
-  if ( FAILED(hr = IDataObject_GetData(pIDataObject, pFormatetc, &medium)) )
+        GlobalUnlock(std2.u.hMetaFilePict);
+
+        ReadClassStg(std.u.pstg, &clsID);
+        ProgIDFromCLSID(&clsID, &strProgID);
+
+        lstrcpyWtoA(strOleTypeName, strProgID);
+        OLECONVERT_CreateOleStream(std.u.pstg);
+        OLECONVERT_CreateCompObjStream(std.u.pstg, strOleTypeName);
+      }
+    }
+  }
+  else
+  {
+    if (FAILED(hr = IDataObject_GetData(pIDataObject, pFormatetc, &std)))
   {
     WARN("() : IDataObject_GetData failed to render clipboard data! (%lx)\n", hr);
     return hr;
+  }
+
+    /* To put a copy back on the clipboard */
+
+    hStorage = std.u.hGlobal;
   }
 
   /*
    *  Put a copy of the rendered data back on the clipboard
    */
   
-  if ( !(hDup = OLEClipbrd_GlobalDupMem(medium.u.hGlobal)) )
+  if ( !(hDup = OLEClipbrd_GlobalDupMem(hStorage)) )
     HANDLE_ERROR( E_OUTOFMEMORY );
        
   if ( !SetClipboardData( pFormatetc->cfFormat, hDup ) )
@@ -917,7 +1026,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
 
 CLEANUP:
   
-  ReleaseStgMedium(&medium);
+  ReleaseStgMedium(&std);
   
   return hr;
 }

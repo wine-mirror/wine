@@ -13,6 +13,7 @@
 #include "wine/obj_dragdrop.h"
 #include "wine/obj_inplace.h"
 #include "wine/obj_oleobj.h"
+#include "wine/obj_oleview.h"
 #ifndef __WINE__
 #include "oleidl.h"
 #include "oleauto.h"

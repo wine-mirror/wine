@@ -602,6 +602,7 @@ static HRESULT DataCache_ReadPresentationData(
   /*
    * Open the stream and read the header.
    */
+
   hres = IStorage_OpenStream(
            this->presentationStorage,
 	   streamName,
@@ -1248,7 +1249,6 @@ static HRESULT WINAPI DataCache_Load(
   {
     IStorage_AddRef(this->presentationStorage);
   }
-
   return S_OK;
 }
 
@@ -1298,15 +1298,20 @@ static HRESULT WINAPI DataCache_SaveCompleted(
 {
   TRACE("(%p, %p)\n", iface, pStgNew);
 
+  if (pStgNew)
+  {
   /*
    * First, make sure we get our hands off any storage we have.
    */
+
   DataCache_HandsOffStorage(iface);
 
   /*
    * Then, attach to the new storage.
    */
+
   DataCache_Load(iface, pStgNew);
+  }
 
   return S_OK;
 }

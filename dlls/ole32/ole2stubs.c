@@ -2,6 +2,7 @@
  * Temporary place for ole2 stubs.
  *
  * Copyright (C) 1999 Corel Corporation
+ * Move these functions to dlls/ole32/ole2impl.c when you implement them.
  */
 
 #include "ole2.h"
@@ -11,19 +12,6 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
-
-/******************************************************************************
- *               OleCreateFromData        [OLE32.92]
- */
-HRESULT WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
-                DWORD renderopt, LPFORMATETC pFormatEtc,
-                LPOLECLIENTSITE pClientSite, LPSTORAGE pStg,
-                LPVOID* ppvObj)
-{
-    FIXME("(%p,%p,%li,%p,%p,%p,%p), stub!\n", pSrcDataObj,riid,renderopt,pFormatEtc,pClientSite,pStg,ppvObj);
-    return DV_E_FORMATETC;
-}
-
 
 /******************************************************************************
  *               OleCreateLinkToFile        [OLE32.96]
@@ -142,15 +130,6 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
 {
   FIXME("(%p,%p,%x), stub!\n", rclsid, lpszLabel, fUseTypeAsLabel);
   return S_OK;
-}
-
-/******************************************************************************
- *              OleQueryCreateFromData        [OLE32.117]
- */
-HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
-{
-  FIXME("(%p), stub!\n", pSrcDataObject);
-  return S_FALSE;
 }
 
 /******************************************************************************

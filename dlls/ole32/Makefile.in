@@ -25,6 +25,7 @@ C_SRCS = \
 	moniker.c \
 	ole2.c \
 	ole2stubs.c \
+	ole2impl.c \
 	oleobj.c \
 	stg_bigblockfile.c \
 	stg_stream.c \

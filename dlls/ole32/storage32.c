@@ -5724,9 +5724,10 @@ HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm)
 
         if (SUCCEEDED(res))
 
-            res=IPersistStream_Save(pPStm,pStm,FALSE);
+            res=IPersistStream_Save(pPStm,pStm,TRUE);
     }
 
+    TRACE("Finished Save\n");
     return res;
 }
 

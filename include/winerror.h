@@ -1532,6 +1532,7 @@ extern int WIN32_LastError;
 #define	OLE_E_STATIC              0x8004000B
 #define	OLE_E_PROMPTSAVECANCELLED 0x8004000C
 #define OLE_S_USEREG                            0x00040000
+#define OLE_S_STATIC              0x00040001
 
 #define DV_E_FORMATETC            0x80040064
 #define DV_E_DVASPECT             0x8004006B
