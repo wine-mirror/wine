@@ -6,6 +6,20 @@
  * This file contains routines to support MDI (Multiple Document
  * Interface) features .
  *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  * Notes: Fairly complete implementation.
  *        Also, Excel and WinWord do _not_ use MDI so if you're trying
  *	  to fix them look elsewhere. 
@@ -81,10 +95,10 @@
 #include "controls.h"
 #include "user.h"
 #include "struct32.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "dlgs.h"
 
-DEFAULT_DEBUG_CHANNEL(mdi);
+WINE_DEFAULT_DEBUG_CHANNEL(mdi);
 
 #define MDI_MAXLISTLENGTH       0x40
 #define MDI_MAXTITLELENGTH      0xa1

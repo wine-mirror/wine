@@ -4,10 +4,21 @@
  *  Copyright   1996-98 Marcus Meissner
  *
  *	based on Eric Youndale's pe-test and:
- *
- *	ftp.microsoft.com:/pub/developer/MSDN/CD8/PEFILE.ZIP
- * make that:
  *	ftp.microsoft.com:/developr/MSDN/OctCD/PEFILE.ZIP
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* Notes:
  * Before you start changing something in this file be aware of the following:
@@ -34,14 +45,14 @@
 #include "winerror.h"
 #include "snoop.h"
 #include "wine/server.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(win32);
-DECLARE_DEBUG_CHANNEL(delayhlp);
-DECLARE_DEBUG_CHANNEL(fixup);
-DECLARE_DEBUG_CHANNEL(module);
-DECLARE_DEBUG_CHANNEL(relay);
-DECLARE_DEBUG_CHANNEL(segment);
+WINE_DEFAULT_DEBUG_CHANNEL(win32);
+WINE_DECLARE_DEBUG_CHANNEL(delayhlp);
+WINE_DECLARE_DEBUG_CHANNEL(fixup);
+WINE_DECLARE_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(segment);
 
 
 static IMAGE_EXPORT_DIRECTORY *get_exports( HMODULE hmod )

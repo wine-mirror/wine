@@ -5,6 +5,20 @@
  *
  * Copyright 1998 Marcus Meissner
  *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  * FIXME: 	Small reentrancy problem.
  * IDEA(s):	could be used to split up shell32,comctl32... 
  */
@@ -20,10 +34,10 @@
 #include "snoop.h"
 #include "file.h"
 #include "module.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(win32);
+WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
 typedef struct {
 	WORD	popl	WINE_PACKED;	/* 0x8f 0x05 */

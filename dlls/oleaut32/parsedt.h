@@ -31,8 +31,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id$
- *
  *-------------------------------------------------------------------------
  */
 #ifndef DT_H

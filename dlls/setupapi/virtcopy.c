@@ -1,6 +1,22 @@
 /*
  * SetupAPI virtual copy operations
  *
+ * Copyright 2001 Andreas Mohr
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  * FIXME: we now rely on builtin setupapi.dll for dialog resources.
  *        This is bad ! We ought to have 16bit resource handling working.
  */
@@ -11,9 +27,9 @@
 #include "setupx16.h"
 #include "winreg.h"
 #include "setupapi_private.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(setupapi);
+WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 /* ### start build ### */
 extern WORD CALLBACK VCP_CallTo16_word_lwwll(FARPROC16,LPVOID,UINT16,WPARAM,LPARAM,LPARAM);

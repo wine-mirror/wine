@@ -9,6 +9,20 @@
  * Fixed bugs in the _w95_loadreg() function. Added extra information
  * regarding the format of the Windows '95 registry files.
  *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  * NOTES
  *    When changing this file, please re-run the regtest program to ensure
  *    the conditions are handled properly.
@@ -43,9 +57,9 @@
 #include "file.h"
 #include "options.h"
 
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(reg);
+WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 /* FIXME: following defines should be configured global */
 #define SAVE_GLOBAL_REGBRANCH_USER_DEFAULT  ETCDIR"/wine.userreg"

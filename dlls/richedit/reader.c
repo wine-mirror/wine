@@ -76,9 +76,9 @@
 #include "charlist.h"
 #include "windef.h"
 #include "winbase.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(richedit);
+WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 extern HANDLE RICHED32_hHeap;
 

@@ -6,6 +6,20 @@
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "config.h"
@@ -22,14 +36,14 @@
 
 /* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
 #define MAX_DDRAW_DRIVERS 3
 static const ddraw_driver* DDRAW_drivers[MAX_DDRAW_DRIVERS];
 static int DDRAW_num_drivers; /* = 0 */
 static int DDRAW_default_driver;
 
-DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /**********************************************************************/
 

@@ -2,6 +2,20 @@
  * Task functions
  *
  * Copyright 1995 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "config.h"
@@ -34,11 +48,11 @@
 #include "thread.h"
 #include "toolhelp.h"
 
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(task);
-DECLARE_DEBUG_CHANNEL(relay);
-DECLARE_DEBUG_CHANNEL(toolhelp);
+WINE_DEFAULT_DEBUG_CHANNEL(task);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(toolhelp);
 
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32

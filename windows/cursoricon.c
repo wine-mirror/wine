@@ -5,6 +5,20 @@
  *           1996 Martin Von Loewis
  *           1997 Alex Korobka
  *           1998 Turchanov Sergey
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /*
@@ -41,16 +55,16 @@
 #include "bitmap.h"
 #include "cursoricon.h"
 #include "module.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "user.h"
 #include "input.h"
 #include "message.h"
 #include "winerror.h"
 #include "msvcrt/excpt.h"
 
-DECLARE_DEBUG_CHANNEL(cursor);
-DECLARE_DEBUG_CHANNEL(icon);
-DECLARE_DEBUG_CHANNEL(resource);
+WINE_DECLARE_DEBUG_CHANNEL(cursor);
+WINE_DECLARE_DEBUG_CHANNEL(icon);
+WINE_DECLARE_DEBUG_CHANNEL(resource);
 
 static HCURSOR hActiveCursor = 0;  /* Active cursor */
 static INT CURSOR_ShowCount = 0;   /* Cursor display count */

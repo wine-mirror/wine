@@ -36,14 +36,14 @@
  * - Updated for 1.10 distribution.
  */
 
-# include	<stdio.h>
+#include <stdio.h>
 
-# include	"rtf.h"
-# include	"rtf2text.h"
-# include       "charlist.h"
-# include	"debugtools.h"
+#include "rtf.h"
+#include "rtf2text.h"
+#include "charlist.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(richedit);
+WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static void	TextClass ();
 static void	ControlClass ();

@@ -5,6 +5,20 @@
  *	Copyright  William Magro, 1995, 1996
  *	Copyright  Frans van Dorsselaer, 1996, 1997
  *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /*
@@ -25,11 +39,11 @@
 #include "controls.h"
 #include "local.h"
 #include "user.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(edit);
-DECLARE_DEBUG_CHANNEL(combo);
-DECLARE_DEBUG_CHANNEL(relay);
+WINE_DEFAULT_DEBUG_CHANNEL(edit);
+WINE_DECLARE_DEBUG_CHANNEL(combo);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #define BUFLIMIT_MULTI		65534	/* maximum buffer size (not including '\0')
 					   FIXME: BTW, new specs say 65535 (do you dare ???) */

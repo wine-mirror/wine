@@ -3,11 +3,11 @@
 
 #include "config.h"
 #include "wine_gl.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
 typedef const GLubyte * GLstring;
 
-DEFAULT_DEBUG_CHANNEL(opengl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 /***********************************************************************
  *              glAccum (OPENGL32.@)

@@ -1,4 +1,28 @@
 /*
+ * ComboBoxEx control v2 (mod6)
+ *
+ * Copyright 1998, 1999 Eric Kohl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ *   This is just a dummy control. An author is needed! Any volunteers?
+ *   I will only improve this control once in a while.
+ *     Eric <ekohl@abo.rhein-zeitung.de>
+ *
+ *
  * TODO   <-------------
  *  1. The following extended styles need to be implemented, use will
  *     result in a FIXME:
@@ -14,20 +38,8 @@
  *           I_INDENTCALLBACK
  *  3. No use is made of the iOverlay image.
  *  4. Notify CBEN_DRAGBEGIN is not implemented.
- */
-
-
-/*
- * ComboBoxEx control v2 (mod6)
  *
- * Copyright 1998, 1999 Eric Kohl
  *
- * NOTES
- *   This is just a dummy control. An author is needed! Any volunteers?
- *   I will only improve this control once in a while.
- *     Eric <ekohl@abo.rhein-zeitung.de>
- *
-
  * Changes  Guy Albertelli <galberte@neo.lrun.com>
  * v1  Implemented messages: CB_SETITEMHEIGHT, WM_WINDOWPOSCHANGING,
  *      WM_DRAWITEM, and WM_MEASUREITEM. Fixed WM_CREATE. Fixed height
@@ -84,15 +96,15 @@
 #include <string.h>
 #include "winbase.h"
 #include "commctrl.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "wine/unicode.h"
 
-DEFAULT_DEBUG_CHANNEL(comboex);
+WINE_DEFAULT_DEBUG_CHANNEL(comboex);
 /*
  * The following is necessary for the test done in COMBOEX_DrawItem
  * to determine whether to dump out the DRAWITEM structure or not.
  */
-DECLARE_DEBUG_CHANNEL(message);
+WINE_DECLARE_DEBUG_CHANNEL(message);
 
 /* Item structure */
 typedef struct

@@ -8,6 +8,20 @@
  * Copyright 1999 Keith Matthews
  * Copyright 2000 Corel
  * Copyright 2001 Eric Pouech
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <string.h>
@@ -20,10 +34,10 @@
 #include "dde.h"
 #include "ddeml.h"
 #include "win.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "dde/dde_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddeml);
+WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
 static DWORD		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */

@@ -4,9 +4,9 @@
 
 #include <stdio.h>
 #include "miscemu.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(int);
+WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
  *           INT_Int4bHandler (WPROCS.175)

@@ -4,6 +4,20 @@
  * Copyright 1998,1999 Alex Priem <alexp@sci.kun.nl>
  * Copyright 1999 Sylvain St-Germain
  *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  * Note that TREEVIEW_INFO * and HTREEITEM are the same thing.
  *
  * Note2: All items always! have valid (allocated) pszText field.
@@ -34,7 +48,7 @@
 #include "wingdi.h"
 #include "commctrl.h"
 #include "comctl32.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
 /* internal structures */
 
@@ -150,7 +164,7 @@ VOID TREEVIEW_Register (VOID);
 VOID TREEVIEW_Unregister (VOID);
 
 
-DEFAULT_DEBUG_CHANNEL(treeview);
+WINE_DEFAULT_DEBUG_CHANNEL(treeview);
 
 
 #define TEXT_CALLBACK_SIZE 260

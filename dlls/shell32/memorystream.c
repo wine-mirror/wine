@@ -7,6 +7,22 @@
  *	needs to be able to load lnk's from a IStream
  *	interface so it was obvious to capsule the file
  *	access in a IStream to.
+ *
+ * Copyright 1999 Juergen Schmied
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <string.h>
@@ -14,10 +30,10 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "shlobj.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "shell32_main.h"
 
-DEFAULT_DEBUG_CHANNEL(shell);
+WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVOID *ppvObj);
 static ULONG WINAPI IStream_fnAddRef(IStream *iface);

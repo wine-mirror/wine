@@ -5,8 +5,21 @@
  *  	1) its name is defined in the environment variable LIB_ODBC_DRIVER_MANAGER
  *	2) if LIB_ODBC_DRIVER_MANAGER is not defined, a default library libodbc.so will be used.
  *
- * Xiang Li, Corel Corporation, Nov. 12, 1999
+ * Copyright 1999 Xiang Li, Corel Corporation
  *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "config.h"
@@ -18,7 +31,7 @@
 #include <assert.h>
 
 #include "winbase.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
 #include "sql.h"
 #include "sqltypes.h"
@@ -29,7 +42,7 @@
 static BOOL ODBC_LoadDriverManager(void);
 static BOOL ODBC_LoadDMFunctions(void);
 
-DEFAULT_DEBUG_CHANNEL(odbc);
+WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
 static const DM_FUNC template_func[] =
 {

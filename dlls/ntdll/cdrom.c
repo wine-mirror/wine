@@ -4,6 +4,20 @@
  * Copyright 1994 Martin Ayotte
  * Copyright 1999, 2001 Eric Pouech
  * Copyright 2000 Andreas Mohr
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "config.h"
@@ -19,7 +33,7 @@
 #include "ntddcdrm.h"
 #include "drive.h"
 #include "file.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>
@@ -31,7 +45,7 @@
 # include <sys/cdio.h>
 #endif
 
-DEFAULT_DEBUG_CHANNEL(cdrom);
+WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
 
 /* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom 
  * this should be removed when a proper device interface is implemented

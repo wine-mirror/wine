@@ -1,10 +1,25 @@
-/* generic.c */
-/* Copyright 1999 - Joseph Pranevich */
-
-/* This is a driver to implement, when possible, "high-level"
-   routines using only low level calls. This is to make it possible
-   to have accelerated functions for the individual drivers...
-   or to simply not bother with them. */
+/*
+ * Copyright 1999 - Joseph Pranevich
+ *
+ * This is a driver to implement, when possible, "high-level"
+ * routines using only low level calls. This is to make it possible
+ * to have accelerated functions for the individual drivers...
+ * or to simply not bother with them.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 /* When creating new drivers, you need to assign all the functions that
    that driver supports into the driver struct. If it is a supplementary
@@ -15,9 +30,9 @@
 #include <stdio.h>
 
 #include "console.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
-DEFAULT_DEBUG_CHANNEL(console);
+WINE_DEFAULT_DEBUG_CHANNEL(console);
 
 static void GENERIC_MoveLine(char row1, char row2, char col1, char col2);
 static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,

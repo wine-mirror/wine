@@ -9,18 +9,19 @@
  *  and made it look like the original Windows one. You can find the original
  *  rolex.c in the wine /libtest directory.
  *
- *  Original file header:
- *  >
- *  > rolex.c: Windows clock application for WINE (by Jim Peterson)    
- *  >                                                                 
- *  > This is a translation of a Turbo Pascal OWL application I made   
- *  > once, so it's a little flaky (tons of globals, functions that    
- *  > could have been in-lined, etc.).  The source code should easily  
- *  > compile with a standard Win32 C compiler.                        
- *  >                                                                 
- *  > To try it out, type 'make rolex'.                               
- *  >
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <math.h>

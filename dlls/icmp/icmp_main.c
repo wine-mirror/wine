@@ -5,6 +5,20 @@
  *   RW Hall, 1999, based on public domain code PING.C by Mike Muus (1983) 
  *   and later works (c) 1989 Regents of Univ. of California - see copyright 
  *   notice at end of source-code.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /* Future work:
@@ -52,7 +66,7 @@
 #include "winerror.h"
 #include "wine/ipexport.h"
 #include "wine/icmpapi.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 
 /* Set up endiannes macros for the ip and ip_icmp BSD headers */
 #ifndef BIG_ENDIAN
@@ -81,7 +95,7 @@
 #include "ip_icmp.h"
 
 
-DEFAULT_DEBUG_CHANNEL(icmp);
+WINE_DEFAULT_DEBUG_CHANNEL(icmp);
 
 /* Define the following macro to use the winsock functions */
 /*#define ICMP_WIN*/
@@ -514,11 +528,7 @@ DWORD WINAPI IcmpSendEcho(
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

@@ -3,6 +3,20 @@
  *
  * Copyright 1997 Alex Korobka
  *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  * TODO: Mapping algorithm tweaks, FO_SYNTH_... flags (ExtTextOut() will
  *	 have to be changed for that), dynamic font loading (FreeType).
  */
@@ -27,13 +41,13 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "font.h"
-#include "debugtools.h"
+#include "wine/debug.h"
 #include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11font.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 
-DEFAULT_DEBUG_CHANNEL(font);
+WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
