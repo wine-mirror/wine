@@ -2803,8 +2803,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		}
 		break;
 	    case WINE_WM_STOPPING:
-		wwi->state = WINE_WS_STOPPED;
-    		wwi->dwTotalRecorded = 0;
 		if (wwi->state != WINE_WS_STOPPED)
 		{
                     if (wwi->ossdev->bTriggerSupport)
@@ -2829,6 +2827,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		        wwi->lpQueuePtr = lpNext;
 		    }
 		}
+		wwi->state = WINE_WS_STOPPED;
 		SetEvent(ev);
 		break;
 	    case WINE_WM_RESETTING:
