@@ -168,7 +168,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
-	if(dc->funcs->pExtTextOut)
+        if(PATH_IsPathOpen(dc->path))
+            FIXME("called on an open path\n");
+        else if(dc->funcs->pExtTextOut)
 	    ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
 	GDI_ReleaseObj( hdc );
     }
