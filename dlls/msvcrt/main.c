@@ -5,6 +5,9 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/stdio.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* Index to TLS */
@@ -21,11 +24,7 @@ static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
 static inline void msvcrt_init_critical_sections(void);
 static inline void msvcrt_free_critical_sections(void);
-#ifdef __GNUC__
-const char *msvcrt_get_reason(DWORD reason) __attribute__((unused));
-#else
-const char *msvcrt_get_reason(DWORD reason);
-#endif
+const char* msvcrt_get_reason(DWORD reason) WINE_UNUSED;
 
 void msvcrt_init_io(void);
 void msvcrt_init_console(void);

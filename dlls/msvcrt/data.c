@@ -6,6 +6,10 @@
 #include <math.h>
 #include "msvcrt.h"
 
+#include "msvcrt/stdlib.h"
+#include "msvcrt/string.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned int MSVCRT___argc;
@@ -22,7 +26,8 @@ unsigned int MSVCRT_osversion; /* FIXME: */
 unsigned int MSVCRT__winmajor;
 unsigned int MSVCRT__winminor;
 unsigned int MSVCRT__winver;
-unsigned int MSVCRT__sys_nerr;
+unsigned int MSVCRT__sys_nerr; /* FIXME: not accessible from Winelib apps */
+char**       MSVCRT__sys_errlist; /* FIXME: not accessible from Winelib apps */
 unsigned int MSVCRT___setlc_active;
 unsigned int MSVCRT___unguarded_readlc_active;
 double MSVCRT__HUGE;
@@ -30,8 +35,8 @@ char **MSVCRT___argv;
 WCHAR **MSVCRT___wargv;
 char *MSVCRT__acmdln;
 WCHAR *MSVCRT__wcmdln;
-char *MSVCRT__environ;
-WCHAR *MSVCRT__wenviron;
+char **MSVCRT__environ;
+WCHAR **MSVCRT__wenviron;
 char **MSVCRT___initenv;
 WCHAR **MSVCRT___winitenv;
 int MSVCRT_timezone;
@@ -42,7 +47,7 @@ typedef void (*_INITTERMFUN)(void);
 /***********************************************************************
  *		__p___argc (MSVCRT.@)
  */
-unsigned int* __p___argc(void) { return &MSVCRT___argc; }
+int* __p___argc(void) { return &MSVCRT___argc; }
 
 /***********************************************************************
  *		__p__commode (MSVCRT.@)
@@ -97,12 +102,12 @@ WCHAR*** __p___wargv(void) { return &MSVCRT___wargv; }
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
  */
-char** __p__environ(void) { return &MSVCRT__environ; }
+char*** __p__environ(void) { return &MSVCRT__environ; }
 
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-WCHAR** __p__wenviron(void) { return &MSVCRT__wenviron; }
+WCHAR*** __p__wenviron(void) { return &MSVCRT__wenviron; }
 
 /*********************************************************************
  *		__p___initenv (MSVCRT.@)
@@ -216,10 +221,16 @@ void msvcrt_init_args(void)
   MSVCRT_free( cmdline );
 
   TRACE("found %d arguments\n",MSVCRT___argc);
+  /* FIXME: This is plain wrong, we must convert from a '\0' separated 
+   * memory block to an array of pointers to string format.
+   */
   MSVCRT__environ = GetEnvironmentStringsA();
-  MSVCRT___initenv = &MSVCRT__environ;
+  MSVCRT___initenv = MSVCRT__environ;
+  /* FIXME: This is plain wrong, we must convert from a '\0' separated 
+   * memory block to an array of pointers to string format.
+   */
   MSVCRT__wenviron = GetEnvironmentStringsW();
-  MSVCRT___winitenv = &MSVCRT__wenviron;
+  MSVCRT___winitenv = MSVCRT__wenviron;
 }
 
 
@@ -232,26 +243,26 @@ void msvcrt_free_args(void)
 /*********************************************************************
  *		__getmainargs (MSVCRT.@)
  */
-void __getmainargs(int *argc, char ***argv, char **environ,
+void __getmainargs(int *argc, char** *argv, char** *envp,
                                   int expand_wildcards, int *new_mode)
 {
-  TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, environ, expand_wildcards, new_mode);
+  TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, envp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
   *argv = MSVCRT___argv;
-  *environ = MSVCRT__environ;
+  *envp = MSVCRT__environ;
   MSVCRT__set_new_mode( *new_mode );
 }
 
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
-void __wgetmainargs(int *argc, WCHAR ***wargv, WCHAR **wenviron,
+void __wgetmainargs(int *argc, WCHAR** *wargv, WCHAR** *wenvp,
                                    int expand_wildcards, int *new_mode)
 {
-  TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenviron, expand_wildcards, new_mode);
+  TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenvp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
   *wargv = MSVCRT___wargv;
-  *wenviron = MSVCRT__wenviron;
+  *wenvp = MSVCRT__wenviron;
   MSVCRT__set_new_mode( *new_mode );
 }
 

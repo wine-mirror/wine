@@ -6,6 +6,10 @@
 
 #include "msvcrt.h"
 
+#include <stdlib.h>
+#include "msvcrt/stdlib.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef int (*MSVCRT_comp_func)(const void*, const void*);
@@ -18,8 +22,6 @@ void _beep( unsigned int freq, unsigned int duration)
     TRACE(":Freq %d, Duration %d\n",freq,duration);
     Beep(freq, duration);
 }
-
-extern int rand(void);
 
 /*********************************************************************
  *		rand (MSVCRT.@)

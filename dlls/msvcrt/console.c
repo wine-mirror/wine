@@ -9,7 +9,13 @@
 #include "msvcrt.h"
 #include "wincon.h"
 
+#include "msvcrt/conio.h"
+#include "msvcrt/stdio.h"
+#include "msvcrt/stdlib.h"
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
+
+
 
 /* MT */
 extern CRITICAL_SECTION MSVCRT_console_cs;
@@ -333,8 +339,6 @@ int _kbhit(void)
 }
 
 
-extern int snprintf(char *, int, const char *, ...);
-
 /*********************************************************************
  *		_cprintf (MSVCRT.@)
  */
@@ -350,7 +354,7 @@ int _cprintf(const char* format, ...)
    * Return the number of bytes that would have been written
    * The code below handles both cases
    */
-  while ((written = snprintf( mem, resize, format, valist )) == -1 ||
+  while ((written = _snprintf( mem, resize, format, valist )) == -1 ||
           written > resize)
   {
     resize = (written == -1 ? resize * 2 : written + 1);

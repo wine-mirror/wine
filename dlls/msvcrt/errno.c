@@ -7,6 +7,11 @@
 #include "msvcrt.h"
 #include "ms_errno.h"
 
+#include <stdio.h>
+#include <string.h>
+#include "msvcrt/conio.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
@@ -86,8 +91,6 @@ int* __doserrno(void)
   return GET_THREAD_VAR_PTR(doserrno);
 }
 
-char *strerror(int);
-
 /*********************************************************************
  *		strerror (MSVCRT.@)
  */
@@ -99,8 +102,6 @@ char* MSVCRT_strerror(int err)
 /**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
-extern int sprintf(char *str, const char *format, ...);
-
 const char* _strerror(const char* err)
 {
   static char strerrbuff[256]; /* FIXME: Per thread, nprintf */
@@ -108,12 +109,10 @@ const char* _strerror(const char* err)
   return strerrbuff;
 }
 
-int _cprintf( const char * format, ... );
-
 /*********************************************************************
  *		perror (MSVCRT.@)
  */
-void MSVCRT_perror(const char *str)
+void MSVCRT_perror(const char* str)
 {
   _cprintf("%s: %s\n",str,MSVCRT_strerror(GET_THREAD_VAR(errno)));
 }

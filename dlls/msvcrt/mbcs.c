@@ -10,6 +10,9 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/string.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257];
@@ -428,7 +431,7 @@ char *_mbsncpy(char *dst, const char *src, unsigned int len)
  *
  * Find a multibyte character in a multibyte string.
  */
-char *_mbschr(const char *str, unsigned int c)
+unsigned char* _mbschr(const unsigned char* str, unsigned int c)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -472,7 +475,7 @@ unsigned int _mbsnccnt(const unsigned char *str, unsigned int len)
 /*********************************************************************
  *		_mbsncat(MSVCRT.@)
  */
-char *_mbsncat(char *dst, const unsigned char *src, unsigned int len)
+unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
 {
   if(MSVCRT___mb_cur_max > 1)
   {

@@ -14,17 +14,10 @@
 #include "msvcrt.h"
 #include "ms_errno.h"
 
+#include "msvcrt/process.h"
+#include "msvcrt/stdlib.h"
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
-
-/* Process creation flags */
-#define _P_WAIT    0
-#define _P_NOWAIT  1
-#define _P_OVERLAY 2
-#define _P_NOWAITO 3
-#define _P_DETACH  4
-
-void MSVCRT__exit(int);
-void _searchenv(const char* file, const char* env, char *buf);
 
 /* FIXME: Check file extensions for app to run */
 static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';
@@ -83,9 +76,9 @@ static int msvcrt_spawn(int flags, const char* exe, char* args, char* env)
 }
 
 /* INTERNAL: Convert argv list to a single 'delim'-separated string */
-static char* msvcrt_argvtos(const char* *arg, char delim)
+static char* msvcrt_argvtos(const char* const* arg, char delim)
 {
-  const char **search = arg;
+  const char* const* search = arg;
   long size = 0;
   char *ret;
 
@@ -152,8 +145,8 @@ int _cwait(int *status, int pid, int action)
 /*********************************************************************
  *		_spawnve (MSVCRT.@)
  */
-int _spawnve(int flags, const char* name, const char **argv,
-                            const char **envv)
+int _spawnve(int flags, const char* name, const char* const* argv,
+                            const char* const* envv)
 {
   char * args = msvcrt_argvtos(argv,' ');
   char * envs = msvcrt_argvtos(envv,0);
@@ -177,7 +170,7 @@ int _spawnve(int flags, const char* name, const char **argv,
 /*********************************************************************
  *		_spawnv (MSVCRT.@)
  */
-int _spawnv(int flags, const char* name, const char **argv)
+int _spawnv(int flags, const char* name, const char* const* argv)
 {
   return _spawnve(flags, name, argv, NULL);
 }
@@ -185,8 +178,8 @@ int _spawnv(int flags, const char* name, const char **argv)
 /*********************************************************************
  *		_spawnvpe (MSVCRT.@)
  */
-int _spawnvpe(int flags, const char* name, const char **argv,
-                            const char **envv)
+int _spawnvpe(int flags, const char* name, const char* const* argv,
+                            const char* const* envv)
 {
   char fullname[MAX_PATH];
   _searchenv(name, "PATH", fullname);
@@ -196,7 +189,7 @@ int _spawnvpe(int flags, const char* name, const char **argv,
 /*********************************************************************
  *		_spawnvp (MSVCRT.@)
  */
-int _spawnvp(int flags, const char* name, const char **argv)
+int _spawnvp(int flags, const char* name, const char* const* argv)
 {
   return _spawnvpe(flags, name, argv, NULL);
 }

@@ -1,3 +1,4 @@
+EXTRADEFS = -DUSE_MSVCRT_PREFIX
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

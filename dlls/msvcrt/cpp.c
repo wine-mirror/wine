@@ -5,6 +5,9 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/stdlib.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 

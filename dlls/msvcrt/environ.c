@@ -9,9 +9,10 @@
 #include "wine/unicode.h"
 #include "msvcrt.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "msvcrt/stdlib.h"
 
-LPWSTR wcsrchr( LPWSTR str, WCHAR ch );
+
+DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
  *		getenv (MSVCRT.@)
@@ -51,7 +52,7 @@ WCHAR *_wgetenv(const WCHAR *name)
 
   for (pp = environ; (*pp); pp = pp + strlenW(pp) + 1)
   {
-    pos =wcsrchr(pp,'=');
+    pos = strrchrW(pp,'=');
     if (pos)
       length = pos -pp;
     else

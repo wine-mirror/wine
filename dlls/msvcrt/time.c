@@ -10,21 +10,18 @@
 #include <sys/times.h>
 #include "msvcrt.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "msvcrt/stdlib.h"
+#include "msvcrt/sys/timeb.h"
+#include "msvcrt/time.h"
 
-typedef struct __MSVCRT_timeb
-{
-  time_t  time;
-  unsigned short  millitm;
-  short   timezone;
-  short   dstflag;
-} MSVCRT_timeb;
+
+DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: Return formatted current time/date */
 char* msvcrt_get_current_time(char* out, const char* format)
 {
-  static const time_t bad_time = (time_t)-1;
+  static const MSVCRT_time_t bad_time = (MSVCRT_time_t)-1;
   time_t t;
   struct tm *_tm = NULL;
   char *retval = NULL;
@@ -73,7 +70,7 @@ clock_t MSVCRT_clock(void)
 /*********************************************************************
  *		difftime (MSVCRT.@)
  */
-double MSVCRT_difftime(time_t time1, time_t time2)
+double MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
 {
     return (double)(time1 - time2);
 }
@@ -81,16 +78,16 @@ double MSVCRT_difftime(time_t time1, time_t time2)
 /*********************************************************************
  *		time (MSVCRT.@)
  */
-time_t MSVCRT_time(time_t* buf)
+MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
 {
-  time_t curtime = time(NULL);
+  MSVCRT_time_t curtime = time(NULL);
   return buf ? *buf = curtime : curtime;
 }
 
 /*********************************************************************
  *		_ftime (MSVCRT.@)
  */
-void _ftime(MSVCRT_timeb* buf)
+void _ftime(struct _timeb *buf)
 {
   buf->time = MSVCRT_time(NULL);
   buf->millitm = 0; /* FIXME */

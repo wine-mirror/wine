@@ -5,6 +5,8 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/process.h"
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
@@ -13,7 +15,7 @@ DEFAULT_DEBUG_CHANNEL(msvcrt);
  */
 unsigned long _beginthreadex(void* sec,
                              unsigned int stack,
-                             LPTHREAD_START_ROUTINE start,
+                             unsigned __stdcall (*start)(void*),
                              void* arg, unsigned int flag,
                              unsigned int* addr)
 {

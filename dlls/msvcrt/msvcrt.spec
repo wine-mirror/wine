@@ -470,8 +470,8 @@ debug_channels (msvcrt)
 @ cdecl _strtime(str) _strtime
 @ forward -noimport _strupr ntdll._strupr
 @ cdecl _swab(str str long) _swab
-@ stub _sys_errlist #() # FIXME: This is supposed to be a variable!
-@ stub _sys_nerr #() # FIXME: This is supposed to be a variable!
+@ extern _sys_errlist MSVCRT__sys_errlist
+@ extern _sys_nerr MSVCRT__sys_nerr
 @ cdecl _tell(long) _tell
 @ stub _telli64 #(long)
 @ cdecl _tempnam(str str) _tempnam

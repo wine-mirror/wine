@@ -111,17 +111,9 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp)
   return !strncasecmp(cmp, buff, strlen(cmp));
 }
 
-
-/* INTERNAL: Callback for enumerated languages */
-#ifdef __GNUC__
-#define UNUSED __attribute__((unused))
-#else
-#define UNUSED
-#endif
-
 static BOOL CALLBACK
-find_best_locale_proc(HMODULE hModule UNUSED, LPCSTR type UNUSED,
-                      LPCSTR name UNUSED, WORD LangID, LONG lParam)
+find_best_locale_proc(HMODULE hModule WINE_UNUSED, LPCSTR type WINE_UNUSED,
+                      LPCSTR name WINE_UNUSED, WORD LangID, LONG lParam)
 {
   locale_search_t *res = (locale_search_t *)lParam;
   const LCID lcid = MAKELCID(LangID, SORT_DEFAULT);

@@ -14,6 +14,8 @@
 #include <ieeefp.h>
 #endif
 
+#include "msvcrt/stdlib.h"
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 #ifndef HAVE_FINITE
@@ -674,7 +676,7 @@ LONGLONG MSVCRT_div(int num, int denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-div_t MSVCRT_div(int num, int denom)
+MSVCRT_div_t MSVCRT_div(int num, int denom)
 {
   return div(num,denom);
 }
@@ -700,7 +702,7 @@ ULONGLONG MSVCRT_ldiv(long num, long denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-ldiv_t MSVCRT_ldiv(long num, long denom)
+MSVCRT_ldiv_t MSVCRT_ldiv(long num, long denom)
 {
   return ldiv(num,denom);
 }

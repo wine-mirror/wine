@@ -8,6 +8,8 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/stdlib.h"
+#include "msvcrt/string.h"
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 

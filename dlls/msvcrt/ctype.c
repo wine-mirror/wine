@@ -5,20 +5,11 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/ctype.h"
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/* ASCII char classification table - binary compatible */
-#define _UPPER        C1_UPPER
-#define _LOWER        C1_LOWER
-#define _DIGIT        C1_DIGIT
-#define _SPACE        C1_SPACE
-#define _PUNCT        C1_PUNCT
-#define _CONTROL      C1_CNTRL
-#define _BLANK        C1_BLANK
-#define _HEX          C1_XDIGIT
-#define _LEADBYTE     0x8000
-#define _ALPHA       (C1_ALPHA|_UPPER|_LOWER)
-
+/* Some abbreviations to make the following table readable */
 #define _C_ _CONTROL
 #define _S_ _SPACE
 #define _P_ _PUNCT

@@ -13,37 +13,17 @@
 #include "msvcrt.h"
 #include "ms_errno.h"
 
+#include "wine/unicode.h"
+#include "msvcrt/direct.h"
+#include "msvcrt/dos.h"
+#include "msvcrt/io.h"
+#include "msvcrt/stdlib.h"
+#include "msvcrt/string.h"
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-typedef struct MSVCRT_finddata_t
-{
-  unsigned      attrib;
-  time_t        time_create; /* -1 when N/A */
-  time_t        time_access; /* -1 when N/A */
-  time_t        time_write;
-  unsigned long size;        /* FIXME: 64 bit ??*/
-  char          name[MAX_PATH];
-} MSVCRT_finddata_t;
-
-typedef struct MSVCRT_wfinddata_t
-{
-  unsigned      attrib;
-  time_t        time_create; /* -1 when N/A */
-  time_t        time_access; /* -1 when N/A */
-  time_t        time_write;
-  unsigned long size;        /* FIXME: 64 bit ??*/
-  WCHAR          name[MAX_PATH];
-} MSVCRT_wfinddata_t;
-
-typedef struct msvcrt_diskfree_t {
-  unsigned num_clusters;
-  unsigned available;
-  unsigned cluster_sectors;
-  unsigned sector_bytes;
-} MSVCRT_diskfree_t;
-
 /* INTERNAL: Translate finddata_t to PWIN32_FIND_DATAA */
-static void msvcrt_fttofd(LPWIN32_FIND_DATAA fd, MSVCRT_finddata_t* ft)
+static void msvcrt_fttofd(LPWIN32_FIND_DATAA fd, struct _finddata_t* ft)
 {
   DWORD dw;
 
@@ -63,7 +43,7 @@ static void msvcrt_fttofd(LPWIN32_FIND_DATAA fd, MSVCRT_finddata_t* ft)
 }
 
 /* INTERNAL: Translate wfinddata_t to PWIN32_FIND_DATAA */
-static void msvcrt_wfttofd(LPWIN32_FIND_DATAW fd, MSVCRT_wfinddata_t* ft)
+static void msvcrt_wfttofd(LPWIN32_FIND_DATAW fd, struct _wfinddata_t* ft)
 {
   DWORD dw;
 
@@ -81,17 +61,6 @@ static void msvcrt_wfttofd(LPWIN32_FIND_DATAW fd, MSVCRT_wfinddata_t* ft)
   ft->size = fd->nFileSizeLow;
   strcpyW(ft->name, fd->cFileName);
 }
-
-char* msvcrt_strndup(const char*, unsigned int);
-LPWSTR _wcsdup( LPCWSTR );
-LPWSTR msvcrt_wstrndup( LPCWSTR , unsigned int );
-char * MSVCRT_getenv(const char *);
-WCHAR *wcscpy(WCHAR *,const WCHAR *);
-WCHAR *wcsncpy(WCHAR *,const WCHAR *,unsigned int);
-WCHAR *wcscat(WCHAR *,const WCHAR *);
-WCHAR *wcschr(WCHAR *,WCHAR);
-WCHAR *wcsrchr(WCHAR *,WCHAR);
-void _splitpath(const char *,char *, char *,char *,char *);
 
 /*********************************************************************
  *		_chdir (MSVCRT.@)
@@ -139,7 +108,7 @@ int _chdrive(int newdrive)
 /*********************************************************************
  *		_findclose (MSVCRT.@)
  */
-int _findclose(DWORD hand)
+int _findclose(long hand)
 {
   TRACE(":handle %ld\n",hand);
   if (!FindClose((HANDLE)hand))
@@ -153,7 +122,7 @@ int _findclose(DWORD hand)
 /*********************************************************************
  *		_findfirst (MSVCRT.@)
  */
-DWORD _findfirst(const char * fspec, MSVCRT_finddata_t* ft)
+long _findfirst(const char * fspec, struct _finddata_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -172,7 +141,7 @@ DWORD _findfirst(const char * fspec, MSVCRT_finddata_t* ft)
 /*********************************************************************
  *		_wfindfirst (MSVCRT.@)
  */
-DWORD _wfindfirst(const WCHAR * fspec, MSVCRT_wfinddata_t* ft)
+long _wfindfirst(const WCHAR * fspec, struct _wfinddata_t* ft)
 {
   WIN32_FIND_DATAW find_data;
   HANDLE hfind;
@@ -191,7 +160,7 @@ DWORD _wfindfirst(const WCHAR * fspec, MSVCRT_wfinddata_t* ft)
 /*********************************************************************
  *		_findnext (MSVCRT.@)
  */
-int _findnext(DWORD hand, MSVCRT_finddata_t * ft)
+int _findnext(long hand, struct _finddata_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -208,7 +177,7 @@ int _findnext(DWORD hand, MSVCRT_finddata_t * ft)
 /*********************************************************************
  *		_wfindnext (MSVCRT.@)
  */
-int _wfindnext(DWORD hand, MSVCRT_wfinddata_t * ft)
+int _wfindnext(long hand, struct _wfinddata_t * ft)
 {
   WIN32_FIND_DATAW find_data;
 
@@ -367,7 +336,7 @@ WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
 /*********************************************************************
  *		_getdiskfree (MSVCRT.@)
  */
-unsigned int _getdiskfree(unsigned int disk, MSVCRT_diskfree_t* d)
+unsigned int _getdiskfree(unsigned int disk, struct _diskfree_t* d)
 {
   char drivespec[4] = {'@', ':', '\\', 0};
   DWORD ret[4];
@@ -380,10 +349,10 @@ unsigned int _getdiskfree(unsigned int disk, MSVCRT_diskfree_t* d)
 
   if (GetDiskFreeSpaceA(disk==0?NULL:drivespec,ret,ret+1,ret+2,ret+3))
   {
-    d->cluster_sectors = (unsigned)ret[0];
-    d->sector_bytes = (unsigned)ret[1];
-    d->available = (unsigned)ret[2];
-    d->num_clusters = (unsigned)ret[3];
+    d->sectors_per_cluster = (unsigned)ret[0];
+    d->bytes_per_sector = (unsigned)ret[1];
+    d->avail_clusters = (unsigned)ret[2];
+    d->total_clusters = (unsigned)ret[3];
     return 0;
   }
   err = GetLastError();
@@ -446,7 +415,8 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
   WCHAR pathbuff[MAX_PATH],*path=pathbuff;
 
   TRACE(":splitting path '%s'\n",debugstr_w(path));
-  wcscpy(pathbuff, inpath);
+  /* FIXME: Should be an strncpyW or something */
+  strcpyW(pathbuff, inpath);
 
   /* convert slashes to backslashes for searching */
   for (ptr = (WCHAR*)path; *ptr; ++ptr)
@@ -454,12 +424,12 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
       *ptr = (WCHAR)L'\\';
 
   /* look for drive spec */
-  if ((ptr = wcschr(path, (WCHAR)L':')) != (WCHAR)L'\0')
+  if ((ptr = strchrW(path, (WCHAR)L':')) != (WCHAR)L'\0')
   {
     ++ptr;
     if (drv)
     {
-      wcsncpy(drv, path, ptr - path);
+      strncpyW(drv, path, ptr - path);
       drv[ptr - path] = (WCHAR)L'\0';
     }
     path = ptr;
@@ -468,8 +438,8 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
     *drv = (WCHAR)L'\0';
 
   /* find rightmost backslash or leftmost colon */
-  if ((ptr = wcsrchr(path, (WCHAR)L'\\')) == NULL)
-    ptr = (wcschr(path, (WCHAR)L':'));
+  if ((ptr = strrchrW(path, (WCHAR)L'\\')) == NULL)
+    ptr = (strchrW(path, (WCHAR)L':'));
 
   if (!ptr)
   {
@@ -484,15 +454,15 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
     {
       ch = *ptr;
       *ptr = (WCHAR)L'\0';
-      wcscpy(dir, path);
+      strcpyW(dir, path);
       *ptr = ch;
     }
   }
 
-  if ((p = wcsrchr(ptr, (WCHAR)L'.')) == NULL)
+  if ((p = strrchrW(ptr, (WCHAR)L'.')) == NULL)
   {
     if (fname)
-      wcscpy(fname, ptr);
+      strcpyW(fname, ptr);
     if (ext)
       *ext = (WCHAR)L'\0';
   }
@@ -500,10 +470,10 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
   {
     *p = (WCHAR)L'\0';
     if (fname)
-      wcscpy(fname, ptr);
+      strcpyW(fname, ptr);
     *p = (WCHAR)L'.';
     if (ext)
-      wcscpy(ext, p);
+      strcpyW(ext, p);
   }
 
   /* Fix pathological case - Win returns ':' as part of the
@@ -516,8 +486,8 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
     {
       pathbuff[0] = (WCHAR)L':';
       pathbuff[1] = (WCHAR)L'\0';
-      wcscat(pathbuff,dir);
-      wcscpy(dir, pathbuff);
+      strcatW(pathbuff,dir);
+      strcpyW(dir, pathbuff);
     }
   }
 }
@@ -688,7 +658,7 @@ VOID _makepath(char * path, const char * drive,
                               const char * extension )
 {
     char ch;
-    TRACE("_makepath got %s %s %s %s\n", drive, directory,
+    TRACE("got %s %s %s %s\n", drive, directory,
           filename, extension);
 
     if ( !path )
@@ -719,7 +689,7 @@ VOID _makepath(char * path, const char * drive,
         }
     }
 
-    TRACE("_makepath returns %s\n",path);
+    TRACE("returning %s\n",path);
 }
 
 

@@ -11,10 +11,6 @@
 #include <ctype.h>
 #include <string.h>
 
-/* Files */
-#define MSVCRT_EOF   -1
-#define MSVCRT_WEOF (WCHAR)(0xFFFF)
-
 /* TLS data */
 extern DWORD MSVCRT_tls_index;
 
@@ -33,14 +29,13 @@ typedef struct __MSVCRT_thread_data
 #define SET_THREAD_VAR(x,y) \
   ((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x = y
 
-void  MSVCRT__set_errno(int);
-int   MSVCRT__set_new_mode(int mode);
-int   _fcloseall(void);
-void* MSVCRT_malloc(unsigned int);
-void* MSVCRT_calloc(unsigned int, unsigned int);
-void  MSVCRT_free(void *);
-int   _cputs(const char *);
-int   _cprintf( const char *, ... );
-char* _strdup(const char *);
+void   MSVCRT__set_errno(int);
+char*  msvcrt_strndup(const char*,unsigned int);
+LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);
+
+/* FIXME: This should be declared in new.h but it's not an extern "C" so 
+ * it would not be much use anyway. Even for Winelib applications.
+ */
+int    MSVCRT__set_new_mode(int mode);
 
 #endif /* __WINE_MSVCRT_H */

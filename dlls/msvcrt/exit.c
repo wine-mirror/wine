@@ -5,6 +5,10 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/conio.h"
+#include "msvcrt/stdlib.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* MT */
@@ -12,9 +16,7 @@ extern CRITICAL_SECTION MSVCRT_exit_cs;
 #define LOCK_EXIT      EnterCriticalSection(&MSVCRT_exit_cs)
 #define UNLOCK_EXIT    LeaveCriticalSection(&MSVCRT_exit_cs)
 
-typedef void (*MSVCRT_atexit_func)(void);
-
-static MSVCRT_atexit_func *MSVCRT_atexit_table = NULL;
+static _onexit_t *MSVCRT_atexit_table = NULL;
 static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 
@@ -40,11 +42,9 @@ void __MSVCRT__call_atexit(void)
 /*********************************************************************
  *		__dllonexit (MSVCRT.@)
  */
-MSVCRT_atexit_func __dllonexit(MSVCRT_atexit_func func,
-                                              MSVCRT_atexit_func **start,
-                                              MSVCRT_atexit_func **end)
+_onexit_t __dllonexit(_onexit_t func, _onexit_t **start, _onexit_t **end)
 {
-  MSVCRT_atexit_func *tmp;
+  _onexit_t *tmp;
   int len;
 
   TRACE("(%p,%p,%p)\n", func, start, end);
@@ -62,7 +62,7 @@ MSVCRT_atexit_func __dllonexit(MSVCRT_atexit_func func,
   if (++len <= 0)
     return NULL;
 
-  tmp = (MSVCRT_atexit_func *)MSVCRT_realloc(*start, len * sizeof(tmp));
+  tmp = (_onexit_t *)MSVCRT_realloc(*start, len * sizeof(tmp));
   if (!tmp)
     return NULL;
   *start = tmp;
@@ -145,7 +145,7 @@ void MSVCRT__cexit(void)
 /*********************************************************************
  *		_onexit (MSVCRT.@)
  */
- MSVCRT_atexit_func _onexit(MSVCRT_atexit_func func)
+_onexit_t _onexit(_onexit_t func)
 {
   TRACE("(%p)\n",func);
 
@@ -155,7 +155,7 @@ void MSVCRT__cexit(void)
   LOCK_EXIT;
   if (MSVCRT_atexit_registered > MSVCRT_atexit_table_size - 1)
   {
-    MSVCRT_atexit_func *newtable;
+    _onexit_t *newtable;
     TRACE("expanding table\n");
     newtable = MSVCRT_calloc(sizeof(void *),MSVCRT_atexit_table_size + 32);
     if (!newtable)
@@ -191,7 +191,7 @@ void MSVCRT_exit(int exitcode)
 /*********************************************************************
  *		atexit (MSVCRT.@)
  */
-int MSVCRT_atexit(MSVCRT_atexit_func func)
+int MSVCRT_atexit(_onexit_t func)
 {
   TRACE("(%p)\n", func);
   return _onexit(func) == func ? 0 : -1;
