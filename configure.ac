@@ -326,6 +326,15 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 	 fi
     fi
 
+    dnl **** Check for NAS ****
+    AC_SUBST(NASLIBS,"")
+    AC_CHECK_HEADERS(audio/audiolib.h,
+         [AC_CHECK_HEADERS(audio/soundlib.h,,,[#include <audio/audiolib.h>])
+          AC_CHECK_LIB(audio,AuCreateFlow,
+                       [AC_DEFINE(HAVE_NAS,1,[Define if you have NAS including devel headers])
+                        NASLIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"],,
+                       [-lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
+
     CPPFLAGS="$ac_save_CPPFLAGS"
     XFILES='$(XFILES)'
 else
@@ -603,15 +612,6 @@ then
     	AC_DEFINE(HAVE_ALSA,1,[Define if you have ALSA including devel headers])
 	ALSALIBS="-lasound")
 fi
-
-dnl **** Check for NAS ****
-AC_SUBST(NASLIBS,"")
-AC_CHECK_HEADERS(audio/audiolib.h,
-     [AC_CHECK_HEADERS(audio/soundlib.h,,,[#include <audio/audiolib.h>])
-      AC_CHECK_LIB(audio,AuCreateFlow,
-    	           [AC_DEFINE(HAVE_NAS,1,[Define if you have NAS including devel headers])
-                    NASLIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"],,
-                   [-lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
 
 dnl **** Check for libaudioio (which can be used to get solaris audio support) ****
 
@@ -969,7 +969,6 @@ AC_CHECK_HEADERS(\
 	float.h \
 	ieeefp.h \
 	io.h \
-	libaudioio.h \
 	libio.h \
 	libutil.h \
 	link.h \
