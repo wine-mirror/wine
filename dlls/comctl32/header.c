@@ -6,7 +6,6 @@
  *  TODO:
  *   - Imagelist support (partially).
  *   - Callback items (under construction).
- *   - Order list support.
  *   - Control specific cursors (over dividers).
  *   - Hottrack support (partially).
  *   - Custom draw support (including Notifications).
@@ -15,7 +14,7 @@
  *
  *  FIXME:
  *   - Replace DrawText32A by DrawTextEx32A(...|DT_ENDELLIPSIS) in
- *     HEADER_DrawItem.
+ *     HEADER_DrawItem.(Is still needed? UB 001018)
  *   - Little flaw when drawing a bitmap on the right side of the text.
  */
 
@@ -25,6 +24,7 @@
 #include "wine/unicode.h"
 #include "wine/winestring.h"
 #include "commctrl.h"
+#include "imagelist.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(header);
@@ -46,6 +46,7 @@ typedef struct
 
 typedef struct
 {
+    HWND      hwndNotify;     /* Owner window to send notifications to */
     UINT      uNumItem;	/* number of items (columns) */
     INT       nHeight;	/* height of the header (pixels) */
     HFONT     hFont;		/* handle to the current font */
@@ -65,7 +66,7 @@ typedef struct
     HIMAGELIST  himl;		/* handle to a image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
     BOOL	bRectsValid;	/* validity flag for bounding rectangles */
-    LPINT     pOrder;         /* pointer to order array */
+    /*LPINT     pOrder;          pointer to order array */
 } HEADER_INFO;
 
 
@@ -74,6 +75,30 @@ typedef struct
 
 #define HEADER_GetInfoPtr(hwnd) ((HEADER_INFO *)GetWindowLongA(hwnd,0))
 
+
+inline static LRESULT
+HEADER_IndexToOrder (HWND hwnd, INT iItem)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    HEADER_ITEM *lpItem = (HEADER_ITEM*)&infoPtr->items[iItem];
+    return lpItem->iOrder;
+}
+
+
+static INT 
+HEADER_OrderToIndex(HWND hwnd, WPARAM wParam)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    INT i,iorder = (INT)wParam;
+  
+    
+    if ((iorder <0) || iorder >infoPtr->uNumItem)
+      return iorder;
+    for (i=0; i<infoPtr->uNumItem; i++)
+      if (HEADER_IndexToOrder(hwnd,i) == iorder)
+	return i;
+    return iorder;
+}
 
 static void
 HEADER_SetItemBounds (HWND hwnd)
@@ -92,7 +117,7 @@ HEADER_SetItemBounds (HWND hwnd)
 
     x = rect.left;
     for (i = 0; i < infoPtr->uNumItem; i++) {
-        phdi = &infoPtr->items[i];
+        phdi = &infoPtr->items[HEADER_OrderToIndex(hwnd,i)];
         phdi->rect.top = rect.top;
         phdi->rect.bottom = rect.bottom;
         phdi->rect.left = x;
@@ -252,9 +277,11 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	}
 
 	if (phdi->fmt & HDF_IMAGE) {
-
-
-/*	    ImageList_Draw (infoPtr->himl, phdi->iImage,...); */
+	  r.left +=3;
+	  /* FIXME: (r.bottom- (infoPtr->himl->cy))/2 should horicontal center the image
+	     It looks like it doesn't work as expected*/
+	  ImageList_Draw (infoPtr->himl, phdi->iImage,hdc,r.left, (r.bottom- (infoPtr->himl->cy))/2,NULL);
+	  r.left += infoPtr->himl->cx;
 	}
 
         if (((phdi->fmt & HDF_STRING)
@@ -262,15 +289,15 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 				   HDF_BITMAP_ON_RIGHT|HDF_IMAGE)))) /* no explicit format specified? */
 	    && (phdi->pszText)) {
             oldBkMode = SetBkMode(hdc, TRANSPARENT);
-            r.left += 3;
+            r.left += 3 ;
 	    r.right -= 3;
-	    SetTextColor (hdc, bHotTrack ? COLOR_HIGHLIGHT : COLOR_BTNTEXT);
+	    SetTextColor (hdc, (bHotTrack) ? COLOR_HIGHLIGHT : COLOR_BTNTEXT);
             DrawTextW (hdc, phdi->pszText, -1,
-	   	  &r, uTextJustify|DT_VCENTER|DT_SINGLELINE);
+	   	  &r, uTextJustify|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE);
             if (oldBkMode != TRANSPARENT)
                 SetBkMode(hdc, oldBkMode);
         }
-    }
+    }/*Ownerdrawn*/
 
     return phdi->rect.right;
 }
@@ -297,7 +324,7 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
 
     x = rect.left;
     for (i = 0; i < infoPtr->uNumItem; i++) {
-        x = HEADER_DrawItem (hwnd, hdc, i, FALSE);
+        x = HEADER_DrawItem (hwnd, hdc, HEADER_OrderToIndex(hwnd,i), FALSE);
     }
 
     if ((x <= rect.right) && (infoPtr->uNumItem > 0)) {
@@ -467,13 +494,14 @@ HEADER_DrawTrackLine (HWND hwnd, HDC hdc, INT x)
 static BOOL
 HEADER_SendSimpleNotify (HWND hwnd, UINT code)
 {
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     NMHDR nmhdr;
 
     nmhdr.hwndFrom = hwnd;
     nmhdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
     nmhdr.code     = code;
 
-    return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
 				   (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
 }
 
@@ -500,7 +528,7 @@ HEADER_SendItemChange(HWND hwnd, INT iItem, UINT mask, UINT msg)
     nmitem.iOrder = infoPtr->items[iItem].iOrder;
     nmitem.iImage = infoPtr->items[iItem].iImage;
 
-    return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
 			       (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
 }
 
@@ -529,7 +557,7 @@ HEADER_SendHeaderNotify (HWND hwnd, UINT code, INT iItem)
     nmitem.iOrder = infoPtr->items[iItem].iOrder;
     nmitem.iImage = infoPtr->items[iItem].iImage;
 
-    return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
 			       (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
 }
 
@@ -537,6 +565,7 @@ HEADER_SendHeaderNotify (HWND hwnd, UINT code, INT iItem)
 static BOOL
 HEADER_SendClickNotify (HWND hwnd, UINT code, INT iItem)
 {
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     NMHEADERA nmhdr;
 
     nmhdr.hdr.hwndFrom = hwnd;
@@ -546,7 +575,7 @@ HEADER_SendClickNotify (HWND hwnd, UINT code, INT iItem)
     nmhdr.iButton = 0;
     nmhdr.pitem = NULL;
 
-    return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
 			       (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
 }
 
@@ -750,8 +779,39 @@ HEADER_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << HEADER_GetOrderArray >> */
+static LRESULT 
+HEADER_GetOrderArray(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    int i;
+    LPINT order = (LPINT) lParam;
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
 
+    if ((int)wParam <infoPtr->uNumItem)
+      return FALSE;
+    for (i=0; i<(int)wParam; i++)
+      *order++=HEADER_OrderToIndex(hwnd,i);
+    return TRUE;
+}
+
+static LRESULT 
+HEADER_SetOrderArray(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    int i;
+    LPINT order = (LPINT) lParam;
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    HEADER_ITEM *lpItem;
+
+    if ((int)wParam <infoPtr->uNumItem)
+      return FALSE;
+    for (i=0; i<(int)wParam; i++)
+      {
+	lpItem = (HEADER_ITEM*)&infoPtr->items[*order++];
+	lpItem->iOrder=i;
+      }
+    infoPtr->bRectsValid=0;
+    InvalidateRect(hwnd, NULL, FALSE);
+    return TRUE;
+}
 
 inline static LRESULT
 HEADER_GetUnicodeFormat (HWND hwnd)
@@ -845,6 +905,10 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpItem->fmt == 0)
 	lpItem->fmt = HDF_LEFT;
 
+    if (!(lpItem->fmt &HDF_STRING) && (phdi->mask & HDI_TEXT))
+      {
+	lpItem->fmt |= HDF_STRING;
+      }
     if (phdi->mask & HDI_BITMAP)
         lpItem->hbm = phdi->hbm;
 
@@ -855,7 +919,12 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         lpItem->iImage = phdi->iImage;
 
     if (phdi->mask & HDI_ORDER)
+      {
         lpItem->iOrder = phdi->iOrder;
+      }
+    else
+      lpItem->iOrder=nItem;
+	  
 
     HEADER_SetItemBounds (hwnd);
 
@@ -939,7 +1008,11 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
         lpItem->iImage = phdi->iImage;
 
     if (phdi->mask & HDI_ORDER)
+      {
         lpItem->iOrder = phdi->iOrder;
+      }
+    else
+      lpItem->iOrder = nItem;
 
     HEADER_SetItemBounds (hwnd);
 
@@ -1044,7 +1117,11 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpItem->iImage = phdi->iImage;
 
     if (phdi->mask & HDI_ORDER)
+      {
 	lpItem->iOrder = phdi->iOrder;
+      }
+    else
+      lpItem->iOrder = nItem;
 
     HEADER_SendItemChange(hwnd,nItem,phdi->mask,HDN_ITEMCHANGEDA);    
 
@@ -1107,7 +1184,11 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpItem->iImage = phdi->iImage;
 
     if (phdi->mask & HDI_ORDER)
+      {
 	lpItem->iOrder = phdi->iOrder;
+      }
+    else
+      lpItem->iOrder = nItem;
 
     HEADER_SendItemChange(hwnd, nItem, phdi->mask,HDN_ITEMCHANGEDW);
 
@@ -1117,10 +1198,6 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     return TRUE;
 }
-
-
-/* << HEADER_SetOrderArray >> */
-
 
 inline static LRESULT
 HEADER_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
@@ -1145,6 +1222,7 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr = (HEADER_INFO *)COMCTL32_Alloc (sizeof(HEADER_INFO));
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
+    infoPtr->hwndNotify = GetParent(hwnd);
     infoPtr->uNumItem = 0;
     infoPtr->nHeight = 20;
     infoPtr->hFont = 0;
@@ -1303,6 +1381,25 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    HEADER_SendClickNotify (hwnd, HDN_ITEMCLICKA, infoPtr->iMoveItem);
 	}
+	else if (flags == HHT_ONHEADER)
+	  {
+	    HEADER_ITEM *lpItem;
+	    INT newindex = HEADER_IndexToOrder(hwnd,nItem);
+	    INT oldindex = HEADER_IndexToOrder(hwnd,infoPtr->iMoveItem);
+
+	    TRACE("Exchanging [index:order] [%d:%d] [%d:%d]\n",
+		  infoPtr->iMoveItem,oldindex,nItem,newindex);
+	    lpItem= (HEADER_ITEM*)&infoPtr->items[nItem];
+	    lpItem->iOrder=oldindex;
+
+	    lpItem= (HEADER_ITEM*)&infoPtr->items[infoPtr->iMoveItem];
+	    lpItem->iOrder = newindex;
+
+	    infoPtr->bRectsValid = FALSE;
+	    InvalidateRect(hwnd, NULL, FALSE);
+	    /* FIXME: Should some WM_NOTIFY be sent */
+	  }    
+
 	TRACE("Released item %d!\n", infoPtr->iMoveItem);
 	infoPtr->bPressed = FALSE;
     }
@@ -1555,7 +1652,14 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case HDM_GETITEMRECT:
 	    return HEADER_GetItemRect (hwnd, wParam, lParam);
 
-/*	case HDM_GETORDERARRAY: */
+	case HDM_GETORDERARRAY: 
+	    return HEADER_GetOrderArray(hwnd, wParam, lParam);
+
+	case HDM_SETORDERARRAY: 
+	    return HEADER_SetOrderArray(hwnd, wParam, lParam);
+
+	case HDM_ORDERTOINDEX: 
+	    return HEADER_OrderToIndex(hwnd, wParam);
 
 	case HDM_GETUNICODEFORMAT:
 	    return HEADER_GetUnicodeFormat (hwnd);
@@ -1580,8 +1684,6 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case HDM_SETITEMW:
 	    return HEADER_SetItemW (hwnd, wParam, lParam);
-
-/*	case HDM_SETORDERARRAY: */
 
 	case HDM_SETUNICODEFORMAT:
 	    return HEADER_SetUnicodeFormat (hwnd, wParam);
