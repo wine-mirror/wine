@@ -413,7 +413,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	struct timeval tv;
 	fd_set infd;
 	BOOL bSuccess = FALSE;
-	INT nRecv = 0;
+	DWORD nRecv = 0;
 
 	FD_ZERO(&infd);
 	FD_SET(connection->socketFD, &infd);
@@ -450,7 +450,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	{
 	    lpszBuffer[nRecv++] = '\0';
 	    *dwBuffer = nRecv;
-	    TRACE(":%d %s\n", nRecv, lpszBuffer);
+	    TRACE(":%lu %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}
 	else
@@ -462,7 +462,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
     {
 #ifdef HAVE_OPENSSL_SSL_H
 	long prev_timeout;
-	INT nRecv = 0;
+	DWORD nRecv = 0;
         BOOL success = TRUE;
 
         prev_timeout = pSSL_CTX_get_timeout(ctx);
@@ -491,7 +491,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	{
 	    lpszBuffer[nRecv++] = '\0';
 	    *dwBuffer = nRecv;
-	    TRACE("_SSL:%d %s\n", nRecv, lpszBuffer);
+	    TRACE("_SSL:%lu %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}
         return FALSE;

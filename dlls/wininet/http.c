@@ -97,7 +97,7 @@ BOOL HTTP_InterpretHttpHeader(LPWSTR buffer, LPWSTR field, INT fieldlen, LPWSTR 
 INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField);
 BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
 INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
-BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, INT index);
+BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
 
 /***********************************************************************
  *           HTTP_Tokenize (internal)
@@ -118,7 +118,7 @@ static LPWSTR * HTTP_Tokenize(LPCWSTR string, LPCWSTR token_string)
     for (i = 0; string[i]; i++)
         if (!strncmpW(string+i, token_string, strlenW(token_string)))
         {
-            int j;
+            DWORD j;
             tokens++;
             /* we want to skip over separators, but not the null terminator */
             for (j = 0; j < strlenW(token_string) - 1; j++)
@@ -266,7 +266,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     len = MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, NULL, 0 );
     hdr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, hdr, len );
-    if( dwHeaderLength != -1 )
+    if( dwHeaderLength != ~0UL )
         dwHeaderLength = len;
 
     r = HttpAddRequestHeadersW( hHttpRequest, hdr, dwHeaderLength, dwModifier );
@@ -854,7 +854,7 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
 
         if (index == HTTP_QUERY_RAW_HEADERS_CRLF)
         {
-            int len = strlenW(lpwhr->lpszRawHeaders);
+            DWORD len = strlenW(lpwhr->lpszRawHeaders);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
             {
                 *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
@@ -872,8 +872,7 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
         {
             static const WCHAR szCrLf[] = {'\r','\n',0};
             LPWSTR * ppszRawHeaderLines = HTTP_Tokenize(lpwhr->lpszRawHeaders, szCrLf);
-            int size = 0;
-            int i;
+            DWORD i, size = 0;
             LPWSTR pszString = (WCHAR*)lpBuffer;
 
             for (i = 0; ppszRawHeaderLines[i]; i++)
@@ -889,7 +888,7 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
 
             for (i = 0; ppszRawHeaderLines[i]; i++)
             {
-                int len = strlenW(ppszRawHeaderLines[i]);
+                DWORD len = strlenW(ppszRawHeaderLines[i]);
                 memcpy(pszString, ppszRawHeaderLines[i], (len+1)*sizeof(WCHAR));
                 pszString += len+1;
             }
@@ -971,7 +970,7 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
     }
     else
     {
-        INT len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
+        DWORD len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
 
         if (len > *lpdwBufferLength)
         {
@@ -1087,7 +1086,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 #undef FE
 	DWORD info_mod = dwInfoLevel & HTTP_QUERY_MODIFIER_FLAGS_MASK;
 	DWORD info = dwInfoLevel & HTTP_QUERY_HEADER_MASK;
-	int i;
+	DWORD i;
 
 	TRACE("(%p, 0x%08lx)--> %ld\n", hHttpRequest, dwInfoLevel, dwInfoLevel);
 	TRACE("  Attribute:");
@@ -1456,7 +1455,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
 {
     INT cnt;
-    INT i;
+    DWORD i;
     BOOL bSuccess = FALSE;
     LPWSTR requestString = NULL;
     INT responseLen;
@@ -1514,7 +1513,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         static const WCHAR szColon[] = { ':',' ',0 };
         LPCWSTR *req;
         LPWSTR p, szCookedHeaders = NULL;
-        int len, n;
+        DWORD len, n;
         char *ascii_req;
 
         TRACE("Going to url %s %s\n", debugstr_w(lpwhr->lpszHostName), debugstr_w(lpwhr->lpszPath));
@@ -1996,9 +1995,9 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     static const WCHAR szCrLf[] = {'\r','\n',0};
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code, status_text;
-    int cchMaxRawHeaders = 1024;
+    DWORD cchMaxRawHeaders = 1024;
     LPWSTR lpszRawHeaders = HeapAlloc(GetProcessHeap(), 0, (cchMaxRawHeaders+1)*sizeof(WCHAR));
-    int cchRawHeaders = 0;
+    DWORD cchRawHeaders = 0;
 
     TRACE("-->\n");
 
@@ -2298,7 +2297,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, D
     BOOL bSuccess = FALSE;
     INT index;
 
-    TRACE("--> %s: %s - 0x%08x\n", debugstr_w(field), debugstr_w(value), (unsigned int)dwModifier);
+    TRACE("--> %s: %s - 0x%08lx\n", debugstr_w(field), debugstr_w(value), dwModifier);
 
     /* Adjust modifier flags */
     if (dwModifier & COALESCEFLASG)
@@ -2453,7 +2452,7 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
  */
 static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
 {
-    int i;
+    DWORD i;
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
 
     TRACE("\n");
@@ -2519,7 +2518,7 @@ void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
  */
 INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField)
 {
-    INT index;
+    DWORD index;
 
     TRACE("%s\n", debugstr_w(lpszField));
 
@@ -2533,7 +2532,7 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField)
     if (index >= lpwhr->nCustHeaders)
 	index = -1;
 
-    TRACE("Return: %d\n", index);
+    TRACE("Return: %lu\n", index);
     return index;
 }
 
@@ -2582,7 +2581,7 @@ BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr)
  * Delete header from array
  *  If this function is called, the indexs may change.
  */
-BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, INT index)
+BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
 {
     if( lpwhr->nCustHeaders <= 0 )
         return FALSE;

@@ -849,7 +849,7 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
     {
         if (nResCode == 257) /* Extract directory name */
         {
-            INT firstpos, lastpos, len;
+            DWORD firstpos, lastpos, len;
 	    LPWSTR lpszResponseBuffer = WININET_strdup_AtoW(INTERNET_GetResponseBuffer());
 
             for (firstpos = 0, lastpos = 0; lpszResponseBuffer[lastpos]; lastpos++)
@@ -1823,7 +1823,7 @@ BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
     	DWORD len;
 	CHAR *buf;
 	DWORD nBytesSent = 0;
-	DWORD nRC = 0;
+	int nRC = 0;
 	DWORD dwParamLen;
 
 	TRACE("%d: (%s) %d\n", ftpCmd, lpszParam, nSocket);
@@ -2409,7 +2409,8 @@ BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
     DWORD nBytesRead = 0;
     DWORD nBytesSent = 0;
     DWORD nTotalSent = 0;
-    DWORD nBytesToSend, nLen, nRC = 1;
+    DWORD nBytesToSend, nLen;
+    int nRC = 1;
     time_t s_long_time, e_long_time;
     LONG nSeconds;
     CHAR *lpszBuffer;
@@ -2627,7 +2628,7 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
 static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
 {
     LPWININETFINDNEXTW lpwfn = (LPWININETFINDNEXTW) hdr;
-    INT i;
+    DWORD i;
 
     TRACE("\n");
 

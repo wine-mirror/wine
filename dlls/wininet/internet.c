@@ -451,7 +451,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 	    FE(INTERNET_FLAG_OFFLINE)
 	};
 #undef FE
-	int i;
+	DWORD i;
 	const char *access_type_str = "Unknown";
 	DWORD flag_val = dwFlags;
 	
@@ -873,7 +873,7 @@ BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData)
 	return FALSE;
     }
 
-    TRACE("index(%d) size(%ld)\n", lpwh->index, lpwh->size);
+    TRACE("index(%ld) size(%ld)\n", lpwh->index, lpwh->size);
 
     lpFindFileData = (LPWIN32_FIND_DATAW) lpvFindData;
     ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
@@ -999,7 +999,7 @@ void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen,
 {
     if (*dwComponentLen != 0)
     {
-        int nASCIILength=WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,NULL,0,NULL,NULL);
+        DWORD nASCIILength=WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,NULL,0,NULL,NULL);
         if (*lppszComponent == NULL)
         {
             int nASCIIOffset=WideCharToMultiByte(CP_ACP,0,lpwszStart,lpwszComponent-lpwszStart,NULL,0,NULL,NULL);
@@ -1008,7 +1008,7 @@ void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen,
         }
         else
         {
-            INT ncpylen = min((*dwComponentLen)-1, nASCIILength);
+            DWORD ncpylen = min((*dwComponentLen)-1, nASCIILength);
             WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,*lppszComponent,ncpylen+1,NULL,NULL);
             (*lppszComponent)[ncpylen]=0;
             *dwComponentLen = ncpylen;
@@ -1101,7 +1101,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
  *    INTERNET_SCHEME_UNKNOWN on failure
  *
  */
-INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, INT nMaxCmp)
+static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
 {
     INTERNET_SCHEME iScheme=INTERNET_SCHEME_UNKNOWN;
     static const WCHAR lpszFtp[]={'f','t','p',0};
@@ -1151,9 +1151,9 @@ INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, INT nMaxCmp)
  *    FALSE on failure
  *
  */
-BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen, LPCWSTR lpszStart, INT len)
+static BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen, LPCWSTR lpszStart, DWORD len)
 {
-    TRACE("%s (%d)\n", debugstr_wn(lpszStart,len), len);
+    TRACE("%s (%ld)\n", debugstr_wn(lpszStart,len), len);
 
     if ( (*dwComponentLen == 0) && (*lppszComponent == NULL) )
         return FALSE;
@@ -1167,7 +1167,7 @@ BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen, LPCWS
         }
         else
         {
-            INT ncpylen = min((*dwComponentLen)-1, len);
+            DWORD ncpylen = min((*dwComponentLen)-1, len);
             strncpyW(*lppszComponent, lpszStart, ncpylen);
             (*lppszComponent)[ncpylen] = '\0';
             *dwComponentLen = ncpylen;

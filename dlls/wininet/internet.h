@@ -184,7 +184,7 @@ typedef struct
     WININET_NETCONNECTION netConnection;
     HTTPHEADERW StdHeaders[HTTP_QUERY_MAX+1];
     HTTPHEADERW *pCustHeaders;
-    INT nCustHeaders;
+    DWORD nCustHeaders;
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 
@@ -224,7 +224,7 @@ typedef struct
 typedef struct
 {
     WININETHANDLEHEADER hdr;
-    int index;
+    DWORD index;
     DWORD size;
     LPFILEPROPERTIESW lpafp;
 } WININETFINDNEXTW, *LPWININETFINDNEXTW;

@@ -345,7 +345,7 @@ void URLCacheContainers_CreateDefaults()
         { CSIDL_HISTORY, HistorySuffix, HistoryPrefix },
         { CSIDL_COOKIES, CookieSuffix, CookiePrefix },
     };
-    int i;
+    DWORD i;
 
     for (i = 0; i < sizeof(DefaultContainerData) / sizeof(DefaultContainerData[0]); i++)
     {
@@ -355,7 +355,7 @@ void URLCacheContainers_CreateDefaults()
 
         if (FAILED(SHGetSpecialFolderPathW(NULL, wszCachePath, DefaultContainerData[i].nFolder, TRUE)))
         {
-            ERR("Couldn't get path for default container %d\n", i);
+            ERR("Couldn't get path for default container %lu\n", i);
             continue;
         }
         path_len = strlenW(wszCachePath);
@@ -878,7 +878,7 @@ static DWORD URLCache_HashKey(LPCSTR lpszKey)
         0x98, 0x83, 0x7B, 0xE5, 0xCB, 0x4C, 0x78, 0xD1
     };
     BYTE key[4];
-    int i;
+    DWORD i;
     int subscript[sizeof(key) / sizeof(key[0])];
 
     subscript[0] = *lpszKey;
@@ -1732,7 +1732,7 @@ BOOL WINAPI CommitUrlCacheEntryA(
 
         /* Get file size */
         dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
-        if ((dwFileSizeLow == -1) && (GetLastError() != NO_ERROR))
+        if ((dwFileSizeLow == INVALID_FILE_SIZE) && (GetLastError() != NO_ERROR))
         {
             ERR("couldn't get file size (error is %ld)\n", GetLastError());
             CloseHandle(hFile);
@@ -1904,7 +1904,7 @@ BOOL WINAPI ReadUrlCacheEntryStream(
         return FALSE;
     }
 
-    if (SetFilePointer(pStream->hFile, dwLocation, NULL, FILE_CURRENT) == -1)
+    if (SetFilePointer(pStream->hFile, dwLocation, NULL, FILE_CURRENT) == INVALID_SET_FILE_POINTER)
         return FALSE;
     return ReadFile(pStream->hFile, lpBuffer, *lpdwLen, lpdwLen, NULL);
 }
