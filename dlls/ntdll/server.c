@@ -826,6 +826,7 @@ void server_init_process(void)
     sigaddset( &block_set, SIGHUP );
     sigaddset( &block_set, SIGUSR1 );
     sigaddset( &block_set, SIGUSR2 );
+    sigaddset( &block_set, SIGCHLD );
 
     /* receive the first thread request fd on the main socket */
     NtCurrentTeb()->request_fd = receive_fd( &dummy_handle );
