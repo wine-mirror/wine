@@ -12,7 +12,7 @@ init    WININET_LibMain
 @ stub DeleteIE3Cache
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
-@ stub DeleteUrlCacheEntry
+@ stdcall DeleteUrlCacheEntry(str) DeleteUrlCacheEntry
 @ stub DeleteUrlCacheGroup
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
@@ -111,13 +111,13 @@ init    WININET_LibMain
 @ stub InternetGetLastResponseInfoW
 @ stub InternetGoOnline
 @ stub InternetHangUp
-@ stub InternetLockRequestFile
+@ stdcall InternetLockRequestFile(ptr ptr) InternetLockRequestFile
 @ stdcall InternetOpenA(str long str str long) InternetOpenA
 @ stub InternetOpenServerPushParse
 @ stdcall InternetOpenUrlA(ptr str str long long long) InternetOpenUrlA
 @ stub InternetOpenUrlW
 @ stub InternetOpenW
-@ stub InternetQueryDataAvailable
+@ stdcall InternetQueryDataAvailable(ptr ptr long long) InternetQueryDataAvailable
 @ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
 @ stub InternetQueryOptionW
 @ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile
@@ -136,7 +136,7 @@ init    WININET_LibMain
 @ stub InternetShowSecurityInfoByURL
 @ stub InternetTimeFromSystemTime
 @ stub InternetTimeToSystemTime
-@ stub InternetUnlockRequestFile
+@ stdcall InternetUnlockRequestFile(ptr) InternetUnlockRequestFile
 @ stdcall InternetWriteFile(ptr ptr long ptr) InternetWriteFile
 @ stub InternetWriteFileExA
 @ stub InternetWriteFileExW
@@ -144,7 +144,7 @@ init    WININET_LibMain
 @ stub LoadUrlCacheContent
 @ stub ParseX509EncodedCertificateForListBoxEntry
 @ stub ReadUrlCacheEntryStream
-@ stub RetrieveUrlCacheEntryFileA
+@ stdcall RetrieveUrlCacheEntryFileA(str ptr ptr long) RetrieveUrlCacheEntryFileA
 @ stub RetrieveUrlCacheEntryFileW
 @ stub RetrieveUrlCacheEntryStreamA
 @ stub RetrieveUrlCacheEntryStreamW

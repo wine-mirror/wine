@@ -2,8 +2,10 @@
  * Wininet - Utility functions
  *
  * Copyright 1999 Corel Corporation
+ * Copyright 2002 CodeWeavers Inc.
  *
  * Ulrich Czekalla
+ * Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -160,4 +162,53 @@ BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
     psa->sin_port = htons((u_short)nServerPort);
 
     return TRUE;
+}
+
+/*
+ * Helper function for sending async Callbacks
+ */
+
+VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
+                             lpvStatusInfo, DWORD dwStatusInfoLength)
+{
+        if (! (hIC->lpfnStatusCB))
+            return;
+
+        TRACE("--> Callback %ld\n",dwInternetStatus);
+
+        hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
+                          lpvStatusInfo, dwStatusInfoLength);
+
+        TRACE("<-- Callback %ld\n",dwInternetStatus);
+}
+
+
+
+VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
+                             lpvStatusInfo,  DWORD dwStatusInfoLength)
+{
+        TRACE("Send Callback %ld\n",dwInternetStatus);
+
+        if (! (hIC->lpfnStatusCB))
+            return;
+        if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+        {
+            WORKREQUEST workRequest;
+
+            workRequest.asyncall = SENDCALLBACK;
+
+            workRequest.param1 = (DWORD)hIC;
+            workRequest.param2 = (DWORD)hHttpSession;
+            workRequest.param3 = dwContext;
+            workRequest.param4 = dwInternetStatus;
+            workRequest.param5 = (DWORD)lpvStatusInfo;
+            workRequest.param6 = dwStatusInfoLength;
+
+            INTERNET_AsyncCall(&workRequest);
+        }
+        else
+            SendAsyncCallbackInt(hIC, hHttpSession, dwContext, dwInternetStatus,
+                                  lpvStatusInfo, dwStatusInfoLength);
 }

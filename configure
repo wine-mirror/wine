@@ -13079,6 +13079,8 @@ ac_config_commands="$ac_config_commands dlls/user/tests"
 
 ac_config_commands="$ac_config_commands dlls/wineps/data"
 
+ac_config_commands="$ac_config_commands dlls/wininet/tests"
+
 ac_config_commands="$ac_config_commands dlls/winsock/tests"
 
 ac_config_commands="$ac_config_commands files"
@@ -13760,6 +13762,7 @@ do
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
   "dlls/user/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/tests" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
+  "dlls/wininet/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wininet/tests" ;;
   "dlls/winsock/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/winsock/tests" ;;
   "files" ) CONFIG_COMMANDS="$CONFIG_COMMANDS files" ;;
   "graphics" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics" ;;
@@ -14458,6 +14461,8 @@ echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources"
 echo "$as_me: creating dlls/user/tests" >&6;} && mkdir "dlls/user/tests") ;;
     dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:$LINENO: creating dlls/wineps/data" >&5
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
+    dlls/wininet/tests ) test -d "dlls/wininet/tests" || ({ echo "$as_me:$LINENO: creating dlls/wininet/tests" >&5
+echo "$as_me: creating dlls/wininet/tests" >&6;} && mkdir "dlls/wininet/tests") ;;
     dlls/winsock/tests ) test -d "dlls/winsock/tests" || ({ echo "$as_me:$LINENO: creating dlls/winsock/tests" >&5
 echo "$as_me: creating dlls/winsock/tests" >&6;} && mkdir "dlls/winsock/tests") ;;
     files ) test -d "files" || ({ echo "$as_me:$LINENO: creating files" >&5

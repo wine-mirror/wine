@@ -154,6 +154,7 @@ typedef enum
     INTERNETFINDNEXTA,
     HTTPSENDREQUESTA,
     HTTPOPENREQUESTA,
+    SENDCALLBACK,
 } ASYNC_FUNC;
 
 typedef struct WORKREQ
@@ -220,8 +221,6 @@ HINTERNET HTTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName,
 BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa);
 
-int INTERNET_WriteDataToStream(int nDataSocket, LPCVOID Buffer, DWORD BytesToWrite);
-int INTERNET_ReadDataFromStream(int nDataSocket, LPVOID Buffer, DWORD BytesToRead);
 void INTERNET_SetLastError(DWORD dwError);
 DWORD INTERNET_GetLastError();
 BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
@@ -256,6 +255,14 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	DWORD dwFlags, DWORD dwContext);
 void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs);
 void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr);
+
+VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+                             DWORD dwContext, DWORD dwInternetStatus, LPVOID 
+                             lpvStatusInfo , DWORD dwStatusInfoLength);
+
+VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+                             DWORD dwContext, DWORD dwInternetStatus, LPVOID 
+                             lpvStatusInfo , DWORD dwStatusInfoLength);
 
 
 #define MAX_REPLY_LEN	 	0x5B4
