@@ -6,6 +6,7 @@ MODULE    = none
 DB2HTML   = @DB2HTML@
 DB2PDF    = @DB2PDF@
 DB2PS     = @DB2PS@
+DB2TXT    = @DB2TXT@
 
 EXTRASUBDIRS = samples
 
@@ -61,10 +62,11 @@ all: $(MAN_TARGETS)
 @MAKE_RULES@
 
 everything: $(MAN_TARGETS) doc
-doc: html pdf ps
+doc: html pdf ps txt
 html: $(ALLBOOKS:%=%.html) wine-faq.html
 pdf: $(ALLBOOKS:%=%.pdf)
 ps: $(ALLBOOKS:%=%.ps)
+txt: $(ALLBOOKS:%=%.txt)
 
 .PHONY: everything doc html pdf ps dist
 
@@ -79,13 +81,13 @@ ps: $(ALLBOOKS:%=%.ps)
 .sgml.ps:
 	$(DB2PS) $<
 
-.html.txt:
-	w3m -dump $< > $@ || ($(RM) $@ && false)
+.sgml.txt:
+	$(DB2TXT) $<
 
-wine-devel.pdf wine-devel.ps wine-devel.html: $(WINE_DEVEL_SRCS)
-wine-user.pdf wine-user.ps wine-user.html: $(WINE_USER_SRCS)
-wine-faq.pdf wine-faq.ps wine-faq.html: $(WINE_FAQ_SRCS)
-winelib-user.pdf winelib-user.ps winelib-user.html: $(WINELIB_USER_SRCS)
+wine-devel.pdf wine-devel.ps wine-devel.html wine-devel.txt: $(WINE_DEVEL_SRCS)
+wine-user.pdf wine-user.ps wine-user.html wine-user.txt: $(WINE_USER_SRCS)
+wine-faq.pdf wine-faq.ps wine-faq.html wine-faq.txt: $(WINE_FAQ_SRCS)
+winelib-user.pdf winelib-user.ps winelib-user.html winelib-user.txt: $(WINELIB_USER_SRCS)
 
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || ($(RM) $@ && false)

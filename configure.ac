@@ -121,6 +121,10 @@ dnl Check for db2ps
 AC_CHECK_PROGS(DB2PS, docbook2ps db2ps, false)
 AC_SUBST(DB2PS)
 
+dnl Check for db2txt
+AC_CHECK_PROGS(DB2TXT, docbook2txt db2txt, false)
+AC_SUBST(DB2TXT)
+
 dnl **** Check for some libraries ****
 
 dnl Check for -lm
