@@ -149,6 +149,10 @@ static	DWORD	MIX_GetLineInfoFromIndex(LPMIXERLINEA lpMl, int devmask, DWORD idx)
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
 	break;
+	case SOUND_MIXER_BASS:
+	case SOUND_MIXER_TREBLE:
+	WARN("BASS/TREBLE not handled correctly.\n");
+	return MMSYSERR_NOERROR;
     default:
 	WARN("Index %ld not handled.\n", idx);
 	return MIXERR_INVALLINE;
@@ -346,12 +350,11 @@ static void MIX_DoGetLineControls(LPMIXERCONTROLA mc, DWORD lineID, DWORD dwType
 	memset(&mc->Bounds, 0, sizeof(mc->Bounds));
 	/* CONTROLTYPE_VOLUME uses the MIXER_CONTROLDETAILS_UNSIGNED struct, 
 	 * [0, 100] is the range supported by OSS
-	 * FIXME: sounds like MIXERCONTROL_CONTROLTYPE_VOLUME is always between 0 and 65536
-	 * whatever the min and max values are...
-	 * look at conversions done in (Get|Set)ControlDetails to stay in [0, 100] range
+	 * whatever the min and max values are they must match
+	 * conversions done in (Get|Set)ControlDetails to stay in [0, 100] range
 	 */
 	mc->Bounds.s1.dwMinimum = 0;
-	mc->Bounds.s1.dwMaximum = 100;
+	mc->Bounds.s1.dwMaximum = 65535;
 	memset(&mc->Metrics, 0, sizeof(mc->Metrics));
 	break;
     case MIXERCONTROL_CONTROLTYPE_MUTE:
@@ -557,6 +560,10 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 			if (!MIX_SetVal(lineID, 0))
 			    return MMSYSERR_INVALPARAM;
 		    } else {
+			if (MIX_Volume[lineID] == -1) {
+				ret = MMSYSERR_NOERROR;
+				break;
+			}
 			if (!MIX_SetVal(lineID, MIX_Volume[lineID]))
 			    return MMSYSERR_INVALPARAM;
 			MIX_Volume[lineID] = -1;
