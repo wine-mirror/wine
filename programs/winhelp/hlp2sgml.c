@@ -48,7 +48,7 @@ typedef struct
 {
     const char ch;
     const char *subst;
-} CHARMAP[];
+} CHARMAP_ENTRY;
 
 
 FORMAT format =
@@ -77,7 +77,7 @@ FORMAT format =
     "\n</article>\n"
 };
 
-CHARMAP charmap =
+CHARMAP_ENTRY charmap[] =
 {{'Æ', "AElig"},
  {'Á', "Aacute"},
  {'Â', "Acirc"},
