@@ -15,6 +15,12 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ *  o Linked list implementation for dplay/dplobby. Based off of the BSD
+ *    version found in <sys/queue.h>
+ *  o Port it to <wine/list.h> ?
+ *
  */
 
 #ifndef __WINE_DPLAYX_QUEUE_H

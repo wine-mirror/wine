@@ -1,4 +1,5 @@
-/*
+/* COM class factory for direct play lobby interfaces.
+ *
  * Copyright 1999, 2000 Peter Hunnisett
  *
  * This library is free software; you can redistribute it and/or

@@ -17,10 +17,17 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-/* NOTE: Methods that begin with DPLAYX_ are used for dealing with
- *       dplayx.dll data which is accessible from all processes.
+ *
+ *
+ * NOTES: 
+ *  o Implementation of all things which are associated with dplay on
+ *    the computer - ie shared resources and such. Methods in this
+ *    compilation unit should not call anything out side this unit
+ *    excepting base windows services and an interface to start the
+ *    messaging thread.
+ *  o Methods that begin with DPLAYX_ are used for dealing with
+ *    dplayx.dll data which is accessible from all processes.
+ *
  */
 
 #include <stdarg.h>
