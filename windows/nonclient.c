@@ -943,6 +943,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
     WND *wndPtr;
     DWORD dwStyle, dwExStyle;
     WORD flags;
+    HRGN hrgn;
     RECT rectClient, rectWindow;
     int has_menu;
 
@@ -969,19 +970,21 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
        Now, how is the "system" supposed to tell what happened?
      */
 
-    if (!(hdc = GetDCEx( hwnd, (clip > (HRGN)1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
-			      ((clip > (HRGN)1) ?(DCX_INTERSECTRGN | DCX_KEEPCLIPRGN) : 0) ))) return;
-
-
-    if (ExcludeVisRect16( HDC_16(hdc), rectClient.left-rectWindow.left,
-		        rectClient.top-rectWindow.top,
-		        rectClient.right-rectWindow.left,
-		        rectClient.bottom-rectWindow.top )
-	== NULLREGION)
+    hrgn = CreateRectRgn( rectClient.left - rectWindow.left,
+                          rectClient.top - rectWindow.top,
+                          rectClient.right - rectWindow.left,
+                          rectClient.bottom - rectWindow.top );
+    if (clip > (HRGN)1)
     {
-	ReleaseDC( hwnd, hdc );
-	return;
+        CombineRgn( hrgn, clip, hrgn, RGN_DIFF );
+        hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_INTERSECTRGN );
     }
+    else
+    {
+        hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_EXCLUDERGN );
+    }
+
+    if (!hdc) return;
 
     rect.top = rect.left = 0;
     rect.right  = rectWindow.right - rectWindow.left;
