@@ -2126,10 +2126,10 @@ typedef struct tagNMTVGETINFOTIPW
 
 
 #define TreeView_InsertItemA(hwnd, phdi) \
-  (INT)SendMessageA((hwnd), TVM_INSERTITEMA, 0, \
+  (HTREEITEM)SendMessageA((hwnd), TVM_INSERTITEMA, 0, \
                             (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
 #define TreeView_InsertItemW(hwnd,phdi) \
-  (INT)SendMessageW((hwnd), TVM_INSERTITEMW, 0, \
+  (HTREEITEM)SendMessageW((hwnd), TVM_INSERTITEMW, 0, \
                             (LPARAM)(LPTVINSERTSTRUCTW)(phdi))
 #define TreeView_InsertItem WINELIB_NAME_AW(TreeView_InsertItem) 
 
@@ -2212,6 +2212,7 @@ typedef struct tagNMTVGETINFOTIPW
  (BOOL)SendMessageA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem)) 
 #define TreeView_SetItemW(hwnd, pitem) \
  (BOOL)SendMessageW((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem)) 
+#define TreeView_SetItem WINELIB_NAME_AW(TreeView_SetItem)
 
 #define TreeView_EditLabel(hwnd, hitem) \
     (HWND)SendMessageA((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
@@ -2309,6 +2310,11 @@ typedef struct tagNMTVGETINFOTIPW
   SendMessageA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
 }
 
+typedef struct {
+  NMHDR hdr;
+  WORD  wVKey;
+  UINT  flags;
+} TV_KEYDOWN;
 
 
 
