@@ -32,7 +32,7 @@
 #define MAX_FONT_FAMILIES	128
 #define MAX_LFD_LENGTH		256
 
-#define MAX_FONT_SIZE           5000    /* Max size in pixels */
+#define MAX_FONT_SIZE           1000    /* Max size in pixels */
 
 #define REMOVE_SUBSETS		1
 #define UNMARK_SUBSETS		0
