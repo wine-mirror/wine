@@ -6619,7 +6619,11 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 			   hdpaSubItems );
     if (nItem == -1) goto fail;
    
-    if (!LISTVIEW_SetItemT(infoPtr, lpLVItem, isW)) goto fail;
+    if (!LISTVIEW_SetItemT(infoPtr, lpLVItem, isW))
+    {
+	DPA_DeletePtr(infoPtr->hdpaItems, nItem);
+	goto fail;
+    }
 
     /* if we're sorted, sort the list, and update the index */
     if (is_sorted)
@@ -6630,7 +6634,8 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	{
 	    ERR("We can't find the item we just inserted, possible memory corruption.");
 	    /* we can't remove it from the list if we can't find it, so just fail */
-	    goto fail;
+	    /* we don't deallocate memory here, as it will probably cause more problems */
+	    return -1;
 	}
     }
 
