@@ -1565,6 +1565,14 @@ typedef struct
 #define GCW_ATOM            (-32)
 #define GCL_HICONSM         (-34)
 
+#define GCLP_MENUNAME       (-8)
+#define GCLP_HBRBACKGROUND  (-10)
+#define GCLP_HCURSOR        (-12)
+#define GCLP_HICON          (-14)
+#define GCLP_HMODULE        (-16)
+#define GCLP_WNDPROC        (-24)
+#define GCLP_HICONSM        (-34)
+
 /* BroadcastSystemMessage flags */
 #define BSM_ALLCOMPONENTS        0x00000000
 #define BSM_VXDS                 0x00000001
@@ -3212,6 +3220,13 @@ typedef struct {
 #define	DSS_MONO	0x0080
 #define	DSS_RIGHT	0x8000
 
+/* UserObjectInformation classes */
+#define UOI_FLAGS 1
+#define UOI_NAME 2
+#define UOI_TYPE 3
+#define UOI_USER_SID 4
+
+
 /* Sent as the lParam of a WM_DRAWITEM message to instruct how an
  * owner drawn control is to be drawn */
 typedef struct tagDRAWITEMSTRUCT
@@ -4153,6 +4168,9 @@ BOOL      WINAPI GetClassInfoExW(HINSTANCE,LPCWSTR,WNDCLASSEXW *);
 LONG        WINAPI GetClassLongA(HWND,INT);
 LONG        WINAPI GetClassLongW(HWND,INT);
 #define     GetClassLong WINELIB_NAME_AW(GetClassLong)
+#define     GetClassLongPtrA GetClassLongA
+#define     GetClassLongPtrW GetClassLongW
+#define     GetClassLongPtr WINELIB_NAME_AW(GetClassLongPtr)
 INT         WINAPI GetClassNameA(HWND,LPSTR,INT);
 INT         WINAPI GetClassNameW(HWND,LPWSTR,INT);
 #define     GetClassName WINELIB_NAME_AW(GetClassName)
