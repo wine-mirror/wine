@@ -67,7 +67,7 @@ static void ShowUsage(int ExitCode)
 	ExitProcess(ExitCode);
 }
 
-static BOOL GetProductCode(LPCSTR str, LPGUID guid)
+static BOOL GetProductCode(LPCSTR str, LPCSTR *PackageName, LPGUID *ProductCode)
 {
 	BOOL ret = FALSE;
 	int len = 0;
@@ -77,9 +77,16 @@ static BOOL GetProductCode(LPCSTR str, LPGUID guid)
 	{
 		len = MultiByteToWideChar(CP_ACP, 0, str, -1, wstr, 0);
 		wstr = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
-		ret = (CLSIDFromString(wstr, guid) == NOERROR);
+		ret = (CLSIDFromString(wstr, *ProductCode) == NOERROR);
 		HeapFree(GetProcessHeap(), 0, wstr);
 		wstr = NULL;
+	}
+
+	if(!ret)
+	{
+		HeapFree(GetProcessHeap(), 0, *ProductCode);
+		*ProductCode = NULL;
+		*PackageName = str;
 	}
 
 	return ret;
@@ -174,7 +181,7 @@ int main(int argc, char *argv[])
 	BOOL FunctionDllUnregisterServer = FALSE;
 
 	BOOL GotProductCode = FALSE;
-	LPSTR PackageName = NULL;
+	LPCSTR PackageName = NULL;
 	LPGUID ProductCode = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
 	LPSTR Properties = HeapAlloc(GetProcessHeap(), 0, 1);
 
@@ -209,13 +216,7 @@ int main(int argc, char *argv[])
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			GotProductCode = GetProductCode(argv[i], ProductCode);
-			if(!GotProductCode)
-			{
-				HeapFree(GetProcessHeap(), 0, ProductCode);
-				ProductCode = NULL;
-				PackageName = argv[i];
-			}
+			GotProductCode = GetProductCode(argv[i], &PackageName, &ProductCode);
 		}
 		else if(!strcasecmp(argv[i], "/a"))
 		{
@@ -295,13 +296,7 @@ int main(int argc, char *argv[])
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			GotProductCode = GetProductCode(argv[i], ProductCode);
-			if(!GotProductCode)
-			{
-				HeapFree(GetProcessHeap(), 0, ProductCode);
-				ProductCode = NULL;
-				PackageName = argv[i];
-			}
+			GotProductCode = GetProductCode(argv[i], &PackageName, &ProductCode);
 		}
 		else if(!strcasecmp(argv[i], "/x"))
 		{
@@ -310,13 +305,7 @@ int main(int argc, char *argv[])
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			GotProductCode = GetProductCode(argv[i], ProductCode);
-			if(!GotProductCode)
-			{
-				HeapFree(GetProcessHeap(), 0, ProductCode);
-				ProductCode = NULL;
-				PackageName = argv[i];
-			}
+			GotProductCode = GetProductCode(argv[i], &PackageName, &ProductCode);
 			StringListAppend(&Properties, RemoveAll);
 		}
 		else if(!strncasecmp(argv[i], "/j", 2))
@@ -559,13 +548,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			FunctionInstall = TRUE;
-			GotProductCode = GetProductCode(argv[i], ProductCode);
-			if(!GotProductCode)
-			{
-				HeapFree(GetProcessHeap(), 0, ProductCode);
-				ProductCode = NULL;
-				PackageName = argv[i];
-			}
+			GotProductCode = GetProductCode(argv[i], &PackageName, &ProductCode);
 		}
 	}
 
