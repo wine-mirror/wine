@@ -1175,7 +1175,11 @@ DEBUG_ReadExecutableDbgInfo(void)
   Elf32_Dyn	      * dynpnt;
   struct r_debug      * dbg_hdr;
   struct link_map     * lpnt = NULL;
+#ifdef __GNUC__
+  extern Elf32_Dyn      _DYNAMIC[] __attribute__ ((weak));
+#else
   extern Elf32_Dyn      _DYNAMIC[];
+#endif
   int			rtn = FALSE;
   int                   rowcount;
 
@@ -1196,9 +1200,10 @@ DEBUG_ReadExecutableDbgInfo(void)
    * of the other shared libraries which might be loaded.  Perform the
    * same step for all of these.
    */
-  dynpnt = _DYNAMIC;
-  if( dynpnt == NULL )
+  if( (&_DYNAMIC == NULL) || (_DYNAMIC == NULL) )
       goto leave;
+
+  dynpnt = _DYNAMIC;
 
   /*
    * Now walk the dynamic section (of the executable, looking for a DT_DEBUG
