@@ -7,9 +7,9 @@ MODULE	  = none
 LIB_TARGET = @LIB_TARGET@
 
 INSTALLED_INCLUDES = \
+	windef.h \
 	windows.h \
 	wingdi.h \
-	wintypes.h \
 	winuser.h
 
 @MAKE_RULES@
