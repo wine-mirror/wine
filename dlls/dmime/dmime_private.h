@@ -949,6 +949,12 @@ extern HRESULT WINAPI IDirectMusicWaveTrack_IPersistStream_Load (LPPERSISTSTREAM
 extern HRESULT WINAPI IDirectMusicWaveTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicWaveTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dmime.dll
+ */
+extern LONG DMIME_refCount;
+static inline void DMIME_LockModule() { InterlockedIncrement( &DMIME_refCount ); }
+static inline void DMIME_UnlockModule() { InterlockedDecrement( &DMIME_refCount ); }
 
 /*****************************************************************************
  * Misc.

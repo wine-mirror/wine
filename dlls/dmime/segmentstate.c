@@ -43,6 +43,8 @@ ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTSTATE8 if
 
 	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
 
+	DMIME_LockModule();
+
 	return ref;
 }
 
@@ -50,9 +52,13 @@ ULONG WINAPI IDirectMusicSegmentState8Impl_Release (LPDIRECTMUSICSEGMENTSTATE8 i
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
 	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+
+	DMIME_UnlockModule();
+
 	return ref;
 }
 

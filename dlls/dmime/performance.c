@@ -186,6 +186,8 @@ ULONG WINAPI IDirectMusicPerformance8Impl_AddRef (LPDIRECTMUSICPERFORMANCE8 ifac
 
   TRACE("(%p): AddRef from %ld\n", This, ref - 1);
 
+  DMIME_LockModule();
+
   return ref;
 }
 
@@ -193,10 +195,14 @@ ULONG WINAPI IDirectMusicPerformance8Impl_Release (LPDIRECTMUSICPERFORMANCE8 ifa
   IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
   ULONG ref = InterlockedDecrement(&This->ref);
   TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+  
   if (ref == 0) {
     DeleteCriticalSection(&This->safe);
     HeapFree(GetProcessHeap(), 0, This);
   }
+
+  DMIME_UnlockModule();
+
   return ref;
 }
 

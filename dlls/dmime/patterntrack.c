@@ -43,6 +43,8 @@ ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK ifac
 
 	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
 
+	DMIME_LockModule();
+
 	return ref;
 }
 
@@ -50,9 +52,13 @@ ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK ifa
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
 	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+
+	DMIME_UnlockModule();
+
 	return ref;
 }
 
