@@ -55,6 +55,7 @@
  55 stub @
  56 stub @
  57 stub @
+ 57 stdcall @(long long ptr long ptr)  MSNET32_57
  58 stub @
  59 stub @
  60 stub @
