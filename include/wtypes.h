@@ -36,12 +36,6 @@ typedef float FLOAT;
 
 typedef double DOUBLE;
 
-typedef long LONG_PTR, *PLONG_PTR;
-
-typedef unsigned int UINT_PTR, *PUINT_PTR;
-
-typedef unsigned long ULONG_PTR, *PULONG_PTR;
-
 typedef void *PVOID, *LPVOID;
 
 typedef char CHAR;
@@ -579,31 +573,6 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal  (unsigned long *, unsigned
 unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(unsigned long *, unsigned char *, HMETAFILEPICT *);
 void            __RPC_USER HMETAFILEPICT_UserFree     (unsigned long *, HMETAFILEPICT *);
 
-#ifndef GUID_DEFINED
-#define GUID_DEFINED
-typedef struct _GUID {
-    DWORD Data1;
-    WORD Data2;
-    WORD Data3;
-    BYTE Data4[8];
-} GUID;
-
-#endif
-#if 0 /* guiddef.h */
-typedef GUID *LPGUID;
-
-typedef GUID IID;
-
-typedef IID *LPIID;
-
-typedef GUID CLSID;
-
-typedef CLSID *LPCLSID;
-
-typedef GUID FMTID;
-
-typedef FMTID *LPFMTID;
-
 #if 0
 typedef GUID *REFGUID;
 
@@ -614,7 +583,6 @@ typedef CLSID *REFCLSID;
 typedef FMTID *REFFMTID;
 
 #endif
-#endif /* guiddef.h */
 typedef enum tagDVASPECT {
     DVASPECT_CONTENT = 1,
     DVASPECT_THUMBNAIL = 2,

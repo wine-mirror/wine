@@ -18,18 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+import "basetsd.h";
+import "guiddef.h";
+
 [
   uuid(D3980A60-910C-1068-9341-00DD010F2F1C),
   version(0.1),
   pointer_default(unique)
 ]
+
 interface IWinTypes
 {
-
-/******************** WINE STUFF ********************/
-
-cpp_quote("#include \"basetsd.h\"")
-cpp_quote("#include \"guiddef.h\"")
 
 /******************** BASIC WIN32 TYPES ********************/
 cpp_quote("#if 0 /* winnt.h */") /* don't redefine these */
@@ -47,11 +46,6 @@ typedef long LONG;
 typedef unsigned long ULONG;
 typedef float FLOAT;
 typedef double DOUBLE;
-
-/* FIXME: This is wrong for WIN64 */
-typedef long LONG_PTR, *PLONG_PTR;
-typedef unsigned int UINT_PTR, *PUINT_PTR;
-typedef unsigned long ULONG_PTR, *PULONG_PTR;
 
 typedef void *PVOID, *LPVOID;
 
@@ -533,36 +527,12 @@ DECLARE_WIREM_HANDLE(HMETAFILEPICT);
 
 /******************** GUID TYPES ********************/
 
-cpp_quote("#ifndef GUID_DEFINED")
-cpp_quote("#define GUID_DEFINED")
-typedef struct _GUID {
-  DWORD Data1;
-  WORD  Data2;
-  WORD  Data3;
-  BYTE  Data4[8];
-} GUID;
-cpp_quote("#endif")
-
-cpp_quote("#if 0 /* guiddef.h */")
-typedef GUID *LPGUID;
-
-typedef GUID IID;
-typedef IID *LPIID;
-
-typedef GUID CLSID;
-typedef CLSID *LPCLSID;
-
-typedef GUID FMTID;
-typedef FMTID *LPFMTID;
-
 cpp_quote("#if 0") /* for IDL only (C/C++ defs are in guiddef.h) */
 typedef GUID *REFGUID;
 typedef IID *REFIID;
 typedef CLSID *REFCLSID;
 typedef FMTID *REFFMTID;
 cpp_quote("#endif")
-
-cpp_quote("#endif /* guiddef.h */")
 
 /******************** MISC TYPES ********************/
 

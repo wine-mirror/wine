@@ -44,7 +44,7 @@ extern "C" {
  * simply add to the command line:
  *    -D__int8=char -D__int16=short -D__int32=int "-D__int64=long long"
  */
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__WIDL__)
 #  ifndef __int8
 #    define __int8  char
 #  endif
@@ -59,17 +59,17 @@ extern "C" {
 #  endif
 #endif /* !defined(_MSC_VER) */
 
-typedef signed __int8    INT8, *PINT8;
-typedef signed __int16   INT16, *PINT16;
-typedef signed __int32   INT32, *PINT32;
+typedef signed char      INT8, *PINT8;
+typedef signed short     INT16, *PINT16;
+typedef signed int       INT32, *PINT32;
 typedef signed __int64   INT64, *PINT64;
-typedef unsigned __int8  UINT8, *PUINT8;
-typedef unsigned __int16 UINT16, *PUINT16;
-typedef unsigned __int32 UINT32, *PUINT32;
+typedef unsigned char    UINT8, *PUINT8;
+typedef unsigned short   UINT16, *PUINT16;
+typedef unsigned int     UINT32, *PUINT32;
 typedef unsigned __int64 UINT64, *PUINT64;
-typedef signed __int32   LONG32, *PLONG32;
-typedef unsigned __int32 ULONG32, *PULONG32;
-typedef unsigned __int32 DWORD32, *PDWORD32;
+typedef signed int       LONG32, *PLONG32;
+typedef unsigned int     ULONG32, *PULONG32;
+typedef unsigned int     DWORD32, *PDWORD32;
 typedef signed __int64   LONG64, *PLONG64;
 typedef unsigned __int64 ULONG64, *PULONG64;
 typedef unsigned __int64 DWORD64, *PDWORD64;
@@ -88,8 +88,8 @@ typedef unsigned __int64 DWORD_PTR, *PDWORD_PTR;
 #define MININT_PTR 0x8000000000000000
 #define MAXUINT_PTR 0xffffffffffffffff
 
-typedef signed __int32   HALF_PTR, *PHALF_PTR;
-typedef unsigned __int32 UHALF_PTR, *PUHALF_PTR;
+typedef int HALF_PTR, *PHALF_PTR;
+typedef unsigned int UHALF_PTR, *PUHALF_PTR;
 
 #define MAXHALF_PTR 0x7fffffff
 #define MINHALF_PTR 0x80000000
@@ -97,9 +97,9 @@ typedef unsigned __int32 UHALF_PTR, *PUHALF_PTR;
 
 #else /* FIXME: defined(_WIN32) */
 
-typedef signed __int32   INT_PTR, *PINT_PTR;
+typedef int INT_PTR, *PINT_PTR;
 typedef long LONG_PTR, *PLONG_PTR;
-typedef unsigned __int32 UINT_PTR, *PUINT_PTR;
+typedef unsigned int UINT_PTR, *PUINT_PTR;
 typedef unsigned long ULONG_PTR, *PULONG_PTR;
 typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 
@@ -107,8 +107,8 @@ typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 #define MININT_PTR 0x80000000
 #define MAXUINT_PTR 0xffffffff
 
-typedef signed __int16   HALF_PTR, *PHALF_PTR;
-typedef unsigned __int16 UHALF_PTR, *PUHALF_PTR;
+typedef signed short HALF_PTR, *PHALF_PTR;
+typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 
 #define MAXUHALF_PTR 0xffff
 #define MAXHALF_PTR 0x7fff
@@ -139,7 +139,7 @@ typedef ULONG_PTR SIZE_T, *PSIZE_T;
 # define WORDS_LITTLEENDIAN
 # define BITFIELDS_LITTLEENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
-#elif !defined(RC_INVOKED)
+#elif !defined(RC_INVOKED) && !defined(__WIDL__)
 # error Unknown CPU architecture!
 #endif
 
