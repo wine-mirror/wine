@@ -103,12 +103,37 @@ static void RELAY_MakeShortContext( CONTEXT86 *context )
  * This stub is called by __wine_call_from_16_regs in order to marshall
  * relay parameters.
  */
-static void __stdcall RELAY_RelayStub( DOSRELAY proc, 
+static void __stdcall RELAY_RelayStub( DOSRELAY       proc, 
                                        unsigned char *args, 
-                                       void *context )
+                                       void          *ctx86 )
 {
     if (proc)
-        proc( (CONTEXT86*)context, *(LPVOID *)args );
+    {
+        CONTEXT86     *context    = (CONTEXT86*)ctx86;
+        RELAY_Stack16 *stack      = RELAY_GetPointer( context->Esp );
+
+        DWORD          old_seg_cs = context->SegCs;
+        DWORD          old_eip    = context->Eip;
+        DWORD          old_seg_ss = context->SegSs;
+        DWORD          old_esp    = context->Esp;
+
+        context->SegCs = stack->seg_cs;
+        context->Eip   = stack->eip;
+        context->SegSs = stack->seg_ss;
+        context->Esp   = stack->esp;
+
+        proc( context, *(LPVOID *)args );
+
+        stack->seg_cs = context->SegCs;
+        stack->eip    = context->Eip;
+        stack->seg_ss = context->SegSs;
+        stack->esp    = context->Esp;
+
+        context->SegCs = old_seg_cs;
+        context->Eip   = old_eip;
+        context->SegSs = old_seg_ss;
+        context->Esp   = old_esp;
+    }
 }
 
 
