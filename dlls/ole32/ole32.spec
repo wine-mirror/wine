@@ -92,8 +92,8 @@
 @ stdcall DllDebugObjectRPCHook(long ptr)
 @ stdcall -private DllGetClassObject (ptr ptr ptr) OLE32_DllGetClassObject
 @ stub DllGetClassObjectWOW
-@ stdcall -private DllRegisterServer() OLE32_DllRegisterServer
-@ stdcall -private DllUnregisterServer() OLE32_DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stdcall DoDragDrop(ptr ptr long ptr)
 @ stub EnableHookObject
 @ stdcall FreePropVariantArray(long ptr)

@@ -834,7 +834,7 @@ static void test_disconnect_stub()
 
     CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 }
 
 /* tests failure case of a same-thread marshal and unmarshal twice */

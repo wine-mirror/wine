@@ -185,6 +185,7 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
 struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
+void apartment_disconnect_object(APARTMENT *apt, void *object);
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
 HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);

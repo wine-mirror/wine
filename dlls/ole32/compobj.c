@@ -28,9 +28,6 @@
  *
  * TODO list:           (items bunched together depend on each other)
  *
- *   - Rewrite the CoLockObjectExternal code, it does totally the wrong
- *     thing currently (should be controlling the stub manager)
- *
  *   - Implement the service control manager (in rpcss) to keep track
  *     of registered class objects: ISCM::ServerRegisterClsid et al
  *   - Implement the OXID resolver so we don't need magic pipe names for
@@ -87,7 +84,6 @@ typedef LPCSTR LPCOLESTR16;
 
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(void);
-static void COM_ExternalLockFreeList(void);
 
 const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
@@ -712,9 +708,6 @@ void WINAPI CoUninitialize(void)
     /* This will free the loaded COM Dlls  */
     CoFreeAllLibraries();
 
-    /* This will free list of external references to COM objects */
-    COM_ExternalLockFreeList();
-
     /* This ensures we deal with any pending RPCs */
     COM_FlushMessageQueue();
   }
@@ -748,7 +741,31 @@ void WINAPI CoUninitialize(void)
  */
 HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
-    FIXME("(%p, %lx): stub - probably harmless\n",lpUnk,reserved);
+    HRESULT hr;
+    IMarshal *marshal;
+    APARTMENT *apt;
+
+    TRACE("(%p, 0x%08lx)\n", lpUnk, reserved);
+
+    hr = IUnknown_QueryInterface(lpUnk, &IID_IMarshal, (void **)&marshal);
+    if (hr == S_OK)
+    {
+        hr = IMarshal_DisconnectObject(marshal, reserved);
+        IMarshal_Release(marshal);
+        return hr;
+    }
+
+    apt = COM_CurrentApt();
+    if (!apt)
+        return CO_E_NOTINITIALIZED;
+
+    apartment_disconnect_object(apt, lpUnk);
+
+    /* Note: native is pretty broken here because it just silently
+     * fails, without returning an appropriate error code if the object was
+     * not found, making apps think that the object was disconnected, when
+     * it actually wasn't */
+
     return S_OK;
 }
 
@@ -1983,209 +2000,6 @@ static void COM_RevokeAllClasses()
   LeaveCriticalSection( &csRegisteredClassList );
 }
 
-/****************************************************************************
- *  COM External Lock methods implementation
- *
- *  This api provides a linked list to managed external references to
- *  COM objects.
- *
- *  The public interface consists of three calls:
- *      COM_ExternalLockAddRef
- *      COM_ExternalLockRelease
- *      COM_ExternalLockFreeList
- */
-
-#define EL_END_OF_LIST 0
-#define EL_NOT_FOUND   0
-
-/*
- * Declaration of the static structure that manage the
- * external lock to COM  objects.
- */
-typedef struct COM_ExternalLock     COM_ExternalLock;
-typedef struct COM_ExternalLockList COM_ExternalLockList;
-
-struct COM_ExternalLock
-{
-  IUnknown         *pUnk;     /* IUnknown referenced */
-  ULONG            uRefCount; /* external lock counter to IUnknown object*/
-  COM_ExternalLock *next;     /* Pointer to next element in list */
-};
-
-struct COM_ExternalLockList
-{
-  COM_ExternalLock *head;     /* head of list */
-};
-
-/*
- * Declaration and initialization of the static structure that manages
- * the external lock to COM objects.
- */
-static COM_ExternalLockList elList = { EL_END_OF_LIST };
-
-/*
- * Private methods used to managed the linked list
- */
-
-
-static COM_ExternalLock* COM_ExternalLockLocate(
-  COM_ExternalLock *element,
-  IUnknown         *pUnk);
-
-/****************************************************************************
- * Internal - Insert a new IUnknown* to the linked list
- */
-static BOOL COM_ExternalLockInsert(
-  IUnknown *pUnk)
-{
-  COM_ExternalLock *newLock      = NULL;
-  COM_ExternalLock *previousHead = NULL;
-
-  /*
-   * Allocate space for the new storage object
-   */
-  newLock = HeapAlloc(GetProcessHeap(), 0, sizeof(COM_ExternalLock));
-
-  if (newLock!=NULL) {
-    if ( elList.head == EL_END_OF_LIST ) {
-      elList.head = newLock;    /* The list is empty */
-    } else {
-      /* insert does it at the head */
-      previousHead  = elList.head;
-      elList.head = newLock;
-    }
-
-    /* Set new list item data member */
-    newLock->pUnk      = pUnk;
-    newLock->uRefCount = 1;
-    newLock->next      = previousHead;
-
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/****************************************************************************
- * Internal - Method that removes an item from the linked list.
- */
-static void COM_ExternalLockDelete(
-  COM_ExternalLock *itemList)
-{
-  COM_ExternalLock *current = elList.head;
-
-  if ( current == itemList ) {
-    /* this section handles the deletion of the first node */
-    elList.head = itemList->next;
-    HeapFree( GetProcessHeap(), 0, itemList);
-  } else {
-    do {
-      if ( current->next == itemList ){   /* We found the item to free  */
-        current->next = itemList->next;  /* readjust the list pointers */
-        HeapFree( GetProcessHeap(), 0, itemList);
-        break;
-      }
-
-      /* Skip to the next item */
-      current = current->next;
-
-    } while ( current != EL_END_OF_LIST );
-  }
-}
-
-/****************************************************************************
- * Internal - Recursivity agent for IUnknownExternalLockList_Find
- *
- * NOTES: how long can the list be ?? (recursive!!!)
- */
-static COM_ExternalLock* COM_ExternalLockLocate( COM_ExternalLock *element, IUnknown *pUnk)
-{
-  if ( element == EL_END_OF_LIST )
-    return EL_NOT_FOUND;
-  else if ( element->pUnk == pUnk )    /* We found it */
-    return element;
-  else                                 /* Not the right guy, keep on looking */
-    return COM_ExternalLockLocate( element->next, pUnk);
-}
-
-/****************************************************************************
- * Public - Method that increments the count for a IUnknown* in the linked
- * list.  The item is inserted if not already in the list.
- */
-static void COM_ExternalLockAddRef(IUnknown *pUnk)
-{
-  COM_ExternalLock *externalLock = COM_ExternalLockLocate(elList.head, pUnk);
-
-  /*
-   * Add an external lock to the object. If it was already externally
-   * locked, just increase the reference count. If it was not.
-   * add the item to the list.
-   */
-  if ( externalLock == EL_NOT_FOUND )
-    COM_ExternalLockInsert(pUnk);
-  else
-    externalLock->uRefCount++;
-
-  /*
-   * Add an internal lock to the object
-   */
-  IUnknown_AddRef(pUnk);
-}
-
-/****************************************************************************
- * Public - Method that decrements the count for a IUnknown* in the linked
- * list.  The item is removed from the list if its count end up at zero or if
- * bRelAll is TRUE.
- */
-static void COM_ExternalLockRelease(
-  IUnknown *pUnk,
-  BOOL   bRelAll)
-{
-  COM_ExternalLock *externalLock = COM_ExternalLockLocate(elList.head, pUnk);
-
-  if ( externalLock != EL_NOT_FOUND ) {
-    do {
-      externalLock->uRefCount--;  /* release external locks      */
-      IUnknown_Release(pUnk);     /* release local locks as well */
-
-      if ( bRelAll == FALSE ) break;  /* perform single release */
-
-    } while ( externalLock->uRefCount > 0 );
-
-    if ( externalLock->uRefCount == 0 )  /* get rid of the list entry */
-      COM_ExternalLockDelete(externalLock);
-  }
-}
-/****************************************************************************
- * Public - Method that frees the content of the list.
- */
-static void COM_ExternalLockFreeList()
-{
-  COM_ExternalLock *head;
-
-  head = elList.head;                 /* grab it by the head             */
-  while ( head != EL_END_OF_LIST ) {
-    COM_ExternalLockDelete(head);     /* get rid of the head stuff       */
-    head = elList.head;               /* get the new head...             */
-  }
-}
-
-/****************************************************************************
- * Public - Method that dump the content of the list.
- */
-void COM_ExternalLockDump()
-{
-  COM_ExternalLock *current = elList.head;
-
-  DPRINTF("\nExternal lock list contains:\n");
-
-  while ( current != EL_END_OF_LIST ) {
-    DPRINTF( "\t%p with %lu references count.\n", current->pUnk, current->uRefCount);
-
-    /* Skip to the next item */
-    current = current->next;
-  }
-}
-
 /******************************************************************************
  *		CoLockObjectExternal	[OLE32.@]
  *
@@ -2203,28 +2017,40 @@ void COM_ExternalLockDump()
  *  Failure: HRESULT code.
  */
 HRESULT WINAPI CoLockObjectExternal(
-    LPUNKNOWN pUnk,		/* */
-    BOOL fLock,		/* [in] do lock */
-    BOOL fLastUnlockReleases) /* [in] unlock all */
+    LPUNKNOWN pUnk,
+    BOOL fLock,
+    BOOL fLastUnlockReleases)
 {
+    struct stub_manager *stubmgr;
+    struct apartment *apt;
+
     TRACE("pUnk=%p, fLock=%s, fLastUnlockReleases=%s\n",
           pUnk, fLock ? "TRUE" : "FALSE", fLastUnlockReleases ? "TRUE" : "FALSE");
 
-	if (fLock) {
-            /*
-             * Increment the external lock coutner, COM_ExternalLockAddRef also
-             * increment the object's internal lock counter.
-             */
-	    COM_ExternalLockAddRef( pUnk);
-        } else {
-            /*
-             * Decrement the external lock coutner, COM_ExternalLockRelease also
-             * decrement the object's internal lock counter.
-             */
-            COM_ExternalLockRelease( pUnk, fLastUnlockReleases);
-        }
+    apt = COM_CurrentApt();
+    if (!apt) return CO_E_NOTINITIALIZED;
+
+    stubmgr = get_stub_manager_from_object(apt, pUnk);
+    
+    if (stubmgr)
+    {
+        if (fLock)
+            stub_manager_ext_addref(stubmgr, 1);
+        else
+            stub_manager_ext_release(stubmgr, 1);
+        
+        stub_manager_int_release(stubmgr);
 
         return S_OK;
+    }
+    else
+    {
+        WARN("stub object not found %p\n", pUnk);
+        /* Note: native is pretty broken here because it just silently
+         * fails, without returning an appropriate error code, making apps
+         * think that the object was disconnected, when it actually wasn't */
+        return S_OK;
+    }
 }
 
 /***********************************************************************
