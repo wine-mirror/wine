@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 /* Max first-level includes per file */
-#define MAX_INCLUDES 124
+#define MAX_INCLUDES 200
 
 typedef struct _INCL_FILE
 {
@@ -20,6 +20,7 @@ typedef struct _INCL_FILE
     char              *filename;
     struct _INCL_FILE *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
+    int                system;        /* is it a system include (#include <name>) */
     struct _INCL_FILE *owner;
     struct _INCL_FILE *files[MAX_INCLUDES];
 } INCL_FILE;
@@ -134,7 +135,7 @@ static INCL_FILE *add_src_file( const char *name )
  *
  * Add an include file if it doesn't already exists.
  */
-static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line )
+static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int system )
 {
     INCL_FILE **p = &firstInclude;
     int pos;
@@ -155,6 +156,7 @@ static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line )
         (*p)->name = xstrdup(name);
         (*p)->included_by = pFile;
         (*p)->included_line = line;
+        (*p)->system = system || pFile->system;
     }
     pFile->files[pos] = *p;
     return *p;
@@ -207,6 +209,8 @@ static FILE *open_include_file( INCL_FILE *pFile )
         }
         free( filename );
     }
+    if (!file && pFile->system) return NULL;  /* ignore system files we cannot find */
+
     /* try in src file directory */
     if (!file)
     {
@@ -224,6 +228,7 @@ static FILE *open_include_file( INCL_FILE *pFile )
 
     if (!file)
     {
+        if (pFile->included_by->system) return NULL;  /* ignore if included by a system file */
         if (firstPath) perror( pFile->name );
         else fprintf( stderr, "%s: %s: File not found\n",
                       ProgramName, pFile->name );
@@ -257,9 +262,11 @@ static void parse_file( INCL_FILE *pFile, int src )
     }
 
     file = src ? open_src_file( pFile ) : open_include_file( pFile );
+    if (!file) return;
 
     while (fgets( buffer, sizeof(buffer)-1, file ))
     {
+        char quote;
         char *p = buffer;
         line++;
         while (*p && isspace(*p)) p++;
@@ -268,9 +275,11 @@ static void parse_file( INCL_FILE *pFile, int src )
         if (strncmp( p, "include", 7 )) continue;
         p += 7;
         while (*p && isspace(*p)) p++;
-        if (*p++ != '\"') continue;
+        if (*p != '\"' && *p != '<' ) continue;
+        quote = *p++;
+        if (quote == '<') quote = '>';
         include = p;
-        while (*p && (*p != '\"')) p++;
+        while (*p && (*p != quote)) p++;
         if (!*p)
         {
             fprintf( stderr, "%s:%d: Malformed #include directive\n",
@@ -278,7 +287,7 @@ static void parse_file( INCL_FILE *pFile, int src )
             exit(1);
         }
         *p = 0;
-        add_include( pFile, include, line );
+        add_include( pFile, include, line, (quote == '>') );
     }
     fclose(file);
 }
@@ -293,6 +302,7 @@ static void output_include( FILE *file, INCL_FILE *pFile,
     int i;
 
     if (pFile->owner == owner) return;
+    if (!pFile->filename) return;
     pFile->owner = owner;
     if (*column + strlen(pFile->filename) + 1 > 70)
     {
