@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "Apr 19, 2001" "Version 20010418" "Windows On Unix"
+.TH WINE 1 "Aug 5, 2001" "Version 20010731" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -225,7 +225,8 @@ All
 .B wine
 processes using the same 
 .B wineserver
-(i.e.: same user) share certain things like registry and shared memory.
+(i.e.: same user) share certain things like registry, shared memory,
+and config file.
 By setting 
 .I WINEPREFIX
 to different values for different 
@@ -265,16 +266,13 @@ Specifies the X11 display to use.
 .SH CONFIGURATION FILE
 .B wine
 expects a configuration file (
-.I @sysconfdir@/wine.conf
+.I $WINEPREFIX/config
+(~/.wine/config)
 ), which must conform to the format specified in the
 .BR wine.conf (5)
 man page. A sample configuration file is documentation/samples/config in the 
 .B wine 
-source archive. Alternatively a configuration file with the name
-.I config
-in the ~/.wine directory of the user running 
-.B wine 
-can be used.
+source archive.
 .SH AUTHORS
 .B wine
 is available thanks to the work of many developers. For a listing
@@ -368,10 +366,6 @@ clipboard server
 Directory containing 
 .B wine's
 shared libraries 
-.TP
-.I @sysconfdir@/wine.conf
-Global configuration file for 
-.B wine.
 .TP
 .I ~/.wine/config
 User-specific configuration file

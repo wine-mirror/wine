@@ -1,23 +1,14 @@
 .\" -*- nroff -*-
-.TH WINE.CONF 5 "December 5, 2000" "Version 20001202" "Wine Configuration File"
+.TH WINE.CONF 5 "August 5, 2001" "Version 20010731" "Wine Configuration File"
 .SH NAME
 wine.conf \- Wine configuration file
 .SH DESCRIPTION
 .B wine
 expects a configuration file (
-.I @sysconfdir@/wine.conf
-), which should conform to the following rules. Common locations are
-/usr/local/etc/wine.conf or (in some distributions)
-/etc/wine.conf. The actual directory where that file resides may be
-specified during the execution of the
-.B configure
-script with the --sysconfdir option. Alternatively, you may have a
-file named
-.I config
-in this format in your ~/.wine directory or in the directory named in
-the
-.B WINEPREFIX
-environment variable.  A sample configuration file is available as
+.I $WINEPREFIX/config
+(~/.wine/config)
+), which should conform to the following rules. 
+A sample configuration file is available as
 .I documentation/samples/config
 in the Wine source distribution.
 .SH CONFIGURATION FILE FORMAT
@@ -272,9 +263,6 @@ A sample configuration file is distributed as
 .B documentation/samples/config
 in the Wine source distribution.
 .SH FILES
-.TP
-.I @sysconfdir@/wine.conf
-Global configuration file for wine.
 .TP
 .I ~/.wine/config
 User-specific configuration file
