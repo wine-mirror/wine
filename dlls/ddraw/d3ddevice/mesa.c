@@ -88,6 +88,116 @@ inline static Display *get_display( HDC hdc )
     return display;
 }
 
+#define UNLOCK_TEX_SIZE 256
+
+#define DEPTH_RANGE_BIT (0x00000001 << 0)
+#define VIEWPORT_BIT    (0x00000001 << 1)
+
+static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, BOOLEAN use_alpha, BOOLEAN *initial) {
+    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
+    DWORD opt_bitmap = 0x00000000;
+    
+    if (gl_d3d_dev->unlock_tex == 0) {
+        glGenTextures(1, &gl_d3d_dev->unlock_tex);
+	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+	*initial = TRUE;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+    }
+    if (d3d_dev->tex_mat_is_identity[0] == FALSE) {
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+    }
+    
+    if (gl_d3d_dev->transform_state != GL_TRANSFORM_ORTHO) {
+	gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
+	d3ddevice_set_ortho(d3d_dev);
+    }
+    
+    if (gl_d3d_dev->depth_test != FALSE) glDisable(GL_DEPTH_TEST);
+    if ((gl_d3d_dev->current_bound_texture[0] == NULL) ||
+	(d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE))
+	glEnable(GL_TEXTURE_2D);
+    glEnable(GL_SCISSOR_TEST);
+    if ((d3d_dev->active_viewport.dvMinZ != 0.0) ||
+	(d3d_dev->active_viewport.dvMaxZ != 1.0)) {
+	glDepthRange(0.0, 1.0);
+	opt_bitmap |= DEPTH_RANGE_BIT;
+    }
+    if ((d3d_dev->active_viewport.dwX != 0) ||
+	(d3d_dev->active_viewport.dwY != 0) ||
+	(d3d_dev->active_viewport.dwWidth != d3d_dev->surface->surface_desc.dwWidth) ||
+	(d3d_dev->active_viewport.dwHeight != d3d_dev->surface->surface_desc.dwHeight)) {
+	glViewport(0, 0, d3d_dev->surface->surface_desc.dwWidth, d3d_dev->surface->surface_desc.dwHeight);
+	opt_bitmap |= VIEWPORT_BIT;
+    }
+    glScissor(pRect->left, d3d_dev->surface->surface_desc.dwHeight - pRect->bottom,
+	      pRect->right - pRect->left, pRect->bottom - pRect->top);
+    if (gl_d3d_dev->lighting != FALSE) glDisable(GL_LIGHTING);
+    if (gl_d3d_dev->cull_face != FALSE) glDisable(GL_CULL_FACE);
+    if (use_alpha) {
+	if (gl_d3d_dev->alpha_test == FALSE) glEnable(GL_ALPHA_TEST);
+	if (((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) != 0x00) ||
+	    ((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]) != D3DCMP_GREATER)) {
+	    glAlphaFunc(GL_GREATER, 0.0);
+	}
+    } else {
+	if (gl_d3d_dev->alpha_test != FALSE) glDisable(GL_ALPHA_TEST);
+    }
+    if (gl_d3d_dev->stencil_test != FALSE) glDisable(GL_STENCIL_TEST);
+    if (gl_d3d_dev->blending != FALSE) glDisable(GL_BLEND);
+    if (gl_d3d_dev->fogging != FALSE) glDisable(GL_FOG);
+    if (gl_d3d_dev->current_tex_env != GL_REPLACE)
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glColor3ub(0xFF, 0xFF, 0xFF);
+    
+    return opt_bitmap;
+}
+
+static void d3ddevice_restore_state_after_flush(IDirect3DDeviceImpl *d3d_dev, DWORD opt_bitmap, BOOLEAN use_alpha) {
+    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
+
+    /* And restore all the various states modified by this code */
+    if (gl_d3d_dev->depth_test != 0) glEnable(GL_DEPTH_TEST);
+    if (gl_d3d_dev->lighting != 0) glEnable(GL_LIGHTING);
+    if ((gl_d3d_dev->alpha_test != 0) && (use_alpha == 0))
+	glEnable(GL_ALPHA_TEST);
+    else if ((gl_d3d_dev->alpha_test == 0) && (use_alpha != 0))
+	glDisable(GL_ALPHA_TEST);
+    if (use_alpha) {
+	if (((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) != 0x00) ||
+	    ((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]) != D3DCMP_GREATER)) {
+	    glAlphaFunc(convert_D3D_compare_to_GL(d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]),
+			(d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) / 255.0);
+	}
+    }
+    if (gl_d3d_dev->stencil_test != 0) glEnable(GL_STENCIL_TEST);
+    if (gl_d3d_dev->cull_face != 0) glEnable(GL_CULL_FACE);
+    if (gl_d3d_dev->blending != 0) glEnable(GL_BLEND);
+    if (gl_d3d_dev->fogging != 0) glEnable(GL_FOG);
+    glDisable(GL_SCISSOR_TEST);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_d3d_dev->current_tex_env);
+    if (opt_bitmap & DEPTH_RANGE_BIT) {
+	glDepthRange(d3d_dev->active_viewport.dvMinZ, d3d_dev->active_viewport.dvMaxZ);
+    }
+    if (opt_bitmap & VIEWPORT_BIT) {
+	glViewport(d3d_dev->active_viewport.dwX,
+		   d3d_dev->surface->surface_desc.dwHeight - (d3d_dev->active_viewport.dwHeight + d3d_dev->active_viewport.dwY),
+		   d3d_dev->active_viewport.dwWidth, d3d_dev->active_viewport.dwHeight);
+    }
+    if (d3d_dev->tex_mat_is_identity[0] == FALSE) {
+	d3d_dev->matrices_updated(d3d_dev, TEXMAT0_CHANGED);
+    }
+    
+    /* This is a hack to prevent querying the current texture from GL. Basically, at the next
+       DrawPrimitive call, this will bind the correct texture to this stage. */
+    gl_d3d_dev->current_bound_texture[0] = (IDirectDrawSurfaceImpl *) 0x00000001;
+    if (d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE) glDisable(GL_TEXTURE_2D);
+}
 
 /* retrieve the X drawable to use on a given DC */
 inline static Drawable get_drawable( HDC hdc )
@@ -2697,7 +2807,10 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		GLenum prev_draw;
 		WINE_GL_BUFFER_TYPE src_buffer_type;
 		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
-		
+		BOOLEAN initial = FALSE;
+		DWORD opt_bitmap;
+		int x, y;
+	
 		if (rsrc) {
 		    src_rect.u1.x1 = rsrc->left;
 		    src_rect.u2.y1 = rsrc->top;
@@ -2713,9 +2826,9 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		width = src_rect.u3.x2 - src_rect.u1.x1;
 		height = src_rect.u4.y2 - src_rect.u2.y1;
 
-		if ((width != (src_rect.u3.x2 - src_rect.u1.x1)) ||
-		    (height != (src_rect.u4.y2 - src_rect.u2.y1))) {
-		    TRACE(" buffer to buffer copy not supported with stretching yet !\n");
+		if ((width != (rect.u3.x2 - rect.u1.x1)) ||
+		    (height != (rect.u4.y2 - rect.u2.y1))) {
+		    FIXME(" buffer to buffer copy not supported with stretching yet !\n");
 		    return DDERR_INVALIDPARAMS;
 		}
 
@@ -2732,6 +2845,15 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		TRACE(" using direct buffer to buffer copy.\n");
 
 		ENTER_GL();
+
+		opt_bitmap = d3ddevice_set_state_for_flush(This->d3ddevice, (LPCRECT) &rect, FALSE, &initial);
+		
+		if (upload_surface_to_tex_memory_init(This, 0, &gl_d3d_dev->current_internal_format,
+						      initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
+		    ERR(" unsupported pixel format at direct buffer to buffer copy.\n");
+		    LEAVE_GL();
+		    return DDERR_INVALIDPARAMS;
+		}
 		
 		glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
 		if (buffer_type == WINE_GL_BUFFER_FRONT)
@@ -2743,22 +2865,61 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		    glReadBuffer(GL_FRONT);
 		else
 		    glReadBuffer(GL_BACK);
-		
-		/* Set orthographic projection to prevent bad things happening with the glRasterPos call */
-		if (gl_d3d_dev->transform_state != GL_TRANSFORM_ORTHO) {
-		    gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
-		    d3ddevice_set_ortho(This->d3ddevice);
-		}
 
-		glRasterPos3d(rect.u1.x1, rect.u2.y1, 0.5);
-		glCopyPixels(src_rect.u1.x1, src_impl->surface_desc.dwHeight - rect.u4.y2,
-			     width, height, GL_COLOR);
+		/* Now the serious stuff happens. Basically, we copy from the source buffer to the texture memory.
+		   And directly re-draws this on the destination buffer. */
+		for (y = 0; y < height; y += UNLOCK_TEX_SIZE) {
+		    int get_height;
+		    
+		    if ((src_rect.u2.y1 + y + UNLOCK_TEX_SIZE) > src_impl->surface_desc.dwHeight)
+			get_height = src_impl->surface_desc.dwHeight - (src_rect.u2.y1 + y);
+		    else
+			get_height = UNLOCK_TEX_SIZE;
+		    
+		    for (x = 0; x < width; x += UNLOCK_TEX_SIZE) {
+			int get_width;
+			
+			if ((src_rect.u1.x1 + x + UNLOCK_TEX_SIZE) > src_impl->surface_desc.dwWidth)
+			    get_width = src_impl->surface_desc.dwWidth - (src_rect.u1.x1 + x);
+			else
+			    get_width = UNLOCK_TEX_SIZE;
+			
+			glCopyTexSubImage2D(GL_TEXTURE_2D, 0,
+					    0, UNLOCK_TEX_SIZE - get_height,
+					    src_rect.u1.x1 + x, src_impl->surface_desc.dwHeight - (src_rect.u2.y1 + y + get_height),
+					    get_width, get_height);
+			
+			glBegin(GL_QUADS);
+			glTexCoord2f(0.0, 0.0);
+			glVertex3d(rect.u1.x1 + x,
+				   rect.u2.y1 + y + UNLOCK_TEX_SIZE,
+				   0.5);
+			glTexCoord2f(1.0, 0.0);
+			glVertex3d(rect.u1.x1 + x + UNLOCK_TEX_SIZE,
+				   rect.u2.y1 + y + UNLOCK_TEX_SIZE,
+				   0.5);
+			glTexCoord2f(1.0, 1.0);
+			glVertex3d(rect.u1.x1 + x + UNLOCK_TEX_SIZE,
+				   rect.u2.y1 + y,
+				   0.5);
+			glTexCoord2f(0.0, 1.0);
+			glVertex3d(rect.u1.x1 + x,
+				   rect.u2.y1 + y,
+				   0.5);
+			glEnd();
+		    }
+		}
+		
+		upload_surface_to_tex_memory_release();
+		d3ddevice_restore_state_after_flush(This->d3ddevice, opt_bitmap, FALSE);
 		
 		if (((buffer_type == WINE_GL_BUFFER_FRONT) && (prev_draw == GL_BACK)) ||
 		    ((buffer_type == WINE_GL_BUFFER_BACK)  && (prev_draw == GL_FRONT)))
 		    glDrawBuffer(prev_draw);
 		
 		LEAVE_GL();
+
+		return DD_OK;
 	    }
 	}
     }
@@ -3127,114 +3288,6 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
     }
 }
 
-#define UNLOCK_TEX_SIZE 256
-
-#define DEPTH_RANGE_BIT (0x00000001 << 0)
-#define VIEWPORT_BIT    (0x00000001 << 1)
-
-static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, BOOLEAN use_alpha, BOOLEAN *initial) {
-    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-    DWORD opt_bitmap = 0x00000000;
-    
-    if (gl_d3d_dev->unlock_tex == 0) {
-        glGenTextures(1, &gl_d3d_dev->unlock_tex);
-	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
-	*initial = TRUE;
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    } else {
-        glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
-    }
-    if (d3d_dev->tex_mat_is_identity[0] == FALSE) {
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-    }
-    
-    if (gl_d3d_dev->transform_state != GL_TRANSFORM_ORTHO) {
-	gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
-	d3ddevice_set_ortho(d3d_dev);
-    }
-    
-    if (gl_d3d_dev->depth_test != FALSE) glDisable(GL_DEPTH_TEST);
-    if ((gl_d3d_dev->current_bound_texture[0] == NULL) ||
-	(d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE))
-	glEnable(GL_TEXTURE_2D);
-    glEnable(GL_SCISSOR_TEST);
-    if ((d3d_dev->active_viewport.dvMinZ != 0.0) ||
-	(d3d_dev->active_viewport.dvMaxZ != 1.0)) {
-	glDepthRange(0.0, 1.0);
-	opt_bitmap |= DEPTH_RANGE_BIT;
-    }
-    if ((d3d_dev->active_viewport.dwX != 0) ||
-	(d3d_dev->active_viewport.dwY != 0) ||
-	(d3d_dev->active_viewport.dwWidth != d3d_dev->surface->surface_desc.dwWidth) ||
-	(d3d_dev->active_viewport.dwHeight != d3d_dev->surface->surface_desc.dwHeight)) {
-	glViewport(0, 0, d3d_dev->surface->surface_desc.dwWidth, d3d_dev->surface->surface_desc.dwHeight);
-	opt_bitmap |= VIEWPORT_BIT;
-    }
-    glScissor(pRect->left, d3d_dev->surface->surface_desc.dwHeight - pRect->bottom,
-	      pRect->right - pRect->left, pRect->bottom - pRect->top);
-    if (gl_d3d_dev->lighting != FALSE) glDisable(GL_LIGHTING);
-    if (gl_d3d_dev->cull_face != FALSE) glDisable(GL_CULL_FACE);
-    if (use_alpha) {
-	if (gl_d3d_dev->alpha_test == FALSE) glEnable(GL_ALPHA_TEST);
-	if (((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) != 0x00) ||
-	    ((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]) != D3DCMP_GREATER)) {
-	    glAlphaFunc(GL_GREATER, 0.0);
-	}
-    } else {
-	if (gl_d3d_dev->alpha_test != FALSE) glDisable(GL_ALPHA_TEST);
-    }
-    if (gl_d3d_dev->stencil_test != FALSE) glDisable(GL_STENCIL_TEST);
-    if (gl_d3d_dev->blending != FALSE) glDisable(GL_BLEND);
-    if (gl_d3d_dev->fogging != FALSE) glDisable(GL_FOG);
-    if (gl_d3d_dev->current_tex_env != GL_REPLACE)
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    return opt_bitmap;
-}
-
-static void d3ddevice_restore_state_after_flush(IDirect3DDeviceImpl *d3d_dev, DWORD opt_bitmap, BOOLEAN use_alpha) {
-    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-
-    /* And restore all the various states modified by this code */
-    if (gl_d3d_dev->depth_test != 0) glEnable(GL_DEPTH_TEST);
-    if (gl_d3d_dev->lighting != 0) glEnable(GL_LIGHTING);
-    if ((gl_d3d_dev->alpha_test != 0) && (use_alpha == 0))
-	glEnable(GL_ALPHA_TEST);
-    else if ((gl_d3d_dev->alpha_test == 0) && (use_alpha != 0))
-	glDisable(GL_ALPHA_TEST);
-    if (use_alpha) {
-	if (((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) != 0x00) ||
-	    ((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]) != D3DCMP_GREATER)) {
-	    glAlphaFunc(convert_D3D_compare_to_GL(d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]),
-			(d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) / 255.0);
-	}
-    }
-    if (gl_d3d_dev->stencil_test != 0) glEnable(GL_STENCIL_TEST);
-    if (gl_d3d_dev->cull_face != 0) glEnable(GL_CULL_FACE);
-    if (gl_d3d_dev->blending != 0) glEnable(GL_BLEND);
-    if (gl_d3d_dev->fogging != 0) glEnable(GL_FOG);
-    glDisable(GL_SCISSOR_TEST);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_d3d_dev->current_tex_env);
-    if (opt_bitmap & DEPTH_RANGE_BIT) {
-	glDepthRange(d3d_dev->active_viewport.dvMinZ, d3d_dev->active_viewport.dvMaxZ);
-    }
-    if (opt_bitmap & VIEWPORT_BIT) {
-	glViewport(d3d_dev->active_viewport.dwX,
-		   d3d_dev->surface->surface_desc.dwHeight - (d3d_dev->active_viewport.dwHeight + d3d_dev->active_viewport.dwY),
-		   d3d_dev->active_viewport.dwWidth, d3d_dev->active_viewport.dwHeight);
-    }
-    if (d3d_dev->tex_mat_is_identity[0] == FALSE) {
-	d3d_dev->matrices_updated(d3d_dev, TEXMAT0_CHANGED);
-    }
-    
-    /* This is a hack to prevent querying the current texture from GL. Basically, at the next
-       DrawPrimitive call, this will bind the correct texture to this stage. */
-    gl_d3d_dev->current_bound_texture[0] = (IDirectDrawSurfaceImpl *) 0x00000001;
-    if (d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE) glDisable(GL_TEXTURE_2D);
-}
-
 static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, IDirectDrawSurfaceImpl *surf) {
     RECT loc_rect;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
@@ -3263,20 +3316,20 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	return;
     }
 	
-    for (x = pRect->left; x < pRect->right; x += UNLOCK_TEX_SIZE) {
-        for (y = pRect->top; y < pRect->bottom; y += UNLOCK_TEX_SIZE) {
-	    /* First, upload the texture... */
-	    RECT flush_rect;
+    for (y = pRect->top; y < pRect->bottom; y += UNLOCK_TEX_SIZE) {
+	RECT flush_rect;
+	
+	flush_rect.top = y;
+	flush_rect.bottom = (y + UNLOCK_TEX_SIZE > pRect->bottom) ? pRect->bottom : (y + UNLOCK_TEX_SIZE);
 
+	for (x = pRect->left; x < pRect->right; x += UNLOCK_TEX_SIZE) {
+	    /* First, upload the texture... */
 	    flush_rect.left = x;
-	    flush_rect.top = y;
 	    flush_rect.right  = (x + UNLOCK_TEX_SIZE > pRect->right)  ? pRect->right  : (x + UNLOCK_TEX_SIZE);
-	    flush_rect.bottom = (y + UNLOCK_TEX_SIZE > pRect->bottom) ? pRect->bottom : (y + UNLOCK_TEX_SIZE);
 
 	    upload_surface_to_tex_memory(&flush_rect, 0, 0, &(gl_d3d_dev->surface_ptr));
 
 	    glBegin(GL_QUADS);
-	    glColor3ub(0xFF, 0xFF, 0xFF);
 	    glTexCoord2f(0.0, 0.0);
 	    glVertex3d(x, y, 0.5);
 	    glTexCoord2f(1.0, 0.0);
