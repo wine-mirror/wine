@@ -103,6 +103,10 @@ struct statfs;
 #define snprintf _snprintf
 #endif
 
+#if !defined(HAVE_VSNPRINTF) && defined(HAVE__VSNPRINTF)
+#define vsnprintf _vsnprintf
+#endif
+
 #ifndef S_ISLNK
 # define S_ISLNK(mod) (0)
 #endif /* S_ISLNK */

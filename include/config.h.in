@@ -638,6 +638,9 @@
 /* Define to 1 if you have the `vfscanf' function. */
 #undef HAVE_VFSCANF
 
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
 /* Define to 1 if you have the `wait4' function. */
 #undef HAVE_WAIT4
 
@@ -694,6 +697,9 @@
 
 /* Define to 1 if you have the `_strnicmp' function. */
 #undef HAVE__STRNICMP
+
+/* Define to 1 if you have the `_vsnprintf' function. */
+#undef HAVE__VSNPRINTF
 
 /* Define if we have __va_copy */
 #undef HAVE___VA_COPY

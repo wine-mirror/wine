@@ -13148,6 +13148,8 @@ fi
 
 
 
+
+
 for ac_func in \
 	_lwp_create \
 	_pclose \
@@ -13155,6 +13157,7 @@ for ac_func in \
 	_snprintf \
 	_stricmp \
 	_strnicmp \
+	_vsnprintf \
 	chsize \
 	clone \
 	ecvt \
@@ -13202,6 +13205,7 @@ for ac_func in \
 	timegm \
 	usleep \
 	vfscanf \
+	vsnprintf \
 	wait4 \
 	waitpid \
 

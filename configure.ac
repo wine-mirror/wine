@@ -936,6 +936,7 @@ AC_CHECK_FUNCS(\
 	_snprintf \
 	_stricmp \
 	_strnicmp \
+	_vsnprintf \
 	chsize \
 	clone \
 	ecvt \
@@ -983,6 +984,7 @@ AC_CHECK_FUNCS(\
 	timegm \
 	usleep \
 	vfscanf \
+	vsnprintf \
 	wait4 \
 	waitpid \
 )
