@@ -79,9 +79,17 @@ void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
     /* retrieve the stack info (except for main thread) */
     if (funcs.ptr_set_thread_data)
     {
+#ifdef HAVE_PTHREAD_GETATTR_NP
         pthread_attr_t attr;
         pthread_getattr_np( pthread_self(), &attr );
         pthread_attr_getstack( &attr, &info->stack_base, &info->stack_size );
+#else
+        /* assume that the stack allocation is page aligned */
+        char dummy;
+        size_t page_mask = getpagesize() - 1;
+        char *stack_top = (char *)((unsigned long)(&dummy + page_mask) & ~page_mask);
+        info->stack_base = stack_top - info->stack_size;
+#endif
     }
 
     /* set pid and tid */

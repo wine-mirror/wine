@@ -410,6 +410,9 @@
 /* Define to 1 if you have the <process.h> header file. */
 #undef HAVE_PROCESS_H
 
+/* Define to 1 if you have the `pthread_getattr_np' function. */
+#undef HAVE_PTHREAD_GETATTR_NP
+
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
