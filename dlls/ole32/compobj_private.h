@@ -97,6 +97,7 @@ struct ifproxy
   IPID ipid;               /* imported interface ID (RO) */
   LPRPCPROXYBUFFER proxy;  /* interface proxy (RO) */
   DWORD refs;              /* imported (public) references (CS parent->cs) */
+  IRpcChannelBuffer *chan; /* channel to object (CS parent->cs) */
 };
 
 /* imported object / proxy manager */
@@ -105,7 +106,6 @@ struct proxy_manager
   const IMultiQIVtbl *lpVtbl;
   struct apartment *parent; /* owning apartment (RO) */
   struct list entry;        /* entry in apartment (CS parent->cs) */
-  LPRPCCHANNELBUFFER chan;  /* channel to object (CS cs) */
   OXID oxid;                /* object exported ID (RO) */
   OID oid;                  /* object ID (RO) */
   struct list interfaces;   /* imported interfaces (CS cs) */

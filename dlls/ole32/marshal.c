@@ -377,12 +377,17 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
     return hr;
 }
 
+/* should be called inside This->parent->cs critical section */
 static void ifproxy_disconnect(struct ifproxy * This)
 {
     ifproxy_release_public_refs(This);
     if (This->proxy) IRpcProxyBuffer_Disconnect(This->proxy);
+
+    IRpcChannelBuffer_Release(This->chan);
+    This->chan = NULL;
 }
 
+/* should be called in This->parent->cs critical section if it is an entry in parent's list */
 static void ifproxy_destroy(struct ifproxy * This)
 {
     TRACE("%p\n", This);
@@ -393,6 +398,12 @@ static void ifproxy_destroy(struct ifproxy * This)
 
     list_remove(&This->entry);
 
+    if (This->chan)
+    {
+        IRpcChannelBuffer_Release(This->chan);
+        This->chan = NULL;
+    }
+
     /* note: we don't call Release for This->proxy because its lifetime is
      * controlled by the return value from ClientIdentity_Release, which this
      * function is always called from */
@@ -402,7 +413,7 @@ static void ifproxy_destroy(struct ifproxy * This)
 
 static HRESULT proxy_manager_construct(
     APARTMENT * apt, ULONG sorflags, OXID oxid, OID oid,
-    IRpcChannelBuffer * channel, struct proxy_manager ** proxy_manager)
+    struct proxy_manager ** proxy_manager)
 {
     struct proxy_manager * This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
@@ -427,9 +438,6 @@ static HRESULT proxy_manager_construct(
      * proxy manager specific, not ifproxy specific, so this implies that we
      * should store the STDOBJREF flags in the proxy manager. */
     This->sorflags = sorflags;
-
-    assert(channel);
-    This->chan = channel; /* FIXME: we should take the binding strings and construct the channel in this function */
 
     /* we create the IRemUnknown proxy on demand */
     This->remunk = NULL;
@@ -479,7 +487,7 @@ static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, 
 
 static HRESULT proxy_manager_create_ifproxy(
     struct proxy_manager * This, const IPID *ipid, REFIID riid, ULONG cPublicRefs,
-    struct ifproxy ** iif_out)
+    IRpcChannelBuffer * channel, struct ifproxy ** iif_out)
 {
     HRESULT hr;
     IPSFactoryBuffer * psfb;
@@ -493,6 +501,9 @@ static HRESULT proxy_manager_create_ifproxy(
     ifproxy->iid = *riid;
     ifproxy->refs = cPublicRefs;
     ifproxy->proxy = NULL;
+
+    assert(channel);
+    ifproxy->chan = channel; /* FIXME: we should take the binding strings and construct the channel in this function */
 
     /* the IUnknown interface is special because it does not have a
      * proxy associated with the ifproxy as we handle IUnknown ourselves */
@@ -522,7 +533,7 @@ static HRESULT proxy_manager_create_ifproxy(
                 debugstr_guid(riid), hr);
 
         if (hr == S_OK)
-            hr = IRpcProxyBuffer_Connect(ifproxy->proxy, This->chan);
+            hr = IRpcProxyBuffer_Connect(ifproxy->proxy, ifproxy->chan);
     }
 
     /* get at least one external reference to the object to keep it alive */
@@ -583,11 +594,6 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
 
     /* apartment is being destroyed so don't keep a pointer around to it */
     This->parent = NULL;
-
-    /* FIXME: will this still be necessary if/when we use a real RPC
-     * channel? */
-    IRpcChannelBuffer_Release(This->chan);
-    This->chan = NULL;
 
     LeaveCriticalSection(&This->cs);
 }
@@ -676,7 +682,6 @@ static void proxy_manager_destroy(struct proxy_manager * This)
     }
 
     if (This->remunk) IRemUnknown_Release(This->remunk);
-    if (This->chan) IRpcChannelBuffer_Release(This->chan);
 
     DeleteCriticalSection(&This->cs);
 
@@ -844,13 +849,9 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
      * object */
     if (!find_proxy_manager(apt, stdobjref->oxid, stdobjref->oid, &proxy_manager))
     {
-        IRpcChannelBuffer *chanbuf;
-
-        hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid, &chanbuf);
-        if (hr == S_OK)
-            hr = proxy_manager_construct(apt, stdobjref->flags,
-                                         stdobjref->oxid, stdobjref->oid,
-                                         chanbuf, &proxy_manager);
+        hr = proxy_manager_construct(apt, stdobjref->flags,
+                                     stdobjref->oxid, stdobjref->oid,
+                                     &proxy_manager);
     }
     else
         TRACE("proxy manager already created, using\n");
@@ -860,9 +861,14 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
         struct ifproxy * ifproxy;
         hr = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
         if (hr == E_NOINTERFACE)
-            hr = proxy_manager_create_ifproxy(proxy_manager, &stdobjref->ipid,
-                                              riid, stdobjref->cPublicRefs,
-                                              &ifproxy);
+        {
+            IRpcChannelBuffer *chanbuf;
+            hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid, &chanbuf);
+            if (hr == S_OK)
+                hr = proxy_manager_create_ifproxy(proxy_manager, &stdobjref->ipid,
+                                                  riid, stdobjref->cPublicRefs,
+                                                  chanbuf, &ifproxy);
+        }
 
         if (hr == S_OK)
         {
