@@ -2917,7 +2917,7 @@ then
   then
     MFC_INCLUDE_ROOT=":$WINE_INCLUDE_ROOT/mfc:/usr/include/mfc:/usr/local/include/mfc:/opt/mfc/include/mfc:/opt/mfc/include"
   else
-    MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT:$MFC_INCLUDE_ROOT/mfc:$MFC_INCLUDE_ROOT/mfc/include"
+    MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT:$MFC_INCLUDE_ROOT/mfc:$MFC_INCLUDE_ROOT/mfc/include:$MFC_INCLUDE_ROOT/Include"
   fi
   AC_PATH_HEADER(MFC_INCLUDE_ROOT,afx.h,[
     AC_MSG_ERROR([Could not find the MFC includes])
@@ -2932,7 +2932,7 @@ then
   then
     MFC_LIBRARY_ROOT=":$WINE_LIBRARY_ROOT:/usr/lib/mfc:/usr/local/lib:/usr/local/lib/mfc:/opt/mfc/lib";
   else
-    MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT:$MFC_LIBRARY_ROOT/lib:$MFC_LIBRARY_ROOT/mfc/src";
+    MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT:$MFC_LIBRARY_ROOT/lib:$MFC_LIBRARY_ROOT/mfc/src:$MFC_LIBRARY_ROOT/src";
   fi
   AC_PATH_LIBRARY(MFC_LIBRARY_ROOT,[-lmfc],[$WINE_LIBRARY_PATH -lwine -lwine_unicode],[
     AC_MSG_ERROR([Could not find the MFC library])
