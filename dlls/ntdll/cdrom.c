@@ -759,7 +759,7 @@ static DWORD CDROM_Verify(int dev)
     SUB_Q_CHANNEL_DATA          data;
 
     fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
-    return CDROM_ReadQChannel(dev, &fmt, &data) ? 0 : 1;
+    return CDROM_ReadQChannel(dev, &fmt, &data) ? 1 : 0;
 }
 
 /******************************************************************
