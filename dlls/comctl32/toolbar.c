@@ -3488,14 +3488,7 @@ TOOLBAR_GetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_GetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    INT nIndex;
-
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
-    if (nIndex == -1)
-	return -1;
-
-    return infoPtr->buttons[nIndex].fsStyle;
+    return GetWindowLongW(hwnd, GWL_STYLE);
 }
 
 
