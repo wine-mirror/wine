@@ -152,10 +152,16 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
     }
 
-    pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
-    if (This->myDesc.Format == D3DFMT_DXT1) /* DXT1 is half byte per pixel */
-        pLockedRect->Pitch = pLockedRect->Pitch/2;
-    
+    /* DXTn formats dont have exact pitches as they are to the newt row of blocks, 
+         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)      
+          ie pitch = (width/4) * bytes per block                                  */
+    if (This->myDesc.Format == D3DFMT_DXT1) /* DXT1 is 8 bytes per block */
+        pLockedRect->Pitch = (This->myDesc.Width/4) * 8;
+    else if (This->myDesc.Format == D3DFMT_DXT3 || This->myDesc.Format == D3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
+        pLockedRect->Pitch = (This->myDesc.Width/4) * 16;
+    else
+        pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
+
     if (NULL == pRect) {
       pLockedRect->pBits = This->allocatedMemory;
       This->lockedRect.left   = 0;

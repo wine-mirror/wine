@@ -1487,7 +1487,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
                     TRACE("Saving texture %s (Format:%s)\n", buffer, debug_d3dformat(((IDirect3DBaseTexture8Impl *)This->StateBlock->textures[textureNo])->format));
                     IDirect3DTexture8Impl_GetSurfaceLevel((LPDIRECT3DTEXTURE8) This->StateBlock->textures[textureNo], 0, &pSur);
                     IDirect3DSurface8Impl_SaveSnapshot(pSur, buffer);
-                    IDirect3DSurface8Impl_ReleaseRef(pSur);
+                    IDirect3DSurface8Impl_Release(pSur);
                 }
             }
            }
