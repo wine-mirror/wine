@@ -1713,6 +1713,24 @@ export PATH=$PATH:/path/to/wine/binary
       </qandaentry>
 
       <qandaentry>
+      <question id="Can-I-bundle-everything-in-one-huge-executable">
+        <para>
+          Is there a way to bind the Wine code, a Windows .exe, associated DLLs,
+          and any necessary accompanying files into a single Linux executable which
+          can execute as if it were a native linux binary (ie without also having
+          Wine pre-installed)?
+        </para>
+      </question>
+      <answer>
+        <para>
+          No. However, if you don't want Wine as a dependency, you can bundle your 
+          private version of Wine into your package (.rpm/.deb). Wine has good
+          support for such a setup via the WINEPREFIX environment variable.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
       <question id="How-can-I-detect-Wine">
         <para>How can I detect Wine?</para>
       </question>
