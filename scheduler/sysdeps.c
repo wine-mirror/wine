@@ -56,11 +56,6 @@ extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 
 static int init_done;
 
-#ifndef __i386__
-static TEB *pCurrentTeb;
-#endif
-
-
 #ifndef NO_REENTRANT_LIBC
 
 /***********************************************************************
@@ -112,13 +107,14 @@ int *__h_errno_location()
  */
 void SYSDEPS_SetCurThread( TEB *teb )
 {
-#ifdef __i386__
+#if defined(__i386__)
     /* On the i386, the current thread is in the %fs register */
     SET_FS( teb->teb_sel );
-#else
-    /* FIXME: only works if there is no preemptive task-switching going on... */
-    pCurrentTeb = teb;
-#endif  /* __i386__ */
+#elif defined(HAVE__LWP_CREATE)
+    /* On non-i386 Solaris, we use the LWP private pointer */
+    _lwp_setprivate( teb );
+#endif
+
     init_done = 1;  /* now we can use threading routines */
 }
 
@@ -216,20 +212,13 @@ void SYSDEPS_ExitThread(void)
  * This will crash and burn if called before threading is initialized
  */
 
-#ifdef NtCurrentTeb
-
 /* if it was defined as a macro, we need to do some magic */
+#ifdef NtCurrentTeb
 #undef NtCurrentTeb
+#endif
+
 struct _TEB * WINAPI NtCurrentTeb(void)
 {
     return __get_teb();
 }
 
-#else  /* NtCurrentTeb */
-
-struct _TEB * WINAPI NtCurrentTeb(void)
-{
-    return pCurrentTeb;
-}
-
-#endif  /* NtCurrentTeb */

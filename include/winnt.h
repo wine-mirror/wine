@@ -739,15 +739,29 @@ WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 #define DBG_EXCEPTION_NOT_HANDLED   0x80010001
 
 struct _TEB;
-#if defined(__i386__) && defined(__WINE__)
+
+#ifdef __WINE__
+
+#if defined(__i386__)
 static inline struct _TEB * WINE_UNUSED __get_teb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
     return teb;
 }
-#define NtCurrentTeb() __get_teb()
+#elif defined(HAVE__LWP_CREATE)
+extern void *_lwp_getprivate(void);
+static inline struct _TEB * WINE_UNUSED __get_teb(void)
+{
+    return (struct _TEB *)_lwp_getprivate();
+}
 #else
+#error NtCurrentTeb() not defined for this architecture!
+#endif
+
+#define NtCurrentTeb() __get_teb()
+
+#else /* __WINE__ */
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
 
