@@ -115,6 +115,7 @@ typedef DWORD           LCID;
 typedef WORD            LANGID;
 typedef DWORD           LCTYPE;
 typedef float           FLOAT;
+typedef long long       __int64;
 
 /* Pointers types. These are the same for emulator and library. */
 /* winnt types */
@@ -277,6 +278,7 @@ typedef LPCSTR LPCTSTR;
 
 DECL_WINELIB_TYPE(INT)
 DECL_WINELIB_TYPE(LPINT)
+DECL_WINELIB_TYPE(PUINT)
 DECL_WINELIB_TYPE(LPUINT)
 DECL_WINELIB_TYPE(UINT)
 DECL_WINELIB_TYPE(BOOL)
