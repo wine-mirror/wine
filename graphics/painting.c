@@ -103,7 +103,7 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 
     if(dc->funcs->pMoveToEx)
         return dc->funcs->pMoveToEx(dc,x,y,pt);
-    return FALSE;
+    return TRUE;
 }
 
 
