@@ -293,7 +293,7 @@ static struct {
 	{&IID_IPersistFolder2,		"IID_IPersistFolder2"},
 	{&IID_IPersistFolder3,		"IID_IPersistFolder3"},
 	{&IID_IExtractIconA,		"IID_IExtractIconA"},
-	{&IID_IDataObject,		"IID_IDataObject"},
+	{&IID_IExtractIconW,		"IID_IExtractIconW"},
 	{&IID_IDataObject,		"IID_IDataObject"},
 	{NULL,NULL}};
 
