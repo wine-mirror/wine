@@ -29,7 +29,6 @@ OPTIONS   = @OPTIONS@ -D_REENTRANT
 X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
 XLIB      = @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
-DLL_LINK  = @DLL_LINK@
 LIBS      = @LIBS@
 YACC      = @YACC@
 LEX       = @LEX@
@@ -93,86 +92,6 @@ OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_
        $(ASM_SRCS:.S=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
 LINTS = $(C_SRCS:.c=.ln)
-
-# DLL list
-
-X_DLLS = \
-	ddraw \
-	@OPENGL32_DLL@ \
-	@GLU32_DLL@ \
-	x11drv
-
-DLLS = \
-	@X_DLLS@ \
-	advapi32 \
-	avifil32 \
-	comctl32 \
-	comdlg32 \
-	crtdll \
-	dciman32 \
-	dinput \
-	dplay \
-	dplayx \
-	dsound \
-	gdi32 \
-	icmp \
-	imagehlp \
-	imm32 \
-	joystick.drv \
-	kernel32 \
-	lz32 \
-	mapi32 \
-	mcianim.drv \
-	mciavi.drv \
-	mcicda.drv \
-	mciseq.drv \
-	mciwave.drv \
-	midimap.drv \
-	mpr \
-	msacm.drv \
-	msacm32 \
-	msimg32 \
-	msnet32 \
-	msvcrt \
-	msvfw32 \
-	odbc32 \
-	ole32 \
-	oleaut32 \
-	olecli32 \
-	oledlg \
-	olepro32 \
-	olesvr32 \
-	psapi \
-	quartz \
-	rasapi32 \
-	riched32 \
-	rpcrt4 \
-	serialui \
-	setupapi \
-	shdocvw \
-	shell32 \
-	shfolder \
-	shlwapi \
-	sti \
-	tapi32 \
-	ttydrv \
-	url \
-	urlmon \
-	user32 \
-	version \
-	w32skrnl \
-	winedos \
-	wineoss.drv \
-	wineps \
-	wininet \
-	winmm \
-	winnls32 \
-	winspool.drv \
-	wintrust \
-	wnaspi32 \
-	wow32 \
-	ws2_32 \
-	wsock32
 
 # Implicit rules
 

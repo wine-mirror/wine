@@ -133,18 +133,12 @@ AC_CHECK_HEADERS(jpeglib.h,
 
 
 AC_SUBST(XLIB)
-AC_SUBST(X_DLLS)
-X_DLLS=""
 AC_SUBST(XFILES)
 XFILES=""
 AC_SUBST(OPENGLFILES)
 OPENGLFILES=""
-AC_SUBST(OPENGL32_DLL)
-OPENGL32_DLL=""
-GLU32FILES=""
 AC_SUBST(GLU32FILES)
-GLU32_DLL=""
-AC_SUBST(GLU32_DLL)
+GLU32FILES=""
 if test "$have_x" = "yes"
 then
     XLIB="-lXext -lX11"
@@ -341,8 +335,6 @@ then
 				    AC_DEFINE(HAVE_GLEXT_PROTOTYPES, 1,
                                               [Define if the OpenGL headers define extension typedefs])
 				fi
-
-				OPENGL32_DLL=opengl32
 			fi
 
 		fi
@@ -350,7 +342,6 @@ then
 		AC_CHECK_LIB(GLU,gluLookAt,
 			     X_PRE_LIBS="$X_PRE_LIBS -lGLU"
 			     GLU32FILES='$(GLU32FILES)'
-			     GLU32_DLL=glu32
 			     ,,
 			     $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
@@ -359,7 +350,6 @@ then
     fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
-    X_DLLS='$(X_DLLS)'
     XFILES='$(XFILES)'
 else
     XLIB=""
@@ -716,40 +706,12 @@ LDPATH=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
-    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) \$(LIBWINE) \$(LIBUNICODE)"
     LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
 elif test "$LIBEXT" = "dll"; then
     #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
-    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) \$(LIBWINE) \$(LIBUNICODE)"
     LDPATH="PATH=\"\$(TOPOBJDIR)/unicode:\$\$PATH\""
-else
-    DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) \$(LIBWINE) \$(LIBUNICODE) \$(X_LIBS) \$(XLIB)"
-    AC_CACHE_CHECK([whether the linker supports --[[no]]-whole-archive (Linux)],
- 	           ac_cv_c_whole_archive,
-            [saved_cflags=$CFLAGS
-            CFLAGS="$CFLAGS -Wl,--whole-archive -Wl,--no-whole-archive"
-            AC_TRY_LINK(,[return 1],ac_cv_c_whole_archive="yes",ac_cv_c_whole_archive="no")
-            CFLAGS=$saved_cflags
-            ])
-    if test "$ac_cv_c_whole_archive" = "yes"
-    then
-        DLL_LINK="-Wl,--whole-archive $DLL_LINK -Wl,--no-whole-archive"
-    else
-        AC_CACHE_CHECK([whether the linker supports -z {all,default}extract (Linux)],
-                       ac_cv_c_allextract,
-		[saved_cflags=$CFLAGS
-		CFLAGS="$CFLAGS -Wl,-z,allextract -Wl,-z,defaultextract"
-		AC_TRY_LINK(,[return 1],ac_cv_c_allextract="yes",ac_cv_c_allextract="no")
-		CFLAGS=$saved_cflags
-		])
-        if test "$ac_cv_c_allextract" = "yes"
-        then
-            DLL_LINK="-Wl,-z,allextract $DLL_LINK -Wl,-z,defaultextract"
-        fi
-    fi
 fi
 
-AC_SUBST(DLL_LINK)
 AC_SUBST(DLLFLAGS)
 AC_SUBST(LDSHARED)
 AC_SUBST(LDDLLFLAGS)

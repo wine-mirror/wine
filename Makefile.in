@@ -67,8 +67,6 @@ INSTALLSUBDIRS = \
 EMUOBJS = \
 	miscemu/miscemu.o
 
-DLLOBJS = $(DLLS:%=dlls/lib%.@LIBEXT@)
-
 all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(LIBSYMLINKS) wine
 	@echo "Wine build complete."
 
@@ -81,7 +79,7 @@ Make.rules: Make.rules.in configure
 	@exit 1
 
 wine: dlls $(EMUOBJS)
-	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS) $(LDFLAGS)
+	$(CC) -o wine $(EMUOBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
 
 install:: all $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
@@ -92,7 +90,7 @@ install:: all $(INSTALLSUBDIRS:%=%/__install__)
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 	cd $(bindir) && $(RM) wine dosmod
 
-$(EMUOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
+$(EMUOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 libwine.$(LIBEXT): library/libwine.$(LIBEXT)
@@ -109,7 +107,7 @@ libwine_uuid.a: ole/libwine_uuid.a
 
 # Dependencies between directories
 
-$(DLLOBJS) $(PROGRAMS): tools
+$(PROGRAMS): tools
 
 $(EMUOBJS): tools dlls
 
