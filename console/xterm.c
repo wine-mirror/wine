@@ -19,6 +19,8 @@
 #include "console.h"
 #include "debug.h"
 
+#define ESC '\x1b'
+
 static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid);
 static FILE *wine_openpty(FILE **master, FILE **slave, char *name,
                         struct termios *term, struct winsize *winsize);
@@ -30,7 +32,7 @@ static FILE *wine_openpty(FILE **master, FILE **slave, char *name,
 typedef struct _XTERM_CONSOLE {
         FILE    *master;                 /* xterm side of pty */
         FILE    *slave;                  /* wine side of pty */
-        int     pid;                    /* xterm's pid, -1 if no xterm */
+        int     pid;                     /* xterm's pid, -1 if no xterm */
 } XTERM_CONSOLE;
 
 static XTERM_CONSOLE xterm_console;
@@ -47,6 +49,9 @@ void XTERM_Start()
 
    chain.close = driver.close;
    driver.close = XTERM_Close;
+
+   chain.resizeScreen = driver.resizeScreen;
+   driver.resizeScreen = XTERM_ResizeScreen;
 }
 
 void XTERM_Init()
@@ -78,6 +83,20 @@ void XTERM_Close()
    if (xterm_console.pid != -1) {
       kill(xterm_console.pid, SIGTERM);
    }
+}
+
+void XTERM_ResizeScreen(int x, int y)
+{
+   char temp[100];
+
+   /* Call the chain first, there shoudln't be any... */
+   if (chain.resizeScreen)
+      chain.resizeScreen(x, y);
+
+   sprintf(temp, "\x1b[8;%d;%dt", y, x);
+   CONSOLE_WriteRawString(temp);
+
+   CONSOLE_NotifyResizeScreen(x, y);
 }
 
 /**
@@ -145,7 +164,8 @@ static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid)
         if ((*pid=fork()) == 0) {
                 tcsetattr(fileno(*slave), TCSADRAIN, &term);
                 sprintf(buf, "-Sxx%d", fileno(*master));
-                execlp("xterm", "xterm", buf, NULL);
+                execlp(CONSOLE_XTERM_PROG, CONSOLE_XTERM_PROG, buf, "-fg",
+                   "white", "-bg", "black", NULL);
                 ERR(console, "error creating xterm\n");
                 exit(1);
         }

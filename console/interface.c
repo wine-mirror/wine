@@ -197,8 +197,23 @@ void CONSOLE_ResizeScreen(int x, int y)
 
 void CONSOLE_NotifyResizeScreen(int x, int y)
 {
-   if (driver.resizeScreen)
-      driver.resizeScreen(x, y);
+   if (driver.notifyResizeScreen)
+      driver.notifyResizeScreen(x, y);
+}
+
+void CONSOLE_WriteRawString(char *str)
+{
+   /* This is a special function that is only for internal use and 
+      does not actually call any of the console drivers. It's 
+      primary purpose is to provide a way for higher-level drivers
+      to write directly to the underlying terminal without worry that
+      there will be any retranslation done by the assorted drivers. Care
+      should be taken to ensure that this only gets called when the thing
+      written does not actually produce any output or a CONSOLE_Redraw()
+      is called immediately afterwards.
+      CONSOLE_Redraw() is not yet implemented.
+   */
+   fprintf(driver.console_out, "%s", str);
 }
 
 /* Utility functions... */
