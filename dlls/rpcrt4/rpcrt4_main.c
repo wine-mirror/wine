@@ -105,7 +105,7 @@ RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
        * However, under earlier systems, sa_len isn't present, so
        *  the size is just sizeof(struct ifreq)
        */
-#ifdef HAVE_SA_LEN
+#ifdef HAVE_SOCKADDR_SA_LEN
 #  ifndef max
 #   define max(a,b) ((a) > (b) ? (a) : (b))
 #  endif
@@ -113,8 +113,8 @@ RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
 sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 # else
 #  define ifreq_size(i) sizeof(struct ifreq)
-# endif /* HAVE_SA_LEN */
-      
+# endif /* defined(HAVE_SOCKADDR_SA_LEN) */
+
       sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
       if (sd < 0) {
 	 /* if we can't open a socket, just use random numbers */
@@ -143,7 +143,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 	 } else {
 	    /* loop through the interfaces, looking for a valid one */
 	    n = ifc.ifc_len;
-	    for (i = 0; i < n; i+= ifreq_size(*ifr) ) {
+	    for (i = 0; i < n; i+= ifreq_size(ifr) ) {
 	       ifrp = (struct ifreq *)((char *) ifc.ifc_buf+i);
 	       strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
 	       /* try to get the address for this interface */

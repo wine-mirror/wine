@@ -6840,13 +6840,50 @@ EOF
 fi
 
 
-echo $ac_n "checking "for sun_len in struct sockaddr_un"""... $ac_c" 1>&6
-echo "configure:6845: checking "for sun_len in struct sockaddr_un"" >&5
-if eval "test \"`echo '$''{'ac_cv_c_sun_len'+set}'`\" = set"; then
+echo $ac_n "checking "for sa_len in struct sockaddr"""... $ac_c" 1>&6
+echo "configure:6845: checking "for sa_len in struct sockaddr"" >&5
+if eval "test \"`echo '$''{'ac_cv_c_sockaddr_sa_len'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
 #line 6850 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int main() {
+static struct sockaddr addr; addr.sa_len = 1
+; return 0; }
+EOF
+if { (eval echo configure:6859: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_c_sockaddr_sa_len="yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_c_sockaddr_sa_len="no"
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_c_sockaddr_sa_len" 1>&6
+if test "$ac_cv_c_sockaddr_sa_len" = "yes"
+then
+    cat >> confdefs.h <<\EOF
+#define HAVE_SOCKADDR_SA_LEN 1
+EOF
+
+fi
+
+
+echo $ac_n "checking "for sun_len in struct sockaddr_un"""... $ac_c" 1>&6
+echo "configure:6882: checking "for sun_len in struct sockaddr_un"" >&5
+if eval "test \"`echo '$''{'ac_cv_c_sockaddr_sun_len'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 6887 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -6855,20 +6892,20 @@ int main() {
 static struct sockaddr_un addr; addr.sun_len = 1
 ; return 0; }
 EOF
-if { (eval echo configure:6859: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:6896: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
-  ac_cv_c_sun_len="yes"
+  ac_cv_c_sockaddr_sun_len="yes"
 else
   echo "configure: failed program was:" >&5
   cat conftest.$ac_ext >&5
   rm -rf conftest*
-  ac_cv_c_sun_len="no"
+  ac_cv_c_sockaddr_sun_len="no"
 fi
 rm -f conftest*
 fi
 
-echo "$ac_t""$ac_cv_c_sun_len" 1>&6
-if test "$ac_cv_c_sun_len" = "yes"
+echo "$ac_t""$ac_cv_c_sockaddr_sun_len" 1>&6
+if test "$ac_cv_c_sockaddr_sun_len" = "yes"
 then
     cat >> confdefs.h <<\EOF
 #define HAVE_SOCKADDR_SUN_LEN 1
@@ -6878,12 +6915,12 @@ fi
 
 
 echo $ac_n "checking "whether we need to define __i386__"""... $ac_c" 1>&6
-echo "configure:6882: checking "whether we need to define __i386__"" >&5
+echo "configure:6919: checking "whether we need to define __i386__"" >&5
 if eval "test \"`echo '$''{'ac_cv_cpp_def_i386'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 6887 "configure"
+#line 6924 "configure"
 #include "confdefs.h"
 #if (defined(i386) || defined(__i386)) && !defined(__i386__)
 yes

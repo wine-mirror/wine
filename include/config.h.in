@@ -520,6 +520,9 @@
 /* Define if struct msghdr contains msg_accrights */
 #undef HAVE_MSGHDR_ACCRIGHTS
 
+/* Define if struct sockaddr contains sa_len */
+#undef HAVE_SOCKADDR_SA_LEN
+
 /* Define if struct sockaddr_un contains sun_len */
 #undef HAVE_SOCKADDR_SUN_LEN
 
