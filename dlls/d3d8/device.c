@@ -2716,6 +2716,56 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 	break;
 
 
+    case D3DRS_COLORVERTEX               :
+    case D3DRS_DIFFUSEMATERIALSOURCE     :
+    case D3DRS_SPECULARMATERIALSOURCE    :
+    case D3DRS_AMBIENTMATERIALSOURCE     :
+    case D3DRS_EMISSIVEMATERIALSOURCE    :
+        {
+            GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
+
+            if (This->StateBlock.renderstate[D3DRS_COLORVERTEX]) {
+                glEnable(GL_COLOR_MATERIAL);
+                checkGLcall("glEnable GL_GL_COLOR_MATERIAL\n");
+
+                TRACE("diff %ld, amb %ld, emis %ld, spec %ld\n",
+                      This->StateBlock.renderstate[D3DRS_DIFFUSEMATERIALSOURCE],
+                      This->StateBlock.renderstate[D3DRS_AMBIENTMATERIALSOURCE],
+                      This->StateBlock.renderstate[D3DRS_EMISSIVEMATERIALSOURCE],
+                      This->StateBlock.renderstate[D3DRS_SPECULARMATERIALSOURCE]);
+
+                if (This->StateBlock.renderstate[D3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    if (This->StateBlock.renderstate[D3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                        Parm = GL_AMBIENT_AND_DIFFUSE;
+                    } else {
+                        Parm = GL_DIFFUSE;
+                    }
+                } else if (This->StateBlock.renderstate[D3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    Parm = GL_AMBIENT;
+                } else if (This->StateBlock.renderstate[D3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    Parm = GL_EMISSION;
+                } else if (This->StateBlock.renderstate[D3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    Parm = GL_SPECULAR;
+                } else {
+                    Parm = -1;
+                }
+
+                if (Parm == -1) {
+                    glDisable(GL_COLOR_MATERIAL);
+                    checkGLcall("glDisable GL_GL_COLOR_MATERIAL\n");
+                } else {
+                    TRACE("glColorMaterial Parm=%d\n", Parm);
+                    glColorMaterial(GL_FRONT_AND_BACK, Parm);
+                    checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)\n");
+                }
+
+            } else {
+                glDisable(GL_COLOR_MATERIAL);
+                checkGLcall("glDisable GL_GL_COLOR_MATERIAL\n");
+            }
+        }
+        break; 
+
         /* Unhandled yet...! */
     case D3DRS_LINEPATTERN               :
     case D3DRS_LASTPIXEL                 :
@@ -2733,13 +2783,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP6                     :
     case D3DRS_WRAP7                     :
     case D3DRS_FOGVERTEXMODE             :
-    case D3DRS_COLORVERTEX               :
     case D3DRS_LOCALVIEWER               :
     case D3DRS_NORMALIZENORMALS          :
-    case D3DRS_DIFFUSEMATERIALSOURCE     :
-    case D3DRS_SPECULARMATERIALSOURCE    :
-    case D3DRS_AMBIENTMATERIALSOURCE     :
-    case D3DRS_EMISSIVEMATERIALSOURCE    :
     case D3DRS_SOFTWAREVERTEXPROCESSING  :
     case D3DRS_POINTSIZE                 :
     case D3DRS_POINTSIZE_MIN             :
