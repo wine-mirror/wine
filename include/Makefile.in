@@ -19,7 +19,7 @@ install::
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
 # anything extra the user may have put there.
 uninstall::
-	cd $(includedir); $(RM) $(INSTALLED_INCLUDES)
+	cd $(includedir) && $(RM) $(INSTALLED_INCLUDES)
 	-rmdir $(includedir)
 
 ### Dependencies:
