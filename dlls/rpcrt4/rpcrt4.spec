@@ -100,8 +100,8 @@
 @ stdcall RpcMgmtWaitServerListen()
 @ stub RpcNetworkInqProtseqsA
 @ stub RpcNetworkInqProtseqsW
-@ stub RpcNetworkIsProtseqValidA
-@ stub RpcNetworkIsProtseqValidW
+@ stdcall RpcNetworkIsProtseqValidA(ptr)
+@ stdcall RpcNetworkIsProtseqValidW(ptr)
 @ stub RpcNsBindingInqEntryNameA
 @ stub RpcNsBindingInqEntryNameW
 @ stub RpcObjectInqType

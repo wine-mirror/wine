@@ -1021,22 +1021,22 @@ RPC_STATUS WINAPI I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING
 }
 
 /***********************************************************************
- *             RpcNetworkIsProtSeqValidA (RPCRT4.@)
+ *             RpcNetworkIsProtseqValidA (RPCRT4.@)
  */
-RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidA(unsigned char *protseq) {
+RPC_STATUS RPC_ENTRY RpcNetworkIsProtseqValidA(unsigned char *protseq) {
   UNICODE_STRING protseqW;
 
   if (!protseq) return RPC_S_INVALID_RPC_PROTSEQ; /* ? */
   
   if (RtlCreateUnicodeStringFromAsciiz(&protseqW, protseq)) {
-    RPC_STATUS ret = RpcNetworkIsProtSeqValidW(protseqW.Buffer);
+    RPC_STATUS ret = RpcNetworkIsProtseqValidW(protseqW.Buffer);
     RtlFreeUnicodeString(&protseqW);
     return ret;
   } else return RPC_S_OUT_OF_MEMORY;
 }
 
 /***********************************************************************
- *             RpcNetworkIsProtSeqValidW (RPCRT4.@)
+ *             RpcNetworkIsProtseqValidW (RPCRT4.@)
  * 
  * Checks if the given protocol sequence is known by the RPC system.
  * If it is, returns RPC_S_OK, otherwise RPC_S_PROTSEQ_NOT_SUPPORTED.
@@ -1045,7 +1045,7 @@ RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidA(unsigned char *protseq) {
  *   ncalrpc   local-only rpc over LPC (LPC is not really used)
  *   ncacn_np  rpc over named pipes
  */
-RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidW(LPWSTR protseq) {
+RPC_STATUS RPC_ENTRY RpcNetworkIsProtseqValidW(LPWSTR protseq) {
   static const WCHAR protseqsW[][15] = { 
     {'n','c','a','l','r','p','c',0},
     {'n','c','a','c','n','_','n','p',0}
