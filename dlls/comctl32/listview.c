@@ -119,6 +119,7 @@ typedef struct tagLISTVIEW_INFO
     INT nEditLabelItem;
     EDITLABEL_ITEM *pedititem;
     DWORD dwHoverTime;
+    INT nColumnCount; /* the number of columns in this control */
 
     WPARAM charCode; /* Added */
     CHAR szSearchParam[ MAX_PATH ]; /* Added */
@@ -2786,8 +2787,10 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   CHAR szDispText[DISP_TEXT_SIZE];
   LVITEMA lvItem;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
+  HBRUSH hBrush;
+  RECT rcTemp;
 
-  TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d)\n", hwnd, hdc, 
+  TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d)\n", hwnd, hdc,
         nItem, nSubItem);
 
   /* get information needed for drawing the item */
@@ -2798,6 +2801,17 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+
+  /* redraw the background of the item */
+  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  rcTemp = rcItem;
+  if(infoPtr->nColumnCount == (nSubItem + 1))
+    rcTemp.right = infoPtr->rcList.right;
+  else
+    rcTemp.right+=WIDTH_PADDING;
+
+  FillRect(hdc, &rcTemp, hBrush);
+  DeleteObject(hBrush);
 
   /* set item colors */
   if (ListView_GetItemState(hwnd,nItem,LVIS_SELECTED)
@@ -2812,12 +2826,12 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
     {
        SetBkMode(hdc, TRANSPARENT);
        textoutOptions &= ~ETO_OPAQUE;
-   }
-   else
-   {
+    }
+    else
+    {
       SetBkMode(hdc, OPAQUE);
       SetBkColor(hdc, infoPtr->clrTextBk);
-   }
+    }
 
     SetTextColor(hdc, infoPtr->clrText);
   }
@@ -2871,7 +2885,8 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   BOOL bImage = FALSE;
   INT   iBkMode = -1;
   UINT  textoutOptions = ETO_OPAQUE | ETO_CLIPPED;
-
+  HBRUSH hBrush;
+  RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d)\n", hwnd, hdc, nItem);
 
@@ -2885,6 +2900,17 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+
+  /* redraw the background of the item */
+  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  rcTemp = rcItem;
+  if(infoPtr->nColumnCount == (nItem + 1))
+    rcTemp.right = infoPtr->rcList.right;
+  else
+    rcTemp.right+=WIDTH_PADDING;
+
+  FillRect(hdc, &rcTemp, hBrush);
+  DeleteObject(hBrush);
 
   /* do indent */
   if (lvItem.iIndent>0 && infoPtr->iconSize.cx > 0)
@@ -3040,6 +3066,8 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   TEXTMETRICA tm;
   LVITEMA lvItem;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
+  HBRUSH hBrush;
+  RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, \
 bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right, 
@@ -3054,6 +3082,16 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+
+  /* redraw the background of the item */
+  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  if(infoPtr->nColumnCount == (nItem + 1))
+    rcTemp.right = infoPtr->rcList.right;
+  else
+    rcTemp.right+=WIDTH_PADDING;
+
+  FillRect(hdc, &rcTemp, hBrush);
+  DeleteObject(hBrush);
 
   if (lvItem.state & LVIS_SELECTED)
   {
@@ -3170,13 +3208,14 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   SCROLLINFO scrollInfo;
   INT nDrawPosY = infoPtr->rcList.top;
   INT nColumnCount;
-  RECT rcItem;
+  RECT rcItem, rcTemp;
   INT  j;
   INT nItem;
   INT nLast;
   BOOL FullSelected;
   DWORD cditemmode = CDRF_DODEFAULT;
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  HBRUSH hBrush;
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
@@ -3204,7 +3243,18 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   }
 
   nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
+  infoPtr->nColumnCount = nColumnCount; /* update nColumnCount */
   FullSelected = infoPtr->dwExStyle & LVS_EX_FULLROWSELECT;
+
+  /* clear the background of any part of the control that doesn't contain items */
+  SubtractRect(&rcTemp, &infoPtr->rcList, &infoPtr->rcView);
+  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  FillRect(hdc, &infoPtr->rcList, hBrush);
+  DeleteObject(hBrush);
+
+  /* nothing to draw */
+  if(GETITEMCOUNT(infoPtr) == 0)
+    return;
 
   for (; nItem < nLast; nItem++)
   {
@@ -3436,7 +3486,7 @@ static INT LISTVIEW_GetColumnCount(HWND hwnd)
 static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  RECT rcItem,FocusRect;
+  RECT rcItem, FocusRect, rcTemp;
   INT i, j;
   INT nItem;
   INT nColumnCount;
@@ -3444,11 +3494,23 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
   INT nItemWidth = infoPtr->nItemWidth;
   INT nItemHeight = infoPtr->nItemHeight;
   DWORD cditemmode = CDRF_DODEFAULT;
-  
+  HBRUSH hBrush;
+
   /* get number of fully visible columns */
   nColumnCount = LISTVIEW_GetColumnCount(hwnd);
+  infoPtr->nColumnCount = nColumnCount;
   nCountPerColumn = LISTVIEW_GetCountPerColumn(hwnd);
   nItem = ListView_GetTopIndex(hwnd);
+
+  /* paint the background of the control that doesn't contain any items */
+  SubtractRect(&rcTemp, &infoPtr->rcList, &infoPtr->rcView);
+  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  FillRect(hdc, &infoPtr->rcList, hBrush);
+  DeleteObject(hBrush);
+
+  /* nothing to draw, return here */
+  if(GETITEMCOUNT(infoPtr) == 0)
+    return;
 
   for (i = 0; i < nColumnCount; i++)
   {
@@ -3499,10 +3561,23 @@ static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   POINT ptPosition;
   POINT ptOrigin;
-  RECT rcItem,SuggestedFocus;
+  RECT rcItem, SuggestedFocus, rcTemp;
+  HBRUSH hBrush;
   INT i;
   DWORD cditemmode = CDRF_DODEFAULT;
 
+  infoPtr->nColumnCount = 1; /* set this to an arbitrary value to prevent */
+                             /* DrawItem from erasing the incorrect background area */
+
+  /* paint the background of the control that doesn't contain any items */
+  SubtractRect(&rcTemp, &infoPtr->rcList, &infoPtr->rcView);
+  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  FillRect(hdc, &infoPtr->rcList, hBrush);
+  DeleteObject(hBrush);
+
+  /* nothing to draw, return here */
+  if(GETITEMCOUNT(infoPtr) == 0)
+    return;
 
   LISTVIEW_GetOrigin(hwnd, &ptOrigin);
   for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
@@ -8151,7 +8226,8 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
     LISTVIEW_RemoveAllSelections(hwnd);
   }
 
-  InvalidateRect(hwnd, NULL, TRUE);
+  /* redraw if we could have possibly selected something */
+  if(!GETITEMCOUNT(infoPtr)) InvalidateRect(hwnd, NULL, TRUE);
 
   return 0;
 }
