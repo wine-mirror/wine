@@ -1058,6 +1058,7 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 static void load_builtin_callback( void *module, const char *filename )
 {
     static const WCHAR emptyW[1];
+    void *addr;
     IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
     WCHAR *fullname, *p;
@@ -1105,6 +1106,8 @@ static void load_builtin_callback( void *module, const char *filename )
         return;
     }
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
+    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, module, &nt->OptionalHeader.SizeOfImage,
+                             MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
 
     /* fixup imports */
 
@@ -1656,7 +1659,7 @@ static void MODULE_FlushModrefs(void)
         SERVER_END_REQ;
 
         if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
-        else NtUnmapViewOfSection( GetCurrentProcess(), mod->BaseAddress );
+        NtUnmapViewOfSection( GetCurrentProcess(), mod->BaseAddress );
         if (cached_modref == wm) cached_modref = NULL;
         RtlFreeUnicodeString( &mod->FullDllName );
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm->deps );
