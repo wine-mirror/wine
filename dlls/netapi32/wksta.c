@@ -89,6 +89,13 @@ NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
 	    PWKSTA_TRANSPORT_INFO_0 ti;
 	    int i,size_needed,n_adapt  = enum_hw();
 	    
+	    if (n_adapt == 0)
+              return ERROR_NETWORK_UNREACHABLE;
+	    if (!read_entries)
+              return STATUS_ACCESS_VIOLATION;
+	    if (!total_entries || !pbuf)
+              return RPC_X_NULL_REF_POINTER;
+	    
 	    size_needed = n_adapt * (sizeof(WKSTA_TRANSPORT_INFO_0) 
 				     * 13 * sizeof (WCHAR));
 	    if (prefmaxlen == MAX_PREFERRED_LENGTH)
@@ -115,8 +122,8 @@ NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
 		TRACE("%d of %d:ti at %p transport_address at %p %s\n",i,n_adapt,
 		      ti, ti->wkti0_transport_address, debugstr_w(ti->wkti0_transport_address));
 	      }
-	    if(read_entries)*read_entries = n_adapt;
-	    if(total_entries)*total_entries = n_adapt;
+	    *read_entries = n_adapt;
+	    *total_entries = n_adapt;
 	    if(hresume) *hresume= 0;
 	    break;
 	  }
