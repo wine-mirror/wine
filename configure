@@ -8007,7 +8007,7 @@ if test "${ac_cv_lib_glut_glutMainLoop+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lglut $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lglut $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXmu -lXi -lX11 $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -8056,7 +8056,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_glut_glutMainLoop" >&5
 echo "${ECHO_T}$ac_cv_lib_glut_glutMainLoop" >&6
 if test $ac_cv_lib_glut_glutMainLoop = yes; then
-  GLUT_LIBS="-lglut"
+  GLUT_LIBS="-lglut -lXmu -lXi"
 
                         GLUT32FILES='$(GLUT32FILES)'
 
