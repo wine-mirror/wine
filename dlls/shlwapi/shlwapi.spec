@@ -374,8 +374,8 @@
 374 stub -noname SHCheckDiskForMediaA
 375 stub -noname SHCheckDiskForMediaW
 376 stdcall -noname MLGetUILanguage()  # kernel32.GetUserDefaultUILanguage
-377 stdcall -noname MLLoadLibraryA(str long long)
-378 stdcall -noname MLLoadLibraryW(wstr long long)
+377 stdcall MLLoadLibraryA(str long long)
+378 stdcall MLLoadLibraryW(wstr long long)
 379 stub -noname Shell_GetCachedImageIndexWrapW
 380 stub -noname Shell_GetCachedImageIndexWrapA
 381 stub -noname AssocCopyVerbs
@@ -802,8 +802,6 @@
 @ stdcall StrRetToStrW (ptr ptr ptr)
 @ stdcall SHRegGetPathA(long str str ptr long)
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)
-@ stub    MLLoadLibraryA
-@ stub    MLLoadLibraryW
 @ stdcall PathIsDirectoryEmptyA(str)
 @ stdcall PathIsDirectoryEmptyW(wstr)
 @ stdcall PathIsNetworkPathA(str)
