@@ -47,16 +47,91 @@ typedef void * POBJDIR_INFORMATION;
  * NtQueryObject [NTDLL.@]
  * ZwQueryObject [NTDLL.@]
  */
-NTSTATUS WINAPI NtQueryObject(
-	IN HANDLE ObjectHandle,
-	IN OBJECT_INFORMATION_CLASS ObjectInformationClass,
-	OUT PVOID ObjectInformation,
-	IN ULONG Length,
-	OUT PULONG ResultLength)
+NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
+                              IN OBJECT_INFORMATION_CLASS info_class,
+                              OUT PVOID ptr, IN ULONG len, OUT PULONG used_len)
 {
-	FIXME("(%p,0x%08x,%p,0x%08lx,%p): stub\n",
-	ObjectHandle, ObjectInformationClass, ObjectInformation, Length, ResultLength);
-	return 0;
+    NTSTATUS status;
+
+    TRACE("(%p,0x%08x,%p,0x%08lx,%p): stub\n",
+          handle, info_class, ptr, len, used_len);
+
+    if (used_len) *used_len = 0;
+
+    switch (info_class)
+    {
+    case ObjectDataInformation:
+        {
+            OBJECT_DATA_INFORMATION* p = (OBJECT_DATA_INFORMATION*)ptr;
+
+            if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
+
+            SERVER_START_REQ( set_handle_info )
+            {
+                req->handle = handle;
+                req->flags  = 0;
+                req->mask   = 0;
+                req->fd     = -1;
+                status = wine_server_call( req );
+                if (status == STATUS_SUCCESS)
+                {
+                    p->InheritHandle = (reply->old_flags & HANDLE_FLAG_INHERIT) ? TRUE : FALSE;
+                    p->ProtectFromClose = (reply->old_flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) ? TRUE : FALSE;
+                    if (used_len) *used_len = sizeof(*p);
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
+    default:
+        FIXME("Unsupported information class %u\n", info_class);
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+    return status;
+}
+
+/******************************************************************
+ *		NtSetInformationObject [NTDLL.@]
+ *		ZwSetInformationObject [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtSetInformationObject(IN HANDLE handle,
+                                       IN OBJECT_INFORMATION_CLASS info_class,
+                                       IN PVOID ptr, IN ULONG len)
+{
+    NTSTATUS status;
+
+    TRACE("(%p,0x%08x,%p,0x%08lx): stub\n",
+          handle, info_class, ptr, len);
+
+    switch (info_class)
+    {
+    case ObjectDataInformation:
+        {
+            OBJECT_DATA_INFORMATION* p = (OBJECT_DATA_INFORMATION*)ptr;
+
+            if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
+
+            SERVER_START_REQ( set_handle_info )
+            {
+                req->handle = handle;
+                req->flags  = 0;
+                req->mask   = HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE;
+                req->fd     = -1;
+                if (p->InheritHandle)    req->flags |= HANDLE_FLAG_INHERIT;
+                if (p->ProtectFromClose) req->flags |= HANDLE_FLAG_PROTECT_FROM_CLOSE;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        break;
+    default:
+        FIXME("Unsupported information class %u\n", info_class);
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+    return status;
 }
 
 /******************************************************************************

@@ -215,7 +215,7 @@
 @ stub NtSetHighWaitLowThread
 @ stdcall NtSetInformationFile(long long long long long)
 @ stdcall NtSetInformationKey(long long ptr long)
-@ stub NtSetInformationObject
+@ stdcall NtSetInformationObject(long long ptr long)
 @ stdcall NtSetInformationProcess(long long long long)
 @ stdcall NtSetInformationThread(long long long long)
 @ stub NtSetInformationToken
@@ -742,7 +742,7 @@
 @ stub ZwSetHighWaitLowThread
 @ stdcall ZwSetInformationFile(long long long long long) NtSetInformationFile
 @ stdcall ZwSetInformationKey(long long ptr long) NtSetInformationKey
-@ stub ZwSetInformationObject
+@ stdcall ZwSetInformationObject(long long ptr long) NtSetInformationObject
 @ stdcall ZwSetInformationProcess(long long long long) NtSetInformationProcess
 @ stdcall ZwSetInformationThread(long long long long) NtSetInformationThread
 @ stub ZwSetInformationToken
