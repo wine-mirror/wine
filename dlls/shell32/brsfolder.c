@@ -90,7 +90,10 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR l
 	TRACE("%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
 	if (SUCCEEDED(IShellFolder_GetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
 	{
-	  bSuccess = StrRetToStrNA (lpFriendlyName, MAX_PATH, &str, lpi);
+	  if(FAILED(StrRetToStrNA (lpFriendlyName, MAX_PATH, &str, lpi)))
+	  {
+	      bSuccess = FALSE;
+	  }
 	}
 	else
 	  bSuccess = FALSE;
@@ -113,7 +116,6 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	HWND		hwnd=GetParent(hwndTreeView);
 
 	TRACE("%p %p %x\n",lpsf, pidl, (INT)hParent);
-	
 	SetCapture(GetParent(hwndTreeView));
 	SetCursor(LoadCursorA(0, IDC_WAITA));
 
@@ -132,11 +134,11 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	           tvi.mask |= TVIF_CHILDREN;
 	        }
 
-	        if (! ( lptvid = (LPTV_ITEMDATA)SHAlloc(sizeof(TV_ITEMDATA)) ) )
-	          goto Done;
+	        if (!( lptvid = (LPTV_ITEMDATA)SHAlloc(sizeof(TV_ITEMDATA))))
+		    goto Done;
 
 	        if (!GetName(lpsf, pidlTemp, SHGDN_NORMAL, szBuff))
-	          goto Done;
+		    goto Done;
 
 	        tvi.pszText    = szBuff;
 	        tvi.cchTextMax = MAX_PATH;
@@ -152,7 +154,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	        tvins.hInsertAfter = hPrev;
 	        tvins.hParent      = hParent;
 
-	        hPrev = (HTREEITEM)TreeView_InsertItemW (hwndTreeView, &tvins);
+	        hPrev = (HTREEITEM)TreeView_InsertItemA (hwndTreeView, &tvins);
 
 	      }
 	    }
