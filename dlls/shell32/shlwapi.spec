@@ -324,10 +324,10 @@ type win32
 @ stub    StrCSpnIW
 @ stub    StrCSpnW
 @ stub    StrCatW
-@ stub    StrChrA
+@ stdcall StrChrA (ptr long) strchr
 @ stub    StrChrIA
 @ stub    StrChrIW
-@ stdcall StrChrW (ptr ptr) StrChrW
+@ stdcall StrChrW (ptr long) StrChrW
 @ stub    StrCmpIW
 @ stub    StrCmpNA
 @ stub    StrCmpNIA
