@@ -427,7 +427,6 @@ HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPM
 HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
 HRESULT WINAPI CreateObjrefMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
 HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
-HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER* ppmk);
 HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
 HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName, ULONG * pchEaten, LPMONIKER * ppmk);
