@@ -602,7 +602,7 @@ AC_CHECK_HEADERS(audio/audiolib.h,
      [AC_CHECK_HEADERS(audio/soundlib.h,,,[#include <audio/audiolib.h>])
       AC_CHECK_LIB(audio,AuCreateFlow,
     	           [AC_DEFINE(HAVE_NAS,1,[Define if you have NAS including devel headers])
-                    NASLIBS="-laudio -lXt \$(X_LIBS) \$(XLIB)"],,
+                    NASLIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"],,
                    [-lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
 
 dnl **** Check for libaudioio (which can be used to get solaris audio support) ****

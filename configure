@@ -9589,7 +9589,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_NAS 1
 _ACEOF
 
-                    NASLIBS="-laudio -lXt \$(X_LIBS) \$(XLIB)"
+                    NASLIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"
 fi
 
 fi
