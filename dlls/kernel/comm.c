@@ -1084,6 +1084,7 @@ BOOL WINAPI SetCommState(
 {
      struct termios port;
      int fd, bytesize, stopbits;
+     BOOL ret;
 
      TRACE("handle %p, ptr %p\n", handle, lpdcb);
      TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
@@ -1092,6 +1093,11 @@ BOOL WINAPI SetCommState(
 	   (lpdcb->StopBits == TWOSTOPBITS)?2:0);
      TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
 	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
+     TRACE("fOutxCtsFlow %d fRtsControl %d\n", lpdcb->fOutxCtsFlow,
+             lpdcb->fRtsControl);
+     TRACE("fOutxDsrFlow %d fDtrControl%d\n", lpdcb->fOutxDsrFlow,
+             lpdcb->fDtrControl);
+             
 
      fd = get_comm_fd( handle, GENERIC_READ );
      if (fd < 0) return FALSE;
@@ -1385,11 +1391,6 @@ BOOL WINAPI SetCommState(
 	  }
 #endif
 
-	if (lpdcb->fDtrControl == DTR_CONTROL_HANDSHAKE)
-	  {
-             WARN("DSR/DTR flow control not supported\n");
-	  }
-
 	if (lpdcb->fInX)
 		port.c_iflag |= IXON;
 	else
@@ -1400,16 +1401,39 @@ BOOL WINAPI SetCommState(
 		port.c_iflag &= ~IXOFF;
 
 	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
-	        int save_error=errno;
+                ERR("tcsetattr error '%s'\n", strerror(errno));
                 COMM_SetCommError(handle,CE_IOE);
-                release_comm_fd( handle, fd );
-                ERR("tcsetattr error '%s'\n", strerror(save_error));
-		return FALSE;
+		ret = FALSE;
 	} else {
                 COMM_SetCommError(handle,0);
-                release_comm_fd( handle, fd );
-		return TRUE;
+		ret = TRUE;
 	}
+
+        /* note: change DTR/RTS lines after setting the comm attributes,
+         * so flow control does not interfere. */
+#ifdef TIOCM_DTR
+	if (lpdcb->fDtrControl == DTR_CONTROL_HANDSHAKE)
+        {
+             WARN("DSR/DTR flow control not supported\n");
+	} else if(lpdcb->fDtrControl == DTR_CONTROL_DISABLE)
+            COMM_WhackModem(fd, ~TIOCM_DTR, 0);
+        else    
+            COMM_WhackModem(fd, 0, TIOCM_DTR);
+#endif
+#ifdef TIOCM_RTS
+	if(!lpdcb->fOutxCtsFlow )
+        {
+            if(lpdcb->fRtsControl == RTS_CONTROL_DISABLE)
+                COMM_WhackModem(fd, ~TIOCM_RTS, 0);
+            else    
+                COMM_WhackModem(fd, 0, TIOCM_RTS);
+        }
+#endif
+        if(lpdcb->fRtsControl == RTS_CONTROL_TOGGLE)
+            FIXME("RTS_CONTROL_TOGGLE is not supported.\n");
+        release_comm_fd( handle, fd );
+        return ret;
+
 }
 
 
@@ -1432,14 +1456,19 @@ BOOL WINAPI GetCommState(
 {
      struct termios port;
      int fd,speed;
+     int stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
 
      TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
      fd = get_comm_fd( handle, GENERIC_READ );
      if (fd < 0) return FALSE;
-     if (tcgetattr(fd, &port) == -1) {
+     if (tcgetattr(fd, &port) == -1
+#ifdef TIOCMGET
+             || ioctl(fd, TIOCMGET, &stat) == -1
+#endif
+             ) {
                 int save_error=errno;
-                ERR("tcgetattr error '%s'\n", strerror(save_error));
+                ERR("tcgetattr or ioctl error '%s'\n", strerror(save_error));
                 COMM_SetCommError(handle,CE_IOE);
                 release_comm_fd( handle, fd );
 		return FALSE;
@@ -1562,7 +1591,11 @@ BOOL WINAPI GetCommState(
 
 	/* termios does not support DTR/DSR flow control */
 	lpdcb->fOutxDsrFlow = 0;
-	lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
+	lpdcb->fDtrControl =
+#ifdef TIOCM_DTR
+            !(stat & TIOCM_DTR) ?  DTR_CONTROL_DISABLE:
+#endif
+                DTR_CONTROL_ENABLE  ;
 
 #ifdef CRTSCTS
 
@@ -1572,7 +1605,11 @@ BOOL WINAPI GetCommState(
 	} else
 #endif
 	{
-		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
+		lpdcb->fRtsControl = 
+#ifdef TIOCM_RTS
+                    !(stat & TIOCM_RTS) ?  RTS_CONTROL_DISABLE :
+#endif
+                    RTS_CONTROL_ENABLE ;
 		lpdcb->fOutxCtsFlow = 0;
 	}
 	if (port.c_iflag & IXON)
@@ -1601,6 +1638,10 @@ BOOL WINAPI GetCommState(
 	      (lpdcb->StopBits == TWOSTOPBITS)?2:0);
 	TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
 	      (lpdcb->fOutX)?"IXOFF":"~IXOFF");
+         TRACE("fOutxCtsFlow %d fRtsControl %d\n", lpdcb->fOutxCtsFlow,
+                 lpdcb->fRtsControl);
+         TRACE("fOutxDsrFlow %d fDtrControl%d\n", lpdcb->fOutxDsrFlow,
+                 lpdcb->fDtrControl);
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
 		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
@@ -1609,7 +1650,6 @@ BOOL WINAPI GetCommState(
         else
 
 	  TRACE("~CRTSCTS\n");
-
 #endif
 	return TRUE;
 }
