@@ -39,8 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wing);
  *
  * This initial approach could not compete with the performance of Dos games
  * (such as Doom and Warcraft) at the time, and so this dll was eventually
- * superceeded by DirectX. It should not be used by new applications, and is
- * provided only for compatability with older Windows programs.
+ * superseded by DirectX. It should not be used by new applications, and is
+ * provided only for compatibility with older Windows programs.
  */
 
 typedef enum WING_DITHER_TYPE

@@ -327,7 +327,7 @@ BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len,
 /******************************************************************************
  * NETCON_recv
  * Basically calls 'recv()' unless we should use SSL
- * number of chars receieved is put in *recvd
+ * number of chars received is put in *recvd
  */
 BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */)
