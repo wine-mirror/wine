@@ -388,18 +388,16 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
         /* check we really open with the same parameters */
         if (ossdev->open_access != req_access)
         {
-            WARN("Mismatch in access...\n");
+            ERR("FullDuplex: Mismatch in access. Your sound device is not full duplex capable.\n");
             return WAVERR_BADFORMAT;
         }
 
-        /* FIXME: if really needed, we could do, in this case, on the fly
-         * PCM conversion (using the MSACM ad hoc driver)
-         */
-        if (ossdev->audio_fragment != (frag ? *frag : 0) ||
-            ossdev->sample_rate != sample_rate ||
+	/* check if the audio parameters are the same */
+        if (ossdev->sample_rate != sample_rate ||
             ossdev->stereo != stereo ||
             ossdev->format != fmt)
         {
+	    /* This is not a fatal error because MSACM might do the remapping */ 
             WARN("FullDuplex: mismatch in PCM parameters for input and output\n"
                  "OSS doesn't allow us different parameters\n"
                  "audio_frag(%x/%x) sample_rate(%d/%d) stereo(%d/%d) fmt(%d/%d)\n",
@@ -409,6 +407,12 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
                  ossdev->format, fmt);
             return WAVERR_BADFORMAT;
         }
+	/* check if the fragment sizes are the same */
+        if (ossdev->audio_fragment != (frag ? *frag : 0) ) {
+	    ERR("FullDuplex: Playback and Capture hardware acceleration levels are different.\n"
+		"Use: \"HardwareAcceleration\" = \"Emulation\" in the [dsound] section of your config file.\n");
+	    return WAVERR_BADFORMAT;
+	}
         if (GetCurrentThreadId() != ossdev->owner_tid)
         {
             WARN("Another thread is trying to access audio...\n");
@@ -774,12 +778,6 @@ LONG OSS_WaveInit(void)
     int 	i;
     TRACE("()\n");
 
-    /* FIXME: only one device is supported */
-    memset(&OSS_Devices, 0, sizeof(OSS_Devices));
-    /* FIXME: should check that dsp actually points to dsp0, or that dsp0 exists
-     * we should also be able to configure (bitmap) which devices we want to use...
-     * - or even store the name of all drivers in our configuration
-     */
     for (i = 0; i < MAX_WAVEDRV; ++i)
     {
 	if (i == 0) {
@@ -794,7 +792,7 @@ LONG OSS_WaveInit(void)
 	INIT_GUID(OSS_Devices[i].dsc_guid, 0xe437ebb6, 0x534f, 0x11ce, 0x9f, 0x53, 0x00, 0x20, 0xaf, 0x0b, 0xa7, 0x80 + i);
     }
 
-    /* start with output device */
+    /* start with output devices */
     for (i = 0; i < MAX_WAVEDRV; ++i)
     {
         if (OSS_WaveOutInit(&OSS_Devices[i]))
@@ -805,7 +803,7 @@ LONG OSS_WaveInit(void)
         }
     }
 
-    /* then do input device */
+    /* then do input devices */
     for (i = 0; i < MAX_WAVEDRV; ++i)
     {
         if (OSS_WaveInInit(&OSS_Devices[i]))
