@@ -71,6 +71,7 @@ BOOL16 joyOpenDriver(WORD wID)
 
 	if (wID>=MAXJOYSTICK) return FALSE;
 	if (joy_dev[wID] >= 0) return TRUE; /* was already open */
+#ifdef HAVE_LINUX_JOYSTICK_H
         sprintf(buf,JOYDEV,wID);
 	flags = O_RDONLY;
 #ifdef HAVE_LINUX_22_JOYSTICK_API
@@ -81,6 +82,9 @@ BOOL16 joyOpenDriver(WORD wID)
 		return TRUE;
 	} else
 		return FALSE;
+#else
+	return FALSE;
+#endif /* HAVE_LINUX_JOYSTICK_H */
 }
 
 /**************************************************************************
