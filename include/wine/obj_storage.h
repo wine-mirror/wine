@@ -517,29 +517,6 @@ ICOM_DEFINE(IStorage,IUnknown)
 #define IStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IStorage_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IStorage_Release(p)            ICOM_CALL (Release,p)
-/*** IStorage32 methods ***/
-#define IStorage_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
-#define IStorage_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
-#define IStorage_CreateStorage(p,a,b,c,d,e) ICOM_CALL5(CreateStorage,p,a,b,c,d,e)
-#define IStorage_OpenStorage(p,a,b,c,d,e,f) ICOM_CALL6(OpenStorage,p,a,b,c,d,e,f)
-#define IStorage_CopyTo(p,a,b,c,d)          ICOM_CALL4(CopyTo,p,a,b,c,d)
-#define IStorage_MoveElementTo(p,a,b,c,d)   ICOM_CALL4(MoveElementTo,p,a,b,c,d)
-#define IStorage_Commit(p,a)                ICOM_CALL1(Commit,p,a)
-#define IStorage_Revert(p)                  ICOM_CALL (Revert,p)
-#define IStorage_EnumElements(p,a,b,c,d)    ICOM_CALL4(EnumElements,p,a,b,c,d)
-#define IStorage_DestroyElement(p,a)        ICOM_CALL1(DestroyElement,p,a)
-#define IStorage_RenameElement(p,a,b)       ICOM_CALL2(RenameElement,p,a,b)
-#define IStorage_SetElementTimes(p,a,b,c,d) ICOM_CALL4(SetElementTimes,p,a,b,c,d)
-#define IStorage_SetClass(p,a)              ICOM_CALL1(SetClass,p,a)
-#define IStorage_SetStateBits(p,a,b)        ICOM_CALL2(SetStateBits,p,a,b)
-#define IStorage_Stat(p,a,b)                ICOM_CALL2(Stat,p,a,b)
-
-#ifndef __WINE__
-/* Duplicated for WINELIB */
-/*** IUnknown methods ***/
-#define IStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IStorage_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IStorage_Release(p)            ICOM_CALL (Release,p)
 /*** IStorage methods ***/
 #define IStorage_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
 #define IStorage_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
@@ -556,7 +533,6 @@ ICOM_DEFINE(IStorage,IUnknown)
 #define IStorage_SetClass(p,a)              ICOM_CALL1(SetClass,p,a)
 #define IStorage_SetStateBits(p,a,b)        ICOM_CALL2(SetStateBits,p,a,b)
 #define IStorage_Stat(p,a,b)                ICOM_CALL2(Stat,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -622,26 +598,6 @@ ICOM_DEFINE(IStream,ISequentialStream)
 /*** ISequentialStream methods ***/
 #define IStream_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
 #define IStream_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
-/*** IStream32 methods ***/
-#define IStream_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
-#define IStream_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
-#define IStream_CopyTo(p,a,b,c,d)     ICOM_CALL4(CopyTo,p,a,b,c,d)
-#define IStream_Commit(p,a)           ICOM_CALL1(Commit,p,a)
-#define IStream_Revert(p)             ICOM_CALL (Revert,p)
-#define IStream_LockRegion(p,a,b,c)   ICOM_CALL3(LockRegion,p,a,b,c)
-#define IStream_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
-#define IStream_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
-#define IStream_Clone(p,a)            ICOM_CALL1(Clone,p,a)
-
-#ifndef __WINE__
-/* Duplicated for WINELIB */
-/*** IUnknown methods ***/
-#define IStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IStream_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IStream_Release(p)            ICOM_CALL (Release,p)
-/*** ISequentialStream methods ***/
-#define IStream_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
-#define IStream_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
 /*** IStream methods ***/
 #define IStream_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
 #define IStream_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
@@ -652,7 +608,6 @@ ICOM_DEFINE(IStream,ISequentialStream)
 #define IStream_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
 #define IStream_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
 #define IStream_Clone(p,a)            ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************
