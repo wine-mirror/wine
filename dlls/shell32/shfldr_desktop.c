@@ -261,6 +261,59 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 }
 
 /**************************************************************************
+ *  CreateDesktopEnumList()
+ */
+static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
+{
+    BOOL ret = TRUE;
+    char szPath[MAX_PATH];
+
+    TRACE("(%p)->(flags=0x%08lx) \n",list,dwFlags);
+
+    /*enumerate the root folders */
+    if(dwFlags & SHCONTF_FOLDERS)
+    {
+        HKEY hkey;
+
+        /*create the pidl for This item */
+        ret = AddToEnumList(list, _ILCreateMyComputer());
+
+        if (ret && !RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\explorer\\desktop\\NameSpace",
+         0, KEY_READ, &hkey))
+        {
+            char iid[50];
+            int i=0;
+            BOOL moreKeys = TRUE;
+
+            while (ret && moreKeys)
+            {
+                DWORD size = sizeof (iid);
+                LONG apiRet = RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL,
+                 NULL);
+
+                if (ERROR_SUCCESS == apiRet)
+                {
+                    ret = AddToEnumList(list, _ILCreateGuidFromStrA(iid));
+                    i++;
+                }
+                else if (ERROR_NO_MORE_ITEMS == apiRet)
+                    moreKeys = FALSE;
+                else
+                    ret = FALSE;
+            }
+            RegCloseKey(hkey);
+        }
+    }
+
+    /*enumerate the elements in %windir%\desktop */
+    SHGetSpecialFolderPathA(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+    ret = ret && CreateFolderEnumList(list, szPath, dwFlags);
+
+    return ret;
+}
+
+/**************************************************************************
 *		ISF_Desktop_fnEnumObjects
 */
 static HRESULT WINAPI ISF_Desktop_fnEnumObjects (IShellFolder2 * iface,
@@ -270,7 +323,9 @@ static HRESULT WINAPI ISF_Desktop_fnEnumObjects (IShellFolder2 * iface,
 
     TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
-    *ppEnumIDList = IEnumIDList_BadConstructor (NULL, dwFlags, EIDL_DESK);
+    *ppEnumIDList = IEnumIDList_Constructor();
+    if (*ppEnumIDList)
+        CreateDesktopEnumList(*ppEnumIDList, dwFlags);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 

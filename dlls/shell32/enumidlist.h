@@ -18,16 +18,13 @@
 
 #include "shlobj.h"
 
+/* Creates an IEnumIDList; add LPITEMIDLISTs to it with AddToEnumList. */
 LPENUMIDLIST IEnumIDList_Constructor(void);
-BOOL AddToEnumList(IEnumIDList * iface, LPITEMIDLIST pidl);
+BOOL AddToEnumList(IEnumIDList *list, LPITEMIDLIST pidl);
 
-/* old interface that's going away soon: */
-/* kind of enumidlist */
-#define EIDL_DESK   0
-#define EIDL_MYCOMP 1
-#define EIDL_FILE   2
-
-IEnumIDList * IEnumIDList_BadConstructor(LPCSTR lpszPath, DWORD dwFlags,
- DWORD dwKind);
+/* Enumerates the folders and/or files (depending on dwFlags) in lpszPath and
+ * adds them to the already-created list.
+ */
+BOOL CreateFolderEnumList(IEnumIDList *list, LPCSTR lpszPath, DWORD dwFlags);
 
 #endif /* ndef __ENUMIDLIST_H__ */
