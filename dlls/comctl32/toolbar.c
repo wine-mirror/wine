@@ -2732,11 +2732,15 @@ TOOLBAR_AutoSize (HWND hwnd)
 	cy = infoPtr->nHeight;
 	cx = infoPtr->nWidth;
 
-	if (dwStyle & CCS_NOMOVEY) {
+	if ((dwStyle & CCS_BOTTOM) == CCS_NOMOVEY) {
 		GetWindowRect(hwnd, &window_rect);
 		ScreenToClient(parent, (LPPOINT)&window_rect.left);
 		y = window_rect.top;
 	}
+	if ((dwStyle & CCS_BOTTOM) == CCS_BOTTOM) {
+            GetWindowRect(hwnd, &window_rect);
+            y = parent_rect.bottom - ( window_rect.bottom - window_rect.top);
+        }
     }
 
     if (dwStyle & CCS_NOPARENTALIGN)
@@ -2753,10 +2757,9 @@ TOOLBAR_AutoSize (HWND hwnd)
     }
 
     infoPtr->bAutoSize = TRUE;
-    SetWindowPos (hwnd, HWND_TOP, parent_rect.left - x, parent_rect.top - y,
-                        cx, cy, uPosFlags);
-    /* The following line makes sure that the infoPtr->bAutoSize is turned off after
-     * the setwindowpos calls */
+    SetWindowPos (hwnd, HWND_TOP,  x, y, cx, cy, uPosFlags);
+    /* The following line makes sure that the infoPtr->bAutoSize is turned off
+     * after the setwindowpos calls */
     infoPtr->bAutoSize = FALSE;
 
     return 0;
@@ -5573,11 +5576,16 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    cy = infoPtr->nHeight;
 	    cx = infoPtr->nWidth;
 
-	    if (dwStyle & CCS_NOMOVEY) {
+	    if ((dwStyle & CCS_BOTTOM) == CCS_NOMOVEY) {
 		GetWindowRect(hwnd, &window_rect);
 		ScreenToClient(parent, (LPPOINT)&window_rect.left);
-		y = window_rect.top;
+                y = window_rect.top;
 	    }
+            if ((dwStyle & CCS_BOTTOM) == CCS_BOTTOM) {
+                GetWindowRect(hwnd, &window_rect);
+                y = parent_rect.bottom -
+                    ( window_rect.bottom - window_rect.top);
+            }
 	}
 
 	if (dwStyle & CCS_NOPARENTALIGN) {
@@ -5596,8 +5604,7 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    cx += GetSystemMetrics(SM_CYEDGE);
 	}
 
-	SetWindowPos (hwnd, 0, parent_rect.left - x, parent_rect.top - y,
-			cx, cy, uPosFlags | SWP_NOZORDER);
+	SetWindowPos (hwnd, 0,  x,  y, cx, cy, uPosFlags | SWP_NOZORDER);
     }
     return 0;
 }
