@@ -950,6 +950,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl -noimport strspn(str str) strspn
 @ cdecl -noimport strstr(str str) strstr
 @ cdecl -noimport strtol(str ptr long) strtol
+@ cdecl -noimport strtoul(str ptr long) strtoul
 @ varargs swprintf(wstr wstr) NTDLL_swprintf
 @ cdecl -noimport tan(double) tan
 @ cdecl tolower(long) tolower
@@ -973,7 +974,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl wcstok(wstr wstr) NTDLL_wcstok
 @ cdecl wcstol(wstr ptr long) NTDLL_wcstol
 @ cdecl wcstombs(ptr ptr long) NTDLL_wcstombs
-@ stub wcstoul
+@ cdecl wcstoul(wstr ptr long) NTDLL_wcstoul
 @ stub NtAddAtom
 @ stub NtDeleteAtom
 @ stub NtFindAtom

@@ -289,6 +289,21 @@ INT __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
 
 
 /*********************************************************************
+ *                  wcstoul  (NTDLL.@)
+ * Like strtoul, but for wide character strings.
+ */
+INT __cdecl NTDLL_wcstoul(LPCWSTR s,LPWSTR *end,INT base)
+{
+    LPSTR sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
+    INT	ret = strtoul(sA,&endA,base);
+
+    HeapFree(GetProcessHeap(),0,sA);
+    if (end) *end = ((LPWSTR)s)+(endA-sA); /* pointer magic checked. */
+    return ret;
+}
+
+
+/*********************************************************************
  *           iswctype    (NTDLL.@)
  */
 INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
