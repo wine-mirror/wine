@@ -386,7 +386,7 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d\n",
+    fprintf( stderr, "Startup info flags=%x in=%p out=%p err=%p\n",
              info->create_flags, info->hstdin, info->hstdout, info->hstderr );
 }
 

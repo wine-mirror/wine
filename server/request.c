@@ -384,7 +384,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     int ret;
 
     if (debug_level)
-        fprintf( stderr, "%08x: *fd* %d -> %d\n", (unsigned int)current, handle, fd );
+        fprintf( stderr, "%08x: *fd* %p -> %d\n", (unsigned int)current, handle, fd );
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(fd);

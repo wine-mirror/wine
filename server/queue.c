@@ -608,7 +608,7 @@ static void msg_queue_destroy( struct object *obj )
 static void thread_input_dump( struct object *obj, int verbose )
 {
     struct thread_input *input = (struct thread_input *)obj;
-    fprintf( stderr, "Thread input focus=%x capture=%x active=%x\n",
+    fprintf( stderr, "Thread input focus=%p capture=%p active=%p\n",
              input->focus, input->capture, input->active );
 }
 

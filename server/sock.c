@@ -253,7 +253,7 @@ static void sock_wake_up( struct sock *sock, int pollev )
     }
     if (sock->window)
     {
-        if (debug_level) fprintf(stderr, "signalling events %x win %x\n", events, sock->window );
+        if (debug_level) fprintf(stderr, "signalling events %x win %p\n", events, sock->window );
         for (i = 0; i < FD_MAX_EVENTS; i++)
         {
             int event = event_bitorder[i];
