@@ -190,7 +190,7 @@ static MDICLIENTINFO *get_client_info( HWND client )
         }
         if (win->cbWndExtra < sizeof(MDICLIENTINFO)) WARN( "%x is not an MDI client\n", client );
         else ret = (MDICLIENTINFO *)win->wExtra;
-        WIN_ReleaseWndPtr( win );
+        WIN_ReleasePtr( win );
     }
     return ret;
 }
