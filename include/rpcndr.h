@@ -24,6 +24,10 @@
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <basetsd.h>
 
 /* stupid #if can't handle casts... this __stupidity 
@@ -507,4 +511,7 @@ RPCRTAPI void * RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrRpcSsDefaultFree( IN void *NodeToFree );
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__WINE_RPCNDR_H */
