@@ -1,6 +1,7 @@
 Makefile
 alloc.ok
 atom.ok
+change.ok
 codepage.ok
 comm.ok
 console.ok

@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/stat.h>
 
 #include "windef.h"
 
@@ -81,6 +82,10 @@ static void adjust_changes( int fd, unsigned int filter )
         val |= DN_MODIFY;
     if( filter & FILE_NOTIFY_CHANGE_LAST_WRITE )
         val |= DN_MODIFY;
+    if( filter & FILE_NOTIFY_CHANGE_LAST_ACCESS )
+        val |= DN_ACCESS;
+    if( filter & FILE_NOTIFY_CHANGE_CREATION )
+        val |= DN_CREATE;
     if( filter & FILE_NOTIFY_CHANGE_SECURITY )
         val |= DN_ATTRIB;
     fcntl( fd, F_NOTIFY, val );
@@ -114,6 +119,14 @@ static inline void remove_change( struct change *change )
 static struct change *create_change_notification( struct fd *fd, int subtree, unsigned int filter )
 {
     struct change *change;
+    struct stat st;
+    int unix_fd = get_unix_fd( fd );
+
+    if (fstat( unix_fd, &st ) == -1 || !S_ISDIR(st.st_mode))
+    {
+        set_error( STATUS_NOT_A_DIRECTORY );
+        return NULL;
+    }
 
     if ((change = alloc_object( &change_ops )))
     {
@@ -123,7 +136,7 @@ static struct change *create_change_notification( struct fd *fd, int subtree, un
         change->notified = 0;
         change->signaled = 0;
         insert_change( change );
-        adjust_changes( get_unix_fd(fd), filter );
+        adjust_changes( unix_fd, filter );
     }
     return change;
 }
