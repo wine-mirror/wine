@@ -1038,7 +1038,6 @@ BOOL        WINAPI AccessCheck(PSECURITY_DESCRIPTOR,HANDLE,DWORD,PGENERIC_MAPPIN
 BOOL        WINAPI AdjustTokenPrivileges(HANDLE,BOOL,LPVOID,DWORD,LPVOID,LPDWORD);
 BOOL        WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,PSID *);
 BOOL        WINAPI AllocateLocallyUniqueId(PLUID);
-BOOL      WINAPI AllocConsole(void);
 BOOL      WINAPI AreFileApisANSI(void);
 BOOL        WINAPI BackupEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI BackupEventLogW(HANDLE,LPCWSTR);
@@ -1152,13 +1151,11 @@ BOOL      WINAPI FindCloseChangeNotification(HANDLE);
 HRSRC     WINAPI FindResourceExA(HMODULE,LPCSTR,LPCSTR,WORD);
 HRSRC     WINAPI FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 #define     FindResourceEx WINELIB_NAME_AW(FindResourceEx)
-BOOL      WINAPI FlushConsoleInputBuffer(HANDLE);
 BOOL      WINAPI FlushFileBuffers(HANDLE);
 BOOL      WINAPI FlushViewOfFile(LPCVOID, DWORD);
 DWORD       WINAPI FormatMessageA(DWORD,LPCVOID,DWORD,DWORD,LPSTR,DWORD,va_list*);
 DWORD       WINAPI FormatMessageW(DWORD,LPCVOID,DWORD,DWORD,LPWSTR,DWORD,va_list*);
 #define     FormatMessage WINELIB_NAME_AW(FormatMessage)
-BOOL      WINAPI FreeConsole(void);
 BOOL      WINAPI FreeEnvironmentStringsA(LPSTR);
 BOOL      WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define     FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
@@ -1176,12 +1173,6 @@ LPWSTR      WINAPI GetCommandLineW(void);
 BOOL      WINAPI GetComputerNameA(LPSTR,LPDWORD);
 BOOL      WINAPI GetComputerNameW(LPWSTR,LPDWORD);
 #define     GetComputerName WINELIB_NAME_AW(GetComputerName)
-UINT      WINAPI GetConsoleCP(void);
-BOOL      WINAPI GetConsoleMode(HANDLE,LPDWORD);
-UINT      WINAPI GetConsoleOutputCP(void);
-DWORD       WINAPI GetConsoleTitleA(LPSTR,DWORD);
-DWORD       WINAPI GetConsoleTitleW(LPWSTR,DWORD);
-#define     GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
 HANDLE      WINAPI GetCurrentProcess(void);
 HANDLE      WINAPI GetCurrentThread(void);
 BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);
@@ -1213,8 +1204,6 @@ DWORD       WINAPI GetLogicalDrives(void);
 DWORD       WINAPI GetLongPathNameA(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI GetLongPathNameW(LPCWSTR,LPWSTR,DWORD);
 #define     GetLongPathName WINELIB_NAME_AW(GetLongPathName)
-BOOL      WINAPI GetNumberOfConsoleInputEvents(HANDLE,LPDWORD);
-BOOL      WINAPI GetNumberOfConsoleMouseButtons(LPDWORD);
 BOOL        WINAPI GetNumberOfEventLogRecords(HANDLE,PDWORD);
 BOOL        WINAPI GetOldestEventLogRecord(HANDLE,PDWORD);
 DWORD       WINAPI GetPriorityClass(HANDLE);
@@ -1324,9 +1313,6 @@ DWORD       WINAPI QueryDosDeviceW(LPCWSTR,LPWSTR,DWORD);
 #define     QueryDosDevice WINELIB_NAME_AW(QueryDosDevice)
 BOOL        WINAPI QueryPerformanceCounter(LARGE_INTEGER*);
 BOOL        WINAPI QueryPerformanceFrequency(LARGE_INTEGER*);
-BOOL        WINAPI ReadConsoleA(HANDLE,LPVOID,DWORD,LPDWORD,LPVOID);
-BOOL        WINAPI ReadConsoleW(HANDLE,LPVOID,DWORD,LPDWORD,LPVOID);
-#define     ReadConsole WINELIB_NAME_AW(ReadConsole)
 BOOL        WINAPI ReadEventLogA(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 BOOL        WINAPI ReadEventLogW(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 #define     ReadEventLog WINELIB_NAME_AW(ReadEventLog)
@@ -1354,10 +1340,6 @@ BOOL        WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
 BOOL      WINAPI SetComputerNameA(LPCSTR);
 BOOL      WINAPI SetComputerNameW(LPCWSTR);
 #define     SetComputerName WINELIB_NAME_AW(SetComputerName)
-BOOL      WINAPI SetConsoleMode(HANDLE,DWORD);
-BOOL      WINAPI SetConsoleTitleA(LPCSTR);
-BOOL      WINAPI SetConsoleTitleW(LPCWSTR);
-#define     SetConsoleTitle WINELIB_NAME_AW(SetConsoleTitle)
 BOOL        WINAPI SetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,DWORD);
 BOOL        WINAPI SetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,DWORD);
 #define     SetDefaultCommConfig WINELIB_NAME_AW(SetDefaultCommConfig)
@@ -1424,9 +1406,6 @@ DWORD       WINAPI WaitForSingleObjectEx(HANDLE,DWORD,BOOL);
 BOOL        WINAPI WaitNamedPipeA(LPCSTR,DWORD);
 BOOL        WINAPI WaitNamedPipeW(LPCWSTR,DWORD);
 #define     WaitNamedPipe WINELIB_NAME_AW(WaitNamedPipe)
-BOOL      WINAPI WriteConsoleA(HANDLE,LPCVOID,DWORD,LPDWORD,LPVOID);
-BOOL      WINAPI WriteConsoleW(HANDLE,LPCVOID,DWORD,LPDWORD,LPVOID);
-#define     WriteConsole WINELIB_NAME_AW(WriteConsole)
 BOOL      WINAPI WriteFile(HANDLE,LPCVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI WriteFileEx(HANDLE,LPCVOID,DWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
 DWORD       WINAPI WriteTapemark(HANDLE,DWORD,DWORD,BOOL);
