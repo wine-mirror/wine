@@ -749,7 +749,7 @@ DECL_HANDLER(send_message)
 
         switch(msg->type)
         {
-       case MSG_OTHER_PROCESS:
+        case MSG_OTHER_PROCESS:
             msg->data_size = get_req_data_size();
             if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
             {
@@ -771,6 +771,13 @@ DECL_HANDLER(send_message)
             set_queue_bits( recv_queue, QS_SENDMESSAGE );
             break;
         case MSG_POSTED:
+            /* needed for posted DDE messages */
+            msg->data_size = get_req_data_size();
+            if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
+            {
+                free( msg );
+                break;
+            }
             append_message( &recv_queue->msg_list[POST_MESSAGE], msg );
             set_queue_bits( recv_queue, QS_POSTMESSAGE );
             break;
@@ -803,8 +810,12 @@ static void return_message_to_app( struct msg_queue *queue, int flags,
                                    struct get_message_reply *reply,
                                    struct message *msg, enum message_kind kind )
 {
-    assert( !msg->data_size );  /* posted messages can't have data */
-
+    reply->total = msg->data_size;
+    if (msg->data_size > get_reply_max_size())
+    {
+        set_error( STATUS_BUFFER_OVERFLOW );
+        return;
+    }
     reply->type   = msg->type;
     reply->win    = msg->win;
     reply->msg    = msg->msg;
@@ -814,16 +825,22 @@ static void return_message_to_app( struct msg_queue *queue, int flags,
     reply->y      = msg->y;
     reply->time   = msg->time;
     reply->info   = msg->info;
-    reply->total  = 0;
 
     /* raw messages always get removed */
     if ((msg->type == MSG_HARDWARE_RAW) || (flags & GET_MSG_REMOVE))
     {
         queue->last_msg = NULL;
+        if (msg->data)
+        {
+            set_reply_data_ptr( msg->data, msg->data_size );
+            msg->data = NULL;
+            msg->data_size = 0;
+        }
         remove_queue_message( queue, msg, kind );
     }
     else  /* remember it as the last returned message */
     {
+        if (msg->data) set_reply_data( msg->data, msg->data_size );
         queue->last_msg = msg;
         queue->last_msg_kind = kind;
     }

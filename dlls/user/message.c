@@ -512,7 +512,6 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_MDIGETACTIVE:
         if (lparam) return sizeof(BOOL);
         return 0;
-
     case WM_WINE_SETWINDOWPOS:
         push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
         return 0;
@@ -537,13 +536,6 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     /* these contain an HGLOBAL */
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_DDE_INITIATE:
-    case WM_DDE_ADVISE:
-    case WM_DDE_UNADVISE:
-    case WM_DDE_DATA:
-    case WM_DDE_REQUEST:
-    case WM_DDE_POKE:
-    case WM_DDE_EXECUTE:
     /* these contain pointers */
     case WM_DROPOBJECT:
     case WM_QUERYDROPOBJECT:
@@ -763,7 +755,6 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*lparam) return TRUE;
         if (!get_buffer_space( buffer, sizeof(BOOL) )) return FALSE;
         break;
-
     /* these contain an HFONT */
     case WM_SETFONT:
     case WM_GETFONT:
@@ -784,13 +775,6 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     /* these contain an HGLOBAL */
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_DDE_INITIATE:
-    case WM_DDE_ADVISE:
-    case WM_DDE_UNADVISE:
-    case WM_DDE_DATA:
-    case WM_DDE_REQUEST:
-    case WM_DDE_POKE:
-    case WM_DDE_EXECUTE:
     /* these contain pointers */
     case WM_DROPOBJECT:
     case WM_QUERYDROPOBJECT:
@@ -944,7 +928,7 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         memcpy( (RECT *)lparam, buffer, min( sizeof(RECT), size ));
         break;
     case EM_GETLINE:
-        size = min( size, *(WORD *)lparam );
+        size = min( size, (size_t)*(WORD *)lparam );
         memcpy( (WCHAR *)lparam, buffer, size );
         break;
     case LB_GETSELITEMS:
@@ -1065,6 +1049,271 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     }
 }
 
+/* since the WM_DDE_ACK response to a WM_DDE_EXECUTE message should contain the handle
+ * to the memory handle, we keep track (in the server side) of all pairs of handle
+ * used (the client passes its value and the content of the memory handle), and
+ * the server stored both values (the client, and the local one, created after the
+ * content). When a ACK message is generated, the list of pair is searched for a 
+ * matching pair, so that the client memory handle can be returned.
+ */
+struct DDE_pair {
+    HGLOBAL     client_hMem;
+    HGLOBAL     server_hMem;
+};
+
+static      struct DDE_pair*    dde_pairs;
+static      int                 dde_num_alloc;
+static      int                 dde_num_used;
+static      CRITICAL_SECTION    dde_crst = CRITICAL_SECTION_INIT("Raw_DDE_CritSect");
+
+static BOOL dde_add_pair(HGLOBAL chm, HGLOBAL shm)
+{
+    int  i;
+#define GROWBY  4
+
+    EnterCriticalSection(&dde_crst);
+
+    /* now remember the pair of hMem on both sides */
+    if (dde_num_used == dde_num_alloc)
+    {
+        struct DDE_pair* tmp = HeapReAlloc( GetProcessHeap(), 0, dde_pairs,
+                                            (dde_num_alloc + GROWBY) * sizeof(struct DDE_pair));
+        if (!tmp)
+        {
+            LeaveCriticalSection(&dde_crst);
+            return FALSE;
+        }
+        dde_pairs = tmp;
+        /* zero out newly allocated part */
+        memset(&dde_pairs[dde_num_alloc], 0, GROWBY * sizeof(struct DDE_pair));
+        dde_num_alloc += GROWBY;
+    }
+#undef GROWBY
+    for (i = 0; i < dde_num_alloc; i++)
+    {
+        if (dde_pairs[i].server_hMem == 0)
+        {
+            dde_pairs[i].client_hMem = chm;
+            dde_pairs[i].server_hMem = shm;
+            dde_num_used++;
+            break;
+        }
+    }
+    LeaveCriticalSection(&dde_crst);
+    return TRUE;
+}
+
+static HGLOBAL dde_get_pair(HGLOBAL shm)
+{
+    int  i;
+    HGLOBAL     ret = 0;
+
+    EnterCriticalSection(&dde_crst);
+    for (i = 0; i < dde_num_alloc; i++)
+    {
+        if (dde_pairs[i].server_hMem == shm)
+        {
+            /* free this pair */
+            dde_pairs[i].server_hMem = 0;
+            dde_num_used--;
+            ret = dde_pairs[i].client_hMem;
+            break;
+        }
+    }
+    LeaveCriticalSection(&dde_crst);
+    return ret;
+}
+
+/***********************************************************************
+ *		post_dde_message
+ *
+ * Post a DDE messag
+ */
+static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const struct send_message_info *info )
+{
+    void*       ptr = NULL;
+    int         size = 0;
+    UINT        uiLo, uiHi;
+    LPARAM      lp = 0;
+    HGLOBAL     hunlock = 0;
+    int         i;
+    DWORD       res;
+
+    if (!UnpackDDElParam( info->msg, info->lparam, &uiLo, &uiHi ))
+        return FALSE;
+
+    lp = info->lparam;
+    switch (info->msg)
+    {
+        /* DDE messages which don't require packing are:
+         * WM_DDE_INITIATE
+         * WM_DDE_TERMINATE
+         * WM_DDE_REQUEST
+         * WM_DDE_UNADVISE
+         */
+    case WM_DDE_ACK:
+        if (HIWORD(uiHi))
+        {
+            /* uiHi should contain a hMem from WM_DDE_EXECUTE */
+            HGLOBAL h = dde_get_pair( uiHi );
+            if (h)
+            {
+                /* send back the value of h on the other side */
+                push_data( data, &h, sizeof(HGLOBAL) );
+                lp = uiLo;
+                TRACE( "send dde-ack %x %08x => %08lx\n", uiLo, uiHi, (DWORD)h );
+            }
+        }
+        else
+        {
+            /* uiHi should contain either an atom or 0 */
+            TRACE( "send dde-ack %x atom=%x\n", uiLo, uiHi );
+            lp = MAKELONG( uiLo, uiHi );
+        }
+        break;
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        size = 0;
+        if (uiLo)
+        {
+            size = GlobalSize( (HGLOBAL)uiLo ) ;
+            if ((info->msg == WM_DDE_ADVISE && size < sizeof(DDEADVISE)) ||
+                (info->msg == WM_DDE_DATA   && size < sizeof(DDEDATA))   ||
+                (info->msg == WM_DDE_POKE   && size < sizeof(DDEPOKE))
+                )
+            return FALSE;
+        }
+        else if (info->msg != WM_DDE_DATA) return FALSE;
+        
+        lp = uiHi;
+        if (uiLo)
+        {
+            if ((ptr = GlobalLock( (HGLOBAL)uiLo) ))
+            {
+                push_data( data, ptr, size );
+                hunlock = (HGLOBAL)uiLo;
+            }
+        }
+        TRACE( "send ddepack %u %x\n", size, uiHi );
+        break;
+    case WM_DDE_EXECUTE:
+        if (info->lparam)
+        {
+            if ((ptr = GlobalLock( (HGLOBAL)info->lparam) ))
+            {
+                push_data(data, ptr, GlobalSize( (HGLOBAL)info->lparam ));
+                /* so that the other side can send it back on ACK */
+                lp = info->lparam;
+                hunlock = (HGLOBAL)info->lparam;
+            }
+        }
+        break;
+    }
+    SERVER_START_REQ( send_message )
+    {
+        req->id      = (void *)dest_tid;
+        req->type    = info->type;
+        req->win     = info->hwnd;
+        req->msg     = info->msg;
+        req->wparam  = info->wparam;
+        req->lparam  = lp;
+        req->time    = GetCurrentTime();
+        req->timeout = -1;
+        for (i = 0; i < data->count; i++) 
+            wine_server_add_data( req, data->data[i], data->size[i] );
+        if ((res = wine_server_call( req )))
+        {
+            if (res == STATUS_INVALID_PARAMETER)
+                /* FIXME: find a STATUS_ value for this one */
+                SetLastError( ERROR_INVALID_THREAD_ID );
+            else
+                SetLastError( RtlNtStatusToDosError(res) );
+        }   
+        else 
+            FreeDDElParam(info->msg, info->lparam);
+    }
+    SERVER_END_REQ;
+    if (hunlock) GlobalUnlock(hunlock);
+
+    return !res;
+}
+
+/***********************************************************************
+ *		unpack_dde_message
+ *
+ * Unpack a posted DDE message received from another process.
+ */
+static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                                void **buffer, size_t size )
+{
+    UINT	uiLo, uiHi;
+    HGLOBAL	hMem = 0;
+    void*	ptr;
+
+    switch (message)
+    {
+    case WM_DDE_ACK:
+        if (size)
+        {
+            /* hMem is being passed */
+            if (size != sizeof(HGLOBAL)) return FALSE;
+            if (!buffer || !*buffer) return FALSE;
+            uiLo = *lparam;
+            memcpy( &hMem, *buffer, size );
+            uiHi = hMem;
+            TRACE("recv dde-ack %u mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( uiHi ));
+        }
+        else
+        {
+            uiLo = LOWORD( *lparam );
+            uiHi = HIWORD( *lparam );
+            TRACE("recv dde-ack %x atom=%x\n", uiLo, uiHi);
+        }
+	*lparam = PackDDElParam( WM_DDE_ACK, uiLo, uiHi );
+	break;
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+	if ((!buffer || !*buffer) && message != WM_DDE_DATA) return FALSE;
+	uiHi = *lparam;
+	TRACE( "recv ddepack %u %x\n", size, uiHi );
+        if (size)
+        {
+            hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size );
+            if (hMem && (ptr = GlobalLock( hMem )))
+            {
+                memcpy( ptr, *buffer, size );
+                GlobalUnlock( hMem );
+            }
+            else return FALSE;
+        }
+	uiLo = hMem;
+
+	*lparam = PackDDElParam( message, uiLo, uiHi );
+	break;
+    case WM_DDE_EXECUTE:
+	if (size)
+	{
+	    if (!buffer || !*buffer) return FALSE;
+	    hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size );
+	    if (hMem && (ptr = GlobalLock( hMem )))
+	    {
+		memcpy( ptr, *buffer, size );
+		GlobalUnlock( hMem );
+                TRACE( "exec: pairing c=%08lx s=%08lx\n", *lparam, (DWORD)hMem );
+                if (!dde_add_pair( *lparam, hMem )) 
+                {
+                    GlobalFree( hMem );
+                    return FALSE;
+                }
+	    }
+	} else return FALSE;
+	*lparam = hMem;
+        break;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *           call_window_proc
@@ -1222,6 +1471,18 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
             /* fall through */
         case MSG_POSTED:
             queue->GetMessageExtraInfoVal = extra_info;
+	    if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
+	    {
+		if (!unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
+                                         &info.msg.lParam, &buffer, size ))
+		{
+		    ERR( "invalid packed dde-message %x (%s) hwnd %x wp %x lp %lx size %d\n",
+			 info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd), 
+			 info.msg.hwnd, info.msg.wParam, info.msg.lParam, size );
+		    /* ignore it */
+		    continue;
+		}
+	    }
             *msg = info.msg;
             if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
             return TRUE;
@@ -1320,6 +1581,10 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
             WARN( "cannot pack message %x\n", info->msg );
             return FALSE;
         }
+    }
+    else if (info->type == MSG_POSTED && info->msg >= WM_DDE_FIRST && info->msg <= WM_DDE_LAST)
+    {
+        return post_dde_message( dest_tid, &data, info );
     }
 
     SERVER_START_REQ( send_message )
