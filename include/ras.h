@@ -38,8 +38,6 @@ extern "C" {
 #define RAS_MaxUserData       200
 #define RAS_MaxDnsSuffix      256
 
-DECLARE_HANDLE(HRASCONN);
-
 /* szDeviceType strings for RASDEVINFO */
 #define	RASDT_Direct	"direct"
 #define	RASDT_Modem	"modem"
@@ -64,6 +62,9 @@ typedef struct tagRASDEVINFOW {
 
 DECL_WINELIB_TYPE_AW(RASDEVINFO)
 DECL_WINELIB_TYPE_AW(LPRASDEVINFO)
+
+DECLARE_HANDLE(HRASCONN);
+typedef  HRASCONN* LPHRASCONN;
 
 typedef struct tagRASCONNA {
     DWORD    dwSize;
@@ -298,12 +299,118 @@ typedef struct tagRASENTRYW {
 
 DECL_WINELIB_TYPE_AW(RASENTRY)
 
+#define RASCS_PAUSED 0x1000
+#define RASCS_DONE   0x2000
+typedef enum tagRASCONNSTATE
+{
+      RASCS_OpenPort = 0,
+      RASCS_PortOpened,
+      RASCS_ConnectDevice,
+      RASCS_DeviceConnected,
+      RASCS_AllDevicesConnected,
+      RASCS_Authenticate,
+      RASCS_AuthNotify,
+      RASCS_AuthRetry,
+      RASCS_AuthCallback,
+      RASCS_AuthChangePassword,
+      RASCS_AuthProject,
+      RASCS_AuthLinkSpeed,
+      RASCS_AuthAck,
+      RASCS_ReAuthenticate,
+      RASCS_Authenticated,
+      RASCS_PrepareForCallback,
+      RASCS_WaitForModemReset,
+      RASCS_WaitForCallback,
+      RASCS_Projected,
+      RASCS_StartAuthentication,
+      RASCS_CallbackComplete,
+      RASCS_LogonNetwork,
+      RASCS_SubEntryConnected,
+      RASCS_SubEntryDisconnected,
+      RASCS_Interactive = RASCS_PAUSED,
+      RASCS_RetryAuthentication,
+      RASCS_CallbackSetByCaller,
+      RASCS_PasswordExpired,
+      RASCS_Connected = RASCS_DONE,
+      RASCS_Disconnected
+}  RASCONNSTATE, *LPRASCONNSTATE;
+
+typedef struct tagRASCONNSTATUSA
+{
+    DWORD dwSize;
+    RASCONNSTATE rasconnstate;
+    DWORD dwError;
+    CHAR szDeviceType[RAS_MaxDeviceType + 1];
+    CHAR szDeviceName[RAS_MaxDeviceName + 1];
+} RASCONNSTATUSA, *LPRASCONNSTATUSA;
+
+typedef struct tagRASCONNSTATUSW
+{
+    DWORD dwSize;
+    RASCONNSTATE rasconnstate;
+    DWORD dwError;
+    WCHAR szDeviceType[RAS_MaxDeviceType + 1];
+    WCHAR szDeviceName[RAS_MaxDeviceName + 1];
+} RASCONNSTATUSW, *LPRASCONNSTATUSW;
+
+DECL_WINELIB_TYPE_AW(RASCONNSTATUS)
+
+typedef enum tagRASPROJECTION
+{
+    RASP_Amb =    0x10000,
+    RASP_PppNbf = 0x803F,
+    RASP_PppIpx = 0x802B,
+    RASP_PppIp =  0x8021,
+    RASP_PppLcp = 0xC021,
+    RASP_Slip =   0x20000
+} RASPROJECTION, *LPRASPROJECTION;
+
+typedef struct tagRASSUBENTRYA
+{
+    DWORD dwSize;
+    DWORD dwfFlags;
+    CHAR szDeviceType[RAS_MaxDeviceType + 1];
+    CHAR szDeviceName[RAS_MaxDeviceName + 1];
+    CHAR szLocalPhoneNumber[RAS_MaxPhoneNumber + 1];
+    DWORD dwAlternateOffset;
+} RASSUBENTRYA, *LPRASSUBENTRYA;
+
+typedef struct tagRASSUBENTRYW
+{
+    DWORD dwSize;
+    DWORD dwfFlags;
+    WCHAR szDeviceType[RAS_MaxDeviceType + 1];
+    WCHAR szDeviceName[RAS_MaxDeviceName + 1];
+    WCHAR szLocalPhoneNumber[RAS_MaxPhoneNumber + 1];
+    DWORD dwAlternateOffset;
+} RASSUBENTRYW, *LPRASSUBENTRYW;
+
+typedef struct tagRASDIALEXTENSIONS
+{
+    DWORD dwSize;
+    DWORD dwfOptions;
+    HWND hwndParent;
+    ULONG_PTR reserved;
+} RASDIALEXTENSIONS, *LPRASDIALEXTENSIONS;
+
+DWORD WINAPI RasConnectionNotificationA(HRASCONN,HANDLE,DWORD);
+DWORD WINAPI RasConnectionNotificationW(HRASCONN,HANDLE,DWORD);
+#define      RasConnectionNotification WINELIB_NAME_AW(RasConnectionNotification)
+DWORD WINAPI RasCreatePhonebookEntryA(HWND,LPCSTR);
+DWORD WINAPI RasCreatePhonebookEntryW(HWND,LPCWSTR);
+#define      RasCreatePhonebookEntry WINELIB_NAME_AW(RasCreatePhonebookEntry)
 DWORD WINAPI RasDeleteEntryA(LPCSTR,LPCSTR);
 DWORD WINAPI RasDeleteEntryW(LPCWSTR,LPCWSTR);
 #define      RasDeleteEntry WINELIB_NAME_AW(RasDeleteEntry)
 DWORD WINAPI RasDeleteSubEntryA(LPCSTR,LPCSTR,DWORD);
 DWORD WINAPI RasDeleteSubEntryW(LPCWSTR,LPCWSTR,DWORD);
 #define      RasDeleteSubEntry WINELIB_NAME_AW(RasDeleteSubEntry)
+DWORD WINAPI RasDialA(LPRASDIALEXTENSIONS,LPCSTR,LPRASDIALPARAMSA,DWORD,LPVOID,LPHRASCONN);
+DWORD WINAPI RasDialW(LPRASDIALEXTENSIONS,LPCWSTR,LPRASDIALPARAMSW,DWORD,LPVOID,LPHRASCONN);
+#define      RasDial WINELIB_NAME_AW(RasDial)
+DWORD WINAPI RasEditPhonebookEntryA(HWND,LPCSTR,LPCSTR);
+DWORD WINAPI RasEditPhonebookEntryW(HWND,LPCWSTR,LPCWSTR);
+#define      RasEditPhonebookEntry WINELIB_NAME_AW(RasEditPhonebookEntry)
 DWORD WINAPI RasEnumConnectionsA(LPRASCONNA,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumConnectionsW(LPRASCONNW,LPDWORD,LPDWORD);
 #define      RasEnumConnections WINELIB_NAME_AW(RasEnumConnections)
@@ -313,12 +420,33 @@ DWORD WINAPI RasEnumDevicesW(LPRASDEVINFOW,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumEntriesA(LPCSTR,LPCSTR,LPRASENTRYNAMEA,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumEntriesW(LPCWSTR,LPCWSTR,LPRASENTRYNAMEW,LPDWORD,LPDWORD);
 #define      RasEnumEntries WINELIB_NAME_AW(RasEnumEntries)
+DWORD WINAPI RasGetConnectStatusA(HRASCONN,LPRASCONNSTATUSA);
+DWORD WINAPI RasGetConnectStatusW(HRASCONN,LPRASCONNSTATUSW);
+#define      RasGetConnectStatus WINELIB_NAME_AW(RasGetConnectStatus)
 DWORD WINAPI RasGetEntryDialParamsA(LPCSTR,LPRASDIALPARAMSA,LPBOOL);
 DWORD WINAPI RasGetEntryDialParamsW(LPCWSTR,LPRASDIALPARAMSW,LPBOOL);
 #define      RasGetEntryDialParams WINELIB_NAME_AW(RasGetEntryDialParams)
+DWORD WINAPI RasGetEntryPropertiesA(LPCSTR,LPCSTR,LPRASENTRYA,LPDWORD,LPBYTE,LPDWORD);
+DWORD WINAPI RasGetEntryPropertiesW(LPCWSTR,LPCWSTR,LPRASENTRYW,LPDWORD,LPBYTE,LPDWORD);
+#define      RasGetEntryProperties WINELIB_NAME_AW(RasGetEntryProperties)
+DWORD WINAPI RasGetErrorStringA(UINT,LPSTR,DWORD);
+DWORD WINAPI RasGetErrorStringW(UINT,LPWSTR,DWORD);
+#define      RasGetErrorString WINELIB_NAME_AW(RasGetErrorString)
+DWORD WINAPI RasGetProjectionInfoA(HRASCONN,RASPROJECTION,LPVOID,LPDWORD);
+DWORD WINAPI RasGetProjectionInfoW(HRASCONN,RASPROJECTION,LPVOID,LPDWORD);
+#define      RasGetProjectionInfo WINELIB_NAME_AW(RasGetProjectionInfo)
 DWORD WINAPI RasHangUpA(HRASCONN);
 DWORD WINAPI RasHangUpW(HRASCONN);
 #define      RasHangUp WINELIB_NAME_AW(RasHangUp)
+DWORD WINAPI RasRenameEntryA(LPCSTR,LPCSTR,LPCSTR);
+DWORD WINAPI RasRenameEntryW(LPCWSTR,LPCWSTR,LPCWSTR);
+#define      RasRenameEntry WINELIB_NAME_AW(RasRenameEntry)
+DWORD WINAPI RasSetEntryDialParamsA(LPCSTR,LPRASDIALPARAMSA,BOOL);
+DWORD WINAPI RasSetEntryDialParamsW(LPCWSTR,LPRASDIALPARAMSW,BOOL);
+#define      RasSetEntryDialParams WINELIB_NAME_AW(RasSetEntryDialParams)
+DWORD WINAPI RasSetSubEntryPropertiesA(LPCSTR,LPCSTR,DWORD,LPRASSUBENTRYA,DWORD,LPBYTE,DWORD);
+DWORD WINAPI RasSetSubEntryPropertiesW(LPCWSTR,LPCWSTR,DWORD,LPRASSUBENTRYW,DWORD,LPBYTE,DWORD);
+#define      RasSetSubEntryProperties WINELIB_NAME_AW(RasSetSubEntryProperties)
 DWORD WINAPI RasValidateEntryNameA(LPCSTR  lpszPhonebook, LPCSTR  lpszEntry);
 DWORD WINAPI RasValidateEntryNameW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry);
 #define RasValidateEntryName WINELIB_NAME_AW(RasValidateEntryName)
