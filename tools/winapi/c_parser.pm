@@ -33,6 +33,14 @@ use output qw($output);
 use c_function;
 use c_type;
 
+# Defined a couple common regexp tidbits
+my $CALL_CONVENTION="__cdecl|__stdcall|" .
+                    "__RPC_API|__RPC_STUB|__RPC_USER|" .
+		    "CALLBACK|CDECL|NTAPI|PASCAL|RPC_ENTRY|RPC_VAR_ENTRY|" .
+		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|" .
+		    "WINE_UNUSED";
+
+
 ########################################################################
 # new
 #
@@ -1211,11 +1219,7 @@ sub parse_c_function {
 
 	$self->_parse_c('inline|FAR', \$_, \$line, \$column);
 
-	$self->_parse_c("__cdecl|__stdcall|__RPC_STUB|" .
-			"CALLBACK|CDECL|PASCAL|" .
-			"RPC_ENTRY|RPC_VAR_ENTRY|" .
-			"VFWAPIV|VFWAPI|WINAPIV|WINAPI|" .
-			"WINE_UNUSED",
+	$self->_parse_c($CALL_CONVENTION,
 			\$_, \$line, \$column, \$calling_convention);
 
 
@@ -1835,6 +1839,16 @@ sub parse_c_typedef {
 					 \$kind, \$_name, \@field_type_names, \@field_names, \@names))
     {
 	my $base_name;
+        foreach my $name (@names)
+        {
+            if ($name =~ /^\w+$/)
+            {
+                $base_name = $name;
+                last;
+            }
+        }
+        $base_name="$kind $_name" if (!defined $base_name and defined $_name);
+        $base_name=$kind if (!defined $base_name);
 	foreach my $name (@names) {
 	    if ($name =~ /^\w+$/) {
 		my $type = &$$create_type();
@@ -1846,10 +1860,6 @@ sub parse_c_typedef {
 		$type->field_names([@field_names]);
 
 		&$$found_type($type);
-
-		$base_name = $name;
-	    } elsif (!defined($base_name)) {
-		$self->_parse_c_error($_, $line, $column, "typedef 1");
 	    } elsif ($name =~ /^(\*+)\s*(?:RESTRICTED_POINTER\s+)?(\w+)$/) {
 		my $type_name = "$base_name $1";
 		$name = $2;
@@ -2004,7 +2014,7 @@ sub parse_c_variable {
 	$type = $self->_format_c_type($type);
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
 	$type = $self->_format_c_type("$sign$1$3");
 	$name = $2;
 
@@ -2061,7 +2071,7 @@ sub parse_c_variable {
 
     if($finished) {
 	# Nothing
-    } elsif(s/^(\((?:__cdecl|PASCAL|WINAPI)?\s*\*?\s*(?:__cdecl|PASCAL|WINAPI)?\w+\s*(?:\[[^\]]*\]\s*)*\))\s*\(//) {
+    } elsif(s/^(\((?:$CALL_CONVENTION)?\s*\*?\s*(?:$CALL_CONVENTION)?\w+\s*(?:\[[^\]]*\]\s*)*\))\s*\(//) {
 	$self->_update_c_position($&, \$line, \$column);
 
 	$name = $1;

@@ -129,6 +129,8 @@ typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(_wine_boolean flag);
 struct _MIDL_STUB_MESSAGE;
 struct _MIDL_STUB_DESC;
 struct _FULL_PTR_XLAT_TABLES;
+struct NDR_ALLOC_ALL_NODES_CONTEXT;
+struct NDR_POINTER_QUEUE_STATE;
 
 typedef void (__RPC_USER *EXPR_EVAL)(struct _MIDL_STUB_MESSAGE *);
 typedef const unsigned char *PFORMAT_STRING;
@@ -142,6 +144,13 @@ typedef struct
   unsigned long *OffsetArray;
   unsigned long *ActualCountArray;
 } ARRAY_INFO, *PARRAY_INFO;
+
+typedef struct
+{
+  unsigned long WireCodeset;
+  unsigned long DesiredReceivingCodeset;
+  void *CSArrayInfo;
+} CS_STUB_INFO;
 
 typedef struct _NDR_PIPE_DESC *PNDR_PIPE_DESC;
 typedef struct _NDR_PIPE_MESSAGE *PNDR_PIPE_MESSAGE;
@@ -161,12 +170,13 @@ typedef struct _MIDL_STUB_MESSAGE
   unsigned char *Memory;
   int IsClient;
   int ReuseBuffer;
-  unsigned char *AllocAllNodesMemory;
-  unsigned char *AllocAllNodesMemoryEnd;
+  struct NDR_ALLOC_ALL_NODES_CONTEXT *pAllocAllNodesContext;
+  struct NDR_POINTER_QUEUE_STATE *pPointerQueueState;
   int IgnoreEmbeddedPointers;
   unsigned char *PointerBufferMark;
   unsigned char fBufferValid;
-  unsigned char Unused;
+  unsigned char uFlags;
+  unsigned short UniquePtrCount;
   ULONG_PTR MaxCount;
   unsigned long Offset;
   unsigned long ActualCount;
@@ -179,7 +189,7 @@ typedef struct _MIDL_STUB_MESSAGE
   const struct _MIDL_STUB_DESC *StubDesc;
   struct _FULL_PTR_XLAT_TABLES *FullPtrXlatTables;
   unsigned long FullPtrRefId;
-  unsigned long ulUnused1;
+  unsigned long PointerLength;
   int fInDontFree:1;
   int fDontCallFreeInst:1;
   int fInOnlyParam:1;
@@ -199,12 +209,21 @@ typedef struct _MIDL_STUB_MESSAGE
   unsigned long *SizePtrLengthArray;
   void *pArgQueue;
   unsigned long dwStubPhase;
-  PNDR_PIPE_DESC pPipeDesc;
+  void *LowStackMark;
   PNDR_ASYNC_MESSAGE pAsyncMsg;
   PNDR_CORRELATION_INFO pCorrInfo;
   unsigned char *pCorrMemory;
   void *pMemoryList;
-  ULONG_PTR w2kReserved[5];
+  CS_STUB_INFO *pCSInfo;
+  unsigned char *ConformanceMark;
+  unsigned char *VarianceMark;
+  INT_PTR Unused;
+  struct _NDR_PROC_CONTEXT *pContext;
+  INT_PTR Reserved51_1;
+  INT_PTR Reserved51_2;
+  INT_PTR Reserved51_3;
+  INT_PTR Reserved51_4;
+  INT_PTR Reserved51_5;
 } MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
 #include <poppack.h>
 
@@ -286,6 +305,18 @@ typedef struct _MIDL_FORMAT_STRING
 #endif
 } MIDL_FORMAT_STRING;
 
+typedef struct _MIDL_SYNTAX_INFO
+{
+  RPC_SYNTAX_IDENTIFIER TransferSyntax;
+  RPC_DISPATCH_TABLE* DispatchTable;
+  PFORMAT_STRING ProcString;
+  const unsigned short* FmtStringOffset;
+  PFORMAT_STRING TypeString;
+  const void* aUserMarshalQuadruple;
+  ULONG_PTR pReserved1;
+  ULONG_PTR pReserved2;
+} MIDL_SYNTAX_INFO, *PMIDL_SYNTAX_INFO;
+
 typedef void (__RPC_API *STUB_THUNK)( PMIDL_STUB_MESSAGE );
 
 typedef long (__RPC_API *SERVER_ROUTINE)();
@@ -297,9 +328,9 @@ typedef struct _MIDL_SERVER_INFO_
   PFORMAT_STRING ProcString;
   const unsigned short *FmtStringOffset;
   const STUB_THUNK *ThunkTable;
-  PFORMAT_STRING LocalFormatTypes;
-  PFORMAT_STRING LocalProcString;
-  const unsigned short *LocalFmtStringOffset;
+  PRPC_SYNTAX_IDENTIFIER pTransferSyntax;
+  ULONG_PTR nCount;
+  PMIDL_SYNTAX_INFO pSyntaxInfo;
 } MIDL_SERVER_INFO, *PMIDL_SERVER_INFO;
 
 typedef struct _MIDL_STUBLESS_PROXY_INFO
@@ -307,9 +338,9 @@ typedef struct _MIDL_STUBLESS_PROXY_INFO
   PMIDL_STUB_DESC pStubDesc;
   PFORMAT_STRING ProcFormatString;
   const unsigned short *FormatStringOffset;
-  PFORMAT_STRING LocalFormatTypes;
-  PFORMAT_STRING LocalProcStrings;
-  const unsigned short *LocalFmtStringOffset;
+  PRPC_SYNTAX_IDENTIFIER pTransferSyntax;
+  ULONG_PTR nCount;
+  PMIDL_SYNTAX_INFO pSyntaxInfo;
 } MIDL_STUBLESS_PROXY_INFO, *PMIDL_STUBLESS_PROXY_INFO;
 
 typedef union _CLIENT_CALL_RETURN

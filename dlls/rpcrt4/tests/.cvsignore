@@ -1,3 +1,4 @@
 Makefile
+generated.ok
 rpc.ok
 testlist.c

@@ -6,6 +6,7 @@ TESTDLL   = rpcrt4.dll
 IMPORTS   = rpcrt4
 
 CTESTS = \
+	generated.c \
 	rpc.c
 
 @MAKE_TEST_RULES@
