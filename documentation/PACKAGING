@@ -448,7 +448,7 @@ You will need to package the files:
 
 The post-install script:
 
-	if ! grep -q /usr/X11R6/lib/wine /etc/ld.so.conf; then
+	if ! grep /usr/X11R6/lib/wine /etc/ld.so.conf &gt;/dev/null; then
 	    echo "/usr/X11R6/lib/wine" &gt;&gt; /etc/ld.so.conf
 	fi
 	/sbin/ldconfig

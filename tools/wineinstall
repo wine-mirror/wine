@@ -274,7 +274,7 @@ then {
       # to our sucommand string
       if [ -f /etc/ld.so.conf ]
       then
-        if ! grep -qs "$libdir" /etc/ld.so.conf
+        if ! grep -s "$libdir" /etc/ld.so.conf >/dev/null 2>&1
         then {
           echo
           echo "$libdir doesn't exist in your /etc/ld.so.conf, it will be added"
