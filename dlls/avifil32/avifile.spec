@@ -2,6 +2,11 @@ name	avifile
 type	win16
 owner	avifil32
 
+# I'm just using "long" instead of "ptr" for the interface pointers,
+# because they are 32-bit pointers, not converted to 16-bit format,
+# but the app doesn't really need to know, it should never need to
+# dereference the interface pointer itself (if we're lucky)...
+
 1   stub     WEP
 2   stub     DLLGETCLASSOBJECT
 3   stub     DLLCANUNLOADNOW
@@ -11,9 +16,9 @@ owner	avifil32
 12  stub     _IID_IAVIEDITSTREAM
 13  stub     _IID_IGETFRAME
 14  stub     _CLSID_AVISIMPLEUNMARSHAL
-100 stub     AVIFILEINIT
-101 stub     AVIFILEEXIT
-102 stub     AVIFILEOPEN
+100 pascal   AVIFileInit() AVIFileInit
+101 pascal   AVIFileExit() AVIFileExit
+102 pascal   AVIFileOpen(ptr str word ptr) AVIFileOpenA
 103 stub     AVISTREAMOPENFROMFILE
 104 stub     AVISTREAMCREATE
 105 stub     AVIMAKECOMPRESSEDSTREAM
@@ -32,9 +37,9 @@ owner	avifil32
 132 stub     AVISTREAMTIMETOSAMPLE
 133 stub     AVISTREAMSAMPLETOTIME
 140 stub     AVIFILEADDREF
-141 stub     AVIFILERELEASE
+141 pascal   AVIFileRelease(long) AVIFileRelease
 142 stub     AVIFILEINFO
-143 stub     AVIFILEGETSTREAM
+143 pascal   AVIFileGetStream(long ptr long long) AVIFileGetStream
 144 stub     AVIFILECREATESTREAM
 146 stub     AVIFILEWRITEDATA
 147 stub     AVIFILEREADDATA
