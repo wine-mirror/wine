@@ -109,10 +109,15 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
         if (rc==DSERR_NODRIVER) {
             trace("  No Driver\n");
             return;
-        } else if (rc==DSERR_ALLOCATED) {
+        }
+	if (rc==DSERR_ALLOCATED) {
             trace("  Already In Use\n");
             return;
-       }
+        }
+	if (rc==E_FAIL) {
+            trace("  Could not initialize DirectSound.\n");
+	    return;
+	}
     }
 
     /* DSOUND: Error: Invalid caps buffer */
