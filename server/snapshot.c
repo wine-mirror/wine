@@ -123,7 +123,7 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     ptr = &snapshot->processes[snapshot->process_pos++];
     reply->count    = ptr->count;
     reply->pid      = get_process_id( ptr->process );
-    reply->ppid     = get_process_id( ptr->process->parent );
+    reply->ppid     = ptr->process->parent ? get_process_id( ptr->process->parent ) : 0;
     reply->heap     = 0;  /* FIXME */
     reply->module   = 0;  /* FIXME */
     reply->threads  = ptr->threads;
