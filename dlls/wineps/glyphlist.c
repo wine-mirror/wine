@@ -65,18 +65,11 @@ INT PSDRV_GlyphListInit()
  *  be initialized without generating compiler warnings
  *
  */
-typedef struct
+inline static INT GlyphListInsert(LPCSTR szName, INT index)
 {
-    INT	    index;
-    LPSTR   sz;
-} _glyphname;
+    GLYPHNAME *g;
 
-inline INT GlyphListInsert(LPCSTR szName, INT index)
-{
-    _glyphname	*g;
-
-    g = (_glyphname *)HeapAlloc(PSDRV_Heap, 0,
-	    sizeof(GLYPHNAME) + strlen(szName) + 1);
+    g = HeapAlloc(PSDRV_Heap, 0, sizeof(GLYPHNAME) + strlen(szName) + 1);
     if (g == NULL)
     {
 	ERR("Failed to allocate %i bytes of memory\n", 
@@ -86,7 +79,7 @@ inline INT GlyphListInsert(LPCSTR szName, INT index)
 
     g->index = -1;
     g->sz = (LPSTR)(g + 1);
-    strcpy(g->sz, szName);
+    strcpy((LPSTR)g->sz, szName);
 
     if (glyphListSize % GLYPHLIST_ALLOCSIZE == 0)	/* grow the list? */
     {
@@ -114,7 +107,7 @@ inline INT GlyphListInsert(LPCSTR szName, INT index)
 		(glyphListSize - index) * sizeof(GLYPHNAME *));
     }
 
-    glyphList[index] = (GLYPHNAME *)g;
+    glyphList[index] = g;
     ++glyphListSize;
 
     TRACE("Added '%s' at glyphList[%i] (glyphListSize now %i)\n",

@@ -15,18 +15,18 @@
 #include "winspool.h"
 
 typedef struct {
-    INT			index;
-    const LPCSTR	sz;
+    INT		index;
+    LPCSTR	sz;
 } GLYPHNAME;
 
 typedef struct {
     LONG		UV;
-    const GLYPHNAME	*const name;
+    const GLYPHNAME    *name;
 } UNICODEGLYPH;
 
 typedef struct {
     INT			size;
-    const UNICODEGLYPH	*const glyphs;
+    const UNICODEGLYPH *glyphs;
 } UNICODEVECTOR;
 
 extern const INT	    PSDRV_AGLGlyphNamesSize;
