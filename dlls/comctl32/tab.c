@@ -79,7 +79,7 @@ typedef struct
 /******************************************************************************
  * Positioning constants
  */
-#define SELECTED_TAB_OFFSET     1
+#define SELECTED_TAB_OFFSET     2
 #define HORIZONTAL_ITEM_PADDING 6
 #define VERTICAL_ITEM_PADDING   3
 #define ROUND_CORNER_SIZE       2
@@ -1099,7 +1099,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 
     /* Take the highest between font or icon */
     if (fontMetrics.tmHeight > icon_height)
-      item_height = fontMetrics.tmHeight;
+      item_height = fontMetrics.tmHeight + 2;
     else
       item_height = icon_height;
 
