@@ -52,7 +52,7 @@ static const struct gdi_obj_funcs bitmap_funcs =
  * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
  * data.
  */
-static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
+INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 {
     switch(bpp)
     {
@@ -98,59 +98,20 @@ static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
  *    Failure: 0
  */
 HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
-                                 UINT bpp, LPCVOID bits )
+                             UINT bpp, LPCVOID bits )
 {
-    BITMAPOBJ *bmp;
-    HBITMAP hbitmap;
+    BITMAP bm;
 
-    planes = (BYTE)planes;
-    bpp    = (BYTE)bpp;
+    bm.bmType = 0;
+    bm.bmWidth = width;
+    bm.bmHeight = height;
+    bm.bmWidthBytes = BITMAP_GetWidthBytes( width, bpp );
+    bm.bmPlanes = planes;
+    bm.bmBitsPixel = bpp;
+    bm.bmBits = (LPVOID)bits;
 
-
-      /* Check parameters */
-    if (!height || !width)
-    {
-        height = 1;
-        width  = 1;
-        planes = 1;
-        bpp    = 1;
-    }
-    if (planes != 1) {
-        FIXME("planes = %d\n", planes);
-	return 0;
-    }
-    if (height < 0) height = -height;
-    if (width < 0) width = -width;
-
-      /* Create the BITMAPOBJ */
-    if (!(bmp = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC,
-				 (HGDIOBJ *)&hbitmap, &bitmap_funcs )))
-        return 0;
-
-    TRACE("%dx%d, %d colors returning %p\n", width, height, 1 << (planes*bpp), hbitmap);
-
-    bmp->size.cx = 0;
-    bmp->size.cy = 0;
-    bmp->bitmap.bmType = 0;
-    bmp->bitmap.bmWidth = width;
-    bmp->bitmap.bmHeight = height;
-    bmp->bitmap.bmPlanes = planes;
-    bmp->bitmap.bmBitsPixel = bpp;
-    bmp->bitmap.bmWidthBytes = BITMAP_GetWidthBytes( width, bpp );
-    bmp->bitmap.bmBits = NULL;
-
-    bmp->funcs = NULL;
-    bmp->physBitmap = NULL;
-    bmp->dib = NULL;
-    bmp->segptr_bits = 0;
-
-    if (bits) /* Set bitmap bits */
-	SetBitmapBits( hbitmap, height * bmp->bitmap.bmWidthBytes,
-                         bits );
-    GDI_ReleaseObj( hbitmap );
-    return hbitmap;
+    return CreateBitmapIndirect( &bm );
 }
-
 
 /******************************************************************************
  * CreateCompatibleBitmap [GDI32.@]
@@ -223,7 +184,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
                     bi->bmiHeader.biCompression   = bmp->dib->dsBmih.biCompression;
                     bi->bmiHeader.biSizeImage     = 0;
                     bi->bmiHeader.biXPelsPerMeter = bmp->dib->dsBmih.biXPelsPerMeter;
-                    bi->bmiHeader.biYPelsPerMeter = bmp->dib->dsBmih.biYPelsPerMeter;		
+                    bi->bmiHeader.biYPelsPerMeter = bmp->dib->dsBmih.biYPelsPerMeter;
                     bi->bmiHeader.biClrUsed       = bmp->dib->dsBmih.biClrUsed;
                     bi->bmiHeader.biClrImportant  = bmp->dib->dsBmih.biClrImportant;
 
@@ -255,17 +216,76 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 /******************************************************************************
  * CreateBitmapIndirect [GDI32.@]
  *
- * Creates a bitmap with the specifies info.
+ * Creates a bitmap with the specified info.
+ *
+ * PARAMS
+ *  bmp [I] Pointer to the bitmap info describing the bitmap
  *
  * RETURNS
  *    Success: Handle to bitmap
- *    Failure: NULL
+ *    Failure: NULL. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ *  If a width or height of 0 are given, a 1x1 monochrome bitmap is returned.
  */
-HBITMAP WINAPI CreateBitmapIndirect(
-    const BITMAP * bmp) /* [in] Pointer to the bitmap data */
+HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
 {
-    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
-                           bmp->bmBitsPixel, bmp->bmBits );
+    BITMAP bm;
+    BITMAPOBJ *bmpobj;
+    HBITMAP hbitmap;
+
+    if (!bmp || bmp->bmType || bmp->bmPlanes != 1)
+    {
+        if (bmp && bmp->bmPlanes != 1)
+            FIXME("planes = %d\n", bmp->bmPlanes);
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    bm = *bmp;
+
+    if (!bm.bmWidth || !bm.bmHeight)
+    {
+        bm.bmWidth = bm.bmHeight = 1;
+        bm.bmPlanes = bm.bmBitsPixel = 1;
+        bm.bmWidthBytes = 2;
+        bm.bmBits = NULL;
+    }
+    else
+    {
+        if (bm.bmHeight < 0)
+            bm.bmHeight = -bm.bmHeight;
+        if (bm.bmWidth < 0)
+            bm.bmWidth = -bm.bmWidth;
+    }
+
+      /* Create the BITMAPOBJ */
+    bmpobj = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC,
+                              (HGDIOBJ *)&hbitmap, &bitmap_funcs );
+
+    if (!bmpobj)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+
+    TRACE("%dx%d, %d colors returning %p\n", bm.bmWidth, bm.bmHeight,
+          1 << (bm.bmPlanes * bm.bmBitsPixel), hbitmap);
+
+    bmpobj->size.cx = 0;
+    bmpobj->size.cy = 0;
+    bmpobj->bitmap = bm;
+    bmpobj->bitmap.bmBits = NULL;
+    bmpobj->funcs = NULL;
+    bmpobj->physBitmap = NULL;
+    bmpobj->dib = NULL;
+    bmpobj->segptr_bits = 0;
+
+    if (bm.bmBits)
+        SetBitmapBits( hbitmap, bm.bmHeight * bm.bmWidthBytes, bm.bmBits );
+
+    GDI_ReleaseObj( hbitmap );
+    return hbitmap;
 }
 
 
