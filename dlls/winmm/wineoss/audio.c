@@ -733,7 +733,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("fd=%d fragmentSize=%ld\n", 
 	  WOutDev[wDevID].unixdev, WOutDev[wDevID].dwFragmentSize);
-    if (WOutDev[wDevID].dwFragmentSize % (WOutDev[wDevID].format.wf.nBlockAlign - 1) != 0)
+    if (WOutDev[wDevID].dwFragmentSize % WOutDev[wDevID].format.wf.nBlockAlign)
 	ERR("Fragment doesn't contain an integral number of data blocks\n");
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n", 
