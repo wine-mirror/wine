@@ -1357,7 +1357,7 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 	lm.l_name != NULL &&
 	DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr))) {
       bufstr[sizeof(bufstr) - 1] = '\0';
-      DEBUG_ProcessElfObject(bufstr, lm.l_addr);
+      DEBUG_ProcessElfObject(bufstr, (unsigned)lm.l_addr);
     }
   }
   
@@ -1433,7 +1433,7 @@ DEBUG_ReadExecutableDbgInfo(const char* exe_name)
     value.type = NULL;
     value.cookie = DV_TARGET;
     value.addr.seg = 0;
-    value.addr.off = dbg_hdr.r_brk;
+    value.addr.off = (DWORD)dbg_hdr.r_brk;
     DEBUG_AddBreakpoint(&value, DEBUG_RescanElf);
     DEBUG_SetBreakpoints(TRUE);
   }
