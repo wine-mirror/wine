@@ -1486,7 +1486,13 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
         if (!pModule) break;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !strncmp(tmpstr, name_table+1, len))
+	/* FIXME: the lstrncmpiA is WRONG. It should not be case insensitive,
+	 * but case sensitive! (Unfortunately Winword 6 and subdlls have
+	 * lowercased module names, but try to load uppercase DLLs, so this
+	 * 'i' compare is just a quickfix until the loader handles that
+	 * correctly. -MM 990705
+	 */
+        if ((*name_table == len) && !lstrncmpiA(tmpstr, name_table+1, len))
             return hModule;
     }
 
