@@ -19,6 +19,7 @@
 #define WANT_REQUEST_HANDLERS
 #include "server.h"
 #include "server/request.h"
+#include "server/process.h"
 #include "server/thread.h"
 
 /* check that the string is NULL-terminated and that the len is correct */
@@ -754,3 +755,26 @@ DECL_HANDLER(create_device)
     }
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
+
+/* create a snapshot */
+DECL_HANDLER(create_snapshot)
+{
+    struct object *obj;
+    struct create_snapshot_reply reply = { -1 };
+
+    if ((obj = create_snapshot( req->flags )))
+    {
+        reply.handle = alloc_handle( current->process, obj, 0, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* get the next process from a snapshot */
+DECL_HANDLER(next_process)
+{
+    struct next_process_reply reply;
+    snapshot_next_process( req->handle, req->reset, &reply );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+

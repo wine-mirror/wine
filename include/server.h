@@ -596,6 +596,32 @@ struct create_device_reply
 };
 
 
+/* Create a snapshot */
+struct create_snapshot_request
+{
+    int          inherit;       /* inherit flag */
+    int          flags;         /* snapshot flags (TH32CS_*) */
+};
+struct create_snapshot_reply
+{
+    int          handle;        /* handle to the snapshot */
+};
+
+
+/* Get the next process from a snapshot */
+struct next_process_request
+{
+    int          handle;        /* handle to the snapshot */
+    int          reset;         /* reset snapshot position? */
+};
+struct next_process_reply
+{
+    void*        pid;          /* process id */
+    int          threads;      /* number of threads */
+    int          priority;     /* process priority */
+};
+
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__

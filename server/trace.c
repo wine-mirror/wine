@@ -541,6 +541,34 @@ static int dump_create_device_reply( struct create_device_reply *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_create_snapshot_request( struct create_snapshot_request *req, int len )
+{
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " flags=%d", req->flags );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_snapshot_reply( struct create_snapshot_reply *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_next_process_request( struct next_process_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " reset=%d", req->reset );
+    return (int)sizeof(*req);
+}
+
+static int dump_next_process_reply( struct next_process_reply *req, int len )
+{
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " threads=%d,", req->threads );
+    fprintf( stderr, " priority=%d", req->priority );
+    return (int)sizeof(*req);
+}
+
 struct dumper
 {
     int (*dump_req)( void *data, int len );
@@ -645,6 +673,10 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_get_mapping_info_reply },
     { (int(*)(void *,int))dump_create_device_request,
       (void(*)())dump_create_device_reply },
+    { (int(*)(void *,int))dump_create_snapshot_request,
+      (void(*)())dump_create_snapshot_reply },
+    { (int(*)(void *,int))dump_next_process_request,
+      (void(*)())dump_next_process_reply },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -697,6 +729,8 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "create_mapping",
     "get_mapping_info",
     "create_device",
+    "create_snapshot",
+    "next_process",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

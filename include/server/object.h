@@ -20,6 +20,7 @@
 struct object;
 struct object_name;
 struct thread;
+struct process;
 struct file;
 struct wait_queue_entry;
 
@@ -119,42 +120,6 @@ extern void set_timeout( int client_fd, struct timeval *when );
 extern int send_reply_v( int client_fd, int type, int pass_fd,
                          struct iovec *vec, int veclen );
 
-/* process functions */
-
-struct process;
-
-extern struct process *create_process(void);
-extern struct process *get_process_from_id( void *id );
-extern struct process *get_process_from_handle( int handle, unsigned int access );
-extern void add_process_thread( struct process *process,
-                                struct thread *thread );
-extern void remove_process_thread( struct process *process,
-                                   struct thread *thread );
-extern void kill_process( struct process *process, int exit_code );
-extern void get_process_info( struct process *process,
-                              struct get_process_info_reply *reply );
-extern void set_process_info( struct process *process,
-                              struct set_process_info_request *req );
-extern int alloc_console( struct process *process );
-extern int free_console( struct process *process );
-extern struct object *get_console( struct process *process, int output );
-
-/* handle functions */
-
-/* alloc_handle takes a void *obj for convenience, but you better make sure */
-/* that the thing pointed to starts with a struct object... */
-extern int alloc_handle( struct process *process, void *obj,
-                         unsigned int access, int inherit );
-extern int close_handle( struct process *process, int handle );
-extern int set_handle_info( struct process *process, int handle,
-                            int mask, int flags );
-extern struct object *get_handle_obj( struct process *process, int handle,
-                                      unsigned int access, const struct object_ops *ops );
-extern int duplicate_handle( struct process *src, int src_handle, struct process *dst,
-                             int dst_handle, unsigned int access, int inherit, int options );
-extern int open_object( const char *name, const struct object_ops *ops,
-                        unsigned int access, int inherit );
-
 /* event functions */
 
 extern struct object *create_event( const char *name, int manual_reset, int initial_state );
@@ -231,6 +196,10 @@ extern int get_mapping_info( int handle, struct get_mapping_info_reply *reply );
 /* device functions */
 extern struct object *create_device( int id );
 
+
+/* snapshot functions */
+extern struct object *create_snapshot( int flags );
+extern int snapshot_next_process( int handle, int reset, struct next_process_reply *reply );
 
 extern int debug_level;
 

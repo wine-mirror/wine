@@ -17,6 +17,7 @@
 #include "winnt.h"
 
 #include "server.h"
+#include "server/process.h"
 #include "server/thread.h"
 
 /* reserved handle access rights */
@@ -60,6 +61,7 @@ struct process
 
 static struct process *first_process;
 static struct process *initial_process;
+static int running_processes;
 
 #define MIN_HANDLE_ENTRIES  32
 
@@ -214,7 +216,7 @@ void add_process_thread( struct process *process, struct thread *thread )
     thread->proc_prev = NULL;
     if (thread->proc_next) thread->proc_next->proc_prev = thread;
     process->thread_list = thread;
-    process->running_threads++;
+    if (!process->running_threads++) running_processes++;
     grab_object( thread );
 }
 
@@ -231,6 +233,7 @@ void remove_process_thread( struct process *process, struct thread *thread )
     if (!--process->running_threads)
     {
         /* we have removed the last running thread, exit the process */
+        running_processes--;
         process_killed( process, thread->exit_code );
     }
     release_object( thread );
@@ -572,4 +575,26 @@ struct object *get_console( struct process *process, int output )
     if (!(obj = output ? process->console_out : process->console_in))
         return NULL;
     return grab_object( obj );
+}
+
+/* take a snapshot of currently running processes */
+struct process_snapshot *process_snap( int *count )
+{
+    struct process_snapshot *snapshot, *ptr;
+    struct process *process;
+    if (!running_processes) return NULL;
+    if (!(snapshot = mem_alloc( sizeof(*snapshot) * running_processes )))
+        return NULL;
+    ptr = snapshot;
+    for (process = first_process; process; process = process->next)
+    {
+        if (!process->running_threads) continue;
+        ptr->process  = process;
+        ptr->threads  = process->running_threads;
+        ptr->priority = process->priority;
+        grab_object( process );
+        ptr++;
+    }
+    *count = running_processes;
+    return snapshot;
 }

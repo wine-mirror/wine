@@ -17,6 +17,7 @@ C_SRCS = \
 	pipe.c \
 	process.c \
 	request.c \
+	snapshot.c \
 	select.c \
 	semaphore.c \
 	socket.c \

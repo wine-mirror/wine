@@ -53,6 +53,8 @@ enum request
     REQ_CREATE_MAPPING,
     REQ_GET_MAPPING_INFO,
     REQ_CREATE_DEVICE,
+    REQ_CREATE_SNAPSHOT,
+    REQ_NEXT_PROCESS,
     REQ_NB_REQUESTS
 };
 
@@ -109,6 +111,8 @@ DECL_HANDLER(create_change_notification);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(get_mapping_info);
 DECL_HANDLER(create_device);
+DECL_HANDLER(create_snapshot);
+DECL_HANDLER(next_process);
 
 static const struct handler {
     void       (*handler)();
@@ -162,6 +166,8 @@ static const struct handler {
     { (void(*)())req_create_mapping, sizeof(struct create_mapping_request) },
     { (void(*)())req_get_mapping_info, sizeof(struct get_mapping_info_request) },
     { (void(*)())req_create_device, sizeof(struct create_device_request) },
+    { (void(*)())req_create_snapshot, sizeof(struct create_snapshot_request) },
+    { (void(*)())req_next_process, sizeof(struct next_process_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 
