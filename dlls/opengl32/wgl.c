@@ -520,7 +520,6 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 {
     /* We are running using client-side rendering fonts... */
     GLYPHMETRICS gm;
-    static const MAT2 id = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 0 } };
     int glyph;
     int size = 0;
     void *bitmap = NULL, *gl_bitmap = NULL;
@@ -532,10 +531,20 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
     LEAVE_GL();
 
     for (glyph = first; glyph < first + count; glyph++) {
-	int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &id);
+	int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
 	int height, width_int;
-	
-	if (needed_size == GDI_ERROR) goto error;
+
+	TRACE("Glyph : %d\n", glyph);
+	if (needed_size == GDI_ERROR) {
+	    TRACE("  - needed size : %d (GDI_ERROR)\n", needed_size);
+	    goto error;
+	} else {
+	    TRACE("  - needed size : %d\n", needed_size);
+	    if (needed_size == 0) {
+		continue;
+	    }
+	}
+
 	if (needed_size > size) {
 	    size = needed_size;
 	    if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
@@ -543,16 +552,14 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 	    bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	    gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	}
-	if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &id) == GDI_ERROR) goto error;
+	if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, NULL) == GDI_ERROR) goto error;
 	if (TRACE_ON(opengl)) {
 	    unsigned int height, width, bitmask;
 	    unsigned char *bitmap_ = (unsigned char *) bitmap;
 	    
-	    DPRINTF("Glyph : %d\n", glyph);
 	    DPRINTF("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
 	    DPRINTF("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
 	    DPRINTF("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
-	    DPRINTF("  - size : %d\n", needed_size);
 	    DPRINTF("  - bitmap : \n");
 	    for (height = 0; height < gm.gmBlackBoxY; height++) {
 		DPRINTF("      ");
