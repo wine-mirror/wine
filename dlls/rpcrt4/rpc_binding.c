@@ -399,7 +399,7 @@ RPC_STATUS RPCRT4_SetBindingObject(RpcBinding* Binding, UUID* ObjectUuid)
 RPC_STATUS RPCRT4_MakeBinding(RpcBinding** Binding, RpcConnection* Connection)
 {
   RpcBinding* NewBinding;
-  TRACE("(*RpcBinding == ^%p, Connection == ^%p)\n", *Binding, Connection);
+  TRACE("(RpcBinding == ^%p, Connection == ^%p)\n", Binding, Connection);
 
   RPCRT4_AllocBinding(&NewBinding, Connection->server);
   NewBinding->Protseq = RPCRT4_strdupA(Connection->Protseq);
@@ -1095,4 +1095,23 @@ RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(LPWSTR protseq) {
   
   FIXME("Unknown protseq %s - we probably need to implement it one day\n", debugstr_w(protseq));
   return RPC_S_PROTSEQ_NOT_SUPPORTED;
+}
+
+/***********************************************************************
+ *             RpcImpersonateClient (RPCRT4.@)
+ *
+ * Impersonates the client connected via a binding handle so that security
+ * checks are done in the context of the client.
+ *
+ * PARAMS
+ *  BindingHandle [I] Handle to the binding to the client.
+ *
+ * RETURNS
+ *  Success: RPS_S_OK.
+ *  Failure: RPC_STATUS value.
+ */
+RPC_STATUS WINAPI RpcImpersonateClient(RPC_BINDING_HANDLE BindingHandle)
+{
+    FIXME("(%p): stub\n", BindingHandle);
+    return RPC_S_NO_CONTEXT_AVAILABLE;
 }
