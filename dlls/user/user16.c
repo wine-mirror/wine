@@ -38,6 +38,34 @@
 WORD WINAPI DestroyIcon32(HGLOBAL16, UINT16);
 
 
+/* ### start build ### */
+extern WORD CALLBACK USER_CallTo16_word_wlw(GRAYSTRINGPROC16,WORD,LONG,WORD);
+/* ### stop build ### */
+
+struct gray_string_info
+{
+    GRAYSTRINGPROC16 proc;
+    LPARAM           param;
+    char             str[1];
+};
+
+/* callback for 16-bit gray string proc with opaque pointer */
+static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
+{
+    const struct gray_string_info *info = (struct gray_string_info *)param;
+    return USER_CallTo16_word_wlw( info->proc, HDC_16(hdc), info->param, len );
+}
+
+/* callback for 16-bit gray string proc with string pointer */
+static BOOL CALLBACK gray_string_callback_ptr( HDC hdc, LPARAM param, INT len )
+{
+    const struct gray_string_info *info;
+    char *str = (char *)param;
+
+    info = (struct gray_string_info *)(str - offsetof( struct gray_string_info, str ));
+    return USER_CallTo16_word_wlw( info->proc, HDC_16(hdc), info->param, len );
+}
+
 /***********************************************************************
  *		SetCursor (USER.69)
  */
@@ -77,7 +105,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT
         ret = DrawTextA( HDC_32(hdc), str, count, &rect32, flags );
         CONV_RECT32TO16( &rect32, rect );
     }
-    else ret = DrawTextA( hdc, str, count, NULL, flags);
+    else ret = DrawTextA( HDC_32(hdc), str, count, NULL, flags);
     return ret;
 }
 
@@ -212,6 +240,79 @@ HBITMAP16 WINAPI LoadBitmap16(HINSTANCE16 hInstance, LPCSTR name)
 {
   return HBITMAP_16(LoadBitmapA(HINSTANCE_32(hInstance), name));
 }
+
+
+/***********************************************************************
+ *           GrayString   (USER.185)
+ */
+BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
+                            LPARAM lParam, INT16 cch, INT16 x, INT16 y,
+                            INT16 cx, INT16 cy )
+{
+    BOOL ret;
+
+    if (!gsprc) return GrayStringA( HDC_32(hdc), HBRUSH_32(hbr), NULL,
+                                    (LPARAM)MapSL(lParam), cch, x, y, cx, cy );
+
+    if (cch == -1 || (cch && cx && cy))
+    {
+        /* lParam can be treated as an opaque pointer */
+        struct gray_string_info info;
+
+        info.proc  = gsprc;
+        info.param = lParam;
+        ret = GrayStringA( HDC_32(hdc), HBRUSH_32(hbr), gray_string_callback,
+                           (LPARAM)&info, cch, x, y, cx, cy );
+    }
+    else  /* here we need some string conversions */
+    {
+        char *str16 = MapSL(lParam);
+        struct gray_string_info *info;
+
+        if (!cch) cch = strlen(str16);
+        if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) + cch ))) return FALSE;
+        info->proc  = gsprc;
+        info->param = lParam;
+        memcpy( info->str, str16, cch );
+        ret = GrayStringA( HDC_32(hdc), HBRUSH_32(hbr), gray_string_callback_ptr,
+                           (LPARAM)info->str, cch, x, y, cx, cy );
+        HeapFree( GetProcessHeap(), 0, info );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           TabbedTextOut    (USER.196)
+ */
+LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
+                             INT16 count, INT16 nb_tabs, const INT16 *tabs16, INT16 tab_org )
+{
+    LONG ret;
+    INT i, *tabs = HeapAlloc( GetProcessHeap(), 0, nb_tabs * sizeof(tabs) );
+    if (!tabs) return 0;
+    for (i = 0; i < nb_tabs; i++) tabs[i] = tabs16[i];
+    ret = TabbedTextOutA( HDC_32(hdc), x, y, lpstr, count, nb_tabs, tabs, tab_org );
+    HeapFree( GetProcessHeap(), 0, tabs );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetTabbedTextExtent    (USER.197)
+ */
+DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
+                                    INT16 nb_tabs, const INT16 *tabs16 )
+{
+    LONG ret;
+    INT i, *tabs = HeapAlloc( GetProcessHeap(), 0, nb_tabs * sizeof(tabs) );
+    if (!tabs) return 0;
+    for (i = 0; i < nb_tabs; i++) tabs[i] = tabs16[i];
+    ret = GetTabbedTextExtentA( HDC_32(hdc), lpstr, count, nb_tabs, tabs );
+    HeapFree( GetProcessHeap(), 0, tabs );
+    return ret;
+}
+
 
 /*************************************************************************
  *		ScrollDC (USER.221)
@@ -444,7 +545,7 @@ BOOL16 WINAPI InsertMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
  */
 BOOL16 WINAPI AppendMenu16(HMENU16 hMenu, UINT16 flags, UINT16 id, SEGPTR data)
 {
-    return InsertMenu16( HMENU_32(hMenu), -1, flags | MF_BYPOSITION, id, data );
+    return InsertMenu16( hMenu, -1, flags | MF_BYPOSITION, id, data );
 }
 
 
@@ -514,9 +615,9 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
     miia.fType         = mii->fType;
     miia.fState        = mii->fState;
     miia.wID           = mii->wID;
-    miia.hSubMenu      = mii->hSubMenu;
-    miia.hbmpChecked   = mii->hbmpChecked;
-    miia.hbmpUnchecked = mii->hbmpUnchecked;
+    miia.hSubMenu      = HMENU_32(mii->hSubMenu);
+    miia.hbmpChecked   = HBITMAP_32(mii->hbmpChecked);
+    miia.hbmpUnchecked = HBITMAP_32(mii->hbmpUnchecked);
     miia.dwItemData    = mii->dwItemData;
     miia.cch           = mii->cch;
     if (IS_MENU_STRING_ITEM(miia.fType))

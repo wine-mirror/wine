@@ -1080,21 +1080,16 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
  *           GrayString functions
  */
 
-/* ### start build ### */
-extern WORD CALLBACK TEXT_CallTo16_word_wlw(GRAYSTRINGPROC16,WORD,LONG,WORD);
-/* ### stop build ### */
-
-struct gray_string_info
+/* callback for ASCII gray string proc */
+static BOOL CALLBACK gray_string_callbackA( HDC hdc, LPARAM param, INT len )
 {
-    GRAYSTRINGPROC16 proc;
-    LPARAM           param;
-};
+    return TextOutA( hdc, 0, 0, (LPCSTR)param, len );
+}
 
-/* callback for 16-bit gray string proc */
-static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
+/* callback for Unicode gray string proc */
+static BOOL CALLBACK gray_string_callbackW( HDC hdc, LPARAM param, INT len )
 {
-    const struct gray_string_info *info = (struct gray_string_info *)param;
-    return TEXT_CallTo16_word_wlw( info->proc, HDC_16(hdc), info->param, len );
+    return TextOutW( hdc, 0, 0, (LPCWSTR)param, len );
 }
 
 /***********************************************************************
@@ -1108,7 +1103,7 @@ static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
  *
  */
 static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, INT len,
-                            INT x, INT y, INT cx, INT cy, BOOL unicode, BOOL _32bit)
+                            INT x, INT y, INT cx, INT cy )
 {
     HBITMAP hbm, hbmsave;
     HBRUSH hbsave;
@@ -1121,29 +1116,6 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     if(!hdc) return FALSE;
     if (!(memdc = CreateCompatibleDC(hdc))) return FALSE;
 
-    if(len == 0)
-    {
-        if(unicode)
-    	    slen = lstrlenW((LPCWSTR)lp);
-    	else if(_32bit)
-    	    slen = strlen((LPCSTR)lp);
-    	else
-    	    slen = strlen(MapSL(lp));
-    }
-
-    if((cx == 0 || cy == 0) && slen != -1)
-    {
-        SIZE s;
-        if(unicode)
-            GetTextExtentPoint32W(hdc, (LPCWSTR)lp, slen, &s);
-        else if(_32bit)
-            GetTextExtentPoint32A(hdc, (LPCSTR)lp, slen, &s);
-        else
-            GetTextExtentPoint32A(hdc, MapSL(lp), slen, &s);
-        if(cx == 0) cx = s.cx;
-        if(cy == 0) cy = s.cy;
-    }
-
     hbm = CreateBitmap(cx, cy, 1, 1, NULL);
     hbmsave = (HBITMAP)SelectObject(memdc, hbm);
     hbsave = SelectObject( memdc, GetStockObject(BLACK_BRUSH) );
@@ -1153,23 +1125,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     SetBkColor(memdc, RGB(0, 0, 0));
     hfsave = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
 
-    if(fn)
-    {
-        if(_32bit)
-            retval = fn(memdc, lp, slen);
-        else
-            retval = (BOOL)((BOOL16)((GRAYSTRINGPROC16)fn)(HDC_16(memdc), lp, (INT16)slen));
-    }
-    else
-    {
-        if(unicode)
-            TextOutW(memdc, 0, 0, (LPCWSTR)lp, slen);
-        else if(_32bit)
-            TextOutA(memdc, 0, 0, (LPCSTR)lp, slen);
-        else
-            TextOutA(memdc, 0, 0, MapSL(lp), slen);
-    }
-
+    retval = fn(memdc, lp, slen);
     SelectObject(memdc, hfsave);
 
 /*
@@ -1202,31 +1158,22 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
 
 
 /***********************************************************************
- *           GrayString   (USER.185)
- */
-BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
-                            LPARAM lParam, INT16 cch, INT16 x, INT16 y,
-                            INT16 cx, INT16 cy )
-{
-    struct gray_string_info info;
-
-    if (!gsprc) return TEXT_GrayString(hdc, hbr, NULL, lParam, cch, x, y, cx, cy, FALSE, FALSE);
-    info.proc  = gsprc;
-    info.param = lParam;
-    return TEXT_GrayString( hdc, hbr, gray_string_callback, (LPARAM)&info,
-                            cch, x, y, cx, cy, FALSE, FALSE);
-}
-
-
-/***********************************************************************
  *           GrayStringA   (USER32.@)
  */
 BOOL WINAPI GrayStringA( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                          LPARAM lParam, INT cch, INT x, INT y,
                          INT cx, INT cy )
 {
-    return TEXT_GrayString(hdc, hbr, gsprc, lParam, cch, x, y, cx, cy,
-                           FALSE, TRUE);
+    if (!cch) cch = strlen( (LPCSTR)lParam );
+    if ((cx == 0 || cy == 0) && cch != -1)
+    {
+        SIZE s;
+        GetTextExtentPoint32A( hdc, (LPCSTR)lParam, cch, &s );
+        if (cx == 0) cx = s.cx;
+        if (cy == 0) cy = s.cy;
+    }
+    if (!gsprc) gsprc = gray_string_callbackA;
+    return TEXT_GrayString( hdc, hbr, gsprc, lParam, cch, x, y, cx, cy );
 }
 
 
@@ -1237,14 +1184,18 @@ BOOL WINAPI GrayStringW( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                          LPARAM lParam, INT cch, INT x, INT y,
                          INT cx, INT cy )
 {
-    return TEXT_GrayString(hdc, hbr, gsprc, lParam, cch, x, y, cx, cy,
-                           TRUE, TRUE);
+    if (!cch) cch = strlenW( (LPCWSTR)lParam );
+    if ((cx == 0 || cy == 0) && cch != -1)
+    {
+        SIZE s;
+        GetTextExtentPoint32W( hdc, (LPCWSTR)lParam, cch, &s );
+        if (cx == 0) cx = s.cx;
+        if (cy == 0) cy = s.cy;
+    }
+    if (!gsprc) gsprc = gray_string_callbackW;
+    return TEXT_GrayString( hdc, hbr, gsprc, lParam, cch, x, y, cx, cy );
 }
 
-/***********************************************************************
- *
- *           TabbedText functions
- */
 
 /***********************************************************************
  *           TEXT_TabbedTextOut
@@ -1253,9 +1204,8 @@ BOOL WINAPI GrayStringW( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
  * Note: this doesn't work too well for text-alignment modes other
  *       than TA_LEFT|TA_TOP. But we want bug-for-bug compatibility :-)
  */
-static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
-                                INT count, INT cTabStops, const INT16 *lpTabPos16,
-                                const INT *lpTabPos32, INT nTabOrg,
+static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
+                                INT count, INT cTabStops, const INT *lpTabPos, INT nTabOrg,
                                 BOOL fDisplayText )
 {
     INT defWidth;
@@ -1268,7 +1218,7 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
 
     if (cTabStops == 1)
     {
-        defWidth = lpTabPos32 ? *lpTabPos32 : *lpTabPos16;
+        defWidth = *lpTabPos;
         cTabStops = 0;
     }
     else
@@ -1282,29 +1232,17 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
     {
         for (i = 0; i < count; i++)
             if (lpstr[i] == '\t') break;
-        GetTextExtentPointA( hdc, lpstr, i, &extent );
-        if (lpTabPos32)
+        GetTextExtentPointW( hdc, lpstr, i, &extent );
+        while ((cTabStops > 0) &&
+               (nTabOrg + *lpTabPos <= x + extent.cx))
         {
-            while ((cTabStops > 0) &&
-                   (nTabOrg + *lpTabPos32 <= x + extent.cx))
-            {
-                lpTabPos32++;
-                cTabStops--;
-            }
-        }
-        else
-        {
-            while ((cTabStops > 0) &&
-                   (nTabOrg + *lpTabPos16 <= x + extent.cx))
-            {
-                lpTabPos16++;
-                cTabStops--;
-            }
+            lpTabPos++;
+            cTabStops--;
         }
         if (i == count)
             tabPos = x + extent.cx;
         else if (cTabStops > 0)
-            tabPos = nTabOrg + (lpTabPos32 ? *lpTabPos32 : *lpTabPos16);
+            tabPos = nTabOrg + *lpTabPos;
         else
             tabPos = nTabOrg + ((x + extent.cx - nTabOrg) / defWidth + 1) * defWidth;
         if (fDisplayText)
@@ -1314,9 +1252,8 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
             r.top    = y;
             r.right  = tabPos;
             r.bottom = y + extent.cy;
-            ExtTextOutA( hdc, x, y,
-                           GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
-                           &r, lpstr, i, NULL );
+            ExtTextOutW( hdc, x, y, GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
+                         &r, lpstr, i, NULL );
         }
         x = tabPos;
         count -= i+1;
@@ -1327,27 +1264,19 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOut    (USER.196)
- */
-LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
-                             INT16 count, INT16 cTabStops,
-                             const INT16 *lpTabPos, INT16 nTabOrg )
-{
-    TRACE("%04x %d,%d %s %d\n", hdc, x, y, debugstr_an(lpstr,count), count );
-    return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
-                               lpTabPos, NULL, nTabOrg, TRUE );
-}
-
-
-/***********************************************************************
  *           TabbedTextOutA    (USER32.@)
  */
 LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
 {
-    TRACE("%04x %d,%d %s %d\n", hdc, x, y, debugstr_an(lpstr,count), count );
-    return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
-                               NULL, lpTabPos, nTabOrg, TRUE );
+    LONG ret;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, lpstr, count, NULL, 0 );
+    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (!strW) return 0;
+    MultiByteToWideChar( CP_ACP, 0, lpstr, count, strW, len );
+    ret = TabbedTextOutW( hdc, x, y, strW, len, cTabStops, lpTabPos, nTabOrg );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
 }
 
 
@@ -1357,30 +1286,8 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
 LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
 {
-    LONG ret;
-    LPSTR p;
-    INT acount;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-
-    acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
-    p = HeapAlloc( GetProcessHeap(), 0, acount );
-    if(p == NULL) return 0; /* FIXME: is this the correct return on failure */
-    acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
-    ret = TabbedTextOutA( hdc, x, y, p, acount, cTabStops, lpTabPos, nTabOrg );
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetTabbedTextExtent    (USER.197)
- */
-DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
-                                    INT16 cTabStops, const INT16 *lpTabPos )
-{
-    TRACE("%04x %s %d\n", hdc, debugstr_an(lpstr,count), count );
-    return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
-                               lpTabPos, NULL, 0, FALSE );
+    TRACE("%x %d,%d %s %d\n", hdc, x, y, debugstr_wn(str,count), count );
+    return TEXT_TabbedTextOut( hdc, x, y, str, count, cTabStops, lpTabPos, nTabOrg, TRUE );
 }
 
 
@@ -1390,9 +1297,14 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
                                    INT cTabStops, const INT *lpTabPos )
 {
-    TRACE("%04x %s %d\n", hdc, debugstr_an(lpstr,count), count );
-    return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
-                               NULL, lpTabPos, 0, FALSE );
+    LONG ret;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, lpstr, count, NULL, 0 );
+    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (!strW) return 0;
+    MultiByteToWideChar( CP_ACP, 0, lpstr, count, strW, len );
+    ret = GetTabbedTextExtentW( hdc, strW, len, cTabStops, lpTabPos );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
 }
 
 
@@ -1402,16 +1314,6 @@ DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
 DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count,
                                    INT cTabStops, const INT *lpTabPos )
 {
-    LONG ret;
-    LPSTR p;
-    INT acount;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-
-    acount = WideCharToMultiByte(codepage,0,lpstr,count,NULL,0,NULL,NULL);
-    p = HeapAlloc( GetProcessHeap(), 0, acount );
-    if(p == NULL) return 0; /* FIXME: is this the correct failure value? */
-    acount = WideCharToMultiByte(codepage,0,lpstr,count,p,acount,NULL,NULL);
-    ret = GetTabbedTextExtentA( hdc, p, acount, cTabStops, lpTabPos );
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
+    TRACE("%x %s %d\n", hdc, debugstr_wn(lpstr,count), count );
+    return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops, lpTabPos, 0, FALSE );
 }
