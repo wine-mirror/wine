@@ -309,8 +309,14 @@ void SYSDEPS_AbortThread( int status )
  *
  * This will crash and burn if called before threading is initialized
  */
-#ifdef __i386__
+#if defined(__i386__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
+#elif defined(__i386__) && defined(_MSC_VER)
+__declspec(naked) struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    __asm mov eax, fs:[0x18];
+    __asm ret;
+}
 #elif defined(HAVE__LWP_CREATE)
 /***********************************************************************
  *		NtCurrentTeb (NTDLL.@)

@@ -69,6 +69,8 @@
 # if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
 #  define __stdcall __attribute__((__stdcall__))
 #  define __cdecl   __attribute__((__cdecl__))
+# elif defined(_MSC_VER)
+/* Nothing needs to be done. __cdecl/__stdcall already exists */
 # else
 #  error You need gcc >= 2.7 to build Wine on a 386
 # endif  /* __GNUC__ */
@@ -152,6 +154,14 @@
 #define WINE_PACKED    /* nothing */
 #define WINE_UNUSED    /* nothing */
 #define WINE_NORETURN  /* nothing */
+#endif
+
+#ifndef DECLSPEC_NORETURN
+# if _MSVC_VER > 1200
+#  define DECLSPEC_NORETURN __declspec(noreturn)
+# else
+#  define DECLSPEC_NORETURN
+# endif
 #endif
 
 /* Anonymous union/struct handling */
@@ -1232,10 +1242,15 @@ typedef CONTEXT *PCONTEXT;
     { unsigned short res; __asm__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
 #  define __DEFINE_SET_SEG(seg) \
     extern inline void __set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
-# else  /* __GNUC__ */
+# elif defined(_MSC_VER)
+#  define __DEFINE_GET_SEG(seg) \
+    extern inline unsigned short __get_##seg(void) { unsigned short res; __asm { mov res, fs } return res; }
+#  define __DEFINE_SET_SEG(seg) \
+    extern inline void __set_##seg(unsigned short val) { __asm { mov seg, val } }
+# else  /* __GNUC__ || _MSC_VER */
 #  define __DEFINE_GET_SEG(seg) extern unsigned short __get_##seg(void);
 #  define __DEFINE_SET_SEG(seg) extern void __set_##seg(unsigned int);
-# endif /* __GNUC__ */
+# endif /* __GNUC__ || _MSC_VER */
 #else  /* __i386__ */
 # define __DEFINE_GET_SEG(seg) inline static unsigned short __get_##seg(void) { return 0; }
 # define __DEFINE_SET_SEG(seg) /* nothing */
@@ -2338,15 +2353,15 @@ typedef struct _NT_TIB
 struct _TEB;
 
 #if defined(__i386__) && defined(__GNUC__)
-extern inline struct _TEB WINAPI *NtCurrentTeb(void);
-extern inline struct _TEB WINAPI *NtCurrentTeb(void)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void);
+extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
     return teb;
 }
 #else
-extern struct _TEB WINAPI *NtCurrentTeb(void);
+extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
 
 
