@@ -85,15 +85,51 @@ dlls/dinput
 
 dlls/dinput8
 
+% dlls/dmband/dmband.spec
+
+dlls/dmband
+
+% dlls/dmcompos/dmcompos.spec
+
+dlls/dmcompos
+
+% dlls/dmime/dmime.spec
+
+dlls/dmime
+
+% dlls/dmloader/dmloader.spec
+
+dlls/dmloader
+
+% dlls/dmscript/dmscript.spec
+
+dlls/dmscript
+
+% dlls/dmstyle/dmstyle.spec
+
+dlls/dmstyle
+
+% dlls/dmsynth/dmsynth.spec
+
+dlls/dmsynth
+
 % dlls/dmusic/dmusic.spec
 
 dlls/dmusic
+
+% dlls/dmusic32/dmusic32.spec
+
+dlls/dmusic32
 
 % dlls/dplay/dplay.spec
 
 % dlls/dplayx/dplayx.spec
 
 dlls/dplayx
+
+% dlls/dpnhpast/dpnhpast.spec
+
+dlls/dpnhpast
 
 % dlls/dsound/dsound.spec
 
