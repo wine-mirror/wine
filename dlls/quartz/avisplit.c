@@ -224,7 +224,8 @@ static ULONG WINAPI AVISplitter_Release(IBaseFilter * iface)
         ULONG i;
 
         DeleteCriticalSection(&This->csFilter);
-        IReferenceClock_Release(This->pClock);
+        if (This->pClock)
+            IReferenceClock_Release(This->pClock);
         
         for (i = 0; i < This->cStreams + 1; i++)
             IPin_Release(This->ppPins[i]);
@@ -385,7 +386,8 @@ static HRESULT WINAPI AVISplitter_GetSyncSource(IBaseFilter * iface, IReferenceC
     EnterCriticalSection(&This->csFilter);
     {
         *ppClock = This->pClock;
-        IReferenceClock_AddRef(This->pClock);
+        if (This->pClock)
+            IReferenceClock_AddRef(This->pClock);
     }
     LeaveCriticalSection(&This->csFilter);
     

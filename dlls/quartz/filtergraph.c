@@ -495,7 +495,7 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
     static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
     IPropertyBag * pPropBagCat = NULL;
     HRESULT hr;
-    
+
     VariantInit(pvar);
     V_VT(pvar) = VT_BSTR;
 
@@ -524,7 +524,7 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* poutputpin, IP
     HRESULT hr;
     ULONG nb = 0;
 
-    TRACE("\n");
+    TRACE("(%p, %p, %p, %p)\n", pfilter, poutputpin, pppins, pnb);
     hr = IPin_QueryInternalConnections(poutputpin, NULL, &nb);
     if (hr == S_OK) {
         /* Rendered input */
@@ -1167,7 +1167,7 @@ static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
 
     ResetEvent(This->hEventCompletion);
 
-    return S_OK;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI Mediacontrol_Pause(IMediaControl *iface) {

@@ -27,6 +27,8 @@
 #include "dshow.h"
 #include "control.h"
 
+static const WCHAR file[] = {'t','e','s','t','.','a','v','i',0};
+
 IGraphBuilder* pgraph;
 
 static void createfiltergraph()
@@ -37,10 +39,8 @@ static void createfiltergraph()
     ok(hr==S_OK, "Creating filtergraph returned: %lx\n", hr);
 }
 
-#if 0
 static void renderfile()
 {
-    WCHAR file[] = {'t','e','s','t','.','a','v','i',0};
     HRESULT hr;
 
     hr = IGraphBuilder_RenderFile(pgraph, file, NULL);
@@ -56,27 +56,38 @@ static void rungraph()
     ok(hr==S_OK, "Cannot get IMediaControl interface returned: %lx\n", hr);
 
     hr = IMediaControl_Run(pmc);
-    ok(hr==S_OK, "Cannot run the graph returned: %lx\n", hr);
+    ok(hr==S_FALSE, "Cannot run the graph returned: %lx\n", hr);
 
-    Sleep(20000); 
+    Sleep(20000);
+
+    hr = IMediaControl_Stop(pmc);
+    ok(hr==S_OK, "Cannot stop the graph returned: %lx\n", hr);
+    
+    hr = IMediaControl_Release(pmc);
+    ok(hr==1, "Releasing mediacontrol returned: %lx\n", hr);     
 }
-#endif
 
 static void releasefiltergraph()
 {
     HRESULT hr;
 
     hr = IGraphBuilder_Release(pgraph);
-    ok(hr==S_OK, "Releasing filtergraph returned: %lx\n", hr);
+    ok(hr==0, "Releasing filtergraph returned: %lx\n", hr);
 }
 
 START_TEST(filtergraph)
 {
+    HANDLE h;
+	
     CoInitialize(NULL);
     createfiltergraph();
-#if 0
-    renderfile();
-    rungraph();
-#endif
+
+    h = CreateFileW(file, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+	CloseHandle(h);
+	renderfile();
+	rungraph();
+    }
+
     releasefiltergraph();
 }

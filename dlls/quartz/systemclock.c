@@ -111,16 +111,16 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
       timeOut = INFINITE;
       goto outrefresh;
     }
-    
+
     /** First SingleShots Advice: sorted list */
-    for (it = This->pSingleShotAdvise; NULL != it && it->rtBaseTime <= curTime; it = it->next) {
+    for (it = This->pSingleShotAdvise; NULL != it && (it->rtBaseTime + it->rtIntervalTime) <= curTime; it = it->next) {
       /** send event ... */
       SetEvent((HANDLE) it->hEvent);
       /** ... and Release it */
       QUARTZ_RemoveAviseEntryFromQueue(This, it);
       HeapFree(GetProcessHeap(), 0, it);
     }
-    if (NULL != it) timeOut = (DWORD) (curTime - (it->rtBaseTime + it->rtIntervalTime));
+    if (NULL != it) timeOut = (DWORD) ((it->rtBaseTime + it->rtIntervalTime) - curTime) / (REFERENCE_TIME)10000;
 
     /** Now Periodics Advice: semi sorted list (sort cannot be used) */
     for (it = This->pPeriodicAdvise; NULL != it; it = it->next) {
@@ -129,10 +129,10 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
 	/** Release the semaphore ... */
 	ReleaseSemaphore((HANDLE) it->hEvent, nPeriods, NULL);
 	/** ... and refresh time */
-	it->rtBaseTime += it->rtIntervalTime;
+	it->rtBaseTime += nPeriods * it->rtIntervalTime;
 	/*assert( it->rtBaseTime + it->rtIntervalTime < curTime );*/
       }
-      tmpTimeOut = (DWORD) (curTime - (it->rtBaseTime + it->rtIntervalTime));
+      tmpTimeOut = (DWORD) ((it->rtBaseTime + it->rtIntervalTime) - curTime) / (REFERENCE_TIME)10000;
       if (timeOut > tmpTimeOut) timeOut = tmpTimeOut; 
     }
 
@@ -175,10 +175,20 @@ outofthread:
 
 static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMsg) {
   if (FALSE == This->adviseThreadActive) {
+    BOOL res;
     This->adviseThread = CreateThread(NULL, 0, SystemClockAdviseThread, This, 0, &This->adviseThreadId);
     if (NULL == This->adviseThread) return FALSE;
     SetThreadPriority(This->adviseThread, THREAD_PRIORITY_TIME_CRITICAL);
     This->adviseThreadActive = TRUE;
+    while(1) {
+      res = PostThreadMessageA(This->adviseThreadId, iMsg, 0, 0);
+      /* Let the thread creates its message queue (with MsgWaitForMultipleObjects call) by yielding and retrying */
+      if (!res && (GetLastError() == ERROR_INVALID_THREAD_ID))
+	Sleep(0);
+      else
+	break;
+    }
+    return res;
   }
   return PostThreadMessageA(This->adviseThreadId, iMsg, 0, 0);
 }

@@ -730,7 +730,7 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
     } /* if succeeded */
     LeaveCriticalSection(This->pin.pCritSec);
 
-    FIXME(" -- %lx\n", hr);
+    TRACE(" -- %lx\n", hr);
     return hr;
 }
 
