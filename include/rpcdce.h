@@ -238,6 +238,12 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcNetworkIsProtSeqValidA( unsigned char *protseq );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcNetworkIsProtSeqValidW( LPWSTR protseq );
+#define RpcNetworkIsProtSeqValid WINELIB_NAME_AW(RpcNetworkIsProtSeqValid)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringFreeA(unsigned char** String);
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringFreeW(unsigned short** String);

@@ -2,6 +2,7 @@
  * RPC binding API
  *
  * Copyright 2001 Ove Kåven, TransGaming Technologies
+ * Copyright 2003 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,7 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 
 #include "rpc.h"
@@ -1013,4 +1015,37 @@ RPC_STATUS WINAPI I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING
   bind->BlockingFn = BlockingFn;
 
   return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcNetworkIsProtSeqValidA (RPCRT4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidA(unsigned char *protseq) {
+  UNICODE_STRING protseqW;
+
+  if (!protseq) return RPC_S_INVALID_RPC_PROTSEQ; /* ? */
+  
+  if (RtlCreateUnicodeStringFromAsciiz(&protseqW, protseq)) {
+    RPC_STATUS ret = RpcNetworkIsProtSeqValidW(protseqW.Buffer);
+    RtlFreeUnicodeString(&protseqW);
+    return ret;
+  } else return RPC_S_OUT_OF_MEMORY;
+}
+
+/***********************************************************************
+ *             RpcNetworkIsProtSeqValidW (RPCRT4.@)
+ * 
+ * Checks if the given protocol sequence is known by the RPC system.
+ * If it is, returns RPC_S_OK, otherwise RPC_S_PROTSEQ_NOT_SUPPORTED.
+ *
+ * We currently only support ncalrpc.
+ */
+RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidW(LPWSTR protseq) {
+  static const WCHAR ncalrpcW[] = {'n','c','a','l','r','p','c',0};
+
+  if (!protseq) return RPC_S_INVALID_RPC_PROTSEQ; /* ? */
+  if (!strcmpW(protseq, ncalrpcW)) return RPC_S_OK;
+  
+  FIXME("Unknown protseq %s - we probably need to implement it one day", debugstr_w(protseq));
+  return RPC_S_PROTSEQ_NOT_SUPPORTED;
 }
