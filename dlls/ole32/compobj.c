@@ -1150,9 +1150,10 @@ HRESULT WINAPI CoRevokeClassObject(
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
  */
-HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
-                        LPVOID pvReserved, REFIID iid, LPVOID *ppv)
-{
+HRESULT WINAPI CoGetClassObject(
+    REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
+    REFIID iid, LPVOID *ppv
+) {
     LPUNKNOWN	regClassObject;
     HRESULT	hres = E_UNEXPECTED;
     char	xclsid[80];
@@ -1169,6 +1170,11 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	debugstr_guid(rclsid),
 	debugstr_guid(iid)
     );
+
+    if (pServerInfo) {
+	FIXME("\tpServerInfo: name=%s\n",debugstr_w(pServerInfo->pwszName));
+	FIXME("\t\tpAuthInfo=%p\n",pServerInfo->pAuthInfo);
+    }
 
     /*
      * First, try and see if we can't match the class ID with one of the 
@@ -1192,9 +1198,13 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     }
 
     /* out of process and remote servers not supported yet */
-    if (((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext)
-        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)){
-        FIXME("CLSCTX_LOCAL_SERVER and CLSCTX_REMOTE_SERVER not supported!\n");
+    if (     ((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext)
+        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)
+    ){
+        FIXME("%s %s not supported!\n",
+		(dwClsContext&CLSCTX_LOCAL_SERVER)?"CLSCTX_LOCAL_SERVER":"",
+		(dwClsContext&CLSCTX_REMOTE_SERVER)?"CLSCTX_REMOTE_SERVER":""
+	);
 	return E_ACCESSDENIED;
     }
 
@@ -1383,8 +1393,10 @@ HRESULT WINAPI CoCreateInstance(
 			  &IID_IClassFactory,
 			  (LPVOID)&lpclf);
 
-  if (FAILED(hres))
+  if (FAILED(hres)) {
+    FIXME("no instance created for %s, hres is 0x%08lx\n",debugstr_guid(iid),hres);
     return hres;
+  }
 
   /*
    * Create the object and don't forget to release the factory
