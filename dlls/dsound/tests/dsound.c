@@ -22,8 +22,6 @@
 #include <stdlib.h>
 
 #include "wine/test.h"
-#include "wine/debug.h"
-
 #include "objbase.h"
 #include "initguid.h"
 #include "dsound.h"
@@ -401,7 +399,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     DSCAPS dscaps;
     int f;
 
-    trace("Testing %s - %s : %s\n",lpcstrDescription,lpcstrModule,wine_dbgstr_guid(lpGuid));
+    trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
     ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
     if (rc!=DS_OK)
@@ -647,7 +645,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     int f;
 
     /* Private dsound.dll: Error: Invalid interface buffer */
-    trace("Testing %s - %s : %s\n",lpcstrDescription,lpcstrModule,wine_dbgstr_guid(lpGuid));
+    trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
     rc=DirectSoundCaptureCreate(lpGuid,NULL,NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate didn't fail: 0x%lx\n",rc);
     if (rc==DS_OK)
