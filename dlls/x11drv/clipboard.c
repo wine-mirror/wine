@@ -2038,24 +2038,30 @@ INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName)
  */
 INT X11DRV_GetClipboardFormatName(UINT wFormat, LPSTR retStr, INT maxlen)
 {
-    INT len = 0;
-    LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+    INT len;
+    LPWINE_CLIPFORMAT lpFormat;
 
     TRACE("(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
+
+    if (wFormat < 0xc000)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
 
     if (!lpFormat || (lpFormat->wFlags & CF_FLAG_BUILTINFMT))
     {
         TRACE("Unknown format 0x%08x!\n", wFormat);
-        SetLastError(ERROR_INVALID_PARAMETER);
-    }
-    else
-    {
-        strncpy(retStr, lpFormat->Name, maxlen - 1);
-        retStr[maxlen - 1] = 0;
-
-        len = strlen(retStr);
+        SetLastError(ERROR_INVALID_HANDLE);
+        return 0;
     }
 
+    strncpy(retStr, lpFormat->Name, maxlen - 1);
+    retStr[maxlen - 1] = 0;
+
+    len = strlen(retStr);
     return len;
 }
 

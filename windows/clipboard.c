@@ -91,7 +91,7 @@ BOOL CLIPBOARD_SetClipboardOwner(HWND hWnd)
 
         if (wine_server_call_err( req ))
         {
-            ERR("Failed to set clipboard.\n");
+            ERR("Failed to set clipboard owner to %p\n", hWnd);
         }
         else
         {
@@ -117,7 +117,7 @@ static BOOL CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
 
         if (wine_server_call_err( req ))
         {
-            ERR("Failed to get clipboard owner.\n");
+            ERR("Failed to get clipboard info\n");
         }
         else
         {
@@ -174,14 +174,8 @@ static BOOL CLIPBOARD_OpenClipboard(HWND hWnd)
         req->flags = SET_CB_OPEN;
         req->clipboard = WIN_GetFullHandle( hWnd );
 
-        if (wine_server_call_err( req ))
-        {
-            ERR("Failed to set clipboard.\n");
-        }
-        else
-        {
+        if (!wine_server_call( req ))
             bRet = TRUE;
-        }
     }
     SERVER_END_REQ;
 
@@ -408,22 +402,20 @@ BOOL WINAPI EmptyClipboard(void)
 
     /* Tell the driver to acquire the selection. The current owner
      * will be signaled to delete it's own cache. */
-    if (~cbinfo.flags & CB_OWNER)
-    {
-        /* Assign ownership of the clipboard to the current client. We do
-	 * this before acquiring the selection so that when we do acquire the
-	 * selection and the selection loser gets notified, it can check if 
-	 * it has lost the Wine clipboard ownership. If it did then it knows
-	 * that a WM_DESTORYCLIPBOARD has already been sent. Otherwise it
-	 * lost the selection to a X app and it should send the 
-	 * WM_DESTROYCLIPBOARD itself. */
-        CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
 
-	/* Acquire the selection. This will notify the previous owner
-	 * to clear it's cache. */ 
-        if (USER_Driver.pAcquireClipboard) 
-            USER_Driver.pAcquireClipboard(cbinfo.hWndOpen);
-    }
+    /* Assign ownership of the clipboard to the current client. We do
+     * this before acquiring the selection so that when we do acquire the
+     * selection and the selection loser gets notified, it can check if 
+     * it has lost the Wine clipboard ownership. If it did then it knows
+     * that a WM_DESTORYCLIPBOARD has already been sent. Otherwise it
+     * lost the selection to a X app and it should send the 
+     * WM_DESTROYCLIPBOARD itself. */
+    CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
+
+    /* Acquire the selection. This will notify the previous owner
+     * to clear it's cache. */ 
+    if (USER_Driver.pAcquireClipboard) 
+        USER_Driver.pAcquireClipboard(cbinfo.hWndOpen);
 
     /* Empty the local cache */
     if (USER_Driver.pEmptyClipboard) 

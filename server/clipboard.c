@@ -80,26 +80,22 @@ static int set_clipboard_window(user_handle_t win, int clear)
 
 static int set_clipboard_owner(user_handle_t win, int clear)
 {
-    if (cbthread == current)
-    {
-        if (!clear)
-        {
-            cbowner = current;
-            owner = win;
-        }
-        else
-        {
-            cbowner = 0;
-            owner = 0;
-        }
-        seqno++;
-        return 1;
-    }
-    else
+    if (cbowner && cbowner != current)
     {
         set_error(STATUS_WAS_LOCKED);
         return 0;
     }
+    else if (!clear)
+    {
+        owner = win;
+        cbowner = current;
+    }
+    else
+    {
+        owner = 0;
+        cbowner = NULL;
+    }
+    return 1;
 }
 
 
@@ -124,11 +120,24 @@ DECL_HANDLER(set_clipboard_info)
 
     if (req->flags & SET_CB_OPEN)
     {
+        if (cbthread)
+        {
+            /* clipboard already opened */
+            set_error(STATUS_WAS_LOCKED);
+            return;
+        }
+
         if (!set_clipboard_window(req->clipboard, 0))
             return;
     }
     else if (req->flags & SET_CB_CLOSE)
     {
+        if (cbthread != current)
+        {
+            set_win32_error(ERROR_CLIPBOARD_NOT_OPEN);
+            return;
+        }
+
         if (!set_clipboard_window(0, 1))
             return;
     }
