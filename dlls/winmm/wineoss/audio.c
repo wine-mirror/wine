@@ -24,6 +24,7 @@
 /*
  * FIXME:
  *	pause in waveOut does not work correctly in loop mode
+ *	Direct Sound Capture driver does not work (not complete yet)
  */
 
 /*#define EMULATE_SB16*/
@@ -148,8 +149,8 @@ typedef struct tagOSS_DEVICE {
     const char*                 mixer_name;
     unsigned                    open_count;
     WAVEOUTCAPSA                out_caps;
-    WAVEINCAPSA		        in_caps;
-	DWORD                       in_caps_support;
+    WAVEINCAPSA                 in_caps;
+    DWORD                       in_caps_support;
     unsigned                    open_access;
     int                         fd;
     DWORD                       owner_tid;
@@ -210,6 +211,10 @@ typedef struct {
     DWORD			dwThreadID;
     HANDLE			hStartUpEvent;
     OSS_MSG_RING		msgRing;
+
+    /* DirectSound stuff */
+    LPBYTE                      mapping;
+    DWORD                       maplen;
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEDRV];
@@ -395,16 +400,16 @@ static void	OSS_CloseDevice(OSS_DEVICE* ossdev)
 static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
 {
     DWORD       ret;
+    int         old_fd = ossdev->fd;
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_RESET, NULL) == -1) 
     {
 	perror("ioctl SNDCTL_DSP_RESET");
         return -1;
     }
-    TRACE("Changing fd from %d to ", ossdev->fd);
     close(ossdev->fd);
     ret = OSS_RawOpenDevice(ossdev, 1);
-    TRACE("%d\n", ossdev->fd);
+    TRACE("Changing fd from %d to %d\n", old_fd, ossdev->fd);
     return ret;
 }
 
@@ -595,6 +600,8 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
         if ((arg & DSP_CAP_TRIGGER) && (arg & DSP_CAP_MMAP) &&
             !(arg & DSP_CAP_BATCH))
             ossdev->in_caps_support |= WAVECAPS_DIRECTSOUND;
+	if ((arg & DSP_CAP_REALTIME) && !(arg & DSP_CAP_BATCH))
+	    ossdev->in_caps_support |= WAVECAPS_SAMPLEACCURATE;
     }
     OSS_CloseDevice(ossdev);
     TRACE("in dwFormats = %08lX\n", ossdev->in_caps.dwFormats);
@@ -785,6 +792,31 @@ static int OSS_RetrieveRingMessage(OSS_MSG_RING* omr,
     *hEvent = omr->messages[omr->msg_toget].hEvent;
     omr->msg_toget = (omr->msg_toget + 1) % OSS_RING_BUFFER_SIZE;
     CLEAR_OMR(omr);
+    LeaveCriticalSection(&omr->msg_crst);
+    return 1;
+}
+
+/******************************************************************
+ *              OSS_PeekRingMessage
+ *
+ * Peek at a message from the ring but do not remove it.
+ * Should be called by the playback/record thread.
+ */
+static int OSS_PeekRingMessage(OSS_MSG_RING* omr,
+                               enum win_wm_message *msg,
+                               DWORD *param, HANDLE *hEvent)
+{
+    EnterCriticalSection(&omr->msg_crst);
+
+    if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
+    {
+	LeaveCriticalSection(&omr->msg_crst);
+	return 0;
+    }
+
+    *msg = omr->messages[omr->msg_toget].msg;
+    *param = omr->messages[omr->msg_toget].param;
+    *hEvent = omr->messages[omr->msg_toget].hEvent;
     LeaveCriticalSection(&omr->msg_crst);
     return 1;
 }
@@ -2271,6 +2303,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     wwi->state = WINE_WS_STOPPED;
     wwi->dwTotalRecorded = 0;
+    wwi->lpQueuePtr = NULL;
 
     SetEvent(wwi->hStartUpEvent);
 
@@ -2279,7 +2312,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
      */
     read(wwi->ossdev->fd, &xs, 4);
 
-	/* make sleep time to be # of ms to output a fragment */
+    /* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
     TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
@@ -2370,12 +2403,36 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 			    wwi->lpQueuePtr = lpWaveHdr = lpNext;
 			    if (!lpNext && bytesRead) {
-                                /* no more buffer to copy data to, but we did read more.
-                                 * what hasn't been copied will be dropped
-                                 */
-                                WARN("buffer under run! %lu bytes dropped.\n", bytesRead);
-                                wwi->lpQueuePtr = NULL;
-                                break;
+				/* before we give up, check for more header messages */
+				while (OSS_PeekRingMessage(&wwi->msgRing, &msg, &param, &ev))
+				{
+				    if (msg == WINE_WM_HEADER) {
+					LPWAVEHDR hdr;
+					OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev);
+					hdr = ((LPWAVEHDR)param);
+					TRACE("msg = %s, hdr = %p, ev = %p\n", wodPlayerCmdString[msg - WM_USER - 1], hdr, ev);
+					hdr->lpNext = 0;
+					if (lpWaveHdr == 0) {
+					    /* new head of queue */
+					    wwi->lpQueuePtr = lpWaveHdr = hdr;
+					} else {
+					    /* insert buffer at the end of queue */
+					    LPWAVEHDR*  wh;
+					    for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
+					    *wh = hdr;
+					}
+				    } else
+					break;
+				}
+
+				if (lpWaveHdr == 0) {
+                                    /* no more buffer to copy data to, but we did read more.
+                                     * what hasn't been copied will be dropped
+                                     */
+                                    WARN("buffer under run! %lu bytes dropped.\n", bytesRead);
+                                    wwi->lpQueuePtr = NULL;
+                                    break;
+				}
                             }
                         }
                     }
@@ -2387,7 +2444,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-
             TRACE("msg=0x%x param=0x%lx\n", msg, param);
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
@@ -2505,7 +2561,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
     if (dwFlags & WAVE_DIRECTSOUND) {
-		TRACE("has DirectSoundCapture driver\n");
+	TRACE("has DirectSoundCapture driver\n");
         if (wwi->ossdev->in_caps_support & WAVECAPS_SAMPLEACCURATE)
 	    /* we have realtime DirectSound, fragments just waste our time,
 	     * but a large buffer is good, so choose 64KB (32 * 2^11) */
@@ -2515,15 +2571,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	     * let's try to fragment the above 64KB (256 * 2^8) */
 	    audio_fragment = 0x01000008;
     } else {
-		TRACE("doesn't have DirectSoundCapture driver\n");
+	TRACE("doesn't have DirectSoundCapture driver\n");
         /* This is actually hand tuned to work so that my SB Live:
          * - does not skip
          * - does not buffer too much
          * when sending with the Shoutcast winamp plugin
          */
         /* 15 fragments max, 2^10 = 1024 bytes per fragment */
-/*        audio_fragment = 0x000F000A; */
-	    audio_fragment = 0x01000008;
+        audio_fragment = 0x000F000A;
     }
 
     TRACE("using %d %d byte fragments\n", audio_fragment >> 16, 1 << (audio_fragment & 0xffff));
@@ -2839,10 +2894,66 @@ struct IDsCaptureDriverBufferImpl
     DWORD			buflen;
 };
 
+static HRESULT DSDB_MapCapture(IDsCaptureDriverBufferImpl *dscdb)
+{
+    WINE_WAVEIN *wwi = &(WInDev[dscdb->drv->wDevID]);
+    if (!wwi->mapping) {
+	wwi->mapping = mmap(NULL, wwi->maplen, PROT_WRITE, MAP_SHARED,
+			    wwi->ossdev->fd, 0);
+	if (wwi->mapping == (LPBYTE)-1) {
+	    TRACE("(%p): Could not map sound device for direct access (%s)\n", dscdb, strerror(errno));
+	    return DSERR_GENERIC;
+	}
+	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dscdb, wwi->mapping, wwi->maplen);
+
+	/* for some reason, es1371 and sblive! sometimes have junk in here.
+	 * clear it, or we get junk noise */
+	/* some libc implementations are buggy: their memset reads from the buffer...
+	 * to work around it, we have to zero the block by hand. We don't do the expected:
+	 * memset(wwo->mapping,0, wwo->maplen);
+	 */
+	{
+	    char*	p1 = wwi->mapping;
+	    unsigned	len = wwi->maplen;
+
+	    if (len >= 16) /* so we can have at least a 4 long area to store... */
+	    {
+		/* the mmap:ed value is (at least) dword aligned
+		 * so, start filling the complete unsigned long:s
+		 */
+		int		b = len >> 2;
+		unsigned long*	p4 = (unsigned long*)p1;
+
+		while (b--) *p4++ = 0;
+		/* prepare for filling the rest */
+		len &= 3;
+		p1 = (unsigned char*)p4;
+	    }
+	    /* in all cases, fill the remaining bytes */
+	    while (len-- != 0) *p1++ = 0;
+	}
+    }
+    return DS_OK;
+}
+
+static HRESULT DSDB_UnmapCapture(IDsCaptureDriverBufferImpl *dscdb)
+{
+    WINE_WAVEIN *wwi = &(WInDev[dscdb->drv->wDevID]);
+    if (wwi->mapping) {
+	if (munmap(wwi->mapping, wwi->maplen) < 0) {
+	    ERR("(%p): Could not unmap sound device (%s)\n", dscdb, strerror(errno));
+	    return DSERR_GENERIC;
+	}
+	wwi->mapping = NULL;
+	TRACE("(%p): sound device unmapped\n", dscdb);
+    }
+    return DS_OK;
+}
+
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(): stub!\n");
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    FIXME("(%p,%p,%p): stub!\n",This,riid,ppobj);
     return DSERR_UNSUPPORTED;
 }
 
@@ -2858,6 +2969,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     if (--This->ref)
 	return This->ref;
+    DSDB_UnmapCapture(This);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
@@ -2868,53 +2980,93 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(PIDSCDRIVERBUFFER iface,
 					              DWORD dwWritePosition,DWORD dwWriteLen,
 					              DWORD dwFlags)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p): stub\n",iface);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    FIXME("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx): stub!\n",This,ppvAudio1,pdwLen1,ppvAudio2,pdwLen2,
+	dwWritePosition,dwWriteLen,dwFlags);
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(PIDSCDRIVERBUFFER iface,
 						        LPVOID pvAudio1,DWORD dwLen1,
 						        LPVOID pvAudio2,DWORD dwLen2)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p): stub\n",iface);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    FIXME("(%p,%p,%ld,%p,%ld): stub!\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER iface,
 						             LPDWORD lpdwCapture, LPDWORD lpdwWrite)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p,%p,%p): stub!\n",iface,lpdwCapture,lpdwWrite);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    count_info info;
+    DWORD ptr;
+    TRACE("(%p,%p,%p)\n",This,lpdwCapture,lpdwWrite);
+
+    if (WInDev[This->drv->wDevID].state == WINE_WS_CLOSED) {
+	ERR("device not open, but accessing?\n");
+	return DSERR_UNINITIALIZED;
+    }
+    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_GETOPTR, &info) < 0) {
+	ERR("ioctl failed (%s)\n", strerror(errno));
+	return DSERR_GENERIC;
+    }
+    ptr = info.ptr & ~3; /* align the pointer, just in case */
+    if (lpdwCapture) *lpdwCapture = ptr;
+    if (lpdwWrite) {
+	/* add some safety margin (not strictly necessary, but...) */
+	if (WInDev[This->drv->wDevID].ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	    *lpdwWrite = ptr + 32;
+	else
+	    *lpdwWrite = ptr + WInDev[This->drv->wDevID].dwFragmentSize;
+	while (*lpdwWrite > This->buflen)
+	    *lpdwWrite -= This->buflen;
+    }
+    TRACE("capturepos=%ld, writepos=%ld\n", lpdwCapture?*lpdwCapture:0, lpdwWrite?*lpdwWrite:0);
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetStatus(PIDSCDRIVERBUFFER iface, LPDWORD lpdwStatus)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p,%p): stub!\n",iface,lpdwStatus);
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    FIXME("(%p,%p): stub!\n",This,lpdwStatus);
     return DSERR_UNSUPPORTED;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, DWORD dwFlags)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p,%lx): stub!\n",iface,dwFlags);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    int enable = PCM_ENABLE_INPUT;
+    TRACE("(%p,%lx)\n",This,dwFlags);
+    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p): stub!\n",iface);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    int enable = 0;
+    TRACE("(%p)\n",This);
+    /* no more captureing */
+    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+
+    /* Most OSS drivers just can't stop capturing without closing the device...
+     * so we need to somehow signal to our DirectSound implementation
+     * that it should completely recreate this HW buffer...
+     * this unexpected error code should do the trick... */
+    return DSERR_BUFFERLOST;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER iface, LPWAVEFORMATEX pwfx)
 {
-    /*ICOM_THIS(IDsCaptureDriverBufferImpl,iface);*/
-    FIXME("(%p): stub!\n",iface);
+    ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
+    FIXME("(%p): stub!\n",This);
     return DSERR_UNSUPPORTED;
 }
 
@@ -2935,8 +3087,8 @@ static ICOM_VTABLE(IDsCaptureDriverBuffer) dscdbvt =
 
 static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(PIDSCDRIVER iface, REFIID riid, LPVOID *ppobj)
 {
-    /*ICOM_THIS(IDsCaptureDriverImpl,iface);*/
-    FIXME("(%p): stub!\n",iface);
+    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    FIXME("(%p,%p,%p): stub!\n",This,riid,ppobj);
     return DSERR_UNSUPPORTED;
 }
 
@@ -2958,43 +3110,145 @@ static ULONG WINAPI IDsCaptureDriverImpl_Release(PIDSCDRIVER iface)
 
 static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(PIDSCDRIVER iface, PDSDRIVERDESC pDesc)
 {
-    /*ICOM_THIS(IDsCaptureDriverImpl,iface);*/
-    FIXME("(%p,%p): stub!\n",iface,pDesc);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    TRACE("(%p,%p)\n",This,pDesc);
+
+    if (!pDesc) {
+	TRACE("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    pDesc->dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
+	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK | 
+	DSDDESC_DONTNEEDSECONDARYLOCK;
+    strcpy(pDesc->szDesc,"WineOSS DirectSound Driver");
+    strcpy(pDesc->szDrvName,"wineoss.drv");
+    pDesc->dnDevNode		= WInDev[This->wDevID].waveDesc.dnDevNode;
+    pDesc->wVxdId		= 0;
+    pDesc->wReserved		= 0;
+    pDesc->ulDeviceNum		= This->wDevID;
+    pDesc->dwHeapType		= DSDHEAP_NOHEAP;
+    pDesc->pvDirectDrawHeap	= NULL;
+    pDesc->dwMemStartAddress	= 0;
+    pDesc->dwMemEndAddress	= 0;
+    pDesc->dwMemAllocExtra	= 0;
+    pDesc->pvReserved1		= NULL;
+    pDesc->pvReserved2		= NULL;
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_Open(PIDSCDRIVER iface)
 {
-    /*ICOM_THIS(IDsCaptureDriverImpl,iface);*/
-    FIXME("(%p): stub!\n",iface);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    TRACE("(%p)\n",This);
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_Close(PIDSCDRIVER iface)
 {
-    /*ICOM_THIS(IDsCaptureDriverImpl,iface);*/
-    FIXME("(%p): stub!\n",iface);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    TRACE("(%p)\n",This);
+    if (This->capture_buffer) {
+	ERR("problem with DirectSound: capture buffer not released\n");
+	return DSERR_GENERIC;
+    }
+    return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(PIDSCDRIVER iface, PDSDRIVERCAPS pCaps)
+static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(PIDSCDRIVER iface, PDSCDRIVERCAPS pCaps)
 {
-    /*ICOM_THIS(IDsCaptureDriverImpl,iface);*/
-    FIXME("(%p,%p): stub!\n",iface,pCaps);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    TRACE("(%p,%p)\n",This,pCaps);
+
+    if ( !pCaps || (pCaps->dwSize != 0) ) {
+	TRACE("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    pCaps->dwFlags = 0;
+    pCaps->dwChannels = WInDev[This->wDevID].ossdev->in_caps.wChannels;
+    pCaps->dwFormats = WInDev[This->wDevID].ossdev->in_caps.dwFormats;
+
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface,
 						               LPWAVEFORMATEX pwfx,
-						               DWORD dwFlags, DWORD dwCardAddress,
+						               DWORD dwFlags, 
+							       DWORD dwCardAddress,
 						               LPDWORD pdwcbBufferSize,
 						               LPBYTE *ppbBuffer,
 						               LPVOID *ppvObj)
 {
-    /*ICOM_THIS(IDsCaptureDriverImpl,iface);*/
-    FIXME("(%p,%p,%lx,%lx): stub!\n",iface,pwfx,dwFlags,dwCardAddress);
-    return DSERR_UNSUPPORTED;
+    ICOM_THIS(IDsCaptureDriverImpl,iface);
+    IDsCaptureDriverBufferImpl** ippdscdb = (IDsCaptureDriverBufferImpl**)ppvObj;
+    HRESULT err;
+    audio_buf_info info;
+    int enable = 0;
+    TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
+
+    if (This->capture_buffer) {
+	TRACE("already allocated\n");
+	return DSERR_ALLOCATED;
+    }
+
+    *ippdscdb = (IDsCaptureDriverBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsCaptureDriverBufferImpl));
+    if (*ippdscdb == NULL) {
+	TRACE("out of memory\n");
+	return DSERR_OUTOFMEMORY;
+    }
+
+    ICOM_VTBL(*ippdscdb) = &dscdbvt;
+    (*ippdscdb)->ref	= 1;
+    (*ippdscdb)->drv	= This;
+
+    if (WInDev[This->wDevID].state == WINE_WS_CLOSED) {
+	WAVEOPENDESC desc;
+	desc.hWave = 0;
+	desc.lpFormat = pwfx; 
+	desc.dwCallback = 0;
+	desc.dwInstance = 0;
+	desc.uMappedDeviceID = 0;
+	desc.dnDevNode = 0;
+	err = widOpen(This->wDevID, &desc, dwFlags | WAVE_DIRECTSOUND);
+	if (err != MMSYSERR_NOERROR) {
+	    TRACE("widOpen failed\n");
+	    return err;
+	}
+    }
+
+    /* check how big the DMA buffer is now */
+    if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
+	ERR("ioctl failed (%s)\n", strerror(errno));
+	HeapFree(GetProcessHeap(),0,*ippdscdb);
+	*ippdscdb = NULL;
+	return DSERR_GENERIC;
+    }
+    WInDev[This->wDevID].maplen = (*ippdscdb)->buflen = info.fragstotal * info.fragsize;
+
+    /* map the DMA buffer */
+    err = DSDB_MapCapture(*ippdscdb);
+    if (err != DS_OK) {
+	HeapFree(GetProcessHeap(),0,*ippdscdb);
+	*ippdscdb = NULL;
+	return err;
+    }
+
+    /* capture buffer is ready to go */
+    *pdwcbBufferSize	= WInDev[This->wDevID].maplen;
+    *ppbBuffer		= WInDev[This->wDevID].mapping;
+
+    /* some drivers need some extra nudging after mapping */
+    if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+
+    This->capture_buffer = *ippdscdb;
+
+    return DS_OK;
 }
+
 static ICOM_VTABLE(IDsCaptureDriver) dscdvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -3011,7 +3265,6 @@ static ICOM_VTABLE(IDsCaptureDriver) dscdvt =
 static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 {
     IDsCaptureDriverImpl** idrv = (IDsCaptureDriverImpl**)drv;
-
     TRACE("(%d,%p)\n",wDevID,drv);
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */

@@ -278,7 +278,7 @@ ICOM_DEFINE(IDsDriverNotify,IUnknown)
     ICOM_METHOD1(HRESULT,GetDriverDesc,		PDSDRIVERDESC,pDsDriverDesc) \
     ICOM_METHOD (HRESULT,Open) \
     ICOM_METHOD (HRESULT,Close) \
-    ICOM_METHOD1(HRESULT,GetCaps,		PDSDRIVERCAPS,pDsDrvCaps) \
+    ICOM_METHOD1(HRESULT,GetCaps,		PDSCDRIVERCAPS,pDsDrvCaps) \
     ICOM_METHOD6(HRESULT,CreateCaptureBuffer,	LPWAVEFORMATEX,pwfx,DWORD,dwFlags,DWORD,dwCardAddress,LPDWORD,pdwcbBufferSize,LPBYTE*,ppbBuffer,LPVOID*,ppvObj)
 #define IDsCaptureDriver_IMETHODS \
     IUnknown_METHODS \
