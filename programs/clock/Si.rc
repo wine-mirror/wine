@@ -1,7 +1,7 @@
 /*
- * Clock resources
+ * Clock (Slovenian resources)
  *
- * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Copyright 2002 Rok Mandeljc <rok.mandeljc@gimb.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +18,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
-#include "main.h"
+MAIN_MENU MENU LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+{
+ POPUP "&Lastnosti" {
+  MENUITEM "Ana&logna ura", 0x100
+  MENUITEM "Digi&talna ura", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Pisava ...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Brez naslovne vrstice", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Sekunde", 0x107
+  MENUITEM "&Datum", 0x108
+ }
+ POPUP "Inf&ormacije ..." {
+  MENUITEM "&Licenèna pogodba", 0x109
+  MENUITEM "&BREZ GARANCIJE", 0x10A
+  MENUITEM "&O Uri", 0x10B
+ }
+}
 
-#include "clock_res.h"
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fi.rc"
-#include "Fr.rc"
-#include "Pt.rc"
-#include "Si.rc"
-#include "Sk.rc"
-#include "Sw.rc"
-#include "Wa.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+{
+CLOCK,		"Ura"
+MENU_ON_TOP,	"&Vedno na vrhu"
+}
