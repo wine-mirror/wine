@@ -2,13 +2,6 @@
     <title>How to do regression testing using CVS</title>
 
     <para>
-      written by Gerard Patel
-    </para>
-    <para>
-      (Extracted from <filename>wine/documentation/bugreports</filename>)
-    </para>
-
-    <para>
       A problem that can happen sometimes is 'it used to work
       before, now it doesn't anymore...'. Here is a step by step
       procedure to try to pinpoint when the problem occurred. This is
