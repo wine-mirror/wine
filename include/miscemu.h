@@ -240,6 +240,15 @@ extern void WINAPI INT_Int2aHandler(CONTEXT86*);
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
+/* msdos/int41.c */
+extern void WINAPI INT_Int41Handler(CONTEXT86*);
+
+/* msdos/int4b.c */
+extern void WINAPI INT_Int4bHandler(CONTEXT86*);
+
+/* msdos/int5c.c */
+extern void WINAPI NetBIOSCall16(CONTEXT86*);
+
 /* fpu.c */
 extern void WINAPI INT_Int34Handler(CONTEXT86*);
 extern void WINAPI INT_Int35Handler(CONTEXT86*);

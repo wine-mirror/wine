@@ -614,26 +614,37 @@ void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
     }
 }
 
-
 /**********************************************************************
- *	    DOSVM_Int31Handler
+ *         DOSVM_CheckWrappers
  *
- * Handler for real-mode int 31h (DPMI).
+ * Check if this was really a wrapper call instead of an interrupt.
+ * FIXME: Protected mode stuff does not work in 32-bit DPMI.
+ * FIXME: If int31 is called asynchronously (unlikely) 
+ *        wrapper checks are wrong (CS/IP must not be used).
  */
-void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
+static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
 {
+    /* Handle protected mode interrupts. */
+    if (!ISV86(context)) {
+        if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel) {
+           INT_Int31Handler( context ); /* FIXME: Call RawModeSwitch */
+           return TRUE;
+       }
+       return FALSE;
+    }
+
     /* check if it's our wrapper */
     TRACE("called from real mode\n");
     if (context->SegCs==DOSVM_dpmi_segments->dpmi_seg) {
         /* This is the protected mode switch */
         StartPM(context);
-        return;
+        return TRUE;
     }
     else if (context->SegCs==DOSVM_dpmi_segments->xms_seg)
     {
         /* This is the XMS driver entry point */
         XMS_Handler(context);
-        return;
+        return TRUE;
     }
     else
     {
@@ -646,10 +657,57 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         if (CurrRMCB) {
             /* RMCB call, propagate to protected-mode handler */
             DPMI_CallRMCBProc(context, CurrRMCB, dpmi_flag);
-            return;
+            return TRUE;
         }
     }
 
-    /* chain to protected mode handler */
-    INT_Int31Handler( context );
+    return FALSE;
+}
+
+/**********************************************************************
+ *         DOSVM_Int31Handler
+ *
+ * Handler for int 31h (DPMI).
+ */
+void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
+{
+    if (DOSVM_CheckWrappers(context))
+        return;
+
+    RESET_CFLAG(context);
+    switch(AX_reg(context))
+    {
+    case 0x0204:  /* Get protected mode interrupt vector */
+        TRACE("get protected mode interrupt handler (0x%02x)\n",
+             BL_reg(context));
+        if (DOSVM_IsDos32()) {
+            FARPROC48 handler = DOSVM_GetPMHandler48( BL_reg(context) );
+            SET_CX( context, handler.selector );
+            context->Edx = handler.offset;
+        } else {
+            FARPROC16 handler = DOSVM_GetPMHandler16( BL_reg(context) );
+            SET_CX( context, SELECTOROF(handler) );
+            SET_DX( context, OFFSETOF(handler) );
+        }
+        break;
+
+    case 0x0205:  /* Set protected mode interrupt vector */
+        TRACE("set protected mode interrupt handler (0x%02x,0x%04x:0x%08lx)\n",
+             BL_reg(context), CX_reg(context), context->Edx);
+        if (DOSVM_IsDos32()) {
+            FARPROC48 handler;
+            handler.selector = CX_reg(context);
+            handler.offset = context->Edx;
+            DOSVM_SetPMHandler48( BL_reg(context), handler );
+        } else {
+            FARPROC16 handler;
+            handler = (FARPROC16)MAKESEGPTR( CX_reg(context), DX_reg(context)); 
+            DOSVM_SetPMHandler16( BL_reg(context), handler );
+        }
+        break;
+
+    default:
+        /* chain to protected mode handler */
+        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+    }  
 }

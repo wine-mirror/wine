@@ -24,12 +24,79 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-static FARPROC16 DOSVM_Vectors16[256];
-static FARPROC48 DOSVM_Vectors48[256];
-static INTPROC   DOSVM_VectorsBuiltin[256];
+/*
+ * FIXME: Interrupt handlers for interrupts implemented in other DLLs.
+ *        These functions should be removed when the interrupt handlers have
+ *        been moved to winedos.
+ */
+void WINAPI DOSVM_Int11Handler( CONTEXT86 *context ) { INT_Int11Handler(context); }
+void WINAPI DOSVM_Int12Handler( CONTEXT86 *context ) { INT_Int12Handler(context); }
+void WINAPI DOSVM_Int13Handler( CONTEXT86 *context ) { INT_Int13Handler(context); }
+void WINAPI DOSVM_Int15Handler( CONTEXT86 *context ) { INT_Int15Handler(context); }
+void WINAPI DOSVM_Int1aHandler( CONTEXT86 *context ) { INT_Int1aHandler(context); }
+void WINAPI DOSVM_Int25Handler( CONTEXT86 *context ) { INT_Int25Handler(context); }
+void WINAPI DOSVM_Int26Handler( CONTEXT86 *context ) { INT_Int26Handler(context); }
+void WINAPI DOSVM_Int2aHandler( CONTEXT86 *context ) { INT_Int2aHandler(context); }
+void WINAPI DOSVM_Int2fHandler( CONTEXT86 *context ) { INT_Int2fHandler(context); }
+void WINAPI DOSVM_Int34Handler( CONTEXT86 *context ) { INT_Int34Handler(context); }
+void WINAPI DOSVM_Int35Handler( CONTEXT86 *context ) { INT_Int35Handler(context); }
+void WINAPI DOSVM_Int36Handler( CONTEXT86 *context ) { INT_Int36Handler(context); }
+void WINAPI DOSVM_Int37Handler( CONTEXT86 *context ) { INT_Int37Handler(context); }
+void WINAPI DOSVM_Int38Handler( CONTEXT86 *context ) { INT_Int38Handler(context); }
+void WINAPI DOSVM_Int39Handler( CONTEXT86 *context ) { INT_Int39Handler(context); }
+void WINAPI DOSVM_Int3aHandler( CONTEXT86 *context ) { INT_Int3aHandler(context); }
+void WINAPI DOSVM_Int3bHandler( CONTEXT86 *context ) { INT_Int3bHandler(context); }
+void WINAPI DOSVM_Int3cHandler( CONTEXT86 *context ) { INT_Int3cHandler(context); }
+void WINAPI DOSVM_Int3dHandler( CONTEXT86 *context ) { INT_Int3dHandler(context); }
+void WINAPI DOSVM_Int3eHandler( CONTEXT86 *context ) { INT_Int3eHandler(context); }
+void WINAPI DOSVM_Int41Handler( CONTEXT86 *context ) { INT_Int41Handler(context); }
+void WINAPI DOSVM_Int4bHandler( CONTEXT86 *context ) { INT_Int4bHandler(context); }
+void WINAPI DOSVM_Int5cHandler( CONTEXT86 *context ) { NetBIOSCall16(context); }
 
-/* Ordinal number for interrupt 0 handler in winedos.dll and winedos16.dll */
+static FARPROC16     DOSVM_Vectors16[256];
+static FARPROC48     DOSVM_Vectors48[256];
+static const INTPROC DOSVM_VectorsBuiltin[] =
+{
+  /* 00 */ 0,                  0,                  0,                  0,
+  /* 04 */ 0,                  0,                  0,                  0,
+  /* 08 */ 0,                  DOSVM_Int09Handler, 0,                  0,
+  /* 0C */ 0,                  0,                  0,                  0,
+  /* 10 */ DOSVM_Int10Handler, DOSVM_Int11Handler, DOSVM_Int12Handler, DOSVM_Int13Handler,
+  /* 14 */ 0,                  DOSVM_Int15Handler, DOSVM_Int16Handler, DOSVM_Int17Handler,
+  /* 18 */ 0,                  0,                  DOSVM_Int1aHandler, 0,
+  /* 1C */ 0,                  0,                  0,                  0,
+  /* 20 */ DOSVM_Int20Handler, DOSVM_Int21Handler, 0,                  0,
+  /* 24 */ 0,                  DOSVM_Int25Handler, DOSVM_Int26Handler, 0,
+  /* 28 */ 0,                  DOSVM_Int29Handler, DOSVM_Int2aHandler, 0,
+  /* 2C */ 0,                  0,                  0,                  DOSVM_Int2fHandler,
+  /* 30 */ 0,                  DOSVM_Int31Handler, 0,                  DOSVM_Int33Handler,
+  /* 34 */ DOSVM_Int34Handler, DOSVM_Int35Handler, DOSVM_Int36Handler, DOSVM_Int37Handler,
+  /* 38 */ DOSVM_Int38Handler, DOSVM_Int39Handler, DOSVM_Int3aHandler, DOSVM_Int3bHandler,
+  /* 3C */ DOSVM_Int3cHandler, DOSVM_Int3dHandler, DOSVM_Int3eHandler, 0,
+  /* 40 */ 0,                  DOSVM_Int41Handler, 0,                  0,
+  /* 44 */ 0,                  0,                  0,                  0,
+  /* 48 */ 0,                  0,                  0,                  DOSVM_Int4bHandler,
+  /* 4C */ 0,                  0,                  0,                  0,
+  /* 50 */ 0,                  0,                  0,                  0,
+  /* 54 */ 0,                  0,                  0,                  0,
+  /* 58 */ 0,                  0,                  0,                  0,
+  /* 5C */ DOSVM_Int5cHandler, 0,                  0,                  0,
+  /* 60 */ 0,                  0,                  0,                  0,
+  /* 64 */ 0,                  0,                  0,                  DOSVM_Int67Handler
+};
+
+/* Ordinal number for interrupt 0 handler in winedos16.dll */
 #define FIRST_INTERRUPT 100
+
+/**********************************************************************
+ *         DOSVM_DefaultHandler
+ *
+ * Default interrupt handler. This will be used to emulate all
+ * interrupts that don't have their own interrupt handler.
+ */
+void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
+{
+}
 
 /**********************************************************************
  *         DOSVM_EmulateInterruptPM
@@ -143,11 +210,11 @@ FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
 
 
 /**********************************************************************
- *          DOSVM_SetPMHandler
+ *          DOSVM_SetPMHandler16
  *
  * Set the protected mode interrupt handler for a given interrupt.
  */
-void DOSVM_SetPMHandler( BYTE intnum, FARPROC16 handler )
+void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler )
 {
   TRACE("Set protected mode interrupt vector %02x <- %04x:%04x\n",
        intnum, HIWORD(handler), LOWORD(handler) );
@@ -190,41 +257,12 @@ void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
  */
 INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
 {
-  static HMODULE procs;
-  INTPROC handler = DOSVM_VectorsBuiltin[intnum];
-
-  if (!handler)
-  {
-    if (!procs)
-      procs = LoadLibraryA( "winedos.dll" );
-
-    if (!procs) 
-    {
-      ERR("could not load winedos.dll\n");
-      return 0;
-    }
-
-    handler = (INTPROC)GetProcAddress( procs, 
-                                      (LPCSTR)(FIRST_INTERRUPT + intnum));
-    if (!handler) 
-    {
-      WARN("int%x not implemented, returning dummy handler\n", intnum );
-      handler = (INTPROC)GetProcAddress( procs, 
-                                        (LPCSTR)(FIRST_INTERRUPT + 256));
-    }
-
-    DOSVM_VectorsBuiltin[intnum] = handler;
+  if (intnum < sizeof(DOSVM_VectorsBuiltin)/sizeof(INTPROC)) {
+    INTPROC proc = DOSVM_VectorsBuiltin[intnum];
+    if(proc)
+      return proc;
   }
 
-  return handler;
-}
-
-/**********************************************************************
- *         DOSVM_DefaultHandler
- *
- * Default interrupt handler. This will be used to emulate all
- * interrupts that don't have their own interrupt handler.
- */
-void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
-{
+  WARN("int%x not implemented, returning dummy handler\n", intnum );
+  return DOSVM_DefaultHandler;
 }

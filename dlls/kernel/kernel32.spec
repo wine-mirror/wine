@@ -1049,6 +1049,7 @@ init	MAIN_KernelInit
 @ stdcall INT_Int15Handler(ptr) INT_Int15Handler
 @ stdcall INT_Int1aHandler(ptr) INT_Int1aHandler
 @ stdcall INT_Int25Handler(ptr) INT_Int25Handler
+@ stdcall INT_Int26Handler(ptr) INT_Int26Handler  
 @ stdcall INT_Int2aHandler(ptr) INT_Int2aHandler
 @ stdcall INT_Int2fHandler(ptr) INT_Int2fHandler
 @ stdcall INT_Int31Handler(ptr) INT_Int31Handler
@@ -1063,6 +1064,9 @@ init	MAIN_KernelInit
 @ stdcall INT_Int3cHandler(ptr) INT_Int3cHandler
 @ stdcall INT_Int3dHandler(ptr) INT_Int3dHandler
 @ stdcall INT_Int3eHandler(ptr) INT_Int3eHandler
+@ stdcall INT_Int41Handler(ptr) INT_Int41Handler 
+@ stdcall INT_Int4bHandler(ptr) INT_Int4bHandler 
+@ stdcall NetBIOSCall16(ptr) NetBIOSCall16
 @ cdecl INT_SetPMHandler(long long) INT_SetPMHandler
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc
 @ cdecl LOCAL_Compact(long long long) LOCAL_Compact

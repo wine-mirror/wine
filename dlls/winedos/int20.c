@@ -30,5 +30,9 @@
  */
 void WINAPI DOSVM_Int20Handler( CONTEXT86 *context )
 {
-    MZ_Exit( context, TRUE, 0 );
+    /* FIXME: Is this correct in DOS DPMI? */
+    if (ISV86(context))
+        MZ_Exit( context, TRUE, 0 );
+    else
+        ExitThread(0);
 }

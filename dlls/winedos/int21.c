@@ -72,11 +72,17 @@ void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
 /***********************************************************************
  *           DOSVM_Int21Handler
  *
- * int 21h real-mode handler. Most calls are passed directly to DOS3Call.
+ * int 21h handler. Most calls are passed directly to DOS3Call.
  */
 void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 {
     BYTE ascii;
+
+    if (DOSVM_IsWin16()) {
+        DOS3Call( context );
+        return;
+    }
+
     RESET_CFLAG(context);  /* Not sure if this is a good idea */
 
     if(AH_reg(context) == 0x0c) /* FLUSH BUFFER AND READ STANDARD INPUT */
