@@ -146,6 +146,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     NE_MODULE *pModule;
     int minsize;
     SEGTABLEENTRY *pSegTable;
+    OSVERSIONINFOA versionInfo;
 
     HMODULE16 hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
                                             descr->module_size, 0,
@@ -158,6 +159,13 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->self = hModule;
 
+    /* Set expected_version according to the emulated Windows version */
+
+    versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
+    if ( GetVersionExA( &versionInfo ) )
+        pModule->expected_version = (versionInfo.dwMajorVersion & 0xff) << 8
+                                  | (versionInfo.dwMinorVersion & 0xff);
+    
     /* Allocate the code segment */
 
     pSegTable = NE_SEG_TABLE( pModule );
