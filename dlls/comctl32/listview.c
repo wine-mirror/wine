@@ -1219,6 +1219,9 @@ static inline BOOL is_autoarrange(LISTVIEW_INFO *infoPtr)
 
 static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT nSubItem)
 {
+    static COLUMN_INFO mainItem;
+
+    if (nSubItem == 0 && infoPtr->hdpaColumns->nItemCount == 0) return &mainItem;
     assert (nSubItem >= 0 && nSubItem < infoPtr->hdpaColumns->nItemCount);
     return (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
 }
