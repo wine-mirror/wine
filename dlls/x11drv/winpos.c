@@ -521,6 +521,7 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 /* fix redundant flags and values in the WINDOWPOS structure */
 static BOOL fixup_flags( WINDOWPOS *winpos )
 {
+    HWND parent;
     WND *wndPtr = WIN_GetPtr( winpos->hwnd );
     BOOL ret = TRUE;
 
@@ -542,6 +543,9 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     if (winpos->cy < 0) winpos->cy = 0;
     else if (winpos->cy > 32767) winpos->cy = 32767;
 
+    parent = GetAncestor( winpos->hwnd, GA_PARENT );
+    if (!IsWindowVisible( parent )) winpos->flags |= SWP_NOREDRAW;
+
     if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
     else
     {
@@ -558,7 +562,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 
     if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
     {
-        if (!(winpos->flags & SWP_NOACTIVATE)) /* Bring to the top when activating */
+        if (!(winpos->flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW))) /* Bring to the top when activating */
         {
             winpos->flags &= ~SWP_NOZORDER;
             winpos->hwndInsertAfter = HWND_TOP;
@@ -589,7 +593,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     }
     else
     {
-        if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != wndPtr->parent) ret = FALSE;
+        if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != parent) ret = FALSE;
         else
         {
             /* don't need to change the Zorder of hwnd if it's already inserted
@@ -860,7 +864,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     else if (winpos->flags & SWP_SHOWWINDOW)
         ShowCaret(winpos->hwnd);
 
-    if (!(winpos->flags & SWP_NOACTIVATE))
+    if (!(winpos->flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW)))
     {
         /* child windows get WM_CHILDACTIVATE message */
         if ((GetWindowLongW( winpos->hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
@@ -1071,8 +1075,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     {
         case SW_HIDE:
             if (!wasVisible) goto END;
-	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE |
-		        SWP_NOACTIVATE | SWP_NOZORDER;
+            swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER;
 	    break;
 
 	case SW_SHOWMINNOACTIVE:
