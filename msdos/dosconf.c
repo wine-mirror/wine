@@ -54,7 +54,6 @@ DOSCONF DOSCONF_config =
 typedef struct {
     const char *tag_name;
     int (*tag_handler)(char **p);
-    void *data;
 } TAG_ENTRY;
 
 

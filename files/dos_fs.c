@@ -1489,7 +1489,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
                     const char *long_mask, int drive, BYTE attr,
                     int skip, WIN32_FIND_DATAA *entry )
 {
-    static FIND_FIRST_INFO info = { NULL };
+    static FIND_FIRST_INFO info;
     LPCSTR short_name, long_name;
     int count;
 

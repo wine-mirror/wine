@@ -1052,7 +1052,7 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
         { "hex:",      4,   REG_BINARY,          REG_BINARY },
         { "dword:",    6,   REG_DWORD,           REG_DWORD },
         { "hex(",      4,   -1,                  REG_BINARY },
-        { NULL, }
+        { NULL,        0,    0,                  0 }
     };
 
     const struct data_type *ptr;

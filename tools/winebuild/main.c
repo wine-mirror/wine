@@ -103,7 +103,7 @@ static const struct option option_table[] =
     { "-spec",  1, do_spec,   "-spec file.spec  Build a .c file from a spec file" },
     { "-glue",  1, do_glue,   "-glue file.c     Build the 16-bit glue for a .c file" },
     { "-relay", 0, do_relay,  "-relay           Build the relay assembly routines" },
-    { NULL }
+    { NULL,     0, NULL,      NULL }
 };
 
 static void do_pic(void)

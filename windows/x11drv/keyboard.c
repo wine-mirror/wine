@@ -401,7 +401,7 @@ static const struct {
  {"Japanese 106 keyboard layout", 932, &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Japanese pc98x1 keyboard layout", 932, &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
- {0} /* sentinel */
+ {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };
 static unsigned kbd_layout=0; /* index into above table of layouts */
 

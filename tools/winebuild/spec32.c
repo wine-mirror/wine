@@ -255,7 +255,7 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
                 assert(0);
             }
         }
-        else fprintf( outfile, "    { 0, }" );
+        else fprintf( outfile, "    { 0, { 0,0,0,0 }, 0, 0, 0, 0 }" );
 
         if (i < Limit) fprintf( outfile, ",\n" );
     }
