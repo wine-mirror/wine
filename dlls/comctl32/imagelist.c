@@ -1210,38 +1210,32 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
     ICONINFO ii;
     HICON  hIcon;
     HDC    hdcSrc, hdcDst;
-    INT    nWidth, nHeight;
 
     if ((himl == NULL) || (i < 0) || (i >= himl->cCurImage))
 	return 0;
-
-    nWidth = GetSystemMetrics (SM_CXICON);
-    nHeight = GetSystemMetrics (SM_CYICON);
 
     hdcSrc = CreateCompatibleDC(0);
     hdcDst = CreateCompatibleDC(0);
 
     ii.fIcon = TRUE;
-    ii.xHotspot = nWidth / 2;
-    ii.yHotspot = nHeight / 2;
-    ii.hbmMask  = CreateCompatibleBitmap (hdcDst, nWidth, nHeight);
-    ii.hbmColor = CreateCompatibleBitmap (hdcDst, nWidth, nHeight);
+    ii.hbmMask  = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
+    ii.hbmColor = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
 
 
     /* draw mask*/
     SelectObject (hdcDst, ii.hbmMask);
     if (himl->hbmMask) {
 	SelectObject (hdcSrc, himl->hbmMask);
-	BitBlt (hdcDst, 0, 0, nWidth, nHeight,
+	BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
 		  hdcSrc, i * himl->cx, 0, SRCCOPY);
     }
     else
-	PatBlt (hdcDst, 0, 0, nWidth, nHeight, BLACKNESS);
+	PatBlt (hdcDst, 0, 0, himl->cx, himl->cy, BLACKNESS);
 
     /* draw image*/
     SelectObject (hdcDst, ii.hbmColor);
     SelectObject (hdcSrc, himl->hbmImage);
-    BitBlt (hdcDst, 0, 0, nWidth, nHeight,
+    BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
 	      hdcSrc, i * himl->cx, 0, SRCCOPY);
 
     hIcon = CreateIconIndirect (&ii);    
