@@ -56,11 +56,13 @@ typedef struct tagTOOLBAR_INFO
     HWND     hwndNotify;      /* handle to the window that gets notifications */
     BOOL     bTransparent;    /* background transparency flag */
     BOOL     bAutoSize;       /* auto size deadlock indicator */
+    BOOL     bAnchor;         /* anchor highlight enabled */
     DWORD      dwExStyle;       /* extended toolbar style */
     DWORD      dwDTFlags;       /* DrawText flags */
 
     COLORREF   clrInsertMark;   /* insert mark color */
     RECT     rcBound;         /* bounding rectangle */
+    INT      iVersion;
 
     TBUTTON_INFO *buttons;      /* pointer to button array */
     LPWSTR       *strings;      /* pointer to string array */
