@@ -1,4 +1,4 @@
-This is release 20020804 of Wine, a free implementation of Windows on
+This is release 20020904 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,12 +6,11 @@ correctly.
 Patches should be submitted to "wine-patches@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20020804: (see ChangeLog for details)
-	- Beginnings of an IDL compiler.
-	- Several new winedbg features.
-	- More OLE and shell improvements.
-	- NAS and AudioIO sound drivers.
-	- Still more Sparc portability fixes.
+WHAT'S NEW with Wine-20020904: (see ChangeLog for details)
+	- Much improved PowerPC support.
+	- More correct locale definitions.
+	- Progress on the conversion of handle types to pointers.
+	- Many Visio and Quicken fixes merged from Crossover.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -20,10 +19,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20020804.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20020804.tar.gz
-  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20020804.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20020804.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20020904.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20020904.tar.gz
+  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20020904.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20020904.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 For more download locations, see http://ftpsearch.lycos.com. These
