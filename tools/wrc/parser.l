@@ -548,6 +548,7 @@ void add_to_substtext(char *text, int len)
 
 	/* preprocessor junk */
 <INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*pragma[^\n]*	;	/* Ignore #pragma */
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*ident[^\n]*		;	/* Ignore #ident */
 <INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*line[^\n]*		;	/* Ignore #line */
  /* We'll get an error on malformed #xxx statements
   * by not recognising '#' at all. This helps tracking
