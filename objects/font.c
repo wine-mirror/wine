@@ -1536,15 +1536,51 @@ DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
 
 /*************************************************************************
  * GetCharacterPlacementA [GDI32.160]
+ *
+ * NOTES:
+ *  the web browser control of ie4 calls this with dwFlags=0
  */
 DWORD WINAPI
 GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 			 INT nMaxExtent, GCP_RESULTSA *lpResults,
 			 DWORD dwFlags)
 {
-    /* return value 0 is correct for most cases anyway */
-    FIXME_(font)(":stub!\n");
-    return 0;
+    DWORD ret=0;
+    SIZE size;
+
+    TRACE_(font)("%s 0x%08x 0x%08x 0x%08lx:stub!\n",
+      debugstr_a(lpString), uCount, nMaxExtent, dwFlags);
+
+    TRACE_(font)("lpOrder=%p lpDx=%p lpCaretPos=%p lpClass=%p lpOutString=%p lpGlyphs=%p\n",
+      lpResults->lpOrder, lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
+      lpResults->lpOutString, lpResults->lpGlyphs);
+
+    if(dwFlags)			FIXME_(font)("flags 0x%08lx ignored\n", dwFlags);
+    if(lpResults->lpOrder)	FIXME_(font)("reordering not implemented\n");
+    if(lpResults->lpCaretPos)	FIXME_(font)("caret positions not implemented\n");
+    if(lpResults->lpClass)	FIXME_(font)("classes not implemented\n");
+    if(lpResults->lpGlyphs)	FIXME_(font)("glyphs not implemented\n");
+
+    /* copy will do if the GCP_REORDER flag is not set */
+    if(lpResults->lpOutString)
+    {
+      lstrcpynA(lpResults->lpOutString, lpString, uCount);
+    }
+
+    if (lpResults->lpDx)
+    {
+      int i, c;
+      for (i=0; i<uCount;i++)
+      { 
+        if (GetCharWidth32A(hdc, lpString[i], lpString[i], &c))
+          lpResults->lpDx[i]= c;
+      }
+    }
+
+    if (GetTextExtentPoint32A(hdc, lpString, uCount, &size))
+      ret = MAKELONG(size.cx, size.cy);
+
+    return ret;
 }
 
 /*************************************************************************
