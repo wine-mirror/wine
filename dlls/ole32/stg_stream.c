@@ -414,8 +414,12 @@ HRESULT WINAPI StgStreamImpl_Write(
   TRACE("(%p, %p, %ld, %p)\n",
 	iface, pv, cb, pcbWritten);
  
-  if (!(This->grfMode & STGM_WRITE))
-     return STG_E_ACCESSDENIED; 
+  /*
+   * Do we have permission to write to this stream?
+   */
+  if (!(This->grfMode & (STGM_WRITE | STGM_READWRITE))) {
+      return STG_E_ACCESSDENIED;
+  }
 
   /*
    * If the caller is not interested in the number of bytes written,
@@ -428,12 +432,6 @@ HRESULT WINAPI StgStreamImpl_Write(
    * Initialize the out parameter
    */
   *pcbWritten = 0;
-
-  /*
-   * Do we have permission to write to this stream?
-   */
-  if (!(This->grfMode & (STGM_WRITE | STGM_READWRITE)))
-    return STG_E_ACCESSDENIED;
 
   if (cb == 0)
   {
