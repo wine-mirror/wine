@@ -93,8 +93,14 @@ static void timer_callback( void *private )
 
     /* queue an APC */
     if (timer->thread)
-        thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 0, 3,
-                          (void *)timer->when.tv_sec, (void *)timer->when.tv_usec, timer->arg );
+    {
+        if (!thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 0, 3,
+                               (void *)timer->when.tv_sec, (void *)timer->when.tv_usec, timer->arg))
+        {
+            release_object( timer->thread );
+            timer->thread = NULL;
+        }
+    }
 
     if (timer->period)  /* schedule the next expiration */
     {
@@ -119,6 +125,7 @@ static void cancel_timer( struct timer *timer )
     if (timer->thread)
     {
         thread_cancel_apc( timer->thread, &timer->obj, 0 );
+        release_object( timer->thread );
         timer->thread = NULL;
     }
 }
@@ -147,7 +154,7 @@ static void set_timer( struct timer *timer, int sec, int usec, int period,
     timer->period       = period;
     timer->callback     = callback;
     timer->arg          = arg;
-    if (callback) timer->thread = current;
+    if (callback) timer->thread = (struct thread *)grab_object( current );
     timer->timeout = add_timeout_user( &timer->when, timer_callback, timer );
 }
 
@@ -182,6 +189,7 @@ static void timer_destroy( struct object *obj )
     assert( obj->ops == &timer_ops );
 
     if (timer->timeout) remove_timeout_user( timer->timeout );
+    if (timer->thread) release_object( timer->thread );
 }
 
 /* create a timer */

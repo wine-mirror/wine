@@ -554,6 +554,7 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
 
     /* cancel a possible previous APC with the same owner */
     if (owner) thread_cancel_apc( thread, owner, system );
+    if (thread->state == TERMINATED) return 0;
 
     if (!(apc = mem_alloc( sizeof(*apc) + (nb_args-1)*sizeof(apc->args[0]) ))) return 0;
     apc->prev    = queue->tail;
