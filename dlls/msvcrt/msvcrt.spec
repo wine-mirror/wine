@@ -254,7 +254,7 @@
 @ cdecl _getcwd(str long) _getcwd
 @ cdecl _getdcwd(long str long) _getdcwd
 @ cdecl _getdiskfree(long ptr) _getdiskfree
-@ forward _getdllprocaddr kernel32.GetProcAddress
+@ cdecl _getdllprocaddr(long str long) _getdllprocaddr
 @ cdecl _getdrive() _getdrive
 @ forward _getdrives kernel32.GetLogicalDrives
 @ stub _getmaxstdio #()

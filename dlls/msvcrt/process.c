@@ -472,3 +472,17 @@ int _unloaddll(int dll)
     return err;
   }
 }
+
+/*********************************************************************
+ *		_getdllprocaddr (MSVCRT.@)
+ */
+void *_getdllprocaddr(int dll, const char *name, int ordinal)
+{
+    if (name)
+    {
+        if (ordinal != -1) return NULL;
+        return GetProcAddress( (HMODULE)dll, name );
+    }
+    if (HIWORD(ordinal)) return NULL;
+    return GetProcAddress( (HMODULE)dll, (LPCSTR)(ULONG_PTR)ordinal );
+}
