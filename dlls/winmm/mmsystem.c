@@ -251,6 +251,44 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCSTR lpszName)
     return hmmio;
 }
 
+struct playsound_data {
+    HANDLE	hEvent;
+    DWORD	dwEventCount;
+};
+
+static void CALLBACK PlaySound_Callback(HWAVEOUT hwo, UINT uMsg, 
+					DWORD dwInstance,  
+					DWORD dwParam1, DWORD dwParam2)
+{
+    struct playsound_data*	s = (struct playsound_data*)dwInstance;
+
+    switch (uMsg) {
+    case WOM_OPEN:
+    case WOM_CLOSE:
+	break;
+    case WOM_DONE:
+	InterlockedIncrement(&s->dwEventCount);
+	TRACE("Returning waveHdr=%lx\n", dwParam1);
+	SetEvent(s->hEvent);
+	break;
+    default:
+	ERR("Unknown uMsg=%d\n", uMsg);
+    }
+}
+
+static void PlaySound_WaitDone(struct playsound_data* s) 
+{
+    for (;;) {
+	ResetEvent(s->hEvent);
+	if (InterlockedDecrement(&s->dwEventCount) >= 0) {
+	    break;
+	}
+	InterlockedIncrement(&s->dwEventCount);
+	
+	WaitForSingleObject(s->hEvent, INFINITE);
+    }
+}
+
 static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 {
     BOOL		bRet = FALSE;
@@ -261,7 +299,10 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     HWAVE		hWave = 0;
     LPWAVEHDR		waveHdr = NULL;
     INT			count, bufsize, left, index;
-    
+    struct playsound_data	s;
+
+    s.hEvent = 0;
+
     TRACE("SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
     if (lpszSoundName == NULL) {
 	TRACE("Stop !\n");
@@ -278,7 +319,7 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     } else {
 	hmmio = 0;
 	if (uFlags & SND_ALIAS)
-	    if ((hmmio=get_mmioFromProfile(uFlags, lpszSoundName)) == 0) 
+	    if ((hmmio = get_mmioFromProfile(uFlags, lpszSoundName)) == 0) 
 		return FALSE;
 	
 	if (uFlags & SND_FILENAME)
@@ -337,7 +378,10 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX\n", 
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
 
-    if (waveOutOpen(&hWave, WAVE_MAPPER, lpWaveFormat, 0L, 0L, CALLBACK_NULL) != MMSYSERR_NOERROR)
+    s.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    if (waveOutOpen(&hWave, WAVE_MAPPER, lpWaveFormat, (DWORD)PlaySound_Callback,
+		    (DWORD)&s, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
 	goto errCleanUp;
 
     /* make it so that 3 buffers per second are needed */
@@ -347,50 +391,45 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     waveHdr[0].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR);
     waveHdr[1].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR) + bufsize;
     waveHdr[0].dwUser = waveHdr[1].dwUser = 0L;
+    waveHdr[0].dwLoops = waveHdr[1].dwLoops = 0L;
+    waveHdr[0].dwFlags = waveHdr[1].dwFlags = 0L;
+    waveHdr[0].dwBufferLength = waveHdr[1].dwBufferLength = bufsize;
+    if (waveOutPrepareHeader(hWave, &waveHdr[0], sizeof(WAVEHDR)) || 
+	waveOutPrepareHeader(hWave, &waveHdr[1], sizeof(WAVEHDR))) {
+	goto errCleanUp;
+    }
 
     do {
 	index = 0;
-	
 	left = mmckInfo.cksize;
+	s.dwEventCount = 1L; /* for first buffer */
+
 	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
 	while (left) {
 	    if (PlaySound_Stop) {
 		PlaySound_Stop = PlaySound_Loop = FALSE;
 		break;
 	    }
-	    waveHdr[index].dwBufferLength = bufsize;
-	    waveHdr[index].dwFlags = 0L;
-	    waveHdr[index].dwLoops = 0L;
-	    if (waveOutPrepareHeader(hWave, &waveHdr[index], sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
-		count = mmioRead(hmmio, waveHdr[index].lpData, MIN(bufsize, left));
-		if (count < 1) break;
-		left -= count;
-		waveHdr[index].dwBufferLength = count;
-		/* FIXME: doesn't expect async ops */ 
-		waveOutWrite(hWave, &waveHdr[index], sizeof(WAVEHDR));
-		index ^= 1;
-	    } else {
-		WARN("can't prepare WaveOut device !\n");
-	    }
-	    if (waveHdr[index].dwFlags & WHDR_PREPARED) {
-		/* test if waveHdr[index] has been prepared, if so it has been queued for playing */
-		while (!(waveHdr[index].dwFlags & WHDR_DONE))
-		    Sleep(10);
-		waveOutUnprepareHeader(hWave, &waveHdr[index], sizeof(WAVEHDR));
-		bRet = TRUE;
-	    }
+	    count = mmioRead(hmmio, waveHdr[index].lpData, MIN(bufsize, left));
+	    if (count < 1) break;
+	    left -= count;
+	    waveHdr[index].dwBufferLength = count;
+	    waveHdr[index].dwFlags &= ~WHDR_DONE;
+	    waveOutWrite(hWave, &waveHdr[index], sizeof(WAVEHDR));
+	    index ^= 1;
+	    PlaySound_WaitDone(&s);
 	}
-    } while (PlaySound_Loop);
-    index ^= 1;
-    if (waveHdr[index].dwFlags & WHDR_PREPARED) {
-	/* test if waveHdr[index] has been prepared, if so it has been queued for playing */
-	while (!(waveHdr[index].dwFlags & WHDR_DONE))
-	    Sleep(10);
-	waveOutUnprepareHeader(hWave, &waveHdr[index], sizeof(WAVEHDR));
 	bRet = TRUE;
-    }
+    } while (PlaySound_Loop);
+
+    PlaySound_WaitDone(&s);
+    waveOutReset(hWave);
+
+    waveOutUnprepareHeader(hWave, &waveHdr[0], sizeof(WAVEHDR));
+    waveOutUnprepareHeader(hWave, &waveHdr[1], sizeof(WAVEHDR));
 
 errCleanUp:
+    CloseHandle(s.hEvent);
     HeapFree(GetProcessHeap(), 0, waveHdr);
     HeapFree(GetProcessHeap(), 0, lpWaveFormat);
     if (hWave)		while (waveOutClose(hWave) == WAVERR_STILLPLAYING) Sleep(100);
