@@ -1549,6 +1549,17 @@ struct disconnect_named_pipe_request
     handle_t       handle;
 };
 
+struct get_named_pipe_info_request
+{
+    struct request_header __header;
+    handle_t       handle;
+    unsigned int   flags;
+    unsigned int   maxinstances;
+    unsigned int   outsize;
+    unsigned int   insize;
+};
+
+
 
 enum request
 {
@@ -1674,6 +1685,7 @@ enum request
     REQ_connect_named_pipe,
     REQ_wait_named_pipe,
     REQ_disconnect_named_pipe,
+    REQ_get_named_pipe_info,
     REQ_NB_REQUESTS
 };
 
@@ -1803,8 +1815,9 @@ union generic_request
     struct connect_named_pipe_request connect_named_pipe;
     struct wait_named_pipe_request wait_named_pipe;
     struct disconnect_named_pipe_request disconnect_named_pipe;
+    struct get_named_pipe_info_request get_named_pipe_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 50
+#define SERVER_PROTOCOL_VERSION 51
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -237,6 +237,15 @@ DECL_HANDLER(create_named_pipe)
     if(!pipe)
         return;
 
+    if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+    {
+        pipe->insize = req->insize;
+        pipe->outsize = req->outsize;
+        pipe->maxinstances = req->maxinstances;
+        pipe->timeout = req->timeout;
+        pipe->pipemode = req->pipemode;
+    }
+
     user = create_pipe_user (pipe, -1);
 
     if(user)
@@ -403,3 +412,20 @@ DECL_HANDLER(disconnect_named_pipe)
     }
     release_object(user);
 }
+
+DECL_HANDLER(get_named_pipe_info)
+{
+    struct pipe_user *user;
+
+    user = get_pipe_user_obj(current->process, req->handle, 0);
+    if(!user)
+        return;
+
+    req->flags        = user->pipe->pipemode;
+    req->maxinstances = user->pipe->maxinstances;
+    req->insize       = user->pipe->insize;
+    req->outsize      = user->pipe->outsize;
+
+    release_object(user);
+}
+

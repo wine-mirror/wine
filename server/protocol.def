@@ -1382,3 +1382,13 @@ enum message_type
 @REQ(disconnect_named_pipe)
     handle_t       handle;
 @END
+
+@REQ(get_named_pipe_info)
+    handle_t       handle;
+@REPLY
+    unsigned int   flags;
+    unsigned int   maxinstances;
+    unsigned int   outsize;
+    unsigned int   insize;
+@END
+

@@ -746,9 +746,27 @@ BOOL WINAPI GetNamedPipeInfo(
     HANDLE hNamedPipe, LPDWORD lpFlags, LPDWORD lpOutputBufferSize,
     LPDWORD lpInputBufferSize, LPDWORD lpMaxInstances)
 {
-    FIXME("%d %p %p %p %p\n", hNamedPipe, lpFlags, 
+    BOOL ret;
+
+    TRACE("%d %p %p %p %p\n", hNamedPipe, lpFlags, 
           lpOutputBufferSize, lpInputBufferSize, lpMaxInstances);
-    return FALSE;
+
+    SERVER_START_REQ( get_named_pipe_info )
+    {
+        req->handle = hNamedPipe;
+        ret = !SERVER_CALL_ERR();
+        if(lpFlags)
+            *lpFlags = req->flags;
+        if(lpOutputBufferSize)
+            *lpOutputBufferSize = req->outsize;
+        if(lpInputBufferSize)
+            *lpInputBufferSize = req->outsize;
+        if(lpMaxInstances)
+            *lpMaxInstances = req->maxinstances;
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /***********************************************************************
