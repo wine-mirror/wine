@@ -200,9 +200,9 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 
 
 /***********************************************************************
- *           RegisterTaskList   			[USER23.436]
+ *           RegisterTasklist   			[USER23.436]
  */
-DWORD WINAPI RegisterTaskList (DWORD x)
+DWORD WINAPI RegisterTasklist (DWORD x)
 {
     FIXME("0x%08lx\n",x);
     return TRUE;

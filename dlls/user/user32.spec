@@ -397,7 +397,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall MapDialogRect(long ptr) MapDialogRect
 @ stdcall MapVirtualKeyA(long long) MapVirtualKeyA
 @ stdcall MapVirtualKeyExA(long long long) MapVirtualKeyExA
-@ stdcall MapVirtualKeyW(long long) MapVirtualKeyA
+@ stdcall MapVirtualKeyW(long long) MapVirtualKeyW
 @ stdcall MapWindowPoints(long long ptr long) MapWindowPoints
 @ stdcall MenuItemFromPoint(long long long long) MenuItemFromPoint
 @ stub MenuWindowProcA
@@ -448,7 +448,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall RegisterHotKey(long long long long) RegisterHotKey
 @ stdcall RegisterLogonProcess(long long) RegisterLogonProcess
 @ stdcall RegisterSystemThread(long long) RegisterSystemThread
-@ stdcall RegisterTasklist (long) RegisterTaskList
+@ stdcall RegisterTasklist (long) RegisterTasklist
 @ stdcall RegisterWindowMessageA(str) RegisterWindowMessageA
 @ stdcall RegisterWindowMessageW(wstr) RegisterWindowMessageW
 @ stdcall ReleaseCapture() ReleaseCapture
