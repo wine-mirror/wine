@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_WCHAR_H
 #define __WINE_WCHAR_H
+#define __WINE_USE_MSVCRT
 
 #include "msvcrt/io.h"
 #include "msvcrt/locale.h"

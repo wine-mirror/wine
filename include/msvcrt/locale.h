@@ -5,6 +5,7 @@
  */
 #ifndef __WINE_LOCALE_H
 #define __WINE_LOCALE_H
+#define __WINE_USE_MSVCRT
 
 #include "winnt.h"
 

@@ -5,6 +5,8 @@
  */
 #ifndef __WINE_WCTYPE_H
 #define __WINE_WCTYPE_H
+#define __WINE_USE_MSVCRT
+
 
 /* FIXME: winnt.h includes 'ctype.h' which includes 'wctype.h'. So we get 
  * there but WCHAR is not defined.

@@ -5,6 +5,7 @@
  */
 #ifndef __WINE_SYS_UTIME_H
 #define __WINE_SYS_UTIME_H
+#define __WINE_USE_MSVCRT
 
 #include "winnt.h"
 #include "msvcrt/sys/types.h"      /* For time_t */

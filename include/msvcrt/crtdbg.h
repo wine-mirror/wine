@@ -5,11 +5,12 @@
  */
 #ifndef __WINE_CRTDBG_H_
 #define __WINE_CRTDBG_H_
+#define __WINE_USE_MSVCRT
+
 
 /* The debug API is not implemented in Winelib.
  * Redirect everything to the regular APIs.
  */
-
 
 #define _CRT_WARN                       0
 #define _CRT_ERROR                      1

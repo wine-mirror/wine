@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_PROCESS_H
 #define __WINE_PROCESS_H
+#define __WINE_USE_MSVCRT
 
 #include "winnt.h"
 

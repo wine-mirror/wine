@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_DIRECT_H
 #define __WINE_DIRECT_H
+#define __WINE_USE_MSVCRT
 
 #include "winnt.h"
 #include "msvcrt/dos.h"            /* For _getdiskfree & co */

@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_SYS_STAT_H
 #define __WINE_SYS_STAT_H
+#define __WINE_USE_MSVCRT
 
 #include "msvcrt/sys/types.h"
 

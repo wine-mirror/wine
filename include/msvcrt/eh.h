@@ -5,6 +5,7 @@
  */
 #ifndef __WINE_EH_H
 #define __WINE_EH_H
+#define __WINE_USE_MSVCRT
 
 #if !defined(__cplusplus) && !defined(__WINE__)
 #error "eh.h is meant only for C++ applications"

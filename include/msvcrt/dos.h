@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_DOS_H
 #define __WINE_DOS_H
+#define __WINE_USE_MSVCRT
 
 
 /* The following are also defined in io.h */

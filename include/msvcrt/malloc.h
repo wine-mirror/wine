@@ -5,6 +5,7 @@
  */
 #ifndef __WINE_MALLOC_H
 #define __WINE_MALLOC_H
+#define __WINE_USE_MSVCRT
 
 #ifdef USE_MSVCRT_PREFIX
 #define MSVCRT(x)    MSVCRT_##x

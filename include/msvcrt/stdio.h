@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_STDIO_H
 #define __WINE_STDIO_H
+#define __WINE_USE_MSVCRT
 
 #ifndef RC_INVOKED
 #include <stdarg.h>

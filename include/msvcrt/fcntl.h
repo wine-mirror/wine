@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_FCNTL_H
 #define __WINE_FCNTL_H
+#define __WINE_USE_MSVCRT
 
 
 #define _O_RDONLY      0

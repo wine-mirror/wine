@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_CTYPE_H
 #define __WINE_CTYPE_H
+#define __WINE_USE_MSVCRT
 
 #include "msvcrt/wctype.h"
 

@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_CONIO_H
 #define __WINE_CONIO_H
+#define __WINE_USE_MSVCRT
 
 
 #ifdef __cplusplus

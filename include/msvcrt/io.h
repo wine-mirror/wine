@@ -7,6 +7,7 @@
  */
 #ifndef __WINE_IO_H
 #define __WINE_IO_H
+#define __WINE_USE_MSVCRT
 
 #include "msvcrt/stdio.h"          /* For FILENAME_MAX */
 #include "msvcrt/sys/types.h"      /* For time_t */
