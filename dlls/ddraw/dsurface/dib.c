@@ -395,6 +395,11 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	}
     }
 
+    if (xsrc.bottom > sdesc.dwHeight)
+	xsrc.bottom = sdesc.dwHeight;
+    if (xdst.bottom > ddesc.dwHeight)
+	xdst.bottom = ddesc.dwHeight;
+    
     if (src) assert((xsrc.bottom-xsrc.top) <= sdesc.dwHeight);
     assert((xdst.bottom-xdst.top) <= ddesc.dwHeight);
 
