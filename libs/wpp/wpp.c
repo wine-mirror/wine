@@ -143,6 +143,8 @@ int wpp_parse( const char *input, FILE *output )
 {
     int ret;
 
+    pp_status.input = NULL;
+
     pp_push_define_state();
     add_cmdline_defines();
     add_special_defines();
