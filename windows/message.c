@@ -633,8 +633,10 @@ SHORT WINAPI GetKeyState(INT vkey)
     INT retval;
 
     if (vkey >= 'a' && vkey <= 'z') vkey += 'A' - 'a';
-    retval = ((WORD)(QueueKeyStateTable[vkey] & 0x80) << 8 ) | (QueueKeyStateTable[vkey] & 0x01);
-    /* TRACE(key, "(0x%x) -> %x\n", vkey, retval); */
+    retval = ((WORD)(QueueKeyStateTable[vkey] & 0x80) << 8 ) |
+              (QueueKeyStateTable[vkey] & 0x80) |
+              (QueueKeyStateTable[vkey] & 0x01);
+    TRACE("key (0x%x) -> %x\n", vkey, retval);
     return retval;
 }
 
@@ -938,18 +940,28 @@ static const struct accent_char accent_chars[] =
  * ditto replacing WM_* with WM_SYS*
  * This produces WM_CHAR messages only for keys mapped to ASCII characters
  * by the keyboard driver.
+ *
+ * If the message is WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, or WM_SYSKEYUP, the
+ * return value is nonzero, regardless of the translation.
+ *
  */
 BOOL WINAPI TranslateMessage( const MSG *msg )
 {
     static int dead_char;
     UINT message;
     WCHAR wp[2];
+    BOOL rc = FALSE;
 
     if (msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST)
+    {
         TRACE_(key)("(%s, %04X, %08lX)\n",
                     SPY_GetMsgName(msg->message, msg->hwnd), msg->wParam, msg->lParam );
 
-    if ((msg->message != WM_KEYDOWN) && (msg->message != WM_SYSKEYDOWN)) return FALSE;
+        /* Return code must be TRUE no matter what! */
+        rc = TRUE;
+    }
+
+    if ((msg->message != WM_KEYDOWN) && (msg->message != WM_SYSKEYDOWN)) return rc;
 
     TRACE_(key)("Translating key %s (%04x), scancode %02x\n",
                  SPY_GetVKeyName(msg->wParam), msg->wParam, LOBYTE(HIWORD(msg->lParam)));
@@ -983,7 +995,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
         }
         TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
-        return TRUE;
+        break;
 
     case -1:
         message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
@@ -992,7 +1004,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         return TRUE;
     }
-    return FALSE;
+    return rc;
 }
 
 
