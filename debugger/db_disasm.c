@@ -769,7 +769,7 @@ static const struct inst db_inst_table[256] = {
 /*c6*/	{ "mov",   TRUE,  BYTE,  op2(I, E),   0 },
 /*c7*/	{ "mov",   TRUE,  LONG,  op2(I, E),   0 },
 
-/*c8*/	{ "enter", FALSE, NONE,  op2(Ib, Iw), 0 },
+/*c8*/	{ "enter", FALSE, NONE,  op2(Iw, Ib), 0 },
 /*c9*/	{ "leave", FALSE, NONE,  0,           0 },
 /*ca*/	{ "lret",  FALSE, NONE,  op1(Iw),     0 },
 /*cb*/	{ "lret",  FALSE, NONE,  0,	      0 },
