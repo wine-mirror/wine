@@ -7,6 +7,9 @@
 ## Improvements by Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
 ## (c) 2000
 ##
+## A few minor improovements here and there
+## Copyright 2003 Ivan Leo Murray-Smith
+##
 ## This library is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU Lesser General Public
 ## License as published by the Free Software Foundation; either
@@ -38,9 +41,7 @@
 ##January 25, 1999 - Initial Release
 ## -------------------------------------------
 ##| IRCNET/UNDERNET: jazzfan AOL: Jazzrock12  |
-##| E-MAIL: magicbox@bestweb.net ICQ: 19617831|
-##|   Utah Jazz Page @ http://www.gojazz.net  |
-##|  Wine Builds @ http://www.gojazz.net/wine |
+##| ICQ: 19617831|
 ## -------------------------------------------
 sub do_var {
 	$var=$_[0];
@@ -188,10 +189,10 @@ print "Checking if $wineloc is stripped...\n";
 $ifstrip = `nm $wineloc 2>&1`;
 while ($ifstrip =~ /no symbols/) {
 	$var24 = qq{
-	Your wine is stripped! You probably downloaded it off of the internet.
+	Your wine is stripped! Stripped versions make useless debug reports
 	If you have another location of wine that may be used, enter it now.
-	Otherwise, hit control-c and download an unstripped version, then re-run
-	this script. Note: stripped versions make useless debug reports
+	Otherwise, hit control-c and download an unstripped (Debug) version, then re-run
+	this script.
 	};
 	print do_var($var24);
 	&select_wineloc;
@@ -213,18 +214,20 @@ print "\nWhat version of Windows are you using with Wine?\n\n".
       "1 - Windows 3.x\n".
       "2 - Windows 95\n".
       "3 - Windows 98\n".
-      "4 - Windows NT 3.5x\n".
-      "5 - Windows NT4.x\n".
-      "6 - Windows 2000\n".
-      "7 - Windows XP\n".
-      "8 - Other\n\n";
+      "4 - Windows ME\n".
+      "5 - Windows NT 3.5x\n".
+      "6 - Windows NT4.x\n".
+      "7 - Windows 2000\n".
+      "8 - Windows XP\n".
+      "9 - Windows Server 2003\n".
+      "10 - Other\n\n";
 do
 	{
 	print "Enter the number that corresponds to your Windows version: ";
 	$winver=<STDIN>;
 	chomp $winver;
 	}
-until ($winver >= 0 and $winver <= 7);
+until ($winver >= 0 and $winver <= 10);
 if ($winver =~ 0) {
 	$winver="None Installed";
 } elsif ($winver =~ 1) {
@@ -234,14 +237,18 @@ if ($winver =~ 0) {
 } elsif ($winver =~ 3) {
 	$winver="Windows 98";
 } elsif ($winver =~ 4) {
-	$winver="Windows NT 3.5x";
+	$winver="Windows ME";
 } elsif ($winver =~ 5) {
-	$winver="Windows NT 4.x";
+	$winver="Windows NT 3.5x";
 } elsif ($winver =~ 6) {
-	$winver="Windows 2000";
+	$winver="Windows NT 4.x";
 } elsif ($winver =~ 7) {
-	$winver="Windows XP";
+	$winver="Windows 2000";
 } elsif ($winver =~ 8) {
+	$winver="Windows XP";
+} elsif ($winver =~ 9) {
+	$winver="Windows Server 2003";
+} elsif ($winver =~ 10) {
 	print "What version of Windows are you using? ";
 	$winver=<STDIN>;
 	chomp $winver;
@@ -278,20 +285,20 @@ print do_var($var9);
 $progname=<STDIN>;
 chomp $progname;
 $var10 = qq{
-Enter 0 if your program is 16 bit (Windows 3.x), 1 if your program is 32
-bit (Windows 9x, NT3.x and up), or 2 if you are unsure:
+Enter 1 if your program is 16 bit (Windows 3.x), 2 if your program is 32
+bit (Windows 95, NT3.x and up), or 3 if you are unsure:
 };
 print do_var($var10);
 $progbits=<STDIN>;
 chomp $progbits;
-until ($progbits == 0 or $progbits == 1 or $progbits == 2) {
-	print "You must enter 0, 1 or 2!\n";
+until ($progbits == 1 or $progbits == 2 or $progbits == 3) {
+	print "You must enter 1, 2 or 3!\n";
 	$progbits=<STDIN>;
 	chomp $progbits
 }
-if ($progbits =~ 0) {
+if ($progbits =~ 1) {
 	$progbits=Win16
-} elsif ($progbits =~ 1) {
+} elsif ($progbits =~ 2) {
 	$progbits=Win32
 } else {
 	$progbits = "Unsure"
@@ -358,7 +365,7 @@ if ($debuglevel > 1) {
 	$extraops=" ";
 }
 
-print "\nEnter the name of your distribution (Example: RedHat 6.1): ";
+print "\nEnter the name of your distribution (Example: RedHat 8.0): ";
 $dist=<STDIN>;
 chomp $dist;
 
@@ -367,7 +374,7 @@ if ($debuglevel > 1) {
 		$var16 = qq{
 		When you ran ./configure to build wine, were there any special options
 		you used to do so (Example: --enable-dll)? If you didn't use any special
-		options or didn't compile Wine on your own, just hit enter:
+		options or didn't compile Wine yourself, just hit enter:
 		};
 		print do_var($var16);
 	} elsif ($debuglevel =~ 3) {
@@ -388,17 +395,17 @@ if ($debuglevel > 1) {
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
 		$var18 = qq{
-		Is your Wine version CVS or from a .tar.gz file? As in... did you download it
+		Is your Wine version CVS or from a .tar.gz or RPM file? As in... did you download it
 		off a website/ftpsite or did you/have you run cvs on it to update it?
-		For CVS: YYMMDD, where YY is the year (99), MM is the month (01), and DD
-		is the day (14), that you last updated it (Example: 990114).
-		For tar.gz: Just hit enter and I'll figure out the version for you:
+		For CVS: YYYYMMDD, where YYYY is the year (2003), MM is the month (08), and DD
+		is the day (13), that you last updated it (Example: 20030813).
+		For tar.gz and RPM: Just hit enter and I'll figure out the version for you:
 		};
 		print do_var($var18);
 	} elsif ($debuglevel =~ 3) {
 		$var19 = qq{
 		Is your Wine from CVS? Enter the last CVS update date for it here, in
-		YYMMDD form (If it's from a tarball, just hit enter):
+		YYYYMMDD form (If it's from a tarball or RPM, just hit enter):
 		};
 		print do_var($var19);
 	}
@@ -556,7 +563,8 @@ Thank you!
 EOM
 }
 $var22 = qq{
-Great! We're finished making the debug report. Do whatever with it.
+Great! We're finished making the debug report. Please go to http://bugs.winehq.com
+and enter it as a new bug. Check that nobody has already reported the same bug!
 };
 $var28 = qq{
 The filename for the formatted report is:
@@ -568,9 +576,9 @@ $dbgoutfile.gz
 Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
 };
 $var30 = qq{
-Having problems with the script?
-Submit a bug report to Wine bugtracking system at http://bugs.winehq.com or
-tell the Wine newsgroup (comp.emulators.ms-windows.wine).
+If you have any problems with this bug reporting tool,
+please submit a bug report to Wine bugtracking system at http://bugs.winehq.com
+or tell the Wine newsgroup (comp.emulators.ms-windows.wine).
 };
 print do_var($var22);
 print do_var($var28) if $outfile ne "no file";
