@@ -990,11 +990,11 @@ DWORD WINAPI GetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, LPDWORD pType,
 			     LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded);
 #define GetPrinterData WINELIB_NAME_AW(GetPrinterData)
 
-DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
-			       LPSTR pValueName, LPDWORD pType,
+DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+			       LPCSTR pValueName, LPDWORD pType,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded);
-DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
-			       LPWSTR pValueName, LPDWORD pType,
+DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+			       LPCWSTR pValueName, LPDWORD pType,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded);
 #define GetPrinterDataEx WINELIB_NAME_AW(GetPrinterDataEx)
 
@@ -1004,11 +1004,11 @@ DWORD WINAPI SetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, DWORD Type,
 			     LPBYTE pData, DWORD cbData);
 #define SetPrinterData WINELIB_NAME_AW(SetPrinterData)
 
-DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
-			       LPSTR pValueName, DWORD Type,
+DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+			       LPCSTR pValueName, DWORD Type,
 			       LPBYTE pData, DWORD cbData);
-DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
-			       LPWSTR pValueName, DWORD Type,
+DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+			       LPCWSTR pValueName, DWORD Type,
 			       LPBYTE pData, DWORD cbData);
 #define SetPrinterDataEx WINELIB_NAME_AW(SetPrinterDataEx)
 

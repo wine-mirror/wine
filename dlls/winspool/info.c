@@ -68,40 +68,40 @@ static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
                                               LPDEVMODEA lpdmInput, LPSTR lpszProfile,
                                               DWORD fwMode );
 
-static char Printers[] =
+static const char Printers[] =
 "System\\CurrentControlSet\\control\\Print\\Printers\\";
-static char Drivers[] =
+static const char Drivers[] =
 "System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers\\";
 
-static WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
+static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 
-static WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
+static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
 				      'i','o','n',' ','F','i','l','e',0};
-static WCHAR DatatypeW[] = {'D','a','t','a','t','y','p','e',0};
-static WCHAR Data_FileW[] = {'D','a','t','a',' ','F','i','l','e',0};
-static WCHAR Default_DevModeW[] = {'D','e','f','a','u','l','t',' ','D','e','v',
+static const WCHAR DatatypeW[] = {'D','a','t','a','t','y','p','e',0};
+static const WCHAR Data_FileW[] = {'D','a','t','a',' ','F','i','l','e',0};
+static const WCHAR Default_DevModeW[] = {'D','e','f','a','u','l','t',' ','D','e','v',
 				   'M','o','d','e',0};
-static WCHAR Dependent_FilesW[] = {'D','e','p','e','n','d','e','n','t',' ','F',
+static const WCHAR Dependent_FilesW[] = {'D','e','p','e','n','d','e','n','t',' ','F',
 				   'i','l','e','s',0};
-static WCHAR DescriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
-static WCHAR DriverW[] = {'D','r','i','v','e','r',0};
-static WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
-static WCHAR LocationW[] = {'L','o','c','a','t','i','o','n',0};
-static WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
-static WCHAR NameW[] = {'N','a','m','e',0};
-static WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
-static WCHAR PortW[] = {'P','o','r','t',0};
-static WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e',
+static const WCHAR DescriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR DriverW[] = {'D','r','i','v','e','r',0};
+static const WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
+static const WCHAR LocationW[] = {'L','o','c','a','t','i','o','n',0};
+static const WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
+static const WCHAR NameW[] = {'N','a','m','e',0};
+static const WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
+static const WCHAR PortW[] = {'P','o','r','t',0};
+static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e',
 				   's','s','o','r',0};
-static WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i',
+static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i',
 				  'v','e','r',0};
-static WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i',
+static const WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i',
 				     'v','e','r','D','a','t','a',0};
-static WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F',
+static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F',
 				  'i','l','e',0};
-static WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
-static WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
-static WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
+static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
+static const WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
+static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 
 static const WCHAR May_Delete_Value[] = {'W','i','n','e','M','a','y','D','e','l','e','t','e','M','e',0};
 
@@ -388,7 +388,7 @@ PRINTCAP_LoadPrinters(void) {
     return hadprinter;
 }
 
-static inline DWORD set_reg_szW(HKEY hkey, WCHAR *keyname, WCHAR *value)
+static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *value)
 {
     if (value)
         return RegSetValueExW(hkey, keyname, 0, REG_SZ, (LPBYTE)value,
@@ -2400,7 +2400,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
          ((PDRIVER_INFO_3A) ptr)->cVersion = dw;
 
     if(!pEnvironment)
-        pEnvironment = DefaultEnvironmentW;
+        pEnvironment = (LPWSTR)DefaultEnvironmentW;
     if(unicode)
         size = (lstrlenW(pEnvironment) + 1) * sizeof(WCHAR);
     else
@@ -3183,8 +3183,8 @@ BOOL WINAPI GetDefaultPrinterW(LPWSTR name, LPDWORD namesize)
 /******************************************************************************
  *		SetPrinterDataExA   (WINSPOOL.@)
  */
-DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
-			       LPSTR pValueName, DWORD Type,
+DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+			       LPCSTR pValueName, DWORD Type,
 			       LPBYTE pData, DWORD cbData)
 {
     HKEY hkeyPrinter, hkeySubkey;
@@ -3212,8 +3212,8 @@ DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
 /******************************************************************************
  *		SetPrinterDataExW   (WINSPOOL.@)
  */
-DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
-			       LPWSTR pValueName, DWORD Type,
+DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+			       LPCWSTR pValueName, DWORD Type,
 			       LPBYTE pData, DWORD cbData)
 {
     HKEY hkeyPrinter, hkeySubkey;
@@ -3261,8 +3261,8 @@ DWORD WINAPI SetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, DWORD Type,
 /******************************************************************************
  *		GetPrinterDataExA   (WINSPOOL.@)
  */
-DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
-			       LPSTR pValueName, LPDWORD pType,
+DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+			       LPCSTR pValueName, LPDWORD pType,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
 {
     HKEY hkeyPrinter, hkeySubkey;
@@ -3292,8 +3292,8 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
 /******************************************************************************
  *		GetPrinterDataExW   (WINSPOOL.@)
  */
-DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
-			       LPWSTR pValueName, LPDWORD pType,
+DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+			       LPCWSTR pValueName, LPDWORD pType,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
 {
     HKEY hkeyPrinter, hkeySubkey;
