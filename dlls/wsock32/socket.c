@@ -193,7 +193,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                      }
                
                      /* Get a socket so that we can use ioctl */
-                     if ( (sock = socket (AF_INET, SOCK_DGRAM, 0)) < 0)
+                     if ( (sock = socket (AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
                      {
                         ERR ("Error creating socket!\n");
                         return (-1);
@@ -359,7 +359,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                
                
                /* Get a socket so we can use ioctl */
-               if ( (sock = socket (AF_INET, SOCK_DGRAM, 0)) < 0)
+               if ( (sock = socket (AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
                {
                   ERR ("Error creating socket!\n");
                   return (-1);
