@@ -1691,7 +1691,7 @@ static const struct _strret_U4 {
     { 0,           4 },
 };
 
-START_TEST(vartest)
+static void test_variant(void)
 {
 	HMODULE hdll;
 	VARIANTARG va;
@@ -2771,4 +2771,591 @@ START_TEST(vartest)
 	VariantClear( &ve );
 	/* There is alot of memory leaks but this is simply a test program.
 	 */
+}
+
+static void test_VariantInit(void)
+{
+  VARIANTARG v1, v2;
+
+  /* Test that VariantInit() only sets the type */
+  memset(&v1, -1, sizeof(v1));
+  v2 = v1;
+  V_VT(&v2) = VT_EMPTY;
+  VariantInit(&v1);
+  ok(!memcmp(&v1, &v2, sizeof(v1)), "VariantInit() set extra fields\n");
+}
+
+/* All possible combinations of extra V_VT() flags */
+static const VARTYPE ExtraFlags[16] =
+{
+  0,
+  VT_VECTOR,
+  VT_ARRAY,
+  VT_BYREF,
+  VT_RESERVED,
+  VT_VECTOR|VT_ARRAY,
+  VT_VECTOR|VT_BYREF,
+  VT_VECTOR|VT_RESERVED,
+  VT_VECTOR|VT_ARRAY|VT_BYREF,
+  VT_VECTOR|VT_ARRAY|VT_RESERVED,
+  VT_VECTOR|VT_BYREF|VT_RESERVED,
+  VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED,
+  VT_ARRAY|VT_BYREF,
+  VT_ARRAY|VT_RESERVED,
+  VT_ARRAY|VT_BYREF|VT_RESERVED,
+  VT_BYREF|VT_RESERVED,
+};
+
+static void test_VariantClear(void)
+{
+  HRESULT hres;
+  VARIANTARG v;
+  size_t i;
+
+#if 0
+  /* Crashes: Native does not test input for NULL, so neither does Wine */
+  hres = VariantClear(NULL);
+#endif
+
+  /* Only the type field is set, to VT_EMPTY */
+  V_VT(&v) = VT_UI4;
+  V_UI4(&v) = ~0u;
+  hres = VariantClear(&v);
+  ok(hres == S_OK && V_VT(&v) == VT_EMPTY, "VariantClear: Type set to %d\n", V_VT(&v));
+  ok(V_UI4(&v) == ~0u, "VariantClear: Overwrote value\n");
+
+  /* Test all possible V_VT values.
+   * Also demonstrates that null pointers in 'v' are not dereferenced.
+   * Individual variant tests should test VariantClear() with non-NULL values.
+   */
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    VARTYPE vt;
+
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      HRESULT hExpected = DISP_E_BADVARTYPE;
+
+      memset(&v, 0, sizeof(v));
+      V_VT(&v) = vt | ExtraFlags[i];
+
+      hres = VariantClear(&v);
+
+      /* Only the following flags/types are valid */
+      if ((vt <= VT_LPWSTR || vt == VT_RECORD || vt == VT_CLSID) &&
+          vt != (VARTYPE)15 &&
+          (vt < (VARTYPE)24 || vt > (VARTYPE)31) &&
+          (!(ExtraFlags[i] & (VT_BYREF|VT_ARRAY)) || vt > VT_NULL) &&
+          (ExtraFlags[i] == 0 || ExtraFlags[i] == VT_BYREF || ExtraFlags[i] == VT_ARRAY ||
+           ExtraFlags[i] == (VT_ARRAY|VT_BYREF)))
+        hExpected = S_OK;
+
+      ok(hres == hExpected, "VariantClear: expected 0x%lX, got 0x%lX for vt %d | 0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+    }
+  }
+}
+
+/* Macros for converting and testing the result of VarParseNumFromStr */
+#define FAILDIG 255
+#define CONVERTN(str,dig,flags) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)); \
+  memset(rgb, FAILDIG, sizeof(rgb)); memset(&np,-1,sizeof(np)); np.cDig = dig; np.dwInFlags = flags; \
+  hres = VarParseNumFromStr(buff,lcid,0,&np,rgb)
+#define CONVERT(str,flags) CONVERTN(str,sizeof(rgb),flags)
+#define EXPECT(a,b,c,d,e,f) ok(hres == (HRESULT)S_OK, "Call failed, hres = %08lx\n", hres); \
+  if (hres == (HRESULT)S_OK) { \
+    ok(np.cDig == (a), "Expected cDig = %d, got %d\n", (a), np.cDig); \
+    ok(np.dwInFlags == (b), "Expected dwInFlags = 0x%lx, got 0x%lx\n", (ULONG)(b), np.dwInFlags); \
+    ok(np.dwOutFlags == (c), "Expected dwOutFlags = 0x%lx, got 0x%lx\n", (ULONG)(c), np.dwOutFlags); \
+    ok(np.cchUsed == (d), "Expected cchUsed = %d, got %d\n", (d), np.cchUsed); \
+    ok(np.nBaseShift == (e), "Expected nBaseShift = %d, got %d\n", (e), np.nBaseShift); \
+    ok(np.nPwr10 == (f), "Expected nPwr10 = %d, got %d\n", (f), np.nPwr10); \
+  }
+#define EXPECTRGB(a,b) ok(rgb[a] == b, "Digit[%d], expected %d, got %d\n", a, b, rgb[a])
+#define EXPECTFAIL ok(hres == (HRESULT)DISP_E_TYPEMISMATCH, "Call succeeded, hres = %08lx\n", hres)
+#define EXPECT2(a,b) EXPECTRGB(0,a); EXPECTRGB(1,b)
+
+static void test_VarParseNumFromStr(void)
+{
+  HRESULT hres;
+  OLECHAR buff[128];
+  /* Ensure all tests are using the same locale characters for '$', ',' etc */
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+  NUMPARSE np;
+  BYTE rgb[128];
+
+  /** No flags **/
+
+  /* Consume a single digit */
+  CONVERT("7", 0);
+  EXPECT(1,0,0,1,0,0);
+  EXPECT2(7,FAILDIG);
+
+  /* cDig is not literal digits - zeros are suppressed and nPwr10 is increased */
+  CONVERT("10", 0);
+  EXPECT(1,0,0,2,0,1);
+  /* Note: Win32 writes the trailing zeros if they are within cDig's limits,
+   * but then excludes them from the returned cDig count.
+   * In our implementation we don't bother writing them at all.
+   */
+  EXPECTRGB(0, 1);
+
+  /* if cDig is too small and numbers follow, sets INEXACT */
+  CONVERTN("11",1, 0);
+  EXPECT(1,0,NUMPRS_INEXACT,2,0,1);
+  EXPECT2(1,FAILDIG);
+
+  /* Strips leading zeros */
+  CONVERT("01", 0);
+  EXPECT(1,0,0,2,0,0);
+  EXPECT2(1,FAILDIG);
+
+  /* Strips leading zeros */
+  CONVERTN("01",1, 0);
+  EXPECT(1,0,0,2,0,0);
+  EXPECT2(1,FAILDIG);
+
+
+  /* Fails on non digits */
+  CONVERT("a", 0);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /** NUMPRS_LEADING_WHITE/NUMPRS_TRAILING_WHITE **/
+
+  /* Without flag, fails on whitespace */
+  CONVERT(" 0", 0);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+
+  /* With flag, consumes whitespace */
+  CONVERT(" 0", NUMPRS_LEADING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_WHITE,NUMPRS_LEADING_WHITE,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Test TAB once, then assume it acts as space for all cases */
+  CONVERT("\t0", NUMPRS_LEADING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_WHITE,NUMPRS_LEADING_WHITE,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+
+  /* Doesn't pick up trailing whitespace without flag */
+  CONVERT("0 ", 0);
+  EXPECT(1,0,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With flag, consumes trailing whitespace */
+  CONVERT("0 ", NUMPRS_TRAILING_WHITE);
+  EXPECT(1,NUMPRS_TRAILING_WHITE,NUMPRS_TRAILING_WHITE,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Leading flag only consumes leading */
+  CONVERT(" 0 ", NUMPRS_LEADING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_WHITE,NUMPRS_LEADING_WHITE,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Both flags consumes both */
+  CONVERT(" 0 ", NUMPRS_LEADING_WHITE|NUMPRS_TRAILING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_WHITE|NUMPRS_TRAILING_WHITE,NUMPRS_LEADING_WHITE|NUMPRS_TRAILING_WHITE,3,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /** NUMPRS_LEADING_PLUS/NUMPRS_TRAILING_PLUS **/
+
+  /* Without flag, fails on + */
+  CONVERT("+0", 0);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /* With flag, consumes + */
+  CONVERT("+0", NUMPRS_LEADING_PLUS);
+  EXPECT(1,NUMPRS_LEADING_PLUS,NUMPRS_LEADING_PLUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Without flag, doesn't consume trailing + */
+  CONVERT("0+", 0);
+  EXPECT(1,0,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With flag, consumes trailing + */
+  CONVERT("0+", NUMPRS_TRAILING_PLUS);
+  EXPECT(1,NUMPRS_TRAILING_PLUS,NUMPRS_TRAILING_PLUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With leading flag, doesn't consume trailing + */
+  CONVERT("+0+", NUMPRS_LEADING_PLUS);
+  EXPECT(1,NUMPRS_LEADING_PLUS,NUMPRS_LEADING_PLUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Trailing + doesn't get consumed if we specify both (unlike whitespace) */
+  CONVERT("+0+", NUMPRS_LEADING_PLUS|NUMPRS_TRAILING_PLUS);
+  EXPECT(1,NUMPRS_LEADING_PLUS|NUMPRS_TRAILING_PLUS,NUMPRS_LEADING_PLUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /** NUMPRS_LEADING_MINUS/NUMPRS_TRAILING_MINUS **/
+
+  /* Without flag, fails on - */
+  CONVERT("-0", 0);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /* With flag, consumes - */
+  CONVERT("-0", NUMPRS_LEADING_MINUS);
+  EXPECT(1,NUMPRS_LEADING_MINUS,NUMPRS_NEG|NUMPRS_LEADING_MINUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Without flag, doesn't consume trailing - */
+  CONVERT("0-", 0);
+  EXPECT(1,0,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With flag, consumes trailing - */
+  CONVERT("0-", NUMPRS_TRAILING_MINUS);
+  EXPECT(1,NUMPRS_TRAILING_MINUS,NUMPRS_NEG|NUMPRS_TRAILING_MINUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With leading flag, doesn't consume trailing - */
+  CONVERT("-0-", NUMPRS_LEADING_MINUS);
+  EXPECT(1,NUMPRS_LEADING_MINUS,NUMPRS_NEG|NUMPRS_LEADING_MINUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Trailing - doesn't get consumed if we specify both (unlike whitespace) */
+  CONVERT("-0-", NUMPRS_LEADING_MINUS|NUMPRS_TRAILING_MINUS);
+  EXPECT(1,NUMPRS_LEADING_MINUS|NUMPRS_TRAILING_MINUS,NUMPRS_NEG|NUMPRS_LEADING_MINUS,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /** NUMPRS_HEX_OCT **/
+
+  /* Could be hex, octal or decimal - With flag reads as decimal */
+  CONVERT("0", NUMPRS_HEX_OCT);
+  EXPECT(1,NUMPRS_HEX_OCT,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Doesn't recognise hex in .asm sytax */
+  CONVERT("0h", NUMPRS_HEX_OCT);
+  EXPECT(1,NUMPRS_HEX_OCT,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Doesn't fail with valid leading string but no digits */
+  CONVERT("0x", NUMPRS_HEX_OCT);
+  EXPECT(1,NUMPRS_HEX_OCT,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Doesn't recognise hex format humbers at all! */
+  CONVERT("0x0", NUMPRS_HEX_OCT);
+  EXPECT(1,NUMPRS_HEX_OCT,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Doesn't recognise plain hex digits either */
+  CONVERT("FE", NUMPRS_HEX_OCT);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /* Octal */
+  CONVERT("0100", NUMPRS_HEX_OCT);
+  EXPECT(1,NUMPRS_HEX_OCT,0,4,0,2);
+  EXPECTRGB(0,1);
+  todo_wine
+  {
+    EXPECTRGB(1,0);
+    EXPECTRGB(2,0);
+  }
+  EXPECTRGB(3,FAILDIG);
+
+  /** NUMPRS_PARENS **/
+
+  /* Empty parens = error */
+  CONVERT("()", NUMPRS_PARENS);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /* With flag, trailing parens not consumed */
+  CONVERT("0()", NUMPRS_PARENS);
+  EXPECT(1,NUMPRS_PARENS,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With flag, Number in parens made negative and parens consumed */
+  CONVERT("(0)", NUMPRS_PARENS);
+  EXPECT(1,NUMPRS_PARENS,NUMPRS_NEG|NUMPRS_PARENS,3,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /** NUMPRS_THOUSANDS **/
+
+  /* With flag, thousands sep. not needed */
+  CONVERT("0", NUMPRS_THOUSANDS);
+  EXPECT(1,NUMPRS_THOUSANDS,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* With flag, thousands sep. and following digits consumed */
+  CONVERT("1,000", NUMPRS_THOUSANDS);
+  EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,3);
+  EXPECTRGB(0,1);
+
+  /* With flag and decimal point, thousands sep. but not decimals consumed */
+  CONVERT("1,000.0", NUMPRS_THOUSANDS);
+  EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,3);
+  EXPECTRGB(0,1);
+
+  /** NUMPRS_CURRENCY **/
+
+  /* Without flag, chokes on currency sign */
+  CONVERT("$11", 0);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /* With flag, consumes currency sign */
+  CONVERT("$11", NUMPRS_CURRENCY);
+  EXPECT(2,NUMPRS_CURRENCY,NUMPRS_CURRENCY,3,0,0);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag only, doesn't consume decimal point */
+  CONVERT("$11.1", NUMPRS_CURRENCY);
+  EXPECT(2,NUMPRS_CURRENCY,NUMPRS_CURRENCY,3,0,0);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag and decimal flag, consumes decimal point and following digits */
+  CONVERT("$11.1", NUMPRS_CURRENCY|NUMPRS_DECIMAL);
+  EXPECT(3,NUMPRS_CURRENCY|NUMPRS_DECIMAL,NUMPRS_CURRENCY|NUMPRS_DECIMAL,5,0,-1);
+  EXPECT2(1,1);
+  EXPECTRGB(2,1);
+  EXPECTRGB(3,FAILDIG);
+
+  /* Thousands flag can only be used with currency */
+  CONVERT("$1,234", NUMPRS_CURRENCY|NUMPRS_THOUSANDS);
+  EXPECT(4,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,6,0,0);
+  EXPECT2(1,2);
+  EXPECTRGB(2,3);
+  EXPECTRGB(3,4);
+  EXPECTRGB(4,FAILDIG);
+
+  /** NUMPRS_DECIMAL **/
+
+  /* With flag, consumes decimal point */
+  CONVERT("1.1", NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL,3,0,-1);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag, consumes decimal point. Skipping the decimal part is not an error */
+  CONVERT("1.", NUMPRS_DECIMAL);
+  EXPECT(1,NUMPRS_DECIMAL,NUMPRS_DECIMAL,2,0,0);
+  EXPECT2(1,FAILDIG);
+
+  /* Consumes only one decimal point */
+  CONVERT("1.1.", NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL,3,0,-1);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /** NUMPRS_EXPONENT **/
+
+  /* Without flag, doesn't consume exponent */
+  CONVERT("1e1", 0);
+  EXPECT(1,0,0,1,0,0);
+  EXPECT2(1,FAILDIG);
+
+  /* With flag, consumes exponent */
+  CONVERT("1e1", NUMPRS_EXPONENT);
+  EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,3,0,1);
+  EXPECT2(1,FAILDIG);
+
+  /* Negative exponents are accepted without flags */
+  CONVERT("1e-1", NUMPRS_EXPONENT);
+  EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,4,0,-1);
+  EXPECT2(1,FAILDIG);
+
+  /* As are positive exponents and leading exponent 0's */
+  CONVERT("1e+01", NUMPRS_EXPONENT);
+  EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,5,0,1);
+  EXPECT2(1,FAILDIG);
+
+  /* Doesn't consume a real number exponent */
+  CONVERT("1e1.", NUMPRS_EXPONENT);
+  EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,3,0,1);
+  EXPECT2(1,FAILDIG);
+
+  /* Powers of 10 are calculated from the position of any decimal point */
+  CONVERT("1.5e20", NUMPRS_EXPONENT|NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_EXPONENT|NUMPRS_DECIMAL,NUMPRS_EXPONENT|NUMPRS_DECIMAL,6,0,19);
+  EXPECT2(1,5);
+
+  CONVERT("1.5e-20", NUMPRS_EXPONENT|NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_EXPONENT|NUMPRS_DECIMAL,NUMPRS_EXPONENT|NUMPRS_DECIMAL,7,0,-21);
+  EXPECT2(1,5);
+
+  /** NUMPRS_USE_ALL **/
+
+  /* Flag expects all digits */
+  CONVERT("0", NUMPRS_USE_ALL);
+  EXPECT(1,NUMPRS_USE_ALL,0,1,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Rejects anything trailing */
+  CONVERT("0 ", NUMPRS_USE_ALL);
+  EXPECTFAIL;
+  EXPECT2(0,FAILDIG);
+
+  /* Unless consumed by trailing flag */
+  CONVERT("0 ", NUMPRS_USE_ALL|NUMPRS_TRAILING_WHITE);
+  EXPECT(1,NUMPRS_USE_ALL|NUMPRS_TRAILING_WHITE,NUMPRS_TRAILING_WHITE,2,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /** Combinations **/
+
+  /* Leading whitepace and plus, doesn't consume trailing whitespace */
+  CONVERT("+ 0 ", NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,3,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Order of whitepace and plus is unimportant */
+  CONVERT(" +0", NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,3,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* Leading whitespace can be repeated */
+  CONVERT(" + 0", NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE);
+  EXPECT(1,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,4,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /* But plus/minus etc. cannot */
+  CONVERT("+ +0", NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
+  /* Inexact is not set if trailing zeros are removed */
+  CONVERTN("10", 1, 0);
+  EXPECT(1,0,0,2,0,1);
+  EXPECT2(1,FAILDIG);
+
+  /* Make sure a leading 0 is stripped but decimals after it get read */
+  CONVERT("-0.51", NUMPRS_STD);
+  EXPECT(2,NUMPRS_STD,NUMPRS_NEG|NUMPRS_DECIMAL|NUMPRS_LEADING_MINUS,5,0,-2);
+  EXPECT2(5,1);
+}
+
+/* Macros for converting and testing the result of VarNumFromParseNum */
+#define SETRGB(indx,val) if (!indx) memset(rgb, FAILDIG, sizeof(rgb)); rgb[indx] = val
+#undef CONVERT
+#define CONVERT(a,b,c,d,e,f,bits) \
+    np.cDig = (a); np.dwInFlags = (b); np.dwOutFlags = (c); np.cchUsed = (d); \
+    np.nBaseShift = (e); np.nPwr10 = (f); hres = VarNumFromParseNum(&np, rgb, bits, &vOut)
+#define EXPECT_OVERFLOW ok(hres == (HRESULT)DISP_E_OVERFLOW, "Expected overflow, hres = %08lx\n", hres)
+#define EXPECT_OK ok(hres == (HRESULT)S_OK, "Call failed, hres = %08lx\n", hres); \
+  if (hres == (HRESULT)S_OK)
+#define EXPECT_TYPE(typ) ok(V_VT(&vOut) == typ,"Expected Type = " #typ ", got %d\n", V_VT(&vOut))
+#define EXPECT_I1(val) EXPECT_OK { EXPECT_TYPE(VT_I1); \
+  ok(V_I1(&vOut) == val, "Expected i1 = %d, got %d\n", (signed char)val, V_I1(&vOut)); }
+#define EXPECT_UI1(val) EXPECT_OK { EXPECT_TYPE(VT_UI1); \
+  ok(V_UI1(&vOut) == val, "Expected ui1 = %d, got %d\n", (BYTE)val, V_UI1(&vOut)); }
+#define EXPECT_I2(val) EXPECT_OK { EXPECT_TYPE(VT_I2); \
+  ok(V_I2(&vOut) == val, "Expected i2 = %d, got %d\n", (SHORT)val, V_I2(&vOut)); }
+#define EXPECT_UI2(val) EXPECT_OK { EXPECT_TYPE(VT_UI2); \
+  ok(V_UI2(&vOut) == val, "Expected ui2 = %d, got %d\n", (USHORT)val, V_UI2(&vOut)); }
+#define EXPECT_I4(val) EXPECT_OK { EXPECT_TYPE(VT_I4); \
+  ok(V_I4(&vOut) == val, "Expected i4 = %ld, got %ld\n", (LONG)val, V_I4(&vOut)); }
+#define EXPECT_UI4(val) EXPECT_OK { EXPECT_TYPE(VT_UI4); \
+  ok(V_UI4(&vOut) == val, "Expected ui4 = %ld, got %ld\n", (ULONG)val, V_UI4(&vOut)); }
+#define EXPECT_I8(val) EXPECT_OK { EXPECT_TYPE(VT_I8); \
+  ok(V_I8(&vOut) == val, "Expected i8 = %lld, got %lld\n", (LONG64)val, V_I8(&vOut)); }
+#define EXPECT_UI8(val) EXPECT_OK { EXPECT_TYPE(VT_UI8); \
+  ok(V_UI8(&vOut) == val, "Expected ui8 = %lld, got %lld\n", (ULONG64)val, V_UI8(&vOut)); }
+#define EXPECT_R4(val) EXPECT_OK { EXPECT_TYPE(VT_R4); \
+  ok(V_R4(&vOut) == val, "Expected r4 = %f, got %f\n", val, V_R4(&vOut)); }
+#define EXPECT_R8(val) EXPECT_OK { EXPECT_TYPE(VT_R8); \
+  ok(V_R8(&vOut) == val, "Expected r8 = %g, got %g\n", val, V_R8(&vOut)); }
+#define CY_MULTIPLIER 10000
+#define EXPECT_CY(val) EXPECT_OK { EXPECT_TYPE(VT_CY); \
+  ok(V_CY(&vOut).int64 == (LONG64)(val * CY_MULTIPLIER), "Expected r8 = %lld, got %lld\n", (LONG64)val, V_CY(&vOut).int64); }
+
+static void test_VarNumFromParseNum(void)
+{
+  HRESULT hres;
+  NUMPARSE np;
+  BYTE rgb[128];
+  VARIANT vOut;
+
+  /* Convert the number 1 to different types */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_I1); EXPECT_I1(1);
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_UI1); EXPECT_UI1(1);
+  /* Prefers a signed type to unsigned of the same size */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_I1|VTBIT_UI1); EXPECT_I1(1);
+  /* But takes the smaller size if possible */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_I2|VTBIT_UI1); EXPECT_UI1(1);
+
+  /* Try different integer sizes */
+#define INTEGER_VTBITS (VTBIT_I1|VTBIT_UI1|VTBIT_I2|VTBIT_UI2|VTBIT_I4|VTBIT_UI4|VTBIT_I8|VTBIT_UI8)
+
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, INTEGER_VTBITS); EXPECT_I1(1);
+  /* 127 */
+  SETRGB(0, 1); SETRGB(1, 2); SETRGB(2, 7);
+  CONVERT(3,0,0,3,0,0, INTEGER_VTBITS); EXPECT_I1(127);
+  /* 128 */
+  SETRGB(0, 1); SETRGB(1, 2); SETRGB(2, 8);
+  CONVERT(3,0,0,3,0,0, INTEGER_VTBITS); EXPECT_UI1(128);
+  /* 255 */
+  SETRGB(0, 2); SETRGB(1, 5); SETRGB(2, 5);
+  CONVERT(3,0,0,3,0,0, INTEGER_VTBITS); EXPECT_UI1(255);
+  /* 256 */
+  SETRGB(0, 2); SETRGB(1, 5); SETRGB(2, 6);
+  CONVERT(3,0,0,3,0,0, INTEGER_VTBITS); EXPECT_I2(256);
+  /* 32767 */
+  SETRGB(0, 3); SETRGB(1, 2); SETRGB(2, 7); SETRGB(3, 6); SETRGB(4, 7);
+  CONVERT(5,0,0,5,0,0, INTEGER_VTBITS); EXPECT_I2(32767);
+  /* 32768 */
+  SETRGB(0, 3); SETRGB(1, 2); SETRGB(2, 7); SETRGB(3, 6); SETRGB(4, 8);
+  CONVERT(5,0,0,5,0,0, INTEGER_VTBITS); EXPECT_UI2(32768);
+
+  /* Assume the above pattern holds for remaining positive integers; test negative */
+
+  /* -128 */
+  SETRGB(0, 1); SETRGB(1, 2); SETRGB(2, 8);
+  CONVERT(3,0,NUMPRS_NEG,3,0,0, INTEGER_VTBITS); EXPECT_I1(-128);
+  /* -129 */
+  SETRGB(0, 1); SETRGB(1, 2); SETRGB(2, 9);
+  CONVERT(3,0,NUMPRS_NEG,3,0,0, INTEGER_VTBITS); EXPECT_I2(-129);
+  /* -32768 */
+  SETRGB(0, 3); SETRGB(1, 2); SETRGB(2, 7); SETRGB(3, 6); SETRGB(4, 8);
+  CONVERT(5,0,NUMPRS_NEG,5,0,0, INTEGER_VTBITS); EXPECT_I2(-32768);
+  /* -32768 */
+  SETRGB(0, 3); SETRGB(1, 2); SETRGB(2, 7); SETRGB(3, 6); SETRGB(4, 9);
+  CONVERT(5,0,NUMPRS_NEG,5,0,0, INTEGER_VTBITS); EXPECT_I4(-32769);
+
+  /* Assume the above pattern holds for remaining negative integers */
+
+  /* Negative numbers overflow if we have only unsigned outputs */
+  /* -1 */
+  SETRGB(0, 1); CONVERT(1,0,NUMPRS_NEG,1,0,0, VTBIT_UI1); EXPECT_OVERFLOW;
+  /* -0.6 */
+  SETRGB(0, 6); CONVERT(1,0,NUMPRS_NEG,1,0,~0u, VTBIT_UI1); EXPECT_OVERFLOW;
+
+  /* Except that rounding is done first, so -0.5 to 0 are accepted as 0 */
+  /* -0.5 */
+  SETRGB(0, 5); CONVERT(1,0,NUMPRS_NEG,1,0,~0u, VTBIT_UI1); EXPECT_UI1(0);
+
+  /* Float is acceptable for an integer input value */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_R4); EXPECT_R4(1.0f);
+  /* As is double */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_R8); EXPECT_R8(1.0);
+  /* As is currency */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_CY); EXPECT_CY(1);
+
+  /* Float is preferred over double */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_R4|VTBIT_R8); EXPECT_R4(1.0f);
+
+  /* Double is preferred over currency */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_R8|VTBIT_CY); EXPECT_R8(1.0);
+
+  /* Currency is preferred over decimal */
+  SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_CY|VTBIT_DECIMAL); EXPECT_CY(1);
+}
+
+START_TEST(vartest)
+{
+  test_variant();
+  test_VariantInit();
+  test_VariantClear();
+  test_VarParseNumFromStr();
+  test_VarNumFromParseNum();
 }
