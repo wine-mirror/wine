@@ -3,6 +3,7 @@
  * 
  * Copyright 1996 John Harvey
  * Copyright 1998 Andreas Mohr
+ * Copyright 1999 Klaas van Gend
  */
 
 #include <stdlib.h>
@@ -13,6 +14,8 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "debug.h"
+
+CRITICAL_SECTION PRINT32_RegistryBlocker;
 
 static char PrinterModel[]	= "Printer Model";
 static char DefaultDevMode[]	= "Default DevMode";
@@ -402,6 +405,210 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 }
 
 
+
+
+/******************************************************************
+ *              ENUMPRINTERS_GetDWORDFromRegistryA    internal
+ *
+ * Reads a DWORD from registry KeyName 
+ *
+ * RETURNS
+ *    value on OK or NULL on error
+ */
+DWORD ENUMPRINTERS_GetDWORDFromRegistryA(
+				HKEY  hPrinterSettings,  /* handle to registry key */
+				LPSTR KeyName			 /* name key to retrieve string from*/
+){                   
+ DWORD DataSize=8;
+ DWORD DataType;
+ BYTE  Data[8];
+ DWORD Result=684;
+
+ if (RegQueryValueExA(hPrinterSettings, KeyName, NULL, &DataType,
+  					Data, &DataSize)!=ERROR_SUCCESS)
+	FIXME(print, "Query of register didn't succeed?");                     
+ if (DataType == REG_DWORD_LITTLE_ENDIAN)
+ 	Result = Data[0] + (Data[1]<<8) + (Data[2]<<16) + (Data[3]<<24);
+ if (DataType == REG_DWORD_BIG_ENDIAN)
+ 	Result = Data[3] + (Data[2]<<8) + (Data[1]<<16) + (Data[0]<<24);
+ return(Result);
+}
+
+
+/******************************************************************
+ *              ENUMPRINTERS_AddStringFromRegistryA    internal
+ *
+ * Reads a string from registry KeyName and writes it at
+ * lpbPrinters[dwNextStringPos]. Store reference to string in Dest.
+ *
+ * RETURNS
+ *    FALSE if there is still space left in the buffer.
+ */
+BOOL ENUMPRINTERS_AddStringFromRegistryA(
+				HKEY  hPrinterSettings,  /* handle to registry key */
+				LPSTR KeyName,			 /* name key to retrieve string from*/
+                LPSTR* Dest,		     /* pointer to write string addres to */
+                LPBYTE lpbPrinters,      /* buffer which receives info*/
+                LPDWORD dwNextStringPos, /* pos in buffer for next string */
+			    DWORD  dwBufSize,        /* max size of buffer in bytes */
+                BOOL   bCalcSpaceOnly    /* TRUE if out-of-space in buffer */
+){                   
+ DWORD DataSize=34;
+ DWORD DataType;
+ LPSTR Data = (LPSTR) malloc(DataSize*sizeof(char));
+
+ while(RegQueryValueExA(hPrinterSettings, KeyName, NULL, &DataType,
+  					Data, &DataSize)==ERROR_MORE_DATA)
+    {
+     Data = (LPSTR) realloc(Data, DataSize+2);
+    }
+
+ if (DataType == REG_SZ)
+ 	{                   
+	 *Dest = &lpbPrinters[*dwNextStringPos];
+	 *dwNextStringPos += DataSize+1;
+	 if (*dwNextStringPos > dwBufSize)
+	 	bCalcSpaceOnly=TRUE;
+	 if (bCalcSpaceOnly==FALSE)
+        {
+         if (DataSize==0)		/* DataSize = 0 means empty string, even though*/
+         	*Dest[0]=0;			/* the data itself needs not to be empty */
+         else
+	         strcpy(*Dest, Data);
+        }
+ 	}
+ else
+ 	WARN(print,"Expected string setting, got something else from registry");
+    
+ if (Data)
+    free(Data);
+ return(bCalcSpaceOnly);
+}
+
+
+
+/******************************************************************
+ *              ENUMPRINTERS_AddInfo2A        internal
+ *
+ *    Creates a PRINTER_INFO_2A structure at:  lpbPrinters[dwNextStructPos]
+ *    for printer PrinterNameKey.
+ *    Note that there is no check whether the information really fits!
+ *
+ * RETURNS
+ *    FALSE if there is still space left in the buffer.
+ *
+ * BUGS:
+ *    This function should not only read the registry but also ask the driver
+ *    for information.
+ */
+BOOL ENUMPRINTERS_AddInfo2A(
+                   LPSTR lpszPrinterName,/* name of printer to fill struct for*/
+                   LPBYTE lpbPrinters,   /* buffer which receives info*/
+                   DWORD  dwNextStructPos,  /* pos in buffer for struct */
+                   LPDWORD dwNextStringPos, /* pos in buffer for next string */
+				   DWORD  dwBufSize,        /* max size of buffer in bytes */
+                   BOOL   bCalcSpaceOnly    /* TRUE if out-of-space in buffer */
+){                   
+ HKEY  hPrinterSettings;
+ DWORD DevSize=0;
+ DWORD DataType;
+ LPSTR lpszPrinterSettings = (LPSTR) malloc(strlen(Printers)+
+  										   	   strlen(lpszPrinterName)+2);
+ LPPRINTER_INFO_2A lpPInfo2 = (LPPRINTER_INFO_2A) &lpbPrinters[dwNextStructPos];
+
+ /* open the registry to find the attributes, etc of the printer */
+ if (lpszPrinterSettings!=NULL)
+ 	{
+     strcpy(lpszPrinterSettings,Printers);
+     strcat(lpszPrinterSettings,lpszPrinterName);
+    }
+ if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, lpszPrinterSettings, 0, 
+ 						KEY_READ, &hPrinterSettings) != ERROR_SUCCESS)
+	{
+     WARN(print, "The registry did not contain my printer anymore?\n");
+    }
+ else
+    {
+     lpPInfo2->pServerName = NULL;
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Name", &(lpPInfo2->pPrinterName), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Share Name", &(lpPInfo2->pShareName), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Port", &(lpPInfo2->pPortName), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Printer Driver", &(lpPInfo2->pDriverName), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Description", &(lpPInfo2->pComment), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Location", &(lpPInfo2->pLocation), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Separator File", &(lpPInfo2->pSepFile), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Print Processor", &(lpPInfo2->pPrintProcessor), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Datatype", &(lpPInfo2->pDatatype), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Parameters", &(lpPInfo2->pParameters), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     lpPInfo2->pSecurityDescriptor = NULL; /* EnumPrinters doesn't return this*/
+
+     					  /* FIXME: Attributes gets LOCAL as no REMOTE exists*/
+	 lpPInfo2->Attributes = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"Attributes") +PRINTER_ATTRIBUTE_LOCAL; 
+	 lpPInfo2->Priority   = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"Priority"); 
+	 lpPInfo2->DefaultPriority = ENUMPRINTERS_GetDWORDFromRegistryA(
+     								hPrinterSettings, "Default Priority"); 
+	 lpPInfo2->StartTime  = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"StartTime"); 
+	 lpPInfo2->UntilTime  = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"UntilTime"); 
+	 lpPInfo2->Status     = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"Status"); 
+	 lpPInfo2->cJobs      = 0;    /* FIXME: according to MSDN, this does not 
+     							   * reflect the TotalJobs Key ??? */
+	 lpPInfo2->AveragePPM = 0;    /* FIXME: according to MSDN, this does not 
+     							   * reflect the TotalPages Key ??? */
+
+     /* and read the devModes structure... */
+      RegQueryValueExA(hPrinterSettings, "pDevMode", NULL, &DataType,
+  					NULL, &DevSize); /* should return ERROR_MORE_DATA */
+      lpPInfo2->pDevMode = &lpbPrinters[*dwNextStringPos];
+      *dwNextStringPos += DevSize + 1;      
+ if (*dwNextStringPos > dwBufSize)
+ 	bCalcSpaceOnly=TRUE;
+ if (bCalcSpaceOnly==FALSE)
+	      RegQueryValueExA(hPrinterSettings, "pDevMode", NULL, &DataType,
+  					(LPBYTE)lpPInfo2->pDevMode, &DevSize); 
+	}                                 
+
+ if (lpszPrinterSettings)
+	 free(lpszPrinterSettings);
+
+ return(bCalcSpaceOnly);     
+}
+
 /******************************************************************
  *              ENUMPRINTERS_AddInfo4A        internal
  *
@@ -424,21 +631,9 @@ BOOL ENUMPRINTERS_AddInfo4A(
                    BOOL   bCalcSpaceOnly    /* TRUE if out-of-space in buffer */
 ){                   
  HKEY  hPrinterSettings;
- DWORD DataType;
- DWORD DataSize=8;
- char  Data[8];
- DWORD* DataPointer= (DWORD*) Data;
  LPSTR lpszPrinterSettings = (LPSTR) malloc(strlen(Printers)+
   										   	   strlen(lpszPrinterName)+2);
  LPPRINTER_INFO_4A lpPInfo4 = (LPPRINTER_INFO_4A) &lpbPrinters[dwNextStructPos];
-
- lpPInfo4->pPrinterName = &lpbPrinters[*dwNextStringPos];
- *dwNextStringPos += strlen(lpszPrinterName)+1;
- if (*dwNextStringPos > dwBufSize)
- 	bCalcSpaceOnly=TRUE;
- if (bCalcSpaceOnly==FALSE)
-     strcpy(lpPInfo4->pPrinterName, lpszPrinterName);
- lpPInfo4->pServerName = NULL;
  
  /* open the registry to find the attributes of the printer */
  if (lpszPrinterSettings!=NULL)
@@ -449,15 +644,17 @@ BOOL ENUMPRINTERS_AddInfo4A(
  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, lpszPrinterSettings, 0, 
  						KEY_READ, &hPrinterSettings) != ERROR_SUCCESS)
 	{
-     FIXME(print, "The registry did not contain my printer anymore?\n");
-     lpPInfo4->Attributes = 0;
+     WARN(print, "The registry did not contain my printer anymore?\n");
     }
  else
     {
-	 RegQueryValueExA(hPrinterSettings, "Attributes", NULL, &DataType,
-  					Data, &DataSize);
-	 if (DataType==REG_DWORD) 
-  	 lpPInfo4->Attributes = PRINTER_ATTRIBUTE_LOCAL + *DataPointer; 
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Name", &(lpPInfo4->pPrinterName), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     					  /* FIXME: Attributes gets LOCAL as no REMOTE exists*/
+	 lpPInfo4->Attributes = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"Attributes") +PRINTER_ATTRIBUTE_LOCAL; 
     }
  if (lpszPrinterSettings)
 	 free(lpszPrinterSettings);
@@ -484,21 +681,9 @@ BOOL ENUMPRINTERS_AddInfo5A(
                    BOOL   bCalcSpaceOnly    /* TRUE if out-of-space in buffer */
 ){                   
  HKEY  hPrinterSettings;
- DWORD DataType;
- DWORD DataSize=255;
- char  Data[255];
- DWORD* DataPointer= (DWORD*) Data;
  LPSTR lpszPrinterSettings = (LPSTR) malloc(strlen(Printers)+
   										   	   strlen(lpszPrinterName)+2);
  LPPRINTER_INFO_5A lpPInfo5 = (LPPRINTER_INFO_5A) &lpbPrinters[dwNextStructPos];
-
- /* copy the PrinterName into the structure */
- lpPInfo5->pPrinterName = &lpbPrinters[*dwNextStringPos];
- *dwNextStringPos += strlen(lpszPrinterName)+1;
- if (*dwNextStringPos > dwBufSize)
- 	bCalcSpaceOnly=TRUE;
- if (bCalcSpaceOnly==FALSE)
-     strcpy(lpPInfo5->pPrinterName, lpszPrinterName);
 
  /* open the registry to find the attributes, etc of the printer */
  if (lpszPrinterSettings!=NULL)
@@ -509,41 +694,26 @@ BOOL ENUMPRINTERS_AddInfo5A(
  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, lpszPrinterSettings, 0, 
  						KEY_READ, &hPrinterSettings) != ERROR_SUCCESS)
 	{
-     FIXME(print, "The registry did not contain my printer anymore?\n");
-     lpPInfo5->Attributes = 0;
-     lpPInfo5->pPortName = NULL;
-     lpPInfo5->Attributes = 0;  
-     lpPInfo5->DeviceNotSelectedTimeOut =0;
-     lpPInfo5->TransmissionRetryTimeout = 0; 
+     WARN(print, "The registry did not contain my printer anymore?\n");
     }
  else
     {
-	 RegQueryValueExA(hPrinterSettings, "Attributes", NULL, &DataType,
-  					Data, &DataSize);
-	 if (DataType==REG_DWORD) 
-  	 	lpPInfo5->Attributes = PRINTER_ATTRIBUTE_LOCAL + *DataPointer; 
-
-     DataSize=255;
-	 RegQueryValueExA(hPrinterSettings, "txTimeout", NULL, &DataType,
-  					Data, &DataSize);
-	 if (DataType==REG_DWORD) 
- 		lpPInfo5->DeviceNotSelectedTimeOut = *DataPointer;
-
-     DataSize=255;
-	 RegQueryValueExA(hPrinterSettings, "dnsTimeout", NULL, &DataType,
-  					Data, &DataSize);
-	 if (DataType==REG_DWORD) 
-		 lpPInfo5->TransmissionRetryTimeout = *DataPointer; 
-         
-     DataSize=255;
-	 RegQueryValueExA(hPrinterSettings, "Port", NULL, &DataType,
-  					Data, &DataSize);
- 	 lpPInfo5->pPortName = &lpbPrinters[*dwNextStringPos];
-     *dwNextStringPos += DataSize+1;
- 	 if (*dwNextStringPos > dwBufSize)
-	 	bCalcSpaceOnly=TRUE;
-	 if (bCalcSpaceOnly==FALSE)
-    	 strcpy(lpPInfo5->pPortName, Data);         
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Name", &(lpPInfo5->pPrinterName), 
+                                  lpbPrinters, dwNextStringPos, 
+                                  dwBufSize, bCalcSpaceOnly);
+     bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
+     			                  "Port", &(lpPInfo5->pPortName), lpbPrinters,
+                                  dwNextStringPos, dwBufSize, bCalcSpaceOnly);
+     					  /* FIXME: Attributes gets LOCAL as no REMOTE exists*/
+	 lpPInfo5->Attributes = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"Attributes") +PRINTER_ATTRIBUTE_LOCAL; 
+	 lpPInfo5->DeviceNotSelectedTimeOut 
+     					  = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"txTimeout"); 
+	 lpPInfo5->TransmissionRetryTimeout
+     					  = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
+     								"dnsTimeout"); 
     }
     
  if (lpszPrinterSettings)
@@ -562,12 +732,17 @@ BOOL ENUMPRINTERS_AddInfo5A(
  * RETURNS:
  *
  *    If level is set to 1:
- *    If level is set to 2:
  *      Not implemented yet! 
  *      Returns TRUE with an empty list.
  *
+ *    If level is set to 2:
+ *		Possible flags: PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL.
+ *      Returns an array of PRINTER_INFO_2 data structures in the 
+ *      lpbPrinters buffer. Note that according to MSDN also an 
+ *      OpenPrinter should be performed on every remote printer.
+ *
  *    If level is set to 4 (officially WinNT only):
- *		Possible flags: PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL).
+ *		Possible flags: PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL.
  *      Fast: Only the registry is queried to retrieve printer names,
  *      no connection to the driver is made.
  *      Returns an array of PRINTER_INFO_4 data structures in the 
@@ -587,9 +762,12 @@ BOOL ENUMPRINTERS_AddInfo5A(
  *
  * BUGS:
  *    - Only PRINTER_ENUM_LOCAL and PRINTER_ENUM_NAME are implemented.
- *    - Only level 4 and 5 are implemented at the moment.
+ *    - Only levels 2, 4 and 5 are implemented at the moment.
  *    - 16-bit printer drivers are not enumerated.
- *    - returned bytes used/needed do not match the real Windoze implementation
+ *    - Returned amount of bytes used/needed does not match the real Windoze 
+ *      implementation (as in this implementation, all strings are part 
+ *      of the buffer, whereas Win32 keeps them somewhere else)
+ *    - At level 2, EnumPrinters should also call OpenPrinter for remote printers.
  *
  * NOTE:
  *    - In a regular Wine installation, no registry settings for printers
@@ -616,30 +794,41 @@ BOOL  WINAPI EnumPrintersA(
  
  TRACE(print, "EnumPrintersA\n");
 
+ /* zero out the data area, and initialise some returns to zero,
+  * to prevent problems 
+  */
+ {
+  int i;
+  for (i=0; i<cbBuf; i++)
+  	  lpbPrinters[i]=0;
+ }
+ *lpdwReturned=0;
+ *lpdwNeeded = 0;
+
  /* check for valid Flags */
  if (dwType != PRINTER_ENUM_LOCAL && dwType != PRINTER_ENUM_NAME)
  	{
      SetLastError(ERROR_INVALID_FLAGS);
      return(0);
     }
- if (dwLevel == 1 || dwLevel == 2)
-     return(TRUE);
- if (dwLevel != 4 && dwLevel != 5)
+ switch(dwLevel)
  	{
+     case 1:
+	     return(TRUE);
+     case 2:
+     case 4:
+     case 5:
+     	 break;
+     default:
      SetLastError(ERROR_INVALID_PARAMETER);
-     return(0);
+	     return(FALSE);
     } 	
 
- /* zero out the data area, and initialise some returns to zero,
-  * to prevent problems 
+ /* Enter critical section to prevent AddPrinters() et al. to
+  * modify whilst we're reading in the registry
  */
-{
-  int i;
-  for (i=0; i<cbBuf; i++)
-  	  lpbPrinters[i]=0;
- }
-    *lpdwReturned=0;
-    *lpdwNeeded = 0;
+ InitializeCriticalSection(&PRINT32_RegistryBlocker);
+ EnterCriticalSection(&PRINT32_RegistryBlocker);
  
  /* get a pointer to a list of all printer names in the registry */ 
  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, Printers, 0, KEY_READ,
@@ -649,7 +838,6 @@ BOOL  WINAPI EnumPrintersA(
       * (which is a valid configuration anyway)
       */
      TRACE(print, "No entries in the Printers part of the registry\n");
-     return(TRUE);
     }
 
  /* count the number of entries and check if it fits in the buffer
@@ -711,7 +899,9 @@ BOOL  WINAPI EnumPrintersA(
          	/* FIXME: unimplemented */
             break;
          case 2:
-            /* FIXME: unimplemented */
+            bCalcSpaceOnly = ENUMPRINTERS_AddInfo2A(PrinterName, lpbPrinters,
+            					dwIndex*dwStructPrinterInfoSize,
+                                &dwNextStringPos, cbBuf, bCalcSpaceOnly);
             break;
          case 4:
             bCalcSpaceOnly = ENUMPRINTERS_AddInfo4A(PrinterName, lpbPrinters,
@@ -735,7 +925,7 @@ BOOL  WINAPI EnumPrintersA(
 	  	  lpbPrinters[i]=0;
      *lpdwReturned=0;    
     } 
- 
+ LeaveCriticalSection(&PRINT32_RegistryBlocker); 
  return(TRUE);
 }
 
