@@ -421,9 +421,7 @@ DWORD WINAPI WsControl(DWORD protocol,
             break;
          }
 
-         /* FIXME: not real name. Value is 0x101.  Obviously it's a bad name,
-          * too, because it can be used to get the ARP table--see below. */
-         case IP_MIB_ROUTETABLE_ENTRY_ID:
+         case IP_MIB_TABLE_ENTRY_ID:
          {
             switch (pcommand->toi_entity.tei_entity)
             {
@@ -511,6 +509,51 @@ DWORD WINAPI WsControl(DWORD protocol,
 
                   /* calculate the length of the data in the output buffer */
                   *pcbResponseInfoLen = sizeof(MIB_IPNETROW) *
+                   table->dwNumEntries;
+
+                  free(table);
+               }
+               break;
+
+               case CO_TL_ENTITY:
+               {
+                  DWORD tcpTableSize, numEntries, ret;
+                  PMIB_TCPTABLE table;
+                  DWORD i;
+
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  GetTcpTable(NULL, &tcpTableSize, FALSE);
+                  numEntries = min(tcpTableSize - sizeof(MIB_TCPTABLE),
+                   0) / sizeof(MIB_TCPROW) + 1;
+                  if (*pcbResponseInfoLen < sizeof(MIB_TCPROW) * numEntries)
+                     return (ERROR_LOCK_VIOLATION);
+                  table = (PMIB_TCPTABLE)calloc(1, tcpTableSize);
+                  if (!table)
+                     return ERROR_NOT_ENOUGH_MEMORY;
+                  ret = GetTcpTable(table, &tcpTableSize, FALSE);
+                  if (ret != NO_ERROR)
+                     return ret;
+                  if (*pcbResponseInfoLen < sizeof(MIB_TCPROW) *
+                   table->dwNumEntries)
+                  {
+                     free(table);
+                     return ERROR_LOCK_VIOLATION;
+                  }
+                  for (i = 0; i < table->dwNumEntries; i++)
+                  {
+                     USHORT sPort;
+
+                     sPort = ntohs((USHORT)table->table[i].dwLocalPort);
+                     table->table[i].dwLocalPort = (DWORD)sPort;
+                     sPort = ntohs((USHORT)table->table[i].dwRemotePort);
+                     table->table[i].dwRemotePort = (DWORD)sPort;
+                  }
+                  memcpy(pResponseInfo, table->table, sizeof(MIB_TCPROW) *
+                   table->dwNumEntries);
+
+                  /* calculate the length of the data in the output buffer */
+                  *pcbResponseInfoLen = sizeof(MIB_TCPROW) *
                    table->dwNumEntries;
 
                   free(table);

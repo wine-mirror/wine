@@ -119,7 +119,7 @@ typedef struct IPRouteEntry {
 /* Constants for use in the toi_id field */
 #define ENTITY_LIST_ID 0 /* to get the list of entity IDs */
 #define ENTITY_TYPE_ID 1 /* it's an interface; what type of interface is it? */
-#define IP_MIB_ROUTETABLE_ENTRY_ID 0x101 /* not real name */
+#define IP_MIB_TABLE_ENTRY_ID 0x101 /* not real name */
 #define IP_MIB_ADDRTABLE_ENTRY_ID  0x102
 
 /* Constants for use in the toi_class field */
