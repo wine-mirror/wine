@@ -635,8 +635,20 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   /* try to open the file */
   This->paf->hmmio = mmioOpenW(This->paf->szFileName, NULL,
 			       MMIO_ALLOCBUF | dwMode);
-  if (This->paf->hmmio == NULL)
-    return AVIERR_FILEOPEN;
+  if (This->paf->hmmio == NULL) {
+    /* mmioOpenW not in native DLLs of Win9x -- try mmioOpenA */
+    LPSTR szFileName = LocalAlloc(LPTR, len * sizeof(CHAR));
+    if (szFileName == NULL)
+      return AVIERR_MEMORY;
+
+    WideCharToMultiByte(CP_ACP, 0, This->paf->szFileName, -1, szFileName,
+			len, NULL, NULL);
+
+    This->paf->hmmio = mmioOpenA(szFileName, NULL, MMIO_ALLOCBUF | dwMode);
+    LocalFree((HLOCAL)szFileName);
+    if (This->paf->hmmio == NULL)
+      return AVIERR_FILEOPEN;
+  }
 
   /* should we create a new file? */
   if (dwMode & OF_CREATE) {
@@ -1792,9 +1804,9 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
       hr = ReadChunkIntoExtra(&This->fileextra, This->hmmio, &ckLIST2);
       if (FAILED(hr))
 	return hr;
-      if (mmioAscend(This->hmmio, &ckLIST2, 0) != S_OK)
-	return AVIERR_FILEREAD;
     }
+    if (mmioAscend(This->hmmio, &ckLIST2, 0) != S_OK)
+      return AVIERR_FILEREAD;
   }
 
   /* read any extra headers in "LIST","hdrl" */
@@ -1936,7 +1948,8 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
   for (n = 0; n < This->fInfo.dwStreams; n++) {
     IAVIStreamImpl *pStream = This->ppStreams[n];
 
-    if (pStream->sInfo.dwLength != pStream->lLastFrame+1)
+    if (pStream->sInfo.dwSampleSize == 0 &&
+	pStream->sInfo.dwLength != pStream->lLastFrame+1)
       ERR("stream %lu length mismatch: dwLength=%lu found=%ld\n",
 	   n, pStream->sInfo.dwLength, pStream->lLastFrame);
   }

@@ -899,6 +899,7 @@ LONG WINAPI AVIStreamLength(PAVISTREAM pstream)
 LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample)
 {
   AVISTREAMINFOW asiw;
+  LONG time;
 
   TRACE("(%p,%ld)\n", pstream, lSample);
 
@@ -910,7 +911,19 @@ LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample)
   if (asiw.dwRate == 0)
     return -1;
 
-  return (LONG)(((float)lSample * asiw.dwScale * 1000.0) / asiw.dwRate);
+  /* limit to stream bounds */
+  if (lSample < asiw.dwStart)
+    lSample = asiw.dwStart;
+  if (lSample > asiw.dwStart + asiw.dwLength)
+    lSample = asiw.dwStart + asiw.dwLength;
+
+  if (asiw.dwRate / asiw.dwScale < 1000)
+    time = (LONG)(((float)lSample * asiw.dwScale * 1000) / asiw.dwRate);
+  else
+    time = (LONG)(((float)lSample * asiw.dwScale * 1000 + (asiw.dwRate - 1)) / asiw.dwRate);
+
+  TRACE(" -> %ld\n",time);
+  return time;
 }
 
 /***********************************************************************
@@ -920,10 +933,11 @@ LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample)
 LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
 {
   AVISTREAMINFOW asiw;
+  LONG sample;
 
   TRACE("(%p,%ld)\n", pstream, lTime);
 
-  if (pstream == NULL)
+  if (pstream == NULL || lTime < 0)
     return -1;
 
   if (FAILED(IAVIStream_Info(pstream, &asiw, sizeof(asiw))))
@@ -931,7 +945,19 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
   if (asiw.dwScale == 0)
     return -1;
 
-  return (LONG)(((float)lTime * asiw.dwRate) / asiw.dwScale / 1000.0);
+  if (asiw.dwRate / asiw.dwScale < 1000)
+    sample = (LONG)((((float)asiw.dwRate * lTime) / (asiw.dwScale * 1000)));
+  else
+    sample = (LONG)(((float)asiw.dwRate * lTime + (asiw.dwScale * 1000 - 1)) / (asiw.dwScale * 1000));
+
+  /* limit to stream bounds */
+  if (sample < asiw.dwStart)
+    sample = asiw.dwStart;
+  if (sample > asiw.dwStart + asiw.dwLength)
+    sample = asiw.dwStart + asiw.dwLength;
+
+  TRACE(" -> %ld\n", sample);
+  return sample;
 }
 
 /***********************************************************************
