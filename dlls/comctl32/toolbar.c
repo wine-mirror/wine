@@ -2260,7 +2260,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    TRACE("len=%d %s\n", len, debugstr_w(p));
 	    infoPtr->strings[infoPtr->nNumStrings] =
 		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	    lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len);
+	    lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len+1);
 	    infoPtr->nNumStrings++;
 
 		p += (len+1);
