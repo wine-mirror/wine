@@ -872,7 +872,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 /***********************************************************************
  *           WinExec   (KERNEL32.@)
  */
-HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
+UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 {
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
