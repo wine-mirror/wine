@@ -56,8 +56,8 @@ typedef struct {
 	HICON	hIcon;
 	HCURSOR	hCursor;
 	HBRUSH	hbrBackground;
-	LPSTR	lpszMenuName WINE_PACKED;
-	LPSTR   lpszClassName WINE_PACKED;
+	SEGPTR  lpszMenuName WINE_PACKED;
+	SEGPTR  lpszClassName WINE_PACKED;
 } WNDCLASS, *LPWNDCLASS;
 
 #define CS_VREDRAW          0x0001
@@ -429,8 +429,7 @@ typedef struct tagMSG
 	
 typedef WORD ATOM;
 
-#define MAKEINTATOM(i)     ((LPCSTR)MAKELP(0, (i)))
-
+#define MAKEINTATOM(i)   ((SEGPTR)MAKELONG((i),0))
 
   /* Raster operations */
 
@@ -2399,12 +2398,12 @@ F(void,SwitchStackBack)
 F(void,ValidateCodeSegments)
 F(void,WaitMessage)
 F(void,Yield)
-Fa(ATOM,AddAtom,LPCSTR,a)
+Fa(ATOM,AddAtom,SEGPTR,a)
 Fa(ATOM,DeleteAtom,ATOM,a)
-Fa(ATOM,FindAtom,LPCSTR,a)
-Fa(ATOM,GlobalAddAtom,LPCSTR,a)
+Fa(ATOM,FindAtom,SEGPTR,a)
+Fa(ATOM,GlobalAddAtom,SEGPTR,a)
 Fa(ATOM,GlobalDeleteAtom,ATOM,a)
-Fa(ATOM,GlobalFindAtom,LPCSTR,a)
+Fa(ATOM,GlobalFindAtom,SEGPTR,a)
 Fa(ATOM,RegisterClass,LPWNDCLASS,a) 
 Fa(BOOL,BringWindowToTop,HWND,a)
 Fa(BOOL,DeleteDC,HDC,a)
@@ -2559,7 +2558,7 @@ Fa(WORD,LocalLock,HLOCAL,a)
 Fa(WORD,LocalSize,HLOCAL,a)
 Fa(WORD,RealizeDefaultPalette,HDC,a)
 Fa(WORD,RegisterClipboardFormat,LPCSTR,a)
-Fa(WORD,RegisterWindowMessage,LPCSTR,a)
+Fa(WORD,RegisterWindowMessage,SEGPTR,a)
 Fa(WORD,SetHandleCount,WORD,a)
 Fa(WORD,VkKeyScan,WORD,a)
 Fa(int,AddFontResource,LPSTR,a)
@@ -2651,7 +2650,7 @@ Fb(BOOL,SetWindowPlacement,HWND,a,LPWINDOWPLACEMENT,b)
 Fb(BOOL,ShowWindow,HWND,a,int,b) 
 Fb(BOOL,TranslateMDISysAccel,HWND,a,LPMSG,b)
 Fb(BOOL,UnhookWindowsHook,short,a,FARPROC,b)
-Fb(BOOL,UnregisterClass,LPSTR,a,HANDLE,b)
+Fb(BOOL,UnregisterClass,SEGPTR,a,HANDLE,b)
 Fb(DWORD,GetNearestColor,HDC,a,DWORD,b)
 Fb(DWORD,SetBkColor,HDC,a,COLORREF,b)
 Fb(DWORD,SetMapperFlags,HDC,a,DWORD,b)
@@ -2683,7 +2682,7 @@ Fb(HMENU,LoadMenu,HANDLE,a,SEGPTR,b)
 Fb(HMENU,LookupMenuHandle,HMENU,a,INT,b)
 Fb(HPALETTE,GDISelectPalette,HDC,a,HPALETTE,b)
 Fb(HWND,ChildWindowFromPoint,HWND,a,POINT,b)
-Fb(HWND,FindWindow,LPSTR,a,LPSTR,b)
+Fb(HWND,FindWindow,SEGPTR,a,LPSTR,b)
 Fb(HWND,GetDlgItem,HWND,a,WORD,b)
 Fb(HWND,GetNextWindow,HWND,a,WORD,b)
 Fb(HWND,GetWindow,HWND,a,WORD,b)

@@ -25,20 +25,10 @@ typedef struct
     HANDLE      entries[1];
 } ATOMTABLE;
 
-#ifdef WINELIB
-#define LocalAlign(flags,bytes) LocalAlloc (flags|LMEM_WINE_ALIGN,bytes)
-#else
-#define LocalAlign(flags,bytes) LocalAlloc((flags),(bytes))
-#endif
 
-ATOM LocalAddAtom( LPCSTR str );
+ATOM LocalAddAtom( SEGPTR str );
 ATOM LocalDeleteAtom( ATOM atom );
-ATOM LocalFindAtom( LPCSTR str );
-WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count );
-
-ATOM LocalAddAtom( LPCSTR str );
-ATOM LocalDeleteAtom( ATOM atom );
-ATOM LocalFindAtom( LPCSTR str );
+ATOM LocalFindAtom( SEGPTR str );
 WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count );
 
 #endif  /* ATOM_H */

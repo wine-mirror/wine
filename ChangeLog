@@ -1,4 +1,117 @@
 ----------------------------------------------------------------------
+Thu Aug 17 19:30:14 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [*/Makefile.in]
+	Removed winelibclean target, as it doesn't work anyway.
+
+	* [controls/button.c]
+	Avoid drawing the focus rectangle outside of the button.
+
+	* [controls/widgets.c]
+	Fixed bug with the size of the reserved bytes for the Edit
+	control (caused Eudora to crash).
+
+	* [debugger/*] [include/debugger.h]
+	Unified debugger address handling. Segmented and linear addresses
+	are no grouped in a single type DBG_ADDR.
+	All commands now accept seg:off addresses.
+	Module entry points are now loaded upon first entry to the
+	debugger, so that entry points of the loaded executable also
+	appear in the symbol table.
+
+	* [include/registers.h] [miscemu/*.c]
+	Register macros are now of the form 'AX_reg(context)' instead of 'AX'.
+	This makes code less readable, but will prevent a lot of name
+	clashes with other definitions. It also avoids a hidden reference
+	to the 'context' variable.
+
+	* [ipc/dde_atom.c] [misc/atom.c]
+	All *AddAtom and *FindAtom functions now take a SEGPTR parameter,
+	to allow supporting integer atoms.
+	Moved atom.c to memory/ directory.
+
+	* [loader/task.c]
+	Fixed environment allocation to compute the size dynamically.
+	Added 'windir' environment variable.
+	Fixed GetDOSEnvironment() to return the current task environment.
+
+	* [windows/message.c]
+	Fixed bug in MSG_GetWindowForEvent().
+
+Wed Aug  9 11:40:43 1995  Marcus Meissner  <msmeissn@faui01.informatik.uni-erlangen.de>
+
+	* [include/ole.h]
+	Added a lot of structures  from my Borland Manual. Neither complete,
+	nor 100% right (check please)
+	
+	* [misc/shell.c]
+	Fixed some of the Reg* functions.
+	Enhanced ShellExecute.
+	Please test: wine "regedit.exe /v" mplayer.exe soundrec.exe
+	Do YOU know the format of \WINDOWS\REG.DAT? Mail me please :)
+
+	* [misc/dos_fs.c]
+	Make umsdos mounted windows dirs work again.
+
+	* [miscemu/emulate.c]
+	Added some comments, preimplementation of subfunction 7.
+
+	* [multimedia/mmsystem.c]
+	Implemented mciSendString. not complete, not clean, not
+	necessarily working (only checked with a program which uses
+ 	'cdaudio' (one working program is cool.exe, a shareware waveditor
+ 	with cdaudio play facilities.)
+
+	* [multimedia/mcicda.c]
+	Segptr fixes in DriverProc
+	Default cdrom drive in Linux is /dev/cdrom ... usually a symbolic
+ 	link to your real cdrom device.
+
+Tue Aug  8 19:41:50 CDT 1995 Daniel Schepler <dks2@cec.wustl.edu>
+
+	* [loader/resource.c]
+	Don't crash in a LoadString to NULL
+
+	* [loader/resource.c]
+	Fixed accelerators to work with modifiers.  (ALT-x modifiers still
+ 	won't work unless the ALT keypress exited the menu.)
+
+	* [misc/file.c]
+	Expand a file to the current offset with an _lwrite of size zero.
+
+	* [misc/file.c]
+	Set a newly created file to read-write instead of write-only.
+	
+Sun Aug  6 20:28:35 1995  Anand Kumria <akumria@ozemail.com.au>
+
+	* [misc/main.c] [include/msdos.h]
+	Fixed to return DOS version 6.22, and the correct byte order
+	for Windows programs.
+
+Wed Aug  2 12:36:33 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+	* [include/options.h] [memory/global.c] [misc/main.c]
+	Make the new IPC run-time selectible, disabling it by default.
+	(I think it's only useful for libwine, anyway.)
+
+	* [loader/task.c] [memory/selector.c]
+	In FreeSelector(), walk up the stack and fix the frames.
+
+	* [objects/dib.c]
+	Missing break statement in DIB_SetImageBits_RLE8().
+	In GetDIBits(), set the compression flag in the bitmap info to zero.
+
+	* [windows/dialog.c]
+	GetNextDlgGroupItem() needs to treat the first child as if it had
+	an implicit WS_GROUP bit set.
+
+Mon Jul 31 15:44:47 EDT 1995 Louis-D. Dubeau <ldd@step.polymtl.ca>
+
+	* [misc/dos_fs.c]
+	Quick'n dirty fix for the initialisation of the Z: information
+	structure.
+
+----------------------------------------------------------------------
 Sat Jul 22 22:39:09 IDT 1995 Michael Veksler <e1678223@tochnapc2.technion.ac.il>
 
 	* [ipc/*]
@@ -48,7 +161,7 @@ Sun Jul  16 18:17:17 1995  Gregory Trubetskoy <grisha@mira.com>
         Added LoadIconHandler. It doesn't do anything yet, but now you
         can use borland help files with winhelp.exe.
 
-Sun Jul 16 11:58:45 1996  Anand Kumria <akumria@ozemail.com.au>
+Sun Jul 16 11:58:45 1995 Anand Kumria <akumria@ozemail.com.au>
 
 	* [misc/main.c]
 	Fixed to return 386 Enhanced mode correctly. Also return the same

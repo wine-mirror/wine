@@ -21,8 +21,8 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
     int prefix, segprefix, repX, long_op, long_addr;
     BYTE *instr;
 
-    long_op = long_addr = (GET_SEL_FLAGS(CS) & LDT_FLAGS_32BIT) != 0;
-    instr = (BYTE *) PTR_SEG_OFF_TO_LIN( CS, long_op ? EIP : IP );
+    long_op = long_addr = (GET_SEL_FLAGS(CS_reg(context)) & LDT_FLAGS_32BIT) != 0;
+    instr = (BYTE *) PTR_SEG_OFF_TO_LIN( CS_reg(context), EIP_reg(context) );
 
     /* First handle any possible prefix */
 
@@ -34,22 +34,22 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
         switch(*instr)
         {
         case 0x2e:
-            segprefix = CS;
+            segprefix = CS_reg(context);
             break;
         case 0x36:
-            segprefix = SS;
+            segprefix = SS_reg(context);
             break;
         case 0x3e:
-            segprefix = DS;
+            segprefix = DS_reg(context);
             break;
         case 0x26:
-            segprefix = ES;
+            segprefix = ES_reg(context);
             break;
         case 0x64:
-            segprefix = FS;
+            segprefix = FS_reg(context);
             break;
         case 0x65:
-            segprefix = GS;
+            segprefix = GS_reg(context);
             break;
         case 0x66:
             long_op = !long_op;  /* opcode size prefix */
@@ -72,7 +72,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
         if (prefix)
         {
             instr++;
-            EIP++;
+            EIP_reg(context)++;
         }
     }
 
@@ -90,15 +90,16 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
             {
                 SEGPTR addr = INT_GetHandler( instr[1] );
                 /* FIXME: should check the stack 'big' bit */
-                WORD *stack = (WORD *)PTR_SEG_OFF_TO_LIN( SS, SP );
+                WORD *stack = (WORD *)PTR_SEG_OFF_TO_LIN( SS_reg(context),
+                                                          SP_reg(context) );
                 /* Push the flags and return address on the stack */
-                *(--stack) = FL;
-                *(--stack) = CS;
-                *(--stack) = IP + 2;
-                SP -= 3 * sizeof(WORD);
+                *(--stack) = FL_reg(context);
+                *(--stack) = CS_reg(context);
+                *(--stack) = IP_reg(context) + 2;
+                SP_reg(context) -= 3 * sizeof(WORD);
                 /* Jump to the interrupt handler */
-                CS  = HIWORD(addr);
-                EIP = LOWORD(addr);
+                CS_reg(context)  = HIWORD(addr);
+                EIP_reg(context) = LOWORD(addr);
             }
             break;
 
@@ -106,73 +107,75 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
             if (long_op)
             {
                 /* FIXME: should check the stack 'big' bit */
-                DWORD *stack = (DWORD *)PTR_SEG_OFF_TO_LIN( SS, SP );
-                EIP = *stack++;
-                CS  = *stack++;
-                EFL = *stack;
-                SP += 3*sizeof(DWORD);  /* Pop the return address and flags */
+                DWORD *stack = (DWORD *)PTR_SEG_OFF_TO_LIN( SS_reg(context),
+                                                            SP_reg(context) );
+                EIP_reg(context) = *stack++;
+                CS_reg(context)  = *stack++;
+                EFL_reg(context) = *stack;
+                SP_reg(context) += 3*sizeof(DWORD);  /* Pop the return address and flags */
             }
             else
             {
                 /* FIXME: should check the stack 'big' bit */
-                WORD *stack = (WORD *)PTR_SEG_OFF_TO_LIN( SS, SP );
-                EIP = *stack++;
-                CS  = *stack++;
-                FL  = *stack;
-                SP += 3*sizeof(WORD);  /* Pop the return address and flags */
+                WORD *stack = (WORD *)PTR_SEG_OFF_TO_LIN( SS_reg(context),
+                                                          SP_reg(context) );
+                EIP_reg(context) = *stack++;
+                CS_reg(context)  = *stack++;
+                FL_reg(context)  = *stack;
+                SP_reg(context) += 3*sizeof(WORD);  /* Pop the return address and flags */
             }
             break;
 
         case 0xe4: /* inb al,XX */
-            AL = inport( instr[1], 1 );
-	    EIP += 2;
+            AL_reg(context) = inport( instr[1], 1 );
+	    EIP_reg(context) += 2;
             break;
 
         case 0xe5: /* in (e)ax,XX */
-            if (long_op) EAX = inport( instr[1], 4 );
-            else AX = inport( instr[1], 2 );
-	    EIP += 2;
+            if (long_op) EAX_reg(context) = inport( instr[1], 4 );
+            else AX_reg(context) = inport( instr[1], 2 );
+	    EIP_reg(context) += 2;
             break;
 
         case 0xe6: /* outb XX,al */
-            outport( instr[1], 1, AL );
-	    EIP += 2;
+            outport( instr[1], 1, AL_reg(context) );
+	    EIP_reg(context) += 2;
             break;
 
         case 0xe7: /* out XX,(e)ax */
-            if (long_op) outport( instr[1], 4, EAX );
-            else outport( instr[1], 2, AX );
-  	    EIP += 2;
+            if (long_op) outport( instr[1], 4, EAX_reg(context) );
+            else outport( instr[1], 2, AX_reg(context) );
+  	    EIP_reg(context) += 2;
             break;
 
         case 0xec: /* inb al,dx */
-            AL = inport( DX, 1 );
-	    EIP++;
+            AL_reg(context) = inport( DX_reg(context), 1 );
+	    EIP_reg(context)++;
             break;
 
         case 0xed: /* in (e)ax,dx */
-            if (long_op) EAX = inport( DX, 4 );
-            else AX = inport( DX, 2 );
-	    EIP++;  
+            if (long_op) EAX_reg(context) = inport( DX_reg(context), 4 );
+            else AX_reg(context) = inport( DX_reg(context), 2 );
+	    EIP_reg(context)++;  
             break;
 
         case 0xee: /* outb dx,al */
-            outport( DX, 1, AL );
-	    EIP++;
+            outport( DX_reg(context), 1, AL_reg(context) );
+	    EIP_reg(context)++;
             break;
       
         case 0xef: /* out dx,(e)ax */
-            if (long_op) outport( DX, 4, EAX );
-            else outport( DX, 2, AX );
-	    EIP++;
+            if (long_op) outport( DX_reg(context), 4, EAX_reg(context) );
+            else outport( DX_reg(context), 2, AX_reg(context) );
+	    EIP_reg(context)++;
             break;
 
         case 0xfa: /* cli, ignored */
-	    EIP++;
+	    EIP_reg(context)++;
             break;
 
         case 0xfb: /* sti, ignored */
-	    EIP++;
+	    EIP_reg(context)++;
             break;
 
         case 0x6c: /* insb     */
@@ -182,11 +185,12 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
 	    {
 	      int typ = *instr;  /* Just in case it's overwritten.  */
 	      int outp = (typ >= 0x6e);
-	      unsigned long count = repX ? (long_addr ? ECX : CX) : 1;
+	      unsigned long count = repX ?
+                          (long_addr ? ECX_reg(context) : CX_reg(context)) : 1;
 	      int opsize = (typ & 1) ? (long_op ? 4 : 2) : 1;
-	      int step = (EFL & 0x400) ? -opsize : +opsize;
-	      /* FIXME: Check this, please.  */
-	      int seg = outp ? (segprefix >= 0 ? segprefix : DS) : ES;
+	      int step = (EFL_reg(context) & 0x400) ? -opsize : +opsize;
+	      int seg = outp ? (segprefix >= 0 ? segprefix : DS_reg(context))
+                             : ES_reg(context);
 
 	      if (outp)
 		/* FIXME: Check segment readable.  */
@@ -197,53 +201,51 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
 
 	      if (repX)
 		if (long_addr)
-		  ECX = 0;
+		  ECX_reg(context) = 0;
 		else
-		  CX = 0;
+		  CX_reg(context) = 0;
 
 	      while (count-- > 0)
 		{
 		  void *data;
 		  if (outp)
-		    {
-		      data = PTR_SEG_OFF_TO_LIN (seg, long_addr ? ESI : SI);
-		      if (long_addr)
-			ESI += step;
-		      else
-			SI += step;
-		    }
+                  {
+		      data = PTR_SEG_OFF_TO_LIN (seg,
+                               long_addr ? ESI_reg(context) : SI_reg(context));
+		      if (long_addr) ESI_reg(context) += step;
+		      else SI_reg(context) += step;
+                  }
 		  else
-		    {
-		      data = PTR_SEG_OFF_TO_LIN (seg, long_addr ? EDI : DI);
-		      if (long_addr)
-			EDI += step;
-		      else
-			DI += step;
-		    }
-
+                  {
+		      data = PTR_SEG_OFF_TO_LIN (seg,
+                               long_addr ? EDI_reg(context) : DI_reg(context));
+		      if (long_addr) EDI_reg(context) += step;
+		      else DI_reg(context) += step;
+                  }
+                  
 		  switch (typ)
-		    {
+                  {
 		    case 0x6c:
-		      *((BYTE *)data) = inport (DX, 1);
+		      *((BYTE *)data) = inport( DX_reg(context), 1);
 		      break;
 		    case 0x6d:
 		      if (long_op)
-			*((DWORD *)data) = inport (DX, 4);
+			*((DWORD *)data) = inport( DX_reg(context), 4);
 		      else
-			*((WORD *)data) = inport (DX, 2);
+			*((WORD *)data) = inport( DX_reg(context), 2);
 		      break;
 		    case 0x6e:
-		      outport (DX, 1, *((BYTE *)data));
+		      outport( DX_reg(context), 1, *((BYTE *)data));
 		      break;
 		    case 0x6f:
 		      if (long_op)
-			outport (DX, 4, *((DWORD *)data));
+			outport( DX_reg(context), 4, *((DWORD *)data));
 		      else
-			outport (DX, 2, *((WORD *)data));
+			outport( DX_reg(context), 2, *((WORD *)data));
 		      break;
 		    }
 		}
-	      EIP++;
+	      EIP_reg(context)++;
 	      break;
 	    }
 

@@ -124,6 +124,7 @@ void ToUnix(char *s)
 {
     while(*s){
 	if (*s == '\\') *s = '/';
+	*s=tolower(*s); /* umsdos fs can't read files without :( */
 	s++;
     }
 }
@@ -188,7 +189,6 @@ void DOS_InitFS(void)
 	DosDrives[x].disabled = 0;
     }
     DosDrives[25].rootdir = "/";
-    strcpy(DosDrives[25].cwd, "/");
     strcpy(DosDrives[25].label, "UNIX-FS");
     DosDrives[25].serialnumber = 0x12345678;
     DosDrives[25].disabled = 0;
@@ -206,6 +206,7 @@ void DOS_InitFS(void)
 
     getcwd(temp, 254);
     strcat(temp, "/");      /* For DOS_GetDosFileName */
+    strcpy(DosDrives[25].cwd, temp );
     strcpy(temp, DOS_GetDosFileName(temp));
     if(temp[0] != 'Z')
     {

@@ -76,6 +76,7 @@ int Throw( LPCATCHBUF lpbuf, int retval )
     pFrame->bp         = lpbuf[6];
     pFrame->ip         = lpbuf[7];
     pFrame->cs         = lpbuf[8];
+    pFrame->es         = 0;
     return retval;
 }
 

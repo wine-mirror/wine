@@ -31,7 +31,9 @@ struct fcb {
 	BYTE dummy2[9];
 };
 
-#define DOSVERSION 0x0005      /* Major version in low byte: DOS 5.00 */
+
+#define DOSVERSION 0x1606      /* Major version in low byte: DOS 6.22 */
+#define WINDOSVER  0x0616      /* Windows reports the DOS version reversed */
 #define WINVERSION 0x0a03      /* Windows version 3.10 */
 
 #define MAX_DOS_DRIVES	26

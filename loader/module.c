@@ -35,8 +35,6 @@ static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
  */
 BOOL MODULE_Init(void)
 {
-    extern void load_entrypoints( HMODULE );
-
     HMODULE hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -82,7 +80,6 @@ BOOL MODULE_Init(void)
 
         pModule->next = hFirstModule;
         hFirstModule = hModule;
-        load_entrypoints( hModule );
     }
 
       /* Initialize some KERNEL exported values */
@@ -1166,6 +1163,22 @@ FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
 
     dprintf_module( stddeb, "GetProcAddress: returning %08lx\n", ret );
     return (FARPROC)ret;
+}
+
+
+/***********************************************************************
+ *           GetWndProcEntry16 (not a Windows API function)
+ *
+ * Return an entry point from the WINPROCS dll.
+ */
+WNDPROC GetWndProcEntry16( char *name )
+{
+    WORD ordinal;
+    static HMODULE hModule = 0;
+
+    if (!hModule) hModule = GetModuleHandle( "WINPROCS" );
+    ordinal = MODULE_GetOrdinal( hModule, name );
+    return MODULE_GetEntryPoint( hModule, ordinal );
 }
 
 

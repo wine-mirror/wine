@@ -819,20 +819,6 @@ HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
         if (!(wndPtr->dwStyle & WS_GROUP)) return ctrlPtr->hwndNext;
     }
 
-    if (ctrlPtr->dwStyle & WS_GROUP)  /* Control is the first of the group */
-    {
-        if (!fPrevious) return hwndCtrl;  /* Control is alone in his group */
-        hwnd = ctrlPtr->hwndNext;
-        while(hwnd)  /* Find last control of the group */
-        {
-            wndPtr = WIN_FindWndPtr( hwnd );
-            if (wndPtr->dwStyle & WS_GROUP) break;
-            hwndCtrl = hwnd;
-            hwnd = wndPtr->hwndNext;
-        }
-        return hwndCtrl;
-    }
-    
       /* Now we will have to find the start of the group */
 
     hwndStart = hwnd = dlgPtr->hwndChild;
@@ -840,22 +826,26 @@ HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
     {
 	wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr->dwStyle & WS_GROUP) hwndStart = hwnd;  /*Start of a group*/
-        if (hwnd == hwndCtrl)
-        {
-            /* We found the control -> hwndStart is the first of the group */
-            if (!fPrevious) return hwndStart;
-
-            while(hwndStart)  /* Find the control placed before hwndCtrl */
-            {
-                wndPtr = WIN_FindWndPtr( hwndStart );
-                if (wndPtr->hwndNext == hwndCtrl) return hwndStart;
-                hwndStart = wndPtr->hwndNext;
-            }
-            break;
-        }
+	if (hwnd == hwndCtrl) break;
 	hwnd = wndPtr->hwndNext;
     }
-    return hwndCtrl;  /* Not found -> return original control */
+
+    if (!hwnd) fprintf(stderr, "GetNextDlgGroupItem: hwnd not in dialog!\n");
+
+      /* only case left for forward search: wraparound */
+    if (!fPrevious) return hwndStart;
+    
+    hwnd = hwndStart;
+    wndPtr = WIN_FindWndPtr( hwnd );
+    hwnd = wndPtr->hwndNext;
+    while (hwnd && (hwnd != hwndCtrl))
+    {
+	wndPtr = WIN_FindWndPtr( hwnd );
+	if (wndPtr->dwStyle & WS_GROUP) break;
+	hwndStart = hwnd;
+	hwnd = wndPtr->hwndNext;
+    }
+    return hwndStart;
 }
 
 

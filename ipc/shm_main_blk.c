@@ -8,6 +8,7 @@
  ***************************************************************************
  */
 #define inline __inline__
+#include <sys/types.h>
 #include <sys/sem.h>
 #include <stdio.h>
 #include <time.h>
@@ -62,7 +63,7 @@ static void print_shm_info(int shm_id)
 
 }
 
-int proc_exist(__pid_t pid)
+int proc_exist(pid_t pid)
 {
   if ( kill(pid,0) == 0)	   /* dummy signal to test existence */
      return 1;
@@ -189,7 +190,9 @@ static int shm_locate_MainBlock(key_t shm_key)
 	 }
        } else {
 	  switch(errno) {
+#ifdef EIDRM
 	    case EIDRM:		   /* segment destroyed */
+#endif
 	    case EACCES:	   /* no user permision */
 	      break;
 

@@ -12,6 +12,7 @@
 #include "win.h"
 #include "dce.h"
 #include "atom.h"
+#include "ldt.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 /* #define DEBUG_CLASS */
@@ -27,7 +28,7 @@ static HCLASS firstClass = 0;
  * Return a handle and a pointer to the class.
  * 'ptr' can be NULL if the pointer is not needed.
  */
-HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr )
+HCLASS CLASS_FindClassByName( SEGPTR name, WORD hinstance, CLASS **ptr )
 {
     ATOM atom;
     HCLASS class;
@@ -90,17 +91,21 @@ ATOM RegisterClass( LPWNDCLASS class )
     CLASS * newClass, * prevClassPtr;
     HCLASS handle, prevClass;
     int classExtra;
-    char *name = PTR_SEG_TO_LIN( class->lpszClassName );
 
-    dprintf_class(stddeb, "RegisterClass: wndproc=%08lx hinst=%04x name='%s' background %04x\n",
-	    (DWORD)class->lpfnWndProc, class->hInstance, name, class->hbrBackground );
-    dprintf_class(stddeb, "               style %04x\n",class->style);
+    dprintf_class( stddeb, "RegisterClass: wndproc=%08lx hinst=%04x name='%s' background %04x\n",
+                 (DWORD)class->lpfnWndProc, class->hInstance,
+                 HIWORD(class->lpszClassName) ?
+                  (char *)PTR_SEG_TO_LIN(class->lpszClassName) : "(int)",
+                 class->hbrBackground );
+    dprintf_class(stddeb,"               style=%04x clsExtra=%d winExtra=%d\n",
+                  class->style, class->cbClsExtra, class->cbWndExtra );
     
       /* Window classes are owned by modules, not instances */
     class->hInstance = GetExePtr( class->hInstance );
     
       /* Check if a class with this name already exists */
-    prevClass = CLASS_FindClassByName( name, class->hInstance, &prevClassPtr );
+    prevClass = CLASS_FindClassByName( class->lpszClassName,
+                                       class->hInstance, &prevClassPtr );
     if (prevClass)
     {
 	  /* Class can be created only if it is local and */
@@ -123,8 +128,8 @@ ATOM RegisterClass( LPWNDCLASS class )
     newClass->wc.cbWndExtra = (class->cbWndExtra < 0) ? 0 : class->cbWndExtra;
     newClass->wc.cbClsExtra = classExtra;
 
-    newClass->atomName = LocalAddAtom( name );
-    newClass->wc.lpszClassName = NULL; 
+    newClass->atomName = LocalAddAtom( class->lpszClassName );
+    newClass->wc.lpszClassName = 0;
 
     if (newClass->wc.style & CS_CLASSDC)
 	newClass->hdce = DCE_AllocDCE( DCE_CLASS_DC );
@@ -132,13 +137,13 @@ ATOM RegisterClass( LPWNDCLASS class )
 
       /* Make a copy of the menu name (only if it is a string) */
 
-    if ((int)class->lpszMenuName & 0xffff0000)
+    if (HIWORD(class->lpszMenuName))
     {
         char *menuname = PTR_SEG_TO_LIN( class->lpszMenuName );
 	HANDLE hname = USER_HEAP_ALLOC( strlen(menuname)+1 );
 	if (hname)
 	{
-	    newClass->wc.lpszMenuName = (char *)USER_HEAP_SEG_ADDR( hname );
+	    newClass->wc.lpszMenuName = USER_HEAP_SEG_ADDR( hname );
 	    strcpy( USER_HEAP_LIN_ADDR( hname ), menuname );
 	}
     }
@@ -152,7 +157,7 @@ ATOM RegisterClass( LPWNDCLASS class )
 /***********************************************************************
  *           UnregisterClass    (USER.403)
  */
-BOOL UnregisterClass( LPSTR className, HANDLE hinstance )
+BOOL UnregisterClass( SEGPTR className, HANDLE hinstance )
 {
     HANDLE class, prevClass;
     CLASS * classPtr, * prevClassPtr;
@@ -186,8 +191,8 @@ BOOL UnregisterClass( LPSTR className, HANDLE hinstance )
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
     /*if (classPtr->wc.style & CS_GLOBALCLASS)*/ LocalDeleteAtom( classPtr->atomName );
     /*else DeleteAtom( classPtr->atomName );*/
-    if ((int)classPtr->wc.lpszMenuName & 0xffff0000)
-	USER_HEAP_FREE( (int)classPtr->wc.lpszMenuName & 0xffff );
+    if (HIWORD(classPtr->wc.lpszMenuName))
+	USER_HEAP_FREE( LOWORD(classPtr->wc.lpszMenuName) );
     USER_HEAP_FREE( class );
     return TRUE;
 }
@@ -272,36 +277,17 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
 /***********************************************************************
  *           GetClassInfo      (USER.404)
  */
-BOOL GetClassInfo(HANDLE hInstance, SEGPTR ClassName, 
-		                    LPWNDCLASS lpWndClass)
+BOOL GetClassInfo( HANDLE hInstance, SEGPTR name, LPWNDCLASS lpWndClass )
 {
     CLASS *classPtr;
-    LPSTR lpClassName = 0;
-    char  temp[10];
-    if (HIWORD(ClassName)) {
-      lpClassName = PTR_SEG_TO_LIN(ClassName);
-    } else  {
-      sprintf(temp,"#%d",(int)LOWORD(ClassName));
-      lpClassName = temp;
-    }
-    dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=%s\n",
-		  hInstance, lpClassName);
 
-    hInstance = GetExePtr(hInstance);
+    dprintf_class( stddeb, "GetClassInfo: hInstance=%04x className=%s\n",
+		   hInstance,
+                   HIWORD(name) ? (char *)PTR_SEG_TO_LIN(name) : "(int)" );
+
+    hInstance = GetExePtr( hInstance );
     
-    /* if (!(CLASS_FindClassByName(lpClassName, &classPtr))) return FALSE; */
-    if (!(CLASS_FindClassByName(lpClassName, hInstance, &classPtr)))
-    {
-/*        if (!HIWORD(lpClassName))
-        {
-            char temp[10];
-            sprintf(temp, "#%d", (int)lpClassName);
-            if (!(CLASS_FindClassByName(temp, hInstance, &classPtr))) return FALSE;
-
-        }
-        else */return FALSE;
-    }
-
+    if (!(CLASS_FindClassByName( name, hInstance, &classPtr))) return FALSE;
     if (hInstance && (hInstance != classPtr->wc.hInstance)) return FALSE;
 
     memcpy(lpWndClass, &(classPtr->wc), sizeof(WNDCLASS));

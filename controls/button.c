@@ -313,14 +313,15 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
         /* do we have the focus? */
         if (infoPtr->state & BUTTON_HASFOCUS)
         {
-            dwTextSize = GetTextExtent(hDC, text, strlen(text) );
-            delta = ((rc.right - rc.left) - LOWORD(dwTextSize) - 1) >> 1;
-            rc.left += delta;
-            rc.right -= delta;
-            GetTextMetrics(hDC, &tm);
-            delta = ((rc.bottom - rc.top) - tm.tmHeight - 1) >> 1;
-            rc.top += delta; 	rc.bottom -= delta;
-            DrawFocusRect(hDC, &rc);
+            short xdelta, ydelta;
+            dwTextSize = GetTextExtent( hDC, text, strlen(text) );
+            GetTextMetrics( hDC, &tm );
+            xdelta = ((rc.right - rc.left) - LOWORD(dwTextSize) - 1) / 2;
+            ydelta = ((rc.bottom - rc.top) - tm.tmHeight - 1) / 2;
+            if (xdelta < 0) xdelta = 0;
+            if (ydelta < 0) ydelta = 0;
+            InflateRect( &rc, -xdelta, -ydelta );
+            DrawFocusRect( hDC, &rc );
         }
     }
 
@@ -378,10 +379,13 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
         ((action == ODA_DRAWENTIRE) && (infoPtr->state & BUTTON_HASFOCUS)))
     {
         GetTextExtentPoint(hDC, text, textlen, &size);
-        rc.top += delta - 1;
-        rc.bottom -= delta + 1;
+        if (delta > 1)
+        {
+            rc.top += delta - 1;
+            rc.bottom -= delta + 1;
+        }
         rc.left--;
-        rc.right = rc.left + size.cx + 2;
+        rc.right = min( rc.left + size.cx + 2, rc.right );
         DrawFocusRect(hDC, &rc);
     }
 }

@@ -5,6 +5,7 @@
  * Purpose :  dynamically growing hash, may use shared or local memory.
  ***************************************************************************
  */
+#include <sys/types.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "generic_hash.h"

@@ -67,11 +67,10 @@ void INT_SetHandler( BYTE intnum, SEGPTR handler )
 /**********************************************************************
  *	    INT_DummyHandler
  */
-void INT_DummyHandler( struct sigcontext_struct sigcontext )
+void INT_DummyHandler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    INT_BARF( CURRENT_STACK16->ordinal_number - FIRST_INTERRUPT_ORDINAL );
-#undef context
+    INT_BARF( &context,
+              CURRENT_STACK16->ordinal_number - FIRST_INTERRUPT_ORDINAL );
 }
 
 
@@ -80,11 +79,9 @@ void INT_DummyHandler( struct sigcontext_struct sigcontext )
  *
  * Handler for int 11h (get equipment list).
  */
-void INT_Int11Handler( struct sigcontext_struct sigcontext )
+void INT_Int11Handler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    AX = DOS_GetEquipment();
-#undef context
+    AX_reg(&context) = DOS_GetEquipment();
 }
 
 
@@ -93,11 +90,9 @@ void INT_Int11Handler( struct sigcontext_struct sigcontext )
  *
  * Handler for int 12h (get memory size).
  */
-void INT_Int12Handler( struct sigcontext_struct sigcontext )
+void INT_Int12Handler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    AX = 640;
-#undef context
+    AX_reg(&context) = 640;
 }
 
 
@@ -106,11 +101,9 @@ void INT_Int12Handler( struct sigcontext_struct sigcontext )
  *
  * Handler for int 15h.
  */
-void INT_Int15Handler( struct sigcontext_struct sigcontext )
+void INT_Int15Handler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    INT_BARF( 0x15 );
-#undef context
+    INT_BARF( &context, 0x15 );
 }
 
 
@@ -119,9 +112,7 @@ void INT_Int15Handler( struct sigcontext_struct sigcontext )
  *
  * Handler for int 16h (keyboard).
  */
-void INT_Int16Handler( struct sigcontext_struct sigcontext )
+void INT_Int16Handler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    INT_BARF( 0x16 );
-#undef context
+    INT_BARF( &context, 0x16 );
 }

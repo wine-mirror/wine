@@ -69,7 +69,8 @@ struct options Options =
     SW_SHOWNORMAL,  /* cmdShow */
     FALSE,
     FALSE,          /* AllowReadOnly */
-    FALSE           /* Enhanced mode */
+    FALSE,          /* Enhanced mode */
+    FALSE           /* IPC enabled */
 };
 
 
@@ -80,6 +81,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-depth",         ".depth",           XrmoptionSepArg, (caddr_t)NULL },
     { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
     { "-iconic",        ".iconic",          XrmoptionNoArg,  (caddr_t)"on" },
+    { "-ipc",           ".ipc",             XrmoptionNoArg,  (caddr_t)"off"},
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
@@ -100,6 +102,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -desktop geom   Use a desktop window of the given geometry\n" \
   "    -display name   Use the specified display\n" \
   "    -iconic         Start as an icon\n" \
+  "    -ipc            Enable IPC facilities\n" \
   "    -debug          Enter debugger before starting application\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
@@ -309,6 +312,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         Options.allowReadOnly = TRUE;
     if (MAIN_GetResource( db, ".enhanced", &value ))
         Options.enhanced = TRUE;
+    if (MAIN_GetResource( db, ".ipc", &value ))
+        Options.ipc = TRUE;
     if (MAIN_GetResource( db, ".depth", &value))
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
@@ -558,7 +563,7 @@ void MessageBeep(WORD i)
  */
 LONG GetVersion(void)
 {
-    return MAKELONG( WINVERSION, DOSVERSION );
+    return MAKELONG( WINVERSION, WINDOSVER );
 }
 
 /***********************************************************************

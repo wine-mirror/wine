@@ -3,7 +3,6 @@
 MODULE = misc
 
 SRCS = \
-	atom.c \
 	clipboard.c \
 	comm.c \
 	commdlg.c \

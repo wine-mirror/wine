@@ -134,6 +134,7 @@ static TSecHeader *load (char *filename, char **pfullname)
 
 
     state = FirstBrace;
+    next = CharBuffer;
     while ((c = fgetc (f)) != EOF){
 	if (c == '\r')		/* Ignore Carriage Return */
 	    continue;

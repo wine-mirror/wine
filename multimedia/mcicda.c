@@ -29,7 +29,7 @@
 #endif
 
 #define SOUND_DEV "/dev/dsp"
-#define CDAUDIO_DEV "/dev/sbpcd"
+#define CDAUDIO_DEV "/dev/cdrom"
 
 #ifdef SOUND_VERSION
 #define IOCTL(a,b,c)		ioctl(a,b,&c)
@@ -566,7 +566,7 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 					lpParms->dwReturn = CDADev[wDevID].lpdwTrackPos[lpParms->dwTrack - 1];
                     			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // get MCI_TRACK #%lu !\n", lpParms->dwTrack);
 					}
-				lpParms->dwReturn = CDAUDIO_CalcTime(wDevID, 
+				lpParms->dwReturn = CDAUDIO_CalcTime(wDevID,
 					CDADev[wDevID].dwTimeFormat, lpParms->dwReturn);
                 			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MCI_STATUS_POSITION=%08lX !\n",
 														lpParms->dwReturn);
@@ -577,14 +577,14 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 			 	return 0;
 			case MCI_STATUS_TIME_FORMAT:
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MCI_STATUS_TIME_FORMAT !\n");
-				lpParms->dwReturn = MCI_FORMAT_MILLISECONDS;
+				lpParms->dwReturn = CDADev[wDevID].dwTimeFormat;
 			 	return 0;
 			default:
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // unknown command %08lX !\n", lpParms->dwItem);
 				return MCIERR_UNRECOGNIZED_COMMAND;
 			}
 		}
-    dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // not MCI_STATUS_ITEM !\n");
+	dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // not MCI_STATUS_ITEM !\n");
  	return 0;
 #else
 	return MMSYSERR_NOTENABLED;
@@ -842,12 +842,11 @@ LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 		case DRV_OPEN:
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
-			return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS)dwParam2); 
+			return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2)); 
 		case DRV_CLOSE:
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
-			return CDAUDIO_mciClose(dwDevID, dwParam1, 
-					(LPMCI_GENERIC_PARMS)dwParam2);
+			return CDAUDIO_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case DRV_ENABLE:
 			return 1;
 		case DRV_DISABLE:

@@ -1,73 +1,68 @@
+/*
+ * Register definitions
+ *
+ * Copyright 1995 Alexandre Julliard
+ */
+
 #ifndef __WINE_REGISTERS_H
 #define __WINE_REGISTERS_H
 
 #include <windows.h>
-
-#ifndef PROCEMU
-
 #include "wine.h"
 
-#define EAX (context->sc_eax)
-#define EBX (context->sc_ebx)
-#define ECX (context->sc_ecx)
-#define EDX (context->sc_edx)
-#define ESI (context->sc_esi)
-#define EDI (context->sc_edi)
-#define EBP (context->sc_ebp)
-
-#define AX (*(WORD*)&context->sc_eax)
-#define BX (*(WORD*)&context->sc_ebx)
-#define CX (*(WORD*)&context->sc_ecx)
-#define DX (*(WORD*)&context->sc_edx)
-#define SI (*(WORD*)&context->sc_esi)
-#define DI (*(WORD*)&context->sc_edi)
-#define BP (*(WORD*)&context->sc_ebp)
-
-#define AL (*(BYTE*)&context->sc_eax)
-#define AH (*(((BYTE*)&context->sc_eax)+1))
-#define BL (*(BYTE*)&context->sc_ebx)
-#define BH (*(((BYTE*)&context->sc_ebx)+1))
-#define CL (*(BYTE*)&context->sc_ecx)
-#define CH (*(((BYTE*)&context->sc_ecx)+1))
-#define DL (*(BYTE*)&context->sc_edx)
-#define DH (*(((BYTE*)&context->sc_edx)+1))
-
-#define CS (context->sc_cs)
-#define DS (context->sc_ds)
-#define ES (context->sc_es)
-#define SS (context->sc_ss)
-
-#ifdef linux
-#define FS (context->sc_fs)
-#define GS (context->sc_gs)
+#define EAX_reg(context)     ((context)->sc_eax)
+#define EBX_reg(context)     ((context)->sc_ebx)
+#define ECX_reg(context)     ((context)->sc_ecx)
+#define EDX_reg(context)     ((context)->sc_edx)
+#define ESI_reg(context)     ((context)->sc_esi)
+#define EDI_reg(context)     ((context)->sc_edi)
+#define EBP_reg(context)     ((context)->sc_ebp)
+                            
+#define AX_reg(context)      (*(WORD*)&((context)->sc_eax))
+#define BX_reg(context)      (*(WORD*)&((context)->sc_ebx))
+#define CX_reg(context)      (*(WORD*)&((context)->sc_ecx))
+#define DX_reg(context)      (*(WORD*)&((context)->sc_edx))
+#define SI_reg(context)      (*(WORD*)&((context)->sc_esi))
+#define DI_reg(context)      (*(WORD*)&((context)->sc_edi))
+#define BP_reg(context)      (*(WORD*)&((context)->sc_ebp))
+                            
+#define AL_reg(context)      (*(BYTE*)(&(context)->sc_eax))
+#define AH_reg(context)      (*(((BYTE*)(&(context)->sc_eax)+1)))
+#define BL_reg(context)      (*(BYTE*)(&(context)->sc_ebx))
+#define BH_reg(context)      (*(((BYTE*)(&(context)->sc_ebx)+1)))
+#define CL_reg(context)      (*(BYTE*)(&(context)->sc_ecx))
+#define CH_reg(context)      (*(((BYTE*)(&(context)->sc_ecx)+1)))
+#define DL_reg(context)      (*(BYTE*)(&(context)->sc_edx))
+#define DH_reg(context)      (*(((BYTE*)(&(context)->sc_edx)+1)))
+                            
+#define CS_reg(context)      ((context)->sc_cs)
+#define DS_reg(context)      ((context)->sc_ds)
+#define ES_reg(context)      ((context)->sc_es)
+#define SS_reg(context)      ((context)->sc_ss)
+                            
+#ifdef linux                
+#define FS_reg(context)      ((context)->sc_fs)
+#define GS_reg(context)      ((context)->sc_gs)
 #else  /* FIXME: are fs and gs supported under *BSD? */
-#define FS  0
-#define GS  0
-#endif
+#define FS_reg(context)      0
+#define GS_reg(context)      0
+#endif                      
+                            
+#ifndef __FreeBSD__         
+#define EFL_reg(context)     ((context)->sc_eflags)
+#define FL_reg(context)      (*(WORD*)(&(context)->sc_eflags))
+#else                       
+#define EFL_reg(context)     ((context)->sc_efl)
+#define FL_reg(context)      (*(WORD*)(&(context)->sc_efl))
+#endif                      
+                            
+#define EIP_reg(context)     ((context)->sc_eip)
+#define ESP_reg(context)     ((context)->sc_esp)
+                            
+#define IP_reg(context)      (*(WORD*)(&(context)->sc_eip))
+#define SP_reg(context)      (*(WORD*)(&(context)->sc_esp))
+                            
+#define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
+#define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
 
-#ifndef __FreeBSD__
-#define EFL (context->sc_eflags)
-#define FL (*(WORD*)&context->sc_eflags)
-#else
-#define EFL (context->sc_efl)
-#define FL (*(WORD*)&context->sc_efl)
-#endif
-
-#define EIP (context->sc_eip)
-#define ESP (context->sc_esp)
-
-#define IP  (*(WORD*)&context->sc_eip)
-#define SP  (*(WORD*)&context->sc_esp)
-
-#define SetCflag	(EFL |= 0x00000001)
-#define ResetCflag	(EFL &= 0xfffffffe)
-
-#else
-
-#include "bx_bochs.h"
-
-#define SetCflag	bx_STC()
-#define ResetCflag	bx_CLC()
-
-#endif /* PROCEMU */
 #endif /* __WINE_REGISTERS_H */

@@ -32,7 +32,7 @@ typedef struct tagCLASS
 #endif
 
 
-HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr );
+HCLASS CLASS_FindClassByName( SEGPTR name, WORD hinstance, CLASS **ptr );
 CLASS * CLASS_FindClassPtr( HCLASS hclass );
 
 

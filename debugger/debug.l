@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "dbg.tab.h"
 #include "debugger.h"
+#include "dbg.tab.h"
 
 #ifdef USE_READLINE
 #undef YY_INPUT
@@ -25,7 +25,6 @@ static int dbg_read(char * buf, int size);
 static char * make_symbol(char *);
 void flush_symbols();
 static int syntax_error;
-extern int yylval;
 %}
 
 DIGIT	   [0-9]
@@ -39,37 +38,39 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 
 [-+=()*:]       { return *yytext; }
 
-"0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval); return NUM; }
-{DIGIT}+             { sscanf(yytext, "%d", &yylval); return NUM; }
+"0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval.integer); return NUM; }
+{DIGIT}+             { sscanf(yytext, "%d", &yylval.integer); return NUM; }
 
-"/"{DIGIT}+{FORMAT}  { char *last; yylval = strtol( yytext+1, &last, NULL );
-                       yylval = (yylval << 8) | *last; return FORMAT; }
-"/"{FORMAT}          { yylval = (1 << 8) | yytext[1]; return FORMAT; }
+"/"{DIGIT}+{FORMAT}  { char * last;
+                       yylval.integer = strtol( yytext+1, &last, NULL );
+                       yylval.integer = (yylval.integer << 8) | *last;
+                       return FORMAT; }
+"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return FORMAT; }
 
-$pc     { yylval = REG_EIP; return REG; }
-$flags  { yylval = REG_EFL; return REG; }
-$eip    { yylval = REG_EIP; return REG; }
-$ip     { yylval = REG_IP;  return REG; }
-$esp    { yylval = REG_ESP; return REG; }
-$sp     { yylval = REG_SP;  return REG; }
-$eax    { yylval = REG_EAX; return REG; }
-$ebx    { yylval = REG_EBX; return REG; }
-$ecx    { yylval = REG_ECX; return REG; }
-$edx    { yylval = REG_EDX; return REG; }
-$esi    { yylval = REG_ESI; return REG; }
-$edi    { yylval = REG_EDI; return REG; }
-$ebp    { yylval = REG_EBP; return REG; }
-$ax     { yylval = REG_AX;  return REG; }
-$bx     { yylval = REG_BX;  return REG; }
-$cx     { yylval = REG_CX;  return REG; }
-$dx     { yylval = REG_DX;  return REG; }
-$si     { yylval = REG_SI;  return REG; }
-$di     { yylval = REG_DI;  return REG; }
-$bp     { yylval = REG_BP;  return REG; }
-$es     { yylval = REG_ES;  return REG; }
-$ds     { yylval = REG_DS;  return REG; }
-$cs     { yylval = REG_CS;  return REG; }
-$ss     { yylval = REG_SS;  return REG; }
+$pc     { yylval.reg = REG_EIP; return REG; }
+$flags  { yylval.reg = REG_EFL; return REG; }
+$eip    { yylval.reg = REG_EIP; return REG; }
+$ip     { yylval.reg = REG_IP;  return REG; }
+$esp    { yylval.reg = REG_ESP; return REG; }
+$sp     { yylval.reg = REG_SP;  return REG; }
+$eax    { yylval.reg = REG_EAX; return REG; }
+$ebx    { yylval.reg = REG_EBX; return REG; }
+$ecx    { yylval.reg = REG_ECX; return REG; }
+$edx    { yylval.reg = REG_EDX; return REG; }
+$esi    { yylval.reg = REG_ESI; return REG; }
+$edi    { yylval.reg = REG_EDI; return REG; }
+$ebp    { yylval.reg = REG_EBP; return REG; }
+$ax     { yylval.reg = REG_AX;  return REG; }
+$bx     { yylval.reg = REG_BX;  return REG; }
+$cx     { yylval.reg = REG_CX;  return REG; }
+$dx     { yylval.reg = REG_DX;  return REG; }
+$si     { yylval.reg = REG_SI;  return REG; }
+$di     { yylval.reg = REG_DI;  return REG; }
+$bp     { yylval.reg = REG_BP;  return REG; }
+$es     { yylval.reg = REG_ES;  return REG; }
+$ds     { yylval.reg = REG_DS;  return REG; }
+$cs     { yylval.reg = REG_CS;  return REG; }
+$ss     { yylval.reg = REG_SS;  return REG; }
 
 info|inf|in		      { return INFO; }
 segments|segm                 { return SEGMENTS; }
@@ -103,14 +104,14 @@ registers|regs|reg|re	{ return REGS; }
 
 stack|stac|sta|st     	{ return STACK; }
 
-{IDENTIFIER}	{yylval = (int) make_symbol(yytext); 
-	          return IDENTIFIER;
-	         }
+{IDENTIFIER}	{ yylval.string = make_symbol(yytext); return IDENTIFIER; }
 
 [ \t]+        /* Eat up whitespace */
 
-.		{ if(syntax_error == 0) {
-		syntax_error ++; fprintf(stderr, "Syntax Error\n"); }
+.		{ if (syntax_error == 0)
+                  {
+		    syntax_error ++; fprintf(stderr, "Syntax Error\n");
+                  }
 		}
 
 %%
@@ -124,11 +125,6 @@ int yywrap(void) { return 1; }
 #define whitespace(c) (((c) == ' ') || ((c) == '\t'))
 #endif
 
-#if 0
-/* Used only with GNU readline */
-#include "readline/readline.h"
-#include "readline/chardefs.h"
-#endif
 
 /* Strip whitespace from the start and end of STRING. */
 static void stripwhite (char *string)
@@ -161,10 +157,12 @@ static int dbg_read(char * buf, int size)
         line = readline ("Wine-dbg>");
         if (!line) exit(0);
 
-        /* Remove leading and trailing whitespace from the line.
-           Then, if there is anything left, add it to the history list
-           and execute it. */
+        /* Remove leading and trailing whitespace from the line */
+
         stripwhite (line);
+
+        /* If there is anything left, add it to the history list
+           and execute it. Otherwise, re-execute last command. */
 
         if (*line)
         {
@@ -172,7 +170,9 @@ static int dbg_read(char * buf, int size)
             strncpy( last_line, line, 255 );
             last_line[255] = '\0'; 
        }
-        else line = last_line;  /* Repeat previous command */
+
+        free( line );
+        line = last_line;
 
         if ((len = strlen(line)) > 0)
         {
@@ -184,7 +184,6 @@ static int dbg_read(char * buf, int size)
             strcpy(buf, line);
             buf[len] = '\n';
             buf[len+1] = 0;
-            free(line);
             return len + 1;
         }
     }

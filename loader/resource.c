@@ -549,36 +549,33 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
     if (hAccel == 0 || msg == NULL) return 0;
     if (msg->message != WM_KEYDOWN &&
     	msg->message != WM_KEYUP &&
+	msg->message != WM_SYSKEYDOWN &&
+	msg->message != WM_SYSKEYUP &&
     	msg->message != WM_CHAR) return 0;
 
     dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04X !\n", hAccel);
 
     lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
     for (i = 0; i < lpAccelTbl->wCount; i++) {
-	if (lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) {
-	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
-		msg->message == WM_KEYDOWN) {
-		if ((lpAccelTbl->tbl[i].type & SHIFT_ACCEL) &&
-		    !(GetKeyState(VK_SHIFT) & 0xf)) {
+	if(lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) {
+	    if(msg->wParam == lpAccelTbl->tbl[i].wEvent &&
+	       (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)) {
+		INT mask = 0;
+
+		if(GetKeyState(VK_SHIFT) & 0xf) mask |= SHIFT_ACCEL;
+		if(GetKeyState(VK_CONTROL) & 0xf) mask |= CONTROL_ACCEL;
+		if(GetKeyState(VK_MENU) & 0xf) mask |= ALT_ACCEL;
+		if(mask == (lpAccelTbl->tbl[i].type &
+			    (SHIFT_ACCEL | CONTROL_ACCEL | ALT_ACCEL))) {
+		    SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval,
+				0x00010000L);
 		    GlobalUnlock(hAccel);
-		    return 0;
-		}
-		if ((lpAccelTbl->tbl[i].type & CONTROL_ACCEL) &&
-		    !(GetKeyState(VK_CONTROL) & 0xf)) {
-		    GlobalUnlock(hAccel);
-		    return 0;
-		}
-		if ((lpAccelTbl->tbl[i].type & ALT_ACCEL) &&
-		    !(GetKeyState(VK_MENU) & 0xf)) {
-		    GlobalUnlock(hAccel);
-		    return 0;
-		}
-		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
-		GlobalUnlock(hAccel);
-		return 1;
-		}
-	    if (msg->message == WM_KEYUP) return 1;
+		    return 1;
+	        }
+		if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
+		    return 1;
 	    }
+	}
 	else {
 	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
 		msg->message == WM_CHAR) {
@@ -619,6 +616,8 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     dprintf_resource( stddeb, "strlen = %d\n", (int)*p );
     
     i = min(buflen - 1, *p);
+    if (buffer == NULL)
+	return i;
     if (i > 0) {
 	memcpy(buffer, p + 1, i);
 	buffer[i] = '\0';

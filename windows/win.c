@@ -224,7 +224,7 @@ BOOL WIN_CreateDesktopWindow(void)
     CLASS *classPtr;
     HDC hdc;
 
-    if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_NAME, 0, &classPtr )))
+    if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_ATOM, 0, &classPtr )))
 	return FALSE;
 
     hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
@@ -302,17 +302,23 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     int wmcreate;
     XSetWindowAttributes win_attr;
 
-    if (windowName != NULL && HIWORD(windowName) == 0) {
-	dprintf_win(stddeb,"CreateWindowEx: %04x ", LOWORD(windowName));
-    } else {
-	dprintf_win(stddeb,"CreateWindowEx: '%s' ", windowName);
-    }
-    dprintf_win(stddeb, "%08lX '%s' %08lX %d,%d %dx%d %04X %04X %04X %08lx\n",
-		exStyle, className, style, x, y, width, height,
+    /* FIXME: windowName and className should be SEGPTRs */
+
+    if (HIWORD(windowName))
+	dprintf_win( stddeb, "CreateWindowEx: '%s' ", windowName );
+    else
+	dprintf_win( stddeb, "CreateWindowEx: %04x ", LOWORD(windowName) );
+    if (HIWORD(className))
+        dprintf_win( stddeb, "'%s' ", className );
+    else
+        dprintf_win( stddeb, "%04x ", LOWORD(className) );
+
+    dprintf_win(stddeb, "%08lx %08lx %d,%d %dx%d %04x %04x %04x %08lx\n",
+		exStyle, style, x, y, width, height,
 		parent, menu, instance, data);
     /* 'soundrec.exe' has negative position ! 
        Why ? For now, here a patch : */
-    if (!strcmp(className, "SoundRec"))
+    if (HIWORD(className) && !strcmp(className, "SoundRec"))
     {
 	if (x < 0) x = 0;
 	if (y < 0) y = 0;
@@ -330,7 +336,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     {
 	/* Make sure parent is valid */
         if (!IsWindow( parent )) {
-	    dprintf_win(stddeb,"CreateWindowEx: Parent %x is not a windows\n", parent);
+	    dprintf_win(stddeb,"CreateWindowEx: Parent %x is not a window\n", parent);
 	    return 0;
 	}
     }
@@ -342,9 +348,15 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	}
     }
 
-    if (!(class = CLASS_FindClassByName( className, GetExePtr( instance ), &classPtr ))) {
-	fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
-	return 0;
+    {
+        /* FIXME!! */
+        char buff[256];
+        if (HIWORD(className)) strcpy( buff, className );
+        if (!(class = CLASS_FindClassByName( HIWORD(className) ? MAKE_SEGPTR(buff) : (SEGPTR)className,
+                                         GetExePtr( instance ), &classPtr ))) {
+            fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
+            return 0;
+        }
     }
 
       /* Correct the window style */
@@ -457,14 +469,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     {
         if (menu) SetMenu(hwnd, menu);
         else if (classPtr->wc.lpszMenuName)
-            SetMenu(hwnd,LoadMenu(instance,(SEGPTR)classPtr->wc.lpszMenuName));
+            SetMenu( hwnd, LoadMenu( instance, classPtr->wc.lpszMenuName ) );
     }
     else wndPtr->wIDmenu = menu;
 
       /* Send the WM_CREATE message */
 
-    hclassName = USER_HEAP_ALLOC( strlen(className)+1 );
-    strcpy( USER_HEAP_LIN_ADDR(hclassName), className );
     createStruct.lpCreateParams = (LPSTR)data;
     createStruct.hInstance      = instance;
     createStruct.hMenu          = menu;
@@ -474,24 +484,29 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     createStruct.x              = x;
     createStruct.y              = y;
     createStruct.style          = style;
-    createStruct.lpszClass      = (LPSTR)USER_HEAP_SEG_ADDR(hclassName);
     createStruct.dwExStyle      = 0;
-    if (windowName)
+    if (HIWORD(className))
     {
-	if (HIWORD(windowName) == 0) {
-	    /* Hack for SS_ICON controls */
-	    createStruct.lpszName = windowName;
-	    hwinName = 0;
-	} else  {
-	    hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
-	    strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
-	    createStruct.lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
-	}
+        hclassName = USER_HEAP_ALLOC( strlen(className)+1 );
+        strcpy( USER_HEAP_LIN_ADDR(hclassName), className );
+        createStruct.lpszClass = (LPSTR)USER_HEAP_SEG_ADDR(hclassName);
+    }
+    else
+    {
+        hclassName = 0;
+        createStruct.lpszClass = className;
+    }
+
+    if (HIWORD(windowName))
+    {
+        hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
+        strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
+        createStruct.lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
     }
     else
     {
         hwinName = 0;
-        createStruct.lpszName = NULL;
+        createStruct.lpszName = windowName;
     }
 
     wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, MAKE_SEGPTR(&createStruct) );
@@ -506,7 +521,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	wmcreate = SendMessage(hwnd, WM_CREATE, 0, MAKE_SEGPTR(&createStruct));
     }
 
-    USER_HEAP_FREE( hclassName );
+    if (hclassName) USER_HEAP_FREE( hclassName );
     if (hwinName) USER_HEAP_FREE( hwinName );
 
     if (wmcreate == -1)
@@ -609,7 +624,7 @@ BOOL OpenIcon(HWND hWnd)
 /***********************************************************************
  *           FindWindow   (USER.50)
  */
-HWND FindWindow(LPSTR ClassMatch, LPSTR TitleMatch)
+HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch )
 {
     HCLASS hclass;
     CLASS *classPtr;

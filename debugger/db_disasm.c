@@ -64,7 +64,7 @@
 
 #include <stdio.h>
 #include "windows.h"
-#include "ldt.h"
+#include "debugger.h"
 
 /*
  * Switch to disassemble 16-bit code.
@@ -881,52 +881,46 @@ static int db_lengths[] = {
 	10,	/* EXTR */
 };
 
-static unsigned int db_get_task_value( unsigned int segment, unsigned int loc,
-                                       int size, int is_signed)
+static unsigned int db_get_task_value( const DBG_ADDR *addr,
+                                       int size, int is_signed )
 {
-  unsigned int result;
-  if (segment) loc = (unsigned int)PTR_SEG_OFF_TO_LIN( segment, loc );
-  switch(size)
+    unsigned int result;
+    unsigned char *p = DBG_ADDR_TO_LIN( addr );
+
+    switch(size)
     {
     case 4:
-      if (is_signed)
-	result = (unsigned int) *((int *) loc);
-      else
-	result = (unsigned int) *((unsigned int *) loc);
-      break;
+        if (is_signed) result = (unsigned int) *(int *)p;
+        else result = *(unsigned int *)p;
+        break;
     case 2:
-      if (is_signed)
-	result = (unsigned int) *((short int *) loc);
-      else
-	result = *((unsigned short int *) loc);
-      break;
+        if (is_signed) result = (unsigned int) *(short int *)p;
+        else result = *(unsigned short int *)p;
+        break;
     case 1:
-      if (is_signed)
-	result = (unsigned int) *((char *) loc);
-      else
-	result = *((unsigned char *) loc);
-      break;
+        if (is_signed) result = (unsigned int) *(char *)p;
+        else result = *(unsigned char *)p;
+        break;
     default:
-      fprintf(stderr, "Illegal size specified\n");
-      result = 0;
-      break;
+        fprintf(stderr, "Illegal size specified\n");
+        result = 0;
+        break;
     }
-  return result;
+    return result;
 }
 
-#define	get_value_inc(result, segment, loc, size, is_signed) \
-	result = db_get_task_value((segment), (loc), (size), (is_signed)); \
-        if (!db_disasm_16) (loc) += (size); \
-        else (loc) = ((loc) & 0xffff0000) | (((loc) + (size)) & 0xffff);
+#define	get_value_inc(result, addr, size, is_signed) \
+    result = db_get_task_value((addr), (size), (is_signed)); \
+    if (!db_disasm_16) (addr)->off += (size); \
+    else (addr)->off = ((addr)->off + (size)) & 0xffff;
 
 /*
  * Read address at location and return updated location.
  */
-unsigned int db_read_address( unsigned int segment, unsigned int loc,
-                              int short_addr, int regmodrm,
-                              struct i_addr *addrp )
+void db_read_address( DBG_ADDR *addr, int short_addr, int regmodrm,
+                      struct i_addr *addrp )
 {
-	int		mod, rm, sib, index, disp;
+	int mod, rm, sib, index, disp;
 
 	mod = f_mod(regmodrm);
 	rm  = f_rm(regmodrm);
@@ -934,7 +928,7 @@ unsigned int db_read_address( unsigned int segment, unsigned int loc,
 	if (mod == 3) {
 	    addrp->is_reg = TRUE;
 	    addrp->disp = rm;
-	    return (loc);
+            return;
 	}
 	addrp->is_reg = FALSE;
 	addrp->index = 0;
@@ -945,7 +939,7 @@ unsigned int db_read_address( unsigned int segment, unsigned int loc,
 	    switch (mod) {
 		case 0:
 		    if (rm == 6) {
-			get_value_inc(disp, segment, loc, 2, TRUE);
+			get_value_inc(disp, addr, 2, TRUE);
 			addrp->disp = disp;
 			addrp->base = 0;
 		    }
@@ -955,12 +949,12 @@ unsigned int db_read_address( unsigned int segment, unsigned int loc,
 		    }
 		    break;
 		case 1:
-		    get_value_inc(disp, segment, loc, 1, TRUE);
+		    get_value_inc(disp, addr, 1, TRUE);
 		    addrp->disp = disp;
 		    addrp->base = db_index_reg_16[rm];
 		    break;
 		case 2:
-		    get_value_inc(disp, segment, loc, 2, TRUE);
+		    get_value_inc(disp, addr, 2, TRUE);
 		    addrp->disp = disp;
 		    addrp->base = db_index_reg_16[rm];
 		    break;
@@ -968,7 +962,7 @@ unsigned int db_read_address( unsigned int segment, unsigned int loc,
 	}
 	else {
 	    if (mod != 3 && rm == 4) {
-		get_value_inc(sib, segment, loc, 1, FALSE);
+		get_value_inc(sib, addr, 1, FALSE);
 		rm = sib_base(sib);
 		index = sib_index(sib);
 		if (index != 4)
@@ -979,7 +973,7 @@ unsigned int db_read_address( unsigned int segment, unsigned int loc,
 	    switch (mod) {
 		case 0:
 		    if (rm == 5) {
-			get_value_inc(addrp->disp, segment, loc, 4, FALSE);
+			get_value_inc(addrp->disp, addr, 4, FALSE);
 			addrp->base = 0;
 		    }
 		    else {
@@ -989,19 +983,18 @@ unsigned int db_read_address( unsigned int segment, unsigned int loc,
 		    break;
 
 		case 1:
-		    get_value_inc(disp, segment, loc, 1, TRUE);
+		    get_value_inc(disp, addr, 1, TRUE);
 		    addrp->disp = disp;
 		    addrp->base = db_reg[LONG][rm];
 		    break;
 
 		case 2:
-		    get_value_inc(disp, segment, loc, 4, FALSE);
+		    get_value_inc(disp, addr, 4, FALSE);
 		    addrp->disp = disp;
 		    addrp->base = db_reg[LONG][rm];
 		    break;
 	    }
 	}
-	return (loc);
 }
 
 static void db_task_printsym(unsigned int addr, int size)
@@ -1015,7 +1008,10 @@ static void db_task_printsym(unsigned int addr, int size)
         fprintf(stderr, "0x%4.4x", addr & 0xffff );
         break;
     case LONG:
-        print_address(0, addr, db_disasm_16 ? 16 : 32);
+        {
+            DBG_ADDR address = { 0, addr };
+            DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32 );
+        }
         break;
     }
 }
@@ -1051,8 +1047,8 @@ db_print_address(seg, size, addrp)
  * Disassemble floating-point ("escape") instruction
  * and return updated location.
  */
-unsigned int db_disasm_esc( unsigned int segment, unsigned int loc,
-                            int inst, int short_addr, int size, char *seg )
+void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
+                    int size, char *seg )
 {
 	int		regmodrm;
 	struct finst	*fp;
@@ -1060,14 +1056,14 @@ unsigned int db_disasm_esc( unsigned int segment, unsigned int loc,
 	struct i_addr	address;
 	char *		name;
 
-	get_value_inc(regmodrm, segment, loc, 1, FALSE);
+	get_value_inc(regmodrm, addr, 1, FALSE);
 	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
 	    /*
 	     * Normal address modes.
 	     */
-	    loc = db_read_address(segment,loc, short_addr, regmodrm, &address);
+	    db_read_address( addr, short_addr, regmodrm, &address);
 	    fprintf(stderr,fp->f_name);
 	    switch(fp->f_size) {
 		case SNGL:
@@ -1123,15 +1119,16 @@ unsigned int db_disasm_esc( unsigned int segment, unsigned int loc,
 		    break;
 	    }
 	}
-
-	return (loc);
 }
 
-/*
- * Disassemble instruction at 'loc'.  Return address of start of
- * next instruction.
+
+/***********************************************************************
+ *           DEBUG_Disasm
+ *
+ * Disassemble instruction at 'addr'.  addr is changed to point to the
+ * start of the next instruction.
  */
-unsigned int db_disasm( unsigned int segment, unsigned int loc )
+void DEBUG_Disasm( DBG_ADDR *addr )
 {
 	int	inst;
 	int	size;
@@ -1146,14 +1143,13 @@ unsigned int db_disasm( unsigned int segment, unsigned int loc )
 	int	displ;
 	int	prefix;
 	int	imm;
-	int	imm2;
 	int	len;
 	struct i_addr	address;
 
-        if (!segment) db_disasm_16 = FALSE;
-        else db_disasm_16 = !(GET_SEL_FLAGS(segment) & LDT_FLAGS_32BIT);
+        if (!addr->seg) db_disasm_16 = FALSE;
+        else db_disasm_16 = !(GET_SEL_FLAGS(addr->seg) & LDT_FLAGS_32BIT);
 
-	get_value_inc(inst, segment, loc, 1, FALSE);
+	get_value_inc( inst, addr, 1, FALSE );
 
 	if (db_disasm_16) {
 	    short_addr = TRUE;
@@ -1212,18 +1208,18 @@ unsigned int db_disasm( unsigned int segment, unsigned int loc )
 		    break;
 	    }
 	    if (prefix) {
-		get_value_inc(inst, segment, loc, 1, FALSE);
+		get_value_inc(inst, addr, 1, FALSE);
 	    }
 	} while (prefix);
 
-	if (inst >= 0xd8 && inst <= 0xdf) {
-	    loc = db_disasm_esc(segment, loc, inst, short_addr, size, seg);
-	    fprintf(stderr,"\n");
-	    return (loc);
-	}
+	if (inst >= 0xd8 && inst <= 0xdf)
+        {
+	    db_disasm_esc( addr, inst, short_addr, size, seg);
+            return;
+        }
 
 	if (inst == 0x0f) {
-	    get_value_inc(inst, segment, loc, 1, FALSE);
+	    get_value_inc(inst, addr, 1, FALSE);
 	    ip = db_inst_0f[inst>>4];
 	    if (ip == 0) {
 		ip = &db_bad_inst;
@@ -1236,8 +1232,8 @@ unsigned int db_disasm( unsigned int segment, unsigned int loc )
 	    ip = &db_inst_table[inst];
 
 	if (ip->i_has_modrm) {
-	    get_value_inc(regmodrm, segment, loc, 1, FALSE);
-	    loc = db_read_address(segment,loc, short_addr, regmodrm, &address);
+	    get_value_inc(regmodrm, addr, 1, FALSE);
+	    db_read_address( addr, short_addr, regmodrm, &address);
 	}
 
 	i_name = ip->i_name;
@@ -1378,42 +1374,42 @@ unsigned int db_disasm( unsigned int segment, unsigned int loc )
 
 		case I:
 		    len = db_lengths[size];
-		    get_value_inc(imm, segment, loc, len, FALSE);/* unsigned */
+		    get_value_inc(imm, addr, len, FALSE);/* unsigned */
 		    fprintf(stderr,"$0x%x", imm);
 		    break;
 
 		case Is:
 		    len = db_lengths[size];
-		    get_value_inc(imm, segment, loc, len, TRUE); /* signed */
+		    get_value_inc(imm, addr, len, TRUE); /* signed */
 		    fprintf(stderr,"$%d", imm);
 		    break;
 
 		case Ib:
-		    get_value_inc(imm, segment, loc, 1, FALSE); /* unsigned */
+		    get_value_inc(imm, addr, 1, FALSE); /* unsigned */
 		    fprintf(stderr,"$0x%x", imm);
 		    break;
 
 		case Ibs:
-		    get_value_inc(imm, segment, loc, 1, TRUE); /* signed */
+		    get_value_inc(imm, addr, 1, TRUE); /* signed */
 		    fprintf(stderr,"$%d", imm);
 		    break;
 
 		case Iw:
-		    get_value_inc(imm, segment, loc, 2, FALSE); /* unsigned */
+		    get_value_inc(imm, addr, 2, FALSE); /* unsigned */
 		    fprintf(stderr,"$0x%x", imm);
 		    break;
 
 		case Il:
-		    get_value_inc(imm, segment, loc, 4, FALSE);
+		    get_value_inc(imm, addr, 4, FALSE);
 		    fprintf(stderr,"$0x%x", imm);
 		    break;
 
 		case O:
 		    if (short_addr) {
-			get_value_inc(displ, segment, loc, 2, TRUE);
+			get_value_inc(displ, addr, 2, TRUE);
 		    }
 		    else {
-			get_value_inc(displ, segment, loc, 4, TRUE);
+			get_value_inc(displ, addr, 4, TRUE);
 		    }
 		    if (seg)
 			fprintf(stderr,"%s:%d",seg, displ);
@@ -1422,27 +1418,26 @@ unsigned int db_disasm( unsigned int segment, unsigned int loc )
 		    break;
 
 		case Db:
-		    get_value_inc(displ, segment, loc, 1, TRUE);
+		    get_value_inc(displ, addr, 1, TRUE);
 		    if (short_addr) {
 			/* offset only affects low 16 bits */
-		        displ = (loc & 0xffff0000)
-			      | ((loc + displ) & 0xffff);
+		        displ = (addr->off & 0xffff0000)
+			      | ((addr->off + displ) & 0xffff);
 		    }
-		    else
-			displ = displ + loc;
+		    else displ += addr->off;
 		    db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;
 
 		case Dl:
 		    if (short_addr) {
-			get_value_inc(displ, segment, loc, 2, TRUE);
+			get_value_inc(displ, addr, 2, TRUE);
 			/* offset only affects low 16 bits */
-		        displ = (loc & 0xffff0000)
-			      | ((loc + displ) & 0xffff);
+		        displ = (addr->off & 0xffff0000)
+			      | ((addr->off + displ) & 0xffff);
 		    }
 		    else {
-			get_value_inc(displ, segment, loc, 4, TRUE);
-			displ = displ + loc;
+			get_value_inc(displ, addr, 4, TRUE);
+			displ += addr->off;
 		    }
 		    db_task_printsym( displ, short_addr ? WORD : LONG);
 		    break;
@@ -1456,18 +1451,15 @@ unsigned int db_disasm( unsigned int segment, unsigned int loc )
 		    break;
 
 		case OS:
-		    if (short_addr) {
-			get_value_inc(imm, segment, loc, 2, FALSE);/* offset */
-		    }
-		    else {
-			get_value_inc(imm, segment, loc, 4, FALSE);/* offset */
-		    }
-		    get_value_inc(imm2, segment, loc, 2, FALSE); /* segment */
-                    print_address( imm2, imm, short_addr ? 16 : 32 );
+                    {
+                        DBG_ADDR address;
+                        get_value_inc( address.off, addr,  /* offset */
+                                       short_addr ? 2 : 4, FALSE );
+                        get_value_inc( address.seg, addr,  /* segment */
+                                       2, FALSE );
+                        DEBUG_PrintAddress( &address, short_addr ? 16 : 32 );
+                    }
 		    break;
 	    }
 	}
-
-	return (loc);
 }
-

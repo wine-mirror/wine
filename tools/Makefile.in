@@ -16,8 +16,7 @@ build: build.o
 depend:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
-	cp tmp_make Makefile
-	rm tmp_make
+	mv tmp_make Makefile
 
 clean:
 	rm -f *.o \#*\# *~ build tmp_make
@@ -27,15 +26,6 @@ distclean: clean
 
 countryclean:
 
-NAMES = $(SRCS:.c=)
-
-winelibclean:
-	for i in $(NAMES); do \
-	if test `grep -c WINELIB $$i.c` -ne 0; then \
-	rm $$i.o; \
-	fi; \
-	done
- 
 dummy:
 
 ### Dependencies:

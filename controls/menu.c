@@ -673,7 +673,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, WORD id, int x, int y)
     {
 	WND *wndPtr = WIN_FindWndPtr( hwndOwner );
 	if (!wndPtr) return FALSE;
-	menu->hWnd = CreateWindow( POPUPMENU_CLASS_NAME, "",
+	menu->hWnd = CreateWindow( (LPSTR)POPUPMENU_CLASS_ATOM, "",
 				   WS_POPUP | WS_BORDER, x, y, 
 				   menu->Width + 2*SYSMETRICS_CXBORDER,
 				   menu->Height + 2*SYSMETRICS_CYBORDER,

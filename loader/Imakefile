@@ -9,7 +9,6 @@ SRCS = \
 	ne_resource.c \
 	pe_image.c \
 	pe_resource.c \
-	selector.c \
 	signal.c \
 	resource.c \
 	task.c 

@@ -539,6 +539,7 @@ HWND SetCapture( HWND hwnd )
                      GrabModeAsync, GrabModeAsync,
                      None, None, CurrentTime ) == GrabSuccess)
     {
+	dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
 	captureWnd   = hwnd;
 	return old_capture_wnd;
     }
@@ -554,6 +555,7 @@ void ReleaseCapture()
     if (captureWnd == 0) return;
     XUngrabPointer( display, CurrentTime );
     captureWnd = 0;
+    dprintf_win(stddeb, "ReleaseCapture\n");
 }
 
 /**********************************************************************

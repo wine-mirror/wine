@@ -17,6 +17,7 @@ SRCS = \
 	hash.c \
 	info.c \
 	lex.yy.c \
+	memory.c \
 	registers.c \
 	stack.c
 

@@ -105,6 +105,8 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
   LONG         style = 0;
   LONG         cstyle = GetWindowLong(hwnd,GWL_STYLE);
   RECT         rect,lboxrect;
+  char className[] = "COMBOLBOX";  /* Hack so that class names are > 0x10000 */
+  char editName[] = "EDIT";
 
   /* translate combo into listbox styles */
   if (cstyle & CBS_OWNERDRAWFIXED) style |= LBS_OWNERDRAWFIXED;
@@ -125,7 +127,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
     dprintf_combo(stddeb,"CBS_SIMPLE\n");
     SetRectEmpty(&lphc->RectButton);
     lphc->LBoxTop = lphl->StdItemHeight;
-    lphc->hWndEdit = CreateWindow("EDIT", "", 
+    lphc->hWndEdit = CreateWindow(editName, "", 
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				  0, 0, rect.right, lphl->StdItemHeight,
 				  hwnd, 1, GetWindowWord(hwnd,GWW_HINSTANCE), 0L);
@@ -139,7 +141,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
     SetWindowPos(hwnd, 0, 0, 0, rect.right - rect.left + 2*SYSMETRICS_CXBORDER,
 		 lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER,
 		 SWP_NOMOVE | SWP_NOZORDER);
-    lphc->hWndEdit = CreateWindow("EDIT", "",
+    lphc->hWndEdit = CreateWindow(editName, "",
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				  0, 0, lphc->RectButton.left, lphl->StdItemHeight,
 				  hwnd, 1, GetWindowWord(hwnd,GWW_HINSTANCE), 0L);
@@ -159,7 +161,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
   /* FIXME: WinSight says these should be CHILD windows with the TOPMOST flag
    * set. Wine doesn't support TOPMOST, and simply setting the WS_CHILD
    * flag doesn't work. */
-  lphc->hWndLBox = CreateWindow("COMBOLBOX", "", 
+  lphc->hWndLBox = CreateWindow(className, "", 
 				WS_POPUP | WS_BORDER | WS_VSCROLL,
 				lboxrect.left, lboxrect.top,
 				lboxrect.right - lboxrect.left, 

@@ -3,10 +3,11 @@
 MODULE = memory
 
 SRCS = \
-	selector.c \
+	atom.c \
 	global.c \
 	ldt.c \
-	local.c
+	local.c \
+	selector.c
 
 OBJS = $(SRCS:.c=.o)
 

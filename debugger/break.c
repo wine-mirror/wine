@@ -8,9 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-#ifdef linux
-#include <sys/utsname.h>
-#endif
 #include "windows.h"
 #include "debugger.h"
 
@@ -21,15 +18,14 @@
 
 typedef struct
 {
-    unsigned int  segment;
-    unsigned int  addr;
-    BYTE          addrlen;
-    BYTE          opcode;
-    BOOL          enabled;
-    BOOL          in_use;
+    DBG_ADDR    addr;
+    BYTE        addrlen;
+    BYTE        opcode;
+    BOOL        enabled;
+    BOOL        in_use;
 } BREAKPOINT;
 
-static BREAKPOINT breakpoints[MAX_BREAKPOINTS] = { { 0, }, };
+static BREAKPOINT breakpoints[MAX_BREAKPOINTS];
 
 static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
 
@@ -39,11 +35,11 @@ static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
  *
  * Change the opcode at segment:addr.
  */
-static void DEBUG_SetOpcode( unsigned int segment, unsigned int addr, BYTE op )
+static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
 {
-    if (segment)
+    if (addr->seg)
     {
-        *(BYTE *)PTR_SEG_OFF_TO_LIN( segment, addr ) = op;
+        *(BYTE *)PTR_SEG_OFF_TO_LIN( addr->seg, addr->off ) = op;
     }
     else  /* 32-bit code, so we have to change the protection first */
     {
@@ -56,14 +52,15 @@ static void DEBUG_SetOpcode( unsigned int segment, unsigned int addr, BYTE op )
            Not that portability matters, this code is i386 only anyways...
            How do I get the old protection in order to restore it later on?
         */
-        if (mprotect((caddr_t)(addr & (~4095)), 4096,
-                     PROT_READ|PROT_WRITE|PROT_EXEC) == -1)
+        if (mprotect((caddr_t)(addr->off & (~4095)), 4096,
+                     PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
         {
             perror( "Can't set break point" );
             return;
 	}
-        *(BYTE *)addr = op;
-	mprotect((caddr_t)(addr & ~4095), 4096, PROT_READ|PROT_EXEC);
+        *(BYTE *)addr->off = op;
+	mprotect((caddr_t)(addr->off & ~4095), 4096,
+                  PROT_READ | PROT_EXEC );
     }
 }
 
@@ -80,7 +77,7 @@ void DEBUG_SetBreakpoints( BOOL set )
     for (i = 0; i < MAX_BREAKPOINTS; i++)
     {
         if (breakpoints[i].in_use && breakpoints[i].enabled)
-            DEBUG_SetOpcode( breakpoints[i].segment, breakpoints[i].addr,
+            DEBUG_SetOpcode( &breakpoints[i].addr,
                              set ? INT3 : breakpoints[i].opcode );
     }
 }
@@ -92,15 +89,15 @@ void DEBUG_SetBreakpoints( BOOL set )
  * Find the breakpoint for a given address. Return the breakpoint
  * number or -1 if none.
  */
-int DEBUG_FindBreakpoint( unsigned int segment, unsigned int addr )
+int DEBUG_FindBreakpoint( const DBG_ADDR *addr )
 {
     int i;
 
     for (i = 0; i < MAX_BREAKPOINTS; i++)
     {
         if (breakpoints[i].in_use && breakpoints[i].enabled &&
-            breakpoints[i].segment == segment && breakpoints[i].addr == addr)
-            return i;
+            breakpoints[i].addr.seg == addr->seg &&
+            breakpoints[i].addr.off == addr->off) return i;
     }
     return -1;
 }
@@ -111,13 +108,13 @@ int DEBUG_FindBreakpoint( unsigned int segment, unsigned int addr )
  *
  * Add a breakpoint.
  */
-void DEBUG_AddBreakpoint( unsigned int segment, unsigned int addr )
+void DEBUG_AddBreakpoint( const DBG_ADDR *address )
 {
+    DBG_ADDR addr = *address;
     int num;
     BYTE *p;
 
-    if (segment == 0xffffffff) segment = CS;
-    if (segment == WINE_CODE_SELECTOR) segment = 0;
+    DBG_FIX_ADDR_SEG( &addr, CS_reg(DEBUG_context) );
 
     if (next_bp < MAX_BREAKPOINTS)
         num = next_bp++;
@@ -131,16 +128,15 @@ void DEBUG_AddBreakpoint( unsigned int segment, unsigned int addr )
             return;
         }
     }
-    p = segment ? (BYTE *)PTR_SEG_OFF_TO_LIN( segment, addr ) : (BYTE *)addr;
-    breakpoints[num].segment = segment;
+    p = DBG_ADDR_TO_LIN( &addr );
     breakpoints[num].addr    = addr;
-    breakpoints[num].addrlen = !segment ? 32 :
-                          (GET_SEL_FLAGS(segment) & LDT_FLAGS_32BIT) ? 32 : 16;
+    breakpoints[num].addrlen = !addr.seg ? 32 :
+                         (GET_SEL_FLAGS(addr.seg) & LDT_FLAGS_32BIT) ? 32 : 16;
     breakpoints[num].opcode  = *p;
     breakpoints[num].enabled = TRUE;
     breakpoints[num].in_use  = TRUE;
     fprintf( stderr, "Breakpoint %d at ", num );
-    print_address( segment, addr, breakpoints[num].addrlen );
+    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].addrlen );
     fprintf( stderr, "\n" );
 }
 
@@ -193,8 +189,7 @@ void DEBUG_InfoBreakpoints(void)
         if (breakpoints[i].in_use)
         {
             fprintf( stderr, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
-            print_address( breakpoints[i].segment, breakpoints[i].addr,
-                           breakpoints[i].addrlen );
+            DEBUG_PrintAddress( &breakpoints[i].addr, breakpoints[i].addrlen );
             fprintf( stderr, "\n" );
         }
     }
@@ -210,22 +205,24 @@ void DEBUG_InfoBreakpoints(void)
 BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
                            enum exec_mode mode )
 {
-    unsigned int segment, addr;
+    DBG_ADDR addr;
     int bpnum;
 
       /* If not single-stepping, back up over the int3 instruction */
-    if (!(EFL & STEP_FLAG)) EIP--;
+    if (!(EFL_reg(DEBUG_context) & STEP_FLAG)) EIP_reg(DEBUG_context)--;
 
-    segment = (CS == WINE_CODE_SELECTOR) ? 0 : CS;
-    addr    = EIP;
-    bpnum  = DEBUG_FindBreakpoint( segment, addr );
+    addr.seg = (CS_reg(DEBUG_context) == WINE_CODE_SELECTOR) ? 
+                0 : CS_reg(DEBUG_context);
+    addr.off = EIP_reg(DEBUG_context);
+        
+    bpnum  = DEBUG_FindBreakpoint( &addr );
     breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
 
     if ((bpnum != 0) && (bpnum != -1))
     {
         fprintf( stderr, "Stopped on breakpoint %d at ", bpnum );
-        print_address( breakpoints[bpnum].segment, breakpoints[bpnum].addr,
-                       breakpoints[bpnum].addrlen );
+        DEBUG_PrintAddress( &breakpoints[bpnum].addr,
+                            breakpoints[bpnum].addrlen );
         fprintf( stderr, "\n" );
         return FALSE;
     }
@@ -243,34 +240,34 @@ BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
 void DEBUG_RestartExecution( struct sigcontext_struct *context,
                              enum exec_mode mode, int instr_len )
 {
-    unsigned int segment, addr;
+    DBG_ADDR addr;
 
-    segment = (CS == WINE_CODE_SELECTOR) ? 0 : CS;
-    addr    = EIP;
+    addr.seg = (CS_reg(DEBUG_context) == WINE_CODE_SELECTOR) ?
+                0 : CS_reg(DEBUG_context);
+    addr.off = EIP_reg(DEBUG_context);
 
-    if (DEBUG_FindBreakpoint( segment, addr ) != -1)
+    if (DEBUG_FindBreakpoint( &addr ) != -1)
         mode = EXEC_STEP_INSTR;  /* If there's a breakpoint, skip it */
 
     switch(mode)
     {
     case EXEC_CONT: /* Continuous execution */
-        EFL &= ~STEP_FLAG;
+        EFL_reg(DEBUG_context) &= ~STEP_FLAG;
         DEBUG_SetBreakpoints( TRUE );
         break;
 
     case EXEC_STEP_OVER:  /* Stepping over a call */
-        EFL &= ~STEP_FLAG;
-        breakpoints[0].segment = segment;
-        breakpoints[0].addr    = addr + instr_len;
+        EFL_reg(DEBUG_context) &= ~STEP_FLAG;
+        addr.off += instr_len;
+        breakpoints[0].addr    = addr;
         breakpoints[0].enabled = TRUE;
         breakpoints[0].in_use  = TRUE;
-        breakpoints[0].opcode  = segment ?
-           *(BYTE *)PTR_SEG_OFF_TO_LIN(segment,addr+instr_len) : *(BYTE *)addr;
+        breakpoints[0].opcode  = *(BYTE *)DBG_ADDR_TO_LIN( &addr );
         DEBUG_SetBreakpoints( TRUE );
         break;
 
     case EXEC_STEP_INSTR: /* Single-stepping an instruction */
-        EFL |= STEP_FLAG;
+        EFL_reg(DEBUG_context) |= STEP_FLAG;
         break;
     }
 }

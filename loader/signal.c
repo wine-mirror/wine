@@ -55,13 +55,15 @@ static void win_fault(int signal, int code, struct sigcontext *context)
 #endif
     if (signal != SIGTRAP)
     {
-        if (CS == WINE_CODE_SELECTOR)
+        if (CS_reg(context) == WINE_CODE_SELECTOR)
         {
             fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
-                            "  Please debug\n", CS, EIP );
+                            "  Please debug\n",
+                            CS_reg(context), EIP_reg(context) );
         }
         else if (INSTR_EmulateInstruction( context )) return;
-        fprintf(stderr,"In win_fault %x:%lx\n", CS, EIP );
+        fprintf( stderr,"In win_fault %x:%lx\n",
+                 CS_reg(context), EIP_reg(context) );
     }
     XUngrabPointer(display, CurrentTime);
     XUngrabServer(display);

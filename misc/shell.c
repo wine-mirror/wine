@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "windows.h"
 #include "shell.h"
 #include "neexe.h"
@@ -17,7 +18,7 @@
 
 LPKEYSTRUCT	lphRootKey = NULL,lphTopKey = NULL;
 
-static char RootKeyName[]=".classes", TopKeyName[] = "(null)";
+static char RootKeyName[]=".classes", TopKeyName[] = "[top-null]";
 
 /*************************************************************************
  *                        SHELL_RegCheckForRoot()     internal use only
@@ -62,7 +63,7 @@ static LONG SHELL_RegCheckForRoot()
  */
 LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 {
-	LPKEYSTRUCT	lpKey;
+	LPKEYSTRUCT	lpKey,lpNextKey;
 	LPCSTR		ptr;
 	char		str[128];
 	LONG            dwRet;
@@ -71,18 +72,21 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
         if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegOpenKey(%08lX, %p='%s', %p)\n",
 						hKey, lpSubKey, lpSubKey, lphKey);
-	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
         switch(hKey) {
 	case 0: 
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
+        case 0x80000000:
           lpKey = lphRootKey; break;
         default: 
 	  dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
-        if (!*lpSubKey)  { *lphKey = hKey; return ERROR_SUCCESS; }
+	if (lpSubKey == NULL || !*lpSubKey)  { 
+	  *lphKey = hKey; 
+	  return ERROR_SUCCESS; 
+	}
         while(*lpSubKey) {
           ptr = strchr(lpSubKey,'\\');
           if (!ptr) ptr = lpSubKey + strlen(lpSubKey);
@@ -91,8 +95,11 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
           lpSubKey = ptr; 
           if (*lpSubKey) lpSubKey++;
 	  
-	  lpKey = lpKey->lpSubLvl;
-          while(lpKey != NULL && strcmp(lpKey->lpSubKey, str) != 0) { lpKey = lpKey->lpNextKey; }
+	  lpNextKey = lpKey->lpSubLvl;
+          while(lpKey != NULL && strcmp(lpKey->lpSubKey, str) != 0) { 
+          	lpKey = lpNextKey;
+          	if (lpKey) lpNextKey = lpKey->lpNextKey;
+          }
           if (lpKey == NULL) {
 	    dprintf_reg(stddeb,"RegOpenKey: key %s not found!\n",str);
 	    return ERROR_BADKEY;
@@ -119,18 +126,21 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	dwRet = SHELL_RegCheckForRoot();
         if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegCreateKey(%08lX, '%s', %p)\n",	hKey, lpSubKey, lphKey);
-	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
         switch(hKey) {
 	case 0: 
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
+        case 0x80000000:
           lpKey = lphRootKey; break;
         default: 
 	  dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
-        if (!*lpSubKey)  { *lphKey = hKey; return ERROR_SUCCESS; }
+	if (lpSubKey == NULL || !*lpSubKey)  { 
+	  *lphKey = hKey; 
+	  return ERROR_SUCCESS;
+	}
         while (*lpSubKey) {
           dprintf_reg(stddeb, "RegCreateKey: Looking for subkey %s\n", lpSubKey);
           ptr = strchr(lpSubKey,'\\');
@@ -210,7 +220,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
     LONG       	dwRet;
     dprintf_reg(stddeb, "RegSetValue(%08lX, '%s', %08lX, '%s', %08lX);\n",
 		hKey, lpSubKey, dwType, lpVal, dwIgnored);
-    if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
+    /*if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;*/
     if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
     if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
 	dprintf_reg(stddeb, "RegSetValue // key not found ... so create it !\n");
@@ -240,7 +250,7 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 	int			size;
 	dprintf_reg(stddeb, "RegQueryValue(%08lX, '%s', %p, %p);\n",
 							hKey, lpSubKey, lpVal, lpcb);
-	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
+	/*if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;*/
 	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpcb == NULL) return ERROR_INVALID_PARAMETER;
         if (!*lpcb) return ERROR_INVALID_PARAMETER;
@@ -285,12 +295,12 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 	case 0: 
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
+        case 0x80000000:
           lpKey = lphRootKey; break;
         default: 
 	  dprintf_reg(stddeb,"RegEnumKey // specific key = %08lX !\n", hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
-
         lpKey = lpKey->lpSubLvl;
         while(lpKey != NULL){
           if (!dwSubKey){
@@ -301,7 +311,7 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 	    return ERROR_SUCCESS;
 	  }
           dwSubKey--;
-	  lpKey = lpKey->lpNextKey;
+          lpKey = lpKey->lpNextKey;
         }
 	dprintf_reg(stddeb, "RegEnumKey: key not found!\n");
 	return ERROR_INVALID_PARAMETER;
@@ -351,30 +361,75 @@ BOOL DragQueryPoint(HDROP h, POINT FAR *p)
 HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int iShowCmd)
 {
     char cmd[400];
+    char *p,*x;
+    long len;
+    char subclass[200];
+    /* OK. We are supposed to lookup the program associated with lpFile,
+     * then to execute it using that program. If lpFile is a program,
+     * we have to pass the parameters. If an instance is already running,
+     * we might have to send DDE commands.
+     */
     dprintf_exec(stddeb, "ShellExecute(%4X,'%s','%s','%s','%s',%x)\n",
 		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
 		lpParameters ? lpParameters : "<null>", 
 		lpDirectory ? lpDirectory : "<null>", iShowCmd);
-    if(lpOperation && !strcasecmp(lpOperation,"print"))
-    {
-        fprintf(stderr, "Shell print %s: not supported\n", lpFile);
-    	return 2; /* file not found */
+    if (lpFile==NULL) return 0; /* should not happen */
+    if (lpOperation==NULL) /* default is open */
+      lpOperation="open";
+    p=strrchr(lpFile,'.');
+    if (p!=NULL) {
+      x=p; /* the suffixes in the register database are lowercased */
+      while (*x) {*x=tolower(*x);x++;}
     }
-    if(lpOperation && !strcasecmp(lpOperation,"open"))
-    {
-        fprintf(stderr, "ShellExecute: Unknown operation %s\n",lpOperation);
-        return 2;
-    }
-    /* OK. We are supposed to lookup the program associated with lpFile,
-       then to execute it using that program. If lpFile is a program,
-       we have to pass the parameters. If an instance is already running,
-       we might have to send DDE commands.
-       This implementation does none of that. It assumes lpFile is a program.
-       Plain WinExec will do what we need */
-    if(lpParameters)
+    if (p==NULL || !strcmp(p,".exe")) {
+      p=".exe";
+      if (lpParameters) {
         sprintf(cmd,"%s %s",lpFile,lpParameters);
-    else
+      } else {
         strcpy(cmd,lpFile);
+      }
+    } else {
+      len=200;
+      if (RegQueryValue(HKEY_CLASSES_ROOT,p,subclass,&len)==ERROR_SUCCESS) {
+	if (len>20)
+	  fprintf(stddeb,"ShellExecute:subclass with len %ld? (%s), please report.\n",len,subclass);
+	subclass[len]='\0';
+	strcat(subclass,"\\shell\\");
+	strcat(subclass,lpOperation);
+	strcat(subclass,"\\command");
+	dprintf_exec(stddeb,"ShellExecute:looking for %s.\n",subclass);
+	len=400;
+	if (RegQueryValue(HKEY_CLASSES_ROOT,subclass,cmd,&len)==ERROR_SUCCESS) {
+	  char *t;
+	  dprintf_exec(stddeb,"ShellExecute:...got %s\n",cmd);
+	  cmd[len]='\0';
+	  t=strstr(cmd,"%1");
+	  if (t==NULL) {
+	    strcat(cmd," ");
+	    strcat(cmd,lpFile);
+	  } else {
+	    char *s;
+	    s=malloc(len+strlen(lpFile)+10);
+	    strncpy(s,cmd,t-cmd);
+	    strcat(s,lpFile);
+	    strcat(s,t+2);
+	    strcpy(cmd,s);
+	    free(s);
+	  }
+	  /* does this use %x magic too? */
+	  if (lpParameters) {
+	    strcat(cmd," ");
+	    strcat(cmd,lpParameters);
+	  }
+	} else {
+	  fprintf(stddeb,"ShellExecute: No %s\\shell\\%s\\command found for \"%s\" suffix.\n",subclass,lpOperation,p);
+	  return 14; /* unknown type */
+	}
+      } else {
+	fprintf(stddeb,"ShellExecute: No operation found for \"%s\" suffix.\n",p);
+	return 14; /* file not found */
+      }
+    }
     return WinExec(cmd,iShowCmd);
 }
 

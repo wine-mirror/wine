@@ -109,7 +109,7 @@ BOOL IsCharAlpha(char ch)
 /* IsCharAlphanumeric USER 434 */
 BOOL IsCharAlphanumeric(char ch)
 {
-  return (ch<'0')?0:(ch<'9');
+  return (ch < '0') ? 0 : (ch <= '9');
 }
 
 /* IsCharUpper USER 435 */

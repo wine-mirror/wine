@@ -64,8 +64,8 @@ id	1
 66  pascal16 AllocResource(word word long) AllocResource
 67  stub SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable
-69  pascal16 FindAtom(ptr) FindAtom
-70  pascal16 AddAtom(ptr) AddAtom
+69  pascal16 FindAtom(segptr) FindAtom
+70  pascal16 AddAtom(segptr) AddAtom
 71  pascal16 DeleteAtom(word) DeleteAtom
 72  pascal16 GetAtomName(word ptr word) GetAtomName
 73  pascal16 GetAtomHandle(word) GetAtomHandle

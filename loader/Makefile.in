@@ -10,7 +10,7 @@ LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
 MODULE 	= loader
 
 SRCS 	= main.c module.c ne_image.c ne_resource.c pe_image.c \
-	pe_resource.c selector.c signal.c resource.c task.c
+	pe_resource.c signal.c resource.c task.c
  
 OBJS = $(SRCS:.c=.o)
 
@@ -25,26 +25,16 @@ $(MODULE).o: $(OBJS)
 depend:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
-	cp tmp_make Makefile
-	rm tmp_make
+	mv tmp_make Makefile
 
 clean:
 	rm -f *.o \#*\# *~ tmp_make
 
 distclean: clean
-	rm Makefile
+	rm -f Makefile
 
 countryclean:
 
-NAMES = $(SRCS:.c=)
-
-winelibclean:
-	for i in $(NAMES); do \
-	if test `grep -c WINELIB $$i.c` -ne 0; then \
-	rm $$i.o; \
-	fi; \
-	done
- 
 dummy:
 
 ### Dependencies:

@@ -72,8 +72,8 @@ INT _lread (INT hFile, LPSTR lpBuffer, WORD wBytes)
 {
   int result;
 
-  dprintf_file(stddeb, "_lread: handle %d, buffer = %ld, length = %d\n",
-	  		hFile, (long) lpBuffer, wBytes);
+  dprintf_file(stddeb, "_lread: handle %d, buffer = %p, length = %d\n",
+	  		hFile, lpBuffer, wBytes);
   
   result = wBytes == 0 ? 0 : read (hFile, lpBuffer, wBytes);
 
@@ -90,10 +90,28 @@ INT _lwrite (INT hFile, LPCSTR lpBuffer, WORD wBytes)
 {
     int result;
 
-    dprintf_file(stddeb, "_lwrite: handle %d, buffer = %ld, length = %d\n",
-		 hFile, (long) lpBuffer, wBytes);
+    dprintf_file(stddeb, "_lwrite: handle %d, buffer = %p, length = %d\n",
+		 hFile, lpBuffer, wBytes);
 
-    result = wBytes == 0 ? 0 : write (hFile, lpBuffer, wBytes);
+    if(wBytes == 0) {  /* Expand the file size if necessary */
+	char toWrite = 0;
+	off_t prev, end;
+	
+	prev = lseek(hFile, 0, SEEK_CUR);
+	if(prev == -1) return HFILE_ERROR;
+	end = lseek(hFile, 0, SEEK_END);
+	if(end == -1) return HFILE_ERROR;
+	if(prev > end) {
+	    lseek(hFile, prev-1, SEEK_SET);
+	    result = write(hFile, &toWrite, 1) - 1;
+	    if(result == -2) ++result;
+	}
+	else {
+	    lseek(hFile, prev, SEEK_SET);
+	    result = 0;
+	}
+    }
+    else result = write (hFile, lpBuffer, wBytes);
 
     if (result == -1)
         return HFILE_ERROR;
@@ -325,7 +343,7 @@ INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 		lpszFilename, fnAttribute);
 	if ((UnixFileName = DOS_GetUnixFileName(lpszFilename)) == NULL)
   		return HFILE_ERROR;
-	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY, 0666);
+	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_RDWR, 0666);
 
 	if (handle == -1)
 		return HFILE_ERROR;

@@ -66,6 +66,7 @@ WORD FreeSelector( WORD sel )
 {
     WORD i, count;
     ldt_entry entry;
+    STACK16FRAME *frame;
 
     dprintf_selector( stddeb, "FreeSelector(%04x)\n", sel );
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
@@ -80,11 +81,12 @@ WORD FreeSelector( WORD sel )
 
     /* Clear the saved 16-bit selector */
 #ifndef WINELIB
-    if (CURRENT_STACK16)
+    frame = CURRENT_STACK16;
+    while (frame)
     {
-        /* FIXME: maybe we ought to walk up the stack and fix all frames */
-        if (CURRENT_STACK16->ds == sel) CURRENT_STACK16->ds = 0;
-        if (CURRENT_STACK16->es == sel) CURRENT_STACK16->es = 0;
+        if (frame->ds == sel) frame->ds = 0;
+        if (frame->es == sel) frame->es = 0;
+	frame = PTR_SEG_OFF_TO_LIN(frame->saved_ss, frame->saved_sp);
     }
 #endif
     return 0;

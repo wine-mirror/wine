@@ -19,15 +19,15 @@
  *
  * Handler for int 1ah (date and time).
  */
-void INT_Int1aHandler( struct sigcontext_struct sigcontext )
+void INT_Int1aHandler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-	time_t ltime;
-        DWORD ticks;
-	struct tm *bdtime;
-        struct timeval tvs;
+    time_t ltime;
+    DWORD ticks;
+    struct tm *bdtime;
+    struct timeval tvs;
 
-	switch(AH) {
+    switch(AH_reg(&context))
+    {
 	case 0:
                 /* This should give us the (approximately) correct
                  * 18.206 clock ticks per second since midnight
@@ -38,9 +38,9 @@ void INT_Int1aHandler( struct sigcontext_struct sigcontext )
                 ticks = (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
                         bdtime->tm_sec) * 18206) / 1000) +
                         (tvs.tv_usec / 54927);
-		CX = ticks >> 16;
-		DX = ticks & 0x0000FFFF;
-		AX = 0;  /* No midnight rollover */
+		CX_reg(&context) = HIWORD(ticks);
+		DX_reg(&context) = LOWORD(ticks);
+		AX_reg(&context) = 0;  /* No midnight rollover */
 		dprintf_int(stddeb,"int1a_00 // ticks=%ld\n", ticks);
 		break;
 		
@@ -48,14 +48,17 @@ void INT_Int1aHandler( struct sigcontext_struct sigcontext )
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
 		
-		CX = (BIN_TO_BCD(bdtime->tm_hour)<<8) | BIN_TO_BCD(bdtime->tm_min);
-		DX = (BIN_TO_BCD(bdtime->tm_sec)<<8);
+		CX_reg(&context) = (BIN_TO_BCD(bdtime->tm_hour)<<8) |
+                                    BIN_TO_BCD(bdtime->tm_min);
+		DX_reg(&context) = (BIN_TO_BCD(bdtime->tm_sec)<<8);
 
 	case 4:
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
-		CX = (BIN_TO_BCD(bdtime->tm_year/100)<<8) | BIN_TO_BCD((bdtime->tm_year-1900)%100);
-		DX = (BIN_TO_BCD(bdtime->tm_mon)<<8) | BIN_TO_BCD(bdtime->tm_mday);
+		CX_reg(&context) = (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
+                                    BIN_TO_BCD((bdtime->tm_year-1900)%100);
+		DX_reg(&context) = (BIN_TO_BCD(bdtime->tm_mon)<<8) |
+                                    BIN_TO_BCD(bdtime->tm_mday);
 		break;
 
 		/* setting the time,date or RTC is not allow -EB */
@@ -72,7 +75,6 @@ void INT_Int1aHandler( struct sigcontext_struct sigcontext )
 		break;
 
 	default:
-		INT_BARF( 0x1a );
-	}
-#undef context
+		INT_BARF( &context, 0x1a );
+    }
 }

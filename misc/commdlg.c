@@ -368,7 +368,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam)
   else
     *tmpstr = 0;
   if (!FILEDLG_ScanDir(hWnd, tmpstr))
-    fprintf(stderr, "FileDlg: couldn't read initial directory!\n");
+    fprintf(stderr, "FileDlg: couldn't read initial directory %s!\n", tmpstr);
   /* select current drive in combo 2 */
   n = DOS_GetDefaultDrive();
   SendDlgItemMessage(hWnd, cmb2, CB_SETCURSEL, n - 1, 0);

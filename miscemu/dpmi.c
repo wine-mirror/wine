@@ -22,147 +22,153 @@
  *
  * Handler for int 31h (DPMI).
  */
-void INT_Int31Handler( struct sigcontext_struct sigcontext )
+void INT_Int31Handler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
     DWORD dw;
     BYTE *ptr;
 
-    ResetCflag;
-    switch(AX)
+    RESET_CFLAG(&context);
+    switch(AX_reg(&context))
     {
     case 0x0000:  /* Allocate LDT descriptors */
-        if (!(AX = AllocSelectorArray( CX )))
+        if (!(AX_reg(&context) = AllocSelectorArray( CX_reg(&context) )))
         {
-            AX = 0x8011;  /* descriptor unavailable */
-            SetCflag;
+            AX_reg(&context) = 0x8011;  /* descriptor unavailable */
+            SET_CFLAG(&context);
         }
         break;
 
     case 0x0001:  /* Free LDT descriptor */
-        if (FreeSelector( BX ))
+        if (FreeSelector( BX_reg(&context) ))
         {
-            AX = 0x8022;  /* invalid selector */
-            SetCflag;
+            AX_reg(&context) = 0x8022;  /* invalid selector */
+            SET_CFLAG(&context);
         }
         break;
 
     case 0x0003:  /* Get next selector increment */
-        AX = __AHINCR;
+        AX_reg(&context) = __AHINCR;
         break;
 
     case 0x0004:  /* Lock selector (not supported) */
-        AX = 0;  /* FIXME: is this a correct return value? */
+        AX_reg(&context) = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0005:  /* Unlock selector (not supported) */
-        AX = 0;  /* FIXME: is this a correct return value? */
+        AX_reg(&context) = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0006:  /* Get selector base address */
-        if (!(dw = GetSelectorBase( BX )))
+        if (!(dw = GetSelectorBase( BX_reg(&context) )))
         {
-            AX = 0x8022;  /* invalid selector */
-            SetCflag;
+            AX_reg(&context) = 0x8022;  /* invalid selector */
+            SET_CFLAG(&context);
         }
         else
         {
-            CX = HIWORD(dw);
-            DX = LOWORD(dw);
+            CX_reg(&context) = HIWORD(dw);
+            DX_reg(&context) = LOWORD(dw);
         }
         break;
 
     case 0x0007:  /* Set selector base address */
-        SetSelectorBase( BX, MAKELONG( DX, CX ) );
+        SetSelectorBase( BX_reg(&context),
+                         MAKELONG( DX_reg(&context), CX_reg(&context) ) );
         break;
 
     case 0x0008:  /* Set selector limit */
-        SetSelectorLimit( BX, MAKELONG( DX, CX ) );
+        SetSelectorLimit( BX_reg(&context),
+                          MAKELONG( DX_reg(&context), CX_reg(&context) ) );
         break;
 
     case 0x0009:  /* Set selector access rights */
-        SelectorAccessRights( BX, 1, CX );
+        SelectorAccessRights( BX_reg(&context), 1, CX_reg(&context) );
 
     case 0x000a:  /* Allocate selector alias */
-        if (!(AX = AllocCStoDSAlias( BX )))
+        if (!(AX_reg(&context) = AllocCStoDSAlias( BX_reg(&context) )))
         {
-            AX = 0x8011;  /* descriptor unavailable */
-            SetCflag;
+            AX_reg(&context) = 0x8011;  /* descriptor unavailable */
+            SET_CFLAG(&context);
         }
         break;
 
     case 0x000b:  /* Get descriptor */
         {
             ldt_entry entry;
-            LDT_GetEntry( SELECTOR_TO_ENTRY(BX), &entry );
+            LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(&context) ), &entry );
             /* FIXME: should use ES:EDI for 32-bit clients */
-            LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( ES, DI ), &entry );
+            LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( ES_reg(&context),
+                                                  DI_reg(&context) ), &entry );
         }
         break;
 
     case 0x000c:  /* Set descriptor */
         {
             ldt_entry entry;
-            LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES, DI ), &entry );
-            LDT_GetEntry( SELECTOR_TO_ENTRY(BX), &entry );
+            LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(&context),
+                                                  DI_reg(&context) ), &entry );
+            LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(&context) ), &entry );
         }
         break;
 
     case 0x000d:  /* Allocate specific LDT descriptor */
-        AX = 0x8011; /* descriptor unavailable */
-        SetCflag;
+        AX_reg(&context) = 0x8011; /* descriptor unavailable */
+        SET_CFLAG(&context);
         break;
 
     case 0x0204:  /* Get protected mode interrupt vector */
-	dw = (DWORD)INT_GetHandler( BL );
-	CX = HIWORD(dw);
-	DX = LOWORD(dw);
+	dw = (DWORD)INT_GetHandler( BL_reg(&context) );
+	CX_reg(&context) = HIWORD(dw);
+	DX_reg(&context) = LOWORD(dw);
 	break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
-	INT_SetHandler( BL, (SEGPTR)MAKELONG( DX, CX ) );
+	INT_SetHandler( BL_reg(&context),
+                       (SEGPTR)MAKELONG( DX_reg(&context), CX_reg(&context) ));
 	break;
 
     case 0x0400:  /* Get DPMI version */
-        AX = 0x005a;  /* DPMI version 0.90 */
-        BX = 0x0005;  /* Flags: 32-bit, virtual memory */
-        CL = 3;       /* CPU type: 386 */
-        DX = 0x0102;  /* Master and slave interrupt controller base */
+        AX_reg(&context) = 0x005a;  /* DPMI version 0.90 */
+        BX_reg(&context) = 0x0005;  /* Flags: 32-bit, virtual memory */
+        CL_reg(&context) = 3;       /* CPU type: 386 */
+        DX_reg(&context) = 0x0102;  /* Master/slave interrupt controller base*/
         break;
 
     case 0x0500:  /* Get free memory information */
-        ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( ES, DI );
+        ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( ES_reg(&context), DI_reg(&context) );
         *(DWORD *)ptr = 0x00ff0000; /* Largest block available */
         memset( ptr + 4, 0xff, 0x2c );  /* No other information supported */
         break;
 
     case 0x0501:  /* Allocate memory block */
-        if (!(ptr = (BYTE *)malloc( MAKELONG( CX, BX ) )))
+        if (!(ptr = (BYTE *)malloc( MAKELONG( CX_reg(&context),
+                                              BX_reg(&context) ) )))
         {
-            AX = 0x8012;  /* linear memory not available */
-            SetCflag;
+            AX_reg(&context) = 0x8012;  /* linear memory not available */
+            SET_CFLAG(&context);
         }
         else
         {
-            BX = SI = HIWORD(ptr);
-            CX = DI = LOWORD(ptr);
+            BX_reg(&context) = SI_reg(&context) = HIWORD(ptr);
+            CX_reg(&context) = DI_reg(&context) = LOWORD(ptr);
         }
         break;
 
     case 0x0502:  /* Free memory block */
-        free( (void *)MAKELONG( DI, SI ) );
+        free( (void *)MAKELONG( DI_reg(&context), SI_reg(&context) ) );
         break;
 
     case 0x0503:  /* Resize memory block */
-        if (!(ptr = (BYTE *)realloc( (void *)MAKELONG(DI,SI),MAKELONG(CX,BX))))
+        if (!(ptr = (BYTE *)realloc( (void *)MAKELONG(DI_reg(&context),SI_reg(&context)),
+                                     MAKELONG(CX_reg(&context),BX_reg(&context)))))
         {
-            AX = 0x8012;  /* linear memory not available */
-            SetCflag;
+            AX_reg(&context) = 0x8012;  /* linear memory not available */
+            SET_CFLAG(&context);
         }
         else
         {
-            BX = SI = HIWORD(ptr);
-            CX = DI = LOWORD(ptr);
+            BX_reg(&context) = SI_reg(&context) = HIWORD(ptr);
+            CX_reg(&context) = DI_reg(&context) = LOWORD(ptr);
         }
         break;
 
@@ -173,10 +179,9 @@ void INT_Int31Handler( struct sigcontext_struct sigcontext )
         break;  /* Just ignore it */
 
     default:
-        INT_BARF( 0x31 );
-        AX = 0x8001;  /* unsupported function */
-        SetCflag;
+        INT_BARF( &context, 0x31 );
+        AX_reg(&context) = 0x8001;  /* unsupported function */
+        SET_CFLAG(&context);
         break;
     }
-#undef context
 }

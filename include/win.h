@@ -21,6 +21,12 @@
 #define WINSWITCH_CLASS_NAME "#32771"  /* WinSwitch */
 #define ICONTITLE_CLASS_NAME "#32772"  /* IconTitle */
 
+#define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
+#define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
+#define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
+#define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
+#define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
+
 typedef struct tagWND
 {
     HWND         hwndNext;       /* Next sibling */

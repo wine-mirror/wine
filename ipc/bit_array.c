@@ -29,8 +29,9 @@
 #include <assert.h>
 
 #include "bit_array.h"
-#if defined(HAS_BITOPS)
-#  include <asm/bitops.h>
+#ifdef HAS_BITOPS
+#define inline __inline__  /* So we can compile with -ansi */
+#include <asm/bitops.h>
 #else
 static __inline__ int clear_bit(int bit, int *mem);
 static __inline__ int set_bit(int bit, int *mem);

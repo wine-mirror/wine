@@ -4,6 +4,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -13,6 +14,7 @@
 #include "selectors.h"
 #include "dde_mem.h"
 #include "stackframe.h"
+#include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -128,7 +130,7 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
 
     pArena->base = (DWORD)ptr;
     pArena->size = GET_SEL_LIMIT(sel) + 1;
-    if (flags & GMEM_DDESHARE)
+    if ((flags & GMEM_DDESHARE) && Options.ipc)
     {
 	pArena->handle = shmdata->handle;
 	pArena->shmid  = shmdata->shmid;
@@ -194,7 +196,7 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 
       /* Allocate the linear memory */
 
-    if (flags & GMEM_DDESHARE) 
+    if ((flags & GMEM_DDESHARE) && Options.ipc)
         ptr= DDE_malloc(flags, size, &shmdata);
     else 
 	ptr = malloc( size );
@@ -266,7 +268,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
                     handle, size, flags );
     if (!handle) return 0;
     
-    if (flags & GMEM_DDESHARE || is_dde_handle(handle)) {
+    if (Options.ipc && (flags & GMEM_DDESHARE || is_dde_handle(handle))) {
 	fprintf(stdnimp,
 		"GlobalReAlloc: shared memory reallocating unimplemented\n"); 
 	return 0;

@@ -14,6 +14,7 @@
 #include "dde_atom.h"
 #include "shm_main_blk.h"
 #include "shm_fragment.h"
+#include "ldt.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -109,20 +110,25 @@ void ATOM_GlobalInit(void)
  */
 
 /* important! don't forget to unlock semaphores before return */
-ATOM GlobalAddAtom( LPCSTR str )
+ATOM GlobalAddAtom( SEGPTR name )
 {
   int atom_idx;
   int atom_ofs;
   AtomData_ptr ptr;
   ATOM atom;
+  char *str;
 
-  dprintf_atom(stddeb,"GlobalAddAtom(%p)\n", str);
-  if ((unsigned) str < MIN_STR_ATOM)	   /* MS-windows convention */
-     return (ATOM) (unsigned) str;
-  if (str[0] == '#') {		   /* wine convention */
-     atom= (ATOM) atoi(&str[1]);
+  /* First check for integer atom */
+
+  if (!HIWORD(name)) return (ATOM)LOWORD(name);
+
+  str = (char *)PTR_SEG_TO_LIN( name );
+  if (str[0] == '#')
+  {
+     ATOM atom= (ATOM) atoi(&str[1]);
      return (atom<MIN_STR_ATOM) ? atom : 0;
   }
+
   dprintf_atom(stddeb,"GlobalAddAtom(\"%s\")\n",str);
 
   DDE_IPC_init();		/* will initialize only if needed */
@@ -199,15 +205,21 @@ ATOM GlobalDeleteAtom( ATOM atom )
 /***********************************************************************
  *           GlobalFindAtom   (USER.270)
  */
-ATOM GlobalFindAtom( LPCSTR str )
+ATOM GlobalFindAtom( SEGPTR name )
 {
   int atom_idx;
   int atom_ofs;
+  char *str;
 
-  dprintf_atom(stddeb,"GlobalFindAtom(%p)\n", str );
-  if ((unsigned) str < MIN_STR_ATOM) /* MS-windows convention */
-     return (ATOM) (unsigned) str;
-  if (str[0] == '#') {		   /* wine convention */
+  dprintf_atom(stddeb,"GlobalFindAtom(%08lx)\n", name );
+
+  /* First check for integer atom */
+
+  if (!HIWORD(name)) return (ATOM)LOWORD(name);
+
+  str = (char *)PTR_SEG_TO_LIN( name );
+  if (str[0] == '#')
+  {
      ATOM atom= (ATOM) atoi(&str[1]);
      return (atom<MIN_STR_ATOM) ? atom : 0;
   }

@@ -14,6 +14,7 @@
 #include "local.h"
 #include "win.h"
 #include "class.h"
+#include "stackframe.h" /* for MAKE_SEGPTR */
 #include "user.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -2303,8 +2304,11 @@ static long EDIT_WM_Create(HWND hwnd, LONG lParam)
     es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
 
     /* set up text cursor for edit class */
-    CLASS_FindClassByName("EDIT", 0, &classPtr);
-    classPtr->wc.hCursor = LoadCursor(0, IDC_IBEAM);
+    {
+        char editname[] = "EDIT";
+        CLASS_FindClassByName( MAKE_SEGPTR(editname), 0, &classPtr);
+        classPtr->wc.hCursor = LoadCursor(0, IDC_IBEAM);
+    }
 
     /* paint background on first WM_PAINT */
     es->PaintBkgd = TRUE;

@@ -9,10 +9,7 @@ COMPILE	= $(CC) $(CFLAGS) $(DIVINCL) $(LANG)
 
 all: rc.o
 
-y.tab.c: parser.y
-	$(BISON) -d -t parser.y
-
-y.tab.h: parser.y
+y.tab.c y.tab.h: parser.y
 	$(BISON) -d -t parser.y
 
 lex.yy.c: parser.l parser.h y.tab.h
@@ -26,11 +23,7 @@ sysres.rct: sysres.rc
 	echo WINDOWS_H_ENDS_HERE >>sysres.rct
 	cat sysres.rc >>sysres.rct
 
-sysres.c: sysres.rct winerc
-	$(COMPILE) -E -x c -P sysres.rct > sysres.tmp
-	cat sysres.tmp | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o sysres -v -p sysres
-
-sysres.h: sysres.rct winerc
+sysres.c sysres.h: sysres.rct winerc
 	$(COMPILE) -E -x c -P sysres.rct > sysres.tmp
 	cat sysres.tmp | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o sysres -v -p sysres
 
@@ -45,11 +38,9 @@ clean:
 	y.tab.h sysres.c sysres.h tmp_make
 
 distclean: clean
-	rm Makefile
+	rm -f Makefile
 
 countryclean:
-
-winelibclean: clean
 
 depend: sysres.h
 

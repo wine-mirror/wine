@@ -5,22 +5,10 @@
  */
 
 /*
- * Current limitations:
- *
- * - The code assumes that LocalAlloc() returns a block aligned on a
- * 4-bytes boundary (because of the shifting done in HANDLETOATOM).
- * If this is not the case, the allocation code will have to be changed.
- *
- * - Integer atoms created with MAKEINTATOM are not supported.  This is
- * because they can't generally be differentiated from string constants
- * located below 0x10000 in the emulation library.  If you need
- * integer atoms, use the "#1234" form.
- *
- * 13/Feb, miguel
- * Changed the calls to LocalAlloc to LocalAlign. When compiling WINELIB
- * you call a special version of LocalAlloc that would do the alignement.
- * When compiling the emulator we depend on LocalAlloc returning the
- * aligned block. Needed to test the Library.
+ * Warning: The code assumes that LocalAlloc() returns a block aligned
+ * on a 4-bytes boundary (because of the shifting done in
+ * HANDLETOATOM).  If this is not the case, the allocation code will
+ * have to be changed.
  */
 
 #include <stdlib.h>
@@ -130,20 +118,22 @@ static WORD ATOM_Hash( WORD entries, LPCSTR str, WORD len )
 /***********************************************************************
  *           ATOM_AddAtom
  */
-static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
+static ATOM ATOM_AddAtom( WORD selector, SEGPTR name )
 {
     WORD hash;
     HANDLE entry;
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
     int len;
-    
-    if ((len = strlen( str )) > 255) len = 255;
+    char *str;
 
-      /* Check for integer atom */
-/*    if (!((int)str & 0xffff0000)) return (ATOM)((int)str & 0xffff); */
+    /* Check for integer atom */
+
+    if (!HIWORD(name)) return (ATOM)LOWORD(name);
+    str = PTR_SEG_TO_LIN( name );
     if (str[0] == '#') return atoi( &str[1] );
 
+    if ((len = strlen( str )) > 255) len = 255;
     if (!(table = ATOM_GetTable( selector, TRUE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
     entry = table->entries[hash];
@@ -210,19 +200,21 @@ static ATOM ATOM_DeleteAtom( WORD selector, ATOM atom )
 /***********************************************************************
  *           ATOM_FindAtom
  */
-static ATOM ATOM_FindAtom( WORD selector, LPCSTR str )
+static ATOM ATOM_FindAtom( WORD selector, SEGPTR name )
 {
     ATOMTABLE * table;
     WORD hash;
     HANDLE entry;
     int len;
-    
-    if ((len = strlen( str )) > 255) len = 255;
-    
-      /* Check for integer atom */
-/*    if (!((int)str & 0xffff0000)) return (ATOM)((int)str & 0xffff); */
+    char *str;
+
+    /* Check for integer atom */
+
+    if (!HIWORD(name)) return (ATOM)LOWORD(name);
+    str = PTR_SEG_TO_LIN( name );
     if (str[0] == '#') return atoi( &str[1] );
 
+    if ((len = strlen( str )) > 255) len = 255;
     if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
     entry = table->entries[hash];
@@ -295,7 +287,7 @@ HANDLE GetAtomHandle( ATOM atom )
 /***********************************************************************
  *           AddAtom   (KERNEL.70)
  */
-ATOM AddAtom( LPCSTR str )
+ATOM AddAtom( SEGPTR str )
 {
     return ATOM_AddAtom( CURRENT_DS, str );
 }
@@ -313,7 +305,7 @@ ATOM DeleteAtom( ATOM atom )
 /***********************************************************************
  *           FindAtom   (KERNEL.69)
  */
-ATOM FindAtom( LPCSTR str )
+ATOM FindAtom( SEGPTR str )
 {
     return ATOM_FindAtom( CURRENT_DS, str );
 }
@@ -331,7 +323,7 @@ WORD GetAtomName( ATOM atom, LPSTR buffer, short count )
 /***********************************************************************
  *           LocalAddAtom   (USER.268)
  */
-ATOM LocalAddAtom( LPCSTR str )
+ATOM LocalAddAtom( SEGPTR str )
 {
     return ATOM_AddAtom( USER_HeapSel, str );
 }
@@ -349,7 +341,7 @@ ATOM LocalDeleteAtom( ATOM atom )
 /***********************************************************************
  *           LocalFindAtom   (USER.270)
  */
-ATOM LocalFindAtom( LPCSTR str )
+ATOM LocalFindAtom( SEGPTR str )
 {
     return ATOM_FindAtom( USER_HeapSel, str );
 }

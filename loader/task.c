@@ -10,6 +10,7 @@
 #include "windows.h"
 #include "task.h"
 #include "callback.h"
+#include "dos_fs.h"
 #include "debugger.h"
 #include "global.h"
 #include "instance.h"
@@ -36,11 +37,15 @@ static HTASK hCurrentTask = 0;
 static HTASK hTaskToKill = 0;
 static HTASK hLockedTask = 0;
 static WORD nTaskCount = 0;
+static HANDLE hDOSEnvironment = 0;
 
   /* TASK_Reschedule() 16-bit entry point */
 static FARPROC TASK_RescheduleProc;
 
 #define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc,0)
+
+
+static HANDLE TASK_CreateDOSEnvironment(void);
 
 
 /***********************************************************************
@@ -49,7 +54,113 @@ static FARPROC TASK_RescheduleProc;
 BOOL TASK_Init(void)
 {
     TASK_RescheduleProc = (FARPROC)GetWndProcEntry16( "TASK_Reschedule" );
-    return TRUE;
+    if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
+        fprintf( stderr, "Not enough memory for DOS Environment\n" );
+    return (hDOSEnvironment != 0);
+}
+
+
+/***********************************************************************
+ *           TASK_CreateDOSEnvironment
+ *
+ * Create the original DOS environment.
+ */
+static HANDLE TASK_CreateDOSEnvironment(void)
+{
+    static const char program_name[] = "KRNL386.EXE";
+    char **e, *p;
+    int initial_size, size;
+    HANDLE handle;
+
+    extern char **environ;
+    extern char WindowsDirectory[], SystemDirectory[];
+
+    /* DOS environment format:
+     * ASCIIZ   string 1
+     * ASCIIZ   string 2
+     * ...
+     * ASCIIZ   string n
+     * ASCIIZ   PATH=xxx
+     * ASCIIZ   windir=xxx
+     * BYTE     0
+     * WORD     1
+     * ASCIIZ   program name (e.g. C:\WINDOWS\SYSTEM\KRNL386.EXE)
+     */
+
+    /* First compute the size of the fixed part of the environment */
+
+    initial_size = 5 +                            /* PATH= */
+                   strlen(WindowsPath) + 1 +      /* path value */
+                   7 +                            /* windir= */
+                   strlen(WindowsDirectory) + 1 + /* windir value */
+                   1 +                            /* BYTE 0 at end */
+                   sizeof(WORD) +                 /* WORD 1 */
+                   strlen(SystemDirectory) + 1 +  /* program directory */
+                   strlen(program_name) + 1;      /* program name */
+
+    /* Compute the total size of the Unix environment (except path) */
+
+    for (e = environ, size = initial_size; *e; e++)
+    {
+	if (strncasecmp(*e, "path=", 5))
+	{
+            int len = strlen(*e) + 1;
+            if (size + len >= 32767)
+            {
+                fprintf( stderr, "Warning: environment larger than 32k.\n" );
+                break;
+            }
+            size += len;
+	}
+    }
+
+
+    /* Now allocate the environment */
+
+    if (!(handle = GlobalAlloc( GMEM_FIXED, size ))) return 0;
+    p = (char *)GlobalLock( handle );
+
+    /* And fill it with the Unix environment */
+
+    for (e = environ, size = initial_size; *e; e++)
+    {
+	if (strncasecmp(*e, "path=", 5))
+	{
+            int len = strlen(*e) + 1;
+            if (size + len >= 32767) break;
+            strcpy( p, *e );
+            size += len;
+            p    += len;
+	}
+    }
+
+    /* Now add the path and Windows directory */
+
+    strcpy( p, "PATH=" );
+    strcat( p, WindowsPath );
+    p += strlen(p) + 1;
+
+    strcpy( p, "windir=" );
+    strcat( p, WindowsDirectory );
+    p += strlen(p) + 1;
+
+    /* Now add the program name */
+
+    *p++ = '\0';
+    *(WORD *)p = 1;
+    p += sizeof(WORD);
+    strcpy( p, SystemDirectory );
+    strcat( p, "\\" );
+    strcat( p, program_name );
+
+    /* Display it */
+
+    p = (char *) GlobalLock( handle );
+    dprintf_task(stddeb, "Master DOS environment at %p\n", p);
+    for (; *p; p += strlen(p) + 1) dprintf_task(stddeb, "    %s\n", p);
+    dprintf_task( stddeb, "Progname: %s\n", p+3 );
+
+    return handle;
 }
 
 
@@ -229,7 +340,7 @@ static void TASK_CallToStart(void)
                    0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
     /* This should never return */
     fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
-    exit(1);
+    TASK_KillCurrentTask( 1 );
 }
 
 
@@ -241,6 +352,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 {
     HTASK hTask;
     TDB *pTask;
+    HANDLE hParentEnv;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
@@ -260,7 +372,24 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     if (!hTask) return 0;
     pTask = (TDB *)GlobalLock( hTask );
 
-      /* get current directory */
+      /* Allocate the new environment block */
+
+    if (!(hParentEnv = hEnvironment))
+    {
+        TDB *pParent = (TDB *)GlobalLock( hCurrentTask );
+        hParentEnv = pParent ? pParent->pdb.environment : hDOSEnvironment;
+    }
+    /* FIXME: do we really need to make a copy also when */
+    /*        we don't use the parent environment? */
+    if (!(hEnvironment = GlobalAlloc( GMEM_FIXED, GlobalSize( hParentEnv ) )))
+    {
+        GlobalFree( hTask );
+        return 0;
+    }
+    memcpy( GlobalLock( hEnvironment ), GlobalLock( hParentEnv ),
+            GlobalSize( hParentEnv ) );
+
+      /* Get current directory */
     
     GetModuleFileName( hModule, filename, sizeof(filename) );
     name = strrchr(filename, '\\');
@@ -355,8 +484,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
                  pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1;
     stack16Top = (char *)PTR_SEG_OFF_TO_LIN( pTask->ss, pTask->sp );
     frame16 = (STACK16FRAME *)stack16Top - 1;
-    frame16->saved_ss = pTask->ss;
-    frame16->saved_sp = pTask->sp;
+    frame16->saved_ss = 0; /*pTask->ss;*/
+    frame16->saved_sp = 0; /*pTask->sp;*/
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
     frame16->ordinal_number = 24;  /* WINPROCS.24 is TASK_Reschedule */
@@ -380,8 +509,9 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
     if (Options.debug)
     {
+        DBG_ADDR addr = { pSegTable[pModule->cs-1].selector, pModule->ip };
         fprintf( stderr, "Task '%s': ", name );
-        DEBUG_AddBreakpoint( pSegTable[pModule->cs-1].selector, pModule->ip );
+        DEBUG_AddBreakpoint( &addr );
     }
 
       /* Add the task to the linked list */
@@ -840,6 +970,18 @@ int GetInstanceData( HANDLE instance, WORD buffer, int len )
     if ((int)buffer + len >= 0x10000) len = 0x10000 - buffer;
     memcpy( ptr + buffer, (char *)GlobalLock( CURRENT_DS ) + buffer, len );
     return len;
+}
+
+
+/***********************************************************************
+ *           GetDOSEnvironment   (KERNEL.131)
+ */
+SEGPTR GetDOSEnvironment(void)
+{
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    return WIN16_GlobalLock( pTask->pdb.environment );
 }
 
 

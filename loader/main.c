@@ -57,17 +57,14 @@ int MAIN_Init(void)
       /* Create built-in modules */
     if (!MODULE_Init()) return 0;
 
+      /* Initialize the DOS file system */
+    DOS_InitFS();
+
       /* Initialize tasks */
     if (!TASK_Init()) return 0;
 
       /* Initialize interrupt vectors */
     if (!INT_Init()) return 0;
-
-      /* Initialize the DOS file system */
-    DOS_InitFS();
-
-      /* Create DOS environment */
-    CreateSelectors();
 
       /* Initialize signal handling */
     init_wine_signals();

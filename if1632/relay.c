@@ -156,7 +156,9 @@ void RELAY_DebugCall32( int func_type, char *args )
     {
         struct sigcontext_struct *context = (struct sigcontext_struct *)args16;
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
-                AX, BX, CX, DX, SI, DI, ES, EFL );
+                AX_reg(context), BX_reg(context), CX_reg(context),
+                DX_reg(context), SI_reg(context), DI_reg(context),
+                ES_reg(context), EFL_reg(context) );
     }
 }
 

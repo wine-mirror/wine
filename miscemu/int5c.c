@@ -17,9 +17,7 @@
  *
  * Also handler for interrupt 5c.
  */
-void NetBIOSCall( struct sigcontext_struct sigcontext )
+void NetBIOSCall( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    INT_BARF( 0x5c );
-#undef context
+    INT_BARF( &context, 0x5c );
 }

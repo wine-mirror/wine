@@ -13,16 +13,14 @@
  *
  * Handler for int 2ah (network).
  */
-void INT_Int2aHandler( struct sigcontext_struct sigcontext )
+void INT_Int2aHandler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    switch(AH)
+    switch(AH_reg(&context))
     {
     case 0x00:                             /* NETWORK INSTALLATION CHECK */
         break;
 		
     default:
-	INT_BARF( 0x2a );
+	INT_BARF( &context, 0x2a );
     }
-#undef context
 }

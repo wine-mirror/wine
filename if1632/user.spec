@@ -49,7 +49,7 @@ id	2
 47  pascal16 IsWindow(word) IsWindow
 48  pascal16 IsChild(word word) IsChild
 49  pascal16 IsWindowVisible(word) IsWindowVisible
-50  pascal16 FindWindow(ptr ptr) FindWindow
+50  pascal16 FindWindow(segptr ptr) FindWindow
 #51 BEAR51
 52  pascal16 AnyPopup() AnyPopup
 53  pascal16 DestroyWindow(word) DestroyWindow
@@ -115,7 +115,7 @@ id	2
 114 pascal   DispatchMessage(ptr) DispatchMessage
 115 stub ReplyMessage
 116 pascal16 PostAppMessage(word word word long) PostAppMessage
-118 pascal16 RegisterWindowMessage(ptr) RegisterWindowMessage
+118 pascal16 RegisterWindowMessage(long) RegisterWindowMessage
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook
@@ -269,9 +269,9 @@ id	2
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups
 266 pascal16 SetMessageQueue(word) SetMessageQueue
 267 pascal16 ShowScrollBar(word word word) ShowScrollBar
-268 pascal16 GlobalAddAtom(ptr) GlobalAddAtom
+268 pascal16 GlobalAddAtom(segptr) GlobalAddAtom
 269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom
-270 pascal16 GlobalFindAtom(ptr) GlobalFindAtom
+270 pascal16 GlobalFindAtom(segptr) GlobalFindAtom
 271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomName
 272 pascal16 IsZoomed(word) IsZoomed
 273 stub ControlPanelInfo
@@ -334,7 +334,7 @@ id	2
 400 stub FinalUserInit
 402 pascal16 GetPriorityClipboardFormat(word ptr s_word)
              GetPriorityClipboardFormat
-403 pascal16 UnregisterClass(ptr word) UnregisterClass
+403 pascal16 UnregisterClass(segptr word) UnregisterClass
 404 pascal16 GetClassInfo(word segptr ptr) GetClassInfo
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor
 407 pascal16 CreateIcon(word word word byte byte ptr ptr) CreateIcon

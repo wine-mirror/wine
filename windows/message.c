@@ -236,6 +236,11 @@ static INT MSG_GetWindowForEvent( POINT pt, HWND *phwnd )
 	else hwnd = wndPtr->hwndNext;
     }
 
+    /* Make point relative to parent again */
+
+    wndPtr = WIN_FindWndPtr( *phwnd );
+    x += wndPtr->rectClient.left;
+    y += wndPtr->rectClient.top;
 
     /* Send the WM_NCHITTEST message */
 
@@ -249,18 +254,18 @@ static INT MSG_GetWindowForEvent( POINT pt, HWND *phwnd )
         hwnd = wndPtr->hwndNext;
         while (hwnd)
         {
-            wndPtr = WIN_FindWndPtr( hwnd );
-            if ((wndPtr->dwStyle & WS_VISIBLE) &&
-                (x >= wndPtr->rectWindow.left) &&
-                (x < wndPtr->rectWindow.right) &&
-                (y >= wndPtr->rectWindow.top) &&
-                (y < wndPtr->rectWindow.bottom)) break;
-            hwnd = wndPtr->hwndNext;
+            WND *nextPtr = WIN_FindWndPtr( hwnd );
+            if ((nextPtr->dwStyle & WS_VISIBLE) &&
+                (x >= nextPtr->rectWindow.left) &&
+                (x < nextPtr->rectWindow.right) &&
+                (y >= nextPtr->rectWindow.top) &&
+                (y < nextPtr->rectWindow.bottom)) break;
+            hwnd = nextPtr->hwndNext;
         }
         if (hwnd) *phwnd = hwnd; /* Found a suitable sibling */
         else  /* Go back to the parent */
         {
-            *phwnd = WIN_FindWndPtr( *phwnd )->hwndParent;
+            if (!(*phwnd = wndPtr->hwndParent)) break;
             wndPtr = WIN_FindWndPtr( *phwnd );
             x += wndPtr->rectClient.left;
             y += wndPtr->rectClient.top;
@@ -1189,12 +1194,10 @@ LONG GetMessageExtraInfo(void)
 /***********************************************************************
  *           RegisterWindowMessage   (USER.118)
  */
-WORD RegisterWindowMessage( LPCSTR str )
+WORD RegisterWindowMessage( SEGPTR str )
 {
-	WORD	wRet;
-    dprintf_msg(stddeb, "RegisterWindowMessage: '%s'\n", str );
-	wRet = LocalAddAtom( str );
-    return wRet;
+    dprintf_msg(stddeb, "RegisterWindowMessage: '%08lx'\n", str );
+    return LocalAddAtom( str );
 }
 
 

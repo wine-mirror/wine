@@ -32,15 +32,21 @@ typedef struct
  */
 void DEBUG_InfoStack(void)
 {
+    DBG_ADDR addr;
+
     fprintf(stderr,"Stack dump:\n");
-    if ((SS == WINE_DATA_SELECTOR) ||
-        (GET_SEL_FLAGS(SS) & LDT_FLAGS_32BIT))  /* 32-bit mode */
-    {
-        examine_memory( 0, ESP, 10, 'x' );
+    if ((SS_reg(DEBUG_context) == WINE_DATA_SELECTOR) ||
+        (GET_SEL_FLAGS(SS_reg(DEBUG_context)) & LDT_FLAGS_32BIT))
+    {  /* 32-bit mode */
+        addr.seg = 0;
+        addr.off = ESP_reg(DEBUG_context);
+        DEBUG_ExamineMemory( &addr, 10, 'x' );
     }
     else  /* 16-bit mode */
     {
-        examine_memory( SS, SP, 10, 'w' );
+        addr.seg = SS_reg(DEBUG_context);
+        addr.off = SP_reg(DEBUG_context);
+        DEBUG_ExamineMemory( &addr, 10, 'w' );
     }
     fprintf(stderr,"\n");
 }
@@ -53,25 +59,29 @@ void DEBUG_InfoStack(void)
  */
 void DEBUG_BackTrace(void)
 {
-  int frameno = 0;
+    DBG_ADDR addr;
+    int frameno = 0;
 
   fprintf(stderr,"Backtrace:\n");
-  if (SS == WINE_DATA_SELECTOR)  /* 32-bit mode */
+  if (SS_reg(DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
   {
-      FRAME32 *frame = (FRAME32 *)EBP;
+      FRAME32 *frame = (FRAME32 *)EBP_reg(DEBUG_context);
+      addr.seg = 0;
       while (frame->ip)
       {
           fprintf(stderr,"%d ",frameno++);
-          print_address( 0, frame->ip, 32 );
+          addr.off = frame->ip;
+          DEBUG_PrintAddress( &addr, 32 );
           fprintf( stderr, "\n" );
           frame = (FRAME32 *)frame->bp;
       }
   }
   else  /* 16-bit mode */
   {
-      FRAME16 *frame = (FRAME16 *)PTR_SEG_OFF_TO_LIN( SS, BP & ~1 );
-      WORD cs = CS;
-      if (GET_SEL_FLAGS(SS) & LDT_FLAGS_32BIT)
+      FRAME16 *frame = (FRAME16 *)PTR_SEG_OFF_TO_LIN( SS_reg(DEBUG_context),
+                                                  BP_reg(DEBUG_context) & ~1 );
+      WORD cs = CS_reg(DEBUG_context);
+      if (GET_SEL_FLAGS(SS_reg(DEBUG_context)) & LDT_FLAGS_32BIT)
       {
           fprintf( stderr, "Not implemented: 32-bit backtrace on a different stack segment.\n" );
           return;
@@ -80,9 +90,12 @@ void DEBUG_BackTrace(void)
       {
           if (frame->bp & 1) cs = frame->cs;
           fprintf( stderr,"%d ", frameno++ );
-          print_address( cs, frame->ip, 16 );
+          addr.seg = cs;
+          addr.off = frame->ip;
+          DEBUG_PrintAddress( &addr, 16 );
           fprintf( stderr, "\n" );
-          frame = (FRAME16 *)PTR_SEG_OFF_TO_LIN( SS, frame->bp & ~1 );
+          frame = (FRAME16 *)PTR_SEG_OFF_TO_LIN( SS_reg(DEBUG_context),
+                                                 frame->bp & ~1 );
       }
   }
   fprintf( stderr, "\n" );

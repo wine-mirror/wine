@@ -347,6 +347,7 @@ static void DIB_SetImageBits_RLE8(WORD lines,
 			   * fail.			[JAY]
 			   */
 			  line=0; /* Cause exit from do loop. */
+			  break;
 		      }
 		      
 		    case RleDelta: /* =2, a delta */
@@ -666,6 +667,7 @@ int GetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
 	XDestroyImage( dibImage );
 	XDestroyImage( bmpImage );
     }
+    info->bmiHeader.biCompression = 0;
     return lines;
 }
 

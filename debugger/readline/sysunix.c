@@ -3,7 +3,10 @@
 **  Unix system-dependant routines for editline library.
 */
 #include "editline.h"
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #if	defined(HAVE_TCGETATTR)
 #include <termios.h>

@@ -13,29 +13,27 @@
  *
  * Handler for int 10h (video).
  */
-void INT_Int10Handler( struct sigcontext_struct sigcontext )
+void INT_Int10Handler( struct sigcontext_struct context )
 {
-#define context (&sigcontext)
-    switch(AH)
+    switch(AH_reg(&context))
     {
     case 0x0f:
-        AL = 0x5b;
+        AL_reg(&context) = 0x5b;
         break;
 
     case 0x12:
-        if (BL == 0x10)
+        if (BL_reg(&context) == 0x10)
         {
-            BX = 0x0003;
-            CX = 0x0009;
+            BX_reg(&context) = 0x0003;
+            CX_reg(&context) = 0x0009;
         }
         break;
 			
     case 0x1a:
-        BX = 0x0008;
+        BX_reg(&context) = 0x0008;
         break;
 
     default:
-        INT_BARF( 0x10 );
+        INT_BARF( &context, 0x10 );
     }
-#undef context
 }
