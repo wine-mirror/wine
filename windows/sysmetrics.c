@@ -260,6 +260,23 @@ void SYSMETRICS_Init(void)
 
 
 /***********************************************************************
+ *		SYSMETRICS_Set
+ *
+ *  Sets system metrics.
+ */
+INT SYSMETRICS_Set( INT index, INT value )
+{
+    if ((index < 0) || (index > SM_WINE_CMETRICS)) return 0;
+    else
+    {
+        INT prev = sysMetrics[index];
+        sysMetrics[index] = value;
+        return prev;
+    }
+}
+
+
+/***********************************************************************
  *		GetSystemMetrics (USER.179)
  */
 INT16 WINAPI GetSystemMetrics16( INT16 index )
@@ -274,5 +291,5 @@ INT16 WINAPI GetSystemMetrics16( INT16 index )
 INT WINAPI GetSystemMetrics( INT index )
 {
     if ((index < 0) || (index > SM_WINE_CMETRICS)) return 0;
-    else return sysMetrics[index];    
+    return sysMetrics[index];
 }

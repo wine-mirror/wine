@@ -20,6 +20,7 @@
 #include "keyboard.h"
 #include "user.h"
 #include "debugtools.h"
+#include "sysmetrics.h"
 
 DEFAULT_DEBUG_CHANNEL(system);
 
@@ -404,9 +405,11 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_GETMOUSEKEYS);		/*     54 */
     WINE_SPI_FIXME(SPI_SETMOUSEKEYS);		/*     55 */
     case SPI_GETSHOWSOUNDS:			/*     56 */
-      *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
-      break;
-    WINE_SPI_FIXME(SPI_SETSHOWSOUNDS);		/*     57 */
+        *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
+        break;
+    case SPI_SETSHOWSOUNDS:			/*     57 */
+        SYSMETRICS_Set(SM_SHOWSOUNDS, uiParam);
+        break;
     WINE_SPI_FIXME(SPI_GETSTICKYKEYS);		/*     58 */
     WINE_SPI_FIXME(SPI_SETSTICKYKEYS);		/*     59 */
     WINE_SPI_FIXME(SPI_GETACCESSTIMEOUT);	/*     60 */

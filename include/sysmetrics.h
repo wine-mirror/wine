@@ -8,6 +8,7 @@
 #define __WINE_SYSMETRICS_H
 
 extern void SYSMETRICS_Init(void);  /* sysmetrics.c */
+extern INT SYSMETRICS_Set( INT index, INT value );  /* sysmetrics.c */
 extern void SYSCOLOR_Init(void);  /* syscolor.c */
 
 /* Wine extensions */
