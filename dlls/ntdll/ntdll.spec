@@ -4,8 +4,8 @@ type	win32
 debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
                 global heap int int21 int31 io loaddll local module ntdll process
                 profile reg relay resource segment seh selector server snoop
-                string system tape task thread thunk tid timer toolhelp ver
-                virtual vxd win32)
+                string system tape task thread tid timer toolhelp ver virtual
+                vxd win32)
 
 #note that the Zw... functions are alternate names for the 
 #Nt... functions.  (see www.sysinternals.com for details)

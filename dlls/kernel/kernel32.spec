@@ -5,7 +5,8 @@ rsrc	kernel.res
 
 import  ntdll.dll
 
-debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
+debug_channels (comm console debugstr dll int resource stress thunk toolhelp
+                win32)
 
 # Functions exported by the Win95 kernel32.dll 
 # (these need to have these exact ordinals, for some win95 dlls 
