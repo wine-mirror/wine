@@ -239,6 +239,121 @@ void __RPC_STUB IAutoComplete2_GetOptions_Stub(
 
 #endif  /* __IAutoComplete2_INTERFACE_DEFINED__ */
 
+#ifndef __IFolderViewOC_FWD_DEFINED__
+#define __IFolderViewOC_FWD_DEFINED__
+typedef struct IFolderViewOC IFolderViewOC;
+#endif
+
+/*****************************************************************************
+ * IFolderViewOC interface
+ */
+#ifndef __IFolderViewOC_INTERFACE_DEFINED__
+#define __IFolderViewOC_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IFolderViewOC, 0x9ba05970, 0xf6a8, 0x11cf, 0xa4,0x42, 0x00,0xa0,0xc9,0x0a,0x8f,0x39);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IFolderViewOC : public IDispatch
+{
+    virtual HRESULT STDMETHODCALLTYPE SetFolderView(
+        IDispatch* pdisp) = 0;
+
+};
+#else
+typedef struct IFolderViewOCVtbl IFolderViewOCVtbl;
+struct IFolderViewOC {
+    const IFolderViewOCVtbl* lpVtbl;
+};
+struct IFolderViewOCVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IFolderViewOC* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IFolderViewOC* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IFolderViewOC* This);
+
+    /*** IDispatch methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoCount)(
+        IFolderViewOC* This,
+        UINT* pctinfo);
+
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(
+        IFolderViewOC* This,
+        UINT iTInfo,
+        LCID lcid,
+        ITypeInfo** ppTInfo);
+
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(
+        IFolderViewOC* This,
+        REFIID riid,
+        LPOLESTR* rgszNames,
+        UINT cNames,
+        LCID lcid,
+        DISPID* rgDispId);
+
+    HRESULT (STDMETHODCALLTYPE *Invoke)(
+        IFolderViewOC* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr);
+
+    /*** IFolderViewOC methods ***/
+    HRESULT (STDMETHODCALLTYPE *SetFolderView)(
+        IFolderViewOC* This,
+        IDispatch* pdisp);
+
+};
+
+/*** IUnknown methods ***/
+#define IFolderViewOC_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IFolderViewOC_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IFolderViewOC_Release(p) (p)->lpVtbl->Release(p)
+/*** IDispatch methods ***/
+#define IFolderViewOC_GetTypeInfoCount(p,a) (p)->lpVtbl->GetTypeInfoCount(p,a)
+#define IFolderViewOC_GetTypeInfo(p,a,b,c) (p)->lpVtbl->GetTypeInfo(p,a,b,c)
+#define IFolderViewOC_GetIDsOfNames(p,a,b,c,d,e) (p)->lpVtbl->GetIDsOfNames(p,a,b,c,d,e)
+#define IFolderViewOC_Invoke(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->Invoke(p,a,b,c,d,e,f,g,h)
+/*** IFolderViewOC methods ***/
+#define IFolderViewOC_SetFolderView(p,a) (p)->lpVtbl->SetFolderView(p,a)
+
+#endif
+
+#define IFolderViewOC_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IDispatch methods ***/ \
+    STDMETHOD_(HRESULT,GetTypeInfoCount)(THIS_ UINT* pctinfo) PURE; \
+    STDMETHOD_(HRESULT,GetTypeInfo)(THIS_ UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo) PURE; \
+    STDMETHOD_(HRESULT,GetIDsOfNames)(THIS_ REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId) PURE; \
+    STDMETHOD_(HRESULT,Invoke)(THIS_ DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr) PURE; \
+    /*** IFolderViewOC methods ***/ \
+    STDMETHOD_(HRESULT,SetFolderView)(THIS_ IDispatch* pdisp) PURE;
+
+HRESULT CALLBACK IFolderViewOC_SetFolderView_Proxy(
+    IFolderViewOC* This,
+    IDispatch* pdisp);
+void __RPC_STUB IFolderViewOC_SetFolderView_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IFolderViewOC_INTERFACE_DEFINED__ */
+
 #ifdef __cplusplus
 }
 #endif

@@ -73,3 +73,13 @@ interface IAutoComplete2 : IAutoComplete
 
     HRESULT GetOptions( [out] DWORD *pdwFlag);
 }
+
+[
+    object,
+    uuid(9ba05970-f6a8-11cf-a442-00a0c90a8f39),
+    pointer_default(unique)
+]
+interface IFolderViewOC : IDispatch
+{
+    HRESULT SetFolderView( [in] IDispatch *pdisp );
+}
