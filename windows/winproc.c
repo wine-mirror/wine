@@ -575,6 +575,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_DIR:
     case LB_ADDFILE:
     case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
     case EM_REPLACESEL:
         *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
@@ -741,6 +742,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case LB_DIR:
     case LB_ADDFILE:
     case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
     case EM_REPLACESEL:
         HeapFree( GetProcessHeap(), 0, (void *)lParam );
@@ -821,6 +823,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_DIR:
     case LB_ADDFILE:
     case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
     case EM_REPLACESEL:
         *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
@@ -958,6 +961,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case LB_DIR:
     case LB_ADDFILE:
     case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
     case EM_REPLACESEL:
         HeapFree( GetProcessHeap(), 0, (void *)lParam );
