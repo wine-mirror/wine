@@ -37,6 +37,7 @@ DLLFILES = \
 	win87em/libwin87em.@LIBEXT@ \
 	windebug/libwindebug.@LIBEXT@ \
 	wing/libwing.@LIBEXT@ \
+	winmm/libwinmm.@LIBEXT@ \
 	winmm/joystick/libjoystick.drv.@LIBEXT@ \
 	winmm/mcianim/libmcianim.drv.@LIBEXT@ \
 	winmm/mciavi/libmciavi.drv.@LIBEXT@ \
@@ -225,6 +226,10 @@ libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
 libwing.@LIBEXT@: wing/libwing.@LIBEXT@
 	$(RM) $@
 	$(LN_S) wing/libwing.@LIBEXT@ $@
+
+libwinmm.@LIBEXT@: winmm/libwinmm.@LIBEXT@
+	$(RM) $@
+	$(LN_S) winmm/libwinmm.@LIBEXT@ $@
 
 libwinspool.@LIBEXT@: winspool/libwinspool.@LIBEXT@
 	$(RM) $@

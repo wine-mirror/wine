@@ -1,5 +1,6 @@
-Makefile
+*.glue.c
 *.spec.c
 *.spec.glue.s
-*.glue.c
+Makefile
+libwinmm.so.1.0
 winmm_res.s

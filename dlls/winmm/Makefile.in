@@ -3,7 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = winmm
+SOVERSION = 1.0
 WRCEXTRA  = -s -pwinmm
 
 SPEC_SRCS = \
@@ -25,7 +27,7 @@ GLUE =  lolvldrv.c \
 RC_SRCS= \
 	winmm_res.rc
 
-all: check_wrc $ $(MODULE).o
+all: check_wrc $ lib$(MODULE).$(LIBEXT)
 
 SUBDIRS = \
 	joystick \
@@ -44,5 +46,8 @@ $(SUBDIRS): dummy
 @MAKE_RULES@
 
 $(RC_SRCS:.rc=.s): $(WRC)
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:

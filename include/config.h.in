@@ -53,7 +53,7 @@
 /* Define if struct msghdr contains msg_accrights */
 #undef HAVE_MSGHDR_ACCRIGHTS
 
-/* Define if struct sockaddr_un has the member sun_len */
+/* Define if struct sockaddr_un contains sun_len */
 #undef HAVE_SOCKADDR_SUN_LEN
 
 /* Define if you have the Xxf86dga library (-lXxf86dga).  */

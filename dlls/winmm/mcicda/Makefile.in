@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = mcicda.drv
 SOVERSION = 1.0
+IMPORTS   = winmm
 
 SPEC_SRCS = \
 	mcicda.spec

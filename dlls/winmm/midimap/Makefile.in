@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = midimap.drv
 SOVERSION = 1.0
+IMPORTS   = winmm
 
 SPEC_SRCS = \
 	midimap.spec

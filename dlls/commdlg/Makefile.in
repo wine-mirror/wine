@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = comdlg32
 SOVERSION = 1.0
-IMPORTS   = shell32 ole32 comctl32 winspool
+IMPORTS   = shell32 ole32 comctl32 winspool winmm
 WRCEXTRA  = -s -pcomdlg32
 
 SPEC_SRCS = commdlg.spec comdlg32.spec

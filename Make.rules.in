@@ -126,6 +126,7 @@ DLLS = \
 	windebug \
 	wineoss.drv \
 	wing \
+	winmm \
 	winspool \
 	wnaspi32 \
 	wsock32

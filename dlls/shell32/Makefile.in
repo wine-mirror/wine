@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = shell32
 SOVERSION = 1.0
-IMPORTS   = ole32 comctl32
+IMPORTS   = ole32 comctl32 winmm
 WRCEXTRA  = -s -p$(MODULE)
 
 SPEC_SRCS = \

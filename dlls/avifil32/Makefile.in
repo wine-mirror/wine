@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = avifil32
 SOVERSION = 1.0
-IMPORTS   = msvfw32
+IMPORTS   = msvfw32 winmm
 
 SPEC_SRCS = avifil32.spec avifile.spec
 

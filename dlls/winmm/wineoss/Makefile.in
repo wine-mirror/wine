@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = wineoss.drv
 SOVERSION = 1.0
+IMPORTS   = winmm
 
 SPEC_SRCS = \
 	wineoss.spec

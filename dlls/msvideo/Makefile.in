@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = msvfw32
 SOVERSION = 1.0
+IMPORTS   = winmm
 
 SPEC_SRCS = msvfw32.spec msvideo.spec
 

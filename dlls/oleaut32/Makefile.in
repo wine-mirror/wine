@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = oleaut32
 SOVERSION = 1.0
-IMPORTS   = olepro32 ole32 comctl32
+IMPORTS   = olepro32 ole32 comctl32 winmm
 
 SPEC_SRCS = oleaut32.spec ole2disp.spec typelib.spec
 

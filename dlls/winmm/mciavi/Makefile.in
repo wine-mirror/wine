@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = mciavi.drv
 SOVERSION = 1.0
+IMPORTS   = winmm
 
 SPEC_SRCS = \
 	mciavi.spec
