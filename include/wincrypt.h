@@ -52,6 +52,14 @@ typedef struct _PROV_ENUMALGS_EX {
   CHAR   szLongName[40];
 } PROV_ENUMALGS_EX;
 
+typedef struct HMAC_INFO {
+  ALG_ID HashAlgid;
+  BYTE*  pbInnerString;
+  DWORD  cbInnerString;
+  BYTE*  pbOuterString;
+  DWORD  cbOuterString;
+} HMAC_INFO, *PHMAC_INFO;
+		
 typedef struct _CRYPTOAPI_BLOB {
   DWORD    cbData;
   BYTE*    pbData;
