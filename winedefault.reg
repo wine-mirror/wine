@@ -235,6 +235,38 @@
 "ThreadingModel"="Both"
 
 #
+# Entries used by Internet Explorer installer
+#
+
+# Active Setup is installed
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{6E449686-C509-11CF-AAFA-00AA00B6015C}]
+@="Microsoft Active Setup Engine"
+
+# Active Setup is installed
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{6E449686-C509-11CF-AAFA-00AA00B6015C}\InProcServer32]
+@="inseng.dll"
+"ThreadingModel"="Apartment"
+
+# IDispatch
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00020400-0000-0000-C000-000000000046}]
+@="IDispatch"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00020400-0000-0000-C000-000000000046}\ProxyStubClsid32]
+@="{00020420-0000-0000-C000-000000000046}"
+
+# Without this IE setup creates garbage filenames in Windows directory
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Advanced INF Setup]
+@=""
+
+# Session Manager is installed
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager]
+@=""
+
+# NT 4.0 SP6 is installed
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Windows]
+"CSDVersion"=dword:00000600
+
+#
 # Entries for Multimedia
 #
 
