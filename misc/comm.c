@@ -153,6 +153,7 @@ static struct DosDeviceStruct *GetDeviceStruct(int fd)
 		if (COM[fd].fd)
 		    return &COM[fd];
 	    } else {
+		fd &= 0x7f;
 		if (LPT[fd].fd)
 		    return &LPT[fd];
 	    }
@@ -338,6 +339,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 		}
 
 		if (!ValidCOMPort(port)) {
+			FIXME("invalid COM port %d?\n",port);
 			return -1;
 		}
 		
@@ -517,6 +519,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
         
     	TRACE("cid=%d\n", cid);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no cid=%d found!\n", cid);
 		return -1;
 	}
 	if (!(cid&FLAG_LPT)) {
@@ -553,6 +556,7 @@ INT16 WINAPI SetCommBreak16(INT16 cid)
 
 	TRACE("cid=%d\n", cid);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no cid=%d found!\n", cid);
 		return -1;
 	}
 
@@ -569,10 +573,10 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
 	struct DosDeviceStruct *ptr;
 
     	TRACE("cid=%d\n", cid);
-	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+	if (!(ptr = GetDeviceStruct(cid))) {
+		FIXME("no cid=%d found!\n", cid);
 		return -1;
 	}
-
 	ptr->suspended = 0;
 	ptr->commerror = 0;
 	return 0;
@@ -590,7 +594,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
     	TRACE("cid=%d, function=%d\n", cid, nFunction);
 	if ((nFunction != GETMAXCOM) && (nFunction != GETMAXLPT)) {
 		if ((ptr = GetDeviceStruct(cid)) == NULL) {
-		        TRACE("GetDeviceStruct failed\n");
+			FIXME("no cid=%d found!\n", cid);
 			return -1;
 		}
 		if (tcgetattr(ptr->fd,&port) == -1) {
@@ -691,6 +695,7 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 
     	TRACE("cid=%d, queue=%d\n", cid, fnQueue);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no cid=%d found!\n", cid);
 		return -1;
 	}
 	switch (fnQueue) {
@@ -727,6 +732,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
         unsigned int mstat;
 
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return -1;
 	}
         if (cid&FLAG_LPT) {
@@ -771,8 +777,10 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
         unsigned int mstat;
 
     	TRACE("cid %d,mask %d\n",cid,fuEvtMask);
-	if ((ptr = GetDeviceStruct(cid)) == NULL)
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 	    return (SEGPTR)NULL;
+	}
 
 	ptr->eventmask = fuEvtMask;
 
@@ -802,8 +810,10 @@ UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
 	WORD events;
 
     	TRACE("cid %d, mask %d\n", cid, fnEvtClear);
-	if ((ptr = GetDeviceStruct(cid)) == NULL)
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 	    return 0;
+	}
 
         if ((cid&FLAG_LPT) || !ValidCOMPort(cid)) {
             WARN(" cid %d not comm port\n",cid);
@@ -825,6 +835,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 
     	TRACE("cid %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",lpdcb->Id);
 		return -1;
 	}
 	if (tcgetattr(ptr->fd, &port) == -1) {
@@ -1041,6 +1052,7 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 
     	TRACE("cid %d, ptr %p\n", cid, lpdcb);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return -1;
 	}
 	if (tcgetattr(ptr->fd, &port) == -1) {
@@ -1180,6 +1192,7 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 
     	TRACE("cid %d, data %d \n", cid, chTransmit);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return -1;
 	}
 
@@ -1221,6 +1234,7 @@ INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
 
     	TRACE("cid %d (char %d)\n", cid, chUnget);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return -1;
 	}
 
@@ -1253,6 +1267,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 
     	TRACE("cid %d, ptr %p, length %d\n", cid, lpvBuf, cbRead);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return -1;
 	}
 
@@ -1302,6 +1317,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
     	TRACE("cid %d, ptr %p, length %d\n", 
 		cid, lpvBuf, cbWrite);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return -1;
 	}
 
@@ -1352,6 +1368,7 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 
 	TRACE("(%d, %x, %d, %d)\n", cid, hwnd, cbWriteNotify, cbOutQueue);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",cid);
 		ptr->commerror = IE_BADID;
 		return -1;
 	}
@@ -1541,7 +1558,7 @@ static int COMM_GetReadFd( HANDLE handle)
  */
 static int COMM_GetWriteFd( HANDLE handle)
 {
-    int fd;
+    int fd = -1;
     struct get_write_fd_request *req = get_req_buffer();
     req->handle = handle;
     server_call_fd( REQ_GET_WRITE_FD, -1, &fd );
@@ -1619,8 +1636,10 @@ BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 
     	TRACE("handle %d, function=%d\n", handle, nFunction);
 	fd = COMM_GetWriteFd(handle);
-	if(fd<0)
+	if(fd<0) {
+		FIXME("handle %d not found.\n",handle);
 		return FALSE;
+	}
 
 	if (tcgetattr(fd,&port) == -1) {
 		commerror=WinError();
@@ -1725,8 +1744,10 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
      TRACE("handle %d, flags %lx\n", handle, flags);
 
      fd = COMM_GetWriteFd(handle);
-     if(fd<0)
-         return FALSE;
+     if(fd<0) {
+	FIXME("no handle %d found\n",handle);
+	return FALSE;
+     }
 
      /*
      ** not exactly sure how these are different
@@ -1734,21 +1755,13 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
      ** and the other flushes the kernel's buffers.
      */
      if(flags&PURGE_TXABORT)
-     {
          tcflush(fd,TCOFLUSH);
-     }
      if(flags&PURGE_RXABORT)
-     {
          tcflush(fd,TCIFLUSH);
-     }
      if(flags&PURGE_TXCLEAR)
-     {
          tcflush(fd,TCOFLUSH);
-     }
      if(flags&PURGE_RXCLEAR)
-     {
          tcflush(fd,TCIFLUSH);
-     }
      close(fd);
 
      return 1;
@@ -1764,6 +1777,7 @@ BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
     fd=COMM_GetReadFd(handle);
     if(0>fd) 
     {
+	FIXME("no handle %d found\n",handle);
         return FALSE;
     }
 
@@ -1771,8 +1785,12 @@ BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
     {
 	lpStat->status = 0;
 
+#ifdef TIOCOUTQ
 	if(ioctl(fd, TIOCOUTQ, &lpStat->cbOutQue))
 	    WARN("ioctl returned error\n");
+#else
+	lpStat->cbOutQue = 0; /* FIXME: find a different way to find out */
+#endif
 
 	if(ioctl(fd, TIOCINQ, &lpStat->cbInQue))
 	    WARN("ioctl returned error\n");
@@ -1805,8 +1823,8 @@ BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
 
     FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
     fd=COMM_GetWriteFd(handle);
-    if(0>fd)
-    {
+    if(0>fd) {
+	FIXME("handle %d not found?\n",handle);
         return FALSE;
     }
     close(fd);
@@ -1823,6 +1841,7 @@ BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
     TRACE("handle %d, mask %p\n", handle, evtmask);
     if(0>(fd=COMM_GetReadFd(handle))) 
     {
+	FIXME("no handle %d found\n",handle);
         return FALSE;
     }
     close(fd);
@@ -1861,6 +1880,7 @@ BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
 	  (evtmask&EV_TXEMPTY)?"EV_TXEMPTY":"");
 	  
     if(0>(fd=COMM_GetWriteFd(handle))) {
+	FIXME("no handle %d found\n",handle);
         return FALSE;
     }
     close(fd);
@@ -1884,7 +1904,10 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
      TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
 	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
 
-     if ((fd = COMM_GetWriteFd(handle)) < 0) return FALSE;
+     if ((fd = COMM_GetWriteFd(handle)) < 0)  {
+	FIXME("no handle %d found\n",handle);
+	return FALSE;
+     }
 
      if ((tcgetattr(fd,&port)) == -1) {
          int save_error = errno;
@@ -2318,9 +2341,9 @@ BOOL WINAPI TransmitCommChar(INT cid,CHAR chTransmit)
 	struct DosDeviceStruct *ptr;
 
     	FIXME("(%d,'%c'), use win32 handle!\n",cid,chTransmit);
-	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+	if ((ptr = GetDeviceStruct(cid)) == NULL)
+		FIXME("no handle for cid = %0x!.\n",cid);
 		return FALSE;
-	}
 
 	if (ptr->suspended) {
 		ptr->commerror = IE_HARDWARE;
@@ -2338,26 +2361,52 @@ BOOL WINAPI TransmitCommChar(INT cid,CHAR chTransmit)
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
  */
-BOOL WINAPI GetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts)
+BOOL WINAPI GetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts)
 {
-	FIXME("(%x,%p):stub.\n",cid,lptimeouts);
+	FIXME("(%x,%p):stub.\n",hcom,lptimeouts);
 	return TRUE;
 }
 
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.453)
  */
-BOOL WINAPI SetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts) {
-	FIXME("(%x,%p):stub.\n",cid,lptimeouts);
-	TRACE("ReadIntervalTimeout %ld\n",lptimeouts->ReadIntervalTimeout);
-	TRACE("ReadTotalTimeoutMultiplier %ld\n",
-	      lptimeouts->ReadTotalTimeoutMultiplier);
-	TRACE("ReadTotalTimeoutConstant %ld\n",
-	      lptimeouts->ReadTotalTimeoutConstant);
-	TRACE("WriteTotalTimeoutMultiplier %ld\n",
-	      lptimeouts->WriteTotalTimeoutMultiplier);
-	TRACE("WriteTotalTimeoutConstant %ld\n",
-	      lptimeouts->WriteTotalTimeoutConstant);
+BOOL WINAPI SetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts) {
+	struct DosDeviceStruct *ptr;
+	struct termios	tios;
+	int	fd;
+
+	FIXME("(%x,%p):stub.\n",hcom,lptimeouts);
+	/* 
+	if ((ptr = GetDeviceStruct(hcom)) == NULL) {
+		FIXME("no handle for cid = %0x!.\n",hcom);
+		return FALSE;
+	}
+	 */
+
+	fd = COMM_GetWriteFd(hcom);
+	if (fd < 0) {
+		FIXME("no fd for cid = %0x!.\n",hcom);
+		return FALSE;
+	}
+
+
+	FIXME("ReadIntervalTimeout %ld\n",lptimeouts->ReadIntervalTimeout);
+	FIXME("ReadTotalTimeoutMultiplier %ld\n",lptimeouts->ReadTotalTimeoutMultiplier);
+	FIXME("ReadTotalTimeoutConstant %ld\n",lptimeouts->ReadTotalTimeoutConstant);
+	FIXME("WriteTotalTimeoutMultiplier %ld\n",lptimeouts->WriteTotalTimeoutMultiplier);
+	FIXME("WriteTotalTimeoutConstant %ld\n",lptimeouts->WriteTotalTimeoutConstant);
+
+
+	if (-1==tcgetattr(fd,&tios)) {
+		FIXME("tcgetattr on fd %d failed!\n",fd);
+		return FALSE;
+	}
+	/* VTIME is in 1/10 seconds */
+	tios.c_cc[VTIME]= (lptimeouts->ReadIntervalTimeout+99)/100;
+	if (-1==tcsetattr(fd,0,&tios)) {
+		FIXME("tcsetattr on fd %d failed!\n",fd);
+		return FALSE;
+	}
 	return TRUE;
 }
 

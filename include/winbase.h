@@ -4,7 +4,6 @@
 #include "basetsd.h"
 #include "winnt.h"
 #include "wine/winestring.h"
-
 #include "pshpack1.h"
 
 
@@ -1096,8 +1095,8 @@ BOOL      WINAPI BuildCommDCBW(LPCWSTR,LPDCB);
 BOOL      WINAPI BuildCommDCBAndTimeoutsA(LPCSTR,LPDCB,LPCOMMTIMEOUTS);
 BOOL      WINAPI BuildCommDCBAndTimeoutsW(LPCWSTR,LPDCB,LPCOMMTIMEOUTS);
 #define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
-BOOL      WINAPI GetCommTimeouts(INT,LPCOMMTIMEOUTS);
-BOOL      WINAPI SetCommTimeouts(INT,LPCOMMTIMEOUTS);
+BOOL      WINAPI GetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
+BOOL      WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
 BOOL      WINAPI GetCommState(INT,LPDCB);
 BOOL      WINAPI SetCommState(INT,LPDCB);
 BOOL      WINAPI TransmitCommChar(INT,CHAR);
