@@ -960,7 +960,7 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
     DWORD found;
     BOOL allocated_libdir = FALSE;
     static LPCSTR libdir = NULL; /* See above */
-    NTSTATUS nts = STATUS_SUCCESS;
+    NTSTATUS nts = STATUS_NO_SUCH_FILE;
 
     *pwm = NULL;
     if ( !libname ) return STATUS_DLL_NOT_FOUND; /* FIXME ? */
