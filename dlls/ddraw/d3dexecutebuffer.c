@@ -227,12 +227,6 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 
     case D3DOP_TRIANGLE: {
       int i;
-      float z_inv_matrix[16] = {
-	1.0, 0.0,  0.0, 0.0,
-	0.0, 1.0,  0.0, 0.0,
-	0.0, 0.0, -1.0, 0.0,
-	0.0, 0.0,  1.0, 1.0
-      };
 
       OGL_Vertex  *vx    = (OGL_Vertex  *) ilpBuff->vertex_data;
       OGL_LVertex *l_vx  = (OGL_LVertex *) ilpBuff->vertex_data;
@@ -255,9 +249,11 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	TRACE("  View       Matrix : (%p)\n", odev->view_mat);
 	dump_mat(odev->view_mat);
 
-	glLoadMatrixf((float *) z_inv_matrix);
-	glMultMatrixf((float *) odev->proj_mat);
-      glMultMatrixf((float *) odev->view_mat);
+	/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
+	   are always 0.0 at the front viewing volume and 1.0 at the back with Direct 3D and with
+	   the default behaviour of OpenGL. So, no additional transformation is required. */
+	glLoadMatrixf((float *) odev->proj_mat);
+	glMultMatrixf((float *) odev->view_mat);
 	break;
 
       case D3DVT_LVERTEX:
@@ -275,8 +271,10 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	TRACE("  View       Matrix : (%p)\n", odev->view_mat);
 	dump_mat(odev->view_mat);
 
-	glLoadMatrixf((float *) z_inv_matrix);
-	glMultMatrixf((float *) odev->proj_mat);
+	/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
+	   are always 0 at the front viewing volume and 1 at the back with Direct 3D and with
+	   the default behaviour of OpenGL. So, no additional transformation is required. */
+	glLoadMatrixf((float *) odev->proj_mat);
 	glMultMatrixf((float *) odev->view_mat);
 	break;
 
@@ -554,9 +552,9 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 
 	  for (nb = 0; nb < ci->dwCount; nb++) {
 	    /* For the moment, no normal transformation... */
-	    dst->nx = src->u4.nx;
-	    dst->ny = src->u5.ny;
-	    dst->nz = src->u6.nz;
+	    dst->nx = (src->u4.nx * mat->_11) + (src->u5.ny * mat->_21) + (src->u6.nz * mat->_31);
+	    dst->ny = (src->u4.nx * mat->_12) + (src->u5.ny * mat->_22) + (src->u6.nz * mat->_32);
+	    dst->nz = (src->u4.nx * mat->_13) + (src->u5.ny * mat->_23) + (src->u6.nz * mat->_33);
 
 	    dst->u  = src->u7.tu;
 	    dst->v  = src->u8.tv;
