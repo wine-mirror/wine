@@ -49,3 +49,15 @@ HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
           debugstr_guid( riid ), ppvObject );
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI OLEACC_DllRegisterServer()
+{
+    FIXME("\n");
+    return S_OK;
+}
+
+HRESULT WINAPI OLEACC_DllUnregisterServer()
+{
+    FIXME("\n");
+    return S_OK;
+}
