@@ -407,8 +407,6 @@ INT WINAPI GetDIBits(
 {
     DC * dc;
     BITMAPOBJ * bmp;
-    PALETTEENTRY * palEntry;
-    PALETTEOBJ * palette;
     int i;
 
     if (!info) return 0;
@@ -418,12 +416,6 @@ INT WINAPI GetDIBits(
         GDI_ReleaseObj( hdc );
 	return 0;
     }
-    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
-    {
-        GDI_ReleaseObj( hdc );
-        GDI_ReleaseObj( hbitmap );
-        return 0;
-    }
 
     /* Transfer color info */
 
@@ -431,57 +423,71 @@ INT WINAPI GetDIBits(
 
 	info->bmiHeader.biClrUsed = 0;
 
-	if(info->bmiHeader.biBitCount >= bmp->bitmap.bmBitsPixel) {
-	    palEntry = palette->logpalette.palPalEntry;
-	    for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++, palEntry++) {
-		if (coloruse == DIB_RGB_COLORS) {
-		    info->bmiColors[i].rgbRed      = palEntry->peRed;
-		    info->bmiColors[i].rgbGreen    = palEntry->peGreen;
-		    info->bmiColors[i].rgbBlue     = palEntry->peBlue;
-		    info->bmiColors[i].rgbReserved = 0;
-		}
-		else ((WORD *)info->bmiColors)[i] = (WORD)i;
-	    }
-	} else {
-	    switch (info->bmiHeader.biBitCount) {
-	    case 1:
-	        info->bmiColors[0].rgbRed = info->bmiColors[0].rgbGreen =
-		  info->bmiColors[0].rgbBlue = 0;
-		info->bmiColors[0].rgbReserved = 0;
-		info->bmiColors[1].rgbRed = info->bmiColors[1].rgbGreen =
-		  info->bmiColors[1].rgbBlue = 0xff;
-		info->bmiColors[1].rgbReserved = 0;
-		break;
-
-	    case 4:
-	        memcpy(info->bmiColors, EGAColors, sizeof(EGAColors));
-		break;
-
-	    case 8:
-	        {
-	        INT r, g, b;
-		RGBQUAD *color;
-
-		memcpy(info->bmiColors, DefLogPalette,
-		       10 * sizeof(RGBQUAD));
-		memcpy(info->bmiColors + 246, DefLogPalette + 10,
-		       10 * sizeof(RGBQUAD));
-		color = info->bmiColors + 10;
-		for(r = 0; r <= 5; r++) /* FIXME */
-		    for(g = 0; g <= 5; g++)
-		        for(b = 0; b <= 5; b++) {
-			    color->rgbRed =   (r * 0xff) / 5;
-			    color->rgbGreen = (g * 0xff) / 5;
-			    color->rgbBlue =  (b * 0xff) / 5;
-			    color->rgbReserved = 0;
-			    color++;
-			}
-		}
-	    }
+	/* If the bitmap object already has a dib section at the
+	   same color depth then get the color map from it */
+	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == info->bmiHeader.biBitCount) {
+	    GetDIBColorTable(hdc, 0, 1 << info->bmiHeader.biBitCount, info->bmiColors);
 	}
-    }
+        else {
+            if(info->bmiHeader.biBitCount >= bmp->bitmap.bmBitsPixel) {
+                /* Generate the color map from the selected palette */
+                PALETTEENTRY * palEntry;
+                PALETTEOBJ * palette;
+                if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC ))) {
+                    GDI_ReleaseObj( hdc );
+                    GDI_ReleaseObj( hbitmap );
+                    return 0;
+                }
+                palEntry = palette->logpalette.palPalEntry;
+                for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++, palEntry++) {
+                    if (coloruse == DIB_RGB_COLORS) {
+                        info->bmiColors[i].rgbRed      = palEntry->peRed;
+                        info->bmiColors[i].rgbGreen    = palEntry->peGreen;
+                        info->bmiColors[i].rgbBlue     = palEntry->peBlue;
+                        info->bmiColors[i].rgbReserved = 0;
+                    }
+                    else ((WORD *)info->bmiColors)[i] = (WORD)i;
+                }
+                GDI_ReleaseObj( dc->hPalette );
+            } else {
+                switch (info->bmiHeader.biBitCount) {
+                case 1:
+                    info->bmiColors[0].rgbRed = info->bmiColors[0].rgbGreen =
+                        info->bmiColors[0].rgbBlue = 0;
+                    info->bmiColors[0].rgbReserved = 0;
+                    info->bmiColors[1].rgbRed = info->bmiColors[1].rgbGreen =
+                        info->bmiColors[1].rgbBlue = 0xff;
+                    info->bmiColors[1].rgbReserved = 0;
+                    break;
 
-    GDI_ReleaseObj( dc->hPalette );
+                case 4:
+                    memcpy(info->bmiColors, EGAColors, sizeof(EGAColors));
+                    break;
+
+                case 8:
+                    {
+                        INT r, g, b;
+                        RGBQUAD *color;
+
+                        memcpy(info->bmiColors, DefLogPalette,
+                               10 * sizeof(RGBQUAD));
+                        memcpy(info->bmiColors + 246, DefLogPalette + 10,
+                               10 * sizeof(RGBQUAD));
+                        color = info->bmiColors + 10;
+                        for(r = 0; r <= 5; r++) /* FIXME */
+                            for(g = 0; g <= 5; g++)
+                                for(b = 0; b <= 5; b++) {
+                                    color->rgbRed =   (r * 0xff) / 5;
+                                    color->rgbGreen = (g * 0xff) / 5;
+                                    color->rgbBlue =  (b * 0xff) / 5;
+                                    color->rgbReserved = 0;
+                                    color++;
+                                }
+                    }
+                }
+            }
+        }
+    }
 
     if (bits && lines)
     {
@@ -664,8 +670,8 @@ INT WINAPI GetDIBits(
                         }
                         break;
 
-                    default: /* ? bit bmp -> 16 bit DIB */
-                        FIXME("15/16 bit DIB %d bit bitmap\n",
+                    default: /* ? bit bmp -> 32 bit DIB */
+                        FIXME("32 bit DIB %d bit bitmap\n",
                         bmp->bitmap.bmBitsPixel);
                         break;
                     }
