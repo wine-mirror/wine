@@ -41,7 +41,6 @@ extern int pedantic;
 extern int do_everything;
 extern int header_only;
 extern int typelib_only;
-extern int compat_icom;
 
 extern char *input_name;
 extern char *header_name;

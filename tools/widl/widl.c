@@ -56,7 +56,6 @@
 
 static char usage[] =
 "Usage: widl [options...] infile.idl\n"
-"   -b          Make headers compatible with ICOM macros\n"
 "   -d n        Set debug level to 'n'\n"
 "   -D id[=val] Define preprocessor identifier id=val\n"
 "   -E          Preprocess only\n"
@@ -89,7 +88,6 @@ int preprocess_only = 0;
 int header_only = 0;
 int typelib_only = 0;
 int no_preprocess = 0;
-int compat_icom = 0;
 
 char *input_name;
 char *header_name;
@@ -138,11 +136,8 @@ int main(int argc,char *argv[])
 
   now = time(NULL);
 
-  while((optc = getopt(argc, argv, "bd:D:EhH:I:NtT:VW")) != EOF) {
+  while((optc = getopt(argc, argv, "d:D:EhH:I:NtT:VW")) != EOF) {
     switch(optc) {
-    case 'b':
-      compat_icom = 1;
-      break;
     case 'd':
       debuglevel = strtol(optarg, NULL, 0);
       break;

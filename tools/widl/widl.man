@@ -23,18 +23,16 @@ The default filename is infile.tlb.
 Print version number and exits from the program.
 .PP
 .B Header options:
-.IP \fB-b\fR
-Make headers compatible with ICOM macros.
 .IP \fB-h\fR
 Only generate header files.
 .IP "\fB-H \fIfile\fR"
-Name of header file to include. The default header
+Name of header file to generate. The default header
 filename is infile.h.
+.PP
+.B Preprocessor options:
 .IP "\fB-I \fIpath\fR"
 Add a header search dir to path. Multiple search 
 dirs are allowed.
-.PP
-.B Preprocessor options:
 .IP "\fB-D \fIid[=val]\fR"
 Define preprocessor identifier id value.
 .IP \fB-E\fR

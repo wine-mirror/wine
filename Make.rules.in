@@ -137,7 +137,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(WINEBUILD) -w $(DEFS) -o $@ --def $<
 
 .idl.h:
-	$(WIDL) $(IDLFLAGS) -b -h -H $@ $<
+	$(WIDL) $(IDLFLAGS) -h -H $@ $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
