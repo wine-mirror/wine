@@ -189,7 +189,10 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   lpddi->guidProduct	= DInput_Wine_Joystick_GUID;
 
   lpddi->guidFFDriver = GUID_NULL;
-  lpddi->dwDevType    = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL<<8);
+  if (version >= 8)
+    lpddi->dwDevType    = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+  else
+    lpddi->dwDevType    = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
 
   strcpy(lpddi->tszInstanceName, "Joystick");
   /* ioctl JSIOCGNAME(len) */
