@@ -176,7 +176,7 @@ HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This)
     TRACE("(%p)\n",This);
 
     /* Initialize the virtual function table.*/
-    ICOM_VTBL(This)    = &VT_BindCtxImpl;
+    This->lpVtbl       = &VT_BindCtxImpl;
     This->ref          = 0;
 
     /* Initialize the BIND_OPTS2 structure */

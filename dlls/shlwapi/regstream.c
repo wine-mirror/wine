@@ -343,7 +343,7 @@ static IStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
 
  if (regStream)
  {
-   ICOM_VTBL(regStream) = &rstvt;
+   regStream->lpVtbl = &rstvt;
    regStream->ref = 1;
    regStream->hKey = hKey;
    regStream->pbBuffer = pbBuffer;

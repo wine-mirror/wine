@@ -123,7 +123,7 @@ PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
 
   pg = (IGetFrameImpl*)LocalAlloc(LPTR, sizeof(IGetFrameImpl));
   if (pg != NULL) {
-    ICOM_VTBL(pg)     = &igetframeVtbl;
+    pg->lpVtbl        = &igetframeVtbl;
     pg->ref           = 1;
     pg->lCurrentFrame = -1;
     pg->pStream       = pStream;

@@ -87,7 +87,7 @@ StgStreamImpl* StgStreamImpl_Construct(
     /*
      * Set-up the virtual function table and reference count.
      */
-    ICOM_VTBL(newStream) = &StgStreamImpl_Vtbl;
+    newStream->lpVtbl    = &StgStreamImpl_Vtbl;
     newStream->ref       = 0;
 
     /*

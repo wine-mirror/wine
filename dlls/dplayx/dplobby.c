@@ -293,32 +293,32 @@ HRESULT DPL_CreateInterface
   if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
   {
     ICOM_THIS(IDirectPlayLobbyWImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobbyWVT;
+    This->lpVtbl = &directPlayLobbyWVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
   {
     ICOM_THIS(IDirectPlayLobbyAImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobbyAVT;
+    This->lpVtbl = &directPlayLobbyAVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby2WImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby2WVT;
+    This->lpVtbl = &directPlayLobby2WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby2AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby2AVT;
+    This->lpVtbl = &directPlayLobby2AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby3WImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby3WVT;
+    This->lpVtbl = &directPlayLobby3WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby3AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby3AVT;
+    This->lpVtbl = &directPlayLobby3AVT;
   }
   else
   {
@@ -373,32 +373,32 @@ static HRESULT WINAPI DPL_QueryInterface
   if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
   {
     ICOM_THIS(IDirectPlayLobbyWImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobbyWVT;
+    This->lpVtbl = &directPlayLobbyWVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
   {
     ICOM_THIS(IDirectPlayLobbyAImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobbyAVT;
+    This->lpVtbl = &directPlayLobbyAVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby2WImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby2WVT;
+    This->lpVtbl = &directPlayLobby2WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby2AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby2AVT;
+    This->lpVtbl = &directPlayLobby2AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby3WImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby3WVT;
+    This->lpVtbl = &directPlayLobby3WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
   {
     ICOM_THIS(IDirectPlayLobby3AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlayLobby3AVT;
+    This->lpVtbl = &directPlayLobby3AVT;
   }
   else
   {

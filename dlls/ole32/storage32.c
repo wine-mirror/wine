@@ -2209,7 +2209,7 @@ HRESULT StorageImpl_Construct(
   /*
    * Initialize the virtual function table.
    */
-  ICOM_VTBL(This)    = &Storage32Impl_Vtbl;
+  This->lpVtbl = &Storage32Impl_Vtbl;
   This->v_destructor = &StorageImpl_Destroy;
 
   /*
@@ -3481,7 +3481,7 @@ StorageInternalImpl* StorageInternalImpl_Construct(
     /*
      * Initialize the virtual function table.
      */
-    ICOM_VTBL(newStorage)    = &Storage32InternalImpl_Vtbl;
+    newStorage->lpVtbl = &Storage32InternalImpl_Vtbl;
     newStorage->v_destructor = &StorageInternalImpl_Destroy;
 
     /*
@@ -3552,7 +3552,7 @@ IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     /*
      * Set-up the virtual function table and reference count.
      */
-    ICOM_VTBL(newEnumeration) = &IEnumSTATSTGImpl_Vtbl;
+    newEnumeration->lpVtbl    = &IEnumSTATSTGImpl_Vtbl;
     newEnumeration->ref       = 0;
 
     /*

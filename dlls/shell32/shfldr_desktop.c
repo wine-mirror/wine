@@ -108,7 +108,7 @@ HRESULT WINAPI ISF_Desktop_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOI
 	return E_OUTOFMEMORY;
 
     sf->ref = 0;
-    ICOM_VTBL (sf) = &vt_MCFldr_ShellFolder2;
+    sf->lpVtbl = &vt_MCFldr_ShellFolder2;
     sf->pidlRoot = _ILCreateDesktop ();	/* my qualified pidl */
     sf->sPathTarget = SHAlloc (strlen (szMyPath) + 1);
     lstrcpyA (sf->sPathTarget, szMyPath);

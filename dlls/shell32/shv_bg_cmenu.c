@@ -55,7 +55,7 @@ IContextMenu *ISvBgCm_Constructor(IShellFolder*	pSFParent)
 	BgCmImpl* cm;
 
 	cm = (BgCmImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(BgCmImpl));
-	ICOM_VTBL(cm)=&cmvt;
+	cm->lpVtbl = &cmvt;
 	cm->ref = 1;
 	cm->pSFParent = pSFParent;
 	if(pSFParent) IShellFolder_AddRef(pSFParent);

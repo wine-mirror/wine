@@ -229,7 +229,7 @@ HRESULT WINAPI IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID 
 	return E_OUTOFMEMORY;
 
     sf->ref = 0;
-    ICOM_VTBL (sf) = &unkvt;
+    sf->lpVtbl = &unkvt;
     sf->lpvtblShellFolder = &sfvt;
     sf->lpvtblPersistFolder3 = &vt_FSFldr_PersistFolder3;
     sf->lpvtblDropTarget = &dtvt;

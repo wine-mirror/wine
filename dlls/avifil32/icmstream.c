@@ -130,7 +130,7 @@ HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppv)
   if (pstream == NULL)
     return AVIERR_MEMORY;
 
-  ICOM_VTBL(pstream)  = &iicmst;
+  pstream->lpVtbl  = &iicmst;
   AVIFILE_Reset(pstream);
 
   hr = IUnknown_QueryInterface((IUnknown*)pstream, riid, ppv);

@@ -2076,7 +2076,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
     if (!pTypeLibImpl) return NULL;
 
-    ICOM_VTBL(pTypeLibImpl) = &tlbvt;
+    pTypeLibImpl->lpVtbl = &tlbvt;
     pTypeLibImpl->ref = 1;
 
     /* get pointer to beginning of typelib data */
@@ -2890,7 +2890,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
     if (!pTypeLibImpl) return NULL;
 
-    ICOM_VTBL(pTypeLibImpl) = &tlbvt;
+    pTypeLibImpl->lpVtbl = &tlbvt;
     pTypeLibImpl->ref = 1;
 
     pHeader = pLib;
@@ -3759,7 +3759,7 @@ static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void)
     pTypeInfoImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeInfoImpl));
     if (pTypeInfoImpl)
     {
-      ICOM_VTBL(pTypeInfoImpl) = &tinfvt;
+      pTypeInfoImpl->lpVtbl = &tinfvt;
       pTypeInfoImpl->ref=1;
     }
     TRACE("(%p)\n", pTypeInfoImpl);

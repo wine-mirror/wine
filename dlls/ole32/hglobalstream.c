@@ -223,7 +223,7 @@ HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
   /*
    * Verify that the stream object was created with CreateStreamOnHGlobal.
    */
-  if (ICOM_VTBL(pStream) == &HGLOBALStreamImpl_Vtbl)
+  if (pStream->lpVtbl == &HGLOBALStreamImpl_Vtbl)
     *phglobal = pStream->supportHandle;
   else
   {
@@ -259,7 +259,7 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
     /*
      * Set-up the virtual function table and reference count.
      */
-    ICOM_VTBL(newStream) = &HGLOBALStreamImpl_Vtbl;
+    newStream->lpVtbl = &HGLOBALStreamImpl_Vtbl;
     newStream->ref    = 0;
 
     /*

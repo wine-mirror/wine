@@ -78,7 +78,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
     ICOM_THIS(IDPLobbySPImpl,*ppvObj);
-    ICOM_VTBL(This) = &dpLobbySPVT;
+    This->lpVtbl = &dpLobbySPVT;
   }
   else
   {
@@ -203,7 +203,7 @@ HRESULT WINAPI DPLSP_QueryInterface
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
     ICOM_THIS(IDPLobbySPImpl,*ppvObj);
-    ICOM_VTBL(This) = &dpLobbySPVT;
+    This->lpVtbl = &dpLobbySPVT;
   }
   else
   {

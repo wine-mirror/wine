@@ -67,7 +67,7 @@ IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
 
 	ei = (IExtractIconWImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIconWImpl));
 	ei->ref=1;
-	ICOM_VTBL(ei) = &eivt;
+	ei->lpVtbl = &eivt;
 	ei->lpvtblPersistFile = &pfvt;
 	ei->lpvtblExtractIconA = &eiavt;
 	ei->pidl=ILClone(pidl);

@@ -112,7 +112,7 @@ HRESULT WINAPI ISF_MyComputer_Constructor (IUnknown * pUnkOuter, REFIID riid, LP
 	return E_OUTOFMEMORY;
 
     sf->ref = 0;
-    ICOM_VTBL (sf) = &vt_ShellFolder2;
+    sf->lpVtbl = &vt_ShellFolder2;
     sf->lpVtblPersistFolder2 = &vt_PersistFolder2;
     sf->pidlRoot = _ILCreateMyComputer ();	/* my qualified pidl */
 

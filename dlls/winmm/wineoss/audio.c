@@ -2320,7 +2320,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     *ippdsdb = (IDsDriverBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverBufferImpl));
     if (*ippdsdb == NULL)
 	return DSERR_OUTOFMEMORY;
-    ICOM_VTBL(*ippdsdb) = &dsdbvt;
+    (*ippdsdb)->lpVtbl  = &dsdbvt;
     (*ippdsdb)->ref	= 1;
     (*ippdsdb)->drv	= This;
 
@@ -2397,7 +2397,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     *idrv = (IDsDriverImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
     if (!*idrv)
 	return MMSYSERR_NOMEM;
-    ICOM_VTBL(*idrv)	= &dsdvt;
+    (*idrv)->lpVtbl	= &dsdvt;
     (*idrv)->ref	= 1;
 
     (*idrv)->wDevID	= wDevID;
@@ -3395,7 +3395,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
 	return DSERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(*ippdscdb) = &dscdbvt;
+    (*ippdscdb)->lpVtbl = &dscdbvt;
     (*ippdscdb)->ref	= 1;
     (*ippdscdb)->drv	= This;
 
@@ -3477,7 +3477,7 @@ static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
     *idrv = (IDsCaptureDriverImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsCaptureDriverImpl));
     if (!*idrv)
 	return MMSYSERR_NOMEM;
-    ICOM_VTBL(*idrv)	= &dscdvt;
+    (*idrv)->lpVtbl	= &dscdvt;
     (*idrv)->ref	= 1;
 
     (*idrv)->wDevID	= wDevID;

@@ -108,8 +108,7 @@ void* StdGlobalInterfaceTable_Construct() {
   newGIT = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGlobalInterfaceTableImpl));
   if (newGIT == 0) return newGIT;
 
-  ICOM_VTBL(newGIT) = &StdGlobalInterfaceTableImpl_Vtbl;
-  
+  newGIT->lpVtbl = &StdGlobalInterfaceTableImpl_Vtbl;
   newGIT->ref = 0;      /* Initialise the reference count */
   newGIT->firstEntry = NULL; /* we start with an empty table   */
   newGIT->lastEntry  = NULL;

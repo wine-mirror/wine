@@ -128,7 +128,7 @@ DirectSoundCaptureCreate8(
 
         InitializeCriticalSection( &(This->lock) );
 
-        ICOM_VTBL(This) = &dscvt;
+        This->lpVtbl = &dscvt;
         dsound_capture = This;
 
         if (GetDeviceID(lpcGUID, &This->guid) == DS_OK)
@@ -641,7 +641,7 @@ DSOUND_CreateDirectSoundCaptureBuffer(
             return DSERR_OUTOFMEMORY; 
         }
 
-        ICOM_VTBL(This) = &dscbvt;
+        This->lpVtbl = &dscbvt;
 
 	if (ipDSC->driver) {
 	    err = IDsCaptureDriver_CreateCaptureBuffer(ipDSC->driver, 
@@ -704,7 +704,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
         dsn->dscb = This;
 	/* FIXME: get this right someday */
         IDirectSoundCaptureBuffer8_AddRef(iface);
-        ICOM_VTBL(dsn) = &dsnvt;
+        dsn->lpVtbl = &dsnvt;
         *ppobj = (LPVOID)dsn;
         return DS_OK;
     }
@@ -1296,10 +1296,9 @@ DirectSoundFullDuplexCreate8(
         ICOM_THIS(IDirectSoundFullDuplexImpl, *ippDSFD);
 
         This->ref = 1;
+        This->lpVtbl = &dsfdvt;
 
         InitializeCriticalSection( &(This->lock) );
-
-        ICOM_VTBL(This) = &dsfdvt;
 
         return IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
                                                       pcGuidCaptureDevice, pcGuidRenderDevice,

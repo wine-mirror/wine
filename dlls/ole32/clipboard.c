@@ -1576,7 +1576,7 @@ LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC a
     return NULL;
 
   ef->ref = 0;
-  ICOM_VTBL(ef) = &efvt;
+  ef->lpVtbl = &efvt;
   ef->pUnkDataObj = pUnkDataObj;
 
   ef->posFmt = 0;

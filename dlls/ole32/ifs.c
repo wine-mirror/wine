@@ -605,8 +605,8 @@ BOOL WINAPI IsValidInterface(
 ) {
 	return !(
 		IsBadReadPtr(punk,4)					||
-		IsBadReadPtr(ICOM_VTBL(punk),4)				||
-		IsBadReadPtr(ICOM_VTBL(punk)->QueryInterface,9)	||
-		IsBadCodePtr((FARPROC)ICOM_VTBL(punk)->QueryInterface)
+		IsBadReadPtr(punk->lpVtbl,4)				||
+		IsBadReadPtr(punk->lpVtbl->QueryInterface,9)	||
+		IsBadCodePtr((FARPROC)punk->lpVtbl->QueryInterface)
 	);
 }

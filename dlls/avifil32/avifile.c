@@ -235,9 +235,9 @@ HRESULT AVIFILE_CreateAVIFile(REFIID riid, LPVOID *ppv)
   if (pfile == NULL)
     return AVIERR_MEMORY;
 
-  ICOM_VTBL(pfile)               = &iavift;
-  ICOM_VTBL(&pfile->iPersistFile) = &ipersistft;
+  pfile->lpVtbl = &iavift;
   pfile->ref = 0;
+  pfile->iPersistFile.lpVtbl = &ipersistft;
   pfile->iPersistFile.paf = pfile;
 
   hr = IUnknown_QueryInterface((IUnknown*)pfile, riid, ppv);
@@ -1423,7 +1423,7 @@ static void    AVIFILE_ConstructAVIStream(IAVIFileImpl *paf, DWORD nr, LPAVISTRE
 
   pstream = paf->ppStreams[nr];
 
-  ICOM_VTBL(pstream)      = &iavist;
+  pstream->lpVtbl         = &iavist;
   pstream->ref            = 0;
   pstream->paf            = paf;
   pstream->nStream        = nr;

@@ -691,7 +691,7 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	ds3db = (IDirectSound3DBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*ds3db));
 	ds3db->ref = 0;
 	ds3db->dsb = This;
-	ICOM_VTBL(ds3db) = &ds3dbvt;
+	ds3db->lpVtbl = &ds3dbvt;
 	InitializeCriticalSection(&ds3db->lock);
 
 	ds3db->ds3db.dwSize = sizeof(DS3DBUFFER);
@@ -1003,7 +1003,7 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 
 	dsl = (IDirectSound3DListenerImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*dsl));
 	dsl->ref = 1;
-	ICOM_VTBL(dsl) = &ds3dlvt;
+	dsl->lpVtbl = &ds3dlvt;
 
 	dsl->ds3dl.dwSize = sizeof(DS3DLISTENER);
 	dsl->ds3dl.vPosition.u1.x = 0.0;

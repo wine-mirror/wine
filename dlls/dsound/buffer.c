@@ -824,7 +824,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 		dsn->dsb = This;
 		dsn->dscb = 0;
 		IDirectSoundBuffer8_AddRef(iface);
-		ICOM_VTBL(dsn) = &dsnvt;
+		dsn->lpVtbl = &dsnvt;
 		*ppobj = (LPVOID)dsn;
 		return S_OK;
 	}
@@ -919,7 +919,7 @@ HRESULT WINAPI SecondaryBuffer_Create(
 	dsb->ref = 1;
 	dsb->dsound = This;
 	dsb->parent = NULL;
-	ICOM_VTBL(dsb) = &dsbvt;
+	dsb->lpVtbl = &dsbvt;
 
 	memcpy(&dsb->dsbd, dsbd, sizeof(*dsbd));
 	if (wfex)

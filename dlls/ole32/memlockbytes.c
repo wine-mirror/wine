@@ -186,7 +186,7 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
   ULONG xread;
 
   *phglobal = 0;
-  if (ICOM_VTBL(pMemLockBytes) == &HGLOBALLockBytesImpl_Vtbl) {
+  if (pMemLockBytes->lpVtbl == &HGLOBALLockBytesImpl_Vtbl) {
     *phglobal = pMemLockBytes->supportHandle;
     if (*phglobal == 0)
       return E_INVALIDARG;
@@ -240,7 +240,7 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
     /*
      * Set up the virtual function table and reference count.
      */
-    ICOM_VTBL(newLockBytes) = &HGLOBALLockBytesImpl_Vtbl;
+    newLockBytes->lpVtbl = &HGLOBALLockBytesImpl_Vtbl;
     newLockBytes->ref    = 0;
 
     /*
@@ -760,8 +760,8 @@ HGLOBALLockBytesImpl16_Construct(HGLOBAL16 hGlobal,
 #undef VTENT
       msegvt16 = MapLS( &vt16 );
   }
-  ICOM_VTBL(newLockBytes)	= (ICOM_VTABLE(ILockBytes16)*)msegvt16;
-  newLockBytes->ref		= 0;
+  newLockBytes->lpVtbl	= (ICOM_VTABLE(ILockBytes16)*)msegvt16;
+  newLockBytes->ref	= 0;
   /*
    * Initialize the support.
    */

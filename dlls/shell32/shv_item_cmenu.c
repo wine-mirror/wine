@@ -79,7 +79,7 @@ IContextMenu *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl,
 	UINT  u;
 
 	cm = (ItemCmImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ItemCmImpl));
-	ICOM_VTBL(cm)=&cmvt;
+	cm->lpVtbl = &cmvt;
 	cm->ref = 1;
 	cm->pidl = ILClone(pidl);
 	cm->pSFParent = pSFParent;

@@ -161,7 +161,7 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 {	IShellViewImpl * sv;
 	sv=(IShellViewImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellViewImpl));
 	sv->ref=1;
-	ICOM_VTBL(sv)=&svvt;
+	sv->lpVtbl=&svvt;
 	sv->lpvtblOleCommandTarget=&ctvt;
 	sv->lpvtblDropTarget=&dtvt;
 	sv->lpvtblDropSource=&dsvt;

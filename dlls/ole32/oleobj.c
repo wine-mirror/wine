@@ -87,7 +87,7 @@ static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor()
 					 0,
 					 sizeof(OleAdviseHolderImpl));
 
-  ICOM_VTBL(lpoah) = &oahvt;
+  lpoah->lpVtbl = &oahvt;
   lpoah->ref = 1;
   lpoah->maxSinks = INITIAL_SINKS;
   lpoah->arrayOfSinks = HeapAlloc(GetProcessHeap(),
@@ -431,7 +431,7 @@ static IDataAdviseHolder* DataAdviseHolder_Constructor()
 					   0,
 					   sizeof(DataAdviseHolder));
 
-  ICOM_VTBL(newHolder) = &DataAdviseHolderImpl_VTable;
+  newHolder->lpVtbl = &DataAdviseHolderImpl_VTable;
   newHolder->ref = 1;
   newHolder->maxCons = INITIAL_SINKS;
   newHolder->Connections = HeapAlloc(GetProcessHeap(),

@@ -691,7 +691,7 @@ static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BO
 	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
 		dsb = dsound->buffers[i];
 
-		if (!dsb || !(ICOM_VTBL(dsb)))
+		if (!dsb || !dsb->lpVtbl)
 			continue;
 		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
 			TRACE("Checking %p, mixlen=%ld\n", dsb, mixlen);
@@ -738,7 +738,7 @@ static void DSOUND_MixReset(DWORD writepos)
 	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
 		dsb = dsound->buffers[i];
 
-		if (!dsb || !(ICOM_VTBL(dsb)))
+		if (!dsb || !dsb->lpVtbl)
 			continue;
 		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
 			TRACE("Resetting %p\n", dsb);

@@ -69,7 +69,7 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
     if (!dth) return E_OUTOFMEMORY;
 
     dth->ref = 0;
-    ICOM_VTBL (dth) = &vt_IDropTargetHelper;
+    dth->lpVtbl = &vt_IDropTargetHelper;
 
     if (!SUCCEEDED (IUnknown_QueryInterface (_IUnknown_ (dth), riid, ppv))) {
 	IUnknown_Release (_IUnknown_ (dth));

@@ -397,7 +397,7 @@ IQueryAssociations* IQueryAssociations_Constructor(void)
 
 	ei=(IQueryAssociationsImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IQueryAssociationsImpl));
 	ei->ref=1;
-	ICOM_VTBL(ei) = &qavt;
+	ei->lpVtbl = &qavt;
 
 	TRACE("(%p)\n",ei);
 	return (IQueryAssociations *)ei;

@@ -189,7 +189,7 @@ IMalloc16_Constructor()
 #undef VTENT
         msegvt16 = MapLS( &vt16 );
     }
-    ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)msegvt16;
+    This->lpVtbl = (ICOM_VTABLE(IMalloc16)*)msegvt16;
     This->ref = 1;
     return (LPMALLOC16)MapLS( This );
 }
@@ -304,7 +304,7 @@ _xmalloc16(DWORD size, SEGPTR *ptr) {
    */
   if (!K32WOWCallback16Ex(
       (DWORD)((ICOM_VTABLE(IMalloc16)*)MapSL(
-	  (SEGPTR)ICOM_VTBL(((LPMALLOC16)MapSL((SEGPTR)mllc))))
+	  (SEGPTR)((LPMALLOC16)MapSL((SEGPTR)mllc))->lpVtbl  )
       )->Alloc,
       WCB16_CDECL,
       2*sizeof(DWORD),

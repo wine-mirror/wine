@@ -780,7 +780,7 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	if (*ippDS == NULL)
 		return DSERR_OUTOFMEMORY;
 
-	ICOM_VTBL(*ippDS)	= &dsvt;
+	(*ippDS)->lpVtbl	= &dsvt;
 	(*ippDS)->ref		= 1;
 
 	(*ippDS)->driver	= drv;

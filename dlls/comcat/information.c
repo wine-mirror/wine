@@ -438,7 +438,7 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Clone(
 	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
 
-    ICOM_VTBL(new_this) = ICOM_VTBL(This);
+    new_this->lpVtbl = This->lpVtbl;
     new_this->ref = 1;
     new_this->lcid = This->lcid;
     /* FIXME: could we more efficiently use DuplicateHandle? */
@@ -472,7 +472,7 @@ static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid)
 			      't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
 			      'r', 'i', 'e', 's', 0 };
 
-	ICOM_VTBL(This) = &COMCAT_IEnumCATEGORYINFO_Vtbl;
+	This->lpVtbl = &COMCAT_IEnumCATEGORYINFO_Vtbl;
 	This->lcid = lcid;
 	RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, KEY_READ, &This->key);
     }
@@ -739,7 +739,7 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Clone(
 	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
 
-    ICOM_VTBL(new_this) = ICOM_VTBL(This);
+    new_this->lpVtbl = This->lpVtbl;
     new_this->ref = 1;
     size = HeapSize(GetProcessHeap(), 0, (LPVOID)This->categories);
     new_this->categories = (struct class_categories *)
@@ -779,7 +779,7 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
     if (This) {
 	WCHAR keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
 
-	ICOM_VTBL(This) = &COMCAT_CLSID_IEnumGUID_Vtbl;
+	This->lpVtbl = &COMCAT_CLSID_IEnumGUID_Vtbl;
 	This->categories = categories;
 	RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, KEY_READ, &This->key);
     }
@@ -921,7 +921,7 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Clone(
 	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
 
-    ICOM_VTBL(new_this) = ICOM_VTBL(This);
+    new_this->lpVtbl = This->lpVtbl;
     new_this->ref = 1;
     lstrcpyW(new_this->keyname, This->keyname);
     /* FIXME: could we more efficiently use DuplicateHandle? */
@@ -954,7 +954,7 @@ static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(
     if (This) {
 	WCHAR prefix[6] = { 'C', 'L', 'S', 'I', 'D', '\\' };
 
-	ICOM_VTBL(This) = &COMCAT_CATID_IEnumGUID_Vtbl;
+	This->lpVtbl = &COMCAT_CATID_IEnumGUID_Vtbl;
 	memcpy(This->keyname, prefix, sizeof prefix);
 	StringFromGUID2(rclsid, This->keyname + 6, 39);
 	lstrcpyW(This->keyname + 44, postfix);

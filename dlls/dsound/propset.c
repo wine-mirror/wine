@@ -134,7 +134,7 @@ HRESULT WINAPI IKsPropertySetImpl_Create(
 	iks = (IKsPropertySetImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
 	iks->ref = 0;
 	iks->dsb = This;
-	ICOM_VTBL(iks) = &iksvt;
+	iks->lpVtbl = &iksvt;
 
 	*piks = iks;
 	return S_OK;

@@ -350,7 +350,7 @@ static IStream *IStream_Create(LPCWSTR lpszPath, HANDLE hFile, DWORD dwMode)
 
  if (fileStream)
  {
-   ICOM_VTBL(fileStream) = &SHLWAPI_fsVTable;
+   fileStream->lpVtbl = &SHLWAPI_fsVTable;
    fileStream->ref = 1;
    fileStream->hFile = hFile;
    fileStream->dwMode = dwMode;

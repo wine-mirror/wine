@@ -1020,7 +1020,7 @@ HRESULT WINAPI IShellLink_Constructor (
 	if (!sl) return E_OUTOFMEMORY;
 
 	sl->ref = 1;
-	ICOM_VTBL(sl) = &slvt;
+	sl->lpVtbl = &slvt;
 	sl->lpvtblw = &slvtw;
 	sl->lpvtblPersistFile = &pfvt;
 	sl->lpvtblPersistStream = &psvt;

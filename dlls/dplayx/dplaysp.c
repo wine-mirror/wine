@@ -102,7 +102,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp 
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
     ICOM_THIS(IDirectPlaySPImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlaySPVT;
+    This->lpVtbl = &directPlaySPVT;
   }
   else
   {
@@ -239,7 +239,7 @@ static HRESULT WINAPI DPSP_QueryInterface
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
     ICOM_THIS(IDirectPlaySPImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlaySPVT;
+    This->lpVtbl = &directPlaySPVT;
   }
   else
   {

@@ -228,7 +228,7 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN * p
     if (!ftm)
 	return E_OUTOFMEMORY;
 
-    ICOM_VTBL (ftm) = &iunkvt;
+    ftm->lpVtbl = &iunkvt;
     ftm->lpvtblFTM = &ftmvtbl;
     ftm->ref = 1;
     ftm->pUnkOuter = punkOuter;

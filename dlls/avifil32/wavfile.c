@@ -188,9 +188,9 @@ HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppv)
   if (pfile == NULL)
     return AVIERR_MEMORY;
 
-  ICOM_VTBL(pfile)                = &iwavft;
-  ICOM_VTBL(&pfile->iPersistFile) = &iwavpft;
-  ICOM_VTBL(&pfile->iAVIStream)   = &iwavst;
+  pfile->lpVtbl                = &iwavft;
+  pfile->iPersistFile.lpVtbl   = &iwavpft;
+  pfile->iAVIStream.lpVtbl     = &iwavst;
   pfile->ref = 0;
   pfile->iPersistFile.paf = pfile;
   pfile->iAVIStream.paf   = pfile;

@@ -208,7 +208,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize()
         return E_OUTOFMEMORY;
 
     /* initialize the virtual table function */
-    ICOM_VTBL(runningObjectTableInstance) = &VT_RunningObjectTableImpl;
+    runningObjectTableInstance->lpVtbl = &VT_RunningObjectTableImpl;
 
     /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
     /* the ROT refered many times  not in the same time (all the objects in the ROT will  */

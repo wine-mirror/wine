@@ -76,7 +76,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 	if(ef)
 	{
 	  ef->ref=1;
-	  ICOM_VTBL(ef)=&efvt;
+	  ef->lpVtbl=&efvt;
 
 	  ef->countFmt = cfmt;
 	  ef->pFmt = SHAlloc (size);
@@ -234,7 +234,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 	if (dto)
 	{
 	  dto->ref = 1;
-	  ICOM_VTBL(dto) = &dtovt;
+	  dto->lpVtbl = &dtovt;
 	  dto->pidl = ILClone(pMyPidl);
 	  dto->apidl = _ILCopyaPidl(apidl, cidl);
 	  dto->cidl = cidl;

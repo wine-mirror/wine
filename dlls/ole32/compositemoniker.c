@@ -1638,7 +1638,7 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,
         return E_INVALIDARG;
 
     /* Initialize the virtual function table. */
-    ICOM_VTBL(newEnumMoniker)    = &VT_EnumMonikerImpl;
+    newEnumMoniker->lpVtbl       = &VT_EnumMonikerImpl;
     newEnumMoniker->ref          = 0;
 
     newEnumMoniker->tabSize=tabSize;

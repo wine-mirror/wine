@@ -536,7 +536,7 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll,
 
 	lpclf = (IDefClFImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDefClFImpl));
 	lpclf->ref = 1;
-	ICOM_VTBL(lpclf) = &dclfvt;
+	lpclf->lpVtbl = &dclfvt;
 	lpclf->lpfnCI = lpfnCI;
 	lpclf->pcRefDll = pcRefDll;
 

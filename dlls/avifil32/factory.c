@@ -74,7 +74,7 @@ static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
   if (pClassFactory == NULL)
     return E_OUTOFMEMORY;
 
-  ICOM_VTBL(pClassFactory) = &iclassfact;
+  pClassFactory->lpVtbl    = &iclassfact;
   pClassFactory->dwRef     = 0;
   memcpy(&pClassFactory->clsid, pclsid, sizeof(pClassFactory->clsid));
 

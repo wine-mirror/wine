@@ -325,7 +325,7 @@ IEnumIDList * IEnumIDList_Constructor(
 	if (lpeidl)
 	{
 	  lpeidl->ref = 1;
-	  ICOM_VTBL(lpeidl) = &eidlvt;
+	  lpeidl->lpVtbl = &eidlvt;
 
 	  switch (dwKind)
 	  {

@@ -1177,7 +1177,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 		}
 	}
 	lpst = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpst) );
-	ICOM_VTBL(lpst)	= segstrvt16;
+	lpst->lpVtbl	= segstrvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= MapLS( lpst );
 	*str = (void*)lpst->thisptr;
@@ -1587,7 +1587,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 		}
 	}
 	lpst = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpst) );
-	ICOM_VTBL(lpst)	= segstvt16;
+	lpst->lpVtbl	= segstvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= MapLS(lpst);
 	*stg = (void*)lpst->thisptr;
@@ -1716,7 +1716,7 @@ HRESULT WINAPI StgIsStorageILockBytes16(SEGPTR plkbyt)
 
   if (!K32WOWCallback16Ex(
       (DWORD)((ICOM_VTABLE(ILockBytes16)*)MapSL(
-	  (SEGPTR)ICOM_VTBL(((LPLOCKBYTES16)MapSL(plkbyt))))
+                  (SEGPTR)((LPLOCKBYTES16)MapSL(plkbyt))->lpVtbl)
       )->ReadAt,
       WCB16_PASCAL,
       6*sizeof(DWORD),

@@ -880,7 +880,7 @@ HRESULT WINAPI PrimaryBuffer_Create(
 	dsb = (PrimaryBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
 	dsb->ref = 1;
 	dsb->dsound = This;
-	ICOM_VTBL(dsb) = &dspbvt;
+	dsb->lpVtbl = &dspbvt;
 
 	memcpy(&dsb->dsbd, dsbd, sizeof(*dsbd));
 

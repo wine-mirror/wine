@@ -482,32 +482,32 @@ HRESULT DP_CreateInterface
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
   {
     ICOM_THIS(IDirectPlay2Impl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay2WVT;
+    This->lpVtbl = &directPlay2WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
     ICOM_THIS(IDirectPlay2AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay2AVT;
+    This->lpVtbl = &directPlay2AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
   {
     ICOM_THIS(IDirectPlay3Impl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay3WVT;
+    This->lpVtbl = &directPlay3WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
   {
     ICOM_THIS(IDirectPlay3AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay3AVT;
+    This->lpVtbl = &directPlay3AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
   {
     ICOM_THIS(IDirectPlay4Impl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay4WVT;
+    This->lpVtbl = &directPlay4WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
   {
     ICOM_THIS(IDirectPlay4AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay4AVT;
+    This->lpVtbl = &directPlay4AVT;
   }
   else
   {
@@ -566,32 +566,32 @@ static HRESULT WINAPI DP_QueryInterface
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
   {
     ICOM_THIS(IDirectPlay2Impl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay2WVT;
+    This->lpVtbl = &directPlay2WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
     ICOM_THIS(IDirectPlay2AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay2AVT;
+    This->lpVtbl = &directPlay2AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
   {
     ICOM_THIS(IDirectPlay3Impl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay3WVT;
+    This->lpVtbl = &directPlay3WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
   {
     ICOM_THIS(IDirectPlay3AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay3AVT;
+    This->lpVtbl = &directPlay3AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
   {
     ICOM_THIS(IDirectPlay4Impl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay4WVT;
+    This->lpVtbl = &directPlay4WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
   {
     ICOM_THIS(IDirectPlay4AImpl,*ppvObj);
-    ICOM_VTBL(This) = &directPlay4AVT;
+    This->lpVtbl = &directPlay4AVT;
   }
   else
   {
