@@ -34,7 +34,7 @@
  *       HCBT_ACTIVATE              OK
  *       HCBT_CLICKSKIPPED          OK
  *       HCBT_KEYSKIPPED            OK
- *       HCBT_SYSCOMMAND            Not implemented
+ *       HCBT_SYSCOMMAND            OK
  *       HCBT_SETFOCUS              OK
  *     WH_SYSMSGFILTER	            OK
  *     WH_MOUSE	                    OK
