@@ -1171,25 +1171,175 @@ BOOL WINAPI GetOverlappedResult(
 }
 
 /***********************************************************************
- *              ReadFile                (KERNEL32.428)
+ *             FILE_AsyncResult           (INTERNAL)
+ */
+static int FILE_AsyncResult(HANDLE hAsync, int result)
+{
+    int r;
+
+    SERVER_START_REQ
+    {
+        struct async_result_request *req = server_alloc_req(sizeof *req,0);
+
+        req->ov_handle = hAsync;
+        req->result    = result;
+
+        r = server_call( REQ_ASYNC_RESULT);
+    }
+    SERVER_END_REQ
+
+    return !r;
+}
+
+/***********************************************************************
+ *             FILE_AsyncReadService      (INTERNAL)
+ */
+static void FILE_AsyncReadService(void **args)
+{
+    LPOVERLAPPED lpOverlapped = (LPOVERLAPPED)args[0];
+    LPDWORD buffer = (LPDWORD)args[1];
+    DWORD events = (DWORD)args[2];
+    int fd, result, r;
+
+    TRACE("%p %p %08lx\n", lpOverlapped, buffer, events );
+
+    /* if there are no events, it must be a timeout */
+    if(events==0)
+    {
+        TRACE("read timed out\n");
+        /* r = STATUS_TIMEOUT; */
+        r = STATUS_SUCCESS;
+        goto async_end;
+    }
+
+    fd = FILE_GetUnixHandle(lpOverlapped->InternalHigh, GENERIC_READ);
+    if(fd<0)
+    {
+        TRACE("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->InternalHigh);
+        r = STATUS_UNSUCCESSFUL;
+        goto async_end;
+    }
+
+    /* check to see if the data is ready (non-blocking) */
+    result = read(fd, &buffer[lpOverlapped->Offset],
+                  lpOverlapped->OffsetHigh - lpOverlapped->Offset);
+    close(fd);
+
+    if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
+    {
+        TRACE("Deferred read %d\n",errno);
+        r = STATUS_PENDING;
+        goto async_end;
+    }
+
+    /* check to see if the transfer is complete */
+    if(result<0)
+    {
+        TRACE("read returned errno %d\n",errno);
+        r = STATUS_UNSUCCESSFUL;
+        goto async_end;
+    }
+
+    lpOverlapped->Offset += result;
+    TRACE("read %d more bytes %ld/%ld so far\n",result,lpOverlapped->Offset,lpOverlapped->OffsetHigh);
+
+    if(lpOverlapped->Offset < lpOverlapped->OffsetHigh)
+        r = STATUS_PENDING;
+    else
+        r = STATUS_SUCCESS;
+
+async_end:
+    lpOverlapped->Internal = r;
+    if ( (r!=STATUS_PENDING)
+        || (!FILE_AsyncResult( lpOverlapped->InternalHigh, r)))
+    {
+        /* close the handle to the async operation */
+        if(lpOverlapped->InternalHigh)
+            CloseHandle(lpOverlapped->InternalHigh);
+        lpOverlapped->InternalHigh = 0;
+
+        NtSetEvent( lpOverlapped->hEvent, NULL );
+        TRACE("set event flag\n");
+    }
+}
+
+/***********************************************************************
+ *             FILE_StartAsyncRead      (INTERNAL)
+ */
+static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID buffer, DWORD count)
+{
+    int r;
+
+    SERVER_START_REQ
+    {
+        struct create_async_request *req = server_alloc_req(sizeof *req,0);
+
+        req->file_handle = hFile;
+        req->overlapped = overlapped;
+        req->buffer = buffer;
+        req->count = count;
+        req->func = FILE_AsyncReadService;
+        req->type = ASYNC_TYPE_READ;
+
+        r=server_call( REQ_CREATE_ASYNC );
+
+        overlapped->InternalHigh = req->ov_handle;
+    }
+    SERVER_END_REQ
+
+    if(!r)
+    {
+        TRACE("ov=%ld IO is pending!!!\n",overlapped->InternalHigh);
+        SetLastError(ERROR_IO_PENDING);
+    }
+
+    return !r;
+}
+
+/***********************************************************************
+ *              ReadFile                (KERNEL32.577)
  */
 BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
     int unix_handle, result;
 
-    TRACE("%d %p %ld\n", hFile, buffer, bytesToRead );
+    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead, 
+          bytesRead, overlapped );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    if ( overlapped ) {
-      SetLastError ( ERROR_INVALID_PARAMETER );
-      return FALSE;
+    /* this will only have impact if the overlapped structure is specified */
+    if ( overlapped )
+    {
+        /* if overlapped, check that there is an event flag */
+        if ( (overlapped->hEvent == 0) ||
+           (overlapped->hEvent == INVALID_HANDLE_VALUE) )
+        {
+            return FALSE;
+        }
+
+        overlapped->Offset       = 0;
+        overlapped->OffsetHigh   = bytesToRead;
+        overlapped->Internal     = 0;
+        overlapped->InternalHigh = 0;
+
+        NtResetEvent( overlapped->hEvent, NULL );
+
+        if(FILE_StartAsyncRead(hFile, overlapped, buffer, bytesToRead))
+        {
+            overlapped->Internal = STATUS_PENDING;
+        }
+
+        /* always fail on return, either ERROR_IO_PENDING or other error */
+        return FALSE;
     }
 
     unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
     if (unix_handle == -1) return FALSE;
+
+    /* code for synchronous reads */
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
@@ -1203,27 +1353,145 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     return TRUE;
 }
 
+/***********************************************************************
+ *             FILE_AsyncWriteService      (INTERNAL)
+ */
+static void FILE_AsyncWriteService(void **args)
+{
+    LPOVERLAPPED lpOverlapped = (LPOVERLAPPED)args[0];
+    LPDWORD buffer = (LPDWORD)args[1];
+    DWORD events = (DWORD)args[2];
+    int fd, result, r;
+
+    TRACE("(%p %p %lx)\n",lpOverlapped,buffer,events);
+
+    /* if there are no events, it must be a timeout */
+    if(events==0)
+    {
+        TRACE("write timed out\n");
+        r = STATUS_TIMEOUT;
+        goto async_end;
+    }
+
+    fd = FILE_GetUnixHandle(lpOverlapped->InternalHigh, GENERIC_WRITE);
+    if(fd<0)
+    {
+        ERR("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->InternalHigh);
+        r = STATUS_UNSUCCESSFUL;
+        goto async_end;
+    }
+
+    /* write some data (non-blocking) */
+    result = write(fd, &buffer[lpOverlapped->Offset],
+                  lpOverlapped->OffsetHigh-lpOverlapped->Offset);
+    close(fd);
+
+    if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
+    {
+        r = STATUS_PENDING;
+        goto async_end;
+    }
+
+    /* check to see if the transfer is complete */
+    if(result<0)
+    {
+        r = STATUS_UNSUCCESSFUL;
+        goto async_end;
+    }
+
+    lpOverlapped->Offset += result;
+
+    if(lpOverlapped->Offset < lpOverlapped->OffsetHigh)
+        r = STATUS_PENDING;
+    else
+        r = STATUS_SUCCESS;
+
+async_end:
+    lpOverlapped->Internal = r;
+    if ( (r!=STATUS_PENDING)
+        || (!FILE_AsyncResult( lpOverlapped->InternalHigh, r)))
+    {
+        /* close the handle to the async operation */
+        CloseHandle(lpOverlapped->InternalHigh);
+        lpOverlapped->InternalHigh = 0;
+
+        NtSetEvent( lpOverlapped->hEvent, NULL );
+    }
+}
 
 /***********************************************************************
- *             WriteFile               (KERNEL32.578)
+ *             FILE_StartAsyncWrite      (INTERNAL)
+ */
+static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID buffer,DWORD count)
+{
+    int r;
+
+    SERVER_START_REQ
+    {
+        struct create_async_request *req = get_req_buffer();
+
+        req->file_handle = hFile;
+        req->buffer = (LPVOID)buffer;
+        req->overlapped = overlapped;
+        req->count = 0;
+        req->func = FILE_AsyncWriteService;
+        req->type = ASYNC_TYPE_WRITE;
+
+        r = server_call( REQ_CREATE_ASYNC );
+
+        overlapped->InternalHigh = req->ov_handle;
+    }
+    SERVER_END_REQ
+
+    if(!r)
+    {
+        SetLastError(ERROR_IO_PENDING);
+    }
+
+    return !r;
+}
+
+/***********************************************************************
+ *             WriteFile               (KERNEL32.738)
  */
 BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
     int unix_handle, result;
 
-    TRACE("%d %p %ld\n", hFile, buffer, bytesToWrite );
+    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite, 
+          bytesWritten, overlapped );
 
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
-    if ( overlapped ) {
-      SetLastError ( ERROR_INVALID_PARAMETER );
-      return FALSE;
+    /* this will only have impact if the overlappd structure is specified */
+    if ( overlapped )
+    {
+        if ( (overlapped->hEvent == 0) ||
+             (overlapped->hEvent == INVALID_HANDLE_VALUE) )
+            return FALSE;
+
+        overlapped->Offset       = 0;
+        overlapped->OffsetHigh   = bytesToWrite;
+        overlapped->Internal     = 0;
+        overlapped->InternalHigh = 0;
+
+        NtResetEvent( overlapped->hEvent, NULL );
+
+        if (FILE_StartAsyncWrite(hFile, overlapped, buffer, bytesToWrite))
+        {
+            overlapped->Internal = STATUS_PENDING;
+        }
+
+        /* always fail on return, either ERROR_IO_PENDING or other error */
+        return FALSE;
     }
 
     unix_handle = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
     if (unix_handle == -1) return FALSE;
+
+    /* synchronous file write */
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
