@@ -596,7 +596,7 @@ static HANDLER_DEF(usr1_handler)
  *
  * Set a signal handler
  */
-static int set_handler( int sig, int have_sigaltstack, void (*func)() )
+static int set_handler( int sig, void (*func)() )
 {
     struct sigaction sig_act;
 
@@ -606,10 +606,6 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sigaddset( &sig_act.sa_mask, SIGALRM );
 
     sig_act.sa_flags = SA_RESTART | SA_SIGINFO;
-
-#ifdef SA_ONSTACK
-    if (have_sigaltstack) sig_act.sa_flags |= SA_ONSTACK;
-#endif
     return sigaction( sig, &sig_act, NULL );
 }
 
@@ -631,30 +627,18 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
  */
 BOOL SIGNAL_Init(void)
 {
-    int have_sigaltstack = 0;
-
-#ifdef HAVE_SIGALTSTACK
-    struct sigaltstack ss;
-    if ((ss.ss_sp = NtCurrentTeb()->signal_stack))
-    {
-        ss.ss_size  = SIGNAL_STACK_SIZE;
-        ss.ss_flags = 0;
-        if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
-    }
-#endif  /* HAVE_SIGALTSTACK */
-
-    if (set_handler( SIGINT,  have_sigaltstack, (void (*)())int_handler ) == -1) goto error;
-    if (set_handler( SIGFPE,  have_sigaltstack, (void (*)())fpe_handler ) == -1) goto error;
-    if (set_handler( SIGSEGV, have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
-    if (set_handler( SIGILL,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
-    if (set_handler( SIGABRT, have_sigaltstack, (void (*)())abrt_handler ) == -1) goto error;
-    if (set_handler( SIGTERM, have_sigaltstack, (void (*)())term_handler ) == -1) goto error;
-    if (set_handler( SIGUSR1, have_sigaltstack, (void (*)())usr1_handler ) == -1) goto error;
+    if (set_handler( SIGINT,  (void (*)())int_handler ) == -1) goto error;
+    if (set_handler( SIGFPE,  (void (*)())fpe_handler ) == -1) goto error;
+    if (set_handler( SIGSEGV, (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGILL,  (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGABRT, (void (*)())abrt_handler ) == -1) goto error;
+    if (set_handler( SIGTERM, (void (*)())term_handler ) == -1) goto error;
+    if (set_handler( SIGUSR1, (void (*)())usr1_handler ) == -1) goto error;
 #ifdef SIGBUS
-    if (set_handler( SIGBUS,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGBUS,  (void (*)())segv_handler ) == -1) goto error;
 #endif
 #ifdef SIGTRAP
-    if (set_handler( SIGTRAP, have_sigaltstack, (void (*)())trap_handler ) == -1) goto error;
+    if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
 #endif
 
     return TRUE;
