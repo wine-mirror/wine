@@ -306,7 +306,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                         if(len > 0)
                         {
                             sFilter = (WCHAR*)GlobalAlloc(GPTR, (len + 1)*sizeof(WCHAR));
-                            GetDlgItemTextW(hwnd, IDC_FILTER, sFilter, (len + 1)*sizeof(WCHAR));
+                            GetDlgItemTextW(hwnd, IDC_FILTER, sFilter, len + 1);
                         }
                         else sFilter = NULL;
                         UpdateList(hList);
