@@ -154,6 +154,8 @@ typedef struct {
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
 
 /* These strings used only for tracing */
 static const char *wodPlayerCmdString[] = {
@@ -1382,7 +1384,9 @@ DWORD WINAPI ARTS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
 
-    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
+    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -1399,6 +1403,20 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     MESSAGE("This sound card's driver does not support direct access\n");
     MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
     return MMSYSERR_NOTSUPPORTED;
+}
+
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    memset(desc, 0, sizeof(*desc));
+    strcpy(desc->szDesc, "Wine aRts DirectSound Driver");
+    strcpy(desc->szDrvName, "winearts.drv");
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
+{
+    memcpy(pGuid, &DSDEVID_DefaultPlayback, sizeof(GUID));
+    return MMSYSERR_NOERROR;
 }
 
 #else /* !HAVE_ARTS */

@@ -176,6 +176,11 @@ static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV ];
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
+static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
+static DWORD widDsGuid(UINT wDevID, LPGUID pGuid);
 
 /*======================================================================*
  *                  Low level WAVE implementation			*
@@ -1242,7 +1247,9 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
 
-    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
+    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -1503,8 +1510,8 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
     TRACE("(%p,%p)\n",iface,pDesc);
     pDesc->dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
 	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK;
-    strcpy(pDesc->szDesc,"WineOSS DirectSound Driver");
-    strcpy(pDesc->szDrvName,"wineoss.drv");
+    strcpy(pDesc->szDesc,"Wine AudioIO DirectSound Driver");
+    strcpy(pDesc->szDrvName,"wineaudioio.drv");
     pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
     pDesc->wReserved		= 0;
@@ -1673,6 +1680,20 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 
     (*idrv)->wDevID	= wDevID;
     (*idrv)->primary	= NULL;
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    memset(desc, 0, sizeof(*desc));
+    strcpy(desc->szDesc, "Wine LIBAUDIOIO DirectSound Driver");
+    strcpy(desc->szDrvName, "wineaudioio.drv");
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
+{
+    memcpy(pGuid, &DSDEVID_DefaultPlayback, sizeof(GUID));
     return MMSYSERR_NOERROR;
 }
 
@@ -2259,10 +2280,39 @@ DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_RESET:		return widReset      (wDevID);
     case WIDM_START:		return widStart      (wDevID);
     case WIDM_STOP:		return widStop       (wDevID);
+    case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
+    case DRV_QUERYDSOUNDGUID:	return widDsGuid     (wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %u!\n", wMsg);
     }
     return MMSYSERR_NOTSUPPORTED;
+}
+
+/*======================================================================*
+ *                  Low level DSOUND capture implementation		*
+ *======================================================================*/
+static DWORD widDsCreate(UINT wDevID, PIDSDRIVER* drv)
+{
+    /* we can't perform memory mapping as we don't have a file stream
+	interface with arts like we do with oss */
+    MESSAGE("This sound card's driver does not support direct access\n");
+    MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    memset(desc, 0, sizeof(*desc));
+    strcpy(desc->szDesc, "Wine LIBAUDIOIO DirectSound Driver");
+    strcpy(desc->szDrvName, "wineaudioio.drv");
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
+{
+    memcpy(pGuid, &DSDEVID_DefaultCapture, sizeof(GUID));
+    return MMSYSERR_NOERROR;
 }
 
 #else /* HAVE_LIBAUDIOIO */
