@@ -1,8 +1,6 @@
   <chapter id="compiling">
     <title>Compiling the Wine Source</title>
 
-    <para>How to compile wine, and problems that may arise...</para>
-
     <para>
       In case you downloaded Wine source code files, this chapter will
       tell you how to compile it into binary files before installing them.
@@ -13,6 +11,22 @@
 
     <sect1 id="compiling-wine">
       <title>Compiling Wine</title>
+
+      <sect2>
+        <title>Commands</title>
+        <para>
+	  To compile and install Wine, run the following commands:
+	  <screen>
+./configure
+make depend
+make
+make install
+	  </screen>
+          Please note that the last command (<command>make install</command>)
+          must be run as root.
+        </para>
+      </sect2>
+
 
       <sect2>
         <title>Requirements</title>
