@@ -7,29 +7,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "libres.h"
+#include "windows.h"
+#include "xmalloc.h"
 
 typedef struct RLE
 {
-  struct resource** Resources;  /* NULL-terminated array of pointers */
-  struct RLE* next;
+    const struct resource* const * Resources;  /* NULL-terminated array of pointers */
+    struct RLE* next;
 } ResListE;
 
 static ResListE* ResourceList=NULL;
 
-void LIBRES_RegisterResources(struct resource** Res)
+void LIBRES_RegisterResources(const struct resource* const * Res)
 {
   ResListE** Curr;
   ResListE* n;
   for(Curr=&ResourceList; *Curr; Curr=&((*Curr)->next)) { }
   n=xmalloc(sizeof(ResListE));
-  if(n)
-  {
-    n->Resources=Res;
-    n->next=NULL;
-    *Curr=n;
-  }
-  else
-    fprintf(stderr,"LIBRES_RegisterResources(): Out of memory.\n");
+  n->Resources=Res;
+  n->next=NULL;
+  *Curr=n;
 }
 
 /**********************************************************************
@@ -39,7 +36,7 @@ HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
-  struct resource** Res;
+  const struct resource* const * Res;
 
   if(HIWORD(name))
   {

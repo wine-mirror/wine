@@ -910,7 +910,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 	infohdr->biPlanes = bmp->bitmap.bmPlanes;
 	infohdr->biBitCount = bmp->bitmap.bmBitsPixel;
 	memcpy(mr->rdParam + (sizeof(BITMAPINFOHEADER) / 2) + 4,
-	       bmp->bitmap.bmBits, 
+	       PTR_SEG_TO_LIN(bmp->bitmap.bmBits),
 	       bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes);
 	break;
 

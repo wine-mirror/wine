@@ -30,6 +30,9 @@ extern FILE_OBJECT *hstderr;
 static void UnixTimeToFileTime(time_t unix_time, FILETIME *filetime);
 static int TranslateCreationFlags(DWORD create_flags);
 static int TranslateAccessFlags(DWORD access_flags);
+#ifndef MAP_ANON
+#define MAP_ANON 0
+#endif
 
 /***********************************************************************
  *           OpenFileMappingA             (KERNEL32.397)
@@ -43,6 +46,7 @@ WINAPI HANDLE32 OpenFileMapping(DWORD access, BOOL inherit,const char *fname)
  *           CreateFileMappingA		(KERNEL32.46)
  *
  */
+int TranslateProtectionFlags(DWORD);
 WINAPI HANDLE32 CreateFileMapping(HANDLE32 h,SECURITY_ATTRIBUTES *ats,
   DWORD pot,  DWORD sh,  DWORD hlow,  const char * lpName )
 {
@@ -97,7 +101,7 @@ WINAPI void *MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offhi,
                              DWORD offlo, DWORD size, DWORD st)
 {
     if (!size) size = ((FILEMAP_OBJECT *)handle)->size;
-    return mmap (st, size, ((FILEMAP_OBJECT *)handle)->prot, 
+    return mmap ((caddr_t)st, size, ((FILEMAP_OBJECT *)handle)->prot, 
                  MAP_ANON|MAP_PRIVATE, 
 		 ((FILEMAP_OBJECT *)handle)->file_obj->fd,
 		 offlo);
@@ -138,7 +142,7 @@ DWORD WINAPI GetFileInformationByHandle(FILE_OBJECT *hFile,
         lpfi->dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
     if(file_stat.st_mode & S_IFDIR)
         lpfi->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-    if(file_stat.st_mode & S_IWRITE == 0)
+    if((file_stat.st_mode & S_IWRITE) == 0)
         lpfi->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
     /* Translate the file times.  Use the last modification time

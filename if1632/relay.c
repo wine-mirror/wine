@@ -173,8 +173,10 @@ void RELAY_DebugReturn( int func_type, int ret_val, int args32 )
     struct dll_table_s *table;
     char *name;
 
-    if (*(DWORD *)PTR_SEG_TO_LIN(IF1632_Stack32_base) != 0xDEADBEEF) {
+    if (*(DWORD *)PTR_SEG_TO_LIN(IF1632_Stack32_base) != 0xDEADBEEF)
+    {
 	fprintf(stderr, "Wine wrote past the end of the 32 bit stack. Please report this.\n");
+        exit(1);  /* There's probably no point in going on */
     }
     if (!debugging_relay) return;
 
@@ -186,13 +188,16 @@ void RELAY_DebugReturn( int func_type, int ret_val, int args32 )
     switch(func_type)
     {
     case 0: /* long */
-        printf( "retval=0x%08x ds=%04x\n", ret_val, frame->ds );
+        printf( "retval=0x%08x ret=%04x:%04x ds=%04x\n",
+                ret_val, frame->cs, frame->ip, frame->ds );
         break;
     case 1: /* word */
-        printf( "retval=0x%04x ds=%04x\n", ret_val & 0xffff, frame->ds );
+        printf( "retval=0x%04x ret=%04x:%04x ds=%04x\n",
+                ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
         break;
     case 2: /* regs */
-        printf( "retval=none ds=%04x\n", frame->ds );
+        printf( "retval=none ret=%04x:%04x ds=%04x\n",
+                frame->cs, frame->ip, frame->ds );
         {
             struct sigcontext_struct *context = (struct sigcontext_struct *)&args32;
             printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",

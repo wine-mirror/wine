@@ -40,13 +40,13 @@ void DEBUG_InfoStack(void)
     {  /* 32-bit mode */
         addr.seg = 0;
         addr.off = ESP_reg(DEBUG_context);
-        DEBUG_ExamineMemory( &addr, 10, 'x' );
+        DEBUG_ExamineMemory( &addr, 24, 'x' );
     }
     else  /* 16-bit mode */
     {
         addr.seg = SS_reg(DEBUG_context);
         addr.off = SP_reg(DEBUG_context);
-        DEBUG_ExamineMemory( &addr, 10, 'w' );
+        DEBUG_ExamineMemory( &addr, 24, 'w' );
     }
     fprintf(stderr,"\n");
 }

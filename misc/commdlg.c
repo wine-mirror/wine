@@ -9,12 +9,11 @@
 #include <string.h>
 #include "win.h"
 #include "user.h"
-#include "global.h"
 #include "message.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "selectors.h"
-#include "../rc/sysres.h"
+#include "resource.h"
 #include "dos_fs.h"
 #include "stackframe.h"
 
@@ -72,11 +71,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
         }
         hDlgTmpl = LoadResource( lpofn->hInstance, hResInfo );
     }
-    else hDlgTmpl = GLOBAL_CreateBlock( GMEM_FIXED,
-                                        sysres_DIALOG_OPEN_FILE.bytes,
-                                        sysres_DIALOG_OPEN_FILE.size,
-                                        GetCurrentPDB(), FALSE, FALSE,
-                                        TRUE, NULL );
+    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_OPEN_FILE );
     if (!hDlgTmpl)
     {
         CommDlgLastError = CDERR_LOADRESFAILURE;
@@ -91,7 +86,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
         if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource( hDlgTmpl );
-        else GLOBAL_FreeBlock( hDlgTmpl );
+        else SYSRES_FreeResource( hDlgTmpl );
     }
 
     printf("GetOpenFileName // return lpstrFile='%s' !\n", 
@@ -123,12 +118,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
         }
         hDlgTmpl = LoadResource( lpofn->hInstance, hResInfo );
     }
-    else hDlgTmpl = GLOBAL_CreateBlock( GMEM_FIXED,
-                                        sysres_DIALOG_SAVE_FILE.bytes,
-                                        sysres_DIALOG_SAVE_FILE.size,
-                                        GetCurrentPDB(), FALSE, FALSE,
-                                        TRUE, NULL );
-
+    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_SAVE_FILE );
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
@@ -137,7 +127,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
         if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource( hDlgTmpl );
-        else GLOBAL_FreeBlock( hDlgTmpl );
+        else SYSRES_FreeResource( hDlgTmpl );
     }
 
     printf( "GetSaveFileName // return lpstrFile='%s' !\n", 
@@ -153,7 +143,7 @@ static void FILEDLG_StripEditControl(HWND hwnd)
 {
     char temp[512], *cp;
 
-    SendDlgItemMessage(hwnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(temp));
+    SendDlgItemMessage(hwnd, edt1, WM_GETTEXT, 511, (LPARAM)MAKE_SEGPTR(temp));
     cp = strrchr(temp, '\\');
     if (cp != NULL) {
 	strcpy(temp, cp+1);
@@ -172,7 +162,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPSTR newPath)
   char str[512],str2[512];
 
   strncpy(str,newPath,511); str[511]=0;
-  SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(str2));
+  SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, (LPARAM)MAKE_SEGPTR(str2));
   strncat(str,str2,511-strlen(str)); str[511]=0;
   if (!DlgDirList(hWnd, str, lst1, 0, 0x0000)) return FALSE;
   DlgDirList(hWnd, "*.*", lst2, stc1, 0x8010);
@@ -225,7 +215,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
-		    MAKE_SEGPTR(str));
+		    (LPARAM)MAKE_SEGPTR(str));
 	TextOut(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
 		str, strlen(str));
 	if (lpdis->itemState != 0) {
@@ -239,7 +229,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
-		    MAKE_SEGPTR(str));
+		    (LPARAM)MAKE_SEGPTR(str));
 
 	hBitmap = hFolder;
 	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
@@ -261,7 +251,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
-		    MAKE_SEGPTR(str));
+		    (LPARAM)MAKE_SEGPTR(str));
 	switch(str[2]) {
 	 case 'a': case 'b':
 	    hBitmap = hFloppy;
@@ -323,7 +313,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	  n = strlen(pstr);
 	  strncpy(tmpstr, pstr, 511); tmpstr[511]=0;
 	  printf("lpstrCustomFilter // add tmpstr='%s' ", tmpstr);
-	  SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, MAKE_SEGPTR(tmpstr));
+	  SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
 	  pstr += n + 1;
 	  n = strlen(pstr);
 	  printf("associated to '%s'\n", pstr);
@@ -337,7 +327,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
       n = strlen(pstr);
       strncpy(tmpstr, pstr, 511); tmpstr[511]=0;
       printf("lpstrFilter // add tmpstr='%s' ", tmpstr);
-      SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, MAKE_SEGPTR(tmpstr));
+      SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
       pstr += n + 1;
       n = strlen(pstr);
       printf("associated to '%s'\n", pstr);
@@ -352,7 +342,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   tmpstr[511]=0;
   printf("nFilterIndex = %ld // SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
-  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
   /* get drive list */
   *tmpstr = 0;
   DlgDirListComboBox(hWnd, MAKE_SEGPTR(tmpstr), cmb2, 0, 0xC000);
@@ -399,8 +389,8 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet,
-			 MAKE_SEGPTR(tmpstr));
-      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+			 (LPARAM)MAKE_SEGPTR(tmpstr));
+      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
       return TRUE;
     case lst2: /* directory list */
       FILEDLG_StripEditControl(hWnd);
@@ -409,7 +399,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	  lRet = SendDlgItemMessage(hWnd, lst2, LB_GETCURSEL, 0, 0);
 	  if (lRet == LB_ERR) return TRUE;
 	  SendDlgItemMessage(hWnd, lst2, LB_GETTEXT, lRet,
-			     MAKE_SEGPTR(tmpstr));
+			     (LPARAM)MAKE_SEGPTR(tmpstr));
 	  if (tmpstr[0] == '[')
 	    {
 	      tmpstr[strlen(tmpstr) - 1] = 0;
@@ -430,7 +420,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       FILEDLG_StripEditControl(hWnd);
       lRet = SendDlgItemMessage(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
       if (lRet == LB_ERR) return 0;
-      SendDlgItemMessage(hWnd, cmb2, CB_GETLBTEXT, lRet, MAKE_SEGPTR(tmpstr));
+      SendDlgItemMessage(hWnd, cmb2, CB_GETLBTEXT, lRet, (LPARAM)MAKE_SEGPTR(tmpstr));
       sprintf(tmpstr, "%c:", tmpstr[2]);
     reset_scan:
       lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
@@ -440,7 +430,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
 				 lRet);
       strncpy(tmpstr2, pstr, 511); tmpstr2[511]=0;
-      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr2));
       FILEDLG_ScanDir(hWnd, tmpstr);
       return TRUE;
     case chx1:
@@ -449,7 +439,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       return TRUE;
     case IDOK:
     almost_ok:
-      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(tmpstr));
+      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, (LPARAM)MAKE_SEGPTR(tmpstr));
       pstr = strrchr(tmpstr, '\\');
       if (pstr == NULL)
 	pstr = strrchr(tmpstr, ':');
@@ -467,7 +457,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	      *tmpstr=0;
 	    }
 	  printf("commdlg: %s, %s\n", tmpstr, tmpstr2);
-	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr2));
 	  FILEDLG_ScanDir(hWnd, tmpstr);
 	  return TRUE;
 	}
@@ -485,7 +475,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
 				 lRet), 511);
       tmpstr2[511]=0;
-      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr2));
       /* if ScanDir succeeds, we have changed the directory */
       if (FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
       /* if not, this must be a filename */
@@ -495,13 +485,13 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	  /* strip off the pathname */
 	  *pstr = 0;
 	  strncpy(tmpstr2, pstr+1, 511); tmpstr2[511]=0;
-	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr2));
 	  /* Should we MessageBox() if this fails? */
 	  if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
 	  strcpy(tmpstr, tmpstr2);
 	}
       else 
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
       ShowWindow(hWnd, SW_HIDE);
       {
 	int drive;
@@ -527,7 +517,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 	  lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
 	  SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet,
-			     MAKE_SEGPTR(tmpstr));
+			     (LPARAM)MAKE_SEGPTR(tmpstr));
           printf("strcpy'ing '%s'\n",tmpstr); fflush(stdout);
 	  strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), tmpstr);
 	}
@@ -621,14 +611,12 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
 
-    hDlgTmpl = GLOBAL_CreateBlock(GMEM_FIXED, sysres_DIALOG_CHOOSE_COLOR.bytes,
-                                  sysres_DIALOG_CHOOSE_COLOR.size,
-                                  GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
+    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_COLOR );
     hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChCol->hwndOwner,
                                    GetWndProcEntry16("ColorDlgProc"), 
                                    (DWORD)lpChCol );
-    GLOBAL_FreeBlock( hDlgTmpl );
+    SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
 
@@ -668,14 +656,12 @@ BOOL FindText(LPFINDREPLACE lpFind)
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
 
-    hDlgTmpl = GLOBAL_CreateBlock(GMEM_FIXED, sysres_DIALOG_FIND_TEXT.bytes,
-                                  sysres_DIALOG_FIND_TEXT.size,
-                                  GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
+    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpFind->hwndOwner,
                                    GetWndProcEntry16("FindTextDlgProc"), 
                                    (DWORD)lpFind );
-    GLOBAL_FreeBlock( hDlgTmpl );
+    SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
 
@@ -688,14 +674,12 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
 
-    hDlgTmpl = GLOBAL_CreateBlock(GMEM_FIXED, sysres_DIALOG_REPLACE_TEXT.bytes,
-                                  sysres_DIALOG_REPLACE_TEXT.size,
-                                  GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
+    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpFind->hwndOwner,
                                    GetWndProcEntry16("ReplaceTextDlgProc"), 
                                    (DWORD)lpFind );
-    GLOBAL_FreeBlock( hDlgTmpl );
+    SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
 
@@ -769,16 +753,9 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
         return TRUE;
 
     if (lpPrint->Flags & PD_PRINTSETUP)
-        hDlgTmpl = GLOBAL_CreateBlock( GMEM_FIXED,
-                                       sysres_DIALOG_PRINT_SETUP.bytes,
-                                       sysres_DIALOG_PRINT_SETUP.size,
-                                       GetCurrentPDB(), FALSE,
-                                       FALSE, TRUE, NULL );
+	hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_PRINT_SETUP );
     else
-        hDlgTmpl = GLOBAL_CreateBlock( GMEM_FIXED, sysres_DIALOG_PRINT.bytes,
-                                       sysres_DIALOG_PRINT.size,
-                                       GetCurrentPDB(), FALSE,
-                                       FALSE, TRUE, NULL );
+	hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_PRINT );
 
     hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpPrint->hwndOwner,
@@ -786,7 +763,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
                                        GetWndProcEntry16("PrintSetupDlgProc") :
                                        GetWndProcEntry16("PrintDlgProc"),
                                    (DWORD)lpPrint );
-    GLOBAL_FreeBlock( hDlgTmpl );
+    SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
 
@@ -845,9 +822,9 @@ LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 
 
 /***********************************************************************
- *           CommDlgExtendError   (COMMDLG.26)
+ *           CommDlgExtendedError   (COMMDLG.26)
  */
-DWORD CommDlgExtendError(void)
+DWORD CommDlgExtendedError(void)
 {
   return CommDlgLastError;
 }
@@ -856,7 +833,7 @@ DWORD CommDlgExtendError(void)
 /***********************************************************************
  *           GetFileTitle   (COMMDLG.27)
  */
-int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
+short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
     int i, len;
     printf("GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
@@ -879,7 +856,7 @@ int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
     printf("\n---> '%s' ", &lpFile[i]);
     
     len = strlen(lpFile+i)+1;
-    if (cbBuf < len);
+    if (cbBuf < len)
     	return len;
 
     strncpy(lpTitle, &lpFile[i], len);

@@ -10,9 +10,10 @@
 #include "windows.h"
 #include "ldt.h"
 
-extern WORD SELECTOR_AllocBlock( void *base, DWORD size, enum seg_type type,
-                                 BOOL is32bit, BOOL readonly );
-extern WORD SELECTOR_ReallocBlock( WORD sel, void *base, DWORD size,
+extern WORD SELECTOR_AllocBlock( const void *base, DWORD size,
+				 enum seg_type type, BOOL is32bit,
+				 BOOL readonly );
+extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
                                    enum seg_type type, BOOL is32bit,
                                    BOOL readonly );
 

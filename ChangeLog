@@ -1,4 +1,142 @@
 ----------------------------------------------------------------------
+Sat Dec 23 18:15:59 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [configure.in] [Makefile.in] [tools/install-sh]
+	New 'install' target installs Wine binary, library and man page.
+	Library is now more logically named libwine.a.
+	Split toolkit/ directory into library (for library code) and
+	libtest (for test programs).
+
+	* [controls/edit.c]
+	Quick hack to partially support EM_PASSWORD style (avoids
+	displaying your passwords on the screen when testing programs...)
+
+	* [configure.in] [controls/menu.c] [include/resource.h]
+	  [misc/commdlg.c] [misc/ole2nls.c] [misc/shell.c] [windows/msgbox.c]
+	Language is now a run-time option (wine -language xx).
+
+	* [debugger/dbg.y]
+	Dump some more debugging info on crash.
+
+	* [misc/profile.c]
+	Only consider ';' as a comment if it's the first non-blank
+	character on the line.
+
+	* [miscemu/dpmi.c]
+	More debugging info for real-mode callback.
+
+	* [objects/gdiobj.c]
+	Rewrote EnumObjects() to do the Right Thing.
+
+	* [resources/sysres*]
+	New directory containing system resources.
+
+Fri Dec 22 11:24:39 GMT 1995  John Harvey <john@division.co.uk>
+
+	* [win32/file.c] [win32/memory.c]
+        Unixware doesn't have MAP_ANON ifdefed out for now.
+
+	* [misc/dos_fs.c]
+        DOS_GetDosFileName didn't truncate paths starting ./ properly.
+
+	* [tools/build.c]
+	Produces assembly code that works with the unixware assembler.
+
+Wed Dec 20 22:22:29 +0100 1995  Morten Welinder <terra@diku.dk>
+
+	* [miscemu/instr.c]
+	INSTR_GetOperandAddr: 16-bit addresses should be masked to 16 bits.
+
+	* [misc/dos_fs.c]
+	DOS_readdir should always return directories, even if they don't
+ 	match the file name mask.
+
+Tue Dec 19 18:00:00 1995  Uwe Bonnes <bon@elektron.ikp.physik.th-darmstadt.de>
+	
+	* [misc/exec.c]
+	Give arguments to winhelp.
+
+	* [miscemu/int21.c]
+	Implemented Interrupt 21 AX=6C00 EXTENDED OPEN/CREATE.
+	Created function ExtendedOpenCreateFile.
+	Give for some Windows95 interrupts the return value 'not
+	implemented'.
+
+Sun Dec 17 16:51:56 EST 1995  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [include/kernel32.h] [include/windows.h]
+	Moved the typedefs for SYSTEMTIME and LPSYSTEMTIME from
+ 	include/kernel32.h to include/windows.h and declared the new Win32
+ 	API functions Sleep(), GetLocalTime(), and GetSystemTime().
+  	Redefined INFINITE as 0xFFFFFFFF if WINELIB32.
+
+	* [rc/rc (new file)]
+	Created the shell script 'rc', which should simplify resource
+ 	compilation.
+
+	* [win32/environment.c]
+	Kludged around an undefined reference to wine_files.  This change
+ 	should be fixed some time.
+
+	* [win32/time.c] [if1632/kernel32.spec]
+	Added the functions GetSystemTime(), and Sleep().
+
+	* [miscemu/int21.c]
+	Renamed static function GetSystemTime to INT21_GetSystemTime to
+ 	avoid conflicts with the API function of the same name.
+
+	* [include/wintypes.h]
+	Added the SPFMT definition for printf statements.
+
+	* [misc/shell.c] [include/shell.h]
+	Changed ERROR_* defines to SHELL_ERROR_*, as they were conflicting
+ 	with the ones in include/winerror.h.  They should probably use the
+ 	versions in winerror.h, but I'm not certain, and that can be done
+ 	later.
+
+	* [windows/mdi.c]
+	Translated WM_MDIACTIVATE(?,(LOhwnd,HIhwnd)) messages to
+ 	WM_MDIACTIVATE(HIhwnd,LOhwnd) for WINELIB32.  The ? parameter
+ 	(boolean) was discarded with this translation.  Translated handler
+ 	of WM_MDISETMENU(ref,(loHMENU,hiHMENU)) to handle
+ 	WM_MDISETMENU(loHMENU, hiHMENU) messages in WINELIB32 (ref assumed
+ 	false, call DrawMenuBar() if desired).
+
+	* [*/*]
+	General explicit casts and more rigid typing to remove warnings.
+
+	* [include/winpos.h] [windows/winpos.c]
+	Changed return type of WINPOS_ChangeActiveWindow to BOOL.
+
+	* [include/commdlg.h] [misc/commdlg.c]
+	Added prototypes for ChooseColor(), CommDlgExtendedError(),
+ 	FindText() GetFileTitle(), GetOpenFileName(), GetSaveFileName(),
+ 	PrintDlg, and ReplaceText().
+	Renamed the CommDlgExtendError() function to CommDlgExtendedError().
+	Made GetFileTitle return a short, as per the API definition.
+
+	* [Makefile.in]
+	Added line to clean and distclean that removes temporaries from
+ 	the include directory.
+
+Sat Dec 16 19:39:14 MET 1995  Steffen Moeller <smoe0024@rz.uni-hildesheim.de>
+
+	* [controls/edit.c]
+	Almost rewrote EDIT_GetLineMsg.
+
+Sat Dec 16 13:51:48 MST 1995  Andrew Taylor <andrew@riscan.com>
+
+	* [windows/mdi.c]
+	Fixed MDITile() bug that occurs when 0 windows are present or all
+	windows are minimized.
+
+Wed Dec 12 23:30:00 1995  Uwe Bonnes <bon@elektron.ikp.physik.th-darmstadt.de>
+
+	* [misc/profile.c]
+        Try harder to find files, especially in the working directory.
+	Look in $HOME/.wine too and create it there if it isn't found.
+
+----------------------------------------------------------------------
 Mon Dec 11 19:08:55 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [misc/lstr.c]

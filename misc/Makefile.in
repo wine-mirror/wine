@@ -31,13 +31,7 @@ C_SRCS = \
 	winsocket.c \
 	xmalloc.c
 
-all: checkrc $(MODULE).o
-
-checkrc: dummy
-	cd $(TOPSRC)/rc; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LANG=$(LANG)'
-
-langclean::
-	$(RM) ole2nls.o
+all: $(MODULE).o
 
 @MAKE_RULES@
 

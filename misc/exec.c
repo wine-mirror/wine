@@ -57,12 +57,13 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 	case 0:
 	case HELP_HELPONHELP:
 		GetWindowsDirectory(str, sizeof(str));
-		strcat(str, "\\winhelp.exe");
+		strcat(str, "\\winhelp.exe winhelp.hlp");
         dprintf_exec(stddeb,"'%s'\n", str);
 		break;
 	case HELP_INDEX:
 		GetWindowsDirectory(str, sizeof(str));
-		strcat(str, "\\winhelp.exe");
+		strcat(str, "\\winhelp.exe ");
+		strcat(str, lpHelpFile);
         dprintf_exec(stddeb,"'%s'\n", str);
 		break;
 	default:

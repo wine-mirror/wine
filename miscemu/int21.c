@@ -444,7 +444,7 @@ static void GetSystemDate(struct sigcontext_struct *context)
 	AX_reg(context) = now->tm_wday;
 }
 
-static void GetSystemTime(struct sigcontext_struct *context)
+static void INT21_GetSystemTime(struct sigcontext_struct *context)
 {
 	struct tm *now;
 	struct timeval tv;
@@ -603,6 +603,92 @@ static void CloseFile(struct sigcontext_struct *context)
 	RESET_CFLAG(context);
 }
 
+void ExtendedOpenCreateFile(struct sigcontext_struct *context)
+{
+  dprintf_int(stddeb, "int21: extended open/create: file= %s \n",
+	      DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context))));
+  /* Shuffle arguments to call OpenExistingFile */
+  AL_reg(context) = BL_reg(context);
+  DX_reg(context) = SI_reg(context);
+  /* BX,CX and DX should be preserved */
+  OpenExistingFile(context);
+  if ((EFL_reg(context) & 0x0001)==0) 
+    { /* It exists */
+      dprintf_int(stddeb, "int21: extended open/create %s exists \n",
+		  DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context))));
+      /* Now decide what do do */
+      if ((DL_reg(context) & 0x0007)== 0)
+	{
+	  BX_reg(context) = AX_reg(context);
+	  CloseFile(context);
+	  AX_reg(context) = 0x0050;/*File exists*/
+	  CX_reg(context) = 0;
+	  SET_CFLAG(context);
+	  dprintf_int(stddeb, "int21: extended open/create: failed because file exixts \n");
+	  return;
+	}
+      if ((DL_reg(context) & 0x0007)== 2) {
+	/* Truncate it, but first check if opend for write */
+	if ((BL_reg(context) & 0x0007)== 0) {
+	  BX_reg(context) = AX_reg(context);
+	  CloseFile(context);
+	  dprintf_int(stddeb, "int21: extended open/create: failed, trunc on ro file");
+	  AX_reg(context) = 0x000C;/*Access code invalid*/
+	  CX_reg(context) = 0;
+	  SET_CFLAG(context);
+	  return;
+	}
+	/* Shuffle arguments to call CloseFile */
+	dprintf_int(stddeb, "int21: extended open/create: Closing before truncate\n");
+	BX_reg(context) = AX_reg(context);
+	/* BX and DX should be preserved */
+	CloseFile(context);
+	if (EFL_reg(context) & 0x0001) {
+	  dprintf_int(stddeb, "int21: extended open/create: close before trunc failed");
+	  AX_reg(context) = 0x0019;/*Seek Error*/
+	  CX_reg(context) = 0;
+	  SET_CFLAG(context);
+	}
+	/* Shuffle arguments to call CreateFile */
+	dprintf_int(stddeb, "int21: extended open/create: Truncating\n");
+	AL_reg(context) = BL_reg(context);
+	/* CX is still the same */
+	DX_reg(context) = SI_reg(context);
+	CreateFile(context);
+	if (EFL_reg(context) & 0x0001) { /*no file open, flags set */
+	  dprintf_int(stddeb, "int21: extended open/create: truncfailed");
+	  return;
+	}
+	CX_reg(context) = 3;
+	return;
+      }
+      CX_reg(context) = 1;
+      return;
+    }
+  else /* file does not exist */
+    {
+     dprintf_int(stddeb, "int21: extended open/create %s dosen't exists \n",
+		  DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context))));
+      if ((DL_reg(context) & 0x00F0)== 0) {
+	CX_reg(context) = 0;
+	SET_CFLAG(context);
+	dprintf_int(stddeb, "int21: extended open/create: failed, file dosen't exist\n");
+	return;
+      }
+      /* Shuffle arguments to call CreateFile */
+      dprintf_int(stddeb, "int21: extended open/create: Creating\n");
+      AL_reg(context) = BL_reg(context);
+      /* CX should still be the same */
+      DX_reg(context) = SI_reg(context);
+      CreateFile(context);
+      if (EFL_reg(context) & 0x0001) { /*no file open, flags set */
+	dprintf_int(stddeb, "int21: extended open/create: create failed\n");
+	return;
+      }
+      CX_reg(context) = 2;
+      return;
+    }
+}
 static void RenameFile(struct sigcontext_struct *context)
 {
 	char *newname, *oldname;
@@ -1312,7 +1398,7 @@ void DOS3Call( struct sigcontext_struct context )
             break;
 
 	  case 0x2c: /* GET SYSTEM TIME */
-	    GetSystemTime(&context);
+	    INT21_GetSystemTime(&context);
 	    break;
 
           case 0x2d: /* SET SYSTEM TIME */
@@ -1738,6 +1824,21 @@ void DOS3Call( struct sigcontext_struct context )
 	    }
 	    break;
     
+	  case 0x6C: /* Extended Open/Create*/
+	    ExtendedOpenCreateFile(&context);
+	    break;
+	
+          case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
+          case 0x71: /* MS-DOS 7 (Chicago) - LONG FILENAME FUNCTIONS */
+          case 0x72: /* MS-DOS 7 (Windows95) - ??? */
+          case 0x73: /* MS-DOS 7 (Windows95) - DRIVE LOCKING ??? */
+            dprintf_int(stddeb,"int21: windows95 function AX %04x\n",
+ 			AX_reg(&context));
+ 	    dprintf_int(stddeb, "        returning unimplemented\n");
+ 	    SET_CFLAG(&context);
+ 	    AL_reg(&context) = 0;
+ 	    break;
+
           case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
             break;
 

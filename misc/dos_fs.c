@@ -453,7 +453,7 @@ char *DOS_GetDosFileName(char *unixfilename)
     } else {
 	/* Expand it if it's a relative name. */
 	getcwd(temp, 255);
-	if(strncmp(unixfilename, "./", 2) != 0) {
+	if(strncmp(unixfilename, "./", 2) == 0) {
 	    strcat(temp, unixfilename + 1);
 	} else {	    
 	    strcat(temp, "/");
@@ -934,20 +934,20 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	    strcpy(de->filename, d->d_name);
 	    if (d->d_reclen > 12)
 	    de->filename[12] = '\0';
-
 	    ToDos(de->filename);
-	} while ( !match(de->filename, de->filemask) );
 
-	strcpy(temp,de->unixpath);
-	strcat(temp,"/");
-	strcat(temp,de->filename);
-	ToUnix(temp + strlen(de->unixpath));
+	    strcpy(temp,de->unixpath);
+	    strcat(temp,"/");
+	    strcat(temp,d->d_name);
+	    stat (temp, &st);
+	    de->attribute = 0x0;
+	    if S_ISDIR(st.st_mode)
+	      de->attribute |= FA_DIREC;
 
-	stat (temp, &st);
-	de->attribute = 0x0;
-	if S_ISDIR(st.st_mode)
-		de->attribute |= FA_DIREC;
-	
+	} while (!(de->attribute & FA_DIREC) &&
+		 !match(de->filename, de->filemask) );
+
+
 	de->filesize = st.st_size;
 	de->filetime = st.st_mtime;
 

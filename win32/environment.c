@@ -25,9 +25,13 @@ LPSTR GetCommandLineA(void)
     char *cp;
     PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
 
+#ifndef WINELIB
     strcpy(buffer, wine_files->name);
     cp = buffer+strlen(buffer);
     *cp++ = ' ';
+#else
+    cp = buffer;
+#endif;
     memcpy( cp, &pdb->cmdLine[1], pdb->cmdLine[0] );
     dprintf_win32(stddeb,"CommandLine = %s\n", buffer );
     return buffer;

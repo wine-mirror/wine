@@ -235,6 +235,19 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
 
+        if (signal != SIGTRAP)  /* This is a real crash, dump some info */
+        {
+            DEBUG_InfoRegisters();
+            DEBUG_InfoStack();
+            if (dbg_mode == 16)
+            {
+                LDT_Print( SELECTOR_TO_ENTRY(DS_reg(DEBUG_context)), 1 );
+                if (ES_reg(DEBUG_context) != DS_reg(DEBUG_context))
+                    LDT_Print( SELECTOR_TO_ENTRY(ES_reg(DEBUG_context)), 1 );
+            }
+            DEBUG_BackTrace();
+        }
+
         /* Show where we crashed */
         DEBUG_PrintAddress( &addr, dbg_mode );
         fprintf(stderr,":  ");

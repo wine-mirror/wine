@@ -534,7 +534,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	    winpos.flags |= SWP_NOSIZE;
 
 	/* Send WM_WINDOWPOSCHANGING */
-	SendMessage(hwnd, WM_WINDOWPOSCHANGING, 0, MAKE_SEGPTR(&winpos));
+	SendMessage(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)MAKE_SEGPTR(&winpos));
 
 	/* Calculate new position and size */
 	newWindowRect.left = event->x;
@@ -549,7 +549,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	/* Set new size and position */
 	wndPtr->rectWindow = newWindowRect;
 	wndPtr->rectClient = newClientRect;
-	SendMessage(hwnd, WM_WINDOWPOSCHANGED, 0, MAKE_SEGPTR(&winpos));
+	SendMessage(hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)MAKE_SEGPTR(&winpos));
     }
 }
 

@@ -23,7 +23,7 @@ typedef struct tagQMSG
 
 typedef struct tagMESSAGEQUEUE
 {
-  WORD      next;                   /* 00 Next queue */
+  HANDLE    next;                   /* 00 Next queue */
   HTASK     hTask;                  /* 02 hTask owning the queue */
   WORD      msgSize;                /* 04 Size of messages in the queue */
   WORD      msgCount;               /* 06 Number of waiting messages */

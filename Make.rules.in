@@ -1,21 +1,36 @@
 # Global rules shared by all makefiles
 # The makefile must define at least TOPSRC and MODULE
 
+# First some useful definitions
+
 CC 	  = @CC@
+CPP       = @CPP@
 CFLAGS 	  = @CFLAGS@
 DEFS      = @DEFS@
-LANG	  = @LANG@
 X_CFLAGS  = @X_CFLAGS@
+X_LIBS    = @X_LIBS@
+XPM_LIB	  = -lXpm
+XLIB	  = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
+LDLIBS	  = @LDLIBS@
 YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 DIVINCL   = -I$(TOPSRC)/include
-ALLCFLAGS = $(CFLAGS) $(DEFS) -ALANG\($(LANG)\) $(X_CFLAGS) $(DIVINCL) $(EXTRA_DEFS)
+ALLCFLAGS = $(CFLAGS) $(DEFS) $(X_CFLAGS) $(DIVINCL) $(EXTRA_DEFS)
 LDCOMBINE = ld -r
 RM        = rm -f
+BUILD     = $(TOPSRC)/tools/build
+WINERC    = $(TOPSRC)/rc/winerc
+WINELIB   = $(TOPSRC)/libwine.a
+SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)'
 @SET_MAKE@
 
-OBJS = $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o)
+OBJS = $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
+
+
+# Implicit rules
+
+.SUFFIXES: .rc
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -23,8 +38,34 @@ OBJS = $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o)
 .S.o:
 	$(CC) -c -o $*.o $<  
 
+.rc.c:
+	echo "#include \"windows.h\"" >winerctmp.c
+	echo WINDOWS_H_ENDS_HERE >>winerctmp.c
+	cat $< >>winerctmp.c
+	$(CPP) $(DEFS) $(DIVINCL) -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
+	$(RM) winerctmp.c
+
+.rc.h:
+	echo "#include \"windows.h\"" >winerctmp.c
+	echo WINDOWS_H_ENDS_HERE >>winerctmp.c
+	cat $< >>winerctmp.c
+	$(CPP) $(DEFS) $(DIVINCL) -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
+	$(RM) winerctmp.c
+
+
+# Rule to rebuild resource compiler
+
+$(WINERC) check_winerc:
+	cd $(TOPSRC)/rc; $(SUBMAKE) winerc
+
+
+# Rule for main module
+
 $(MODULE).o: $(OBJS)
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
+
+
+# Misc. rules
 
 depend:: $(C_SRCS)
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
@@ -32,11 +73,11 @@ depend:: $(C_SRCS)
 	mv tmp_make Makefile
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak *.flc tmp_make
+	$(RM) *.o \#*\# *~ *.bak *.flc tmp_make winerctmp.c
 
 distclean:: clean
 	$(RM) Makefile
 
-langclean::
-
 dummy:
+
+# End of global rules

@@ -218,7 +218,7 @@ HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     HGLOBAL hmem;
     SEGPTR data;
 
-    dprintf_dialog(stddeb, "CreateDialogParam: "NPFMT",%08lx,"NPFMT",%08lx,%ld\n",
+    dprintf_dialog(stddeb, "CreateDialogParam: "NPFMT","SPFMT","NPFMT",%08lx,%ld\n",
 	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
      
     if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
@@ -523,7 +523,7 @@ int DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 {
     HWND hwnd;
     
-    dprintf_dialog(stddeb, "DialogBoxParam: "NPFMT",%08lx,"NPFMT",%08lx,%ld\n",
+    dprintf_dialog(stddeb, "DialogBoxParam: "NPFMT","SPFMT","NPFMT",%08lx,%ld\n",
 	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -751,7 +751,7 @@ void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
 
     if (fSigned) sprintf( str, "%d", (int)value );
     else sprintf( str, "%u", value );
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, MAKE_SEGPTR(str) );
+    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(str) );
 }
 
 
@@ -764,7 +764,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
     long result = 0;
     
     if (translated) *translated = FALSE;
-    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, 30, MAKE_SEGPTR(str) ))
+    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, 30, (LPARAM)MAKE_SEGPTR(str) ))
     {
 	char * endptr;
 	result = strtol( str, &endptr, 10 );

@@ -583,7 +583,7 @@ BOOL ACTIVATEAPP_callback(HWND hWnd, LPARAM lParam)
 	return 1;
 
     SendMessage( hWnd, WM_ACTIVATEAPP, lpActStruct->wFlag,
-		(LPARAM)(lpActStruct->hWindowTask)?lpActStruct->hWindowTask:0);
+		(LPARAM)((lpActStruct->hWindowTask)?lpActStruct->hWindowTask:0));
     return 1;
 }
 
@@ -615,7 +615,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 	dprintf_win(stddeb,"WINPOS_ActivateWindow: no current active window.\n");
 
     /* call CBT hook chain */
-    wRet = HOOK_CallHooks(WH_CBT, HCBT_ACTIVATE, hWnd,
+    wRet = HOOK_CallHooks(WH_CBT, HCBT_ACTIVATE, (WPARAM)hWnd,
 			  (LPARAM)MAKE_SEGPTR(&cbtStruct));
 
     if( wRet ) return wRet;
@@ -623,6 +623,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     /* set prev active wnd to current active wnd and send notification */
     if( (hwndPrevActive = hwndActive) )
     {
+/* FIXME: need a Win32 translation for WINELIB32 */
 	if( !SendMessage(hwndPrevActive, WM_NCACTIVATE, 0, MAKELONG(hWnd,wIconized)) )
         {
 	    if (GetSysModalWindow() != hWnd) return 0;
@@ -647,7 +648,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     /* send palette messages */
     if( SendMessage( hWnd, WM_QUERYNEWPALETTE, 0, 0L) )
-	SendMessage((HWND)-1, WM_PALETTEISCHANGING, hWnd, 0L );
+	SendMessage((HWND)-1, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0L );
 
     /* if prev wnd is minimized redraw icon title 
   if( hwndPrevActive )
@@ -718,6 +719,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     wndTemp->hwndLastActive = hWnd;
 
     wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+/* FIXME: Needs a Win32 translation for WINELIB32 */
     SendMessage( hWnd, WM_NCACTIVATE, 1,
 		 MAKELONG(hwndPrevActive,wIconized));
 #ifdef WINELIB32
@@ -753,26 +755,26 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
  *	   WINPOS_ChangeActiveWindow
  *
  */
-HWND WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
+BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    if( !wndPtr ) return  0;
+    if( !wndPtr ) return FALSE;
 
     /* minors are not allowed */
     if( (wndPtr->dwStyle & WS_CHILD) && !( wndPtr->dwStyle & WS_POPUP))
 	return SendMessage(hWnd, WM_CHILDACTIVATE, 0, 0L);
 
-    if( hWnd == hwndActive ) return 0;     
+    if( hWnd == hwndActive ) return FALSE;
 
     if( !WINPOS_SetActiveWindow(hWnd ,mouseMsg ,TRUE) )
-	return 0;
+	return FALSE;
 
     /* switch desktop queue to current active here */
     if( wndPtr->hwndParent == GetDesktopWindow())
     { }
 
-    return 1;
+    return TRUE;
 }
 
 
@@ -799,10 +801,10 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
 	params.lppos = winpos;
     }
     result = SendMessage( hwnd, WM_NCCALCSIZE, calcValidRect,
-                          MAKE_SEGPTR( &params ) );
+                          (LPARAM)MAKE_SEGPTR( &params ) );
     dprintf_win(stddeb, "WINPOS_SendNCCalcSize: %d %d %d %d\n",
-		params.rgrc[0].top,    params.rgrc[0].left,
-		params.rgrc[0].bottom, params.rgrc[0].right);
+		(int)params.rgrc[0].top,    (int)params.rgrc[0].left,
+		(int)params.rgrc[0].bottom, (int)params.rgrc[0].right);
     *newClientRect = params.rgrc[0];
     return result;
 }
@@ -1006,7 +1008,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* Send WM_WINDOWPOSCHANGING message */
 
     if (!(flags & SWP_NOSENDCHANGING))
-	SendMessage( hwnd, WM_WINDOWPOSCHANGING, 0, MAKE_SEGPTR(&winpos) );
+	SendMessage( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)MAKE_SEGPTR(&winpos) );
 
       /* Calculate new position and size */
 
@@ -1162,7 +1164,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
     if (!(winpos.flags & SWP_NOSENDCHANGING))
         SendMessage( winpos.hwnd, WM_WINDOWPOSCHANGED,
-                     0, MAKE_SEGPTR(&winpos) );
+                     0, (LPARAM)MAKE_SEGPTR(&winpos) );
 
     return TRUE;
 }

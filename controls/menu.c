@@ -23,13 +23,9 @@
 #include "win.h"
 #include "message.h"
 #include "graphics.h"
+#include "resource.h"
 #include "stddebug.h"
-/* #define DEBUG_MENU */
-/* #define DEBUG_MENUCALC */
-/* #define DEBUG_MENUSHORTCUT */
 #include "debug.h"
-
-#include "../rc/sysres.h"
 
   /* Dimension of the menu bitmaps */
 static WORD check_bitmap_width = 0, check_bitmap_height = 0;
@@ -265,7 +261,7 @@ static void MENU_CalcItemSize( HDC hdc, LPMENUITEM lpitem, HWND hwndOwner,
       mistruct->itemData = (long int)lpitem->item_text;
       mistruct->itemHeight = 16;
       mistruct->itemWidth = 30;
-      SendMessage(hwndOwner,WM_MEASUREITEM,0,mistrsegp);
+      SendMessage(hwndOwner,WM_MEASUREITEM,0,(LPARAM)mistrsegp);
       lpitem->rect.bottom += mistruct->itemHeight;
       lpitem->rect.right += mistruct->itemWidth;
       dprintf_menu(stddeb,"DrawMenuItem: MeasureItem %04x %d:%d!\n",
@@ -475,7 +471,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HDC hdc, LPMENUITEM lpitem,
       distruct->hwndItem = hwnd;
       distruct->hDC = hdc;
       distruct->rcItem = lpitem->rect;
-      SendMessage(hwnd,WM_DRAWITEM,0,distrsegp);
+      SendMessage(hwnd,WM_DRAWITEM,0,(LPARAM)distrsegp);
       return;
     }
     if (menuBar && (lpitem->item_flags & MF_SEPARATOR)) return;
@@ -633,7 +629,7 @@ UINT MENU_DrawMenuBar(HDC hDC, LPRECT lprect, HWND hwnd, BOOL suppress_draw)
     int i;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     
-    lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR( wndPtr->wIDmenu );
+    lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR( (HMENU)wndPtr->wIDmenu );
     if (lppop == NULL || lprect == NULL) return SYSMETRICS_CYMENU;
     dprintf_menu(stddeb,"MENU_DrawMenuBar("NPFMT", %p, %p); !\n", 
 		 hDC, lprect, lppop);
@@ -1454,7 +1450,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam )
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
     SendMessage( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
       /* Select first selectable item */
-    MENU_SelectItem( hwnd, wndPtr->wIDmenu, NO_SELECTED_ITEM );
+    MENU_SelectItem( hwnd, (HMENU)wndPtr->wIDmenu, NO_SELECTED_ITEM );
     MENU_SelectNextItem( hwnd, (HMENU)wndPtr->wIDmenu );
     MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		    0, 0, hwnd, NULL );
@@ -1672,7 +1668,7 @@ UINT GetMenuState(HMENU hMenu, UINT wItemID, UINT wFlags)
 /**********************************************************************
  *			GetMenuItemCount		[USER.263]
  */
-WORD GetMenuItemCount(HMENU hMenu)
+INT GetMenuItemCount(HMENU hMenu)
 {
 	LPPOPUPMENU	menu;
 	dprintf_menu(stddeb,"GetMenuItemCount("NPFMT");\n", hMenu);
@@ -1724,7 +1720,7 @@ BOOL InsertMenu(HMENU hMenu, UINT nPos, UINT wFlags, UINT wItemID, LPSTR lpNewIt
       /* Find where to insert new item */
 
     if ((wFlags & MF_BYPOSITION) && 
-        ((nPos == (UINT)-1) || (nPos == GetMenuItemCount(hMenu))))
+        ((nPos == (UINT)-1) || (nPos == (UINT)GetMenuItemCount(hMenu))))
     {
           /* Special case: append to menu 
              Some programs specify the menu length to do that */
@@ -1857,7 +1853,7 @@ BOOL DeleteMenu(HMENU hMenu, UINT nPos, UINT wFlags)
 {
     MENUITEM *item = MENU_FindItem( &hMenu, &nPos, wFlags );
     if (!item) return FALSE;
-    if (item->item_flags & MF_POPUP) DestroyMenu( item->item_id );
+    if (item->item_flags & MF_POPUP) DestroyMenu( (HMENU)item->item_id );
       /* nPos is now the position of the item */
     RemoveMenu( hMenu, nPos, wFlags | MF_BYPOSITION );
     return TRUE;
@@ -2093,7 +2089,7 @@ HMENU GetSubMenu(HMENU hMenu, short nPos)
     if ((UINT)nPos >= lppop->nItems) return 0;
     lpitem = (MENUITEM *) USER_HEAP_LIN_ADDR( lppop->hItems );
     if (!(lpitem[nPos].item_flags & MF_POPUP)) return 0;
-    return lpitem[nPos].item_id;
+    return (HMENU)lpitem[nPos].item_id;
 }
 
 
@@ -2190,9 +2186,12 @@ HMENU LoadMenuIndirect(LPSTR menu_template)
 HMENU CopySysMenu()
 {
     HMENU hMenu;
+    HGLOBAL handle;
     LPPOPUPMENU menu;
 
-    hMenu = LoadMenuIndirect( sysres_MENU_SYSMENU.bytes );
+    if (!(handle = SYSRES_LoadResource( SYSRES_MENU_SYSMENU ))) return 0;
+    hMenu = LoadMenuIndirect( GlobalLock( handle ) );
+    SYSRES_FreeResource( handle );
     if(!hMenu)
     {
 	dprintf_menu(stddeb,"No SYSMENU\n");
@@ -2230,17 +2229,18 @@ WORD * ParseMenuResource(WORD *first_item, int level, HMENU hMenu)
 	    AppendMenu(hMenu, popup_item->item_flags, 
 	    	(UINT)hSubMenu, popup_item->item_text);
 	    }
-	else {
-		MENUITEMTEMPLATE *normal_item = (MENUITEMTEMPLATE *) item;
-		next_item = (WORD *) (normal_item->item_text + 
-		strlen(normal_item->item_text) + 1);
-		if (strlen(normal_item->item_text) == 0 && normal_item->item_id == 0) 
-			normal_item->item_flags |= MF_SEPARATOR;
-		AppendMenu(hMenu, normal_item->item_flags, 
-			normal_item->item_id, normal_item->item_text);
-	    }
-	}
-    while (!(*item & MF_END));
+	else
+        {
+            MENUITEMTEMPLATE *normal_item = (MENUITEMTEMPLATE *) item;
+            WORD flags = normal_item->item_flags;
+            next_item = (WORD *) (normal_item->item_text + 
+                                  strlen(normal_item->item_text) + 1);
+            if (!normal_item->item_text[0] && !normal_item->item_id) 
+                flags |= MF_SEPARATOR;  /* FIXME: do this in InsertMenu? */
+            AppendMenu( hMenu, flags, normal_item->item_id,
+                        normal_item->item_text );
+        }
+    } while (!(*item & MF_END));
     return next_item;
 }
 

@@ -31,7 +31,7 @@ BOOL SetProp( HWND hwnd, SEGPTR str, HANDLE hData )
     PROPERTY *prop;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "SetProp: "NPFMT" %08lx "NPFMT"\n", hwnd, str, hData );
+    dprintf_prop( stddeb, "SetProp: "NPFMT" "SPFMT" "NPFMT"\n", hwnd, str, hData );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     hProp = USER_HEAP_ALLOC( sizeof(PROPERTY) + 
                              (HIWORD(str) ? strlen(PTR_SEG_TO_LIN(str)) : 0 ));
@@ -62,7 +62,7 @@ HANDLE GetProp( HWND hwnd, SEGPTR str )
     HANDLE hProp;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "GetProp: "NPFMT" %08lx\n", hwnd, str );
+    dprintf_prop( stddeb, "GetProp: "NPFMT" "SPFMT"\n", hwnd, str );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     hProp = wndPtr->hProp;
     while (hProp)
@@ -88,7 +88,7 @@ HANDLE RemoveProp( HWND hwnd, SEGPTR str )
     HANDLE *hProp;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "RemoveProp: "NPFMT" %08lx\n", hwnd, str );
+    dprintf_prop( stddeb, "RemoveProp: "NPFMT" "SPFMT"\n", hwnd, str );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     hProp = &wndPtr->hProp;
     while (*hProp)

@@ -311,6 +311,7 @@ static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
  * 32-bit entry point for a new task. This function is responsible for
  * setting up the registers and jumping to the 16-bit entry point.
  */
+#ifndef WINELIB
 static void TASK_CallToStart(void)
 {
     int cs_reg, ds_reg, ip_reg;
@@ -357,6 +358,7 @@ static void TASK_CallToStart(void)
     fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
     TASK_KillCurrentTask( 1 );
 }
+#endif
 
 
 /***********************************************************************
@@ -747,7 +749,6 @@ void InitTask( struct sigcontext_struct context )
 
 #ifndef WINELIB
     NE_InitializeDLLs( pTask->hModule );
-#endif
 
     /* Registers on return are:
      * ax     1 if OK, 0 on error
@@ -764,6 +765,7 @@ void InitTask( struct sigcontext_struct context )
     ESI_reg(&context) = (DWORD)pTask->hPrevInstance;
     EDI_reg(&context) = (DWORD)pTask->hInstance;
     ES_reg (&context) = (WORD)pTask->hPDB;
+#endif
 
     /* Initialize the local heap */
     if ( pModule->heap_size )
@@ -910,7 +912,7 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
     if (!thunkaddr) return (FARPROC)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
 
-    dprintf_task( stddeb, "MakeProcInstance(%08lx,"NPFMT"): got thunk %08lx\n",
+    dprintf_task( stddeb, "MakeProcInstance("SPFMT","NPFMT"): got thunk "SPFMT"\n",
                   (SEGPTR)func, hInstance, (SEGPTR)thunkaddr );
     
     *thunk++ = 0xb8;    /* movw instance, %ax */
@@ -929,7 +931,7 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
  */
 void FreeProcInstance( FARPROC func )
 {
-    dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (SEGPTR)func );
+    dprintf_task( stddeb, "FreeProcInstance("SPFMT")\n", (SEGPTR)func );
     TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 }
 

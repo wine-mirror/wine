@@ -63,7 +63,7 @@ typedef struct
     int SelEndLine;          /* ending line of selection */
     int SelEndCol;           /* ending column of selection */
     HFONT hFont;             /* handle of current font (if not default) */
-    HANDLE hDeletedText;     /* handle to deleted txet buffer for undo */
+    HANDLE hDeletedText;     /* handle to deleted text buffer for undo */
     int DeletedLength;       /* length of deleted text */
     int DeletedCurrLine;     /* starting line from which text was deleted */
     int DeletedCurrCol;      /* starting col from which text was deleted */
@@ -509,7 +509,15 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
     }
 
-    if (!(cp = strchr(str, VK_TAB)))
+    if ((GetWindowLong( hwnd, GWL_STYLE ) & ES_PASSWORD))
+    {
+        int len = strlen(str);
+        char *buff = xmalloc( len+1 );
+        memset( buff, '*', len );
+        buff[len] = '\0';
+	TextOut( hdc, col - diff, row * es->txtht, buff, len );
+    }
+    else if (!(cp = strchr(str, VK_TAB)))
 	TextOut(hdc, col - diff, row * es->txtht, str, strlen(str));
     else
     {
@@ -1920,15 +1928,35 @@ static LONG EDIT_SetTabStopsMsg(HWND hwnd, WORD wParam, LONG lParam)
  */
 static LONG EDIT_GetLineMsg(HWND hwnd, WORD wParam, LONG lParam)
 {
-    char *cp, *cp1;
-    int len;
-    unsigned char *buffer = (char *)lParam;
+    char *cp;
+    int len = 0;
+    unsigned char *buffer = (char *)PTR_SEG_TO_LIN(lParam);
 
-    cp = EDIT_TextLine(hwnd, wParam);
-    cp1 = EDIT_TextLine(hwnd, wParam + 1);
-    len = MIN((int)(cp1 - cp), (WORD)(*buffer));
+       /* the line wanted */
+    cp  = EDIT_TextLine  (hwnd, wParam);
+    len = EDIT_LineLength(hwnd, wParam);
+    
+       /* if cp==NULL nothing will be copied - I hope */
+    if ((char *) NULL == cp && 0 != len) {
+       fprintf(stdnimp,"edit: EDIT_GetLineMsg cp == NULL && len != 0"); 
+       return 0L;
+    }
+
+    if (0>len)
+       fprintf(stdnimp,"edit: EDIT_GetLineMsg len < 0"); 
+
+       /* suggested reason for the following line:
+          never copy more than the buffer's size ? 
+          I thought that this would make sense only if
+          the lstrcpyn fun was used instead of the gnu strncpy.
+       */
+    len = MIN(len, (WORD)(*buffer));
+
+    if (0>len)
+       fprintf(stdnimp,"edit: EDIT_GetLineMsg len < 0 after MIN"); 
+
     dprintf_edit( stddeb, "EDIT_GetLineMsg: %d %d, len %d\n", (int)(WORD)(*buffer), (int)(WORD)(*(char *)buffer), len);
-    strncpy(buffer, cp, len);
+    lstrcpyn(buffer, cp, len);
 
     return (LONG)len;
 }

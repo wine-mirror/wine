@@ -226,7 +226,7 @@ FARPROC SetWindowsHook( short id, HOOKPROC proc )
     HTASK hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
     HANDLE handle = HOOK_SetHook( id, proc, hInst, hTask );
-    if (!handle) return -1;
+    if (!handle) return (FARPROC)-1;
     if (!((HOOKDATA *)USER_HEAP_LIN_ADDR( handle ))->next) return 0;
     /* Not sure if the return value is correct; should not matter much
      * since it's never used (see DefHookProc). -- AJ */
@@ -319,7 +319,11 @@ BOOL UnhookWindowsHookEx( HHOOK hhook )
 DWORD CallNextHookEx( HHOOK hhook, short code, WPARAM wParam, LPARAM lParam )
 {
     HANDLE next;
+#ifdef WINELIB32
+    if (!(next = HOOK_GetNextHook( (HANDLE)hhook ))) return 0;
+#else
     if (HIWORD(hhook) != HOOK_MAGIC) return 0;  /* Not a new format hook */
     if (!(next = HOOK_GetNextHook( LOWORD(hhook) ))) return 0;
+#endif
     return HOOK_CallHook( next, code, wParam, lParam );
 }

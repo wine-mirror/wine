@@ -33,12 +33,12 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 	case WM_COMMAND:
 	switch(w){
 		case 100:
-			CreateDialogIndirect(0,hello3_DIALOG_DIADEMO.bytes,wnd,(WNDPROC)DlgProc);
+			CreateDialogIndirect(0,hello3res_DIALOG_DIADEMO.bytes,wnd,(WNDPROC)DlgProc);
 			return 0;
 		case 101:
 		{
-			BITMAPINFO *bm=hello3_BITMAP_BITDEMO.bytes;
-			char *bits=bm;
+			BITMAPINFO *bm=(BITMAPINFO*)hello3res_BITMAP_BITDEMO.bytes;
+			char *bits=(char*)bm;
 			HDC hdc=GetDC(wnd);
 			bits+=bm->bmiHeader.biSize;
 			bits+=(1<<bm->bmiHeader.biBitCount)*sizeof(RGBQUAD);

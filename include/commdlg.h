@@ -290,6 +290,15 @@ typedef DEVNAMES * LPDEVNAMES;
 #define FINDDLG		       		9
 #define REPLACEDLG	       		10
 
+BOOL  ChooseColor(LPCHOOSECOLOR lpChCol);
+DWORD CommDlgExtendedError(void);
+BOOL  FindText(LPFINDREPLACE lpFind);
+short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf);
+BOOL  GetOpenFileName(LPOPENFILENAME lpofn);
+BOOL  GetSaveFileName(LPOPENFILENAME lpofn);
+BOOL  PrintDlg(LPPRINTDLG lpPrint);
+BOOL  ReplaceText(LPFINDREPLACE lpFind);
+
 LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);

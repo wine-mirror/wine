@@ -28,7 +28,7 @@ typedef struct
 
 extern void WINPOS_FindIconPos( HWND hwnd );
 extern BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus);
-extern HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
+extern BOOL WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
 extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 				   RECT *newWindowRect, RECT *oldWindowRect,
 				   RECT *oldClientRect, WINDOWPOS *winpos,

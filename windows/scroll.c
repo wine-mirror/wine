@@ -19,7 +19,7 @@
 
 
 
-extern DCE_GetVisRgn(HWND, WORD);
+extern HRGN DCE_GetVisRgn(HWND, WORD);
 
 static int RgnType;
 
@@ -127,10 +127,10 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
     RECT rc, cliprc;
 
     dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, lpRect =%08lx clipRect=%i,%i,%i,%i\n", 
-	    dx, dy, (LONG)rect, (clipRect)?clipRect->left:0,
-                                (clipRect)?clipRect->top:0,
-                                (clipRect)?clipRect->right:0, 
-                                (clipRect)?clipRect->bottom:0);
+	    dx, dy, (LONG)rect, (int)((clipRect)?clipRect->left:0),
+                                (int)((clipRect)?clipRect->top:0),
+                                (int)((clipRect)?clipRect->right:0), 
+                                (int)((clipRect)?clipRect->bottom:0));
 
     /* if rect is NULL children have to be moved */
     if ( !rect )
@@ -146,8 +146,9 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
        {
 	  GetClientRect(hwnd,&rc);
 	  dprintf_scroll(stddeb,"\trect=%i %i %i %i client=%i %i %i %i\n",
-			 rect->left,rect->top,rect->right,rect->bottom,rc.left,rc.top,
-			 rc.right,rc.bottom);
+			 (int)rect->left,(int)rect->top,(int)rect->right,
+			 (int)rect->bottom,(int)rc.left,(int)rc.top,
+			 (int)rc.right,(int)rc.bottom);
 
 	CopyRect(&rc, rect);
 	  hdc = GetDC(hwnd);
@@ -206,10 +207,10 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
     dprintf_scroll(stddeb,"ScrollDC: dx=%d dy=%d, hrgnUpdate="NPFMT" rc=%i %i %i %i\n",
-                                     dx,dy,hrgnUpdate,(rc)?rc->left:0,
-				                      (rc)?rc->top:0,
-				                      (rc)?rc->right:0,
-				                      (rc)?rc->bottom:0); 
+                                     dx,dy,hrgnUpdate,(int)((rc)?rc->left:0),
+				                      (int)((rc)?rc->top:0),
+				                      (int)((rc)?rc->right:0),
+				                      (int)((rc)?rc->bottom:0)); 
 
     if (rc == NULL)
 	return FALSE;
@@ -288,7 +289,7 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect,
     HDC hdc;
     RECT rc, cliprc;
 
-    dprintf_scroll(stddeb,"ScrollWindowEx: dx=%d, dy=%d, wFlags="NPFMT"\n",dx, dy, flags);
+    dprintf_scroll(stddeb,"ScrollWindowEx: dx=%d, dy=%d, wFlags=%04x\n",dx, dy, flags);
 
     hdc = GetDC(hwnd);
 

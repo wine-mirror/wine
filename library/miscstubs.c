@@ -109,13 +109,13 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
     return handle;
 }
 
-HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
+HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 			    HGLOBAL hOwner, BOOL isCode,
 			    BOOL is32Bit, BOOL isReadOnly,
 			    SHMDATA *shmdata)
 {
 /*  fprintf(stderr,"JBP: GLOBAL_CreateBlock() faked.\n");*/
-  return ptr;
+  return (HGLOBAL)ptr;
 }
 
 BOOL GLOBAL_FreeBlock( HGLOBAL handle )

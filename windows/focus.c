@@ -11,7 +11,7 @@
 #include "winpos.h"
 #include "hook.h"
 #include "color.h"
-
+#include "options.h"
 
 static HWND hwndFocus = 0;
 
@@ -25,8 +25,9 @@ static void FOCUS_SetXFocus( HWND hwnd )
     XWindowAttributes win_attr;
     Window win;
 
-      /* Only mess with the X focus if there's no desktop window */
-    if (rootWindow != DefaultRootWindow(display)) return;
+    /* Only mess with the X focus if there's */
+    /* no desktop window and no window manager. */
+    if ((rootWindow != DefaultRootWindow(display)) || Options.managed) return;
 
     if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
@@ -53,11 +54,11 @@ void FOCUS_SwitchFocus(HWND hFocusFrom, HWND hFocusTo)
 {
     hwndFocus = hFocusTo;
 
-    if (hFocusFrom) SendMessage( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0L);
+    if (hFocusFrom) SendMessage( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0L);
     if( !hFocusTo || hFocusTo != hwndFocus )
 	return;
 
-    SendMessage( hFocusTo, WM_SETFOCUS, hFocusFrom, 0L);
+    SendMessage( hFocusTo, WM_SETFOCUS, (WPARAM)hFocusFrom, 0L);
     FOCUS_SetXFocus( hFocusTo );
 }
 
@@ -88,7 +89,7 @@ HWND SetFocus(HWND hwnd)
 	if( hwnd == hwndFocus ) return hwnd;
 
 	/* call hooks */
-	if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, hwnd, hwndFocus) )
+	if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)hwndFocus) )
 	    return 0;
 
         /* activate hwndTop if needed. */
@@ -99,7 +100,7 @@ HWND SetFocus(HWND hwnd)
 	    if (!IsWindow( hwnd )) return 0;  /* Abort if window destroyed */
 	}
     }
-    else if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, 0, hwndFocus ) )
+    else if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hwndFocus ) )
              return 0;
 
       /* Change focus and send messages */

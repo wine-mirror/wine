@@ -3,9 +3,10 @@ dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 dnl                         <patra@itp1.physik.tu-berlin.de>
 AC_REVISION([configure.in 1.00])
 AC_INIT(controls/edit.c)		
+AC_CONFIG_AUX_DIR(tools)
 
 # We want these before the checks, so the checks can modify their values.
-test -z "$CFLAGS" && CFLAGS="-g -O2 -Wall" AC_SUBST(CFLAGS)
+test -z "$CFLAGS" && CFLAGS="-g -O2" AC_SUBST(CFLAGS)
 test -z "$LDFLAGS" && LDFLAGS=-g AC_SUBST(LDFLAGS)
 test -z "$LDLIBS" && LDLIBS=-lm AC_SUBST(LDLIBS)
 
@@ -13,14 +14,8 @@ dnl **** Command-line arguments ****
 
 AC_ARG_WITH(library,
 [  --with-library          build Wine as a library instead of an emulator],
-[AC_DEFINE(WINELIB) MAIN_TARGET="winelib.a"],[MAIN_TARGET="wine"])
+[AC_DEFINE(WINELIB) MAIN_TARGET="libwine.a"],[MAIN_TARGET="wine"])
 AC_SUBST(MAIN_TARGET)
-
-AC_ARG_WITH(language,
-[  --with-language=LANG    change the language (LANG=En/De/Fr/Es/No/Fi/Da)],
-[LANG="$withval"],
-[LANG=En],)
-AC_SUBST(LANG)
 
 AC_ARG_WITH(ipc,
 [  --with-ipc              use inter-process communication for DDE],
@@ -34,10 +29,14 @@ dnl **** Check for some programs and libraries ****
 
 AC_PROG_MAKE_SET
 AC_PROG_CC
+dnl Add some options for gcc
+test "x${GCC}" = "xyes" && CFLAGS="$CFLAGS -Wall -fno-strength-reduce"
+AC_PROG_CPP
 AC_PATH_XTRA
 AC_PROG_YACC
 AC_PROG_LEX
 AC_PROG_RANLIB
+AC_PROG_INSTALL
 dnl Check for -li386 for NetBSD
 AC_CHECK_LIB(i386,i386_set_ldt,LDLIBS="$LDLIBS -li386")
 
@@ -49,27 +48,32 @@ AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
 
-if test -z "${top_srcdir}"; then
-TOP_SRCDIR=`pwd`
-else
-TOP_SRCDIR="${top_srcdir}"
-fi
+dnl **** Generate output files ****
 
-AC_MSG_CHECKING(for /usr/local/etc/wine.conf)
-if test -f /usr/local/etc/wine.conf; then
-AC_MSG_RESULT(yes)
-WINE_INI_GLOBAL='"/usr/local/etc/wine.conf"'
-else
-AC_MSG_RESULT(no)
-WINE_INI_GLOBAL="\"${TOP_SRCDIR}/wine.ini\""
-fi
-AC_SUBST(WINE_INI_GLOBAL)
-AC_DEFINE_UNQUOTED(WINE_INI_GLOBAL,$WINE_INI_GLOBAL)
-
-MAKE_RULES=$TOP_SRCDIR/Make.rules
+MAKE_RULES=Make.rules
 AC_SUBST_FILE(MAKE_RULES)
 
-AC_OUTPUT(Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile win32/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile)
+AC_OUTPUT([
+Make.rules
+Makefile
+controls/Makefile
+debugger/Makefile
+debugger/readline/Makefile
+if1632/Makefile
+ipc/Makefile
+library/Makefile
+libtest/Makefile
+loader/Makefile
+memory/Makefile
+misc/Makefile
+miscemu/Makefile
+multimedia/Makefile
+objects/Makefile
+rc/Makefile
+resources/Makefile
+tools/Makefile
+win32/Makefile
+windows/Makefile ])
 
 echo
 echo "Configure finished.  Do 'make depend; make' to compile Wine."
@@ -79,5 +83,5 @@ dnl Local Variables:
 dnl comment-start: "dnl "
 dnl comment-end: ""
 dnl comment-start-skip: "\\bdnl\\b\\s *"
-dnl compile-command: "make configure config.h.in"
+dnl compile-command: "autoconf"
 dnl End:

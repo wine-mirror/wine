@@ -106,8 +106,8 @@ void DC_FillDevCaps( DeviceCaps * caps )
     caps->vertRes       = screenHeight;
     caps->bitsPixel     = screenDepth;
     caps->planes        = 1;
-    caps->numBrushes    = 0;
-    caps->numPens       = 0;
+    caps->numBrushes    = 16+6;  /* 16 solid + 6 hatched brushes */
+    caps->numPens       = 16;    /* 16 solid pens */
     caps->numMarkers    = 0;
     caps->numFonts      = 0;
     caps->numColors     = 1 << caps->bitsPixel;

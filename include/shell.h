@@ -7,15 +7,15 @@ extern void SHELL_LoadRegistry();
 extern void SHELL_SaveRegistry();
 extern BOOL SHELL_Init();
 
-#define ERROR_SUCCESS           0L
-#define ERROR_BADDB             1L
-#define ERROR_BADKEY            2L
-#define ERROR_CANTOPEN          3L
-#define ERROR_CANTREAD          4L
-#define ERROR_CANTWRITE         5L
-#define ERROR_OUTOFMEMORY       6L
-#define ERROR_INVALID_PARAMETER 7L
-#define ERROR_ACCESS_DENIED     8L
+#define SHELL_ERROR_SUCCESS           0L
+#define SHELL_ERROR_BADDB             1L
+#define SHELL_ERROR_BADKEY            2L
+#define SHELL_ERROR_CANTOPEN          3L
+#define SHELL_ERROR_CANTREAD          4L
+#define SHELL_ERROR_CANTWRITE         5L
+#define SHELL_ERROR_OUTOFMEMORY       6L
+#define SHELL_ERROR_INVALID_PARAMETER 7L
+#define SHELL_ERROR_ACCESS_DENIED     8L
 
 #define REG_SZ                  1           /* string type */
 

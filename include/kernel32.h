@@ -56,16 +56,7 @@ typedef struct {
         HANDLE hStdError;
 } STARTUPINFO, *LPSTARTUPINFO;
 
-typedef struct {
-        WORD wYear;
-        WORD wMonth;
-        WORD wDayOfWeek;
-        WORD wDay;
-        WORD wHour;
-        WORD wMinute;
-        WORD wSecond;
-        WORD wMilliseconds;
-} SYSTEMTIME, *LPSYSTEMTIME;
+/* SYSTEMTIME, and LPSYSTEMTIME moved to include/windows.h (JBP) */
 
 typedef struct {
         LONG Bias;

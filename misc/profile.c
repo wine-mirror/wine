@@ -74,13 +74,13 @@ static char *GetIniFileName(char *name, char *dir)
 	if (strchr(name, '/'))
 		return name;
 
-	if (strchr(name, '\\'))
-		return DOS_GetUnixFileName(name);
-
+        if (strlen(dir)) {
         strcpy(temp, dir);
         strcat(temp, "\\");
 	strcat(temp, name);
-	
+	}
+	else
+	  strcpy(temp, name);
 	return DOS_GetUnixFileName(temp);
 }
 
@@ -92,23 +92,37 @@ static TSecHeader *load (char *filename, char **pfullname)
     char *bufptr;
     char *lastnonspc;
     int bufsize;
-    char *file;
+    char *file, *purefilename;
     int c;
     char path[MAX_PATH+1];
     BOOL firstbrace;
     
     *pfullname = NULL;
 
-    /* Try the Windows directory */
+    dprintf_profile(stddeb,"Trying to load file %s \n", filename);
 
-    GetWindowsDirectory(path, sizeof(path));
-    file = GetIniFileName(filename, path);
-
-    dprintf_profile(stddeb,"Load %s\n", file);
+    /* First try it as is */
+    file = GetIniFileName(filename, "");
     f = fopen(file, "r");
     
     if (f == NULL) {
-	/* Try the path of the current executable */
+
+      if  ((purefilename = strrchr( filename, '\\' )))
+	purefilename++; 
+      else if  ((purefilename = strrchr( filename, '/' ))) 
+	purefilename++; 
+      else
+	purefilename = filename;
+      ToUnix(purefilename);
+
+      /* Now try the Windows directory */
+      GetWindowsDirectory(path, sizeof(path));
+      file = GetIniFileName(purefilename, path);
+      dprintf_profile(stddeb,"Trying to load  in windows directory file %s\n",
+		      file);
+      f = fopen(file, "r");
+    
+      if (f == NULL) { 	/* Try the path of the current executable */
     
 	if (GetCurrentTask())
 	{
@@ -116,16 +130,37 @@ static TSecHeader *load (char *filename, char **pfullname)
 	    GetModuleFileName( GetCurrentTask(), path, MAX_PATH );
 	    if ((p = strrchr( path, '\\' )))
 	    {
-		p[1] = '\0';
-		file = GetIniFileName(filename, path);
+		p[0] = '\0'; /* Remove trailing slash */
+		file = GetIniFileName(purefilename, path);
+		dprintf_profile(stddeb,
+				"Trying to load in current directory%s\n",
+				file);
 		f = fopen(file, "r");
 	    }
 	}
     }
+      if (f == NULL) { 	/* And now in $HOME/.wine */
+	
+	strcpy(file,getenv("HOME"));
+	strcat(file, "/.wine/");
+	strcat(file, purefilename);
+	dprintf_profile(stddeb,"Trying to load in user-directory %s\n", file);
+	f = fopen(file, "r");
+      }
+      
+      if (f == NULL) {
+	/* FIXED: we ought to create it now (in which directory?) */
+	/* lets do it in ~/.wine */
+	strcpy(file,getenv("HOME"));
+	strcat(file, "/.wine/");
+	strcat(file, purefilename);
+	dprintf_profile(stddeb,"Creating %s\n", file);
+	f = fopen(file, "w+");
     if (f == NULL) {
 	fprintf(stderr, "profile.c: load() can't find file %s\n", filename);
-        /* FIXME: we ought to create it now (in which directory?) */
 	return NULL;
+	}
+      }
     }
     
     *pfullname = strdup(file);
@@ -206,7 +241,7 @@ static TSecHeader *load (char *filename, char **pfullname)
 	    skipspc = TRUE;
 	    do {
 		c = fgetc(f);
-		if (c == EOF || c == '\n' || c == ';') break;
+		if (c == EOF || c == '\n') break;
 		if (!isspace(c) || !skipspc) {
 		    skipspc = FALSE;
 		    bufsize++;

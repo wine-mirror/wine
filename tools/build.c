@@ -808,7 +808,7 @@ static void BuildSpec32Files( char *specname )
 		    if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
 		    if (argno!=argc-1) putchar( ',' );
 		}
-		printf( ") __attribute((stdcall));" );
+		printf( ") __attribute((stdcall));\n" );
 	    }
 
             printf( "void %s_%d(", UpperDLLName, i);
@@ -1071,15 +1071,15 @@ static void BuildCall32LargeStack(void)
 
     printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%eax\n" );
     printf( "\torl %%eax,%%eax\n" );
-    printf( "\tje 0f\n" );
+    printf( "\tje no_orig_esp\n" );
     printf( "\tmovl %%eax,%%esp\n" );
-    printf( "0:\n" );
+    printf( "no_orig_esp:\n" );
 
     /* Transfer the arguments */
 
     printf( "\tmovl 12(%%ebp),%%ecx\n" );
     printf( "\torl %%ecx,%%ecx\n" );
-    printf( "\tje 1f\n" );
+    printf( "\tje no_args\n" );
     printf( "\tleal 16(%%ebp),%%esi\n" );
     printf( "\tshll $2,%%ecx\n" );
     printf( "\tsubl %%ecx,%%esp\n" );
@@ -1087,7 +1087,7 @@ static void BuildCall32LargeStack(void)
     printf( "\tshrl $2,%%ecx\n" );
     printf( "\tcld\n" );
     printf( "\trep; movsl\n" );
-    printf( "1:\n" );
+    printf( "no_args:\n" );
 
     /* Call the function */
 
@@ -1321,6 +1321,9 @@ static void BuildCall32Func( char *profile )
 
     printf( "\tpushw " PREFIX "IF1632_Saved16_sp\n" );
     printf( "\tpushw " PREFIX "IF1632_Saved16_ss\n" );
+#ifdef __svr4__
+    printf("\tdata16\n");
+#endif
     printf( "\tmovw %%ss," PREFIX "IF1632_Saved16_ss\n" );
     printf( "\tmovw %%sp," PREFIX "IF1632_Saved16_sp\n" );
 
@@ -1380,9 +1383,18 @@ static void BuildCall32Func( char *profile )
 
     /* Restore the 16-bit stack */
 
+#ifdef __svr4__
+    printf( "\tdata16\n");
+#endif
     printf( "\tmovw " PREFIX "IF1632_Saved16_ss,%%ss\n" );
     printf( "\tmovw " PREFIX "IF1632_Saved16_sp,%%sp\n" );
+#ifdef __svr4__
+    printf( "\tdata16\n");
+#endif
     printf( "\tpopw " PREFIX "IF1632_Saved16_ss\n" );
+#ifdef __svr4__
+    printf( "\tdata16\n");
+#endif
     printf( "\tpopw " PREFIX "IF1632_Saved16_sp\n" );
 
     if (reg_func)
@@ -1547,6 +1559,9 @@ static void BuildCall16Func( char *profile )
 
     /* Switch to the 16-bit stack */
 
+#ifdef __svr4__
+    printf("\tdata16\n");
+#endif
     printf( "\tmovw " PREFIX "IF1632_Saved16_ss,%%ss\n" );
     printf( "\tmovw " PREFIX "IF1632_Saved16_sp,%%sp\n" );
 
@@ -1608,6 +1623,9 @@ static void BuildCall16Func( char *profile )
     {
         /* Set ax equal to ds for window procedures */
         printf( "\tmovw 16(%%ebx),%%ax\n" );
+#ifdef __svr4__
+        printf( "\tdata16\n");
+#endif
         printf( "\tmovw %%ax,%%ds\n" );
     }
 
@@ -1639,8 +1657,17 @@ static void BuildRet16Func()
     /* Restore 32-bit segment registers */
 
     printf( "\tmovw $0x%04x,%%bx\n", WINE_DATA_SELECTOR );
+#ifdef __svr4__
+    printf( "\tdata16\n");
+#endif
     printf( "\tmovw %%bx,%%ds\n" );
+#ifdef __svr4__
+    printf( "\tdata16\n");
+#endif
     printf( "\tmovw %%bx,%%es\n" );
+#ifdef __svr4__
+    printf( "\tdata16\n");
+#endif
     printf( "\tmovw %%bx,%%ss\n" );
 
     /* Restore the 32-bit stack */

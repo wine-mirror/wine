@@ -368,7 +368,7 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
         return 0;
     }
     /* Make it owned by the module */
-    FarSetOwner( handle, GetExePtr( hInstance ) );
+    FarSetOwner( handle, (WORD)(DWORD)GetExePtr( hInstance ) );
     info = (CURSORICONINFO *)GlobalLock( handle );
     info->ptHotSpot.x   = hotspot.x;
     info->ptHotSpot.y   = hotspot.y;
@@ -404,7 +404,7 @@ static HANDLE CURSORICON_Copy( HANDLE hInstance, HANDLE handle )
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
     size = GlobalSize( handle );
     hNew = GlobalAlloc( GMEM_MOVEABLE, size );
-    FarSetOwner( hNew, hInstance );
+    FarSetOwner( hNew, (WORD)(DWORD)hInstance );
     ptrNew = (char *)GlobalLock( hNew );
     memcpy( ptrNew, ptrOld, size );
     GlobalUnlock( handle );

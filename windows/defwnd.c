@@ -328,7 +328,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	 len = 1;
 	 while(len < 64)
 		if( (hI = LoadIcon(wndPtr->hInstance,MAKEINTRESOURCE(len))) )
-		     return hI;
+		     return (LRESULT)hI;
 	}
         break;
 

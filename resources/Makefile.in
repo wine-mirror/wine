@@ -1,0 +1,20 @@
+TOPSRC = @top_srcdir@
+
+MODULE = resources
+
+LANGUAGES = En Es De No Fr Fi Da
+
+SYSRES_SRCS = $(LANGUAGES:%=sysres_%.c)
+
+C_SRCS = $(SYSRES_SRCS) sysres.c
+
+all: check_winerc $(MODULE).o
+
+@MAKE_RULES@
+
+$(SYSRES_SRCS): $(WINERC)
+
+clean::
+	$(RM) $(SYSRES_SRCS) $(SYSRES_SRCS:.c=.h)
+
+### Dependencies:

@@ -286,7 +286,7 @@ base	1
 0282 stub GetSystemDirectoryA
 0283 stub GetSystemDirectoryW
 0284 stub GetSystemInfo
-0285 stub GetSystemTime
+0285 	stdcall GetSystemTime(ptr) GetSystemTime
 0286 stub GetSystemTimeAdjustment
 0287 stub GetTapeParameters
 0288 stub GetTapePosition
@@ -525,7 +525,7 @@ base	1
 0520 stub SetupComm
 0521 stub ShowConsoleCursor
 0522 stub SizeofResource
-0523 stub Sleep
+0523 	stdcall Sleep(long) Sleep
 0524 stub SleepEx
 0525 stub SuspendThread
 0526 stub SystemTimeToFileTime

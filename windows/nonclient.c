@@ -174,16 +174,16 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         MinMax.ptMaxPosition.y = -yinc;
     }
 
-    SendMessage( hwnd, WM_GETMINMAXINFO, 0, MAKE_SEGPTR(&MinMax) );
+    SendMessage( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)MAKE_SEGPTR(&MinMax) );
 
       /* Some sanity checks */
 
     dprintf_nonclient(stddeb, 
 		      "NC_GetMinMaxInfo: %d %d / %d %d / %d %d / %d %d\n",
-		      MinMax.ptMaxSize.x,MinMax.ptMaxSize.y,
-		      MinMax.ptMaxPosition.x,MinMax.ptMaxPosition.y,
-		      MinMax.ptMaxTrackSize.x,MinMax.ptMaxTrackSize.y,
-		      MinMax.ptMinTrackSize.x,MinMax.ptMinTrackSize.y);
+		      (int)MinMax.ptMaxSize.x,(int)MinMax.ptMaxSize.y,
+		      (int)MinMax.ptMaxPosition.x,(int)MinMax.ptMaxPosition.y,
+		      (int)MinMax.ptMaxTrackSize.x,(int)MinMax.ptMaxTrackSize.y,
+		      (int)MinMax.ptMinTrackSize.x,(int)MinMax.ptMinTrackSize.y);
     MinMax.ptMaxTrackSize.x = MAX( MinMax.ptMaxTrackSize.x,
 				   MinMax.ptMinTrackSize.x );
     MinMax.ptMaxTrackSize.y = MAX( MinMax.ptMaxTrackSize.y,
@@ -892,7 +892,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT *capturePoint )
     }
     *capturePoint = pt;
     SetCursorPos( capturePoint->x, capturePoint->y );
-    NC_HandleSetCursor( hwnd, hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    NC_HandleSetCursor( hwnd, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
 

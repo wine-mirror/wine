@@ -1152,7 +1152,7 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     EnterSpyMessage(SPY_SENDMESSAGE, hwnd, msg, wParam, lParam);
 
-    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, MAKE_SEGPTR(&msgstruct) );
+    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)MAKE_SEGPTR(&msgstruct) );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
     {
         ExitSpyMessage(SPY_RESULT_INVALIDHWND,hwnd,msg,0);
@@ -1225,8 +1225,10 @@ LONG DispatchMessage( LPMSG msg )
     {
 	if (msg->lParam)
         {
+#ifndef WINELIB32
             HINSTANCE ds = msg->hwnd ? WIN_GetWindowInstance( msg->hwnd )
                                      : (HINSTANCE)CURRENT_DS;
+#endif
 /*            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 	    return CallWndProc( (WNDPROC)msg->lParam, ds, msg->hwnd,
                                 msg->message, msg->wParam, GetTickCount() );
@@ -1293,7 +1295,7 @@ LONG GetMessageExtraInfo(void)
  */
 WORD RegisterWindowMessage( SEGPTR str )
 {
-    dprintf_msg(stddeb, "RegisterWindowMessage: '%08lx'\n", str );
+    dprintf_msg(stddeb, "RegisterWindowMessage: '"SPFMT"'\n", str );
     return GlobalAddAtom( str );
 }
 

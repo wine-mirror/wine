@@ -496,7 +496,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     createStruct.lpszClass      = className;
     createStruct.dwExStyle      = 0;
 
-    wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, MAKE_SEGPTR(&createStruct) );
+    wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, (LPARAM)MAKE_SEGPTR(&createStruct) );
     if (!wmcreate)
     {
 	dprintf_win(stddeb,"CreateWindowEx: WM_NCCREATE return 0\n");
@@ -506,7 +506,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     {
 	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
 			       NULL, NULL, NULL, &wndPtr->rectClient );
-	wmcreate = SendMessage(hwnd, WM_CREATE, 0, MAKE_SEGPTR(&createStruct));
+	wmcreate = SendMessage(hwnd, WM_CREATE, 0, (LPARAM)MAKE_SEGPTR(&createStruct));
     }
 
     if (wmcreate == -1)
@@ -1309,8 +1309,8 @@ BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
 
 	 if(ptrWnd)
 	    dprintf_msg(stddeb,"DragQueryUpdate: hwnd = "NPFMT", %i %i - %i %i\n",hWnd,
-			     ptrWnd->rectWindow.left,ptrWnd->rectWindow.top,
-			     ptrWnd->rectWindow.right,ptrWnd->rectWindow.bottom);	 
+			(int)ptrWnd->rectWindow.left,(int)ptrWnd->rectWindow.top,
+			(int)ptrWnd->rectWindow.right,(int)ptrWnd->rectWindow.bottom);	 
 	 else
 	    dprintf_msg(stddeb,"DragQueryUpdate: hwnd = "NPFMT"\n",hWnd);
 
@@ -1460,7 +1460,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
     if( hCurrentCursor )
         SetCursor(hCurrentCursor);
 
-    dprintf_msg(stddeb,"drag: got "NPFMT"\n",btemp);
+    dprintf_msg(stddeb,"drag: got %04x\n",btemp);
 
     /* send WM_DRAGLOOP */
     SendMessage( hWnd, WM_DRAGLOOP, (WPARAM)(hCurrentCursor != hBummer) , 
@@ -1498,7 +1498,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
 
  if( hCurrentCursor != hBummer ) 
 	dwRet = SendMessage( lpDragInfo->hScope, WM_DROPOBJECT, 
-			     hWnd, (LPARAM)spDragInfo );
+			     (WPARAM)hWnd, (LPARAM)spDragInfo );
  GlobalFree(hDragInfo);
 
  return dwRet;

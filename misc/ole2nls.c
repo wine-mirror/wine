@@ -10,6 +10,7 @@
 #include <string.h>
 #include "windows.h"
 #include "ole.h"
+#include "options.h"
 #include "winnls.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -20,20 +21,18 @@
 DWORD WINAPI GetUserDefaultLCID()
 {
 /* Default sorting, neutral sublanguage */
-#if #LANG(En)
-	return 9;
-#elif #LANG(De)
-	return 7;
-#elif #LANG(Es)
-	return 7; /* Just a Guess :-) */
-#elif #LANG(Fr)
-	return 7; /* ditto :-) */
-#elif #LANG(No)
-	return 0x14;
-#else
-	/* Neutral language */
-	return 0;
-#endif
+    switch(Options.language)
+    {
+    case LANG_En: return 0x09;
+    case LANG_Es: return 0x07; /* Just a Guess :-) */
+    case LANG_De: return 0x07;
+    case LANG_No: return 0x14;
+    case LANG_Fr:
+    case LANG_Fi:
+    case LANG_Da:
+    default:
+	return 0;  /* Neutral language */
+    }
 }
 
 /***********************************************************************
@@ -192,7 +191,9 @@ UNSUPPORTED(LOCALE_INEGSEPBYSPACE)
 
 /* Now, the language specific definitions. They don't have to be
    complete */
-#if #LANG(De)
+    switch(Options.language)
+    {
+    case LANG_De:
 /* This definitions apply to Germany only. Users in Austria 
    or Switzerland might want to modify them */
 LOCVAL(LOCALE_ILANGUAGE,"9")
@@ -315,9 +316,9 @@ LOCVAL(LOCALE_IPOSSEPBYSPACE)
 LOCVAL(LOCALE_INEGSYMPRECEDES)
 LOCVAL(LOCALE_INEGSEPBYSPACE)
 */
-#endif /* LANG(De) */
+    break;  /* LANG(De) */
 
-#if #LANG(Da)
+    case LANG_Da:
 /* LOCVAL(LOCALE_ILANGUAGE,"9") */
 LOCVAL(LOCALE_SLANGUAGE,"Dansk")
 LOCVAL(LOCALE_SENGLANGUAGE,"Danish")
@@ -417,11 +418,13 @@ LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
 /* LOCVAL(LOCALE_IPOSSEPBYSPACE) */
 /* LOCVAL(LOCALE_INEGSYMPRECEDES) */
 /* LOCVAL(LOCALE_INEGSEPBYSPACE) */
-#endif /* LANG(Da) */
+    break; /* LANG(Da) */
 
 /*Insert other languages here*/
 
-
+    default:
+	break;
+    }  /* switch */
 
 	if(!retLen)
 	{

@@ -16,7 +16,7 @@ typedef struct
     int shmid;
 } SHMDATA;
 
-extern HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
+extern HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
                                    HGLOBAL hOwner, BOOL isCode,
                                    BOOL is32Bit, BOOL isReadOnly,
 				   SHMDATA *shmdata);

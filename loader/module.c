@@ -271,7 +271,9 @@ int MODULE_OpenFile( HMODULE hModule )
     close( cachedfd );
     hCachedModule = hModule;
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    cachedfd = open( DOS_GetUnixFileName( name ), O_RDONLY );
+    if ((cachedfd = open( DOS_GetUnixFileName( name ), O_RDONLY )) == -1)
+        fprintf( stderr, "MODULE_OpenFile: can't open file '%s' for module "NPFMT"\n",
+                 name, hModule );
     dprintf_module( stddeb, "MODULE_OpenFile: opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;
@@ -457,7 +459,7 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
 
     hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
     if (!hModule) return (HMODULE)11;  /* invalid exe */
-    FarSetOwner( hModule, hModule );
+    FarSetOwner( hModule, (WORD)(DWORD)hModule );
     pModule = (NE_MODULE *)GlobalLock( hModule );
     memcpy( pModule, &ne_header, sizeof(NE_MODULE) );
     pModule->count = 0;
@@ -666,7 +668,7 @@ WORD MODULE_GetOrdinal( HMODULE hModule, char *name )
  *
  * Return the entry point for a given ordinal.
  */
-DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
+SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
 {
     NE_MODULE *pModule;
     WORD curOrdinal = 1;
@@ -706,8 +708,8 @@ DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
     }
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
-    else sel = (WORD)NE_SEG_TABLE(pModule)[sel-1].selector;
-    return MAKELONG( offset, sel );
+    else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
+    return (SEGPTR)MAKELONG( offset, sel );
 }
 
 
@@ -884,7 +886,7 @@ static void MODULE_FreeModule( HMODULE hModule )
 
       /* Free the referenced modules */
 
-    pModRef = NE_MODULE_TABLE( pModule );
+    pModRef = (HMODULE*)NE_MODULE_TABLE( pModule );
     for (i = 0; i < pModule->modref_count; i++, pModRef++)
     {
         FreeModule( *pModRef );
@@ -1268,7 +1270,11 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 
       /* Now load the executable file */
 
+#ifdef WINELIB32
+    params.hEnvironment = (HANDLE)GetDOSEnvironment();
+#else
     params.hEnvironment = (HANDLE)SELECTOROF( GetDOSEnvironment() );
+#endif
     params.cmdLine  = (SEGPTR)WIN16_GlobalLock( cmdLineHandle );
     params.showCmd  = (SEGPTR)WIN16_GlobalLock( cmdShowHandle );
     params.reserved = 0;
@@ -1328,7 +1334,7 @@ FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
 
     ret = MODULE_GetEntryPoint( hModule, ordinal );
 
-    dprintf_module( stddeb, "GetProcAddress: returning %08lx\n", ret );
+    dprintf_module( stddeb, "GetProcAddress: returning "SPFMT"\n", ret );
     return (FARPROC)ret;
 }
 

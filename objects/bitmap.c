@@ -227,7 +227,7 @@ HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
     {
         char *str = (char *)PTR_SEG_TO_LIN( name );
         dprintf_bitmap( stddeb, "LoadBitmap("NPFMT",'%s')\n", instance, str );
-        if (str[0] == '#') name = (SEGPTR)(WORD)atoi( str + 1 );
+        if (str[0] == '#') name = (SEGPTR)(DWORD)(WORD)atoi( str + 1 );
     }
     else
         dprintf_bitmap( stddeb, "LoadBitmap("NPFMT",%04x)\n",

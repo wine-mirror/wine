@@ -1,0 +1,34 @@
+TOPSRC   = @top_srcdir@
+MODULE   = none
+PROGRAMS = hello hello2 hello3 rolex
+ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+
+C_SRCS = \
+	hello.c \
+	hello2.c \
+	hello3.c \
+	hello3res.c \
+	rolex.c
+
+all: check_winerc $(PROGRAMS)
+
+@MAKE_RULES@
+
+hello: hello.o $(WINELIB)
+	$(CC) -o hello hello.o $(LDOPTIONS) $(ALL_LIBS)
+
+hello2: hello2.o $(WINELIB)
+	$(CC) -o hello2 hello2.o $(LDOPTIONS) $(ALL_LIBS)
+
+hello3: hello3res.o hello3.o $(WINELIB)
+	$(CC) -o hello3 hello3.o hello3res.o $(LDOPTIONS) $(ALL_LIBS)
+
+rolex: rolex.o $(WINELIB)
+	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
+
+clean::
+	$(RM) hello hello2 hello3 hello3res.c hello3res.h rolex
+
+hello3res.c hello3res.h: $(WINERC)
+
+### Dependencies:

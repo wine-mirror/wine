@@ -18,6 +18,7 @@
 
 char usage[]="winerc -bdvc -p prefix -o outfile < infile \n"
 	"   -b            Create a C array from a binary .res file\n"
+        "   -c            Add 'const' prefix to C constants\n"
 	"   -d            Output debugging information\n"
 	"   -p prefix     Give a prefix for the generated names\n"
 	"   -v            Show each resource as it is processed\n"
@@ -54,7 +55,7 @@ int main(int argc,char *argv[])
 	extern char* optarg;
 	int optc,lose,ret,binary;
 	lose=binary=0;
-	while((optc=getopt(argc,argv,"bdp:vo:"))!=EOF)
+	while((optc=getopt(argc,argv,"bcdp:vo:"))!=EOF)
 		switch(optc)
 		{
 			/* bison will print state transitions on stderr */
@@ -546,8 +547,8 @@ void create_output(gen_res* top)
     for (it=top;it;it=it->next)
         fprintf( header,"extern %sstruct resource %s;\n",
                  ISCONSTANT, get_resource_name(it) );
-    fprintf( header,"\nextern %sstruct resource * %sTable[];\n",
-             ISCONSTANT, prefix );
+    fprintf( header,"\nextern %sstruct resource * %s%s_Table[];\n",
+             ISCONSTANT, ISCONSTANT, prefix );
 
     /* Print the resources bytes */
 
@@ -562,10 +563,10 @@ void create_output(gen_res* top)
                  ISCONSTANT, get_resource_name(it) );
         for (i=0;i<it->size-1;i++)
         {
-            fprintf(code,"%#4x,",it->res[i]);
+            fprintf(code,"0x%02x, ",it->res[i]);
             if ((i&7)==7)fputc('\n',code);
         }
-        fprintf(code,"%#4x};\n\n",it->res[i]);
+        fprintf(code,"0x%02x };\n\n",it->res[i]);
     }
 
     /* Print the resources */
@@ -574,15 +575,15 @@ void create_output(gen_res* top)
         int type;
         switch(it->type)
         {
-        case acc:type=RT_ACCELERATOR;break;
-        case bmp:type=RT_BITMAP;break;
-        case cur:type=RT_CURSOR;break;
-        case dlg:type=RT_DIALOG;break;
-        case fnt:type=RT_FONT;break;
-        case ico:type=RT_ICON;break;
-        case men:type=RT_MENU;break;
-        case rdt:type=RT_RCDATA;break;
-        case str:type=RT_STRING;break;
+        case acc:type=(int)RT_ACCELERATOR;break;
+        case bmp:type=(int)RT_BITMAP;break;
+        case cur:type=(int)RT_CURSOR;break;
+        case dlg:type=(int)RT_DIALOG;break;
+        case fnt:type=(int)RT_FONT;break;
+        case ico:type=(int)RT_ICON;break;
+        case men:type=(int)RT_MENU;break;
+        case rdt:type=(int)RT_RCDATA;break;
+        case str:type=(int)RT_STRING;break;
         default:fprintf(stderr,"Unknown restype\n");type=-1;break;
         }
         if(it->n_type)
@@ -597,7 +598,8 @@ void create_output(gen_res* top)
 
     /* Print the resource table (NULL terminated) */
 
-    fprintf(code,"\n%sstruct resource * %sTable[] = {\n", ISCONSTANT, prefix);
+    fprintf(code,"\n%sstruct resource * %s%s_Table[] = {\n",
+	    ISCONSTANT, ISCONSTANT, prefix);
     for (it=top;it;it=it->next)
         fprintf( code, "  &%s,\n", get_resource_name(it) );
     fprintf( code, "  0\n};\n" );
@@ -608,7 +610,7 @@ void create_output(gen_res* top)
                 "static void DoIt() WINE_CONSTRUCTOR;\n"
                 "static void DoIt()\n"
                 "{\n"
-                "\tLIBRES_RegisterResources(%sTable);\n"
+                "\tLIBRES_RegisterResources(%s_Table);\n"
                 "}\n\n"
                 "#ifndef HAVE_WINE_CONSTRUCTOR\n"
                 "void LIBWINE_Register_%s(){\n"

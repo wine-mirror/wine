@@ -1104,7 +1104,11 @@ typedef OFSTRUCT *LPOFSTRUCT;
 #define ONE5STOPBITS	1
 #define TWOSTOPBITS	2
 #define IGNORE		0
+#ifdef WINELIB32
+#define INFINITE        0xFFFFFFFF
+#else
 #define INFINITE	0xFFFF
+#endif
 
 #define CE_RXOVER	0x0001
 #define CE_OVERRUN	0x0002
@@ -2273,7 +2277,6 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 #define LMEM_ZEROINIT       0x0040
 #define LMEM_MODIFY         0x0080
 #define LMEM_DISCARDABLE    0x0F00
-#define LMEM_WINE_ALIGN     0x1000
 
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE       0x0002
@@ -2510,6 +2513,18 @@ typedef struct
 #define DBF_APPLICATION     0x0008
 #define DBF_DRIVER          0x0010
 
+/* Win32-specific structures */
+
+typedef struct {
+        WORD wYear;
+        WORD wMonth;
+        WORD wDayOfWeek;
+        WORD wDay;
+        WORD wHour;
+        WORD wMinute;
+        WORD wSecond;
+        WORD wMilliseconds;
+} SYSTEMTIME, *LPSYSTEMTIME;
 
 #ifndef WINELIB
 #pragma pack(4)
@@ -2657,7 +2672,7 @@ BOOL       EnumChildWindows(HWND,FARPROC,LONG);
 WORD       EnumClipboardFormats(WORD);
 int        EnumFonts(HDC,LPSTR,FARPROC,LPSTR);
 BOOL       EnumMetaFile(HDC,LOCALHANDLE,FARPROC,BYTE*);
-int        EnumObjects(HDC,int,FARPROC,LPSTR);
+int        EnumObjects(HDC,int,FARPROC,LPARAM);
 int        EnumProps(HWND,FARPROC);
 BOOL       EnumTaskWindows(HANDLE,FARPROC,LONG);
 BOOL       EnumWindows(FARPROC,LONG);
@@ -2762,10 +2777,11 @@ int        GetKeyState(int);
 void       GetKeyboardState(BYTE*);
 int        GetKeyboardType(int);
 HWND       GetLastActivePopup(HWND);
+VOID       GetLocalTime(LPSYSTEMTIME);     /* Win32 */
 WORD       GetMapMode(HDC);
 HMENU      GetMenu(HWND);
 DWORD      GetMenuCheckMarkDimensions(void);
-WORD       GetMenuItemCount(HMENU);
+INT        GetMenuItemCount(HMENU);
 UINT       GetMenuItemID(HMENU,int);
 UINT       GetMenuState(HMENU,UINT,UINT);
 int        GetMenuString(HMENU,UINT,LPSTR,short,UINT);
@@ -2815,6 +2831,7 @@ HMENU      GetSystemMenu(HWND,BOOL);
 int        GetSystemMetrics(WORD);
 WORD       GetSystemPaletteEntries(HDC,WORD,WORD,LPPALETTEENTRY);
 WORD       GetSystemPaletteUse(HDC);
+VOID       GetSystemTime(LPSYSTEMTIME);    /* Win32 */
 DWORD      GetTabbedTextExtent(HDC,LPSTR,int,int,LPINT);
 HINSTANCE  GetTaskDS(void);
 HGLOBAL    GetTaskQueue(HTASK);
@@ -3143,6 +3160,7 @@ void       ShowOwnedPopups(HWND,BOOL);
 void       ShowScrollBar(HWND,WORD,BOOL);
 BOOL       ShowWindow(HWND,int);
 DWORD      SizeofResource(HINSTANCE,HRSRC);
+VOID       Sleep(DWORD);      /* Win32 */
 int        StartSound(void);
 int        StopSound(void);
 BOOL       StretchBlt(HDC,short,short,short,short,HDC,short,short,short,short,DWORD);

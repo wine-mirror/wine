@@ -17,6 +17,28 @@
 #include "debug.h"
 
 
+/* Structure for real-mode callbacks */
+typedef struct
+{
+    DWORD edi;
+    DWORD esi;
+    DWORD ebp;
+    DWORD reserved;
+    DWORD ebx;
+    DWORD edx;
+    DWORD ecx;
+    DWORD eax;
+    WORD  flags;
+    WORD  es;
+    WORD  ds;
+    WORD  fs;
+    WORD  gs;
+    WORD  ip;
+    WORD  cs;
+    WORD  sp;
+    WORD  ss;
+} REALMODECALL;
+
 /**********************************************************************
  *	    INT_Int31Handler
  *
@@ -132,13 +154,39 @@ void INT_Int31Handler( struct sigcontext_struct context )
         *  ES:DI points to real-mode call structure  
         *  Currently we just print it out and return error.
         */
-        ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( ES_reg(&context), DI_reg(&context) );
-        fprintf(stdnimp,
-               "RealModeInt %02x: AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x DS=%04x\n",
-                BL_reg(&context),
-              *(WORD*)(ptr+0x1c),*(WORD*)(ptr+0x10),*(WORD*)(ptr+0x18),*(WORD*)(ptr+0x14),
-              *(WORD*)(ptr+0x04),*(WORD*)(ptr+0x00),*(WORD*)(ptr+0x22),*(WORD*)(ptr+0x24));
-        SET_CFLAG(&context);
+        {
+            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(&context), DI_reg(&context) );
+            fprintf(stdnimp,
+                    "RealModeInt %02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
+                    "                ESI=%08lx EDI=%08lx ES=%04x DS=%04x\n",
+                    BL_reg(&context), p->eax, p->ebx, p->ecx, p->edx,
+                    p->esi, p->edi, p->es, p->ds );
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x0301:  /* Call real mode procedure with far return */
+        {
+            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(&context), DI_reg(&context) );
+            fprintf(stdnimp,
+                    "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
+                    "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
+                    p->eax, p->ebx, p->ecx, p->edx,
+                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x0302:  /* Call real mode procedure with interrupt return */
+        {
+            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(&context), DI_reg(&context) );
+            fprintf(stdnimp,
+                    "RealModeCallIret: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
+                    "                  ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
+                    p->eax, p->ebx, p->ecx, p->edx,
+                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
+            SET_CFLAG(&context);
+        }
         break;
 
     case 0x0400:  /* Get DPMI version */

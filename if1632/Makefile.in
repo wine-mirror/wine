@@ -1,5 +1,4 @@
 TOPSRC = @top_srcdir@
-BUILD  = $(TOPSRC)/tools/build
 
 MODULE = if1632
 
@@ -41,7 +40,7 @@ all: checkbuild $(MODULE).o
 $(SPEC16_FILES) $(SPEC32_FILES): $(BUILD)
 
 $(BUILD) checkbuild:
-	cd $(TOPSRC)/tools; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LANG=$(LANG)' build
+	cd $(TOPSRC)/tools; $(SUBMAKE) build
 
 call16.S: $(TOPSRC)/include/callback.h $(BUILD)
 	$(BUILD) -call16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > call16.S

@@ -79,11 +79,8 @@ HANDLE LocalAlloc (WORD flags, WORD bytes)
     HANDLE hMem;
 
     slot = HEAP_GetFreeSlot (&hMem);
-    if (flags & LMEM_WINE_ALIGN)
-	m = memalign (4, bytes);
-    else
-	m = malloc (bytes);
-    if (m){
+    if ((m = malloc (bytes)))
+    {
 	*slot = m;
 	if (flags & LMEM_ZEROINIT)
 	    bzero (m, bytes);
@@ -221,11 +218,8 @@ HANDLE HEAP_Alloc (WORD flags, DWORD bytes)
     HeapData* m;
 
     bytes+=sizeof(HeapData);
-    if (flags & LMEM_WINE_ALIGN)
-	m = memalign (4, bytes);
-    else
-	m = malloc (bytes);
-    if (m){
+    if ((m = malloc (bytes)))
+    {
 	if (flags & LMEM_ZEROINIT)
 	    bzero (m, bytes);
     }

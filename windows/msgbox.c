@@ -7,12 +7,11 @@
 
 #include "windows.h"
 #include "dlgs.h"
-#include "global.h"
 #include "selectors.h"
 #include "alias.h"
 #include "relay32.h"
 #include "win.h"
-#include "../rc/sysres.h"
+#include "resource.h"
 #include "task.h"
 
 typedef struct {
@@ -201,15 +200,13 @@ int MessageBox(HWND hWnd, LPSTR text, LPSTR title, WORD type)
         initialized=1;
     }
 
-    handle = GLOBAL_CreateBlock( GMEM_FIXED, sysres_DIALOG_MSGBOX.bytes,
-                                 sysres_DIALOG_MSGBOX.size, GetCurrentPDB(),
-                                 FALSE, FALSE, TRUE, NULL );
+    handle = SYSRES_LoadResource( SYSRES_DIALOG_MSGBOX );
     if (!handle) return 0;
     ret = DialogBoxIndirectParam( WIN_GetWindowInstance(hWnd),
                                   handle, hWnd,
                                   GetWndProcEntry16("SystemMessageBoxProc"),
                                   (LONG)&mbox );
-    GLOBAL_FreeBlock( handle );
+    SYSRES_FreeResource( handle );
     return ret;
 }
 

@@ -25,6 +25,6 @@ lex.yy.c: debug.l
 	$(LEX) -8 -I debug.l
 
 clean::
-	rm -f y.tab.c y.tab.h lex.yy.c
+	$(RM) y.tab.c y.tab.h lex.yy.c
 
 ### Dependencies:

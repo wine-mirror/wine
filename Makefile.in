@@ -3,18 +3,18 @@
 # all (default):	build wine
 # clean:		remove all intermediate files
 # distclean:		also remove all files created by configure
-# langclean:		remove all files which have to be remade if
-#			a different LANGuage is selected
 # depend:		create the dependencies
 # etags:		Create a TAGS file for Emacs.
 #
 # Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 #                         <patra@itp1.physik.tu-berlin.de>
 
+# First some useful definitions
+
 CC 	  = @CC@
+CPP       = @CPP@
 CFLAGS 	  = @CFLAGS@
-DEFS      = @DEFS@
-LANG	  = @LANG@
+DEFS      = @DEFS@ -DWINE_INI_GLOBAL=\"$(WINE_INI_GLOBAL)\"
 X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
 TOPSRC    = @top_srcdir@
@@ -25,17 +25,50 @@ LDLIBS	  = @LDLIBS@
 AR        = ar rc
 RANLIB    = @RANLIB@
 RM        = rm -f
+SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)'
 @SET_MAKE@
+
+# Installation infos
+
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+bindir          = @bindir@
+libdir          = @libdir@
+sysconfdir      = @sysconfdir@
+mandir          = @mandir@/man1
+manext          = .1
+WINE_INI_GLOBAL = $(sysconfdir)/wine.conf
+
+# Main target to build
 
 MAIN_TARGET = @MAIN_TARGET@
 
-COMMONSUBDIRS = rc controls ipc loader misc multimedia objects win32 windows
+COMMONSUBDIRS = \
+	rc \
+	controls \
+	ipc \
+	loader \
+	misc \
+	multimedia \
+	objects \
+	resources \
+	win32 \
+	windows
 
-EMUSUBDIRS = tools debugger debugger/readline if1632 memory miscemu
+EMUSUBDIRS = \
+	tools \
+	debugger \
+	debugger/readline \
+	if1632 \
+	memory \
+	miscemu
 
-LIBSUBDIRS = toolkit
+LIBSUBDIRS = library
 
-ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS)
+ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS) libtest
 
 COMMONOBJS = \
 	controls/controls.o \
@@ -44,7 +77,7 @@ COMMONOBJS = \
 	misc/misc.o \
 	multimedia/multimedia.o \
 	objects/objects.o \
-	rc/rc.o \
+	resources/resources.o \
 	win32/win32.o \
 	windows/windows.o
 
@@ -55,22 +88,31 @@ EMUOBJS = \
 	memory/memory.o \
 	miscemu/miscemu.o
 
-LIBOBJS = toolkit/toolkit.o
+LIBOBJS = library/library.o
 
 
 all: $(MAIN_TARGET)
+
+install: install_$(MAIN_TARGET)
 
 wine wine.sym: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
 	$(CC) -o wine $(COMMONOBJS) $(EMUOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
-winelib.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
+install_wine: dummy
+	$(INSTALL_PROGRAM) wine $(bindir)/wine
+	$(INSTALL_DATA) wine.man $(mandir)/wine$(manext)
+
+libwine.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 	$(RM) $@
 	$(AR) $@ $(COMMONOBJS) $(LIBOBJS)
 	$(RANLIB) $@
 
+install_libwine.a: dummy
+	$(INSTALL_DATA) libwine.a $(libdir)
+
 $(ALLSUBDIRS): dummy
-	@cd $@; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LANG=$(LANG)'
+	@cd $@; $(SUBMAKE)
 
 depend:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) depend); done
@@ -80,15 +122,13 @@ etags:
 
 clean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean); done
-	$(RM) *.o \#*\# *~ *.bak *.flc wine wine.sym winelib.a TAGS
+	$(RM) *.o \#*\# *~ *.bak *.flc wine wine.sym libwine.a TAGS
+	$(RM) include/\#*\# include/*~ include/*.bak include/*.flc
 
 distclean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) distclean); done
-	$(RM) *.o \#*\# *~ *.bak wine wine.sym winelib.a TAGS
+	$(RM) *.o \#*\# *~ *.bak wine wine.sym libwine.a TAGS
+	$(RM) include/\#*\# include/*~ include/*.bak include/*.flc
 	$(RM) config.* include/config.h Make.rules Makefile
-
-langclean:
-	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) langclean); done
-	$(RM) wine wine.sym winelib.a
 
 dummy:

@@ -181,9 +181,11 @@ static BYTE *INSTR_GetOperandAddr( struct sigcontext_struct *context,
             base += (signed short)off;
             break;
         }
+        base &= 0xffff;
     }
     if (segprefix != -1) seg = segprefix;
 
+    /* FIXME: should check limit of the segment here */
     return (BYTE *)PTR_SEG_OFF_TO_LIN( seg, (base + (index << ss)) );
 }
 

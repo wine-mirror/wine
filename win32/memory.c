@@ -20,6 +20,9 @@
 #ifndef PROT_NONE  /* FreeBSD doesn't define PROT_NONE */
 #define PROT_NONE 0
 #endif
+#ifndef MAP_ANON
+#define MAP_ANON 0
+#endif
 
 typedef struct {
     caddr_t	ptr;
@@ -33,6 +36,7 @@ int mem_used = 0;
 /***********************************************************************
  *           VirtualAlloc             (KERNEL32.548)
  */
+int TranslateProtectionFlags(DWORD);
 LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
                    DWORD fdwAllocationType, DWORD fdwProtect)
 {

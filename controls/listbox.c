@@ -759,7 +759,7 @@ static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
 
   CreateListBoxStruct(hwnd, ODT_LISTBOX, dwStyle, GetParent(hwnd));
   lphl = ListBoxGetStorageHeader(hwnd);
-  dprintf_listbox(stddeb,"ListBox created: lphl = %p dwStyle = "NPFMT":"NPFMT"\n", 
+  dprintf_listbox(stddeb,"ListBox created: lphl = %p dwStyle = %04x:%04x\n", 
 			  lphl, HIWORD(dwStyle), LOWORD(dwStyle));
 
   GetClientRect(hwnd,&rect);
@@ -1431,7 +1431,7 @@ static LONG LBDeleteString(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBFindString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  return ListBoxFindString(lphl, wParam, lParam);
+  return ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
 }
 
 /***********************************************************************
@@ -1600,7 +1600,7 @@ static LONG LBSelectString(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD  wRet;
 
-  wRet = ListBoxFindString(lphl, wParam, lParam);
+  wRet = ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
 
   /* XXX add functionality here */
 

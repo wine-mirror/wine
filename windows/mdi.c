@@ -58,6 +58,7 @@ static HWND MDI_GetChildByID(WND* mdiClient,int id)
 /**********************************************************************
  *			MDI_MenuAppendItem
  */
+#ifdef SUPERFLUOUS_FUNCTIONS
 static BOOL MDI_MenuAppendItem(WND *clientWnd, HWND hWndChild)
 {
     char buffer[128];
@@ -74,6 +75,7 @@ static BOOL MDI_MenuAppendItem(WND *clientWnd, HWND hWndChild)
  return AppendMenu(clientInfo->hWindowMenu,MF_STRING,
                        wndPtr->wIDmenu,(LPSTR)buffer);
 }
+#endif
 
 /**********************************************************************
  *			MDI_MenuModifyItem
@@ -245,7 +247,8 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 			  WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU |
 			  WS_THICKFRAME | WS_VISIBLE | cs->style,
 			  cs->x, cs->y, cs->cx, cs->cy, parent, 
-                         (HMENU) wIDmenu, w->hInstance, (SEGPTR)lParam);
+                         (HMENU)(DWORD)(WORD)wIDmenu, w->hInstance, 
+			 (SEGPTR)lParam);
 
     if (hwnd)
     {
@@ -376,7 +379,7 @@ HWND MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent,
         ci->nActiveChildren--;
 
         if( ci->flagChildMaximized == child )
-            ci->flagChildMaximized = 1;
+            ci->flagChildMaximized = (HWND)1;
 
         if (flagDestroy)
 	   {
@@ -477,8 +480,13 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
     if( wndPrev )
     {
 	SendMessage( prevActiveWnd, WM_NCACTIVATE, FALSE, 0L );
+#ifdef WINELIB32
+        SendMessage( prevActiveWnd, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, 
+		     (LPARAM)hWndChild);
+#else
         SendMessage( prevActiveWnd, WM_MDIACTIVATE, FALSE,
 					    MAKELONG(hWndChild,prevActiveWnd));
+#endif
         /* uncheck menu item */
        	if( clientInfo->hWindowMenu )
        	        CheckMenuItem( clientInfo->hWindowMenu,
@@ -517,13 +525,18 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
 	    SendMessage( hWndChild, WM_NCACTIVATE, TRUE, 0L);
 	    if( GetFocus() == GetParent(hWndChild) )
 		SendMessage( GetParent(hWndChild), WM_SETFOCUS, 
-			     GetParent(hWndChild), 0L );
+			     (WPARAM)GetParent(hWndChild), 0L );
 	    else
 		SetFocus( GetParent(hWndChild) );
     }
 
+#ifdef WINELIB32
+    SendMessage( hWndChild, WM_MDIACTIVATE, (WPARAM)hWndChild,
+		 (LPARAM)prevActiveWnd );
+#else
     SendMessage( hWndChild, WM_MDIACTIVATE, TRUE,
 				       MAKELONG(prevActiveWnd,hWndChild) );
+#endif
 
     return 1;
 }
@@ -678,6 +691,10 @@ LONG MDITile(HWND parent, MDICLIENTINFO *ci)
 
     if( !listTop ) return 0;
 
+    /* just free memory and return if zero windows to tile */
+    if ( iToPosition == 0 )
+        goto MDITile_free;
+
     GetClientRect(parent, &rect);
 
     rows    = (int) sqrt((double) iToPosition);
@@ -725,7 +742,8 @@ LONG MDITile(HWND parent, MDICLIENTINFO *ci)
 
 	x += xsize;
     }
-    
+
+  MDITile_free:
     /* free the rest if any */
     while( listTop ) {
 	 listPrev = listTop->prev;
@@ -791,7 +809,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 
     dprintf_mdi(stddeb, "MDIPaintMaximized: frame "NPFMT",  client "NPFMT
 		",  max flag %d,  menu %04x\n", hwndFrame, hwndClient, 
-		ci->flagChildMaximized, wndPtr ? wndPtr->wIDmenu : 0);
+		(int)ci->flagChildMaximized, wndPtr ? wndPtr->wIDmenu : 0);
 
     if (ci->flagChildMaximized && wndPtr && wndPtr->wIDmenu != 0)
     {
@@ -881,7 +899,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 
       case WM_MDIACTIVATE:
-	SetWindowPos(wParam,0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );
+	SetWindowPos((HWND)wParam,0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );
 	return 0;
 
       case WM_MDICASCADE:
@@ -891,7 +909,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return (LONG)MDICreateChild(w, ci, hwnd, lParam );
 
       case WM_MDIDESTROY:
-	return MDIDestroyChild(w, ci, hwnd, wParam, TRUE);
+	return (LONG)MDIDestroyChild(w, ci, hwnd, (HWND)wParam, TRUE);
 
       case WM_MDIGETACTIVE:
 	return ((LONG) ci->hwndActiveChild | 
@@ -905,7 +923,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	       return 0;
 	
       case WM_MDIMAXIMIZE:
-	return MDIMaximizeChild(hwnd, wParam, ci);
+	return MDIMaximizeChild(hwnd, (HWND)wParam, ci);
 
       case WM_MDINEXT:
 	MDI_SwitchActiveChild(hwnd, (HWND)wParam, lParam);
@@ -915,7 +933,11 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return MDIRestoreChild(hwnd, ci);
 
       case WM_MDISETMENU:
-	return MDISetMenu(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
+#ifdef WINELIB32
+	return (LRESULT)MDISetMenu(hwnd, FALSE, (HMENU)wParam, (HMENU)lParam);
+#else
+	return (LRESULT)MDISetMenu(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
+#endif
 	
       case WM_MDITILE:
 	ci->sbStop = TRUE;
@@ -989,7 +1011,11 @@ LRESULT DefFrameProc(HWND hwnd, HWND hwndMDIClient, UINT message,
 	    childHwnd = MDI_GetChildByID( WIN_FindWndPtr(hwndMDIClient),
                                           wParam );
  	    if( childHwnd )
+#ifdef WINELIB32 /* FIXME: need to find out the equivalent Win32 message */
+	        SendMessage(hwndMDIClient, WM_MDIACTIVATE, 0 , 0);
+#else
 	        SendMessage(hwndMDIClient, WM_MDIACTIVATE, childHwnd , 0L);
+#endif
 	    break;
 
 	  case WM_NCLBUTTONDOWN:
@@ -1048,7 +1074,7 @@ LONG DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
         return 0;
 
       case WM_CLOSE:
-	SendMessage(GetParent(hwnd),WM_MDIDESTROY,hwnd,0L);
+	SendMessage(GetParent(hwnd),WM_MDIDESTROY,(WPARAM)hwnd,0L);
 	return 0;
 
       case WM_SIZE:
@@ -1158,11 +1184,11 @@ void CalcChildScroll( HWND hwnd, WORD scroll )
 void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
  WND	*wndPtr = WIN_FindWndPtr(hWnd);
- short 	 newPos;
+ short 	 newPos=-1;
  short 	 curPos;
  short 	 length;
- short 	 minPos;
- short 	 maxPos;
+ INT 	 minPos;
+ INT 	 maxPos;
  short   shift;
 
  if( !wndPtr ) return;

@@ -193,32 +193,6 @@ BOOL GDI_Init(void)
 
 
 /***********************************************************************
- *           GDI_AppendToPenBrushList
- */
-BOOL GDI_AppendToPenBrushList(HANDLE hNewObj)
-{
-	HANDLE	 	*lphObj;
-	int	       	i = 1;
-	if (hNewObj == 0) return FALSE;
-	if (lpPenBrushList == NULL) {
-		lpPenBrushList = xmalloc(MAX_OBJ * sizeof(HANDLE));
-		lpPenBrushList[0] = 0;
-		dprintf_gdi(stddeb,"GDI_AppendToPenBrushList() lpPenBrushList allocated !\n");
-	}
-	for (lphObj = lpPenBrushList; i < MAX_OBJ; i++) {
-		if (*lphObj == 0) {
-			*lphObj = hNewObj;
-			*(lphObj + 1) = 0;
-			dprintf_gdi(stddeb,"GDI_AppendToPenBrushList("NPFMT") appended (count=%d)\n", hNewObj, i);
-			return TRUE;
-		}
-		lphObj++;
-	}
-	return FALSE;
-}
-
-
-/***********************************************************************
  *           GDI_AllocObject
  */
 HANDLE GDI_AllocObject( WORD size, WORD magic )
@@ -231,9 +205,6 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;
-    if (magic == PEN_MAGIC || magic == BRUSH_MAGIC) {
-      GDI_AppendToPenBrushList(handle);
-    }
     return handle;
 }
 
@@ -406,8 +377,71 @@ BOOL UnrealizeObject( HANDLE handle )
 /***********************************************************************
  *           EnumObjects    (GDI.71)
  */
-int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
+int EnumObjects( HDC hdc, int nObjType, FARPROC lpEnumFunc, LPARAM lParam )
 {
+    /* Solid colors to enumerate */
+    static const COLORREF solid_colors[] =
+    { RGB(0x00,0x00,0x00), RGB(0xff,0xff,0xff),
+      RGB(0xff,0x00,0x00), RGB(0x00,0xff,0x00),
+      RGB(0x00,0x00,0xff), RGB(0xff,0xff,0x00),
+      RGB(0xff,0x00,0xff), RGB(0x00,0xff,0xff),
+      RGB(0x80,0x00,0x00), RGB(0x00,0x80,0x00),
+      RGB(0x80,0x80,0x00), RGB(0x00,0x00,0x80),
+      RGB(0x80,0x00,0x80), RGB(0x00,0x80,0x80),
+      RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
+    };
+    
+    int i, retval = 0;
+
+    dprintf_gdi( stddeb, "EnumObjects: "NPFMT" %d %08lx %08lx\n",
+                 hdc, nObjType, (DWORD)lpEnumFunc, lParam );
+    switch(nObjType)
+    {
+    case OBJ_PEN:
+        /* Enumerate solid pens */
+        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
+        {
+            LOGPEN pen = { PS_SOLID, { 1, 0 }, solid_colors[i] };
+            retval = CallEnumObjectsProc( lpEnumFunc, MAKE_SEGPTR(&pen),
+                                          lParam );
+            dprintf_gdi( stddeb, "EnumObject: solid pen %08lx, ret=%d\n",
+                         solid_colors[i], retval);
+            if (!retval) break;
+        }
+        break;
+
+    case OBJ_BRUSH:
+        /* Enumerate solid brushes */
+        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
+        {
+            LOGBRUSH brush = { BS_SOLID, solid_colors[i], 0 };
+            retval = CallEnumObjectsProc( lpEnumFunc, MAKE_SEGPTR(&brush),
+                                          lParam );
+            dprintf_gdi( stddeb, "EnumObject: solid brush %08lx, ret=%d\n",
+                         solid_colors[i], retval);
+            if (!retval) break;
+        }
+        if (!retval) break;
+
+        /* Now enumerate hatched brushes */
+        for (i = HS_HORIZONTAL; i <= HS_DIAGCROSS; i++)
+        {
+            LOGBRUSH brush = { BS_HATCHED, RGB(0,0,0), i };
+            retval = CallEnumObjectsProc( lpEnumFunc, MAKE_SEGPTR(&brush),
+                                          lParam );
+            dprintf_gdi( stddeb, "EnumObject: hatched brush %d, ret=%d\n",
+                         i, retval);
+            if (!retval) break;
+        }
+        break;
+
+    default:
+        fprintf( stderr, "EnumObjects: invalid type %d\n", nObjType );
+        break;
+    }
+    return retval;
+#if 0
+
   /*    HANDLE 		handle;
    DC 			*dc;*/
   HANDLE       	*lphObj;
@@ -508,7 +542,9 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
   GDI_HEAP_FREE(hLog);
   dprintf_gdi(stddeb,"EnumObjects // End of enumeration !\n");
   return nRet;
+#endif
 }
+
 
 /***********************************************************************
  *		IsGDIObject(GDI.462)

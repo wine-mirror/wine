@@ -14,6 +14,6 @@
 
 int ValidateKernelObject(KERNEL_OBJECT *ptr)
 {
-  return (!ptr || (short int)ptr==-1);
+  return (!ptr || (short int)(int)ptr==-1);
 }
 

@@ -6,18 +6,16 @@
 
 #ifdef WINELIB
 
-#include "windows.h"
+#include "wintypes.h"
 #include "resource.h"
 
-void    LIBRES_RegisterResources(struct resource** Res);
-
-INT     LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc );
-HGLOBAL LIBRES_AllocResource( HINSTANCE hModule, HRSRC hRsrc, DWORD size );
-HRSRC   LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type );
-BOOL    LIBRES_FreeResource( HGLOBAL handle );
-HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc );
-LPVOID  LIBRES_LockResource( HGLOBAL handle );
-DWORD   LIBRES_SizeofResource( HINSTANCE hModule, HRSRC hRsrc );
+extern INT     LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc );
+extern HGLOBAL LIBRES_AllocResource( HINSTANCE hModule, HRSRC hRsrc, DWORD size );
+extern HRSRC   LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type );
+extern BOOL    LIBRES_FreeResource( HGLOBAL handle );
+extern HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc );
+extern LPVOID  LIBRES_LockResource( HGLOBAL handle );
+extern DWORD   LIBRES_SizeofResource( HINSTANCE hModule, HRSRC hRsrc );
 
 #endif /* WINELIB */
 

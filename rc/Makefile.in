@@ -1,14 +1,16 @@
 TOPSRC = @top_srcdir@
 
-MODULE = rc
+PROGRAM = winerc
+MODULE = none
 
-C_SRCS = sysres.c
+C_SRCS = y.tab.c lex.yy.c winerc.c 
 
-LANGUAGES = En Es De No Fr Fi Da
-
-all: $(MODULE).o
+all: $(PROGRAM)
 
 @MAKE_RULES@
+
+$(PROGRAM): $(OBJS)
+	$(CC) $(CFLAGS) -o winerc $(OBJS) $(LEXLIB)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) -d -t parser.y
@@ -16,25 +18,7 @@ y.tab.c y.tab.h: parser.y
 lex.yy.c: parser.l
 	$(LEX) -8 -I parser.l
 
-winerc: lex.yy.o winerc.o y.tab.o
-	$(CC) $(ALLCFLAGS) lex.yy.o winerc.o y.tab.o -o winerc $(LEXLIB)
-
-sysres.rct: sysres.rc $(LANGUAGES:%=sysres_%.rc)
-	echo "#include \"windows.h\"" >sysres.rct
-	echo WINDOWS_H_ENDS_HERE >>sysres.rct
-	cat sysres.rc >>sysres.rct
-
-sysres.c sysres.h: sysres.rct winerc
-	$(CC) $(ALLCFLAGS) -E -x c -P sysres.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o sysres -v -p sysres
-
 clean::
-	$(RM) lex.yy.c sysres.rct winerc y.tab.c y.tab.h sysres.c sysres.h
-
-langclean::
-	$(RM) sysres.c sysres.h sysres.o
-
-y.tab.o: y.tab.c y.tab.h parser.h
-lex.yy.o: lex.yy.c y.tab.h parser.h
-winerc.o: $(TOPSRC)/include/windows.h $(TOPSRC)/include/neexe.h parser.h y.tab.h
+	$(RM) y.tab.c y.tab.h lex.yy.c $(PROGRAM)
 
 ### Dependencies:

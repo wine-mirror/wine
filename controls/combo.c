@@ -434,7 +434,7 @@ static LRESULT CBSelectString(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   WORD  wRet;
 
-  wRet = ListBoxFindString(lphl, wParam, lParam);
+  wRet = ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
 
   /* XXX add functionality here */
 
@@ -447,7 +447,7 @@ static LRESULT CBSelectString(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT CBFindString(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
-  return ListBoxFindString(lphl, wParam, lParam);
+  return ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
 }
 
 /***********************************************************************

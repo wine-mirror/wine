@@ -158,5 +158,5 @@ DWORD USER32_CreateWindowExA(long flags,char* class,char *title,
     return (DWORD) CreateWindowEx(flags,MAKE_SEGPTR(classbuf),
 				  MAKE_SEGPTR(titlebuf),style,x,y,width,height,
 				  (HWND)parent,(HMENU)menu,(HINSTANCE)instance,
-				  param);
+				  (LPVOID)param);
 }

@@ -35,6 +35,7 @@ BOOL WINAPI GetUserNameA(LPSTR lpszName, LPDWORD lpSize)
 /***********************************************************************
  *           RegCreateKeyEx   (ADVAPI32.130)
  */
+LONG RegCreateKey(HKEY,LPCTSTR,LPHKEY);
 WINAPI LONG RegCreateKeyEx(HKEY key,
                             const char *subkey,
                             long dontuse,
