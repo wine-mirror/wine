@@ -2233,13 +2233,10 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 	case CB_GETDROPPEDSTATE:
 		return  (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
 	case CB_DIR16:
-                lParam = (LPARAM)MapSL(lParam);
-		message = LB_DIR16;
-                /* fall through */
+		return SendMessageA(lphc->hWndLBox, LB_DIR16, wParam, lParam);
 	case CB_DIR:
-		if(message == CB_DIR) message = LB_DIR;
-		return unicode ? SendMessageW(lphc->hWndLBox, message, wParam, lParam) :
-				 SendMessageA(lphc->hWndLBox, message, wParam, lParam);
+		return unicode ? SendMessageW(lphc->hWndLBox, LB_DIR, wParam, lParam) :
+				 SendMessageA(lphc->hWndLBox, LB_DIR, wParam, lParam);
 
 	case CB_SHOWDROPDOWN16:
 	case CB_SHOWDROPDOWN:
