@@ -233,10 +233,10 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
 	FIXME("(%p) (file=%p index=%u %p %p size=%u) semi-stub\n", This, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
 
 	if (phiconLarge)
-	  *phiconLarge = pImageList_GetIcon(ShellBigIconList, nIconIndex, ILD_TRANSPARENT);
+	  *phiconLarge = ImageList_GetIcon(ShellBigIconList, nIconIndex, ILD_TRANSPARENT);
 
 	if (phiconSmall)
-	  *phiconSmall = pImageList_GetIcon(ShellSmallIconList, nIconIndex, ILD_TRANSPARENT);
+	  *phiconSmall = ImageList_GetIcon(ShellSmallIconList, nIconIndex, ILD_TRANSPARENT);
 
 	return S_OK;
 }

@@ -14,6 +14,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
+#include "shlwapi.h"
 #include "filedlgbrowser.h"
 #include "cdlg.h"
 #include "shlguid.h"
@@ -75,7 +76,7 @@ extern HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
 {
     char lpstrPath[MAX_PATH];
-    COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
+    SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
     SetCurrentDirectoryA(lpstrPath);
     TRACE("new current folder %s\n", lpstrPath);
 }
@@ -138,7 +139,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     sb->lpVtbl = &IShellBrowserImpl_Vtbl;
     sb->lpVtblCommDlgBrowser = &IShellBrowserImpl_ICommDlgBrowser_Vtbl;
     sb->lpVtblServiceProvider = &IShellBrowserImpl_IServiceProvider_Vtbl;
-    COMDLG32_SHGetSpecialFolderLocation(hwndOwner, CSIDL_DESKTOP,
+    SHGetSpecialFolderLocation(hwndOwner, CSIDL_DESKTOP,
                                &fodInfos->ShellInfos.pidlAbsCurrent);
 
     TRACE("%p\n", sb);
@@ -789,7 +790,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
     {
       if (SUCCEEDED(COMDLG32_StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
       {
-	  if (COMDLG32_PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
+	  if (PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
           return S_OK;
       }
     }

@@ -305,7 +305,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	/* icon handle */
 	if (SUCCEEDED(hr) && (flags & SHGFI_ICON))
-	  psfi->hIcon = pImageList_GetIcon((flags & SHGFI_LARGEICON) ? ShellBigIconList:ShellSmallIconList, psfi->iIcon, ILD_NORMAL);
+	  psfi->hIcon = ImageList_GetIcon((flags & SHGFI_LARGEICON) ? ShellBigIconList:ShellSmallIconList, psfi->iIcon, ILD_NORMAL);
 
 	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
 	  FIXME("unknown attribute!\n");
@@ -836,13 +836,6 @@ HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
  *
  */
 void	(WINAPI* pDLLInitComctl)(LPVOID);
-INT	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON hIcon);
-INT	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT, HICON);
-HIMAGELIST (WINAPI * pImageList_Create) (INT,INT,UINT,INT,INT);
-BOOL	(WINAPI* pImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
-HICON	(WINAPI * pImageList_GetIcon) (HIMAGELIST, INT, UINT);
-INT	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
-COLORREF (WINAPI *pImageList_SetBkColor)(HIMAGELIST, COLORREF);
 
 LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT);  
 BOOL	(WINAPI* pCOMCTL32_Free) (LPVOID);  
@@ -855,16 +848,10 @@ BOOL	(WINAPI* pDPA_Destroy) (const HDPA);
 INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
 
-/* user32 */
-HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
-HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
-
 static HINSTANCE	hComctl32;
-static INT		shell32_RefCount = 0;
 
 LONG		shell32_ObjCount = 0;
 HINSTANCE	shell32_hInstance = 0; 
-HMODULE		huser32 = 0;
 HIMAGELIST	ShellSmallIconList = 0;
 HIMAGELIST	ShellBigIconList = 0;
 
@@ -883,15 +870,11 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	switch (fdwReason)
 	{
 	  case DLL_PROCESS_ATTACH:
-	    shell32_RefCount++;
-	    if (shell32_hInstance) return TRUE;
-
 	    shell32_hInstance = hinstDLL;
 	    hComctl32 = GetModuleHandleA("COMCTL32.DLL");	
-	    if(!huser32) huser32 = GetModuleHandleA("USER32.DLL");
 	    DisableThreadLibraryCalls(shell32_hInstance);
 
-	    if (!hComctl32 || !huser32)
+	    if (!hComctl32)
 	    {
 	      ERR("P A N I C SHELL32 loading failed\n");
 	      return FALSE;
@@ -899,13 +882,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	    /* comctl32 */
 	    pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
-	    pImageList_Create=(void*)GetProcAddress(hComctl32,"ImageList_Create");
-	    pImageList_AddIcon=(void*)GetProcAddress(hComctl32,"ImageList_AddIcon");
-	    pImageList_ReplaceIcon=(void*)GetProcAddress(hComctl32,"ImageList_ReplaceIcon");
-	    pImageList_GetIcon=(void*)GetProcAddress(hComctl32,"ImageList_GetIcon");
-	    pImageList_GetImageCount=(void*)GetProcAddress(hComctl32,"ImageList_GetImageCount");
-	    pImageList_Draw=(void*)GetProcAddress(hComctl32,"ImageList_Draw");
-	    pImageList_SetBkColor=(void*)GetProcAddress(hComctl32,"ImageList_SetBkColor");
 	    pCOMCTL32_Alloc=(void*)GetProcAddress(hComctl32, (LPCSTR)71L);
 	    pCOMCTL32_Free=(void*)GetProcAddress(hComctl32, (LPCSTR)73L);
 	    pDPA_Create=(void*)GetProcAddress(hComctl32, (LPCSTR)328L);
@@ -915,9 +891,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
 	    pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
 	    pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
-	    /* user32 */
-	    pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(huser32,"LookupIconIdFromDirectoryEx");
-	    pCreateIconFromResourceEx=(void*)GetProcAddress(huser32,"CreateIconFromResourceEx");
 
 	    /* initialize the common controls */
 	    if (pDLLInitComctl)
@@ -932,18 +905,12 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    break;
 
 	  case DLL_THREAD_ATTACH:
-	    shell32_RefCount++;
 	    break;
 
 	  case DLL_THREAD_DETACH:
-	    shell32_RefCount--;
 	    break;
 
 	  case DLL_PROCESS_DETACH:
-	    shell32_RefCount--;
-
-	    if ( !shell32_RefCount )
-	    { 
 	      shell32_hInstance = 0;
 
 	      if (pdesktopfolder) 
@@ -960,10 +927,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      {
 	        WARN("leaving with %lu objects left (memory leak)\n", shell32_ObjCount);
 	      }
-	    }
-
-	    TRACE("refcount=%u objcount=%lu \n", shell32_RefCount, shell32_ObjCount);
-	    break;
+              break;
 	}
 	return TRUE;
 }

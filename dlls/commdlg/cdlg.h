@@ -92,9 +92,6 @@ typedef struct {
 #include "shlobj.h"
 #include "shellapi.h"
 
-/* IMAGELIST */
-extern BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
-
 /* ITEMIDLIST */
 
 extern LPITEMIDLIST (WINAPI *COMDLG32_PIDL_ILClone) (LPCITEMIDLIST);
@@ -104,30 +101,9 @@ extern BOOL (WINAPI *COMDLG32_PIDL_ILRemoveLastID)(LPCITEMIDLIST);
 extern BOOL (WINAPI *COMDLG32_PIDL_ILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 
 /* SHELL */
-extern BOOL (WINAPI *COMDLG32_SHGetPathFromIDListA) (LPCITEMIDLIST,LPSTR);
-extern HRESULT (WINAPI *COMDLG32_SHGetSpecialFolderLocation)(HWND,INT,LPITEMIDLIST *);
-extern DWORD (WINAPI *COMDLG32_SHGetDesktopFolder)(IShellFolder **);
-extern DWORD (WINAPI *COMDLG32_SHGetFileInfoA)(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
 extern LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 extern DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
-extern HRESULT (WINAPI *COMDLG32_SHGetDataFromIDListA)(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len);
 extern BOOL (WINAPI *COMDLG32_SHGetFolderPathA)(HWND,int,HANDLE,DWORD,LPSTR);
-
-
-/* PATH */
-extern BOOL (WINAPI *COMDLG32_PathIsRootA)(LPCSTR x);
-extern LPSTR (WINAPI *COMDLG32_PathFindFileNameA)(LPCSTR path);
-extern DWORD (WINAPI *COMDLG32_PathRemoveFileSpecA)(LPSTR fn);
-extern BOOL (WINAPI *COMDLG32_PathMatchSpecW)(LPCWSTR x, LPCWSTR y);
-extern LPSTR (WINAPI *COMDLG32_PathAddBackslashA)(LPSTR path);
-extern BOOL (WINAPI *COMDLG32_PathCanonicalizeA)(LPSTR pszBuf, LPCSTR pszPath);
-extern int (WINAPI *COMDLG32_PathGetDriveNumberA)(LPCSTR lpszPath);
-extern BOOL (WINAPI *COMDLG32_PathIsRelativeA) (LPCSTR lpszPath);
-extern LPSTR (WINAPI *COMDLG32_PathFindNextComponentA)(LPCSTR pszPath);
-extern LPWSTR (WINAPI *COMDLG32_PathAddBackslashW)(LPWSTR lpszPath);
-extern LPSTR (WINAPI *COMDLG32_PathFindExtensionA)(LPCVOID lpszPath);
-extern BOOL (WINAPI *COMDLG32_PathAddExtensionA)(LPSTR  pszPath,LPCSTR pszExtension);
-
 
 extern BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType);
 extern BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType);

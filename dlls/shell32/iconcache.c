@@ -82,8 +82,8 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	}
 	else
 	{
-	  index = pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
-	  index1= pImageList_AddIcon (ShellBigIconList, hBigIcon);
+	  index = ImageList_AddIcon (ShellSmallIconList, hSmallIcon);
+	  index1= ImageList_AddIcon (ShellBigIconList, hBigIcon);
 
 	  if (index!=index1)
 	  {
@@ -175,8 +175,8 @@ static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOO
 	}
 
 	if (bSmallIcon)
-	  return pImageList_GetIcon(ShellSmallIconList, index, ILD_NORMAL);
-	return pImageList_GetIcon(ShellBigIconList, index, ILD_NORMAL);
+	  return ImageList_GetIcon(ShellSmallIconList, index, ILD_NORMAL);
+	return ImageList_GetIcon(ShellBigIconList, index, ILD_NORMAL);
 	
 }
 /*****************************************************************************
@@ -203,11 +203,11 @@ BOOL SIC_Initialize(void)
 	  return(FALSE);
 	}
 
-	ShellSmallIconList = pImageList_Create(16,16,ILC_COLORDDB | ILC_MASK,0,0x20);
-	ShellBigIconList = pImageList_Create(32,32,ILC_COLORDDB | ILC_MASK,0,0x20);
+	ShellSmallIconList = ImageList_Create(16,16,ILC_COLORDDB | ILC_MASK,0,0x20);
+	ShellBigIconList = ImageList_Create(32,32,ILC_COLORDDB | ILC_MASK,0,0x20);
 
-	pImageList_SetBkColor(ShellSmallIconList, GetSysColor(COLOR_WINDOW));
-	pImageList_SetBkColor(ShellBigIconList, GetSysColor(COLOR_WINDOW));
+	ImageList_SetBkColor(ShellSmallIconList, GetSysColor(COLOR_WINDOW));
+	ImageList_SetBkColor(ShellBigIconList, GetSysColor(COLOR_WINDOW));
 
 	for (index=1; index<39; index++)
 	{

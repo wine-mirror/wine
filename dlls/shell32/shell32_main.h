@@ -30,13 +30,6 @@ extern HDPA		sic_hdpa;
 * pointer to functions dynamically loaded
 */
 extern void	(WINAPI* pDLLInitComctl)(LPVOID);
-extern INT	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON hIcon);
-extern INT	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT, HICON);
-extern HIMAGELIST (WINAPI* pImageList_Create) (INT,INT,UINT,INT,INT);
-extern BOOL	(WINAPI* pImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
-extern HICON	(WINAPI* pImageList_GetIcon) (HIMAGELIST, INT, UINT);
-extern INT	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
-extern COLORREF (WINAPI *pImageList_SetBkColor)(HIMAGELIST, COLORREF);
 
 extern LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT);  
 extern BOOL	(WINAPI* pCOMCTL32_Free) (LPVOID);  
@@ -49,9 +42,6 @@ extern BOOL	(WINAPI* pDPA_Destroy) (const HDPA);
 extern INT	(WINAPI* pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 extern LPVOID	(WINAPI* pDPA_DeletePtr) (const HDPA hdpa, INT i);
 #define pDPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))   
-
-extern HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
-extern HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
 /* ole2 */
 /*
