@@ -10,10 +10,6 @@
 #include "wintypes.h"
 #include "pe_image.h"
 
-#ifndef WINELIB
-#pragma pack(1)
-#endif
-
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct
 {
@@ -84,15 +80,18 @@ typedef struct
     FARPROC16 SetOwner;      /* Set Owner procedure, exported by wine */
 } SELFLOADHEADER;
 
-  /* Parameters for LoadModule() */
+#pragma pack(1)
 
+  /* Parameters for LoadModule() */
 typedef struct
 {
-    HANDLE16 hEnvironment;  /* Environment segment */
-    SEGPTR   cmdLine;       /* Command-line */
-    SEGPTR   showCmd;       /* Code for ShowWindow() */
-    SEGPTR   reserved;
+    HANDLE16 hEnvironment;         /* Environment segment */
+    SEGPTR   cmdLine WINE_PACKED;  /* Command-line */
+    SEGPTR   showCmd WINE_PACKED;  /* Code for ShowWindow() */
+    SEGPTR   reserved WINE_PACKED;
 } LOADPARAMS;
+
+#pragma pack(4)
 
 /* Resource types */
 typedef struct resource_typeinfo_s NE_TYPEINFO;
@@ -111,10 +110,6 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
     ((struct pe_data *)(((pModule)->flags & NE_FFLAGS_WIN32) ? \
                     ((NE_WIN32_EXTRAINFO *)((pModule) + 1))->pe_module : 0))
 
-#ifndef WINELIB
-#pragma pack(4)
-#endif
-
 /* module.c */
 extern NE_MODULE *MODULE_GetPtr( HMODULE16 hModule );
 extern void MODULE_DumpModule( HMODULE16 hmodule );
@@ -124,7 +119,7 @@ extern LPSTR MODULE_GetModuleName( HMODULE16 hModule );
 extern void MODULE_RegisterModule( NE_MODULE *pModule );
 extern HINSTANCE16 MODULE_GetInstance( HMODULE16 hModule );
 extern WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name );
-extern SEGPTR MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
+extern FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern BOOL16 MODULE_SetEntryPoint( HMODULE16 hModule, WORD ordinal,
                                     WORD offset );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
@@ -132,9 +127,9 @@ extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 /* builtin.c */
 extern BOOL16 BUILTIN_Init(void);
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL16 force );
-extern NE_MODULE *BUILTIN_GetEntryPoint( WORD cs, WORD ip,
-                                         WORD *pOrd, char **ppName );
-extern DWORD BUILTIN_GetProcAddress32( NE_MODULE *pModule, char *function );
+extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd );
+extern LPCSTR BUILTIN_GetEntryPoint32( void *relay );
+extern FARPROC32 BUILTIN_GetProcAddress32(NE_MODULE *pModule, LPCSTR function);
 extern BOOL16 BUILTIN_ParseDLLOptions( const char *str );
 extern void BUILTIN_PrintDLLs(void);
 

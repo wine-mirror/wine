@@ -10,10 +10,6 @@
 #include <X11/Xlib.h>
 #include "windows.h"
 
-#ifndef WINELIB
-#pragma pack(1)
-#endif
-
 typedef struct
 {
     BYTE   bWidth;
@@ -42,6 +38,8 @@ typedef union
     CURSORDIRENTRY  cursor;
 } CURSORICONDIRENTRY;
 
+#pragma pack(1)
+
 typedef struct
 {
     WORD                idReserved;
@@ -50,9 +48,7 @@ typedef struct
     CURSORICONDIRENTRY  idEntries[1] WINE_PACKED;
 } CURSORICONDIR;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 extern Cursor CURSORICON_XCursor;  /* Current X cursor */
 

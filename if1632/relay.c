@@ -64,24 +64,19 @@ BOOL RELAY_Init(void)
  *           RELAY_DebugCallFrom16
  */
 void RELAY_DebugCallFrom16( int func_type, char *args,
-                            void *entry_point, int args32 )
+                            void *entry_point, SIGCONTEXT *context )
 {
     STACK16FRAME *frame;
-    NE_MODULE *pModule;
     WORD ordinal;
-    char *args16, *name;
+    char *args16;
     int i;
 
     if (!debugging_relay) return;
 
     frame = CURRENT_STACK16;
-    pModule = BUILTIN_GetEntryPoint( frame->entry_cs, frame->entry_ip,
-                                     &ordinal, &name );
-    printf( "Call %.*s.%d: %.*s(",
-            *((BYTE *)pModule + pModule->name_table),
-            (char *)pModule + pModule->name_table + 1,
-            ordinal, *name, name + 1 );
-
+    printf( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
+                                                 frame->entry_ip,
+                                                 &ordinal ));
     args16 = (char *)frame->args;
     for (i = 0; i < strlen(args); i++)
     {
@@ -122,13 +117,10 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     printf( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
 
     if (func_type == 2)  /* register function */
-    {
-        SIGCONTEXT *context = (SIGCONTEXT *)&args32;
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
                 ES_reg(context), EFL_reg(context) );
-    }
 }
 
 
@@ -138,9 +130,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
 void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
 {
     STACK16FRAME *frame;
-    NE_MODULE *pModule;
     WORD ordinal;
-    char *name;
 
     if (*(DWORD *)PTR_SEG_TO_LIN(IF1632_Stack32_base) != 0xDEADBEEF)
     {
@@ -149,14 +139,10 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
     }
     if (!debugging_relay) return;
 
-    frame   = CURRENT_STACK16;
-    pModule = BUILTIN_GetEntryPoint( frame->entry_cs, frame->entry_ip,
-                                     &ordinal, &name );
-    printf( "Ret  %.*s.%d: %.*s() ",
-            *((BYTE *)pModule + pModule->name_table),
-            (char *)pModule + pModule->name_table + 1,
-            ordinal, *name, name + 1 );
-
+    frame = CURRENT_STACK16;
+    printf( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
+                                                   frame->entry_ip,
+                                                   &ordinal ));
     switch(func_type)
     {
     case 0: /* long */
@@ -191,15 +177,10 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
 void RELAY_Unimplemented16(void)
 {
     WORD ordinal;
-    char *name;
     STACK16FRAME *frame = CURRENT_STACK16;
-    NE_MODULE *pModule  = BUILTIN_GetEntryPoint( frame->entry_cs,
-                                                 frame->entry_ip,
-                                                 &ordinal, &name );
-    fprintf( stderr, "No handler for Win16 routine %.*s.%d (%.*s) called from %04x:%04x\n",
-             *((BYTE *)pModule + pModule->name_table),
-             (char *)pModule + pModule->name_table + 1,
-             ordinal, *name, name + 1, frame->cs, frame->ip );
+    fprintf(stderr,"No handler for Win16 routine %s (called from %04x:%04x)\n",
+            BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal),
+            frame->cs, frame->ip );
     TASK_KillCurrentTask(1);
 }
 
@@ -211,11 +192,11 @@ void RELAY_Unimplemented16(void)
  * as 'stub' in the spec file).
  * (The args are the same than for RELAY_DebugCallFrom32).
  */
-void RELAY_Unimplemented32( int nb_args, void *entry_point,
-                            const char *func_name, int ebp, int ret_addr )
+void RELAY_Unimplemented32( int nb_args, void *relay_addr,
+                            void *entry_point, int ebp, int ret_addr )
 {
-    fprintf( stderr, "No handler for Win32 routine %s called from %08x\n",
-             func_name, ret_addr );
+    fprintf( stderr, "No handler for Win32 routine %s (called from %08x)\n",
+             BUILTIN_GetEntryPoint32( relay_addr ), ret_addr );
     TASK_KillCurrentTask(1);
 }
 
@@ -246,13 +227,13 @@ void RELAY_DebugCallTo16( int* stack, int nbargs )
 /***********************************************************************
  *           RELAY_DebugCallFrom32
  */
-void RELAY_DebugCallFrom32( int nb_args, void *entry_point,
-                            const char *func_name, int ebp, int ret_addr,
-                            int arg1 )
+void RELAY_DebugCallFrom32( int nb_args, void *relay_addr,
+                            void *entry_point, int ebp, int ret_addr, int arg1)
 {
-    int  *parg;
+    int *parg;
+
     if (!debugging_relay) return;
-    printf( "Call %s(", func_name );
+    printf( "Call %s(", BUILTIN_GetEntryPoint32( relay_addr ));
     for (parg = &arg1; nb_args; parg++, nb_args--)
     {
         printf( "%08x", *parg );
@@ -265,12 +246,12 @@ void RELAY_DebugCallFrom32( int nb_args, void *entry_point,
 /***********************************************************************
  *           RELAY_DebugCallFrom32Ret
  */
-void RELAY_DebugCallFrom32Ret( int ret_val, void *entry_point,
-                               const char *func_name, int ebp, int ret_addr )
+void RELAY_DebugCallFrom32Ret( int ret_val, void *relay_addr,
+                               void *entry_point, int ebp, int ret_addr )
 {
     if (!debugging_relay) return;
     printf( "Ret  %s() retval=0x%08x ret=%08x\n",
-            func_name, ret_val, ret_addr );
+            BUILTIN_GetEntryPoint32( relay_addr ), ret_val, ret_addr );
 }
 
 

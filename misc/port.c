@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <sys/time.h>
 
 #ifndef HAVE_USLEEP
@@ -9,7 +10,7 @@ unsigned int usleep (unsigned int useconds)
     delay.tv_sec = 0;
     delay.tv_usec = useconds;
 
-    (void) select (0, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &delay);
+    select( 0, 0, 0, 0, &delay );
     return 0;
 }
 

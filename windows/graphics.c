@@ -991,8 +991,8 @@ static void GRAPH_InternalFloodFill( XImage *image, DC *dc,
  *
  * Main flood-fill routine.
  */
-static BOOL GRAPH_DoFloodFill( DC *dc, RECT16 *rect, INT16 x, INT16 y,
-                               COLORREF color, WORD fillType )
+static BOOL16 GRAPH_DoFloodFill( DC *dc, RECT16 *rect, INT32 x, INT32 y,
+                                 COLORREF color, UINT32 fillType )
 {
     XImage *image;
 
@@ -1021,9 +1021,10 @@ static BOOL GRAPH_DoFloodFill( DC *dc, RECT16 *rect, INT16 x, INT16 y,
 
 
 /**********************************************************************
- *          ExtFloodFill  (GDI.372)
+ *          ExtFloodFill  (GDI.372) (GDI32.96)
  */
-BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
+BOOL16 ExtFloodFill( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
+                     UINT32 fillType )
 {
     RECT16 rect;
     DC *dc;
@@ -1049,32 +1050,129 @@ BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
 
 
 /**********************************************************************
- *          FloodFill  (GDI.25)
+ *          FloodFill  (GDI.25) (GDI32.104)
  */
-BOOL FloodFill( HDC hdc, INT x, INT y, COLORREF color )
+BOOL16 FloodFill( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 {
     return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
 }
 
 
 /**********************************************************************
- *          DrawEdge  (USER.659)
+ *          DrawEdge16   (USER.659)
  */
-BOOL DrawEdge(HDC hdc, LPRECT16 qrc, UINT edge, UINT flags)
+BOOL16 DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 {
-	fprintf(stdnimp,"DrawEdge(%x,%p,%d,%x), empty stub!\n",
-		hdc,qrc,edge,flags
-	);
-	return TRUE;
+    RECT32 rect32;
+    BOOL32 ret;
+
+    CONV_RECT16TO32( rc, &rect32 );
+    ret = DrawEdge32( hdc, &rect32, edge, flags );
+    CONV_RECT32TO16( &rect32, rc );
+    return ret;
 }
 
+
 /**********************************************************************
- *          DrawFrameControl  (USER.656)
+ *          DrawEdge32   (USER32.154)
  */
-BOOL DrawFrameControl(HDC hdc, LPRECT16 qrc, UINT edge, UINT flags)
+BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 {
-	fprintf(stdnimp,"DrawFrameControl(%x,%p,%d,%x), empty stub!\n",
-		hdc,qrc,edge,flags
-	);
-	return TRUE;
+    HBRUSH hbrushOld;
+
+    if (flags >= BF_DIAGONAL)
+        fprintf( stderr, "DrawEdge: unsupported flags %04x\n", flags );
+
+    dprintf_graphics( stddeb, "DrawEdge: %04x %d,%d-%d,%d %04x %04x\n",
+                      hdc, rc->left, rc->top, rc->right, rc->bottom,
+                      edge, flags );
+
+    /* First do all the raised edges */
+
+    SelectObject( hdc, sysColorObjects.hbrushBtnHighlight );
+    if (edge & BDR_RAISEDOUTER)
+    {
+        if (flags & BF_LEFT) PatBlt( hdc, rc->left, rc->top,
+                                     1, rc->bottom - rc->top - 1, PATCOPY );
+        if (flags & BF_TOP) PatBlt( hdc, rc->left, rc->top,
+                                     rc->right - rc->left - 1, 1, PATCOPY );
+    }
+    if (edge & BDR_SUNKENOUTER)
+    {
+        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 1, rc->top,
+                                      1, rc->bottom - rc->top, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left, rc->bottom - 1,
+                                       rc->right - rc->left, 1, PATCOPY );
+    }
+    if (edge & BDR_RAISEDINNER)
+    {
+        if (flags & BF_LEFT) PatBlt( hdc, rc->left + 1, rc->top + 1, 
+                                     1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_TOP) PatBlt( hdc, rc->left + 1, rc->top + 1,
+                                     rc->right - rc->left - 2, 1, PATCOPY );
+    }
+    if (edge & BDR_SUNKENINNER)
+    {
+        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 2, rc->top + 1,
+                                     1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left + 1, rc->bottom - 2,
+                                       rc->right - rc->left - 2, 1, PATCOPY );
+    }
+
+    /* Then do all the sunken edges */
+
+    hbrushOld = SelectObject( hdc, sysColorObjects.hbrushBtnShadow );
+    if (edge & BDR_SUNKENOUTER)
+    {
+        if (flags & BF_LEFT) PatBlt( hdc, rc->left, rc->top,
+                                     1, rc->bottom - rc->top - 1, PATCOPY );
+        if (flags & BF_TOP) PatBlt( hdc, rc->left, rc->top,
+                                     rc->right - rc->left - 1, 1, PATCOPY );
+    }
+    if (edge & BDR_RAISEDOUTER)
+    {
+        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 1, rc->top,
+                                      1, rc->bottom - rc->top, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left, rc->bottom - 1,
+                                       rc->right - rc->left, 1, PATCOPY );
+    }
+    if (edge & BDR_SUNKENINNER)
+    {
+        if (flags & BF_LEFT) PatBlt( hdc, rc->left + 1, rc->top + 1, 
+                                     1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_TOP) PatBlt( hdc, rc->left + 1, rc->top + 1,
+                                     rc->right - rc->left - 2, 1, PATCOPY );
+    }
+    if (edge & BDR_RAISEDINNER)
+    {
+        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 2, rc->top + 1,
+                                     1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left + 1, rc->bottom - 2,
+                                       rc->right - rc->left - 2, 1, PATCOPY );
+    }
+
+    SelectObject( hdc, hbrushOld );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *          DrawFrameControl16  (USER.656)
+ */
+BOOL16 DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
+{
+    fprintf( stdnimp,"DrawFrameControl16(%x,%p,%d,%x), empty stub!\n",
+             hdc,rc,edge,flags );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *          DrawFrameControl32  (USER32.157)
+ */
+BOOL32 DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
+{
+    fprintf( stdnimp,"DrawFrameControl32(%x,%p,%d,%x), empty stub!\n",
+             hdc,rc,edge,flags );
+    return TRUE;
 }

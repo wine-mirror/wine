@@ -19,7 +19,6 @@
 
 WORD USER_HeapSel = 0;
 
-#ifndef WINELIB
 
 extern HTASK	TASK_GetNextTask(HTASK);
 extern void	QUEUE_SetDoomedQueue(HQUEUE);
@@ -62,7 +61,7 @@ WORD GetFreeSystemResources( WORD resType )
 /***********************************************************************
  *           SystemHeapInfo   (TOOLHELP.71)
  */
-BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
+BOOL16 SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 {
     pHeapInfo->wUserFreePercent = GetFreeSystemResources( GFSR_USERRESOURCES );
     pHeapInfo->wGDIFreePercent  = GetFreeSystemResources( GFSR_GDIRESOURCES );
@@ -71,7 +70,6 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
     return TRUE;
 }
 
-#endif  /* WINELIB */
 
 /***********************************************************************
  *           TimerCount   (TOOLHELP.80)

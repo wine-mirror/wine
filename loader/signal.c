@@ -168,9 +168,9 @@ extern void stop_wait(int a);
 
 
 /**********************************************************************
- *		init_wine_signals
+ *		SIGNAL_Init
  */
-void init_wine_signals(void)
+BOOL32 SIGNAL_Init(void)
 {
 #if defined(__NetBSD__) || defined(__FreeBSD__)
     struct sigaltstack ss;
@@ -178,13 +178,13 @@ void init_wine_signals(void)
     if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
         fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
                 MINSIGSTKSZ);
-        exit(1);
+        return FALSE;
     }
     ss.ss_size = MINSIGSTKSZ;
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) < 0) {
         perror("sigstack");
-        exit(1);
+        return FALSE;
     }
 #endif  /* __FreeBSD__ || __NetBSD__ */
 
@@ -194,13 +194,13 @@ void init_wine_signals(void)
     if ((ss.ss_sp = malloc(SIGSTKSZ) ) == NULL) {
         fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
                 SIGSTKSZ);
-        exit(1);
+        return FALSE;
     }
     ss.ss_size = SIGSTKSZ;
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) < 0) {
         perror("sigstack");
-        exit(1);
+        return FALSE;
     }
 #endif  /* __svr4__ || _SCO_DS */
     
@@ -216,6 +216,7 @@ void init_wine_signals(void)
 #ifdef CONFIG_IPC
     SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait ); /* For IPC */
 #endif
+    return TRUE;
 }
 
 

@@ -405,7 +405,6 @@ HGLOBAL16 GlobalFree16( HGLOBAL16 handle )
  */
 SEGPTR WIN16_GlobalLock16( HGLOBAL16 handle )
 {
-#ifndef WINELIB
     dprintf_global( stddeb, "WIN16_GlobalLock16(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (!handle) return 0;
@@ -417,9 +416,6 @@ SEGPTR WIN16_GlobalLock16( HGLOBAL16 handle )
 
     if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
     return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
-#else  /* WINELIB */
-    return GlobalLock16( handle );
-#endif  /* WINELIB */
 }
 
 

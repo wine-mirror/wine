@@ -356,18 +356,18 @@ BOOL CreateScalableFontResource( UINT fHidden,LPSTR lpszResourceFile,
 
 
 /***********************************************************************
- *           CreateFontIndirect    (GDI.57)
+ *           CreateFontIndirect16   (GDI.57)
  */
-HFONT CreateFontIndirect( const LOGFONT16 * font )
+HFONT16 CreateFontIndirect16( const LOGFONT16 *font )
 {
     FONTOBJ * fontPtr;
-    HFONT hfont;
+    HFONT16 hfont;
 
     if (!font)
-	{
-	fprintf(stderr, "CreateFontIndirect : font is NULL : returning NULL\n");
+    {
+	fprintf(stderr,"CreateFontIndirect: font is NULL : returning NULL\n");
 	return 0;
-	}
+    }
     hfont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
     if (!hfont) return 0;
     fontPtr = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hfont );
@@ -376,6 +376,56 @@ HFONT CreateFontIndirect( const LOGFONT16 * font )
     dprintf_font(stddeb,"CreateFontIndirect(%p (%d,%d)); return %04x\n",
 	font, font->lfHeight, font->lfWidth, hfont);
     return hfont;
+}
+
+
+/***********************************************************************
+ *           CreateFontIndirect32A   (GDI32.44)
+ */
+HFONT32 CreateFontIndirect32A( const LOGFONT32A *font )
+{
+    LOGFONT16 font16;
+
+    font16.lfHeight         = (INT16)font->lfHeight;
+    font16.lfWidth          = (INT16)font->lfWidth;
+    font16.lfEscapement     = (INT16)font->lfEscapement;
+    font16.lfOrientation    = (INT16)font->lfOrientation;
+    font16.lfWeight         = (INT16)font->lfWeight;
+    font16.lfItalic         = font->lfItalic;
+    font16.lfUnderline      = font->lfUnderline;
+    font16.lfStrikeOut      = font->lfStrikeOut;
+    font16.lfCharSet        = font->lfCharSet;
+    font16.lfOutPrecision   = font->lfOutPrecision;
+    font16.lfClipPrecision  = font->lfClipPrecision;
+    font16.lfQuality        = font->lfQuality;
+    font16.lfPitchAndFamily = font->lfPitchAndFamily;
+    lstrcpyn32A( font16.lfFaceName, font->lfFaceName, LF_FACESIZE );
+    return CreateFontIndirect16( &font16 );
+}
+
+
+/***********************************************************************
+ *           CreateFontIndirect32W   (GDI32.45)
+ */
+HFONT32 CreateFontIndirect32W( const LOGFONT32W *font )
+{
+    LOGFONT16 font16;
+
+    font16.lfHeight         = (INT16)font->lfHeight;
+    font16.lfWidth          = (INT16)font->lfWidth;
+    font16.lfEscapement     = (INT16)font->lfEscapement;
+    font16.lfOrientation    = (INT16)font->lfOrientation;
+    font16.lfWeight         = (INT16)font->lfWeight;
+    font16.lfItalic         = font->lfItalic;
+    font16.lfUnderline      = font->lfUnderline;
+    font16.lfStrikeOut      = font->lfStrikeOut;
+    font16.lfCharSet        = font->lfCharSet;
+    font16.lfOutPrecision   = font->lfOutPrecision;
+    font16.lfClipPrecision  = font->lfClipPrecision;
+    font16.lfQuality        = font->lfQuality;
+    font16.lfPitchAndFamily = font->lfPitchAndFamily;
+    lstrcpynWtoA( font16.lfFaceName, font->lfFaceName, LF_FACESIZE );
+    return CreateFontIndirect16( &font16 );
 }
 
 
@@ -390,13 +440,9 @@ HFONT CreateFont( INT height, INT width, INT esc, INT orient, INT weight,
     LOGFONT16 logfont = {height, width, esc, orient, weight, italic, underline,
                       strikeout, charset, outpres, clippres, quality, pitch, };
     dprintf_font(stddeb,"CreateFont(%d,%d)\n", height, width);
-    if (name)
-	{
-	strncpy( logfont.lfFaceName, name, LF_FACESIZE - 1 );
-	logfont.lfFaceName[LF_FACESIZE - 1] = '\0';
-	}
+    if (name) lstrcpyn32A(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
     else logfont.lfFaceName[0] = '\0';
-    return CreateFontIndirect( &logfont );
+    return CreateFontIndirect16( &logfont );
 }
 
 
@@ -1092,13 +1138,13 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
     dprintf_font(stddeb,"EnumFonts // enum '%s' !\n", lpLogFontList[i]->lfFaceName);
     dprintf_font(stddeb,"EnumFonts // %p !\n", lpLogFontList[i]);
     memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT16) + LF_FACESIZE);
-    hFont = CreateFontIndirect(lpLogFont);
+    hFont = CreateFontIndirect16(lpLogFont);
     hOldFont = SelectObject(hDC, hFont);
     GetTextMetrics16(hDC, lptm);
     SelectObject(hDC, hOldFont);
     DeleteObject(hFont);
     dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
-    nRet = CallEnumFontsProc(lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),
+    nRet = CallEnumFontsProc((FARPROC16)lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),
 			     GDI_HEAP_SEG_ADDR(hMet), 0, (LONG)lpData );
     if (nRet == 0) {
       dprintf_font(stddeb,"EnumFonts // EnumEnd requested by application !\n");
@@ -1161,14 +1207,14 @@ INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM
     memcpy(lpEnumLogFont, lpLogFontList[i], sizeof(LOGFONT16));
     strcpy(lpEnumLogFont->elfFullName,"");
     strcpy(lpEnumLogFont->elfStyle,"");
-    hFont = CreateFontIndirect((LPLOGFONT16)lpEnumLogFont);
+    hFont = CreateFontIndirect16((LPLOGFONT16)lpEnumLogFont);
     hOldFont = SelectObject(hDC, hFont);
     GetTextMetrics16(hDC, lptm);
     SelectObject(hDC, hOldFont);
     DeleteObject(hFont);
     dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpEnumLogFont, lptm);
     
-    nRet = CallEnumFontFamProc( lpEnumFunc,
+    nRet = CallEnumFontFamProc( (FARPROC16)lpEnumFunc,
 			       GDI_HEAP_SEG_ADDR(hLog),
 			       GDI_HEAP_SEG_ADDR(hMet),
 			       0, lpData );

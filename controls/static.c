@@ -222,13 +222,8 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 	wFormat |= DT_NOPREFIX;
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
-#ifdef WINELIB32
     hBrush = SendMessage32A( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
-#else
-    hBrush = SendMessage16( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, (WORD)hdc,
-                            MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
-#endif
     if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect16(hdc, &rc, hBrush);
     if (wndPtr->text) DrawText16( hdc, wndPtr->text, -1, &rc, wFormat );
@@ -281,13 +276,8 @@ static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
-#ifdef WINELIB32
     hbrush = SendMessage32A( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
-#else
-    hbrush = SendMessage16( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, hdc,
-                            MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
-#endif
     FillRect16( hdc, &rc, hbrush );
     if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
 }

@@ -11,9 +11,7 @@
 #include "ldt.h"
 #include "callback.h"
 
-#ifndef WINELIB
 #pragma pack(1)
-#endif
 
   /* Hook data (pointed to by a HHOOK) */
 typedef struct
@@ -26,9 +24,7 @@ typedef struct
     WORD       inHookProc;         /* 0c TRUE if in this->proc */
 } HOOKDATA;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 #define HOOK_MAGIC  ((int)'H' | (int)'K' << 8)  /* 'HK' */
 

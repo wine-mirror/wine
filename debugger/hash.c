@@ -212,7 +212,7 @@ void DEBUG_LoadEntryPoints(void)
     DBG_ADDR addr;
     char buffer[256];
     unsigned char *cpnt, *name;
-    unsigned int address;
+    FARPROC16 address;
     BOOL ok;
 
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))

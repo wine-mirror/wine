@@ -304,9 +304,27 @@ HPALETTE16 SelectPalette(HDC hDC, HPALETTE16 hPal, BOOL bForceBackground)
 
 
 /***********************************************************************
+ *           SelectPalette32    (GDI32.300)
+ */
+HPALETTE16 SelectPalette32(HDC hDC, HPALETTE16 hPal, BOOL bForceBackground)
+{
+    return GDISelectPalette( hDC, hPal );
+}
+
+
+/***********************************************************************
  *           RealizePalette    (USER.283)
  */
 UINT RealizePalette(HDC hDC)
+{
+    return GDIRealizePalette( hDC );
+}
+
+
+/***********************************************************************
+ *           RealizePalette32    (GDI32.280)
+ */
+UINT RealizePalette32(HDC hDC)
 {
     return GDIRealizePalette( hDC );
 }

@@ -10,12 +10,14 @@
 #include "callback.h"
 #include "heap.h"
 #include "ldt.h"
+#include "registers.h"
 #include "stackframe.h"
 #include "string32.h"
 #include "struct32.h"
 #include "win.h"
-#include "wine.h"
 #include "winproc.h"
+#include "stddebug.h"
+#include "debug.h"
 
 /* Window procedure 16-bit thunk; see BuildSpec16Files() in tools/build.c */
 typedef struct
@@ -36,7 +38,7 @@ typedef struct
 typedef struct
 {
     BYTE       popl_eax;             /* popl  %eax (return address) */
-    BYTE       pushl;                /* pushl $proc */
+    BYTE       pushl_func;           /* pushl $proc */
     WNDPROC16  proc WINE_PACKED;
     BYTE       pushl_eax;            /* pushl %eax */
     BYTE       pushl_ebp;            /* pushl %ebp */
@@ -44,9 +46,16 @@ typedef struct
     LPCSTR     name WINE_PACKED;
     BYTE       pushl_thunk;          /* pushl $thunkfrom32 */
     void     (*thunk32)() WINE_PACKED;
-    BYTE       jmp;                  /* jmp   relay */
+    BYTE       jmp;                  /* jmp   relay (relative jump)*/
     void     (*relay)() WINE_PACKED;
 } WINPROC_THUNK_FROM32;
+
+/* Simple jmp to call 32-bit procedure directly */
+typedef struct
+{
+    BYTE       jmp;                  /* jmp  proc (relative jump) */
+    WNDPROC32  proc WINE_PACKED;
+} WINPROC_JUMP;
 
 typedef union
 {
@@ -57,6 +66,7 @@ typedef union
 typedef struct tagWINDOWPROC
 {
     WINPROC_THUNK         thunk;    /* Thunk */
+    WINPROC_JUMP          jmp;      /* Jump */
     struct tagWINDOWPROC *next;     /* Next window proc */
     UINT32                magic;    /* Magic number */
     WINDOWPROCTYPE        type;     /* Function type */
@@ -84,10 +94,10 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
 
 #ifndef WINELIB
 extern void CallFrom16_long_wwwll(void);
-extern void CallFrom32_5(void);
+extern void CallFrom32_stdcall_5(void);
 #else
 static void CallFrom16_long_wwwll(void) {}
-static void CallFrom32_5(void) {}
+static void CallFrom32_stdcall_5(void) {}
 #endif  /* WINELIB */
 
 /* Reference 16->32A thunk */
@@ -114,8 +124,8 @@ static const WINPROC_THUNK_FROM16 WINPROC_ThunkRef16To32W =
     WINE_CODE_SELECTOR
 };
 
-/* Reference 32A->16 thunk */
-static const WINPROC_THUNK_FROM32 WINPROC_ThunkRef32ATo16 =
+/* Reference 32->16 thunk */
+static const WINPROC_THUNK_FROM32 WINPROC_ThunkRef32To16 =
 {
     0x58,                                       /* popl  %eax */
     0x68, 0x00000000,                           /* pushl $proc16 */
@@ -123,9 +133,14 @@ static const WINPROC_THUNK_FROM32 WINPROC_ThunkRef32ATo16 =
     0x55,                                       /* pushl %ebp */
     0x68, "WINPROC_CallProc32ATo16",            /* pushl $name */
     0x68, (void (*)())WINPROC_CallProc32ATo16,  /* pushl $thunk32 */
-    0xe9, CallFrom32_5                          /* jmp   relay */
+    0xe9, CallFrom32_stdcall_5                  /* jmp   relay */
 };
 
+/* Reference 32->32 jump */
+static const WINPROC_JUMP WINPROC_JumpRef =
+{
+    0xe9, 0x00000000                            /* jmp   proc (relative) */
+};
 
 static HANDLE32 WinProcHeap;
 
@@ -151,22 +166,37 @@ BOOL32 WINPROC_Init(void)
  */
 static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
 {
+    BYTE *ptr;
     WINDOWPROC *proc;
 
     /* Check for a linear pointer */
 
     if (HEAP_IsInsideHeap( WinProcHeap, 0, (LPVOID)handle ))
     {
-        proc = (WINDOWPROC *)handle;
-        if (proc->magic == WINPROC_MAGIC) return proc;
+        ptr = (BYTE *)handle;
+        /* First check if it is the jmp address */
+        if (*ptr == WINPROC_JumpRef.jmp)
+            ptr -= (int)&((WINDOWPROC *)0)->jmp -
+                   (int)&((WINDOWPROC *)0)->thunk;
+        /* Now it must be the thunk address */
+        if (*ptr == WINPROC_ThunkRef16To32A.popl_eax)
+            ptr -= (int)&((WINDOWPROC *)0)->thunk;
+        /* Now we have a pointer to the WINDOWPROC struct */
+        if (((WINDOWPROC *)ptr)->magic == WINPROC_MAGIC)
+            return (WINDOWPROC *)ptr;
     }
 
     /* Check for a segmented pointer */
 
-    if (!IsBadReadPtr( (SEGPTR)handle, sizeof(WINDOWPROC) ))
+    if (!IsBadReadPtr( (SEGPTR)handle, sizeof(WINDOWPROC)-sizeof(proc->thunk)))
     {
-        proc = (WINDOWPROC *)PTR_SEG_TO_LIN(handle);
-        if (proc->magic == WINPROC_MAGIC) return proc;
+        ptr = (BYTE *)PTR_SEG_TO_LIN(handle);
+        /* It must be the thunk address */
+        if (*ptr == WINPROC_ThunkRef32To16.popl_eax)
+            ptr -= (int)&((WINDOWPROC *)0)->thunk;
+        /* Now we have a pointer to the WINDOWPROC struct */
+        if (((WINDOWPROC *)ptr)->magic == WINPROC_MAGIC)
+            return (WINDOWPROC *)ptr;
     }
 
     return NULL;
@@ -197,7 +227,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type )
         switch(type)
         {
         case WIN_PROC_16:
-            proc->thunk.t_from32 = WINPROC_ThunkRef32ATo16;
+            proc->thunk.t_from32 = WINPROC_ThunkRef32To16;
             proc->thunk.t_from32.proc = func;
             /* We need to fix the relative jump target */
             proc->thunk.t_from32.relay = (void (*)())((DWORD)proc->thunk.t_from32.relay -
@@ -206,10 +236,18 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type )
         case WIN_PROC_32A:
             proc->thunk.t_from16 = WINPROC_ThunkRef16To32A;
             proc->thunk.t_from16.proc = (FARPROC32)func;
+            proc->jmp = WINPROC_JumpRef;
+            /* Fixup relative jump */
+            proc->jmp.proc = (WNDPROC32)((DWORD)func -
+                                                 (DWORD)(&proc->jmp.proc + 1));
             break;
         case WIN_PROC_32W:
             proc->thunk.t_from16 = WINPROC_ThunkRef16To32W;
-            proc->thunk.t_from16.proc = (FARPROC32)func;
+            proc->thunk.t_from16.proc = (WNDPROC32)func;
+            proc->jmp = WINPROC_JumpRef;
+            /* Fixup relative jump */
+            proc->jmp.proc = (WNDPROC32)((DWORD)func -
+                                                 (DWORD)(&proc->jmp.proc + 1));
             break;
         default:
             /* Should not happen */
@@ -219,6 +257,8 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type )
         proc->type  = type;
     }
     proc->next  = NULL;
+    dprintf_win( stddeb, "WINPROC_AllocWinProc(%08x,%d): returning %08x\n",
+                 (UINT32)func, type, (UINT32)proc );
     return proc;
 }
 
@@ -235,14 +275,15 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
         if (((WINDOWPROC *)proc)->type == WIN_PROC_16)
             return ((WINDOWPROC *)proc)->thunk.t_from32.proc;
         else
-            return (WNDPROC16)HEAP_GetSegptr( WinProcHeap, 0, proc );
+            return (WNDPROC16)HEAP_GetSegptr( WinProcHeap, 0,
+                                              &((WINDOWPROC *)proc)->thunk );
     }
     else  /* We want a 32-bit address */
     {
         if (((WINDOWPROC *)proc)->type == WIN_PROC_16)
-            return (WNDPROC16)proc;
+            return (WNDPROC16)&((WINDOWPROC *)proc)->thunk;
         else
-            return (WNDPROC16)((WINDOWPROC *)proc)->thunk.t_from16.proc;
+            return (WNDPROC16)&((WINDOWPROC *)proc)->jmp;
     }
 }
 
@@ -293,6 +334,8 @@ BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
 
     /* Add the win proc at the head of the list */
 
+    dprintf_win( stddeb, "WINPROC_SetProc(%08x,%08x,%d): res=%08x\n",
+                 (UINT32)*pFirst, (UINT32)func, type, (UINT32)proc );
     proc->next  = *(WINDOWPROC **)pFirst;
     *(WINDOWPROC **)pFirst = proc;
     return TRUE;
@@ -309,6 +352,7 @@ void WINPROC_FreeProc( HWINDOWPROC proc )
     while (proc)
     {
         WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
+        dprintf_win( stddeb, "WINPROC_FreeProc: freeing %08x\n", (UINT32)proc);
         HeapFree( WinProcHeap, 0, proc );
         proc = next;
     }
@@ -383,7 +427,7 @@ void WINPROC_UnmapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            STRING32_UniToAnsi( (LPSTR)*ptr, (LPWSTR)(ptr + 1) );
+            lstrcpynWtoA( (LPSTR)*ptr, (LPWSTR)(ptr + 1), wParam );
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
@@ -457,7 +501,7 @@ void WINPROC_UnmapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            STRING32_AnsiToUni( (LPWSTR)*ptr, (LPSTR)(ptr + 1) );
+            lstrcpynAtoW( (LPWSTR)*ptr, (LPSTR)(ptr + 1), wParam );
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
@@ -780,10 +824,12 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
     case WM_COMMAND:
-    case WM_HSCROLL:
     case WM_VKEYTOITEM:
-    case WM_VSCROLL:
         *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32) );
+        return 0;
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+        *plparam = MAKELPARAM( HIWORD(wParam32), (HWND16)*plparam );
         return 0;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -1169,23 +1215,7 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
 
     if (WINPROC_MapMsg32ATo16( msg, wParam, &msg16, &wParam16, &lParam ) == -1)
         return 0;
-#ifndef WINELIB
-    if ((msg16 == WM_CREATE) || (msg16 == WM_NCCREATE))
-    {
-        CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
-        /* Build the CREATESTRUCT on the 16-bit stack. */
-        /* This is really ugly, but some programs (notably the */
-        /* "Undocumented Windows" examples) want it that way.  */
-        result = CallWndProcNCCREATE16( func, ds, cs->dwExStyle,
-                      cs->lpszClass, cs->lpszName, cs->style, cs->x, cs->y,
-                      cs->cx, cs->cy, cs->hwndParent, cs->hMenu, cs->hInstance,
-                      (LONG)cs->lpCreateParams, hwnd, msg16, wParam16,
-                      MAKELONG( IF1632_Saved16_sp-sizeof(CREATESTRUCT16),
-                                IF1632_Saved16_ss ) );
-    }
-    else
-#endif  /* WINELIB */
-        result = CallWndProc16( func, ds, hwnd, msg16, wParam16, lParam );
+    result = CallWndProc16( func, ds, hwnd, msg16, wParam16, lParam );
     WINPROC_UnmapMsg32ATo16( msg16, wParam16, lParam );
     return result;
 }
@@ -1242,6 +1272,22 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     case WIN_PROC_16:
         if (!proc->thunk.t_from32.proc) return 0;
         wndPtr = WIN_FindWndPtr( hwnd );
+#ifndef WINELIB
+        if ((msg == WM_CREATE) || (msg == WM_NCCREATE))
+        {
+            CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            /* Build the CREATESTRUCT on the 16-bit stack. */
+            /* This is really ugly, but some programs (notably the */
+            /* "Undocumented Windows" examples) want it that way.  */
+            return CallWndProcNCCREATE16( proc->thunk.t_from32.proc,
+                      wndPtr ? wndPtr->hInstance : CURRENT_DS, cs->dwExStyle,
+                      cs->lpszClass, cs->lpszName, cs->style, cs->x, cs->y,
+                      cs->cx, cs->cy, cs->hwndParent, cs->hMenu, cs->hInstance,
+                      (LONG)cs->lpCreateParams, hwnd, msg, wParam,
+                      MAKELONG( IF1632_Saved16_sp-sizeof(CREATESTRUCT16),
+                                IF1632_Saved16_ss ) );
+        }
+#endif
         return CallWndProc16( proc->thunk.t_from32.proc,
                               wndPtr ? wndPtr->hInstance : CURRENT_DS,
                               hwnd, msg, wParam, lParam );

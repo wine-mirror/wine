@@ -26,30 +26,30 @@ base	1
 0021 stub ChangeClipboardChain
 0022 stdcall ChangeMenuA(long long ptr long long) ChangeMenu32A
 0023 stdcall ChangeMenuW(long long ptr long long) ChangeMenu32W
-0024 stub CharLowerA
-0025 stub CharLowerBuffA
-0026 stub CharLowerBuffW
-0027 stub CharLowerW
-0028 stub CharNextA
-0029 stub CharNextExA
-0030 stub CharNextExW
-0031 stub CharNextW
-0032 stub CharPrevA
-0033 stub CharPrevExA
-0034 stub CharPrevExW
-0035 stub CharPrevW
-0036 stub CharToOemA
-0037 stub CharToOemBuffA
-0038 stub CharToOemBuffW
-0039 stub CharToOemW
-0040 stub CharUpperA
-0041 stub CharUpperBuffA
-0042 stub CharUpperBuffW
-0043 stub CharUpperW
-0044 stub CheckDlgButton
+0024 stdcall CharLowerA(ptr) CharLower32A
+0025 stdcall CharLowerBuffA(ptr long) CharLowerBuff32A
+0026 stdcall CharLowerBuffW(ptr long) CharLowerBuff32W
+0027 stdcall CharLowerW(ptr) CharLower32W
+0028 stdcall CharNextA(ptr) CharNext32A
+0029 stdcall CharNextExA(long ptr long) CharNextEx32A
+0030 stdcall CharNextExW(long ptr long) CharNextEx32W
+0031 stdcall CharNextW(ptr) CharNext32W
+0032 stdcall CharPrevA(ptr ptr) CharPrev32A
+0033 stdcall CharPrevExA(long ptr ptr long) CharPrevEx32A
+0034 stdcall CharPrevExW(long ptr ptr long) CharPrevEx32W
+0035 stdcall CharPrevW(ptr ptr) CharPrev32W
+0036 stdcall CharToOemA(ptr ptr) CharToOem32A
+0037 stdcall CharToOemBuffA(ptr ptr long) CharToOemBuff32A
+0038 stdcall CharToOemBuffW(ptr ptr long) CharToOemBuff32W
+0039 stdcall CharToOemW(ptr ptr) CharToOem32W
+0040 stdcall CharUpperA(ptr) CharUpper32A
+0041 stdcall CharUpperBuffA(ptr long) CharUpperBuff32A
+0042 stdcall CharUpperBuffW(ptr long) CharUpperBuff32W
+0043 stdcall CharUpperW(ptr) CharUpper32W
+0044 stdcall CheckDlgButton(long long long) CheckDlgButton
 0045 stdcall CheckMenuItem(long long long) CheckMenuItem
 0046 stub CheckMenuRadioItem
-0047 stub CheckRadioButton
+0047 stdcall CheckRadioButton(long long long long) CheckRadioButton
 0048 stdcall ChildWindowFromPoint(long long long) ChildWindowFromPoint32
 0049 stub ChildWindowFromPointEx
 0050 stub ClientThreadConnect
@@ -61,13 +61,13 @@ base	1
 0056 stub CloseWindowStation
 0057 stub CopyAcceleratorTableA
 0058 stub CopyAcceleratorTableW
-0059 stub CopyIcon
+0059 stdcall CopyIcon(long) CopyIcon32
 0060 stub CopyImage
 0061 stdcall CopyRect(ptr ptr) CopyRect32
 0062 stub CountClipboardFormats
 0063 stub CreateAcceleratorTableA
 0064 stub CreateAcceleratorTableW
-0065 stub CreateCaret
+0065 stdcall CreateCaret(long long long long) CreateCaret
 0066 stub CreateCursor
 0067 stub CreateDesktopA
 0068 stub CreateDesktopW
@@ -134,7 +134,7 @@ base	1
 0127 stub DeferWindowPos
 0128 stub DeleteMenu
 0129 stub DestroyAcceleratorTable
-0130 stub DestroyCaret
+0130 stdcall DestroyCaret() DestroyCaret
 0131 stub DestroyCursor
 0132 stub DestroyIcon
 0133 stub DestroyMenu
@@ -158,10 +158,10 @@ base	1
 0151 stub DragObject
 0152 stub DrawAnimatedRects
 0153 stub DrawCaption
-0154 stub DrawEdge
+0154 stdcall DrawEdge(long ptr long long) DrawEdge32
 0155 stdcall DrawFocusRect(long ptr) DrawFocusRect32
 0156 stub DrawFrame
-0157 stub DrawFrameControl
+0157 stdcall DrawFrameControl(long ptr long long) DrawFrameControl32
 0158 stub DrawIcon
 0159 stub DrawIconEx
 0160 stdcall DrawMenuBar(long) DrawMenuBar
@@ -212,7 +212,7 @@ base	1
 0205 stdcall GetAppCompatFlags(long) GetAppCompatFlags
 0206 stub GetAsyncKeyState
 0207 stub GetCapture
-0208 stub GetCaretBlinkTime
+0208 stdcall GetCaretBlinkTime() GetCaretBlinkTime32
 0209 stdcall GetCaretPos(ptr) GetCaretPos32
 0210 stdcall GetClassInfoA(long ptr ptr) GetClassInfo32A
 0211 stdcall GetClassInfoExA(long ptr ptr) GetClassInfoEx32A
@@ -237,7 +237,7 @@ base	1
 0230 stub GetDCEx
 0231 stdcall GetDesktopWindow() GetDesktopWindow
 0232 stub GetDialogBaseUnits
-0233 stub GetDlgCtrlID
+0233 stdcall GetDlgCtrlID(long) GetDlgCtrlID
 0234 stdcall GetDlgItem(long long) GetDlgItem
 0235 stdcall GetDlgItemInt(long long long long) GetDlgItemInt
 0236 stdcall GetDlgItemTextA(long long ptr long) GetDlgItemText32A
@@ -320,7 +320,7 @@ base	1
 0313 stdcall GetWindowWord(long long) GetWindowWord
 0314 stub GrayStringA
 0315 stub GrayStringW
-0316 stub HideCaret
+0316 stdcall HideCaret(long) HideCaret
 0317 stub HiliteMenuItem
 0318 stub ImpersonateDdeClientWindow
 0319 stub InSendMessage
@@ -334,14 +334,14 @@ base	1
 0327 stdcall InvalidateRect(long ptr long) InvalidateRect32
 0328 stdcall InvalidateRgn(long long long) InvalidateRgn
 0329 stdcall InvertRect(long ptr) InvertRect32
-0330 stub IsCharAlphaA
-0331 stub IsCharAlphaNumericA
-0332 stub IsCharAlphaNumericW
-0333 stub IsCharAlphaW
-0334 stub IsCharLowerA
-0335 stub IsCharLowerW
-0336 stub IsCharUpperA
-0337 stub IsCharUpperW
+0330 stdcall IsCharAlphaA(long) IsCharAlpha32A
+0331 stdcall IsCharAlphaNumericA(long) IsCharAlphaNumeric32A
+0332 stdcall IsCharAlphaNumericW(long) IsCharAlphaNumeric32W
+0333 stdcall IsCharAlphaW(long) IsCharAlpha32W
+0334 stdcall IsCharLowerA(long) IsCharLower32A
+0335 stdcall IsCharLowerW(long) IsCharLower32W
+0336 stdcall IsCharUpperA(long) IsCharUpper32A
+0337 stdcall IsCharUpperW(long) IsCharUpper32W
 0338 stub IsChild
 0339 stub IsClipboardFormatAvailable
 0340 stub IsDialogMessage
@@ -351,13 +351,13 @@ base	1
 0344 stdcall IsIconic(long) IsIconic
 0345 stub IsMenu
 0346 stdcall IsRectEmpty(ptr) IsRectEmpty32
-0347 stub IsWindow
+0347 stdcall IsWindow(long) IsWindow
 0348 stdcall IsWindowEnabled(long) IsWindowEnabled
 0349 stdcall IsWindowUnicode(long) IsWindowUnicode
 0350 stdcall IsWindowVisible(long) IsWindowVisible
 0351 stub IsZoomed
-0352 stub KillSystemTimer
-0353 stdcall KillTimer(long long) KillTimer
+0352 stdcall KillSystemTimer(long long) KillSystemTimer32
+0353 stdcall KillTimer(long long) KillTimer32
 0354 	stdcall LoadAcceleratorsA(long ptr) WIN32_LoadAcceleratorsA
 0355 stdcall LoadAcceleratorsW(long ptr)	WIN32_LoadAcceleratorsW
 0356 	stdcall LoadBitmapA(long ptr) WIN32_LoadBitmapA
@@ -405,10 +405,10 @@ base	1
 0398 stdcall MoveWindow(long long long long long long) MoveWindow
 0399 stub MsgWaitForMultipleObjects
 0400 stub OemKeyScan
-0401 stub OemToCharA
-0402 stub OemToCharBuffA
-0403 stub OemToCharBuffW
-0404 stub OemToCharW
+0401 stdcall OemToCharA(ptr ptr) OemToChar32A
+0402 stdcall OemToCharBuffA(ptr ptr long) OemToCharBuff32A
+0403 stdcall OemToCharBuffW(ptr ptr long) OemToCharBuff32W
+0404 stdcall OemToCharW(ptr ptr) OemToChar32W
 0405 stdcall OffsetRect(ptr long long) OffsetRect32
 0406 stub OpenClipboard
 0407 stub OpenDesktopA
@@ -468,8 +468,8 @@ base	1
 0461 stub ServerSetFunctionPointers
 0462 stub SetActiveWindow
 0463 stdcall SetCapture(long) SetCapture
-0464 stub SetCaretBlinkTime
-0465 stub SetCaretPos
+0464 stdcall SetCaretBlinkTime(long) SetCaretBlinkTime
+0465 stdcall SetCaretPos(long long) SetCaretPos
 0466 stdcall SetClassLongA(long long long) SetClassLong32A
 0467 stdcall SetClassLongW(long long long) SetClassLong32W
 0468 stdcall SetClassWord(long long long) SetClassWord
@@ -484,7 +484,7 @@ base	1
 0477 stdcall SetDlgItemTextA(long long ptr) SetDlgItemText32A
 0478 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
 0479 stub SetDoubleClickTime
-0480 stub SetFocus
+0480 stdcall SetFocus(long) SetFocus
 0481 stub SetForegroundWindow
 0482 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
 0483 stub SetKeyboardState
@@ -512,9 +512,9 @@ base	1
 0505 stub SetSysColorsTemp
 0506 stub SetSystemCursor
 0507 stub SetSystemMenu
-0508 stub SetSystemTimer
+0508 stdcall SetSystemTimer(long long long ptr) SetSystemTimer32
 0509 stub SetThreadDesktop
-0510 stdcall SetTimer(long long long long) USER32_SetTimer
+0510 stdcall SetTimer(long long long ptr) SetTimer32
 0511 stub SetUserObjectInformationA
 0512 stub SetUserObjectInformationW
 0513 stub SetUserObjectSecurity
@@ -532,7 +532,7 @@ base	1
 0525 stdcall SetWindowsHookExA(long long long long) SetWindowsHookEx32A
 0526 stub SetWindowsHookExW
 0527 stub SetWindowsHookW
-0528 stub ShowCaret
+0528 stdcall ShowCaret(long) ShowCaret
 0529 stdcall ShowCursor(long) ShowCursor
 0530 stub ShowOwnedPopups
 0531 stub ShowScrollBar

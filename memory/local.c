@@ -1603,9 +1603,6 @@ BOOL16 LocalNext( LOCALENTRY *pLocalEntry )
     return TRUE;
 }
 
-#ifndef WINELIB
-
-#endif  /* WINELIB */
 
 /***********************************************************************
  *           LocalAlloc32   (KERNEL32.371)

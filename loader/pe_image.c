@@ -101,7 +101,7 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
     }
 }
 
-static DWORD PE_FindExportedFunction(struct pe_data *pe, char* funcName)
+FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 {
 	struct PE_Export_Directory * exports = pe->pe_export;
 	unsigned load_addr = pe->load_addr;
@@ -109,7 +109,8 @@ static DWORD PE_FindExportedFunction(struct pe_data *pe, char* funcName)
 	u_long * function;
 	u_char ** name, *ename;
 	int i;
-	if(!exports)return 0;
+
+	if (!exports) return NULL;
 	ordinal = (u_short *) (((char *) load_addr) + (int) exports->Address_Of_Name_Ordinals);
 	function = (u_long *)  (((char *) load_addr) + (int) exports->AddressOfFunctions);
 	name = (u_char **)  (((char *) load_addr) + (int) exports->AddressOfNames);
@@ -119,27 +120,16 @@ static DWORD PE_FindExportedFunction(struct pe_data *pe, char* funcName)
 		{
 			ename =  (char *) (((char *) load_addr) + (int) *name);
 			if(strcmp(ename,funcName)==0)
-				return load_addr+*function;
+				return (FARPROC32)(load_addr + *function);
 		}else{
 			if(funcName == (int)*ordinal + exports->Base)
-				return load_addr+*function;
+				return (FARPROC32)(load_addr + *function);
 		}
 		function++;
 		ordinal++;
 		name++;
 	}
-	return 0;
-}
-
-DWORD PE_GetProcAddress(HMODULE hModule, char* function)
-{
-    NE_MODULE *pModule;
-
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!(pModule->flags & NE_FFLAGS_WIN32) || !pModule->pe_module) return 0;
-    if (pModule->flags & NE_FFLAGS_BUILTIN)
-        return BUILTIN_GetProcAddress32( pModule, function );
-    return PE_FindExportedFunction( pModule->pe_module, function );
+	return NULL;
 }
 
 void fixup_imports(struct pe_data *pe, HMODULE hModule)
@@ -211,24 +201,24 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
 	  {
 		int ordinal=*import_list & (0x80000000-1);
 		dprintf_win32(stddeb,"--- Ordinal %s,%d\n", Module, ordinal);
-		*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
-			ordinal);
+		*thunk_list = GetProcAddress32(MODULE_FindModule(Module),
+                                               (LPCSTR)ordinal);
 	  	if(!*thunk_list)
 	  	{
-	  		fprintf(stderr,"No implementation for %s.%d\n",Module, 
-				ordinal);
-			fixup_failed=1;
+	  		fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
+                                Module, ordinal);
+			/* fixup_failed=1; */
 	  	}
 	  }else{ /* import by name */
 	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
-	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
-				pe_name->Name);
+	  	*thunk_list = GetProcAddress32(MODULE_FindModule(Module),
+                                               pe_name->Name);
 	  if(!*thunk_list)
 	  {
-	  	fprintf(stderr,"No implementation for %s.%d(%s)\n",Module, 
-			pe_name->Hint, pe_name->Name);
-		fixup_failed=1;
+	  	fprintf(stderr,"No implementation for %s.%d(%s), setting to NULL\n",
+                        Module, pe_name->Hint, pe_name->Name);
+		/* fixup_failed=1; */
 	  }
 
 #else
@@ -251,15 +241,15 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
         }
         dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
-	/* FIXME: Both calls should be unified into GetProcAddress */
-        *thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
-                                           pe_name->Name);
+        *thunk_list = GetProcAddress32(MODULE_FindModule(Module),
+                                       pe_name->Name);
 #else
         fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
 #endif
         if(!*thunk_list) {
-          fprintf(stderr,"No implementation for %s.%d\n",Module, pe_name->Hint);
-          fixup_failed=1;
+          fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
+                  Module, pe_name->Hint);
+          /* fixup_failed=1; */
         }
         thunk_list++;
       }
@@ -533,7 +523,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE hModule, WORD offset )
 }
 
 HINSTANCE MODULE_CreateInstance(HMODULE hModule,LOADPARAMS *params);
-void InitTask(SIGCONTEXT context);
+void InitTask( SIGCONTEXT *context );
 
 HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
@@ -644,18 +634,18 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 int USER_InitApp(HINSTANCE hInstance);
 void PE_InitTEB(int hTEB);
 
-void PE_Win32CallToStart(SIGCONTEXT context)
+void PE_Win32CallToStart( SIGCONTEXT *context )
 {
     int fs;
     HMODULE hModule;
     NE_MODULE *pModule;
 
     dprintf_win32(stddeb,"Going to start Win32 program\n");	
-    InitTask(context);
+    InitTask( &context );
     hModule = GetExePtr( GetCurrentTask() );
     pModule = MODULE_GetPtr( hModule );
     USER_InitApp( hModule );
-    fs=(int)GlobalAlloc16(GHND,0x10000);
+    fs=(int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
     PE_InitTEB(fs);
     __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
     CallTaskStart32( (FARPROC)(pModule->pe_module->load_addr + 

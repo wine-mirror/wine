@@ -7,8 +7,70 @@
 #ifndef __WINE_REGISTERS_H
 #define __WINE_REGISTERS_H
 
-#include <windows.h>
-#include "wine.h"
+#include "wintypes.h"
+
+#ifndef WINELIB
+
+#ifdef i386
+extern int runtime_cpu (void);
+#else
+static inline int runtime_cpu(void) { return 3; }
+#endif
+
+#ifdef linux
+typedef struct
+{
+    unsigned short sc_gs, __gsh;
+    unsigned short sc_fs, __fsh;
+    unsigned short sc_es, __esh;
+    unsigned short sc_ds, __dsh;
+    unsigned long sc_edi;
+    unsigned long sc_esi;
+    unsigned long sc_ebp;
+    unsigned long sc_esp;
+    unsigned long sc_ebx;
+    unsigned long sc_edx;
+    unsigned long sc_ecx;
+    unsigned long sc_eax;
+    unsigned long sc_trapno;
+    unsigned long sc_err;
+    unsigned long sc_eip;
+    unsigned short sc_cs, __csh;
+    unsigned long sc_eflags;
+    unsigned long esp_at_signal;
+    unsigned short sc_ss, __ssh;
+    unsigned long i387;
+    unsigned long oldmask;
+    unsigned long cr2;
+} SIGCONTEXT;
+#define WINE_DATA_SELECTOR 0x2b
+#define WINE_CODE_SELECTOR 0x23
+#endif  /* linux */
+
+#ifdef __NetBSD__
+#include <signal.h>
+typedef struct sigcontext SIGCONTEXT;
+#define WINE_DATA_SELECTOR 0x1f
+#define WINE_CODE_SELECTOR 0x17
+#endif  /* NetBSD */
+
+#if defined(__svr4__) || defined(_SCO_DS)
+#include <signal.h>
+#ifdef _SCO_DS
+#include <sys/regset.h>
+#endif
+#include <sys/ucontext.h>
+typedef struct ucontext SIGCONTEXT;
+#define WINE_DATA_SELECTOR 0x1f
+#define WINE_CODE_SELECTOR 0x17
+#endif  /* svr4 || SCO_DS */
+
+#ifdef __FreeBSD__
+#include <signal.h>
+typedef struct sigcontext SIGCONTEXT;
+#define WINE_DATA_SELECTOR 0x27
+#define WINE_CODE_SELECTOR 0x1f
+#endif  /* FreeBSD */
 
 #if !defined(__svr4__) && !defined(_SCO_DS)
 
@@ -124,5 +186,13 @@
 
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
+
+#else  /* ifndef WINELIB */
+
+typedef void SIGCONTEXT;
+#define WINE_DATA_SELECTOR 0x00
+#define WINE_CODE_SELECTOR 0x00
+
+#endif  /* ifndef WINELIB */
 
 #endif /* __WINE_REGISTERS_H */

@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "registers.h"
 #include "ldt.h"
-#include "wine.h"
 #include "drive.h"
 #include "msdos.h"
 #include "miscemu.h"
@@ -25,24 +23,24 @@ void do_mscdex( SIGCONTEXT *context );
  *
  * Handler for int 2fh (multiplex).
  */
-void INT_Int2fHandler( SIGCONTEXT context )
+void INT_Int2fHandler( SIGCONTEXT *context )
 {
-    switch(AH_reg(&context))
+    switch(AH_reg(context))
     {
     case 0x10:
-        AL_reg(&context) = 0xff; /* share is installed */
+        AL_reg(context) = 0xff; /* share is installed */
         break;
 
     case 0x15: /* mscdex */
-        do_mscdex(&context);
+        do_mscdex(context);
         break;
 
     case 0x16:
-        do_int2f_16( &context );
+        do_int2f_16( context );
         break;
 
     case 0x4a:
-        switch(AL_reg(&context))
+        switch(AL_reg(context))
         {
 	case 0x10:  /* smartdrv */
 	    break;  /* not installed */
@@ -51,14 +49,14 @@ void INT_Int2fHandler( SIGCONTEXT context )
         case 0x12:  /* realtime compression interface */
             break;  /* not installed */
         default:
-            INT_BARF( &context, 0x2f );
+            INT_BARF( context, 0x2f );
         }
         break;
     case 0xb7:  /* append */
-        AL_reg(&context) = 0; /* not installed */
+        AL_reg(context) = 0; /* not installed */
         break;
     default:
-        INT_BARF( &context, 0x2f );
+        INT_BARF( context, 0x2f );
         break;
     }
 }
@@ -100,8 +98,8 @@ static void do_int2f_16( SIGCONTEXT *context )
 	break;
 
     case 0x84:  /* Get device API entry point */
-        addr = MODULE_GetEntryPoint( GetModuleHandle("WPROCS"),
-                                     VXD_BASE + BX_reg(context) );
+        addr = (DWORD)MODULE_GetEntryPoint( GetModuleHandle("WPROCS"),
+                                            VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {
 	    fprintf( stderr,"Application attempted to access VxD %04x\n",

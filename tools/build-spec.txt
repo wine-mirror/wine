@@ -1,6 +1,7 @@
 name	NAME
 type    win16|win32
-id	ID_NUMBER
+[base   ORDINAL]
+[heap   SIZE]
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
 
@@ -17,10 +18,12 @@ ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
 --------------------
 General:
 
-    "name", "type" and "id" fields are mandatory.  Specific ordinal
+    "name" and "type" fields are mandatory.  Specific ordinal
 declarations are optional, but the default handler will print an error
-message.  Lines whose first character is a '#' will be ignored as
-comments.
+message.  "base" gives the offset of the first ordinal; default is 0.
+"heap" is the size of the module local heap (only valid for Win16
+modules); default is no local heap.  Lines whose first character is a
+'#' will be ignored as comments.
 
 Variable ordinals:
 
@@ -33,19 +36,36 @@ dynamic linking.  "DATA" can be a decimal number or a hex number preceeded
 by "0x".  The following example defines the variable "VariableA" at
 ordinal 2 and containing 4 bytes:
 
-	2 byte VariableA -1 0xff 0 0
+	2 byte VariableA(-1 0xff 0 0)
 
 Function ordinals:
 
     This type defines a function entry point.  The prototype defined by
 "EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available for
-dynamic linking and the format of the 16-bit stack. "ORDINAL" is replaced
-by the ordinal number corresponding to the function.  "FUNCTYPE" should be
-"pascal16" or "pascal" for 16-bit or 32-bit return values.  "ARGTYPE"
-should be "byte", "word", "long", "ptr" (linear pointer), "s_byte" (signed
-byte), "s_word" (signed word), "s_long" (signed long), or "segptr"
-(segmented pointer).  "HANDLERNAME" is the name of the actual function that
-will process the request in 32-bit mode.
+dynamic linking and the format of the arguments. "ORDINAL" is replaced
+by the ordinal number corresponding to the function.
+
+"FUNCTYPE" should be one of:
+- "pascal16" for a Win16 function returning a 16-bit value
+- "pascal" for a Win16 function returning a 32-bit value
+- "register" for a function using CPU register to pass arguments
+- "stdcall" for a normal Win32 function
+- "cdecl" for a Win32 function using the C calling convention
+
+"ARGTYPE" should be one of:
+- "byte"
+- "word"
+- "long"
+- "ptr" (linear pointer)
+- "s_byte" (signed byte)
+- "s_word" (signed word)
+- "s_long" (signed long)
+- "segptr" (segmented pointer).
+
+Only "ptr" and "long" are valid for Win32 functions.
+
+"HANDLERNAME" is the name of the actual Wine function that will
+process the request in 32-bit mode.
 
     This first example defines an entry point for the CreateWindow()
 call (the ordinal 100 is just an example):

@@ -85,31 +85,18 @@ typedef struct
 
 #define EDITSTATEPTR(wndPtr) (*(EDITSTATE **)((wndPtr)->wExtra))
 
-#ifdef WINELIB32
 #define EDIT_SEND_CTLCOLOR(wndPtr,hdc) \
-		SendMessage32A((wndPtr)->parent->hwndSelf, WM_CTLCOLOREDIT, \
-				(WPARAM)(hdc), (LPARAM)(wndPtr)->hwndSelf)
+    (SendMessage32A((wndPtr)->parent->hwndSelf, WM_CTLCOLOREDIT, \
+                    (WPARAM)(hdc), (LPARAM)(wndPtr)->hwndSelf ))
 #define EDIT_NOTIFY_PARENT(wndPtr, wNotifyCode) \
-		SendMessage32A((wndPtr)->parent->hwndSelf, WM_COMMAND, \
-				MAKEWPARAM((wndPtr)->wIDmenu, wNotifyCode), \
-				(LPARAM)(wndPtr)->hwndSelf )
+    (SendMessage32A((wndPtr)->parent->hwndSelf, WM_COMMAND, \
+                    MAKEWPARAM((wndPtr)->wIDmenu, wNotifyCode), \
+                    (LPARAM)(wndPtr)->hwndSelf ))
 #define DPRINTF_EDIT_MSG(str) \
-		dprintf_edit(stddeb, \
-			"edit: " str ": hwnd=%08x, wParam=%08x, lParam=%08lx\n", \
-			(UINT)hwnd, (UINT)wParam, (DWORD)lParam)
-#else
-#define EDIT_SEND_CTLCOLOR(wndPtr,hdc) \
-		SendMessage16((wndPtr)->parent->hwndSelf, WM_CTLCOLOR, \
-				(WPARAM)(hdc), MAKELPARAM((wndPtr)->hwndSelf, CTLCOLOR_EDIT))
-#define EDIT_NOTIFY_PARENT(wndPtr, wNotifyCode) \
-		SendMessage16((wndPtr)->parent->hwndSelf, WM_COMMAND, \
-				(wndPtr)->wIDmenu, \
-				MAKELPARAM((wndPtr)->hwndSelf, wNotifyCode))
-#define DPRINTF_EDIT_MSG(str) \
-		dprintf_edit(stddeb, \
-			"edit: " str ": hwnd=%04x, wParam=%04x, lParam=%08lx\n", \
-			(UINT)hwnd, (UINT)wParam, (DWORD)lParam)
-#endif
+    dprintf_edit(stddeb, \
+                 "edit: " str ": hwnd=%04x, wParam=%04x, lParam=%08x\n", \
+                 (UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
+
 
 /*********************************************************************
  *

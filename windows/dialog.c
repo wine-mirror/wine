@@ -295,11 +295,6 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
         }
         if (!hwndCtrl) return FALSE;
 
-        /* Make the control last one in Z-order, so that controls remain
-           in the order in which they were created */
-	SetWindowPos( hwndCtrl, HWND_BOTTOM, 0, 0, 0, 0,
-                      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-
             /* Send initialisation messages to the control */
         if (dlgInfo->hUserFont) SendMessage32A( hwndCtrl, WM_SETFONT,
                                                (WPARAM)dlgInfo->hUserFont, 0 );
@@ -548,7 +543,10 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     rect.bottom -= rect.top;
 
     if ((INT16)template.x == CW_USEDEFAULT16)
-        rect.left = rect.top = CW_USEDEFAULT16;
+    {
+        rect.left = rect.top = (procType == WIN_PROC_16) ? CW_USEDEFAULT16
+                                                         : CW_USEDEFAULT32;
+    }
     else
     {
         rect.left += template.x * xUnit / 4;
@@ -929,36 +927,20 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
             break;
 
         case VK_ESCAPE:
-#ifdef WINELIB32
-            SendMessage32A( hwndDlg, WM_COMMAND, 
-                            MAKEWPARAM( IDCANCEL, 0 ),
-                            (LPARAM)GetDlgItem(hwndDlg,IDCANCEL) );
-#else
-            SendMessage16( hwndDlg, WM_COMMAND, IDCANCEL,
-                           MAKELPARAM( GetDlgItem(hwndDlg,IDCANCEL), 0 ));
-#endif
+            SendMessage32A( hwndDlg, WM_COMMAND, IDCANCEL,
+                            (LPARAM)GetDlgItem( hwndDlg, IDCANCEL ) );
             break;
 
         case VK_RETURN:
             {
                 DWORD dw = SendMessage16( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
-#ifdef WINELIB32
                     SendMessage32A( hwndDlg, WM_COMMAND, 
                                     MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
-                                   (LPARAM)GetDlgItem( hwndDlg, LOWORD(dw) ) );
+                                    (LPARAM)GetDlgItem( hwndDlg, LOWORD(dw) ));
                 else
-                    SendMessage32A( hwndDlg, WM_COMMAND, 
-                                    MAKEWPARAM( IDOK, 0 ),
-                                    (LPARAM)GetDlgItem(hwndDlg,IDOK) );
-#else
-                    SendMessage16( hwndDlg, WM_COMMAND, LOWORD(dw),
-                                 MAKELPARAM( GetDlgItem( hwndDlg, LOWORD(dw) ),
-                                             BN_CLICKED ));
-                else
-                    SendMessage16( hwndDlg, WM_COMMAND, IDOK,
-                                 MAKELPARAM( GetDlgItem(hwndDlg,IDOK), 0 ));
-#endif
+                    SendMessage32A( hwndDlg, WM_COMMAND, IDOK,
+                                    (LPARAM)GetDlgItem( hwndDlg, IDOK ) );
             }
             break;
 
@@ -985,9 +967,9 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
 
 
 /****************************************************************
- *         GetDlgCtrlID           (USER.277)
+ *         GetDlgCtrlID   (USER.277) (USER32.233)
  */
-int GetDlgCtrlID( HWND hwnd )
+INT16 GetDlgCtrlID( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     if (wndPtr) return wndPtr->wIDmenu;
@@ -1164,9 +1146,9 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 
 
 /***********************************************************************
- *           CheckDlgButton   (USER.97)
+ *           CheckDlgButton   (USER.97) (USER32.44)
  */
-BOOL CheckDlgButton( HWND hwnd, INT id, UINT check )
+BOOL16 CheckDlgButton( HWND32 hwnd, INT32 id, UINT32 check )
 {
     SendDlgItemMessage32A( hwnd, id, BM_SETCHECK32, check, 0 );
     return TRUE;
@@ -1183,9 +1165,10 @@ WORD IsDlgButtonChecked( HWND hwnd, WORD id )
 
 
 /***********************************************************************
- *           CheckRadioButton   (USER.96)
+ *           CheckRadioButton   (USER.96) (USER32.47)
  */
-BOOL CheckRadioButton( HWND hwndDlg, UINT firstID, UINT lastID, UINT checkID )
+BOOL16 CheckRadioButton( HWND32 hwndDlg, UINT32 firstID, UINT32 lastID,
+                         UINT32 checkID )
 {
     WND *pWnd = WIN_FindWndPtr( hwndDlg );
     if (!pWnd) return FALSE;

@@ -9,9 +9,7 @@
 
 #include "gdi.h"
 
-#ifndef WINELIB
 #pragma pack(1)
-#endif
 
   /* GDI logical font object */
 typedef struct
@@ -19,6 +17,8 @@ typedef struct
     GDIOBJHDR   header;
     LOGFONT16   logfont WINE_PACKED;
 } FONTOBJ;
+
+#pragma pack(4)
 
 /* may be switched... */
 #define GGO_BITMAP	0x4F4D
@@ -39,9 +39,6 @@ typedef struct
 	DWORD	eM22;
 } MAT2,*LPMAT2;
 
-#ifndef WINELIB
-#pragma pack(4)
-#endif
 
 extern BOOL FONT_Init( void );
 extern int FONT_GetObject( FONTOBJ * font, int count, LPSTR buffer );

@@ -552,39 +552,33 @@ HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
 
 
 /***********************************************************************
- *           CopyIcon    (USER.368)
+ *           CopyIcon16    (USER.368)
  */
-#ifdef WINELIB
-HICON CopyIcon( HICON hIcon )
+HICON16 CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 {
-    dprintf_icon( stddeb, "CopyIcon: %04x\n", hIcon );
-    return CURSORICON_Copy( 0, hIcon );
-}
-#else
-HICON CopyIcon( HANDLE hInstance, HICON hIcon )
-{
-    dprintf_icon( stddeb, "CopyIcon: %04x %04x\n", hInstance, hIcon );
+    dprintf_icon( stddeb, "CopyIcon16: %04x %04x\n", hInstance, hIcon );
     return CURSORICON_Copy( hInstance, hIcon );
 }
-#endif
 
 
 /***********************************************************************
- *           CopyCursor    (USER.369)
+ *           CopyIcon32    (USER32.59)
  */
-#ifdef WINELIB
-HCURSOR CopyCursor( HCURSOR hCursor )
+HICON32 CopyIcon32( HICON32 hIcon )
 {
-    dprintf_cursor( stddeb, "CopyCursor: %04x\n", hCursor );
-    return CURSORICON_Copy( 0, hCursor );
+    dprintf_icon( stddeb, "CopyIcon32: %04x\n", hIcon );
+    return CURSORICON_Copy( 0, hIcon );
 }
-#else
-HCURSOR CopyCursor( HANDLE hInstance, HCURSOR hCursor )
+
+
+/***********************************************************************
+ *           CopyCursor16    (USER.369)
+ */
+HCURSOR16 CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 {
-    dprintf_cursor( stddeb, "CopyCursor: %04x %04x\n", hInstance, hCursor );
+    dprintf_cursor( stddeb, "CopyCursor16: %04x %04x\n", hInstance, hCursor );
     return CURSORICON_Copy( hInstance, hCursor );
 }
-#endif
 
 
 /***********************************************************************

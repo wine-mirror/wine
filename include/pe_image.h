@@ -20,6 +20,7 @@ struct pe_data {
 typedef struct pe_data PE_MODULE;
 
 extern int PE_unloadImage(HMODULE32 hModule);
+extern FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName);
 extern void my_wcstombs(char * result, u_short * source, int len);
 
 #endif /* __WINE_PE_IMAGE_H */

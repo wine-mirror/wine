@@ -96,7 +96,6 @@
 #undef DEBUG_DOSFS
 #undef DEBUG_DRIVER
 #undef DEBUG_EDIT
-#undef DEBUG_ENUM
 #undef DEBUG_ENV
 #undef DEBUG_EVENT
 #undef DEBUG_EXEC
@@ -174,7 +173,6 @@
 #define DEBUG_DOSFS
 #define DEBUG_DRIVER
 #define DEBUG_EDIT
-#define DEBUG_ENUM
 #define DEBUG_ENV
 #define DEBUG_EVENT
 #define DEBUG_EXEC

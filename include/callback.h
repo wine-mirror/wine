@@ -1,5 +1,5 @@
 /*
- * 16-bit mode callback functions
+ * Callback functions
  *
  * Copyright 1995 Alexandre Julliard
  */
@@ -77,16 +77,16 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
 #define CallWindowsExitProc( func, nExitType ) \
     CallTo16_word_w( func, CURRENT_DS, nExitType )
 #define CallWndProc16( func, ds, hwnd, msg, wParam, lParam ) \
-    CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
+    CallTo16_long_wwwl( (FARPROC16)(func), ds, hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, CURRENT_DS, lpch, ichCurrent, cch, code )
 #define CallWndProcNCCREATE16( func, ds, exStyle, clsName, winName, style, \
                                x, y, cx, cy, hparent, hmenu, instance, \
                                params, hwnd, msg, wParam, lParam ) \
-    CallTo16_long_lllllllwlwwwl( func, ds, exStyle, clsName, winName, style, \
-                                 MAKELONG(y,x), MAKELONG(cy,cx), \
-                                 MAKELONG(hmenu,hparent), instance, params, \
-                                 hwnd, msg, wParam, lParam )
+    CallTo16_long_lllllllwlwwwl( (FARPROC16)(func), ds, exStyle, clsName, \
+                              winName, style, MAKELONG(y,x), MAKELONG(cy,cx), \
+                              MAKELONG(hmenu,hparent), instance, params, \
+                              hwnd, msg, wParam, lParam )
 
 /* List of the 32-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto32.S */

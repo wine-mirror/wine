@@ -11,10 +11,6 @@ extern "C" {
 
 #include "wintypes.h"		/* needed for CHOOSEFONT structure */
 
-#ifndef WINELIB
-#pragma pack(1)
-#endif
-
 #define RT_CURSOR           MAKEINTRESOURCE(1)
 #define RT_BITMAP           MAKEINTRESOURCE(2)
 #define RT_ICON             MAKEINTRESOURCE(3)
@@ -28,10 +24,6 @@ extern "C" {
 
 #define RT_GROUP_CURSOR     MAKEINTRESOURCE(12)
 #define RT_GROUP_ICON       MAKEINTRESOURCE(14)
-
-#ifndef HGLOBAL
-#define HGLOBAL     HANDLE
-#endif
 
 #define OFN_READONLY                 0x00000001
 #define OFN_OVERWRITEPROMPT          0x00000002
@@ -55,7 +47,6 @@ extern "C" {
 #define OFN_SHARENOWARN          1
 #define OFN_SHAREWARN            0
 
-
 typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
@@ -75,8 +66,7 @@ typedef struct {
 	UINT		nFileExtension;
 	SEGPTR		lpstrDefExt;
 	LPARAM 		lCustData;
-/*	UINT 		(CALLBACK *lpfnHook)(HWND, UINT, WPARAM, LPARAM);*/
-        FARPROC         lpfnHook;
+        WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;
 	}   OPENFILENAME;
 typedef OPENFILENAME * LPOPENFILENAME;
@@ -90,7 +80,7 @@ typedef struct {
 	COLORREF       *lpCustColors;
 	DWORD 		Flags;
 	LPARAM		lCustData;
-	UINT		(*lpfnHook)(HWND, UINT, WPARAM, LPARAM);
+        WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;
 	} CHOOSECOLOR;
 typedef CHOOSECOLOR *LPCHOOSECOLOR;
@@ -114,8 +104,7 @@ typedef struct {
 	UINT		wFindWhatLen;           /* size of find buffer      */
 	UINT 		wReplaceWithLen;        /* size of replace buffer   */
 	LPARAM 		lCustData;              /* data passed to hook fn.  */
-/*	UINT		(CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM); */
-        FARPROC         lpfnHook;
+        WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;         /* custom template name     */
 	} FINDREPLACE;
 typedef FINDREPLACE *LPFINDREPLACE;
@@ -139,6 +128,8 @@ typedef FINDREPLACE *LPFINDREPLACE;
 #define FR_HIDEWHOLEWORD                0x00010000
 
 
+#pragma pack(1)
+
 typedef struct {
 	DWORD			lStructSize;
 	HWND			hwndOwner;          /* caller's window handle   */
@@ -148,8 +139,7 @@ typedef struct {
 	DWORD			Flags WINE_PACKED;  /* enum. type flags         */
 	COLORREF		rgbColors;          /* returned text color      */
 	LPARAM	                lCustData;          /* data passed to hook fn.  */
-/*	UINT (CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM);*/
-        FARPROC                 lpfnHook;
+        WNDPROC16               lpfnHook;
 	SEGPTR			lpTemplateName;     /* custom template name     */
 	HINSTANCE		hInstance;          /* instance handle of.EXE that   */
 							/* contains cust. dlg. template  */
@@ -164,6 +154,7 @@ typedef struct {
 	} CHOOSEFONT;
 typedef CHOOSEFONT *LPCHOOSEFONT;
 
+#pragma pack(4)
 
 #define CF_SCREENFONTS               0x00000001
 #define CF_PRINTERFONTS              0x00000002
@@ -226,17 +217,14 @@ typedef struct {
 	UINT		nCopies;
 	HINSTANCE 	hInstance;
 	LPARAM 		lCustData;
-/*	UINT		(CALLBACK* lpfnPrintHook)(HWND, UINT, WPARAM, LPARAM);
-	UINT		(CALLBACK* lpfnSetupHook)(HWND, UINT, WPARAM, LPARAM);*/
-        FARPROC         lpfnPrintHook;
-        FARPROC         lpfnSetupHook;
+        WNDPROC16       lpfnPrintHook;
+        WNDPROC16       lpfnSetupHook;
 	SEGPTR 		lpPrintTemplateName;
 	SEGPTR 		lpSetupTemplateName;
 	HGLOBAL 	hPrintTemplate;
 	HGLOBAL 	hSetupTemplate;
 	} PRINTDLG;
 typedef PRINTDLG * LPPRINTDLG;
-
 
 #define PD_ALLPAGES                  0x00000000
 #define PD_SELECTION                 0x00000001
@@ -305,10 +293,6 @@ LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-
-#ifndef WINELIB
-#pragma pack(4)
-#endif
 
 #ifdef __cplusplus
 }

@@ -19,14 +19,13 @@
 #include "ldt.h"
 #include "module.h"
 #include "neexe.h"
+#include "registers.h"
 #include "stackframe.h"
 #include "task.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
-
 #include "callback.h"
-#include "wine.h"
 
 extern HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
 
@@ -663,7 +662,7 @@ WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name )
  *
  * Return the entry point for a given ordinal.
  */
-SEGPTR MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
+FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 {
     NE_MODULE *pModule;
     WORD curOrdinal = 1;
@@ -704,7 +703,7 @@ SEGPTR MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
-    return PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+    return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
 }
 
 
@@ -1403,12 +1402,12 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 
 
 /***********************************************************************
- *           GetProcAddress   (KERNEL.50)
+ *           GetProcAddress16   (KERNEL.50)
  */
-FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
+FARPROC16 GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 {
     WORD ordinal;
-    SEGPTR ret;
+    FARPROC16 ret;
 
     if (!hModule) hModule = GetCurrentTask();
     hModule = GetExePtr( hModule );
@@ -1425,12 +1424,34 @@ FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
         dprintf_module( stddeb, "GetProcAddress: %04x %04x\n",
                         hModule, ordinal );
     }
-    if (!ordinal) return (FARPROC)0;
+    if (!ordinal) return (FARPROC16)0;
 
     ret = MODULE_GetEntryPoint( hModule, ordinal );
 
-    dprintf_module( stddeb, "GetProcAddress: returning %08lx\n", (DWORD)ret );
-    return (FARPROC)ret;
+    dprintf_module( stddeb, "GetProcAddress: returning %08x\n", (UINT32)ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetProcAddress32   (KERNEL32.257)
+ */
+FARPROC32 GetProcAddress32( HMODULE32 hModule, LPCSTR function )
+{
+#ifndef WINELIB
+    NE_MODULE *pModule;
+
+    hModule = GetExePtr( hModule );
+    if (!(pModule = MODULE_GetPtr( hModule )))
+        return (FARPROC32)0;
+    if (!(pModule->flags & NE_FFLAGS_WIN32) || !pModule->pe_module)
+        return (FARPROC32)0;
+    if (pModule->flags & NE_FFLAGS_BUILTIN)
+        return BUILTIN_GetProcAddress32( pModule, function );
+    return PE_FindExportedFunction( pModule->pe_module, function );
+#else
+    return NULL;
+#endif
 }
 
 

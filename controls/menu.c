@@ -303,13 +303,8 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
 	    if (p && (p[1] != '&') && (toupper(p[1]) == key)) return i;
 	}
     }
-#ifdef WINELIB32
     menuchar = SendMessage32A( hwndOwner, WM_MENUCHAR, 
-                               MAKEWPARAM(key,menu->wFlags), hmenu );
-#else
-    menuchar = SendMessage16( hwndOwner, WM_MENUCHAR, key,
-                              MAKELONG( menu->wFlags, hmenu ) );
-#endif
+                               MAKEWPARAM( key, menu->wFlags ), hmenu );
     if (HIWORD(menuchar) == 2) return LOWORD(menuchar);
     if (HIWORD(menuchar) == 1) return -2;
     return -1;
@@ -860,17 +855,9 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
         {
 	    NC_DrawSysButton( lppop->hWnd, hdc, TRUE );
             if (sendMenuSelect)
-#ifdef WINELIB32
-/* FIX: LostInfo */
-                SendMessage32A( hwndOwner, WM_MENUSELECT,
-                             MAKEWPARAM( WIN_FindWndPtr(lppop->hWnd)->hSysMenu,
-                                         lppop->wFlags | MF_MOUSESELECT ),
-                             (LPARAM)hmenu );
-#else
                 SendMessage16( hwndOwner, WM_MENUSELECT,
                              WIN_FindWndPtr(lppop->hWnd)->hSysMenu,
                              MAKELONG(lppop->wFlags | MF_MOUSESELECT, hmenu));
-#endif
         }
 	else
 	{
@@ -878,30 +865,14 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
 	    MENU_DrawMenuItem( lppop->hWnd, hdc, &lppop->items[lppop->FocusedItem],
                                lppop->Height, !(lppop->wFlags & MF_POPUP) );
             if (sendMenuSelect)
-#ifdef WINELIB32
-                SendMessage32A( hwndOwner, WM_MENUSELECT,
-                             MAKEWPARAM( lppop->items[lppop->FocusedItem].item_id,
-                                         lppop->items[lppop->FocusedItem].item_flags| 
-                                         MF_MOUSESELECT ),
-                             (LPARAM) hmenu );
-#else
 	        SendMessage16( hwndOwner, WM_MENUSELECT,
                              lppop->items[lppop->FocusedItem].item_id,
                              MAKELONG( lppop->items[lppop->FocusedItem].item_flags | MF_MOUSESELECT, hmenu));
-#endif
 	}
     }
-#ifdef WINELIB32
-/* FIX: Lost Info */
-    else if (sendMenuSelect)
-        SendMessage32A( hwndOwner, WM_MENUSELECT, 
-                     MAKEWPARAM( (DWORD)hmenu, lppop->wFlags | MF_MOUSESELECT),
-                     hmenu );
-#else
     else if (sendMenuSelect)
         SendMessage16( hwndOwner, WM_MENUSELECT, hmenu,
-                     MAKELONG( lppop->wFlags | MF_MOUSESELECT, hmenu ) );
-#endif
+                       MAKELONG( lppop->wFlags | MF_MOUSESELECT, hmenu ) );
 
     ReleaseDC( lppop->hWnd, hdc );
 }

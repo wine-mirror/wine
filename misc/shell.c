@@ -140,7 +140,9 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     }
 
     /* First thing we need is the file's extension */
-    extension = strchr( lpFile, '.' ); /* Assumes first "." is the one... */
+    extension = strrchr( lpFile, '.' ); /* Assume last "." is the one; */
+					/* File->Run in progman uses */
+					/* .\FILE.EXE :( */
     if ((extension == NULL) || (extension == &lpFile[strlen(lpFile)]))
     {
 	return 31; /* no association */
@@ -179,7 +181,10 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
 	    dprintf_exec(stddeb, "SHELL_FindExecutable: found %s\n",
 			 lpResult);
 	    return 33; /* Greater than 32 to indicate success FIXME */
-		       /* what are the correct values here? */
+		       /* According to the docs, I should be returning */
+		       /* a handle for the executable. Does this mean */
+		       /* I'm supposed to open the executable file or */
+		       /* something? More RTFM, I guess... */
 	}
 	tok=strtok(NULL, " \t");
     }
@@ -320,11 +325,7 @@ LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  
   switch(msg) {
    case WM_INITDIALOG:
-#ifdef WINELIB32
     SendDlgItemMessage32A(hWnd,stc1,STM_SETICON,lParam,0);
-#else
-    SendDlgItemMessage16(hWnd,stc1,STM_SETICON,LOWORD(lParam),0);
-#endif
     GetWindowText32A(hWnd, Template, sizeof(Template));
     sprintf(AppTitle, Template, AppName);
     SetWindowText32A(hWnd, AppTitle);

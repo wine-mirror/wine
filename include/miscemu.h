@@ -7,28 +7,29 @@
 #ifndef __WINE_MISCEMU_H
 #define __WINE_MISCEMU_H
 
+#include <stdio.h>
 #include "wintypes.h"
 #include "registers.h"
 
   /* miscemu/dosmem.c */
-extern BOOL DOSMEM_Init(void);
+extern BOOL32 DOSMEM_Init(void);
 extern void DOSMEM_Tick(void);
 extern void DOSMEM_FillBiosSegment(void);
-extern HANDLE DOSMEM_BiosSeg;
+extern HANDLE16 DOSMEM_BiosSeg;
 
   /* miscemu/instr.c */
-extern BOOL INSTR_EmulateInstruction( SIGCONTEXT *context );
+extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
 
   /* miscemu/interrupts.c */
-extern BOOL INT_Init(void);
-extern SEGPTR INT_GetHandler( BYTE intnum );
-extern void INT_SetHandler( BYTE intnum, SEGPTR handler );
+extern BOOL32 INT_Init(void);
+extern FARPROC16 INT_GetHandler( BYTE intnum );
+extern void INT_SetHandler( BYTE intnum, FARPROC16 handler );
 
   /* miscemu/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
 
   /* miscemu/int21.c */
-extern BOOL INT21_Init(void);
+extern BOOL32 INT21_Init(void);
 
   /* miscemu/ioports.c */
 extern DWORD inport( int port, int count );

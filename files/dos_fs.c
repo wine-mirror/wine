@@ -24,6 +24,8 @@
 #include "msdos.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
+#include "string32.h"
 
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
@@ -715,4 +717,33 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     closedir( dir );
     dir = NULL;
     return 0;  /* End of directory */
+}
+
+
+/***********************************************************************
+ *           GetShortPathNameA   (KERNEL32.271)
+ */
+DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
+{
+    LPCSTR dostruename;
+
+    dprintf_dosfs( stddeb, "GetShortPathName32A(%s,%p,%ld)\n",
+                   longpath, shortpath, shortlen );
+
+    dostruename = DOSFS_GetDosTrueName( longpath, 0 );
+    lstrcpyn32A( shortpath, dostruename, shortlen );
+    return strlen(dostruename);
+}
+
+
+/***********************************************************************
+ *           GetShortPathNameW   (KERNEL32.272)
+ */
+DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
+{
+    LPSTR longpatha = STRING32_DupUniToAnsi( longpath );
+    LPCSTR dostruename = DOSFS_GetDosTrueName( longpatha, 0 );
+    free( longpatha );
+    lstrcpynAtoW( shortpath, dostruename, shortlen );
+    return strlen(dostruename);
 }

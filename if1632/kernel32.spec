@@ -31,8 +31,8 @@ base	1
 0026 stub CommConfigDialogA
 0027 stub CommConfigDialogW
 0028 stub CompareFileTime
-0029 stdcall CompareStringA(long long ptr long ptr long) CompareStringA
-0030 stub CompareStringW
+0029 stdcall CompareStringA(long long ptr long ptr long) CompareString32A
+0030 stdcall CompareStringW(long long ptr long ptr long) CompareString32W
 0031 stub ConnectNamedPipe
 0032 stub ConsoleMenuControl
 0033 stub ConsoleSubst
@@ -259,7 +259,7 @@ base	1
 0254 stub GetPrivateProfileSectionW
 0255 stdcall GetPrivateProfileStringA(ptr ptr ptr ptr long ptr) GetPrivateProfileString
 0256 stub GetPrivateProfileStringW
-0257	stdcall GetProcAddress(long long)	WIN32_GetProcAddress
+0257 stdcall GetProcAddress(long ptr) GetProcAddress32
 0258 stdcall GetProcessAffinityMask(long ptr ptr)	GetProcessAffinityMask
 0259 stdcall GetProcessHeap() GetProcessHeap
 0260 stub GetProcessHeaps
@@ -273,9 +273,9 @@ base	1
 0268 stdcall GetProfileStringA(ptr ptr ptr ptr long) GetProfileString
 0269 stub GetProfileStringW
 0270 stub GetQueuedCompletionStatus
-0271 stub GetShortPathNameA
-0272 stub GetShortPathNameW
-0273	stdcall GetStartupInfoA(ptr) GetStartupInfoA
+0271 stdcall GetShortPathNameA(ptr ptr long) GetShortPathName32A
+0272 stdcall GetShortPathNameW(ptr ptr long) GetShortPathName32W
+0273 stdcall GetStartupInfoA(ptr) GetStartupInfoA
 0274 stub GetStartupInfoW
 0275	stdcall GetStdHandle(long)	GetStdHandle
 0276 stub GetStringTypeA
@@ -292,8 +292,8 @@ base	1
 0287 stub GetTapeParameters
 0288 stub GetTapePosition
 0289 stub GetTapeStatus
-0290 stub GetTempFileNameA
-0291 stub GetTempFileNameW
+0290 stdcall GetTempFileNameA(ptr ptr long ptr) GetTempFileName32A
+0291 stdcall GetTempFileNameW(ptr ptr long ptr) GetTempFileName32W
 0292 stdcall GetTempPathA(long ptr) GetTempPath32A
 0293 stdcall GetTempPathW(long ptr) GetTempPath32W
 0294	stdcall GetThreadContext(long ptr)	GetThreadContext
@@ -301,11 +301,11 @@ base	1
 0296 stub GetThreadPriority
 0297 stub GetThreadSelectorEntry
 0298 stub GetThreadTimes
-0299    stdcall GetTickCount() GetTickCount
+0299 stdcall GetTickCount() GetTickCount
 0300 stub GetTimeFormatA
 0301 stub GetTimeFormatW
 0302    stdcall GetTimeZoneInformation(ptr) GetTimeZoneInformation
-0303 stub GetUserDefaultLCID
+0303 stdcall GetUserDefaultLCID() GetUserDefaultLCID
 0304 stub GetUserDefaultLangID
 0305 stub GetVDMCurrentDirectories
 0306 stdcall GetVersion() GetVersion32
@@ -398,8 +398,8 @@ base	1
 0393 stub OpenConsoleW
 0394 stub OpenEventA
 0395 stub OpenEventW
-0396 stub OpenFile
-0397 	stdcall OpenFileMappingA(long long ptr) OpenFileMapping
+0396 stdcall OpenFile(ptr ptr long) OpenFile
+0397 stdcall OpenFileMappingA(long long ptr) OpenFileMapping
 0398 stub OpenFileMappingW
 0399 stub OpenMutexA
 0400 stub OpenMutexW
@@ -594,10 +594,10 @@ base	1
 0589 stub WriteTapemark
 0590 stub _hread
 0591 stub _hwrite
-0592 stub _lclose
-0593 stub _lcreat
+0592 stdcall _lclose(long) _lclose
+0593 stdcall _lcreat(ptr long) _lcreat
 0594 stub _llseek
-0595 stub _lopen
+0595 stdcall _lopen(ptr long) _lopen
 0596 stub _lread
 0597 stub _lwrite
 0598 stdcall lstrcat(ptr ptr) lstrcat32A

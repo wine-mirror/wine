@@ -59,7 +59,6 @@ typedef struct
 #define DLL_FLAG_ALWAYS_USED 0x02  /* Always use built-in DLL */
 #define DLL_FLAG_WIN32       0x04  /* DLL is a Win32 DLL */
 
-
 /* 16-bit DLLs */
 
 extern const DLL_DESCRIPTOR KERNEL_Descriptor;
@@ -146,7 +145,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &ADVAPI32_Descriptor, 0 },
     { &COMCTL32_Descriptor, 0 },
     { &COMDLG32_Descriptor, 0 },
-    { &CRTDLL_Descriptor, 0 },
+    { &CRTDLL_Descriptor,   0 },
     { &OLE32_Descriptor,    0 },
     { &GDI32_Descriptor,    0 },
     { &KERNEL32_Descriptor, DLL_FLAG_ALWAYS_USED },
@@ -230,6 +229,7 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL16 force )
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         pModule->pe_module = (PE_MODULE *)table;
+        table->flags |= DLL_FLAG_WIN32;
     }
     else  /* Win16 module */
     {
@@ -265,13 +265,14 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL16 force )
 
 
 /***********************************************************************
- *           BUILTIN_GetEntryPoint
+ *           BUILTIN_GetEntryPoint16
  *
- * Return the built-in module, ordinal and name corresponding
- * to a CS:IP address. This is used only by relay debugging.
+ * Return the ordinal and name corresponding to a CS:IP address.
+ * This is used only by relay debugging.
  */
-NE_MODULE *BUILTIN_GetEntryPoint( WORD cs, WORD ip, WORD *pOrd, char **ppName )
+LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
 {
+    static char buffer[80];
     WORD ordinal, i, max_offset;
     register BYTE *p;
     NE_MODULE *pModule;
@@ -324,18 +325,62 @@ NE_MODULE *BUILTIN_GetEntryPoint( WORD cs, WORD ip, WORD *pOrd, char **ppName )
     /* (built-in modules have no non-resident table)   */
     
     p = (BYTE *)pModule + pModule->name_table;
-    *ppName = "???";
     while (*p)
     {
         p += *p + 1 + sizeof(WORD);
-        if (*(WORD *)(p + *p + 1) == *pOrd)
-        {
-            *ppName = (char *)p;
-            break;
-        }
+        if (*(WORD *)(p + *p + 1) == *pOrd) break;
     }
 
-    return pModule;
+    sprintf( buffer, "%.*s.%d: %.*s",
+             *((BYTE *)pModule + pModule->name_table),
+             (char *)pModule + pModule->name_table + 1,
+             *pOrd, *p, (char *)(p + 1) );
+    return buffer;
+}
+
+
+/***********************************************************************
+ *           BUILTIN_GetEntryPoint32
+ *
+ * Return the name of the DLL entry point corresponding
+ * to a relay entry point address. This is used only by relay debugging.
+ */
+LPCSTR BUILTIN_GetEntryPoint32( void *relay )
+{
+    static char buffer[80];
+    BUILTIN_DLL *dll;
+    const void **funcs;
+    int first, i, size;
+
+    /* First find the module */
+
+    for (dll = BuiltinDLLs; dll->descr; dll++)
+        if ((dll->flags & DLL_FLAG_WIN32) &&
+            (dll->descr->u.win32.functions[0] <= relay) &&
+            (dll->descr->u.win32.functions[dll->descr->u.win32.size-1] >relay))
+            break;
+    if (!dll->descr)
+    {
+        sprintf( buffer, "???.???: %08x", (UINT32)relay );
+        return buffer;
+    }
+
+    /* Do a binary search for the function */
+
+    relay = (BYTE *)relay - 11;  /* The relay entry point is 11 bytes long */
+    funcs = dll->descr->u.win32.functions;
+    first = i = 0;
+    size = dll->descr->u.win32.size;
+    while (first < size)
+    {
+        i = (first + size) / 2;
+        if (funcs[i] == relay) break;
+        if (funcs[i] > relay) size = i;
+        else first = i + 1;
+    }
+    sprintf( buffer, "%s.%d: %s",
+             dll->descr->name, i, dll->descr->u.win32.names[i] );
+    return buffer;
 }
 
 
@@ -345,12 +390,12 @@ NE_MODULE *BUILTIN_GetEntryPoint( WORD cs, WORD ip, WORD *pOrd, char **ppName )
  * Implementation of GetProcAddress() for built-in Win32 modules.
  * FIXME: this should be unified with the real GetProcAddress32().
  */
-DWORD BUILTIN_GetProcAddress32( NE_MODULE *pModule, char *function )
+FARPROC32 BUILTIN_GetProcAddress32( NE_MODULE *pModule, LPCSTR function )
 {
     BUILTIN_DLL *dll = (BUILTIN_DLL *)pModule->pe_module;
     const WIN32_DESCRIPTOR *info = &dll->descr->u.win32;
 
-    if (!dll) return 0;
+    if (!dll) return NULL;
 
     if (HIWORD(function))  /* Find function by name */
     {
@@ -360,7 +405,7 @@ DWORD BUILTIN_GetProcAddress32( NE_MODULE *pModule, char *function )
                         function, dll->descr->name );
         for (i = 0; i < info->size; i++)
             if (info->names[i] && !strcmp( function, info->names[i] ))
-                return (DWORD)info->functions[i];
+                return (FARPROC32)info->functions[i];
     }
     else  /* Find function by ordinal */
     {
@@ -368,9 +413,9 @@ DWORD BUILTIN_GetProcAddress32( NE_MODULE *pModule, char *function )
         dprintf_module( stddeb, "Looking for ordinal %d in %s\n",
                         ordinal, dll->descr->name );
         if (ordinal && ordinal < info->size)
-            return (DWORD)info->functions[ordinal - info->base];
+            return (FARPROC32)info->functions[ordinal - info->base];
     }
-    return 0;
+    return NULL;
 }
 
 

@@ -9,9 +9,7 @@
 
 #include "gdi.h"
 
-#ifndef WINELIB
 #pragma pack(1)
-#endif
 
   /* GDI logical brush object */
 typedef struct
@@ -20,9 +18,7 @@ typedef struct
     LOGBRUSH16  logbrush WINE_PACKED;
 } BRUSHOBJ;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 extern BOOL BRUSH_Init(void);
 extern int BRUSH_GetObject( BRUSHOBJ * brush, int count, LPSTR buffer );

@@ -36,7 +36,7 @@ void QUEUE_SetDoomedQueue(HQUEUE hQueue)
 /***********************************************************************
  *	     QUEUE_DumpQueue
  */
-void QUEUE_DumpQueue( HQUEUE hQueue )
+void QUEUE_DumpQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *pq; 
 
@@ -127,7 +127,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
  *
  * Unlinks and deletes a message queue.
  */
-BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue )
+BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock16(hQueue);
     HQUEUE *pPrev;
@@ -159,7 +159,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue )
  * Create the system message queue, and set the double-click speed.
  * Must be called only once.
  */
-BOOL QUEUE_CreateSysMsgQueue( int size )
+BOOL32 QUEUE_CreateSysMsgQueue( int size )
 {
     if (size > MAX_QUEUE_SIZE) size = MAX_QUEUE_SIZE;
     else if (size <= 0) size = 1;
@@ -302,7 +302,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG16 * msg, DWORD extraInfo )
+BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG16 * msg, DWORD extraInfo )
 {
     int pos;
     MESSAGEQUEUE *msgQueue;
@@ -334,7 +334,7 @@ BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG16 * msg, DWORD extraInfo )
  *
  * Find a message matching the given parameters. Return -1 if none available.
  */
-int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last )
+int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
 {
     int i, pos = msgQueue->nextMessage;
 
@@ -488,7 +488,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
 /***********************************************************************
  *	     QUEUE_GetQueueTask
  */
-HTASK QUEUE_GetQueueTask( HQUEUE hQueue )
+HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue = GlobalLock16( hQueue );
     return (queue) ? queue->hTask : 0 ;
@@ -498,7 +498,7 @@ HTASK QUEUE_GetQueueTask( HQUEUE hQueue )
 /***********************************************************************
  *           QUEUE_IncPaintCount
  */
-void QUEUE_IncPaintCount( HQUEUE hQueue )
+void QUEUE_IncPaintCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
@@ -511,7 +511,7 @@ void QUEUE_IncPaintCount( HQUEUE hQueue )
 /***********************************************************************
  *           QUEUE_DecPaintCount
  */
-void QUEUE_DecPaintCount( HQUEUE hQueue )
+void QUEUE_DecPaintCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
@@ -524,7 +524,7 @@ void QUEUE_DecPaintCount( HQUEUE hQueue )
 /***********************************************************************
  *           QUEUE_IncTimerCount
  */
-void QUEUE_IncTimerCount( HQUEUE hQueue )
+void QUEUE_IncTimerCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
@@ -537,7 +537,7 @@ void QUEUE_IncTimerCount( HQUEUE hQueue )
 /***********************************************************************
  *           QUEUE_DecTimerCount
  */
-void QUEUE_DecTimerCount( HQUEUE hQueue )
+void QUEUE_DecTimerCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
@@ -561,9 +561,9 @@ void PostQuitMessage( INT exitCode )
 
 
 /***********************************************************************
- *           GetWindowTask   (USER.224)
+ *           GetWindowTask16   (USER.224)
  */
-HTASK GetWindowTask( HWND hwnd )
+HTASK16 GetWindowTask16( HWND16 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 

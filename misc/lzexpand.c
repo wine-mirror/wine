@@ -25,7 +25,6 @@
 
 #define strdupW2A(x)	STRING32_DupUniToAnsi(x)
 #define strdupA2W(x)	STRING32_DupAnsiToUni(x)
-#define strcpyWA(a,b)	STRING32_UniToAnsi(a,b)
 #define strcpyAW(a,b)	STRING32_AnsiToUni(a,b)
 
 /* The readahead length of the decompressor. Reading single bytes
@@ -470,6 +469,23 @@ LZCopy(HFILE src,HFILE dest) {
 #undef BUFLEN
 }
 
+/* reverses GetExpandedPathname */
+static LPSTR LZEXPAND_MangleName( LPCSTR fn )
+{
+    char *p;
+    char *mfn = (char *)xmalloc( strlen(fn) + 3 ); /* "._" and \0 */
+    strcpy( mfn, fn );
+    if (!(p = strrchr( mfn, '\\' ))) p = mfn;
+    if ((p = strchr( p, '.' )))
+    {
+        p++;
+        if (strlen(p) < 3) strcat( p, "_" );  /* append '_' */
+        else p[strlen(p)-1] = '_';  /* replace last character */
+    }
+    else strcat( mfn, "._" );	/* append "._" */
+    return mfn;
+}
+
 /*
  * LZOpenFile				[LZEXPAND.2]
  * Opens a file. If not compressed, open it as a normal file.
@@ -481,6 +497,12 @@ LZOpenFile16(LPCSTR fn,LPOFSTRUCT ofs,UINT16 mode) {
 	dprintf_file(stddeb,"LZOpenFile(%s,%p,%d)\n",fn,ofs,mode);
 	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
 	fd=OpenFile(fn,ofs,mode);
+	if (fd==HFILE_ERROR)
+        {
+            LPSTR mfn = LZEXPAND_MangleName(fn);
+            fd = OpenFile(mfn,ofs,mode);
+            free( mfn );
+	}
 	if ((mode&~0x70)!=OF_READ)
 		return fd;
 	if (fd==HFILE_ERROR)

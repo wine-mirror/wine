@@ -37,7 +37,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     WORD *pModuleTable;
     WORD count, i, offset;
     HMODULE module;
-    DWORD address;
+    FARPROC16 address;
     int fd;
     struct relocation_entry_s *rep, *reloc_entries;
     BYTE *func_name;
@@ -242,7 +242,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	    }
 	    else
 	    {
-                address = PTR_SEG_OFF_TO_SEGPTR( pSegTable[rep->target1-1].selector, rep->target2 );
+                address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( pSegTable[rep->target1-1].selector, rep->target2 );
 	    }
 	    
 	    dprintf_fixup(stddeb,"%d: %04x:%04x\n", 
@@ -288,9 +288,9 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
                               pSeg->selector, offset, *sp, additive ? " additive":"");
                 offset = *sp;
 		if(additive)
-                    *(unsigned char*)sp = (unsigned char)((address+offset) & 0xFF);
+                    *(unsigned char*)sp = (unsigned char)(((int)address+offset) & 0xFF);
 		else
-                    *(unsigned char*)sp = (unsigned char)(address & 0xFF);
+                    *(unsigned char*)sp = (unsigned char)((int)address & 0xFF);
             }
             while (offset != 0xffff && !additive);
             break;

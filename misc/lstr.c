@@ -2,6 +2,7 @@
  * String functions
  *
  * Copyright 1993 Yngvi Sigurjonsson (yngvi@hafro.is)
+ * Copyright 1996 Marcus Meissner
  */
 
 #include <stdio.h>
@@ -17,6 +18,7 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "string32.h"
 
 #define ToUpper(c)	toupper(c)
 #define ToLower(c)	tolower(c)
@@ -61,25 +63,25 @@ static const BYTE Ansi2Oem[256] =
 /* Funny to divide them between user and kernel. */
 
 /* IsCharAlpha USER 433 */
-BOOL IsCharAlpha(char ch)
+BOOL16 IsCharAlpha16(CHAR ch)
 {
   return isalpha(ch);   /* This is probably not right for NLS */
 }
 
 /* IsCharAlphanumeric USER 434 */
-BOOL IsCharAlphanumeric(char ch)
+BOOL16 IsCharAlphanumeric16(CHAR ch)
 {
-  return (ch < '0') ? 0 : (ch <= '9');
+    return isalnum(ch);
 }
 
 /* IsCharUpper USER 435 */
-BOOL IsCharUpper(char ch)
+BOOL16 IsCharUpper16(CHAR ch)
 {
   return isupper(ch);
 }
 
 /* IsCharLower USER 436 */
-BOOL IsCharLower(char ch)
+BOOL16 IsCharLower16(CHAR ch)
 {
   return islower(ch);
 }
@@ -203,7 +205,7 @@ SEGPTR AnsiPrev( SEGPTR start, SEGPTR current)
 
 
 /* AnsiToOem Keyboard.5 */
-INT AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)
+INT AnsiToOem(LPCSTR lpAnsiStr, LPSTR lpOemStr)
 {
     dprintf_keyboard(stddeb, "AnsiToOem: %s\n", lpAnsiStr);
     while(*lpAnsiStr){
@@ -214,7 +216,7 @@ INT AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)
 }
 
 /* OemToAnsi Keyboard.6 */
-BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)
+BOOL OemToAnsi(LPCSTR lpOemStr, LPSTR lpAnsiStr)
 {
     dprintf_keyboard(stddeb, "OemToAnsi: %s\n", lpOemStr);
     while(*lpOemStr){
@@ -233,7 +235,7 @@ void AnsiToOemBuff(LPCSTR lpAnsiStr, LPSTR lpOemStr, UINT nLength)
 }
 
 /* OemToAnsi Keyboard.135 */
-void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, INT nLength)
+void OemToAnsiBuff(LPCSTR lpOemStr, LPSTR lpAnsiStr, INT nLength)
 {
   int i;
   for(i=0;i<nLength;i++)
@@ -256,4 +258,376 @@ void OutputDebugString( LPCSTR str )
     fprintf( stderr, "OutputDebugString: %s says '%s'\n",
              module ? module : "???", buffer );
     free( buffer );
+}
+
+/***********************************************************************
+ *           CharNextA   (USER32.28)
+ */
+LPSTR CharNext32A(LPCSTR x)
+{
+    if (*x) return (LPSTR)(x+1);
+    else return (LPSTR)x;
+}
+
+/***********************************************************************
+ *           CharNextExA   (USER32.29)
+ */
+LPSTR CharNextEx32A(WORD codepage,LPCSTR x,DWORD flags)
+{
+    /* FIXME: add DBCS / codepage stuff */
+    if (*x) return (LPSTR)(x+1);
+    else return (LPSTR)x;
+}
+
+/***********************************************************************
+ *           CharNextExW   (USER32.30)
+ */
+LPWSTR CharNextEx32W(WORD codepage,LPCWSTR x,DWORD flags)
+{
+    /* FIXME: add DBCS / codepage stuff */
+    if (*x) return (LPWSTR)(x+1);
+    else return (LPWSTR)x;
+}
+
+/***********************************************************************
+ *           CharNextW   (USER32.31)
+ */
+LPWSTR CharNext32W(LPCWSTR x)
+{
+    if (*x) return (LPWSTR)(x+1);
+    else return (LPWSTR)x;
+}
+
+/***********************************************************************
+ *           CharPrevA   (USER32.32)
+ */
+LPSTR CharPrev32A(LPCSTR start,LPCSTR x)
+{
+    if (x>start) return (LPSTR)(x-1);
+    else return (LPSTR)x;
+}
+
+/***********************************************************************
+ *           CharPrevExA   (USER32.33)
+ */
+LPSTR CharPrevEx32A(WORD codepage,LPCSTR start,LPCSTR x,DWORD flags)
+{
+    /* FIXME: add DBCS / codepage stuff */
+    if (x>start) return (LPSTR)(x-1);
+    else return (LPSTR)x;
+}
+
+/***********************************************************************
+ *           CharPrevExW   (USER32.34)
+ */
+LPWSTR CharPrevEx32W(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
+{
+    /* FIXME: add DBCS / codepage stuff */
+    if (x>start) return (LPWSTR)(x-1);
+    else return (LPWSTR)x;
+}
+
+/***********************************************************************
+ *           CharPrevW   (USER32.35)
+ */
+LPWSTR CharPrev32W(LPCWSTR start,LPCWSTR x)
+{
+    if (x>start) return (LPWSTR)(x-1);
+    else return (LPWSTR)x;
+}
+
+/***********************************************************************
+ *           CharLowerA   (USER32.24)
+ * FIXME: handle current locale
+ */
+LPSTR CharLower32A(LPSTR x)
+{
+    LPSTR	s;
+
+    if (HIWORD(x))
+    {
+        s=x;
+        while (*s)
+        {
+            *s=tolower(*s);
+            s++;
+        }
+        return x;
+    }
+    else return (LPSTR)tolower(LOWORD(x));
+}
+
+/***********************************************************************
+ *           CharLowerBuffA   (USER32.25)
+ * FIXME: handle current locale
+ */
+DWORD CharLowerBuff32A(LPSTR x,DWORD buflen)
+{
+    DWORD done=0;
+
+    while (*x && (buflen--))
+    {
+        *x=tolower(*x);
+        x++;
+        done++;
+    }
+    return done;
+}
+
+/***********************************************************************
+ *           CharLowerBuffW   (USER32.26)
+ * FIXME: handle current locale
+ */
+DWORD CharLowerBuff32W(LPWSTR x,DWORD buflen)
+{
+    DWORD done=0;
+
+    while (*x && (buflen--))
+    {
+        *x=tolower(*x);
+        x++;
+        done++;
+    }
+    return done;
+}
+
+/***********************************************************************
+ *           CharLowerW   (USER32.27)
+ * FIXME: handle current locale
+ */
+LPWSTR CharLower32W(LPWSTR x)
+{
+    if (HIWORD(x))
+    {
+        LPWSTR s = x;
+        while (*s)
+        {
+            *s=tolower(*s);
+            s++;
+        }
+        return x;
+    }
+    else return (LPWSTR)tolower(LOWORD(x));
+}
+
+/***********************************************************************
+ *           CharUpperA   (USER32.40)
+ * FIXME: handle current locale
+ */
+LPSTR CharUpper32A(LPSTR x)
+{
+    if (HIWORD(x))
+    {
+        LPSTR s = x;
+        while (*s)
+        {
+            *s=toupper(*s);
+            s++;
+        }
+        return x;
+    }
+    else return (LPSTR)toupper(LOWORD(x));
+}
+
+/***********************************************************************
+ *           CharUpperBuffA   (USER32.41)
+ * FIXME: handle current locale
+ */
+DWORD CharUpperBuff32A(LPSTR x,DWORD buflen)
+{
+    DWORD done=0;
+
+    while (*x && (buflen--))
+    {
+        *x=toupper(*x);
+        x++;
+        done++;
+    }
+    return done;
+}
+
+/***********************************************************************
+ *           CharUpperBuffW   (USER32.42)
+ * FIXME: handle current locale
+ */
+DWORD CharUpperBuff32W(LPWSTR x,DWORD buflen)
+{
+    DWORD done=0;
+
+    while (*x && (buflen--))
+    {
+        *x=toupper(*x);
+        x++;
+        done++;
+    }
+    return done;
+}
+
+/***********************************************************************
+ *           CharUpperW   (USER32.43)
+ * FIXME: handle current locale
+ */
+LPWSTR CharUpper32W(LPWSTR x)
+{
+    if (HIWORD(x))
+    {
+        LPWSTR s = x;
+        while (*s)
+        {
+            *s=toupper(*s);
+            s++;
+        }
+        return x;
+    }
+    else return (LPWSTR)toupper(LOWORD(x));
+}
+
+/***********************************************************************
+ *           IsCharAlphaA   (USER32.330)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharAlpha32A(CHAR x)
+{
+    return isalpha(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaNumericA   (USER32.331)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharAlphaNumeric32A(CHAR x)
+{
+    return isalnum(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaNumericW   (USER32.332)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharAlphaNumeric32W(WCHAR x)
+{
+    return isalnum(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaW   (USER32.333)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharAlpha32W(WCHAR x)
+{
+    return isalpha(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaW   (USER32.334)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharLower32A(CHAR x)
+{
+    return islower(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaW   (USER32.335)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharLower32W(WCHAR x)
+{
+    return islower(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaW   (USER32.336)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharUpper32A(CHAR x)
+{
+    return isupper(x);
+}
+
+/***********************************************************************
+ *           IsCharAlphaW   (USER32.337)
+ * FIXME: handle current locale
+ */
+BOOL32 IsCharUpper32W(WCHAR x)
+{
+    return isupper(x);
+}
+
+/***********************************************************************
+ *           CharToOemA   (USER32.36)
+ */
+BOOL32 CharToOem32A(LPSTR s,LPSTR d)
+{
+    AnsiToOem(s,d);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           CharToOemBuffA   (USER32.37)
+ */
+BOOL32 CharToOemBuff32A(LPSTR s,LPSTR d,DWORD len)
+{
+    AnsiToOemBuff(s,d,len);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           CharToOemBuffW   (USER32.38)
+ */
+BOOL32 CharToOemBuff32W(LPCWSTR s,LPSTR d,DWORD len)
+{
+    LPSTR	x=STRING32_DupUniToAnsi(s);
+    AnsiToOemBuff(x,d,len);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           CharToOemW   (USER32.39)
+ */
+BOOL32 CharToOem32W(LPCWSTR s,LPSTR d)
+{
+    LPSTR	x=STRING32_DupUniToAnsi(s);
+    AnsiToOem(x,d);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           OemToCharA   (USER32.401)
+ */
+BOOL32 OemToChar32A(LPSTR s,LPSTR d)
+{
+    OemToAnsi(s,d);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           OemToCharBuffA   (USER32.402)
+ */
+BOOL32 OemToCharBuff32A(LPSTR s,LPSTR d,DWORD len)
+{
+    OemToAnsiBuff(s,d,len);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           OemToCharBuffW   (USER32.403)
+ */
+BOOL32 OemToCharBuff32W(LPCSTR s,LPWSTR d,DWORD len)
+{
+    LPSTR x=(char*)xmalloc(strlen(s));
+    OemToAnsiBuff((LPSTR)s,x,len);
+    STRING32_AnsiToUni(d,x);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           OemToCharW   (USER32.404)
+ */
+BOOL32 OemToChar32W(LPCSTR s,LPWSTR d)
+{
+    LPSTR x=(char*)xmalloc(strlen(s));
+    OemToAnsi((LPSTR)s,x);
+    STRING32_AnsiToUni(d,x);
+    return TRUE;
 }

@@ -65,7 +65,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
 56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
                         word word word word word ptr) CreateFont
-57  pascal16 CreateFontIndirect(ptr) CreateFontIndirect
+57  pascal16 CreateFontIndirect(ptr) CreateFontIndirect16
 58  pascal16 CreateHatchBrush(word long) CreateHatchBrush
 60  pascal16 CreatePatternBrush(word) CreatePatternBrush
 61  pascal16 CreatePen(s_word s_word long) CreatePen

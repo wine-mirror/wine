@@ -468,7 +468,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     pTask->pdb.int20 = 0x20cd;
 #ifndef WINELIB
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
-    *(DWORD *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
+    *(FARPROC16 *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
@@ -766,10 +766,9 @@ void TASK_Reschedule(void)
 #ifdef WINELIB
 void InitTask(void)
 #else
-void InitTask( SIGCONTEXT context )
+void InitTask( SIGCONTEXT *context )
 #endif
 {
-    static int firstTask = 1;
     TDB *pTask;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -777,26 +776,10 @@ void InitTask( SIGCONTEXT context )
     LONG stacklow, stackhi;
 
 #ifndef WINELIB
-    EAX_reg(&context) = 0;
+    EAX_reg(context) = 0;
 #endif
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
-
-    if (firstTask)
-    {
-        extern BOOL WIDGETS_Init(void);
-        extern BOOL WIN_CreateDesktopWindow(void);
-
-        /* Perform global initialisations that need a task context */
-
-          /* Initialize built-in window classes */
-        if (!WIDGETS_Init()) return;
-
-          /* Create desktop window */
-        if (!WIN_CreateDesktopWindow()) return;
-
-        firstTask = 0;
-    }
 
 #ifndef WINELIB
     NE_InitializeDLLs( pTask->hModule );
@@ -809,13 +792,13 @@ void InitTask( SIGCONTEXT context )
      * di     instance handle of the new task
      * es:bx  pointer to command-line inside PSP
      */
-    EAX_reg(&context) = 1;
-    EBX_reg(&context) = 0x81;
-    ECX_reg(&context) = pModule->stack_size;
-    EDX_reg(&context) = pTask->nCmdShow;
-    ESI_reg(&context) = (DWORD)pTask->hPrevInstance;
-    EDI_reg(&context) = (DWORD)pTask->hInstance;
-    ES_reg (&context) = (WORD)pTask->hPDB;
+    EAX_reg(context) = 1;
+    EBX_reg(context) = 0x81;
+    ECX_reg(context) = pModule->stack_size;
+    EDX_reg(context) = pTask->nCmdShow;
+    ESI_reg(context) = (DWORD)pTask->hPrevInstance;
+    EDI_reg(context) = (DWORD)pTask->hInstance;
+    ES_reg (context) = (WORD)pTask->hPDB;
 
     /* Initialize the local heap */
     if ( pModule->heap_size )
@@ -823,7 +806,6 @@ void InitTask( SIGCONTEXT context )
         LocalInit( pTask->hInstance, 0, pModule->heap_size );
     }    
 #endif
-
 
     /* Initialize the INSTANCEDATA structure */
     pSegTable = NE_SEG_TABLE( pModule );
@@ -1059,7 +1041,7 @@ HQUEUE SetTaskQueue( HANDLE hTask, HQUEUE hQueue )
 /***********************************************************************
  *           GetTaskQueue  (KERNEL.35)
  */
-HQUEUE GetTaskQueue( HANDLE hTask )
+HQUEUE16 GetTaskQueue( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -1073,9 +1055,9 @@ HQUEUE GetTaskQueue( HANDLE hTask )
  *           GetTaskQueueDS  (KERNEL.118)
  */
 #ifndef WINELIB
-void GetTaskQueueDS( SIGCONTEXT context )
+void GetTaskQueueDS( SIGCONTEXT *context )
 {
-    DS_reg(&context) = GlobalHandleToSel( GetTaskQueue(0) );
+    DS_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
 #endif  /* WINELIB */
 
@@ -1084,9 +1066,9 @@ void GetTaskQueueDS( SIGCONTEXT context )
  *           GetTaskQueueES  (KERNEL.119)
  */
 #ifndef WINELIB
-void GetTaskQueueES( SIGCONTEXT context )
+void GetTaskQueueES( SIGCONTEXT *context )
 {
-    ES_reg(&context) = GlobalHandleToSel( GetTaskQueue(0) );
+    ES_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
 #endif  /* WINELIB */
 
@@ -1171,7 +1153,7 @@ WORD GetNumTasks(void)
 /***********************************************************************
  *           GetTaskDS   (KERNEL.155)
  */
-HINSTANCE GetTaskDS(void)
+HINSTANCE16 GetTaskDS(void)
 {
     TDB *pTask;
 

@@ -94,7 +94,7 @@ void WIN_DumpWindow( HWND hwnd )
              "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x hdce=%04x  idmenu=%04x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08x  text='%s'\n"
              "client=%d,%d-%d,%d  window=%d,%d-%d,%d  iconpos=%d,%d  maxpos=%d,%d\n"
-             "sysmenu=%04x  flags=%04x  props=%04x  vscroll=%04x  hscroll=%04x\n",
+             "sysmenu=%04x  flags=%04x  props=%04x  vscroll=%p  hscroll=%p\n",
              ptr->next, ptr->child, ptr->parent, ptr->owner,
              ptr->class, className, ptr->hInstance, ptr->hmemTaskQ,
              ptr->hrgnUpdate, ptr->hwndLastActive, ptr->hdce, ptr->wIDmenu,
@@ -104,7 +104,7 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->rectClient.bottom, ptr->rectWindow.left, ptr->rectWindow.top,
              ptr->rectWindow.right, ptr->rectWindow.bottom, ptr->ptIconPos.x,
              ptr->ptIconPos.y, ptr->ptMaxPos.x, ptr->ptMaxPos.y, ptr->hSysMenu,
-             ptr->flags, ptr->hProp, ptr->hVScroll, ptr->hHScroll );
+             ptr->flags, ptr->hProp, ptr->pVScroll, ptr->pHScroll );
 
     if (ptr->class->cbWndExtra)
     {
@@ -403,8 +403,8 @@ BOOL WIN_CreateDesktopWindow(void)
                                      WS_CLIPSIBLINGS;
     pWndDesktop->dwExStyle         = 0;
     pWndDesktop->hdce              = 0;
-    pWndDesktop->hVScroll          = 0;
-    pWndDesktop->hHScroll          = 0;
+    pWndDesktop->pVScroll          = NULL;
+    pWndDesktop->pHScroll          = NULL;
     pWndDesktop->wIDmenu           = 0;
     pWndDesktop->flags             = 0;
     pWndDesktop->window            = rootWindow;
@@ -525,8 +525,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->flags          = 0;
-    wndPtr->hVScroll       = 0;
-    wndPtr->hHScroll       = 0;
+    wndPtr->pVScroll       = NULL;
+    wndPtr->pHScroll       = NULL;
     wndPtr->hSysMenu       = MENU_GetDefSysMenu();
     wndPtr->hProp          = 0;
     wndPtr->userdata       = 0;
@@ -555,7 +555,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     /* Insert the window in the linked list */
 
-    WIN_LinkWindow( hwnd, HWND_TOP );
+    WIN_LinkWindow( hwnd, HWND_BOTTOM );
 
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
@@ -1139,7 +1139,7 @@ BOOL IsWindowEnabled(HWND hWnd)
 /***********************************************************************
  *           IsWindowUnicode   (USER32.349)
  */
-BOOL IsWindowUnicode( HWND hwnd )
+BOOL32 IsWindowUnicode( HWND32 hwnd )
 {
     WND * wndPtr; 
 
@@ -1295,8 +1295,13 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
             retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
             WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, type );
             return retval;
+	case GWL_STYLE:
+            ptr = &wndPtr->dwStyle;
+            /* Some bits can't be changed this way */
+            newval &= ~(WS_VISIBLE | WS_CHILD);
+            newval |= (*ptr & (WS_VISIBLE | WS_CHILD));
+            break;
         case GWL_USERDATA: ptr = &wndPtr->userdata; break;
-	case GWL_STYLE:    ptr = &wndPtr->dwStyle; break;
         case GWL_EXSTYLE:  ptr = &wndPtr->dwExStyle; break;
 	default:
             fprintf( stderr, "SetWindowLong: invalid offset %d\n", offset );
@@ -1428,9 +1433,9 @@ int GetWindowTextLength(HWND hwnd)
 
 
 /*******************************************************************
- *         IsWindow    (USER.47)
+ *         IsWindow   (USER.47) (USER32.347)
  */
-BOOL IsWindow( HWND hwnd )
+BOOL16 IsWindow( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
@@ -1656,7 +1661,8 @@ BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
     {
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if (!CallEnumWindowsProc16( lpEnumFunc, (*ppWnd)->hwndSelf, lParam ))
+        if (!CallEnumWindowsProc16( (FARPROC16)lpEnumFunc,
+                                    (*ppWnd)->hwndSelf, lParam ))
             break;
     }
     HeapFree( SystemHeap, 0, list );
@@ -1711,7 +1717,8 @@ BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
-        if (!CallEnumWindowsProc16( func, (*ppWnd)->hwndSelf, lParam ))
+        if (!CallEnumWindowsProc16( (FARPROC16)func,
+                                    (*ppWnd)->hwndSelf, lParam ))
             break;
     }
     HeapFree( SystemHeap, 0, list );
@@ -1761,7 +1768,7 @@ static BOOL16 WIN_EnumChildWindows16( WND **ppWnd, WNDENUMPROC16 func,
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         /* Build children list first */
         if (!(childList = WIN_BuildWinArray( *ppWnd ))) return FALSE;
-        if (!CallEnumWindowsProc16( func, (*ppWnd)->hwndSelf, lParam ))
+        if (!CallEnumWindowsProc16((FARPROC16)func,(*ppWnd)->hwndSelf,lParam))
             return FALSE;
         ret = WIN_EnumChildWindows16( childList, func, lParam );
         HeapFree( SystemHeap, 0, childList );

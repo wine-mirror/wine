@@ -4,8 +4,6 @@
  * Copyright 1993 Martin Ayotte
  */
 
-#ifndef WINELIB
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,5 +92,3 @@ WORD JoySetCalibration(WORD wID)
     fprintf(stdnimp, "EMPTY STUB !!! JoySetCalibration(%04X);\n", wID);
     return MMSYSERR_NODRIVER;
 }
-
-#endif

@@ -60,7 +60,7 @@ base	1
 056 stub _clearfp
 057 stub _close
 058 stub _commit
-059 stub _commode_dll
+059 long _commode_dll(0)
 060 stub _control87
 061 stub _controlfp
 062 stub _copysign
@@ -105,7 +105,7 @@ base	1
 101 stub _finite
 102 stub _flsbuf
 103 stub _flushall
-104 stub _fmode_dll
+104 long _fmode_dll(0)
 105 stub _fpclass
 106 stub _fpieee_flt
 107 stub _fpreset

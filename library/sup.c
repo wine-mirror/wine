@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "callback.h"
-#include "wine.h"
 #include "arch.h"
 #include "neexe.h"
 

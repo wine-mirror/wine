@@ -9,31 +9,29 @@
 
 #include "wintypes.h"
 
-#ifndef WINELIB
 #pragma pack(1)
-#endif
 
   /* Process database (i.e. a normal DOS PSP) */
 
 typedef struct
 {
-    WORD   int20;                   /* 00 int 20h instruction */
-    WORD   nextParagraph;           /* 02 Segment of next paragraph */
-    BYTE   reserved1;
-    BYTE   dispatcher[5];           /* 05 Long call to DOS */
-    SEGPTR savedint22 WINE_PACKED;  /* 0a Saved int 22h handler */
-    SEGPTR savedint23 WINE_PACKED;  /* 0e Saved int 23h handler */
-    SEGPTR savedint24 WINE_PACKED;  /* 12 Saved int 24h handler */
-    WORD   parentPSP;               /* 16 Selector of parent PSP */
-    BYTE   fileHandles[20];         /* 18 Open file handles */
-    HANDLE environment;             /* 2c Selector of environment */
-    WORD   reserved2[2];
-    WORD   nbFiles;                 /* 32 Number of file handles */
-    SEGPTR fileHandlesPtr;          /* 34 Pointer to file handle table */
-    WORD   reserved3[18];
-    BYTE   fcb1[16];                /* 5c First FCB */
-    BYTE   fcb2[20];                /* 6c Second FCB */
-    BYTE   cmdLine[128];            /* 80 Command-line (first byte is len) */
+    WORD      int20;                   /* 00 int 20h instruction */
+    WORD      nextParagraph;           /* 02 Segment of next paragraph */
+    BYTE      reserved1;
+    BYTE      dispatcher[5];           /* 05 Long call to DOS */
+    FARPROC16 savedint22 WINE_PACKED;  /* 0a Saved int 22h handler */
+    FARPROC16 savedint23 WINE_PACKED;  /* 0e Saved int 23h handler */
+    FARPROC16 savedint24 WINE_PACKED;  /* 12 Saved int 24h handler */
+    WORD      parentPSP;               /* 16 Selector of parent PSP */
+    BYTE      fileHandles[20];         /* 18 Open file handles */
+    HANDLE16  environment;             /* 2c Selector of environment */
+    WORD      reserved2[2];
+    WORD      nbFiles;                 /* 32 Number of file handles */
+    SEGPTR    fileHandlesPtr;          /* 34 Pointer to file handle table */
+    WORD      reserved3[18];
+    BYTE      fcb1[16];                /* 5c First FCB */
+    BYTE      fcb2[20];                /* 6c Second FCB */
+    BYTE      cmdLine[128];            /* 80 Command-line (first byte is len)*/
 } PDB;
 
 
@@ -107,9 +105,7 @@ typedef struct
 #define TDBF_OS2APP     0x0008
 #define TDBF_WIN32S     0x0010
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 extern BOOL TASK_Init(void);
 extern HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance,

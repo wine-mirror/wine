@@ -40,7 +40,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "stddebug.h"
 #include "debug.h"
 
-void init_wine_signals(void);
 
 HANDLE32 SystemHeap = 0;
 HANDLE32 SegptrHeap = 0;
@@ -50,7 +49,9 @@ HANDLE32 SegptrHeap = 0;
  */
 int MAIN_Init(void)
 {
-    extern BOOL RELAY_Init(void);
+    extern BOOL32 RELAY_Init(void);
+    extern BOOL32 SIGNAL_Init(void);
+    extern BOOL32 WIDGETS_Init(void);
 
     int queueSize;
 
@@ -61,9 +62,6 @@ int MAIN_Init(void)
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return 0;
 
-    /* Initialize message spying */
-    if (!SPY_Init()) return 0;
-
 #ifdef WINELIB
     /* Create USER and GDI heap */
     USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
@@ -71,12 +69,24 @@ int MAIN_Init(void)
     GDI_HeapSel  = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
     LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
 #else
-      /* Initialize relay code */
+    /* Initialize relay code */
     if (!RELAY_Init()) return 0;
 
-      /* Create built-in modules */
+    /* Create built-in modules */
     if (!BUILTIN_Init()) return 0;
-#endif
+
+    /* Initialize interrupt vectors */
+    if (!INT_Init()) return 0;
+
+      /* Initialize DOS memory */
+    if (!DOSMEM_Init()) return 0;
+
+      /* Initialize the DOS interrupt */
+    if (!INT21_Init()) return 0;
+
+      /* Initialize signal handling */
+    if (!SIGNAL_Init()) return 0;
+#endif  /* WINELIB */
 
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return 0;
@@ -90,19 +100,6 @@ int MAIN_Init(void)
       /* Initialize communications */
     COMM_Init();
 
-#ifndef WINELIB
-      /* Initialize interrupt vectors */
-    if (!INT_Init()) return 0;
-
-      /* Initialize DOS memory */
-    if (!DOSMEM_Init()) return 0;
-
-      /* Initialize signal handling */
-    init_wine_signals();
-
-      /* Initialize the DOS memory */
-    if (!INT21_Init()) return 0;
-#endif
       /* registry initialisation */
     SHELL_LoadRegistry();
     
@@ -122,11 +119,20 @@ int MAIN_Init(void)
     /* Initialize window procedures */
     if (!WINPROC_Init()) return 0;
 
+    /* Initialize built-in window classes */
+    if (!WIDGETS_Init()) return 0;
+
       /* Initialize dialog manager */
     if (!DIALOG_Init()) return 0;
 
       /* Initialize menus */
     if (!MENU_Init()) return 0;
+
+    /* Create desktop window */
+    if (!WIN_CreateDesktopWindow()) return 0;
+
+    /* Initialize message spying */
+    if (!SPY_Init()) return 0;
 
       /* Initialize Win32 data structures */
     if (!KERN32_Init()) return 0;

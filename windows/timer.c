@@ -4,8 +4,10 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "windows.h"
 #include "queue.h"
+#include "winproc.h"
 #include "stddebug.h"
 /* #define DEBUG_TIMER */
 #include "debug.h"
@@ -13,14 +15,14 @@
 
 typedef struct tagTIMER
 {
-    HWND             hwnd;
-    HQUEUE	     hq;
-    WORD             msg;  /* WM_TIMER or WM_SYSTIMER */
-    WORD             id;
-    WORD             timeout;
+    HWND32           hwnd;
+    HQUEUE16         hq;
+    UINT16           msg;  /* WM_TIMER or WM_SYSTIMER */
+    UINT32           id;
+    UINT32           timeout;
     struct tagTIMER *next;
     DWORD            expires;  /* Next expiration, or 0 if already expired */
-    FARPROC          proc;
+    HWINDOWPROC      proc;
 } TIMER;
 
 #define NB_TIMERS            34
@@ -86,14 +88,14 @@ static void TIMER_ClearTimer( TIMER * pTimer )
     pTimer->msg     = 0;
     pTimer->id      = 0;
     pTimer->timeout = 0;
-    pTimer->proc    = 0;
+    WINPROC_FreeProc( pTimer->proc );
 }
 
 
 /***********************************************************************
  *           TIMER_SwitchQueue
  */
-void TIMER_SwitchQueue(HQUEUE old, HQUEUE new)
+void TIMER_SwitchQueue( HQUEUE16 old, HQUEUE16 new )
 {
     TIMER * pT = pNextTimer;
 
@@ -110,7 +112,7 @@ void TIMER_SwitchQueue(HQUEUE old, HQUEUE new)
  *
  * Remove all timers for a given window.
  */
-void TIMER_RemoveWindowTimers( HWND hwnd )
+void TIMER_RemoveWindowTimers( HWND32 hwnd )
 {
     int i;
     TIMER *pTimer;
@@ -126,7 +128,7 @@ void TIMER_RemoveWindowTimers( HWND hwnd )
  *
  * Remove all timers for a given queue.
  */
-void TIMER_RemoveQueueTimers( HQUEUE hqueue )
+void TIMER_RemoveQueueTimers( HQUEUE16 hqueue )
 {
     int i;
     TIMER *pTimer;
@@ -187,7 +189,8 @@ void TIMER_ExpireTimers(void)
  *
  * Build a message for an expired timer.
  */
-BOOL TIMER_GetTimerMsg( MSG16 *msg, HWND hwnd, HQUEUE hQueue, BOOL remove )
+BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
+                          HQUEUE16 hQueue, BOOL32 remove )
 {
     TIMER *pTimer = pNextTimer;
     DWORD curTime = GetTickCount();
@@ -204,9 +207,9 @@ BOOL TIMER_GetTimerMsg( MSG16 *msg, HWND hwnd, HQUEUE hQueue, BOOL remove )
 		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
       /* Build the message */
-    msg->hwnd    = pTimer->hwnd;
+    msg->hwnd    = (HWND16)pTimer->hwnd;
     msg->message = pTimer->msg;
-    msg->wParam  = pTimer->id;
+    msg->wParam  = (UINT16)pTimer->id;
     msg->lParam  = (LONG)pTimer->proc;
     msg->time    = curTime;
     return TRUE;
@@ -216,14 +219,13 @@ BOOL TIMER_GetTimerMsg( MSG16 *msg, HWND hwnd, HQUEUE hQueue, BOOL remove )
 /***********************************************************************
  *           TIMER_SetTimer
  */
-static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
-			    FARPROC proc, BOOL sys )
+static UINT32 TIMER_SetTimer( HWND32 hwnd, UINT32 id, UINT32 timeout,
+                              WNDPROC16 proc, WINDOWPROCTYPE type, BOOL32 sys )
 {
     int i;
     TIMER * pTimer;
 
     if (!timeout) return 0;
-/*    if (!hwnd && !proc) return 0; */
 
       /* Check if there's already a timer with the same hwnd and id */
 
@@ -234,7 +236,9 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
               /* Got one: set new values and return */
             TIMER_RemoveTimer( pTimer );
             pTimer->timeout = timeout;
-            pTimer->proc    = proc;
+            WINPROC_FreeProc( pTimer->proc );
+            pTimer->proc = (HWINDOWPROC)0;
+            if (proc) WINPROC_SetProc( &pTimer->proc, proc, type );
             pTimer->expires = GetTickCount() + timeout;
             TIMER_InsertTimer( pTimer );
             return id;
@@ -252,27 +256,27 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
       /* Add the timer */
 
     pTimer->hwnd    = hwnd;
-    pTimer->hq	    = (hwnd) ? GetTaskQueue( GetWindowTask( hwnd ) )
+    pTimer->hq	    = (hwnd) ? GetTaskQueue( GetWindowTask16( hwnd ) )
 			     : GetTaskQueue( 0 );
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
     pTimer->expires = GetTickCount() + timeout;
-    pTimer->proc    = proc;
-    dprintf_timer(stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
-		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
+    pTimer->proc    = (HWINDOWPROC)0;
+    if (proc) WINPROC_SetProc( &pTimer->proc, proc, type );
+    dprintf_timer( stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
+		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
+                   (DWORD)pTimer->proc );
     TIMER_InsertTimer( pTimer );
-    if (!id)
-	return TRUE;
-    else
-	return id;
+    if (!id) return TRUE;
+    else return id;
 }
 
 
 /***********************************************************************
  *           TIMER_KillTimer
  */
-static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
+static BOOL32 TIMER_KillTimer( HWND32 hwnd, UINT32 id, BOOL32 sys )
 {
     int i;
     TIMER * pTimer;
@@ -295,41 +299,90 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 
 
 /***********************************************************************
- *           SetTimer   (USER.10)
+ *           SetTimer16   (USER.10)
  */
-WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
+UINT16 SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
 {
-    dprintf_timer(stddeb, "SetTimer: %04x %d %d %08lx\n", hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( hwnd, id, timeout, proc, FALSE );
+    dprintf_timer( stddeb, "SetTimer16: %04x %d %d %08lx\n",
+                   hwnd, id, timeout, (LONG)proc );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+                           WIN_PROC_16, FALSE );
 }
 
 
 /***********************************************************************
- *           SetSystemTimer   (USER.11)
+ *           SetTimer32   (USER32.510)
  */
-WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
+UINT32 SetTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout, TIMERPROC32 proc )
 {
-    dprintf_timer(stddeb, "SetSystemTimer: %04x %d %d %08lx\n", 
-		  hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( hwnd, id, timeout, proc, TRUE );
+    dprintf_timer( stddeb, "SetTimer32: %04x %d %d %08lx\n",
+                   hwnd, id, timeout, (LONG)proc );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+                           WIN_PROC_32A, FALSE );
 }
 
 
 /***********************************************************************
- *           KillTimer   (USER.12)
+ *           SetSystemTimer16   (USER.11)
  */
-BOOL KillTimer( HWND hwnd, WORD id )
+UINT16 SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
+                         TIMERPROC16 proc )
 {
-    dprintf_timer(stddeb, "KillTimer: %04x %d\n", hwnd, id );
+    dprintf_timer( stddeb, "SetSystemTimer16: %04x %d %d %08lx\n", 
+                   hwnd, id, timeout, (LONG)proc );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+                           WIN_PROC_16, TRUE );
+}
+
+
+/***********************************************************************
+ *           SetSystemTimer32   (USER32.508)
+ */
+UINT32 SetSystemTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
+                         TIMERPROC32 proc )
+{
+    dprintf_timer( stddeb, "SetSystemTimer32: %04x %d %d %08lx\n", 
+                   hwnd, id, timeout, (LONG)proc );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+                           WIN_PROC_32A, TRUE );
+}
+
+
+/***********************************************************************
+ *           KillTimer16   (USER.12)
+ */
+BOOL16 KillTimer16( HWND16 hwnd, UINT16 id )
+{
+    dprintf_timer(stddeb, "KillTimer16: %04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
 
 /***********************************************************************
- *           KillSystemTimer   (USER.182)
+ *           KillTimer32   (USER32.353)
  */
-BOOL KillSystemTimer( HWND hwnd, WORD id )
+BOOL32 KillTimer32( HWND32 hwnd, UINT32 id )
 {
-    dprintf_timer(stddeb, "KillSystemTimer: %04x %d\n", hwnd, id );
+    dprintf_timer(stddeb, "KillTimer32: %04x %d\n", hwnd, id );
+    return TIMER_KillTimer( hwnd, id, FALSE );
+}
+
+
+/***********************************************************************
+ *           KillSystemTimer16   (USER.182)
+ */
+BOOL16 KillSystemTimer16( HWND16 hwnd, UINT16 id )
+{
+    dprintf_timer( stddeb, "KillSystemTimer16: %04x %d\n", hwnd, id );
+    return TIMER_KillTimer( hwnd, id, TRUE );
+}
+
+
+/***********************************************************************
+ *           KillSystemTimer32   (USER32.352)
+ */
+BOOL32 KillSystemTimer32( HWND32 hwnd, UINT32 id )
+{
+    dprintf_timer( stddeb, "KillSystemTimer32: %04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }

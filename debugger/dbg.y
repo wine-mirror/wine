@@ -234,6 +234,7 @@ void wine_debug( int signal, SIGCONTEXT *regs )
     static int loaded_symbols = 0;
     char SymbolTableFile[256];
     int instr_len = 0, newmode;
+    BOOL32 ret_ok;
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
@@ -295,6 +296,7 @@ void wine_debug( int signal, SIGCONTEXT *regs )
             instr_len = addr.off - EIP_reg(DEBUG_context);
         }
 
+        ret_ok = 0;
         do
         {
             issue_prompt();
@@ -303,7 +305,9 @@ void wine_debug( int signal, SIGCONTEXT *regs )
             addr.seg = CS_reg(DEBUG_context);
             addr.off = EIP_reg(DEBUG_context);
             DBG_FIX_ADDR_SEG( &addr, 0 );
-        } while (!DBG_CHECK_READ_PTR( &addr, 1 ));
+            ret_ok = DEBUG_ValidateRegisters();
+            if (ret_ok) ret_ok = DBG_CHECK_READ_PTR( &addr, 1 );
+        } while (!ret_ok);
     }
 
     DEBUG_RestartExecution( regs, dbg_exec_mode, instr_len );

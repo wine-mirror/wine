@@ -19,7 +19,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "windows.h"
-#include "user.h"
 #include "win.h"
 #include "gdi.h"
 #include "msdos.h"
@@ -32,34 +31,12 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-#if 0
-#define LIST_HEAP_ALLOC(lphl,f,size) ((int)HEAP_Alloc(&lphl->Heap,f,size) & 0xffff)
-#define LIST_HEAP_FREE(lphl,handle) (HEAP_Free(&lphl->Heap,LIST_HEAP_ADDR(lphl,handle)))
-#define LIST_HEAP_ADDR(lphl,handle) \
-    ((void *)((handle) ? ((handle) | ((int)lphl->Heap & 0xffff0000)) : 0))
-#else
-/* FIXME: shouldn't each listbox have its own heap? */
-#if 0
-#define LIST_HEAP_ALLOC(lphl,f,size) USER_HEAP_ALLOC(size)
-#define LIST_HEAP_FREE(lphl,handle)  USER_HEAP_FREE(handle)
-#define LIST_HEAP_ADDR(lphl,handle)  USER_HEAP_LIN_ADDR(handle)
-#define LIST_HEAP_SEG_ADDR(lphl,handle) USER_HEAP_SEG_ADDR(handle)
-#else
-/* Something like this maybe ? */
 #define LIST_HEAP_ALLOC(lphl,f,size) \
-            LOCAL_Alloc( lphl->HeapSel, LMEM_FIXED, (size) )
-#if 0
-#define LIST_HEAP_REALLOC(handle,size) \
-            LOCAL_ReAlloc( USER_HeapSel, (handle), (size), LMEM_FIXED )
-#endif
+    LOCAL_Alloc( lphl->HeapSel, LMEM_FIXED, (size) )
 #define LIST_HEAP_FREE(lphl,handle) \
-            LOCAL_Free( lphl->HeapSel, (handle) )
+    LOCAL_Free( lphl->HeapSel, (handle) )
 #define LIST_HEAP_ADDR(lphl,handle)  \
-            ((handle) ? PTR_SEG_OFF_TO_LIN(lphl->HeapSel, (handle)) : NULL)
-#define LIST_HEAP_SEG_ADDR(lphl,handle)  \
-            ((handle) ? MAKELONG((handle), lphl->HeapSel) : 0)
-#endif
-#endif
+    ((handle) ? PTR_SEG_OFF_TO_LIN(lphl->HeapSel, (handle)) : NULL)
 
 #define LIST_HEAP_SIZE 0x10000
 
@@ -128,13 +105,8 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
     ListBoxAskMeasure(lphl,&dummyls);
   }
 
-/* WINELIBS list boxes do not operate on local heaps */
-#ifndef WINELIB
   lphl->HeapSel = GlobalAlloc16(GMEM_FIXED,LIST_HEAP_SIZE);
   LocalInit( lphl->HeapSel, 0, LIST_HEAP_SIZE-1);
-#else
-  lphl->HeapSel = 0;
-#endif
 }
 
 void DestroyListBoxStruct(LPHEADLIST lphl)
@@ -154,13 +126,8 @@ static LPHEADLIST ListBoxGetStorageHeader(HWND hwnd)
 void ListBoxSendNotification(LPHEADLIST lphl, WORD code)
 {
   if (lphl->dwStyle & LBS_NOTIFY)
-#ifdef WINELIB32
-    SendMessage32A(lphl->hParent, WM_COMMAND,
-                   MAKEWPARAM(lphl->CtlID,code), (LPARAM)lphl->hSelf);
-#else
-    SendMessage16(lphl->hParent, WM_COMMAND,
-                  lphl->CtlID, MAKELONG(lphl->hSelf, code));
-#endif
+      SendMessage32A( lphl->hParent, WM_COMMAND,
+                      MAKEWPARAM( lphl->CtlID, code), (LPARAM)lphl->hSelf );
 }
 
 
@@ -303,25 +270,20 @@ int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y)
 
 void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)  
 {
-  HANDLE hTemp = USER_HEAP_ALLOC( sizeof(MEASUREITEMSTRUCT16) );
-  MEASUREITEMSTRUCT16 *lpmeasure = (MEASUREITEMSTRUCT16 *) USER_HEAP_LIN_ADDR(hTemp);
+    MEASUREITEMSTRUCT16 *lpmeasure = SEGPTR_NEW(MEASUREITEMSTRUCT16);
+    if (!lpmeasure) return;
+    *lpmeasure = lpls->mis;
+    lpmeasure->itemHeight = lphl->StdItemHeight;
+    SendMessage16( lphl->hParent, WM_MEASUREITEM, lphl->CtlID,
+                   (LPARAM)SEGPTR_GET(lpmeasure) );
 
-  if (lpmeasure == NULL) {
-    fprintf(stdnimp,"ListBoxAskMeasure() out of memory !\n");
-    return;
-  }
- 
-  *lpmeasure = lpls->mis;
-  lpmeasure->itemHeight = lphl->StdItemHeight;
-  SendMessage16(lphl->hParent, WM_MEASUREITEM, lphl->CtlID, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
-
-  if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
-    if (lpmeasure->itemHeight > lphl->StdItemHeight)
-      lphl->StdItemHeight = lpmeasure->itemHeight;
-    lpls->mis.itemHeight = lpmeasure->itemHeight;
-  }
-
-  USER_HEAP_FREE(hTemp);			
+    if (lphl->dwStyle & LBS_OWNERDRAWFIXED)
+    {
+        if (lpmeasure->itemHeight > lphl->StdItemHeight)
+            lphl->StdItemHeight = lpmeasure->itemHeight;
+        lpls->mis.itemHeight = lpmeasure->itemHeight;
+    }
+    SEGPTR_FREE(lpmeasure);
 }
 
 /* -------------------- strings and item data ---------------------- */
@@ -975,11 +937,9 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
      InvalidateRect16( hwnd, &rectsel, TRUE );
    }
 
-#ifndef WINELIB
   if (GetWindowLong32A(lphl->hSelf,GWL_EXSTYLE) & WS_EX_DRAGDETECT)
      if( DragDetect(lphl->hSelf,MAKEPOINT16(lParam)) )
          SendMessage16(lphl->hParent, WM_BEGINDRAG,0,0L);
-#endif
   return 0;
 }
 
@@ -1005,15 +965,8 @@ static LONG LBRButtonUp(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-#ifdef WINELIB32
-  SendMessage32A(lphl->hParent, WM_COMMAND, 
-                 MAKEWPARAM(GetWindowWord(hwnd,GWW_ID),LBN_DBLCLK),
-                 (LPARAM)hwnd);
-#else
   SendMessage16(lphl->hParent, WM_COMMAND, GetWindowWord(hwnd,GWW_ID),
 		MAKELONG(hwnd, LBN_DBLCLK));
-#endif
-
   return 0;
 }
 
@@ -1311,14 +1264,8 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 
-#ifdef WINELIB32
-  hBrush = (HBRUSH) SendMessage16(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
-                                  (LPARAM)hwnd);
-#else
-  hBrush = SendMessage16(lphl->hParent, WM_CTLCOLOR, hdc,
-                         MAKELONG(hwnd, CTLCOLOR_LISTBOX));
-#endif
-
+  hBrush = (HBRUSH)SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX,
+                                   (WPARAM)hdc, (LPARAM)hwnd);
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
   FillRect16(hdc, &rect, hBrush);

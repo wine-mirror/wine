@@ -4,12 +4,11 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef DEBUGGER_H
-#define DEBUGGER_H
+#ifndef __WINE_DEBUGGER_H
+#define __WINE_DEBUGGER_H
 
 #include "ldt.h"
 #include "registers.h"
-#include "wine.h"
 
 #define STEP_FLAG 0x100 /* single step flag */
 
@@ -50,7 +49,7 @@ enum debug_regs
     REG_EDI, REG_EBP, REG_EFL, REG_EIP, REG_ESP,
     REG_AX, REG_BX, REG_CX, REG_DX, REG_SI,
     REG_DI, REG_BP, REG_FL, REG_IP, REG_SP,
-    REG_CS, REG_DS, REG_ES, REG_SS
+    REG_CS, REG_DS, REG_ES, REG_SS, REG_FS, REG_GS
 };
 
 
@@ -104,6 +103,7 @@ extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);
 extern void DEBUG_SetRegister( enum debug_regs reg, int val );
 extern int DEBUG_GetRegister( enum debug_regs reg );
 extern void DEBUG_InfoRegisters(void);
+extern BOOL32 DEBUG_ValidateRegisters(void);
 
   /* debugger/stack.c */
 extern void DEBUG_InfoStack(void);
@@ -113,4 +113,4 @@ extern void DEBUG_BackTrace(void);
 extern void DEBUG_EnterDebugger(void);
 extern void wine_debug( int signal, SIGCONTEXT *regs );
 
-#endif  /* DEBUGGER_H */
+#endif  /* __WINE_DEBUGGER_H */

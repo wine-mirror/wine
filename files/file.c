@@ -526,13 +526,12 @@ INT32 FILE_Read( HFILE hFile, LPVOID buffer, UINT32 count )
 
 
 /***********************************************************************
- *           GetTempFileName   (KERNEL.97)
+ *           GetTempFileName16   (KERNEL.97)
  */
-INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
+UINT16 GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
+                          LPSTR buffer )
 {
-    int i;
-    UINT num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
-    char *p;
+    char temppath[144];
 
     if ((drive & TF_FORCEDRIVE) &&
         !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
@@ -543,15 +542,28 @@ INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
     }
 
     if (drive & TF_FORCEDRIVE)
-    {
-        sprintf( buffer, "%c:", drive & ~TF_FORCEDRIVE );
-    }
+        sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
     else
     {
-        GetTempPath32A( 132, buffer );  /* buffer must be at least 144 */
-        strcat( buffer, "\\" );
+        GetTempPath32A( 132, temppath );
+        strcat( temppath, "\\" );
     }
+    return (UINT16)GetTempFileName32A( temppath, prefix, unique, buffer );
+}
 
+
+/***********************************************************************
+ *           GetTempFileName32A   (KERNEL32.290)
+ */
+UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
+                           LPSTR buffer)
+{
+    LPSTR p;
+    int i;
+    UINT32 num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
+
+    if (!path) return 0;
+    strcpy( buffer, path );
     p = buffer + strlen(buffer);
     *p++ = '~';
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
@@ -587,9 +599,30 @@ INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
 
 
 /***********************************************************************
- *           OpenFile   (KERNEL.74)
+ *           GetTempFileName32W   (KERNEL32.291)
  */
-HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
+UINT32 GetTempFileName32W( LPCWSTR path, LPCWSTR prefix, UINT32 unique,
+                           LPWSTR buffer )
+{
+    LPSTR   patha,prefixa;
+    char    buffera[144];
+    UINT32  ret;
+
+    if (!path) return 0;
+    patha	= STRING32_DupUniToAnsi(path);
+    prefixa	= STRING32_DupUniToAnsi(prefix);
+    ret 	= GetTempFileName32A( patha, prefixa, unique, buffera );
+    STRING32_AnsiToUni( buffer, buffera );
+    free(patha);
+    free(prefixa);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           OpenFile   (KERNEL.74) (KERNEL32.396)
+ */
+HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
 {
     DOS_FILE *file;
     HFILE hFileRet;
@@ -771,7 +804,7 @@ error:  /* We get here if there was an error opening the file */
 
 
 /***********************************************************************
- *           _lclose   (KERNEL.81)
+ *           _lclose   (KERNEL.81) (KERNEL32.592)
  */
 HFILE _lclose( HFILE hFile )
 {
@@ -795,9 +828,9 @@ INT _lread( HFILE hFile, SEGPTR buffer, WORD count )
 
 
 /***********************************************************************
- *           _lcreat   (KERNEL.83)
+ *           _lcreat   (KERNEL.83) (KERNEL32.593)
  */
-HFILE _lcreat( LPCSTR path, INT attr )
+HFILE _lcreat( LPCSTR path, INT32 attr )
 {
     DOS_FILE *file;
     HFILE handle;
@@ -856,9 +889,9 @@ LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 
 
 /***********************************************************************
- *           _lopen   (KERNEL.85)
+ *           _lopen   (KERNEL.85) (KERNEL32.595)
  */
-HFILE _lopen( LPCSTR path, INT mode )
+HFILE _lopen( LPCSTR path, INT32 mode )
 {
     DOS_FILE *file;
     int unixMode;

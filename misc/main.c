@@ -17,7 +17,6 @@
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#include "wine.h"
 #include "message.h"
 #include "module.h"
 #include "msdos.h"
@@ -25,6 +24,7 @@
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
+#include "registers.h"
 #include "shell.h"
 #include "winbase.h"
 #include "string32.h"
@@ -1020,9 +1020,6 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 	XKeyboardState		keyboard_state;
 	XKeyboardControl	keyboard_value;
 
-
-	fprintf(stderr, "SystemParametersInfo: action %d, param %x, flag %x\n", 
-			uAction, uParam, fuWinIni);
 
 	switch (uAction) {
 		case SPI_GETBEEP:

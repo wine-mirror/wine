@@ -44,7 +44,7 @@ LPTOP_LEVEL_EXCEPTION_FILTER pTopExcHandler = NULL;
 
 void EXC_Init(void)
 {
-    pTopExcHandler = (LPTOP_LEVEL_EXCEPTION_FILTER)PE_GetProcAddress(
+    pTopExcHandler = (LPTOP_LEVEL_EXCEPTION_FILTER)GetProcAddress32(
                                                  GetModuleHandle("KERNEL32"),
                                                  "UnhandledExceptionFilter" );
 }

@@ -326,8 +326,9 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-        if (!CallEnumMetafileProc(lpEnumFunc, hdc, ht, MAKE_SEGPTR(mr),  /* FIXME!! */
-                                  mh->mtNoObjects, (LONG)lpData))
+        if (!CallEnumMetafileProc( (FARPROC16)lpEnumFunc, hdc, ht,
+                                   MAKE_SEGPTR(mr),  /* FIXME!! */
+                                   mh->mtNoObjects, (LONG)lpData))
 	    break;
 
 	offset += (mr->rdSize * 2);
@@ -568,7 +569,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 
     case META_CREATEFONTINDIRECT:
 	MF_AddHandle(ht, nHandles, 
-		     CreateFontIndirect((LOGFONT16 *)(&(mr->rdParam))));
+		     CreateFontIndirect16((LOGFONT16 *)(&(mr->rdParam))));
 	break;
 
     case META_CREATEBRUSHINDIRECT:

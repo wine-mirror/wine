@@ -248,9 +248,23 @@ UINT DIR_GetDosPath( int element, LPSTR path, UINT count )
  */
 BYTE GetTempDrive( BYTE ignored )
 {
+    /* FIXME: apparently Windows does something with the ignored byte */
     return DIR_TempDosDir[0];
 }
 
+
+UINT32 WIN16_GetTempDrive( BYTE ignored )
+{
+    /* A closer look at krnl386.exe shows what the SDK doesn't mention:
+     *
+     * returns:
+     *	 AL: driveletter
+     *   AH: ':'		- yes, some kernel code even does stosw with
+     *                            the returned AX.
+     *   DX: 1 for success
+     */
+    return MAKELONG( GetTempDrive(ignored) | (':' << 8), 1 );
+}
 
 /***********************************************************************
  *           GetWindowsDirectory   (KERNEL.134)

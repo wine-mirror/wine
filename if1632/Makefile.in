@@ -79,7 +79,7 @@ callfrom16.S: $(SPEC_FILES)
 	$(BUILD) -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq` > callfrom16.S
 
 callfrom32.S: $(SPEC_FILES)
-	$(BUILD) -callfrom32 `cat $(SPEC_FILES) | grep CallFrom32_ | sed 's/.*CallFrom32_\([0-9]*\)/\1/' | sort | uniq` > callfrom32.S
+	$(BUILD) -callfrom32 `cat $(SPEC_FILES) | grep CallFrom32_ | sed 's/.*CallFrom32_\(.*\)/\1/' | sort | uniq` > callfrom32.S
 
 callto16.S: $(TOPSRC)/include/callback.h $(BUILD)
 	$(BUILD) -callto16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > callto16.S

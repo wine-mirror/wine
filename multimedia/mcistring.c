@@ -24,11 +24,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-#ifdef WINELIB32
-#define UIFMT "%u"
-#else
-#define UIFMT "%hu"
-#endif
 
 extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 
@@ -71,21 +66,19 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 } while(0)
 
 /* calling DriverProc. We need to pass the struct as SEGMENTED POINTER. */
-#define _MCI_CALL_DRIVER(cmd,params) {\
-	DWORD	xparams;\
-	xparams=MAKE_SEGPTR(&params);\
+#define _MCI_CALL_DRIVER(cmd,params) \
 	switch(uDevTyp) {\
 	case MCI_DEVTYPE_CD_AUDIO:\
-		res=CDAUDIO_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags, xparams);\
+		res=CDAUDIO_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags, (DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_WAVEFORM_AUDIO:\
-		res=WAVE_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags,xparams);\
+		res=WAVE_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_SEQUENCER:\
-		res=MIDI_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags,xparams);\
+		res=MIDI_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_ANIMATION:\
-		res=ANIM_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags,xparams);\
+		res=ANIM_DriverProc(mciDrv[wDevID].wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_DIGITAL_VIDEO:\
 		dprintf_mci(stddeb,"_MCI_CALL_DRIVER //No DIGITAL_VIDEO yet !\n");\
@@ -95,8 +88,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 		dprintf_mci(stddeb,"_MCI_CALL_DRIVER //Invalid Device Name '%s' !\n",dev);\
 		res=MCIERR_INVALID_DEVICE_NAME;\
 		break;\
-	}\
-}
+	}
 /* we need to have strings in 16 bit space for some things 
  * FIXME: this is bad.
  */
@@ -433,7 +425,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		fprintf(stdnimp,__FILE__":MCISTR_Open:unknown parameter passed %s, please report.\n",keywords[i]);
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_OPEN,U);
+	_MCI_CALL_DRIVER( MCI_OPEN, MAKE_SEGPTR(&U) );
 	if (res==0)
 		memcpy(&mciOpenDrv[wDevID],&U.openParams,sizeof(MCI_OPEN_PARMS));
 	return res;
@@ -451,7 +443,7 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef) {
 	dwFlags	= MCI_STATUS_ITEM;
 	statusParams.dwItem	= MCI_STATUS_TIME_FORMAT;
 	statusParams.dwReturn	= 0;
-	_MCI_CALL_DRIVER(MCI_STATUS,statusParams);
+	_MCI_CALL_DRIVER( MCI_STATUS, MAKE_SEGPTR(&statusParams) );
 	if (res==0) *timef=statusParams.dwReturn;
 	return res;
 }
@@ -621,7 +613,7 @@ MCISTR_Status(_MCISTR_PROTO_) {
 	if (!statusParams.dwItem) 
 		return MCIERR_MISSING_STRING_ARGUMENT;
 
-	_MCI_CALL_DRIVER(MCI_STATUS,statusParams);
+	_MCI_CALL_DRIVER( MCI_STATUS, MAKE_SEGPTR(&statusParams) );
 	if (res==0)
 		_MCISTR_convreturn(type,statusParams.dwReturn,lpstrReturnString,uReturnLength,uDevTyp,timef);
 	return res;
@@ -761,14 +753,14 @@ MCISTR_Set(_MCISTR_PROTO_) {
 				i+=2;\
 				continue;\
 			}
-			WII("formattag",MCI_WAVE_SET_FORMATTAG,UIFMT,wFormatTag);
-			WII("channels",MCI_WAVE_SET_CHANNELS,UIFMT,nChannels);
+			WII("formattag",MCI_WAVE_SET_FORMATTAG,"%hu",wFormatTag);
+			WII("channels",MCI_WAVE_SET_CHANNELS,"%hu",nChannels);
 			WII("bytespersec",MCI_WAVE_SET_AVGBYTESPERSEC,"%lu",nAvgBytesPerSec);
 			WII("samplespersec",MCI_WAVE_SET_SAMPLESPERSEC,"%lu",nSamplesPerSec);
-			WII("alignment",MCI_WAVE_SET_BLOCKALIGN,UIFMT,nBlockAlign);
-			WII("bitspersample",MCI_WAVE_SET_BITSPERSAMPLE,UIFMT,wBitsPerSample);
-			WII("input",MCI_WAVE_INPUT,UIFMT,wInput);
-			WII("output",MCI_WAVE_OUTPUT,UIFMT,wOutput);
+			WII("alignment",MCI_WAVE_SET_BLOCKALIGN,"%hu",nBlockAlign);
+			WII("bitspersample",MCI_WAVE_SET_BITSPERSAMPLE,"%hu",wBitsPerSample);
+			WII("input",MCI_WAVE_INPUT,"%hu",wInput);
+			WII("output",MCI_WAVE_OUTPUT,"%hu",wOutput);
 #undef WII
 			break;
 		case MCI_DEVTYPE_SEQUENCER:
@@ -822,7 +814,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
 	}
 	if (!dwFlags)
 		return MCIERR_MISSING_STRING_ARGUMENT;
-	_MCI_CALL_DRIVER(MCI_SET,U);
+	_MCI_CALL_DRIVER( MCI_SET, MAKE_SEGPTR(&U) );
 	return res;
 }
 
@@ -852,7 +844,7 @@ MCISTR_Break(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_BREAK,breakParams);
+	_MCI_CALL_DRIVER( MCI_BREAK, MAKE_SEGPTR(&breakParams) );
 	return res;
 }
 
@@ -971,7 +963,7 @@ MCISTR_Capability(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_GETDEVCAPS,gdcParams);
+	_MCI_CALL_DRIVER( MCI_GETDEVCAPS, MAKE_SEGPTR(&gdcParams) );
 	/* no timeformat needed */
 	if (res==0)
 		_MCISTR_convreturn(type,gdcParams.dwReturn,lpstrReturnString,uReturnLength,uDevTyp,0);
@@ -987,7 +979,7 @@ MCISTR_Resume(_MCISTR_PROTO_) {
 	int	res;
 
 	genParams.dwCallback=0;
-	_MCI_CALL_DRIVER(MCI_RESUME,genParams);
+	_MCI_CALL_DRIVER( MCI_RESUME, MAKE_SEGPTR(&genParams) );
 	return res;
 }
 
@@ -997,7 +989,7 @@ MCISTR_Pause(_MCISTR_PROTO_) {
 	MCI_GENERIC_PARMS	genParams;
 	int			res;
 	genParams.dwCallback=0;
-	_MCI_CALL_DRIVER(MCI_PAUSE,genParams);
+	_MCI_CALL_DRIVER( MCI_PAUSE, MAKE_SEGPTR(&genParams) );
 	return res;
 }
 
@@ -1007,7 +999,7 @@ MCISTR_Stop(_MCISTR_PROTO_) {
 	MCI_GENERIC_PARMS	genParams;
 	int			res;
 	genParams.dwCallback=0;
-	_MCI_CALL_DRIVER(MCI_STOP,genParams);
+	_MCI_CALL_DRIVER( MCI_STOP, MAKE_SEGPTR(&genParams) );
 	return res;
 }
 
@@ -1081,7 +1073,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 		FLAG1("overwrite",MCI_RECORD_OVERWRITE);
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_RECORD,recordParams);
+	_MCI_CALL_DRIVER( MCI_RECORD, MAKE_SEGPTR(&recordParams) );
 	return res;
 }
 
@@ -1192,7 +1184,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_PLAY,U);
+	_MCI_CALL_DRIVER( MCI_PLAY, MAKE_SEGPTR(&U) );
 	return res;
 }
 
@@ -1264,7 +1256,7 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_SEEK,seekParams);
+	_MCI_CALL_DRIVER( MCI_SEEK, MAKE_SEGPTR(&seekParams) );
 	return res;
 }
 
@@ -1274,7 +1266,7 @@ MCISTR_Close(_MCISTR_PROTO_) {
 	MCI_GENERIC_PARMS	closeParams;
 	int			res;
 
-	_MCI_CALL_DRIVER(MCI_CLOSE,closeParams);
+	_MCI_CALL_DRIVER( MCI_CLOSE, MAKE_SEGPTR(&closeParams) );
 	return res;
 }
 
@@ -1312,7 +1304,7 @@ MCISTR_Info(_MCISTR_PROTO_) {
 	/* MCI driver will fill in lpstrReturn, dwRetSize.
 	 * FIXME: I don't know if this is correct behaviour
 	 */
-	_MCI_CALL_DRIVER(MCI_INFO,infoParams);
+	_MCI_CALL_DRIVER( MCI_INFO, MAKE_SEGPTR(&infoParams) );
 	if (res==0)
 		_MCI_STR(infoParams.lpstrReturn);
 	return res;
@@ -1409,7 +1401,7 @@ MCISTR_Load(_MCISTR_PROTO_) {
 	strcpy(PTR_SEG_TO_LIN(U.loadParams.lpfilename),s);
 	free(s);
 	dwFlags |= MCI_LOAD_FILE;
-	_MCI_CALL_DRIVER(MCI_LOAD,U);
+	_MCI_CALL_DRIVER( MCI_LOAD, MAKE_SEGPTR(&U) );
 	USER_HEAP_FREE(x);
 	return res;
 }
@@ -1461,7 +1453,7 @@ MCISTR_Save(_MCISTR_PROTO_) {
 	strcpy(PTR_SEG_TO_LIN(U.saveParams.lpfilename),s);
 	free(s);
 	dwFlags |= MCI_LOAD_FILE;
-	_MCI_CALL_DRIVER(MCI_SAVE,U);
+	_MCI_CALL_DRIVER( MCI_SAVE, MAKE_SEGPTR(&U) );
 	USER_HEAP_FREE(x);
 	return res;
 }
@@ -1484,7 +1476,7 @@ MCISTR_Cue(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_CUE,cueParams);
+	_MCI_CALL_DRIVER( MCI_CUE, MAKE_SEGPTR(&cueParams) );
 	return res;
 }
 
@@ -1551,7 +1543,7 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_DELETE,deleteParams);
+	_MCI_CALL_DRIVER( MCI_DELETE, MAKE_SEGPTR(&deleteParams) );
 	return res;
 }
 
@@ -1585,7 +1577,7 @@ MCISTR_Escape(_MCISTR_PROTO_) {
 	strcpy(PTR_SEG_TO_LIN(escapeParams.lpstrCommand),s);
 	free(s);
 	dwFlags |= MCI_VD_ESCAPE_STRING;
-	_MCI_CALL_DRIVER(MCI_ESCAPE,escapeParams);
+	_MCI_CALL_DRIVER( MCI_ESCAPE, MAKE_SEGPTR(&escapeParams) );
 	USER_HEAP_FREE(x);
 	return res;
 }
@@ -1612,7 +1604,7 @@ MCISTR_Unfreeze(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_UNFREEZE,unfreezeParams);
+	_MCI_CALL_DRIVER( MCI_UNFREEZE, MAKE_SEGPTR(&unfreezeParams) );
 	return res;
 }
 /* freeze [part of] the overlayed video 
@@ -1637,7 +1629,7 @@ MCISTR_Freeze(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_FREEZE,freezeParams);
+	_MCI_CALL_DRIVER( MCI_FREEZE, MAKE_SEGPTR(&freezeParams) );
 	return res;
 }
 
@@ -1695,7 +1687,7 @@ MCISTR_Put(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_PUT,U);
+	_MCI_CALL_DRIVER( MCI_PUT, MAKE_SEGPTR(&U) );
 	return res;
 }
 
@@ -1717,7 +1709,7 @@ MCISTR_Realize(_MCISTR_PROTO_) {
 		FLAG1("normal",MCI_ANIM_REALIZE_NORM);
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_REALIZE,realizeParams);
+	_MCI_CALL_DRIVER( MCI_REALIZE, MAKE_SEGPTR(&realizeParams) );
 	return res;
 }
 
@@ -1738,7 +1730,7 @@ MCISTR_Spin(_MCISTR_PROTO_) {
 		FLAG1("down",MCI_VD_SPIN_UP);
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_SPIN,spinParams);
+	_MCI_CALL_DRIVER( MCI_SPIN, MAKE_SEGPTR(&spinParams) );
 	return res;
 }
 
@@ -1778,7 +1770,7 @@ MCISTR_Step(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_STEP,U);
+	_MCI_CALL_DRIVER( MCI_STEP, MAKE_SEGPTR(&U) );
 	return res;
 }
 
@@ -1811,7 +1803,7 @@ MCISTR_Update(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_UPDATE,updateParams);
+	_MCI_CALL_DRIVER( MCI_UPDATE, MAKE_SEGPTR(&updateParams) );
 	return res;
 }
 
@@ -1848,7 +1840,7 @@ MCISTR_Where(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_WHERE,U);
+	_MCI_CALL_DRIVER( MCI_WHERE, MAKE_SEGPTR(&U) );
 	if (res==0) {
 		char	buf[100];
 		switch (uDevTyp) {
@@ -2029,7 +2021,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER(MCI_WINDOW,U);
+	_MCI_CALL_DRIVER( MCI_WINDOW, MAKE_SEGPTR(&U) );
 	if (s) free(s);
 	return res;
 }

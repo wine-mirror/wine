@@ -461,7 +461,7 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
     case SPY_SENDMESSAGE32:
         {
             char taskName[30];
-            HTASK hTask = GetWindowTask(hWnd);
+            HTASK hTask = GetWindowTask16(hWnd);
             if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
             else if (!hTask) strcpy( taskName, "Wine" );
             else sprintf( taskName, "task %04x %s",

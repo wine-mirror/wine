@@ -19,13 +19,8 @@ extern WORD USER_HeapSel;
 #define USER_HEAP_FREE(handle) \
             LOCAL_Free( USER_HeapSel, (handle) )
 #define USER_HEAP_LIN_ADDR(handle)  \
-            ((handle) ? PTR_SEG_OFF_TO_LIN(USER_HeapSel, (handle)) : NULL)
-
-#ifdef WINELIB
-#define USER_HEAP_SEG_ADDR(handle)  ((SEGPTR)(USER_HEAP_LIN_ADDR(handle)))
-#else
+         ((handle) ? PTR_SEG_OFF_TO_LIN(USER_HeapSel, (handle)) : NULL)
 #define USER_HEAP_SEG_ADDR(handle)  \
-            ((handle) ? MAKELONG((handle), USER_HeapSel) : 0)
-#endif  /* WINELIB */
+         ((handle) ? PTR_SEG_OFF_TO_SEGPTR(USER_HeapSel, (handle)) : (SEGPTR)0)
 
 #endif  /* USER_H */

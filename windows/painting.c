@@ -196,17 +196,12 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 {
       /* Send WM_CTLCOLOR message if needed */
 
-    if ((DWORD)hbrush <= CTLCOLOR_MAX)
+    if ((UINT32)hbrush <= CTLCOLOR_MAX)
     {
 	if (!hwndParent) return;
-#ifdef WINELIB32
 	hbrush = (HBRUSH)SendMessage32A( hwndParent, 
-                                         WM_CTLCOLORMSGBOX+(DWORD)hbrush,
+                                         WM_CTLCOLORMSGBOX + (UINT32)hbrush,
                                          (WPARAM)hdc, (LPARAM)hwnd );
-#else
-	hbrush = (HBRUSH)SendMessage16( hwndParent, WM_CTLCOLOR,
-                                        hdc, MAKELONG( hwnd, hbrush ) );
-#endif
     }
     if (hbrush) FillRect16( hdc, rect, hbrush );
 }
@@ -217,13 +212,8 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
  */
 HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 {
-#ifdef WINELIB32
     return (HBRUSH)SendMessage32A( GetParent(hwnd), WM_CTLCOLOR+control,
                                    (WPARAM)hdc, (LPARAM)hwnd );
-#else
-    return (HBRUSH)SendMessage16( GetParent(hwnd), WM_CTLCOLOR,
-                                  hdc, MAKELONG( hwnd, control ) );
-#endif
 }
 
 

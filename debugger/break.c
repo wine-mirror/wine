@@ -37,31 +37,25 @@ static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
  */
 static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
 {
-    if (addr->seg)
+    BYTE *ptr;
+
+    if (addr->seg) ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( addr->seg, addr->off );
+    else ptr = (BYTE *)addr->off;
+
+    /* There are a couple of problems with this. On Linux prior to
+       1.1.62, this call fails (ENOACCESS) due to a bug in fs/exec.c.
+       This code is currently not tested at all on BSD.
+       How do I get the old protection in order to restore it later on?
+       */
+    if (mprotect((caddr_t)((int)ptr & (~4095)), 4096,
+                 PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
     {
-        *(BYTE *)PTR_SEG_OFF_TO_LIN( addr->seg, addr->off ) = op;
+        perror( "Can't set break point" );
+        return;
     }
-    else  /* 32-bit code, so we have to change the protection first */
-    {
-        /* There are a couple of problems with this. On Linux prior to
-           1.1.62, this call fails (ENOACCESS) due to a bug in fs/exec.c.
-           This code is currently not tested at all on BSD.
-           How do I determine the page size in a more symbolic manner?
-           And why does mprotect need that start address of the page
-           in the first place?
-           Not that portability matters, this code is i386 only anyways...
-           How do I get the old protection in order to restore it later on?
-        */
-        if (mprotect((caddr_t)(addr->off & (~4095)), 4096,
-                     PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
-        {
-            perror( "Can't set break point" );
-            return;
-	}
-        *(BYTE *)addr->off = op;
-	mprotect((caddr_t)(addr->off & ~4095), 4096,
-                  PROT_READ | PROT_EXEC );
-    }
+    *ptr = op;
+    /* mprotect((caddr_t)(addr->off & ~4095), 4096,
+       PROT_READ | PROT_EXEC ); */
 }
 
 

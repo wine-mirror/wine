@@ -2,8 +2,6 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "registers.h"
-#include "wine.h"
 #include "options.h"
 #include "miscemu.h"
 #include "stddebug.h"
@@ -42,19 +40,19 @@ DWORD INT1A_GetTicksSinceMidnight(void)
  *
  * Handler for int 1ah (date and time).
  */
-void INT_Int1aHandler( SIGCONTEXT context )
+void INT_Int1aHandler( SIGCONTEXT *context )
 {
     time_t ltime;
     DWORD ticks;
     struct tm *bdtime;
 
-    switch(AH_reg(&context))
+    switch(AH_reg(context))
     {
 	case 0:
             ticks = INT1A_GetTicksSinceMidnight();
-            CX_reg(&context) = HIWORD(ticks);
-            DX_reg(&context) = LOWORD(ticks);
-            AX_reg(&context) = 0;  /* No midnight rollover */
+            CX_reg(context) = HIWORD(ticks);
+            DX_reg(context) = LOWORD(ticks);
+            AX_reg(context) = 0;  /* No midnight rollover */
             dprintf_int(stddeb,"int1a_00 // ticks=%ld\n", ticks);
             break;
 		
@@ -62,17 +60,17 @@ void INT_Int1aHandler( SIGCONTEXT context )
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
 		
-		CX_reg(&context) = (BIN_TO_BCD(bdtime->tm_hour)<<8) |
-                                    BIN_TO_BCD(bdtime->tm_min);
-		DX_reg(&context) = (BIN_TO_BCD(bdtime->tm_sec)<<8);
+		CX_reg(context) = (BIN_TO_BCD(bdtime->tm_hour)<<8) |
+                                   BIN_TO_BCD(bdtime->tm_min);
+		DX_reg(context) = (BIN_TO_BCD(bdtime->tm_sec)<<8);
 
 	case 4:
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
-		CX_reg(&context) = (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
-                                    BIN_TO_BCD((bdtime->tm_year-1900)%100);
-		DX_reg(&context) = (BIN_TO_BCD(bdtime->tm_mon)<<8) |
-                                    BIN_TO_BCD(bdtime->tm_mday);
+		CX_reg(context) = (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
+                                   BIN_TO_BCD((bdtime->tm_year-1900)%100);
+		DX_reg(context) = (BIN_TO_BCD(bdtime->tm_mon)<<8) |
+                                   BIN_TO_BCD(bdtime->tm_mday);
 		break;
 
 		/* setting the time,date or RTC is not allow -EB */
@@ -89,6 +87,6 @@ void INT_Int1aHandler( SIGCONTEXT context )
 		break;
 
 	default:
-		INT_BARF( &context, 0x1a );
+		INT_BARF( context, 0x1a );
     }
 }

@@ -20,9 +20,7 @@ type	win16
 20 pascal PrintDlgProc(word word word long) PrintDlgProc
 21 pascal AboutDlgProc(word word word long) AboutDlgProc
 22 pascal ComboLBoxWndProc(word word word long) ComboLBoxWndProc
-23 pascal16 CARET_Callback(word word word long) CARET_Callback
 24 pascal16 TASK_Reschedule() TASK_Reschedule
-25 pascal MMSysTimeCallback(word word word long) MMSysTimeCallback
 26 register Win32CallToStart() PE_Win32CallToStart
 27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment

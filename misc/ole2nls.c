@@ -24,16 +24,16 @@ DWORD GetUserDefaultLCID()
     switch(Options.language)
     {
     case LANG_En: return 0x09;
-    case LANG_Es: return 0x07; /* Just a Guess :-) */
+    case LANG_Es: return 0x0a;
     case LANG_De: return 0x07;
     case LANG_No: return 0x14;
-    case LANG_Fr:
-    case LANG_Fi:
-    case LANG_Da:
-    case LANG_Cz:
-    case LANG_Eo:
-    case LANG_It:
-    case LANG_Ko:
+    case LANG_Fr: return 0x0c;
+    case LANG_Fi: return 0x0b;
+    case LANG_Da: return 0x06;
+    case LANG_Cz: return 0x05;
+    case LANG_Eo: return 0x25; /* not official */
+    case LANG_It: return 0x10;
+    case LANG_Ko: return 0x12;
     default:
 	return 0;  /* Neutral language */
     }
@@ -525,7 +525,130 @@ LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
 /* LOCVAL(LOCALE_INEGSYMPRECEDES) */
 /* LOCVAL(LOCALE_INEGSEPBYSPACE) */
     break;  /* LANG(Eo) */
-    
+
+    case LANG_Fi:
+LOCVAL(LOCALE_ILANGUAGE,"11")
+LOCVAL(LOCALE_SLANGUAGE,"Suomi")
+LOCVAL(LOCALE_SENGLANGUAGE,"Finnish")
+LOCVAL(LOCALE_SABBREVLANGNAME,"fin")
+LOCVAL(LOCALE_SNATIVELANGNAME,"suomi")
+LOCVAL(LOCALE_ICOUNTRY,"49")
+LOCVAL(LOCALE_SCOUNTRY,"Suomi")
+LOCVAL(LOCALE_SENGCOUNTRY,"Finland")
+LOCVAL(LOCALE_SABBREVCTRYNAME,"Fin")
+LOCVAL(LOCALE_SNATIVECTRYNAME,"Suomi")
+LOCVAL(LOCALE_IDEFAULTLANGUAGE,"11")
+LOCVAL(LOCALE_IDEFAULTCOUNTRY,"358")
+/* 
+LOCVAL(LOCALE_IDEFAULTCODEPAGE)
+LOCVAL(LOCALE_IDEFAULTANSICODEPAGE)
+*/
+LOCVAL(LOCALE_SLIST,";")
+LOCVAL(LOCALE_IMEASURE,"0")
+LOCVAL(LOCALE_SDECIMAL,",")
+LOCVAL(LOCALE_STHOUSAND,".")
+/*
+LOCVAL(LOCALE_SGROUPING)
+*/
+LOCVAL(LOCALE_IDIGITS,"2")
+LOCVAL(LOCALE_ILZERO,"1")
+/*
+LOCVAL(LOCALE_INEGNUMBER)
+Is this "0123456789" ??
+LOCVAL(LOCALE_SNATIVEDIGITS)
+*/
+LOCVAL(LOCALE_SCURRENCY,"mk")
+/*
+LOCVAL(LOCALE_SINTLSYMBOL)
+LOCVAL(LOCALE_SMONDECIMALSEP)
+LOCVAL(LOCALE_SMONTHOUSANDSEP)
+LOCVAL(LOCALE_SMONGROUPING)
+*/
+LOCVAL(LOCALE_ICURRDIGITS,"2")
+/*
+LOCVAL(LOCALE_IINTLCURRDIGITS)
+*/
+LOCVAL(LOCALE_ICURRENCY,"3")
+LOCVAL(LOCALE_INEGCURR,"8")
+LOCVAL(LOCALE_SDATE,".")
+LOCVAL(LOCALE_STIME,":")
+LOCVAL(LOCALE_SSHORTDATE,"dd.MM.yyyy")
+LOCVAL(LOCALE_SLONGDATE,"ddd, d. MMMM yyyy")
+/*
+LOCVAL(LOCALE_STIMEFORMAT)
+*/
+LOCVAL(LOCALE_IDATE,"1")
+/*
+LOCVAL(LOCALE_ILDATE)
+*/
+LOCVAL(LOCALE_ITIME,"1")
+/*
+LOCVAL(LOCALE_ITIMEMARKPOSN)
+LOCVAL(LOCALE_ICENTURY)
+*/
+LOCVAL(LOCALE_ITLZERO,"1")
+/*
+LOCVAL(LOCALE_IDAYLZERO)
+LOCVAL(LOCALE_IMONLZERO)
+LOCVAL(LOCALE_S1159)
+LOCVAL(LOCALE_S2359)
+LOCVAL(LOCALE_ICALENDARTYPE)
+LOCVAL(LOCALE_IOPTIONALCALENDAR)
+LOCVAL(LOCALE_IFIRSTDAYOFWEEK)
+LOCVAL(LOCALE_IFIRSTWEEKOFYEAR)
+*/
+LOCVAL(LOCALE_SDAYNAME1,"maanantai")
+LOCVAL(LOCALE_SDAYNAME2,"tiistai")
+LOCVAL(LOCALE_SDAYNAME3,"keskiviikko")
+LOCVAL(LOCALE_SDAYNAME4,"torstai")
+LOCVAL(LOCALE_SDAYNAME5,"perjantai")
+LOCVAL(LOCALE_SDAYNAME6,"lauantai")
+LOCVAL(LOCALE_SDAYNAME7,"sunnuntai")
+LOCVAL(LOCALE_SABBREVDAYNAME1,"Ma")
+LOCVAL(LOCALE_SABBREVDAYNAME2,"Ti")
+LOCVAL(LOCALE_SABBREVDAYNAME3,"Ke")
+LOCVAL(LOCALE_SABBREVDAYNAME4,"To")
+LOCVAL(LOCALE_SABBREVDAYNAME5,"Pe")
+LOCVAL(LOCALE_SABBREVDAYNAME6,"La")
+LOCVAL(LOCALE_SABBREVDAYNAME7,"Su")
+LOCVAL(LOCALE_SMONTHNAME1,"tammikuu")
+LOCVAL(LOCALE_SMONTHNAME2,"helmikuu")
+LOCVAL(LOCALE_SMONTHNAME3,"maaliskuu")
+LOCVAL(LOCALE_SMONTHNAME4,"huhtikuu")
+LOCVAL(LOCALE_SMONTHNAME5,"toukokuu")
+LOCVAL(LOCALE_SMONTHNAME6,"kesäkuu")
+LOCVAL(LOCALE_SMONTHNAME7,"heinäkuu")
+LOCVAL(LOCALE_SMONTHNAME8,"elokuu")
+LOCVAL(LOCALE_SMONTHNAME9,"syyskuu")
+LOCVAL(LOCALE_SMONTHNAME10,"lokakuu")
+LOCVAL(LOCALE_SMONTHNAME11,"marraskuu")
+LOCVAL(LOCALE_SMONTHNAME12,"joulukuu")
+LOCVAL(LOCALE_SMONTHNAME13,"")
+LOCVAL(LOCALE_SABBREVMONTHNAME1,"tammi")
+LOCVAL(LOCALE_SABBREVMONTHNAME2,"helmi")
+LOCVAL(LOCALE_SABBREVMONTHNAME3,"maalis")
+LOCVAL(LOCALE_SABBREVMONTHNAME4,"huhti")
+LOCVAL(LOCALE_SABBREVMONTHNAME5,"touko")
+LOCVAL(LOCALE_SABBREVMONTHNAME6,"kesä")
+LOCVAL(LOCALE_SABBREVMONTHNAME7,"heinä")
+LOCVAL(LOCALE_SABBREVMONTHNAME8,"elo")
+LOCVAL(LOCALE_SABBREVMONTHNAME9,"syys")
+LOCVAL(LOCALE_SABBREVMONTHNAME10,"loka")
+LOCVAL(LOCALE_SABBREVMONTHNAME11,"marras")
+LOCVAL(LOCALE_SABBREVMONTHNAME12,"joulu")
+LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
+/*
+LOCVAL(LOCALE_SPOSITIVESIGN)
+LOCVAL(LOCALE_SNEGATIVESIGN)
+LOCVAL(LOCALE_IPOSSIGNPOSN)
+LOCVAL(LOCALE_INEGSIGNPOSN)
+LOCVAL(LOCALE_IPOSSYMPRECEDES)
+LOCVAL(LOCALE_IPOSSEPBYSPACE)
+LOCVAL(LOCALE_INEGSYMPRECEDES)
+LOCVAL(LOCALE_INEGSEPBYSPACE)
+*/
+    break;  /* LANG(Fi) */
+
     case LANG_It:
 LOCVAL(LOCALE_ILANGUAGE,"9")
 LOCVAL(LOCALE_SLANGUAGE,"Italiano")
@@ -671,11 +794,21 @@ LOCVAL(LOCALE_INEGSEPBYSPACE)
 
 
 /***********************************************************************
- *           CompareStringA       (OLE2NLS.8)
- * This implementation ignores the locale, and trusts in libc
+ *           CompareString16       (OLE2NLS.8)
  */
-int CompareStringA(DWORD lcid, DWORD fdwStyle, 
-	char *s1, int l1, char *s2,int l2)
+UINT16 CompareString16(DWORD lcid,DWORD fdwStyle,
+	LPCSTR s1,DWORD l1,LPCSTR s2,DWORD l2)
+{
+	return (UINT16)CompareString32A(lcid,fdwStyle,s1,l1,s2,l2);
+}
+
+/***********************************************************************
+ *           CompareString32A   (KERNEL32.29)
+ * This implementation ignores the locale
+ * FIXME
+ */
+UINT32 CompareString32A(DWORD lcid, DWORD fdwStyle, 
+	LPCSTR s1, DWORD l1, LPCSTR s2,DWORD l2)
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
@@ -695,6 +828,35 @@ int CompareStringA(DWORD lcid, DWORD fdwStyle,
 	if(ret!=0)return ret+2;
 	/* same len, return 2 */
 	if(l1==l2)return 2;
+	/* the longer one is lexically greater */
+	return (l1<l2)? 1 : 3;
+}
+
+/***********************************************************************
+ *           CompareString32W       (KERNEL32.30)
+ * This implementation ignores the locale
+ * FIXME
+ */
+UINT32 CompareString32W(DWORD lcid, DWORD fdwStyle, 
+	LPCWSTR s1, DWORD l1, LPCWSTR s2,DWORD l2)
+{
+	int len,ret;
+	if(fdwStyle & NORM_IGNORENONSPACE)
+		fprintf(stdnimp,"CompareStringW:IGNORENONSPACE not supprted\n");
+	if(fdwStyle & NORM_IGNORESYMBOLS)
+		fprintf(stdnimp,"CompareStringW:IGNORESYMBOLS not supported\n");
+
+	/* Is strcmp defaulting to string sort or to word sort?? */
+	/* FIXME: Handle NORM_STRINGSORT */
+	l1 = (l1==-1)?lstrlen32W(s1):l1;
+	l2 = (l2==-1)?lstrlen32W(s2):l2;
+	len = l1<l2 ? l1:l2;
+	ret = (fdwStyle & NORM_IGNORECASE) ?
+		lstrncmpi32W(s1,s2,len)	: lstrncmp32W(s1,s2,len);
+	/* not equal, return 1 or 3 */
+	if(ret!=0) return ret+2;
+	/* same len, return 2 */
+	if(l1==l2) return 2;
 	/* the longer one is lexically greater */
 	return (l1<l2)? 1 : 3;
 }

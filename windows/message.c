@@ -253,7 +253,7 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
         if ((first || last) && 
             ((msg->message < first) || (msg->message > last))) continue;
         if ((msg->hwnd != GetDesktopWindow()) && 
-            (GetWindowTask(msg->hwnd) != GetCurrentTask()))
+            (GetWindowTask16(msg->hwnd) != GetCurrentTask()))
             continue;  /* Not for this task */
         if (remove)
         {
@@ -662,7 +662,6 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         return TRUE;
     }
 
-
     HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1,
                     (LPARAM)MAKE_SEGPTR(&msgstruct) );
     hwnd   = msgstruct.hWnd;
@@ -676,13 +675,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         return 0;
     }
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
-    {
-#if 0
-        fprintf( stderr, "SendMessage16: intertask message not supported\n" );
-        return 0;
-#endif
         return MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam );
-    }
 
     SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
     ret = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
@@ -718,6 +711,19 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         fprintf( stderr, "SendMessage32A: invalid hwnd %08x\n", hwnd );
         return 0;
     }
+
+    if (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_16)
+    {
+        /* Use SendMessage16 for now to get hooks right */
+        UINT16 msg16;
+        WPARAM16 wParam16;
+        if (WINPROC_MapMsg32ATo16( msg, wParam, &msg16, &wParam16, &lParam ) == -1)
+            return 0;
+        ret = SendMessage16( hwnd, msg16, wParam16, lParam );
+        WINPROC_UnmapMsg32ATo16( msg16, wParam16, lParam );
+        return ret;
+    }
+
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
     {
         fprintf( stderr, "SendMessage32A: intertask message not supported\n" );
@@ -895,7 +901,7 @@ WORD RegisterWindowMessage32W( LPCWSTR str )
 
 
 /***********************************************************************
- *           GetTickCount    (USER.13) (KERNEL32.299)
+ *           GetTickCount   (USER.13) (KERNEL32.299)
  */
 DWORD GetTickCount(void)
 {

@@ -133,7 +133,7 @@ INT EnumProps( HWND hwnd, PROPENUMPROC func )
           /* Already get the next in case the callback */
           /* function removes the current property.    */
         hProp = prop->next;
-        ret = CallEnumPropProc( func, hwnd,
+        ret = CallEnumPropProc( (FARPROC16)func, hwnd,
                                 prop->atom ? 
                                   (LONG)MAKELONG( prop->atom, 0 )
 				:

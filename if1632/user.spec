@@ -9,9 +9,9 @@ heap	65520
 5   pascal16 InitApp(word) USER_InitApp
 6   pascal16 PostQuitMessage(word) PostQuitMessage
 7   pascal16 ExitWindows(long word) ExitWindows
-10  pascal16 SetTimer(word word word segptr) SetTimer
-11  pascal16 SetSystemTimer(word word word segptr) SetSystemTimer
-12  pascal16 KillTimer(word word) KillTimer
+10  pascal16 SetTimer(word word word segptr) SetTimer16
+11  pascal16 SetSystemTimer(word word word segptr) SetSystemTimer16
+12  pascal16 KillTimer(word word) KillTimer16
 13  pascal   GetTickCount() GetTickCount
 14  pascal   GetTimerResolution() GetTimerResolution
 15  pascal   GetCurrentTime() GetCurrentTime
@@ -168,7 +168,7 @@ heap	65520
 166 pascal16 HideCaret(word) HideCaret
 167 pascal16 ShowCaret(word) ShowCaret
 168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime
-169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime
+169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows
 171 pascal16 WinHelp(word ptr word long) WinHelp
 172 stub SwitchToThisWindow
@@ -181,7 +181,7 @@ heap	65520
 179 pascal16 GetSystemMetrics(word) GetSystemMetrics
 180 pascal   GetSysColor(word) GetSysColor
 181 pascal16 SetSysColors(word ptr ptr) SetSysColors
-182 pascal16 KillSystemTimer(word word) KillSystemTimer
+182 pascal16 KillSystemTimer(word word) KillSystemTimer16
 183 pascal16 GetCaretPos(ptr) GetCaretPos16
 184 stub QuerySendMessage
 185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) GrayString
@@ -224,7 +224,7 @@ heap	65520
 221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
-224 pascal16 GetWindowTask(word) GetWindowTask
+224 pascal16 GetWindowTask(word) GetWindowTask16
 225 pascal16 EnumTaskWindows(word segptr long) EnumTaskWindows16
 226 stub LockInput
 227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem
@@ -329,8 +329,8 @@ heap	65520
 359 pascal16 GetDCEx(word word long) GetDCEx
 362 pascal16 DCHook(word word long long) DCHook
 364 stub LookupIconIDFromDirectoryEx
-368 pascal16 CopyIcon(word word) CopyIcon
-369 pascal16 CopyCursor(word word) CopyCursor
+368 pascal16 CopyIcon(word word) CopyIcon16
+369 pascal16 CopyCursor(word word) CopyCursor16
 370 pascal16 GetWindowPlacement(word ptr) GetWindowPlacement16
 371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement16
 372 stub GetInternalIconHeader
@@ -382,10 +382,10 @@ heap	65520
 430 pascal16 lstrcmp(ptr ptr) lstrcmp16
 431 pascal   AnsiUpper(segptr) WIN16_AnsiUpper
 432 pascal   AnsiLower(segptr) WIN16_AnsiLower
-433 pascal16 IsCharAlpha(byte) IsCharAlpha
-434 pascal16 IsCharAlphanumeric(byte) IsCharAlphanumeric
-435 pascal16 IsCharUpper(byte) IsCharUpper
-436 pascal16 IsCharLower(byte) IsCharLower
+433 pascal16 IsCharAlpha(byte) IsCharAlpha16
+434 pascal16 IsCharAlphanumeric(byte) IsCharAlphanumeric16
+435 pascal16 IsCharUpper(byte) IsCharUpper16
+436 pascal16 IsCharLower(byte) IsCharLower16
 437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff
 438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff
 441 stub InsertMenuItem
@@ -484,10 +484,10 @@ heap	65520
 652 stub GetKeyboardLayoutList
 654 stub UnloadKeyboardLayout
 655 stub PostPostedMessages
-656 pascal16 DrawFrameControl(word ptr word word) DrawFrameControl
+656 pascal16 DrawFrameControl(word ptr word word) DrawFrameControl16
 657 stub DrawCaptionTemp
 658 stub DispatchInput
-659 pascal16 DrawEdge(word ptr word word) DrawEdge
+659 pascal16 DrawEdge(word ptr word word) DrawEdge16
 660 stub DrawCaption
 661 stub SetSysColorsTemp
 662 stub DrawMenubarTemp

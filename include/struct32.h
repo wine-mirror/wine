@@ -1,11 +1,7 @@
 /* Structure definitions for Win32 -- used only internally */
-#ifndef _STRUCT32_H
-#define _STRUCT32_H
+#ifndef __WINE__STRUCT32_H
+#define __WINE__STRUCT32_H
 #include "handle32.h"
-
-#ifndef WINELIB
-#pragma pack(1)
-#endif
 
 void STRUCT32_RECT32to16(const RECT32*,RECT16*);
 void STRUCT32_RECT16to32(const RECT16*,RECT32*);
@@ -24,22 +20,13 @@ extern void STRUCT32_NCCALCSIZE16to32Flat( const NCCALCSIZE_PARAMS16* from,
                                            NCCALCSIZE_PARAMS32* to,
                                            int validRects );
 
-
-typedef struct {
-	DWORD style;
-	DWORD dwExtendedStyle;
-	WORD noOfItems WINE_PACKED;
-	short x WINE_PACKED;
-	short y WINE_PACKED;
-	WORD cx WINE_PACKED;
-	WORD cy WINE_PACKED;
-} DLGTEMPLATE32;
-
 void STRUCT32_MSG16to32(const MSG16 *msg16,MSG32 *msg32);
 void STRUCT32_MSG32to16(const MSG32 *msg32,MSG16 *msg16);
 
 void STRUCT32_CREATESTRUCT32Ato16(const CREATESTRUCT32A*,CREATESTRUCT16*);
 void STRUCT32_CREATESTRUCT16to32A(const CREATESTRUCT16*,CREATESTRUCT32A*);
+
+#pragma pack(1)
 
 typedef struct {
 	BYTE   bWidth;
@@ -77,9 +64,6 @@ typedef struct {
 } CURSORICONDIR32;
 
 
-
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
-#endif
+#endif  /* __WINE_STRUCT32_H */

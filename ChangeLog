@@ -1,4 +1,98 @@
 ----------------------------------------------------------------------
+Fri Jul 12 17:43:05 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/scroll.c]
+	Use Win32 heap functions to allocate scroll-bar info structure.
+
+	* [debugger/dbg.y] [debugger/registers.c]
+	Added support for FS and GS segment registers.
+	Check that segment registers value are OK before returning from
+	the signal handler.
+
+	* [tools/build.c] [if1632/relay.c] [loader/builtin.c]
+	Changed relay debugging for Win32 function: the relay code now
+	passes the entry point address instead of the function name.
+
+	* [tools/build.c] [miscemu/*.c]
+	Added support for data entry points in Win32 DLLs.
+	Added 'cdecl' function type for Win32.
+	For 'register' function, the relay code now passes a pointer to
+	the SIGCONTEXT structure.
+	
+	* [include/registers.h] [include/wine.h]
+	Moved SIGCONTEXT structure definition in registers.h.
+
+	* [loader/pe_image.c]
+	Don't die at once if some Win32 entry points cannot be found, but
+	set them to NULL, just like we do for Win16. This allows some
+	programs to go further before crashing.
+
+	* [loader/task.c] [loader/main.c]
+	Moved global initializations from InitTask() to MAIN_Init(), as
+	they no longer need a task context with the new SEGPTR heap functions.
+
+	* [memory/string.c]
+	Added lstrcpynAtoW and lstrcpynWtoA; not real API functions, but
+ 	very convenient.
+
+	* [windows/graphics.c]
+	Partially implemented DrawEdge().
+
+	* [windows/timer.c] [windows/caret.c]
+	Implemented Win32 timer handling. Updated caret management to use
+	Win32 timers (avoids having to use a Win16 callback).
+
+	* [windows/win.c]
+	Prevent programs from setting some style bits with
+	SetWindowLong(). This should fix some BadMatch crashes.
+	Link new windows at the end of the linked list.
+
+	* [windows/winpos.c]
+	Don't try to activate a child window in ShowWindow().
+
+	* [windows/winproc.c]
+	Added a 32->32 thunk to support Ansi-Unicode translation.
+
+Wed Jul 10 22:11:12 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/directory.c]
+	Additional (undocumented) return value for GetTempDrive() added.
+
+	* [files/dos_fs.c] [files/file.c] [include/windows.h]
+	GetTempFileName32* added.
+	GetShortPathName* added.
+
+	* [memory/string.c]
+	Win16 lstrcpy() can get NULL ptrs as argument and survive.
+
+	* [misc/lzexpand.c]
+	LZOpenFile(): also try opening with compressed filename if normal
+ 	open fails.
+
+	* [misc/ole2nls.c] [misc/lstr.c] [include/windows.h]
+	Char* added.
+	CompareString* added.
+
+Sun Jul  7 01:22:14  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [objects/font.c] [if1632/gdi32.spec]
+	CreateFontIndirect32A and CreateFontIndirect32W added.
+
+	* [misc/ole2nls.c]
+	GetUserDefaultLCID return values updated for new languages.
+	Finnish support added for GetLocaleInfoA.
+
+	* [object/palette] [gdi32.spec]
+	RealizePalette32 and SelectPalette32 added.
+	
+Sat Jul  6 17:27:30 1996  Ronan Waide  <root@waider.ie>
+
+	* [misc/shell.c]
+	Fixup for SHELL_FindExecutable so that File->Run from progman
+	works once more. Still needs some more fixups - grep for FIXME in
+	this file.
+
+----------------------------------------------------------------------
 Fri Jul  5 16:27:43 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/desktop.c]
@@ -461,7 +555,7 @@ Thu May 23 19:35:38 1996  Greg Kreider <kreider@natlab.research.philips.com>
 	* [misc/main.c]
 	Result of option "-fixedmap" is to turn flag on.
 
-Thu May 23 19:15:41 1996  Waider  <root@waider.ie>
+Thu May 23 19:15:41 1996  Ronan Waide  <root@waider.ie>
 
 	* [misc/shell.c]
 	ShellExecute and FindExecutable now both use common code to

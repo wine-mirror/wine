@@ -136,59 +136,6 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD reslen,LPVOID data
 );
 
-DWORD GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle);
-DWORD GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle);
-DWORD GetFileVersionInfoSize32W(LPCWSTR filename,LPDWORD handle);
-#define GetFileVersionInfoSize WINELIB_NAME_AW(GetFileVersionInfoSize)
-
-DWORD GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data);
-DWORD GetFileVersionInfo32A(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data);
-DWORD GetFileVersionInfo32W(LPCWSTR filename,DWORD handle,DWORD datasize,LPVOID data);
-#define GetFileVersionInfo WINELIB_NAME_AW(GetFileVersionInfo)
-
-DWORD
-VerFindFile16(
-	UINT16 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
-	LPSTR curdir,UINT16 *curdirlen,LPSTR destdir,UINT16 *destdirlen
-);
-DWORD
-VerFindFile32A(
-	UINT32 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
-	LPSTR curdir,UINT32 *curdirlen,LPSTR destdir,UINT32 *destdirlen
-);
-DWORD
-VerFindFile32W(
-	UINT32 flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
-	LPWSTR curdir,UINT32 *curdirlen,LPWSTR destdir,UINT32 *destdirlen
-);
-#define VerFindFile WINELIB_NAME_AW(VerFindFile)
-
-DWORD
-VerInstallFile16(
-	UINT16 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT16 *tmpfilelen
-);
-DWORD
-VerInstallFile32A(
-	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT32 *tmpfilelen
-);
-DWORD
-VerInstallFile32W(
-	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
-	LPCWSTR destdir,LPWSTR tmpfile,UINT32 *tmpfilelen
-);
-#define VerInstallFile WINELIB_NAME_AW(VerInstallFile)
-
-DWORD VerLanguageName16(UINT16 lang,LPSTR langname,UINT16 langnamelen);
-DWORD VerLanguageName32A(UINT32 lang,LPSTR langname,UINT32 langnamelen);
-DWORD VerLanguageName32W(UINT32 lang,LPWSTR langname,UINT32 langnamelen);
-#define VerLanguageName WINELIB_NAME_AW(VerLanguageName)
-
-DWORD VerQueryValue16(SEGPTR block,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen);
-DWORD VerQueryValue32A(LPVOID block,LPCSTR subblock,LPVOID *buffer,UINT32 *buflen);
-DWORD VerQueryValue32W(LPVOID block,LPCWSTR subblock,LPVOID *buffer,UINT32 *buflen);
-#define VerQueryValue WINELIB_NAME_AW(VerQueryValue)
 
 /* 20 GETFILEVERSIONINFORAW */
 

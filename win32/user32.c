@@ -80,11 +80,3 @@ BOOL32 PeekMessage32W( LPMSG32 lpmsg, HWND32 hwnd,
 	/* FIXME: Should perform Unicode translation on specific messages */
 	return PeekMessage32A(lpmsg,hwnd,min,max,wRemoveMsg);
 }
-
-UINT USER32_SetTimer(HWND hwnd, UINT id, UINT timeout, void *proc)
-
-{
-    dprintf_win32(stddeb, "USER32_SetTimer: %d %d %d %08lx\n", hwnd, id, timeout,
-(LONG)proc );
-    return SetTimer( hwnd, id, timeout, MAKE_SEGPTR(proc));
-}   

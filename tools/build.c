@@ -24,16 +24,17 @@
 #endif
 
 #define TYPE_INVALID     0
-#define TYPE_BYTE        1
-#define TYPE_WORD        2
-#define TYPE_LONG        3
-#define TYPE_PASCAL_16   4
-#define TYPE_PASCAL      5
-#define TYPE_REGISTER    6
-#define TYPE_ABS         7
-#define TYPE_RETURN      8
-#define TYPE_STUB        9
-#define TYPE_STDCALL    10
+#define TYPE_BYTE        1  /* byte variable */
+#define TYPE_WORD        2  /* word variable */
+#define TYPE_LONG        3  /* long variable */
+#define TYPE_PASCAL_16   4  /* pascal function with 16-bit return (Win16) */
+#define TYPE_PASCAL      5  /* pascal function with 32-bit return (Win16) */
+#define TYPE_REGISTER    6  /* register function (Win16) */
+#define TYPE_ABS         7  /* absolute value */
+#define TYPE_RETURN      8  /* simple return value function */
+#define TYPE_STUB        9  /* unimplemented stub */
+#define TYPE_STDCALL    10  /* stdcall function (Win32) */
+#define TYPE_CDECL      11  /* cdecl function (Win32) */
 
 #define MAX_ORDINALS	1299
 
@@ -295,6 +296,11 @@ static int ParseExportFunction(int ordinal, int type)
             fprintf( stderr, "%d: 'stdcall' not supported for Win16\n", Line );
             exit(1);
         }
+        if (type == TYPE_CDECL)
+        {
+            fprintf( stderr, "%d: 'cdecl' not supported for Win16\n", Line );
+            exit(1);
+        }
         break;
     case SPEC_WIN32:
         if ((type == TYPE_PASCAL) || (type == TYPE_PASCAL_16))
@@ -354,7 +360,8 @@ static int ParseExportFunction(int ordinal, int type)
         exit(1);
     }
     fdp->arg_types[i] = '\0';
-
+    if ((type == TYPE_STDCALL) && !i)
+        odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
     strcpy(fdp->internal_name, GetToken());
     return 0;
 }
@@ -468,6 +475,8 @@ static int ParseOrdinal(int ordinal)
         return ParseExportFunction(ordinal, TYPE_REGISTER);
     if (strcmp(token, "stdcall") == 0)
         return ParseExportFunction(ordinal, TYPE_STDCALL);
+    if (strcmp(token, "cdecl") == 0)
+        return ParseExportFunction(ordinal, TYPE_CDECL);
     if (strcmp(token, "equate") == 0)
 	return ParseEquate(ordinal);
     if (strcmp(token, "return") == 0)
@@ -811,6 +820,7 @@ static int BuildModule32(void)
     pModule->magic = NE_SIGNATURE;
     pModule->count = 1;
     pModule->next = 0;
+    pModule->dgroup_entry = 0;
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
                      NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
     pModule->dgroup = 0;
@@ -900,7 +910,8 @@ static void BuildSpec32Files(void)
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
     ORDRETDEF *rdp;
-    int i, module_size;
+    int i, module_size, len;
+    char buffer[1024];
 
     printf( "/* File generated automatically; do not edit! */\n" );
     printf( "\t.text\n" );
@@ -916,37 +927,66 @@ static void BuildSpec32Files(void)
         switch (odp->type)
         {
         case TYPE_INVALID:
-            printf( "/* %s.%d */\n", DLLName, i );
-            printf( "\t.align 4\n" );
-            printf( "%s_%d:\n", DLLName, i );
-            printf( "\tpushl %%ebp\n" );
-            printf( "\tpushl $Name_%d\n", i );
-            printf( "\tpushl $" PREFIX "%s\n", STUB_CALLBACK );
-            printf( "\tjmp " PREFIX "CallFrom32_0\n" );
             break;
 
         case TYPE_STDCALL:
+        case TYPE_CDECL:
         case TYPE_STUB:
             printf( "/* %s.%d (%s) */\n",
                      DLLName, i, odp->export_name);
-            printf( "\t.align 4\n" );
             printf( "%s_%d:\n", DLLName, i );
             printf( "\tpushl %%ebp\n" );
-            printf( "\tpushl $Name_%d\n", i );
             printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
-            printf( "\tjmp " PREFIX "CallFrom32_%d\n", strlen(fdp->arg_types));
+            printf( "\tcall " PREFIX "CallFrom32_%s_%d\n",
+                    (odp->type == TYPE_STDCALL) ? "stdcall" : "cdecl",
+                    strlen(fdp->arg_types));
+            printf( "\tnop\n" );
             break;
 
         case TYPE_RETURN:
             printf( "/* %s.%d (%s) */\n",
                      DLLName, i, odp->export_name);
-            printf( "\t.align 4\n" );
             printf( "%s_%d:\n", DLLName, i );
             printf( "\tmovl $%d,%%eax\n", ERROR_CALL_NOT_IMPLEMENTED );
             printf( "\tmovl %%eax," PREFIX "WIN32_LastError\n" );
             printf( "\tmovl $%d,%%eax\n", rdp->ret_value );
-            if (rdp->arg_size) printf( "\tret $%d\n", rdp->arg_size );
+            if (rdp->arg_size)
+            {
+                printf( "\tret $%d\n", rdp->arg_size );
+                printf( "\tnop\n" );
+                printf( "\tnop\n" );
+            }
             else printf( "\tret\n" );
+            break;
+
+        case TYPE_BYTE:
+            printf( "/* %s.%d (%s) */\n",
+                     DLLName, i, odp->export_name);
+            printf( "\t.data\n" );
+            printf( "%s_%d:\n", DLLName, i );
+            len = StoreVariableCode( buffer, 1, odp );
+            DumpBytes( buffer, len, NULL, NULL );
+            printf( "\t.text\n" );
+            break;
+
+        case TYPE_WORD:
+            printf( "/* %s.%d (%s) */\n",
+                     DLLName, i, odp->export_name);
+            printf( "\t.data\n" );
+            printf( "%s_%d:\n", DLLName, i );
+            len = StoreVariableCode( buffer, 2, odp );
+            DumpBytes( buffer, len, NULL, NULL );
+            printf( "\t.text\n" );
+            break;
+
+        case TYPE_LONG:
+            printf( "/* %s.%d (%s) */\n",
+                     DLLName, i, odp->export_name);
+            printf( "\t.data\n" );
+            printf( "%s_%d:\n", DLLName, i );
+            len = StoreVariableCode( buffer, 4, odp );
+            DumpBytes( buffer, len, NULL, NULL );
+            printf( "\t.text\n" );
             break;
 
         default:
@@ -964,7 +1004,11 @@ static void BuildSpec32Files(void)
     printf( "\t.align 4\n" );
     printf( "Functions:\n" );
     odp = OrdinalDefinitions;
-    for (i = 0; i <= Limit; i++, odp++) printf("\t.long %s_%d\n", DLLName, i);
+    for (i = 0; i <= Limit; i++, odp++)
+    {
+        if (odp->type == TYPE_INVALID) printf( "\t.long 0\n" );
+        else printf("\t.long %s_%d\n", DLLName, i);
+    }
 
     /* Output the DLL names table */
 
@@ -980,11 +1024,8 @@ static void BuildSpec32Files(void)
 
     for (i = 0, odp = OrdinalDefinitions; i <= Limit; i++, odp++)
     {
-        printf( "Name_%d:\t", i );
-        if (odp->type == TYPE_INVALID)
-            printf( ".ascii \"%s.%d\\0\"\n", DLLName, i );
-        else
-            printf( ".ascii \"%s\\0\"\n", odp->export_name );
+        if (odp->type != TYPE_INVALID)
+            printf( "Name_%d:\t.ascii \"%s\\0\"\n", i, odp->export_name );
     }
 
     /* Output the DLL descriptor */
@@ -1482,6 +1523,8 @@ static void BuildCallFrom16Func( char *profile )
     printf( "\tpopw %%ss\n" );
     printf( "\tleal -%d(%%ebp),%%esp\n",
             reg_func ? sizeof(SIGCONTEXT) : 4 * strlen(args) );
+    if (reg_func)  /* Push the address of the context struct */
+        printf( "\tpushl %%esp\n" );
 
     /* Setup %ebp to point to the previous stack frame (built by CallTo16) */
 
@@ -1840,19 +1883,37 @@ static void BuildRet16Func()
  * (ebp+8)   arg1
  * (ebp+4)   ret addr
  * (ebp)     ebp
- * (ebp-4)   func name
- * (ebp-8)   entry point
+ * (ebp-4)   entry point
+ * (ebp-8)   func name
  */
-static void BuildCallFrom32Func( int args )
+static void BuildCallFrom32Func( const char *profile )
 {
+    int args, stdcall;
+
+    if (!strncmp( profile, "stdcall", 7 ))
+    {
+        stdcall = 1;
+        args = atoi( profile + 8 );
+    }
+    else if (!strncmp( profile, "cdecl", 5 ))
+    {
+        stdcall = 0;
+        args = atoi( profile + 6 );
+    }
+    else
+    {
+        fprintf( stderr, "Invalid function profile '%s'\n", profile );
+        return;
+    }
+
     /* Function header */
 
     printf( "/**********\n" );
-    printf( " * " PREFIX "CallFrom32_%d\n", args );
+    printf( " * " PREFIX "CallFrom32_%s\n", profile );
     printf( " **********/\n" );
     printf( "\t.align 4\n" );
-    printf( "\t.globl " PREFIX "CallFrom32_%d\n\n", args );
-    printf( PREFIX "CallFrom32_%d:\n", args );
+    printf( "\t.globl " PREFIX "CallFrom32_%s\n\n", profile );
+    printf( PREFIX "CallFrom32_%s:\n", profile );
 
     /* Entry code */
 
@@ -1884,7 +1945,7 @@ static void BuildCallFrom32Func( int args )
 
     /* Call the function */
 
-    printf( "\tcall -8(%%ebp)\n" );
+    printf( "\tcall -4(%%ebp)\n" );
 
     /* Print the debugging info */
 
@@ -1901,7 +1962,7 @@ static void BuildCallFrom32Func( int args )
 
     /* Return, removing arguments */
 
-    if (args) printf( "\tret $%d\n", args * 4 );
+    if (args && stdcall) printf( "\tret $%d\n", args * 4 );
     else printf( "\tret\n" );
 }
 
@@ -2045,7 +2106,7 @@ int main(int argc, char **argv)
 
         /* Build the callback functions */
 
-        for (i = 2; i < argc; i++) BuildCallFrom32Func( atoi(argv[i]) );
+        for (i = 2; i < argc; i++) BuildCallFrom32Func( argv[i] );
     }
     else if (!strcmp( argv[1], "-callto32" ))  /* Wine-to-32-bit callbacks */
     {

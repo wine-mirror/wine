@@ -20,7 +20,6 @@
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"
-#include "string32.h"
 #include "user.h"
 
 #ifdef CONFIG_IPC
@@ -360,7 +359,7 @@ ATOM GlobalAddAtom32W( LPCWSTR str )
 {
     char buffer[MAX_ATOM_LEN+1];
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    STRING32_UniToAnsi( buffer, str );  /* FIXME: 'str' length? */
+    lstrcpynWtoA( buffer, str, sizeof(buffer) );
     return ATOM_AddAtom( USER_HeapSel, buffer );
 }
 
@@ -407,7 +406,7 @@ ATOM GlobalFindAtom32W( LPCWSTR str )
 {
     char buffer[MAX_ATOM_LEN+1];
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    STRING32_UniToAnsi( buffer, str );  /* FIXME: 'str' length? */
+    lstrcpynWtoA( buffer, str, sizeof(buffer) );
     return ATOM_FindAtom( USER_HeapSel, buffer );
 }
 
@@ -437,10 +436,8 @@ UINT32 GlobalGetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
  */
 UINT32 GlobalGetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 {
-    UINT32 len;
     char tmp[MAX_ATOM_LEN+1];
-    if (count > sizeof(tmp)) count = sizeof(tmp);
-    len = ATOM_GetAtomName( USER_HeapSel, atom, tmp, count );
-    STRING32_AnsiToUni( buffer, tmp );  /* FIXME: len? */
-    return len;
+    ATOM_GetAtomName( USER_HeapSel, atom, tmp, sizeof(tmp) );
+    lstrcpynAtoW( buffer, tmp, count );
+    return lstrlen32W( buffer );
 }

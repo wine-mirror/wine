@@ -121,9 +121,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_NCDESTROY:
 	if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
 	wndPtr->text = NULL;
-	if (wndPtr->hVScroll) USER_HEAP_FREE(wndPtr->hVScroll);
-	if (wndPtr->hHScroll) USER_HEAP_FREE(wndPtr->hHScroll);
-        wndPtr->hVScroll = wndPtr->hHScroll = 0;
+	if (wndPtr->pVScroll) HeapFree( SystemHeap, 0, wndPtr->pVScroll );
+	if (wndPtr->pHScroll) HeapFree( SystemHeap, 0, wndPtr->pHScroll );
+        wndPtr->pVScroll = wndPtr->pHScroll = NULL;
 	return 0;
 	
     case WM_PAINT:

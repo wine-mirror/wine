@@ -44,7 +44,6 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 WORD CallTo16_word_ ( FARPROC func, WORD arg ) { return func(arg); }
 
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
-extern LRESULT CARET_Callback(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ColorDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ComboBoxWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ComboLBoxWndProc(HWND,UINT,WPARAM,LPARAM);
@@ -78,7 +77,6 @@ WNDPROC MODULE_GetWndProcEntry16( char *name )
 {
 #define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return proc
   MAP_STR_TO_PROC("AboutDlgProc",AboutDlgProc);
-  MAP_STR_TO_PROC("CARET_Callback",CARET_Callback);
   MAP_STR_TO_PROC("ColorDlgProc",ColorDlgProc);
   MAP_STR_TO_PROC("ComboBoxWndProc",ComboBoxWndProc);
   MAP_STR_TO_PROC("ComboLBoxWndProc",ComboLBoxWndProc);

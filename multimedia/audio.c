@@ -128,9 +128,6 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpPa
 		MCIWavDev[wDevID].nUseCount = 1;
 		MCIWavDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		}
-	dprintf_mciwave(stddeb,"WAVE_mciOpen // before setting lParams->wDeviceID // winstack=%p ds=%04X ss=%04X sp=%04X\n",
-		(BYTE *)CURRENT_STACK16->args, 
-		CURRENT_STACK16->ds, IF1632_Saved16_ss, IF1632_Saved16_sp);
 	lpParms->wDeviceID = wDevID;
 	dprintf_mciwave(stddeb,"WAVE_mciOpen // wDevID=%04X\n", wDevID);
 	dprintf_mciwave(stddeb,"WAVE_mciOpen // before OPEN_ELEMENT\n");

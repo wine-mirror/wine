@@ -656,6 +656,8 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	    break;
     }
 
+    /* We can't activate a child window */
+    if (wndPtr->dwStyle & WS_CHILD) swpflags |= SWP_NOACTIVATE | SWP_NOZORDER;
     SendMessage16( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
     SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
 
@@ -961,14 +963,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
     SendMessage16( hWnd, WM_NCACTIVATE, TRUE, 0 );
-#ifdef WINELIB32
     SendMessage32A( hWnd, WM_ACTIVATE,
-		 MAKEWPARAM( (fMouse)?WA_CLICKACTIVE:WA_ACTIVE, wIconized),
+		 MAKEWPARAM( (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE, wIconized),
 		 (LPARAM)hwndPrevActive );
-#else
-    SendMessage16( hWnd, WM_ACTIVATE, (fMouse)? WA_CLICKACTIVE : WA_ACTIVE,
-		 MAKELONG(hwndPrevActive,wIconized));
-#endif
 
     if( !IsWindow(hWnd) ) return 0;
 

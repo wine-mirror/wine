@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#if defined(__linux__) || defined(sun)
+#if defined(__linux__) || defined(sun) || defined(hpux)
 #include <sys/vfs.h>
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)

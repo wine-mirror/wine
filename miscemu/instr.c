@@ -8,7 +8,6 @@
 #include "windows.h"
 #include "ldt.h"
 #include "miscemu.h"
-#include "registers.h"
 
 
 #define STACK_reg(context) \
@@ -279,7 +278,7 @@ static BOOL INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
  *
  * Emulate a priviledged instruction. Returns TRUE if emulation successful.
  */
-BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
+BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
@@ -552,7 +551,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
             }
             else
             {
-                SEGPTR addr = INT_GetHandler( instr[1] );
+                FARPROC16 addr = INT_GetHandler( instr[1] );
                 WORD *stack = (WORD *)STACK_PTR( context );
                 /* Push the flags and return address on the stack */
                 *(--stack) = FL_reg(context);

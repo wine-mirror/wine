@@ -46,7 +46,7 @@ type	win16
 47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName
-50  pascal GetProcAddress(word segptr) GetProcAddress
+50  pascal GetProcAddress(word segptr) GetProcAddress16
 51  pascal MakeProcInstance(segptr word) MakeProcInstance16
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
@@ -88,12 +88,12 @@ type	win16
 89  pascal   lstrcat(segptr segptr) lstrcat16
 90  pascal16 lstrlen(ptr) lstrlen16
 91  register InitTask() InitTask
-92  pascal16 GetTempDrive(byte) GetTempDrive
+92  pascal   GetTempDrive(byte) WIN16_GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
 94  stub DefineHandleTable
 95  pascal16 LoadLibrary(ptr) LoadLibrary
 96  pascal16 FreeLibrary(word) FreeLibrary
-97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName
+97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName16
 98  stub GetLastDiskChange
 99  stub GetLPErrMode
 100 stub ValidateCodeSegments

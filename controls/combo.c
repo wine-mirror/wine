@@ -256,12 +256,7 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 
-#ifdef WINELIB32
-  hBrush = SendMessage32A(lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd);
-#else
-  hBrush = SendMessage16(lphl->hParent, WM_CTLCOLOR, hdc,
-                         MAKELONG(hwnd, CTLCOLOR_LISTBOX));
-#endif
+  hBrush = SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd );
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
   lpls = ListBoxGetItem(lphl,lphl->ItemFocused);

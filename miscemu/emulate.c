@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "wine.h"
 #include "miscemu.h"
-#include "registers.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
@@ -30,27 +28,27 @@ struct Win87EmInfoStruct
  */
 /* FIXME: Only skeletal implementation for now */
 
-void WIN87_fpmath( SIGCONTEXT context )
+void WIN87_fpmath( SIGCONTEXT *context )
 {
     dprintf_int(stddeb, "_fpmath: (cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
-                 CS_reg(&context), EIP_reg(&context),
-                 ES_reg(&context), BX_reg(&context),
-                 AX_reg(&context), DX_reg(&context) );
+                 CS_reg(context), EIP_reg(context),
+                 ES_reg(context), BX_reg(context),
+                 AX_reg(context), DX_reg(context) );
 
-    switch(BX_reg(&context))
+    switch(BX_reg(context))
     {
     case 0: /* install (increase instanceref) emulator, install NMI vector */
-        AX_reg(&context) = 0;
+        AX_reg(context) = 0;
         break;
 
     case 1: /* Init Emulator */
-        AX_reg(&context) = 0;
+        AX_reg(context) = 0;
         break;
 
     case 2: /* deinstall emulator (decrease instanceref), deinstall NMI vector	
              * if zero. Every '0' call should have a matching '2' call.
              */
-        AX_reg(&context) = 0;   	
+        AX_reg(context) = 0;   	
         break;
 
     case 3:
@@ -79,8 +77,8 @@ void WIN87_fpmath( SIGCONTEXT context )
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
             dprintf_int(stddeb,"emulate.c:On top of stack was %ld\n",dw);
-            AX_reg(&context) = LOWORD(dw);
-            DX_reg(&context) = HIWORD(dw);
+            AX_reg(context) = LOWORD(dw);
+            DX_reg(context) = HIWORD(dw);
         }
         break;
 
@@ -91,19 +89,19 @@ void WIN87_fpmath( SIGCONTEXT context )
         break;
 
     case 10: /* dunno. but looks like returning nr. of things on stack in AX */
-	AX_reg(&context) = 0;
+	AX_reg(context) = 0;
         break;
 
     case 11: /* just returns the installed flag in DX:AX */
-        DX_reg(&context) = 0;
-        AX_reg(&context) = 1;
+        DX_reg(context) = 0;
+        AX_reg(context) = 1;
         break;
 
     case 12: /* save AX in some internal state var */
         break;
 
     default: /* error. Say that loud and clear */
-        AX_reg(&context) = DX_reg(&context) = 0xFFFF;
+        AX_reg(context) = DX_reg(context) = 0xFFFF;
         break;
     }
 }

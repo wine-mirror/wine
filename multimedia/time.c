@@ -40,9 +40,10 @@ typedef struct tagTIMERENTRY {
 static LPTIMERENTRY lpTimerList = NULL;
 
 /**************************************************************************
- * 				MMSysTimeCallback	[internal]
+ *           TIME_MMSysTimeCallback
  */
-WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
+static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
+                                    UINT32 id, DWORD dwTime )
 {
     LPTIMERENTRY lpTimer = lpTimerList;
     mmSysTimeMS.u.ms += 33;
@@ -53,7 +54,7 @@ WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
 	    lpTimer->wCurTime = lpTimer->wDelay;
 	    if (lpTimer->lpFunc != (FARPROC) NULL) {
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // before CallBack16 !\n");
-		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%08lx wTimerID=%04X dwUser=%08lX !\n",
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
 			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // hInstance=%04X !\n", lpTimer->hInstance);
 
@@ -83,7 +84,6 @@ WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
 	}
 	lpTimer = lpTimer->Next;
     }
-    return 0;
 }
 
 /**************************************************************************
@@ -102,7 +102,7 @@ void StartMMTime()
 	mmSysTimeSMPTE.u.smpte.frame = 0;
 	mmSysTimeSMPTE.u.smpte.fps = 0;
 	mmSysTimeSMPTE.u.smpte.dummy = 0;
-	SetTimer(0, 1, 33, MODULE_GetWndProcEntry16("MMSysTimeCallback"));
+	SetTimer32( 0, 1, 33, TIME_MMSysTimeCallback );
     }
 }
 

@@ -16,7 +16,7 @@
 #include "module.h"
 
 
-HANDLE DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
+HANDLE16 DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
 
 
 #pragma pack(1)
@@ -84,7 +84,7 @@ static BIOSDATA *pBiosData = NULL;
  * Create the dos memory segments, and store them into the KERNEL
  * exported values. BUILTIN_Init() must already have been called.
  */
-BOOL DOSMEM_Init(void)
+BOOL32 DOSMEM_Init(void)
 {
     HMODULE16 hModule = GetModuleHandle( "KERNEL" );
     char *dosmem;

@@ -124,12 +124,10 @@ address offsets and must have the arguments translated and moved to
 Wines 32-bit stack.  This task is handled by the code in the "if1632"
 directory.  To define a new API entry point handler you must place a
 new entry in the appropriate API specification file.  These files are
-named *.spec.  For example, the API specification file for the USER DLL
-is contained in the file user.spec.  These entries are processed by
-the "build" program to create dll_*.s and dll_tab_*.c.  The dll_*.s
-files contain the entry point code for each API call, and the dll_tab_*.s
-files contain tables used by relay.c to translate arguments and transfer
-control to the proper handler.  The format of the *.spec files is
+named *.spec.  For example, the API specification file for the USER
+DLL is contained in the file user.spec.  These entries are processed
+by the "build" program to create an assembly file containing the entry
+point code for each API call.  The format of the *.spec files is
 documented in the file "tools/build-spec.txt".
 
 

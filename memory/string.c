@@ -176,6 +176,7 @@ SEGPTR lstrcpy16( SEGPTR dst, SEGPTR src )
  */
 LPSTR lstrcpy32A( LPSTR dst, LPCSTR src )
 {
+    if (!src || !dst) return NULL;
     strcpy( dst, src );
     return dst;
 }
@@ -262,15 +263,6 @@ INT32 lstrlen32W( LPCWSTR str )
 
 
 /***********************************************************************
- *           lstrncmp16   (Not a Windows API)
- */
-INT16 lstrncmp16( LPCSTR str1, LPCSTR str2, INT16 n )
-{
-    return (INT16)lstrncmp32A( str1, str2, n );
-}
-
-
-/***********************************************************************
  *           lstrncmp32A   (Not a Windows API)
  */
 INT32 lstrncmp32A( LPCSTR str1, LPCSTR str2, INT32 n )
@@ -287,15 +279,6 @@ INT32 lstrncmp32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
     if (!n) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
     return (INT32)(*str1 - *str2);
-}
-
-
-/***********************************************************************
- *           lstrncmpi16   (Not a Windows API)
- */
-INT16 lstrncmpi16( LPCSTR str1, LPCSTR str2, INT16 n )
-{
-    return (INT16)lstrncmpi32A( str1, str2, n );
 }
 
 
@@ -337,6 +320,30 @@ INT32 lstrncmpi32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
 
 
 /***********************************************************************
+ *           lstrcpynAtoW   (Not a Windows API)
+ */
+LPWSTR lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
+{
+    LPWSTR p = dst;
+    while ((n-- > 1) && *src) *p++ = (WCHAR)(unsigned char)*src++;
+    *p = 0;
+    return dst;
+}
+
+
+/***********************************************************************
+ *           lstrcpynWtoA   (Not a Windows API)
+ */
+LPSTR lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
+{
+    LPSTR p = dst;
+    while ((n-- > 1) && *src) *p++ = (CHAR)*src++;
+    *p = 0;
+    return dst;
+}
+
+
+/***********************************************************************
  *           RtlFillMemory   (KERNEL32.441)
  */
 VOID RtlFillMemory( LPVOID ptr, UINT32 len, UINT32 fill )
@@ -359,7 +366,16 @@ VOID RtlMoveMemory( LPVOID dst, LPCVOID src, UINT32 len )
         return;
     }
     /* do it the hard way (FIXME: could do better than this) */
-    while (len--) *((BYTE *)dst)++ = *((BYTE *)src)++;
+    if (dst < src)
+    {
+        while (len--) *((BYTE *)dst)++ = *((BYTE *)src)++;
+    }
+    else
+    {
+        dst = (BYTE *)dst + len - 1;
+        src = (BYTE *)src + len - 1;
+        while (len--) *((BYTE *)dst)-- = *((BYTE *)src)--;
+    }
 }
 
 

@@ -884,7 +884,7 @@ FARPROC GetMouseEventProc(void)
  *           Mouse_Event   (USER.299)
  */
 #ifndef WINELIB
-void Mouse_Event( SIGCONTEXT context )
+void Mouse_Event( SIGCONTEXT *context )
 {
     /* Register values:
      * AX = mouse event
@@ -897,25 +897,25 @@ void Mouse_Event( SIGCONTEXT context )
     int rootX, rootY, childX, childY;
     unsigned int state;
 
-    if (AX_reg(&context) & ME_MOVE)
+    if (AX_reg(context) & ME_MOVE)
     {
         /* We have to actually move the cursor */
         XWarpPointer( display, rootWindow, None, 0, 0, 0, 0,
-                      (short)BX_reg(&context), (short)CX_reg(&context) );
+                      (short)BX_reg(context), (short)CX_reg(context) );
         return;
     }
     if (!XQueryPointer( display, rootWindow, &root, &child,
                         &rootX, &rootY, &childX, &childY, &state )) return;
-    if (AX_reg(&context) & ME_LDOWN)
+    if (AX_reg(context) & ME_LDOWN)
         hardware_event( WM_LBUTTONDOWN, EVENT_XStateToKeyState( state ), 0L,
                         rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
-    if (AX_reg(&context) & ME_LUP)
+    if (AX_reg(context) & ME_LUP)
         hardware_event( WM_LBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
                         rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
-    if (AX_reg(&context) & ME_RDOWN)
+    if (AX_reg(context) & ME_RDOWN)
         hardware_event( WM_RBUTTONDOWN, EVENT_XStateToKeyState( state ), 0L,
                         rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
-    if (AX_reg(&context) & ME_RUP)
+    if (AX_reg(context) & ME_RUP)
         hardware_event( WM_RBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
                         rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
 }

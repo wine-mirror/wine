@@ -6,8 +6,7 @@
 
 #include "windows.h"
 #include "ole2.h"
-#include "global.h"
-#include "local.h"
+#include "heap.h"
 #include "ldt.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -17,39 +16,21 @@
    as ISO-8859 */
 
 typedef DWORD	BSTR;
-HGLOBAL	BSTRheapsel=0;
-#define BSTR_HEAP_SIZE	65536
 
 static BSTR BSTR_AllocBytes(int n)
 {
-	HLOCAL16 mem;
-	if(!BSTRheapsel)
-	{
-		BSTRheapsel=GlobalAlloc16(GMEM_FIXED,BSTR_HEAP_SIZE);
-		LocalInit(BSTRheapsel,0,BSTR_HEAP_SIZE-1);
-	}
-	if(!BSTRheapsel)
-		return 0;
-	mem=LOCAL_Alloc(BSTRheapsel,LMEM_FIXED,n);
-#ifdef WINELIB32
-	return (BSTR)mem;
-#else
-	return mem ? MAKELONG(mem,BSTRheapsel) : 0;
-#endif
+    void *ptr = SEGPTR_ALLOC(n);
+    return SEGPTR_GET(ptr);
 }
 
 static void BSTR_Free(BSTR in)
 {
-#ifdef WINELIB32
-	LOCAL_Free(BSTRheapsel, (HANDLE)in);
-#else
-	LOCAL_Free(BSTRheapsel, LOWORD(in));
-#endif
+    SEGPTR_FREE( PTR_SEG_TO_LIN(in) );
 }
 
 static void* BSTR_GetAddr(BSTR in)
 {
-	return in ? PTR_SEG_TO_LIN(in) : 0;
+    return in ? PTR_SEG_TO_LIN(in) : 0;
 }
 
 /***********************************************************************

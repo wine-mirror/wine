@@ -45,14 +45,14 @@ typedef struct tagWND
     POINT16        ptIconPos;     /* Icon position */
     POINT16        ptMaxPos;      /* Maximized window position */
     LPSTR          text;          /* Window text */
+    void          *pVScroll;      /* Vertical scroll-bar info */
+    void          *pHScroll;      /* Horizontal scroll-bar info */
     HGLOBAL        hmemTaskQ;     /* Task queue global memory handle */
     HRGN           hrgnUpdate;    /* Update region */
     HWND           hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     HANDLE         hdce;          /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    HANDLE         hVScroll;      /* Vertical scroll-bar info */
-    HANDLE         hHScroll;      /* Horizontal scroll-bar info */
     UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
     WORD           flags;         /* Misc. flags (see below) */
     Window         window;        /* X window (only for top-level windows) */

@@ -938,7 +938,7 @@ BOOL32 HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
-    if (!HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
+    if (!ptr || !HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );

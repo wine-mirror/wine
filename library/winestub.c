@@ -1,7 +1,6 @@
 /* Sample winestub.c file for compiling programs with libwine.so. */
 
 #include "windows.h"
-#include "wine.h"
 #ifdef WIN_DEBUG
 #include <stdio.h>
 #endif

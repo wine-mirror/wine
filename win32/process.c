@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "kernel32.h"
 #include "handle32.h"
+#include "task.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -22,7 +23,7 @@ static HANDLE32 ProcessHeap = 0;  /* FIXME: should be in process database */
 
 void ExitProcess(DWORD status)
 {
-        exit(status);
+    TASK_KillCurrentTask( status );
 }
 
 /***********************************************************************
@@ -127,18 +128,6 @@ BOOL FreeLibrary32(HINSTANCE hLibModule)
 	fprintf(stderr,"FreeLibrary: empty stub\n");
 	return TRUE;
 }
-
-#ifndef WINELIB
-/***********************************************************************
- *          WIN32_GetProcAddress
- */
-void* WIN32_GetProcAddress(HANDLE32 hModule, char* function)
-{
-	dprintf_module( stddeb, "WIN32_GetProcAddress(%08x,%s)\n",
-		hModule, function);
-	return PE_GetProcAddress(GetExePtr(hModule),function);
-}
-#endif  /* WINELIB */
 
 /**********************************************************************
  *          GetProcessAffinityMask

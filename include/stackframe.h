@@ -4,15 +4,13 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef WINE_STACKFRAME_H
-#define WINE_STACKFRAME_H
+#ifndef __WINE_STACKFRAME_H
+#define __WINE_STACKFRAME_H
 
 #include <windows.h>
 #include "ldt.h"
 
-#ifndef WINELIB
 #pragma pack(1)
-#endif
 
   /* 16-bit stack layout after CallFrom16() */
 typedef struct
@@ -45,9 +43,7 @@ typedef struct
     DWORD   args[1];        /* arguments to 16-bit function */
 } STACK32FRAME;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
   /* Saved 16-bit stack for current process (Win16 only) */
 extern WORD IF1632_Saved16_ss;
@@ -80,4 +76,4 @@ SEGPTR MAKE_SEGPTR(void *ptr);
 #define MAKE_SEGPTR(ptr)   ((SEGPTR)ptr)
 #endif
 
-#endif /* WINE_STACKFRAME_H */
+#endif /* __WINE_STACKFRAME_H */

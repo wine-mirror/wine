@@ -293,7 +293,7 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
     return hAccel;
 #else
 	fprintf(stderr,"LoadAcceleratorsW: not implemented\n");
-	return 0;
+	return 0x100;  /* Return something anyway */
 #endif
 }
 

@@ -4,7 +4,7 @@ base	1
 
 0000 stub AbortDoc
 0001 stub AbortPath
-0002 stub AddFontResourceA
+0002 stdcall AddFontResourceA(ptr) AddFontResource
 0003 stub AddFontResourceTracking
 0004 stub AddFontResourceW
 0005 stub AngleArc
@@ -36,7 +36,7 @@ base	1
 0031 stdcall CreateCompatibleDC(long) CreateCompatibleDC
 0032 stub CreateDCA
 0033 stub CreateDCW
-0034 stub CreateDIBPatternBrush
+0034 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush
 0035 stub CreateDIBPatternBrushPt
 0036 stub CreateDIBSection
 0037 stub CreateDIBitmap
@@ -46,8 +46,8 @@ base	1
 0041 stub CreateEnhMetaFileA
 0042 stub CreateEnhMetaFileW
 0043 stub CreateFontA
-0044 stub CreateFontIndirectA
-0045 stub CreateFontIndirectW
+0044 stdcall CreateFontIndirectA(ptr) CreateFontIndirect32A
+0045 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
 0046 stub CreateFontW
 0047 stub CreateHalftonePalette
 0048 stub CreateHatchBrush
@@ -98,7 +98,7 @@ base	1
 0093 stub ExtCreatePen
 0094 stub ExtCreateRegion
 0095 stub ExtEscape
-0096 stub ExtFloodFill
+0096 stdcall ExtFloodFill(long long long long long) ExtFloodFill
 0097 stub ExtSelectClipRgn
 0098 stdcall ExtTextOutA(long long long long ptr ptr long ptr) ExtTextOut32A
 0099 stdcall ExtTextOutW(long long long long ptr ptr long ptr) ExtTextOut32W
@@ -106,7 +106,7 @@ base	1
 0101 stub FillRgn
 0102 stub FixBrushOrgEx
 0103 stub FlattenPath
-0104 stub FloodFill
+0104 stdcall FloodFill(long long long long) FloodFill
 0105 stub FrameRgn
 0106 stub FreeImageColorMatcher
 0107 stub GdiAssociateObject
@@ -224,7 +224,7 @@ base	1
 0219 stdcall GetRgnBox(long ptr) GetRgnBox32
 0220 stdcall GetStockObject(long) GetStockObject
 0221 stub GetStretchBltMode
-0222 stub GetSystemPaletteEntries
+0222 stdcall GetSystemPaletteEntries(long long long ptr) GetSystemPaletteEntries
 0223 stub GetSystemPaletteUse
 0224 stub GetTextAlign
 0225 stub GetTextCharacterExtra
@@ -282,7 +282,7 @@ base	1
 0277 stub PolylineTo
 0278 stdcall PtInRegion(long long long) PtInRegion
 0279 stub PtVisible
-0280 stub RealizePalette
+0280 stdcall RealizePalette(long) RealizePalette32
 0281 stdcall RectInRegion(long ptr) RectInRegion32
 0282 stdcall RectVisible(long ptr) RectVisible32
 0283 stdcall Rectangle(long long long long long) Rectangle
@@ -302,13 +302,13 @@ base	1
 0297 stub SelectClipRgn
 0298 stub SelectFontLocal
 0299 stdcall SelectObject(long long) SelectObject
-0300 stub SelectPalette
+0300 stdcall SelectPalette(long long long) SelectPalette32
 0301 stub SetAbortProc
 0302 stub SetArcDirection
 0303 stdcall SetBitmapBits(long long ptr) SetBitmapBits
 0304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
 0305 stdcall SetBkColor(long long) SetBkColor
-0306 stub SetBkMode
+0306 stdcall SetBkMode(long long) SetBkMode
 0307 stub SetBoundsRect
 0308 stub SetBrushOrgEx
 0309 stub SetColorAdjustment

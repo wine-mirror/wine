@@ -2,7 +2,6 @@
 #include <string.h>
 #include <malloc.h>
 #include "windows.h"
-#include "wine.h"
 #include "xmalloc.h"
 
 extern int MAIN_Init(void);
@@ -31,9 +30,6 @@ int _WinMain (int argc, char *argv [])
   hInstance = WinExec( *argv, SW_SHOWNORMAL );
   TASK_Reschedule();
   USER_InitApp( hInstance );
-  /* Perform global initialisations that need a task context */
-  if (!WIDGETS_Init()) return -1;
-  if (!WIN_CreateDesktopWindow()) return -1;
 
 #ifdef WINELIBDLL
   return (int)hInstance;

@@ -453,8 +453,8 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
             pen->lopnWidth.x = 1;
             pen->lopnWidth.y = 0;
             pen->lopnColor   = solid_colors[i];
-            retval = CallEnumObjectsProc( lpEnumFunc, SEGPTR_GET(pen),
-                                          lParam );
+            retval = CallEnumObjectsProc( (FARPROC16)lpEnumFunc,
+                                          SEGPTR_GET(pen), lParam );
             dprintf_gdi( stddeb, "EnumObject: solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
@@ -470,8 +470,8 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
             brush->lbStyle = BS_SOLID;
             brush->lbColor = solid_colors[i];
             brush->lbHatch = 0;
-            retval = CallEnumObjectsProc( lpEnumFunc, SEGPTR_GET(brush),
-                                          lParam );
+            retval = CallEnumObjectsProc( (FARPROC16)lpEnumFunc,
+                                          SEGPTR_GET(brush), lParam );
             dprintf_gdi( stddeb, "EnumObject: solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
@@ -483,8 +483,8 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
             brush->lbStyle = BS_HATCHED;
             brush->lbColor = RGB(0,0,0);
             brush->lbHatch = i;
-            retval = CallEnumObjectsProc( lpEnumFunc, SEGPTR_GET(brush),
-                                          lParam );
+            retval = CallEnumObjectsProc( (FARPROC16)lpEnumFunc,
+                                          SEGPTR_GET(brush), lParam );
             dprintf_gdi( stddeb, "EnumObject: hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;

@@ -11,12 +11,11 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "module.h"
-#include "registers.h"
 #include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 
-static SEGPTR INT_Vectors[256];
+static FARPROC16 INT_Vectors[256];
 
   /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
 #define FIRST_INTERRUPT_ORDINAL 100
@@ -25,7 +24,7 @@ static SEGPTR INT_Vectors[256];
 /**********************************************************************
  *	    INT_Init
  */
-BOOL INT_Init(void)
+BOOL32 INT_Init(void)
 {
     WORD vector;
     HMODULE16 hModule = GetModuleHandle( "WPROCS" );
@@ -48,7 +47,7 @@ BOOL INT_Init(void)
  *
  * Return the interrupt vector for a given interrupt.
  */
-SEGPTR INT_GetHandler( BYTE intnum )
+FARPROC16 INT_GetHandler( BYTE intnum )
 {
     return INT_Vectors[intnum];
 }
@@ -59,7 +58,7 @@ SEGPTR INT_GetHandler( BYTE intnum )
  *
  * Set the interrupt handler for a given interrupt.
  */
-void INT_SetHandler( BYTE intnum, SEGPTR handler )
+void INT_SetHandler( BYTE intnum, FARPROC16 handler )
 {
     dprintf_int( stddeb, "Set interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
@@ -70,13 +69,12 @@ void INT_SetHandler( BYTE intnum, SEGPTR handler )
 /**********************************************************************
  *	    INT_DummyHandler
  */
-void INT_DummyHandler( SIGCONTEXT context )
+void INT_DummyHandler( SIGCONTEXT *context )
 {
     WORD ordinal;
-    char *name;
     STACK16FRAME *frame = CURRENT_STACK16;
-    BUILTIN_GetEntryPoint( frame->entry_cs, frame->entry_ip, &ordinal, &name );
-    INT_BARF( &context, ordinal - FIRST_INTERRUPT_ORDINAL );
+    BUILTIN_GetEntryPoint16( frame->entry_cs, frame->entry_ip, &ordinal );
+    INT_BARF( context, ordinal - FIRST_INTERRUPT_ORDINAL );
 }
 
 
@@ -85,7 +83,7 @@ void INT_DummyHandler( SIGCONTEXT context )
  *
  * Handler for int 11h (get equipment list).
  */
-void INT_Int11Handler( SIGCONTEXT context )
+void INT_Int11Handler( SIGCONTEXT *context )
 {
     int diskdrives = 0;
     int parallelports = 0;
@@ -134,8 +132,8 @@ void INT_Int11Handler( SIGCONTEXT context )
     if (parallelports > 3)		/* 2 bits -- maximum value = 3 */
         parallelports=3;
     
-    AX_reg(&context) = (diskdrives << 6) | (serialports << 9) | 
-                       (parallelports << 14) | 0x02;
+    AX_reg(context) = (diskdrives << 6) | (serialports << 9) | 
+                      (parallelports << 14) | 0x02;
 }
 
 
@@ -144,9 +142,9 @@ void INT_Int11Handler( SIGCONTEXT context )
  *
  * Handler for int 12h (get memory size).
  */
-void INT_Int12Handler( SIGCONTEXT context )
+void INT_Int12Handler( SIGCONTEXT *context )
 {
-    AX_reg(&context) = 640;
+    AX_reg(context) = 640;
 }
 
 
@@ -155,9 +153,9 @@ void INT_Int12Handler( SIGCONTEXT context )
  *
  * Handler for int 15h.
  */
-void INT_Int15Handler( SIGCONTEXT context )
+void INT_Int15Handler( SIGCONTEXT *context )
 {
-    INT_BARF( &context, 0x15 );
+    INT_BARF( context, 0x15 );
 }
 
 
@@ -166,7 +164,7 @@ void INT_Int15Handler( SIGCONTEXT context )
  *
  * Handler for int 16h (keyboard).
  */
-void INT_Int16Handler( SIGCONTEXT context )
+void INT_Int16Handler( SIGCONTEXT *context )
 {
-    INT_BARF( &context, 0x16 );
+    INT_BARF( context, 0x16 );
 }

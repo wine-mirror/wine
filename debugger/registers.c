@@ -7,10 +7,7 @@
 #include <stdio.h>
 #include "debugger.h"
 
-
 SIGCONTEXT *DEBUG_context;
-
-
 
 /***********************************************************************
  *           DEBUG_SetRegister
@@ -45,6 +42,20 @@ void DEBUG_SetRegister( enum debug_regs reg, int val )
         case REG_DS:  DS_reg(DEBUG_context)  = val; break;
         case REG_ES:  ES_reg(DEBUG_context)  = val; break;
         case REG_SS:  SS_reg(DEBUG_context)  = val; break;
+#ifdef FS_reg
+        case REG_FS:  FS_reg(DEBUG_context)  = val; break;
+#else
+        case REG_FS:
+            fprintf( stderr, "Register %fs not supported on this system\n ");
+            break;
+#endif
+#ifdef GS_reg
+        case REG_GS:  GS_reg(DEBUG_context)  = val; break;
+#else
+        case REG_GS:
+            fprintf( stderr, "Register %gs not supported on this system\n ");
+            break;
+#endif
     }
 }
 
@@ -82,6 +93,20 @@ int DEBUG_GetRegister( enum debug_regs reg )
         case REG_DS:  return DS_reg(DEBUG_context);
         case REG_ES:  return ES_reg(DEBUG_context);
         case REG_SS:  return SS_reg(DEBUG_context);
+#ifdef FS_reg
+        case REG_FS:  return FS_reg(DEBUG_context);
+#else
+        case REG_FS:
+            fprintf( stderr, "Register %fs not supported on this system\n ");
+            return 0;
+#endif
+#ifdef GS_reg
+        case REG_GS:  return GS_reg(DEBUG_context);
+#else
+        case REG_GS:
+            fprintf( stderr, "Register %gs not supported on this system\n ");
+            return 0;
+#endif
     }
     return 0;  /* should not happen */
 }
@@ -98,13 +123,18 @@ void DEBUG_InfoRegisters(void)
     fprintf(stderr,"Register dump:\n");
 
     /* First get the segment registers out of the way */
-    fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x\n",
+    fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x",
              CS_reg(DEBUG_context), SS_reg(DEBUG_context),
              DS_reg(DEBUG_context), ES_reg(DEBUG_context) );
-
+#ifdef FS_reg
+    fprintf( stderr, " FS:%04x", FS_reg(DEBUG_context) );
+#endif
+#ifdef GS_reg
+    fprintf( stderr, " GS:%04x", GS_reg(DEBUG_context) );
+#endif
     if (dbg_mode == 16)
     {
-        fprintf( stderr," IP:%04x SP:%04x BP:%04x FLAGS:%04x\n",
+        fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x\n",
                  IP_reg(DEBUG_context), SP_reg(DEBUG_context),
                  BP_reg(DEBUG_context), FL_reg(DEBUG_context) );
 	fprintf( stderr," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
@@ -114,7 +144,7 @@ void DEBUG_InfoRegisters(void)
     }
     else  /* 32-bit mode */
     {
-        fprintf( stderr, " EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx\n", 
+        fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx\n", 
                  EIP_reg(DEBUG_context), ESP_reg(DEBUG_context),
                  EBP_reg(DEBUG_context), EFL_reg(DEBUG_context) );
 	fprintf( stderr, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
@@ -125,3 +155,52 @@ void DEBUG_InfoRegisters(void)
     }
 }
 
+
+/***********************************************************************
+ *           DEBUG_ValidateRegisters
+ *
+ * Make sure all registers have a correct value for returning from
+ * the signal handler.
+ */
+BOOL32 DEBUG_ValidateRegisters(void)
+{
+/* Check that a selector is a valid ring-3 LDT selector, or a NULL selector */
+#define CHECK_SEG(seg,name) \
+    if (((seg) & ~3) && \
+        ((((seg) & 7) != 7) || IS_LDT_ENTRY_FREE(SELECTOR_TO_ENTRY(seg)))) \
+    { \
+        fprintf( stderr, "*** Invalid value for %s register: %04x\n", \
+                 (name), (seg) ); \
+        return FALSE; \
+    }
+
+    if (CS_reg(DEBUG_context) != WINE_CODE_SELECTOR)
+        CHECK_SEG( CS_reg(DEBUG_context), "CS" );
+    if (SS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( SS_reg(DEBUG_context), "SS" );
+    if (DS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( DS_reg(DEBUG_context), "DS" );
+    if (ES_reg(DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( ES_reg(DEBUG_context), "ES" );
+    if (FS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( FS_reg(DEBUG_context), "FS" );
+    if (GS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( GS_reg(DEBUG_context), "GS" );
+
+    /* Check that CS and SS are not NULL */
+
+    if (!(CS_reg(DEBUG_context) & ~3))
+    {
+        fprintf( stderr, "*** Invalid value for CS register: %04x\n",
+                 CS_reg(DEBUG_context) );
+        return FALSE;
+    }
+    if (!(SS_reg(DEBUG_context) & ~3))
+    {
+        fprintf( stderr, "*** Invalid value for SS register: %04x\n",
+                 SS_reg(DEBUG_context) );
+        return FALSE;
+    }
+    return TRUE;
+#undef CHECK_SEG
+}

@@ -202,7 +202,6 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
  *
  * Print the content of the LDT on stdout.
  */
-#ifndef WINELIB
 void LDT_Print( int start, int length )
 {
     int i;
@@ -232,4 +231,3 @@ void LDT_Print( int start, int length )
                 flags[0], flags[1], flags[2] );
     }
 }
-#endif  /* WINELIB */

@@ -14,16 +14,16 @@
 
 typedef struct
 {
-    HWND          hwnd;
-    short         hidden;
-    BOOL          on;
-    short         x;
-    short         y;
-    short         width;
-    short         height;
-    HBRUSH        hBrush;
-    WORD          timeout;
-    WORD          timerid;
+    HWND32     hwnd;
+    UINT32     hidden;
+    BOOL32     on;
+    INT32      x;
+    INT32      y;
+    INT32      width;
+    INT32      height;
+    HBRUSH16   hBrush;
+    UINT32     timeout;
+    UINT32     timerid;
 } CARET;
 
 typedef enum
@@ -33,13 +33,13 @@ typedef enum
     CARET_TOGGLE,
 } DISPLAY_CARET;
 
-static CARET Caret = { 0, };
+static CARET Caret;
 
 
 /*****************************************************************
  *              CARET_GetHwnd
  */
-HWND CARET_GetHwnd()
+HWND32 CARET_GetHwnd()
 {
     return Caret.hwnd;
 }
@@ -47,10 +47,10 @@ HWND CARET_GetHwnd()
 /*****************************************************************
  *               CARET_DisplayCaret
  */
-void CARET_DisplayCaret(DISPLAY_CARET status)
+static void CARET_DisplayCaret( DISPLAY_CARET status )
 {
-    HDC hdc;
-    HBRUSH hPrevBrush;
+    HDC16 hdc;
+    HBRUSH16 hPrevBrush;
 
     if (Caret.on && (status == CARET_ON)) return;
     if (!Caret.on && (status == CARET_OFF)) return;
@@ -69,37 +69,35 @@ void CARET_DisplayCaret(DISPLAY_CARET status)
 /*****************************************************************
  *               CARET_Callback
  */
-WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
+static VOID CARET_Callback( HWND32 hwnd, UINT32 msg, UINT32 id, DWORD ctime)
 {
     dprintf_caret(stddeb,"CARET_Callback: hwnd=%04x, timerid=%d, caret=%d\n",
-                  hwnd, timerid, Caret.on);
-	
+                  hwnd, id, Caret.on);
     CARET_DisplayCaret(CARET_TOGGLE);
-    return 0;
 }
 
 
 /*****************************************************************
  *               CARET_SetTimer
  */
-void CARET_SetTimer(void)
+static void CARET_SetTimer(void)
 {
-    if (Caret.timerid) KillSystemTimer((HWND)0, Caret.timerid);
-    Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout,
-                                   MODULE_GetWndProcEntry16("CARET_Callback"));
+    if (Caret.timerid) KillSystemTimer32( (HWND32)0, Caret.timerid );
+    Caret.timerid = SetSystemTimer32( (HWND32)0, 0, Caret.timeout,
+                                      CARET_Callback );
 }
 
 
 /*****************************************************************
  *               CARET_ResetTimer
  */
-void CARET_ResetTimer(void)
+static void CARET_ResetTimer(void)
 {
     if (Caret.timerid) 
     {
-	KillSystemTimer((HWND)0, Caret.timerid);
-	Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout,
-                                   MODULE_GetWndProcEntry16("CARET_Callback"));
+	KillSystemTimer32( (HWND32)0, Caret.timerid );
+	Caret.timerid = SetSystemTimer32( (HWND32)0, 0, Caret.timeout,
+                                          CARET_Callback );
     }
 }
 
@@ -107,20 +105,20 @@ void CARET_ResetTimer(void)
 /*****************************************************************
  *               CARET_KillTimer
  */
-void CARET_KillTimer(void)
+static void CARET_KillTimer(void)
 {
     if (Caret.timerid) 
     {
-	KillSystemTimer((HWND)0, Caret.timerid);
+	KillSystemTimer32( (HWND32)0, Caret.timerid );
 	Caret.timerid = 0;
     }
 }
 
 
 /*****************************************************************
- *               CreateCaret          (USER.163)
+ *           CreateCaret   (USER.163) (USER32.65)
  */
-BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
+BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
 {
     dprintf_caret(stddeb,"CreateCaret: hwnd=%04x\n", hwnd);
 
@@ -158,10 +156,9 @@ BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
    
 
 /*****************************************************************
- *               DestroyCaret         (USER.164)
+ *           DestroyCaret   (USER.164) (USER32.130)
  */
-
-BOOL DestroyCaret()
+BOOL16 DestroyCaret(void)
 {
     if (!Caret.hwnd) return FALSE;
 
@@ -171,20 +168,18 @@ BOOL DestroyCaret()
     DeleteObject( Caret.hBrush );
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
-
     Caret.hwnd = 0;
     return TRUE;
 }
 
 
 /*****************************************************************
- *               SetCaretPos          (USER.165)
+ *           SetCaretPos   (USER.165) (USER32.465)
  */
-
-void SetCaretPos(short x, short y)
+BOOL16 SetCaretPos( INT32 x, INT32 y)
 {
-    if (!Caret.hwnd) return;
-    if ((x == Caret.x) && (y == Caret.y)) return;
+    if (!Caret.hwnd) return FALSE;
+    if ((x == Caret.x) && (y == Caret.y)) return TRUE;
 
     dprintf_caret(stddeb,"SetCaretPos: x=%d, y=%d\n", x, y);
 
@@ -197,16 +192,17 @@ void SetCaretPos(short x, short y)
 	CARET_DisplayCaret(CARET_ON);
 	CARET_SetTimer();
     }
+    return TRUE;
 }
 
-/*****************************************************************
- *               HideCaret            (USER.166)
- */
 
-void HideCaret(HWND hwnd)
+/*****************************************************************
+ *           HideCaret   (USER.166) (USER32.316)
+ */
+BOOL16 HideCaret( HWND32 hwnd )
 {
-    if (!Caret.hwnd) return;
-    if (hwnd && (Caret.hwnd != hwnd)) return;
+    if (!Caret.hwnd) return FALSE;
+    if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
 
     dprintf_caret(stddeb,"HideCaret: hwnd=%04x, hidden=%d\n",
                   hwnd, Caret.hidden);
@@ -214,17 +210,17 @@ void HideCaret(HWND hwnd)
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
     Caret.hidden++;
+    return TRUE;
 }
 
 
 /*****************************************************************
- *               ShowCaret            (USER.167)
+ *           ShowCaret   (USER.167) (USER32.528)
  */
-
-void ShowCaret(HWND hwnd)
+BOOL16 ShowCaret( HWND32 hwnd )
 {
-    if (!Caret.hwnd) return;
-    if (hwnd && (Caret.hwnd != hwnd)) return;
+    if (!Caret.hwnd) return FALSE;
+    if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
 
     dprintf_caret(stddeb,"ShowCaret: hwnd=%04x, hidden=%d\n",
 		hwnd, Caret.hidden);
@@ -238,61 +234,66 @@ void ShowCaret(HWND hwnd)
 	    CARET_SetTimer();
 	}
     }
+    return TRUE;
 }
 
 
 /*****************************************************************
- *               SetCaretBlinkTime    (USER.168)
+ *           SetCaretBlinkTime   (USER.168) (USER32.464)
  */
-
-void SetCaretBlinkTime(WORD msecs)
+BOOL16 SetCaretBlinkTime( UINT32 msecs )
 {
-    if (!Caret.hwnd) return;
+    if (!Caret.hwnd) return FALSE;
 
     dprintf_caret(stddeb,"SetCaretBlinkTime: hwnd=%04x, msecs=%d\n",
 		Caret.hwnd, msecs);
 
     Caret.timeout = msecs;
     CARET_ResetTimer();
+    return TRUE;
 }
 
 
 /*****************************************************************
- *               GetCaretBlinkTime    (USER.169)
+ *           GetCaretBlinkTime16   (USER.169)
  */
+UINT16 GetCaretBlinkTime16(void)
+{
+    return (UINT16)GetCaretBlinkTime32();
+}
 
-WORD GetCaretBlinkTime()
+
+/*****************************************************************
+ *           GetCaretBlinkTime32   (USER32.208)
+ */
+UINT32 GetCaretBlinkTime32(void)
 {
     if (!Caret.hwnd) return 0;
-
-    dprintf_caret(stddeb,"GetCaretBlinkTime: hwnd=%04x, msecs=%d\n",
-		Caret.hwnd, Caret.timeout);
-
     return Caret.timeout;
 }
 
 
 /*****************************************************************
- *               GetCaretPos16          (USER.183)
+ *           GetCaretPos16   (USER.183)
  */
-void GetCaretPos16( LPPOINT16 pt )
+VOID GetCaretPos16( LPPOINT16 pt )
 {
     if (!Caret.hwnd || !pt) return;
 
     dprintf_caret(stddeb,"GetCaretPos: hwnd=%04x, pt=%p, x=%d, y=%d\n",
                   Caret.hwnd, pt, Caret.x, Caret.y);
-
-    pt->x = Caret.x;
-    pt->y = Caret.y;
+    pt->x = (INT16)Caret.x;
+    pt->y = (INT16)Caret.y;
 }
 
 
 /*****************************************************************
- *               GetCaretPos32          (USER32.209)
+ *           GetCaretPos32   (USER32.209)
  */
-void GetCaretPos32( LPPOINT32 pt )
+BOOL32 GetCaretPos32( LPPOINT32 pt )
 {
-    if (!Caret.hwnd || !pt) return;
+    if (!Caret.hwnd || !pt) return FALSE;
     pt->x = Caret.x;
     pt->y = Caret.y;
+    return TRUE;
 }

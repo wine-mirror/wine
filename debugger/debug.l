@@ -80,6 +80,8 @@ $es     { yylval.reg = REG_ES;  return tREG; }
 $ds     { yylval.reg = REG_DS;  return tREG; }
 $cs     { yylval.reg = REG_CS;  return tREG; }
 $ss     { yylval.reg = REG_SS;  return tREG; }
+$fs     { yylval.reg = REG_FS;  return tREG; }
+$gs     { yylval.reg = REG_GS;  return tREG; }
 
 info|inf|in			{ return tINFO; }
 show|sho|sh			{ return tINFO; }
@@ -169,7 +171,11 @@ static int dbg_read(char * buf, int size)
     {
         flush_symbols();
         line = readline ("Wine-dbg>");
-        if (!line) exit(0);
+        if (!line)
+        {
+            fprintf( stderr, "\n" );
+            exit(0);
+        }
 
         /* Remove leading and trailing whitespace from the line */
 

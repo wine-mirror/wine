@@ -28,10 +28,6 @@
 #define METAFILE_DC_MAGIC     0x4f51
 #define MAGIC_DONTCARE	      0xffff
 
-#ifndef WINELIB
-#pragma pack(1)
-#endif
-
 typedef struct tagGDIOBJHDR
 {
     HANDLE16    hNext;
@@ -74,11 +70,6 @@ typedef struct
     WORD   numReserved;   /* 106: reserved entries */
     WORD   colorRes;      /* 108: color resolution */    
 } DeviceCaps;
-
-#ifndef WINELIB
-#pragma pack(4)
-#endif
-
 
   /* Device independent DC information */
 typedef struct
@@ -265,15 +256,9 @@ extern WORD GDI_HeapSel;
 #define GDI_HEAP_FREE(handle) \
             LOCAL_Free( GDI_HeapSel, (handle) )
 #define GDI_HEAP_LIN_ADDR(handle)  \
-            ((handle) ? PTR_SEG_OFF_TO_LIN(GDI_HeapSel, (handle)) : NULL)
-
-#ifdef WINELIB
-#define GDI_HEAP_SEG_ADDR(handle) ((SEGPTR)GDI_HEAP_LIN_ADDR(handle))
-#else
+         ((handle) ? PTR_SEG_OFF_TO_LIN(GDI_HeapSel, (handle)) : NULL)
 #define GDI_HEAP_SEG_ADDR(handle)  \
-            ((handle) ? MAKELONG((handle), GDI_HeapSel) : 0)
-
-#endif  /* WINELIB */
+         ((handle) ? PTR_SEG_OFF_TO_SEGPTR(GDI_HeapSel, (handle)) : (SEGPTR)0)
 
 extern BOOL32 GDI_Init(void);
 extern HANDLE16 GDI_AllocObject( WORD, WORD );
