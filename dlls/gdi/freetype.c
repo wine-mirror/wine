@@ -78,6 +78,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #endif
 
 static FT_Library library = 0;
+typedef struct
+{
+    FT_Int major;
+    FT_Int minor;
+    FT_Int patch;
+} FT_Version_t;
+static FT_Version_t FT_Version;
 
 static void *ft_handle = NULL;
 
@@ -98,6 +105,7 @@ MAKE_FUNCPTR(FT_Set_Pixel_Sizes)
 MAKE_FUNCPTR(FT_Sin)
 MAKE_FUNCPTR(FT_Vector_Rotate)
 #undef MAKE_FUNCPTR
+static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 
 #define GET_BE_WORD(ptr) MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
 
@@ -547,6 +555,8 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Vector_Rotate)
 
 #undef LOAD_FUNCPTR
+    /* Don't warn if this one is missing */
+    pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
 
       if(!wine_dlsym(ft_handle, "FT_Get_Postscript_Name", NULL, 0) &&
 	 !wine_dlsym(ft_handle, "FT_Sqrt64", NULL, 0)) {
@@ -561,6 +571,18 @@ BOOL WineEngInit(void)
         ft_handle = NULL;
 	return FALSE;
     }
+    FT_Version.major=FT_Version.minor=FT_Version.patch=-1;
+    if (pFT_Library_Version)
+    {
+        pFT_Library_Version(library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
+    }
+    if (FT_Version.major<=0)
+    {
+        FT_Version.major=2;
+        FT_Version.minor=0;
+        FT_Version.patch=5;
+    }
+    TRACE("FreeType version is %d.%d.%d\n",FT_Version.major,FT_Version.minor,FT_Version.patch);
 
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
     GetWindowsDirectoryA(windowsdir, sizeof(windowsdir));
@@ -2073,7 +2095,16 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
         return GDI_ERROR;
 
     tt_face = (TT_Face) ft_face;
-    sfnt = (SFNT_Interface*)tt_face->sfnt;
+    if (FT_Version.major==2 && FT_Version.minor==0)
+    {
+        /* 2.0.x */
+        sfnt = *(SFNT_Interface**)((char*)tt_face + 528);
+    }
+    else
+    {
+        /* A field was added in the middle of the structure in 2.1.x */
+        sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
+    }
 
     if(!buf || !cbData)
         len = 0;
