@@ -105,97 +105,14 @@ BOOL DragQueryPoint(HDROP16 hDrop, POINT16 *p)
     return bRet;
 }
 
-
 /*************************************************************************
- *				ShellExecute		[SHELL.20]
+ *				SHELL_FindExecutable
+ * Utility for code sharing between FindExecutable and ShellExecute
  */
-HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpParameters, LPCSTR lpDirectory, INT iShowCmd)
-{
-    char cmd[400];
-    char *p,*x;
-    long len;
-    char subclass[200];
-
-    /* OK. We are supposed to lookup the program associated with lpFile,
-     * then to execute it using that program. If lpFile is a program,
-     * we have to pass the parameters. If an instance is already running,
-     * we might have to send DDE commands.
-     *
-     * FIXME: Should also look up WIN.INI [Extensions] section?
-     */
-
-    dprintf_exec(stddeb, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
-		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
-		lpParameters ? lpParameters : "<null>", 
-		lpDirectory ? lpDirectory : "<null>", iShowCmd);
-
-    if (lpFile==NULL) return 0; /* should not happen */
-    if (lpOperation==NULL) /* default is open */
-      lpOperation="open";
-    p=strrchr(lpFile,'.');
-    if (p!=NULL) {
-      x=p; /* the suffixes in the register database are lowercased */
-      while (*x) {*x=tolower(*x);x++;}
-    }
-    if (p==NULL || !strcmp(p,".exe")) {
-      p=".exe";
-      if (lpParameters) {
-        sprintf(cmd,"%s %s",lpFile,lpParameters);
-      } else {
-        strcpy(cmd,lpFile);
-      }
-    } else {
-      len=200;
-      if (RegQueryValue16((HKEY)HKEY_CLASSES_ROOT,p,subclass,&len)==SHELL_ERROR_SUCCESS) {
-	if (len>20)
-	  fprintf(stddeb,"ShellExecute:subclass with len %ld? (%s), please report.\n",len,subclass);
-	subclass[len]='\0';
-	strcat(subclass,"\\shell\\");
-	strcat(subclass,lpOperation);
-	strcat(subclass,"\\command");
-	dprintf_exec(stddeb,"ShellExecute:looking for %s.\n",subclass);
-	len=400;
-	if (RegQueryValue16((HKEY)HKEY_CLASSES_ROOT,subclass,cmd,&len)==SHELL_ERROR_SUCCESS) {
-	  char *t;
-	  dprintf_exec(stddeb,"ShellExecute:...got %s\n",cmd);
-	  cmd[len]='\0';
-	  t=strstr(cmd,"%1");
-	  if (t==NULL) {
-	    strcat(cmd," ");
-	    strcat(cmd,lpFile);
-	  } else {
-	    char *s;
-	    s=xmalloc(len+strlen(lpFile)+10);
-	    strncpy(s,cmd,t-cmd);
-	    s[t-cmd]='\0';
-	    strcat(s,lpFile);
-	    strcat(s,t+2);
-	    strcpy(cmd,s);
-	    free(s);
-	  }
-	  /* does this use %x magic too? */
-	  if (lpParameters) {
-	    strcat(cmd," ");
-	    strcat(cmd,lpParameters);
-	  }
-	} else {
-	  fprintf(stddeb,"ShellExecute: No %s\\shell\\%s\\command found for \"%s\" suffix.\n",subclass,lpOperation,p);
-	  return (HINSTANCE)31; /* unknown type */
-	}
-      } else {
-	fprintf(stddeb,"ShellExecute: No operation found for \"%s\" suffix.\n",p);
-	return (HINSTANCE)31; /* file not found */
-      }
-    }
-    dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
-    return WinExec(cmd,iShowCmd);
-}
-
-
-/*************************************************************************
- *				FindExecutable		[SHELL.21]
- */
-HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
+static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile, 
+				      LPCSTR lpDirectory,
+				      LPCSTR lpOperation,
+				      LPSTR lpResult)
 {
     char *extension = NULL; /* pointer to file extension */
     char tmpext[5];         /* local copy to mung as we please */
@@ -208,7 +125,7 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
     char *tok;              /* token pointer */
     int i;                  /* random counter */
 
-    dprintf_exec(stddeb, "FindExecutable: File %s, Dir %s\n", 
+    dprintf_exec(stddeb, "SHELL_FindExecutable: File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
 		 (lpDirectory != NULL?lpDirectory:"-"));
 
@@ -216,7 +133,7 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 
     /* trap NULL parameters on entry */
     if (( lpFile == NULL ) || ( lpDirectory == NULL ) || 
-	( lpResult == NULL ))
+	( lpResult == NULL ) || ( lpOperation == NULL ))
     {
 	/* FIXME - should throw a warning, perhaps! */
 	return 2; /* File not found. Close enough, I guess. */
@@ -236,7 +153,7 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
     else
 	tmpext[4]='\0';
     for (i=0;i<strlen(tmpext);i++) tmpext[i]=tolower(tmpext[i]);
-    dprintf_exec(stddeb, "FindExecutable: %s file\n", tmpext);
+    dprintf_exec(stddeb, "SHELL_FindExecutable: %s file\n", tmpext);
     
     /* Three places to check: */
     /* 1. win.ini, [windows], programs (NB no leading '.') */
@@ -259,7 +176,8 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 	{
 	    strcpy(lpResult, lpFile); /* Need to perhaps check that */
 				      /* the file has a path attached */
-	    dprintf_exec(stddeb, "FindExecutable: found %s\n", lpResult);
+	    dprintf_exec(stddeb, "SHELL_FindExecutable: found %s\n",
+			 lpResult);
 	    return 33; /* Greater than 32 to indicate success FIXME */
 		       /* what are the correct values here? */
 	}
@@ -271,10 +189,13 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
                          &filetypelen ) == SHELL_ERROR_SUCCESS )
     {
 	filetype[filetypelen]='\0';
-	dprintf_exec(stddeb, "File type: %s\n", filetype);
+	dprintf_exec(stddeb, "SHELL_FindExecutable: File type: %s\n",
+		     filetype);
 
-	/* Looking for ...buffer\shell\open\command */
-	strcat( filetype, "\\shell\\open\\command" );
+	/* Looking for ...buffer\shell\lpOperation\command */
+	strcat( filetype, "\\shell\\" );
+	strcat( filetype, lpOperation );
+	strcat( filetype, "\\command" );
 	
 	if (RegQueryValue16( (HKEY)HKEY_CLASSES_ROOT, filetype, command,
                              &commandlen ) == SHELL_ERROR_SUCCESS )
@@ -319,6 +240,70 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 	    retval=33;
 	}
     }
+
+    dprintf_exec(stddeb, "SHELL_FindExecutable: returning %s\n", lpResult);
+    return retval;
+}
+
+/*************************************************************************
+ *				ShellExecute		[SHELL.20]
+ */
+HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+		       LPSTR lpParameters, LPCSTR lpDirectory,
+		       INT iShowCmd)
+{
+    HINSTANCE retval=31;
+    char cmd[256];
+
+    dprintf_exec(stddeb, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
+		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
+		lpParameters ? lpParameters : "<null>", 
+		lpDirectory ? lpDirectory : "<null>", iShowCmd);
+
+    if (lpFile==NULL) return 0; /* should not happen */
+    if (lpOperation==NULL) /* default is open */
+      lpOperation="open";
+
+    retval = SHELL_FindExecutable( lpFile, lpDirectory, lpOperation, cmd );
+
+    if ( retval <= 32 )
+    {
+	return retval;
+    }
+
+    if (lpParameters)
+    {
+	strcat(cmd," ");
+	strcat(cmd,lpParameters);
+    }
+
+    dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
+    return WinExec(cmd,iShowCmd);
+}
+
+/*************************************************************************
+ *				FindExecutable		[SHELL.21]
+ */
+HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
+{
+    HINSTANCE retval=31;    /* default - 'No association was found' */
+
+    dprintf_exec(stddeb, "FindExecutable: File %s, Dir %s\n", 
+		 (lpFile != NULL?lpFile:"-"), 
+		 (lpDirectory != NULL?lpDirectory:"-"));
+
+    lpResult[0]='\0'; /* Start off with an empty return string */
+
+    /* trap NULL parameters on entry */
+    if (( lpFile == NULL ) || ( lpDirectory == NULL ) || 
+	( lpResult == NULL ))
+    {
+	/* FIXME - should throw a warning, perhaps! */
+	return 2; /* File not found. Close enough, I guess. */
+    }
+
+    retval = SHELL_FindExecutable( lpFile, lpDirectory, "open",
+				  lpResult );
 
     dprintf_exec(stddeb, "FindExecutable: returning %s\n", lpResult);
     return retval;

@@ -8,14 +8,12 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <errno.h>
 
 #include "message.h"
 #include "win.h"
 #include "gdi.h"
 #include "sysmetrics.h"
 #include "hook.h"
-#include "event.h"
 #include "spy.h"
 #include "winpos.h"
 #include "atom.h"
@@ -204,7 +202,7 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
     int i, pos = sysMsgQueue->nextMessage;
 
     /* If the queue is empty, attempt to fill it */
-    if (!sysMsgQueue->msgCount && XPending(display)) MSG_WaitXEvent( 0 );
+    if (!sysMsgQueue->msgCount && XPending(display)) EVENT_WaitXEvent( 0 );
 
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
@@ -278,6 +276,7 @@ WORD GetDoubleClickTime()
  */
 BOOL MSG_GetHardwareMessage( LPMSG msg )
 {
+#if 0
     int pos;
     XEvent event;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
@@ -293,92 +292,83 @@ BOOL MSG_GetHardwareMessage( LPMSG msg )
 	XNextEvent( display, &event );
 	EVENT_ProcessEvent( &event );
     }
+#endif
+    MSG_PeekMessage( msg, 0, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE, 0 );
     return TRUE;
 }
 
 
 /***********************************************************************
- *           MSG_Synchronize
+ *           MSG_SendMessage
  *
- * Synchronize with the X server. Should not be used too often.
+ * Implementation of an inter-task SendMessage.
  */
-void MSG_Synchronize()
+LRESULT MSG_SendMessage( HQUEUE hDestQueue, HWND hwnd, UINT msg,
+                         WPARAM wParam, LPARAM lParam )
 {
-    XEvent event;
+    MESSAGEQUEUE *queue, *destQ;
 
-    XSync( display, False );
-    while (XPending( display ))
+    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(destQ = (MESSAGEQUEUE*)GlobalLock16( hDestQueue ))) return 0;
+
+    if (IsTaskLocked())
     {
-	XNextEvent( display, &event );
-	EVENT_ProcessEvent( &event );
-    }    
+        fprintf( stderr, "SendMessage: task is locked\n" );
+        return 0;
+    }
+
+    if (queue->hWnd)
+    {
+        fprintf( stderr, "Nested SendMessage() not supported\n" );
+        return 0;
+    }
+    queue->hWnd   = hwnd;
+    queue->msg    = msg;
+    queue->wParam = wParam;
+    queue->lParam = lParam;
+    queue->hPrevSendingTask = destQ->hSendingTask;
+    destQ->hSendingTask = GetTaskQueue(0);
+    QUEUE_SetWakeBit( destQ, QS_SENDMESSAGE );
+
+    /* Wait for the result */
+
+    printf( "SendMessage %04x to %04x\n", msg, hDestQueue );
+
+    if (!(queue->wakeBits & QS_SMRESULT))
+    {
+        DirectedYield( hDestQueue );
+        QUEUE_WaitBits( QS_SMRESULT );
+    }
+    printf( "SendMessage %04x to %04x: got %08x\n",
+            msg, hDestQueue, queue->SendMessageReturn );
+    queue->wakeBits &= ~QS_SMRESULT;
+    return queue->SendMessageReturn;
 }
 
 
 /***********************************************************************
- *           MSG_WaitXEvent
- *
- * Wait for an X event, but at most maxWait milliseconds (-1 for no timeout).
- * Return TRUE if an event is pending, FALSE on timeout or error
- * (for instance lost connection with the server).
+ *           ReplyMessage   (USER.115)
  */
-BOOL MSG_WaitXEvent( LONG maxWait )
+void ReplyMessage( LRESULT result )
 {
-    fd_set read_set;
-    struct timeval timeout;
-    XEvent event;
-    int fd = ConnectionNumber(display);
+    MESSAGEQUEUE *senderQ;
+    MESSAGEQUEUE *queue;
 
-    if (!XPending(display) && (maxWait != -1))
+    printf( "ReplyMessage\n " );
+    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return;
+    if (!(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->InSendMessageHandle)))
+        return;
+    for (;;)
     {
-        FD_ZERO( &read_set );
-        FD_SET( fd, &read_set );
-
-	timeout.tv_usec = (maxWait % 1000) * 1000;
-	timeout.tv_sec = maxWait / 1000;
-
-#ifdef CONFIG_IPC
-	sigsetjmp(env_wait_x, 1);
-	stop_wait_op= CONT;
-	    
-	if (DDE_GetRemoteMessage()) {
-	    while(DDE_GetRemoteMessage())
-		;
-	    return TRUE;
-	}
-	stop_wait_op= STOP_WAIT_X;
-	/* The code up to the next "stop_wait_op= CONT" must be reentrant  */
-	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1 &&
-	    !XPending(display)) {
-	    stop_wait_op= CONT;
-	    return FALSE;
-	} else {
-	    stop_wait_op= CONT;
-	}
-#else  /* CONFIG_IPC */
-	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-            return FALSE;  /* Timeout or error */
-#endif  /* CONFIG_IPC */
-
+        if (queue->wakeBits & QS_SENDMESSAGE) QUEUE_ReceiveMessage( queue );
+        else if (senderQ->wakeBits & QS_SMRESULT) Yield();
+        else break;
     }
-
-    /* Process the event (and possibly others that occurred in the meantime) */
-    do
-    {
-
-#ifdef CONFIG_IPC
-        if (DDE_GetRemoteMessage())
-        {
-            while(DDE_GetRemoteMessage()) ;
-            return TRUE;
-        }
-#endif  /* CONFIG_IPC */
-
-        XNextEvent( display, &event );
-        EVENT_ProcessEvent( &event );
-    }
-    while (XPending( display ));
-    return TRUE;
+    printf( "ReplyMessage: res = %08x\n", result );
+    senderQ->SendMessageReturn = result;
+    queue->InSendMessageHandle = 0;
+    QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
+    DirectedYield( queue->hSendingTask );
 }
 
 
@@ -397,58 +387,51 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
     DDE_GetRemoteMessage();
 #endif  /* CONFIG_IPC */
-    
+
+    mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
     {
-	mask = QS_POSTMESSAGE;  /* Always selectioned */
 	if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
 	if ((first <= WM_MOUSELAST) && (last >= WM_MOUSEFIRST)) mask |= QS_MOUSE;
 	if ((first <= WM_TIMER) && (last >= WM_TIMER)) mask |= QS_TIMER;
 	if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
 	if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
     }
-    else mask = QS_MOUSE | QS_KEY | QS_POSTMESSAGE | QS_TIMER | QS_PAINT;
+    else mask |= QS_MOUSE | QS_KEY | QS_TIMER | QS_PAINT;
+
+    if (IsTaskLocked()) flags |= PM_NOYIELD;
 
     while(1)
     {    
 	hQueue   = GetTaskQueue(0);
         msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         if (!msgQueue) return FALSE;
+        msgQueue->changeBits = 0;
 
-	  /* First handle a message put by SendMessage() */
-	if (msgQueue->status & QS_SENDMESSAGE)
-	{
-	    if (!hwnd || (msgQueue->hWnd == hwnd))
-	    {
-		if ((!first && !last) || 
-		    ((msgQueue->msg >= first) && (msgQueue->msg <= last)))
-		{
-		    msg->hwnd    = msgQueue->hWnd;
-		    msg->message = msgQueue->msg;
-		    msg->wParam  = msgQueue->wParam;
-		    msg->lParam  = msgQueue->lParam;
-		    if (flags & PM_REMOVE) msgQueue->status &= ~QS_SENDMESSAGE;
-		    break;
-		}
-	    }
-	}
+        /* First handle a message put by SendMessage() */
+
+	if (msgQueue->wakeBits & QS_SENDMESSAGE)
+            QUEUE_ReceiveMessage( msgQueue );
     
-	  /* Now find a normal message */
-	pos = QUEUE_FindMsg( msgQueue, hwnd, first, last );
-	if (pos != -1)
-	{
-	    QMSG *qmsg = &msgQueue->messages[pos];
-	    *msg = qmsg->msg;
-	    msgQueue->GetMessageTimeVal      = msg->time;
-	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
-	    msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
+        /* Now find a normal message */
 
-	    if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, pos );
-	    break;
-	}
+        if (((msgQueue->wakeBits & mask) & QS_POSTMESSAGE) &&
+            ((pos = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != -1))
+        {
+            QMSG *qmsg = &msgQueue->messages[pos];
+            *msg = qmsg->msg;
+            msgQueue->GetMessageTimeVal      = msg->time;
+            msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
+            msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
-	  /* Now find a hardware event */
-        if (MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
+            if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, pos );
+            break;
+        }
+
+        /* Now find a hardware event */
+
+        if (((msgQueue->wakeBits & mask) & (QS_MOUSE | QS_KEY)) &&
+            MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
         {
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
@@ -457,7 +440,8 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
             break;
         }
 
-	  /* Now handle a WM_QUIT message */
+        /* Now handle a WM_QUIT message */
+
 	if (msgQueue->wPostQMsg)
 	{
 	    msg->hwnd    = hwnd;
@@ -467,8 +451,14 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	    break;
 	}
 
-	  /* Now find a WM_PAINT message */
-	if ((msgQueue->status & QS_PAINT) && (mask & QS_PAINT))
+        /* Check again for SendMessage */
+
+ 	if (msgQueue->wakeBits & QS_SENDMESSAGE)
+            QUEUE_ReceiveMessage( msgQueue );
+
+        /* Now find a WM_PAINT message */
+
+	if ((msgQueue->wakeBits & mask) & QS_PAINT)
 	{
 	    msg->hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
 	    msg->message = WM_PAINT;
@@ -490,23 +480,28 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
               }
 	}
 
-	  /* Finally handle WM_TIMER messages */
-	if ((msgQueue->status & QS_TIMER) && (mask & QS_TIMER))
+        /* Check for timer messages, but yield first */
+
+        if (!(flags & PM_NOYIELD))
+        {
+            UserYield();
+            if (msgQueue->wakeBits & QS_SENDMESSAGE)
+                QUEUE_ReceiveMessage( msgQueue );
+        }
+	if ((msgQueue->wakeBits & mask) & QS_TIMER)
 	{
 	    if (TIMER_CheckTimer( &nextExp, msg, hwnd, flags & PM_REMOVE ))
 		break;  /* Got a timer msg */
 	}
 	else nextExp = -1;  /* No timeout needed */
 
-        Yield();
-
-	  /* Wait until something happens */
         if (peek)
         {
-            if (!MSG_WaitXEvent( 0 )) return FALSE;  /* No pending event */
+            if (!(flags & PM_NOYIELD)) UserYield();
+            return FALSE;
         }
-        else  /* Wait for an event, then restart the loop */
-            MSG_WaitXEvent( nextExp );
+        msgQueue->wakeMask = mask;
+        QUEUE_WaitBits( mask );
     }
 
       /* We got a message */
@@ -534,7 +529,9 @@ BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
                                   0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
-		SendMessage16( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
+                if (IsWindow(hwndOwner))
+                    SendMessage16( hwndOwner, WM_ENTERIDLE,
+                                   code, (LPARAM)hwnd );
 		MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                                  0, 0, 0, flags, FALSE );
 	    }
@@ -679,6 +676,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         return TRUE;
     }
 
+
     HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1,
                     (LPARAM)MAKE_SEGPTR(&msgstruct) );
     hwnd   = msgstruct.hWnd;
@@ -686,12 +684,21 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
     wParam = msgstruct.wParam;
     lParam = msgstruct.lParam;
 
-    SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        SPY_ExitMessage( SPY_RESULT_INVALIDHWND16, hwnd, msg, 0 );
+        fprintf( stderr, "SendMessage16: invalid hwnd %04x\n", hwnd );
         return 0;
     }
+    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+    {
+#if 0
+        fprintf( stderr, "SendMessage16: intertask message not supported\n" );
+        return 0;
+#endif
+        return MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam );
+    }
+
+    SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
     ret = CallWindowProc16( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, ret );
     return ret;
@@ -719,12 +726,18 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     /* FIXME: call hooks */
 
-    SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        SPY_ExitMessage( SPY_RESULT_INVALIDHWND32, hwnd, msg, 0 );
+        fprintf( stderr, "SendMessage32A: invalid hwnd %08x\n", hwnd );
         return 0;
     }
+    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+    {
+        fprintf( stderr, "SendMessage32A: intertask message not supported\n" );
+        return 0;
+    }
+
+    SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
     ret = CallWindowProc32A( (WNDPROC32)wndPtr->lpfnWndProc,
                              hwnd, msg, wParam, lParam );
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
@@ -753,12 +766,18 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     /* FIXME: call hooks */
 
-    SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        SPY_ExitMessage( SPY_RESULT_INVALIDHWND32, hwnd, msg, 0 );
+        fprintf( stderr, "SendMessage32W: invalid hwnd %08x\n", hwnd );
         return 0;
     }
+    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+    {
+        fprintf( stderr, "SendMessage32W: intertask message not supported\n" );
+        return 0;
+    }
+
+    SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
     ret = CallWindowProc32W( (WNDPROC32)wndPtr->lpfnWndProc,
                              hwnd, msg, wParam, lParam );
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
@@ -781,14 +800,14 @@ void WaitMessage( void )
     
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
     if ((queue->wPostQMsg) || 
-        (queue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
+        (queue->wakeBits & (QS_SENDMESSAGE | QS_PAINT)) ||
         (queue->msgCount) || (QUEUE_GetSysQueue()->msgCount) )
         return;
-    if ((queue->status & QS_TIMER) && 
+    if ((queue->wakeBits & QS_TIMER) && 
         TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
         return;
     /* FIXME: (dde) must check DDE & X-events simultaneously */
-    MSG_WaitXEvent( nextExp );
+    EVENT_WaitXEvent( nextExp );
 }
 
 
@@ -927,14 +946,13 @@ DWORD GetCurrentTime(void)
 
 
 /***********************************************************************
- *			InSendMessage	(USER.192
- *
- * According to the book, this should return true iff the current message
- * was send from another application. In that case, the application should
- * invoke ReplyMessage before calling message relevant API.
- * Currently, Wine will always return FALSE, as there is no other app.
+ *           InSendMessage    (USER.192)
  */
 BOOL InSendMessage()
 {
-	return FALSE;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) )))
+        return 0;
+    return (BOOL)queue->InSendMessageHandle;
 }

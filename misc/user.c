@@ -21,7 +21,6 @@ WORD USER_HeapSel = 0;
 
 #ifndef WINELIB
 
-extern void 	TIMER_NukeTimers(HWND, HQUEUE);
 extern HTASK	TASK_GetNextTask(HTASK);
 extern void	QUEUE_SetDoomedQueue(HQUEUE);
 
@@ -127,7 +126,7 @@ void USER_AppExit(HTASK hTask, HINSTANCE hInstance, HQUEUE hQueue)
 
     /* Nuke timers */
 
-    TIMER_NukeTimers( 0, hQueue );
+    TIMER_RemoveQueueTimers( hQueue );
 
     HOOK_FreeQueueHooks( hQueue );
 

@@ -42,16 +42,17 @@ typedef struct tagMESSAGEQUEUE
   DWORD     SendMessageReturn;      /* 28 Return value for SendMessage */
   WORD      wPostQMsg;              /* 2c PostQuitMessage flag */
   WORD      wExitCode;              /* 2e PostQuitMessage exit code */
-  WORD      reserved3[3];           /* 30 Unknown */
+  WORD      flags;                  /* 30 Queue flags */
+  WORD      reserved3[2];           /* 32 Unknown */
   WORD      wWinVersion;            /* 36 Expected Windows version */
   HQUEUE    InSendMessageHandle;    /* 38 Queue of task that sent a message */
   HTASK     hSendingTask;           /* 3a Handle of task that sent a message */
   HTASK     hPrevSendingTask;       /* 3c Handle of previous sender */
   WORD      wPaintCount;            /* 3e Number of WM_PAINT needed */
   WORD      wTimerCount;            /* 40 Number of timers for this task */
-  WORD      tempStatus;             /* 42 State reset by GetQueueStatus */
-  WORD      status;                 /* 44 Queue state */
-  WORD      wakeMask;               /* 46 Task wake-up mask */
+  WORD      changeBits;             /* 42 Changed wake-up bits */
+  WORD      wakeBits;               /* 44 Queue wake-up bits */
+  WORD      wakeMask;               /* 46 Queue wake-up mask */
   WORD      SendMsgReturnPtrs[3];   /* 48 Near ptr to return values (?) */
   HANDLE    hCurHook;               /* 4e Current hook */
   HANDLE    hooks[WH_NB_HOOKS];     /* 50 Task hooks list */
@@ -63,9 +64,19 @@ typedef struct tagMESSAGEQUEUE
 #pragma pack(4)
 #endif
 
+/* Extra (undocumented) queue wake bits; not sure about the values */
+#define QS_SMRESULT      0x0100  /* Queue has a SendMessage() result */
+#define QS_SMPARAMSFREE  0x0200  /* SendMessage() parameters are available */
+
+/* Queue flags */
+#define QUEUE_FLAG_REPLIED  0x0001  /* Replied to a SendMessage() */
+
 extern void QUEUE_DumpQueue( HQUEUE hQueue );
 extern void QUEUE_WalkQueues(void);
 extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
+extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
+extern void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue );
+extern void QUEUE_WaitBits( WORD bits );
 extern void QUEUE_IncPaintCount( HQUEUE hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE hQueue );
 extern void QUEUE_IncTimerCount( HQUEUE hQueue );

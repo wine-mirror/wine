@@ -810,7 +810,8 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
  *
  * RGDB_section:
  * 	00:		"RGDB"	- magic
- *	04...1F:	?
+ *	04: DWORD	offset to next RGDB section (perhaps WORD)
+ *	08...1F:	?
  *	20.....:	disk keys
  *
  * disk key:
@@ -1004,10 +1005,10 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	HFILE		hfd;
 	int		fd,lastmodified;
 	char		magic[5];
-	unsigned long	nr,pos,i,where,version,rgdbsection,end;
+	unsigned long	nr,pos,i,where,version,rgdbsection,end,off_next_rgdb;
 	struct	_w95key	*keys;
 	int		nrofdkes;
-	unsigned char	*data,*curdata;
+	unsigned char	*data,*curdata,*nextrgdb;
 	OFSTRUCT	ofs;
 	struct	stat	stbuf;
 
@@ -1083,8 +1084,15 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 			continue;
 		}
 		if (keys[nr].dkeaddr) {
+			int	x;
+
+			for (x=sizeof(dke);x--;)
+				if (((char*)&dke)[x])
+					break;
+			if (x==-1)
+				break; /* finished reading if we got only 0 */
 			if (nr)
-				dprintf_reg(stddeb,"key doubled? nr=%ld,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,keys[i].dkeaddr,dkeaddr);
+				dprintf_reg(stddeb,"key doubled? nr=%ld,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,keys[nr].dkeaddr,dkeaddr);
 			continue;
 		}
 		nr2da[i].nr	 = nr;
@@ -1116,7 +1124,8 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	_lclose(hfd);
 	curdata = data;
 	memcpy(magic,curdata,4);
-	curdata+=4;
+	memcpy(&off_next_rgdb,curdata+4,4);
+	nextrgdb = curdata+off_next_rgdb;
 	if (strcmp(magic,"RGDB")) {
 		dprintf_reg(stddeb,"third IFF header not RGDB, but %s\n",magic);
 		return;
@@ -1128,6 +1137,17 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		struct	_w95key	*key,xkey;
 
 		bytesread = 0;
+		if (curdata>=nextrgdb) {
+			curdata = nextrgdb;
+			if (!strncmp(curdata,"RGDB",4)) {
+				memcpy(&off_next_rgdb,curdata+4,4);
+				nextrgdb = curdata+off_next_rgdb;
+				curdata+=0x20;
+			} else {
+				dprintf_reg(stddeb,"at end of RGDB section, but no next header. Breaking.\n");
+				break;
+			}
+		}
 #define XREAD(whereto,len) \
 	if ((curdata-data+len)<end) {\
 		memcpy(whereto,curdata,len);\
@@ -1150,7 +1170,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 				continue;
 			}
 			if (dkh.nrLS == 0xFFFE) {
-				dprintf_reg(stddeb,"0xFFFE at %lx\n",lseek(fd,0,SEEK_CUR)-bytesread);
+				dprintf_reg(stddeb,"0xFFFE at %x\n",curdata-data);
 				break;
 			}
 			dprintf_reg(stddeb,"haven't found nr %ld.\n",nr);

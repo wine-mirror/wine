@@ -65,68 +65,77 @@ static void TIMER_InsertTimer( TIMER * pTimer )
  */
 static void TIMER_RemoveTimer( TIMER * pTimer )
 {
-    if (pTimer == pNextTimer) pNextTimer = pTimer->next;
-    else
-    {
-	TIMER * ptr = pNextTimer;
-	while (ptr && (ptr->next != pTimer)) ptr = ptr->next;
-	if (ptr) ptr->next = pTimer->next;
-    }
+    TIMER **ppTimer = &pNextTimer;
+
+    while (*ppTimer && (*ppTimer != pTimer)) ppTimer = &(*ppTimer)->next;
+    if (*ppTimer) *ppTimer = pTimer->next;
     pTimer->next = NULL;
 }
+
+
+/***********************************************************************
+ *           TIMER_ClearTimer
+ *
+ * Clear and remove a timer.
+ */
+static void TIMER_ClearTimer( TIMER * pTimer )
+{
+    TIMER_RemoveTimer( pTimer );
+    QUEUE_DecTimerCount( pTimer->hq );
+    pTimer->hwnd    = 0;
+    pTimer->msg     = 0;
+    pTimer->id      = 0;
+    pTimer->timeout = 0;
+    pTimer->proc    = 0;
+}
+
 
 /***********************************************************************
  *           TIMER_SwitchQueue
  */
 void TIMER_SwitchQueue(HQUEUE old, HQUEUE new)
 {
- TIMER*         pT = pNextTimer;
+    TIMER * pT = pNextTimer;
 
- while(pT)
-  {
-   if( pT->hq == old ) pT->hq = new;
-   pT = pT->next;
-  }
-
-}
-
-/***********************************************************************
- *           TIMER_NukeTimers
- *
- * Trash all timers that are bound to the hwnd or hq
- */
-void TIMER_NukeTimers(HWND hwnd, HQUEUE hq)
-{
- HQUEUE		hQToUpdate = ( hwnd ) ? GetTaskQueue( GetWindowTask( hwnd ) )
-				      : hq;
- TIMER*         pT = pNextTimer;
- TIMER*         pTnext;
-
- if( !pT ) return;
-
- while( (hwnd && pT->hwnd == hwnd) ||
-        (hq && pT->hq == hq) )
-      {
-	 QUEUE_DecTimerCount( hQToUpdate );
-         if( !(pT = pNextTimer = pNextTimer->next) )
-             return;
-      }
-
- /* pT points to the "good" timer */
-
- while( (pTnext = pT->next) )
+    while (pT)
     {
-      while( (hwnd && pTnext->hwnd == hwnd) ||
-             (hq && pTnext->hq == hq) )
-	   {
-	      QUEUE_DecTimerCount( hQToUpdate );
-              if( !(pT->next = pTnext->next) )
-                  return;
-	   }
-
-      pT = pT->next;
+        if (pT->hq == old) pT->hq = new;
+        pT = pT->next;
     }
 }
+
+
+/***********************************************************************
+ *           TIMER_RemoveWindowTimers
+ *
+ * Remove all timers for a given window.
+ */
+void TIMER_RemoveWindowTimers( HWND hwnd )
+{
+    int i;
+    TIMER *pTimer;
+
+    for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
+	if ((pTimer->hwnd == hwnd) && pTimer->timeout)
+            TIMER_ClearTimer( pTimer );
+}
+
+
+/***********************************************************************
+ *           TIMER_RemoveQueueTimers
+ *
+ * Remove all timers for a given queue.
+ */
+void TIMER_RemoveQueueTimers( HQUEUE hqueue )
+{
+    int i;
+    TIMER *pTimer;
+
+    for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
+	if ((pTimer->hq == hqueue) && pTimer->timeout)
+            TIMER_ClearTimer( pTimer );
+}
+
 
 /***********************************************************************
  *           TIMER_RestartTimers
@@ -141,6 +150,17 @@ static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
 }
 
 			       
+/***********************************************************************
+ *           TIMER_GetNextExp
+ *
+ * Return next timer expiration time, or -1 if none.
+ */
+LONG TIMER_GetNextExp(void)
+{
+    return pNextTimer ? EXPIRE_TIME( pNextTimer, GetTickCount() ) : -1;
+}
+
+
 /***********************************************************************
  *           TIMER_CheckTimer
  *
@@ -243,9 +263,8 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 {
     int i;
     TIMER * pTimer;
-    HQUEUE  hq;
     
-      /* Find the timer */
+    /* Find the timer */
     
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
 	if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
@@ -255,17 +274,9 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
     if (!sys && (pTimer->msg != WM_TIMER)) return FALSE;
     else if (sys && (pTimer->msg != WM_SYSTIMER)) return FALSE;    
 
-      /* Delete the timer */
+    /* Delete the timer */
 
-    hq = pTimer->hq;
-
-    pTimer->hwnd    = 0;
-    pTimer->msg     = 0;
-    pTimer->id      = 0;
-    pTimer->timeout = 0;
-    pTimer->proc    = 0;
-    TIMER_RemoveTimer( pTimer );
-    QUEUE_DecTimerCount( hq );
+    TIMER_ClearTimer( pTimer );
     return TRUE;
 }
 

@@ -145,7 +145,6 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
    case CBS_SIMPLE:            /* edit control, list always visible  */
      lboxrect=rect;    
-     lboxrect.left +=8;
      dprintf_combo(stddeb,"CBS_SIMPLE\n");
      style= WS_BORDER |  WS_CHILD | WS_VISIBLE | WS_VSCROLL;
      SetRectEmpty16(&lphc->RectButton);
@@ -162,10 +161,9 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
      lphc->RectButton = rect;
      lphc->RectButton.left = lphc->RectButton.right - 6 - CBitWidth;
      lphc->RectButton.bottom = lphc->RectButton.top + lphl->StdItemHeight;
-     SetWindowPos(hwnd, 0, 0, 0, rect.right - rect.left + 2*SYSMETRICS_CXBORDER,
+     SetWindowPos(hwnd, 0, 0, 0, rect.right -rect.left + 2*SYSMETRICS_CXBORDER,
 		 lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER,
-		 SWP_NOMOVE | SWP_NOZORDER);
-     rect.right=lphc->RectButton.left - 8;
+		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOSENDCHANGING);
      dprintf_combo(stddeb,(cstyle & 3)==CBS_DROPDOWN ? "CBS_DROPDOWN\n": "CBS_DROPDOWNLIST\n");
      break;
      
@@ -175,8 +173,9 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if ((cstyle & 3) != CBS_DROPDOWNLIST)
       lphc->hWndEdit = CreateWindow16(MAKE_SEGPTR(editName), (SEGPTR)0,
-				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | ES_LEFT | WS_BORDER,
-				  0, 0, rect.right, lphl->StdItemHeight,
+				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | ES_LEFT,
+				  0, 0, rect.right-6-CBitWidth,
+				  lphl->StdItemHeight+2*SYSMETRICS_CYBORDER,
 				  hwnd, (HMENU)ID_EDIT, WIN_GetWindowInstance(hwnd), 0L);
 				  
   lboxrect.top+=lphc->LBoxTop;
@@ -210,11 +209,10 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT CBDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  LPHEADLIST lphl = ComboGetListHeader(hwnd);
+  LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
 
-  ListBoxResetContent(lphl);
-  DestroyListBoxStruct(lphl);
-  dprintf_combo(stddeb,"Combo WM_DESTROY %p !\n", lphl);
+  if (lphc->hWndEdit) DestroyWindow( lphc->hWndEdit );
+  if (lphc->hWndLBox) DestroyWindow( lphc->hWndLBox );
   return 0;
 }
 
@@ -233,8 +231,16 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   RECT16 rect;
   
   hdc = BeginPaint16(hwnd, &ps);
+
+  GetClientRect16(hwnd, &rect);
+  CBCheckSize(hwnd);
+  /* 1 for button border */
+  rect.right = lphc->RectButton.left - 1;
+
   if (hComboBit != 0 && !IsRectEmpty16(&lphc->RectButton))
   {
+    Rectangle(hdc,lphc->RectButton.left-1,lphc->RectButton.top-1,
+	      lphc->RectButton.right+1,lphc->RectButton.bottom+1);
     GRAPH_DrawReliefRect(hdc, &lphc->RectButton, 2, 2, FALSE);
     GRAPH_DrawBitmap(hdc, hComboBit,
 		     lphc->RectButton.left + 2,lphc->RectButton.top + 2,
@@ -257,11 +263,6 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
                          MAKELONG(hwnd, CTLCOLOR_LISTBOX));
 #endif
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
-
-  GetClientRect16(hwnd, &rect);
-
-  CBCheckSize(hwnd);
-  rect.right -= (lphc->RectButton.right - lphc->RectButton.left);
 
   lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
   if (lpls != NULL) {  
@@ -630,17 +631,17 @@ static BOOL CBCheckSize(HWND hwnd)
   LONG         cstyle = GetWindowLong(hwnd,GWL_STYLE);
   RECT16       cRect,wRect;
 
-  /* TODO - The size of combo's and their listboxes is still broken */
-
   if (lphc->hWndLBox == 0) return FALSE;
 
   GetClientRect16(hwnd,&cRect);
   GetWindowRect16(hwnd,&wRect);
 
-  dprintf_combo(stddeb,"CBCheckSize: cRect %d,%d-%d,%d  wRect %d,%d-%d,%d\n",
-		cRect.left,cRect.top,cRect.right,cRect.bottom,
+  dprintf_combo(stddeb,
+	 "CBCheckSize: hwnd %04x Rect %d,%d-%d,%d  wRect %d,%d-%d,%d\n", 
+		hwnd,cRect.left,cRect.top,cRect.right,cRect.bottom,
 		wRect.left,wRect.top,wRect.right,wRect.bottom);
   if ((cstyle & 3) == CBS_SIMPLE  ) return TRUE ;
+
   if ((cRect.bottom - cRect.top) > 
       (lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER)) {
     SetWindowPos(hwnd, 0, 0, 0, 
@@ -649,23 +650,29 @@ static BOOL CBCheckSize(HWND hwnd)
 		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE );
     GetClientRect16(hwnd,&cRect);
     GetWindowRect16(hwnd,&wRect);
+
+    lphc->RectButton.right = cRect.right;
+    lphc->RectButton.left = cRect.right - 2*SYSMETRICS_CXBORDER - 4 
+                            - CBitWidth;
+    lphc->RectButton.top = cRect.top;
+    lphc->RectButton.bottom = cRect.bottom;
   }
 
-  switch (cstyle & 3) {
-    case CBS_SIMPLE:
-      break;
-    case CBS_DROPDOWN:
-    case CBS_DROPDOWNLIST:
+  if (cRect.right < lphc->RectButton.left) {
+    /* if the button is outside the window, move it in */
+    if ((wRect.right - wRect.left - 2*SYSMETRICS_CXBORDER) == (cRect.right - cRect.left)) {
       lphc->RectButton.right = cRect.right;
       lphc->RectButton.left = cRect.right - 2*SYSMETRICS_CXBORDER - 4 
 	                       - CBitWidth;
       lphc->RectButton.top = cRect.top;
       lphc->RectButton.bottom = cRect.bottom;
-      break;
-    default:
-      fprintf(stderr,"CBCheckSize: style %lx not recognized!\n",cstyle);
-      return FALSE;
     }
+    /* otherwise we need to make the client include the button */
+    else
+      SetWindowPos(hwnd, 0, 0, 0, lphc->RectButton.right,
+		   lphl->StdItemHeight+2*SYSMETRICS_CYBORDER, 
+		   SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE );
+  }
 
   CBLCheckSize(hwnd);
   return TRUE;
@@ -1116,7 +1123,7 @@ static BOOL CBLCheckSize(HWND hwnd)
   LPLISTSTRUCT lpls;
   HWND         hWndLBox;
   RECT16 cRect,wRect,lRect,lwRect;
-  int totheight;
+  int totheight,dw;
   char className[80];
 
   GetClassName32A(hwnd,className,80);
@@ -1143,12 +1150,16 @@ static BOOL CBLCheckSize(HWND hwnd)
   for (lpls=lphl->lpFirst; lpls != NULL; lpls=lpls->lpNext)
     totheight += lpls->mis.itemHeight;
 
+  dw = cRect.right-cRect.left+2*SYSMETRICS_CXBORDER+SYSMETRICS_CXVSCROLL;
+  dw -= lwRect.right-lwRect.left;
+  dw -= SYSMETRICS_CXVSCROLL;
+
   /* TODO: This isn't really what windows does */
-  if (lRect.bottom-lRect.top < 3*lphl->StdItemHeight) {
-    dprintf_combo(stddeb,"    Changing; totHeight %d  StdItemHght %d\n",
-		totheight,lphl->StdItemHeight);
+  if ((lRect.bottom-lRect.top < 3*lphl->StdItemHeight) || dw) {
+    dprintf_combo(stddeb,"    Changing; totHeight %d  StdItemHght %d  dw %d\n",
+		  totheight,lphl->StdItemHeight,dw);
     SetWindowPos(hWndLBox, 0, lRect.left, lRect.top, 
-		 lwRect.right-lwRect.left, totheight+2*SYSMETRICS_CYBORDER, 
+		 lwRect.right-lwRect.left+dw, totheight+2*SYSMETRICS_CYBORDER, 
 		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE );
   }
   return TRUE;

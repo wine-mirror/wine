@@ -1,4 +1,62 @@
 ----------------------------------------------------------------------
+Tue May 28 19:36:36 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/combo.c]
+	Destroy the listbox and edit control when destroying the
+	combo. This should prevent crashes on application exit.
+
+	* [misc/system.c] [if1632/system.spec]
+	Implemented InquireSystem().
+
+	* [loader/task.c] [windows/message.c] [windows/queue.c]
+	First attempt at inter-task SendMessage(). Still has a lot of
+	problems.
+
+Tue May 28 14:26:04 1996  Peter Bajusz  <hyp-x@inf.bme.hu>
+
+	* [windows/mdi.c]
+	Fixed MDITile with iconic children.
+
+Mon May 27 20:28:18 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [misc/commdlg.c]
+	ChooseFont dialog:
+	- complete rewrite of FontFamilyEnumProc() and FontStyleEnumProc()
+	  not real available font types (e.g. "Bold") can not selected
+	- supporting more CF_LIMITSIZE- and CF_...ONLY- flags
+
+	* [objects/font.c]
+	In FONT_MatchFont perform check if "lfFaceName" is family from X11
+	only if "lfFaceName" is a windows font family then do a call of
+	FONT_TranslateName() : this results in better font selections in 
+	ChooseFont() or applications like charmap.exe or write.exe.
+	Added a ParseFontParms() call if necessary in function 
+	FONT_MatchFont(): we need a font name as basis for GetTextFace() 
+	even if there isn't one...
+
+	* [resources/TODO]
+	Inventory of resource translations in sysres_??.rc
+
+Fri May 24 16:33:28 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [misc/registry.c]
+	_w95_loadreg: use offset to determine next RGDB position too.
+
+Thu May 23 19:35:38 1996  Greg Kreider <kreider@natlab.research.philips.com>
+
+	* [controls/combo.c]
+	Fixed size of combo, lbox, and button (lb sometimes off by 2 pixels).
+
+	* [misc/main.c]
+	Result of option "-fixedmap" is to turn flag on.
+
+Thu May 23 19:15:41 1996  Waider  <root@waider.ie>
+
+	* [misc/shell.c]
+	ShellExecute and FindExecutable now both use common code to
+	determine the required executable file.
+
+----------------------------------------------------------------------
 Tue May 21 14:06:07 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/button.c]

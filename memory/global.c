@@ -820,9 +820,6 @@ BOOL MemManInfo( MEMMANINFO *pInfo )
 #endif
 }
 
-#ifndef WINELIB
-
-#endif  /* WINELIB */
 
 /***********************************************************************
  *           GlobalAlloc32   (KERNEL32.315)

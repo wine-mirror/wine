@@ -114,7 +114,7 @@ heap	65520
 112 pascal16 WaitMessage() WaitMessage
 113 pascal16 TranslateMessage(ptr) TranslateMessage
 114 pascal   DispatchMessage(ptr) DispatchMessage
-115 stub ReplyMessage
+115 pascal16 ReplyMessage(long) ReplyMessage
 116 pascal16 PostAppMessage(word word word long) PostAppMessage
 118 pascal16 RegisterWindowMessage(segptr) RegisterWindowMessage16
 117 stub WindowFromDC
@@ -315,7 +315,7 @@ heap	65520
 325 pascal16 PaintRect(word word word word ptr) PaintRect
 326 pascal16 GetControlBrush(word word word) GetControlBrush
 331 pascal16 EnableHardwareInput(word) EnableHardwareInput
-332 return UserYield 0 0
+332 pascal16 UserYield() UserYield
 333 stub IsUserIdle
 334 pascal   GetQueueStatus(word) GetQueueStatus
 335 pascal16 GetInputState() GetInputState
@@ -426,6 +426,11 @@ heap	65520
 482 pascal16 EnableScrollBar(word word word) EnableScrollBar
 483 pascal16 SystemParametersInfo(word word ptr word) SystemParametersInfo
 #484 __GP
+# Stubs for Hebrew version
+489 pascal16 USER_489() stub_USER_489
+490 pascal16 USER_490() stub_USER_490
+492 pascal16 USER_492() stub_USER_492
+496 pascal16 USER_496() stub_USER_496
 499 pascal16 WNetErrorText(word ptr word) WNetErrorText
 501 pascal16 WNetOpenJob(ptr ptr word ptr)  WNetOpenJob
 502 pascal16 WNetCloseJob(word ptr ptr) WNetCloseJob
@@ -514,10 +519,6 @@ heap	65520
 890 stub InstallIMT
 891 stub UninstallIMT
 # Stubs for Hebrew version
-489 pascal16 USER_489() stub_USER_489
-490 pascal16 USER_490() stub_USER_490
-492 pascal16 USER_492() stub_USER_492
-496 pascal16 USER_496() stub_USER_496
 902 pascal16 USER_902() stub_USER_902
 905 pascal16 USER_905() stub_USER_905
 906 pascal16 USER_906() stub_USER_906

@@ -310,11 +310,16 @@ BOOL LocalInit( HANDLE selector, WORD start, WORD end )
 
     dprintf_local(stddeb, "LocalInit: %04x %04x-%04x\n", selector, start, end);
     if (!selector) selector = CURRENT_DS;
-    pHeapInfo = LOCAL_GetHeap(selector);
 
-    if (pHeapInfo)  {
-      fprintf( stderr, "LocalInit: Heap %04x initialized twice.\n", selector);
-      if (debugging_local) LOCAL_PrintHeap(selector);
+    if (debugging_heap)
+    {
+        /* If debugging_heap is set, the global heap blocks are cleared */
+        /* before use, so we can test for double initialization. */
+        if (LOCAL_GetHeap(selector))
+        {
+            fprintf( stderr, "LocalInit: Heap %04x initialized twice.\n", selector);
+            if (debugging_local) LOCAL_PrintHeap(selector);
+        }
     }
 
     if (start == 0) {

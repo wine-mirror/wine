@@ -773,12 +773,16 @@ LONG MDITile(WND* wndClient, MDICLIENTINFO *ci,WORD wParam)
                 if( !listTop )
                     break;
                 
-                if( listTop->hChild )
+                /* skip iconized childs from tiling */
+                while (!listTop->hChild)
                 {
-                    SetWindowPos(listTop->hChild, 0, x, y, xsize, ysize, 
-				 SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
-		    y += ysize;
-                }
+    	            listPrev = listTop->prev;
+    	            free(listTop);
+    	            listTop = listPrev;
+    	        }                
+                SetWindowPos(listTop->hChild, 0, x, y, xsize, ysize, 
+                             SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
+                y += ysize;
     	        listPrev = listTop->prev;
     	        free(listTop);
     	        listTop = listPrev;

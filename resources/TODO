@@ -28,14 +28,10 @@ flags (WS_??? etc): They control how the dialog behaves.  Things like:
 Frans van Dorsselaer
 dorssel@rulhm1.LeidenUniv.nl
 ***************************************************************
-1996, April, 7th
+1996, May
 
 Subject: ChooseColor
          ===========
-
-Today I introduced ChooseColor() to commdlg.c.
-Because this old resource was insufficient I wrote a new one
-(including some new static contols).
 
 Please delete the old CHOOSECOLOR in YOUR sysres_??.rc   
 and insert the new CHOOSECOLOR from sysres_En.rc to YOUR 
@@ -48,6 +44,7 @@ Today it works well for:
 * French
 * Italian
 * Korean
+* Finnish
 ...to be continued......
 
 Thank you.
@@ -56,15 +53,16 @@ Albrecht Kleine
 kleine@ak.sax.de
 
 **************************************************************
-1996, May, 2nd
+1996, May
 
-Subject ChooseFont
+Subject: ChooseFont
 
 Just like ChooseColor, please copy CHOSEFONT from sysres_EN.rc,
 and translate it to your language. It's okay for:
 
 * English
 * German
+* Finnish
 .....
 
 Thank you.

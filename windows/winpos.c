@@ -10,7 +10,6 @@
 #include "module.h"
 #include "user.h"
 #include "win.h"
-#include "event.h"
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
@@ -883,23 +882,17 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     }
 
     /* set prev active wnd to current active wnd and send notification */
-    if( (hwndPrevActive = hwndActive) )
+    if ((hwndPrevActive = hwndActive) && IsWindow(hwndPrevActive))
     {
-/* FIXME: need a Win32 translation for WINELIB32 */
-	if( !SendMessage16(hwndPrevActive, WM_NCACTIVATE, 0, MAKELONG(hWnd,wIconized)) )
+        if (!SendMessage16( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 ))
         {
 	    if (GetSysModalWindow() != hWnd) return 0;
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
-#ifdef WINELIB32
-	SendMessage32A( hwndActive, WM_ACTIVATE,
-		     MAKEWPARAM( WA_INACTIVE, wIconized ),
-		     (LPARAM)hWnd );
-#else
-	SendMessage16(hwndPrevActive, WM_ACTIVATE, WA_INACTIVE, 
-		    MAKELONG(hWnd,wIconized));
-#endif
+	SendMessage32A( hwndPrevActive, WM_ACTIVATE,
+                        MAKEWPARAM( WA_INACTIVE, wIconized ),
+                        (LPARAM)hWnd );
 
 	/* check if something happened during message processing */
 	if( hwndPrevActive != hwndActive ) return 0;
@@ -972,9 +965,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     wndTemp->hwndLastActive = hWnd;
 
     wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-/* FIXME: Needs a Win32 translation for WINELIB32 */
-    SendMessage16( hWnd, WM_NCACTIVATE, 1,
-		 MAKELONG(hwndPrevActive,wIconized));
+    SendMessage16( hWnd, WM_NCACTIVATE, TRUE, 0 );
 #ifdef WINELIB32
     SendMessage32A( hWnd, WM_ACTIVATE,
 		 MAKEWPARAM( (fMouse)?WA_CLICKACTIVE:WA_ACTIVE, wIconized),
@@ -1704,7 +1695,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
     
       /* Repaint the window */
 
-    if (wndPtr->window) MSG_Synchronize();  /* Wait for all expose events */
+    if (wndPtr->window) EVENT_Synchronize();  /* Wait for all expose events */
 
     EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
 

@@ -150,7 +150,7 @@ HANDLE GetClipboardData(WORD wFormat)
 		XInternAtom(display,"PRIMARY_TEXT",False),
 		WIN_GetXWindow(hWndClipboardOwner),CurrentTime);
 	/* TODO: need time-out for broken clients */
-	while(wait_for_selection)MSG_WaitXEvent(-1);
+	while(wait_for_selection) EVENT_WaitXEvent(-1);
     }
     while(TRUE) {
 	if (lpFormat == NULL) return 0;

@@ -121,7 +121,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-language",      ".language",        XrmoptionSepArg, (caddr_t)"En" },
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
-    { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)NULL },
+    { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },

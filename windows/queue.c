@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "module.h"
 #include "queue.h"
+#include "task.h"
 #include "win.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -63,7 +64,7 @@ void QUEUE_DumpQueue( HQUEUE hQueue )
              pq->nextFreeMessage, (unsigned)pq->lParam, pq->queueSize,
              (unsigned)pq->SendMessageReturn, pq->wWinVersion, pq->InSendMessageHandle,
              pq->wPaintCount, pq->hSendingTask, pq->wTimerCount,
-             pq->hPrevSendingTask, pq->status, pq->wakeMask, pq->hCurHook);
+             pq->hPrevSendingTask, pq->wakeBits, pq->wakeMask, pq->hCurHook);
 }
 
 
@@ -102,6 +103,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
     HQUEUE hQueue;
     MESSAGEQUEUE * msgQueue;
     int queueSize;
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
     dprintf_msg(stddeb,"Creating message queue...\n");
 
@@ -111,7 +113,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
     msgQueue = (MESSAGEQUEUE *) GlobalLock16( hQueue );
     msgQueue->msgSize = sizeof(QMSG);
     msgQueue->queueSize = size;
-    msgQueue->wWinVersion = 0;  /* FIXME? */
+    msgQueue->wWinVersion = pTask ? pTask->version : 0;
     GlobalUnlock16( hQueue );
     return hQueue;
 }
@@ -173,6 +175,99 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
 
 
 /***********************************************************************
+ *           QUEUE_SetWakeBit
+ *
+ * See "Windows Internals", p.449
+ */
+void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
+{
+    queue->changeBits |= bit;
+    queue->wakeBits   |= bit;
+    if (queue->wakeMask & bit)
+    {
+        queue->wakeMask = 0;
+        PostEvent( queue->hTask );
+    }
+}
+
+
+/***********************************************************************
+ *           QUEUE_WaitBits
+ *
+ * See "Windows Internals", p.447
+ */
+void QUEUE_WaitBits( WORD bits )
+{
+    MESSAGEQUEUE *queue;
+
+    for (;;)
+    {
+        if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
+        if (queue->changeBits & bits)
+        {
+            /* One of the bits is set; we can return */
+            queue->wakeMask = 0;
+            return;
+        }
+        if (queue->wakeBits & QS_SENDMESSAGE)
+        {
+            /* Process the sent message immediately */
+            QUEUE_ReceiveMessage( queue );
+        }
+        queue->wakeMask = bits | QS_SENDMESSAGE;
+        WaitEvent( 0 );
+    }
+}
+
+
+/***********************************************************************
+ *           QUEUE_ReceiveMessage
+ *
+ * This routine is called when a sent message is waiting for the queue.
+ */
+void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
+{
+    MESSAGEQUEUE *senderQ;
+    HWND hwnd;
+    UINT msg;
+    WPARAM wParam;
+    LPARAM lParam;
+    LRESULT result = 0;
+
+    printf( "ReceiveMessage\n" );
+    if (!(queue->wakeBits & QS_SENDMESSAGE)) return;
+    if (!(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask))) return;
+
+    /* Remove sending queue from the list */
+    queue->InSendMessageHandle = queue->hSendingTask;
+    queue->hSendingTask        = senderQ->hPrevSendingTask;
+    senderQ->hPrevSendingTask  = 0;
+    if (!queue->hSendingTask) queue->wakeBits &= ~QS_SENDMESSAGE;
+
+    /* Get the parameters from the sending task */
+    hwnd   = senderQ->hWnd;
+    msg    = senderQ->msg;
+    wParam = senderQ->wParam;
+    lParam = senderQ->lParam;
+    senderQ->hWnd = 0;
+    QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
+
+    printf( "ReceiveMessage: calling wnd proc %04x %04x %04x %08x\n",
+            hwnd, msg, wParam, lParam );
+
+    /* Call the window procedure */
+    /* FIXME: should we use CallWindowProc here? */
+    if (IsWindow( hwnd )) result = SendMessage16( hwnd, msg, wParam, lParam );
+
+    printf( "ReceiveMessage: wnd proc %04x %04x %04x %08x ret = %08x\n",
+            hwnd, msg, wParam, lParam, result );
+
+    /* Return the result to the sender task */
+    ReplyMessage( result );
+}
+
+
+/***********************************************************************
  *           QUEUE_AddMsg
  *
  * Add a message to the queue. Return FALSE if queue is full.
@@ -199,8 +294,7 @@ BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG * msg, DWORD extraInfo )
     else pos = 0;
     msgQueue->nextFreeMessage = pos;
     msgQueue->msgCount++;
-    msgQueue->status |= QS_POSTMESSAGE;
-    msgQueue->tempStatus |= QS_POSTMESSAGE;
+    QUEUE_SetWakeBit( msgQueue, QS_POSTMESSAGE );
     return TRUE;
 }
 
@@ -258,8 +352,47 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 	else msgQueue->nextFreeMessage = msgQueue->queueSize-1;
     }
     msgQueue->msgCount--;
-    if (!msgQueue->msgCount) msgQueue->status &= ~QS_POSTMESSAGE;
-    msgQueue->tempStatus = 0;
+    if (!msgQueue->msgCount) msgQueue->wakeBits &= ~QS_POSTMESSAGE;
+}
+
+
+/***********************************************************************
+ *           QUEUE_WakeSomeone
+ *
+ * Wake a queue upon reception of a hardware event.
+ */
+static void QUEUE_WakeSomeone( UINT message )
+{
+    HWND hwnd;
+    WORD wakeBit;
+    HQUEUE hQueue;
+    MESSAGEQUEUE *queue = NULL;
+
+    if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST)) wakeBit = QS_KEY;
+    else wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
+
+    if (!(hwnd = GetSysModalWindow()))
+    {
+        hwnd = (wakeBit == QS_KEY) ? GetFocus() : GetCapture();
+        if (!hwnd) hwnd = GetActiveWindow();
+    }
+    if (hwnd)
+    {
+        WND *wndPtr = WIN_FindWndPtr( hwnd );
+        if (wndPtr) queue = (MESSAGEQUEUE *)GlobalLock16( wndPtr->hmemTaskQ );
+    }
+    else
+    {
+        hQueue = hFirstQueue;
+        while (hQueue)
+        {
+            queue = GlobalLock16( hQueue );
+            if (queue->wakeBits & wakeBit) break;
+            hQueue = queue->next;
+        }
+    }
+    if (!queue) printf( "WakeSomeone: no one found\n" );
+    if (queue) QUEUE_SetWakeBit( queue, wakeBit );
 }
 
 
@@ -274,7 +407,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
 {
     MSG *msg;
     int pos;
-  
+
     if (!sysMsgQueue) return;
     pos = sysMsgQueue->nextFreeMessage;
 
@@ -315,6 +448,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
     else pos = 0;
     sysMsgQueue->nextFreeMessage = pos;
     sysMsgQueue->msgCount++;
+    QUEUE_WakeSomeone( message );
 }
 
 		    
@@ -337,8 +471,7 @@ void QUEUE_IncPaintCount( HQUEUE hQueue )
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wPaintCount++;
-    queue->status |= QS_PAINT;
-    queue->tempStatus |= QS_PAINT;    
+    QUEUE_SetWakeBit( queue, QS_PAINT );
 }
 
 
@@ -351,7 +484,7 @@ void QUEUE_DecPaintCount( HQUEUE hQueue )
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wPaintCount--;
-    if (!queue->wPaintCount) queue->status &= ~QS_PAINT;
+    if (!queue->wPaintCount) queue->wakeBits &= ~QS_PAINT;
 }
 
 
@@ -364,8 +497,7 @@ void QUEUE_IncTimerCount( HQUEUE hQueue )
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wTimerCount++;
-    queue->status |= QS_TIMER;
-    queue->tempStatus |= QS_TIMER;
+    QUEUE_SetWakeBit( queue, QS_TIMER );
 }
 
 
@@ -378,7 +510,7 @@ void QUEUE_DecTimerCount( HQUEUE hQueue )
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wTimerCount--;
-    if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
+    if (!queue->wTimerCount) queue->wakeBits &= ~QS_TIMER;
 }
 
 
@@ -448,8 +580,8 @@ DWORD GetQueueStatus( UINT flags )
     DWORD ret;
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
-    ret = MAKELONG( queue->tempStatus, queue->status );
-    queue->tempStatus = 0;
+    ret = MAKELONG( queue->changeBits, queue->wakeBits );
+    queue->changeBits = 0;
     return ret & MAKELONG( flags, flags );
 }
 
@@ -462,7 +594,7 @@ BOOL GetInputState()
     MESSAGEQUEUE *queue;
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return FALSE;
-    return queue->status & (QS_KEY | QS_MOUSEBUTTON);
+    return queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
 }
 
 

@@ -2144,7 +2144,7 @@ BOOL ChooseFont(LPCHOOSEFONT lpChFont)
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
-    dprintf_commdlg(stddeb,"ChoseFont\n");
+    dprintf_commdlg(stddeb,"ChooseFont\n");
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_FONT );
     hInst = WIN_GetWindowInstance( lpChFont->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChFont->hwndOwner,
@@ -2178,6 +2178,7 @@ static BOOL CFn_HookCallChk(LPCHOOSEFONT lpcf)
  return FALSE;
 }
 
+
 /***********************************************************************
  *                FontFamilyEnumProc                       (COMMDLG.19)
  */
@@ -2186,73 +2187,135 @@ int FontFamilyEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM 
   int i;
   WORD w;
   HWND hwnd=LOWORD(lParam);
+  HWND hDlg=GetParent(hwnd);
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
 
   dprintf_commdlg(stddeb,"FontFamilyEnumProc: font=%s (nFontType=%d)\n",
      			lplf->lfFaceName,nFontType);
+
+  if (lpcf->Flags & CF_FIXEDPITCHONLY)
+   if (!(lplf->lfPitchAndFamily & FIXED_PITCH))
+     return 1;
+  if (lpcf->Flags & CF_ANSIONLY)
+   if (lplf->lfCharSet != ANSI_CHARSET)
+     return 1;
+  if (lpcf->Flags & CF_TTONLY)
+   if (!(nFontType & 0x0004))   /* this means 'TRUETYPE_FONTTYPE' */
+     return 1;   
+
   i=SendMessage16(hwnd,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(lplf->lfFaceName));
   if (i!=CB_ERR)
   {
     w=(lplf->lfCharSet << 8) | lplf->lfPitchAndFamily;
     SendMessage16(hwnd, CB_SETITEMDATA,i,MAKELONG(nFontType,w));
-    return 1 ;
+    return 1 ;        /* store some important font information */
   }
   else
     return 0;
 }
+
+/*************************************************************************
+ *              SetFontStylesToCombo2                           [internal]
+ *
+ * Fill font style information into combobox  (without using font.c directly)
+ */
+static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT lplf ,LPTEXTMETRIC lptm)
+{
+   #define FSTYLES 4
+   struct FONTSTYLE
+          { int italic; 
+            int weight;
+            char stname[20]; };
+   static struct FONTSTYLE fontstyles[FSTYLES]={ 
+          { 0,FW_NORMAL,"Regular"},{0,FW_BOLD,"Bold"},
+          { 1,FW_NORMAL,"Italic"}, {1,FW_BOLD,"Bold Italic"}};
+   HFONT hf;                      
+   int i,j;
+
+   for (i=0;i<FSTYLES;i++)
+   {
+     lplf->lfItalic=fontstyles[i].italic;
+     lplf->lfWeight=fontstyles[i].weight;
+     hf=CreateFontIndirect(lplf);
+     hf=SelectObject(hdc,hf);
+     GetTextMetrics(hdc,lptm);
+     hf=SelectObject(hdc,hf);
+     DeleteObject(hf);
+
+     if (lptm->tmWeight==fontstyles[i].weight &&
+         lptm->tmItalic==fontstyles[i].italic)    /* font successful created ? */
+     {
+       j=SendMessage16(hwnd,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(fontstyles[i].stname));
+       if (j==CB_ERR) return 1;
+       j=SendMessage16(hwnd, CB_SETITEMDATA, j, 
+                                 MAKELONG(fontstyles[i].weight,fontstyles[i].italic));
+       if (j==CB_ERR) return 1;                                 
+     }
+   }  
+  return 0;
+ }
+
+/*************************************************************************
+ *              SetFontSizesToCombo3                           [internal]
+ */
+static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT lplf, LPCHOOSEFONT lpcf)
+{
+  int sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72,0};
+  int h,i,j;
+  char buffer[20];
+  
+  for (i=0;sizes[i] && !lplf->lfHeight;i++)
+  {
+   h=lplf->lfHeight ? lplf->lfHeight : sizes[i];
+
+   if (  (!(lpcf->Flags & CF_LIMITSIZE))  ||
+           ((lpcf->Flags & CF_LIMITSIZE) && (h >= lpcf->nSizeMin) && (h <= lpcf->nSizeMax)))
+   {
+      sprintf(buffer,"%2d",h);
+      j=SendMessage16(hwnd,CB_FINDSTRING,-1,(LPARAM)MAKE_SEGPTR(buffer));
+      if (j==CB_ERR)
+      {
+        j=SendMessage16(hwnd,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+        if (j==CB_ERR) return 1;
+        j=SendMessage16(hwnd, CB_SETITEMDATA, j, h); 
+        if (j==CB_ERR) return 1;
+      }
+   }  
+  }  
+ return 0;
+}
+
 
 /***********************************************************************
  *                 FontStyleEnumProc                     (COMMDLG.18)
  */
 int FontStyleEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM lParam)
 {
-  int j;
-  char buffer[20];
-/*  HWND hcmb2=LOWORD(lParam);*/
+  HWND hcmb2=LOWORD(lParam);
   HWND hcmb3=HIWORD(lParam);
-  LPLOGFONT lf=lplf;
-
+  HWND hDlg=GetParent(hcmb3);
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+  int i;
+  
   dprintf_commdlg(stddeb,"FontStyleEnumProc: (nFontType=%d)\n",nFontType);
   dprintf_commdlg(stddeb,"  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d ch=%d op=%d cp=%d q=%d pf=%xh\n",
-	lf->lfFaceName,lf->lfHeight,lf->lfWidth,lf->lfEscapement,lf->lfOrientation,
-	lf->lfWeight,lf->lfItalic,lf->lfUnderline,lf->lfStrikeOut,lf->lfCharSet,
-	lf->lfOutPrecision,lf->lfClipPrecision,lf->lfQuality,lf->lfPitchAndFamily);
+	lplf->lfFaceName,lplf->lfHeight,lplf->lfWidth,lplf->lfEscapement,lplf->lfOrientation,
+	lplf->lfWeight,lplf->lfItalic,lplf->lfUnderline,lplf->lfStrikeOut,lplf->lfCharSet,
+	lplf->lfOutPrecision,lplf->lfClipPrecision,lplf->lfQuality,lplf->lfPitchAndFamily);
 
-#if 1         /* VERSION A: use some predefined height values */                       
-  /* FIXME: if (!(nFontType & RASTER_FONTTYPE))......... */
-  {
-    int sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72,0};  
-    int i;
-    if (!SendMessage16(hcmb3,CB_GETCOUNT,0,0)) 
-    {
-      i=0;
-      while (sizes[i])
-      {
-        sprintf(buffer,"%d",sizes[i]);
-        j=SendMessage16(hcmb3,CB_INSERTSTRING,-1,(LPARAM)MAKE_SEGPTR(buffer));
-        SendMessage16(hcmb3, CB_SETITEMDATA, j, MAKELONG(sizes[i],0));
-        i++;
-      }
-    }
-  }
-  return 0; 
-#endif
+  if (SetFontSizesToCombo3(hcmb3, lplf ,lpcf))
+   return 0;
 
-#if 0        /* VERSION B: use only lplf->lfHeight values */
+  if (!SendMessage16(hcmb2,CB_GETCOUNT,0,0))
   {
-    if (lplf->lfHeight)
-    {
-      sprintf(buffer,"%3d",lplf->lfHeight);
-      j=SendMessage16(hcmb3,CB_FINDSTRING,-1,(LPARAM)MAKE_SEGPTR(buffer));
-      if (j==CB_ERR)
-      {
-       j=SendMessage16(hcmb3,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
-       SendMessage16(hcmb3, CB_SETITEMDATA, j, MAKELONG(lplf->lfHeight,lplf->lfWidth));
-      } 
-    } 
+       HDC hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+       i=SetFontStylesToCombo2(hcmb2,hdc,lplf,lptm);
+       if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
+         ReleaseDC(hDlg,hdc);
+       if (i)
+        return 0;  
   }
   return 1 ;
-#endif  
-
 }
 
 
@@ -2264,7 +2327,6 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   HDC hdc;
   int i,j,res,init=0;
   long l;
-  char buffer[32];
   FARPROC enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
   LPLOGFONT lpxx;
   HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
@@ -2308,21 +2370,6 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
     ShowWindow(GetDlgItem(hDlg,grp1),SW_HIDE);
     ShowWindow(GetDlgItem(hDlg,stc4),SW_HIDE);
   }
-  
-  /* perhaps this stuff should be moved to FontStyleEnumProc() ?? */
-  strcpy(buffer,"Regular"); 	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
-  j=SendDlgItemMessage16(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
-  SendDlgItemMessage16(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_NORMAL,0));
-  strcpy(buffer,"Bold");       	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
-  j=SendDlgItemMessage16(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
-  SendDlgItemMessage16(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_BOLD,0));
-  strcpy(buffer,"Italic");	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
-  j=SendDlgItemMessage16(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
-  SendDlgItemMessage16(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_NORMAL,1));
-  strcpy(buffer,"Bold Italic");	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
-  j=SendDlgItemMessage16(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
-  SendDlgItemMessage16(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_BOLD,1));
-  
   hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
   if (hdc)
   {
@@ -2530,9 +2577,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
 		    if (hdc)
 		    {
-		      /* only if cmb2 is refilled in  FontStyleEnumProc():
-       		                 SendDlgItemMessage(hDlg,cmb2,CB_RESETCONTENT,0,0); 
-		       */
+                      SendDlgItemMessage16(hDlg,cmb2,CB_RESETCONTENT,0,0); 
 		      SendDlgItemMessage16(hDlg,cmb3,CB_RESETCONTENT,0,0);
 		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL,0,0);
 		      if (i!=CB_ERR)
@@ -2588,14 +2633,12 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		    }
 		    i=SendDlgItemMessage16(hDlg,cmb3,CB_GETCURSEL,0,0);
 		    if (i!=CB_ERR)
-		    {
-		      l=SendDlgItemMessage16(hDlg,cmb3,CB_GETITEMDATA,i,0);
-		      lpxx->lfHeight=-LOWORD(l);
-		      lpxx->lfWidth = 0;  /* FYI: lfWidth is in HIWORD(l); */
-		    }
+		      lpxx->lfHeight=-LOWORD(SendDlgItemMessage16(hDlg,cmb3,CB_GETITEMDATA,i,0));
+		    else
+		      lpxx->lfHeight=0;
 		    lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
 		    lpxx->lfUnderline=IsDlgButtonChecked(hDlg,chx2);
-		    lpxx->lfOrientation=lpxx->lfEscapement=0;
+		    lpxx->lfWidth=lpxx->lfOrientation=lpxx->lfEscapement=0;
 		    lpxx->lfOutPrecision=OUT_DEFAULT_PRECIS;
 		    lpxx->lfClipPrecision=CLIP_DEFAULT_PRECIS;
 		    lpxx->lfQuality=DEFAULT_QUALITY;
@@ -2663,6 +2706,8 @@ LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       case WM_COMMAND:
                         return CFn_WMCommand(hDlg,wParam,lParam);
       case WM_CHOOSEFONT_GETLOGFONT: 
+                         dprintf_commdlg(stddeb,
+                          "FormatCharDlgProc // WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
                         /* FIXME:  current logfont back to caller */
                         break;
     }

@@ -26,6 +26,7 @@
 #define MAX_FONTS	256
 static LPLOGFONT lpLogFontList[MAX_FONTS] = { NULL };
 
+static int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz);
 
 #define CI_NONEXISTCHAR(cs) (((cs)->width == 0) && \
 			     (((cs)->rbearing|(cs)->lbearing| \
@@ -99,6 +100,27 @@ BOOL FONT_Init( void )
   return TRUE;
 }
 
+/***********************************************************************
+ *           FONT_ChkX11Family
+ *
+ * returns a valid X11 equivalent if a Windows face name 
+ * is like a X11 family  - or NULL if translation is needed
+ */
+static char *FONT_ChkX11Family(char *winFaceName )
+{
+  static char x11fam[32+2];   /* will be returned */
+  int i;
+
+  for(i = 0; lpLogFontList[i] != NULL; i++)
+    if( !strcasecmp(winFaceName, lpLogFontList[i]->lfFaceName) )
+    {
+	strcpy(x11fam,"*-");
+	return strcat(x11fam,winFaceName);
+    }    
+  return NULL;               /* a FONT_TranslateName() call is needed */
+}
+
+
 
 /***********************************************************************
  *           FONT_TranslateName
@@ -171,7 +193,10 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
   
     charset = (font->lfCharSet == ANSI_CHARSET) ? "iso8859-1" : "*-*";
     if (*font->lfFaceName) {
-	family = FONT_TranslateName( font->lfFaceName );
+	family = FONT_ChkX11Family(font->lfFaceName);
+	/*--do _not_ translate if lfFaceName is family from X11  A.K.*/
+	if (!family) 
+	  family = FONT_TranslateName( font->lfFaceName );
 	/* FIX ME: I don't if that's correct but it works J.M. */
 	spacing = '*';
 	}
@@ -196,7 +221,6 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
       family = "*-*";
       break;
     }
-    
     oldheight = height;
     oldspacing = spacing;
     while (TRUE) {
@@ -239,6 +263,10 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
             }
     }
     dprintf_font(stddeb,"        Found '%s'\n", *names );
+    if (!*font->lfFaceName)
+      ParseFontParms(*names, 2, font->lfFaceName , LF_FACESIZE-1);
+      /* we need a font name for function GetTextFace() even if there isn't one ;-) */  
+    
     fontStruct = XLoadQueryFont( display, *names );
     XFreeFontNames( names );
     return fontStruct;
@@ -878,7 +906,10 @@ void InitFontsList(void)
     }
     dprintf_font(stddeb,"InitFontsList // names[%d]='%s' \n", i, names[i]);
     ParseFontParms(names[i], 2, str, sizeof(str));
+#if 0
+    /* not necessary because new function FONT_ChkX11Family() */
     if (strcmp(str, "fixed") == 0) strcat(str, "sys");
+#endif    
     AnsiUpper(str);
     strcpy(lpNewFont->lfFaceName, str);
     ParseFontParms(names[i], 8, str, sizeof(str));

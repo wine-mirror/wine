@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "windows.h"
 #include "task.h"
 #include "callback.h"
@@ -16,6 +17,7 @@
 #include "debugger.h"
 #include "global.h"
 #include "instance.h"
+#include "message.h"
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
@@ -33,7 +35,6 @@
   /* Must not be greater than 64k, or MAKE_SEGPTR won't work */
 #define STACK32_SIZE 0x10000
 
-extern void TIMER_SwitchQueue(HQUEUE, HQUEUE );
 extern void USER_AppExit(HTASK, HINSTANCE, HQUEUE );
 /* ------ Internal variables ------ */
 
@@ -441,13 +442,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     pTask->hPrevInstance = hPrevInstance;
     pTask->hModule       = hModule;
     pTask->hParent       = hCurrentTask;
-#ifdef WINELIB
-    pTask->curdrive      = 'C' - 'A' + 0x80;
-    strcpy( pTask->curdir, "\\" );
-#else
     pTask->curdrive      = filename[0] - 'A' + 0x80;
     strcpy( pTask->curdir, filename+2 );
-#endif
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
 
@@ -631,7 +627,7 @@ void TASK_KillCurrentTask( int exitCode )
     if (hTaskToKill && (hTaskToKill != hCurrentTask))
     {
         /* If another task is already marked for destruction, */
-        /* we call kill it now, as we are in another context. */
+        /* we can kill it now, as we are in another context.  */ 
         TASK_DeleteTask( hTaskToKill );
     }
 
@@ -679,11 +675,11 @@ void TASK_Reschedule(void)
         hTaskToKill = 0;
     }
 
-      /* If current task is locked, simply return */
+    /* Flush any X events that happened in the meantime */
 
-    if (hLockedTask) return;
+    EVENT_WaitXEvent( 0 );
 
-      /* Find a task to yield to */
+    /* Find a task to yield to */
 
     pOldTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pOldTask && pOldTask->hYieldTo)
@@ -695,23 +691,26 @@ void TASK_Reschedule(void)
             hTask = 0;
     }
 
-    if (!hTask)
+    while (!hTask)
     {
+        /* Find a task that has an event pending */
+
         hTask = hFirstTask;
         while (hTask)
         {
             pNewTask = (TDB *)GlobalLock16( hTask );
-            if (pNewTask->nEvents && (hTask != hCurrentTask)) break;
+            if (pNewTask->nEvents) break;
             hTask = pNewTask->hNext;
         }
+        if (hLockedTask && (hTask != hLockedTask)) hTask = 0;
+        if (hTask) break;
+
+        /* No task found, wait for some events to come in */
+
+        EVENT_WaitXEvent( TIMER_GetNextExp() );
     }
 
-     /* If there's a task to kill, switch to any other task, */
-     /* even if it doesn't have events pending. */
-
-    if (!hTask && hTaskToKill) hTask = hFirstTask;
-
-    if (!hTask) return;  /* Do nothing */
+    if (hTask == hCurrentTask) return;  /* Nothing to do */
 
     pNewTask = (TDB *)GlobalLock16( hTask );
     dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
@@ -842,8 +841,9 @@ BOOL WaitEvent( HTASK hTask )
         return FALSE;
     }
     TASK_SCHEDULE();
-    /* When we get back here, we have an event (or the task is the only one) */
+    /* When we get back here, we have an event */
     if (pTask->nEvents > 0) pTask->nEvents--;
+    else fprintf( stderr, "WaitEvent: reschedule returned without event\n" );
     return TRUE;
 }
 
@@ -921,12 +921,28 @@ void OldYield(void)
  */
 void DirectedYield( HTASK hTask )
 {
-    TDB *pCurTask;
+    TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
+    pCurTask->hYieldTo = hTask;
+    OldYield();
+}
 
-    if ((pCurTask = (TDB *)GlobalLock16( hCurrentTask )) != NULL)
-        pCurTask->hYieldTo = hTask;
+
+/***********************************************************************
+ *           UserYield  (USER.332)
+ */
+void UserYield(void)
+{
+    TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
+    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
+    /* Handle sent messages */
+    if (queue && (queue->wakeBits & QS_SENDMESSAGE))
+        QUEUE_ReceiveMessage( queue );
 
     OldYield();
+
+    queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
+    if (queue && (queue->wakeBits & QS_SENDMESSAGE))
+        QUEUE_ReceiveMessage( queue );
 }
 
 
@@ -935,7 +951,10 @@ void DirectedYield( HTASK hTask )
  */
 void Yield(void)
 {
-    DirectedYield( 0 );
+    TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
+    if (pCurTask) pCurTask->hYieldTo = 0;
+    if (pCurTask && pCurTask->hQueue) UserYield();
+    else OldYield();
 }
 
 
@@ -1177,11 +1196,7 @@ HMODULE GetExePtr( HANDLE handle )
 
       /* Check the owner for module handle */
 
-#ifndef WINELIB
     owner = FarGetOwner( handle );
-#else
-    owner = NULL;
-#endif
     if (!(ptr = GlobalLock16( owner ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
 

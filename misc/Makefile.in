@@ -26,6 +26,7 @@ C_SRCS = \
 	sound.c \
 	spy.c \
 	stress.c \
+	system.c \
 	toolhelp.c \
 	user.c \
 	ver.c \

@@ -15,10 +15,10 @@
 #include "dce.h"
 #include "sysmetrics.h"
 #include "cursoricon.h"
-#include "event.h"
 #include "heap.h"
 #include "hook.h"
 #include "menu.h"
+#include "message.h"
 #include "nonclient.h"
 #include "string32.h"
 #include "queue.h"
@@ -333,6 +333,7 @@ static void WIN_DestroyWindow( HWND hwnd )
 	
     if (!wndPtr) return;
     WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */
+    TIMER_RemoveWindowTimers( hwnd );
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     wndPtr->hwndSelf = 0;
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))

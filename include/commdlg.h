@@ -283,19 +283,6 @@ typedef DEVNAMES * LPDEVNAMES;
 #define CDERR_NOHOOK           0x000B
 #define CDERR_REGISTERMSGFAIL  0x000C
 
-/************************************************************************
-*                 COMMDLG Resources placed in Wine SYSRES.DLL		    *
-************************************************************************/
-
-#define OPENFILEDLG    			3
-#define SAVEFILEDLG    			4
-#define PRINTDLG	       		5
-#define PRINTSETUPDLG			6
-#define FONTDLG		       		7
-#define COLORDLG	       		8
-#define FINDDLG		       		9
-#define REPLACEDLG	       		10
-
 BOOL  ChooseColor(LPCHOOSECOLOR lpChCol);
 DWORD CommDlgExtendedError(void);
 BOOL  FindText(LPFINDREPLACE lpFind);
