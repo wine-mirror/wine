@@ -639,7 +639,19 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
                0, 0, SWP_NOSIZE);
 
   if (showPage)
+  {
+    NMHDR hdr;
+
+    hdr.hwndFrom = hwndParent;
+    hdr.code = PSN_SETACTIVE;
+
+    /*
+     * Send the notification before showing the page.
+     */
+    SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr);
+
     ShowWindow(hwndPage, SW_SHOW);
+  }
   else
     ShowWindow(hwndPage, SW_HIDE);
 
@@ -870,17 +882,36 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
   if (SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr))
     return FALSE;
 
+  /*
+   * hpage takes precedence over index.
+   */
   if (hpage != NULL)
-    FIXME("Implement HPROPSHEETPAGE!\n");
-  else
-    hwndPage = psInfo->proppage[index].hwndPage;
+  {
+    index = PROPSHEET_GetPageIndex(hpage, psInfo);
+
+    if (index == -1)
+    {
+      TRACE("Could not find page to remove!\n");
+      return FALSE;
+    }
+  }
+
+  hwndPage = psInfo->proppage[index].hwndPage;
 
   /*
-   * Notify the new page.
+   * Notify the new page if it's already created.
+   * If not it will get created and notified in PROPSHEET_ShowPage.
    */
-  hdr.code = PSN_SETACTIVE;
+  if (hwndPage)
+  {
+    int result;
+    hdr.code = PSN_SETACTIVE;
 
-  SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr);
+    result = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr);
+    /*
+     * TODO: check return value. 
+     */
+  }
 
   /*
    * Display the new page.
@@ -1311,17 +1342,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if (pnmh->code == TCN_SELCHANGE)
       {
-        PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwnd,
-                                                          PropSheetInfoStr);
         int index = SendMessageA(pnmh->hwndFrom, TCM_GETCURSEL, 0, 0);
-        HWND hwndHelp  = GetDlgItem(hwnd, IDHELP);
-
-        PROPSHEET_ShowPage(hwnd, index, psInfo);
-
-        if (psInfo->proppage[index].hasHelp)
-          EnableWindow(hwndHelp, TRUE);
-        else
-          EnableWindow(hwndHelp, FALSE);
+        PROPSHEET_SetCurSel(hwnd, index, 0);
       }
 
       return 0;
