@@ -117,5 +117,29 @@ interface IWebBrowserApp : IWebBrowser
     HRESULT put_FullScreen([in] VARIANT_BOOL bFullScreen);
 }
 
+[
+    object,
+    oleautomation,
+    uuid(85cb6900-4d95-11cf-960c-0080c7f4ee85)
+]
+interface IShellWindows : IDispatch
+{
+    HRESULT get_Count( [out] long *Count );
+    HRESULT Item( [in] VARIANT index, [out] IDispatch **Folder );
+    HRESULT _NewEnum( [out] IUnknown **ppunk );
+    HRESULT Register( [in] IDispatch *pid, [in] long hWnd, [in] int swClass,
+                [out] long *plCookie );
+    HRESULT RegisterPending( [in] long lThread, [in] VARIANT *pvarloc,
+                [in] VARIANT *varlocRoot, [in] int swClass, [out] long *plCookie );
+    HRESULT Revoke( [in] long Cookie );
+    HRESULT OnNavigate( [in] long Cookie, [out] VARIANT *pvarLoc );
+    HRESULT OnActivated( [in] long Cookie, [in] VARIANT fActive );
+    HRESULT FindWindowSW( [in] VARIANT *pvarLoc, [in] VARIANT *pvarLocRoot, 
+                [in] int swClass, [out] long *phwnd, int swfwOptions,
+                IDispatch **ppdispOut );
+    HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
+    HRESULT ProcessAttachDetach( [in] VARIANT_BOOL fAttach );
+}
+
 /* FIXME */
 cpp_quote("DEFINE_GUID(CLSID_WebBrowser, 0x8856f961, 0x340a, 0x11d0, 0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2);")

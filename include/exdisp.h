@@ -1145,6 +1145,339 @@ void __RPC_STUB IWebBrowserApp_put_FullScreen_Stub(
 
 #endif  /* __IWebBrowserApp_INTERFACE_DEFINED__ */
 
+#ifndef __IShellWindows_FWD_DEFINED__
+#define __IShellWindows_FWD_DEFINED__
+typedef struct IShellWindows IShellWindows;
+#endif
+
+/*****************************************************************************
+ * IShellWindows interface
+ */
+#ifndef __IShellWindows_INTERFACE_DEFINED__
+#define __IShellWindows_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IShellWindows, 0x85cb6900, 0x4d95, 0x11cf, 0x96,0x0c, 0x00,0x80,0xc7,0xf4,0xee,0x85);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IShellWindows : public IDispatch
+{
+    virtual HRESULT STDMETHODCALLTYPE get_Count(
+        long* Count) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Item(
+        VARIANT index,
+        IDispatch** Folder) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE _NewEnum(
+        IUnknown** ppunk) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Register(
+        IDispatch* pid,
+        long hWnd,
+        int swClass,
+        long* plCookie) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE RegisterPending(
+        long lThread,
+        VARIANT* pvarloc,
+        VARIANT* varlocRoot,
+        int swClass,
+        long* plCookie) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Revoke(
+        long Cookie) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE OnNavigate(
+        long Cookie,
+        VARIANT* pvarLoc) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE OnActivated(
+        long Cookie,
+        VARIANT fActive) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE FindWindowSW(
+        VARIANT* pvarLoc,
+        VARIANT* pvarLocRoot,
+        int swClass,
+        long* phwnd,
+        int swfwOptions,
+        IDispatch** ppdispOut) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE OnCreated(
+        long lCookie,
+        IUnknown* punk) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE ProcessAttachDetach(
+        VARIANT_BOOL fAttach) = 0;
+
+};
+#else
+typedef struct IShellWindowsVtbl IShellWindowsVtbl;
+struct IShellWindows {
+    const IShellWindowsVtbl* lpVtbl;
+};
+struct IShellWindowsVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IShellWindows* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IShellWindows* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IShellWindows* This);
+
+    /*** IDispatch methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoCount)(
+        IShellWindows* This,
+        UINT* pctinfo);
+
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(
+        IShellWindows* This,
+        UINT iTInfo,
+        LCID lcid,
+        ITypeInfo** ppTInfo);
+
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(
+        IShellWindows* This,
+        REFIID riid,
+        LPOLESTR* rgszNames,
+        UINT cNames,
+        LCID lcid,
+        DISPID* rgDispId);
+
+    HRESULT (STDMETHODCALLTYPE *Invoke)(
+        IShellWindows* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr);
+
+    /*** IShellWindows methods ***/
+    HRESULT (STDMETHODCALLTYPE *get_Count)(
+        IShellWindows* This,
+        long* Count);
+
+    HRESULT (STDMETHODCALLTYPE *Item)(
+        IShellWindows* This,
+        VARIANT index,
+        IDispatch** Folder);
+
+    HRESULT (STDMETHODCALLTYPE *_NewEnum)(
+        IShellWindows* This,
+        IUnknown** ppunk);
+
+    HRESULT (STDMETHODCALLTYPE *Register)(
+        IShellWindows* This,
+        IDispatch* pid,
+        long hWnd,
+        int swClass,
+        long* plCookie);
+
+    HRESULT (STDMETHODCALLTYPE *RegisterPending)(
+        IShellWindows* This,
+        long lThread,
+        VARIANT* pvarloc,
+        VARIANT* varlocRoot,
+        int swClass,
+        long* plCookie);
+
+    HRESULT (STDMETHODCALLTYPE *Revoke)(
+        IShellWindows* This,
+        long Cookie);
+
+    HRESULT (STDMETHODCALLTYPE *OnNavigate)(
+        IShellWindows* This,
+        long Cookie,
+        VARIANT* pvarLoc);
+
+    HRESULT (STDMETHODCALLTYPE *OnActivated)(
+        IShellWindows* This,
+        long Cookie,
+        VARIANT fActive);
+
+    HRESULT (STDMETHODCALLTYPE *FindWindowSW)(
+        IShellWindows* This,
+        VARIANT* pvarLoc,
+        VARIANT* pvarLocRoot,
+        int swClass,
+        long* phwnd,
+        int swfwOptions,
+        IDispatch** ppdispOut);
+
+    HRESULT (STDMETHODCALLTYPE *OnCreated)(
+        IShellWindows* This,
+        long lCookie,
+        IUnknown* punk);
+
+    HRESULT (STDMETHODCALLTYPE *ProcessAttachDetach)(
+        IShellWindows* This,
+        VARIANT_BOOL fAttach);
+
+};
+
+/*** IUnknown methods ***/
+#define IShellWindows_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellWindows_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IShellWindows_Release(p) (p)->lpVtbl->Release(p)
+/*** IDispatch methods ***/
+#define IShellWindows_GetTypeInfoCount(p,a) (p)->lpVtbl->GetTypeInfoCount(p,a)
+#define IShellWindows_GetTypeInfo(p,a,b,c) (p)->lpVtbl->GetTypeInfo(p,a,b,c)
+#define IShellWindows_GetIDsOfNames(p,a,b,c,d,e) (p)->lpVtbl->GetIDsOfNames(p,a,b,c,d,e)
+#define IShellWindows_Invoke(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->Invoke(p,a,b,c,d,e,f,g,h)
+/*** IShellWindows methods ***/
+#define IShellWindows_get_Count(p,a) (p)->lpVtbl->get_Count(p,a)
+#define IShellWindows_Item(p,a,b) (p)->lpVtbl->Item(p,a,b)
+#define IShellWindows__NewEnum(p,a) (p)->lpVtbl->_NewEnum(p,a)
+#define IShellWindows_Register(p,a,b,c,d) (p)->lpVtbl->Register(p,a,b,c,d)
+#define IShellWindows_RegisterPending(p,a,b,c,d,e) (p)->lpVtbl->RegisterPending(p,a,b,c,d,e)
+#define IShellWindows_Revoke(p,a) (p)->lpVtbl->Revoke(p,a)
+#define IShellWindows_OnNavigate(p,a,b) (p)->lpVtbl->OnNavigate(p,a,b)
+#define IShellWindows_OnActivated(p,a,b) (p)->lpVtbl->OnActivated(p,a,b)
+#define IShellWindows_FindWindowSW(p,a,b,c,d,e,f) (p)->lpVtbl->FindWindowSW(p,a,b,c,d,e,f)
+#define IShellWindows_OnCreated(p,a,b) (p)->lpVtbl->OnCreated(p,a,b)
+#define IShellWindows_ProcessAttachDetach(p,a) (p)->lpVtbl->ProcessAttachDetach(p,a)
+
+#endif
+
+#define IShellWindows_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IDispatch methods ***/ \
+    STDMETHOD_(HRESULT,GetTypeInfoCount)(THIS_ UINT* pctinfo) PURE; \
+    STDMETHOD_(HRESULT,GetTypeInfo)(THIS_ UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo) PURE; \
+    STDMETHOD_(HRESULT,GetIDsOfNames)(THIS_ REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId) PURE; \
+    STDMETHOD_(HRESULT,Invoke)(THIS_ DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr) PURE; \
+    /*** IShellWindows methods ***/ \
+    STDMETHOD_(HRESULT,get_Count)(THIS_ long* Count) PURE; \
+    STDMETHOD_(HRESULT,Item)(THIS_ VARIANT index, IDispatch** Folder) PURE; \
+    STDMETHOD_(HRESULT,_NewEnum)(THIS_ IUnknown** ppunk) PURE; \
+    STDMETHOD_(HRESULT,Register)(THIS_ IDispatch* pid, long hWnd, int swClass, long* plCookie) PURE; \
+    STDMETHOD_(HRESULT,RegisterPending)(THIS_ long lThread, VARIANT* pvarloc, VARIANT* varlocRoot, int swClass, long* plCookie) PURE; \
+    STDMETHOD_(HRESULT,Revoke)(THIS_ long Cookie) PURE; \
+    STDMETHOD_(HRESULT,OnNavigate)(THIS_ long Cookie, VARIANT* pvarLoc) PURE; \
+    STDMETHOD_(HRESULT,OnActivated)(THIS_ long Cookie, VARIANT fActive) PURE; \
+    STDMETHOD_(HRESULT,FindWindowSW)(THIS_ VARIANT* pvarLoc, VARIANT* pvarLocRoot, int swClass, long* phwnd, int swfwOptions, IDispatch** ppdispOut) PURE; \
+    STDMETHOD_(HRESULT,OnCreated)(THIS_ long lCookie, IUnknown* punk) PURE; \
+    STDMETHOD_(HRESULT,ProcessAttachDetach)(THIS_ VARIANT_BOOL fAttach) PURE;
+
+HRESULT CALLBACK IShellWindows_get_Count_Proxy(
+    IShellWindows* This,
+    long* Count);
+void __RPC_STUB IShellWindows_get_Count_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_Item_Proxy(
+    IShellWindows* This,
+    VARIANT index,
+    IDispatch** Folder);
+void __RPC_STUB IShellWindows_Item_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows__NewEnum_Proxy(
+    IShellWindows* This,
+    IUnknown** ppunk);
+void __RPC_STUB IShellWindows__NewEnum_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_Register_Proxy(
+    IShellWindows* This,
+    IDispatch* pid,
+    long hWnd,
+    int swClass,
+    long* plCookie);
+void __RPC_STUB IShellWindows_Register_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_RegisterPending_Proxy(
+    IShellWindows* This,
+    long lThread,
+    VARIANT* pvarloc,
+    VARIANT* varlocRoot,
+    int swClass,
+    long* plCookie);
+void __RPC_STUB IShellWindows_RegisterPending_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_Revoke_Proxy(
+    IShellWindows* This,
+    long Cookie);
+void __RPC_STUB IShellWindows_Revoke_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_OnNavigate_Proxy(
+    IShellWindows* This,
+    long Cookie,
+    VARIANT* pvarLoc);
+void __RPC_STUB IShellWindows_OnNavigate_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_OnActivated_Proxy(
+    IShellWindows* This,
+    long Cookie,
+    VARIANT fActive);
+void __RPC_STUB IShellWindows_OnActivated_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_FindWindowSW_Proxy(
+    IShellWindows* This,
+    VARIANT* pvarLoc,
+    VARIANT* pvarLocRoot,
+    int swClass,
+    long* phwnd,
+    int swfwOptions,
+    IDispatch** ppdispOut);
+void __RPC_STUB IShellWindows_FindWindowSW_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_OnCreated_Proxy(
+    IShellWindows* This,
+    long lCookie,
+    IUnknown* punk);
+void __RPC_STUB IShellWindows_OnCreated_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IShellWindows_ProcessAttachDetach_Proxy(
+    IShellWindows* This,
+    VARIANT_BOOL fAttach);
+void __RPC_STUB IShellWindows_ProcessAttachDetach_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IShellWindows_INTERFACE_DEFINED__ */
+
 DEFINE_GUID(CLSID_WebBrowser, 0x8856f961, 0x340a, 0x11d0, 0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2);
 #ifdef __cplusplus
 }
