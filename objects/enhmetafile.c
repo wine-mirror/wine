@@ -704,17 +704,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_EXTSELECTCLIPRGN:
       {
 	PEMREXTSELECTCLIPRGN lpRgn = (PEMREXTSELECTCLIPRGN)mr;
-
-	if ((lpRgn->cbRgnData == 0) && (lpRgn->iMode == RGN_COPY)) {
-	  ExtSelectClipRgn( hdc, 0, RGN_COPY );
-	} else {
-	  FIXME("EMR_EXTSELECTCLIPRGN cbRgnData %lu\n", lpRgn->cbRgnData);
-
-	/* Need to make a region out of the RGNDATA we have */
-/*	  ExtCreateRegion(....); */
-/*	  ExtSelectClipRgn( hdc, ..., (INT)(lpRgn->iMode) ); */
-	}
-
+	HRGN hRgn = ExtCreateRegion(NULL, lpRgn->cbRgnData, (RGNDATA *)lpRgn->RgnData);
+	ExtSelectClipRgn(hdc, hRgn, (INT)(lpRgn->iMode));
+	/* ExtSelectClipRgn created a copy of the region */
+	DeleteObject(hRgn);
         break;
       }
 
