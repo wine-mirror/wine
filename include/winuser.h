@@ -6,7 +6,6 @@
 #endif
 #include "windef.h"
 #include "wingdi.h"
-#include "wine/winestring.h"
 
 #ifdef __cplusplus
 extern "C" {

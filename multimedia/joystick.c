@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include "winuser.h"
+#include "winbase.h"
 #include "mmsystem.h"
 #include "debug.h"
 

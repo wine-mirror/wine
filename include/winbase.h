@@ -2,6 +2,7 @@
 #define __WINE_WINBASE_H
 
 #include "winnt.h"
+#include "wine/winestring.h"
 
 #include "pshpack1.h"
 
