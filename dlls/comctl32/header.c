@@ -26,6 +26,7 @@
  *   - Drag and Drop support (including Notifications).
  *   - New messages.
  *   - Use notification format
+ *   - Correct the order maintenance code to preserve valid order
  *
  *  FIXME:
  *   - Little flaw when drawing a bitmap on the right side of the text.
@@ -93,7 +94,7 @@ inline static LRESULT
 HEADER_IndexToOrder (HWND hwnd, INT iItem)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    HEADER_ITEM *lpItem = (HEADER_ITEM*)&infoPtr->items[iItem];
+    HEADER_ITEM *lpItem = &infoPtr->items[iItem];
     return lpItem->iOrder;
 }
 
@@ -608,10 +609,14 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
     }
     else {
         HEADER_ITEM *oldItems = infoPtr->items;
+        HEADER_ITEM *pItem;
+        INT i;
+        INT iOrder;
         TRACE("Complex delete! [iItem=%d]\n", iItem);
 
         if (infoPtr->items[iItem].pszText)
             COMCTL32_Free (infoPtr->items[iItem].pszText);
+        iOrder = infoPtr->items[iItem].iOrder;
 
         infoPtr->uNumItem--;
         infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
@@ -627,6 +632,12 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
                     (infoPtr->uNumItem - iItem) * sizeof(HEADER_ITEM));
         }
 
+        /* Correct the orders */
+        for (i=infoPtr->uNumItem, pItem = infoPtr->items; i; i--, pItem++)
+        {
+            if (pItem->iOrder > iOrder)
+            pItem->iOrder--;
+        }
         COMCTL32_Free (oldItems);
     }
 
@@ -665,7 +676,7 @@ HEADER_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask == 0)
 	return TRUE;
 
-    lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
+    lpItem = &infoPtr->items[nItem];
     if (phdi->mask & HDI_BITMAP)
 	phdi->hbm = lpItem->hbm;
 
@@ -718,7 +729,7 @@ HEADER_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask == 0)
 	return TRUE;
 
-    lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
+    lpItem = &infoPtr->items[nItem];
     if (phdi->mask & HDI_BITMAP)
 	phdi->hbm = lpItem->hbm;
 
@@ -805,7 +816,7 @@ HEADER_SetOrderArray(HWND hwnd, WPARAM wParam, LPARAM lParam)
       return FALSE;
     for (i=0; i<(int)wParam; i++)
       {
-	lpItem = (HEADER_ITEM*)&infoPtr->items[*order++];
+        lpItem = &infoPtr->items[*order++];
 	lpItem->iOrder=i;
       }
     infoPtr->bRectsValid=0;
@@ -881,7 +892,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         COMCTL32_Free (oldItems);
     }
 
-    lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
+    lpItem = &infoPtr->items[nItem];
     lpItem->bDown = FALSE;
 
     if (phdi->mask & HDI_WIDTH)
@@ -980,7 +991,7 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
         COMCTL32_Free (oldItems);
     }
 
-    lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
+    lpItem = &infoPtr->items[nItem];
     lpItem->bDown = FALSE;
 
     if (phdi->mask & HDI_WIDTH)
@@ -1096,7 +1107,7 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, nItem, phdi->mask))
 	return FALSE;
 
-    lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
+    lpItem = &infoPtr->items[nItem];
     if (phdi->mask & HDI_BITMAP)
 	lpItem->hbm = phdi->hbm;
 
@@ -1163,7 +1174,7 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGW, nItem, phdi->mask))
 	return FALSE;
 
-    lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
+    lpItem = &infoPtr->items[nItem];
     if (phdi->mask & HDI_BITMAP)
 	lpItem->hbm = phdi->hbm;
 
@@ -1271,7 +1282,7 @@ HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nItem;
 
     if (infoPtr->items) {
-	lpItem = (HEADER_ITEM*)infoPtr->items;
+        lpItem = infoPtr->items;
         for (nItem = 0; nItem < infoPtr->uNumItem; nItem++, lpItem++) {
 	    if ((lpItem->pszText) && (lpItem->pszText != LPSTR_TEXTCALLBACKW))
 		COMCTL32_Free (lpItem->pszText);
@@ -1403,10 +1414,10 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    TRACE("Exchanging [index:order] [%d:%d] [%d:%d]\n",
 		  infoPtr->iMoveItem,oldindex,nItem,newindex);
-	    lpItem= (HEADER_ITEM*)&infoPtr->items[nItem];
+            lpItem= &infoPtr->items[nItem];
 	    lpItem->iOrder=oldindex;
 
-	    lpItem= (HEADER_ITEM*)&infoPtr->items[infoPtr->iMoveItem];
+            lpItem= &infoPtr->items[infoPtr->iMoveItem];
 	    lpItem->iOrder = newindex;
 
 	    infoPtr->bRectsValid = FALSE;
@@ -1768,7 +1779,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return HEADER_SetFont (hwnd, wParam, lParam);
 
         default:
-            if (msg >= WM_USER)
+            if ((msg >= WM_USER) && (msg < WM_APP))
 		ERR("unknown msg %04x wp=%04x lp=%08lx\n",
 		     msg, wParam, lParam );
 	    return DefWindowProcA (hwnd, msg, wParam, lParam);
@@ -1799,4 +1810,3 @@ HEADER_Unregister (void)
 {
     UnregisterClassA (WC_HEADERA, (HINSTANCE)NULL);
 }
-
