@@ -316,7 +316,6 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 
             /* Add items to the new Window menu */
             ci->nActiveChildren = nActiveChildren_old;
-            AppendMenuW(hmenuWindow, MF_SEPARATOR, 0, NULL);
             MDI_RefreshMenu(ci);
         }
         else
@@ -357,7 +356,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
  */
 static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 {
-    UINT i, count, visible, separator_pos;
+    UINT i, count, visible, separator_pos, id;
     WCHAR buf[MDI_MAXTITLELENGTH];
 
     TRACE("children %u, window menu %p\n", ci->nActiveChildren, ci->hWindowMenu);
@@ -371,9 +370,11 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
         return 0;
     }
 
-    /* Windows finds the last separator in the menu, removes all existing
+    /* Windows finds the last separator in the menu, and if after it
+     * there is a menu item with MDI magic ID removes all existing
      * menu items after it, and then adds visible MDI children.
      */
+    id = (UINT)-1;
     separator_pos = 0;
     count = GetMenuItemCount(ci->hWindowMenu);
     for (i = 0; i < count; i++)
@@ -383,30 +384,43 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
         memset(&mii, 0, sizeof(mii));
         mii.cbSize = sizeof(mii);
         mii.fMask  = MIIM_TYPE;
-        GetMenuItemInfoW(ci->hWindowMenu, i, TRUE, &mii);
+        if (GetMenuItemInfoW(ci->hWindowMenu, i, TRUE, &mii))
+        {
+            if (mii.fType & MF_SEPARATOR)
+            {
+                separator_pos = i;
 
-        if (mii.fType & MFT_SEPARATOR)
-            separator_pos = i;
+                /* Windows checks only ID of the menu item */
+                memset(&mii, 0, sizeof(mii));
+                mii.cbSize = sizeof(mii);
+                mii.fMask  = MIIM_ID;
+                if (GetMenuItemInfoW(ci->hWindowMenu, i + 1, TRUE, &mii))
+                    id = mii.wID;
+            }
+        }
     }
 
-    for (i = separator_pos + 1; i < count; i++)
-        RemoveMenu(ci->hWindowMenu, separator_pos + 1, MF_BYPOSITION);
+    if (separator_pos && id == ci->idFirstChild)
+    {
+        for (i = separator_pos; i < count; i++)
+            RemoveMenu(ci->hWindowMenu, separator_pos, MF_BYPOSITION);
+    }
 
     visible = 0;
     for (i = 0; i < ci->nActiveChildren; i++)
     {
-        UINT id = ci->idFirstChild + i;
-
-        if (visible == MDI_MOREWINDOWSLIMIT)
-        {
-            LoadStringW(user32_module, IDS_MDI_MOREWINDOWS, buf, sizeof(buf)/sizeof(WCHAR));
-            AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
-            break;
-        }
-
         if (GetWindowLongW(ci->child[i], GWL_STYLE) & WS_VISIBLE)
         {
-            if (!visible && !separator_pos)
+            id = ci->idFirstChild + visible;
+
+            if (visible == MDI_MOREWINDOWSLIMIT)
+            {
+                LoadStringW(user32_module, IDS_MDI_MOREWINDOWS, buf, sizeof(buf)/sizeof(WCHAR));
+                AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
+                break;
+            }
+
+            if (!visible)
                 /* Visio expects that separator has id 0 */
                 AppendMenuW(ci->hWindowMenu, MF_SEPARATOR, 0, NULL);
 
@@ -1410,6 +1424,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     case WM_SETFOCUS:
     case WM_CHILDACTIVATE:
     case WM_SYSCOMMAND:
+    case WM_SHOWWINDOW:
     case WM_SETVISIBLE:
     case WM_SIZE:
     case WM_NEXTMENU:
@@ -1488,6 +1503,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         }
         break;
 
+    case WM_SHOWWINDOW:
     case WM_SETVISIBLE:
         if (IsZoomed(ci->hwndActiveChild)) ci->mdiFlags &= ~MDIF_NEEDUPDATE;
         else MDI_PostUpdate(client, ci, SB_BOTH+1);
