@@ -26,13 +26,6 @@
 #define SG_NEXT_CMD_LEN 0x2283  /* override SCSI command length with given
 		   number on the next write() on this file descriptor */
 
-/* This is what the linux kernel thinks.... */
-static const unsigned char scsi_command_size[8] =
-{
-	6, 10, 10, 12,
-	12, 12, 10, 10
-};
-
 struct sg_header
 {
     int pack_len;    /* [o] reply_len (ie useless), ignored as input */

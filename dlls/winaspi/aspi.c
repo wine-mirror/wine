@@ -306,6 +306,13 @@ linux_hack:
 void
 SCSI_Fix_CMD_LEN(int fd, int cmd, int len)
 {
+	/* This is what the linux kernel thinks.... */
+	static const unsigned char scsi_command_size[8] =
+	{
+        	6, 10, 10, 12,
+        	12, 12, 10, 10
+	};
+
 	int index=(cmd>>5)&7;
 
 	if (len!=scsi_command_size[index])
