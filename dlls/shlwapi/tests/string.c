@@ -39,6 +39,10 @@ static LPWSTR  (WINAPI *pStrCpyNXW)(LPWSTR,LPCWSTR,int);
 static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,void*,BSTR*);
 static DWORD   (WINAPI *pSHAnsiToAnsi)(LPCSTR,LPSTR,int);
 static DWORD   (WINAPI *pSHUnicodeToUnicode)(LPCWSTR,LPWSTR,int);
+static BOOL    (WINAPI *pStrIsIntlEqualA)(BOOL,LPCSTR,LPCSTR,int);
+static BOOL    (WINAPI *pIntlStrEqWorkerA)(BOOL,LPCSTR,LPCSTR,int);
+static BOOL    (WINAPI *pStrIsIntlEqualW)(BOOL,LPCWSTR,LPCWSTR,int);
+static BOOL    (WINAPI *pIntlStrEqWorkerW)(BOOL,LPCWSTR,LPCWSTR,int);
 
 static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
@@ -563,11 +567,20 @@ void test_StrCmpA(void)
   ok(!ChrCmpIA('b', 'B'), "ChrCmpIA is not case-insensitive\n");
   ok(ChrCmpIA('a', 'z'), "ChrCmpIA believes that a == z!\n");
 
-  ok(StrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
-  ok(!StrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
+  pStrIsIntlEqualA = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualA");
+  pIntlStrEqWorkerA = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerA");
 
-  ok(IntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
-  ok(!IntlStrEqWorkerA(TRUE, str1, str2, 5), "IntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
+  if (!pStrIsIntlEqualA)
+    return;
+
+  ok(pStrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
+  ok(!pStrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
+
+  if (!pIntlStrEqWorkerA)
+    return;
+
+  ok(pIntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
+  ok(!pIntlStrEqWorkerA(TRUE, str1, str2, 5), "pIntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
 }
 
 void test_StrCmpW(void)
@@ -580,11 +593,20 @@ void test_StrCmpW(void)
   ok(!ChrCmpIW('b', 'B'), "ChrCmpIW is not case-insensitive\n");
   ok(ChrCmpIW('a', 'z'), "ChrCmpIW believes that a == z!\n");
 
-  ok(StrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) isn't case-insensitive\n");
-  ok(!StrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
+  pStrIsIntlEqualW = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualW");
+  pIntlStrEqWorkerW = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerW");
 
-  ok(IntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) isn't case-insensitive\n");
-  ok(!IntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
+  if (!pStrIsIntlEqualW)
+    return;
+
+  ok(pStrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) isn't case-insensitive\n");
+  ok(!pStrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
+
+  if (!pIntlStrEqWorkerW)
+    return;
+
+  ok(pIntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) isn't case-insensitive\n");
+  ok(!pIntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
 }
 
 static WCHAR *CoDupStrW(const char* src)
