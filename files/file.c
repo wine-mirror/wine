@@ -1708,14 +1708,14 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
                          const FILETIME *atime,
                          const FILETIME *mtime )
 {
-#ifdef HAVE_FUTIMES
     BOOL ret = FALSE;
     NTSTATUS status;
     int fd;
-    ULONGLONG sec, nsec;
 
     if (!(status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &fd, NULL, NULL )))
     {
+#ifdef HAVE_FUTIMES
+        ULONGLONG sec, nsec;
         struct timeval tv[2];
 
         if (!atime || !mtime)
@@ -1747,14 +1747,13 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
 
         if (!futimes( fd, tv )) ret = TRUE;
         else FILE_SetDosError();
+#else
+        ret = TRUE;  /* pretend it succeeded */
+#endif
         wine_server_release_fd( hFile, fd );
     }
     else SetLastError( RtlNtStatusToDosError(status) );
     return ret;
-#else
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-#endif  /* HAVE_FUTIMES */
 }
 
 
