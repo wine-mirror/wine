@@ -154,7 +154,7 @@ static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATU
             ok(strcmpW(bval1, bval2) == 0, "Cannot get value written to environment\n");
             break;
         case STATUS_VARIABLE_NOT_FOUND:
-            ok(val == NULL, "Couldn't find variable, but didn't delete it\n");
+            ok(val == NULL, "Couldn't find variable, but didn't delete it. val = %s\n", val);
             break;
         default:
             ok(0, "Wrong ret %lu for %s\n", nts, var);

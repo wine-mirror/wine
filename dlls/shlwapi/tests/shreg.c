@@ -248,7 +248,7 @@ static void test_SHQUeryValueEx(void)
         todo_wine
         {
                 ok( (0 == strcmp("", buf)) | (0 == strcmp(sEnvvar2, buf)),
-                    "Expected empty or first part of the string (win98), got (%s)\n", buf);
+                    "Expected empty or first part of the string \"%s\", got \"%s\"\n", sEnvvar2, buf);
         }
 
 	ok( dwSize >= nUsedBuffer2, "Buffer size (%lu) should be >= (%lu)\n", dwSize, nUsedBuffer2);
