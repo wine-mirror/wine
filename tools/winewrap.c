@@ -235,8 +235,8 @@ static const char *wrapper_code =
 ;
 
 static char *output_name;
-static char **lib_files, **dll_files, **lib_paths, **obj_files;
-static int nb_lib_files, nb_dll_files, nb_lib_paths, nb_obj_files;
+static char **arh_files,  **dll_files,  **lib_files,  **lib_paths,  **obj_files;
+static int nb_arh_files, nb_dll_files, nb_lib_files, nb_lib_paths, nb_obj_files;
 static int verbose = 0;
 static int keep_generated = 0;
 
@@ -401,6 +401,8 @@ void add_lib_path(const char* path)
     lib_paths[nb_lib_paths++] = strdup(path);
     dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
     dll_files[nb_dll_files++] = strmake("-L%s", path);
+    lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
+    lib_files[nb_lib_files++] = strmake("-L%s", path);
 }
 
 void add_lib_file(const char* library)
@@ -414,10 +416,14 @@ void add_lib_file(const char* library)
     }
     else if ((lib = find_lib(library)))
     {
-        lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
-        lib_files[nb_lib_files++] = lib;
+        arh_files = realloc( arh_files, (nb_arh_files+1) * sizeof(*arh_files) );
+        arh_files[nb_arh_files++] = lib;
     }
-    else error("Can not find library %s", library);
+    else
+    {
+        lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
+        lib_files[nb_lib_files++] = strmake("-l%s", library);
+    }
 }
 
 int main(int argc, char **argv)
@@ -529,7 +535,7 @@ int main(int argc, char **argv)
     wrap_o_name = strmake("%s.o", wrp_temp_name);
 
     /* build winebuild's argument list */
-    spec_args = malloc( (nb_lib_files + nb_dll_files + nb_obj_files + 20) * sizeof (char *) );
+    spec_args = malloc( (nb_arh_files + nb_dll_files + nb_obj_files + 20) * sizeof (char *) );
     j = 0;
     spec_args[j++] = BINDIR "/winebuild";
     spec_args[j++] = "-o";
@@ -551,8 +557,8 @@ int main(int argc, char **argv)
 	spec_args[j++] = dll_files[i];
     for (i = 0; i < nb_obj_files; i++)
 	spec_args[j++] = obj_files[i];
-    for (i = 0; i < nb_lib_files; i++)
-	spec_args[j++] = lib_files[i];
+    for (i = 0; i < nb_arh_files; i++)
+	spec_args[j++] = arh_files[i];
     spec_args[j] = 0;
 
     /* build gcc's argument list */
@@ -567,20 +573,22 @@ int main(int argc, char **argv)
     comp_args[j] = 0;
     
     /* build ld's argument list */
-    link_args = malloc( (nb_lib_files + nb_obj_files + 20) * sizeof (char *) );
+    link_args = malloc( (nb_arh_files + nb_obj_files + nb_lib_files + 20) * sizeof (char *) );
     j = 0;
     link_args[j++] = cpp ? "g++" : "gcc";
     link_args[j++] = "-shared";
     link_args[j++] = "-Wl,-Bsymbolic,-z,defs";
     link_args[j++] = "-lwine";
     link_args[j++] = "-lm";
+    for (i = 0; i < nb_lib_files; i++)
+	link_args[j++] = lib_files[i];
     link_args[j++] = "-o";
     link_args[j++] = strmake("%s.%s.so", base_file, create_wrapper ? "dll" : "exe");
     link_args[j++] = spec_o_name;
     for (i = 0; i < nb_obj_files; i++)
 	if (!is_resource(obj_files[i])) link_args[j++] = obj_files[i];
-    for (i = 0; i < nb_lib_files; i++)
-	link_args[j++] = lib_files[i];
+    for (i = 0; i < nb_arh_files; i++)
+	link_args[j++] = arh_files[i];
     link_args[j] = 0;
   
     /* build wrapper compile argument list */
