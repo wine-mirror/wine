@@ -42,10 +42,10 @@ CONTEXT		DEBUG_context;
 BOOL		DEBUG_interactiveP = FALSE;
 enum exit_mode  DEBUG_ExitMode = EXIT_CONTINUE;
 int 		curr_frame = 0;
+int automatic_mode = 0;
 static char*	DEBUG_LastCmdLine = NULL;
 
 static DBG_PROCESS* DEBUG_ProcessList = NULL;
-static int automatic_mode;
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
 void	DEBUG_OutputA(int chn, const char* buffer, int len)

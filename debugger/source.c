@@ -196,28 +196,31 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 
 	  if( sl == NULL )
 	    {
-	      char	zbuf[256];
-	      /*
-	       * Still couldn't find it.  Ask user for path to add.
-	       */
-	      sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
-	      DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath), FALSE, FALSE);
+                if (!automatic_mode)
+                {
+                    char zbuf[256];
+                    /*
+                     * Still couldn't find it.  Ask user for path to add.
+                     */
+                    sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
+                    DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath), FALSE, FALSE);
 
-	      if( tmppath[strlen(tmppath)-1] == '\n' )
-		{
-		  tmppath[strlen(tmppath)-1] = '\0';
-		}
+                    if( tmppath[strlen(tmppath)-1] == '\n' )
+                    {
+                        tmppath[strlen(tmppath)-1] = '\0';
+                    }
 
-	      if( tmppath[strlen(tmppath)-1] != '/' )
-		{
-		  strcat(tmppath, "/");
-		}
-	      /*
-	       * Now append the base file name.
-	       */
-	      strcat(tmppath, basename);
+                    if( tmppath[strlen(tmppath)-1] != '/' )
+                    {
+                        strcat(tmppath, "/");
+                    }
+                    /*
+                     * Now append the base file name.
+                     */
+                    strcat(tmppath, basename);
 
-	      status = stat(tmppath, &statbuf);
+                    status = stat(tmppath, &statbuf);
+                }
 	      if( status == -1 )
 		{
 		  /*

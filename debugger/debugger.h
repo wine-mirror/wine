@@ -530,6 +530,7 @@ extern void DEBUG_Run(const char* args);
 extern DBG_PROCESS* 	DEBUG_GetProcess(DWORD pid);
 extern DBG_THREAD* 	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid);
 extern int curr_frame;
+extern int automatic_mode;
 
 /* Choose your allocator! */
 #if 1
