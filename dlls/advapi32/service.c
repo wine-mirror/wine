@@ -9,6 +9,7 @@
 #include "windef.h"
 #include "winsvc.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -143,9 +144,25 @@ SC_HANDLE WINAPI
 OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {
-    FIXME("(%s,%s,0x%08lx): stub\n", debugstr_w(lpMachineName), 
+    HKEY hKey;
+    LONG r;
+
+    TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName), 
           debugstr_w(lpDatabaseName), dwDesiredAccess);
-    return 1;
+
+    /*
+     * FIXME: what is lpDatabaseName?
+     * It should be set to "SERVICES_ACTIVE_DATABASE" according to
+     * docs, but what if it isn't?
+     */
+
+    r = RegConnectRegistryW(lpMachineName,HKEY_LOCAL_MACHINE,&hKey);
+    if (r!=ERROR_SUCCESS)
+        return 0;
+
+    TRACE("returning %x\n",hKey);
+
+    return hKey;
 }
 
 
@@ -196,7 +213,10 @@ ControlService( SC_HANDLE hService, DWORD dwControl,
 BOOL WINAPI
 CloseServiceHandle( SC_HANDLE hSCObject )
 {
-    FIXME("(%d): stub\n", hSCObject);
+    TRACE("(%x)\n", hSCObject);
+
+    RegCloseKey(hSCObject);
+    
     return TRUE;
 }
 
@@ -209,7 +229,13 @@ OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
                 DWORD dwDesiredAccess )
 {
     LPWSTR lpServiceNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpServiceName);
-    DWORD ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
+    DWORD ret;
+
+    if(lpServiceName)
+        TRACE("Request for service %s\n",lpServiceName);
+    else
+        return FALSE;
+    ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
     HeapFree(GetProcessHeap(),0,lpServiceNameW);
     return ret;
 }
@@ -232,9 +258,27 @@ SC_HANDLE WINAPI
 OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                DWORD dwDesiredAccess)
 {
-    FIXME("(%d,%p,%ld): stub\n",hSCManager, lpServiceName,
+    const char *str = "System\\CurrentControlSet\\Services\\";
+    WCHAR lpServiceKey[80]; /* FIXME: this should be dynamically allocated */
+    HKEY hKey;
+    long r;
+
+    TRACE("(%d,%p,%ld)\n",hSCManager, lpServiceName,
           dwDesiredAccess);
-    return 1;
+
+    lstrcpyAtoW(lpServiceKey,str);
+    lstrcatW(lpServiceKey,lpServiceName);
+
+    TRACE("Opening reg key %s\n", debugstr_w(lpServiceKey));
+
+    /* FIXME: dwDesiredAccess may need some processing */
+    r = RegOpenKeyExW(hSCManager, lpServiceKey, 0, dwDesiredAccess, &hKey );
+    if (r!=ERROR_SUCCESS)
+        return 0;
+
+    TRACE("returning %x\n",hKey);
+
+    return hKey;
 }
 
 
@@ -320,7 +364,29 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
 BOOL WINAPI
 QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 {
-	FIXME("(%d,%p),stub!\n",hService,lpservicestatus);
-	return TRUE;
+    LONG r;
+    DWORD type, val, size;
+
+    FIXME("(%x,%p) partial\n",hService,lpservicestatus);
+
+    /* read the service type from the registry */
+    size = sizeof val;
+    r = RegQueryValueExA(hService, "Type", NULL, &type, (LPBYTE)&val, &size);
+    if(type!=REG_DWORD)
+    {
+        ERR("invalid Type\n");
+        return FALSE;
+    }
+    lpservicestatus->dwServiceType = val;
+
+    /* FIXME: how are these determined or read from the registry? */
+    lpservicestatus->dwCurrentState            = 0 /*SERVICE_STOPPED*/;
+    lpservicestatus->dwControlsAccepted        = 0;
+    lpservicestatus->dwWin32ExitCode           = NO_ERROR;
+    lpservicestatus->dwServiceSpecificExitCode = 0;
+    lpservicestatus->dwCheckPoint              = 0;
+    lpservicestatus->dwWaitHint                = 0;
+
+    return TRUE;
 }
 
