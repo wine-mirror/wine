@@ -11,8 +11,8 @@
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
 /* from msvcrt */
-extern void __cdecl __getmainargs( int *argc, char ***argv, char **environ,
-                                   int expand_wildcards, int *new_mode );
+extern void __getmainargs( int *argc, char ***argv, char ***envp,
+                           int expand_wildcards, int *new_mode );
 
 /* The following data items are not exported from msvcrt */
 unsigned int CRTDLL__basemajor_dll;
@@ -50,8 +50,8 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 /*********************************************************************
  *                  __GetMainArgs  (CRTDLL.@)
  */
-void __cdecl __GetMainArgs( int *argc, char ***argv, char **environ, int expand_wildcards )
+void __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards )
 {
     int new_mode = 0;
-    __getmainargs( argc, argv, environ, expand_wildcards, &new_mode );
+    __getmainargs( argc, argv, envp, expand_wildcards, &new_mode );
 }
