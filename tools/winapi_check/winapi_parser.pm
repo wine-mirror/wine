@@ -303,6 +303,11 @@ sub parse_c_file {
 	    if($level == 0) {
 		&$function_end;
 	    }
+	} elsif(/__ASM_GLOBAL_FUNC\(\s*(.*?)\s*,/s) {
+	    $_ = $'; $again = 1;
+	    my @arguments = ();
+	    &$function_begin($documentation, "", "void", "__asm", $1, \@arguments);
+	    &$function_end;
 	} elsif(/DC_(GET_X_Y|GET_VAL_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments = ("HDC16");

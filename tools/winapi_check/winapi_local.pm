@@ -60,12 +60,16 @@ sub check_function {
 	    $implemented_calling_convention = "cdecl";
 	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
 	    $implemented_calling_convention = "varargs";
-	} elsif($calling_convention = ~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
+	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
 	    if($implemented_return_kind =~ /^s_word|word|void$/) {
 		$implemented_calling_convention = "pascal16";
 	    } else {
 		$implemented_calling_convention = "pascal";
 	    }
+	} elsif($calling_convention =~ /^__asm$/) {
+    	    $implemented_calling_convention = "asm";
+	} else {
+    	    $implemented_calling_convention = "cdecl";
 	}
     } elsif($winapi->name eq "win32") {
 	if($calling_convention =~ /^__cdecl$/) {
@@ -78,6 +82,8 @@ sub check_function {
 	    } else {
 		$implemented_calling_convention = "stdcall";
 	    }
+	} elsif($calling_convention =~ /^__asm$/) {
+    	    $implemented_calling_convention = "asm";
 	} else {
 	    $implemented_calling_convention = "cdecl";
 	}
@@ -95,7 +101,8 @@ sub check_function {
          (($winapi->name eq "win16" && $implemented_calling_convention =~ /^pascal/))))
     {
 	# correct
-    } elsif($implemented_calling_convention ne $declared_calling_convention && 
+    } elsif($implemented_calling_convention ne $declared_calling_convention &&
+       $implemented_calling_convention ne "asm" &&
        !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
        !($implemented_calling_convention =~ /^cdecl|varargs$/ && $declared_calling_convention =~ /^cdecl|varargs$/))
     {
@@ -182,7 +189,10 @@ sub check_function {
 		}
 	    }
 	}
-        if($#argument_kinds != $#declared_argument_kinds) {
+
+        if($#argument_kinds != $#declared_argument_kinds &&
+	   $implemented_calling_convention ne "asm")
+	{
 	    if($options->argument_count) {
 		$output->write("argument count differs: " . 
 		    ($#argument_types + 1) . " != " . 

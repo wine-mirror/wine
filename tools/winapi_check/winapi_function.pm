@@ -121,6 +121,17 @@ sub argument_names {
     return $$argument_names;
 }
 
+sub argument_documentations {
+    my $self = shift;
+    my $argument_documentations = \${$self->{ARGUMENT_DOCUMENTATIONS}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$argument_documentations = $_; }
+    
+    return $$argument_documentations;
+}
+
 sub module16 {
     my $self = shift;
     my $module16 = \${$self->{MODULE16}};
