@@ -573,7 +573,7 @@ static	void DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             if (DEBUG_ExitMode == EXIT_QUIT || DEBUG_ExitMode == EXIT_DETACH)
                 break;
 	    if (DEBUG_ValidateRegisters()) {
-		if (DEBUG_ExitMode == EXIT_PASS || first_chance)
+		if (DEBUG_ExitMode == EXIT_CONTINUE || first_chance)
 		    break;
 		DEBUG_Printf(DBG_CHN_MESG, "Cannot pass on last chance exception. You must use cont\n");
 	    }
