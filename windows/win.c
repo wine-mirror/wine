@@ -21,7 +21,6 @@
 #include "message.h"
 #include "queue.h"
 #include "winpos.h"
-#include "thread.h"
 #include "winerror.h"
 #include "stackframe.h"
 #include "debugtools.h"
@@ -2882,10 +2881,11 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 
 
 /**********************************************************************
- *		EnumTaskWindows (USER.225)
+ *		WIN_EnumQueueWindows
+ *
+ * Helper for EnumTaskWindows16 and EnumThreadWindows.
  */
-BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
-                                 LPARAM lParam )
+static BOOL WIN_EnumQueueWindows( HQUEUE16 queue, WNDENUMPROC func, LPARAM lParam )
 {
     WND **list, **ppWnd;
 
@@ -2906,15 +2906,15 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
         int iWndsLocks = 0;
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if (QUEUE_GetQueueTask((*ppWnd)->hmemTaskQ) != hTask) continue;
-        
+        if ((*ppWnd)->hmemTaskQ != queue) continue;
+
         /* To avoid any deadlocks, all the locks on the windows
            structures must be suspended before the control
            is passed to the application */
         iWndsLocks = WIN_SuspendWndsLock();
         funcRetval = func( (*ppWnd)->hwndSelf, lParam );
         WIN_RestoreWndsLock(iWndsLocks);
-        
+
         if (!funcRetval) break;
     }
     WIN_ReleaseWinArray(list);
@@ -2924,13 +2924,25 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
 
 
 /**********************************************************************
+ *		EnumTaskWindows16   (USER.225)
+ */
+BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
+                                 LPARAM lParam )
+{
+    HQUEUE16 queue = GetTaskQueue16( hTask );
+    if (!queue) return FALSE;
+    return WIN_EnumQueueWindows( queue, (WNDENUMPROC)func, lParam );
+}
+
+
+/**********************************************************************
  *		EnumThreadWindows (USER32.@)
  */
 BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
 {
-    TEB *teb = THREAD_IdToTEB(id);
-
-    return (BOOL16)EnumTaskWindows16(teb->htask16, (WNDENUMPROC16)func, lParam);
+    HQUEUE16 queue = GetThreadQueue16( id );
+    if (!queue) return FALSE;
+    return WIN_EnumQueueWindows( queue, func, lParam );
 }
 
 
