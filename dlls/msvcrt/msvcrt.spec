@@ -370,7 +370,7 @@ debug_channels (msvcrt)
 @ cdecl _mbsnbcnt(ptr long) _mbsnbcnt
 @ stub _mbsnbcoll #(str str long)
 @ cdecl _mbsnbcpy(ptr str long) _mbsnbcpy
-@ stub _mbsnbicmp #(str str long)
+@ cdecl _mbsnbicmp(str str long) _mbsnbicmp
 @ stub _mbsnbicoll #(str str long)
 @ stub _mbsnbset #(str long long)
 @ cdecl _mbsncat(str str long) _mbsncat

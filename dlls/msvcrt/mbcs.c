@@ -412,6 +412,51 @@ int _mbsnicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t 
 }
 
 /*********************************************************************
+ *              _mbsnbicmp(MSVCRT.@)
+ */
+int _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
+{
+  if (!len)
+    return 0;
+  if(MSVCRT___mb_cur_max > 1)
+  {
+    unsigned int strc, cmpc;
+    while (len)
+    {
+      int clen;
+      if(!*str)
+        return *cmp ? -1 : 0;
+      if(!*cmp)
+        return 1;
+      if (MSVCRT_isleadbyte(*str))
+      {
+        strc=(len>=2)?_mbsnextc(str):0;
+        clen=2;
+      }
+      else
+      {
+        strc=*str;
+        clen=1;
+      }
+      if (MSVCRT_isleadbyte(*cmp))
+        cmpc=(len>=2)?_mbsnextc(cmp):0;
+      else
+        cmpc=*str;
+      strc = _mbctolower(strc);
+      cmpc = _mbctolower(cmpc);
+      if(strc != cmpc)
+        return strc < cmpc ? -1 : 1;
+      len -= clen;
+      str += clen;
+      cmp += clen;
+    }
+    return 0; /* Matched len bytes */
+      FIXME("%s %s %d\n",str,cmp,len);
+  }
+  return strncmp(str,cmp,len);
+}
+
+/*********************************************************************
  *		_mbschr(MSVCRT.@)
  *
  * Find a multibyte character in a multibyte string.
