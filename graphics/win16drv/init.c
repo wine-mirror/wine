@@ -339,19 +339,27 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
             }
           break;
           case STARTDOC:
-	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
-				  lpInData, lpOutData);
-            if (nRet != -1)
-            {
-              HDC *tmpHdc = SEGPTR_NEW(HDC);
+	    {
+	      /* lpInData is not necessarily \0 terminated so make it so */
+	      char *cp = SEGPTR_ALLOC(cbInput + 1);
+	      memcpy(cp, PTR_SEG_TO_LIN(lpInData), cbInput);
+	      cp[cbInput] = '\0';
+	    
+	      nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
+				    SEGPTR_GET(cp), lpOutData);
+	      SEGPTR_FREE(cp);
+	      if (nRet != -1)
+		{
+		  HDC *tmpHdc = SEGPTR_NEW(HDC);
 
 #define SETPRINTERDC SETABORTPROC
 
-              *tmpHdc = dc->hSelf;
-              PRTDRV_Control(physDev->segptrPDEVICE, SETPRINTERDC,
-                             SEGPTR_GET(tmpHdc), (SEGPTR)NULL);
-              SEGPTR_FREE(tmpHdc);
-            }
+		  *tmpHdc = dc->hSelf;
+		  PRTDRV_Control(physDev->segptrPDEVICE, SETPRINTERDC,
+				 SEGPTR_GET(tmpHdc), (SEGPTR)NULL);
+		  SEGPTR_FREE(tmpHdc);
+		}
+	    }
             break;
 	  default:
 	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,

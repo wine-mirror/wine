@@ -261,6 +261,8 @@ typedef struct
     INT16    cbSize;
     SEGPTR   lpszDocName;
     SEGPTR   lpszOutput;
+    SEGPTR   lpszDatatype;
+    DWORD    fwType;
 } DOCINFO16, *LPDOCINFO16;
 
 typedef BOOL16 (CALLBACK* ABORTPROC16)(HDC16, INT16);

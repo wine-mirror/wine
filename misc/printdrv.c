@@ -45,8 +45,16 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
     docA.cbSize = lpdoc->cbSize;
     docA.lpszDocName = PTR_SEG_TO_LIN(lpdoc->lpszDocName);
     docA.lpszOutput = PTR_SEG_TO_LIN(lpdoc->lpszOutput);
-    docA.lpszDatatype = NULL;
-    docA.fwType = 0;
+
+    if(lpdoc->cbSize >= 14)
+        docA.lpszDatatype = PTR_SEG_TO_LIN(lpdoc->lpszDatatype);
+    else
+        docA.lpszDatatype = NULL;
+
+    if(lpdoc->cbSize >= 18)
+        docA.fwType = lpdoc->fwType;
+    else
+        docA.fwType = 0;
 
     return StartDocA(hdc, &docA);
 }
@@ -54,6 +62,10 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 /******************************************************************
  *                  StartDocA  [GDI32.347]
  *
+ * StartDoc calls the STARTDOC Escape with the input data pointing to DocName
+ * and the output data (which is used as a second input parameter).pointing at
+ * the whole docinfo structure.  This seems to be an undocumented feature of
+ * the STARTDOC Escape. 
  */
 INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 {
@@ -68,7 +80,7 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
         return dc->funcs->pStartDoc( dc, doc );
     else
         return Escape(hdc, STARTDOC, strlen(doc->lpszDocName),
-		      doc->lpszDocName, 0);
+		      doc->lpszDocName, (LPVOID)doc);
 }
 
 /*************************************************************************

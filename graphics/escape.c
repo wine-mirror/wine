@@ -114,7 +114,10 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
         break;
     }
 
-      /* Escape(hdc,STARTDOC,LPSTR,NULL); */
+      /* Escape(hdc,STARTDOC,LPSTR,LPDOCINFOA);
+       * lpvOutData is actually a pointer to the DocInfo structure and used as
+       * a second input parameter
+       */
 
     case STARTDOC: /* string may not be \0 terminated */
         if(lpszInData) {
@@ -123,6 +126,18 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 	    segin = SEGPTR_GET(cp);
 	} else
 	    segin = 0;
+
+	if(lpvOutData) {
+	    DOCINFO16 *lpsegdoc = SEGPTR_NEW(DOCINFO16);
+	    DOCINFOA *lpdoc = lpvOutData;
+	    memset(lpsegdoc, 0, sizeof(*lpsegdoc));
+	    lpsegdoc->cbSize = sizeof(*lpsegdoc);
+	    lpsegdoc->lpszDocName = SEGPTR_GET(SEGPTR_STRDUP(lpdoc->lpszDocName));
+	    lpsegdoc->lpszOutput = SEGPTR_GET(SEGPTR_STRDUP(lpdoc->lpszOutput));
+	    lpsegdoc->lpszDatatype = SEGPTR_GET(SEGPTR_STRDUP(lpdoc->lpszDatatype));
+	    lpsegdoc->fwType = lpdoc->fwType;
+	    segout = SEGPTR_GET(lpsegdoc);
+	}
 	break;
 
     case SETABORTPROC:
@@ -193,7 +208,16 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
         SEGPTR_FREE(x);
         break;
     }
-    case STARTDOC:
+    case STARTDOC: {
+        DOCINFO16 *doc = PTR_SEG_TO_LIN(segout);
+	SEGPTR_FREE(PTR_SEG_TO_LIN(doc->lpszDocName));
+	SEGPTR_FREE(PTR_SEG_TO_LIN(doc->lpszOutput));
+	SEGPTR_FREE(PTR_SEG_TO_LIN(doc->lpszDatatype));
+	SEGPTR_FREE(doc);
+	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+	break;
+    }
+
     case CLIP_TO_PATH:
     case END_PATH:
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
