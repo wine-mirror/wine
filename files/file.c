@@ -1675,11 +1675,27 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     {
     case FD_TYPE_SMB:
         return SMB_ReadFile(hFile, buffer, bytesToRead, bytesRead, NULL);
+
     case FD_TYPE_CONSOLE:
 	return FILE_ReadConsole(hFile, buffer, bytesToRead, bytesRead, NULL);
 
+    case FD_TYPE_DEFAULT:
+        /* normal unix files */
+        if (unix_handle == -1) return FALSE;
+        if (overlapped)
+        {
+            DWORD highOffset = overlapped->OffsetHigh;
+            if ( (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, overlapped->Offset,
+                                                             &highOffset, FILE_BEGIN)) &&
+                 (GetLastError() != NO_ERROR) )
+            {
+              close(unix_handle);
+              return FALSE;
+            }
+        }
+        break;
+
     default:
-	/* normal unix files */
 	if (unix_handle == -1)
 	    return FALSE;
 	if (overlapped)
@@ -1877,9 +1893,33 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite,
 	      bytesWritten, overlapped );
 	return FILE_WriteConsole(hFile, buffer, bytesToWrite, bytesWritten, NULL);
+
+    case FD_TYPE_DEFAULT:
+        if (unix_handle == -1) return FALSE;
+
+        if(overlapped)
+        {
+            DWORD highOffset = overlapped->OffsetHigh;
+            if ( (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, overlapped->Offset,
+                                                             &highOffset, FILE_BEGIN)) &&
+                 (GetLastError() != NO_ERROR) )
+            {
+              close(unix_handle);
+              return FALSE;
+            }
+        }
+        break;
+
     default:
-	if (unix_handle == -1)
-	    return FALSE;
+        if (unix_handle == -1)
+            return FALSE;
+        if (overlapped)
+        {
+            close(unix_handle);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        break;
     }
 
     /* synchronous file write */
@@ -1975,7 +2015,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
-    DWORD ret = 0xffffffff;
+    DWORD ret = INVALID_SET_FILE_POINTER;
 
     TRACE("handle %d offset %ld high %ld origin %ld\n",
           hFile, distance, highword?*highword:0, method );
@@ -2719,6 +2759,9 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHig
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
 {
     BOOL ret;
+
+    FIXME("not implemented in server\n");
+
     SERVER_START_REQ( lock_file )
     {
         req->handle      = hFile;
@@ -2770,6 +2813,9 @@ BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetH
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
 {
     BOOL ret;
+
+    FIXME("not implemented in server\n");
+
     SERVER_START_REQ( unlock_file )
     {
         req->handle      = hFile;
