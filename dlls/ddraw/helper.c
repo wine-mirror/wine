@@ -57,8 +57,11 @@ typedef struct
 
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
 
-static void DDRAW_dump_flags(DWORD flags, const flag_info* names,
-			     size_t num_names)
+#define DDRAW_dump_flags(flags,names,num_names) \
+     DDRAW_dump_flags_(flags, names, num_names, 1)
+
+static void DDRAW_dump_flags_(DWORD flags, const flag_info* names,
+			     size_t num_names, int newline)
 {
     unsigned int	i;
 
@@ -66,7 +69,8 @@ static void DDRAW_dump_flags(DWORD flags, const flag_info* names,
 	if (names[i].val & flags)
 	    DPRINTF("%s ", names[i].name);
 
-    DPRINTF("\n");
+    if (newline)
+        DPRINTF("\n");
 }
 
 static void DDRAW_dump_members(DWORD flags, const void* data,
@@ -187,7 +191,7 @@ void DDRAW_dump_DDSCAPS(const DDSCAPS2 *in)
 	    FE(DDSCAPS_OPTIMIZED)
     };
 
-    DDRAW_dump_flags(in->dwCaps, flags, sizeof(flags)/sizeof(flags[0]));
+    DDRAW_dump_flags_(in->dwCaps, flags, sizeof(flags)/sizeof(flags[0]), 0);
 }
 
 void DDRAW_dump_pixelformat_flag(DWORD flagmask)
@@ -210,7 +214,7 @@ void DDRAW_dump_pixelformat_flag(DWORD flagmask)
 	    FE(DDPF_ZPIXELS)
     };
 
-    DDRAW_dump_flags(flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+    DDRAW_dump_flags_(flagmask, flags, sizeof(flags)/sizeof(flags[0]), 0);
 }
 
 void DDRAW_dump_paletteformat(DWORD dwFlags)
@@ -346,4 +350,167 @@ void DDRAW_dump_cooperativelevel(DWORD cooplevel)
 	DPRINTF(" - ");
 	DDRAW_dump_flags(cooplevel, flags, sizeof(flags)/sizeof(flags[0]));
     }
+}
+
+void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps) {
+    static const flag_info flags1[] = {
+      FE(DDCAPS_3D),
+      FE(DDCAPS_ALIGNBOUNDARYDEST),
+      FE(DDCAPS_ALIGNSIZEDEST),
+      FE(DDCAPS_ALIGNBOUNDARYSRC),
+      FE(DDCAPS_ALIGNSIZESRC),
+      FE(DDCAPS_ALIGNSTRIDE),
+      FE(DDCAPS_BLT),
+      FE(DDCAPS_BLTQUEUE),
+      FE(DDCAPS_BLTFOURCC),
+      FE(DDCAPS_BLTSTRETCH),
+      FE(DDCAPS_GDI),
+      FE(DDCAPS_OVERLAY),
+      FE(DDCAPS_OVERLAYCANTCLIP),
+      FE(DDCAPS_OVERLAYFOURCC),
+      FE(DDCAPS_OVERLAYSTRETCH),
+      FE(DDCAPS_PALETTE),
+      FE(DDCAPS_PALETTEVSYNC),
+      FE(DDCAPS_READSCANLINE),
+      FE(DDCAPS_STEREOVIEW),
+      FE(DDCAPS_VBI),
+      FE(DDCAPS_ZBLTS),
+      FE(DDCAPS_ZOVERLAYS),
+      FE(DDCAPS_COLORKEY),
+      FE(DDCAPS_ALPHA),
+      FE(DDCAPS_COLORKEYHWASSIST),
+      FE(DDCAPS_NOHARDWARE),
+      FE(DDCAPS_BLTCOLORFILL),
+      FE(DDCAPS_BANKSWITCHED),
+      FE(DDCAPS_BLTDEPTHFILL),
+      FE(DDCAPS_CANCLIP),
+      FE(DDCAPS_CANCLIPSTRETCHED),
+      FE(DDCAPS_CANBLTSYSMEM)
+    };
+    static const flag_info flags2[] = {
+      FE(DDCAPS2_CERTIFIED),
+      FE(DDCAPS2_NO2DDURING3DSCENE),
+      FE(DDCAPS2_VIDEOPORT),
+      FE(DDCAPS2_AUTOFLIPOVERLAY),
+      FE(DDCAPS2_CANBOBINTERLEAVED),
+      FE(DDCAPS2_CANBOBNONINTERLEAVED),
+      FE(DDCAPS2_COLORCONTROLOVERLAY),
+      FE(DDCAPS2_COLORCONTROLPRIMARY),
+      FE(DDCAPS2_CANDROPZ16BIT),
+      FE(DDCAPS2_NONLOCALVIDMEM),
+      FE(DDCAPS2_NONLOCALVIDMEMCAPS),
+      FE(DDCAPS2_NOPAGELOCKREQUIRED),
+      FE(DDCAPS2_WIDESURFACES),
+      FE(DDCAPS2_CANFLIPODDEVEN),
+      FE(DDCAPS2_CANBOBHARDWARE),
+      FE(DDCAPS2_COPYFOURCC),
+      FE(DDCAPS2_PRIMARYGAMMA),
+      FE(DDCAPS2_CANRENDERWINDOWED),
+      FE(DDCAPS2_CANCALIBRATEGAMMA),
+      FE(DDCAPS2_FLIPINTERVAL),
+      FE(DDCAPS2_FLIPNOVSYNC),
+      FE(DDCAPS2_CANMANAGETEXTURE),
+      FE(DDCAPS2_TEXMANINNONLOCALVIDMEM),
+      FE(DDCAPS2_STEREO),
+      FE(DDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL)
+    };
+    static const flag_info flags3[] = {
+      FE(DDCKEYCAPS_DESTBLT),
+      FE(DDCKEYCAPS_DESTBLTCLRSPACE),
+      FE(DDCKEYCAPS_DESTBLTCLRSPACEYUV),
+      FE(DDCKEYCAPS_DESTBLTYUV),
+      FE(DDCKEYCAPS_DESTOVERLAY),
+      FE(DDCKEYCAPS_DESTOVERLAYCLRSPACE),
+      FE(DDCKEYCAPS_DESTOVERLAYCLRSPACEYUV),
+      FE(DDCKEYCAPS_DESTOVERLAYONEACTIVE),
+      FE(DDCKEYCAPS_DESTOVERLAYYUV),
+      FE(DDCKEYCAPS_SRCBLT),
+      FE(DDCKEYCAPS_SRCBLTCLRSPACE),
+      FE(DDCKEYCAPS_SRCBLTCLRSPACEYUV),
+      FE(DDCKEYCAPS_SRCBLTYUV),
+      FE(DDCKEYCAPS_SRCOVERLAY),
+      FE(DDCKEYCAPS_SRCOVERLAYCLRSPACE),
+      FE(DDCKEYCAPS_SRCOVERLAYCLRSPACEYUV),
+      FE(DDCKEYCAPS_SRCOVERLAYONEACTIVE),
+      FE(DDCKEYCAPS_SRCOVERLAYYUV),
+      FE(DDCKEYCAPS_NOCOSTOVERLAY)
+    };
+    static const flag_info flags4[] = {
+      FE(DDFXCAPS_BLTALPHA),
+      FE(DDFXCAPS_OVERLAYALPHA),
+      FE(DDFXCAPS_BLTARITHSTRETCHYN),
+      FE(DDFXCAPS_BLTARITHSTRETCHY),
+      FE(DDFXCAPS_BLTMIRRORLEFTRIGHT),
+      FE(DDFXCAPS_BLTMIRRORUPDOWN),
+      FE(DDFXCAPS_BLTROTATION),
+      FE(DDFXCAPS_BLTROTATION90),
+      FE(DDFXCAPS_BLTSHRINKX),
+      FE(DDFXCAPS_BLTSHRINKXN),
+      FE(DDFXCAPS_BLTSHRINKY),
+      FE(DDFXCAPS_BLTSHRINKYN),
+      FE(DDFXCAPS_BLTSTRETCHX),
+      FE(DDFXCAPS_BLTSTRETCHXN),
+      FE(DDFXCAPS_BLTSTRETCHY),
+      FE(DDFXCAPS_BLTSTRETCHYN),
+      FE(DDFXCAPS_OVERLAYARITHSTRETCHY),
+      FE(DDFXCAPS_OVERLAYARITHSTRETCHYN),
+      FE(DDFXCAPS_OVERLAYSHRINKX),
+      FE(DDFXCAPS_OVERLAYSHRINKXN),
+      FE(DDFXCAPS_OVERLAYSHRINKY),
+      FE(DDFXCAPS_OVERLAYSHRINKYN),
+      FE(DDFXCAPS_OVERLAYSTRETCHX),
+      FE(DDFXCAPS_OVERLAYSTRETCHXN),
+      FE(DDFXCAPS_OVERLAYSTRETCHY),
+      FE(DDFXCAPS_OVERLAYSTRETCHYN),
+      FE(DDFXCAPS_OVERLAYMIRRORLEFTRIGHT),
+      FE(DDFXCAPS_OVERLAYMIRRORUPDOWN)
+    };
+    static const flag_info flags5[] = {
+      FE(DDFXALPHACAPS_BLTALPHAEDGEBLEND),
+      FE(DDFXALPHACAPS_BLTALPHAPIXELS),
+      FE(DDFXALPHACAPS_BLTALPHAPIXELSNEG),
+      FE(DDFXALPHACAPS_BLTALPHASURFACES),
+      FE(DDFXALPHACAPS_BLTALPHASURFACESNEG),
+      FE(DDFXALPHACAPS_OVERLAYALPHAEDGEBLEND),
+      FE(DDFXALPHACAPS_OVERLAYALPHAPIXELS),
+      FE(DDFXALPHACAPS_OVERLAYALPHAPIXELSNEG),
+      FE(DDFXALPHACAPS_OVERLAYALPHASURFACES),
+      FE(DDFXALPHACAPS_OVERLAYALPHASURFACESNEG)
+    };
+    static const flag_info flags6[] = {
+      FE(DDPCAPS_4BIT),
+      FE(DDPCAPS_8BITENTRIES),
+      FE(DDPCAPS_8BIT),
+      FE(DDPCAPS_INITIALIZE),
+      FE(DDPCAPS_PRIMARYSURFACE),
+      FE(DDPCAPS_PRIMARYSURFACELEFT),
+      FE(DDPCAPS_ALLOW256),
+      FE(DDPCAPS_VSYNC),
+      FE(DDPCAPS_1BIT),
+      FE(DDPCAPS_2BIT),
+      FE(DDPCAPS_ALPHA),
+    };
+    static const flag_info flags7[] = {
+      FE(DDSVCAPS_RESERVED1),
+      FE(DDSVCAPS_RESERVED2),
+      FE(DDSVCAPS_RESERVED3),
+      FE(DDSVCAPS_RESERVED4),
+      FE(DDSVCAPS_STEREOSEQUENTIAL),
+    };
+
+    DPRINTF(" - dwSize : %ld\n", lpcaps->dwSize);
+    DPRINTF(" - dwCaps : "); DDRAW_dump_flags(lpcaps->dwCaps, flags1, sizeof(flags1)/sizeof(flags1[0]));
+    DPRINTF(" - dwCaps2 : "); DDRAW_dump_flags(lpcaps->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]));
+    DPRINTF(" - dwCKeyCaps : "); DDRAW_dump_flags(lpcaps->dwCKeyCaps, flags3, sizeof(flags3)/sizeof(flags3[0]));
+    DPRINTF(" - dwFXCaps : "); DDRAW_dump_flags(lpcaps->dwFXCaps, flags4, sizeof(flags4)/sizeof(flags4[0]));
+    DPRINTF(" - dwFXAlphaCaps : "); DDRAW_dump_flags(lpcaps->dwFXAlphaCaps, flags5, sizeof(flags5)/sizeof(flags5[0]));
+    DPRINTF(" - dwPalCaps : "); DDRAW_dump_flags(lpcaps->dwPalCaps, flags6, sizeof(flags6)/sizeof(flags6[0]));
+    DPRINTF(" - dwSVCaps : "); DDRAW_dump_flags(lpcaps->dwSVCaps, flags7, sizeof(flags7)/sizeof(flags7[0]));
+    DPRINTF("...\n");
+    DPRINTF(" - dwNumFourCCCodes : %ld\n", lpcaps->dwNumFourCCCodes);
+    DPRINTF(" - dwCurrVisibleOverlays : %ld\n", lpcaps->dwCurrVisibleOverlays);
+    DPRINTF(" - dwMinOverlayStretch : %ld\n", lpcaps->dwMinOverlayStretch);
+    DPRINTF(" - dwMaxOverlayStretch : %ld\n", lpcaps->dwMaxOverlayStretch);
+    DPRINTF("...\n");
+    DPRINTF(" - ddsCaps : "); DDRAW_dump_DDSCAPS(&lpcaps->ddsCaps); DPRINTF("\n");
 }

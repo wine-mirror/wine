@@ -493,7 +493,10 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
     ICOM_THIS(IDirectDrawImpl, iface);
 
     TRACE("(%p)->(%p,%p,%p)\n",This,pDDSD,ppSurf,pUnkOuter);
-    TRACE("Requested Caps: 0x%lx\n", pDDSD->ddsCaps.dwCaps);
+    if (TRACE_ON(ddraw)) {
+        DPRINTF("Requesting surface desc :\n");
+        DDRAW_dump_surface_desc(pDDSD);
+    }
 
     if (pUnkOuter != NULL) {
 	FIXME("outer != NULL?\n");
@@ -520,7 +523,8 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
        /* create backbuffer surface */
        hr = This->create_backbuffer(This, pDDSD, ppSurf, pUnkOuter, NULL);
     }
-    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
+    else if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN) ||
+	     (pDDSD->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)) /* No difference in Wine right now */
     {
 	/* create offscreenplain surface */
 	hr = create_offscreen(This, pDDSD, ppSurf, pUnkOuter);
@@ -790,10 +794,20 @@ Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 {
     ICOM_THIS(IDirectDrawImpl,iface);
     TRACE("(%p,%p,%p), stub\n",This,pDriverCaps,pHELCaps);
-    if (pDriverCaps != NULL)
+    if (pDriverCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&This->caps);
-    if (pHELCaps != NULL)
+	if (TRACE_ON(ddraw)) {
+	  DPRINTF("Driver Caps : \n");
+	  DDRAW_dump_DDCAPS(pDriverCaps);
+	}
+    }
+    if (pHELCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pHELCaps,&This->caps);
+	if (TRACE_ON(ddraw)) {
+	  DPRINTF("HEL Caps : \n");
+	  DDRAW_dump_DDCAPS(pHELCaps);
+	}
+    }
     return DD_OK;
 }
 

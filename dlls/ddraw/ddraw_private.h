@@ -358,4 +358,5 @@ extern void DDRAW_dump_colorkeyflag(DWORD ck);
 extern void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd);
 extern void DDRAW_dump_cooperativelevel(DWORD cooplevel);
 extern void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *in);
+extern void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
 #endif /* __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H */

@@ -853,6 +853,9 @@ Main_DirectDrawSurface_GetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
     }
 
     DD_STRUCT_COPY_BYSIZE(pDDSD,&This->surface_desc);
+    if (TRACE_ON(ddraw)) {
+      DDRAW_dump_surface_desc(pDDSD);
+    }
     return DD_OK;
 }
 
