@@ -269,13 +269,13 @@ DEBUG_ReadTypeEnum(char **x) {
 
     if (**x=='(') {
 	(*x)++;					/* '(' */
-	filenr=strtol(*x,x,10);			/* <int> */
+	filenr=strtol(*x,x,10);	                /* <int> */
 	(*x)++;					/* ',' */
-	subnr=strtol(*x,x,10);			/* <int> */
+	subnr=strtol(*x,x,10);		        /* <int> */
 	(*x)++;					/* ')' */
     } else {
     	filenr = 0;
-	subnr = strtol(*x,x,10);		/* <int> */
+	subnr = strtol(*x,x,10);        	/* <int> */
     }
     return DEBUG_FileSubNr2StabEnum(filenr,subnr);
 }
@@ -344,13 +344,54 @@ static int DEBUG_PTS_ReadRange(struct ParseTypedefData* ptd, struct datatype** d
     return 0;
 }
 
-static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct datatype* sdt)
+static inline int DEBUG_PTS_ReadMethodInfo(struct ParseTypedefData* ptd,
+                                           struct datatype* dt)
+{
+    char*   tmp;
+
+    if (*ptd->ptr++ == ':')
+    {
+        if (!(tmp = strchr(ptd->ptr, ';'))) return -1;
+        ptd->ptr = tmp + 1;
+
+    }
+    if (!(*ptd->ptr >= '0' && *ptd->ptr <= '9')) return -1;
+    ptd->ptr++;
+    if (!(ptd->ptr[0] >= 'A' && *ptd->ptr <= 'D')) return -1;
+    ptd->ptr++;
+    if (*ptd->ptr++ != '.') return -1;
+    if (*ptd->ptr != ';')
+    {
+        while (*ptd->ptr)
+        {
+            /* some GCC versions (2.96 for example) really spit out wrongly defined 
+             * stabs... in some cases, the methods are not correctly handled
+             * so just swallow the garbage until either .; (end of method) 
+             * or ;; (end of struct) are found
+             */
+            if (ptd->ptr[0] == '.' && ptd->ptr[1] == ';')
+            {
+                ptd->ptr++;
+                break;
+            }
+            if (ptd->ptr[0] == ';' && ptd->ptr[1] == ';')
+                break;
+            ptd->ptr++;
+        }
+    }
+
+    return 0;
+}
+
+static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd,
+                                          struct datatype* sdt)
 {
     int			sz, ofs;
     char*		last;
     struct datatype*	adt;
     int			idx;
     int			doadd;
+    BOOL                inMethod;
 
     sz = strtol(ptd->ptr, &last, 10);
     if (last == ptd->ptr) return -1;
@@ -366,29 +407,62 @@ static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct d
     while (*ptd->ptr != ';') {
 	/* agg_name : type ',' <int:offset> ',' <int:size> */
 	idx = ptd->idx;
+
 	if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
         /* Ref. TSDF R2.130 Section 7.4.  When the field name is a method name
          * it is followed by two colons rather than one.
          */
-        if (*ptd->ptr == ':') ptd->ptr++;
+        if (*ptd->ptr == ':')
+        {
+            ptd->ptr++; 
+            {
+                char* psemic = strchr(ptd->ptr, ';');
+                char* psharp = strchr(ptd->ptr, '#');
 
+                if (!psharp || psharp > psemic)
+                {
+                    struct datatype*	dt = NULL;
+                    /* FIXME: hack... this shall be a ctor */
+                    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1) return -1;
+                    if (DEBUG_PTS_ReadMethodInfo(ptd, dt) == -1) return -1;
+                    if (*ptd->ptr++ != ';') return -1;
+                    ptd->idx = idx;
+                    continue;
+                }
+            }
+            inMethod = TRUE;
+        }
+        else
+        {
+            inMethod = FALSE;
+        }
+        
 	if (DEBUG_PTS_ReadTypedef(ptd, NULL, &adt) == -1) return -1;
 	if (!adt) return -1;
 
-	if (*ptd->ptr++ != ',') return -1;
-	if (DEBUG_PTS_ReadNum(ptd, &ofs) == -1) return -1;
-	if (*ptd->ptr++ != ',') return -1;
-	if (DEBUG_PTS_ReadNum(ptd, &sz) == -1) return -1;
-	if (*ptd->ptr++ != ';') return -1;
+	if (*ptd->ptr != ',')
+        {
+            if (!inMethod) return -1;
+            ptd->ptr++;
+        }
+        else
+        {
+            ptd->ptr++;
+            if (DEBUG_PTS_ReadNum(ptd, &ofs) == -1) return -1;
+            if (*ptd->ptr++ != ',') return -1;
+            if (DEBUG_PTS_ReadNum(ptd, &sz) == -1) return -1;
+            if (*ptd->ptr++ != ';') return -1;
 
-	if (doadd) DEBUG_AddStructElement(sdt, ptd->buf + idx, adt, ofs, sz);
+            if (doadd) DEBUG_AddStructElement(sdt, ptd->buf + idx, adt, ofs, sz);
+        }
 	ptd->idx = idx;
     }
     ptd->ptr++; /* ';' */
     return 0;
 }
 
-static inline int DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, struct datatype* edt)
+static inline int DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, 
+                                     struct datatype* edt)
 {
     int			ofs;
     int			idx;
@@ -405,7 +479,8 @@ static inline int DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, struct dataty
     return 0;
 }
 
-static inline int DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, struct datatype* adt)
+static inline int DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, 
+                                      struct datatype* adt)
 {
     int			lo, hi;
     struct datatype*	rdt;
@@ -463,14 +538,15 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	/* then the real definitions */
 	switch (*ptd->ptr++) {
 	case '*':
+        case '&':
 	    new_dt = DEBUG_NewDataType(DT_POINTER, NULL);
 	    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
 	    DEBUG_SetPointerType(new_dt, ref_dt);
            break;
-       case 'k': /* 'const' modifier */
-       case 'B': /* 'volatile' modifier */
-           /* just kinda ignore the modifier, I guess -gmt */
-           if (DEBUG_PTS_ReadTypedef(ptd, NULL, &new_dt) == -1) return -1;
+        case 'k': /* 'const' modifier */
+        case 'B': /* 'volatile' modifier */
+            /* just kinda ignore the modifier, I guess -gmt */
+            if (DEBUG_PTS_ReadTypedef(ptd, NULL, &new_dt) == -1) return -1;
 	    break;
 	case '(':
 	    ptd->ptr--;
@@ -588,7 +664,8 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
                 case 31: basic = DT_BASIC_LONGLONGINT; break;
                 case 32: basic = DT_BASIC_ULONGLONGINT; break;
                 default:
-                    DEBUG_Printf(DBG_CHN_MESG, "Unsupported integral type (%d/%d)\n", lo, sz);
+                    DEBUG_Printf(DBG_CHN_MESG, 
+                                 "Unsupported integral type (%d/%d)\n", lo, sz);
                     return -1;
                 }
                 if (!(new_dt = DEBUG_GetBasicType(basic))) {
@@ -598,6 +675,33 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
                 if (*ptd->ptr++ != ';') return -1;
             }
 	    break;
+        case '#':
+	    new_dt = DEBUG_NewDataType(DT_FUNC, NULL);
+            if (*ptd->ptr == '#')
+            {
+                ptd->ptr++;
+                if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+                DEBUG_SetPointerType(new_dt, ref_dt);
+                if (*ptd->ptr++ != ';') return -1;
+                
+            }
+            else
+            {
+                struct datatype* cls_dt;
+                struct datatype* pmt_dt;
+
+                if (DEBUG_PTS_ReadTypedef(ptd, NULL, &cls_dt) == -1) return -1;
+                if (*ptd->ptr++ != ',') return -1;
+                if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+                DEBUG_SetPointerType(new_dt, ref_dt);
+                while (*ptd->ptr++ == ',')
+                {
+                    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &pmt_dt) == -1) return -1;
+                }
+            }
+            if (DEBUG_PTS_ReadMethodInfo(ptd, new_dt) == -1) return -1;
+            
+            break;
 	default:
 	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", ptd->ptr[-1]);
 	    return -1;
@@ -647,11 +751,13 @@ static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
     if ((ptd.ptr = strchr(ptr, ':'))) {
 	ptd.ptr++;
 	if (*ptd.ptr != '(') ptd.ptr++;
+        /* most of type definitions take one char, except Tt */
+	if (*ptd.ptr != '(') ptd.ptr++;
 	ret = DEBUG_PTS_ReadTypedef(&ptd, typename, &dt);
     }
 
     if (ret == -1 || *ptd.ptr) {
-	DEBUG_Printf(DBG_CHN_MESG, "failure on %s at %s\n", ptr, ptd.ptr);
+	DEBUG_Printf(DBG_CHN_MESG, "Failure on %s at %s\n", ptr, ptd.ptr);
 	return FALSE;
     }
 
@@ -729,7 +835,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 
   strtabinc = 0;
   stabbuff[0] = '\0';
-  for(i=0; i < nstab; i++, stab_ptr++ )
+  for (i = 0; i < nstab; i++, stab_ptr++)
     {
       ptr = strs + (unsigned int) stab_ptr->n_un.n_name;
       if( ptr[strlen(ptr) - 1] == '\\' )
@@ -944,7 +1050,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
             }
 #endif
 
-          if( *ptr == '\0' )
+          if( *ptr == '\0' ) /* end of N_SO file */
             {
               /*
                * Nuke old path.
@@ -970,7 +1076,8 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            * If this is the main source, enable the debug stuff, otherwise
            * ignore it.
            */
-          in_external_file = !(subpath == NULL || strcmp(ptr, subpath) == 0);
+            in_external_file = !(subpath == NULL || strcmp(ptr, subpath) == 0);
+            in_external_file = FALSE; /* FIXME EPP hack FIXME */;
           break;
         case N_UNDF:
           strs += strtabinc;
@@ -1004,7 +1111,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
       stabbuff[0] = '\0';
 
 #if 0
-      DEBUG_Printf(DBG_CHN_MESG, "%d %x %s\n", stab_ptr->n_type,
+      DEBUG_Printf(DBG_CHN_MESG, "0x%02x %x %s\n", stab_ptr->n_type,
 		   (unsigned int) stab_ptr->n_value,
 		   strs + (unsigned int) stab_ptr->n_un.n_name);
 #endif
@@ -1044,7 +1151,7 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
   nsym = symtab->sh_size / sizeof(*symp);
   strp = (char *) (addr + strtab->sh_offset);
 
-  for(i=0; i < nsym; i++, symp++)
+  for (i = 0; i < nsym; i++, symp++)
     {
       /*
        * Ignore certain types of entries which really aren't of that much
@@ -1165,7 +1272,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
     }
 
     if (stabsect == -1 || stabstrsect == -1) {
-	DEBUG_Printf(DBG_CHN_WARN, "no .stab section\n");
+	DEBUG_Printf(DBG_CHN_WARN, "No .stab section\n");
 	goto leave;
     }
 
@@ -1181,7 +1288,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
 	dil = DIL_LOADED;
     } else {
 	dil = DIL_ERROR;
-	DEBUG_Printf(DBG_CHN_WARN, "bad stabs\n");
+	DEBUG_Printf(DBG_CHN_WARN, "Couldn't read correctly read stabs\n");
 	goto leave;
     }
 
@@ -1383,6 +1490,7 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
     for (lm_addr = (u_long)dbg_hdr->r_map; lm_addr; lm_addr = (u_long)lm.l_next) {
 	if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
 	    return FALSE;
+
 	if (lm.l_addr != 0 &&
 	    DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
 	    ehdr.e_type == ET_DYN && /* only look at dynamic modules */
