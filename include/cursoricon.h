@@ -48,11 +48,35 @@ typedef struct
     CURSORICONDIRENTRY  idEntries[1] WINE_PACKED;
 } CURSORICONDIR;
 
+typedef struct {
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD xHotspot;
+    WORD yHotspot;
+    DWORD dwDIBSize;
+    DWORD dwDIBOffset;
+} CURSORICONFILEDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONFILEDIRENTRY  idEntries[1];
+} CURSORICONFILEDIR;
+
+
 #pragma pack(4)
 
 extern HCURSOR16 CURSORICON_IconToCursor( HICON16 hIcon,
                                           BOOL32 bSemiTransparent );
 
+extern HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
+                                    int width, int height, int colors,
+                                    BOOL32 fCursor, UINT32 loadflags);
+				    
 extern Cursor CURSORICON_XCursor;  /* Current X cursor */
 
 #endif /* __WINE_CURSORICON_H */
