@@ -67,7 +67,7 @@ init	Shell32LibMain
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
   72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
   73 stdcall SHShellFolderView_Message(long long long) SHShellFolderView_Message
-  74 stub SHCreateStdEnumFmtEtc
+  74 stdcall SHCreateStdEnumFmtEtc(long ptr ptr) SHCreateStdEnumFmtEtc
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex

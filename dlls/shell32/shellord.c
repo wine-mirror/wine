@@ -19,6 +19,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#include "config.h"
+
 #include <string.h>
 #include <stdio.h>
 #include "winerror.h"
@@ -1353,4 +1355,30 @@ HRESULT WINAPI CIDLData_CreateFromIDArray(
 					     lppidlFiles, cpidlFiles);
     if (*ppdataObject) return S_OK;
     return E_OUTOFMEMORY;
+}
+
+/*************************************************************************
+ * SHCreateStdEnumFmtEtc			[SHELL32.74]
+ *
+ * NOTES
+ *
+ */
+HRESULT WINAPI SHCreateStdEnumFmtEtc(
+	DWORD cFormats,
+	const FORMATETC *lpFormats,
+	LPENUMFORMATETC *ppenumFormatetc)
+{
+	IEnumFORMATETC *pef;
+	HRESULT hRes;
+	TRACE("cf=%ld fe=%p pef=%p\n", cFormats, lpFormats, ppenumFormatetc);
+
+	pef = IEnumFORMATETC_Constructor(cFormats, lpFormats);
+	if (!pef)
+	  return E_OUTOFMEMORY;
+
+	IEnumFORMATETC_AddRef(pef);
+	hRes = IEnumFORMATETC_QueryInterface(pef, &IID_IEnumFORMATETC, (LPVOID*)ppenumFormatetc);
+	IEnumFORMATETC_Release(pef);
+
+	return hRes;
 }
