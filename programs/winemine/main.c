@@ -384,17 +384,15 @@ void LoadBoard( BOARD *p_board )
 
 void SaveBoard( BOARD *p_board )
 {
-    DWORD disp;
     HKEY hkey;
-    SECURITY_ATTRIBUTES sa;
     unsigned i;
     char data[16];
     char key_name[8];
 
     if( RegCreateKeyEx( HKEY_LOCAL_MACHINE,
                 "Software\\Wine\\WineMine", 0, NULL,
-                REG_OPTION_NON_VOLATILE, KEY_WRITE, &sa,
-                &hkey, &disp ) != ERROR_SUCCESS)
+                REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
+                &hkey, NULL ) != ERROR_SUCCESS)
         return;
 
     wsprintf( data, "%d", p_board->pos.x );
