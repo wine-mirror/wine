@@ -32,7 +32,7 @@ extern HBITMAP ConvertInfoBitmap( HDC hdc, BITMAPINFO * image );
 
 /* loader/signal.c */
 
-extern int init_wine_signals(void);
+extern void init_wine_signals(void);
 extern void wine_debug(int signal, int * regs);
 
 /* loader/wine.c */
@@ -56,18 +56,6 @@ extern void SpyInit(void);
 /* controls/widget.c */
 
 extern BOOL WIDGETS_Init(void);
-
-/* objects/palette.c */
-
-extern BOOL PALETTE_Init(void);
-
-/* objects/region.c */
-
-extern BOOL REGION_Init(void);
-
-/* windows/graphic.c */
-
-extern void DrawReliefRect(HDC hdc, RECT rect, int thickness, BOOL pressed);
 
 /* windows/dce.c */
 

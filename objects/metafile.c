@@ -7,10 +7,9 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 */
 
 #include <string.h>
-#include "windows.h"
 #include "gdi.h"
+#include "bitmap.h"
 #include "metafile.h"
-#include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_METAFILE */
 #include "debug.h"
@@ -25,8 +24,6 @@ static int HTLen;       /* allocated length of handle table */
  */
 HMETAFILE GetMetaFile(LPSTR lpFilename)
 {
-
-  DC *dc;
   HMETAFILE hmf;
   METAFILE *mf;
   METAHEADER *mh;
@@ -143,7 +140,6 @@ HMETAFILE CloseMetaFile(HDC hdc)
     METAFILE *mf;
     METAHEADER *mh;
     HMETAFILE hmf;
-    char buffer[15];
 /*    METARECORD *mr = (METARECORD *)&buffer;*/
 
     dprintf_metafile(stddeb,"CloseMetaFile\n");
@@ -804,6 +800,8 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 	*(mr->rdParam + 1) = LOWORD(logbrush->lbColor);
 	memcpy(mr->rdParam + 2, info, biSize + bmSize);
 	break;
+    default:
+        return FALSE;
     }
     if (!MF_WriteRecord(dc->w.hMetaFile, mr, len))
     {
@@ -961,6 +959,7 @@ BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 	       short height, HDC hdcSrc, short xSrc, short ySrc, DWORD rop)
 {
     fprintf(stdnimp,"MF_BitBlt: not implemented yet\n");
+    return FALSE;
 }
 
 
@@ -972,4 +971,5 @@ BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short widthSrc, short heightSrc, DWORD rop)
 {
     fprintf(stdnimp,"MF_StretchBlt: not implemented yet\n");
+    return FALSE;
 }

@@ -26,11 +26,11 @@ HEAP_CheckHeap(MDESC **free_list)
     for (m = *free_list; m != NULL; m = m->next)
     {
 	if (((int) m & 0xffff0000) != ((int) *free_list & 0xffff0000))
-	{   dprintf_heap(stddeb,"Invalid block %08x\n",m);
+	{   dprintf_heap(stddeb,"Invalid block %p\n",m);
 	    *(char *)0 = 0;
 	}
 	if (m->prev && (((int) m->prev & 0xffff0000) != ((int) *free_list & 0xffff0000)))
-	{   dprintf_heap(stddeb,"Invalid prev %08x from %08x\n", m->prev, m);
+	{   dprintf_heap(stddeb,"Invalid prev %p from %p\n", m->prev, m);
 	    *(char *)0 = 0;
 	}
     }
@@ -164,7 +164,7 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
     if (m->prev != m || m->next != m || 
 	((int) m & 0xffff0000) != ((int) *free_list & 0xffff0000))
     {
-	fprintf(stderr,"Attempt to resize bad pointer, m = %08x, *free_list = %08x\n",
+	fprintf(stderr,"Attempt to resize bad pointer, m = %p, *free_list = %p\n",
 	       m, free_list);
 	HEAP_CheckHeap(free_list);
 	return NULL;
@@ -235,7 +235,7 @@ HEAP_Free(MDESC **free_list, void *block)
     MDESC *m;
     MDESC *m_prev;
 
-    dprintf_heap(stddeb,"HeapFree: free_list %08x, block %08x\n", 
+    dprintf_heap(stddeb,"HeapFree: free_list %p, block %p\n", 
 	   free_list, block);
     if(debugging_heap)HEAP_CheckHeap(free_list);
 
@@ -246,7 +246,7 @@ HEAP_Free(MDESC **free_list, void *block)
     if (m_free->prev != m_free || m_free->next != m_free)
     {
 	fprintf(stderr,"Attempt to free bad pointer,"
-	       "m_free = %08x, *free_list = %08x\n",
+	       "m_free = %p, *free_list = %p\n",
 	       m_free, free_list);
 	return -1;
     }
@@ -261,7 +261,7 @@ HEAP_Free(MDESC **free_list, void *block)
     else if (((int) m_free & 0xffff0000) != ((int) *free_list & 0xffff0000))
     {
 	fprintf(stderr,"Attempt to free bad pointer,"
-	       "m_free = %08x, *free_list = %08x\n",
+	       "m_free = %p, *free_list = %p\n",
 	       m_free, free_list);
 	return -1;
     }
@@ -276,7 +276,7 @@ HEAP_Free(MDESC **free_list, void *block)
     if (m_prev != NULL && (int) m_prev + m_prev->length > (int) m_free)
     {
 	fprintf(stderr,"Attempt to free bad pointer,"
-	       "m_free = %08x, m_prev = %08x (length %x)\n",
+	       "m_free = %p, m_prev = %p (length %x)\n",
 	       m_free, m_prev, m_prev->length);
 	return -1;
     }
@@ -285,7 +285,7 @@ HEAP_Free(MDESC **free_list, void *block)
 	(int) m_free + m_free->length > ((int) m_free | 0xffff))
     {
 	fprintf(stderr,"Attempt to free bad pointer,"
-	       "m_free = %08x (length %x), m = %08x\n",
+	       "m_free = %p (length %x), m = %p\n",
 	       m_free, m_free->length, m);
 	return -1;
     }
@@ -347,7 +347,7 @@ HEAP_CheckLocalHeaps(char *file,int line)
     LHEAP *lh;
     dprintf_heap(stddeb,"CheckLocalHeaps called from %s %d\n",file,line);
     for(lh=LocalHeaps; lh!=NULL; lh = lh->next)
-    {	dprintf_heap(stddeb,"Checking heap %08x, free_list %08x\n",
+    {	dprintf_heap(stddeb,"Checking heap %p, free_list %p\n",
 		lh,lh->free_list);
 	HEAP_CheckHeap(&lh->free_list);
     }
@@ -361,7 +361,6 @@ LHEAP *
 HEAP_LocalFindHeap(unsigned short owner)
 {
     LHEAP *lh;
-    extern struct w_files *current_exe;
     
     dprintf_heap(stddeb,"HEAP_LocalFindHeap: owner %04x\n", owner);
 
@@ -383,7 +382,7 @@ HEAP_LocalInit(unsigned short owner, void *start, int length)
 {
     LHEAP *lh;
 
-    dprintf_heap(stddeb,"HEAP_LocalInit: owner %04x, start %08x, length %04x\n"
+    dprintf_heap(stddeb,"HEAP_LocalInit: owner %04x, start %p, length %04x\n"
 	   ,owner, start, length);
 
     if (length < 2 * sizeof(MDESC))
@@ -398,7 +397,7 @@ HEAP_LocalInit(unsigned short owner, void *start, int length)
     lh->local_table = NULL;
     lh->delta       = 0x20;
     HEAP_Init(&lh->free_list, start, length);
-    dprintf_heap(stddeb,"HEAP_LocalInit: free_list %08x, length %04x, prev %08x, next %08x\n",&lh->free_list,lh->free_list->length, lh->free_list->prev,lh->free_list->next);
+    dprintf_heap(stddeb,"HEAP_LocalInit: free_list %p, length %04x, prev %p, next %p\n",&lh->free_list,lh->free_list->length, lh->free_list->prev,lh->free_list->next);
     LocalHeaps = lh;
 }
 
@@ -553,9 +552,9 @@ WIN16_LocalReAlloc(unsigned int handle, int bytes, int flags)
     void *m;
     dprintf_heap(stddeb,"WIN16_LocalReAlloc(%04X, %d, %04X); !\n",	
 		 handle, bytes, flags);
-    dprintf_heap(stddeb,"WIN16_LocalReAlloc // LOCALHEAP()=%08X !\n", 
+    dprintf_heap(stddeb,"WIN16_LocalReAlloc // LOCALHEAP()=%p !\n", 
 		 LOCALHEAP());
-    dprintf_heap(stddeb,"WIN16_LocalReAlloc // *LOCALHEAP()=%08X !\n", 
+    dprintf_heap(stddeb,"WIN16_LocalReAlloc // *LOCALHEAP()=%p !\n", 
 		 *LOCALHEAP());
     m = HEAP_ReAlloc(LOCALHEAP(), (void *)
 		     (((int) *LOCALHEAP() & 0xffff0000) | (handle & 0xffff)),

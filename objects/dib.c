@@ -9,8 +9,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "dc.h"
-#include "gdi.h"
 #include "bitmap.h"
+#include "palette.h"
 #include "icon.h"
 #include "stddebug.h"
 #include "color.h"
@@ -395,7 +395,7 @@ static void DIB_SetImageBits_RLE8(WORD lines,
 			   * bytes are always read in pairs.  [JAY]
 			   */
 			  if (escape_code & 1) 
-			    (*pIn++); /* Get and throw away the pad byte. */
+			    pIn++; /* Throw away the pad byte. */
 			  break;
 		      }
 		  } /* switch (escape_code) : Escape sequence */

@@ -1,9 +1,9 @@
 /*
- *        Menus functions
-static char RCSId[] = "$Id$";
-static char Copyright[] = "Copyright  Martin Ayotte, 1993";
-static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ * Menu functions
+ *
+ * Copyright 1993 Martin Ayotte
+ * Copyright 1994 Alexandre Julliard
+ */
 
 /*
  * Note: the style MF_MOUSESELECT is used to mark popup items that
@@ -18,7 +18,6 @@ static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
 #include "windows.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
-#include "prototypes.h"
 #include "menu.h"
 #include "user.h"
 #include "win.h"
@@ -482,15 +481,13 @@ static void MENU_DrawMenuItem( HDC hdc, LPMENUITEM lpitem,
 	    GRAPH_DrawBitmap(hdc, lpitem->hCheckBit ? lpitem->hCheckBit :
 			     hStdCheck, rect.left,
 			     (rect.top+rect.bottom-check_bitmap_height) / 2,
-			     0, 0, check_bitmap_width, check_bitmap_height,
-			     SRCCOPY);
+			     0, 0, check_bitmap_width, check_bitmap_height );
 	}
 	else if (lpitem->hUnCheckBit != 0)  /* Not checked */
 	{
 	    GRAPH_DrawBitmap(hdc, lpitem->hUnCheckBit, rect.left,
 			     (rect.top+rect.bottom-check_bitmap_height) / 2,
-			     0, 0, check_bitmap_width, check_bitmap_height,
-			     SRCCOPY);
+			     0, 0, check_bitmap_width, check_bitmap_height );
 	}
 
 	  /* Draw the popup-menu arrow */
@@ -500,8 +497,7 @@ static void MENU_DrawMenuItem( HDC hdc, LPMENUITEM lpitem,
 	    GRAPH_DrawBitmap( hdc, hStdMnArrow,
 			      rect.right-arrow_bitmap_width-1,
 			      (rect.top+rect.bottom-arrow_bitmap_height) / 2,
-			      0, 0, arrow_bitmap_width, arrow_bitmap_height,
-			      SRCCOPY );
+                              0, 0, arrow_bitmap_width, arrow_bitmap_height );
 	}
 
 	rect.left += check_bitmap_width;
@@ -513,8 +509,7 @@ static void MENU_DrawMenuItem( HDC hdc, LPMENUITEM lpitem,
     if (lpitem->item_flags & MF_BITMAP)
     {
 	GRAPH_DrawBitmap( hdc, (HBITMAP)lpitem->hText, rect.left, rect.top,
-			  0, 0, rect.right-rect.left, rect.bottom-rect.top,
-			  SRCCOPY );
+                          0, 0, rect.right-rect.left, rect.bottom-rect.top );
 	return;
     }
     /* No bitmap - process text if present */
@@ -1018,7 +1013,7 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 {
     POPUPMENU *menu;
     MENUITEM *item;
-    HMENU hsubmenu;
+    HMENU hsubmenu = 0;
     WORD id;
 
     if (!hmenu) return FALSE;  /* Outside all menus */

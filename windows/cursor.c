@@ -12,11 +12,11 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include <unistd.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
-#include "prototypes.h"
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
 #include "library.h"
+#include "neexe.h"
 #include "wine.h"
 #include "cursor.h"
 #include "stddebug.h"
@@ -69,11 +69,10 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 	for (i = 0; i < NB_SYS_CURSORS; i++)
 	    if (system_cursor[i].name == cursor_name)
 	    {
-		hCursor = system_cursor[i].cursor;
-		break;
+		if (system_cursor[i].cursor) return system_cursor[i].cursor;
+                else break;
 	    }
 	if (i == NB_SYS_CURSORS) return 0;
-	if (hCursor) return hCursor;
     }
     hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 
     if (hCursor == (HCURSOR)NULL) return 0;

@@ -555,7 +555,7 @@ substrcmp(text, pat, len)
     if ((c = *pat) == '\0')
         return *text == '\0';
     for ( ; *text; text++)
-        if (*text == c && strncmp(text, pat, len) == 0)
+        if ((CHAR)*text == c && strncmp(text, pat, len) == 0)
             return 0;
     return 1;
 }

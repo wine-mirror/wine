@@ -14,9 +14,9 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-#include "prototypes.h"
 #include "heap.h"
 #include "win.h"
+#include "message.h"
 #include "clipboard.h"
 #include "stddebug.h"
 #include "debug.h"

@@ -77,6 +77,7 @@
 
 #ifdef DEBUG_NONE
 #undef DEBUG_ACCEL
+#undef DEBUG_BITBLT
 #undef DEBUG_BITMAP
 #undef DEBUG_CALLBACK
 #undef DEBUG_CARET
@@ -146,6 +147,7 @@
 
 #ifdef DEBUG_ALL
 #define DEBUG_ACCEL
+#define DEBUG_BITBLT
 #define DEBUG_BITMAP
 #define DEBUG_CALLBACK
 #define DEBUG_CARET

@@ -4,8 +4,6 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-
 #include <math.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -15,7 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #define PI M_PI
 #endif
 #include "dc.h"
-#include "gdi.h"
+#include "bitmap.h"
 #include "metafile.h"
 #include "syscolor.h"
 #include "stddebug.h"
@@ -250,6 +248,16 @@ BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
     if (bottom < top)
     	swap_int(&bottom, &top);
     
+    if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
+        (dc->u.x.pen.width < right-left-1) &&
+        (dc->u.x.pen.width < bottom-top-1))
+    {
+        left   += dc->u.x.pen.width / 2;
+        right  -= (dc->u.x.pen.width + 1) / 2;
+        top    += dc->u.x.pen.width / 2;
+        bottom -= (dc->u.x.pen.width + 1) / 2;
+    }
+
     if (DC_SetupGCForBrush( dc ))
 	XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
@@ -286,7 +294,8 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
     if (bottom < top)
     	swap_int(&bottom, &top);
 
-    if ((left == right) || (top == bottom)) {
+    if ((left == right) || (top == bottom))
+    {
 	if (DC_SetupGCForPen( dc ))
 	    XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
 		  dc->w.DCOrgX + left,
@@ -296,6 +305,16 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
 	return TRUE;
     }
     
+    if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
+        (dc->u.x.pen.width < right-left) &&
+        (dc->u.x.pen.width < bottom-top))
+    {
+        left   += dc->u.x.pen.width / 2;
+        right  -= (dc->u.x.pen.width + 1) / 2;
+        top    += dc->u.x.pen.width / 2;
+        bottom -= (dc->u.x.pen.width + 1) / 2;
+    }
+
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
@@ -330,7 +349,8 @@ BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
     y1 = YLPTODP(dc, top);
     x2 = XLPTODP(dc, right - ell_width);
     y2 = YLPTODP(dc, bottom - ell_height);
-    if (DC_SetupGCForBrush(dc)) {
+    if (DC_SetupGCForBrush( dc ))
+    {
 	XFillArc(display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y1,
 		        ell_width, ell_height, 90 * 64, 90 * 64);
@@ -428,7 +448,8 @@ int FrameRect( HDC hdc, LPRECT rect, HBRUSH hbrush )
     right  = XLPTODP( dc, rect->right );
     bottom = YLPTODP( dc, rect->bottom );
     
-    if (DC_SetupGCForBrush( dc )) {
+    if (DC_SetupGCForBrush( dc ))
+    {
    	PatBlt( hdc, rect->left, rect->top, 1,
 	    rect->bottom - rect->top, PATCOPY );
 	PatBlt( hdc, rect->right - 1, rect->top, 1,
@@ -498,19 +519,6 @@ COLORREF GetPixel( HDC hdc, short x, short y )
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
-#if 0
-    if ((x < 0) || (y < 0)) return 0;
-    
-    if (!(dc->w.flags & DC_MEMORY))
-    {
-	XWindowAttributes win_attr;
-	
-	if (!XGetWindowAttributes( display, dc->u.x.drawable, &win_attr ))
-	    return 0;
-	if (win_attr.map_state != IsViewable) return 0;
-	if ((x >= win_attr.width) || (y >= win_attr.height)) return 0;
-    }
-#endif
     image = XGetImage( display, dc->u.x.drawable, x, y,
 		       1, 1, AllPlanes, ZPixmap );
     pixel = XGetPixel( image, 0, 0 );
@@ -533,6 +541,8 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
     HRGN tmpVisRgn, prevVisRgn;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
+
+      /* FIXME: the region is supposed to be in logical coordinates */
 
       /* Modify visible region */
 
@@ -627,7 +637,7 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
  * Faster than CreateCompatibleDC() + SelectBitmap() + BitBlt() + DeleteDC().
  */
 BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-		       int xsrc, int ysrc, int width, int height, int rop )
+		       int xsrc, int ysrc, int width, int height )
 {
     XGCValues val;
     BITMAPOBJ *bmp;
@@ -636,7 +646,7 @@ BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return FALSE;
-    val.function   = DC_XROPfunction[(rop >> 16) & 0x0f];
+    val.function   = GXcopy;
     val.foreground = dc->w.textPixel;
     val.background = dc->w.backgroundPixel;
     XChangeGC(display, dc->u.x.gc, GCFunction|GCForeground|GCBackground, &val);
@@ -777,7 +787,7 @@ BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT counts, WORD polygons )
 	/* MF_MetaPoly(dc, META_POLYGON, pt, count); */
 	return TRUE;
     }
-      /* The points should be converted to device coords before */
+      /* FIXME: The points should be converted to device coords before */
       /* creating the region. But as CreatePolyPolygonRgn is not */
       /* really correct either, it doesn't matter much... */
       /* At least the outline will be correct :-) */

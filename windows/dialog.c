@@ -35,12 +35,18 @@ BOOL DIALOG_Init()
     
       /* Calculate the dialog base units */
 
-    if (!(hdc = GetDC(GetDesktopWindow()))) return FALSE;
+    if (!(hdc = GetDC( 0 ))) return FALSE;
     GetTextMetrics( hdc, &tm );
     ReleaseDC( 0, hdc );
     xBaseUnit = tm.tmAveCharWidth;
     yBaseUnit = tm.tmHeight;
-    dprintf_dialog(stddeb, "DIALOG_Init: base units = %d,%d\n", xBaseUnit, yBaseUnit );
+
+      /* Dialog units are based on a proportional system font */
+      /* so we adjust them a bit for a fixed font. */
+    if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH) xBaseUnit = xBaseUnit * 5 / 4;
+
+    dprintf_dialog( stddeb, "DIALOG_Init: base units = %d,%d\n",
+                    xBaseUnit, yBaseUnit );
     return TRUE;
 }
 
@@ -152,7 +158,7 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
 {
     dprintf_dialog(stddeb, "DIALOG %d, %d, %d, %d\n", result->header->x, result->header->y,
 	    result->header->cx, result->header->cy );
-    dprintf_dialog(stddeb, " STYLE %08x\n", result->header->style );
+    dprintf_dialog(stddeb, " STYLE %08lx\n", result->header->style );
     dprintf_dialog(stddeb, " CAPTION '%s'\n", result->caption );
     dprintf_dialog(stddeb, " CLASS '%s'\n", result->className );
     if (result->menuName[0] == 0xff)
@@ -271,6 +277,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    ReleaseDC( 0, hdc );
 	    xUnit = tm.tmAveCharWidth;
 	    yUnit = tm.tmHeight;
+            if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH)
+                xBaseUnit = xBaseUnit * 5 / 4;  /* See DIALOG_Init() */
 	}
     }
     
@@ -464,16 +472,6 @@ int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
     return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
-/***********************************************************************
- *           DialogBoxIndirectPtr
- *  like DialogBoxIndirect, but expects pointer to template
- */
-int DialogBoxIndirectPtr( HINSTANCE hInst, LPCSTR dlgTemplate,
-                          HWND owner, WNDPROC dlgProc)
-{
-    return DialogBoxIndirectParamPtr(hInst, dlgTemplate, owner, dlgProc, 0);
-}
-
 
 /***********************************************************************
  *           DialogBoxIndirectParam   (USER.240)
@@ -491,6 +489,7 @@ int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
     return -1;
 }
 
+
 /***********************************************************************
  *           DialogBoxIndirectParamPtr
  *  like DialogBoxIndirectParam, but expects pointer to template
@@ -504,6 +503,15 @@ int DialogBoxIndirectParamPtr(HINSTANCE hInst,LPCSTR dlgTemplate,
     return -1;
 }
 
+/***********************************************************************
+ *           DialogBoxIndirectPtr
+ *  like DialogBoxIndirect, but expects pointer to template
+ */
+int DialogBoxIndirectPtr( HINSTANCE hInst, LPCSTR dlgTemplate,
+                          HWND owner, WNDPROC dlgProc)
+{
+    return DialogBoxIndirectParamPtr(hInst, dlgTemplate, owner, dlgProc, 0);
+}
 
 /***********************************************************************
  *           EndDialog   (USER.88)
@@ -530,16 +538,16 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd )) return FALSE;
 
       /* Only the key messages get special processing */
-    if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_SYSCHAR) ||
-	(msg->message == WM_CHAR))
+    if ((msg->message != WM_KEYDOWN) &&
+        (msg->message != WM_SYSCHAR) &&
+	(msg->message != WM_CHAR))
+        return FALSE;
+
+    dlgCode = SendMessage( msg->hwnd, WM_GETDLGCODE, 0, 0 );
+    if (dlgCode & DLGC_WANTMESSAGE)
     {
-	dlgCode = SendMessage( msg->hwnd, WM_GETDLGCODE, 0, 0 );
-        if (dlgCode & DLGC_WANTMESSAGE)
-        {
-            DispatchMessage( msg );
-            return TRUE;
-        }
+        DispatchMessage( msg );
+        return TRUE;
     }
 
     switch(msg->message)

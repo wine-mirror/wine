@@ -214,7 +214,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 	XFlush(display);
     fprintf(stderr,"In win_fault %x:%lx\n", scp->sc_cs, scp->sc_eip);
 #if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
-    wine_debug(signal, scp);  /* Enter our debugger */
+    wine_debug(signal, (int *)scp);  /* Enter our debugger */
 #else
     fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
     dump = (int*) scp;
@@ -229,7 +229,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 #endif
 }
 
-int init_wine_signals(void)
+void init_wine_signals(void)
 {
 #ifdef linux
 	segv_act.sa_handler = (__sighandler_t) win_fault;

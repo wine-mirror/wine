@@ -3,8 +3,8 @@
  *
  * Copyright 1993 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include "gdi.h"
@@ -17,8 +17,56 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 static DeviceCaps * displayDevCaps = NULL;
 
-extern const WIN_DC_INFO DCVAL_defaultValues;
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
+
+  /* Default DC values */
+static const WIN_DC_INFO DC_defaultValues =
+{
+    0,                      /* flags */
+    NULL,                   /* devCaps */
+    0,                      /* hMetaFile */
+    0,                      /* hClipRgn */
+    0,                      /* hVisRgn */
+    0,                      /* hGCClipRgn */
+    STOCK_BLACK_PEN,        /* hPen */
+    STOCK_WHITE_BRUSH,      /* hBrush */
+    STOCK_SYSTEM_FONT,      /* hFont */
+    0,                      /* hBitmap */
+    0,                      /* hFirstBitmap */
+    0,                      /* hDevice */
+    STOCK_DEFAULT_PALETTE,  /* hPalette */
+    R2_COPYPEN,             /* ROPmode */
+    ALTERNATE,              /* polyFillMode */
+    BLACKONWHITE,           /* stretchBltMode */
+    ABSOLUTE,               /* relAbsMode */
+    OPAQUE,                 /* backgroundMode */
+    RGB( 255, 255, 255 ),   /* backgroundColor */
+    RGB( 0, 0, 0 ),         /* textColor */
+    0,                      /* backgroundPixel */
+    0,                      /* textPixel */
+    0,                      /* brushOrgX */
+    0,                      /* brushOrgY */
+    TA_LEFT | TA_TOP | TA_NOUPDATECP,  /* textAlign */
+    0,                      /* charExtra */
+    0,                      /* breakTotalExtra */
+    0,                      /* breakCount */
+    0,                      /* breakExtra */
+    0,                      /* breakRem */
+    1,                      /* bitsPerPixel */
+    MM_TEXT,                /* MapMode */
+    0,                      /* DCOrgX */
+    0,                      /* DCOrgY */
+    0,                      /* CursPosX */
+    0,                      /* CursPosY */
+    0,                      /* WndOrgX */
+    0,                      /* WndOrgY */
+    1,                      /* WndExtX */
+    1,                      /* WndExtY */
+    0,                      /* VportOrgX */
+    0,                      /* VportOrgY */
+    1,                      /* VportExtX */
+    1                       /* VportExtY */
+};
 
   /* ROP code to GC function conversion */
 const int DC_XROPfunction[16] =
@@ -109,17 +157,19 @@ void DC_InitDC( HDC hdc )
 
 
 /***********************************************************************
- *           DC_SetupDCForBrush
+ *           DC_SetupDCForPatBlt
  *
- * Setup dc->u.x.gc for drawing operations using current brush.
- * Return 0 if brush is BS_NULL, 1 otherwise.
+ * Setup the GC for a PatBlt operation using current brush.
+ * If fMapColors is TRUE, X pixels are mapped to Windows colors.
+ * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-int DC_SetupGCForBrush( DC * dc )
+BOOL DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
 {
     XGCValues val;
-    unsigned long mask = 0;
+    unsigned long mask;
+    Pixmap pixmap = 0;
 
-    if (dc->u.x.brush.style == BS_NULL) return 0;
+    if (dc->u.x.brush.style == BS_NULL) return FALSE;
     if (dc->u.x.brush.pixel == -1)
     {
 	/* Special case used for monochrome pattern brushes.
@@ -134,27 +184,68 @@ int DC_SetupGCForBrush( DC * dc )
 	val.foreground = dc->u.x.brush.pixel;
 	val.background = dc->w.backgroundPixel;
     }
+    if (fMapColors && COLOR_PixelToPalette)
+    {
+        val.foreground = COLOR_PixelToPalette[val.foreground];
+        val.background = COLOR_PixelToPalette[val.background];
+    }
+
     val.function = DC_XROPfunction[dc->w.ROPmode-1];
     val.fill_style = dc->u.x.brush.fillStyle;
-    if ((val.fill_style==FillStippled) || (val.fill_style==FillOpaqueStippled))
+    switch(val.fill_style)
     {
+    case FillStippled:
+    case FillOpaqueStippled:
 	if (dc->w.backgroundMode==OPAQUE) val.fill_style = FillOpaqueStippled;
 	val.stipple = dc->u.x.brush.pixmap;
 	mask = GCStipple;
-    }
-    else if (val.fill_style == FillTiled)
-    {
-	val.tile = dc->u.x.brush.pixmap;
+        break;
+
+    case FillTiled:
+        if (fMapColors && COLOR_PixelToPalette)
+        {
+            register int x, y;
+            XImage *image;
+            pixmap = XCreatePixmap( display, rootWindow, 8, 8, screenDepth );
+            image = XGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
+                               AllPlanes, ZPixmap );
+            for (y = 0; y < 8; y++)
+                for (x = 0; x < 8; x++)
+                    XPutPixel( image, x, y,
+                               COLOR_PixelToPalette[XGetPixel( image, x, y)] );
+            XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
+            XDestroyImage( image );
+            val.tile = pixmap;
+        }
+        else val.tile = dc->u.x.brush.pixmap;
 	mask = GCTile;
+        break;
+
+    default:
+        mask = 0;
+        break;
     }
     val.ts_x_origin = dc->w.DCOrgX + dc->w.brushOrgX;
     val.ts_y_origin = dc->w.DCOrgY + dc->w.brushOrgY;
     val.fill_rule = (dc->w.polyFillMode==WINDING) ? WindingRule : EvenOddRule;
-    XChangeGC( display, dc->u.x.gc, 
+    XChangeGC( display, gc, 
 	       GCFunction | GCForeground | GCBackground | GCFillStyle |
 	       GCFillRule | GCTileStipXOrigin | GCTileStipYOrigin | mask,
 	       &val );
-    return 1;
+    if (pixmap) XFreePixmap( display, pixmap );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DC_SetupDCForBrush
+ *
+ * Setup dc->u.x.gc for drawing operations using current brush.
+ * Return FALSE if brush is BS_NULL, TRUE otherwise.
+ */
+BOOL DC_SetupGCForBrush( DC * dc )
+{
+    return DC_SetupGCForPatBlt( dc, dc->u.x.gc, FALSE );
 }
 
 
@@ -162,13 +253,13 @@ int DC_SetupGCForBrush( DC * dc )
  *           DC_SetupDCForPen
  *
  * Setup dc->u.x.gc for drawing operations using current pen.
- * Return 0 if pen is PS_NULL, 1 otherwise.
+ * Return FALSE if pen is PS_NULL, TRUE otherwise.
  */
-int DC_SetupGCForPen( DC * dc )
+BOOL DC_SetupGCForPen( DC * dc )
 {
     XGCValues val;
 
-    if (dc->u.x.pen.style == PS_NULL) return 0;
+    if (dc->u.x.pen.style == PS_NULL) return FALSE;
     val.function   = DC_XROPfunction[dc->w.ROPmode-1];
     val.foreground = dc->u.x.pen.pixel;
     val.background = dc->w.backgroundPixel;
@@ -187,7 +278,7 @@ int DC_SetupGCForPen( DC * dc )
     XChangeGC( display, dc->u.x.gc, 
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |
 	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
-    return 1;    
+    return TRUE;
 }
 
 
@@ -195,15 +286,16 @@ int DC_SetupGCForPen( DC * dc )
  *           DC_SetupGCForText
  *
  * Setup dc->u.x.gc for text drawing operations.
- * Return 0 if the font is null, 1 otherwise.
+ * Return FALSE if the font is null, TRUE otherwise.
  */
-int DC_SetupGCForText( DC * dc )
+BOOL DC_SetupGCForText( DC * dc )
 {
     XGCValues val;
 
     if (!dc->u.x.font.fstruct)
     {
-	FONT_SelectObject(dc, STOCK_SYSTEM_FONT, NULL);
+        fprintf( stderr, "DC_SetupGCForText: fstruct is NULL. Please report this\n" );
+        return FALSE;
     }
     val.function   = GXcopy;  /* Text is always GXcopy */
     val.foreground = dc->w.textPixel;
@@ -213,7 +305,7 @@ int DC_SetupGCForText( DC * dc )
     XChangeGC( display, dc->u.x.gc, 
 	       GCFunction | GCForeground | GCBackground | GCFillStyle |
 	       GCFont, &val );
-    return 1;
+    return TRUE;
 }
 
 
@@ -364,7 +456,7 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     }
 
     dc->saveLevel = 0;
-    memcpy( &dc->w, &DCVAL_defaultValues, sizeof(DCVAL_defaultValues) );
+    memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
     dc->u.x.drawable   = rootWindow;
@@ -421,7 +513,7 @@ HDC CreateCompatibleDC( HDC hdc )
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     
     dc->saveLevel = 0;
-    memcpy( &dc->w, &DCVAL_defaultValues, sizeof(DCVAL_defaultValues) );
+    memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
     dc->u.x.drawable   = bmp->pixmap;
@@ -430,6 +522,7 @@ HDC CreateCompatibleDC( HDC hdc )
     dc->w.bitsPerPixel = 1;
     dc->w.devCaps      = displayDevCaps;
     dc->w.hBitmap      = hbitmap;
+    dc->w.hFirstBitmap = hbitmap;
     dc->w.hVisRgn      = CreateRectRgn( 0, 0, 1, 1 );
 
     if (!dc->w.hVisRgn)
@@ -473,8 +566,7 @@ BOOL DeleteDC( HDC hdc )
 	XFreeGC( display, dc->u.x.gc );
     }
 
-    if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hBitmap );
-
+    if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
     if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );

@@ -89,6 +89,43 @@ void ChopOffSlash(char *path)
 		path[strlen(path)-1] = '\0';
 }
 
+void ToUnix(char *s)
+{
+	/*  \WINDOWS\\SYSTEM   =>   /windows/system */
+
+	char *p;
+
+	for (p = s; *p; p++) 
+	{
+		if (*p != '\\')
+			*s++ = tolower(*p);
+		else {
+			*s++ = '/';
+			if (*(p+1) == '/' || *(p+1) == '\\')
+				p++;
+		}
+	}
+	*s = '\0';
+}
+
+void ToDos(char *s)
+{
+	/* /windows//system   =>   \WINDOWS\SYSTEM */
+
+	char *p;
+	for (p = s; *p; p++) 
+	{
+		if (*p != '/')
+			*s++ = toupper(*p);
+		else {
+			*s++ = '\\';
+			if (*(p+1) == '/' || *(p+1) == '\\') 
+			    p++;
+		}
+	}
+	*s = '\0';
+}
+
 void DOS_InitFS(void)
 {
 	int x;
@@ -277,43 +314,6 @@ void DOS_SetDefaultDrive(int drive)
     dprintf_dosfs(stddeb,"SetDefaultDrive to %c:\n",'A'+drive);
 	if (DOS_ValidDrive(drive))
 		CurrentDrive = drive;
-}
-
-void ToUnix(char *s)
-{
-	/*  \WINDOWS\\SYSTEM   =>   /windows/system */
-
-	char *p;
-
-	for (p = s; *p; p++) 
-	{
-		if (*p != '\\')
-			*s++ = tolower(*p);
-		else {
-			*s++ = '/';
-			if (*(p+1) == '/' || *(p+1) == '\\')
-				p++;
-		}
-	}
-	*s = '\0';
-}
-
-void ToDos(char *s)
-{
-	/* /windows//system   =>   \WINDOWS\SYSTEM */
-
-	char *p;
-	for (p = s; *p; p++) 
-	{
-		if (*p != '/')
-			*s++ = toupper(*p);
-		else {
-			*s++ = '\\';
-			if (*(p+1) == '/' || *(p+1) == '\\') 
-			    p++;
-		}
-	}
-	*s = '\0';
 }
 
 int DOS_DisableDrive(int drive)

@@ -37,7 +37,7 @@ typedef LPSTR 	LPNETRESOURCE;
 int WNetGetConnection(LPSTR lpLocalName, 
 	LPSTR lpRemoteName, UINT FAR *cbRemoteName)
 {
-	printf("EMPTY STUB !!! WNetGetConnection('%s', %08X, %08X);\n", 
+	printf("EMPTY STUB !!! WNetGetConnection('%s', %p, %p);\n", 
 		lpLocalName, lpRemoteName, cbRemoteName);
 	return	WN_NET_ERROR;
 }
@@ -55,7 +55,7 @@ int WNetGetCaps(WORD capability)
  */
 UINT WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
-	printf("EMPTY STUB !!! WNetGetUser('%s', %08X, %08X);\n", 
+	printf("EMPTY STUB !!! WNetGetUser('%s', %p, %p);\n", 
 							lpLocalName, lpUserName, lpSize);
 	return WN_NET_ERROR;
 }
@@ -65,7 +65,7 @@ UINT WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
  */
 UINT WNetAddConnection(LPSTR lpNetPath, LPSTR lpPassWord, LPSTR lpLocalName)
 {
-	printf("EMPTY STUB !!! WNetAddConnection('%s', %08X, '%s');\n",
+	printf("EMPTY STUB !!! WNetAddConnection('%s', %p, '%s');\n",
 							lpNetPath, lpPassWord, lpLocalName);
 	return WN_NET_ERROR;
 }
@@ -87,7 +87,7 @@ UINT WNetCancelConnection(LPSTR lpName, BOOL bForce)
 UINT WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord, 
 		LPSTR lpLocalName, LPSTR lpUserName)
 {
-	printf("EMPTY STUB !!! WNetAddConnection2('%s', %08X, '%s', '%s');\n",
+	printf("EMPTY STUB !!! WNetAddConnection2('%s', %p, '%s', '%s');\n",
 					lpNetPath, lpPassWord, lpLocalName, lpUserName);
 	return WN_NET_ERROR;
 }
@@ -107,7 +107,7 @@ UINT WNetCloseEnum(HANDLE hEnum)
 UINT WNetEnumResource(HANDLE hEnum, DWORD cRequ, 
 				DWORD *lpCount, LPVOID lpBuf)
 {
-	printf("EMPTY STUB !!! WNetEnumResource(%04X, %08X, %08X, %08X);\n", 
+	printf("EMPTY STUB !!! WNetEnumResource(%04X, %08lX, %p, %p);\n", 
 							hEnum, cRequ, lpCount, lpBuf);
 	return WN_NET_ERROR;
 }
@@ -118,7 +118,7 @@ UINT WNetEnumResource(HANDLE hEnum, DWORD cRequ,
 UINT WNetOpenEnum(DWORD dwScope, DWORD dwType, 
 	LPNETRESOURCE lpNet, HANDLE FAR *lphEnum)
 {
-	printf("EMPTY STUB !!! WNetOpenEnum(%08X, %08X, %08X, %08X);\n",
+	printf("EMPTY STUB !!! WNetOpenEnum(%08lX, %08lX, %p, %p);\n",
 							dwScope, dwType, lpNet, lphEnum);
 	return WN_NET_ERROR;
 }

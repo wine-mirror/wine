@@ -1091,7 +1091,7 @@ int ListBoxGetSel(HWND hwnd, WORD wIndex)
 int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 {
 	struct dosdirent *dp;
-	int	x, wRet;
+	int	x, wRet = LB_OKAY;
 	BOOL    OldFlag;
 	char 	temp[256];
     LPHEADLIST 	lphl;

@@ -95,7 +95,7 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 		    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper,
 				      x, y, 0, 0, 
 				      infoPtr->bitmapSize.cx,
-				      infoPtr->bitmapSize.cy, SRCCOPY );
+				      infoPtr->bitmapSize.cy );
 	}
 	else
 	{
@@ -104,8 +104,7 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 	    if (x < 0) x = 0;
 	    if (y < 0) y = 0;
 	    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper, x, y, 0, 0, 
-			      infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy,
-			      SRCCOPY );
+                              infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy );
 	}
     }
 

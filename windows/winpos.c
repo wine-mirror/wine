@@ -4,8 +4,6 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-
 #include "sysmetrics.h"
 #include "user.h"
 #include "win.h"

@@ -6,7 +6,6 @@ static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "prototypes.h"
 #include "windows.h"
 #include "keyboard.h"
 #include "stddebug.h"

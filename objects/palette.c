@@ -15,8 +15,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 #endif
 
 #include <X11/Xlib.h>
-#include "gdi.h"
 #include "color.h"
+#include "palette.h"
 #include "stddebug.h"
 /* #define DEBUG_PALETTE */
 #include "debug.h"

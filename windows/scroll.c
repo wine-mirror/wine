@@ -5,8 +5,6 @@
  *
  */
 
-static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
-
 #include <stdlib.h>
 #include "windows.h"
 #include "gdi.h"

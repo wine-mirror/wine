@@ -204,9 +204,9 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
 
 
 /***********************************************************************
- *           BMP_DeleteObject
+ *           BITMAP_DeleteObject
  */
-BOOL BMP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
+BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
 {
     XFreePixmap( display, bitmap->pixmap );
     return GDI_FreeObject( hbitmap );
@@ -214,9 +214,9 @@ BOOL BMP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
 
 	
 /***********************************************************************
- *           BMP_GetObject
+ *           BITMAP_GetObject
  */
-int BMP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer )
+int BITMAP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer )
 {
     if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
     memcpy( buffer, &bmp->bitmap, count );

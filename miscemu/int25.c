@@ -25,7 +25,7 @@ int do_int25(struct sigcontext_struct *context)
 		length = CX;
 	}
 	dprintf_int(stdnimp, "int25: abs diskread, drive %d, sector %ld, "
-	"count %ld, buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
+	"count %ld, buffer %d\n", (int)EAX & 0xff, begin, length, (int) dataptr);
 
 	memset(dataptr, 0, length * 512);
 

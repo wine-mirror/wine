@@ -491,7 +491,6 @@ int main( int argc, char *argv[] )
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();
-    Font_Init();
 #ifndef WINELIB
     INT21_Init();
 #endif
@@ -553,7 +552,7 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 				}
 			free(lpEnv->Value);
 			lpEnv->Value = malloc(nCount);
-			if (lpNewEnv->Value == NULL) {
+			if (lpEnv->Value == NULL) {
 				printf("SetEnvironment() // Error allocating entry value !\n");
 				return 0;
 			}

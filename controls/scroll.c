@@ -163,6 +163,9 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT *lprect,
 	GetClientRect( hwnd, lprect );
         vertical = ((wndPtr->dwStyle & SBS_VERT) != 0);
 	break;
+
+    default:
+        return FALSE;
     }
 
     if (vertical) pixels = lprect->bottom - lprect->top;
@@ -267,6 +270,7 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLINFO *infoPtr, RECT *rect,
     HBITMAP hbmpPrev = SelectObject( hdcMem, vertical ?
                                     TOP_ARROW(infoPtr->flags, top_pressed)
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
+    SetStretchBltMode( hdc, STRETCH_DELETESCANS );
     StretchBlt( hdc, rect->left, rect->top,
                 vertical ? rect->right-rect->left : arrowSize+1,
                 vertical ? arrowSize+1 : rect->bottom-rect->top,
@@ -385,7 +389,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
     if (!thumbPos)  /* No thumb to draw */
     {
         PatBlt( hdc, r.left+1, r.top+1, r.right - r.left - 2,
-                r.bottom - r.top - 2, SRCCOPY );
+                r.bottom - r.top - 2, PATCOPY );
         return;
     }
 
@@ -394,12 +398,12 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
         PatBlt( hdc, r.left + 1, r.top + 1,
                 r.right - r.left - 2,
                 thumbPos - arrowSize,
-                top_selected ? NOTSRCCOPY : SRCCOPY );
+                top_selected ? 0x0f0000 : PATCOPY );
         r.top += thumbPos - arrowSize;
         PatBlt( hdc, r.left + 1, r.top + SYSMETRICS_CYHSCROLL + 1,
                 r.right - r.left - 2,
                 r.bottom - r.top - SYSMETRICS_CYHSCROLL - 2,
-                bottom_selected ? NOTSRCCOPY : SRCCOPY );
+                bottom_selected ? 0x0f0000 : PATCOPY );
         r.bottom = r.top + SYSMETRICS_CYHSCROLL + 1;
     }
     else  /* horizontal */
@@ -407,12 +411,12 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
         PatBlt( hdc, r.left + 1, r.top + 1,
                 thumbPos - arrowSize,
                 r.bottom - r.top - 2,
-                top_selected ? NOTSRCCOPY : SRCCOPY );
+                top_selected ? 0x0f0000 : PATCOPY );
         r.left += thumbPos - arrowSize;
         PatBlt( hdc, r.left + SYSMETRICS_CYHSCROLL + 1, r.top + 1,
                 r.right - r.left - SYSMETRICS_CYHSCROLL - 2,
                 r.bottom - r.top - 2,
-                bottom_selected ? NOTSRCCOPY : SRCCOPY );
+                bottom_selected ? 0x0f0000 : PATCOPY );
         r.right = r.left + SYSMETRICS_CXVSCROLL + 1;
     }
 

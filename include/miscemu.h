@@ -17,6 +17,10 @@ extern void inportb(struct sigcontext_struct *context);
 extern void inport(struct sigcontext_struct *context);
 extern void outportb(struct sigcontext_struct *context);
 extern void outport(struct sigcontext_struct *context);
+extern void inportb_abs(struct sigcontext_struct *context);
+extern void inport_abs(struct sigcontext_struct *context);
+extern void outportb_abs(struct sigcontext_struct *context);
+extern void outport_abs(struct sigcontext_struct *context);
 
 extern void IntBarf(int i, struct sigcontext_struct *context);
 

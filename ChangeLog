@@ -1,3 +1,22 @@
+Thu Jan  5 13:37:42 1995  Cameron Heide  (heide@ee.ualberta.ca)
+
+	* [memory/global.c]
+	GlobalCompact should now return the correct value when the
+	largest run of free blocks includes the last block.
+
+	* [windows/mdi.c]
+	Tiling and cascading windows without any MDI children should
+	no longer crash (assuming no-op is the correct thing to do).
+
+Sun Jan  1 23:30:25 1995  Fons Botman  <botman@rabo.nl>
+
+	* objects/font.c (GetTextExtentPoint): 
+	Fixed debug output, str is counted string, not zero terminated.
+
+	* if1632/relay.c (DLLRelay): 
+	When debugging_stack got segv, added upper bound for stack dump.
+
+----------------------------------------------------------------------
 Tue Dec 27 13:35:16 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
 	* [*/Imakefile]

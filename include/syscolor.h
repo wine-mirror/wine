@@ -7,7 +7,7 @@
 #ifndef SYSCOLOR_H
 #define SYSCOLOR_H
 
-#include "gdi.h"
+#include "windows.h"
 
 struct SysColorObjects
 {

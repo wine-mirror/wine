@@ -246,7 +246,7 @@ HBITMAP OBM_LoadOEMBitmap( WORD id )
         {
             fprintf( stderr, "Error %d creating pixmap %d\n",
                      err, OBM_FIRST+id );
-            pixmap = 0;
+            pixmap = width = height = 0;
         }
         else
         {

@@ -22,7 +22,6 @@
 #include "msdos.h"
 #include "registers.h"
 #include "options.h"
-#include "prototypes.h"
 #include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
@@ -485,7 +484,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	  case 0x30:    /* DENYREAD */
 	    dprintf_int(stdnimp,
 	      "OpenExistingFile (%s): DENYREAD changed to DENYALL\n",
-	      SAFEMAKEPTR(DS,DX));
+	      (char *)SAFEMAKEPTR(DS,DX));
 	  case 0x10:    /* DENYALL */  
 	    lock = LOCK_EX;
 	    break;
@@ -549,7 +548,7 @@ static void RenameFile(struct sigcontext_struct *context)
 	char *newname, *oldname;
 
 	dprintf_int(stddeb,"int21: renaming %s to %s\n",
-			SAFEMAKEPTR(DS,DX), SAFEMAKEPTR(ES,DI) );
+			(char *)SAFEMAKEPTR(DS,DX), (char *)SAFEMAKEPTR(ES,DI) );
 	
 	oldname = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) );
 	newname = DOS_GetUnixFileName( SAFEMAKEPTR(ES,DI) );
@@ -563,7 +562,7 @@ static void MakeDir(struct sigcontext_struct *context)
 {
 	char *dirname;
 
-	dprintf_int(stddeb,"int21: makedir %s\n", SAFEMAKEPTR(DS,DX) );
+	dprintf_int(stddeb,"int21: makedir %s\n", (char *)SAFEMAKEPTR(DS,DX) );
 	
 	if ((dirname = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
@@ -600,7 +599,7 @@ static void RemoveDir(struct sigcontext_struct *context)
 {
 	char *dirname;
 
-	dprintf_int(stddeb,"int21: removedir %s\n", SAFEMAKEPTR(DS,DX) );
+	dprintf_int(stddeb,"int21: removedir %s\n", (char *)SAFEMAKEPTR(DS,DX) );
 
 	if ((dirname = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
@@ -1601,7 +1600,10 @@ void INT21_Init(void)
 	MDESC *DosHeapDesc;
 
 	if ((handle = GlobalAlloc(GMEM_FIXED,sizeof(struct DosHeap))) == 0)
-		myerror("out of memory");
+        {
+            fprintf( stderr, "INT21_Init: Out of memory\n");
+            exit(1);
+        }
 
 	heap = (struct DosHeap *) GlobalLock(handle);
 	HEAP_Init(&DosHeapDesc, heap, sizeof(struct DosHeap));

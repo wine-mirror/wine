@@ -20,6 +20,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "icon.h"
 #include "cursor.h"
 #include "event.h"
+#include "message.h"
 #include "winpos.h"
 #include "color.h"
 #include "stddebug.h"
@@ -297,7 +298,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     int wmcreate;
     XSetWindowAttributes win_attr;
 
-    dprintf_win(stddeb, "CreateWindowEx: %04X '%s' '%s' %04X %d,%d %dx%d %04X %04X %04X %08X\n",
+    dprintf_win(stddeb, "CreateWindowEx: %08lX '%s' '%s' %08lX %d,%d %dx%d %04X %04X %04X %p\n",
 				exStyle, className, windowName, style, x, y, width, height, 
 				parent, menu, instance, data);
 	/* 'soundrec.exe' has negative position ! 
@@ -444,7 +445,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
         GlobalUnlock( hCursor );
     }
     
-    dprintf_menu(stddeb,"CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
+    dprintf_menu(stddeb,"CreateWindowEx // menu=%04X instance=%04X classmenu=%p !\n", 
     	menu, instance, classPtr->wc.lpszMenuName);
 
 	if ((style & WS_CAPTION) && (style & WS_CHILD) == 0) {

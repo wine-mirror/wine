@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <neexe.h>
 #include <segmem.h>
-#include <prototypes.h>
 #include "selectors.h"
 #include <wine.h>
 #include <dlls.h>

@@ -8,54 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "metafile.h"
 
-  /* Default DC values */
-const WIN_DC_INFO DCVAL_defaultValues =
-{
-    0,                      /* flags */
-    NULL,                   /* devCaps */
-    0,                      /* hMetaFile */
-    0,                      /* hClipRgn */
-    0,                      /* hVisRgn */
-    0,                      /* hGCClipRgn */
-    STOCK_BLACK_PEN,        /* hPen */
-    STOCK_WHITE_BRUSH,      /* hBrush */
-    STOCK_SYSTEM_FONT,      /* hFont */
-    0,                      /* hBitmap */
-    0,                      /* hDevice */
-    STOCK_DEFAULT_PALETTE,  /* hPalette */
-    R2_COPYPEN,             /* ROPmode */
-    ALTERNATE,              /* polyFillMode */
-    BLACKONWHITE,           /* stretchBltMode */
-    ABSOLUTE,               /* relAbsMode */
-    OPAQUE,                 /* backgroundMode */
-    RGB( 255, 255, 255 ),   /* backgroundColor */
-    RGB( 0, 0, 0 ),         /* textColor */
-    0,                      /* backgroundPixel */
-    0,                      /* textPixel */
-    0,                      /* brushOrgX */
-    0,                      /* brushOrgY */
-    TA_LEFT | TA_TOP | TA_NOUPDATECP,  /* textAlign */
-    0,                      /* charExtra */
-    0,                      /* breakTotalExtra */
-    0,                      /* breakCount */
-    0,                      /* breakExtra */
-    0,                      /* breakRem */
-    1,                      /* bitsPerPixel */
-    MM_TEXT,                /* MapMode */
-    0,                      /* DCOrgX */
-    0,                      /* DCOrgY */
-    0,                      /* CursPosX */
-    0,                      /* CursPosY */
-    0,                      /* WndOrgX */
-    0,                      /* WndOrgY */
-    1,                      /* WndExtX */
-    1,                      /* WndExtY */
-    0,                      /* VportOrgX */
-    0,                      /* VportOrgY */
-    1,                      /* VportExtX */
-    1                       /* VportExtY */
-};
-
 
 #define DC_GET_VAL( func_type, func_name, dc_field ) \
 func_type func_name( HDC hdc ) \

@@ -211,6 +211,9 @@ static void PaintTextfn( HWND hwnd, HDC hdc )
     case SS_LEFTNOWORDWRAP:
 	wFormat = DT_LEFT | DT_SINGLELINE | DT_EXPANDTABS | DT_VCENTER;
 	break;
+
+    default:
+        return;
     }
 
     if (style & SS_NOPREFIX)
@@ -247,6 +250,9 @@ static void PaintRectfn( HWND hwnd, HDC hdc )
     case SS_WHITERECT:
 	hBrush = CreateSolidBrush(color_window);
 	break;
+
+    default:
+        return;
     }
     FillRect( hdc, &rc, hBrush );
 }
@@ -274,6 +280,9 @@ static void PaintFramefn( HWND hwnd, HDC hdc )
     case SS_WHITEFRAME:
 	hPen = CreatePen(PS_SOLID, 1, color_window);
 	break;
+
+    default:
+        return;
     }
 
     hBrush = CreateSolidBrush(color_window);

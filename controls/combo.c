@@ -16,7 +16,6 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "user.h"
 #include "heap.h"
 #include "win.h"
-#include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_COMBO */
 #include "debug.h"
@@ -271,8 +270,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 			GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
                         GRAPH_DrawBitmap( hDC, hComboBit,
                                           rect.right - bm.bmWidth, 0,
-                                          0, 0, bm.bmWidth, bm.bmHeight,
-                                          SRCCOPY );
+                                          0, 0, bm.bmWidth, bm.bmHeight );
 			}
 		EndPaint(hwnd, &paintstruct);
 		lphc = ComboGetStorageHeader(hwnd);

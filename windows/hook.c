@@ -4,8 +4,6 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-
 /* Warning!
  * HHOOK is not a real handle, but a 32-bit pointer to a HOOKDATA structure.
  * This is for compatibility with Windows 3.0 where HHOOK was a HOOKPROC.

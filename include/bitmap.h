@@ -4,19 +4,19 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
-#ifndef BITMAP_H
-#define BITMAP_H
+#ifndef __WINE_BITMAP_H
+#define __WINE_BITMAP_H
 
-#include <stdlib.h>
-#include <X11/Xlib.h>
-#include "windows.h"
+#include "gdi.h"
 
-  /* objects/bitmap.c */
-extern BOOL BITMAP_Init(void);
-
-  /* objects/dib.c */
-extern int DIB_GetImageWidthBytes( int width, int depth );
-extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
+  /* GDI logical bitmap object */
+typedef struct
+{
+    GDIOBJHDR   header;
+    BITMAP      bitmap;
+    Pixmap      pixmap;
+    SIZE        size;   /* For SetBitmapDimension() */
+} BITMAPOBJ;
 
   /* GCs used for B&W and color bitmap operations */
 extern GC BITMAP_monoGC, BITMAP_colorGC;
@@ -32,4 +32,15 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
                            (width), (height), 32, width_bytes ); \
 }
 
-#endif  /* BITMAP_H */
+  /* objects/bitmap.c */
+extern BOOL BITMAP_Init(void);
+extern int BITMAP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer );
+extern BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap );
+extern HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
+                                    BITMAPOBJ * bmp );
+
+  /* objects/dib.c */
+extern int DIB_GetImageWidthBytes( int width, int depth );
+extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
+
+#endif  /* __WINE_BITMAP_H */

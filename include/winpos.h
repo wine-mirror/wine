@@ -9,15 +9,6 @@
 
 #define DWP_MAGIC  0x5057  /* 'WP' */
 
-extern HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
-extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
-			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
-extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
-				   RECT *newWindowRect, RECT *oldWindowRect,
-				   RECT *oldClientRect, WINDOWPOS *winpos,
-				   RECT *newClientRect );  /* winpos.c */
-extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos ); /* winpos.c */
-
 typedef struct
 {
     WORD        actualCount;
@@ -27,5 +18,16 @@ typedef struct
     HWND        hwndParent;
     WINDOWPOS   winPos[1];
 } DWP;
+
+
+extern HWND WINPOS_NextWindowFromPoint( HWND hwnd, POINT pt );
+extern HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
+extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
+			    POINT *minTrack, POINT *maxTrack );
+extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
+				   RECT *newWindowRect, RECT *oldWindowRect,
+				   RECT *oldClientRect, WINDOWPOS *winpos,
+				   RECT *newClientRect );
+extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos );
 
 #endif  /* WINPOS_H */

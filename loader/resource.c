@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "arch.h"
 #include "windows.h"
 #include "gdi.h"
+#include "bitmap.h"
 #include "neexe.h"
 #include "icon.h"
 #include "menu.h"
@@ -742,7 +743,7 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	}
 	if(!it->value)return 0;
 	dprintf_resource(stddeb,"Found %s\n",it->name);
-	lp=it->value;
+	lp=(long *)it->value;
 	rsc_mem=(HANDLE)NULL;
     } else { /* Load from file - indent this code properly later */
 

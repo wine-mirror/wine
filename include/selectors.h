@@ -2,6 +2,8 @@
 #define __WINE_SELECTORS_H
 
 #include "dlls.h"
+#include "segmem.h"
+#include "windows.h"
 
 extern int FindUnusedSelectors(int n_selectors);
 extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);

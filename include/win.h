@@ -67,14 +67,13 @@ typedef struct tagWND
 #define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)
 
   /* Window functions */
-WND *WIN_FindWndPtr( HWND hwnd );
-Window WIN_GetXWindow( HWND hwnd );
-BOOL WIN_UnlinkWindow( HWND hwnd );
-BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
-HWND WIN_FindWinToRepaint( HWND hwnd );
-BOOL WIN_CreateDesktopWindow(void);
-BOOL WINPOS_IsAnActiveWindow( HWND hwnd );
-void WINPOS_ActivateChild( HWND hwnd );
+extern WND *WIN_FindWndPtr( HWND hwnd );
+extern Window WIN_GetXWindow( HWND hwnd );
+extern BOOL WIN_UnlinkWindow( HWND hwnd );
+extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
+extern HWND WIN_FindWinToRepaint( HWND hwnd );
+extern void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam );
+extern BOOL WIN_CreateDesktopWindow(void);
 
 extern Display * display;
 extern Screen * screen;

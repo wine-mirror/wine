@@ -5,7 +5,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "prototypes.h"
+#include "windows.h"
 
 int OpenSound(void)
 {
@@ -51,7 +51,7 @@ int SetSoundNoise(int nSource, int nDuration)
 
 int SetVoiceSound(int nVoice, long lFrequency, int nDuration)
 {
-  printf("SetVoiceSound(%d, %d, %d)\n",nVoice,lFrequency, nDuration);
+  printf("SetVoiceSound(%d, %ld, %d)\n",nVoice,lFrequency, nDuration);
   return 0;
 }
 
@@ -68,31 +68,37 @@ int StopSound(void)
 int WaitSoundState(int x)
 {
 	fprintf(stderr, "WaitSoundState(%d)\n", x);
+        return 0;
 }
 
 int SyncAllVoices(void)
 {
 	fprintf(stderr, "SyncAllVoices()\n");
+        return 0;
 }
 
 int CountVoiceNotes(int x)
 {
 	fprintf(stderr, "CountVoiceNotes(%d)\n", x);
+        return 0;
 }
 
 LPINT GetThresholdEvent(void)
 {
 	fprintf(stderr, "GetThresholdEvent()\n");
+        return NULL;
 }
 
 int GetThresholdStatus(void)
 {
 	fprintf(stderr, "GetThresholdStatus()\n");
+        return 0;
 }
 
 int SetVoiceThreshold(int a, int b)
 {
 	fprintf(stderr, "SetVoiceThreshold(%d,%d)\n", a, b);
+        return 0;
 }
 
 void DoBeep(void)

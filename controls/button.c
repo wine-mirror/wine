@@ -367,7 +367,7 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
         ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
     else if (infoPtr->state & BUTTON_3STATE) y += 2 * checkBoxHeight;
     GRAPH_DrawBitmap( hDC, hbitmapCheckBoxes, rc.left, rc.top + delta,
-                      x, y, checkBoxWidth, checkBoxHeight, SRCCOPY );
+                      x, y, checkBoxWidth, checkBoxHeight );
     rc.left += checkBoxWidth + tm.tmAveCharWidth / 2;
 
     if (action == ODA_DRAWENTIRE)

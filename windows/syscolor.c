@@ -6,12 +6,9 @@
  *
  */
 
-static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
-static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
-
 #include <stdio.h>
 #include <stdlib.h>
-#include "windows.h"
+#include "gdi.h"
 #include "syscolor.h"
 #include "stddebug.h"
 /* #define DEBUG_SYSCOLOR */

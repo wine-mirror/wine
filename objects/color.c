@@ -114,7 +114,7 @@ static HPALETTE COLOR_InitPalette(void)
     colorTranslation = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
     revTranslation   = (WORD *) GDI_HEAP_ADDR( hRevSysColorTranslation );
 
-    if (COLOR_WinColormap == DefaultColormapOfScreen(screen))
+    if ((COLOR_WinColormap == DefaultColormapOfScreen(screen)) && (screenDepth <= 8))
     {
         COLOR_PaletteToPixel = (int *)malloc( sizeof(int) * size );
         COLOR_PixelToPalette = (int *)malloc( sizeof(int) * size );
@@ -151,7 +151,7 @@ static HPALETTE COLOR_InitPalette(void)
                 fprintf(stderr, "Warning: Not enough free colors. Try using the -privatemap option.\n" );
                 color.pixel = color.red = color.green = color.blue = 0;
             }
-            else
+            else if (COLOR_PaletteToPixel)
             {
                 COLOR_PaletteToPixel[pixel] = color.pixel;
                 COLOR_PixelToPalette[color.pixel] = pixel;
@@ -254,6 +254,14 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     WORD *mapping;
 
     if (screenDepth > 8) return color;
+    if (dc && (dc->w.bitsPerPixel == 1) && ((color >> 24) == 0))
+    {
+        if (((color >> 16) & 0xff) +
+            ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2)
+            return 1;  /* white */
+        else return 0;  /* black */
+    }
+    
     switch(color >> 24)
     {
     case 0:  /* RGB */

@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "prototypes.h"
 #include "regfunc.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
@@ -18,8 +17,8 @@ struct Win87EmInfoStruct {
 int
 WIN87_fpmath()
 {
-  dprintf_int(stddeb, "_fpmath: (%x:%lx %lx %x)\n",_CONTEXT->sc_cs, 
-	 _CONTEXT->sc_eip, _CONTEXT->sc_es, _BX & 0xffff);
+  dprintf_int(stddeb, "_fpmath: (%x:%lx %x %x)\n",_CONTEXT->sc_cs, 
+	 _CONTEXT->sc_eip, _CONTEXT->sc_es, (unsigned int)_BX & 0xffff);
 
   switch(_BX & 0xffff)
     {

@@ -9,8 +9,6 @@
  * one message queue).
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -844,7 +842,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	    while (hwnd) {
 	        if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
 			if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
-				dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08X !\n", 
+				dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08lX !\n", 
 							hwnd, message, wParam, lParam);
 				PostMessage(hwnd, message, wParam, lParam);
 				}

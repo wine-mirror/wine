@@ -361,6 +361,11 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
     if (ci->flagChildMaximized)
 	MDIRestoreChild(parent, ci);
 
+    /* If there aren't any children, don't even bother.
+     */
+    if (ci->nActiveChildren == 0)
+        return 0;
+
     GetClientRect(parent, &rect);
     spacing = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
     ysize   = rect.bottom - 8 * spacing;
@@ -405,6 +410,11 @@ LONG MDITile(HWND parent, MDICLIENTINFO *ci)
 
     if (ci->flagChildMaximized)
 	MDIRestoreChild(parent, ci);
+
+    /* If there aren't any children, don't even bother.
+     */
+    if (ci->nActiveChildren == 0)
+        return 0;
 
     GetClientRect(parent, &rect);
     rows    = (int) sqrt((double) ci->nActiveChildren);

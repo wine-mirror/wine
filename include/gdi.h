@@ -29,14 +29,6 @@
 
 #pragma pack(1)
 
-typedef struct tagREGION
-{
-    WORD        type;
-    RECT        box;
-    Pixmap      pixmap;
-    Region      xrgn;
-} REGION;
-
 typedef struct tagGDIOBJHDR
 {
     HANDLE      hNext;
@@ -45,45 +37,6 @@ typedef struct tagGDIOBJHDR
     WORD        wMetaList;
 } GDIOBJHDR;
 
-typedef struct tagBRUSHOBJ
-{
-    GDIOBJHDR   header;
-    LOGBRUSH    logbrush WINE_PACKED;
-} BRUSHOBJ;
-
-typedef struct tagPENOBJ
-{
-    GDIOBJHDR   header;
-    LOGPEN      logpen WINE_PACKED;
-} PENOBJ;
-
-typedef struct tagPALETTEOBJ
-{
-    GDIOBJHDR   header;
-    LOGPALETTE  logpalette WINE_PACKED;
-} PALETTEOBJ;
-
-typedef struct tagFONTOBJ
-{
-    GDIOBJHDR   header;
-    LOGFONT     logfont WINE_PACKED;
-} FONTOBJ;
-
-typedef struct tagBITMAPOBJ
-{
-    GDIOBJHDR   header;
-    BITMAP      bitmap;
-    Pixmap      pixmap;
-    SIZE        size;   /* For SetBitmapDimension() */
-} BITMAPOBJ;
-
-typedef struct tagRGNOBJ
-{
-    GDIOBJHDR   header;
-    REGION      region;
-} RGNOBJ;
-
-#pragma pack(4)
 
 typedef struct
 {
@@ -119,6 +72,8 @@ typedef struct
     WORD   colorRes;      /* 108: color resolution */    
 } DeviceCaps;
 
+#pragma pack(4)
+
 
   /* Device independent DC information */
 typedef struct
@@ -134,6 +89,7 @@ typedef struct
     HBRUSH        hBrush;
     HFONT         hFont;
     HBITMAP       hBitmap;
+    HBITMAP       hFirstBitmap; /* Bitmap selected at creation of the DC */
     HANDLE        hDevice;
     HPALETTE      hPalette;
 

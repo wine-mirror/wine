@@ -61,14 +61,14 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 	HINSTANCE	hInst;
 	WND 		*wndPtr;
 	BOOL		bRet;
-	printf("GetOpenFileName(%08X); !\n", lpofn);
+	printf("GetOpenFileName(%p); !\n", lpofn);
 	if (lpofn == NULL) return FALSE;
-	printf("GetOpenFileName // Flags=%08X !\n", lpofn->Flags);
-	printf("GetOpenFileName // nMaxFile=%d lpstrFile='%s' !\n", 
+	printf("GetOpenFileName // Flags=%08lX !\n", lpofn->Flags);
+	printf("GetOpenFileName // nMaxFile=%ld lpstrFile='%s' !\n", 
 						lpofn->nMaxFile, lpofn->lpstrFile);
 	printf("GetOpenFileName // lpstrInitialDir='%s' !\n", lpofn->lpstrInitialDir);
-	printf("GetOpenFileName // lpstrFilter=%08X !\n", lpofn->lpstrFilter);
-	printf("GetOpenFileName // nFilterIndex=%d !\n", lpofn->nFilterIndex);
+	printf("GetOpenFileName // lpstrFilter=%p !\n", lpofn->lpstrFilter);
+	printf("GetOpenFileName // nFilterIndex=%ld !\n", lpofn->nFilterIndex);
 	if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
 		hDlgTmpl = lpofn->hInstance;
 		}
@@ -123,13 +123,13 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
 	HINSTANCE	hInst;
     WND 		*wndPtr;
 	BOOL		bRet;
-	printf("GetSaveFileName(%08X); !\n", lpofn);
+	printf("GetSaveFileName(%p); !\n", lpofn);
 	if (lpofn == NULL) return FALSE;
-	printf("GetSaveFileName // Flags=%08X !\n", lpofn->Flags);
-	printf("GetSaveFileName // nMaxFile=%d lpstrFile='%s' !\n", 
+	printf("GetSaveFileName // Flags=%08lX !\n", lpofn->Flags);
+	printf("GetSaveFileName // nMaxFile=%ld lpstrFile='%s' !\n", 
 						lpofn->nMaxFile, lpofn->lpstrFile);
 	printf("GetSaveFileName // lpstrInitialDir='%s' !\n", lpofn->lpstrInitialDir);
-	printf("GetSaveFileName // lpstrFilter=%08X !\n", lpofn->lpstrFilter);
+	printf("GetSaveFileName // lpstrFilter=%p !\n", lpofn->lpstrFilter);
 	if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
 		hDlgTmpl = lpofn->hInstance;
 		}
@@ -197,7 +197,6 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 	HDC 	hMemDC;
 	HBITMAP	hBitmap;
 	BITMAP	bm;
-    WND 	*wndPtr;
 	LPMEASUREITEMSTRUCT lpmeasure;
 	LPDRAWITEMSTRUCT lpdis;
 	static	int		nDrive;
@@ -209,7 +208,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 #ifdef DEBUG_OPENDLG
 			printf("FileOpenDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
 #endif
-			printf("FileOpenDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
+			printf("FileOpenDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
 			if (!FileDlg_Init(hWnd, lParam)) return TRUE;
 			SendDlgItemMessage(hWnd, cmb1, CB_RESETCONTENT, 0, 0L);
 			lpofn = (LPOPENFILENAME)lParam;
@@ -632,8 +631,6 @@ BOOL FileSaveDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 	LPMEASUREITEMSTRUCT lpmeasure;
 	LPDRAWITEMSTRUCT lpdis;
 	static	int		nDrive;
-	static	int		OldDrive;
-	static 	char	OldPath[512];
 	static 	char	CurPath[512];
 	static LPOPENFILENAME lpofn;
 
@@ -874,7 +871,7 @@ BOOL ColorDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
 	switch (wMsg) {
 		case WM_INITDIALOG:
-			printf("ColorDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
+			printf("ColorDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			return (TRUE);
 
@@ -952,7 +949,7 @@ BOOL FindTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
 	switch (wMsg) {
 		case WM_INITDIALOG:
-			printf("FindTextDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
+			printf("FindTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			return (TRUE);
 
@@ -978,7 +975,7 @@ BOOL ReplaceTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
 	switch (wMsg) {
 		case WM_INITDIALOG:
-			printf("ReplaceTextDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
+			printf("ReplaceTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			return (TRUE);
 
@@ -1006,7 +1003,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
 	HANDLE	hResInfo;
     WND 	*wndPtr;
 	BOOL	bRet;
-	printf("PrintDlg(%08X) // Flags=%08X\n", lpPrint->Flags);
+	printf("PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags);
 	if (lpPrint->Flags & PD_PRINTSETUP)
 		hResInfo = FindResource(hSysRes, MAKEINTRESOURCE(PRINTSETUPDLG), RT_DIALOG);
 	else
@@ -1038,7 +1035,7 @@ BOOL PrintDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
 	switch (wMsg) {
 		case WM_INITDIALOG:
-			printf("PrintDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
+			printf("PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			return (TRUE);
 
@@ -1064,7 +1061,7 @@ BOOL PrintSetupDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
 	switch (wMsg) {
 		case WM_INITDIALOG:
-			printf("PrintSetupDlgProc // WM_INITDIALOG lParam=%08X\n", lParam);
+			printf("PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			return (TRUE);
 
@@ -1098,7 +1095,7 @@ DWORD CommDlgExtendError(void)
 int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
 	int		i, len;
-	printf("GetFileTitle(%08X %08X %d); \n", lpFile, lpTitle, cbBuf);
+	printf("GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
 	if (lpFile == NULL || lpTitle == NULL) return -1;
 	len = strlen(lpFile);
 	if (len == 0) return -1;

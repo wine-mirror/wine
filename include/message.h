@@ -49,6 +49,7 @@ extern void MSG_DecPaintCount( HANDLE hQueue );
 extern void MSG_IncTimerCount( HANDLE hQueue );
 extern void MSG_DecTimerCount( HANDLE hQueue );
 extern void MSG_Synchronize();
+extern BOOL MSG_WaitXEvent( LONG maxWait );
 extern BOOL MSG_CreateSysMsgQueue( int size );
 extern void hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );

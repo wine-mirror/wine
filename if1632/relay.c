@@ -23,8 +23,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "dlls.h"
 #include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_RELAY /* */
-/* #define DEBUG_STACK /* */
+/* #define DEBUG_RELAY */
+/* #define DEBUG_STACK */
 #include "debug.h"
 
 #if 0
@@ -129,7 +129,9 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	if(debugging_stack)
         {
             unsigned short *stack_p = (unsigned short *) seg_off;
-            for (i = 0; i < 24; i++, stack_p++)
+	    /* FIXME: Is there an end-of-stack-pointer somewhere ? */
+	    int n = min(24, (0x10000 - (seg_off & 0xffff)) / sizeof(*stack_p));
+            for (i = 0; i < n; i++, stack_p++)
             {
                 printf("%04x ", *stack_p);
                 if ((i & 7) == 7)

@@ -48,7 +48,7 @@ DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 #ifdef linux
 	int 	mixer;
 	int		volume;
-	printf("AUX_GetDevCaps(%u, %08X, %u);\n", wDevID, lpCaps, dwSize);
+	printf("AUX_GetDevCaps(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		printf("AUX_GetDevCaps // mixer device not available !\n");
@@ -120,7 +120,7 @@ DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 	int 	mixer;
 	int		volume;
 	int		cmd;
-	printf("AUX_GetVolume(%u, %08X);\n", wDevID, lpdwVol);
+	printf("AUX_GetVolume(%u, %p);\n", wDevID, lpdwVol);
 	if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		printf("Linux 'AUX_GetVolume' // mixer device not available !\n");
@@ -174,7 +174,7 @@ DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 	int 	mixer;
 	int		volume;
 	int		cmd;
-	printf("AUX_SetVolume(%u, %08X);\n", wDevID, dwParam);
+	printf("AUX_SetVolume(%u, %08lX);\n", wDevID, dwParam);
 	volume = LOWORD(dwParam);
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		printf("Linux 'AUX_SetVolume' // mixer device not available !\n");
@@ -225,7 +225,7 @@ DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
-	printf("auxMessage(%u, %04X, %08X, %08X, %08X);\n", 
+	printf("auxMessage(%u, %04X, %08lX, %08lX, %08lX);\n", 
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 		case AUXDM_GETDEVCAPS:

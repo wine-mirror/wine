@@ -7,6 +7,7 @@ CC = gcc -D__FreeBSD__
 #endif
 
 DEFINES = AutoDefines -DUSE_READLINE -DWINESTAT
+CDEBUGFLAGS = -O2 -Wall
 
 /*
  * This is the second try at using Imakefiles. There are probably many

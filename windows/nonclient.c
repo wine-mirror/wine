@@ -3,8 +3,7 @@
  *
  * Copyright 1994 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ */
 
 #include "win.h"
 #include "class.h"
@@ -38,8 +37,8 @@ extern BOOL AboutWine_Proc( HWND hDlg, WORD msg, WORD wParam, LONG lParam );
 
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \
-    (((style) & WS_DLGFRAME) && \
-     (((exStyle) & WS_EX_DLGMODALFRAME) || !((style) & WS_BORDER)))
+    (((exStyle) & WS_EX_DLGMODALFRAME) || \
+     (((style) & WS_DLGFRAME) && !((style) & WS_BORDER)))
 
 #define HAS_THICKFRAME(style) \
     (((style) & WS_THICKFRAME) && \
@@ -316,13 +315,18 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
+    HDC hdcMem;
+    HBITMAP hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+
     NC_GetInsideRect( hwnd, &rect );
-    GRAPH_DrawBitmap( hdc, hbitmapClose,
-		      rect.left, rect.top,
-                      (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
-                      SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
-		      down ? NOTSRCCOPY : SRCCOPY );
+    hdcMem = CreateCompatibleDC( hdc );
+    hbitmap = SelectObject( hdcMem, hbitmapClose );
+    BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+            hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
+            down ? NOTSRCCOPY : SRCCOPY );
+    SelectObject( hdcMem, hbitmap );
+    DeleteDC( hdcMem );
 }
 
 
@@ -337,7 +341,7 @@ static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 			    (down ? hbitmapRestoreD : hbitmapRestore) :
 			    (down ? hbitmapMaximizeD : hbitmapMaximize)),
 		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, SRCCOPY );
+		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
 }
 
 
@@ -352,7 +356,7 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
     if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE + 1;
     GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
 		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, SRCCOPY );
+		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
 }
 
 
@@ -544,9 +548,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 
     dprintf_nonclient(stddeb, "NC_DoNCPaint: %d %d\n", hwnd, hrgn );
     if (!wndPtr || !hrgn) return;
-    if ((!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME))) ||
-	(!(wndPtr->dwStyle & WS_VISIBLE)))
-	return;  /* Nothing to do! */
+    if (!(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
+    if (!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME)) &&
+        !(wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)) return; /* Nothing to do */
 
     if (hrgn == 1) hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
     else
@@ -594,7 +598,8 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 
     SelectObject( hdc, sysColorObjects.hpenWindowFrame );
 
-    if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME))
+    if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
+        (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
     {
 	MoveTo( hdc, 0, 0 );
 	LineTo( hdc, rect.right-1, 0 );

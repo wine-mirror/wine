@@ -9,17 +9,12 @@
 /* #define DEBUG_INT */
 #include "debug.h"
 
-#ifdef linux
-#define inline __inline__  /* So we can compile with -ansi */
-#include <linux/sched.h> /* needed for HZ */
-#undef inline
-#endif
-
 #define	BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
 #define BIN_TO_BCD(x) ((x%10) + ((x/10)<<4))
 
 int do_int1a(struct sigcontext_struct * context){
-	time_t ltime, ticks;
+	time_t ltime;
+        DWORD ticks;
 	struct tm *bdtime;
 
     if (debugging_relay) {
@@ -30,8 +25,7 @@ int do_int1a(struct sigcontext_struct * context){
 
 	switch(AH) {
 	case 0:
-		ltime = time(NULL);
-		ticks = (int) (ltime * HZ);
+                ticks = GetTickCount();
 		CX = ticks >> 16;
 		DX = ticks & 0x0000FFFF;
 		AX = 0;  /* No midnight rollover */

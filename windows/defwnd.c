@@ -100,7 +100,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	}
 
     case WM_SETREDRAW:
-        if (wParam)
+        if (!wParam)
         {
             ValidateRect( hwnd, NULL );
             wndPtr->flags |= WIN_NO_REDRAW;

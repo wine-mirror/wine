@@ -167,15 +167,6 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 }
 
 /**********************************************************************
- *					WIN16_GlobalAlloc
- */
-HANDLE
-WIN16_GlobalAlloc(unsigned int flags, unsigned long size)
-{
-    return GlobalAlloc(flags & ~GLOBAL_FLAGS_MOVEABLE, size);
-}
-
-/**********************************************************************
  *					GlobalAlloc
  */
 HANDLE
@@ -288,6 +279,15 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	dprintf_heap(stddeb,"GlobalAlloc: returning %04x\n", g->handle);
 	return g->handle;
     }
+}
+
+/**********************************************************************
+ *					WIN16_GlobalAlloc
+ */
+HANDLE
+WIN16_GlobalAlloc(unsigned int flags, unsigned long size)
+{
+    return GlobalAlloc(flags & ~GLOBAL_FLAGS_MOVEABLE, size);
 }
 
 /**********************************************************************
@@ -549,6 +549,13 @@ GlobalCompact(unsigned int desired)
 	    current_free = 0;
 	}
     }
+
+    /* One final check just in case the last block was also marked free, in
+     * which case the above test against max_free doesn't occur for the
+     * last run of free blocks.
+     */
+    if (current_free > max_free)
+        max_free = current_free;
     
     return max_free << 16;
 }

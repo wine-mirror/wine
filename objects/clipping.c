@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include "gdi.h"
+#include "region.h"
 #include "metafile.h"
 #include "stddebug.h"
 /* #define DEBUG_CLIPPING */

@@ -4,8 +4,6 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
 #include <stdio.h>
 #include <X11/Xlib.h>
 

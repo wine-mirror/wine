@@ -8,7 +8,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "gdi.h"
+#include "region.h"
 #include "stddebug.h"
 /* #define DEBUG_REGION */
 #include "debug.h"
@@ -341,6 +341,7 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
     }
     rgnObj = (RGNOBJ *) GDI_HEAP_ADDR( hrgn );
     rgnObj->region.type   = SIMPLEREGION;
+    rgnObj->region.xrgn   = 0;
     rgnObj->region.pixmap = 0;
 
       /* Create X region */
@@ -354,7 +355,13 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
 	}
 	xrgn = XPolygonRegion( xpoints, *count,
 			       (mode == WINDING) ? WindingRule : EvenOddRule );
-	if (!xrgn) break;
+	if (!xrgn)
+        {
+            if (rgnObj->region.xrgn) XDestroyRegion( rgnObj->region.xrgn );
+            free( xpoints );
+            GDI_FreeObject( hrgn );
+            return 0;
+        }
 	if (i > 0)
 	{
 	    Region tmprgn = XCreateRegion();
@@ -367,11 +374,6 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
     }
 
     free( xpoints );
-    if (!xrgn)
-    {
-	GDI_FreeObject( hrgn );
-	return 0;
-    }
     XClipBox( rgnObj->region.xrgn, &rect );
     SetRect( &rgnObj->region.box, rect.x, rect.y,
 	     rect.x + rect.width, rect.y + rect.height);

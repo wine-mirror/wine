@@ -195,7 +195,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
     }
     else if (IS_16_BIT_ADDRESS(func))
     {	
-	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%p !\n", 
+	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%08x !\n", 
 		(unsigned int) func);
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
 	PushOn16( CALLBACK_SIZE_WORD, message );

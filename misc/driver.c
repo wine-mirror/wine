@@ -46,6 +46,7 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, WORD msg, LPARAM lParam1, LPARAM
 {
 	dprintf_driver(stdnimp,"SendDriverMessage(%04X, %04X, %08lX, %08lX);\n",
 						hDriver, msg, lParam1, lParam2);
+        return 0;
 }
 
 /**************************************************************************

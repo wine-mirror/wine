@@ -24,7 +24,6 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include "wine.h"
 #include "windows.h"
 #include "dos_fs.h"
-#include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_PROFILE */
 #include "debug.h"

@@ -1,5 +1,4 @@
-static char RCSId[] = "$Id: build.c,v 1.3 1993/07/04 04:04:21 root Exp root $";
-static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+/* static char Copyright[] = "Copyright  Robert J. Amstadt, 1993"; */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -679,8 +678,6 @@ OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
     ORDVARDEF *vdp;
     int i;
 
-    fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
-
     vdp = odp->additional_data;
     for (i = 0; i < vdp->n_values; i++)
     {
@@ -697,7 +694,7 @@ OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
     fprintf(fp, "\n");
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
@@ -796,14 +793,17 @@ main(int argc, char **argv)
 		break;
 
 	      case VARTYPE_BYTE:
+                fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		OutputVariableCode(fp, ".byte", odp);
 		break;
 
 	      case VARTYPE_WORD:
+                fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		OutputVariableCode(fp, ".word", odp);
 		break;
 
 	      case VARTYPE_LONG:
+                fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		OutputVariableCode(fp, ".long", odp);
 		break;
 

@@ -18,7 +18,7 @@
 #include "debug.h"
 
 
-static char Copyright[] = "Copyright Andrew C. Bulhak, 1993";
+/* static char Copyright[] = "Copyright Andrew C. Bulhak, 1993"; */
 
 
 /*	MulDiv is a simple function that may as well have been
@@ -72,6 +72,7 @@ void OutputDebugString(LPSTR foo)
 	DebugPrintString(foo);
 };
 
+#if 0
 /*	UTILITY_qualify(source, dest) takes the format string source and
  *	changes all the parameters to correspond to Linux integer sizes
  *	rather than Windows sizes. For example, it converts %i to %hi
@@ -109,6 +110,7 @@ loop_end:
 	};
 	*dest = '\0';
 };
+#endif
 
 /*	UTILITY_argsize() evaluates the size of the argument list that
  *	accompanies a vsprintf() or wvsprintf() call.

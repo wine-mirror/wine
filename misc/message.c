@@ -15,7 +15,6 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "prototypes.h"
 #include "heap.h"
 #include "library.h"
 #include "win.h"
