@@ -839,14 +839,19 @@ void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
 
     if (changed & WS_VISIBLE)
     {
-        if (!IsRectEmpty( &wndPtr->rectWindow ) && !is_window_top_level(wndPtr))
+        if (!IsRectEmpty( &wndPtr->rectWindow ))
         {
             if (wndPtr->dwStyle & WS_VISIBLE)
             {
                 TRACE( "mapping win %p\n", hwnd );
+                if (is_window_top_level(wndPtr))
+                {
+                    X11DRV_sync_window_style( display, wndPtr );
+                    X11DRV_set_wm_hints( display, wndPtr );
+                }
                 TSXMapWindow( display, get_whole_window(wndPtr) );
             }
-            else
+            else if (!is_window_top_level(wndPtr))  /* don't unmap managed windows */
             {
                 TRACE( "unmapping win %p\n", hwnd );
                 TSXUnmapWindow( display, get_whole_window(wndPtr) );
