@@ -30,8 +30,8 @@
       </para>
 
       <para>
-	There are two specific low level drivers (one for wave input/output,
-        another one for MIDI output only), whose role is:
+	There are two specific low level drivers (msacm.drv for wave input/output,
+        midimap.drv for MIDI output only), whose role is:
 	<itemizedlist>
 	  <listitem>
 	    <para>
@@ -40,7 +40,9 @@
 	  </listitem>
 	  <listitem>
 	    <para>
-              add the possibility to convert streams (ie ADPCM =&gt; PCM)
+              add the possibility to convert streams (ie ADPCM =&gt;
+              PCM) (this is useful if the format required by the
+              application for playback isn't supported by the soundcard). 
             </para>
 	  </listitem>
 	  <listitem>
@@ -125,8 +127,13 @@
 	  <title>Other sub systems</title>
 
 	  <para>
-	    No other is available. Could think of Sun Audio, remote audio systems
-	    (using X extensions, ...), ALSA, EsounD, ArTs...
+            Support is also provided for ALSA, aRts, NAS, Jack,
+            AudioIO, but with less intensive debugging than the OSS.
+          </para>
+
+	  <para>
+	    EsounD isn't supported yet. ALSA support still needs a
+            couple of refinements.
 	  </para>
 
 	</sect3>
@@ -202,14 +209,16 @@
 	  <title>Other sub systems</title>
 
 	  <para>
-	    Could support other MIDI implementation for other sub systems (any
-	    idea here ?)
+	    Could support other MIDI implementation for other sub
+            systems (ALSA, any other idea here ?)
 	  </para>
 
 	  <para>
 	    Could also implement a software synthesizer, either inside Wine or
 	    using using MIDI loop back devices in an external program (like
 	    timidity). The only trouble is that timidity is GPL'ed...
+            Note: this could be achieved using the ALSA sequencer and
+            Timidity being used as a server.
 	  </para>
 
 	</sect3>
@@ -498,7 +507,7 @@
 	    The currently best implementation is the MCI CDAUDIO driver that can
 	    be found in dlls/winmm/mcicda/mcicda.c. The implementation is mostly
 	    complete, there have been no reports of errors. It makes use of
-	    misc/cdrom.c Wine internal cdrom interface.
+	    dlls/ntdll/cdrom.c Wine cdrom interface.
 	    This interface has been ported on Linux, FreeBSD and NetBSD. (Sun
 	    should be similar, but are not implemented.)
 	  </para>
@@ -519,12 +528,6 @@
 		<para>
 		  add support for multiple cdaudio devices (plus a decent
                   configuration scheme)
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  The DLL is not cleanly separated from the NTDLL DLL. The CDROM
-                  interface should be exported someway (or stored in a Wine only DLL)
 		</para>
 	      </listitem>
 	    </itemizedlist>
@@ -762,16 +765,6 @@
 	  </listitem>
 	  <listitem>
 	    <para>
-	      add clean-up mechanisms when process detaches from MM DLLs
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      prepare for the 16/32 big split
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
 	      check thread-safeness for MMSYSTEM and WINMM entry points
 	    </para>
 	  </listitem>
@@ -799,9 +792,9 @@
 
         <para>
 	  MCI drivers are seen as regular Wine modules, and can be loaded (with
-	  a correct load order between builtin, native, so), as any
-	  other DLL. Please note, that MCI drivers module names must bear the
-	  .drv extension to be correctly understood.
+	  a correct load order between builtin, native), as any other DLL. 
+	  Please note, that MCI drivers module names must bear the .drv 
+	  extension to be correctly understood.
         </para>
 
         <para>
@@ -866,13 +859,6 @@
 		not support binary command lines =&gt; provide Wine's own mmtask.tsk not
 		using binary command line.
 	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		the Wine native MCI drivers should use the mmThreadXXX API (but since
-                all built-in MCI drivers are 32 bit, this would require a special
-                flag to mark 32 bit entry points)
-   	      </para>
 	    </listitem>
 	  </itemizedlist>
 	</para>
@@ -984,6 +970,13 @@
 	    <listitem>
 	      <para>
 		use a default registry setting to bypass this (ugly) configuration
+		model
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		we need also a generic tool to let the end user pick
+                up his/her driver depending on the hardware present on the machine.
 		model
 	      </para>
 	    </listitem>
@@ -1222,35 +1215,35 @@ Kernel space |                    Client applications
 
     </sect1>
 
-	  <sect1 id="msacm">
-	    <title>MS ACM Dlls</title>
+    <sect1 id="msacm">
+      <title>MS ACM Dlls</title>
 
-	    <sect2>
-	      <title>Contents</title>
+      <sect2>
+	<title>Contents</title>
 
-	      <para>tbd</para>
-	    </sect2>
+	<para>tbd</para>
+      </sect2>
 
-	    <sect2>
-	      <title>Status</title>
+      <sect2>
+	<title>Status</title>
 
-	      <para>tbd</para>
-	    </sect2>
+	<para>tbd</para>
+      </sect2>
 
-	    <sect2>
-	      <title>Caching</title>
+      <sect2>
+	<title>Caching</title>
 
-	      <para>
-		The MSACM/MSACM32 keeps some data cached for all known ACM
-		drivers. Under the key
-		<screen>
+	<para>
+	  The MSACM/MSACM32 keeps some data cached for all known ACM
+	  drivers. Under the key
+          <screen>
 		  Software\Microsoft\AudioCompressionManager\DriverCache\&lt;driver
 		  name&gt;
-		</screen>
-		are kept for values:
-		<itemizedlist>
-		  <listitem>
-		    <para>
+	  </screen>
+	  , are kept for values:
+	    <itemizedlist>
+	      <listitem>
+	        <para>
                       aFormatTagCache which contains an array of
 		      DWORD. There are two DWORDs per cFormatTags
 		      entry. The first DWORD contains a format tag
@@ -1258,37 +1251,36 @@ Kernel space |                    Client applications
 		      size for a WAVEFORMATEX structure.
 		      (Fields dwFormatTag and cbFormatSize from
 		      ACMFORMATDETAILS)
-                    </para>
-		  </listitem>
-		  <listitem>
-		    <para>
+                 </para>
+	      </listitem>
+	      <listitem>
+	        <para>
 		      cFilterTags contains the number of tags supported by the driver
 		      for filtering.
-		    </para>
-		  </listitem>
-		  <listitem>
-		    <para>
+		</para>
+	      </listitem>
+	      <listitem>
+	        <para>
 		      cFormatTags contains the number of tags support
 		      by the driver for conversions.
-		    </para>
-		  </listitem>
-		  <listitem>
-		    <para>
+		</para>
+	      </listitem>
+	      <listitem>
+	        <para>
 		      fdwSupport (the same as the one returned from
 		      acmDriverDetails).
-		    </para>
-		  </listitem>
-		</itemizedlist>
-	      </para>
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
 
-	      <para>
+	<para>
 		The cFilterTags, cFormatTags, fdwSupport are the same
 		values as the ones returned from acmDriverDetails
 		function.
-	      </para>
-	    </sect2>
-	  </sect1>
-
+	</para>
+      </sect2>
+    </sect1>
 
   </chapter>
 
