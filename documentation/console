@@ -92,3 +92,76 @@ FreeConsole
 
 Is it possible to interrupt win32's FileWrite?  I'm not sure.
 It may not be possible to interrupt any system calls.
+
+
+DOS (Generic) Console Support
+-----------------------------
+
+I. Command Line Configuration
+
+   DOS consoles must be configured either on the command line or in a dot
+   resource file (.console). A typical configuration consists of a string
+   of driver keywords separated by plus ('+') signs. To change the 
+   configuration on the command-line, use the -console switch.
+
+   For example:
+
+      wine -console ncurses+xterm <apllication>
+   
+   Possible drivers:
+
+      tty	- Generic text-only support. Supports redirection.
+      ncurses	- Full-screen graphical support with color.
+      xterm	- Load a new window to display the console in. Also
+                  supports resizing windows.
+
+
+II. Wine.conf Configuration
+
+   In the wine.conf file, you can create a section called [console] that
+   contains configuration options that are respected by the assorted
+   console drivers.
+
+   Current Options:
+
+      XtermProg=<program>
+
+         Use this program instead of xterm. This eliminates the need for a
+         recompile.
+
+      XtermResolution=<cols>x<rows>
+
+         (Example: XtermResolution=80x25)
+         Start your xterm program with this text resolution. 80x25 is
+         recommended, a NULL value will mean to use the terminal's default
+         resolution, determined however your specific terminal figures
+         that out. Most console-based programs expect eother 80x25 or
+         80x40 displays.
+
+         Note: The default for many terminals is 80x24. One row smaller
+         than what the console subsystem generally expects.
+ 
+         Note 2: This information is passed on the command-line with the
+         -g switch.
+
+III. Terminal Types
+
+   There are a large number of potential terminals that can be used with
+   Wine, depending on what you are trying to do. Unfortunately, I am still
+   looking for the "best" driver combination.
+
+   Note that 'slave' is required for use in Wine, currently.
+
+   Program     | Color? | Resizing? | Slave?
+   -----------------------------------------
+   xterm	   N          Y         Y
+   nxterm          Y          N         Y
+   rxvt            Y          ?         N
+   
+   (linux console) Y          N         ?
+
+   As X terminals typically use a 24x80 screen resolution rather than the
+   typical 25x80 one, it is necessary to resize the screen to allow a DOS
+   program to work full-screen. Soon, I will add an option to the
+   configuration to set this up at run time. On the fly resizing will
+   still be disabled however.
