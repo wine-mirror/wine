@@ -725,7 +725,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	  case CSIDL_PROGRAMS:
 	    hRootKey = HKEY_CURRENT_USER;
 	    strcpy(szValueName, "Programs");
-	    strcpy(szDefaultPath, "StartMenu\\Programs");
+	    strcpy(szDefaultPath, "Start Menu\\Programs");
 	    break;
 
 	  case CSIDL_COMMON_PROGRAMS:
@@ -748,26 +748,26 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 
 	  case CSIDL_STARTMENU:
 	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "StartMenu");
-	    strcpy(szDefaultPath, "StartMenu");
+	    strcpy(szValueName, "Start Menu");
+	    strcpy(szDefaultPath, "Start Menu");
 	    break;
 
 	  case CSIDL_COMMON_STARTMENU:
 	    hRootKey = HKEY_LOCAL_MACHINE;
-	    strcpy(szValueName, "Common StartMenu");
-	    strcpy(szDefaultPath, "StartMenu");
+	    strcpy(szValueName, "Common Start Menu");
+	    strcpy(szDefaultPath, "Start Menu");
 	    break;
 
 	  case CSIDL_STARTUP:
 	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Startup");
-	    strcpy(szDefaultPath, "StartMenu\\Programs\\Startup");
+	    strcpy(szValueName, "StartUp");
+	    strcpy(szDefaultPath, "Start Menu\\Programs\\StartUp");
 	    break;
 
 	  case CSIDL_COMMON_STARTUP:
 	    hRootKey = HKEY_LOCAL_MACHINE;
-	    strcpy(szValueName, "Common Startup");
-	    strcpy(szDefaultPath, "StartMenu\\Programs\\Startup");
+	    strcpy(szValueName, "Common StartUp");
+	    strcpy(szDefaultPath, "Start Menu\\Programs\\StartUp");
 	    break;
 
 	  case CSIDL_TEMPLATES:
