@@ -1050,25 +1050,23 @@ BOOL WINAPI SetCommState(
 		case 57600:
 		case CBR_57600:
 			port.c_cflag |= B57600;
-			break;		
+			break;
 #endif
 #ifdef B115200
 		case 115200:
 		case CBR_115200:
 			port.c_cflag |= B115200;
-			break;		
+			break;
 #endif
 #ifdef B230400
 		case 230400:
-		case CBR_230400:
 			port.c_cflag |= B230400;
-			break;		
+			break;
 #endif
 #ifdef B460800
 		case 460800:
-		case CBR_460800:
 			port.c_cflag |= B460800;
-			break;		
+			break;
 #endif
                 default:
                         COMM_SetCommError(handle,IE_BAUDRATE);
