@@ -1659,6 +1659,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetMaterial(LPDIRECT3DDEVICE8 iface, CONST
     if (This->StateBlock->renderstate[D3DRS_SPECULARENABLE]) {
        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
        checkGLcall("glMaterialfv");
+    } else {
+       float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
+       checkGLcall("glMaterialfv");
     }
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->UpdateStateBlock->material.Emissive);
     checkGLcall("glMaterialfv");
@@ -1829,8 +1833,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     if (object->glIndex != -1) {
         setup_light(iface, object->glIndex, object);
     }
-    DUMP_LIGHT_CHAIN();
-
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight) {
@@ -1886,7 +1888,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
         D3DLIGHT8 lightParms;
         /* Warning - untested code :-) Prob safe to change fixme to a trace but
              wait until someone confirms it seems to work!                     */
-        FIXME("Light enabled requested but light not defined, so defining one!\n"); 
+        TRACE("Light enabled requested but light not defined, so defining one!\n"); 
         lightParms.Type = D3DLIGHT_DIRECTIONAL;
         lightParms.Diffuse.r = 1.0;
         lightParms.Diffuse.g = 1.0;
@@ -2074,7 +2076,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
             }
         }
     }
-    DUMP_LIGHT_CHAIN();
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL* pEnable) {

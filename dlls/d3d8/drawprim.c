@@ -203,8 +203,14 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
         checkGLcall("glMaterialfv");
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->StateBlock->material.Diffuse);
         checkGLcall("glMaterialfv");
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->StateBlock->material.Specular);
-        checkGLcall("glMaterialfv");
+        if (This->StateBlock->renderstate[D3DRS_SPECULARENABLE]) {
+           glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->StateBlock->material.Specular);
+           checkGLcall("glMaterialfv");
+        } else {
+           float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+           glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
+           checkGLcall("glMaterialfv");
+        }
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->StateBlock->material.Emissive);
         checkGLcall("glMaterialfv");
     }
@@ -1478,9 +1484,10 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
             for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
                 if (This->StateBlock->textures[textureNo] != NULL) {
                     sprintf(buffer, "/tmp/texture_%ld_%d.ppm", primCounter, textureNo);
-                    TRACE("Saving texture %s\n", buffer);
+                    TRACE("Saving texture %s (Format:%s)\n", buffer, debug_d3dformat(((IDirect3DBaseTexture8Impl *)This->StateBlock->textures[textureNo])->format));
                     IDirect3DTexture8Impl_GetSurfaceLevel((LPDIRECT3DTEXTURE8) This->StateBlock->textures[textureNo], 0, &pSur);
                     IDirect3DSurface8Impl_SaveSnapshot(pSur, buffer);
+                    IDirect3DSurface8Impl_ReleaseRef(pSur);
                 }
             }
            }
