@@ -1366,6 +1366,31 @@ void test_schannel_provider()
     CryptReleaseContext(hProv, 0);
 }
 
+void test_enum_container()
+{
+    BYTE abContainerName[256];
+    DWORD dwBufferLen;
+    BOOL result, fFound = FALSE;
+
+    /* If PP_ENUMCONTAINERS is queried with CRYPT_FIRST and abData == NULL, it returns
+     * the maximum legal length of container names (which is MAX_PATH + 1 == 261) */
+    result = CryptGetProvParam(hProv, PP_ENUMCONTAINERS, NULL, &dwBufferLen, CRYPT_FIRST);
+    ok (result && dwBufferLen == MAX_PATH + 1, "%08lx\n", GetLastError());
+
+    /* If the result fits into abContainerName dwBufferLen is left untouched */
+    dwBufferLen = (DWORD)sizeof(abContainerName);
+    result = CryptGetProvParam(hProv, PP_ENUMCONTAINERS, abContainerName, &dwBufferLen, CRYPT_FIRST);
+    ok (result && dwBufferLen == (DWORD)sizeof(abContainerName), "%08lx\n", GetLastError());
+    
+    /* We only check, if the currently open 'winetest' container is among the enumerated. */
+    do {
+        if (!strcmp(abContainerName, "winetest")) fFound = TRUE;
+        dwBufferLen = (DWORD)sizeof(abContainerName);
+    } while (CryptGetProvParam(hProv, PP_ENUMCONTAINERS, abContainerName, &dwBufferLen, 0));
+        
+    ok (fFound && GetLastError() == ERROR_NO_MORE_ITEMS, "%d, %08lx\n", fFound, GetLastError());
+}
+
 START_TEST(rsaenh)
 {
     if (!init_environment()) 
@@ -1384,6 +1409,7 @@ START_TEST(rsaenh)
     test_import_private();
     test_verify_signature();
     test_rsa_encrypt();
+    test_enum_container();
     clean_up_environment();
     test_schannel_provider();
 }

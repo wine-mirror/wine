@@ -119,6 +119,7 @@ typedef struct tagKEYCONTAINER
     DWORD        dwFlags;
     DWORD        dwPersonality;
     DWORD        dwEnumAlgsCtr;
+    DWORD        dwEnumContainersCtr;
     CHAR         szName[MAX_PATH];
     CHAR         szProvName[MAX_PATH];
     HCRYPTKEY    hKeyExchangeKeyPair;
@@ -976,6 +977,24 @@ static HCRYPTPROV new_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTab
             } else {
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_STRONG;
             }
+        }
+
+        /* The new key container has to be inserted into the CSP immediately 
+         * after creation to be available for CPGetProvParam's PP_ENUMCONTAINERS. */
+        if (!(dwFlags & CRYPT_VERIFYCONTEXT)) {
+            BYTE szRSABase[MAX_PATH];
+            HKEY hRootKey, hKey;
+
+            sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
+
+            if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET) {
+                hRootKey = HKEY_LOCAL_MACHINE;
+            } else {
+                hRootKey = HKEY_CURRENT_USER;
+            }
+
+            RegCreateKeyA(hRootKey, szRSABase, &hKey);
+            RegCloseKey(hKey);
         }
     }
 
@@ -1862,10 +1881,10 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         encrypt_stream_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, *pdwDataLen);
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_RSA) {
-		if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
-			SetLastError(NTE_BAD_KEY);
-			return FALSE;
-		}
+        if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
+            SetLastError(NTE_BAD_KEY);
+            return FALSE;
+        }
         if (dwBufLen < pCryptKey->dwBlockLen) {
             SetLastError(ERROR_MORE_DATA);
             return FALSE;
@@ -1982,10 +2001,10 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         encrypt_stream_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, *pdwDataLen);
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_RSA) {
-		if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
-			SetLastError(NTE_BAD_KEY);
-			return FALSE;
-		}
+        if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
+            SetLastError(NTE_BAD_KEY);
+            return FALSE;
+        }
         encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, pbData, RSAENH_DECRYPT);
         if (!unpad_data(pbData, pCryptKey->dwBlockLen, pbData, pdwDataLen, dwFlags)) return FALSE;
         Final = TRUE;
@@ -2717,6 +2736,8 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     KEYCONTAINER *pKeyContainer;
     PROV_ENUMALGS provEnumalgs;
     DWORD dwTemp;
+    BYTE szRSABase[MAX_PATH];
+    HKEY hKey, hRootKey;
    
     /* This is for dwParam 41, which does not seem to be documented
      * on MSDN. IE6 SP1 asks for it in the 'About' dialog, however.
@@ -2763,7 +2784,48 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
         case PP_KEYX_KEYSIZE_INC:
             dwTemp = 8;
             return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
-            
+ 
+        case PP_ENUMCONTAINERS:
+            if ((dwFlags & CRYPT_FIRST) == CRYPT_FIRST) pKeyContainer->dwEnumContainersCtr = 0;
+
+            if (!pbData) {
+                *pdwDataLen = (DWORD)MAX_PATH + 1;
+                return TRUE;
+            }
+ 
+            sprintf(szRSABase, RSAENH_REGKEY, "");
+
+            if (dwFlags & CRYPT_MACHINE_KEYSET) {
+                hRootKey = HKEY_LOCAL_MACHINE;
+            } else {
+                hRootKey = HKEY_CURRENT_USER;
+            }
+
+            if (RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+            {
+                SetLastError(ERROR_NO_MORE_ITEMS);
+                return FALSE;
+            }
+
+            dwTemp = *pdwDataLen;
+            switch (RegEnumKeyExA(hKey, pKeyContainer->dwEnumContainersCtr, pbData, &dwTemp,
+                    NULL, NULL, NULL, NULL))
+            {
+                case ERROR_MORE_DATA:
+                    *pdwDataLen = (DWORD)MAX_PATH + 1;
+ 
+                case ERROR_SUCCESS:
+                    pKeyContainer->dwEnumContainersCtr++;
+                    RegCloseKey(hKey);
+                    return TRUE;
+
+                case ERROR_NO_MORE_ITEMS:
+                default:
+                    SetLastError(ERROR_NO_MORE_ITEMS);
+                    RegCloseKey(hKey);
+                    return FALSE;
+            }
+ 
         case PP_ENUMALGS:
         case PP_ENUMALGS_EX:
             if (((pKeyContainer->dwEnumAlgsCtr >= RSAENH_MAX_ENUMALGS-1) ||
