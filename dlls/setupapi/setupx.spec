@@ -134,14 +134,14 @@
 212  stub     IpOpenAppendEx #(str word word)
 213  pascal16 vcpUICallbackProc(ptr word word long long) vcpUICallbackProc16
 214  stub     VcpAddMRUPath #(str)
-300  stub     DiBuildCompatDrvList #(ptr)
+300  pascal16 DiBuildCompatDrvList (ptr) DiBuildCompatDrvList16
 301  stub     DiBuildClassDrvList #(ptr)
 302  stub     DiDestroyDriverNodeList #(ptr)
-303  stub     DiCreateDeviceInfo #(ptr str long str str word)
+303  pascal16 DiCreateDeviceInfo (ptr str long long str str word) DiCreateDeviceInfo16
 304  pascal16 DiGetClassDevs(ptr str word word) DiGetClassDevs16
-305  stub     DiDestroyDeviceInfoList #(ptr)
+305  pascal16 DiDestroyDeviceInfoList (ptr) DiDestroyDeviceInfoList16
 306  stub     DiRemoveDevice #(ptr)
-308  stub     DiCallClassInstaller #(word ptr)
+308  pascal16 DiCallClassInstaller (word ptr) DiCallClassInstaller16
 309  stub     DiCreateDriverNode #(ptr word word word str str str str str str long)
 310  stub     DiDrawMiniIcon
 311  stub     DiGetClassBitmapIndex #(str ptr)
@@ -151,8 +151,8 @@
 315  stub     DiAskForOEMDisk #(ptr)
 316  stub     Display_SetMode #(ptr word word word)
 317  stub     Display_ClassInstaller #(word ptr)
-318  stub     DiCreateDevRegKey #(ptr ptr word str word)
-319  stub     DiOpenDevRegKey #(ptr ptr word)
+318  pascal16 DiCreateDevRegKey (ptr ptr word str word) DiCreateDevRegKey16
+319  pascal16 DiOpenDevRegKey (ptr ptr word) DiOpenDevRegKey16
 320  stub     DiInstallDrvSection #(str str str str long)
 321  stub     DiInstallClass #(str long)
 322  stub     DiOpenClassRegKey #(ptr str)
@@ -166,7 +166,7 @@
 341  stub     DiBuildClassInfoList #(ptr)
 342  stub     DiDestroyClassInfoList #(ptr)
 343  stub     DiGetDeviceClassInfo #(ptr ptr)
-344  stub     DiDeleteDevRegKey #(ptr word)
+344  pascal16 DiDeleteDevRegKey (ptr word) DiDeleteDevRegKey16
 350  stub     DiSelectOEMDrv #(word ptr)
 351  stub     DiGetINFClass #(str word str long)
 353  stub     DIPICKBESTDRIVER
