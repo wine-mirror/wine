@@ -2867,7 +2867,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
         if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    if (wndPtr == WND_OTHER_PROCESS)
+    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
     {
         if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
@@ -2942,7 +2942,7 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
         if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    if (wndPtr == WND_OTHER_PROCESS)
+    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
     {
         if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         else SetLastError( ERROR_INVALID_WINDOW_HANDLE );

@@ -477,7 +477,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
     {
         HWND hwnd = hwndFrom;
 
-        while (hwnd && hwnd != GetDesktopWindow())
+        while (hwnd)
         {
             if (hwnd == hwndTo) return;
             if (!(wndPtr = WIN_GetPtr( hwnd )))
@@ -485,6 +485,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
                 ERR( "bad hwndFrom = %p\n", hwnd );
                 return;
             }
+            if (wndPtr == WND_DESKTOP) break;
             if (wndPtr == WND_OTHER_PROCESS) goto other_process;
             offset->x += wndPtr->rectClient.left;
             offset->y += wndPtr->rectClient.top;
@@ -498,13 +499,14 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
     {
         HWND hwnd = hwndTo;
 
-        while (hwnd && hwnd != GetDesktopWindow())
+        while (hwnd)
         {
             if (!(wndPtr = WIN_GetPtr( hwnd )))
             {
                 ERR( "bad hwndTo = %p\n", hwnd );
                 return;
             }
+            if (wndPtr == WND_DESKTOP) break;
             if (wndPtr == WND_OTHER_PROCESS) goto other_process;
             offset->x -= wndPtr->rectClient.left;
             offset->y -= wndPtr->rectClient.top;
@@ -893,7 +895,7 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     WND *pWnd = WIN_GetPtr( hwnd );
     LPINTERNALPOS lpPos;
 
-    if (!pWnd) return FALSE;
+    if (!pWnd || pWnd == WND_DESKTOP) return FALSE;
     if (pWnd == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
@@ -932,7 +934,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     DWORD style;
     WND *pWnd = WIN_GetPtr( hwnd );
 
-    if (!pWnd || pWnd == WND_OTHER_PROCESS) return FALSE;
+    if (!pWnd || pWnd == WND_OTHER_PROCESS || pWnd == WND_DESKTOP) return FALSE;
     lpPos = WINPOS_InitInternalPos( pWnd );
 
     if( flags & PLACE_MIN )

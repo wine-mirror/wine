@@ -152,7 +152,7 @@ static SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
     SCROLLBAR_INFO *infoPtr = NULL;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return NULL;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return NULL;
     switch(nBar)
     {
         case SB_HORZ: infoPtr = (SCROLLBAR_INFO *)wndPtr->pHScroll; break;
@@ -201,7 +201,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
     BOOL vertical;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
 
     switch(nBar)
     {
@@ -1069,7 +1069,7 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
     if (scrollbar != SB_CTL)
     {
         WND *wndPtr = WIN_GetPtr( hwnd );
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return;
         xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
         yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
         WIN_ReleasePtr( wndPtr );

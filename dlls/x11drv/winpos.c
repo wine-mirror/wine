@@ -724,7 +724,6 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
         return FALSE;
     }
-    old_style = win->dwStyle;
     SERVER_START_REQ( set_window_pos )
     {
         req->handle        = hwnd;
@@ -749,6 +748,8 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
     }
     SERVER_END_REQ;
 
+    if (win == WND_DESKTOP) return ret;
+
     if (ret)
     {
         Display *display = thread_display();
@@ -765,6 +766,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
         win->rectWindow   = *rectWindow;
         win->rectClient   = *rectClient;
+        old_style         = win->dwStyle;
         win->dwStyle      = new_style;
         data->window_rect = *rectWindow;
 
@@ -1090,6 +1092,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     RECT newPos = {0, 0, 0, 0};
     UINT swp = 0;
 
+    if (hwnd == GetDesktopWindow()) return FALSE;
 
     TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
 

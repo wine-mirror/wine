@@ -191,7 +191,7 @@ static MDICLIENTINFO *get_client_info( HWND client )
     {
         if (win == WND_OTHER_PROCESS)
         {
-            ERR( "client %p belongs to other process\n", client );
+            if (IsWindow(client)) ERR( "client %p belongs to other process\n", client );
             return NULL;
         }
         if (win->cbWndExtra < sizeof(MDICLIENTINFO)) WARN( "%p is not an MDI client\n", client );

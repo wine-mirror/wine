@@ -51,7 +51,7 @@ WINE_DECLARE_DEBUG_CHANNEL(msg);
 /**********************************************************************/
 
 /* Desktop window */
-static WND *pWndDesktop = NULL;
+static HWND hwndDesktop;
 
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
@@ -213,13 +213,14 @@ static HWND *list_window_parents( HWND hwnd )
     {
         if (!(win = WIN_GetPtr( current ))) goto empty;
         if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
-        list[pos] = win->parent;
-        WIN_ReleasePtr( win );
-        if (!(current = list[pos]))
+        if (win == WND_DESKTOP)
         {
             if (!pos) goto empty;
+            list[pos] = 0;
             return list;
         }
+        list[pos] = current = win->parent;
+        WIN_ReleasePtr( win );
         if (++pos == size - 1)
         {
             /* need to grow the list */
@@ -312,6 +313,11 @@ WND *WIN_GetPtr( HWND hwnd )
             return ptr;
         ptr = NULL;
     }
+    else if (index == USER_HANDLE_TO_INDEX(hwndDesktop))
+    {
+        if (!HIWORD(hwnd) || hwnd == GetDesktopWindow()) ptr = WND_DESKTOP;
+        else ptr = NULL;
+    }
     else ptr = WND_OTHER_PROCESS;
     USER_Unlock();
     return ptr;
@@ -328,7 +334,7 @@ HWND WIN_IsCurrentProcess( HWND hwnd )
     WND *ptr;
     HWND ret;
 
-    if (!(ptr = WIN_GetPtr( hwnd )) || ptr == WND_OTHER_PROCESS) return 0;
+    if (!(ptr = WIN_GetPtr( hwnd )) || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
     ret = ptr->hwndSelf;
     WIN_ReleasePtr( ptr );
     return ret;
@@ -345,11 +351,9 @@ HWND WIN_IsCurrentThread( HWND hwnd )
     WND *ptr;
     HWND ret = 0;
 
-    if ((ptr = WIN_GetPtr( hwnd )) && ptr != WND_OTHER_PROCESS)
-    {
-        if (ptr->tid == GetCurrentThreadId()) ret = ptr->hwndSelf;
-        WIN_ReleasePtr( ptr );
-    }
+    if (!(ptr = WIN_GetPtr( hwnd )) || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
+    if (ptr->tid == GetCurrentThreadId()) ret = ptr->hwndSelf;
+    WIN_ReleasePtr( ptr );
     return ret;
 }
 
@@ -369,6 +373,8 @@ HWND WIN_Handle32( HWND16 hwnd16 )
     if (hwnd16 >= (HWND16)-3) return (HWND)(LONG_PTR)(INT16)hwnd16;
 
     if (!(ptr = WIN_GetPtr( hwnd ))) return hwnd;
+
+    if (ptr == WND_DESKTOP) return GetDesktopWindow();
 
     if (ptr != WND_OTHER_PROCESS)
     {
@@ -411,7 +417,7 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
 {
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr) return;
+    if (!wndPtr || wndPtr == WND_DESKTOP) return;
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd)) ERR(" cannot link other process window %p\n", hwnd );
@@ -444,7 +450,7 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
     WND *win = WIN_GetPtr( hwnd );
     HWND ret = 0;
 
-    if (!win) return 0;
+    if (!win || win == WND_DESKTOP) return 0;
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd)) ERR( "cannot set owner %p on other process window %p\n", owner, hwnd );
@@ -477,7 +483,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     ULONG new_style, old_style = 0;
     WND *win = WIN_GetPtr( hwnd );
 
-    if (!win) return 0;
+    if (!win || win == WND_DESKTOP) return 0;
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
@@ -521,7 +527,16 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
     BOOL ret = TRUE;
 
     if (!win) return FALSE;
-    if (win == WND_OTHER_PROCESS)
+    if (win == WND_DESKTOP)
+    {
+        RECT rect;
+        rect.left = rect.top = 0;
+        rect.right  = GetSystemMetrics(SM_CXSCREEN);
+        rect.bottom = GetSystemMetrics(SM_CYSCREEN);
+        if (rectWindow) *rectWindow = rect;
+        if (rectClient) *rectClient = rect;
+    }
+    else if (win == WND_OTHER_PROCESS)
     {
         SERVER_START_REQ( get_window_rectangles )
         {
@@ -645,26 +660,27 @@ void WIN_DestroyThreadWindows( HWND hwnd )
  */
 BOOL WIN_CreateDesktopWindow(void)
 {
-    HWND hwndDesktop;
     CREATESTRUCTA cs;
 
     TRACE("Creating desktop window\n");
 
     if (!WINPOS_CreateInternalPosAtom()) return FALSE;
 
-    pWndDesktop = create_window_handle( 0, 0, LOWORD(DESKTOP_CLASS_ATOM), 0, WIN_PROC_32W );
-    if (!pWndDesktop) return FALSE;
-    hwndDesktop = pWndDesktop->hwndSelf;
+    SERVER_START_REQ( create_window )
+    {
+        req->parent   = 0;
+        req->owner    = 0;
+        req->atom     = LOWORD(DESKTOP_CLASS_ATOM);
+        req->instance = 0;
+        if (!wine_server_call_err( req )) hwndDesktop = reply->handle;
+    }
+    SERVER_END_REQ;
 
-    pWndDesktop->tid               = 0;  /* nobody owns the desktop */
-    pWndDesktop->parent            = 0;
-    pWndDesktop->owner             = 0;
-    pWndDesktop->text              = NULL;
-    pWndDesktop->pVScroll          = NULL;
-    pWndDesktop->pHScroll          = NULL;
-    pWndDesktop->helpContext       = 0;
-    pWndDesktop->flags             = 0;
-    pWndDesktop->hSysMenu          = 0;
+    if (!hwndDesktop)
+    {
+        ERR( "error %ld creating desktop window\n", GetLastError() );
+        return FALSE;
+    }
 
     cs.lpCreateParams = NULL;
     cs.hInstance      = 0;
@@ -674,30 +690,12 @@ BOOL WIN_CreateDesktopWindow(void)
     cs.y              = 0;
     cs.cx             = GetSystemMetrics( SM_CXSCREEN );
     cs.cy             = GetSystemMetrics( SM_CYSCREEN );
-    cs.style          = pWndDesktop->dwStyle;
-    cs.dwExStyle      = pWndDesktop->dwExStyle;
+    cs.style          = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+    cs.dwExStyle      = 0;
     cs.lpszName       = NULL;
     cs.lpszClass      = DESKTOP_CLASS_ATOM;
 
-    SERVER_START_REQ( set_window_info )
-    {
-        req->handle = hwndDesktop;
-        req->flags  = 0;  /* don't set anything, just retrieve */
-        req->extra_offset = -1;
-        wine_server_call( req );
-        pWndDesktop->dwStyle   = reply->old_style;
-        pWndDesktop->dwExStyle = reply->old_ex_style;
-        pWndDesktop->hInstance = (HINSTANCE)reply->old_instance;
-        pWndDesktop->userdata  = (ULONG_PTR)reply->old_user_data;
-        pWndDesktop->wIDmenu   = reply->old_id;
-    }
-    SERVER_END_REQ;
-    WIN_ReleasePtr( pWndDesktop );
-
-    if (!USER_Driver.pCreateWindow || !USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE ))
-        return FALSE;
-
-    return TRUE;
+    return USER_Driver.pCreateWindow( hwndDesktop, &cs, TRUE );
 }
 
 
@@ -946,7 +944,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         UINT flags = 0;
 
         wndPtr = WIN_GetPtr(cs->hwndParent);
-        if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+        if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
         {
             flags = wndPtr->flags;
             WIN_ReleasePtr(wndPtr);
@@ -1640,7 +1638,7 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    if (pWndDesktop) return pWndDesktop->hwndSelf;
+    if (hwndDesktop) return hwndDesktop;
     ERR( "Wine init error: either you're trying to use an invalid native USER.EXE config, or some graphics/GUI libraries or DLLs didn't initialize properly. Aborting.\n" );
     ExitProcess(1);
     return 0;
@@ -1714,6 +1712,7 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
     BOOL retvalue;
 
     if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return FALSE;
+    if (wndPtr == WND_DESKTOP) return TRUE;
     retvalue = (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
     WIN_ReleasePtr( wndPtr );
     return retvalue;
@@ -1734,7 +1733,7 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
-        if (wndPtr == WND_OTHER_PROCESS)
+        if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
         {
             SERVER_START_REQ( set_window_info )
             {
@@ -1801,6 +1800,11 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     }
 
     wndPtr = WIN_GetPtr( hwnd );
+    if (wndPtr == WND_DESKTOP)
+    {
+        SetLastError( ERROR_ACCESS_DENIED );
+        return 0;
+    }
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
@@ -1865,7 +1869,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         return 0;
     }
 
-    if (wndPtr == WND_OTHER_PROCESS)
+    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
     {
         if (offset == GWLP_WNDPROC)
         {
@@ -1976,7 +1980,19 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (!WIN_IsCurrentProcess( hwnd ))
+
+    if (!(wndPtr = WIN_GetPtr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr == WND_DESKTOP)
+    {
+        /* can't change anything on the desktop window */
+        SetLastError( ERROR_ACCESS_DENIED );
+        return 0;
+    }
+    if (wndPtr == WND_OTHER_PROCESS)
     {
         if (offset == GWLP_WNDPROC)
         {
@@ -1984,15 +2000,6 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
             return 0;
         }
         return SendMessageW( hwnd, WM_WINE_SETWINDOWLONG, offset, newval );
-    }
-
-    wndPtr = WIN_GetPtr( hwnd );
-    if (wndPtr->hwndSelf == GetDesktopWindow())
-    {
-        /* can't change anything on the desktop window */
-        WIN_ReleasePtr( wndPtr );
-        SetLastError( ERROR_ACCESS_DENIED );
-        return 0;
     }
 
     /* first some special cases */
@@ -2289,7 +2296,8 @@ INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
 
     if (nMaxCount <= 0) return 0;
     if (!(win = WIN_GetPtr( hwnd ))) return 0;
-    if (win != WND_OTHER_PROCESS)
+    if (win == WND_DESKTOP) lpString[0] = 0;
+    else if (win != WND_OTHER_PROCESS)
     {
         if (win->text) lstrcpynW( lpString, win->text, nMaxCount );
         else lpString[0] = 0;
@@ -2385,6 +2393,7 @@ BOOL WINAPI IsWindow( HWND hwnd )
     BOOL ret;
 
     if (!(ptr = WIN_GetPtr( hwnd ))) return FALSE;
+    if (ptr == WND_DESKTOP) return TRUE;
 
     if (ptr != WND_OTHER_PROCESS)
     {
@@ -2417,7 +2426,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
         return 0;
     }
 
-    if (ptr != WND_OTHER_PROCESS)
+    if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP)
     {
         /* got a valid window */
         tid = ptr->tid;
@@ -2454,6 +2463,7 @@ HWND WINAPI GetParent( HWND hwnd )
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
+    if (wndPtr == WND_DESKTOP) return 0;
     if (wndPtr == WND_OTHER_PROCESS)
     {
         LONG style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -2497,6 +2507,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
+        if (win == WND_DESKTOP) return 0;
         if (win != WND_OTHER_PROCESS)
         {
             ret = win->parent;
@@ -2584,7 +2595,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     was_visible = ShowWindow( hwnd, SW_HIDE );
 
     if (!IsWindow( parent )) return 0;
-    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return 0;
+    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
 
     retvalue = wndPtr->parent;  /* old parent */
     if (parent != retvalue)
@@ -2703,6 +2714,7 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
             SetLastError( ERROR_INVALID_HANDLE );
             return 0;
         }
+        if (wndPtr == WND_DESKTOP) return 0;
         if (wndPtr != WND_OTHER_PROCESS)
         {
             retval = wndPtr->owner;
@@ -2972,7 +2984,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
 
         wndPtr = WIN_GetPtr(hWnd);
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
         if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
         {
             wndPtr->flags |= WIN_NCACTIVATED;
@@ -2989,7 +3001,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         WPARAM wparam;
 
         wndPtr = WIN_GetPtr(hWnd);
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
         hWnd = wndPtr->hwndSelf;  /* make it a full handle */
 
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
@@ -3017,7 +3029,7 @@ DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
 {
     DWORD retval;
     WND *wnd = WIN_GetPtr( hwnd );
-    if (!wnd) return 0;
+    if (!wnd || wnd == WND_DESKTOP) return 0;
     if (wnd == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
@@ -3035,7 +3047,7 @@ DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
 BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 {
     WND *wnd = WIN_GetPtr( hwnd );
-    if (!wnd) return FALSE;
+    if (!wnd || wnd == WND_DESKTOP) return FALSE;
     if (wnd == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );

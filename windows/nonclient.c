@@ -182,7 +182,7 @@ static HICON NC_IconForWindow( HWND hwnd )
     HICON hIcon = 0;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+    if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
     {
         hIcon = wndPtr->hIconSmall;
         if (!hIcon) hIcon = wndPtr->hIcon;
@@ -441,7 +441,7 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect )
 {
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return;
 
     rect->top    = rect->left = 0;
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
@@ -642,7 +642,7 @@ LONG NC_HandleNCHitTest (HWND hwnd , POINT pt)
     LONG retvalue;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return HTERROR;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return HTERROR;
 
     retvalue = NC_DoNCHitTest (wndPtr, pt);
     WIN_ReleasePtr( wndPtr );
@@ -933,18 +933,10 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
 
 
 /******************************************************************************
- *
  *   NC_DoNCPaint
  *
- *   Paint the non-client area for windows.  The clip region is
- *   currently ignored.
- *
- *   Bugs
- *        grep -E -A10 -B5 \(95\)\|\(Bugs\)\|\(FIXME\) windows/nonclient.c \
- *           misc/tweak.c controls/menu.c  # :-)
- *
- *****************************************************************************/
-
+ *   Paint the non-client area for windows.
+ */
 static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
 {
     HDC hdc;
@@ -1185,7 +1177,7 @@ void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
     else
     {
         WND *wndPtr = WIN_GetPtr( hwnd );
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return;
 
         NC_GetInsideRect( hwnd, rect );
         OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);

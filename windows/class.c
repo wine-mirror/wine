@@ -65,7 +65,6 @@ typedef struct tagCLASS
 } CLASS;
 
 static struct list class_list = LIST_INIT( class_list );
-static CLASS *desktop_class;
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
 
@@ -78,8 +77,9 @@ static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
 
     if (ptr)
     {
-        if (ptr != WND_OTHER_PROCESS) return ptr->class;
-        if (write_access && IsWindow( hwnd )) /* check other processes */
+        if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP) return ptr->class;
+
+        if (write_access && (ptr == WND_DESKTOP || IsWindow( hwnd ))) /* check other processes */
         {
             /* modifying classes in other processes is not allowed */
             SetLastError( ERROR_ACCESS_DENIED );
@@ -476,7 +476,7 @@ void CLASS_RegisterBuiltinClasses(void)
     extern const struct builtin_class_descr SCROLL_builtin_class;
     extern const struct builtin_class_descr STATIC_builtin_class;
 
-    desktop_class = register_builtin( &DESKTOP_builtin_class );
+    register_builtin( &DESKTOP_builtin_class );
     register_builtin( &BUTTON_builtin_class );
     register_builtin( &COMBO_builtin_class );
     register_builtin( &COMBOLBOX_builtin_class );
@@ -499,8 +499,6 @@ void CLASS_RegisterBuiltinClasses(void)
  */
 void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
 {
-    if (!class) class = desktop_class;
-
     if (type == WIN_PROC_32W)
     {
         if (!(win->winproc = class->winprocW)) win->winproc = class->winprocA;

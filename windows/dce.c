@@ -349,7 +349,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     else hwnd = WIN_GetFullHandle( hwnd );
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
-    if (wndPtr == WND_OTHER_PROCESS)
+    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
     {
         wndPtr = NULL;
         USER_Lock();

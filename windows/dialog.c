@@ -997,7 +997,7 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
 	if (!hParent) break;
 
 	pParent = WIN_GetPtr(hParent);
-	if (!pParent || pParent == WND_OTHER_PROCESS) break;
+	if (!pParent || pParent == WND_OTHER_PROCESS || pParent == WND_DESKTOP) break;
 
 	if (!(pParent->flags & WIN_ISDIALOG))
 	{
@@ -1086,6 +1086,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
     if (CallMsgFilterW( msg, MSGF_DIALOGBOX )) return TRUE;
 
     hwndDlg = WIN_GetFullHandle( hwndDlg );
+    if (hwndDlg == GetDesktopWindow()) return FALSE;
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd )) return FALSE;
 
     hwndDlg = DIALOG_FindMsgDestination(hwndDlg);

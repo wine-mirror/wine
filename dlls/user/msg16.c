@@ -363,11 +363,10 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    if (wndPtr == WND_OTHER_PROCESS)
+    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
     {
-        if (IsWindow( hwnd ))
-            ERR( "cannot dispatch msg to other process window %p\n", hwnd );
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        if (IsWindow( hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
     winproc = (WNDPROC16)wndPtr->winproc;

@@ -66,17 +66,11 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     Display *display;
     MSG msg;
     HWND hwnd;
-    WND *win;
     Atom atom = x11drv_atom(WM_DELETE_WINDOW);
 
     NtCurrentTeb()->driver_data = driver_data;
     display = thread_display();
     hwnd = GetDesktopWindow();
-
-    /* patch the desktop window queue to point to our queue */
-    win = WIN_GetPtr( hwnd );
-    win->tid = GetCurrentThreadId();
-    WIN_ReleasePtr( win );
 
     SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_winproc );
     wine_tsx11_lock();

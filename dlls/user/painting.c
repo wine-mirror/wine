@@ -188,7 +188,7 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
         INT type;
         WND *win = WIN_GetPtr( hwnd );
 
-        if (!win || win == WND_OTHER_PROCESS)
+        if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
         {
             DeleteObject( whole_rgn );
             return 0;

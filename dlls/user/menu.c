@@ -319,7 +319,7 @@ static HMENU get_win_sys_menu( HWND hwnd )
 {
     HMENU ret = 0;
     WND *win = WIN_GetPtr( hwnd );
-    if (win && win != WND_OTHER_PROCESS)
+    if (win && win != WND_OTHER_PROCESS && win != WND_DESKTOP)
     {
         ret = win->hSysMenu;
         WIN_ReleasePtr( win );
@@ -3667,6 +3667,7 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
     WND *wndPtr = WIN_GetPtr( hWnd );
     HMENU retvalue = 0;
 
+    if (wndPtr == WND_DESKTOP) return 0;
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow( hWnd )) FIXME( "not supported on other process window %p\n", hWnd );
@@ -3724,7 +3725,7 @@ BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
 {
     WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+    if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
     {
 	if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
 	wndPtr->hSysMenu = MENU_GetSysMenu( hwnd, hMenu );

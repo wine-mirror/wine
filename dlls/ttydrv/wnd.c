@@ -109,6 +109,7 @@ static BOOL set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         ret = !wine_server_call( req );
     }
     SERVER_END_REQ;
+    if (win == WND_DESKTOP) return ret;
     if (ret)
     {
         win->rectWindow = *rectWindow;

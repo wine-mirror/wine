@@ -359,7 +359,7 @@ DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
         dlgInfo->flags       = 0;
         dlgInfo->hDialogHeap = 0;
         wndPtr = WIN_GetPtr( hwnd );
-        if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+        if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
         {
             wndPtr->flags |= WIN_ISDIALOG;
             WIN_ReleasePtr( wndPtr );
