@@ -170,9 +170,35 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         if(PATH_IsPathOpen(dc->path))
             FIXME("called on an open path\n");
-        else if(dc->funcs->pExtTextOut)
-	    ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
-	GDI_ReleaseObj( hdc );
+		else if(dc->funcs->pExtTextOut)
+		{
+			DWORD fontLangInfo=0;
+			if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) &&
+			   ((fontLangInfo=GetFontLanguageInfo( hdc ))&(GCP_REORDER|GCP_GLYPHSHAPE)) )
+			{
+				/* The caller did not specify that language processing was already done,
+				 * and the font idetifies iteself as requiring language processing.
+				 */
+				GCP_RESULTSW gcp;
+				
+				gcp.lStructSize=sizeof(gcp);
+				gcp.lpOutString=HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
+				gcp.lpOrder=NULL;
+				gcp.lpDx=NULL;
+				gcp.lpCaretPos=NULL;
+				gcp.lpClass=NULL;
+				gcp.lpGlyphs=NULL;
+				gcp.nGlyphs=0;
+				gcp.nMaxFit=0;
+				
+				GetCharacterPlacementW(hdc, str, count, 0, &gcp, GCP_REORDER );
+				
+				ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags|ETO_IGNORELANGUAGE,
+					lprect,gcp.lpOutString,count,lpDx);
+			} else
+				ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
+		}
+		GDI_ReleaseObj( hdc );
     }
     return ret;
 }
