@@ -80,6 +80,7 @@ typedef struct tagICONCACHE
 
 static ICONCACHE *IconAnchor = NULL;
 static CRITICAL_SECTION IconCrst;
+static DWORD ICON_HOTSPOT = 0x42424242;
 
 /**********************************************************************
  *	    CURSORICON_Init
@@ -436,7 +437,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
     BITMAPOBJ *bmpXor, *bmpAnd;
-    POINT16 hotspot = { 0 ,0 };
+    POINT16 hotspot = { ICON_HOTSPOT, ICON_HOTSPOT };
     BITMAPINFO *bmi;
     HDC hdc;
     BOOL DoStretch;
@@ -964,7 +965,16 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
  if(hIcon && pTask)
     if (!(pIcon = (CURSORICONINFO*)GlobalLock16( hIcon ))) return FALSE;
        if (pIcon->bPlanes * pIcon->bBitsPerPixel == 1)
+       {
            hRet = CURSORICON_Copy( pTask->hInstance, hIcon );
+
+ 
+	   pIcon = GlobalLock16(hRet);
+
+	   pIcon->ptHotSpot.x = pIcon->ptHotSpot.y = 15;
+ 
+	   GlobalUnlock(hRet);
+       }
        else
        {
            BYTE  pAndBits[128];
@@ -1119,8 +1129,8 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
     TRACE_(icon)("%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
 
-    info.ptHotSpot.x = 0;
-    info.ptHotSpot.y = 0;
+    info.ptHotSpot.x = ICON_HOTSPOT;
+    info.ptHotSpot.y = ICON_HOTSPOT;
     info.nWidth = nWidth;
     info.nHeight = nHeight;
     info.nWidthBytes = 0;
@@ -1143,8 +1153,8 @@ HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
     TRACE_(icon)("%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
 
-    info.ptHotSpot.x = 0;
-    info.ptHotSpot.y = 0;
+    info.ptHotSpot.x = ICON_HOTSPOT;
+    info.ptHotSpot.y = ICON_HOTSPOT;
     info.nWidth = nWidth;
     info.nHeight = nHeight;
     info.nWidthBytes = 0;
@@ -1784,9 +1794,20 @@ BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
     ciconinfo = GlobalLock16(hIcon);
     if (!ciconinfo)
 	return FALSE;
-    iconinfo->xHotspot = ciconinfo->ptHotSpot.x;
-    iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
-    iconinfo->fIcon    = TRUE; /* hmm */
+
+    if ( (ciconinfo->ptHotSpot.x == ICON_HOTSPOT) &&
+	 (ciconinfo->ptHotSpot.y == ICON_HOTSPOT) )
+    {
+      iconinfo->fIcon    = TRUE;
+      iconinfo->xHotspot = 0;
+      iconinfo->yHotspot = 0;
+    }
+    else
+    {
+      iconinfo->fIcon    = FALSE;
+      iconinfo->xHotspot = ciconinfo->ptHotSpot.x;
+      iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
+    }
 
     iconinfo->hbmColor = CreateBitmap ( ciconinfo->nWidth, ciconinfo->nHeight,
                                 ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
@@ -1822,8 +1843,19 @@ HICON WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
 	CURSORICONINFO *info;
 
 	info = (CURSORICONINFO *)GlobalLock16( hObj );
-	info->ptHotSpot.x   = iconinfo->xHotspot;
-	info->ptHotSpot.y   = iconinfo->yHotspot;
+
+	/* If we are creating an icon, the hotspot is unused */
+	if (iconinfo->fIcon)
+	{
+	  info->ptHotSpot.x   = ICON_HOTSPOT;
+	  info->ptHotSpot.y   = ICON_HOTSPOT;
+	}
+	else
+	{
+	  info->ptHotSpot.x   = iconinfo->xHotspot;
+	  info->ptHotSpot.y   = iconinfo->yHotspot;
+	}
+
 	info->nWidth        = bmpXor->bitmap.bmWidth;
 	info->nHeight       = bmpXor->bitmap.bmHeight;
 	info->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
