@@ -42,6 +42,9 @@
 #endif
 #include <errno.h>
 
+#ifdef __NetBSD__
+#undef if_type
+#endif
 
 /* FIXME: The rest of the socket() cdecl<->stdapi stack corruption problem
           discussed above. */
