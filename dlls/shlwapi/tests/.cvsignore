@@ -1,7 +1,9 @@
 Makefile
 clist.ok
+clsid.ok
 generated.ok
 path.ok
 shlwapi_test.exe.spec.c
 shreg.ok
+string.ok
 testlist.c
