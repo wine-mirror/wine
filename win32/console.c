@@ -665,6 +665,23 @@ BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
 }
 
 
+/******************************************************************************
+ * SetConsoleOutputCP [KERNEL32.629]  Set the output codepage used by the console
+ *
+ * PARAMS
+ *    cp [I] code page to set
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL WINAPI SetConsoleOutputCP( UINT cp )
+{
+    FIXME("stub\n");
+    return TRUE;
+}
+
+
 /***********************************************************************
  *            GetConsoleTitleA   (KERNEL32.191)
  */

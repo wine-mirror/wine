@@ -644,7 +644,7 @@ import  ntdll.dll
 626 stdcall SetConsoleCursorInfo(long ptr) SetConsoleCursorInfo
 627 stdcall SetConsoleCursorPosition(long long) SetConsoleCursorPosition
 628 stdcall SetConsoleMode(long long) SetConsoleMode
-629 stub SetConsoleOutputCP
+629 stdcall SetConsoleOutputCP(long) SetConsoleOutputCP
 630 stdcall SetConsoleScreenBufferSize(long long) SetConsoleScreenBufferSize
 631 stdcall SetConsoleTextAttribute(long long) SetConsoleTextAttribute
 632 stdcall SetConsoleTitleA(str) SetConsoleTitleA
