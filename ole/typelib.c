@@ -528,7 +528,8 @@ DWORD TLB_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
 	DWORD bytesread=0;
 	
 	if ((   where != DO_NOT_SEEK &&
-		(0xffffffff == SetFilePointer( pcx->hFile, where, 0,FILE_BEGIN))
+		(0xffffffff == SetFilePointer( pcx->hFile, where + pcx->oStart,
+					       0,FILE_BEGIN))
 	    ) ||
 	    !ReadFile(pcx->hFile, buffer, count, &bytesread, NULL)
 	) {
@@ -1041,6 +1042,7 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
 	return E_FAIL;
     }
     /* get pointer to beginning of typelib data */
+    cx.oStart=0;
     if((oStart=TLB_FindTlb(&cx))<0){
         if(oStart==-1)
             ERR_(typelib)("cannot locate typelib in  %s\n",file);
