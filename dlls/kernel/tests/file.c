@@ -540,6 +540,7 @@ static void test_CopyFileA(void)
     char source[MAX_PATH], dest[MAX_PATH];
     static const char prefix[] = "pfx";
     HANDLE hfile;
+    FILETIME ft1, ft2;
     char buf[10];
     DWORD ret;
     BOOL retok;
@@ -558,6 +559,10 @@ static void test_CopyFileA(void)
     ok( retok && ret == sizeof(prefix),
        "WriteFile error %ld\n", GetLastError());
     ok(GetFileSize(hfile, NULL) == sizeof(prefix), "source file has wrong size\n");
+    /* get the file time and change it to prove the difference */
+    ok(GetFileTime(hfile, NULL, NULL, &ft1), "GetFileTime error %ld\n", GetLastError());
+    ft1.dwLowDateTime -= 600000000; /* 60 second */
+    ok(SetFileTime(hfile, NULL, NULL, &ft1), "SetFileTime error %ld\n", GetLastError());
     CloseHandle(hfile);
 
     ret = GetTempFileNameA(temp_path, prefix, 0, dest);
@@ -576,6 +581,10 @@ static void test_CopyFileA(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file\n");
     ret = GetFileSize(hfile, NULL);
     ok(ret == sizeof(prefix), "destination file has wrong size %ld\n", ret);
+
+    /* make sure that destination has the same filetime */
+    ok(ret = GetFileTime(hfile, NULL, NULL, &ft2), "GetFileTime error %ld\n", GetLastError());
+    ok(CompareFileTime(&ft1, &ft2) == 0, "destination file has wrong filetime");
 
     SetLastError(0xdeadbeef);
     ret = CopyFileA(source, dest, FALSE);
@@ -1076,17 +1085,23 @@ static void test_file_sharing(void)
     static const DWORD sharing_modes[4] = { 0, FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE };
     int a1, s1, a2, s2;
     int ret;
+    HANDLE h, h2;
 
     /* make sure the file exists */
-    HANDLE h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    if (h == INVALID_HANDLE_VALUE)
+    {
+        ok(0, "couldn't create file \"%s\" (err=%ld)\n", filename, GetLastError());
+        return;
+    }
     CloseHandle( h );
 
     for (a1 = 0; a1 < 4; a1++)
     {
         for (s1 = 0; s1 < 4; s1++)
         {
-            HANDLE h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
-                                    NULL, OPEN_EXISTING, 0, 0 );
+            h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
+                             NULL, OPEN_EXISTING, 0, 0 );
             if (h == INVALID_HANDLE_VALUE)
             {
                 ok(0,"couldn't create file \"%s\" (err=%ld)\n",filename,GetLastError());
@@ -1096,8 +1111,9 @@ static void test_file_sharing(void)
             {
                 for (s2 = 0; s2 < 4; s2++)
                 {
-                    HANDLE h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
-                                          NULL, OPEN_EXISTING, 0, 0 );
+                    SetLastError(0xdeadbeef);
+                    h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
+                                      NULL, OPEN_EXISTING, 0, 0 );
                     if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
                                                access_modes[a2], sharing_modes[s2] ))
                     {
@@ -1129,6 +1145,22 @@ static void test_file_sharing(void)
             CloseHandle( h );
         }
     }
+
+    SetLastError(0xdeadbeef);
+    h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, 0 );
+    ok( h != INVALID_HANDLE_VALUE, "CreateFileA error %ld\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    h2 = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( h2 == INVALID_HANDLE_VALUE, "CreateFileA should fail\n");
+    ok( GetLastError() == ERROR_SHARING_VIOLATION, "wrong error code %ld\n", GetLastError() );
+
+    h2 = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    ok( h2 != INVALID_HANDLE_VALUE, "CreateFileA error %ld\n", GetLastError() );
+
+    CloseHandle(h);
+    CloseHandle(h2);
+
     DeleteFileA( filename );
 }
 
