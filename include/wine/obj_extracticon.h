@@ -30,6 +30,7 @@ extern "C" {
 typedef struct IExtractIconA IExtractIconA,*LPEXTRACTICONA;
 typedef struct IExtractIconW IExtractIconW,*LPEXTRACTICONW;
 #define LPEXTRACTICON WINELIB_NAME_AW(LPEXTRACTICON)
+#define IExtractIcon WINELIB_NAME_AW(IExtractIcon)
 
 /* GetIconLocation() input flags*/
 #define GIL_OPENICON     0x0001      /* allows containers to specify an "open" look */
