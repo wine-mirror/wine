@@ -129,8 +129,13 @@ inline static BOOL is_window_managed( WND *win )
     if (win->dwStyle & WS_THICKFRAME) return TRUE;
     /* application windows are managed */
     if (win->dwExStyle & WS_EX_APPWINDOW) return TRUE;
-    /* popup windows that aren't owned are managed */
-    if ((win->dwStyle & WS_POPUP) && !win->owner) return TRUE;
+    /* full-screen popup windows are managed */
+    if ((win->dwStyle & WS_POPUP) && 
+        (win->rectWindow.right-win->rectWindow.left) == screen_width && 
+        (win->rectWindow.bottom-win->rectWindow.top) == screen_height) 
+    {
+        return TRUE;
+    }
     /* default: not managed */
     return FALSE;
 }
