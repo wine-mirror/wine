@@ -2,15 +2,8 @@ Makefile
 call32.s
 ddraw.spec.c
 dinput.spec.c
-dsound.spec.c
 gdi32.spec.c
 kernel32.spec.c
-mcianim.spec.c
-mciavi.spec.c
-mcicda.spec.c
-mciseq.spec.c
-mciwave.spec.c
 user32.spec.c
-winmm.spec.c
 wow32.spec.c
 wsock32.spec.c

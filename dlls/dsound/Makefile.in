@@ -1,26 +1,19 @@
 DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wineoss
+MODULE    = dsound
 
 SPEC_SRCS = \
-	wineoss.spec
+	dsound.spec
 
 C_SRCS = \
-	audio.c \
-	midi.c \
-	midipatch.c \
-	mixer.c \
-	mmaux.c \
-	oss.c
+	dsound_main.c
 
 all: $(MODULE).o
 
 @MAKE_RULES@
 
-call32.s: $(BUILD)
-	$(BUILD) @BUILDFLAGS@ -o $@ -call32
-
 ### Dependencies:
+

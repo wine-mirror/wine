@@ -13,7 +13,6 @@ SPEC_SRCS = \
 	gdi.spec \
 	kernel.spec \
 	keyboard.spec \
-	mmsystem.spec \
 	mouse.spec \
 	ole2conv.spec \
 	ole2nls.spec \

@@ -37,6 +37,7 @@ LIBSUBDIRS = \
 	dlls/crtdll \
 	dlls/dciman32 \
 	dlls/dplayx \
+	dlls/dsound \
 	dlls/imagehlp \
 	dlls/imm32 \
 	dlls/lzexpand \
@@ -63,9 +64,14 @@ LIBSUBDIRS = \
 	dlls/win87em \
 	dlls/winaspi \
 	dlls/windebug \
-	dlls/winmm \
-	dlls/winmm/wineoss \
 	dlls/wing \
+	dlls/winmm \
+	dlls/winmm/mcianim \
+	dlls/winmm/mciavi \
+	dlls/winmm/mcicda \
+	dlls/winmm/mciseq \
+	dlls/winmm/mciwave \
+	dlls/winmm/wineoss \
 	dlls/winspool \
 	dlls/wnaspi32 \
 	files \
@@ -83,7 +89,6 @@ LIBSUBDIRS = \
 	memory \
 	misc \
 	msdos \
-	multimedia \
 	objects \
 	ole \
 	relay32 \
@@ -137,6 +142,7 @@ LIBOBJS = \
 	dlls/crtdll/crtdll.o \
 	dlls/dciman32/dciman32.o \
 	dlls/dplayx/dplayx.o \
+	dlls/dsound/dsound.o \
 	dlls/imagehlp/imagehlp.o \
 	dlls/imm32/imm32.o \
 	dlls/lzexpand/lzexpand.o \
@@ -163,8 +169,14 @@ LIBOBJS = \
 	dlls/win87em/win87em.o \
 	dlls/winaspi/winaspi.o \
 	dlls/windebug/windebug.o \
-	dlls/winmm/wineoss/wineoss.o \
 	dlls/wing/wing.o \
+	dlls/winmm/mcianim/mcianim.drv.o \
+	dlls/winmm/mciavi/mciavi.drv.o \
+	dlls/winmm/mcicda/mcicda.drv.o \
+	dlls/winmm/mciseq/mciseq.drv.o \
+	dlls/winmm/mciwave/mciwave.drv.o \
+	dlls/winmm/wineoss/wineoss.o \
+	dlls/winmm/winmm.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \
@@ -181,7 +193,6 @@ LIBOBJS = \
 	memory/memory.o \
 	misc/misc.o \
 	msdos/msdos.o \
-	multimedia/multimedia.o \
 	objects/objects.o \
 	ole/ole.o \
 	relay32/relay32.o \

@@ -7,7 +7,6 @@ display.spec.c
 gdi.spec.c
 kernel.spec.c
 keyboard.spec.c
-mmsystem.spec.c
 mouse.spec.c
 ole2conv.spec.c
 ole2nls.spec.c

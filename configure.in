@@ -832,6 +832,7 @@ dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
 dlls/dplayx/Makefile
+dlls/dsound/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/lzexpand/Makefile
@@ -858,9 +859,14 @@ dlls/win32s/Makefile
 dlls/win87em/Makefile
 dlls/winaspi/Makefile
 dlls/windebug/Makefile
-dlls/winmm/Makefile
-dlls/winmm/wineoss/Makefile
 dlls/wing/Makefile
+dlls/winmm/Makefile
+dlls/winmm/mcianim/Makefile
+dlls/winmm/mciavi/Makefile
+dlls/winmm/mcicda/Makefile
+dlls/winmm/mciseq/Makefile
+dlls/winmm/mciwave/Makefile
+dlls/winmm/wineoss/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
 documentation/Makefile
@@ -885,7 +891,6 @@ memory/Makefile
 misc/Makefile
 miscemu/Makefile
 msdos/Makefile
-multimedia/Makefile
 objects/Makefile
 ole/Makefile
 programs/Makefile

@@ -4,10 +4,30 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winmm
+WRCEXTRA  = -s -pwinmm
 
-all: $(MODULE).o
+SPEC_SRCS = \
+	mmsystem.spec \
+	winmm.spec
+
+C_SRCS = \
+	joystick.c \
+	lolvldrv.c \
+	mci.c \
+	mmio.c \
+	mmsystem.c \
+	time.c
+
+GLUE =  lolvldrv.c \
+	mmsystem.c
+
+RC_SRCS= \
+	winmm_res.rc
+
+all: check_wrc $ $(MODULE).o
 
 @MAKE_RULES@
 
-### Dependencies:
+$(RC_SRCS:.rc=.s): $(WRC)
 
+### Dependencies:

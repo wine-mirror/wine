@@ -1,28 +1,15 @@
 DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
+TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = relay32
+MODULE    = mcianim.drv
 
 SPEC_SRCS = \
-	ddraw.spec \
-	dinput.spec \
-	gdi32.spec \
-	kernel32.spec \
-	user32.spec \
-	wow32.spec \
-	wsock32.spec
+	mcianim.spec
 
 C_SRCS = \
-	builtin32.c \
-	relay386.c \
-	snoop.c \
-	utthunk.c \
-	wowthunk.c
-
-GEN_ASM_SRCS = \
-	call32.s
+	mcianim.c
 
 all: $(MODULE).o
 
