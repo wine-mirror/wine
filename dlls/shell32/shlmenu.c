@@ -163,7 +163,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 		if (SUCCEEDED (IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulItemAttr)))
 		{
 		  ILGetDisplayName( pidlTemp, sTemp);
-		  if (! (PidlToSicIndex(lpsf, pidlTemp, FALSE, &iIcon)))
+		  if (! (PidlToSicIndex(lpsf, pidlTemp, FALSE, 0, &iIcon)))
 		    iIcon = FM_BLANK_ICON;
 		  if ( SFGAO_FOLDER & ulItemAttr)
 		  {

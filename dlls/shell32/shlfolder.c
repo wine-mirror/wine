@@ -1090,10 +1090,12 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf(
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 	char szSrc[MAX_PATH], szDest[MAX_PATH];
 	int len;
+	BOOL bIsFolder = _ILIsFolder(ILFindLastID(pidl));
 
-	TRACE("(%p)->(%u,pidl=%p,%s,%lu,%p),stub!\n",
-	This,hwndOwner,pidl,debugstr_w(lpName),dwFlags,pPidlOut);
+	TRACE("(%p)->(%u,pidl=%p,%s,%lu,%p)\n",
+	  This,hwndOwner,pidl,debugstr_w(lpName),dwFlags,pPidlOut);
 
+	/* build source path */
 	if (dwFlags & SHGDN_INFOLDER)
 	{
 	  strcpy(szSrc, This->sMyPath);
@@ -1105,15 +1107,18 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf(
 	{
 	  SHGetPathFromIDListA(pidl, szSrc);
 	}
+
+	/* build destination path */
 	strcpy(szDest, This->sMyPath);
 	PathAddBackslashA(szDest);
 	len = strlen (szDest);
 	lstrcpynWtoA(szDest+len, lpName, MAX_PATH-len);
 	
 	TRACE("src=%s dest=%s\n", szSrc, szDest);
-	if (MoveFileA(szSrc, szDest))
+	if ( MoveFileA(szSrc, szDest) )
 	{
 	  if (pPidlOut) *pPidlOut = SHSimpleIDListFromPathA(szDest);
+	  SHChangeNotifyA( bIsFolder?SHCNE_RENAMEFOLDER:SHCNE_RENAMEITEM, SHCNF_PATHA, szSrc, szDest);
 	  return S_OK;
 	}
 	return E_FAIL;
@@ -1430,8 +1435,8 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	  {
 	    LPITEMIDLIST pidl;
 
-/*	    if (! RemoveDirectoryA(szPath)) return E_FAIL; */
-	    MESSAGE("would delete %s\n", szPath);
+	    MESSAGE("delete %s\n", szPath);
+	    if (! RemoveDirectoryA(szPath)) return E_FAIL;
 	    pidl = ILCombine(This->absPidl, apidl[i]);
 	    SHChangeNotifyA(SHCNE_RMDIR, SHCNF_IDLIST, pidl, NULL);
 	    SHFree(pidl); 
@@ -1440,8 +1445,8 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	  {
 	    LPITEMIDLIST pidl;
 
-/*	    if (! DeleteFileA(szPath)) return E_FAIL; */
-	    MESSAGE("would delete %s\n", szPath);
+	    MESSAGE("delete %s\n", szPath);
+	    if (! DeleteFileA(szPath)) return E_FAIL;
 	    pidl = ILCombine(This->absPidl, apidl[i]);
 	    SHChangeNotifyA(SHCNE_DELETE, SHCNF_IDLIST, pidl, NULL);
 	    SHFree(pidl); 

@@ -309,7 +309,8 @@ static void DoRename(
 	  if(SUCCEEDED(IShellBrowser_QueryActiveShellView(lpSB, &lpSV)))
 	  {
 	    TRACE("(sv=%p)\n",lpSV);    
-	    IShellView_EditItem(lpSV, This->apidl[0]);
+	    IShellView_SelectItem(lpSV, This->apidl[0],
+              SVSI_DESELECTOTHERS|SVSI_EDIT|SVSI_ENSUREVISIBLE|SVSI_FOCUSED|SVSI_SELECT);
 	    IShellView_Release(lpSV);
 	  }
 	}
@@ -320,9 +321,7 @@ static void DoRename(
  *
  * deletes the currently selected items
  */
-static void DoDelete(
-	IContextMenu *iface,
-	IShellView *psv)
+static void DoDelete(IContextMenu *iface)
 {
 	ICOM_THIS(ItemCmImpl, iface);
 	ISFHelper * psfhlp;
@@ -331,8 +330,6 @@ static void DoDelete(
 	if (psfhlp)
 	{
 	  ISFHelper_DeleteItems(psfhlp, This->cidl, This->apidl);
-	  if(psv)
-	    IShellView_Refresh(psv); /* fixme: so long we dont have SHChangeNotify */
 	  ISFHelper_Release(psfhlp);
 	}
 }
@@ -421,16 +418,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
-	LPSHELLBROWSER	lpSB;
-	LPSHELLVIEW	lpSV = NULL;
-
 	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
-
-	/* get the active IShellView */
-	lpSB = (LPSHELLBROWSER)SendMessageA(lpcmi->hwnd, CWM_GETISHELLBROWSER,0,0);
-
-	/* we are not in a ShellView every time */
-	if (lpSB) IShellBrowser_QueryActiveShellView(lpSB, &lpSV);
 
 	if(LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)  return E_INVALIDARG;
 
@@ -446,7 +434,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 	    DoRename(iface, lpcmi->hwnd);
 	    break;	    
 	  case FCIDM_SHVIEW_DELETE:
-	    DoDelete(iface, lpSV);
+	    DoDelete(iface);
 	    break;	    
 	  case FCIDM_SHVIEW_COPY:
 	    DoCopyOrCut(iface, lpcmi->hwnd, FALSE);

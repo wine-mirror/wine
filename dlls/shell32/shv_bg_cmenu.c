@@ -171,7 +171,6 @@ static void DoNewFolder(
 	  if(psv)
 	  {
 	    /* if we are in a shellview do labeledit */
-	    IShellView_Refresh(psv); /* fixme: so long we dont have SHChangeNotify */
 	    IShellView_SelectItem(psv,
                     pidl,(SVSI_DESELECTOTHERS | SVSI_EDIT | SVSI_ENSUREVISIBLE
                     |SVSI_FOCUSED|SVSI_SELECT));

@@ -272,8 +272,8 @@ type win32
 @ stub    SHCreateShellPalette
 @ stub    SHDeleteEmptyKeyA
 @ stub    SHDeleteEmptyKeyW
-@ stub    SHDeleteKeyA
-@ stub    SHDeleteKeyW
+@ stdcall SHDeleteKeyA(long str)SHRegDeleteKeyA
+@ stdcall SHDeleteKeyW(long str)SHRegDeleteKeyW
 @ stub    SHDeleteOrphanKeyA
 @ stub    SHDeleteOrphanKeyW
 @ stub    SHDeleteValueA
@@ -348,10 +348,10 @@ type win32
 @ stub    StrNCatW
 @ stub    StrPBrkA
 @ stub    StrPBrkW
-@ stdcall StrRChrA (str str long) StrRChrA
+@ stdcall StrRChrA (str str long) lstrrchr
 @ stub    StrRChrIA
 @ stub    StrRChrIW
-@ stdcall StrRChrW (wstr wstr long) StrRChrW
+@ stdcall StrRChrW (wstr wstr long) lstrrchrw
 @ stub    StrRStrIA
 @ stub    StrRStrIW
 @ stub    StrSpnA

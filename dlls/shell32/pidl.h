@@ -7,8 +7,11 @@
  * The contents of a pidl should never used from a application
  * directly. 
  *
- * This stuff is used from SHGetFileAttributes, ShellFolder 
- * EnumIDList and ShellView.
+ * Undocumented:
+ * MS says: the abID of SHITEMID should be treated as binary data and not
+ * be interpreted by applications. Applies to everyone but MS itself.
+ * Word95 interprets the contents of abID (Filesize/Date) so we have to go
+ * for binary compatibility here.
  */
  
 #ifndef __WINE_PIDL_H
