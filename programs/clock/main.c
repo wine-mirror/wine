@@ -37,9 +37,35 @@
 
 #define INITIAL_WINDOW_SIZE 200
 #define TIMER_ID 1
-#define TIMER_PERIOD 50 /* milliseconds */
 
 CLOCK_GLOBALS Globals;
+
+/***********************************************************************
+ *
+ *           CLOCK_ResetTimer
+ */
+static BOOL CLOCK_ResetTimer(void)
+{
+    UINT period; /* milliseconds */
+
+    KillTimer(Globals.hMainWnd, TIMER_ID);
+
+    if (Globals.bSeconds)
+	if (Globals.bAnalog)
+	    period = 50;
+	else
+	    period = 500;
+    else
+	period = 1000;
+
+    if (!SetTimer (Globals.hMainWnd, TIMER_ID, period, NULL)) {
+	CHAR szApp[MAX_STRING_LEN];
+	LoadString(Globals.hInstance, IDS_CLOCK, szApp, sizeof(szApp));
+        MessageBox(0, "No available timers", szApp, MB_ICONEXCLAMATION | MB_OK);
+        return FALSE;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *
@@ -57,14 +83,16 @@ int CLOCK_MenuCommand (WPARAM wParam)
         case IDM_ANALOG: {
             Globals.bAnalog = TRUE;
             LANGUAGE_UpdateMenuCheckmarks();
-            SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
+	    CLOCK_ResetTimer();
+	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* switch to digital */
         case IDM_DIGITAL: {
             Globals.bAnalog = FALSE;
             LANGUAGE_UpdateMenuCheckmarks();
-            SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
+	    CLOCK_ResetTimer();
+	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* change font */
@@ -89,7 +117,8 @@ int CLOCK_MenuCommand (WPARAM wParam)
         case IDM_SECONDS: {
             Globals.bSeconds = !Globals.bSeconds;
             LANGUAGE_UpdateMenuCheckmarks();
-            SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
+	    CLOCK_ResetTimer();
+	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* show or hide date */
@@ -174,9 +203,9 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             
             context = BeginPaint(hWnd, &ps);
             if(Globals.bAnalog)
-                AnalogClock(context, Globals.MaxX, Globals.MaxY);
+                AnalogClock(context, Globals.MaxX, Globals.MaxY, Globals.bSeconds);
             else
-                DigitalClock(context, Globals.MaxX, Globals.MaxY);
+                DigitalClock(context, Globals.MaxX, Globals.MaxY, Globals.bSeconds);
             EndPaint(hWnd, &ps);
             break;
         }
@@ -193,7 +222,7 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
             
         case WM_TIMER: {
-            /* Could just invalidate the changed hands,
+            /* Could just invalidate what has changed,
              * but it doesn't really seem worth the effort
              */
 	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
@@ -210,7 +239,6 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return 0;
 }
-
 
 
 /***********************************************************************
@@ -260,10 +288,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
                                      Globals.MaxX, Globals.MaxY, 0,
                                      0, Globals.hInstance, 0);
 
-    if (!SetTimer (Globals.hMainWnd, TIMER_ID, TIMER_PERIOD, NULL)) {
-        MessageBox(0, "No available timers", szWinName, MB_ICONEXCLAMATION | MB_OK);
+    if (!CLOCK_ResetTimer())
         return FALSE;
-    }
 
     LANGUAGE_LoadMenus();
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
@@ -277,6 +303,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    KillTimer(Globals.hMainWnd, TIMER_ID);
 
     return 0;
 }

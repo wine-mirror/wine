@@ -31,15 +31,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
-#include "winnls.h"
 #include "winclock.h"
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-
-COLORREF FaceColor = RGB(192,192,192);
-COLORREF HandColor = RGB(0,0,0);
-COLORREF EtchColor = RGB(0,0,0);
-
+static COLORREF FaceColor = RGB(192,192,192);
+static COLORREF HandColor = RGB(0,0,0);
+static COLORREF EtchColor = RGB(0,0,0);
+static COLORREF GRAY = RGB(128,128,128);
+static const int ETCH_DEPTH = 2;
+ 
 typedef struct
 {
     POINT Start;
@@ -83,10 +82,11 @@ static void DrawHand(HDC dc,HandData* hand)
     LineTo(dc, hand->End.x, hand->End.y);
 }
 
-static void DrawHands(HDC dc)
+static void DrawHands(HDC dc, BOOL bSeconds)
 {
     SelectObject(dc,CreatePen(PS_SOLID,1,HandColor));
-    DrawHand(dc, &SecondHand);
+    if (bSeconds)
+        DrawHand(dc, &SecondHand);
     DrawHand(dc, &MinuteHand);
     DrawHand(dc, &HourHand);
     DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
@@ -99,7 +99,7 @@ static void PositionHand(const POINT* centre, double length, double angle, HandD
     hand->End.y = centre->y - cos(angle)*length;
 }
 
-static void PositionHands(const POINT* centre, int radius)
+static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
 {
     SYSTEMTIME st;
     double hour, minute, second;
@@ -114,40 +114,57 @@ static void PositionHands(const POINT* centre, int radius)
 
     PositionHand(centre, radius * 0.5,  hour/12   * 2*M_PI, &HourHand);
     PositionHand(centre, radius * 0.65, minute/60 * 2*M_PI, &MinuteHand);
-    PositionHand(centre, radius * 0.79, second/60 * 2*M_PI, &SecondHand);  
+    if (bSeconds)
+        PositionHand(centre, radius * 0.79, second/60 * 2*M_PI, &SecondHand);  
 }
 
-void AnalogClock(HDC dc, int x, int y)
+void AnalogClock(HDC dc, int x, int y, BOOL bSeconds)
 {
     POINT centre;
     int radius;
-    radius = MIN(x, y)/2;
+    radius = min(x, y)/2;
 
     centre.x = x/2;
     centre.y = y/2;
 
     DrawFace(dc, &centre, radius);
-    PositionHands(&centre, radius);
-    DrawHands(dc);
+    PositionHands(&centre, radius, bSeconds);
+    DrawHands(dc, bSeconds);
 }
 
-void DigitalClock(HDC dc, int X, int Y)
+void DigitalClock(HDC dc, int x, int y, BOOL bSeconds)
 {
-    /* FIXME - this doesn't work very well */
     CHAR szTime[255];
-    static short xChar, yChar;
-    TEXTMETRIC tm;
-    SYSTEMTIME st;
-    
-    GetLocalTime(&st);
-    GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, &st, NULL,
-                  szTime, sizeof szTime);    
-    xChar = tm.tmAveCharWidth;
-    yChar = tm.tmHeight;
-    xChar = 100;
-    yChar = 100;
+    SIZE extent;
+    LOGFONT lf;
+    double xscale, yscale;
+    HFONT oldFont;
 
-    SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
-    TextOut (dc, xChar, yChar, szTime, strlen (szTime));
-    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));   
+    GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
+		  NULL, szTime, sizeof (szTime));
+
+    memset(&lf, 0, sizeof (lf));
+    lf.lfHeight = -20;
+
+    x -= 2 * ETCH_DEPTH;
+    y -= 2 * ETCH_DEPTH;
+
+    oldFont = SelectObject(dc, CreateFontIndirect(&lf));
+    GetTextExtentPoint(dc, szTime, strlen(szTime), &extent);
+    xscale = (double)x/extent.cx;
+    yscale = (double)y/extent.cy;
+    lf.lfHeight *= min(xscale, yscale);
+
+    DeleteObject(SelectObject(dc, CreateFontIndirect(&lf)));
+    GetTextExtentPoint(dc, szTime, strlen(szTime), &extent);
+
+    SetBkColor(dc, GRAY); /* to match the background brush */
+    SetTextColor(dc, EtchColor);
+    TextOut(dc, (x - extent.cx)/2 + ETCH_DEPTH, (y - extent.cy)/2 + ETCH_DEPTH,
+	    szTime, strlen(szTime));
+    SetBkMode(dc, TRANSPARENT);
+
+    SetTextColor(dc, FaceColor);
+    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szTime, strlen(szTime));
+    DeleteObject(SelectObject(dc, oldFont));
 }

@@ -21,5 +21,5 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-void AnalogClock(HDC dc, int X, int Y);
-void DigitalClock(HDC dc, int X, int Y);
+void AnalogClock(HDC dc, int X, int Y, BOOL bSeconds);
+void DigitalClock(HDC dc, int X, int Y, BOOL bSeconds);
