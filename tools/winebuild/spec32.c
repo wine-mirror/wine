@@ -670,6 +670,8 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
+
+#if defined(__i386__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
@@ -679,6 +681,22 @@ void BuildSpec32File( FILE *outfile )
         fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_fini\\n\"\n", DLLName );
         fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     }
+#elif defined(__sparc__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tnop\\n\"\n" );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    if (nr_debug)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_fini\\n\"\n", DLLName );
+        fprintf( outfile, "    \"\\tnop\\n\"\n" );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+#else
+#error You need to define the DLL constructor for your architecture
+#endif
+
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );

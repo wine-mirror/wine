@@ -18,6 +18,7 @@
 
 #include "build.h"
 
+#ifdef __i386__
 
 /*******************************************************************
  *         BuildCallFrom16Core
@@ -440,7 +441,6 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
  * core routine.
  *
  */
-
 static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 {
     char *name = reg_func == 2 ? "regs_long" :
@@ -1138,8 +1138,6 @@ void BuildRelays( FILE *outfile )
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
-#ifdef __i386__
-
 #ifdef USE_STABS
     if (output_file_name)
     {
@@ -1218,20 +1216,14 @@ void BuildRelays( FILE *outfile )
     /* End of Call16_Ret segment */
     fprintf( outfile, "\n\t.globl " PREFIX "Call16_Ret_End\n" );
     fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
+}
 
-#else  /* __i386__ */
+#else /* __i386__ */
 
-    fprintf( outfile, PREFIX"Call16_Start:\n" );
-    fprintf( outfile, "\t.globl "PREFIX"Call16_Start\n" );
-    fprintf( outfile, "\t.byte 0\n\n" );
-    fprintf( outfile, PREFIX"Call16_End:\n" );
-    fprintf( outfile, "\t.globl "PREFIX"Call16_End\n" );
-
-    fprintf( outfile, "\t.globl " PREFIX "Call16_Ret_Start\n" );
-    fprintf( outfile, PREFIX "Call16_Ret_Start:\n" );
-    fprintf( outfile, "\t.byte 0\n\n" );
-    fprintf( outfile, "\n\t.globl " PREFIX "Call16_Ret_End\n" );
-    fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
+void BuildRelays( FILE *outfile )
+{
+    fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
+}
 
 #endif  /* __i386__ */
-}
+

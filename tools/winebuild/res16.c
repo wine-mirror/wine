@@ -89,17 +89,26 @@ static WORD get_byte(void)
 static WORD get_word(void)
 {
     /* might not be aligned */
-    /* FIXME: should we change this on big-endian machines? */
+#ifdef WORDS_BIGENDIAN
+    unsigned char high = get_byte();
+    unsigned char low = get_byte();
+#else
     unsigned char low = get_byte();
     unsigned char high = get_byte();
+#endif
     return low | (high << 8);
 }
 
 /* get the next dword from the current resource file */
 static DWORD get_dword(void)
 {
+#ifdef WORDS_BIGENDIAN
+    WORD high = get_word();
+    WORD low = get_word();
+#else
     WORD low = get_word();
     WORD high = get_word();
+#endif
     return low | (high << 16);
 }
 
@@ -207,8 +216,13 @@ inline static void put_byte( unsigned char **buffer, unsigned char val )
 
 inline static void put_word( unsigned char **buffer, WORD val )
 {
+#ifdef WORDS_BIGENDIAN
+    put_byte( buffer, HIBYTE(val) );
+    put_byte( buffer, LOBYTE(val) );
+#else
     put_byte( buffer, LOBYTE(val) );
     put_byte( buffer, HIBYTE(val) );
+#endif
 }
 
 /* output a string preceded by its length */

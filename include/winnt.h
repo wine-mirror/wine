@@ -1022,8 +1022,6 @@ typedef CONTEXT *PCONTEXT;
 
 /* Macros to retrieve the current context */
 
-#ifdef __i386__
-
 #ifdef NEED_UNDERSCORE_PREFIX
 # define __ASM_NAME(name) "_" name
 #else
@@ -1053,6 +1051,8 @@ typedef CONTEXT *PCONTEXT;
                code ); \
       }
 #endif  /* __GNUC__ */
+
+#ifdef __i386__
 
 #define _DEFINE_REGS_ENTRYPOINT( name, fn, args ) \
     __ASM_GLOBAL_FUNC( name, \

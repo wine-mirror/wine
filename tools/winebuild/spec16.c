@@ -12,6 +12,7 @@
 #include <ctype.h>
 
 #include "config.h"
+#include "wine/port.h"
 #include "wine/exception.h"
 #include "builtin16.h"
 #include "module.h"
@@ -22,8 +23,6 @@
 #ifdef __i386__
 extern unsigned short __get_cs(void);
 __ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" );
-#else
-static inline unsigned short __get_cs(void) { return 0; }
 #endif /* __i386__ */
 
 
@@ -71,7 +70,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     OFSTRUCT *pFileInfo;
     BYTE *pstr;
     ET_BUNDLE *bundle = 0;
-    ET_ENTRY *entry = 0;
+    ET_ENTRY entry;
 
     /*   Module layout:
      * NE_MODULE       Module
@@ -85,9 +84,9 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
      */
 
     buffer = xmalloc( 0x10000 );
+    memset( buffer, 0, 0x10000 );
 
     pModule = (NE_MODULE *)buffer;
-    memset( pModule, 0, sizeof(*pModule) );
     pModule->magic = IMAGE_OS2_SIGNATURE;
     pModule->count = 1;
     pModule->next = 0;
@@ -126,11 +125,10 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
                         + strlen(DLLFileName);
     strcpy( pFileInfo->szPathName, DLLFileName );
     pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
-        
-#ifdef __i386__  /* FIXME: Alignment problems! */
 
       /* Segment table */
 
+    pstr = (char *)(((long)pstr + 3) & ~3);
     pSegment = (SEGTABLEENTRY *)pstr;
     pModule->seg_table = (int)pSegment - (int)pModule;
     pSegment->filepos = 0;
@@ -151,23 +149,26 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
       /* Resource table */
 
     pstr = (char *)pSegment;
+    pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->res_table = (int)pstr - (int)pModule;
     pstr += output_res16_directory( pstr );
 
       /* Imported names table */
 
+    pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->import_table = (int)pstr - (int)pModule;
     *pstr++ = 0;
     *pstr++ = 0;
 
       /* Resident names table */
 
+    pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->name_table = (int)pstr - (int)pModule;
     /* First entry is module name */
-    *pstr = strlen(DLLName );
+    *pstr = strlen( DLLName );
     strcpy( pstr + 1, DLLName );
     pstr += *pstr + 1;
-    *(WORD *)pstr = 0;
+    PUT_UA_WORD( pstr, 0 );
     pstr += sizeof(WORD);
     /* Store all ordinals */
     for (i = 1; i <= Limit; i++)
@@ -178,13 +179,14 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
         strcpy( pstr + 1, odp->name );
         strupper( pstr + 1 );
         pstr += *pstr + 1;
-        *(WORD *)pstr = i;
+        PUT_UA_WORD( pstr, i );
         pstr += sizeof(WORD);
     }
     *pstr++ = 0;
 
       /* Entry table */
 
+    pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->entry_table = (int)pstr - (int)pModule;
     for (i = 1; i <= Limit; i++)
     {
@@ -223,6 +225,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
             bundle->last++;
         else
         {
+            pstr = (char *)(((long)pstr + 1) & ~1);
             if ( bundle )
                 bundle->next = (char *)pstr - (char *)pModule;
 
@@ -234,18 +237,18 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
         }
 
 	/* FIXME: is this really correct ?? */
-	entry = (ET_ENTRY *)pstr;
-	entry->type = 0xff;  /* movable */
-	entry->flags = 3; /* exported & public data */
-	entry->segnum = selector;
-	entry->offs = odp->offset;
+	entry.type = 0xff;  /* movable */
+	entry.flags = 3; /* exported & public data */
+	entry.segnum = selector;
+	entry.offs = odp->offset;
+        memcpy( pstr, &entry, sizeof(ET_ENTRY) );
 	pstr += sizeof(ET_ENTRY);
     }
     *pstr++ = 0;
-#endif
 
       /* Dump the module content */
 
+    pstr = (char *)(((long)pstr + 3) & ~3);
     dump_bytes( outfile, (char *)pModule, (int)pstr - (int)pModule, "Module", 0 );
     return (int)pstr - (int)pModule;
 }
@@ -557,7 +560,9 @@ void BuildSpec16File( FILE *outfile )
     int i, nFuncs, nTypes;
     int code_offset, data_offset, module_size, res_size;
     unsigned char *data;
+#ifdef __i386__
     unsigned short code_selector = __get_cs();
+#endif
 
     /* File header */
 
@@ -613,7 +618,7 @@ void BuildSpec16File( FILE *outfile )
     }
 
     /* Output CallFrom16 routines needed by this .spec file */
-
+#ifdef __i386__
     for ( i = 0; i < nTypes; i++ )
     {
         char profile[101];
@@ -627,6 +632,7 @@ void BuildSpec16File( FILE *outfile )
 
         BuildCallFrom16Func( outfile, profile, DLLName, TRUE );
     }
+#endif
 
     /* Output the DLL functions prototypes */
 
@@ -686,6 +692,7 @@ void BuildSpec16File( FILE *outfile )
         if ( typelist[i]->type == TYPE_INTERRUPT )
             argsize += 2;
 
+#ifdef __i386__
         fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
                  DLLName, profile, 
                  (typelist[i]->type == TYPE_REGISTER 
@@ -697,6 +704,9 @@ void BuildSpec16File( FILE *outfile )
         else
             fprintf( outfile, "        0x%04x, 0x66, 0xcb, 0x9090, \"%s\" },\n",
                      code_selector, profile );
+#else
+        fprintf( outfile, "    { \"%s\" },\n", profile );
+#endif
 
         code_offset += sizeof(CALLFROM16);
     }
@@ -727,7 +737,11 @@ void BuildSpec16File( FILE *outfile )
             assert( type );
 
             fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
+#ifdef __i386__
             fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s_%s_%s */ },\n",
+#else
+            fprintf( outfile, "{ %s, %d, /* %s_%s_%s */ },\n",
+#endif
                      odp->link_name,
                      (type-typelist)*sizeof(CALLFROM16) -
                      (code_offset + sizeof(ENTRYPOINT16)),
@@ -736,6 +750,7 @@ void BuildSpec16File( FILE *outfile )
                      (odp->type == TYPE_INTERRUPT) ? "intr" :
                      (odp->type == TYPE_PASCAL_16) ? "word" : "long",
                      odp->u.func.arg_types );
+
             odp->offset = code_offset;
             code_offset += sizeof(ENTRYPOINT16);
             break;
@@ -772,20 +787,32 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output the DLL constructor */
 
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
+
+#if defined(__i386__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+#elif defined(__sparc__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tnop\\n\"\n" );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+#else
+#error You need to define the DLL constructor for your architecture
+#endif
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );
+
     fprintf( outfile,
-             "#ifndef __GNUC__\n"
-             "static void __asm__dummy_dll_init(void) {\n"
-             "#endif /* defined(__GNUC__) */\n"
-             "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n"
-             "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n"
-             "    \"\\t.previous\\n\");\n"
-             "#ifndef __GNUC__\n"
-             "}\n"
-             "#endif /* defined(__GNUC__) */\n\n"
              "void __wine_spec_%s_init(void)\n"
              "{\n"
              "    __wine_register_dll_16( &descriptor );\n"
-             "}\n", DLLName, DLLName );
+             "}\n", DLLName );
 }
 
 
@@ -843,3 +870,4 @@ void BuildGlue( FILE *outfile, FILE *infile )
 
     fclose( infile );
 }
+

@@ -59,7 +59,8 @@ inline static const char *find_symbol( const char *name, char **table, int size 
 /* sort a symbol table */
 inline static void sort_symbols( char **table, int size )
 {
-    qsort( table, size, sizeof(*table), name_cmp );
+    if (table )
+        qsort( table, size, sizeof(*table), name_cmp );
 }
 
 /* open the .so library for a given dll in a specified path */
@@ -292,7 +293,8 @@ void read_undef_symbols( const char *name )
         char *p = buffer + strlen(buffer) - 1;
         if (p < buffer) continue;
         if (*p == '\n') *p-- = 0;
-        add_undef_symbol( buffer );
+        p = buffer; while (*p == ' ') p++;
+        add_undef_symbol( p );
     }
     if ((err = pclose( f ))) fatal_error( "nm -u %s error %d\n", name, err );
 }
@@ -394,7 +396,7 @@ static int output_immediate_imports( FILE *outfile )
 
     fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
     pos = 20 * (nb_imm + 1);  /* offset of imports.data from start of imports */
-    fprintf( outfile, "asm(\".align 8\\n\"\n" );
+    fprintf( outfile, "asm(\".data\\n\\t.align 8\\n\"\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
@@ -404,15 +406,42 @@ static int output_immediate_imports( FILE *outfile )
                      dll_imports[i]->imports[j] );
             fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
                      dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"" PREFIX "%s:\\t", dll_imports[i]->imports[j] );
+
+
+
+
+            fprintf( outfile, "    \"" PREFIX "%s:\\n\\t", dll_imports[i]->imports[j] );
+
+#if defined(__i386__)
             if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
-                fprintf( outfile, ".byte 0x2e\\n\\tjmp *(imports+%d)\\n\\tnop\\n\"\n", pos );
+                fprintf( outfile, ".byte 0x2e\\n\\tjmp *(imports+%d)\\n\\tnop\\n", pos );
             else
-                fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n\"\n", pos );
+                fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
+#elif defined(__sparc__)
+            if ( !UsePIC )
+            {
+                fprintf( outfile, "sethi %%hi(imports+%d), %%g1\\n\\t", pos );
+                fprintf( outfile, "ld [%%g1+%%lo(imports+%d)], %%g1\\n\\t", pos );
+                fprintf( outfile, "jmp %%g1\\n\\tnop\\n" );
+            }
+            else
+            {
+                /* Hmpf.  Stupid sparc assembler always interprets global variable
+                   names as GOT offsets, so we have to do it the long way ... */
+                fprintf( outfile, "save %%sp, -96, %%sp\\n" );
+                fprintf( outfile, "0:\\tcall 1f\\n\\tnop\\n" );
+                fprintf( outfile, "1:\\tsethi %%hi(imports+%d-0b), %%g1\\n\\t", pos );
+                fprintf( outfile, "or %%g1, %%lo(imports+%d-0b), %%g1\\n\\t", pos );
+                fprintf( outfile, "ld [%%g1+%%o7], %%g1\\n\\t" );
+                fprintf( outfile, "jmp %%g1\\n\\trestore\\n" );
+            }
+#else
+#error You need to define import thunks for your architecture!
+#endif
+            fprintf( outfile, "\"\n" );
         }
-        pos += 4;
     }
-    fprintf( outfile, ");\n#ifndef __GNUC__\n}\n#endif\n\n" );
+    fprintf( outfile, "\".previous\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
  done:
     return nb_imm;

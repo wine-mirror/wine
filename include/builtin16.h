@@ -13,6 +13,7 @@
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
+#ifdef __i386__
 #include "pshpack1.h"
 
 typedef struct
@@ -38,6 +39,20 @@ typedef struct
 } CALLFROM16;
 
 #include "poppack.h"
+#else
+
+typedef struct
+{
+    void (*target)();
+    int    callfrom16;
+} ENTRYPOINT16;
+
+typedef struct
+{
+    LPCSTR profile;
+} CALLFROM16;
+
+#endif
 
 typedef struct
 {
