@@ -2599,7 +2599,7 @@ TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr)
     if (vert)
     {
 	si.nPage = TREEVIEW_GetVisibleCount(infoPtr);
-       if ( si.nPage )
+       if ( si.nPage && NULL != infoPtr->firstVisible)
        {
            si.nPos  = infoPtr->firstVisible->visibleOrder;
            si.nMax  = infoPtr->maxVisibleOrder - 1;
