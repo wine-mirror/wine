@@ -1359,6 +1359,7 @@ void __RPC_STUB IInternetProtocolInfo_QueryInfo_Stub(
 
 #endif  /* __IInternetProtocolInfo_INTERFACE_DEFINED__ */
 
+DEFINE_GUID(CLSID_StdURLMoniker, 0x79EAC9E0, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);
 #define MK_S_ASYNCHRONOUS                0x000401E8
 #define S_ASYNCHRONOUS                   MK_S_ASYNCHRONOUS
 #define INET_E_ERROR_FIRST               0x800C0002L
