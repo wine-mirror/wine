@@ -2907,24 +2907,31 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     ReleaseCapture();
 
-    menu = MENU_GetMenu( mt.hTopMenu );
-
-    if( IsWindow( mt.hOwnerWnd ) )
+    /* If dropdown is still painted and the close box is clicked on
+       then the menu will be destroyed as part of the DispatchMessage above.
+       This will then invalidate the menu handle in mt.hTopMenu. We should
+       check for this first.  */
+    if( IsMenu( mt.hTopMenu ) )
     {
-	MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE );
+	menu = MENU_GetMenu( mt.hTopMenu );
 
-	if (menu && menu->wFlags & MF_POPUP) 
-	{
-	    ShowWindow( menu->hWnd, SW_HIDE );
-	    uSubPWndLevel = 0;
-	}
-	MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
-	SendMessageA( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0xffff), 0 );
+        if( IsWindow( mt.hOwnerWnd ) )
+        {
+	    MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE );
+
+	    if (menu && menu->wFlags & MF_POPUP) 
+	    {
+	        ShowWindow( menu->hWnd, SW_HIDE );
+	        uSubPWndLevel = 0;
+	    }
+	    MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
+	    SendMessageA( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0xffff), 0 );
+        }
+
+        /* Reset the variable for hiding menu */
+        if( menu ) menu->bTimeToHide = FALSE;
     }
 
-    /* Reset the variable for hiding menu */
-    menu->bTimeToHide = FALSE;
-    
     /* The return value is only used by TrackPopupMenu */
     return ((executedMenuId != -1) ? executedMenuId : 0);
 }
