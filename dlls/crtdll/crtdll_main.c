@@ -25,6 +25,7 @@ UB 000416:
 #include "crtdll.h"
 #include <ctype.h>
 #define __USE_ISOC9X 1 /* for isfinite */
+#define __USE_ISOC99 1 /* for isfinite */
 #include <math.h>
 #include <errno.h>
 #include <stdlib.h>
