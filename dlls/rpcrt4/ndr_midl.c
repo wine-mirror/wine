@@ -122,6 +122,15 @@ void WINAPI NdrProxyFreeBuffer(void *This,
 }
 
 /***********************************************************************
+ *           NdrProxyErrorHandler [RPCRT4.@]
+ */
+HRESULT WINAPI NdrProxyErrorHandler(DWORD dwExceptionCode)
+{
+  FIXME("(0x%08lx): semi-stub\n", dwExceptionCode);
+  return MAKE_HRESULT(SEVERITY_ERROR, FACILITY_RPC, RPC_S_CALL_FAILED);
+}
+
+/***********************************************************************
  *           NdrStubInitialize [RPCRT4.@]
  */
 void WINAPI NdrStubInitialize(PRPC_MESSAGE pRpcMsg,
@@ -162,7 +171,9 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
   assert( pRpcMessage && pStubMsg && pStubDesc );
 
   memset(pRpcMessage, 0, sizeof(RPC_MESSAGE));
-  memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
+
+  /* not everyone allocates stack space for w2kReserved */
+  memset(pStubMsg, 0, sizeof(*pStubMsg) - sizeof(pStubMsg->w2kReserved));
 
   pStubMsg->ReuseBuffer = FALSE;
   pStubMsg->IsClient = TRUE;
@@ -185,7 +196,8 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
 
   assert( pRpcMsg && pStubMsg && pStubDesc );
 
-  memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
+  /* not everyone allocates stack space for w2kReserved */
+  memset(pStubMsg, 0, sizeof(*pStubMsg) - sizeof(pStubMsg->w2kReserved));
 
   pStubMsg->ReuseBuffer = TRUE;
   pStubMsg->IsClient = FALSE;

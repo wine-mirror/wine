@@ -285,7 +285,7 @@
 @ stub NdrPipeSendReceive
 @ stub NdrPipesDone
 @ stub NdrPipesInitialize
-@ stub NdrProxyErrorHandler
+@ stdcall NdrProxyErrorHandler(long)
 @ stdcall NdrProxyFreeBuffer(ptr ptr)
 @ stdcall NdrProxyGetBuffer(ptr ptr)
 @ stdcall NdrProxyInitialize(ptr ptr ptr ptr long)
