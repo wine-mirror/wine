@@ -20,12 +20,16 @@ typedef struct tagTAB_ITEM
   LPARAM lParam;
   RECT   rect;    /* bounding rectangle of the item relative to the
 		   * leftmost item (the leftmost item, 0, would have a 
-		   * "left" member of 0 in this rectangle) */
+		   * "left" member of 0 in this rectangle) 
+                   *  
+                   * additionally the top member hold the row number
+                   * and bottom is unused and should be 0 */
 } TAB_ITEM;
 
 typedef struct tagTAB_INFO
 {
   UINT       uNumItem;        /* number of tab items */
+  UINT       uNumRows;	      /* number of tab rows */
   INT        tabHeight;       /* height of the tab row */
   INT        tabWidth;        /* width of tabs */
   HFONT      hFont;           /* handle to the current font */

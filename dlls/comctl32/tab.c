@@ -174,14 +174,15 @@ static BOOL TAB_InternalGetItemRect(
   RECT*       itemRect,
   RECT*       selectedRect)
 {
-  RECT tmpItemRect;
-
+  RECT tmpItemRect,clientRect;
+  LONG        lStyle  = GetWindowLongA(hwnd, GWL_STYLE);
+  
   /*
    * Perform a sanity check and a trivial visibility check.
    */
   if ( (infoPtr->uNumItem <=0) || 
        (itemIndex >= infoPtr->uNumItem) ||
-       (itemIndex < infoPtr->leftmostVisible) )
+       (!(lStyle &TCS_MULTILINE) && (itemIndex < infoPtr->leftmostVisible)) )
     return FALSE;
 
   /*
@@ -195,6 +196,31 @@ static BOOL TAB_InternalGetItemRect(
    * Retrieve the unmodified item rect.
    */
   *itemRect = infoPtr->items[itemIndex].rect;
+
+  /*
+   * calculate the times bottom and top based on the row
+   */
+  GetClientRect(hwnd, &clientRect);
+
+  if (lStyle & TCS_BOTTOM) 
+  {
+    itemRect->bottom = clientRect.bottom - 
+                      SELECTED_TAB_OFFSET - 
+                      itemRect->top * (infoPtr->tabHeight - 2);
+
+    itemRect->top = clientRect.bottom - 
+                   infoPtr->tabHeight -
+                   itemRect->top * ( infoPtr->tabHeight - 2);
+  }
+  else 
+  {
+    itemRect->bottom = clientRect.top + 
+                      infoPtr->tabHeight +
+                      itemRect->top * (infoPtr->tabHeight - 2);
+    itemRect->top = clientRect.top + 
+                   SELECTED_TAB_OFFSET+
+                   itemRect->top * (infoPtr->tabHeight - 2);
+ }
 
   /*
    * "scroll" it to make sure the item at the very left of the 
@@ -463,9 +489,9 @@ static LRESULT TAB_AdjustRect(
      * Add the height of the tabs.
      */
     if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
-      prc->bottom += infoPtr->tabHeight;
+      prc->bottom += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
     else
-      prc->top -= infoPtr->tabHeight;
+      prc->top -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
 
     /*
      * Inflate the rectangle for the padding
@@ -497,9 +523,9 @@ static LRESULT TAB_AdjustRect(
      * Remove the height of the tabs.
      */
     if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
-      prc->bottom -= infoPtr->tabHeight;
+      prc->bottom -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
     else
-      prc->top += infoPtr->tabHeight;
+      prc->top += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
 
   }
   
@@ -575,10 +601,6 @@ static void TAB_SetupScrolling(
      */
     if (infoPtr->hwndUpDown==0)
     {
-      /*
-       * I use a scrollbar since it seems to be more stable than the Updown
-       * control.
-       */
       infoPtr->hwndUpDown = CreateWindowA("msctls_updown32",
 					  "",
 					  WS_VISIBLE | WS_CHILD | UDS_HORZ,
@@ -651,6 +673,7 @@ static void TAB_SetItemBounds (HWND hwnd)
   TEXTMETRICA fontMetrics;
   INT         curItem;
   INT         curItemLeftPos;
+  INT         curItemRowCount;
   HFONT       hFont, hOldFont;
   HDC         hdc;
   RECT        clientRect;
@@ -675,6 +698,7 @@ static void TAB_SetItemBounds (HWND hwnd)
    * The leftmost item will be "0" aligned
    */
   curItemLeftPos = 0;
+  curItemRowCount = 0;
 
   if ( !(lStyle & TCS_FIXEDWIDTH) && !((lStyle & TCS_OWNERDRAWFIXED) && infoPtr->fSizeSet) )
   {
@@ -711,24 +735,6 @@ static void TAB_SetItemBounds (HWND hwnd)
   for (curItem = 0; curItem < infoPtr->uNumItem; curItem++)
   {
     /*
-     * Calculate the vertical position of the tab
-     */
-    if (lStyle & TCS_BOTTOM) 
-    {
-      infoPtr->items[curItem].rect.bottom = clientRect.bottom - 
-                                            SELECTED_TAB_OFFSET;
-      infoPtr->items[curItem].rect.top = clientRect.bottom - 
-                                         infoPtr->tabHeight;
-    }
-    else 
-    {
-      infoPtr->items[curItem].rect.top = clientRect.top + 
-                                         SELECTED_TAB_OFFSET;
-      infoPtr->items[curItem].rect.bottom = clientRect.top + 
-                                            infoPtr->tabHeight;
-    }
-
-    /*
      * Set the leftmost position of the tab.
      */
     infoPtr->items[curItem].rect.left = curItemLeftPos;
@@ -764,6 +770,27 @@ static void TAB_SetItemBounds (HWND hwnd)
                                            num*HORIZONTAL_ITEM_PADDING;
     }
 
+    /*
+     * Check if this is a multiline tab control and if so
+     * check to see if we should wrap the tabs
+     *
+     * Because we are going to arange all these tabs evenly
+     * really we are basically just counting rows at this point
+     *
+     */
+
+    if ((lStyle & TCS_MULTILINE)&&
+        (infoPtr->items[curItem].rect.right > clientRect.right))
+    {
+        infoPtr->items[curItem].rect.right -= 
+                                      infoPtr->items[curItem].rect.left;
+	infoPtr->items[curItem].rect.left = 0;
+        curItemRowCount ++;
+    }
+
+    infoPtr->items[curItem].rect.bottom = 0;
+    infoPtr->items[curItem].rect.top = curItemRowCount;
+
     TRACE("TextSize: %i\n ", size.cx);
     TRACE("Rect: T %i, L %i, B %i, R %i\n", 
 	  infoPtr->items[curItem].rect.top,
@@ -776,23 +803,118 @@ static void TAB_SetItemBounds (HWND hwnd)
      * of this one.
      */
     if (lStyle & TCS_BUTTONS)
-      curItemLeftPos = infoPtr->items[curItem].rect.right + BUTTON_SPACINGX;
+      curItemLeftPos = infoPtr->items[curItem].rect.right + BUTTON_SPACINGX; 
     else
       curItemLeftPos = infoPtr->items[curItem].rect.right;
   }
 
+  if (!(lStyle & TCS_MULTILINE))
+  {
+    /*
+     * Check if we need a scrolling control.
+     */
+    infoPtr->needsScrolling = (curItemLeftPos + (2*SELECTED_TAB_OFFSET) > 
+                               clientRect.right);
+
+    TAB_SetupScrolling(hwnd, infoPtr, &clientRect);      
+  }
+
   /*
-   * Check if we need a scrolling control.
+   * Set the number of rows
    */
-  infoPtr->needsScrolling = (curItemLeftPos + (2*SELECTED_TAB_OFFSET) > 
-                             clientRect.right);
 
-  /* Don't need scrolling, then update infoPtr->leftmostVisible */
-  if(!infoPtr->needsScrolling)
-    infoPtr->leftmostVisible = 0; 
+  infoPtr->uNumRows = curItemRowCount;
 
-  TAB_SetupScrolling(hwnd, infoPtr, &clientRect);      
-  
+   if ((lStyle & TCS_MULTILINE)&&(infoPtr->uNumItem > 0))
+   {
+      INT widthDiff,remainder;
+      INT tabPerRow,remTab;
+      INT iRow,iItm;
+      INT iIndexStart=0,iIndexEnd=0, iCount=0;
+
+      /*
+       * Ok Microsoft trys to even out the rows. place the same
+       * number of tabs in each row. So lets give that a shot
+       *
+       */
+
+      tabPerRow = infoPtr->uNumItem / (infoPtr->uNumRows + 1);
+      remTab = infoPtr->uNumItem % (infoPtr->uNumRows + 1);
+
+      for (iItm=0,iRow=0,iCount=0,curItemLeftPos=0;
+           iItm<infoPtr->uNumItem;
+           iItm++,iCount++)
+      {
+          if (iCount >= ((iRow<remTab)?tabPerRow+1:tabPerRow))
+          {
+              iRow++;
+              curItemLeftPos = 0;
+              iCount = 0;
+          }
+          /*
+           * normalize the current rect
+           */
+          infoPtr->items[iItm].rect.right -= 
+            infoPtr->items[iItm].rect.left;
+          infoPtr->items[iItm].rect.left = 0;
+
+          infoPtr->items[iItm].rect.top = iRow;
+          infoPtr->items[iItm].rect.left +=curItemLeftPos;
+          infoPtr->items[iItm].rect.right +=curItemLeftPos; 
+          if (lStyle & TCS_BUTTONS)
+            curItemLeftPos = infoPtr->items[iItm].rect.right +
+                             BUTTON_SPACINGX;
+          else
+            curItemLeftPos = infoPtr->items[iItm].rect.right;
+      }
+          
+      /*
+       * Justify the rows
+       *
+       */
+      {
+         while(iIndexStart < infoPtr->uNumItem)
+        {
+        /* 
+         * find the indexs of the row
+         */
+        for (iIndexEnd=iIndexStart;
+             (iIndexEnd < infoPtr->uNumItem) && 
+ 	       (infoPtr->items[iIndexEnd].rect.top ==
+                infoPtr->items[iIndexStart].rect.top) ;
+            iIndexEnd++)
+        /* intentionaly blank */;
+
+        /* 
+         * we need to justify these tabs so they fill the whole given
+         * client area
+         *
+         */
+        widthDiff = clientRect.right - (2*SELECTED_TAB_OFFSET) -
+                            infoPtr->items[iIndexEnd-1].rect.right;
+       
+        iCount = iIndexEnd-iIndexStart; 
+
+        if (iCount)
+        {
+           INT iIndex;
+           remainder = widthDiff % iCount;
+           widthDiff = widthDiff / iCount;
+           for (iIndex=iIndexStart,iCount=0; iIndex < iIndexEnd; 
+                iIndex++,iCount++)
+           {
+              infoPtr->items[iIndex].rect.left +=iCount*widthDiff;
+              infoPtr->items[iIndex].rect.right +=(iCount+1)*widthDiff;
+           }
+           infoPtr->items[iIndex-1].rect.right += remainder;
+        }
+
+        iIndexStart=iIndexEnd;
+        }
+      }
+  }
+
+  TAB_EnsureSelectionVisible(hwnd,infoPtr);
   /*
    * Cleanup
    */
@@ -1044,7 +1166,14 @@ static void TAB_DrawItem(
     /*
      * Draw the text;
      */
-    DrawTextA(hdc,
+    if (lStyle & TCS_RIGHTJUSTIFY)
+      DrawTextA(hdc,
+	      infoPtr->items[iItem].pszText, 
+	      lstrlenA(infoPtr->items[iItem].pszText),
+	      &r, 
+	      DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+    else
+       DrawTextA(hdc,
 	      infoPtr->items[iItem].pszText, 
 	      lstrlenA(infoPtr->items[iItem].pszText),
 	      &r, 
@@ -1101,11 +1230,11 @@ static void TAB_DrawBorder (HWND hwnd, HDC hdc)
    */
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
   {
-    rect.bottom -= infoPtr->tabHeight;
+    rect.bottom -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
   }
   else
   {
-    rect.top += infoPtr->tabHeight;
+    rect.top += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
   }
 
   /*
@@ -1180,13 +1309,13 @@ static void TAB_Refresh (HWND hwnd, HDC hdc)
      * Then, draw the selected item
      */
     TAB_DrawItem (hwnd, hdc, infoPtr->iSelected);
-    
+
     /*
      * If we haven't set the current focus yet, set it now.
      * Only happens when we first paint the tab controls.
      */
-     if (infoPtr->uFocus == -1)
-       TAB_SetCurFocus(hwnd, infoPtr->iSelected); 
+   if (infoPtr->uFocus == -1)
+     TAB_SetCurFocus(hwnd, infoPtr->iSelected);
   }
 
   SelectObject (hdc, hOldFont);
@@ -1235,6 +1364,41 @@ static void TAB_EnsureSelectionVisible(
   TAB_INFO* infoPtr)
 {
   INT iSelected = infoPtr->iSelected;
+
+  /* 
+   * set the items row to the bottommost row or topmost row depending on 
+   * style 
+   */
+
+  if (infoPtr->uNumRows > 0)
+  {
+      INT newselected=infoPtr->items[iSelected].rect.top;
+      INT iTargetRow;
+      LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+
+      if (lStyle & TCS_BOTTOM)
+          iTargetRow = 0;
+      else
+          iTargetRow = infoPtr->uNumRows;
+
+      if (newselected != iTargetRow)
+      {
+         INT i;
+         for (i=0; i < infoPtr->uNumItem; i++)
+             if (infoPtr->items[i].rect.top == newselected )
+                 infoPtr->items[i].rect.top = iTargetRow;
+             else if (lStyle&TCS_BOTTOM)
+                 {
+                  if (infoPtr->items[i].rect.top < newselected)
+                     infoPtr->items[i].rect.top+=1;
+                 }
+                 else 
+                 {
+                   if (infoPtr->items[i].rect.top > newselected)
+                     infoPtr->items[i].rect.top-=1;
+                 }
+      }
+  }
 
   /*
    * Do the trivial cases first.
@@ -1301,11 +1465,13 @@ static void TAB_InvalidateTabArea(
 
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
   {
-    clientRect.top = clientRect.bottom - (infoPtr->tabHeight + 3);
+    clientRect.top = clientRect.bottom - (infoPtr->tabHeight * 
+                                           (infoPtr->uNumRows + 1) + 3);
   }
   else
   {
-    clientRect.bottom = clientRect.top + (infoPtr->tabHeight + 1);
+    clientRect.bottom = clientRect.top + (infoPtr->tabHeight * 
+                                           (infoPtr->uNumRows + 1) + 1);
   }
 
   InvalidateRect(hwnd, &clientRect, TRUE);
@@ -1389,12 +1555,12 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (pti->mask & TCIF_PARAM)
     infoPtr->items[iItem].lParam = pti->lParam;
   
-  TAB_SetItemBounds(hwnd);
   TAB_InvalidateTabArea(hwnd, infoPtr);
   
   TRACE("[%04x]: added item %d '%s'\n",
 	hwnd, iItem, infoPtr->items[iItem].pszText);
 
+  TAB_SetItemBounds(hwnd);
   return iItem;
 }
 
@@ -1668,6 +1834,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   SetWindowLongA(hwnd, 0, (DWORD)infoPtr);
    
   infoPtr->uNumItem        = 0;
+  infoPtr->uNumRows        = 0;
   infoPtr->hFont           = 0;
   infoPtr->items           = 0;
   infoPtr->hcurArrow       = LoadCursorA (0, IDC_ARROWA);
@@ -1938,7 +2105,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     default:
       if (uMsg >= WM_USER)
-	WARN("unknown msg %04x wp=%08x lp=%08lx\n",
+	ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 	     uMsg, wParam, lParam);
       return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
