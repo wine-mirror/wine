@@ -23,6 +23,7 @@ C_SRCS = \
 	suminfo.c \
 	table.c \
 	tokenize.c \
+	update.c \
 	where.c
 
 RC_SRCS = version.rc

@@ -66,6 +66,23 @@ static UINT WHERE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     return wv->table->ops->fetch_int( wv->table, row, col, val );
 }
 
+static UINT WHERE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
+{
+    MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
+
+    TRACE("%p %d %d %04x\n", wv, row, col, val );
+
+    if( !wv->table )
+         return ERROR_FUNCTION_FAILED;
+    
+    if( row > wv->row_count )
+        return ERROR_NO_MORE_ITEMS;
+    
+    row = wv->reorder[ row ];
+    
+    return wv->table->ops->set_int( wv->table, row, col, val );
+}
+
 static UINT INT_evaluate( UINT lval, UINT op, UINT rval )
 {
     switch( op )
@@ -311,7 +328,7 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS where_ops =
 {
     WHERE_fetch_int,
-    NULL,
+    WHERE_set_int,
     NULL,
     WHERE_execute,
     WHERE_close,

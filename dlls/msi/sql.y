@@ -80,6 +80,7 @@ static struct expr * EXPR_wildcard();
     struct expr *expr;
     USHORT column_type;
     create_col_info *column_info;
+    column_assignment update_col_info;
 }
 
 %token TK_ABORT TK_AFTER TK_AGG_FUNCTION TK_ALL TK_AND TK_AS TK_ASC
@@ -128,11 +129,12 @@ static struct expr * EXPR_wildcard();
 
 %type <string> column table string_or_id
 %type <column_list> selcollist
-%type <query> from unorderedsel oneselect onequery onecreate oneinsert
+%type <query> from unorderedsel oneselect onequery onecreate oneinsert oneupdate
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
 %type <column_info> column_def table_def
 %type <val_list> constlist
+%type <update_col_info> column_assignment update_assign_list
 
 %%
 
@@ -148,6 +150,11 @@ onequery:
         *sql->view = $1;
     }
   | oneinsert
+    {
+        SQL_input* sql = (SQL_input*) info;
+        *sql->view = $1;
+    }
+  | oneupdate
     {
         SQL_input* sql = (SQL_input*) info;
         *sql->view = $1;
@@ -177,7 +184,7 @@ onecreate:
     TK_CREATE TK_TABLE table TK_LP table_def TK_RP
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *create; 
+            MSIVIEW *create = NULL; 
 
             if( !$5 )
                 YYABORT;
@@ -187,12 +194,23 @@ onecreate:
   | TK_CREATE TK_TABLE table TK_LP table_def TK_RP TK_HOLD
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *create; 
+            MSIVIEW *create = NULL; 
 
             if( !$5 )
                 YYABORT;
             CREATE_CreateView( sql->db, &create, $3, $5, TRUE );
             $$ = create;
+        }
+    ;
+
+oneupdate:
+    TK_UPDATE table TK_SET update_assign_list TK_WHERE expr
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW *update = NULL; 
+
+            UPDATE_CreateView( sql->db, &update, $2, &$4, $6 );
+            $$ = update;
         }
     ;
 
@@ -483,7 +501,33 @@ constlist:
             $1->next = vals;
             $$ = $1;
         }
-        ;
+    ;
+
+update_assign_list:
+    column_assignment
+  | column_assignment TK_COMMA update_assign_list
+        {
+            $1.col_list->next = $3.col_list;
+            $1.val_list->next = $3.val_list;
+            $$ = $1;
+        }
+    ;
+
+column_assignment:
+    column TK_EQ const_val
+        {
+            $$.col_list = HeapAlloc( GetProcessHeap(), 0, sizeof *$$.col_list );
+            if( !$$.col_list )
+                YYABORT;
+            $$.col_list->string = $1;
+            $$.col_list->next = NULL;
+            $$.val_list = HeapAlloc( GetProcessHeap(), 0, sizeof *$$.val_list );
+            if( !$$.val_list )
+                YYABORT;
+            $$.val_list->val = $3;
+            $$.val_list->next = 0;
+        }
+    ;
 
 const_val:
     TK_INTEGER

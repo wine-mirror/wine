@@ -98,6 +98,13 @@ typedef struct _value_list
     struct _value_list *next;
 } value_list;
 
+typedef struct _column_assignment
+{
+    string_list *col_list;
+    value_list *val_list;
+} column_assignment;
+
+
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phView);
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view );
@@ -118,6 +125,9 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 
 UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         string_list *columns, value_list *values, BOOL temp );
+
+UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPWSTR table,
+                        column_assignment *list, struct expr *expr );
 
 void delete_expr( struct expr *e );
 void delete_string_list( string_list *sl );
