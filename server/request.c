@@ -262,7 +262,9 @@ int receive_fd( struct process *process )
 
     if (ret >= 0)
     {
-        fprintf( stderr, "Protocol error: process %p: partial recvmsg %d for fd\n", process, ret );
+        if (ret > 0)
+            fprintf( stderr, "Protocol error: process %p: partial recvmsg %d for fd\n",
+                     process, ret );
         kill_process( process, NULL, 1 );
     }
     else
@@ -303,7 +305,8 @@ int send_client_fd( struct process *process, int fd, handle_t handle )
 
     if (ret >= 0)
     {
-        fprintf( stderr, "Protocol error: process %p: partial sendmsg %d\n", process, ret );
+        if (ret > 0)
+            fprintf( stderr, "Protocol error: process %p: partial sendmsg %d\n", process, ret );
         kill_process( process, NULL, 1 );
     }
     else
@@ -341,7 +344,9 @@ static void master_socket_poll_event( struct object *obj, int event )
         struct sockaddr_un dummy;
         int len = sizeof(dummy);
         int client = accept( master_socket->obj.fd, (struct sockaddr *) &dummy, &len );
-        if (client != -1) create_process( client );
+        if (client == -1) return;
+        fcntl( client, F_SETFL, O_NONBLOCK );
+        create_process( client );
     }
 }
 
