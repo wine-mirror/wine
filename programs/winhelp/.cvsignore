@@ -4,5 +4,3 @@ lex.yy.c
 rsrc.res
 winhelp.exe.dbg.c
 winhelp.exe.spec.c
-y.tab.c
-y.tab.h

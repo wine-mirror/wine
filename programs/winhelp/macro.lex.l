@@ -3,6 +3,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,7 +24,6 @@
 %{
 #include <assert.h>
 #include "macro.h"
-#include "y.tab.h"
 
 #include "wine/debug.h"
 
@@ -33,6 +33,7 @@ static LPCSTR  macroptr;
 static LPSTR   strptr;
 static int     quote_stack[32];
 static int     quote_stk_idx = 0;
+struct lexret  yylval;
 
 #define YY_INPUT(buf,result,max_size)\
   if ((result = *macroptr ? 1 : 0)) buf[0] = *macroptr++;
@@ -40,145 +41,57 @@ static int     quote_stk_idx = 0;
 #define YY_NO_UNPUT
 %}
 %%
-About			yylval.void_function_void = MACRO_About;		return VOID_FUNCTION_VOID;
-AddAccelerator|AA	yylval.void_function_2uint_string = MACRO_AddAccelerator;		return VOID_FUNCTION_2UINT_STRING;
-ALink|AL		yylval.void_function_string_uint_string = MACRO_ALink;	return VOID_FUNCTION_STRING_UINT_STRING;
-Annotate		yylval.void_function_void = MACRO_Annotate;		return VOID_FUNCTION_VOID;
-AppendItem		yylval.void_function_4string = MACRO_AppendItem;	return VOID_FUNCTION_4STRING;
-Back			yylval.void_function_void = MACRO_Back;			return VOID_FUNCTION_VOID;
-BackFlush|BF		yylval.void_function_void = MACRO_BackFlush;		return VOID_FUNCTION_VOID;
-BookmarkDefine		yylval.void_function_void = MACRO_BookmarkDefine;	return VOID_FUNCTION_VOID;
-BookmarkMore		yylval.void_function_void = MACRO_BookmarkMore;		return VOID_FUNCTION_VOID;
-BrowseButtons		yylval.void_function_void = MACRO_BrowseButtons;	return VOID_FUNCTION_VOID;
-ChangeButtonBinding|CBB	yylval.void_function_2string = MACRO_ChangeButtonBinding;	return VOID_FUNCTION_2STRING;
-ChangeEnable|CE		yylval.void_function_2string = MACRO_ChangeEnable;	return VOID_FUNCTION_2STRING;
-ChangeItemBinding|CIB	yylval.void_function_2string = MACRO_ChangeItemBinding;	return VOID_FUNCTION_2STRING;
-CheckItem|CI		yylval.void_function_string = MACRO_CheckItem;		return VOID_FUNCTION_STRING;
-CloseSecondarys|CS	yylval.void_function_void = MACRO_CloseSecondarys;	return VOID_FUNCTION_VOID;
-CloseWindow|CW		yylval.void_function_string = MACRO_CloseWindow;	return VOID_FUNCTION_STRING;
-Compare			yylval.void_function_string = MACRO_Compare;		return VOID_FUNCTION_STRING;
-Contents		yylval.void_function_void = MACRO_Contents;		return VOID_FUNCTION_VOID;
-ControlPanel		yylval.void_function_2string_uint = MACRO_ControlPanel;	return VOID_FUNCTION_2STRING_UINT;
-CopyDialog		yylval.void_function_void = MACRO_CopyDialog;		return VOID_FUNCTION_VOID;
-CopyTopic|CT		yylval.void_function_void = MACRO_CopyTopic;		return VOID_FUNCTION_VOID;
-CreateButton|CB		yylval.void_function_3string = MACRO_CreateButton;	return VOID_FUNCTION_3STRING;
-DeleteItem		yylval.void_function_string = MACRO_DeleteItem;		return VOID_FUNCTION_STRING;
-DeleteMark		yylval.void_function_string = MACRO_DeleteMark;		return VOID_FUNCTION_STRING;
-DestroyButton		yylval.void_function_string = MACRO_DestroyButton;	return VOID_FUNCTION_STRING;
-DisableButton|DB	yylval.void_function_string = MACRO_DisableButton;	return VOID_FUNCTION_STRING;
-DisableItem|DI		yylval.void_function_string = MACRO_DisableItem;	return VOID_FUNCTION_STRING;
-EnableButton|EB		yylval.void_function_string = MACRO_EnableButton;	return VOID_FUNCTION_STRING;
-EnableItem|EI		yylval.void_function_string = MACRO_EnableItem;		return VOID_FUNCTION_STRING;
-EndMPrint		yylval.void_function_void = MACRO_EndMPrint;		return VOID_FUNCTION_VOID;
-ExecFile|EF		yylval.void_function_2string_uint_string = MACRO_ExecFile;		return VOID_FUNCTION_2STRING_UINT_STRING;
-ExecProgram|EP		yylval.void_function_string_uint = MACRO_ExecProgram;	return VOID_FUNCTION_STRING_UINT;
-Exit			yylval.void_function_void = MACRO_Exit;			return VOID_FUNCTION_VOID;
-ExtAbleItem		yylval.void_function_string_uint = MACRO_ExtAbleItem;	return VOID_FUNCTION_STRING_UINT;
-ExtInsertItem		yylval.void_function_4string_2uint = MACRO_ExtInsertItem;		return VOID_FUNCTION_4STRING_2UINT;
-ExtInsertMenu		yylval.void_function_3string_2uint = MACRO_ExtInsertMenu;		return VOID_FUNCTION_3STRING_2UINT;
-FileExist|FE		yylval.bool_function_string = MACRO_FileExist;		return BOOL_FUNCTION_STRING;
-FileOpen|FO		yylval.void_function_void = MACRO_FileOpen;		return VOID_FUNCTION_VOID;
-Find			yylval.void_function_void = MACRO_Find;			return VOID_FUNCTION_VOID;
-Finder|FD		yylval.void_function_void = MACRO_Finder;		return VOID_FUNCTION_VOID;
-FloatingMenu		yylval.void_function_void = MACRO_FloatingMenu;		return VOID_FUNCTION_VOID;
-Flush|FH		yylval.void_function_void = MACRO_Flush;		return VOID_FUNCTION_VOID;
-FocusWindow		yylval.void_function_string = MACRO_FocusWindow;	return VOID_FUNCTION_STRING;
-Generate		yylval.void_function_string_wparam_lparam = MACRO_Generate;		return VOID_FUNCTION_STRING_WPARAM_LPARAM;
-GotoMark		yylval.void_function_string = MACRO_GotoMark;		return VOID_FUNCTION_STRING;
-HelpOn			yylval.void_function_void = MACRO_HelpOn;		return VOID_FUNCTION_VOID;
-HelpOnTop		yylval.void_function_void = MACRO_HelpOnTop;		return VOID_FUNCTION_VOID;
-History			yylval.void_function_void = MACRO_History;		return VOID_FUNCTION_VOID;
-IfThen|IF							return IF_THEN;
-IfThenElse|IE							return IF_THEN_ELSE;
-InitMPrint		yylval.bool_function_void = MACRO_InitMPrint;		return BOOL_FUNCTION_VOID;
-InsertItem		yylval.void_function_4string_uint = MACRO_InsertItem;	return VOID_FUNCTION_4STRING_UINT;
-InsertMenu		yylval.void_function_2string_uint = MACRO_InsertMenu;	return VOID_FUNCTION_2STRING_UINT;
-IsBook			yylval.bool_function_void = MACRO_IsBook;		return BOOL_FUNCTION_VOID;
-IsMark			yylval.bool_function_string = MACRO_IsMark;		return BOOL_FUNCTION_STRING;
-IsNotMark|NM		yylval.bool_function_string = MACRO_IsNotMark;		return BOOL_FUNCTION_STRING;
-JumpContents		yylval.void_function_2string = MACRO_JumpContents;	return VOID_FUNCTION_FILE_WIN;
-JumpContext|JC		yylval.void_function_2string_uint = MACRO_JumpContext;	return VOID_FUNCTION_FILE_WIN_UINT;
-JumpHash|JH		yylval.void_function_2string_uint = MACRO_JumpHash;	return VOID_FUNCTION_FILE_WIN_UINT;
-JumpHelpOn		yylval.void_function_void = MACRO_JumpHelpOn;		return VOID_FUNCTION_VOID;
-JumpID|JI		yylval.void_function_3string = MACRO_JumpID;		return VOID_FUNCTION_FILE_WIN_STRING;
-JumpKeyword|JK		yylval.void_function_3string = MACRO_JumpKeyword;	return VOID_FUNCTION_FILE_WIN_STRING;
-KLink|KL		yylval.void_function_string_uint_2string = MACRO_KLink;	return VOID_FUNCTION_STRING_UINT_2STRING;
-Menu|MU			yylval.void_function_void = MACRO_Menu;			return VOID_FUNCTION_VOID;
-MPrintHash		yylval.void_function_uint = MACRO_MPrintHash;		return VOID_FUNCTION_UINT;
-MPrintID		yylval.void_function_string = MACRO_MPrintID;		return VOID_FUNCTION_STRING;
-Next			yylval.void_function_void = MACRO_Next;			return VOID_FUNCTION_VOID;
-NoShow			yylval.void_function_void = MACRO_NoShow;		return VOID_FUNCTION_VOID;
-Not								return NOT;
-PopupContext|PC		yylval.void_function_string_uint = MACRO_PopupContext;	return VOID_FUNCTION_STRING_UINT;
-PopupHash		yylval.void_function_string_uint = MACRO_PopupHash;	return VOID_FUNCTION_STRING_UINT;
-PopupId|PI		yylval.void_function_2string = MACRO_PopupId;		return VOID_FUNCTION_2STRING;
-PositionWindow|PW	yylval.void_function_2int_3uint_string = MACRO_PositionWindow;		return VOID_FUNCTION_2INT_3UINT_STRING;
-Prev			yylval.void_function_void = MACRO_Prev;			return VOID_FUNCTION_VOID;
-Print			yylval.void_function_void = MACRO_Print;		return VOID_FUNCTION_VOID;
-PrinterSetup		yylval.void_function_void = MACRO_PrinterSetup;		return VOID_FUNCTION_VOID;
-RegisterRoutine|RR	yylval.void_function_3string = MACRO_RegisterRoutine;	return VOID_FUNCTION_3STRING;
-RemoveAccelerator|RA	yylval.void_function_2uint = MACRO_RemoveAccelerator;	return VOID_FUNCTION_2UINT;
-ResetMenu		yylval.void_function_void = MACRO_ResetMenu;		return VOID_FUNCTION_VOID;
-SaveMark		yylval.void_function_string = MACRO_SaveMark;		return VOID_FUNCTION_STRING;
-Search			yylval.void_function_void = MACRO_Search;		return VOID_FUNCTION_VOID;
-SetContents		yylval.void_function_string_uint = MACRO_SetContents;	return VOID_FUNCTION_STRING_UINT;
-SetHelpOnFile		yylval.void_function_string = MACRO_SetHelpOnFile;	return VOID_FUNCTION_STRING;
-SetPopupColor|SPC	yylval.void_function_3uint = MACRO_SetPopupColor;	return VOID_FUNCTION_3UINT;
-ShellExecute|SE		yylval.void_function_2string_2uint_2string = MACRO_ShellExecute;	return VOID_FUNCTION_2STRING_2UINT_2STRING;
-ShortCut|SH		yylval.void_function_2string_wparam_lparam_string = MACRO_ShortCut;	return VOID_FUNCTION_2STRING_WPARAM_LPARAM_STRING;
-TCard			yylval.void_function_uint = MACRO_TCard;		return VOID_FUNCTION_UINT;
-Test			yylval.void_function_uint = MACRO_Test;			return VOID_FUNCTION_UINT;
-TestALink		yylval.bool_function_string = MACRO_TestALink;		return BOOL_FUNCTION_STRING;
-TestKLink		yylval.bool_function_string = MACRO_TestKLink;		return BOOL_FUNCTION_STRING;
-UncheckItem|UI		yylval.void_function_string = MACRO_UncheckItem;	return VOID_FUNCTION_STRING;
-UpdateWindow|UW		yylval.void_function_2string = MACRO_UpdateWindow;	return VOID_FUNCTION_2STRING;
 
-[-+]?[0-9]+		yylval.integer = strtol(yytext, NULL, 10);	return INTEGER;
+[-+]?[0-9]+             yylval.integer = strtol(yytext, NULL, 10);	return INTEGER;
 [-+]?0[xX][0-9a-f]+	yylval.integer = strtol(yytext, NULL, 16);	return INTEGER;
 
+[a-zA-Z][_0-9a-zA-Z]*   return MACRO_Lookup(yytext, &yylval);
 
-\`			    |
-\"			    |
-\'           |
-<quote>\`    |
-<quote>\"    |
-<quote>\'    {
-                 if (quote_stk_idx == 0 ||
-                     (yytext[0] == '\"' && quote_stack[quote_stk_idx - 1] != '\"') ||
-                     (yytext[0] == '`'))
-                 {
-                     /* opening a new one */
-  			            if (quote_stk_idx == 0)
-                     {
-                         strptr = HeapAlloc(GetProcessHeap(), 0, strlen(macroptr) + 1);
- 			                yylval.string = strptr;
-			                BEGIN(quote);
-                     }
-                     else *strptr++ = yytext[0];
-                     quote_stack[quote_stk_idx++] = yytext[0];
-                     assert(quote_stk_idx < sizeof(quote_stack) / sizeof(quote_stack[0]));
-                 }
-                 else
-                 {
-                     if (yytext[0] == '`') assert(0);
-                     /* close the current quote */
-                     if (--quote_stk_idx == 0)
-                     {
-                         BEGIN INITIAL;
-                         *strptr++ = '\0';
-                         return tSTRING;
-                     }
-                     else *strptr++ = yytext[0];
-                }
-			   }
+\`	    |
+\"	    |
+\'          |
+<quote>\`   |
+<quote>\"   |
+<quote>\'   {
+    if (quote_stk_idx == 0 ||
+        (yytext[0] == '\"' && quote_stack[quote_stk_idx - 1] != '\"') ||
+        (yytext[0] == '`'))
+    {
+        /* opening a new one */
+        if (quote_stk_idx == 0)
+        {
+            strptr = HeapAlloc(GetProcessHeap(), 0, strlen(macroptr) + 1);
+            yylval.string = strptr;
+            BEGIN(quote);
+        }
+        else *strptr++ = yytext[0];
+        quote_stack[quote_stk_idx++] = yytext[0];
+        assert(quote_stk_idx < sizeof(quote_stack) / sizeof(quote_stack[0]));
+    }
+    else
+    {
+        if (yytext[0] == '`') assert(0);
+        /* close the current quote */
+        if (--quote_stk_idx == 0)
+        {
+            BEGIN INITIAL;
+            *strptr++ = '\0';
+            return STRING;
+        }
+        else *strptr++ = yytext[0];
+    }
+}
 
-<quote>.    *strptr++ = yytext[0];
-<quote>\\.	*strptr++ = yytext[1];
-<quote><<EOF>>	return 0;
+<quote>.                *strptr++ = yytext[0];
+<quote>\\.	        *strptr++ = yytext[1];
+<quote><<EOF>>	        return 0;
 
 " "
-.			   return yytext[0];
+.			return yytext[0];
 %%
+
+#if 0
+/* all code for testing macros */
 #include "winhelp.h"
 static CHAR szTestMacro[256];
 
@@ -193,20 +106,176 @@ static LRESULT CALLBACK MACRO_TestDialogProc(HWND hDlg, UINT msg, WPARAM wParam,
     return FALSE;
 }
 
-void MACRO_ExecuteMacro(LPCSTR macro)
+void macro_test(void)
 {
-    WINE_TRACE("%s\n", wine_dbgstr_a(macro));
-    if (!lstrcmpi(macro, "MacroTest"))
+    WNDPROC lpfnDlg = MakeProcInstance(MACRO_TestDialogProc, Globals.hInstance);
+    DialogBox(Globals.hInstance, STRING_DIALOG_TEST, Globals.active_win->hMainWnd, (DLGPROC)lpfnDlg);
+    FreeProcInstance(lpfnDlg);
+    macro = szTestMacro;
+}
+#endif
+
+/* small helper function for debug messages */
+static const char* ts(int t)
+{
+    static char c[2] = {0,0};
+
+    switch (t)
     {
-        WNDPROC lpfnDlg = MakeProcInstance(MACRO_TestDialogProc, Globals.hInstance);
-        DialogBox(Globals.hInstance, STRING_DIALOG_TEST, Globals.active_win->hMainWnd, (DLGPROC)lpfnDlg);
-        FreeProcInstance(lpfnDlg);
-        macro = szTestMacro;
+    case EMPTY: return "EMPTY";
+    case VOID_FUNCTION: return "VOID_FUNCTION";
+    case BOOL_FUNCTION: return "BOOL_FUNCTION";
+    case INTEGER: return "INTEGER";
+    case STRING: return "STRING";
+    case IDENTIFIER: return "IDENTIFIER";
+    default: c[0] = (char)t; return c;
     }
+}
+
+static int MACRO_CallBoolFunc(BOOL (*fn)(), const char* args, void** ret);
+
+/******************************************************************
+ *		MACRO_CheckArgs
+ *
+ * checks number of arguments against prototype, and stores arguments on
+ * stack pa for later call
+ * returns -1 on error, otherwise the number of pushed parameters
+ */
+static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
+{
+    int         t;
+    int         idx = 0;
+
+    WINE_TRACE("Checking %s\n", args);
+
+    if (yylex() != '(') {WINE_WARN("missing (\n");return -1;}
+
+    if (*args)
+    {
+        for (;;)
+        {
+            t = yylex();
+            WINE_TRACE("Got %s <=> %c\n", ts(t), *args);
+
+            switch (*args)
+            {
+            case 'S': 
+                if (t != STRING)
+                {WINE_WARN("missing S\n");return -1;}
+                pa[idx] = (void*)yylval.string;  
+                break;
+            case 'U':
+            case 'I':
+                if (t != INTEGER)
+                {WINE_WARN("missing U\n");return -1;}   
+                pa[idx] = (void*)yylval.integer; 
+                break;
+            case 'B':
+                if (t != BOOL_FUNCTION) 
+                {WINE_WARN("missing B\n");return -1;}   
+                if (MACRO_CallBoolFunc(yylval.bool_function, yylval.proto, &pa[idx]) == 0)
+                    return -1;
+                break;
+            default: 
+                WINE_WARN("unexpected %s while args is %c\n", ts(t), *args);
+                return -1;
+            }
+            idx++;
+            if (*++args == '\0') break;
+            if (yylex() != ',') {WINE_WARN("missing ,\n");return -1;}
+            if (idx == max) {WINE_FIXME("stack overflow (%d)\n", max);return -1;}
+        }
+    }
+    if (yylex() != ')') {WINE_WARN("missing )\n");return -1;}
+    return idx;
+}
+
+/******************************************************************
+ *		MACRO_CallBoolFunc
+ *
+ * Invokes boolean function fn, which arguments are defined by args
+ * stores bool result into ret
+ */
+static int MACRO_CallBoolFunc(BOOL (*fn)(), const char* args, void** ret)
+{
+    void*       pa[2];
+    int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
+
+    if (idx == -1) return 0;
+    if (!fn)       return 1;
+
+    WINE_TRACE("calling with %u pmts\n", idx);
+
+    switch (idx)
+    {
+    case 0: *ret = (void*)(fn)();          break;
+    case 1: *ret = (void*)(fn)(pa[0]);     break;
+    default: WINE_FIXME("NIY\n");
+    }
+
+    return 1;
+}
+
+/******************************************************************
+ *		MACRO_CallVoidFunc
+ *
+ *
+ */
+static int MACRO_CallVoidFunc(void (*fn)(), const char* args)
+{
+    void*       pa[6];
+    int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
+
+    if (idx == -1) return 0;
+    if (!fn)       return 1;
+
+    WINE_TRACE("calling with %u pmts\n", idx);
+
+    switch (idx)
+    {
+    case 0: (fn)();                                     break;
+    case 1: (fn)(pa[0]);                                break;
+    case 2: (fn)(pa[0],pa[1]);                          break;
+    case 3: (fn)(pa[0],pa[1],pa[2]);                    break;
+    case 4: (fn)(pa[0],pa[1],pa[2],pa[3]);              break;
+    case 5: (fn)(pa[0],pa[1],pa[2],pa[3],pa[4]);        break;
+    case 6: (fn)(pa[0],pa[1],pa[2],pa[3],pa[4],pa[5]);  break;
+    default: WINE_FIXME("NIY\n");
+    }
+
+    return 1;
+}
+
+BOOL MACRO_ExecuteMacro(LPCSTR macro)
+{
+    int t;
+
+    WINE_TRACE("%s\n", wine_dbgstr_a(macro));
 
     macroptr = macro;
 
-    yyparse();
+    while ((t = yylex()) != EMPTY)
+    {
+        switch (t)
+        {
+        case VOID_FUNCTION:
+            WINE_TRACE("got type void func(%s)\n", yylval.proto);
+            MACRO_CallVoidFunc(yylval.void_function, yylval.proto);
+            break;
+        case BOOL_FUNCTION:
+            WINE_WARN("got type bool func(%s)\n", yylval.proto);
+            break;
+        default:
+            WINE_WARN("got unexpected type %s\n", ts(t));
+            return 0;
+        }
+        switch (t = yylex())
+        {
+        case EMPTY:     return 1;
+        case ';':       break;
+        default:        return 0;
+        }
+    }
 
     if (strptr)
     {
@@ -214,19 +283,8 @@ void MACRO_ExecuteMacro(LPCSTR macro)
         strptr = NULL;
     }
     quote_stk_idx = 0;
-}
 
-void yyerror(const char *s)
-{
-    WINE_WARN("Error while parsing: %s\n", s);
-    BEGIN INITIAL;
-    yyrestart(yyin);
-    if (strptr)
-    {
-        HeapFree(GetProcessHeap(), 0, strptr);
-        strptr = NULL;
-    }
-    quote_stk_idx = 0;
+    return 1;
 }
 
 #ifndef yywrap

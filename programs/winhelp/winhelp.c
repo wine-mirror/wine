@@ -45,7 +45,7 @@ static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-WINHELP_GLOBALS Globals = {3, 0, 0, 0, 0, 0};
+WINHELP_GLOBALS Globals = {3, 0, 0, 0, 1, 0, 0};
 
 static BOOL MacroTest = FALSE;
 
@@ -91,6 +91,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
         case 'x':
             show = SW_HIDE; 
+            Globals.isBook = FALSE;
             break;
 
         default:

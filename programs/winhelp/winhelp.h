@@ -111,6 +111,7 @@ typedef struct
     HANDLE              hInstance;
     HWND                hPopupWnd;
     UINT                wStringTableOffset;
+    BOOL                isBook;
     WINHELP_WINDOW*     active_win;
     WINHELP_WINDOW*     win_list;
 } WINHELP_GLOBALS;
@@ -122,13 +123,13 @@ BOOL WINHELP_CreateHelpWindowByPage(HLPFILE_PAGE*, LPCSTR, BOOL, HWND, LPPOINT, 
 INT  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 INT  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
 
-extern CHAR MAIN_WIN_CLASS_NAME[];
-extern CHAR BUTTON_BOX_WIN_CLASS_NAME[];
-extern CHAR TEXT_WIN_CLASS_NAME[];
-extern CHAR SHADOW_WIN_CLASS_NAME[];
-extern CHAR STRING_BUTTON[];
-extern CHAR STRING_MENU_Xx[];
-extern CHAR STRING_DIALOG_TEST[];
+extern char MAIN_WIN_CLASS_NAME[];
+extern char BUTTON_BOX_WIN_CLASS_NAME[];
+extern char TEXT_WIN_CLASS_NAME[];
+extern char SHADOW_WIN_CLASS_NAME[];
+extern char STRING_BUTTON[];
+extern char STRING_MENU_Xx[];
+extern char STRING_DIALOG_TEST[];
 #endif
 
 /* Buttons */
