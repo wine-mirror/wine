@@ -1538,11 +1538,14 @@ static VOID LISTVIEW_AddGroupSelection(HWND hwnd, INT nItem)
   INT i;
   LVITEMA item;
 
+  if (nFirst == -1)
+    nFirst = nItem;
+
   ZeroMemory(&item,sizeof(LVITEMA));
   item.stateMask = LVIS_SELECTED;
   item.state = LVIS_SELECTED;
 
-  for (i = nFirst; i <= nLast; i++);
+  for (i = nFirst; i <= nLast; i++)
   {
     LISTVIEW_SetItemState(hwnd,i,&item);
   }
@@ -1679,8 +1682,17 @@ static VOID LISTVIEW_SetGroupSelection(HWND hwnd, INT nItem)
   if ((uView == LVS_LIST) || (uView == LVS_REPORT))
   {
     INT i;
-    INT nFirst = min(infoPtr->nSelectionMark, nItem);
-    INT nLast = max(infoPtr->nSelectionMark, nItem);
+    INT nFirst, nLast;
+
+    if (infoPtr->nSelectionMark == -1)
+    {
+      infoPtr->nSelectionMark = nFirst = nLast = nItem;
+    }
+    else
+    {
+      nFirst = min(infoPtr->nSelectionMark, nItem);
+      nLast = max(infoPtr->nSelectionMark, nItem);
+    }
 
     for (i = 0; i <= GETITEMCOUNT(infoPtr); i++)
     {
