@@ -99,8 +99,6 @@
  *    (OMFDirHeader.cDir)
  */
 
-extern void			*PE_base;
-
 extern IMAGE_NT_HEADERS*        PE_nt_headers;
 
 static	void*		cv_base /* = 0 */;
@@ -509,14 +507,14 @@ static const char*   get_coff_name( PIMAGE_SYMBOL coff_sym, const char* coff_str
    return nampnt;
 }
 
-void	dump_coff(unsigned long coffbase, unsigned long len)
+void	dump_coff(unsigned long coffbase, unsigned long len, void* pmt)
 {
     PIMAGE_COFF_SYMBOLS_HEADER coff;
     PIMAGE_SYMBOL                 coff_sym;
     PIMAGE_SYMBOL                 coff_symbols;
     PIMAGE_LINENUMBER             coff_linetab;
     char                        * coff_strtab;
-    IMAGE_SECTION_HEADER *sectHead = (IMAGE_SECTION_HEADER*)((char*)PE_nt_headers + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+    IMAGE_SECTION_HEADER        * sectHead = pmt;
     unsigned int i;
     const char                  * nampnt;
     int naux;
@@ -527,9 +525,9 @@ void	dump_coff(unsigned long coffbase, unsigned long len)
     coff_linetab = (PIMAGE_LINENUMBER) ((unsigned int) coff + coff->LvaToFirstLinenumber);
     coff_strtab = (char *) (coff_symbols + coff->NumberOfSymbols);
 
-    printf("\nDebug table: COFF format. modbase %p, coffbase %p\n", PE_base, coff);
+    printf("\nDebug table: COFF format. modbase %p, coffbase %p\n", PRD(0, 0), coff);
     printf("  ID  | seg:offs    [  abs   ] | symbol/function name\n");
-  for(i=0; i < coff->NumberOfSymbols; i++ )
+    for(i=0; i < coff->NumberOfSymbols; i++ )
     {
       coff_sym = coff_symbols + i;
       naux = coff_sym->NumberOfAuxSymbols;

@@ -10,16 +10,18 @@ MODULE   = none
 
 C_SRCS = \
 	debug.c \
+	dump.c \
 	emf.c \
 	le.c \
 	lnk.c \
-	main.c  \
-	misc.c  \
-	msmangle.c  \
+	main.c \
+	minidump.c \
+	misc.c \
+	msmangle.c \
 	ne.c \
-	output.c  \
+	output.c \
 	pe.c \
-	search.c  \
+	search.c \
 	symbol.c
 
 all: $(PROGRAMS)

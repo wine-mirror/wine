@@ -89,6 +89,8 @@ typedef struct __parsed_symbol
   char  arg_flag [MAX_FUNCTION_ARGS];
   char *arg_text [MAX_FUNCTION_ARGS];
   char *arg_name [MAX_FUNCTION_ARGS];
+  unsigned int n_u_refs;
+  char *u_ref    [MAX_FUNCTION_ARGS];
 } parsed_symbol;
 
 /* FIXME: Replace with some hash such as GHashTable */
@@ -220,11 +222,23 @@ const char *str_find_set (const char *str, const char *findset);
 
 char *str_toupper (char *str);
 
-void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
+/* file dumping functions */
+enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP};
 
-void ne_dump( const void *exe, size_t exe_size );
+void*		PRD(unsigned long prd, unsigned long len);
+unsigned long	Offset(void* ptr);
 
-void le_dump( const void *exe, size_t exe_size );
+typedef void (*file_dumper)(enum FileSig, void*);
+int             dump_analysis(const char*, file_dumper, enum FileSig);
+
+void            dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
+const char*	get_time_str( unsigned long );
+unsigned int    strlenW( const unsigned short *str );
+void            dump_unicode_str( const unsigned short *str, int len );
+
+void            ne_dump( const void *exe, size_t exe_size );
+void            le_dump( const void *exe, size_t exe_size );
+void            mdmp_dump( void );
 
 FILE *open_file (const char *name, const char *ext, const char *mode);
 

@@ -46,37 +46,7 @@
 #include "winedump.h"
 #include "pe.h"
 
-#ifndef O_BINARY
-# define O_BINARY 0
-#endif
-
-void*			PE_base;
-unsigned long		PE_total_len;
-IMAGE_NT_HEADERS*	PE_nt_headers;
-
-enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE};
-
-static inline unsigned int strlenW( const WCHAR *str )
-{
-    const WCHAR *s = str;
-    while (*s) s++;
-    return s - str;
-}
-
-char*	get_time_str(DWORD _t)
-{
-    time_t 	t = (time_t)_t;
-    static char	buf[128];
-
-    /* FIXME: I don't get the same values from MS' pedump running under Wine...
-     * I wonder if Wine isn't broken wrt to GMT settings...
-     */
-    strncpy(buf, ctime(&t), sizeof(buf));
-    buf[sizeof(buf) - 1] = '\0';
-    if (buf[strlen(buf)-1] == '\n')
-	buf[strlen(buf)-1] = '\0';
-    return buf;
-}
+static IMAGE_NT_HEADERS*	PE_nt_headers;
 
 static	const char* get_machine_str(DWORD mach)
 {
@@ -92,18 +62,6 @@ static	const char* get_machine_str(DWORD mach)
     case IMAGE_FILE_MACHINE_POWERPC:	return "PowerPC";
     }
     return "???";
-}
-
-void*	PRD(unsigned long prd, unsigned long len)
-{
-    return (prd + len > PE_total_len) ? NULL : (char*)PE_base + prd;
-}
-
-unsigned long Offset(void* ptr)
-{
-    if (ptr < PE_base) {printf("<<<<<ptr below\n");return 0;}
-    if ((char *)ptr >= (char*)PE_base + PE_total_len) {printf("<<<<<ptr above\n");return 0;}
-    return (char*)ptr - (char*)PE_base;
 }
 
 static void*	RVA(unsigned long rva, unsigned long len)
@@ -515,7 +473,8 @@ static	void	dump_dir_debug_dir(IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_UNKNOWN:
 	break;
     case IMAGE_DEBUG_TYPE_COFF:
-	dump_coff(idd->PointerToRawData, idd->SizeOfData);
+	dump_coff(idd->PointerToRawData, idd->SizeOfData, 
+                  (char*)PE_nt_headers + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 	break;
     case IMAGE_DEBUG_TYPE_CODEVIEW:
 	dump_codeview(idd->PointerToRawData, idd->SizeOfData);
@@ -597,7 +556,7 @@ static void dump_dir_tls(void)
     printf(" }\n\n");
 }
 
-static void	dump_separate_dbg(void)
+void	dump_separate_dbg(void)
 {
     IMAGE_SEPARATE_DEBUG_HEADER*separateDebugHead = PRD(0, sizeof(separateDebugHead));
     unsigned			nb_dbg;
@@ -643,28 +602,6 @@ static void	dump_separate_dbg(void)
     }
 }
 
-static void dump_unicode_str( const WCHAR *str, int len )
-{
-    if (len == -1) for (len = 0; str[len]; len++) ;
-    printf( "L\"");
-    while (len-- > 0 && *str)
-    {
-        WCHAR c = *str++;
-        switch (c)
-        {
-        case '\n': printf( "\\n" ); break;
-        case '\r': printf( "\\r" ); break;
-        case '\t': printf( "\\t" ); break;
-        case '"':  printf( "\\\"" ); break;
-        case '\\': printf( "\\\\" ); break;
-        default:
-            if (c >= ' ' && c <= 126) putchar(c);
-            else printf( "\\u%04x",c);
-        }
-    }
-    printf( "\"" );
-}
-
 static const char *get_resource_type( unsigned int id )
 {
     static const char *types[] =
@@ -697,36 +634,6 @@ static const char *get_resource_type( unsigned int id )
 
     if ((size_t)id < sizeof(types)/sizeof(types[0])) return types[id];
     return NULL;
-}
-
-void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
-{
-    unsigned int i, j;
-
-    printf( "%s", prefix );
-    if (!ptr)
-    {
-        printf("NULL\n");
-        return;
-    }
-    for (i = 0; i < size; i++)
-    {
-        printf( "%02x%c", ptr[i], (i % 16 == 7) ? '-' : ' ' );
-        if ((i % 16) == 15)
-        {
-            printf( " " );
-            for (j = 0; j < 16; j++)
-                printf( "%c", isprint(ptr[i-15+j]) ? ptr[i-15+j] : '.' );
-            if (i < size-1) printf( "\n%s", prefix );
-        }
-    }
-    if (i % 16)
-    {
-        printf( "%*s ", 3 * (16-(i%16)), "" );
-        for (j = 0; j < i % 16; j++)
-            printf( "%c", isprint(ptr[i-(i%16)+j]) ? ptr[i-(i%16)+j] : '.' );
-    }
-    printf( "\n" );
 }
 
 /* dump an ASCII string with proper escaping */
@@ -944,22 +851,11 @@ static void dump_dir_resource(void)
     printf( "\n\n" );
 }
 
-static	void	do_dump( enum FileSig sig )
+void pe_dump(void* pmt)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
 
-    if (sig == SIG_NE)
-    {
-        ne_dump( PE_base, PE_total_len );
-        return;
-    }
-
-    if (sig == SIG_LE)
-    {
-        le_dump( PE_base, PE_total_len );
-        return;
-    }
-
+    PE_nt_headers = pmt;
     if (globals.do_dumpheader)
     {
 	dump_pe_header();
@@ -993,142 +889,6 @@ static	void	do_dump( enum FileSig sig )
 #endif
     }
 }
-
-static	enum FileSig	check_headers(void)
-{
-    WORD*		pw;
-    DWORD*		pdw;
-    IMAGE_DOS_HEADER*	dh;
-    enum FileSig	sig;
-
-    pw = PRD(0, sizeof(WORD));
-    if (!pw) {printf("Can't get main signature, aborting\n"); return 0;}
-
-    switch (*pw)
-    {
-    case IMAGE_DOS_SIGNATURE:
-	sig = SIG_DOS;
-	dh = PRD(0, sizeof(IMAGE_DOS_HEADER));
-	if (dh && dh->e_lfanew >= sizeof(*dh)) /* reasonable DOS header ? */
-	{
-	    /* the signature is the first DWORD */
-	    pdw = PRD(dh->e_lfanew, sizeof(DWORD));
-	    if (pdw)
-	    {
-		if (*pdw == IMAGE_NT_SIGNATURE)
-		{
-		    PE_nt_headers = PRD(dh->e_lfanew, sizeof(DWORD)+sizeof(IMAGE_FILE_HEADER));
-		    sig = SIG_PE;
-		}
-                else if (*(WORD *)pdw == IMAGE_OS2_SIGNATURE)
-                {
-                    sig = SIG_NE;
-                }
-		else if (*(WORD *)pdw == IMAGE_VXD_SIGNATURE)
-		{
-                    sig = SIG_LE;
-		}
-		else
-		{
-		    printf("No PE Signature found\n");
-		}
-	    }
-	    else
-	    {
-		printf("Can't get the extented signature, aborting\n");
-	    }
-	}
-	break;
-    case 0x4944: /* "DI" */
-	sig = SIG_DBG;
-	break;
-    default:
-	printf("No known main signature (%.2s/%x), aborting\n", (char*)pw, *pw);
-	sig = SIG_UNKNOWN;
-    }
-
-    return sig;
-}
-
-static int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig wanted_sig)
-{
-    int			fd;
-    enum FileSig	effective_sig;
-    int			ret = 1;
-    struct stat		s;
-
-    setbuf(stdout, NULL);
-
-    fd = open(name, O_RDONLY | O_BINARY);
-    if (fd == -1) fatal("Can't open file");
-
-    if (fstat(fd, &s) < 0) fatal("Can't get size");
-    PE_total_len = s.st_size;
-
-#ifdef HAVE_MMAP
-    if ((PE_base = mmap(NULL, PE_total_len, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
-#endif
-    {
-        if (!(PE_base = malloc( PE_total_len ))) fatal( "Out of memory" );
-        if ((unsigned long)read( fd, PE_base, PE_total_len ) != PE_total_len) fatal( "Cannot read file" );
-    }
-
-    effective_sig = check_headers();
-
-    if (effective_sig == SIG_UNKNOWN)
-    {
-	printf("Can't get a recognized file signature, aborting\n");
-	ret = 0;
-    }
-    else if (wanted_sig == SIG_UNKNOWN || wanted_sig == effective_sig)
-    {
-	switch (effective_sig)
-	{
-	case SIG_UNKNOWN: /* shouldn't happen... */
-	    ret = 0; break;
-	case SIG_PE:
-	case SIG_NE:
-	case SIG_LE:
-	    printf("Contents of \"%s\": %ld bytes\n\n", name, PE_total_len);
-	    (*fn)(effective_sig);
-	    break;
-	case SIG_DBG:
-	    dump_separate_dbg();
-	    break;
-	case SIG_DOS:
-	    ret = 0; break;
-	}
-    }
-    else
-    {
-	printf("Can't get a suitable file signature, aborting\n");
-	ret = 0;
-    }
-
-    if (ret) printf("Done dumping %s\n", name);
-#ifdef HAVE_MMAP
-    if (munmap(PE_base, PE_total_len) == -1)
-#endif
-    {
-        free( PE_base );
-    }
-    close(fd);
-
-    return ret;
-}
-
-void	dump_file(const char* name)
-{
-    pe_analysis(name, do_dump, SIG_UNKNOWN);
-}
-
-#if 0
-int 	main(int argc, char* argv[])
-{
-    if (argc != 2) fatal("usage");
-    pe_analysis(argv[1], do_dump);
-}
-#endif
 
 typedef struct _dll_symbol {
     size_t	ordinal;
@@ -1164,9 +924,9 @@ static void dll_close (void)
 }
 */
 
-static	void	do_grab_sym( enum FileSig sig )
+static	void	do_grab_sym( enum FileSig sig, void* pmt )
 {
-    IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY);
+    IMAGE_EXPORT_DIRECTORY	*exportDir;
     unsigned			i, j;
     DWORD*			pName;
     DWORD*			pFunc;
@@ -1174,7 +934,8 @@ static	void	do_grab_sym( enum FileSig sig )
     char*			ptr;
     DWORD*			map;
 
-    if (!exportDir) return;
+    PE_nt_headers = pmt;
+    if (!(exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY))) return;
 
     pName = RVA(exportDir->AddressOfNames, exportDir->NumberOfNames * sizeof(DWORD));
     if (!pName) {printf("Can't grab functions' name table\n"); return;}
@@ -1242,7 +1003,7 @@ static	void	do_grab_sym( enum FileSig sig )
  */
 int dll_open (const char *dll_name)
 {
-    return pe_analysis(dll_name, do_grab_sym, SIG_PE);
+    return dump_analysis(dll_name, do_grab_sym, SIG_PE);
 }
 
 /*******************************************************************
