@@ -256,10 +256,12 @@ BOOL User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This, DWORD dwFlags)
 {
 #ifdef SYNC_UPDATE
+    This->lastlockrect.left = This->lastlockrect.right = 0;
     assert(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE);
     User_copy_to_screen(This,NULL);
 #else
     USER_PRIV_VAR(priv, This);
+    This->lastlockrect.left = This->lastlockrect.right = 0;
     assert(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE);
     SetEvent(priv->user.update_event);
 #endif
