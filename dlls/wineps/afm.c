@@ -461,8 +461,9 @@ static void PSDRV_ReadAFMDir(const char* afmdir) {
 	    if (strstr(dent->d_name,".afm")) {
 		char *afmfn;
 
-		afmfn=(char*)HeapAlloc(GetProcessHeap(),0,strlen(afmdir)+strlen(dent->d_name)+1);
+		afmfn=(char*)HeapAlloc(GetProcessHeap(),0,strlen(afmdir)+strlen(dent->d_name)+2);
 		strcpy(afmfn,afmdir);
+		strcat(afmfn,"/");
 		strcat(afmfn,dent->d_name);
 		TRACE("loading AFM %s\n",afmfn);
 		afm = PSDRV_AFMParse(afmfn);
@@ -486,55 +487,6 @@ BOOL PSDRV_GetFontMetrics(void)
     char key[256];
     char value[256];
 
-    /* some packages with afm files in that directory */
-    PSDRV_ReadAFMDir("/usr/share/ghostscript/fonts/");
-    PSDRV_ReadAFMDir("/usr/share/a2ps/afm/");
-    PSDRV_ReadAFMDir("/usr/share/enscript/");
-    PSDRV_ReadAFMDir("/usr/X11R6/lib/X11/fonts/Type1/");
-
-
-#if 0
-    {
-        /* this takes rather long to load :/ */
-        /* teTeX has a 3level directory storage of afm files */
-        char *path="/opt/teTeX/share/texmf/fonts/afm/";
-        DIR *dir = opendir(path);
-        if (dir) {
-            struct dirent *dent;
-
-            while ((dent=readdir(dir))) {
-                DIR *dir2;
-                char *path2;
-
-                if (dent->d_name[0]=='.')
-                    continue;
-                path2=(char*)HeapAlloc(GetProcessHeap(),0,strlen(path)+1+1+strlen(dent->d_name));
-                strcpy(path2,path);
-                strcat(path2,dent->d_name);
-                strcat(path2,"/");
-                dir2 = opendir(path2);
-                if (dir2) {
-                    while ((dent=readdir(dir2))) {
-                        char *path3;
-                        if (dent->d_name[0]=='.')
-                            continue;
-                        path3=(char*)HeapAlloc(GetProcessHeap(),0,strlen(path2)+1+1+strlen(dent->d_name));
-                        strcpy(path3,path2);
-                        strcat(path3,dent->d_name);
-                        strcat(path3,"/");
-                        PSDRV_ReadAFMDir(path3);
-                        HeapFree(GetProcessHeap(),0,path3);
-                    }
-                    closedir(dir2);
-                } else
-                    PSDRV_ReadAFMDir(path2);
-                HeapFree(GetProcessHeap(),0,path2);
-            }
-            closedir(dir);
-        }
-    }
-#endif
-
     while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key), value, sizeof(value)))
     {
         AFM* afm = PSDRV_AFMParse(value);
@@ -547,6 +499,11 @@ BOOL PSDRV_GetFontMetrics(void)
             PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
         }
     }
+
+    for (idx = 0; PROFILE_EnumWineIniString ("afmdirs", idx, key, sizeof (key),
+	    value, sizeof (value)); ++idx)
+	PSDRV_ReadAFMDir (value);
+
     PSDRV_DumpFontList();
     return TRUE;
 }
