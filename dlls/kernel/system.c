@@ -77,7 +77,7 @@ static DWORD CALLBACK SYSTEM_TimerThread( void *dummy )
 
     when.s.LowPart = when.s.HighPart = 0;
     SetWaitableTimer( SYS_timer, &when, (SYS_TIMER_RATE+500)/1000, SYSTEM_TimerTick, 0, FALSE );
-    for (;;) WaitForMultipleObjectsEx( 0, NULL, FALSE, INFINITE, TRUE );
+    for (;;) SleepEx( INFINITE, TRUE );
 }
 
 

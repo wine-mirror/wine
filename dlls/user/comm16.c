@@ -837,7 +837,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 	if (lpStat) {
 		lpStat->status = 0;
 
-		WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
+		SleepEx(1,TRUE);
 
 		lpStat->cbOutQue = comm_outbuf(ptr);
 		lpStat->cbInQue = comm_inbuf(ptr);
@@ -1107,7 +1107,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 	}
 
 	if(0==comm_inbuf(ptr))
-		WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
+		SleepEx(1,TRUE);
 
 	/* read unget character */
 	if (ptr->unget>=0) {

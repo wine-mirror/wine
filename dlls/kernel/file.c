@@ -141,7 +141,7 @@ BOOL WINAPI CancelIo(HANDLE handle)
         if ( ovp->handle == handle )
              cancel_async ( ovp );
     }
-    WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
+    SleepEx(1,TRUE);
     return TRUE;
 }
 
