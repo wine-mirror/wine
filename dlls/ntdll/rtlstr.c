@@ -4,10 +4,14 @@
  *	Copyright 1996-1998 Marcus Meissner
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <wctype.h>
+#ifdef HAVE_WCTYPE_H
+# include <wctype.h>
+#endif
 #include "wine/winestring.h"
 #include "heap.h"
 #include "winnls.h"
