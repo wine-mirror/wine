@@ -353,8 +353,12 @@ HFONT WINAPI CreateFontIndirectA( const LOGFONTA *font )
 {
     LOGFONT16 font16;
 
-    FONT_LogFont32ATo16( font, &font16 );
-    return CreateFontIndirect16( &font16 );
+    if (font) {
+	FONT_LogFont32ATo16( font, &font16 );
+	return CreateFontIndirect16( &font16 );
+     } else
+	return CreateFontIndirect16( NULL );
+
 }
 
 /***********************************************************************
@@ -364,8 +368,11 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *font )
 {
     LOGFONT16 font16;
 
-    FONT_LogFont32WTo16( font, &font16 );
-    return CreateFontIndirect16( &font16 );
+    if (font) {
+	FONT_LogFont32WTo16( font, &font16 );
+	return CreateFontIndirect16( &font16 );
+    } else
+	return CreateFontIndirect16( NULL );
 }
 
 /***********************************************************************
