@@ -1758,7 +1758,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	    case VT_BSTR: case VT_ERROR: case VT_BOOL:
 	    case VT_VARIANT: case VT_DECIMAL: case VT_I1: case VT_UI1:
 	    case VT_UI2: case VT_UI4: case VT_I8: case VT_UI8: case VT_INT:
-	    case VT_UINT: case VT_VOID: case VT_HRESULT: case VT_PTR:
+           case VT_UINT: case VT_VOID: case VT_HRESULT:
 	    case VT_SAFEARRAY: case VT_CARRAY: case VT_USERDEFINED:
 	    case VT_LPSTR: case VT_LPWSTR: case VT_RECORD: case VT_FILETIME:
 	    case VT_BLOB: case VT_STREAM: case VT_STORAGE:
@@ -1766,6 +1766,9 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	    case VT_CF: case VT_CLSID:
 		res = DISP_E_TYPEMISMATCH;
 		break;
+           case VT_PTR:
+               V_UNION(pd,pdispVal) = V_UNION(ps,pdispVal);
+               break;
 	    default:
 		FIXME("Coercion from %d to VT_DISPATCH unhandled.\n", vtFrom);
 		res = DISP_E_BADVARTYPE;
