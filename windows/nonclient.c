@@ -1754,12 +1754,11 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  */
 LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
 {
-    WORD wStateChange;
-
-    if( wParam ) wStateChange = !(wndPtr->flags & WIN_NCACTIVATED);
-    else wStateChange = wndPtr->flags & WIN_NCACTIVATED;
-
-    if( wStateChange )
+    /* Lotus Notes draws menu descriptions in the caption of its main
+     * window. When it wants to restore original "system" view, it just
+     * sends WM_NCACTIVATE message to itself. Any optimizations here in
+     * attempt to minimize redrawings lead to a not restored caption.
+     */
     {
 	if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
 	else wndPtr->flags &= ~WIN_NCACTIVATED;
