@@ -18,46 +18,47 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !!
-   Must be rewritten for use of NLS */
-
-#define LANGUAGE_ID                  Sk
-#define LANGUAGE_NUMBER              10
-
-/* Menu */
-
-#define MENU_FILE                    "&S˙bor"
-#define MENU_FILE_OPEN               "&Otvoriù..."
-#define MENU_FILE_PRINT              "&TlaËiù"
-#define MENU_FILE_PRINTER_SETUP      "&Nastavenie tlaËe..."
-#define MENU_FILE_EXIT               "U&konËiù"
-
-#define MENU_EDIT                    "&Upraviù"
-#define MENU_EDIT_COPY_DIALOG        "KopÌ&rovaù..."
-#define MENU_EDIT_ANNOTATE           "&Skomentovaù..."
-
-#define MENU_BOOKMARK                "&Z·loûka"
-#define MENU_BOOKMARK_DEFINE         "&Definovaù..."
-
-#define MENU_HELP                    "&Pomoc"
-#define MENU_HELP_ON_HELP            "Pomoc &na pomoci"
-#define MENU_HELP_ON_TOP             "Vûdy na &vrchu"
-#define MENU_HELP_INFO               "&Info..."
-#define MENU_HELP_ABOUT_WINE         "O& WINE"
+MAIN_MENU MENU LANGUAGE LANG_SLOVAK, SUBLANG_DEFAULT
+{
+ POPUP "&S˙bor" {
+   MENUITEM "&Otvoriù...", 0x101
+   MENUITEM SEPARATOR
+   MENUITEM "&TlaËiù", 0x104
+   MENUITEM "&Nastavenie tlaËe...", 0x106
+   MENUITEM "U&konËiù", 0x108
+ }
+ POPUP "&Upraviù" {
+   MENUITEM "KopÌ&rovaù...", 0x10a
+   MENUITEM SEPARATOR
+   MENUITEM "&Skomentovaù...", 0x10c
+ }
+ POPUP "&Z·loûka" {
+   MENUITEM "&Definovaù...", 0x10e
+ }
+ POPUP "&Pomoc" {
+   MENUITEM "Pomoc &na pomoci", 0x110
+   MENUITEM "Vûdy na &vrchu", 0x111
+   MENUITEM SEPARATOR
+   MENUITEM "&Info...", 0x113
+#ifdef WINELIB
+   MENUITEM "O& WINE", 0x114
+#endif
+ }
+}
 
 /* Strings */
-
-#define STRING_WINE_HELP             "WINE Pomoc"
-#define STRING_ERROR                 "CHYBA"
-#define STRING_WARNING               "VAROVANIE"
-#define STRING_INFO                  "Inform·cie"
-#define STRING_NOT_IMPLEMENTED       "NeimplementovanÈ"
-#define STRING_HLPFILE_ERROR_s       "Chyba poËas ËÌtania s˙boru `%s'"
-#define STRING_CONTENTS              "&Obsah"
-#define STRING_SEARCH                "&Hæadaù"
-#define STRING_BACK                  "&Sp‰ù"
-#define STRING_HISTORY               "&HistÛria"
-#define STRING_ALL_FILES             "Vöetky s˙bory (*.*)"
-#define STRING_HELP_FILES_HLP        "S˙bory pomoci (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVAK, SUBLANG_DEFAULT
+{
+WINE_HELP,             "WINE Pomoc"
+WHERROR,               "CHYBA"
+WARNING,               "VAROVANIE"
+INFO,                  "Inform·cie"
+NOT_IMPLEMENTED,       "NeimplementovanÈ"
+HLPFILE_ERROR_s,       "Chyba poËas ËÌtania s˙boru `%s'"
+CONTENTS,              "&Obsah"
+SEARCH,                "&Hæadaù"
+BACK,                  "&Sp‰ù"
+HISTORY,               "&HistÛria"
+ALL_FILES,             "Vöetky s˙bory (*.*)"
+HELP_FILES_HLP,        "S˙bory pomoci (*.hlp)"
+}
