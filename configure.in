@@ -214,23 +214,41 @@ fi
 dnl **** Check for working dll ****
 
 DLLFLAGS=""
+LDSHARED=""
 if test "$LIB_TARGET" = "libwine.so.1.0"
 then
-  AC_CACHE_CHECK("whether we can build a dll",
-                 ac_cv_c_dll,
+  AC_CACHE_CHECK("whether we can build a Linux dll",
+                 ac_cv_c_dll_linux,
   [saved_cflags=$CFLAGS
   CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0"
-  AC_TRY_LINK(,[return 1],ac_cv_c_dll="yes",ac_cv_c_dll="no")
+  AC_TRY_LINK(,[return 1],ac_cv_c_dll_linux="yes",ac_cv_c_dll_linux="no")
   CFLAGS=$saved_cflags
   ])
-  if test "$ac_cv_c_dll" = "yes"
+  if test "$ac_cv_c_dll_linux" = "yes"
   then
     DLLFLAGS="-fPIC"
+    LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so"
   else
+    AC_CACHE_CHECK("whether we can build a NetBSD dll",
+                   ac_cv_c_dll_netbsd,
+    [saved_cflags=$CFLAGS
+    CFLAGS="$CFLAGS -fPIC -Bshareable -Bforcearchive"
+    AC_TRY_LINK(,[return 1],ac_cv_c_dll_netbsd="yes",ac_cv_c_dll_netbsd="no")
+    CFLAGS=$saved_cflags
+    ])
+    if test "$ac_cv_c_dll_netbsd" = "yes"
+    then
+      DLLFLAGS="-fPIC"
+      LDSHARED="ld -Bshareable -Bforcearchive"
+    fi
+  fi
+  if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
+  then
     LIB_TARGET="libwine.a"
   fi
 fi
 AC_SUBST(DLLFLAGS)
+AC_SUBST(LDSHARED)
 
 dnl **** Check for reentrant libc ****
 dnl

@@ -163,7 +163,7 @@ libwine.a: $(LIBOBJS) $(X11OBJS)
 	$(RANLIB) $@
 
 libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
-	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
+	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
 
 install_emu: install_lib
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)

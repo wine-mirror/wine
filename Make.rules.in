@@ -33,6 +33,7 @@ LN_S      = @LN_S@
 DIVINCL   = -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include -I$(SRCDIR) -I.
 ALLCFLAGS = $(CFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL) $(X_CFLAGS)
 LDCOMBINE = ld -r
+LDSHARED  = @LDSHARED@
 AR        = ar rc
 RM        = rm -f
 MKDIR     = mkdir -p
