@@ -1135,6 +1135,11 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
+    if ( overlapped ) {
+      SetLastError ( ERROR_INVALID_PARAMETER );
+      return FALSE;
+    }
+
     req->handle = hFile;
     server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
     if (unix_handle == -1) return FALSE;
@@ -1165,6 +1170,11 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
+
+    if ( overlapped ) {
+      SetLastError ( ERROR_INVALID_PARAMETER );
+      return FALSE;
+    }
 
     req->handle = hFile;
     server_call_fd( REQ_GET_WRITE_FD, -1, &unix_handle );
