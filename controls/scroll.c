@@ -1207,11 +1207,6 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 		infoPtr->flags = ESB_DISABLE_BOTH;
 	    }
 
-            if (lpCreat->style & SBS_SIZEBOX)
-            {
-                FIXME("Unimplemented style SBS_SIZEBOX.\n" );
-                return 0;
-            }
 	    if (lpCreat->style & SBS_VERT)
             {
                 if (lpCreat->style & SBS_LEFTALIGN)
@@ -1332,7 +1327,10 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint( hwnd, &ps );
-            SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, TRUE, TRUE );
+            if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEBOX)
+                FillRect( hdc, &ps.rcPaint, GetSysColorBrush(COLOR_SCROLLBAR) );
+            else
+                SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, TRUE, TRUE );
             EndPaint( hwnd, &ps );
         }
         break;
