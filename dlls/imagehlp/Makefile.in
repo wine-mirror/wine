@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imagehlp.dll
-IMPORTS   = kernel32
+IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	access.c \

@@ -23,6 +23,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wine/debug.h"
 #include "imagehlp.h"
@@ -107,19 +109,6 @@ DWORD WINAPI GetImageUnusedHeaderBytes(
 }
 
 /***********************************************************************
- *		ImageDirectoryEntryToData (IMAGEHLP.@)
- */
-PVOID WINAPI ImageDirectoryEntryToData(
-  PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size)
-{
-  FIXME("(%p, %d, %hd, %p): stub\n",
-    Base, MappedAsImage, DirectoryEntry, Size
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return NULL;
-}
-
-/***********************************************************************
  *		ImageLoad (IMAGEHLP.@)
  */
 PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
@@ -133,41 +122,6 @@ PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
     pLoadedImage->FileHeader = HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(IMAGE_NT_HEADERS));
   
   return pLoadedImage;
-}
-
-/***********************************************************************
- *		ImageNtHeader (IMAGEHLP.@)
- */
-PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base)
-{
-  TRACE("(%p)\n", Base);
-  return (PIMAGE_NT_HEADERS)
-    ((LPBYTE) Base + ((PIMAGE_DOS_HEADER) Base)->e_lfanew);
-}
-
-/***********************************************************************
- *		ImageRvaToSection (IMAGEHLP.@)
- */
-PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(
-  PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva)
-{
-  FIXME("(%p, %p, %ld): stub\n", NtHeaders, Base, Rva);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return NULL;
-}
-
-/***********************************************************************
- *		ImageRvaToVa (IMAGEHLP.@)
- */
-PVOID WINAPI ImageRvaToVa(
-  PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva,
-  PIMAGE_SECTION_HEADER *LastRvaSection)
-{
-  FIXME("(%p, %p, %ld, %p): stub\n",
-    NtHeaders, Base, Rva, LastRvaSection
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return NULL;
 }
 
 /***********************************************************************
@@ -268,7 +222,7 @@ BOOL WINAPI MapAndLoad(
     IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE)
   );
 
-  pNtHeader = ImageNtHeader((PVOID) hModule);
+  pNtHeader = RtlImageNtHeader(hModule);
 
   pLoadedImage->ModuleName = HeapAlloc(IMAGEHLP_hHeap, 0, strlen(pszDllPath)+1); /* FIXME: Correct? */
   strcpy( pLoadedImage->ModuleName, pszDllPath );

@@ -8,16 +8,16 @@
 @ stdcall GetImageUnusedHeaderBytes(ptr ptr)
 @ stdcall GetTimestampForLoadedLibrary(long)
 @ stdcall ImageAddCertificate(long ptr ptr)
-@ stdcall ImageDirectoryEntryToData(ptr long long ptr)
+@ stdcall ImageDirectoryEntryToData(ptr long long ptr) ntdll.RtlImageDirectoryEntryToData
 @ stdcall ImageEnumerateCertificates(long long ptr ptr long)
 @ stdcall ImageGetCertificateData(long long ptr ptr)
 @ stdcall ImageGetCertificateHeader(long long ptr)
 @ stdcall ImageGetDigestStream(long long ptr long)
 @ stdcall ImageLoad(str str)
-@ stdcall ImageNtHeader(ptr)
+@ stdcall ImageNtHeader(ptr) ntdll.RtlImageNtHeader
 @ stdcall ImageRemoveCertificate(long long)
-@ stdcall ImageRvaToSection(ptr ptr long)
-@ stdcall ImageRvaToVa(ptr ptr long ptr)
+@ stdcall ImageRvaToSection(ptr ptr long) ntdll.RtlImageRvaToSection
+@ stdcall ImageRvaToVa(ptr ptr long ptr) ntdll.RtlImageRvaToVa
 @ stdcall ImageUnload(ptr)
 @ stdcall ImagehlpApiVersion()
 @ stdcall ImagehlpApiVersionEx(ptr)

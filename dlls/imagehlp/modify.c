@@ -22,6 +22,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wine/debug.h"
 #include "imagehlp.h"
@@ -101,7 +103,7 @@ PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
 				BaseAddress,
 				(FileLength + 1) / sizeof(WORD));
 
-  Header = ImageNtHeader(BaseAddress);
+  Header = RtlImageNtHeader(BaseAddress);
   HdrSum = Header->OptionalHeader.CheckSum;
 
   /* Subtract image checksum from calculated checksum. */
