@@ -226,17 +226,16 @@ static UINT msi_dialog_build_font_list( msi_dialog *dialog )
     return r;
 }
 
-static msi_control *msi_dialog_add_control( msi_dialog *dialog,
-                MSIRECORD *rec, LPCWSTR szCls, DWORD style )
+static msi_control *msi_dialog_create_window( msi_dialog *dialog,
+                MSIRECORD *rec, LPCWSTR szCls, LPCWSTR name, LPCWSTR text,
+                DWORD style, HWND parent )
 {
-    DWORD x, y, width, height, attributes;
-    LPCWSTR text, name;
+    DWORD x, y, width, height;
     LPWSTR font = NULL, title = NULL;
-    msi_control *control = NULL;
+    msi_control *control;
 
     style |= WS_CHILD | WS_GROUP;
 
-    name = MSI_RecordGetString( rec, 2 );
     control = HeapAlloc( GetProcessHeap(), 0,
                          sizeof *control + strlenW(name)*sizeof(WCHAR) );
     strcpyW( control->name, name );
@@ -249,32 +248,49 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
     y = MSI_RecordGetInteger( rec, 5 );
     width = MSI_RecordGetInteger( rec, 6 );
     height = MSI_RecordGetInteger( rec, 7 );
-    attributes = MSI_RecordGetInteger( rec, 8 );
-    text = MSI_RecordGetString( rec, 10 );
-
-    TRACE("Dialog %s control %s\n", debugstr_w(dialog->name), debugstr_w(text));
 
     x = msi_dialog_scale_unit( dialog, x );
     y = msi_dialog_scale_unit( dialog, y );
     width = msi_dialog_scale_unit( dialog, width );
     height = msi_dialog_scale_unit( dialog, height );
 
-    if( attributes & 1 )
-        style |= WS_VISIBLE;
-    if( ~attributes & 2 )
-        style |= WS_DISABLED;
     if( text )
     {
         font = msi_dialog_get_style( &text );
         deformat_string( dialog->package, text, &title );
     }
+
     control->hwnd = CreateWindowW( szCls, title, style,
-                          x, y, width, height, dialog->hwnd, NULL, NULL, NULL );
+                          x, y, width, height, parent, NULL, NULL, NULL );
+
+    TRACE("Dialog %s control %s hwnd %p\n",
+           debugstr_w(dialog->name), debugstr_w(text), control->hwnd );
+
     msi_dialog_set_font( dialog, control->hwnd,
                          font ? font : dialog->default_font );
+
     HeapFree( GetProcessHeap(), 0, font );
     HeapFree( GetProcessHeap(), 0, title );
+
     return control;
+}
+
+/* everything except radio buttons */
+static msi_control *msi_dialog_add_control( msi_dialog *dialog,
+                MSIRECORD *rec, LPCWSTR szCls, DWORD style )
+{
+    DWORD attributes;
+    LPCWSTR text, name;
+
+    name = MSI_RecordGetString( rec, 2 );
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    text = MSI_RecordGetString( rec, 10 );
+    if( attributes & 1 )
+        style |= WS_VISIBLE;
+    if( ~attributes & 2 )
+        style |= WS_DISABLED;
+    return msi_dialog_create_window( dialog, rec, szCls, name, text,
+                                     style, dialog->hwnd );
 }
 
 static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
@@ -327,7 +343,7 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     const static WCHAR szEdit[] = { 'E','D','I','T',0 };
 
-    TRACE("%p %p\n", dialog, rec);
+    FIXME("%p %p\n", dialog, rec);
 
     msi_dialog_add_control( dialog, rec, szEdit, WS_BORDER |
                  ES_MULTILINE | WS_VSCROLL | ES_READONLY | ES_AUTOVSCROLL );
@@ -377,58 +393,26 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
     return msi_dialog_edit_control( dialog, rec );
 }
 
+/* radio buttons are a bit different to a normal control */
 static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
 {
     radio_button_group_descr *group = (radio_button_group_descr *)param;
     msi_dialog *dialog = group->dialog;
     msi_control *control;
-    LPCWSTR prop;
-    DWORD x, y, width, height, style;
+    LPCWSTR prop, text, name;
+    DWORD style;
     DWORD attributes = group->attributes;
-    LPCWSTR text, name;
-    LPWSTR font = NULL, title = NULL;
 
     style = WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE;
     name = MSI_RecordGetString( rec, 3 );
-    control = HeapAlloc( GetProcessHeap(), 0,
-                         sizeof *control + strlenW(name)*sizeof(WCHAR) );
-    strcpyW( control->name, name );
-    control->next = dialog->control_list;
-    dialog->control_list = control;
-
-    x = MSI_RecordGetInteger( rec, 4 );
-    y = MSI_RecordGetInteger( rec, 5 );
-    width = MSI_RecordGetInteger( rec, 6 );
-    height = MSI_RecordGetInteger( rec, 7 );
     text = MSI_RecordGetString( rec, 8 );
-
-    x = msi_dialog_scale_unit( dialog, x );
-    y = msi_dialog_scale_unit( dialog, y );
-    width = msi_dialog_scale_unit( dialog, width );
-    height = msi_dialog_scale_unit( dialog, height );
-
     if( attributes & 1 )
         style |= WS_VISIBLE;
     if( ~attributes & 2 )
         style |= WS_DISABLED;
 
-    if( text )
-    {
-        font = msi_dialog_get_style( &text );
-        deformat_string( dialog->package, text, &title );
-    }
-
-    control->hwnd = CreateWindowW( szButton, title, style, x, y, width, height,
-        group->parent->hwnd, NULL, NULL, NULL );
-
-    TRACE("Dialog %s control %s hwnd %p\n", debugstr_w(dialog->name), debugstr_w(text), control->hwnd);
-
-    msi_dialog_set_font( dialog, control->hwnd,
-            font ? font : dialog->default_font );
-
-    HeapFree( GetProcessHeap(), 0, font );
-    HeapFree( GetProcessHeap(), 0, title );
-
+    control = msi_dialog_create_window( dialog, rec, szButton, name, text,
+                                        style, group->parent->hwnd );
     control->handler = msi_dialog_radiogroup_handler;
 
     prop = MSI_RecordGetString( rec, 1 );
