@@ -31,6 +31,7 @@ C_SRCS = \
 	file16.c \
 	format_msg.c \
 	heap.c \
+	instr.c \
 	kernel_main.c \
 	lcformat.c \
 	local16.c \
@@ -48,6 +49,7 @@ C_SRCS = \
 	stress.c \
 	string.c \
 	sync.c \
+	system.c \
 	tape.c \
 	task.c \
 	thread.c \
@@ -61,8 +63,7 @@ C_SRCS = \
 
 C_SRCS16 = \
 	error16.c \
-	registry16.c \
-	system.c
+	registry16.c
 
 ASM_SRCS = relay16asm.s
 

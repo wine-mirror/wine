@@ -170,16 +170,21 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
         NtCurrentTeb()->cur_stack = frame32->frame16;
         _LeaveWin16Lock();
     }
-    else
+    else if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+             record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
     {
         if (IS_SELECTOR_SYSTEM(context->SegCs))
         {
             if (fix_selector( context )) return ExceptionContinueExecution;
         }
-        else /* check for Win16 __GP handler */
+        else
         {
-            SEGPTR gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
-            if (gpHandler)
+            SEGPTR gpHandler;
+
+            if (!INSTR_EmulateInstruction( context )) return ExceptionContinueExecution;
+
+            /* check for Win16 __GP handler */
+            if ((gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) )))
             {
                 WORD *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
                 *--stack = context->SegCs;

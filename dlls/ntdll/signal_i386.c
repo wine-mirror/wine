@@ -407,7 +407,6 @@ typedef struct
 
 #include "wine/exception.h"
 #include "global.h"
-#include "miscemu.h"
 #include "syslevel.h"
 #include "wine/debug.h"
 
@@ -748,13 +747,6 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
 {
     EXCEPTION_RECORD rec;
-    DWORD page_fault_code = EXCEPTION_ACCESS_VIOLATION;
-
-#ifdef FAULT_ADDRESS
-    /* we want the page-fault case to be fast */
-    if (trap_code == T_PAGEFLT)
-        if (!(page_fault_code = VIRTUAL_HandleFault( cr2 ))) return;
-#endif
 
     rec.ExceptionRecord  = NULL;
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
@@ -778,15 +770,17 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
     case T_SEGNPFLT:  /* Segment not present exception */
     case T_PROTFLT:   /* General protection fault */
     case T_UNKNOWN:   /* Unknown fault code */
-        if (!(rec.ExceptionCode = INSTR_EmulateInstruction( context ))) return;
+        rec.ExceptionCode = err_code ? EXCEPTION_ACCESS_VIOLATION : EXCEPTION_PRIV_INSTRUCTION;
         break;
     case T_PAGEFLT:  /* Page fault */
 #ifdef FAULT_ADDRESS
+        if (!(rec.ExceptionCode = VIRTUAL_HandleFault( cr2 ))) return;
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (err_code & 2) != 0;
         rec.ExceptionInformation[1] = (DWORD)cr2;
+#else
+        rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 #endif
-        rec.ExceptionCode = page_fault_code;
         break;
     case T_ALIGNFLT:  /* Alignment check exception */
         /* FIXME: pass through exception handler first? */

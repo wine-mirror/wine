@@ -21,7 +21,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/memory/environ.c \
 	$(TOPOBJDIR)/memory/global.c \
 	$(TOPOBJDIR)/memory/heap.c \
-	$(TOPOBJDIR)/memory/instr.c \
 	$(TOPOBJDIR)/memory/selector.c \
 	$(TOPOBJDIR)/memory/string.c \
 	$(TOPOBJDIR)/memory/virtual.c \

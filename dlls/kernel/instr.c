@@ -67,19 +67,6 @@ inline static void *get_stack( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           timer_thread
- */
-static DWORD CALLBACK timer_thread( void *dummy )
-{
-    for (;;)
-    {
-        Sleep(55);
-        DOSMEM_Tick( 0 );
-    }
-    return 0; /* unreached */
-}
-
-/***********************************************************************
  *           INSTR_ReplaceSelector
  *
  * Try to replace an invalid selector by a valid one.
@@ -94,13 +81,9 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 {
     if (*sel == 0x40)
     {
-#if 0  /* hack until this is moved to kernel */
         static WORD sys_timer = 0;
         if (!sys_timer)
             sys_timer = CreateSystemTimer( 55, DOSMEM_Tick );
-#endif
-        static HANDLE sys_thread;
-        if (!sys_thread) sys_thread = CreateThread( NULL, 0, timer_thread, NULL, 0, NULL );
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }
@@ -502,7 +485,8 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             switch(instr[1])
             {
 	    case 0x22: /* mov eax, crX */
-	    	switch (instr[2]) {
+                switch (instr[2])
+                {
 		case 0xc0:
 			ERR("mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
                             context->Eip,context->Eax );
@@ -513,7 +497,8 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
 		}
 		break; /*fallthrough to bad instruction handling */
 	    case 0x20: /* mov crX, eax */
-	        switch (instr[2]) {
+                switch (instr[2])
+                {
 		case 0xe0: /* mov cr4, eax */
 		    /* CR4 register . See linux/arch/i386/mm/init.c, X86_CR4_ defs
 		     * bit 0: VME	Virtual Mode Exception ?
@@ -699,13 +684,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
-            if (IS_SELECTOR_SYSTEM(context->SegCs))
-            {
-                /* Win32 applications cannot use interrupts */
-                ret = EXCEPTION_ACCESS_VIOLATION;
-                break;
-            }
-            else if (!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
+            if (!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
             {
                 ERR("could not initialize interrupt handling\n");
             }
