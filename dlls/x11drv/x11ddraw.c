@@ -159,12 +159,14 @@ static DWORD PASCAL X11DRV_DDHAL_DestroySurface(LPDDHAL_DESTROYSURFACEDATA data)
 
 static DWORD PASCAL X11DRV_DDHAL_SetPalette(LPDDHAL_SETPALETTEDATA data)
 {
-  Colormap pal = data->lpDDPalette->u1.dwReserved1;
-  if (pal) {
+  if (data->lpDDPalette && data->lpDDPalette->u1.dwReserved1) {
     if (data->lpDDSurface == X11DRV_DD_Primary) {
       FIXME("stub\n");
       /* we should probably find the ddraw window (maybe data->lpDD->lpExclusiveOwner->hWnd),
-       * and attach the palette to it */
+       * and attach the palette to it
+       *
+       * Colormap pal = data->lpDDPalette->u1.dwReserved1;
+       */
     }
   }
   data->ddRVal = DD_OK;

@@ -223,7 +223,7 @@ void HAL_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
     DIB_DirectDrawSurface_set_palette(This, pal);
     data.lpDD = dd_gbl;
     data.lpDDSurface = &This->local;
-    data.lpDDPalette = &pal->global;
+    data.lpDDPalette = (pal != NULL ? &pal->global : NULL);
     data.ddRVal = 0;
     data.Attach = TRUE; /* what's this? */
     data.SetPalette = dd_gbl->lpDDCBtmp->HALDDSurface.SetPalette;
