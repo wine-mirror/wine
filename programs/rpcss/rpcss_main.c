@@ -58,6 +58,8 @@
 #include <limits.h>
 #include <assert.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "rpcss.h"
 #include "winnt.h"
 

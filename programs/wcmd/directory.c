@@ -25,6 +25,8 @@
  * environment-variable and batch parameter substitution already done.
  */
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wcmd.h"
 
 int WCMD_dir_sort (const void *a, const void *b);

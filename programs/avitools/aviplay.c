@@ -35,6 +35,9 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windows.h"
 #include "wingdi.h"
 #include "mmsystem.h"
