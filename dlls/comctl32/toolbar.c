@@ -1900,8 +1900,26 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpTbb == NULL)
 	return FALSE;
-    if (nIndex < 0)
-	return FALSE;
+
+    if (nIndex == -1) {
+       /* EPP: this seems to be an undocumented call (from my IE4)
+	* I assume in that case that:
+	* - lpTbb->iString is a string pointer (not a string index in strings[] table
+	* - index of insertion is at the end of existing buttons
+	* I only see this happen with nIndex == -1, but it could have a special
+	* meaning (like -nIndex (or ~nIndex) to get the real position of insertion).
+	*/
+       int	len = lstrlenA((char*)lpTbb->iString) + 2;
+       LPSTR	ptr = COMCTL32_Alloc(len);
+
+       nIndex = infoPtr->nNumButtons;
+       strcpy(ptr, (char*)lpTbb->iString);
+       ptr[len - 1] = 0; /* ended by two '\0' */
+       lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
+       COMCTL32_Free(ptr);
+
+    } else if (nIndex < 0)
+       return FALSE;
 
     TRACE("inserting button index=%d\n", nIndex);
     if (nIndex > infoPtr->nNumButtons) {
@@ -2162,6 +2180,7 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lptbbi->dwMask & TBIF_TEXT) {
 	if ((btnPtr->iString >= 0) || 
 	    (btnPtr->iString < infoPtr->nNumStrings)) {
+	   TRACE("Ooooooch\n");
 #if 0
 	    CHAR **lpString = &infoPtr->strings[btnPtr->iString];
 	    INT len = lstrlenA (lptbbi->pszText);
@@ -2669,7 +2688,6 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-
 static LRESULT
 TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -2724,10 +2742,32 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
 	ReleaseDC (hwnd, hdc);
 
-	if (bSendMessage)
-	    SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
+	if (bSendMessage) {
+	    SendMessageA (GetParent(hwnd), WM_COMMAND,
 			  MAKEWPARAM(btnPtr->idCommand, 0), (LPARAM)hwnd);
 
+	    if ((GetWindowLongA(hwnd, GWL_STYLE) & TBSTYLE_DROPDOWN) ||
+		(btnPtr->fsStyle & 0x08/* BTNS_DROPDOWN */)) {
+	       NMTOOLBARW	nmtb;
+
+	       nmtb.hdr.hwndFrom = hwnd;
+	       nmtb.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+	       nmtb.hdr.code     = TBN_DROPDOWN;
+	       nmtb.iItem        = nHit;
+	       /* nmtb.tbButton not used with TBN_DROPDOWN */
+	       if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings)) {
+		  nmtb.pszText      = infoPtr->strings[btnPtr->iString];
+		  nmtb.cchText      = lstrlenW(nmtb.pszText);
+	       } else {
+		  nmtb.pszText      = NULL;
+		  nmtb.cchText      = 0;
+	       }
+	       nmtb.rcButton     = btnPtr->rect;
+
+	       SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
+			    (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
+	    }
+	}
 	infoPtr->nButtonDown = -1;
 	infoPtr->nOldHit = -1;
     }

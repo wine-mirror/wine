@@ -941,6 +941,14 @@ typedef struct _TBBUTTON {
 } TBBUTTON, *PTBBUTTON, *LPTBBUTTON;
 typedef const TBBUTTON *LPCTBBUTTON;
 
+typedef struct tagNMTOOLBAR {
+        NMHDR           hdr;
+        int             iItem;
+        TBBUTTON        tbButton;
+        int             cchText;
+        LPWSTR          pszText;
+        RECT            rcButton; /*Version 5.80*/
+} NMTOOLBARW, * LPNMTOOLBARW;
 
 typedef struct _COLORMAP {
     COLORREF from;
