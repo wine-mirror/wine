@@ -78,8 +78,6 @@ static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 static void GrabPointer(BOOL grab)
 {
-  WND*    pWnd;
-
   if(grab) { 
     Window window = X11DRV_get_whole_window(GetFocus()); 
     if(window)
@@ -89,27 +87,16 @@ static void GrabPointer(BOOL grab)
   if(!X11DRV_DD_GrabMessage)
     X11DRV_DD_GrabMessage = RegisterWindowMessageA("WINE_X11DRV_GRABPOINTER");
 
-  pWnd = WIN_FindWndPtr(X11DRV_DD_PrimaryWnd);
-  if(!pWnd)
-    return;
-
-  X11DRV_DD_GrabOldProcedure = pWnd->winproc;
-  pWnd->winproc = GrabWndProc;
-
-  WIN_ReleaseWndPtr(pWnd);
+  /* FIXME: Replace with SetWindowLongPtrA when available */
+  X11DRV_DD_GrabOldProcedure = (WNDPROC)SetWindowLongA(X11DRV_DD_PrimaryWnd,
+                                                       GWL_WNDPROC, (LONG)GrabWndProc);
 
   SendMessageA(X11DRV_DD_PrimaryWnd, X11DRV_DD_GrabMessage, grab ? 1 : 0, 0);
 
-  pWnd = WIN_FindWndPtr(X11DRV_DD_PrimaryWnd); 
-  if(!pWnd)
-    return;
-
-  if(pWnd->winproc != GrabWndProc)
+  /* FIXME: Replace with SetWindowLongPtrA when available */
+  if(SetWindowLongA(X11DRV_DD_PrimaryWnd, GWL_WNDPROC,
+                    (LONG)X11DRV_DD_GrabOldProcedure) != (LONG)GrabWndProc)
     ERR("Window procedure has been changed!\n");
-  else
-    pWnd->winproc = X11DRV_DD_GrabOldProcedure;
-  
-  WIN_ReleaseWndPtr(pWnd); 
 }
 
 static DWORD PASCAL X11DRV_DDHAL_DestroyDriver(LPDDHAL_DESTROYDRIVERDATA data)
