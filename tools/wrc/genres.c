@@ -257,7 +257,7 @@ void string_to_upper(string_t *str)
  * Remarks	:
  *****************************************************************************
 */
-void put_string(res_t *res, string_t *str, enum str_e type, int isterm)
+static void put_string(res_t *res, string_t *str, enum str_e type, int isterm)
 {
 	int cnt;
 	int c = !0;
@@ -269,6 +269,7 @@ void put_string(res_t *res, string_t *str, enum str_e type, int isterm)
 		return;
 	}
 
+	str = convert_string(str, type);
 	if(str->type == str_unicode && type == str_unicode)
 	{
 		for(cnt = 0; cnt < str->size; cnt++)
@@ -317,6 +318,7 @@ void put_string(res_t *res, string_t *str, enum str_e type, int isterm)
 		if(isterm && (str->size == 0 || (cnt == str->size && c)))
 			put_word(res, 0);
 	}
+	free(str);
 }
 
 /*
@@ -375,6 +377,12 @@ void put_lvc(res_t *res, lvc_t *lvc)
 		put_dword(res, *(lvc->characts));
 	else
 		put_dword(res, 0);
+	if(lvc && lvc->language)
+	    set_language( lvc->language->id, lvc->language->sub );
+	else if (currentlanguage)
+	    set_language( currentlanguage->id, currentlanguage->sub );
+	else
+	    set_language( LANG_NEUTRAL, SUBLANG_NEUTRAL );
 }
 
 /*
@@ -1418,11 +1426,13 @@ static res_t *stringtable2res(stringtable_t *stt)
 		{
 			if(stt->entries[i].str && stt->entries[i].str->size)
 			{
-				if(win32)
-					put_word(res, stt->entries[i].str->size);
+				string_t *str = convert_string(stt->entries[i].str, win32 ? str_unicode : str_char);
+			        if(win32)
+					put_word(res, str->size);
 				else
-					put_byte(res, stt->entries[i].str->size);
-				put_string(res, stt->entries[i].str, win32 ? str_unicode : str_char, FALSE);
+					put_byte(res, str->size);
+				put_string(res, str, win32 ? str_unicode : str_char, FALSE);
+				free(str);
 			}
 			else
 			{

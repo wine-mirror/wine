@@ -7,6 +7,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -14,6 +15,7 @@
 #include <assert.h>
 #include <ctype.h>
 
+#include "wine/unicode.h"
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"
@@ -21,6 +23,7 @@
 
 /* #define WANT_NEAR_INDICATION */
 
+static const union cptable *current_codepage;
 
 #ifdef WANT_NEAR_INDICATION
 void make_print(char *str)
@@ -208,71 +211,29 @@ char *xstrdup(const char *str)
 	return strcpy(s, str);
 }
 
-int string_compare(const string_t *s1, const string_t *s2)
-{
-	if(s1->type == str_char && s2->type == str_char)
-	{
-		return strcasecmp(s1->str.cstr, s2->str.cstr);
-	}
-	else
-	{
-		internal_error(__FILE__, __LINE__, "Cannot yet compare unicode strings");
-	}
-	return 0;
-}
-
-int wstrlen(const short *s)
-{
-	int cnt = 0;
-	while(*s++)
-		cnt++;
-	return cnt;
-}
-
-short *wstrcpy(short *dst, const short *src)
-{
-	short *d = dst;
-	while(*src)
-		*d++ = *src++;
-	return dst;
-}
-
-int wstricmp(const short *s1, const short *s2)
-{
-	char *cs1 = dupwstr2cstr(s1);
-	char *cs2 = dupwstr2cstr(s2);
-	int retval = strcasecmp(cs1, cs2);
-	free(cs1);
-	free(cs2);
-	warning("Comparing unicode strings without case -> converting to ascii");
-	return retval;;
-}
-
 short *dupcstr2wstr(const char *str)
 {
-	int len = strlen(str) + 1;
-	short *ws = (short *)xmalloc(len*2);
-	short *wptr;
+	int len;
+	WCHAR *ws;
 
-	wptr = ws;
-	/* FIXME: codepage translation */
-	while(*str)
-		*wptr++ = (short)(*str++ & 0xff);
-	*wptr = 0;
+	if (!current_codepage) set_language( LANG_NEUTRAL, SUBLANG_NEUTRAL );
+	len = cp_mbstowcs( current_codepage, 0, str, strlen(str), NULL, 0 );
+	ws = xmalloc( sizeof(WCHAR) * (len + 1) );
+	len = cp_mbstowcs( current_codepage, 0, str, strlen(str), ws, len );
+	ws[len] = 0;
 	return ws;
 }
 
 char *dupwstr2cstr(const short *str)
 {
-	int len = wstrlen(str) + 1;
-	char *cs = (char *)xmalloc(len);
-	char *cptr;
+	int len;
+	char *cs;
 
-	cptr = cs;
-	/* FIXME: codepage translation */
-	while(*str)
-		*cptr++ = (char)*str++;
-	*cptr = 0;
+	if (!current_codepage) set_language( LANG_NEUTRAL, SUBLANG_NEUTRAL );
+	len = cp_wcstombs( current_codepage, 0, str, strlenW(str), NULL, 0, NULL, NULL );
+	cs = xmalloc( len + 1 );
+	len = cp_wcstombs( current_codepage, 0, str, strlenW(str),  cs, len, NULL, NULL );
+	cs[len] = 0;
 	return cs;
 }
 
@@ -302,7 +263,7 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
 		else if(n1->name.s_name->type == str_unicode
 		&& n2->name.s_name->type == str_unicode)
 		{
-			return wstricmp(n1->name.s_name->str.wstr, n2->name.s_name->str.wstr);
+			return strcmpiW(n1->name.s_name->str.wstr, n2->name.s_name->str.wstr);
 		}
 		else
 		{
@@ -320,3 +281,124 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
 	return 0; /* Keep the compiler happy */
 }
 
+string_t *convert_string(const string_t *str, enum str_e type)
+{
+        string_t *ret = xmalloc(sizeof(*ret));
+
+        if((str->type == str_char) && (type == str_unicode))
+	{
+		ret->str.wstr = dupcstr2wstr(str->str.cstr);
+		ret->type     = str_unicode;
+		ret->size     = strlenW(ret->str.wstr);
+	}
+	else if((str->type == str_unicode) && (type == str_char))
+	{
+	        ret->str.cstr = dupwstr2cstr(str->str.wstr);
+	        ret->type     = str_char;
+	        ret->size     = strlen(ret->str.cstr);
+	}
+	else if(str->type == str_unicode)
+        {
+	        ret->type     = str_unicode;
+		ret->size     = strlenW(str->str.wstr);
+		ret->str.wstr = xmalloc(sizeof(WCHAR)*(ret->size+1));
+		strcpyW(ret->str.wstr, str->str.wstr);
+	}  
+	else /* str->type == str_char */
+        {
+	        ret->type     = str_char;
+		ret->size     = strlen(str->str.cstr);
+		ret->str.cstr = xmalloc( ret->size + 1 );
+		strcpy(ret->str.cstr, str->str.cstr);
+        }
+	return ret;
+}
+
+
+struct lang2cp
+{
+    unsigned short lang;
+    unsigned short sublang;
+    unsigned int   cp;
+} lang2cp_t;
+
+/* language to codepage conversion table */
+/* specific sublanguages need only be specified if their codepage */
+/* differs from the default (SUBLANG_NEUTRAL) */
+static const struct lang2cp lang2cps[] =
+{
+    /* default code page (LANG_NEUTRAL) must be first entry */
+    { LANG_NEUTRAL,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_AFRIKAANS,      SUBLANG_NEUTRAL,              1252 },
+    { LANG_ALBANIAN,       SUBLANG_NEUTRAL,              1250 },
+    { LANG_BASQUE,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_BRETON,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_BULGARIAN,      SUBLANG_NEUTRAL,              1251 },
+    { LANG_BYELORUSSIAN,   SUBLANG_NEUTRAL,              1251 },
+    { LANG_CATALAN,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_CORNISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_CZECH,          SUBLANG_NEUTRAL,              1250 },
+    { LANG_DANISH,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_DUTCH,          SUBLANG_NEUTRAL,              1252 },
+    { LANG_ENGLISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_ESPERANTO,      SUBLANG_NEUTRAL,              1252 },
+    { LANG_ESTONIAN,       SUBLANG_NEUTRAL,              1257 },
+    { LANG_FINNISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_FRENCH,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_GAELIC,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_GERMAN,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_GREEK,          SUBLANG_NEUTRAL,              1253 },
+    { LANG_HUNGARIAN,      SUBLANG_NEUTRAL,              1250 },
+    { LANG_ICELANDIC,      SUBLANG_NEUTRAL,              1252 },
+    { LANG_INDONESIAN,     SUBLANG_NEUTRAL,              1252 },
+    { LANG_ITALIAN,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_JAPANESE,       SUBLANG_NEUTRAL,              932  },
+    { LANG_KOREAN,         SUBLANG_NEUTRAL,              949  },
+    { LANG_LATVIAN,        SUBLANG_NEUTRAL,              1257 },
+    { LANG_LITHUANIAN,     SUBLANG_NEUTRAL,              1257 },
+    { LANG_MACEDONIAN,     SUBLANG_NEUTRAL,              1251 },
+    { LANG_NORWEGIAN,      SUBLANG_NEUTRAL,              1252 },
+    { LANG_POLISH,         SUBLANG_NEUTRAL,              1250 },
+    { LANG_PORTUGUESE,     SUBLANG_NEUTRAL,              1252 },
+    { LANG_ROMANIAN,       SUBLANG_NEUTRAL,              1250 },
+    { LANG_RUSSIAN,        SUBLANG_NEUTRAL,              1251 },
+    { LANG_SERBO_CROATIAN, SUBLANG_NEUTRAL,              1250 },
+    { LANG_SERBO_CROATIAN, SUBLANG_SERBIAN_LATIN,        1251 },
+    { LANG_SLOVAK,         SUBLANG_NEUTRAL,              1250 },
+    { LANG_SLOVENIAN,      SUBLANG_NEUTRAL,              1250 },
+    { LANG_SPANISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_SWEDISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_THAI,           SUBLANG_NEUTRAL,              874  },
+    { LANG_TURKISH,        SUBLANG_NEUTRAL,              1254 },
+    { LANG_UKRAINIAN,      SUBLANG_NEUTRAL,              1251 },
+    { LANG_WALON,          SUBLANG_NEUTRAL,              1252 },
+    { LANG_WELSH,          SUBLANG_NEUTRAL,              1252 }
+};
+
+void set_language( unsigned short lang, unsigned short sublang )
+{
+    int i;
+    unsigned int cp = 0, defcp = 0;
+
+    for (i = 0; i < sizeof(lang2cps)/sizeof(lang2cps[0]); i++)
+    {
+        if (lang2cps[i].lang != lang) continue;
+        if (lang2cps[i].sublang == sublang)
+        {
+            cp = lang2cps[i].cp;
+            break;
+        }
+        if (lang2cps[i].sublang == SUBLANG_NEUTRAL) defcp = lang2cps[i].cp;
+    }
+
+    if (!cp) cp = defcp;
+    if (!cp) error( "No codepage value for language %04x", MAKELANGID(lang,sublang) );
+    else
+    {
+        if ((current_codepage = cp_get_table( cp ))) return;
+        error( "Bad codepage %d for language %04x", cp, MAKELANGID(lang,sublang) );
+    }
+    /* now find a default code page */
+    current_codepage = cp_get_table( lang2cps[0].cp );
+    assert( current_codepage );
+}

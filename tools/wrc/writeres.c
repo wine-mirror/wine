@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "wine/unicode.h"
 #include "wrc.h"
 #include "writeres.h"
 #include "genres.h"
@@ -261,7 +262,7 @@ static void write_name_str(FILE *fp, name_id_t *nid)
 	}
 	else  if(win32 && nid->name.s_name->type == str_unicode)
 	{
-		res.size = wstrlen(nid->name.s_name->str.wstr);
+		res.size = strlenW(nid->name.s_name->str.wstr);
 		if(res.size > 65534)
 			error("Can't write strings larger than 65534 bytes");
 		if(res.size == 0)
@@ -269,7 +270,7 @@ static void write_name_str(FILE *fp, name_id_t *nid)
 		res.dataidx = 0;
 		res.data = (char *)xmalloc((res.size + 1) * 2);
 		((short *)res.data)[0] = (short)res.size;
-		wstrcpy((short *)(res.data+2), nid->name.s_name->str.wstr);
+		strcpyW((WCHAR *)(res.data+2), nid->name.s_name->str.wstr);
 		res.size *= 2; /* Function writes bytes, not shorts... */
 		res.size += 2; /* We need to write the length word as well */
 		write_s_res(fp, &res);
