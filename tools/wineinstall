@@ -118,7 +118,7 @@ WINECONF=tools/wineconf       # the path of wineconf perl script
 WINEINI=$exdir/config         # the path of default wine config file (also used by wineconf)
 WININI=/dev/null              # the path of default win.ini
 SYSTEMINI=$exdir/system.ini   # the path of default system.ini
-REGEDIT=programs/regedit/regedit # the path of regedit winelib application
+REGEDIT=$bindir/regedit       # the path of regedit winelib application
 DEFREG=winedefault.reg        # the path of the registry file to be fed to regedit
 # CROOT=/var/wine             # the path of the fake Drive C (asks user if not set)
 DEFCAT=cat                    # program to cat $DEFREG with (some packages need zcat)
@@ -187,8 +187,7 @@ function create_windows_directories {
 # - name of the installed winelib application
 # - full path to application in the winelib directory
 function link_app {
-  ln -sf $bindir/$1 $2
-  ln -sf $bindir/$1.so $2.so
+  ln -sf $libdir/wine/$1.exe.so $2
 }
 
 #puts windows applications replacements to windows directories,
