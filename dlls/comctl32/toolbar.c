@@ -89,6 +89,13 @@ typedef struct
 
 typedef struct
 {
+    UINT nButtons;
+    HINSTANCE hInst;
+    UINT nID;
+} TBITMAP_INFO;
+
+typedef struct
+{
     DWORD      dwStructSize;   /* size of TBBUTTON struct */
     INT      nHeight;        /* height of the toolbar */
     INT      nWidth;         /* width of the toolbar */
@@ -104,6 +111,7 @@ typedef struct
     INT      nNumButtons;     /* number of buttons */
     INT      nNumBitmaps;     /* number of bitmaps */
     INT      nNumStrings;     /* number of strings */
+    INT      nNumBitmapInfos;
     BOOL     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
     BOOL     bCaptured;       /* mouse captured? */
     INT      nButtonDown;
@@ -139,6 +147,7 @@ typedef struct
 
     TBUTTON_INFO *buttons;      /* pointer to button array */
     LPWSTR       *strings;      /* pointer to string array */
+    TBITMAP_INFO *bitmaps;
 } TOOLBAR_INFO, *PTOOLBAR_INFO;
 
 
@@ -2200,6 +2209,26 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	DeleteObject (hbmLoad);
     }
 
+    TRACE("Number of bitmap infos: %d\n", infoPtr->nNumBitmapInfos);
+
+    if (infoPtr->nNumBitmapInfos == 0)
+    {
+        infoPtr->bitmaps = COMCTL32_Alloc(sizeof(TBITMAP_INFO));
+    }
+    else
+    {
+        TBITMAP_INFO *oldBitmaps = infoPtr->bitmaps;
+        infoPtr->bitmaps = COMCTL32_Alloc((infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
+        memcpy(&infoPtr->bitmaps[0], &oldBitmaps[0], infoPtr->nNumBitmapInfos);
+    }
+
+    infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nButtons = nButtons;
+    infoPtr->bitmaps[infoPtr->nNumBitmapInfos].hInst = lpAddBmp->hInst;
+    infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nID = lpAddBmp->nID;
+
+    infoPtr->nNumBitmapInfos++;
+    TRACE("Number of bitmap infos: %d\n", infoPtr->nNumBitmapInfos);
+
     if (nIndex != -1)
     {
        INT imagecount = ImageList_GetImageCount(infoPtr->himlDef);
@@ -3625,8 +3654,71 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_ReplaceBitmap >> */
+static LRESULT
+TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    LPTBREPLACEBITMAP lpReplace = (LPTBREPLACEBITMAP) lParam;
+    HBITMAP hBitmap;
+    int i = 0, nOldButtons = 0, pos = 0;
 
+    TRACE("hInstOld %x nIDOld %x hInstNew %x nIDNew %x nButtons %x\n",
+          lpReplace->hInstOld, lpReplace->nIDOld, lpReplace->hInstNew, lpReplace->nIDNew,
+          lpReplace->nButtons);
+
+    if (lpReplace->hInstOld == -1)
+    {
+        FIXME("changing standard bitmaps not implemented\n");
+        return FALSE;
+    }
+    else if (lpReplace->hInstOld != 0)
+    {
+        FIXME("resources not in the current module not implemented\n");
+        return FALSE;
+    }
+    else
+    {
+        hBitmap = (HBITMAP) lpReplace->nIDNew;
+    }
+
+    TRACE("To be replaced hInstOld %x nIDOld %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+    for (i = 0; i < infoPtr->nNumBitmapInfos; i++) {
+        TBITMAP_INFO *tbi = &infoPtr->bitmaps[i];
+        TRACE("tbimapinfo %d hInstOld %x nIDOld %x\n", i, tbi->hInst, tbi->nID);
+        if (tbi->hInst == lpReplace->hInstOld && tbi->nID == lpReplace->nIDOld)
+        {
+            TRACE("Found: nButtons %d hInst %x nID %x\n", tbi->nButtons, tbi->hInst, tbi->nID);
+            nOldButtons = tbi->nButtons;
+            tbi->nButtons = lpReplace->nButtons;
+            tbi->hInst = lpReplace->hInstNew;
+            tbi->nID = lpReplace->nIDNew;
+            TRACE("tbimapinfo changed %d hInstOld %x nIDOld %x\n", i, tbi->hInst, tbi->nID);
+            break;
+        }
+        pos += tbi->nButtons;
+    }
+
+    if (nOldButtons == 0)
+    {
+        WARN("No hinst/bitmap found! hInst %x nID %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+        return FALSE;
+    }
+
+    infoPtr->nNumBitmaps = infoPtr->nNumBitmaps - nOldButtons + lpReplace->nButtons;
+
+    /* ImageList_Replace(infoPtr->himlDef, pos, hBitmap, NULL); */
+
+
+    for (i = pos + nOldButtons - 1; i >= pos; i--) {
+        ImageList_Remove(infoPtr->himlDef, i);
+    }
+
+    ImageList_AddMasked(infoPtr->himlDef, hBitmap, CLR_DEFAULT);
+
+    InvalidateRect(hwnd, NULL, FALSE);
+
+    return TRUE;
+}
 
 static LRESULT
 TOOLBAR_SaveRestoreA (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -5531,7 +5623,8 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_PRESSBUTTON:
 	    return TOOLBAR_PressButton (hwnd, wParam, lParam);
 
-/*	case TB_REPLACEBITMAP: */
+	case TB_REPLACEBITMAP:
+            return TOOLBAR_ReplaceBitmap (hwnd, wParam, lParam);
 
 	case TB_SAVERESTOREA:
 	    return TOOLBAR_SaveRestoreA (hwnd, wParam, lParam);
