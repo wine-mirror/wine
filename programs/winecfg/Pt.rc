@@ -32,7 +32,6 @@ BEGIN
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    GROUPBOX        "Informação",IDC_STATIC,8,4,244,106
     CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,59
 END
@@ -44,16 +43,17 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Configurações da aplicação",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine fornece a habilidade a aplicações Windows de imitar vários estilos e versões do Windows",
+    GROUPBOX        " Configurações da aplicação ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine pode imitar vários estilos e versões do Windows para cada aplicação",
                     IDC_STATIC,15,20,227,20
-    CONTROL         "Aplicações",IDC_APP_TREEVIEW,"SysTreeView32",WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,40,142,145
-    PUSHBUTTON	    "Adiconar aplicação...",IDC_APP_ADDAPP, 163,40,82,60
-    PUSHBUTTON	    "Remover aplicação",IDC_APP_REMOVEAPP, 163,125,82,60
-    LTEXT           "Versão do Windows:",IDC_STATIC,17,192,65,8
-    LTEXT           "Versão do DOS:",IDC_STATIC,17,211,65,8
-    COMBOBOX        IDC_WINVER,108,190,138,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_DOSVER,108,208,138,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Aplicações",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,40,230,140
+    PUSHBUTTON	    "Adiconar aplicação...",IDC_APP_ADDAPP, 90,184,75,14
+    PUSHBUTTON	    "Remover aplicação",IDC_APP_REMOVEAPP, 170,184,75,14
+    LTEXT           "Versão do Windows:",IDC_STATIC,17,204,58,8
+    COMBOBOX        IDC_WINVER,83,202,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+    LTEXT           "Versão do DOS:",IDC_STATIC,17,223,57,8
+    COMBOBOX        IDC_DOSVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 

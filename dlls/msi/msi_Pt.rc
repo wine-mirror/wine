@@ -1,5 +1,7 @@
 /*
- * Copyright 2004 Mike McCormack for CodeWeavers
+ * Portuguese resources for MSI
+ *
+ * Copyright 2005 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,12 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "commctrl.h"
+LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
 
-#include "version.rc"
-
-#include "En.rc"
-#include "Pt.rc"
+STRINGTABLE DISCARDABLE
+{
+	5 "caminho %s não encontrado"
+	9 "insira disco %s"
+	10 "parâmetros inválidos"
+	11 "entre qual pasta contém %s"
+	12 "instalar fonte para característica faltando"
+	13 "drive de rede para  característica faltando"
+	14 "característica de:"
+	15 "escolha qual pasta contém %s"
+}

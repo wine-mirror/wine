@@ -28,3 +28,4 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "version.rc"
 
 #include "msi_En.rc"
+#include "msi_Pt.rc"
