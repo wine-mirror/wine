@@ -327,7 +327,6 @@ typedef struct {
 
 typedef struct {
     HDC                 hdc;
-    struct tagDC       *dc;
     PSFONT		font;		/* Current PS font */
     DOWNLOAD            *downloaded_fonts;
     PSPEN		pen;

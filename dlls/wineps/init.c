@@ -29,7 +29,6 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winreg.h"
@@ -104,7 +103,7 @@ static PSDRV_DEVMODEA DefaultDevmode =
 
 HANDLE PSDRV_Heap = 0;
 
-static HANDLE PSDRV_DefaultFont = 0;
+static HFONT PSDRV_DefaultFont = 0;
 static LOGFONTA DefaultLogFont = {
     100, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, 0, 0,
     DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
@@ -294,7 +293,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
                      LPCWSTR output, const DEVMODEW* initData )
 {
     PSDRV_PDEVICE *physDev;
@@ -327,8 +326,7 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devic
 					             sizeof(*physDev) );
     if (!physDev) return FALSE;
     *pdev = physDev;
-    physDev->hdc = dc->hSelf;
-    physDev->dc = dc;
+    physDev->hdc = hdc;
 
     physDev->pi = pi;
 
@@ -357,7 +355,7 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devic
     }
 
     PSDRV_UpdateDevCaps(physDev);
-    dc->hFont = PSDRV_DefaultFont;
+    SelectObject( hdc, PSDRV_DefaultFont );
     return TRUE;
 }
 

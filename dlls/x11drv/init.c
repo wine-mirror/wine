@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "x11drv.h"
 #include "x11font.h"
-#include "gdi.h"
 #include "ddrawi.h"
 #include "wine/debug.h"
 
@@ -85,7 +84,7 @@ void X11DRV_GDI_Finalize(void)
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+BOOL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
                       LPCWSTR output, const DEVMODEW* initData )
 {
     X11DRV_PDEVICE *physDev;
@@ -94,9 +93,9 @@ BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR dev
     if (!physDev) return FALSE;
 
     *pdev = physDev;
-    physDev->hdc = dc->hSelf;
+    physDev->hdc = hdc;
 
-    if (GetObjectType( dc->hSelf ) == OBJ_MEMDC)
+    if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
         physDev->drawable  = BITMAP_stock_pixmap;
         physDev->depth     = 1;

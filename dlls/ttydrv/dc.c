@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include "gdi.h"
 #include "ttydrv.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -39,14 +38,13 @@ BOOL TTYDRV_GDI_Initialize(void)
 /***********************************************************************
  *	     TTYDRV_DC_CreateDC
  */
-BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+BOOL TTYDRV_DC_CreateDC(HDC hdc, TTYDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
 			LPCWSTR output, const DEVMODEW *initData)
 {
   TTYDRV_PDEVICE *physDev;
 
   TRACE("(%p, %s, %s, %s, %p)\n",
-    dc, debugstr_w(driver), debugstr_w(device),
-    debugstr_w(output), initData);
+        hdc, debugstr_w(driver), debugstr_w(device), debugstr_w(output), initData);
 
   physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TTYDRV_PDEVICE));
   if(!physDev) {
@@ -54,10 +52,10 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR d
     return FALSE;
   }
   *pdev = physDev;
-  physDev->hdc = dc->hSelf;
+  physDev->hdc = hdc;
   physDev->org.x = physDev->org.y = 0;
 
-  if(GetObjectType(dc->hSelf) == OBJ_MEMDC) {
+  if(GetObjectType(hdc) == OBJ_MEMDC) {
     physDev->window = NULL;
     physDev->cellWidth = 1;
     physDev->cellHeight = 1;

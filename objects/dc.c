@@ -603,7 +603,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
           debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc, &dc->physDev, buf, device, output, initData ))
+        !dc->funcs->pCreateDC( hdc, &dc->physDev, buf, device, output, initData ))
     {
         WARN("creation aborted by device\n" );
         GDI_FreeObject( dc->hSelf, dc );
@@ -717,7 +717,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     dc->physDev = physDev;
 
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc, &dc->physDev, NULL, NULL, NULL, NULL ))
+        !dc->funcs->pCreateDC( dc->hSelf, &dc->physDev, NULL, NULL, NULL, NULL ))
     {
         WARN("creation aborted by device\n");
         GDI_FreeObject( dc->hSelf, dc );
