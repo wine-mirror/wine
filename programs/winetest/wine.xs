@@ -24,7 +24,8 @@ enum ret_type
     RET_VOID = 0,
     RET_INT  = 1,
     RET_WORD = 2,
-    RET_PTR  = 3
+    RET_PTR  = 3,
+    RET_STR  = 4
 };
 
 /* max arguments for a function call */
@@ -121,7 +122,8 @@ static SV *convert_value( enum ret_type type, unsigned long val )
         case RET_VOID: return &PL_sv_undef;
         case RET_INT:  return sv_2mortal( newSViv ((int) val ));
         case RET_WORD: return sv_2mortal( newSViv ((int) val & 0xffff ));
-        case RET_PTR:  return sv_2mortal( newSVpv ((char *) val, 0 ));
+        case RET_PTR:  return sv_2mortal( newSViv ((int) val ));
+        case RET_STR:  return sv_2mortal( newSVpv ((char *) val, 0 ));
 
         default:
             croak ("Bad return type %d", type);

@@ -4,20 +4,7 @@
 
 use wine;
 
-################################################################
-# Declarations for functions we use in this script
-
-wine::declare( "kernel32",
-               SetLastError       => "void",
-               GetLastError       => ["int", []],
-               GlobalAddAtomA     => ["word",["str"]],
-               GlobalGetAtomNameA => ["int", ["int","ptr","int"]],
-               GetCurrentThread   => ["int", []],
-               GetExitCodeThread  => ["int", ["int","ptr"]],
-               GetModuleHandleA   => ["int", ["str"]],
-               GetProcAddress     => ["int", ["long","str"]],
-               lstrcatA           => ["str", ["str","str"]],
-);
+use kernel32;
 
 ################################################################
 # Test some simple function calls
@@ -56,8 +43,16 @@ ok( $ret == 123 );
 ################################################################
 # Test various error cases
 
+eval { SetLastError(1,2); };
+ok( $@ =~ /Wrong number of arguments, expected 1, got 2/ );
+
+wine::declare("kernel32", "SetLastError" => "int" );  # disable prototype
 eval { SetLastError(1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7); };
-ok( $@ =~ /Too many arguments at/ );
+ok( $@ =~ /Too many arguments/ );
+
+wine::declare("kernel32", "non_existent_func" => ["int",["int"]]);
+eval { non_existent_func(1); };
+ok( $@ =~ /Could not get address for kernel32\.non_existent_func/ );
 
 my $funcptr = GetProcAddress( GetModuleHandleA("kernel32"), "SetLastError" );
 ok( $funcptr );

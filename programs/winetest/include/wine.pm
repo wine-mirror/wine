@@ -61,7 +61,8 @@ $todo_failures = 0;
     "void" => 0,
     "int" => 1, "long" => 1,
     "word" => 2,
-    "ptr" => 3, "str" => 3, "wstr" => 3
+    "ptr" => 3,
+    "str" => 4, "wstr" => 4
 );
 
 
@@ -123,7 +124,14 @@ sub AUTOLOAD
 sub call($@)
 {
     my ($function,@args) = @_;
-    my ($funcptr,$ret_type,$arg_types) = @{$prototypes{$function}};
+    my ($module,$funcptr,$ret_type,$arg_types) = @{$prototypes{$function}};
+
+    unless ($funcptr)
+    {
+        my $handle = $loaded_modules{$module};
+        $funcptr = get_proc_address( $handle, $function ) or die "Could not get address for $module.$function";
+        ${$prototypes{$function}}[1] = $funcptr;
+    }
 
     if ($wine::debug > 1)
     {
@@ -142,7 +150,7 @@ sub call($@)
 	my @arg_types = @$arg_types;
 
 	if($#args != $#arg_types) {
-	    print STDERR "$function: too many arguments, expected " .
+	    die "$function: Wrong number of arguments, expected " .
 		($#arg_types + 1) . ", got " . ($#args + 1) . "\n";
 	}
 
@@ -196,19 +204,17 @@ sub declare($%)
 
     foreach $func (keys %list)
     {
-        my $ptr = get_proc_address( $handle, $func ) or die "Could not find '$func' in '$module'";
-
 	if(ref($list{$func}) eq "ARRAY") {
 	    my ($return_type, $argument_types) = @{$list{$func}};
 
 	    my $ret_type = $return_types{$return_type};
 	    my $arg_types = [map { $return_types{$_} } @$argument_types];
 
-	    $prototypes{$func} = [ $ptr, $ret_type, $arg_types ];
+	    $prototypes{$func} = [ $module, 0, $ret_type, $arg_types ];
 	} else {
 	    my $ret_type = $return_types{$list{$func}};
 
-	    $prototypes{$func} = [ $ptr, $ret_type ];
+	    $prototypes{$func} = [ $module, 0, $ret_type ];
 	}
     }
 }
