@@ -37,7 +37,11 @@ GLUE = utthunk.c
 
 EXTRASUBDIRS = \
 	messages \
-	nls
+	nls \
+	tests
+
+PLTESTS = \
+	tests/atom.pl
 
 @MAKE_DLL_RULES@
 
