@@ -108,6 +108,12 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
         case 0x10:
             INT_Int10Handler(context);
             break;
+        case 0x11:
+            INT_Int11Handler(context);
+            break;
+        case 0x16:
+            INT_Int16Handler(context);
+            break;
         case 0x1a:
             INT_Int1aHandler(context);
             break;
@@ -126,9 +132,13 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
         case 0x31:
             INT_Int31Handler(context);
             break;
+        case 0x29:
+            INT_Int29Handler(context);
+            break;
         default:
             FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);
             return 1;
     }
+    FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);
     return 0;
 }
