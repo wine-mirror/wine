@@ -137,9 +137,10 @@ HRESULT WINAPI StrRetToStrNAW (
 /****************************************************************************
 * SHChangeNotifyRegister API
 */
-#define SHCNF_ACCEPT_INTERRUPTS		0x0001
-#define SHCNF_ACCEPT_NON_INTERRUPTS	0x0002
-#define SHCNF_NO_PROXY			0x8001
+#define SHCNRF_InterruptLevel		0x0001
+#define SHCNRF_ShellLevel		0x0002
+#define SHCNRF_RecursiveInterrupt	0x1000	/* Must be combined with SHCNRF_InterruptLevel */
+#define SHCNRF_NewDelivery		0x8000	/* Messages use shared memory */
 
 typedef struct
 {
@@ -160,7 +161,7 @@ HANDLE WINAPI SHChangeNotifyRegister(
 	HWND hwnd,
 	LONG dwFlags,
 	LONG wEventMask,
-	DWORD uMsg,
+	UINT uMsg,
 	int cItems,
 	LPCNOTIFYREGISTER lpItems);
 

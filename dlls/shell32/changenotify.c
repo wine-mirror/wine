@@ -185,17 +185,17 @@ SHChangeNotifyRegister(
     HWND hwnd,
     LONG dwFlags,
     LONG wEventMask,
-    DWORD uMsg,
+    UINT uMsg,
     int cItems,
     LPCNOTIFYREGISTER lpItems)
 {
     LPNOTIFICATIONLIST item;
-    DWORD i;
+    int i;
 
     item = SHAlloc(sizeof(NOTIFICATIONLIST));
 
-    TRACE("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p) item=%p\n",
-	hwnd,dwFlags,wEventMask,uMsg,cItems,lpItems,item);
+    TRACE("(%p,0x%08lx,0x%08lx,0x%08x,0x%08x,%p) item=%p\n",
+	hwnd, dwFlags, wEventMask, uMsg, cItems, lpItems, item);
 
     item->next = NULL;
     item->prev = NULL;
