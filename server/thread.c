@@ -211,6 +211,12 @@ static void cleanup_thread( struct thread *thread )
     thread->request_fd = -1;
     thread->reply_fd = -1;
     thread->wait_fd = -1;
+
+    if (thread == booting_thread)  /* killing booting thread */
+    {
+        booting_thread = NULL;
+        lock_master_socket(0);
+    }
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -479,7 +485,7 @@ static void thread_timeout( void *ptr )
     if (debug_level) fprintf( stderr, "%08x: *wakeup* signaled=%d cookie=%p\n",
                               (unsigned int)thread, STATUS_TIMEOUT, cookie );
     end_wait( thread );
-    send_thread_wakeup( thread, cookie, STATUS_TIMEOUT );
+    if (send_thread_wakeup( thread, cookie, STATUS_TIMEOUT ) == -1) return;
     /* check if other objects have become signaled in the meantime */
     wake_thread( thread );
 }
