@@ -2304,6 +2304,9 @@ typedef struct tagNMTVGETINFOTIPW
 #define WC_LISTVIEWW          L"SysListView32"
 #define WC_LISTVIEW  WINELIB_NAME_AW(WC_LISTVIEW)
 
+#define LVSCW_AUTOSIZE -1
+#define LVSCW_AUTOSIZE_USEHEADER -2
+
 #define LVS_ICON                0x0000
 #define LVS_REPORT              0x0001
 #define LVS_SMALLICON           0x0002
