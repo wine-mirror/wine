@@ -1267,10 +1267,29 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      msg.pt = 0;*/
 	      
 	      LPNMLVKEYDOWN plvKeyDown = (LPNMLVKEYDOWN) lpnmh;
+
+              /* initiate a rename of the selected file or directory */
+              if(plvKeyDown->wVKey == VK_F2)
+              {
+                /* see how many files are selected */
+                int i = ListView_GetSelectedCount(This->hWndList);
+
+                /* get selected item */
+                if(i == 1)
+                {
+                  /* get selected item */
+                  i = ListView_GetNextItem(This->hWndList, -1,
+			LVNI_SELECTED);
+ 
+                  ListView_EnsureVisible(This->hWndList, i, 0);
+                  ListView_EditLabelA(This->hWndList, i);
+                }
+              }
 #if 0
 	      TranslateAccelerator(This->hWnd, This->hAccel, &msg)
 #endif
-	      FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
+              else
+	        FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
 	    }
 	    break;
 	  default:
