@@ -332,18 +332,6 @@ INT __cdecl CRTDLL__setjmp(LPDWORD *jmpbuf)
   FIXME(":(%p): stub\n",jmpbuf);
   return 0;
 }
-/*********************************************************************
- *                  _read     (CRTDLL.256)
- * 
- * BUGS
- *   Unimplemented
- */
-INT __cdecl CRTDLL__read(INT fd, LPVOID buf, UINT count)
-{
-  FIXME(":(%d,%p,%d): stub\n",fd,buf,count);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
 
 /*********************************************************************
  *                  fopen     (CRTDLL.372)
@@ -474,6 +462,18 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE *stream, LPSTR format, ... )
 #endif
     FIXME("broken\n");
     return 0;
+}
+
+/*********************************************************************
+ *                  _lseek     (CRTDLL.179)
+ */
+LONG __cdecl CRTDLL__lseek( INT fd, LONG offset, INT whence)
+{
+  TRACE("fd %d to 0x%08lx pos %s\n",
+        fd,offset,(whence==SEEK_SET)?"SEEK_SET":
+        (whence==SEEK_CUR)?"SEEK_CUR":
+        (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
+  return SetFilePointer( fd, offset, NULL, whence );
 }
 
 /*********************************************************************
@@ -638,6 +638,17 @@ BOOL __cdecl CRTDLL__isatty(DWORD x)
 {
 	TRACE("(%ld)\n",x);
 	return TRUE;
+}
+
+/*********************************************************************
+ *                  _read     (CRTDLL.256)
+ *
+ */
+INT __cdecl CRTDLL__read(INT fd, LPVOID buf, UINT count)
+{
+    TRACE("0x%08x bytes fd %d to %p\n", count,fd,buf);
+    if (!fd) fd = GetStdHandle( STD_INPUT_HANDLE );
+    return _lread( fd, buf, count );
 }
 
 /*********************************************************************
@@ -1219,6 +1230,8 @@ HFILE __cdecl CRTDLL__open(LPCSTR path,INT flags)
     }
     if (flags & 0x0008) /* O_APPEND */
         FIXME("O_APPEND not supported\n" );
+    if (!(flags & 0x8000 /* O_BINARY */ ) || (flags & 0x4000 /* O_TEXT */))
+	FIXME(":text mode not supported\n");
     if (flags & 0xf0f4) 
       TRACE("CRTDLL_open file unsupported flags 0x%04x\n",flags);
     /* End Fixme */

@@ -181,7 +181,7 @@ init    CRTDLL_Init
 @ cdecl _lrotl (long long) CRTDLL__lrotl
 @ stub _lrotr
 @ stub _lsearch
-@ stub _lseek
+@ cdecl _lseek(long long long) CRTDLL__lseek
 @ cdecl _ltoa(long str long) CRTDLL__ltoa
 @ stub _ltow
 @ cdecl _makepath (ptr str str str str) CRTDLL__makepath
