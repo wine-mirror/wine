@@ -14,6 +14,7 @@
 #define PC_SYS_MAPPED   0x10		/* logical palentry is a direct alias for system palentry */
 
 extern HPALETTE16 	COLOR_Init(void);
+extern void		COLOR_Cleanup(void);
 extern COLORREF		COLOR_ToLogical(int pixel);
 extern int 		COLOR_ToPhysical( DC *dc, COLORREF color );
 extern int 		COLOR_SetMapping( PALETTEOBJ* pal, BOOL32 mapOnly );

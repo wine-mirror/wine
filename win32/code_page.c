@@ -9,9 +9,9 @@
 #include "windows.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "string32.h"
 
 
 /***********************************************************************
@@ -102,14 +102,14 @@ EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags) {
  *              EnumSystemCodePages32W                (KERNEL32.93)
  */
 BOOL32
-EnumSystemCodePages32W(CODEPAGE_ENUMPROC32W lpfnCodePageEnum,DWORD flags) {
-	WCHAR	*cp;
-	dprintf_win32(stddeb,"EnumSystemCodePages32W(%p,%08lx)\n",
-		lpfnCodePageEnum,flags
-	);
+EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum, DWORD flags)
+{
+    WCHAR	*cp;
+    dprintf_win32(stddeb,"EnumSystemCodePages32W(%p,%08lx)\n",
+                  lpfnCodePageEnum,flags );
 
-	cp=STRING32_DupAnsiToUni("437");
-	lpfnCodePageEnum(cp);
-	free(cp);
-	return TRUE;
+    cp = HEAP_strdupAtoW( GetProcessHeap(), 0, "437" );
+    lpfnCodePageEnum(cp);
+    HeapFree( GetProcessHeap(), 0, cp );
+    return TRUE;
 }

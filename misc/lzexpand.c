@@ -16,16 +16,13 @@
 #include <sys/stat.h>
 #include "windows.h"
 #include "file.h"
+#include "heap.h"
 #include "ldt.h"
 #include "lzexpand.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
-#include "string32.h"
 
-#define strdupW2A(x)	STRING32_DupUniToAnsi(x)
-#define strdupA2W(x)	STRING32_DupAnsiToUni(x)
-#define strcpyAW(a,b)	STRING32_AnsiToUni(a,b)
 
 /* The readahead length of the decompressor. Reading single bytes
  * using _lread() would be SLOW.
@@ -265,13 +262,12 @@ GetExpandedName32W(LPCWSTR in,LPWSTR out) {
 	char	*xin,*xout;
 	INT32	ret;
 
-	xout	= malloc(lstrlen32W(in)+3);
-	xin	= strdupW2A(in);
+	xout	= HeapAlloc( GetProcessHeap(), 0, lstrlen32W(in)+3 );
+	xin	= HEAP_strdupWtoA( GetProcessHeap(), 0, in );
 	ret	= GetExpandedName16(xin,xout);
-	if (ret>0)
-		strcpyAW(out,xout);
-	free(xin);
-	free(xout);
+	if (ret>0) lstrcpyAtoW(out,xout);
+	HeapFree( GetProcessHeap(), 0, xin );
+	HeapFree( GetProcessHeap(), 0, xout );
 	return	ret;
 }
 
@@ -530,14 +526,14 @@ LZOpenFile32W(LPCWSTR fn,LPOFSTRUCT ofs,UINT32 mode) {
 	LPWSTR	yfn;
 	HFILE	ret;
 
-	xfn	= strdupW2A(fn);
+	xfn	= HEAP_strdupWtoA( GetProcessHeap(), 0, fn);
 	ret	= LZOpenFile16(xfn,ofs,mode);
-	free(xfn);
+	HeapFree( GetProcessHeap(), 0, xfn );
 	if (ret!=HFILE_ERROR) {
 		/* ofs->szPathName is an array with the OFSTRUCT */
-		yfn 	= strdupA2W(ofs->szPathName);
+                yfn = HEAP_strdupAtoW( GetProcessHeap(), 0, ofs->szPathName );
 		memcpy(ofs->szPathName,yfn,lstrlen32W(yfn)*2+2);
-		free(yfn);
+                HeapFree( GetProcessHeap(), 0, yfn );
 	}
 	return	ret;
 }

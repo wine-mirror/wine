@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include "windows.h"
 #include "winerror.h"
+#include "heap.h"
 #include "handle32.h"
 #include "task.h"
 #include "stddebug.h"
@@ -124,13 +125,10 @@ HINSTANCE32 LoadLibrary32A(LPCSTR libname)
  */
 HINSTANCE32 LoadLibrary32W(LPCWSTR libnameW)
 {
-	LPSTR libnameA = STRING32_DupUniToAnsi(libnameW);
-	HINSTANCE32 ret;
-
-	ret = LoadLibrary32A(libnameA);
-	free(libnameA);
-	return ret;
-
+    LPSTR libnameA = HEAP_strdupWtoA( GetProcessHeap(), 0, libnameW );
+    HINSTANCE32 ret = LoadLibrary32A( libnameA );
+    HeapFree( GetProcessHeap(), 0, libnameA );
+    return ret;
 }
 
 /***********************************************************************

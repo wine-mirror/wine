@@ -16,6 +16,7 @@
 #include "windows.h"
 #include "gdi.h"
 #include "global.h"
+#include "heap.h"
 #include "neexe.h"
 #include "accel.h"
 #include "module.h"
@@ -23,8 +24,6 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "libres.h"
-#include "string32.h"
-#include "xmalloc.h"
 
 #define PrintId(name) \
     if (HIWORD((DWORD)name)) \
@@ -85,13 +84,17 @@ HANDLE32 FindResourceEx32A(
     LPWSTR xname,xtype;
     HANDLE32 ret;
 
-    if (HIWORD((DWORD)name)) xname = STRING32_DupAnsiToUni(name);
-    else xname = (LPWSTR)name;
-    if (HIWORD((DWORD)type)) xtype = STRING32_DupAnsiToUni(type);
-    else xtype = (LPWSTR)type;
-    ret = FindResourceEx32W(hModule,xname,xtype,lang);
-    if (HIWORD((DWORD)name)) free(xname);
-    if (HIWORD((DWORD)type)) free(xtype);
+    if (HIWORD((DWORD)name))
+        xname = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+    else
+        xname = (LPWSTR)name;
+    if (HIWORD((DWORD)type))
+        xtype = HEAP_strdupAtoW( GetProcessHeap(), 0, type);
+    else
+        xtype = (LPWSTR)type;
+    ret = FindResourceEx32W( hModule, xname, xtype, lang );
+    if (HIWORD((DWORD)name)) HeapFree( GetProcessHeap(), 0, xname );
+    if (HIWORD((DWORD)type)) HeapFree( GetProcessHeap(), 0, xtype );
     return ret;
 }
 
@@ -494,12 +497,11 @@ HACCEL32 LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
 	LPWSTR	 uni;
 	HACCEL32 result;
 	if (HIWORD(lpTableName))
-		uni=STRING32_DupAnsiToUni(lpTableName);
+		uni = HEAP_strdupAtoW( GetProcessHeap(), 0, lpTableName );
 	else
-		uni=(LPWSTR)lpTableName;
-	result=LoadAccelerators32W(instance,uni);
-	if (HIWORD(uni))
-		free(uni);
+		uni = (LPWSTR)lpTableName;
+	result = LoadAccelerators32W(instance,uni);
+	if (HIWORD(uni)) HeapFree( GetProcessHeap(), 0, uni);
 	return result;
 }
 
@@ -607,13 +609,15 @@ LoadString32W(HINSTANCE32 instance,UINT32 resource_id,LPWSTR buffer,int buflen)
 INT32
 LoadString32A(HINSTANCE32 instance,UINT32 resource_id,LPSTR buffer,int buflen)
 {
-    LPWSTR buffer2 = buffer?(LPWSTR)xmalloc(buflen*2):NULL;
-    INT32 retval = LoadString32W(instance,resource_id,buffer2,buflen);
+    INT32 retval;
+    LPWSTR buffer2 = NULL;
+    if (buffer) buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen * 2 );
+    retval = LoadString32W(instance,resource_id,buffer2,buflen);
 
-    if (!retval) return 0;
-    if (buffer) {
-	STRING32_UniToAnsi(buffer,buffer2);
-	free(buffer2);
+    if (buffer)
+    {
+        lstrcpynWtoA( buffer, buffer2, buflen );
+	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
     return retval;
 }
@@ -712,16 +716,17 @@ LoadMessage32A(
 /**********************************************************************
  *	LoadMessage32W	(internal)
  */
-INT32
-LoadMessage32W(
-	HINSTANCE32 instance,UINT32 id,WORD lang,LPWSTR buffer,int buflen
-) {
-    LPSTR buffer2 = buffer?(LPSTR)xmalloc(buflen):NULL;
-    INT32 retval = LoadMessage32A(instance,id,lang,buffer2,buflen);
-
-    if (buffer) {
-	STRING32_AnsiToUni(buffer,buffer2);
-	free(buffer2);
+INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
+                      LPWSTR buffer, int buflen )
+{
+    INT32 retval;
+    LPSTR buffer2 = NULL;
+    if (buffer) buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen );
+    retval = LoadMessage32A(instance,id,lang,buffer2,buflen);
+    if (buffer)
+    {
+        lstrcpynAtoW( buffer, buffer2, buflen );
+	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
     return retval;
 }

@@ -7,12 +7,12 @@
 #include <string.h>
 #include <malloc.h>
 #include "windows.h"
+#include "heap.h"
 #include "ole.h"
 #include "options.h"
 #include "winnls.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "string32.h"
 
 /* Locale name to id map. used by EnumSystemLocales, GetLocalInfoA 
  * MUST contain all #defines from winnls.h
@@ -1278,22 +1278,22 @@ BOOL32 IsValidLocale(DWORD lcid,DWORD flags) {
 /***********************************************************************
  *              EnumSystemLocales32W                (KERNEL32.93)
  */
-BOOL32
-EnumSystemLocales32W(LOCALE_ENUMPROC32W lpfnLocaleEnum,DWORD flags) {
-	WCHAR	*cp;
+BOOL32 EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum, DWORD flags )
+{
 	int	i;
 	BOOL32	ret;
 
 	dprintf_win32(stddeb,"EnumSystemLocales32W(%p,%08lx)\n",
-		lpfnLocaleEnum,flags
-	);
+                      lpfnLocaleEnum,flags );
 	i=0;
-	while (locale_name2id[i].name!=NULL) {
-		cp=(LPWSTR)STRING32_DupAnsiToUni(locale_name2id[i].name);
-		ret=lpfnLocaleEnum(cp);
-		free(cp);
-		if (!ret) break;
-		i++;
+	while (locale_name2id[i].name!=NULL)
+        {
+            LPWSTR cp = HEAP_strdupAtoW( GetProcessHeap(), 0,
+                                         locale_name2id[i].name );
+            ret = lpfnLocaleEnum(cp);
+            HeapFree( GetProcessHeap(), 0, cp );
+            if (!ret) break;
+            i++;
 	}
 	return TRUE;
 }

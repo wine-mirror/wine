@@ -18,10 +18,10 @@
 #include "windows.h"
 #include "hook.h"
 #include "queue.h"
+#include "stackframe.h"
 #include "user.h"
 #include "heap.h"
 #include "struct32.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -237,14 +237,14 @@ static void HOOK_Map16To32W(INT32 id, INT32 code, WPARAM32 *pwParam,
 				      (LPCREATESTRUCT32A)lpcbtcw32->lpcs );
 
 	if (HIWORD(lpcs16->lpszName))
-            lpcbtcw32->lpcs->lpszName = 
-                STRING32_DupAnsiToUni( PTR_SEG_TO_LIN(lpcs16->lpszName) );
+            lpcbtcw32->lpcs->lpszName = HEAP_strdupAtoW( SystemHeap, 0,
+                                            PTR_SEG_TO_LIN(lpcs16->lpszName) );
 	else
             lpcbtcw32->lpcs->lpszName = (LPWSTR)lpcs16->lpszName;
 
 	if (HIWORD(lpcs16->lpszClass))
-            lpcbtcw32->lpcs->lpszClass =
-                STRING32_DupAnsiToUni( PTR_SEG_TO_LIN(lpcs16->lpszClass) );
+            lpcbtcw32->lpcs->lpszClass = HEAP_strdupAtoW( SystemHeap, 0,
+                                           PTR_SEG_TO_LIN(lpcs16->lpszClass) );
 	else
             lpcbtcw32->lpcs->lpszClass = (LPWSTR)lpcs16->lpszClass;
 
@@ -346,9 +346,9 @@ static void HOOK_UnMap16To32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
     {
 	LPCBT_CREATEWND32W lpcbtcw32 = (LPCBT_CREATEWND32W)lParam;
 	if (HIWORD(lpcbtcw32->lpcs->lpszName))
-	  free( (LPWSTR)lpcbtcw32->lpcs->lpszName );
+            HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcw32->lpcs->lpszName );
 	if (HIWORD(lpcbtcw32->lpcs->lpszClass))
-	  free( (LPWSTR)lpcbtcw32->lpcs->lpszClass );
+            HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcw32->lpcs->lpszClass );
 	HeapFree( SystemHeap, 0, lpcbtcw32->lpcs );
 	HeapFree( SystemHeap, 0, lpcbtcw32 );
     }
@@ -525,6 +525,7 @@ static void HOOK_Map32WTo16(INT32 id, INT32 code, WPARAM32 *pwParam,
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
+        LPSTR name, cls;
 	LPCBT_CREATEWND32W lpcbtcw32 = (LPCBT_CREATEWND32W)*plParam;
 	LPCBT_CREATEWND16 lpcbtcw16 = SEGPTR_NEW( CBT_CREATEWND16 );
 	LPCREATESTRUCT16 lpcs16 = SEGPTR_NEW( CREATESTRUCT16 );
@@ -533,24 +534,10 @@ static void HOOK_Map32WTo16(INT32 id, INT32 code, WPARAM32 *pwParam,
 	STRUCT32_CREATESTRUCT32Ato16( (LPCREATESTRUCT32A)lpcbtcw32->lpcs,
 				      lpcs16 );
 
-	if (HIWORD(lpcbtcw32->lpcs->lpszName))
-	{
-	    LPSTR str = SEGPTR_ALLOC( lstrlen32W(lpcbtcw32->lpcs->lpszName) );
-	    STRING32_UniToAnsi( str, lpcbtcw32->lpcs->lpszName );
-	    lpcs16->lpszName = SEGPTR_GET( str );
-	}
-	else
-	  lpcs16->lpszName = (SEGPTR)lpcbtcw32->lpcs->lpszName;
-
-	if (HIWORD(lpcbtcw32->lpcs->lpszClass))
-	{
-	    LPSTR str = SEGPTR_ALLOC( lstrlen32W(lpcbtcw32->lpcs->lpszClass) );
-	    STRING32_UniToAnsi( str, lpcbtcw32->lpcs->lpszClass );
-	    lpcs16->lpszClass = SEGPTR_GET( str );
-	}
-	else
-	  lpcs16->lpszClass = (SEGPTR)lpcbtcw32->lpcs->lpszClass;
-
+        name = SEGPTR_STRDUP_WtoA( lpcbtcw32->lpcs->lpszName );
+        cls  = SEGPTR_STRDUP_WtoA( lpcbtcw32->lpcs->lpszClass );
+        lpcs16->lpszName  = SEGPTR_GET( name );
+        lpcs16->lpszClass = SEGPTR_GET( cls );
 	lpcbtcw16->hwndInsertAfter = lpcbtcw32->hwndInsertAfter;
 
 	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
@@ -670,16 +657,16 @@ static void HOOK_Map32ATo32W(INT32 id, INT32 code, WPARAM32 *pwParam,
 
 	if (HIWORD(lpcbtcwA->lpcs->lpszName))
 	{
-	    lpcbtcwW->lpcs->lpszName =
-	      STRING32_DupAnsiToUni( lpcbtcwA->lpcs->lpszName );
+	    lpcbtcwW->lpcs->lpszName = HEAP_strdupAtoW( SystemHeap, 0,
+                                                    lpcbtcwA->lpcs->lpszName );
 	}
 	else
 	  lpcbtcwW->lpcs->lpszName = (LPWSTR)lpcbtcwA->lpcs->lpszName;
 
 	if (HIWORD(lpcbtcwA->lpcs->lpszClass))
 	{
-	    lpcbtcwW->lpcs->lpszClass =
-	      STRING32_DupAnsiToUni( lpcbtcwA->lpcs->lpszClass);
+	    lpcbtcwW->lpcs->lpszClass = HEAP_strdupAtoW( SystemHeap, 0,
+                                                   lpcbtcwA->lpcs->lpszClass );
 	}
 	else
 	  lpcbtcwW->lpcs->lpszClass = (LPCWSTR)lpcbtcwA->lpcs->lpszClass;
@@ -699,9 +686,9 @@ static void HOOK_UnMap32ATo32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
     {
 	LPCBT_CREATEWND32W lpcbtcwW = (LPCBT_CREATEWND32W)lParam;
 	if (HIWORD(lpcbtcwW->lpcs->lpszName))
-            free( (LPWSTR)lpcbtcwW->lpcs->lpszName );
+            HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcwW->lpcs->lpszName );
 	if (HIWORD(lpcbtcwW->lpcs->lpszClass))
-            free( (LPWSTR)lpcbtcwW->lpcs->lpszClass );
+            HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcwW->lpcs->lpszClass );
 	HeapFree( SystemHeap, 0, lpcbtcwW->lpcs );
 	HeapFree( SystemHeap, 0, lpcbtcwW );
     }
@@ -726,14 +713,14 @@ static void HOOK_Map32WTo32A(INT32 id, INT32 code, WPARAM32 *pwParam,
 	*lpcbtcwA->lpcs = *(LPCREATESTRUCT32A)lpcbtcwW->lpcs;
 
 	if (HIWORD(lpcbtcwW->lpcs->lpszName))
-	  lpcbtcwA->lpcs->lpszName =
-	    STRING32_DupUniToAnsi( lpcbtcwW->lpcs->lpszName );
+	  lpcbtcwA->lpcs->lpszName = HEAP_strdupWtoA( SystemHeap, 0,
+                                                    lpcbtcwW->lpcs->lpszName );
 	else
 	  lpcbtcwA->lpcs->lpszName = (LPSTR)lpcbtcwW->lpcs->lpszName;
 
 	if (HIWORD(lpcbtcwW->lpcs->lpszClass))
-	  lpcbtcwA->lpcs->lpszClass =
-	    STRING32_DupUniToAnsi( lpcbtcwW->lpcs->lpszClass);
+	  lpcbtcwA->lpcs->lpszClass = HEAP_strdupWtoA( SystemHeap, 0,
+                                                   lpcbtcwW->lpcs->lpszClass );
 	else
 	  lpcbtcwA->lpcs->lpszClass = (LPSTR)lpcbtcwW->lpcs->lpszClass;
     }
@@ -752,9 +739,9 @@ static void HOOK_UnMap32WTo32A(INT32 id, INT32 code, WPARAM32 wParamOrig,
     {
 	LPCBT_CREATEWND32A lpcbtcwA = (LPCBT_CREATEWND32A)lParam;
 	if (HIWORD(lpcbtcwA->lpcs->lpszName))
-	  free( (LPSTR)lpcbtcwA->lpcs->lpszName );
+            HeapFree( SystemHeap, 0, (LPSTR)lpcbtcwA->lpcs->lpszName );
 	if (HIWORD(lpcbtcwA->lpcs->lpszClass))
-	  free( (LPSTR)lpcbtcwA->lpcs->lpszClass );
+            HeapFree( SystemHeap, 0, (LPSTR)lpcbtcwA->lpcs->lpszClass );
 	HeapFree( SystemHeap, 0, lpcbtcwA->lpcs );
 	HeapFree( SystemHeap, 0, lpcbtcwA );
     }
@@ -947,6 +934,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
     HANDLE16 prevHook;
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
     LRESULT ret;
+    WORD old_ds;
 
     WPARAM32 wParamOrig = wParam;
     LPARAM lParamOrig = lParam;
@@ -969,7 +957,11 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
     dprintf_hook( stddeb, "Calling hook %04x: %d %08x %08lx\n",
                   hook, code, wParam, lParam );
 
+    /* Set DS = SS to call hook procedure */
+    old_ds = CURRENT_DS;
+    CURRENT_DS = IF1632_Saved16_ss;
     ret = data->proc(code, wParam, lParam);
+    CURRENT_DS = old_ds;
 
     dprintf_hook( stddeb, "Ret hook %04x = %08lx\n", hook, ret );
 

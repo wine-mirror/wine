@@ -33,13 +33,13 @@ base	1
 0028 stub CreateColorSpaceA
 0029 stub CreateColorSpaceW
 0030 stdcall CreateCompatibleBitmap(long long long) CreateCompatibleBitmap
-0031 stdcall CreateCompatibleDC(long) CreateCompatibleDC
+0031 stdcall CreateCompatibleDC(long) CreateCompatibleDC32
 0032 stdcall CreateDCA(ptr ptr ptr ptr) CreateDC32A
 0033 stdcall CreateDCW(ptr ptr ptr ptr) CreateDC32W
 0034 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
 0035 stub CreateDIBPatternBrushPt
 0036 stub CreateDIBSection
-0037 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap
+0037 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap32
 0038 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap
 0039 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn32
 0040 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
@@ -53,8 +53,8 @@ base	1
                         long long long long long ptr) CreateFont32W
 0047 stub CreateHalftonePalette
 0048 stdcall CreateHatchBrush(long long) CreateHatchBrush32
-0049 stdcall CreateICA(ptr ptr ptr ptr) CreateIC
-0050 stub CreateICW
+0049 stdcall CreateICA(ptr ptr ptr ptr) CreateIC32A
+0050 stdcall CreateICW(ptr ptr ptr ptr) CreateIC32W
 0051 stub CreateMetaFileA
 0052 stub CreateMetaFileW
 0053 stdcall CreatePalette(ptr) CreatePalette
@@ -72,7 +72,7 @@ base	1
 0064 stdcall CreateSolidBrush(long) CreateSolidBrush32
 0065 stdcall DPtoLP(long ptr long) DPtoLP32
 0066 stub DeleteColorSpace
-0067 stdcall DeleteDC(long) DeleteDC
+0067 stdcall DeleteDC(long) DeleteDC32
 0068 stub DeleteEnhMetaFile
 0069 stub DeleteMetaFile
 0070 stdcall DeleteObject(long)	DeleteObject32
@@ -150,20 +150,20 @@ base	1
 0142 stub GetAspectRatioFilterEx
 0143 stdcall GetBitmapBits(long long ptr) GetBitmapBits
 0144 stdcall GetBitmapDimensionEx(long ptr) GetBitmapDimensionEx32
-0145 stdcall GetBkColor(long) GetBkColor
-0146 stub GetBkMode
+0145 stdcall GetBkColor(long) GetBkColor32
+0146 stdcall GetBkMode(long) GetBkMode32
 0147 stub GetBoundsRect
 0148 stdcall GetBrushOrgEx(long ptr) GetBrushOrgEx32
-0149 stub GetCharABCWidthsA
+0149 stdcall GetCharABCWidthsA(long long long ptr) GetCharABCWidths32A
 0150 stub GetCharABCWidthsFloatA
 0151 stub GetCharABCWidthsFloatW
-0152 stub GetCharABCWidthsW
-0153 stdcall GetCharWidth32A(long long long long) GetCharWidth
-0154 stub GetCharWidth32W
-0155 stdcall GetCharWidthA(long long long long) GetCharWidth
+0152 stdcall GetCharABCWidthsW(long long long ptr) GetCharABCWidths32W
+0153 stdcall GetCharWidth32A(long long long long) GetCharWidth32A
+0154 stdcall GetCharWidth32W(long long long long) GetCharWidth32W
+0155 stdcall GetCharWidthA(long long long long) GetCharWidth32A
 0156 stub GetCharWidthFloatA
 0157 stub GetCharWidthFloatW
-0158 stub GetCharWidthW
+0158 stdcall GetCharWidthW(long long long long) GetCharWidth32W
 0159 stub GetCharWidthWOW
 0160 stub GetCharacterPlacementA
 0161 stub GetCharacterPlacementW
@@ -175,7 +175,7 @@ base	1
 0167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
 0168 stdcall GetDCOrgEx(long ptr) GetDCOrgEx
 0169 stub GetDIBColorTable
-0170 stub GetDIBits
+0170 stdcall GetDIBits(long long long long ptr ptr long) GetDIBits32
 0171 stdcall GetDeviceCaps(long long) GetDeviceCaps
 0172 stub GetDeviceGammaRamp
 0173 stub GetETM
@@ -201,7 +201,7 @@ base	1
 0193 stub GetKerningPairsW
 0194 stub GetLogColorSpaceA
 0195 stub GetLogColorSpaceW
-0196 stub GetMapMode
+0196 stdcall GetMapMode(long) GetMapMode32
 0197 stub GetMetaFileA
 0198 stub GetMetaFileBitsEx
 0199 stub GetMetaFileW
@@ -218,21 +218,21 @@ base	1
 0210 stub GetPath
 0211 stdcall GetPixel(long long long) GetPixel32
 0212 stub GetPixelFormat
-0213 stub GetPolyFillMode
-0214 stub GetROP2
+0213 stdcall GetPolyFillMode(long) GetPolyFillMode32
+0214 stdcall GetROP2(long) GetROP232
 0215 stub GetRandomRgn
 0216 stub GetRasterizerCaps
 0217 stub GetRegionData
-0218 stub GetRelAbs
+0218 stdcall GetRelAbs(long) GetRelAbs32
 0219 stdcall GetRgnBox(long ptr) GetRgnBox32
 0220 stdcall GetStockObject(long) GetStockObject32
-0221 stub GetStretchBltMode
+0221 stdcall GetStretchBltMode(long) GetStretchBltMode32
 0222 stdcall GetSystemPaletteEntries(long long long ptr) GetSystemPaletteEntries
 0223 stub GetSystemPaletteUse
-0224 stub GetTextAlign
-0225 stub GetTextCharacterExtra
+0224 stdcall GetTextAlign(long) GetTextAlign32
+0225 stdcall GetTextCharacterExtra(long) GetTextCharacterExtra32
 0226 stub GetTextCharset
-0227 stdcall GetTextColor(long) GetTextColor
+0227 stdcall GetTextColor(long) GetTextColor32
 0228 stdcall GetTextExtentExPointA(long ptr long long ptr ptr ptr) GetTextExtentExPoint32A
 0229 stdcall GetTextExtentExPointW(long ptr long long ptr ptr ptr) GetTextExtentExPoint32W
 0230 stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
@@ -292,12 +292,12 @@ base	1
 0284 stub RemoveFontResourceA
 0285 stub RemoveFontResourceTracking
 0286 stub RemoveFontResourceW
-0287 stub ResetDCA
-0288 stub ResetDCW
+0287 stdcall ResetDCA(long ptr) ResetDC32A
+0288 stdcall ResetDCW(long ptr) ResetDC32W
 0289 stub ResizePalette
-0290 stdcall RestoreDC(long long) RestoreDC
+0290 stdcall RestoreDC(long long) RestoreDC32
 0291 stdcall RoundRect(long long long long long long long) RoundRect32
-0292 stdcall SaveDC(long) SaveDC
+0292 stdcall SaveDC(long) SaveDC32
 0293 stdcall ScaleViewportExtEx(long long long long long ptr) ScaleViewportExtEx32
 0294 stdcall ScaleWindowExtEx(long long long long long ptr) ScaleWindowExtEx32
 0295 stub SelectBrushLocal
@@ -311,15 +311,15 @@ base	1
 0303 stdcall SetBitmapBits(long long ptr) SetBitmapBits
 0304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
 0305 stdcall SetBkColor(long long) SetBkColor
-0306 stdcall SetBkMode(long long) SetBkMode
+0306 stdcall SetBkMode(long long) SetBkMode32
 0307 stub SetBoundsRect
 0308 stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
 0309 stub SetColorAdjustment
 0310 stub SetColorSpace
 0311 stub SetDIBColorTable
-0312 stdcall SetDIBits(long long long long ptr ptr long) SetDIBits
+0312 stdcall SetDIBits(long long long long ptr ptr long) SetDIBits32
 0313 stdcall SetDIBitsToDevice(long long long long long long long long long
-                               ptr ptr long) SetDIBitsToDevice
+                               ptr ptr long) SetDIBitsToDevice32
 0314 stub SetDeviceGammaRamp
 0315 stub SetEnhMetaFileBits
 0316 stub SetFontEnumeration
@@ -327,7 +327,7 @@ base	1
 0318 stub SetICMMode
 0319 stub SetICMProfileA
 0320 stub SetICMProfileW
-0321 stdcall SetMapMode(long long) SetMapMode
+0321 stdcall SetMapMode(long long) SetMapMode32
 0322 stdcall SetMapperFlags(long long) SetMapperFlags
 0323 stub SetMetaFileBitsEx
 0324 stub SetMetaRgn
@@ -336,16 +336,16 @@ base	1
 0327 stdcall SetPixel(long long long long) SetPixel32
 0328 stub SetPixelFormat
 0329 stub SetPixelV
-0330 stub SetPolyFillMode
-0331 stdcall SetROP2(long long) SetROP2
+0330 stdcall SetPolyFillMode(long long) SetPolyFillMode32
+0331 stdcall SetROP2(long long) SetROP232
 0332 stdcall SetRectRgn(long long long long long) SetRectRgn
-0333 stub SetRelAbs
-0334 stdcall SetStretchBltMode(long long) SetStretchBltMode
+0333 stdcall SetRelAbs(long long) SetRelAbs32
+0334 stdcall SetStretchBltMode(long long) SetStretchBltMode32
 0335 stub SetSystemPaletteUse
-0336 stdcall SetTextAlign(long long) SetTextAlign
-0337 stub SetTextCharacterExtra
+0336 stdcall SetTextAlign(long long) SetTextAlign32
+0337 stdcall SetTextCharacterExtra(long long) SetTextCharacterExtra32
 0338 stdcall SetTextColor(long long) SetTextColor
-0339 stub SetTextJustification
+0339 stdcall SetTextJustification(long long long) SetTextJustification32
 0340 stdcall SetViewportExtEx(long long long ptr) SetViewportExtEx32
 0341 stdcall SetViewportOrgEx(long long long ptr) SetViewportOrgEx32
 0342 stub SetVirtualResolution

@@ -70,14 +70,14 @@ void DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style )
     /* now draw text */
     if ((style != SBT_OWNERDRAW) && text) {
 	SelectObject32(hdc, sysColorObjects.hpenWindowText);
-	oldbkmode = SetBkMode(hdc, TRANSPARENT);
+	oldbkmode = SetBkMode32(hdc, TRANSPARENT);
 	rt = r;
 	rt.left += 3;
 	DrawText32A(hdc, text, lstrlen32A(text),
 		    &rt, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	if (oldbkmode != TRANSPARENT)
-	    SetBkMode(hdc, oldbkmode);
+	    SetBkMode32(hdc, oldbkmode);
     }
 }
 

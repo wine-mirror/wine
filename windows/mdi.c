@@ -663,8 +663,8 @@ MDIWCL* MDI_BuildWCL(WND* clientWnd, INT16* iTotal)
  */
 HBITMAP16 CreateMDIMenuBitmap(void)
 {
- HDC16 		hDCSrc  = CreateCompatibleDC(0);
- HDC16		hDCDest	= CreateCompatibleDC(hDCSrc);
+ HDC32 		hDCSrc  = CreateCompatibleDC32(0);
+ HDC32		hDCDest	= CreateCompatibleDC32(hDCSrc);
  HBITMAP16	hbClose = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CLOSE) );
  HBITMAP16	hbCopy,hb_src,hb_dest;
 
@@ -680,8 +680,8 @@ HBITMAP16 CreateMDIMenuBitmap(void)
 
  DeleteObject32(hbClose);
 
- DeleteDC(hDCDest);
- DeleteDC(hDCSrc);
+ DeleteDC32(hDCDest);
+ DeleteDC32(hDCSrc);
 
  return hbCopy;
 }

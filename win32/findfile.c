@@ -11,7 +11,6 @@
 #include "winerror.h"
 #include "dos_fs.h"
 #include "heap.h"
-#include "string32.h"
 #include "drive.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -173,8 +172,8 @@ BOOL32 FindNextFile32W(HANDLE32 handle, LPWIN32_FIND_DATA32W data)
     adata.nFileSizeLow		= data->nFileSizeLow;
     adata.dwReserved0		= data->dwReserved0;
     adata.dwReserved1		= data->dwReserved1;
-    STRING32_UniToAnsi(adata.cFileName,data->cFileName);
-    STRING32_UniToAnsi(adata.cAlternateFileName,data->cAlternateFileName);
+    lstrcpyWtoA(adata.cFileName,data->cFileName);
+    lstrcpyWtoA(adata.cAlternateFileName,data->cAlternateFileName);
     res=FindNextFile32A(handle,&adata);
     if (res) {
 	    data->dwFileAttributes 	= adata.dwFileAttributes;
@@ -185,8 +184,8 @@ BOOL32 FindNextFile32W(HANDLE32 handle, LPWIN32_FIND_DATA32W data)
 	    data->nFileSizeLow		= adata.nFileSizeLow;
 	    data->dwReserved0		= adata.dwReserved0; 
 	    data->dwReserved1		= adata.dwReserved1;
-	    STRING32_AnsiToUni(data->cFileName,adata.cFileName);
-	    STRING32_AnsiToUni(data->cAlternateFileName,adata.cAlternateFileName);
+	    lstrcpyAtoW(data->cFileName,adata.cFileName);
+	    lstrcpyAtoW(data->cAlternateFileName,adata.cAlternateFileName);
     }
     return res;
 }
@@ -282,11 +281,10 @@ HANDLE32 FindFirstFile32A(LPCSTR lpfilename_in,
 HANDLE32 FindFirstFile32W(LPCWSTR filename,LPWIN32_FIND_DATA32W data)
 {
     WIN32_FIND_DATA32A	adata;
-    LPSTR		afn = STRING32_DupUniToAnsi(filename);
-    HANDLE32		res;
-
-    res=FindFirstFile32A(afn,&adata);
-    if (res) {
+    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    HANDLE32 res = FindFirstFile32A(afn,&adata);
+    if (res)
+    {
 	data->dwFileAttributes 	= adata.dwFileAttributes;
 	data->ftCreationTime	= adata.ftCreationTime;
 	data->ftLastAccessTime	= adata.ftLastAccessTime;
@@ -295,10 +293,10 @@ HANDLE32 FindFirstFile32W(LPCWSTR filename,LPWIN32_FIND_DATA32W data)
 	data->nFileSizeLow	= adata.nFileSizeLow;
 	data->dwReserved0	= adata.dwReserved0; 
 	data->dwReserved1	= adata.dwReserved1;
-	STRING32_AnsiToUni(data->cFileName,adata.cFileName);
-	STRING32_AnsiToUni(data->cAlternateFileName,adata.cAlternateFileName);
+	lstrcpyAtoW(data->cFileName,adata.cFileName);
+	lstrcpyAtoW(data->cAlternateFileName,adata.cAlternateFileName);
     }
-    free(afn);
+    HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
 

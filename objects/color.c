@@ -23,14 +23,15 @@
  *				     
  *
  * Windows needs contiguous color space ( from 0 to n ) but 
- * it is possible only with private colormap. Otherwise we
- * have to map DC palette indices to real pixel values.
- * With private colormap it boils down to identity mapping. The
- * other special case is when we have fixed color visual with 
- * screendepth > 8 - we abandon mapping altogether (pixel
- * values can be calculated without X server assistance).
+ * it is possible only with the private colormap. Otherwise we
+ * have to map DC palette indices to real pixel values. With 
+ * private colormaps it boils down to the identity mapping. The
+ * other special case is when we have a fixed color visual with 
+ * the screendepth > 8 - we abandon palette mappings altogether 
+ * because pixel values can be calculated without X server 
+ * assistance.
  *
- * For info about general Windows palette management read
+ * For some info about general Windows palette management read
  * http://198.105.232.5/MSDN/LIBRARY/TECHNOTE/CH3.HTM 
  */
 
@@ -66,6 +67,7 @@ Visual* 		visual = NULL;
 static PALETTEENTRY* COLOR_sysPal = NULL;    /* current system palette */
 static int COLOR_gapStart = 256;
 static int COLOR_gapEnd = -1;
+static int COLOR_gapFilled = 0;
 
   /* First free dynamic color cell, 0 = full palette, -1 = fixed palette */
 static int            COLOR_firstFree = 0; 
@@ -156,6 +158,15 @@ void COLOR_FormatSystemPalette(void)
   COLOR_freeList[j] = 0;
 }
 
+BOOL32 COLOR_CheckSysColor(COLORREF c)
+{
+  int i;
+  for( i = 0; i < NB_RESERVED_COLORS; i++ )
+       if( c == (*(COLORREF*)(__sysPalTemplate + i) & 0x00ffffff) )
+	   return 0;
+  return 1;
+}
+
 void COLOR_FillDefaultColors(void)
 {
  /* initialize unused entries to what Windows uses as a color 
@@ -177,8 +188,9 @@ void COLOR_FillDefaultColors(void)
 
   idx = COLOR_firstFree;
 
-  for (blue = NB_COLORCUBE_START_INDEX; blue < 256 && idx; blue += inc_b )
-    for (green = NB_COLORCUBE_START_INDEX; green < 256 && idx; green += inc_g )
+  if( idx != -1 )
+    for (blue = NB_COLORCUBE_START_INDEX; blue < 256 && idx; blue += inc_b )
+     for (green = NB_COLORCUBE_START_INDEX; green < 256 && idx; green += inc_g )
       for (red = NB_COLORCUBE_START_INDEX; red < 256 && idx; red += inc_r )
       {
 	 /* weird but true */
@@ -212,23 +224,40 @@ void COLOR_FillDefaultColors(void)
 	 idx = COLOR_freeList[idx];
       }
 
-  /* fill the rest with gray for now - only needed for
-   * sparse palette (in seamless mode)
-   */
+  /* try to fill some entries in the "gap" with
+   * what's already in the colormap - they will be
+   * mappable to but not changeable. */
 
-  for ( i = COLOR_gapStart; i <= COLOR_gapEnd; i++ )
+  if( COLOR_gapStart < COLOR_gapEnd && COLOR_PixelToPalette )
   {
-     *(COLORREF*)(COLOR_sysPal + i) = 0x00c0c0c0;
-      if( COLOR_PaletteToPixel )
-	  COLOR_PaletteToPixel[i] = COLOR_PaletteToPixel[7];
+    XColor	xc;
+    int		r, g, b;
+
+    for ( i = 0, idx = COLOR_gapStart; i < 256 && idx <= COLOR_gapEnd; i++ )
+      if( COLOR_PixelToPalette[i] == 0 )
+	{
+	  xc.pixel = i;
+
+	  XQueryColor(display, cSpace.colorMap, &xc);
+	  r = xc.red>>8; g = xc.green>>8; b = xc.blue>>8;
+
+	  if( xc.pixel < 256 && COLOR_CheckSysColor(RGB(r, g, b)) &&
+	      XAllocColor(display, cSpace.colorMap, &xc) )
+	  {
+	     COLOR_PixelToPalette[xc.pixel] = idx;
+	     COLOR_PaletteToPixel[idx] = xc.pixel;
+           *(COLORREF*)(COLOR_sysPal + idx) = RGB(r, g, b);
+	     COLOR_sysPal[idx++].peFlags |= PC_SYS_USED;
+	  }
+	}
+    COLOR_gapFilled = idx - COLOR_gapStart;    
   }
 }
 
 /***********************************************************************
  *           COLOR_BuildPrivateMap/COLOR_BuildSharedMap
  *
- * Executed only one time so we don't care about sloppiness,
- * the rest have to be very tight though...
+ * Allocate colorcells and initialize mapping tables.
  */
 static BOOL COLOR_BuildPrivateMap(CSPACE* cs)
 {
@@ -265,7 +294,7 @@ static BOOL COLOR_BuildPrivateMap(CSPACE* cs)
        color.pixel = i;
        XStoreColor(display, cs->colorMap, &color);
 
-       /* Set EGA mapping if color in the first or last eight */
+       /* Set EGA mapping if color is from the first or last eight */
 
        if (i < 8)
            COLOR_mapEGAPixel[i] = color.pixel;
@@ -287,8 +316,10 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
    unsigned long        sysPixel[NB_RESERVED_COLORS];
    unsigned long*	pixDynMapping = NULL;
    unsigned long	plane_masks[1];
-   int			i, j;
+   int			i, j, warn = 0;
    int			color_ini_max = 256;
+   int			diff, r, g, b, max = 256, bp = 0, wp = 1;
+   int			step = 1;
 
    /* read "AllocSystemColors" from wine.conf */
 
@@ -309,10 +340,46 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
         color.flags = DoRed | DoGreen | DoBlue;
 
         if (!XAllocColor( display, cSpace.colorMap, &color ))
-           { 
-             fprintf(stderr, "Warning: Not enough free colors for system palette.\n" );
-             color.pixel = color.red = color.green = color.blue = 0;
-           }
+        { 
+	     XColor	best, c;
+	     
+             if( !warn++ ) 
+	     {
+		  dprintf_palette(stddeb, "Not enough colors for the full system palette.\n");
+
+	          bp = BlackPixel(display, DefaultScreen(display));
+	          wp = WhitePixel(display, DefaultScreen(display));
+
+	          max = (0xffffffff)>>(32 - screenDepth);
+	          if( max > 256 ) 
+	          {
+	  	      step = max/256;
+		      max = 256;
+	          }
+	     }
+
+	     /* reinit color (XAllocColor() may change it)
+	      * and map to the best shared colorcell */
+
+             color.red   = __sysPalTemplate[i].peRed * 65535 / 255;
+             color.green = __sysPalTemplate[i].peGreen * 65535 / 255;
+             color.blue  = __sysPalTemplate[i].peBlue * 65535 / 255;
+
+	     best.pixel = best.red = best.green = best.blue = 0;
+	     for( c.pixel = 0, diff = 0x7fffffff; c.pixel < max; c.pixel += step )
+	     {
+		XQueryColor(display, cSpace.colorMap, &c);
+		r = (c.red - color.red)>>8; 
+		g = (c.green - color.green)>>8; 
+		b = (c.blue - color.blue)>>8;
+		r = r*r + g*g + b*b;
+		if( r < diff ) { best = c; diff = r; }
+	     }
+
+	     if( XAllocColor(display, cSpace.colorMap, &best) )
+		 color.pixel = best.pixel;
+	     else color.pixel = (i < NB_RESERVED_COLORS/2)? bp : wp;
+        }
 
         sysPixel[i] = color.pixel;
 
@@ -326,6 +393,8 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
         else if (i >= NB_RESERVED_COLORS - 8 )
             COLOR_mapEGAPixel[i - (NB_RESERVED_COLORS-16)] = color.pixel;
      }
+
+   /* now allocate changeable set */
 
    if( !(cSpace.flags & COLOR_FIXED) )  
      {
@@ -389,12 +458,8 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
 
    dprintf_palette(stddeb,"Shared system palette uses %i colors.\n", cs->size);
 
-   /* Set gap to account for pixel shortage. It has to be right in the center
-    * of the system palette because otherwise raster ops get screwed.
-    * ( if we have 100 color palette and application does invert for pixel 1
-    *   it gets pixel 254 - far beyond our pathetic palette unless these 100
-    *   colors are mapped with the gap in the middle )
-    */
+   /* set gap to account for pixel shortage. It has to be right in the center
+    * of the system palette because otherwise raster ops get screwed. */
 
    if( cs->size >= 256 )
      { COLOR_gapStart = 256; COLOR_gapEnd = -1; }
@@ -407,7 +472,7 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
 
    COLOR_sysPal = (PALETTEENTRY*)xmalloc(sizeof(PALETTEENTRY)*256);
 
-   /* Setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
+   /* setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
 
    if( screenDepth <= 8 )
      {
@@ -448,7 +513,7 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
       dprintf_palette(stddeb,"\tindex %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
 
       if( COLOR_PixelToPalette )
-        COLOR_PixelToPalette[COLOR_PaletteToPixel[i]] = i;
+          COLOR_PixelToPalette[COLOR_PaletteToPixel[i]] = i;
    }
 
    if( pixDynMapping ) free(pixDynMapping);
@@ -459,7 +524,7 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
 /***********************************************************************
  *           COLOR_InitPalette
  *
- * Create the system palette and initialize mapping tables.
+ * Create the system palette.
  */
 static HPALETTE16 COLOR_InitPalette(void)
 {
@@ -482,10 +547,9 @@ static HPALETTE16 COLOR_InitPalette(void)
     /* Build free list */
 
     if( COLOR_firstFree != -1 )
-    {
 	COLOR_FormatSystemPalette();
-        COLOR_FillDefaultColors();
-    }
+
+    COLOR_FillDefaultColors();
 
     /* create default palette (20 system colors) */
 
@@ -517,7 +581,7 @@ static HPALETTE16 COLOR_InitPalette(void)
  *
  * Calculate conversion parameters for direct mapped visuals
  */
-void COLOR_Computeshifts(unsigned long maskbits, int *shift, int *max)
+static void COLOR_Computeshifts(unsigned long maskbits, int *shift, int *max)
 {
     int i;
 
@@ -597,6 +661,18 @@ HPALETTE16 COLOR_Init(void)
     return COLOR_InitPalette();
 }
 
+/***********************************************************************
+ *           COLOR_Cleanup
+ *
+ * Free external colors we grabbed in the FillDefaultPalette()
+ */
+void COLOR_Cleanup(void)
+{
+  if( COLOR_gapFilled )
+      XFreeColors(display, cSpace.colorMap, 
+		  (unsigned long*)(COLOR_PaletteToPixel + COLOR_gapStart), 
+		  COLOR_gapFilled, 0);
+}
 
 /***********************************************************************
  *           COLOR_IsSolid
@@ -736,25 +812,25 @@ COLORREF COLOR_ToLogical(int pixel)
     /* check for hicolor visuals first */
 
     if ( cSpace.flags & COLOR_FIXED && !COLOR_Graymax )
-       {
+    {
          color.red = (pixel >> COLOR_Redshift) & COLOR_Redmax;
          color.green = (pixel >> COLOR_Greenshift) & COLOR_Greenmax;
          color.blue = (pixel >> COLOR_Blueshift) & COLOR_Bluemax;
-       }
-    else if ((screenDepth <= 8) && (pixel < 256) && 
-	    !(cSpace.flags & (COLOR_VIRTUAL | COLOR_FIXED)) )
-        return  ( *(COLORREF*)(COLOR_sysPal + 
-		  ((COLOR_PixelToPalette)?COLOR_PixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
-    else
-       {
-         color.pixel = pixel;
-         XQueryColor(display, cSpace.colorMap, &color);
-         return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
-       }
+         return RGB((color.red * 255)/COLOR_Redmax,
+                    (color.green * 255)/COLOR_Greenmax,
+                    (color.blue * 255)/COLOR_Bluemax);
+    }
 
-    return RGB((color.red * 255)/COLOR_Redmax,
-               (color.green * 255)/COLOR_Greenmax,
-               (color.blue * 255)/COLOR_Bluemax);
+    /* check if we can bypass X */
+
+    if ((screenDepth <= 8) && (pixel < 256) && 
+       !(cSpace.flags & (COLOR_VIRTUAL | COLOR_FIXED)) )
+         return  ( *(COLORREF*)(COLOR_sysPal + 
+		   ((COLOR_PixelToPalette)?COLOR_PixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
+
+    color.pixel = pixel;
+    XQueryColor(display, cSpace.colorMap, &color);
+    return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
 }
 
 

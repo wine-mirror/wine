@@ -205,7 +205,7 @@ HMETAFILE16 CloseMetaFile(HDC16 hdc)
 
     if (!MF_MetaParam0(dc, META_EOF))
     {
-        DeleteDC( hdc );
+        DeleteDC32( hdc );
 	return 0;
     }	
 
@@ -215,12 +215,12 @@ HMETAFILE16 CloseMetaFile(HDC16 hdc)
 	mh->mtNoParameters = 0;
         if (_llseek(hFile, 0L, 0) == -1)
         {
-            DeleteDC( hdc );
+            DeleteDC32( hdc );
             return 0;
         }
         if (_lwrite32(hFile, (char *)mh, MFHEADERSIZE) == -1)
         {
-            DeleteDC( hdc );
+            DeleteDC32( hdc );
             return 0;
         }
         _lclose(hFile);
@@ -229,7 +229,7 @@ HMETAFILE16 CloseMetaFile(HDC16 hdc)
     hmf = physDev->hMetafile;
     GlobalUnlock16( hmf );
     physDev->hMetafile = 0;  /* So it won't be deleted */
-    DeleteDC( hdc );
+    DeleteDC32( hdc );
     return hmf;
 }
 
@@ -409,27 +409,27 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SETBKMODE:
-	SetBkMode(hdc, *(mr->rdParam));
+	SetBkMode16(hdc, *(mr->rdParam));
 	break;
 
     case META_SETMAPMODE:
-	SetMapMode(hdc, *(mr->rdParam));
+	SetMapMode16(hdc, *(mr->rdParam));
 	break;
 
     case META_SETROP2:
-	SetROP2(hdc, *(mr->rdParam));
+	SetROP216(hdc, *(mr->rdParam));
 	break;
 
     case META_SETRELABS:
-	SetRelAbs(hdc, *(mr->rdParam));
+	SetRelAbs16(hdc, *(mr->rdParam));
 	break;
 
     case META_SETPOLYFILLMODE:
-	SetPolyFillMode(hdc, *(mr->rdParam));
+	SetPolyFillMode16(hdc, *(mr->rdParam));
 	break;
 
     case META_SETSTRETCHBLTMODE:
-	SetStretchBltMode(hdc, *(mr->rdParam));
+	SetStretchBltMode16(hdc, *(mr->rdParam));
 	break;
 
     case META_SETTEXTCOLOR:
@@ -528,7 +528,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SAVEDC:
-	SaveDC(hdc);
+	SaveDC32(hdc);
 	break;
 
     case META_SETPIXEL:
@@ -561,7 +561,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_RESTOREDC:
-	RestoreDC(hdc, *(mr->rdParam));
+	RestoreDC32(hdc, *(mr->rdParam));
 	break;
 
     case META_SELECTOBJECT:
@@ -622,7 +622,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SETTEXTALIGN:
-       	SetTextAlign(hdc, *(mr->rdParam));
+       	SetTextAlign16(hdc, *(mr->rdParam));
 	break;
 
     case META_SELECTPALETTE:
@@ -698,7 +698,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 
     case META_STRETCHBLT:
       {
-       HDC16 hdcSrc=CreateCompatibleDC(hdc);
+       HDC16 hdcSrc=CreateCompatibleDC16(hdc);
        HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[10], /*Width */
                                       mr->rdParam[11], /*Height*/
                                       mr->rdParam[13], /*Planes*/
@@ -710,13 +710,13 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 		    hdcSrc,mr->rdParam[5],mr->rdParam[4],
 		    mr->rdParam[3],mr->rdParam[2],
 		    MAKELONG(mr->rdParam[0],mr->rdParam[1]));
-       DeleteDC(hdcSrc);		    
+       DeleteDC32(hdcSrc);		    
       }
       break;
 
     case META_BITBLT:            /* <-- not yet debugged */
       {
-       HDC16 hdcSrc=CreateCompatibleDC(hdc);
+       HDC16 hdcSrc=CreateCompatibleDC16(hdc);
        HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[7]/*Width */,mr->rdParam[8]/*Height*/,
                             mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
                             (LPSTR)&mr->rdParam[12]/*bits*/);
@@ -725,7 +725,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
                 mr->rdParam[4],mr->rdParam[3],
                 hdcSrc, mr->rdParam[2],mr->rdParam[1],
                 MAKELONG(0,mr->rdParam[0]));
-       DeleteDC(hdcSrc);		    
+       DeleteDC32(hdcSrc);		    
       }
       break;
 

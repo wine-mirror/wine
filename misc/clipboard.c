@@ -17,12 +17,12 @@
 #include <X11/Xatom.h>
 #include "windows.h"
 #include "win.h"
+#include "heap.h"
 #include "message.h"
 #include "clipboard.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "string32.h"
 
 #define  CF_REGFORMATBASE 	0xC000
 
@@ -391,9 +391,9 @@ BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
   if( lpstrT )
   {
     if( lpSource->wFormatID == CF_TEXT )
-	AnsiToOemBuff(lpstrS, lpstrT, size);
+	CharToOemBuff32A(lpstrS, lpstrT, size);
     else
-	OemToAnsiBuff(lpstrS, lpstrT, size);
+	OemToCharBuff32A(lpstrS, lpstrT, size);
     dprintf_clipboard(stddeb,"\tgot %s\n", lpstrT);
     return TRUE;
   }
@@ -585,11 +585,9 @@ UINT32 RegisterClipboardFormat32A( LPCSTR formatName )
  */
 UINT32 RegisterClipboardFormat32W( LPCWSTR formatName )
 {
-    LPSTR aFormat;
-    UINT32 ret;
-    aFormat = STRING32_DupUniToAnsi(formatName);
-    ret = RegisterClipboardFormat32A(aFormat);
-    free(aFormat);
+    LPSTR aFormat = HEAP_strdupWtoA( GetProcessHeap(), 0, formatName );
+    UINT32 ret = RegisterClipboardFormat32A( aFormat );
+    HeapFree( GetProcessHeap(), 0, aFormat );
     return ret;
 }
 

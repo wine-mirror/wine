@@ -28,11 +28,11 @@
 #include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
+#include "heap.h"
 #include "msdos.h"
 #include "options.h"
 #include "task.h"
 #include "xmalloc.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -529,7 +529,7 @@ BOOL16 GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpaceA   (KERNEL32.206)
+ *           GetDiskFreeSpace32A   (KERNEL32.206)
  */
 BOOL32 GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
                             LPDWORD sector_bytes, LPDWORD free_clusters,
@@ -562,7 +562,7 @@ BOOL32 GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpaceW   (KERNEL32.207)
+ *           GetDiskFreeSpace32W   (KERNEL32.207)
  */
 BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
                             LPDWORD sector_bytes, LPDWORD free_clusters,
@@ -571,10 +571,10 @@ BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
     LPSTR xroot;
     BOOL ret;
 
-    xroot = STRING32_DupUniToAnsi(root);
+    xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
     ret = GetDiskFreeSpace32A( xroot,cluster_sectors, sector_bytes,
                                free_clusters, total_clusters );
-    free( xroot );
+    HeapFree( GetProcessHeap(), 0, xroot );
     return ret;
 }
 
@@ -625,11 +625,9 @@ UINT32 GetDriveType32A( LPCSTR root )
  */
 UINT32 GetDriveType32W( LPCWSTR root )
 {
-    LPSTR xpath=STRING32_DupUniToAnsi(root);
-    UINT32 ret;
-
-    ret = GetDriveType32A(xpath);
-    free(xpath);
+    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
+    UINT32 ret = GetDriveType32A( xpath );
+    HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
 
@@ -669,12 +667,10 @@ UINT32 GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
  */
 UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
 {
-    LPSTR xpath=(char*)xmalloc(buflen+1);
-    UINT32 ret;
-
-    ret = GetCurrentDirectory32A(buflen,xpath);
-    STRING32_AnsiToUni(buf,xpath);
-    free(xpath);
+    LPSTR xpath = HeapAlloc( GetProcessHeap(), 0, buflen+1 );
+    UINT32 ret = GetCurrentDirectory32A( buflen, xpath );
+    lstrcpyAtoW( buf, xpath );
+    HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
 
@@ -715,10 +711,9 @@ BOOL32 SetCurrentDirectory32A( LPCSTR dir )
  */
 BOOL32 SetCurrentDirectory32W( LPCWSTR dirW)
 {
-    LPSTR dir = STRING32_DupUniToAnsi(dirW);
-    BOOL32  res = SetCurrentDirectory32A(dir);
-    
-    free(dir);
+    LPSTR dir = HEAP_strdupWtoA( GetProcessHeap(), 0, dirW );
+    BOOL32 res = SetCurrentDirectory32A( dir );
+    HeapFree( GetProcessHeap(), 0, dir );
     return res;
 }
 
@@ -831,19 +826,19 @@ BOOL32 GetVolumeInformation32W( LPCWSTR root, LPWSTR label, DWORD label_len,
                                 DWORD *serial, DWORD *filename_len,
                                 DWORD *flags, LPWSTR fsname, DWORD fsname_len)
 {
-    LPSTR xroot    = root?STRING32_DupUniToAnsi(root):NULL;
-    LPSTR xvolname = label?(char*)xmalloc( label_len ):NULL;
-    LPSTR xfsname  = fsname?(char*)xmalloc( fsname_len ):NULL;
+    LPSTR xroot    = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
+    LPSTR xvolname = label ? HeapAlloc(GetProcessHeap(),0,label_len) : NULL;
+    LPSTR xfsname  = fsname ? HeapAlloc(GetProcessHeap(),0,fsname_len) : NULL;
     BOOL32 ret = GetVolumeInformation32A( xroot, xvolname, label_len, serial,
                                           filename_len, flags, xfsname,
                                           fsname_len );
     if (ret)
     {
-        if (label) STRING32_AnsiToUni( label, xvolname );
-        if (fsname) STRING32_AnsiToUni( fsname, xfsname );
+        if (label) lstrcpyAtoW( label, xvolname );
+        if (fsname) lstrcpyAtoW( fsname, xfsname );
     }
-    if (xroot) free(xroot);
-    if (xvolname) free(xvolname);
-    if (xfsname) free(xfsname);
+    HeapFree( GetProcessHeap(), 0, xroot );
+    HeapFree( GetProcessHeap(), 0, xvolname );
+    HeapFree( GetProcessHeap(), 0, xfsname );
     return ret;
 }

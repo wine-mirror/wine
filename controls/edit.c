@@ -1313,8 +1313,8 @@ static UINT EDIT_PaintText(WND *wndPtr, HDC32 hdc, INT x, INT y, UINT line, UINT
 
 	if (!count)
 		return 0;
-	BkColor = GetBkColor(hdc);
-	TextColor = GetTextColor(hdc);
+	BkColor = GetBkColor32(hdc);
+	TextColor = GetTextColor32(hdc);
 	if (rev) {
 		SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
 		SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));

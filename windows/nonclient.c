@@ -436,20 +436,20 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
     RECT16 rect;
-    HDC16 hdcMem;
-    HBITMAP16 hbitmap;
+    HDC32 hdcMem;
+    HBITMAP32 hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      hdcMem = CreateCompatibleDC( hdc );
+      hdcMem = CreateCompatibleDC32( hdc );
       hbitmap = SelectObject32( hdcMem, hbitmapClose );
       BitBlt32(hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
                hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
                down ? NOTSRCCOPY : SRCCOPY );
       SelectObject32( hdcMem, hbitmap );
-      DeleteDC( hdcMem );
+      DeleteDC32( hdcMem );
     }
 }
 
@@ -649,7 +649,7 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
     {
 	if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
 	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
-	SetBkMode( hdc, TRANSPARENT );
+	SetBkMode32( hdc, TRANSPARENT );
 	DrawText16( hdc, buffer, -1, &r,
                     DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
     }

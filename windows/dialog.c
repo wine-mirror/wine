@@ -14,7 +14,6 @@
 #include "heap.h"
 #include "win.h"
 #include "ldt.h"
-#include "string32.h"
 #include "user.h"
 #include "winproc.h"
 #include "message.h"
@@ -73,7 +72,7 @@ BOOL32 DIALOG_Init()
 
     if (!(hdc = CreateDC16( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
     GetTextMetrics16( hdc, &tm );
-    DeleteDC( hdc );
+    DeleteDC32( hdc );
     xBaseUnit = tm.tmAveCharWidth;
     yBaseUnit = tm.tmHeight;
 
@@ -174,12 +173,12 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
     {
         switch(GET_WORD(p+1))
         {
-            case 0x80: STRING32_AnsiToUni( buffer, "BUTTON" ); break;
-            case 0x81: STRING32_AnsiToUni( buffer, "EDIT" ); break;
-            case 0x82: STRING32_AnsiToUni( buffer, "STATIC" ); break;
-            case 0x83: STRING32_AnsiToUni( buffer, "LISTBOX" ); break;
-            case 0x84: STRING32_AnsiToUni( buffer, "SCROLLBAR" ); break;
-            case 0x85: STRING32_AnsiToUni( buffer, "COMBOBOX" ); break;
+            case 0x80: lstrcpyAtoW( buffer, "Button" ); break;
+            case 0x81: lstrcpyAtoW( buffer, "Edit" ); break;
+            case 0x82: lstrcpyAtoW( buffer, "Static" ); break;
+            case 0x83: lstrcpyAtoW( buffer, "ListBox" ); break;
+            case 0x84: lstrcpyAtoW( buffer, "ScrollBar" ); break;
+            case 0x85: lstrcpyAtoW( buffer, "ComboBox" ); break;
             default:   buffer[0] = '\0'; break;
         }
         info->className = (LPCSTR)buffer;
@@ -653,9 +652,9 @@ HWND32 CreateDialogParam32A( HINSTANCE32 hInst, LPCSTR name,
 {
     if (HIWORD(name))
     {
-        LPWSTR str = STRING32_DupAnsiToUni( name );
+        LPWSTR str = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
         HWND32 hwnd = CreateDialogParam32W( hInst, str, owner, dlgProc, param);
-        free( str );
+        HeapFree( GetProcessHeap(), 0, str );
         return hwnd;
     }
     return CreateDialogParam32W( hInst, (LPCWSTR)name, owner, dlgProc, param );
@@ -1599,10 +1598,9 @@ INT32 DlgDirList32W( HWND32 hDlg, LPCWSTR spec, INT32 idLBox, INT32 idStatic,
                      UINT32 attrib )
 {
     INT32 ret;
-    LPSTR specA = NULL;
-    if (spec) specA = STRING32_DupUniToAnsi(spec);
+    LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
     ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic, attrib, FALSE );
-    if (specA) free( specA );
+    HeapFree( GetProcessHeap(), 0, specA );
     return ret;
 }
 
@@ -1634,9 +1632,8 @@ INT32 DlgDirListComboBox32W( HWND32 hDlg, LPCWSTR spec, INT32 idCBox,
                              INT32 idStatic, UINT32 attrib )
 {
     INT32 ret;
-    LPSTR specA = NULL;
-    if (spec) specA = STRING32_DupUniToAnsi(spec);
+    LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
     ret = DIALOG_DlgDirList( hDlg, specA, idCBox, idStatic, attrib, FALSE );
-    if (specA) free( specA );
+    HeapFree( GetProcessHeap(), 0, specA );
     return ret;
 }

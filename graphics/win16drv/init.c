@@ -61,8 +61,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pLineTo */
     NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrgEx */
-    NULL,                            /* pOffsetWindowOrgEx */
+    NULL,                            /* pOffsetViewportOrg (optional) */
+    NULL,                            /* pOffsetWindowOrg (optional) */
     NULL,                            /* pPaintRgn */
     NULL,                            /* pPatBlt */
     NULL,                            /* pPie */
@@ -74,8 +74,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */
-    NULL,                            /* pScaleViewportExtEx */
-    NULL,                            /* pScaleWindowExtEx */
+    NULL,                            /* pScaleViewportExt (optional) */
+    NULL,                            /* pScaleWindowExt (optional) */
     NULL,                            /* pSelectClipRgn */
     NULL,                            /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -83,7 +83,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
-    NULL,                            /* pSetMapMode */
+    NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
@@ -94,10 +94,10 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetTextCharacterExtra */
     NULL,                            /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
-    NULL,                            /* pSetViewportExtEx */
-    NULL,                            /* pSetViewportOrgEx */
-    NULL,                            /* pSetWindowExtEx */
-    NULL,                            /* pSetWindowOrgEx */
+    NULL,                            /* pSetViewportExt (optional) */
+    NULL,                            /* pSetViewportOrg (optional) */
+    NULL,                            /* pSetWindowExt (optional) */
+    NULL,                            /* pSetWindowOrg (optional) */
     NULL,                            /* pStretchBlt */
     NULL,                            /* pStretchDIBits */
     NULL                             /* pTextOut */

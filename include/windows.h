@@ -4211,14 +4211,17 @@ INT16      FlushComm(INT16,INT16);
 WORD       FreeSelector(WORD);
 HANDLE16   GetAtomHandle(ATOM);
 DWORD      GetBitmapDimension(HBITMAP16);
+DWORD      GetBrushOrg(HDC16);
 HANDLE16   GetCodeHandle(FARPROC16);
 INT16      GetCommError(INT16,LPCOMSTAT);
 UINT16     GetCommEventMask(INT16,UINT16);
 VOID       GetCodeInfo(FARPROC16,LPVOID);
 HANDLE16   GetCurrentPDB(void);
+DWORD      GetCurrentPosition(HDC16);
 HTASK16    GetCurrentTask(void);
 DWORD      GetDCHook(HDC16,FARPROC16*);
 DWORD      GetDCOrg(HDC16);
+HDC16      GetDCState(HDC16);
 HWND16     GetDesktopHwnd(void);
 HMODULE16  GetExePtr(HANDLE16);
 WORD       GetExeVersion(void);
@@ -4230,6 +4233,11 @@ DWORD      GetSelectorBase(WORD);
 DWORD      GetSelectorLimit(WORD);
 HINSTANCE16 GetTaskDS(void);
 HQUEUE16   GetTaskQueue(HTASK16);
+DWORD      GetTextExtent(HDC16,LPCSTR,INT16);
+DWORD      GetViewportExt(HDC16);
+DWORD      GetViewportOrg(HDC16);
+DWORD      GetWindowExt(HDC16);
+DWORD      GetWindowOrg(HDC16);
 DWORD      GlobalDOSAlloc(DWORD);
 WORD       GlobalDOSFree(WORD);
 void       GlobalFreeAll(HGLOBAL16);
@@ -4239,6 +4247,7 @@ VOID       GlobalNotify(FARPROC16);
 WORD       GlobalPageLock(HGLOBAL16);
 WORD       GlobalPageUnlock(HGLOBAL16);
 INT16      InitApp(HINSTANCE16);
+HRGN16     InquireVisRgn(HDC16);
 INT16      IntersectVisRect(HDC16,INT16,INT16,INT16,INT16);
 BOOL16     IsGDIObject(HGDIOBJ16);
 BOOL16     IsSharedSelector(HANDLE16);
@@ -4266,6 +4275,8 @@ DWORD      SetBitmapDimension(HBITMAP16,INT16,INT16);
 DWORD      SetBrushOrg(HDC16,INT16,INT16);
 UINT16*    SetCommEventMask(INT16,UINT16);
 BOOL16     SetDCHook(HDC16,FARPROC16,DWORD);
+DWORD      SetDCOrg(HDC16,INT16,INT16);
+VOID       SetDCState(HDC16,HDC16);
 BOOL16     SetDeskPattern(void);
 VOID       SetPriority(HTASK16,INT16);
 WORD       SetSelectorBase(WORD,DWORD);
@@ -4444,8 +4455,6 @@ COLORREF   SetBkColor(HDC32,COLORREF);
 BOOL16     SetCaretBlinkTime(UINT32);
 BOOL16     SetCaretPos(INT32,INT32);
 WORD       SetClassWord(HWND32,INT32,WORD);
-INT16      SetDIBits(HDC32,HBITMAP32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-INT16      SetDIBitsToDevice(HDC32,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
 VOID       SetLastError(DWORD);
 VOID       SetLastErrorEx(DWORD,DWORD);
 VOID       SetRectRgn(HRGN32,INT32,INT32,INT32,INT32);
@@ -4474,6 +4483,14 @@ BOOL32     AdjustWindowRectEx32(LPRECT32,DWORD,BOOL32,DWORD);
 HGLOBAL16  AllocResource16(HINSTANCE16,HRSRC16,DWORD);
 HGLOBAL32  AllocResource32(HINSTANCE32,HRSRC32,DWORD);
 #define    AllocResource WINELIB_NAME(AllocResource)
+INT16      AnsiToOem16(LPCSTR,LPSTR);
+#define    AnsiToOem32A CharToOem32A
+#define    AnsiToOem32W CharToOem32W
+#define    AnsiToOem WINELIB_NAME_AW(AnsiToOem)
+VOID       AnsiToOemBuff16(LPCSTR,LPSTR,UINT16);
+#define    AnsiToOemBuff32A CharToOemBuff32A
+#define    AnsiToOemBuff32W CharToOemBuff32W
+#define    AnsiToOemBuff WINELIB_NAME_AW(AnsiToOemBuff)
 BOOL16     AppendMenu16(HMENU16,UINT16,UINT16,SEGPTR);
 BOOL32     AppendMenu32A(HMENU32,UINT32,UINT32,LPCSTR);
 BOOL32     AppendMenu32W(HMENU32,UINT32,UINT32,LPCWSTR);
@@ -4529,10 +4546,10 @@ LPWSTR     CharUpper32W(LPWSTR);
 DWORD      CharUpperBuff32A(LPSTR,DWORD);
 DWORD      CharUpperBuff32W(LPWSTR,DWORD);
 #define    CharUpperBuff WINELIB_NAME_AW(CharUpperBuff)
-BOOL32     CharToOem32A(LPSTR,LPSTR);
+BOOL32     CharToOem32A(LPCSTR,LPSTR);
 BOOL32     CharToOem32W(LPCWSTR,LPSTR);
 #define    CharToOem WINELIB_NAME_AW(CharToOem)
-BOOL32     CharToOemBuff32A(LPSTR,LPSTR,DWORD);
+BOOL32     CharToOemBuff32A(LPCSTR,LPSTR,DWORD);
 BOOL32     CharToOemBuff32W(LPCWSTR,LPSTR,DWORD);
 #define    CharToOemBuff WINELIB_NAME_AW(CharToOemBuff)
 HWND16     ChildWindowFromPoint16(HWND16,POINT16);
@@ -4575,6 +4592,9 @@ HBITMAP32  CreateBitmapIndirect32(const BITMAP32*);
 HBRUSH16   CreateBrushIndirect16(const LOGBRUSH16*);
 HBRUSH32   CreateBrushIndirect32(const LOGBRUSH32*);
 #define    CreateBrushIndirect WINELIB_NAME(CreateBrushIndirect)
+HDC16      CreateCompatibleDC16(HDC16);
+HDC32      CreateCompatibleDC32(HDC32);
+#define    CreateCompatibleDC WINELIB_NAME(CreateCompatibleDC)
 HDC16      CreateDC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
 HDC32      CreateDC32A(LPCSTR,LPCSTR,LPCSTR,const DEVMODE32A*);
 HDC32      CreateDC32W(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODE32W*);
@@ -4599,6 +4619,11 @@ HWND16     CreateDialogParam16(HINSTANCE16,SEGPTR,HWND16,DLGPROC16,LPARAM);
 HWND32     CreateDialogParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC32,LPARAM);
 HWND32     CreateDialogParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC32,LPARAM);
 #define    CreateDialogParam WINELIB_NAME_AW(CreateDialogParam)
+HBITMAP16  CreateDIBitmap16(HDC16,const BITMAPINFOHEADER*,DWORD,LPCVOID,
+                            const BITMAPINFO*,UINT16);
+HBITMAP32  CreateDIBitmap32(HDC32,const BITMAPINFOHEADER*,DWORD,LPCVOID,
+                            const BITMAPINFO*,UINT32);
+#define    CreateDIBitmap WINELIB_NAME(CreateDIBitmap)
 HBRUSH16   CreateDIBPatternBrush16(HGLOBAL16,UINT16);
 HBRUSH32   CreateDIBPatternBrush32(HGLOBAL32,UINT32);
 #define    CreateDIBPatternBrush WINELIB_NAME(CreateDIBPatternBrush)
@@ -4626,6 +4651,10 @@ HFONT32    CreateFontIndirect32W(const LOGFONT32W*);
 HBRUSH16   CreateHatchBrush16(INT16,COLORREF);
 HBRUSH32   CreateHatchBrush32(INT32,COLORREF);
 #define    CreateHatchBrush WINELIB_NAME(CreateHatchBrush)
+HDC16      CreateIC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
+HDC32      CreateIC32A(LPCSTR,LPCSTR,LPCSTR,const DEVMODE32A*);
+HDC32      CreateIC32W(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODE32W*);
+#define    CreateIC WINELIB_NAME_AW(CreateIC)
 HDC16      CreateMetaFile16(LPCSTR);
 HDC32      CreateMetaFile32A(LPCSTR);
 HDC32      CreateMetaFile32W(LPCWSTR);
@@ -4691,6 +4720,9 @@ LRESULT    DefWindowProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    DefWindowProc32A(HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    DefWindowProc32W(HWND32,UINT32,WPARAM32,LPARAM);
 #define    DefWindowProc WINELIB_NAME_AW(DefWindowProc)
+BOOL16     DeleteDC16(HDC16);
+BOOL32     DeleteDC32(HDC32);
+#define    DeleteDC WINELIB_NAME(DeleteDC)
 BOOL16     DeleteFile16(LPCSTR);
 BOOL32     DeleteFile32A(LPCSTR);
 BOOL32     DeleteFile32W(LPCWSTR);
@@ -4863,6 +4895,12 @@ BOOL32     GetBitmapDimensionEx32(HBITMAP32,LPSIZE32);
 BOOL16     GetBrushOrgEx16(HDC16,LPPOINT16);
 BOOL32     GetBrushOrgEx32(HDC32,LPPOINT32);
 #define    GetBrushOrgEx WINELIB_NAME(GetBrushOrgEx)
+COLORREF   GetBkColor16(HDC16);
+COLORREF   GetBkColor32(HDC32);
+#define    GetBkColor WINELIB_NAME(GetBkColor)
+INT16      GetBkMode16(HDC16);
+INT32      GetBkMode32(HDC32);
+#define    GetBkMode WINELIB_NAME(GetBkMode)
 HWND16     GetCapture16(void);
 HWND32     GetCapture32(void);
 #define    GetCapture WINELIB_NAME(GetCapture)
@@ -4872,6 +4910,14 @@ UINT32     GetCaretBlinkTime32(void);
 VOID       GetCaretPos16(LPPOINT16);
 BOOL32     GetCaretPos32(LPPOINT32);
 #define    GetCaretPos WINELIB_NAME(GetCaretPos)
+BOOL16     GetCharABCWidths16(HDC16,UINT16,UINT16,LPABC16);
+BOOL32     GetCharABCWidths32A(HDC32,UINT32,UINT32,LPABC32);
+BOOL32     GetCharABCWidths32W(HDC32,UINT32,UINT32,LPABC32);
+#define    GetCharABCWidths WINELIB_NAME_AW(GetCharABCWidths)
+BOOL16     GetCharWidth16(HDC16,UINT16,UINT16,LPINT16);
+BOOL32     GetCharWidth32A(HDC32,UINT32,UINT32,LPINT32);
+BOOL32     GetCharWidth32W(HDC32,UINT32,UINT32,LPINT32);
+#define    GetCharWidth WINELIB_NAME_AW(GetCharWidth)
 BOOL16     GetClassInfo16(HINSTANCE16,SEGPTR,WNDCLASS16 *);
 BOOL32     GetClassInfo32A(HINSTANCE32,LPCSTR,WNDCLASS32A *);
 BOOL32     GetClassInfo32W(HINSTANCE32,LPCWSTR,WNDCLASS32W *);
@@ -4922,6 +4968,9 @@ HDC32      GetDCEx32(HWND32,HRGN32,DWORD);
 HWND16     GetDesktopWindow16(void);
 HWND32     GetDesktopWindow32(void);
 #define    GetDesktopWindow WINELIB_NAME(GetDesktopWindow)
+INT16      GetDIBits16(HDC16,HBITMAP16,UINT16,UINT16,LPSTR,LPBITMAPINFO,UINT16);
+INT32      GetDIBits32(HDC32,HBITMAP32,UINT32,UINT32,LPSTR,LPBITMAPINFO,UINT32);
+#define    GetDIBits WINELIB_NAME(GetDIBits)
 BOOL16     GetDiskFreeSpace16(LPCSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 BOOL32     GetDiskFreeSpace32A(LPCSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 BOOL32     GetDiskFreeSpace32W(LPCWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
@@ -4963,6 +5012,9 @@ INT32      GetKeyNameText32W(LONG,LPWSTR,INT32);
 UINT32     GetLogicalDriveStrings32A(UINT32,LPSTR);
 UINT32     GetLogicalDriveStrings32W(UINT32,LPWSTR);
 #define    GetLogicalDriveStrings WINELIB_NAME_AW(GetLogicalDriveStrings)
+INT16      GetMapMode16(HDC16);
+INT32      GetMapMode32(HDC32);
+#define    GetMapMode WINELIB_NAME(GetMapMode)
 INT16      GetModuleFileName16(HINSTANCE16,LPSTR,INT16);
 DWORD      GetModuleFileName32A(HMODULE32,LPSTR,DWORD);
 DWORD      GetModuleFileName32W(HMODULE32,LPWSTR,DWORD);
@@ -4983,6 +5035,9 @@ HWND32     GetParent32(HWND32);
 COLORREF   GetPixel16(HDC16,INT16,INT16);
 COLORREF   GetPixel32(HDC32,INT32,INT32);
 #define    GetPixel WINELIB_NAME(GetPixel)
+INT16      GetPolyFillMode16(HDC16);
+INT32      GetPolyFillMode32(HDC32);
+#define    GetPolyFillMode WINELIB_NAME(GetPolyFillMode)
 UINT16     GetPrivateProfileInt16(LPCSTR,LPCSTR,INT16,LPCSTR);
 UINT32     GetPrivateProfileInt32A(LPCSTR,LPCSTR,INT32,LPCSTR);
 UINT32     GetPrivateProfileInt32W(LPCWSTR,LPCWSTR,INT32,LPCWSTR);
@@ -5006,9 +5061,15 @@ HANDLE16   GetProp16(HWND16,LPCSTR);
 HANDLE32   GetProp32A(HWND32,LPCSTR);
 HANDLE32   GetProp32W(HWND32,LPCWSTR);
 #define    GetProp WINELIB_NAME_AW(GetProp)
+INT16      GetRelAbs16(HDC16);
+INT32      GetRelAbs32(HDC32);
+#define    GetRelAbs WINELIB_NAME(GetRelAbs)
 INT16      GetRgnBox16(HRGN16,LPRECT16);
 INT32      GetRgnBox32(HRGN32,LPRECT32);
 #define    GetRgnBox WINELIB_NAME(GetRgnBox)
+INT16      GetROP216(HDC16);
+INT32      GetROP232(HDC32);
+#define    GetROP2 WINELIB_NAME(GetROP2)
 BOOL16     GetScrollInfo16(HWND16,INT16,LPSCROLLINFO);
 BOOL32     GetScrollInfo32(HWND32,INT32,LPSCROLLINFO);
 #define    GetScrollInfo WINELIB_NAME(GetScrollInfo)
@@ -5021,6 +5082,9 @@ BOOL32     GetScrollRange32(HWND32,INT32,LPINT32,LPINT32);
 HGDIOBJ16  GetStockObject16(INT16);
 HGDIOBJ32  GetStockObject32(INT32);
 #define    GetStockObject WINELIB_NAME(GetStockObject)
+INT16      GetStretchBltMode16(HDC16);
+INT32      GetStretchBltMode32(HDC32);
+#define    GetStretchBltMode WINELIB_NAME(GetStretchBltMode)
 HBRUSH16   GetSysColorBrush16(INT16);
 HBRUSH32   GetSysColorBrush32(INT32);
 #define    GetSysColorBrush WINELIB_NAME(GetSysColorBrush)
@@ -5038,6 +5102,15 @@ UINT32     GetTempFileName32W(LPCWSTR,LPCWSTR,UINT32,LPWSTR);
 UINT32     GetTempPath32A(UINT32,LPSTR);
 UINT32     GetTempPath32W(UINT32,LPWSTR);
 #define    GetTempPath WINELIB_NAME_AW(GetTempPath)
+UINT16     GetTextAlign16(HDC16);
+UINT32     GetTextAlign32(HDC32);
+#define    GetTextAlign WINELIB_NAME(GetTextAlign)
+INT16      GetTextCharacterExtra16(HDC16);
+INT32      GetTextCharacterExtra32(HDC32);
+#define    GetTextCharacterExtra WINELIB_NAME(GetTextCharacterExtra)
+COLORREF   GetTextColor16(HDC16);
+COLORREF   GetTextColor32(HDC32);
+#define    GetTextColor WINELIB_NAME(GetTextColor)
 BOOL16     GetTextExtentPoint16(HDC16,LPCSTR,INT16,LPSIZE16);
 BOOL32     GetTextExtentPoint32A(HDC32,LPCSTR,INT32,LPSIZE32);
 BOOL32     GetTextExtentPoint32W(HDC32,LPCWSTR,INT32,LPSIZE32);
@@ -5314,10 +5387,18 @@ BOOL32     MoveToEx32(HDC32,INT32,INT32,LPPOINT32);
 INT16      MulDiv16(INT16,INT16,INT16);
 INT32      MulDiv32(INT32,INT32,INT32);
 #define    MulDiv WINELIB_NAME(MulDiv)
-BOOL32     OemToChar32A(LPSTR,LPSTR);
+INT16      OemToAnsi16(LPCSTR,LPSTR);
+#define    OemToAnsi32A OemToChar32A
+#define    OemToAnsi32W OemToChar32W
+#define    OemToAnsi WINELIB_NAME_AW(OemToAnsi)
+VOID       OemToAnsiBuff16(LPCSTR,LPSTR,UINT16);
+#define    OemToAnsiBuff32A OemToCharBuff32A
+#define    OemToAnsiBuff32W OemToCharBuff32W
+#define    OemToAnsiBuff WINELIB_NAME_AW(OemToAnsiBuff)
+BOOL32     OemToChar32A(LPCSTR,LPSTR);
 BOOL32     OemToChar32W(LPCSTR,LPWSTR);
 #define    OemToChar WINELIB_NAME_AW(OemToChar)
-BOOL32     OemToCharBuff32A(LPSTR,LPSTR,DWORD);
+BOOL32     OemToCharBuff32A(LPCSTR,LPSTR,DWORD);
 BOOL32     OemToCharBuff32W(LPCSTR,LPWSTR,DWORD);
 #define    OemToCharBuff WINELIB_NAME_AW(OemToCharBuff)
 INT16      OffsetClipRgn16(HDC16,INT16,INT16);
@@ -5451,9 +5532,19 @@ BOOL16     RemoveDirectory16(LPCSTR);
 BOOL32     RemoveDirectory32A(LPCSTR);
 BOOL32     RemoveDirectory32W(LPCWSTR);
 #define    RemoveDirectory WINELIB_NAME_AW(RemoveDirectory)
+HDC16      ResetDC16(HDC16,const DEVMODE16 *);
+HDC32      ResetDC32A(HDC32,const DEVMODE32A *);
+HDC32      ResetDC32W(HDC32,const DEVMODE32W *);
+#define    ResetDC WINELIB_NAME_AW(ResetDC)
+BOOL16     RestoreDC16(HDC16,INT16);
+BOOL32     RestoreDC32(HDC32,INT32);
+#define    RestoreDC WINELIB_NAME(RestoreDC)
 BOOL16     RoundRect16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16);
 BOOL32     RoundRect32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32);
 #define    RoundRect WINELIB_NAME(RoundRect)
+INT16      SaveDC16(HDC16);
+INT32      SaveDC32(HDC32);
+#define    SaveDC WINELIB_NAME(SaveDC)
 BOOL16     ScaleViewportExtEx16(HDC16,INT16,INT16,INT16,INT16,LPSIZE16);
 BOOL32     ScaleViewportExtEx32(HDC32,INT32,INT32,INT32,INT32,LPSIZE32);
 #define    ScaleViewportExtEx WINELIB_NAME(ScaleViewportExtEx)
@@ -5493,6 +5584,9 @@ LRESULT    SendMessage32W(HWND32,UINT32,WPARAM32,LPARAM);
 BOOL16     SetBitmapDimensionEx16(HBITMAP16,INT16,INT16,LPSIZE16);
 BOOL32     SetBitmapDimensionEx32(HBITMAP32,INT32,INT32,LPSIZE32);
 #define    SetBitmapDimensionEx WINELIB_NAME(SetBitmapDimensionEx)
+INT16      SetBkMode16(HDC16,INT16);
+INT32      SetBkMode32(HDC32,INT32);
+#define    SetBkMode WINELIB_NAME(SetBkMode)
 HWND16     SetCapture16(HWND16);
 HWND32     SetCapture32(HWND32);
 #define    SetCapture WINELIB_NAME(SetCapture)
@@ -5509,6 +5603,14 @@ BOOL32     SetCommState32(INT32,LPDCB32);
 BOOL16     SetDeskWallPaper16(LPCSTR);
 BOOL32     SetDeskWallPaper32(LPCSTR);
 #define    SetDeskWallPaper WINELIB_NAME(SetDeskWallPaper)
+INT16      SetDIBits16(HDC16,HBITMAP16,UINT16,UINT16,LPCVOID,const BITMAPINFO*,UINT16);
+INT32      SetDIBits32(HDC32,HBITMAP32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
+#define    SetDIBits WINELIB_NAME(SetDIBits)
+INT16      SetDIBitsToDevice16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,
+                               UINT16,UINT16,LPCVOID,const BITMAPINFO*,UINT16);
+INT32      SetDIBitsToDevice32(HDC32,INT32,INT32,DWORD,DWORD,INT32,INT32,
+                               UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
+#define    SetDIBitsToDevice WINELIB_NAME(SetDIBitsToDevice)
 void       SetDlgItemInt16(HWND16,INT16,UINT16,BOOL16);
 void       SetDlgItemInt32(HWND32,INT32,UINT32,BOOL32);
 #define    SetDlgItemInt WINELIB_NAME(SetDlgItemInt)
@@ -5532,9 +5634,15 @@ UINT32     SetHandleCount32(UINT32);
 void       SetInternalWindowPos16(HWND16,UINT16,LPRECT16,LPPOINT16);
 void       SetInternalWindowPos32(HWND32,UINT32,LPRECT32,LPPOINT32);
 #define    SetInternalWindowPos WINELIB_NAME(SetInternalWindowPos)
+INT16      SetMapMode16(HDC16,INT16);
+INT32      SetMapMode32(HDC32,INT32);
+#define    SetMapMode WINELIB_NAME(SetMapMode)
 COLORREF   SetPixel16(HDC16,INT16,INT16,COLORREF);
 COLORREF   SetPixel32(HDC32,INT32,INT32,COLORREF);
 #define    SetPixel WINELIB_NAME(SetPixel)
+INT16      SetPolyFillMode16(HDC16,INT16);
+INT32      SetPolyFillMode32(HDC32,INT32);
+#define    SetPolyFillMode WINELIB_NAME(SetPolyFillMode)
 BOOL16     SetProp16(HWND16,LPCSTR,HANDLE16);
 BOOL32     SetProp32A(HWND32,LPCSTR,HANDLE32);
 BOOL32     SetProp32W(HWND32,LPCWSTR,HANDLE32);
@@ -5545,6 +5653,12 @@ void       SetRect32(LPRECT32,INT32,INT32,INT32,INT32);
 void       SetRectEmpty16(LPRECT16);
 void       SetRectEmpty32(LPRECT32);
 #define    SetRectEmpty WINELIB_NAME(SetRectEmpty)
+INT16      SetRelAbs16(HDC16,INT16);
+INT32      SetRelAbs32(HDC32,INT32);
+#define    SetRelAbs WINELIB_NAME(SetRelAbs)
+INT16      SetROP216(HDC16,INT16);
+INT32      SetROP232(HDC32,INT32);
+#define    SetROP2 WINELIB_NAME(SetROP2)
 INT16      SetScrollInfo16(HWND16,INT16,const SCROLLINFO*,BOOL16);
 INT32      SetScrollInfo32(HWND32,INT32,const SCROLLINFO*,BOOL32);
 #define    SetScrollInfo WINELIB_NAME(SetScrollInfo)
@@ -5554,12 +5668,24 @@ INT32      SetScrollPos32(HWND32,INT32,INT32,BOOL32);
 void       SetScrollRange16(HWND16,INT16,INT16,INT16,BOOL16);
 BOOL32     SetScrollRange32(HWND32,INT32,INT32,INT32,BOOL32);
 #define    SetScrollRange WINELIB_NAME(SetScrollRange)
+INT16      SetStretchBltMode16(HDC16,INT16);
+INT32      SetStretchBltMode32(HDC32,INT32);
+#define    SetStretchBltMode WINELIB_NAME(SetStretchBltMode)
 HWND16     SetSysModalWindow16(HWND16);
 #define    SetSysModalWindow32(hwnd) ((HWND32)0)
 #define    SetSysModalWindow WINELIB_NAME(SetSysModalWindow)
 UINT16     SetSystemTimer16(HWND16,UINT16,UINT16,TIMERPROC16);
 UINT32     SetSystemTimer32(HWND32,UINT32,UINT32,TIMERPROC32);
 #define    SetSystemTimer WINELIB_NAME(SetSystemTimer)
+UINT16     SetTextAlign16(HDC16,UINT16);
+UINT32     SetTextAlign32(HDC32,UINT32);
+#define    SetTextAlign WINELIB_NAME(SetTextAlign)
+INT16      SetTextCharacterExtra16(HDC16,INT16);
+INT32      SetTextCharacterExtra32(HDC32,INT32);
+#define    SetTextCharacterExtra WINELIB_NAME(SetTextCharacterExtra)
+INT16      SetTextJustification16(HDC16,INT16,INT16);
+BOOL32     SetTextJustification32(HDC32,INT32,INT32);
+#define    SetTextJustification WINELIB_NAME(SetTextJustification)
 UINT16     SetTimer16(HWND16,UINT16,UINT16,TIMERPROC16);
 UINT32     SetTimer32(HWND32,UINT32,UINT32,TIMERPROC32);
 #define    SetTimer WINELIB_NAME(SetTimer)
@@ -5734,6 +5860,8 @@ INT32      lstrncmp32A(LPCSTR,LPCSTR,INT32);
 INT32      lstrncmp32W(LPCWSTR,LPCWSTR,INT32);
 INT32      lstrncmpi32A(LPCSTR,LPCSTR,INT32);
 INT32      lstrncmpi32W(LPCWSTR,LPCWSTR,INT32);
+LPWSTR     lstrcpyAtoW(LPWSTR,LPCSTR);
+LPSTR      lstrcpyWtoA(LPSTR,LPCWSTR);
 LPWSTR     lstrcpynAtoW(LPWSTR,LPCSTR,INT32);
 LPSTR      lstrcpynWtoA(LPSTR,LPCWSTR,INT32);
 
@@ -5772,8 +5900,6 @@ BOOL       AnimatePalette(HPALETTE16,UINT,UINT,LPPALETTEENTRY);
 UINT       AnsiLowerBuff(LPSTR,UINT);
 SEGPTR     AnsiNext(SEGPTR);
 SEGPTR     AnsiPrev(SEGPTR,SEGPTR);
-INT        AnsiToOem(LPCSTR,LPSTR);
-void       AnsiToOemBuff(LPCSTR,LPSTR,UINT);
 UINT       AnsiUpperBuff(LPSTR,UINT);
 BOOL       AnyPopup(void);
 UINT       ArrangeIconicWindows(HWND);
@@ -5790,18 +5916,14 @@ int        ConvertRequest(HWND,LPKANJISTRUCT);
 HMETAFILE16 CopyMetaFile(HMETAFILE16,LPCSTR);
 INT        CountClipboardFormats(void);
 INT        CountVoiceNotes(INT);
-HDC16      CreateCompatibleDC(HDC16);
 HCURSOR16  CreateCursor(HINSTANCE16,INT,INT,INT,INT,const BYTE*,const BYTE*);
 HGLOBAL16  CreateCursorIconIndirect(HINSTANCE16,CURSORICONINFO*,const BYTE*,const BYTE*);
-HBITMAP16  CreateDIBitmap(HDC16,BITMAPINFOHEADER*,DWORD,LPVOID,BITMAPINFO*,UINT);
-HDC16      CreateIC(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
 HICON16    CreateIcon(HINSTANCE16,INT,INT,BYTE,BYTE,const BYTE*,const BYTE*);
 HMENU16    CreateMenu(void);
 HPALETTE16 CreatePalette(const LOGPALETTE*);
 HMENU16    CreatePopupMenu(void);
 HDWP16     DeferWindowPos(HDWP16,HWND,HWND,INT,INT,INT,INT,UINT);
 ATOM       DeleteAtom(ATOM);
-BOOL       DeleteDC(HDC16);
 BOOL       DeleteMenu(HMENU16,UINT,UINT);
 BOOL       DestroyCursor(HCURSOR16);
 BOOL       DestroyIcon(HICON16);
@@ -5834,21 +5956,13 @@ HWND       GetActiveWindow(void);
 DWORD      GetAspectRatioFilter(HDC16);
 int        GetAsyncKeyState(int);
 WORD       GetAtomName(ATOM,LPSTR,short);
-COLORREF   GetBkColor(HDC16);
-WORD       GetBkMode(HDC16);
-DWORD      GetBrushOrg(HDC16);
-BOOL       GetCharABCWidths(HDC16,UINT,UINT,LPABC16);
-BOOL       GetCharWidth(HDC16,WORD,WORD,LPINT16);
 HANDLE16   GetClipboardData(WORD);
 int        GetClipboardFormatName(WORD,LPSTR,short);
 HWND       GetClipboardOwner(void);
 HWND       GetClipboardViewer(void);
 HBRUSH16   GetControlBrush(HWND,HDC16,WORD);
-DWORD      GetCurrentPosition(HDC16);
 DWORD      GetCurrentTime(void);
 HCURSOR16  GetCursor(void);
-HDC16      GetDCState(HDC16);
-int        GetDIBits(HDC16,HBITMAP16,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
 SEGPTR     GetDOSEnvironment(void);
 int        GetDeviceCaps(HDC16,WORD);
 DWORD      GetDialogBaseUnits(void);
@@ -5865,7 +5979,6 @@ INT        GetKeyState(INT);
 void       GetKeyboardState(BYTE*);
 int        GetKeyboardType(int);
 HWND       GetLastActivePopup(HWND);
-WORD       GetMapMode(HDC16);
 HMENU16    GetMenu(HWND);
 DWORD      GetMenuCheckMarkDimensions(void);
 INT        GetMenuItemCount(HMENU16);
@@ -5885,13 +5998,9 @@ WORD       GetNearestPaletteIndex(HPALETTE16,DWORD);
 HWND       GetNextWindow(HWND,WORD);
 HWND       GetOpenClipboardWindow(void);
 WORD       GetPaletteEntries(HPALETTE16,WORD,WORD,LPPALETTEENTRY);
-WORD       GetPolyFillMode(HDC16);
 int        GetPriorityClipboardFormat(WORD*,short);
 DWORD      GetQueueStatus(UINT);
 BOOL       GetRasterizerCaps(LPRASTERIZER_STATUS,UINT);
-WORD       GetROP2(HDC16);
-WORD       GetRelAbs(HDC16);
-WORD       GetStretchBltMode(HDC16);
 HMENU16    GetSubMenu(HMENU16,short);
 HMENU16    GetSystemMenu(HWND,BOOL);
 int        GetSystemMetrics(WORD);
@@ -5899,20 +6008,12 @@ WORD       GetSystemPaletteEntries(HDC16,WORD,WORD,LPPALETTEENTRY);
 WORD       GetSystemPaletteUse(HDC16);
 DWORD      GetTabbedTextExtent(HDC16,LPSTR,int,int,LPINT16);
 BYTE       GetTempDrive(BYTE);
-WORD       GetTextAlign(HDC16);
-short      GetTextCharacterExtra(HDC16);
-COLORREF   GetTextColor(HDC16);
-DWORD      GetTextExtent(HDC16,LPCSTR,short);
 LPINT16    GetThresholdEvent(void);
 int        GetThresholdStatus(void);
 HWND       GetTopWindow(HWND);
-DWORD      GetViewportExt(HDC16);
-DWORD      GetViewportOrg(HDC16);
 BOOL       GetWinDebugInfo(LPWINDEBUGINFO,UINT);
 LONG       GetWinFlags(void);
 HWND       GetWindow(HWND,WORD);
-DWORD      GetWindowExt(HDC16);
-DWORD      GetWindowOrg(HDC16);
 ATOM       GlobalDeleteAtom(ATOM);
 void       GlobalFix(HGLOBAL16);
 BOOL16     GlobalUnWire(HGLOBAL16);
@@ -5922,7 +6023,6 @@ BOOL       GrayString(HDC16,HBRUSH16,GRAYSTRINGPROC16,LPARAM,INT,INT,INT,INT,INT
 BOOL       HiliteMenuItem(HWND,HMENU16,UINT,UINT);
 BOOL       InSendMessage(void);
 WORD       InitAtomTable(WORD);
-HRGN32     InquireVisRgn(HDC16);
 void       InvalidateRgn(HWND32,HRGN32,BOOL32);
 BOOL       IsChild(HWND,HWND);
 BOOL       IsClipboardFormatAvailable(WORD);
@@ -5941,8 +6041,6 @@ WORD       MapVirtualKey(WORD,WORD);
 void       MessageBeep(WORD);
 BOOL       MoveWindow(HWND,short,short,short,short,BOOL);
 DWORD      OemKeyScan(WORD);
-BOOL       OemToAnsi(LPCSTR,LPSTR);
-void       OemToAnsiBuff(LPCSTR,LPSTR,INT);
 BOOL       OpenClipboard(HWND);
 BOOL       OpenIcon(HWND);
 int        OpenSound(void);
@@ -5963,14 +6061,10 @@ WORD       RealizeDefaultPalette(HDC16);
 BOOL       RemoveFontResource(LPSTR);
 BOOL       RemoveMenu(HMENU16,UINT,UINT);
 void       ReplyMessage(LRESULT);
-HDC16      ResetDC(HDC16,LPVOID);
 BOOL       ResizePalette(HPALETTE16,UINT);
-BOOL       RestoreDC(HDC16,short);
-int        SaveDC(HDC16);
 void       ScrollChildren(HWND,UINT,WPARAM16,LPARAM);
 HPALETTE16 SelectPalette(HDC16,HPALETTE16,BOOL);
 HWND       SetActiveWindow(HWND);
-WORD       SetBkMode(HDC16,WORD);
 HANDLE16   SetClipboardData(WORD,HANDLE16);
 HWND       SetClipboardViewer(HWND);
 void       SetConvertHook(BOOL);
@@ -5978,13 +6072,11 @@ BOOL       SetConvertParams(int,int);
 BOOL32     SetCurrentDirectory(LPCSTR);
 HCURSOR16  SetCursor(HCURSOR16);
 void       SetCursorPos(short,short);
-void       SetDCState(HDC16,HDC16);
 void       SetDoubleClickTime(WORD);
 int        SetEnvironment(LPCSTR,LPCSTR,WORD);
 UINT       SetErrorMode(UINT);
 WORD       SetHookFlags(HDC16,WORD);
 void       SetKeyboardState(BYTE*);
-WORD       SetMapMode(HDC16,WORD);
 DWORD      SetMapperFlags(HDC16,DWORD);
 BOOL       SetMenu(HWND,HMENU16);
 BOOL       SetMenuItemBitmaps(HMENU16,UINT,UINT,HBITMAP16,HBITMAP16);
@@ -5992,18 +6084,11 @@ BOOL       SetMessageQueue(int);
 HMETAFILE16 SetMetaFileBits(HGLOBAL16);
 WORD       SetPaletteEntries(HPALETTE16,WORD,WORD,LPPALETTEENTRY);
 HWND       SetParent(HWND,HWND);
-WORD       SetPolyFillMode(HDC16,WORD);
-WORD       SetROP2(HDC16,WORD);
-WORD       SetRelAbs(HDC16,WORD);
 FARPROC16  SetResourceHandler(HINSTANCE16,LPSTR,FARPROC16);
 int        SetSoundNoise(int,int);
-WORD       SetStretchBltMode(HDC16,WORD);
 LONG       SetSwapAreaSize(WORD);
 void       SetSysColors(int,LPINT16,COLORREF*);
 WORD       SetSystemPaletteUse(HDC16,WORD);
-WORD       SetTextAlign(HDC16,WORD);
-short      SetTextCharacterExtra(HDC16,short);
-short      SetTextJustification(HDC16,short,short);
 int        SetVoiceAccent(int,int,int,int,int);
 int        SetVoiceEnvelope(int,int,int);
 int        SetVoiceNote(int,int,int,int);

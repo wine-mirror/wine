@@ -46,14 +46,14 @@ void DEBUG_SetRegister( enum debug_regs reg, int val )
         case REG_FS:  FS_reg(DEBUG_context)  = val; break;
 #else
         case REG_FS:
-            fprintf( stderr, "Register %fs not supported on this system\n" );
+            fprintf( stderr, "Register %%fs not supported on this system\n" );
             break;
 #endif
 #ifdef GS_reg
         case REG_GS:  GS_reg(DEBUG_context)  = val; break;
 #else
         case REG_GS:
-            fprintf( stderr, "Register %gs not supported on this system\n" );
+            fprintf( stderr, "Register %%gs not supported on this system\n" );
             break;
 #endif
     }
@@ -97,14 +97,14 @@ int DEBUG_GetRegister( enum debug_regs reg )
         case REG_FS:  return FS_reg(DEBUG_context);
 #else
         case REG_FS:
-            fprintf( stderr, "Register %fs not supported on this system\n" );
+            fprintf( stderr, "Register %%fs not supported on this system\n" );
             return 0;
 #endif
 #ifdef GS_reg
         case REG_GS:  return GS_reg(DEBUG_context);
 #else
         case REG_GS:
-            fprintf( stderr, "Register %gs not supported on this system\n" );
+            fprintf( stderr, "Register %%gs not supported on this system\n" );
             return 0;
 #endif
     }

@@ -16,7 +16,6 @@
 #include "xmalloc.h"
 #include "handle32.h"
 #include "struct32.h"
-#include "string32.h"
 #include "win.h"
 #include "debug.h"
 #include "stddebug.h"

@@ -39,8 +39,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pLineTo */
     NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrgEx */
-    NULL,                            /* pOffsetWindowOrgEx */
+    MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
+    MFDRV_OffsetWindowOrg,           /* pOffsetWindowOrg */
     NULL,                            /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
     NULL,                            /* pPie */
@@ -52,8 +52,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */
-    NULL,                            /* pScaleViewportExtEx */
-    NULL,                            /* pScaleWindowExtEx */
+    MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
+    MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
     NULL,                            /* pSelectClipRgn */
     NULL,                            /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -61,7 +61,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
-    NULL,                            /* pSetMapMode */
+    MFDRV_SetMapMode,                /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
@@ -72,10 +72,10 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSetTextCharacterExtra */
     NULL,                            /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
-    NULL,                            /* pSetViewportExtEx */
-    NULL,                            /* pSetViewportOrgEx */
-    NULL,                            /* pSetWindowExtEx */
-    NULL,                            /* pSetWindowOrgEx */
+    MFDRV_SetViewportExt,            /* pSetViewportExt */
+    MFDRV_SetViewportOrg,            /* pSetViewportOrg */
+    MFDRV_SetWindowExt,              /* pSetWindowExt */
+    MFDRV_SetWindowOrg,              /* pSetWindowOrg */
     MFDRV_StretchBlt,                /* pStretchBlt */
     NULL,                            /* pStretchDIBits */
     NULL                             /* pTextOut */
@@ -156,13 +156,13 @@ HDC16 CreateMetaFile16( LPCSTR filename )
         physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = _lcreat( filename, 0 )) == HFILE_ERROR)
         {
-            DeleteDC( dc->hSelf );
+            DeleteDC32( dc->hSelf );
             return 0;
         }
         if (_lwrite32( hFile, (LPSTR)physDev->mh,
                        sizeof(*physDev->mh)) == HFILE_ERROR)
 	{
-            DeleteDC( dc->hSelf );
+            DeleteDC32( dc->hSelf );
             return 0;
 	}
 	physDev->mh->mtNoParameters = hFile; /* store file descriptor here */
@@ -197,7 +197,7 @@ HMETAFILE16 CloseMetaFile16( HDC16 hdc )
 
     if (!MF_MetaParam0(dc, META_EOF))
     {
-        DeleteDC( hdc );
+        DeleteDC32( hdc );
 	return 0;
     }	
 
@@ -207,13 +207,13 @@ HMETAFILE16 CloseMetaFile16( HDC16 hdc )
 	physDev->mh->mtNoParameters = 0;
         if (_llseek(hFile, 0L, 0) == HFILE_ERROR)
         {
-            DeleteDC( hdc );
+            DeleteDC32( hdc );
             return 0;
         }
         if (_lwrite32( hFile, (LPSTR)physDev->mh,
                        sizeof(*physDev->mh)) == HFILE_ERROR)
         {
-            DeleteDC( hdc );
+            DeleteDC32( hdc );
             return 0;
         }
         _lclose(hFile);
@@ -225,7 +225,7 @@ HMETAFILE16 CloseMetaFile16( HDC16 hdc )
                               physDev->mh->mtSize * sizeof(WORD),
                               GetCurrentPDB(), FALSE, FALSE, FALSE, NULL );
     physDev->mh = NULL;  /* So it won't be deleted */
-    DeleteDC( hdc );
+    DeleteDC32( hdc );
     return hmf;
 }
 

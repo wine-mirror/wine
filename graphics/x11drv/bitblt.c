@@ -1114,14 +1114,14 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 
     xDst      = dcDst->w.DCOrgX + XLPTODP( dcDst, xDst );
     yDst      = dcDst->w.DCOrgY + YLPTODP( dcDst, yDst );
-    widthDst  = widthDst * dcDst->w.VportExtX / dcDst->w.WndExtX;
-    heightDst = heightDst * dcDst->w.VportExtY / dcDst->w.WndExtY;
+    widthDst  = widthDst * dcDst->vportExtX / dcDst->wndExtX;
+    heightDst = heightDst * dcDst->vportExtY / dcDst->wndExtY;
 
     dprintf_bitblt( stddeb, "    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
-                   dcDst->w.VportOrgX, dcDst->w.VportOrgY,
-                   dcDst->w.VportExtX, dcDst->w.VportExtY,
-                   dcDst->w.WndOrgX, dcDst->w.WndOrgY,
-                   dcDst->w.WndExtX, dcDst->w.WndExtY );
+                    dcDst->vportOrgX, dcDst->vportOrgY,
+                    dcDst->vportExtX, dcDst->vportExtY,
+                    dcDst->wndOrgX, dcDst->wndOrgY,
+                    dcDst->wndExtX, dcDst->wndExtY );
     dprintf_bitblt( stddeb, "    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
                     xDst, yDst, widthDst, heightDst,
                     dcDst->w.DCOrgX, dcDst->w.DCOrgY );
@@ -1130,14 +1130,14 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     {
         xSrc      = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc );
         ySrc      = dcSrc->w.DCOrgY + YLPTODP( dcSrc, ySrc );
-        widthSrc  = widthSrc * dcSrc->w.VportExtX / dcSrc->w.WndExtX;
-        heightSrc = heightSrc * dcSrc->w.VportExtY / dcSrc->w.WndExtY;
+        widthSrc  = widthSrc * dcSrc->vportExtX / dcSrc->wndExtX;
+        heightSrc = heightSrc * dcSrc->vportExtY / dcSrc->wndExtY;
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
         dprintf_bitblt( stddeb,"    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
-                        dcSrc->w.VportOrgX, dcSrc->w.VportOrgY,
-                        dcSrc->w.VportExtX, dcSrc->w.VportExtY,
-                        dcSrc->w.WndOrgX, dcSrc->w.WndOrgY,
-                        dcSrc->w.WndExtX, dcSrc->w.WndExtY );
+                        dcSrc->vportOrgX, dcSrc->vportOrgY,
+                        dcSrc->vportExtX, dcSrc->vportExtY,
+                        dcSrc->wndOrgX, dcSrc->wndOrgY,
+                        dcSrc->wndExtX, dcSrc->wndExtY );
         dprintf_bitblt( stddeb, "    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
                         xSrc, ySrc, widthSrc, heightSrc,
                         dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );

@@ -86,6 +86,10 @@ $ss     { yylval.reg = REG_SS;  return tREG; }
 $fs     { yylval.reg = REG_FS;  return tREG; }
 $gs     { yylval.reg = REG_GS;  return tREG; }
 
+up				{ return tUP; }
+down|dow|do			{ return tDOWN; }
+frame|fram|fra|fr		{ return tFRAME; }
+locals|local|loca|loc		{ return tLOCAL; }
 info|inf|in			{ return tINFO; }
 show|sho|sh			{ return tINFO; }
 list|lis|li|l			{ return tLIST; }

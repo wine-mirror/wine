@@ -9,7 +9,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "wincon.h"
-#include "string32.h"
+#include "heap.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -93,7 +93,7 @@ BOOL32 GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
  */
 BOOL32 SetConsoleMode(HANDLE32 hcon,DWORD mode)
 {
-    fprintf(stdnimp,"SetConsoleMode(%08lx,%08lx)\n",hcon,mode);
+    fprintf(stdnimp,"SetConsoleMode(%08x,%08lx)\n",hcon,mode);
     return TRUE;
 }
 
@@ -189,20 +189,21 @@ BOOL32 ReadConsole32W(
 }
 
 /***********************************************************************
- *            SetConsoleTitleA   (KERNEL32.476)
+ *            SetConsoleTitle32A   (KERNEL32.476)
  */
 BOOL32 SetConsoleTitle32A(LPCSTR title)
 {
     fprintf(stderr,"SetConsoleTitle(%s)\n",title);
     return TRUE;
 }
+
 /***********************************************************************
- *            SetConsoleTitleW   (KERNEL32.477)
+ *            SetConsoleTitle32W   (KERNEL32.477)
  */
-BOOL32 SetConsoleTitle32W(LPCWSTR title)
+BOOL32 SetConsoleTitle32W( LPCWSTR title )
 {
-    LPSTR titleA = STRING32_DupUniToAnsi(title);
+    LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
     fprintf(stderr,"SetConsoleTitle(%s)\n",titleA);
-    free(titleA);
+    HeapFree( GetProcessHeap(), 0, titleA );
     return TRUE;
 }

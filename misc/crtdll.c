@@ -22,7 +22,6 @@
 #include "xmalloc.h"
 #include "heap.h"
 #include "crtdll.h"
-#include "string32.h"
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;         /* CRTDLL.24 */

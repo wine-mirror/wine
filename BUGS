@@ -5,7 +5,7 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Dec 15 1996 -
+As of Dec 22 1996 -
 
 General:
 
@@ -41,7 +41,6 @@ Miscellaneous:
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
  * ScrollWindowEx() is outdated.
- * HCBT_CLICKSKIPPED/HCBT_KEYSKIPPED hook actions are not implemented.
 
 Where to look in source files:
 

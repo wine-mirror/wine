@@ -49,7 +49,7 @@ StartServiceCtrlDispatcher32W(LPSERVICE_TABLE_ENTRY32W servent)
 BOOL32
 OpenProcessToken(HANDLE32 process,DWORD desiredaccess,HANDLE32 *thandle)
 {
-	fprintf(stdnimp,"OpenProcessToken(%08lx,%08lx,%p),stub!\n",
+	fprintf(stdnimp,"OpenProcessToken(%08x,%08lx,%p),stub!\n",
 		process,desiredaccess,thandle
 	);
 	return TRUE;

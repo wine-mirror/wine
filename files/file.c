@@ -23,11 +23,11 @@
 #include "dos_fs.h"
 #include "drive.h"
 #include "global.h"
+#include "heap.h"
 #include "msdos.h"
 #include "options.h"
 #include "ldt.h"
 #include "task.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -630,12 +630,12 @@ UINT32 GetTempFileName32W( LPCWSTR path, LPCWSTR prefix, UINT32 unique,
     UINT32  ret;
 
     if (!path) return 0;
-    patha	= STRING32_DupUniToAnsi(path);
-    prefixa	= STRING32_DupUniToAnsi(prefix);
-    ret 	= GetTempFileName32A( patha, prefixa, unique, buffera );
-    STRING32_AnsiToUni( buffer, buffera );
-    free(patha);
-    free(prefixa);
+    patha   = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
+    prefixa = HEAP_strdupWtoA( GetProcessHeap(), 0, prefix );
+    ret     = GetTempFileName32A( patha, prefixa, unique, buffera );
+    lstrcpyAtoW( buffer, buffera );
+    HeapFree( GetProcessHeap(), 0, patha );
+    HeapFree( GetProcessHeap(), 0, prefixa );
     return ret;
 }
 
@@ -921,29 +921,27 @@ found:
 /***********************************************************************
  *           SearchPath32W   (KERNEL32.448)
  */
-DWORD SearchPath32W(
-	LPCWSTR path,LPCWSTR fn,LPCWSTR ext,DWORD buflen,LPWSTR buf,
-	LPWSTR *lastpart
-) {
-	LPSTR	pathA = path?STRING32_DupUniToAnsi(path):NULL;
-	LPSTR	fnA = STRING32_DupUniToAnsi(fn);
-	LPSTR	extA = ext?STRING32_DupUniToAnsi(fn):NULL;
+DWORD SearchPath32W( LPCWSTR path, LPCWSTR fn, LPCWSTR ext, DWORD buflen,
+                     LPWSTR buf, LPWSTR *lastpart )
+{
+	LPSTR	pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
+	LPSTR	fnA = HEAP_strdupWtoA( GetProcessHeap(), 0, fn );
+	LPSTR	extA = HEAP_strdupWtoA( GetProcessHeap(), 0, ext );
 	LPSTR	lastpartA;
-	LPSTR	bufA = (char*)xmalloc(buflen+1);
+	LPSTR	bufA = HeapAlloc( GetProcessHeap(), 0, buflen + 1 );
 	DWORD	ret;
 
-	ret=SearchPath32A(pathA,fnA,extA,buflen,bufA,&lastpartA);
-	lstrcpynAtoW(buf,bufA,buflen);
-	if (lastpart) {
-		if (lastpartA)
-			*lastpart = buf+(lastpartA-bufA);
-		else
-			*lastpart = NULL;
+	ret = SearchPath32A(pathA,fnA,extA,buflen,bufA,&lastpartA);
+	lstrcpyAtoW( buf, bufA );
+	if (lastpart)
+        {
+            if (lastpartA) *lastpart = buf+(lastpartA-bufA);
+            else *lastpart = NULL;
 	}
-	free(bufA);
-	free(fnA);
-	if (pathA) free(pathA);
-	if (extA) free(extA);
+	HeapFree( GetProcessHeap(), 0, bufA );
+	HeapFree( GetProcessHeap(), 0, fnA );
+	HeapFree( GetProcessHeap(), 0, pathA );
+	HeapFree( GetProcessHeap(), 0, extA );
 	return ret;
 }
 
@@ -1282,9 +1280,9 @@ BOOL32 DeleteFile32A( LPCSTR path )
  */
 BOOL32 DeleteFile32W( LPCWSTR path )
 {
-    LPSTR xpath = STRING32_DupUniToAnsi(path);
+    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
     BOOL32 ret = RemoveDirectory32A( xpath );
-    free(xpath);
+    HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
 
@@ -1328,9 +1326,9 @@ BOOL32 CreateDirectory32A( LPCSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
  */
 BOOL32 CreateDirectory32W( LPCWSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
 {
-    LPSTR xpath = STRING32_DupUniToAnsi(path);
-    BOOL32 ret = CreateDirectory32A(xpath,lpsecattribs);
-    free(xpath);
+    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
+    BOOL32 ret = CreateDirectory32A( xpath, lpsecattribs );
+    HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
 
@@ -1391,9 +1389,9 @@ BOOL32 RemoveDirectory32A( LPCSTR path )
  */
 BOOL32 RemoveDirectory32W( LPCWSTR path )
 {
-    LPSTR xpath = STRING32_DupUniToAnsi(path);
+    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
     BOOL32 ret = RemoveDirectory32A( xpath );
-    free(xpath);
+    HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
 

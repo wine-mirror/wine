@@ -67,7 +67,7 @@ HDC16 WinGCreateDC16(void)
   __initWinG();
 
   if( __WinGOK > 0 )
-	return CreateCompatibleDC(NULL);
+	return CreateCompatibleDC16(NULL);
   return (HDC16)NULL;
 }
 
@@ -278,8 +278,8 @@ BOOL16 WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest, INT16 widDest,
     ySrc    = dcSrc->w.DCOrgY + YLPTODP( dcSrc, ySrc );
     xDest   = dcDst->w.DCOrgX + XLPTODP( dcDst, xDest );
     yDest   = dcDst->w.DCOrgY + YLPTODP( dcDst, yDest );
-    widDest = widDest * dcDst->w.VportExtX / dcDst->w.WndExtX;
-    heiDest = heiDest * dcDst->w.VportExtY / dcDst->w.WndExtY;
+    widDest = widDest * dcDst->vportExtX / dcDst->wndExtX;
+    heiDest = heiDest * dcDst->vportExtY / dcDst->wndExtY;
 
     XSetFunction( display, dcDst->u.x.gc, GXcopy );
     XCopyArea( display, dcSrc->u.x.drawable,

@@ -213,7 +213,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
     HBRUSH32 hBrush;
     HBITMAP16 hBitmap, hPrevBitmap;
     BITMAP16 bm;
-    HDC16 hMemDC;
+    HDC32 hMemDC;
 
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1)
     {
@@ -253,12 +253,12 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
 	GetObject16( hBitmap, sizeof(bm), &bm );
 	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
                   lpdis->rcItem.top, str, strlen(str));
-	hMemDC = CreateCompatibleDC(lpdis->hDC);
+	hMemDC = CreateCompatibleDC32(lpdis->hDC);
 	hPrevBitmap = SelectObject32(hMemDC, hBitmap);
 	BitBlt32(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
                  bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
 	SelectObject32(hMemDC, hPrevBitmap);
-	DeleteDC(hMemDC);
+	DeleteDC32(hMemDC);
 	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
         SEGPTR_FREE(str);
 	return TRUE;
@@ -282,12 +282,12 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
 	GetObject16( hBitmap, sizeof(bm), &bm );
 	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
                   lpdis->rcItem.top, str, strlen(str));
-	hMemDC = CreateCompatibleDC(lpdis->hDC);
+	hMemDC = CreateCompatibleDC32(lpdis->hDC);
 	hPrevBitmap = SelectObject32(hMemDC, hBitmap);
 	BitBlt32( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
                   bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY );
 	SelectObject32(hMemDC, hPrevBitmap);
-	DeleteDC(hMemDC);
+	DeleteDC32(hMemDC);
 	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
         SEGPTR_FREE(str);
 	return TRUE;
@@ -1595,7 +1595,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
 
  GetClientRect16(hwnd,&client);
  hdc=GetDC32(hwnd);
- lpp->hdcMem = CreateCompatibleDC(hdc);
+ lpp->hdcMem = CreateCompatibleDC32(hdc);
  lpp->hbmMem = CreateCompatibleBitmap(hdc,client.right,client.bottom);
  SelectObject32(lpp->hdcMem,lpp->hbmMem);
 
@@ -2153,7 +2153,7 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
 	  case WM_INITDIALOG:
 	                return CC_WMInitDialog(hDlg,wParam,lParam);
 	  case WM_NCDESTROY:
-	                DeleteDC(lpp->hdcMem); 
+	                DeleteDC32(lpp->hdcMem); 
 	                DeleteObject32(lpp->hbmMem); 
 	                free(lpp);
 	                SetWindowLong32A(hDlg, DWL_USER, 0L); /* we don't need it anymore */
@@ -2579,12 +2579,12 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 		  /* FIXME: draw bitmap if truetype usage */
 		if (nFontType&TRUETYPE_FONTTYPE)
 		{
-		  hMemDC = CreateCompatibleDC(lpdi->hDC);
+		  hMemDC = CreateCompatibleDC32(lpdi->hDC);
 		  hBitmap = SelectObject32(hMemDC, hBitmapTT);
 		  BitBlt32(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
                            bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
 		  SelectObject32(hMemDC, hBitmap);
-		  DeleteDC(hMemDC);
+		  DeleteDC32(hMemDC);
 		}
 #endif
 		break;

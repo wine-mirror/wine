@@ -4,7 +4,7 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
-#include "gdi.h"
+#include "dc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -15,7 +15,7 @@
 BOOL16 PatBlt16( HDC16 hdc, INT16 left, INT16 top,
                  INT16 width, INT16 height, DWORD rop)
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
 
     dprintf_bitblt( stddeb, "PatBlt16: %04x %d,%d %dx%d %06lx\n",
@@ -30,7 +30,7 @@ BOOL16 PatBlt16( HDC16 hdc, INT16 left, INT16 top,
 BOOL32 PatBlt32( HDC32 hdc, INT32 left, INT32 top,
                  INT32 width, INT32 height, DWORD rop)
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
 
     dprintf_bitblt( stddeb, "PatBlt32: %04x %d,%d %dx%d %06lx\n",
@@ -47,9 +47,9 @@ BOOL16 BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
 {
     DC *dcDst, *dcSrc;
 
-    if (!(dcDst = (DC *)GDI_GetObjPtr( hdcDst, DC_MAGIC ))) return FALSE;
+    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
     if (!dcDst->funcs->pBitBlt) return FALSE;
-    dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
+    dcSrc = DC_GetDCPtr( hdcSrc );
 
     dprintf_bitblt(stddeb,
                 "BitBlt16: hdcSrc=%04x %d,%d %d bpp -> hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
@@ -68,9 +68,9 @@ BOOL32 BitBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst, INT32 width,
 {
     DC *dcDst, *dcSrc;
 
-    if (!(dcDst = (DC *)GDI_GetObjPtr( hdcDst, DC_MAGIC ))) return FALSE;
+    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
     if (!dcDst->funcs->pBitBlt) return FALSE;
-    dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
+    dcSrc = DC_GetDCPtr( hdcSrc );
 
     dprintf_bitblt(stddeb,
                 "BitBlt32: hdcSrc=%04x %d,%d %d bpp -> hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
@@ -91,9 +91,10 @@ BOOL16 StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
 {
     DC *dcDst, *dcSrc;
 
-    if (!(dcDst = (DC *) GDI_GetObjPtr( hdcDst, DC_MAGIC ))) return FALSE;
+    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
     if (!dcDst->funcs->pStretchBlt) return FALSE;
-    dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
+    dcSrc = DC_GetDCPtr( hdcSrc );
+
     dprintf_bitblt(stddeb,
         "StretchBlt16: %04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                    hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
@@ -115,9 +116,10 @@ BOOL32 StretchBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst,
 {
     DC *dcDst, *dcSrc;
 
-    if (!(dcDst = (DC *) GDI_GetObjPtr( hdcDst, DC_MAGIC ))) return FALSE;
+    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
     if (!dcDst->funcs->pStretchBlt) return FALSE;
-    dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
+    dcSrc = DC_GetDCPtr( hdcSrc );
+
     dprintf_bitblt(stddeb,
         "StretchBlt32: %04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                    hdcSrc, xSrc, ySrc, widthSrc, heightSrc,

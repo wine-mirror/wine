@@ -9,6 +9,7 @@
 #include "windows.h"
 #include "file.h"
 #include "shell.h"
+#include "heap.h"
 #include "module.h"
 #include "neexe.h"
 #include "resource.h"
@@ -771,7 +772,7 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
   LPSTR   lpstr = str;
   LPSTR   lpbstr = lpBuffer;
 
-  AnsiToOem(str,str);
+  CharToOem32A(str,str);
 
   dprintf_reg(stddeb,"DoEnvSubst: accept %s", str);
 
@@ -824,7 +825,7 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
 
   dprintf_reg(stddeb," return %s\n", str);
 
-  OemToAnsi(str,str);
+  OemToChar32A(str,str);
   free(lpBuffer);
 
   /*  Return str length in the LOWORD
@@ -873,7 +874,8 @@ CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs) {
 	LPWSTR	*argv,s,t;
 	int	i;
 
-	cmdline = (LPWSTR)STRING32_strdupW(cmdline); /* to get writeable copy */
+        /* to get writeable copy */
+	cmdline = HEAP_strdupW( GetProcessHeap(), 0, cmdline);
 	s=cmdline;i=0;
 	while (*s) {
 		/* space */
@@ -886,13 +888,13 @@ CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs) {
 		}
 		s++;
 	}
-	argv=(LPWSTR*)xmalloc(sizeof(LPWSTR)*(i+1));
+	argv=(LPWSTR*)HeapAlloc( GetProcessHeap(), 0, sizeof(LPWSTR)*(i+1) );
 	s=t=cmdline;
 	i=0;
 	while (*s) {
 		if (*s==0x0020) {
 			*s=0;
-			argv[i++]=(LPWSTR)STRING32_strdupW(t);
+			argv[i++]=HEAP_strdupW( GetProcessHeap(), 0, t );
 			*s=0x0020;
 			while (*s && *s==0x0020)
 				s++;
@@ -905,8 +907,8 @@ CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs) {
 		s++;
 	}
 	if (*t)
-		argv[i++]=(LPWSTR)STRING32_strdupW(t);
-	free(cmdline);
+		argv[i++]=(LPWSTR)HEAP_strdupW( GetProcessHeap(), 0, t );
+	HeapFree( GetProcessHeap(), 0, cmdline );
 	argv[i]=NULL;
 	*numargs=i;
 	return argv;

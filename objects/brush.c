@@ -536,9 +536,10 @@ HBRUSH32 BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );
-	    hBitmap = CreateDIBitmap( dc->hSelf, &bmpInfo->bmiHeader, CBM_INIT,
-				      ((char *)bmpInfo) + size, bmpInfo,
-				      (WORD) brush->logbrush.lbColor );
+	    hBitmap = CreateDIBitmap32( dc->hSelf, &bmpInfo->bmiHeader,
+                                        CBM_INIT, ((char *)bmpInfo) + size,
+                                        bmpInfo,
+                                        (WORD)brush->logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( dc, hBitmap );
 	    DeleteObject16( hBitmap );
 	    GlobalUnlock16( (HGLOBAL16)brush->logbrush.lbHatch );	    

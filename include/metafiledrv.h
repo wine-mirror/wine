@@ -32,5 +32,16 @@ extern BOOL32 MFDRV_StretchBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                                 INT32 widthDst, INT32 heightDst,
                                 struct tagDC *dcSrc, INT32 xSrc, INT32 ySrc,
                                 INT32 widthSrc, INT32 heightSrc, DWORD rop );
+extern INT32 MFDRV_SetMapMode( struct tagDC *dc, INT32 mode );
+extern BOOL32 MFDRV_SetViewportExt( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_SetViewportOrg( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_SetWindowExt( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_SetWindowOrg( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_OffsetViewportOrg( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_OffsetWindowOrg( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_ScaleViewportExt( struct tagDC *dc, INT32 xNum,
+                                      INT32 xDenom, INT32 yNum, INT32 yDenom );
+extern BOOL32 MFDRV_ScaleWindowExt( struct tagDC *dc, INT32 xNum, INT32 xDenom,
+                                    INT32 yNum, INT32 yDenom );
 
 #endif  /* __WINE_METAFILEDRV_H */

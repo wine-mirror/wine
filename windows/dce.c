@@ -85,7 +85,7 @@ void DCE_FreeDCE( DCE *dce )
 
     SetDCHook(dce->hDC, NULL, 0L);
 
-    DeleteDC( dce->hDC );
+    DeleteDC32( dce->hDC );
     if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
 	DeleteObject32(dce->hClipRgn);
     HeapFree( SystemHeap, 0, dce );

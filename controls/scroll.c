@@ -311,11 +311,11 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                                RECT32 *rect, INT32 arrowSize, BOOL32 vertical,
                                BOOL32 top_pressed, BOOL32 bottom_pressed )
 {
-    HDC32 hdcMem = CreateCompatibleDC( hdc );
+    HDC32 hdcMem = CreateCompatibleDC32( hdc );
     HBITMAP32 hbmpPrev = SelectObject32( hdcMem, vertical ?
                                     TOP_ARROW(infoPtr->flags, top_pressed)
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
-    SetStretchBltMode( hdc, STRETCH_DELETESCANS );
+    SetStretchBltMode32( hdc, STRETCH_DELETESCANS );
     StretchBlt32( hdc, rect->left, rect->top,
                   vertical ? rect->right-rect->left : arrowSize+1,
                   vertical ? arrowSize+1 : rect->bottom-rect->top,
@@ -339,7 +339,7 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                       SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
                       SRCCOPY );
     SelectObject32( hdcMem, hbmpPrev );
-    DeleteDC( hdcMem );
+    DeleteDC32( hdcMem );
 }
 
 

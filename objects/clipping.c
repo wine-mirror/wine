@@ -418,6 +418,7 @@ INT32 GetClipBox32( HDC32 hdc, LPRECT32 rect )
     return ret;
 }
 
+
 /***********************************************************************
  *           GetClipRgn32  (GDI32.163)
  */

@@ -17,8 +17,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "file.h"
+#include "heap.h"
 #include "handle32.h"
-#include "string32.h"
 #include "dos_fs.h"
 #include "xmalloc.h"
 #include "stddebug.h"
@@ -50,7 +50,6 @@ HANDLE32 OpenFileMapping(DWORD access, BOOL inherit,const char *fname)
 HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
   DWORD pot,  DWORD sh,  DWORD hlow,  LPCSTR lpName )
 {
-    HFILE hfile;
     FILEMAP_OBJECT *filemap_obj;
 
     dprintf_win32(stddeb,"CreateFileMapping32A(%08x,%p,%ld,%ld,%ld,%s)\n",
@@ -82,11 +81,9 @@ HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
 HANDLE32 CreateFileMapping32W(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
   DWORD pot,  DWORD sh,  DWORD hlow,  LPCWSTR lpName)
 {
-    HANDLE32	res;
-    LPSTR	aname = STRING32_DupUniToAnsi(lpName);
-
-    res = CreateFileMapping32A(h,ats,pot,sh,hlow,aname);
-    free(aname);
+    LPSTR aname = HEAP_strdupWtoA( GetProcessHeap(), 0, lpName );
+    HANDLE32 res = CreateFileMapping32A(h,ats,pot,sh,hlow,aname);
+    HeapFree( GetProcessHeap(), 0, aname );
     return res;
 }
 
@@ -338,11 +335,10 @@ HFILE CreateFile32W(LPCWSTR filename, DWORD access, DWORD sharing,
                     LPSECURITY_ATTRIBUTES security, DWORD creation,
                     DWORD attributes, HANDLE32 template)
 {
-    HFILE 	res;
-    LPSTR	afn = STRING32_DupUniToAnsi(filename);
-
-    res = CreateFile32A(afn,access,sharing,security,creation,attributes,template);
-    free(afn);
+    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    HFILE res = CreateFile32A( afn, access, sharing, security, creation,
+                               attributes, template );
+    HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
 
@@ -445,12 +441,10 @@ DWORD GetFileAttributes32A(LPCSTR lpFileName)
  */
 DWORD GetFileAttributes32W(LPCWSTR lpFileName)
 {
-	LPSTR	afn = STRING32_DupUniToAnsi(lpFileName);
-	DWORD	res;
-
-	res = GetFileAttributes32A(afn);
-	free(afn);
-	return res;
+    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
+    DWORD res = GetFileAttributes32A( afn );
+    HeapFree( GetProcessHeap(), 0, afn );
+    return res;
 }
 
 
@@ -486,12 +480,10 @@ BOOL32 SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
  */
 BOOL32 SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
 {
-	LPSTR afn = STRING32_DupUniToAnsi(lpFileName);
-	BOOL32	res;
-
-	res = SetFileAttributes32A(afn,attributes);
-	free(afn);
-	return res;
+    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
+    BOOL32 res = SetFileAttributes32A( afn, attributes );
+    HeapFree( GetProcessHeap(), 0, afn );
+    return res;
 }
 
 /**************************************************************************
@@ -549,14 +541,12 @@ BOOL32 MoveFile32A(LPCSTR fn1,LPCSTR fn2)
  */
 BOOL32 MoveFile32W(LPCWSTR fn1,LPCWSTR fn2)
 {
-	LPSTR	afn1 = STRING32_DupUniToAnsi(fn1);
-	LPSTR	afn2 = STRING32_DupUniToAnsi(fn2);
-	BOOL32	res;
-
-	res = MoveFile32A(afn1,afn2);
-	free(afn1);
-	free(afn2);
-	return res;
+    LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
+    LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
+    BOOL32 res = MoveFile32A( afn1, afn2 );
+    HeapFree( GetProcessHeap(), 0, afn1 );
+    HeapFree( GetProcessHeap(), 0, afn2 );
+    return res;
 }
 
 VOID SetFileApisToOEM()
@@ -581,7 +571,7 @@ BOOL32 CopyFile32A(LPCSTR sourcefn,LPCSTR destfn,BOOL32 failifexists)
 	OFSTRUCT	of;
 	HFILE		hf1,hf2;
 	char		buffer[2048];
-	int		res,lastread,curlen;
+	int		lastread,curlen;
 
 	fprintf(stddeb,"CopyFile: %s -> %s\n",sourcefn,destfn);
 	hf1 = OpenFile(sourcefn,&of,OF_READ);
@@ -600,16 +590,14 @@ BOOL32 CopyFile32A(LPCSTR sourcefn,LPCSTR destfn,BOOL32 failifexists)
 	while ((lastread=_lread16(hf1,buffer,sizeof(buffer)))>0) {
 		curlen=0;
 		while (curlen<lastread) {
-			int	res;
-
-			res=_lwrite16(hf2,buffer+curlen,lastread-curlen);
+			int res = _lwrite16(hf2,buffer+curlen,lastread-curlen);
 			if (res<=0) break;
 			curlen+=res;
 		}
 	}
 	_lclose(hf1);
 	_lclose(hf2);
-	return res>0;
+	return curlen > 0;
 }
 
 BOOL32

@@ -166,9 +166,16 @@ int MAIN_Init(void)
 int main(int argc, char *argv[] )
 {
     extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
+    extern char * DEBUG_argv0;
 
     int i;
     HINSTANCE16 handle;
+
+    /*
+     * Save this so that the internal debugger can get a hold of it if
+     * it needs to.
+     */
+    DEBUG_argv0 = argv[0];
 
     if (!MAIN_WineInit( &argc, argv )) return 1;
     if (!MAIN_Init()) return 1;

@@ -13,7 +13,6 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -87,6 +86,9 @@ HBITMAP16 CreateBitmap( INT32 width, INT32 height, UINT32 planes,
 {
     BITMAPOBJ * bmpObjPtr;
     HBITMAP16 hbitmap;
+
+    planes = (BYTE)planes;
+    bpp    = (BYTE)bpp;
 
     dprintf_gdi( stddeb, "CreateBitmap: %dx%d, %d colors\n", 
                  width, height, 1 << (planes*bpp) );
@@ -294,7 +296,7 @@ HANDLE32 CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
  */
 HBITMAP16 LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 {
-    HBITMAP16 hbitmap = 0;
+    HBITMAP32 hbitmap = 0;
     HDC32 hdc;
     HRSRC16 hRsrc;
     HGLOBAL16 handle;
@@ -323,8 +325,8 @@ HBITMAP16 LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
     if ((hdc = GetDC32(0)) != 0)
     {
         char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
-        hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-                                  bits, info, DIB_RGB_COLORS );
+        hbitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
+                                    bits, info, DIB_RGB_COLORS );
         ReleaseDC32( 0, hdc );
     }
     FreeResource16( handle );
@@ -356,8 +358,8 @@ HBITMAP32 LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
     if ((hdc = GetDC32(0)) != 0)
     {
         char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
-        hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-                                  bits, info, DIB_RGB_COLORS );
+        hbitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
+                                    bits, info, DIB_RGB_COLORS );
         ReleaseDC32( 0, hdc );
     }
     return hbitmap;
@@ -370,12 +372,12 @@ HBITMAP32 LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
 HBITMAP32 LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
 {
     HBITMAP32 res;
-    if (!HIWORD(name)) res = LoadBitmap32W(instance,(LPWSTR)name);
+    if (!HIWORD(name)) res = LoadBitmap32W( instance, (LPWSTR)name );
     else
     {
-        LPWSTR uni = STRING32_DupAnsiToUni(name);
-        res = LoadBitmap32W(instance,uni);
-        free(uni);
+        LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+        res = LoadBitmap32W( instance, uni );
+        HeapFree( GetProcessHeap(), 0, uni );
     }
     return res;
 }

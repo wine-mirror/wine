@@ -236,7 +236,7 @@ static BOOL CURSORICON_LoadDirEntry(HINSTANCE32 hInstance, SEGPTR name,
 HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
                                   BOOL fCursor )
 {
-    HBITMAP16 hAndBits, hXorBits;
+    HBITMAP32 hAndBits, hXorBits;
     HDC32 hdc;
     int size, sizeAnd, sizeXor;
     POINT16 hotspot = { 0 ,0 };
@@ -292,8 +292,8 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
         return 0;
     }
 
-    hXorBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
-                               (char*)bmi + size, pInfo, DIB_RGB_COLORS );
+    hXorBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
+                                 (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 
     /* Fix the bitmap header to load the monochrome mask */
 
@@ -322,8 +322,8 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
 
     /* Create the AND bitmap */
 
-    hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
-                               bits, pInfo, DIB_RGB_COLORS );
+    hAndBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
+                                 bits, pInfo, DIB_RGB_COLORS );
     ReleaseDC32( 0, hdc );
 
     /* Now create the CURSORICONINFO structure */
@@ -664,12 +664,12 @@ BOOL DestroyCursor( HCURSOR16 hCursor )
 BOOL DrawIcon( HDC16 hdc, INT x, INT y, HICON16 hIcon )
 {
     CURSORICONINFO *ptr;
-    HDC16 hMemDC;
+    HDC32 hMemDC;
     HBITMAP16 hXorBits, hAndBits;
     COLORREF oldFg, oldBg;
 
     if (!(ptr = (CURSORICONINFO *)GlobalLock16( hIcon ))) return FALSE;
-    if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
+    if (!(hMemDC = CreateCompatibleDC32( hdc ))) return FALSE;
     hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, (char *)(ptr+1));
     hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                              ptr->bBitsPerPixel, (char *)(ptr + 1)
@@ -685,7 +685,7 @@ BOOL DrawIcon( HDC16 hdc, INT x, INT y, HICON16 hIcon )
         BitBlt32(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0,SRCINVERT);
         SelectObject32( hMemDC, hBitTemp );
     }
-    DeleteDC( hMemDC );
+    DeleteDC32( hMemDC );
     if (hXorBits) DeleteObject32( hXorBits );
     if (hAndBits) DeleteObject32( hAndBits );
     GlobalUnlock16( hIcon );

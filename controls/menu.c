@@ -28,7 +28,6 @@
 #include "message.h"
 #include "graphics.h"
 #include "resource.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -585,7 +584,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HDC32 hdc, MENUITEM *lpitem,
     if (lpitem->item_flags & MF_HILITE)
 	FillRect16( hdc, &rect, sysColorObjects.hbrushHighlight );
     else FillRect16( hdc, &rect, sysColorObjects.hbrushMenu );
-    SetBkMode( hdc, TRANSPARENT );
+    SetBkMode32( hdc, TRANSPARENT );
 
       /* Draw the separator bar (if any) */
 
@@ -2250,9 +2249,9 @@ BOOL32 InsertMenu32W( HMENU32 hMenu, UINT32 pos, UINT32 flags,
 
     if (IS_STRING_ITEM(flags) && str)
     {
-        LPSTR newstr = STRING32_DupUniToAnsi( str );
+        LPSTR newstr = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
         ret = InsertMenu32A( hMenu, pos, flags, id, newstr );
-        free( newstr );
+        HeapFree( GetProcessHeap(), 0, newstr );
         return ret;
     }
     else return InsertMenu32A( hMenu, pos, flags, id, (LPCSTR)str );
@@ -2386,9 +2385,9 @@ BOOL32 ModifyMenu32W( HMENU32 hMenu, UINT32 pos, UINT32 flags,
 
     if (IS_STRING_ITEM(flags) && str)
     {
-        LPSTR newstr = STRING32_DupUniToAnsi( str );
+        LPSTR newstr = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
         ret = ModifyMenu32A( hMenu, pos, flags, id, newstr );
-        free( newstr );
+        HeapFree( GetProcessHeap(), 0, newstr );
         return ret;
     }
     else return ModifyMenu32A( hMenu, pos, flags, id, (LPCSTR)str );

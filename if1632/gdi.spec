@@ -3,15 +3,15 @@ type	win16
 heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 
 1   pascal SetBkColor(word long) SetBkColor
-2   pascal16 SetBkMode(word word) SetBkMode
-3   pascal16 SetMapMode(word word) SetMapMode
-4   pascal16 SetROP2(word word) SetROP2
-5   pascal16 SetRelAbs(word word) SetRelAbs
-6   pascal16 SetPolyFillMode(word word) SetPolyFillMode
-7   pascal16 SetStretchBltMode(word word) SetStretchBltMode
-8   pascal16 SetTextCharacterExtra(word s_word) SetTextCharacterExtra
+2   pascal16 SetBkMode(word word) SetBkMode16
+3   pascal16 SetMapMode(word word) SetMapMode16
+4   pascal16 SetROP2(word word) SetROP216
+5   pascal16 SetRelAbs(word word) SetRelAbs16
+6   pascal16 SetPolyFillMode(word word) SetPolyFillMode16
+7   pascal16 SetStretchBltMode(word word) SetStretchBltMode16
+8   pascal16 SetTextCharacterExtra(word s_word) SetTextCharacterExtra16
 9   pascal SetTextColor(word long) SetTextColor
-10  pascal16 SetTextJustification(word s_word s_word) SetTextJustification
+10  pascal16 SetTextJustification(word s_word s_word) SetTextJustification16
 11  pascal SetWindowOrg(word s_word s_word) SetWindowOrg
 12  pascal SetWindowExt(word s_word s_word) SetWindowExt
 13  pascal SetViewportOrg(word s_word s_word) SetViewportOrg
@@ -34,7 +34,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 28  pascal16 RoundRect(word s_word s_word s_word s_word s_word s_word)
              RoundRect16
 29  pascal16 PatBlt(word s_word s_word s_word s_word long) PatBlt16
-30  pascal16 SaveDC(word) SaveDC
+30  pascal16 SaveDC(word) SaveDC16
 31  pascal   SetPixel(word s_word s_word long) SetPixel16
 32  pascal16 OffsetClipRgn(word s_word s_word) OffsetClipRgn16
 33  pascal16 TextOut(word s_word s_word ptr word) TextOut16
@@ -45,7 +45,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 36  pascal16 Polygon (word ptr word) Polygon16
 37  pascal16 Polyline (word ptr word) Polyline16
 38  pascal Escape(word word word segptr segptr) Escape
-39  pascal16 RestoreDC(word s_word) RestoreDC
+39  pascal16 RestoreDC(word s_word) RestoreDC16
 40  pascal16 FillRgn(word word word) FillRgn16
 41  pascal16 FrameRgn(word word word word word) FrameRgn16
 42  pascal16 InvertRgn(word word) InvertRgn16
@@ -58,7 +58,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 49  pascal16 CreateBitmapIndirect(ptr) CreateBitmapIndirect16
 50  pascal16 CreateBrushIndirect(ptr) CreateBrushIndirect16
 51  pascal16 CreateCompatibleBitmap(word word word) CreateCompatibleBitmap
-52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC
+52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC16
 53  pascal16 CreateDC(ptr ptr ptr ptr) CreateDC16
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn16
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
@@ -74,36 +74,36 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 65  pascal16 CreateRectRgnIndirect(ptr) CreateRectRgnIndirect16
 66  pascal16 CreateSolidBrush(long) CreateSolidBrush16
 67  pascal16 DPtoLP(word ptr s_word) DPtoLP16
-68  pascal16 DeleteDC(word) DeleteDC
+68  pascal16 DeleteDC(word) DeleteDC16
 69  pascal16 DeleteObject(word) DeleteObject16
 70  pascal16 EnumFonts(word ptr segptr long) THUNK_EnumFonts16
 71  pascal16 EnumObjects(word word segptr long) THUNK_EnumObjects16
 72  pascal16 EqualRgn(word word) EqualRgn16
 73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect
 74  pascal GetBitmapBits(word long ptr) GetBitmapBits
-75  pascal GetBkColor(word) GetBkColor
-76  pascal16 GetBkMode(word) GetBkMode
+75  pascal   GetBkColor(word) GetBkColor16
+76  pascal16 GetBkMode(word) GetBkMode16
 77  pascal16 GetClipBox(word ptr) GetClipBox16
-78  pascal GetCurrentPosition(word) GetCurrentPosition
-79  pascal GetDCOrg(word) GetDCOrg
+78  pascal   GetCurrentPosition(word) GetCurrentPosition
+79  pascal   GetDCOrg(word) GetDCOrg
 80  pascal16 GetDeviceCaps(word s_word) GetDeviceCaps
-81  pascal16 GetMapMode(word) GetMapMode
+81  pascal16 GetMapMode(word) GetMapMode16
 82  pascal16 GetObject(word s_word ptr) GetObject16
 83  pascal   GetPixel(word s_word s_word) GetPixel16
-84  pascal16 GetPolyFillMode(word) GetPolyFillMode
-85  pascal16 GetROP2(word) GetROP2
-86  pascal16 GetRelAbs(word) GetRelAbs
+84  pascal16 GetPolyFillMode(word) GetPolyFillMode16
+85  pascal16 GetROP2(word) GetROP216
+86  pascal16 GetRelAbs(word) GetRelAbs16
 87  pascal16 GetStockObject(word) GetStockObject16
-88  pascal16 GetStretchBltMode(word) GetStretchBltMode
-89  pascal16 GetTextCharacterExtra(word) GetTextCharacterExtra
-90  pascal GetTextColor(word) GetTextColor
-91  pascal GetTextExtent(word ptr s_word) GetTextExtent
+88  pascal16 GetStretchBltMode(word) GetStretchBltMode16
+89  pascal16 GetTextCharacterExtra(word) GetTextCharacterExtra16
+90  pascal   GetTextColor(word) GetTextColor16
+91  pascal   GetTextExtent(word ptr s_word) GetTextExtent
 92  pascal16 GetTextFace(word s_word ptr) GetTextFace16
 93  pascal16 GetTextMetrics(word ptr) GetTextMetrics16
-94  pascal GetViewportExt(word) GetViewportExt
-95  pascal GetViewportOrg(word) GetViewportOrg
-96  pascal GetWindowExt(word) GetWindowExt
-97  pascal GetWindowOrg(word) GetWindowOrg
+94  pascal   GetViewportExt(word) GetViewportExt
+95  pascal   GetViewportOrg(word) GetViewportOrg
+96  pascal   GetWindowExt(word) GetWindowExt
+97  pascal   GetWindowOrg(word) GetWindowOrg
 98  pascal16 IntersectVisRect(word s_word s_word s_word s_word)
              IntersectVisRect
 99  pascal16 LPtoDP(word ptr s_word) LPtoDP16
@@ -136,7 +136,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 149 pascal GetBrushOrg(word) GetBrushOrg
 150 pascal16 UnrealizeObject(word) UnrealizeObject16
 151 pascal16 CopyMetaFile(word ptr) CopyMetaFile
-153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC
+153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC16
 154 pascal GetNearestColor(word long) GetNearestColor
 155 stub QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap
@@ -216,7 +216,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 304 stub ENGINESETFONTCONTEXT
 305 stub ENGINEGETGLYPHBMP
 306 stub ENGINEMAKEFONTDIR
-307 pascal16 GetCharABCWidths(word word word ptr) GetCharABCWidths
+307 pascal16 GetCharABCWidths(word word word ptr) GetCharABCWidths16
 308 stub GetOutLineTextMetrics
 309 pascal   GetGlyphOutLine(word word word ptr long ptr ptr) GetGlyphOutLine
 310 pascal16 CreateScalableFontResource(word ptr ptr ptr) CreateScalableFontResource
@@ -229,12 +229,12 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 317 stub EngineGetGlyphBmpExt
 330 pascal16 EnumFontFamilies(word ptr segptr long) THUNK_EnumFontFamilies16
 332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs
-345 pascal16 GetTextAlign(word) GetTextAlign
-346 pascal16 SetTextAlign(word word) SetTextAlign
+345 pascal16 GetTextAlign(word) GetTextAlign16
+346 pascal16 SetTextAlign(word word) SetTextAlign16
 348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word
                    s_word s_word) Chord16
 349 pascal SetMapperFlags(word long) SetMapperFlags
-350 pascal16 GetCharWidth(word word word ptr) GetCharWidth
+350 pascal16 GetCharWidth(word word word ptr) GetCharWidth16
 351 pascal16 ExtTextOut(word s_word s_word word ptr ptr word ptr) ExtTextOut16
 352 stub GetPhysicalFontHandle
 353 stub GetAspectRatioFilter
@@ -255,7 +255,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 374 pascal16 GetSystemPaletteUse(word) GetSystemPaletteUse
 375 pascal16 GetSystemPaletteEntries(word word word ptr)
              GetSystemPaletteEntries
-376 pascal16 ResetDC(word ptr) ResetDC
+376 pascal16 ResetDC(word ptr) ResetDC16
 377 stub STARTDOC
 378 stub ENDDOC
 379 stub STARTPAGE
@@ -274,11 +274,11 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette
 439 pascal16 StretchDIBits (word s_word s_word s_word s_word s_word s_word
                             s_word s_word ptr ptr word long) StretchDIBits16
-440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits
-441 pascal16 GetDIBits(word word word word ptr ptr word) GetDIBits
-442 pascal16 CreateDIBitmap(word ptr long ptr ptr word) CreateDIBitmap
-443 pascal16 SetDIBitsToDevice(word s_word s_word word word word word
-                               word word ptr ptr word) SetDIBitsToDevice
+440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits16
+441 pascal16 GetDIBits(word word word word ptr ptr word) GetDIBits16
+442 pascal16 CreateDIBitmap(word ptr long ptr ptr word) CreateDIBitmap16
+443 pascal16 SetDIBitsToDevice(word s_word s_word s_word s_word s_word s_word
+                               word word ptr ptr word) SetDIBitsToDevice16
 444 pascal16 CreateRoundRectRgn(s_word s_word s_word s_word s_word s_word)
              CreateRoundRectRgn16
 445 pascal16 CreateDIBPatternBrush(word word) CreateDIBPatternBrush16

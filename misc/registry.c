@@ -20,6 +20,7 @@
 #include "win.h"
 #include "winerror.h"
 #include "file.h"
+#include "heap.h"
 #include "dos_fs.h"
 #include "string32.h"	
 #include "stddebug.h"
@@ -82,11 +83,8 @@ static KEYSTRUCT	*key_dyn_data=NULL;
 #define UNICONVMASK	((1<<REG_SZ)|(1<<REG_MULTI_SZ)|(1<<REG_EXPAND_SZ))
 
 #define strdupA2W(x)	STRING32_DupAnsiToUni(x)
-#define strdupW2A(x)	STRING32_DupUniToAnsi(x)
 #define strdupW(x)	STRING32_strdupW(x)
-#define strcmpniW(a,b)	STRING32_lstrcmpniW(a,b)
 #define strchrW(a,c)	STRING32_lstrchrW(a,c)
-#define strcpyWA(a,b)	STRING32_UniToAnsi(a,b)
 
 static struct openhandle {
 	LPKEYSTRUCT	lpkey;
@@ -159,8 +157,8 @@ W2C(LPCWSTR x,int sub) {
 		return "<NULL>";
 	if (sub!=0 && sub!=1)
 		return "<W2C:bad sub>";
-	if (unicodedebug[sub]) free(unicodedebug[sub]);
-	unicodedebug[sub]	= strdupW2A(x);
+	if (unicodedebug[sub]) HeapFree( SystemHeap, 0, unicodedebug[sub] );
+	unicodedebug[sub] = HEAP_strdupWtoA( SystemHeap, 0, x );
 	return unicodedebug[sub];
 }
 
@@ -1429,7 +1427,7 @@ __w31_dumptree(	unsigned short idx,
 	struct _w31_dirent	*dir;
 	struct _w31_keyent	*key;
 	struct _w31_valent	*val;
-	LPKEYSTRUCT		xlpkey;
+	LPKEYSTRUCT		xlpkey = NULL;
 	LPWSTR			name,value;
 	static char		tail[400];
 
@@ -2132,7 +2130,7 @@ DWORD RegQueryValueEx32A(
 		if (buf) {
 			if (UNICONVMASK & (1<<(type))) {
 				/* convert UNICODE to ASCII */
-				strcpyWA(lpbData,(LPWSTR)buf);
+				lstrcpyWtoA(lpbData,(LPWSTR)buf);
 				*lpcbData	= myxlen/2;
 			} else {
 				if (myxlen>*lpcbData)
@@ -2536,10 +2534,10 @@ DWORD RegEnumKeyEx32A(
 		ft
 	);
 	if (ret==ERROR_SUCCESS) {
-		strcpyWA(lpszName,lpszNameW);
+		lstrcpyWtoA(lpszName,lpszNameW);
 		*lpcchName=strlen(lpszName);
 		if (lpszClassW) {
-			strcpyWA(lpszClass,lpszClassW);
+			lstrcpyWtoA(lpszClass,lpszClassW);
 			*lpcchClass=strlen(lpszClass);
 		}
 	}
@@ -2677,10 +2675,10 @@ DWORD RegEnumValue32A(
 	);
 
 	if (ret==ERROR_SUCCESS) {
-		strcpyWA(lpszValue,lpszValueW);
+		lstrcpyWtoA(lpszValue,lpszValueW);
 		if (lpbData) {
 			if ((1<<*lpdwType) & UNICONVMASK) {
-				strcpyWA(lpbData,(LPWSTR)lpbDataW);
+				lstrcpyWtoA(lpbData,(LPWSTR)lpbDataW);
 			} else {
 				if (lpcbDataW > *lpcbData)
 					ret	= ERROR_MORE_DATA;
@@ -3009,7 +3007,7 @@ DWORD RegQueryInfoKey32A(
 		ft
 	);
 	if (ret==ERROR_SUCCESS)
-		strcpyWA(lpszClass,lpszClassW);
+		lstrcpyWtoA(lpszClass,lpszClassW);
 	if (lpcchClass)
 		*lpcchClass/=2;
 	if (lpcchMaxSubkey)

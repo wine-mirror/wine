@@ -220,6 +220,32 @@ struct PE_Reloc_Block
 	short Relocations[1];
 };
 
+/*
+ * The IMAGE_FILE_DEBUG_DIRECTORY data directory points to an array of
+ * these structures.
+ */
+struct PE_Debug_dir
+{
+	u_long		flags;
+	u_long		timestamp;
+	u_short		major;
+	u_short		minor;
+	u_long		type;
+	u_long		dbgsize;
+	u_long		dbgptr;
+	u_long		dbgoff;
+};
+
+/*
+ * The type field above can take these (plus a few other
+ * irrelevant) values.
+ */
+#define IMAGE_DEBUG_TYPE_UNKNOWN	0
+#define IMAGE_DEBUG_TYPE_COFF		1
+#define IMAGE_DEBUG_TYPE_CODEVIEW	2
+#define IMAGE_DEBUG_TYPE_FPO		3
+#define IMAGE_DEBUG_TYPE_MISC		4
+
 #define IMAGE_REL_BASED_ABSOLUTE 		0
 #define IMAGE_REL_BASED_HIGH			1
 #define IMAGE_REL_BASED_LOW				2

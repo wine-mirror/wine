@@ -5,17 +5,18 @@
  *
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <string.h>
 #include "gdi.h"
 #include "bitmap.h"
+#include "heap.h"
 #include "metafile.h"
 #include "stddebug.h"
 #include "color.h"
 #include "debug.h"
 #include "font.h"
 #include "xmalloc.h"
-#include "string32.h"
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 
@@ -56,15 +57,7 @@ static const WIN_DC_INFO DC_defaultValues =
     0,                      /* DCOrgX */
     0,                      /* DCOrgY */
     0,                      /* CursPosX */
-    0,                      /* CursPosY */
-    0,                      /* WndOrgX */
-    0,                      /* WndOrgY */
-    1,                      /* WndExtX */
-    1,                      /* WndExtY */
-    0,                      /* VportOrgX */
-    0,                      /* VportOrgY */
-    1,                      /* VportExtX */
-    1                       /* VportExtY */
+    0                       /* CursPosY */
 };
 
   /* ROP code to GC function conversion */
@@ -158,6 +151,14 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     dc->saveLevel  = 0;
     dc->dwHookData = 0L;
     dc->hookProc   = NULL;
+    dc->wndOrgX    = 0;
+    dc->wndOrgY    = 0;
+    dc->wndExtX    = 1;
+    dc->wndExtY    = 1;
+    dc->vportOrgX  = 0;
+    dc->vportOrgY  = 0;
+    dc->vportExtX  = 1;
+    dc->vportExtY  = 1;
 
     memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
     return dc;
@@ -379,11 +380,49 @@ HDC16 GetDCState( HDC16 hdc )
     dprintf_dc(stddeb, "GetDCState(%04x): returning %04x\n", hdc, handle );
 
     memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
-    memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
+    newdc->w.flags           = dc->w.flags | DC_SAVED;
+    newdc->w.devCaps         = dc->w.devCaps;
+    newdc->w.hPen            = dc->w.hPen;       
+    newdc->w.hBrush          = dc->w.hBrush;     
+    newdc->w.hFont           = dc->w.hFont;      
+    newdc->w.hBitmap         = dc->w.hBitmap;    
+    newdc->w.hFirstBitmap    = dc->w.hFirstBitmap;
+    newdc->w.hDevice         = dc->w.hDevice;
+    newdc->w.hPalette        = dc->w.hPalette;   
+    newdc->w.bitsPerPixel    = dc->w.bitsPerPixel;
+    newdc->w.ROPmode         = dc->w.ROPmode;
+    newdc->w.polyFillMode    = dc->w.polyFillMode;
+    newdc->w.stretchBltMode  = dc->w.stretchBltMode;
+    newdc->w.relAbsMode      = dc->w.relAbsMode;
+    newdc->w.backgroundMode  = dc->w.backgroundMode;
+    newdc->w.backgroundColor = dc->w.backgroundColor;
+    newdc->w.textColor       = dc->w.textColor;
+    newdc->w.backgroundPixel = dc->w.backgroundPixel;
+    newdc->w.textPixel       = dc->w.textPixel;
+    newdc->w.brushOrgX       = dc->w.brushOrgX;
+    newdc->w.brushOrgY       = dc->w.brushOrgY;
+    newdc->w.textAlign       = dc->w.textAlign;
+    newdc->w.charExtra       = dc->w.charExtra;
+    newdc->w.breakTotalExtra = dc->w.breakTotalExtra;
+    newdc->w.breakCount      = dc->w.breakCount;
+    newdc->w.breakExtra      = dc->w.breakExtra;
+    newdc->w.breakRem        = dc->w.breakRem;
+    newdc->w.MapMode         = dc->w.MapMode;
+    newdc->w.DCOrgX          = dc->w.DCOrgX;
+    newdc->w.DCOrgY          = dc->w.DCOrgY;
+    newdc->w.CursPosX        = dc->w.CursPosX;
+    newdc->w.CursPosY        = dc->w.CursPosY;
+    newdc->wndOrgX           = dc->wndOrgX;
+    newdc->wndOrgY           = dc->wndOrgY;
+    newdc->wndExtX           = dc->wndExtX;
+    newdc->wndExtY           = dc->wndExtY;
+    newdc->vportOrgX         = dc->vportOrgX;
+    newdc->vportOrgY         = dc->vportOrgY;
+    newdc->vportExtX         = dc->vportExtX;
+    newdc->vportExtY         = dc->vportExtY;
 
     newdc->hSelf = (HDC32)handle;
     newdc->saveLevel = 0;
-    newdc->w.flags |= DC_SAVED;
 
     newdc->w.hGCClipRgn = 0;
     newdc->w.hVisRgn = CreateRectRgn32( 0, 0, 0, 0 );
@@ -435,14 +474,15 @@ void SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->w.DCOrgY          = dcs->w.DCOrgY;
     dc->w.CursPosX        = dcs->w.CursPosX;
     dc->w.CursPosY        = dcs->w.CursPosY;
-    dc->w.WndOrgX         = dcs->w.WndOrgX;
-    dc->w.WndOrgY         = dcs->w.WndOrgY;
-    dc->w.WndExtX         = dcs->w.WndExtX;
-    dc->w.WndExtY         = dcs->w.WndExtY;
-    dc->w.VportOrgX       = dcs->w.VportOrgX;
-    dc->w.VportOrgY       = dcs->w.VportOrgY;
-    dc->w.VportExtX       = dcs->w.VportExtX;
-    dc->w.VportExtY       = dcs->w.VportExtY;
+
+    dc->wndOrgX           = dcs->wndOrgX;
+    dc->wndOrgY           = dcs->wndOrgY;
+    dc->wndExtX           = dcs->wndExtX;
+    dc->wndExtY           = dcs->wndExtY;
+    dc->vportOrgX         = dcs->vportOrgX;
+    dc->vportOrgY         = dcs->vportOrgY;
+    dc->vportExtX         = dcs->vportExtX;
+    dc->vportExtY         = dcs->vportExtY;
 
     if (!(dc->w.flags & DC_MEMORY)) dc->w.bitsPerPixel = dcs->w.bitsPerPixel;
     CombineRgn32( dc->w.hVisRgn, dcs->w.hVisRgn, 0, RGN_COPY );
@@ -456,11 +496,20 @@ void SetDCState( HDC16 hdc, HDC16 hdcs )
 
 
 /***********************************************************************
- *           SaveDC    (GDI.30)
+ *           SaveDC16    (GDI.30)
  */
-int SaveDC( HDC16 hdc )
+INT16 SaveDC16( HDC16 hdc )
 {
-    HDC16 hdcs;
+    return (INT16)SaveDC32( hdc );
+}
+
+
+/***********************************************************************
+ *           SaveDC32    (GDI32.292)
+ */
+INT32 SaveDC32( HDC32 hdc )
+{
+    HDC32 hdcs;
     DC * dc, * dcs;
 
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -481,9 +530,18 @@ int SaveDC( HDC16 hdc )
 
 
 /***********************************************************************
- *           RestoreDC    (GDI.39)
+ *           RestoreDC16    (GDI.39)
  */
-BOOL RestoreDC( HDC16 hdc, short level )
+BOOL16 RestoreDC16( HDC16 hdc, INT16 level )
+{
+    return RestoreDC32( hdc, level );
+}
+
+
+/***********************************************************************
+ *           RestoreDC32    (GDI32.290)
+ */
+BOOL32 RestoreDC32( HDC32 hdc, INT32 level )
 {
     DC * dc, * dcs;
 
@@ -498,15 +556,15 @@ BOOL RestoreDC( HDC16 hdc, short level )
 	return TRUE;
     }
     if (level == -1) level = dc->saveLevel;
-    if ((level < 1) || (level > (short)dc->saveLevel)) return FALSE;
+    if ((level < 1) || (level > dc->saveLevel)) return FALSE;
     
-    while ((short)dc->saveLevel >= level)
+    while (dc->saveLevel >= level)
     {
 	HDC16 hdcs = dc->header.hNext;
 	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return FALSE;
 	dc->header.hNext = dcs->header.hNext;
-	if ((short)--dc->saveLevel < level) SetDCState( hdc, hdcs );
-	DeleteDC( hdcs );
+	if (--dc->saveLevel < level) SetDCState( hdc, hdcs );
+	DeleteDC32( hdcs );
     }
     return TRUE;
 }
@@ -557,24 +615,23 @@ HDC32 CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
 HDC32 CreateDC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                    const DEVMODE32W *initData )
 { 
-    LPSTR driverA = driver?STRING32_DupUniToAnsi(driver):NULL;
-    LPSTR deviceA = device?STRING32_DupUniToAnsi(device):NULL;
-    LPSTR outputA = output?STRING32_DupUniToAnsi(output):NULL;
-    HDC32 res;
-
-    res = CreateDC16( driverA, deviceA, outputA, (const DEVMODE16 *)initData );
-    if (driverA) free(driverA);
-    if (deviceA) free(deviceA);
-    if (outputA) free(outputA);
+    LPSTR driverA = HEAP_strdupWtoA( GetProcessHeap(), 0, driver );
+    LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
+    LPSTR outputA = HEAP_strdupWtoA( GetProcessHeap(), 0, output );
+    HDC32 res = CreateDC16( driverA, deviceA, outputA,
+                            (const DEVMODE16 *)initData /*FIXME*/ );
+    HeapFree( GetProcessHeap(), 0, driverA );
+    HeapFree( GetProcessHeap(), 0, deviceA );
+    HeapFree( GetProcessHeap(), 0, outputA );
     return res;
 }
 
 
 /***********************************************************************
- *           CreateIC    (GDI.153)
+ *           CreateIC16    (GDI.153)
  */
-HDC16 CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output,
-                const DEVMODE16* initData )
+HDC16 CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
+                  const DEVMODE16* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC16( driver, device, output, initData );
@@ -582,12 +639,43 @@ HDC16 CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateCompatibleDC    (GDI.52)
+ *           CreateIC32A    (GDI32.49)
  */
-HDC16 CreateCompatibleDC( HDC16 hdc )
+HDC32 CreateIC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
+                   const DEVMODE32A* initData )
+{
+      /* Nothing special yet for ICs */
+    return CreateDC32A( driver, device, output, initData );
+}
+
+
+/***********************************************************************
+ *           CreateIC32W    (GDI32.50)
+ */
+HDC32 CreateIC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                   const DEVMODE32W* initData )
+{
+      /* Nothing special yet for ICs */
+    return CreateDC32W( driver, device, output, initData );
+}
+
+
+/***********************************************************************
+ *           CreateCompatibleDC16    (GDI.52)
+ */
+HDC16 CreateCompatibleDC16( HDC16 hdc )
+{
+    return (HDC16)CreateCompatibleDC32( hdc );
+}
+
+
+/***********************************************************************
+ *           CreateCompatibleDC32   (GDI32.31)
+ */
+HDC32 CreateCompatibleDC32( HDC32 hdc )
 {
     DC *dc, *origDC;
-    HBITMAP16 hbitmap;
+    HBITMAP32 hbitmap;
     const DC_FUNCTIONS *funcs;
 
     if ((origDC = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
@@ -613,7 +701,7 @@ HDC16 CreateCompatibleDC( HDC16 hdc )
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
-        dprintf_dc( stddeb, "CreateDC: creation aborted by device\n" );
+        dprintf_dc(stddeb, "CreateCompatibleDC: creation aborted by device\n");
         DeleteObject32( hbitmap );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
@@ -625,9 +713,18 @@ HDC16 CreateCompatibleDC( HDC16 hdc )
 
 
 /***********************************************************************
- *           DeleteDC    (GDI.68)
+ *           DeleteDC16    (GDI.68)
  */
-BOOL DeleteDC( HDC16 hdc )
+BOOL16 DeleteDC16( HDC16 hdc )
+{
+    return DeleteDC32( hdc );
+}
+
+
+/***********************************************************************
+ *           DeleteDC32    (GDI32.67)
+ */
+BOOL32 DeleteDC32( HDC32 hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -641,7 +738,7 @@ BOOL DeleteDC( HDC16 hdc )
 	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
-	DeleteDC( hdcs );
+	DeleteDC32( hdcs );
     }
     
     if (!(dc->w.flags & DC_SAVED))
@@ -662,11 +759,31 @@ BOOL DeleteDC( HDC16 hdc )
 
 
 /***********************************************************************
- *           ResetDC    (GDI.376)
+ *           ResetDC16    (GDI.376)
  */
-HDC16 ResetDC( HDC16 hdc, /* DEVMODE */ void *devmode )
+HDC16 ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
 {
-    fprintf( stderr, "ResetDC: empty stub!\n" );
+    fprintf( stderr, "ResetDC16: empty stub!\n" );
+    return hdc;
+}
+
+
+/***********************************************************************
+ *           ResetDC32A    (GDI32.287)
+ */
+HDC32 ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
+{
+    fprintf( stderr, "ResetDC32A: empty stub!\n" );
+    return hdc;
+}
+
+
+/***********************************************************************
+ *           ResetDC32W    (GDI32.288)
+ */
+HDC32 ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
+{
+    fprintf( stderr, "ResetDC32A: empty stub!\n" );
     return hdc;
 }
 
@@ -732,11 +849,20 @@ COLORREF SetTextColor( HDC32 hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextAlign    (GDI.346)
+ *           SetTextAlign16    (GDI.346)
  */
-WORD SetTextAlign( HDC16 hdc, WORD textAlign )
+UINT16 SetTextAlign16( HDC16 hdc, UINT16 textAlign )
 {
-    WORD prevAlign;
+    return SetTextAlign32( hdc, textAlign );
+}
+
+
+/***********************************************************************
+ *           SetTextAlign32    (GDI32.336)
+ */
+UINT32 SetTextAlign32( HDC32 hdc, UINT32 textAlign )
+{
+    UINT32 prevAlign;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc)
     {
@@ -753,7 +879,7 @@ WORD SetTextAlign( HDC16 hdc, WORD textAlign )
 /***********************************************************************
  *           GetDCOrgEx  (GDI32.168)
  */
-BOOL32 GetDCOrgEx(HDC32 hDC, LPPOINT32 lpp)
+BOOL32 GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC );
     if (!dc || !lpp) return FALSE;
@@ -762,7 +888,7 @@ BOOL32 GetDCOrgEx(HDC32 hDC, LPPOINT32 lpp)
     {
        Window root;
        int w, h, border, depth;
-
+       /* FIXME: this is not correct for managed windows */
        XGetGeometry( display, dc->u.x.drawable, &root,
                     &lpp->x, &lpp->y, &w, &h, &border, &depth );
     }
@@ -787,7 +913,7 @@ DWORD GetDCOrg( HDC16 hdc )
 /***********************************************************************
  *           SetDCOrg    (GDI.117)
  */
-DWORD SetDCOrg( HDC16 hdc, short x, short y )
+DWORD SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD prevOrg;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );

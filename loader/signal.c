@@ -97,17 +97,8 @@ static void SIGNAL_break(int signal, int code, SIGCONTEXT *context)
  * 
  * wait4 terminated child processes
  */
-#ifdef linux
-static void SIGNAL_child(int signal, SIGCONTEXT context_struct)
+static void SIGNAL_child(void)
 {
-    SIGCONTEXT *context = &context_struct;
-#elif defined(__svr4__) || defined(_SCO_DS)
-static void SIGNAL_child(int signal, void *siginfo, SIGCONTEXT *context)
-{
-#else
-static void SIGNAL_child(int signal, int code, SIGCONTEXT *context)
-{
-#endif
    wait4( 0, NULL, WNOHANG, NULL);
 }
 

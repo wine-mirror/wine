@@ -10,6 +10,8 @@
 #include "ldt.h"
 #include "registers.h"
 
+#include "pe_image.h"
+
 #define STEP_FLAG 0x100 /* single step flag */
 
 typedef struct
@@ -17,6 +19,45 @@ typedef struct
     DWORD seg;  /* 0xffffffff means current default segment (cs or ds) */
     DWORD off;
 } DBG_ADDR;
+
+struct  wine_lines {
+  unsigned long		line_number;
+  DBG_ADDR		pc_offset;
+};
+
+typedef struct wine_lines WineLineNo;
+
+/*
+ * This structure holds information about stack variables, function
+ * parameters, and register variables, which are all local to this
+ * function.
+ */
+struct  wine_locals {
+  unsigned int		regno:8;	/* For register symbols */
+  unsigned int		offset:24;	/* offset from esp/ebp to symbol */
+  unsigned int		pc_start;	/* For RBRAC/LBRAC */
+  unsigned int		pc_end;		/* For RBRAC/LBRAC */
+  char		      * name;		/* Name of symbol */
+};
+
+typedef struct wine_locals WineLocals;
+
+struct name_hash
+{
+    struct name_hash * next;
+    char *             name;
+    char *             sourcefile;
+
+    int		       n_locals;
+    int		       locals_alloc;
+    WineLocals       * local_vars;
+  
+    int		       n_lines;
+    int		       lines_alloc;
+    WineLineNo       * linetab;
+
+    DBG_ADDR           addr;
+};
 
 #define DBG_FIX_ADDR_SEG(addr,default) \
     { if ((addr)->seg == 0xffffffff) (addr)->seg = (default); \
@@ -30,13 +71,13 @@ typedef struct
 #define DBG_CHECK_READ_PTR(addr,len) \
     (!DEBUG_IsBadReadPtr((addr),(len)) || \
      (fprintf(stderr,"*** Invalid address "), \
-      DEBUG_PrintAddress((addr),dbg_mode), \
+      DEBUG_PrintAddress((addr),dbg_mode, FALSE), \
       fprintf(stderr,"\n"),0))
 
 #define DBG_CHECK_WRITE_PTR(addr,len) \
     (!DEBUG_IsBadWritePtr((addr),(len)) || \
      (fprintf(stderr,"*** Invalid address "), \
-      DEBUG_PrintAddress(addr,dbg_mode), \
+      DEBUG_PrintAddress(addr,dbg_mode, FALSE), \
       fprintf(stderr,"\n"),0))
 
 #ifdef REG_SP  /* Some Sun includes define this */
@@ -79,18 +120,36 @@ extern void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
 extern void DEBUG_Disasm( DBG_ADDR *addr );
 
   /* debugger/hash.c */
-extern void DEBUG_AddSymbol( const char *name, const DBG_ADDR *addr );
-extern BOOL32 DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr );
+extern struct name_hash * DEBUG_AddSymbol( const char *name, 
+					   const DBG_ADDR *addr,
+					   const char * sourcefile);
+extern BOOL32 DEBUG_GetSymbolValue( const char * name, const int lineno,
+				    DBG_ADDR *addr );
 extern BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
-extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr );
+extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
+					     struct name_hash ** rtn,
+					     unsigned int ebp);
 extern void DEBUG_ReadSymbolTable( const char * filename );
 extern void DEBUG_LoadEntryPoints(void);
+extern void DEBUG_AddLineNumber( struct name_hash * func, int line_num, 
+		     unsigned long offset );
+extern void DEBUG_AddLocal( struct name_hash * func, int regno, 
+			    int offset,
+			    int pc_start,
+			    int pc_end,
+			    char * name);
+
 
   /* debugger/info.c */
 extern void DEBUG_Print( const DBG_ADDR *addr, int count, char format );
-extern void DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen );
+extern struct name_hash * DEBUG_PrintAddress( const DBG_ADDR *addr, 
+					      int addrlen, int flag );
 extern void DEBUG_Help(void);
 extern void DEBUG_List( DBG_ADDR *addr, int count );
+extern struct name_hash * DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, 
+						     int addrlen, 
+						     unsigned int ebp, 
+						     int flag );
 
   /* debugger/memory.c */
 extern BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
@@ -108,6 +167,17 @@ extern BOOL32 DEBUG_ValidateRegisters(void);
   /* debugger/stack.c */
 extern void DEBUG_InfoStack(void);
 extern void DEBUG_BackTrace(void);
+extern BOOL32 DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr );
+extern int  DEBUG_InfoLocals(void);
+extern int  DEBUG_SetFrame(int newframe);
+
+  /* debugger/stabs.c */
+extern int DEBUG_ReadExecutableDbgInfo(void);
+
+  /* debugger/msc.c */
+extern int DEBUG_RegisterDebugInfo(int, struct pe_data *pe,
+				   int, unsigned long, unsigned long);
+extern int DEBUG_ProcessDeferredDebug(void);
 
   /* debugger/dbg.y */
 extern void DEBUG_EnterDebugger(void);

@@ -12,7 +12,9 @@ C_SRCS = \
 	hash.c \
 	info.c \
 	memory.c \
+	msc.c	\
 	registers.c \
+	stabs.c	\
 	stack.c
 
 GEN_C_SRCS = \

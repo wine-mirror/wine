@@ -21,11 +21,11 @@
 #include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
+#include "heap.h"
 #include "msdos.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
-#include "string32.h"
 
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
@@ -877,9 +877,9 @@ DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
  */
 DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
 {
-    LPSTR longpatha = STRING32_DupUniToAnsi( longpath );
+    LPSTR longpatha = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
     LPCSTR dostruename = DOSFS_GetDosTrueName( longpatha, TRUE );
-    free( longpatha );
+    HeapFree( GetProcessHeap(), 0, longpatha );
     lstrcpynAtoW( shortpath, dostruename, shortlen );
     return strlen(dostruename);
 }

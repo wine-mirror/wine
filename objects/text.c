@@ -11,8 +11,8 @@
 #include "dc.h"
 #include "gdi.h"
 #include "callback.h"
+#include "heap.h"
 #include "metafile.h"
-#include "string32.h"
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
@@ -257,7 +257,7 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
                               rect, line, len, NULL )) return 0;
             if (prefix_offset != -1)
             {
-                HPEN32 hpen = CreatePen32( PS_SOLID, 1, GetTextColor(hdc) );
+                HPEN32 hpen = CreatePen32( PS_SOLID, 1, GetTextColor32(hdc) );
                 HPEN32 oldPen = SelectObject32( hdc, hpen );
                 MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
                 LineTo32(hdc, x + prefix_end, y + tm.tmAscent + 1 );
@@ -312,9 +312,9 @@ INT32 DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
 INT32 DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
                    LPRECT32 rect, UINT32 flags )
 {
-    char *p = STRING32_DupUniToAnsi( str );
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     INT32 ret = DrawText32A( hdc, p, count, rect, flags );
-    free(p);
+    HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
 
@@ -589,9 +589,9 @@ BOOL32 ExtTextOut32W( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
                       const RECT32 *lprect, LPCWSTR str, UINT32 count,
                       const INT32 *lpDx )
 {
-    char *p = STRING32_DupUniToAnsi( str );
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     INT32 ret = ExtTextOut32A( hdc, x, y, flags, lprect, p, count, lpDx );
-    free(p);
+    HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
 
@@ -634,7 +634,7 @@ BOOL GrayString(HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam,
 
     if (!cch) cch = lstrlen16( (LPCSTR)PTR_SEG_TO_LIN(lParam) );
     if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = GetTextColor( hdc );
+    current_color = GetTextColor32( hdc );
     SetTextColor( hdc, GetSysColor(COLOR_GRAYTEXT) );
     ret = TextOut16( hdc, x, y, (LPCSTR)PTR_SEG_TO_LIN(lParam), cch );
     SetTextColor( hdc, current_color );
@@ -691,7 +691,7 @@ LONG TEXT_TabbedTextOut( HDC16 hdc, int x, int y, LPSTR lpstr, int count,
             RECT16 r;
             SetRect16( &r, x, y, tabPos, y+HIWORD(extent) );
             ExtTextOut16( hdc, x, y,
-                          GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
+                          GetBkMode32(hdc) == OPAQUE ? ETO_OPAQUE : 0,
                           &r, lpstr, i, NULL );
         }
         x = tabPos;

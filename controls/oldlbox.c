@@ -200,7 +200,7 @@ void ListBoxDrawItem(HWND hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls,
       int 	OldBkMode;
       DWORD 	dwOldTextColor = 0;
 
-      OldBkMode = SetBkMode(hdc, TRANSPARENT);
+      OldBkMode = SetBkMode32(hdc, TRANSPARENT);
 
       if (itemState != 0) {
 	dwOldTextColor = SetTextColor(hdc, 0x00FFFFFFL);
@@ -220,7 +220,7 @@ void ListBoxDrawItem(HWND hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls,
 	SetTextColor(hdc, dwOldTextColor);
       }
       
-      SetBkMode(hdc, OldBkMode);
+      SetBkMode32(hdc, OldBkMode);
     }
     else DrawFocusRect16(hdc, rect);
 }

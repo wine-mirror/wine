@@ -36,7 +36,7 @@ QueryPerformanceCounter(LPLARGE_INTEGER counter) {
 
 DWORD
 GetWindowThreadProcessId(HWND32 hwnd,LPDWORD processid) {
-	fprintf(stdnimp,"GetWindowThreadProcessId(%04lx,%p),stub\n",hwnd,processid);
+	fprintf(stdnimp,"GetWindowThreadProcessId(%04x,%p),stub\n",hwnd,processid);
 	return 0;
 }
 

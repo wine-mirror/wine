@@ -18,6 +18,7 @@
 
 extern FILE * yyin;
 unsigned int dbg_mode = 0;
+int curr_frame = 0;
 
 static enum exec_mode dbg_exec_mode = EXEC_CONT;
 
@@ -37,11 +38,13 @@ int yyerror(char *);
     int              integer;
 }
 
-%token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK
+%token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tDEFINE tABORT
-%token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE 
+%token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tNO_SYMBOL tEOL
 %token tSYMBOLFILE
+%token tFRAME
+
 
 %token <string> tIDENTIFIER
 %token <integer> tNUM tFORMAT
@@ -87,12 +90,17 @@ command:
     | tLIST addr tEOL          { DEBUG_List( &$2, 15 ); }
     | tABORT tEOL              { kill(getpid(), SIGABRT); }
     | tSYMBOLFILE tIDENTIFIER tEOL  { DEBUG_ReadSymbolTable( $2 ); }
-    | tDEFINE tIDENTIFIER addr tEOL { DEBUG_AddSymbol( $2, &$3 ); }
+    | tDEFINE tIDENTIFIER addr tEOL { DEBUG_AddSymbol( $2, &$3, NULL ); }
     | tMODE tNUM tEOL          { mode_command($2); }
     | tENABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, TRUE ); }
     | tDISABLE tNUM tEOL       { DEBUG_EnableBreakpoint( $2, FALSE ); }
     | tDELETE tBREAK tNUM tEOL { DEBUG_DelBreakpoint( $3 ); }
     | tBACKTRACE tEOL	       { DEBUG_BackTrace(); }
+    | tUP tEOL		       { DEBUG_SetFrame( curr_frame + 1 );  }
+    | tUP tNUM tEOL	       { DEBUG_SetFrame( curr_frame + $2 ); }
+    | tDOWN tEOL	       { DEBUG_SetFrame( curr_frame - 1 );  }
+    | tDOWN tNUM tEOL	       { DEBUG_SetFrame( curr_frame - $2 ); }
+    | tFRAME expr tEOL	       { DEBUG_SetFrame( $2 ); }
     | set_command
     | x_command
     | print_command
@@ -122,6 +130,10 @@ print_command:
 break_command:
       tBREAK '*' addr tEOL     { DEBUG_AddBreakpoint( &$3 ); }
     | tBREAK symbol tEOL       { DEBUG_AddBreakpoint( &$2 ); }
+    | tBREAK symbol '+' expr tEOL { DBG_ADDR addr = $2;
+                                    addr.off += $4;
+                                    DEBUG_AddBreakpoint( &addr ); 
+                                  }
     | tBREAK tEOL              { DBG_ADDR addr = { CS_reg(DEBUG_context),
                                                    EIP_reg(DEBUG_context) };
                                  DEBUG_AddBreakpoint( &addr );
@@ -137,6 +149,7 @@ info_command:
     | tINFO tSEGMENTS tEOL      { LDT_Print( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
     | tINFO tWND expr tEOL      { WIN_DumpWindow( $3 ); } 
+    | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
 
 walk_command:
       tWALK tCLASS tEOL         { CLASS_WalkClasses(); }
@@ -145,12 +158,19 @@ walk_command:
     | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
 
-symbol: tIDENTIFIER   { if (!DEBUG_GetSymbolValue( $1, &$$ ))
-			{
-			   fprintf( stderr, "Symbol %s not found\n", $1 );
-			   YYERROR;
-			}
-		      } 
+symbol:
+    tIDENTIFIER            { if (!DEBUG_GetSymbolValue( $1, -1, &$$ ))
+                             {
+                               fprintf( stderr, "Symbol %s not found\n", $1 );
+                               YYERROR;
+                             }
+                           }
+    | tIDENTIFIER ':' tNUM { if (!DEBUG_GetSymbolValue( $1, $3, &$$ ))
+                             {
+                               fprintf( stderr, "No code at %s:%d\n", $1, $3 );
+                               YYERROR;
+                             }
+                           }
 
 addr:
       expr                       { $$.seg = 0xffffffff; $$.off = $1; }
@@ -159,6 +179,8 @@ addr:
 segaddr:
       expr ':' expr              { $$.seg = $1; $$.off = $3; }
     | symbol                     { $$ = $1; }
+    | symbol '+' expr            { $$ = $1; $$.off += $3; }
+    | symbol '-' expr            { $$ = $1; $$.off -= $3; }
 
 expr:
       tNUM                       { $$ = $1; }
@@ -258,9 +280,29 @@ void wine_debug( int signal, SIGCONTEXT *regs )
     if (!loaded_symbols)
     {
         loaded_symbols++;
-        PROFILE_GetWineIniString( "wine", "SymbolTableFile", "wine.sym",
-                                  SymbolTableFile, sizeof(SymbolTableFile) );
-        DEBUG_ReadSymbolTable( SymbolTableFile );
+	/*
+	 * In some cases we can read the stabs information directly
+	 * from the executable.  If this is the case, we don't need
+	 * to bother with trying to read a symbol file, as the stabs
+	 * also have line number and local variable information.
+	 * As long as gcc is used for the compiler, stabs will
+	 * be the default.  On SVr4, DWARF could be used, but we
+	 * don't grok that yet, and in this case we fall back to using
+	 * the wine.sym file.
+	 */
+	if( DEBUG_ReadExecutableDbgInfo() == FALSE )
+        {
+	    PROFILE_GetWineIniString( "wine", "SymbolTableFile", "wine.sym",
+                                     SymbolTableFile, sizeof(SymbolTableFile));
+	    DEBUG_ReadSymbolTable( SymbolTableFile );
+        }
+
+	/*
+	 * Read COFF, MSC, etc debug information that we noted when we
+	 * started up the executable.
+	 */
+	DEBUG_ProcessDeferredDebug();
+
         DEBUG_LoadEntryPoints();
     }
 
@@ -298,7 +340,8 @@ void wine_debug( int signal, SIGCONTEXT *regs )
         }
 
         /* Show where we crashed */
-        DEBUG_PrintAddress( &addr, dbg_mode );
+        curr_frame = 0;
+        DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
         fprintf(stderr,":  ");
         if (DBG_CHECK_READ_PTR( &addr, 1 ))
         {

@@ -76,14 +76,38 @@ void DEBUG_Print( const DBG_ADDR *addr, int count, char format )
  *
  * Print an 16- or 32-bit address, with the nearest symbol if any.
  */
-void DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen )
+struct name_hash *
+DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
 {
-    const char *name = DEBUG_FindNearestSymbol( addr );
+    struct name_hash * nh;
+    const char *name = DEBUG_FindNearestSymbol( addr, flag, &nh, 0 );
 
     if (addr->seg) fprintf( stderr, "0x%04lx:", addr->seg );
     if (addrlen == 16) fprintf( stderr, "0x%04lx", addr->off );
     else fprintf( stderr, "0x%08lx", addr->off );
     if (name) fprintf( stderr, " (%s)", name );
+    return nh;
+}
+/***********************************************************************
+ *           DEBUG_PrintAddressAndArgs
+ *
+ * Print an 16- or 32-bit address, with the nearest symbol if any.
+ * Similar to DEBUG_PrintAddress, but we print the arguments to
+ * each function (if known).  This is useful in a backtrace.
+ */
+struct name_hash *
+DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, int addrlen, 
+			   unsigned int ebp, int flag )
+{
+    struct name_hash * nh;
+    const char *name = DEBUG_FindNearestSymbol( addr, flag, &nh, ebp );
+
+    if (addr->seg) fprintf( stderr, "0x%04lx:", addr->seg );
+    if (addrlen == 16) fprintf( stderr, "0x%04lx", addr->off );
+    else fprintf( stderr, "0x%08lx", addr->off );
+    if (name) fprintf( stderr, " (%s)", name );
+
+    return nh;
 }
 
 
@@ -100,19 +124,20 @@ void DEBUG_Help(void)
 "The commands accepted by the Wine debugger are a small subset",
 "of the commands that gdb would accept.",
 "The commands currently are:",
-"  break [*<addr>]                      delete break bpnum",
-"  disable bpnum                        enable bpnum",
-"  help                                 quit",
-"  bt                                   cont",
-"  step                                 next",
-"  x <addr>                             print <expr>",
-"  set <reg> = <expr>                   set *<addr> = <expr>",
-"  symbolfile <filename>                define <identifier> <addr>",
-"  list <addr>\n",
+"  break [*<addr>]                        delete break bpnum",
+"  disable bpnum                          enable bpnum",
+"  help                                   quit",
+"  bt                                     cont",
+"  step                                   next",
+"  x <addr>                               print <expr>",
+"  set <reg> = <expr>                     set *<addr> = <expr>",
+"  symbolfile <filename>                  define <identifier> <addr>",
+"  up                                     down\n",
+"  list <addr>                            frame <n>\n",
 
 "Wine-specific commands:",
-"  mode [16,32]                         walk [wnd,class,queue] <handle>",
-"  info [reg,stack,break,segments]      info [wnd, queue] <handle>\n",
+"  mode [16,32]                           walk [wnd,class,queue] <handle>",
+"  info [reg,stack,break,segments,locals] info [wnd, queue] <handle>\n",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
 "same way that gdb does.\n",
@@ -144,7 +169,7 @@ void DEBUG_List( DBG_ADDR *addr, int count )
     DBG_FIX_ADDR_SEG( addr, CS_reg(DEBUG_context) );
     while (count-- > 0)
     {
-        DEBUG_PrintAddress( addr, dbg_mode );
+        DEBUG_PrintAddress( addr, dbg_mode, FALSE );
         fprintf( stderr, ":  " );
         if (!DBG_CHECK_READ_PTR( addr, 1 )) return;
         DEBUG_Disasm( addr );

@@ -20,8 +20,8 @@ BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
     XTextExtents( dc->u.x.font.fstruct, str, count, &dir,
 		  &ascent, &descent, &info );
     size->cx = abs((info.width + dc->w.breakRem + count * dc->w.charExtra)
-		    * dc->w.WndExtX / dc->w.VportExtX);
+		    * dc->wndExtX / dc->vportExtX);
     size->cy = abs((dc->u.x.font.fstruct->ascent+dc->u.x.font.fstruct->descent)
-		    * dc->w.WndExtY / dc->w.VportExtY);
+		    * dc->wndExtY / dc->vportExtY);
     return TRUE;
 }

@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "libres.h"
+#include "heap.h"
 #include "windows.h"
 #include "xmalloc.h"
-#include "string32.h"
 
 typedef struct RLE
 {
@@ -86,16 +86,15 @@ HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
   int nameid=0,typeid;
   ResListE* ResBlock;
   const struct resource* const * Res;
-  LPSTR nameA, typeA;
 
   if(HIWORD(name))
   {
     if(*name=='#')
     {
-      nameA = STRING32_DupUniToAnsi(name);
-      nameid=atoi(nameA+1);
-      free(nameA);
-      name=NULL;
+        LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
+        nameid = atoi(nameA+1);
+        HeapFree( GetProcessHeap(), 0, nameA );
+        name=NULL;
     }
   }
   else
@@ -107,9 +106,9 @@ HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
   {
     if(*type=='#')
     {
-      typeA = STRING32_DupUniToAnsi(type);
-      typeid=atoi(typeA+1);
-      free(typeA);
+        LPSTR typeA = HEAP_strdupWtoA( GetProcessHeap(), 0, type );
+        typeid=atoi(typeA+1);
+        HeapFree( GetProcessHeap(), 0, typeA );
     }
     else
     {

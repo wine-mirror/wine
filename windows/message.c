@@ -439,6 +439,35 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
             if (HOOK_IsHooked( WH_JOURNALRECORD ))
                 MSG_JournalRecordMsg( msg );
             QUEUE_RemoveMsg( sysMsgQueue, pos );
+            
+            /* call CBT hook _after_ message removed from queue */
+	    if (HOOK_IsHooked( WH_CBT ))
+	    {
+	    	if (((msg->message >= WM_MOUSEFIRST) &&
+                     (msg->message <= WM_MOUSELAST)) ||
+	    	    ((msg->message >= WM_NCMOUSEFIRST) &&
+                     (msg->message <= WM_NCMOUSELAST)))
+	    	{
+                    MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
+                    if (hook)
+                    {
+	    	  	hook->pt           = msg->pt;
+			hook->hwnd         = msg->hwnd;
+			hook->wHitTestCode = (INT16)SendMessage16( msg->hwnd,
+                                            WM_NCHITTEST, 0,
+                                            MAKELONG( msg->pt.x, msg->pt.y ) );
+			hook->dwExtraInfo  = 0;
+			HOOK_CallHooks16( WH_CBT, HCBT_CLICKSKIPPED ,msg->message, 
+                                          (LPARAM)SEGPTR_GET(hook) );
+			SEGPTR_FREE(hook);
+                    }
+                }
+                else 
+                    if ((msg->message >= WM_KEYFIRST) &&
+                        (msg->message <= WM_KEYLAST))
+		   	HOOK_CallHooks16( WH_CBT, HCBT_KEYSKIPPED,
+                                          msg->wParam, msg->lParam );
+            }
         }
         return TRUE;
     }

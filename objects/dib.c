@@ -4,6 +4,7 @@
  * Copyright 1993,1994  Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -134,7 +135,7 @@ static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
                                BITMAPINFO *info )
 {
     int i, colors;
-    BOOL isInfo;
+    BOOL32 isInfo;
     WORD *colorPtr;
     int *colorMapping;
 
@@ -196,10 +197,10 @@ static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
  *
  * SetDIBits for a 1-bit deep DIB.
  */
-static void DIB_SetImageBits_1( WORD lines, BYTE *bits, WORD width,
+static void DIB_SetImageBits_1( DWORD lines, BYTE *bits, DWORD width,
                                 int *colors, XImage *bmpImage )
 {
-    WORD i, x;
+    DWORD i, x;
     BYTE pad, pix;
 
     if (!(width & 31)) pad = 0;
@@ -240,10 +241,10 @@ static void DIB_SetImageBits_1( WORD lines, BYTE *bits, WORD width,
  *
  * SetDIBits for a 4-bit deep DIB.
  */
-static void DIB_SetImageBits_4( WORD lines, BYTE *bits, WORD width,
+static void DIB_SetImageBits_4( DWORD lines, BYTE *bits, DWORD width,
                                 int *colors, XImage *bmpImage )
 {
-    WORD i, x;
+    DWORD i, x;
     BYTE pad;
 
     if (!(width & 7)) pad = 0;
@@ -274,14 +275,14 @@ static void DIB_SetImageBits_4( WORD lines, BYTE *bits, WORD width,
  *
  * SetDIBits for a 4-bit deep compressed DIB.
  */
-static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
+static void DIB_SetImageBits_RLE4( DWORD lines, BYTE *bits, DWORD width,
                                    int *colors, XImage *bmpImage )
 {
 	int x = 0, c, length;
 	BYTE *begin = bits;
 
         lines--;
-	while ((short)lines >= 0)
+	while ((int)lines >= 0)
         {
 		length = *bits++;
 		if (length) {	/* encoded */
@@ -334,10 +335,10 @@ static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
  *
  * SetDIBits for an 8-bit deep DIB.
  */
-static void DIB_SetImageBits_8( WORD lines, BYTE *bits, WORD width,
+static void DIB_SetImageBits_8( DWORD lines, BYTE *bits, DWORD width,
                                 int *colors, XImage *bmpImage )
 {
-    WORD x;
+    DWORD x;
     BYTE pad = (4 - (width & 3)) & 3;
 
     while (lines--)
@@ -379,11 +380,8 @@ enum Rle8_EscapeCodes
   RleDelta	= 2		/* Delta */
 };
   
-static void DIB_SetImageBits_RLE8(WORD lines, 
-				  BYTE *bits, 
-				  WORD width,
-				  int *colors, 
-				  XImage *bmpImage)
+static void DIB_SetImageBits_RLE8( DWORD lines, BYTE *bits, DWORD width,
+                                   int *colors, XImage *bmpImage )
 {
     int x;			/* X-positon on each line.  Increases. */
     int line;			/* Line #.  Starts at lines-1, decreases */
@@ -535,10 +533,10 @@ static void DIB_SetImageBits_RLE8(WORD lines,
  *
  * SetDIBits for a 24-bit deep DIB.
  */
-static void DIB_SetImageBits_24( WORD lines, BYTE *bits, WORD width,
+static void DIB_SetImageBits_24( DWORD lines, BYTE *bits, DWORD width,
 				 DC *dc, XImage *bmpImage )
 {
-    WORD x;
+    DWORD x;
     BYTE pad = (4 - ((width*3) & 3)) & 3;
 
     /* "bits" order is reversed for some reason */
@@ -560,7 +558,7 @@ static void DIB_SetImageBits_24( WORD lines, BYTE *bits, WORD width,
  * Transfer the bits to an X image.
  * Helper function for SetDIBits() and SetDIBitsToDevice().
  */
-static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
+static int DIB_SetImageBits( DC *dc, DWORD lines, WORD depth, LPSTR bits,
                              DWORD infoWidth, WORD infoBpp,
                              BITMAPINFO *info, WORD coloruse,
 			     Drawable drawable, GC gc, int xSrc, int ySrc,
@@ -643,24 +641,36 @@ INT32 StretchDIBits32( HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
     HBITMAP32 hBitmap, hOldBitmap;
     HDC32 hdcMem;
 
-    hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-                              bits, info, wUsage );
-    hdcMem = CreateCompatibleDC( hdc );
+    hBitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
+                                bits, info, wUsage );
+    hdcMem = CreateCompatibleDC32( hdc );
     hOldBitmap = SelectObject32( hdcMem, hBitmap );
     StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
                   hdcMem, xSrc, ySrc, widthSrc, heightSrc, dwRop );
     SelectObject32( hdcMem, hOldBitmap );
-    DeleteDC( hdcMem );
+    DeleteDC32( hdcMem );
     DeleteObject32( hBitmap );
     return heightSrc;
 }
 
 
 /***********************************************************************
- *           SetDIBits    (GDI.440) (GDI32.312)
+ *           SetDIBits16    (GDI.440)
  */
-INT16 SetDIBits( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan, UINT32 lines,
-                 LPCVOID bits, const BITMAPINFO *info, UINT32 coloruse )
+INT16 SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
+                   UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
+                   UINT16 coloruse )
+{
+    return SetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
+}
+
+
+/***********************************************************************
+ *           SetDIBits32   (GDI32.312)
+ */
+INT32 SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
+                   UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
+                   UINT32 coloruse )
 {
     DC * dc;
     BITMAPOBJ * bmp;
@@ -692,12 +702,25 @@ INT16 SetDIBits( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan, UINT32 lines,
 
 
 /***********************************************************************
- *           SetDIBitsToDevice    (GDI.443) (GDI32.313)
+ *           SetDIBitsToDevice16    (GDI.443)
  */
-INT16 SetDIBitsToDevice( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
-                         DWORD cy, INT32 xSrc, INT32 ySrc, UINT32 startscan,
-                         UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
-                         UINT32 coloruse )
+INT16 SetDIBitsToDevice16( HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
+                           INT16 cy, INT16 xSrc, INT16 ySrc, UINT16 startscan,
+                           UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
+                           UINT16 coloruse )
+{
+    return SetDIBitsToDevice32( hdc, xDest, yDest, cx, cy, xSrc, ySrc,
+                                startscan, lines, bits, info, coloruse );
+}
+
+
+/***********************************************************************
+ *           SetDIBitsToDevice32   (GDI32.313)
+ */
+INT32 SetDIBitsToDevice32( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
+                           DWORD cy, INT32 xSrc, INT32 ySrc, UINT32 startscan,
+                           UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
+                           UINT32 coloruse )
 {
     DC * dc;
     DWORD width, height;
@@ -737,10 +760,22 @@ INT16 SetDIBitsToDevice( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 
 
 /***********************************************************************
- *           GetDIBits    (GDI.441)
+ *           GetDIBits16    (GDI.441)
  */
-int GetDIBits( HDC16 hdc, HBITMAP16 hbitmap, WORD startscan, WORD lines,
-	       LPSTR bits, BITMAPINFO * info, WORD coloruse )
+INT16 GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
+                   UINT16 lines, LPSTR bits, BITMAPINFO * info,
+                   UINT16 coloruse )
+{
+    return GetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
+}
+
+
+/***********************************************************************
+ *           GetDIBits32    (GDI32.170)
+ */
+INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
+                   UINT32 lines, LPSTR bits, BITMAPINFO * info,
+                   UINT32 coloruse )
 {
     DC * dc;
     BITMAPOBJ * bmp;
@@ -805,13 +840,25 @@ int GetDIBits( HDC16 hdc, HBITMAP16 hbitmap, WORD startscan, WORD lines,
 
 
 /***********************************************************************
- *           CreateDIBitmap    (GDI.442)
+ *           CreateDIBitmap16    (GDI.442)
  */
-HBITMAP16 CreateDIBitmap( HDC16 hdc, BITMAPINFOHEADER * header, DWORD init,
-                          LPVOID bits, BITMAPINFO * data, UINT coloruse )
+HBITMAP16 CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
+                            DWORD init, LPCVOID bits, const BITMAPINFO * data,
+                            UINT16 coloruse )
 {
-    HBITMAP16 handle;
-    BOOL fColor;
+    return CreateDIBitmap32( hdc, header, init, bits, data, coloruse );
+}
+
+
+/***********************************************************************
+ *           CreateDIBitmap32    (GDI32.37)
+ */
+HBITMAP32 CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
+                            DWORD init, LPCVOID bits, const BITMAPINFO *data,
+                            UINT32 coloruse )
+{
+    HBITMAP32 handle;
+    BOOL32 fColor;
     DWORD width, height;
     WORD bpp;
 
@@ -866,6 +913,6 @@ HBITMAP16 CreateDIBitmap( HDC16 hdc, BITMAPINFOHEADER * header, DWORD init,
     if (!handle) return 0;
 
     if (init == CBM_INIT)
-        SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
+        SetDIBits32( hdc, handle, 0, height, bits, data, coloruse );
     return handle;
 }

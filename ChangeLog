@@ -1,4 +1,56 @@
 ----------------------------------------------------------------------
+Sun Dec 22 13:30:18 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [graphics/metafiledrv/init.c] [graphisc/metafiledrv/mapping.c]
+	Added mapping functions.
+
+	* [if1632/gdi.spec] [objects/*.c] [include/windows.h]
+	Added a lot of Win32 functions.
+
+	* [memory/heap.c]
+	Added HEAP_strdupAtoW and HEAP_strdupWtoA.
+
+	* [misc/lstr.c] [memory/string.c]
+	Moved OEM<->Ansi conversion to string.c. Fixed a couple of bugs.
+
+	* [object/font.c]
+	Avoid uppercasing font names.
+
+	* [windows/hook.c]
+	Set ds = ss before calling hook procedure.
+
+Sat Dec 21 21:44:17 1996  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [objects/color.c]
+	Use colors allocated by other clients. 
+
+	* [windows/caret.c]
+	Set default blink time to 500.
+
+	* [windows/win.c] [windows/event.c]
+	Delete X context before XDestroyWindow().
+
+	* [windows/keyboard.c]
+	Fixed GetKeyState() once more.
+
+Fri Dec 20 08:26:33 1996  Eric Youngdale <eric@sub2304.jic.com>
+
+	* [debugger/*.c]
+	Lots of built-in debugger improvements: parse Win32 EXEs debug
+ 	information, display local variables, source files and line
+ 	numbers, get symbols directly from the Wine executable, etc.
+
+Tue Dec 17 22:39:42 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [misc/winsock_async.c]
+ 	Extern declaration added for h_errno.
+
+Tue Dec 17 21:29:34 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/message.c]
+	Added two more CBT hook calls: HCBT_CLICKSKIPPED/HCBT_KEYSKIPPED.
+
+----------------------------------------------------------------------
 Sun Dec 15 16:18:15 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [graphics/x11drv/bitblt.c]

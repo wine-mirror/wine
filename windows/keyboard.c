@@ -29,16 +29,12 @@ INT GetKeyState(INT keycode)
 {
     INT retval;
 
-    if (keycode >= 'a' && keycode <= 'z')
-        keycode += 'A' - 'a';
-    switch(keycode) {
-     case VK_LBUTTON:
-	retval = MouseButtonsStates[0];
-     case VK_MBUTTON:
-	retval = MouseButtonsStates[1];
-     case VK_RBUTTON:
-	retval = MouseButtonsStates[2];
-     default:
+    if( keycode >= VK_LBUTTON && keycode <= VK_RBUTTON )
+	retval = MouseButtonsStates[keycode - VK_LBUTTON];
+    else
+    {
+	if (keycode >= 'a' && keycode <= 'z')
+	    keycode += 'A' - 'a';
 	retval = ( (INT)(QueueKeyStateTable[keycode] & 0x80) << 8 ) |
 		   (INT)(QueueKeyStateTable[keycode] & 0x01);
     }

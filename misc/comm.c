@@ -21,11 +21,11 @@
 
 #include "windows.h"
 #include "comm.h"
+#include "heap.h"
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "handle32.h"
-#include "string32.h"
 
 int commerror = 0, eventmask = 0;
 
@@ -363,9 +363,9 @@ BOOL32 BuildCommDCBAndTimeouts32W(
 	BOOL32	ret;
 
 	dprintf_comm(stddeb,"BuildCommDCBAndTimeouts32W(%p,%p,%p)\n",devid,lpdcb,lptimeouts);
-	devidA = STRING32_DupUniToAnsi(devid);
+	devidA = HEAP_strdupWtoA( GetProcessHeap(), 0, devid );
 	ret=BuildCommDCBAndTimeouts32A(devidA,lpdcb,lptimeouts);
-	free(devidA);
+        HeapFree( GetProcessHeap(), 0, devidA );
 	return ret;
 }
 

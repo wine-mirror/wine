@@ -11,6 +11,7 @@
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
+#include "heap.h"
 #include "ver.h"
 #include "lzexpand.h"
 #include "module.h"
@@ -19,14 +20,10 @@
 #include "debug.h"
 #include "xmalloc.h"
 #include "winreg.h"
-#include "string32.h"
 
 #define LZREAD(what) \
   if (sizeof(*what)!=LZRead32(lzfd,what,sizeof(*what))) return 0;
 #define LZTELL(lzfd) LZSeek(lzfd, 0, SEEK_CUR);
-
-#define strdupW2A(x)	STRING32_DupUniToAnsi(x)
-#define strdupA2W(x)	STRING32_DupAnsiToUni(x)
 
 int
 read_ne_header(HFILE lzfd,struct ne_header_s *nehd) {
@@ -348,15 +345,12 @@ GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle) {
 }
 
 /* GetFileVersionInfoSize32W			[VERSION.2] */
-DWORD
-GetFileVersionInfoSize32W(LPCWSTR filename,LPDWORD handle) {
-	LPSTR	xfn;
-	DWORD	ret;
-
-	xfn	= strdupW2A(filename);
-	ret=GetFileVersionInfoSize16(xfn,handle);
-	free(xfn);
-	return	ret;
+DWORD GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
+{
+    LPSTR xfn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    DWORD ret = GetFileVersionInfoSize16( xfn, handle );
+    HeapFree( GetProcessHeap(), 0, xfn );
+    return ret;
 }
 
 /* GetFileVersionInfo				[VER.7] */
@@ -377,15 +371,13 @@ GetFileVersionInfo32A(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
 }
 
 /* GetFileVersionInfoW				[VERSION.3] */
-DWORD 
-GetFileVersionInfo32W(LPCWSTR filename,DWORD handle,DWORD datasize,LPVOID data){
-	DWORD	ret;
-	LPSTR	fn;
-
-	fn	= strdupW2A(filename);
-	ret	= GetFileVersionInfo16(fn,handle,datasize,data);
-	free(fn);
-	return	ret;
+DWORD GetFileVersionInfo32W( LPCWSTR filename, DWORD handle, DWORD datasize,
+                             LPVOID data)
+{
+    LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    DWORD ret = GetFileVersionInfo16( fn, handle, datasize, data );
+    HeapFree( GetProcessHeap(), 0, fn );
+    return ret;
 }
 
 /* VerFindFile				[VER.8] */
@@ -428,16 +420,21 @@ VerFindFile32W(
     LPSTR wfn,wwd,wad,wdd,wcd;
     DWORD ret;
 
-    wfn = strdupW2A(filename);
-    wwd = strdupW2A(windir);
-    wad = strdupW2A(appdir);
-    wcd = (LPSTR)malloc(*pcurdirlen);
-    wdd = (LPSTR)malloc(*pdestdirlen);
-    ret=VerFindFile16(flags,wfn,wwd,wad,wcd,&curdirlen,wdd,&destdirlen);
-    STRING32_AnsiToUni(curdir,wcd);
-    STRING32_AnsiToUni(destdir,wdd);
+    wfn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    wwd = HEAP_strdupWtoA( GetProcessHeap(), 0, windir );
+    wad = HEAP_strdupWtoA( GetProcessHeap(), 0, appdir );
+    wcd = HeapAlloc( GetProcessHeap(), 0, *pcurdirlen );
+    wdd = HeapAlloc( GetProcessHeap(), 0, *pdestdirlen );
+    ret = VerFindFile16(flags,wfn,wwd,wad,wcd,&curdirlen,wdd,&destdirlen);
+    lstrcpynAtoW(curdir,wcd,*pcurdirlen);
+    lstrcpynAtoW(destdir,wdd,*pdestdirlen);
     *pcurdirlen = strlen(wcd);
     *pdestdirlen = strlen(wdd);
+    HeapFree( GetProcessHeap(), 0, wfn );
+    HeapFree( GetProcessHeap(), 0, wwd );
+    HeapFree( GetProcessHeap(), 0, wad );
+    HeapFree( GetProcessHeap(), 0, wcd );
+    HeapFree( GetProcessHeap(), 0, wdd );
     return ret;
 }
 
@@ -473,23 +470,23 @@ VerInstallFile32A(
 DWORD
 VerInstallFile32W(
 	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
-	LPCWSTR destdir,LPWSTR tmpfile,UINT32 *tmpfilelen
-) {
-	LPSTR	wsrcf,wsrcd,wdestf,wdestd,wtmpf;
-	DWORD	ret;
+	LPCWSTR destdir,LPWSTR tmpfile,UINT32 *tmpfilelen )
+{
+    LPSTR wsrcf,wsrcd,wdestf,wdestd,wtmpf;
+    DWORD ret;
 
-	wsrcf	= strdupW2A(srcfilename);
-	wsrcd	= strdupW2A(srcdir);
-	wdestf	= strdupW2A(destfilename);
-	wdestd	= strdupW2A(destdir);
-	wtmpf	= strdupW2A(tmpfile);
-	ret=VerInstallFile32A(flags,wsrcf,wdestf,wsrcd,wdestd,wtmpf,tmpfilelen);
-	free(wsrcf);
-	free(wsrcd);
-	free(wdestf);
-	free(wdestd);
-	free(wtmpf);
-	return ret;
+    wsrcf  = HEAP_strdupWtoA( GetProcessHeap(), 0, srcfilename );
+    wsrcd  = HEAP_strdupWtoA( GetProcessHeap(), 0, srcdir );
+    wdestf = HEAP_strdupWtoA( GetProcessHeap(), 0, destfilename );
+    wdestd = HEAP_strdupWtoA( GetProcessHeap(), 0, destdir );
+    wtmpf  = HEAP_strdupWtoA( GetProcessHeap(), 0, tmpfile );
+    ret = VerInstallFile32A(flags,wsrcf,wdestf,wsrcd,wdestd,wtmpf,tmpfilelen);
+    HeapFree( GetProcessHeap(), 0, wsrcf );
+    HeapFree( GetProcessHeap(), 0, wsrcd );
+    HeapFree( GetProcessHeap(), 0, wdestf );
+    HeapFree( GetProcessHeap(), 0, wdestd );
+    HeapFree( GetProcessHeap(), 0, wtmpf );
+    return ret;
 }
 
 /* FIXME: This table should, of course, be language dependend */
@@ -580,32 +577,25 @@ VerLanguageName32A(UINT32 langid,LPSTR langname,UINT32 langnamelen) {
 DWORD
 VerLanguageName32W(UINT32 langid,LPWSTR langname,UINT32 langnamelen) {
 	int	i;
-	char	*buf;
-	LPWSTR	keyname,result;
+	char	buffer[80];
+	LPWSTR	keyname;
 
 	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
 	 * from the registry. 
 	 */
-	buf=(char*)malloc(strlen("\\System\\CurrentControlSet\\control\\Nls\\Locale\\")+9);
-	sprintf(buf,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
-	keyname=strdupA2W(buf);free(buf);
+	sprintf(buffer,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
+	keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
 	if (ERROR_SUCCESS==RegQueryValue32W(HKEY_LOCAL_MACHINE,keyname,langname,(LPDWORD)&langnamelen)) {
-		free(keyname);
+		HeapFree( GetProcessHeap(), 0, keyname );
 		return langnamelen;
 	}
-	free(keyname);
+        HeapFree( GetProcessHeap(), 0, keyname );
 	/* if that fails, use the interal table */
 	for (i=0;languages[i].langid!=0;i++)
 		if (langid==languages[i].langid)
 			break;
-	result=strdupA2W(languages[i].langname);
-	i=lstrlen32W(result)*sizeof(WCHAR);
-	if (i>langnamelen)
-		i=langnamelen;
-	memcpy(langname,result,i);
-	langname[langnamelen-1]='\0';
-	free(result);
-	return strlen(languages[i].langname); /* same as strlenW(result); */
+        lstrcpyAtoW( langname, languages[i].langname );
+	return strlen(languages[i].langname); /* same as strlenW(langname); */
 }
 
 /* FIXME: UNICODE? */
@@ -729,13 +719,13 @@ VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	struct	db	*db;
 	char		*s,*sb;
 
-	sb=strdupW2A(subblock);
+	sb = HEAP_strdupWtoA( GetProcessHeap(), 0, subblock );
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(sb)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,sb);
 	b=_find_data(block,s);
 	if (b==NULL) {
 		*buflen=0;
-		free(sb);
+		HeapFree( GetProcessHeap(), 0, sb );
 		return 0;
 	}
 	db=(struct db*)b;
@@ -744,7 +734,7 @@ VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	b	= b+4+((strlen(db->name)+4)&~3);
 	*buffer	= b;
 	dprintf_ver(stddeb,"	-> %s=%s\n",sb,b);
-	free(sb);
+        HeapFree( GetProcessHeap(), 0, sb );
 	return 1;
 }
 /* 20 GETFILEVERSIONINFORAW */

@@ -13,8 +13,8 @@
 
 #include "windows.h"
 #include "dos_fs.h"
+#include "heap.h"
 #include "xmalloc.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -649,7 +649,7 @@ UINT32 GetProfileInt32A( LPCSTR section, LPCSTR entry, INT32 def_val )
  */
 UINT32 GetProfileInt32W( LPCWSTR section, LPCWSTR entry, INT32 def_val )
 {
-    if (!wininiW) wininiW = STRING32_DupAnsiToUni("win.ini");
+    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
     return GetPrivateProfileInt32W( section, entry, def_val, wininiW );
 }
 
@@ -679,7 +679,7 @@ INT32 GetProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 INT32 GetProfileString32W( LPCWSTR section,LPCWSTR entry,LPCWSTR def_val,
                            LPWSTR buffer, INT32 len )
 {
-    if (!wininiW) wininiW = STRING32_DupAnsiToUni("win.ini");
+    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
     return GetPrivateProfileString32W( section, entry, def_val,
                                        buffer, len, wininiW );
 }
@@ -706,7 +706,7 @@ BOOL32 WriteProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR string )
  */
 BOOL32 WriteProfileString32W( LPCWSTR section, LPCWSTR entry, LPCWSTR string )
 {
-    if (!wininiW) wininiW = STRING32_DupAnsiToUni("win.ini");
+    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
     return WritePrivateProfileString32W( section, entry, string, wininiW );
 }
 
@@ -749,15 +749,13 @@ UINT32 GetPrivateProfileInt32A( LPCSTR section, LPCSTR entry, INT32 def_val,
 UINT32 GetPrivateProfileInt32W( LPCWSTR section, LPCWSTR entry, INT32 def_val,
                                 LPCWSTR filename )
 {
-    LPSTR sectionA=section?STRING32_DupUniToAnsi(section):NULL;
-    LPSTR entryA=entry?STRING32_DupUniToAnsi(entry):NULL;
-    LPSTR filenameA=filename?STRING32_DupUniToAnsi(filename):NULL;
-    UINT32 res;
-
-    res=GetPrivateProfileInt32A(sectionA,entryA,def_val,filenameA);
-    if (sectionA) free(sectionA);
-    if (filenameA) free(filenameA);
-    if (entryA) free(entryA);
+    LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
+    LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
+    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    UINT32 res = GetPrivateProfileInt32A(sectionA, entryA, def_val, filenameA);
+    HeapFree( GetProcessHeap(), 0, sectionA );
+    HeapFree( GetProcessHeap(), 0, filenameA );
+    HeapFree( GetProcessHeap(), 0, entryA );
     return res;
 }
 
@@ -785,24 +783,23 @@ INT32 GetPrivateProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 /***********************************************************************
  *           GetPrivateProfileString32W   (KERNEL32.256)
  */
-INT32 GetPrivateProfileString32W( LPCWSTR section,LPCWSTR entry,LPCWSTR def_val,
-                                  LPWSTR buffer,INT32 len,LPCWSTR filename )
+INT32 GetPrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
+                                  LPCWSTR def_val, LPWSTR buffer,
+                                  INT32 len, LPCWSTR filename )
 {
-    LPSTR	sectionA = section?STRING32_DupUniToAnsi(section):NULL;
-    LPSTR	entryA = entry?STRING32_DupUniToAnsi(entry):NULL;
-    LPSTR	filenameA = filename?STRING32_DupUniToAnsi(filename):NULL;
-    LPSTR	def_valA = def_val?STRING32_DupUniToAnsi(def_val):NULL;
-    LPSTR	bufferA = xmalloc(len);
-    INT32	ret;
-
-    ret=GetPrivateProfileString32A(sectionA,entryA,def_valA,bufferA,len,filenameA);
-    if (sectionA) free(sectionA);
-    if (entryA) free(entryA);
-    if (filenameA) free(filenameA);
-    if (def_valA) free(def_valA);
-
+    LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
+    LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
+    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    LPSTR def_valA  = HEAP_strdupWtoA( GetProcessHeap(), 0, def_val );
+    LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, len );
+    INT32 ret = GetPrivateProfileString32A( sectionA, entryA, def_valA,
+                                            bufferA, len, filenameA );
     lstrcpynAtoW( buffer, bufferA, len );
-    free(bufferA);
+    HeapFree( GetProcessHeap(), 0, sectionA );
+    HeapFree( GetProcessHeap(), 0, entryA );
+    HeapFree( GetProcessHeap(), 0, filenameA );
+    HeapFree( GetProcessHeap(), 0, def_valA );
+    HeapFree( GetProcessHeap(), 0, bufferA);
     return ret;
 }
 
@@ -831,21 +828,19 @@ BOOL32 WritePrivateProfileString32A(LPCSTR section,LPCSTR entry,LPCSTR string,
 /***********************************************************************
  *           WritePrivateProfileString32W   (KERNEL32.583)
  */
-BOOL32 WritePrivateProfileString32W(LPCWSTR section,LPCWSTR entry,LPCWSTR string,
-                                    LPCWSTR filename )
+BOOL32 WritePrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
+                                     LPCWSTR string, LPCWSTR filename )
 {
-    LPSTR sectionA = section?STRING32_DupUniToAnsi(section):NULL;
-    LPSTR entryA = entry?STRING32_DupUniToAnsi(entry):NULL;
-    LPSTR stringA = string?STRING32_DupUniToAnsi(string):NULL;
-    LPSTR filenameA = filename?STRING32_DupUniToAnsi(filename):NULL;
-    BOOL32 res;
-
-    res = WritePrivateProfileString32A(sectionA,entryA,stringA,filenameA);
-
-    if (sectionA) free(sectionA);
-    if (entryA) free(entryA);
-    if (stringA) free(stringA);
-    if (filenameA) free(filenameA);
+    LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
+    LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
+    LPSTR stringA   = HEAP_strdupWtoA( GetProcessHeap(), 0, string );
+    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    BOOL32 res = WritePrivateProfileString32A( sectionA, entryA,
+                                               stringA, filenameA );
+    HeapFree( GetProcessHeap(), 0, sectionA );
+    HeapFree( GetProcessHeap(), 0, entryA );
+    HeapFree( GetProcessHeap(), 0, stringA );
+    HeapFree( GetProcessHeap(), 0, filenameA );
     return res;
 }
 

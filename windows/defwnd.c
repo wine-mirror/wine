@@ -12,7 +12,6 @@
 #include "heap.h"
 #include "nonclient.h"
 #include "winpos.h"
-#include "string32.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
@@ -481,9 +480,9 @@ LRESULT DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    if (cs->lpszName)
             {
                 WND *wndPtr = WIN_FindWndPtr( hwnd );
-                LPSTR str = STRING32_DupUniToAnsi( cs->lpszName );
+                LPSTR str = HEAP_strdupWtoA(GetProcessHeap(), 0, cs->lpszName);
                 DEFWND_SetText( wndPtr, str );
-                free( str );
+                HeapFree( GetProcessHeap(), 0, str );
             }
 	    result = 1;
 	}
@@ -491,18 +490,18 @@ LRESULT DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     case WM_GETTEXT:
         {
-            LPSTR str = malloc( wParam );
+            LPSTR str = HeapAlloc( GetProcessHeap(), 0, wParam );
             result = DefWindowProc32A( hwnd, msg, wParam, (LPARAM)str );
-            STRING32_AnsiToUni( (LPWSTR)lParam, str );
-            free( str );
+            lstrcpynAtoW( (LPWSTR)lParam, str, wParam );
+            HeapFree( GetProcessHeap(), 0, str );
         }
         break;
 
     case WM_SETTEXT:
         {
-            LPSTR str = STRING32_DupUniToAnsi( (LPWSTR)lParam );
+            LPSTR str = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPWSTR)lParam );
             result = DefWindowProc32A( hwnd, msg, wParam, (LPARAM)str );
-            free( str );
+            HeapFree( GetProcessHeap(), 0, str );
         }
         break;
 

@@ -425,8 +425,8 @@ BOOL32 RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
-    ell_width  = abs( ell_width * dc->w.VportExtX / dc->w.WndExtX );
-    ell_height = abs( ell_height * dc->w.VportExtY / dc->w.WndExtY );
+    ell_width  = abs( ell_width * dc->vportExtX / dc->wndExtX );
+    ell_height = abs( ell_height * dc->vportExtY / dc->wndExtY );
 
     /* Fix the coordinates */
 
@@ -819,10 +819,10 @@ BOOL16 InvertRgn16( HDC16 hdc, HRGN16 hrgn )
 BOOL32 InvertRgn32( HDC32 hdc, HRGN32 hrgn )
 {
     HBRUSH32 prevBrush = SelectObject32( hdc, GetStockObject32(BLACK_BRUSH) );
-    WORD prevROP = SetROP2( hdc, R2_NOT );
+    INT32 prevROP = SetROP232( hdc, R2_NOT );
     BOOL32 retval = PaintRgn32( hdc, hrgn );
     SelectObject32( hdc, prevBrush );
-    SetROP2( hdc, prevROP );
+    SetROP232( hdc, prevROP );
     return retval;
 }
 
@@ -856,8 +856,8 @@ void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     bottom = YLPTODP( dc, rc->bottom );
     
     hOldPen = SelectObject32( hdc, sysColorObjects.hpenWindowText );
-    oldDrawMode = SetROP2(hdc, R2_XORPEN);
-    oldBkMode = SetBkMode(hdc, TRANSPARENT);
+    oldDrawMode = SetROP232(hdc, R2_XORPEN);
+    oldBkMode = SetBkMode32(hdc, TRANSPARENT);
 
     /* Hack: make sure the XORPEN operation has an effect */
     dc->u.x.pen.pixel = (1 << screenDepth) - 1;
@@ -867,8 +867,8 @@ void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
 
-    SetBkMode(hdc, oldBkMode);
-    SetROP2(hdc, oldDrawMode);
+    SetBkMode32(hdc, oldBkMode);
+    SetROP232(hdc, oldDrawMode);
     SelectObject32(hdc, hOldPen);
 }
 

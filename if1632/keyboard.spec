@@ -5,8 +5,8 @@ type	win16
 #2	pascal	Enable
 #3	pascal	Disable
 4   pascal16 ToAscii(word word ptr ptr word) ToAscii
-5   pascal16 AnsiToOem(ptr ptr) AnsiToOem
-6   pascal16 OemToAnsi(ptr ptr) OemToAnsi
+5   pascal16 AnsiToOem(ptr ptr) AnsiToOem16
+6   pascal16 OemToAnsi(ptr ptr) OemToAnsi16
 7   return   SetSpeed 2 65535
 #100	pascal	ScreenSwitchEnable
 #126	pascal	GetTableSeg
@@ -17,8 +17,8 @@ type	win16
 131 pascal16 MapVirtualKey(word word) MapVirtualKey
 132 pascal16 GetKbCodePage() GetKbCodePage
 133 pascal16 GetKeyNameText(long ptr word) GetKeyNameText16
-134 pascal16 AnsiToOemBuff(ptr ptr word) AnsiToOemBuff
-135 pascal16 OemToAnsiBuff(ptr ptr word) OemToAnsiBuff
+134 pascal16 AnsiToOemBuff(ptr ptr word) AnsiToOemBuff16
+135 pascal16 OemToAnsiBuff(ptr ptr word) OemToAnsiBuff16
 #136	pascal	EnableKbSysReq
 #137	pascal	GetBiosKeyProc
 

@@ -153,7 +153,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 
     if (format != 'i' && count > 1)
     {
-        DEBUG_PrintAddress( &addr, dbg_mode );
+        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
         fprintf(stderr,": ");
     }
 
@@ -176,7 +176,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 	case 'i':
 		while (count--)
                 {
-                    DEBUG_PrintAddress( &addr, dbg_mode );
+                    DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
                     fprintf(stderr,": ");
                     if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
                     DEBUG_Disasm( &addr );
@@ -193,7 +193,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     if ((i % 8) == 7)
                     {
                         fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode );
+                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
                         fprintf(stderr,": ");
                     }
 		}
@@ -210,7 +210,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     if ((i % 8) == 7)
                     {
                         fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode );
+                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
                         fprintf(stderr,": ");
                     }
 		}
@@ -227,7 +227,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     if ((i % 8) == 7)
                     {
                         fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode );
+                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
                         fprintf(stderr,": ");
                     }
 		}
@@ -248,7 +248,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     if ((i % 32) == 31)
                     {
                         fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode );
+                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
                         fprintf(stderr,": ");
                     }
 		}
@@ -264,7 +264,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     if ((i % 16) == 15)
                     {
                         fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode );
+                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
                         fprintf(stderr,": ");
                     }
 		}

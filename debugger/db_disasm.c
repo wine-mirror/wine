@@ -1010,7 +1010,7 @@ static void db_task_printsym(unsigned int addr, int size)
     case LONG:
         {
             DBG_ADDR address = { 0, addr };
-            DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32 );
+            DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
         }
         break;
     }
@@ -1457,7 +1457,8 @@ void DEBUG_Disasm( DBG_ADDR *addr )
                                        short_addr ? 2 : 4, FALSE );
                         get_value_inc( address.seg, addr,  /* segment */
                                        2, FALSE );
-                        DEBUG_PrintAddress( &address, short_addr ? 16 : 32 );
+                        DEBUG_PrintAddress( &address, short_addr ? 16 : 32, 
+					    TRUE );
                     }
 		    break;
 	    }

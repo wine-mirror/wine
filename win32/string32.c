@@ -15,47 +15,17 @@
 #include "string32.h"
 #include "xmalloc.h"
 
-void STRING32_UniToAnsi(LPSTR dest,LPCWSTR src)
-{
-	static int have_warned=0;
-	while(*src)
-	{
-		if(*src>255 && !have_warned)
-		{
-			fprintf(stderr,"Cannot deal with non-ANSI characters\n");
-			have_warned=1;
-		}
-		*dest++=*src++;
-	}
-	/* copy the terminator */
-	*dest = *src;
-}
-
-/* FIXME: we need to use unsigned char here, for if 
- *        we got chars with the 7th bit set, we will get
- *	  negative integers -> wrong unicode values
- */
-void 
-STRING32_AnsiToUni(LPWSTR dest,LPCSTR src) {
-	unsigned char	*usrc;
-
-	usrc=(unsigned char*)src;
-	while(*usrc)
-		*dest++=*usrc++;
-	*dest = *usrc;
-}
-
 LPSTR STRING32_DupUniToAnsi(LPCWSTR src)
 {
 	LPSTR dest=xmalloc(lstrlen32W(src)+1);
-	STRING32_UniToAnsi(dest,src);
+	lstrcpyWtoA(dest,src);
 	return dest;
 }
 
 LPWSTR STRING32_DupAnsiToUni(LPCSTR src)
 {
 	LPWSTR dest=xmalloc(2*strlen(src)+2);
-	STRING32_AnsiToUni(dest,src);
+	lstrcpyAtoW(dest,src);
 	return dest;
 }
 

@@ -31,6 +31,7 @@ extern BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek );
 extern void EVENT_Synchronize(void);
 extern void EVENT_ProcessEvent( XEvent *event );
 extern void EVENT_RegisterWindow( WND *pWnd );
+extern void EVENT_DestroyWindow( WND *pWnd );
 extern void EVENT_DummyMotionNotify(void);
 
 #endif  /* __WINE_MESSAGE_H */

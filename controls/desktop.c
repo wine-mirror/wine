@@ -61,9 +61,9 @@ static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
 	HeapFree( SystemHeap, 0, buffer );
 	return 0;
     }
-    hbitmap = CreateDIBitmap( hdc, &bitmapInfo->bmiHeader, CBM_INIT,
-			      buffer + fileHeader->bfOffBits,
-			      bitmapInfo, DIB_RGB_COLORS );
+    hbitmap = CreateDIBitmap32( hdc, &bitmapInfo->bmiHeader, CBM_INIT,
+                                buffer + fileHeader->bfOffBits,
+                                bitmapInfo, DIB_RGB_COLORS );
     HeapFree( SystemHeap, 0, buffer );
     return hbitmap;
 }

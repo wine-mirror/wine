@@ -17,6 +17,7 @@
 #include "windows.h"
 #include "pe_image.h"
 #include "module.h"
+#include "heap.h"
 #include "handle32.h"
 #include "libres.h"
 #include "resource32.h"
@@ -24,7 +25,6 @@
 #include "neexe.h"
 #include "accel.h"
 #include "xmalloc.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -102,13 +102,13 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 	PIMAGE_RESOURCE_DIRECTORY	ret;
 
 	if (HIWORD((DWORD)name))
-		xname	= STRING32_DupAnsiToUni(name);
+		xname	= HEAP_strdupAtoW( GetProcessHeap(), 0, name );
 	else
 		xname	= (LPWSTR)name;
 
 	ret=GetResDirEntryW(resdirptr,xname,root);
 	if (HIWORD((DWORD)name))
-		free(xname);
+            HeapFree( GetProcessHeap(), 0, xname );
 	return ret;
 }
 

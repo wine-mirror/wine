@@ -13,7 +13,6 @@
 #include "dce.h"
 #include "atom.h"
 #include "ldt.h"
-#include "string32.h"
 #include "toolhelp.h"
 #include "winproc.h"
 #include "stddebug.h"
@@ -92,9 +91,7 @@ static LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
     if (!classPtr->menuNameA && classPtr->menuNameW)
     {
         /* We need to copy the Unicode string */
-        if ((classPtr->menuNameA = SEGPTR_ALLOC(
-                                        lstrlen32W(classPtr->menuNameW) + 1 )))
-            STRING32_UniToAnsi( classPtr->menuNameA, classPtr->menuNameW );
+        classPtr->menuNameA = SEGPTR_STRDUP_WtoA( classPtr->menuNameW );
     }
     return classPtr->menuNameA;
 }
@@ -112,9 +109,8 @@ static LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
         if (!HIWORD(classPtr->menuNameA))
             return (LPWSTR)classPtr->menuNameA;
         /* Now we need to copy the ASCII string */
-        if ((classPtr->menuNameW = HeapAlloc( SystemHeap, 0,
-                              (strlen(classPtr->menuNameA)+1)*sizeof(WCHAR) )))
-            STRING32_AnsiToUni( classPtr->menuNameW, classPtr->menuNameA );
+        classPtr->menuNameW = HEAP_strdupAtoW( SystemHeap, 0,
+                                               classPtr->menuNameA );
     }
     return classPtr->menuNameW;
 }

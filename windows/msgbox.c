@@ -9,11 +9,11 @@
 #include <malloc.h>
 #include "windows.h"
 #include "dlgs.h"
+#include "heap.h"
 #include "module.h"
 #include "win.h"
 #include "resource.h"
 #include "task.h"
-#include "string32.h"
 
 typedef struct {
   LPCSTR title;
@@ -213,8 +213,8 @@ INT32 MessageBox32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title, UINT32 type )
     MSGBOX mbox;
     int ret;
 
-    mbox.title = title?STRING32_DupUniToAnsi(title):NULL;
-    mbox.text  = text?STRING32_DupUniToAnsi(text):NULL;
+    mbox.title = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
+    mbox.text  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
     mbox.type  = type;
 
     fprintf(stderr,"MessageBox(%s,%s)\n",mbox.text,mbox.title);
@@ -225,8 +225,8 @@ INT32 MessageBox32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title, UINT32 type )
                                   MODULE_GetWndProcEntry16("SystemMessageBoxProc"),
                                   (LONG)&mbox );
     SYSRES_FreeResource( handle );
-    if (title) free(mbox.title);
-    if (text) free(mbox.text);
+    HeapFree( GetProcessHeap(), 0, mbox.title );
+    HeapFree( GetProcessHeap(), 0, mbox.text );
     return ret;
 }
 

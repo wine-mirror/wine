@@ -313,6 +313,17 @@ void EVENT_RegisterWindow( WND *pWnd )
     XSaveContext( display, pWnd->window, winContext, (char *)pWnd );
 }
 
+/***********************************************************************
+ *           EVENT_DestroyWindow
+ */
+void EVENT_DestroyWindow( WND *pWnd )
+{
+   XEvent xe;
+
+   XDeleteContext( display, pWnd->window, winContext );
+   XDestroyWindow( display, pWnd->window );
+   while( XCheckWindowEvent(display, pWnd->window, NoEventMask, &xe) );
+}
 
 /***********************************************************************
  *           EVENT_WaitXEvent
@@ -391,9 +402,9 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
         {
 	  WND*		pWnd;
 	  MESSAGEQUEUE* pQ;
-  
-          if( XFindContext( display, ((XAnyEvent *)&event)->window, winContext, (char **)&pWnd) 
-	      || event.type == NoExpose )  
+
+          if (XFindContext( display, ((XAnyEvent *)&event)->window, winContext,
+                            (char **)&pWnd ) || (event.type == NoExpose))
               continue;
 
 	  /* check for the "safe" hardware events */
@@ -613,7 +624,8 @@ static void EVENT_key( XKeyEvent *event )
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
-	keylp.lp1.win_internal = 0;
+	keylp.lp1.win_internal = 0;			/* this has something to do with dialogs, 
+							 * don't remember where I read it - AK */
 	keylp.lp1.context = ( (event->state & Mod1Mask) || 
 			       (InputKeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
 	keylp.lp1.previous = (KeyDown ? 0 : 1);

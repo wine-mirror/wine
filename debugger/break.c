@@ -205,7 +205,8 @@ void DEBUG_AddBreakpoint( const DBG_ADDR *address )
     breakpoints[num].enabled = TRUE;
     breakpoints[num].in_use  = TRUE;
     fprintf( stderr, "Breakpoint %d at ", num );
-    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].addrlen );
+    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].addrlen,
+			TRUE );
     fprintf( stderr, "\n" );
 }
 
@@ -258,7 +259,8 @@ void DEBUG_InfoBreakpoints(void)
         if (breakpoints[i].in_use)
         {
             fprintf( stderr, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
-            DEBUG_PrintAddress( &breakpoints[i].addr, breakpoints[i].addrlen );
+            DEBUG_PrintAddress( &breakpoints[i].addr, breakpoints[i].addrlen,
+				TRUE);
             fprintf( stderr, "\n" );
         }
     }
@@ -290,7 +292,7 @@ BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode )
     {
         fprintf( stderr, "Stopped on breakpoint %d at ", bpnum );
         DEBUG_PrintAddress( &breakpoints[bpnum].addr,
-                            breakpoints[bpnum].addrlen );
+                            breakpoints[bpnum].addrlen, TRUE );
         fprintf( stderr, "\n" );
         return FALSE;
     }

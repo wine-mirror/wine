@@ -264,7 +264,7 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     hOldPen = (HPEN32)SelectObject32(hDC, sysColorObjects.hpenWindowFrame);
     hOldBrush = (HBRUSH32)SelectObject32(hDC, sysColorObjects.hbrushBtnFace);
-    SetBkMode(hDC, TRANSPARENT);
+    SetBkMode32(hDC, TRANSPARENT);
     Rectangle32(hDC, rc.left, rc.top, rc.right, rc.bottom);
     if (action == ODA_DRAWENTIRE)
     {
@@ -339,7 +339,7 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
 {
     static int Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55};
     HBITMAP16 hbm  = CreateBitmap(8, 8, 1, 1, Pattern);
-    HDC32 hdcMem = CreateCompatibleDC(hDC);
+    HDC32 hdcMem = CreateCompatibleDC32(hDC);
     HBITMAP16 hbmMem;
     HBRUSH16 hBr;
     RECT32 rect,rc2;
@@ -359,7 +359,7 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
     PatBlt32( hdcMem,0,0,rect.right,rect.bottom,0xFA0089);
     DeleteObject32( SelectObject32( hdcMem,hBr) );
     BitBlt32(hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,0x990000);
-    DeleteDC( hdcMem);
+    DeleteDC32( hdcMem);
     DeleteObject32( hbmMem );
 }
 

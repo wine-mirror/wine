@@ -15,6 +15,8 @@
 #include <sys/wait.h>
 #include <errno.h>
 
+extern int h_errno;
+
 #include "windows.h"
 #include "winsock.h"
 #include "debug.h"

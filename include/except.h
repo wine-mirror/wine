@@ -216,7 +216,4 @@ BOOL RtlUnwind( PEXCEPTION_FRAME pestframe,
 
 DWORD UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers);
 
-__PTOP_EXCFILTER SetUnhandledExceptionFilter(
-      LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
-  
 #endif  /* __WINE_EXCEPT_H */

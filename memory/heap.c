@@ -1225,3 +1225,39 @@ LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str )
     lstrcpy32W( p, str );
     return p;
 }
+
+
+/***********************************************************************
+ *           HEAP_strdupAtoW
+ */
+LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str )
+{
+    LPWSTR ret;
+
+    if (!str) return NULL;
+    if (!(ret = HeapAlloc( heap, flags, (lstrlen32A(str)+1) * sizeof(WCHAR) )))
+    {
+        fprintf( stderr, "Virtual memory exhausted.\n" );
+        exit(1);
+    }
+    lstrcpyAtoW( ret, str );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           HEAP_strdupWtoA
+ */
+LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str )
+{
+    LPSTR ret;
+
+    if (!str) return NULL;
+    if (!(ret = HeapAlloc( heap, flags, lstrlen32W(str) + 1 )))
+    {
+        fprintf( stderr, "Virtual memory exhausted.\n" );
+        exit(1);
+    }
+    lstrcpyWtoA( ret, str );
+    return ret;
+}

@@ -11,12 +11,10 @@
 #include "winerror.h"
 #include "handle32.h"
 #include "except.h"
+#include "heap.h"
 #include "task.h"
 #include "stddebug.h"
-#include "string32.h"
-#define DEBUG_WIN32
 #include "debug.h"
-#include "string32.h"
 #include "xmalloc.h"
   
 /* The global error value
@@ -28,9 +26,9 @@ int WIN32_LastError;
  */
 BOOL CloseHandle(KERNEL_OBJECT *handle)
 {
-    if (handle<0x1000) /* FIXME: hack */
-    	return CloseFileHandle(handle);
-    if (handle==0xFFFFFFFF)
+    if ((int)handle<0x1000) /* FIXME: hack */
+    	return CloseFileHandle((int)handle);
+    if ((int)handle==0xFFFFFFFF)
     	return FALSE;
     switch(handle->magic)
     {
@@ -74,13 +72,11 @@ all calls to e.g. CreateWindowEx. */
 
 HMODULE32 WIN32_GetModuleHandleW(LPCWSTR module)
 {
-  HMODULE32 hModule;
-  LPSTR     modulea;
-  if(module==NULL) return WIN32_GetModuleHandleA(NULL);
-  modulea=STRING32_DupUniToAnsi(module);
-  hModule = WIN32_GetModuleHandleA(modulea);
-  free(modulea);
-  return hModule;
+    HMODULE32 hModule;
+    LPSTR modulea = HEAP_strdupWtoA( GetProcessHeap(), 0, module );
+    hModule = WIN32_GetModuleHandleA( modulea );
+    HeapFree( GetProcessHeap(), 0, modulea );
+    return hModule;
 }
 
 
@@ -107,9 +103,9 @@ VOID GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
 VOID GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
 {
     lpStartupInfo->cb = sizeof(STARTUPINFO32W);
-    lpStartupInfo->lpReserved = STRING32_DupAnsiToUni("<Reserved>");
-    lpStartupInfo->lpDesktop = STRING32_DupAnsiToUni("Desktop");
-    lpStartupInfo->lpTitle = STRING32_DupAnsiToUni("Title");
+    lpStartupInfo->lpReserved = HEAP_strdupAtoW(GetProcessHeap(),0,"<Reserved>");
+    lpStartupInfo->lpDesktop = HEAP_strdupAtoW(GetProcessHeap(), 0, "Desktop");
+    lpStartupInfo->lpTitle = HEAP_strdupAtoW(GetProcessHeap(), 0, "Title");
 
     lpStartupInfo->cbReserved2 = 0;
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
@@ -130,8 +126,8 @@ GetSystemInfo(LPSYSTEM_INFO si) {
     si->u.x.wProcessorArchitecture	= PROCESSOR_ARCHITECTURE_INTEL;
 
     si->dwPageSize			= 4096; /* 4K */
-    si->lpMinimumApplicationAddress	= 0x40000000;
-    si->lpMaximumApplicationAddress	= 0x80000000;
+    si->lpMinimumApplicationAddress	= (void *)0x40000000;
+    si->lpMaximumApplicationAddress	= (void *)0x80000000;
     si->dwActiveProcessorMask		= 1;
     si->dwNumberOfProcessors		= 1;
 #ifdef WINELIB

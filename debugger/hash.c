@@ -16,13 +16,6 @@
 #include "toolhelp.h"
 #include "xmalloc.h"
 
-struct name_hash
-{
-    struct name_hash * next;
-    char *             name;
-    DBG_ADDR           addr;
-};
-
 #define NR_NAME_HASH 128
 
 static struct name_hash * name_hash_table[NR_NAME_HASH];
@@ -44,7 +37,8 @@ static unsigned int name_hash( const char * name )
  *
  * Add a symbol to the table.
  */
-void DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr )
+struct name_hash *
+DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source )
 {
     struct name_hash  * new;
     int hash;
@@ -52,12 +46,32 @@ void DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr )
     new = (struct name_hash *) xmalloc(sizeof(struct name_hash));
     new->addr = *addr;
     new->name = xstrdup(name);
+
+    if( source != NULL )
+      {
+	new->sourcefile = xstrdup(source);
+      }
+    else
+      {
+	new->sourcefile = NULL;
+      }
+
+    new->n_lines = 0;
+    new->lines_alloc = 0;
+    new->linetab = NULL;
+
+    new->n_locals = 0;
+    new->locals_alloc = 0;
+    new->local_vars = NULL;
+
     new->next = NULL;
     hash = name_hash(name);
 
     /* Now insert into the hash table */
     new->next = name_hash_table[hash];
     name_hash_table[hash] = new;
+
+    return new;
 }
 
 
@@ -66,9 +80,11 @@ void DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr )
  *
  * Get the address of a named symbol.
  */
-BOOL32 DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr )
+BOOL32 DEBUG_GetSymbolValue( const char * name, const int lineno, 
+			     DBG_ADDR *addr )
 {
     char buffer[256];
+    int i;
     struct name_hash *nh;
 
     for(nh = name_hash_table[name_hash(name)]; nh; nh = nh->next)
@@ -82,8 +98,45 @@ BOOL32 DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr )
             if (!strcmp(nh->name, buffer)) break;
     }
 
-    if (!nh) return FALSE;
-    *addr = nh->addr;
+    /*
+     * If we don't have anything here, then try and see if this
+     * is a local symbol to the current stack frame.  No matter
+     * what, we have nothing more to do, so we let that function
+     * decide what we ultimately return.
+     */
+    if (!nh) return DEBUG_GetStackSymbolValue(name, addr);
+
+
+    if( lineno == -1 )
+      {
+	*addr = nh->addr;
+      }
+    else
+      {
+	/*
+	 * Search for the specific line number.  If we don't find it,
+	 * then return FALSE.
+	 */
+	if( nh->linetab == NULL )
+	  {
+	    return FALSE;
+	  }
+
+	for(i=0; i < nh->n_lines; i++ )
+	  {
+	    if( nh->linetab[i].line_number == lineno )
+	      {
+		*addr = nh->linetab[i].pc_offset;
+		return TRUE;
+	      }
+	  }
+
+	/*
+	 * This specific line number not found.
+	 */
+	return FALSE;
+      }
+
     return TRUE;
 }
 
@@ -120,14 +173,26 @@ BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
  *           DEBUG_FindNearestSymbol
  *
  * Find the symbol nearest to a given address.
+ * If ebp is specified as non-zero, it means we should dump the argument
+ * list into the string we return as well.
  */
-const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr )
+const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
+				      struct name_hash ** rtn,
+				      unsigned int ebp)
 {
-    static char name_buffer[256];
+    static char name_buffer[MAX_PATH + 256];
+    static char arglist[1024];
+    static char argtmp[256];
     struct name_hash * nearest = NULL;
     struct name_hash * nh;
     unsigned int nearest_address = 0;
+    unsigned	int * ptr;
+    int lineno;
+    char * lineinfo, *sourcefile;
     int i;
+    char linebuff[16];
+
+    *rtn = NULL;
 
     for(i=0; i<NR_NAME_HASH; i++)
     {
@@ -142,11 +207,95 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr )
     }
     if (!nearest) return NULL;
 
-    if (addr->off == nearest->addr.off)
-        sprintf( name_buffer, "%s", nearest->name );
+    *rtn = nearest;
+    lineinfo = "";
+    lineno = -1;
+
+    memset(arglist, '\0', sizeof(arglist));
+    if( ebp != 0 )
+      {
+	for(i=0; i < nearest->n_locals; i++ )
+	  {
+	    /*
+	     * If this is a register (offset == 0) or a local
+	     * variable, we don't want to know about it.
+	     */
+	    if( nearest->local_vars[i].offset <= 0 )
+	      {
+		continue;
+	      }
+
+	    ptr = (unsigned int *) (ebp + nearest->local_vars[i].offset);
+	    if( arglist[0] == '\0' )
+	      {
+		arglist[0] = '(';
+	      }
+	    else
+	      {
+		strcat(arglist, ", ");
+	      }
+
+	    sprintf(argtmp, "%s=0x%x", nearest->local_vars[i].name,
+		    *ptr);
+	    strcat(arglist, argtmp);
+	  }
+	if( arglist[0] == '(' )
+	  {
+	    strcat(arglist, ")");
+	  }
+      }
+
+    if( (nearest->sourcefile != NULL) && (flag == TRUE)
+	&& (addr->off - nearest->addr.off < 0x100000) )
+      {
+
+	/*
+	 * Try and find the nearest line number to the current offset.
+	 */
+	if( nearest->linetab != NULL )
+	  {
+	    /*
+	     * FIXME - this is an inefficient linear search.  A binary
+	     * search would be better if this gets to be a performance
+	     * bottleneck.
+	     */
+	    for(i=0; i < nearest->n_lines; i++)
+	      {
+		if( addr->off < nearest->linetab[i].pc_offset.off )
+		{
+		  break;
+		}
+		lineno = nearest->linetab[i].line_number;
+	      }
+	  }
+
+	if( lineno != -1 )
+	  {
+	    sprintf(linebuff, ":%d", lineno);
+	    lineinfo = linebuff;
+	  }
+
+        /* Remove the path from the file name */
+        sourcefile = strrchr( nearest->sourcefile, '/' );
+        if (!sourcefile) sourcefile = nearest->sourcefile;
+        else sourcefile++;
+
+	if (addr->off == nearest->addr.off)
+	  sprintf( name_buffer, "%s%s [%s%s]", nearest->name, 
+		   arglist, sourcefile, lineinfo);
+	else
+	  sprintf( name_buffer, "%s+0x%lx%s [%s%s]", nearest->name,
+		   addr->off - nearest->addr.off, 
+		   arglist, sourcefile, lineinfo );
+      }
     else
-        sprintf( name_buffer, "%s+0x%lx", nearest->name,
-                addr->off - nearest->addr.off );
+      {
+	if (addr->off == nearest->addr.off)
+	  sprintf( name_buffer, "%s%s", nearest->name, arglist);
+	else
+	  sprintf( name_buffer, "%s+0x%lx%s", nearest->name,
+		   addr->off - nearest->addr.off, arglist);
+      }
     return name_buffer;
 }
 
@@ -194,7 +343,7 @@ void DEBUG_ReadSymbolTable( const char * filename )
         if (!(*cpnt) || *cpnt == '\n') continue;
 		
         nargs = sscanf(buffer, "%lx %c %s", &addr.off, &type, name);
-        DEBUG_AddSymbol( name, &addr );
+        DEBUG_AddSymbol( name, &addr, NULL );
     }
     fclose(symbolfile);
 }
@@ -234,7 +383,7 @@ void DEBUG_LoadEntryPoints(void)
             {
                 addr.seg = HIWORD(address);
                 addr.off = LOWORD(address);
-                DEBUG_AddSymbol( buffer, &addr );
+                DEBUG_AddSymbol( buffer, &addr, NULL );
             }
         }
 
@@ -252,8 +401,59 @@ void DEBUG_LoadEntryPoints(void)
             {
                 addr.seg = HIWORD(address);
                 addr.off = LOWORD(address);
-                DEBUG_AddSymbol( buffer, &addr );
+                DEBUG_AddSymbol( buffer, &addr, NULL);
             }
         }
     }
 }
+
+void
+DEBUG_AddLineNumber( struct name_hash * func, int line_num, 
+		     unsigned long offset )
+{
+  if( func == NULL )
+    {
+      return;
+    }
+
+  if( func->n_lines + 1 >= func->lines_alloc )
+    {
+      func->lines_alloc += 32;
+      func->linetab = realloc(func->linetab,
+			      func->lines_alloc * sizeof(WineLineNo));
+    }
+
+  func->linetab[func->n_lines].line_number = line_num;
+  func->linetab[func->n_lines].pc_offset.seg = func->addr.seg;
+  func->linetab[func->n_lines].pc_offset.off = func->addr.off + offset;
+  func->n_lines++;
+}
+
+
+void
+DEBUG_AddLocal( struct name_hash * func, int regno, 
+		int offset,
+		int pc_start,
+		int pc_end,
+		char * name)
+{
+  if( func == NULL )
+    {
+      return;
+    }
+
+  if( func->n_locals + 1 >= func->locals_alloc )
+    {
+      func->locals_alloc += 32;
+      func->local_vars = realloc(func->local_vars,
+			      func->locals_alloc * sizeof(WineLocals));
+    }
+
+  func->local_vars[func->n_locals].regno = regno;
+  func->local_vars[func->n_locals].offset = offset;
+  func->local_vars[func->n_locals].pc_start = pc_start;
+  func->local_vars[func->n_locals].pc_end = pc_end;
+  func->local_vars[func->n_locals].name = xstrdup(name);
+  func->n_locals++;
+}
+

@@ -33,7 +33,7 @@ typedef enum
     CARET_TOGGLE,
 } DISPLAY_CARET;
 
-static CARET Caret;
+static CARET Caret = { 0, 0, FALSE, 0, 0, 2, 12, 0, 500, 0 };
 
 
 /*****************************************************************
@@ -150,7 +150,7 @@ BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
     Caret.x = 0;
     Caret.y = 0;
 
-    Caret.timeout = GetProfileInt32A( "windows", "CursorBlinkRate", 750 );
+    Caret.timeout = GetProfileInt32A( "windows", "CursorBlinkRate", 500 );
     return TRUE;
 }
    
@@ -268,7 +268,6 @@ UINT16 GetCaretBlinkTime16(void)
  */
 UINT32 GetCaretBlinkTime32(void)
 {
-    if (!Caret.hwnd) return 0;
     return Caret.timeout;
 }
 

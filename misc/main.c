@@ -18,17 +18,18 @@
 #include <X11/Xutil.h>
 #include <X11/Xlocale.h>
 #include <X11/cursorfont.h>
+#include "heap.h"
 #include "message.h"
 #include "module.h"
 #include "msdos.h"
 #include "windows.h"
+#include "color.h"
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
 #include "registers.h"
 #include "shell.h"
 #include "winbase.h"
-#include "string32.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
@@ -602,6 +603,7 @@ static void MAIN_RestoreSetup(void)
 static void called_at_exit(void)
 {
     MAIN_RestoreSetup();
+    COLOR_Cleanup();
     WINSOCK_Shutdown();
 }
 
@@ -764,7 +766,7 @@ BOOL32 GetVersionEx32W(OSVERSIONINFO32W *v)
 	v->dwMinorVersion = v1.dwMinorVersion;
 	v->dwBuildNumber = v1.dwBuildNumber;
 	v->dwPlatformId = v1.dwPlatformId;
-	STRING32_AnsiToUni(v->szCSDVersion, v1.szCSDVersion);
+        lstrcpyAtoW( v->szCSDVersion, v1.szCSDVersion );
 	return TRUE;
 }
 
@@ -889,12 +891,11 @@ BOOL32 SetEnvironmentVariable32A( LPCSTR lpName, LPCSTR lpValue )
  */
 BOOL32 SetEnvironmentVariable32W( LPCWSTR lpName, LPCWSTR lpValue )
 {
-    LPSTR lpNameA = STRING32_DupUniToAnsi(lpName);
-    LPSTR lpValueA = lpValue?STRING32_DupUniToAnsi(lpValue):NULL;
+    LPSTR lpNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpName );
+    LPSTR lpValueA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpValue );
     BOOL32 ret = SetEnvironmentVariable32A(lpNameA,lpValueA);
-
-    free (lpNameA);
-    if (lpValue) free (lpValueA);
+    HeapFree( GetProcessHeap(), 0, lpNameA );
+    HeapFree( GetProcessHeap(), 0, lpValueA );
     return ret;
 }
 
@@ -936,13 +937,15 @@ DWORD GetEnvironmentVariable32A( LPSTR lpName, LPSTR lpValue, DWORD size )
  */
 DWORD GetEnvironmentVariable32W( LPWSTR nameW, LPWSTR valW, DWORD size )
 {
-    LPSTR	name = nameW?STRING32_DupUniToAnsi(nameW):NULL;
-    LPSTR	val = valW?(LPSTR)xmalloc(size*2):NULL;
-    DWORD	res = GetEnvironment(name,val,size);
-
-    if (name) free(name);
-    if (val) lstrcpynAtoW(valW,val,size);
-    if (val) free(val);
+    LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
+    LPSTR val  = valW ? HeapAlloc( GetProcessHeap(), 0, size ) : NULL;
+    DWORD res  = GetEnvironment( name, val, size );
+    HeapFree( GetProcessHeap(), 0, name );
+    if (val)
+    {
+        lstrcpyAtoW( valW, val );
+        HeapFree( GetProcessHeap(), 0, val );
+    }
     return res;
 }
 

@@ -5,11 +5,9 @@
  */
 
 #define NO_TRANSITION_TYPES  /* This file is Win32-clean */
-#include <stdlib.h>
 #include <string.h>
 #include "win.h"
 #include "heap.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -83,9 +81,9 @@ HANDLE32 GetProp32W( HWND32 hwnd, LPCWSTR str )
     HANDLE32 ret;
 
     if (!HIWORD(str)) return GetProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str) );
-    strA = STRING32_DupUniToAnsi( str );
+    strA = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     ret = GetProp32A( hwnd, strA );
-    free( strA );
+    HeapFree( GetProcessHeap(), 0, strA );
     return ret;
 }
 
@@ -141,9 +139,9 @@ BOOL32 SetProp32W( HWND32 hwnd, LPCWSTR str, HANDLE32 handle )
 
     if (!HIWORD(str))
         return SetProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str), handle );
-    strA = STRING32_DupUniToAnsi( str );
+    strA = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     ret = SetProp32A( hwnd, strA, handle );
-    free( strA );
+    HeapFree( GetProcessHeap(), 0, strA );
     return ret;
 }
 
@@ -205,9 +203,9 @@ HANDLE32 RemoveProp32W( HWND32 hwnd, LPCWSTR str )
 
     if (!HIWORD(str))
         return RemoveProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str) );
-    strA = STRING32_DupUniToAnsi( str );
+    strA = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     ret = RemoveProp32A( hwnd, strA );
-    free( strA );
+    HeapFree( GetProcessHeap(), 0, strA );
     return ret;
 }
 
@@ -324,9 +322,9 @@ INT32 EnumPropsEx32W( HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam )
                       prop->handle, prop->string );
         if (HIWORD(prop->string))
         {
-            LPWSTR str = STRING32_DupAnsiToUni( prop->string );
+            LPWSTR str = HEAP_strdupAtoW( GetProcessHeap(), 0, prop->string );
             ret = func( hwnd, str, prop->handle, lParam );
-            free( str );
+            HeapFree( GetProcessHeap(), 0, str );
         }
         else
             ret = func( hwnd, (LPCWSTR)(UINT32)LOWORD( prop->string ),

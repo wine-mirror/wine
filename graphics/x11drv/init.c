@@ -39,8 +39,8 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pLineTo */
     NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrgEx */
-    NULL,                            /* pOffsetWindowOrgEx */
+    NULL,                            /* pOffsetViewportOrg (optional) */
+    NULL,                            /* pOffsetWindowOrg (optional) */
     NULL,                            /* pPaintRgn */
     X11DRV_PatBlt,                   /* pPatBlt */
     NULL,                            /* pPie */
@@ -52,8 +52,8 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */
-    NULL,                            /* pScaleViewportExtEx */
-    NULL,                            /* pScaleWindowExtEx */
+    NULL,                            /* pScaleViewportExt (optional) */
+    NULL,                            /* pScaleWindowExt (optional) */
     NULL,                            /* pSelectClipRgn */
     NULL,                            /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -61,7 +61,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetBkMode */
     X11DRV_SetDeviceClipping,        /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
-    NULL,                            /* pSetMapMode */
+    NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
@@ -72,10 +72,10 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetTextCharacterExtra */
     NULL,                            /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
-    NULL,                            /* pSetViewportExtEx */
-    NULL,                            /* pSetViewportOrgEx */
-    NULL,                            /* pSetWindowExtEx */
-    NULL,                            /* pSetWindowOrgEx */
+    NULL,                            /* pSetViewportExt (optional) */
+    NULL,                            /* pSetViewportOrg (optional) */
+    NULL,                            /* pSetWindowExt (optional) */
+    NULL,                            /* pSetWindowOrg (optional) */
     X11DRV_StretchBlt,               /* pStretchBlt */
     NULL,                            /* pStretchDIBits */
     NULL                             /* pTextOut */

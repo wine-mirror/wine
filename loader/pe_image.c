@@ -114,7 +114,7 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
 	  daddr.off=load_addr+*functions;
 	  function++;
       }
-      DEBUG_AddSymbol(buffer,&daddr);
+      DEBUG_AddSymbol(buffer,&daddr, NULL);
   }
 }
 
@@ -525,7 +525,11 @@ problem needs to be fixed properly at some stage */
 
 	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_DEBUG_DIRECTORY].Size)
-		dprintf_win32(stdnimp,"Debug directory ignored\n");
+	  {
+	    DEBUG_RegisterDebugInfo(fd, pe, load_addr, 
+			pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Virtual_address,
+			pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Size);
+	  }
 
 	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_DESCRIPTION_STRING].Size)
@@ -556,15 +560,16 @@ problem needs to be fixed properly at some stage */
 				pe->pe_seg[i].Name
 			);
 			daddr.off=load_addr+pe->pe_seg[i].Virtual_Address;
-			DEBUG_AddSymbol(buffer,&daddr);
+			DEBUG_AddSymbol(buffer,&daddr, NULL);
 		}
 		/* add entry point */
 		sprintf(buffer,"%s.EntryPoint",((char*)load_addr)+pe->pe_export->Name);
 		daddr.off=load_addr+pe->pe_header->opt_coff.AddressOfEntryPoint;
-		DEBUG_AddSymbol(buffer,&daddr);
+		DEBUG_AddSymbol(buffer,&daddr, NULL);
 		/* add start of DLL */
 		daddr.off=load_addr;
-		DEBUG_AddSymbol(((char*)load_addr)+pe->pe_export->Name,&daddr);
+		DEBUG_AddSymbol(((char*)load_addr)+pe->pe_export->Name,&daddr,
+				NULL);
 	}
         return pe;
 }

@@ -32,11 +32,11 @@
 #include "win.h"
 #include "bitmap.h"
 #include "struct32.h"
-#include "string32.h"
+#include "heap.h"
+#include "task.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
-#include "task.h"
 
 /* This dictionary could might eventually become a macro for better reuse */
 struct MAP_DWORD_DWORD{
@@ -328,8 +328,8 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
         return 0;
     }
 
-    hXorBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
-                               (char*)bmi + size, pInfo, DIB_RGB_COLORS );
+    hXorBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
+                                 (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 
     /* Fix the bitmap header to load the monochrome mask */
 
@@ -358,8 +358,8 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
 
     /* Create the AND bitmap */
 
-    hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
-                               bits, pInfo, DIB_RGB_COLORS );
+    hAndBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
+                                 bits, pInfo, DIB_RGB_COLORS );
     ReleaseDC32( 0, hdc );
 
     /* Now create the CURSORICONINFO structure */
@@ -418,19 +418,19 @@ static HGLOBAL32 CURSORICON32_Load( HINSTANCE32 hInstance, LPCWSTR name,
 		WORD resid;
 		if(HIWORD(name))
 		{
-			LPSTR ansi;
-			ansi=STRING32_DupUniToAnsi(name);
+			LPSTR ansi = HEAP_strdupWtoA(GetProcessHeap(),0,name);
 			if(ansi[0]=='#')	/*Check for '#xxx' name */
 			{
-				resid=atoi(ansi+1);
-				free(ansi);
-			}else{
-				free(ansi);
-				return 0;
+                            resid = atoi(ansi+1);
+                            HeapFree( GetProcessHeap(), 0, ansi );
+			}
+                        else
+                        {
+                            HeapFree( GetProcessHeap(), 0, ansi );
+                            return 0;
 			}
 		}
-		else
-			resid=(WORD)(int)name;
+		else resid = LOWORD(name);
 		return OBM_LoadCursorIcon(resid, fCursor);
 	}
 
@@ -474,10 +474,11 @@ HCURSOR32 LoadCursor32A(HINSTANCE32 hInstance,LPCSTR name)
 	HCURSOR32 res=0;
 	if(!HIWORD(name))
 		return LoadCursor32W(hInstance,(LPCWSTR)name);
-	else {
-		LPWSTR uni = STRING32_DupAnsiToUni(name);
-		res = LoadCursor32W(hInstance, uni);
-		free(uni);
+	else
+        {
+            LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+            res = LoadCursor32W(hInstance, uni);
+            HeapFree( GetProcessHeap(), 0, uni);
 	}
 	return res;
 }
@@ -501,10 +502,11 @@ HICON32 LoadIcon32A(HINSTANCE32 hInstance,LPCSTR name)
 	HICON32 res=0;
 	if(!HIWORD(name))
 		return LoadIcon32W(hInstance, (LPCWSTR)name);
-	else {
-		LPWSTR uni = STRING32_DupAnsiToUni(name);
-		res = LoadIcon32W(hInstance, uni);
-		free(uni);
+	else
+        {
+            LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+            res = LoadIcon32W( hInstance, uni );
+            HeapFree( GetProcessHeap(), 0, uni );
 	}
 	return res;
 }

@@ -17,6 +17,8 @@ extern int HEAP_IsInsideHeap( HANDLE32 heap, DWORD flags, LPCVOID ptr );
 extern SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr );
 extern LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str );
 extern LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str );
+extern LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str );
+extern LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str );
 
 /* SEGPTR helper macros */
 
@@ -26,6 +28,8 @@ extern LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str );
          ((type *)HeapAlloc( SegptrHeap, 0, sizeof(type) ))
 #define SEGPTR_STRDUP(str) \
          (HIWORD(str) ? HEAP_strdupA( SegptrHeap, 0, (str) ) : (LPSTR)(str))
+#define SEGPTR_STRDUP_WtoA(str) \
+         (HIWORD(str) ? HEAP_strdupWtoA( SegptrHeap, 0, (str) ) : (LPSTR)(str))
 #define SEGPTR_GET(ptr) \
          (HIWORD(ptr) ? HEAP_GetSegptr( SegptrHeap, 0, (ptr) ) : (SEGPTR)(ptr))
 #define SEGPTR_FREE(ptr) \

@@ -17,7 +17,6 @@ C_SRCS = \
 	graphics.c \
 	hook.c \
 	keyboard.c \
-	mapping.c \
 	mdi.c \
 	message.c \
 	msgbox.c \

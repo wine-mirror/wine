@@ -22,7 +22,6 @@
 #include "menu.h"
 #include "message.h"
 #include "nonclient.h"
-#include "string32.h"
 #include "queue.h"
 #include "winpos.h"
 #include "color.h"
@@ -363,7 +362,7 @@ static void WIN_DestroyWindow( WND* wndPtr )
     if (!(wndPtr->dwStyle & WS_CHILD))
        if (wndPtr->wIDmenu) DestroyMenu( (HMENU16)wndPtr->wIDmenu );
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
-    if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
+    if (wndPtr->window) EVENT_DestroyWindow( wndPtr );
     if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->dce );
 
     WINPROC_FreeProc( wndPtr->winproc );
@@ -919,9 +918,9 @@ HWND32 CreateWindowEx32W( DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
     {
     	if (HIWORD(className))
         {
-            LPSTR cn = STRING32_DupUniToAnsi(className);
+            LPSTR cn = HEAP_strdupWtoA( GetProcessHeap(), 0, className );
             fprintf( stderr, "CreateWindowEx32W: bad class name '%s'\n",cn);
-            free(cn);
+            HeapFree( GetProcessHeap(), 0, cn );
 	}
         else
             fprintf( stderr, "CreateWindowEx32W: bad class name %p\n", className );
@@ -1221,9 +1220,9 @@ HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
         /* with this name exists either. */
         if (!(atom = GlobalFindAtom32W( className ))) return 0;
     }
-    buffer = title ? STRING32_DupUniToAnsi( title ) : NULL;
+    buffer = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
     hwnd = WIN_FindWindow( 0, 0, atom, buffer );
-    if (buffer) free( buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
     return hwnd;
 }
 

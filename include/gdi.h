@@ -107,19 +107,11 @@ typedef struct
 
     BYTE          bitsPerPixel;
 
-    WORD          MapMode;
-    short         DCOrgX;            /* DC origin */
-    short         DCOrgY;
-    short         CursPosX;          /* Current position */
-    short         CursPosY;
-    short         WndOrgX;
-    short         WndOrgY;
-    short         WndExtX;
-    short         WndExtY;
-    short         VportOrgX;
-    short         VportOrgY;
-    short         VportExtX;
-    short         VportExtY;
+    INT32         MapMode;
+    INT32         DCOrgX;            /* DC origin */
+    INT32         DCOrgY;
+    INT32         CursPosX;          /* Current position */
+    INT32         CursPosY;
 } WIN_DC_INFO;
 
 typedef X11DRV_PDEVICE X_DC_INFO;  /* Temporary */
@@ -130,9 +122,18 @@ typedef struct tagDC
     HDC32          hSelf;            /* Handle to this DC */
     const struct tagDC_FUNCS *funcs; /* DC function table */
     void          *physDev;          /* Physical device (driver-specific) */
-    WORD           saveLevel;
+    INT32          saveLevel;
     DWORD          dwHookData;
     FARPROC16      hookProc;
+
+    INT32          wndOrgX;          /* Window origin */
+    INT32          wndOrgY;
+    INT32          wndExtX;          /* Window extent */
+    INT32          wndExtY;
+    INT32          vportOrgX;        /* Viewport origin */
+    INT32          vportOrgY;
+    INT32          vportExtX;        /* Viewport extent */
+    INT32          vportExtY;
 
     WIN_DC_INFO w;
     union
@@ -168,8 +169,8 @@ typedef struct tagDC_FUNCS
     BOOL32     (*pLineTo)(DC*,INT32,INT32);
     BOOL32     (*pMoveToEx)(DC*,INT32,INT32,LPPOINT32);
     INT32      (*pOffsetClipRgn)(DC*,INT32,INT32);
-    BOOL32     (*pOffsetViewportOrgEx)(DC*,INT32,INT32,LPPOINT32);
-    BOOL32     (*pOffsetWindowOrgEx)(DC*,INT32,INT32,LPPOINT32);
+    BOOL32     (*pOffsetViewportOrg)(DC*,INT32,INT32);
+    BOOL32     (*pOffsetWindowOrg)(DC*,INT32,INT32);
     BOOL32     (*pPaintRgn)(DC*,HRGN32);
     BOOL32     (*pPatBlt)(DC*,INT32,INT32,INT32,INT32,DWORD);
     BOOL32     (*pPie)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
@@ -181,8 +182,8 @@ typedef struct tagDC_FUNCS
     BOOL32     (*pRestoreDC)(DC*,INT32);
     BOOL32     (*pRoundRect)(DC*,INT32,INT32,INT32,INT32,INT32,INT32);
     INT32      (*pSaveDC)(DC*);
-    BOOL32     (*pScaleViewportExtEx)(DC*,INT32,INT32,INT32,INT32,LPSIZE32);
-    BOOL32     (*pScaleWindowExtEx)(DC*,INT32,INT32,INT32,INT32,LPSIZE32);
+    BOOL32     (*pScaleViewportExt)(DC*,INT32,INT32,INT32,INT32);
+    BOOL32     (*pScaleWindowExt)(DC*,INT32,INT32,INT32,INT32);
     INT32      (*pSelectClipRgn)(DC*,HRGN32);
     HANDLE32   (*pSelectObject)(DC*,HANDLE32);
     HPALETTE32 (*pSelectPalette)(DC*,HPALETTE32,BOOL32);
@@ -190,7 +191,7 @@ typedef struct tagDC_FUNCS
     WORD       (*pSetBkMode)(DC*,WORD);
     VOID       (*pSetDeviceClipping)(DC*);
     INT32      (*pSetDIBitsToDevice)(DC*,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-    WORD       (*pSetMapMode)(DC*,WORD);
+    INT32      (*pSetMapMode)(DC*,INT32);
     DWORD      (*pSetMapperFlags)(DC*,DWORD);
     COLORREF   (*pSetPixel)(DC*,INT32,INT32,COLORREF);
     WORD       (*pSetPolyFillMode)(DC*,WORD);
@@ -201,10 +202,10 @@ typedef struct tagDC_FUNCS
     INT32      (*pSetTextCharacterExtra)(DC*,INT32);
     DWORD      (*pSetTextColor)(DC*,DWORD);
     INT32      (*pSetTextJustification)(DC*,INT32,INT32);
-    BOOL32     (*pSetViewportExtEx)(DC*,INT32,INT32,LPSIZE32);
-    BOOL32     (*pSetViewportOrgEx)(DC*,INT32,INT32,LPPOINT32);
-    BOOL32     (*pSetWindowExtEx)(DC*,INT32,INT32,LPSIZE32);
-    BOOL32     (*pSetWindowOrgEx)(DC*,INT32,INT32,LPPOINT32);
+    BOOL32     (*pSetViewportExt)(DC*,INT32,INT32);
+    BOOL32     (*pSetViewportOrg)(DC*,INT32,INT32);
+    BOOL32     (*pSetWindowExt)(DC*,INT32,INT32);
+    BOOL32     (*pSetWindowOrg)(DC*,INT32,INT32);
     BOOL32     (*pStretchBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,INT32,INT32,DWORD);
     INT32      (*pStretchDIBits)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,LPSTR,LPBITMAPINFO,WORD,DWORD);
     BOOL32     (*pTextOut)(DC*,INT32,INT32,LPCSTR,INT32);
@@ -259,13 +260,13 @@ typedef struct tagDC_FUNCS
   /* Device <-> logical coords conversion */
 
 #define XDPTOLP(dc,x) \
-(((x)-(dc)->w.VportOrgX) * (dc)->w.WndExtX / (dc)->w.VportExtX+(dc)->w.WndOrgX)
+    (((x)-(dc)->vportOrgX) * (dc)->wndExtX / (dc)->vportExtX+(dc)->wndOrgX)
 #define YDPTOLP(dc,y) \
-(((y)-(dc)->w.VportOrgY) * (dc)->w.WndExtY / (dc)->w.VportExtY+(dc)->w.WndOrgY)
+    (((y)-(dc)->vportOrgY) * (dc)->wndExtY / (dc)->vportExtY+(dc)->wndOrgY)
 #define XLPTODP(dc,x) \
-(((x)-(dc)->w.WndOrgX) * (dc)->w.VportExtX / (dc)->w.WndExtX+(dc)->w.VportOrgX)
+    (((x)-(dc)->wndOrgX) * (dc)->vportExtX / (dc)->wndExtX+(dc)->vportOrgX)
 #define YLPTODP(dc,y) \
-(((y)-(dc)->w.WndOrgY) * (dc)->w.VportExtY / (dc)->w.WndExtY+(dc)->w.VportOrgY)
+    (((y)-(dc)->wndOrgY) * (dc)->vportExtY / (dc)->wndExtY+(dc)->vportOrgY)
 
 
   /* GDI local heap */

@@ -14,9 +14,9 @@
 #include <string.h>
 #include <X11/Xatom.h>
 #include "font.h"
+#include "heap.h"
 #include "metafile.h"
 #include "options.h"
-#include "string32.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -133,7 +133,7 @@ static const char *FONT_TranslateName( char *winFaceName )
   int i;
 
   for (i = 1; i < FontSize; i ++)
-    if( !strcmp( winFaceName, FontNames[i].window ) ) {
+    if( !lstrcmpi32A( winFaceName, FontNames[i].window ) ) {
       dprintf_font(stddeb, "---- Mapped %s to %s\n", winFaceName, FontNames[i].x11 );
       return FontNames[i].x11;
     }
@@ -163,7 +163,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT16 * font, DC * dc )
     if (font->lfHeight == -1)
 	height = 0;
     else
-	height = font->lfHeight * dc->w.VportExtX / dc->w.WndExtX;
+	height = font->lfHeight * dc->vportExtX / dc->wndExtX;
     if (height == 0) height = 120;  /* Default height = 12 */
     else if (height < 0)
     {
@@ -180,7 +180,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT16 * font, DC * dc )
         height = (height-2) * -10; 
     }
     else height *= 10;
-    width  = 10 * (font->lfWidth * dc->w.VportExtY / dc->w.WndExtY);
+    width  = 10 * (font->lfWidth * dc->vportExtY / dc->wndExtY);
     if (width < 0) {
 	dprintf_font( stddeb, "FONT_MatchFont: negative width %d(%d)\n",
 		      width, font->lfWidth );
@@ -279,12 +279,104 @@ static XFontStruct * FONT_MatchFont( LOGFONT16 * font, DC * dc )
     dprintf_font(stddeb,"        Found '%s'\n", *names );
     if (!*font->lfFaceName)
       ParseFontParms(*names, 2, font->lfFaceName , LF_FACESIZE-1);
-      /* we need a font name for function GetTextFace() even if there isn't one ;-) */  
-    AnsiUpper(font->lfFaceName);
+    /* we need a font name for function GetTextFace() even if there isn't one ;-) */  
+    /*AnsiUpper(font->lfFaceName);*/
 
     fontStruct = XLoadQueryFont( display, *names );
     XFreeFontNames( names );
     return fontStruct;
+}
+
+
+/***********************************************************************
+ *           FONT_LOGFONT32AToLOGFONT16
+ */
+static void FONT_LOGFONT32AToLOGFONT16( const LOGFONT32A *font,
+                                        LPLOGFONT16 font16 )
+{
+    font16->lfHeight         = (INT16)font->lfHeight;
+    font16->lfWidth          = (INT16)font->lfWidth;
+    font16->lfEscapement     = (INT16)font->lfEscapement;
+    font16->lfOrientation    = (INT16)font->lfOrientation;
+    font16->lfWeight         = (INT16)font->lfWeight;
+    font16->lfItalic         = font->lfItalic;
+    font16->lfUnderline      = font->lfUnderline;
+    font16->lfStrikeOut      = font->lfStrikeOut;
+    font16->lfCharSet        = font->lfCharSet;
+    font16->lfOutPrecision   = font->lfOutPrecision;
+    font16->lfClipPrecision  = font->lfClipPrecision;
+    font16->lfQuality        = font->lfQuality;
+    font16->lfPitchAndFamily = font->lfPitchAndFamily;
+    lstrcpyn32A( font16->lfFaceName, font->lfFaceName, LF_FACESIZE );
+}
+
+
+/***********************************************************************
+ *           FONT_LOGFONT32WToLOGFONT16
+ */
+static void FONT_LOGFONT32WToLOGFONT16( const LOGFONT32W *font,
+                                        LPLOGFONT16 font16 )
+{
+    font16->lfHeight         = (INT16)font->lfHeight;
+    font16->lfWidth          = (INT16)font->lfWidth;
+    font16->lfEscapement     = (INT16)font->lfEscapement;
+    font16->lfOrientation    = (INT16)font->lfOrientation;
+    font16->lfWeight         = (INT16)font->lfWeight;
+    font16->lfItalic         = font->lfItalic;
+    font16->lfUnderline      = font->lfUnderline;
+    font16->lfStrikeOut      = font->lfStrikeOut;
+    font16->lfCharSet        = font->lfCharSet;
+    font16->lfOutPrecision   = font->lfOutPrecision;
+    font16->lfClipPrecision  = font->lfClipPrecision;
+    font16->lfQuality        = font->lfQuality;
+    font16->lfPitchAndFamily = font->lfPitchAndFamily;
+    lstrcpynWtoA( font16->lfFaceName, font->lfFaceName, LF_FACESIZE );
+}
+
+
+/***********************************************************************
+ *           FONT_LOGFONT16ToLOGFONT32A
+ */
+static void FONT_LOGFONT16ToLOGFONT32A( LPLOGFONT16 font,
+                                        LPLOGFONT32A font32A )
+{
+    font32A->lfHeight         = (INT32)font->lfHeight;
+    font32A->lfWidth          = (INT32)font->lfWidth;
+    font32A->lfEscapement     = (INT32)font->lfEscapement;
+    font32A->lfOrientation    = (INT32)font->lfOrientation;
+    font32A->lfWeight         = (INT32)font->lfWeight;
+    font32A->lfItalic         = font->lfItalic;
+    font32A->lfUnderline      = font->lfUnderline;
+    font32A->lfStrikeOut      = font->lfStrikeOut;
+    font32A->lfCharSet        = font->lfCharSet;
+    font32A->lfOutPrecision   = font->lfOutPrecision;
+    font32A->lfClipPrecision  = font->lfClipPrecision;
+    font32A->lfQuality        = font->lfQuality;
+    font32A->lfPitchAndFamily = font->lfPitchAndFamily;
+    lstrcpyn32A( font32A->lfFaceName, font->lfFaceName, LF_FACESIZE );
+}
+
+
+/***********************************************************************
+ *           FONT_LOGFONT16ToLOGFONT32W
+ */
+static void FONT_LOGFONT16ToLOGFONT32W( LPLOGFONT16 font,
+                                        LPLOGFONT32W font32W )
+{
+    font32W->lfHeight         = (INT32)font->lfHeight;
+    font32W->lfWidth          = (INT32)font->lfWidth;
+    font32W->lfEscapement     = (INT32)font->lfEscapement;
+    font32W->lfOrientation    = (INT32)font->lfOrientation;
+    font32W->lfWeight         = (INT32)font->lfWeight;
+    font32W->lfItalic         = font->lfItalic;
+    font32W->lfUnderline      = font->lfUnderline;
+    font32W->lfStrikeOut      = font->lfStrikeOut;
+    font32W->lfCharSet        = font->lfCharSet;
+    font32W->lfOutPrecision   = font->lfOutPrecision;
+    font32W->lfClipPrecision  = font->lfClipPrecision;
+    font32W->lfQuality        = font->lfQuality;
+    font32W->lfPitchAndFamily = font->lfPitchAndFamily;
+    lstrcpynAtoW( font32W->lfFaceName, font->lfFaceName, LF_FACESIZE );
 }
 
 
@@ -354,78 +446,6 @@ DWORD GetGlyphOutLine( HDC16 hdc, UINT uChar, UINT fuFormat,
     fprintf( stdnimp,"GetGlyphOutLine(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
              hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
-}
-
-void
-FONT_LOGFONT32AToLOGFONT16(const LOGFONT32A *font,LPLOGFONT16 font16) {
-    font16->lfHeight         = (INT16)font->lfHeight;
-    font16->lfWidth          = (INT16)font->lfWidth;
-    font16->lfEscapement     = (INT16)font->lfEscapement;
-    font16->lfOrientation    = (INT16)font->lfOrientation;
-    font16->lfWeight         = (INT16)font->lfWeight;
-    font16->lfItalic         = font->lfItalic;
-    font16->lfUnderline      = font->lfUnderline;
-    font16->lfStrikeOut      = font->lfStrikeOut;
-    font16->lfCharSet        = font->lfCharSet;
-    font16->lfOutPrecision   = font->lfOutPrecision;
-    font16->lfClipPrecision  = font->lfClipPrecision;
-    font16->lfQuality        = font->lfQuality;
-    font16->lfPitchAndFamily = font->lfPitchAndFamily;
-    lstrcpyn32A( font16->lfFaceName, font->lfFaceName, LF_FACESIZE );
-}
-
-void
-FONT_LOGFONT32WToLOGFONT16(const LOGFONT32W *font,LPLOGFONT16 font16) {
-    font16->lfHeight         = (INT16)font->lfHeight;
-    font16->lfWidth          = (INT16)font->lfWidth;
-    font16->lfEscapement     = (INT16)font->lfEscapement;
-    font16->lfOrientation    = (INT16)font->lfOrientation;
-    font16->lfWeight         = (INT16)font->lfWeight;
-    font16->lfItalic         = font->lfItalic;
-    font16->lfUnderline      = font->lfUnderline;
-    font16->lfStrikeOut      = font->lfStrikeOut;
-    font16->lfCharSet        = font->lfCharSet;
-    font16->lfOutPrecision   = font->lfOutPrecision;
-    font16->lfClipPrecision  = font->lfClipPrecision;
-    font16->lfQuality        = font->lfQuality;
-    font16->lfPitchAndFamily = font->lfPitchAndFamily;
-    lstrcpynWtoA( font16->lfFaceName, font->lfFaceName, LF_FACESIZE );
-}
-
-void
-FONT_LOGFONT16ToLOGFONT32A(LPLOGFONT16 font,LPLOGFONT32A font32A) {
-    font32A->lfHeight         = (INT32)font->lfHeight;
-    font32A->lfWidth          = (INT32)font->lfWidth;
-    font32A->lfEscapement     = (INT32)font->lfEscapement;
-    font32A->lfOrientation    = (INT32)font->lfOrientation;
-    font32A->lfWeight         = (INT32)font->lfWeight;
-    font32A->lfItalic         = font->lfItalic;
-    font32A->lfUnderline      = font->lfUnderline;
-    font32A->lfStrikeOut      = font->lfStrikeOut;
-    font32A->lfCharSet        = font->lfCharSet;
-    font32A->lfOutPrecision   = font->lfOutPrecision;
-    font32A->lfClipPrecision  = font->lfClipPrecision;
-    font32A->lfQuality        = font->lfQuality;
-    font32A->lfPitchAndFamily = font->lfPitchAndFamily;
-    lstrcpyn32A( font32A->lfFaceName, font->lfFaceName, LF_FACESIZE );
-}
-
-void
-FONT_LOGFONT16ToLOGFONT32W(LPLOGFONT16 font,LPLOGFONT32W font32W) {
-    font32W->lfHeight         = (INT32)font->lfHeight;
-    font32W->lfWidth          = (INT32)font->lfWidth;
-    font32W->lfEscapement     = (INT32)font->lfEscapement;
-    font32W->lfOrientation    = (INT32)font->lfOrientation;
-    font32W->lfWeight         = (INT32)font->lfWeight;
-    font32W->lfItalic         = font->lfItalic;
-    font32W->lfUnderline      = font->lfUnderline;
-    font32W->lfStrikeOut      = font->lfStrikeOut;
-    font32W->lfCharSet        = font->lfCharSet;
-    font32W->lfOutPrecision   = font->lfOutPrecision;
-    font32W->lfClipPrecision  = font->lfClipPrecision;
-    font32W->lfQuality        = font->lfQuality;
-    font32W->lfPitchAndFamily = font->lfPitchAndFamily;
-    lstrcpynAtoW( font32W->lfFaceName, font->lfFaceName, LF_FACESIZE );
 }
 
 
@@ -535,12 +555,12 @@ HFONT32 CreateFont32W( INT32 height, INT32 width, INT32 esc, INT32 orient,
                        DWORD clippres, DWORD quality, DWORD pitch,
                        LPCWSTR name )
 {
-    LPSTR namea = name ? STRING32_DupUniToAnsi(name) : NULL;
+    LPSTR namea = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     HFONT32 ret = (HFONT32)CreateFont16( height, width, esc, orient, weight,
                                          italic, underline, strikeout, charset,
                                          outpres, clippres, quality, pitch,
                                          namea );
-    free(namea);
+    HeapFree( GetProcessHeap(), 0, namea );
     return ret;
 }
 
@@ -748,41 +768,71 @@ HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font )
 
 
 /***********************************************************************
- *           GetTextCharacterExtra    (GDI.89)
+ *           GetTextCharacterExtra16    (GDI.89)
  */
-short GetTextCharacterExtra( HDC16 hdc )
+INT16 GetTextCharacterExtra16( HDC16 hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-    return abs( (dc->w.charExtra * dc->w.WndExtX + dc->w.VportExtX / 2)
-	         / dc->w.VportExtX );
+    return abs( (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2)
+	         / dc->vportExtX );
 }
 
 
 /***********************************************************************
- *           SetTextCharacterExtra    (GDI.8)
+ *           GetTextCharacterExtra32    (GDI32.225)
  */
-short SetTextCharacterExtra( HDC16 hdc, short extra )
+INT32 GetTextCharacterExtra32( HDC32 hdc )
 {
-    short prev;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-    extra = (extra * dc->w.VportExtX + dc->w.WndExtX / 2) / dc->w.WndExtX;    
+    return abs( (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2)
+	         / dc->vportExtX );
+}
+
+
+/***********************************************************************
+ *           SetTextCharacterExtra16    (GDI.8)
+ */
+INT16 SetTextCharacterExtra16( HDC16 hdc, INT16 extra )
+{
+    return (INT16)SetTextCharacterExtra32( hdc, extra );
+}
+
+
+/***********************************************************************
+ *           SetTextCharacterExtra32    (GDI32.337)
+ */
+INT32 SetTextCharacterExtra32( HDC32 hdc, INT32 extra )
+{
+    INT32 prev;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return 0;
+    extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;    
     prev = dc->w.charExtra;
     dc->w.charExtra = abs(extra);
-    return (prev * dc->w.WndExtX + dc->w.VportExtX / 2) / dc->w.VportExtX;
+    return (prev * dc->wndExtX + dc->vportExtX / 2) / dc->vportExtX;
 }
 
 
 /***********************************************************************
- *           SetTextJustification    (GDI.10)
+ *           SetTextJustification16    (GDI.10)
  */
-short SetTextJustification( HDC16 hdc, short extra, short breaks )
+INT16 SetTextJustification16( HDC16 hdc, INT16 extra, INT16 breaks )
+{
+    return SetTextJustification32( hdc, extra, breaks );
+}
+
+
+/***********************************************************************
+ *           SetTextJustification32    (GDI32.339)
+ */
+BOOL32 SetTextJustification32( HDC32 hdc, INT32 extra, INT32 breaks )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
 
-    extra = abs((extra * dc->w.VportExtX + dc->w.WndExtX / 2) / dc->w.WndExtX);
+    extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
     if (!extra) breaks = 0;
     dc->w.breakTotalExtra = extra;
     dc->w.breakCount = breaks;
@@ -798,6 +848,7 @@ short SetTextJustification( HDC16 hdc, short extra, short breaks )
     }
     return 1;
 }
+
 
 /***********************************************************************
  *           GetTextFace16    (GDI.92)
@@ -827,11 +878,10 @@ INT32 GetTextFace32A( HDC32 hdc, INT32 count, LPSTR name )
  */
 INT32 GetTextFace32W( HDC32 hdc, INT32 count, LPWSTR name )
 {
-    LPSTR nameA = (LPSTR)xmalloc(count);
+    LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, count );
     INT32 res = GetTextFace32A(hdc,count,nameA);
-
-    lstrcpynAtoW(name,nameA,count);
-    free(nameA);
+    lstrcpyAtoW( name, nameA );
+    HeapFree( GetProcessHeap(), 0, nameA );
     return res;
 }
 
@@ -839,7 +889,7 @@ INT32 GetTextFace32W( HDC32 hdc, INT32 count, LPWSTR name )
 /***********************************************************************
  *           GetTextExtent    (GDI.91)
  */
-DWORD GetTextExtent( HDC16 hdc, LPCSTR str, short count )
+DWORD GetTextExtent( HDC16 hdc, LPCSTR str, INT16 count )
 {
     SIZE16 size;
     if (!GetTextExtentPoint16( hdc, str, count, &size )) return 0;
@@ -892,9 +942,9 @@ BOOL32 GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
 BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
                               LPSIZE32 size )
 {
-    char *p = STRING32_DupUniToAnsi( str );
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     BOOL32 ret = GetTextExtentPoint32A( hdc, p, count, size );
-    free( p );
+    HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
 
@@ -967,10 +1017,10 @@ BOOL32 GetTextExtentExPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
                                 INT32 maxExt, LPINT32 lpnFit, LPINT32 alpDx,
                                 LPSIZE32 size )
 {
-    char *p = STRING32_DupUniToAnsi( str );
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     BOOL32 ret = GetTextExtentExPoint32A( hdc, p, count, maxExt,
 					lpnFit, alpDx, size);
-    free( p );
+    HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
 
@@ -984,18 +1034,18 @@ BOOL16 GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
     memcpy( metrics, &dc->u.x.font.metrics, sizeof(*metrics) );
 
     metrics->tmAscent  = abs( metrics->tmAscent
-			      * dc->w.WndExtY / dc->w.VportExtY );
+			      * dc->wndExtY / dc->vportExtY );
     metrics->tmDescent = abs( metrics->tmDescent
-			      * dc->w.WndExtY / dc->w.VportExtY );
+			      * dc->wndExtY / dc->vportExtY );
     metrics->tmHeight  = metrics->tmAscent + metrics->tmDescent;
     metrics->tmInternalLeading = abs( metrics->tmInternalLeading
-				      * dc->w.WndExtY / dc->w.VportExtY );
+				      * dc->wndExtY / dc->vportExtY );
     metrics->tmExternalLeading = abs( metrics->tmExternalLeading
-				      * dc->w.WndExtY / dc->w.VportExtY );
+				      * dc->wndExtY / dc->vportExtY );
     metrics->tmMaxCharWidth    = abs( metrics->tmMaxCharWidth 
-				      * dc->w.WndExtX / dc->w.VportExtX );
+				      * dc->wndExtX / dc->vportExtX );
     metrics->tmAveCharWidth    = abs( metrics->tmAveCharWidth
-				      * dc->w.WndExtX / dc->w.VportExtX );
+				      * dc->wndExtX / dc->vportExtX );
 
     dprintf_font(stdnimp,"text metrics:\n
 	InternalLeading = %i
@@ -1117,26 +1167,50 @@ DWORD SetMapperFlags(HDC16 hDC, DWORD dwFlag)
 
  
 /***********************************************************************
- *           GetCharABCWidths   (GDI.307)
+ *           GetCharABCWidths16   (GDI.307)
  */
-BOOL GetCharABCWidths(HDC16 hdc, UINT wFirstChar, UINT wLastChar, LPABC16 lpABC)
+BOOL16 GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
+                           LPABC16 abc )
 {
+    ABC32 abc32;
+    if (!GetCharABCWidths32A( hdc, firstChar, lastChar, &abc32 )) return FALSE;
+    abc->abcA = abc32.abcA;
+    abc->abcB = abc32.abcB;
+    abc->abcC = abc32.abcC;
+    return TRUE;
+}
 
+
+/***********************************************************************
+ *           GetCharABCWidths32A   (GDI32.149)
+ */
+BOOL32 GetCharABCWidths32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
+                            LPABC32 abc )
+{
     /* No TrueType fonts in Wine so far */
-
-    fprintf(stdnimp,"STUB: GetCharABCWidths(%04x,%04x,%04x,%08x)\n",
-			   hdc,wFirstChar,wLastChar,(unsigned)lpABC);
-  
+    fprintf( stdnimp, "STUB: GetCharABCWidths(%04x,%04x,%04x,%p)\n",
+             hdc, firstChar, lastChar, abc );
     return FALSE;
 }
 
 
 /***********************************************************************
- *           GetCharWidth    (GDI.350)
+ *           GetCharABCWidths32W   (GDI32.152)
  */
-BOOL GetCharWidth(HDC16 hdc, WORD wFirstChar, WORD wLastChar, LPINT16 lpBuffer)
+BOOL32 GetCharABCWidths32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
+                            LPABC32 abc )
 {
-    int i, j;
+    return GetCharABCWidths32A( hdc, firstChar, lastChar, abc );
+}
+
+
+/***********************************************************************
+ *           GetCharWidth16    (GDI.350)
+ */
+BOOL16 GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
+                       LPINT16 buffer )
+{
+    int i, width;
     XFontStruct *xfont;
     XCharStruct *cs, *def;
 
@@ -1147,21 +1221,64 @@ BOOL GetCharWidth(HDC16 hdc, WORD wFirstChar, WORD wLastChar, LPINT16 lpBuffer)
     /* fixed font? */
     if (xfont->per_char == NULL)
     {
-	for (i = wFirstChar, j = 0; i <= wLastChar; i++, j++)
-	    *(lpBuffer + j) = xfont->max_bounds.width;
+	for (i = firstChar; i <= lastChar; i++)
+	    *buffer++ = xfont->max_bounds.width;
 	return TRUE;
     }
 
     CI_GET_DEFAULT_INFO(xfont, def);
 	
-    for (i = wFirstChar, j = 0; i <= wLastChar; i++, j++)
+    for (i = firstChar; i <= lastChar; i++)
     {
-	CI_GET_CHAR_INFO(xfont, i, def, cs);
-	*(lpBuffer + j) = cs ? cs->width : xfont->max_bounds.width;
-	if (*(lpBuffer + j) < 0)
-	    *(lpBuffer + j) = 0;
+	CI_GET_CHAR_INFO( xfont, i, def, cs );
+        width = cs ? cs->width : xfont->max_bounds.width;
+        *buffer++ = MAX( width, 0 );
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetCharWidth32A    (GDI32.155)
+ */
+BOOL32 GetCharWidth32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
+                        LPINT32 buffer )
+{
+    int i, width;
+    XFontStruct *xfont;
+    XCharStruct *cs, *def;
+
+    DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
+    if (!dc) return FALSE;
+    xfont = dc->u.x.font.fstruct;
+    
+    /* fixed font? */
+    if (xfont->per_char == NULL)
+    {
+	for (i = firstChar; i <= lastChar; i++)
+	    *buffer++ = xfont->max_bounds.width;
+	return TRUE;
+    }
+
+    CI_GET_DEFAULT_INFO(xfont, def);
+	
+    for (i = firstChar; i <= lastChar; i++)
+    {
+	CI_GET_CHAR_INFO( xfont, i, def, cs );
+        width = cs ? cs->width : xfont->max_bounds.width;
+        *buffer++ = MAX( width, 0 );
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetCharWidth32W    (GDI32.158)
+ */
+BOOL32 GetCharWidth32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
+                        LPINT32 buffer )
+{
+    return GetCharWidth32A( hdc, firstChar, lastChar, buffer );
 }
 
 
@@ -1217,8 +1334,8 @@ int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 
 static int logfcmp(const void *a,const void *b) 
 {
-  return strcmp( (*(LPLOGFONT16 *)a)->lfFaceName,
-                 (*(LPLOGFONT16 *)b)->lfFaceName );
+  return lstrcmpi32A( (*(LPLOGFONT16 *)a)->lfFaceName,
+                      (*(LPLOGFONT16 *)b)->lfFaceName );
 }
 
 void InitFontsList(void)
@@ -1256,11 +1373,7 @@ void InitFontsList(void)
     dprintf_font(stddeb,"InitFontsList // names[%d]='%s' \n", i, names[i]);
 
     ParseFontParms(names[i], 2, str, sizeof(str));
-#if 0
-    /* not necessary because new function FONT_ChkX11Family() */
-    if (strcmp(str, "fixed") == 0) strcat(str, "sys");
-#endif    
-    AnsiUpper(str);
+/*    AnsiUpper(str);*/
     strcpy(lpNewFont->lfFaceName, str);
     ParseFontParms(names[i], 8, str, sizeof(str));
     lpNewFont->lfHeight = atoi(str) / 10;
@@ -1423,7 +1536,7 @@ INT16 EnumFontFamiliesEx16(HDC16 hDC, LPLOGFONT16 lpLF, FONTENUMPROCEX16 lpEnumF
   }
   lpOldName = NULL;
   strcpy(FaceName,lpLF->lfFaceName);
-  AnsiUpper(lpLF->lfFaceName);
+/*  AnsiUpper(lpLF->lfFaceName);*/
 
   if (lpLogFontList[0] == NULL) InitFontsList();
   for(i = 0; lpLogFontList[i] != NULL; i++) {
@@ -1434,11 +1547,15 @@ INT16 EnumFontFamiliesEx16(HDC16 hDC, LPLOGFONT16 lpLF, FONTENUMPROCEX16 lpEnumF
 
     /* lfPitchAndFamily only of importance in Hebrew and Arabic versions. */
     /* lfFaceName */
-    if (FaceName[0]) {
-    	if (strcmp(FaceName,lpLogFontList[i]->lfFaceName))
+    if (FaceName[0])
+    {
+    	if (lstrcmpi32A(FaceName,lpLogFontList[i]->lfFaceName))
 	   continue;
-    } else {
-    	if ((lpOldName!=NULL)&&!strcmp(lpOldName,lpLogFontList[i]->lfFaceName))
+    }
+    else
+    {
+    	if ((lpOldName!=NULL) &&
+            !lstrcmpi32A(lpOldName,lpLogFontList[i]->lfFaceName))
 	   continue;
 	lpOldName=lpLogFontList[i]->lfFaceName;
     }
@@ -1500,7 +1617,7 @@ INT32 EnumFontFamiliesEx32A(HDC32 hDC, LPLOGFONT32A lpLF,FONTENUMPROCEX32A lpEnu
   }
   lpOldName = NULL;
   strcpy(FaceName,lpLF->lfFaceName);
-  AnsiUpper(lpLF->lfFaceName);
+/*  AnsiUpper(lpLF->lfFaceName);*/
 
   if (lpLogFontList[0] == NULL) InitFontsList();
   for(i = 0; lpLogFontList[i] != NULL; i++) {
@@ -1512,10 +1629,11 @@ INT32 EnumFontFamiliesEx32A(HDC32 hDC, LPLOGFONT32A lpLF,FONTENUMPROCEX32A lpEnu
     /* lfPitchAndFamily only of importance in Hebrew and Arabic versions. */
     /* lfFaceName */
     if (FaceName[0]) {
-    	if (strcmp(FaceName,lpLogFontList[i]->lfFaceName))
+    	if (lstrcmpi32A(FaceName,lpLogFontList[i]->lfFaceName))
 	   continue;
     } else {
-    	if ((lpOldName!=NULL)&&!strcmp(lpOldName,lpLogFontList[i]->lfFaceName))
+    	if ((lpOldName!=NULL) &&
+            !lstrcmpi32A(lpOldName,lpLogFontList[i]->lfFaceName))
 	   continue;
 	lpOldName=lpLogFontList[i]->lfFaceName;
     }
@@ -1557,19 +1675,15 @@ INT32 EnumFontFamiliesEx32W(HDC32 hDC, LPLOGFONT32W lpLF, FONTENUMPROCEX32W lpEn
   LPSTR	       	lpOldName;
   int	       	nRet = 0;
   int	       	i;
-  LPSTR	lpszFamily=STRING32_DupUniToAnsi(lpLF->lfFaceName);
+  LPSTR	lpszFamily;
   
   dprintf_font(stddeb,"EnumFontFamiliesEx32W(%04x, %p, %08lx, %08lx, %08lx)\n",
 	       hDC, lpLF, (DWORD)lpEnumFunc, lpData,reserved);
-  if (lpEnumFunc == 0) {
-    free(lpszFamily);
-    return 0;
-  }
+  if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONTEX32W) );
   lpEnumLogFont = (LPENUMLOGFONTEX32W) GDI_HEAP_LIN_ADDR(hLog);
   if (lpEnumLogFont == NULL) {
     fprintf(stderr,"EnumFontFamilies32W // can't alloc LOGFONT struct !\n");
-    free(lpszFamily);
     return 0;
   }
   hMet = GDI_HEAP_ALLOC( sizeof(NEWTEXTMETRICEX32W) );
@@ -1577,10 +1691,10 @@ INT32 EnumFontFamiliesEx32W(HDC32 hDC, LPLOGFONT32W lpLF, FONTENUMPROCEX32W lpEn
   if (lptm == NULL) {
     GDI_HEAP_FREE(hLog);
     fprintf(stderr,"EnumFontFamilies32W // can't alloc TEXTMETRIC struct !\n");
-    free(lpszFamily);
     return 0;
   }
   lpOldName = NULL;
+  lpszFamily = HEAP_strdupWtoA( GetProcessHeap(), 0, lpLF->lfFaceName );
   AnsiUpper(lpszFamily);
   if (lpLogFontList[0] == NULL) InitFontsList();
   for(i = 0; lpLogFontList[i] != NULL; i++) {
@@ -1592,18 +1706,19 @@ INT32 EnumFontFamiliesEx32W(HDC32 hDC, LPLOGFONT32W lpLF, FONTENUMPROCEX32W lpEn
     /* lfPitchAndFamily only of importance in Hebrew and Arabic versions. */
     /* lfFaceName */
     if (lpszFamily[0]) {
-    	if (strcmp(lpszFamily,lpLogFontList[i]->lfFaceName))
+    	if (lstrcmpi32A(lpszFamily,lpLogFontList[i]->lfFaceName))
 	   continue;
     } else {
-    	if ((lpOldName!=NULL)&&!strcmp(lpOldName,lpLogFontList[i]->lfFaceName))
+    	if ((lpOldName!=NULL) &&
+            !lstrcmpi32A(lpOldName,lpLogFontList[i]->lfFaceName))
 	   continue;
 	lpOldName=lpLogFontList[i]->lfFaceName;
     }
 
     FONT_LOGFONT16ToLOGFONT32W(lpLogFontList[i],&(lpEnumLogFont->elfLogFont));
-    lstrcpynAtoW(lpEnumLogFont->elfFullName,"",1);
-    lstrcpynAtoW(lpEnumLogFont->elfStyle,"",1);
-    lstrcpynAtoW(lpEnumLogFont->elfScript,"",1);
+    lpEnumLogFont->elfFullName[0] = 0;
+    lpEnumLogFont->elfStyle[0] = 0;
+    lpEnumLogFont->elfScript[0] = 0;
     hFont = CreateFontIndirect32W((LPLOGFONT32W)lpEnumLogFont);
     hOldFont = SelectObject32(hDC, hFont);
     GetTextMetrics32W(hDC, (LPTEXTMETRIC32W)lptm);
@@ -1619,7 +1734,7 @@ INT32 EnumFontFamiliesEx32W(HDC32 hDC, LPLOGFONT32W lpLF, FONTENUMPROCEX32W lpEn
   }
   GDI_HEAP_FREE(hMet);
   GDI_HEAP_FREE(hLog);
-  free(lpszFamily);
+  HeapFree( GetProcessHeap(), 0, lpszFamily );
   return nRet;
 }
 
