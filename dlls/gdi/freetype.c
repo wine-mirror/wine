@@ -40,6 +40,7 @@
 #include "gdi_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 
@@ -189,6 +190,7 @@ typedef struct {
 } GM;
 
 struct tagGdiFont {
+    struct list entry;
     FT_Face ft_face;
     XFORM xform;
     LPWSTR name;
@@ -206,12 +208,11 @@ struct tagGdiFont {
     SHORT yMin;
     OUTLINETEXTMETRICW *potm;
     FONTSIGNATURE fs;
-    struct tagGdiFont *next;
 };
 
 #define INIT_GM_SIZE 128
 
-static GdiFont GdiFontList = NULL;
+static struct list gdi_font_list = LIST_INIT(gdi_font_list);
 
 static Family *FontList = NULL;
 
@@ -1329,7 +1330,6 @@ static GdiFont alloc_font(void)
     ret->gmsize = INIT_GM_SIZE;
     ret->gm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			ret->gmsize * sizeof(*ret->gm));
-    ret->next = NULL;
     ret->potm = NULL;
     ret->xform.eM11 = ret->xform.eM22 = 1.0;
     return ret;
@@ -1507,6 +1507,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     BOOL bd, it, can_use_bitmap;
     LOGFONTW lf;
     CHARSETINFO csi;
+    struct list *elem_ptr;
 
     if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
     can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
@@ -1517,8 +1518,9 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	  lf.lfEscapement);
 
     /* check the cache first */
-    for(ret = GdiFontList; ret; ret = ret->next) {
-	if(ret->hfont == hfont && !memcmp(&ret->xform, &dc->xformWorld2Vport, offsetof(XFORM, eDx)) &&
+    LIST_FOR_EACH(elem_ptr, &gdi_font_list) {
+        ret = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
+        if(ret->hfont == hfont && !memcmp(&ret->xform, &dc->xformWorld2Vport, offsetof(XFORM, eDx)) &&
            (can_use_bitmap || FT_IS_SCALABLE(ret->ft_face))) {
 
 	    TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
@@ -1702,19 +1704,19 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
     ret->hfont = hfont;
     ret->aveWidth= lf.lfWidth;
-    ret->next = GdiFontList;
-    GdiFontList = ret;
-
+    list_add_head(&gdi_font_list, &ret->entry);
     return ret;
 }
 
-static void DumpGdiFontList(void)
+static void dump_gdi_font_list(void)
 {
     GdiFont gdiFont;
+    LOGFONTW lf;
+    struct list *elem_ptr;
 
     TRACE("---------- gdiFont Cache ----------\n");
-    for(gdiFont = GdiFontList; gdiFont; gdiFont = gdiFont->next) {
-	LOGFONTW lf;
+    LIST_FOR_EACH(elem_ptr, &gdi_font_list) {
+        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
         GetObjectW( gdiFont->hfont, sizeof(lf), &lf );
 	TRACE("gdiFont=%p  hfont=%p (%s)\n",
 	       gdiFont, gdiFont->hfont, debugstr_w(lf.lfFaceName));
@@ -1730,30 +1732,22 @@ static void DumpGdiFontList(void)
 BOOL WineEngDestroyFontInstance(HFONT handle)
 {
     GdiFont gdiFont;
-    GdiFont gdiPrev = NULL;
     BOOL ret = FALSE;
+    struct list *elem_ptr;
 
     TRACE("destroying hfont=%p\n", handle);
     if(TRACE_ON(font))
-	DumpGdiFontList();
+	dump_gdi_font_list();
 
-    gdiFont = GdiFontList;
-    while(gdiFont) {
-	if(gdiFont->hfont == handle) {
-	    if(gdiPrev) {
-	        gdiPrev->next = gdiFont->next;
-		free_font(gdiFont);
-		gdiFont = gdiPrev->next;
-	    } else {
-		GdiFontList = gdiFont->next;
-		free_font(gdiFont);
-		gdiFont = GdiFontList;
-	    }
-	    ret = TRUE;
-	} else {
-	    gdiPrev = gdiFont;
-	    gdiFont = gdiFont->next;
-	}
+    elem_ptr = list_head(&gdi_font_list);
+    while(elem_ptr) {
+        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
+        elem_ptr = list_next(&gdi_font_list, elem_ptr);
+        if(gdiFont->hfont == handle) {
+            list_remove(&gdiFont->entry);
+            free_font(gdiFont);
+            ret = TRUE;
+        }
     }
     return ret;
 }
