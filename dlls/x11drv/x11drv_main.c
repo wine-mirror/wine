@@ -224,14 +224,6 @@ static void setup_options(void)
         putenv( strdup(buffer) );
     }
 
-    /* check --managed option in wine config file if it was not set on command line */
-
-    if (!Options.managed)
-    {
-        if (!get_config_key( hkey, appkey, "Managed", buffer, sizeof(buffer) ))
-            Options.managed = IS_OPTION_TRUE( buffer[0] );
-    }
-
     if (!get_config_key( hkey, appkey, "Desktop", buffer, sizeof(buffer) ))
     {
         /* Imperfect validation:  If Desktop=N, then we don't turn on
@@ -356,10 +348,7 @@ static void process_attach(void)
     screen_height = HeightOfScreen( screen );
 
     if (desktop_geometry)
-    {
-        Options.managed = FALSE;
         root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
-    }
 
     /* initialize GDI */
     if(!X11DRV_GDI_Initialize( display ))

@@ -376,12 +376,11 @@ static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
 
     bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
 
-    /* If the window has been disabled and we are in managed mode,
-       * revert the X focus back to the last focus window. This is to disallow
-       * the window manager from switching focus away while the app is
-       * in a modal state.
-       */
-    if ( Options.managed && bIsDisabled && glastXFocusWin)
+    /* If the window has been disabled, revert the X focus back to the last
+     * focus window. This is to disallow the window manager from switching 
+     * focus away while the app is in a modal state.
+     */
+    if (bIsDisabled && glastXFocusWin)
     {
         /* Change focus only if saved focus window is registered and viewable */
         wine_tsx11_lock();

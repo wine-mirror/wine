@@ -74,8 +74,6 @@ static LPCSTR icon_window_atom;
  */
 inline static BOOL is_window_managed( WND *win )
 {
-    if (!Options.managed) return FALSE;
-
     /* tray window is always managed */
     if (win->dwExStyle & WS_EX_TRAYWINDOW) return TRUE;
     /* child windows are not managed */

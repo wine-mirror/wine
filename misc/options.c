@@ -40,12 +40,6 @@ struct option_descr
     const char *usage;
 };
 
-/* default options */
-struct options Options =
-{
-    FALSE           /* Managed windows */
-};
-
 const char *argv0;       /* the original argv[0] */
 const char *full_argv0;  /* the full path of argv[0] (if known) */
 
@@ -60,7 +54,6 @@ static void out_of_memory(void)
 
 static void do_debugmsg( const char *arg );
 static void do_help( const char *arg );
-static void do_managed( const char *arg );
 static void do_version( const char *arg );
 
 static const struct option_descr option_table[] =
@@ -74,8 +67,6 @@ static const struct option_descr option_table[] =
       "                    Only valid with --winver win31" },
     { "help",       'h', 0, 0, do_help,
       "--help,-h        Show this help message" },
-    { "managed",      0, 0, 0, do_managed,
-      "--managed        Allow the window manager to manage created windows" },
     { "version",    'v', 0, 0, do_version,
       "--version,-v     Display the Wine version" },
     { "winver",       0, 1, 1, VERSION_ParseWinVersion,
@@ -93,11 +84,6 @@ static void do_version( const char *arg )
 {
     MESSAGE( "%s\n", PACKAGE_STRING );
     ExitProcess(0);
-}
-
-static void do_managed( const char *arg )
-{
-    Options.managed = TRUE;
 }
 
 static void do_debugmsg( const char *arg )

@@ -23,12 +23,6 @@
 
 #include "windef.h"
 
-struct options
-{
-    int    managed;	    /* Managed windows */
-};
-
-extern struct options Options;
 extern const char *argv0;
 extern const char *full_argv0;
 extern unsigned int server_startticks;

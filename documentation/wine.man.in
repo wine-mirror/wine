@@ -161,10 +161,6 @@ Specify the DOS version
 should imitate (e.g. 6.22) This option
 is only valid when used in conjunction with --winver win31.
 .TP
-.I --managed
-Create each top-level window as a properly managed X window instead of
-creating our own "sticky" window.
-.TP
 .I --winver version
 Specify which Windows version 
 .B wine 
@@ -205,7 +201,7 @@ by
 For example, if you want to execute 
 .B wine 
 with the options 
-.I --managed --dll riched32=n
+.I --dll riched32=n
 and if 
 .B wine 
 should run the program 
@@ -215,7 +211,7 @@ with the arguments
 , then you could use the following command line to invoke 
 .B wine:
 .PP
-.I wine --managed --dll riched32=n -- myapp.exe --display 3d somefile
+.I wine --dll riched32=n -- myapp.exe --display 3d somefile
 .PP 
 Note that in contrast to previous versions of 
 .B wine, 

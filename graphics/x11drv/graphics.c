@@ -1316,7 +1316,7 @@ BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp )
        Window root;
        int x, y, w, h, border, depth;
 
-       /* FIXME: this is not correct for managed windows */
+       FIXME("this is not correct for managed windows");
        TSXGetGeometry( gdi_display, physDev->drawable, &root,
                        &x, &y, &w, &h, &border, &depth );
        lpp->x = x;
