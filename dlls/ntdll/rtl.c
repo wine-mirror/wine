@@ -294,17 +294,41 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 /******************************************************************************
  *	DbgPrint	[NTDLL.@]
  */
-void WINAPIV DbgPrint(LPCSTR fmt, ...)
+NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...)
 {
-       char buf[512];
-       va_list args;
+  char buf[512];
+  va_list args;
 
-       va_start(args, fmt);
-       vsprintf(buf,fmt, args);
-       va_end(args);
+  va_start(args, fmt);
+  vsprintf(buf,fmt, args);
+  va_end(args);
 
-	MESSAGE("DbgPrint says: %s",buf);
-	/* hmm, raise exception? */
+  MESSAGE("DbgPrint says: %s",buf);
+  /* hmm, raise exception? */
+  return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *	DbgPrint	[NTDLL.@]
+ */
+NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...)
+{
+  char buf[1024];
+  va_list args;
+
+  va_start(args, fmt);
+  vsprintf(buf, fmt, args);
+  va_end(args);
+
+  switch (Level & DPFLTR_MASK) {
+  case DPFLTR_ERROR_LEVEL:   ERR("%lx: %s", iComponentId, buf); break;
+  case DPFLTR_WARNING_LEVEL: WARN("%lx: %s", iComponentId, buf); break;
+  case DPFLTR_TRACE_LEVEL: 
+  case DPFLTR_INFO_LEVEL: 
+  default:                   TRACE("%lx: %s", iComponentId, buf); break;
+  }
+  return STATUS_SUCCESS;
 }
 
 /******************************************************************************

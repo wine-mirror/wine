@@ -23,6 +23,7 @@
 @ stub CsrpProcessCallbackRequest
 @ stdcall DbgBreakPoint()
 @ varargs DbgPrint(str)
+@ varargs DbgPrintEx(long long str)
 @ stub DbgPrompt
 @ stub DbgSsHandleKmApiMsg
 @ stub DbgSsInitialize
@@ -123,6 +124,7 @@
 @ stdcall NtGetContextThread(long ptr)
 @ stub NtGetPlugPlayEvent
 @ stub NtGetTickCount
+@ stub NtImpersonateAnonymousToken
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry

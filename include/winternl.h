@@ -1011,6 +1011,15 @@ typedef struct _DEBUG_LOCK_INFORMATION {
   ULONG  NumberOfExclusiveWaiters;
 } DEBUG_LOCK_INFORMATION, *PDEBUG_LOCK_INFORMATION;
 
+typedef struct _PORT_MESSAGE_HEADER {
+  USHORT DataSize;
+  USHORT MessageSize;
+  USHORT MessageType;
+  USHORT VirtualRangesOffset;
+  CLIENT_ID ClientId;
+  ULONG MessageId;
+  ULONG SectionSize;
+} PORT_MESSAGE_HEADER, *PPORT_MESSAGE_HEADER, PORT_MESSAGE, *PPORT_MESSAGE;
 
 /***********************************************************************
  * Defines
@@ -1086,6 +1095,14 @@ typedef struct _DEBUG_LOCK_INFORMATION {
 typedef void (CALLBACK *PNTAPCFUNC)(ULONG_PTR,ULONG_PTR,ULONG_PTR); /* FIXME: not the right name */
 typedef void (CALLBACK *PRTL_THREAD_START_ROUTINE)(LPVOID); /* FIXME: not the right name */
 
+
+/* DbgPrintEx default levels */
+#define DPFLTR_ERROR_LEVEL     0
+#define DPFLTR_WARNING_LEVEL   1
+#define DPFLTR_TRACE_LEVEL     2
+#define DPFLTR_INFO_LEVEL      3
+#define DPFLTR_MASK    0x8000000
+
 /***********************************************************************
  * Function declarations
  */
@@ -1100,7 +1117,8 @@ static inline void WINAPI DbgUserBreakPoint(void) { __asm__ __volatile__("int3")
 void WINAPI DbgBreakPoint(void);
 void WINAPI DbgUserBreakPoint(void);
 #endif  /* __i386__ && __GNUC__ */
-void WINAPIV DbgPrint(LPCSTR fmt, ...);
+NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...);
+NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...);
 
 NTSTATUS  WINAPI LdrAccessResource(HMODULE,const IMAGE_RESOURCE_DATA_ENTRY*,void**,PULONG);
 NTSTATUS  WINAPI LdrFindResourceDirectory_U(HMODULE,const LDR_RESOURCE_INFO*,ULONG,const IMAGE_RESOURCE_DIRECTORY**);
@@ -1135,6 +1153,9 @@ NTSTATUS  WINAPI NtFlushKey(HKEY);
 NTSTATUS  WINAPI NtFlushVirtualMemory(HANDLE,LPCVOID*,ULONG*,ULONG);
 NTSTATUS  WINAPI NtFreeVirtualMemory(HANDLE,PVOID*,ULONG*,ULONG);
 NTSTATUS  WINAPI NtGetContextThread(HANDLE,CONTEXT*);
+NTSTATUS  WINAPI NtImpersonateAnonymousToken(HANDLE);
+NTSTATUS  WINAPI NtImpersonateClientOfPort(HANDLE,PPORT_MESSAGE);
+NTSTATUS  WINAPI NtImpersonateThread(HANDLE,HANDLE,PSECURITY_QUALITY_OF_SERVICE);
 NTSTATUS  WINAPI NtLoadKey(const OBJECT_ATTRIBUTES *,const OBJECT_ATTRIBUTES *);
 NTSTATUS  WINAPI NtLockFile(HANDLE,HANDLE,PIO_APC_ROUTINE,void*,PIO_STATUS_BLOCK,PLARGE_INTEGER,PLARGE_INTEGER,ULONG*,BOOLEAN,BOOLEAN);
 NTSTATUS  WINAPI NtLockVirtualMemory(HANDLE,PVOID*,ULONG*,ULONG);
