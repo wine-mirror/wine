@@ -444,6 +444,12 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
         }
     }
 
+    if ( !IsWindow( hwnd ) )
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return TRUE;
+    }
+
       /* Recursively process children */
 
     if (!(flags & RDW_NOCHILDREN) &&

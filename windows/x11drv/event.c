@@ -976,6 +976,8 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
   
   /* Send WM_WINDOWPOSCHANGING */
   SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
+
+  if (!IsWindow( winpos.hwnd )) return;
   
   /* Calculate new position and size */
   newWindowRect.left = x;
@@ -986,6 +988,8 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
   WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
 			 &pWnd->rectWindow, &pWnd->rectClient,
 			 &winpos, &newClientRect );
+  
+  if (!IsWindow( winpos.hwnd )) return;
   
   hrgnOldPos = CreateRectRgnIndirect( &pWnd->rectWindow );
   hrgnNewPos = CreateRectRgnIndirect( &newWindowRect );
