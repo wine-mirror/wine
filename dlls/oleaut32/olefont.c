@@ -995,6 +995,7 @@ static HRESULT WINAPI OLEFontImpl_Clone(
 	GetProcessHeap(),0,
 	(1+strlenW(this->description.lpstrName))*2
   );
+  strcpyW(newObject->description.lpstrName, this->description.lpstrName);
   /* We need to clone the HFONT too. This is just cut & paste from above */
   IFont_get_Size(iface, &cySize);
 
@@ -1422,6 +1423,10 @@ static HRESULT WINAPI OLEFontImpl_Load(
   this->description.lpstrName = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof(WCHAR) );
   MultiByteToWideChar( CP_ACP, 0, readBuffer, bStringSize, this->description.lpstrName, len );
   this->description.lpstrName[len] = 0;
+
+  /* Ensure use of this font causes a new one to be created @@@@ */
+  DeleteObject(this->gdiFont);
+  this->gdiFont = 0;
 
   return S_OK;
 }
