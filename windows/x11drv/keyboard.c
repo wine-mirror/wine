@@ -421,6 +421,15 @@ static const char main_key_LT_B[MAIN_LEN][4] =
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
+/*** Turkish keyboard Layout */
+static const char main_key_TK[MAIN_LEN][4] =
+{
+"\"é","1!","2'","3^#","4+$","5%","6&","7/{","8([","9)]","0=}","*?\\","-_",
+"qQ@","wW","eE","rR","tT","yY","uU","ýIî","oO","pP","ðÐ","üÜ~",
+"aAæ","sSß","dD","fF","gG","hH","jJ","kK","lL","þÞ","iÝ",",;`",
+"zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
     const char *comment;
@@ -461,6 +470,7 @@ static const struct {
  {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Turkish keyboard layout", 28591, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };
