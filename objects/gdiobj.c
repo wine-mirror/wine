@@ -584,8 +584,7 @@ BOOL GDI_Init(void)
         hkey = 0;
 
     /* create GDI heap */
-    if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
-    GDI_HeapSel = instance | 7;
+    if ((instance = LoadLibrary16( "GDI.EXE" )) >= 32) GDI_HeapSel = instance | 7;
 
     /* create stock objects */
     stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
@@ -680,7 +679,16 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     _EnterSysLevel( &GDI_level );
     switch(magic)
     {
-        /* allocate DCs on the larger heap */
+    default:
+        if (GDI_HeapSel)
+        {
+            if (!(hlocal = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size ))) goto error;
+            assert( hlocal & 2 );
+            obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, hlocal );
+            *handle = (HGDIOBJ)(ULONG_PTR)hlocal;
+            break;
+        }
+        /* fall through */
     case DC_MAGIC:
     case DISABLED_DC_MAGIC:
     case META_DC_MAGIC:
@@ -690,12 +698,6 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     case ENHMETAFILE_DC_MAGIC:
     case BITMAP_MAGIC:
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
-        break;
-    default:
-        if (!(hlocal = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size ))) goto error;
-        assert( hlocal & 2 );
-        obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, hlocal );
-        *handle = (HGDIOBJ)(ULONG_PTR)hlocal;
         break;
     }
 
@@ -724,16 +726,32 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 {
     HGDIOBJ new_handle;
 
-    assert( handle & 2 );  /* no realloc for large handles */
-    LOCAL_Unlock( GDI_HeapSel, handle );
-    if (!(new_handle = LOCAL_ReAlloc( GDI_HeapSel, handle, size, LMEM_MOVEABLE )))
+    if (handle & 2)  /* GDI heap handle */
     {
-        TRACE_SEC( handle, "leave" );
-        _LeaveSysLevel( &GDI_level );
-        return NULL;
+        LOCAL_Unlock( GDI_HeapSel, handle );
+        if ((new_handle = LOCAL_ReAlloc( GDI_HeapSel, handle, size, LMEM_MOVEABLE )))
+        {
+            assert( new_handle == handle );  /* moveable handle cannot change */
+            return LOCAL_Lock( GDI_HeapSel, handle );
+        }
     }
-    assert( new_handle == handle );  /* moveable handle cannot change */
-    return LOCAL_Lock( GDI_HeapSel, handle );
+    else
+    {
+        int i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
+        if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
+        {
+            void *new_ptr = HeapReAlloc( GetProcessHeap(), 0, large_handles[i], size );
+            if (new_ptr)
+            {
+                large_handles[i] = new_ptr;
+                return new_ptr;
+            }
+        }
+        else ERR( "Invalid handle %x\n", handle );
+    }
+    TRACE_SEC( handle, "leave" );
+    _LeaveSysLevel( &GDI_level );
+    return NULL;
 }
 
 

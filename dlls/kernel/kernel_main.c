@@ -68,40 +68,41 @@ static BOOL process_attach(void)
     /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;
 
-    if ((hModule = LoadLibrary16( "krnl386.exe" )) < 32) return FALSE;
+    if ((hModule = LoadLibrary16( "krnl386.exe" )) >= 32)
+    {
+        /* Initialize special KERNEL entry points */
 
-    /* Initialize special KERNEL entry points */
+        /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
+        NE_SetEntryPoint( hModule, 178, GetWinFlags16() );
 
-    /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
-    NE_SetEntryPoint( hModule, 178, GetWinFlags16() );
+        /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
+        NE_SetEntryPoint( hModule, 454, wine_get_cs() );
+        NE_SetEntryPoint( hModule, 455, wine_get_ds() );
 
-    /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
-    NE_SetEntryPoint( hModule, 454, wine_get_cs() );
-    NE_SetEntryPoint( hModule, 455, wine_get_ds() );
+        /* Initialize KERNEL.THHOOK */
+        TASK_InstallTHHook(MapSL((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));
 
-    /* Initialize KERNEL.THHOOK */
-    TASK_InstallTHHook(MapSL((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));
-
-    /* Initialize the real-mode selector entry points */
+        /* Initialize the real-mode selector entry points */
 #define SET_ENTRY_POINT( num, addr ) \
     NE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
                       DOSMEM_MapDosToLinear(addr), 0x10000, hModule, \
                       WINE_LDT_FLAGS_DATA ))
 
-    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
-    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
-    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
-    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
-    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
-    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
-    NE_SetEntryPoint( hModule, 183, DOSMEM_0000H );       /* KERNEL.183: __0000H */
-    NE_SetEntryPoint( hModule, 173, DOSMEM_BiosSysSeg );  /* KERNEL.173: __ROMBIOS */
-    NE_SetEntryPoint( hModule, 193, DOSMEM_BiosDataSeg ); /* KERNEL.193: __0040H */
-    NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
+        SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
+        SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
+        SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
+        SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
+        SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
+        SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
+        NE_SetEntryPoint( hModule, 183, DOSMEM_0000H );       /* KERNEL.183: __0000H */
+        NE_SetEntryPoint( hModule, 173, DOSMEM_BiosSysSeg );  /* KERNEL.173: __ROMBIOS */
+        NE_SetEntryPoint( hModule, 193, DOSMEM_BiosDataSeg ); /* KERNEL.193: __0040H */
+        NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
 #undef SET_ENTRY_POINT
+    }
 
     /* Force loading of some dlls */
-    if (LoadLibrary16( "system" ) < 32) return FALSE;
+    LoadLibrary16( "system" );
 
     /* Create 16-bit task */
     TASK_CreateMainTask();

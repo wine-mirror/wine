@@ -125,23 +125,20 @@ static HPEN   SysColorPens[NUM_SYS_COLORS];
  */
 static void SYSCOLOR_MakeObjectSystem( HGDIOBJ handle, BOOL set)
 {
-    static WORD GDI_heap_sel = 0;
+    WORD heap_sel;
     LPWORD ptr;
 
-    if (!GDI_heap_sel)
+    if ((heap_sel = GetModuleHandle16( "gdi" )))
     {
-	GDI_heap_sel = LoadLibrary16("gdi");
-	FreeLibrary16(GDI_heap_sel);
+        ptr = (LPWORD)LOCAL_Lock(heap_sel, handle);
+
+        /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
+        if (set)
+            *(ptr+1) &= ~OBJECT_NOSYSTEM;
+        else
+            *(ptr+1) |= OBJECT_NOSYSTEM;
+        LOCAL_Unlock( heap_sel, handle );
     }
-
-    ptr = (LPWORD)LOCAL_Lock(GDI_heap_sel, handle);
-
-    /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
-    if (set)
-        *(ptr+1) &= ~OBJECT_NOSYSTEM;
-    else
-	*(ptr+1) |= OBJECT_NOSYSTEM;
-    LOCAL_Unlock( GDI_heap_sel, handle );
 }
 
 /*************************************************************************

@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 
 HINSTANCE	COMDLG32_hInstance = 0;
-HINSTANCE16	COMDLG32_hInstance16 = 0;
+static HINSTANCE16 COMDLG32_hInstance16;
 
 static DWORD	COMDLG32_TlsIndex;
 
@@ -78,15 +78,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_hInstance = hInstance;
 		DisableThreadLibraryCalls(hInstance);
 
-		if(!COMDLG32_hInstance16)
-		{
-			if(!(COMDLG32_hInstance16 = LoadLibrary16("commdlg.dll")))
-			{
-				ERR("Could not load sibling commdlg.dll\n");
-				return FALSE;
-			}
-		}
-
+		COMDLG32_hInstance16 = LoadLibrary16("commdlg.dll");
 		COMDLG32_TlsIndex = 0xffffffff;
 
 		SHELL32_hInstance = GetModuleHandleA("SHELL32.DLL");
@@ -128,8 +120,6 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 
 	case DLL_PROCESS_DETACH:
             if (COMDLG32_TlsIndex != 0xffffffff) TlsFree(COMDLG32_TlsIndex);
-            COMDLG32_TlsIndex = 0xffffffff;
-            COMDLG32_hInstance = 0;
             if(COMDLG32_hInstance16) FreeLibrary16(COMDLG32_hInstance16);
             if(SHFOLDER_hInstance) FreeLibrary(SHFOLDER_hInstance);
             break;

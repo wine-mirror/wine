@@ -214,8 +214,12 @@ static BOOL process_attach(void)
     HINSTANCE16 instance;
 
     /* Create USER heap */
-    if ((instance = LoadLibrary16( "USER.EXE" )) < 32) return FALSE;
-    USER_HeapSel = instance | 7;
+    if ((instance = LoadLibrary16( "USER.EXE" )) >= 32) USER_HeapSel = instance | 7;
+    else
+    {
+        USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 65536 );
+        LocalInit16( USER_HeapSel, 32, 65534 );
+    }
 
     /* Load the graphics driver */
     tweak_init();
