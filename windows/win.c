@@ -1024,6 +1024,18 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         }
 
         top_child = GetWindow(cs->hwndParent, GW_CHILD);
+
+        if (top_child)
+        {
+            /* Restore current maximized child */
+            if((cs->style & WS_VISIBLE) && IsZoomed(top_child))
+            {
+                TRACE("Restoring current maximized child %p\n", top_child);
+                SendMessageW( top_child, WM_SETREDRAW, FALSE, 0 );
+                ShowWindow(top_child, SW_RESTORE);
+                SendMessageW( top_child, WM_SETREDRAW, TRUE, 0 );
+            }
+        }
     }
 
     /* Find the parent window */
@@ -1167,23 +1179,21 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     send_parent_notify( hwnd, WM_CREATE );
     if (!IsWindow( hwnd )) return 0;
 
-    if (cs->dwExStyle & WS_EX_MDICHILD)
-    {
-        if (top_child)
-        {
-            /* Restore current maximized child */
-            if((cs->style & WS_VISIBLE) && IsZoomed(top_child))
-            {
-                TRACE("Restoring current maximized child %p\n", top_child);
-                ShowWindow(top_child, SW_SHOWNOACTIVATE);
-            }
-        }
-
-        SendMessageW(cs->hwndParent, WM_MDIREFRESHMENU, 0, 0);
-    }
-
     if (cs->style & WS_VISIBLE)
+    {
+        if (cs->style & WS_MAXIMIZE)
+            sw = SW_SHOWMAXIMIZED;
+        else if (cs->style & WS_MINIMIZE)
+            sw = SW_SHOWMINIMIZED;
+
         ShowWindow( hwnd, sw );
+        if (cs->dwExStyle & WS_EX_MDICHILD)
+        {
+            SendMessageW(cs->hwndParent, WM_MDIREFRESHMENU, 0, 0);
+            /* ShowWindow won't activate child windows */
+            SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE );
+        }
+    }
 
     /* Call WH_SHELL hook */
 
@@ -1431,9 +1441,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     }
 
     TRACE("(%p)\n", hwnd);
-
-    if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-        SendMessageW(GetAncestor(hwnd, GA_PARENT), WM_MDIREFRESHMENU, 0, 0);
 
       /* Call hooks */
 

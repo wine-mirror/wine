@@ -316,6 +316,14 @@ static const struct message WmShowChildSeq_3[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
+/* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE)
+ * for a visible child window with a caption
+ */
+static const struct message WmShowChildSeq_4[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_CHILDACTIVATE, sent },
+    { 0 }
+};
 /* ShowWindow(SW_SHOW) for child with invisible parent */
 static const struct message WmShowChildInvisibleParentSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
@@ -1268,6 +1276,76 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq2[] = {
     { WM_NCDESTROY, sent|defwinproc },
     { 0 }
 };
+/* ShowWindow(SW_MAXIMIZE) for a not visible MDI child window */
+static const struct message WmMaximizeMDIchildInvisibleSeq[] = {
+    { HCBT_MINMAX, hook },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCACTIVATE, sent|wparam|defwinproc, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_MDIACTIVATE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
+/* ShowWindow(SW_MAXIMIZE) for a visible MDI child window */
+static const struct message WmMaximizeMDIchildVisibleSeq[] = {
+    { HCBT_MINMAX, hook },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
+/* ShowWindow(SW_RESTORE) for a visible MDI child window */
+static const struct message WmRestoreMDIchildVisibleSeq[] = {
+    { HCBT_MINMAX, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
+/* ShowWindow(SW_RESTORE) for a not visible MDI child window */
+static const struct message WmRestoreMDIchildInisibleSeq[] = {
+    { HCBT_MINMAX, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
 
 static HWND mdi_client;
 static WNDPROC old_mdi_client_proc;
@@ -1462,6 +1540,9 @@ static void test_mdi_messages(void)
     assert(mdi_frame);
     ok_sequence(WmCreateMDIframeSeq, "Create MDI frame window", TRUE);
 
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_frame, "wrong focus window %p\n", GetFocus());
+
     trace("creating MDI client window\n");
     client_cs.hWindowMenu = 0;
     client_cs.idFirstChild = MDI_FIRST_CHILD_ID;
@@ -1473,6 +1554,7 @@ static void test_mdi_messages(void)
     assert(mdi_client);
     ok_sequence(WmCreateMDIclientSeq, "Create visible MDI client window", FALSE);
 
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == mdi_frame, "input focus should be on MDI frame not on %p\n", GetFocus());
 
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
@@ -1493,6 +1575,9 @@ static void test_mdi_messages(void)
     ok(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
     ok(IsWindowVisible(mdi_child), "MDI child should be visible\n");
 
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child, "wrong focus window %p\n", GetFocus());
+
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child, "wrong active MDI child %p\n", active_child);
     ok(!zoomed, "wrong zoomed state %d\n", zoomed);
@@ -1500,6 +1585,9 @@ static void test_mdi_messages(void)
 
     DestroyWindow(mdi_child);
     ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window", TRUE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     /* Win2k: MDI client still returns a just destroyed child as active
      * Win9x: MDI client returns 0
@@ -1510,7 +1598,6 @@ static void test_mdi_messages(void)
        "wrong active MDI child %p\n", active_child);
     ok(!zoomed, "wrong zoomed state %d\n", zoomed);
 
-    SetFocus(0);
     flush_sequence();
 
     trace("creating invisible MDI child window\n");
@@ -1519,10 +1606,13 @@ static void test_mdi_messages(void)
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     assert(mdi_child2);
-    ok_sequence(WmCreateMDIchildInvisibleSeq, "Create invisible MDI child window", TRUE);
+    ok_sequence(WmCreateMDIchildInvisibleSeq, "Create invisible MDI child window", FALSE);
 
     ok(!(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE), "MDI child should not be visible\n");
     ok(!IsWindowVisible(mdi_child2), "MDI child should not be visible\n");
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     /* Win2k: MDI client still returns a just destroyed child as active
      * Win9x: MDI client returns mdi_child2
@@ -1534,14 +1624,78 @@ static void test_mdi_messages(void)
     ok(!zoomed, "wrong zoomed state %d\n", zoomed);
     flush_sequence();
 
-    ShowWindow(mdi_child2, SW_SHOW);
-    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):MDI child", TRUE);
+    ShowWindow(mdi_child2, SW_MAXIMIZE);
+    ok_sequence(WmMaximizeMDIchildInvisibleSeq, "ShowWindow(SW_MAXIMIZE):invisible MDI child", TRUE);
+
+    ok(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
+    ok(IsWindowVisible(mdi_child2), "MDI child should be visible\n");
+
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(active_child == mdi_child2, "wrong active MDI child %p\n", active_child);
+    ok(zoomed, "wrong zoomed state %d\n", zoomed);
+    flush_sequence();
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child2 || /* win2k */
+       GetFocus() == 0, /* win9x */
+       "wrong focus window %p\n", GetFocus());
+
+    SetFocus(0);
+    flush_sequence();
 
     ShowWindow(mdi_child2, SW_HIDE);
     ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE):MDI child", FALSE);
 
+    ShowWindow(mdi_child2, SW_RESTORE);
+    ok_sequence(WmRestoreMDIchildInisibleSeq, "ShowWindow(SW_RESTORE):invisible MDI child", TRUE);
+    flush_sequence();
+
+    ok(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
+    ok(IsWindowVisible(mdi_child2), "MDI child should be visible\n");
+
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(active_child == mdi_child2, "wrong active MDI child %p\n", active_child);
+    ok(!zoomed, "wrong zoomed state %d\n", zoomed);
+    flush_sequence();
+
+    SetFocus(0);
+    flush_sequence();
+
+    ShowWindow(mdi_child2, SW_HIDE);
+    ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE):MDI child", FALSE);
+
+    ShowWindow(mdi_child2, SW_SHOW);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):MDI child", TRUE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    ShowWindow(mdi_child2, SW_MAXIMIZE);
+    ok_sequence(WmMaximizeMDIchildVisibleSeq, "ShowWindow(SW_MAXIMIZE):MDI child", TRUE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    ShowWindow(mdi_child2, SW_RESTORE);
+    ok_sequence(WmRestoreMDIchildVisibleSeq, "ShowWindow(SW_RESTORE):MDI child", TRUE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    SetFocus(0);
+    flush_sequence();
+
+    ShowWindow(mdi_child2, SW_HIDE);
+    ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE):MDI child", FALSE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
     DestroyWindow(mdi_child2);
     ok_sequence(WmDestroyMDIchildInvisibleSeq, "Destroy invisible MDI child window", TRUE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     /* test for maximized MDI children */
     trace("creating maximized visible MDI child window 1\n");
@@ -1552,6 +1706,11 @@ static void test_mdi_messages(void)
     assert(mdi_child);
     ok_sequence(WmCreateMDIchildVisibleMaxSeq1, "Create maximized visible 1st MDI child window", TRUE);
     ok(IsZoomed(mdi_child), "1st MDI child should be maximized\n");
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child || /* win2k */
+       GetFocus() == 0, /* win9x */
+       "wrong focus window %p\n", GetFocus());
 
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child, "wrong active MDI child %p\n", active_child);
@@ -1568,16 +1727,22 @@ static void test_mdi_messages(void)
     ok(IsZoomed(mdi_child2), "2nd MDI child should be maximized\n");
     ok(!IsZoomed(mdi_child), "1st MDI child should NOT be maximized\n");
 
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child2, "wrong focus window %p\n", GetFocus());
+
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child2, "wrong active MDI child %p\n", active_child);
     ok(zoomed, "wrong zoomed state %d\n", zoomed);
     flush_sequence();
 
+    trace("destroying maximized visible MDI child window 2\n");
     DestroyWindow(mdi_child2);
     ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window", TRUE);
 
     ok(!IsZoomed(mdi_child), "1st MDI child should NOT be maximized\n");
-    ok(GetFocus() == 0, "GetFocus() = %p\n", GetFocus());
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     /* Win2k: MDI client still returns a just destroyed child as active
      * Win9x: MDI client returns 0
@@ -1592,6 +1757,9 @@ static void test_mdi_messages(void)
     ok(IsZoomed(mdi_child), "1st MDI child should be maximized\n");
     flush_sequence();
 
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child, "wrong focus window %p\n", GetFocus());
+
     trace("re-creating maximized visible MDI child window 2\n");
     mdi_child2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE,
@@ -1601,6 +1769,9 @@ static void test_mdi_messages(void)
     ok_sequence(WmCreateMDIchildVisibleMaxSeq2, "Create maximized visible 2nd MDI child 2 window", TRUE);
     ok(IsZoomed(mdi_child2), "2nd MDI child should be maximized\n");
     ok(!IsZoomed(mdi_child), "1st MDI child should NOT be maximized\n");
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child2, "wrong focus window %p\n", GetFocus());
 
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child2, "wrong active MDI child %p\n", active_child);
@@ -1612,9 +1783,8 @@ static void test_mdi_messages(void)
     ok(!IsWindow(mdi_child2), "MDI child 2 should be destroyed\n");
 
     ok(IsZoomed(mdi_child), "1st MDI child should be maximized\n");
-todo_wine {
-    ok(GetFocus() == mdi_child, "GetFocus() = %p\n", GetFocus());
-}
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child, "wrong focus window %p\n", GetFocus());
 
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child, "wrong active MDI child %p\n", active_child);
@@ -1623,6 +1793,9 @@ todo_wine {
 
     DestroyWindow(mdi_child);
     ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window", TRUE);
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     /* Win2k: MDI client still returns a just destroyed child as active
      * Win9x: MDI client returns 0
@@ -1884,7 +2057,7 @@ static void test_messages(void)
     ok(GetActiveWindow() == hwnd, "window should be active\n");
     ok(GetFocus() == hwnd, "window should have input focus\n");
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", FALSE);
+    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", TRUE);
     ok(!IsWindowVisible(hwnd), "window should not be visible at this point\n");
 
     /* test WM_SETREDRAW on a visible top level window */
@@ -1909,13 +2082,18 @@ static void test_messages(void)
     DestroyWindow(hchild);
     flush_sequence();
 
-    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
+    /* visible child window with a caption */
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child",
+                             WS_CHILD | WS_VISIBLE | WS_CAPTION,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
     ok_sequence(WmCreateVisibleChildSeq, "CreateWindow:visible child", FALSE);
 
     trace("testing scroll APIs on a visible child window %p\n", hchild);
     test_scroll_messages(hchild);
+
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
+    ok_sequence(WmShowChildSeq_4, "SetWindowPos(SWP_SHOWWINDOW):child with a caption", FALSE);
 
     DestroyWindow(hchild);
     flush_sequence();

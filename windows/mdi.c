@@ -480,23 +480,33 @@ static void MDI_ChildGetMinMaxInfo( HWND client, HWND hwnd, MINMAXINFO* lpMinMax
  * Note: SetWindowPos sends WM_CHILDACTIVATE to the child window that is
  *       being activated
  */
-static void MDI_SwitchActiveChild( HWND clientHwnd, HWND childHwnd,
-                                   BOOL bNextWindow )
+static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo )
 {
-    HWND	   hwndTo    = 0;
-    HWND	   hwndPrev  = 0;
-    MDICLIENTINFO *ci = get_client_info( clientHwnd );
+    HWND hwndPrev;
 
-    hwndTo = MDI_GetWindow(ci, childHwnd, bNextWindow, 0);
     hwndPrev = ci->hwndActiveChild;
 
-    TRACE("from %p, to %p\n",childHwnd,hwndTo);
+    TRACE("from %p, to %p\n", hwndPrev, hwndTo);
 
-    if ( !hwndTo )
-        MDI_ChildActivate( clientHwnd, 0 );
-    else if ( hwndTo != hwndPrev )
-	SetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0,
-                      SWP_NOMOVE | SWP_NOSIZE );
+    if ( hwndTo != hwndPrev )
+    {
+        BOOL was_zoomed = IsZoomed(hwndPrev);
+
+        if (was_zoomed)
+        {
+            /* restore old MDI child */
+            SendMessageW( hwndPrev, WM_SETREDRAW, FALSE, 0 );
+            ShowWindow( hwndPrev, SW_RESTORE );
+            SendMessageW( hwndPrev, WM_SETREDRAW, TRUE, 0 );
+
+            /* activate new MDI child */
+            SetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
+            /* maximize new MDI child */
+            ShowWindow( hwndTo, SW_MAXIMIZE );
+        }
+        /* activate new MDI child */
+        SetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
+    }
 }
 
 
@@ -512,8 +522,8 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
 
     if( child == ci->hwndActiveChild )
     {
-        MDI_SwitchActiveChild(parent, child, TRUE);
-        ShowWindow(child, SW_HIDE);
+        HWND next = MDI_GetWindow(ci, child, TRUE, 0);
+        MDI_SwitchActiveChild(ci, next);
     }
 
     for (i = 0; i < ci->nActiveChildren; i++)
@@ -546,7 +556,7 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
 /**********************************************************************
  *					MDI_ChildActivate
  *
- * Note: hWndChild is NULL when last child is being destroyed
+ * Called in response to WM_CHILDACTIVATE
  */
 static LONG MDI_ChildActivate( HWND client, HWND child )
 {
@@ -554,17 +564,15 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
     HWND prevActiveWnd, frame;
     BOOL isActiveFrameWnd;
 
-    if (child && (!IsWindowEnabled( child ))) return 0;
-
     clientInfo = get_client_info( client );
+
+    if (clientInfo->hwndActiveChild == child) return 0;
 
     TRACE("%p\n", child);
 
     frame = GetParent(client);
     isActiveFrameWnd = (GetActiveWindow() == frame);
     prevActiveWnd = clientInfo->hwndActiveChild;
-
-    if (prevActiveWnd == child) return 0;
 
     /* deactivate prev. active child */
     if(prevActiveWnd)
@@ -575,39 +583,13 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
 
     clientInfo->hwndActiveChild = child;
 
-    /* set appearance */
-    if (IsZoomed(prevActiveWnd) && prevActiveWnd != child)
-    {
-        if( child )
-        {
-            INT cmd = SW_SHOWNORMAL;
-            HMENU hSysMenu = GetSystemMenu(child, FALSE);
-            UINT state = 0;
-            if (hSysMenu)
-                state = GetMenuState(hSysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
-            if (state != 0xFFFFFFFF && !(state & (MF_DISABLED | MF_GRAYED)))
-                cmd = SW_SHOWMAXIMIZED;
-
-            ShowWindow( child, cmd );
-        }
-        else
-            MDI_RestoreFrameMenu(frame, child);
-    }
-
-    MDI_UpdateFrameText(frame, client, NULL);
-
-    /* check if we have any children left */
-    if( !child )
-    {
-	if( isActiveFrameWnd )
-	    SetFocus( client );
-        return 0;
-    }
-
     MDI_RefreshMenu(clientInfo);
 
     if( isActiveFrameWnd )
+    {
         SendMessageW( child, WM_NCACTIVATE, TRUE, 0L);
+        SetFocus(child);
+    }
 
     SendMessageW( child, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, (LPARAM)child );
     return TRUE;
@@ -1060,8 +1042,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 
       case WM_MDIACTIVATE:
       {
-        if( ci->hwndActiveChild != (HWND)wParam )
-	    SetWindowPos((HWND)wParam, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE);
+        MDI_SwitchActiveChild( ci, (HWND)wParam );
         return 0;
       }
 
@@ -1111,8 +1092,11 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         return 0;
 
       case WM_MDINEXT: /* lParam != 0 means previous window */
-	MDI_SwitchActiveChild( hwnd, WIN_GetFullHandle( (HWND)wParam ), !lParam );
+      {
+        HWND next = MDI_GetWindow( ci, WIN_GetFullHandle( (HWND)wParam ), !lParam, 0 );
+        MDI_SwitchActiveChild( ci, next );
 	break;
+      }
 
       case WM_MDIRESTORE:
         SendMessageW( (HWND)wParam, WM_SYSCOMMAND, SC_RESTORE, 0);
@@ -1399,6 +1383,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     case WM_SIZE:
     case WM_NEXTMENU:
     case WM_SYSCHAR:
+    case WM_DESTROY:
         return DefMDIChildProcW( hwnd, message, wParam, lParam );
     }
     return DefWindowProcA(hwnd, message, wParam, lParam);
@@ -1472,29 +1457,20 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         break;
 
     case WM_SIZE:
-        if (wParam == SIZE_MAXIMIZED && !IsWindowVisible(hwnd))
-            wParam = SIZE_RESTORED;
-
-        if( hwnd == ci->hwndActiveChild && wParam != SIZE_MAXIMIZED )
+        if( hwnd == ci->hwndActiveChild )
         {
-            MDI_RestoreFrameMenu( GetParent(client), hwnd );
-            MDI_UpdateFrameText( GetParent(client), client, NULL );
+            if( wParam == SIZE_MAXIMIZED )
+            {
+                TRACE("maximizing child %p\n", hwnd );
+
+                MDI_AugmentFrameMenu( GetParent(client), hwnd );
+            }
+            else
+                MDI_RestoreFrameMenu( GetParent(client), hwnd );
         }
 
-        if( wParam == SIZE_MAXIMIZED )
-        {
-            TRACE("maximizing child %p\n", hwnd );
-
-            MDI_AugmentFrameMenu( GetParent(client), hwnd );
-            MDI_UpdateFrameText( GetParent(client), client, NULL );
-        }
-
-        if( wParam == SIZE_MINIMIZED )
-        {
-            HWND switchTo = MDI_GetWindow(ci, hwnd, TRUE, WS_MINIMIZE);
-
-            if (switchTo) SendMessageW( switchTo, WM_CHILDACTIVATE, 0, 0);
-        }
+        MDI_UpdateFrameText( GetParent(client), client, NULL );
+        MDI_RefreshMenu(ci);
         MDI_PostUpdate(client, ci, SB_BOTH+1);
         break;
 
@@ -1523,6 +1499,11 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
             SendMessageW( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, (DWORD)VK_SPACE);
             return 0;
         }
+        break;
+
+    case WM_DESTROY:
+        /* Remove itself from the Window menu */
+        MDI_RefreshMenu(ci);
         break;
     }
     return DefWindowProcW(hwnd, message, wParam, lParam);
