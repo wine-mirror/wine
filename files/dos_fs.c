@@ -93,7 +93,6 @@ typedef struct
 #endif  /* linux */
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
-#define IS_END_OF_NAME(ch) (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
@@ -172,6 +171,12 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 
+/* return non-zero if c is the end of a directory name */
+static inline int is_end_of_name(WCHAR c)
+{
+    return !c || (c == '/') || (c == '\\');
+}
+
 /***********************************************************************
  *           DOSFS_ValidDOSName
  *
@@ -192,9 +197,9 @@ static int DOSFS_ValidDOSName( LPCWSTR name )
         p++;
         if (*p == '.') p++;
         /* All other names beginning with '.' are invalid */
-        return (IS_END_OF_NAME(*p));
+        return (is_end_of_name(*p));
     }
-    while (!IS_END_OF_NAME(*p))
+    while (!is_end_of_name(*p))
     {
         if (*p < 256 && strchr( invalid, (char)*p )) return 0;  /* Invalid char */
         if (*p == '.') break;  /* Start of the extension */
@@ -203,9 +208,9 @@ static int DOSFS_ValidDOSName( LPCWSTR name )
     }
     if (*p != '.') return 1;  /* End of name */
     p++;
-    if (IS_END_OF_NAME(*p)) return 0;  /* Empty extension not allowed */
+    if (is_end_of_name(*p)) return 0;  /* Empty extension not allowed */
     len = 0;
-    while (!IS_END_OF_NAME(*p))
+    while (!is_end_of_name(*p))
     {
         if (*p < 256 && strchr( invalid, (char)*p )) return 0;  /* Invalid char */
         if (*p == '.') return 0;  /* Second extension not allowed */
@@ -312,7 +317,7 @@ static BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
      * is something behind this ?
      */
     while (*p == '*' || *p == ' ') p++; /* skip wildcards and spaces */
-    return IS_END_OF_NAME(*p);
+    return is_end_of_name(*p);
 }
 
 
@@ -670,13 +675,13 @@ static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format )
 
         /* Simply copy the name, converting to uppercase */
 
-        for (dst = buffer; !IS_END_OF_NAME(*name) && (*name != '.'); name++)
+        for (dst = buffer; !is_end_of_name(*name) && (*name != '.'); name++)
             *dst++ = toupperW(*name);
         if (*name == '.')
         {
             if (dir_format) dst = buffer + 8;
             else *dst++ = '.';
-            for (name++; !IS_END_OF_NAME(*name); name++)
+            for (name++; !is_end_of_name(*name); name++)
                 *dst++ = toupperW(*name);
         }
         if (!dir_format) *dst = '\0';
@@ -688,27 +693,27 @@ static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format )
     /* insert a better algorithm here... */
     if (!is_case_sensitive)
     {
-        for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
+        for (p = name, hash = 0xbeef; !is_end_of_name(p[1]); p++)
             hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p) ^ (tolowerW(p[1]) << 8);
         hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p); /* Last character */
     }
     else
     {
-        for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
+        for (p = name, hash = 0xbeef; !is_end_of_name(p[1]); p++)
             hash = (hash << 3) ^ (hash >> 5) ^ *p ^ (p[1] << 8);
         hash = (hash << 3) ^ (hash >> 5) ^ *p;  /* Last character */
     }
 
     /* Find last dot for start of the extension */
-    for (p = name+1, ext = NULL; !IS_END_OF_NAME(*p); p++)
+    for (p = name+1, ext = NULL; !is_end_of_name(*p); p++)
         if (*p == '.') ext = p;
-    if (ext && IS_END_OF_NAME(ext[1]))
+    if (ext && is_end_of_name(ext[1]))
         ext = NULL;  /* Empty extension ignored */
 
     /* Copy first 4 chars, replacing invalid chars with '_' */
     for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
     {
-        if (IS_END_OF_NAME(*p) || (p == ext)) break;
+        if (is_end_of_name(*p) || (p == ext)) break;
         *dst++ = (*p < 256 && strchr( invalid_chars, (char)*p )) ? '_' : toupperW(*p);
     }
     /* Pad to 5 chars with '~' */
@@ -723,7 +728,7 @@ static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format )
     if (ext)
     {
         if (!dir_format) *dst++ = '.';
-        for (i = 3, ext++; (i > 0) && !IS_END_OF_NAME(*ext); i--, ext++)
+        for (i = 3, ext++; (i > 0) && !is_end_of_name(*ext); i--, ext++)
             *dst++ = (*ext < 256 && strchr( invalid_chars, (char)*ext )) ? '_' : toupperW(*ext);
     }
     if (!dir_format) *dst = '\0';
@@ -1035,13 +1040,13 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
         if (*name == '.')
         {
-            if (IS_END_OF_NAME(name[1]))
+            if (is_end_of_name(name[1]))
             {
                 name++;
                 while ((*name == '\\') || (*name == '/')) name++;
                 continue;
             }
-            else if ((name[1] == '.') && IS_END_OF_NAME(name[2]))
+            else if ((name[1] == '.') && is_end_of_name(name[2]))
             {
                 name += 2;
                 while ((*name == '\\') || (*name == '/')) name++;
@@ -1070,13 +1075,13 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
             p_l   += strlen(p_l);
             *p_s++ = '\\';
             p_s   += strlenW(p_s);
-            while (!IS_END_OF_NAME(*name)) name++;
+            while (!is_end_of_name(*name)) name++;
         }
         else if (!check_last)
         {
             *p_l++ = '/';
             *p_s++ = '\\';
-            while (!IS_END_OF_NAME(*name) &&
+            while (!is_end_of_name(*name) &&
                    (p_s < full->short_name + sizeof(full->short_name)/sizeof(full->short_name[0]) - 1) &&
                    (p_l < full->long_name + sizeof(full->long_name) - 1))
             {
