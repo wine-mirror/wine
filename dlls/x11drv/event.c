@@ -532,6 +532,8 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
     int revert;
     XIC xic;
 
+    if (!hwnd) return;
+
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (event->detail == NotifyPointer) return;
