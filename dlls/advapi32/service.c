@@ -566,7 +566,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 /******************************************************************************
  * LockServiceDatabase  [ADVAPI32.@]
  */
-LPVOID WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
+SC_LOCK WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
 {
     HANDLE ret;
 
@@ -589,7 +589,7 @@ LPVOID WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
 /******************************************************************************
  * UnlockServiceDatabase  [ADVAPI32.@]
  */
-BOOL WINAPI UnlockServiceDatabase (LPVOID ScLock)
+BOOL WINAPI UnlockServiceDatabase (SC_LOCK ScLock)
 {
     TRACE("%p\n",ScLock);
 

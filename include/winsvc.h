@@ -114,7 +114,7 @@ extern "C" {
 
 typedef HANDLE SC_HANDLE, *LPSC_HANDLE;
 typedef DWORD  SERVICE_STATUS_HANDLE;
-
+typedef LPVOID SC_LOCK;
 
 /* Service status structure */
 
@@ -285,28 +285,19 @@ BOOL        WINAPI EnumServicesStatusA(SC_HANDLE,DWORD,DWORD,LPENUM_SERVICE_STAT
 BOOL        WINAPI EnumServicesStatusW(SC_HANDLE,DWORD,DWORD,LPENUM_SERVICE_STATUSW,
                                        DWORD,LPDWORD,LPDWORD,LPDWORD);
 #define     EnumServicesStatus WINELIB_NAME_AW(EnumServicesStatus)
+BOOL        WINAPI GetServiceDisplayNameA(SC_HANDLE,LPCSTR,LPSTR,LPDWORD);
+BOOL        WINAPI GetServiceDisplayNameW(SC_HANDLE,LPCWSTR,LPWSTR,LPDWORD);
+#define     GetServiceDisplayName WINELIB_NAME_AW(GetServiceDisplayName)
 BOOL        WINAPI GetServiceKeyNameA(SC_HANDLE,LPCSTR,LPSTR,LPDWORD);
 BOOL        WINAPI GetServiceKeyNameW(SC_HANDLE,LPCWSTR,LPWSTR,LPDWORD);
 #define     GetServiceKeyName WINELIB_NAME_AW(GetServiceKeyName)
+SC_LOCK     WINAPI LockServiceDatabase(SC_HANDLE);
 SC_HANDLE   WINAPI OpenSCManagerA(LPCSTR,LPCSTR,DWORD);
 SC_HANDLE   WINAPI OpenSCManagerW(LPCWSTR,LPCWSTR,DWORD);
 #define     OpenSCManager WINELIB_NAME_AW(OpenSCManager)
 SC_HANDLE   WINAPI OpenServiceA(SC_HANDLE,LPCSTR,DWORD);
 SC_HANDLE   WINAPI OpenServiceW(SC_HANDLE,LPCWSTR,DWORD);
 #define     OpenService WINELIB_NAME_AW(OpenService)
-SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerA(LPCSTR,LPHANDLER_FUNCTION);
-SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW(LPCWSTR,LPHANDLER_FUNCTION);
-#define     RegisterServiceCtrlHandler WINELIB_NAME_AW(RegisterServiceCtrlHandler)
-SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA(LPCSTR,LPHANDLER_FUNCTION_EX,LPVOID);
-SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW(LPCWSTR,LPHANDLER_FUNCTION_EX,LPVOID);
-#define     RegisterServiceCtrlHandlerEx WINELIB_NAME_AW(RegisterServiceCtrlHandlerEx)
-BOOL        WINAPI SetServiceStatus(SERVICE_STATUS_HANDLE,LPSERVICE_STATUS);
-BOOL        WINAPI StartServiceA(SC_HANDLE,DWORD,LPCSTR*);
-BOOL        WINAPI StartServiceW(SC_HANDLE,DWORD,LPCWSTR*);
-#define     StartService WINELIB_NAME_AW(StartService)
-BOOL        WINAPI StartServiceCtrlDispatcherA(LPSERVICE_TABLE_ENTRYA);
-BOOL        WINAPI StartServiceCtrlDispatcherW(LPSERVICE_TABLE_ENTRYW);
-#define     StartServiceCtrlDispatcher WINELIB_NAME_AW(StartServiceCtrlDispatcher)
 BOOL        WINAPI QueryServiceStatus(SC_HANDLE,LPSERVICE_STATUS);
 BOOL        WINAPI QueryServiceStatusEx(SC_HANDLE,SC_STATUS_TYPE,LPBYTE,DWORD,LPDWORD);
 BOOL        WINAPI QueryServiceConfigA(SC_HANDLE,LPQUERY_SERVICE_CONFIGA,DWORD,LPDWORD);
@@ -315,6 +306,21 @@ BOOL        WINAPI QueryServiceConfigW(SC_HANDLE,LPQUERY_SERVICE_CONFIGW,DWORD,L
 BOOL        WINAPI QueryServiceLockStatusA(SC_HANDLE,LPQUERY_SERVICE_LOCK_STATUSA,DWORD,LPDWORD);
 BOOL        WINAPI QueryServiceLockStatusW(SC_HANDLE,LPQUERY_SERVICE_LOCK_STATUSW,DWORD,LPDWORD);
 #define     QueryServiceLockStatus WINELIB_NAME_AW(QueryServiceLockStatus)
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerA(LPCSTR,LPHANDLER_FUNCTION);
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW(LPCWSTR,LPHANDLER_FUNCTION);
+#define     RegisterServiceCtrlHandler WINELIB_NAME_AW(RegisterServiceCtrlHandler)
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA(LPCSTR,LPHANDLER_FUNCTION_EX,LPVOID);
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW(LPCWSTR,LPHANDLER_FUNCTION_EX,LPVOID);
+#define     RegisterServiceCtrlHandlerEx WINELIB_NAME_AW(RegisterServiceCtrlHandlerEx)
+BOOL        WINAPI SetServiceObjectSecurity(SC_HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
+BOOL        WINAPI SetServiceStatus(SERVICE_STATUS_HANDLE,LPSERVICE_STATUS);
+BOOL        WINAPI StartServiceA(SC_HANDLE,DWORD,LPCSTR*);
+BOOL        WINAPI StartServiceW(SC_HANDLE,DWORD,LPCWSTR*);
+#define     StartService WINELIB_NAME_AW(StartService)
+BOOL        WINAPI StartServiceCtrlDispatcherA(LPSERVICE_TABLE_ENTRYA);
+BOOL        WINAPI StartServiceCtrlDispatcherW(LPSERVICE_TABLE_ENTRYW);
+#define     StartServiceCtrlDispatcher WINELIB_NAME_AW(StartServiceCtrlDispatcher)
+BOOL        WINAPI UnlockServiceDatabase(SC_LOCK);
 
 #ifdef __cplusplus
 } /* extern "C" */
