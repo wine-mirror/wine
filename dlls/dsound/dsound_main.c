@@ -103,6 +103,7 @@ struct IDirectSoundImpl
  */
 struct IDirectSoundBufferImpl
 {
+    /* FIXME: document */
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSoundBuffer);
     DWORD                            ref;
@@ -1361,7 +1362,7 @@ static DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
 	if (pwrite < pplay) pwrite += primarybuf->buflen; /* wraparound */
 	pwrite -= pplay;
 	if (pmix > (DS_SND_QUEUE * primarybuf->dsound->fraglen + pwrite + primarybuf->writelead)) {
-		TRACE("detected an underrun: primary queue was %ld\n",pmix);
+		WARN("detected an underrun: primary queue was %ld\n",pmix);
 		pmix = 0;
 	}
 	/* divide the offset by its sample size */
@@ -1535,8 +1536,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	if ((writebytes == This->buflen) &&
 	    ((This->state == STATE_STARTING) ||
 	     (This->state == STATE_PLAYING)))
-		/* some games, like Half-Life, tries to be clever (not) and
-		 * keeps one secondary buffer, and mixes sounds into it itself,
+		/* some games, like Half-Life, try to be clever (not) and
+		 * keep one secondary buffer, and mix sounds into it itself,
 		 * locking the entire buffer every time... so we can just forget
 		 * about tracking the last-written-to-position... */
 		This->probably_valid_to = (DWORD)-1;
@@ -2746,7 +2747,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	/* determine this buffer's write position */
 	DWORD buf_writepos = DSOUND_CalcPlayPosition(dsb, dsb->state & primarybuf->state, writepos,
 						     writepos, dsb->primary_mixpos, dsb->buf_mixpos);
-	/* determine how much already-mixed data exist */
+	/* determine how much already-mixed data exists */
 	DWORD buf_done =
 		((dsb->buf_mixpos < buf_writepos) ? dsb->buflen : 0) +
 		dsb->buf_mixpos - buf_writepos;
@@ -2935,6 +2936,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 	if (primarybuf->hwbuf) {
 		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
 			BOOL paused = ((primarybuf->state == STATE_STOPPED) || (primarybuf->state == STATE_STARTING));
+			/* FIXME: document variables */
  			DWORD playpos, writepos, inq, maxq, frag;
 			hres = IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, &writepos);
 			if (hres) {

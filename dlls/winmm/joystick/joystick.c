@@ -238,7 +238,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
     if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-    /* After opening the device it's state can be
+    /* After opening the device, its state can be
        read with JS_EVENT_INIT flag */
     while ((read(dev, &ev, sizeof(struct js_event))) > 0) {
 	if (ev.type == (JS_EVENT_AXIS | JS_EVENT_INIT)) {

@@ -1,7 +1,7 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 
 /*
- * MMSYTEM time functions
+ * MMSYSTEM time functions
  *
  * Copyright 1993 Martin Ayotte
  */

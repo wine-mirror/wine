@@ -448,7 +448,7 @@ HTASK TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmdline, BYTE len
 
 
 /***********************************************************************
- *           TASK_KillTask
+ *           TASK_ExitTask
  */
 void TASK_ExitTask(void)
 {
