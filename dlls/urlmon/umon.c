@@ -127,3 +127,13 @@ HRESULT WINAPI RevokeBindStatusCallback(
     return hr;
 }
 
+/***********************************************************************
+ *           Extract (URLMON.@)
+ *
+ */
+HRESULT WINAPI Extract(DWORD Param1, DWORD Param2)
+{
+   TRACE("%lx %lx\n", Param1, Param2);
+
+   return S_OK;
+}

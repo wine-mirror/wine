@@ -34,7 +34,7 @@ debug_channels (urlmon win32)
 @ stdcall DllRegisterServer() URLMON_DllRegisterServer
 @ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
 @ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
-@ stub Extract
+@ stdcall Extract(long long) Extract
 @ stub FaultInIEFeature
 @ stub FindMediaType
 @ stub FindMediaTypeClass
