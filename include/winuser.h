@@ -938,6 +938,10 @@ typedef struct tagWINDOWPOS
 #define WA_ACTIVE               1
 #define WA_CLICKACTIVE          2
 
+/* WM_GETICON/WM_SETICON params values */
+#define ICON_SMALL              0
+#define ICON_BIG                1
+
   /* WM_NCCALCSIZE parameter structure */
 typedef struct
 {

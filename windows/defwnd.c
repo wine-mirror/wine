@@ -467,7 +467,25 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_QUERYOPEN:
     case WM_QUERYENDSESSION:
 	return 1;
+
+    case WM_SETICON:
+    case WM_GETICON:
+        {
+            LRESULT result = 0;
+            int index = GCL_HICON;
+
+            if (wParam == ICON_SMALL)
+                index = GCL_HICONSM;
+
+            result = GetClassLongA(wndPtr->hwndSelf, index);
+
+            if (msg == WM_SETICON)
+                SetClassLongA(wndPtr->hwndSelf, index, lParam);
+
+            return result;
+        }
     }
+
     return 0;
 }
 
