@@ -2945,7 +2945,7 @@ TOOLBAR_IsButtonHidden (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
     if (nIndex == -1)
-	return FALSE;
+	return TRUE;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_HIDDEN);
 }
