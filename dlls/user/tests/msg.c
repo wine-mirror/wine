@@ -723,7 +723,7 @@ static void flush_sequence()
     sequence_cnt = sequence_size = 0;
 }
 
-static void ok_sequence(const struct message *expected, const char *context)
+static void ok_sequence(const struct message *expected, const char *context, int todo)
 {
     static const struct message end_of_sequence = { 0, 0, 0, 0 };
     const struct message *actual;
@@ -763,26 +763,42 @@ static void ok_sequence(const struct message *expected, const char *context)
 	}
 	else if (expected->flags & optional)
 	    expected++;
-	else
+	else if (todo)
 	{
-	  todo_wine {
-	    ok (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
-		context, expected->message, actual->message);
-	    expected++;
-	    actual++;
-	  }
-	}
+            todo_wine {
+                ok (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+                    context, expected->message, actual->message);
+                expected++;
+                actual++;
+            }
+        }
+        else
+        {
+            ok (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+                context, expected->message, actual->message);
+            expected++;
+            actual++;
+        }
     }
 
     /* skip all optional trailing messages */
     while (expected->message && (expected->flags & optional))
 	expected++;
 
-  todo_wine {
-    if (expected->message || actual->message)
-	ok (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
-	    context, expected->message, actual->message);
-  }
+    if (todo)
+    {
+        todo_wine {
+            if (expected->message || actual->message)
+                ok (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
+                    context, expected->message, actual->message);
+        }
+    }
+    else
+    {
+        if (expected->message || actual->message)
+            ok (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
+                context, expected->message, actual->message);
+    }
 
     flush_sequence();
 }
@@ -1120,7 +1136,7 @@ static void test_mdi_messages(void)
                                 GetDesktopWindow(), 0,
                                 GetModuleHandleA(0), NULL);
     assert(mdi_frame);
-    ok_sequence(WmCreateMDIframeSeq, "Create MDI frame window");
+    ok_sequence(WmCreateMDIframeSeq, "Create MDI frame window", TRUE);
 
     trace("creating MDI client window\n");
     client_cs.hWindowMenu = 0;
@@ -1131,7 +1147,7 @@ static void test_mdi_messages(void)
                                  0, 0, 0, 0,
                                  mdi_frame, 0, GetModuleHandleA(0), &client_cs);
     assert(mdi_client);
-    ok_sequence(WmCreateMDIclientSeq, "Create visible MDI client window");
+    ok_sequence(WmCreateMDIclientSeq, "Create visible MDI client window", TRUE);
 
     ok(GetFocus() == mdi_frame, "input focus should be on MDI frame not on %p\n", GetFocus());
 
@@ -1144,13 +1160,13 @@ static void test_mdi_messages(void)
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     assert(mdi_child);
-    ok_sequence(WmCreateMDIchildVisibleSeq, "Create visible MDI child window");
+    ok_sequence(WmCreateMDIchildVisibleSeq, "Create visible MDI child window", TRUE);
 
     ok(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
     ok(IsWindowVisible(mdi_child), "MDI child should be visible\n");
 
     DestroyWindow(mdi_child);
-    ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window");
+    ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window", TRUE);
 
     SetFocus(0);
     flush_sequence();
@@ -1161,19 +1177,19 @@ static void test_mdi_messages(void)
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     assert(mdi_child);
-    ok_sequence(WmCreateMDIchildInvisibleSeq, "Create invisible MDI child window");
+    ok_sequence(WmCreateMDIchildInvisibleSeq, "Create invisible MDI child window", TRUE);
 
     ok(!(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE), "MDI child should not be visible\n");
     ok(!IsWindowVisible(mdi_child), "MDI child should not be visible\n");
 
     DestroyWindow(mdi_child);
-    ok_sequence(WmDestroyMDIchildInvisibleSeq, "Destroy invisible MDI child window");
+    ok_sequence(WmDestroyMDIchildInvisibleSeq, "Destroy invisible MDI child window", TRUE);
 
     DestroyWindow(mdi_client);
-    ok_sequence(WmDestroyMDIclientSeq, "Destroy MDI client window");
+    ok_sequence(WmDestroyMDIclientSeq, "Destroy MDI client window", FALSE);
 
     DestroyWindow(mdi_frame);
-    ok_sequence(WmDestroyMDIframeSeq, "Destroy MDI frame window");
+    ok_sequence(WmDestroyMDIframeSeq, "Destroy MDI frame window", FALSE);
 }
 /************************* End of MDI test **********************************/
 
@@ -1184,14 +1200,14 @@ static void test_WM_SETREDRAW(HWND hwnd)
     flush_sequence();
 
     SendMessageA(hwnd, WM_SETREDRAW, FALSE, 0);
-    ok_sequence(WmSetRedrawFalseSeq, "SetRedraw:FALSE");
+    ok_sequence(WmSetRedrawFalseSeq, "SetRedraw:FALSE", FALSE);
 
     ok(!(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should NOT be set\n");
     ok(!IsWindowVisible(hwnd), "IsWindowVisible() should return FALSE\n");
 
     flush_sequence();
     SendMessageA(hwnd, WM_SETREDRAW, TRUE, 0);
-    ok_sequence(WmSetRedrawTrueSeq, "SetRedraw:TRUE");
+    ok_sequence(WmSetRedrawTrueSeq, "SetRedraw:TRUE", FALSE);
 
     ok(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
     ok(IsWindowVisible(hwnd), "IsWindowVisible() should return TRUE\n");
@@ -1234,9 +1250,9 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
 
     ok(SetScrollRange(hwnd, ctl, min, max, FALSE), "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
     if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
-        ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollRange(SB_HORZ/SB_VERT) NC");
+        ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollRange(SB_HORZ/SB_VERT) NC", FALSE);
     else
-        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollRange(SB_HORZ/SB_VERT)");
+        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollRange(SB_HORZ/SB_VERT)", TRUE);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     if (set) ok(style & set, "style %08lx should be set\n", set);
@@ -1244,13 +1260,13 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
 
     /* a subsequent call should do nothing */
     ok(SetScrollRange(hwnd, ctl, min, max, FALSE), "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
-    ok_sequence(WmEmptySeq, "SetScrollRange(SB_HORZ/SB_VERT)");
+    ok_sequence(WmEmptySeq, "SetScrollRange(SB_HORZ/SB_VERT)", FALSE);
 
     xmin = 0xdeadbeef;
     xmax = 0xdeadbeef;
     trace("Ignore GetScrollRange error below if you are on Win9x\n");
     ok(GetScrollRange(hwnd, ctl, &xmin, &xmax), "GetScrollRange(%d) error %ld\n", ctl, GetLastError());
-    ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)");
+    ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)", FALSE);
     ok(xmin == min, "unexpected min scroll value %d\n", xmin);
     ok(xmax == max, "unexpected max scroll value %d\n", xmax);
 }
@@ -1274,9 +1290,9 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     si.nMax = max;
     SetScrollInfo(hwnd, ctl, &si, TRUE);
     if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
-        ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollInfo(SB_HORZ/SB_VERT) NC");
+        ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollInfo(SB_HORZ/SB_VERT) NC", FALSE);
     else
-        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollInfo(SB_HORZ/SB_VERT)", TRUE);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     if (set) ok(style & set, "style %08lx should be set\n", set);
@@ -1284,23 +1300,23 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
 
     /* a subsequent call should do nothing */
     SetScrollInfo(hwnd, ctl, &si, TRUE);
-    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)", FALSE);
 
     si.fMask = SIF_PAGE;
     si.nPage = 5;
     SetScrollInfo(hwnd, ctl, &si, FALSE);
-    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)", FALSE);
 
     si.fMask = SIF_POS;
     si.nPos = max - 1;
     SetScrollInfo(hwnd, ctl, &si, FALSE);
-    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)", FALSE);
 
     si.fMask = SIF_RANGE;
     si.nMin = 0xdeadbeef;
     si.nMax = 0xdeadbeef;
     ok(GetScrollInfo(hwnd, ctl, &si), "GetScrollInfo error %ld\n", GetLastError());
-    ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)");
+    ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)", FALSE);
     ok(si.nMin == min, "unexpected min scroll value %d\n", si.nMin);
     ok(si.nMax == max, "unexpected max scroll value %d\n", si.nMax);
 }
@@ -1395,31 +1411,31 @@ static void test_messages(void)
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
-    ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
+    ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped", FALSE);
 
     /* test ShowWindow(SW_HIDE) on a newly created invisible window */
     ok( ShowWindow(hwnd, SW_HIDE) == FALSE, "ShowWindow: window was visible\n" );
-    ok_sequence(WmHideInvisibleOverlappedSeq, "ShowWindow(SW_HIDE):overlapped, invisible");
+    ok_sequence(WmHideInvisibleOverlappedSeq, "ShowWindow(SW_HIDE):overlapped, invisible", FALSE);
 
     /* test WM_SETREDRAW on a not visible top level window */
     test_WM_SETREDRAW(hwnd);
 
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmSWP_ShowOverlappedSeq, "SetWindowPos:SWP_SHOWWINDOW:overlapped");
+    ok_sequence(WmSWP_ShowOverlappedSeq, "SetWindowPos:SWP_SHOWWINDOW:overlapped", FALSE);
     ok(IsWindowVisible(hwnd), "window should be visible at this point\n");
 
     ok(GetActiveWindow() == hwnd, "window should be active\n");
     ok(GetFocus() == hwnd, "window should have input focus\n");
     ShowWindow(hwnd, SW_HIDE);
-    ok_sequence(WmHideOverlappedSeq, "ShowWindow(SW_HIDE):overlapped");
+    ok_sequence(WmHideOverlappedSeq, "ShowWindow(SW_HIDE):overlapped", TRUE);
     
     ShowWindow(hwnd, SW_SHOW);
-    ok_sequence(WmShowOverlappedSeq, "ShowWindow(SW_SHOW):overlapped");
+    ok_sequence(WmShowOverlappedSeq, "ShowWindow(SW_SHOW):overlapped", TRUE);
 
     ok(GetActiveWindow() == hwnd, "window should be active\n");
     ok(GetFocus() == hwnd, "window should have input focus\n");
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped");
+    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", FALSE);
     ok(!IsWindowVisible(hwnd), "window should not be visible at this point\n");
 
     /* test WM_SETREDRAW on a visible top level window */
@@ -1430,7 +1446,7 @@ static void test_messages(void)
     test_scroll_messages(hwnd);
 
     DestroyWindow(hwnd);
-    ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped");
+    ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped", FALSE);
 
     hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               100, 100, 200, 200, 0, 0, 0, NULL);
@@ -1440,14 +1456,14 @@ static void test_messages(void)
     hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_MAXIMIZE,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
-    ok_sequence(WmCreateMaximizedChildSeq, "CreateWindow:maximized child");
+    ok_sequence(WmCreateMaximizedChildSeq, "CreateWindow:maximized child", FALSE);
     DestroyWindow(hchild);
     flush_sequence();
 
     hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
-    ok_sequence(WmCreateVisibleChildSeq, "CreateWindow:visible child");
+    ok_sequence(WmCreateVisibleChildSeq, "CreateWindow:visible child", FALSE);
 
     trace("testing scroll APIs on a visible child window %p\n", hchild);
     test_scroll_messages(hchild);
@@ -1458,7 +1474,7 @@ static void test_messages(void)
     hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
-    ok_sequence(WmCreateChildSeq, "CreateWindow:child");
+    ok_sequence(WmCreateChildSeq, "CreateWindow:child", FALSE);
     
     hchild2 = CreateWindowExA(0, "SimpleWindowClass", "Test child2", WS_CHILD,
                                100, 100, 50, 50, hparent, 0, 0, NULL);
@@ -1473,30 +1489,30 @@ static void test_messages(void)
     test_WM_SETREDRAW(hchild);
 
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowChildSeq, "ShowWindow:child");
+    ok_sequence(WmShowChildSeq, "ShowWindow:child", FALSE);
 
     /* test WM_SETREDRAW on a visible child window */
     test_WM_SETREDRAW(hchild);
 
     MoveWindow(hchild, 10, 10, 20, 20, TRUE);
-    ok_sequence(WmResizingChildWithMoveWindowSeq, "MoveWindow:child");
+    ok_sequence(WmResizingChildWithMoveWindowSeq, "MoveWindow:child", FALSE);
 
     ShowWindow(hchild, SW_HIDE);
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmShowChildSeq_2, "SetWindowPos:show_child_2");
+    ok_sequence(WmShowChildSeq_2, "SetWindowPos:show_child_2", FALSE);
 
     ShowWindow(hchild, SW_HIDE);
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
-    ok_sequence(WmShowChildSeq_3, "SetWindowPos:show_child_3");
+    ok_sequence(WmShowChildSeq_3, "SetWindowPos:show_child_3", FALSE);
 
     /* DestroyWindow sequence below expects that a child has focus */
     SetFocus(hchild);
     flush_sequence();
 
     DestroyWindow(hchild);
-    ok_sequence(WmDestroyChildSeq, "DestroyWindow:child");
+    ok_sequence(WmDestroyChildSeq, "DestroyWindow:child", FALSE);
     DestroyWindow(hchild2);
     DestroyWindow(hbutton);
 
@@ -1504,7 +1520,7 @@ static void test_messages(void)
     hchild = CreateWindowExA(0, "TestWindowClass", "Test Child Popup", WS_CHILD | WS_POPUP,
                              0, 0, 100, 100, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child popup window\n");
-    ok_sequence(WmCreateChildPopupSeq, "CreateWindow:child_popup");
+    ok_sequence(WmCreateChildPopupSeq, "CreateWindow:child_popup", FALSE);
     DestroyWindow(hchild);
 
     /* test what happens to a window which sets WS_VISIBLE in WM_CREATE */
@@ -1512,18 +1528,18 @@ static void test_messages(void)
     hchild = CreateWindowExA(0, "TestPopupClass", "Test Popup", WS_POPUP,
                              0, 0, 100, 100, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create popup window\n");
-    ok_sequence(WmCreateInvisiblePopupSeq, "CreateWindow:invisible_popup");
+    ok_sequence(WmCreateInvisiblePopupSeq, "CreateWindow:invisible_popup", FALSE);
     ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
     ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
     flush_sequence();
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmEmptySeq, "ShowWindow:show_visible_popup");
+    ok_sequence(WmEmptySeq, "ShowWindow:show_visible_popup", FALSE);
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2");
+    ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2", FALSE);
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmShowVisiblePopupSeq_3, "SetWindowPos:show_visible_popup_3");
+    ok_sequence(WmShowVisiblePopupSeq_3, "SetWindowPos:show_visible_popup_3", FALSE);
     DestroyWindow(hchild);
 
     /* this time add WS_VISIBLE for CreateWindowEx, but this fact actually
@@ -1533,22 +1549,22 @@ static void test_messages(void)
     hchild = CreateWindowExA(0, "TestPopupClass", "Test Popup", WS_POPUP | WS_VISIBLE,
                              0, 0, 100, 100, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create popup window\n");
-    ok_sequence(WmCreateInvisiblePopupSeq, "CreateWindow:invisible_popup");
+    ok_sequence(WmCreateInvisiblePopupSeq, "CreateWindow:invisible_popup", FALSE);
     ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
     ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
     flush_sequence();
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmEmptySeq, "ShowWindow:show_visible_popup");
+    ok_sequence(WmEmptySeq, "ShowWindow:show_visible_popup", FALSE);
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2");
+    ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2", FALSE);
     DestroyWindow(hchild);
 
     flush_sequence();
     hwnd = CreateWindowExA(WS_EX_DLGMODALFRAME, "TestDialogClass", NULL, WS_VISIBLE|WS_CAPTION|WS_SYSMENU|WS_DLGFRAME,
                            0, 0, 100, 100, hparent, 0, 0, NULL);
     ok(hwnd != 0, "Failed to create custom dialog window\n");
-    ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog");
+    ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog", TRUE);
 
     trace("testing scroll APIs on a visible dialog %p\n", hwnd);
     test_scroll_messages(hwnd);
@@ -1556,14 +1572,14 @@ static void test_messages(void)
     flush_sequence();
     after_end_dialog = 1;
     EndDialog( hwnd, 0 );
-    ok_sequence(WmEndCustomDialogSeq, "EndCustomDialog");
+    ok_sequence(WmEndCustomDialogSeq, "EndCustomDialog", FALSE);
 
     DestroyWindow(hwnd);
     after_end_dialog = 0;
 
     flush_sequence();
     DialogBoxA( 0, "TEST_DIALOG", hparent, TestModalDlgProcA );
-    ok_sequence(WmModalDialogSeq, "ModalDialog");
+    ok_sequence(WmModalDialogSeq, "ModalDialog", TRUE);
 
     DestroyWindow(hparent);
     flush_sequence();
@@ -1574,20 +1590,20 @@ static void test_messages(void)
     ok (InsertMenuA(hmenu, -1, MF_BYPOSITION, 0x1000, "foo"), "InsertMenu failed\n");
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, hmenu, 0, NULL);
-    ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
+    ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped", FALSE);
     ok (SetMenu(hwnd, 0), "SetMenu\n");
-    ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange");
+    ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange", FALSE);
     ok (SetMenu(hwnd, 0), "SetMenu\n");
-    ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange");
+    ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange", FALSE);
     ShowWindow(hwnd, SW_SHOW);
     flush_sequence();
     ok (SetMenu(hwnd, 0), "SetMenu\n");
-    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");
+    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange", TRUE);
     ok (SetMenu(hwnd, hmenu), "SetMenu\n");
-    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange");
+    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange", TRUE);
 
     ok(DrawMenuBar(hwnd), "DrawMenuBar\n");
-    ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar");
+    ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar", TRUE);
 
     DestroyWindow(hwnd);
     flush_sequence();
@@ -1604,7 +1620,7 @@ static void test_messages(void)
     flush_sequence();
 
     EnableWindow(hparent, FALSE);
-    ok_sequence(WmEnableWindowSeq, "EnableWindow");
+    ok_sequence(WmEnableWindowSeq, "EnableWindow", FALSE);
 
     DestroyWindow(hparent);
     flush_sequence();
@@ -1720,10 +1736,10 @@ static void test_button_messages(void)
 
 	trace("button style %08lx\n", button[i].style);
 	SetFocus(hwnd);
-	ok_sequence(button[i].setfocus, "SetFocus(hwnd) on a button");
+	ok_sequence(button[i].setfocus, "SetFocus(hwnd) on a button", FALSE);
 
 	SetFocus(0);
-	ok_sequence(button[i].killfocus, "SetFocus(0) on a button");
+	ok_sequence(button[i].killfocus, "SetFocus(0) on a button", FALSE);
 
 	DestroyWindow(hwnd);
     }
