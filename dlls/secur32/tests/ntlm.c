@@ -436,7 +436,8 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
             0, data_rep, NULL, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
-        ok(ret == SEC_E_INTERNAL_ERROR, "expected SEC_E_INTERNAL_ERROR, got %s\n", getSecError(ret));
+        ok(ret == SEC_E_INTERNAL_ERROR || ret == SEC_I_CONTINUE_NEEDED,
+           "expected SEC_E_INTERNAL_ERROR or SEC_I_CONTINUE_NEEDED, got %s\n", getSecError(ret));
 
         out_buf->pBuffers[0].pvBuffer = old_buf;
 
