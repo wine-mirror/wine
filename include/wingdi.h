@@ -1,11 +1,11 @@
-#ifndef __WINE_WINGDI_H
-#define __WINE_WINGDI_H
+#ifndef _WINGDI_
+#define _WINGDI_
+#ifndef NOGDI
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define _WINGDI_
 
 #include "pshpack1.h"
 
@@ -165,7 +165,7 @@ typedef struct tagLOGCOLORSPACEA
   DWORD lcsGammaRed;
   DWORD lcsGammaGreen;
   DWORD lcsGammaBlue;
-  CHAR lcsFilename[_MAX_PATH];
+  CHAR lcsFilename[MAX_PATH];
 } LOGCOLORSPACEA, *LPLOGCOLORSPACEA;
 
  typedef struct tagLOGCOLORSPACEW
@@ -179,7 +179,7 @@ typedef struct tagLOGCOLORSPACEA
   DWORD lcsGammaRed;
   DWORD lcsGammaGreen;
   DWORD lcsGammaBlue;
-  WCHAR lcsFilename[_MAX_PATH];
+  WCHAR lcsFilename[MAX_PATH];
 } LOGCOLORSPACEW, *LPLOGCOLORSPACEW;
 
 DECL_WINELIB_TYPE_AW(LPLOGCOLORSPACE)
@@ -1437,10 +1437,9 @@ typedef struct tagEXTLOGPEN
 #define WINDING           2
 #define POLYFILL_LAST     2
 
-  /* Background modes */
-#ifdef TRANSPARENT  /*Apparently some broken svr4 includes define TRANSPARENT*/
+/* Background modes */
+/* Apparently some broken svr4 includes define TRANSPARENT */
 #undef TRANSPARENT
-#endif
 #define TRANSPARENT       1
 #define OPAQUE            2
 #define BKMODE_LAST       2
@@ -3354,4 +3353,5 @@ BOOL      WINAPI PolyTextOutW(HDC,PPOLYTEXTW,INT);
 }
 #endif
 
-#endif /* __WINE_WINGDI_H */
+#endif /* !NOGDI */
+#endif /* _WINGDI_ */
