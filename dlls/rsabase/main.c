@@ -317,23 +317,20 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
     {
         if (dp == REG_CREATED_NEW_KEY)
         {
-            static const WCHAR szImagePath[] = { 'I','m','a','g','e','P','a',
-             't','h',0 };
-            static const WCHAR szRSABase[] = { 'r','s','a','b','a','s','e','.',
-             'd','l','l',0 };
-             static const WCHAR szType[] = { 'T','y','p','e',0 };
-             DWORD type = 1;
-
-            RegSetValueExW(key, szImagePath, 0, REG_SZ, (LPBYTE)szRSABase,
-             (lstrlenW(szRSABase) + 1) * sizeof(WCHAR));
-            RegSetValueExW(key, szType, 0, REG_DWORD, (LPBYTE)&type,
-             sizeof(type));
+            static const WCHAR szImagePath[] = { 'I','m','a','g','e',' ','P','a','t','h',0 };
+            static const WCHAR szRSABase[] = { 'r','s','a','b','a','s','e','.','d','l','l',0 };
+            static const WCHAR szType[] = { 'T','y','p','e',0 };
+            static const WCHAR szSignature[] = { 'S','i','g','n','a','t','u','r','e',0 };
+            DWORD type = 1;
+            DWORD sign = 0xdeadbeef;
+            RegSetValueExW(key, szImagePath, 0, REG_SZ, (LPBYTE)szRSABase, (lstrlenW(szRSABase) + 1) * sizeof(WCHAR));
+            RegSetValueExW(key, szType, 0, REG_DWORD, (LPBYTE)&type, sizeof(type));
+            RegSetValueExW(key, szSignature, 0, REG_DWORD, (LPBYTE)&sign, sizeof(sign));
         }
         RegCloseKey(key);
     }
     if (apiRet == ERROR_SUCCESS)
-        apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szRSAKey2, 0, NULL,
-         REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dp);
+        apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szRSAKey2, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dp);
     if (apiRet == ERROR_SUCCESS)
     {
         if (dp == REG_CREATED_NEW_KEY)
@@ -344,8 +341,7 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
               'r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r',
               'o','v','i','d','e','r',' ','v','1','.','0',0 };
 
-            RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName,
-                sizeof(szRSAName));
+            RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName, sizeof(szRSAName));
         }
         RegCloseKey(key);
     }
