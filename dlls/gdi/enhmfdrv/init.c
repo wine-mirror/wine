@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -186,11 +187,15 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
     ENHMETAHEADER *emh;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
 
+    TRACE("record %ld, size %ld %s\n",
+          emr->iType, emr->nSize, physDev->hFile ? "(to disk)" : "");
+
+    assert( !(emr->nSize & 3) );
+
     physDev->emh->nBytes += emr->nSize;
     physDev->emh->nRecords++;
 
     if(physDev->hFile) {
-        TRACE("Writing record to disk\n");
 	if (!WriteFile(physDev->hFile, (char *)emr, emr->nSize, NULL, NULL))
 	    return FALSE;
     } else {
