@@ -164,7 +164,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 
     dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
-    
+
     if(dc->funcs->pStretchDIBits)
     {
         heightSrc = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
@@ -179,6 +179,10 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 
         GDI_ReleaseObj( hdc );
 	hdcMem = CreateCompatibleDC( hdc );
+        hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth,
+                                         info->bmiHeader.biHeight);
+        hOldBitmap = SelectObject( hdcMem, hBitmap );
+
 	if (info->bmiHeader.biCompression == BI_RLE4 ||
 	    info->bmiHeader.biCompression == BI_RLE8) {
 
@@ -196,22 +200,15 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 	    * pStretchDIBits function shall be implemented.
 	    * ericP (2000/09/09)
 	    */
-	   hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth,
-					    info->bmiHeader.biHeight);
-	   hOldBitmap = SelectObject( hdcMem, hBitmap );
 
-	   /* copy existing bitmap from destination dc */
-	   StretchBlt( hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
-		       widthSrc, heightSrc, hdc, xDst, yDst, widthDst, heightDst,
-		       dwRop );
-	   SetDIBits(hdcMem, hBitmap, 0, info->bmiHeader.biHeight, bits,
-		     info, DIB_RGB_COLORS);
+            /* copy existing bitmap from destination dc */
+            StretchBlt( hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
+                        widthSrc, heightSrc, hdc, xDst, yDst, widthDst, heightDst,
+                        dwRop );
+        }
 
-	} else {
-	   hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-				     bits, info, wUsage );
-	   hOldBitmap = SelectObject( hdcMem, hBitmap );
-	}
+        SetDIBits(hdcMem, hBitmap, 0, info->bmiHeader.biHeight, bits,
+		     info, wUsage);
 
         /* Origin for DIBitmap may be bottom left (positive biHeight) or top
            left (negative biHeight) */
