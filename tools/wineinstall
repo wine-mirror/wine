@@ -222,9 +222,16 @@ then {
 
   if ! [ -f configure ]
   then {
-    echo "You're running this from the wrong directory."
-    echo "Change to the Wine source's main directory and try again."
-    exit 1
+    if [ -f ../configure ]
+    then {
+      pushd ..
+    }
+    else {
+      echo "You're running this from the wrong directory."
+      echo "Change to the Wine source's main directory and try again."
+      exit 1
+    }
+    fi
   }
   fi
 
