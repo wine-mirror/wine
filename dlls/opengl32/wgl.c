@@ -22,6 +22,8 @@
 
 DEFAULT_DEBUG_CHANNEL(opengl);
 
+static GLXContext default_cx = NULL;
+
 typedef struct wine_glcontext {
   HDC hdc;
   GLXContext ctx;
@@ -449,20 +451,53 @@ BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
   return FALSE;
 }
 
+
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
-DECL_GLOBAL_CONSTRUCTOR(OpenGL_create_default_context) {
+static void process_attach(void) {
   int num;
   XVisualInfo template;
-  XVisualInfo *vis;
-  GLXContext cx;
+  XVisualInfo *vis = NULL;
 
+  if (!visual) {
+    ERR("X11DRV not loaded yet. Cannot create default context.\n");
+    return;
+  }
+  
   ENTER_GL();
   template.visualid = XVisualIDFromVisual(visual);
   vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
-  cx=glXCreateContext(display, vis, 0, GL_TRUE);
-  glXMakeCurrent(display, X11DRV_GetXRootWindow(), cx);
+  if (vis != NULL)        default_cx = glXCreateContext(display, vis, 0, GL_TRUE);
+  if (default_cx != NULL) glXMakeCurrent(display, X11DRV_GetXRootWindow(), default_cx);
+  XFree(vis);
   LEAVE_GL();
 
+  if (default_cx == NULL) {
+    ERR("Could not create default context.\n");
+  }
+  
   context_array = NULL;
+}
+
+static void process_detach(void) {
+  glXDestroyContext(display, default_cx);
+}
+
+/***********************************************************************
+ *           OpenGL initialisation routine
+ */
+BOOL WINAPI OpenGL32_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+  static int process_count;
+  
+  switch(reason) {
+  case DLL_PROCESS_ATTACH:
+    if (!process_count++) process_attach();
+    break;
+  case DLL_PROCESS_DETACH:
+    if (!--process_count) process_detach();
+    break;
+  }
+  
+  return TRUE;
 }
