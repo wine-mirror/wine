@@ -11,15 +11,13 @@
 #include "oaidl.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct tagSAFEARRAY;
 struct tagSAFEARRAYBOUND;
 struct tagVARIANT;
-struct UDATE;
-
-#ifdef __cplusplus
-extern "C" {
-#endif 
-
 
 /*
  * BSTR API
