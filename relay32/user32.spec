@@ -66,7 +66,7 @@ init	MAIN_UserInit
  62 stdcall CopyRect(ptr ptr) CopyRect
  63 stdcall CountClipboardFormats() CountClipboardFormats
  64 stdcall CreateAcceleratorTableA(ptr long) CreateAcceleratorTableA
- 65 stub CreateAcceleratorTableW
+ 65 stdcall CreateAcceleratorTableW(ptr long) CreateAcceleratorTableW
  66 stdcall CreateCaret(long long long long) CreateCaret
  67 stdcall CreateCursor(long long long long long ptr ptr) CreateCursor
  68 stub CreateDesktopA

@@ -31,6 +31,7 @@
 #include "libres.h"
 #include "winerror.h"
 #include "debugstr.h"
+#include "winnls.h"
 
 DECLARE_DEBUG_CHANNEL(accel)
 DECLARE_DEBUG_CHANNEL(resource)
@@ -777,6 +778,60 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   return hAccel;
 }
 
+/*********************************************************************
+ *                    CreateAcceleratorTableW   (USER32.64)
+ *
+ * 
+ */
+HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
+{
+  HACCEL	hAccel;
+  LPACCEL16	accel;
+  int		i;
+  char		ckey;  
+
+  /* Do parameter checking just in case someone's trying to be
+     funny. */
+  if(cEntries < 1) {
+    WARN_(accel)("Application sent invalid parameters (%p %d).\n",
+	 lpaccel, cEntries);
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return (HACCEL)NULL;
+  }
+  FIXME_(accel)("should check that the accelerator descriptions are valid,"
+	" return NULL and SetLastError() if not.\n");
+
+
+  /* Allocate memory and copy the table. */
+  hAccel = GlobalAlloc16(0,cEntries*sizeof(ACCEL16));
+
+  TRACE_(accel)("handle %x\n", hAccel);
+  if(!hAccel) {
+    ERR_(accel)("Out of memory.\n");
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return (HACCEL)NULL;
+  }
+  accel = GlobalLock16(hAccel);
+
+
+  for (i=0;i<cEntries;i++) {
+       accel[i].fVirt = lpaccel[i].fVirt;
+       if( !(accel[i].fVirt & FVIRTKEY) ) {
+	  ckey = (char) lpaccel[i].key;
+         if(!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, &ckey, 1, &accel[i].key, 1))
+            WARN_(accel)("Error converting ASCII accelerator table to Unicode");
+       }
+       else 
+         accel[i].key = lpaccel[i].key; 
+       accel[i].cmd = lpaccel[i].cmd;
+  }
+
+  /* Set the end-of-table terminator. */
+  accel[cEntries-1].fVirt |= 0x80;
+
+  TRACE_(accel)("Allocated accelerator handle %x\n", hAccel);
+  return hAccel;
+}
 
 /******************************************************************************
  * DestroyAcceleratorTable [USER32.130]
@@ -792,9 +847,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
  */
 BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
-    FIXME_(accel)("(0x%x): stub\n", handle);
-    /* FIXME: GlobalFree16(handle); */
-    return TRUE;
+    return GlobalFree16(handle); 
 }
   
 /**********************************************************************

@@ -2921,6 +2921,9 @@ WORD        WINAPI CascadeWindows(HWND, UINT, const LPRECT, UINT, const HWND *);
 INT       WINAPI CopyAcceleratorTableA(HACCEL,LPACCEL,INT);
 INT       WINAPI CopyAcceleratorTableW(HACCEL,LPACCEL,INT);
 #define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
+HACCEL      WINAPI CreateAcceleratorTableA(LPACCEL,INT);
+HACCEL      WINAPI CreateAcceleratorTableW(LPACCEL,INT);
+#define     CreateAcceleratorTable WINELIB_NAME_AW(CreateAcceleratorTable)
 HICON     WINAPI CreateIconIndirect(LPICONINFO);
 BOOL      WINAPI DestroyAcceleratorTable(HACCEL);
 BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
