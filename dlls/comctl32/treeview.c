@@ -2132,7 +2132,7 @@ TREEVIEW_CreateDragImage (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  hdc=CreateCompatibleDC32 (htopdc); 
  
  hOldFont=SelectObject32 (hdc, infoPtr->hFont);
- GetTextExtentPoint32 (hdc, itemtxt, lstrlen32A (itemtxt), &size);
+ GetTextExtentPoint32A (hdc, itemtxt, lstrlen32A (itemtxt), &size);
  TRACE (treeview,"%d %d %s %d\n",size.cx,size.cy,itemtxt,lstrlen32A(itemtxt));
  hbmp=CreateCompatibleBitmap32 (htopdc, size.cx, size.cy);
  hOldbmp=SelectObject32 (hdc, hbmp);
