@@ -86,16 +86,15 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 		    glDisable(GL_TEXTURE_2D);
 		    TRACE("disabling texturing\n");
 		} else {
-		    IDirect3DTextureGLImpl *gl_tex = (IDirect3DTextureGLImpl *) tex->tex_private;
-		    
 		    glEnable(GL_TEXTURE_2D);
+		    
 		    /* Default parameters */
-		    glBindTexture(GL_TEXTURE_2D, gl_tex->tex_name);
+		    gltex_upload_texture(tex);
+		    
 		    /* To prevent state change, we could test here what are the parameters
 		       stored in the texture */
 		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, rs->mag);
 		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, rs->min);
-		    TRACE("setting OpenGL texture handle : %d\n", gl_tex->tex_name);
 		}
 	    } break;
 

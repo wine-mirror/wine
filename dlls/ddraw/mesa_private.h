@@ -102,7 +102,11 @@ typedef struct IDirect3DTextureGLImpl
 {
     GLuint tex_name;
     BOOLEAN loaded; /* For the moment, this is here.. Should be part of surface management though */
-    BOOLEAN first_unlock;
+
+    /* Texture upload management */
+    BOOLEAN initial_upload_done;
+    BOOLEAN dirty_flag;
+
     /* This is for now used to override 'standard' surface stuff to be as transparent as possible */
     void (*final_release)(struct IDirectDrawSurfaceImpl *This);
     void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
@@ -156,6 +160,9 @@ extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, I
 extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
 extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
+
+/* Used to upload the texture */
+extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This) ;
 
 /* Common functions defined in d3dcommon.c */
 void set_render_state(IDirect3DDeviceGLImpl* This,

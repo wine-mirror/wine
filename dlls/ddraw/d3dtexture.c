@@ -61,10 +61,9 @@ snoop_texture(IDirectDrawSurfaceImpl *This) {
 /*******************************************************************************
  *			   IDirectSurface callback methods
  */
-static HRESULT
-gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
+HRESULT
+gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
-    GLuint current_texture;
 #if 0
     static BOOL color_table_queried = FALSE;
 #endif
@@ -77,10 +76,14 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 
     DDSURFACEDESC *src_d = (DDSURFACEDESC *)&(This->surface_desc);
 
-    TRACE(" uploading texture to GL id %d (initial = %d).\n", glThis->tex_name, init_upload);
-
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
     glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
+
+    if (glThis->dirty_flag == FALSE) {
+        TRACE(" activating OpenGL texture id %d.\n", glThis->tex_name);
+	return DD_OK;
+    } else {
+        TRACE(" activating and uploading texture id %d (initial done = %d).\n", glThis->tex_name, glThis->initial_upload_done);
+    }
 
     /* Texture snooping for the curious :-) */
     snoop_texture(This);
@@ -272,14 +275,21 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 		dst = surface;
 		
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-		    WORD color = *src++;
-		    *dst = (color & 0x0FFF) << 4;
-		    if (((src_d->dwFlags & DDSD_CKSRCBLT) == 0) ||
-			(color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		        *dst |= (color & 0xF000) >> 12;
-		    dst++;
+		if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst = (color & 0x0FFF) << 4;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= (color & 0xF000) >> 12;
+			dst++;
+		    }
+		} else {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst++ = (((color & 0x0FFF) << 4) |
+				  ((color & 0xF000) >> 12));
+		    }
 		}
 
 	        format = GL_RGBA;
@@ -294,14 +304,22 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		
 		surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 		dst = (WORD *) surface;
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-		    WORD color = *src++;
-		    *dst = (color & 0x7FFF) << 1;
-		    if (((src_d->dwFlags & DDSD_CKSRCBLT) == 0) ||
-			(color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		        *dst |= (color & 0x8000) >> 15;
-		    dst++;
+		
+		if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst = (color & 0x7FFF) << 1;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= (color & 0x8000) >> 15;
+			dst++;
+		    }
+		} else {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst++ = (((color & 0x7FFF) << 1) |
+				  ((color & 0x8000) >> 15));
+		    }		  
 		}
 		
 	        format = GL_RGBA;
@@ -367,13 +385,14 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
 		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
 		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
-		    /* Just add an alpha component and handle color-keying... */
-		    DWORD i;
-		    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	        /* Just add an alpha component and handle color-keying... */
+	        DWORD i;
+		DWORD *src = (DWORD *) src_d->lpSurface, *dst;
 		
-		    surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-		    dst = (DWORD *) surface;
+		surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		dst = (DWORD *) surface;
+		
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
 		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 		        DWORD color = *src++;
 		        *dst = color << 8;
@@ -381,6 +400,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
 			    *dst |= 0xFF;
 			dst++;
+		    }
+		} else {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        *dst++ = (*src++ << 8) | 0xFF;
 		    }
 		}
 	        format = GL_RGBA;
@@ -396,7 +419,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
     } 
 
     if ((upload_done == FALSE) && (error == FALSE)) {
-        if (init_upload)
+        if (glThis->initial_upload_done == FALSE) {
 	    glTexImage2D(GL_TEXTURE_2D,
 			 This->mipmap_level,
 			 format,
@@ -405,7 +428,8 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			 format,
 			 pixel_format,
 			 surface == NULL ? src_d->lpSurface : surface);
-	else
+	    glThis->initial_upload_done = TRUE;
+	} else {
 	    glTexSubImage2D(GL_TEXTURE_2D,
 			    This->mipmap_level,
 			    0, 0,
@@ -413,6 +437,8 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			    format,
 			    pixel_format,
 			    surface == NULL ? src_d->lpSurface : surface);
+	}
+	
 	if (surface) HeapFree(GetProcessHeap(), 0, surface);
     } else if (error == TRUE) {
 	if (ERR_ON(ddraw)) {
@@ -421,7 +447,8 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	}
     }
 
-    glBindTexture(GL_TEXTURE_2D, current_texture);
+    glThis->dirty_flag = FALSE;
+
     return DD_OK;
 }
 
@@ -440,12 +467,8 @@ gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDCOLORKEY c
 {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
 
-    /* Basically, the only thing we have to do is to re-upload the texture */
-    if (glThis->first_unlock == FALSE) {
-        ENTER_GL();
-	gltex_upload_texture(This, glThis->first_unlock);
-	LEAVE_GL();
-    }
+    glThis->dirty_flag = TRUE;
+
     return DD_OK;
 }
 
@@ -492,13 +515,9 @@ static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteIm
     
     /* First call the previous set_palette function */
     glThis->set_palette(This, pal);
-
-    /* Then re-upload the texture to OpenGL only if the surface was already 'unlocked' once */
-    if (glThis->first_unlock == FALSE) {
-        ENTER_GL();
-	gltex_upload_texture(This, glThis->first_unlock);
-	LEAVE_GL();
-    }
+    
+    /* And set the dirty flag */
+    glThis->dirty_flag = TRUE;
 }
 
 static void
@@ -545,10 +564,9 @@ gltex_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 
     glThis->unlock_update(This, pRect);
     
-    ENTER_GL();
-    gltex_upload_texture(This, glThis->first_unlock);
-    LEAVE_GL();
-    glThis->first_unlock = FALSE;
+    /* Set the dirty flag according to the lock type */
+    if ((This->lastlocktype & DDLOCK_READONLY) == 0)
+        glThis->dirty_flag = TRUE;
 }
 
 HRESULT WINAPI
@@ -661,15 +679,8 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	    /* If the GetHandle was not done, it is an error... */
 	    if (glThis->tex_name == 0) ERR("Unbound GL texture !!!\n");
 
-	    ENTER_GL();
-	    
-	    /* Now, load the texture */
-	    /* d3dd->set_context(d3dd); We need to set the context somehow.... */
-	    
-	    ret_value = gltex_upload_texture(This, glThis->first_unlock);
-	    glThis->first_unlock = FALSE;
-	    
-	    LEAVE_GL();
+	    /* Set this texture as dirty */
+	    glThis->dirty_flag = TRUE;
 	}
     }
 
@@ -823,10 +834,6 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	
 	/* If at creation, we can optimize stuff and wait the first 'unlock' to upload a valid stuff to OpenGL.
 	   Otherwise, it will be uploaded here (and may be invalid). */
-	if (at_creation == TRUE)
-	    private->first_unlock = TRUE;
-	else
-	    private->first_unlock = FALSE;
 	surf->final_release = gltex_final_release;
 	surf->lock_update = gltex_lock_update;
 	surf->unlock_update = gltex_unlock_update;
@@ -844,13 +851,11 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	    TRACE(" GL texture created for surface %p (private data at %p and GL id reusing id %d from surface %p (%p)).\n",
 		  surf, private, private->tex_name, main, main->tex_private);
 	}
-
-	if ((at_creation == FALSE) &&
-	    ((surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) == 0))
-	{
-	    gltex_upload_texture(surf, TRUE);
-	}
 	LEAVE_GL();
+
+	/* And set the dirty flag accordingly */
+	private->dirty_flag = (at_creation == FALSE);
+	private->initial_upload_done = FALSE;
     }
 
     return D3D_OK;

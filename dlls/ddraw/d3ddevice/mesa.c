@@ -1413,15 +1413,13 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
         glDisable(GL_TEXTURE_2D);
     } else {
         IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpTexture2);
-	IDirect3DTextureGLImpl *tex_glimpl = (IDirect3DTextureGLImpl *) tex_impl->tex_private;
 	
 	This->current_texture[dwStage] = tex_impl;
 	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7)); /* Not sure about this either */
 	
-	TRACE(" activating OpenGL texture %d.\n", tex_glimpl->tex_name);
-	
         glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, tex_glimpl->tex_name);
+	gltex_upload_texture(tex_impl);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glThis->render_state.mag);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glThis->render_state.min);
     }
