@@ -353,7 +353,7 @@ pp_expr	: tSINT				{ $$.type = cv_sint;  $$.val.si = $1; }
 	| '+' pp_expr			{ $$ =  $2; }
 	| '-' pp_expr			{ UNARY_OP($$, $2, -) }
 	| '~' pp_expr			{ UNARY_OP($$, $2, ~) }
-	| '!' pp_expr			{ $$.type = cv_sint; $$.val.si = !boolean(&$2) }
+	| '!' pp_expr			{ $$.type = cv_sint; $$.val.si = !boolean(&$2); }
 	| '(' pp_expr ')'		{ $$ =  $2; }
 	| pp_expr '?' pp_expr ':' pp_expr { $$ = boolean(&$1) ? $3 : $5; }
 	;
