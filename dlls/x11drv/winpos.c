@@ -553,16 +553,6 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
 {
     WND *wndPtr;
 
-    if (pWinpos->flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW))
-    {
-        BOOL wasVisible, showFlag;
-
-        wasVisible = (GetWindowLongW(pWinpos->hwnd, GWL_STYLE) & WS_VISIBLE) != 0;
-        showFlag = !(pWinpos->flags & SWP_HIDEWINDOW);
-        if (showFlag != wasVisible)
-            SendMessageW(pWinpos->hwnd, WM_SHOWWINDOW, showFlag, 0);
-    }
-
     /* Send WM_WINDOWPOSCHANGING message */
 
     if (!(pWinpos->flags & SWP_NOSENDCHANGING))
@@ -1275,7 +1265,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 {
     WND* 	wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL 	wasVisible;
+    BOOL 	wasVisible, showFlag;
     RECT 	newPos = {0, 0, 0, 0};
     UINT 	swp = 0;
 
@@ -1342,6 +1332,13 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
             else swp |= SWP_NOSIZE | SWP_NOMOVE;
 	    break;
+    }
+
+    showFlag = (cmd != SW_HIDE);
+    if (showFlag != wasVisible)
+    {
+        SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
+        if (!IsWindow( hwnd )) goto END;
     }
 
     /* We can't activate a child window */
