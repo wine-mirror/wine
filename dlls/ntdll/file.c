@@ -383,8 +383,13 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         ovp->async.event = hEvent;
         ovp->async.iosb = io_status;
         ovp->count = length;
-        ovp->offset = offset->s.LowPart;
-        if (offset->s.HighPart) FIXME("NIY-high part\n");
+        if ( offset == NULL ) 
+            ovp->offset = 0;
+        else
+        {
+            ovp->offset = offset->s.LowPart;
+            if (offset->s.HighPart) FIXME("NIY-high part\n");
+        } 
         ovp->apc = apc;
         ovp->apc_user = apc_user;
         ovp->buffer = buffer;
