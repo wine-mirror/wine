@@ -789,7 +789,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
     lpszUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
     sprintfW( lpszUrl, szUrlForm, lpwhr->lpszHostName );
 
-    if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
+    if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) &&
+        InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
     {
         int cnt = 0;
         static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
@@ -1649,7 +1650,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 
         /* process headers here. Is this right? */
         CustHeaderIndex = HTTP_GetCustomHeaderIndex(lpwhr, szSetCookie);
-        if (CustHeaderIndex >= 0)
+        if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && (CustHeaderIndex >= 0))
         {
             LPHTTPHEADERW setCookieHeader;
             int nPosStart = 0, nPosEnd = 0, len;
