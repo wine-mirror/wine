@@ -2143,8 +2143,6 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    /* FIXME: this should disapear */
-    lpMidiOutHdr->reserved = (DWORD)lpMidiOutHdr;
     return MMDRV_Message(wmld, MODM_PREPARE, (DWORD)lpMidiOutHdr, uSize, TRUE);
 }
 
@@ -2163,8 +2161,6 @@ UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    /* FIXME: this should disapear */
-    lpMidiOutHdr->reserved = (DWORD)lpsegMidiOutHdr;
     return MMDRV_Message(wmld, MODM_PREPARE, (DWORD)lpMidiOutHdr, uSize, FALSE);
 }
 
@@ -2207,7 +2203,7 @@ UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_UNPREPARE, (DWORD)lpMidiOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MODM_UNPREPARE, (DWORD)lpsegMidiOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -2660,8 +2656,6 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    /* FIXME: should disapear */
-    lpMidiInHdr->reserved = (DWORD)lpMidiInHdr;
     return MMDRV_Message(wmld, MIDM_PREPARE, (DWORD)lpMidiInHdr, uSize, TRUE);
 }
 
@@ -2673,16 +2667,13 @@ UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,
 				    UINT16 uSize)
 {
     LPWINE_MLD		wmld;
-    LPMIDIHDR16		lpMidiInHdr = PTR_SEG_TO_LIN(lpsegMidiInHdr);
 
     TRACE("(%04X, %p, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    /* FIXME: should disapear */
-    lpMidiInHdr->reserved = (DWORD)lpsegMidiInHdr;
-    return MMDRV_Message(wmld, MIDM_PREPARE, (DWORD)lpMidiInHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MIDM_PREPARE, (DWORD)lpsegMidiInHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -2757,7 +2748,7 @@ UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD)lpsegMidiInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD)lpsegMidiInHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -3001,7 +2992,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	    
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice, 
-			   MM_MOM_DONE, lpwm->mod.dwInstance, lpMidiHdr->reserved, 0L);
+			   MM_MOM_DONE, lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
 	}
 	lpMidiStrm->lpMidiHdr = 0;
 	SetEvent(lpMidiStrm->hEvent);
@@ -3039,11 +3030,10 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	 * 3b 4c 00 99 23 5e 04 89 3b 00 00 89 23 00 7c 99 ;L..#^..;...#.|.
 	 */
 	lpMidiHdr = (LPMIDIHDR)msg->lParam;
-	lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
-	    (LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
+	lpData = lpMidiHdr->lpData;
 	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%08lx dwBufferLength=%lu/%lu dwFlags=0x%08lx size=%u]\n", 
 	      (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr, 
-	      lpMidiHdr->reserved, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded, 
+	      (DWORD)lpMidiHdr, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded, 
 	      lpMidiHdr->dwFlags, msg->wParam);
 #if 0
 	/* dumps content of lpMidiHdr->lpData
@@ -3075,7 +3065,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	    
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice, 
-			   MM_MOM_DONE, lpwm->mod.dwInstance, lpMidiHdr->reserved, 0L);
+			   MM_MOM_DONE, lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
 	    break;
 	} 
 	
@@ -3145,13 +3135,8 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    continue;
 	}
 
-	/* <HACK>
-	 * midiOutPrepareHeader(), in Wine, sets the 'reserved' field of MIDIHDR to the
-	 * 16 or 32 bit address of lpMidiHdr (depending if called from 16 to 32 bit code)
-	 */
 	if (!lpData)
-	    lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
-		(LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
+	    lpData = lpMidiHdr->lpData;
 	    
 	me = (LPMIDIEVENT)(lpData + lpMidiHdr->dwOffset);
 	
@@ -3213,7 +3198,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    
 	    lpMidiStrm->lpMidiHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice, 
-			   MM_MOM_DONE, lpwm->mod.dwInstance, lpMidiHdr->reserved, 0L);
+			   MM_MOM_DONE, lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
 	    lpData = 0;
 	}
     }
@@ -3868,9 +3853,6 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    /* FIXME: this should disapear */
-    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr;
-
     return MMDRV_Message(wmld, WODM_PREPARE, (DWORD)lpWaveOutHdr, uSize, TRUE);
 }
 
@@ -3884,15 +3866,12 @@ UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,
     LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveOutHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveOutHdr);
     
-    TRACE("(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
+    TRACE("(%04X, %p, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
 
     if (lpWaveOutHdr == NULL) return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
-
-    /* FIXME: this should disapear */
-    lpWaveOutHdr->reserved = (DWORD)lpsegWaveOutHdr;
 
     return MMDRV_Message(wmld, WODM_PREPARE, (DWORD)lpsegWaveOutHdr, uSize, FALSE);
 }
@@ -4309,7 +4288,6 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 	return MMSYSERR_INVALHANDLE;
 
     lpWaveInHdr->dwBytesRecorded = 0;
-    lpWaveInHdr->reserved = (DWORD)lpWaveInHdr;
 
     return MMDRV_Message(wmld, WIDM_PREPARE, (DWORD)lpWaveInHdr, uSize, TRUE);
 }
@@ -4332,9 +4310,8 @@ UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,
 	return MMSYSERR_INVALHANDLE;
 
     lpWaveInHdr->dwBytesRecorded = 0;
-    lpWaveInHdr->reserved = (DWORD)lpsegWaveInHdr;
 
-    ret = MMDRV_Message(wmld, WIDM_PREPARE, (DWORD)lpWaveInHdr, uSize, FALSE);
+    ret = MMDRV_Message(wmld, WIDM_PREPARE, (DWORD)lpsegWaveInHdr, uSize, FALSE);
     return ret;
 }
 
