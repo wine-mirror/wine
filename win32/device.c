@@ -562,6 +562,459 @@ void VxDCall( DWORD service, CONTEXT86 *context )
 }
 
 
+/******************************************************************************
+ * The following is a massive duplication of the advapi32 code.
+ * Unfortunately sharing the code is not possible since the native
+ * Win95 advapi32 depends on it. Someday we should probably stop
+ * supporting native Win95 advapi32 altogether...
+ */
+
+
+/* check if value type needs string conversion (Ansi<->Unicode) */
+inline static int is_string( DWORD type )
+{
+    return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
+}
+
+/******************************************************************************
+ *           VMM_RegCreateKeyA
+ */
+static DWORD VMM_RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    ANSI_STRING nameA;
+    NTSTATUS status;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitAnsiString( &nameA, name );
+
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtCreateKey( retkey, KEY_ALL_ACCESS, &attr, 0, NULL,
+                              REG_OPTION_NON_VOLATILE, NULL );
+        RtlFreeUnicodeString( &nameW );
+    }
+    return RtlNtStatusToDosError( status );
+}
+
+
+/******************************************************************************
+ *           VMM_RegOpenKeyExA
+ */
+DWORD WINAPI VMM_RegOpenKeyExA(HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, LPHKEY retkey)
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    STRING nameA;
+    NTSTATUS status;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitAnsiString( &nameA, name );
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtOpenKey( retkey, access, &attr );
+        RtlFreeUnicodeString( &nameW );
+    }
+    return RtlNtStatusToDosError( status );
+}
+
+
+/******************************************************************************
+ *           VMM_RegCloseKey
+ */
+static DWORD VMM_RegCloseKey( HKEY hkey )
+{
+    if (!hkey || hkey >= (HKEY)0x80000000) return ERROR_SUCCESS;
+    return RtlNtStatusToDosError( NtClose( hkey ) );
+}
+
+
+/******************************************************************************
+ *           VMM_RegDeleteKeyA
+ */
+static DWORD VMM_RegDeleteKeyA( HKEY hkey, LPCSTR name )
+{
+    DWORD ret;
+    HKEY tmp;
+
+    if (!name || !*name) return NtDeleteKey( hkey );
+    if (!(ret = VMM_RegOpenKeyExA( hkey, name, 0, 0, &tmp )))
+    {
+        ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
+        NtClose( tmp );
+    }
+    return ret;
+}
+
+
+/******************************************************************************
+ *           VMM_RegSetValueExA
+ */
+static DWORD VMM_RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
+                                 CONST BYTE *data, DWORD count )
+{
+    UNICODE_STRING nameW;
+    ANSI_STRING nameA;
+    WCHAR *dataW = NULL;
+    NTSTATUS status;
+
+    if (is_string(type))
+    {
+        DWORD lenW;
+
+        if (count)
+        {
+            /* if user forgot to count terminating null, add it (yes NT does this) */
+            if (data[count-1] && !data[count]) count++;
+        }
+        RtlMultiByteToUnicodeSize( &lenW, data, count );
+        if (!(dataW = HeapAlloc( GetProcessHeap(), 0, lenW ))) return ERROR_OUTOFMEMORY;
+        RtlMultiByteToUnicodeN( dataW, lenW, NULL, data, count );
+        count = lenW;
+        data = (BYTE *)dataW;
+    }
+
+    RtlInitAnsiString( &nameA, name );
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtSetValueKey( hkey, &nameW, 0, type, data, count );
+        RtlFreeUnicodeString( &nameW );
+    }
+    if (dataW) HeapFree( GetProcessHeap(), 0, dataW );
+    return RtlNtStatusToDosError( status );
+}
+
+
+/******************************************************************************
+ *           VMM_RegSetValueA
+ */
+static DWORD VMM_RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
+{
+    HKEY subkey = hkey;
+    DWORD ret;
+
+    if (type != REG_SZ) return ERROR_INVALID_PARAMETER;
+
+    if (name && name[0])  /* need to create the subkey */
+    {
+        if ((ret = VMM_RegCreateKeyA( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
+    }
+    ret = VMM_RegSetValueExA( subkey, NULL, 0, REG_SZ, (LPBYTE)data, strlen(data)+1 );
+    if (subkey != hkey) NtClose( subkey );
+    return ret;
+}
+
+
+/******************************************************************************
+ *           VMM_RegDeleteValueA
+ */
+static DWORD VMM_RegDeleteValueA( HKEY hkey, LPCSTR name )
+{
+    UNICODE_STRING nameW;
+    STRING nameA;
+    NTSTATUS status;
+
+    RtlInitAnsiString( &nameA, name );
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtDeleteValueKey( hkey, &nameW );
+        RtlFreeUnicodeString( &nameW );
+    }
+    return RtlNtStatusToDosError( status );
+}
+
+
+/******************************************************************************
+ *           VMM_RegQueryValueExA
+ */
+static DWORD VMM_RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
+                                   LPBYTE data, LPDWORD count )
+{
+    NTSTATUS status;
+    ANSI_STRING nameA;
+    UNICODE_STRING nameW;
+    DWORD total_size;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    static const int info_size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
+
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+
+    RtlInitAnsiString( &nameA, name );
+    if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+        return RtlNtStatusToDosError(status);
+
+    status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                              buffer, sizeof(buffer), &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
+
+    /* we need to fetch the contents for a string type even if not requested,
+     * because we need to compute the length of the ASCII string. */
+    if (data || is_string(info->Type))
+    {
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
+        {
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+            {
+                status = STATUS_NO_MEMORY;
+                goto done;
+            }
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
+            status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                      buf_ptr, total_size, &total_size );
+        }
+
+        if (!status)
+        {
+            if (is_string(info->Type))
+            {
+                DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info_size),
+                                                 (total_size - info_size) /sizeof(WCHAR),
+                                                 NULL, 0, NULL, NULL );
+                if (data && len)
+                {
+                    if (len > *count) status = STATUS_BUFFER_OVERFLOW;
+                    else
+                    {
+                        WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info_size),
+                                             (total_size - info_size) /sizeof(WCHAR),
+                                             data, len, NULL, NULL );
+                        /* if the type is REG_SZ and data is not 0-terminated
+                         * and there is enough space in the buffer NT appends a \0 */
+                        if (len < *count && data[len-1]) data[len] = 0;
+                    }
+                }
+                total_size = len + info_size;
+            }
+            else if (data)
+            {
+                if (total_size - info_size > *count) status = STATUS_BUFFER_OVERFLOW;
+                else memcpy( data, buf_ptr + info_size, total_size - info_size );
+            }
+        }
+        else if (status != STATUS_BUFFER_OVERFLOW) goto done;
+    }
+
+    if (type) *type = info->Type;
+    if (count) *count = total_size - info_size;
+
+ done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    RtlFreeUnicodeString( &nameW );
+    return RtlNtStatusToDosError(status);
+}
+
+
+/******************************************************************************
+ *           VMM_RegQueryValueA
+ */
+static DWORD VMM_RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
+{
+    DWORD ret;
+    HKEY subkey = hkey;
+
+    if (name && name[0])
+    {
+        if ((ret = VMM_RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, &subkey )) != ERROR_SUCCESS)
+            return ret;
+    }
+    ret = VMM_RegQueryValueExA( subkey, NULL, NULL, NULL, (LPBYTE)data, count );
+    if (subkey != hkey) NtClose( subkey );
+    if (ret == ERROR_FILE_NOT_FOUND)
+    {
+        /* return empty string if default value not found */
+        if (data) *data = 0;
+        if (count) *count = 1;
+        ret = ERROR_SUCCESS;
+    }
+    return ret;
+}
+
+
+/******************************************************************************
+ *           VMM_RegEnumValueA
+ */
+static DWORD VMM_RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
+                                LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
+{
+    NTSTATUS status;
+    DWORD total_size;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+    static const int info_size = offsetof( KEY_VALUE_FULL_INFORMATION, Name );
+
+    TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
+          hkey, index, value, val_count, reserved, type, data, count );
+
+    /* NT only checks count, not val_count */
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+
+    total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
+    if (data) total_size += *count;
+    total_size = min( sizeof(buffer), total_size );
+
+    status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                  buffer, total_size, &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
+
+    /* we need to fetch the contents for a string type even if not requested,
+     * because we need to compute the length of the ASCII string. */
+    if (value || data || is_string(info->Type))
+    {
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
+        {
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                          buf_ptr, total_size, &total_size );
+        }
+
+        if (status) goto done;
+
+        if (is_string(info->Type))
+        {
+            DWORD len;
+            RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->DataOffset),
+                                       total_size - info->DataOffset );
+            if (data && len)
+            {
+                if (len > *count) status = STATUS_BUFFER_OVERFLOW;
+                else
+                {
+                    RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
+                                            total_size - info->DataOffset );
+                    /* if the type is REG_SZ and data is not 0-terminated
+                     * and there is enough space in the buffer NT appends a \0 */
+                    if (len < *count && data[len-1]) data[len] = 0;
+                }
+            }
+            info->DataLength = len;
+        }
+        else if (data)
+        {
+            if (total_size - info->DataOffset > *count) status = STATUS_BUFFER_OVERFLOW;
+            else memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+        }
+
+        if (value && !status)
+        {
+            DWORD len;
+
+            RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
+            if (len >= *val_count)
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+                if (*val_count)
+                {
+                    len = *val_count - 1;
+                    RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
+                    value[len] = 0;
+                }
+            }
+            else
+            {
+                RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
+                value[len] = 0;
+                *val_count = len;
+            }
+        }
+    }
+    else status = STATUS_SUCCESS;
+
+    if (type) *type = info->Type;
+    if (count) *count = info->DataLength;
+
+ done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError(status);
+}
+
+
+/******************************************************************************
+ *           VMM_RegEnumKeyA
+ */
+static DWORD VMM_RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
+{
+    NTSTATUS status;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_NODE_INFORMATION *info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD total_size;
+
+    status = NtEnumerateKey( hkey, index, KeyNodeInformation,
+                             buffer, sizeof(buffer), &total_size );
+
+    while (status == STATUS_BUFFER_OVERFLOW)
+    {
+        /* retry with a dynamically allocated buffer */
+        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+        if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        info = (KEY_NODE_INFORMATION *)buf_ptr;
+        status = NtEnumerateKey( hkey, index, KeyNodeInformation,
+                                 buf_ptr, total_size, &total_size );
+    }
+
+    if (!status)
+    {
+        DWORD len;
+
+        RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
+        if (len >= name_len) status = STATUS_BUFFER_OVERFLOW;
+        else
+        {
+            RtlUnicodeToMultiByteN( name, len, NULL, info->Name, info->NameLength );
+            name[len] = 0;
+        }
+    }
+
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError( status );
+}
+
+
+/******************************************************************************
+ *           VMM_RegQueryInfoKeyA
+ *
+ * NOTE: This VxDCall takes only a subset of the parameters that the
+ * corresponding Win32 API call does. The implementation in Win95
+ * ADVAPI32 sets all output parameters not mentioned here to zero.
+ */
+static DWORD VMM_RegQueryInfoKeyA( HKEY hkey, LPDWORD subkeys, LPDWORD max_subkey,
+                                   LPDWORD values, LPDWORD max_value, LPDWORD max_data )
+{
+    NTSTATUS status;
+    KEY_FULL_INFORMATION info;
+    DWORD total_size;
+
+    status = NtQueryKey( hkey, KeyFullInformation, &info, sizeof(info), &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) return RtlNtStatusToDosError( status );
+
+    if (subkeys) *subkeys = info.SubKeys;
+    if (max_subkey) *max_subkey = info.MaxNameLen;
+    if (values) *values = info.Values;
+    if (max_value) *max_value = info.MaxValueNameLen;
+    if (max_data) *max_data = info.MaxValueDataLen;
+    return ERROR_SUCCESS;
+}
+
+
 /***********************************************************************
  *           VxDCall_VMM
  */
@@ -574,7 +1027,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         LPHKEY  retkey     = (LPHKEY)stack32_pop( context );
-        return RegOpenKeyA( hkey, lpszSubKey, retkey );
+        return VMM_RegOpenKeyExA( hkey, lpszSubKey, 0, KEY_ALL_ACCESS, retkey );
     }
 
     case 0x0012:  /* RegCreateKey */
@@ -582,20 +1035,20 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         LPHKEY  retkey     = (LPHKEY)stack32_pop( context );
-        return RegCreateKeyA( hkey, lpszSubKey, retkey );
+        return VMM_RegCreateKeyA( hkey, lpszSubKey, retkey );
     }
 
     case 0x0013:  /* RegCloseKey */
     {
         HKEY    hkey       = (HKEY)stack32_pop( context );
-        return RegCloseKey( hkey );
+        return VMM_RegCloseKey( hkey );
     }
 
     case 0x0014:  /* RegDeleteKey */
     {
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
-        return RegDeleteKeyA( hkey, lpszSubKey );
+        return VMM_RegDeleteKeyA( hkey, lpszSubKey );
     }
 
     case 0x0015:  /* RegSetValue */
@@ -605,14 +1058,14 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         DWORD   dwType     = (DWORD) stack32_pop( context );
         LPCSTR  lpszData   = (LPCSTR)stack32_pop( context );
         DWORD   cbData     = (DWORD) stack32_pop( context );
-        return RegSetValueA( hkey, lpszSubKey, dwType, lpszData, cbData );
+        return VMM_RegSetValueA( hkey, lpszSubKey, dwType, lpszData, cbData );
     }
 
     case 0x0016:  /* RegDeleteValue */
     {
         HKEY    hkey       = (HKEY) stack32_pop( context );
         LPSTR   lpszValue  = (LPSTR)stack32_pop( context );
-        return RegDeleteValueA( hkey, lpszValue );
+        return VMM_RegDeleteValueA( hkey, lpszValue );
     }
 
     case 0x0017:  /* RegQueryValue */
@@ -621,7 +1074,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPSTR   lpszSubKey = (LPSTR)  stack32_pop( context );
         LPSTR   lpszData   = (LPSTR)  stack32_pop( context );
         LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
-        return RegQueryValueA( hkey, lpszSubKey, lpszData, lpcbData );
+        return VMM_RegQueryValueA( hkey, lpszSubKey, lpszData, lpcbData );
     }
 
     case 0x0018:  /* RegEnumKey */
@@ -630,7 +1083,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         DWORD   iSubkey    = (DWORD)stack32_pop( context );
         LPSTR   lpszName   = (LPSTR)stack32_pop( context );
         DWORD   lpcchName  = (DWORD)stack32_pop( context );
-        return RegEnumKeyA( hkey, iSubkey, lpszName, lpcchName );
+        return VMM_RegEnumKeyA( hkey, iSubkey, lpszName, lpcchName );
     }
 
     case 0x0019:  /* RegEnumValue */
@@ -643,8 +1096,8 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPDWORD lpdwType   = (LPDWORD)stack32_pop( context );
         LPBYTE  lpbData    = (LPBYTE) stack32_pop( context );
         LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
-        return RegEnumValueA( hkey, iValue, lpszValue, lpcchValue,
-                              lpReserved, lpdwType, lpbData, lpcbData );
+        return VMM_RegEnumValueA( hkey, iValue, lpszValue, lpcchValue,
+                                  lpReserved, lpdwType, lpbData, lpcbData );
     }
 
     case 0x001A:  /* RegQueryValueEx */
@@ -655,8 +1108,8 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPDWORD lpdwType   = (LPDWORD)stack32_pop( context );
         LPBYTE  lpbData    = (LPBYTE) stack32_pop( context );
         LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
-        return RegQueryValueExA( hkey, lpszValue, lpReserved,
-                                 lpdwType, lpbData, lpcbData );
+        return VMM_RegQueryValueExA( hkey, lpszValue, lpReserved,
+                                     lpdwType, lpbData, lpcbData );
     }
 
     case 0x001B:  /* RegSetValueEx */
@@ -667,14 +1120,15 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         DWORD   dwType     = (DWORD) stack32_pop( context );
         LPBYTE  lpbData    = (LPBYTE)stack32_pop( context );
         DWORD   cbData     = (DWORD) stack32_pop( context );
-        return RegSetValueExA( hkey, lpszValue, dwReserved,
-                               dwType, lpbData, cbData );
+        return VMM_RegSetValueExA( hkey, lpszValue, dwReserved,
+                                   dwType, lpbData, cbData );
     }
 
     case 0x001C:  /* RegFlushKey */
     {
-        HKEY    hkey       = (HKEY)stack32_pop( context );
-        return RegFlushKey( hkey );
+        HKEY hkey = (HKEY)stack32_pop( context );
+        FIXME( "RegFlushKey(%x): stub\n", hkey );
+        return ERROR_SUCCESS;
     }
 
     case 0x001D:  /* RegQueryInfoKey */
@@ -689,9 +1143,8 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPDWORD lpcValues         = (LPDWORD)stack32_pop( context );
         LPDWORD lpcchMaxValueName = (LPDWORD)stack32_pop( context );
         LPDWORD lpcchMaxValueData = (LPDWORD)stack32_pop( context );
-        return RegQueryInfoKeyA( hkey, NULL, NULL, NULL, lpcSubKeys, lpcchMaxSubKey,
-                                 NULL, lpcValues, lpcchMaxValueName, lpcchMaxValueData,
-                                 NULL, NULL );
+        return VMM_RegQueryInfoKeyA( hkey, lpcSubKeys, lpcchMaxSubKey,
+                                     lpcValues, lpcchMaxValueName, lpcchMaxValueData );
     }
 
     case 0x0021:  /* RegLoadKey */
@@ -699,14 +1152,16 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         LPCSTR  lpszFile   = (LPCSTR)stack32_pop( context );
-        return RegLoadKeyA( hkey, lpszSubKey, lpszFile );
+        FIXME("RegLoadKey(%x,%s,%s): stub\n",hkey, debugstr_a(lpszSubKey), debugstr_a(lpszFile));
+        return ERROR_SUCCESS;
     }
 
     case 0x0022:  /* RegUnLoadKey */
     {
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
-        return RegUnLoadKeyA( hkey, lpszSubKey );
+        FIXME("RegUnLoadKey(%x,%s): stub\n",hkey, debugstr_a(lpszSubKey));
+        return ERROR_SUCCESS;
     }
 
     case 0x0023:  /* RegSaveKey */
@@ -714,7 +1169,8 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszFile   = (LPCSTR)stack32_pop( context );
         LPSECURITY_ATTRIBUTES sa = (LPSECURITY_ATTRIBUTES)stack32_pop( context );
-        return RegSaveKeyA( hkey, lpszFile, sa );
+        FIXME("RegSaveKey(%x,%s,%p): stub\n",hkey, debugstr_a(lpszFile),sa);
+        return ERROR_SUCCESS;
     }
 
 #if 0 /* Functions are not yet implemented in misc/registry.c */
@@ -728,8 +1184,11 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         LPCSTR  lpszNewFile= (LPCSTR)stack32_pop( context );
         LPCSTR  lpszOldFile= (LPCSTR)stack32_pop( context );
-        return RegReplaceKeyA( hkey, lpszSubKey, lpszNewFile, lpszOldFile );
+        FIXME("RegReplaceKey(%x,%s,%s,%s): stub\n", hkey, debugstr_a(lpszSubKey),
+              debugstr_a(lpszNewFile),debugstr_a(lpszOldFile));
+        return ERROR_SUCCESS;
     }
+
     case 0x0000: /* PageReserve */
       {
 	LPVOID address;
