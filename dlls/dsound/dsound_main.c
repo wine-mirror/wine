@@ -641,11 +641,23 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 
 	/* Set default wave format (may need it for waveOutOpen) */
 	(*ippDS)->wfx.wFormatTag	= WAVE_FORMAT_PCM;
-	(*ippDS)->wfx.nChannels		= 2;
+	/* default to stereo, if the sound card can do it */
+	if (wcaps.wChannels > 1)
+		(*ippDS)->wfx.nChannels		= 2;
+	else
+		(*ippDS)->wfx.nChannels		= 1;
+	/* default to 8, if the sound card can do it */
+	if (wcaps.dwFormats & (WAVE_FORMAT_4M08 | WAVE_FORMAT_2M08 | WAVE_FORMAT_1M08 |
+			       WAVE_FORMAT_4S08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_1S08)) {
+		(*ippDS)->wfx.wBitsPerSample	= 8;
+		(*ippDS)->wfx.nBlockAlign	= 1 * (*ippDS)->wfx.nChannels;
+	} else {
+		/* it's probably a 16-bit-only card */
+		(*ippDS)->wfx.wBitsPerSample	= 16;
+		(*ippDS)->wfx.nBlockAlign	= 2 * (*ippDS)->wfx.nChannels;
+	}
 	(*ippDS)->wfx.nSamplesPerSec	= 22050;
-	(*ippDS)->wfx.nAvgBytesPerSec	= 44100;
-	(*ippDS)->wfx.nBlockAlign	= 2;
-	(*ippDS)->wfx.wBitsPerSample	= 8;
+	(*ippDS)->wfx.nAvgBytesPerSec	= 22050 * (*ippDS)->wfx.nBlockAlign;
 
 	/* If the driver requests being opened through MMSYSTEM
 	 * (which is recommended by the DDK), it is supposed to happen
