@@ -582,7 +582,7 @@ else {
     case 0x11: /* TEXT MODE CHARGEN */
         /* Note that second subfunction is *almost* identical. */
         /* See INTERRUPT.A for details. */
-        switch AH_reg(context) {
+        switch AL_reg(context) {
         case 0x00: /* LOAD USER SPECIFIED PATTERNS */
         case 0x10:
             FIXME(int10, "Load User Specified Patterns - Not Supported\n");
