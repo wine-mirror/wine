@@ -137,6 +137,8 @@ static int set_process_console( struct process *process, struct process *parent,
         req->hstderr = alloc_handle( process, process->console_out,
                                      GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
     }
+    /* some handles above may have been invalid; this is not an error */
+    if (get_error() == STATUS_INVALID_HANDLE) clear_error();
     return 1;
 }
 
@@ -165,6 +167,8 @@ struct thread *create_process( int fd )
     process->console_in      = NULL;
     process->console_out     = NULL;
     process->init_event      = NULL;
+    process->idle_event      = NULL;
+    process->queue           = NULL;
     process->ldt_copy        = NULL;
     process->ldt_flags       = NULL;
     process->exe.next        = NULL;
@@ -282,6 +286,8 @@ static void process_destroy( struct object *obj )
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
     if (process->init_event) release_object( process->init_event );
+    if (process->idle_event) release_object( process->idle_event );
+    if (process->queue) release_object( process->queue );
     if (process->exe.file) release_object( process->exe.file );
 }
 
@@ -813,6 +819,7 @@ DECL_HANDLER(init_process_done)
     set_event( process->init_event );
     release_object( process->init_event );
     process->init_event = NULL;
+    if (req->gui) process->idle_event = create_event( NULL, 0, 1, 0 );
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
     req->debugged = (current->process->debugger != 0);
 }
@@ -918,4 +925,20 @@ DECL_HANDLER(load_dll)
 DECL_HANDLER(unload_dll)
 {
     process_unload_dll( current->process, req->base );
+}
+
+/* wait for a process to start waiting on input */
+/* FIXME: only returns event for now, wait is done in the client */
+DECL_HANDLER(wait_input_idle)
+{
+    struct process *process;
+
+    req->event = -1;
+    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
+    {
+        if (process->idle_event && process != current->process && process->queue != current->queue)
+            req->event = alloc_handle( current->process, process->idle_event,
+                                       EVENT_ALL_ACCESS, 0 );
+        release_object( process );
+    }
 }

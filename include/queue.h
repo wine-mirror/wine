@@ -90,7 +90,7 @@ typedef struct tagMESSAGEQUEUE
   HQUEUE16  next;                   /* Next queue */
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   TEB*      teb;                    /* Thread owning queue */
-  HANDLE  hEvent;                 /* Event handle */
+  HANDLE    server_queue;           /* Handle to server-side queue */
   CRITICAL_SECTION cSection;        /* Queue access critical section */
 
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */

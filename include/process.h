@@ -91,8 +91,6 @@ typedef struct _PDB
     HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
     WORD             winver;           /*    Windows version figured out by VERSION_GetVersion */
     struct _SERVICETABLE *service_table; /*  Service table for service thread */
-    HANDLE           idle_event;       /* event to signal, when the process is idle */
-    HANDLE16         main_queue;       /* main message queue of the process */ 
 } PDB;
 
 /* Process flags */

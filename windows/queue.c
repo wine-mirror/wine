@@ -20,12 +20,12 @@
 #include "hook.h"
 #include "heap.h"
 #include "thread.h"
-#include "process.h"
 #include "debugtools.h"
+#include "server.h"
 #include "spy.h"
 
-DECLARE_DEBUG_CHANNEL(msg)
-DECLARE_DEBUG_CHANNEL(sendmsg)
+DECLARE_DEBUG_CHANNEL(msg);
+DECLARE_DEBUG_CHANNEL(sendmsg);
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
@@ -342,8 +342,8 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
         if ( --queue->lockCount == 0 )
         {
             DeleteCriticalSection ( &queue->cSection );
-            if (queue->hEvent)
-                CloseHandle( queue->hEvent );
+            if (queue->server_queue)
+                CloseHandle( queue->server_queue );
             GlobalFree16( queue->self );
         }
     
@@ -443,6 +443,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     HQUEUE16 hQueue;
     MESSAGEQUEUE * msgQueue;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    struct get_msg_queue_request *req = get_req_buffer();
 
     TRACE_(msg)("(): Creating message queue...\n");
 
@@ -454,6 +455,15 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     if ( !msgQueue )
         return 0;
 
+    if (server_call( REQ_GET_MSG_QUEUE ))
+    {
+        ERR_(msg)("Cannot get thread queue");
+        GlobalFree16( hQueue );
+        return 0;
+    }
+    msgQueue->server_queue = req->handle;
+    msgQueue->server_queue = ConvertToGlobalHandle( msgQueue->server_queue );
+
     msgQueue->self        = hQueue;
     msgQueue->wakeBits    = msgQueue->changeBits = 0;
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
@@ -461,22 +471,6 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     InitializeCriticalSection( &msgQueue->cSection );
     MakeCriticalSectionGlobal( &msgQueue->cSection );
 
-    /* Create an Event object for waiting on message, used by win32 thread
-       only */
-    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
-    {
-        msgQueue->hEvent = CreateEventA( NULL, FALSE, FALSE, NULL);
-
-        if (msgQueue->hEvent == 0)
-        {
-            WARN_(msg)("CreateEventA is not able to create an event object");
-            return 0;
-        }
-        msgQueue->hEvent = ConvertToGlobalHandle( msgQueue->hEvent );
-    }
-    else
-        msgQueue->hEvent = 0;
-         
     msgQueue->lockCount = 1;
     msgQueue->magic = QUEUE_MAGIC;
     
@@ -645,7 +639,10 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         }
         else
         {
-            SetEvent( queue->hEvent );
+            struct wake_queue_request *req = get_req_buffer();
+            req->handle = queue->server_queue;
+            req->bits   = bit;
+            server_call( REQ_WAKE_QUEUE );
         }
     }
 }
@@ -675,7 +672,6 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
     MESSAGEQUEUE *queue;
     DWORD curTime = 0;
     HQUEUE16 hQueue;
-    PDB * pdb;
 
     TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
 
@@ -685,8 +681,6 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
     hQueue = GetFastQueue16();
     if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return 0;
     
-    pdb = PROCESS_Current();
-
     for (;;)
     {
         if (queue->changeBits & bits)
@@ -724,22 +718,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 	        ReleaseThunkLock( &dwlc );
 	    }
 
-
-	    if ( pdb->main_queue == INVALID_HANDLE_VALUE16 ) 
-	    {
-	        pdb->main_queue = hQueue;
-	    }
-	    if ( pdb->main_queue == hQueue ) 
-	    {
-	        SetEvent ( pdb->idle_event );
-	    }
-
-	    WaitForSingleObject( queue->hEvent, timeout );
-
-	    if ( pdb->main_queue == hQueue ) 
-	    {
-	        ResetEvent ( pdb->idle_event );
-	    }
+	    WaitForSingleObject( queue->server_queue, timeout );
 
 	    if ( bHasWin16Lock ) 
 	    {
@@ -748,8 +727,6 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
         }
         else
         {
-	    SetEvent ( pdb->idle_event );
-
             if ( timeout == INFINITE )
                 WaitEvent16( 0 );  /* win 16 thread, use WaitEvent */
             else
@@ -1522,34 +1499,21 @@ BOOL16 WINAPI GetInputState16(void)
  */
 DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 {
-  PDB * pdb;
-  DWORD cur_time, ret, pid = MapProcessHandle ( hProcess );
+    DWORD cur_time, ret;
+    HANDLE idle_event;
+    struct wait_input_idle_request *req = get_req_buffer();
 
-  /* Check whether the calling process is a command line application */
-  if (!THREAD_IsWin16(NtCurrentTeb() ) &&
-      (PROCESS_Current()->flags & PDB32_CONSOLE_PROC))
-  {
-    TRACE_(msg)("not a win32 GUI application!\n" );
-    return 0; 
-  }
-  
-  if (!(pdb = PROCESS_IdToPDB( pid ))) return 0;
-
-  /* check whether we are waiting for a win32 process or the win16 subsystem */
-  if ( pdb->flags & PDB32_WIN16_PROC ) {
-    if ( THREAD_IsWin16(NtCurrentTeb()) ) return 0;
-  }
-    else { /* target is win32 */
-    if ( pdb->flags & PDB32_CONSOLE_PROC ) return 0;
-    if ( GetFastQueue16() == pdb->main_queue ) return 0;
-  }
+    req->handle = hProcess;
+    req->timeout = dwTimeOut;
+    if (server_call( REQ_WAIT_INPUT_IDLE )) return 0xffffffff;
+    if ((idle_event = req->event) == -1) return 0;  /* no event to wait on */
 
   cur_time = GetTickCount();
   
-  TRACE_(msg)("waiting for %x\n", pdb->idle_event );
+  TRACE_(msg)("waiting for %x\n", idle_event );
   while ( dwTimeOut > GetTickCount() - cur_time || dwTimeOut == INFINITE ) {
 
-    ret = MsgWaitForMultipleObjects ( 1, &pdb->idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
+    ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
     if ( ret == ( WAIT_OBJECT_0 + 1 )) {
       MESSAGEQUEUE * queue;
       if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0xFFFFFFFF;

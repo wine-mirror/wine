@@ -170,6 +170,7 @@ struct init_process_done_request
 {
     IN  void*        module;       /* main module base address */
     IN  void*        entry;        /* process entry point */
+    IN  int          gui;          /* is it a GUI process? */
     OUT int          debugged;     /* being debugged? */
 };
 
@@ -1147,6 +1148,29 @@ struct get_atom_name_request
     OUT WCHAR        name[1];      /* atom name */
 };
 
+
+/* Get the message queue of the current thread */
+struct get_msg_queue_request
+{
+    OUT int          handle;       /* handle to the queue */
+};
+
+/* Wake up a message queue */
+struct wake_queue_request
+{
+    IN  int          handle;       /* handle to the queue */
+    IN  unsigned int bits;         /* wake bits */
+};
+
+/* Wait for a process to start waiting on input */
+struct wait_input_idle_request
+{
+    IN  int          handle;       /* process handle */
+    IN  int          timeout;      /* timeout */
+    OUT int          event;        /* handle to idle event */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1255,10 +1279,13 @@ enum request
     REQ_DELETE_ATOM,
     REQ_FIND_ATOM,
     REQ_GET_ATOM_NAME,
+    REQ_GET_MSG_QUEUE,
+    REQ_WAKE_QUEUE,
+    REQ_WAIT_INPUT_IDLE,
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 12
+#define SERVER_PROTOCOL_VERSION 13
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

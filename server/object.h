@@ -72,6 +72,14 @@ struct object
 #endif
 };
 
+struct wait_queue_entry
+{
+    struct wait_queue_entry *next;
+    struct wait_queue_entry *prev;
+    struct object           *obj;
+    struct thread           *thread;
+};
+
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops, int fd );

@@ -22,6 +22,7 @@ C_SRCS = \
 	pipe.c \
 	process.c \
 	ptrace.c \
+	queue.c \
 	registry.c \
 	request.c \
 	select.c \

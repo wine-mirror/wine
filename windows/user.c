@@ -210,9 +210,7 @@ void WINAPI FinalUserInit16( void )
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule )
 {
-    static HANDLE win16_idle_event;
     HINSTANCE16 hInst;
-    PDB * pdb;
 
     /* FIXME: Proper reaction to most signals still missing. */
 
@@ -239,32 +237,12 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
         break;
 
     case USIG_PROCESS_CREATE:
-      pdb = PROCESS_Current();
-
-      /* Create the idle event for the process. We have just one idle_event for all
-	 win16 processes, while each win32 process has its own */
-
-      if ( pdb->flags & PDB32_WIN16_PROC )
-      {
-          if (!win16_idle_event)
-          {
-              win16_idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
-              win16_idle_event = ConvertToGlobalHandle ( win16_idle_event );
-          }
-          pdb->idle_event = win16_idle_event;
-      }
-      else { /* win32 process */
-	pdb->idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
-        pdb->idle_event = ConvertToGlobalHandle ( pdb->idle_event );
-	TRACE_(win)("created win32 idle event: %x\n", pdb->idle_event );
-      }
       break;
 
     case USIG_PROCESS_INIT:
     case USIG_PROCESS_LOADED:
       break;
     case USIG_PROCESS_RUNNING:
-	SetEvent ( PROCESS_Current()->idle_event );
         break;
 
     case USIG_PROCESS_EXIT:
@@ -273,12 +251,6 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
     case USIG_PROCESS_DESTROY:      
       hInst = ((TDB *)GlobalLock16( GetCurrentTask() ))->hInstance;
       USER_AppExit( hInst );
-
-      pdb = PROCESS_Current();
-      if ( ! (pdb->flags & PDB32_WIN16_PROC) ) {
-	TRACE_(win)("destroying win32 idle event: %x\n", pdb->idle_event );
-	CloseHandle ( pdb->idle_event );	
-      }
       break;
 
     default:

@@ -13,6 +13,8 @@
 
 #include "object.h"
 
+struct msg_queue;
+
 /* process structures */
 
 struct process_dll
@@ -45,6 +47,8 @@ struct process
     struct object       *console_in;      /* console input */
     struct object       *console_out;     /* console output */
     struct event        *init_event;      /* event for init done */
+    struct event        *idle_event;      /* event for input idle */
+    struct msg_queue    *queue;           /* main message queue */
     struct process_dll   exe;             /* main exe file */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */

@@ -23,7 +23,6 @@
 #include "queue.h"
 #include "winproc.h"
 #include "task.h"
-#include "process.h"
 #include "selectors.h"
 #include "thread.h"
 #include "options.h"
@@ -31,9 +30,9 @@
 #include "struct32.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(msg)
-DECLARE_DEBUG_CHANNEL(key)
-DECLARE_DEBUG_CHANNEL(sendmsg)
+DEFAULT_DEBUG_CHANNEL(msg);
+DECLARE_DEBUG_CHANNEL(key);
+DECLARE_DEBUG_CHANNEL(sendmsg);
 
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
@@ -1952,7 +1951,6 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     DWORD i;
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
     DWORD ret;
-    PDB * pdb = PROCESS_Current();
 
     HQUEUE16 hQueue = GetFastQueue16();
     MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
@@ -1988,7 +1986,6 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
 	/*
 	 * Check the handles in the list.
 	 */
-	SetEvent ( pdb->idle_event );
 	ret = WaitForMultipleObjects(nCount, pHandles, fWaitAll, 5L);
 
 	/*
@@ -2020,18 +2017,11 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     {
     /* Add the thread event to the handle list */
       for (i = 0; i < nCount; i++)
-	handles[i] = pHandles[i];
-      handles[nCount] = msgQueue->hEvent;
-
-      if ( pdb->main_queue == INVALID_HANDLE_VALUE16 ) pdb->main_queue = hQueue;
-      if ( pdb->main_queue == hQueue ) SetEvent ( pdb->idle_event );
+ 	handles[i] = pHandles[i];
+      handles[nCount] = msgQueue->server_queue;
       ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
-      if ( pdb->main_queue == hQueue ) ResetEvent ( pdb->idle_event );
-
     } 
-
     QUEUE_Unlock( msgQueue );
-    
     return ret;
 }
 

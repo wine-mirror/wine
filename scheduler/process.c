@@ -187,7 +187,6 @@ BOOL PROCESS_Init(void)
     pdb->group                  = pdb;
     pdb->priority               = 8;  /* Normal */
     pdb->winver                 = 0xffff; /* to be determined */
-    pdb->main_queue             = INVALID_HANDLE_VALUE16;
     initial_envdb.startup_info  = &initial_startup;
 
     /* Setup the server connection */
@@ -217,14 +216,6 @@ BOOL PROCESS_Init(void)
     /* Create the system and process heaps */
     if (!HEAP_CreateSystemHeap()) return FALSE;
     pdb->heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
-
-    /* Create the idle event for the initial process
-       FIXME 1: Shouldn't we call UserSignalProc for the initial process too?
-       FIXME 2: It seems to me that the initial pdb becomes never freed, so I don't now
-                where to release the idle event for the initial process.
-    */
-    pdb->idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
-    pdb->idle_event = ConvertToGlobalHandle ( pdb->idle_event );
 
     /* Copy the parent environment */
     if (!ENV_BuildEnvironment()) return FALSE;
@@ -332,7 +323,7 @@ static void start_process(void)
     __TRY
     {
         struct init_process_done_request *req = get_req_buffer();
-        int debugged;
+        int debugged, console_app;
         HMODULE16 hModule16;
         UINT cmdShow = SW_SHOWNORMAL;
         LPTHREAD_START_ROUTINE entry;
@@ -347,6 +338,7 @@ static void start_process(void)
 
         /* Retrieve entry point address */
         entry = (LPTHREAD_START_ROUTINE)RVA_PTR( module, OptionalHeader.AddressOfEntryPoint );
+        console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
         /* Create 16-bit dummy module */
         if ((hModule16 = MODULE_CreateDummyModule( pdb->exe_modref->filename, module )) < 32)
@@ -358,12 +350,12 @@ static void start_process(void)
                           NtCurrentTeb(), NULL, 0 ))
             goto error;
 
-        if (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-            pdb->flags |= PDB32_CONSOLE_PROC;
+        if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
 
         /* Signal the parent process to continue */
         req->module = (void *)module;
         req->entry  = entry;
+        req->gui    = !console_app;
         server_call( REQ_INIT_PROCESS_DONE );
         debugged = req->debugged;
 
@@ -376,8 +368,7 @@ static void start_process(void)
         LeaveCriticalSection( &pdb->crit_section );
 
         /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
-        if (pdb->flags & PDB32_CONSOLE_PROC)
-            PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+        if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
         TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
         if (debugged) DbgBreakPoint();

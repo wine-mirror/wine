@@ -284,7 +284,8 @@ static void dump_init_process_reply( const struct init_process_request *req )
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
     fprintf( stderr, " module=%p,", req->module );
-    fprintf( stderr, " entry=%p", req->entry );
+    fprintf( stderr, " entry=%p,", req->entry );
+    fprintf( stderr, " gui=%d", req->gui );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_request *req )
@@ -1333,6 +1334,32 @@ static void dump_get_atom_name_reply( const struct get_atom_name_request *req )
     dump_unicode_string( req, req->name );
 }
 
+static void dump_get_msg_queue_request( const struct get_msg_queue_request *req )
+{
+}
+
+static void dump_get_msg_queue_reply( const struct get_msg_queue_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_wake_queue_request( const struct wake_queue_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " bits=%08x", req->bits );
+}
+
+static void dump_wait_input_idle_request( const struct wait_input_idle_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " timeout=%d", req->timeout );
+}
+
+static void dump_wait_input_idle_reply( const struct wait_input_idle_request *req )
+{
+    fprintf( stderr, " event=%d", req->event );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_wait_process_request,
@@ -1437,6 +1464,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_delete_atom_request,
     (dump_func)dump_find_atom_request,
     (dump_func)dump_get_atom_name_request,
+    (dump_func)dump_get_msg_queue_request,
+    (dump_func)dump_wake_queue_request,
+    (dump_func)dump_wait_input_idle_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1543,6 +1573,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_find_atom_reply,
     (dump_func)dump_get_atom_name_reply,
+    (dump_func)dump_get_msg_queue_reply,
+    (dump_func)0,
+    (dump_func)dump_wait_input_idle_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1649,6 +1682,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "delete_atom",
     "find_atom",
     "get_atom_name",
+    "get_msg_queue",
+    "wake_queue",
+    "wait_input_idle",
 };
 
 /* ### make_requests end ### */

@@ -34,14 +34,6 @@
 
 /* thread queues */
 
-struct wait_queue_entry
-{
-    struct wait_queue_entry *next;
-    struct wait_queue_entry *prev;
-    struct object           *obj;
-    struct thread           *thread;
-};
-
 struct thread_wait
 {
     int                     count;      /* count of objects */
@@ -131,6 +123,7 @@ struct thread *create_thread( int fd, struct process *process )
     thread->mutex       = NULL;
     thread->debug_ctx   = NULL;
     thread->debug_event = NULL;
+    thread->queue       = NULL;
     thread->info        = NULL;
     thread->wait        = NULL;
     thread->apc         = NULL;
@@ -196,6 +189,7 @@ static void destroy_thread( struct object *obj )
     else first_thread = thread->next;
     if (thread->apc) free( thread->apc );
     if (thread->info) release_object( thread->info );
+    if (thread->queue) release_object( thread->queue );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
     if (thread->pass_fd != -1) close( thread->pass_fd );
 }
