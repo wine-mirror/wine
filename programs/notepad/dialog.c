@@ -55,7 +55,7 @@ void AlertFileNotFound(LPSTR szFileName) {
 
    /* Load and format szMessage */
    LoadString(Globals.hInstance, IDS_NOTFOUND, szRessource, sizeof(szRessource));
-   wvsprintf(szMessage, szRessource, szFileName);
+   wsprintf(szMessage, szRessource, szFileName);
    
    /* Load szCaption */
    LoadString(Globals.hInstance, IDS_ERROR,  szRessource, sizeof(szRessource));
@@ -74,7 +74,7 @@ int AlertFileNotSaved(LPSTR szFileName) {
    /* Load and format Message */
 
    LoadString(Globals.hInstance, IDS_NOTSAVED, szRessource, sizeof(szRessource));
-   wvsprintf(szMessage, szRessource, szFileName);
+   wsprintf(szMessage, szRessource, szFileName);
    
    /* Load Caption */
 
@@ -146,19 +146,12 @@ BOOL DoCloseFile(void) {
 
 void DoOpenFile(LPCSTR szFileName) {
 
-    int  hFile;
-    WORD nResult;
-
     /* Close any files and prompt to save changes */
     if (DoCloseFile()) {
         GetFileTitle(szFileName, Globals.szFileName, sizeof(Globals.szFileName));
         LANGUAGE_UpdateWindowCaption();
-        hFile = _lopen(szFileName, OF_READ);
-        nResult = _lread(hFile, Globals.Buffer, sizeof(Globals.Buffer));
-        _lclose(hFile);
 
-        /* FIXME: Append time/date if first line contains LOGPREFIX */
-        /* (Globals.Buffer, ) */
+        LoadBufferFromFile(szFileName);
     }
 }
 
@@ -167,7 +160,7 @@ VOID DIALOG_FileNew(VOID)
 {
     /* Close any files and promt to save changes */
     if (DoCloseFile()) {
-        /* do nothing yet */
+        TrashBuffer();
     }
 }
 

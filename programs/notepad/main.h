@@ -55,6 +55,9 @@ extern NOTEPAD_GLOBALS Globals;
 
 /* function prototypes */
 
+void TrashBuffer(void);
+void LoadBufferFromFile(LPCSTR lpFileName);
+
 /* class names */
 
 /* Resource names */
