@@ -150,42 +150,32 @@ void async_add_timeout(struct async *async, int timeout)
 
 DECL_HANDLER(register_async)
 {
-    struct object *obj;
+    struct object *obj = get_handle_obj( current->process, req->handle, 0, NULL);
 
-    if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL)) )
-        return;
-
-    if(obj->ops->queue_async)
+    if ( !(obj) || !obj->ops->queue_async )
     {
-        struct async_queue *q = obj->ops->queue_async(obj, NULL, req->type, 0);
-        struct async *async;
-
-        async = find_async(q, current, req->overlapped);
-        if(req->status==STATUS_PENDING)
-        {
-            if(!async)
-                async = create_async(obj, current, req->overlapped);
-
-            if(async)
-            {
-                async->status = req->status;
-                if(!obj->ops->queue_async(obj, async, req->type, req->count))
-                    destroy_async(async);
-            }
-        }
-        else
-        {
-            if(async)
-                destroy_async(async);
-            else
-                set_error(STATUS_INVALID_PARAMETER);
-        }
-
-        set_select_events(obj,obj->ops->get_poll_events(obj));
-    }
-    else
         set_error(STATUS_INVALID_HANDLE);
+        return;
+    }
 
+/*
+ * The queue_async method must do the following:
+ *
+ * 1. Get the async_queue for the request of given type.
+ * 2. Call find_async() to look for the specific client request in the queue (=> NULL if not found).
+ * 3. If status is STATUS_PENDING:
+ *      a) If no async request found in step 2 (new request): call create_async() to initialize one.
+ *      b) Set request's status to STATUS_PENDING.
+ *      c) If the "queue" field of the async request is NULL: call async_insert() to put it into the queue.
+ *    Otherwise:
+ *      If the async request was found in step 2, destroy it by calling destroy_async().
+ * 4. Carry out any operations necessary to adjust the object's poll events
+ *    Usually: set_elect_events (obj, obj->ops->get_poll_events()).
+ *
+ * See also the implementations in file.c, serial.c, and sock.c.
+*/
+
+    obj->ops->queue_async (obj, req->overlapped, req->status, req->type, req->count);
     release_object(obj);
 }
 

@@ -63,8 +63,8 @@ struct object_ops
     int  (*flush)(struct object *);
     /* get file information */
     int  (*get_file_info)(struct object *,struct get_file_info_reply *, int *flags);
-    /* queue an async operation */
-    struct async_queue* (*queue_async)(struct object *, struct async *async, int type, int count);
+    /* queue an async operation - see register_async handler in async.c*/
+    void (*queue_async)(struct object *, void* ptr, unsigned int status, int type, int count);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };

@@ -51,7 +51,7 @@ static void serial_dump( struct object *obj, int verbose );
 static int serial_get_fd( struct object *obj );
 static int serial_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static int serial_get_poll_events( struct object *obj );
-static struct async_queue * serial_queue_async(struct object *obj, struct async* async, int type, int count);
+static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
 static void destroy_serial(struct object *obj);
 static void serial_poll_event( struct object *obj, int event );
 
@@ -250,24 +250,11 @@ static void serial_poll_event(struct object *obj, int event)
     set_select_events(obj,obj->ops->get_poll_events(obj));
 }
 
-/* 
- * This function is an abuse of overloading that deserves some explanation.
- *
- * It has three purposes:
- *
- * 1. get the queue for a type of async operation
- * 2. requeue an async operation
- * 3. queue a new async operation
- *
- * It is overloaded so that these three functions only take one function pointer
- *  in the object operations list.
- *
- * In all cases, it returns the async queue.
- */
-static struct async_queue *serial_queue_async(struct object *obj, struct async *async, int type, int count)
+static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)
 {
     struct serial *serial = (struct serial *)obj;
     struct async_queue *q;
+    struct async *async;
     int timeout;
 
     assert(obj->ops == &serial_ops);
@@ -288,19 +275,29 @@ static struct async_queue *serial_queue_async(struct object *obj, struct async *
         break;
     default:
         set_error(STATUS_INVALID_PARAMETER);
-        return NULL;
+        return;
     }
 
-    if(async)
+    async = find_async ( q, current, ptr );
+
+    if ( status == STATUS_PENDING )
     {
+        if ( !async )
+            async = create_async ( obj, current, ptr );
+        if ( !async )
+            return;
+
+        async->status = STATUS_PENDING;
         if(!async->q)
         {
             async_add_timeout(async,timeout);
             async_insert(q, async);
+        }
     }
-}
+    else if ( async ) destroy_async ( async );
+    else set_error ( STATUS_INVALID_PARAMETER );
 
-    return q;
+    set_select_events ( obj, serial_get_poll_events ( obj ));
 }
 
 /* create a serial */

@@ -69,7 +69,7 @@ static int file_get_fd( struct object *obj );
 static int file_flush( struct object *obj );
 static int file_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void file_destroy( struct object *obj );
-static struct async_queue * file_queue_async(struct object *obj, struct async* async, int type, int count);
+static void file_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
 
 static const struct object_ops file_ops =
 {
@@ -358,9 +358,10 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply,
     return FD_TYPE_DEFAULT;
 }
 
-static struct async_queue *file_queue_async(struct object *obj, struct async *async, int type, int count)
+static void file_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)
 {
     struct file *file = (struct file *)obj;
+    struct async *async;
     struct async_queue *q;
 
     assert( obj->ops == &file_ops );
@@ -368,7 +369,7 @@ static struct async_queue *file_queue_async(struct object *obj, struct async *as
     if ( !(file->flags & FILE_FLAG_OVERLAPPED) )
     {
         set_error ( STATUS_INVALID_HANDLE );
-        return NULL;
+        return;
     }
 
     switch(type)
@@ -381,13 +382,26 @@ static struct async_queue *file_queue_async(struct object *obj, struct async *as
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
+        return;
     }
 
-    if(async && !async->q)
-        async_insert(q, async);
+    async = find_async ( q, current, ptr );
 
-    return q;
+    if ( status == STATUS_PENDING )
+    {
+        if ( !async )
+            async = create_async ( obj, current, ptr );
+        if ( !async )
+            return;
+
+        async->status = STATUS_PENDING;
+        if ( !async->q )
+            async_insert( q, async );
+    }
+    else if ( async ) destroy_async ( async );
+    else set_error ( STATUS_INVALID_PARAMETER );
+
+    set_select_events ( obj, file_get_poll_events ( obj ));
 }
 
 static void file_destroy( struct object *obj )
