@@ -50,153 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 #define _ICOM_THIS_From_IPropertySetStorage(class, name) \
     class* This = (class*)(((char*)name)-_IPropertySetStorage_Offset)
 
-
-/***********************************************************************
- * Declaration of the functions used in IPropertySetStorage
- */
-
-static HRESULT WINAPI IPropertySetStorage_fnQueryInterface(
-    IPropertySetStorage *ppstg,
-    REFIID riid,
-    void** ppvObject);
-
-static ULONG WINAPI IPropertySetStorage_fnAddRef(
-    IPropertySetStorage *ppstg);
-
-static ULONG WINAPI IPropertySetStorage_fnRelease(
-    IPropertySetStorage *ppstg);
-
-static HRESULT WINAPI IPropertySetStorage_fnCreate(
-    IPropertySetStorage *ppstg,
-    REFFMTID rfmtid,
-    const CLSID* pclsid,
-    DWORD grfFlags,
-    DWORD grfMode,
-    IPropertyStorage** ppprstg);
-
-static HRESULT WINAPI IPropertySetStorage_fnOpen(
-    IPropertySetStorage *ppstg,
-    REFFMTID rfmtid,
-    DWORD grfMode,
-    IPropertyStorage** ppprstg);
-
-static HRESULT WINAPI IPropertySetStorage_fnDelete(
-    IPropertySetStorage *ppstg,
-    REFFMTID rfmtid);
-
-static HRESULT WINAPI IPropertySetStorage_fnEnum(
-    IPropertySetStorage *ppstg,
-    IEnumSTATPROPSETSTG** ppenum);
-
-/***********************************************************************
- * Declaration of the functions used in IPropertyStorage
- */
-
-static HRESULT WINAPI IPropertyStorage_fnQueryInterface(
-    IPropertyStorage *ppstg,
-    REFIID riid,
-    void** ppvObject);
-
-static ULONG WINAPI IPropertyStorage_fnAddRef(
-    IPropertyStorage *ppstg);
-
-static ULONG WINAPI IPropertyStorage_fnRelease(
-    IPropertyStorage *ppstg);
-
-static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
-    IPropertyStorage* This,
-    ULONG cpspec,
-    const PROPSPEC rgpspec[],
-    PROPVARIANT rgpropvar[]);
-
-static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
-    IPropertyStorage* This,
-    ULONG cpspec,
-    const PROPSPEC rgpspec[],
-    const PROPVARIANT rgpropvar[],
-    PROPID propidNameFirst);
-
-static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
-    IPropertyStorage* This,
-    ULONG cpspec,
-    const PROPSPEC rgpspec[]);
-
-static HRESULT WINAPI IPropertyStorage_fnReadPropertyNames(
-    IPropertyStorage* This,
-    ULONG cpropid,
-    const PROPID rgpropid[],
-    LPOLESTR rglpwstrName[]);
-
-static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
-    IPropertyStorage* This,
-    ULONG cpropid,
-    const PROPID rgpropid[],
-    const LPOLESTR rglpwstrName[]);
-
-static HRESULT WINAPI IPropertyStorage_fnDeletePropertyNames(
-    IPropertyStorage* This,
-    ULONG cpropid,
-    const PROPID rgpropid[]);
-
-static HRESULT WINAPI IPropertyStorage_fnCommit(
-    IPropertyStorage* This,
-    DWORD grfCommitFlags);
-
-static HRESULT WINAPI IPropertyStorage_fnRevert(
-    IPropertyStorage* This);
-
-static HRESULT WINAPI IPropertyStorage_fnEnum(
-    IPropertyStorage* This,
-    IEnumSTATPROPSTG** ppenum);
-
-static HRESULT WINAPI IPropertyStorage_fnSetTimes(
-    IPropertyStorage* This,
-    const FILETIME* pctime,
-    const FILETIME* patime,
-    const FILETIME* pmtime);
-
-static HRESULT WINAPI IPropertyStorage_fnSetClass(
-    IPropertyStorage* This,
-    REFCLSID clsid);
-
-static HRESULT WINAPI IPropertyStorage_fnStat(
-    IPropertyStorage* This,
-    STATPROPSETSTG* statpsstg);
-
-
-/***********************************************************************
- * vtables
- */
-IPropertySetStorageVtbl IPropertySetStorage_Vtbl =
-{
-    IPropertySetStorage_fnQueryInterface,
-    IPropertySetStorage_fnAddRef,
-    IPropertySetStorage_fnRelease,
-    IPropertySetStorage_fnCreate,
-    IPropertySetStorage_fnOpen,
-    IPropertySetStorage_fnDelete,
-    IPropertySetStorage_fnEnum
-};
-
-static IPropertyStorageVtbl IPropertyStorage_Vtbl =
-{
-    IPropertyStorage_fnQueryInterface,
-    IPropertyStorage_fnAddRef,
-    IPropertyStorage_fnRelease,
-    IPropertyStorage_fnReadMultiple,
-    IPropertyStorage_fnWriteMultiple,
-    IPropertyStorage_fnDeleteMultiple,
-    IPropertyStorage_fnReadPropertyNames,
-    IPropertyStorage_fnWritePropertyNames,
-    IPropertyStorage_fnDeletePropertyNames,
-    IPropertyStorage_fnCommit,
-    IPropertyStorage_fnRevert,
-    IPropertyStorage_fnEnum,
-    IPropertyStorage_fnSetTimes,
-    IPropertyStorage_fnSetClass,
-    IPropertyStorage_fnStat,
-};
-
+static IPropertyStorageVtbl IPropertyStorage_Vtbl;
 
 /***********************************************************************
  * Implementation of IPropertyStorage
@@ -589,3 +443,37 @@ static HRESULT WINAPI IPropertySetStorage_fnEnum(
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
+
+
+/***********************************************************************
+ * vtables
+ */
+IPropertySetStorageVtbl IPropertySetStorage_Vtbl =
+{
+    IPropertySetStorage_fnQueryInterface,
+    IPropertySetStorage_fnAddRef,
+    IPropertySetStorage_fnRelease,
+    IPropertySetStorage_fnCreate,
+    IPropertySetStorage_fnOpen,
+    IPropertySetStorage_fnDelete,
+    IPropertySetStorage_fnEnum
+};
+
+static IPropertyStorageVtbl IPropertyStorage_Vtbl =
+{
+    IPropertyStorage_fnQueryInterface,
+    IPropertyStorage_fnAddRef,
+    IPropertyStorage_fnRelease,
+    IPropertyStorage_fnReadMultiple,
+    IPropertyStorage_fnWriteMultiple,
+    IPropertyStorage_fnDeleteMultiple,
+    IPropertyStorage_fnReadPropertyNames,
+    IPropertyStorage_fnWritePropertyNames,
+    IPropertyStorage_fnDeletePropertyNames,
+    IPropertyStorage_fnCommit,
+    IPropertyStorage_fnRevert,
+    IPropertyStorage_fnEnum,
+    IPropertyStorage_fnSetTimes,
+    IPropertyStorage_fnSetClass,
+    IPropertyStorage_fnStat,
+};
