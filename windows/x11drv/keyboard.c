@@ -63,11 +63,21 @@ static const WORD main_key_scan_qwerty[MAIN_LEN] =
 
 static const WORD main_key_vkey_qwerty[MAIN_LEN] =
 {
-/* NOTE: this layout must be identical to the above one */
+/* NOTE: this layout must concur with the scan codes layout above */
    VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
    VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
    VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
    VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
+};
+
+static const WORD main_key_vkey_azerty[MAIN_LEN] =
+{
+/* NOTE: this layout must concur with the scan codes layout above */
+   VK_OEM_7,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_4,VK_OEM_PLUS,
+   VK_A,VK_Z,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_6,VK_OEM_1,
+   VK_Q,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_M,VK_OEM_3,VK_OEM_5,
+   VK_W,VK_X,VK_C,VK_V,VK_B,VK_N,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,VK_OEM_8,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
@@ -372,9 +382,9 @@ static const struct {
  {"Swedish keyboard layout", 28591, &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Norwegian keyboard layout", 28591, &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Danish keyboard layout", 28591, &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"French keyboard layout", 28591, &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"French keyboard layout", 28591, &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {"Canadian French keyboard layout", 28591, &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Belgian keyboard layout", 28591, &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Belgian keyboard layout", 28591, &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {"Swiss French keyboard layout", 28591, &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Portuguese keyboard layout", 28591, &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_qwerty, &main_key_vkey_qwerty},

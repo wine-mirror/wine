@@ -2911,7 +2911,8 @@ typedef struct
 #define VK_OEM_5            0xDC
 #define VK_OEM_6            0xDD
 #define VK_OEM_7            0xDE
-/*                          0xDF-0xE0  OEM specific */
+#define VK_OEM_8            0xDF
+/*                          0xE0       OEM specific */
 #define VK_OEM_AX           0xE1  /* "AX" key on Japanese AX keyboard */
 #define VK_OEM_102          0xE2  /* "<>" or "\|" on RT 102-key keyboard */
 #define VK_ICO_HELP         0xE3  /* Help key on ICO */
