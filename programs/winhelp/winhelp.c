@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -810,6 +811,36 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 
         if (!(winpos->flags & SWP_NOSIZE)) WINHELP_SetupText(hWnd);
         break;
+
+    case WM_MOUSEWHEEL:
+    {
+       int wheelDelta = 0;
+       UINT scrollLines = 3;
+       int curPos = GetScrollPos(hWnd, SB_VERT);
+       int min, max;
+
+       GetScrollRange(hWnd, SB_VERT, &min, &max);
+
+       SystemParametersInfo(SPI_GETWHEELSCROLLLINES,0, &scrollLines, 0);
+       if (wParam & (MK_SHIFT | MK_CONTROL))
+           return DefWindowProc(hWnd, msg, wParam, lParam);
+       wheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
+       if (abs(wheelDelta) >= WHEEL_DELTA && scrollLines) {
+           int dy;
+
+           curPos += wheelDelta;
+           if (curPos > max)
+                curPos = max;
+           else if (curPos < min)
+                curPos = min;
+
+           dy = GetScrollPos(hWnd, SB_VERT) - curPos;
+           SetScrollPos(hWnd, SB_VERT, curPos, TRUE);
+           ScrollWindow(hWnd, 0, dy, NULL, NULL);
+           UpdateWindow(hWnd);
+       }
+    }
+    break;
 
     case WM_VSCROLL:
     {
