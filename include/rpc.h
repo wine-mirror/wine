@@ -14,6 +14,7 @@
 #define __RPC_USER WINAPI
 #define __RPC_STUB WINAPI
 #define RPC_ENTRY  WINAPI
+#define RPCRTAPI
 typedef long RPC_STATUS;
 
 typedef void* I_RPC_HANDLE;
@@ -38,7 +39,7 @@ RPC_STATUS RPC_ENTRY UuidCreate(UUID *Uuid);
 
 #include "rpcdce.h"
 /* #include "rpcnsi.h" */
-/* #include "rpcnterr.h" */
+#include "rpcnterr.h"
 /* #include "excpt.h" */
 #include "winerror.h"
 

@@ -91,6 +91,7 @@ INSTALLED_INCLUDES = \
 	rpcdce.h \
 	rpcdcep.h \
 	rpcndr.h \
+	rpcnterr.h \
 	servprov.h \
 	setupapi.h \
 	shellapi.h \

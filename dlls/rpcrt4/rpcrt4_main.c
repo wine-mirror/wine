@@ -261,7 +261,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    
    TRACE("%s\n", debugstr_guid(Uuid));
    
-   return S_OK;
+   return RPC_S_OK;
 }
 
 /*************************************************************************
@@ -277,7 +277,7 @@ RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
-  return S_OK;
+  return RPC_S_OK;
 }
 
 /*************************************************************************
@@ -297,18 +297,16 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 {
   *StringUuid = HeapAlloc( GetProcessHeap(), 0, sizeof(char) * 37);
 
-
-  /* FIXME: this should be RPC_S_OUT_OF_MEMORY */
   if(!(*StringUuid))
-    return ERROR_OUTOFMEMORY;
+    return RPC_S_OUT_OF_MEMORY;
 
-       sprintf(*StringUuid, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+  sprintf(*StringUuid, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                  Uuid->Data1, Uuid->Data2, Uuid->Data3,
                  Uuid->Data4[0], Uuid->Data4[1], Uuid->Data4[2],
                  Uuid->Data4[3], Uuid->Data4[4], Uuid->Data4[5],
                  Uuid->Data4[6], Uuid->Data4[7] );
 
-  return S_OK; /*FIXME: this should be RPC_S_OK */
+  return RPC_S_OK;
 }
 
 /***********************************************************************
@@ -318,7 +316,194 @@ HRESULT WINAPI NdrDllRegisterProxy(
   HMODULE hDll,          /* [in] */
   void **pProxyFileList, /* [???] FIXME: const ProxyFileInfo ** */
   const CLSID *pclsid    /* [in] */
-) {
+) 
+{
   FIXME("(%x,%p,%s), stub!\n",hDll,pProxyFileList,debugstr_guid(pclsid));
   return S_OK;
+}
+
+/***********************************************************************
+ *		RpcServerUseProtseqEpA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor )
+{
+  RPC_POLICY policy;
+  
+  TRACE( "(%s,%u,%s,%p)\n", Protseq, MaxCalls, Endpoint, SecurityDescriptor );
+  
+  /* This should provide the default behaviour */
+  policy.Length        = sizeof( policy );
+  policy.EndpointFlags = 0;
+  policy.NICFlags      = 0;
+  
+  return RpcServerUseProtseqEpExA( Protseq, MaxCalls, Endpoint, SecurityDescriptor, &policy );
+}
+
+/***********************************************************************
+ *		RpcServerUseProtseqEpW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor )
+{
+  RPC_POLICY policy;
+  
+  TRACE( "(%s,%u,%s,%p)\n", debugstr_w( Protseq ), MaxCalls, debugstr_w( Endpoint ), SecurityDescriptor );
+  
+  /* This should provide the default behaviour */
+  policy.Length        = sizeof( policy );
+  policy.EndpointFlags = 0;
+  policy.NICFlags      = 0;
+  
+  return RpcServerUseProtseqEpExW( Protseq, MaxCalls, Endpoint, SecurityDescriptor, &policy );
+}
+
+/***********************************************************************
+ *		RpcServerUseProtseqEpExA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor,
+                          PRPC_POLICY lpPolicy )
+{
+  FIXME( "(%s,%u,%s,%p,{%u,%lu,%lu}): stub\n", Protseq, MaxCalls, Endpoint, SecurityDescriptor,
+                                               lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
+  
+  return RPC_S_PROTSEQ_NOT_SUPPORTED; /* We don't support anything at this point */			  
+}
+
+/***********************************************************************
+ *		RpcServerUseProtseqEpExW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
+                          PRPC_POLICY lpPolicy )
+{
+  FIXME( "(%s,%u,%s,%p,{%u,%lu,%lu}): stub\n", debugstr_w( Protseq ), MaxCalls, debugstr_w( Endpoint ),
+                                               SecurityDescriptor,
+                                               lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
+  
+  return RPC_S_PROTSEQ_NOT_SUPPORTED; /* We don't support anything at this point */			  
+}
+
+/***********************************************************************
+ *		RpcServerRegisterIf (RPCRT4.@)
+ */
+RPC_STATUS RPC_ENTRY
+RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv )
+{
+  /* FIXME: Dump UUID using UuidToStringA */
+  TRACE( "(%p,%p,%p)\n", IfSpec, MgrTypeUuid, MgrEpv );
+  
+  return RpcServerRegisterIf2( IfSpec, MgrTypeUuid, MgrEpv, 0, RPC_C_LISTEN_MAX_CALLS_DEFAULT, (UINT)-1, NULL );
+}
+
+/***********************************************************************
+ *		RpcServerRegisterIfEx (RPCRT4.@)
+ */
+RPC_STATUS RPC_ENTRY
+RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
+                       UINT Flags, UINT MaxCalls, RPC_IF_CALLBACK_FN* IfCallbackFn )
+{
+  /* FIXME: Dump UUID using UuidToStringA */
+  TRACE( "(%p,%p,%p,%u,%u,%p)\n", IfSpec, MgrTypeUuid, MgrEpv, Flags, MaxCalls, IfCallbackFn );
+  
+  return RpcServerRegisterIf2( IfSpec, MgrTypeUuid, MgrEpv, Flags, MaxCalls, (UINT)-1, IfCallbackFn );
+}
+
+/***********************************************************************
+ *		RpcServerRegisterIf2 (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
+                      UINT Flags, UINT MaxCalls, UINT MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn )
+{
+  /* FIXME: Dump UUID using UuidToStringA */
+  FIXME( "(%p,%p,%p,%u,%u,%u,%p): stub\n", IfSpec, MgrTypeUuid, MgrEpv, Flags, MaxCalls, MaxRpcSize, IfCallbackFn );
+  
+  return RPC_S_UNKNOWN_IF; /* I guess this return code is as good as any failure */
+}
+
+
+/***********************************************************************
+ *		RpcServerRegisterAuthInfoA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+                            LPVOID Arg )
+{
+  FIXME( "(%s,%lu,%p,%p): stub\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg );
+  
+  return RPC_S_UNKNOWN_AUTHN_SERVICE; /* We don't know any authentication services */
+}
+
+/***********************************************************************
+ *		RpcServerRegisterAuthInfoW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+                            LPVOID Arg )
+{
+  FIXME( "(%s,%lu,%p,%p): stub\n", debugstr_w( ServerPrincName ), AuthnSvc, GetKeyFn, Arg );
+  
+  return RPC_S_UNKNOWN_AUTHN_SERVICE; /* We don't know any authentication services */
+}
+
+/***********************************************************************
+ *		RpcServerListen (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait )
+{
+  FIXME( "(%u,%u,%u): stub\n", MinimumCallThreads, MaxCalls, DontWait );
+  
+  return RPC_S_NO_PROTSEQS_REGISTERED; /* Since we don't allow registration this seems reasonable */
+}
+
+/***********************************************************************
+ *		RpcStringBindingComposeA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint,
+                          LPSTR Options, LPSTR* StringBinding )
+{
+  FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", ObjUuid, Protseq, NetworkAddr, Endpoint, Options, StringBinding );
+  *StringBinding = NULL;
+  
+  return RPC_S_INVALID_STRING_UUID; /* Failure */
+}
+
+/***********************************************************************
+ *		RpcStringBindingComposeW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
+                          LPWSTR Options, LPWSTR* StringBinding )
+{
+  FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", debugstr_w( ObjUuid ), debugstr_w( Protseq ), debugstr_w( NetworkAddr ),
+                                        debugstr_w( Endpoint ), debugstr_w( Options ), StringBinding );
+  *StringBinding = NULL;
+  
+  return RPC_S_INVALID_STRING_UUID; /* Failure */
+}
+
+/***********************************************************************
+ *		RpcBindingFromStringBindingA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
+{
+  FIXME( "(%s,%p): stub\n", StringBinding, Binding );
+  
+  return RPC_S_INVALID_STRING_BINDING; /* As good as any failure code */
+}
+  
+/***********************************************************************
+ *		RpcBindingFromStringBindingW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding )
+{
+  FIXME( "(%s,%p): stub\n", debugstr_w( StringBinding ), Binding );
+
+  return RPC_S_INVALID_STRING_BINDING; /* As good as any failure code */
 }
