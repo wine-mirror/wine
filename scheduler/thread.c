@@ -757,8 +757,14 @@ BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
  */ 
 EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
 {
-    FIXME("(0x%lx): stub\n", flags);
-    return ES_SYSTEM_REQUIRED|ES_DISPLAY_REQUIRED|ES_USER_PRESENT;
+    static EXECUTION_STATE current =
+	    ES_SYSTEM_REQUIRED|ES_DISPLAY_REQUIRED|ES_USER_PRESENT;
+    EXECUTION_STATE old = current;
+    
+    if (!(current & ES_CONTINUOUS) || (flags & ES_CONTINUOUS))
+        current = flags;
+    FIXME("(0x%lx): stub, harmless (power management).\n", flags);
+    return old;
 }
 
 
