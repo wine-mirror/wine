@@ -248,17 +248,11 @@
 /* Define if you have the curses library (-lcurses) */
 #undef HAVE_LIBCURSES
 
-/* Define if you have libgif/libungif including devel headers */
-#undef HAVE_LIBGIF
-
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386
 
 /* Define to 1 if you have the <libio.h> header file. */
 #undef HAVE_LIBIO_H
-
-/* Define if you have libjpeg including devel headers */
-#undef HAVE_LIBJPEG
 
 /* Define if you have the ncurses library (-lncurses) */
 #undef HAVE_LIBNCURSES
@@ -887,6 +881,9 @@
 /* Define to the soname of the libjack library. */
 #undef SONAME_LIBJACK
 
+/* Define to the soname of the libjpeg library. */
+#undef SONAME_LIBJPEG
+
 /* Define to the soname of the libncurses library. */
 #undef SONAME_LIBNCURSES
 
@@ -895,6 +892,9 @@
 
 /* Define to the soname of the libtxc_dxtn library. */
 #undef SONAME_LIBTXC_DXTN
+
+/* Define to the soname of the libungif library. */
+#undef SONAME_LIBUNGIF
 
 /* Define to the soname of the libX11 library. */
 #undef SONAME_LIBX11

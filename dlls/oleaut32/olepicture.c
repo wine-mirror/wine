@@ -36,6 +36,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -49,6 +50,9 @@
  */
 #ifdef HAVE_GIF_LIB_H
 # include <gif_lib.h>
+#ifndef SONAME_LIBUNGIF
+#define SONAME_LIBUNGIF "libungif.so"
+#endif
 #endif
 
 #define NONAMELESSUNION
@@ -67,16 +71,17 @@
 #include "wine/wingdi16.h"
 #include "cursoricon.h"
 
-#ifdef HAVE_LIBJPEG
+#ifdef HAVE_JPEGLIB_H
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
 #define XMD_H
 #define UINT8 JPEG_UINT8
 #define UINT16 JPEG_UINT16
 #undef FAR
-#ifdef HAVE_JPEGLIB_H
 # include <jpeglib.h>
-#endif
 #undef UINT16
+#ifndef SONAME_LIBJPEG
+#define SONAME_LIBJPEG "libjpeg.so"
+#endif
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -825,7 +830,41 @@ static HRESULT WINAPI OLEPictureImpl_IsDirty(
   return E_NOTIMPL;
 }
 
-#ifdef HAVE_LIBJPEG
+#ifdef HAVE_JPEGLIB_H
+
+static void *libjpeg_handle;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(jpeg_std_error);
+MAKE_FUNCPTR(jpeg_CreateDecompress);
+MAKE_FUNCPTR(jpeg_read_header);
+MAKE_FUNCPTR(jpeg_start_decompress);
+MAKE_FUNCPTR(jpeg_read_scanlines);
+MAKE_FUNCPTR(jpeg_finish_decompress);
+MAKE_FUNCPTR(jpeg_destroy_decompress);
+#undef MAKE_FUNCPTR
+
+static void *load_libjpeg(void)
+{
+    if((libjpeg_handle = wine_dlopen(SONAME_LIBJPEG, RTLD_NOW, NULL, 0)) != NULL) {
+
+#define LOAD_FUNCPTR(f) \
+    if((p##f = wine_dlsym(libjpeg_handle, #f, NULL, 0)) == NULL) { \
+        libjpeg_handle = NULL; \
+        return NULL; \
+    }
+
+        LOAD_FUNCPTR(jpeg_std_error);
+        LOAD_FUNCPTR(jpeg_CreateDecompress);
+        LOAD_FUNCPTR(jpeg_read_header);
+        LOAD_FUNCPTR(jpeg_start_decompress);
+        LOAD_FUNCPTR(jpeg_read_scanlines);
+        LOAD_FUNCPTR(jpeg_finish_decompress);
+        LOAD_FUNCPTR(jpeg_destroy_decompress);
+#undef LOAD_FUNCPTR
+    }
+    return libjpeg_handle;
+}
+
 /* for the jpeg decompressor source manager. */
 static void _jpeg_init_source(j_decompress_ptr cinfo) { }
 
@@ -845,14 +884,40 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
     return FALSE;
 }
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
-#endif /* HAVE_LIBJPEG */
+#endif /* HAVE_JPEGLIB_H */
 
-#ifdef HAVE_LIBGIF
+#ifdef HAVE_GIF_LIB_H
+
+static void *libungif_handle;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(DGifOpen);
+MAKE_FUNCPTR(DGifSlurp);
+MAKE_FUNCPTR(DGifCloseFile);
+#undef MAKE_FUNCPTR
+
 struct gifdata {
     unsigned char *data;
     unsigned int curoff;
     unsigned int len;
 };
+
+static void *load_libungif(void)
+{
+    if((libungif_handle = wine_dlopen(SONAME_LIBUNGIF, RTLD_NOW, NULL, 0)) != NULL) {
+
+#define LOAD_FUNCPTR(f) \
+    if((p##f = wine_dlsym(libungif_handle, #f, NULL, 0)) == NULL) { \
+        libungif_handle = NULL; \
+        return NULL; \
+    }
+
+        LOAD_FUNCPTR(DGifOpen);
+        LOAD_FUNCPTR(DGifSlurp);
+        LOAD_FUNCPTR(DGifCloseFile);
+#undef LOAD_FUNCPTR
+    }
+    return libungif_handle;
+}
 
 static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     struct gifdata *gd = (struct gifdata*)gif->UserData;
@@ -865,7 +930,8 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     gd->curoff += len;
     return len;
 }
-#endif
+
+#endif  /* HAVE_GIF_LIB_H */
 
 /************************************************************************
  * OLEPictureImpl_IPersistStream_Load (IUnknown)
@@ -875,7 +941,7 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
  * 	DWORD magic;
  * 	DWORD len;
  *
- * Currently implemented: BITMAP, ICON, JPEG.
+ * Currently implemented: BITMAP, ICON, JPEG, GIF
  */
 static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   HRESULT	hr = E_FAIL;
@@ -930,7 +996,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   magic = xbuf[0] + (xbuf[1]<<8);
   switch (magic) {
   case 0x4947: { /* GIF */
-#ifdef HAVE_LIBGIF
+#ifdef HAVE_GIF_LIB_H
     struct gifdata 	gd;
     GifFileType 	*gif;
     BITMAPINFO		*bmi;
@@ -944,11 +1010,18 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     ExtensionBlock      *eb;
     int                 padding;
 
+    if(!libungif_handle) {
+        if(!load_libungif()) {
+            FIXME("Failed reading GIF because unable to find %s\n", SONAME_LIBUNGIF);
+            return E_FAIL;
+        }
+    }
+
     gd.data   = xbuf;
     gd.curoff = 0;
     gd.len    = xread;
-    gif = DGifOpen((void*)&gd, _gif_inputfunc);
-    ret = DGifSlurp(gif);
+    gif = pDGifOpen((void*)&gd, _gif_inputfunc);
+    ret = pDGifSlurp(gif);
     if (ret == GIF_ERROR) {
       FIXME("Failed reading GIF using libgif.\n");
       return E_FAIL;
@@ -1052,7 +1125,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     DeleteDC(hdcref);
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
-    DGifCloseFile(gif);
+    pDGifCloseFile(gif);
     HeapFree(GetProcessHeap(),0,bytes);
     return S_OK;
 #else
@@ -1062,7 +1135,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     break;
   }
   case 0xd8ff: { /* JPEG */
-#ifdef HAVE_LIBJPEG
+#ifdef HAVE_JPEGLIB_H
     struct jpeg_decompress_struct	jd;
     struct jpeg_error_mgr		jerr;
     int					ret;
@@ -1075,6 +1148,13 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     LPBYTE                              oldbits;
     int i;
 
+    if(!libjpeg_handle) {
+        if(!load_libjpeg()) {
+            FIXME("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
+            return E_FAIL;
+        }
+    }
+
     /* This is basically so we can use in-memory data for jpeg decompression.
      * We need to have all the functions.
      */
@@ -1086,12 +1166,14 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     xjsm.resync_to_restart	= _jpeg_resync_to_restart;
     xjsm.term_source		= _jpeg_term_source;
 
-    jd.err = jpeg_std_error(&jerr);
-    jpeg_create_decompress(&jd);
+    jd.err = pjpeg_std_error(&jerr);
+    /* jpeg_create_decompress is a macro that expands to jpeg_CreateDecompress - see jpeglib.h
+     * jpeg_create_decompress(&jd); */
+    pjpeg_CreateDecompress(&jd, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
     jd.src = &xjsm;
-    ret=jpeg_read_header(&jd,TRUE);
+    ret=pjpeg_read_header(&jd,TRUE);
     jd.out_color_space = JCS_RGB;
-    jpeg_start_decompress(&jd);
+    pjpeg_start_decompress(&jd);
     if (ret != JPEG_HEADER_OK) {
 	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
 	HeapFree(GetProcessHeap(),0,xbuf);
@@ -1105,7 +1187,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     oldbits = bits;
     oldsamprow = samprow;
     while ( jd.output_scanline<jd.output_height ) {
-      x = jpeg_read_scanlines(&jd,&samprow,1);
+      x = pjpeg_read_scanlines(&jd,&samprow,1);
       if (x != 1) {
 	FIXME("failed to read current scanline?\n");
 	break;
@@ -1134,8 +1216,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     bmi.biClrImportant	= 0;
 
     HeapFree(GetProcessHeap(),0,samprow);
-    jpeg_finish_decompress(&jd);
-    jpeg_destroy_decompress(&jd);
+    pjpeg_finish_decompress(&jd);
+    pjpeg_destroy_decompress(&jd);
     hdcref = GetDC(0);
     This->desc.u.bmp.hbitmap=CreateDIBitmap(
 	    hdcref,

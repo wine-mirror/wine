@@ -145,24 +145,6 @@ AC_CHECK_LIB(resolv,res_9_init)
 dnl Check for -lpthread
 AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
-JPEGLIB=""
-AC_SUBST(JPEGLIB)
-AC_CHECK_HEADERS(jpeglib.h,
-    AC_CHECK_LIB(jpeg,jpeg_start_decompress,
-    	AC_DEFINE(HAVE_LIBJPEG,1,[Define if you have libjpeg including devel headers])
-	JPEGLIB="-ljpeg"
-    )
-)
-
-AC_SUBST(GIFLIB,"")
-AC_CHECK_HEADERS(gif_lib.h,
-    AC_CHECK_LIB(ungif,DGifOpen,
-        [AC_DEFINE(HAVE_LIBGIF,1,[Define if you have libgif/libungif including devel headers])
-         GIFLIB="-lungif"],
-        [AC_CHECK_LIB(gif,DGifOpen,
-                      [AC_DEFINE(HAVE_LIBGIF,1)
-                       GIFLIB="-lgif"])]))
-
 AC_SUBST(XLIB)
 AC_SUBST(XFILES)
 XFILES=""
@@ -1031,6 +1013,8 @@ then
   WINE_GET_SONAME(crypto,BIO_new_socket)
   WINE_GET_SONAME(ncurses,waddch)
   WINE_GET_SONAME(curses,waddch)
+  WINE_GET_SONAME(jpeg,jpeg_start_decompress)
+  WINE_GET_SONAME(ungif,DGifOpen)
 fi
 
 
@@ -1108,9 +1092,11 @@ AC_CHECK_HEADERS(\
 	float.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
+	gif_lib.h \
 	ieeefp.h \
 	io.h \
 	jack/jack.h \
+	jpeglib.h \
 	libio.h \
 	libutil.h \
 	link.h \
