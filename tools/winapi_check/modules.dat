@@ -32,6 +32,8 @@ dlls/commdlg
 
 dlls/crtdll
 
+% dlls/crypt32/crypt32.spec
+
 % dlls/dciman32/dciman32.spec
 
 dlls/dciman32
