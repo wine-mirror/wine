@@ -315,17 +315,23 @@ static BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
 /***********************************************************************
  * 				FILEDLG_ScanDir                 [internal]
  */
-static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath, BOOL bChgDir)
+static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
 {
     WCHAR		buffer[BUFFILE];
-    HWND 		hdlg;
+    HWND 		hdlg, hdlgDir;
+    LRESULT             lRet = TRUE;
+    HCURSOR             hCursorWait, oldCursor;
 
-    if (bChgDir)
-        if  ( !SetCurrentDirectoryW( newPath ))
-            return FALSE;
+    if  ( !SetCurrentDirectoryW( newPath ))
+        return FALSE;
     lstrcpynW(buffer, newPath, sizeof(buffer));
+
     /* get the list of spec files */
     GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer));
+
+    hCursorWait = LoadCursorA(NULL, IDC_WAITA);
+    oldCursor = SetCursor(hCursorWait);
+
     /* list of files */
     if ((hdlg = GetDlgItem(hWnd, lst1)) != 0) {
         WCHAR*	scptr; /* ptr on semi-colon */
@@ -336,7 +342,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath, BOOL bChgDir)
 	while (filter) {
 	    scptr = strchrW(filter, ';');
 	    if (scptr)	*scptr = 0;
-            while (*filter == ' ') filter++; 
+            while (*filter == ' ') filter++;
 	    TRACE("Using file spec %s\n", debugstr_w(filter));
 	    if (SendMessageW(hdlg, LB_DIR, 0, (LPARAM)filter) == LB_ERR)
 	        return FALSE;
@@ -344,9 +350,15 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath, BOOL bChgDir)
 	        filter = (scptr) ? (scptr + 1) : 0;
 	 }
     }
+
     /* list of directories */
     strcpyW(buffer, FILE_star);
-    return DlgDirListW(hWnd, buffer, lst2, stc1, DDL_EXCLUSIVE | DDL_DIRECTORY);
+
+    if ((hdlgDir = GetDlgItem(hWnd, lst2)) != 0) {
+        lRet = DlgDirListW(hWnd, buffer, lst2, stc1, DDL_EXCLUSIVE | DDL_DIRECTORY);
+    }
+    SetCursor(oldCursor);
+    return lRet;
 }
 
 
@@ -586,9 +598,9 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
   else
     *tmpstr = 0;
-  if (!FILEDLG_ScanDir(hWnd, tmpstr, TRUE)) {
+  if (!FILEDLG_ScanDir(hWnd, tmpstr)) {
     *tmpstr = 0;
-    if (!FILEDLG_ScanDir(hWnd, tmpstr, TRUE))
+    if (!FILEDLG_ScanDir(hWnd, tmpstr))
       WARN("Couldn't read initial directory %s!\n", debugstr_w(tmpstr));
   }
   /* select current drive in combo 2, omit missing drives */
@@ -608,10 +620,11 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
  *                              FILEDLG_UpdateResult            [internal]
  *      update the displayed file name (with path) 
  */
-void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr, WCHAR *tmpstr2)
+void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
 {
     int lenstr2;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
+    WCHAR tmpstr2[BUFFILE];
 
     GetCurrentDirectoryW(BUFFILE, tmpstr2);
     lenstr2 = lstrlenW(tmpstr2);
@@ -671,9 +684,10 @@ void FILEDLG_UpdateFileTitle(LFSPRIVATE lfs)
 /***********************************************************************
  *                              FILEDLG_DirListDblClick         [internal]
  */
-static LRESULT FILEDLG_DirListDblClick(HWND hWnd, LFSPRIVATE lfs)
+static LRESULT FILEDLG_DirListDblClick( LFSPRIVATE lfs )
 {
   LONG lRet;
+  HWND hWnd = lfs->hwnd;
   LPWSTR pstr;
   WCHAR tmpstr[BUFFILE];
 
@@ -693,8 +707,7 @@ static LRESULT FILEDLG_DirListDblClick(HWND hWnd, LFSPRIVATE lfs)
     }
   strcatW(tmpstr, FILE_bslash);
 
-  /* directory *has* to be changed before notifying the hook */
-  SetCurrentDirectoryW( tmpstr ); 
+  FILEDLG_ScanDir(hWnd, tmpstr);
   /* notify the app */
   if (lfs->hook)
     {
@@ -702,201 +715,278 @@ static LRESULT FILEDLG_DirListDblClick(HWND hWnd, LFSPRIVATE lfs)
               MAKELONG(lRet,CD_LBSELCHANGE)))
         return TRUE;
     }
-
-  lRet = SendDlgItemMessageW(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-  if (lRet == LB_ERR)
-     return TRUE;
-  pstr = (LPWSTR)SendDlgItemMessageW(hWnd, cmb1, CB_GETITEMDATA, lRet, 0);
-  TRACE("Selected filter : %s\n", debugstr_w(pstr));
-  SetDlgItemTextW( hWnd, edt1, pstr );
-
-  FILEDLG_ScanDir(hWnd, tmpstr, FALSE);
   return TRUE;
+}
+
+
+/***********************************************************************
+ *                              FILEDLG_FileListSelect         [internal]
+ *    called when a new item is picked in the file list
+ */
+static LRESULT FILEDLG_FileListSelect( LFSPRIVATE lfs )
+{
+    LONG lRet;
+    HWND hWnd = lfs->hwnd;
+    LPWSTR pstr;
+
+    lRet = SendDlgItemMessageW(hWnd, lst1, LB_GETCURSEL16, 0, 0);
+    if (lRet == LB_ERR)
+        return TRUE;
+
+    /* set the edit control to the choosen file */
+    if ((pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC)))
+    {
+        SendDlgItemMessageW(hWnd, lst1, LB_GETTEXT, lRet,
+                       (LPARAM)pstr);
+        SetDlgItemTextW( hWnd, edt1, pstr );
+        HeapFree(GetProcessHeap(), 0, pstr);
+    }
+    if (lfs->hook)
+    {
+        FILEDLG_CallWindowProc(lfs, lfs->lbselchstring, lst1,
+                           MAKELONG(lRet,CD_LBSELCHANGE));
+    }
+    /* FIXME: for OFN_ALLOWMULTISELECT we need CD_LBSELSUB, CD_SELADD,
+           CD_LBSELNOITEMS */
+    return TRUE;
+}
+
+/***********************************************************************
+ *                              FILEDLG_TestPath      [internal]
+ *      before accepting the file name, test if it includes wild cards
+ *      tries to scan the directory and returns TRUE if no error.
+ */
+static LRESULT FILEDLG_TestPath( LFSPRIVATE lfs, LPWSTR path )
+{
+    HWND hWnd = lfs->hwnd;
+    LPWSTR pBeginFileName, pstr2;
+    WCHAR tmpstr2[BUFFILE];
+
+    pBeginFileName = strrchrW(path, '\\');
+    if (pBeginFileName == NULL)
+	pBeginFileName = strrchrW(path, ':');
+
+    if (strchrW(path,'*') != NULL || strchrW(path,'?') != NULL)
+    {
+        /* edit control contains wildcards */
+        if (pBeginFileName != NULL)
+        {
+	    lstrcpynW(tmpstr2, pBeginFileName + 1, BUFFILE);
+	    *(pBeginFileName + 1) = 0;
+	}
+	else
+	{
+	    strcpyW(tmpstr2, path);
+	    *path = 0;
+        }
+
+        TRACE("path=%s, tmpstr2=%s\n", debugstr_w(path), debugstr_w(tmpstr2));
+        SetDlgItemTextW( hWnd, edt1, tmpstr2 );
+        FILEDLG_ScanDir(hWnd, path);
+        return FALSE;
+    }
+
+    /* no wildcards, we might have a directory or a filename */
+    /* try appending a wildcard and reading the directory */
+
+    pstr2 = path + lstrlenW(path);
+    if (pBeginFileName == NULL || *(pBeginFileName + 1) != 0)
+        strcatW(path, FILE_bslash);
+
+    /* if ScanDir succeeds, we have changed the directory */
+    if (FILEDLG_ScanDir(hWnd, path))
+        return TRUE;
+
+    /* if not, this must be a filename */
+
+    *pstr2 = 0; /* remove the wildcard added before */
+
+    if (pBeginFileName != NULL)
+    {
+        /* strip off the pathname */
+        *pBeginFileName = 0;
+        SetDlgItemTextW( hWnd, edt1, pBeginFileName + 1 );
+
+        lstrcpynW(tmpstr2, pBeginFileName + 1, sizeof(tmpstr2) );
+        /* Should we MessageBox() if this fails? */
+        if (!FILEDLG_ScanDir(hWnd, path))
+        {
+            return FALSE;
+        }
+        strcpyW(path, tmpstr2);
+    }
+    else
+        SetDlgItemTextW( hWnd, edt1, path );
+    return TRUE;
+}
+
+/***********************************************************************
+ *                              FILEDLG_Validate               [internal]
+ *   called on: click Ok button, Enter in edit, DoubleClick in file list
+ */
+static LRESULT FILEDLG_Validate( LFSPRIVATE lfs, LPWSTR path, UINT control, INT itemIndex,
+                                 BOOL internalUse )
+{
+    LONG lRet;
+    HWND hWnd = lfs->hwnd;
+    OPENFILENAMEW ofnsav;
+    LPOPENFILENAMEW ofnW = lfs->ofnW;
+    WCHAR filename[BUFFILE];
+
+    ofnsav = *ofnW; /* for later restoring */
+
+    /* get current file name */
+    if (path)
+        lstrcpynW(filename, path, sizeof(filename));
+    else
+        GetDlgItemTextW( hWnd, edt1, filename, sizeof(filename) );
+
+    /* if we did not click in file list to get there */
+    if (control != lst1)
+    {
+        if (!FILEDLG_TestPath( lfs, filename) )
+           return FALSE;
+    }
+    FILEDLG_UpdateResult(lfs, filename);
+
+    if (internalUse)
+    { /* called internally after a change in a combo */
+        if (lfs->hook)
+        {
+             FILEDLG_CallWindowProc(lfs, lfs->lbselchstring, control,
+                             MAKELONG(itemIndex,CD_LBSELCHANGE));
+        }
+        return TRUE;
+    }
+
+    FILEDLG_UpdateFileTitle(lfs);
+    if (lfs->hook)
+    {
+        lRet = (BOOL)FILEDLG_CallWindowProc(lfs, lfs->fileokstring,
+                  0, lfs->lParam );
+        if (lRet)       
+        {
+            *ofnW = ofnsav; /* restore old state */
+            return FALSE;
+        }
+    }
+    if ((ofnW->Flags & OFN_ALLOWMULTISELECT) && (ofnW->Flags & OFN_EXPLORER))
+    {
+        if (ofnW->lpstrFile)
+        {
+            LPWSTR str = (LPWSTR)ofnW->lpstrFile;
+            LPWSTR ptr = strrchrW(str, '\\');
+	    str[lstrlenW(str) + 1] = '\0';
+	    *ptr = 0;
+        }
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *                              FILEDLG_DiskChange             [internal]
+ *    called when a new item is picked in the disk selection combo
+ */
+static LRESULT FILEDLG_DiskChange( LFSPRIVATE lfs )
+{
+    LONG lRet;
+    HWND hWnd = lfs->hwnd;
+    LPWSTR pstr;
+    WCHAR diskname[BUFFILE];
+
+    FILEDLG_StripEditControl(hWnd);
+    lRet = SendDlgItemMessageW(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
+    if (lRet == LB_ERR)
+        return 0;
+    pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC);
+    SendDlgItemMessageW(hWnd, cmb2, CB_GETLBTEXT, lRet,
+                         (LPARAM)pstr);
+    wsprintfW(diskname, FILE_specc, pstr[2]);
+    HeapFree(GetProcessHeap(), 0, pstr);    
+
+    return FILEDLG_Validate( lfs, diskname, cmb2, lRet, TRUE );
+}
+
+
+/***********************************************************************
+ *                              FILEDLG_FileTypeChange         [internal]
+ *    called when a new item is picked in the file type combo
+ */
+static LRESULT FILEDLG_FileTypeChange( LFSPRIVATE lfs )
+{
+    LONG lRet;
+    WCHAR diskname[BUFFILE];
+    LPWSTR pstr;
+
+    diskname[0] = 0;
+
+    lRet = SendDlgItemMessageW(lfs->hwnd, cmb1, CB_GETCURSEL, 0, 0);
+    if (lRet == LB_ERR)
+        return TRUE;
+    pstr = (LPWSTR)SendDlgItemMessageW(lfs->hwnd, cmb1, CB_GETITEMDATA, lRet, 0);
+    TRACE("Selected filter : %s\n", debugstr_w(pstr));
+    SetDlgItemTextW( lfs->hwnd, edt1, pstr );
+
+    return FILEDLG_Validate( lfs, NULL, cmb1, lRet, TRUE );
 }
 
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
-BOOL in_update=FALSE;
-
 static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
        UINT control, LFSPRIVATE lfs ) 
 {
-  LONG lRet;
-  OPENFILENAMEW ofn2;
-  LPOPENFILENAMEW ofnW = lfs->ofnW;
-  WCHAR tmpstr[BUFFILE], tmpstr2[BUFFILE];
-  LPWSTR pstr, pstr2;
-
-  switch (control)
+    switch (control)
     {
-    case lst1: /* file list */
-      FILEDLG_StripEditControl(hWnd);
-      if (notification == LBN_DBLCLK)
-	goto almost_ok;
-      /* notify the app */
-      lRet = SendDlgItemMessageW(hWnd, lst1, LB_GETCURSEL16, 0, 0);
-      if (lRet == LB_ERR) return TRUE;
-      if ((pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC)))
-      {
-          SendDlgItemMessageW(hWnd, lst1, LB_GETTEXT, lRet,
-                               (LPARAM)pstr);
-          SetDlgItemTextW( hWnd, edt1, pstr );
-          HeapFree(GetProcessHeap(), 0, pstr);
-      }
-      if (lfs->hook)
-          FILEDLG_CallWindowProc(lfs, lfs->lbselchstring, control,
-                                 MAKELONG(lRet,CD_LBSELCHANGE));
-      /* FIXME: for OFN_ALLOWMULTISELECT we need CD_LBSELSUB, CD_SELADD, CD_LBSELNOITEMS */
-      return TRUE;
-
-    case lst2: /* directory list */
-      FILEDLG_StripEditControl(hWnd);
-      if (notification == LBN_DBLCLK)
-	{
-          return FILEDLG_DirListDblClick(hWnd, lfs);
-	}
-      return TRUE;
-
-    case cmb1: /* file type drop list */
-      if (notification == CBN_SELCHANGE) 
-	{
-	  *tmpstr = 0;
-	  goto reset_scan;
-	}
-      return TRUE;
-
-    case chx1:
-      return TRUE;
-    case pshHelp:
-      return TRUE;
-
-    case cmb2: /* disk drop list */
-      FILEDLG_StripEditControl(hWnd);
-      lRet = SendDlgItemMessageW(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
-      if (lRet == LB_ERR) return 0;
-      pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC);
-      SendDlgItemMessageW(hWnd, cmb2, CB_GETLBTEXT, lRet,
-                           (LPARAM)pstr);
-      wsprintfW(tmpstr, FILE_specc, pstr[2]);
-      HeapFree(GetProcessHeap(), 0, pstr);
-      if (notification != CBN_SELCHANGE) return TRUE;
-
-    /* on entry tmpstr points to the new path to scan */
-    reset_scan:
-      lRet = SendDlgItemMessageW(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-      if (lRet == LB_ERR)
-	return TRUE;
-      pstr = (LPWSTR)SendDlgItemMessageW(hWnd, cmb1, CB_GETITEMDATA, lRet, 0);
-      TRACE("Selected filter : %s\n", debugstr_w(pstr));
-      SetDlgItemTextW( hWnd, edt1, pstr );
-      FILEDLG_ScanDir(hWnd, tmpstr, TRUE);
-      in_update=TRUE;
-
-    case IDOK:
-    almost_ok:
-
-      ofn2 = *ofnW; /* for later restoring */
-      /* get current file name */
-      GetDlgItemTextW( hWnd, edt1, tmpstr, sizeof(tmpstr) );
-      pstr = strrchrW(tmpstr, '\\');
-      if (pstr == NULL)
-	pstr = strrchrW(tmpstr, ':');
-
-      if (strchrW(tmpstr,'*') != NULL || strchrW(tmpstr,'?') != NULL)
-	{
-	  /* edit control contains wildcards */
-	  if (pstr != NULL)
-	    {
-	      lstrcpynW(tmpstr2, pstr+1, BUFFILE);
-	      *(pstr+1) = 0;
-	    }
-	  else
-	    {
-	      strcpyW(tmpstr2, tmpstr);
-	      *tmpstr=0;
-	    }
-
-	  TRACE("tmpstr=%s, tmpstr2=%s\n", debugstr_w(tmpstr), debugstr_w(tmpstr2));
-          SetDlgItemTextW( hWnd, edt1, tmpstr2 );
-	  FILEDLG_ScanDir(hWnd, tmpstr, TRUE);
-	  return TRUE;
-	}
-      /* no wildcards, we might have a directory or a filename */
-      /* try appending a wildcard and reading the directory */
-      pstr2 = tmpstr + lstrlenW(tmpstr);
-      if (pstr == NULL || *(pstr+1) != 0)
-	strcatW(tmpstr, FILE_bslash);
-      lRet = SendDlgItemMessageW(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-      if (lRet == LB_ERR) return TRUE;
-      ofnW->nFilterIndex = lRet + 1;
-      TRACE("ofn->nFilterIndex=%ld\n", ofnW->nFilterIndex);
-      lstrcpynW(tmpstr2, 
-	     FILEDLG_GetFileType(ofnW->lpstrCustomFilter,
-				 (LPWSTR) ofnW->lpstrFilter,
-				 lRet), sizeof(tmpstr2));
-      SetDlgItemTextW( hWnd, edt1, tmpstr2 );
-
-      if (!in_update)
-      {
-          /* if ScanDir succeeds, we have changed the directory */
-          if (FILEDLG_ScanDir(hWnd, tmpstr, TRUE))
-              return TRUE;
-      }
-      /* if not, this must be a filename */
-      *pstr2 = 0; /* remove the wildcard added before */
-
-      if (pstr != NULL)
-	{
-	  /* strip off the pathname */
-	  *pstr = 0;
-          SetDlgItemTextW( hWnd, edt1, pstr + 1 );
-	  lstrcpynW(tmpstr2, pstr+1, sizeof(tmpstr2) );
-	  /* Should we MessageBox() if this fails? */
-	  if (!FILEDLG_ScanDir(hWnd, tmpstr, TRUE)) return TRUE;
-	  strcpyW(tmpstr, tmpstr2);
-	}
-      else SetDlgItemTextW( hWnd, edt1, tmpstr );
-      FILEDLG_UpdateResult(lfs, tmpstr, tmpstr2);
-      if(in_update)
-       {
-         if (lfs->hook)
-             FILEDLG_CallWindowProc(lfs, lfs->lbselchstring, control,
-                                 MAKELONG(lRet,CD_LBSELCHANGE));
-         in_update = FALSE;
-         return TRUE;
-       }
-      FILEDLG_UpdateFileTitle(lfs);
-      if (lfs->hook)
-      {
-        lRet = (BOOL)FILEDLG_CallWindowProc(lfs, lfs->fileokstring,
-                  0, lfs->lParam );
-        if (lRet)       
+        case lst1: /* file list */
+        FILEDLG_StripEditControl(hWnd);
+        if (notification == LBN_DBLCLK)
         {
-          *ofnW = ofn2; /* restore old state */
-          break;
+            if (FILEDLG_Validate( lfs, NULL, control, 0, FALSE ))
+                EndDialog(hWnd, TRUE);
+            return TRUE;
         }
-      }
-      if ((ofnW->Flags & OFN_ALLOWMULTISELECT) && (ofnW->Flags & OFN_EXPLORER)) {
-	 if (ofnW->lpstrFile) {
-	    LPWSTR str = (LPWSTR)ofnW->lpstrFile;
-	    LPWSTR ptr = strrchrW(str, '\\');
-	    str[lstrlenW(str) + 1] = '\0';
-	    *ptr = 0;
-	 }
-      }
-      EndDialog(hWnd, TRUE);
-      return TRUE;
-    case IDCANCEL:
-      EndDialog(hWnd, FALSE);
-      return TRUE;
-    case IDABORT: /* can be sent by the hook procedure */
-      EndDialog(hWnd, TRUE);
-      return TRUE;
-    }
-  return FALSE;
-}
+        else if (notification == LBN_SELCHANGE)
+            return FILEDLG_FileListSelect( lfs );
+        break;
 
+        case lst2: /* directory list */
+        FILEDLG_StripEditControl(hWnd);
+        if (notification == LBN_DBLCLK)
+            return FILEDLG_DirListDblClick( lfs );
+        break;
+
+        case cmb1: /* file type drop list */
+        if (notification == CBN_SELCHANGE) 
+            return FILEDLG_FileTypeChange( lfs );
+        break;
+
+        case chx1:
+        break;
+
+        case pshHelp:
+        break;
+
+        case cmb2: /* disk dropdown combo */
+        if (notification == CBN_SELCHANGE)
+            return FILEDLG_DiskChange( lfs );
+        break;
+
+        case IDOK:
+        if (FILEDLG_Validate( lfs, NULL, control, 0, FALSE ))
+            EndDialog(hWnd, TRUE);
+        return TRUE;
+
+        case IDCANCEL:
+        EndDialog(hWnd, FALSE);
+        return TRUE;
+
+        case IDABORT: /* can be sent by the hook procedure */
+        EndDialog(hWnd, TRUE);
+        return TRUE;
+    }
+    return FALSE;
+}
 
 /***********************************************************************
  *                              FILEDLG_MapDrawItemStruct       [internal]
