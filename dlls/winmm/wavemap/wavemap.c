@@ -49,7 +49,7 @@ static void	CALLBACK WAVEMAP_DstCallback(HDRVR hDev, UINT uMsg, DWORD dwInstance
 {
     WAVEMAPDATA*	wom = (WAVEMAPDATA*)dwInstance;
 
-    TRACE("(0x%x %u %ld %ld %ld);\n", hDev, uMsg, dwInstance, dwParam1, dwParam2);
+    TRACE("(0x%x %u %ld %lx %lx);\n", hDev, uMsg, dwInstance, dwParam1, dwParam2);
 
     switch (uMsg) {
     case WOM_OPEN:
@@ -333,6 +333,11 @@ static	DWORD	wodReset(WAVEMAPDATA* wom)
     return waveOutReset(wom->hWave);
 }
 
+static	DWORD	wodBreakLoop(WAVEMAPDATA* wom)
+{
+    return waveOutBreakLoop(wom->hWave);
+}
+
 /**************************************************************************
  * 				WAVEMAP_wodMessage	[sample driver]
  */
@@ -354,7 +359,7 @@ DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_WRITE:	 	return wodWrite		((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1,	dwParam2);
     case WODM_PAUSE:	 	return wodPause		((WAVEMAPDATA*)dwUser);
     case WODM_GETPOS:	 	return wodGetPosition	((WAVEMAPDATA*)dwUser, (LPMMTIME)dwParam1, 	dwParam2);
-    case WODM_BREAKLOOP: 	return MMSYSERR_NOTSUPPORTED;
+    case WODM_BREAKLOOP: 	return wodBreakLoop	((WAVEMAPDATA*)dwUser);
     case WODM_PREPARE:	 	return wodPrepare	((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
     case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (WAVEMAPDATA*)dwUser, (LPWAVEOUTCAPSA)dwParam1,dwParam2);
