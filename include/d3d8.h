@@ -19,6 +19,10 @@
 #ifndef __WINE_D3D8_H
 #define __WINE_D3D8_H
 
+#ifndef DIRECT3D_VERSION
+#define DIRECT3D_VERSION  0x0800
+#endif
+
 #include "objbase.h"
 
 #include "d3d8types.h"

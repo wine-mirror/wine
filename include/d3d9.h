@@ -502,51 +502,6 @@ ICOM_DEFINE(IDirect3DSwapChain9,IUnknown)
 #endif
 
 /*****************************************************************************
- * IDirect3DSurface9 interface
- */
-#define INTERFACE IDirect3DSurface9
-#define IDirect3DSurface9_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
-    STDMETHOD(SetPrivateData)(THIS_ REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) PURE; \
-    STDMETHOD(GetPrivateData)(THIS_ REFGUID refguid, void* pData, DWORD* pSizeOfData) PURE; \
-    STDMETHOD(FreePrivateData)(THIS_ REFGUID refguid) PURE; \
-    STDMETHOD_(DWORD, SetPriority)(THIS_ DWORD PriorityNew) PURE; \
-    STDMETHOD_(DWORD, GetPriority)(THIS) PURE; \
-    STDMETHOD_(void, PreLoad)(THIS) PURE; \
-    STDMETHOD_(D3DRESOURCETYPE, GetType)(THIS) PURE; \
-    STDMETHOD(GetContainer)(THIS_ REFIID riid, void** ppContainer) PURE; \
-    STDMETHOD(GetDesc)(THIS_ D3DSURFACE_DESC* pDesc) PURE; \
-    STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE; \
-    STDMETHOD(UnlockRect)(THIS) PURE; \
-    STDMETHOD(GetDC)(THIS_ HDC* phdc) PURE; \
-    STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
-ICOM_DEFINE(IDirect3DSurface9,IUnknown)
-#undef INTERFACE
-
-#ifdef COBJMACROS
-/*** IUnknown methods ***/
-#define IDirect3DSurface9_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirect3DSurface9_AddRef(p)                    (p)->lpVtbl->AddRef(p)
-#define IDirect3DSurface9_Release(p)                   (p)->lpVtbl->Release(p)
-/*** IDirect3DSurface9 methods ***/
-#define IDirect3DSurface9_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
-#define IDirect3DSurface9_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
-#define IDirect3DSurface9_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
-#define IDirect3DSurface9_FreePrivateData(p,a)         (p)->lpVtbl->FreePrivateData(p,a)
-#define IDirect3DSurface9_SetPriority(p,a)             (p)->lpVtbl->SetPriority(p,a)
-#define IDirect3DSurface9_GetPriority(p)               (p)->lpVtbl->GetPriority(p)
-#define IDirect3DSurface9_PreLoad(p)                   (p)->lpVtbl->PreLoad(p)
-#define IDirect3DSurface9_GetType(p)                   (p)->lpVtbl->GetType(p)
-#define IDirect3DSurface9_GetContainer(p,a,b)          (p)->lpVtbl->GetContainer(p,a,b)
-#define IDirect3DSurface9_GetDesc(p,a)                 (p)->lpVtbl->GetDesc(p,a)
-#define IDirect3DSurface9_LockRect(p,a,b,c)            (p)->lpVtbl->LockRect(p,a,b,c)
-#define IDirect3DSurface9_UnlockRect(p)                (p)->lpVtbl->UnlockRect(p)
-#define IDirect3DSurface9_GetDC(p,a)                   (p)->lpVtbl->GetDC(p,a)
-#define IDirect3DSurface9_ReleaseDC(p,a)               (p)->lpVtbl->ReleaseDC(p,a)
-#endif
-
-/*****************************************************************************
  * IDirect3DResource9 interface
  */
 #define INTERFACE IDirect3DResource9
@@ -577,6 +532,44 @@ ICOM_DEFINE(IDirect3DResource9,IUnknown)
 #define IDirect3DResource9_GetPriority(p)               (p)->lpVtbl->GetPriority(p)
 #define IDirect3DResource9_PreLoad(p)                   (p)->lpVtbl->PreLoad(p)
 #define IDirect3DResource9_GetType(p)                   (p)->lpVtbl->GetType(p)
+#endif
+
+/*****************************************************************************
+ * IDirect3DSurface9 interface
+ */
+#define INTERFACE IDirect3DSurface9
+#define IDirect3DSurface9_METHODS \
+    IDirect3DResource9_METHODS \
+    STDMETHOD(GetContainer)(THIS_ REFIID riid, void** ppContainer) PURE; \
+    STDMETHOD(GetDesc)(THIS_ D3DSURFACE_DESC* pDesc) PURE; \
+    STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE; \
+    STDMETHOD(UnlockRect)(THIS) PURE; \
+    STDMETHOD(GetDC)(THIS_ HDC* phdc) PURE; \
+    STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
+ICOM_DEFINE(IDirect3DSurface9,IDirect3DResource9)
+#undef INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define IDirect3DSurface9_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DSurface9_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IDirect3DSurface9_Release(p)                   (p)->lpVtbl->Release(p)
+/*** IDirect3DSurface9 methods: IDirect3DResource9 ***/
+#define IDirect3DSurface9_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
+#define IDirect3DSurface9_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
+#define IDirect3DSurface9_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
+#define IDirect3DSurface9_FreePrivateData(p,a)         (p)->lpVtbl->FreePrivateData(p,a)
+#define IDirect3DSurface9_SetPriority(p,a)             (p)->lpVtbl->SetPriority(p,a)
+#define IDirect3DSurface9_GetPriority(p)               (p)->lpVtbl->GetPriority(p)
+#define IDirect3DSurface9_PreLoad(p)                   (p)->lpVtbl->PreLoad(p)
+#define IDirect3DSurface9_GetType(p)                   (p)->lpVtbl->GetType(p)
+/*** IDirect3DSurface9 methods ***/
+#define IDirect3DSurface9_GetContainer(p,a,b)          (p)->lpVtbl->GetContainer(p,a,b)
+#define IDirect3DSurface9_GetDesc(p,a)                 (p)->lpVtbl->GetDesc(p,a)
+#define IDirect3DSurface9_LockRect(p,a,b,c)            (p)->lpVtbl->LockRect(p,a,b,c)
+#define IDirect3DSurface9_UnlockRect(p)                (p)->lpVtbl->UnlockRect(p)
+#define IDirect3DSurface9_GetDC(p,a)                   (p)->lpVtbl->GetDC(p,a)
+#define IDirect3DSurface9_ReleaseDC(p,a)               (p)->lpVtbl->ReleaseDC(p,a)
 #endif
 
 /*****************************************************************************
@@ -773,10 +766,10 @@ ICOM_DEFINE(IDirect3DTexture9,IDirect3DBaseTexture9)
 #define INTERFACE IDirect3DVolumeTexture9
 #define IDirect3DVolumeTexture9_METHODS \
     IDirect3DBaseTexture9_METHODS \
-    STDMETHOD(GetLevelDesc)(THIS_ UINT Level, D3DVOLUME_DESC *pDesc) PURE;
-    STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, IDirect3DVolume9** ppVolumeLevel) PURE;
-    STDMETHOD(LockBox)(THIS_ UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE;
-    STDMETHOD(UnlockBox)(THIS_ UINT Level) PURE;
+    STDMETHOD(GetLevelDesc)(THIS_ UINT Level, D3DVOLUME_DESC *pDesc) PURE; \
+    STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, IDirect3DVolume9** ppVolumeLevel) PURE; \
+    STDMETHOD(LockBox)(THIS_ UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE; \
+    STDMETHOD(UnlockBox)(THIS_ UINT Level) PURE; \
     STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX* pDirtyBox) PURE;
 ICOM_DEFINE(IDirect3DVolumeTexture9,IDirect3DBaseTexture9)
 #undef INTERFACE

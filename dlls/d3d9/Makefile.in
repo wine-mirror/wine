@@ -1,0 +1,37 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = d3d9.dll
+IMPORTS   = user32 gdi32 kernel32
+EXTRAINCL = @X_CFLAGS@
+EXTRALIBS = $(LIBUUID) @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	basetexture.c \
+	cubetexture.c \
+	d3d9_main.c \
+	device.c \
+	directx.c \
+	indexbuffer.c \
+	pixelshader.c \
+	query.c \
+	resource.c \
+	stateblock.c \
+	surface.c \
+	swapchain.c \
+	texture.c \
+	vertexbuffer.c \
+	vertexdeclaration.c \
+	vertexshader.c \
+	volume.c \
+	volumetexture.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

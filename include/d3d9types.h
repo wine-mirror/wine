@@ -200,7 +200,7 @@ typedef enum _D3DDECLUSAGE {
 
 #define MAXD3DDECLUSAGE         D3DDECLUSAGE_SAMPLE
 #define MAXD3DDECLUSAGEINDEX    15
-#define MAXD3DDECLLENGTH        64 /* does not include "end" marker vertex element */
+#define MAXD3DDECLLENGTH        64
 
 typedef enum _D3DDECLMETHOD {
   D3DDECLMETHOD_DEFAULT = 0,

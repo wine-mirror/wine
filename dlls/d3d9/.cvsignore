@@ -1,0 +1,5 @@
+Makefile
+d3d9.dll.dbg.c
+d3d9.spec.c
+d3d9.spec.def
+version.res
