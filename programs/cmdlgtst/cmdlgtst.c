@@ -1,16 +1,21 @@
-// (c) 1999-2000 Eric Williams.  Rights as specified under the WINE
-// License.  Don't hoard code; share it!
+/*
+ * (c) 1999-2000 Eric Williams.  Rights as specified under the WINE
+ * License.  Don't hoard code; share it!
+ */
+ 
+/*
+ * One might call this a Commdlg test jig.  Its sole function in life
+ * is to call the Commdlg Common Dialogs.  The results of a call to
+ * File Open or File Save are printed in the upper left corner;
+ * Font adjusts the font of the printout, and Color adjusts the color
+ * of the background.
+ */
 
-//
-// One might call this a Commdlg test jig.  Its sole function in life
-// is to call the Commdlg Common Dialogs.  The results of a call to
-// File Open or File Save are printed in the upper left corner;
-// Font adjusts the font of the printout, and Color adjusts the color
-// of the background.
-
-// Ideally it would also do event logging and be a bit less stupid
-// about displaying the results of the various requesters.  But hey,
-// it's only a first step. :-)
+/*
+ * Ideally it would also do event logging and be a bit less stupid
+ * about displaying the results of the various requesters.  But hey,
+ * it's only a first step. :-)
+ */
 
 #include <windows.h>
 #include <commdlg.h>
@@ -18,37 +23,47 @@
 #include <string.h>
 #include "cmdlgtst.h"
 
-// This structure is to set up flag / control associations for the custom
-// requesters.  The ft_id is the id for the control (usually generated
-// by the system) and the ft_bit is the flag bit which goes into the
-// settings longword for the various Commdlg structures.  It is assumed
-// that all flags fit in an unsigned long and that all bits are in fact
-// one bit.
+/*
+ * This structure is to set up flag / control associations for the custom
+ * requesters.  The ft_id is the id for the control (usually generated
+ * by the system) and the ft_bit is the flag bit which goes into the
+ * settings longword for the various Commdlg structures.  It is assumed
+ * that all flags fit in an unsigned long and that all bits are in fact
+ * one bit.
+ */
 
-// The array of entries is terminated by {IDOK, 0}; the assumption is that
-// IDOK would never be associated with a dialogbox control (since it's
-// usually the ID of the OK button}.
+/*
+ * The array of entries is terminated by {IDOK, 0}; the assumption is that
+ * IDOK would never be associated with a dialogbox control (since it's
+ * usually the ID of the OK button}.
+ */
 
 struct FlagTableEntry {
 	int ft_id;
 	unsigned long ft_bit;
 };
 
-//#define FAR
+#if 0
+#define FAR
+#endif
 #define EXPORT
 
 static char menuName[] = "CmdlgtstMenu";
 static char className[] = "CmdlgtstClass";
 static char windowName[] = "Cmdlgtst Window";
 
-// global hInstance variable.  This makes the code non-threadable,
-// but wotthehell; this is Win32 anyway!  (Though it does work
-// under Win16, if one doesn't run more than one copy at a time.)
+/*
+ * global hInstance variable.  This makes the code non-threadable,
+ * but wotthehell; this is Win32 anyway!  (Though it does work
+ * under Win16, if one doesn't run more than one copy at a time.)
+ */
 
 static HINSTANCE g_hInstance;
 
-// global CommDlg data structures for modals.  These are placed here
-// so that the custom dialog boxes can get at them.
+/*
+ * global CommDlg data structures for modals.  These are placed here
+ * so that the custom dialog boxes can get at them.
+ */
 
 static PRINTDLG pd;
 static COLORREF cc_cr[16];
@@ -60,7 +75,7 @@ static char ofn_result[1024];
 static char ofn_titleresult[128];
 static OPENFILENAME ofn;
 
-// Stuff for find and replace.  These are modeless, so I have to put them here.
+/* Stuff for find and replace.  These are modeless, so I have to put them here. */
 
 static HWND findDialogBox = 0;
 static UINT findMessageId = 0;
@@ -68,39 +83,43 @@ static UINT findMessageId = 0;
 static FINDREPLACE frS;
 static char fromstring[1024], tostring[1024];
 
-// Stuff for the drawing of the window(s).  I put them here for convenience.
+/* Stuff for the drawing of the window(s).  I put them here for convenience. */
 
-static COLORREF fgColor = RGB(0, 0, 0); // not settable
-static COLORREF bgColor = RGB(255, 255, 255); // COLOR dialog
-static COLORREF txtColor = RGB(0, 0, 0); // settable if one enables CF_EFFECTS
+static COLORREF fgColor = RGB(0, 0, 0); /* not settable */
+static COLORREF bgColor = RGB(255, 255, 255); /* COLOR dialog */
+static COLORREF txtColor = RGB(0, 0, 0); /* settable if one enables CF_EFFECTS */
 
-// Utility routines.
+/* Utility routines. */
 
 void nyi(HWND hWnd)
 {
-	// "Hi there!  I'm not yet implemented!"
+	/* "Hi there!  I'm not yet implemented!" */
 	MessageBox(hWnd, "Not yet implemented!", "NYI", MB_ICONEXCLAMATION | MB_OK);
 }
 
 UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
 {
-	// If the user specifies something that needs an awfully stupid hook function,
-	// this is the one to use.  It's a no-op, and says "I didn't do anything."
+	/*
+	 * If the user specifies something that needs an awfully stupid hook function,
+	 * this is the one to use.  It's a no-op, and says "I didn't do anything."
+	 */
 
 	(void) hWnd;
 	(void) msg;
 	(void) wParam;
 	(void) lParam;
 
-	printf("dummyfnhook\n"); // visible under Wine, but Windows probably won't see it!
+	printf("dummyfnhook\n"); /* visible under Wine, but Windows probably won't see it! */
 
 	return 0;
 }
 
-// Initialization code.  This code simply shoves in predefined
-// data into the COMMDLG data structures; in the future, I might use
-// a series of loadable resources, or static initializers; of course,
-// if Microsoft decides to change the field ordering, I'd be screwed.
+/*
+ * Initialization code.  This code simply shoves in predefined
+ * data into the COMMDLG data structures; in the future, I might use
+ * a series of loadable resources, or static initializers; of course,
+ * if Microsoft decides to change the field ordering, I'd be screwed.
+ */
 
 void mwi_Print(HWND hWnd)
 {
@@ -126,7 +145,7 @@ void mwi_Color(HWND hWnd)
 {
 	int i;
 
-	// there's probably an init call for this, somewhere.
+	/* there's probably an init call for this, somewhere. */
 
 	for(i=0;i<16;i++)
 		cc_cr[i] = RGB(0,0,0);
@@ -148,8 +167,8 @@ void mwi_Font(HWND hWnd)
 	cf.hwndOwner = hWnd;
 	cf.hDC = 0;
 	cf.lpLogFont = &cf_lf;
-	cf.Flags = CF_SCREENFONTS; // something's needed for display; otherwise it craps out with an error
-	cf.rgbColors = RGB(0,0,0);  // what is *this* doing here??
+	cf.Flags = CF_SCREENFONTS; /* something's needed for display; otherwise it craps out with an error */
+	cf.rgbColors = RGB(0,0,0);  /* what is *this* doing here?? */
 	cf.lCustData = 0;
 	cf.lpfnHook = 0;
 	cf.lpTemplateName = 0;
@@ -159,7 +178,7 @@ void mwi_Font(HWND hWnd)
 	cf.nSizeMin = 8;
 	cf.nSizeMax = 72;
 
-	cf_lf.lfHeight = -18; // this can be positive or negative, but negative is usually used.
+	cf_lf.lfHeight = -18; /* this can be positive or negative, but negative is usually used. */
 }
 
 void mwi_File(HWND hWnd)
@@ -216,12 +235,14 @@ void mwi_InitAll(HWND hWnd)
 	mwi_FindReplace(hWnd);
 }
 
-// Various configurations for the window.  Ideally, this
-// would be stored with the window itself, but then, this
-// isn't the brightest of apps.  Wouldn't be hard to set up,
-// though -- one of the neater functions of Windows, but if
-// someone decides to load the windows themselves from resources,
-// there might be a problem.
+/*
+ * Various configurations for the window.  Ideally, this
+ * would be stored with the window itself, but then, this
+ * isn't the brightest of apps.  Wouldn't be hard to set up,
+ * though -- one of the neater functions of Windows, but if
+ * someone decides to load the windows themselves from resources,
+ * there might be a problem.
+ */
 
 void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 {
@@ -235,7 +256,7 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	(void) wParam;
 	(void) lParam;
 
-	// Commence painting!
+	/* Commence painting! */
 
 	BeginPaint(hWnd, &ps);
 	GetClientRect(hWnd, (LPRECT) &rect);
@@ -244,20 +265,22 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	brush = (HBRUSH) SelectObject(ps.hdc, CreateSolidBrush(bgColor));
 	font = (HFONT) SelectObject(ps.hdc, CreateFontIndirect(&cf_lf));
 
-	// Ideally, we'd only need to draw the exposed bit.
-	// But something in BeginPaint is screwing up the rectangle.
-	// Either that, or Windows is drawing it wrong.  AARGH!
-	// Rectangle(ps.hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+	/*
+	 * Ideally, we'd only need to draw the exposed bit.
+	 * But something in BeginPaint is screwing up the rectangle.
+	 * Either that, or Windows is drawing it wrong.  AARGH!
+	 * Rectangle(ps.hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+         */
 	Rectangle(ps.hdc, rect.left, rect.top, rect.right, rect.bottom);
 
-	// now draw a couple of lines, just for giggles.
+	/* now draw a couple of lines, just for giggles. */
 
 	MoveToEx(ps.hdc, rect.left, rect.top, (POINT FAR *) 0);
 	LineTo(ps.hdc, rect.right, rect.bottom);
 	MoveToEx(ps.hdc, rect.left, rect.bottom, (POINT FAR *) 0);
 	LineTo(ps.hdc, rect.right, rect.top);
 
-	// draw some text
+	/* draw some text */
 
 	SetTextAlign(ps.hdc, TA_CENTER|TA_BASELINE);
 	SetTextColor(ps.hdc, txtColor);
@@ -267,8 +290,10 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	TextOut(ps.hdc, rect.left+10, rect.top+10, ofn_result, strlen(ofn_result));
 	TextOut(ps.hdc, rect.left+10, rect.top-cf_lf.lfHeight+10, ofn_titleresult, strlen(ofn_titleresult));
 
-	// set the HDC back to the old pen and brush,
-	// and delete the newly created objects.
+	/*
+	 * set the HDC back to the old pen and brush,
+	 * and delete the newly created objects.
+	 */
 
 	pen = (HPEN) SelectObject(ps.hdc, pen);
 	DeleteObject(pen);
@@ -280,10 +305,12 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	EndPaint(hWnd, &ps);
 }
 
-// This function simply returns an error indication.  Naturally,
-// I do not (yet) see an elegant method by which one can convert
-// the CDERR_xxx return values into something resembling usable text;
-// consult cderr.h to see what was returned.
+/*
+ * This function simply returns an error indication.  Naturally,
+ * I do not (yet) see an elegant method by which one can convert
+ * the CDERR_xxx return values into something resembling usable text;
+ * consult cderr.h to see what was returned.
+ */
 
 void mw_checkError(HWND hWnd, BOOL explicitcancel)
 {
@@ -299,10 +326,12 @@ void mw_checkError(HWND hWnd, BOOL explicitcancel)
 	}
 }
 
-// The actual dialog function calls.  These merely wrap the Commdlg
-// calls, and do something (not so) intelligent with the result.
-// Ideally, the main window would refresh and take into account the
-// various values specified in the dialog.
+/*
+ * The actual dialog function calls.  These merely wrap the Commdlg
+ * calls, and do something (not so) intelligent with the result.
+ * Ideally, the main window would refresh and take into account the
+ * various values specified in the dialog.
+ */
 
 void mw_ColorSetup(HWND hWnd)
 {
@@ -363,8 +392,10 @@ void mw_SaveSetup(HWND hWnd)
 	else mw_checkError(hWnd,FALSE);
 }
 
-// Can't find documentation in Borland for this one.  Does it
-// exist at all, or is it merely a subdialog of Print?
+/*
+ * Can't find documentation in Borland for this one.  Does it
+ * exist at all, or is it merely a subdialog of Print?
+ */
 
 void mw_PSetupSetup(HWND hWnd)
 {
@@ -374,20 +405,26 @@ void mw_PSetupSetup(HWND hWnd)
 void mw_PrintSetup(HWND hWnd)
 {
 	if(PrintDlg(&pd)) {
-		// the following are suggested in the Borland documentation,
-		// but aren't that useful until WinE starts to actually
-		// function with respect to printing.
+		/*
+		 * the following are suggested in the Borland documentation,
+		 * but aren't that useful until WinE starts to actually
+		 * function with respect to printing.
+		 */
 
-		// Escape(tmp.hDC, STARTDOC, 8, "Test-Doc", NULL);
+#if 0
+		Escape(tmp.hDC, STARTDOC, 8, "Test-Doc", NULL);
+#endif
 
 	 /* Print text and rectangle */
 
-		// TextOut(tmp.hDC, 50, 50, "Common Dialog Test Page", 23);
+#if 0
+		TextOut(tmp.hDC, 50, 50, "Common Dialog Test Page", 23);
 
-		// Rectangle(tmp.hDC, 50, 90, 625, 105);
-		// Escape(tmp.hDC, NEWFRAME, 0, NULL, NULL);
-		// Escape(tmp.hDC, ENDDOC, 0, NULL, NULL);
-	 //	DeleteDC(tmp.hDC);
+		Rectangle(tmp.hDC, 50, 90, 625, 105);
+		Escape(tmp.hDC, NEWFRAME, 0, NULL, NULL);
+		Escape(tmp.hDC, ENDDOC, 0, NULL, NULL);
+	 	DeleteDC(tmp.hDC);
+#endif
 		 if (pd.hDevMode != 0)
 			 GlobalFree(pd.hDevMode);
 		 if (pd.hDevNames != 0)
@@ -401,8 +438,10 @@ void mw_PrintSetup(HWND hWnd)
 	else mw_checkError(hWnd,TRUE);
 }
 
-// Some support functions for the custom dialog box handlers.
-// In particular, we have to set things properly, and get the flags back.
+/*
+ * Some support functions for the custom dialog box handlers.
+ * In particular, we have to set things properly, and get the flags back.
+ */
 
 void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long flags)
 {
@@ -428,10 +467,12 @@ unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
 	return l;
 }
 
-// These functions are the custom dialog box handlers.
-// The division of labor may be a tad peculiar; in particular,
-// the flag tables should probably be in the main functions,
-// not the handlers.  I'll fix that later; this works as of right now.
+/*
+ * These functions are the custom dialog box handlers.
+ * The division of labor may be a tad peculiar; in particular,
+ * the flag tables should probably be in the main functions,
+ * not the handlers.  I'll fix that later; this works as of right now.
+ */
 
 BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 					 struct FlagTableEntry * table, unsigned long * flags)
@@ -441,12 +482,12 @@ BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	switch(uMsg)
 	{
 		case WM_INITDIALOG:
-			// Set the controls properly.
+			/* Set the controls properly. */
 
 			mwcd_SetFlags(hWnd, table, *flags);
 
-			return TRUE; // I would return FALSE if I explicitly called SetFocus().
-							 // As usual, Windows is weird.
+			return TRUE; /* I would return FALSE if I explicitly called SetFocus(). */
+				     /* As usual, Windows is weird. */
 
 		case WM_COMMAND:
 			switch(wParam) {
@@ -460,15 +501,15 @@ BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 					break;
 
 				case CM_R_HELP:
-					break; // help?  We don't need no steenkin help!
+					break; /* help?  We don't need no steenkin help! */
 
 				default:
-					break; // eat the message
+					break; /* eat the message */
 			}
 			return TRUE;
 
 		default:
-			return FALSE; // since I don't process this particular message
+			return FALSE; /* since I don't process this particular message */
 	}
 }
 
@@ -609,17 +650,18 @@ BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	(void) lParam;
 
 	switch(uMsg) {
-		case WM_INITDIALOG: return TRUE; // let WINDOWS set the focus.
-		case WM_COMMAND: EndDialog(hWnd, 0); return TRUE; // it's our OK button.
-		default: return FALSE; // it's something else, let Windows worry about it
+		case WM_INITDIALOG: return TRUE; /* let WINDOWS set the focus. */
+		case WM_COMMAND: EndDialog(hWnd, 0); return TRUE; /* it's our OK button. */
+		default: return FALSE; /* it's something else, let Windows worry about it */
 	}
 }
 
-
-// These functions call custom dialog boxes (resource-loaded, if I do this right).
-// Right now they don't do a heck of a lot, but at some future time
-// they will muck about with the flags (and be loaded from the flags) of
-// the CommDlg structures initialized by the mwi_xxx() routines.
+/*
+ * These functions call custom dialog boxes (resource-loaded, if I do this right).
+ * Right now they don't do a heck of a lot, but at some future time
+ * they will muck about with the flags (and be loaded from the flags) of
+ * the CommDlg structures initialized by the mwi_xxx() routines.
+ */
 
 void mwc_ColorSetup(HWND hWnd)
 {
@@ -651,10 +693,12 @@ void mwc_FileSetup(HWND hWnd)
 	if(r < 0) { MessageBox(hWnd, "Failure opening File_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
-// Main window message dispatcher.  Here the messages get chewed up
-// and spit out.  Note the ugly hack for the modeless Find/Replace box;
-// this looks like it was bolted on with hexhead screws and is now
-// dangling from Windows like a loose muffler.  Sigh.
+/*
+ * Main window message dispatcher.  Here the messages get chewed up
+ * and spit out.  Note the ugly hack for the modeless Find/Replace box;
+ * this looks like it was bolted on with hexhead screws and is now
+ * dangling from Windows like a loose muffler.  Sigh.
+ */
 
 LRESULT CALLBACK EXPORT mainWindowDispatcher(
 	HWND hWnd,
@@ -686,31 +730,33 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 	}
 	else switch(uMsg) {
 	case WM_CREATE:
-			// this is always the first message...at least as far as
-			// we are concerned.
+			/*
+			 * this is always the first message...at least as far as
+			 * we are concerned.
+			 */
 		mwi_InitAll(hWnd);
 		break;
 
 	case WM_PAINT:
-			// Well, draw something!
+			/* Well, draw something! */
 		paintMainWindow(hWnd, uMsg, wParam, lParam);
 		break;
 
 	case WM_DESTROY:
-			// Uh oh.  Eject!  Eject!  Eject!
+			/* Uh oh.  Eject!  Eject!  Eject! */
 		PostQuitMessage(0);
 		break;
 
 	case WM_COMMAND:
-			// menu or accelerator pressed; do something.
+			/* menu or accelerator pressed; do something. */
 
 		switch(wParam) {
 		case CM_U_EXIT:
-				// Uh oh.  Eject!  Eject!  Eject!
+				/* Uh oh.  Eject!  Eject!  Eject! */
 			PostQuitMessage(0);
 			break;
 
-		// these actually call the Common Dialogs.
+		/* these actually call the Common Dialogs. */
 
 		case CM_U_COLOR:
 			mw_ColorSetup(hWnd); return 1;
@@ -736,9 +782,11 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 		case CM_U_PRINT:
 			mw_PrintSetup(hWnd); return 1;
 
-		// these set up various flags and values in the Common Dialog
-		// data structures, which are currently stored in static memory.
-		// The control dialogs themselves are resources as well.
+		/*
+		 * these set up various flags and values in the Common Dialog
+		 * data structures, which are currently stored in static memory.
+		 * The control dialogs themselves are resources as well.
+		 */
 
 		case CM_F_FILE:
 			mwc_FileSetup(hWnd); return 1;
@@ -760,7 +808,7 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 			return 1;
 		case CM_H_USAGE:
 			DialogBox(g_hInstance, "UsageDialog", hWnd, (DLGPROC) mwcd_About);
-         	// return value?  *What* return value?
+         	/* return value?  *What* return value? */
 			return 1;
 
 		default:
@@ -774,7 +822,7 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 	return 0;
 }
 
-// Class registration.  One might call this a Windowsism.
+/* Class registration.  One might call this a Windowsism. */
 
 int registerMainWindowClass(HINSTANCE hInstance)
 {
@@ -785,8 +833,10 @@ int registerMainWindowClass(HINSTANCE hInstance)
 	wndClass.cbClsExtra    = 0;
 	wndClass.cbWndExtra    = 0;
 	wndClass.hInstance     = hInstance;
-	//wndClass.hIcon         = LoadIcon(hInstance, "whello");
-	//wndClass.hCursor       = LoadCursor(hInstance, IDC_ARROW);
+#if 0
+	wndClass.hIcon         = LoadIcon(hInstance, "whello");
+	wndClass.hCursor       = LoadCursor(hInstance, IDC_ARROW);
+#endif
 	wndClass.hIcon         = 0;
 	wndClass.hCursor       = 0;
 	wndClass.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
@@ -796,26 +846,28 @@ int registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClass(&wndClass);
 }
 
-// Another Windowsism; this one's not too bad, as it compares
-// favorably with CreateWindow() in X (mucking about with X Visuals
-// can get messy; at least here we don't have to worry about that).
+/*
+ * Another Windowsism; this one's not too bad, as it compares
+ * favorably with CreateWindow() in X (mucking about with X Visuals
+ * can get messy; at least here we don't have to worry about that).
+ */
 
 HWND createMainWindow(HINSTANCE hInstance, int show)
 {
 	HWND hWnd;
 
 	hWnd = CreateWindow(
-		className,  // classname
-		windowName,  // windowname/title
-		WS_OVERLAPPEDWINDOW, // dwStyle
-		0, //x
-		0, //y
-		CW_USEDEFAULT, //width
-		CW_USEDEFAULT, //height
-		0, // parent window
-		0, // menu
-		hInstance, // instance
-		0          // passthrough for MDI
+		className,  /* classname */
+		windowName,  /* windowname/title */
+		WS_OVERLAPPEDWINDOW, /* dwStyle */
+		0, /* x */
+		0, /* y */
+		CW_USEDEFAULT, /* width */
+		CW_USEDEFAULT, /* height */
+		0, /* parent window */
+		0, /* menu */
+		hInstance, /* instance */
+		0          /* passthrough for MDI */
 	);
 
 	if(hWnd==0) return 0;
@@ -841,12 +893,14 @@ int messageLoop(HINSTANCE hInstance, HWND hWnd)
 	return msg.wParam;
 }
 
-// Oh, did we tell you that main() isn't the name of the
-// thing called in a Win16/Win32 app?  And then there are
-// the lack of argument lists, the necessity (at least in Win16)
-// of having to deal with class registration exactly once (as the
-// app may be run again), and some other bizarre holdovers from
-// Windows 3.x days.  But hey, Solitaire still works.
+/*
+ * Oh, did we tell you that main() isn't the name of the
+ * thing called in a Win16/Win32 app?  And then there are
+ * the lack of argument lists, the necessity (at least in Win16)
+ * of having to deal with class registration exactly once (as the
+ * app may be run again), and some other bizarre holdovers from
+ * Windows 3.x days.  But hey, Solitaire still works.
+ */
 
 int PASCAL WinMain(
 	HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -873,8 +927,9 @@ int PASCAL WinMain(
 	return messageLoop(hInstance, hWnd);
 }
 
-// And now the end of the program.  Enjoy.
+/* And now the end of the program.  Enjoy. */
 
-// (c) 1999-2000 Eric Williams.  Rights as specified under the WINE
-// License.  Don't hoard code; share it!
-
+/*
+ * (c) 1999-2000 Eric Williams.  Rights as specified under the WINE
+ * License.  Don't hoard code; share it!
+ */

@@ -26,9 +26,10 @@ BOOL isAldus;
 BOOL FileOpen(HWND hWnd, char *fn)
 {
   OPENFILENAME ofn = { sizeof(OPENFILENAME),
-		       0, 0, "Metafiles\0*.wmf\0", NULL, 0, 0, NULL, 
+		       0, 0, NULL, NULL, 0, 0, NULL, 
 		       FN_LENGTH, NULL, 0, NULL, NULL, OFN_CREATEPROMPT |
 		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
+  ofn.lpstrFilter = "Metafiles\0*.wmf\0";
   ofn.hwndOwner = hWnd;
   ofn.lpstrFile = fn;
   return GetOpenFileName(&ofn);

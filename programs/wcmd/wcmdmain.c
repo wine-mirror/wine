@@ -106,7 +106,9 @@ HANDLE h;
   h = CreateFile (string, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (h != INVALID_HANDLE_VALUE) {
     CloseHandle (h);
-//    WCMD_batch (string, " ");
+#if 0
+    WCMD_batch (string, " ");
+#endif
   }
 
 /*

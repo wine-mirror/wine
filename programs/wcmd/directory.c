@@ -202,7 +202,9 @@ __int64 byte_count;
     if ((recurse) &&
           ((fd+i)->cFileName[0] != '.') &&
       	  ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-//      GetFullPathName ((fd+i)->cFileName, sizeof(string), string, NULL);
+#if 0
+      GetFullPathName ((fd+i)->cFileName, sizeof(string), string, NULL);
+#endif
       p = strrchr (search_path, '\\');
       lstrcpyn (string, search_path, (p-search_path+2));
       lstrcat (string, (fd+i)->cFileName);

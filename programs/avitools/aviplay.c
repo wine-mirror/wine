@@ -217,7 +217,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	    int		i,palchanged;
 
 	    /* skip used colorentries. */
-	    decodedbits+=bmi->biClrUsed*sizeof(RGBQUAD);
+	    decodedbits=(char*)decodedbits+bmi->biClrUsed*sizeof(RGBQUAD);
 	    palchanged = 0;
 	    for (i=0;i<bmi->biClrUsed;i++) {
 	    	if (	(palent[i].peRed != rgb[i].rgbRed) ||
@@ -245,8 +245,8 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	}
 	/* Argh. AVIs are upside down. */
 	for (i=0;i<dsdesc.dwHeight;i++) {
-	    memcpy( dsdesc.u1.lpSurface+(i*dsdesc.lPitch),
-		    decodedbits+bytesline*(dsdesc.dwHeight-i-1),
+	    memcpy( (char *)dsdesc.u1.lpSurface+(i*dsdesc.lPitch),
+		    (char *)decodedbits+bytesline*(dsdesc.dwHeight-i-1),
 		    bytesline
 	    );
 	}

@@ -150,7 +150,7 @@ void DoOpenFile(LPCSTR szFileName) {
     WORD nResult;
 
     /* Close any files and prompt to save changes */
-    if (DoCloseFile) {
+    if (DoCloseFile()) {
         GetFileTitle(szFileName, Globals.szFileName, sizeof(Globals.szFileName));
         LANGUAGE_UpdateWindowCaption();
         hFile = _lopen(szFileName, OF_READ);

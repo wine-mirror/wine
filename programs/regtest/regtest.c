@@ -20,6 +20,10 @@
 #include <winerror.h>
 #include <winnt.h>
 
+#ifndef __GNUC__
+#define __FUNCTION__ "<function>"
+#endif
+
 /* True this when security is implemented */
 #define CHECK_SAM FALSE
 

@@ -102,5 +102,3 @@ um diese Funktion \nabzuschließen. Beenden Sie eine oder mehrere \
 \nAnwendungen, um den verfügbaren Arbeitsspeicher zu \nerhöhen."
 
 #include "notepad.rc"
-
-

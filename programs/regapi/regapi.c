@@ -160,60 +160,60 @@ static void    processQueryValue(LPSTR cmdline);
 /*
  * Help Text displayed when invalid parameters are provided
  */
-static char helpText[] = "
-NAME
-          regapi - provide a command line interface to the wine registry.
-
-SYNOPSIS
-          regapi commandName [-force] < file
-
-DESCRIPTION
-          regapi allows editing the wine registry.  It processes the given 
-          commandName for every line in the stdin data stream.  Input data 
-          format may vary depending on the commandName see INPUT FILE FORMAT.
-
-OPTIONS
-          commandName
-              Instruct regapi about what action to perform on the data stream.
-              Currently, only setValue and queryValue are supported and 
-              implemented.
-
-          -force 
-              When provided the action will be performed anyway.  This may 
-              have a different meaning depending on the context.  For example,
-              when providing -force to setValue, the value is set even if it 
-              was previously set to another value.
-
-          < file
-              STDIN channel, provide a file name with line of the appropriate
-              format.
-
-INPUT FILE FORMAT
-
-          setValue
-              The input file format required by the setValue command is similar
-              to the one obtained from regedit.exe export option.  The only 
-              difference is that multi line values are not supported, the 
-              value data must be on a single line.
-
-              [KEY_CLASS\\Some\\Path\\For\\A\\Key]
-              \"Value1\"=\"Data1\"
-              \"Value2\"=\"Data2\"
-              \"Valuen\"=\"Datan\"
-              ...
-
-          queryValue
-              The input file format required by the queryValue command is 
-              similar to the one required by setValue.  The only 
-              difference is that you only provide the value name.
-
-              [KEY_CLASS\\Some\\Path\\For\\A\\Key]
-              \"Value1\"
-              \"Value2\"
-              \"Valuen\"
-              ...
-                                February 1999.
-";
+static char helpText[] =
+"NAME\n"
+"          regapi - provide a command line interface to the wine registry.\n"
+"\n"
+"SYNOPSIS\n"
+"          regapi commandName [-force] < file\n"
+"\n"
+"DESCRIPTION\n"
+"          regapi allows editing the wine registry.  It processes the given\n"
+"          commandName for every line in the stdin data stream.  Input data\n"
+"          format may vary depending on the commandName see INPUT FILE FORMAT.\n"
+"\n"
+"OPTIONS\n"
+"          commandName\n"
+"              Instruct regapi about what action to perform on the data stream.\n"
+"              Currently, only setValue and queryValue are supported and\n"
+"              implemented.\n"
+"\n"
+"          -force\n"
+"              When provided the action will be performed anyway.  This may\n"
+"              have a different meaning depending on the context.  For example,\n"
+"              when providing -force to setValue, the value is set even if it\n"
+"              was previously set to another value.\n"
+"\n"
+"          < file\n"
+"              STDIN channel, provide a file name with line of the appropriate\n"
+"              format.\n"
+"\n"
+"INPUT FILE FORMAT\n"
+"\n"
+"          setValue\n"
+"              The input file format required by the setValue command is similar\n"
+"              to the one obtained from regedit.exe export option.  The only\n"
+"              difference is that multi line values are not supported, the\n"
+"              value data must be on a single line.\n"
+"\n"
+"              [KEY_CLASS\\Some\\Path\\For\\A\\Key]\n"
+"              \"Value1\"=\"Data1\"\n"
+"              \"Value2\"=\"Data2\"\n"
+"              \"Valuen\"=\"Datan\"\n"
+"              ...\n"
+"\n"
+"          queryValue\n"
+"              The input file format required by the queryValue command is\n"
+"              similar to the one required by setValue.  The only\n"
+"              difference is that you only provide the value name.\n"
+"\n"
+"              [KEY_CLASS\\Some\\Path\\For\\A\\Key]\n"
+"              \"Value1\"\n"
+"              \"Value2\"\n"
+"              \"Valuen\"\n"
+"              ...\n"
+"                                February 1999.\n"
+;
               
 
 /******************************************************************************
