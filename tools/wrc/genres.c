@@ -213,10 +213,7 @@ static void set_dword(res_t *res, int ofs, unsigned d)
 
 /*
  *****************************************************************************
- * Function	: get_word
- *		  get_dword
- * Syntax	: WORD get_word(res_t *res, int ofs)
- *		  DWORD get_dword(res_t *res, int ofs)
+ * Function	: get_dword
  * Input	:
  *	res	- Binary resource to put the data in
  *	ofs	- Byte offset in data-array
@@ -226,26 +223,6 @@ static void set_dword(res_t *res, int ofs, unsigned d)
  * Remarks	:
  *****************************************************************************
 */
-static WORD get_word(res_t *res, int ofs)
-{
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		return   (res->data[ofs+0] << 8)
-		       |  res->data[ofs+1];
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		return   (res->data[ofs+1] << 8)
-		       |  res->data[ofs+0];
-	}
-}
-
 static DWORD get_dword(res_t *res, int ofs)
 {
 	switch(byteorder)
