@@ -342,7 +342,10 @@ static int set_file_pointer( handle_t handle, int *low, int *high, int whence )
     if ((result = lseek( file->obj.fd, *low, whence )) == -1)
     {
         /* Check for seek before start of file */
-        if ((errno == EINVAL) && (whence != SEEK_SET) && (*low < 0))
+
+        /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
+        if (((errno == EINVAL) || (errno == EPERM))
+            && (whence != SEEK_SET) && (*low < 0))
             set_error( 0xc0010000 | ERROR_NEGATIVE_SEEK /* FIXME */ );
         else
             file_set_error();
