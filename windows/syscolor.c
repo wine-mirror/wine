@@ -125,10 +125,11 @@ static HPEN   SysColorPens[NUM_SYS_COLORS];
  */
 static void SYSCOLOR_MakeObjectSystem( HGDIOBJ handle, BOOL set)
 {
-    WORD heap_sel;
+    static WORD heap_sel = 0;
     LPWORD ptr;
 
-    if ((heap_sel = GetModuleHandle16( "gdi" )))
+    if (!heap_sel) heap_sel = LoadLibrary16( "gdi" );
+    if (heap_sel >= 32)
     {
         ptr = (LPWORD)LOCAL_Lock(heap_sel, handle);
 
