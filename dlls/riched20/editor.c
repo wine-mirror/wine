@@ -962,8 +962,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       break;
 
     case DLL_PROCESS_DETACH:
-      UnregisterClassW(wszClassName, hinstDLL);
-      UnregisterClassA("RichEdit20A", hinstDLL);
+      UnregisterClassW(wszClassName, 0);
+      UnregisterClassW(wszClassName50, 0);
+      UnregisterClassA("RichEdit20A", 0);
+      UnregisterClassA("RichEdit50A", 0);
       HeapDestroy (me_heap);
       me_heap = NULL;
       break;
