@@ -60,7 +60,7 @@ static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
     ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf,
 							   ENHMETAFILE_MAGIC );
     TRACE("hmf %04x -> enhmetaObj %p\n", hmf, metaObj);
-    return metaObj->emh;
+    return metaObj ? metaObj->emh : NULL;
 }
 
 /******************************************************************
@@ -108,7 +108,8 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
     HENHMETAFILE hmf;
     HFILE hFile;
 
-    hFile = CreateFileA(lpszMetaFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
+    hFile = CreateFileA(lpszMetaFile, GENERIC_READ, FILE_SHARE_READ, 0,
+			OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE) {
         WARN("could not open %s\n", lpszMetaFile);
 	return 0;
@@ -128,7 +129,8 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
     HENHMETAFILE hmf;
     HFILE hFile;
 
-    hFile = CreateFileW(lpszMetaFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
+    hFile = CreateFileW(lpszMetaFile, GENERIC_READ, FILE_SHARE_READ, 0,
+			OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE) {
         WARN("could not open %s\n", debugstr_w(lpszMetaFile));
 	return 0;
@@ -156,6 +158,7 @@ UINT WINAPI GetEnhMetaFileHeader(
 
     if (!buf) return sizeof(ENHMETAHEADER);
     emh = EMF_GetEnhMetaHeader(hmf);
+    if(!emh) return FALSE;
     memmove(buf, emh, MIN(sizeof(ENHMETAHEADER), bufsize));
     EMF_ReleaseEnhMetaHeader(hmf);
     return MIN(sizeof(ENHMETAHEADER), bufsize);
@@ -174,6 +177,7 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
      INT first;
  
+     if(!emh) return FALSE;
      if(emh->nDescription == 0 || emh->offDescription == 0) {
          EMF_ReleaseEnhMetaHeader(hmf);
  	return 0;
@@ -210,7 +214,8 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
     )
 {
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
- 
+
+     if(!emh) return FALSE;
      if(emh->nDescription == 0 || emh->offDescription == 0) {
          EMF_ReleaseEnhMetaHeader(hmf);
  	return 0;
@@ -548,9 +553,12 @@ BOOL WINAPI EnumEnhMetaFile(
 {
     BOOL ret = TRUE;
     LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
-    INT count = ((LPENHMETAHEADER) p)->nHandles;
-    HANDLETABLE *ht = HeapAlloc( GetProcessHeap(), 0, 
-				 sizeof(HANDLETABLE)*count);
+    INT count;
+    HANDLETABLE *ht;
+
+    if(!p) return FALSE;
+    count = ((LPENHMETAHEADER) p)->nHandles;
+    ht = HeapAlloc( GetProcessHeap(), 0, sizeof(HANDLETABLE)*count);
     ht->objectHandle[0] = hmf;
     while (ret) {
         ret = (*callback)(hdc, ht, p, count, data); 
@@ -580,11 +588,14 @@ BOOL WINAPI PlayEnhMetaFile(
       )
 {
     LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
-    INT count = ((LPENHMETAHEADER) p)->nHandles;
-    HANDLETABLE *ht = HeapAlloc( GetProcessHeap(), 0, 
-				 sizeof(HANDLETABLE) * count);
+    INT count;
+    HANDLETABLE *ht;
     BOOL ret = FALSE;
     INT savedMode = 0;
+
+    if(!p) return FALSE;
+    count = ((LPENHMETAHEADER) p)->nHandles;
+    ht = HeapAlloc( GetProcessHeap(), 0, sizeof(HANDLETABLE) * count);
     if (lpRect) {
         LPENHMETAHEADER h = (LPENHMETAHEADER) p;
 	FLOAT xscale = (h->rclBounds.right - h->rclBounds.left) /
@@ -640,6 +651,7 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
     ENHMETAHEADER *emrSrc = EMF_GetEnhMetaHeader( hmfSrc ), *emrDst;
     HENHMETAFILE hmfDst;
 
+    if(!emrSrc) return FALSE;
     if (!file) {
         emrDst = HeapAlloc( SystemHeap, 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
