@@ -763,7 +763,6 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
         {
             winpos->flags &= ~SWP_NOZORDER;
             winpos->hwndInsertAfter = HWND_TOP;
-            goto done;
         }
     }
 
@@ -779,7 +778,17 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
         (winpos->hwndInsertAfter == HWND_NOTOPMOST)) winpos->hwndInsertAfter = HWND_TOP;
 
     /* hwndInsertAfter must be a sibling of the window */
-    if ((winpos->hwndInsertAfter != HWND_TOP) && (winpos->hwndInsertAfter != HWND_BOTTOM))
+    if (winpos->hwndInsertAfter == HWND_TOP)
+    {
+        if (GetWindow(winpos->hwnd, GW_HWNDFIRST) == winpos->hwnd)
+            winpos->flags |= SWP_NOZORDER;
+    }
+    else if (winpos->hwndInsertAfter == HWND_BOTTOM)
+    {
+        if (GetWindow(winpos->hwnd, GW_HWNDLAST) == winpos->hwnd)
+            winpos->flags |= SWP_NOZORDER;
+    }
+    else
     {
         if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != wndPtr->parent) ret = FALSE;
         else
