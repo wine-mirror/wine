@@ -1011,10 +1011,11 @@ static void db_task_printsym(unsigned int addr, int size)
 }
 
 void
-db_print_address(seg, size, addrp)
+db_print_address(seg, size, addrp, byref)
 	char *		seg;
 	int		size;
 	struct i_addr	*addrp;
+	int		byref;
 {
 	if (addrp->is_reg) {
 	    fprintf(stderr,"%s", db_reg[size][addrp->disp]);
@@ -1033,8 +1034,22 @@ db_print_address(seg, size, addrp)
 	    if (addrp->index)
 		fprintf(stderr,",%s,%d", addrp->index, 1<<addrp->ss);
 	    fprintf(stderr,")");
-	} else
-	    db_task_printsym(addrp->disp, size);
+	} 
+	else {
+
+	    /* try to get destination of indirect call)
+	       works not for segmented adresses */	
+	    if (!seg && byref) {
+	        DBG_ADDR dbg_addr = {0,0,*(LPDWORD)(addrp->disp)};
+	        fprintf(stderr,"0x%x -> ", addrp->disp);
+		if ( DEBUG_IsBadReadPtr( &dbg_addr, sizeof(DWORD)))
+		    fprintf(stderr, "(invalid destination)");
+		else 
+		    db_task_printsym(dbg_addr.off, 0);
+	    }
+	    else
+	       db_task_printsym(addrp->disp, size);
+	}
 }
 
 /*
@@ -1087,7 +1102,7 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 		    break;
 	    }
 	    fprintf(stderr,"\t");
-	    db_print_address(seg, BYTE, &address);
+	    db_print_address(seg, BYTE, &address, 0);
 	}
 	else {
 	    /*
@@ -1328,7 +1343,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case E:
 		  if( db_display )
 		    {
-		      db_print_address(seg, size, &address);
+		      db_print_address(seg, size, &address, 0);
 		    }
 		    break;
 
@@ -1336,21 +1351,21 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      fprintf(stderr,"*");
-		      db_print_address(seg, size, &address);
+		      db_print_address(seg, size, &address, 1);
 		    }
 		    break;
 
 		case Ew:
 		  if( db_display )
 		    {
-		      db_print_address(seg, WORD, &address);
+		      db_print_address(seg, WORD, &address, 0);
 		    }
 		    break;
 
 		case Eb:
 		  if( db_display )
 		    {
-		      db_print_address(seg, BYTE, &address);
+		      db_print_address(seg, BYTE, &address, 0);
 		    }
 		    break;
 
