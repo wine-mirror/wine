@@ -2590,28 +2590,27 @@
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMelodyFormulationTrack.1\CLSID]
 @="{B0684266-B57F-11D2-97F9-00C04FA36E58}"
 
-# As far as I know, not yet available
 ## Microsoft DirectSound Wave
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}]
-#@="Microsoft DirectSound Wave"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\InProcServer32]
-#@="dswave.dll"
-#"ThreadingModel"="Both"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\ProgID]
-#@="Microsoft.DirectSoundWave.1"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\VersionIndependentProgID]
-#@="Microsoft.DirectSoundWave"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}]
+@="Microsoft DirectSound Wave"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\InProcServer32]
+@="dswave.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\ProgID]
+@="Microsoft.DirectSoundWave.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\VersionIndependentProgID]
+@="Microsoft.DirectSoundWave"
 
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave]
-#@="Microsoft DirectSound Wave"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave\CLSID]
-#@="{8A667154-F9CB-11D2-AD8A-0060B0575ABC}"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave\CurVer]
-#@="Microsoft.DirectSoundWave.1"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave.1]
-#@="Microsoft DirectSound Wave"
-#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave.1\CLSID]
-#@="{8A667154-F9CB-11D2-AD8A-0060B0575ABC}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave]
+@="Microsoft DirectSound Wave"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave\CLSID]
+@="{8A667154-F9CB-11D2-AD8A-0060B0575ABC}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave\CurVer]
+@="Microsoft.DirectSoundWave.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave.1]
+@="Microsoft DirectSound Wave"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave.1\CLSID]
+@="{8A667154-F9CB-11D2-AD8A-0060B0575ABC}"
 
 
 #

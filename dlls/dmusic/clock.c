@@ -1,6 +1,6 @@
 /* IReferenceClock Implementation
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
-/* IReferenceClock IUnknown parts follow: */
-HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFIID riid, LPVOID *ppobj)
-{
+/* IReferenceClockImpl IUnknown part: */
+HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -40,20 +31,17 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFII
 		*ppobj = This;
 		return S_OK;
 	}
-
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IReferenceClockImpl_AddRef (IReferenceClock *iface)
-{
+ULONG WINAPI IReferenceClockImpl_AddRef (IReferenceClock *iface) {
 	ICOM_THIS(IReferenceClockImpl,iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface)
-{
+ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface) {
 	ICOM_THIS(IReferenceClockImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
@@ -63,46 +51,33 @@ ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface)
 	return ref;
 }
 
-/* IReferenceClock Interface follow: */
-HRESULT WINAPI IReferenceClockImpl_GetTime (IReferenceClock *iface, REFERENCE_TIME* pTime)
-{
+/* IReferenceClockImpl IReferenceClock part: */
+HRESULT WINAPI IReferenceClockImpl_GetTime (IReferenceClock *iface, REFERENCE_TIME* pTime) {
 	ICOM_THIS(IReferenceClockImpl,iface);
-
 	TRACE("(%p, %p)\n", This, pTime);
 	*pTime = This->rtTime;
-	
 	return S_OK;
 }
 
-HRESULT WINAPI IReferenceClockImpl_AdviseTime (IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie)
-{
+HRESULT WINAPI IReferenceClockImpl_AdviseTime (IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie) {
 	ICOM_THIS(IReferenceClockImpl,iface);
-
 	FIXME("(%p, %lli, %lli, %p, %p): stub\n", This, baseTime, streamTime, hEvent, pdwAdviseCookie);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie)
-{
+HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie) {
 	ICOM_THIS(IReferenceClockImpl,iface);
-
 	FIXME("(%p, %lli, %lli, %p, %p): stub\n", This, startTime, periodTime, hSemaphore, pdwAdviseCookie);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdviseCookie)
-{
+HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdviseCookie) {
 	ICOM_THIS(IReferenceClockImpl,iface);
-
 	FIXME("(%p, %ld): stub\n", This, dwAdviseCookie);
-
 	return S_OK;
 }
 
-ICOM_VTABLE(IReferenceClock) ReferenceClock_Vtbl =
-{
+ICOM_VTABLE(IReferenceClock) ReferenceClock_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IReferenceClockImpl_QueryInterface,
 	IReferenceClockImpl_AddRef,
@@ -114,26 +89,18 @@ ICOM_VTABLE(IReferenceClock) ReferenceClock_Vtbl =
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateReferenceClock (LPCGUID lpcGUID, IReferenceClock** ppRC, LPUNKNOWN pUnkOuter)
-{
+HRESULT WINAPI DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
 	IReferenceClockImpl* clock;
-	
-	if (IsEqualIID (lpcGUID, &IID_IReferenceClock))
-	{
-		clock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IReferenceClockImpl));
-		if (NULL == clock) {
-			*ppRC = NULL;
-			return E_OUTOFMEMORY;
-		}
-		clock->lpVtbl = &ReferenceClock_Vtbl;
-		clock->ref = 1;
-		clock->rtTime = 0;
-		clock->pClockInfo.dwSize = sizeof (DMUS_CLOCKINFO);
-		
-		*ppRC = (IReferenceClock *) clock;
-		return S_OK;
+
+	clock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IReferenceClockImpl));
+	if (NULL == clock) {
+		*ppobj = NULL;
+		return E_OUTOFMEMORY;
 	}
-	
-	WARN("No interface found\n");
-	return E_NOINTERFACE;	
+	clock->lpVtbl = &ReferenceClock_Vtbl;
+	clock->ref = 0; /* will be inited by QueryInterface */
+	clock->rtTime = 0;
+	clock->pClockInfo.dwSize = sizeof (DMUS_CLOCKINFO);
+		
+	return IReferenceClockImpl_QueryInterface ((IReferenceClock *)clock, lpcGUID, ppobj);
 }

@@ -1,6 +1,6 @@
 /* IDirectMusicPatternTrack Implementation
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "dmime_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 /* IDirectMusicPatternTrack IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERNTRACK iface, REFIID riid, LPVOID *ppobj)
-{
+HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERNTRACK iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -45,15 +36,13 @@ HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERN
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK iface)
-{
+ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK iface) {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK iface)
-{
+ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK iface) {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
@@ -64,35 +53,25 @@ ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK ifa
 }
 
 /* IDirectMusicPatternTrack Interface follow: */
-HRESULT WINAPI IDirectMusicPatternTrackImpl_CreateSegment (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicStyle* pStyle, IDirectMusicSegment** ppSegment)
-{
+HRESULT WINAPI IDirectMusicPatternTrackImpl_CreateSegment (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicStyle* pStyle, IDirectMusicSegment** ppSegment) {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
 	FIXME("(%p, %p, %p): stub\n", This, pStyle, ppSegment);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicPatternTrackImpl_SetVariation (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, DWORD dwVariationFlags, DWORD dwPart)
-{
+HRESULT WINAPI IDirectMusicPatternTrackImpl_SetVariation (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, DWORD dwVariationFlags, DWORD dwPart) {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
 	FIXME("(%p, %p, %ld, %ld): stub\n", This, pSegState, dwVariationFlags, dwPart);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, WCHAR* wszName, IDirectMusicStyle* pStyle, DWORD dwPatternType, DWORD* pdwLength)
-{
+HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, WCHAR* wszName, IDirectMusicStyle* pStyle, DWORD dwPatternType, DWORD* pdwLength) {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
 	FIXME("(%p, %p, %p, %p, %ld, %p): stub\n", This, pSegState, wszName, pStyle, dwPatternType, pdwLength);
-
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicPatternTrack) DirectMusicPatternTrack_Vtbl =
-{
+ICOM_VTABLE(IDirectMusicPatternTrack) DirectMusicPatternTrack_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicPatternTrackImpl_QueryInterface,
 	IDirectMusicPatternTrackImpl_AddRef,
@@ -103,14 +82,16 @@ ICOM_VTABLE(IDirectMusicPatternTrack) DirectMusicPatternTrack_Vtbl =
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicPatternTrack (LPCGUID lpcGUID, LPDIRECTMUSICPATTERNTRACK *ppDMPtrnTrack, LPUNKNOWN pUnkOuter)
-{
-	if (IsEqualIID (lpcGUID, &IID_IDirectMusicComposer))
-	{
-		FIXME("Not yet\n");
-		return E_NOINTERFACE;
-	}
+HRESULT WINAPI DMUSIC_CreateDirectMusicPatternTrackImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+	IDirectMusicPatternTrackImpl* track;
 	
-	WARN("No interface found\n");
-	return E_NOINTERFACE;	
+	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPatternTrackImpl));
+	if (NULL == track) {
+		*ppobj = (LPVOID) NULL;
+		return E_OUTOFMEMORY;
+	}
+	track->lpVtbl = &DirectMusicPatternTrack_Vtbl;
+	track->ref = 0; /* will be inited by QueryInterface */
+	
+	return IDirectMusicPatternTrackImpl_QueryInterface ((LPDIRECTMUSICPATTERNTRACK)track, lpcGUID, ppobj);
 }

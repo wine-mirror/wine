@@ -1,6 +1,6 @@
 /* DirectMusicScript Main
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 
-typedef struct
-{
+typedef struct {
     /* IUnknown fields */
     ICOM_VFIELD(IClassFactory);
     DWORD                       ref;
@@ -31,41 +30,32 @@ typedef struct
 /******************************************************************
  *		DirectMusicScriptAutoImplSegment ClassFactory
  */
-static HRESULT WINAPI ScriptAutoImplSegmentCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplSegmentCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptAutoImplSegmentCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplSegmentCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptAutoImplSegmentCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplSegmentCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptAutoImplSegmentCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplSegmentCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
-	/* nothing here yet */
-	
+	/* nothing here yet */	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptAutoImplSegmentCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptAutoImplSegmentCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -85,44 +75,30 @@ static IClassFactoryImpl ScriptAutoImplSegment_CF = {&ScriptAutoImplSegmentCF_Vt
 /******************************************************************
  *		DirectMusicScriptTrack ClassFactory
  */
-static HRESULT WINAPI ScriptTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptTrackCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptTrackCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptTrackCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptTrackCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
-	if (IsEqualIID (riid, &IID_IDirectMusicTrack) 
-		|| IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
-		return DMUSIC_CreateDirectMusicScriptTrack (riid, (LPDIRECTMUSICTRACK8*)ppobj, pOuter);
-	}
-	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
-	return E_NOINTERFACE;
+	return DMUSIC_CreateDirectMusicScriptTrack (riid, ppobj, pOuter);
 }
 
-static HRESULT WINAPI ScriptTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -142,41 +118,32 @@ static IClassFactoryImpl ScriptTrack_CF = {&ScriptTrackCF_Vtbl, 1 };
 /******************************************************************
  *		DirectMusicAudioVBScript ClassFactory
  */
-static HRESULT WINAPI AudioVBScriptCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI AudioVBScriptCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI AudioVBScriptCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI AudioVBScriptCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI AudioVBScriptCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI AudioVBScriptCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI AudioVBScriptCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI AudioVBScriptCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI AudioVBScriptCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI AudioVBScriptCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -196,44 +163,30 @@ static IClassFactoryImpl AudioVBScript_CF = {&AudioVBScriptCF_Vtbl, 1 };
 /******************************************************************
  *		DirectMusicScript ClassFactory
  */
-static HRESULT WINAPI ScriptCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualIID (riid, &IID_IDirectMusicScript)) {
-		return DMUSIC_CreateDirectMusicScript (riid, (LPDIRECTMUSICSCRIPT*)ppobj, pOuter);
-	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-		return DMUSIC_CreateDirectMusicScriptObject (riid, (LPDIRECTMUSICOBJECT*)ppobj, pOuter);
-	}
-	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
-	return E_NOINTERFACE;
+	return DMUSIC_CreateDirectMusicScriptImpl (riid, ppobj, pOuter);
 }
 
-static HRESULT WINAPI ScriptCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -253,41 +206,32 @@ static IClassFactoryImpl Script_CF = {&ScriptCF_Vtbl, 1 };
 /******************************************************************
  *		DirectMusicScriptAutoImplPerformance ClassFactory
  */
-static HRESULT WINAPI ScriptAutoImplPerformanceCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplPerformanceCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptAutoImplPerformanceCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplPerformanceCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptAutoImplPerformanceCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplPerformanceCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptAutoImplPerformanceCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplPerformanceCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptAutoImplPerformanceCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptAutoImplPerformanceCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -307,41 +251,32 @@ static IClassFactoryImpl ScriptAutoImplPerformance_CF = {&ScriptAutoImplPerforma
 /******************************************************************
  *		DirectMusicScriptSourceCodeLoader ClassFactory
  */
-static HRESULT WINAPI ScriptSourceCodeLoaderCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptSourceCodeLoaderCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptSourceCodeLoaderCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptSourceCodeLoaderCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptSourceCodeLoaderCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptSourceCodeLoaderCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptSourceCodeLoaderCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptSourceCodeLoaderCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptSourceCodeLoaderCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptSourceCodeLoaderCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -361,41 +296,32 @@ static IClassFactoryImpl ScriptSourceCodeLoader_CF = {&ScriptSourceCodeLoaderCF_
 /******************************************************************
  *		DirectMusicScriptAutoImplSegmentState ClassFactory
  */
-static HRESULT WINAPI ScriptAutoImplSegmentStateCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplSegmentStateCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptAutoImplSegmentStateCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplSegmentStateCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptAutoImplSegmentStateCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplSegmentStateCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptAutoImplSegmentStateCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplSegmentStateCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptAutoImplSegmentStateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptAutoImplSegmentStateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -415,41 +341,32 @@ static IClassFactoryImpl ScriptAutoImplSegmentState_CF = {&ScriptAutoImplSegment
 /******************************************************************
  *		DirectMusicScriptAutoImplAudioPathConfig ClassFactory
  */
-static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptAutoImplAudioPathConfigCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplAudioPathConfigCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptAutoImplAudioPathConfigCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplAudioPathConfigCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -469,41 +386,32 @@ static IClassFactoryImpl ScriptAutoImplAudioPathConfig_CF = {&ScriptAutoImplAudi
 /******************************************************************
  *		DirectMusicScriptAutoImplAudioPath ClassFactory
  */
-static HRESULT WINAPI ScriptAutoImplAudioPathCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplAudioPathCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptAutoImplAudioPathCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplAudioPathCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptAutoImplAudioPathCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplAudioPathCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptAutoImplAudioPathCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplAudioPathCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptAutoImplAudioPathCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptAutoImplAudioPathCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -523,41 +431,32 @@ static IClassFactoryImpl ScriptAutoImplAudioPath_CF = {&ScriptAutoImplAudioPathC
 /******************************************************************
  *		DirectMusicScriptAutoImplSong ClassFactory
  */
-static HRESULT WINAPI ScriptAutoImplSongCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplSongCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ScriptAutoImplSongCF_AddRef(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplSongCF_AddRef(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI ScriptAutoImplSongCF_Release(LPCLASSFACTORY iface)
-{
+static ULONG WINAPI ScriptAutoImplSongCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI ScriptAutoImplSongCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
-{
+static HRESULT WINAPI ScriptAutoImplSongCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	
 	/* nothing here yet */
-	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI ScriptAutoImplSongCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
+static HRESULT WINAPI ScriptAutoImplSongCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
@@ -579,15 +478,11 @@ static IClassFactoryImpl ScriptAutoImplSong_CF = {&ScriptAutoImplSongCF_Vtbl, 1 
  *
  *
  */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-	if (fdwReason == DLL_PROCESS_ATTACH)
-	{
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+	if (fdwReason == DLL_PROCESS_ATTACH) {
             DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
-	}
-	else if (fdwReason == DLL_PROCESS_DETACH)
-	{
+	} else if (fdwReason == DLL_PROCESS_DETACH) {
 		/* FIXME: Cleanup */
 	}
 
@@ -600,10 +495,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  *
  */
-HRESULT WINAPI DMSCRIPT_DllCanUnloadNow(void)
-{
+HRESULT WINAPI DMSCRIPT_DllCanUnloadNow(void) {
     FIXME("(void): stub\n");
-
     return S_FALSE;
 }
 
@@ -613,8 +506,7 @@ HRESULT WINAPI DMSCRIPT_DllCanUnloadNow(void)
  *
  *
  */
-HRESULT WINAPI DMSCRIPT_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
-{
+HRESULT WINAPI DMSCRIPT_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpSegment) && IsEqualIID (riid, &IID_IClassFactory)) {
       *ppv = (LPVOID) &ScriptAutoImplSegment_CF;

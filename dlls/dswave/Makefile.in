@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dswave.dll
+IMPORTS   = msacm32 ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
+
+C_SRCS = \
+	dswave.c \
+	dswave_main.c \
+	regsvr.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

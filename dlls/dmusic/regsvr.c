@@ -18,21 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdarg.h>
-#include <string.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "winerror.h"
-
-#include "dmusics.h"
-#include "dmusici.h"
-#include "dmplugin.h"
-
-#include "wine/debug.h"
+#include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -44,8 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 /***********************************************************************
  *		interface for self-registering
  */
-struct regsvr_interface
-{
+struct regsvr_interface {
     IID const *iid;		/* NULL for end of list */
     LPCSTR name;		/* can be NULL to omit */
     IID const *base_iid;	/* can be NULL to omit */
@@ -57,8 +42,7 @@ struct regsvr_interface
 static HRESULT register_interfaces(struct regsvr_interface const *list);
 static HRESULT unregister_interfaces(struct regsvr_interface const *list);
 
-struct regsvr_coclass
-{
+struct regsvr_coclass {
     CLSID const *clsid;		/* NULL for end of list */
     LPCSTR name;		/* can be NULL to omit */
     LPCSTR ips;			/* can be NULL to omit */
@@ -124,8 +108,7 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name);
 /***********************************************************************
  *		register_interfaces
  */
-static HRESULT register_interfaces(struct regsvr_interface const *list)
-{
+static HRESULT register_interfaces(struct regsvr_interface const *list) {
     LONG res = ERROR_SUCCESS;
     HKEY interface_key;
 
@@ -194,8 +177,7 @@ error_return:
 /***********************************************************************
  *		unregister_interfaces
  */
-static HRESULT unregister_interfaces(struct regsvr_interface const *list)
-{
+static HRESULT unregister_interfaces(struct regsvr_interface const *list) {
     LONG res = ERROR_SUCCESS;
     HKEY interface_key;
 
@@ -219,8 +201,7 @@ error_return:
 /***********************************************************************
  *		register_coclasses
  */
-static HRESULT register_coclasses(struct regsvr_coclass const *list)
-{
+static HRESULT register_coclasses(struct regsvr_coclass const *list) {
     LONG res = ERROR_SUCCESS;
     HKEY coclass_key;
 
@@ -301,8 +282,7 @@ error_return:
 /***********************************************************************
  *		unregister_coclasses
  */
-static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
-{
+static HRESULT unregister_coclasses(struct regsvr_coclass const *list) {
     LONG res = ERROR_SUCCESS;
     HKEY coclass_key;
 
@@ -338,8 +318,7 @@ error_return:
 /***********************************************************************
  *		regsvr_key_guid
  */
-static LONG register_key_guid(HKEY base, WCHAR const *name, GUID const *guid)
-{
+static LONG register_key_guid(HKEY base, WCHAR const *name, GUID const *guid) {
     WCHAR buf[39];
 
     StringFromGUID2(guid, buf, 39);
@@ -352,8 +331,7 @@ static LONG register_key_guid(HKEY base, WCHAR const *name, GUID const *guid)
 static LONG register_key_defvalueW(
     HKEY base,
     WCHAR const *name,
-    WCHAR const *value)
-{
+    WCHAR const *value) {
     LONG res;
     HKEY key;
 
@@ -372,8 +350,7 @@ static LONG register_key_defvalueW(
 static LONG register_key_defvalueA(
     HKEY base,
     WCHAR const *name,
-    char const *value)
-{
+    char const *value) {
     LONG res;
     HKEY key;
 
@@ -394,8 +371,7 @@ static LONG register_progid(
     char const *progid,
     char const *curver_progid,
     char const *name,
-    char const *extra)
-{
+    char const *extra) {
     LONG res;
     HKEY progid_key;
 
@@ -439,8 +415,7 @@ error_close_progid_key:
 /***********************************************************************
  *		recursive_delete_key
  */
-static LONG recursive_delete_key(HKEY key)
-{
+static LONG recursive_delete_key(HKEY key) {
     LONG res;
     WCHAR subkey_name[MAX_PATH];
     DWORD cName;
@@ -471,8 +446,7 @@ static LONG recursive_delete_key(HKEY key)
 /***********************************************************************
  *		recursive_delete_keyA
  */
-static LONG recursive_delete_keyA(HKEY base, char const *name)
-{
+static LONG recursive_delete_keyA(HKEY base, char const *name) {
     LONG res;
     HKEY key;
 
@@ -487,8 +461,7 @@ static LONG recursive_delete_keyA(HKEY base, char const *name)
 /***********************************************************************
  *		recursive_delete_keyW
  */
-static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
-{
+static LONG recursive_delete_keyW(HKEY base, WCHAR const *name) {
     LONG res;
     HKEY key;
 
@@ -534,8 +507,7 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (DMUSIC.3)
  */
-HRESULT WINAPI DMUSIC_DllRegisterServer(void)
-{
+HRESULT WINAPI DMUSIC_DllRegisterServer(void) {
     HRESULT hr;
 
     TRACE("\n");
@@ -549,8 +521,7 @@ HRESULT WINAPI DMUSIC_DllRegisterServer(void)
 /***********************************************************************
  *		DllUnregisterServer (DMUSIC.4)
  */
-HRESULT WINAPI DMUSIC_DllUnregisterServer(void)
-{
+HRESULT WINAPI DMUSIC_DllUnregisterServer(void) {
     HRESULT hr;
 
     TRACE("\n");

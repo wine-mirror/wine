@@ -1,6 +1,6 @@
-/* Defines and Structures for Instrument Collection Form RIFF DLS
+/* Defines and Structures for Instrument Collection Form RIFF DLS1
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
+ 
 #ifndef __WINE_INCLUDE_DLS1_H
 #define __WINE_INCLUDE_DLS1_H
 
 /*****************************************************************************
- * FOURCC's
+ * FOURCCs
  */
 #define FOURCC_DLS   mmioFOURCC('D','L','S',' ')
 #define FOURCC_DLID  mmioFOURCC('d','l','i','d')
@@ -43,149 +43,160 @@
 #define FOURCC_VERS  mmioFOURCC('v','e','r','s')
 
 /*****************************************************************************
- * Definitions
+ * Flags
  */
-#define CONN_SRC_NONE              0x0000
-#define CONN_SRC_LFO               0x0001
-#define CONN_SRC_KEYONVELOCITY     0x0002
-#define CONN_SRC_KEYNUMBER         0x0003
-#define CONN_SRC_EG1               0x0004
-#define CONN_SRC_EG2               0x0005
-#define CONN_SRC_PITCHWHEEL        0x0006
-#define CONN_SRC_CC1               0x0081
-#define CONN_SRC_CC7               0x0087
-#define CONN_SRC_CC10              0x008a
-#define CONN_SRC_CC11              0x008b
 
-#define CONN_DST_NONE              0x0000
-#define CONN_DST_ATTENUATION       0x0001
-#define CONN_DST_PITCH             0x0003
-#define CONN_DST_PAN               0x0004
-#define CONN_DST_LFO_FREQUENCY     0x0104
-#define CONN_DST_LFO_STARTDELAY    0x0105
-#define CONN_DST_EG1_ATTACKTIME    0x0206
-#define CONN_DST_EG1_DECAYTIME     0x0207
-#define CONN_DST_EG1_RELEASETIME   0x0209
-#define CONN_DST_EG1_SUSTAINLEVEL  0x020a
-#define CONN_DST_EG2_ATTACKTIME    0x030a
-#define CONN_DST_EG2_DECAYTIME     0x030b
-#define CONN_DST_EG2_RELEASETIME   0x030d
-#define CONN_DST_EG2_SUSTAINLEVEL  0x030e
+#define CONN_DST_NONE             0x000
+#define CONN_DST_ATTENUATION      0x001
+#define CONN_DST_PITCH            0x003
+#define CONN_DST_PAN              0x004
 
-#define CONN_TRN_NONE              0x0000
-#define CONN_TRN_CONCAVE           0x0001
+#define CONN_DST_LFO_FREQUENCY    0x104
+#define CONN_DST_LFO_STARTDELAY   0x105
 
-#define F_INSTRUMENT_DRUMS      0x80000000
-#define F_RGN_OPTION_SELFNONEXCLUSIVE  0x0001
+#define CONN_DST_EG1_ATTACKTIME   0x206
+#define CONN_DST_EG1_DECAYTIME    0x207
+#define CONN_DST_EG1_RELEASETIME  0x209
+#define CONN_DST_EG1_SUSTAINLEVEL 0x20A
 
-#define WAVELINK_CHANNEL_LEFT    0x0001l
-#define WAVELINK_CHANNEL_RIGHT   0x0002l
+#define CONN_DST_EG2_ATTACKTIME   0x30A
+#define CONN_DST_EG2_DECAYTIME    0x30B
+#define CONN_DST_EG2_RELEASETIME  0x30D
+#define CONN_DST_EG2_SUSTAINLEVEL 0x30E
 
-#define F_WAVELINK_PHASE_MASTER  0x0001
-#define POOL_CUE_NULL  0xffffffffl
+#define CONN_SRC_NONE             0x000
+#define CONN_SRC_LFO              0x001
+#define CONN_SRC_KEYONVELOCITY    0x002
+#define CONN_SRC_KEYNUMBER        0x003
+#define CONN_SRC_EG1              0x004
+#define CONN_SRC_EG2              0x005
+#define CONN_SRC_PITCHWHEEL       0x006
 
-#define F_WSMP_NO_TRUNCATION     0x0001l
-#define F_WSMP_NO_COMPRESSION    0x0002l
-  
-#define WLOOP_TYPE_FORWARD   0
+#define CONN_SRC_CC1              0x081
+#define CONN_SRC_CC7              0x087
+#define CONN_SRC_CC10             0x08A
+#define CONN_SRC_CC11             0x08B
+
+#define CONN_TRN_NONE             0x000
+#define CONN_TRN_CONCAVE          0x001
+
+#define F_INSTRUMENT_DRUMS 0x80000000
+
+#define F_RGN_OPTION_SELFNONEXCLUSIVE 0x1
+
+#define F_WAVELINK_PHASE_MASTER 0x1
+
+#define F_WSMP_NO_TRUNCATION  0x1
+#define F_WSMP_NO_COMPRESSION 0x2
+
+#define POOL_CUE_NULL 0xFFFFFFFF
+
+#define WAVELINK_CHANNEL_LEFT  0x1
+#define WAVELINK_CHANNEL_RIGHT 0x2
+
+#define WLOOP_TYPE_FORWARD 0x0
 
 /*****************************************************************************
  * Structures
  */
-typedef struct _DLSID 
-{
-  ULONG    ulData1;
-  USHORT   usData2;
-  USHORT   usData3;
-  BYTE     abData4[8];
-} DLSID, *LPDLSID;
+/* typedef definitions */
+typedef struct _DLSID          DLSID,          *LPDLSID;
+typedef struct _DLSVERSION     DLSVERSION,     *LPDLSVERSION;
+typedef struct _CONNECTION     CONNECTION,     *LPCONNECTION;
+typedef struct _CONNECTIONLIST CONNECTIONLIST, *LPCONNECTIONLIST;
+typedef struct _RGNRANGE       RGNRANGE,       *LPRGNRANGE;
+typedef struct _MIDILOCALE     MIDILOCALE,     *LPMIDILOCALE;
+typedef struct _RGNHEADER      RGNHEADER,      *LPRGNHEADER;
+typedef struct _INSTHEADER     INSTHEADER,     *LPINSTHEADER;
+typedef struct _DLSHEADER      DLSHEADER,      *LPDLSHEADER;
+typedef struct _WAVELINK       WAVELINK,       *LPWAVELINK;
+typedef struct _POOLCUE        POOLCUE,        *LPPOOLCUE;
+typedef struct _POOLTABLE      POOLTABLE,      *LPPOOLTABLE;
+typedef struct _rwsmp          WSMPL,          *LPWSMPL;
+typedef struct _rloop          WLOOP,          *LPWLOOP;
 
-typedef struct _DLSVERSION
-{ DWORD    dwVersionMS;
-  DWORD    dwVersionLS;
-} DLSVERSION, *LPDLSVERSION;
-                   
-typedef struct _CONNECTION
-{
-  USHORT   usSource;
-  USHORT   usControl;
-  USHORT   usDestination;
-  USHORT   usTransform;
-  LONG     lScale;
-} CONNECTION, *LPCONNECTION;
+/* actual structures */
+struct _DLSID {
+	ULONG  ulData1;
+	USHORT usData2;
+	USHORT usData3;
+	BYTE   abData4[8];
+};
 
-typedef struct _CONNECTIONLIST
-{
-  ULONG    cbSize;
-  ULONG    cConnections;
-} CONNECTIONLIST, *LPCONNECTIONLIST;
+struct _DLSVERSION {
+	DWORD dwVersionMS;
+	DWORD dwVersionLS;
+};
 
-typedef struct _RGNRANGE
-{
-  USHORT usLow;
-  USHORT usHigh;
-} RGNRANGE, *LPRGNRANGE;
+struct _CONNECTION {
+	USHORT usSource;
+	USHORT usControl;
+	USHORT usDestination;
+	USHORT usTransform;
+	LONG   lScale;
+};
 
-typedef struct _MIDILOCALE
-{
-  ULONG ulBank;
-  ULONG ulInstrument;
-} MIDILOCALE, *LPMIDILOCALE;
+struct _CONNECTIONLIST {
+	ULONG cbSize;
+	ULONG cConnections;
+};
 
-typedef struct _RGNHEADER
-{
-  RGNRANGE RangeKey;
-  RGNRANGE RangeVelocity;
-  USHORT   fusOptions;
-  USHORT   usKeyGroup;
-} RGNHEADER, *LPRGNHEADER;
+struct _RGNRANGE {
+	USHORT usLow;
+	USHORT usHigh;
+};
 
-typedef struct _INSTHEADER
-{
-  ULONG      cRegions;
-  MIDILOCALE Locale;
-} INSTHEADER, *LPINSTHEADER;
+struct _MIDILOCALE {
+	ULONG ulBank;
+	ULONG ulInstrument;
+};
 
-typedef struct _DLSHEADER
-{
-  ULONG      cInstruments;
-} DLSHEADER, *LPDLSHEADER;
+struct _RGNHEADER {
+	RGNRANGE RangeKey;
+	RGNRANGE RangeVelocity;
+	USHORT   fusOptions;
+	USHORT   usKeyGroup;
+};
 
-typedef struct _WAVELINK
-{
-  USHORT   fusOptions;
-  USHORT   usPhaseGroup;
-  ULONG    ulChannel;
-  ULONG    ulTableIndex;
-} WAVELINK, *LPWAVELINK;
+struct _INSTHEADER {
+	ULONG      cRegions;
+	MIDILOCALE Locale;
+};
 
-typedef struct _POOLCUE
-{ 
-  ULONG    ulOffset;
-} POOLCUE, *LPPOOLCUE;
+struct _DLSHEADER {
+	ULONG cInstruments;
+};
 
-typedef struct _POOLTABLE
-{
-  ULONG    cbSize;
-  ULONG    cCues;
-} POOLTABLE, *LPPOOLTABLE;
+struct _WAVELINK {
+	USHORT fusOptions;
+	USHORT usPhaseGroup;
+	ULONG  ulChannel;
+	ULONG  ulTableIndex;
+};
 
-typedef struct _rwsmp
-{
-  ULONG   cbSize;
-  USHORT  usUnityNote;
-  SHORT   sFineTune;
-  LONG    lAttenuation;
-  ULONG   fulOptions;
-  ULONG   cSampleLoops;
-} WSMPL, *LPWSMPL;
+struct _POOLCUE { 
+	ULONG ulOffset;
+};
 
-typedef struct _rloop
-{
-  ULONG cbSize;
-  ULONG ulType;
-  ULONG ulStart;
-  ULONG ulLength;
-} WLOOP, *LPWLOOP;
+struct _POOLTABLE {
+	ULONG cbSize;
+	ULONG cCues;
+};
+
+struct _rwsmp {
+	ULONG  cbSize;
+	USHORT usUnityNote;
+	SHORT  sFineTune;
+	LONG   lAttenuation;
+	ULONG  fulOptions;
+	ULONG  cSampleLoops;
+};
+
+struct _rloop {
+	ULONG cbSize;
+	ULONG ulType;
+	ULONG ulStart;
+	ULONG ulLength;
+};
 
 #endif /* __WINE_INCLUDE_DLS1_H */

@@ -1,6 +1,6 @@
 /* DirectMusic32 Main
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,21 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "wingdi.h"
+#include "winuser.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+#include "wine/debug.h"
+#include "wine/list.h"
+#include "wine/unicode.h"
+#include "winreg.h"
+
+#include "dmusici.h"
+#include "dmusicf.h"
+#include "dmusics.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(dmusic32);
 
 HRESULT WINAPI DMUSIC32_CreateCDirectMusicEmulatePort (LPVOID ptr1, LPVOID ptr2, LPVOID ptr3)
 {	

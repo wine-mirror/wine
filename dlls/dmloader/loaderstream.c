@@ -1,6 +1,6 @@
 /* ILoaderStream Implementation
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,30 +19,23 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "dmloader_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
+WINE_DECLARE_DEBUG_CHANNEL(dmfileraw);
 
 /*****************************************************************************
  * Custom functions:
  */
-HRESULT WINAPI ILoaderStream_Attach (ILoaderStream* This, LPCWSTR wzFile, IDirectMusicLoader *pLoader)
-{
+HRESULT WINAPI ILoaderStream_Attach (LPSTREAM iface, LPCWSTR wzFile, IDirectMusicLoader *pLoader) {
+	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
     TRACE("(%p, %s, %p)\n", This, debugstr_w(wzFile), pLoader);
-    ILoaderStream_Detach (This);
+    ILoaderStream_Detach (iface);
     This->hFile = CreateFileW (wzFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (This->hFile == INVALID_HANDLE_VALUE) {
         TRACE(": failed\n");
-        return E_FAIL;
+        return DMUS_E_LOADER_FAILEDOPEN;
     }
     /* create IDirectMusicGetLoader */
     (LPDIRECTMUSICLOADER) This->pLoader = pLoader;
@@ -51,8 +44,8 @@ HRESULT WINAPI ILoaderStream_Attach (ILoaderStream* This, LPCWSTR wzFile, IDirec
     return S_OK;
 }
 
-void WINAPI ILoaderStream_Detach (ILoaderStream* This)
-{
+void WINAPI ILoaderStream_Detach (LPSTREAM iface) {
+	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
 	if (This->hFile != INVALID_HANDLE_VALUE) {
         CloseHandle(This->hFile);
     }
@@ -60,20 +53,24 @@ void WINAPI ILoaderStream_Detach (ILoaderStream* This)
 }
 
 /*****************************************************************************
- * ILoaderStream IStream:
+ * ILoaderStream implementation
  */
-HRESULT WINAPI ILoaderStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid, void** ppobj)
-{
-	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
+/* ILoaderStream IUnknown part: */
+HRESULT WINAPI ILoaderStream_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, void** ppobj) {
+	ICOM_THIS_MULTI(ILoaderStream, UnknownVtbl, iface);
 	
-	if (IsEqualIID (riid, &IID_IUnknown)
-		|| IsEqualIID (riid, &IID_IStream)) {
+	TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IUnknown)) {
+		*ppobj = (LPVOID)&This->UnknownVtbl;
+		ILoaderStream_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IStream)) {
 		*ppobj = (LPVOID)&This->StreamVtbl;
-		ILoaderStream_IStream_AddRef (iface);
+		ILoaderStream_IStream_AddRef ((LPSTREAM)&This->StreamVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicGetLoader)) {
 		*ppobj = (LPVOID)&This->GetLoaderVtbl;
-		ILoaderStream_IStream_AddRef (iface);		
+		ILoaderStream_IDirectMusicGetLoader_AddRef ((LPDIRECTMUSICGETLOADER)&This->GetLoaderVtbl);		
 		return S_OK;
 	}
 
@@ -81,16 +78,14 @@ HRESULT WINAPI ILoaderStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI ILoaderStream_IStream_AddRef (LPSTREAM iface)
-{
-	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
+ULONG WINAPI ILoaderStream_IUnknown_AddRef (LPUNKNOWN iface) {
+	ICOM_THIS_MULTI(ILoaderStream, UnknownVtbl, iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI ILoaderStream_IStream_Release (LPSTREAM iface)
-{
-	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
+ULONG WINAPI ILoaderStream_IUnknown_Release (LPUNKNOWN iface) {
+	ICOM_THIS_MULTI(ILoaderStream, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -99,22 +94,45 @@ ULONG WINAPI ILoaderStream_IStream_Release (LPSTREAM iface)
 	return ref;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_Read (LPSTREAM iface, void* pv, ULONG cb, ULONG* pcbRead)
-{
+ICOM_VTABLE(IUnknown) LoaderStream_Unknown_Vtbl = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	ILoaderStream_IUnknown_QueryInterface,
+	ILoaderStream_IUnknown_AddRef,
+	ILoaderStream_IUnknown_Release
+};
+
+/* ILoaderStream IStream part: */
+HRESULT WINAPI ILoaderStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid, void** ppobj) {
+	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
+	return ILoaderStream_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+}
+
+ULONG WINAPI ILoaderStream_IStream_AddRef (LPSTREAM iface) {
+	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
+	return ILoaderStream_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+}
+
+ULONG WINAPI ILoaderStream_IStream_Release (LPSTREAM iface) {
+	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
+	return ILoaderStream_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+}
+
+HRESULT WINAPI ILoaderStream_IStream_Read (LPSTREAM iface, void* pv, ULONG cb, ULONG* pcbRead) {
 	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
     ULONG cbRead;
-
+	TRACE_(dmfileraw)("(%p, %p, 0x%04lx, %p)\n", This, pv, cb, pcbRead);
     if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
     if (pcbRead == NULL) pcbRead = &cbRead;
     if (!ReadFile (This->hFile, pv, cb, pcbRead, NULL) || *pcbRead != cb) return E_FAIL;
-
+	TRACE_(dmfileraw)(": data (size = 0x%04lx): '%s'\n", *pcbRead, debugstr_an(pv, *pcbRead));
     return S_OK;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
-{
+HRESULT WINAPI ILoaderStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition) {
 	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
     LARGE_INTEGER liNewPos;
+	
+	TRACE_(dmfileraw)("(%p, 0x%04llx, %s, %p)\n", This, dlibMove.QuadPart, resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
 
 	if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
 
@@ -127,14 +145,13 @@ HRESULT WINAPI ILoaderStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMov
     return S_OK;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_Clone (LPSTREAM iface, IStream** ppstm)
-{
+HRESULT WINAPI ILoaderStream_IStream_Clone (LPSTREAM iface, IStream** ppstm) {
 	ICOM_THIS_MULTI(ILoaderStream, StreamVtbl, iface);
-	ILoaderStream* pOther = NULL;
+	LPSTREAM pOther = NULL;
 	HRESULT result;
 
 	TRACE("(%p, %p)\n", iface, ppstm);
-	result = DMUSIC_CreateLoaderStream ((LPSTREAM*)&pOther);
+	result = DMUSIC_CreateLoaderStream ((LPVOID*)&pOther);
 	if (FAILED(result)) return result;
 	if (This->hFile != INVALID_HANDLE_VALUE) {
 		ULARGE_INTEGER ullCurrentPosition;
@@ -160,57 +177,47 @@ HRESULT WINAPI ILoaderStream_IStream_Clone (LPSTREAM iface, IStream** ppstm)
 	return S_OK;
 }
 
-/* not needed*/
-HRESULT WINAPI ILoaderStream_IStream_Write (LPSTREAM iface, const void* pv, ULONG cb, ULONG* pcbWritten)
-{
+HRESULT WINAPI ILoaderStream_IStream_Write (LPSTREAM iface, const void* pv, ULONG cb, ULONG* pcbWritten) {
 	ERR(": should not be needed\n");
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_SetSize (LPSTREAM iface, ULARGE_INTEGER libNewSize)
-{
+HRESULT WINAPI ILoaderStream_IStream_SetSize (LPSTREAM iface, ULARGE_INTEGER libNewSize) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_CopyTo (LPSTREAM iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten)
-{
+HRESULT WINAPI ILoaderStream_IStream_CopyTo (LPSTREAM iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_Commit (LPSTREAM iface, DWORD grfCommitFlags)
-{
+HRESULT WINAPI ILoaderStream_IStream_Commit (LPSTREAM iface, DWORD grfCommitFlags) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_Revert (LPSTREAM iface)
-{
+HRESULT WINAPI ILoaderStream_IStream_Revert (LPSTREAM iface) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_LockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
-{
+HRESULT WINAPI ILoaderStream_IStream_LockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_UnlockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
-{
+HRESULT WINAPI ILoaderStream_IStream_UnlockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ILoaderStream_IStream_Stat (LPSTREAM iface, STATSTG* pstatstg, DWORD grfStatFlag)
-{
+HRESULT WINAPI ILoaderStream_IStream_Stat (LPSTREAM iface, STATSTG* pstatstg, DWORD grfStatFlag) {
 	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IStream) LoaderStream_Stream_Vtbl =
-{
+ICOM_VTABLE(IStream) LoaderStream_Stream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ILoaderStream_IStream_QueryInterface,
 	ILoaderStream_IStream_AddRef,
@@ -229,28 +236,24 @@ ICOM_VTABLE(IStream) LoaderStream_Stream_Vtbl =
 };
 
 /*****************************************************************************
- * ILoaderStream IDirectMusicGetLoader:
+ * ILoaderStream IDirectMusicGetLoader part:
  */
-HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, void** ppobj)
-{
+HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, void** ppobj) {
 	ICOM_THIS_MULTI(ILoaderStream, GetLoaderVtbl, iface);
-	return ILoaderStream_IStream_QueryInterface ((LPSTREAM)&This->StreamVtbl, riid, ppobj);
+	return ILoaderStream_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI ILoaderStream_IDirectMusicGetLoader_AddRef (LPDIRECTMUSICGETLOADER iface)
-{
+ULONG WINAPI ILoaderStream_IDirectMusicGetLoader_AddRef (LPDIRECTMUSICGETLOADER iface) {
 	ICOM_THIS_MULTI(ILoaderStream, GetLoaderVtbl, iface);
-	return ILoaderStream_IStream_AddRef ((LPSTREAM)&This->StreamVtbl);
+	return ILoaderStream_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI ILoaderStream_IDirectMusicGetLoader_Release (LPDIRECTMUSICGETLOADER iface)
-{
+ULONG WINAPI ILoaderStream_IDirectMusicGetLoader_Release (LPDIRECTMUSICGETLOADER iface) {
 	ICOM_THIS_MULTI(ILoaderStream, GetLoaderVtbl, iface);
-	return ILoaderStream_IStream_Release ((LPSTREAM)&This->StreamVtbl);
+	return ILoaderStream_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_GetLoader (LPDIRECTMUSICGETLOADER iface, IDirectMusicLoader **ppLoader)
-{
+HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_GetLoader (LPDIRECTMUSICGETLOADER iface, IDirectMusicLoader **ppLoader) {
 	ICOM_THIS_MULTI(ILoaderStream, GetLoaderVtbl, iface);
 
 	TRACE("(%p, %p)\n", This, ppLoader);
@@ -260,8 +263,7 @@ HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_GetLoader (LPDIRECTMUSICGETLO
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicGetLoader) LoaderStream_GetLoader_Vtbl =
-{
+ICOM_VTABLE(IDirectMusicGetLoader) LoaderStream_GetLoader_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ILoaderStream_IDirectMusicGetLoader_QueryInterface,
 	ILoaderStream_IDirectMusicGetLoader_AddRef,
@@ -269,22 +271,19 @@ ICOM_VTABLE(IDirectMusicGetLoader) LoaderStream_GetLoader_Vtbl =
 	ILoaderStream_IDirectMusicGetLoader_GetLoader
 };
 
-
-HRESULT WINAPI DMUSIC_CreateLoaderStream (LPSTREAM* ppStream)
-{
+HRESULT WINAPI DMUSIC_CreateLoaderStream (LPVOID* ppobj) {
 	ILoaderStream *pStream;
 
-	TRACE("(%p)\n", ppStream);
-
+	TRACE("(%p)\n", ppobj);
 	pStream = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(ILoaderStream));
 	if (NULL == pStream) {
-		*ppStream = (LPSTREAM)NULL;
+		*ppobj = (LPVOID) NULL;
 		return E_OUTOFMEMORY;
 	}
+	pStream->UnknownVtbl = &LoaderStream_Unknown_Vtbl;
 	pStream->StreamVtbl = &LoaderStream_Stream_Vtbl;
 	pStream->GetLoaderVtbl = &LoaderStream_GetLoader_Vtbl;
-	pStream->ref = 1;
-	
-	*ppStream = (LPSTREAM)pStream;
-	return S_OK;
+	pStream->ref = 0; /* will be inited with QueryInterface */
+
+	return ILoaderStream_IUnknown_QueryInterface ((LPUNKNOWN)&pStream->UnknownVtbl, &IID_IStream, ppobj);
 }

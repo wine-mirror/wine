@@ -1,7 +1,7 @@
 /*
  *  DirectMusic Software Synth Definitions
  *
- *  Copyright (C) 2003 Rok Mandeljc
+ *  Copyright (C) 2003-2004 Rok Mandeljc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,28 +23,34 @@
 
 #include <dmusicc.h>
 
-
 /*****************************************************************************
- * Definitions
+ * Registry path
  */
-#define REGSTR_PATH_SOFTWARESYNTHS  "Software\\Microsoft\\DirectMusic\\SoftwareSynths"
-#define REFRESH_F_LASTBUFFER        0x00000001
+#define REGSTR_PATH_SOFTWARESYNTHS "Software\\Microsoft\\DirectMusic\\SoftwareSynths"
 
 
 /*****************************************************************************
  * Predeclare the interfaces
  */
+/* IIDs */
+DEFINE_GUID(IID_IDirectMusicSynth,     0x09823661,0x5c85,0x11d2,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
+DEFINE_GUID(IID_IDirectMusicSynth8,    0x53cab625,0x2711,0x4c9f,0x9d,0xe7,0x1b,0x7f,0x92,0x5f,0x6f,0xc8);
+DEFINE_GUID(IID_IDirectMusicSynthSink, 0x09823663,0x5c85,0x11d2,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
 
-DEFINE_GUID(IID_IDirectMusicSynth, 			0x9823661,0x5c85,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
-DEFINE_GUID(IID_IDirectMusicSynth8,			0x53cab625,0x2711,0x4c9f,0x9d,0xe7,0x1b,0x7f,0x92,0x5f,0x6f,0xc8);
-DEFINE_GUID(IID_IDirectMusicSynthSink,		0x9823663,0x5c85,0x11d2,0xaf,0xa6,0x0,0xaa, 0x0,0x24,0xd8,0xb6);
-
-typedef struct IDirectMusicSynth IDirectMusicSynth, *LPDIRECTMUSICSYNTH;
-typedef struct IDirectMusicSynth8 IDirectMusicSynth8, *LPDIRECTMUSICSYNTH8;
+/* typedef definitions */
+typedef struct IDirectMusicSynth     IDirectMusicSynth,     *LPDIRECTMUSICSYNTH;
+typedef struct IDirectMusicSynth8    IDirectMusicSynth8,    *LPDIRECTMUSICSYNTH8;
 typedef struct IDirectMusicSynthSink IDirectMusicSynthSink, *LPDIRECTMUSICSYNTHSINK;	
 
-DEFINE_GUID(GUID_DMUS_PROP_SetSynthSink,	0x0a3a5ba5,0x37b6,0x11d2,0xb9,0xf9,0x00,0x00,0xf8,0x75,0xac,0x12);
-DEFINE_GUID(GUID_DMUS_PROP_SinkUsesDSound,	0xbe208857,0x8952,0x11d2,0xba,0x1c,0x00,0x00,0xf8,0x75,0xac,0x12);
+/* GUIDs - property set */
+DEFINE_GUID(GUID_DMUS_PROP_SetSynthSink,   0x0a3a5ba5,0x37b6,0x11d2,0xb9,0xf9,0x00,0x00,0xf8,0x75,0xac,0x12);
+DEFINE_GUID(GUID_DMUS_PROP_SinkUsesDSound, 0xbe208857,0x8952,0x11d2,0xba,0x1c,0x00,0x00,0xf8,0x75,0xac,0x12);
+
+
+/*****************************************************************************
+ * Flags
+ */
+#define REFRESH_F_LASTBUFFER        0x1
 
 
 /*****************************************************************************
@@ -53,12 +59,14 @@ DEFINE_GUID(GUID_DMUS_PROP_SinkUsesDSound,	0xbe208857,0x8952,0x11d2,0xba,0x1c,0x
 #ifndef _DMUS_VOICE_STATE_DEFINED
 #define _DMUS_VOICE_STATE_DEFINED
 
-typedef struct _DMUS_VOICE_STATE
-{
-    BOOL                bExists;
-    SAMPLE_POSITION     spPosition;
-} DMUS_VOICE_STATE;
+/* typedef definition */
+typedef struct _DMUS_VOICE_STATE DMUS_VOICE_STATE, *LPDMUS_VOICE_STATE;
 
+/* actual structure */
+struct _DMUS_VOICE_STATE {
+	BOOL            bExists;
+	SAMPLE_POSITION spPosition;
+}; 
 #endif /* _DMUS_VOICE_STATE_DEFINED */
 
 

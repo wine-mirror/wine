@@ -1498,6 +1498,7 @@ dlls/dplayx/Makefile
 dlls/dpnhpast/Makefile
 dlls/dsound/Makefile
 dlls/dsound/tests/Makefile
+dlls/dswave/Makefile
 dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile

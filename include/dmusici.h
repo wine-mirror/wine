@@ -1,7 +1,7 @@
 /*
  *  DirectMusic Performance API
  *
- *  Copyright (C) 2003 Rok Mandeljc
+ *  Copyright (C) 2003-2004 Rok Mandeljc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,258 +21,279 @@
 #ifndef __WINE_DMUSIC_PERFORMANCE_H
 #define __WINE_DMUSIC_PERFORMANCE_H
 
+#ifndef __WINESRC__
+#include <windows.h>
+#else
+#include <oleauto.h> /* VARIANT */
+#endif /* __WINESRC__ */
+
 #include <objbase.h>
 #include <mmsystem.h>
-
-#include <oleauto.h>
+#include <dmusicc.h>
+#include <dmplugin.h>
+#include <pshpack8.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-/*****************************************************************************
- * Types
- */
-typedef WORD            TRANSITION_TYPE;
-/* Already defined somewhere? */
-/* typedef __int64         REFERENCE_TIME; */
-typedef long            MUSIC_TIME;
-
 /*****************************************************************************
  * Predeclare the interfaces
  */
 /* CLSIDs */
-DEFINE_GUID(CLSID_DirectMusicPerformance,					0xd2ac2881,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicSegment,						0xd2ac2882,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicSegmentState,					0xd2ac2883,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicGraph,							0xd2ac2884,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicStyle,							0xd2ac288a,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicChordMap,						0xd2ac288f,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicComposer,						0xd2ac2890,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicLoader,						0xd2ac2892,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicBand,							0x79ba9e00,0xb6ee,0x11d1,0x86,0xbe,0x0,0xc0,0x4f,0xbf,0x8f,0xef);
-DEFINE_GUID(CLSID_DirectMusicPatternTrack,					0xd2ac2897,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicScript,						0x810b5013,0xe88d,0x11d2,0x8b,0xc1,0x0,0x60,0x8,0x93,0xb1,0xb6);
-DEFINE_GUID(CLSID_DirectMusicContainer,						0x9301e380,0x1f22,0x11d3,0x82,0x26,0xd2,0xfa,0x76,0x25,0x5d,0x47);
-DEFINE_GUID(CLSID_DirectSoundWave,							0x8a667154,0xf9cb,0x11d2,0xad,0x8a,0x0,0x60,0xb0,0x57,0x5a,0xbc);
-DEFINE_GUID(CLSID_DirectMusicSong,							0xaed5f0a5,0xd972,0x483d,0xa3,0x84,0x64,0x9d,0xfe,0xb9,0xc1,0x81);
-DEFINE_GUID(CLSID_DirectMusicAudioPathConfig,				0xee0b9ca0,0xa81e,0x11d3,0x9b,0xd1,0x0,0x80,0xc7,0x15,0xa,0x74);
-/* these CLSIDs aren't officially declared in any dmusic header, but are used by regsvr implementations*/
-DEFINE_GUID(CLSID_DirectMusicSynthSink,						0xaec17ce3,0xa514,0x11d1,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
-DEFINE_GUID(CLSID_DirectMusicSection,						0x3f037241,0x414e,0x11d1,0xa7,0xce,0x00,0xa0,0xc9,0x13,0xf7,0x3c);
-DEFINE_GUID(CLSID_DirectMusicAuditionTrack,					0xd2ac2897,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
-DEFINE_GUID(CLSID_DirectMusicSegTriggerTrack,				0xbae4d665,0x4ea1,0x11d3,0x8b,0xda,0x00,0x60,0x08,0x93,0xb1,0xb6);
-DEFINE_GUID(CLSID_DirectMusicAudioPath,						0xee0b9ca0,0xa81e,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
-DEFINE_GUID(CLSID_DirectMusicTemplate,						0xd30bcc65,0x60e8,0x11d1,0xa7,0xce,0x00,0xa0,0xc9,0x13,0xf7,0x3c);
-DEFINE_GUID(CLSID_DirectMusicScriptAutoImpSegment,			0x4062c116,0x0270,0x11d3,0x8b,0xcb,0x00,0x60,0x08,0x93,0xb1,0xb6);
-DEFINE_GUID(CLSID_AudioVBScript,							0x4ee17959,0x931e,0x49e4,0xa2,0xc6,0x97,0x7e,0xcf,0x36,0x28,0xf3);
-DEFINE_GUID(CLSID_DirectMusicScriptAutoImpPerformance,		0xa861c6e2,0xfcfc,0x11d2,0x8b,0xc9,0x00,0x60,0x08,0x93,0xb1,0xb6);
-DEFINE_GUID(CLSID_DirectMusicScripSourceCodeLoader,			0xc70eb77f,0xefd4,0x4678,0xa2,0x7b,0xbf,0x16,0x48,0xf3,0x0d,0x04); /* [sic] */
-DEFINE_GUID(CLSID_DirectMusicScriptAutoImpSegmentState,		0xebf2320a,0x2502,0x11d3,0x8b,0xd1,0x00,0x60,0x08,0x93,0xb1,0xb6);
-DEFINE_GUID(CLSID_DirectMusicScriptAutoImpAudioPathConfig,	0x1cebde3e,0x6b91,0x484a,0xaf,0x48,0x5e,0x4f,0x4e,0xd6,0xb1,0xe1);
-DEFINE_GUID(CLSID_DirectMusicScriptAutoImpAudioPath,		0x2c5f9b72,0x7148,0x4d97,0xbf,0xc9,0x68,0xa0,0xe0,0x76,0xbe,0xbd);
-DEFINE_GUID(CLSID_DirectMusicScriptAutoImpSong,				0xa16f1761,0xb6d8,0x42eb,0x8d,0x57,0x4a,0x44,0xfe,0xdd,0x3b,0xd2);
+DEFINE_GUID(CLSID_DirectMusicAudioPathConfig,              0xee0b9ca0,0xa81e,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
+DEFINE_GUID(CLSID_DirectMusicBand,                         0x79ba9e00,0xb6ee,0x11d1,0x86,0xbe,0x00,0xc0,0x4f,0xbf,0x8f,0xef);
+DEFINE_GUID(CLSID_DirectMusicChordMap,                     0xd2ac288f,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicComposer,                     0xd2ac2890,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicContainer,                    0x9301e380,0x1f22,0x11d3,0x82,0x26,0xd2,0xfa,0x76,0x25,0x5d,0x47);
+DEFINE_GUID(CLSID_DirectMusicGraph,                        0xd2ac2884,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicLoader,                       0xd2ac2892,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicPatternTrack,                 0xd2ac2897,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicPerformance,                  0xd2ac2881,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicScript,                       0x810b5013,0xe88d,0x11d2,0x8b,0xc1,0x00,0x60,0x08,0x93,0xb1,0xb6);
+DEFINE_GUID(CLSID_DirectMusicSegment,                      0xd2ac2882,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicSegmentState,                 0xd2ac2883,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicStyle,                        0xd2ac288a,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectSoundWave,                         0x8a667154,0xf9cb,0x11d2,0xad,0x8a,0x00,0x60,0xb0,0x57,0x5a,0xbc);
+/* MS doesn't support this in DX 9.0 and newer... but there's no harm in keeping it around */
+DEFINE_GUID(CLSID_DirectMusicSong,                         0xaed5f0a5,0xd972,0x483d,0xa3,0x84,0x64,0x9d,0xfe,0xb9,0xc1,0x81);
+/* these CLSIDs aren't officially declared in any dmusic header, but are used by wine's regsvr implementations*/
+DEFINE_GUID(CLSID_DirectMusicSynthSink,                    0xaec17ce3,0xa514,0x11d1,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
+DEFINE_GUID(CLSID_DirectMusicSection,                      0x3f037241,0x414e,0x11d1,0xa7,0xce,0x00,0xa0,0xc9,0x13,0xf7,0x3c);
+DEFINE_GUID(CLSID_DirectMusicAuditionTrack,                0xd2ac2897,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(CLSID_DirectMusicSegTriggerTrack,              0xbae4d665,0x4ea1,0x11d3,0x8b,0xda,0x00,0x60,0x08,0x93,0xb1,0xb6);
+DEFINE_GUID(CLSID_DirectMusicAudioPath,                    0xee0b9ca0,0xa81e,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
+DEFINE_GUID(CLSID_DirectMusicTemplate,                     0xd30bcc65,0x60e8,0x11d1,0xa7,0xce,0x00,0xa0,0xc9,0x13,0xf7,0x3c);
+DEFINE_GUID(CLSID_DirectMusicScriptAutoImpSegment,         0x4062c116,0x0270,0x11d3,0x8b,0xcb,0x00,0x60,0x08,0x93,0xb1,0xb6);
+DEFINE_GUID(CLSID_AudioVBScript,                           0x4ee17959,0x931e,0x49e4,0xa2,0xc6,0x97,0x7e,0xcf,0x36,0x28,0xf3);
+DEFINE_GUID(CLSID_DirectMusicScriptAutoImpPerformance,     0xa861c6e2,0xfcfc,0x11d2,0x8b,0xc9,0x00,0x60,0x08,0x93,0xb1,0xb6);
+DEFINE_GUID(CLSID_DirectMusicScripSourceCodeLoader,        0xc70eb77f,0xefd4,0x4678,0xa2,0x7b,0xbf,0x16,0x48,0xf3,0x0d,0x04);
+DEFINE_GUID(CLSID_DirectMusicScriptAutoImpSegmentState,    0xebf2320a,0x2502,0x11d3,0x8b,0xd1,0x00,0x60,0x08,0x93,0xb1,0xb6);
+DEFINE_GUID(CLSID_DirectMusicScriptAutoImpAudioPathConfig, 0x1cebde3e,0x6b91,0x484a,0xaf,0x48,0x5e,0x4f,0x4e,0xd6,0xb1,0xe1);
+DEFINE_GUID(CLSID_DirectMusicScriptAutoImpAudioPath,       0x2c5f9b72,0x7148,0x4d97,0xbf,0xc9,0x68,0xa0,0xe0,0x76,0xbe,0xbd);
+DEFINE_GUID(CLSID_DirectMusicScriptAutoImpSong,            0xa16f1761,0xb6d8,0x42eb,0x8d,0x57,0x4a,0x44,0xfe,0xdd,0x3b,0xd2);
 
 /* IIDs */
-DEFINE_GUID(IID_IDirectMusicAudioPath,						0xc87631f5,0x23be,0x4986,0x88,0x36,0x5,0x83,0x2f,0xcc,0x48,0xf9);
-DEFINE_GUID(IID_IDirectMusicBand,							0xd2ac28c0,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicChordMap,						0xd2ac28be,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicComposer,						0xd2ac28bf,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicContainer,						0x9301e386,0x1f22,0x11d3,0x82,0x26,0xd2,0xfa,0x76,0x25,0x5d,0x47);
-DEFINE_GUID(IID_IDirectMusicGetLoader,						0x68a04844,0xd13d,0x11d1,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
-DEFINE_GUID(IID_IDirectMusicGraph,							0x2befc277,0x5497,0x11d2,0xbc,0xcb,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-DEFINE_GUID(IID_IDirectMusicLoader,							0x2ffaaca2,0x5dca,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
-DEFINE_GUID(IID_IDirectMusicLoader8,						0x19e7c08c,0xa44,0x4e6a,0xa1,0x16,0x59,0x5a,0x7c,0xd5,0xde,0x8c);
-DEFINE_GUID(IID_IDirectMusicObject,							0xd2ac28b5,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicPatternTrack,					0x51c22e10,0xb49f,0x46fc,0xbe,0xc2,0xe6,0x28,0x8f,0xb9,0xed,0xe6);
-DEFINE_GUID(IID_IDirectMusicPerformance,					0x7d43d03,0x6523,0x11d2,0x87,0x1d,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicPerformance2,					0x6fc2cae0,0xbc78,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
-DEFINE_GUID(IID_IDirectMusicPerformance8,					0x679c4137,0xc62e,0x4147,0xb2,0xb4,0x9d,0x56,0x9a,0xcb,0x25,0x4c);
-DEFINE_GUID(IID_IDirectMusicScript,							0x2252373a,0x5814,0x489b,0x82,0x9,0x31,0xfe,0xde,0xba,0xf1,0x37);
-DEFINE_GUID(IID_IDirectMusicSegment,						0xf96029a2,0x4282,0x11d2,0x87,0x17,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicSegment2,						0xd38894d1,0xc052,0x11d2,0x87,0x2f,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicSegment8,						0xc6784488,0x41a3,0x418f,0xaa,0x15,0xb3,0x50,0x93,0xba,0x42,0xd4);
-DEFINE_GUID(IID_IDirectMusicSegmentState,					0xa3afdcc7,0xd3ee,0x11d1,0xbc,0x8d,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-DEFINE_GUID(IID_IDirectMusicSegmentState8,					0xa50e4730,0xae4,0x48a7,0x98,0x39,0xbc,0x4,0xbf,0xe0,0x77,0x72);
-DEFINE_GUID(IID_IDirectMusicSong,							0xa862b2ec,0x3676,0x4982,0x85,0xa,0x78,0x42,0x77,0x5e,0x1d,0x86);
-DEFINE_GUID(IID_IDirectMusicStyle,							0xd2ac28bd,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(IID_IDirectMusicStyle8,							0xfd24ad8a,0xa260,0x453d,0xbf,0x50,0x6f,0x93,0x84,0xf7,0x9,0x85);
+DEFINE_GUID(IID_IDirectMusicAudioPath,                     0xc87631f5,0x23be,0x4986,0x88,0x36,0x05,0x83,0x2f,0xcc,0x48,0xf9);
+DEFINE_GUID(IID_IDirectMusicBand,                          0xd2ac28c0,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicChordMap,                      0xd2ac28be,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicComposer,                      0xd2ac28bf,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicContainer,                     0x9301e386,0x1f22,0x11d3,0x82,0x26,0xd2,0xfa,0x76,0x25,0x5d,0x47);
+DEFINE_GUID(IID_IDirectMusicGetLoader,                     0x68a04844,0xd13d,0x11d1,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
+DEFINE_GUID(IID_IDirectMusicGraph,                         0x2befc277,0x5497,0x11d2,0xbc,0xcb,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+DEFINE_GUID(IID_IDirectMusicLoader,                        0x2ffaaca2,0x5dca,0x11d2,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
+DEFINE_GUID(IID_IDirectMusicLoader8,                       0x19e7c08c,0x0a44,0x4e6a,0xa1,0x16,0x59,0x5a,0x7c,0xd5,0xde,0x8c);
+DEFINE_GUID(IID_IDirectMusicObject,                        0xd2ac28b5,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicPatternTrack,                  0x51c22e10,0xb49f,0x46fc,0xbe,0xc2,0xe6,0x28,0x8f,0xb9,0xed,0xe6);
+DEFINE_GUID(IID_IDirectMusicPerformance,                   0x07d43d03,0x6523,0x11d2,0x87,0x1d,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicPerformance2,                  0x6fc2cae0,0xbc78,0x11d2,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
+DEFINE_GUID(IID_IDirectMusicPerformance8,                  0x679c4137,0xc62e,0x4147,0xb2,0xb4,0x9d,0x56,0x9a,0xcb,0x25,0x4c);
+DEFINE_GUID(IID_IDirectMusicScript,                        0x2252373a,0x5814,0x489b,0x82,0x09,0x31,0xfe,0xde,0xba,0xf1,0x37);
+DEFINE_GUID(IID_IDirectMusicSegment,                       0xf96029a2,0x4282,0x11d2,0x87,0x17,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicSegment2,                      0xd38894d1,0xc052,0x11d2,0x87,0x2f,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicSegment8,                      0xc6784488,0x41a3,0x418f,0xaa,0x15,0xb3,0x50,0x93,0xba,0x42,0xd4);
+DEFINE_GUID(IID_IDirectMusicSegmentState,                  0xa3afdcc7,0xd3ee,0x11d1,0xbc,0x8d,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+DEFINE_GUID(IID_IDirectMusicSegmentState8,                 0xa50e4730,0x0ae4,0x48a7,0x98,0x39,0xbc,0x04,0xbf,0xe0,0x77,0x72);
+DEFINE_GUID(IID_IDirectMusicStyle,                         0xd2ac28bd,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(IID_IDirectMusicStyle8,                        0xfd24ad8a,0xa260,0x453d,0xbf,0x50,0x6f,0x93,0x84,0xf7,0x09,0x85);
 
 /* IIDs of unchanged interfaces */
-#define IID_IDirectMusicAudioPath8 IID_IDirectMusicAudioPath
-#define IID_IDirectMusicBand8 IID_IDirectMusicBand
-#define IID_IDirectMusicChordMap8 IID_IDirectMusicChordMap
-#define IID_IDirectMusicComposer8 IID_IDirectMusicComposer
-#define IID_IDirectMusicContainer8 IID_IDirectMusicContainer
-#define IID_IDirectMusicGetLoader8 IID_IDirectMusicGetLoader
-#define IID_IDirectMusicGraph8 IID_IDirectMusicGraph
-#define IID_IDirectMusicObject8 IID_IDirectMusicObject
+#define IID_IDirectMusicAudioPath8    IID_IDirectMusicAudioPath
+#define IID_IDirectMusicBand8         IID_IDirectMusicBand
+#define IID_IDirectMusicChordMap8     IID_IDirectMusicChordMap
+#define IID_IDirectMusicComposer8     IID_IDirectMusicComposer
+#define IID_IDirectMusicContainer8    IID_IDirectMusicContainer
+#define IID_IDirectMusicGetLoader8    IID_IDirectMusicGetLoader
+#define IID_IDirectMusicGraph8        IID_IDirectMusicGraph
+#define IID_IDirectMusicObject8       IID_IDirectMusicObject
 #define IID_IDirectMusicPatternTrack8 IID_IDirectMusicPatternTrack
-#define IID_IDirectMusicScript8 IID_IDirectMusicScript
-#define IID_IDirectMusicSong8 IID_IDirectMusicSong
+#define IID_IDirectMusicScript8       IID_IDirectMusicScript
 
 /* typedef definitions */
-typedef struct IDirectMusicAudioPath IDirectMusicAudioPath, *LPDIRECTMUSICAUDIOPATH, IDirectMusicAudioPath8, *LPDIRECTMUSICAUDIOPATH8;
-typedef struct IDirectMusicBand IDirectMusicBand, *LPDIRECTMUSICBAND, IDirectMusicBand8, *LPDIRECTMUSICBAND8, *LPDMUS_BAND;
-typedef struct IDirectMusicChordMap IDirectMusicChordMap, *LPDIRECTMUSICCHORDMAP, IDirectMusicChordMap8, *LPDIRECTMUSICCHORDMAP8;
-typedef struct IDirectMusicComposer IDirectMusicComposer, *LPDIRECTMUSICCOMPOSER;
-typedef struct IDirectMusicContainer IDirectMusicContainer, *LPDIRECTMUSICCONTAINER, IDirectMusicContainer8, *LPDIRECTMUSICCONTAINER8;
-typedef struct IDirectMusicGetLoader IDirectMusicGetLoader, *LPDIRECTMUSICGETLOADER, IDirectMusicGetLoader8, *LPDIRECTMUSICGETLOADER8;
-typedef struct IDirectMusicGraph IDirectMusicGraph, *LPDIRECTMUSICGRAPH, IDirectMusicGraph8, *LPDIRECTMUSICGRAPH8;
-typedef struct IDirectMusicLoader IDirectMusicLoader, *LPDIRECTMUSICLOADER, *LPDMUS_LOADER;
-typedef struct IDirectMusicLoader8 IDirectMusicLoader8, *LPDIRECTMUSICLOADER8;
-typedef struct IDirectMusicObject IDirectMusicObject, *LPDIRECTMUSICOBJECT, IDirectMusicObject8, *LPDIRECTMUSICOBJECT8, *LPDMUS_OBJECT;
-typedef struct IDirectMusicPatternTrack IDirectMusicPatternTrack, *LPDIRECTMUSICPATTERNTRACK, IDirectMusicPatternTrack8, *LPDIRECTMUSICPATTERNTRACK8;
-typedef struct IDirectMusicPerformance IDirectMusicPerformance, *LPDIRECTMUSICPERFORMANCE;
-typedef struct IDirectMusicPerformance2 IDirectMusicPerformance2, *LPDIRECTMUSICPERFORMANCE2;
-typedef struct IDirectMusicPerformance8 IDirectMusicPerformance8, *LPDIRECTMUSICPERFORMANCE8;
-typedef struct IDirectMusicScript IDirectMusicScript, *LPDIRECTMUSICSCRIPT, IDirectMusicScript8, *LPDIRECTMUSICSCRIPT8;
-typedef struct IDirectMusicSegment IDirectMusicSegment, *LPDIRECTMUSICSEGMENT;
-typedef struct IDirectMusicSegment2 IDirectMusicSegment2, *LPDIRECTMUSICSEGMENT2;
-typedef struct IDirectMusicSegment8 IDirectMusicSegment8, *LPDIRECTMUSICSEGMENT8;
-typedef struct IDirectMusicSegmentState IDirectMusicSegmentState, *LPDIRECTMUSICSEGMENTSTATE;
-typedef struct IDirectMusicSegmentState8 IDirectMusicSegmentState8, *LPDIRECTMUSICSEGMENTSTATE8;
-typedef struct IDirectMusicSong IDirectMusicSong, *LPDIRECTMUSICSONG, IDirectMusicSong8, *LPDIRECTMUSICSONG8;
-typedef struct IDirectMusicStyle IDirectMusicStyle, *LPDIRECTMUSICSTYLE;
-typedef struct IDirectMusicStyle8 IDirectMusicStyle8, *LPDIRECTMUSICSTYLE8;
-/* Imported from dmplugin.h */
-typedef struct IDirectMusicTool IDirectMusicTool, *LPDIRECTMUSICTOOL;
-typedef struct IDirectMusicTool8 IDirectMusicTool8, *LPDIRECTMUSICTOOL8;
-typedef struct IDirectMusicTrack IDirectMusicTrack, *LPDIRECTMUSICTRACK;
-typedef struct IDirectMusicTrack8 IDirectMusicTrack8, *LPDIRECTMUSICTRACK8;
+typedef struct IDirectMusicBand         IDirectMusicBand,          *LPDIRECTMUSICBAND;
+typedef struct IDirectMusicBand         IDirectMusicBand8,         *LPDIRECTMUSICBAND8;
+typedef struct IDirectMusicObject       IDirectMusicObject,        *LPDIRECTMUSICOBJECT;
+typedef struct IDirectMusicObject       IDirectMusicObject8,       *LPDIRECTMUSICOBJECT8;
+typedef struct IDirectMusicLoader       IDirectMusicLoader,        *LPDIRECTMUSICLOADER;
+typedef struct IDirectMusicLoader       IDirectMusicLoader8,       *LPDIRECTMUSICLOADER8;
+typedef struct IDirectMusicGetLoader    IDirectMusicGetLoader,     *LPDIRECTMUSICGETLOADER;
+typedef struct IDirectMusicGetLoader    IDirectMusicGetLoader8,    *LPDIRECTMUSICGETLOADER8;
+typedef struct IDirectMusicAudioPath    IDirectMusicAudioPath,     *LPDIRECTMUSICAUDIOPATH;
+typedef struct IDirectMusicAudioPath    IDirectMusicAudioPath8,    *LPDIRECTMUSICAUDIOPATH8;
+typedef struct IDirectMusicStyle        IDirectMusicStyle,         *LPDIRECTMUSICSTYLE;
+typedef struct IDirectMusicStyle8       IDirectMusicStyle8,        *LPDIRECTMUSICSTYLE8;
+typedef struct IDirectMusicChordMap     IDirectMusicChordMap,      *LPDIRECTMUSICCHORDMAP;
+typedef struct IDirectMusicChordMap     IDirectMusicChordMap8,     *LPDIRECTMUSICCHORDMAP8;
+typedef struct IDirectMusicComposer     IDirectMusicComposer,      *LPDIRECTMUSICCOMPOSER;
+typedef struct IDirectMusicComposer     IDirectMusicComposer8,     *LPDIRECTMUSICCOMPOSER8;
+typedef struct IDirectMusicPatternTrack IDirectMusicPatternTrack,  *LPDIRECTMUSICPATTERNTRACK;
+typedef struct IDirectMusicPatternTrack IDirectMusicPatternTrack8, *LPDIRECTMUSICPATTERNTRACK8;
+typedef struct IDirectMusicScript       IDirectMusicScript,        *LPDIRECTMUSICSCRIPT;
+typedef struct IDirectMusicScript       IDirectMusicScript8,       *LPDIRECTMUSICSCRIPT8;
+typedef struct IDirectMusicContainer    IDirectMusicContainer,     *LPDIRECTMUSICCONTAINER;
+typedef struct IDirectMusicContainer    IDirectMusicContainer8,    *LPDIRECTMUSICCONTAINER8;
 
-DEFINE_GUID(GUID_DirectMusicAllTypes,						0xd2ac2893,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+/* RPC declarations */
+typedef struct IDirectMusicBand   __RPC_FAR *LPDMUS_BAND;
+typedef struct IDirectMusicLoader __RPC_FAR *LPDMUS_LOADER;
+typedef struct IDirectMusicObject __RPC_FAR *LPDMUS_OBJECT;
 
-DEFINE_GUID(GUID_NOTIFICATION_SEGMENT,						0xd2ac2899,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_NOTIFICATION_PERFORMANCE,					0x81f75bc5,0x4e5d,0x11d2,0xbc,0xc7,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-DEFINE_GUID(GUID_NOTIFICATION_MEASUREANDBEAT,				0xd2ac289a,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_NOTIFICATION_CHORD,						0xd2ac289b,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_NOTIFICATION_COMMAND,						0xd2ac289c,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_NOTIFICATION_RECOMPOSE,					0xd348372b,0x945b,0x45ae,0xa5,0x22,0x45,0xf,0x12,0x5b,0x84,0xa5);
-
-DEFINE_GUID(GUID_CommandParam,								0xd2ac289d,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_CommandParam2,								0x28f97ef7,0x9538,0x11d2,0x97,0xa9,0x0,0xc0,0x4f,0xa3,0x6e,0x58);
-DEFINE_GUID(GUID_CommandParamNext,							0x472afe7a,0x281b,0x11d3,0x81,0x7d,0x0,0xc0,0x4f,0xa3,0x6e,0x58);
-DEFINE_GUID(GUID_ChordParam,								0xd2ac289e,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_RhythmParam,								0xd2ac289f,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_IDirectMusicStyle,							0xd2ac28a1,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_TimeSignature,								0xd2ac28a4,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_TempoParam,								0xd2ac28a5,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_Valid_Start_Time,							0x7f6b1760,0x1fdb,0x11d3,0x82,0x26,0x44,0x45,0x53,0x54,0x0,0x0);
-DEFINE_GUID(GUID_Play_Marker,								0xd8761a41,0x801a,0x11d3,0x9b,0xd1,0xda,0xf7,0xe1,0xc3,0xd8,0x34);
-DEFINE_GUID(GUID_BandParam,									0x2bb1938,0xcb8b,0x11d2,0x8b,0xb9,0x0,0x60,0x8,0x93,0xb1,0xb6);
-DEFINE_GUID(GUID_IDirectMusicBand,							0xd2ac28ac,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_IDirectMusicChordMap,						0xd2ac28ad,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_MuteParam,									0xd2ac28af,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-
-DEFINE_GUID(GUID_Download,									0xd2ac28a7,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_Unload,									0xd2ac28a8,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_ConnectToDLSCollection,					0x1db1ae6b,0xe92e,0x11d1,0xa8,0xc5,0x0,0xc0,0x4f,0xa3,0x72,0x6e);
-DEFINE_GUID(GUID_Enable_Auto_Download,						0xd2ac28a9,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_Disable_Auto_Download,						0xd2ac28aa,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_Clear_All_Bands,							0xd2ac28ab,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_StandardMIDIFile,							0x6621075,0xe92e,0x11d1,0xa8,0xc5,0x0,0xc0,0x4f,0xa3,0x72,0x6e);
-#define GUID_IgnoreBankSelectForGM 	GUID_StandardMIDIFile
-
-DEFINE_GUID(GUID_DisableTimeSig,							0x45fc707b,0x1db4,0x11d2,0xbc,0xac,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-DEFINE_GUID(GUID_EnableTimeSig,								0x45fc707c,0x1db4,0x11d2,0xbc,0xac,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-DEFINE_GUID(GUID_DisableTempo,								0x45fc707d,0x1db4,0x11d2,0xbc,0xac,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-DEFINE_GUID(GUID_EnableTempo,								0x45fc707e,0x1db4,0x11d2,0xbc,0xac,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-
-DEFINE_GUID(GUID_SeedVariations,							0x65b76fa5,0xff37,0x11d2,0x81,0x4e,0x0,0xc0,0x4f,0xa3,0x6e,0x58);
-DEFINE_GUID(GUID_MelodyFragment,							0xb291c7f2,0xb616,0x11d2,0x97,0xfa,0x0,0xc0,0x4f,0xa3,0x6e,0x58);
-DEFINE_GUID(GUID_Clear_All_MelodyFragments,					0x8509fee6,0xb617,0x11d2,0x97,0xfa,0x0,0xc0,0x4f,0xa3,0x6e,0x58);
-DEFINE_GUID(GUID_Variations,								0x11f72cce,0x26e6,0x4ecd,0xaf,0x2e,0xd6,0x68,0xe6,0x67,0x7,0xd8);
-DEFINE_GUID(GUID_DownloadToAudioPath,						0x9f2c0341,0xc5c4,0x11d3,0x9b,0xd1,0x44,0x45,0x53,0x54,0x0,0x0);
-DEFINE_GUID(GUID_UnloadFromAudioPath,						0x9f2c0342,0xc5c4,0x11d3,0x9b,0xd1,0x44,0x45,0x53,0x54,0x0,0x0);
-
-DEFINE_GUID(GUID_PerfMasterTempo,							0xd2ac28b0,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_PerfMasterVolume,							0xd2ac28b1,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_PerfMasterGrooveLevel,						0xd2ac28b2,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
-DEFINE_GUID(GUID_PerfAutoDownload,							0xfb09565b,0x3631,0x11d2,0xbc,0xb8,0x0,0xa0,0xc9,0x22,0xe6,0xeb);
-
-DEFINE_GUID(GUID_DefaultGMCollection,						0xf17e8673,0xc3b4,0x11d1,0x87,0xb,0x0,0x60,0x8,0x93,0xb1,0xbd);
-
-DEFINE_GUID(GUID_Synth_Default,								0x26bb9432,0x45fe,0x48d3,0xa3,0x75,0x24,0x72,0xc5,0xe3,0xe7,0x86);
-
-DEFINE_GUID(GUID_Buffer_Reverb,								0x186cc541,0xdb29,0x11d3,0x9b,0xd1,0x0,0x80,0xc7,0x15,0xa,0x74);
-DEFINE_GUID(GUID_Buffer_EnvReverb,							0x186cc542,0xdb29,0x11d3,0x9b,0xd1,0x0,0x80,0xc7,0x15,0xa,0x74);
-DEFINE_GUID(GUID_Buffer_Stereo,								0x186cc545,0xdb29,0x11d3,0x9b,0xd1,0x0,0x80,0xc7,0x15,0xa,0x74);
-DEFINE_GUID(GUID_Buffer_3D_Dry,								0x186cc546,0xdb29,0x11d3,0x9b,0xd1,0x0,0x80,0xc7,0x15,0xa,0x74);
-DEFINE_GUID(GUID_Buffer_Mono,								0x186cc547,0xdb29,0x11d3,0x9b,0xd1,0x0,0x80,0xc7,0x15,0xa,0x74);
+/* GUIDs - all types loader */
+DEFINE_GUID(GUID_DirectMusicAllTypes,         0xd2ac2893,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+/* GUIDs - notification */
+DEFINE_GUID(GUID_NOTIFICATION_CHORD,          0xd2ac289b,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_NOTIFICATION_COMMAND,        0xd2ac289c,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_NOTIFICATION_MEASUREANDBEAT, 0xd2ac289a,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_NOTIFICATION_PERFORMANCE,    0x81f75bc5,0x4e5d,0x11d2,0xbc,0xc7,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+DEFINE_GUID(GUID_NOTIFICATION_RECOMPOSE,      0xd348372b,0x945b,0x45ae,0xa5,0x22,0x45,0x0f,0x12,0x5b,0x84,0xa5);
+DEFINE_GUID(GUID_NOTIFICATION_SEGMENT,        0xd2ac2899,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+/* GUIDs - param types */
+DEFINE_GUID(GUID_BandParam,                   0x02bb1938,0xcb8b,0x11d2,0x8b,0xb9,0x00,0x60,0x08,0x93,0xb1,0xb6);
+DEFINE_GUID(GUID_ChordParam,                  0xd2ac289e,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_CommandParam,                0xd2ac289d,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_CommandParam2,               0x28f97ef7,0x9538,0x11d2,0x97,0xa9,0x00,0xc0,0x4f,0xa3,0x6e,0x58);
+DEFINE_GUID(GUID_CommandParamNext,            0x472afe7a,0x281b,0x11d3,0x81,0x7d,0x00,0xc0,0x4f,0xa3,0x6e,0x58);
+DEFINE_GUID(GUID_IDirectMusicBand,            0xd2ac28ac,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_IDirectMusicChordMap,        0xd2ac28ad,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_IDirectMusicStyle,           0xd2ac28a1,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_MuteParam,                   0xd2ac28af,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_Play_Marker,                 0xd8761a41,0x801a,0x11d3,0x9b,0xd1,0xda,0xf7,0xe1,0xc3,0xd8,0x34);
+DEFINE_GUID(GUID_RhythmParam,                 0xd2ac289f,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_TempoParam,                  0xd2ac28a5,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_TimeSignature,               0xd2ac28a4,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_Valid_Start_Time,            0x7f6b1760,0x1fdb,0x11d3,0x82,0x26,0x44,0x45,0x53,0x54,0x00,0x00);
+/* GUIDs - param setting */
+DEFINE_GUID(GUID_Clear_All_Bands,             0xd2ac28ab,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_ConnectToDLSCollection,      0x1db1ae6b,0xe92e,0x11d1,0xa8,0xc5,0x00,0xc0,0x4f,0xa3,0x72,0x6e);
+DEFINE_GUID(GUID_Disable_Auto_Download,       0xd2ac28aa,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_DisableTempo,                0x45fc707d,0x1db4,0x11d2,0xbc,0xac,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+DEFINE_GUID(GUID_DisableTimeSig,              0x45fc707b,0x1db4,0x11d2,0xbc,0xac,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+DEFINE_GUID(GUID_Download,                    0xd2ac28a7,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_DownloadToAudioPath,         0x9f2c0341,0xc5c4,0x11d3,0x9b,0xd1,0x44,0x45,0x53,0x54,0x00,0x00);
+DEFINE_GUID(GUID_Enable_Auto_Download,        0xd2ac28a9,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_EnableTempo,                 0x45fc707e,0x1db4,0x11d2,0xbc,0xac,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+DEFINE_GUID(GUID_EnableTimeSig,               0x45fc707c,0x1db4,0x11d2,0xbc,0xac,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+#define GUID_IgnoreBankSelectForGM            GUID_StandardMIDIFile
+DEFINE_GUID(GUID_SeedVariations,              0x65b76fa5,0xff37,0x11d2,0x81,0x4e,0x00,0xc0,0x4f,0xa3,0x6e,0x58);
+DEFINE_GUID(GUID_StandardMIDIFile,            0x06621075,0xe92e,0x11d1,0xa8,0xc5,0x00,0xc0,0x4f,0xa3,0x72,0x6e);
+DEFINE_GUID(GUID_Unload,                      0xd2ac28a8,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_UnloadFromAudioPath,         0x9f2c0342,0xc5c4,0x11d3,0x9b,0xd1,0x44,0x45,0x53,0x54,0x00,0x00);
+DEFINE_GUID(GUID_Variations,                  0x11f72cce,0x26e6,0x4ecd,0xaf,0x2e,0xd6,0x68,0xe6,0x67,0x07,0xd8);
+/* GUIDs - global data */
+DEFINE_GUID(GUID_PerfMasterTempo,             0xd2ac28b0,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_PerfMasterVolume,            0xd2ac28b1,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_PerfMasterGrooveLevel,       0xd2ac28b2,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_PerfAutoDownload,            0xfb09565b,0x3631,0x11d2,0xbc,0xb8,0x00,0xa0,0xc9,0x22,0xe6,0xeb);
+/* GUID - default DLS collection */
+DEFINE_GUID(GUID_DefaultGMCollection,         0xf17e8673,0xc3b4,0x11d1,0x87,0x0b,0x00,0x60,0x08,0x93,0xb1,0xbd);
+/* GUID - default synthesizer */
+DEFINE_GUID(GUID_Synth_Default,               0x26bb9432,0x45fe,0x48d3,0xa3,0x75,0x24,0x72,0xc5,0xe3,0xe7,0x86);
+/* GUIDs - define default buffer configuration */
+DEFINE_GUID(GUID_Buffer_Reverb,               0x186cc541,0xdb29,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
+DEFINE_GUID(GUID_Buffer_EnvReverb,            0x186cc542,0xdb29,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
+DEFINE_GUID(GUID_Buffer_Stereo,               0x186cc545,0xdb29,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
+DEFINE_GUID(GUID_Buffer_3D_Dry,               0x186cc546,0xdb29,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
+DEFINE_GUID(GUID_Buffer_Mono,                 0x186cc547,0xdb29,0x11d3,0x9b,0xd1,0x00,0x80,0xc7,0x15,0x0a,0x74);
 
 
 /*****************************************************************************
- * Definitions
+ * Typedef definitions
  */
-#define MT_MIN          0x80000000
-#define MT_MAX          0x7FFFFFFF
+typedef WORD    TRANSITION_TYPE, *LPTRANSITION_TYPE;
+/*
+ * typedef __int64 REFERENCE_TIME,  *LPREFERENCE_TIME;
+ * typedef long    MUSIC_TIME,      *LPMUSIC_TIME;
+ */
 
-#define DMUS_PPQ        768
 
-#define DMUS_PMSG_PART \
-    DWORD               dwSize; \
-    REFERENCE_TIME      rtTime; \
-    MUSIC_TIME          mtTime; \
-    DWORD               dwFlags; \
-    DWORD               dwPChannel; \
-    DWORD               dwVirtualTrackID; \
-    IDirectMusicTool*   pTool; \
-    IDirectMusicGraph*  pGraph; \
-    DWORD               dwType; \
-    DWORD               dwVoiceID; \
-    DWORD               dwGroupID; \
-    IUnknown*           punkUser;
+/*****************************************************************************
+ * Flags
+ */
+#define DMUS_APATH_SHARED_STEREOPLUSREVERB 0x1
+#define DMUS_APATH_DYNAMIC_3D              0x6
+#define DMUS_APATH_DYNAMIC_MONO            0x7
+#define DMUS_APATH_DYNAMIC_STEREO          0x8
+
+#define DMUS_AUDIOF_3D          0x01
+#define DMUS_AUDIOF_ENVIRON     0x02
+#define DMUS_AUDIOF_EAX         0x04
+#define DMUS_AUDIOF_DMOS        0x08
+#define DMUS_AUDIOF_STREAMING   0x10
+#define DMUS_AUDIOF_BUFFERS     0x20
+#define DMUS_AUDIOF_ALL         0x3F
+
+#define DMUS_AUDIOPARAMS_FEATURES     0x1
+#define DMUS_AUDIOPARAMS_VOICES       0x2
+#define DMUS_AUDIOPARAMS_SAMPLERATE   0x4
+#define DMUS_AUDIOPARAMS_DEFAULTSYNTH 0x8
+
+#define DMUS_CURVET_PBCURVE   0x03
+#define DMUS_CURVET_CCCURVE   0x04
+#define DMUS_CURVET_MATCURVE  0x05
+#define DMUS_CURVET_PATCURVE  0x06
+#define DMUS_CURVET_RPNCURVE  0x07
+#define DMUS_CURVET_NRPNCURVE 0x08
+
+#define DMUS_MASTERTEMPO_MAX 100.0f
+#define DMUS_MASTERTEMPO_MIN 0.01f
+
+#define DMUS_MAX_NAME     0x40
+#define DMUS_MAX_CATEGORY 0x40
+#define DMUS_MAX_FILENAME MAX_PATH
+
+#define DMUS_MAXSUBCHORD 0x8
+
+#define DMUS_NOTIFICATION_SEGSTART       0x0
+#define DMUS_NOTIFICATION_SEGEND         0x1
+#define DMUS_NOTIFICATION_SEGALMOSTEND   0x2
+#define DMUS_NOTIFICATION_SEGLOOP        0x3
+#define DMUS_NOTIFICATION_SEGABORT       0x4
+#define DMUS_NOTIFICATION_MUSICSTARTED   0x0
+#define DMUS_NOTIFICATION_MUSICSTOPPED   0x1
+#define DMUS_NOTIFICATION_MUSICALMOSTEND 0x2
+#define DMUS_NOTIFICATION_MEASUREBEAT    0x0
+#define DMUS_NOTIFICATION_CHORD          0x0
+#define DMUS_NOTIFICATION_GROOVE         0x0
+#define DMUS_NOTIFICATION_EMBELLISHMENT  0x1
+#define DMUS_NOTIFICATION_RECOMPOSE      0x0
+
+#define DMUS_OBJ_OBJECT   0x001
+#define DMUS_OBJ_CLASS    0x002
+#define DMUS_OBJ_NAME     0x004
+#define DMUS_OBJ_CATEGORY 0x008
+#define DMUS_OBJ_FILENAME 0x010
+#define DMUS_OBJ_FULLPATH 0x020
+#define DMUS_OBJ_URL      0x040
+#define DMUS_OBJ_VERSION  0x080
+#define DMUS_OBJ_DATE     0x100
+#define DMUS_OBJ_LOADED   0x200
+#define DMUS_OBJ_MEMORY   0x400
+#define DMUS_OBJ_STREAM   0x800
+
+#define DMUS_PATH_SEGMENT           0x1000
+#define DMUS_PATH_SEGMENT_TRACK     0x1100
+#define DMUS_PATH_SEGMENT_GRAPH     0x1200
+#define DMUS_PATH_SEGMENT_TOOL      0x1300
+#define DMUS_PATH_AUDIOPATH         0x2000
+#define DMUS_PATH_AUDIOPATH_GRAPH   0x2200
+#define DMUS_PATH_AUDIOPATH_TOOL    0x2300
+#define DMUS_PATH_PERFORMANCE       0x3000
+#define DMUS_PATH_PERFORMANCE_GRAPH 0x3200
+#define DMUS_PATH_PERFORMANCE_TOOL  0x3300
+#define DMUS_PATH_PORT              0x4000
+#define DMUS_PATH_BUFFER            0x6000
+#define DMUS_PATH_BUFFER_DMO        0x6100
+#define DMUS_PATH_MIXIN_BUFFER      0x7000
+#define DMUS_PATH_MIXIN_BUFFER_DMO  0x7100
+#define DMUS_PATH_PRIMARY_BUFFER    0x8000
 
 #define DMUS_PCHANNEL_BROADCAST_PERFORMANCE	0xFFFFFFFF
 #define DMUS_PCHANNEL_BROADCAST_AUDIOPATH   0xFFFFFFFE
 #define DMUS_PCHANNEL_BROADCAST_SEGMENT	    0xFFFFFFFD
 #define DMUS_PCHANNEL_BROADCAST_GROUPS  	0xFFFFFFFC
-#define DMUS_PCHANNEL_ALL           0xFFFFFFFB
+#define DMUS_PCHANNEL_ALL                   0xFFFFFFFB 
 
-#define DMUS_PATH_SEGMENT          0x1000
-#define DMUS_PATH_SEGMENT_TRACK    0x1100
-#define DMUS_PATH_SEGMENT_GRAPH    0x1200
-#define DMUS_PATH_SEGMENT_TOOL     0x1300
-#define DMUS_PATH_AUDIOPATH        0x2000
-#define DMUS_PATH_AUDIOPATH_GRAPH  0x2200
-#define DMUS_PATH_AUDIOPATH_TOOL   0x2300
-#define DMUS_PATH_PERFORMANCE      0x3000
-#define DMUS_PATH_PERFORMANCE_GRAPH 0x3200
-#define DMUS_PATH_PERFORMANCE_TOOL 0x3300
-#define DMUS_PATH_PORT             0x4000
-#define DMUS_PATH_BUFFER           0x6000
-#define DMUS_PATH_BUFFER_DMO       0x6100
-#define DMUS_PATH_MIXIN_BUFFER     0x7000
-#define DMUS_PATH_MIXIN_BUFFER_DMO 0x7100
-#define DMUS_PATH_PRIMARY_BUFFER   0x8000
-
-#define DMUS_APATH_SHARED_STEREOPLUSREVERB   0x1
-#define DMUS_APATH_DYNAMIC_3D                0x6
-#define DMUS_APATH_DYNAMIC_MONO              0x7
-#define DMUS_APATH_DYNAMIC_STEREO            0x8
-
-#define DMUS_AUDIOF_3D          0x1
-#define DMUS_AUDIOF_ENVIRON     0x2
-#define DMUS_AUDIOF_EAX         0x4
-#define DMUS_AUDIOF_DMOS        0x8
-#define DMUS_AUDIOF_STREAMING   0x10
-#define DMUS_AUDIOF_BUFFERS     0x20
-#define DMUS_AUDIOF_ALL         0x3F
-
-#define DMUS_AUDIOPARAMS_FEATURES       0x00000001
-#define DMUS_AUDIOPARAMS_VOICES         0x00000002
-#define DMUS_AUDIOPARAMS_SAMPLERATE     0x00000004
-#define DMUS_AUDIOPARAMS_DEFAULTSYNTH   0x00000008
-
-#define DMUS_SEG_REPEAT_INFINITE    0xFFFFFFFF
-#define DMUS_SEG_ALLTRACKS          0x80000000
-#define DMUS_SEG_ANYTRACK           0x80000000
-
-#define DMUS_MAXSUBCHORD 8
-
-#define DMUS_PLAYMODE_FIXED             0
+#define DMUS_PLAYMODE_FIXED             0x0  
 #define DMUS_PLAYMODE_FIXEDTOKEY        DMUS_PLAYMODE_KEY_ROOT
 #define DMUS_PLAYMODE_FIXEDTOCHORD      DMUS_PLAYMODE_CHORD_ROOT
 #define DMUS_PLAYMODE_PEDALPOINT        (DMUS_PLAYMODE_KEY_ROOT | DMUS_PLAYMODE_SCALE_INTERVALS)
@@ -285,531 +306,485 @@ DEFINE_GUID(GUID_Buffer_Mono,								0x186cc547,0xdb29,0x11d3,0x9b,0xd1,0x0,0x80
 #define DMUS_PLAYMODE_SCALE_ROOT        DMUS_PLAYMODE_KEY_ROOT
 #define DMUS_PLAYMODE_FIXEDTOSCALE      DMUS_PLAYMODE_FIXEDTOKEY
 
-#define DMUS_TEMPO_MAX          1000
-#define DMUS_TEMPO_MIN          1
+#define DMUS_PPQ 768
 
-#define DMUS_MASTERTEMPO_MAX    100.0f
-#define DMUS_MASTERTEMPO_MIN    0.01f
+#define DMUS_SEG_REPEAT_INFINITE 0xFFFFFFFF
+#define DMUS_SEG_ALLTRACKS       0x80000000
+#define DMUS_SEG_ANYTRACK        0x80000000
 
-#define DMUS_CURVET_PBCURVE		0x03
-#define DMUS_CURVET_CCCURVE		0x04
-#define DMUS_CURVET_MATCURVE	0x05
-#define DMUS_CURVET_PATCURVE	0x06
-#define DMUS_CURVET_RPNCURVE	0x07
-#define DMUS_CURVET_NRPNCURVE	0x08
+#define DMUS_TEMPO_MAX 1000
+#define DMUS_TEMPO_MIN 1
 
-#define DMUS_NOTIFICATION_SEGSTART       0x0
-#define DMUS_NOTIFICATION_SEGEND         0x1
-#define DMUS_NOTIFICATION_SEGALMOSTEND   0x2
-#define DMUS_NOTIFICATION_SEGLOOP        0x3
-#define DMUS_NOTIFICATION_SEGABORT       0x4
+#define DMUS_TRACKCONFIG_OVERRIDE_ALL          0x00001
+#define DMUS_TRACKCONFIG_OVERRIDE_PRIMARY      0x00002
+#define DMUS_TRACKCONFIG_FALLBACK              0x00004
+#define DMUS_TRACKCONFIG_CONTROL_ENABLED       0x00008
+#define DMUS_TRACKCONFIG_PLAY_ENABLED          0x00010
+#define DMUS_TRACKCONFIG_NOTIFICATION_ENABLED  0x00020
+#define DMUS_TRACKCONFIG_PLAY_CLOCKTIME        0x00040
+#define DMUS_TRACKCONFIG_PLAY_COMPOSE 	       0x00080
+#define DMUS_TRACKCONFIG_LOOP_COMPOSE          0x00100
+#define DMUS_TRACKCONFIG_COMPOSING             0x00200
+#define DMUS_TRACKCONFIG_TRANS1_FROMSEGSTART   0x00400
+#define DMUS_TRACKCONFIG_TRANS1_FROMSEGCURRENT 0x00800
+#define DMUS_TRACKCONFIG_TRANS1_TOSEGSTART     0x01000
+#define DMUS_TRACKCONFIG_CONTROL_PLAY          0x10000
+#define DMUS_TRACKCONFIG_CONTROL_NOTIFICATION  0x20000
+#define DMUS_TRACKCONFIG_DEFAULT               (DMUS_TRACKCONFIG_CONTROL_ENABLED | DMUS_TRACKCONFIG_PLAY_ENABLED | DMUS_TRACKCONFIG_NOTIFICATION_ENABLED)
 
-#define DMUS_NOTIFICATION_MUSICSTARTED   0x0
-#define DMUS_NOTIFICATION_MUSICSTOPPED   0x1
-#define DMUS_NOTIFICATION_MUSICALMOSTEND 0x2
+#define DMUS_WAVEF_OFF          0x01
+#define DMUS_WAVEF_STREAMING    0x02
+#define DMUS_WAVEF_NOINVALIDATE 0x04
+#define DMUS_WAVEF_NOPREROLL    0x08
+#define DMUS_WAVEF_IGNORELOOPS  0x20
 
-#define DMUS_NOTIFICATION_MEASUREBEAT    0x0
+#define DMUSB_LOADED  0x1
+#define DMUSB_DEFAULT 0x2
 
-#define DMUS_NOTIFICATION_CHORD          0x0
+#define MT_MIN 0x80000000
+#define MT_MAX 0x7FFFFFFF
 
-#define DMUS_NOTIFICATION_GROOVE         0x0
-#define DMUS_NOTIFICATION_EMBELLISHMENT  0x1
 
-#define DMUS_NOTIFICATION_RECOMPOSE      0x0
+/*****************************************************************************
+ * Definitions
+ */
+#define DMUS_PMSG_PART \
+	DWORD              dwSize; \
+	REFERENCE_TIME     rtTime; \
+	MUSIC_TIME         mtTime; \
+	DWORD              dwFlags; \
+	DWORD              dwPChannel; \
+	DWORD              dwVirtualTrackID; \
+	IDirectMusicTool*  pTool; \
+	IDirectMusicGraph* pGraph; \
+	DWORD              dwType; \
+	DWORD              dwVoiceID; \
+	DWORD              dwGroupID; \
+	IUnknown*          punkUser;
 
-#define DMUS_WAVEF_OFF           0x1
-#define DMUS_WAVEF_STREAMING     0x2
-#define DMUS_WAVEF_NOINVALIDATE  0x4
-#define DMUS_WAVEF_NOPREROLL     0x8
 
-#define DMUS_MAX_NAME           0x40
-#define DMUS_MAX_CATEGORY       0x40
-#define DMUS_MAX_FILENAME       MAX_PATH
+/*****************************************************************************
+ * Enumerations
+ */
+/* typedef definitions */
+typedef enum enumDMUS_STYLET_TYPES       DMUS_STYLET_TYPES;
+typedef enum enumDMUS_COMMANDT_TYPES     DMUS_COMMANDT_TYPES;
+typedef enum enumDMUS_SHAPET_TYPES       DMUS_SHAPET_TYPES;
+typedef enum enumDMUS_COMPOSEF_FLAGS     DMUS_COMPOSEF_FLAGS;
+typedef enum enumDMUS_PMSGF_FLAGS        DMUS_PMSGF_FLAGS;
+typedef enum enumDMUS_PMSGT_TYPES        DMUS_PMSGT_TYPES;
+typedef enum enumDMUS_SEGF_FLAGS         DMUS_SEGF_FLAGS;
+typedef enum enumDMUS_TIME_RESOLVE_FLAGS DMUS_TIME_RESOLVE_FLAGS;
+typedef enum enumDMUS_CHORDKEYF_FLAGS    DMUS_CHORDKEYF_FLAGS;
+typedef enum enumDMUS_NOTEF_FLAGS        DMUS_NOTEF_FLAGS;
+typedef enum enumDMUS_PLAYMODE_FLAGS     DMUS_PLAYMODE_FLAGS;
+typedef enum enumDMUS_CURVE_FLAGS        DMUS_CURVE_FLAGS;
 
-#define DMUS_OBJ_OBJECT         0x001
-#define DMUS_OBJ_CLASS          0x002
-#define DMUS_OBJ_NAME           0x004
-#define DMUS_OBJ_CATEGORY       0x008
-#define DMUS_OBJ_FILENAME       0x010
-#define DMUS_OBJ_FULLPATH       0x020
-#define DMUS_OBJ_URL            0x040
-#define DMUS_OBJ_VERSION        0x080
-#define DMUS_OBJ_DATE           0x100
-#define DMUS_OBJ_LOADED         0x200
-#define DMUS_OBJ_MEMORY         0x400
-#define DMUS_OBJ_STREAM         0x800
 
-#define DMUS_TRACKCONFIG_OVERRIDE_ALL           0x00001
-#define DMUS_TRACKCONFIG_OVERRIDE_PRIMARY       0x00002
-#define DMUS_TRACKCONFIG_FALLBACK               0x00004
-#define DMUS_TRACKCONFIG_CONTROL_ENABLED        0x00008
-#define DMUS_TRACKCONFIG_PLAY_ENABLED           0x00010
-#define DMUS_TRACKCONFIG_NOTIFICATION_ENABLED	0x00020
-#define DMUS_TRACKCONFIG_PLAY_CLOCKTIME         0x00040
-#define DMUS_TRACKCONFIG_PLAY_COMPOSE 	        0x00080
-#define DMUS_TRACKCONFIG_LOOP_COMPOSE           0x00100
-#define DMUS_TRACKCONFIG_COMPOSING              0x00200
-#define DMUS_TRACKCONFIG_TRANS1_FROMSEGSTART    0x00400
-#define DMUS_TRACKCONFIG_TRANS1_FROMSEGCURRENT  0x00800
-#define DMUS_TRACKCONFIG_TRANS1_TOSEGSTART      0x01000
-#define DMUS_TRACKCONFIG_CONTROL_PLAY           0x10000
-#define DMUS_TRACKCONFIG_CONTROL_NOTIFICATION   0x20000
-#define DMUS_TRACKCONFIG_DEFAULT    (DMUS_TRACKCONFIG_CONTROL_ENABLED | DMUS_TRACKCONFIG_PLAY_ENABLED | DMUS_TRACKCONFIG_NOTIFICATION_ENABLED)
 
-#define DMUS_MAX_FRAGMENTLABEL 20
+/* actual enumerations */
+enum enumDMUS_STYLET_TYPES {
+	DMUS_STYLET_PATTERN = 0x0,
+	DMUS_STYLET_MOTIF   = 0x1,
+};
 
-#define DMUS_FRAGMENTF_USE_REPEAT      0x1
-#define DMUS_FRAGMENTF_REJECT_REPEAT   0x2
-#define DMUS_FRAGMENTF_USE_LABEL       0x4
+enum enumDMUS_COMMANDT_TYPES {
+	DMUS_COMMANDT_GROOVE      = 0x0,
+	DMUS_COMMANDT_FILL        = 0x1,
+	DMUS_COMMANDT_INTRO       = 0x2,
+	DMUS_COMMANDT_BREAK       = 0x3,
+	DMUS_COMMANDT_END         = 0x4,
+	DMUS_COMMANDT_ENDANDINTRO = 0x5
+};
 
-#define DMUS_CONNECTIONF_INTERVALS     0x2
-#define DMUS_CONNECTIONF_OVERLAP       0x4
+enum enumDMUS_SHAPET_TYPES {
+	DMUS_SHAPET_FALLING  = 0x0,
+	DMUS_SHAPET_LEVEL    = 0x1,
+	DMUS_SHAPET_LOOPABLE = 0x2,
+	DMUS_SHAPET_LOUD     = 0x3,
+	DMUS_SHAPET_QUIET    = 0x4,
+	DMUS_SHAPET_PEAKING  = 0x5,
+	DMUS_SHAPET_RANDOM   = 0x6,
+	DMUS_SHAPET_RISING   = 0x7,
+	DMUS_SHAPET_SONG     = 0x8
+};
 
-#define DMUSB_LOADED    0x1
-#define DMUSB_DEFAULT   0x2
+enum enumDMUS_COMPOSEF_FLAGS {       
+	DMUS_COMPOSEF_NONE                = 0x000000,
+	DMUS_COMPOSEF_ALIGN               = 0x000001,
+	DMUS_COMPOSEF_OVERLAP             = 0x000002,
+	DMUS_COMPOSEF_IMMEDIATE           = 0x000004,
+	DMUS_COMPOSEF_GRID                = 0x000008,
+	DMUS_COMPOSEF_BEAT                = 0x000010,
+	DMUS_COMPOSEF_MEASURE             = 0x000020,
+	DMUS_COMPOSEF_AFTERPREPARETIME    = 0x000040,
+	DMUS_COMPOSEF_VALID_START_BEAT    = 0x000080,
+	DMUS_COMPOSEF_VALID_START_GRID    = 0x000100,
+	DMUS_COMPOSEF_VALID_START_TICK    = 0x000200,
+	DMUS_COMPOSEF_SEGMENTEND          = 0x000400,
+	DMUS_COMPOSEF_MARKER              = 0x000800,
+	DMUS_COMPOSEF_MODULATE            = 0x001000,
+	DMUS_COMPOSEF_LONG                = 0x002000,
+	DMUS_COMPOSEF_ENTIRE_TRANSITION   = 0x004000,
+	DMUS_COMPOSEF_1BAR_TRANSITION     = 0x008000,
+	DMUS_COMPOSEF_ENTIRE_ADDITION     = 0x010000,
+	DMUS_COMPOSEF_1BAR_ADDITION       = 0x020000,
+	DMUS_COMPOSEF_VALID_START_MEASURE = 0x040000,
+	DMUS_COMPOSEF_DEFAULT             = 0x080000,
+	DMUS_COMPOSEF_NOINVALIDATE        = 0x100000,
+	DMUS_COMPOSEF_USE_AUDIOPATH       = 0x200000,
+	DMUS_COMPOSEF_INVALIDATE_PRI      = 0x400000
+};
+
+enum enumDMUS_PMSGF_FLAGS {
+	DMUS_PMSGF_REFTIME        = 1,
+	DMUS_PMSGF_MUSICTIME      = 2,
+	DMUS_PMSGF_TOOL_IMMEDIATE = 4,
+	DMUS_PMSGF_TOOL_QUEUE     = 8,
+	DMUS_PMSGF_TOOL_ATTIME    = 0x10,
+	DMUS_PMSGF_TOOL_FLUSH     = 0x20,
+	DMUS_PMSGF_LOCKTOREFTIME  = 0x40,
+	DMUS_PMSGF_DX8            = 0x80
+};
+
+enum enumDMUS_PMSGT_TYPES {
+	DMUS_PMSGT_MIDI             = 0x00,
+	DMUS_PMSGT_NOTE             = 0x01,
+	DMUS_PMSGT_SYSEX            = 0x02,
+	DMUS_PMSGT_NOTIFICATION     = 0x03,
+	DMUS_PMSGT_TEMPO            = 0x04,
+	DMUS_PMSGT_CURVE            = 0x05,
+	DMUS_PMSGT_TIMESIG          = 0x06,
+	DMUS_PMSGT_PATCH            = 0x07,
+	DMUS_PMSGT_TRANSPOSE        = 0x08,
+	DMUS_PMSGT_CHANNEL_PRIORITY = 0x09,
+	DMUS_PMSGT_STOP             = 0x0A,
+	DMUS_PMSGT_DIRTY            = 0x0B,
+	DMUS_PMSGT_WAVE             = 0x0C,
+	DMUS_PMSGT_LYRIC            = 0x0D,
+	DMUS_PMSGT_SCRIPTLYRIC      = 0x0E,
+	DMUS_PMSGT_USER             = 0xFF
+};
+
+enum enumDMUS_SEGF_FLAGS {
+	DMUS_SEGF_REFTIME             = 0x000040,   
+	DMUS_SEGF_SECONDARY           = 0x000080,
+	DMUS_SEGF_QUEUE               = 0x000100,
+	DMUS_SEGF_CONTROL             = 0x000200,
+	DMUS_SEGF_AFTERPREPARETIME    = 0x000400,
+	DMUS_SEGF_GRID                = 0x000800,
+	DMUS_SEGF_BEAT                = 0x001000,
+	DMUS_SEGF_MEASURE             = 0x002000,
+	DMUS_SEGF_DEFAULT             = 0x004000,
+	DMUS_SEGF_NOINVALIDATE        = 0x008000,
+	DMUS_SEGF_ALIGN               = 0x0010000,
+	DMUS_SEGF_VALID_START_BEAT    = 0x0020000,
+	DMUS_SEGF_VALID_START_GRID    = 0x0040000,
+	DMUS_SEGF_VALID_START_TICK    = 0x0080000,
+	DMUS_SEGF_AUTOTRANSITION      = 0x0100000,
+	DMUS_SEGF_AFTERQUEUETIME      = 0x0200000,
+	DMUS_SEGF_AFTERLATENCYTIME    = 0x0400000,
+	DMUS_SEGF_SEGMENTEND          = 0x0800000,
+	DMUS_SEGF_MARKER              = 0x01000000,
+	DMUS_SEGF_TIMESIG_ALWAYS      = 0x02000000,
+	DMUS_SEGF_USE_AUDIOPATH       = 0x04000000,
+	DMUS_SEGF_VALID_START_MEASURE = 0x08000000,
+	DMUS_SEGF_INVALIDATE_PRI      = 0x10000000
+};
+
+enum enumDMUS_TIME_RESOLVE_FLAGS {
+	DMUS_TIME_RESOLVE_AFTERPREPARETIME = DMUS_SEGF_AFTERPREPARETIME,
+	DMUS_TIME_RESOLVE_AFTERQUEUETIME   = DMUS_SEGF_AFTERQUEUETIME,
+	DMUS_TIME_RESOLVE_AFTERLATENCYTIME = DMUS_SEGF_AFTERLATENCYTIME,
+	DMUS_TIME_RESOLVE_GRID             = DMUS_SEGF_GRID,
+	DMUS_TIME_RESOLVE_BEAT             = DMUS_SEGF_BEAT,
+	DMUS_TIME_RESOLVE_MEASURE          = DMUS_SEGF_MEASURE,
+	DMUS_TIME_RESOLVE_MARKER           = DMUS_SEGF_MARKER,
+	DMUS_TIME_RESOLVE_SEGMENTEND       = DMUS_SEGF_SEGMENTEND,
+};
+
+enum enumDMUS_CHORDKEYF_FLAGS {
+	DMUS_CHORDKEYF_SILENT = 0x1,
+};
+
+enum enumDMUS_NOTEF_FLAGS {
+	DMUS_NOTEF_NOTEON               = 0x01,
+	/* DX8 */
+	DMUS_NOTEF_NOINVALIDATE         = 0x02,
+	DMUS_NOTEF_NOINVALIDATE_INSCALE = 0x04,
+	DMUS_NOTEF_NOINVALIDATE_INCHORD = 0x08,
+	DMUS_NOTEF_REGENERATE           = 0x10,
+};
+
+enum enumDMUS_PLAYMODE_FLAGS {
+	DMUS_PLAYMODE_KEY_ROOT        = 0x01,
+	DMUS_PLAYMODE_CHORD_ROOT      = 0x02,
+	DMUS_PLAYMODE_SCALE_INTERVALS = 0x04,
+	DMUS_PLAYMODE_CHORD_INTERVALS = 0x08,
+	DMUS_PLAYMODE_NONE            = 0x10,
+};
+
+enum enumDMUS_CURVE_FLAGS {
+	DMUS_CURVE_RESET              = 0x1,
+	DMUS_CURVE_START_FROM_CURRENT = 0x2
+};
+
+enum { 
+	DMUS_CURVES_LINEAR  = 0x0,
+	DMUS_CURVES_INSTANT = 0x1,
+	DMUS_CURVES_EXP     = 0x2,
+	DMUS_CURVES_LOG     = 0x3,
+	DMUS_CURVES_SINE    = 0x4
+};
+
 
 /*****************************************************************************
  * Structures
  */
-typedef enum enumDMUS_STYLET_TYPES
-{
-    DMUS_STYLET_PATTERN         = 0,
-    DMUS_STYLET_MOTIF           = 1,
-    DMUS_STYLET_FRAGMENT        = 2,
-} DMUS_STYLET_TYPES;
+/* typedef definitions */
+/*typedef struct _DMUS_PMSG                  DMUS_PMSG,                  *LPDMUS_PMSG; */
+typedef struct _DMUS_AUDIOPARAMS           DMUS_AUDIOPARAMS,           *LPDMUS_AUDIOPARAMS;
+typedef struct _DMUS_SUBCHORD              DMUS_SUBCHORD,              *LPDMUS_SUBCHORD;
+typedef struct _DMUS_CHORD_KEY             DMUS_CHORD_KEY,             *LPDMUS_CHORD_KEY;
+typedef struct _DMUS_NOTE_PMSG             DMUS_NOTE_PMSG,             *LPDMUS_NOTE_PMSG;
+typedef struct _DMUS_MIDI_PMSG             DMUS_MIDI_PMSG,             *LPDMUS_MIDI_PMSG;
+typedef struct _DMUS_PATCH_PMSG            DMUS_PATCH_PMSG,            *LPDMUS_PATCH_PMSG;
+typedef struct _DMUS_TRANSPOSE_PMSG        DMUS_TRANSPOSE_PMSG,        *LPDMUS_TRANSPOSE_PMSG;
+typedef struct _DMUS_CHANNEL_PRIORITY_PMSG DMUS_CHANNEL_PRIORITY_PMSG, *LPDMUS_CHANNEL_PRIORITY_PMSG;
+typedef struct _DMUS_TEMPO_PMSG            DMUS_TEMPO_PMSG,            *LPDMUS_TEMPO_PMSG;
+typedef struct _DMUS_SYSEX_PMSG            DMUS_SYSEX_PMSG,            *LPDMUS_SYSEX_PMSG;
+typedef struct _DMUS_CURVE_PMSG            DMUS_CURVE_PMSG,            *LPDMUS_CURVE_PMSG;
+typedef struct _DMUS_TIMESIG_PMSG          DMUS_TIMESIG_PMSG,          *LPDMUS_TIMESIG_PMSG;
+typedef struct _DMUS_NOTIFICATION_PMSG     DMUS_NOTIFICATION_PMSG,     *LPDMUS_NOTIFICATION_PMSG;
+typedef struct _DMUS_WAVE_PMSG             DMUS_WAVE_PMSG,             *LPDMUS_WAVE_PMSG;
+typedef struct _DMUS_LYRIC_PMSG            DMUS_LYRIC_PMSG,            *LPDMUS_LYRIC_PMSG;
+typedef struct _DMUS_VERSION               DMUS_VERSION,               *LPDMUS_VERSION;
+typedef struct _DMUS_TIMESIGNATURE         DMUS_TIMESIGNATURE,         *LPDMUS_TIMESIGNATURE;
+typedef struct _DMUS_VALID_START_PARAM     DMUS_VALID_START_PARAM,     *LPDMUS_VALID_START_PARAM;
+typedef struct _DMUS_PLAY_MARKER_PARAM     DMUS_PLAY_MARKER_PARAM,     *LPDMUS_PLAY_MARKER_PARAM;
+typedef struct _DMUS_OBJECTDESC            DMUS_OBJECTDESC,            *LPDMUS_OBJECTDESC;
+typedef struct _DMUS_SCRIPT_ERRORINFO      DMUS_SCRIPT_ERRORINFO,      *LPDMUS_SCRIPT_ERRORINFO;
+typedef struct _DMUS_COMMAND_PARAM         DMUS_COMMAND_PARAM,         *LPDMUS_COMMAND_PARAM;
+typedef struct _DMUS_COMMAND_PARAM_2       DMUS_COMMAND_PARAM_2,       *LPDMUS_COMMAND_PARAM_2;
+typedef struct _DMUS_BAND_PARAM            DMUS_BAND_PARAM,            *LPDMUS_BAND_PARAM;
+typedef struct _DMUS_VARIATIONS_PARAM      DMUS_VARIATIONS_PARAM,      *LPDMUS_VARIATIONS_PARAM;
 
-typedef enum enumDMUS_COMMANDT_TYPES
-{
-    DMUS_COMMANDT_GROOVE            = 0,
-    DMUS_COMMANDT_FILL              = 1,
-    DMUS_COMMANDT_INTRO             = 2,
-    DMUS_COMMANDT_BREAK             = 3,
-    DMUS_COMMANDT_END               = 4,
-    DMUS_COMMANDT_ENDANDINTRO       = 5
-} DMUS_COMMANDT_TYPES;
-
-typedef enum enumDMUS_SHAPET_TYPES
-{
-    DMUS_SHAPET_FALLING             = 0,
-    DMUS_SHAPET_LEVEL               = 1,
-    DMUS_SHAPET_LOOPABLE            = 2,
-    DMUS_SHAPET_LOUD                = 3,
-    DMUS_SHAPET_QUIET               = 4,
-    DMUS_SHAPET_PEAKING             = 5,
-    DMUS_SHAPET_RANDOM              = 6,
-    DMUS_SHAPET_RISING              = 7,
-    DMUS_SHAPET_SONG                = 8
-}   DMUS_SHAPET_TYPES;
-
-typedef enum enumDMUS_COMPOSEF_FLAGS
-{
-    DMUS_COMPOSEF_NONE                = 0x00000,
-    DMUS_COMPOSEF_ALIGN               = 0x00001,
-    DMUS_COMPOSEF_OVERLAP             = 0x00002,
-    DMUS_COMPOSEF_IMMEDIATE           = 0x00004,
-    DMUS_COMPOSEF_GRID                = 0x00008,
-    DMUS_COMPOSEF_BEAT                = 0x00010,
-    DMUS_COMPOSEF_MEASURE             = 0x00020,
-    DMUS_COMPOSEF_AFTERPREPARETIME    = 0x00040,
-    DMUS_COMPOSEF_VALID_START_BEAT    = 0x00080,
-    DMUS_COMPOSEF_VALID_START_GRID    = 0x00100,
-    DMUS_COMPOSEF_VALID_START_TICK    = 0x00200,
-    DMUS_COMPOSEF_SEGMENTEND          = 0x00400,
-    DMUS_COMPOSEF_MARKER              = 0x00800,
-    DMUS_COMPOSEF_MODULATE            = 0x01000,
-    DMUS_COMPOSEF_LONG                = 0x02000,
-    DMUS_COMPOSEF_ENTIRE_TRANSITION   = 0x04000,
-    DMUS_COMPOSEF_1BAR_TRANSITION     = 0x08000,
-    DMUS_COMPOSEF_ENTIRE_ADDITION     = 0x10000,
-    DMUS_COMPOSEF_1BAR_ADDITION       = 0x20000,
-    DMUS_COMPOSEF_VALID_START_MEASURE = 0x40000,
-    DMUS_COMPOSEF_DEFAULT             = 0x80000,
-    DMUS_COMPOSEF_NOINVALIDATE        = 0x100000,
-    DMUS_COMPOSEF_USE_AUDIOPATH       = 0x200000,
-    DMUS_COMPOSEF_INVALIDATE_PRI      = 0x400000
-}   DMUS_COMPOSEF_FLAGS;
-
-typedef struct _DMUS_PMSG
-{
+/* actual structures */
+struct _DMUS_PMSG {
     DMUS_PMSG_PART
-} DMUS_PMSG;
-
-typedef struct _DMUS_AUDIOPARAMS
-{
-    DWORD   dwSize;
-    BOOL    fInitNow;
-    DWORD 	dwValidData;
-    DWORD   dwFeatures;
-    DWORD   dwVoices;
-    DWORD   dwSampleRate;
-    CLSID   clsidDefaultSynth;
-} DMUS_AUDIOPARAMS;
-
-typedef enum enumDMUS_PMSGF_FLAGS
-{
-    DMUS_PMSGF_REFTIME          = 0x01,
-    DMUS_PMSGF_MUSICTIME        = 0x02,
-    DMUS_PMSGF_TOOL_IMMEDIATE   = 0x04,
-    DMUS_PMSGF_TOOL_QUEUE       = 0x08,
-    DMUS_PMSGF_TOOL_ATTIME      = 0x10,
-    DMUS_PMSGF_TOOL_FLUSH       = 0x20,
-    DMUS_PMSGF_LOCKTOREFTIME    = 0x40,
-    DMUS_PMSGF_DX8              = 0x80
-} DMUS_PMSGF_FLAGS;
-
-typedef enum enumDMUS_PMSGT_TYPES
-{
-    DMUS_PMSGT_MIDI             = 0,
-    DMUS_PMSGT_NOTE             = 1,
-    DMUS_PMSGT_SYSEX            = 2,
-    DMUS_PMSGT_NOTIFICATION     = 3,
-    DMUS_PMSGT_TEMPO            = 4,
-    DMUS_PMSGT_CURVE            = 5,
-    DMUS_PMSGT_TIMESIG          = 6,
-    DMUS_PMSGT_PATCH            = 7,
-    DMUS_PMSGT_TRANSPOSE        = 8,
-    DMUS_PMSGT_CHANNEL_PRIORITY = 9,
-    DMUS_PMSGT_STOP             = 10,
-    DMUS_PMSGT_DIRTY            = 11,
-    DMUS_PMSGT_WAVE             = 12,
-    DMUS_PMSGT_LYRIC            = 13,
-    DMUS_PMSGT_SCRIPTLYRIC      = 14,
-    DMUS_PMSGT_USER             = 255
-} DMUS_PMSGT_TYPES;
-
-typedef enum enumDMUS_SEGF_FLAGS
-{
-    DMUS_SEGF_REFTIME             = 0x00000040,
-    DMUS_SEGF_SECONDARY           = 0x00000080,
-    DMUS_SEGF_QUEUE               = 0x00000100,
-    DMUS_SEGF_CONTROL             = 0x00000200,
-    DMUS_SEGF_AFTERPREPARETIME    = 0x00000400,
-    DMUS_SEGF_GRID                = 0x00000800,
-    DMUS_SEGF_BEAT                = 0x00001000,
-    DMUS_SEGF_MEASURE             = 0x00002000,
-    DMUS_SEGF_DEFAULT             = 0x00004000,
-    DMUS_SEGF_NOINVALIDATE        = 0x00008000,
-    DMUS_SEGF_ALIGN               = 0x00010000,
-    DMUS_SEGF_VALID_START_BEAT    = 0x00020000,
-    DMUS_SEGF_VALID_START_GRID    = 0x00040000,
-    DMUS_SEGF_VALID_START_TICK    = 0x00080000,
-    DMUS_SEGF_AUTOTRANSITION      = 0x00100000,
-    DMUS_SEGF_AFTERQUEUETIME      = 0x00200000,
-    DMUS_SEGF_AFTERLATENCYTIME    = 0x00400000,
-    DMUS_SEGF_SEGMENTEND          = 0x00800000,
-    DMUS_SEGF_MARKER              = 0x01000000,
-    DMUS_SEGF_TIMESIG_ALWAYS      = 0x02000000,
-    DMUS_SEGF_USE_AUDIOPATH       = 0x04000000,
-    DMUS_SEGF_VALID_START_MEASURE = 0x08000000,
-    DMUS_SEGF_INVALIDATE_PRI      = 0x10000000
-} DMUS_SEGF_FLAGS;
-
-typedef enum enumDMUS_TIME_RESOLVE_FLAGS
-{
-    DMUS_TIME_RESOLVE_AFTERPREPARETIME  = DMUS_SEGF_AFTERPREPARETIME,
-    DMUS_TIME_RESOLVE_AFTERQUEUETIME    = DMUS_SEGF_AFTERQUEUETIME,
-    DMUS_TIME_RESOLVE_AFTERLATENCYTIME  = DMUS_SEGF_AFTERLATENCYTIME,
-    DMUS_TIME_RESOLVE_GRID              = DMUS_SEGF_GRID,
-    DMUS_TIME_RESOLVE_BEAT              = DMUS_SEGF_BEAT,
-    DMUS_TIME_RESOLVE_MEASURE           = DMUS_SEGF_MEASURE,
-    DMUS_TIME_RESOLVE_MARKER            = DMUS_SEGF_MARKER,
-    DMUS_TIME_RESOLVE_SEGMENTEND        = DMUS_SEGF_SEGMENTEND,
-} DMUS_TIME_RESOLVE_FLAGS;
-
-typedef enum enumDMUS_CHORDKEYF_FLAGS
-{
-    DMUS_CHORDKEYF_SILENT = 1,
-} DMUS_CHORDKEYF_FLAGS;
-
-typedef struct _DMUS_SUBCHORD
-{
-    DWORD   dwChordPattern;
-    DWORD   dwScalePattern;
-    DWORD   dwInversionPoints;
-    DWORD   dwLevels;
-    BYTE    bChordRoot;
-    BYTE    bScaleRoot;
-} DMUS_SUBCHORD;
-
-typedef struct _DMUS_CHORD_KEY
-{
-    WCHAR           wszName[16];
-    WORD            wMeasure;
-    BYTE            bBeat;
-    BYTE            bSubChordCount;
-    DMUS_SUBCHORD   SubChordList[DMUS_MAXSUBCHORD];
-    DWORD           dwScale;
-    BYTE            bKey;
-    BYTE            bFlags;
-} DMUS_CHORD_KEY;
-
-typedef struct _DMUS_NOTE_PMSG
-{
-    DMUS_PMSG_PART
-
-    MUSIC_TIME mtDuration;
-    WORD    wMusicValue;
-    WORD    wMeasure;
-    short   nOffset;
-    BYTE    bBeat;
-    BYTE    bGrid;
-    BYTE    bVelocity;
-    BYTE    bFlags;
-    BYTE    bTimeRange;
-    BYTE    bDurRange;
-    BYTE    bVelRange;
-    BYTE    bPlayModeFlags;
-    BYTE    bSubChordLevel;
-    BYTE    bMidiValue;
-    char    cTranspose;
-} DMUS_NOTE_PMSG;
-
-typedef enum enumDMUS_NOTEF_FLAGS
-{
-    DMUS_NOTEF_NOTEON               = 0x01,
-    DMUS_NOTEF_NOINVALIDATE         = 0x02,
-    DMUS_NOTEF_NOINVALIDATE_INSCALE = 0x04,
-    DMUS_NOTEF_NOINVALIDATE_INCHORD = 0x08,
-    DMUS_NOTEF_REGENERATE           = 0x10,
-} DMUS_NOTEF_FLAGS;
-
-typedef enum enumDMUS_PLAYMODE_FLAGS
-{
-    DMUS_PLAYMODE_KEY_ROOT          = 0x01,
-    DMUS_PLAYMODE_CHORD_ROOT        = 0x02,
-    DMUS_PLAYMODE_SCALE_INTERVALS   = 0x04,
-    DMUS_PLAYMODE_CHORD_INTERVALS   = 0x08,
-    DMUS_PLAYMODE_NONE              = 0x10,
-} DMUS_PLAYMODE_FLAGS;
-
-typedef struct _DMUS_MIDI_PMSG
-{
-    DMUS_PMSG_PART
-
-    BYTE    bStatus;
-    BYTE    bByte1;
-    BYTE    bByte2;
-    BYTE    bPad[1];
-} DMUS_MIDI_PMSG;
-
-typedef struct _DMUS_PATCH_PMSG
-{
-    DMUS_PMSG_PART
-
-    BYTE    byInstrument;
-    BYTE    byMSB;
-    BYTE    byLSB;
-    BYTE    byPad[1];
-} DMUS_PATCH_PMSG;
-
-typedef struct _DMUS_TRANSPOSE_PMSG
-{
-    DMUS_PMSG_PART
-
-    short   nTranspose;
-    WORD    wMergeIndex;
-} DMUS_TRANSPOSE_PMSG;
-
-typedef struct _DMUS_CHANNEL_PRIORITY_PMSG
-{
-    DMUS_PMSG_PART
-
-    DWORD   dwChannelPriority;
-} DMUS_CHANNEL_PRIORITY_PMSG;
-
-typedef struct _DMUS_TEMPO_PMSG
-{
-    DMUS_PMSG_PART
-
-    double  dblTempo;
-} DMUS_TEMPO_PMSG;
-
-typedef struct _DMUS_SYSEX_PMSG
-{
-    DMUS_PMSG_PART
-
-    DWORD   dwLen;
-    BYTE    abData[1];
-} DMUS_SYSEX_PMSG;
-
-typedef struct _DMUS_CURVE_PMSG
-{
-    DMUS_PMSG_PART
-
-    MUSIC_TIME      mtDuration;
-    MUSIC_TIME      mtOriginalStart;
-    MUSIC_TIME      mtResetDuration;
-    short           nStartValue;
-    short           nEndValue;
-    short           nResetValue;
-    WORD            wMeasure;
-    short           nOffset;
-    BYTE            bBeat;
-    BYTE            bGrid;
-    BYTE            bType;
-    BYTE            bCurveShape;
-    BYTE            bCCData;
-    BYTE            bFlags;
-    WORD            wParamType;
-    WORD            wMergeIndex;
-} DMUS_CURVE_PMSG;
-
-typedef enum enumDMUS_CURVE_FLAGS
-{
-	DMUS_CURVE_RESET = 1,
-	DMUS_CURVE_START_FROM_CURRENT = 2
-} DMUS_CURVE_FLAGS;
-
-#define DMUS_CURVE_RESET    	0x01
-
-enum
-{
-    DMUS_CURVES_LINEAR  = 0x0,
-    DMUS_CURVES_INSTANT = 0x1,
-    DMUS_CURVES_EXP     = 0x2,
-    DMUS_CURVES_LOG     = 0x3,
-    DMUS_CURVES_SINE    = 0x4
 };
 
-typedef struct _DMUS_TIMESIG_PMSG
-{
-    DMUS_PMSG_PART
+struct _DMUS_AUDIOPARAMS {
+	DWORD dwSize;
+	BOOL  fInitNow;
+	DWORD dwValidData;
+	DWORD dwFeatures;
+	DWORD dwVoices;
+	DWORD dwSampleRate;
+	CLSID clsidDefaultSynth;
+};
 
-    BYTE    bBeatsPerMeasure;
-    BYTE    bBeat;
-    WORD    wGridsPerBeat;
-} DMUS_TIMESIG_PMSG;
+struct _DMUS_SUBCHORD {
+	DWORD dwChordPattern;
+	DWORD dwScalePattern;
+	DWORD dwInversionPoints;
+	DWORD dwLevels;
+	BYTE  bChordRoot;
+	BYTE  bScaleRoot;
+};
 
-typedef struct _DMUS_NOTIFICATION_PMSG
-{
-    DMUS_PMSG_PART
+struct _DMUS_CHORD_KEY {
+	WCHAR         wszName[16];
+	WORD          wMeasure;
+	BYTE          bBeat;
+	BYTE          bSubChordCount;
+	DMUS_SUBCHORD SubChordList[DMUS_MAXSUBCHORD];
+	DWORD         dwScale;
+	BYTE          bKey;
+	BYTE          bFlags;
+};
 
-    GUID    guidNotificationType;
-    DWORD   dwNotificationOption;
-    DWORD   dwField1;
-    DWORD   dwField2;
-} DMUS_NOTIFICATION_PMSG;
+struct _DMUS_NOTE_PMSG {
+	DMUS_PMSG_PART
+	MUSIC_TIME mtDuration;
+	WORD       wMusicValue;
+	WORD       wMeasure;
+	short      nOffset;
+	BYTE       bBeat;
+	BYTE       bGrid;
+	BYTE       bVelocity;
+	BYTE       bFlags;
+	BYTE       bTimeRange;
+	BYTE       bDurRange;
+	BYTE       bVelRange;
+	BYTE       bPlayModeFlags;
+	BYTE       bSubChordLevel;
+	BYTE       bMidiValue;
+	char       cTranspose;
+};
 
-typedef struct _DMUS_WAVE_PMSG
-{
-    DMUS_PMSG_PART
+struct _DMUS_MIDI_PMSG {
+	DMUS_PMSG_PART
+	BYTE bStatus;
+	BYTE bByte1;
+	BYTE bByte2;
+	BYTE bPad[1];
+};
 
-    REFERENCE_TIME rtStartOffset;
-    REFERENCE_TIME rtDuration;
-    long    lOffset;
-    long    lVolume;
-    long    lPitch;
-    BYTE    bFlags;
-} DMUS_WAVE_PMSG;
+struct _DMUS_PATCH_PMSG {
+	DMUS_PMSG_PART
+	BYTE byInstrument;
+	BYTE byMSB;
+	BYTE byLSB;
+	BYTE byPad[1];
+};
 
-typedef struct _DMUS_LYRIC_PMSG
-{
-    DMUS_PMSG_PART
+struct _DMUS_TRANSPOSE_PMSG {
+	DMUS_PMSG_PART
+	short nTranspose;
+	/* DX8 */
+	WORD  wMergeIndex;
+};
 
-    WCHAR    wszString[1];
-} DMUS_LYRIC_PMSG;
+struct _DMUS_CHANNEL_PRIORITY_PMSG {
+	DMUS_PMSG_PART
+	DWORD dwChannelPriority;
+};
 
-typedef struct _DMUS_VERSION {
-  DWORD    dwVersionMS;
-  DWORD    dwVersionLS;
-} DMUS_VERSION, *LPDMUS_VERSION;
+struct _DMUS_TEMPO_PMSG {
+	DMUS_PMSG_PART
+	double  dblTempo;
+};
 
-typedef struct _DMUS_TIMESIGNATURE
-{
-    MUSIC_TIME mtTime;
-    BYTE    bBeatsPerMeasure;
-    BYTE    bBeat;
-    WORD    wGridsPerBeat;
-} DMUS_TIMESIGNATURE;
+struct _DMUS_SYSEX_PMSG {
+	DMUS_PMSG_PART
+	DWORD dwLen;
+	BYTE  abData[1];
+};
 
-typedef struct _DMUS_VALID_START_PARAM
-{
-    MUSIC_TIME mtTime;
-} DMUS_VALID_START_PARAM;
+struct _DMUS_CURVE_PMSG {
+	DMUS_PMSG_PART
+	MUSIC_TIME mtDuration;
+	MUSIC_TIME mtOriginalStart;
+	MUSIC_TIME mtResetDuration;
+	short      nStartValue;
+	short      nEndValue;
+	short      nResetValue;
+	WORD       wMeasure;
+	short      nOffset;
+	BYTE       bBeat;
+	BYTE       bGrid;
+	BYTE       bType;
+	BYTE       bCurveShape;
+	BYTE       bCCData;
+	BYTE       bFlags;
+	/* DX8 */
+	WORD       wParamType;
+	WORD       wMergeIndex;
+};
 
-typedef struct _DMUS_PLAY_MARKER_PARAM
-{
-    MUSIC_TIME mtTime;
-} DMUS_PLAY_MARKER_PARAM;
+struct _DMUS_TIMESIG_PMSG {
+	DMUS_PMSG_PART
+	BYTE bBeatsPerMeasure;
+	BYTE bBeat;
+	WORD wGridsPerBeat;
+};
 
-typedef struct _DMUS_OBJECTDESC
-{
-    DWORD          dwSize;
-    DWORD          dwValidData;
-    GUID           guidObject;
-    GUID           guidClass;
-    FILETIME       ftDate;
-    DMUS_VERSION   vVersion;
-    WCHAR          wszName[DMUS_MAX_NAME];
-    WCHAR          wszCategory[DMUS_MAX_CATEGORY];
-    WCHAR          wszFileName[DMUS_MAX_FILENAME];
-    LONGLONG       llMemLength;
-    LPBYTE         pbMemData;
-    IStream *      pStream;
-} DMUS_OBJECTDESC, *LPDMUS_OBJECTDESC;
+struct _DMUS_NOTIFICATION_PMSG {
+	DMUS_PMSG_PART
+	GUID  guidNotificationType;
+	DWORD dwNotificationOption;
+	DWORD dwField1;
+	DWORD dwField2;
+};
 
-typedef struct _DMUS_SCRIPT_ERRORINFO
-{
-    DWORD dwSize;
-    HRESULT hr;
-    ULONG ulLineNumber;
-    LONG ichCharPosition;
-    WCHAR wszSourceFile[DMUS_MAX_FILENAME];
-    WCHAR wszSourceComponent[DMUS_MAX_FILENAME];
-    WCHAR wszDescription[DMUS_MAX_FILENAME];
-    WCHAR wszSourceLineText[DMUS_MAX_FILENAME];
-} DMUS_SCRIPT_ERRORINFO;
+struct _DMUS_WAVE_PMSG {
+	DMUS_PMSG_PART    
+	REFERENCE_TIME rtStartOffset;
+	REFERENCE_TIME rtDuration;
+	long           lOffset;
+	long           lVolume;
+	long           lPitch;
+	BYTE           bFlags;
+};
 
-typedef struct _DMUS_COMMAND_PARAM
-{
-    BYTE bCommand;
-    BYTE bGrooveLevel;
-    BYTE bGrooveRange;
-    BYTE bRepeatMode;
-} DMUS_COMMAND_PARAM;
+struct _DMUS_LYRIC_PMSG {
+	DMUS_PMSG_PART    
+	WCHAR wszString[1];
+};
 
-typedef struct _DMUS_COMMAND_PARAM_2
-{
+struct _DMUS_VERSION {
+	DWORD dwVersionMS;
+	DWORD dwVersionLS;
+};
+
+struct _DMUS_TIMESIGNATURE {
 	MUSIC_TIME mtTime;
-    BYTE bCommand;
-    BYTE bGrooveLevel;
-    BYTE bGrooveRange;
-    BYTE bRepeatMode;
-} DMUS_COMMAND_PARAM_2;
+	BYTE       bBeatsPerMeasure;
+	BYTE       bBeat;
+	WORD       wGridsPerBeat;
+};
 
-typedef struct _DMUS_CONNECTION_RULE
-{
-    DWORD       dwFlags;
-    DWORD       dwIntervals;
-} DMUS_CONNECTION_RULE;
+struct _DMUS_VALID_START_PARAM {
+	MUSIC_TIME mtTime;
+};
 
-typedef struct _DMUS_MELODY_FRAGMENT
-{
-    MUSIC_TIME  mtTime;
-    DWORD       dwID;
-    WCHAR       wszVariationLabel[DMUS_MAX_FRAGMENTLABEL];
-    DWORD       dwVariationFlags;
-    DWORD       dwRepeatFragmentID;
-    DWORD       dwFragmentFlags;
-    DWORD       dwPlayModeFlags;
-    DWORD       dwTransposeIntervals;
-    DMUS_COMMAND_PARAM      Command;
-    DMUS_CONNECTION_RULE    ConnectionArc;
-} DMUS_MELODY_FRAGMENT;
+struct _DMUS_PLAY_MARKER_PARAM {
+	MUSIC_TIME mtTime;
+};
 
-typedef struct _DMUS_BAND_PARAM
-{
-    MUSIC_TIME  mtTimePhysical;
-    IDirectMusicBand *pBand;
-} DMUS_BAND_PARAM;
+struct _DMUS_OBJECTDESC {
+	DWORD        dwSize;
+	DWORD        dwValidData;
+	GUID         guidObject;
+	GUID         guidClass;
+	FILETIME     ftDate;
+	DMUS_VERSION vVersion;
+	WCHAR        wszName[DMUS_MAX_NAME];
+	WCHAR        wszCategory[DMUS_MAX_CATEGORY];
+	WCHAR        wszFileName[DMUS_MAX_FILENAME];
+	LONGLONG     llMemLength;
+	LPBYTE       pbMemData;
+	IStream*     pStream;
+};
 
+struct _DMUS_SCRIPT_ERRORINFO {
+	DWORD   dwSize;
+	HRESULT hr;
+	ULONG   ulLineNumber;
+	LONG    ichCharPosition;
+	WCHAR   wszSourceFile[DMUS_MAX_FILENAME];
+	WCHAR   wszSourceComponent[DMUS_MAX_FILENAME];
+	WCHAR   wszDescription[DMUS_MAX_FILENAME];
+	WCHAR   wszSourceLineText[DMUS_MAX_FILENAME];
+};
 
-typedef struct _DMUS_VARIATIONS_PARAM
-{
-    DWORD   dwPChannelsUsed;
-    DWORD*  padwPChannels;
-    DWORD*  padwVariations;
-} DMUS_VARIATIONS_PARAM;
+struct _DMUS_COMMAND_PARAM {
+	BYTE bCommand;
+	BYTE bGrooveLevel;
+	BYTE bGrooveRange;
+	BYTE bRepeatMode;
+};
+
+struct _DMUS_COMMAND_PARAM_2 {
+	MUSIC_TIME mtTime;
+	BYTE       bCommand;
+	BYTE       bGrooveLevel;
+	BYTE       bGrooveRange;
+	BYTE       bRepeatMode;
+};
+
+struct _DMUS_BAND_PARAM {
+	MUSIC_TIME       mtTimePhysical;
+	IDirectMusicBand *pBand;
+};
+
+struct _DMUS_VARIATIONS_PARAM {
+	DWORD  dwPChannelsUsed;
+	DWORD* padwPChannels;
+	DWORD* padwVariations;
+};
+
 
 /*****************************************************************************
  * IDirectMusicBand interface
@@ -826,13 +801,13 @@ ICOM_DEFINE(IDirectMusicBand,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicBand_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicBand_AddRef(p)              (p)->lpVtbl->AddRef(p)
-#define IDirectMusicBand_Release(p)             (p)->lpVtbl->Release(p)
+#define IDirectMusicBand_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicBand_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicBand_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectMusicBand methods ***/
-#define IDirectMusicBand_CreateSegment(p,a)     (p)->lpVtbl->CreateSegment(p,a)
-#define IDirectMusicBand_Download(p,a)          (p)->lpVtbl->Download(p,a)
-#define IDirectMusicBand_Unload(p,a)            (p)->lpVtbl->Unload(p,a)
+#define IDirectMusicBand_CreateSegment(p,a)    (p)->lpVtbl->CreateSegment(p,a)
+#define IDirectMusicBand_Download(p,a)         (p)->lpVtbl->Download(p,a)
+#define IDirectMusicBand_Unload(p,a)           (p)->lpVtbl->Unload(p,a)
 #endif
 
 
@@ -851,13 +826,13 @@ ICOM_DEFINE(IDirectMusicObject,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicObject_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicObject_AddRef(p)               (p)->lpVtbl->AddRef(p)
-#define IDirectMusicObject_Release(p)              (p)->lpVtbl->Release(p)
+#define IDirectMusicObject_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicObject_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicObject_Release(p)             (p)->lpVtbl->Release(p)
 /*** IDirectMusicObject methods ***/
-#define IDirectMusicObject_GetDescriptor(p,a)      (p)->lpVtbl->GetDescriptor(p,a)
-#define IDirectMusicObject_SetDescriptor(p,a)      (p)->lpVtbl->SetDescriptor(p,a)
-#define IDirectMusicObject_ParseDescriptor(p,a,b)  (p)->lpVtbl->ParseDescriptor(p,a,b)
+#define IDirectMusicObject_GetDescriptor(p,a)     (p)->lpVtbl->GetDescriptor(p,a)
+#define IDirectMusicObject_SetDescriptor(p,a)     (p)->lpVtbl->SetDescriptor(p,a)
+#define IDirectMusicObject_ParseDescriptor(p,a,b) (p)->lpVtbl->ParseDescriptor(p,a,b)
 #endif
 
 
@@ -1089,15 +1064,15 @@ ICOM_DEFINE(IDirectMusicSegmentState,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicSegmentState_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicSegmentState_AddRef(p)              (p)->lpVtbl->AddRef(p)
-#define IDirectMusicSegmentState_Release(p)             (p)->lpVtbl->Release(p)
+#define IDirectMusicSegmentState_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicSegmentState_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicSegmentState_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectMusicSegmentState methods ***/
-#define IDirectMusicSegmentState_GetRepeats(p,a)        (p)->lpVtbl->GetRepeats(p,a)
-#define IDirectMusicSegmentState_GetSegment(p,a)        (p)->lpVtbl->GetSegment(p,a)
-#define IDirectMusicSegmentState_GetStartTime(p,a)      (p)->lpVtbl->GetStartTime(p,a)
-#define IDirectMusicSegmentState_GetSeek(p,a)           (p)->lpVtbl->GetSeek(p,a)
-#define IDirectMusicSegmentState_GetStartPoint(p,a)     (p)->lpVtbl->GetStartPoint(p,a)
+#define IDirectMusicSegmentState_GetRepeats(p,a)       (p)->lpVtbl->GetRepeats(p,a)
+#define IDirectMusicSegmentState_GetSegment(p,a)       (p)->lpVtbl->GetSegment(p,a)
+#define IDirectMusicSegmentState_GetStartTime(p,a)     (p)->lpVtbl->GetStartTime(p,a)
+#define IDirectMusicSegmentState_GetSeek(p,a)          (p)->lpVtbl->GetSeek(p,a)
+#define IDirectMusicSegmentState_GetStartPoint(p,a)    (p)->lpVtbl->GetStartPoint(p,a)
 #endif
 
 
@@ -1146,14 +1121,14 @@ ICOM_DEFINE(IDirectMusicAudioPath,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicAudioPath_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicAudioPath_AddRef(p)                         (p)->lpVtbl->AddRef(p)
-#define IDirectMusicAudioPath_Release(p)                        (p)->lpVtbl->Release(p)
+#define IDirectMusicAudioPath_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicAudioPath_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define IDirectMusicAudioPath_Release(p)                       (p)->lpVtbl->Release(p)
 /*** IDirectMusicAudioPath methods ***/
-#define IDirectMusicAudioPath_GetObjectInPath(p,a,b,c,d,e,f,g)  (p)->lpVtbl->GetObjectInPath(p,a,b,c,d,e,f,g)
-#define IDirectMusicAudioPath_Activate(p,a)                     (p)->lpVtbl->Activate(p,a)
-#define IDirectMusicAudioPath_SetVolume(p,a,b)                  (p)->lpVtbl->SetVolume(p,a,b)
-#define IDirectMusicAudioPath_ConvertPChannel(p,a,b)            (p)->lpVtbl->ConvertPChannel(p,a,b)
+#define IDirectMusicAudioPath_GetObjectInPath(p,a,b,c,d,e,f,g) (p)->lpVtbl->GetObjectInPath(p,a,b,c,d,e,f,g)
+#define IDirectMusicAudioPath_Activate(p,a)                    (p)->lpVtbl->Activate(p,a)
+#define IDirectMusicAudioPath_SetVolume(p,a,b)                 (p)->lpVtbl->SetVolume(p,a,b)
+#define IDirectMusicAudioPath_ConvertPChannel(p,a,b)           (p)->lpVtbl->ConvertPChannel(p,a,b)
 #endif
 
 
@@ -1210,51 +1185,51 @@ ICOM_DEFINE(IDirectMusicPerformance,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPerformance_QueryInterface(p,a,b)                   (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicPerformance_AddRef(p)                               (p)->lpVtbl->AddRef(p)
-#define IDirectMusicPerformance_Release(p)                              (p)->lpVtbl->Release(p)
+#define IDirectMusicPerformance_QueryInterface(p,a,b)                 (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPerformance_AddRef(p)                             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPerformance_Release(p)                            (p)->lpVtbl->Release(p)
 /*** IDirectMusicPerformance methods ***/
-#define IDirectMusicPerformance_Init(p,a,b,c)                           (p)->lpVtbl->Init(p,a,b,c)
-#define IDirectMusicPerformance_PlaySegment(p,a,b,c,d)                  (p)->lpVtbl->PlaySegment(p,a,b,c,d)
-#define IDirectMusicPerformance_Stop(p,a,b,c,d)                         (p)->lpVtbl->Stop(p,a,b,c,d)
-#define IDirectMusicPerformance_GetSegmentState(p,a,b)                  (p)->lpVtbl->GetSegmentState(p,a,b)
-#define IDirectMusicPerformance_SetPrepareTime(p,a)                     (p)->lpVtbl->SetPrepareTime(p,a)
-#define IDirectMusicPerformance_GetPrepareTime(p,a)                     (p)->lpVtbl->GetPrepareTime(p,a)
-#define IDirectMusicPerformance_SetBumperLength(p,a)                    (p)->lpVtbl->SetBumperLength(p,a)
-#define IDirectMusicPerformance_GetBumperLength(p,a)                    (p)->lpVtbl->GetBumperLength(p,a)
-#define IDirectMusicPerformance_SendPMsg(p,a)                           (p)->lpVtbl->SendPMsg(p,a)
-#define IDirectMusicPerformance_MusicToReferenceTime(p,a,b)             (p)->lpVtbl->MusicToReferenceTime(p,a,b)
-#define IDirectMusicPerformance_ReferenceToMusicTime(p,a,b)             (p)->lpVtbl->ReferenceToMusicTime(p,a,b)
-#define IDirectMusicPerformance_IsPlaying(p,a,b)                        (p)->lpVtbl->IsPlaying(p,a,b)
-#define IDirectMusicPerformance_GetTime(p,a,b)                          (p)->lpVtbl->GetTime(p,a,b)
-#define IDirectMusicPerformance_AllocPMsg(p,a,b)                        (p)->lpVtbl->AllocPMsg(p,a,b)
-#define IDirectMusicPerformance_FreePMsg(p,a)                           (p)->lpVtbl->FreePMsg(p,a)
-#define IDirectMusicPerformance_GetGraph(p,a)                           (p)->lpVtbl->GetGraph(p,a)
-#define IDirectMusicPerformance_SetGraph(p,a)                           (p)->lpVtbl->SetGraph(p,a)
-#define IDirectMusicPerformance_SetNotificationHandle(p,a,b)            (p)->lpVtbl->SetNotificationHandle(p,a,b)
-#define IDirectMusicPerformance_GetNotificationPMsg(p,a)                (p)->lpVtbl->GetNotificationPMsg(p,a)
-#define IDirectMusicPerformance_AddNotificationType(p,a)                (p)->lpVtbl->AddNotificationType(p,a)
-#define IDirectMusicPerformance_RemoveNotificationType(p,a)             (p)->lpVtbl->RemoveNotificationType(p,a)
-#define IDirectMusicPerformance_AddPort(p,a)                            (p)->lpVtbl->AddPort(p,a)
-#define IDirectMusicPerformance_RemovePort(p,a)                         (p)->lpVtbl->RemovePort(p,a)
-#define IDirectMusicPerformance_AssignPChannelBlock(p,a,b,c)            (p)->lpVtbl->AssignPChannelBlock(p,a,b,c)
-#define IDirectMusicPerformance_AssignPChannel(p,a,b,c,d)               (p)->lpVtbl->AssignPChannel(p,a,b,c,d)
-#define IDirectMusicPerformance_PChannelInfo(p,a,b,c,d)                 (p)->lpVtbl->PChannelInfo(p,a,b,c,d)
-#define IDirectMusicPerformance_DownloadInstrument(p,a,b,c,d,e,f,g,h)   (p)->lpVtbl->DownloadInstrument(p,a,b,c,d,e,f,g,h)
-#define IDirectMusicPerformance_Invalidate(p,a,b)                       (p)->lpVtbl->Invalidate(p,a,b)
-#define IDirectMusicPerformance_GetParam(p,a,b,c,d,e,f)                 (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
-#define IDirectMusicPerformance_SetParam(p,a,b,c,d,e)                   (p)->lpVtbl->SetParam(p,a,b,c,d,e)
-#define IDirectMusicPerformance_GetGlobalParam(p,a,b,c)                 (p)->lpVtbl->GetGlobalParam(p,a,b,c)
-#define IDirectMusicPerformance_SetGlobalParam(p,a,b,c)                 (p)->lpVtbl->SetGlobalParam(p,a,b,c)
-#define IDirectMusicPerformance_GetLatencyTime(p,a)                     (p)->lpVtbl->GetLatencyTime(p,a)
-#define IDirectMusicPerformance_GetQueueTime(p,a)                       (p)->lpVtbl->GetQueueTime(p,a)
-#define IDirectMusicPerformance_AdjustTime(p,a)                         (p)->lpVtbl->AdjustTime(p,a)
-#define IDirectMusicPerformance_CloseDown(p)                            (p)->lpVtbl->CloseDown(p)
-#define IDirectMusicPerformance_GetResolvedTime(p,a,b,c)                (p)->lpVtbl->GetResolvedTime(p,a,b,c)
-#define IDirectMusicPerformance_MIDIToMusic(p,a,b,c,d,e)                (p)->lpVtbl->MIDIToMusic(p,a,b,c,d,e)
-#define IDirectMusicPerformance_MusicToMIDI(p,a,b,c,d,e)                (p)->lpVtbl->MusicToMIDI(p,a,b,c,d,e)
-#define IDirectMusicPerformance_TimeToRhythm(p,a,b,c,d,e,f)             (p)->lpVtbl->TimeToRhythm(p,a,b,c,d,e,f)
-#define IDirectMusicPerformance_RhythmToTime(p,a,b,c,d,e,f)             (p)->lpVtbl->RhythmToTime(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance_Init(p,a,b,c)                         (p)->lpVtbl->Init(p,a,b,c)
+#define IDirectMusicPerformance_PlaySegment(p,a,b,c,d)                (p)->lpVtbl->PlaySegment(p,a,b,c,d)
+#define IDirectMusicPerformance_Stop(p,a,b,c,d)                       (p)->lpVtbl->Stop(p,a,b,c,d)
+#define IDirectMusicPerformance_GetSegmentState(p,a,b)                (p)->lpVtbl->GetSegmentState(p,a,b)
+#define IDirectMusicPerformance_SetPrepareTime(p,a)                   (p)->lpVtbl->SetPrepareTime(p,a)
+#define IDirectMusicPerformance_GetPrepareTime(p,a)                   (p)->lpVtbl->GetPrepareTime(p,a)
+#define IDirectMusicPerformance_SetBumperLength(p,a)                  (p)->lpVtbl->SetBumperLength(p,a)
+#define IDirectMusicPerformance_GetBumperLength(p,a)                  (p)->lpVtbl->GetBumperLength(p,a)
+#define IDirectMusicPerformance_SendPMsg(p,a)                         (p)->lpVtbl->SendPMsg(p,a)
+#define IDirectMusicPerformance_MusicToReferenceTime(p,a,b)           (p)->lpVtbl->MusicToReferenceTime(p,a,b)
+#define IDirectMusicPerformance_ReferenceToMusicTime(p,a,b)           (p)->lpVtbl->ReferenceToMusicTime(p,a,b)
+#define IDirectMusicPerformance_IsPlaying(p,a,b)                      (p)->lpVtbl->IsPlaying(p,a,b)
+#define IDirectMusicPerformance_GetTime(p,a,b)                        (p)->lpVtbl->GetTime(p,a,b)
+#define IDirectMusicPerformance_AllocPMsg(p,a,b)                      (p)->lpVtbl->AllocPMsg(p,a,b)
+#define IDirectMusicPerformance_FreePMsg(p,a)                         (p)->lpVtbl->FreePMsg(p,a)
+#define IDirectMusicPerformance_GetGraph(p,a)                         (p)->lpVtbl->GetGraph(p,a)
+#define IDirectMusicPerformance_SetGraph(p,a)                         (p)->lpVtbl->SetGraph(p,a)
+#define IDirectMusicPerformance_SetNotificationHandle(p,a,b)          (p)->lpVtbl->SetNotificationHandle(p,a,b)
+#define IDirectMusicPerformance_GetNotificationPMsg(p,a)              (p)->lpVtbl->GetNotificationPMsg(p,a)
+#define IDirectMusicPerformance_AddNotificationType(p,a)              (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicPerformance_RemoveNotificationType(p,a)           (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicPerformance_AddPort(p,a)                          (p)->lpVtbl->AddPort(p,a)
+#define IDirectMusicPerformance_RemovePort(p,a)                       (p)->lpVtbl->RemovePort(p,a)
+#define IDirectMusicPerformance_AssignPChannelBlock(p,a,b,c)          (p)->lpVtbl->AssignPChannelBlock(p,a,b,c)
+#define IDirectMusicPerformance_AssignPChannel(p,a,b,c,d)             (p)->lpVtbl->AssignPChannel(p,a,b,c,d)
+#define IDirectMusicPerformance_PChannelInfo(p,a,b,c,d)               (p)->lpVtbl->PChannelInfo(p,a,b,c,d)
+#define IDirectMusicPerformance_DownloadInstrument(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->DownloadInstrument(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicPerformance_Invalidate(p,a,b)                     (p)->lpVtbl->Invalidate(p,a,b)
+#define IDirectMusicPerformance_GetParam(p,a,b,c,d,e,f)               (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance_SetParam(p,a,b,c,d,e)                 (p)->lpVtbl->SetParam(p,a,b,c,d,e)
+#define IDirectMusicPerformance_GetGlobalParam(p,a,b,c)               (p)->lpVtbl->GetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance_SetGlobalParam(p,a,b,c)               (p)->lpVtbl->SetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance_GetLatencyTime(p,a)                   (p)->lpVtbl->GetLatencyTime(p,a)
+#define IDirectMusicPerformance_GetQueueTime(p,a)                     (p)->lpVtbl->GetQueueTime(p,a)
+#define IDirectMusicPerformance_AdjustTime(p,a)                       (p)->lpVtbl->AdjustTime(p,a)
+#define IDirectMusicPerformance_CloseDown(p)                          (p)->lpVtbl->CloseDown(p)
+#define IDirectMusicPerformance_GetResolvedTime(p,a,b,c)              (p)->lpVtbl->GetResolvedTime(p,a,b,c)
+#define IDirectMusicPerformance_MIDIToMusic(p,a,b,c,d,e)              (p)->lpVtbl->MIDIToMusic(p,a,b,c,d,e)
+#define IDirectMusicPerformance_MusicToMIDI(p,a,b,c,d,e)              (p)->lpVtbl->MusicToMIDI(p,a,b,c,d,e)
+#define IDirectMusicPerformance_TimeToRhythm(p,a,b,c,d,e,f)           (p)->lpVtbl->TimeToRhythm(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance_RhythmToTime(p,a,b,c,d,e,f)           (p)->lpVtbl->RhythmToTime(p,a,b,c,d,e,f)
 #endif
 
 
@@ -1279,61 +1254,61 @@ ICOM_DEFINE(IDirectMusicPerformance8,IDirectMusicPerformance)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPerformance8_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicPerformance8_AddRef(p)                              (p)->lpVtbl->AddRef(p)
-#define IDirectMusicPerformance8_Release(p)                             (p)->lpVtbl->Release(p)
+#define IDirectMusicPerformance8_QueryInterface(p,a,b)                 (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPerformance8_AddRef(p)                             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPerformance8_Release(p)                            (p)->lpVtbl->Release(p)
 /*** IDirectMusicPerformance methods ***/
-#define IDirectMusicPerformance8_Init(p,a,b,c)                          (p)->lpVtbl->Init(p,a,b,c)
-#define IDirectMusicPerformance8_PlaySegment(p,a,b,c,d)                 (p)->lpVtbl->PlaySegment(p,a,b,c,d)
-#define IDirectMusicPerformance8_Stop(p,a,b,c,d)                        (p)->lpVtbl->Stop(p,a,b,c,d)
-#define IDirectMusicPerformance8_GetSegmentState(p,a,b)                 (p)->lpVtbl->GetSegmentState(p,a,b)
-#define IDirectMusicPerformance8_SetPrepareTime(p,a)                    (p)->lpVtbl->SetPrepareTime(p,a)
-#define IDirectMusicPerformance8_GetPrepareTime(p,a)                    (p)->lpVtbl->GetPrepareTime(p,a)
-#define IDirectMusicPerformance8_SetBumperLength(p,a)                   (p)->lpVtbl->SetBumperLength(p,a)
-#define IDirectMusicPerformance8_GetBumperLength(p,a)                   (p)->lpVtbl->GetBumperLength(p,a)
-#define IDirectMusicPerformance8_SendPMsg(p,a)                          (p)->lpVtbl->SendPMsg(p,a)
-#define IDirectMusicPerformance8_MusicToReferenceTime(p,a,b)            (p)->lpVtbl->MusicToReferenceTime(p,a,b)
-#define IDirectMusicPerformance8_ReferenceToMusicTime(p,a,b)            (p)->lpVtbl->ReferenceToMusicTime(p,a,b)
-#define IDirectMusicPerformance8_IsPlaying(p,a,b)                       (p)->lpVtbl->IsPlaying(p,a,b)
-#define IDirectMusicPerformance8_GetTime(p,a,b)                         (p)->lpVtbl->GetTime(p,a,b)
-#define IDirectMusicPerformance8_AllocPMsg(p,a,b)                       (p)->lpVtbl->AllocPMsg(p,a,b)
-#define IDirectMusicPerformance8_FreePMsg(p,a)                          (p)->lpVtbl->FreePMsg(p,a)
-#define IDirectMusicPerformance8_GetGraph(p,a)                          (p)->lpVtbl->GetGraph(p,a)
-#define IDirectMusicPerformance8_SetGraph(p,a)                          (p)->lpVtbl->SetGraph(p,a)
-#define IDirectMusicPerformance8_SetNotificationHandle(p,a,b)           (p)->lpVtbl->SetNotificationHandle(p,a,b)
-#define IDirectMusicPerformance8_GetNotificationPMsg(p,a)               (p)->lpVtbl->GetNotificationPMsg(p,a)
-#define IDirectMusicPerformance8_AddNotificationType(p,a)               (p)->lpVtbl->AddNotificationType(p,a)
-#define IDirectMusicPerformance8_RemoveNotificationType(p,a)            (p)->lpVtbl->RemoveNotificationType(p,a)
-#define IDirectMusicPerformance8_AddPort(p,a)                           (p)->lpVtbl->AddPort(p,a)
-#define IDirectMusicPerformance8_RemovePort(p,a)                        (p)->lpVtbl->RemovePort(p,a)
-#define IDirectMusicPerformance8_AssignPChannelBlock(p,a,b,c)           (p)->lpVtbl->AssignPChannelBlock(p,a,b,c)
-#define IDirectMusicPerformance8_AssignPChannel(p,a,b,c,d)              (p)->lpVtbl->AssignPChannel(p,a,b,c,d)
-#define IDirectMusicPerformance8_PChannelInfo(p,a,b,c,d)                (p)->lpVtbl->PChannelInfo(p,a,b,c,d)
-#define IDirectMusicPerformance8_DownloadInstrument(p,a,b,c,d,e,f,g,h)  (p)->lpVtbl->DownloadInstrument(p,a,b,c,d,e,f,g,h)
-#define IDirectMusicPerformance8_Invalidate(p,a,b)                      (p)->lpVtbl->Invalidate(p,a,b)
-#define IDirectMusicPerformance8_GetParam(p,a,b,c,d,e,f)                (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
-#define IDirectMusicPerformance8_SetParam(p,a,b,c,d,e)                  (p)->lpVtbl->SetParam(p,a,b,c,d,e)
-#define IDirectMusicPerformance8_GetGlobalParam(p,a,b,c)                (p)->lpVtbl->GetGlobalParam(p,a,b,c)
-#define IDirectMusicPerformance8_SetGlobalParam(p,a,b,c)                (p)->lpVtbl->SetGlobalParam(p,a,b,c)
-#define IDirectMusicPerformance8_GetLatencyTime(p,a)                    (p)->lpVtbl->GetLatencyTime(p,a)
-#define IDirectMusicPerformance8_GetQueueTime(p,a)                      (p)->lpVtbl->GetQueueTime(p,a)
-#define IDirectMusicPerformance8_AdjustTime(p,a)                        (p)->lpVtbl->AdjustTime(p,a)
-#define IDirectMusicPerformance8_CloseDown(p)                           (p)->lpVtbl->CloseDown(p)
-#define IDirectMusicPerformance8_GetResolvedTime(p,a,b,c)               (p)->lpVtbl->GetResolvedTime(p,a,b,c)
-#define IDirectMusicPerformance8_MIDIToMusic(p,a,b,c,d,e)               (p)->lpVtbl->MIDIToMusic(p,a,b,c,d,e)
-#define IDirectMusicPerformance8_MusicToMIDI(p,a,b,c,d,e)               (p)->lpVtbl->MusicToMIDI(p,a,b,c,d,e)
-#define IDirectMusicPerformance8_TimeToRhythm(p,a,b,c,d,e,f)            (p)->lpVtbl->TimeToRhythm(p,a,b,c,d,e,f)
-#define IDirectMusicPerformance8_RhythmToTime(p,a,b,c,d,e,f)            (p)->lpVtbl->RhythmToTime(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance8_Init(p,a,b,c)                         (p)->lpVtbl->Init(p,a,b,c)
+#define IDirectMusicPerformance8_PlaySegment(p,a,b,c,d)                (p)->lpVtbl->PlaySegment(p,a,b,c,d)
+#define IDirectMusicPerformance8_Stop(p,a,b,c,d)                       (p)->lpVtbl->Stop(p,a,b,c,d)
+#define IDirectMusicPerformance8_GetSegmentState(p,a,b)                (p)->lpVtbl->GetSegmentState(p,a,b)
+#define IDirectMusicPerformance8_SetPrepareTime(p,a)                   (p)->lpVtbl->SetPrepareTime(p,a)
+#define IDirectMusicPerformance8_GetPrepareTime(p,a)                   (p)->lpVtbl->GetPrepareTime(p,a)
+#define IDirectMusicPerformance8_SetBumperLength(p,a)                  (p)->lpVtbl->SetBumperLength(p,a)
+#define IDirectMusicPerformance8_GetBumperLength(p,a)                  (p)->lpVtbl->GetBumperLength(p,a)
+#define IDirectMusicPerformance8_SendPMsg(p,a)                         (p)->lpVtbl->SendPMsg(p,a)
+#define IDirectMusicPerformance8_MusicToReferenceTime(p,a,b)           (p)->lpVtbl->MusicToReferenceTime(p,a,b)
+#define IDirectMusicPerformance8_ReferenceToMusicTime(p,a,b)           (p)->lpVtbl->ReferenceToMusicTime(p,a,b)
+#define IDirectMusicPerformance8_IsPlaying(p,a,b)                      (p)->lpVtbl->IsPlaying(p,a,b)
+#define IDirectMusicPerformance8_GetTime(p,a,b)                        (p)->lpVtbl->GetTime(p,a,b)
+#define IDirectMusicPerformance8_AllocPMsg(p,a,b)                      (p)->lpVtbl->AllocPMsg(p,a,b)
+#define IDirectMusicPerformance8_FreePMsg(p,a)                         (p)->lpVtbl->FreePMsg(p,a)
+#define IDirectMusicPerformance8_GetGraph(p,a)                         (p)->lpVtbl->GetGraph(p,a)
+#define IDirectMusicPerformance8_SetGraph(p,a)                         (p)->lpVtbl->SetGraph(p,a)
+#define IDirectMusicPerformance8_SetNotificationHandle(p,a,b)          (p)->lpVtbl->SetNotificationHandle(p,a,b)
+#define IDirectMusicPerformance8_GetNotificationPMsg(p,a)              (p)->lpVtbl->GetNotificationPMsg(p,a)
+#define IDirectMusicPerformance8_AddNotificationType(p,a)              (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicPerformance8_RemoveNotificationType(p,a)           (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicPerformance8_AddPort(p,a)                          (p)->lpVtbl->AddPort(p,a)
+#define IDirectMusicPerformance8_RemovePort(p,a)                       (p)->lpVtbl->RemovePort(p,a)
+#define IDirectMusicPerformance8_AssignPChannelBlock(p,a,b,c)          (p)->lpVtbl->AssignPChannelBlock(p,a,b,c)
+#define IDirectMusicPerformance8_AssignPChannel(p,a,b,c,d)             (p)->lpVtbl->AssignPChannel(p,a,b,c,d)
+#define IDirectMusicPerformance8_PChannelInfo(p,a,b,c,d)               (p)->lpVtbl->PChannelInfo(p,a,b,c,d)
+#define IDirectMusicPerformance8_DownloadInstrument(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->DownloadInstrument(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicPerformance8_Invalidate(p,a,b)                     (p)->lpVtbl->Invalidate(p,a,b)
+#define IDirectMusicPerformance8_GetParam(p,a,b,c,d,e,f)               (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance8_SetParam(p,a,b,c,d,e)                 (p)->lpVtbl->SetParam(p,a,b,c,d,e)
+#define IDirectMusicPerformance8_GetGlobalParam(p,a,b,c)               (p)->lpVtbl->GetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance8_SetGlobalParam(p,a,b,c)               (p)->lpVtbl->SetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance8_GetLatencyTime(p,a)                   (p)->lpVtbl->GetLatencyTime(p,a)
+#define IDirectMusicPerformance8_GetQueueTime(p,a)                     (p)->lpVtbl->GetQueueTime(p,a)
+#define IDirectMusicPerformance8_AdjustTime(p,a)                       (p)->lpVtbl->AdjustTime(p,a)
+#define IDirectMusicPerformance8_CloseDown(p)                          (p)->lpVtbl->CloseDown(p)
+#define IDirectMusicPerformance8_GetResolvedTime(p,a,b,c)              (p)->lpVtbl->GetResolvedTime(p,a,b,c)
+#define IDirectMusicPerformance8_MIDIToMusic(p,a,b,c,d,e)              (p)->lpVtbl->MIDIToMusic(p,a,b,c,d,e)
+#define IDirectMusicPerformance8_MusicToMIDI(p,a,b,c,d,e)              (p)->lpVtbl->MusicToMIDI(p,a,b,c,d,e)
+#define IDirectMusicPerformance8_TimeToRhythm(p,a,b,c,d,e,f)           (p)->lpVtbl->TimeToRhythm(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance8_RhythmToTime(p,a,b,c,d,e,f)           (p)->lpVtbl->RhythmToTime(p,a,b,c,d,e,f)
     /*  IDirectMusicPerformance8 methods*/
-#define IDirectMusicPerformance8_InitAudio(p,a,b,c,d,e,f,g)             (p)->lpVtbl->InitAudio(p,a,b,c,d,e,f,g)
-#define IDirectMusicPerformance8_PlaySegmentEx(p,a,b,c,d,e,f,g,h)       (p)->lpVtbl->PlaySegmentEx(p,a,b,c,d,e,f,g,h)
-#define IDirectMusicPerformance8_StopEx(p,a,b,c)                        (p)->lpVtbl->StopEx(p,a,b,c)
-#define IDirectMusicPerformance8_ClonePMsg(p,a,b)                       (p)->lpVtbl->ClonePMsg(p,a,b)
-#define IDirectMusicPerformance8_CreateAudioPath(p,a,b,c)               (p)->lpVtbl->CreateAudioPath(p,a,b,c)
-#define IDirectMusicPerformance8_CreateStandardAudioPath(p,a,b,c,d)     (p)->lpVtbl->CreateStandardAudioPath(p,a,b,c,d)
-#define IDirectMusicPerformance8_SetDefaultAudioPath(p,a)               (p)->lpVtbl->SetDefaultAudioPath(p,a)
-#define IDirectMusicPerformance8_GetDefaultAudioPath(p,a)               (p)->lpVtbl->GetDefaultAudioPath(p,a)
-#define IDirectMusicPerformance8_GetParamEx(p,a,b,c,d,e,f,g)            (p)->lpVtbl->GetParamEx(p,a,b,c,d,e,f,g)
+#define IDirectMusicPerformance8_InitAudio(p,a,b,c,d,e,f,g)            (p)->lpVtbl->InitAudio(p,a,b,c,d,e,f,g)
+#define IDirectMusicPerformance8_PlaySegmentEx(p,a,b,c,d,e,f,g,h)      (p)->lpVtbl->PlaySegmentEx(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicPerformance8_StopEx(p,a,b,c)                       (p)->lpVtbl->StopEx(p,a,b,c)
+#define IDirectMusicPerformance8_ClonePMsg(p,a,b)                      (p)->lpVtbl->ClonePMsg(p,a,b)
+#define IDirectMusicPerformance8_CreateAudioPath(p,a,b,c)              (p)->lpVtbl->CreateAudioPath(p,a,b,c)
+#define IDirectMusicPerformance8_CreateStandardAudioPath(p,a,b,c,d)    (p)->lpVtbl->CreateStandardAudioPath(p,a,b,c,d)
+#define IDirectMusicPerformance8_SetDefaultAudioPath(p,a)              (p)->lpVtbl->SetDefaultAudioPath(p,a)
+#define IDirectMusicPerformance8_GetDefaultAudioPath(p,a)              (p)->lpVtbl->GetDefaultAudioPath(p,a)
+#define IDirectMusicPerformance8_GetParamEx(p,a,b,c,d,e,f,g)           (p)->lpVtbl->GetParamEx(p,a,b,c,d,e,f,g)
 #endif
 
 
@@ -1387,21 +1362,21 @@ ICOM_DEFINE(IDirectMusicStyle,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicStyle_QueryInterface(p,a,b)                 (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicStyle_AddRef(p)                             (p)->lpVtbl->AddRef(p)
-#define IDirectMusicStyle_Release(p)                            (p)->lpVtbl->Release(p)
+#define IDirectMusicStyle_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicStyle_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDirectMusicStyle_Release(p)                        (p)->lpVtbl->Release(p)
 /*** IDirectMusicStyle methods ***/
-#define IDirectMusicStyle_GetBand(p,a,b)                        (p)->lpVtbl->GetBand(p,a,b)
-#define IDirectMusicStyle_EnumBand(p,a,b)                       (p)->lpVtbl->EnumBand(p,a,b)
-#define IDirectMusicStyle_GetDefaultBand(p,a)                   (p)->lpVtbl->GetDefaultBand(p,a)
-#define IDirectMusicStyle_EnumMotif(p,a,b)                      (p)->lpVtbl->EnumMotif(p,a,b)
-#define IDirectMusicStyle_GetMotif(p,a,b)                       (p)->lpVtbl->GetMotif(p,a,b)
-#define IDirectMusicStyle_GetDefaultChordMap(p,a)               (p)->lpVtbl->GetDefaultChordMap(p,a)
-#define IDirectMusicStyle_EnumChordMap(p,a,b)                   (p)->lpVtbl->EnumChordMap(p,a,b)
-#define IDirectMusicStyle_GetChordMap(p,a,b)                    (p)->lpVtbl->GetChordMap(p,a,b)
-#define IDirectMusicStyle_GetTimeSignature(p,a)                 (p)->lpVtbl->GetTimeSignature(p,a)
-#define IDirectMusicStyle_GetEmbellishmentLength(p,a,b,c,d)     (p)->lpVtbl->GetEmbellishmentLength(p,a,b,c,d)
-#define IDirectMusicStyle_GetTempo(p,a)                         (p)->lpVtbl->GetTempo(p,a)
+#define IDirectMusicStyle_GetBand(p,a,b)                    (p)->lpVtbl->GetBand(p,a,b)
+#define IDirectMusicStyle_EnumBand(p,a,b)                   (p)->lpVtbl->EnumBand(p,a,b)
+#define IDirectMusicStyle_GetDefaultBand(p,a)               (p)->lpVtbl->GetDefaultBand(p,a)
+#define IDirectMusicStyle_EnumMotif(p,a,b)                  (p)->lpVtbl->EnumMotif(p,a,b)
+#define IDirectMusicStyle_GetMotif(p,a,b)                   (p)->lpVtbl->GetMotif(p,a,b)
+#define IDirectMusicStyle_GetDefaultChordMap(p,a)           (p)->lpVtbl->GetDefaultChordMap(p,a)
+#define IDirectMusicStyle_EnumChordMap(p,a,b)               (p)->lpVtbl->EnumChordMap(p,a,b)
+#define IDirectMusicStyle_GetChordMap(p,a,b)                (p)->lpVtbl->GetChordMap(p,a,b)
+#define IDirectMusicStyle_GetTimeSignature(p,a)             (p)->lpVtbl->GetTimeSignature(p,a)
+#define IDirectMusicStyle_GetEmbellishmentLength(p,a,b,c,d) (p)->lpVtbl->GetEmbellishmentLength(p,a,b,c,d)
+#define IDirectMusicStyle_GetTempo(p,a)                     (p)->lpVtbl->GetTempo(p,a)
 #endif
 
 
@@ -1418,23 +1393,23 @@ ICOM_DEFINE(IDirectMusicStyle8,IDirectMusicStyle)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicStyle8_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicStyle8_AddRef(p)                            (p)->lpVtbl->AddRef(p)
-#define IDirectMusicStyle8_Release(p)                           (p)->lpVtbl->Release(p)
+#define IDirectMusicStyle8_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicStyle8_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDirectMusicStyle8_Release(p)                        (p)->lpVtbl->Release(p)
 /*** IDirectMusicStyle methods ***/
-#define IDirectMusicStyle8_GetBand(p,a,b)                       (p)->lpVtbl->GetBand(p,a,b)
-#define IDirectMusicStyle8_EnumBand(p,a,b)                      (p)->lpVtbl->EnumBand(p,a,b)
-#define IDirectMusicStyle8_GetDefaultBand(p,a)                  (p)->lpVtbl->GetDefaultBand(p,a)
-#define IDirectMusicStyle8_EnumMotif(p,a,b)                     (p)->lpVtbl->EnumMotif(p,a,b)
-#define IDirectMusicStyle8_GetMotif(p,a,b)                      (p)->lpVtbl->GetMotif(p,a,b)
-#define IDirectMusicStyle8_GetDefaultChordMap(p,a)              (p)->lpVtbl->GetDefaultChordMap(p,a)
-#define IDirectMusicStyle8_EnumChordMap(p,a,b)                  (p)->lpVtbl->EnumChordMap(p,a,b)
-#define IDirectMusicStyle8_GetChordMap(p,a,b)                   (p)->lpVtbl->GetChordMap(p,a,b)
-#define IDirectMusicStyle8_GetTimeSignature(p,a)                (p)->lpVtbl->GetTimeSignature(p,a)
-#define IDirectMusicStyle8_GetEmbellishmentLength(p,a,b,c,d)    (p)->lpVtbl->GetEmbellishmentLength(p,a,b,c,d)
-#define IDirectMusicStyle8_GetTempo(p,a)                        (p)->lpVtbl->GetTempo(p,a)
+#define IDirectMusicStyle8_GetBand(p,a,b)                    (p)->lpVtbl->GetBand(p,a,b)
+#define IDirectMusicStyle8_EnumBand(p,a,b)                   (p)->lpVtbl->EnumBand(p,a,b)
+#define IDirectMusicStyle8_GetDefaultBand(p,a)               (p)->lpVtbl->GetDefaultBand(p,a)
+#define IDirectMusicStyle8_EnumMotif(p,a,b)                  (p)->lpVtbl->EnumMotif(p,a,b)
+#define IDirectMusicStyle8_GetMotif(p,a,b)                   (p)->lpVtbl->GetMotif(p,a,b)
+#define IDirectMusicStyle8_GetDefaultChordMap(p,a)           (p)->lpVtbl->GetDefaultChordMap(p,a)
+#define IDirectMusicStyle8_EnumChordMap(p,a,b)               (p)->lpVtbl->EnumChordMap(p,a,b)
+#define IDirectMusicStyle8_GetChordMap(p,a,b)                (p)->lpVtbl->GetChordMap(p,a,b)
+#define IDirectMusicStyle8_GetTimeSignature(p,a)             (p)->lpVtbl->GetTimeSignature(p,a)
+#define IDirectMusicStyle8_GetEmbellishmentLength(p,a,b,c,d) (p)->lpVtbl->GetEmbellishmentLength(p,a,b,c,d)
+#define IDirectMusicStyle8_GetTempo(p,a)                     (p)->lpVtbl->GetTempo(p,a)
 /*** IDirectMusicStyle8 methods ***/
-#define IDirectMusicStyle8_EnumPattern(p,a,b,c)                 (p)->lpVtbl->EnumPattern(p,a,b,c)
+#define IDirectMusicStyle8_EnumPattern(p,a,b,c)              (p)->lpVtbl->EnumPattern(p,a,b,c)
 #endif
 
 
@@ -1505,13 +1480,13 @@ ICOM_DEFINE(IDirectMusicPatternTrack,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPatternTrack_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicPatternTrack_AddRef(p)                      (p)->lpVtbl->AddRef(p)
-#define IDirectMusicPatternTrack_Release(p)                     (p)->lpVtbl->Release(p)
+#define IDirectMusicPatternTrack_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPatternTrack_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPatternTrack_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectMusicPatternTrack methods ***/
-#define IDirectMusicPatternTrack_CreateSegment(p,a,b)           (p)->lpVtbl->CreateSegment(p,a,b)
-#define IDirectMusicPatternTrack_SetVariation(p,a,b,c)          (p)->lpVtbl->SetVariation(p,a,b,c)
-#define IDirectMusicPatternTrack_SetPatternByName(p,a,b,c,d,e)  (p)->lpVtbl->SetPatternByName(p,a,b,c,d,e)
+#define IDirectMusicPatternTrack_CreateSegment(p,a,b)          (p)->lpVtbl->CreateSegment(p,a,b)
+#define IDirectMusicPatternTrack_SetVariation(p,a,b,c)         (p)->lpVtbl->SetVariation(p,a,b,c)
+#define IDirectMusicPatternTrack_SetPatternByName(p,a,b,c,d,e) (p)->lpVtbl->SetPatternByName(p,a,b,c,d,e)
 #endif
 
 
@@ -1537,20 +1512,20 @@ ICOM_DEFINE(IDirectMusicScript,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicScript_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicScript_AddRef(p)                            (p)->lpVtbl->AddRef(p)
-#define IDirectMusicScript_Release(p)                           (p)->lpVtbl->Release(p)
+#define IDirectMusicScript_QueryInterface(p,a,b)               (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicScript_AddRef(p)                           (p)->lpVtbl->AddRef(p)
+#define IDirectMusicScript_Release(p)                          (p)->lpVtbl->Release(p)
 /*** IDirectMusicScript methods ***/
-#define IDirectMusicPatternTrack_Init(p,a,b)                    (p)->lpVtbl->Init(p,a,b)
-#define IDirectMusicPatternTrack_CallRoutine(p,a,b)             (p)->lpVtbl->CallRoutine(p,a,b)
-#define IDirectMusicPatternTrack_SetVariableVariant(p,a,b,c,d)  (p)->lpVtbl->SetVariableVariant(p,a,b,c,d)
-#define IDirectMusicPatternTrack_GetVariableVariant(p,a,b,c)    (p)->lpVtbl->GetVariableVariant(p,a,b,c)
-#define IDirectMusicPatternTrack_SetVariableNumber(p,a,b,c)     (p)->lpVtbl->SetVariableNumber(p,a,b,c)
-#define IDirectMusicPatternTrack_GetVariableNumber(p,a,b,c)     (p)->lpVtbl->GetVariableNumber(p,a,b,c)
-#define IDirectMusicPatternTrack_SetVariableObject(p,a,b,c)     (p)->lpVtbl->SetVariableObject(p,a,b,c)
-#define IDirectMusicPatternTrack_GetVariableObject(p,a,b,c,d)   (p)->lpVtbl->GetVariableObject(p,a,b,c,d)
-#define IDirectMusicPatternTrack_EnumRoutine(p,a,b)             (p)->lpVtbl->EnumRoutine(p,a,b)
-#define IDirectMusicPatternTrack_EnumVariable(p,a,b)            (p)->lpVtbl->EnumVariable(p,a,b)
+#define IDirectMusicPatternTrack_Init(p,a,b)                   (p)->lpVtbl->Init(p,a,b)
+#define IDirectMusicPatternTrack_CallRoutine(p,a,b)            (p)->lpVtbl->CallRoutine(p,a,b)
+#define IDirectMusicPatternTrack_SetVariableVariant(p,a,b,c,d) (p)->lpVtbl->SetVariableVariant(p,a,b,c,d)
+#define IDirectMusicPatternTrack_GetVariableVariant(p,a,b,c)   (p)->lpVtbl->GetVariableVariant(p,a,b,c)
+#define IDirectMusicPatternTrack_SetVariableNumber(p,a,b,c)    (p)->lpVtbl->SetVariableNumber(p,a,b,c)
+#define IDirectMusicPatternTrack_GetVariableNumber(p,a,b,c)    (p)->lpVtbl->GetVariableNumber(p,a,b,c)
+#define IDirectMusicPatternTrack_SetVariableObject(p,a,b,c)    (p)->lpVtbl->SetVariableObject(p,a,b,c)
+#define IDirectMusicPatternTrack_GetVariableObject(p,a,b,c,d)  (p)->lpVtbl->GetVariableObject(p,a,b,c,d)
+#define IDirectMusicPatternTrack_EnumRoutine(p,a,b)            (p)->lpVtbl->EnumRoutine(p,a,b)
+#define IDirectMusicPatternTrack_EnumVariable(p,a,b)           (p)->lpVtbl->EnumVariable(p,a,b)
 #endif
 
 
@@ -1567,48 +1542,18 @@ ICOM_DEFINE(IDirectMusicContainer,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicContainer_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicContainer_AddRef(p)              (p)->lpVtbl->AddRef(p)
-#define IDirectMusicContainer_Release(p)             (p)->lpVtbl->Release(p)
+#define IDirectMusicContainer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicContainer_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicContainer_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectMusicContainer methods ***/
-#define IDirectMusicContainer_EnumObject(p,a,b,c,d)  (p)->lpVtbl->EnumObject(p,a,b,c,d)
+#define IDirectMusicContainer_EnumObject(p,a,b,c,d) (p)->lpVtbl->EnumObject(p,a,b,c,d)
 #endif
 
-
-/*****************************************************************************
- * IDirectMusicSong interface
- */
-#undef INTERFACE
-#define INTERFACE IDirectMusicSong
-#define IDirectMusicSong_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Compose)(THIS) PURE; \
-    STDMETHOD(GetParam)(THIS_ REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam) PURE; \
-    STDMETHOD(GetSegment)(THIS_ WCHAR *pwzName, IDirectMusicSegment **ppSegment) PURE; \
-    STDMETHOD(GetAudioPathConfig)(THIS_ IUnknown **ppAudioPathConfig) PURE; \
-    STDMETHOD(Download)(THIS_ IUnknown *pAudioPath) PURE; \
-    STDMETHOD(Unload)(THIS_ IUnknown *pAudioPath) PURE; \
-    STDMETHOD(EnumSegment)(THIS_ DWORD dwIndex, IDirectMusicSegment **ppSegment) PURE;
-ICOM_DEFINE(IDirectMusicSong,IUnknown)
-#undef INTERFACE
-
-#ifdef COBJMACROS
-/*** IUnknown methods ***/
-#define IDirectMusicSong_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectMusicSong_AddRef(p)               (p)->lpVtbl->AddRef(p)
-#define IDirectMusicSong_Release(p)              (p)->lpVtbl->Release(p)
-/*** IDirectMusicSong methods ***/
-#define IDirectMusicSong_Compose(p)              (p)->lpVtbl->Compose(p)
-#define IDirectMusicSong_GetParam(p,a,b,c,d,e,f) (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
-#define IDirectMusicSong_GetSegment(p,a,b)       (p)->lpVtbl->GetSegment(p,a,b)
-#define IDirectMusicSong_GetAudioPathConfig(p,a) (p)->lpVtbl->GetAudioPathConfig(p,a)
-#define IDirectMusicSong_Download(p,a)           (p)->lpVtbl->Download(p,a)
-#define IDirectMusicSong_Unload(p,a)             (p)->lpVtbl->Unload(p,a)
-#define IDirectMusicSong_EnumSegment(p,a,b)      (p)->lpVtbl->EnumSegment(p,a,b)
-#endif
 
 #ifdef __cplusplus
 }
 #endif
+
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_PERFORMANCE_H */

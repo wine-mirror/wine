@@ -1,6 +1,6 @@
 /* IDirectMusicDownload Implementation
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,30 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winerror.h"
-#include "mmsystem.h"
-#include "winternl.h"
-#include "mmddk.h"
-#include "wine/windef16.h"
-#include "wine/winbase16.h"
-#include "wine/debug.h"
-#include "dsound.h"
-
 #include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
-/* IDirectMusicDownload IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD iface, REFIID riid, LPVOID *ppobj)
-{
+/* IDirectMusicDownloadImpl IUnknown part: */
+HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicDownloadImpl,iface);
 
 	if (IsEqualIID (riid, &IID_IUnknown) 
@@ -49,20 +31,17 @@ HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD if
 		*ppobj = This;
 		return S_OK;
 	}
-
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface)
-{
+ULONG WINAPI IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface) {
 	ICOM_THIS(IDirectMusicDownloadImpl,iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface)
-{
+ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface) {
 	ICOM_THIS(IDirectMusicDownloadImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
@@ -72,18 +51,14 @@ ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface)
 	return ref;
 }
 
-/* IDirectMusicDownload Interface follow: */
-HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, void** ppvBuffer, DWORD* pdwSize)
-{
+/* IDirectMusicDownloadImpl IDirectMusicDownload part: */
+HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, void** ppvBuffer, DWORD* pdwSize) {
 	ICOM_THIS(IDirectMusicDownloadImpl,iface);
-
 	FIXME("(%p,%p, %p): stub\n", This, ppvBuffer, pdwSize);
-
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicDownload) DirectMusicDownload_Vtbl =
-{
+ICOM_VTABLE(IDirectMusicDownload) DirectMusicDownload_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicDownloadImpl_QueryInterface,
 	IDirectMusicDownloadImpl_AddRef,
@@ -92,13 +67,16 @@ ICOM_VTABLE(IDirectMusicDownload) DirectMusicDownload_Vtbl =
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicDownload (LPCGUID lpcGUID, LPDIRECTMUSICDOWNLOAD* ppDMDL, LPUNKNOWN pUnkOuter)
-{
-	if (IsEqualIID (lpcGUID, &IID_IDirectMusicDownload)) {
-		FIXME("Not yet\n");
-		return E_NOINTERFACE;
-	}
+HRESULT WINAPI DMUSIC_CreateDirectMusicDownloadImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+	IDirectMusicDownloadImpl* dmdl;
 	
-	WARN("No interface found\n");
-	return E_NOINTERFACE;	
+	dmdl = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicDownloadImpl));
+	if (NULL == dmdl) {
+		*ppobj = (LPVOID) NULL;
+		return E_OUTOFMEMORY;
+	}
+	dmdl->lpVtbl = &DirectMusicDownload_Vtbl;
+	dmdl->ref = 0; /* will be inited by QueryInterface */
+	
+	return IDirectMusicDownloadImpl_QueryInterface ((LPDIRECTMUSICDOWNLOAD)dmdl, lpcGUID, ppobj);
 }

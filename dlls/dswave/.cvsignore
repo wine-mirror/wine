@@ -1,0 +1,5 @@
+Makefile
+dswave.dll.dbg.c
+dswave.spec.c
+dswave.spec.def
+version.res

@@ -1,6 +1,6 @@
 /* DirectMusic Error Codes
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 /*****************************************************************************
  * Error code handling
  */
-#define FACILITY_DIRECTMUSIC      0x878
-#define DMUS_ERRBASE              0x1000
+#define FACILITY_DIRECTMUSIC 0x878
+#define DMUS_ERRBASE 0x1000
 
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev,fac,code) \

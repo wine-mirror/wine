@@ -1,5 +1,5 @@
 /*
- *	self-registerable dll functions for dmcompos.dll
+ *	self-registerable dll functions for dmusic.dll
  *
  * Copyright (C) 2003 John K. Hohm
  *
@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "dmcompos_private.h"
+#include "dswave_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
+WINE_DEFAULT_DEBUG_CHANNEL(dswave);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -477,45 +477,13 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name) {
  *		coclass list
  */
 static struct regsvr_coclass const coclass_list[] = {
-    {   &CLSID_DirectMusicChordMap,
-	"DirectMusicChordMap",
+    {   &CLSID_DirectSoundWave,
+	"Microsoft DirectSound Wave",
 	NULL,
-	"dmcompos.dll",
+	"dswave.dll",
 	"Both",
-	"Microsoft.DirectMusicChordMap.1",
-	"Microsoft.DirectMusicChordMap"
-    },
-    {   &CLSID_DirectMusicComposer,
-	"DirectMusicComposer",
-	NULL,
-	"dmcompos.dll",
-	"Both",
-	"Microsoft.DirectMusicComposer.1",
-	"Microsoft.DirectMusicComposer"
-    },
-    {   &CLSID_DirectMusicChordMapTrack,
-	"DirectMusicChordMapTrack",
-	NULL,
-	"dmcompos.dll",
-	"Both",
-	"Microsoft.DirectMusicChordMapTrack.1",
-	"Microsoft.DirectMusicChordMapTrack"
-    },
-    {   &CLSID_DirectMusicTemplate,
-	"DirectMusicTemplate",
-	NULL,
-	"dmcompos.dll",
-	"Both",
-	"Microsoft.DirectMusicTemplate.1",
-	"Microsoft.DirectMusicTemplate"
-    },
-    {   &CLSID_DirectMusicSignPostTrack,
-	"DirectMusicSignPostTrack",
-	NULL,
-	"dmcompos.dll",
-	"Both",
-	"Microsoft.DirectMusicSignPostTrack.1",
-	"Microsoft.DirectMusicSignPostTrack"
+	"Microsoft.DirectSoundWave.1",
+	"Microsoft.DirectSoundWave"
     },
     { NULL }			/* list terminator */
 };
@@ -529,9 +497,9 @@ static struct regsvr_interface const interface_list[] = {
 };
 
 /***********************************************************************
- *		DllRegisterServer (DMCOMPOS.3)
+ *		DllRegisterServer (DSWAVE.3)
  */
-HRESULT WINAPI DMCOMPOS_DllRegisterServer(void) {
+HRESULT WINAPI DSWAVE_DllRegisterServer(void) {
     HRESULT hr;
 
     TRACE("\n");
@@ -543,9 +511,9 @@ HRESULT WINAPI DMCOMPOS_DllRegisterServer(void) {
 }
 
 /***********************************************************************
- *		DllUnregisterServer (DMCOMPOS.4)
+ *		DllUnregisterServer (DSWAVE.4)
  */
-HRESULT WINAPI DMCOMPOS_DllUnregisterServer(void) {
+HRESULT WINAPI DSWAVE_DllUnregisterServer(void) {
     HRESULT hr;
 
     TRACE("\n");

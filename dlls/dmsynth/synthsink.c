@@ -1,6 +1,6 @@
 /* IDirectMusicSynthSink Implementation
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "dmsynth_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
-/* IDirectMusicSynthSink IUnknown part: */
-HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface (LPDIRECTMUSICSYNTHSINK iface, REFIID riid, LPVOID *ppobj)
-{
+/* IDirectMusicSynthSinkImpl IUnknown part: */
+HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface (LPDIRECTMUSICSYNTHSINK iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -40,20 +31,17 @@ HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface (LPDIRECTMUSICSYNTHSINK 
 		*ppobj = This;
 		return S_OK;
 	}
-
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK iface)
-{
+ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK iface) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface)
-{
+ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
@@ -63,81 +51,56 @@ ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface)
 	return ref;
 }
 
-/* IDirectMusicSynth IDirectMusicSynth part: */
-HRESULT WINAPI IDirectMusicSynthSinkImpl_Init (LPDIRECTMUSICSYNTHSINK iface, IDirectMusicSynth* pSynth)
-{
+/* IDirectMusicSynthSinkImpl IDirectMusicSynthSink part: */
+HRESULT WINAPI IDirectMusicSynthSinkImpl_Init (LPDIRECTMUSICSYNTHSINK iface, IDirectMusicSynth* pSynth) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %p): stub\n", This, pSynth);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_SetMasterClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock* pClock)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_SetMasterClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock* pClock) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %p): stub\n", This, pClock);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_GetLatencyClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock** ppClock)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_GetLatencyClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock** ppClock) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %p): stub\n", This, ppClock);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_Activate (LPDIRECTMUSICSYNTHSINK iface, BOOL fEnable)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_Activate (LPDIRECTMUSICSYNTHSINK iface, BOOL fEnable) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %d): stub\n", This, fEnable);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_SampleToRefTime (LPDIRECTMUSICSYNTHSINK iface, LONGLONG llSampleTime, REFERENCE_TIME* prfTime)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_SampleToRefTime (LPDIRECTMUSICSYNTHSINK iface, LONGLONG llSampleTime, REFERENCE_TIME* prfTime) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %lli, %p): stub\n", This, llSampleTime, prfTime);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample (LPDIRECTMUSICSYNTHSINK iface, REFERENCE_TIME rfTime, LONGLONG* pllSampleTime)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample (LPDIRECTMUSICSYNTHSINK iface, REFERENCE_TIME rfTime, LONGLONG* pllSampleTime) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %lli, %p): stub\n", This, rfTime, pllSampleTime );
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound (LPDIRECTMUSICSYNTHSINK iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound (LPDIRECTMUSICSYNTHSINK iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %p, %p): stub\n", This, pDirectSound, pDirectSoundBuffer);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNTHSINK iface, LPDWORD pdwBufferSizeInSamples)
-{
+HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNTHSINK iface, LPDWORD pdwBufferSizeInSamples) {
 	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
 	FIXME("(%p, %p): stub\n", This, pdwBufferSizeInSamples);
-
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl =
-{
+ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicSynthSinkImpl_QueryInterface,
 	IDirectMusicSynthSinkImpl_AddRef,
@@ -153,23 +116,17 @@ ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl =
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSink (LPCGUID lpcGUID, LPDIRECTMUSICSYNTHSINK* ppDMSynthSink, LPUNKNOWN pUnkOuter)
-{
-	IDirectMusicSynthSinkImpl *dmsink;
+HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+	IDirectMusicSynthSinkImpl *obj;
 	
-	TRACE("(%p,%p,%p)\n", lpcGUID, ppDMSynthSink, pUnkOuter);
-	if (IsEqualIID (lpcGUID, &IID_IDirectMusicSynthSink)) {
-		dmsink = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynthSinkImpl));
-		if (NULL == dmsink) {
-			*ppDMSynthSink = (LPDIRECTMUSICSYNTHSINK) NULL;
-			return E_OUTOFMEMORY;
-		}
-		dmsink->lpVtbl = &DirectMusicSynthSink_Vtbl;
-		dmsink->ref = 1;
-		*ppDMSynthSink = (LPDIRECTMUSICSYNTHSINK) dmsink;
-		return S_OK;
+	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
+	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynthSinkImpl));
+	if (NULL == obj) {
+		*ppobj = (LPDIRECTMUSICSYNTHSINK) NULL;
+		return E_OUTOFMEMORY;
 	}
+	obj->lpVtbl = &DirectMusicSynthSink_Vtbl;
+	obj->ref = 0;
 	
-	WARN("No interface found\n");
-	return E_NOINTERFACE;
+	return IDirectMusicSynthSinkImpl_QueryInterface((LPDIRECTMUSICSYNTHSINK)obj, lpcGUID, ppobj);
 }

@@ -1,6 +1,6 @@
 /* IDirectMusicMuteTrack Implementation
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "dmstyle_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
@@ -34,36 +26,36 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  * IDirectMusicMuteTrack implementation
  */
 /* IDirectMusicMuteTrack IUnknown part: */
-HRESULT WINAPI IDirectMusicMuteTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
+HRESULT WINAPI IDirectMusicMuteTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, UnknownVtbl, iface);
 
-	if (IsEqualIID (riid, &IID_IUnknown) || 
-	    IsEqualIID (riid, &IID_IDirectMusicTrack) ||
-	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
-		IDirectMusicMuteTrack_AddRef(iface);
-		*ppobj = This;
+	if (IsEqualIID (riid, &IID_IUnknown)) {
+		*ppobj = (LPUNKNOWN)&This->UnknownVtbl;
+		IDirectMusicMuteTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
+	  || IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		*ppobj = (LPDIRECTMUSICTRACK8)&This->TrackVtbl;
+		IDirectMusicMuteTrack_IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		IDirectMusicMuteTrackStream_AddRef ((LPPERSISTSTREAM)This->pStream);
-		*ppobj = This->pStream;
+		*ppobj = (LPPERSISTSTREAM)&This->PersistStreamVtbl;
+		IDirectMusicMuteTrack_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
 		return S_OK;
 	}
-
+	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicMuteTrack_AddRef (LPDIRECTMUSICTRACK8 iface)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
+ULONG WINAPI IDirectMusicMuteTrack_IUnknown_AddRef (LPUNKNOWN iface) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, UnknownVtbl, iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI IDirectMusicMuteTrack_Release (LPDIRECTMUSICTRACK8 iface)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
+ULONG WINAPI IDirectMusicMuteTrack_IUnknown_Release (LPUNKNOWN iface) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -72,315 +64,217 @@ ULONG WINAPI IDirectMusicMuteTrack_Release (LPDIRECTMUSICTRACK8 iface)
 	return ref;
 }
 
-/* IDirectMusicMuteTrack IDirectMusicTrack part: */
-HRESULT WINAPI IDirectMusicMuteTrack_Init (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegment* pSegment)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
+ICOM_VTABLE(IUnknown) DirectMusicMuteTrack_Unknown_Vtbl = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicMuteTrack_IUnknown_QueryInterface,
+	IDirectMusicMuteTrack_IUnknown_AddRef,
+	IDirectMusicMuteTrack_IUnknown_Release
+};
 
+/* IDirectMusicMuteTrack IDirectMusicTrack8 part: */
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
+	return IDirectMusicMuteTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+}
+
+ULONG WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
+	return IDirectMusicMuteTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+}
+
+ULONG WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_Release (LPDIRECTMUSICTRACK8 iface) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
+	return IDirectMusicMuteTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+}
+
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_Init (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegment* pSegment)
+{
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pSegment);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegmentState* pSegmentState, IDirectMusicPerformance* pPerformance, void** ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegmentState* pSegmentState, IDirectMusicPerformance* pPerformance, void** ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_EndPlay (LPDIRECTMUSICTRACK8 iface, void* pStateData)
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_EndPlay (LPDIRECTMUSICTRACK8 iface, void* pStateData)
 {
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pStateData);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID)
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID)
 {
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %s, %ld, %p, %p): stub\n", This, debugstr_guid(rguidType), mtTime, pmtNext, pParam);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_guid(rguidType), mtTime, pParam);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 
 	TRACE("(%p, %s): ", This, debugstr_guid(rguidType));
 	if (IsEqualGUID (rguidType, &GUID_MuteParam)) {
 		TRACE("param supported\n");
 		return S_OK;
-		}
-
+	}
 	TRACE("param unsupported\n");
 	return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
-
 	return S_OK;
 }
 
-/* IDirectMusicMuteTrack IDirectMusicTrack8 part: */
-HRESULT WINAPI IDirectMusicMuteTrack_PlayEx (LPDIRECTMUSICTRACK8 iface, void* pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_PlayEx (LPDIRECTMUSICTRACK8 iface, void* pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p, %lli, %lli, %lli, %ld, %p, %p, %ld): stub\n", This, pStateData, rtStart, rtEnd, rtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %s, %lli, %p, %p, %p, %ld): stub\n", This, debugstr_guid(rguidType), rtTime, prtNext, pParam, pStateData, dwFlags);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %s, %lli, %p, %p, %ld): stub\n", This, debugstr_guid(rguidType), rtTime, pParam, pStateData, dwFlags);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p, %ld, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicMuteTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack)
-{
-	ICOM_THIS(IDirectMusicMuteTrack,iface);
-
+HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 	FIXME("(%p, %p, %ld, %p, %ld, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
-
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicTrack8) DirectMusicMuteTrack_Vtbl =
-{
+ICOM_VTABLE(IDirectMusicTrack8) DirectMusicMuteTrack_Track_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicMuteTrack_QueryInterface,
-	IDirectMusicMuteTrack_AddRef,
-	IDirectMusicMuteTrack_Release,
-	IDirectMusicMuteTrack_Init,
-	IDirectMusicMuteTrack_InitPlay,
-	IDirectMusicMuteTrack_EndPlay,
-	IDirectMusicMuteTrack_Play,
-	IDirectMusicMuteTrack_GetParam,
-	IDirectMusicMuteTrack_SetParam,
-	IDirectMusicMuteTrack_IsParamSupported,
-	IDirectMusicMuteTrack_AddNotificationType,
-	IDirectMusicMuteTrack_RemoveNotificationType,
-	IDirectMusicMuteTrack_Clone,
-	IDirectMusicMuteTrack_PlayEx,
-	IDirectMusicMuteTrack_GetParamEx,
-	IDirectMusicMuteTrack_SetParamEx,
-	IDirectMusicMuteTrack_Compose,
-	IDirectMusicMuteTrack_Join
+	IDirectMusicMuteTrack_IDirectMusicTrack_QueryInterface,
+	IDirectMusicMuteTrack_IDirectMusicTrack_AddRef,
+	IDirectMusicMuteTrack_IDirectMusicTrack_Release,
+	IDirectMusicMuteTrack_IDirectMusicTrack_Init,
+	IDirectMusicMuteTrack_IDirectMusicTrack_InitPlay,
+	IDirectMusicMuteTrack_IDirectMusicTrack_EndPlay,
+	IDirectMusicMuteTrack_IDirectMusicTrack_Play,
+	IDirectMusicMuteTrack_IDirectMusicTrack_GetParam,
+	IDirectMusicMuteTrack_IDirectMusicTrack_SetParam,
+	IDirectMusicMuteTrack_IDirectMusicTrack_IsParamSupported,
+	IDirectMusicMuteTrack_IDirectMusicTrack_AddNotificationType,
+	IDirectMusicMuteTrack_IDirectMusicTrack_RemoveNotificationType,
+	IDirectMusicMuteTrack_IDirectMusicTrack_Clone,
+	IDirectMusicMuteTrack_IDirectMusicTrack_PlayEx,
+	IDirectMusicMuteTrack_IDirectMusicTrack_GetParamEx,
+	IDirectMusicMuteTrack_IDirectMusicTrack_SetParamEx,
+	IDirectMusicMuteTrack_IDirectMusicTrack_Compose,
+	IDirectMusicMuteTrack_IDirectMusicTrack_Join
+};
+
+/* IDirectMusicMuteTrack IPersistStream part: */
+HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, PersistStreamVtbl, iface);
+	return IDirectMusicMuteTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+}
+
+ULONG WINAPI IDirectMusicMuteTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, PersistStreamVtbl, iface);
+	return IDirectMusicMuteTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+}
+
+ULONG WINAPI IDirectMusicMuteTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
+	ICOM_THIS_MULTI(IDirectMusicMuteTrack, PersistStreamVtbl, iface);
+	return IDirectMusicMuteTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+}
+
+HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
+	FIXME(": Loading not implemented yet\n");
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
+	return E_NOTIMPL;
+}
+
+ICOM_VTABLE(IPersistStream) DirectMusicMuteTrack_PersistStream_Vtbl = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicMuteTrack_IPersistStream_QueryInterface,
+	IDirectMusicMuteTrack_IPersistStream_AddRef,
+	IDirectMusicMuteTrack_IPersistStream_Release,
+	IDirectMusicMuteTrack_IPersistStream_GetClassID,
+	IDirectMusicMuteTrack_IPersistStream_IsDirty,
+	IDirectMusicMuteTrack_IPersistStream_Load,
+	IDirectMusicMuteTrack_IPersistStream_Save,
+	IDirectMusicMuteTrack_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicMuteTrack (LPCGUID lpcGUID, LPDIRECTMUSICTRACK8 *ppTrack, LPUNKNOWN pUnkOuter)
-{
+HRESULT WINAPI DMUSIC_CreateDirectMusicMuteTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
 	IDirectMusicMuteTrack* track;
 	
-	if (IsEqualIID (lpcGUID, &IID_IDirectMusicTrack)
-		|| IsEqualIID (lpcGUID, &IID_IDirectMusicTrack8)) {
-		track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicMuteTrack));
-		if (NULL == track) {
-			*ppTrack = (LPDIRECTMUSICTRACK8) NULL;
-			return E_OUTOFMEMORY;
-		}
-		track->lpVtbl = &DirectMusicMuteTrack_Vtbl;
-		track->ref = 1;
-		track->pStream = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicMuteTrackStream));
-		track->pStream->lpVtbl = &DirectMusicMuteTrackStream_Vtbl;
-		track->pStream->ref = 1;	
-		track->pStream->pParentTrack = track;
-		*ppTrack = (LPDIRECTMUSICTRACK8) track;
-		return S_OK;
+	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicMuteTrack));
+	if (NULL == track) {
+		*ppobj = (LPVOID) NULL;
+		return E_OUTOFMEMORY;
 	}
-	WARN("No interface found\n");
+	track->UnknownVtbl = &DirectMusicMuteTrack_Unknown_Vtbl;
+	track->TrackVtbl = &DirectMusicMuteTrack_Track_Vtbl;
+	track->PersistStreamVtbl = &DirectMusicMuteTrack_PersistStream_Vtbl;
+	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
+	DM_STRUCT_INIT(track->pDesc);
+	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
+	memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicMuteTrack, sizeof (CLSID));
+	track->ref = 0; /* will be inited by QueryInterface */
 	
-	return E_NOINTERFACE;
+	return IDirectMusicMuteTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
 }
-
-
-/*****************************************************************************
- * IDirectMusicMuteTrackStream implementation
- */
-/* IDirectMusicMuteTrackStream IUnknown part follow: */
-HRESULT WINAPI IDirectMusicMuteTrackStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicMuteTrackStream,iface);
-
-	if (IsEqualIID (riid, &IID_IUnknown)
-		|| IsEqualIID (riid, &IID_IPersistStream)) {
-		IDirectMusicMuteTrackStream_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicMuteTrackStream_AddRef (LPPERSISTSTREAM iface)
-{
-	ICOM_THIS(IDirectMusicMuteTrackStream,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicMuteTrackStream_Release (LPPERSISTSTREAM iface)
-{
-	ICOM_THIS(IDirectMusicMuteTrackStream,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicMuteTrackStream IPersist part: */
-HRESULT WINAPI IDirectMusicMuteTrackStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID)
-{
-	return E_NOTIMPL;
-}
-
-/* IDirectMusicMuteTrackStream IPersistStream part: */
-HRESULT WINAPI IDirectMusicMuteTrackStream_IsDirty (LPPERSISTSTREAM iface)
-{
-	return E_NOTIMPL;
-}
-
-HRESULT WINAPI IDirectMusicMuteTrackStream_Load (LPPERSISTSTREAM iface, IStream* pStm)
-{
-	ICOM_THIS(IDirectMusicMuteTrackStream,iface);
-	FOURCC chunkID;
-	DWORD chunkSize, dwSizeOfStruct;
-	LARGE_INTEGER liMove; /* used when skipping chunks */
-	IDirectMusicMuteTrack* pTrack = This->pParentTrack; /* that's where we load data to */
-	
-	IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
-	IStream_Read (pStm, &chunkSize, sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
-	switch (chunkID) {
-		case DMUS_FOURCC_MUTE_CHUNK: {
-			TRACE_(dmfile)(": mute track chunk\n");
-			IStream_Read (pStm, &dwSizeOfStruct, sizeof(DWORD), NULL);
-			if (dwSizeOfStruct != sizeof(DMUS_IO_MUTE)) {
-				TRACE_(dmfile)(": declared size of struct (=%ld) != actual size (=%i); loading failed\n", dwSizeOfStruct, sizeof(DMUS_IO_MUTE));
-				liMove.QuadPart = chunkSize - sizeof(DWORD);
-				IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-				return E_FAIL;
-			}
-			chunkSize -= sizeof(DWORD); /* now chunk size is one DWORD shorter */
-			pTrack->pMutes = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-			IStream_Read (pStm, pTrack->pMutes, chunkSize, NULL);
-			pTrack->dwMutes = chunkSize/dwSizeOfStruct;
-			/* in the end, let's see what we got */
-			TRACE_(dmfile)(": reading finished\n");
-			if (TRACE_ON(dmfile)) {
-				int i;
-				TRACE_(dmfile)(": (READ): number of mutes in track = %ld\n", pTrack->dwMutes);
-				for (i = 0; i < pTrack->dwMutes; i++) {
-					TRACE_(dmfile)(": (READ): mute[%i]: mtTime = %li; dwPChannel = %ld; dwPChannelMap = %ld\n", \
-						i, pTrack->pMutes[i].mtTime, pTrack->pMutes[i].dwPChannel, pTrack->pMutes[i].dwPChannelMap);
-				}
-			}
-		}
-		TRACE_(dmfile)(": reading finished\n");
-		break;
-		default: {
-			TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-			liMove.QuadPart = chunkSize;
-			IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-			return E_FAIL;
-		}
-	}
-		
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicMuteTrackStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty)
-{
-	return E_NOTIMPL;
-}
-
-HRESULT WINAPI IDirectMusicMuteTrackStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize)
-{
-	return E_NOTIMPL;
-}
-
-ICOM_VTABLE(IPersistStream) DirectMusicMuteTrackStream_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicMuteTrackStream_QueryInterface,
-	IDirectMusicMuteTrackStream_AddRef,
-	IDirectMusicMuteTrackStream_Release,
-	IDirectMusicMuteTrackStream_GetClassID,
-	IDirectMusicMuteTrackStream_IsDirty,
-	IDirectMusicMuteTrackStream_Load,
-	IDirectMusicMuteTrackStream_Save,
-	IDirectMusicMuteTrackStream_GetSizeMax
-};

@@ -63,6 +63,7 @@ WINDOWS_INCLUDES = \
 	dispdib.h \
 	dlgs.h \
 	dls1.h \
+	dls2.h \
 	dmdls.h \
 	dmerror.h \
 	dmo.h \

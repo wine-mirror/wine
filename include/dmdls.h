@@ -1,6 +1,6 @@
 /* DirectMusic DLS Download Definitions
  *
- * Copyright (C) 2003 Rok Mandeljc
+ *  Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,182 +16,194 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
+ 
 #ifndef __WINE_DMUSIC_DLS_H
 #define __WINE_DMUSIC_DLS_H
 
 #include <dls1.h>
 
-typedef long PCENT, GCENT, TCENT, PERCENT;
+/*****************************************************************************
+ * Typedef definitions
+ */
+typedef long GCENT;
+typedef long PCENT;
+typedef long PERCENT;
+typedef long TCENT;
+
 typedef LONGLONG REFERENCE_TIME, *LPREFERENCE_TIME;
-/*
-#ifndef MAKE_FOURCC
-#define MAKEFOURCC(ch0, ch1, ch2, ch3)                              \
-                ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |   \
-                ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
-typedef DWORD FOURCC;
-#endif*/
 
 /*****************************************************************************
- * Definitions
+ * FOURCC definition
  */
-#define DMUS_DOWNLOADINFO_INSTRUMENT        1
-#define DMUS_DOWNLOADINFO_WAVE              2
-#define DMUS_DOWNLOADINFO_INSTRUMENT2       3
-#define DMUS_DOWNLOADINFO_WAVEARTICULATION  4
-#define DMUS_DOWNLOADINFO_STREAMINGWAVE     5
-#define DMUS_DOWNLOADINFO_ONESHOTWAVE       6
+#ifndef mmioFOURCC
+typedef DWORD FOURCC;
+#define mmioFOURCC(ch0,ch1,ch2,ch3) \
+	((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+	((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+#endif
 
-#define DMUS_DEFAULT_SIZE_OFFSETTABLE   1
- 
-#define DMUS_INSTRUMENT_GM_INSTRUMENT   (1 << 0)
+/*****************************************************************************
+ * Flags
+ */
+#define DMUS_DEFAULT_SIZE_OFFSETTABLE 0x1
 
-#define DMUS_MIN_DATA_SIZE 4
+#define DMUS_DOWNLOADINFO_INSTRUMENT       0x1
+#define DMUS_DOWNLOADINFO_WAVE             0x2
+#define DMUS_DOWNLOADINFO_INSTRUMENT2      0x3
+#define DMUS_DOWNLOADINFO_WAVEARTICULATION 0x4
+#define DMUS_DOWNLOADINFO_STREAMINGWAVE    0x5
+#define DMUS_DOWNLOADINFO_ONESHOTWAVE      0x6
+
+#define DMUS_INSTRUMENT_GM_INSTRUMENT 0x1
+
+#define DMUS_MIN_DATA_SIZE 0x4       
 
 /*****************************************************************************
  * Structures
  */
-typedef struct _DMUS_DOWNLOADINFO
-{
-    DWORD dwDLType;
-    DWORD dwDLId;
-    DWORD dwNumOffsetTableEntries;
-    DWORD cbSize;
-} DMUS_DOWNLOADINFO;
+/* typedef definitions */
+typedef struct _DMUS_DOWNLOADINFO   DMUS_DOWNLOADINFO,   *LPDMUS_DOWNLOADINFO;
+typedef struct _DMUS_OFFSETTABLE    DMUS_OFFSETTABLE,    *LPDMUS_OFFSETTABLE;
+typedef struct _DMUS_INSTRUMENT     DMUS_INSTRUMENT,     *LPDMUS_INSTRUMENT;
+typedef struct _DMUS_REGION         DMUS_REGION,         *LPDMUS_REGION;
+typedef struct _DMUS_LFOPARAMS      DMUS_LFOPARAMS,      *LPDMUS_LFOPARAMS;
+typedef struct _DMUS_VEGPARAMS      DMUS_VEGPARAMS,      *LPDMUS_VEGPARAMS;
+typedef struct _DMUS_PEGPARAMS      DMUS_PEGPARAMS,      *LPDMUS_PEGPARAMS;
+typedef struct _DMUS_MSCPARAMS      DMUS_MSCPARAMS,      *LPDMUS_MSCPARAMS;
+typedef struct _DMUS_ARTICPARAMS    DMUS_ARTICPARAMS,    *LPDMUS_ARTICPARAMS;
+typedef struct _DMUS_ARTICULATION   DMUS_ARTICULATION,   *LPDMUS_ARTICULATION;
+typedef struct _DMUS_ARTICULATION2  DMUS_ARTICULATION2,  *LPDMUS_ARTICULATION2;
+typedef struct _DMUS_EXTENSIONCHUNK DMUS_EXTENSIONCHUNK, *LPDMUS_EXTENSIONCHUNK;
+typedef struct _DMUS_COPYRIGHT      DMUS_COPYRIGHT,      *LPDMUS_COPYRIGHT;
+typedef struct _DMUS_WAVEDATA       DMUS_WAVEDATA,       *LPDMUS_WAVEDATA;
+typedef struct _DMUS_WAVE           DMUS_WAVE,           *LPDMUS_WAVE;
+typedef struct _DMUS_NOTERANGE      DMUS_NOTERANGE,      *LPDMUS_NOTERANGE;
+typedef struct _DMUS_WAVEARTDL      DMUS_WAVEARTDL,      *LPDMUS_WAVEARTDL;
+typedef struct _DMUS_WAVEDL         DMUS_WAVEDL,         *LPDMUS_WAVEDL;
 
-typedef struct _DMUS_OFFSETTABLE
-{
-    ULONG ulOffsetTable[DMUS_DEFAULT_SIZE_OFFSETTABLE];
-} DMUS_OFFSETTABLE;
+/* actual structures */
+struct _DMUS_DOWNLOADINFO {
+	DWORD dwDLType;
+	DWORD dwDLId;
+	DWORD dwNumOffsetTableEntries;
+	DWORD cbSize;
+};
 
-typedef struct _DMUS_INSTRUMENT
-{
-    ULONG           ulPatch;
-    ULONG           ulFirstRegionIdx;
-    ULONG           ulGlobalArtIdx;
-    ULONG           ulFirstExtCkIdx;
-    ULONG           ulCopyrightIdx;
-    ULONG           ulFlags;
-} DMUS_INSTRUMENT;
+struct _DMUS_OFFSETTABLE {
+	ULONG ulOffsetTable[DMUS_DEFAULT_SIZE_OFFSETTABLE];
+};
 
-typedef struct _DMUS_REGION
-{
-    RGNRANGE        RangeKey;
-    RGNRANGE        RangeVelocity;
-    USHORT          fusOptions;
-    USHORT          usKeyGroup;
-    ULONG           ulRegionArtIdx;
-    ULONG           ulNextRegionIdx;
-    ULONG           ulFirstExtCkIdx;
-    WAVELINK        WaveLink;
-    WSMPL           WSMP;
-    WLOOP           WLOOP[1];
-} DMUS_REGION;
+struct _DMUS_INSTRUMENT {
+	ULONG ulPatch;
+	ULONG ulFirstRegionIdx;             
+	ULONG ulGlobalArtIdx;
+	ULONG ulFirstExtCkIdx;
+	ULONG ulCopyrightIdx;
+	ULONG ulFlags;                        
+};
 
-typedef struct _DMUS_LFOPARAMS
-{
-    PCENT       pcFrequency;
-    TCENT       tcDelay;
-    GCENT       gcVolumeScale;
-    PCENT       pcPitchScale;
-    GCENT       gcMWToVolume;
-    PCENT       pcMWToPitch;
-} DMUS_LFOPARAMS;
+struct _DMUS_REGION {
+	RGNRANGE RangeKey;
+	RGNRANGE RangeVelocity;
+	USHORT   fusOptions;
+	USHORT   usKeyGroup;
+	ULONG    ulRegionArtIdx;
+	ULONG    ulNextRegionIdx;
+	ULONG    ulFirstExtCkIdx;
+	WAVELINK WaveLink;
+	WSMPL    WSMP;
+	WLOOP    WLOOP[1];
+};
 
-typedef struct _DMUS_VEGPARAMS
-{
-    TCENT       tcAttack;
-    TCENT       tcDecay;
-    PERCENT     ptSustain;
-    TCENT       tcRelease;
-    TCENT       tcVel2Attack;
-    TCENT       tcKey2Decay;
-} DMUS_VEGPARAMS;
+struct _DMUS_LFOPARAMS {
+	PCENT pcFrequency;
+	TCENT tcDelay;
+	GCENT gcVolumeScale;
+	PCENT pcPitchScale;
+	GCENT gcMWToVolume;
+	PCENT pcMWToPitch;
+};
 
-typedef struct _DMUS_PEGPARAMS
-{
-    TCENT       tcAttack;
-    TCENT       tcDecay;
-    PERCENT     ptSustain;
-    TCENT       tcRelease;
-    TCENT       tcVel2Attack;
-    TCENT       tcKey2Decay;
-    PCENT       pcRange;
-} DMUS_PEGPARAMS;
+struct _DMUS_VEGPARAMS {
+	TCENT   tcAttack;
+	TCENT   tcDecay;
+	PERCENT ptSustain;
+	TCENT   tcRelease;
+	TCENT   tcVel2Attack;
+	TCENT   tcKey2Decay;
+};
 
-typedef struct _DMUS_MSCPARAMS
-{
-    PERCENT     ptDefaultPan;
-} DMUS_MSCPARAMS;
+struct _DMUS_PEGPARAMS {
+	TCENT   tcAttack;
+	TCENT   tcDecay;
+	PERCENT ptSustain;
+	TCENT   tcRelease;
+	TCENT   tcVel2Attack;
+	TCENT   tcKey2Decay;
+	PCENT   pcRange;
+};
 
-typedef struct _DMUS_ARTICPARAMS
-{
-    DMUS_LFOPARAMS   LFO;
-    DMUS_VEGPARAMS   VolEG;
-    DMUS_PEGPARAMS   PitchEG;
-    DMUS_MSCPARAMS   Misc;
-} DMUS_ARTICPARAMS;
+struct _DMUS_MSCPARAMS {
+	PERCENT ptDefaultPan;
+};
 
-typedef struct _DMUS_ARTICULATION
-{
-    ULONG           ulArt1Idx;
-    ULONG           ulFirstExtCkIdx;
-} DMUS_ARTICULATION;
+struct _DMUS_ARTICPARAMS {
+	DMUS_LFOPARAMS LFO;
+	DMUS_VEGPARAMS VolEG;
+	DMUS_PEGPARAMS PitchEG;
+	DMUS_MSCPARAMS Misc;
+};
 
-typedef struct _DMUS_ARTICULATION2
-{
-    ULONG           ulArtIdx;
-    ULONG           ulFirstExtCkIdx;
-    ULONG           ulNextArtIdx;
-} DMUS_ARTICULATION2;
+struct _DMUS_ARTICULATION {
+	ULONG ulArt1Idx;
+	ULONG ulFirstExtCkIdx;
+};
 
-typedef struct _DMUS_EXTENSIONCHUNK
-{
-    ULONG           cbSize;
-    ULONG           ulNextExtCkIdx;
-    FOURCC          ExtCkID;
-    BYTE            byExtCk[DMUS_MIN_DATA_SIZE];
-} DMUS_EXTENSIONCHUNK;
+struct _DMUS_ARTICULATION2 {
+	ULONG ulArtIdx;
+	ULONG ulFirstExtCkIdx;
+	ULONG ulNextArtIdx;
+};
 
+struct _DMUS_EXTENSIONCHUNK {
+	ULONG  cbSize;
+	ULONG  ulNextExtCkIdx;
+	FOURCC ExtCkID;                                      
+	BYTE   byExtCk[DMUS_MIN_DATA_SIZE];
+};
 
-typedef struct _DMUS_COPYRIGHT
-{
-    ULONG           cbSize;
-    BYTE            byCopyright[DMUS_MIN_DATA_SIZE];
-} DMUS_COPYRIGHT;
+struct _DMUS_COPYRIGHT {
+	ULONG cbSize;
+	BYTE  byCopyright[DMUS_MIN_DATA_SIZE];
+};
 
-typedef struct _DMUS_WAVEDATA
-{
-    ULONG           cbSize;
-    BYTE            byData[DMUS_MIN_DATA_SIZE];
-} DMUS_WAVEDATA;
+struct _DMUS_WAVEDATA {
+	ULONG cbSize;
+	BYTE  byData[DMUS_MIN_DATA_SIZE]; 
+};
 
-typedef struct _DMUS_WAVE
-{
-    ULONG           ulFirstExtCkIdx;
-    ULONG           ulCopyrightIdx;
-    ULONG           ulWaveDataIdx;
-    WAVEFORMATEX    WaveformatEx;
-} DMUS_WAVE;
+struct _DMUS_WAVE {
+	ULONG        ulFirstExtCkIdx;
+	ULONG        ulCopyrightIdx;
+	ULONG        ulWaveDataIdx;
+	WAVEFORMATEX WaveformatEx;
+};
 
-typedef struct _DMUS_NOTERANGE
-{
-    DWORD           dwLowNote;
-    DWORD           dwHighNote;
-} DMUS_NOTERANGE, *LPDMUS_NOTERANGE;
+struct _DMUS_NOTERANGE {
+	DWORD dwLowNote;
+	DWORD dwHighNote;
+};
 
-typedef struct _DMUS_WAVEARTDL
-{
-    ULONG               ulDownloadIdIdx;
-    ULONG               ulBus;
-    ULONG               ulBuffers;
-    ULONG               ulMasterDLId;
-    USHORT              usOptions;
-}   DMUS_WAVEARTDL, *LPDMUS_WAVEARTDL;
+struct _DMUS_WAVEARTDL {
+	ULONG  ulDownloadIdIdx;
+	ULONG  ulBus;
+	ULONG  ulBuffers;
+	ULONG  ulMasterDLId;
+	USHORT usOptions;
+};
 
-typedef struct _DMUS_WAVEDL
-{
-    ULONG               cbWaveData;
-}   DMUS_WAVEDL, *LPDMUS_WAVEDL;
+struct _DMUS_WAVEDL {
+	ULONG cbWaveData;
+};
 
 #endif /* __WINE_DMUSIC_DLS_H */

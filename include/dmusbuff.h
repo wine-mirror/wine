@@ -1,6 +1,6 @@
 /* DirectMusic Buffer Format
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,31 @@
 #ifndef __WINE_DMUSIC_BUFFER_H
 #define __WINE_DMUSIC_BUFFER_H
 
-#include <pshpack4.h>
-
 /*****************************************************************************
- * Definitions
+ * Misc. definitions
  */
-#define DMUS_EVENT_STRUCTURED   0x00000001
 #define QWORD_ALIGN(x) (((x) + 7) & ~7)
 #define DMUS_EVENT_SIZE(cb) QWORD_ALIGN(sizeof(DMUS_EVENTHEADER) + cb)
 
 /*****************************************************************************
+ * Flags
+ */
+#define DMUS_EVENT_STRUCTURED   0x1
+
+/*****************************************************************************
  * Structures
  */
-typedef struct _DMUS_EVENTHEADER
-{
+/* typedef definitions */
+typedef struct _DMUS_EVENTHEADER DMUS_EVENTHEADER, *LPDMUS_EVENTHEADER;
+
+/* actual structure*/ 
+#include <pshpack4.h>
+struct _DMUS_EVENTHEADER {
     DWORD           cbEvent;
     DWORD           dwChannelGroup;
     REFERENCE_TIME  rtDelta;
     DWORD           dwFlags;
-} DMUS_EVENTHEADER, *LPDMUS_EVENTHEADER;
-
+};
 #include <poppack.h>
 
 #endif /* __WINE_DMUSIC_BUFFER_H */

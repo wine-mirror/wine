@@ -1,6 +1,6 @@
 /* DirectMusicSynthesizer Private Include
  *
- * Copyright (C) 2003 Rok Mandeljc
+ * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,19 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "wingdi.h"
-#include "dmusicc.h"
+#include "winuser.h"
+
+#include "wine/debug.h"
+#include "wine/list.h"
+#include "wine/unicode.h"
+#include "winreg.h"
+
 #include "dmusici.h"
-#include "dmusics.h"
-#include "dmplugin.h"
 #include "dmusicf.h"
-#include "dsound.h"
+#include "dmusics.h"
 
 /*****************************************************************************
  * Interfaces
@@ -49,20 +52,13 @@ extern ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl;
 /*****************************************************************************
  * ClassFactory
  */
-/* can support IID_IDirectMusicSynth and IID_IDirectMusicSynth8
- * return always an IDirectMusicSynthImpl
- */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynth (LPCGUID lpcGUID, LPDIRECTMUSICSYNTH8* ppDMSynth, LPUNKNOWN pUnkOuter);
-/* can support IID_IDirectMusicSynthSink
- * return always an IDirectMusicSynthSinkImpl
- */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSink (LPCGUID lpcGUID, LPDIRECTMUSICSYNTHSINK* ppDMSynthSink, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 
 /*****************************************************************************
  * IDirectMusicSynth8Impl implementation structure
  */
-struct IDirectMusicSynth8Impl
-{
+struct IDirectMusicSynth8Impl {
   /* IUnknown fields */
   ICOM_VFIELD(IDirectMusicSynth8);
   DWORD          ref;
@@ -106,8 +102,7 @@ extern HRESULT WINAPI IDirectMusicSynth8Impl_AssignChannelToBuses (LPDIRECTMUSIC
 /*****************************************************************************
  * IDirectMusicSynthSinkImpl implementation structure
  */
-struct IDirectMusicSynthSinkImpl
-{
+struct IDirectMusicSynthSinkImpl {
   /* IUnknown fields */
   ICOM_VFIELD(IDirectMusicSynthSink);
   DWORD          ref;
