@@ -1363,6 +1363,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
         glClearStencil(Stencil);
         checkGLcall("glClearStencil");
         glMask = glMask | GL_STENCIL_BUFFER_BIT;
+        glStencilMask(0xFFFFFFFF);
     }
 
     if (Flags & D3DCLEAR_ZBUFFER) {
@@ -1419,6 +1420,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
     /* Restore the old values (why..?) */
     if (Flags & D3DCLEAR_STENCIL) {
         glClearStencil(old_stencil_clear_value);
+        glStencilMask(This->StateBlock->renderstate[D3DRS_STENCILWRITEMASK]);
     }    
     if (Flags & D3DCLEAR_ZBUFFER) {
         glDepthMask(old_ztest);
