@@ -148,6 +148,11 @@
 
 #define CP_ACP					0
 #define CP_OEMCP				1
+#define CP_MACCP				2
+#define CP_THREAD_ACP				3
+#define CP_SYMBOL				42
+#define CP_UTF7					65000
+#define CP_UTF8					65001
 
 #define WC_DEFAULTCHECK				0x00000100
 #define WC_COMPOSITECHECK			0x00000200
