@@ -1127,6 +1127,7 @@
 
 # Filesystem
 @ cdecl wine_nt_to_unix_file_name(ptr ptr long long)
+@ cdecl __wine_init_windows_dir(wstr wstr)
 
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them

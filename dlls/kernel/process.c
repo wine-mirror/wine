@@ -790,10 +790,12 @@ done:
  */
 static void init_windows_dirs(void)
 {
+    extern void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir );
+
     static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
     static const WCHAR default_windirW[] = {'c',':','\\','w','i','n','d','o','w','s',0};
-    static const WCHAR default_sysdirW[] = {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',0};
+    static const WCHAR default_sysdirW[] = {'\\','s','y','s','t','e','m',0};
 
     DWORD len;
     WCHAR *buffer;
@@ -804,11 +806,7 @@ static void init_windows_dirs(void)
         GetEnvironmentVariableW( windirW, buffer, len );
         DIR_Windows = buffer;
     }
-    else
-    {
-        DIR_Windows = default_windirW;
-        SetEnvironmentVariableW( windirW, DIR_Windows );
-    }
+    else DIR_Windows = default_windirW;
 
     if ((len = GetEnvironmentVariableW( winsysdirW, NULL, 0 )))
     {
@@ -818,8 +816,11 @@ static void init_windows_dirs(void)
     }
     else
     {
-        DIR_System = default_sysdirW;
-        SetEnvironmentVariableW( winsysdirW, DIR_System );
+        len = strlenW( DIR_Windows );
+        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) + sizeof(default_sysdirW) );
+        memcpy( buffer, DIR_Windows, len * sizeof(WCHAR) );
+        memcpy( buffer + len, default_sysdirW, sizeof(default_sysdirW) );
+        DIR_System = buffer;
     }
 
     if (GetFileAttributesW( DIR_Windows ) == INVALID_FILE_ATTRIBUTES)
@@ -831,6 +832,9 @@ static void init_windows_dirs(void)
 
     TRACE_(file)( "WindowsDir = %s\n", debugstr_w(DIR_Windows) );
     TRACE_(file)( "SystemDir  = %s\n", debugstr_w(DIR_System) );
+
+    /* set the directories in ntdll too */
+    __wine_init_windows_dir( DIR_Windows, DIR_System );
 }
 
 
@@ -839,7 +843,7 @@ static void init_windows_dirs(void)
  *
  * Main process initialisation code
  */
-static BOOL process_init( char *argv[], char **environ )
+static BOOL process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     BOOL ret;
@@ -926,7 +930,7 @@ static BOOL process_init( char *argv[], char **environ )
     LOCALE_Init();
 
     /* Copy the parent environment */
-    if (!build_initial_environment( environ )) return FALSE;
+    if (!build_initial_environment( __wine_main_environ )) return FALSE;
 
     /* Create device symlinks */
     VOLUME_CreateDevices();
@@ -1001,9 +1005,7 @@ void __wine_kernel_init(void)
     PEB *peb = NtCurrentTeb()->Peb;
 
     /* Initialize everything */
-    if (!process_init( __wine_main_argv, __wine_main_environ )) exit(1);
-    /* update argc in case options have been removed */
-    for (__wine_main_argc = 0; __wine_main_argv[__wine_main_argc]; __wine_main_argc++) /*nothing*/;
+    if (!process_init()) exit(1);
 
     __wine_main_argv++;  /* remove argv[0] (wine itself) */
     __wine_main_argc--;

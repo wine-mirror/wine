@@ -91,7 +91,7 @@ static UINT tls_module_count;      /* number of modules with TLS directory */
 static UINT tls_total_size;        /* total size of TLS storage */
 static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
 
-static UNICODE_STRING system_dir;  /* system directory */
+UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
 
 static CRITICAL_SECTION loader_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -1538,7 +1538,8 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
             TRACE("Loaded module %s (%s) at %p\n",
                   debugstr_w(filename), filetype, (*pwm)->ldr.BaseAddress);
             if (!TRACE_ON(module))
-                TRACE_(loaddll)("Loaded module %s : %s\n", debugstr_w(filename), filetype);
+                TRACE_(loaddll)("Loaded module %s : %s\n",
+                                debugstr_w((*pwm)->ldr.FullDllName.Buffer), filetype);
             /* Set the ldr.LoadCount here so that an attach failure will */
             /* decrement the dependencies through the MODULE_FreeLibrary call. */
             (*pwm)->ldr.LoadCount = 1;
@@ -1837,43 +1838,6 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 
 
 /******************************************************************
- *		init_system_dir
- *
- * System dir initialization once kernel32 has been loaded.
- */
-static inline void init_system_dir(void)
-{
-    PLIST_ENTRY mark, entry;
-    LPWSTR buffer, p;
-
-    if (!MODULE_GetSystemDirectory( &system_dir ))
-    {
-        ERR( "Couldn't get system dir\n");
-        exit(1);
-    }
-
-    /* prepend the system dir to the name of the already created modules */
-    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
-
-        assert( mod->Flags & LDR_WINE_INTERNAL );
-
-        buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                  system_dir.Length + mod->FullDllName.Length + 2*sizeof(WCHAR) );
-        if (!buffer) continue;
-        strcpyW( buffer, system_dir.Buffer );
-        p = buffer + strlenW( buffer );
-        if (p > buffer && p[-1] != '\\') *p++ = '\\';
-        strcpyW( p, mod->FullDllName.Buffer );
-        RtlInitUnicodeString( &mod->FullDllName, buffer );
-        RtlInitUnicodeString( &mod->BaseDllName, p );
-    }
-}
-
-
-/******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
  * FIXME: the arguments are not correct, main_file is a Wine invention.
@@ -1886,8 +1850,6 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     PEB *peb = NtCurrentTeb()->Peb;
     UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
-
-    init_system_dir();
 
     /* allocate the modref for the main exe */
     if (!(wm = alloc_module( peb->ImageBaseAddress, main_exe_name->Buffer )))
@@ -2022,6 +1984,39 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
  found:
     if (section) *section = sec;
     return (char *)module + sec->PointerToRawData + (rva - sec->VirtualAddress);
+}
+
+
+/******************************************************************
+ *		__wine_init_windows_dir   (NTDLL.@)
+ *
+ * Windows and system dir initialization once kernel32 has been loaded.
+ */
+void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
+{
+    PLIST_ENTRY mark, entry;
+    LPWSTR buffer, p;
+
+    RtlCreateUnicodeString( &system_dir, sysdir );
+
+    /* prepend the system dir to the name of the already created modules */
+    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    {
+        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
+
+        assert( mod->Flags & LDR_WINE_INTERNAL );
+
+        buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                  system_dir.Length + mod->FullDllName.Length + 2*sizeof(WCHAR) );
+        if (!buffer) continue;
+        strcpyW( buffer, system_dir.Buffer );
+        p = buffer + strlenW( buffer );
+        if (p > buffer && p[-1] != '\\') *p++ = '\\';
+        strcpyW( p, mod->FullDllName.Buffer );
+        RtlInitUnicodeString( &mod->FullDllName, buffer );
+        RtlInitUnicodeString( &mod->BaseDllName, p );
+    }
 }
 
 

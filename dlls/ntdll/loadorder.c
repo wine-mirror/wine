@@ -471,30 +471,6 @@ static BOOL get_registry_value( HKEY hkey, const WCHAR *module, enum loadorder_t
 
 
 /***************************************************************************
- *	MODULE_GetSystemDirectory
- *
- * Retrieve the system directory. The string must be freed by the caller.
- */
-BOOL MODULE_GetSystemDirectory( UNICODE_STRING *sysdir )
-{
-    static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
-    UNICODE_STRING name;
-
-    RtlInitUnicodeString( &name, winsysdirW );
-    sysdir->MaximumLength = 0;
-    if (RtlQueryEnvironmentVariable_U( NULL, &name, sysdir ) != STATUS_BUFFER_TOO_SMALL)
-        return FALSE;
-    sysdir->MaximumLength = sysdir->Length + sizeof(WCHAR);
-    if (!(sysdir->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, sysdir->MaximumLength )))
-        return FALSE;
-    if (RtlQueryEnvironmentVariable_U( NULL, &name, sysdir ) == STATUS_SUCCESS)
-        return TRUE;
-    RtlFreeUnicodeString( sysdir );
-    return FALSE;
-}
-
-
-/***************************************************************************
  *	MODULE_GetLoadOrderW	(internal)
  *
  * Locate the loadorder of a module.
@@ -513,7 +489,6 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
                                           'D','l','l','O','v','e','r','r','i','d','e','s',0};
 
     static HKEY std_key = (HKEY)-1;  /* key to standard section, cached */
-    static UNICODE_STRING sysdir;
 
     HKEY app_key = 0;
     WCHAR *module, *basename;
@@ -528,11 +503,10 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
 
     /* Strip path information if the module resides in the system directory
      */
-    if (!sysdir.Buffer && !MODULE_GetSystemDirectory( &sysdir )) return;
     RtlInitUnicodeString( &path_str, path );
-    if (RtlPrefixUnicodeString( &sysdir, &path_str, TRUE ))
+    if (RtlPrefixUnicodeString( &system_dir, &path_str, TRUE ))
     {
-        const WCHAR *p = path + sysdir.Length / sizeof(WCHAR);
+        const WCHAR *p = path + system_dir.Length / sizeof(WCHAR);
         while (*p == '\\' || *p == '/') p++;
         if (!strchrW( p, '\\' ) && !strchrW( p, '/' )) path = p;
     }

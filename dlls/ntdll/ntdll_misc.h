@@ -59,7 +59,6 @@ extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
 extern void DECLSPEC_NORETURN server_abort_thread( int status );
 
 /* module handling */
-extern BOOL MODULE_GetSystemDirectory( UNICODE_STRING *sysdir );
 extern void RELAY_InitDebugLists(void);
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, const WCHAR *user );
@@ -67,6 +66,7 @@ extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY 
                                      FARPROC origfun, DWORD ordinal, const WCHAR *user );
 extern void RELAY_SetupDLL( HMODULE hmod );
 extern void SNOOP_SetupDLL( HMODULE hmod );
+extern UNICODE_STRING system_dir;
 
 /* redefine these to make sure we don't reference kernel symbols */
 #define GetProcessHeap()       (NtCurrentTeb()->Peb->ProcessHeap)
