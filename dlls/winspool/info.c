@@ -101,7 +101,10 @@ static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ',
 				  'i','l','e',0};
 static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
 static const WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
+static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
+static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
+static const WCHAR emptyStringW[] = {0};
 
 static const WCHAR May_Delete_Value[] = {'W','i','n','e','M','a','y','D','e','l','e','t','e','M','e',0};
 
@@ -3114,66 +3117,102 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     return TRUE;
 }
 
+
+/******************************************************************************
+ *		GetDefaultPrinterW   (WINSPOOL.@)
+ *
+ * FIXME
+ *	This function must read the value from data 'device' of key
+ *	HCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows
+ */
+BOOL WINAPI GetDefaultPrinterW(LPWSTR name, LPDWORD namesize)
+{
+    BOOL  retval = TRUE;
+    DWORD insize, len;
+    WCHAR *buffer, *ptr;
+
+    if (!namesize)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* make the buffer big enough for the stuff from the profile/registry,
+     * the content must fit into the local buffer to compute the correct
+     * size even if the extern buffer is to small or not given.
+     * (20 for ,driver,port) */
+    insize = *namesize;
+    len = max(100, (insize + 20));
+    buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (!GetProfileStringW(windowsW, deviceW, emptyStringW, buffer, len))
+    {
+        SetLastError (ERROR_FILE_NOT_FOUND);
+        retval = FALSE;
+        goto end;
+    }
+    TRACE("%s\n", debugstr_w(buffer));
+
+    if ((ptr = strchrW(buffer, ',')) == NULL)
+    {
+        SetLastError(ERROR_INVALID_NAME);
+        retval = FALSE;
+        goto end;
+    }
+
+    *ptr = 0;
+    *namesize = strlenW(buffer) + 1;
+    if(!name || (*namesize > insize))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        retval = FALSE;
+        goto end;
+    }
+    strcpyW(name, buffer);
+
+end:
+    if(buffer) HeapFree( GetProcessHeap(), 0, buffer);
+    return retval;
+}
+
+
 /******************************************************************************
  *		GetDefaultPrinterA   (WINSPOOL.@)
  */
 BOOL WINAPI GetDefaultPrinterA(LPSTR name, LPDWORD namesize)
 {
-   char *ptr;
+    BOOL  retval = TRUE;
+    DWORD insize = 0;
+    WCHAR *bufferW = NULL;
 
-   if (*namesize < 1)
-   {
-      SetLastError (ERROR_INSUFFICIENT_BUFFER);
-      return FALSE;
-   }
+    if (!namesize)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
-   if (!GetProfileStringA ("windows", "device", "", name, *namesize))
-   {
-      SetLastError (ERROR_FILE_NOT_FOUND);
-      return FALSE;
-   }
+    if(name && *namesize) {
+	insize = *namesize;
+	bufferW = HeapAlloc( GetProcessHeap(), 0, insize * sizeof(WCHAR));
+    }
 
-   if ((ptr = strchr (name, ',')) == NULL)
-   {
-      SetLastError (ERROR_FILE_NOT_FOUND);
-      return FALSE;
-   }
+    if(!GetDefaultPrinterW( bufferW, namesize)) {
+	retval = FALSE;
+	goto end;
+    }
 
-   *ptr = '\0';
-   *namesize = strlen (name) + 1;
-   return TRUE;
-}
+    *namesize = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, name, insize,
+                                    NULL, NULL);
+    if (!*namesize)
+    {
+        *namesize = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        retval = FALSE;
+    }
+    TRACE("0x%08lx/0x%08lx:%s\n", *namesize, insize, debugstr_w(bufferW));
 
-
-/******************************************************************************
- *		GetDefaultPrinterW   (WINSPOOL.@)
- */
-BOOL WINAPI GetDefaultPrinterW(LPWSTR name, LPDWORD namesize)
-{
-   char *buf;
-   BOOL  ret;
-
-   if (*namesize < 1)
-   {
-      SetLastError (ERROR_INSUFFICIENT_BUFFER);
-      return FALSE;
-   }
-
-   buf = HeapAlloc (GetProcessHeap (), 0, *namesize);
-   ret = GetDefaultPrinterA (buf, namesize);
-   if (ret)
-   {
-       DWORD len = MultiByteToWideChar (CP_ACP, 0, buf, -1, name, *namesize);
-       if (!len)
-       {
-           SetLastError (ERROR_INSUFFICIENT_BUFFER);
-           ret = FALSE;
-       }
-       else *namesize = len;
-   }
-
-   HeapFree (GetProcessHeap (), 0, buf);
-   return ret;
+end:
+    if(bufferW) HeapFree( GetProcessHeap(), 0, bufferW);
+    return retval;
 }
 
 
