@@ -180,7 +180,15 @@ Support programs, libraries, etc:
 	libs/wpp/		- C preprocessor
 	loader/			- the main Wine loader
 	server/			- the Wine server
-	tools/			- relay code builder, resource compiler, etc.
+	tools/			- various tools used to build/check Wine
+	tools/widl		- the IDL compiler
+	tools/winapi{,_check}	- A Win32 API checker
+	tools/winebuild		- Wine build tool
+	tools/winedump		- a .DLL dump utility
+	tools/winegcc		- a MinGW command line compatible gcc wrapper
+	tools/wmc		- the message compiler
+	tools/wpp		- the C pre-processor library
+	tools/wrc		- the resource compiler
 
 
 Miscellaneous:
@@ -190,7 +198,7 @@ Note: these directories will ultimately get moved into their
 respective dlls.
 
 	files/			- KERNEL file I/O
-	misc/			- KERNEL shell, registry, winsock, etc.
+	misc/			- KERNEL registry 
 
 	graphics/		- GDI graphics drivers
 	objects/		- GDI logical objects
