@@ -852,6 +852,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
 {
     HANDLE h1, h2;
     BY_HANDLE_FILE_INFORMATION info;
+    FILETIME filetime;
     DWORD count;
     BOOL ret = FALSE;
     char buffer[2048];
@@ -900,6 +901,10 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
     }
     ret =  TRUE;
 done:
+    /* Maintain the timestamp of source file to destination file */
+    GetFileTime(h1, NULL, NULL, &filetime);
+    SetFileTime(h2, NULL, NULL, &filetime);
+
     CloseHandle( h1 );
     CloseHandle( h2 );
     return ret;
