@@ -29,9 +29,9 @@
 #include <ctype.h>
 
 #include "wine/exception.h"
+#include "stackframe.h"
 #include "builtin16.h"
 #include "module.h"
-#include "stackframe.h"
 
 #include "build.h"
 

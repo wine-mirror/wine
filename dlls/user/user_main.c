@@ -32,7 +32,6 @@
 #include "global.h"
 #include "message.h"
 #include "user.h"
-#include "thread.h"
 #include "win.h"
 #include "wine/debug.h"
 

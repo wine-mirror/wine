@@ -40,6 +40,7 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "thread.h"
 #include "winternl.h"
 #include "global.h"
 #include "wine/library.h"

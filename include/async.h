@@ -26,6 +26,7 @@
 #ifndef __WINE_ASYNC_H
 #define __WINE_ASYNC_H
 
+#include "thread.h"
 #include "wine/server.h"
 #include "winternl.h"
 

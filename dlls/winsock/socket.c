@@ -123,6 +123,7 @@
 #include "winnt.h"
 #include "wownt32.h"
 #include "iphlpapi.h"
+#include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

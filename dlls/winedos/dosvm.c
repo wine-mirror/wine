@@ -45,12 +45,12 @@
 #include "winnt.h"
 #include "wincon.h"
 
+#include "thread.h"
 #include "msdos.h"
 #include "file.h"
 #include "miscemu.h"
 #include "dosexe.h"
 #include "dosvm.h"
-#include "thread.h"
 #include "wine/debug.h"
 #include "excpt.h"
 

@@ -22,7 +22,6 @@
 #include "wownt32.h"
 #include "winerror.h"
 #include "message.h"
-#include "thread.h"
 #include "win.h"
 #include "winproc.h"
 #include "wine/debug.h"

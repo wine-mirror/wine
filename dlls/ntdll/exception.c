@@ -26,6 +26,7 @@
 #include <signal.h>
 
 #include "windef.h"
+#include "thread.h"
 #include "winternl.h"
 #include "wine/exception.h"
 #include "wine/server.h"

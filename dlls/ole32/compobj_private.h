@@ -28,7 +28,7 @@
 
 #include "wtypes.h"
 #include "dcom.h"
-#include "thread.h"
+#include "winternl.h"
 
 /* exported interface */
 typedef struct tagXIF {

@@ -21,7 +21,7 @@
 #ifndef __WINE_WINE_SERVER_H
 #define __WINE_WINE_SERVER_H
 
-#include "thread.h"
+#include "winternl.h"
 #include "wine/exception.h"
 #include "wine/server_protocol.h"
 

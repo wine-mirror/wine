@@ -21,6 +21,7 @@
 #ifndef __WINE_THREAD_H
 #define __WINE_THREAD_H
 
+#define WINE_NO_TEB
 #include "winternl.h"
 #include "wine/windef16.h"
 
@@ -51,6 +52,8 @@ struct debug_info
   ie4       0x40
   PESHiELD  0x23/0x30 (win95)
 */
+#ifndef WINE_TEB_DEFINED
+#define WINE_TEB_DEFINED
 typedef struct _TEB
 {
     NT_TIB       Tib;            /* 12-  00 Thread information block */
@@ -126,6 +129,7 @@ typedef struct _TEB
     DWORD        pad9[24];                   /* --n f20 */
     PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
 } TEB;
+#endif /* WINE_TEB_DEFINED */
 
 /* Thread exception flags */
 #define TEBF_WIN32  0x0001

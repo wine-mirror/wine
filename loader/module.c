@@ -34,6 +34,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "heap.h"
+#include "thread.h"
 #include "file.h"
 #include "module.h"
 

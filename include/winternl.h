@@ -30,35 +30,6 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 
-/***********************************************************************
- * TEB data structure
- */
-#if 0
-typedef struct _TEB
-{
-    NT_TIB          Tib;                        /* 000 */
-    PVOID           EnvironmentPointer;         /* 01c */
-    CLIENT_ID       ClientId;                   /* 020 */
-    PVOID           ActiveRpcHandle;            /* 028 */
-    PVOID           ThreadLocalStoragePointer;  /* 02c */
-    PPEB            Peb;                        /* 030 */
-    ULONG           LastErrorValue;             /* 034 */
-    BYTE            __pad038[140];              /* 038 */
-    ULONG           CurrentLocale;              /* 0c4 */
-    BYTE            __pad0c8[1752];             /* 0c8 */
-    PVOID           Reserved2[278];             /* 7a0 */
-    UNICODE_STRING  StaticUnicodeString;        /* bf8 used by advapi32 */
-    WCHAR           StaticUnicodeBuffer[261];   /* c00 used by advapi32 */
-    PVOID           DeallocationStack;          /* e0c */
-    PVOID           TlsSlots[64];               /* e10 */
-    BYTE            Reserved3[8];               /* f10 */
-    PVOID           Reserved4[26];              /* f18 */
-    PVOID           ReservedForOle;             /* f80 Windows 2000 only */
-    PVOID           Reserved5[4];               /* f84 */
-    PVOID           TlsExpansionSlots;          /* f94 */
-} TEB, *PTEB;
-#endif
-
 /**********************************************************************
  * Fundamental types and data structures
  */
@@ -174,6 +145,42 @@ typedef struct _PEB
     ULONG                        SessionId;          /* 1d4 */
 } PEB, *PPEB;
 
+
+/***********************************************************************
+ * TEB data structure
+ */
+#if defined(_NTSYSTEM_) || defined(_KERNEL32_)  /* hack, should go away */
+# define WINE_NO_TEB
+#endif
+
+#ifndef WINE_NO_TEB  /* don't define TEB if included from thread.h */
+# ifndef WINE_TEB_DEFINED
+# define WINE_TEB_DEFINED
+typedef struct _TEB
+{
+    NT_TIB          Tib;                        /* 000 */
+    PVOID           EnvironmentPointer;         /* 01c */
+    CLIENT_ID       ClientId;                   /* 020 */
+    PVOID           ActiveRpcHandle;            /* 028 */
+    PVOID           ThreadLocalStoragePointer;  /* 02c */
+    PPEB            Peb;                        /* 030 */
+    ULONG           LastErrorValue;             /* 034 */
+    BYTE            __pad038[140];              /* 038 */
+    ULONG           CurrentLocale;              /* 0c4 */
+    BYTE            __pad0c8[1752];             /* 0c8 */
+    PVOID           Reserved2[278];             /* 7a0 */
+    UNICODE_STRING  StaticUnicodeString;        /* bf8 used by advapi32 */
+    WCHAR           StaticUnicodeBuffer[261];   /* c00 used by advapi32 */
+    PVOID           DeallocationStack;          /* e0c */
+    PVOID           TlsSlots[64];               /* e10 */
+    BYTE            Reserved3[8];               /* f10 */
+    PVOID           Reserved4[26];              /* f18 */
+    PVOID           ReservedForOle;             /* f80 Windows 2000 only */
+    PVOID           Reserved5[4];               /* f84 */
+    PVOID           TlsExpansionSlots;          /* f94 */
+} TEB, *PTEB;
+# endif /* WINE_TEB_DEFINED */
+#endif  /* WINE_NO_TEB */
 
 /***********************************************************************
  * Enums

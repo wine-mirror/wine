@@ -30,7 +30,6 @@
 
 #include "winternl.h"
 #include "wine/exception.h"
-#include "thread.h"
 #include "msvcrt.h"
 
 #include "msvcrt/setjmp.h"

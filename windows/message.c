@@ -37,7 +37,6 @@
 #include "controls.h"
 #include "dde.h"
 #include "message.h"
-#include "thread.h"
 #include "user.h"
 #include "win.h"
 #include "winpos.h"

@@ -27,7 +27,7 @@
 
 #include "windef.h"
 #include "winerror.h"
-
+#include "thread.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"
 #include "wine/library.h"
