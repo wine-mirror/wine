@@ -954,11 +954,12 @@ BOOL WINAPI PrintDlgA(
 				    sizeof(PRINT_PTRA));
 	PrintStructures->lpPrintDlg = lppd;
 
-	/* and create & process the dialog 
+	/* and create & process the dialog .
+	 * -1 is failure, 0 is broken hwnd, everything else is ok.
 	 */
-	bRet = DialogBoxIndirectParamA(hInst, ptr, lppd->hwndOwner,
+	bRet = (0<DialogBoxIndirectParamA(hInst, ptr, lppd->hwndOwner,
 				       PrintDlgProcA,
-				       (LPARAM)PrintStructures);
+				       (LPARAM)PrintStructures));
 
 	if(bRet) {
 	    DEVMODEA *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
