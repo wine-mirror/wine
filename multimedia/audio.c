@@ -141,6 +141,9 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 	    return MMSYSERR_NOERROR;
 	}
 	break;
+    default:
+	FIXME(wave, "Unknown CB message %u\n", wMsg);
+	break;
     }
     return 0;
 }
@@ -162,7 +165,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
     LPBYTE		lpData;
     int			count;
     audio_buf_info 	abinfo;
-    
+
     for (;;) {
 	/* get number of writable fragments */
 	if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOSPACE, &abinfo) == -1) {
@@ -223,8 +226,10 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 	}  else	{
 	    count = write(wwo->unixdev, lpData + wwo->dwOffCurrHdr, wwo->dwRemain);
 	    TRACE(wave, "write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, wwo->dwRemain, count);
-	    wwo->dwOffCurrHdr += count;
-	    wwo->dwRemain = wwo->dwFragmentSize;
+	    if (count > 0) {
+		wwo->dwOffCurrHdr += wwo->dwRemain;
+		wwo->dwRemain = wwo->dwFragmentSize;
+	    }
 	}
     }
 }

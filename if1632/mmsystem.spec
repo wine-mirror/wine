@@ -1,5 +1,6 @@
 name	mmsystem
 type	win16
+init	MMSYSTEM_LibMain
 
 #1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySoundA
@@ -147,7 +148,7 @@ type	win16
 1123   pascal  mmThreadIsCurrent(word) mmThreadIsCurrent16
 1124   pascal  mmThreadIsValid(word) mmThreadIsValid16
 1125   pascal  mmThreadGetTask(word) mmThreadGetTask16
-1150   pascal  mmShowMMCPLPropertySheet(word word word word word word word) mmShowMMCPLPropertySheet16
+1150   pascal  mmShowMMCPLPropertySheet(word str str str) mmShowMMCPLPropertySheet16
 
 1210   pascal  mmioOpen(str ptr long) mmioOpen16
 1211   pascal  mmioClose(word word) mmioClose16
@@ -175,4 +176,4 @@ type	win16
 #2006   stub    WINMMSL_THUNKDATA16
 
 # this is a wine only exported function. Is there another way to do it ?
-2047   pascal  WINE_mmThreadingEntryPoint(long) WINE_mmThreadingEntryPoint 
+2047   pascal  WINE_mmThreadEntryPoint(long) WINE_mmThreadEntryPoint

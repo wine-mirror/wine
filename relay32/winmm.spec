@@ -1,5 +1,6 @@
 name winmm
 type win32
+init WINMM_LibMain
 
   1 stdcall PlaySoundA(ptr long long) PlaySoundA
   2 stdcall WINMM_2(ptr long long) PlaySoundA

@@ -23,6 +23,11 @@ DLLS = \
 	kernel32.spec \
 	lz32.spec \
 	mpr.spec \
+	mcianim.spec \
+	mciavi.spec \
+	mcicda.spec \
+	mciseq.spec \
+	mciwave.spec \
 	msacm32.spec \
 	msnet32.spec \
 	msvfw32.spec \

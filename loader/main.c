@@ -17,7 +17,6 @@
 #include "main.h"
 #include "menu.h"
 #include "message.h"
-#include "multimedia.h"
 #include "dialog.h"
 #include "drive.h"
 #include "queue.h"
@@ -238,9 +237,6 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 
     /* Initialize cursor/icons */
     CURSORICON_Init();
-
-    /* Initialize multimedia */
-    if (!MULTIMEDIA_Init()) return FALSE;
 
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;

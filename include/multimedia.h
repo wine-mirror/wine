@@ -2,9 +2,10 @@
 
 /*****************************************************************************
  * Copyright 1998, Luiz Otavio L. Zorzella
+ *           1999, Eric Pouech
  *
  * File:      multimedia.h
- * Purpose:   multimedia declarations
+ * Purpose:   multimedia declarations (internal to multimedia DLLs)
  *
  *****************************************************************************
  */
@@ -44,7 +45,7 @@
 #endif
 
 typedef struct {
-	HDRVR16			hDrv;
+	HDRVR			hDrv;
 	DRIVERPROC16		driverProc;
 	MCI_OPEN_DRIVER_PARMS16	modp;
 	MCI_OPEN_PARMS16	mop;
@@ -62,41 +63,50 @@ extern WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
 typedef struct {
        DWORD			dwSignature;		/* 00 "BSIL" when ok, 0xDEADDEAD when being deleted */
-       DWORD			dwCounter;		/* 04 */
+       DWORD			dwCounter;		/* 04 > 1 when in mmThread functions */
        HANDLE			hThread;		/* 08 hThread */
-       DWORD                    dwThreadId;     	/* 0C */
-       FARPROC16		fpThread;		/* 10 segmented address of thread proc */
-       DWORD			dwThreadPmt;    	/* 14 parameter to be called upon thread creation */
-       DWORD                    dwUnknown3;     	/* 18 increment interlocked ? */
-       DWORD                    hEvent;     		/* 1C event */
-       DWORD                    dwUnknown5;     	/* 20 */
-       DWORD                    dwStatus;       	/* 24 0, 10, 20, 30 */
+       DWORD                    dwThreadID;     	/* 0C */
+       FARPROC16		fpThread;		/* 10 address of thread proc (segptr or lin depending on dwFlags) */
+       DWORD			dwThreadPmt;    	/* 14 parameter to be passed upon thread creation to fpThread */
+       DWORD                    dwSignalCount;	     	/* 18 counter used for signaling */
+       HANDLE                   hEvent;     		/* 1C event */
+       HANDLE                   hVxD;		     	/* 20 return from OpenVxDHandle */
+       DWORD                    dwStatus;       	/* 24 0x00, 0x10, 0x20, 0x30 */
        DWORD			dwFlags;		/* 28 dwFlags upon creation */
        HANDLE16			hTask;          	/* 2C handle to created task */
 } WINE_MMTHREAD;
 
-#define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
-#define MCI_GetOpenDrv(wDevID)	(&(MCI_GetDrv(wDevID)->mop))
+typedef enum {
+    MCI_MAP_NOMEM, 	/* ko, memory problem */
+    MCI_MAP_MSGERROR, 	/* ko, unknown message */
+    MCI_MAP_OK, 	/* ok, no memory allocated. to be sent to 16 bit proc. */
+    MCI_MAP_OKMEM, 	/* ok, some memory allocated, need to call MCI_UnMapMsg32ATo16. to be sent to 16 bit proc. */
+    MCI_MAP_PASS	/* ok, no memory allocated. to be sent to 32 bit proc */
+} MCI_MapType;
 
 /* function prototypes */
-extern BOOL MULTIMEDIA_Init(void);
+
+#define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
+#define MCI_GetOpenDrv(wDevID)	(&(MCI_GetDrv(wDevID)->mop))
 
 extern int    			MCI_DevIDToIndex(UINT16 wDevID);
 extern UINT16 			MCI_FirstDevID(void);
 extern UINT16 			MCI_NextDevID(UINT16 wDevID);
 extern BOOL 			MCI_DevIDValid(UINT16 wDevID);
 
-extern int			MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
-extern int			MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
+extern MCI_MapType		MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
+extern MCI_MapType		MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
 
 extern DWORD 			MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms);
 extern DWORD 			MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms);
 extern DWORD 			MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms);
 
-typedef LONG			(*MCIPROC16)(DWORD, HDRVR16,  WORD, DWORD, DWORD);
-typedef LONG			(*MCIPROC)(DWORD, HDRVR16, DWORD, DWORD, DWORD);
+typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
+typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
 
-extern WORD		   	MCI_GetDevType(LPCSTR str);
+extern WORD		   	MCI_GetDevTypeFromString(LPCSTR str);
+extern LPCSTR		   	MCI_GetStringFromDevType(WORD type);
+
 extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
 extern const char* 		MCI_CommandToString(UINT16 wMsg);
 
@@ -106,28 +116,34 @@ extern LPSTR			lpmciInstallNames;
 
 extern UINT16		WINAPI	MCI_DefYieldProc(UINT16 wDevID, DWORD data);
 
-typedef struct {
-    WORD	uDevType;
-    char*	lpstrName;
-    MCIPROC	lpfnProc;
-} MCI_WineDesc;
-
-extern	MCI_WineDesc		MCI_InternalDescriptors[];
-
 extern LRESULT			MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
 
-extern DWORD 			MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
+extern DWORD 			MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
+extern DWORD 			MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 extern DWORD 			MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
 
-LONG 				MCIWAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG 				MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 						   DWORD dwParam1, DWORD dwParam2);
-LONG 				MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG 				MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 						   DWORD dwParam1, DWORD dwParam2);
-LONG				MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG				MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 						      DWORD dwParam1, DWORD dwParam2);
-LONG				MCIANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG				MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 						   DWORD dwParam1, DWORD dwParam2);
-LONG				MCIAVI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG				MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 						  DWORD dwParam1, DWORD dwParam2);
+
+HINSTANCE16	WINAPI 		mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt);
+void    	WINAPI  	mmTaskBlock16(HINSTANCE16 hInst);
+LRESULT 	WINAPI 		mmTaskSignal16(HTASK16 ht);
+void    	WINAPI  	mmTaskYield16(void);
+
+void    	WINAPI  	WINE_mmThreadEntryPoint(DWORD _pmt);
+LRESULT 	WINAPI 		mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags);
+void 		WINAPI 		mmThreadSignal16(HANDLE16 hndl);
+void    	WINAPI 		mmThreadBlock16(HANDLE16 hndl);
+HANDLE16 	WINAPI 		mmThreadGetTask16(HANDLE16 hndl);
+BOOL16   	WINAPI 		mmThreadIsValid16(HANDLE16 hndl);
+BOOL16  	WINAPI 		mmThreadIsCurrent16(HANDLE16 hndl);
 
 #endif /* __WINE_MULTIMEDIA_H */

@@ -16,6 +16,11 @@ imagehlp.c
 imm32.c
 kernel32.c
 lz32.c
+mcianim.c
+mciavi.c
+mcicda.c
+mciseq.c
+mciwave.c
 mpr.c
 msacm32.c
 msnet32.c

@@ -15,6 +15,7 @@ services.
 1. Lowlevel layers
 
    Following lowlevel layers are implemented:
+
 1.1 (Waveform) Audio
 
    The API consists of the waveIn*/waveOut* functions found in
@@ -29,18 +30,18 @@ services.
 
    The implementation contains all features commonly used, but has several
    problems. For instance:
-      Writes and reads are not done asynchronously as they are supposed to
-   be done. This breaks some programs (soundrec.exe from the Windows applets),
-   but doesn't worry other programs. Some callbacks are probably done
-   incorrectly (there are reports of some broken multimedia applications,
-   but I haven't found one yet.)
+      Writes are not done asynchronously as they are supposed to be done.
+   This breaks some programs (soundrec.exe from the Windows applets),
+   but doesn't worry other programs. 
 
    TODO:
-   	- add asynchronous writes and reads (must use threads)
-	- check the callback functions
+   	- add asynchronous writes (must use threads)
 	- verify all functions for correctness
 	- add drivers for other soundsystems (Sun Audio, remote audio systems
 	  (using X extensions, ...), ALSA
+	- WaveHdr must be sent though mmsystem.c to get the linear address
+	  set correctly. An application calling directly (wod|wid)Message
+	  will fail
 
 1.2 Mixer
 
@@ -77,9 +78,10 @@ services.
           use existing instrument definition (from playmidi or kmid)
           with a .winerc option
         - have a look at OPL/3 ?
-	- a hack is used in mmsystem.c (setting reserved to the 32 bit linear
-	  address of the block whatever the call is made from 16 or 32 bits 
-	  code...). this should be made in midi.c I think
+	- MidiHdr must be sent though mmsystem.c to get the linear address
+	  set correctly. An application calling directly (wod|wid)Message
+	  will fail
+	- implement asynchronous playback of MidiHdr 
 
 1.4 Timers
 
@@ -92,7 +94,7 @@ services.
    and 'Pinball! SpaceCadet' at least start up.
 
    TODO:
-   	- Implemented asynchronous timers (using a thread probably)
+   	- Implemented asynchronous timers (using the service thread)
 
 1.5 MMIO
    
@@ -138,20 +140,19 @@ services.
    allocation and calls.
 
    The implementation is not complete.
+ 
+   MCI drivers are seen as regular WINE modules, and can be loaded 
+   (with a correct loadorder between builtin, native, elfdll, so), as
+   any other DLL. Please note, that MCI drivers module names must
+   bear the .drv extension to be correctly understood.
 
-   There is a first shot at using native (MS provided) MCI
-   drivers. For this to work, there are two .winerc options to be
-   used:
-	- key 'mci' in [option] section
+   The list of available MCI drivers is obtained as follows:
+	1/ key 'mci' in [option] section from .winerc (or wineconf)
 		mci=CDAUDIO:SEQUENCER
 	  gives the list of MCI drivers (names, in uppercase only) to
-	  be used in WINE. This list, when defined, supercedes the mci
+	  be used in WINE.
+	2/ This list, when defined, supercedes the mci
 	  key in c:\windows\system.ini
-        - key 'mciExternal' in [option] section
-		mciExternal=CDAUDIO
-	  gives the list of MCI drivers to be loaded from Windows
-	  installation. Since, drivers are DLLs, drivers are searched
-	  (and loaded) as DLLs are.
 
    TODO:
 	- support windows MCI drivers (should be possible for they usually 
@@ -164,6 +165,7 @@ services.
 	- implement other stuff as yet unknown
 	- in mciString(), make use of hiword from mciSendMessage
           return value to convert value into string...
+	- move mci drivers as regular DLLs (loading in wine, elfglue...)
 
    WINE implements several MCI midlevel drivers:
 
@@ -193,7 +195,12 @@ services.
    It uses the lowlevel audio API (although not abstracted correctly).
    FIXME: The MCI_STATUS command is broken.
 
-   TODO: - check for correctness
+   TODO: 
+	- check for correctness
+	- better use of asynchronous playback from low level
+   
+   Native MCIWAVE has been working but is currently blocked by
+   scheduling issues.
 
 2.3 MIDI/SEQUENCER
    
@@ -205,6 +212,9 @@ services.
    	- implement it correctly
 	- finish asynchronous commands
 
+   Native MCIMIDI has been working but is currently blocked by
+   scheduling issues.
+
 2.4 MCIANIM
 
    The implementation consists of stubs and is in multimedia/mcianim.c.
@@ -213,6 +223,14 @@ services.
    	- implement it, probably using xanim or something similair. Could
 	  also be implemented by using the Windows MCI video drivers.
 
+2.5 MCIAVI
+
+   The implementation consists of stubs and is in multimedia/mciavi.c.
+
+   TODO: 
+   	- implement it, probably using xanim or something similair. Could
+	  also be implemented by using the Windows MCI video drivers.
+
 3 High-level layers
 
-   The rest (basically the MMSYSTEM and WINMM DLLs entry points.
+   The rest (basically the MMSYSTEM and WINMM DLLs entry points).

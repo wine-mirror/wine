@@ -18,6 +18,7 @@
 
 DECLARE_DEBUG_CHANNEL(mci)
 DECLARE_DEBUG_CHANNEL(midi)
+DECLARE_DEBUG_CHANNEL(mmsys)
 
 #ifdef HAVE_OSS
 
@@ -38,7 +39,7 @@ extern LPMIDIINCAPS16	midiInDevices [MAX_MIDIINDRV];
  *
  */
 #ifdef HAVE_OSS
-int unixToWindowsDeviceType(int type)
+static	int unixToWindowsDeviceType(int type)
 {
 #if !defined(__NetBSD__) && !defined(__OpenBSD__)
     /* MOD_MIDIPORT     output port 
@@ -72,7 +73,7 @@ int unixToWindowsDeviceType(int type)
  * Initializes the MIDI devices information variables
  *
  */
-BOOL MULTIMEDIA_MidiInit(void)
+static	BOOL MULTIMEDIA_MidiInit(void)
 {
 #if defined(HAVE_OSS) && !defined(__NetBSD__) && !defined(__OpenBSD__)
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
@@ -256,10 +257,14 @@ BOOL MULTIMEDIA_MidiInit(void)
     return TRUE;
 }
 
-BOOL MULTIMEDIA_MciInit(void)
+/**************************************************************************
+ * 			MULTIMEDIA_MciInit			[internal]
+ *
+ * Initializes the MCI internal variables.
+ *
+ */static	BOOL MULTIMEDIA_MciInit(void)
 {
     LPSTR	ptr1, ptr2;
-    char    	buffer[1024];
 
     mciInstalledCount = 0;
     ptr1 = lpmciInstallNames = xmalloc(2048);
@@ -286,25 +291,61 @@ BOOL MULTIMEDIA_MciInit(void)
     }
     mciInstalledListLen = ptr1 - lpmciInstallNames;
 
-    if (PROFILE_GetWineIniString("options", "mciExternal", "", buffer, sizeof(buffer)) > 0) {
-	int		i;
- 
-	for (i = 0; MCI_InternalDescriptors[i].uDevType != 0xFFFF; i++) {
-	    if (strstr(buffer, MCI_InternalDescriptors[i].lpstrName) != NULL) {
-		MCI_InternalDescriptors[i].uDevType = 0;	/* disable slot */
+    return TRUE;
+}
+
+HINSTANCE	WINMM_hInstance = 0; 
+HINSTANCE	MMSYSTEM_hInstance = 0; 
+static		bInitDone = FALSE;
+
+/**************************************************************************
+ * 			WINMM_LibMain				[EntryPoint]
+ *
+ * WINMM DLL entry point
+ *
+ */
+BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+    TRACE(mmsys, "0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+
+    switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+	if (!bInitDone) {
+	    if (MULTIMEDIA_MidiInit() && MULTIMEDIA_MciInit()) {
+		bInitDone = TRUE;
+	    } else {
+		return FALSE;
 	    }
 	}
+	WINMM_hInstance = hinstDLL;
+	break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+	break;
     }
     return TRUE;
 }
 
-/**************************************************************************
- * 			MULTIMEDIA_Init			[internal]
- *
- * Initializes the multimedia information variables
- *
- */
-BOOL MULTIMEDIA_Init(void)
+BOOL WINAPI MMSYSTEM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    return MULTIMEDIA_MidiInit() && MULTIMEDIA_MciInit();
+    TRACE(mmsys, "0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+
+    switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+	if (!bInitDone) {
+	    if (MULTIMEDIA_MidiInit() && MULTIMEDIA_MciInit()) {
+		bInitDone = TRUE;
+	    } else {
+		return FALSE;
+	    }
+	}
+	MMSYSTEM_hInstance = hinstDLL;
+	break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+	break;
+    }
+    return TRUE;
 }

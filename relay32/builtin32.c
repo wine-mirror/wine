@@ -63,6 +63,11 @@ extern const BUILTIN32_DESCRIPTOR IMM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR LZ32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MPR_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MCIAVI_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MCIANIM_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MCICDA_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MCISEQ_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MCIWAVE_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSACM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSNET32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSVFW32_Descriptor;
@@ -108,6 +113,11 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &IMM32_Descriptor,    0, NULL },
     { &KERNEL32_Descriptor, 0, NULL },
     { &LZ32_Descriptor,     0, NULL },
+    { &MCIANIM_Descriptor,  0, NULL },
+    { &MCIAVI_Descriptor,   0, NULL },
+    { &MCICDA_Descriptor,   0, NULL },
+    { &MCISEQ_Descriptor,   0, NULL },
+    { &MCIWAVE_Descriptor,  0, NULL },
     { &MPR_Descriptor,      0, NULL },
     { &MSACM32_Descriptor,  0, NULL },
     { &MSNET32_Descriptor,  0, NULL },

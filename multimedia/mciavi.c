@@ -15,11 +15,10 @@
 #include "digitalv.h"
 #include "options.h"
 
-DECLARE_DEBUG_CHANNEL(cdaudio)
 DECLARE_DEBUG_CHANNEL(mciavi)
-DECLARE_DEBUG_CHANNEL(mcimidi)
 
 typedef struct {
+    UINT		wDevID;
     int			nUseCount;          	/* Incremented for each shared open          */
     BOOL16  		fShareable;         	/* TRUE if first open was shareable 	     */
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
@@ -38,15 +37,64 @@ static WINE_MCIAVI	MCIAviDev[MAX_MCIAVIDRV];
  *======================================================================*/
 
 /**************************************************************************
+ * 				AVI_drvGetDrv		[internal]	
+ */
+static WINE_MCIAVI*  AVI_drvGetDrv(UINT16 wDevID)
+{
+    int	i;
+
+    for (i = 0; i < MAX_MCIAVIDRV; i++) {
+	if (MCIAviDev[i].wDevID == wDevID) {
+	    return &MCIAviDev[i];
+	}
+    }
+    return 0;
+}
+
+/**************************************************************************
+ * 				AVI_drvOpen			[internal]	
+ */
+static	DWORD	AVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
+{
+    int	i;
+
+    for (i = 0; i < MAX_MCIAVIDRV; i++) {
+	if (MCIAviDev[i].wDevID == 0) {
+	    MCIAviDev[i].wDevID = modp->wDeviceID;
+	    modp->wCustomCommandTable = -1;
+	    modp->wType = MCI_DEVTYPE_CD_AUDIO;
+	    return modp->wDeviceID;
+	}
+    }
+    return 0;
+}
+
+/**************************************************************************
+ * 				MCIAVI_drvClose		[internal]	
+ */
+static	DWORD	AVI_drvClose(DWORD dwDevID)
+{
+    WINE_MCIAVI*  wma = AVI_drvGetDrv(dwDevID);
+
+    if (wma) {
+	wma->wDevID = 0;
+	return 1;
+    }
+    return 0;
+}
+
+/**************************************************************************
  * 				AVI_mciGetOpenDev		[internal]	
  */
 static WINE_MCIAVI*  AVI_mciGetOpenDev(UINT16 wDevID)
 {
-    if (wDevID >= MAX_MCIAVIDRV || MCIAviDev[wDevID].nUseCount == 0) {
+    WINE_MCIAVI*	wma = AVI_drvGetDrv(wDevID);
+    
+    if (wma == NULL || wma->nUseCount == 0) {
 	WARN(mciavi, "Invalid wDevID=%u\n", wDevID);
 	return 0;
     }
-    return &MCIAviDev[wDevID];
+    return wma;
 }
 
 static	DWORD	AVI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
@@ -56,14 +104,12 @@ static	DWORD	AVI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
  */
 static	DWORD	AVI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpParms)
 {
-    WINE_MCIAVI*	wma;
+    WINE_MCIAVI*	wma = AVI_drvGetDrv(wDevID);
     
     TRACE(mciavi, "(%04x, %08lX, %p) : semi-stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) 		return MCIERR_NULL_PARAMETER_BLOCK;
-    if (wDevID > MAX_MCIAVIDRV)		return MCIERR_INVALID_DEVICE_ID;
-    
-    wma = &MCIAviDev[wDevID];
+    if (wma == NULL)			return MCIERR_INVALID_DEVICE_ID;
     
     if (wma->nUseCount > 0) {
 	/* The driver is already open on this channel */
@@ -78,7 +124,7 @@ static	DWORD	AVI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpP
 	wma->fShareable = dwFlags & MCI_OPEN_SHAREABLE;
     }
     if (dwFlags & MCI_OPEN_ELEMENT) {
-	TRACE(cdaudio,"MCI_OPEN_ELEMENT !\n");
+	TRACE(mciavi,"MCI_OPEN_ELEMENT !\n");
 	/*		return MCIERR_NO_ELEMENT_ALLOWED; */
     }
     
@@ -130,7 +176,7 @@ static	DWORD	AVI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     
     wma->wStatus = MCI_MODE_PLAY;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(mcimidi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+	TRACE(mciavi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -933,14 +979,14 @@ static	DWORD	AVI_mciRestore(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RESTORE_PARM
 /**************************************************************************
  * 				MCIAVI_DriverProc	[sample driver]
  */
-LONG MCIAVI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 		       DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return 1;
-    case DRV_CLOSE:		return 1;
+    case DRV_OPEN:		return AVI_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_CLOSE:		return AVI_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;

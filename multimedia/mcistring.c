@@ -275,7 +275,7 @@ MCISTR_Open(_MCISTR_PROTO_)
 	pU->openParams.lpstrElementName = strdup(s);
 	dwFlags |= MCI_OPEN_ELEMENT;
     }
-    uDevTyp = MCI_GetDevType(dev);
+    uDevTyp = MCI_GetDevTypeFromString(dev);
     if (uDevTyp == 0) {
 	free(pU->openParams.lpstrElementName);
 	free(pU);

@@ -10,12 +10,13 @@
 #include "winuser.h"
 #include "driver.h"
 #include "multimedia.h"
-#include "debug.h"
 #include "cdrom.h"
+#include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(cdaudio)
 
 typedef struct {
+    UINT16		wDevID;
     int     		nUseCount;          /* Incremented for each shared open */
     BOOL16  		fShareable;         /* TRUE if first open was shareable */
     WORD    		wNotifyDeviceID;    /* MCI device ID with a pending notification */
@@ -32,16 +33,64 @@ static WINE_MCICDAUDIO	CDADev[MAX_CDAUDIODRV];
 /*-----------------------------------------------------------------------*/
 
 /**************************************************************************
+ * 				CDAUDIO_drvGetDrv		[internal]	
+ */
+static WINE_MCICDAUDIO*  CDAUDIO_drvGetDrv(UINT16 wDevID)
+{
+    int	i;
+
+    for (i = 0; i < MAX_CDAUDIODRV; i++) {
+	if (CDADev[i].wDevID == wDevID) {
+	    return &CDADev[i];
+	}
+    }
+    return 0;
+}
+
+/**************************************************************************
+ * 				CDAUDIO_drvOpen			[internal]	
+ */
+static	DWORD	CDAUDIO_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
+{
+    int	i;
+
+    for (i = 0; i < MAX_CDAUDIODRV; i++) {
+	if (CDADev[i].wDevID == 0) {
+	    CDADev[i].wDevID = modp->wDeviceID;
+	    modp->wCustomCommandTable = -1;
+	    modp->wType = MCI_DEVTYPE_CD_AUDIO;
+	    return modp->wDeviceID;
+	}
+    }
+    return 0;
+}
+
+/**************************************************************************
+ * 				CDAUDIO_drvClose		[internal]	
+ */
+static	DWORD	CDAUDIO_drvClose(DWORD dwDevID)
+{
+    WINE_MCICDAUDIO*  wmcda = CDAUDIO_drvGetDrv(dwDevID);
+
+    if (wmcda) {
+	wmcda->wDevID = 0;
+	return 1;
+    }
+    return 0;
+}
+
+/**************************************************************************
  * 				CDAUDIO_mciGetOpenDrv		[internal]	
  */
 static WINE_MCICDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT16 wDevID)
 {
-    if (wDevID >= MAX_CDAUDIODRV || CDADev[wDevID].nUseCount == 0 || 
-	CDADev[wDevID].wcda.unixdev <= 0) {
+    WINE_MCICDAUDIO*	wmcda = CDAUDIO_drvGetDrv(wDevID);
+    
+    if (wmcda == NULL || wmcda->nUseCount == 0 || wmcda->wcda.unixdev <= 0) {
 	WARN(cdaudio, "Invalid wDevID=%u\n", wDevID);
 	return 0;
     }
-    return &CDADev[wDevID];
+    return wmcda;
 }
 
 /**************************************************************************
@@ -173,17 +222,15 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
 static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
-    WINE_MCICDAUDIO* 	wmcda;
+    WINE_MCICDAUDIO* 	wmcda = CDAUDIO_drvGetDrv(wDevID);
     MCI_SEEK_PARMS 	seekParms;
 
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpOpenParms);
     
     if (lpOpenParms == NULL) 		return MCIERR_NULL_PARAMETER_BLOCK;
-    if (wDevID > MAX_CDAUDIODRV)	return MCIERR_INVALID_DEVICE_ID;
+    if (wmcda == NULL)			return MCIERR_INVALID_DEVICE_ID;
 
     dwDeviceID = lpOpenParms->wDeviceID;
-
-    wmcda = &CDADev[wDevID];
 
     if (wmcda->nUseCount > 0) {
 	/* The driver is already open on this channel */
@@ -671,18 +718,18 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
 /**************************************************************************
  * 			MCICDAUDIO_DriverProc			[sample driver]
  */
-LONG MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 			   DWORD dwParam1, DWORD dwParam2)
 {
     switch(wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return 1;
-    case DRV_CLOSE:		return 1;
+    case DRV_OPEN:		return CDAUDIO_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_CLOSE:		return CDAUDIO_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;	
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBoxA(0, "Sample Multimedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Sample Multimedia Driver !", "Wine Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 	

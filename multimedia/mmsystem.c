@@ -8,7 +8,9 @@
 
 /* 
  * Eric POUECH : 
- * 98/9	added support for Win32 MCI
+ * 	98/9	added Win32 MCI support
+ *  	99/4	added mmTask and mmThread functions support
+ *		added midiStream support
  */
 
 /* FIXME: I think there are some segmented vs. linear pointer weirdnesses 
@@ -223,7 +225,9 @@ static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 					if (count < 1) break;
 					left -= count;
 					waveHdr.dwBufferLength = count;
-				/*	waveHdr.dwBytesRecorded = count; */
+					/* FIXME */
+					waveHdr.reserved = (DWORD)&waveHdr;
+				        /* waveHdr.dwBytesRecorded = count; */
 					/* FIXME: doesn't expect async ops */ 
 					wodMessage(0, WODM_WRITE, 0, (DWORD)&waveHdr, sizeof(WAVEHDR));
 				    }
@@ -434,34 +438,53 @@ BOOL16 WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 
     switch (uFlags & DCB_TYPEMASK) {
     case DCB_NULL:
-	TRACE(mmsys, "CALLBACK_NULL !\n");
+	TRACE(mmsys, "Null !\n");
 	break;
     case DCB_WINDOW:
-	TRACE(mmsys, "CALLBACK_WINDOW = %04lX handle = %04X!\n",
-	      dwCallBack, hDev);
+	TRACE(mmsys, "Window(%04lX) handle=%04X!\n", dwCallBack, hDev);
 	if (!IsWindow(dwCallBack) || USER_HEAP_LIN_ADDR(hDev) == NULL)
 	    return FALSE;
 	Callout.PostMessageA((HWND16)dwCallBack, wMsg, hDev, dwParam1);
 	break;
-    case DCB_TASK:
-	TRACE(mmsys, "CALLBACK_TASK !\n");
+    case DCB_TASK: /* aka DCB_THREAD */
+	TRACE(mmsys, "Task(%04lx) !\n", dwCallBack);
 	Callout.PostThreadMessageA(dwCallBack, wMsg, hDev, dwParam1);
 	break;
     case DCB_FUNCTION:
-	TRACE(mmsys, "CALLBACK_FUNCTION !\n");
+	TRACE(mmsys, "Function (16bit) !\n");
 	Callbacks->CallDriverCallback((FARPROC16)dwCallBack, hDev, wMsg, dwUser,
 				       dwParam1, dwParam2);
 	break;
-    case DCB_EVENT:
-	TRACE(mmsys, "CALLBACK_EVENT !\n");
-	SetEvent((HANDLE)dwCallBack);
-	break;
-    case DCB_FUNC32:
-	TRACE(mmsys, "CALLBACK_FUNCTION 32bit !\n");
+    case DCB_FUNC32: /* This is a Wine only value - AKAIF not used yet by MS */
+	TRACE(mmsys, "Function (32bit) !\n");
 	((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
 	break;
+    case DCB_EVENT:
+	TRACE(mmsys, "Event(%08lx) !\n", dwCallBack);
+	SetEvent((HANDLE)dwCallBack);
+	break;
+    case 6: /* I would dub it DCB_MMTHREADSIGNAL */
+	/* this is an undocumented DCB_ value used for mmThreads
+	 * loword of dwCallBack contains the handle of the lpMMThd block
+	 * which dwSignalCount has to be incremented
+	 */
+	{
+	    WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(LOWORD(dwCallBack), 0);
+
+	    TRACE(mmsys, "mmThread (%04x, %p) !\n", LOWORD(dwCallBack), lpMMThd);
+	    /* same as mmThreadSignal16 */
+	    InterlockedIncrement(&lpMMThd->dwSignalCount);
+	    SetEvent(lpMMThd->hEvent);
+	    /* some other stuff on lpMMThd->hVxD */
+	}
+	break;	
+#if 0
+    case 4:
+	/* this is an undocumented DCB_ value for... I don't know */
+	break;
+#endif
     default:
-	WARN(mmsys, "Unknown callback type\n");
+	WARN(mmsys, "Unknown callback type %d\n", uFlags & DCB_TYPEMASK);
 	return FALSE;
     }
     TRACE(mmsys, "Done\n");
@@ -1364,7 +1387,7 @@ DWORD WINAPI mciGetDriverData16(UINT16 uDeviceID)
  */
 DWORD WINAPI mciGetDriverData(UINT uDeviceID) 
 {
-    TRACE(mmsys,"(%04x)\n", uDeviceID);
+    TRACE(mmsys, "(%04x)\n", uDeviceID);
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
 	WARN(mmsys, "Bad uDeviceID\n");
 	return 0L;
@@ -1411,7 +1434,7 @@ UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 ty
     LPBYTE          lmem;
     static UINT16   mcidevtype = 0;
     
-    FIXME(mmsys,"(%04x, %s, %d): stub!\n", hinst, resname, type);
+    FIXME(mmsys, "(%04x, %s, %d): stub!\n", hinst, resname, type);
     if (!lstrcmpiA(resname, "core")) {
 	FIXME(mmsys, "(...,\"core\",...), have to use internal tables... (not there yet)\n");
 	return 0;
@@ -1421,7 +1444,7 @@ UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 ty
      * otherwise directly from driver
      */
     strcpy(buf,resname);
-    strcat(buf,".mci");
+    strcat(buf, ".mci");
     if (OpenFile(buf, &ofs,OF_EXIST) != HFILE_ERROR) {
 	xhinst = LoadLibrary16(buf);
 	if (xhinst > 32)
@@ -1502,7 +1525,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 	    FIXME(mmsys, "unhandled MCI_ALL_DEVICE_ID\n");
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else {
-	    dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2);
+	    dwRet = MCI_SendCommandFrom32(wDevID, wMsg, dwParam1, dwParam2);
 	}
 	break;
     }
@@ -1516,7 +1539,8 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
  */
 DWORD WINAPI mciSendCommandW(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    return 0x1; /* !ok */
+    FIXME(mmsys, "(%08x, %s, %08lx, %08lx): stub\n", wDevID, MCI_CommandToString(wMsg), dwParam1, dwParam2);
+    return MCIERR_UNSUPPORTED_FUNCTION;
 }
 
 /**************************************************************************
@@ -1531,9 +1555,13 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 
     switch (wMsg) {
     case MCI_OPEN:
-	if (MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2) >= 0) {
+	switch (MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2)) {
+	case MCI_MAP_OK:
+	case MCI_MAP_OKMEM:
 	    dwRet = MCI_Open(dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
 	    MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
+	    break;
+	default: break; /* so that gcc does bark */
 	}
 	break;
     case MCI_CLOSE:
@@ -1542,15 +1570,25 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else if (!MCI_DevIDValid(wDevID)) {
 	    dwRet = MCIERR_INVALID_DEVICE_ID;
-	} else if (MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2) >= 0) {
-	    dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-	    MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
+	} else {
+	    switch (MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2)) {
+	    case MCI_MAP_OK:
+	    case MCI_MAP_OKMEM:
+		dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+		MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
+		break;
+	    default: break; /* so that gcc does bark */
+	    }
 	}
 	break;
     case MCI_SYSINFO:
-	if (MCI_MapMsg16To32A(0, wDevID, &dwParam2) >= 0) {
+	switch (MCI_MapMsg16To32A(0, wDevID, &dwParam2)) {
+	case MCI_MAP_OK:
+	case MCI_MAP_OKMEM:
 	    dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
 	    MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
+	    break;
+	default: break; /* so that gcc does bark */
 	}
 	break;
     /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
@@ -1558,38 +1596,10 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	if (wDevID == MCI_ALL_DEVICE_ID) {
 	    FIXME(mmsys, "unhandled MCI_ALL_DEVICE_ID\n");
 	    dwRet = MCIERR_CANNOT_USE_ALL;
-	} else if (!MCI_DevIDValid(wDevID)) {
-	    dwRet = MCIERR_INVALID_DEVICE_ID;
 	} else {
-	    int			res;
-		    
-	    switch (DRIVER_GetType(MCI_GetDrv(wDevID)->hDrv)) {
-	    case WINE_DI_TYPE_16:		
-		dwRet = SendDriverMessage16(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
-		break;
-	    case WINE_DI_TYPE_32:
-		switch (res = MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2)) {
-		case -1:
-		    TRACE(mmsys, "Not handled yet (%s)\n", MCI_CommandToString(wMsg));
-		    dwRet = MCIERR_DRIVER_INTERNAL;
-		    break;
-		case -2:
-		    TRACE(mmsys, "Problem mapping msg=%s from 16 to 32a\n", MCI_CommandToString(wMsg));
-		    dwRet = MCIERR_OUT_OF_MEMORY;
-		    break;
-		case 0:
-		case 1:
-		    dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2);
-		    if (res)
-			MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
-		    break;
-		}
-		break;
-	    default:
-		WARN(mmsys, "Unknown driver type=%u\n", DRIVER_GetType(MCI_GetDrv(wDevID)->hDrv));
-		dwRet = MCIERR_DRIVER_INTERNAL;
-	    }
+	    dwRet = MCI_SendCommandFrom16(wDevID, wMsg, dwParam1, dwParam2);
 	}
+	break;
     }
     dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, FALSE);
     TRACE(mmsys, "=> %ld\n", dwRet);
@@ -1651,9 +1661,11 @@ UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
     return ret;
 }
 
+/**************************************************************************
+ * 				MCI_DefYieldProc	       	[internal]
+ */
 UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
 {
-    MSG		msg;
     INT16	ret;
     
     TRACE(mmsys, "(0x%04x, 0x%08lx)\n", wDevID, data);
@@ -1663,8 +1675,9 @@ UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
 	UserYield16();
 	ret = 0;
     } else {
-	msg.hwnd = HIWORD(data);
+	MSG		msg;
 
+	msg.hwnd = HIWORD(data);
 	while (!PeekMessageA(&msg, HIWORD(data), WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
 	ret = 0xFFFF;
     }
@@ -1805,7 +1818,7 @@ UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
 {
     UINT16	ret = 0;
 
-    /*    TRACE(mmsys,"(%04x)\n", uDeviceID); */
+    /*    TRACE(mmsys, "(%04x)\n", uDeviceID); */
 
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
 	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || MCI_GetDrv(uDeviceID)->bIs32) {
@@ -1824,7 +1837,7 @@ UINT WINAPI mciDriverYield(UINT uDeviceID)
 {
     UINT	ret = 0;
 
-    TRACE(mmsys,"(%04x)\n", uDeviceID);
+    TRACE(mmsys, "(%04x)\n", uDeviceID);
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
 	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || !MCI_GetDrv(uDeviceID)->bIs32) {
 	UserYield16();
@@ -2028,6 +2041,7 @@ UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
 UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
                             DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
+    HMIDIOUT16			hMidiOut;
     LPMIDIOPENDESC		lpDesc;
     UINT16			ret = 0;
     BOOL			bMapperFlg = FALSE;
@@ -2043,7 +2057,7 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
 	uDeviceID = 0;
     }
 
-    lpDesc = MIDI_OutAlloc(lphMidiOut, dwCallback, dwInstance, 0, NULL);
+    lpDesc = MIDI_OutAlloc(&hMidiOut, dwCallback, dwInstance, 0, NULL);
 
     if (lpDesc == NULL)
 	return MMSYSERR_NOMEM;
@@ -2058,10 +2072,11 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
     }
     TRACE(mmsys, "=> wDevID=%u (%d)\n", uDeviceID, ret);
     if (ret != MMSYSERR_NOERROR) {
-	HeapFree(GetProcessHeap(), 0, lpDesc);
+	USER_HEAP_FREE(hMidiOut);
 	if (lphMidiOut) *lphMidiOut = 0;
     } else {
 	lpDesc->wDevID = uDeviceID;
+	if (lphMidiOut) *lphMidiOut = hMidiOut;
     }
 
     return ret;
@@ -2089,7 +2104,7 @@ UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
 
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     dwRet = modMessage(lpDesc->wDevID, MODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
-    HeapFree(GetProcessHeap(), 0, lpDesc);
+    USER_HEAP_FREE(hMidiOut);
     return dwRet;
 }
 
@@ -2340,7 +2355,7 @@ DWORD WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     switch (uMessage) {
     case MODM_OPEN:
-	FIXME(mmsys,"can't handle MODM_OPEN!\n");
+	FIXME(mmsys, "can't handle MODM_OPEN!\n");
 	return 0;
     case MODM_GETDEVCAPS:
 	return midiOutGetDevCapsA(hMidiOut, (LPMIDIOUTCAPSA)dwParam1, dwParam2);
@@ -2355,7 +2370,7 @@ DWORD WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
 	/* no argument conversion needed */
 	break;
     default:
-	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	    hMidiOut, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -2376,7 +2391,7 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     switch (uMessage) {
     case MODM_OPEN:
-	FIXME(mmsys,"can't handle MODM_OPEN!\n");
+	FIXME(mmsys, "can't handle MODM_OPEN!\n");
 	return 0;
     case MODM_GETNUMDEVS:
     case MODM_RESET:
@@ -2394,7 +2409,7 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
     case MODM_UNPREPARE:
 	return midiOutUnprepareHeader16(hMidiOut, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     default:
-	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	    hMidiOut, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -2781,7 +2796,7 @@ DWORD WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
     
     switch (uMessage) {
     case MIDM_OPEN:
-	FIXME(mmsys,"can't handle MIDM_OPEN!\n");
+	FIXME(mmsys, "can't handle MIDM_OPEN!\n");
 	return 0;
     case MIDM_GETDEVCAPS:
 	return midiInGetDevCapsA(hMidiIn, (LPMIDIINCAPSA)dwParam1, dwParam2);
@@ -2799,7 +2814,7 @@ DWORD WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
     case MIDM_ADDBUFFER:
 	return midiInAddBuffer(hMidiIn, (LPMIDIHDR)dwParam1, dwParam2);
     default:
-	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	    hMidiIn, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -2820,7 +2835,7 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     switch (uMessage) {
     case MIDM_OPEN:
-	WARN(mmsys,"can't handle MIDM_OPEN!\n");
+	WARN(mmsys, "can't handle MIDM_OPEN!\n");
 	return 0;
     case MIDM_GETDEVCAPS:
 	return midiInGetDevCaps16(hMidiIn, (LPMIDIINCAPS16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
@@ -2838,7 +2853,7 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
     case MIDM_ADDBUFFER:
 	return midiInAddBuffer16(hMidiIn, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     default:
-	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	    hMidiIn, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -3070,7 +3085,7 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 
     midiStreamStop(hMidiStrm);
 
-    HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+    USER_HEAP_FREE(hMidiStrm);
 
     return midiOutClose(hMidiStrm);
 }
@@ -3971,10 +3986,10 @@ DWORD WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
 	/* FIXME: UNICODE/ANSI? */
 	return waveOutGetDevCapsA(hWaveOut, (LPWAVEOUTCAPSA)dwParam1, dwParam2);
     case WODM_OPEN:
-	FIXME(mmsys,"can't handle WODM_OPEN, please report.\n");
+	FIXME(mmsys, "can't handle WODM_OPEN, please report.\n");
 	break;
     default:
-	ERR(mmsys,"(0x%04x, 0x%04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(0x%04x, 0x%04x, %08lx, %08lx): unhandled message\n",
 	    hWaveOut, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -4019,10 +4034,10 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
     case WODM_WRITE:
 	return waveOutWrite16(hWaveOut, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     case WODM_OPEN:
-	FIXME(mmsys,"can't handle WODM_OPEN, please report.\n");
+	FIXME(mmsys, "can't handle WODM_OPEN, please report.\n");
 	break;
     default:
-	ERR(mmsys,"(0x%04x, 0x%04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(0x%04x, 0x%04x, %08lx, %08lx): unhandled message\n",
 	    hWaveOut, uMessage, dwParam1, dwParam2);
     }
     return wodMessage(lpDesc->uDeviceID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -4181,8 +4196,7 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     if (dwFlags & WAVE_FORMAT_QUERY) {
 	TRACE(mmsys, "End of WAVE_FORMAT_QUERY !\n");
 	dwRet = waveInClose16(hWaveIn);
-    }
-    else if (dwRet != MMSYSERR_NOERROR) {
+    } else if (dwRet != MMSYSERR_NOERROR) {
 	USER_HEAP_FREE(hWaveIn);
 	if (lphWaveIn) *lphWaveIn = 0;
     }
@@ -4497,7 +4511,7 @@ DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 	/*FIXME: ANSI/UNICODE */
 	return waveInGetDevCapsA(hWaveIn, (LPWAVEINCAPSA)dwParam1, dwParam2);
     default:
-	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	    hWaveIn, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -4518,7 +4532,7 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     switch (uMessage) {
     case WIDM_OPEN:
-	FIXME(mmsys,"cannot handle WIDM_OPEN, please report.\n");
+	FIXME(mmsys, "cannot handle WIDM_OPEN, please report.\n");
 	break;
     case WIDM_GETNUMDEVS:
     case WIDM_CLOSE:
@@ -4539,7 +4553,7 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
     case WIDM_ADDBUFFER:
 	return waveInAddBuffer16(hWaveIn, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     default:
-	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	ERR(mmsys, "(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	    hWaveIn, uMessage, dwParam1, dwParam2);
 	break;
     }
@@ -4551,7 +4565,7 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
  */
 HDRVR16 WINAPI DrvOpen(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 {
-    TRACE(mmsys,"('%s','%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
+    TRACE(mmsys, "('%s','%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
 
     return OpenDriver16(lpDriverName, lpSectionName, lParam);
 }
@@ -4613,6 +4627,8 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
     }
 }
 
+/*#define USE_MM_TSK_WINE*/
+
 /**************************************************************************
  * 				mmTaskCreate		[MMSYSTEM.900]
  *
@@ -4629,13 +4645,21 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
     HINSTANCE16		handle;
     
     TRACE(mmsys, "(%08lx, %p, %08lx);\n", spProc, lphMmTask, dwPmt);
+    /* This to work requires NE modules to be started with a binary command line
+     * which is not currently the case. A patch exists but has never been committed.
+     * A workaround would be to integrate code for mmtask.tsk into Wine, but
+     * this requires tremendous work (starting with patching tools/build to
+     * create NE executables (and not only DLLs) for builtins modules.
+     * EP 99/04/25
+     */
+    FIXME(mmsys, "This is currently broken. It will fail\n");
 
     cmdline = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 0x0d);
     cmdline[0] = 0x0d;
     *(LPDWORD)(cmdline + 1) = (DWORD)spProc;
     *(LPDWORD)(cmdline + 5) = dwPmt;
     *(LPDWORD)(cmdline + 9) = 0;
-    
+
     sel1 = SELECTOR_AllocBlock(cmdline, 0x0d, SEGMENT_DATA, FALSE, FALSE);
     sel2 = SELECTOR_AllocBlock(&showCmd, sizeof(showCmd),
 			       SEGMENT_DATA, FALSE, FALSE);
@@ -4646,7 +4670,11 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
     lp->showCmd = PTR_SEG_OFF_TO_SEGPTR(sel2, 0);
     lp->reserved = 0;
     
+#ifndef USE_MM_TSK_WINE
     handle = LoadModule16("c:\\windows\\system\\mmtask.tsk", lp);
+#else
+    handle = LoadModule16("mmtask.tsk", lp);
+#endif
     if (handle < 32) {
 	ret = (handle) ? 1 : 2;
 	handle = 0;
@@ -4666,23 +4694,25 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
     return ret;
 }
 
-#if 0
+#ifdef USE_MM_TSK_WINE
 /* C equivalent to mmtask.tsk binary content */
-void	mmTaskEntryPoint(LPSTR cmdLine, WORD di, WORD si)
+void	mmTaskEntryPoint16(LPSTR cmdLine, WORD di, WORD si)
 {
     int	len = cmdLine[0x80];
 
     if (len/2 == 6) {
-	void	(*fpProc)(DWORD) = (void (*)(DWORD))SEG_PTR_TO_LIN(*((DWORD*)(cmdLine + 1)));
+	void	(*fpProc)(DWORD) = (void (*)(DWORD))PTR_SEG_TO_LIN(*((DWORD*)(cmdLine + 1)));
 	DWORD	dwPmt  = *((DWORD*)(cmdLine + 5));
 
+#if 0
 	InitTask16(); /* fixme: pmts / from context ? */
 	InitApp(di);
+#endif
 	if (SetMessageQueue16(0x40)) {
 	    WaitEvent16(0);
 	    if (HIWORD(fpProc)) {
 		OldYield16();
-		StackEnter16();
+/* EPP 		StackEnter16(); */
 		(fpProc)(dwPmt);
 	    }
 	}
@@ -4715,7 +4745,7 @@ void	WINAPI	mmTaskBlock16(HINSTANCE16 WINE_UNUSED hInst)
  */
 LRESULT	WINAPI mmTaskSignal16(HTASK16 ht) 
 {
-    TRACE(mmsys,"(%04x);\n", ht);
+    TRACE(mmsys, "(%04x);\n", ht);
     return Callout.PostAppMessage16(ht, WM_USER, 0, 0);
 }
 
@@ -4731,20 +4761,23 @@ void	WINAPI	mmTaskYield16(void)
     }
 }
 
-void	WINAPI	WINE_mmThreadingEntryPoint(DWORD _pmt);
-
 DWORD	WINAPI	GetProcessFlags(DWORD);
 
 /**************************************************************************
  * 				mmThreadCreate		[MMSYSTEM.1120]
+ *
+ * undocumented
+ * Creates a MM thread, calling fpThreadAddr(dwPmt). 
+ * dwFlags: 
+ * 	bit.0 set means create a 16 bit task instead of thread calling a 16 bit proc
+ *	bit.1 set means to open a VxD for this thread (unsupported) 
  */
 LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags) 
 {
     HANDLE16		hndl;
     LRESULT		ret;
-    FARPROC16		fp;
 
-    FIXME(mmsys, "(%p, %p, %08lx, %08lx): semi-stub!\n", fpThreadAddr, lpHndl, dwPmt, dwFlags);
+    TRACE(mmsys, "(%p, %p, %08lx, %08lx)!\n", fpThreadAddr, lpHndl, dwPmt, dwFlags);
 
     hndl = GlobalAlloc16(sizeof(WINE_MMTHREAD), GMEM_SHARE|GMEM_ZEROINIT);
 
@@ -4753,71 +4786,81 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
     } else {
 	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
 
-	lpMMThd->dwSignature = WINE_MMTHREAD_CREATED;
-	lpMMThd->dwCounter   = 0;
-	lpMMThd->hThread     = 0;
-	lpMMThd->dwThreadId  = 0;
-	lpMMThd->fpThread    = fpThreadAddr;
-	lpMMThd->dwThreadPmt = dwPmt;
-	/* FIXME     lpMMThd->dwUnknown3; */
-	lpMMThd->hEvent = 0;
-	/* FIXME     lpMMThd->dwUnknown5; */
-	lpMMThd->dwStatus    = 0;
-	lpMMThd->dwFlags     = dwFlags;
-	lpMMThd->hTask       = 0;
-
-	/* FIXME: Since main task in Wine is 16 bit (not 32, which is the case for 
-	 * win 9x the test below may not work.
-	 */
-#ifdef WINE_MAIN_TASK_IS_32BIT
-	if ((dwFlags & 1) == 0 && (GetProcessFlags(GetCurrentThreadId()) & 8) != 0)
-	    FIXME(mmsys, "(NIY) Oooch: seems to require a real thread, not a 16 bit task !!\n");
-#else
-	if ((dwFlags & 1) == 0) 
-	    FIXME(mmsys, "(NIY) Oooch: seems to require a real thread, not a 16 bit task !!\n");
-#endif
-
 #if 0
-	if ((dwFlags & 1) == 0 && (GetProcessFlags(GetCurrentThreadId()) & 8)) {
-	    leavewin16lock();
-	    lpMMThd->hEvent = CreateEventA(0, 0, 1, 0);
-	    if (lpMMThd->dwFlags & 2)
-		lpMMThd->dwUnknown5 = OpenVxDHandle(lpMMThd->hEvent);
-	    if (!CreateThread(0, 0, proc, SEGPTR(hndl, 0), 4, x)) {
-		clean-up(event, VxDhandle...);
-	    } else {
-		lpMMThd->hThread = return from CreateThread;
-	    }
-	}
-	else; /* do what's below */
+	/* force mmtask routines even if mmthread is required */
+	/* this will work only if the patch about binary cmd line and NE tasks 
+	 * is committed
+	 */
+	dwFlags |= 1;
 #endif
 
-	/* get WINE_mmThreadingEntryPoint() 
-	 * 2047 is its ordinal in mmsystem.spec
-	 */
-	fp = GetProcAddress16(GetModuleHandle16("MMSYSTEM"), (SEGPTR)2047);
-	TRACE(mmsys, "farproc seg=0x%08lx lin=%p\n", (DWORD)fp, PTR_SEG_TO_LIN(fp));
+	lpMMThd->dwSignature 	= WINE_MMTHREAD_CREATED;
+	lpMMThd->dwCounter   	= 0;
+	lpMMThd->hThread     	= 0;
+	lpMMThd->dwThreadID  	= 0;
+	lpMMThd->fpThread    	= fpThreadAddr;
+	lpMMThd->dwThreadPmt 	= dwPmt;
+	lpMMThd->dwSignalCount	= 0;
+	lpMMThd->hEvent      	= 0;
+	lpMMThd->hVxD        	= 0;
+	lpMMThd->dwStatus    	= 0;
+	lpMMThd->dwFlags     	= dwFlags;
+	lpMMThd->hTask       	= 0;
+	
+	if ((dwFlags & 1) == 0 && (GetProcessFlags(GetCurrentThreadId()) & 8) == 0) {
+	    lpMMThd->hEvent = CreateEventA(0, 0, 1, 0);
 
-	if (fp == 0 || mmTaskCreate16((DWORD)fp, 0, hndl) != 0) {
-	    GlobalFree16(hndl);
-	    hndl = 0;
-	    ret = 1;
+	    TRACE(mmsys, "Let's go crazy... trying new MM thread. lpMMThd=%p\n", lpMMThd);
+	    if (lpMMThd->dwFlags & 2) {
+		/* as long as we don't support MM VxD in wine, we don't need 
+		 * to care about this flag
+		 */
+		/* FIXME(mmsys, "Don't know how to properly open VxD handles\n"); */
+		/* lpMMThd->hVxD = OpenVxDHandle(lpMMThd->hEvent); */
+	    }
+
+	    lpMMThd->hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)WINE_mmThreadEntryPoint, 
+					    (LPVOID)(DWORD)hndl, CREATE_SUSPENDED, &lpMMThd->dwThreadID);
+	    if (lpMMThd->hThread == 0) {
+		WARN(mmsys, "Couldn't create thread\n");
+		/* clean-up(VxDhandle...); devicedirectio... */
+		if (lpMMThd->hEvent != 0)
+		    CloseHandle(lpMMThd->hEvent);
+		ret = 2;
+	    } else {
+		TRACE(mmsys, "Got a nice thread hndl=0x%04x id=0x%08lx\n", lpMMThd->hThread, lpMMThd->dwThreadID);
+		ret = 0;
+	    }
 	} else {
-	    ret = 0;
-	    while (lpMMThd->dwStatus < 10) {
+	    /* get WINE_mmThreadEntryPoint() 
+	     * 2047 is its ordinal in mmsystem.spec
+	     */
+	    FARPROC16	fp = GetProcAddress16(GetModuleHandle16("MMSYSTEM"), (SEGPTR)2047);
+
+	    TRACE(mmsys, "farproc seg=0x%08lx lin=%p\n", (DWORD)fp, PTR_SEG_TO_LIN(fp));
+
+	    ret = (fp == 0) ? 2 : mmTaskCreate16((DWORD)fp, 0, hndl);
+	}
+
+	if (ret == 0) {
+	    if (lpMMThd->hThread && !ResumeThread(lpMMThd->hThread))
+		WARN(mmsys, "Couldn't resume thread\n");
+
+	    while (lpMMThd->dwStatus != 0x10) { /* test also HIWORD of dwStatus */
 		UserYield16();
 	    }
 	}
     }
-#if 0
-    if (lpMMThd->hThread)
-	ResumeThread(lpMMThd->hThread);
-#endif
 
+    if (ret != 0) {
+	GlobalFree16(hndl);
+	hndl = 0;
+    }
 
     if (lpHndl)
 	*lpHndl = hndl;
 
+    TRACE(mmsys, "ok => %ld\n", ret);
     return ret;
 }
 
@@ -4826,27 +4869,57 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
  */
 void WINAPI mmThreadSignal16(HANDLE16 hndl) 
 {
-    TRACE(mmsys,"(%04x)!\n", hndl);
+    TRACE(mmsys, "(%04x)!\n", hndl);
 
     if (hndl) {
 	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
 
 	lpMMThd->dwCounter++;
-#if 0
 	if (lpMMThd->hThread != 0) {
-	    /* FIXME ??
-	     * SYSLEVEL_ReleaseWin16Lock();
-	     * InterlockedIncrement(lpMMThd->hThread [18]);
-	     * SetEvent(lpMMThd->hThread [1C]);
-	     * SYSLEVEL_RestoreWin16Lock();
-	     */
+	    InterlockedIncrement(&lpMMThd->dwSignalCount);
+	    SetEvent(lpMMThd->hEvent);
 	} else {
 	    mmTaskSignal16(lpMMThd->hTask);
 	}
-#else
-	mmTaskSignal16(lpMMThd->hTask);
-#endif
 	lpMMThd->dwCounter--;
+    }
+}
+
+/**************************************************************************
+ * 				MMSYSTEM_ThreadBlock		[internal]
+ */
+static	void	MMSYSTEM_ThreadBlock(WINE_MMTHREAD* lpMMThd)
+{
+    MSG		msg;
+    DWORD	ret;
+
+    if (lpMMThd->dwThreadID != GetCurrentThreadId())
+	ERR(mmsys, "Not called by thread itself\n");
+
+    for (;;) {
+	ResetEvent(lpMMThd->hEvent);
+	if (InterlockedDecrement(&lpMMThd->dwSignalCount) >= 0)
+	    break;
+	InterlockedIncrement(&lpMMThd->dwSignalCount);
+	
+	TRACE(mmsys, "S1\n");
+	
+	ret = MsgWaitForMultipleObjects(1, &lpMMThd->hEvent, FALSE, INFINITE, QS_ALLINPUT);
+	switch (ret) {
+	case WAIT_OBJECT_0:	/* Event */
+	    TRACE(mmsys, "S2.1\n");
+	    break;
+	case WAIT_OBJECT_0 + 1:	/* Msg */
+	    TRACE(mmsys, "S2.2\n");
+	    if (Callout.PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+		Callout.TranslateMessage(&msg);
+		Callout.DispatchMessageA(&msg);
+	    }
+	    break;
+	default:
+	    WARN(mmsys, "S2.x unsupported ret val 0x%08lx\n", ret);
+	}
+	TRACE(mmsys, "S3\n");
     }
 }
 
@@ -4855,46 +4928,40 @@ void WINAPI mmThreadSignal16(HANDLE16 hndl)
  */
 void	WINAPI mmThreadBlock16(HANDLE16 hndl) 
 {
-    TRACE(mmsys,"(%04x)!\n", hndl);
+    TRACE(mmsys, "(%04x)!\n", hndl);
 
     if (hndl) {
 	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
 	
-#if 0
 	if (lpMMThd->hThread != 0) {
-	    /* FIXME
-	     * DPMI: lock linear region lpMMThd
-	     */
+	    SYSLEVEL_ReleaseWin16Lock();
+	    MMSYSTEM_ThreadBlock(lpMMThd);
+	    SYSLEVEL_RestoreWin16Lock();
 	} else {
 	    mmTaskBlock16(lpMMThd->hTask);
 	}
-#else
-	mmTaskBlock16(lpMMThd->hTask);
-#endif
     }
+    TRACE(mmsys, "done\n");
 }
-
-HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl);
-BOOL16	 WINAPI	mmThreadIsValid16(HANDLE16 hndl);
 
 /**************************************************************************
  * 				mmThreadIsCurrent	[MMSYSTEM.1123]
  */
 BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hndl) 
 {
-    WINE_MMTHREAD*	lpMMThd;
+    BOOL16		ret = FALSE;
 
-    TRACE(mmsys, "(%04x)! stub\n", hndl);
+    TRACE(mmsys, "(%04x)!\n", hndl);
 
-    if (!hndl)
-	return FALSE;
-
-    if (!mmThreadIsValid16(hndl))
-	return FALSE;
-
-    lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
-
-    return GetCurrentThreadId() == lpMMThd->dwThreadId;
+    if (hndl && mmThreadIsValid16(hndl)) {
+	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	ret = (GetCurrentThreadId() == lpMMThd->dwThreadID);
+	/* FIXME: just a test */
+	SYSLEVEL_ReleaseWin16Lock();
+	SYSLEVEL_RestoreWin16Lock();
+    }
+    TRACE(mmsys, "=> %d\n", ret);
+    return ret;
 }
 
 /**************************************************************************
@@ -4902,34 +4969,30 @@ BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hndl)
  */
 BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 hndl)
 {
-    WINE_MMTHREAD*	lpMMThd;
-    BOOL16		ret = TRUE;
+    BOOL16		ret = FALSE;
 
     TRACE(mmsys, "(%04x)!\n", hndl);
 
-    if (!hndl)
-	return FALSE;
-    lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+    if (hndl) {
+	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
 
-    if (IsBadWritePtr(lpMMThd, sizeof(WINE_MMTHREAD)) ||
-	lpMMThd->dwSignature != WINE_MMTHREAD_CREATED ||
-	!IsTask16(lpMMThd->hTask))
-	return FALSE;
-
-#if 0
-    lpMMThd->dwCounter++;
-    if (lpMMThd->hThread != 0) {
-	DWORD	dwThreadRet;
-
-	SYSLEVEL_ReleaseWin16Lock();
-	if (!GetExitCodeThread(lpMMThd->hThread, &locvar) ||
-	    dwThreadRet != STATUS_PENDING) {
-	    ret = FALSE;
+	if (!IsBadWritePtr(lpMMThd, sizeof(WINE_MMTHREAD)) &&
+	    lpMMThd->dwSignature == WINE_MMTHREAD_CREATED &&
+	    IsTask16(lpMMThd->hTask)) {
+	    lpMMThd->dwCounter++;
+	    if (lpMMThd->hThread != 0) {
+		DWORD	dwThreadRet;
+		if (GetExitCodeThread(lpMMThd->hThread, &dwThreadRet) &&
+		    dwThreadRet == STATUS_PENDING) {
+		    ret = TRUE;
+		}
+	    } else {
+		ret = TRUE;
+	    }
+	    lpMMThd->dwCounter--;
 	}
-	SYSLEVEL_RestoreWin16Lock();
     }
-    lpMMThd->dwCounter--;
-#endif
+    TRACE(mmsys, "=> %d\n", ret);
     return ret;
 }
 
@@ -4940,7 +5003,7 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
 {
     HANDLE16	ret = 0;
 
-    TRACE(mmsys,"(%04x)\n", hndl);
+    TRACE(mmsys, "(%04x)\n", hndl);
 
     if (mmThreadIsValid16(hndl)) {
 	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
@@ -4949,49 +5012,82 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
     return ret;
 }
 
-void	WINAPI	WINE_mmThreadingEntryPoint(DWORD _pmt)
+/**************************************************************************
+ * 				mmThreadGetTask			[internal]
+ */
+void	WINAPI	WINE_mmThreadEntryPoint(DWORD _pmt)
 {
     HANDLE16		hndl = (HANDLE16)_pmt;
     WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+    CRITICAL_SECTION*	cs;
 
     TRACE(mmsys, "(%04x %p)\n", hndl, lpMMThd);
 
+    GetpWin16Lock(&cs);
+
+    TRACE(mmsys, "lc=%ld rc=%ld ot=%08lx\n", cs->LockCount, cs->RecursionCount, (DWORD)cs->OwningThread);
+
     lpMMThd->hTask = LOWORD(GetCurrentTask());
+    TRACE(mmsys, "[10-%08x] setting hTask to 0x%08x\n", lpMMThd->hThread, lpMMThd->hTask);
     lpMMThd->dwStatus = 0x10;
-    mmThreadBlock16(hndl);
+    MMSYSTEM_ThreadBlock(lpMMThd);
+    TRACE(mmsys, "[20-%08x]\n", lpMMThd->hThread);
     lpMMThd->dwStatus = 0x20;
-    if (lpMMThd->fpThread) 
+    if (lpMMThd->fpThread) {
+#if 0
+        extern	DWORD	CALLBACK	CallTo16_long_l_x(FARPROC16, DWORD);
+	TRACE(mmsys, "Calling %08lx(%08lx)\n", (DWORD)lpMMThd->fpThread, lpMMThd->dwThreadPmt);$
+	CallTo16_long_l_x(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
+#else
 	Callbacks->CallWOWCallbackProc(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
-    lpMMThd->dwStatus = 0x30;
-    while (lpMMThd->dwCounter) {
-	Yield16();
+#endif
     }
+    lpMMThd->dwStatus = 0x30;
+    TRACE(mmsys, "[30-%08x]\n", lpMMThd->hThread);
+    while (lpMMThd->dwCounter) {
+	Sleep(1);
+	/* Yield16();*/
+    }
+    TRACE(mmsys, "[XX-%08x]\n", lpMMThd->hThread);
+    /* paranoia */
     lpMMThd->dwSignature = WINE_MMTHREAD_DELETED;
+    /* close lpMMThread->hVxD directio */
+    if (lpMMThd->hEvent)
+	CloseHandle(lpMMThd->hEvent);
     GlobalFree16(hndl);
+    TRACE(mmsys, "lc=%ld rc=%ld ot=%08lx\n", cs->LockCount, cs->RecursionCount, (DWORD)cs->OwningThread);
+    TRACE(mmsys, "done\n");
 }
 
 /**************************************************************************
  * 			mmShowMMCPLPropertySheet	[MMSYSTEM.1150]
  */
-BOOL16	WINAPI	mmShowMMCPLPropertySheet16(WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6, WORD w7)
+BOOL16	WINAPI	mmShowMMCPLPropertySheet16(HWND hWnd, char* lpStrDevice, 
+					   char* lpStrTab, char* lpStrTitle)
 {
-    FIXME(mmsys, "(%04x %04x %04x %04x %04x %04x %04x): stub!\n", w1, w2, w3, w4, w5, w6, w7);
-
-#if 0
     HANDLE	hndl;
-    FARPROC	fp;
     BOOL16	ret = FALSE;
 
-    /* to be tested */
-    if ((hndl = LoadLibraryA("MMSYS.CPL")) != 0) {
-	if ((fp = GetProcAddressA(hndl, "ShowMMCPLPropertySheet")) != NULL) {
-	    ret = ((BOOL16 (WINAPI *)(WORD, WORD, WORD, WORD, WORD, WORD, WORD, WORD))fp)(0, w1, w2, w3, w4, w5, w6, w7);
+    TRACE(mmsys, "(%04x \"%s\" \"%s\" \"%s\")\n", hWnd, lpStrDevice, lpStrTab, lpStrTitle);
+
+    hndl = LoadLibraryA("MMSYS.CPL");
+    if (hndl != 0) {
+	BOOL16 (WINAPI *fp)(HWND, LPSTR, LPSTR, LPSTR);
+
+	fp = (BOOL16 (WINAPI *)(HWND, LPSTR, LPSTR, LPSTR))GetProcAddress(hndl, "ShowMMCPLPropertySheet");
+	if (fp != NULL) {	    
+	    /* FIXME: wine hangs and/or seg faults in this call, 
+	     * after the window is correctly displayed 
+	     */
+	    TRACE(mmsys, "Ready to go ThreadID=%08lx\n", GetCurrentThreadId());
+	    SYSLEVEL_ReleaseWin16Lock();
+	    ret = (fp)(hWnd, lpStrDevice, lpStrTab, lpStrTitle);
+	    SYSLEVEL_RestoreWin16Lock();
 	}
-	FreeLibraryA(hndl);
+	FreeLibrary(hndl);
     }
-#endif
     
-    return TRUE;
+    return ret;
 }
 
 /**************************************************************************
