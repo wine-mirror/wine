@@ -660,7 +660,6 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
-#if !defined(ALLOW_UNALIGNED_ACCESS)
     /* Check for unaligned pointers */
     if ( (long)pArena % sizeof(void *) != 0 )
     {
@@ -668,7 +667,6 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
              (DWORD)subheap->heap, (DWORD)pArena );
         return FALSE;
     }
-#endif
 
     /* Check magic number */
     if (pArena->magic != ARENA_FREE_MAGIC)
@@ -754,7 +752,6 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
-#if !defined(ALLOW_UNALIGNED_ACCESS)
     /* Check for unaligned pointers */
     if ( (long)pArena % sizeof(void *) != 0 )
     {
@@ -774,7 +771,6 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
         }
         return FALSE;
     }
-#endif
 
     /* Check magic number */
     if (pArena->magic != ARENA_INUSE_MAGIC)

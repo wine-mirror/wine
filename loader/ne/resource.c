@@ -274,7 +274,7 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
 
     while(pTypeInfo->type_id)
     {
-	PUT_UA_DWORD( &pTypeInfo->resloader, (DWORD)DefResourceHandlerProc );
+        memcpy( &pTypeInfo->resloader, &DefResourceHandlerProc, sizeof(FARPROC16) );
 	pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return TRUE;
@@ -300,8 +300,8 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
     {
         if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, typeId )))
             break;
-        prevHandler = (FARPROC16)GET_UA_DWORD( &pTypeInfo->resloader );
-        PUT_UA_DWORD( &pTypeInfo->resloader, (DWORD)resourceHandler );
+        memcpy( &prevHandler, &pTypeInfo->resloader, sizeof(FARPROC16) );
+        memcpy( &pTypeInfo->resloader, &resourceHandler, sizeof(FARPROC16) );
         pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return prevHandler;
@@ -503,7 +503,8 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 	}
 	else
 	{
-            FARPROC16 resloader = (FARPROC16)GET_UA_DWORD( &pTypeInfo->resloader );
+            FARPROC16 resloader;
+            memcpy( &resloader, &pTypeInfo->resloader, sizeof(FARPROC16) );
 	    if ( resloader && resloader != DefResourceHandlerProc )
                 pNameInfo->handle = NE_CallTo16_word_www(
                     resloader, pNameInfo->handle, pModule->self, hRsrc );

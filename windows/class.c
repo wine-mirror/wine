@@ -795,7 +795,7 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
     if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
 
     if (offset <= class->cbClsExtra - sizeof(WORD))
-        retvalue = GET_WORD((char *)(class + 1) + offset);
+        memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(retvalue) );
     else
         SetLastError( ERROR_INVALID_INDEX );
     release_class_ptr( class );
@@ -847,7 +847,7 @@ LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
     if (offset >= 0)
     {
         if (offset <= class->cbClsExtra - sizeof(LONG))
-            retvalue = GET_DWORD((char *)(class + 1) + offset);
+            memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(retvalue) );
         else
             SetLastError( ERROR_INVALID_INDEX );
         release_class_ptr( class );
@@ -940,8 +940,8 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
     if (offset <= class->cbClsExtra - sizeof(WORD))
     {
         void *ptr = (char *)(class + 1) + offset;
-        retval = GET_WORD(ptr);
-        PUT_WORD( ptr, newval );
+        memcpy( &retval, ptr, sizeof(retval) );
+        memcpy( ptr, &newval, sizeof(newval) );
     }
     else SetLastError( ERROR_INVALID_INDEX );
 
@@ -994,8 +994,8 @@ LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
         if (offset <= class->cbClsExtra - sizeof(LONG))
         {
             void *ptr = (char *)(class + 1) + offset;
-            retval = GET_DWORD(ptr);
-            PUT_DWORD( ptr, newval );
+            memcpy( &retval, ptr, sizeof(retval) );
+            memcpy( ptr, &newval, sizeof(newval) );
         }
         else SetLastError( ERROR_INVALID_INDEX );
     }

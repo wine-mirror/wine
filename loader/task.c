@@ -258,6 +258,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     HTASK16 hTask;
     TDB *pTask;
     char name[10];
+    FARPROC16 proc;
 
       /* Allocate the task structure */
 
@@ -308,8 +309,8 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 
     pTask->pdb.int20 = 0x20cd;
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
-    PUT_UA_DWORD(&pTask->pdb.dispatcher[1], 
-                 (DWORD)GetProcAddress16( GetModuleHandle16("KERNEL"), "DOS3Call" ));
+    proc = GetProcAddress16( GetModuleHandle16("KERNEL"), "DOS3Call" );
+    memcpy( &pTask->pdb.dispatcher[1], &proc, sizeof(proc) );
     pTask->pdb.savedint22 = INT_GetPMHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetPMHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetPMHandler( 0x24 );

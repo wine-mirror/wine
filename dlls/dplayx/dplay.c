@@ -4077,10 +4077,8 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
       }
 
       if( i == 0 )
-      {
-        lpSpData->dwReserved1 = GET_DWORD( returnBuffer );
-      }
- 
+          memcpy( &lpSpData->dwReserved1, returnBuffer, sizeof(lpSpData->dwReserved1) );
+
       sizeOfReturnBuffer = 255;
 
       /* Get dwReserved2 */
@@ -4093,9 +4091,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
       }
 
       if( i == 0 )
-      {
-        lpSpData->dwReserved2 = GET_DWORD( returnBuffer );
-      }
+          memcpy( &lpSpData->dwReserved2, returnBuffer, sizeof(lpSpData->dwReserved2) );
 
       sizeOfReturnBuffer = 255;
    
@@ -5267,8 +5263,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
       ERR(": missing dwReserved1 registry data members\n") ;
       continue; 
     }
-
-    majVersionNum = GET_DWORD( returnBuffer );
+    memcpy( &majVersionNum, returnBuffer, sizeof(majVersionNum) );
 
     sizeOfReturnBuffer = 50;
     if( RegQueryValueExA( hkServiceProvider, minVerDataSubKey,
@@ -5278,8 +5273,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
       ERR(": missing dwReserved2 registry data members\n") ;
       continue;
     }
-
-    minVersionNum = GET_DWORD( returnBuffer );
+    memcpy( &minVersionNum, returnBuffer, sizeof(minVersionNum) );
 
 
     /* The enumeration will return FALSE if we are not to continue */

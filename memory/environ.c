@@ -74,15 +74,6 @@ static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
 /* Maximum length of a Win16 environment string (including NULL) */
 #define MAX_WIN16_LEN  128
 
-/* Extra bytes to reserve at the end of an environment */
-#define EXTRA_ENV_SIZE (sizeof(BYTE) + sizeof(WORD) + sizeof(ENV_program_name))
-
-/* Fill the extra bytes with the program name and stuff */
-#define FILL_EXTRA_ENV(p) \
-    *(p) = '\0'; \
-    PUT_UA_WORD( (p) + 1, 1 ); \
-    strcpy( (p) + 3, ENV_program_name );
-
 STARTUPINFOA current_startupinfo =
 {
     sizeof(STARTUPINFOA),    /* cb */
@@ -154,12 +145,13 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
 static BOOL build_environment(void)
 {
     extern char **environ;
+    static const WORD one = 1;
     LPSTR p, *e;
     int size;
 
     /* Compute the total size of the Unix environment */
 
-    size = EXTRA_ENV_SIZE;
+    size = sizeof(BYTE) + sizeof(WORD) + sizeof(ENV_program_name);
     for (e = environ; *e; e++) size += strlen(*e) + 1;
 
     /* Now allocate the environment */
@@ -178,7 +170,9 @@ static BOOL build_environment(void)
 
     /* Now add the program name */
 
-    FILL_EXTRA_ENV( p );
+    *p++ = 0;
+    memcpy( p, &one, sizeof(WORD) );
+    strcpy( p + sizeof(WORD), ENV_program_name );
     return TRUE;
 }
 

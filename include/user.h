@@ -38,6 +38,9 @@ extern WORD USER_HeapSel;
 #define USER_HEAP_LIN_ADDR(handle)  \
          ((handle) ? MapSL(MAKESEGPTR(USER_HeapSel, (handle))) : NULL)
 
+#define GET_WORD(ptr)  (*(WORD *)(ptr))
+#define GET_DWORD(ptr) (*(DWORD *)(ptr))
+
 #define USUD_LOCALALLOC        0x0001
 #define USUD_LOCALFREE         0x0002
 #define USUD_LOCALCOMPACT      0x0003

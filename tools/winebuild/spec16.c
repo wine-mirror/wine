@@ -200,18 +200,19 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     *pstr = strlen( DLLName );
     strcpy( pstr + 1, DLLName );
     pstr += *pstr + 1;
-    PUT_UA_WORD( pstr, 0 );
-    pstr += sizeof(WORD);
+    *pstr++ = 0;
+    *pstr++ = 0;
     /* Store all ordinals */
     for (i = 1; i <= Limit; i++)
     {
         ORDDEF *odp = Ordinals[i];
+        WORD ord = i;
         if (!odp || !odp->name[0]) continue;
         *pstr = strlen( odp->name );
         strcpy( pstr + 1, odp->name );
         strupper( pstr + 1 );
         pstr += *pstr + 1;
-        PUT_UA_WORD( pstr, i );
+        memcpy( pstr, &ord, sizeof(WORD) );
         pstr += sizeof(WORD);
     }
     *pstr++ = 0;

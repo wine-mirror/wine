@@ -99,6 +99,8 @@ MAKE_FUNCPTR(FT_Sin)
 MAKE_FUNCPTR(FT_Vector_Rotate)
 #undef MAKE_FUNCPTR
 
+#define GET_BE_WORD(ptr) MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
+
 typedef struct tagFace {
     WCHAR *StyleName;
     char *file;

@@ -185,7 +185,7 @@ static BOOL MSTTStrToSz(const FT_SfntName *name, LPSTR *p_sz)
 {
     FT_UShort	i;
     INT     	len;
-    USHORT  	*wsz;
+    BYTE  	*wsz;
     LPSTR   	sz;
     
     len = name->string_len / 2;     	    	    /* # of 16-bit chars */
@@ -194,15 +194,12 @@ static BOOL MSTTStrToSz(const FT_SfntName *name, LPSTR *p_sz)
     if (sz == NULL)
     	return FALSE;
 	
-    wsz = (USHORT *)(name->string);
-    
-    for (i = 0; i < len; ++i, ++sz, ++wsz)
+    wsz = (BYTE *)name->string;
+
+    for (i = 0; i < len; ++i, ++sz)
     {
-    	USHORT	wc = *wsz;
-	
-#ifndef WORDS_BIGENDIAN
-    	wc = (wc >> 8) | (wc << 8);
-#endif
+        USHORT wc = (wsz[0] << 8) + wsz[1];
+        wsz += 2;
 
     	if (wc > 127)
 	{

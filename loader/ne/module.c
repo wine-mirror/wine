@@ -278,7 +278,8 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     {
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
-            WORD ordinal = GET_UA_WORD( cpnt + *cpnt + 1 );
+            WORD ordinal;
+            memcpy( &ordinal, cpnt + *cpnt + 1, sizeof(ordinal) );
             TRACE("  Found: ordinal=%d\n", ordinal );
             return ordinal;
         }
@@ -296,7 +297,8 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     {
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
-            WORD ordinal = GET_UA_WORD( cpnt + *cpnt + 1 );
+            WORD ordinal;
+            memcpy( &ordinal, cpnt + *cpnt + 1, sizeof(ordinal) );
             TRACE("  Found: ordinal=%d\n", ordinal );
             return ordinal;
         }
@@ -353,7 +355,7 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
 	entry++;
 
     sel = entry->segnum;
-    offset = GET_UA_WORD( &entry->offs );
+    memcpy( &offset, &entry->offs, sizeof(WORD) );
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = GlobalHandleToSel16(NE_SEG_TABLE(pModule)[sel-1].hSeg);
@@ -394,7 +396,7 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
     for (i=0; i < (ordinal - bundle->first - 1); i++)
 	entry++;
 
-    PUT_UA_WORD( &entry->offs, offset );
+    memcpy( &entry->offs, &offset, sizeof(WORD) );
     return TRUE;
 }
 
