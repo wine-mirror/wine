@@ -309,7 +309,9 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID,
 	lstrcpynA(mc->ctrl.szShortName, "Mixer", MIXER_SHORT_NAME_CHARS);
 	lstrcpynA(mc->ctrl.szName, "Mixer", MIXER_LONG_NAME_CHARS);
 	memset(&mc->ctrl.Bounds, 0, sizeof(mc->ctrl.Bounds));
+        mc->ctrl.Bounds.s1.dwMaximum = mc->ctrl.cMultipleItems - 1;
 	memset(&mc->ctrl.Metrics, 0, sizeof(mc->ctrl.Metrics));
+        mc->ctrl.Metrics.cSteps = mc->ctrl.cMultipleItems;
 	break;
 
     default:
@@ -630,15 +632,17 @@ static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEA lpMl,
     lpMl->dwDestination = dst;
     switch (dst)
     {
-    case 0:
+    case LINEID_SPEAKER:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_DST_SPEAKERS;
 	mask = mix->devMask;
 	j = SOUND_MIXER_VOLUME;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_WAVEOUT;
 	break;
-    case 1:
+    case LINEID_RECORD:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_DST_WAVEIN;
 	mask = mix->recMask;
 	j = SOUND_MIXER_RECLEV;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_WAVEIN;
 	break;
     default:
 	FIXME("shouldn't happen\n");
@@ -691,26 +695,32 @@ static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEA lpMl,
     case SOUND_MIXER_SYNTH:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_MIDIOUT;
 	break;
     case SOUND_MIXER_CD:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_UNDEFINED;
 	break;
     case SOUND_MIXER_LINE:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_LINE;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_UNDEFINED;
 	break;
     case SOUND_MIXER_MIC:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_WAVEIN;
 	break;
     case SOUND_MIXER_PCM:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_WAVEOUT;
 	break;
     case SOUND_MIXER_IMIX:
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_UNDEFINED;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
+        lpMl->Target.dwType = MIXERLINE_TARGETTYPE_UNDEFINED;
 	break;
     default:
 	WARN("Index %ld not handled.\n", idx);
@@ -797,8 +807,8 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
               lpMl->dwDestination);
 	switch (lpMl->dwDestination)
 	{
-	case 0: mask = mix->devMask; break;
-	case 1: mask = mix->recMask; break;
+	case LINEID_SPEAKER: mask = mix->devMask; break;
+	case LINEID_RECORD: mask = mix->recMask; break;
 	default:
             WARN("invalid parameter\n");
             return MMSYSERR_INVALPARAM;
@@ -893,15 +903,16 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	break;
     }
 
-    lpMl->Target.dwType = MIXERLINE_TARGETTYPE_AUX; /* FIXME */
-    lpMl->Target.dwDeviceID = 0xFFFFFFFF;
-    lpMl->Target.wMid = WINE_MIXER_MANUF_ID;
-    lpMl->Target.wPid = WINE_MIXER_PRODUCT_ID;
-    lpMl->Target.vDriverVersion = WINE_MIXER_VERSION;
-    if (mix->name)
-        strcpy(lpMl->Target.szPname, mix->name);
-    else
-        strcpy(lpMl->Target.szPname, WINE_MIXER_NAME);
+    if ((fdwInfo & MIXER_GETLINEINFOF_QUERYMASK) != MIXER_GETLINEINFOF_TARGETTYPE) {
+        lpMl->Target.dwDeviceID = 0xFFFFFFFF;
+        lpMl->Target.wMid = WINE_MIXER_MANUF_ID;
+        lpMl->Target.wPid = WINE_MIXER_PRODUCT_ID;
+        lpMl->Target.vDriverVersion = WINE_MIXER_VERSION;
+        if (mix->name)
+            strcpy(lpMl->Target.szPname, mix->name);
+        else
+            strcpy(lpMl->Target.szPname, WINE_MIXER_NAME);
+    }
 
     return ret;
 }
