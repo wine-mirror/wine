@@ -28,6 +28,8 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
+#include <process.h>
+#include <errno.h>
 
 static void test_fdopen( void )
 {
@@ -233,6 +235,58 @@ static void test_file_write_read( void )
   ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 }
 
+static void test_file_inherit_child(const char* fd_s)
+{
+    int fd = atoi(fd_s);
+    char buffer[32];
+
+    ok(write(fd, "Success", 8) == 8, "Couldn't write in child process on %d (%s)\n", fd, strerror(errno));
+    lseek(fd, 0, SEEK_SET);
+    ok(read(fd, buffer, sizeof (buffer)) == 8, "Couldn't read back the data\n");
+    ok(memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
+}
+
+static void test_file_inherit_child_no(const char* fd_s)
+{
+    int fd = atoi(fd_s);
+
+    ok(write(fd, "Success", 8) == -1 && errno == EBADF, 
+       "Wrong write result in child process on %d (%s)\n", fd, strerror(errno));
+}
+ 
+static void test_file_inherit( const char* selfname )
+{
+    int			fd;
+    const char*		arg_v[5];
+    char 		buffer[16];
+
+    fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
+    ok(fd != -1, "Couldn't create test file\n ");
+    arg_v[0] = selfname;
+    arg_v[1] = "tests/file.c";
+    arg_v[2] = buffer; sprintf(buffer, "%d", fd);
+    arg_v[3] = 0;
+    _spawnvp(_P_WAIT, selfname, arg_v);
+    ok(tell(fd) == 8, "bad position %lu expecting 8\n", tell(fd));
+    lseek(fd, 0, SEEK_SET);
+    ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
+    close (fd);
+    ok(unlink("fdopen.tst") != 1, "Couldn't unlink\n");
+    
+    fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
+    ok(fd != -1, "Couldn't create test file\n ");
+    arg_v[0] = selfname;
+    arg_v[1] = "tests/file.c";
+    arg_v[2] = buffer; sprintf(buffer, "%d", fd);
+    arg_v[3] = buffer;
+    arg_v[4] = 0;
+    _spawnvp(_P_WAIT, selfname, arg_v);
+    ok(tell(fd) == 0, "bad position %lu expecting 0\n", tell(fd));
+    ok(read(fd, buffer, sizeof (buffer)) == 0, "Found unexpected data (%s)\n", buffer);
+    close (fd);
+    ok(unlink("fdopen.tst") != 1, "Couldn't unlink\n");
+}
+
 static void test_tmpnam( void )
 {
   char name[MAX_PATH] = "abc";
@@ -249,17 +303,29 @@ static void test_tmpnam( void )
   ok(res == name, "supplied buffer was not used\n");
   ok(res[0] == '\\', "first character is not a backslash\n");
   ok(strchr(res+1, '\\') == 0, "file not in the root directory\n");
-  ok(res[strlen(res)-1] != '.', "second call - last character is not a dot\n");
+  ok(res[strlen(res)-1] != '.', "second call - last character is a dot\n");
 }
 
 
 
 START_TEST(file)
 {
+    int arg_c;
+    char** arg_v;
+
+    arg_c = winetest_get_mainargs( &arg_v );
+
+    if (arg_c >= 3)
+    {
+	if (arg_c == 3) test_file_inherit_child(arg_v[2]); else test_file_inherit_child_no(arg_v[2]);
+        return;
+    }
+
     test_fdopen();
     test_fileops();
     test_fgetwc();
     test_file_put_get();
     test_file_write_read();
+    test_file_inherit(arg_v[0]);
     test_tmpnam();
 }

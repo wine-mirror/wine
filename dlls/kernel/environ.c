@@ -439,8 +439,8 @@ void ENV_CopyStartupInformation(void)
     startup_infoW.dwFillAttribute      = rupp->dwFillAttribute;
     startup_infoW.dwFlags              = rupp->dwFlags;
     startup_infoW.wShowWindow          = rupp->wShowWindow;
-    startup_infoW.cbReserved2          = 0;
-    startup_infoW.lpReserved2          = NULL;
+    startup_infoW.cbReserved2          = rupp->RuntimeInfo.Length;
+    startup_infoW.lpReserved2          = (void*)rupp->RuntimeInfo.Buffer;
     startup_infoW.hStdInput            = rupp->hStdInput;
     startup_infoW.hStdOutput           = rupp->hStdOutput;
     startup_infoW.hStdError            = rupp->hStdError;
@@ -462,8 +462,8 @@ void ENV_CopyStartupInformation(void)
     startup_infoA.dwFillAttribute      = rupp->dwFillAttribute;
     startup_infoA.dwFlags              = rupp->dwFlags;
     startup_infoA.wShowWindow          = rupp->wShowWindow;
-    startup_infoA.cbReserved2          = 0;
-    startup_infoA.lpReserved2          = NULL;
+    startup_infoA.cbReserved2          = rupp->RuntimeInfo.Length;
+    startup_infoA.lpReserved2          = (void*)rupp->RuntimeInfo.Buffer;
     startup_infoA.hStdInput            = rupp->hStdInput;
     startup_infoA.hStdOutput           = rupp->hStdOutput;
     startup_infoA.hStdError            = rupp->hStdError;

@@ -53,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /* _access() bit flags FIXME: incomplete */
 #define MSVCRT_W_OK      0x02
 
-/* values for xflag */
+/* values for wxflag in file descriptor */
 #define WX_OPEN           0x01
 #define WX_ATEOF          0x02
 #define WX_DONTINHERIT    0x10
@@ -65,7 +65,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 static struct {
     HANDLE              handle;
-    unsigned char       xflag;
+    unsigned char       wxflag;
 } MSVCRT_fdesc[MSVCRT_MAX_FILES];
 
 MSVCRT_FILE MSVCRT__iob[3];
@@ -115,7 +115,7 @@ static void msvcrt_cp_from_stati64(const struct MSVCRT__stati64 *bufi64, struct 
 
 static inline BOOL msvcrt_is_valid_fd(int fd)
 {
-  return fd >= 0 && fd < MSVCRT_fdend && (MSVCRT_fdesc[fd].xflag & WX_OPEN);
+  return fd >= 0 && fd < MSVCRT_fdend && (MSVCRT_fdesc[fd].wxflag & WX_OPEN);
 }
 
 /* INTERNAL: Get the HANDLE for a fd */
@@ -136,7 +136,7 @@ static HANDLE msvcrt_fdtoh(int fd)
 static void msvcrt_free_fd(int fd)
 {
   MSVCRT_fdesc[fd].handle = INVALID_HANDLE_VALUE;
-  MSVCRT_fdesc[fd].xflag = 0;
+  MSVCRT_fdesc[fd].wxflag = 0;
   TRACE(":fd (%d) freed\n",fd);
   if (fd < 3) /* don't use 0,1,2 for user files */
   {
@@ -168,16 +168,13 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
     return -1;
   }
   MSVCRT_fdesc[fd].handle = hand;
-  MSVCRT_fdesc[fd].xflag = WX_OPEN;
-  if (flag & MSVCRT__O_NOINHERIT)      MSVCRT_fdesc[fd].xflag |= WX_DONTINHERIT;
-  if (flag & MSVCRT__O_APPEND)         MSVCRT_fdesc[fd].xflag |= WX_APPEND;
-  if (flag & MSVCRT__O_TEXT)           MSVCRT_fdesc[fd].xflag |= WX_TEXT;
+  MSVCRT_fdesc[fd].wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT));
 
   /* locate next free slot */
   if (fd == MSVCRT_fdend)
     MSVCRT_fdstart = ++MSVCRT_fdend;
   else
-    while(MSVCRT_fdstart < MSVCRT_fdend &&
+    while (MSVCRT_fdstart < MSVCRT_fdend &&
 	  MSVCRT_fdesc[MSVCRT_fdstart].handle != INVALID_HANDLE_VALUE)
       MSVCRT_fdstart++;
 
@@ -232,37 +229,118 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
   return 0;
 }
 
+/* INTERNAL: Create an inheritance data block (for spawned process)
+ * The inheritance block is made of:
+ *      00      int     nb of file descriptor (NBFD)
+ *      04      char    file flags (wxflag): repeated for each fd
+ *      4+NBFD  HANDLE  file handle: repeated for each fd
+ */
+unsigned msvcrt_create_io_inherit_block(STARTUPINFOA* si)
+{
+  int         fd;
+  char*       wxflag_ptr;
+  HANDLE*     handle_ptr;
 
-/* INTERNAL: Set up stdin, stderr and stdout */
+  si->cbReserved2 = sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * MSVCRT_fdend;
+  si->lpReserved2 = MSVCRT_calloc(si->cbReserved2, 1);
+  if (!si->lpReserved2)
+  {
+    si->cbReserved2 = 0;
+    return FALSE;
+  }
+  wxflag_ptr = (char*)si->lpReserved2 + sizeof(unsigned);
+  handle_ptr = (HANDLE*)(wxflag_ptr + MSVCRT_fdend * sizeof(char));
+
+  *(unsigned*)si->lpReserved2 = MSVCRT_fdend;
+  for (fd = 0; fd < MSVCRT_fdend; fd++)
+  {
+    /* to be inherited, we need it to be open, and that DONTINHERIT isn't set */
+    if ((MSVCRT_fdesc[fd].wxflag & (WX_OPEN | WX_DONTINHERIT)) == WX_OPEN)
+    {
+      *wxflag_ptr = MSVCRT_fdesc[fd].wxflag;
+      *handle_ptr = MSVCRT_fdesc[fd].handle;
+    }
+    else
+    {
+      *wxflag_ptr = 0;
+      *handle_ptr = INVALID_HANDLE_VALUE;
+    }
+    wxflag_ptr++; handle_ptr++;
+  } 
+  return TRUE;
+}
+
+/* INTERNAL: Set up all file descriptors, 
+ * as well as default streams (stdin, stderr and stdout) 
+ */
 void msvcrt_init_io(void)
 {
-  int i;
+  STARTUPINFOA  si;
+  int           i;
 
-  memset(MSVCRT__iob,0,3*sizeof(MSVCRT_FILE));
-  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_INPUT_HANDLE),
-    GetCurrentProcess(), &MSVCRT_fdesc[0].handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
-  MSVCRT_fdesc[0].xflag = WX_OPEN;
-  MSVCRT__iob[0]._flag = MSVCRT__IOREAD;
-  MSVCRT__iob[0]._tmpfname = NULL;
-  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
-    GetCurrentProcess(), &MSVCRT_fdesc[1].handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
-  MSVCRT_fdesc[1].xflag = WX_OPEN;
-  MSVCRT__iob[1]._flag = MSVCRT__IOWRT;
-  MSVCRT__iob[1]._tmpfname = NULL;
-  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_ERROR_HANDLE),
-    GetCurrentProcess(), &MSVCRT_fdesc[2].handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
-  MSVCRT_fdesc[2].xflag = WX_OPEN;
-  MSVCRT__iob[2]._flag = MSVCRT__IOWRT;
-  MSVCRT__iob[2]._tmpfname = NULL;
+  GetStartupInfoA(&si);
+  if (si.cbReserved2 != 0 && si.lpReserved2 != NULL)
+  {
+    char*       wxflag_ptr;
+    HANDLE*     handle_ptr;
+
+    MSVCRT_fdend = *(unsigned*)si.lpReserved2;
+
+    wxflag_ptr = (char*)(si.lpReserved2 + sizeof(unsigned));
+    handle_ptr = (HANDLE*)(wxflag_ptr + MSVCRT_fdend * sizeof(char));
+
+    MSVCRT_fdend = min(MSVCRT_fdend, sizeof(MSVCRT_fdesc) / sizeof(MSVCRT_fdesc[0]));
+    for (i = 0; i < MSVCRT_fdend; i++)
+    {
+      if ((*wxflag_ptr & WX_OPEN) && *handle_ptr != INVALID_HANDLE_VALUE)
+      {
+        MSVCRT_fdesc[i].wxflag  = *wxflag_ptr;
+        MSVCRT_fdesc[i].handle = *handle_ptr;
+      }
+      else
+      {
+        MSVCRT_fdesc[i].wxflag  = 0;
+        MSVCRT_fdesc[i].handle = INVALID_HANDLE_VALUE;
+      }
+      wxflag_ptr++; handle_ptr++;
+    }
+    for (MSVCRT_fdstart = 3; MSVCRT_fdstart < MSVCRT_fdend; MSVCRT_fdstart++)
+        if (MSVCRT_fdesc[MSVCRT_fdstart].handle == INVALID_HANDLE_VALUE) break;
+  }
+
+  if (!(MSVCRT_fdesc[0].wxflag & WX_OPEN) || MSVCRT_fdesc[0].handle == INVALID_HANDLE_VALUE)
+  {
+    DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_INPUT_HANDLE),
+                    GetCurrentProcess(), &MSVCRT_fdesc[0].handle, 0, FALSE, 
+                    DUPLICATE_SAME_ACCESS);
+    MSVCRT_fdesc[0].wxflag = WX_OPEN | WX_TEXT;
+  }
+  if (!(MSVCRT_fdesc[1].wxflag & WX_OPEN) || MSVCRT_fdesc[1].handle == INVALID_HANDLE_VALUE)
+  {
+    DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
+                    GetCurrentProcess(), &MSVCRT_fdesc[1].handle, 0, FALSE, 
+                    DUPLICATE_SAME_ACCESS);
+    MSVCRT_fdesc[1].wxflag = WX_OPEN | WX_TEXT;
+  }
+  if (!(MSVCRT_fdesc[2].wxflag & WX_OPEN) || MSVCRT_fdesc[2].handle == INVALID_HANDLE_VALUE)
+  {
+    DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_ERROR_HANDLE),
+                    GetCurrentProcess(), &MSVCRT_fdesc[2].handle, 0, FALSE, 
+                    DUPLICATE_SAME_ACCESS);
+    MSVCRT_fdesc[2].wxflag = WX_OPEN | WX_TEXT;
+  }
 
   TRACE(":handles (%p)(%p)(%p)\n",MSVCRT_fdesc[0].handle,
 	MSVCRT_fdesc[1].handle,MSVCRT_fdesc[2].handle);
 
+  memset(MSVCRT__iob,0,3*sizeof(MSVCRT_FILE));
   for (i = 0; i < 3; i++)
   {
     /* FILE structs for stdin/out/err are static and never deleted */
     MSVCRT_fstreams[i] = &MSVCRT__iob[i];
     MSVCRT__iob[i]._file = i;
+    MSVCRT__iob[i]._tmpfname = NULL;
+    MSVCRT__iob[i]._flag = (i == 0) ? MSVCRT__IOREAD : MSVCRT__IOWRT;
   }
   MSVCRT_stream_idx = 3;
 }
@@ -570,7 +648,7 @@ int _eof(int fd)
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 
-  if (MSVCRT_fdesc[fd].xflag & WX_ATEOF) return TRUE;
+  if (MSVCRT_fdesc[fd].wxflag & WX_ATEOF) return TRUE;
 
   /* Otherwise we do it the hard way */
   hcurpos = hendpos = 0;
@@ -636,7 +714,7 @@ __int64 _lseeki64(int fd, __int64 offset, int whence)
   ret = SetFilePointer(hand, (long)offset, &hoffset, whence);
   if (ret != INVALID_SET_FILE_POINTER || !GetLastError())
   {
-    MSVCRT_fdesc[fd].xflag &= ~WX_ATEOF;
+    MSVCRT_fdesc[fd].wxflag &= ~WX_ATEOF;
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
 
     return ((__int64)hoffset << 32) | ret;
@@ -1079,6 +1157,25 @@ MSVCRT_wchar_t *_wmktemp(MSVCRT_wchar_t *pattern)
   return NULL;
 }
 
+static unsigned split_oflags(unsigned oflags)
+{
+    int         wxflags = 0;
+
+    if (oflags & MSVCRT__O_APPEND)              wxflags |= WX_APPEND;
+    if (oflags & MSVCRT__O_BINARY)              ;
+    else if (oflags & MSVCRT__O_TEXT)           wxflags |= WX_TEXT;
+    else if (*__p__fmode() & MSVCRT__O_BINARY)  ;
+    else                                        wxflags |= WX_TEXT; /* default to TEXT*/
+    if (oflags & MSVCRT__O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
+
+    if (oflags & ~(MSVCRT__O_BINARY|MSVCRT__O_TEXT|MSVCRT__O_APPEND|MSVCRT__O_TRUNC|
+                   MSVCRT__O_EXCL|MSVCRT__O_CREAT|MSVCRT__O_RDWR|MSVCRT__O_WRONLY|
+                   MSVCRT__O_TEMPORARY|MSVCRT__O_NOINHERIT))
+        ERR(":unsupported oflags 0x%04x\n",oflags);
+
+    return wxflags;
+}
+
 /*********************************************************************
  *              _sopen (MSVCRT.@)
  */
@@ -1088,7 +1185,7 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   int pmode;
   DWORD access = 0, creation = 0, attrib;
   DWORD sharing;
-  int ioflag = 0, fd;
+  int wxflag = 0, fd;
   HANDLE hand;
   SECURITY_ATTRIBUTES sa;
 
@@ -1096,20 +1193,12 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   TRACE(":file (%s) oflags: 0x%04x shflags: 0x%04x\n",
         path, oflags, shflags);
 
-  switch(oflags & (MSVCRT__O_RDONLY | MSVCRT__O_WRONLY | MSVCRT__O_RDWR))
+  wxflag = split_oflags(oflags);
+  switch (oflags & (MSVCRT__O_RDONLY | MSVCRT__O_WRONLY | MSVCRT__O_RDWR))
   {
-  case MSVCRT__O_RDONLY:
-    access |= GENERIC_READ;
-    ioflag |= MSVCRT__IOREAD;
-    break;
-  case MSVCRT__O_WRONLY:
-    access |= GENERIC_WRITE;
-    ioflag |= MSVCRT__IOWRT;
-    break;
-  case MSVCRT__O_RDWR:
-    access |= GENERIC_WRITE | GENERIC_READ;
-    ioflag |= MSVCRT__IORW;
-    break;
+  case MSVCRT__O_RDONLY: access |= GENERIC_READ; break;
+  case MSVCRT__O_WRONLY: access |= GENERIC_WRITE; break;
+  case MSVCRT__O_RDWR:   access |= GENERIC_WRITE | GENERIC_READ; break;
   }
 
   if (oflags & MSVCRT__O_CREAT)
@@ -1137,17 +1226,6 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
     else
       creation = OPEN_EXISTING;
   }
-  if (oflags & MSVCRT__O_APPEND)
-    ioflag |= MSVCRT__O_APPEND;
-
-  if (oflags & MSVCRT__O_BINARY)
-    ioflag |= MSVCRT__O_BINARY;
-  else if (oflags & MSVCRT__O_TEXT)
-    ioflag |= MSVCRT__O_TEXT;
-  else if (*__p__fmode() & MSVCRT__O_BINARY)
-    ioflag |= MSVCRT__O_BINARY;
-  else
-    ioflag |= MSVCRT__O_TEXT; /* default to TEXT*/
   
   switch( shflags )
   {
@@ -1176,10 +1254,6 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
       sharing |= FILE_SHARE_DELETE;
   }
 
-  if (oflags & ~(MSVCRT__O_BINARY|MSVCRT__O_TEXT|MSVCRT__O_APPEND|MSVCRT__O_TRUNC|MSVCRT__O_EXCL
-                |MSVCRT__O_CREAT|MSVCRT__O_RDWR|MSVCRT__O_WRONLY|MSVCRT__O_TEMPORARY|MSVCRT__O_NOINHERIT))
-    ERR(":unsupported oflags 0x%04x\n",oflags);
-
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
   sa.bInheritHandle       = (oflags & MSVCRT__O_NOINHERIT) ? FALSE : TRUE;
@@ -1192,7 +1266,7 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
     return -1;
   }
 
-  fd = msvcrt_alloc_fd(hand, ioflag);
+  fd = msvcrt_alloc_fd(hand, wxflag);
 
   TRACE(":fd (%d) handle (%p)\n",fd, hand);
 
@@ -1295,7 +1369,7 @@ int _wcreat(const MSVCRT_wchar_t *path, int flags)
 /*********************************************************************
  *		_open_osfhandle (MSVCRT.@)
  */
-int _open_osfhandle(long hand, int flags)
+int _open_osfhandle(long handle, int oflags)
 {
   int fd;
 
@@ -1305,13 +1379,13 @@ int _open_osfhandle(long hand, int flags)
    * text - it never sets MSVCRT__O_BINARY.
    */
   /* FIXME: handle more flags */
-  if (!(flags & (MSVCRT__O_BINARY | MSVCRT__O_TEXT)) && (*__p__fmode() & MSVCRT__O_BINARY))
-      flags |= MSVCRT__O_BINARY;
+  if (!(oflags & (MSVCRT__O_BINARY | MSVCRT__O_TEXT)) && (*__p__fmode() & MSVCRT__O_BINARY))
+      oflags |= MSVCRT__O_BINARY;
   else
-      flags |= MSVCRT__O_TEXT;
+      oflags |= MSVCRT__O_TEXT;
 
-  fd = msvcrt_alloc_fd((HANDLE)hand,flags);
-  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd,flags);
+  fd = msvcrt_alloc_fd((HANDLE)handle, split_oflags(oflags));
+  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n", handle, fd, oflags);
   return fd;
 }
 
@@ -1375,15 +1449,15 @@ int _read(int fd, void *buf, unsigned int count)
           if (num_read != (count - all_read))
           {
               TRACE(":EOF\n");
-              MSVCRT_fdesc[fd].xflag |= WX_ATEOF;
-              if (MSVCRT_fdesc[fd].xflag & WX_TEXT)
+              MSVCRT_fdesc[fd].wxflag |= WX_ATEOF;
+              if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
                   num_read -= remove_cr(bufstart+all_read,num_read);
               all_read += num_read;
               if (count > 4)
                   TRACE("%s\n",debugstr_an(buf,all_read));
               return all_read;
           }
-          if (MSVCRT_fdesc[fd].xflag & WX_TEXT)
+          if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
           {
               num_read -= remove_cr(bufstart+all_read,num_read);
           }
@@ -1421,13 +1495,13 @@ int MSVCRT__getw(MSVCRT_FILE* file)
  */
 int _setmode(int fd,int mode)
 {
-  int ret = MSVCRT_fdesc[fd].xflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
+  int ret = MSVCRT_fdesc[fd].wxflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
   if (mode & (~(MSVCRT__O_TEXT|MSVCRT__O_BINARY)))
     FIXME("fd (%d) mode (0x%08x) unknown\n",fd,mode);
   if ((mode & MSVCRT__O_TEXT) == MSVCRT__O_TEXT)
-      MSVCRT_fdesc[fd].xflag |= WX_TEXT;
+      MSVCRT_fdesc[fd].wxflag |= WX_TEXT;
   else
-      MSVCRT_fdesc[fd].xflag &= ~WX_TEXT;
+      MSVCRT_fdesc[fd].wxflag &= ~WX_TEXT;
   return ret;
 }
 
@@ -1700,10 +1774,10 @@ int _write(int fd, const void* buf, unsigned int count)
     }
 
   /* If appending, go to EOF */
-  if (MSVCRT_fdesc[fd].xflag & WX_APPEND)
+  if (MSVCRT_fdesc[fd].wxflag & WX_APPEND)
     _lseek(fd, 0, FILE_END);
 
-  if (!(MSVCRT_fdesc[fd].xflag & WX_TEXT))
+  if (!(MSVCRT_fdesc[fd].wxflag & WX_TEXT))
     {
       if (WriteFile(hand, buf, count, &num_written, NULL)
 	  &&  (num_written == count))
@@ -1714,7 +1788,7 @@ int _write(int fd, const void* buf, unsigned int count)
   else
   {
       unsigned int i, j, nr_lf;
-      char *s=(char*)buf, *buf_start=(char*)buf, *p;
+      char *s =(char*)buf, *buf_start=(char*)buf, *p;
       /* find number of \n ( without preceeding \r */
       for ( nr_lf=0,i = 0; i <count; i++)
       {
@@ -1916,7 +1990,7 @@ MSVCRT_wint_t MSVCRT_fgetwc(MSVCRT_FILE* file)
 {
   char c;
 
-  if (!(MSVCRT_fdesc[file->_file].xflag & WX_TEXT))
+  if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
     {
       MSVCRT_wchar_t wc;
       int r;
@@ -2006,7 +2080,7 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
 	file->_ptr += pcnt;
 	written = pcnt;
 	wrcnt -= pcnt;
-       ptr = (char*)ptr + pcnt;
+        ptr = (const char*)ptr + pcnt;
   } else if(!(file->_flag & MSVCRT__IOWRT)) {
 	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOWRT;
@@ -2294,7 +2368,7 @@ int MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 int MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
     size_t i, len = strlen(s);
-    if (!(MSVCRT_fdesc[file->_file].xflag & WX_TEXT))
+    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
       if (MSVCRT_fputc(s[i], file) == MSVCRT_EOF) 
@@ -2308,7 +2382,7 @@ int MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 int MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
 {
     size_t i, len = strlenW(s);
-    if (!(MSVCRT_fdesc[file->_file].xflag & WX_TEXT))
+    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
       {

@@ -49,19 +49,19 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
     return -1;
   }
 
-  FIXME(":must dup/kill streams for child process\n");
-
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
-
+  msvcrt_create_io_inherit_block(&si);
   if (!CreateProcessA(exe, cmdline, NULL, NULL, TRUE,
                      flags == MSVCRT__P_DETACH ? DETACHED_PROCESS : 0,
                      env, NULL, &si, &pi))
   {
     msvcrt_set_errno(GetLastError());
+    MSVCRT_free(&si.lpReserved2);
     return -1;
   }
 
+  MSVCRT_free(&si.lpReserved2);
   switch(flags)
   {
   case MSVCRT__P_WAIT:

@@ -126,6 +126,8 @@ extern void msvcrt_free_console(void);
 extern void msvcrt_init_args(void);
 extern void msvcrt_free_args(void);
 
+extern unsigned msvcrt_create_io_inherit_block(STARTUPINFOA*);
+
 /* run-time error codes */
 #define _RT_STACK       0
 #define _RT_NULLPTR     1

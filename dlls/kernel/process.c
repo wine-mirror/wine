@@ -1386,7 +1386,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
                                                         const STARTUPINFOW *startup )
 {
     RTL_USER_PROCESS_PARAMETERS *params;
-    UNICODE_STRING image_str, cmdline_str, curdir_str, desktop, title;
+    UNICODE_STRING image_str, cmdline_str, curdir_str, desktop, title, runtime;
     NTSTATUS status;
     WCHAR buffer[MAX_PATH];
 
@@ -1400,13 +1400,19 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
     if (cur_dir) RtlInitUnicodeString( &curdir_str, cur_dir );
     if (startup->lpDesktop) RtlInitUnicodeString( &desktop, startup->lpDesktop );
     if (startup->lpTitle) RtlInitUnicodeString( &title, startup->lpTitle );
+    if (startup->lpReserved2 && startup->cbReserved2)
+    {
+        runtime.Length = runtime.MaximumLength = startup->cbReserved2;
+        runtime.Buffer = (WCHAR*)startup->lpReserved2;
+    }
 
     status = RtlCreateProcessParameters( &params, &image_str, NULL,
                                          cur_dir ? &curdir_str : NULL,
                                          &cmdline_str, env,
                                          startup->lpTitle ? &title : NULL,
                                          startup->lpDesktop ? &desktop : NULL,
-                                         NULL, NULL );
+                                         NULL, 
+                                         (startup->lpReserved2 && startup->cbReserved2) ? &runtime : NULL );
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );
