@@ -996,6 +996,18 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
 }
 
 /*****************************************************************************
+ *          GetPrintProcessorDirectoryA  [WINSPOOL.@]
+ */
+BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR environ,
+                                        DWORD level,  LPBYTE Info,
+                                        DWORD cbBuf, LPDWORD needed)
+{
+    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", server, environ, level, Info,
+          cbBuf);
+    return 0;
+}
+
+/*****************************************************************************
  *          WINSPOOL_OpenDriverReg [internal]
  *
  * opens the registry for the printer drivers depending on the given input

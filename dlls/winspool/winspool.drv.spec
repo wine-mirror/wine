@@ -89,7 +89,7 @@
 @ stdcall GetFormW(long wstr long ptr long ptr)
 @ stub GetJobA
 @ stub GetJobW
-@ stub GetPrintProcessorDirectoryA
+@ stdcall GetPrintProcessorDirectoryA(str str long ptr long ptr)
 @ stub GetPrintProcessorDirectoryW
 @ stdcall GetPrinterA(long long ptr long ptr)
 @ stdcall GetPrinterDataA(long str ptr ptr long ptr)
