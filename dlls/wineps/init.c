@@ -146,7 +146,7 @@ static DeviceCaps PSDRV_DevCaps = {
 /* numPens */		10,
 /* numMarkers */	0,
 /* numFonts */		39,
-/* numColors */		2,
+/* numColors */		0xffff,
 /* pdeviceSize */	0,	
 /* curveCaps */		CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
 			CC_WIDE | CC_STYLED | CC_WIDESTYLED | CC_INTERIORS |
