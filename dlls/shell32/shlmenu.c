@@ -764,15 +764,19 @@ void WINAPI FileMenu_AbortInitMenu (void)
  *
  *
  * PARAMETERS
- *  hMenu		[in] handel of menu previously created
+ *  hMenu		[in] handle of menu previously created
  *  hWndParent	[in] parent window
- *  w			[in] no pointer
- *  x			[in] no pointer
+ *  w			[in] no pointer (0x209 over here) perhaps menu IDs ???
+ *  x			[in] no pointer (0x226 over here)
+ *
+ * RETURNS
+ *  LPXXXXX			 pointer to struct containing a func addr at offset 8
+ *					 or NULL at failure.
  */
-HRESULT WINAPI SHFind_InitMenuPopup (HMENU hMenu, HWND hWndParent, DWORD w, DWORD x)
+LPVOID WINAPI SHFind_InitMenuPopup (HMENU hMenu, HWND hWndParent, DWORD w, DWORD x)
 {	FIXME("hmenu=0x%08x hwnd=0x%08x 0x%08lx 0x%08lx stub\n",
 		hMenu,hWndParent,w,x);
-	return TRUE;
+	return NULL; /* this is supposed to be a pointer */
 }
 
 /*************************************************************************
