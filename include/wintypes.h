@@ -17,8 +17,8 @@
 /* Note that Winelib is purely Win32.                             */
 
 #ifdef __WINE__
-# define WINELIB_NAME(func)      this_is_a_syntax_error
-# define WINELIB_NAME_AW(func)   this_is_a_syntax_error
+# define WINELIB_NAME(func)      this_is_a_syntax_error this_is_a_syntax_error
+# define WINELIB_NAME_AW(func)   this_is_a_syntax_error this_is_a_syntax_error
 #else  /* __WINE__ */
 # define WINELIB_NAME(func)     func##32
 # ifdef UNICODE
