@@ -245,12 +245,12 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	}
 	/* Argh. AVIs are upside down. */
 	for (i=0;i<dsdesc.dwHeight;i++) {
-	    memcpy( dsdesc.y.lpSurface+(i*dsdesc.lPitch),
+	    memcpy( dsdesc.u1.lpSurface+(i*dsdesc.lPitch),
 		    decodedbits+bytesline*(dsdesc.dwHeight-i-1),
 		    bytesline
 	    );
 	}
-	IDirectDrawSurface_Unlock(dsurf,dsdesc.y.lpSurface);
+	IDirectDrawSurface_Unlock(dsurf,dsdesc.u1.lpSurface);
     }
     tend = time(NULL);
     fnAVIStreamGetFrameClose(vidgetframe);
