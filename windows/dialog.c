@@ -1072,6 +1072,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    HWND hOwner = 0;
 
     TRACE("%04x %d\n", hwnd, retval );
 
@@ -1081,28 +1082,26 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
         dlgInfo->flags |= DF_END;
     }
 
-    /* Windows sets the focus to the dialog itself first in EndDialog */
+    if(wndPtr->owner)
+      hOwner = WIN_GetTopParent( wndPtr->owner->hwndSelf );
+
+    /* Enable the owner first */
+    if (hOwner && !IsWindowEnabled(hOwner))
+      EnableWindow( hOwner, TRUE );
+ 
+    /* Windows sets the focus to the dialog itself in EndDialog */
 
     if (IsChild(hwnd, GetFocus()))
        SetFocus(wndPtr->hwndSelf);
 
-    /* Paint Shop Pro 4.14 calls EndDialog for a CreateDialog* dialog,
-     * which isn't "normal". Only DialogBox* dialogs may be EndDialog()ed.
-     * Just hide the window 
-     * and re-enable the owner as windows does it...
-     */
-    ShowWindow(hwnd, SW_HIDE);
+    /* Don't have to send a ShowWindow(SW_HIDE), just do
+       SetWindowPos with SWP_HIDEWINDOW as done in Windows */
 
-    if(wndPtr->owner)
-    {
-	HWND hOwner;
-	/* Owner must be a top-level window */
-	hOwner = WIN_GetTopParent( wndPtr->owner->hwndSelf );
-	EnableWindow( hOwner, TRUE );
-    }
+    SetWindowPos(hwnd, (HWND)0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
+                 | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
 
     WIN_ReleaseWndPtr(wndPtr);
-    
+ 
     return TRUE;
 }
 
