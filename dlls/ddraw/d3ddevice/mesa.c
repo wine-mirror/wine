@@ -683,7 +683,7 @@ static float ZfromZproj(IDirect3DDeviceImpl *This, D3DVALUE Zproj)
     c = This->proj_mat->_43;
     d = This->proj_mat->_44;
     /* We have in homogenous coordinates Z' = a * Z + c and W' = b * Z + d
-     * So in non homogenous coordinates we have Zproj = (a * Z + b) / (c * Z + d)
+     * So in non homogenous coordinates we have Zproj = (a * Z + c) / (b * Z + d)
      * And finally Z = (d * Zproj - c) / (a - b * Zproj)
      */
     return (d*Zproj - c) / (a - b*Zproj);
@@ -710,7 +710,7 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
         glThis->transform_state = GL_TRANSFORM_ORTHO;
 	d3ddevice_set_ortho(This);
     }
-    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {glHint(GL_FOG_HINT,GL_NICEST);
+    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
         if (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1] != D3DFOG_NONE) {
             switch (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1]) {
                 case D3DFOG_LINEAR: glFogi(GL_FOG_MODE,GL_LINEAR); break; 
@@ -734,10 +734,10 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 	glDisable(GL_FOG);
 
     /* Handle the 'no-normal' case */
-    if (vertex_lit == TRUE)
-        glDisable(GL_LIGHTING);
-    else if (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE)
+    if ((vertex_lit == FALSE) && (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE))
         glEnable(GL_LIGHTING);
+    else 
+	glDisable(GL_LIGHTING);
 
     /* Handle the code for pre-vertex material properties */
     if (vertex_transformed == FALSE) {
@@ -2266,6 +2266,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     ENTER_GL();
     TRACE(" current context set\n");
 
+    glHint(GL_FOG_HINT,GL_NICEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);
