@@ -7,6 +7,8 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
+#include <strings.h>
 
 #include "winuser.h"
 #include "winerror.h"
@@ -17,6 +19,7 @@
 #include "wine/obj_clientserver.h"
 #include "debug.h"
 #include "ole2ver.h"
+#include "winreg.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -83,6 +86,11 @@ static const char OLEDD_DRAGTRACKERCLASS[] = "WineDragDropTracker32";
  * This is the head of the Drop target container.
  */
 static DropTargetNode* targetListHead = NULL;
+
+/******************************************************************************
+ * These are the prototypes of miscelaneous utility methods 
+ */
+static void OLEUTL_ReadRegistryDWORDValue(HKEY regKey, DWORD* pdwValue);
 
 /******************************************************************************
  * These are the prototypes of the utility methods used to manage a shared menu
@@ -373,14 +381,97 @@ HRESULT WINAPI RevokeDragDrop(
 
 /***********************************************************************
  *           OleRegGetUserType (OLE32.122)
+ *
+ * This implementation of OleRegGetUserType ignores the dwFormOfType
+ * parameter and always returns the full name of the object. This is
+ * not too bad since this is the case for many objects because of the
+ * way they are registered.
  */
 HRESULT WINAPI OleRegGetUserType( 
 	REFCLSID clsid, 
 	DWORD dwFormOfType,
 	LPOLESTR* pszUserType)
 {
-	FIXME(ole,",stub!\n");
-	return S_OK;
+  char  xclsid[50];
+  char  keyName[60];
+  DWORD dwKeyType;
+  DWORD cbData;
+  HKEY  clsidKey;
+  LONG  hres;
+
+  /*
+   * Initialize the out parameter.
+   */
+  *pszUserType = NULL;
+
+  /*
+   * Build the key name we're looking for
+   */
+  WINE_StringFromCLSID((LPCLSID)clsid, xclsid);
+
+  strcpy(keyName, "CLSID\\");
+  strcat(keyName, xclsid);
+  strcat(keyName, "\\");
+
+  TRACE(ole,"(%s, %ld, %p)\n", keyName, dwFormOfType, pszUserType);
+
+  /*
+   * Open the class id Key
+   */
+  hres = RegOpenKeyA(HKEY_CLASSES_ROOT,
+		     keyName,
+		     &clsidKey);
+
+  if (hres != ERROR_SUCCESS)
+    return REGDB_E_CLASSNOTREG;
+
+  /*
+   * Retrieve the size of the name string.
+   */
+  cbData = 0;
+
+  hres = RegQueryValueExA(clsidKey,
+			  "",
+			  NULL,
+			  &dwKeyType,
+			  NULL,
+			  &cbData);
+
+  if (hres!=ERROR_SUCCESS)
+  {
+    RegCloseKey(clsidKey);
+    return REGDB_E_READREGDB;
+  }
+
+  /*
+   * Allocate a buffer for the registry value.
+   */
+  *pszUserType = CoTaskMemAlloc(cbData);
+
+  if (*pszUserType==NULL)
+  {
+    RegCloseKey(clsidKey);
+    return E_OUTOFMEMORY;
+  }
+
+  hres = RegQueryValueExA(HKEY_CLASSES_ROOT,
+			  "",
+			  NULL,
+			  &dwKeyType,
+			  (LPBYTE)*pszUserType,
+			  &cbData);
+
+  RegCloseKey(clsidKey);
+  
+  if (hres!=ERROR_SUCCESS)
+  {
+    CoTaskMemFree(*pszUserType);
+    *pszUserType=NULL;
+
+    return REGDB_E_READREGDB;
+  }
+
+  return S_OK;
 }
 
 /***********************************************************************
@@ -492,8 +583,193 @@ HRESULT WINAPI OleRegGetMiscStatus(
   DWORD    dwAspect,
   DWORD*   pdwStatus)
 {
-  FIXME(ole,"(),stub!\n");
-  return REGDB_E_CLASSNOTREG;
+  char    xclsid[50];
+  char    keyName[60];
+  HKEY    clsidKey;
+  HKEY    miscStatusKey;
+  HKEY    aspectKey;
+  LONG    result;
+
+  /*
+   * Initialize the out parameter.
+   */
+  *pdwStatus = 0;
+
+  /*
+   * Build the key name we're looking for
+   */
+  WINE_StringFromCLSID((LPCLSID)clsid, xclsid);
+
+  strcpy(keyName, "CLSID\\");
+  strcat(keyName, xclsid);
+  strcat(keyName, "\\");
+
+  TRACE(ole,"(%s, %ld, %p)\n", keyName, dwAspect, pdwStatus);
+
+  /*
+   * Open the class id Key
+   */
+  result = RegOpenKeyA(HKEY_CLASSES_ROOT,
+		       keyName,
+		       &clsidKey);
+
+  if (result != ERROR_SUCCESS)
+    return REGDB_E_CLASSNOTREG;
+
+  /*
+   * Get the MiscStatus
+   */
+  result = RegOpenKeyA(clsidKey,
+		       "MiscStatus",
+		       &miscStatusKey);
+
+  
+  if (result != ERROR_SUCCESS)
+  {
+    RegCloseKey(clsidKey);
+    return REGDB_E_READREGDB;
+  }
+
+  /*
+   * Read the default value
+   */
+  OLEUTL_ReadRegistryDWORDValue(miscStatusKey, pdwStatus);
+
+  /*
+   * Open the key specific to the requested aspect.
+   */
+  sprintf(keyName, "%ld", dwAspect);
+
+  result = RegOpenKeyA(miscStatusKey,
+		       keyName,
+		       &aspectKey);
+  
+  if (result == ERROR_SUCCESS)
+  {
+    OLEUTL_ReadRegistryDWORDValue(aspectKey, pdwStatus);
+    RegCloseKey(aspectKey);
+  }
+
+  /*
+   * Cleanup
+   */
+  RegCloseKey(miscStatusKey);
+  RegCloseKey(clsidKey);
+
+  return S_OK;
+}
+
+/******************************************************************************
+ *              OleSetContainedObject        [OLE32.128]
+ */
+HRESULT WINAPI OleSetContainedObject(
+  LPUNKNOWN pUnknown, 
+  BOOL      fContained)
+{
+  IRunnableObject* runnable = NULL;
+  HRESULT          hres;
+
+  TRACE(ole,"(%p,%x), stub!\n", pUnknown, fContained);
+
+  hres = IUnknown_QueryInterface(pUnknown,
+				 &IID_IRunnableObject,
+				 (void**)&runnable);
+
+  if (SUCCEEDED(hres))
+  {
+    hres = IRunnableObject_SetContainedObject(runnable, fContained);
+
+    IRunnableObject_Release(runnable);
+
+    return hres;
+  }
+
+  return S_OK;
+}
+
+/******************************************************************************
+ *              OleLoad        [OLE32.112]
+ */
+HRESULT WINAPI OleLoad(
+  LPSTORAGE       pStg, 
+  REFIID          riid, 
+  LPOLECLIENTSITE pClientSite, 
+  LPVOID*         ppvObj)
+{
+  IPersistStorage* persistStorage = NULL;
+  IOleObject*      oleObject      = NULL;
+  STATSTG          storageInfo;
+  HRESULT          hres;
+
+  TRACE(ole,"(%p,%p,%p,%p)\n", pStg, riid, pClientSite, ppvObj);
+  
+  /*
+   * TODO, Conversion ... OleDoAutoConvert
+   */
+
+  /*
+   * Get the class ID for the object.
+   */
+  hres = IStorage_Stat(pStg, &storageInfo, STATFLAG_NONAME);
+
+  /*
+   * Now, try and create the handler for the object
+   */
+  hres = CoCreateInstance(&storageInfo.clsid,
+			  NULL,
+			  CLSCTX_INPROC_HANDLER,
+			  &IID_IOleObject,
+			  (void**)&oleObject);
+
+  /*
+   * If that fails, as it will most times, load the default
+   * OLE handler.
+   */
+  if (FAILED(hres))
+  {
+    hres = OleCreateDefaultHandler(&storageInfo.clsid,
+				   NULL,
+				   &IID_IOleObject,
+				   (void**)&oleObject);
+  }
+
+  /*
+   * If we couldn't find a handler... this is bad. Abort the whole thing.
+   */
+  if (FAILED(hres))
+    return hres;
+
+  /*
+   * Inform the new object of it's client site.
+   */
+  hres = IOleObject_SetClientSite(oleObject, pClientSite);
+
+  /*
+   * Initialize the object with it's IPersistStorage interface.
+   */
+  hres = IOleObject_QueryInterface(oleObject,
+				   &IID_IPersistStorage,
+				   (void**)&persistStorage);
+
+  if (SUCCEEDED(hres)) 
+  {
+    IPersistStorage_Load(persistStorage, pStg);
+
+    IPersistStorage_Release(persistStorage);
+    persistStorage = NULL;
+  }
+
+  /*
+   * Return the requested interface to the caller.
+   */
+  hres = IOleObject_QueryInterface(oleObject, riid, ppvObj);
+
+  /*
+   * Cleanup interfaces used internally
+   */
+  IOleObject_Release(oleObject);
+
+  return hres;
 }
 
 /***********************************************************************
@@ -1739,4 +2015,49 @@ static DWORD OLEDD_GetButtonState()
   return keyMask;
 }
 
+/***
+ * OLEDD_GetButtonState()
+ *
+ * This method will read the default value of the registry key in
+ * parameter and extract a DWORD value from it. The registry key value
+ * can be in a string key or a DWORD key.
+ *
+ * params:
+ *     regKey   - Key to read the default value from
+ *     pdwValue - Pointer to the location where the DWORD 
+ *                value is returned. This value is not modified
+ *                if the value is not found.
+ */
+
+static void OLEUTL_ReadRegistryDWORDValue(
+  HKEY   regKey, 
+  DWORD* pdwValue)
+{
+  char  buffer[20];
+  DWORD dwKeyType;
+  DWORD cbData = 20;
+  LONG  lres;
+
+  lres = RegQueryValueExA(regKey,
+			  "",
+			  NULL,
+			  &dwKeyType,
+			  (LPBYTE)buffer,
+			  &cbData);
+
+  if (lres==ERROR_SUCCESS)
+  {
+    switch (dwKeyType)
+    {
+      case REG_DWORD:
+	*pdwValue = *(DWORD*)buffer;
+	break;
+      case REG_EXPAND_SZ:
+      case REG_MULTI_SZ:
+      case REG_SZ:
+	*pdwValue = (DWORD)strtoul(buffer, NULL, 10);
+	break;
+    }
+  }
+}
 

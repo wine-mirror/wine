@@ -1752,7 +1752,7 @@ static HRESULT WINAPI ISVViewObject_Draw(
 	HDC hdcDraw,
 	LPCRECTL lprcBounds,
 	LPCRECTL lprcWBounds, 
-	pfnContinue pfnContinue,
+	IVO_ContCallback pfnContinue,
 	DWORD dwContinue)
 {	
 

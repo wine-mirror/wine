@@ -40,7 +40,13 @@ HRESULT WINAPI ReadClassStm(IStream *pStm,REFCLSID pclsid);
 
 
 HRESULT     WINAPI OleSave(LPPERSISTSTORAGE pPS, LPSTORAGE pStg, BOOL fSameAsLoad);
+HRESULT     WINAPI OleRegGetUserType(REFCLSID clsid, 
+				     DWORD dwFormOfType,
+				     LPOLESTR* pszUserType);
 HRESULT     WINAPI OleRegGetMiscStatus (REFCLSID clsid, DWORD dwAspect, DWORD* pdwStatus);
+HRESULT     WINAPI OleRegEnumFormatEtc (REFCLSID clsid, 
+					DWORD    dwDirection,
+					LPENUMFORMATETC* ppenumFormatetc);
 HRESULT     WINAPI CreateStreamOnHGlobal (HGLOBAL hGlobal, BOOL fDeleteOnRelease, LPSTREAM* ppstm);
 HRESULT     WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum);
 BOOL        WINAPI OleIsRunning(LPOLEOBJECT pObject);
@@ -79,6 +85,11 @@ HRESULT     WINAPI WriteFmtUserTypeStg(LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR l
 HRESULT     WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame, LPOLEINPLACEFRAMEINFO lpFrameInfo, LPMSG lpmsg);
 HRESULT     WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObj, REFIID riid, DWORD renderopt, LPFORMATETC pFormatEtc,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
+HRESULT     WINAPI OleCreateDefaultHandler(REFCLSID  clsid,
+					   LPUNKNOWN pUnkOuter,
+					   REFIID    riid,
+					   LPVOID*   ppvObj);
+HRESULT     WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder);
 
 #endif  /* __WINE_OLE2_H */
 

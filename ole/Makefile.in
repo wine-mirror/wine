@@ -10,6 +10,8 @@ C_SRCS = \
 	bindctx.c \
 	compobj.c \
 	compositemoniker.c \
+	datacache.c \
+	defaulthandler.c \
 	filemoniker.c \
 	guid.c \
 	hglobalstream.c \

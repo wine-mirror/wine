@@ -90,7 +90,7 @@ type	win32
  87 stub OleConvertOLESTREAMToIStorage
  88 stub OleConvertOLESTREAMToIStorageEx
  89 stdcall OleCreate(ptr ptr long ptr ptr ptr ptr) OleCreate
- 90 stub OleCreateDefaultHandler
+ 90 stdcall OleCreateDefaultHandler(ptr ptr ptr ptr) OleCreateDefaultHandler
  91 stub OleCreateEmbeddingHelper
  92 stdcall OleCreateFromData(ptr ptr long ptr ptr ptr ptr) OleCreateFromData
  93 stdcall OleCreateFromFile(ptr ptr ptr long ptr ptr ptr ptr) OleCreateFromFile
@@ -119,7 +119,7 @@ type	win32
 116 stub OleNoteObjectVisible
 117 stdcall OleQueryCreateFromData(ptr) OleQueryCreateFromData
 118 stdcall OleQueryLinkFromData(ptr) OleQueryLinkFromData
-119 stub OleRegEnumFormatEtc
+119 stdcall OleRegEnumFormatEtc(ptr long ptr) OleRegEnumFormatEtc
 120 stdcall OleRegEnumVerbs(long ptr) OleRegEnumVerbs
 121 stdcall OleRegGetMiscStatus(ptr long ptr) OleRegGetMiscStatus
 122 stdcall OleRegGetUserType(long long ptr) OleRegGetUserType

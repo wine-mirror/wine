@@ -109,7 +109,7 @@ ICOM_DEFINE(IOleObject,IUnknown)
 #define IOleObject_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleObject_Release(p)                 ICOM_CALL (Release,p)
 /*** IOleObject methods ***/
-#define IOleObject_SetClientSite(p,a,b,c,d) ICOM_CALL1(SetClientSite,p,a)
+#define IOleObject_SetClientSite(p,a)       ICOM_CALL1(SetClientSite,p,a)
 #define IOleObject_GetClientSite(p,a,b)     ICOM_CALL1(GetClientSite,p,a)
 #define IOleObject_SetHostNames(p,a,b)      ICOM_CALL2(SetHostNames,p,a,b)
 #define IOleObject_Close(p,a,b)             ICOM_CALL1(Close,p,a)
@@ -156,12 +156,12 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #define IOleAdviseHolder_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleAdviseHolder_Release(p)                 ICOM_CALL (Release,p)
 /*** IOleAdviseHolder methods ***/
-#define IOleAdviseHolder_Advise(p,a,b)              ICOM_CALL2(UpdateCache,p,a,b)
-#define IOleAdviseHolder_Unadvise(p,a)              ICOM_CALL1(OnStop,p,a)
-#define IOleAdviseHolder_EnumAdvise(p,a)            ICOM_CALL1(OnStop,p,a)
-#define IOleAdviseHolder_SendOnRename(p,a)          ICOM_CALL1(OnStop,p,a)
-#define IOleAdviseHolder_SendOnSave(p)              ICOM_CALL (OnStop,p)
-#define IOleAdviseHolder_SendOnClose(p)             ICOM_CALL (OnStop,p)
+#define IOleAdviseHolder_Advise(p,a,b)              ICOM_CALL2(Advise,p,a,b)
+#define IOleAdviseHolder_Unadvise(p,a)              ICOM_CALL1(Unadvise,p,a)
+#define IOleAdviseHolder_EnumAdvise(p,a)            ICOM_CALL1(EnumAdvise,p,a)
+#define IOleAdviseHolder_SendOnRename(p,a)          ICOM_CALL1(SendOnRename,p,a)
+#define IOleAdviseHolder_SendOnSave(p)              ICOM_CALL (SendOnSave,p)
+#define IOleAdviseHolder_SendOnClose(p)             ICOM_CALL (SendOnClose,p)
 #endif
 				 
 

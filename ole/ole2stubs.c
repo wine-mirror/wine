@@ -160,24 +160,6 @@ HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
 }
 
 /******************************************************************************
- *              CreateDataAdviseHolder        [OLE32.53]
- */
-HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder)
-{
-  FIXME(ole,"(%p), stub!\n", ppDAHolder);
-  return S_OK;
-}
-
-/******************************************************************************
- *              OleLoad        [OLE32.112]
- */
-HRESULT WINAPI OleLoad(LPSTORAGE pStg, REFIID riid, LPOLECLIENTSITE pClientSite, LPVOID* ppvObj)
-{
-  FIXME(ole,"(%p,%p,%p,%p), stub!\n", pStg, riid, pClientSite, ppvObj);
-  return S_OK;
-}
-
-/******************************************************************************
  *              ReadFmtUserTypeStg        [OLE32.136]
  */
 HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lplpszUserType)
@@ -207,15 +189,6 @@ HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 }
 
 /******************************************************************************
- *              OleSetContainedObject        [OLE32.128]
- */
-HRESULT WINAPI OleSetContainedObject(LPUNKNOWN pUnknown, BOOL fContained)
-{
-  FIXME(ole,"(%p,%x), stub!\n", pUnknown, fContained);
-  return S_OK;
-}
-
-/******************************************************************************
  *              OleCreateLinkFromData        [OLE32.95]
  */
 
@@ -225,15 +198,6 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
                 LPVOID* ppvObj)
 {
   FIXME(ole,"(not shown), stub!\n");
-  return S_OK;
-}
-
-/******************************************************************************
- *              CreateDataCache        [OLE32.54]
- */
-HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid, LPVOID* ppv)
-{
-  FIXME(ole,"(%p,%p,%p,%p), stub!\n", pUnkOuter, rclsid, iid, ppv);
   return S_OK;
 }
 
@@ -252,6 +216,19 @@ BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
 {
     FIXME(ole,"(%p,%p), stub!\n", clsid, ppenum);
+    return S_OK;
+}
+
+/***********************************************************************
+ *           OleRegEnumFormatEtc    [OLE32.119]
+ */
+HRESULT     WINAPI OleRegEnumFormatEtc (
+  REFCLSID clsid, 
+  DWORD    dwDirection,
+  LPENUMFORMATETC* ppenumFormatetc)
+{
+    FIXME(ole,"(%p, %ld, %p), stub!\n", clsid, dwDirection, ppenumFormatetc);
+
     return S_OK;
 }
 
