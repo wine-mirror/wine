@@ -138,10 +138,10 @@ static CRITICAL_SECTION winproc_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static BOOL is_valid_winproc( WINDOWPROC *proc )
 {
+    /* check alignment */
+    if (((BYTE *)proc - (BYTE *)winproc_array) % sizeof(*proc)) return FALSE;
     /* check array limits */
     if (proc < winproc_array || proc >= winproc_array + winproc_used) return FALSE;
-    /* check alignment */
-    if (proc != winproc_array + (proc - winproc_array)) return FALSE;
     return (proc->type != WIN_PROC_INVALID);
 }
 
@@ -514,20 +514,22 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC handle )
 
     ptr = (BYTE *)handle;
     /* First check if it is the jmp address */
-    proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->jmp);
+    proc = (WINDOWPROC *)(ptr - FIELD_OFFSET(WINDOWPROC,jmp));
     if (is_valid_winproc(proc)) return proc;
 
     /* Now it must be the thunk address */
-    proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->thunk);
+    proc = (WINDOWPROC *)(ptr - FIELD_OFFSET(WINDOWPROC,thunk));
     if (is_valid_winproc(proc)) return proc;
 
     /* Check for a segmented pointer */
 
-    ptr = MapSL( (SEGPTR)handle );
-    /* It must be the thunk address */
-    proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->thunk);
-    if (is_valid_winproc(proc)) return proc;
-
+    if (HIWORD(handle) == get_winproc_selector())
+    {
+        ptr = (BYTE *)winproc_array + LOWORD(handle);
+        /* It must be the thunk address */
+        proc = (WINDOWPROC *)(ptr - FIELD_OFFSET(WINDOWPROC,thunk));
+        if (is_valid_winproc(proc)) return proc;
+    }
     return NULL;
 }
 
