@@ -54,7 +54,6 @@ static const char UsageStr[] =
 "    msiexec /z module\n"
 "  Display usage and copyright:\n"
 "    msiexec {/h|/?}\n"
-"NOTE: Properties on commandline unimplemented as of yet\n"
 "NOTE: Product code on commandline unimplemented as of yet\n"
 "\n"
 "Copyright 2004 Vincent Béron\n";
@@ -562,6 +561,18 @@ int main(int argc, char *argv[])
 		else if(!strcasecmp(argv[i], "/h") || !strcasecmp(argv[i], "/?"))
 		{
 			ShowUsage(0);
+		}
+		else if(strchr(argv[i], '='))
+		{
+			TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)+strlen(argv[i])+1);
+			if(!TempStr)
+			{
+				WINE_ERR("Out of memory!\n");
+				ExitProcess(1);
+			}
+			Properties = TempStr;
+			strcat(Properties, argv[i]);
+			strcat(Properties, " ");
 		}
 		else
 		{
