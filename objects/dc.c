@@ -1477,6 +1477,7 @@ COLORREF WINAPI GetDCBrushColor(HDC hdc)
     if (dc)
     {
         dcBrushColor = dc->dcBrushColor;
+	GDI_ReleaseObj( hdc );
     }
 
     return dcBrushColor;
@@ -1540,6 +1541,7 @@ COLORREF WINAPI GetDCPenColor(HDC hdc)
     if (dc)
     {
         dcPenColor = dc->dcPenColor;
+	GDI_ReleaseObj( hdc );
     }
 
     return dcPenColor;
