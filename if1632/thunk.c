@@ -17,6 +17,7 @@
 #include "process.h"
 #include "stackframe.h"
 #include "selectors.h"
+#include "syslevel.h"
 #include "task.h"
 #include "except.h"
 #include "win.h"
@@ -821,7 +822,7 @@ void WINAPI WIN16_keybd_event( CONTEXT *context )
 /***********************************************************************
  *           WIN16_CreateSystemTimer   (SYSTEM.2)
  */
-static void CALLBACK THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
+static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 {
     CONTEXT context;
     memset( &context, '\0', sizeof(context) );
@@ -833,23 +834,23 @@ static void CALLBACK THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 
     AX_reg( &context ) = timer;
 
+    if ( _ConfirmWin16Lock() )
+    {
+        FIXME( system, "Skipping timer %d callback because timer signal "
+                       "arrived while we own the Win16Lock!\n", timer );
+        return;
+    }
+
     CallTo16_sreg_( &context, 0 ); 
 
-    /* FIXME: This does not work if the signal occurs while some thread
+    /* FIXME: This does not work if the signal occurs while this thread
               is currently in 16-bit code. With the current structure
               of the Wine thunking code, this seems to be hard to fix ... */
 }
 WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
 {
     THUNK *thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallSystemTimerProc );
-    WORD timer = 0;
-
-#if 1
-    FIXME(system,"are currently broken, returning 0.\n");
-#else
-    timer = CreateSystemTimer( rate, (SYSTEMTIMERPROC)thunk );
-#endif
-
+    WORD timer = CreateSystemTimer( rate, (SYSTEMTIMERPROC)thunk );
     if (!timer) THUNK_Free( thunk );
     return timer;
 }
