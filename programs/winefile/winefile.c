@@ -65,11 +65,6 @@
 #endif
 
 
-WINEFILE_GLOBALS Globals;
-
-extern void WineLicense(HWND hwnd);
-extern void WineWarranty(HWND hwnd);
-
 enum ENTRY_TYPE {
 	ET_WINDOWS,
 	ET_UNIX,
@@ -168,6 +163,10 @@ typedef struct {
 } ChildWnd;
 
 
+extern void WineLicense(HWND hwnd);
+extern void WineWarranty(HWND hwnd);
+
+
 static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd);
 static void set_curdir(ChildWnd* child, Entry* entry, HWND hwnd);
 static void get_path(Entry* dir, PTSTR path);
@@ -175,6 +174,30 @@ static void get_path(Entry* dir, PTSTR path);
 LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam);
+
+
+/* globals */
+WINEFILE_GLOBALS Globals;
+
+/* some common string constants */
+const static TCHAR sEmpty[] = {'\0'};
+const static TCHAR sSpace[] = {' ', '\0'};
+const static TCHAR sNumFmt[] = {'%','d','\0'};
+const static TCHAR sQMarks[] = {'?','?','?','\0'};
+
+/* window class names */
+const static TCHAR sWINEFILEFRAME[] = {'W','F','S','_','F','r','a','m','e','\0'};
+const static TCHAR sWINEFILETREE[] = {'W','F','S','_','T','r','e','e','\0'};
+
+#ifdef _MSC_VER
+/* #define LONGLONGARG _T("I64") */
+const static TCHAR sLongHexFmt[] = {'%','I','6','4','X','\0'};
+const static TCHAR sLongNumFmt[] = {'%','I','6','4','d','\0'};
+#else
+/* #define LONGLONGARG _T("L") */
+const static TCHAR sLongHexFmt[] = {'%','L','X','\0'};
+const static TCHAR sLongNumFmt[] = {'%','L','d','\0'};
+#endif
 
 
 /* load resource string */
@@ -270,7 +293,9 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 	for(p=buffer; *path; )
 		*p++ = *path++;
 
-	lstrcpy(p, TEXT("\\*"));
+	*p++ = '\\';
+	p[0] = '*';
+	p[1] = '\0';
 
 	hFind = FindFirstFile(buffer, &w32fd);
 
@@ -303,7 +328,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 			entry->etype = ET_WINDOWS;
 			entry->bhfi_valid = FALSE;
 
-			lstrcpy(p+1, entry->data.cFileName);
+			lstrcpy(p, entry->data.cFileName);
 
 			hFile = CreateFile(buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
 								0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
@@ -1069,12 +1094,12 @@ static int compareExt(const void* arg1, const void* arg2)
 	if (ext1)
 		ext1++;
 	else
-		ext1 = TEXT("");
+		ext1 = sEmpty;
 
 	if (ext2)
 		ext2++;
 	else
-		ext2 = TEXT("");
+		ext2 = sEmpty;
 
 	cmp = lstrcmpi(ext1, ext2);
 	if (cmp)
@@ -1237,6 +1262,11 @@ static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND 
 
 static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
+	const static TCHAR sBackslash[] = {'\\', '\0'};
+#if !defined(_NO_EXTENSIONS) && defined(__WINE__)
+	const static TCHAR sSlash[] = {'/', '\0'};
+#endif
+
 	TCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
 	TCHAR b1[BUFFER_LEN];
 
@@ -1282,10 +1312,11 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	if (pidl)
 	{
 		root->drive_type = DRIVE_UNKNOWN;
-		lstrcpy(drv, TEXT("\\"));
-		lstrcpy(root->volname, TEXT("Desktop"));
+		drv[0] = '\\';
+		drv[1] = '\0';
+		load_string(root->volname, IDS_DESKTOP);
 		root->fs_flags = 0;
-		lstrcpy(root->fs, TEXT("Shell"));
+		load_string(root->fs, IDS_SHELL);
 
 		entry = read_tree_shell(root, pidl, child->sortOrder, hwnd);
 	}
@@ -1296,12 +1327,12 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	{
 		root->drive_type = GetDriveType(path);
 
-		lstrcat(drv, TEXT("/"));
-		lstrcpy(root->volname, TEXT("root fs"));
+		lstrcat(drv, sSlash);
+		load_string(root->volname, IDS_ROOT_FS);
 		root->fs_flags = 0;
-		lstrcpy(root->fs, TEXT("unixfs"));
+		load_string(root->fs, IDS_UNIXFS);
 
-		lstrcpy(root->path, TEXT("/"));
+		lstrcpy(root->path, sSlash);
 		entry = read_tree_unix(root, path, child->sortOrder, hwnd);
 	}
 	else
@@ -1309,7 +1340,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	{
 		root->drive_type = GetDriveType(path);
 
-		lstrcat(drv, TEXT("\\"));
+		lstrcat(drv, sBackslash);
 		GetVolumeInformation(drv, root->volname, _MAX_FNAME, 0, 0, &root->fs_flags, root->fs, _MAX_DIR);
 
 		lstrcpy(root->path, drv);
@@ -1497,7 +1528,7 @@ static HWND create_child_window(ChildWnd* child)
 	MDICREATESTRUCT mcs;
 	int idx;
 
-	mcs.szClass = WINEFILETREE;
+	mcs.szClass = sWINEFILETREE;
 	mcs.szTitle = (LPTSTR)child->path;
 	mcs.hOwner  = Globals.hInstance;
 	mcs.x       = child->pos.rcNormalPosition.left;
@@ -1533,7 +1564,7 @@ struct ExecuteDialog {
 };
 
 
-static BOOL CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
 	static struct ExecuteDialog* dlg;
 
@@ -1559,7 +1590,7 @@ static BOOL CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, L
 	return 0;
 }
 
-static BOOL CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
 	TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 
@@ -1872,7 +1903,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 						Globals.hfont = CreateFontIndirect(&lFont);
 						SelectFont(hdc, Globals.hfont);
-						GetTextExtentPoint32(hdc, TEXT(" "), 1, &Globals.spaceSize);
+						GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
 
 						/* change font in all open child windows */
 						for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
@@ -2019,21 +2050,8 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 }
 
 
-static const LPTSTR g_pos_names[COLUMNS] = {
-	TEXT(""),			/* symbol */
-	TEXT("Name"),
-	TEXT("Size"),
-	TEXT("CDate"),
-#ifndef _NO_EXTENSIONS
-	TEXT("ADate"),
-	TEXT("MDate"),
-	TEXT("Index/Inode"),
-	TEXT("Links"),
-#endif /* _NO_EXTENSIONS */
-	TEXT("Attributes"),
-#ifndef _NO_EXTENSIONS
-	TEXT("Security")
-#endif
+static TCHAR g_pos_names[COLUMNS][20] = {
+	{'\0'}	/* symbol */
 };
 
 static const int g_pos_align[] = {
@@ -2120,17 +2138,19 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 
 static void init_output(HWND hwnd)
 {
+	const static TCHAR s1000[] = {'1','0','0','0','\0'};
+
 	TCHAR b[16];
 	HFONT old_font;
 	HDC hdc = GetDC(hwnd);
 
-	if (GetNumberFormat(LOCALE_USER_DEFAULT, 0, TEXT("1000"), 0, b, 16) > 4)
+	if (GetNumberFormat(LOCALE_USER_DEFAULT, 0, s1000, 0, b, 16) > 4)
 		Globals.num_sep = b[1];
 	else
 		Globals.num_sep = TEXT('.');
 
 	old_font = SelectFont(hdc, Globals.hfont);
-	GetTextExtentPoint32(hdc, TEXT(" "), 1, &Globals.spaceSize);
+	GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
 	SelectFont(hdc, old_font);
 	ReleaseDC(hwnd, hdc);
 }
@@ -2329,10 +2349,12 @@ static WNDPROC g_orgTreeWndProc;
 
 static void create_tree_window(HWND parent, Pane* pane, int id, int id_header)
 {
+	const static TCHAR sListBox[] = {'L','i','s','t','B','o','x','\0'};
+
 	static int s_init = 0;
 	Entry* entry = pane->root;
 
-	pane->hwnd = CreateWindow(TEXT("ListBox"), TEXT(""), WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
+	pane->hwnd = CreateWindow(sListBox, sEmpty, WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
 								LBS_DISABLENOSCROLL|LBS_NOINTEGRALHEIGHT|LBS_OWNERDRAWFIXED|LBS_NOTIFY,
 								0, 0, 0, 0, parent, (HMENU)id, Globals.hInstance, 0);
 
@@ -2378,7 +2400,7 @@ static void format_date(const FILETIME* ft, TCHAR* buffer, int visible_cols)
 		return;
 
 	if (!FileTimeToLocalFileTime(ft, &lft))
-		{err: _tcscpy(buffer,TEXT("???")); return;}
+		{err: _tcscpy(buffer,sQMarks); return;}
 
 	if (!FileTimeToSystemTime(&lft, &systime))
 		goto err;
@@ -2489,28 +2511,28 @@ static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str
 
 static int is_exe_file(LPCTSTR ext)
 {
-	static const LPCTSTR executable_extensions[] = {
-		TEXT("COM"),
-		TEXT("EXE"),
-		TEXT("BAT"),
-		TEXT("CMD"),
+	static const TCHAR executable_extensions[][4] = {
+		{'C','O','M','\0'},
+		{'E','X','E','\0'},
+		{'B','A','T','\0'},
+		{'C','M','D','\0'},
 #ifndef _NO_EXTENSIONS
-		TEXT("CMM"),
-		TEXT("BTM"),
-		TEXT("AWK"),
+		{'C','M','M','\0'},
+		{'B','T','M','\0'},
+		{'A','W','K','\0'},
 #endif /* _NO_EXTENSIONS */
-		0
+		{'\0'}
 	};
 
 	TCHAR ext_buffer[_MAX_EXT];
-	const LPCTSTR* p;
+	const TCHAR (*p)[4];
 	LPCTSTR s;
 	LPTSTR d;
 
 	for(s=ext+1,d=ext_buffer; (*d=tolower(*s)); s++)
 		d++;
 
-	for(p=executable_extensions; *p; p++)
+	for(p=executable_extensions; (*p)[0]; p++)
 		if (!_tcscmp(ext_buffer, *p))
 			return 1;
 
@@ -2559,7 +2581,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		} else {
 			LPCTSTR ext = _tcsrchr(entry->data.cFileName, '.');
 			if (!ext)
-				ext = TEXT("");
+				ext = sEmpty;
 
 			if (is_exe_file(ext))
 				img = IMG_EXECUTABLE;
@@ -2741,7 +2763,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
                         size = ((ULONGLONG)entry->data.nFileSizeHigh << 32) | entry->data.nFileSizeLow;
 
-			_stprintf(buffer, TEXT("%") LONGLONGARG TEXT("d"), size);
+			_stprintf(buffer, sLongNumFmt, size);
 
 			if (calcWidthCol == -1)
 				output_number(pane, dis, col, buffer);
@@ -2783,20 +2805,24 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
             ULONGLONG index = ((ULONGLONG)entry->bhfi.nFileIndexHigh << 32) | entry->bhfi.nFileIndexLow;
 
 		if (visible_cols & COL_INDEX) {
-			_stprintf(buffer, TEXT("%") LONGLONGARG TEXT("X"), index);
+			_stprintf(buffer, sLongHexFmt, index);
+
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_RIGHT);
 			else if (calcWidthCol==col || calcWidthCol==COLUMNS)
 				calc_width(pane, dis, col, buffer);
+
 			col++;
 		}
 
 		if (visible_cols & COL_LINKS) {
-			wsprintf(buffer, TEXT("%d"), entry->bhfi.nNumberOfLinks);
+			wsprintf(buffer, sNumFmt, entry->bhfi.nNumberOfLinks);
+
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_CENTER);
 			else if (calcWidthCol==col || calcWidthCol==COLUMNS)
 				calc_width(pane, dis, col, buffer);
+
 			col++;
 		}
 	} else
@@ -2806,9 +2832,11 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 	/* show file attributes */
 	if (visible_cols & COL_ATTRIBUTES) {
 #ifdef _NO_EXTENSIONS
-		_tcscpy(buffer, TEXT(" \t \t \t \t "));
+		const static TCHAR s4Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
+		_tcscpy(buffer, s4Tabs);
 #else
-		_tcscpy(buffer, TEXT(" \t \t \t \t \t \t \t \t \t \t \t "));
+		const static TCHAR s11Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
+		_tcscpy(buffer, s11Tabs);
 #endif
 
 		if (attrs & FILE_ATTRIBUTE_NORMAL)					buffer[ 0] = 'N';
@@ -2839,9 +2867,18 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 /*TODO
 	if (flags.security) {
+		const static TCHAR sSecTabs[] = {
+			' ','\t',' ','\t',' ','\t',' ',
+			' ','\t',' ',
+			' ','\t',' ','\t',' ','\t',' ',
+			' ','\t',' ',
+			' ','\t',' ','\t',' ','\t',' ',
+			'\0'
+		};
+
 		DWORD rights = get_access_mask();
 
-		tcscpy(buffer, TEXT(" \t \t \t  \t  \t \t \t  \t  \t \t \t "));
+		tcscpy(buffer, sSecTabs);
 
 		if (rights & FILE_READ_DATA)			buffer[ 0] = 'R';
 		if (rights & FILE_WRITE_DATA)			buffer[ 2] = 'W';
@@ -3708,9 +3745,12 @@ LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 
 static void InitInstance(HINSTANCE hinstance)
 {
+	const static TCHAR sFont[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+
 	WNDCLASSEX wcFrame;
 	WNDCLASS wcChild;
 	ATOM hChildClass;
+	int col;
 
 	INITCOMMONCONTROLSEX icc = {
 		sizeof(INITCOMMONCONTROLSEX),
@@ -3736,7 +3776,7 @@ static void InitInstance(HINSTANCE hinstance)
 	wcFrame.hCursor       = LoadCursor(0, IDC_ARROW);
 	wcFrame.hbrBackground = 0;
 	wcFrame.lpszMenuName  = 0;
-	wcFrame.lpszClassName = WINEFILEFRAME;
+	wcFrame.lpszClassName = sWINEFILEFRAME;
 	wcFrame.hIconSm       = (HICON)LoadImage(hinstance,
 											 MAKEINTRESOURCE(IDI_WINEFILE),
 											 IMAGE_ICON,
@@ -3758,14 +3798,14 @@ static void InitInstance(HINSTANCE hinstance)
 	wcChild.hCursor       = LoadCursor(0, IDC_ARROW);
 	wcChild.hbrBackground = 0;
 	wcChild.lpszMenuName  = 0;
-	wcChild.lpszClassName = WINEFILETREE;
+	wcChild.lpszClassName = sWINEFILETREE;
 
 	hChildClass = RegisterClass(&wcChild);
 
 
 	Globals.haccel = LoadAccelerators(hinstance, MAKEINTRESOURCE(IDA_WINEFILE));
 
-	Globals.hfont = CreateFont(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("MS Shell Dlg"));
+	Globals.hfont = CreateFont(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, sFont);
 
 	ReleaseDC(0, hdc);
 
@@ -3775,13 +3815,36 @@ static void InitInstance(HINSTANCE hinstance)
 	CoInitialize(NULL);
 	CoGetMalloc(MEMCTX_TASK, &Globals.iMalloc);
 	SHGetDesktopFolder(&Globals.iDesktop);
+#ifdef __WINE__
+	Globals.cfStrFName = RegisterClipboardFormatA(CFSTR_FILENAME);
+#else
 	Globals.cfStrFName = RegisterClipboardFormat(CFSTR_FILENAME);
+#endif
+#endif
+
+	/* load column strings */
+	col = 0;
+
+	load_string(g_pos_names[col++], IDS_COL_NAME);
+	load_string(g_pos_names[col++], IDS_COL_SIZE);
+	load_string(g_pos_names[col++], IDS_COL_CDATE);
+#ifndef _NO_EXTENSIONS
+	load_string(g_pos_names[col++], IDS_COL_ADATE);
+	load_string(g_pos_names[col++], IDS_COL_MDATE);
+	load_string(g_pos_names[col++], IDS_COL_IDX);
+	load_string(g_pos_names[col++], IDS_COL_LINKS);
+#endif
+	load_string(g_pos_names[col++], IDS_COL_ATTR);
+#ifndef _NO_EXTENSIONS
+	load_string(g_pos_names[col++], IDS_COL_SEC);
 #endif
 }
 
 
 void show_frame(HWND hwndParent, int cmdshow)
 {
+	const static TCHAR sMDICLIENT[] = {'M','D','I','C','L','I','E','N','T','\0'};
+
 	TCHAR path[MAX_PATH], b1[BUFFER_LEN];
 	ChildWnd* child;
 	HMENU hMenuFrame, hMenuWindow;
@@ -3810,7 +3873,7 @@ void show_frame(HWND hwndParent, int cmdshow)
 					hwndParent, Globals.hMenuFrame, Globals.hInstance, 0/*lpParam*/);
 
 
-	Globals.hmdiclient = CreateWindowEx(0, TEXT("MDICLIENT"), NULL,
+	Globals.hmdiclient = CreateWindowEx(0, sMDICLIENT, NULL,
 					WS_CHILD|WS_CLIPCHILDREN|WS_VSCROLL|WS_HSCROLL|WS_VISIBLE|WS_BORDER,
 					0, 0, 0, 0,
 					Globals.hMainWnd, 0, Globals.hInstance, &ccs);
@@ -3833,7 +3896,10 @@ void show_frame(HWND hwndParent, int cmdshow)
 #ifndef _NO_EXTENSIONS
 #ifdef __WINE__
 		/* insert unix file system button */
-		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)TEXT("/\0"));
+		b1[0] = '/';
+		b1[1] = '\0';
+		b1[2] = '\0';
+		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
 
 		drivebarBtn.idCommand = ID_DRIVE_UNIX_FS;
 		SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
@@ -4011,7 +4077,7 @@ int APIENTRY WinMain(HINSTANCE hinstance,
 					 int	   cmdshow)
 {
 #ifdef _NO_EXTENSIONS
-	if (find_window_class(WINEFILEFRAME))
+	if (find_window_class(sWINEFILEFRAME))
 		return 1;
 #endif
 

@@ -61,12 +61,6 @@
 #define	ASSERT(x)	/* nothing */
 #endif
 
-#ifdef _MSC_VER
-#define	LONGLONGARG _T("I64")
-#else
-#define	LONGLONGARG _T("L")
-#endif
-
 #define	BUFFER_LEN	1024
 
 
@@ -101,11 +95,6 @@ enum IMAGE {
 #else
 #define	COLOR_SPLITBAR		LTGRAY_BRUSH
 #endif
-
-#define	WINEFILEFRAME		_T("WFS_Frame")
-#define	WINEFILETREE		_T("WFS_Tree")
-#define	WINEFILEDRIVES		_T("WFS_Drives")
-#define	WINEFILEMDICLIENT	_T("WFS_MdiClient")
 
 #define	FRM_CALC_CLIENT		0xBF83
 #define	Frame_CalcFrameClient(hwnd, prt) ((BOOL)SNDMSG(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
@@ -154,8 +143,10 @@ typedef struct
 
 extern WINEFILE_GLOBALS Globals;
 
+#ifdef __WINE__
 #ifdef UNICODE
 extern void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 #else
 extern void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext);
+#endif
 #endif
