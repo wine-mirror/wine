@@ -1564,7 +1564,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 
     case 0x41: /* "UNLINK" - DELETE FILE */
-        TRACE("UNLINK%s\n",
+        TRACE("UNLINK %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)));
         bSetDOSExtendedError = (!DeleteFileA( CTX_SEG_OFF_TO_LIN(context,  DS_reg(context),
                                                              EDX_reg(context) )));
@@ -1610,7 +1610,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                                        			   CX_reg(context) ));
             break;
         case 0x02:
-            TRACE("GET COMPRESSED FILE SIZE for %s stub\n",
+            FIXME("GET COMPRESSED FILE SIZE for %s stub\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)));
         }
         break;
@@ -2217,15 +2217,48 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                                                              EDI_reg(context))))
 		bSetDOSExtendedError = TRUE;
             break;
+	case 0xa0:
+	    {
+		LPCSTR driveroot = (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context),EDX_reg(context));
+		LPSTR buffer = (LPSTR)CTX_SEG_OFF_TO_LIN(context,  ES_reg(context),EDI_reg(context));
+		int drive;
+		UINT flags;
+
+		TRACE("LONG FILENAME - GET VOLUME INFORMATION for drive having root dir '%s'.\n", driveroot);
+		AX_reg(context) = 0;
+		if (!driveroot)
+		{
+		    INT_BARF( context, 0x21 );
+		    SET_CFLAG(context);
+		    break;
+		}
+		drive = toupper(driveroot[0]) - 'A';
+		flags = DRIVE_GetFlags(toupper(driveroot[0]) - 'A');
+		BX_reg(context) = 0x4000; /* support for LFN functions */
+		if (flags & DRIVE_CASE_SENSITIVE)
+			BX_reg(context) |= 1;
+		if (flags & DRIVE_CASE_PRESERVING)
+			BX_reg(context) |= 2;
+		/***** FIXME: not supported yet (needed ?)
+		if (flags & DRIVE_UNICODE)
+			BX_reg(context) |= 4;
+		if (flags & DRIVE_COMPRESSED)
+			BX_reg(context) |= 0x8000;
+		*****/
+		CX_reg(context) = (flags & DRIVE_SHORT_NAMES) ? 11 : 255; /* FIXME: 12 ? */
+		DX_reg(context) = MAX_PATH; /* FIXME: which len if DRIVE_SHORT_NAMES ? */
+		if (DRIVE_GetType(drive) == TYPE_CDROM)
+			/* valid for data _and_ audio */
+			strcpy(buffer, "CDFS"); /* FIXME: fail if no CD in drive */
+		else
+			strcpy(buffer, "FAT");
+	    }
+	    break;
         case 0xa1:  /* Find close */
 	    TRACE("LONG FILENAME - FINDCLOSE for handle %d\n",
 		  BX_reg(context));
             bSetDOSExtendedError = (!FindClose16( BX_reg(context) ));
             break;
-	case 0xa0:
-	    TRACE("LONG FILENAME - GET VOLUME INFORMATION for drive %s stub\n",
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context),EDX_reg(context)));
-	    break;
         case 0x60:  
 	  switch(CL_reg(context))
 	  {
@@ -2286,7 +2319,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    }
 	    break;
         case 0x56:  /* Move (rename) file */
-            TRACE("LONG FILENAME - RENAME FILE %s to %s stub\n",
+            FIXME("LONG FILENAME - RENAME FILE %s to %s stub\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)),
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  ES_reg(context), EDI_reg(context))); 
         default:
