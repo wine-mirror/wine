@@ -1288,7 +1288,8 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     {
 	HRSRC hResInfo;
 	HGLOBAL hDlgTmpl;
-	if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_COLOR", (LPSTR)RT_DIALOG)))
+	static const WCHAR wszCHOOSE_COLOR[] = {'C','H','O','O','S','E','_','C','O','L','O','R',0};
+	if (!(hResInfo = FindResourceW(COMDLG32_hInstance, wszCHOOSE_COLOR, (LPWSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
