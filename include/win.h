@@ -28,24 +28,6 @@
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
-/* Built-in 32-bit classes */
-typedef enum
-{
-    BIC32_BUTTON,
-    BIC32_EDIT,
-    BIC32_LISTBOX,
-    BIC32_COMBO,
-    BIC32_COMBOLB,
-    BIC32_POPUPMENU,
-    BIC32_STATIC,
-    BIC32_SCROLL,
-    BIC32_MDICLIENT,
-    BIC32_DESKTOP,
-    BIC32_DIALOG,
-    BIC32_ICONTITLE,
-    BIC32_NB_CLASSES
-} BUILTIN_CLASS32;
-
   /* PAINT_RedrawWindow() control flags */
 #define RDW_EX_USEHRGN		0x0001
 #define RDW_EX_DELETEHRGN	0x0002
@@ -79,13 +61,15 @@ typedef struct tagWND
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN16         hrgnUpdate;    /* Update region */
     HRGN           hrgnWnd;       /* window's region */
-    HWND         hwndLastActive;/* Last active popup hwnd */
+    HWND           hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
-    UINT         wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    DWORD          clsStyle;      /* Class style at window creation */
+    UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
     WORD           flags;         /* Misc. flags (see below) */
     HMENU16        hSysMenu;      /* window's copy of System Menu */
+    int            cbWndExtra;    /* class cbWndExtra at window creation */
     int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */
     struct tagWND_DRIVER *pDriver;  /* Window driver */
@@ -118,8 +102,8 @@ typedef struct tagWND_DRIVER
 {
     void   (*pInitialize)(WND *);
     void   (*pFinalize)(WND *);
-    BOOL (*pCreateDesktopWindow)(WND *, struct tagCLASS *, BOOL);
-    BOOL (*pCreateWindow)(WND *, struct tagCLASS *, CREATESTRUCTA *, BOOL);
+    BOOL   (*pCreateDesktopWindow)(WND *, BOOL);
+    BOOL   (*pCreateWindow)(WND *, CREATESTRUCTA *, BOOL);
     BOOL (*pDestroyWindow)(WND *);
     WND*   (*pSetParent)(WND *, WND *);
     void   (*pForceWindowRaise)(WND *);
@@ -215,9 +199,18 @@ extern BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
                                   UINT control );		      /* windows/painting.c */
 extern HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT flags);     /* windows/painting.c */
 
+/* Classes functions */
+struct tagCLASS;  /* opaque structure */
+extern ATOM CLASS_RegisterBuiltinClass( LPCSTR name, DWORD style, INT winExtra, LPCSTR cursor,
+                                        HBRUSH brush, WNDPROC wndProcA, WNDPROC wndProcW );
+extern struct tagCLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTYPE type,
+                                         INT *winExtra, WNDPROC *winproc,
+                                         DWORD *style, struct tagDCE **dce );
+extern void CLASS_RemoveWindow( struct tagCLASS *cls );
+extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
+
 /* controls/widgets.c */
 extern BOOL WIDGETS_Init( void );
-extern BOOL WIDGETS_IsControl( WND* pWnd, BUILTIN_CLASS32 cls );  
 
 /* controls/icontitle.c */
 extern LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );

@@ -7,7 +7,6 @@
 
 #include <string.h>
 
-#include "class.h"
 #include "win.h"
 #include "user.h"
 #include "heap.h"
@@ -324,7 +323,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	    HDC16 hdc = BeginPaint16( wndPtr->hwndSelf, &ps );
 	    if( hdc ) 
 	    {
-	      if( (wndPtr->dwStyle & WS_MINIMIZE) && wndPtr->class->hIcon )
+              HICON hIcon;
+	      if( (wndPtr->dwStyle & WS_MINIMIZE) && ((hIcon = GetClassLongA( wndPtr->hwndSelf, GCL_HICON))) )
 	      {
 	        int x = (wndPtr->rectWindow.right - wndPtr->rectWindow.left -
 			GetSystemMetrics(SM_CXICON))/2;
@@ -332,7 +332,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 			GetSystemMetrics(SM_CYICON))/2;
 		TRACE("Painting class icon: vis rect=(%i,%i - %i,%i)\n",
 		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
-	        DrawIcon( hdc, x, y, wndPtr->class->hIcon );
+	        DrawIcon( hdc, x, y, hIcon );
 	      }
 	      EndPaint16( wndPtr->hwndSelf, &ps );
 	    }
@@ -387,8 +387,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_ICONERASEBKGND:
 	{
 	    RECT rect;
-
-	    if (!wndPtr->class->hbrBackground) return 0;
+            HBRUSH hbr = GetClassLongA( wndPtr->hwndSelf, GCL_HBRBACKGROUND );
+            if (!hbr) return 0;
 
 	    /*  Since WM_ERASEBKGND may receive either a window dc or a    */ 
 	    /*  client dc, the area to be erased has to be retrieved from  */
@@ -400,7 +400,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
              * supports special background brushes for a window class,
              * the Win16 variant of FillRect does not.
              */
-            FillRect( (HDC) wParam, &rect, wndPtr->class->hbrBackground);
+            FillRect( (HDC) wParam, &rect, hbr );
 	    return 1;
 	}
 
@@ -457,7 +457,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	    {
 		HWND hWnd = WIN_GetTopParent( wndPtr->hwndSelf );
 		wndPtr = WIN_FindWndPtr( hWnd );
-		if( wndPtr && !(wndPtr->class->style & CS_NOCLOSE) )
+		if( wndPtr && !(wndPtr->clsStyle & CS_NOCLOSE) )
 		    PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
                 WIN_ReleaseWndPtr(wndPtr);
 	    }
@@ -528,10 +528,10 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
     case WM_QUERYDRAGICON:
         {
-            HICON16 hIcon=0;
             UINT16 len;
 
-            if( (hIcon=wndPtr->class->hCursor) ) return (LRESULT)hIcon;
+            HICON hIcon = GetClassLongA( wndPtr->hwndSelf, GCL_HICON );
+            if (hIcon) return hIcon;
             for(len=1; len<64; len++)
                 if((hIcon=LoadIconA(wndPtr->hInstance,MAKEINTRESOURCEA(len))))
                     return (LRESULT)hIcon;

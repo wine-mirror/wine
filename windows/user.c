@@ -14,7 +14,6 @@
 #include "user.h"
 #include "task.h"
 #include "queue.h"
-#include "class.h"
 #include "win.h"
 #include "clipboard.h"
 #include "menu.h"

@@ -20,7 +20,6 @@
 #include <assert.h>
 #include "options.h"
 #include "dce.h"
-#include "class.h"
 #include "win.h"
 #include "gdi.h"
 #include "region.h"
@@ -161,7 +160,7 @@ void DCE_FreeWindowDCE( WND* pWnd )
 	{
 	    if( pDCE == pWnd->dce ) /* owned or Class DCE*/
 	    {
-                if (pWnd->class->style & CS_OWNDC)	/* owned DCE*/
+                if (pWnd->clsStyle & CS_OWNDC)	/* owned DCE*/
 		{
                     pDCE = DCE_FreeDCE( pDCE );
                     pWnd->dce = NULL;
@@ -676,7 +675,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     /* fixup flags */
 
-    if (!(wndPtr->class->style & (CS_OWNDC | CS_CLASSDC))) flags |= DCX_CACHE;
+    if (!wndPtr->dce) flags |= DCX_CACHE;
 
     if (flags & DCX_USESTYLE)
     {
@@ -687,7 +686,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
 	if ( !(flags & DCX_WINDOW) )
 	{
-            if (wndPtr->class->style & CS_PARENTDC) flags |= DCX_PARENTCLIP;
+            if (wndPtr->clsStyle & CS_PARENTDC) flags |= DCX_PARENTCLIP;
 
 	    if (wndPtr->dwStyle & WS_CLIPCHILDREN &&
                      !(wndPtr->dwStyle & WS_MINIMIZE) ) flags |= DCX_CLIPCHILDREN;
@@ -767,7 +766,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else 
     {
-        dce = (wndPtr->class->style & CS_OWNDC) ? wndPtr->dce : wndPtr->class->dce;
+        dce = wndPtr->dce;
 	if( dce->hwndCurrent == hwnd )
 	{
 	    TRACE("\tskipping hVisRgn update\n");

@@ -378,12 +378,12 @@ owner	user32
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
 395 pascal16 GetIconInfo(word ptr) GetIconInfo16
 397 pascal16 RegisterClassEx(ptr) RegisterClassEx16
-398 pascal16 GetClassInfoEx(word str ptr) GetClassInfoEx16
+398 pascal16 GetClassInfoEx(word segstr ptr) GetClassInfoEx16
 399 pascal16 ChildWindowFromPointEx(word long word) ChildWindowFromPointEx16
 400 pascal16 FinalUserInit() FinalUserInit16
 402 pascal16 GetPriorityClipboardFormat(ptr s_word) GetPriorityClipboardFormat16
 403 pascal16 UnregisterClass(str word) UnregisterClass16
-404 pascal16 GetClassInfo(word str ptr) GetClassInfo16
+404 pascal16 GetClassInfo(word segstr ptr) GetClassInfo16
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor16
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon16
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)

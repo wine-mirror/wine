@@ -96,10 +96,12 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc,
 	(!desktopPtr->fTileWallPaper && ((desktopPtr->bitmapSize.cx < rect.right) ||
 	 (desktopPtr->bitmapSize.cy < rect.bottom))))
     {
+        HBRUSH brush = desktopPtr->hbrushPattern;
+        if (!brush) brush = GetClassLongA( hwnd, GCL_HBRBACKGROUND );
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor( hdc, RGB(0,0,0) );
 	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
-	FillRect( hdc, &rect, desktopPtr->hbrushPattern );
+	FillRect( hdc, &rect, brush );
     }
 
       /* Paint wall paper */
@@ -289,7 +291,7 @@ BOOL DESKTOP_SetPattern( LPCSTR pattern )
 	desktopPtr->hbrushPattern = CreatePatternBrush( hbitmap );
 	DeleteObject( hbitmap );
     }
-    else desktopPtr->hbrushPattern = CreateSolidBrush( GetSysColor(COLOR_BACKGROUND) );
+    else desktopPtr->hbrushPattern = 0;
     WIN_ReleaseDesktop();
     return TRUE;
 }

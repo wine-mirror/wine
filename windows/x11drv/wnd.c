@@ -26,7 +26,6 @@
 #include "heap.h"
 #include "win.h"
 #include "windef.h"
-#include "class.h"
 #include "x11drv.h"
 #include "wingdi.h"
 #include "winnls.h"
@@ -174,7 +173,7 @@ void X11DRV_WND_Finalize(WND *wndPtr)
 /**********************************************************************
  *		X11DRV_WND_CreateDesktopWindow
  */
-BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
+BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, BOOL bUnicode)
 {
     if (wmProtocols == None)
         wmProtocols = TSXInternAtom( display, "WM_PROTOCOLS", True );
@@ -306,7 +305,7 @@ static void X11DRV_WND_UpdateIconHints(WND *wndPtr)
 /**********************************************************************
  *		X11DRV_WND_CreateWindow
  */
-BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode)
+BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CREATESTRUCTA *cs, BOOL bUnicode)
 {
   /* Create the X window (only for top-level windows, and then only */
   /* when there's no desktop window) */
@@ -336,10 +335,10 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	}
       wndPtr->flags |= WIN_NATIVE;
 
-      win_attr.bit_gravity   = (classPtr->style & (CS_VREDRAW | CS_HREDRAW)) ? BGForget : BGNorthWest;
+      win_attr.bit_gravity   = (wndPtr->clsStyle & (CS_VREDRAW | CS_HREDRAW)) ? BGForget : BGNorthWest;
       win_attr.colormap      = X11DRV_PALETTE_PaletteXColormap;
       win_attr.backing_store = NotUseful;
-      win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
+      win_attr.save_under    = ((wndPtr->clsStyle & CS_SAVEBITS) != 0);
       win_attr.cursor        = X11DRV_MOUSE_XCursor;
 
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
@@ -520,8 +519,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
                     cs.lpszName = 0; /* not used in following call */
                     cs.lpszClass = 0; /*not used in following call */
                     cs.dwExStyle = wndPtr->dwExStyle;
-                    X11DRV_WND_CreateWindow(wndPtr, wndPtr->class,
-                                            &cs, FALSE);
+                    X11DRV_WND_CreateWindow(wndPtr, &cs, FALSE);
                 }
             }
             else /* a child window */
@@ -759,7 +757,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	if (changeMask && X11DRV_WND_GetXWindow(winposPtr))
 	{
 	    TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(winposPtr), 0, changeMask, &winChanges );
-	    if( winposPtr->class->style & (CS_VREDRAW | CS_HREDRAW) )
+	    if( winposPtr->clsStyle & (CS_VREDRAW | CS_HREDRAW) )
 		X11DRV_WND_SetHostAttr( winposPtr, HAK_BITGRAVITY, BGForget );
 	}
     }
@@ -937,7 +935,7 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
          * modify the origin and reset the clipping. When the clipping is set,
          * it is moved according to the new DC origin.
          */
-         if ( (wndPtr->class->style & (CS_OWNDC | CS_CLASSDC)) && (dc->hClipRgn > 0))
+         if ( (wndPtr->clsStyle & (CS_OWNDC | CS_CLASSDC)) && (dc->hClipRgn > 0))
          {
              dcOrgXCopy = dc->DCOrgX;
              dcOrgYCopy = dc->DCOrgY;

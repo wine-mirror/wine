@@ -79,7 +79,7 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
  * Called with window lock held.
  */
 static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
-					   WPARAM wParam, LPARAM lParam )
+                                                  WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     RECT rect;
     HWND	hWnd = wndPtr->hwndSelf;
@@ -215,12 +215,9 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         }
         break;
 
-    case WM_NCHITTEST:
-        if(style == BS_GROUPBOX) return HTTRANSPARENT;
-        return DefWindowProcW( hWnd, uMsg, wParam, lParam );
-
     case WM_SETTEXT:
-        DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
+        if (unicode) DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
+        else DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
 	if( wndPtr->dwStyle & WS_VISIBLE )
             PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         return 1; /* success. FIXME: check text length */
@@ -352,29 +349,48 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         PAINT_BUTTON( wndPtr, style, ODA_SELECT );
         break;
 
+    case WM_NCHITTEST:
+        if(style == BS_GROUPBOX) return HTTRANSPARENT;
+        /* fall through */
     default:
-        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+        return unicode ? DefWindowProcW(hWnd, uMsg, wParam, lParam) :
+                         DefWindowProcA(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
 /***********************************************************************
- *           ButtonWndProc
+ *           ButtonWndProcW
  * The button window procedure. This is just a wrapper which locks
  * the passed HWND and calls the real window procedure (with a WND*
  * pointer pointing to the locked windowstructure).
  */
-LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
-                              WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     LRESULT res;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam);
+    res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam,TRUE);
 
     WIN_ReleaseWndPtr(wndPtr);
     return res;
 }
+
+
+/***********************************************************************
+ *           ButtonWndProcA
+ */
+LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+    LRESULT res;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+
+    res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam,FALSE);
+
+    WIN_ReleaseWndPtr(wndPtr);
+    return res;
+}
+
 
 /**********************************************************************
  *       Push Button Functions

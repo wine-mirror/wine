@@ -11,7 +11,6 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "options.h"
-#include "class.h"
 #include "win.h"
 #include "heap.h"
 #include "user.h"
@@ -229,10 +228,10 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->rectWindow.right, ptr->rectWindow.bottom, ptr->hSysMenu,
              ptr->flags, ptr->pProp, ptr->pVScroll, ptr->pHScroll );
 
-    if (ptr->class->cbWndExtra)
+    if (ptr->cbWndExtra)
     {
         DPRINTF( "extra bytes:" );
-        for (i = 0; i < ptr->class->cbWndExtra; i++)
+        for (i = 0; i < ptr->cbWndExtra; i++)
             DPRINTF( " %02x", *((BYTE*)ptr->wExtra+i) );
         DPRINTF( "\n" );
     }
@@ -268,8 +267,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     {
         DPRINTF( "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
 
-        GlobalGetAtomNameA(ptr->class->atomName,className,sizeof(className));
-        
+        GetClassNameA( hwnd, className, sizeof(className) );
         DPRINTF( "%08lx %-6.4x %-17.17s %08x %08x %.14s\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
                  (UINT)ptr->dwStyle, (UINT)ptr->winproc,
@@ -504,7 +502,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     wndPtr->pDriver->pDestroyWindow( wndPtr );
     DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
-    wndPtr->class->cWindows--;
+    CLASS_RemoveWindow( wndPtr->class );
     wndPtr->class = NULL;
 
     WIN_UpdateWndPtr(&pWnd,wndPtr->next);
@@ -577,18 +575,23 @@ BOOL WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
  */
 BOOL WIN_CreateDesktopWindow(void)
 {
-    CLASS *class;
+    struct tagCLASS *class;
     HWND hwndDesktop;
+    INT wndExtra;
+    DWORD clsStyle;
+    WNDPROC winproc;
+    DCE *dce;
 
     TRACE("Creating desktop window\n");
 
 
     if (!ICONTITLE_Init() ||
 	!WINPOS_CreateInternalPosAtom() ||
-	!(class = CLASS_FindClassByAtom( DESKTOP_CLASS_ATOM, 0 )))
-	return FALSE;
+        !(class = CLASS_AddWindow( DESKTOP_CLASS_ATOM, 0, WIN_PROC_32A,
+                                   &wndExtra, &winproc, &clsStyle, &dce )))
+        return FALSE;
 
-    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+class->cbWndExtra );
+    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND) + wndExtra );
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
@@ -615,6 +618,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
                                      WS_CLIPSIBLINGS;
     pWndDesktop->dwExStyle         = 0;
+    pWndDesktop->clsStyle          = clsStyle;
     pWndDesktop->dce               = NULL;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
@@ -624,11 +628,12 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->flags             = Options.desktopGeometry ? WIN_NATIVE : 0; 
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
-    pWndDesktop->winproc = (WNDPROC16)class->winproc;
+    pWndDesktop->winproc           = winproc;
+    pWndDesktop->cbWndExtra        = wndExtra;
     pWndDesktop->irefCount         = 0;
 
     /* FIXME: How do we know if it should be Unicode or not */
-    if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop, class, FALSE))
+    if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop, FALSE))
       return FALSE;
     
     SendMessageA( hwndDesktop, WM_NCCREATE, 0, 0 );
@@ -711,11 +716,15 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 				WINDOWPROCTYPE type )
 {
     INT sw = SW_SHOW; 
-    CLASS *classPtr;
+    struct tagCLASS *classPtr;
     WND *wndPtr;
     HWND retvalue;
     HWND16 hwnd, hwndLinkAfter;
     POINT maxSize, maxPos, minTrack, maxTrack;
+    INT wndExtra;
+    DWORD clsStyle;
+    WNDPROC winproc;
+    DCE *dce;
     LRESULT (CALLBACK *localSend32)(HWND, UINT, WPARAM, LPARAM);
 
     TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
@@ -743,7 +752,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     }
 
     /* Find the window class */
-    if (!(classPtr = CLASS_FindClassByAtom( classAtom, (type == WIN_PROC_16) ? GetExePtr(cs->hInstance) : cs->hInstance )))
+    if (!(classPtr = CLASS_AddWindow( classAtom, cs->hInstance, type,
+                                      &wndExtra, &winproc, &clsStyle, &dce )))
     {
         WARN("Bad class '%s'\n", cs->lpszClass );
         return 0;
@@ -753,8 +763,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Create the window structure */
 
-    if (!(hwnd = USER_HEAP_ALLOC( sizeof(*wndPtr) + classPtr->cbWndExtra
-                                  - sizeof(wndPtr->wExtra) )))
+    if (!(hwnd = USER_HEAP_ALLOC( sizeof(*wndPtr) + wndExtra - sizeof(wndPtr->wExtra) )))
     {
 	TRACE("out of memory\n" );
 	return 0;
@@ -791,7 +800,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->pDriver->pInitialize(wndPtr);
 
     wndPtr->class          = classPtr;
-    wndPtr->winproc        = classPtr->winproc;
+    wndPtr->winproc        = winproc;
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hInstance      = cs->hInstance;
@@ -802,6 +811,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hwndLastActive = hwnd;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
+    wndPtr->clsStyle       = clsStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->helpContext    = 0;
     wndPtr->flags          = (type == WIN_PROC_16) ? 0 : WIN_ISWIN32;
@@ -811,9 +821,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->userdata       = 0;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
 			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
+    wndPtr->cbWndExtra     = wndExtra;
     wndPtr->irefCount      = 1;
 
-    if (classPtr->cbWndExtra) memset( wndPtr->wExtra, 0, classPtr->cbWndExtra);
+    if (wndExtra) memset( wndPtr->wExtra, 0, wndExtra);
 
     /* Call the WH_CBT hook */
 
@@ -834,14 +845,11 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	    TRACE("CBT-hook returned 0\n");
 	    wndPtr->pDriver->pFinalize(wndPtr);
 	    USER_HEAP_FREE( hwnd );
+            CLASS_RemoveWindow( classPtr );
             retvalue =  0;
             goto end;
 	}
     }
-
-    /* Increment class window counter */
-
-    classPtr->cWindows++;
 
     /* Correct the window style */
 
@@ -857,8 +865,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Get class or window DC if needed */
 
-    if (classPtr->style & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
-    else if (classPtr->style & CS_CLASSDC) wndPtr->dce = classPtr->dce;
+    if (clsStyle & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
+    else if (clsStyle & CS_CLASSDC) wndPtr->dce = dce;
     else wndPtr->dce = NULL;
 
     /* Initialize the dimensions before sending WM_GETMINMAXINFO */
@@ -889,7 +897,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->rectWindow.bottom = cs->y + cs->cy;
     wndPtr->rectClient        = wndPtr->rectWindow;
 
-    if(!wndPtr->pDriver->pCreateWindow(wndPtr, classPtr, cs, type == WIN_PROC_32W))
+    if(!wndPtr->pDriver->pCreateWindow(wndPtr, cs, type == WIN_PROC_32W))
     {
         retvalue = FALSE;
         goto end;
@@ -902,7 +910,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (cs->hMenu) SetMenu(hwnd, cs->hMenu);
         else
         {
-            /* FIXME: should check if classPtr->menuNameW can be used as is */
             LPCSTR menuName = (LPCSTR)GetClassLongA( hwnd, GCL_MENUNAME );
             if (menuName)
             {
@@ -1001,6 +1008,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     WARN("aborted by WM_xxCREATE!\n");
     WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
+    CLASS_RemoveWindow( classPtr );
     retvalue = 0;
 end:
     WIN_ReleaseWndPtr(wndPtr);
@@ -1541,7 +1549,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
 
     for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
     {
-        if (className && (pWnd->class->atomName != className))
+        if (className && (GetClassWord(pWnd->hwndSelf, GCW_ATOM) != className))
             continue;  /* Not the right class */
 
         /* Now check the title */
@@ -1824,7 +1832,7 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
     if (!wndPtr) return 0;
     if (offset >= 0)
     {
-        if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
+        if (offset + sizeof(WORD) > wndPtr->cbWndExtra)
         {
             WARN("Invalid offset %d\n", offset );
             retvalue = 0;
@@ -1879,7 +1887,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     if (!wndPtr) return 0;
     if (offset >= 0)
     {
-        if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
+        if (offset + sizeof(WORD) > wndPtr->cbWndExtra)
         {
             WARN("Invalid offset %d\n", offset );
             retval = 0;
@@ -1918,7 +1926,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     if (!wndPtr) return 0;
     if (offset >= 0)
     {
-        if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
+        if (offset + sizeof(LONG) > wndPtr->cbWndExtra)
         {
             WARN("Invalid offset %d\n", offset );
             retvalue = 0;
@@ -1989,7 +1997,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 
     if (offset >= 0)
     {
-        if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
+        if (offset + sizeof(LONG) > wndPtr->cbWndExtra)
         {
             WARN("Invalid offset %d\n", offset );
 
@@ -2502,9 +2510,9 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
  */
 BOOL WIN_IsWindowDrawable( WND* wnd, BOOL icon )
 {
-  if( (wnd->dwStyle & WS_MINIMIZE &&
-       icon && wnd->class->hIcon) ||
-     !(wnd->dwStyle & WS_VISIBLE) ) return FALSE;
+  if (!(wnd->dwStyle & WS_VISIBLE)) return FALSE;
+  if ((wnd->dwStyle & WS_MINIMIZE) &&
+       icon && GetClassLongA( wnd->hwndSelf, GCL_HICON ))  return FALSE;
   for(wnd = wnd->parent; wnd; wnd = wnd->parent)
     if( wnd->dwStyle & WS_MINIMIZE ||
       !(wnd->dwStyle & WS_VISIBLE) ) break;

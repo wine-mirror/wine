@@ -6,7 +6,6 @@
 
 #include "config.h"
 
-#include "class.h"
 #include "gdi.h"
 #include "heap.h"
 #include "ttydrv.h"
@@ -89,12 +88,12 @@ void TTYDRV_WND_Finalize(WND *wndPtr)
 /**********************************************************************
  *		TTYDRV_WND_CreateDesktopWindow
  */
-BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
+BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, BOOL bUnicode)
 {
   TTYDRV_WND_DATA *pWndDriverData =
     (TTYDRV_WND_DATA *) wndPtr->pDriverData;
 
-  TRACE("(%p, %p, %d)\n", wndPtr, classPtr, bUnicode);
+  TRACE("(%p, %d)\n", wndPtr, bUnicode);
 
   if(!pWndDriverData) { ERR("WND never initialized\n"); return FALSE; }
 
@@ -105,13 +104,13 @@ BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 /**********************************************************************
  *		TTYDRV_WND_CreateWindow
  */
-BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode)
+BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CREATESTRUCTA *cs, BOOL bUnicode)
 {
 #ifdef WINE_CURSES
   WINDOW *window;
   INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
-  TRACE("(%p, %p, %p, %d)\n", wndPtr, classPtr, cs, bUnicode);
+  TRACE("(%p, %p, %d)\n", wndPtr, cs, bUnicode);
 
   /* Only create top-level windows */
   if(cs->style & WS_CHILD)
@@ -124,7 +123,7 @@ BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 		  
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%p, %p, %p, %d): stub\n", wndPtr, classPtr, cs, bUnicode);
+  FIXME("(%p, %p, %p, %d): stub\n", wndPtr, cs, bUnicode);
 
   return TRUE;
 #endif /* defined(WINE_CURSES) */

@@ -35,7 +35,7 @@ typedef struct
 
 #define BUTTON_STATE(hwnd)     ((WIN_FindWndPtr(hwnd))->wExtra[0])
 
-extern LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
-                                     WPARAM wParam, LPARAM lParam );
+extern LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+extern LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 #endif  /* __WINE_BUTTON_H */
