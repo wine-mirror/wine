@@ -36,6 +36,7 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "commdlg.h"
+#include "richedit.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(message);
 
@@ -1561,6 +1562,89 @@ static const USER_MSG updown_array[] = {
           USM(UDM_GETPOS32            ,0),
           {0,0,0} };
 
+/* generated from:
+ * $ for i in `grep EM_ include/richedit.h | cut -d' ' -f2 | cut -f1`; do echo -e "          USM($i\t\t,0),"; done
+ */
+static const USER_MSG richedit_array[] = {
+          {"EM_SCROLLCARET", WM_USER+49 ,0},
+          USM(EM_CANPASTE               ,0),
+          USM(EM_DISPLAYBAND            ,0),
+          USM(EM_EXGETSEL               ,0),
+          USM(EM_EXLIMITTEXT            ,0),
+          USM(EM_EXLINEFROMCHAR         ,0),
+          USM(EM_EXSETSEL               ,0),
+          USM(EM_FINDTEXT               ,0),
+          USM(EM_FORMATRANGE            ,0),
+          USM(EM_GETCHARFORMAT          ,0),
+          USM(EM_GETEVENTMASK           ,0),
+          USM(EM_GETOLEINTERFACE        ,0),
+          USM(EM_GETPARAFORMAT          ,0),
+          USM(EM_GETSELTEXT             ,0),
+          USM(EM_HIDESELECTION          ,0),
+          USM(EM_PASTESPECIAL           ,0),
+          USM(EM_REQUESTRESIZE          ,0),
+          USM(EM_SELECTIONTYPE          ,0),
+          USM(EM_SETBKGNDCOLOR          ,0),
+          USM(EM_SETCHARFORMAT          ,0),
+          USM(EM_SETEVENTMASK           ,0),
+          USM(EM_SETOLECALLBACK         ,0),
+          USM(EM_SETPARAFORMAT          ,0),
+          USM(EM_SETTARGETDEVICE        ,0),
+          USM(EM_STREAMIN               ,0),
+          USM(EM_STREAMOUT              ,0),
+          USM(EM_GETTEXTRANGE           ,0),
+          USM(EM_FINDWORDBREAK          ,0),
+          USM(EM_SETOPTIONS             ,0),
+          USM(EM_GETOPTIONS             ,0),
+          USM(EM_FINDTEXTEX             ,0),
+          USM(EM_GETWORDBREAKPROCEX     ,0),
+          USM(EM_SETWORDBREAKPROCEX     ,0),
+          USM(EM_SETUNDOLIMIT           ,0),
+          USM(EM_REDO                   ,0),
+          USM(EM_CANREDO                ,0),
+          USM(EM_GETUNDONAME            ,0),
+          USM(EM_GETREDONAME            ,0),
+          USM(EM_STOPGROUPTYPING        ,0),
+          USM(EM_SETTEXTMODE            ,0),
+          USM(EM_GETTEXTMODE            ,0),
+          USM(EM_AUTOURLDETECT          ,0),
+          USM(EM_GETAUTOURLDETECT       ,0),
+          USM(EM_SETPALETTE             ,0),
+          USM(EM_GETTEXTEX              ,0),
+          USM(EM_GETTEXTLENGTHEX        ,0),
+          USM(EM_SHOWSCROLLBAR          ,0),
+          USM(EM_SETTEXTEX              ,0),
+          USM(EM_SETPUNCTUATION         ,0),
+          USM(EM_GETPUNCTUATION         ,0),
+          USM(EM_SETWORDWRAPMODE        ,0),
+          USM(EM_GETWORDWRAPMODE        ,0),
+          USM(EM_SETIMECOLOR            ,0),
+          USM(EM_GETIMECOLOR            ,0),
+          USM(EM_SETIMEOPTIONS          ,0),
+          USM(EM_GETIMEOPTIONS          ,0),
+          USM(EM_CONVPOSITION           ,0),
+          USM(EM_SETLANGOPTIONS         ,0),
+          USM(EM_GETLANGOPTIONS         ,0),
+          USM(EM_GETIMECOMPMODE         ,0),
+          USM(EM_FINDTEXTW              ,0),
+          USM(EM_FINDTEXTEXW            ,0),
+          USM(EM_RECONVERSION           ,0),
+          USM(EM_SETIMEMODEBIAS         ,0),
+          USM(EM_GETIMEMODEBIAS         ,0),
+          USM(EM_SETBIDIOPTIONS         ,0),
+          USM(EM_GETBIDIOPTIONS         ,0),
+          USM(EM_SETTYPOGRAPHYOPTIONS   ,0),
+          USM(EM_GETTYPOGRAPHYOPTIONS   ,0),
+          USM(EM_SETEDITSTYLE           ,0),
+          USM(EM_GETEDITSTYLE           ,0),
+          USM(EM_OUTLINE                ,0),
+          USM(EM_GETSCROLLPOS           ,0),
+          USM(EM_SETSCROLLPOS           ,0),
+          USM(EM_SETFONTSIZE            ,0),
+          USM(EM_GETZOOM                ,0),
+          USM(EM_SETZOOM                ,0),
+          {0,0,0} };
+
 #undef SZOF
 #undef USM
 
@@ -1571,6 +1655,7 @@ static CONTROL_CLASS  cc_array[] = {
     {TOOLBARCLASSNAMEW, toolbar_array,  0},
     {TOOLTIPS_CLASSW,   tooltips_array, 0},
     {UPDOWN_CLASSW,     updown_array,   0},
+    {RICHEDIT_CLASS20W, richedit_array, 0},
     {0, 0, 0} };
 
 
@@ -1938,7 +2023,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
             }
         }
 #if DEBUG_SPY
-	TRACE("looking class %s\n", sp_e->wnd_class);
+	TRACE("looking class %s\n", debugstr_w(sp_e->wnd_class));
 #endif
 
 	while (cc_array[i].classname &&
@@ -2189,6 +2274,45 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
 		    TRACE("min=n/a max=%d\n", *ptmax);
 		break;
 	    }
+	case EM_EXSETSEL:
+	    if (enter && sp_e->lParam)
+	    {
+		CHARRANGE *cr = (CHARRANGE *) sp_e->lParam;
+		TRACE("CHARRANGE: cpMin=%ld cpMax=%ld\n", cr->cpMin, cr->cpMax);
+	    }
+	    break;
+	case EM_SETCHARFORMAT:
+	    if (enter && sp_e->lParam)
+	    {
+		CHARFORMATW *cf = (CHARFORMATW *) sp_e->lParam;
+		TRACE("CHARFORMAT: dwMask=0x%08lx dwEffects=", cf->dwMask);
+		if ((cf->dwMask & CFM_BOLD) && (cf->dwEffects & CFE_BOLD))
+		    TRACE(" CFE_BOLD");
+		if ((cf->dwMask & CFM_COLOR) && (cf->dwEffects & CFE_AUTOCOLOR))
+		    TRACE(" CFE_AUTOCOLOR");
+		if ((cf->dwMask & CFM_ITALIC) && (cf->dwEffects & CFE_ITALIC))
+		    TRACE(" CFE_ITALIC");
+		if ((cf->dwMask & CFM_PROTECTED) && (cf->dwEffects & CFE_PROTECTED))
+		    TRACE(" CFE_PROTECTED");
+		if ((cf->dwMask & CFM_STRIKEOUT) && (cf->dwEffects & CFE_STRIKEOUT))
+		    TRACE(" CFE_STRIKEOUT");
+		if ((cf->dwMask & CFM_UNDERLINE) && (cf->dwEffects & CFE_UNDERLINE))
+		    TRACE(" CFE_UNDERLINE");
+		TRACE("\n");
+		if (cf->dwMask & CFM_SIZE)
+		    TRACE("yHeight=%ld\n", cf->yHeight);
+		if (cf->dwMask & CFM_OFFSET)
+		    TRACE("yOffset=%ld\n", cf->yOffset);
+		if ((cf->dwMask & CFM_COLOR) && !(cf->dwEffects & CFE_AUTOCOLOR))
+		    TRACE("crTextColor=%lx\n", cf->crTextColor);
+		TRACE("bCharSet=%x bPitchAndFamily=%x\n", cf->bCharSet, cf->bPitchAndFamily);
+		/* FIXME: we should try to be a bit more intelligent about
+		 * whether this is in ANSI or Unicode (it could be either) */
+		if (cf->dwMask & CFM_FACE)
+		    TRACE("szFaceName=%s\n", debugstr_wn(cf->szFaceName, LF_FACESIZE));
+		/* FIXME: handle CHARFORMAT2 too */
+	    }
+	    break;
 	case WM_DRAWITEM:
 	    if (!enter) break;
 	    {
