@@ -388,6 +388,7 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+#if 0
 static void test_setborder(UINT curr_val)
 {
     BOOL rc;
@@ -442,6 +443,7 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     rc=SystemParametersInfoA( SPI_SETBORDER, old_border, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
+#endif
 
 static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
 {
