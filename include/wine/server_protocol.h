@@ -2211,7 +2211,7 @@ struct create_named_pipe_request
     unsigned int   outsize;
     unsigned int   insize;
     unsigned int   timeout;
-    /* VARARG(filename,string); */
+    /* VARARG(name,unicode_str); */
 };
 struct create_named_pipe_reply
 {
@@ -2225,7 +2225,7 @@ struct open_named_pipe_request
 {
     struct request_header __header;
     unsigned int   access;
-    /* VARARG(filename,string); */
+    /* VARARG(name,unicode_str); */
 };
 struct open_named_pipe_reply
 {
@@ -2255,7 +2255,7 @@ struct wait_named_pipe_request
     unsigned int   timeout;
     void*          overlapped;
     void*          func;
-    /* VARARG(filename,string); */
+    /* VARARG(name,unicode_str); */
 };
 struct wait_named_pipe_reply
 {
@@ -3038,6 +3038,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 67
+#define SERVER_PROTOCOL_VERSION 68
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

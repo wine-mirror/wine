@@ -1552,18 +1552,18 @@ enum message_type
     unsigned int   outsize;
     unsigned int   insize;
     unsigned int   timeout;
-    VARARG(filename,string);    /* pipe name */
+    VARARG(name,unicode_str);    /* pipe name */
 @REPLY
-    handle_t       handle;     /* handle to the pipe */
+    handle_t       handle;       /* handle to the pipe */
 @END
 
 
 /* Open an existing named pipe */
 @REQ(open_named_pipe)
     unsigned int   access;
-    VARARG(filename,string);    /* pipe name */
+    VARARG(name,unicode_str);    /* pipe name */
 @REPLY
-    handle_t       handle;     /* handle to the pipe */
+    handle_t       handle;       /* handle to the pipe */
 @END
 
 
@@ -1580,7 +1580,7 @@ enum message_type
     unsigned int   timeout;
     void*          overlapped;
     void*          func;
-    VARARG(filename,string);    /* pipe name */
+    VARARG(name,unicode_str);    /* pipe name */
 @END
 
 

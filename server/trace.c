@@ -1756,8 +1756,8 @@ static void dump_create_named_pipe_request( const struct create_named_pipe_reque
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x,", req->insize );
     fprintf( stderr, " timeout=%08x,", req->timeout );
-    fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *req )
@@ -1768,8 +1768,8 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
 static void dump_open_named_pipe_request( const struct open_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_open_named_pipe_reply( const struct open_named_pipe_reply *req )
@@ -1789,8 +1789,8 @@ static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *
     fprintf( stderr, " timeout=%08x,", req->timeout );
     fprintf( stderr, " overlapped=%p,", req->overlapped );
     fprintf( stderr, " func=%p,", req->func );
-    fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_disconnect_named_pipe_request( const struct disconnect_named_pipe_request *req )
