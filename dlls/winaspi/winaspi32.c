@@ -474,6 +474,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */
     FIXME("ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
     return SS_COMP;
+
   case SC_GET_DEV_TYPE: {
     /* FIXME: We should return SS_NO_DEVICE if the device is not configured */
     /* FIXME: We should return SS_INVALID_HA if HostAdapter!=0 */
@@ -496,13 +497,17 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     				  /* FIXME: handle lun */
     tmpsrb.cmd.CDBByte[4]	= sizeof(inqbuf);
     tmpsrb.cmd.SRB_CDBLen	= 6;
+
     ret = ASPI_ExecScsiCmd(&tmpsrb.cmd);
-#define X(x) lpSRB->devtype.SRB_##x = tmpsrb.cmd.SRB_##x
-    X(Status);
-#undef X
+
+    lpSRB->devtype.SRB_Status	= tmpsrb.cmd.SRB_Status;
     lpSRB->devtype.SRB_DeviceType = inqbuf[0]&0x1f;
+
     TRACE("returning devicetype %d for target %d\n",inqbuf[0]&0x1f,tmpsrb.cmd.SRB_Target);
-    return ret;
+    if (ret!=SS_PENDING) /* Any error is passed down directly */
+	return ret;
+    /* FIXME: knows that the command is finished already, pass final Status */
+    return tmpsrb.cmd.SRB_Status;
   }
   case SC_EXEC_SCSI_CMD:
     return ASPI_ExecScsiCmd(&lpSRB->cmd);
