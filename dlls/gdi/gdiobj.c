@@ -723,7 +723,8 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     _EnterSysLevel( &GDI_level );
     switch(magic)
     {
-    default:
+    case PEN_MAGIC:
+    case BRUSH_MAGIC:
         if (GDI_HeapSel)
         {
             if (!(hlocal = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size ))) goto error;
@@ -733,23 +734,11 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
             break;
         }
         /* fall through */
-    case DC_MAGIC:
-    case DISABLED_DC_MAGIC:
-    case META_DC_MAGIC:
-    case METAFILE_MAGIC:
-    case METAFILE_DC_MAGIC:
-    case ENHMETAFILE_MAGIC:
-    case ENHMETAFILE_DC_MAGIC:
-    case MEMORY_DC_MAGIC:
-    case BITMAP_MAGIC:
-    case PALETTE_MAGIC:
-    case FONT_MAGIC:
-    case REGION_MAGIC:
+    default:
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
         break;
     }
 
-    obj->hNext   = 0;
     obj->wMagic  = magic|OBJECT_NOSYSTEM;
     obj->dwCount = 0;
     obj->funcs   = funcs;

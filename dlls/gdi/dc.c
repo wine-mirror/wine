@@ -64,6 +64,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->funcs               = funcs;
     dc->physDev             = NULL;
     dc->saveLevel           = 0;
+    dc->saved_dc            = 0;
     dc->dwHookData          = 0;
     dc->hookProc            = NULL;
     dc->hookThunk           = NULL;
@@ -335,6 +336,7 @@ HDC WINAPI GetDCState( HDC hdc )
 
     newdc->hSelf = (HDC)handle;
     newdc->saveLevel = 0;
+    newdc->saved_dc  = 0;
 
     PATH_InitGdiPath( &newdc->path );
 
@@ -506,8 +508,8 @@ INT WINAPI SaveDC( HDC hdc )
 	return 0;
     }
 
-    dcs->header.hNext = dc->header.hNext;
-    dc->header.hNext = HDC_16(hdcs);
+    dcs->saved_dc = dc->saved_dc;
+    dc->saved_dc = hdcs;
     TRACE("(%p): returning %d\n", hdc, dc->saveLevel+1 );
     ret = ++dc->saveLevel;
     GDI_ReleaseObj( hdcs );
@@ -550,13 +552,14 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     success=TRUE;
     while (dc->saveLevel >= level)
     {
-	HDC hdcs = HDC_32(dc->header.hNext);
+        HDC hdcs = dc->saved_dc;
 	if (!(dcs = DC_GetDCPtr( hdcs )))
 	{
 	  GDI_ReleaseObj( hdc );
 	  return FALSE;
 	}
-	dc->header.hNext = dcs->header.hNext;
+        dc->saved_dc = dcs->saved_dc;
+        dcs->saved_dc = 0;
 	if (--dc->saveLevel < level)
 	{
 	    SetDCState( hdc, hdcs );
@@ -768,11 +771,11 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     while (dc->saveLevel)
     {
-	DC * dcs;
-	HDC hdcs = HDC_32(dc->header.hNext);
-	if (!(dcs = DC_GetDCPtr( hdcs ))) break;
-	dc->header.hNext = dcs->header.hNext;
-	dc->saveLevel--;
+        DC * dcs;
+        HDC hdcs = dc->saved_dc;
+        if (!(dcs = DC_GetDCPtr( hdcs ))) break;
+        dc->saved_dc = dcs->saved_dc;
+        dc->saveLevel--;
         if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );
         if (dcs->hVisRgn) DeleteObject( dcs->hVisRgn );
         PATH_DestroyGdiPath(&dcs->path);

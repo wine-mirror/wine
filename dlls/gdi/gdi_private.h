@@ -209,6 +209,7 @@ typedef struct tagDC
     const struct tagDC_FUNCS *funcs; /* DC function table */
     PHYSDEV      physDev;         /* Physical device (driver-specific) */
     INT          saveLevel;
+    HDC          saved_dc;
     DWORD        dwHookData;
     FARPROC16    hookProc;         /* the original SEGPTR ... */
     DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */

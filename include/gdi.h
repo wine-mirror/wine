@@ -59,7 +59,6 @@ struct hdc_list;
 
 typedef struct tagGDIOBJHDR
 {
-    HANDLE16    hNext;
     WORD        wMagic;
     DWORD       dwCount;
     const struct gdi_obj_funcs *funcs;
