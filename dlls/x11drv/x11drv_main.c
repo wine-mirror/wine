@@ -156,8 +156,6 @@ static void process_attach(void)
     CLIPBOARD_Driver = &X11DRV_CLIPBOARD_Driver;
     WND_Driver       = &X11DRV_WND_Driver;
 
-    putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
-
     /* Open display */
   
     if (!(display = TSXOpenDisplay( Options.display )))

@@ -450,7 +450,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
     return keyc2vkey[e->keycode];
 }
 
-static BOOL NumState=FALSE, CapsState=FALSE;
+static BOOL NumState=FALSE, CapsState=FALSE, AltGrState=FALSE;
 
 /**********************************************************************
  *		KEYBOARD_GenerateMsg
@@ -583,6 +583,16 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
 
     TRACE_(key)("EVENT_key : state = %X\n", event->state);
+
+    /* If the state mask for AltGr hasn't been set yet, it's probably
+       because the X server/client are using XKB extension. With XKB extension
+       AltGr is mapped to a Group index. The group index is set in bits 13-14 
+       of event->state field. 
+
+       Ref: X Keyboard Extension: Library specification (section 14.1.1 and 17.1.1) */
+    if (AltGrState && (AltGrMask == 0))
+        AltGrMask = event->state & 0x6000;
+
     if (keysym == XK_Mode_switch)
 	{
 	TRACE_(key)("Alt Gr key event received\n");
@@ -593,6 +603,12 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	force_extended = TRUE;
 	X11DRV_KEYBOARD_HandleEvent( pWnd, event );
 	force_extended = FALSE;
+    
+    /* Here we save the pressed/released state of the AltGr key, to be able to 
+       identify the group index associated with AltGr on the next key pressed *
+       see comment above. */
+    AltGrState = (event->type == KeyPress) ? TRUE : FALSE;
+    
 	return;
 	}
 
