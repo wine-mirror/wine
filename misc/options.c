@@ -305,7 +305,8 @@ static void inherit_options( char *buffer )
 void OPTIONS_Usage(void)
 {
     const struct option *opt;
-    MESSAGE( "Usage: %s [options] program_name [arguments]\n\n", argv0 );
+    MESSAGE( "Usage: %s [options] [--] program_name [arguments]\n", argv0 );
+    MESSAGE("The -- has to be used if you specify arguments (of the program)\n\n");
     MESSAGE( "Options:\n" );
     for (opt = option_table; opt->longname; opt++) MESSAGE( "   %s\n", opt->usage );
     ExitProcess(0);

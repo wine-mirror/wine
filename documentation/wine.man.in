@@ -3,7 +3,7 @@
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.BI "wine " "[wine_options] " "program " "[arguments ... ]"
+.BI "wine " "[wine_options] " "[--] " "program " "[arguments ... ]"
 .PP
 For instructions on passing arguments to Windows programs, please see the 
 .B
