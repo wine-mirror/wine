@@ -145,8 +145,12 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         const long                 *pIdxBufL = NULL;
         const char                 *curPos;
         BOOL                        isLightingOn = FALSE;
-        BOOL                        enableTexture = FALSE;
         int                         vx_index;
+        int                         coordIdxInfo = 0x00;    /* Information on number of coords supplied */
+        float                       s[8], t[8], r[8], q[8]; /* Holding place for tex coords             */
+        const char                 *coordPtr[8];            /* Holding place for the ptr to tex coords  */
+        int                         numCoords[8];           /* Holding place for D3DFVF_TEXTUREFORMATx  */
+
 
         float x = 0.0f, 
               y = 0.0f, 
@@ -179,9 +183,10 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         isDiffuse     = fvf & D3DFVF_DIFFUSE;
         isSpecular    = fvf & D3DFVF_SPECULAR;
         numTextures   = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+        coordIdxInfo  = (fvf & 0x00FF0000) >> 16; /* 16 is from definition of D3DFVF_TEXCOORDSIZE1, and is 8 (0-7 stages) * 2bits long */
 
-        TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d, numBlends=%d)\n",
-              fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures, numBlends);
+        TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d, numBlends=%d, coordIdxInfo=%x)\n",
+              fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures, numBlends, coordIdxInfo);
 
         /* If no normals, DISABLE lighting otherwise, dont touch lighing as it is 
            set by the appropriate render state */
@@ -361,90 +366,112 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     curPos = curPos + sizeof(DWORD);
                 }
 
-                /* ToDo: Texture coords */
+                /* Texture coords */
+                /* numTextures indicates the number of texture coordinates supplied */
+                /* However, the first set may not be for stage 0 texture - it all   */
+                /*   depends on D3DTSS_TEXCOORDINDEX.                               */
+                /* The number of bytes for each coordinate set is based off         */
+                /*   D3DFVF_TEXCOORDSIZEn, which are the bottom 2 bits              */
+
+                /* Initialize unused coords to unsupplied so we can check later */
+                for (textureNo = numTextures; textureNo < 7; textureNo++) numCoords[textureNo] = -1;
+
+                /* So, for each supplied texture extract the coords */
                 for (textureNo = 0; textureNo < numTextures; ++textureNo) {
-                    float s, t, r, q;
+                                        
+                    numCoords[textureNo] = coordIdxInfo & 0x03;
+
+                    /* Always one set */
+                    s[textureNo] = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT1) {
+                        t[textureNo] = *(float *)curPos;
+                        curPos = curPos + sizeof(float);
+                        if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT2) {
+                            r[textureNo] = *(float *)curPos;
+                            curPos = curPos + sizeof(float);
+                            if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT3) {
+                                q[textureNo] = *(float *)curPos;
+                                curPos = curPos + sizeof(float);
+                            }
+                        }
+                    }
+
+                    coordIdxInfo = coordIdxInfo >> 2; /* Drop bottom two bits */
+                }
+
+                /* Now use the appropriate set of texture indexes */
+                for (textureNo = 0; textureNo < This->TextureUnits; ++textureNo) {
 
                     if (!(This->isMultiTexture) && textureNo > 0) {
                         FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
                         continue ;
                     }
-                    if (textureNo > This->TextureUnits) {
-                        FIXME("Program using more concurrent textures than this opengl implementation support\n");
-                        break ;
-                    }
 
                     /* Query tex coords */
-                    if (This->StateBlock->textures[textureNo] != NULL) {
-                        switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock->textures[textureNo])) {
-                        case D3DRTYPE_TEXTURE:
-                            s = *(float *)curPos;
-                            curPos = curPos + sizeof(float);
-                            t = *(float *)curPos;
-                            curPos = curPos + sizeof(float);
-                            VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s,t));
+                    if ((This->StateBlock->textures[textureNo] != NULL) && 
+                        (useVertexShaderFunction == FALSE)) {
 
-                            if (TRUE == useVertexShaderFunction) {
-			      /* Nothing to do */
-                            } else { 
-                                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
-                                    VTRACE("Skip tex coords, as being system generated\n");
-                                } else {
+                        int coordIdx = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
 
-                                    if (This->isMultiTexture) {
+                        if (coordIdx > 7) {
+                            VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
+                        } else if (coordIdx >= numTextures) {
+                            VTRACE(("tex: %d - Skip tex coords, as requested higher than supplied\n", textureNo));
+                        } else {
+                            switch (numCoords[coordIdx]) {   /* Supply the provided texture coords */
+                            case D3DFVF_TEXTUREFORMAT1:
+                                VTRACE(("tex:%d, s=%f\n", textureNo, s[coordIdx]));
+                                if (This->isMultiTexture) {
 #if defined(GL_VERSION_1_3)
-                                        glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
+                                    glMultiTexCoord1f(GL_TEXTURE0 + textureNo, s[coordIdx]);
 #else
-                                        glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+                                    glMultiTexCoord1fARB(GL_TEXTURE0_ARB + textureNo, s[coordIdx]);
 #endif
-                                    } else {
-                                        glTexCoord2f(s, t);
-                                    }
-
-                                }
-                            }
-                            break;
-
-                        case D3DRTYPE_VOLUMETEXTURE:
-                            s = *(float *)curPos;
-                            curPos = curPos + sizeof(float);
-                            t = *(float *)curPos;
-                            curPos = curPos + sizeof(float);
-                            r = *(float *)curPos;
-                            curPos = curPos + sizeof(float);
-                            VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r));
-
-                            if (TRUE == useVertexShaderFunction) {
-			      /* Nothing to do */
-                            } else {
-                                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
-                                    VTRACE("Skip tex coords, as being system generated\n");
                                 } else {
-                                    if (This->isMultiTexture) {
-#if defined(GL_VERSION_1_3)
-                                        glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r);
-#else
-                                        glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-#endif
-                                    } else {
-                                        glTexCoord3f(s, t, r);
-                                    }
+                                    glTexCoord1f(s[coordIdx]);
                                 }
+                                break;
+                            case D3DFVF_TEXTUREFORMAT2:
+                                VTRACE(("tex:%d, s=%f, t=%f\n", textureNo, s[coordIdx], t[coordIdx]));
+                                if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                    glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s[coordIdx], t[coordIdx]);
+#else
+                                    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s[coordIdx], t[coordIdx]);
+#endif
+                                } else {
+                                    glTexCoord2f(s[coordIdx], t[coordIdx]);
+                                }
+                                break;
+                            case D3DFVF_TEXTUREFORMAT3:
+                                VTRACE(("tex:%d, s=%f, t=%f, r=%f\n", textureNo, s[coordIdx], t[coordIdx], r[coordIdx]));
+                                if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                    glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s[coordIdx], t[coordIdx], r[coordIdx]);
+#else
+                                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s[coordIdx], t[coordIdx], r[coordIdx]);
+#endif
+                                } else {
+                                    glTexCoord3f(s[coordIdx], t[coordIdx], r[coordIdx]);
+                                }
+                                break;
+                            case D3DFVF_TEXTUREFORMAT4:
+                                VTRACE(("tex:%d, s=%f, t=%f, r=%f, q=%f\n", textureNo, s[coordIdx], t[coordIdx], r[coordIdx], q[coordIdx]));
+                                if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                    glMultiTexCoord4f(GL_TEXTURE0 + textureNo, s[coordIdx], t[coordIdx], r[coordIdx], q[coordIdx]);
+#else
+                                    glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, s[coordIdx], t[coordIdx], r[coordIdx], q[coordIdx]);
+#endif
+                                } else {
+                                    glTexCoord4f(s[coordIdx], t[coordIdx], r[coordIdx], q[coordIdx]);
+                                }
+                                break;
+                            default:
+                                FIXME("Should not get here as numCoords is two bits only (%x)!\n", numCoords[coordIdx]);
                             }
-                            break;
-			    
-			case D3DRTYPE_CUBETEXTURE:
-                            r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
-                            FIXME("Unhandled texture type: D3DRTYPE_CUBETEXTURE\n");
-			    break;
-
-                        default:
-                            r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
-                            FIXME("Unhandled texture type: %u\n", IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock->textures[textureNo]));
                         }
-                    } else {
-                        /* Note I have seen a program actually do this, so just hide it and continue */
-                        VTRACE(("Very odd - texture requested in FVF but not bound!\n"));
                     }
 
                 }
@@ -526,7 +553,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                                 t = vertex_shader->output.oT[textureNo].y;
                                 VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s, t));
                                 if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
-                                    VTRACE("Skip tex coords, as being system generated\n");
+                                    VTRACE(("Skip tex coords, as being system generated\n"));
                                 } else {
                                     if (This->isMultiTexture) {
 #if defined(GL_VERSION_1_3)
@@ -549,7 +576,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                                 r = vertex_shader->output.oT[textureNo].z;
                                 VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s, t, r));
                                 if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
-                                    VTRACE("Skip tex coords, as being system generated\n");
+                                    VTRACE(("Skip tex coords, as being system generated\n"));
                                 } else {
                                     if (This->isMultiTexture) {
 #if defined(GL_VERSION_1_3)
@@ -743,68 +770,80 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 #endif
             }
 
- 
-            /* ToDo: Texture coords */
-            for (textureNo = 0;textureNo<numTextures; textureNo++) {
- 
-                /* Query tex coords */
-#if defined(GL_VERSION_1_3)
-                glClientActiveTexture(GL_TEXTURE0 + textureNo);
-#else
-                glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
-#endif
-                if (This->StateBlock->textures[textureNo] != NULL) {
-                    enableTexture = TRUE;
-                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock->textures[textureNo])) {
-                    case D3DRTYPE_TEXTURE:
-                        if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
-                            VTRACE("Skip tex coords, as being system generated\n");
-                        } else {
-                            glTexCoordPointer(2, GL_FLOAT, skip, curPos);
-                            checkGLcall("glTexCoordPointer(2, ...)");
-                        }
-                        curPos += 2*sizeof(float);
-                        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                        checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
-                        break;
+            /* Texture coords */
+            /* numTextures indicates the number of texture coordinates supplied */
+            /* However, the first set may not be for stage 0 texture - it all   */
+            /*   depends on D3DTSS_TEXCOORDINDEX.                               */
+            /* The number of bytes for each coordinate set is based off         */
+            /*   D3DFVF_TEXCOORDSIZEn, which are the bottom 2 bits              */
 
-                    case D3DRTYPE_VOLUMETEXTURE:
-                        if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
-                            VTRACE("Skip tex coords, as being system generated\n");
-                        } else {
-                            glTexCoordPointer(3, GL_FLOAT, skip, curPos);
-                            checkGLcall("glTexCoordPointer(3, ...)");
-                        }
-                        curPos += 3*sizeof(float);
-                        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                        checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
-                        break;
+            /* Initialize unused coords to unsupplied so we can check later */
+            for (textureNo = numTextures; textureNo < 7; textureNo++) coordPtr[textureNo] = NULL;
 
-                    default:
-                       FIXME("Unhandled texture type\n");
-                       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                       checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
+            /* So, for each supplied texture extract the coords */
+            for (textureNo = 0; textureNo < numTextures; ++textureNo) {
+                
+                numCoords[textureNo] = coordIdxInfo & 0x03;
+                coordPtr[textureNo] = curPos;
+
+                /* Always one set */
+                curPos = curPos + sizeof(float);
+                if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT1) {
+                    curPos = curPos + sizeof(float);
+                    if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT2) {
+                        curPos = curPos + sizeof(float);
+                        if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT3) {
+                            curPos = curPos + sizeof(float);
+                        }
                     }
-
-                } else {
-
-                    /* Note I have seen a program actually do this, so just hide it and continue */
-                    TRACE("Very odd - texture requested in FVF but not bound!\n");
-#if defined(GL_VERSION_1_3)
-                    glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
-                    checkGLcall("glMultiTexCoord4f(... , 0, 0, 0, 1)");
-                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                    checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
-#else
-                    glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
-                    checkGLcall("glMultiTexCoord4fARB(... , 0, 0, 0, 1)");
-                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                    checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
-#endif 
                 }
- 
+                coordIdxInfo = coordIdxInfo >> 2; /* Drop bottom two bits */
             }
- 
+
+            /* Now use the appropriate set of texture indexes */
+            for (textureNo = 0; textureNo < This->TextureUnits; ++textureNo) {
+
+                if (!(This->isMultiTexture) && textureNo > 0) {
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                    continue ;
+                }
+
+                /* Query tex coords */
+                if ((This->StateBlock->textures[textureNo] != NULL) && (useVertexShaderFunction == FALSE)) {
+                    int coordIdx = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
+
+                    if (coordIdx > 7) {
+                        VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
+                    } else {
+                        int numFloats = 0;
+#if defined(GL_VERSION_1_3)
+                        glClientActiveTexture(GL_TEXTURE0 + textureNo);
+#else
+                        glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
+#endif
+                        switch (numCoords[coordIdx]) {   /* Supply the provided texture coords */
+                        case D3DFVF_TEXTUREFORMAT1: numFloats = 1; break;
+                        case D3DFVF_TEXTUREFORMAT2: numFloats = 2; break;
+                        case D3DFVF_TEXTUREFORMAT3: numFloats = 3; break;
+                        case D3DFVF_TEXTUREFORMAT4: numFloats = 4; break;
+                        default: numFloats = 0; break;           
+                        }
+                            
+                        if (numFloats == 0 || coordIdx >= numTextures) {
+                            VTRACE(("Skipping as invalid request - numfloats=%d, coordIdx=%d, numTextures=%d\n", numFloats, coordIdx, numTextures));
+                            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                            checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
+                        } else {
+                            VTRACE(("tex: %d, ptr=%p, numcoords=%d\n", textureNo, coordPtr[coordIdx], numFloats));
+                            glTexCoordPointer(numFloats, GL_FLOAT, skip, coordPtr[coordIdx]);
+                            checkGLcall("glTexCoordPointer(x, ...)");
+                            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                            checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
+                        }
+                    }
+                }
+            }
+
             /* Finally do the drawing */
             if (isIndexed) {
  
@@ -3684,7 +3723,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
                 case D3DTOP_SELECTARG1                :
 		    {
-                        FIXME("see if D3DTOP_SELECTARG1 behavior is correct now!\n");
                         glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
 			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
 #if 0 /* don't seem to do anything */			
@@ -3732,7 +3770,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 		        DWORD dwValue = 0;
 			GLenum source;
 			GLenum operand;
-		        FIXME("see if D3DTOP_SELECTARG2 behavior is correct now!\n");
                         glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
 			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
 			/* GL_REPLACE, swap args 0 and 1? */
@@ -3901,63 +3938,58 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
     case D3DTSS_TEXCOORDINDEX         :
         {
-            /* CameraSpacePosition means use the vertex position, transformed to camera space, 
-	       as the input texture coordinates for this stage's texture transformation. This 
-	       equates roughly to EYE_LINEAR                                                  */
-	  
-	    /**
-	     * To Jason: i don't understand what to do with the (Value & 0x00FF) index
-	     * it seems a texture coordinate index (0 <= x <= 7) seeing msdn and logs 
-	     * have you any idea ?
-	     */
-
-	    /** 
-	     * Be carefull the value of the mask 0xF0000 come from d3d8types.h infos 
-	     */
-	    switch (Value & 0xFFFFFF00) {
-	    case D3DTSS_TCI_PASSTHRU:
-	      /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
-	      break;
+            /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive */
+          
+            /** 
+             * Be careful the value of the mask 0xF0000 come from d3d8types.h infos 
+             */
+            switch (Value & 0xFFFFFF00) {
+            case D3DTSS_TCI_PASSTHRU:
+              /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
+              break;
 
             case D3DTSS_TCI_CAMERASPACEPOSITION:
-	      {
+              /* CameraSpacePosition means use the vertex position, transformed to camera space, 
+                 as the input texture coordinates for this stage's texture transformation. This 
+                 equates roughly to EYE_LINEAR                                                  */
+              {
                 float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
                 float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
                 float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
                 float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
                 TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
 
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-		glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-		glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-		glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-		glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-		glPopMatrix();
-		
-		TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
-		glEnable(GL_TEXTURE_GEN_S);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-		checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-		glEnable(GL_TEXTURE_GEN_T);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-		checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-		glEnable(GL_TEXTURE_GEN_R);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-		glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-		checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-	      }
-	      break;
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glLoadIdentity();
+                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                glPopMatrix();
+                
+                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
+                glEnable(GL_TEXTURE_GEN_S);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                glEnable(GL_TEXTURE_GEN_T);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                glEnable(GL_TEXTURE_GEN_R);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+              }
+              break;
 
-	    default:
-	        /* Todo: */
-	        /* ? disable GL_TEXTURE_GEN_n ? */
-	        FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
-	        break;
-	    }
+            default:
+                /* Todo: */
+                /* ? disable GL_TEXTURE_GEN_n ? */
+                FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
+                break;
+            }
         }
         break;
 
