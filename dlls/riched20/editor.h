@@ -188,6 +188,9 @@ int ME_GetScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
 
+/* richole.c */
+extern LRESULT CreateIRichEditOle(LPVOID *);
+
 /* wintest.c */
 
 /* editor.c */

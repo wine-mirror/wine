@@ -56,6 +56,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "dispex.h"
 #include "mlang.h"
 #include "mshtml.h"
+#include "richole.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 

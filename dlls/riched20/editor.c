@@ -843,10 +843,11 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return DefWindowProcW(hWnd, msg, wParam, lParam);
   }
   case EM_GETOLEINTERFACE:
-    FIXME("EM_GETOLEINTERFACE: stub\n");
-    /* return 0x12345678; to find out if the missing interface is
-       related to app crash */ 
-    return 0;
+  {
+    LPVOID *ppvObj = (LPVOID*) lParam;
+    TRACE("EM_GETOLEINTERFACE %p\n", ppvObj);
+    return CreateIRichEditOle(ppvObj);
+  }
   default:
   do_default:
     return DefWindowProcW(hWnd, msg, wParam, lParam);
