@@ -227,7 +227,7 @@ typedef struct _STACKFRAME {
   BOOL    Virtual;
   DWORD     Reserved[3];
   KDHELP  KdHelp;
-} STACKFRAME, *PSTACKFRAME;
+} STACKFRAME, *PSTACKFRAME, *LPSTACKFRAME;
 
 typedef struct _IMAGEHLP_SYMBOL {
   DWORD SizeOfStruct;
