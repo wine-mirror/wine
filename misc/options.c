@@ -70,7 +70,7 @@ static const struct option_descr option_table[] =
     { "version",    'v', 0, 0, do_version,
       "--version,-v     Display the Wine version" },
     { "winver",       0, 1, 1, VERSION_ParseWinVersion,
-      "--winver         Version to imitate (win95,nt40,win31,nt2k,win98,nt351,win30,win20)" },
+      "--winver         Version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)" },
     { NULL,           0, 0, 0, NULL, NULL }  /* terminator */
 };
 

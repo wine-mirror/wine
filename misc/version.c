@@ -29,10 +29,11 @@ typedef enum
     WIN31,   /* Windows 3.1 */
     WIN95,   /* Windows 95 */
     WIN98,   /* Windows 98 */
- /* insert Windows ME here as WINME if needed */
+    WINME,   /* Windows Me */
     NT351,   /* Windows NT 3.51 */
-    NT40,    /* Windows NT 4.0 */  
+    NT40,    /* Windows NT 4.0 */
     NT2K,    /* Windows 2000 */
+    WINXP,   /* Windows XP */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -77,22 +78,40 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     {
         0x07005F03,
         0xC0000004,
-	{
-	    /* 0x40003B6 == 4.00.950 == Win95 orig. release and Win95a
-	     * 0x4000457 == 4.00.1111 == Win95B aka Win95 OSR2
-	     * Win95a/B can be discerned via regkey SubVersionNumber */
+        {
+            /* Win95:       4, 0, 0x40003B6, ""
+             * Win95sp1:    4, 0, 0x40003B6, " A " (according to doc)
+             * Win95osr2:   4, 0, 0x4000457, " B " (according to doc)
+             * Win95osr2.1: 4, 3, 0x40304BC, " B " (according to doc)
+             * Win95osr2.5: 4, 3, 0x40304BE, " C " (according to doc)
+             * Win95a/b can be discerned via regkey SubVersionNumber
+             * See also:
+             * http://support.microsoft.com/support/kb/articles/q158/2/38.asp
+             */
             sizeof(OSVERSIONINFOA), 4, 0, 0x40003B6,
-            VER_PLATFORM_WIN32_WINDOWS, "Win95"
-	}
+            VER_PLATFORM_WIN32_WINDOWS, ""
+        }
     },
     /* WIN98 */
     {
-	0x070A5F03,
-	0xC0000A04,
-	{
-	    sizeof(OSVERSIONINFOA), 4, 10, 0x40A07CE,
-	    VER_PLATFORM_WIN32_WINDOWS, "Win98"
-	}
+        0x070A5F03,
+        0xC0000A04,
+        {
+            /* Win98:   4, 10, 0x40A07CE, " "
+             * Win98SE: 4, 10, 0x40A08AE, " A "
+             */
+            sizeof(OSVERSIONINFOA), 4, 10, 0x40A07CE,
+            VER_PLATFORM_WIN32_WINDOWS, " "
+        }
+    },
+    /* WINME */
+    {
+        0x07005F03, /* Assuming DOS 7 like the other Win9x */
+        0xC0005A04,
+        {
+            sizeof(OSVERSIONINFOA), 4, 90, 0x45A0BB8,
+            VER_PLATFORM_WIN32_WINDOWS, " "
+        }
     },
     /* NT351 */
     {
@@ -101,7 +120,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         {
             sizeof(OSVERSIONINFOA), 3, 51, 0x421,
             VER_PLATFORM_WIN32_NT, "Service Pack 2"
-	}
+        }
     },
     /* NT40 */
     {
@@ -112,13 +131,22 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
             VER_PLATFORM_WIN32_NT, "Service Pack 6"
         }
     },
-    /* NT2K FIXME: verify values */
+    /* NT2K */
     {
-        0x05000A03, /* ? */
-        0x08930005, /* better build ? using 2195 (final) for now */
+        0x05005F03,
+        0x08930005,
         {
             sizeof(OSVERSIONINFOA), 5, 0, 0x893,
-            VER_PLATFORM_WIN32_NT, "FIXME: OS version string not known yet"
+            VER_PLATFORM_WIN32_NT, "Service Pack 2"
+        }
+    },
+    /* WINXP */
+    {
+        0x05005F03, /* Assuming DOS 5 like the other NT */
+        0x0A280105,
+        {
+            sizeof(OSVERSIONINFOA), 5, 1, 0xA28,
+            VER_PLATFORM_WIN32_NT, ""
         }
     }
 };
@@ -130,9 +158,11 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
     "win31",
     "win95",
     "win98",
+    "winme",
     "nt351",
     "nt40",
-    "win2000,win2k,nt2k,nt2000"
+    "win2000,win2k,nt2k,nt2000",
+    "winxp"
 };
 
 /* if one of the following dlls is importing ntdll the windows
