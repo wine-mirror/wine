@@ -58,7 +58,7 @@ const WCHAR WDML_szClientConvClassW[] = {'D','d','e','C','l','i','e','n','t','U'
  *    Failure: 0
  */
 HCONVLIST WINAPI DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
-				HCONVLIST hConvList, LPCONVCONTEXT pCC)
+				HCONVLIST hConvList, PCONVCONTEXT pCC)
 {
     FIXME("(%ld,%p,%p,%p,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
     return (HCONVLIST)1;
@@ -94,7 +94,7 @@ BOOL WINAPI DdeDisconnectList(HCONVLIST hConvList)
  *            DdeConnect   (USER32.@)
  */
 HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
-			LPCONVCONTEXT pCC)
+			PCONVCONTEXT pCC)
 {
     HWND		hwndClient;
     WDML_INSTANCE*	pInstance;

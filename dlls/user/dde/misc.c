@@ -2027,7 +2027,7 @@ static	BOOL	WDML_GetLocalConvInfo(WDML_CONV* pConv, CONVINFO* ci, DWORD id)
  *		DdeQueryConvInfo (USER32.@)
  *
  */
-UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, LPCONVINFO lpConvInfo)
+UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
 {
     UINT	ret = lpConvInfo->cb;
     CONVINFO	ci;

@@ -292,7 +292,7 @@ typedef struct tagHSZPAIR
 {
     HSZ hszSvc;
     HSZ hszTopic;
-} HSZPAIR, *PHSZPAIR, *LPHSZPAIR;
+} HSZPAIR, *PHSZPAIR;
 
 typedef struct tagCONVCONTEXT
 {
@@ -302,7 +302,7 @@ typedef struct tagCONVCONTEXT
     INT   iCodePage;
     DWORD   dwLangID;
     DWORD   dwSecurity;
-} CONVCONTEXT, *LPCONVCONTEXT;
+} CONVCONTEXT, *PCONVCONTEXT;
 
 typedef struct tagCONVINFO
 {
@@ -322,7 +322,7 @@ typedef struct tagCONVINFO
     CONVCONTEXT		ConvCtxt;
     HWND		hwnd;
     HWND		hwndPartner;
-} CONVINFO, *LPCONVINFO;
+} CONVINFO, *PCONVINFO;
 
 /*            Interface Definitions		*/
 
@@ -331,13 +331,13 @@ UINT    WINAPI DdeInitializeA(LPDWORD,PFNCALLBACK,DWORD,DWORD);
 UINT    WINAPI DdeInitializeW(LPDWORD,PFNCALLBACK,DWORD,DWORD);
 #define   DdeInitialize WINELIB_NAME_AW(DdeInitialize)
 BOOL    WINAPI DdeUninitialize(DWORD);
-HCONVLIST WINAPI DdeConnectList(DWORD,HSZ,HSZ,HCONVLIST,LPCONVCONTEXT);
+HCONVLIST WINAPI DdeConnectList(DWORD,HSZ,HSZ,HCONVLIST,PCONVCONTEXT);
 HCONV     WINAPI DdeQueryNextServer(HCONVLIST, HCONV);
 DWORD     WINAPI DdeQueryStringA(DWORD, HSZ, LPSTR, DWORD, INT);
 DWORD     WINAPI DdeQueryStringW(DWORD, HSZ, LPWSTR, DWORD, INT);
 #define   DdeQueryString WINELIB_NAME_AW(DdeQueryString)
 BOOL      WINAPI DdeDisconnectList(HCONVLIST);
-HCONV     WINAPI DdeConnect(DWORD,HSZ,HSZ,LPCONVCONTEXT);
+HCONV     WINAPI DdeConnect(DWORD,HSZ,HSZ,PCONVCONTEXT);
 BOOL      WINAPI DdeDisconnect(HCONV);
 HDDEDATA  WINAPI DdeCreateDataHandle(DWORD,LPBYTE,DWORD,DWORD,HSZ,UINT,UINT);
 HCONV     WINAPI DdeReconnect(HCONV);
@@ -361,7 +361,7 @@ BOOL      WINAPI DdeSetUserHandle(HCONV,DWORD,DWORD);
 
 HDDEDATA  WINAPI DdeNameService(DWORD,HSZ,HSZ,UINT);
 UINT      WINAPI DdeGetLastError(DWORD);
-UINT      WINAPI DdeQueryConvInfo(HCONV,DWORD,LPCONVINFO);
+UINT      WINAPI DdeQueryConvInfo(HCONV,DWORD,PCONVINFO);
 
 #ifdef __cplusplus
 } /* extern "C" */
