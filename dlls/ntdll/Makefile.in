@@ -85,9 +85,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/scheduler/syslevel.c \
 	$(TOPOBJDIR)/scheduler/thread.c \
 	$(TOPOBJDIR)/scheduler/timer.c \
-	$(TOPOBJDIR)/win32/console.c \
 	$(TOPOBJDIR)/win32/device.c \
-	$(TOPOBJDIR)/win32/editline.c \
 	$(TOPOBJDIR)/win32/except.c \
 	$(TOPOBJDIR)/win32/init.c \
 	$(TOPOBJDIR)/win32/kernel32.c \

@@ -11,6 +11,7 @@ C_SRCS = \
 	comm.c \
 	console.c \
 	debugger.c \
+	editline.c \
 	format_msg.c \
 	kernel_main.c \
 	stress.c \
