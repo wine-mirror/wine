@@ -632,6 +632,7 @@ typedef struct tagTLBImpLib
 typedef struct tagITypeLibImpl
 {
     ICOM_VFIELD(ITypeLib2);
+    ICOM_VTABLE(ITypeComp) * lpVtblTypeComp;
     UINT ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
 
@@ -654,6 +655,10 @@ typedef struct tagITypeLibImpl
 } ITypeLibImpl;
 
 static struct ICOM_VTABLE(ITypeLib2) tlbvt;
+static struct ICOM_VTABLE(ITypeComp) tlbtcvt;
+
+#define _ITypeComp_Offset(impl) ((int)(&(((impl*)0)->lpVtblTypeComp)))
+#define ICOM_THIS_From_ITypeComp(impl, iface) impl* This = (impl*)(((char*)iface)-_ITypeComp_Offset(impl))
 
 /* ITypeLib methods */
 static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength);
@@ -734,6 +739,7 @@ typedef struct tagTLBImplType
 typedef struct tagITypeInfoImpl
 {
     ICOM_VFIELD(ITypeInfo2);
+    ICOM_VTABLE(ITypeComp) * lpVtblTypeComp;
     UINT ref;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
@@ -762,6 +768,7 @@ typedef struct tagITypeInfoImpl
 } ITypeInfoImpl;
 
 static struct ICOM_VTABLE(ITypeInfo2) tinfvt;
+static struct ICOM_VTABLE(ITypeComp)  tcompvt;
 
 static ITypeInfo2 * WINAPI ITypeInfo_Constructor();
 
@@ -1846,7 +1853,7 @@ ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet->pTypeLib = pLibInfo;
     ptiRet->index=count;
 /* fill in the typeattr fields */
-    FIXME("Assign constructor/destructor memid\n");
+    WARN("Assign constructor/destructor memid\n");
 
     MSFT_ReadGuid(&ptiRet->TypeAttr.guid, tiBase.posguid, pcx);
     ptiRet->TypeAttr.lcid=pLibInfo->LibAttr.lcid;   /* FIXME: correct? */
@@ -2076,6 +2083,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     if (!pTypeLibImpl) return NULL;
 
     pTypeLibImpl->lpVtbl = &tlbvt;
+    pTypeLibImpl->lpVtblTypeComp = &tlbtcvt;
     pTypeLibImpl->ref = 1;
 
     /* get pointer to beginning of typelib data */
@@ -3389,8 +3397,12 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeComp(
 	ITypeComp **ppTComp)
 {
     ICOM_THIS( ITypeLibImpl, iface);
-    FIXME("(%p): stub!\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n",This,ppTComp);
+    *ppTComp = (ITypeComp *)&This->lpVtblTypeComp;
+    ITypeComp_AddRef(*ppTComp);
+
+    return S_OK;
 }
 
 /* ITypeLib::GetDocumentation
@@ -3749,6 +3761,64 @@ static ICOM_VTABLE(ITypeLib2) tlbvt = {
     ITypeLib2_fnGetAllCustData
  };
 
+
+static HRESULT WINAPI ITypeLibComp_fnQueryInterface(ITypeComp * iface, REFIID riid, LPVOID * ppv)
+{
+    ICOM_THIS_From_ITypeComp(ITypeLibImpl, iface);
+
+    return ITypeInfo_QueryInterface((ITypeInfo *)This, riid, ppv);
+}
+
+static ULONG WINAPI ITypeLibComp_fnAddRef(ITypeComp * iface)
+{
+    ICOM_THIS_From_ITypeComp(ITypeLibImpl, iface);
+
+    return ITypeInfo_AddRef((ITypeInfo *)This);
+}
+
+static ULONG WINAPI ITypeLibComp_fnRelease(ITypeComp * iface)
+{
+    ICOM_THIS_From_ITypeComp(ITypeLibImpl, iface);
+
+    return ITypeInfo_Release((ITypeInfo *)This);
+}
+
+static HRESULT WINAPI ITypeLibComp_fnBind(
+    ITypeComp * iface,
+    OLECHAR * szName,
+    unsigned long lHash,
+    unsigned short wFlags,
+    ITypeInfo ** ppTInfo,
+    DESCKIND * pDescKind,
+    BINDPTR * pBindPtr)
+{
+    FIXME("(%s, %lx, 0x%x, %p, %p, %p): stub\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITypeLibComp_fnBindType(
+    ITypeComp * iface,
+    OLECHAR * szName,
+    unsigned long lHash,
+    ITypeInfo ** ppTInfo,
+    ITypeComp ** ppTComp)
+{
+    FIXME("(%s, %lx, %p, %p): stub\n", debugstr_w(szName), lHash, ppTInfo, ppTComp);
+    return E_NOTIMPL;
+}
+
+static ICOM_VTABLE(ITypeComp) tlbtcvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+
+    ITypeLibComp_fnQueryInterface,
+    ITypeLibComp_fnAddRef,
+    ITypeLibComp_fnRelease,
+
+    ITypeLibComp_fnBind,
+    ITypeLibComp_fnBindType
+};
+
 /*================== ITypeInfo(2) Methods ===================================*/
 static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void)
 {
@@ -3758,6 +3828,7 @@ static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void)
     if (pTypeInfoImpl)
     {
       pTypeInfoImpl->lpVtbl = &tinfvt;
+      pTypeInfoImpl->lpVtblTypeComp = &tcompvt;
       pTypeInfoImpl->ref=1;
     }
     TRACE("(%p)\n", pTypeInfoImpl);
@@ -3866,7 +3937,11 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeComp( ITypeInfo2 *iface,
         ITypeComp  * *ppTComp)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
-    FIXME("(%p) stub!\n", This);
+
+    TRACE("(%p)->(%p) stub!\n", This, ppTComp);
+
+    *ppTComp = (ITypeComp *)&This->lpVtblTypeComp;
+    ITypeComp_AddRef(*ppTComp);
     return S_OK;
 }
 
@@ -5370,4 +5445,125 @@ static ICOM_VTABLE(ITypeInfo2) tinfvt =
     ITypeInfo2_fnGetAllParamCustData,
     ITypeInfo2_fnGetAllVarCustData,
     ITypeInfo2_fnGetAllImplTypeCustData,
+};
+
+static HRESULT WINAPI ITypeComp_fnQueryInterface(ITypeComp * iface, REFIID riid, LPVOID * ppv)
+{
+    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+
+    return ITypeInfo_QueryInterface((ITypeInfo *)This, riid, ppv);
+}
+
+static ULONG WINAPI ITypeComp_fnAddRef(ITypeComp * iface)
+{
+    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+
+    return ITypeInfo_AddRef((ITypeInfo *)This);
+}
+
+static ULONG WINAPI ITypeComp_fnRelease(ITypeComp * iface)
+{
+    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+
+    return ITypeInfo_Release((ITypeInfo *)This);
+}
+
+static HRESULT WINAPI ITypeComp_fnBind(
+    ITypeComp * iface,
+    OLECHAR * szName,
+    unsigned long lHash,
+    unsigned short wFlags,
+    ITypeInfo ** ppTInfo,
+    DESCKIND * pDescKind,
+    BINDPTR * pBindPtr)
+{
+    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+    TLBFuncDesc * pFDesc;
+    TLBVarDesc * pVDesc;
+
+    TRACE("(%s, %lx, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+
+    for(pFDesc = This->funclist; pFDesc; pFDesc = pFDesc->next)
+        if (pFDesc->funcdesc.invkind & wFlags)
+            if (!strcmpW(pFDesc->Name, szName)) {
+                break;
+            }
+
+    if (pFDesc)
+    {
+        *pDescKind = DESCKIND_FUNCDESC;
+        pBindPtr->lpfuncdesc = &pFDesc->funcdesc;
+        *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+        return S_OK;
+    } else {
+        if (!(wFlags & ~(INVOKE_PROPERTYGET)))
+        {
+            for(pVDesc = This->varlist; pVDesc; pVDesc = pVDesc->next) {
+                if (!strcmpW(pVDesc->Name, szName)) {
+                    *pDescKind = DESCKIND_VARDESC;
+                    pBindPtr->lpvardesc = &pVDesc->vardesc;
+                    *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+                    return S_OK;
+                }
+            }
+        }
+    }
+    /* not found, look for it in inherited interfaces */
+    if ((This->TypeAttr.typekind == TKIND_INTERFACE) && This->TypeAttr.cImplTypes) {
+        /* recursive search */
+        ITypeInfo *pTInfo;
+        ITypeComp *pTComp;
+        HRESULT hr;
+        hr=ITypeInfo_GetRefTypeInfo((ITypeInfo *)&This->lpVtbl, This->impltypelist->hRef, &pTInfo);
+        if (SUCCEEDED(hr))
+        {
+            hr = ITypeInfo_GetTypeComp(pTInfo,&pTComp);
+            ITypeInfo_Release(pTInfo);
+        }
+        if (SUCCEEDED(hr))
+        {
+            hr = ITypeComp_Bind(pTComp, szName, lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+            ITypeComp_Release(pTComp);
+            return hr;
+        }
+        WARN("Could not search inherited interface!\n");
+    }
+    ERR("did not find member with name %s, flags 0x%x!\n", debugstr_w(szName), wFlags);
+    *pDescKind = DESCKIND_NONE;
+    pBindPtr->lpfuncdesc = NULL;
+    *ppTInfo = NULL;
+    return DISP_E_MEMBERNOTFOUND;
+}
+
+static HRESULT WINAPI ITypeComp_fnBindType(
+    ITypeComp * iface,
+    OLECHAR * szName,
+    unsigned long lHash,
+    ITypeInfo ** ppTInfo,
+    ITypeComp ** ppTComp)
+{
+    TRACE("(%s, %lx, %p, %p)\n", debugstr_w(szName), lHash, ppTInfo, ppTComp);
+
+    /* strange behaviour (does nothing) but like the
+     * original */
+
+    if (!ppTInfo || !ppTComp)
+        return E_POINTER;
+
+    *ppTInfo = NULL;
+    *ppTComp = NULL;
+
+    return S_OK;
+}
+
+static ICOM_VTABLE(ITypeComp) tcompvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+
+    ITypeComp_fnQueryInterface,
+    ITypeComp_fnAddRef,
+    ITypeComp_fnRelease,
+
+    ITypeComp_fnBind,
+    ITypeComp_fnBindType
 };
