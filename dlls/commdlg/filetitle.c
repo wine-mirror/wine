@@ -23,14 +23,13 @@
 
 #include "winbase.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "commdlg.h"
+#include "cdlg.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
-#include "heap.h"	/* Has to go */
-
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
-
-#include "cdlg.h"
 
 /***********************************************************************
  *	GetFileTitleA		(COMDLG32.@)
@@ -38,19 +37,39 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
  */
 short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
-	int i, len;
+    int ret;
+    UNICODE_STRING strWFile;
+    LPWSTR lpWTitle;
 
+    RtlCreateUnicodeStringFromAsciiz(&strWFile, lpFile);
+    lpWTitle = RtlAllocateHeap( GetProcessHeap(), 0, cbBuf*sizeof(WCHAR));
+    ret = GetFileTitleW(strWFile.Buffer, lpWTitle, cbBuf);
+    if (!ret) WideCharToMultiByte( CP_ACP, 0, lpWTitle, -1, lpTitle, cbBuf, NULL, NULL );
+    RtlFreeUnicodeString( &strWFile );
+    RtlFreeHeap( GetProcessHeap(), 0, lpWTitle );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetFileTitleW		(COMDLG32.@)
+ *
+ */
+short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
+{
+	int i, len;
+        static const WCHAR brkpoint[] = {'*','[',']'};
 	TRACE("(%p %p %d); \n", lpFile, lpTitle, cbBuf);
 
 	if(lpFile == NULL || lpTitle == NULL)
 		return -1;
 
-	len = strlen(lpFile);
+	len = strlenW(lpFile);
 
 	if (len == 0)
 		return -1;
 
-	if(strpbrk(lpFile, "*[]"))
+	if(strpbrkW(lpFile, brkpoint))
 		return -1;
 
 	len--;
@@ -70,34 +89,14 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 	if(i == -1)
 		i++;
 
-	TRACE("---> '%s' \n", &lpFile[i]);
+	TRACE("---> '%s' \n", debugstr_w(&lpFile[i]));
 
-	len = strlen(lpFile+i)+1;
+	len = strlenW(lpFile+i)+1;
 	if(cbBuf < len)
 		return len;
 
-	strncpy(lpTitle, &lpFile[i], len);
+	strcpyW(lpTitle, &lpFile[i]);
 	return 0;
-}
-
-
-/***********************************************************************
- *	GetFileTitleW		(COMDLG32.@)
- *
- */
-short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
-{
-	LPSTR file = HEAP_strdupWtoA(GetProcessHeap(), 0, lpFile);	/* Has to go */
-	LPSTR title = HeapAlloc(GetProcessHeap(), 0, cbBuf);
-	short	ret;
-
-	ret = GetFileTitleA(file, title, cbBuf);
-
-        if (cbBuf > 0 && !MultiByteToWideChar( CP_ACP, 0, title, -1, lpTitle, cbBuf ))
-            lpTitle[cbBuf-1] = 0;
-	HeapFree(GetProcessHeap(), 0, file);
-	HeapFree(GetProcessHeap(), 0, title);
-	return ret;
 }
 
 
@@ -108,4 +107,3 @@ short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
 {
 	return GetFileTitleA(lpFile, lpTitle, cbBuf);
 }
-
