@@ -8,7 +8,14 @@
 #define PROBLEM2 0
 
 /*
- * Rebar control    rev 7f
+ * 3. REBAR_MoveChildWindows should have a loop because more than
+ *    one pass is made (together with the RBN_CHILDSIZEs) is made on
+ *    at least RB_INSERTBAND
+ */
+
+
+/*
+ * Rebar control    rev 8
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -41,54 +48,29 @@
  *   - Fix algorithm for Layout and AdjustBand.
  *
  * rev 7
- *  1. Redesign _Layout to better emulate native.
- *     a. Flag rebar when a band needs to be (and all bands) need to
- *        go through rest of _Layout
- *  2. Fix RBN_ENDDRAG contents.
- *  3. REBAR_ForceResize changed to handle shrink of client.
- * rev 7b
- *  4. Support RBBS_HIDDEN in _Layout (phase 2 & 3), _InternalEraseBkgnd,
- *     and _InternalHitTest
- *  5. Support RBS_VARHEIGHT.
- *  6. Rewrite _AdjustBands with new algorithm.
- * rev 7c
- *  7. Format mask and style with labels.
- *  8. Move calls to _ForceResize and _MoveChildWindows into _Layout to
- *     centralize processing.
- *  9. Pass "infoPtr" to all routines instead of "hwnd" to eliminate extra
- *     calls to GetWindowLongA.
- * 10. Use _MoveChildWindows in _HandleLRDrag.
- * 11. Another rewrite of _AdjustBands with new algorithm.
- * 12. Correct drawing of rebar borders and handling of RBS_BORDERS.
- * rev 7d
- * 13. Support WM_NOTIFYFORMAT (both incoming and outgoing) and do 
- *     WM_NOTIFY correctly based on results.
- * 14. Implement WM_SETREDRAW.
- * 15. Native WM_ERASEBKGND draws horz and vert separators between bands and
- *     rows, and fills in the background color for each band. The gripper, 
- *     image, and text for each band is drawn by the WM_PAINT process. Change
- *     this code to match.
- * rev 7e
- * 16. RBBS_FIXEDSIZE should not affect _AdjustBands. (Found by Mike McCormack
- *     in WinZip - Thanks!)
- * 17. Implement WM_NCCREATE to set necessary additional styles and move most
- *     of creation stuff to it like native control.
- * 18. WM_SETFONT should redraw only if LOWORD is TRUE.
- * 19. Implement WM_NCHITTEST to send notify to parent of NM_NCHITTEST.
- * 20. Cleaned up dead and/or testing code.
- * 21. Support RB_MOVEBAND.
- * 22. Support WM_STYLECHANGED and remove all (or most) of the GetWindowLong
- *     for GWL_STYLE.
- * 23. Support RB_MINIMIZEBAND.
- * 24. RBBS_HIDDEN (and the CCS_VERT+RBBS_NOVERT case) should be supported
- *     by all routines now.
- * rev 7f
- * 25. Fix handling of text color.
- * 26. Correct implementation of WM_SETREDRAW to be closer to native.
- *     See REBAR_SetRedraw for doc changes of actual vs. MSDN
- * 27. Do more implementation of RBS_AUTOSIZE in the WM_SIZE processor.
- * 28. Implement RBBS_VARIABLEHEIGHT. Used by IE4.
- * 29. Do more testing in WM_SIZE to handle strange cases like native.
+ *   - Fix algorithm for _Layout and _AdjustBand.
+ *   - Fix or implement RBN_ENDDRAG, RB_MOVEBAND, WM_SETREDRAW, 
+ *     WM_STYLECHANGED, RB_MINIMIZEBAND, RBBS_VARIABLEHEIGHT, RBS_VARHEIGHT,
+ *     RBBS_HIDDEN, WM_NOTIFYFORMAT, NM_NCHITTEST, WM_SETREDRAW, RBS_AUTOSIZE,
+ *     WM_SETFONT, RBS_BORDERS
+ *   - Create structures in WM_NCCREATE
+ *   - Additional performance enhancements.
+ *
+ * rev 8
+ *  1. Create array of start and end band indexes by row and use.
+ *  2. Fix problem with REBAR_Layout Phase 2b to process only if only
+ *     band in row.
+ *  3. Set the Caption Font (Regular) as default font for text.
+ *  4. Delete font handle on control distruction.
+ *  5. Add UpdateWindow call in _MoveChildWindows to match repainting done
+ *     by native control
+ *  6. Improve some traces.
+ *  7. Invalidate window rectangles after SetBandInfo, InsertBand, ShowBand
+ *     so that repainting is correct.
+ *  8. Implement RB_MAXIMIZEBAND for the "ideal=TRUE" case.
+ *  9. Implement item custom draw notifications partially. Only done for 
+ *     ITEMPREPAINT and ITEMPOSTPAINT. (Used by IE4 for "Favorites" frame
+ *     to draw the word "Favorites").
  *
  *
  *    Still to do:
@@ -157,6 +139,7 @@ typedef struct
     INT     iRow;           /* row this band assigned to */
     UINT    fStatus;        /* status flags, reset only by _Validate */
     UINT    fDraw;          /* drawing flags, reset only by _Layout */
+    UINT    uCDret;         /* last return from NM_CUSTOMDRAW */
     RECT    rcoldBand;      /* previous calculated band rectangle */
     RECT    rcBand;         /* calculated band rectangle */
     RECT    rcGripper;      /* calculated gripper rectangle */
@@ -181,6 +164,12 @@ typedef struct
 #define DRAW_BOTTOMSEP  0x00000020
 #define NTF_INVALIDATE  0x01000000
 
+typedef struct
+{
+    INT      istartband;  /* index of first band in row */
+    INT      iendband;    /* index of last band in row */
+} REBAR_ROW;
+
 
 typedef struct
 {
@@ -189,7 +178,7 @@ typedef struct
     COLORREF   clrBtnText;  /* system color for BTNTEXT */
     COLORREF   clrBtnFace;  /* system color for BTNFACE */
     HIMAGELIST himl;        /* handle to imagelist */
-    UINT     uNumBands;   /* # of bands in rebar (first=0, last=uNumRows-1 */
+    UINT     uNumBands;   /* # of bands in rebar (first=0, last=uNumBands-1 */
     UINT     uNumRows;    /* # of rows of bands (first=1, last=uNumRows */
     HWND     hwndSelf;    /* handle of REBAR window itself */
     HWND     hwndToolTip; /* handle to the tool tip control */
@@ -213,6 +202,7 @@ typedef struct
     INT      ihitBand;    /* band number of band whose gripper was grabbed */
     INT      ihitoffset;  /* offset of hotspot from gripper.left */
 
+    REBAR_ROW  *rows;       /* pointer to row indexes              */
     REBAR_BAND *bands;      /* pointer to the array of rebar bands */
 } REBAR_INFO;
 
@@ -423,6 +413,9 @@ REBAR_DumpBand (REBAR_INFO *iP)
 	if (RBBIM_CHILDSIZE)
 	    TRACE("band # %u: xMin=%u, yMin=%u, yChild=%u, yMax=%u, yIntgl=%u\n",
 		  i, pB->cxMinChild, pB->cyMinChild, pB->cyChild, pB->cyMaxChild, pB->cyIntegral);
+	if (pB->fMask & RBBIM_TEXT)
+	    TRACE("band # %u: text=%s\n",
+		  i, (pB->lpText) ? debugstr_w(pB->lpText) : "(null)");
 	TRACE("band # %u: lcx=%u, ccx=%u, hcx=%u, lcy=%u, ccy=%u, hcy=%u, offChild=%ld,%ld\n",
 	      i, pB->lcx, pB->ccx, pB->hcx, pB->lcy, pB->ccy, pB->hcy, pB->offChild.cx, pB->offChild.cy);
 	TRACE("band # %u: fStatus=%08x, fDraw=%08x, Band=(%d,%d)-(%d,%d), Grip=(%d,%d)-(%d,%d)\n",
@@ -504,7 +497,31 @@ REBAR_Notify_NMREBAR (REBAR_INFO *infoPtr, UINT uBand, UINT code)
 static VOID
 REBAR_DrawBand (HDC hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
+    HFONT hOldFont = 0;
+    INT oldBkMode = 0;
+    NMCUSTOMDRAW nmcd;
 
+    if (lpBand->fDraw & DRAW_TEXT) {
+	hOldFont = SelectObject (hdc, infoPtr->hFont);
+	oldBkMode = SetBkMode (hdc, TRANSPARENT);
+    }
+
+    /* should test for CDRF_NOTIFYITEMDRAW here */
+    nmcd.dwDrawStage = CDDS_ITEMPREPAINT;
+    nmcd.hdc = hdc;
+    nmcd.rc = lpBand->rcBand;
+    nmcd.rc.right = lpBand->rcCapText.right;
+    nmcd.rc.bottom = lpBand->rcCapText.bottom;
+    nmcd.dwItemSpec = lpBand->wID;
+    nmcd.uItemState = 0;
+    nmcd.lItemlParam = lpBand->lParam;
+    lpBand->uCDret = REBAR_Notify ((NMHDR *)&nmcd, infoPtr, NM_CUSTOMDRAW);
+    if (lpBand->uCDret == CDRF_SKIPDEFAULT) {
+	if (oldBkMode != TRANSPARENT)
+	    SetBkMode (hdc, oldBkMode);
+	SelectObject (hdc, hOldFont);
+	return;
+    }
 
     /* draw gripper */
     if (lpBand->fDraw & DRAW_GRIPPER)
@@ -525,7 +542,7 @@ REBAR_DrawBand (HDC hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 
     /* draw caption text */
     if (lpBand->fDraw & DRAW_TEXT) {
-	HFONT hOldFont = SelectObject (hdc, infoPtr->hFont);
+	/* need to handle CDRF_NEWFONT here */
 	INT oldBkMode = SetBkMode (hdc, TRANSPARENT);
 	COLORREF oldcolor = CLR_NONE;
 	oldcolor = SetTextColor (hdc, (lpBand->clrFore != CLR_NONE) ?
@@ -536,6 +553,18 @@ REBAR_DrawBand (HDC hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	    SetBkMode (hdc, oldBkMode);
 	SetTextColor (hdc, oldcolor);
 	SelectObject (hdc, hOldFont);
+    }
+
+    if (lpBand->uCDret == (CDRF_NOTIFYPOSTPAINT | CDRF_NOTIFYITEMDRAW)) {
+	nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
+	nmcd.hdc = hdc;
+	nmcd.rc = lpBand->rcBand;
+	nmcd.rc.right = lpBand->rcCapText.right;
+	nmcd.rc.bottom = lpBand->rcCapText.bottom;
+	nmcd.dwItemSpec = lpBand->wID;
+	nmcd.uItemState = 0;
+	nmcd.lItemlParam = lpBand->lParam;
+	lpBand->uCDret = REBAR_Notify ((NMHDR *)&nmcd, infoPtr, NM_CUSTOMDRAW);
     }
 }
 
@@ -555,6 +584,8 @@ REBAR_Refresh (REBAR_INFO *infoPtr, HDC hdc)
 	if (HIDDENBAND(lpBand)) continue; 
 
 	/* now draw the band */
+	TRACE("[%04x] drawing band %i, flags=%08x\n", 
+	      infoPtr->hwndSelf, i, lpBand->fDraw);
 	REBAR_DrawBand (hdc, infoPtr, lpBand);
 
     }
@@ -994,7 +1025,7 @@ REBAR_CalcVertBand (REBAR_INFO *infoPtr, UINT rstart, UINT rend, BOOL notify)
 	if (lpBand->fStatus & HAS_TEXT) {
 	    lpBand->fDraw |= DRAW_TEXT;
 	    lpBand->rcCapText.bottom = max(lpBand->rcCapText.top,
-					   lpBand->rcCapText.bottom-REBAR_POST_TEXT);
+					   lpBand->rcCapText.bottom);
 	}
 
 	/* set initial child window rectangle if there is a child */
@@ -1134,6 +1165,14 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		      rbcz.rcChild.right, rbcz.rcChild.bottom);
 	    }
 
+	    /* native (IE4 in "Favorites" frame **1) does:
+	     *   SetRect (&rc, -1, -1, -1, -1)
+	     *   EqualRect (&rc,band->rc???)
+	     *   if ret==0
+	     *     CopyRect (band->rc????, &rc)
+	     *     set flag outside of loop
+	     */
+
 	    GetClassNameA (lpBand->hwndChild, szClassName, 40);
 	    if (!lstrcmpA (szClassName, "ComboBox") ||
 		!lstrcmpA (szClassName, WC_COMBOBOXEXA)) {
@@ -1182,10 +1221,22 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
     }
     if (!EndDeferWindowPos(deferpos))
         ERR("EndDeferWindowPos returned NULL\n");
+
+    UpdateWindow (infoPtr->hwndSelf);
+
     if (infoPtr->fStatus & NTF_HGHTCHG) {
         infoPtr->fStatus &= ~NTF_HGHTCHG;
         REBAR_Notify (&heightchange, infoPtr, RBN_HEIGHTCHANGE);
     }
+
+    /* native (from **1 above) does:
+     *      UpdateWindow(rebar)
+     *      REBAR_ForceResize
+     *      RBN_HEIGHTCHANGE if necessary
+     *      if ret from any EqualRect was 0
+     *         Goto "BeginDeferWindowPos"
+     */
+
 }
 
 
@@ -1199,7 +1250,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     RECT rcClient, rcAdj;
     INT x, y, cx, cxsep, mmcy, mcy, clientcx, clientcy;
     INT adjcx, adjcy, row, rightx, bottomy, origheight;
-    UINT i, j, rowstart;
+    UINT i, j, rowstart, origrows;
     BOOL dobreak;
 
     if (!(infoPtr->fStatus & BAND_NEEDS_LAYOUT)) {
@@ -1244,7 +1295,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
         origheight = infoPtr->calcSize.cx;
     else
         origheight = infoPtr->calcSize.cy;
-
+    origrows = infoPtr->uNumRows;
 
     /* ******* Start Phase 1 - all bands on row at minimum size ******* */
 
@@ -1294,7 +1345,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 		}
 	    }
 
-	    TRACE("Spliting to new row %d on band %u\n", row+1, i);
+	    TRACE("P1 Spliting to new row %d on band %u\n", row+1, i);
 	    if (infoPtr->dwStyle & CCS_VERT) {
 		y = 0;
 		x += (mcy + SEP_WIDTH);
@@ -1319,20 +1370,20 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    if (infoPtr->dwStyle & CCS_VERT) {
 	        if (x+mcy > adjcx) {
 		    mcy = adjcx - x;
-		    TRACE("row %u limiting mcy=%d, adjcx=%d, x=%d\n",
+		    TRACE("P1 row %u limiting mcy=%d, adjcx=%d, x=%d\n",
 			  i, mcy, adjcx, x);
 		}
 	    }
 	    else {
 	        if (y+mcy > adjcy) {
 		    mcy = adjcy - y;
-		    TRACE("row %u limiting mcy=%d, adjcy=%d, y=%d\n",
+		    TRACE("P1 row %u limiting mcy=%d, adjcy=%d, y=%d\n",
 			  i, mcy, adjcy, y);
 		}
 	    }
 	}
 
-	TRACE("band %u, row %d, x=%d, y=%d, cxsep=%d, cx=%d\n",
+	TRACE("P1 band %u, row %d, x=%d, y=%d, cxsep=%d, cx=%d\n",
 	      i, row,
 	      x, y, cxsep, cx);
 	if (infoPtr->dwStyle & CCS_VERT) {
@@ -1357,7 +1408,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    lpBand->uMinHeight = lpBand->lcy;
 	    x = rightx;
 	}
-	TRACE("band %u, row %d, (%d,%d)-(%d,%d)\n",
+	TRACE("P1 band %u, row %d, (%d,%d)-(%d,%d)\n",
 	      i, row,
 	      lpBand->rcBand.left, lpBand->rcBand.top,
 	      lpBand->rcBand.right, lpBand->rcBand.bottom);
@@ -1448,7 +1499,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	     ) &&
 	    (infoPtr->uNumBands > 1)) {
 	    for (i=(INT)infoPtr->uNumBands-2; i>=0; i--) {
-		TRACE("adjcx=%d, adjcy=%d, x=%d, y=%d\n",
+		TRACE("P2 adjcx=%d, adjcy=%d, x=%d, y=%d\n",
 		      adjcx, adjcy, x, y);
 
 		/* find the current band (starts at i+1) */
@@ -1496,15 +1547,15 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 			current->rcBand.bottom = current->rcBand.top + new_rh;
 			y += adj_rh;
 		    }
-		    TRACE("moving band %d to own row at (%d,%d)-(%d,%d)\n",
+		    TRACE("P2 moving band %d to own row at (%d,%d)-(%d,%d)\n",
 			  current_idx,
 			  current->rcBand.left, current->rcBand.top,
 			  current->rcBand.right, current->rcBand.bottom);
-		    TRACE("prev band %d at (%d,%d)-(%d,%d)\n",
+		    TRACE("P2 prev band %d at (%d,%d)-(%d,%d)\n",
 			  prev_idx,
 			  prev->rcBand.left, prev->rcBand.top,
 			  prev->rcBand.right, prev->rcBand.bottom);
-		    TRACE("values: prev_rh=%d, new_rh=%d, adj_rh=%d\n",
+		    TRACE("P2 values: prev_rh=%d, new_rh=%d, adj_rh=%d\n",
 			  prev_rh, new_rh, adj_rh);
 		    /* for bands below current adjust row # and top/bottom */
 		    for (j = current_idx+1; j<infoPtr->uNumBands; j++) {
@@ -1531,30 +1582,65 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     /* ******* End Phase 2 - split rows till adjustment height full ******* */
 
 
-    /* ******* Start Phase 2a - adjust all bands for height full ******* */
+    /* ******* Start Phase 2a - create array of start and end  ******* */
+    /*                          indexes by row                         */
+
+    if (infoPtr->uNumRows != origrows) {
+	if (infoPtr->rows) COMCTL32_Free (infoPtr->rows);
+	infoPtr->rows = COMCTL32_Alloc (sizeof (REBAR_ROW) * infoPtr->uNumRows);
+    }
+
+    row = 0;
+    for (i = 0; i < infoPtr->uNumBands; i++) {
+	lpBand = &infoPtr->bands[i];
+	if (HIDDENBAND(lpBand)) continue;
+
+	if (lpBand->iRow > row) {
+	    row++;
+	    infoPtr->rows[row-1].istartband = i;
+	}
+	if (row == 0) {
+	    ERR("P2a bug!!!!!!\n");
+	}
+	infoPtr->rows[row-1].iendband = i;
+    }
+
+    for (i = 0; i < infoPtr->uNumRows; i++) {
+	REBAR_ROW *p;
+
+	p = &infoPtr->rows[i];
+	TRACE("P2a row %d, starts %d, ends %d\n",
+	      i+1, p->istartband, p->iendband);
+    }
+
+    /* ******* End Phase 2a - create array of start and end    ******* */
+    /*                          indexes by row                         */
+
+
+    /* ******* Start Phase 2b - adjust all bands for height full ******* */
     /* assumes that the following variables contain:                 */
     /*   y/x     current height/width of all rows                    */
     /*   clientcy/clientcx     height/width of client area           */
 
-    /* **** FIXME FIXME FIXME 
-     *   this does not take into account that more than one band
-     *   is in a row!!!!!!!!!
-     */
-
     if (((infoPtr->dwStyle & CCS_VERT) ? clientcx > x : clientcy > y) &&
 	infoPtr->uNumBands) {
-	INT diff, i, j;
+	INT diff, i, iband, j;
 
 	diff = (infoPtr->dwStyle & CCS_VERT) ? clientcx - x : clientcy - y;
-	for (i = infoPtr->uNumBands-1; i >= 0; i--) {
-	    lpBand = &infoPtr->bands[i];
+	for (i = infoPtr->uNumRows; i >= 1; i--) {
+	    /* if row has more than 1 band, ignore row   */
+	    if (infoPtr->rows[i-1].istartband != infoPtr->rows[i-1].iendband)
+		continue;
+	    /* point to only band in row  */
+	    iband = infoPtr->rows[i-1].istartband;
+	    lpBand = &infoPtr->bands[iband];
 	    if(HIDDENBAND(lpBand)) continue;
 	    if (!lpBand->fMask & RBBS_VARIABLEHEIGHT) continue;
 	    if (((INT)lpBand->cyMaxChild < 1) || 
 		((INT)lpBand->cyIntegral < 1)) {
 		if (lpBand->cyMaxChild + lpBand->cyIntegral == 0) continue;
-		ERR("band %u RBBS_VARIABLEHEIGHT set but cyMax=%d, cyInt=%d\n",
-		    i, lpBand->cyMaxChild, lpBand->cyIntegral);
+		ERR("P2b band %u RBBS_VARIABLEHEIGHT set but cyMax=%d, cyInt=%d\n",
+		    iband, lpBand->cyMaxChild, lpBand->cyIntegral);
 		continue;
 	    }
 	    /* j is now the maximum height/width in the client area */
@@ -1567,14 +1653,14 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 		lpBand->rcBand.right = lpBand->rcBand.left + j;
 	    else
 		lpBand->rcBand.bottom = lpBand->rcBand.top + j;
-	    TRACE("P2a band %d, row %d changed to (%d,%d)-(%d,%d)\n",
-		  i, lpBand->iRow,
+	    TRACE("P2b band %d, row %d changed to (%d,%d)-(%d,%d)\n",
+		  iband, lpBand->iRow,
 		  lpBand->rcBand.left, lpBand->rcBand.top,
 		  lpBand->rcBand.right, lpBand->rcBand.bottom);
 	    if (diff <= 0) break;
 	}
 	if (diff < 0) {
-	    ERR("allocated more than available, diff=%d\n", diff);
+	    ERR("P2b allocated more than available, diff=%d\n", diff);
 	    diff = 0;
 	}
 	if (infoPtr->dwStyle & CCS_VERT)
@@ -1583,78 +1669,54 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    y = clientcy - diff;
     }
 
-    /* ******* End Phase 2a - adjust all bands for height full ******* */
+    /* ******* End Phase 2b - adjust all bands for height full ******* */
 
 
     /* ******* Start Phase 3 - adjust all bands for width full ******* */
 
     if (infoPtr->uNumBands) {
-	INT bandnum, bandnum_start, bandnum_end;
+	REBAR_ROW *p;
 
 	/* If RBS_BANDBORDERS set then indicate to draw bottom separator */
 	/* on all bands in all rows but last row.                        */
 	/* Also indicate to draw the right separator for each band in    */
 	/* each row but the rightmost band.                              */
 	if (infoPtr->dwStyle & RBS_BANDBORDERS) {
-	    REBAR_BAND *prevband;
-	    INT currow;
 
-	    prevband = NULL;
-	    currow = -1;
-	    for (i = 0; i < infoPtr->uNumBands; i++) {
-	        lpBand = &infoPtr->bands[i];
-		if (HIDDENBAND(lpBand)) continue;
-
-		if (lpBand->iRow < infoPtr->uNumRows) 
-		    lpBand->fDraw |= DRAW_BOTTOMSEP;
-
-		if (lpBand->iRow != currow) prevband = NULL;
-		currow = lpBand->iRow;
-		if (prevband) prevband->fDraw |= DRAW_RIGHTSEP;
-		prevband = lpBand;
+	    for(i = 0; i < infoPtr->uNumRows; i++) {
+		p = &infoPtr->rows[i];
+		for (j = p->istartband; j <= p->iendband; j++) {
+		    lpBand = &infoPtr->bands[j];
+		    if (HIDDENBAND(lpBand)) continue;
+		    if (j != p->iendband)
+			lpBand->fDraw |= DRAW_RIGHTSEP;
+		    if (i != infoPtr->uNumRows-1)
+			lpBand->fDraw |= DRAW_BOTTOMSEP;
+		}
 	    }
 	}
 
 	/* Distribute the extra space on the horizontal and adjust  */
 	/* all bands in row to same height.                         */
-	bandnum = 0;
 	for (i=1; i<=infoPtr->uNumRows; i++) {
-	    bandnum_start = -1;
-	    bandnum_end = -1;
+	    p = &infoPtr->rows[i-1];
 	    mcy = 0;
-	    TRACE("processing row %d, starting band %d\n", i, bandnum);
-	    while (TRUE) {
-		lpBand = &infoPtr->bands[bandnum];
-		if ((bandnum >= infoPtr->uNumBands) ||
-		    ((lpBand->iRow != i) &&
-		     !HIDDENBAND(lpBand))) {
-		    if ((bandnum_start == -1) ||
-			(bandnum_end == -1)) {
-			ERR("logic error? bands=%d, rows=%d, start=%d, end=%d\n",
-			    infoPtr->uNumBands, infoPtr->uNumRows, 
-			    (INT)bandnum_start, (INT)bandnum_end);
-			ERR("  current row=%d, band=%d\n",
-			    i, bandnum);
-			break;
-		    }
-		    REBAR_AdjustBands (infoPtr, bandnum_start, bandnum_end,
-				       (infoPtr->dwStyle & CCS_VERT) ? 
-				       clientcy : clientcx, mcy);
-		    break;
-		}
-		if (!HIDDENBAND(lpBand)) {
-		    if (bandnum_start == -1) bandnum_start = bandnum;
-		    if (bandnum_end < bandnum) bandnum_end = bandnum;
-		    if (mcy < ircBw(lpBand)) 
-			mcy = ircBw(lpBand);
-		}
-		bandnum++;
-		TRACE("point 1, bandnum=%d\n", bandnum);
+
+	    TRACE("P3 processing row %d, starting band %d, ending band %d\n", 
+		  i, p->istartband, p->iendband);
+
+	    /* Find the largest height of the bands in the row */
+	    for (j = p->istartband; j <= p->iendband; j++) {
+		lpBand = &infoPtr->bands[j];
+		if (HIDDENBAND(lpBand)) continue;
+		if (mcy < ircBw(lpBand))
+		    mcy = ircBw(lpBand);
 	    }
-	    TRACE("point 2, i=%d, numrows=%d, bandnum=%d\n",
-		  i, infoPtr->uNumRows, bandnum);
+
+	    REBAR_AdjustBands (infoPtr, p->istartband, p->iendband,
+			       (infoPtr->dwStyle & CCS_VERT) ? 
+			       clientcy : clientcx, mcy);
 	}
-	TRACE("point 3\n");
 
 	/* Calculate the other rectangles in each band */
 	if (infoPtr->dwStyle & CCS_VERT) {
@@ -1671,6 +1733,11 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
     /* now compute size of Rebar itself */
     infoPtr->oldSize = infoPtr->calcSize;
+    if (infoPtr->uNumBands == 0) {
+	/* we have no bands, so make size the size of client */
+	x = clientcx;
+	y = clientcy;
+    }
     if (infoPtr->dwStyle & CCS_VERT) {
 	infoPtr->calcSize.cx = x;
 	infoPtr->calcSize.cy = clientcy;
@@ -1969,8 +2036,9 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
 	else
 	    new = infoPtr->clrBtnFace;
 	rect = lpBand->rcBand;
+	/* testing only:  new = RGB(0,128,0);  */
 	old = SetBkColor (hdc, new);
-	TRACE("%s backround color=0x%06lx, band (%d,%d)-(%d,%d), clip (%d,%d)-(%d,%d)\n",
+	TRACE("%s background color=0x%06lx, band (%d,%d)-(%d,%d), clip (%d,%d)-(%d,%d)\n",
 	      (lpBand->clrBack == CLR_NONE) ? "std" : "",
 	      new,
 	      lpBand->rcBand.left,lpBand->rcBand.top,
@@ -2833,6 +2901,7 @@ REBAR_InsertBandA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_DumpBand (infoPtr);
 
     REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
     return TRUE;
 }
@@ -2913,6 +2982,7 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_DumpBand (infoPtr);
 
     REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
     return TRUE;
 }
@@ -2921,10 +2991,36 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 REBAR_MaximizeBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    FIXME("(uBand = %u fIdeal = %s) stub\n",
-	   (UINT)wParam, lParam ? "TRUE" : "FALSE");
+    REBAR_BAND *lpBand;
+    UINT uBand = (UINT) wParam;
 
-    return 0;
+    /* Validate */
+    if ((infoPtr->uNumBands == 0) ||
+	((INT)uBand < 0) || (uBand >= infoPtr->uNumBands)) {
+	/* error !!! */
+	ERR("Illegal MaximizeBand, requested=%d, current band count=%d\n",
+	      (INT)uBand, infoPtr->uNumBands);
+      	return FALSE;
+    }
+
+    lpBand = &infoPtr->bands[uBand];
+
+    if (lParam && (lpBand->fMask & RBBIM_IDEALSIZE)) {
+	/* handle setting ideal size */
+	lpBand->ccx = lpBand->cxIdeal;
+    }
+    else {
+	/* handle setting to max */
+	FIXME("(uBand = %u fIdeal = %s) case not coded\n",
+	      (UINT)wParam, lParam ? "TRUE" : "FALSE");
+	return FALSE;
+    }
+
+    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
+    REBAR_Layout (infoPtr, 0, TRUE, TRUE);
+    InvalidateRect (infoPtr->hwndSelf, 0, TRUE);
+
+    return TRUE;
 
 }
 
@@ -3163,8 +3259,10 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     REBAR_DumpBand (infoPtr);
 
-    if (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE))
+    if (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE)) {
 	  REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
+	  InvalidateRect(infoPtr->hwndSelf, 0, 1);
+    }
 
     return TRUE;
 }
@@ -3206,8 +3304,10 @@ REBAR_SetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     REBAR_DumpBand (infoPtr);
 
-    if (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE))
+    if (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE)) {
       REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
+      InvalidateRect(infoPtr->hwndSelf, 0, 1);
+    }
 
     return TRUE;
 }
@@ -3355,6 +3455,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     }
 
     REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
     return TRUE;
 }
@@ -3441,6 +3542,7 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     DeleteObject (infoPtr->hcurHorz);
     DeleteObject (infoPtr->hcurVert);
     DeleteObject (infoPtr->hcurDrag);
+    DeleteObject (infoPtr->hFont);
     SetWindowLongA (infoPtr->hwndSelf, 0, 0);
 
     /* free rebar info data */
@@ -3596,6 +3698,8 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPCREATESTRUCTA cs = (LPCREATESTRUCTA) lParam;
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
     RECT wnrc1, clrc1;
+    NONCLIENTMETRICSA ncm;
+    HFONT tfont;
     INT i;
 
     if (infoPtr != NULL) {
@@ -3630,6 +3734,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hcurDrag  = LoadCursorA (0, IDC_SIZEA);
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->fStatus = CREATE_RUNNING;
+    infoPtr->hFont = GetStockObject (SYSTEM_FONT);
 
     /* issue WM_NOTIFYFORMAT to get unicode status of parent */
     i = SendMessageA(REBAR_GetNotifyParent (infoPtr),
@@ -3645,17 +3750,30 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->dwStyle = cs->style | WS_VISIBLE | CCS_TOP;
     SetWindowLongA (hwnd, GWL_STYLE, infoPtr->dwStyle);
 
+    /* get font handle for Caption Font */
+    ncm.cbSize = sizeof(NONCLIENTMETRICSA);
+    SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 
+			  ncm.cbSize, &ncm, 0);
+    /* if the font is bold, set to normal */
+    if (ncm.lfCaptionFont.lfWeight > FW_NORMAL) {
+	ncm.lfCaptionFont.lfWeight = FW_NORMAL;
+    }
+    tfont = CreateFontIndirectA (&ncm.lfCaptionFont);
+    if (tfont) {
+	infoPtr->hFont = tfont;
+    }
+
 /* native does:
 	    GetSysColor (numerous);
 	    GetSysColorBrush (numerous) (see WM_SYSCOLORCHANGE);
-	    GetStockObject (SYSTEM_FONT);
+	   *GetStockObject (SYSTEM_FONT);
 	   *SetWindowLong (hwnd, 0, info ptr);
 	   *WM_NOTIFYFORMAT;
 	   *SetWindowLong (hwnd, GWL_STYLE, style+0x10000001);
                                     WS_VISIBLE = 0x10000000;
                                     CCS_TOP    = 0x00000001;
-	    SystemParametersInfo (SPI_GETNONCLIENTMETRICS...);
-	    CreateFontIndirect (lfCaptionFont from above);
+	   *SystemParametersInfo (SPI_GETNONCLIENTMETRICS...);
+	   *CreateFontIndirect (lfCaptionFont from above);
 	    GetDC ();
 	    SelectObject (hdc, fontabove);
 	    GetTextMetrics (hdc, );    guessing is tmHeight
