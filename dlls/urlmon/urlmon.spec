@@ -17,7 +17,7 @@
 @ stub CompareSecurityIds
 @ stub CopyBindInfo
 @ stub CopyStgMedium
-@ stub CreateAsyncBindCtx
+@ stdcall CreateAsyncBindCtx(long ptr ptr ptr)
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
 @ stub CreateFormatEnumerator
 @ stdcall CreateURLMoniker(ptr wstr ptr)
@@ -43,7 +43,7 @@
 @ stub HlinkNavigateString
 @ stub HlinkSimpleNavigateToMoniker
 @ stub HlinkSimpleNavigateToString
-@ stub IsAsyncMoniker
+@ stdcall IsAsyncMoniker(ptr)
 @ stub IsLoggingEnabledA
 @ stub IsLoggingEnabledW
 @ stub IsValidURL

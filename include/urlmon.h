@@ -1387,6 +1387,8 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
 HRESULT WINAPI CompareSecurityIds(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL,  LPCSTR  szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);
 HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);
+HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);
+HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);
 #ifdef __cplusplus
 }
 #endif

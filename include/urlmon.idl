@@ -539,3 +539,5 @@ cpp_quote("HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusC
 cpp_quote("HRESULT WINAPI CompareSecurityIds(BYTE*,DWORD,BYTE*,DWORD,DWORD);")
 cpp_quote("HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL,  LPCSTR  szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);")
 cpp_quote("HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);")
+cpp_quote("HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);")
+cpp_quote("HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);")

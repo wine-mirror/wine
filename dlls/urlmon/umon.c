@@ -803,6 +803,15 @@ static HRESULT WINAPI URLMonikerImpl_IBinding_Suspend(IBinding* iface)
 }
 
 /***********************************************************************
+ *           CreateAsyncBindCtx (URLMON.@)
+ */
+HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
+    IEnumFORMATETC *format, IBindCtx **pbind)
+{
+    FIXME("stub.\n");
+    return E_INVALIDARG;
+}
+/***********************************************************************
  *           CreateAsyncBindCtxEx (URLMON.@)
  *
  * Create an asynchronous bind context.
@@ -921,6 +930,15 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 {
   FIXME("stub\n");
   return E_OUTOFMEMORY;
+}
+
+/***********************************************************************
+ *           IsAsyncMoniker (URLMON.@)
+ */
+HRESULT WINAPI IsAsyncMoniker(IMoniker *pmk)
+{
+    FIXME("stub\n");
+    return S_FALSE;
 }
 
 /***********************************************************************
