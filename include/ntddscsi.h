@@ -82,6 +82,17 @@ typedef struct _SCSI_ADDRESS {
     UCHAR        Lun;
 } SCSI_ADDRESS, *PSCSI_ADDRESS;
 
+typedef struct _IO_SCSI_CAPABILITIES {
+    ULONG       Length;
+    ULONG       MaximumTransferLength;
+    ULONG       MaximumPhysicalPages;
+    ULONG       SupportedAsynchronousEvents;
+    ULONG       AlignmentMask;
+    BOOLEAN     TaggedQueuing;
+    BOOLEAN     AdapterScansDown;
+    BOOLEAN     AdapterUsesPio;
+} IO_SCSI_CAPABILITIES, *PIO_SCSI_CAPABILITIES;
+
 #ifdef __cplusplus
 }
 #endif

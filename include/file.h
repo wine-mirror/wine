@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include "winbase.h"
 #include "wine/windef16.h"  /* HFILE16 */
+#include "winternl.h"
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -118,9 +119,9 @@ extern int PROFILE_GetWineIniBool( LPCWSTR section, LPCWSTR key_name, int def );
 extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 /* ntdll/cdrom.c.c */
-extern BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
-                                  LPVOID lpInBuffer, DWORD nInBufferSize,
-                                  LPVOID lpOutBuffer, DWORD nOutBufferSize,
-                                  LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
+extern NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
+                                      LPVOID lpInBuffer, DWORD nInBufferSize,
+                                      LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                                      LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
 #endif  /* __WINE_FILE_H */

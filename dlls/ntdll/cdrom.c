@@ -131,8 +131,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
 #define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
 #define MSF_OF_FRAME(m,fr) {int f=(fr); ((UCHAR *)&(m))[2]=f%CD_FRAMES;f/=CD_FRAMES;((UCHAR *)&(m))[1]=f%CD_SECS;((UCHAR *)&(m))[0]=f/CD_SECS;}
 
-static DWORD CDROM_ReadTOC(int, CDROM_TOC*);
-static DWORD CDROM_GetStatusCode(int);
+static NTSTATUS CDROM_ReadTOC(int, CDROM_TOC*);
+static NTSTATUS CDROM_GetStatusCode(int);
 
 
 #ifdef linux
@@ -336,7 +336,7 @@ end:
 
 static void CDROM_ClearCacheEntry(int dev)
 {
-  cdrom_cache[dev].toc_good = 0;
+    cdrom_cache[dev].toc_good = 0;
 }
 
 
@@ -555,34 +555,33 @@ void CDROM_InitRegistry(int fd)
 /******************************************************************
  *		CDROM_Open
  *
- *
  */
-static int CDROM_Open(HANDLE hDevice, DWORD clientID)
+static NTSTATUS CDROM_Open(HANDLE hDevice, DWORD clientID, int* dev)
 {
-    int dev = LOWORD(clientID);
+    *dev = LOWORD(clientID);
 
-    if (dev >= 26) return -1;
+    if (*dev >= 26) return STATUS_NO_SUCH_DEVICE;
 
-    if (!cdrom_cache[dev].count)
+    if (!cdrom_cache[*dev].count)
     {
         char root[4];
         const char *device;
 
         strcpy(root, "A:\\");
-        root[0] += dev;
-        if (GetDriveTypeA(root) != DRIVE_CDROM) return -1;
-        if (!(device = DRIVE_GetDevice(dev))) return -1;
-        cdrom_cache[dev].fd = open(device, O_RDONLY|O_NONBLOCK);
-        if (cdrom_cache[dev].fd == -1)
+        root[0] += *dev;
+        if (GetDriveTypeA(root) != DRIVE_CDROM) return STATUS_NO_SUCH_DEVICE;
+        if (!(device = DRIVE_GetDevice(*dev))) return STATUS_NO_SUCH_DEVICE;
+        cdrom_cache[*dev].fd = open(device, O_RDONLY|O_NONBLOCK);
+        if (cdrom_cache[*dev].fd == -1)
         {
-            FIXME("Can't open configured CD-ROM drive at %s (device %s): %s\n", root, DRIVE_GetDevice(dev), strerror(errno));
-            return -1;
+            FIXME("Can't open configured CD-ROM drive at %s (device %s): %s\n", 
+                  root, DRIVE_GetDevice(*dev), strerror(errno));
+            return STATUS_NO_SUCH_DEVICE;
         }
     }
-    cdrom_cache[dev].count++;
-    TRACE("%d, %d, %d\n", dev, cdrom_cache[dev].fd, cdrom_cache[dev].count);
-    /* return cdrom_cache[dev].fd; */
-    return dev; /* can still find fd by using dev */
+    cdrom_cache[*dev].count++;
+    TRACE("%d, %d, %d\n", *dev, cdrom_cache[*dev].fd, cdrom_cache[*dev].count);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -595,9 +594,10 @@ static void CDROM_Close(DWORD clientID)
     int dev = LOWORD(clientID);
 
     if (dev >= 26 /*|| fd != cdrom_cache[dev].fd*/) FIXME("how come\n");
-    if (--cdrom_cache[dev].count == 0) {
-      close(cdrom_cache[dev].fd);
-      cdrom_cache[dev].fd = -1;
+    if (--cdrom_cache[dev].count == 0) 
+    {
+        close(cdrom_cache[dev].fd);
+        cdrom_cache[dev].fd = -1;
     }
 }
 
@@ -606,7 +606,7 @@ static void CDROM_Close(DWORD clientID)
  *
  *
  */
-static DWORD CDROM_GetStatusCode(int io)
+static NTSTATUS CDROM_GetStatusCode(int io)
 {
     if (io == 0) return STATUS_SUCCESS;
     switch (errno)
@@ -626,23 +626,35 @@ static DWORD CDROM_GetStatusCode(int io)
     return STATUS_IO_DEVICE_ERROR;
 }
 
-static DWORD CDROM_GetControl(int dev, CDROM_AUDIO_CONTROL* cac)
+/******************************************************************
+ *		CDROM_GetControl
+ *
+ */
+static NTSTATUS CDROM_GetControl(int dev, CDROM_AUDIO_CONTROL* cac)
 {
     cac->LbaFormat = 0; /* FIXME */
     cac->LogicalBlocksPerSecond = 1; /* FIXME */
     return  STATUS_NOT_SUPPORTED;
 }
 
-static DWORD CDROM_GetDeviceNumber(int dev, STORAGE_DEVICE_NUMBER* devnum)
+/******************************************************************
+ *		CDROM_GetDeviceNumber
+ *
+ */
+static NTSTATUS CDROM_GetDeviceNumber(int dev, STORAGE_DEVICE_NUMBER* devnum)
 {
     return STATUS_NOT_SUPPORTED;
 }
 
-static DWORD CDROM_GetDriveGeometry(int dev, DISK_GEOMETRY* dg)
+/******************************************************************
+ *		CDROM_GetDriveGeometry
+ *
+ */
+static NTSTATUS CDROM_GetDriveGeometry(int dev, DISK_GEOMETRY* dg)
 {
-  CDROM_TOC   toc;
-  DWORD ret = 0;
-  int fsize=0;
+  CDROM_TOC     toc;
+  NTSTATUS      ret = 0;
+  int           fsize = 0;
 
   if ((ret = CDROM_ReadTOC(dev, &toc)) != 0) return ret;
 
@@ -661,7 +673,7 @@ static DWORD CDROM_GetDriveGeometry(int dev, DISK_GEOMETRY* dg)
 /**************************************************************************
  *                              CDROM_Reset                     [internal]
  */
-static DWORD CDROM_ResetAudio(int dev)
+static NTSTATUS CDROM_ResetAudio(int dev)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMRESET));
@@ -677,7 +689,7 @@ static DWORD CDROM_ResetAudio(int dev)
  *
  *
  */
-static DWORD CDROM_SetTray(int dev, BOOL doEject)
+static NTSTATUS CDROM_SetTray(int dev, BOOL doEject)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, doEject ? CDROMEJECT : CDROMCLOSETRAY));
@@ -695,7 +707,7 @@ static DWORD CDROM_SetTray(int dev, BOOL doEject)
  *
  *
  */
-static DWORD CDROM_ControlEjection(int dev, const PREVENT_MEDIA_REMOVAL* rmv)
+static NTSTATUS CDROM_ControlEjection(int dev, const PREVENT_MEDIA_REMOVAL* rmv)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROM_LOCKDOOR, rmv->PreventMediaRemoval));
@@ -711,9 +723,9 @@ static DWORD CDROM_ControlEjection(int dev, const PREVENT_MEDIA_REMOVAL* rmv)
  *
  *
  */
-static DWORD CDROM_ReadTOC(int dev, CDROM_TOC* toc)
+static NTSTATUS CDROM_ReadTOC(int dev, CDROM_TOC* toc)
 {
-    DWORD       ret = STATUS_NOT_SUPPORTED;
+    NTSTATUS       ret = STATUS_NOT_SUPPORTED;
 
     if (dev < 0 || dev >= 26)
        return STATUS_INVALID_PARAMETER;
@@ -731,10 +743,10 @@ static DWORD CDROM_ReadTOC(int dev, CDROM_TOC* toc)
  *
  *
  */
-static DWORD CDROM_GetDiskData(int dev, CDROM_DISK_DATA* data)
+static NTSTATUS CDROM_GetDiskData(int dev, CDROM_DISK_DATA* data)
 {
     CDROM_TOC   toc;
-    DWORD       ret;
+    NTSTATUS    ret;
     int         i;
 
     if ((ret = CDROM_ReadTOC(dev, &toc)) != 0) return ret;
@@ -753,10 +765,10 @@ static DWORD CDROM_GetDiskData(int dev, CDROM_DISK_DATA* data)
  *
  *
  */
-static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
-                                SUB_Q_CHANNEL_DATA* data)
+static NTSTATUS CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
+                                   SUB_Q_CHANNEL_DATA* data)
 {
-    DWORD               ret = STATUS_NOT_SUPPORTED;
+    NTSTATUS            ret = STATUS_NOT_SUPPORTED;
 #ifdef linux
     unsigned            size;
     SUB_Q_HEADER*       hdr = (SUB_Q_HEADER*)data;
@@ -963,7 +975,7 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
  *
  *
  */
-static DWORD CDROM_Verify(int dev)
+static NTSTATUS CDROM_Verify(int dev)
 {
     /* quick implementation */
     CDROM_SUB_Q_DATA_FORMAT     fmt;
@@ -978,9 +990,9 @@ static DWORD CDROM_Verify(int dev)
  *
  *
  */
-static DWORD CDROM_PlayAudioMSF(int dev, const CDROM_PLAY_AUDIO_MSF* audio_msf)
+static NTSTATUS CDROM_PlayAudioMSF(int dev, const CDROM_PLAY_AUDIO_MSF* audio_msf)
 {
-    DWORD       ret = STATUS_NOT_SUPPORTED;
+    NTSTATUS       ret = STATUS_NOT_SUPPORTED;
 #ifdef linux
     struct 	cdrom_msf	msf;
     int         io;
@@ -1046,7 +1058,7 @@ end:
  *
  *
  */
-static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
+static NTSTATUS CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
 {
     CDROM_TOC toc;
     int i, io, frame;
@@ -1140,7 +1152,7 @@ static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
  *
  *
  */
-static DWORD CDROM_PauseAudio(int dev)
+static NTSTATUS CDROM_PauseAudio(int dev)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMPAUSE));
@@ -1156,7 +1168,7 @@ static DWORD CDROM_PauseAudio(int dev)
  *
  *
  */
-static DWORD CDROM_ResumeAudio(int dev)
+static NTSTATUS CDROM_ResumeAudio(int dev)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMRESUME));
@@ -1172,7 +1184,7 @@ static DWORD CDROM_ResumeAudio(int dev)
  *
  *
  */
-static DWORD CDROM_StopAudio(int dev)
+static NTSTATUS CDROM_StopAudio(int dev)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMSTOP));
@@ -1188,7 +1200,7 @@ static DWORD CDROM_StopAudio(int dev)
  *
  *
  */
-static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
+static NTSTATUS CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
 {
 #if defined(linux)
     struct cdrom_volctrl volc;
@@ -1226,7 +1238,7 @@ static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
  *
  *
  */
-static DWORD CDROM_SetVolume(int dev, const VOLUME_CONTROL* vc)
+static NTSTATUS CDROM_SetVolume(int dev, const VOLUME_CONTROL* vc)
 {
 #if defined(linux)
     struct cdrom_volctrl volc;
@@ -1256,7 +1268,7 @@ static DWORD CDROM_SetVolume(int dev, const VOLUME_CONTROL* vc)
  *
  *
  */
-static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWORD len, DWORD* sz)
+static NTSTATUS CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWORD len, DWORD* sz)
 {
     int	        ret = STATUS_NOT_SUPPORTED;
     int         io = -1;
@@ -1363,7 +1375,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
  *
  *
  */
-static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPacket)
+static NTSTATUS CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
 #if defined(linux) && defined(CDROM_SEND_PACKET)
@@ -1487,7 +1499,7 @@ static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPac
  *
  *
  */
-static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
+static NTSTATUS CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
 #if defined(linux) && defined(CDROM_SEND_PACKET)
@@ -1622,11 +1634,36 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 }
 
 /******************************************************************
+ *		CDROM_ScsiGetCaps
+ *
+ *
+ */
+static NTSTATUS CDROM_ScsiGetCaps(int dev, PIO_SCSI_CAPABILITIES caps)
+{
+    NTSTATUS    ret = STATUS_NOT_IMPLEMENTED;
+
+    caps->Length = sizeof(*caps);
+#if defined(linux)
+    caps->MaximumTransferLength = SG_SCATTER_SZ; /* FIXME */
+    caps->MaximumPhysicalPages = SG_SCATTER_SZ / getpagesize();
+    caps->SupportedAsynchronousEvents = TRUE;
+    caps->AlignmentMask = getpagesize();
+    caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
+    caps->AdapterScansDown = FALSE; /* FIXME ? */
+    caps->AdapterUsesPio = FALSE; /* FIXME ? */
+    ret = STATUS_SUCCESS;
+#else
+    FIXME("Unimplemented\n");
+#endif
+    return ret;
+}
+
+/******************************************************************
  *		CDROM_GetAddress
  *
  * implements IOCTL_SCSI_GET_ADDRESS
  */
-static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
+static NTSTATUS CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
 {
     int portnum, busid, targetid, lun;
 
@@ -1647,13 +1684,13 @@ static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
  *
  *
  */
-BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
-                           LPVOID lpInBuffer, DWORD nInBufferSize,
-                           LPVOID lpOutBuffer, DWORD nOutBufferSize,
-                           LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
+                               LPVOID lpInBuffer, DWORD nInBufferSize,
+                               LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                               LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
     DWORD       sz;
-    DWORD       error = 0;
+    NTSTATUS    status = STATUS_SUCCESS;
     int         dev;
 
     TRACE("%lx[%c] %s %lx %ld %lx %ld %lx %lx\n",
@@ -1661,15 +1698,8 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
           (DWORD)lpOutBuffer, nOutBufferSize, (DWORD)lpBytesReturned, (DWORD)lpOverlapped);
 
     if (lpBytesReturned) *lpBytesReturned = 0;
-    if (lpOverlapped)
-    {
-        FIXME("Overlapped isn't implemented yet\n");
-        SetLastError(STATUS_NOT_SUPPORTED);
-        return FALSE;
-    }
 
-    SetLastError(0);
-    if ((dev = CDROM_Open(hDevice, clientID)) == -1) return FALSE;
+    if ((status = CDROM_Open(hDevice, clientID, &dev))) goto error;
 
     switch (dwIoControlCode)
     {
@@ -1678,8 +1708,8 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_Verify(dev);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_Verify(dev);
         break;
 
 /* EPP     case IOCTL_STORAGE_CHECK_VERIFY2: */
@@ -1692,15 +1722,15 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_SetTray(dev, FALSE);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_SetTray(dev, FALSE);
         break;
      case IOCTL_STORAGE_EJECT_MEDIA:
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_SetTray(dev, TRUE);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_SetTray(dev, TRUE);
         break;
 
     case IOCTL_CDROM_MEDIA_REMOVAL:
@@ -1711,48 +1741,48 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
          * lockcount/owner should be handled */
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
-        if (lpOutBuffer != NULL || nOutBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nInBufferSize < sizeof(PREVENT_MEDIA_REMOVAL)) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_ControlEjection(dev, (const PREVENT_MEDIA_REMOVAL*)lpInBuffer);
+        if (lpOutBuffer != NULL || nOutBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nInBufferSize < sizeof(PREVENT_MEDIA_REMOVAL)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ControlEjection(dev, (const PREVENT_MEDIA_REMOVAL*)lpInBuffer);
         break;
 
 /* EPP     case IOCTL_STORAGE_GET_MEDIA_TYPES: */
 
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
         sz = sizeof(STORAGE_DEVICE_NUMBER);
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_GetDeviceNumber(dev, (STORAGE_DEVICE_NUMBER*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetDeviceNumber(dev, (STORAGE_DEVICE_NUMBER*)lpOutBuffer);
         break;
 
     case IOCTL_STORAGE_RESET_DEVICE:
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_ResetAudio(dev);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_ResetAudio(dev);
         break;
 
     case IOCTL_CDROM_GET_CONTROL:
         sz = sizeof(CDROM_AUDIO_CONTROL);
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_GetControl(dev, (CDROM_AUDIO_CONTROL*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetControl(dev, (CDROM_AUDIO_CONTROL*)lpOutBuffer);
         break;
 
     case IOCTL_CDROM_GET_DRIVE_GEOMETRY:
         sz = sizeof(DISK_GEOMETRY);
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_GetDriveGeometry(dev, (DISK_GEOMETRY*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetDriveGeometry(dev, (DISK_GEOMETRY*)lpOutBuffer);
         break;
 
     case IOCTL_CDROM_DISK_TYPE:
         sz = sizeof(CDROM_DISK_DATA);
 	/* CDROM_ClearCacheEntry(dev); */
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_GetDiskData(dev, (CDROM_DISK_DATA*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetDiskData(dev, (CDROM_DISK_DATA*)lpOutBuffer);
         break;
 
 /* EPP     case IOCTL_CDROM_GET_LAST_SESSION: */
@@ -1760,17 +1790,17 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     case IOCTL_CDROM_READ_Q_CHANNEL:
         sz = sizeof(SUB_Q_CHANNEL_DATA);
         if (lpInBuffer == NULL || nInBufferSize < sizeof(CDROM_SUB_Q_DATA_FORMAT))
-            error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_ReadQChannel(dev, (const CDROM_SUB_Q_DATA_FORMAT*)lpInBuffer,
+            status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ReadQChannel(dev, (const CDROM_SUB_Q_DATA_FORMAT*)lpInBuffer,
                                         (SUB_Q_CHANNEL_DATA*)lpOutBuffer);
         break;
 
     case IOCTL_CDROM_READ_TOC:
         sz = sizeof(CDROM_TOC);
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_ReadTOC(dev, (CDROM_TOC*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ReadTOC(dev, (CDROM_TOC*)lpOutBuffer);
         break;
 
 /* EPP     case IOCTL_CDROM_READ_TOC_EX: */
@@ -1778,86 +1808,94 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     case IOCTL_CDROM_PAUSE_AUDIO:
         sz = 0;
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_PauseAudio(dev);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_PauseAudio(dev);
         break;
     case IOCTL_CDROM_PLAY_AUDIO_MSF:
         sz = 0;
-        if (lpOutBuffer != NULL || nOutBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nInBufferSize < sizeof(CDROM_PLAY_AUDIO_MSF)) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_PlayAudioMSF(dev, (const CDROM_PLAY_AUDIO_MSF*)lpInBuffer);
+        if (lpOutBuffer != NULL || nOutBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nInBufferSize < sizeof(CDROM_PLAY_AUDIO_MSF)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_PlayAudioMSF(dev, (const CDROM_PLAY_AUDIO_MSF*)lpInBuffer);
         break;
     case IOCTL_CDROM_RESUME_AUDIO:
         sz = 0;
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_ResumeAudio(dev);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_ResumeAudio(dev);
         break;
     case IOCTL_CDROM_SEEK_AUDIO_MSF:
         sz = 0;
-        if (lpOutBuffer != NULL || nOutBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nInBufferSize < sizeof(CDROM_SEEK_AUDIO_MSF)) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_SeekAudioMSF(dev, (const CDROM_SEEK_AUDIO_MSF*)lpInBuffer);
+        if (lpOutBuffer != NULL || nOutBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nInBufferSize < sizeof(CDROM_SEEK_AUDIO_MSF)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_SeekAudioMSF(dev, (const CDROM_SEEK_AUDIO_MSF*)lpInBuffer);
         break;
     case IOCTL_CDROM_STOP_AUDIO:
         sz = 0;
 	CDROM_ClearCacheEntry(dev); /* Maybe intention is to change media */
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_StopAudio(dev);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_StopAudio(dev);
         break;
     case IOCTL_CDROM_GET_VOLUME:
         sz = sizeof(VOLUME_CONTROL);
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_GetVolume(dev, (VOLUME_CONTROL*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetVolume(dev, (VOLUME_CONTROL*)lpOutBuffer);
         break;
     case IOCTL_CDROM_SET_VOLUME:
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer == NULL || nInBufferSize < sizeof(VOLUME_CONTROL) || lpOutBuffer != NULL)
-            error = STATUS_INVALID_PARAMETER;
-        else error = CDROM_SetVolume(dev, (const VOLUME_CONTROL*)lpInBuffer);
+            status = STATUS_INVALID_PARAMETER;
+        else status = CDROM_SetVolume(dev, (const VOLUME_CONTROL*)lpInBuffer);
         break;
     case IOCTL_CDROM_RAW_READ:
         sz = 0;
-        if (nInBufferSize < sizeof(RAW_READ_INFO)) error = STATUS_INVALID_PARAMETER;
-        else if (lpOutBuffer == NULL) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_RawRead(dev, (const RAW_READ_INFO*)lpInBuffer,
+        if (nInBufferSize < sizeof(RAW_READ_INFO)) status = STATUS_INVALID_PARAMETER;
+        else if (lpOutBuffer == NULL) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_RawRead(dev, (const RAW_READ_INFO*)lpInBuffer,
                                    lpOutBuffer, nOutBufferSize, &sz);
         break;
     case IOCTL_SCSI_GET_ADDRESS:
         sz = sizeof(SCSI_ADDRESS);
-        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_GetAddress(dev, (SCSI_ADDRESS*)lpOutBuffer);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetAddress(dev, (SCSI_ADDRESS*)lpOutBuffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH_DIRECT:
         sz = sizeof(SCSI_PASS_THROUGH_DIRECT);
-        if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH_DIRECT)) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_ScsiPassThroughDirect(dev, (PSCSI_PASS_THROUGH_DIRECT)lpOutBuffer);
+        if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH_DIRECT)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ScsiPassThroughDirect(dev, (PSCSI_PASS_THROUGH_DIRECT)lpOutBuffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH:
         sz = sizeof(SCSI_PASS_THROUGH);
-        if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH)) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_ScsiPassThrough(dev, (PSCSI_PASS_THROUGH)lpOutBuffer);
+        if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ScsiPassThrough(dev, (PSCSI_PASS_THROUGH)lpOutBuffer);
         break;
-
+    case IOCTL_SCSI_GET_CAPABILITIES:
+        sz = sizeof(IO_SCSI_CAPABILITIES);
+        if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sizeof(IO_SCSI_CAPABILITIES)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ScsiGetCaps(dev, (PIO_SCSI_CAPABILITIES)lpOutBuffer);
+        break;
     default:
-        FIXME("Unsupported IOCTL %lx\n", dwIoControlCode);
+        FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 
+              dwIoControlCode, dwIoControlCode >> 16, (dwIoControlCode >> 14) & 3,
+              (dwIoControlCode >> 2) & 0xFFF, dwIoControlCode & 3);
         sz = 0;
-        error = STATUS_INVALID_PARAMETER;
+        status = STATUS_INVALID_PARAMETER;
         break;
     }
-
-    if (lpBytesReturned) *lpBytesReturned = sz;
-    if (error)
+ error:
+    if (lpOverlapped)
     {
-        SetLastError(error);
-        return FALSE;
+        lpOverlapped->Internal = status;
+        lpOverlapped->InternalHigh = sz;
+        NtSetEvent(lpOverlapped->hEvent, NULL);
     }
+    if (lpBytesReturned) *lpBytesReturned = sz;
     CDROM_Close(clientID);
-    return TRUE;
+    return status;
 }

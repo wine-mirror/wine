@@ -439,9 +439,14 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
                 strcpy(str,  "A:");
                 str[0] += LOBYTE(clientID);
                 if (GetDriveTypeA(str) == DRIVE_CDROM)
-                    return CDROM_DeviceIoControl(clientID, hDevice, dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                                 lpvOutBuffer, cbOutBuffer, lpcbBytesReturned,
-                                                 lpOverlapped);
+                {
+                    NTSTATUS status;
+                    status = CDROM_DeviceIoControl(clientID, hDevice, dwIoControlCode, lpvInBuffer, cbInBuffer,
+                                                   lpvOutBuffer, cbOutBuffer, lpcbBytesReturned,
+                                                   lpOverlapped);
+                    if (status) SetLastError(RtlNtStatusToDosError(status));
+                    return !status;
+                }
                 else switch( dwIoControlCode )
 		{
 		case FSCTL_DELETE_REPARSE_POINT:
