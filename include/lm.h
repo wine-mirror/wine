@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 1999 Rein Klazes
+ * Copyright 2002 Andriy Palamarchuk
+ *
+ * General lm header which includes other lm headers.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,18 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LMCONS_H
-#define __WINE_LMCONS_H
+#ifndef __WINE_LM_H
+#define __WINE_LM_H
 
-/* Types */
-
-#define NET_API_STATUS          DWORD
-
-/* Lan manager API defines */
-
-#define UNLEN       256                 /* Maximum user name length */
-#define PWLEN       256                 /* Maximum password length */
-#define CNLEN       15                  /* Computer name length  */
-#define DNLEN       CNLEN               /* Maximum domain name length */
+#include <lmcons.h>
+#include <lmerr.h>
+#include <lmaccess.h>
+#include <lmwksta.h>
+#include <lmapibuf.h>
 
 #endif

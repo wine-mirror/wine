@@ -802,7 +802,7 @@ msvcrt20: msvcrt.dll$(DLLEXT)
 msvcrt:   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 msvideo:  winmm.dll$(DLLEXT) comctl32.dll$(DLLEXT) version.dll$(DLLEXT) user32.dll$(DLLEXT) \
           gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-netapi32: kernel32.dll$(DLLEXT)
+netapi32: advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 odbc32:   kernel32.dll$(DLLEXT)
 ole32:    advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) rpcrt4.dll$(DLLEXT) \
           kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)

@@ -38,7 +38,12 @@ INSTALLED_INCLUDES = \
 	imm.h \
 	initguid.h \
 	instance.h \
+	lm.h \
+	lmaccess.h \
+	lmapibuf.h \
 	lmcons.h \
+	lmerr.h \
+	lmwksta.h \
 	lzexpand.h \
 	mapi.h \
 	mapicode.h \

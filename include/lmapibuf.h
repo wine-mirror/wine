@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 1999 Rein Klazes
+ * Copyright 2002 Andriy Palamarchuk
+ *
+ * Net API buffer calls
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,18 +18,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LMCONS_H
-#define __WINE_LMCONS_H
+#ifndef __WINE_LMAPIBUF_H
+#define __WINE_LMAPIBUF_H
 
-/* Types */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define NET_API_STATUS          DWORD
+/* Buffer functions */
+NET_API_STATUS WINAPI NetApiBufferAllocate(DWORD ByteCount, LPVOID* Buffer);
+NET_API_STATUS WINAPI NetApiBufferFree(LPVOID Buffer);
+NET_API_STATUS WINAPI NetApiBufferReallocate(LPVOID OldBuffer, DWORD NewByteCount,
+                                             LPVOID* NewBuffer);
+NET_API_STATUS WINAPI NetApiBufferSize(LPVOID Buffer, LPDWORD ByteCount);
+NET_API_STATUS WINAPI NetapipBufferAllocate(DWORD ByteCount, LPVOID* Buffer);
 
-/* Lan manager API defines */
-
-#define UNLEN       256                 /* Maximum user name length */
-#define PWLEN       256                 /* Maximum password length */
-#define CNLEN       15                  /* Computer name length  */
-#define DNLEN       CNLEN               /* Maximum domain name length */
+#ifdef __cplusplus
+}
+#endif
 
 #endif

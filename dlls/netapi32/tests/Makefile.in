@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = netapi32.dll
+IMPORTS   = netapi32
+
+CTESTS = \
+	apibuf.c \
+	wksta.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

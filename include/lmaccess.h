@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 1999 Rein Klazes
+ * Copyright 2002 Andriy Palamarchuk
+ *
+ * User API.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,18 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LMCONS_H
-#define __WINE_LMCONS_H
+#ifndef __WINE_LMAPIBUF_H
+#define __WINE_LMAPIBUF_H
 
-/* Types */
-
-#define NET_API_STATUS          DWORD
-
-/* Lan manager API defines */
-
-#define UNLEN       256                 /* Maximum user name length */
-#define PWLEN       256                 /* Maximum password length */
-#define CNLEN       15                  /* Computer name length  */
-#define DNLEN       CNLEN               /* Maximum domain name length */
+typedef struct _USER_INFO_10 {
+    LPWSTR  usri10_name;
+    LPWSTR  usri10_comment;
+    LPWSTR  usri10_usr_comment;
+    LPWSTR  usri10_full_name;
+} USER_INFO_10, *PUSER_INFO_10, *LPUSER_INFO_10;
 
 #endif

@@ -1409,6 +1409,7 @@ dlls/msvcrt/Makefile
 dlls/msvcrt20/Makefile
 dlls/msvideo/Makefile
 dlls/netapi32/Makefile
+dlls/netapi32/tests/Makefile
 dlls/ntdll/Makefile
 dlls/ntdll/tests/Makefile
 dlls/odbc32/Makefile
