@@ -129,11 +129,10 @@ typedef struct {
  * (compared to passing thru the server)
  * this ring will be used by the input (resp output) record (resp playback) routine
  */
+#define OSS_RING_BUFFER_INCREMENT	64
 typedef struct {
-    /* FIXME: this could be made a dynamically growing array (if needed) */
-    /* maybe it's needed, a Humongous game manages to transmit 128 messages at once at startup */
-#define OSS_RING_BUFFER_SIZE	192
-    OSS_MSG			messages[OSS_RING_BUFFER_SIZE];
+    int                         ring_buffer_size;
+    OSS_MSG			* messages;
     int				msg_tosave;
     int				msg_toget;
 #ifdef USE_PIPE_SYNC
@@ -844,7 +843,8 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
 #else
     omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
 #endif
-    memset(omr->messages, 0, sizeof(OSS_MSG) * OSS_RING_BUFFER_SIZE);
+    omr->ring_buffer_size = OSS_RING_BUFFER_INCREMENT;
+    omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(OSS_MSG));
     InitializeCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -861,6 +861,7 @@ static int OSS_DestroyRingMessage(OSS_MSG_RING* omr)
 #else
     CloseHandle(omr->msg_event);
 #endif
+    HeapFree(GetProcessHeap(),0,omr->messages);
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -875,11 +876,11 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
     HANDLE	hEvent = INVALID_HANDLE_VALUE;
 
     EnterCriticalSection(&omr->msg_crst);
-    if ((omr->msg_toget == ((omr->msg_tosave + 1) % OSS_RING_BUFFER_SIZE))) /* buffer overflow ? */
+    if ((omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size)))
     {
-	ERR("buffer overflow !?\n");
-        LeaveCriticalSection(&omr->msg_crst);
-	return 0;
+	omr->ring_buffer_size += OSS_RING_BUFFER_INCREMENT;
+	TRACE("omr->ring_buffer_size=%d\n",omr->ring_buffer_size);
+	omr->messages = HeapReAlloc(GetProcessHeap(),0,omr->messages, omr->ring_buffer_size * sizeof(OSS_MSG));
     }
     if (wait)
     {
@@ -894,7 +895,7 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
             FIXME("two fast messages in the queue!!!!\n");
 
         /* fast messages have to be added at the start of the queue */
-        omr->msg_toget = (omr->msg_toget + OSS_RING_BUFFER_SIZE - 1) % OSS_RING_BUFFER_SIZE;
+        omr->msg_toget = (omr->msg_toget + omr->ring_buffer_size - 1) % omr->ring_buffer_size;
 
         omr->messages[omr->msg_toget].msg = msg;
         omr->messages[omr->msg_toget].param = param;
@@ -905,7 +906,7 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
         omr->messages[omr->msg_tosave].msg = msg;
         omr->messages[omr->msg_tosave].param = param;
         omr->messages[omr->msg_tosave].hEvent = INVALID_HANDLE_VALUE;
-        omr->msg_tosave = (omr->msg_tosave + 1) % OSS_RING_BUFFER_SIZE;
+        omr->msg_tosave = (omr->msg_tosave + 1) % omr->ring_buffer_size;
     }
     LeaveCriticalSection(&omr->msg_crst);
     /* signal a new message */
@@ -939,7 +940,7 @@ static int OSS_RetrieveRingMessage(OSS_MSG_RING* omr,
     omr->messages[omr->msg_toget].msg = 0;
     *param = omr->messages[omr->msg_toget].param;
     *hEvent = omr->messages[omr->msg_toget].hEvent;
-    omr->msg_toget = (omr->msg_toget + 1) % OSS_RING_BUFFER_SIZE;
+    omr->msg_toget = (omr->msg_toget + 1) % omr->ring_buffer_size;
     CLEAR_OMR(omr);
     LeaveCriticalSection(&omr->msg_crst);
     return 1;

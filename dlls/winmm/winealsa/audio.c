@@ -102,10 +102,10 @@ typedef struct {
  * (compared to passing thru the server)
  * this ring will be used by the input (resp output) record (resp playback) routine
  */
+#define ALSA_RING_BUFFER_INCREMENT      64
 typedef struct {
-    /* FIXME: this could be made a dynamically growing array (if needed) */
-#define ALSA_RING_BUFFER_SIZE	30
-    ALSA_MSG			messages[ALSA_RING_BUFFER_SIZE];
+    ALSA_MSG			* messages;
+    int                         ring_buffer_size;
     int				msg_tosave;
     int				msg_toget;
     HANDLE			msg_event;
@@ -527,7 +527,9 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
     omr->msg_toget = 0;
     omr->msg_tosave = 0;
     omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    memset(omr->messages, 0, sizeof(ALSA_MSG) * ALSA_RING_BUFFER_SIZE);
+    omr->ring_buffer_size = ALSA_RING_BUFFER_INCREMENT;
+    omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(ALSA_MSG));
+
     InitializeCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -539,6 +541,7 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
 static int ALSA_DestroyRingMessage(ALSA_MSG_RING* omr)
 {
     CloseHandle(omr->msg_event);
+    HeapFree(GetProcessHeap(),0,omr->messages);
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -553,11 +556,11 @@ static int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWOR
     HANDLE	hEvent = INVALID_HANDLE_VALUE;
 
     EnterCriticalSection(&omr->msg_crst);
-    if ((omr->msg_toget == ((omr->msg_tosave + 1) % ALSA_RING_BUFFER_SIZE))) /* buffer overflow ? */
+    if ((omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size)))
     {
-	ERR("buffer overflow !?\n");
-        LeaveCriticalSection(&omr->msg_crst);
-	return 0;
+	omr->ring_buffer_size += ALSA_RING_BUFFER_INCREMENT;
+	TRACE("omr->ring_buffer_size=%d\n",omr->ring_buffer_size);
+	omr->messages = HeapReAlloc(GetProcessHeap(),0,omr->messages, omr->ring_buffer_size * sizeof(ALSA_MSG));
     }
     if (wait)
     {
@@ -572,7 +575,7 @@ static int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWOR
             FIXME("two fast messages in the queue!!!!\n");
 
         /* fast messages have to be added at the start of the queue */
-        omr->msg_toget = (omr->msg_toget + ALSA_RING_BUFFER_SIZE - 1) % ALSA_RING_BUFFER_SIZE;
+        omr->msg_toget = (omr->msg_toget + omr->ring_buffer_size - 1) % omr->ring_buffer_size;
 
         omr->messages[omr->msg_toget].msg = msg;
         omr->messages[omr->msg_toget].param = param;
@@ -583,7 +586,7 @@ static int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWOR
         omr->messages[omr->msg_tosave].msg = msg;
         omr->messages[omr->msg_tosave].param = param;
         omr->messages[omr->msg_tosave].hEvent = INVALID_HANDLE_VALUE;
-        omr->msg_tosave = (omr->msg_tosave + 1) % ALSA_RING_BUFFER_SIZE;
+        omr->msg_tosave = (omr->msg_tosave + 1) % omr->ring_buffer_size;
     }
     LeaveCriticalSection(&omr->msg_crst);
     /* signal a new message */
@@ -617,7 +620,7 @@ static int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr,
     omr->messages[omr->msg_toget].msg = 0;
     *param = omr->messages[omr->msg_toget].param;
     *hEvent = omr->messages[omr->msg_toget].hEvent;
-    omr->msg_toget = (omr->msg_toget + 1) % ALSA_RING_BUFFER_SIZE;
+    omr->msg_toget = (omr->msg_toget + 1) % omr->ring_buffer_size;
     LeaveCriticalSection(&omr->msg_crst);
     return 1;
 }

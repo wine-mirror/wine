@@ -107,9 +107,10 @@ typedef struct {
  * (compared to passing thru the server)
  * this ring will be used by the input (resp output) record (resp playback) routine
  */
+#define ARTS_RING_BUFFER_INCREMENT      64
 typedef struct {
-#define ARTS_RING_BUFFER_SIZE	30
-    RING_MSG			messages[ARTS_RING_BUFFER_SIZE];
+    RING_MSG			* messages;
+    int                         ring_buffer_size;
     int				msg_tosave;
     int				msg_toget;
     HANDLE			msg_event;
@@ -343,7 +344,8 @@ static int ARTS_InitRingMessage(ARTS_MSG_RING* mr)
     mr->msg_toget = 0;
     mr->msg_tosave = 0;
     mr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    memset(mr->messages, 0, sizeof(RING_MSG) * ARTS_RING_BUFFER_SIZE);
+    mr->ring_buffer_size = ARTS_RING_BUFFER_INCREMENT;
+    mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
     return 0;
 }
@@ -355,6 +357,7 @@ static int ARTS_InitRingMessage(ARTS_MSG_RING* mr)
 static int ARTS_DestroyRingMessage(ARTS_MSG_RING* mr)
 {
     CloseHandle(mr->msg_event);
+    HeapFree(GetProcessHeap(),0,mr->messages);
     DeleteCriticalSection(&mr->msg_crst);
     return 0;
 }
@@ -369,11 +372,11 @@ static int ARTS_AddRingMessage(ARTS_MSG_RING* mr, enum win_wm_message msg, DWORD
     HANDLE      hEvent = INVALID_HANDLE_VALUE;
 
     EnterCriticalSection(&mr->msg_crst);
-    if ((mr->msg_toget == ((mr->msg_tosave + 1) % ARTS_RING_BUFFER_SIZE))) /* buffer overflow? */
+    if ((mr->msg_toget == ((mr->msg_tosave + 1) % mr->ring_buffer_size)))
     {
-        ERR("buffer overflow !?\n");
-        LeaveCriticalSection(&mr->msg_crst);
-        return 0;
+	mr->ring_buffer_size += ARTS_RING_BUFFER_INCREMENT;
+	TRACE("mr->ring_buffer_size=%d\n",mr->ring_buffer_size);
+	mr->messages = HeapReAlloc(GetProcessHeap(),0,mr->messages, mr->ring_buffer_size * sizeof(RING_MSG));
     }
     if (wait)
     {
@@ -388,7 +391,7 @@ static int ARTS_AddRingMessage(ARTS_MSG_RING* mr, enum win_wm_message msg, DWORD
             FIXME("two fast messages in the queue!!!!\n");
 
         /* fast messages have to be added at the start of the queue */
-        mr->msg_toget = (mr->msg_toget + ARTS_RING_BUFFER_SIZE - 1) % ARTS_RING_BUFFER_SIZE;
+        mr->msg_toget = (mr->msg_toget + mr->ring_buffer_size - 1) % mr->ring_buffer_size;
 
         mr->messages[mr->msg_toget].msg = msg;
         mr->messages[mr->msg_toget].param = param;
@@ -399,7 +402,7 @@ static int ARTS_AddRingMessage(ARTS_MSG_RING* mr, enum win_wm_message msg, DWORD
         mr->messages[mr->msg_tosave].msg = msg;
         mr->messages[mr->msg_tosave].param = param;
         mr->messages[mr->msg_tosave].hEvent = INVALID_HANDLE_VALUE;
-        mr->msg_tosave = (mr->msg_tosave + 1) % ARTS_RING_BUFFER_SIZE;
+        mr->msg_tosave = (mr->msg_tosave + 1) % mr->ring_buffer_size;
     }
 
     LeaveCriticalSection(&mr->msg_crst);
@@ -436,7 +439,7 @@ static int ARTS_RetrieveRingMessage(ARTS_MSG_RING* mr,
     mr->messages[mr->msg_toget].msg = 0;
     *param = mr->messages[mr->msg_toget].param;
     *hEvent = mr->messages[mr->msg_toget].hEvent;
-    mr->msg_toget = (mr->msg_toget + 1) % ARTS_RING_BUFFER_SIZE;
+    mr->msg_toget = (mr->msg_toget + 1) % mr->ring_buffer_size;
     LeaveCriticalSection(&mr->msg_crst);
     return 1;
 }
