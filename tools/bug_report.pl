@@ -319,7 +319,7 @@ if ($debuglevel > 1) {
 	chomp $debugopts;
 	if ($debugopts =~ /--debugmsg /) {
 		($crap, $debugopts) = split / /,$debugopts;
-	if ($debugopts =~ /WINEDEBUG /) {
+	if ($debugopts =~ /WINEDEBUG= /) {
 		($crap, $debugopts) = split / /,$debugopts;
 	}
 	if ($debugopts =~ /^\s*$/) {
