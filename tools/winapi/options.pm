@@ -41,7 +41,6 @@ package _options;
 
 use strict;
 
-use config qw($current_dir $wine_dir);
 use output qw($output);
 
 sub new {
@@ -182,6 +181,7 @@ sub parse_files {
     my $self = shift;
 
     my $arguments = \@{$self->{_ARGUMENTS}};
+    my $directories = \@{$self->{_DIRECTORIES}};
     my $c_files = \@{$self->{_C_FILES}};
     my $h_files = \@{$self->{_H_FILES}};
 
@@ -245,6 +245,16 @@ sub parse_files {
 	    }
 	} split(/\n/, `$h_command`));
     }
+
+    my %dirs;
+    foreach my $file (@$c_files, @$h_files) {
+	my $dir = $file;
+	$dir =~ s%/?[^/]+$%%;
+	if(!$dir) { $dir = "."; }
+	$dirs{$dir}++
+    }
+
+    @$directories = sort(keys(%dirs));
 }
 
 sub options_set {
@@ -390,6 +400,18 @@ sub h_files {
     }
 
     return @$h_files;
+}
+
+sub directories {
+    my $self = shift; 
+
+    my $directories = \@{$self->{_DIRECTORIES}};
+
+    if(!defined(@$directories)) {
+	$self->parse_files;
+    }
+
+    return @$directories;
 }
 
 1;

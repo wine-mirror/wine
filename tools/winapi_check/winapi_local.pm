@@ -323,7 +323,7 @@ sub _check_statements {
 			}
 		    }
 		}
-	    } else {
+	    } elsif($options->cross_call) {
 		$$functions{$internal_name}->function_called($called_name);
 		if(!defined($$functions{$called_name})) {
 		    $$functions{$called_name} = 'winapi_function'->new;

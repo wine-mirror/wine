@@ -391,6 +391,8 @@ dlls/winedos
 
 % dlls/wineps/wineps.spec
 
+dlls/wineps
+
 % dlls/wineps/wineps16.spec
 
 dlls/wineps

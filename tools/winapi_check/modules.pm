@@ -14,7 +14,7 @@ use vars qw($modules);
 use config qw(
     &file_type &files_skip
     &file_directory
-    &get_c_files 
+    &get_c_files &get_spec_files 
     $current_dir $wine_dir
     $winapi_check_dir
 );
@@ -23,36 +23,58 @@ use output qw($output);
 
 $modules = 'modules'->new;
 
+sub get_spec_file_type {
+    my $file = shift;
+
+    my $module;
+    my $type;
+
+    open(IN, "< $file") || die "$file: $!\n";
+    local $/ = "\n";
+    while(<IN>) {
+	s/^\s*(.*?)\s*$/$1/;
+	s/^(.*?)\s*#.*$/$1/;
+	/^$/ && next;
+
+	if(/^name\s*(\S*)/) { $module = $1; }
+	if(/^type\s*(\w+)/) { $type = $1; }
+
+	if(defined($module) && defined($type)) { last; }
+    }
+    close(IN);
+
+    if(!defined($module)) {
+	$module = $file;
+	$module =~ s%^.*?([^/]+)\.spec|%$1%;
+    }
+
+    if(!defined($type)) {
+	$type = "";
+    }
+
+    return ($type, $module);
+}
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
     bless ($self, $class);
 
+    my $spec_files16 = \@{$self->{SPEC_FILES16}};
+    my $spec_files32 = \@{$self->{SPEC_FILES32}};
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
+    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
 
     my $module_file = "$winapi_check_dir/modules.dat";
-
-    my @all_spec_files = map {
-	s/^.\/(.*)$/$1/;
-	if(file_type($_) eq "winelib") {
-	    $_;
-	} else {
-	    ();
-	}
-    } split(/\n/, `find $wine_dir -name \\*.spec`);
-
-    my %all_spec_files;
-    foreach my $file (@all_spec_files) {
-	$all_spec_files{$file}++ ;
-    }
 
     if($options->progress) {
 	$output->progress("modules.dat");
     }
 
+    my %spec_file_found;
     my $allowed_dir;
     my $spec_file;
 
@@ -65,17 +87,13 @@ sub new {
 
 	if(/^%\s+(.*?)$/) {
 	    $spec_file = $1;
-	   
+
 	    if(!-f "$wine_dir/$spec_file") {
 		$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
 	    } 
 
-	    if($wine_dir eq ".") {
-		$all_spec_files{$spec_file}--;
-	    } else {
-		$all_spec_files{"$wine_dir/$spec_file"}--;
-	    }
-	    $$dir2spec_file{""}{$spec_file}++; # FIXME: Kludge
+	    $spec_file_found{$spec_file}++;
+	    $$spec_file2dir{$spec_file} = {};
 	    next;
 	} else {
 	    $allowed_dir = $1;
@@ -89,8 +107,40 @@ sub new {
     }
     close(IN);
 
-    foreach my $spec_file (sort(keys(%all_spec_files))) {
-	if($all_spec_files{$spec_file} > 0) {
+    my @spec_files;
+    if($wine_dir eq ".") {
+	@spec_files = get_spec_files("winelib");
+    } else {
+	my %spec_files = ();
+	foreach my $dir ($options->directories) {
+	    $dir = "$current_dir/$dir";
+	    $dir =~ s%/\.$%%;
+	    foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
+		$spec_files{$spec_file}++;
+	    }
+	}
+	@spec_files = sort(keys(%spec_files));
+    }
+
+    @$spec_files16 = ();
+    @$spec_files32 = ();
+    foreach my $spec_file (@spec_files) {
+	(my $type, my $module) = get_spec_file_type("$wine_dir/$spec_file");
+
+	$$spec_file2module{$spec_file} = $module;
+	$$module2spec_file{$module} = $spec_file;
+
+	if($type eq "win16") {
+	    push @$spec_files16, $spec_file;
+	} elsif($type eq "win32") {
+	    push @$spec_files32, $spec_file;
+	} else {
+	    $output->write("$spec_file: unknown type '$type'\n");
+	}
+    }
+
+    foreach my $spec_file (@spec_files) {
+	if(!$spec_file_found{$spec_file}) {
 	    $output->write("modules.dat: $spec_file: exists but is not specified\n");
 	}
     }
@@ -146,19 +196,14 @@ sub complete_modules {
     return @complete_modules;
 }
 
-sub spec_file_module {
+sub is_allowed_module {
     my $self = shift;
 
-    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
     my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
 
-    my $spec_file = shift;
-    $spec_file =~ s/^\.\///;
-
     my $module = shift;
-  
-    $$spec_file2module{$spec_file} = $module;
-    $$module2spec_file{$module} = $spec_file;
+
+    return defined($$module2spec_file{$module});
 }
 
 sub is_allowed_module_in_file {
@@ -205,7 +250,9 @@ sub allowed_modules_in_file {
 	$allowed_modules{$module}++;
     }
 
-    return join(" & ", sort(keys(%allowed_modules)));
+    my $module = join(" & ", sort(keys(%allowed_modules)));
+
+    return $module;
 }
 
 sub allowed_dirs_for_module {
@@ -221,32 +268,20 @@ sub allowed_dirs_for_module {
    return sort(keys(%{$$spec_file2dir{$spec_file}}));
 }
 
-sub allowed_spec_files {
+sub allowed_spec_files16 {
     my $self = shift;
 
-    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
+    my $spec_files16 = \@{$self->{SPEC_FILES16}};
 
-    my @dirs = map {
-	s/^\.\/(.*)$/$1/;
-	if(/^\.$/) {
-	    $current_dir;
-	} else {
-	    if($current_dir ne ".") {
-		"$current_dir/$_";
-	    } else {
-		$_;
-	    }
-	}
-    } split(/\n/, `find . -type d ! -name CVS`);
+    return @$spec_files16;
+}
 
-    my %allowed_spec_files = ();
-    foreach my $dir (sort(@dirs)) {
-	foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
-	    $allowed_spec_files{$spec_file}++; 
-	}
-    }
+sub allowed_spec_files32 {
+    my $self = shift;
 
-    return sort(keys(%allowed_spec_files));
+    my $spec_files32 = \@{$self->{SPEC_FILES32}};
+
+    return @$spec_files32;
 }
 
 sub found_module_in_dir {
@@ -257,6 +292,9 @@ sub found_module_in_dir {
 
     my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
 
+    $dir = "$current_dir/$dir";
+    $dir =~ s%/\.$%%;
+
     $$used_module_dirs{$module}{$dir}++;
 }
 
@@ -264,15 +302,16 @@ sub global_report {
     my $self = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
-    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
+    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
     my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
 
     my @messages;
-    foreach my $dir (sort(keys(%$dir2spec_file))) {
-	if($dir eq "") { next; }
-	foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
-	    my $module = $$spec_file2module{$spec_file};
+    foreach my $dir ($options->directories) {
+	$dir = "$current_dir/$dir";
+	$dir =~ s%/\.$%%;
+	foreach my $module ($self->all_modules) {
 	    if(!$$used_module_dirs{$module}{$dir}) {
+		my $spec_file = $$module2spec_file{$module};
 		push @messages, "modules.dat: $spec_file: directory ($dir) is not used\n";
 	    }
 	}

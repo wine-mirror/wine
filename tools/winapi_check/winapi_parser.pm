@@ -293,10 +293,6 @@ sub parse_c_file {
 		}
 	    }
 
-	    if(!defined($statements)) {
-		$statements = "";
-	    }
-
 	    if($line !~ /^\s*$/) {
 		$statements .= "$line\n";
 	    }
@@ -408,9 +404,9 @@ sub parse_c_file {
 			     $function_line, $linkage, $return_type, $calling_convention, $name,
 			     \@argument_types,\@argument_names,\@argument_documentations);
 	    if($level == 0) {
-		&$function_end($statements);
-		$statements = undef;
+		&$function_end(undef);
 	    }
+	    $statements = "";
 	} elsif(/__ASM_GLOBAL_FUNC\(\s*(.*?)\s*,/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;

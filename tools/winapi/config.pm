@@ -110,16 +110,16 @@ sub file_normalize {
 }
 
 sub file_directory {
-    my $file = shift;
-    $file =~ s%^./%%;
+    local $_ = shift;
 
-    my $dir = $file;
-    $dir =~ s%/?[^/]*$%%;
-    if(!$dir) {
-	$dir = ".";
+    s%/?[^/]*$%%;
+    if(!$_) {
+	$_ = ".";
     }
-  
-    return $dir;
+
+    s%^(?:\./)?(.*?)(?:/\.)?%$1%;
+
+    return $_;
 }
 
 sub _get_files {

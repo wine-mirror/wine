@@ -13,28 +13,31 @@ use vars qw($win16api $win32api @winapis);
 
 use config qw(
     &file_type
-    &get_api_files &get_spec_files
+    &get_api_files
     $current_dir $wine_dir
 );
 use modules qw($modules);
 use options qw($options);
 use output qw($output);
 
-$win16api = 'winapi'->new("win16");
-$win32api = 'winapi'->new("win32");
+my @spec_files16 = $modules->allowed_spec_files16;
+$win16api = 'winapi'->new("win16", \@spec_files16);
+
+my @spec_files32 = $modules->allowed_spec_files32;
+$win32api = 'winapi'->new("win32", \@spec_files32);
+
 @winapis = ($win16api, $win32api);
 
-my @spec_files = get_spec_files("winelib");
-foreach my $file (@spec_files) {
-    (my $type, my $module) = 'winapi'->get_spec_file_type("$wine_dir/$file");
-    $modules->spec_file_module($file, $module);
-}
-
-if($wine_dir eq ".") {
-    'winapi'->read_spec_files(\@spec_files);
-} else {
-    @spec_files = $modules->allowed_spec_files;
-    'winapi'->read_spec_files(\@spec_files);
+for my $internal_name ($win32api->all_internal_functions) {
+    my $module16 = $win16api->function_internal_module($internal_name);
+    my $module32 = $win16api->function_internal_module($internal_name);
+    if(defined($module16) &&
+       !$win16api->is_function_stub_in_module($module16, $internal_name) &&
+       !$win32api->is_function_stub_in_module($module32, $internal_name))
+    {
+	$win16api->found_shared_internal_function($internal_name);
+	$win32api->found_shared_internal_function($internal_name);
+    }
 }
 
 sub new {
@@ -44,19 +47,34 @@ sub new {
     bless ($self, $class);
 
     my $name = \${$self->{NAME}};
+    my $function_forward = \%{$self->{FUNCTION_FORWARD}};
+    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+    my $function_module = \%{$self->{FUNCTION_MODULE}};
 
     $$name = shift;
+    my $refspec_files = shift;
+
+    foreach my $file (@$refspec_files) {
+	$self->parse_spec_file("$wine_dir/$file");
+    }
 
     foreach my $file (get_api_files($$name)) {
 	my $module = $file;
-
-	if($options->progress) {
-	    $output->lazy_progress("$file");
-	}
-
 	$module =~ s/.*?\/([^\/]*?)\.api$/$1/;
-	$self->parse_api_file($file,$module);
+
+	if($modules->is_allowed_module($module)) {
+	    $self->parse_api_file($file,$module);
+	}
     }   
+	
+    foreach my $forward_name (sort(keys(%$function_forward))) {
+	$$function_forward{$forward_name} =~ /^(\S*):(\S*)\.(\S*)$/;
+	(my $from_module, my $to_module, my $external_name) = ($1, $2, $3);
+	my $internal_name = $$function_internal_name{$external_name};
+	if(defined($internal_name)) {
+	    $$function_module{$internal_name} .= " & $from_module";
+	}
+    }
 
     return $self;
 }
@@ -88,7 +106,7 @@ sub parse_api_file {
     my $forbidden = 0;
 
     if($options->progress) {
-	$output->progress("$file");
+	$output->lazy_progress("$file");
     }
 
     open(IN, "< $wine_dir/$file") || die "$wine_dir/$file: $!\n";
@@ -171,75 +189,6 @@ sub parse_api_file {
 	}
     }
     close(IN);
-}
-
-sub get_spec_file_type {
-    my $proto = shift;
-    my $class = ref($proto) || $proto;
-
-    my $file = shift;
-
-    my $module;
-    my $type;
-
-    open(IN, "< $file") || die "$file: $!\n";
-    local $/ = "\n";
-    while(<IN>) {
-	s/^\s*(.*?)\s*$/$1/;
-	s/^(.*?)\s*#.*$/$1/;
-	/^$/ && next;
-
-	if(/^name\s*(\S*)/) { $module = $1; }
-	if(/^type\s*(\w+)/) { $type = $1; }
-
-	if(defined($module) && defined($type)) { last; }
-    }
-    close(IN);
-
-    return ($type, $module);
-}
-
-sub read_spec_files {
-    my $proto = shift;
-    my $class = ref($proto) || $proto;
-
-    my $files = shift;
-
-    foreach my $file (@$files) {
-	(my $type, my $module) = 'winapi'->get_spec_file_type("$wine_dir/$file");
-	if($type eq "win16") {
-	    $win16api->parse_spec_file("$wine_dir/$file");
-	} elsif($type eq "win32") {
-	    $win32api->parse_spec_file("$wine_dir/$file");
-	}
-    }
-
-    foreach my $self ($win16api, $win32api) {
-	my $function_forward = \%{$self->{FUNCTION_FORWARD}};
-	my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
-	my $function_module = \%{$self->{FUNCTION_MODULE}};
-	
-	foreach my $forward_name (sort(keys(%$function_forward))) {
-	    $$function_forward{$forward_name} =~ /^(\S*):(\S*)\.(\S*)$/;
-	    (my $from_module, my $to_module, my $external_name) = ($1, $2, $3);
-	    my $internal_name = $$function_internal_name{$external_name};
-	    if(defined($internal_name)) {
-		$$function_module{$internal_name} .= " & $from_module";
-	    }
-	}
-    }
-
-    for my $internal_name ($win32api->all_internal_functions) {
-	my $module16 = $win16api->function_internal_module($internal_name);
-	my $module32 = $win16api->function_internal_module($internal_name);
-	if(defined($module16) &&
-	   !$win16api->is_function_stub_in_module($module16, $internal_name) &&
-	   !$win32api->is_function_stub_in_module($module32, $internal_name))
-	{
-	    $win16api->found_shared_internal_function($internal_name);
-	    $win32api->found_shared_internal_function($internal_name);
-	}
-    }
 }
 
 sub parse_spec_file {

@@ -30,10 +30,30 @@ my $function;
 ########################################################################
 
 sub error {
-    if(defined($tool)) {
-	$output->write("make_filter: $tool: can't parse output: '$current'\n");
+    my $where = shift;
+
+    if(!defined($where)) {
+	$where = "";
+    }
+
+    my $context;
+    if($tool) {
+	$context = "$tool";
+	if($where) {
+	    $context .= "<$where>";
+	}
     } else {
-	$output->write("make_filter: <>: can't parse output: '$current'\n");
+	if($where) {
+	    $context = "<$where>";
+	} else {
+	    $context = "<>";
+	}
+    }
+
+    if(defined($tool)) {
+	$output->write("make_filter: $context: can't parse output: '$current'\n");
+    } else {
+	$output->write("make_filter: $context: can't parse output: '$current'\n");
     }
     exit 1;
 }
@@ -57,20 +77,25 @@ sub line {
 
 	$function = "";
 
+	my $progress = "";
+	if($directory && $directory ne ".") {
+	    $progress .= "$directory: ";
+	}
+	$progress .= "$tool: ";
+
 	if($tool =~ /^cd|make$/) {
 	    # Nothing
 	} elsif($tool =~ /^ld$/) {
 	    foreach my $file (@{$read_files}) {
-		$output->lazy_progress("$directory: ld: reading '$file'");
+		$output->lazy_progress("$progress: reading '$file'");
 	    }
 	    my $file = $$write_files[0];
-	    $output->progress("$directory: ld: writing '$file'");
+	    $output->progress("$progress: writing '$file'");
 	} elsif($tool =~ /^rm$/) {
 	    foreach my $file (@{$remove_files}) {
-		$output->lazy_progress("$directory: rm: removing '$file'");
+		$output->lazy_progress("$progress: removing '$file'");
 	    }
 	} else {
-	    my $progress = "$directory: $tool: ";
 	    if($#$read_files >= 0) {
 		$progress .= "read[" . join(" ", @{$read_files}) . "]";
 	    }
@@ -89,6 +114,7 @@ sub line {
 	    
 	    $output->progress($progress);
 	}
+
 	return 0;
     }
 
@@ -102,7 +128,7 @@ sub line {
 	$tool = "make";
 	make_output($1, $_);
     } elsif(!defined($tool)) {
-	error();
+	error("line");
     } elsif($tool eq "bison" && /^conflicts:\s+\d+\s+shift\/reduce$/) {
 	# Nothing
     } elsif($tool eq "gcc" && /^In file included from (.+?):(\d+):$/) {
@@ -120,7 +146,7 @@ sub line {
     } elsif($tool eq "cd" && s/^\/bin\/sh:\s*cd:\s*//) {
 	parse_cd_output($_);
     } else {
-	error();
+	error("line");
     }
     
     $file =~ s/^\.\///;
@@ -147,7 +173,7 @@ sub make_output {
 	if(/^File \`(.+?)\' has modification time in the future \((.+?) > \(.+?\)\)$/) {
 	    # Nothing
 	} else {
-	    error();
+	    error("make_output");
 	}
     } elsif(/^\`(.*?)\' is up to date.$/) {
 	# Nothing
@@ -177,10 +203,10 @@ sub make_output {
 	if(/^Clock skew detected.  Your build may be incomplete.$/) {
 	    # Nothing
 	} else {
-	    error();
+	    error("make_output");
 	}
     } else {
-	error();
+	error("make_output");
     }
 
 }
@@ -204,61 +230,61 @@ sub command {
 	# Nothing
     }
 
-    if(s/^ar\s*//) {
+    if(s/^ar\s+//) {
 	$tool = "ar";
 	($read_files, $write_files) = ar_command($_);
-    } elsif(s/^as\s*//) {
+    } elsif(s/^as\s+//) {
 	$tool = "as";
 	($read_files, $write_files) = as_command($_);
-    } elsif(s/^bison\s*//) {
+    } elsif(s/^bison\s+//) {
 	$tool = "bison";
 	($read_files, $write_files) = bison_command($_);
-    } elsif(s/^cd\s*//) {
+    } elsif(s/^cd\s+//) {
 	$tool = "cd";
 	($read_files, $write_files) = cd_command($_);
-    } elsif(s/^flex\s*//) {
+    } elsif(s/^flex\s+//) {
 	$tool = "flex";
 	($read_files, $write_files) = flex_command($_);
-    } elsif(s/^for\s*//) {
+    } elsif(s/^for\s+//) {
 	$tool = "for";
 	($read_files, $write_files) = for_command($_);
-    } elsif(s/^\/usr\/bin\/install\s*//) {
+    } elsif(s/^\/usr\/bin\/install\s+//) {
 	$tool = "install";
 	($read_files, $write_files) = install_command($_);
-    } elsif(s/^ld\s*//) {
+    } elsif(s/^ld\s+//) {
 	$tool = "ld";
 	($read_files, $write_files) = ld_command($_);
-    } elsif(s/^\/sbin\/ldconfig\s*//) {
+    } elsif(s/^\/sbin\/ldconfig\s+//) {
 	$tool = "ldconfig";
 	($read_files, $write_files) = ldconfig_command();
-    } elsif(s/^gcc\s*//) {
+    } elsif(s/^gcc\s+//) {
 	$tool = "gcc";
 	($read_files, $write_files) = gcc_command($_);
-    } elsif(s/^(?:(?:\.\.\/)+|\.\/)tools\/makedep\s*//) {
+    } elsif(s/^(?:(?:\.\.\/)+|\.\/)tools\/makedep\s+//) {
 	$tool = "makedep";
 	($read_files, $write_files) = makedep_command($_);
-    } elsif(s/^mkdir\s*//) {
+    } elsif(s/^mkdir\s+//) {
 	$tool = "mkdir";
 	($read_files, $write_files) = mkdir_command($_);
-    } elsif(s/^ranlib\s*//) {
+    } elsif(s/^ranlib\s+//) {
 	$tool = "ranlib";
 	($read_files, $write_files) = ranlib_command($_);
-    } elsif(s/^rm\s*//) {
+    } elsif(s/^rm\s+//) {
 	$tool = "rm";
 	($read_files, $write_files, $remove_files) = rm_command($_);
-    } elsif(s/^sed\s*//) {
+    } elsif(s/^sed\s+//) {
 	$tool = "sed";
 	($read_files, $write_files) = sed_command($_);
-    } elsif(s/^strip\s*//) {
+    } elsif(s/^strip\s+//) {
 	$tool = "sed";
 	($read_files, $write_files) = strip_command($_);
-    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/winebuild\/winebuild\s*//) {
+    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/winebuild\/winebuild\s+//) {
 	$tool = "winebuild";
 	($read_files, $write_files) = winebuild_command($_);
-    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wmc\/wmc\s*//) {
+    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wmc\/wmc\s+//) {
 	$tool = "wmc";
 	($read_files, $write_files) = wmc_command($_);
-    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wrc\/wrc\s*//) {
+    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wrc\/wrc\s+//) {
 	$tool = "wrc";
 	($read_files, $write_files) = wrc_command($_);
     }
@@ -282,7 +308,7 @@ sub ar_command {
 	$read_files =~ s/^\s*//;
 	$read_files = [split(/\s+/, $read_files)];
     } else {
-	error();
+	error("ar_command");
     }
 
     return ($read_files, $write_files);
@@ -302,7 +328,7 @@ sub as_command {
 	$write_files = [$1];
 	$read_files = [$2];
     } else {
-	error();
+	error("as_command");
     }
 
     return ($read_files, $write_files);
@@ -378,7 +404,7 @@ sub gcc_command {
 	$write_files = [$1];
 	$read_files = ["<???>"];
     } else {
-	error();
+	error("gcc_command");
     }
 
     return ($read_files, $write_files);
@@ -400,7 +426,19 @@ sub gcc_output {
 	    if(0) {
 		# Nothing
 	    } elsif(/^((?:signed |unsigned )?(?:int|long)) format, (different type|\S+) arg \(arg (\d+)\)$/) {
-		$supress = 0;
+		my $type = $2;
+		if($type =~ /^
+		   HACCEL|HANDLE|HBITMAP|HBRUSH|HCALL|HCURSOR|HDC|HDRVR|HDESK|
+		   HGDIOBJ|HKL|HGLOBAL|HINSTANCE|HKEY|
+		   HMENU|HMIDISTRM|HMIDIIN|HMIDIOUT|HMIXER|HMIXEROBJ|HMMIO|HMODULE|
+		   HLINE|HPHONE|HPHONEAPP|
+		   HRASCONN|HRGN|HRSRC|HWAVEIN|HWAVEOUT|HWINSTA|HWND|WSAEVENT|
+		   handle_t|pointer$/x) 
+		{
+		    $supress = 1;
+		} else {
+		    $supress = 0;
+		}
 	    } elsif(/^\(near initialization for \`(.*?)\'\)$/) {
 		$supress = 0;
 	    } elsif(/^\`(.*?)\' defined but not used$/) {
@@ -442,7 +480,13 @@ sub gcc_output {
 	    } elsif(/^ordered comparison of pointer with integer zero$/) {
 		$supress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') from incompatible pointer type$/) {
-		$supress = 0;
+		my $arg = $1;
+		my $name = $2;
+		if(defined($name) && $name =~ /^GDI_AllocObject$/) {
+		    $supress = 1;
+		} else {
+		    $supress = 0;
+		}
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes integer from pointer without a cast$/) {
 		$supress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes pointer from integer without a cast$/) {
@@ -458,14 +502,14 @@ sub gcc_output {
 	    } elsif(!$options->pedantic) {
 		$supress = 0;
 	    } else {
-		error();
+		error("gcc_output");
 	    }
 
 	    if(!$supress) {
 		if($function) {
-		    $message = "function $function: $_";
+		    $message = "function $function: warning: $_";
 		} else {
-		    $message = "$_";
+		    $message = "warning: $_";
 		}
 	    } else {
 		$message = "";
@@ -487,14 +531,14 @@ sub gcc_output {
 	} elsif(!$options->pedantic) {
 	    $message = "$_";
 	} else {
-	    error();
+	    error("gcc_output");
 	}
     } elsif(/^In function \`(.*?)\':$/) {
 	$function = $1;
     } elsif(/^At top level:$/) {
 	$function = "";
     } else {
-	error();
+	error("gcc_output");
     }
 }
 
@@ -522,7 +566,7 @@ sub ld_command {
 	$write_files = [$2];
 	$read_files = [split(/\s+/, $1)];
     } else {
-	error();
+	error("ld_command");
     }
 
     return ($read_files, $write_files);
@@ -657,7 +701,7 @@ sub wmc_command {
 	$write_files = [$rc_file];
 	$read_files = [$mc_file];
     } else {
-	error();
+	error("wmc_command");
     }
 
     return ($read_files, $write_files);
@@ -691,7 +735,7 @@ sub wrc_command {
 	$write_files = [$o_file];
 	$read_files = [$rc_file];
     } else {
-	error();
+	error("wrc_command");
     }
 
     return ($read_files, $write_files);

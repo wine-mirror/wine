@@ -98,6 +98,26 @@ my @h_files = $options->h_files;
 @h_files = files_skip(@h_files);
 @h_files = files_filter("winelib", @h_files);
 
+my $all_modules = 0;
+my %complete_module;
+if($options->global) {
+    my @complete_modules = $modules->complete_modules(\@c_files);
+    
+    foreach my $module (@complete_modules) {
+	$complete_module{$module}++;
+    }
+
+    my $all_modules = 1;
+    foreach my $module ($modules->all_modules) {
+	if(!$complete_module{$module}) {
+	    $all_modules = 0;
+	    if($wine_dir eq ".") {
+		$output->write("*.c: module $module is not complete\n");
+	    }
+	}
+    }
+}
+
 my $progress_current = 0;
 my $progress_max = scalar(@c_files);
 
@@ -289,7 +309,7 @@ foreach my $file (@c_files) {
 	   (defined($module16) || defined($module32)) &&
 	   $linkage eq "" && defined($statements))
 	{
-	    # &winapi_documentation::check_documentation($function);
+	    &winapi_documentation::check_documentation($function);
 	}
 
 	if(1) {
@@ -523,7 +543,7 @@ foreach my $file (@c_files) {
 	    }
 	}
     };
-  
+
     &winapi_parser::parse_c_file($file, $create_function, $found_function, $create_type, $found_type, $found_preprocessor);
     
     if($options->config_unnessary) {
@@ -536,12 +556,7 @@ foreach my $file (@c_files) {
 }
 
 if($options->global) {
-    my @complete_modules = $modules->complete_modules(\@c_files);
-    my %complete_module;
-
-    foreach my $module (@complete_modules) {
-	$complete_module{$module}++;
-    }
+    my @complete_modules = sort(keys(%complete_module));
 
     if($options->declared) {
 	foreach my $module (@complete_modules) {
@@ -575,12 +590,6 @@ if($options->global) {
 	}
     }
 
-    my $all_modules = 1;
-    foreach my $module ($modules->all_modules) {
-	if(!$complete_module{$module}) {
-	    $all_modules = 0;
-	}
-    }
     if($all_modules) {
 	&winapi_documentation::report_documentation;
 	
