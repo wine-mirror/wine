@@ -313,24 +313,24 @@ if ($debuglevel > 1) {
 		$var13 = qq{
 		How many trailing lines of debugging info do you want to include in the report
 		you're going to submit (First file)? If a developer asks you to include
-		the last 200 lines, enter 200 here. Default is 100, which is reached by
+		the last 1000 lines, enter 1000 here. Default is 200, which is reached by
 		pressing enter. (If you're not sure, just hit enter):
 		};
 		print do_var($var13);
 	} elsif ($debuglevel =~ 3) {
 		$var14 = qq{
 		Enter how many lines of trailing debugging output you want in your nice
-		formatted report. Default is 100:
+		formatted report. Default is 200:
 		};
 		print do_var($var14);
 	}
 	$lastnlines=<STDIN>;
 	chomp $lastnlines;
 	if ($lastnlines =~ /^\s*$/) { 
-	$lastnlines=100; 
+	$lastnlines=200; 
 	} 
 } elsif ($debuglevel =~ 1) {
-	$lastnlines=100; 
+	$lastnlines=200; 
 }
 if ($debuglevel > 1) { 
 	$var15 = qq{
