@@ -3766,7 +3766,7 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 	    {
 		POPUPMENU *menu = (POPUPMENU*) 
 			   USER_HEAP_LIN_ADDR(wndPtr->hSysMenu);
-		if( menu->items[0].hSubMenu == MENU_DefSysPopup )
+		if( menu->nItems > 0 && menu->items[0].hSubMenu == MENU_DefSysPopup )
 		    menu->items[0].hSubMenu = MENU_CopySysPopup();
 	    }
 	}
