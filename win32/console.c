@@ -273,7 +273,7 @@ CONSOLE_get_input( HANDLE32 handle )
     {
 	DWORD res;
 	char inchar;
-        if (!WaitForSingleObject( handle, 0 )) break;
+        if (WaitForSingleObject( handle, 0 )) break;
         if (!ReadFile( handle, &inchar, 1, &res, NULL )) break;
 	buf = HeapReAlloc(GetProcessHeap(),0,buf,len+1);
 	buf[len++]=inchar;
