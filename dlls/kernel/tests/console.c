@@ -23,12 +23,12 @@
 #include <stdio.h>
 
 /* DEFAULT_ATTRIB is used for all initial filling of the console.
- * all modifications are made with TEST_ATTRIB so that we could check 
- * what has to be modified or not 
+ * all modifications are made with TEST_ATTRIB so that we could check
+ * what has to be modified or not
  */
 #define TEST_ATTRIB    (BACKGROUND_BLUE | FOREGROUND_GREEN)
 #define DEFAULT_ATTRIB (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_RED)
-/* when filling the screen with non-blank chars, this macro defines 
+/* when filling the screen with non-blank chars, this macro defines
  * what character should be at position 'c'
  */
 #define CONTENT(c)    ('A' + (((c).Y * 17 + (c).X) % 23))
@@ -56,7 +56,7 @@ static void resetContent(HANDLE hCon, COORD sbSize, BOOL content)
     WORD        attr = DEFAULT_ATTRIB;
     char        ch;
     DWORD       len;
-    
+
     for (c.X = 0; c.X < sbSize.X; c.X++)
     {
         for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
@@ -71,26 +71,27 @@ static void resetContent(HANDLE hCon, COORD sbSize, BOOL content)
 static void testCursor(HANDLE hCon, COORD sbSize)
 {
     COORD		c;
-    
+
+    c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(0, c) == 0, "No handle");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %lu",
        ERROR_INVALID_HANDLE, GetLastError());
-    
+
     c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left");
     okCURSOR(hCon, c);
-    
+
     c.X = sbSize.X - 1;
     c.Y = sbSize.Y - 1;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in lower-right");
     okCURSOR(hCon, c);
-    
+
     c.X = sbSize.X;
     c.Y = sbSize.Y - 1;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu",
        ERROR_INVALID_PARAMETER, GetLastError());
-    
+
     c.X = sbSize.X - 1;
     c.Y = sbSize.Y;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside");
@@ -115,19 +116,19 @@ static void testWriteSimple(HANDLE hCon, COORD sbSize)
     COORD		c;
     DWORD		len;
     const char*		mytest = "abcdefg";
-    const size_t	mylen = strlen(mytest);
-    
+    const int	mylen = strlen(mytest);
+
     /* single line write */
     c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (c.X = 0; c.X < mylen; c.X++)
     {
         okCHAR(hCon, c, mytest[c.X], TEST_ATTRIB);
     }
-    
+
     okCURSOR(hCon, c);
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
 }
@@ -137,16 +138,16 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     COORD		c;
     DWORD		len, mode;
     const char*		mytest = "abcd\nf\tg";
-    const size_t	mylen = strlen(mytest);
+    const int	mylen = strlen(mytest);
     int			p;
-    
-    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, mode & ~(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT)), 
+
+    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, mode & ~(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT)),
        "clearing wrap at EOL & processed output");
-    
+
     /* write line, wrapping disabled, buffer exceeds sb width */
     c.X = sbSize.X - 3; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (p = mylen - 3; p < mylen; p++)
@@ -157,15 +158,15 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
 
     c.X = 0; c.Y = 1;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     p = sbSize.X - 3 + mylen % 3;
     c.X = p; c.Y = 0;
     okCURSOR(hCon, c);
-    
+
     /* write line, wrapping disabled, strings end on end of line */
     c.X = sbSize.X - mylen; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (p = 0; p < mylen; p++)
@@ -173,10 +174,10 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
         c.X = sbSize.X - mylen + p;
         okCHAR(hCon, c, mytest[p], TEST_ATTRIB);
     }
-    
+
     c.X = 0; c.Y = 1;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     p = sbSize.X - mylen;
     c.X = p; c.Y = 0;
     okCURSOR(hCon, c);
@@ -187,17 +188,17 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     COORD		c;
     DWORD		len, mode;
     const char*		mytest = "abcd\nf\tg";
-    const size_t	mylen = strlen(mytest);
-    const size_t	mylen2 = strchr(mytest, '\n') - mytest;
+    const int	mylen = strlen(mytest);
+    const int	mylen2 = strchr(mytest, '\n') - mytest;
     int			p;
-    
-    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, (mode | ENABLE_PROCESSED_OUTPUT) & ~ENABLE_WRAP_AT_EOL_OUTPUT), 
+
+    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, (mode | ENABLE_PROCESSED_OUTPUT) & ~ENABLE_WRAP_AT_EOL_OUTPUT),
        "clearing wrap at EOL & setting processed output");
-    
+
     /* write line, wrapping disabled, buffer exceeds sb width */
     c.X = sbSize.X - 5; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-5");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (c.X = sbSize.X - 5; c.X < sbSize.X - 1; c.X++)
@@ -205,7 +206,7 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
         okCHAR(hCon, c, mytest[c.X - sbSize.X + 5], TEST_ATTRIB);
     }
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     c.X = 0; c.Y++;
     okCHAR(hCon, c, mytest[5], TEST_ATTRIB);
     for (c.X = 1; c.X < 8; c.X++)
@@ -213,13 +214,13 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     okCHAR(hCon, c, mytest[7], TEST_ATTRIB);
     c.X++;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     okCURSOR(hCon, c);
-    
+
     /* write line, wrapping disabled, strings end on end of line */
     c.X = sbSize.X - 4; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-4");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (c.X = sbSize.X - 4; c.X < sbSize.X; c.X++)
@@ -233,13 +234,13 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     okCHAR(hCon, c, mytest[7], TEST_ATTRIB);
     c.X++;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     okCURSOR(hCon, c);
-    
+
     /* write line, wrapping disabled, strings end after end of line */
     c.X = sbSize.X - 3; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-4");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (p = mylen2 - 3; p < mylen2; p++)
@@ -254,7 +255,7 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     okCHAR(hCon, c, mytest[7], TEST_ATTRIB);
     c.X++;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     okCURSOR(hCon, c);
 }
 
@@ -263,16 +264,16 @@ static void testWriteWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     COORD		c;
     DWORD		len, mode;
     const char*		mytest = "abcd\nf\tg";
-    const size_t	mylen = strlen(mytest);
+    const int	mylen = strlen(mytest);
     int			p;
-    
-    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon,(mode | ENABLE_WRAP_AT_EOL_OUTPUT) & ~(ENABLE_PROCESSED_OUTPUT)), 
+
+    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon,(mode | ENABLE_WRAP_AT_EOL_OUTPUT) & ~(ENABLE_PROCESSED_OUTPUT)),
        "setting wrap at EOL & clearing processed output");
-    
+
     /* write line, wrapping enabled, buffer doesn't exceed sb width */
     c.X = sbSize.X - 9; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-9");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (p = 0; p < mylen; p++)
@@ -284,11 +285,11 @@ static void testWriteWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
     c.X = 0; c.Y = 1;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     /* write line, wrapping enabled, buffer does exceed sb width */
     c.X = sbSize.X - 3; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     c.Y = 0;
     for (p = 0; p < 3; p++)
@@ -296,7 +297,7 @@ static void testWriteWrappedNotProcessed(HANDLE hCon, COORD sbSize)
         c.X = sbSize.X - 3 + p;
         okCHAR(hCon, c, mytest[p], TEST_ATTRIB);
     }
-    
+
     c.Y = 1;
     for (p = 0; p < mylen - 3; p++)
     {
@@ -305,7 +306,7 @@ static void testWriteWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     }
     c.X = mylen - 3;
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
-    
+
     okCURSOR(hCon, c);
 }
 
@@ -314,16 +315,16 @@ static void testWriteWrappedProcessed(HANDLE hCon, COORD sbSize)
     COORD		c;
     DWORD		len, mode;
     const char*		mytest = "abcd\nf\tg";
-    const size_t	mylen = strlen(mytest);
+    const int	mylen = strlen(mytest);
     int			p;
-    
-    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, mode | (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT)), 
+
+    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, mode | (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT)),
        "setting wrap at EOL & processed output");
-    
+
     /* write line, wrapping enabled, buffer doesn't exceed sb width */
     c.X = sbSize.X - 9; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-9");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     for (p = 0; p < 4; p++)
     {
@@ -344,7 +345,7 @@ static void testWriteWrappedProcessed(HANDLE hCon, COORD sbSize)
     /* write line, wrapping enabled, buffer does exceed sb width */
     c.X = sbSize.X - 3; c.Y = 2;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3");
-    
+
     ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole");
     for (p = 0; p < 3; p++)
     {
@@ -394,7 +395,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
 
     /* no clipping, src & dst rect don't overlap */
     resetContent(hCon, sbSize, TRUE);
-    
+
 #define IN_SRECT(r,c) ((r).Left <= (c).X && (c).X <= (r).Right && (r).Top <= (c).Y && (c).Y <= (r).Bottom)
 #define IN_SRECT2(r,d,c) ((d).X <= (c).X && (c).X <= (d).X + (r).Right - (r).Left && (d).Y <= (c).Y && (c).Y <= (d).Y + (r).Bottom - (r).Top)
 
@@ -424,7 +425,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
                 tc.Y = c.Y - dst.Y;
                 okCHAR(hCon, c, CONTENT(tc), DEFAULT_ATTRIB);
             }
-            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c)) 
+            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c))
                 okCHAR(hCon, c, '#', TEST_ATTRIB);
             else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
         }
@@ -466,7 +467,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
 
     /* clipping, src & dst rect don't overlap */
     resetContent(hCon, sbSize, TRUE);
-    
+
     scroll.Left = 0;
     scroll.Right = W - 1;
     scroll.Top = 0;
@@ -493,7 +494,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
                 tc.Y = c.Y - dst.Y;
                 okCHAR(hCon, c, CONTENT(tc), DEFAULT_ATTRIB);
             }
-            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c)) 
+            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c))
                 okCHAR(hCon, c, '#', TEST_ATTRIB);
             else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
         }
@@ -501,7 +502,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
 
     /* clipping, src & dst rect do overlap */
     resetContent(hCon, sbSize, TRUE);
-    
+
     scroll.Left = 0;
     scroll.Right = W - 1;
     scroll.Top = 0;
@@ -528,7 +529,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
                 tc.Y = c.Y - dst.Y;
                 okCHAR(hCon, c, CONTENT(tc), DEFAULT_ATTRIB);
             }
-            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c)) 
+            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c))
                 okCHAR(hCon, c, '#', TEST_ATTRIB);
             else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
         }
@@ -542,7 +543,7 @@ START_TEST(console)
     BOOL ret;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
 
-    /* be sure we have a clean console (and that's our own) 
+    /* be sure we have a clean console (and that's our own)
      * FIXME: this will make the test fail (currently) if we don't run
      * under X11
      * Another solution would be to rerun the test under wineconsole with

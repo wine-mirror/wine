@@ -125,12 +125,14 @@ void winapi_test(int flags)
     if (hor == 0x0) goto abort;
 
     trace("HttpSendRequestA -->\n");
+    SetLastError(0);
     rc = HttpSendRequestA(hor, "", 0xffffffff,0x0,0x0);
     if (flags)
         ok(((rc == 0)&&(GetLastError()==997)),
             "Asyncronous HttpSendRequest NOT returning 0 with error 997");
     else
-        ok((rc != 0), "Syncronous HttpSendRequest returning 0");
+        ok((rc != 0) || GetLastError() == 12007, /* 12007 == XP */
+           "Syncronous HttpSendRequest returning 0, error %ld", GetLastError());
     trace("HttpSendRequestA <--\n");
 
     while ((flags)&&(!goon))
@@ -233,8 +235,11 @@ void InternetOpenUrlA_test(void)
   urlComponents.dwExtraInfoLength = 1024;
   ok((InternetCrackUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0,0,&urlComponents)),
      "InternetCrackUrl failed, error %lx\n",GetLastError());
+  SetLastError(0);
   myhttp = InternetOpenUrl(myhinternet, "http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0, 0,
 			   INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_TRANSFER_BINARY,0);
+  if (GetLastError() == 12007)
+    return; /* WinXP returns this when not connected to the net */
   ok((myhttp != 0),"InternetOpenUrl failed, error %lx\n",GetLastError());
   ok(InternetReadFile(myhttp, buffer,0x400,&readbytes), "InternetReadFile failed, error %lx\n",GetLastError());
   totalbytes += readbytes;

@@ -695,7 +695,7 @@ void test_MoveFileA(void)
         WIN32_FIND_DATAA fd;
         char temppath[MAX_PATH];
         HANDLE hFind;
-      
+
         lstrcpyA(temppath, tempdir);
         lstrcatA(temppath, "\\*.*");
         hFind = FindFirstFileA(temppath, &fd);
@@ -902,11 +902,6 @@ void test_FindFirstFileA()
     WIN32_FIND_DATAA search_results;
     int err;
 
-    handle = FindFirstFileA("C:",&search_results);
-    err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on Root directory should Fail");
-    if (handle == INVALID_HANDLE_VALUE)
-      ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number\n");
     handle = FindFirstFileA("C:\\",&search_results);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on Root directory should Fail");

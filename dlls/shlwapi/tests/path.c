@@ -92,7 +92,10 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, char* 
   FreeWideString(wszUrl);
   FreeWideString(wszConvertedPart);
 
-  ok(strcmp(szPart,szExpected)==0, "Expected %s, but got %s", szExpected, szPart);
+  /* Note that v6.0 and later don't return '?' with the query */
+  ok(strcmp(szPart,szExpected)==0 ||
+     (*szExpected=='?' && !strcmp(szPart,szExpected+1)),
+	 "Expected %s, but got %s", szExpected, szPart);
 }
 
 static void test_UrlGetPart(void)

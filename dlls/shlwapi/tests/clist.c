@@ -299,13 +299,13 @@ static void test_CList(void)
       inserted = pSHLWAPI_22(list, item->ulId);
       ok(inserted != NULL, "lost after adding");
 
-      ok(!inserted || inserted->ulId != -1, "find returned a container");
+      ok(!inserted || inserted->ulId != ~0UL, "find returned a container");
 
       /* Check size */
       if (inserted && inserted->ulSize & 0x3)
       {
         /* Contained */
-        ok(inserted[-1].ulId == -1, "invalid size is not countained");
+        ok(inserted[-1].ulId == ~0UL, "invalid size is not countained");
         ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
            "container too small");
       }
@@ -374,7 +374,7 @@ static void test_CList(void)
 
   inserted = (LPSHLWAPI_CLIST)buff;
   inserted->ulSize = 44;
-  inserted->ulId = -1;
+  inserted->ulId = ~0UL;
   hRet = pSHLWAPI_20(&list, inserted);
   /* The call succeeds but the item is not inserted */
   ok(hRet == S_OK, "failed adding a container");
@@ -419,13 +419,13 @@ static void test_CList(void)
       inserted = pSHLWAPI_22(list, item->ulId);
       ok(inserted != NULL, "lost after adding");
 
-      ok(!inserted || inserted->ulId != -1, "find returned a container");
+      ok(!inserted || inserted->ulId != ~0UL, "find returned a container");
 
       /* Check size */
       if (inserted && inserted->ulSize & 0x3)
       {
         /* Contained */
-        ok(inserted[-1].ulId == -1, "invalid size is not countained");
+        ok(inserted[-1].ulId == ~0UL, "invalid size is not countained");
         ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
            "container too small");
       }

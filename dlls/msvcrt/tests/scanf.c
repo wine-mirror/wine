@@ -27,7 +27,7 @@ static void test_sscanf( void )
     char buffer[100], buffer1[100];
     char format[20];
     int result, ret;
-    float res1= -82.6267, res2= 27.76, res11, res12;
+    float res1= -82.6267f, res2= 27.76f, res11, res12;
     char pname[]=" St. Petersburg, Florida\n";
     
 

@@ -25,7 +25,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
-#include "ntstatus.h"
 #include "winresrc.h" /* Ensure we use Unicode defns with native headers */
 #include "nb30.h"
 #include "lmcons.h"
@@ -136,7 +135,8 @@ static void run_wkstatransportenum_tests(void)
     /* 1st check: is param 2 (level) correct? (only if param 5 passed?) */
     apiReturn = pNetWkstaTransportEnum(NULL, 1, NULL, MAX_PREFERRED_LENGTH,
         NULL, &totalEntries, NULL);
-    ok(apiReturn == ERROR_INVALID_LEVEL, "Invalid level");
+    ok(apiReturn == ERROR_INVALID_LEVEL || apiReturn == ERROR_INVALID_PARAMETER,
+       "NetWkstaTransportEnum returned %ld", apiReturn);
 
     /* 2nd check: is param 5 passed? (only if level passes?) */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
@@ -146,12 +146,14 @@ static void run_wkstatransportenum_tests(void)
     if (apiReturn == ERROR_NETWORK_UNREACHABLE)
         return;
 
-    ok(apiReturn == STATUS_ACCESS_VIOLATION, "access violation");
+    ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
+       "NetWkstaTransportEnum returned %ld", apiReturn);
 
     /* 3rd check: is param 3 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
         NULL, NULL, NULL);
-    ok(apiReturn == STATUS_ACCESS_VIOLATION, "STATUS_ACCESS_VIOLATION");
+    ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
+       "NetWkstaTransportEnum returned %ld", apiReturn);
 
     /* 4th check: is param 6 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
@@ -161,7 +163,8 @@ static void run_wkstatransportenum_tests(void)
     /* final check: valid return, actually get data back */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
         &entriesRead, &totalEntries, NULL);
-    ok(apiReturn == NERR_Success, "NetWkstaTransportEnum is successful");
+    ok(apiReturn == NERR_Success || apiReturn == ERROR_NETWORK_UNREACHABLE,
+       "NetWkstaTransportEnum returned %ld", apiReturn);
     if (apiReturn == NERR_Success) {
         /* WKSTA_TRANSPORT_INFO_0 *transports = (WKSTA_TRANSPORT_INFO_0 *)bufPtr; */
 

@@ -107,7 +107,8 @@ void run_usergetinfo_tests(void)
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
         rc=pNetUserGetInfo(sBadNetPath, sAdminUserName, 0, (LPBYTE *)&ui0);
-        ok(rc == ERROR_BAD_NETPATH,"Bad Network Path: rc=%ld",rc);
+        ok(rc == ERROR_BAD_NETPATH || rc == ERROR_NETWORK_UNREACHABLE,
+           "Bad Network Path: rc=%ld",rc);
     }
     rc=pNetUserGetInfo(sEmptyStr, sAdminUserName, 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_BAD_NETPATH,"Bad Network Path: rc=%ld",rc);

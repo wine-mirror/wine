@@ -96,8 +96,11 @@ static void test_enum_value(void)
     ok( val_count == 2 || val_count == 3, "val_count set to %ld", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ", type );
+#if 0
+    /* v5.1.2600.0 (XP Home) does not touch value or data in this case */
     ok( !strcmp( value, "Te" ), "value set to '%s' instead of 'Te'", value );
     ok( !strcmp( data, "foobar" ), "data set to '%s' instead of 'foobar'", data );
+#endif
 
     /* overflow empty name */
     val_count = 0;
@@ -111,7 +114,10 @@ static void test_enum_value(void)
     ok( data_count == 7, "data_count set to %ld instead of 7", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'", value );
+#if 0
+    /* v5.1.2600.0 (XP Home) does not touch data in this case */
     ok( !strcmp( data, "foobar" ), "data set to '%s' instead of 'foobar'", data );
+#endif
 
     /* overflow data */
     val_count = 20;

@@ -434,7 +434,7 @@ static void test_RtlDuplicateUnicodeString(void)
         dest_ansi_str.Length = dest_str.Length / sizeof(WCHAR);
         dest_ansi_str.MaximumLength = dest_ansi_str.Length + 1;
         for (pos = 0; pos < dest_ansi_str.Length; pos++) {
-       	    dest_ansi_buf[pos] = dest_buf[pos];
+       	    dest_ansi_buf[pos] = (char)dest_buf[pos];
         } /* for */
         dest_ansi_buf[dest_ansi_str.Length] = '\0';
         dest_ansi_str.Buffer = dest_ansi_buf;
@@ -1286,7 +1286,7 @@ static const str2int_t str2int[] = {
     { 0, "-xFEDCBA00",            0, STATUS_SUCCESS}, /* Negative Hexadecimal (x-notation) */
     { 0, "0x89abcdef",   0x89abcdef, STATUS_SUCCESS}, /* Hex with lower case digits a-f (0x-notation) */
     { 0, "0xFEDCBA00",   0xFEDCBA00, STATUS_SUCCESS}, /* Hex with upper case digits A-F (0x-notation) */
-    { 0, "-0xFEDCBA00", -0xFEDCBA00, STATUS_SUCCESS}, /* Negative Hexadecimal (0x-notation) */
+    { 0, "-0xFEDCBA00",    19088896, STATUS_SUCCESS}, /* Negative Hexadecimal (0x-notation) */
     { 0, "0xabcdefgh",     0xabcdef, STATUS_SUCCESS}, /* Hex with illegal lower case digits (g-z) */
     { 0, "0xABCDEFGH",     0xABCDEF, STATUS_SUCCESS}, /* Hex with illegal upper case digits (G-Z) */
     { 0, "0xF",                 0xf, STATUS_SUCCESS}, /* one digit hexadecimal */
