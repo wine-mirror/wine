@@ -571,8 +571,10 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                ptr->IpAddressList.IpAddress.String);
               toIPAddressString(getInterfaceMaskByIndex(table->indexes[ndx]),
                ptr->IpAddressList.IpMask.String);
-              if (ndx < table->numIndexes + 1)
-                ptr->Next = (ndx == table->numIndexes - 1) ? NULL : &pAdapterInfo[ndx + 1];
+              if (ndx < table->numIndexes - 1)
+                ptr->Next = &pAdapterInfo[ndx + 1];
+              else
+                ptr->Next = NULL;
             }
             ret = NO_ERROR;
           }
