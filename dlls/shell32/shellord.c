@@ -399,6 +399,17 @@ DWORD WINAPI SHRevokeDragDrop(DWORD x) {
 }
 
 /*************************************************************************
+ * SHDoDragDrop					[SHELL32.88]
+ *
+ * NOTES
+ *     exported by ordinal
+ */
+DWORD WINAPI SHDoDragDrop(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y, DWORD z) {
+    FIXME("(0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx):stub.\n",u,v,w,x,y,z);
+    return 0;
+}
+
+/*************************************************************************
  * RunFileDlg					[SHELL32.61]
  *
  * NOTES

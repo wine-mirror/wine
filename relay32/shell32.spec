@@ -93,7 +93,7 @@ init	Shell32LibMain
   85 stdcall OpenRegStream(long long long long) OpenRegStream
   86 stdcall SHRegisterDragDrop(long ptr) SHRegisterDragDrop
   87 stdcall SHRevokeDragDrop(long) SHRevokeDragDrop
-  88 stub SHDoDragDrop
+  88 stdcall SHDoDragDrop(long long long long long long) SHDoDragDrop
   89 stdcall SHCloneSpecialIDList(long long long) SHCloneSpecialIDList
   90 stub SHFindFiles
   91 stub SHFindComputer
