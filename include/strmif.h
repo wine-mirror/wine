@@ -332,6 +332,43 @@ enum __MIDL_IFilterMapper_0001
 	MERIT_SW_COMPRESSOR	= 0x100000,
 };
 
+typedef enum
+{
+	AM_FILE_OVERWRITE = 0x0001,
+} AM_FILESINK_FLAGS;
+
+typedef enum
+{
+	AM_SEEKING_NoPositioning		= 0x0000,
+	AM_SEEKING_AbsolutePositioning		= 0x0001,
+	AM_SEEKING_RelativePositioning		= 0x0002,
+	AM_SEEKING_IncrementalPositioning	= 0x0003,
+	AM_SEEKING_PositioningBitsMask		= 0x0003,
+
+	AM_SEEKING_SeekToKeyFrame		= 0x0004,
+	AM_SEEKING_ReturnTime			= 0x0008,
+	AM_SEEKING_Segment			= 0x0010,
+	AM_SEEKING_NoFlush			= 0x0020,
+} AM_SEEKING_SEEKING_FLAGS;
+
+typedef enum
+{
+	AM_SEEKING_CanSeekAbsolute	= 0x0001,
+	AM_SEEKING_CanSeekForwards	= 0x0002,
+	AM_SEEKING_CanSeekBackwards	= 0x0004,
+	AM_SEEKING_CanGetCurrentPos	= 0x0008,
+	AM_SEEKING_CanGetStopPos	= 0x0010,
+	AM_SEEKING_CanGetDuration	= 0x0020,
+	AM_SEEKING_CanPlayBackwards	= 0x0040,
+	AM_SEEKING_CanDoSegments	= 0x0080,
+	AM_SEEKING_Source		= 0x0100,
+} AM_SEEKING_SEEKING_CAPABILITIES;
+
+enum _AM_RENSDEREXFLAGS
+{
+	AM_RENDEREX_RENDERTOEXISTINGRENDERERS = 0x0001,
+};
+
 
 
 /* structs. */
