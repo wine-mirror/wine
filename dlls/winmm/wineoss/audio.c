@@ -1120,10 +1120,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
     if (abuf_size < 1024 || abuf_size > 65536) {
 	if (abuf_size == -1)
-	    WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
-	else
-	    WARN("SNDCTL_DSP_GETBLKSIZE Invalid dwFragmentSize !\n");
-	return MMSYSERR_NOTENABLED;
+        {
+            WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
+            return MMSYSERR_NOTENABLED;
+        }
+        WARN("SNDCTL_DSP_GETBLKSIZE Invalid dwFragmentSize %d!\n",abuf_size);
     }
     WInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
@@ -1214,6 +1215,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->dwFlags &= ~WHDR_DONE;
     lpWaveHdr->dwBytesRecorded = 0;
+    lpWaveHdr->lpNext = NULL;
     if (WInDev[wDevID].lpQueueHdr == NULL) {
 	WInDev[wDevID].lpQueueHdr = lpWaveHdr;
     } else {
@@ -1223,7 +1225,6 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	    count++;
 	}
 	lpWIHdr->lpNext = lpWaveHdr;
-	lpWaveHdr->lpNext = NULL;
 	count++;
     }
     TRACE("buffer added ! (now %u in queue)\n", count);
