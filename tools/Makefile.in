@@ -41,11 +41,12 @@ bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)
 
 install::
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext) $(datadir)/wine
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(INSTALL_DATA) $(SRCDIR)/wine.inf $(datadir)/wine/wine.inf
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(RM) $(bindir)/winemaker $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(datadir)/wine/wine.inf
 
 ### Dependencies:
