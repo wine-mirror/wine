@@ -1,0 +1,17 @@
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+
+<!-- *** Include list of authors *** -->
+<!entity % authors SYSTEM "authors.ent">
+%authors;
+
+<!entity packaging SYSTEM "packaging.sgml">
+]>
+
+<book id="index">
+  <bookinfo>
+    <title>Wine Packagers Guide</title>
+  </bookinfo>
+
+  &packaging;
+
+</book>

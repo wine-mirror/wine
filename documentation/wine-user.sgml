@@ -1,0 +1,38 @@
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+
+<!-- *** Include list of authors *** -->
+<!entity % authors SYSTEM "authors.ent">
+%authors;
+
+<!entity introduction SYSTEM "introduction.sgml">
+<!entity getting SYSTEM "getting.sgml">
+<!entity installing SYSTEM "installing.sgml">
+<!entity configuring SYSTEM "configuring.sgml">
+<!entity running SYSTEM "running.sgml">
+<!entity bugs SYSTEM "bugs.sgml">
+
+<!-- *** Not currently used *** -->
+<!entity registry SYSTEM "registry.sgml">
+<!entity fonts SYSTEM "fonts.sgml">
+<!entity printing SYSTEM "printing.sgml">
+]>
+
+<book id="index">
+  <bookinfo>
+    <title>Wine User Guide</title>
+  </bookinfo>
+
+  &introduction;
+  &getting;
+
+  &installing;
+  &configuring;
+  &running;
+  &bugs;
+<!--
+  &registry;
+  &fonts;
+  &printing;
+-->
+
+</book>
