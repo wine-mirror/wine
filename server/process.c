@@ -237,7 +237,8 @@ static int set_process_console( struct process *process, struct thread *parent_t
     }
     else reply->hstdin = reply->hstdout = reply->hstderr = 0;
     /* some handles above may have been invalid; this is not an error */
-    if (get_error() == STATUS_INVALID_HANDLE) clear_error();
+    if (get_error() == STATUS_INVALID_HANDLE ||
+        get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
     return 1;
 }
 
