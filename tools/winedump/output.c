@@ -1,7 +1,7 @@
 /*
  *  Code generation functions
  *
- *  Copyright 2000 Jon Griffiths
+ *  Copyright 2000-2002 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,15 +51,8 @@ void  output_spec_preamble (void)
     puts ("Creating .spec preamble");
 
   fprintf (specfile,
-           "# Generated from %s by winedump\nname    %s\n"
-           "type    win32\ninit    %s_Init\n\nimport kernel32.dll\n"
-           "import ntdll.dll\n", globals.input_name, OUTPUT_DLL_NAME,
-           OUTPUT_UC_DLL_NAME);
-
-  if (globals.forward_dll)
-    fprintf (specfile,"#import %s.dll\n", globals.forward_dll);
-
-  fprintf (specfile, "\n\ndebug_channels (%s)\n\n", OUTPUT_DLL_NAME);
+           "# Generated from %s by winedump\ninit    %s_Init\n\n",
+	   globals.input_name, OUTPUT_UC_DLL_NAME);
 }
 
 
@@ -439,11 +432,21 @@ void  output_makefile (void)
   fprintf (makefile,
            "# Generated from %s by winedump.\nTOPSRCDIR = @top_srcdir@\n"
            "TOPOBJDIR = ../..\nSRCDIR    = @srcdir@\nVPATH     = @srcdir@\n"
-           "MODULE    = %s\nEXTRALIBS = $(LIBUNICODE)\n\n"
-           "LDDLLFLAGS = @LDDLLFLAGS@\nSYMBOLFILE = $(MODULE).tmp.o\n\n"
-           "C_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n### Dependencies:",
-           globals.input_name, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
+           "MODULE    = %s\n",globals.input_name, OUTPUT_DLL_NAME);
 
+  fprintf (makefile, "IMPORTS   = user32 advapi32 kernel32 ntdll");
+  if (globals.forward_dll)
+    fprintf (makefile, " %s", globals.forward_dll);
+
+  fprintf (makefile,
+           "\nEXTRALIBS = $(LIBUNICODE)\n\nLDDLLFLAGS = @LDDLLFLAGS@\n"
+           "SYMBOLFILE = $(MODULE).tmp.o\n\n"
+           "C_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n### Dependencies:",
+           OUTPUT_DLL_NAME);
+
+  if (globals.forward_dll)
+    fprintf (specfile,"#import %s.dll\n", globals.forward_dll);
+    
   fclose (makefile);
 }
 
@@ -475,20 +478,21 @@ void  output_install_script (void)
            "cp %s_main.c $1/dlls/%s\ncp %s_dll.h $1/dlls/%s\n"
            "cp Makefile.in $1/dlls/%s/Makefile.in\necho Copied DLL files\n\n"
            "cd $1\n\nsed '/dlls\\/"
-           "x11drv\\/Makefile/{G;s/$/dlls\\/%s\\/Makefile/;}' configure.in"
-           " >t.tmp\nmv -f t.tmp configure.in\necho Patched configure.in\n\n"
-           "sed '/all:/{G;s/$/\\^lib%s.so \\\\/;}'"
+           "x11drv\\/Makefile/{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac"
+           " >t.tmp\nmv -f t.tmp configure.ac\necho Patched configure.ac\n\n"
+           "sed '/all:/{G;s/$/\\^%s.dll$(DLLEXT) \\\\/;}'"
            " dlls/Makefile.in| tr ^ \\\\t >t.tmp\n"
-           "sed '/SUBDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2"
-           "\nsed '/Map library name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
-           "(LN_S\\) %s\\/lib%s.\\$(LIBEXT) \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
-           " > t.tmp\nsed '/Map library name /{G;s/$/lib%s.\\$(LIBEXT): "
-           "%s\\/lib%s.\\$(LIBEXT)/;}' t.tmp > t.tmp2\nsed '/dll "
-           "dependencies/{G;s/$/^\\@cd %s \\&\\& \\$(MAKE) lib%s.\\$(LIBEXT)"
-           "/;}' t.tmp2 | tr ^ \\\\t > t.tmp\nsed '/dll "
-           "dependencies/{G;s/$/%s\\/lib%s.\\$(LIBEXT)\\: libkernel32."
-           "\\$(LIBEXT) libntdll.\\$(LIBEXT)/;}' t.tmp > t.tmp2\n"
-	   "mv -f t.tmp2 dlls/Makefile.in\nrm -f t.tmp\necho Patched dlls/"
+           "sed '/BASEDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2"
+           "\nsed '/Map symlink name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
+           "(LN_S\\) %s\\/%s.dll\\$(DLLEXT) \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
+           " > t.tmp\nsed '/Map symlink name /{G;s/$/%s.dll\\$(DLLEXT): "
+           "%s\\/%s.dll\\$(DLLEXT)/;}' t.tmp > t.tmp2\nsed '/all dependencies"
+	   "/{G;s/$/%s\\/__install__: %s.dll$(DLLEXT)/;}' t.tmp2 > t.tmp\n"
+	   "sed '/dll dependencies/{G;s/$/%s: user32.dll\\$(DLLEXT) "
+	   "kernel32.dll\\$(DLLEXT) ntdll.dll\\$(DLLEXT) advapi32.dll"
+	   "\\$(DLLEXT)/;}' t.tmp > t.tmp2\n\nsed '/Map library name "
+	   "/{G;s/$/%s\\/%s.dll\\$(DLLEXT): %s/;}' t.tmp2 >t.tmp\n"
+           "mv -f t.tmp dlls/Makefile.in\nrm -f t.tmp2\necho Patched dlls/"
            "Makefile.in\n\necho\necho ...done.\necho Run \\'autoconf\\', "
            "\\'./configure\\' then \\'make\\' to rebuild Wine\n\n",
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
@@ -496,7 +500,8 @@ void  output_install_script (void)
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
+           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
+           OUTPUT_DLL_NAME);
 
   fclose (install_file);
   snprintf (cmd, sizeof (cmd), "chmod a+x %s_install", OUTPUT_DLL_NAME);
