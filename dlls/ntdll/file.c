@@ -197,7 +197,7 @@ static void CALLBACK fileio_call_completion_func(ULONG_PTR data)
 
 static void fileio_async_cleanup( struct async_private *ovp )
 {
-    RtlFreeHeap( ntdll_get_process_heap(), 0, ovp );
+    RtlFreeHeap( GetProcessHeap(), 0, ovp );
 }
 
 /***********************************************************************
@@ -360,7 +360,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         async_fileio*   ovp;
         NTSTATUS ret;
 
-        if (!(ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio))))
+        if (!(ovp = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
         {
             wine_server_release_fd( hFile, unix_handle );
             return STATUS_NO_MEMORY;
@@ -545,7 +545,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         async_fileio*   ovp;
         NTSTATUS ret;
 
-        if (!(ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio))))
+        if (!(ovp = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
         {
             wine_server_release_fd( hFile, unix_handle );
             return STATUS_NO_MEMORY;

@@ -78,10 +78,10 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    if (!ntdll_get_process_heap()) crit->DebugInfo = NULL;
+    if (!GetProcessHeap()) crit->DebugInfo = NULL;
     else
     {
-        crit->DebugInfo = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(CRITICAL_SECTION_DEBUG));
+        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION_DEBUG));
         if (crit->DebugInfo)
         {
             crit->DebugInfo->Type = 0;
@@ -151,8 +151,7 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
         /* only free the ones we made in here */
         if (!crit->DebugInfo->Spare[1])
         {
-            
-            RtlFreeHeap( ntdll_get_process_heap(), 0, crit->DebugInfo );
+            RtlFreeHeap( GetProcessHeap(), 0, crit->DebugInfo );
             crit->DebugInfo = NULL;
         }
     }

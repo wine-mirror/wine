@@ -466,7 +466,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 
     /* Allocate module dependency list */
     wm->nDeps = nb_imports;
-    wm->deps  = RtlAllocateHeap( ntdll_get_process_heap(), 0, nb_imports*sizeof(WINE_MODREF *) );
+    wm->deps  = RtlAllocateHeap( GetProcessHeap(), 0, nb_imports*sizeof(WINE_MODREF *) );
 
     /* load the imported modules. They are automatically
      * added to the modref list of the process.
@@ -574,7 +574,7 @@ static NTSTATUS alloc_process_tls(void)
 
     TRACE( "count %u size %u\n", tls_module_count, tls_total_size );
 
-    tls_dirs = RtlAllocateHeap( ntdll_get_process_heap(), 0, tls_module_count * sizeof(*tls_dirs) );
+    tls_dirs = RtlAllocateHeap( GetProcessHeap(), 0, tls_module_count * sizeof(*tls_dirs) );
     if (!tls_dirs) return STATUS_NO_MEMORY;
 
     for (i = 0, entry = mark->Flink; entry != mark; entry = entry->Flink)
@@ -606,13 +606,13 @@ static NTSTATUS alloc_thread_tls(void)
 
     if (!tls_module_count) return STATUS_SUCCESS;
 
-    if (!(pointers = RtlAllocateHeap( ntdll_get_process_heap(), 0,
+    if (!(pointers = RtlAllocateHeap( GetProcessHeap(), 0,
                                       tls_module_count * sizeof(*pointers) )))
         return STATUS_NO_MEMORY;
 
-    if (!(data = RtlAllocateHeap( ntdll_get_process_heap(), 0, tls_total_size )))
+    if (!(data = RtlAllocateHeap( GetProcessHeap(), 0, tls_total_size )))
     {
-        RtlFreeHeap( ntdll_get_process_heap(), 0, pointers );
+        RtlFreeHeap( GetProcessHeap(), 0, pointers );
         return STATUS_NO_MEMORY;
     }
 
@@ -1646,8 +1646,8 @@ static void MODULE_FlushModrefs(void)
         NtUnmapViewOfSection( GetCurrentProcess(), mod->BaseAddress );
         if (cached_modref == wm) cached_modref = NULL;
         RtlFreeUnicodeString( &mod->FullDllName );
-        RtlFreeHeap( ntdll_get_process_heap(), 0, wm->deps );
-        RtlFreeHeap( ntdll_get_process_heap(), 0, wm );
+        RtlFreeHeap( GetProcessHeap(), 0, wm->deps );
+        RtlFreeHeap( GetProcessHeap(), 0, wm );
     }
 }
 

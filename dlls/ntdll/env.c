@@ -48,7 +48,8 @@ NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
 
         RtlAcquirePebLock();
 
-        nts = NtQueryVirtualMemory(NtCurrentProcess(), ntdll_get_process_pmts()->Environment, 
+        nts = NtQueryVirtualMemory(NtCurrentProcess(),
+                                   NtCurrentTeb()->Peb->ProcessParameters->Environment,
                                    0, &mbi, sizeof(mbi), NULL);
         if (nts == STATUS_SUCCESS)
         {
@@ -56,7 +57,7 @@ NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
             nts = NtAllocateVirtualMemory(NtCurrentProcess(), (void**)env, 0, &mbi.RegionSize, 
                                           MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
             if (nts == STATUS_SUCCESS)
-                memcpy(*env, ntdll_get_process_pmts()->Environment, mbi.RegionSize);
+                memcpy(*env, NtCurrentTeb()->Peb->ProcessParameters->Environment, mbi.RegionSize);
             else *env = NULL;
         }
         RtlReleasePebLock();
@@ -126,7 +127,7 @@ NTSTATUS WINAPI RtlQueryEnvironmentVariable_U(PWSTR env,
     if (!env)
     {
         RtlAcquirePebLock();
-        var = ntdll_get_process_pmts()->Environment;
+        var = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     }
     else var = env;
 
@@ -158,8 +159,8 @@ void WINAPI RtlSetCurrentEnvironment(PWSTR new_env, PWSTR* old_env)
 
     RtlAcquirePebLock();
 
-    if (old_env) *old_env = ntdll_get_process_pmts()->Environment;
-    ntdll_get_process_pmts()->Environment = new_env;
+    if (old_env) *old_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    NtCurrentTeb()->Peb->ProcessParameters->Environment = new_env;
 
     RtlReleasePebLock();
 }
@@ -188,7 +189,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     if (!penv)
     {
         RtlAcquirePebLock();
-        env = ntdll_get_process_pmts()->Environment;
+        env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     } else env = *penv;
 
     len = name->Length / sizeof(WCHAR);
@@ -234,7 +235,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         p = new_env + (p - env);
 
         RtlDestroyEnvironment(env);
-        if (!penv) ntdll_get_process_pmts()->Environment = new_env;
+        if (!penv) NtCurrentTeb()->Peb->ProcessParameters->Environment = new_env;
         else *penv = new_env;
         env = new_env;
     }
@@ -276,7 +277,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR renv, const UNICODE_STRING* 
     if (!renv)
     {
         RtlAcquirePebLock();
-        env = ntdll_get_process_pmts()->Environment;
+        env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     }
     else env = renv;
 

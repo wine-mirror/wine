@@ -312,7 +312,7 @@ NTSTATUS WINAPI RtlpNtEnumerateSubKey( HKEY handle, UNICODE_STRING *out, ULONG i
   if (out->Length)
   {
     dwLen = out->Length + sizeof(KEY_BASIC_INFORMATION);
-    info = (KEY_BASIC_INFORMATION*)RtlAllocateHeap( ntdll_get_process_heap(), 0, dwLen );
+    info = (KEY_BASIC_INFORMATION*)RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
     if (!info)
       return STATUS_NO_MEMORY;
   }
@@ -342,7 +342,7 @@ NTSTATUS WINAPI RtlpNtEnumerateSubKey( HKEY handle, UNICODE_STRING *out, ULONG i
   }
 
   if (info)
-    RtlFreeHeap( ntdll_get_process_heap(), 0, info );
+    RtlFreeHeap( GetProcessHeap(), 0, info );
   return ret;
 }
 
@@ -515,7 +515,7 @@ NTSTATUS WINAPI RtlpNtQueryValueKey( HKEY handle, ULONG *result_type, PBYTE dest
     DWORD dwResultLen;
     DWORD dwLen = sizeof (KEY_VALUE_PARTIAL_INFORMATION) + result_len ? *result_len : 0;
 
-    info = (KEY_VALUE_PARTIAL_INFORMATION*)RtlAllocateHeap( ntdll_get_process_heap(), 0, dwLen );
+    info = (KEY_VALUE_PARTIAL_INFORMATION*)RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
     if (!info)
       return STATUS_NO_MEMORY;
 
@@ -534,7 +534,7 @@ NTSTATUS WINAPI RtlpNtQueryValueKey( HKEY handle, ULONG *result_type, PBYTE dest
             memcpy( dest, info->Data, info->DataLength );
     }
 
-    RtlFreeHeap( ntdll_get_process_heap(), 0, info );
+    RtlFreeHeap( GetProcessHeap(), 0, info );
     return ret;
 }
 
@@ -733,7 +733,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
     ANSI_STRING AnsiPath;
     NTSTATUS ret;
 
-    if (!(buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, strlen(user)+16 )))
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, strlen(user)+16 )))
         return STATUS_NO_MEMORY;
 
     strcpy( buffer, "\\Registry\\User\\" );

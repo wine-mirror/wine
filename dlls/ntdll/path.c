@@ -205,15 +205,15 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PWSTR dos_path,
     if (sz == 0) return FALSE;
     if (sz > ptr_sz)
     {
-        ptr = RtlAllocateHeap(ntdll_get_process_heap(), 0, sz);
+        ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz);
         sz = RtlGetFullPathName_U(dos_path, sz, ptr, file_part);
     }
 
     ntpath->MaximumLength = sz + (4 /* unc\ */ + 4 /* \??\ */) * sizeof(WCHAR);
-    ntpath->Buffer = RtlAllocateHeap(ntdll_get_process_heap(), 0, ntpath->MaximumLength);
+    ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, ntpath->MaximumLength);
     if (!ntpath->Buffer)
     {
-        if (ptr != local) RtlFreeHeap(ntdll_get_process_heap(), 0, ptr);
+        if (ptr != local) RtlFreeHeap(GetProcessHeap(), 0, ptr);
         return FALSE;
     }
 
@@ -242,7 +242,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PWSTR dos_path,
 
     /* FIXME: cd filling */
 
-    if (ptr != local) RtlFreeHeap(ntdll_get_process_heap(), 0, ptr);
+    if (ptr != local) RtlFreeHeap(GetProcessHeap(), 0, ptr);
     return TRUE;
 }
 
@@ -306,7 +306,7 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
             }
             paths = ptr;
         }
-        RtlFreeHeap(ntdll_get_process_heap(), 0, name);
+        RtlFreeHeap(GetProcessHeap(), 0, name);
     }
     else if (RtlDoesFileExists_U(search))
     {
@@ -332,7 +332,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     
     RtlAcquirePebLock();
 
-    cd = &ntdll_get_process_pmts()->CurrentDirectoryName;
+    cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
 
     switch (type = RtlDetermineDosPathNameType_U(name))
     {
@@ -545,15 +545,15 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
     reqsize = get_full_path_helper(name, buffer, size);
     if (reqsize > size)
     {
-        LPWSTR tmp = RtlAllocateHeap(ntdll_get_process_heap(), 0, reqsize);
+        LPWSTR tmp = RtlAllocateHeap(GetProcessHeap(), 0, reqsize);
         reqsize = get_full_path_helper(name, tmp, reqsize);
         if (reqsize > size)  /* it may have worked the second time */
         {
-            RtlFreeHeap(ntdll_get_process_heap(), 0, tmp);
+            RtlFreeHeap(GetProcessHeap(), 0, tmp);
             return reqsize + sizeof(WCHAR);
         }
         memcpy( buffer, tmp, reqsize + sizeof(WCHAR) );
-        RtlFreeHeap(ntdll_get_process_heap(), 0, tmp);
+        RtlFreeHeap(GetProcessHeap(), 0, tmp);
     }
 
     /* find file part */
@@ -661,7 +661,7 @@ NTSTATUS WINAPI RtlGetCurrentDirectory_U(ULONG buflen, LPWSTR buf)
 
     RtlAcquirePebLock();
 
-    us = &ntdll_get_process_pmts()->CurrentDirectoryName;
+    us = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
     len = us->Length / sizeof(WCHAR);
     if (us->Buffer[len - 1] == '\\' && us->Buffer[len - 2] != ':')
         len--;
@@ -696,10 +696,10 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 
     RtlAcquirePebLock();
 
-    curdir = &ntdll_get_process_pmts()->CurrentDirectoryName;
+    curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
     size = curdir->MaximumLength;
 
-    buf = RtlAllocateHeap(ntdll_get_process_heap(), 0, size);
+    buf = RtlAllocateHeap(GetProcessHeap(), 0, size);
     if (buf == NULL)
     {
         nts = STATUS_NO_MEMORY;
@@ -758,7 +758,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 #endif
 
  out:
-    if (buf) RtlFreeHeap(ntdll_get_process_heap(), 0, buf);
+    if (buf) RtlFreeHeap(GetProcessHeap(), 0, buf);
 
     RtlReleasePebLock();
 

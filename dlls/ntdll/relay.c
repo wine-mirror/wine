@@ -825,7 +825,7 @@ void SNOOP_SetupDLL(HMODULE hmod)
     NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size,
                             MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!addr) {
-        RtlFreeHeap(ntdll_get_process_heap(),0,*dll);
+        RtlFreeHeap(GetProcessHeap(),0,*dll);
         FIXME("out of memory\n");
         return;
     }
@@ -1019,7 +1019,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
-		ret->args = RtlAllocateHeap(ntdll_get_process_heap(),
+		ret->args = RtlAllocateHeap(GetProcessHeap(),
                                             0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(context->Esp + 4),sizeof(DWORD)*16);
 	}
@@ -1059,7 +1059,7 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
                 }
 		DPRINTF(") retval=%08lx ret=%08lx\n",
 			context->Eax,(DWORD)ret->origreturn );
-		RtlFreeHeap(ntdll_get_process_heap(),0,ret->args);
+		RtlFreeHeap(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	}
         else
