@@ -1062,22 +1062,27 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0300:  /* Simulate real mode interrupt */
+        TRACE( "Simulate real mode interrupt.\n" );
         DOSVM_CallRMInt( context );
         break;
 
     case 0x0301:  /* Call real mode procedure with far return */
+        TRACE( "Call real mode procedure with far return.\n" );
         DOSVM_CallRMProc( context, FALSE );
         break;
 
     case 0x0302:  /* Call real mode procedure with interrupt return */
+        TRACE( "Call real mode procedure with interrupt return.\n" );
         DOSVM_CallRMProc( context, TRUE );
         break;
 
     case 0x0303:  /* Allocate Real Mode Callback Address */
+        TRACE( "Allocate real mode callback address.\n" );
         DOSVM_AllocRMCB( context );
         break;
 
     case 0x0304:  /* Free Real Mode Callback Address */
+        TRACE( "Free real mode callback address.\n" );
         DOSVM_FreeRMCB( context );
         break;
 
@@ -1120,7 +1125,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
             SET_AX( context, 0x005a );  /* DPMI version 0.90 */
             SET_BX( context, 0x0005 );  /* Flags: 32-bit, virtual memory */
             SET_CL( context, si.wProcessorLevel );
-            SET_DX( context, 0x0102 );  /* Master/slave interrupt controller base */
+            SET_DX( context, 0x0870 );  /* Master/slave interrupt controller base */
         }
         break;
 
@@ -1223,6 +1228,14 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         TRACE("get pagesize\n");
         SET_BX( context, HIWORD(getpagesize()) );
         SET_CX( context, LOWORD(getpagesize()) );
+        break;
+
+    case 0x0700: /* Mark pages as paging candidates */
+        TRACE( "mark pages as paging candidates - ignored (no paging)\n" );
+        break;
+
+    case 0x0701: /* Discard pages */
+        TRACE( "discard pages - ignored (no paging)\n" );
         break;
 
     case 0x0702:  /* Mark page as demand-paging candidate */
