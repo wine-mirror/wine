@@ -29,7 +29,6 @@
  * TODO:
  *
  *   Styles
- *   - SS_CENTERIMAGE
  *   - SS_EDITCONTROL
  *   - SS_ENDELLIPSIS
  *   - SS_ENHMETAFILE
