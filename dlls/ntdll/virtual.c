@@ -100,14 +100,14 @@ static CRITICAL_SECTION csVirtual = CRITICAL_SECTION_INIT("csVirtual");
 # define page_mask  0xfff
 # define page_shift 12
 # define page_size  0x1000
+# define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the user address space */
 #else
 static UINT page_shift;
 static UINT page_mask;
 static UINT page_size;
+# define ADDRESS_SPACE_LIMIT  0   /* no limit needed on other platforms */
 #endif  /* __i386__ */
 #define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
-
-#define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the user address space */
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(mask)))
@@ -983,7 +983,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
         /* disallow low 64k, wrap-around and kernel space */
         if (((char *)base <= (char *)granularity_mask) ||
             ((char *)base + size < (char *)base) ||
-            ((char *)base + size > (char *)ADDRESS_SPACE_LIMIT))
+            (ADDRESS_SPACE_LIMIT && ((char *)base + size > (char *)ADDRESS_SPACE_LIMIT)))
             return STATUS_INVALID_PARAMETER;
     }
     else
@@ -1178,7 +1178,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     MEMORY_BASIC_INFORMATION *info = buffer;
 
     if (info_class != MemoryBasicInformation) return STATUS_INVALID_INFO_CLASS;
-    if (addr >= ADDRESS_SPACE_LIMIT) return STATUS_WORKING_SET_LIMIT_RANGE;  /* FIXME */
+    if (ADDRESS_SPACE_LIMIT && addr >= ADDRESS_SPACE_LIMIT)
+        return STATUS_WORKING_SET_LIMIT_RANGE;  /* FIXME */
 
     if (!is_current_process( process ))
     {
