@@ -138,10 +138,10 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
  *     nothing
  *
  * NOTES
- *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     This function is used by ImageList_DrawIndirect, when it is 
  *     required to draw only the Image (without the mask) to the screen.
  *
- *     Blending and Overlays styles are accomplised by another function
+ *     Blending and Overlays styles are accomplished by another function
  */
 static VOID
 IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
@@ -165,7 +165,7 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 /*************************************************************************
  * IMAGELIST_InternalDrawMask [Internal] 
  *
- * Draws the image in the ImageList witht the mask
+ * Draws the image in the ImageList with the mask
  *
  * PARAMS
  *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
@@ -176,29 +176,10 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
  *     nothing
  *
  * NOTES
- *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     This function is used by ImageList_DrawIndirect, when it is 
  *     required to draw the Image with the mask to the screen.
  *
- *     Blending and Overlays styles are accomplised by another function.
- */
-/*************************************************************************
- * IMAGELIST_InternalDrawMask [Internal] 
- *
- * Draws the image in the ImageList witht the mask
- *
- * PARAMS
- *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
- *     cx            [I] the width of the image to display
- *     cy............[I] the height of the image to display
- *
- * RETURNS
- *     nothing
- *
- * NOTES
- *     This functions is used by ImageList_DrawIndirect, when it is 
- *     required to draw the Image with the mask to the screen.
- *
- *     Blending and Overlays styles are accomplised by another function.
+ *     Blending and Overlays styles are accomplished by another function.
  */
 static VOID
 IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
@@ -670,9 +651,9 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
         The statement below should not be done in common practice
         but this is how ImageList_AddMasked works in Windows.
         It overwrites the original bitmap passed, this was discovered
-        by using the same bitmap to itterated the different styles
+        by using the same bitmap to iterate the different styles
         on windows where it failed (BUT ImageList_Add is OK)
-        This is here in case some apps really on this bug
+        This is here in case some apps rely on this bug
     */
     BitBlt(hdcBitmap, 
         0, 0, bmp.bmWidth, bmp.bmHeight,
@@ -788,7 +769,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
  *
  * NOTES
  *     Copying from one image list to another is possible. The original
- *     implementation just copies or swapps within one image list.
+ *     implementation just copies or swaps within one image list.
  *     Could this feature become a bug??? ;-)
  */
 
@@ -1308,8 +1289,8 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
         return FALSE;
     if (pimldp->himl == NULL)
         return FALSE;
-    if ((pimldp->i < 0) || (pimldp->i > pimldp->himl->cCurImage)) {
-	ERR("%d not within range (max %d)\n",pimldp->i,pimldp->himl->cCurImage);
+    if ((pimldp->i < 0) || (pimldp->i >= pimldp->himl->cCurImage)) {
+	ERR("%d not within range (max %d)\n",pimldp->i,pimldp->himl->cCurImage-1);
         return FALSE;
     }
     /*
@@ -1708,8 +1689,8 @@ ImageList_GetImageRect (HIMAGELIST himl, INT i, LPRECT lpRect)
  */
 
 HIMAGELIST WINAPI
-ImageList_LoadImageA (HINSTANCE hi, LPCSTR lpbmp, INT cx,	INT cGrow,
-			COLORREF clrMask, UINT uType,	UINT uFlags)
+ImageList_LoadImageA (HINSTANCE hi, LPCSTR lpbmp, INT cx, INT cGrow,
+			COLORREF clrMask, UINT uType, UINT uFlags)
 {
     HIMAGELIST himl = NULL;
     HANDLE   handle;
@@ -2169,6 +2150,11 @@ ImageList_Remove (HIMAGELIST himl, INT i)
     HDC     hdcSrc, hdcDst;
     INT     cxNew, nCount;
 
+    if (himl == NULL) {
+        ERR("Invalid image list handle!\n");
+        return FALSE;
+    }
+    
     if ((i < -1) || (i >= himl->cCurImage)) {
         ERR("index out of range! %d\n", i);
         return FALSE;
