@@ -3578,6 +3578,8 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, LPCREATESTRUCTA cs)
  		return FALSE;
  	es->style = cs->style;
  
+        es->bEnableState = !(cs->style & WS_DISABLED);
+ 
 	/*
 	 * In Win95 look and feel, the WS_BORDER style is replaced by the 
 	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit 
