@@ -3,9 +3,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = setupapi
-SOVERSION = 1.0
-ALTNAMES  = setupx
+MODULE    = setupapi.dll
+ALTNAMES  = setupx.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = rasapi32
-ALTNAMES  = rasapi16
+MODULE    = rasapi32.dll
+ALTNAMES  = rasapi16.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -25,6 +25,7 @@ $makefiles = `find . -name Makefile.in -print`;
 %imports = ();
 %directories = ();
 %altnames = ();
+%linked_dlls = ();
 
 # list of special dlls that can be switched on or off by configure
 %special_dlls =
@@ -53,25 +54,34 @@ foreach $i (split(/\s/,$makefiles))
             $altnames{$module} = \@list;
             next;
         }
+        if (/^IMPORTS\s*=\s*(.*)/)
+        {
+            my @list = split(/\s/,$1);
+            $linked_dlls{$module} = \@list;
+            next;
+        }
     }
 }
 
 foreach $mod (sort keys %directories)
 {
-    my $spec = sprintf("%s/%s.spec", $directories{$mod}, $mod);
+    my $dll = $mod;
+    $dll =~ s/\.dll$//;
+    my $spec = sprintf("%s/%s.spec", $directories{$mod}, $dll);
     open SPEC,$spec or die "cannot open $spec";
     $imports{$mod} = [ ];
     while (<SPEC>)
     {
         if (/^\#?import\s+(-delay\s+)?([a-zA-Z0-9_]+)\.dll/)
         {
-            my $imp = $2;
+            my $imp = $2 . ".dll";
             push @{$imports{$mod}}, $imp;
             next;
         }
         if (/^\#?import\s+(-delay\s+)?([a-zA-Z0-9_.]+)/)
         {
             my $imp = $2;
+            $imp .= ".dll" unless ($imp =~ /\./);
             push @{$imports{$mod}}, $imp;
             next;
         }
@@ -90,7 +100,6 @@ TOPSRCDIR = \@top_srcdir\@
 TOPOBJDIR = ..
 SRCDIR    = \@srcdir\@
 VPATH     = \@srcdir\@
-LIBEXT    = \@LIBEXT\@
 
 EOF
 
@@ -135,20 +144,22 @@ printf NEWMAKE "\n";
 my %targets = ();  # use a hash to get rid of duplicate target names
 foreach $mod (sort keys %directories)
 {
-    next if defined($special_dlls{$mod});  # skip special dlls
-    $targets{sprintf("lib%s.\$(LIBEXT)",$mod)} = 1;
+    next if defined($special_dlls{$directories{$mod}});  # skip special dlls
+    $targets{sprintf("%s\$(DLLEXT)",$mod)} = 1;
     next unless defined $altnames{$mod};
     foreach $i (sort @{$altnames{$mod}})
     {
-        $targets{sprintf("lib%s.\$(LIBEXT)",$i)} = 1;
+        $targets{sprintf("%s\$(DLLEXT)",$i)} = 1;
     }
 }
 print NEWMAKE <<EOF;
 
 # Main target
 
+\@MAKE_RULES\@
+
 all: \\
-	\$(EXTRADIRS:%=lib%.\$(LIBEXT)) \\
+	\$(EXTRADIRS:%=%.dll\$(DLLEXT)) \\
 EOF
 printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
 
@@ -158,26 +169,24 @@ printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
 
 print NEWMAKE <<EOF;
 
-\@MAKE_RULES\@
-
 # Map library name to directory
 
 EOF
 
 foreach $mod (sort keys %directories)
 {
-    printf NEWMAKE "lib%s.\$(LIBEXT)", $mod;
+    printf NEWMAKE "%s\$(DLLEXT)", $mod;
     if (defined $altnames{$mod})
     {
         my $count = 1;
         foreach $i (sort @{$altnames{$mod}})
         {
             if (!($count++ % 3)) { printf NEWMAKE " \\\n "; }
-            printf NEWMAKE " lib%s.\$(LIBEXT)", $i;
+            printf NEWMAKE " %s\$(DLLEXT)", $i;
         }
     }
-    printf NEWMAKE ": %s/lib%s.\$(LIBEXT)\n", $directories{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/lib%s.\$(LIBEXT) \$@\n\n", $directories{$mod}, $mod;
+    printf NEWMAKE ": %s/%s\$(DLLEXT)\n", $directories{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
 }
 
 
@@ -190,8 +199,17 @@ my @depends = ();
 foreach $mod (sort keys %imports)
 {
     my $count = 1;
-    my $dep = sprintf("%s/lib%s.\$(LIBEXT): dummy", $directories{$mod}, $mod);
+    my $dep = sprintf("%s/%s\$(DLLEXT): dummy", $directories{$mod}, $mod);
     foreach $i (@{$imports{$mod}})
+    {
+        if ($count++ >= 3)
+        {
+            $count = 0;
+            $dep .= " \\\n ";
+        }
+        $dep .= sprintf(" %s\$(DLLEXT)", $i);
+    }
+    foreach $i (@{$linked_dlls{$mod}})
     {
         if ($count++ >= 3)
         {
@@ -200,11 +218,27 @@ foreach $mod (sort keys %imports)
         }
         $dep .= sprintf(" lib%s.\$(LIBEXT)", $i);
     }
-    $dep .= sprintf("\n\t\@cd %s && \$(MAKE) lib%s.\$(LIBEXT)\n\n",$directories{$mod}, $mod);
+    $dep .= sprintf("\n\t\@cd %s && \$(MAKE) %s\$(DLLEXT)\n\n",$directories{$mod}, $mod);
     push @depends, $dep;
 }
 print NEWMAKE sort @depends;
 
+
+################################################################
+# output the linkable dlls special links
+
+%linkable_dlls = ();
+foreach $mod (keys %imports)
+{
+    foreach $i (@{$linked_dlls{$mod}}) { $linkable_dlls{$i} = 1; }
+}
+
+print NEWMAKE "# Special targets for dlls that we need to link to\n\n";
+foreach $mod (keys %linkable_dlls)
+{
+    printf NEWMAKE "lib%s.\$(LIBEXT): %s/%s\$(DLLEXT)\n", $mod, $directories{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
+}
 
 ################################################################
 # makefile trailer
@@ -224,6 +258,7 @@ print NEWMAKE <<EOF;
 install:: \$(SUBDIRS:%=%/__install__)
 
 uninstall:: \$(SUBDIRS:%=%/__uninstall__)
+	-rmdir \$(dlldir)
 
 check test:: \$(SUBDIRS:%=%/__test__)
 

@@ -3,8 +3,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winmm
-ALTNAMES  = mmsystem sound
+MODULE    = winmm.dll
+ALTNAMES  = mmsystem.dll sound.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = version
-ALTNAMES  = ver
+MODULE    = version.dll
+ALTNAMES  = ver.dll
 EXTRALIBS = $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@

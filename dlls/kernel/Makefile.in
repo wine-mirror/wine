@@ -2,10 +2,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = kernel32
-SOVERSION = 1.0
-ALTNAMES  = comm kernel stress system toolhelp windebug win87em wprocs
-IMPORTS   = ntdll
+MODULE    = kernel32.dll
+ALTNAMES  = comm.dll kernel.dll stress.dll system.dll toolhelp.dll windebug.dll win87em.dll wprocs.dll
+IMPORTS   = ntdll.dll
 
 C_SRCS = \
 	comm.c \
@@ -53,5 +52,8 @@ version16.res: version16.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc
 
 kernel.spec.c: version16.res
+
+install:: install_libdir
+uninstall:: uninstall_libdir
 
 ### Dependencies:

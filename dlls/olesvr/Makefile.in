@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = olesvr32
-ALTNAMES  = olesvr
+MODULE    = olesvr32.dll
+ALTNAMES  = olesvr.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

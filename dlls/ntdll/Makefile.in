@@ -3,7 +3,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = ntdll
+MODULE    = ntdll.dll
 EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
@@ -66,5 +66,8 @@ $(EXTRA_OBJS): dummy
 
 relay32.s: $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay32
+
+install:: install_libdir
+uninstall:: uninstall_libdir
 
 ### Dependencies:

@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = olecli32
-ALTNAMES  = olecli
+MODULE    = olecli32.dll
+ALTNAMES  = olecli.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -732,13 +732,16 @@ LDPATH=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
+    DLLEXT=".so"
     LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
 elif test "$LIBEXT" = "dll"; then
     #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
+    DLLEXT=""
     LDPATH="PATH=\"\$(TOPOBJDIR)/unicode:\$\$PATH\""
 fi
 
 AC_SUBST(DLLFLAGS)
+AC_SUBST(DLLEXT)
 AC_SUBST(LDSHARED)
 AC_SUBST(LDDLLFLAGS)
 AC_SUBST(LIBEXT)

@@ -2,9 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = w32skrnl
-SOVERSION = 1.0
-ALTNAMES  = w32sys win32s16
+MODULE    = w32skrnl.dll
+ALTNAMES  = w32sys.dll win32s16.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

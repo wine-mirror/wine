@@ -3,8 +3,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = shell32
-ALTNAMES  = shell
+MODULE    = shell32.dll
+ALTNAMES  = shell.dll
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@

@@ -3,10 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = gdi32
-SOVERSION = 1.0
-ALTNAMES  = gdi dispdib wing
-IMPORTS   = kernel32 ntdll
+MODULE    = gdi32.dll
+ALTNAMES  = gdi.dll dispdib.dll wing.dll
+IMPORTS   = kernel32.dll ntdll.dll
 EXTRALIBS = @FREETYPELIBS@
 EXTRAINCL = @FREETYPEINCL@
 
@@ -52,5 +51,7 @@ version16.res: version16.rc
 
 gdi.spec.c: version16.res
 
-### Dependencies:
+install:: install_libdir
+uninstall:: uninstall_libdir
 
+### Dependencies:

@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = opengl32
-IMPORTS   = x11drv kernel32 ntdll
+MODULE    = opengl32.dll
+IMPORTS   = x11drv.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
 	wgl.c \

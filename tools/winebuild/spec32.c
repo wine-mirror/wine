@@ -790,7 +790,7 @@ void BuildDef32File(FILE *outfile)
     fprintf(outfile, "; File generated automatically from %s; do not edit!\n\n",
             input_file_name );
 
-    fprintf(outfile, "LIBRARY lib%s\n\n", DLLFileName);
+    fprintf(outfile, "LIBRARY %s\n\n", DLLFileName);
 
     fprintf(outfile, "EXPORTS\n");
 
@@ -833,7 +833,7 @@ void BuildDef32File(FILE *outfile)
             fprintf(outfile, "=%s", make_internal_name( odp, "stub" ));
             break;
         case TYPE_FORWARD:
-            fprintf(outfile, "=lib%s", odp->link_name);
+            fprintf(outfile, "=%s", odp->link_name);
             break;
         default:
             assert(0);

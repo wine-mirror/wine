@@ -3,7 +3,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = shlwapi
+MODULE    = shlwapi.dll
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@

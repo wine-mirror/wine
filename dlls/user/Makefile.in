@@ -3,10 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = user32
-SOVERSION = 1.0
-ALTNAMES  = user keyboard ddeml display mouse
-IMPORTS   = gdi32 kernel32 ntdll
+MODULE    = user32.dll
+ALTNAMES  = user.dll keyboard.dll ddeml.dll display.dll mouse.dll
+IMPORTS   = gdi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
 	bidi16.c \
@@ -83,5 +82,8 @@ display.spec.c: resources/display.res
 mouse.spec.c: resources/mouse.res
 
 user.spec.c: resources/version16.res
+
+install:: install_libdir
+uninstall:: uninstall_libdir
 
 ### Dependencies:

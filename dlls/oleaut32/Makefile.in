@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = oleaut32
-ALTNAMES  = ole2disp typelib
+MODULE    = oleaut32.dll
+ALTNAMES  = ole2disp.dll typelib.dll
 EXTRALIBS = $(LIBUUID) @JPEGLIB@
 
 LDDLLFLAGS = @LDDLLFLAGS@

@@ -2,9 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = ttydrv
-SOVERSION = 1.0
-IMPORTS   = user32 gdi32 kernel32 ntdll
+MODULE    = ttydrv.dll
+IMPORTS   = user32.dll gdi32.dll kernel32.dll ntdll.dll
 EXTRALIBS = @CURSESLIBS@
 
 LDDLLFLAGS = @LDDLLFLAGS@

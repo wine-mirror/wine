@@ -48,7 +48,7 @@ static const IMAGE_NT_HEADERS *main_exe;
 
 static load_dll_callback_t load_dll_callback;
 
-static char **dll_paths;
+static const char **dll_paths;
 static int nb_dll_paths;
 static int dll_path_maxlen;
 static int init_done;
@@ -57,33 +57,49 @@ static int init_done;
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
 {
-    int count = 0;
+    static const char * const dlldir = DLLDIR;
+    int len, count = 0;
     char *p, *path = getenv( "WINEDLLPATH" );
 
     init_done = 1;
-    if (!path) return;
-    path = strdup(path);
-    p = path;
-    while (*p)
+
+    if (path)
     {
-        while (*p == ':') p++;
-        if (!*p) break;
-        count++;
-        while (*p && *p != ':') p++;
+        /* count how many path elements we need */
+        path = strdup(path);
+        p = path;
+        while (*p)
+        {
+            while (*p == ':') p++;
+            if (!*p) break;
+            count++;
+            while (*p && *p != ':') p++;
+        }
     }
 
-    dll_paths = malloc( count * sizeof(*dll_paths) );
-    p = path;
-    nb_dll_paths = 0;
-    while (*p)
+    dll_paths = malloc( (count+1) * sizeof(*dll_paths) );
+
+    if (count)
     {
-        while (*p == ':') *p++ = 0;
-        if (!*p) break;
-        dll_paths[nb_dll_paths] = p;
-        while (*p && *p != ':') p++;
-        if (p - dll_paths[nb_dll_paths] > dll_path_maxlen)
-            dll_path_maxlen = p - dll_paths[nb_dll_paths];
-        nb_dll_paths++;
+        p = path;
+        nb_dll_paths = 0;
+        while (*p)
+        {
+            while (*p == ':') *p++ = 0;
+            if (!*p) break;
+            dll_paths[nb_dll_paths] = p;
+            while (*p && *p != ':') p++;
+            if (p - dll_paths[nb_dll_paths] > dll_path_maxlen)
+                dll_path_maxlen = p - dll_paths[nb_dll_paths];
+            nb_dll_paths++;
+        }
+    }
+
+    /* append default dll dir (if not empty) to path */
+    if ((len = strlen(dlldir)))
+    {
+        if (len > dll_path_maxlen) dll_path_maxlen = len;
+        dll_paths[nb_dll_paths++] = dlldir;
     }
 }
 
@@ -93,28 +109,23 @@ static void build_dll_path(void)
 static void *dlopen_dll( const char *name, char *error, int errorsize )
 {
     int i, namelen = strlen(name);
-    char *buffer, *p, *ext;
+    char *buffer, *p;
     void *ret = NULL;
 
     if (!init_done) build_dll_path();
 
-    buffer = malloc( dll_path_maxlen + namelen + 8 );
+    buffer = malloc( dll_path_maxlen + namelen + 5 );
 
-    /* store the name at the end of the buffer, prefixed by /lib and followed by .so */
+    /* store the name at the end of the buffer, followed by .so */
     p = buffer + dll_path_maxlen;
-    memcpy( p, "/lib", 4 );
-    p += 4;
-    memcpy( p, name, namelen+1 );
-    ext = strrchr( p, '.' );
-    p += namelen;
-    /* check for .dll or .exe extension to remove */
-    if (ext && (!strcmp( ext, ".dll" ) || !strcmp( ext, ".exe" ))) p = ext;
-    memcpy( p, ".so", 4 );
+    *p++ = '/';
+    memcpy( p, name, namelen );
+    strcpy( p + namelen, ".so" );
 
     for (i = 0; i < nb_dll_paths; i++)
     {
         int len = strlen(dll_paths[i]);
-        char *p = buffer + dll_path_maxlen - len;
+        p = buffer + dll_path_maxlen - len;
         memcpy( p, dll_paths[i], len );
         if ((ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
     }

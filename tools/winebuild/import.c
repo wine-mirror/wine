@@ -80,18 +80,21 @@ inline static void sort_symbols( char **table, int size )
 /* open the .so library for a given dll in a specified path */
 static char *try_library_path( const char *path, const char *name )
 {
-    char *buffer, *p;
+    char *buffer;
     int fd;
 
-    buffer = xmalloc( strlen(path) + strlen(name) + 8 );
-    sprintf( buffer, "%s/lib%s", path, name );
-    p = buffer + strlen(buffer) - 4;
-    if (!strcmp( p, ".dll" )) *p = 0;
+    buffer = xmalloc( strlen(path) + strlen(name) + 9 );
+    sprintf( buffer, "%s/%s", path, name );
+    if (!strchr( name, '.' )) strcat( buffer, ".dll" );
     strcat( buffer, ".so" );
     /* check if the file exists */
-    if ((fd = open( buffer, O_RDONLY )) == -1) return NULL;
-    close( fd );
-    return buffer;
+    if ((fd = open( buffer, O_RDONLY )) != -1)
+    {
+        close( fd );
+        return buffer;
+    }
+    free( buffer );
+    return NULL;
 }
 
 /* open the .so library for a given dll */

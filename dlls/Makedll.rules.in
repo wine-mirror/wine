@@ -10,34 +10,33 @@
 #
 
 DEFS       = @DLLFLAGS@ -D__WINE__ $(EXTRADEFS)
-LIBEXT     = @LIBEXT@
-IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
-SPEC_SRCS  = $(ALTNAMES:%=%.spec)
-ALL_OBJS   = $(MODULE).spec.o $(OBJS)
+DLLEXT     = @DLLEXT@
+SPEC_SRCS  = $(ALTNAMES:.dll=.spec)
+ALL_OBJS   = $(MODULE:%.dll=%).spec.o $(OBJS)
 ALL_LIBS   = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
-all: lib$(MODULE).$(LIBEXT)
+all: $(MODULE)$(DLLEXT)
 
 @MAKE_RULES@
 
 # Rules for .so files
 
-lib$(MODULE).so: $(ALL_OBJS) Makefile.in
+$(MODULE).so: $(ALL_OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for .dll files
 
-lib$(MODULE).dll: $(ALL_OBJS) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --implib lib$(MODULE).a -o lib$(MODULE).dll $(ALL_OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(ALL_OBJS) Makefile.in
+	$(DLLWRAP) $(DLLWRAPFLAGS) --implib $(MODULE:.dll=.a) -o $(MODULE) $(ALL_OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for checking that no imports are missing
 
-checklink:: lib$(MODULE).$(LIBEXT)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) $(ALL_LIBS) && $(RM) checklink
+checklink:: $(MODULE)$(DLLEXT)
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE)$(DLLEXT) $(ALL_LIBS) && $(RM) checklink
 
 # Rules for testing
 
-$(TESTRESULTS): lib$(MODULE).$(LIBEXT)
+$(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 # Rules for debug channels
 
@@ -52,18 +51,28 @@ Makedll.rules: $(TOPSRCDIR)/Makedll.rules.in $(TOPSRCDIR)/configure
 
 # Rules for installation
 
-.PHONY: install_lib $(ALTNAMES:%=_install_/lib%.$(LIBEXT))
+.PHONY: install_lib $(ALTNAMES:%=_install_/%$(DLLEXT))
 
-$(ALTNAMES:%=_install_/lib%.$(LIBEXT)): install_lib
-	cd $(libdir) && $(RM) `basename $@` && $(LN_S) lib$(MODULE).$(LIBEXT) `basename $@`
+$(ALTNAMES:%=_install_/%$(DLLEXT)): install_lib
+	cd $(dlldir) && $(RM) `basename $@` && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`
 
-install_lib: lib$(MODULE).$(LIBEXT)
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_PROGRAM) lib$(MODULE).$(LIBEXT) $(libdir)/lib$(MODULE).$(LIBEXT)
+install_lib: $(MODULE)$(DLLEXT)
+	[ -d $(dlldir) ] || $(MKDIR) $(dlldir)
+	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(dlldir)/$(MODULE)$(DLLEXT)
 
-install:: install_lib $(ALTNAMES:%=_install_/lib%.$(LIBEXT))
+install:: install_lib $(ALTNAMES:%=_install_/%$(DLLEXT))
 
 uninstall::
-	cd $(libdir) && $(RM) lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
+	$(RM) $(dlldir)/$(MODULE)$(DLLEXT) $(ALTNAMES:%=$(dlldir)/%$(DLLEXT))
+
+# Extra install rules for dlls not yet properly separated
+
+install_libdir:: install_lib
+	cd $(libdir) && $(RM) lib$(MODULE).$(LIBEXT) && if [ "$(dlldir)" = "$(libdir)/wine" ]; \
+	then $(LN_S) wine/$(MODULE)$(DLLEXT) lib$(MODULE).$(LIBEXT); \
+	else $(LN_S) $(dlldir)/$(MODULE)$(DLLEXT) lib$(MODULE).$(LIBEXT); fi
+
+uninstall_libdir::
+	$(RM) $(libdir)/lib$(MODULE).$(LIBEXT)
 
 # End of global dll rules

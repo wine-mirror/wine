@@ -3,8 +3,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = ole32
-ALTNAMES  = ole2 ole2nls ole2conv ole2prox ole2thk storage compobj
+MODULE    = ole32.dll
+ALTNAMES  = ole2.dll ole2nls.dll ole2conv.dll ole2prox.dll ole2thk.dll storage.dll compobj.dll
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@

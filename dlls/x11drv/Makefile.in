@@ -2,9 +2,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = x11drv
+MODULE    = x11drv.dll
 EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
-IMPORTS   = user32 gdi32 kernel32
+IMPORTS   = user32.dll gdi32.dll kernel32.dll
 
 C_SRCS = \
 	desktop.c \
@@ -36,11 +36,11 @@ all: $(PROGRAMS)
 $(EXTRA_OBJS) $(PROGRAMS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
-install:: $(PROGRAMS)
+install:: $(PROGRAMS) install_libdir
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) $(TOPOBJDIR)/windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
 
-uninstall::
+uninstall:: uninstall_libdir
 	cd $(bindir) && $(RM) wineclipsrv
 
 ### Dependencies:

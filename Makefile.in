@@ -21,7 +21,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 LDCONFIG  = @LDCONFIG@
 MODULE    = wine
-IMPORTS   = ntdll
+IMPORTS   = ntdll.dll
 
 # Stand-alone programs
 PROGRAMS = \
@@ -39,8 +39,12 @@ LIBRARIES = \
 	tsx11/libwine_tsx11.$(LIBEXT) \
 	unicode/libwine_unicode.$(LIBEXT)
 
+# Dlls that we need to link against (should go away)
+LINKABLE_DLLS = winspool.drv x11drv.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
+
 # Libraries symlinks to create at the top level
 LIBSYMLINKS = \
+	$(LINKABLE_DLLS:%=lib%.$(LIBEXT)) \
 	libwine.$(LIBEXT) \
 	libwine_tsx11.$(LIBEXT) \
 	libwine_unicode.$(LIBEXT) \
@@ -70,7 +74,7 @@ INSTALLSUBDIRS = \
 EMUOBJS = \
 	miscemu/miscemu.o
 
-all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(LIBSYMLINKS) wine
+all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) wine
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -81,10 +85,10 @@ Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine: dlls $(EMUOBJS)
-	$(CC) -o wine $(EMUOBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
+wine: $(EMUOBJS) $(LIBSYMLINKS) $(IMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT)
+	$(CC) -o wine $(EMUOBJS) -L. $(IMPORTS:%=-l%) $(LIBWINE) $(LIBS) $(LDFLAGS)
 
-install_wine:
+install_wine: dummy
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
@@ -97,6 +101,8 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 $(EMUOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
+# Symlinks to libraries that we need to link against
+
 libwine.$(LIBEXT): library/libwine.$(LIBEXT)
 	$(RM) $@ && $(LN_S) library/libwine.$(LIBEXT) $@
 
@@ -108,6 +114,26 @@ libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
 
 libwine_uuid.a: ole/libwine_uuid.a
 	$(RM) $@ && $(LN_S) ole/libwine_uuid.a $@
+
+libwinspool.drv.$(LIBEXT): dlls/winspool.drv$(DLLEXT)
+	$(RM) $@ && $(LN_S) dlls/winspool.drv$(DLLEXT) $@
+
+libx11drv.dll.$(LIBEXT): dlls/x11drv.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dlls/x11drv.dll$(DLLEXT) $@
+
+libuser32.dll.$(LIBEXT): dlls/user32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dlls/user32.dll$(DLLEXT) $@
+
+libgdi32.dll.$(LIBEXT): dlls/gdi32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dlls/gdi32.dll$(DLLEXT) $@
+
+libkernel32.dll.$(LIBEXT): dlls/kernel32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dlls/kernel32.dll$(DLLEXT) $@
+
+libntdll.dll.$(LIBEXT): dlls/ntdll.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dlls/ntdll.dll$(DLLEXT) $@
+
+$(LINKABLE_DLLS:%=dlls/%$(DLLEXT)): dlls
 
 # Dependencies between directories
 

@@ -2,10 +2,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wineps
-SOVERSION = 1.0
-ALTNAMES  = wineps16
-IMPORTS   = user32 gdi32 winspool.drv kernel32 ntdll
+MODULE    = wineps.dll
+ALTNAMES  = wineps16.dll
+IMPORTS   = user32.dll gdi32.dll winspool.drv kernel32.dll ntdll.dll
 EXTRALIBS = @CUPSLIBS@ @FREETYPELIBS@
 EXTRAINCL = @FREETYPEINCL@
 
