@@ -227,7 +227,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
         /* If we don't know the device settings, go query them now */
         if (This->isGLInfoValid == FALSE) {
 	  WineD3D_Context* ctx = WineD3DCreateFakeGLContext();
-	  if (NULL != ctx) IDirect3D8Impl_FillGLCaps(iface, NULL);
+	  if (NULL != ctx) IDirect3D8Impl_FillGLCaps(iface, ctx->display);
 	  WineD3DReleaseFakeGLContext(ctx);
 	}
         if (This->isGLInfoValid == TRUE) {
@@ -884,7 +884,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     int major, minor;
     ICOM_THIS(IDirect3D8Impl,iface);
 
-    if (This->gl_info.bIsFilled) return ;
+    if (This->gl_info.bIsFilled) return;
     This->gl_info.bIsFilled = 1;
 
     TRACE_(d3d_caps)("(%p, %p)\n", This, display);
@@ -936,11 +936,37 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	break;
       }
     case VENDOR_ATI:
+      major = minor = 0;
+      gl_string_cursor = strchr(gl_string, '-');
+      if (gl_string_cursor++) {
+        int error = 0;
+        /* Check if version number is of the form x.y.z */
+        if (*gl_string_cursor > '9' && *gl_string_cursor < '0')
+          error = 1;
+        if (!error && *(gl_string_cursor+2) > '9' && *(gl_string_cursor+2) < '0')
+          error = 1;
+        if (!error && *(gl_string_cursor+4) > '9' && *(gl_string_cursor+4) < '0')
+          error = 1;
+	if (!error && *(gl_string_cursor+1) != '.' && *(gl_string_cursor+3) != '.')
+          error = 1;
+        /* Mark version number as malformed */
+        if (error)
+          gl_string_cursor = 0;
+      }
+      if (!gl_string_cursor)
+        WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
+      else {
+        major = *gl_string_cursor - '0';
+        minor = (*(gl_string_cursor+2) - '0') * 256 + (*(gl_string_cursor+4) - '0');
+      }      
+      break;
     default:
       major = 0;
       minor = 9;
     }
     This->gl_info.gl_driver_version = MAKEDWORD_VERSION(major, minor);
+
+    FIXME_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), This->gl_info.gl_driver_version);
 
     gl_string = glGetString(GL_RENDERER);
     strcpy(This->gl_info.gl_renderer, gl_string);
@@ -956,18 +982,24 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
       }
       break;
     case VENDOR_ATI:
-      This->gl_info.gl_card = CARD_ATI_RADEON_8500;
+      if (strstr(This->gl_info.gl_renderer, "RADEON 9800 PRO")) {
+        This->gl_info.gl_card = CARD_ATI_RADEON_9800PRO;
+      } else if (strstr(This->gl_info.gl_renderer, "RADEON 9700 PRO")) {
+        This->gl_info.gl_card = CARD_ATI_RADEON_9700PRO;
+      } else {
+        This->gl_info.gl_card = CARD_ATI_RADEON_8500;
+      }
       break;
     default:
       This->gl_info.gl_card = CARD_WINE;
       break;
     }
 
-    FIXME_(d3d_caps)("found GL_VERSION  (0x%08lx)\n", This->gl_info.gl_driver_version);
     FIXME_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(This->gl_info.gl_renderer), This->gl_info.gl_card);
-    /* 
+
+    /*
      * Initialize openGL extension related variables
-     *  with Default values 
+     *  with Default values
      */
     memset(&This->gl_info.supported, 0, sizeof(This->gl_info.supported));
     This->gl_info.max_textures   = 1;
