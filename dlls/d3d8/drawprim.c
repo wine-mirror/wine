@@ -623,9 +623,10 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
             VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
             glVertex3f(x, y, z);
         } else {
-            GLfloat w = 1.0f / rhw;
+            /* Cannot optimize by dividing through by rhw as rhw is required
+               later for perspective in the GL pipeline for vertex shaders   */
             VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
-            glVertex4f(x * w, y * w, z * w, 1.0f);
+            glVertex4f(x,y,z,rhw);
         }
     }
 }
@@ -1189,7 +1190,7 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                 glVertex3f(x, y, z);
             } else {
                 VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
-                glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
+                glVertex4f(x,y,z,rhw);
             }
         }
 
@@ -1265,8 +1266,14 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
         /* Fill the vertex shader input */
         IDirect3DDeviceImpl_FillVertexShaderInput(This, vertex_shader, SkipnStrides);
 
-        /* Now execute the vertex shader */
+        /* Initialize the output fields to the same defaults as it would normally have */
         memset(&vertex_shader->output, 0, sizeof(VSHADEROUTPUTDATA8));
+        vertex_shader->output.oD[0].x = 1.0;
+        vertex_shader->output.oD[0].y = 1.0;
+        vertex_shader->output.oD[0].z = 1.0;
+        vertex_shader->output.oD[0].w = 1.0; 
+
+        /* Now execute the vertex shader */
         IDirect3DVertexShaderImpl_ExecuteSW(vertex_shader, &vertex_shader->input, &vertex_shader->output);
 
         /*

@@ -1152,7 +1152,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->view_ident = 1;
     object->last_was_rhw = 0;
 
-    TRACE("(%p,%d) All defaults now set up, leaving CreateDevice\n", This, Adapter);
+    TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
     return D3D_OK;
 }
 
