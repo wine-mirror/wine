@@ -93,6 +93,8 @@
  * 18. Fix _AdjustBand processing of RBBS_FIXEDSIZE.
  * rev 8c
  * 19. Fix problem in _Layout when all lengths are 0.
+ * 20. If CLR_NONE specified, we will use default BtnFace color when drawing.
+ * 21. Fix test in REBAR_Layout.
  *
  *
  *    Still to do:
@@ -1731,7 +1733,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    iband = infoPtr->rows[i-1].istartband;
 	    lpBand = &infoPtr->bands[iband];
 	    if(HIDDENBAND(lpBand)) continue;
-	    if (!(lpBand->fMask & RBBS_VARIABLEHEIGHT)) continue;
+	    if (lpBand->fMask & RBBS_VARIABLEHEIGHT) continue;
 	    if (((INT)lpBand->cyMaxChild < 1) || 
 		((INT)lpBand->cyIntegral < 1)) {
 		if (lpBand->cyMaxChild + lpBand->cyIntegral == 0) continue;
