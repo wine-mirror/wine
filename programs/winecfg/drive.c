@@ -230,7 +230,7 @@ void load_drives()
         WINE_TRACE("serial: '0x%lX'\n", serial);
 
         /* build rootpath for GetDriveType() */
-        strncpy(rootpath, devices, sizeof(rootpath));
+        lstrcpynA(rootpath, devices, sizeof(rootpath));
         pathlen = strlen(rootpath);
 
         /* ensure that we have a backslash on the root path */
@@ -240,8 +240,8 @@ void load_drives()
             rootpath[pathlen + 1] = 0;
         }
 
-        strncpy(simplepath, devices, 2); /* QueryDosDevice() requires no trailing backslash */
-        simplepath[2] = 0;
+	/* QueryDosDevice() requires no trailing backslash */
+        lstrcpynA(simplepath, devices, 3);
         QueryDosDevice(simplepath, targetpath, sizeof(targetpath));
 
         /* targetpath may have forward slashes rather than backslashes, so correct */

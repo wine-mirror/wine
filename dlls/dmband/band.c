@@ -165,9 +165,9 @@ HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMU
 	if (pDesc->dwValidData & DMUS_OBJ_NAME)
 		strncpyW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
 	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-		strncpyW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);		
+		strncpyW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
 	if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-		strncpyW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);		
+		strncpyW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
 	if (pDesc->dwValidData & DMUS_OBJ_VERSION)
 		memcpy (&This->pDesc->vVersion, &pDesc->vVersion, sizeof (pDesc->vVersion));				
 	if (pDesc->dwValidData & DMUS_OBJ_DATE)

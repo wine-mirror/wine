@@ -268,8 +268,7 @@ static void     doChild(const char* file, const char* option)
         i = 0;
         while (*ptrA)
         {
-            strncpy(env_var, ptrA, MAX_LISTED_ENV_VAR - 1);
-            env_var[MAX_LISTED_ENV_VAR - 1] = '\0';
+            lstrcpynA(env_var, ptrA, MAX_LISTED_ENV_VAR);
             childPrintf(hFile, "env%d=%s\n", i, encodeA(env_var));
             i++;
             ptrA += strlen(ptrA) + 1;

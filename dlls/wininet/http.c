@@ -178,8 +178,7 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
     else
         len = dwHeaderLength;
     buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR)*(len+1) );
-    strncpyW( buffer, lpszHeader, len );
-    buffer[len]=0;
+    lstrcpynW( buffer, lpszHeader, len + 1);
 
     lpszStart = buffer;
 
@@ -1722,14 +1721,12 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         nDomainPosStart = strlenW(szDomain);
                         nDomainLength = (nDomainPosEnd - nDomainPosStart) + 1;
                         domain = HeapAlloc(GetProcessHeap(), 0, (nDomainLength + 1)*sizeof(WCHAR));
-                        strncpyW(domain, &lpszDomain[nDomainPosStart], nDomainLength);
-                        domain[nDomainLength] = '\0';
+                        lstrcpynW(domain, &lpszDomain[nDomainPosStart], nDomainLength + 1);
                     }
                 }
                 if (setCookieHeader->lpszValue[nPosEnd] == '\0') break;
                 buf_cookie = HeapAlloc(GetProcessHeap(), 0, ((nPosEnd - nPosStart) + 1)*sizeof(WCHAR));
-                strncpyW(buf_cookie, &setCookieHeader->lpszValue[nPosStart], (nPosEnd - nPosStart));
-                buf_cookie[(nPosEnd - nPosStart)] = '\0';
+                lstrcpynW(buf_cookie, &setCookieHeader->lpszValue[nPosStart], (nPosEnd - nPosStart) + 1);
                 TRACE("%s\n", debugstr_w(buf_cookie));
                 while (buf_cookie[nEqualPos] != '=' && buf_cookie[nEqualPos] != '\0')
                 {
@@ -1742,8 +1739,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                 }
 
                 cookie_name = HeapAlloc(GetProcessHeap(), 0, (nEqualPos + 1)*sizeof(WCHAR));
-                strncpyW(cookie_name, buf_cookie, nEqualPos);
-                cookie_name[nEqualPos] = '\0';
+                lstrcpynW(cookie_name, buf_cookie, nEqualPos + 1);
                 cookie_data = &buf_cookie[nEqualPos + 1];
 
 

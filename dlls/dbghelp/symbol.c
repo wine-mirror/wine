@@ -536,7 +536,7 @@ static void symt_fill_sym_info(const struct module* module,
                                                       sym_info->MaxNameLen, UNDNAME_COMPLETE) == 0))
         {
             sym_info->NameLen = min(strlen(name), sym_info->MaxNameLen - 1);
-            strncpy(sym_info->Name, name, sym_info->NameLen);
+            memcpy(sym_info->Name, name, sym_info->NameLen);
             sym_info->Name[sym_info->NameLen] = '\0';
         }
     }
@@ -916,8 +916,7 @@ BOOL WINAPI SymGetSymFromAddr(HANDLE hProcess, DWORD Address,
     Symbol->Size    = si->Size;
     Symbol->Flags   = si->Flags;
     len = min(Symbol->MaxNameLength, si->MaxNameLen);
-    strncpy(Symbol->Name, si->Name, len);
-    Symbol->Name[len - 1] = '\0';
+    lstrcpynA(Symbol->Name, si->Name, len);
     return TRUE;
 }
 
@@ -992,8 +991,7 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symb
     Symbol->Size    = si->Size;
     Symbol->Flags   = si->Flags;
     len = min(Symbol->MaxNameLength, si->MaxNameLen);
-    strncpy(Symbol->Name, si->Name, len);
-    Symbol->Name[len - 1] = '\0';
+    lstrcpynA(Symbol->Name, si->Name, len);
     return TRUE;
 }
 

@@ -67,8 +67,7 @@ static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 {
     char buffer[256];
 
-    strncpy( buffer, lpPortName, sizeof(buffer) );
-    buffer[sizeof(buffer)-1] = 0;
+    lstrcpynA( buffer, lpPortName, sizeof(buffer) );
 
     if (buffer[0] && buffer[strlen(buffer)-1] == ':') buffer[strlen(buffer)-1] = 0;
 

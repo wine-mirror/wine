@@ -390,7 +390,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 	 OpenGL drivers (moreover, it is only useful for old 1.0 apps
 	 that query the glBindTextureEXT extension).
       */
-      strncpy(buf, ext_ret->glx_name, strlen(ext_ret->glx_name) - 3);
+      memcpy(buf, ext_ret->glx_name, strlen(ext_ret->glx_name) - 3);
       buf[strlen(ext_ret->glx_name) - 3] = '\0';
       TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
 

@@ -643,10 +643,9 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               DWORD addrLen = sizeof(ptr->Address), type;
 
               /* on Win98 this is left empty, but whatever */
-              strncpy(ptr->AdapterName,
+              lstrcpynA(ptr->AdapterName,
                getInterfaceNameByIndex(table->indexes[ndx]),
-               sizeof(ptr->AdapterName));
-              ptr->AdapterName[MAX_ADAPTER_NAME_LENGTH] = '\0';
+               MAX_ADAPTER_NAME_LENGTH+1);
               getInterfacePhysicalByIndex(table->indexes[ndx], &addrLen,
                ptr->Address, &type);
               /* MS defines address length and type as UINT in some places and

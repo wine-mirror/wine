@@ -53,8 +53,7 @@ DWORD WINAPI tapiGetLocationInfoA(LPSTR lpszCountryCode, LPSTR lpszCityCode)
                     bufsize=sizeof(buf);
                     if( !RegQueryValueExA( hsubkey, "AreaCode", 0, &type, buf,
                                 &bufsize) && type == REG_SZ) {
-                        strncpy( lpszCityCode, (char *) buf, 8);
-                        if(bufsize > 8) lpszCityCode[7] = '\0';
+			lstrcpynA( lpszCityCode, (char *) buf, 8);
                     } else 
                         lpszCityCode[0] = '\0';
                 }

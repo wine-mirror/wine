@@ -196,10 +196,10 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pTransformFilter;
-    strncpyW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
+    lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
-    strncpyW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
+    lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
     hr = TransformFilter_InputPin_Construct(&piInput, TransformFilter_Sample, (LPVOID)pTransformFilter, TransformFilter_Input_QueryAccept, &pTransformFilter->csFilter, &pTransformFilter->ppPins[0]);
 

@@ -528,7 +528,7 @@ HKEY getRegClass(LPSTR lpClass)
     if (lpClass == NULL)
         return (HKEY)ERROR_INVALID_PARAMETER;
 
-    strncpy(lpClassCopy, lpClass, KEY_MAX_LEN);
+    lstrcpynA(lpClassCopy, lpClass, KEY_MAX_LEN);
 
     classNameEnd  = strchr(lpClassCopy, '\\');    /* The class name ends by '\' */
     if (!classNameEnd)                            /* or the whole string */
@@ -792,8 +792,7 @@ void processQueryValue(LPSTR cmdline)
 
         if (hRes == ERROR_SUCCESS) {
             lpsRes = HeapAlloc( GetProcessHeap(), 0, lLen);
-            strncpy(lpsRes, lpsData, lLen);
-            lpsRes[lLen-1]='\0';
+            lstrcpynA(lpsRes, lpsData, lLen);
         }
     } else {
         DWORD  dwLen  = KEY_MAX_LEN;
@@ -823,8 +822,7 @@ void processQueryValue(LPSTR cmdline)
             case REG_SZ:
             case REG_EXPAND_SZ: {
                     lpsRes = HeapAlloc( GetProcessHeap(), 0, dwLen);
-                    strncpy(lpsRes, lpbData, dwLen);
-                    lpsRes[dwLen-1]='\0';
+                    lstrcpynA(lpsRes, lpbData, dwLen);
                     break;
                 }
             case REG_DWORD: {

@@ -384,8 +384,8 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                 err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
-                    strncpy(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA) - 1);
-                    strncpy(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA) - 1);
+                    lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
+                    lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                     MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                     MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
                     err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
@@ -415,8 +415,8 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                 err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
                 if (err == DS_OK) {
                     PIDSCDRIVER drv;
-                    strncpy(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA) - 1);
-                    strncpy(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA) - 1);
+                    lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
+                    lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                     MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                     MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
                     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&drv,0));
@@ -447,8 +447,8 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                 err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
-                    strncpy(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA) - 1);
-                    strncpy(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA) - 1);
+                    lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
+                    lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                     MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                     MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
                     err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
@@ -480,8 +480,8 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                     err = mmErr(waveInMessage((HWAVEIN)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
                     if (err == DS_OK) {
                         PIDSDRIVER drv = NULL;
-                        strncpy(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA) - 1);
-                        strncpy(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA) - 1);
+                        lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
+                        lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                         MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                         MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
                         err = mmErr(waveInMessage((HWAVEIN)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
@@ -1005,8 +1005,8 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                         data.WaveDeviceId = wod;
                         data.DeviceId = DSOUND_renderer_guids[wod];
-                        strncpy(data.DescriptionA, desc.szDesc, sizeof(data.DescriptionA));
-                        strncpy(data.ModuleA, desc.szDrvname, sizeof(data.ModuleA));
+                        lstrcpynA(data.DescriptionA, desc.szDesc, sizeof(data.DescriptionA));
+                        lstrcpynA(data.ModuleA, desc.szDrvname, sizeof(data.ModuleA));
 
                         MultiByteToWideChar( CP_ACP, 0, data.DescriptionA, -1, data.DescriptionW, sizeof(data.DescriptionW) );
                         MultiByteToWideChar( CP_ACP, 0, data.ModuleA, -1, data.ModuleW, sizeof(data.ModuleW) );
@@ -1024,8 +1024,8 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                         data.WaveDeviceId = wod;
                         data.DeviceId = DSOUND_renderer_guids[wod];
-                        strncpy(data.DescriptionA, desc.szDesc, sizeof(data.DescriptionA));
-                        strncpy(data.ModuleA, desc.szDrvname, sizeof(data.ModuleA));
+                        lstrcpynA(data.DescriptionA, desc.szDesc, sizeof(data.DescriptionA));
+                        lstrcpynA(data.ModuleA, desc.szDrvname, sizeof(data.ModuleA));
 
                         MultiByteToWideChar( CP_ACP, 0, data.DescriptionA, -1, data.DescriptionW, sizeof(data.DescriptionW) );
                         MultiByteToWideChar( CP_ACP, 0, data.ModuleA, -1, data.ModuleW, sizeof(data.ModuleW) );

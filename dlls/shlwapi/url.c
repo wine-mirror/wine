@@ -329,7 +329,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     DWORD EscapeFlags;
     LPWSTR lpszUrlCpy, wk1, wk2, mp, root;
     INT nByteLen, state;
-    DWORD nLen;
+    DWORD nLen, nWkLen;
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);
@@ -379,9 +379,10 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 		state = 4;
 		break;
 	    case 3:
-		strcpyW(wk2, wk1);
-		wk1 += strlenW(wk1);
-		wk2 += strlenW(wk2);
+		nWkLen = strlenW(wk1);
+		memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
+		wk1 += nWkLen;
+		wk2 += nWkLen;
 		break;
 	    case 4:
 		if (!isalnumW(*wk1) && (*wk1 != L'-') && (*wk1 != L'.')) {state = 3; break;}
@@ -401,13 +402,14 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 		    TRACE("wk1=%c\n", (CHAR)*wk1);
 		    mp = strchrW(wk1, L'/');
 		    if (!mp) {
-			strcpyW(wk2, wk1);
-			wk1 += strlenW(wk1);
-			wk2 += strlenW(wk2);
+			nWkLen = strlenW(wk1);
+			memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
+			wk1 += nWkLen;
+			wk2 += nWkLen;
 			continue;
 		    }
 		    nLen = mp - wk1 + 1;
-		    strncpyW(wk2, wk1, nLen);
+		    memcpy(wk2, wk1, nLen * sizeof(WCHAR));
 		    wk2 += nLen;
 		    wk1 += nLen;
 		    if (*wk1 == L'.') {

@@ -410,6 +410,7 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 	WCHAR *ourCookieName, *ourCookieData;
 	int ourCookieNameSize;
         BOOL ret;
+
 	if (!(ourCookieData = strchrW(lpCookieData, '=')))
 	{
             TRACE("something terribly wrong with cookie data %s\n", 
@@ -420,7 +421,7 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 	ourCookieData += 1;
 	ourCookieName = HeapAlloc(GetProcessHeap(), 0, 
                               (ourCookieNameSize + 1)*sizeof(WCHAR));
-	strncpyW(ourCookieName, ourCookieData, ourCookieNameSize);
+	memcpy(ourCookieName, ourCookieData, ourCookieNameSize * sizeof(WCHAR));
 	ourCookieName[ourCookieNameSize] = '\0';
 	TRACE("setting (hacked) cookie of %s, %s\n",
                debugstr_w(ourCookieName), debugstr_w(ourCookieData));

@@ -390,7 +390,7 @@ void SaveBoard( BOARD *p_board )
 
     for( i = 0; i < 3; i++ ) {
         wsprintf( key_name, "Name%u", i );
-        strncpy( data, p_board->best_name[i], sizeof( data ) );
+        lstrcpyn( data, p_board->best_name[i], sizeof( data ) );
         RegSetValueEx( hkey, key_name, 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
     }
 

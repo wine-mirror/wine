@@ -2777,7 +2777,7 @@ BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileD
 	    lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
 
         if (lpafp->lpszName)
-            strncpyW(lpFindFileData->cFileName, lpafp->lpszName, MAX_PATH);
+            lstrcpynW(lpFindFileData->cFileName, lpafp->lpszName, MAX_PATH);
 
 	bSuccess = TRUE;
     }

@@ -891,7 +891,7 @@ static HDEVINFO SETUP_CreateSerialDeviceList(void)
             {
                 if (!strncmpW(comW, ptr, sizeof(comW) / sizeof(comW[0]) - 1))
                 {
-                    strncpyW(list->names[list->numPorts].name, ptr,
+                    lstrcpynW(list->names[list->numPorts].name, ptr,
                      sizeof(list->names[list->numPorts].name) /
                      sizeof(list->names[list->numPorts].name[0]));
                     TRACE("Adding %s to list\n",

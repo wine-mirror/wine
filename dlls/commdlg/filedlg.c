@@ -462,16 +462,17 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   if(ofn->lpstrFile)
   {
     fodInfos.filename = MemAlloc(ofn->nMaxFile*sizeof(WCHAR));
-    strncpyW(fodInfos.filename,ofn->lpstrFile,ofn->nMaxFile);
+    lstrcpynW(fodInfos.filename,ofn->lpstrFile,ofn->nMaxFile);
   }
   else
     fodInfos.filename = NULL;
 
   if(ofn->lpstrInitialDir)
   {
-    DWORD len = strlenW(ofn->lpstrInitialDir);
-    fodInfos.initdir = MemAlloc((len+1)*sizeof(WCHAR));
-    strcpyW(fodInfos.initdir,ofn->lpstrInitialDir);
+    /* fodInfos.initdir = strdupW(ofn->lpstrInitialDir); */
+    DWORD len = strlenW(ofn->lpstrInitialDir)+1;
+    fodInfos.initdir = MemAlloc(len*sizeof(WCHAR));
+    memcpy(fodInfos.initdir,ofn->lpstrInitialDir,len*sizeof(WCHAR));
   }
   else
     fodInfos.initdir = NULL;
@@ -853,7 +854,7 @@ HRESULT FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
 
         /* Prepend the current path */
         n = strlenW(lpstrCurrentDir) + 1;
-        strncpyW( bufW, lpstrCurrentDir, size );
+        memcpy( bufW, lpstrCurrentDir, min(n,size) * sizeof(WCHAR));
         if(n<size)
         {
             /* 'n' includes trailing \0 */
@@ -2034,7 +2035,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
              {
                LPOPENFILENAMEW ofn = fodInfos->ofnInfos;
 
-               strncpyW(ofn->lpstrFile, lpstrPathAndFile, ofn->nMaxFile);
+               lstrcpynW(ofn->lpstrFile, lpstrPathAndFile, ofn->nMaxFile);
                if (ofn->Flags & OFN_ALLOWMULTISELECT)
                  ofn->lpstrFile[lstrlenW(ofn->lpstrFile) + 1] = '\0';
              }

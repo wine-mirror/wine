@@ -189,8 +189,7 @@ void PSDRV_AFM2C(const AFM *afm)
     FILE    *of;
     int     i;
 
-    strncpy(buffer, afm->FontName, sizeof(buffer) - 3);
-    buffer[sizeof(buffer) - 3] = '\0';
+    lstrcpynA(buffer, afm->FontName, sizeof(buffer) - 2);
 
     for (i = 0; i < strlen(buffer); ++i)
     	if (buffer[i] == '-')

@@ -242,8 +242,7 @@ BOOL memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode,
     }
     else
     {
-        strncpy(buffer, addr, size);
-        buffer[size - 1] = 0;
+        lstrcpynA(buffer, addr, size);
     }
     return TRUE;
 }

@@ -1959,8 +1959,7 @@ INT WINAPI WSAIoctl(SOCKET s,
                         struct ifreq ifInfo;
 
                         /* Socket Status Flags */
-                        strncpy(ifInfo.ifr_name, ptr->AdapterName, IFNAMSIZ);
-                        ifInfo.ifr_name[IFNAMSIZ-1] = '\0';
+                        lstrcpynA(ifInfo.ifr_name, ptr->AdapterName, IFNAMSIZ);
                         if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0)
                         {
                            ERR("Error obtaining status flags for socket!\n");

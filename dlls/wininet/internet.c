@@ -1163,8 +1163,7 @@ static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
         return INTERNET_SCHEME_UNKNOWN;
 
     tempBuffer=HeapAlloc(GetProcessHeap(),0,(nMaxCmp+1)*sizeof(WCHAR));
-    strncpyW(tempBuffer,lpszScheme,nMaxCmp);
-    tempBuffer[nMaxCmp]=0;
+    lstrcpynW(tempBuffer,lpszScheme,nMaxCmp+1);
     strlwrW(tempBuffer);
     if (nMaxCmp==strlenW(lpszFtp) && !strncmpW(lpszFtp, tempBuffer, nMaxCmp))
         iScheme=INTERNET_SCHEME_FTP;

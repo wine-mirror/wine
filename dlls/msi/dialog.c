@@ -131,7 +131,7 @@ static LPWSTR msi_dialog_get_style( LPCWSTR *text )
     ret = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if( !ret )
         return ret;
-    strncpyW( ret, p, len );
+    memcpy( ret, p, len*sizeof(WCHAR) );
     ret[len-1] = 0;
     return ret;
 }

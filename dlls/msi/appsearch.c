@@ -672,8 +672,8 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
                 pathWithDrive[0] = 'A' + i;
                 if (GetDriveTypeW(pathWithDrive) == DRIVE_FIXED)
                 {
-                    strncpyW(pathWithDrive + 3, expanded,
-                     sizeof(pathWithDrive) / sizeof(pathWithDrive[0]) - 3);
+                    lstrcpynW(pathWithDrive + 3, expanded,
+                              sizeof(pathWithDrive) / sizeof(pathWithDrive[0]) - 3);
                     if (sig->File)
                         rc = ACTION_RecurseSearchDirectory(package, &found, sig,
                          pathWithDrive, depth);

@@ -78,7 +78,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pParser;
-    strncpyW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
+    lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
     hr = Parser_InputPin_Construct(&piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, &pParser->csFilter, (IPin **)&pParser->pInputPin);
 

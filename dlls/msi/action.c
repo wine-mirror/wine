@@ -922,7 +922,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                 while (*ptr == ' ') ptr++;
                 len = ptr2-ptr;
                 prop = HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
-                strncpyW(prop,ptr,len);
+                memcpy(prop,ptr,len*sizeof(WCHAR));
                 prop[len]=0;
                 ptr2++;
            
@@ -942,7 +942,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                     len -= 2;
                 }
                 val = HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
-                strncpyW(val,ptr2,len);
+                memcpy(val,ptr2,len*sizeof(WCHAR));
                 val[len] = 0;
 
                 if (strlenW(prop) > 0)

@@ -959,15 +959,13 @@ static HCRYPTPROV new_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTab
                                            destroy_key_container, (OBJECTHDR**)&pKeyContainer);
     if (hKeyContainer != (HCRYPTPROV)INVALID_HANDLE_VALUE)
     {
-        strncpy(pKeyContainer->szName, pszContainerName, MAX_PATH);
-        pKeyContainer->szName[MAX_PATH-1] = '\0';
+        lstrcpynA(pKeyContainer->szName, pszContainerName, MAX_PATH);
         pKeyContainer->dwFlags = dwFlags;
         pKeyContainer->dwEnumAlgsCtr = 0;
         pKeyContainer->hKeyExchangeKeyPair = (HCRYPTKEY)INVALID_HANDLE_VALUE;
         pKeyContainer->hSignatureKeyPair = (HCRYPTKEY)INVALID_HANDLE_VALUE;
         if (pVTable && pVTable->pszProvName) {
-            strncpy(pKeyContainer->szProvName, pVTable->pszProvName, MAX_PATH);
-            pKeyContainer->szProvName[MAX_PATH-1] = '\0';
+            lstrcpynA(pKeyContainer->szProvName, pVTable->pszProvName, MAX_PATH);
             if (!strcmp(pVTable->pszProvName, MS_DEF_PROV_A)) {
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_BASE;
             } else if (!strcmp(pVTable->pszProvName, MS_ENHANCED_PROV_A)) {

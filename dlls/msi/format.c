@@ -252,7 +252,7 @@ static BOOL find_next_outermost_key(LPCWSTR source, DWORD len_remaining,
     *key = HeapAlloc(GetProcessHeap(),0,i*sizeof(WCHAR));
     /* do not have the [] in the key */
     i -= 1;
-    strncpyW(*key,&(*mark)[1],i);
+    memcpy(*key,&(*mark)[1],i*sizeof(WCHAR));
     (*key)[i] = 0;
 
     TRACE("Found Key %s\n",debugstr_w(*key));

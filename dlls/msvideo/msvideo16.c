@@ -821,17 +821,15 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
     infobuf = HeapAlloc(GetProcessHeap(), 0, infosize);
     if (GetFileVersionInfoA(fn, verhandle, infosize, infobuf)) 
     {
-        char	vbuf[200];
         /* Yes, two space behind : */
         /* FIXME: test for buflen */
-        sprintf(vbuf, "Version:  %d.%d.%d.%d\n", 
+        snprintf(buf2, buf2len, "Version:  %d.%d.%d.%d\n",
                 ((WORD*)infobuf)[0x0f],
                 ((WORD*)infobuf)[0x0e],
                 ((WORD*)infobuf)[0x11],
                 ((WORD*)infobuf)[0x10]
 	    );
-        TRACE("version of %s is %s\n", fn, vbuf);
-        strncpy(buf2, vbuf, buf2len);
+        TRACE("version of %s is %s\n", fn, buf2);
     }
     else 
     {

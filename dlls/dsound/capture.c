@@ -567,8 +567,8 @@ IDirectSoundCaptureImpl_Initialize(
 
             if (err == DS_OK) {
                 This->drvcaps.dwFlags = 0;
-                strncpy(This->drvdesc.szDrvname, wic.szPname,
-                    sizeof(This->drvdesc.szDrvname));
+                lstrcpynA(This->drvdesc.szDrvname, wic.szPname,
+                          sizeof(This->drvdesc.szDrvname));
 
                 This->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
                 This->drvcaps.dwFormats = wic.dwFormats;

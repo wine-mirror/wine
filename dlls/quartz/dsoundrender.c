@@ -307,7 +307,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pDSoundRender;
-    strncpyW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
+    lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
     hr = DSoundRender_InputPin_Construct(&piInput, DSoundRender_Sample, (LPVOID)pDSoundRender, DSoundRender_QueryAccept, &pDSoundRender->csFilter, (IPin **)&pDSoundRender->pInputPin);
 
     if (SUCCEEDED(hr))

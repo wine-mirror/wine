@@ -1233,7 +1233,7 @@ void _searchenv(const char* file, const char* env, char *buf)
       msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return;
     }
-    strncpy(curPath, penv, end - penv);
+    memcpy(curPath, penv, end - penv);
     if (curPath[end - penv] != '/' || curPath[end - penv] != '\\')
     {
       curPath[end - penv] = '\\';

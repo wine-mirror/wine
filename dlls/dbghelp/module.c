@@ -42,8 +42,7 @@ static void module_fill_module(const char* in, char* out, unsigned size)
          *ptr != '/' && *ptr != '\\' && ptr >= in; 
          ptr--);
     if (ptr < in || *ptr == '/' || *ptr == '\\') ptr++;
-    strncpy(out, ptr, size);
-    out[size - 1] = '\0';
+    lstrcpynA(out, ptr, size);
     len = strlen(out);
     if (len > 4 && 
         (!strcasecmp(&out[len - 4], ".dll") || !strcasecmp(&out[len - 4], ".exe")))
@@ -51,7 +50,7 @@ static void module_fill_module(const char* in, char* out, unsigned size)
     else if (((len > 12 && out[len - 13] == '/') || len == 12) && 
              (!strcasecmp(out + len - 12, "wine-pthread") || 
               !strcasecmp(out + len - 12, "wine-kthread")))
-        strcpy(out, "<wine-loader>");
+        lstrcpynA(out, "<wine-loader>",size);
     else
     {
         if (len > 7 && 
@@ -96,9 +95,7 @@ struct module* module_new(struct process* pcs, const char* name,
     module->module.ImageSize = size;
     module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
     module->module.ImageName[0] = '\0';
-    strncpy(module->module.LoadedImageName, name, 
-            sizeof(module->module.LoadedImageName));
-    module->module.LoadedImageName[sizeof(module->module.LoadedImageName) - 1] = '\0';
+    lstrcpynA(module->module.LoadedImageName, name, sizeof(module->module.LoadedImageName));
     module->module.SymType = SymNone;
     module->module.NumSyms = 0;
     module->module.TimeDateStamp = stamp;
@@ -360,13 +357,8 @@ done:
      * of ImageName. Overwrite it, if we have better information
      */
     if (ModuleName)
-    {
-        strncpy(module->module.ModuleName, ModuleName, 
-                sizeof(module->module.ModuleName));
-        module->module.ModuleName[sizeof(module->module.ModuleName) - 1] = '\0';
-    }
-    strncpy(module->module.ImageName, ImageName, sizeof(module->module.ImageName));
-    module->module.ImageName[sizeof(module->module.ImageName) - 1] = '\0';
+        lstrcpynA(module->module.ModuleName, ModuleName, sizeof(module->module.ModuleName));
+    lstrcpynA(module->module.ImageName, ImageName, sizeof(module->module.ImageName));
 
     return module->module.BaseOfImage;
 }

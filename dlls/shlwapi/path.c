@@ -168,14 +168,14 @@ LPWSTR WINAPI PathCombineW(LPWSTR lpszDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
   if (!lpszFile || !*lpszFile)
   {
     /* Use dir only */
-    strncpyW(szTemp, lpszDir, MAX_PATH);
+    lstrcpynW(szTemp, lpszDir, MAX_PATH);
   }
   else if (!lpszDir || !*lpszDir || !PathIsRelativeW(lpszFile))
   {
     if (!lpszDir || !*lpszDir || *lpszFile != '\\' || PathIsUNCW(lpszFile))
     {
       /* Use file only */
-      strncpyW(szTemp, lpszFile, MAX_PATH);
+      lstrcpynW(szTemp, lpszFile, MAX_PATH);
     }
     else
     {
@@ -188,7 +188,7 @@ LPWSTR WINAPI PathCombineW(LPWSTR lpszDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
 
   if (bUseBoth)
   {
-    strncpyW(szTemp, lpszDir, MAX_PATH);
+    lstrcpynW(szTemp, lpszDir, MAX_PATH);
     if (bStrip)
     {
       PathStripToRootW(szTemp);
@@ -2845,7 +2845,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
        * the file name as possible, allowing for the ellipses, e.g:
        * c:\some very long path\filename ==> c:\some v...\filename
        */
-      strncpyW(buff, sFile, MAX_PATH);
+      lstrcpynW(buff, sFile, MAX_PATH);
 
       do
       {
@@ -3397,8 +3397,8 @@ BOOL WINAPI PathRelativePathToW(LPWSTR lpszPath, LPCWSTR lpszFrom, DWORD dwAttrF
     return FALSE;
 
   *lpszPath = '\0';
-  strncpyW(szFrom, lpszFrom, MAX_PATH);
-  strncpyW(szTo, lpszTo, MAX_PATH);
+  lstrcpynW(szFrom, lpszFrom, MAX_PATH);
+  lstrcpynW(szTo, lpszTo, MAX_PATH);
 
   if(!(dwAttrFrom & FILE_ATTRIBUTE_DIRECTORY))
     PathRemoveFileSpecW(szFrom);
@@ -3746,7 +3746,7 @@ BOOL WINAPI PathIsDirectoryEmptyW(LPCWSTR lpszPath)
   if (!lpszPath || !PathIsDirectoryW(lpszPath))
       return FALSE;
 
-  strncpyW(szSearch, lpszPath, MAX_PATH);
+  lstrcpynW(szSearch, lpszPath, MAX_PATH);
   PathAddBackslashW(szSearch);
   dwLen = strlenW(szSearch);
   if (dwLen > MAX_PATH - 4)

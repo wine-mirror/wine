@@ -126,8 +126,7 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath,
     struct process* pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
 
-    strncpy(szSearchPath, pcs->search_path, SearchPathLength);
-    szSearchPath[SearchPathLength - 1] = '\0';
+    lstrcpynA(szSearchPath, pcs->search_path, SearchPathLength);
     return TRUE;
 }
 

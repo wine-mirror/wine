@@ -149,8 +149,7 @@ void setup_dsound_options(void)
            char appname[MAX_PATH+16];
            char *p = strrchr( buffer, '\\' );
            if (p!=NULL) {
-                   appname[MAX_PATH]='\0';
-                   strncpy(appname,p+1,MAX_PATH);
+                   lstrcpynA(appname,p+1,MAX_PATH);
                    strcat(appname,"\\dsound");
                    TRACE("appname = [%s] \n",appname);
                    if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;

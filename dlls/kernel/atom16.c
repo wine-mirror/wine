@@ -210,14 +210,14 @@ ATOM WINAPI AddAtom16( LPCSTR str )
 
     if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
 
-    TRACE("%s\n",debugstr_a(buffer));
+    TRACE("%s\n",debugstr_a(str));
+
+    if (!(table = ATOM_GetTable( TRUE ))) return 0;
 
     /* Make a copy of the string to be sure it doesn't move in linear memory. */
     lstrcpynA( buffer, str, sizeof(buffer) );
 
     len = strlen( buffer );
-    if (!(table = ATOM_GetTable( TRUE ))) return 0;
-
     hash = ATOM_Hash( table->size, buffer, len );
     entry = table->entries[hash];
     while (entry)
@@ -242,9 +242,10 @@ ATOM WINAPI AddAtom16( LPCSTR str )
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;
     entryPtr->length = len;
-    /* Some applications _need_ the '\0' padding provided by this strncpy */
-    strncpy( entryPtr->str, buffer, ae_len - sizeof(ATOMENTRY) + 1 );
-    entryPtr->str[ae_len - sizeof(ATOMENTRY)] = '\0';
+    memcpy( entryPtr->str, buffer, len);
+    /* Some applications _need_ the '\0' padding provided by memset */
+    /* Note that 1 byte of the str is accounted for in the ATOMENTRY struct */
+    memset( entryPtr->str+len, 0, ae_len - sizeof(ATOMENTRY) - (len - 1));
     table->entries[hash] = entry;
     TRACE("-- new 0x%x\n", entry);
     return HANDLETOATOM( entry );

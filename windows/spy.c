@@ -2047,7 +2047,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
             p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
                                  sp_e->msgnum);
             if (p) {
-                strncpy (sp_e->msg_name, p->name, sizeof(sp_e->msg_name)-1);
+                lstrcpynA (sp_e->msg_name, p->name, sizeof(sp_e->msg_name));
                 sp_e->data_len = p->len;
                 return;
             }
@@ -2059,8 +2059,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
     }
     else
     {
-        strncpy(sp_e->msg_name, msg_name, sizeof(sp_e->msg_name)-1);
-        sp_e->msg_name[sizeof(sp_e->msg_name)-1] = 0;
+        lstrcpynA(sp_e->msg_name, msg_name, sizeof(sp_e->msg_name));
     }
 }
 

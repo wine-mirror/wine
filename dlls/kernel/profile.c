@@ -899,7 +899,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
 static INT PROFILE_GetSectionNames( LPWSTR buffer, UINT len )
 {
     LPWSTR buf;
-    UINT f,l;
+    UINT buflen,tmplen;
     PROFILESECTION *section;
 
     TRACE("(%p, %d)\n", buffer, len);
@@ -911,24 +911,24 @@ static INT PROFILE_GetSectionNames( LPWSTR buffer, UINT len )
         return 0;
     }
 
-    f=len-1;
+    buflen=len-1;
     buf=buffer;
     section = CurProfile->section;
     while ((section!=NULL)) {
         if (section->name[0]) {
-            l = strlenW(section->name)+1;
-            if (l > f) {
-                if (f>0) {
-                    strncpyW(buf, section->name, f-1);
-                    buf += f-1;
+            tmplen = strlenW(section->name)+1;
+            if (tmplen > buflen) {
+                if (buflen > 0) {
+                    memcpy(buf, section->name, (buflen-1) * sizeof(WCHAR));
+                    buf += buflen-1;
                     *buf++='\0';
                 }
                 *buf='\0';
                 return len-2;
             }
-            strcpyW(buf, section->name);
-            buf += l;
-            f -= l;
+            memcpy(buf, section->name, tmplen * sizeof(WCHAR));
+            buf += tmplen;
+            buflen -= tmplen;
         }
         section = section->next;
     }
@@ -1109,7 +1109,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
             LPWSTR p;
 
 	    p = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-	    strncpyW(p, def_val, len);
+	    memcpy(p, def_val, len * sizeof(WCHAR));
 	    p[len] = '\0';
             pDefVal = p;
 	}

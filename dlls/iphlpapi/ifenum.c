@@ -191,8 +191,7 @@ static int isLoopbackInterface(int fd, const char *name)
   if (name) {
     struct ifreq ifr;
 
-    strncpy(ifr.ifr_name, name, IFNAMSIZ);
-    ifr.ifr_name[IFNAMSIZ-1] = '\0';
+    lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
     if (ioctl(fd, SIOCGIFFLAGS, &ifr) == 0)
       ret = ifr.ifr_flags & IFF_LOOPBACK;
   }
@@ -245,8 +244,7 @@ static void storeInterfaceInMap(InterfaceNameMap *map, const char *name)
     /* look for new slot */
     for (ndx = 0; !stored && ndx < map->numAllocated; ndx++) {
       if (!map->table[ndx].inUse) {
-        strncpy(map->table[ndx].name, name, IFNAMSIZ);
-        map->table[ndx].name[IFNAMSIZ-1] = '\0';
+        lstrcpynA(map->table[ndx].name, name, IFNAMSIZ);
         map->table[ndx].inUse = TRUE;
         stored = TRUE;
         if (ndx >= map->nextAvailable)
@@ -467,8 +465,7 @@ DWORD getInterfaceIPAddrByName(const char *name)
     if (fd != -1) {
       struct ifreq ifr;
 
-      strncpy(ifr.ifr_name, name, IFNAMSIZ);
-      ifr.ifr_name[IFNAMSIZ-1] = '\0';
+      lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
       if (ioctl(fd, SIOCGIFADDR, &ifr) == 0)
         memcpy(&ret, ifr.ifr_addr.sa_data + 2, sizeof(DWORD));
       close(fd);
@@ -499,8 +496,7 @@ DWORD getInterfaceBCastAddrByName(const char *name)
     if (fd != -1) {
       struct ifreq ifr;
 
-      strncpy(ifr.ifr_name, name, IFNAMSIZ);
-      ifr.ifr_name[IFNAMSIZ-1] = '\0';
+      lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
       if (ioctl(fd, SIOCGIFBRDADDR, &ifr) == 0)
         memcpy(&ret, ifr.ifr_addr.sa_data + 2, sizeof(DWORD));
       close(fd);
@@ -531,8 +527,7 @@ DWORD getInterfaceMaskByName(const char *name)
     if (fd != -1) {
       struct ifreq ifr;
 
-      strncpy(ifr.ifr_name, name, IFNAMSIZ);
-      ifr.ifr_name[IFNAMSIZ-1] = '\0';
+      lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
       if (ioctl(fd, SIOCGIFNETMASK, &ifr) == 0)
         memcpy(&ret, ifr.ifr_addr.sa_data + 2, sizeof(DWORD));
       close(fd);
@@ -568,8 +563,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
     struct ifreq ifr;
 
     memset(&ifr, 0, sizeof(struct ifreq));
-    strncpy(ifr.ifr_name, name, IFNAMSIZ);
-    ifr.ifr_name[IFNAMSIZ-1] = '\0';
+    lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
     if ((ioctl(fd, SIOCGIFHWADDR, &ifr)))
       ret = ERROR_INVALID_DATA;
     else {
@@ -813,8 +807,7 @@ DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
   if (fd != -1) {
     struct ifreq ifr;
 
-    strncpy(ifr.ifr_name, name, IFNAMSIZ);
-    ifr.ifr_name[IFNAMSIZ-1] = '\0';
+    lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
     if ((ioctl(fd, SIOCGIFMTU, &ifr)))
       ret = ERROR_INVALID_DATA;
     else {
@@ -855,8 +848,7 @@ DWORD getInterfaceStatusByName(const char *name, PDWORD status)
   if (fd != -1) {
     struct ifreq ifr;
 
-    strncpy(ifr.ifr_name, name, IFNAMSIZ);
-    ifr.ifr_name[IFNAMSIZ-1] = '\0';
+    lstrcpynA(ifr.ifr_name, name, IFNAMSIZ);
     if ((ioctl(fd, SIOCGIFFLAGS, &ifr)))
       ret = ERROR_INVALID_DATA;
     else {
@@ -940,8 +932,7 @@ char *toIPAddressString(unsigned int addr, char string[16])
 
     iAddr.s_addr = addr;
     /* extra-anal, just to make auditors happy */
-    strncpy(string, inet_ntoa(iAddr), 16);
-    string[16] = '\0';
+    lstrcpynA(string, inet_ntoa(iAddr), sizeof(string));
   }
   return string;
 }
