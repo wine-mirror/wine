@@ -13,6 +13,7 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "debug.h"
+#include "objbase.h"
 
 #include "d3d_private.h"
 
