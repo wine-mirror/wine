@@ -697,11 +697,6 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     HRGN hrgn;
     int asq, bsq, d, xd, yd;
     RECT rect;
-    
-      /* Check if we can do a normal rectangle instead */
-
-    if ((ellipse_width == 0) || (ellipse_height == 0))
-	return CreateRectRgn( left, top, right, bottom );
 
       /* Make the dimensions sensible */
 
@@ -711,6 +706,16 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     ellipse_width = abs(ellipse_width);
     ellipse_height = abs(ellipse_height);
 
+      /* Check parameters */
+
+    if (ellipse_width > right-left) ellipse_width = right-left;
+    if (ellipse_height > bottom-top) ellipse_height = bottom-top;
+
+      /* Check if we can do a normal rectangle instead */
+
+    if ((ellipse_width < 2) || (ellipse_height < 2))
+        return CreateRectRgn( left, top, right, bottom );
+
       /* Create region */
 
     d = (ellipse_height < 128) ? ((3 * ellipse_height) >> 2) : 64;
@@ -718,11 +723,6 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     if (!(obj = GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return 0;
     TRACE("(%d,%d-%d,%d %dx%d): ret=%04x\n",
 	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
-
-      /* Check parameters */
-
-    if (ellipse_width > right-left) ellipse_width = right-left;
-    if (ellipse_height > bottom-top) ellipse_height = bottom-top;
 
       /* Ellipse algorithm, based on an article by K. Porter */
       /* in DDJ Graphics Programming Column, 8/89 */
