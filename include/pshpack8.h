@@ -43,6 +43,5 @@
 #  endif
 
 #  pragma pack(8)
-#  warning "8 as alignment is not supported"
 
 #endif
