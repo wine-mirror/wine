@@ -33,6 +33,11 @@
 #include "wine/winbase16.h"
 #include "winedump.h"
 
+static inline WORD get_word( const BYTE *ptr )
+{
+    return ptr[0] | (ptr[1] << 8);
+}
+
 static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
 {
     printf( "File header:\n" );
@@ -64,11 +69,21 @@ static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
 {
     char *pstr = (char *)ne + ne->ne_restab;
 
-    printf( "\nResident-name table:\n" );
+    printf( "\nResident name table:\n" );
     while (*pstr)
     {
-        printf( "%*.*s: %d\n", *pstr, *pstr, pstr + 1, *(WORD *)(pstr + *pstr + 1) );
+        printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr, pstr + 1 );
         pstr += *pstr + 1 + sizeof(WORD);
+    }
+    if (ne->ne_cbnrestab)
+    {
+        printf( "\nNon-resident name table:\n" );
+        pstr = (char *)base + ne->ne_nrestab;
+        while (*pstr)
+        {
+            printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr, pstr + 1 );
+            pstr += *pstr + 1 + sizeof(WORD);
+        }
     }
 }
 
@@ -99,7 +114,7 @@ static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
 {
     NE_NAMEINFO *name;
     const void *res_ptr = (char *)ne + ne->ne_rsrctab;
-    WORD size_shift = *(WORD *)res_ptr;
+    WORD size_shift = get_word(res_ptr);
     NE_TYPEINFO *info = (NE_TYPEINFO *)((WORD *)res_ptr + 1);
     int count;
 
@@ -122,6 +137,96 @@ static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
     }
 }
 
+static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne, int ordinal )
+{
+    static char name[256];
+    BYTE *pstr;
+    int pass = 0;
+
+    /* search the resident names */
+
+    while (pass < 2)
+    {
+        if (pass == 0)  /* resident names */
+        {
+            pstr = (BYTE *)ne + ne->ne_restab;
+            if (*pstr) pstr += *pstr + 1 + sizeof(WORD);  /* skip first entry (module name) */
+        }
+        else  /* non-resident names */
+        {
+            if (!ne->ne_cbnrestab) break;
+            pstr = (BYTE *)base + ne->ne_nrestab;
+        }
+        while (*pstr)
+        {
+            WORD ord = get_word(pstr + *pstr + 1);
+            if (ord == ordinal)
+            {
+                memcpy( name, pstr + 1, *pstr );
+                name[*pstr] = 0;
+                return name;
+            }
+            pstr += *pstr + 1 + sizeof(WORD);
+        }
+        pass++;
+    }
+    name[0] = 0;
+    return name;
+}
+
+static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
+{
+    BYTE *ptr = (BYTE *)ne + ne->ne_enttab;
+    BYTE *end = ptr + ne->ne_cbenttab;
+    int i, ordinal = 1;
+
+    if (!ne->ne_cbenttab || !*ptr) return;
+
+    printf( "\nExported entry points:\n" );
+
+    while (ptr < end && *ptr)
+    {
+        BYTE count = *ptr++;
+        BYTE type = *ptr++;
+        switch(type)
+        {
+        case 0:  /* next bundle */
+            ordinal += count;
+            break;
+        case 0xff:  /* movable */
+            for (i = 0; i < count; i++)
+            {
+                printf( " %4d MOVABLE %d:%04x %s\n",
+                        ordinal + i, ptr[3], get_word(ptr + 4),
+                        get_export_name( base, ne, ordinal + i ) );
+                ptr += 6;
+            }
+            ordinal += count;
+            break;
+        case 0xfe:  /* constant */
+            for (i = 0; i < count; i++)
+            {
+                printf( " %4d CONST     %04x %s\n",
+                        ordinal + i, get_word(ptr + 1),
+                        get_export_name( base, ne, ordinal + i ) );
+                ptr += 3;
+            }
+            ordinal += count;
+            break;
+        default:  /* fixed */
+            for (i = 0; i < count; i++)
+            {
+                printf( " %4d FIXED   %d:%04x %s\n",
+                        ordinal + i, type, get_word(ptr + 1),
+                        get_export_name( base, ne, ordinal + i ) );
+                ptr += 3;
+            }
+            ordinal += count;
+            break;
+        }
+    }
+}
+
 void ne_dump( const void *exe, size_t exe_size )
 {
     const IMAGE_DOS_HEADER *dos = exe;
@@ -130,4 +235,5 @@ void ne_dump( const void *exe, size_t exe_size )
     dump_ne_header( ne );
     dump_ne_names( exe, ne );
     dump_ne_resources( exe, ne );
+    dump_ne_exports( exe, ne );
 }
