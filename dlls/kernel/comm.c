@@ -1131,9 +1131,27 @@ BOOL WINAPI SetCommState(
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
 	switch (lpdcb->BaudRate) {
+		case 0:
+			port.c_cflag |= B0;
+			break;
+		case 50:
+			port.c_cflag |= B50;
+			break;
+		case 75:
+			port.c_cflag |= B75;
+			break;
 		case 110:
 		case CBR_110:
 			port.c_cflag |= B110;
+			break;
+		case 134:
+			port.c_cflag |= B134;
+			break;
+		case 150:
+			port.c_cflag |= B150;
+			break;
+		case 200:
+			port.c_cflag |= B200;
 			break;
 		case 300:
 		case CBR_300:
@@ -1146,6 +1164,9 @@ BOOL WINAPI SetCommState(
 		case 1200:
 		case CBR_1200:
 			port.c_cflag |= B1200;
+			break;
+		case 1800:
+			port.c_cflag |= B1800;
 			break;
 		case 2400:
 		case CBR_2400:
@@ -1218,9 +1239,27 @@ BOOL WINAPI SetCommState(
 	}
 #elif !defined(__EMX__)
         switch (lpdcb->BaudRate) {
+                case 0:
+                        port.c_ospeed = B0;
+                        break;
+                case 50:
+                        port.c_ospeed = B50;
+                        break;
+                case 75:
+                        port.c_ospeed = B75;
+                        break;
                 case 110:
                 case CBR_110:
                         port.c_ospeed = B110;
+                        break;
+                case 134:
+                        port.c_ospeed = B134;
+                        break;
+                case 150:
+                        port.c_ospeed = B150;
+                        break;
+                case 200:
+                        port.c_ospeed = B200;
                         break;
                 case 300:
                 case CBR_300:
@@ -1233,6 +1272,9 @@ BOOL WINAPI SetCommState(
                 case 1200:
                 case CBR_1200:
                         port.c_ospeed = B1200;
+                        break;
+                case 1800:
+                        port.c_ospeed = B1800;
                         break;
                 case 2400:
                 case CBR_2400:
@@ -1481,8 +1523,26 @@ BOOL WINAPI GetCommState(
      speed= (cfgetospeed(&port));
 #endif
      switch (speed) {
+		case B0:
+			lpdcb->BaudRate = 0;
+			break;
+		case B50:
+			lpdcb->BaudRate = 50;
+			break;
+		case B75:
+			lpdcb->BaudRate = 75;
+			break;
 		case B110:
 			lpdcb->BaudRate = 110;
+			break;
+		case B134:
+			lpdcb->BaudRate = 134;
+			break;
+		case B150:
+			lpdcb->BaudRate = 150;
+			break;
+		case B200:
+			lpdcb->BaudRate = 200;
 			break;
 		case B300:
 			lpdcb->BaudRate = 300;
@@ -1492,6 +1552,9 @@ BOOL WINAPI GetCommState(
 			break;
 		case B1200:
 			lpdcb->BaudRate = 1200;
+			break;
+		case B1800:
+			lpdcb->BaudRate = 1800;
 			break;
 		case B2400:
 			lpdcb->BaudRate = 2400;
