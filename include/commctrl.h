@@ -8,6 +8,7 @@
 #include "windef.h"
 #include "winuser.h"
 #include "imagelist.h"
+#include "prsht.h"
 
 /* c++ likes nameless unions whereas c doesnt */
 /* (used in property sheet structures)        */
