@@ -117,7 +117,10 @@ static BOOL	MIDIMAP_LoadSettingsDefault(MIDIMAPDATA* mom, const char* port)
 	ERR("Registry glitch: couldn't find midi out (%s)\n", port);
 	dev = 0;
     }
-    
+
+    /* this is necessary when no midi out ports are present */
+    if (dev >= numMidiOutPorts)
+	return FALSE;
     /* sets default */
     for (i = 0; i < 16; i++) mom->ChannelMap[i] = &midiOutPorts[dev];
 
@@ -220,7 +223,7 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
     }
     RegCloseKey(hKey);
 
-    if (TRACE_ON(msacm)) 
+    if (ret && TRACE_ON(msacm)) 
     {
 	unsigned	i;
 
