@@ -153,8 +153,8 @@ long _findfirst(const char * fspec, struct _finddata_t* ft)
     return -1;
   }
   msvcrt_fttofd(&find_data,ft);
-  TRACE(":got handle %d\n",hfind);
-  return hfind;
+  TRACE(":got handle %p\n",hfind);
+  return (long)hfind;
 }
 
 /*********************************************************************
@@ -172,8 +172,8 @@ long _wfindfirst(const WCHAR * fspec, struct _wfinddata_t* ft)
     return -1;
   }
   msvcrt_wfttofd(&find_data,ft);
-  TRACE(":got handle %d\n",hfind);
-  return hfind;
+  TRACE(":got handle %p\n",hfind);
+  return (long)hfind;
 }
 
 /*********************************************************************
@@ -183,7 +183,7 @@ int _findnext(long hand, struct _finddata_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
-  if (!FindNextFileA(hand, &find_data))
+  if (!FindNextFileA((HANDLE)hand, &find_data))
   {
     *MSVCRT__errno() = MSVCRT_ENOENT;
     return -1;
@@ -200,7 +200,7 @@ int _wfindnext(long hand, struct _wfinddata_t * ft)
 {
   WIN32_FIND_DATAW find_data;
 
-  if (!FindNextFileW(hand, &find_data))
+  if (!FindNextFileW((HANDLE)hand, &find_data))
   {
     *MSVCRT__errno() = MSVCRT_ENOENT;
     return -1;

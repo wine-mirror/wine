@@ -131,7 +131,7 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
 {
   int fd = MSVCRT_fdstart;
 
-  TRACE(":handle (%d) allocating fd (%d)\n",hand,fd);
+  TRACE(":handle (%p) allocating fd (%d)\n",hand,fd);
   if (fd >= MSVCRT_MAX_FILES)
   {
     WARN(":files exhausted!\n");
@@ -192,7 +192,7 @@ void msvcrt_init_io(void)
   MSVCRT_handles[2] = GetStdHandle(STD_ERROR_HANDLE);
   MSVCRT_flags[2] = MSVCRT__iob[2]._flag = MSVCRT__IOWRT;
 
-  TRACE(":handles (%d)(%d)(%d)\n",MSVCRT_handles[0],
+  TRACE(":handles (%p)(%p)(%p)\n",MSVCRT_handles[0],
 	MSVCRT_handles[1],MSVCRT_handles[2]);
 
   for (i = 0; i < 3; i++)
@@ -366,7 +366,7 @@ int _close(int fd)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
   /* flush stdio buffers */
@@ -409,7 +409,7 @@ int _commit(int fd)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 
@@ -438,7 +438,7 @@ int _eof(int fd)
   DWORD curpos,endpos;
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
@@ -486,7 +486,7 @@ LONG _lseek(int fd, LONG offset, int whence)
   DWORD ret;
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 
@@ -534,7 +534,7 @@ int _locking(int fd, int mode, LONG nbytes)
   DWORD cur_locn;
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 
@@ -746,7 +746,7 @@ long _get_osfhandle(int fd)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
   HANDLE newhand = hand;
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
   if (hand != INVALID_HANDLE_VALUE)
   {
@@ -762,7 +762,7 @@ long _get_osfhandle(int fd)
     DuplicateHandle(GetCurrentProcess(),hand,GetCurrentProcess(),
 		    &newhand,0,TRUE,DUPLICATE_SAME_ACCESS);
   }
-  return newhand;
+  return (long)newhand;
 }
 
 /*********************************************************************
@@ -772,7 +772,7 @@ int _isatty(int fd)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
     return 0;
 
@@ -954,7 +954,7 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
 
   fd = msvcrt_alloc_fd(hand, ioflag);
 
-  TRACE(":fd (%d) handle (%d)\n",fd, hand);
+  TRACE(":fd (%d) handle (%p)\n",fd, hand);
 
   if (fd > 0)
   {
@@ -1057,7 +1057,7 @@ int _open_osfhandle(long hand, int flags)
 {
   /* _O_RDONLY (0) always matches, so set the read flag*/
   /* FIXME: handle more flags */
-  int fd= msvcrt_alloc_fd(hand,flags|MSVCRT__IOREAD);
+  int fd= msvcrt_alloc_fd((HANDLE)hand,flags|MSVCRT__IOREAD);
   TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd, flags |MSVCRT__IOREAD);
   return fd;
 }
@@ -1091,7 +1091,7 @@ int _read(int fd, void *buf, unsigned int count)
 
   /* Dont trace small reads, it gets *very* annoying */
   if (count > 4)
-    TRACE(":fd (%d) handle (%d) buf (%p) len (%d)\n",fd,hand,buf,count);
+    TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n",fd,hand,buf,count);
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 

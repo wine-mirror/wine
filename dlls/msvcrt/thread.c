@@ -92,7 +92,8 @@ unsigned long _beginthread(
   trampoline->arglist = arglist;
 
   /* FIXME */
-  return CreateThread(NULL, stack_size, _beginthread_trampoline, trampoline, 0, NULL);
+  return (unsigned long)CreateThread(NULL, stack_size, _beginthread_trampoline,
+				     trampoline, 0, NULL);
 }
 
 /*********************************************************************
@@ -109,8 +110,9 @@ unsigned long _beginthreadex(
   TRACE("(%p, %d, %p, %p, %d, %p)\n", security, stack_size, start_address, arglist, initflag, thrdaddr);
 
   /* FIXME */
-  return CreateThread(security, stack_size, (LPTHREAD_START_ROUTINE) start_address,
-                      arglist, initflag, (LPDWORD) thrdaddr);
+  return (unsigned long)CreateThread(security, stack_size,
+				     (LPTHREAD_START_ROUTINE) start_address,
+				     arglist, initflag, (LPDWORD) thrdaddr);
 }
 
 /*********************************************************************

@@ -43,7 +43,7 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   MSVCRT_thread_data *tls;
 
-  TRACE("(0x%08x, %s, %p) pid(%ld), tid(%ld), tls(%ld)\n",
+  TRACE("(%p, %s, %p) pid(%ld), tid(%ld), tls(%ld)\n",
         hinstDLL, msvcrt_get_reason(fdwReason), lpvReserved,
         (long)GetCurrentProcessId(), (long)GetCurrentThreadId(),
         (long)MSVCRT_tls_index);
