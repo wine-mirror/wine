@@ -2550,7 +2550,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if (X11DRV_WND_GetXWindow(wndPtr))
         EVENT_Synchronize();  /* Wait for all expose events */
 
-    if (!GetCapture32())
+    if (!GetCapture32() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
         EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
 
     if (!(flags & SWP_DEFERERASE) && !(uFlags & SMC_NOPARENTERASE) )
