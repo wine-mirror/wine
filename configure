@@ -9441,22 +9441,15 @@ echo "${ECHO_T}$ac_cv_c_gcc_stack_boundary" >&6
 fi
 
 
-echo "$as_me:$LINENO: checking whether .type must sit inside a .def directive" >&5
-echo $ECHO_N "checking whether .type must sit inside a .def directive... $ECHO_C" >&6
-if test "${ac_cv_c_type_in_def+set}" = set; then
+echo "$as_me:$LINENO: checking how to define a function in assembly code" >&5
+echo $ECHO_N "checking how to define a function in assembly code... $ECHO_C" >&6
+if test "${ac_cv_asm_func_def+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_try_asm_link_saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test
-	.def _ac_test; .scl 2; .type 32; .endef
-_ac_test:
-	.long 0
-EOF
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+static void ac_asm(void) { asm("\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0"); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9484,44 +9477,14 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_type_in_def="yes"
+  ac_cv_asm_func_def=".def"
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_c_type_in_def="no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-rm -f conftest_asm.s
-LIBS=$ac_try_asm_link_saved_libs
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_type_in_def" >&5
-echo "${ECHO_T}$ac_cv_c_type_in_def" >&6
-if test "$ac_cv_c_type_in_def" = "yes"
-then
-
-cat >>confdefs.h <<\_ACEOF
-#define NEED_TYPE_IN_DEF 1
-_ACEOF
-
-fi
-
-
-echo "$as_me:$LINENO: checking whether @function is defined" >&5
-echo $ECHO_N "checking whether @function is defined... $ECHO_C" >&6
-if test "${ac_cv_at_function_is_defined+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_try_asm_link_saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test
-	.type _ac_test,@function
-_ac_test:
-	.long 0
-EOF
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+static void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0"); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9549,26 +9512,80 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_at_function_is_defined="yes"
+  ac_cv_asm_func_def=".type @function"
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_at_function_is_defined="no"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+static void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0"); }
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_asm_func_def=".type 2"
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_asm_func_def="unknown"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-rm -f conftest_asm.s
-LIBS=$ac_try_asm_link_saved_libs
 fi
-echo "$as_me:$LINENO: result: $ac_cv_at_function_is_defined" >&5
-echo "${ECHO_T}$ac_cv_at_function_is_defined" >&6
-if test "$ac_cv_at_function_is_defined" = "yes"
-then
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_asm_func_def" >&5
+echo "${ECHO_T}$ac_cv_asm_func_def" >&6
 
-cat >>confdefs.h <<\_ACEOF
-#define AT_FUNCTION_IS_DEFINED 1
+
+
+case "$ac_cv_asm_func_def" in
+  ".def")
+     cat >>confdefs.h <<\_ACEOF
+#define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
 _ACEOF
-
-fi
+ ;;
+  ".type @function")
+     cat >>confdefs.h <<\_ACEOF
+#define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
+_ACEOF
+ ;;
+  ".type 2")
+     cat >>confdefs.h <<\_ACEOF
+#define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",2"
+_ACEOF
+ ;;
+  *)
+     cat >>confdefs.h <<\_ACEOF
+#define __ASM_FUNC(name) ""
+_ACEOF
+ ;;
+esac
 
 
 echo "$as_me:$LINENO: checking whether external symbols need an underscore prefix" >&5
@@ -9576,16 +9593,10 @@ echo $ECHO_N "checking whether external symbols need an underscore prefix... $EC
 if test "${ac_cv_c_extern_prefix+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_try_asm_link_saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test
-_ac_test:
-	.long 0
-EOF
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+static void ac_asm(void) { asm(".globl _ac_test\n_ac_test:\t.long 0"); }
 extern int ac_test;
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9620,16 +9631,21 @@ cat conftest.$ac_ext >&5
 ac_cv_c_extern_prefix="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-rm -f conftest_asm.s
-LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_extern_prefix" >&5
 echo "${ECHO_T}$ac_cv_c_extern_prefix" >&6
+
+
+
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
+  cat >>confdefs.h <<\_ACEOF
+#define __ASM_NAME(name) "_" name
+_ACEOF
 
-cat >>confdefs.h <<\_ACEOF
-#define NEED_UNDERSCORE_PREFIX 1
+else
+  cat >>confdefs.h <<\_ACEOF
+#define __ASM_NAME(name) name
 _ACEOF
 
 fi
@@ -9640,17 +9656,10 @@ echo $ECHO_N "checking whether stdcall symbols need to be decorated... $ECHO_C" 
 if test "${ac_cv_c_stdcall_decoration+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_try_asm_link_saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test@0
-_ac_test@0:
-	.globl ac_test@0
-ac_test@0:
-EOF
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+static void ac_asm(void) { asm("\t.globl _ac_test@0\n_ac_test@0:\n\t.globl ac_test@0\nac_test@0:"); }
 extern void __attribute__((__stdcall__)) ac_test(void);
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9685,8 +9694,6 @@ cat conftest.$ac_ext >&5
 ac_cv_c_stdcall_decoration="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-rm -f conftest_asm.s
-LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_stdcall_decoration" >&5
 echo "${ECHO_T}$ac_cv_c_stdcall_decoration" >&6
@@ -9705,14 +9712,10 @@ echo $ECHO_N "checking whether assembler accepts .string... $ECHO_C" >&6
 if test "${ac_cv_c_asm_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_try_asm_link_saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.string "test"
-EOF
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+static void ac_asm(void) { asm(".string \"test\""); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9747,8 +9750,6 @@ cat conftest.$ac_ext >&5
 ac_cv_c_asm_string="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-rm -f conftest_asm.s
-LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_asm_string" >&5
 echo "${ECHO_T}$ac_cv_c_asm_string" >&6

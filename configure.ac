@@ -643,61 +643,53 @@ int main(void) {
   fi
 fi
 
-dnl **** Check if we need to place .type inside a .def directive ****
+dnl **** Check how to define a function in assembly code ****
 
-AC_CACHE_CHECK([whether .type must sit inside a .def directive], ac_cv_c_type_in_def,
-    WINE_TRY_ASM_LINK(
-[	.globl _ac_test
-	.def _ac_test; .scl 2; .type 32; .endef
-_ac_test:
-	.long 0],,,
-    ac_cv_c_type_in_def="yes",ac_cv_c_type_in_def="no"))
-if test "$ac_cv_c_type_in_def" = "yes"
-then
-  AC_DEFINE(NEED_TYPE_IN_DEF, 1, [Define if .type asm directive must be inside a .def directive])
-fi
+AC_CACHE_CHECK([how to define a function in assembly code], ac_cv_asm_func_def,
+  WINE_TRY_ASM_LINK(
+      ["\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0"],,,
+      ac_cv_asm_func_def=".def",
+    [WINE_TRY_ASM_LINK(["\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0"],,,
+      ac_cv_asm_func_def=".type @function",
+    [WINE_TRY_ASM_LINK(["\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0"],,,
+      ac_cv_asm_func_def=".type 2",
+      ac_cv_asm_func_def="unknown")])]))
 
-dnl **** Check if @function is defined ****
-
-AC_CACHE_CHECK([whether @function is defined], ac_cv_at_function_is_defined,
-    WINE_TRY_ASM_LINK(
-[	.globl _ac_test
-	.type _ac_test,@function
-_ac_test:
-	.long 0],,,
-    ac_cv_at_function_is_defined="yes",ac_cv_at_function_is_defined="no"))
-if test "$ac_cv_at_function_is_defined" = "yes"
-then
-  AC_DEFINE(AT_FUNCTION_IS_DEFINED, 1, [Define if @function is defined])
-fi
+AH_TEMPLATE(__ASM_FUNC,[Define to a macro to generate an assembly function directive])
+case "$ac_cv_asm_func_def" in
+  ".def")
+     AC_DEFINE([__ASM_FUNC(name)], [".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"]) ;;
+  ".type @function")
+     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",@function"]) ;;
+  ".type 2")
+     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",2"]) ;;
+  *)
+     AC_DEFINE([__ASM_FUNC(name)], [""]) ;;
+esac
 
 dnl **** Check for underscore on external symbols ****
 
 AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
-    WINE_TRY_ASM_LINK(
-[	.globl _ac_test
-_ac_test:
-	.long 0],
-[extern int ac_test;],
-[if (ac_test) return 1],
-    ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
+    WINE_TRY_ASM_LINK([".globl _ac_test\n_ac_test:\t.long 0"],
+                      [extern int ac_test;],
+                      [if (ac_test) return 1],
+                      ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
+
+AH_TEMPLATE(__ASM_NAME,[Define to a macro to generate an assembly name from a C symbol])
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
-  AC_DEFINE(NEED_UNDERSCORE_PREFIX, 1,
-            [Define if symbols declared in assembly code need an underscore prefix])
+  AC_DEFINE([__ASM_NAME(name)], ["_" name])
+else
+  AC_DEFINE([__ASM_NAME(name)], [name])
 fi
 
 dnl **** Check whether stdcall symbols need to be decorated ****
 
 AC_CACHE_CHECK([whether stdcall symbols need to be decorated], ac_cv_c_stdcall_decoration,
-    WINE_TRY_ASM_LINK(
-[	.globl _ac_test@0
-_ac_test@0:
-	.globl ac_test@0
-ac_test@0:],
-[extern void __attribute__((__stdcall__)) ac_test(void);],
-[ac_test()],
-    ac_cv_c_stdcall_decoration="yes",ac_cv_c_stdcall_decoration="no"))
+    WINE_TRY_ASM_LINK(["\t.globl _ac_test@0\n_ac_test@0:\n\t.globl ac_test@0\nac_test@0:"],
+                      [extern void __attribute__((__stdcall__)) ac_test(void);],
+                      [ac_test()],
+                      ac_cv_c_stdcall_decoration="yes",ac_cv_c_stdcall_decoration="no"))
 if test "$ac_cv_c_stdcall_decoration" = "yes"
 then
   AC_DEFINE(NEED_STDCALL_DECORATION, 1, [Define if stdcall symbols need to be decorated])
@@ -706,8 +698,7 @@ fi
 dnl **** Check for .string in assembler ****
 
 AC_CACHE_CHECK([whether assembler accepts .string], ac_cv_c_asm_string,
-    WINE_TRY_ASM_LINK(
-[	.string "test"],,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
+    WINE_TRY_ASM_LINK([".string \"test\""],,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
 if test "$ac_cv_c_asm_string" = "yes"
 then
   AC_DEFINE(HAVE_ASM_STRING, 1, [Define to use .string instead of .ascii])

@@ -2,9 +2,6 @@
 
 #define __WINE_CONFIG_H
 
-/* Define if  is defined */
-#undef AT_FUNCTION_IS_DEFINED
-
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -626,12 +623,6 @@
 /* Define if stdcall symbols need to be decorated */
 #undef NEED_STDCALL_DECORATION
 
-/* Define if .type asm directive must be inside a .def directive */
-#undef NEED_TYPE_IN_DEF
-
-/* Define if symbols declared in assembly code need an underscore prefix */
-#undef NEED_UNDERSCORE_PREFIX
-
 /* Define to disable all debug messages. */
 #undef NO_DEBUG_MSGS
 
@@ -706,6 +697,12 @@
 
 /* Set this to 64 to enable 64-bit file support on Linux */
 #undef _FILE_OFFSET_BITS
+
+/* Define to a macro to generate an assembly function directive */
+#undef __ASM_FUNC
+
+/* Define to a macro to generate an assembly name from a C symbol */
+#undef __ASM_NAME
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

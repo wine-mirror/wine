@@ -76,14 +76,8 @@ dnl
 dnl Usage: WINE_TRY_ASM_LINK(asm-code,includes,function,[action-if-found,[action-if-not-found]])
 dnl
 AC_DEFUN([WINE_TRY_ASM_LINK],
-[ac_try_asm_link_saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-[$1]
-EOF
-AC_TRY_LINK([$2],[$3],[$4],[$5])
-rm -f conftest_asm.s
-LIBS=$ac_try_asm_link_saved_libs])
+[AC_TRY_LINK([static void ac_asm(void) { asm([$1]); }
+[$2]],[$3],[$4],[$5])])
 
 dnl **** Check if we can link an empty program with special CFLAGS ****
 dnl
