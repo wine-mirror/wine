@@ -83,35 +83,22 @@ static const struct charset_entry
     { "IBM869", 869 },
     { "IBM874", 874 },
     { "IBM875", 875 },
-    { "ISO-8859-1", 28591 },
-    { "ISO-8859-10", 28600 },
-    { "ISO-8859-13", 28603 },
-    { "ISO-8859-14", 28604 },
-    { "ISO-8859-15", 28605 },
-    { "ISO-8859-2", 28592 },
-    { "ISO-8859-3", 28593 },
-    { "ISO-8859-4", 28594 },
-    { "ISO-8859-5", 28595 },
-    { "ISO-8859-6", 28596 },
-    { "ISO-8859-7", 28597 },
-    { "ISO-8859-8", 28598 },
-    { "ISO-8859-9", 28599 },
-    { "ISO_8859-1", 28591 },
-    { "ISO_8859-10", 28600 },
-    { "ISO_8859-13", 28603 },
-    { "ISO_8859-14", 28604 },
-    { "ISO_8859-15", 28605 },
-    { "ISO_8859-2", 28592 },
-    { "ISO_8859-3", 28593 },
-    { "ISO_8859-4", 28594 },
-    { "ISO_8859-5", 28595 },
-    { "ISO_8859-6", 28596 },
-    { "ISO_8859-7", 28597 },
-    { "ISO_8859-8", 28598 },
-    { "ISO_8859-9", 28599 },
-    { "KOI8-R", 20866 },
-    { "KOI8-U", 20866 },
-    { "UTF-8", CP_UTF8 }
+    { "ISO88591", 28591 },
+    { "ISO885910", 28600 },
+    { "ISO885913", 28603 },
+    { "ISO885914", 28604 },
+    { "ISO885915", 28605 },
+    { "ISO88592", 28592 },
+    { "ISO88593", 28593 },
+    { "ISO88594", 28594 },
+    { "ISO88595", 28595 },
+    { "ISO88596", 28596 },
+    { "ISO88597", 28597 },
+    { "ISO88598", 28598 },
+    { "ISO88599", 28599 },
+    { "KOI8R", 20866 },
+    { "KOI8U", 20866 },
+    { "UTF8", CP_UTF8 }
 };
 
 #define NLS_MAX_LANGUAGES 20
@@ -440,8 +427,17 @@ static LCID init_default_lcid( UINT *unix_cp )
             if (ret && charset)
             {
                 const struct charset_entry *entry;
-                entry = bsearch( charset, charset_names, sizeof(charset_names)/sizeof(charset_names[0]),
-                               sizeof(charset_names[0]), charset_cmp );
+                char charset_name[16];
+                int i, j;
+
+                /* remove punctuation characters from charset name */
+                for (i = j = 0; charset[i] && j < sizeof(charset_name)-1; i++)
+                    if (isalnum(charset[i])) charset_name[j++] = charset[i];
+                charset_name[j] = 0;
+
+                entry = bsearch( charset_name, charset_names,
+                                 sizeof(charset_names)/sizeof(charset_names[0]),
+                                 sizeof(charset_names[0]), charset_cmp );
                 if (entry)
                 {
                     *unix_cp = entry->codepage;
