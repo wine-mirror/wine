@@ -565,11 +565,6 @@ HRESULT WINAPI DispCallFunc(void* pvInstance, ULONG oVft, CALLCONV cc,
             VARTYPE vtReturn, UINT  cActuals, VARTYPE* prgvt,
             VARIANTARG** prgpvarg, VARIANT* pvargResult);
 
-#define VARCMP_LT   0
-#define VARCMP_EQ   1
-#define VARCMP_GT   2
-#define VARCMP_NULL 3
-
 
 /*
  * TypeLib API
