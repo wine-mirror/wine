@@ -240,6 +240,11 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
         pidlTemp = _ILCreateNetwork();
         szNext = lpszDisplayName;
     }
+    else if( (pidlTemp = SHELL32_CreatePidlFromBindCtx(pbc, lpszDisplayName)) )
+    {
+        *ppidl = pidlTemp;
+        return S_OK;
+    }
     else
     {
         /* it's a filesystem path on the desktop. Let a FSFolder parse it */
@@ -288,7 +293,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
 {
     BOOL ret = TRUE;
-    char szPath[MAX_PATH];
+    WCHAR szPath[MAX_PATH];
 
     TRACE("(%p)->(flags=0x%08lx) \n",list,dwFlags);
 
@@ -307,7 +312,7 @@ static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
                           0, KEY_READ, &hkey);
         if (ret && ERROR_SUCCESS == r)
         {
-            char iid[50];
+            WCHAR iid[50];
             int i=0;
             BOOL moreKeys = TRUE;
 
@@ -316,10 +321,10 @@ static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
                 DWORD size;
 
                 size = sizeof (iid);
-                r = RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL, NULL);
+                r = RegEnumKeyExW(hkey, i, iid, &size, 0, NULL, NULL, NULL);
                 if (ERROR_SUCCESS == r)
                 {
-                    ret = AddToEnumList(list, _ILCreateGuidFromStrA(iid));
+                    ret = AddToEnumList(list, _ILCreateGuidFromStrW(iid));
                     i++;
                 }
                 else if (ERROR_NO_MORE_ITEMS == r)
@@ -332,7 +337,7 @@ static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
     }
 
     /* enumerate the elements in %windir%\desktop */
-    SHGetSpecialFolderPathA(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+    SHGetSpecialFolderPathW(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
     ret = ret && CreateFolderEnumList(list, szPath, dwFlags);
 
     return ret;

@@ -46,6 +46,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
 			     LPCSTR pathRoot, LPCITEMIDLIST pidlComplete, REFIID riid, LPVOID * ppvOut);
 
 HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2);
+LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path);
 
 static inline int SHELL32_GUIDToStringA (REFGUID guid, LPSTR str)
 {

@@ -208,6 +208,7 @@ LPITEMIDLIST	_ILCreateGuid(PIDLTYPE type, REFIID guid);
 
 /* Like _ILCreateGuid, but using the string szGUID. */
 LPITEMIDLIST	_ILCreateGuidFromStrA(LPCSTR szGUID);
+LPITEMIDLIST	_ILCreateGuidFromStrW(LPCWSTR szGUID);
 
 /* Commonly used PIDLs representing file system objects. */
 LPITEMIDLIST	_ILCreateDesktop	(void);

@@ -444,7 +444,11 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner, DWORD dwFlags
 
     *ppEnumIDList = IEnumIDList_Constructor();
     if (*ppEnumIDList)
-        CreateFolderEnumList(*ppEnumIDList, This->sPathTarget, dwFlags);
+    {
+        WCHAR path[MAX_PATH];
+        MultiByteToWideChar(CP_ACP, 0, This->sPathTarget, -1, path, MAX_PATH);
+        CreateFolderEnumList(*ppEnumIDList, path, dwFlags);
+    }
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 
