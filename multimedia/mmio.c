@@ -930,18 +930,14 @@ LRESULT WINAPI mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
 UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
                           const MMCKINFO * lpckParent, UINT16 uFlags)
 {
-	DWORD	dwfcc, dwOldPos;
-	LPDWORD	tocheck;
+	DWORD		dwOldPos;
+	MMCKINFO	searchcki;
+	char		ckid[5],fcc[5];
 
-	TRACE(mmio, "(%04X, %p, %p, %04X);\n", 
-				hmmio, lpck, lpckParent, uFlags);
+	TRACE(mmio,"(%04X, %p, %p, %04X);\n",hmmio,lpck,lpckParent,uFlags);
 
 	if (lpck == NULL)
 	    return 0;
-
-	dwfcc = lpck->ckid;
-	TRACE(mmio, "dwfcc=%08lX\n", dwfcc);
-
 	dwOldPos = mmioSeek32(hmmio, 0, SEEK_CUR);
 	TRACE(mmio, "dwOldPos=%ld\n", dwOldPos);
 
@@ -954,26 +950,29 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	 * examples disagree -Marcus,990216. 
 	 */
 
+	searchcki.fccType = 0;
 	/* find_chunk looks for 'ckid' */
-	if (uFlags & MMIO_FINDCHUNK) {
-		tocheck = &(lpck->ckid);
-		dwfcc = lpck->ckid;
-	}
+	if (uFlags & MMIO_FINDCHUNK)
+		searchcki.ckid = lpck->ckid;
 	/* find_riff and find_list look for 'fccType' */
-	if (uFlags & (MMIO_FINDLIST|MMIO_FINDRIFF)) {
-		dwfcc = lpck->fccType;
-		tocheck = &(lpck->fccType);
+	if (uFlags & MMIO_FINDLIST) {
+		searchcki.ckid = FOURCC_LIST;
+		searchcki.fccType = lpck->fccType;
 	}
+	if (uFlags & MMIO_FINDRIFF) {
+		searchcki.ckid = FOURCC_RIFF;
+		searchcki.fccType = lpck->fccType;
+	}
+	memcpy(&fcc,&(searchcki.fccType),4);fcc[4]=0;
+	memcpy(&ckid,&(searchcki.ckid),4);ckid[4]=0;
+	TRACE(mmio,"searching for %s.%s\n",ckid,searchcki.fccType?fcc:"<any>");
 
 	if (uFlags & (MMIO_FINDCHUNK|MMIO_FINDLIST|MMIO_FINDRIFF)) {
-		TRACE(mmio, "MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
 		        LONG ix;
-			char fcc[5],ckid[5];
 
 			ix = mmioRead32(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD));
-			TRACE(mmio, "after _lread32 ix = %ld req = %d, errno = %d\n",ix,3 * sizeof(DWORD),errno);
-			if (ix < sizeof(DWORD)) {
+			if (ix < 2*sizeof(DWORD)) {
 				mmioSeek32(hmmio, dwOldPos, SEEK_SET);
 				WARN(mmio, "return ChunkNotFound\n");
 				return MMIOERR_CHUNKNOTFOUND;
@@ -984,10 +983,17 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 				WARN(mmio, "return ChunkNotFound\n");
 				return MMIOERR_CHUNKNOTFOUND;
 			}
-			memcpy(fcc,&dwfcc,4);fcc[4]='\0';
-			memcpy(ckid,&lpck->ckid,4);ckid[4]='\0';
-			TRACE(mmio, "dwfcc=%s ckid=%s cksize=%08lX !\n", fcc, ckid, lpck->cksize);
-			if (dwfcc == *tocheck)
+			memcpy(ckid,&lpck->ckid,4);
+			memcpy(fcc,&lpck->fccType,4);
+			TRACE(mmio, "ckid=%s fcc=%s cksize=%08lX !\n",
+				ckid, searchcki.fccType?fcc:"<unused>",
+				lpck->cksize
+			);
+			if ((searchcki.ckid == lpck->ckid) &&
+			    (!searchcki.fccType ||
+			      (searchcki.fccType == lpck->fccType)
+			    )
+			)
 				break;
 
 			dwOldPos = lpck->dwDataOffset + lpck->cksize;
@@ -1011,8 +1017,10 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 			lpck->dwDataOffset += sizeof(DWORD);
 	}
 	mmioSeek32(hmmio, lpck->dwDataOffset, SEEK_SET);
-	TRACE(mmio, "lpck->ckid=%08lX lpck->cksize=%ld !\n", lpck->ckid, lpck->cksize);
-	TRACE(mmio, "lpck->fccType=%08lX !\n", lpck->fccType);
+	memcpy(ckid,&(lpck->ckid),4);
+	TRACE(mmio, "lpck->ckid=%s lpck->cksize=%ld !\n", ckid, lpck->cksize);
+	memcpy(fcc,&(lpck->fccType),4);
+	TRACE(mmio, "lpck->fccType=%08lX (%s)!\n", lpck->fccType,searchcki.fccType?fcc:"");
 	return 0;
 }
 
