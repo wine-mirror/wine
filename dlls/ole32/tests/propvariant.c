@@ -18,10 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windows.h"
 /* not present in Wine yet */
 /*#include "propidl.h"*/
 WINOLEAPI PropVariantClear(PROPVARIANT*);
+WINOLEAPI PropVariantCopy(PROPVARIANT*, const PROPVARIANT*);
 
 #include "wine/test.h"
 
@@ -160,7 +163,46 @@ static void test_validtypes()
     }
 }
 
+static void test_copy()
+{
+    static const char szTestString[] = "Test String";
+    static const WCHAR wszTestString[] = {'T','e','s','t',' ','S','t','r','i','n','g',0};
+    PROPVARIANT propvarSrc;
+    PROPVARIANT propvarDst;
+    HRESULT hr;
+
+    propvarSrc.vt = VT_BSTR;
+    propvarSrc.u.bstrVal = SysAllocString(wszTestString);
+
+    hr = PropVariantCopy(&propvarDst, &propvarSrc);
+    ok(hr == S_OK, "PropVariantCopy(...VT_BSTR...) failed\n");
+    ok(!lstrcmpW(propvarSrc.u.bstrVal, propvarDst.u.bstrVal), "BSTR not copied properly\n");
+    hr = PropVariantClear(&propvarSrc);
+    ok(hr == S_OK, "PropVariantClear(...VT_BSTR...) failed\n");
+    hr = PropVariantClear(&propvarDst);
+    ok(hr == S_OK, "PropVariantClear(...VT_BSTR...) failed\n");
+
+    propvarSrc.vt = VT_LPWSTR;
+    propvarSrc.u.pwszVal = (LPWSTR)wszTestString;
+    hr = PropVariantCopy(&propvarDst, &propvarSrc);
+    ok(hr == S_OK, "PropVariantCopy(...VT_LPWSTR...) failed\n");
+    ok(!lstrcmpW(propvarSrc.u.pwszVal, propvarDst.u.pwszVal), "Wide string not copied properly\n");
+    hr = PropVariantClear(&propvarDst);
+    ok(hr == S_OK, "PropVariantClear(...VT_LPWSTR...) failed\n");
+    memset(&propvarSrc, 0, sizeof(propvarSrc));
+
+    propvarSrc.vt = VT_LPSTR;
+    propvarSrc.u.pszVal = (LPSTR)szTestString;
+    hr = PropVariantCopy(&propvarDst, &propvarSrc);
+    ok(hr == S_OK, "PropVariantCopy(...VT_LPSTR...) failed\n");
+    ok(!strcmp(propvarSrc.u.pszVal, propvarDst.u.pszVal), "String not copied properly\n");
+    hr = PropVariantClear(&propvarDst);
+    ok(hr == S_OK, "PropVariantClear(...VT_LPSTR...) failed\n");
+    memset(&propvarSrc, 0, sizeof(propvarSrc));
+}
+
 START_TEST(propvariant)
 {
     test_validtypes();
+    test_copy();
 }

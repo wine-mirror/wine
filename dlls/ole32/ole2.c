@@ -1,4 +1,3 @@
-
 /*
  *	OLE2 library
  *
@@ -2426,8 +2425,11 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
         CoTaskMemFree(pvar->u.blob.pBlobData);
         break;
     case VT_BSTR:
-        FIXME("Need to load OLEAUT32 for SysFreeString\n");
-        /* SysFreeString(pvar->u.bstrVal); */
+        if (pvar->u.bstrVal)
+        {
+            FIXME("Need to load OLEAUT32 for SysFreeString\n");
+            /* SysFreeString(pvar->u.bstrVal); */
+        }
         break;
    case VT_CF:
         if (pvar->u.pclipdata)
@@ -2496,13 +2498,13 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
         break;
     case VT_LPSTR:
         len = strlen(pvarSrc->u.pszVal);
-        pvarDest->u.pszVal = CoTaskMemAlloc(len);
-        CopyMemory(pvarDest->u.pszVal, pvarSrc->u.pszVal, len);
+        pvarDest->u.pszVal = CoTaskMemAlloc((len+1)*sizeof(CHAR));
+        CopyMemory(pvarDest->u.pszVal, pvarSrc->u.pszVal, (len+1)*sizeof(CHAR));
         break;
     case VT_LPWSTR:
         len = lstrlenW(pvarSrc->u.pwszVal);
-        pvarDest->u.pwszVal = CoTaskMemAlloc(len);
-        CopyMemory(pvarDest->u.pwszVal, pvarSrc->u.pwszVal, len);
+        pvarDest->u.pwszVal = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+        CopyMemory(pvarDest->u.pwszVal, pvarSrc->u.pwszVal, (len+1)*sizeof(WCHAR));
         break;
     case VT_BLOB:
     case VT_BLOB_OBJECT:
