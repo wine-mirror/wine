@@ -9,6 +9,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 void (*func_glActiveStencilFaceEXT)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glActiveTexture)( GLenum ) = (void *) 0xdeadbeef;
+void (*func_glActiveTextureARB)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glAlphaFragmentOp1ATI)( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glAlphaFragmentOp2ATI)( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glAlphaFragmentOp3ATI)( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
@@ -53,6 +54,7 @@ void (*func_glBufferDataARB)( GLenum, ptrdiff_t, GLvoid*, GLenum ) = (void *) 0x
 GLuint (*func_glBufferRegionEnabled)( ) = (void *) 0xdeadbeef;
 void (*func_glBufferSubDataARB)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glClientActiveTexture)( GLenum ) = (void *) 0xdeadbeef;
+void (*func_glClientActiveTextureARB)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glClientActiveVertexStreamATI)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glColor3fVertex3fSUN)( GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glColor3fVertex3fvSUN)( GLfloat*, GLfloat* ) = (void *) 0xdeadbeef;
@@ -366,76 +368,108 @@ void (*func_glMultiDrawRangeElementArrayAPPLE)( GLenum, GLuint, GLuint, GLint*, 
 void (*func_glMultiModeDrawArraysIBM)( GLenum, GLint*, GLsizei*, GLsizei, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiModeDrawElementsIBM)( GLenum*, GLsizei*, GLenum, GLvoid**, GLsizei, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1d)( GLenum, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1dARB)( GLenum, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1dSGIS)( GLenum, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1dv)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1dvARB)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1dvSGIS)( GLenum, GLdouble * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1f)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1fARB)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1fSGIS)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1fv)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1fvARB)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1fvSGIS)( GLenum, const GLfloat * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1hNV)( GLenum, unsigned short ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1hvNV)( GLenum, unsigned short* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1i)( GLenum, GLint ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1iARB)( GLenum, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1iSGIS)( GLenum, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1iv)( GLenum, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1ivARB)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1ivSGIS)( GLenum, GLint * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1s)( GLenum, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1sARB)( GLenum, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1sSGIS)( GLenum, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1sv)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord1svARB)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord1svSGIS)( GLenum, GLshort * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2d)( GLenum, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2dARB)( GLenum, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2dSGIS)( GLenum, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2dv)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2dvARB)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2dvSGIS)( GLenum, GLdouble * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2f)( GLenum, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2fARB)( GLenum, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2fSGIS)( GLenum, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2fv)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2fvARB)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2fvSGIS)( GLenum, GLfloat * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2hNV)( GLenum, unsigned short, unsigned short ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2hvNV)( GLenum, unsigned short* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2i)( GLenum, GLint, GLint ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2iARB)( GLenum, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2iSGIS)( GLenum, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2iv)( GLenum, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2ivARB)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2ivSGIS)( GLenum, GLint * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2s)( GLenum, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2sARB)( GLenum, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2sSGIS)( GLenum, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2sv)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord2svARB)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord2svSGIS)( GLenum, GLshort * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3d)( GLenum, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3dARB)( GLenum, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3dSGIS)( GLenum, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3dv)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3dvARB)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3dvSGIS)( GLenum, GLdouble * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3f)( GLenum, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3fARB)( GLenum, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3fSGIS)( GLenum, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3fv)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3fvARB)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3fvSGIS)( GLenum, GLfloat * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3hNV)( GLenum, unsigned short, unsigned short, unsigned short ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3hvNV)( GLenum, unsigned short* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3i)( GLenum, GLint, GLint, GLint ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3iARB)( GLenum, GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3iSGIS)( GLenum, GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3iv)( GLenum, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3ivARB)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3ivSGIS)( GLenum, GLint * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3s)( GLenum, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3sARB)( GLenum, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3sSGIS)( GLenum, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3sv)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord3svARB)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord3svSGIS)( GLenum, GLshort * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4d)( GLenum, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4dARB)( GLenum, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4dSGIS)( GLenum, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4dv)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4dvARB)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4dvSGIS)( GLenum, GLdouble * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4f)( GLenum, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4fARB)( GLenum, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4fSGIS)( GLenum, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4fv)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4fvARB)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4fvSGIS)( GLenum, GLfloat * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4hNV)( GLenum, unsigned short, unsigned short, unsigned short, unsigned short ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4hvNV)( GLenum, unsigned short* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4i)( GLenum, GLint, GLint, GLint, GLint ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4iARB)( GLenum, GLint, GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4iSGIS)( GLenum, GLint, GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4iv)( GLenum, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4ivARB)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4ivSGIS)( GLenum, GLint * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4s)( GLenum, GLshort, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4sARB)( GLenum, GLshort, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4sSGIS)( GLenum, GLshort, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4sv)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glMultiTexCoord4svARB)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4svSGIS)( GLenum, GLshort * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoordPointerSGIS)( GLenum, GLint, GLenum, GLsizei, GLvoid * ) = (void *) 0xdeadbeef;
 GLuint (*func_glNewBufferRegion)( GLenum ) = (void *) 0xdeadbeef;
@@ -886,6 +920,7 @@ void (*func_wglFreeMemoryNV)( GLvoid * ) = (void *) 0xdeadbeef;
 /* The function prototypes */
 void WINAPI wine_glActiveStencilFaceEXT( GLenum );
 void WINAPI wine_glActiveTexture( GLenum );
+void WINAPI wine_glActiveTextureARB( GLenum );
 void WINAPI wine_glAlphaFragmentOp1ATI( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint );
 void WINAPI wine_glAlphaFragmentOp2ATI( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint );
 void WINAPI wine_glAlphaFragmentOp3ATI( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint );
@@ -930,6 +965,7 @@ void WINAPI wine_glBufferDataARB( GLenum, ptrdiff_t, GLvoid*, GLenum );
 GLuint WINAPI wine_glBufferRegionEnabled( );
 void WINAPI wine_glBufferSubDataARB( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* );
 void WINAPI wine_glClientActiveTexture( GLenum );
+void WINAPI wine_glClientActiveTextureARB( GLenum );
 void WINAPI wine_glClientActiveVertexStreamATI( GLenum );
 void WINAPI wine_glColor3fVertex3fSUN( GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glColor3fVertex3fvSUN( GLfloat*, GLfloat* );
@@ -1243,76 +1279,108 @@ void WINAPI wine_glMultiDrawRangeElementArrayAPPLE( GLenum, GLuint, GLuint, GLin
 void WINAPI wine_glMultiModeDrawArraysIBM( GLenum, GLint*, GLsizei*, GLsizei, GLint );
 void WINAPI wine_glMultiModeDrawElementsIBM( GLenum*, GLsizei*, GLenum, GLvoid**, GLsizei, GLint );
 void WINAPI wine_glMultiTexCoord1d( GLenum, GLdouble );
+void WINAPI wine_glMultiTexCoord1dARB( GLenum, GLdouble );
 void WINAPI wine_glMultiTexCoord1dSGIS( GLenum, GLdouble );
 void WINAPI wine_glMultiTexCoord1dv( GLenum, GLdouble* );
+void WINAPI wine_glMultiTexCoord1dvARB( GLenum, GLdouble* );
 void WINAPI wine_glMultiTexCoord1dvSGIS( GLenum, GLdouble * );
 void WINAPI wine_glMultiTexCoord1f( GLenum, GLfloat );
+void WINAPI wine_glMultiTexCoord1fARB( GLenum, GLfloat );
 void WINAPI wine_glMultiTexCoord1fSGIS( GLenum, GLfloat );
 void WINAPI wine_glMultiTexCoord1fv( GLenum, GLfloat* );
+void WINAPI wine_glMultiTexCoord1fvARB( GLenum, GLfloat* );
 void WINAPI wine_glMultiTexCoord1fvSGIS( GLenum, const GLfloat * );
 void WINAPI wine_glMultiTexCoord1hNV( GLenum, unsigned short );
 void WINAPI wine_glMultiTexCoord1hvNV( GLenum, unsigned short* );
 void WINAPI wine_glMultiTexCoord1i( GLenum, GLint );
+void WINAPI wine_glMultiTexCoord1iARB( GLenum, GLint );
 void WINAPI wine_glMultiTexCoord1iSGIS( GLenum, GLint );
 void WINAPI wine_glMultiTexCoord1iv( GLenum, GLint* );
+void WINAPI wine_glMultiTexCoord1ivARB( GLenum, GLint* );
 void WINAPI wine_glMultiTexCoord1ivSGIS( GLenum, GLint * );
 void WINAPI wine_glMultiTexCoord1s( GLenum, GLshort );
+void WINAPI wine_glMultiTexCoord1sARB( GLenum, GLshort );
 void WINAPI wine_glMultiTexCoord1sSGIS( GLenum, GLshort );
 void WINAPI wine_glMultiTexCoord1sv( GLenum, GLshort* );
+void WINAPI wine_glMultiTexCoord1svARB( GLenum, GLshort* );
 void WINAPI wine_glMultiTexCoord1svSGIS( GLenum, GLshort * );
 void WINAPI wine_glMultiTexCoord2d( GLenum, GLdouble, GLdouble );
+void WINAPI wine_glMultiTexCoord2dARB( GLenum, GLdouble, GLdouble );
 void WINAPI wine_glMultiTexCoord2dSGIS( GLenum, GLdouble, GLdouble );
 void WINAPI wine_glMultiTexCoord2dv( GLenum, GLdouble* );
+void WINAPI wine_glMultiTexCoord2dvARB( GLenum, GLdouble* );
 void WINAPI wine_glMultiTexCoord2dvSGIS( GLenum, GLdouble * );
 void WINAPI wine_glMultiTexCoord2f( GLenum, GLfloat, GLfloat );
+void WINAPI wine_glMultiTexCoord2fARB( GLenum, GLfloat, GLfloat );
 void WINAPI wine_glMultiTexCoord2fSGIS( GLenum, GLfloat, GLfloat );
 void WINAPI wine_glMultiTexCoord2fv( GLenum, GLfloat* );
+void WINAPI wine_glMultiTexCoord2fvARB( GLenum, GLfloat* );
 void WINAPI wine_glMultiTexCoord2fvSGIS( GLenum, GLfloat * );
 void WINAPI wine_glMultiTexCoord2hNV( GLenum, unsigned short, unsigned short );
 void WINAPI wine_glMultiTexCoord2hvNV( GLenum, unsigned short* );
 void WINAPI wine_glMultiTexCoord2i( GLenum, GLint, GLint );
+void WINAPI wine_glMultiTexCoord2iARB( GLenum, GLint, GLint );
 void WINAPI wine_glMultiTexCoord2iSGIS( GLenum, GLint, GLint );
 void WINAPI wine_glMultiTexCoord2iv( GLenum, GLint* );
+void WINAPI wine_glMultiTexCoord2ivARB( GLenum, GLint* );
 void WINAPI wine_glMultiTexCoord2ivSGIS( GLenum, GLint * );
 void WINAPI wine_glMultiTexCoord2s( GLenum, GLshort, GLshort );
+void WINAPI wine_glMultiTexCoord2sARB( GLenum, GLshort, GLshort );
 void WINAPI wine_glMultiTexCoord2sSGIS( GLenum, GLshort, GLshort );
 void WINAPI wine_glMultiTexCoord2sv( GLenum, GLshort* );
+void WINAPI wine_glMultiTexCoord2svARB( GLenum, GLshort* );
 void WINAPI wine_glMultiTexCoord2svSGIS( GLenum, GLshort * );
 void WINAPI wine_glMultiTexCoord3d( GLenum, GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glMultiTexCoord3dARB( GLenum, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glMultiTexCoord3dSGIS( GLenum, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glMultiTexCoord3dv( GLenum, GLdouble* );
+void WINAPI wine_glMultiTexCoord3dvARB( GLenum, GLdouble* );
 void WINAPI wine_glMultiTexCoord3dvSGIS( GLenum, GLdouble * );
 void WINAPI wine_glMultiTexCoord3f( GLenum, GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glMultiTexCoord3fARB( GLenum, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glMultiTexCoord3fSGIS( GLenum, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glMultiTexCoord3fv( GLenum, GLfloat* );
+void WINAPI wine_glMultiTexCoord3fvARB( GLenum, GLfloat* );
 void WINAPI wine_glMultiTexCoord3fvSGIS( GLenum, GLfloat * );
 void WINAPI wine_glMultiTexCoord3hNV( GLenum, unsigned short, unsigned short, unsigned short );
 void WINAPI wine_glMultiTexCoord3hvNV( GLenum, unsigned short* );
 void WINAPI wine_glMultiTexCoord3i( GLenum, GLint, GLint, GLint );
+void WINAPI wine_glMultiTexCoord3iARB( GLenum, GLint, GLint, GLint );
 void WINAPI wine_glMultiTexCoord3iSGIS( GLenum, GLint, GLint, GLint );
 void WINAPI wine_glMultiTexCoord3iv( GLenum, GLint* );
+void WINAPI wine_glMultiTexCoord3ivARB( GLenum, GLint* );
 void WINAPI wine_glMultiTexCoord3ivSGIS( GLenum, GLint * );
 void WINAPI wine_glMultiTexCoord3s( GLenum, GLshort, GLshort, GLshort );
+void WINAPI wine_glMultiTexCoord3sARB( GLenum, GLshort, GLshort, GLshort );
 void WINAPI wine_glMultiTexCoord3sSGIS( GLenum, GLshort, GLshort, GLshort );
 void WINAPI wine_glMultiTexCoord3sv( GLenum, GLshort* );
+void WINAPI wine_glMultiTexCoord3svARB( GLenum, GLshort* );
 void WINAPI wine_glMultiTexCoord3svSGIS( GLenum, GLshort * );
 void WINAPI wine_glMultiTexCoord4d( GLenum, GLdouble, GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glMultiTexCoord4dARB( GLenum, GLdouble, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glMultiTexCoord4dSGIS( GLenum, GLdouble, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glMultiTexCoord4dv( GLenum, GLdouble* );
+void WINAPI wine_glMultiTexCoord4dvARB( GLenum, GLdouble* );
 void WINAPI wine_glMultiTexCoord4dvSGIS( GLenum, GLdouble * );
 void WINAPI wine_glMultiTexCoord4f( GLenum, GLfloat, GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glMultiTexCoord4fARB( GLenum, GLfloat, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glMultiTexCoord4fSGIS( GLenum, GLfloat, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glMultiTexCoord4fv( GLenum, GLfloat* );
+void WINAPI wine_glMultiTexCoord4fvARB( GLenum, GLfloat* );
 void WINAPI wine_glMultiTexCoord4fvSGIS( GLenum, GLfloat * );
 void WINAPI wine_glMultiTexCoord4hNV( GLenum, unsigned short, unsigned short, unsigned short, unsigned short );
 void WINAPI wine_glMultiTexCoord4hvNV( GLenum, unsigned short* );
 void WINAPI wine_glMultiTexCoord4i( GLenum, GLint, GLint, GLint, GLint );
+void WINAPI wine_glMultiTexCoord4iARB( GLenum, GLint, GLint, GLint, GLint );
 void WINAPI wine_glMultiTexCoord4iSGIS( GLenum, GLint, GLint, GLint, GLint );
 void WINAPI wine_glMultiTexCoord4iv( GLenum, GLint* );
+void WINAPI wine_glMultiTexCoord4ivARB( GLenum, GLint* );
 void WINAPI wine_glMultiTexCoord4ivSGIS( GLenum, GLint * );
 void WINAPI wine_glMultiTexCoord4s( GLenum, GLshort, GLshort, GLshort, GLshort );
+void WINAPI wine_glMultiTexCoord4sARB( GLenum, GLshort, GLshort, GLshort, GLshort );
 void WINAPI wine_glMultiTexCoord4sSGIS( GLenum, GLshort, GLshort, GLshort, GLshort );
 void WINAPI wine_glMultiTexCoord4sv( GLenum, GLshort* );
+void WINAPI wine_glMultiTexCoord4svARB( GLenum, GLshort* );
 void WINAPI wine_glMultiTexCoord4svSGIS( GLenum, GLshort * );
 void WINAPI wine_glMultiTexCoordPointerSGIS( GLenum, GLint, GLenum, GLsizei, GLvoid * );
 GLuint WINAPI wine_glNewBufferRegion( GLenum );
@@ -1761,10 +1829,11 @@ void WINAPI wine_wglFreeMemoryNV( GLvoid * );
 
 
 /* The table giving the correspondance between names and functions */
-int extension_registry_size = 874;
-OpenGL_extension extension_registry[874] = {
+int extension_registry_size = 908;
+OpenGL_extension extension_registry[908] = {
   { "glActiveStencilFaceEXT", "glActiveStencilFaceEXT", (void *) wine_glActiveStencilFaceEXT, (void **) (&func_glActiveStencilFaceEXT) },
   { "glActiveTexture", "glActiveTexture", (void *) wine_glActiveTexture, (void **) (&func_glActiveTexture) },
+  { "glActiveTextureARB", "glActiveTextureARB", (void *) wine_glActiveTextureARB, (void **) (&func_glActiveTextureARB) },
   { "glAlphaFragmentOp1ATI", "glAlphaFragmentOp1ATI", (void *) wine_glAlphaFragmentOp1ATI, (void **) (&func_glAlphaFragmentOp1ATI) },
   { "glAlphaFragmentOp2ATI", "glAlphaFragmentOp2ATI", (void *) wine_glAlphaFragmentOp2ATI, (void **) (&func_glAlphaFragmentOp2ATI) },
   { "glAlphaFragmentOp3ATI", "glAlphaFragmentOp3ATI", (void *) wine_glAlphaFragmentOp3ATI, (void **) (&func_glAlphaFragmentOp3ATI) },
@@ -1809,6 +1878,7 @@ OpenGL_extension extension_registry[874] = {
   { "glBufferRegionEnabled", "glBufferRegionEnabled", (void *) wine_glBufferRegionEnabled, (void **) (&func_glBufferRegionEnabled) },
   { "glBufferSubDataARB", "glBufferSubDataARB", (void *) wine_glBufferSubDataARB, (void **) (&func_glBufferSubDataARB) },
   { "glClientActiveTexture", "glClientActiveTexture", (void *) wine_glClientActiveTexture, (void **) (&func_glClientActiveTexture) },
+  { "glClientActiveTextureARB", "glClientActiveTextureARB", (void *) wine_glClientActiveTextureARB, (void **) (&func_glClientActiveTextureARB) },
   { "glClientActiveVertexStreamATI", "glClientActiveVertexStreamATI", (void *) wine_glClientActiveVertexStreamATI, (void **) (&func_glClientActiveVertexStreamATI) },
   { "glColor3fVertex3fSUN", "glColor3fVertex3fSUN", (void *) wine_glColor3fVertex3fSUN, (void **) (&func_glColor3fVertex3fSUN) },
   { "glColor3fVertex3fvSUN", "glColor3fVertex3fvSUN", (void *) wine_glColor3fVertex3fvSUN, (void **) (&func_glColor3fVertex3fvSUN) },
@@ -2122,76 +2192,108 @@ OpenGL_extension extension_registry[874] = {
   { "glMultiModeDrawArraysIBM", "glMultiModeDrawArraysIBM", (void *) wine_glMultiModeDrawArraysIBM, (void **) (&func_glMultiModeDrawArraysIBM) },
   { "glMultiModeDrawElementsIBM", "glMultiModeDrawElementsIBM", (void *) wine_glMultiModeDrawElementsIBM, (void **) (&func_glMultiModeDrawElementsIBM) },
   { "glMultiTexCoord1d", "glMultiTexCoord1d", (void *) wine_glMultiTexCoord1d, (void **) (&func_glMultiTexCoord1d) },
+  { "glMultiTexCoord1dARB", "glMultiTexCoord1dARB", (void *) wine_glMultiTexCoord1dARB, (void **) (&func_glMultiTexCoord1dARB) },
   { "glMultiTexCoord1dSGIS", "glMultiTexCoord1dSGIS", (void *) wine_glMultiTexCoord1dSGIS, (void **) (&func_glMultiTexCoord1dSGIS) },
   { "glMultiTexCoord1dv", "glMultiTexCoord1dv", (void *) wine_glMultiTexCoord1dv, (void **) (&func_glMultiTexCoord1dv) },
+  { "glMultiTexCoord1dvARB", "glMultiTexCoord1dvARB", (void *) wine_glMultiTexCoord1dvARB, (void **) (&func_glMultiTexCoord1dvARB) },
   { "glMultiTexCoord1dvSGIS", "glMultiTexCoord1dvSGIS", (void *) wine_glMultiTexCoord1dvSGIS, (void **) (&func_glMultiTexCoord1dvSGIS) },
   { "glMultiTexCoord1f", "glMultiTexCoord1f", (void *) wine_glMultiTexCoord1f, (void **) (&func_glMultiTexCoord1f) },
+  { "glMultiTexCoord1fARB", "glMultiTexCoord1fARB", (void *) wine_glMultiTexCoord1fARB, (void **) (&func_glMultiTexCoord1fARB) },
   { "glMultiTexCoord1fSGIS", "glMultiTexCoord1fSGIS", (void *) wine_glMultiTexCoord1fSGIS, (void **) (&func_glMultiTexCoord1fSGIS) },
   { "glMultiTexCoord1fv", "glMultiTexCoord1fv", (void *) wine_glMultiTexCoord1fv, (void **) (&func_glMultiTexCoord1fv) },
+  { "glMultiTexCoord1fvARB", "glMultiTexCoord1fvARB", (void *) wine_glMultiTexCoord1fvARB, (void **) (&func_glMultiTexCoord1fvARB) },
   { "glMultiTexCoord1fvSGIS", "glMultiTexCoord1fvSGIS", (void *) wine_glMultiTexCoord1fvSGIS, (void **) (&func_glMultiTexCoord1fvSGIS) },
   { "glMultiTexCoord1hNV", "glMultiTexCoord1hNV", (void *) wine_glMultiTexCoord1hNV, (void **) (&func_glMultiTexCoord1hNV) },
   { "glMultiTexCoord1hvNV", "glMultiTexCoord1hvNV", (void *) wine_glMultiTexCoord1hvNV, (void **) (&func_glMultiTexCoord1hvNV) },
   { "glMultiTexCoord1i", "glMultiTexCoord1i", (void *) wine_glMultiTexCoord1i, (void **) (&func_glMultiTexCoord1i) },
+  { "glMultiTexCoord1iARB", "glMultiTexCoord1iARB", (void *) wine_glMultiTexCoord1iARB, (void **) (&func_glMultiTexCoord1iARB) },
   { "glMultiTexCoord1iSGIS", "glMultiTexCoord1iSGIS", (void *) wine_glMultiTexCoord1iSGIS, (void **) (&func_glMultiTexCoord1iSGIS) },
   { "glMultiTexCoord1iv", "glMultiTexCoord1iv", (void *) wine_glMultiTexCoord1iv, (void **) (&func_glMultiTexCoord1iv) },
+  { "glMultiTexCoord1ivARB", "glMultiTexCoord1ivARB", (void *) wine_glMultiTexCoord1ivARB, (void **) (&func_glMultiTexCoord1ivARB) },
   { "glMultiTexCoord1ivSGIS", "glMultiTexCoord1ivSGIS", (void *) wine_glMultiTexCoord1ivSGIS, (void **) (&func_glMultiTexCoord1ivSGIS) },
   { "glMultiTexCoord1s", "glMultiTexCoord1s", (void *) wine_glMultiTexCoord1s, (void **) (&func_glMultiTexCoord1s) },
+  { "glMultiTexCoord1sARB", "glMultiTexCoord1sARB", (void *) wine_glMultiTexCoord1sARB, (void **) (&func_glMultiTexCoord1sARB) },
   { "glMultiTexCoord1sSGIS", "glMultiTexCoord1sSGIS", (void *) wine_glMultiTexCoord1sSGIS, (void **) (&func_glMultiTexCoord1sSGIS) },
   { "glMultiTexCoord1sv", "glMultiTexCoord1sv", (void *) wine_glMultiTexCoord1sv, (void **) (&func_glMultiTexCoord1sv) },
+  { "glMultiTexCoord1svARB", "glMultiTexCoord1svARB", (void *) wine_glMultiTexCoord1svARB, (void **) (&func_glMultiTexCoord1svARB) },
   { "glMultiTexCoord1svSGIS", "glMultiTexCoord1svSGIS", (void *) wine_glMultiTexCoord1svSGIS, (void **) (&func_glMultiTexCoord1svSGIS) },
   { "glMultiTexCoord2d", "glMultiTexCoord2d", (void *) wine_glMultiTexCoord2d, (void **) (&func_glMultiTexCoord2d) },
+  { "glMultiTexCoord2dARB", "glMultiTexCoord2dARB", (void *) wine_glMultiTexCoord2dARB, (void **) (&func_glMultiTexCoord2dARB) },
   { "glMultiTexCoord2dSGIS", "glMultiTexCoord2dSGIS", (void *) wine_glMultiTexCoord2dSGIS, (void **) (&func_glMultiTexCoord2dSGIS) },
   { "glMultiTexCoord2dv", "glMultiTexCoord2dv", (void *) wine_glMultiTexCoord2dv, (void **) (&func_glMultiTexCoord2dv) },
+  { "glMultiTexCoord2dvARB", "glMultiTexCoord2dvARB", (void *) wine_glMultiTexCoord2dvARB, (void **) (&func_glMultiTexCoord2dvARB) },
   { "glMultiTexCoord2dvSGIS", "glMultiTexCoord2dvSGIS", (void *) wine_glMultiTexCoord2dvSGIS, (void **) (&func_glMultiTexCoord2dvSGIS) },
   { "glMultiTexCoord2f", "glMultiTexCoord2f", (void *) wine_glMultiTexCoord2f, (void **) (&func_glMultiTexCoord2f) },
+  { "glMultiTexCoord2fARB", "glMultiTexCoord2fARB", (void *) wine_glMultiTexCoord2fARB, (void **) (&func_glMultiTexCoord2fARB) },
   { "glMultiTexCoord2fSGIS", "glMultiTexCoord2fSGIS", (void *) wine_glMultiTexCoord2fSGIS, (void **) (&func_glMultiTexCoord2fSGIS) },
   { "glMultiTexCoord2fv", "glMultiTexCoord2fv", (void *) wine_glMultiTexCoord2fv, (void **) (&func_glMultiTexCoord2fv) },
+  { "glMultiTexCoord2fvARB", "glMultiTexCoord2fvARB", (void *) wine_glMultiTexCoord2fvARB, (void **) (&func_glMultiTexCoord2fvARB) },
   { "glMultiTexCoord2fvSGIS", "glMultiTexCoord2fvSGIS", (void *) wine_glMultiTexCoord2fvSGIS, (void **) (&func_glMultiTexCoord2fvSGIS) },
   { "glMultiTexCoord2hNV", "glMultiTexCoord2hNV", (void *) wine_glMultiTexCoord2hNV, (void **) (&func_glMultiTexCoord2hNV) },
   { "glMultiTexCoord2hvNV", "glMultiTexCoord2hvNV", (void *) wine_glMultiTexCoord2hvNV, (void **) (&func_glMultiTexCoord2hvNV) },
   { "glMultiTexCoord2i", "glMultiTexCoord2i", (void *) wine_glMultiTexCoord2i, (void **) (&func_glMultiTexCoord2i) },
+  { "glMultiTexCoord2iARB", "glMultiTexCoord2iARB", (void *) wine_glMultiTexCoord2iARB, (void **) (&func_glMultiTexCoord2iARB) },
   { "glMultiTexCoord2iSGIS", "glMultiTexCoord2iSGIS", (void *) wine_glMultiTexCoord2iSGIS, (void **) (&func_glMultiTexCoord2iSGIS) },
   { "glMultiTexCoord2iv", "glMultiTexCoord2iv", (void *) wine_glMultiTexCoord2iv, (void **) (&func_glMultiTexCoord2iv) },
+  { "glMultiTexCoord2ivARB", "glMultiTexCoord2ivARB", (void *) wine_glMultiTexCoord2ivARB, (void **) (&func_glMultiTexCoord2ivARB) },
   { "glMultiTexCoord2ivSGIS", "glMultiTexCoord2ivSGIS", (void *) wine_glMultiTexCoord2ivSGIS, (void **) (&func_glMultiTexCoord2ivSGIS) },
   { "glMultiTexCoord2s", "glMultiTexCoord2s", (void *) wine_glMultiTexCoord2s, (void **) (&func_glMultiTexCoord2s) },
+  { "glMultiTexCoord2sARB", "glMultiTexCoord2sARB", (void *) wine_glMultiTexCoord2sARB, (void **) (&func_glMultiTexCoord2sARB) },
   { "glMultiTexCoord2sSGIS", "glMultiTexCoord2sSGIS", (void *) wine_glMultiTexCoord2sSGIS, (void **) (&func_glMultiTexCoord2sSGIS) },
   { "glMultiTexCoord2sv", "glMultiTexCoord2sv", (void *) wine_glMultiTexCoord2sv, (void **) (&func_glMultiTexCoord2sv) },
+  { "glMultiTexCoord2svARB", "glMultiTexCoord2svARB", (void *) wine_glMultiTexCoord2svARB, (void **) (&func_glMultiTexCoord2svARB) },
   { "glMultiTexCoord2svSGIS", "glMultiTexCoord2svSGIS", (void *) wine_glMultiTexCoord2svSGIS, (void **) (&func_glMultiTexCoord2svSGIS) },
   { "glMultiTexCoord3d", "glMultiTexCoord3d", (void *) wine_glMultiTexCoord3d, (void **) (&func_glMultiTexCoord3d) },
+  { "glMultiTexCoord3dARB", "glMultiTexCoord3dARB", (void *) wine_glMultiTexCoord3dARB, (void **) (&func_glMultiTexCoord3dARB) },
   { "glMultiTexCoord3dSGIS", "glMultiTexCoord3dSGIS", (void *) wine_glMultiTexCoord3dSGIS, (void **) (&func_glMultiTexCoord3dSGIS) },
   { "glMultiTexCoord3dv", "glMultiTexCoord3dv", (void *) wine_glMultiTexCoord3dv, (void **) (&func_glMultiTexCoord3dv) },
+  { "glMultiTexCoord3dvARB", "glMultiTexCoord3dvARB", (void *) wine_glMultiTexCoord3dvARB, (void **) (&func_glMultiTexCoord3dvARB) },
   { "glMultiTexCoord3dvSGIS", "glMultiTexCoord3dvSGIS", (void *) wine_glMultiTexCoord3dvSGIS, (void **) (&func_glMultiTexCoord3dvSGIS) },
   { "glMultiTexCoord3f", "glMultiTexCoord3f", (void *) wine_glMultiTexCoord3f, (void **) (&func_glMultiTexCoord3f) },
+  { "glMultiTexCoord3fARB", "glMultiTexCoord3fARB", (void *) wine_glMultiTexCoord3fARB, (void **) (&func_glMultiTexCoord3fARB) },
   { "glMultiTexCoord3fSGIS", "glMultiTexCoord3fSGIS", (void *) wine_glMultiTexCoord3fSGIS, (void **) (&func_glMultiTexCoord3fSGIS) },
   { "glMultiTexCoord3fv", "glMultiTexCoord3fv", (void *) wine_glMultiTexCoord3fv, (void **) (&func_glMultiTexCoord3fv) },
+  { "glMultiTexCoord3fvARB", "glMultiTexCoord3fvARB", (void *) wine_glMultiTexCoord3fvARB, (void **) (&func_glMultiTexCoord3fvARB) },
   { "glMultiTexCoord3fvSGIS", "glMultiTexCoord3fvSGIS", (void *) wine_glMultiTexCoord3fvSGIS, (void **) (&func_glMultiTexCoord3fvSGIS) },
   { "glMultiTexCoord3hNV", "glMultiTexCoord3hNV", (void *) wine_glMultiTexCoord3hNV, (void **) (&func_glMultiTexCoord3hNV) },
   { "glMultiTexCoord3hvNV", "glMultiTexCoord3hvNV", (void *) wine_glMultiTexCoord3hvNV, (void **) (&func_glMultiTexCoord3hvNV) },
   { "glMultiTexCoord3i", "glMultiTexCoord3i", (void *) wine_glMultiTexCoord3i, (void **) (&func_glMultiTexCoord3i) },
+  { "glMultiTexCoord3iARB", "glMultiTexCoord3iARB", (void *) wine_glMultiTexCoord3iARB, (void **) (&func_glMultiTexCoord3iARB) },
   { "glMultiTexCoord3iSGIS", "glMultiTexCoord3iSGIS", (void *) wine_glMultiTexCoord3iSGIS, (void **) (&func_glMultiTexCoord3iSGIS) },
   { "glMultiTexCoord3iv", "glMultiTexCoord3iv", (void *) wine_glMultiTexCoord3iv, (void **) (&func_glMultiTexCoord3iv) },
+  { "glMultiTexCoord3ivARB", "glMultiTexCoord3ivARB", (void *) wine_glMultiTexCoord3ivARB, (void **) (&func_glMultiTexCoord3ivARB) },
   { "glMultiTexCoord3ivSGIS", "glMultiTexCoord3ivSGIS", (void *) wine_glMultiTexCoord3ivSGIS, (void **) (&func_glMultiTexCoord3ivSGIS) },
   { "glMultiTexCoord3s", "glMultiTexCoord3s", (void *) wine_glMultiTexCoord3s, (void **) (&func_glMultiTexCoord3s) },
+  { "glMultiTexCoord3sARB", "glMultiTexCoord3sARB", (void *) wine_glMultiTexCoord3sARB, (void **) (&func_glMultiTexCoord3sARB) },
   { "glMultiTexCoord3sSGIS", "glMultiTexCoord3sSGIS", (void *) wine_glMultiTexCoord3sSGIS, (void **) (&func_glMultiTexCoord3sSGIS) },
   { "glMultiTexCoord3sv", "glMultiTexCoord3sv", (void *) wine_glMultiTexCoord3sv, (void **) (&func_glMultiTexCoord3sv) },
+  { "glMultiTexCoord3svARB", "glMultiTexCoord3svARB", (void *) wine_glMultiTexCoord3svARB, (void **) (&func_glMultiTexCoord3svARB) },
   { "glMultiTexCoord3svSGIS", "glMultiTexCoord3svSGIS", (void *) wine_glMultiTexCoord3svSGIS, (void **) (&func_glMultiTexCoord3svSGIS) },
   { "glMultiTexCoord4d", "glMultiTexCoord4d", (void *) wine_glMultiTexCoord4d, (void **) (&func_glMultiTexCoord4d) },
+  { "glMultiTexCoord4dARB", "glMultiTexCoord4dARB", (void *) wine_glMultiTexCoord4dARB, (void **) (&func_glMultiTexCoord4dARB) },
   { "glMultiTexCoord4dSGIS", "glMultiTexCoord4dSGIS", (void *) wine_glMultiTexCoord4dSGIS, (void **) (&func_glMultiTexCoord4dSGIS) },
   { "glMultiTexCoord4dv", "glMultiTexCoord4dv", (void *) wine_glMultiTexCoord4dv, (void **) (&func_glMultiTexCoord4dv) },
+  { "glMultiTexCoord4dvARB", "glMultiTexCoord4dvARB", (void *) wine_glMultiTexCoord4dvARB, (void **) (&func_glMultiTexCoord4dvARB) },
   { "glMultiTexCoord4dvSGIS", "glMultiTexCoord4dvSGIS", (void *) wine_glMultiTexCoord4dvSGIS, (void **) (&func_glMultiTexCoord4dvSGIS) },
   { "glMultiTexCoord4f", "glMultiTexCoord4f", (void *) wine_glMultiTexCoord4f, (void **) (&func_glMultiTexCoord4f) },
+  { "glMultiTexCoord4fARB", "glMultiTexCoord4fARB", (void *) wine_glMultiTexCoord4fARB, (void **) (&func_glMultiTexCoord4fARB) },
   { "glMultiTexCoord4fSGIS", "glMultiTexCoord4fSGIS", (void *) wine_glMultiTexCoord4fSGIS, (void **) (&func_glMultiTexCoord4fSGIS) },
   { "glMultiTexCoord4fv", "glMultiTexCoord4fv", (void *) wine_glMultiTexCoord4fv, (void **) (&func_glMultiTexCoord4fv) },
+  { "glMultiTexCoord4fvARB", "glMultiTexCoord4fvARB", (void *) wine_glMultiTexCoord4fvARB, (void **) (&func_glMultiTexCoord4fvARB) },
   { "glMultiTexCoord4fvSGIS", "glMultiTexCoord4fvSGIS", (void *) wine_glMultiTexCoord4fvSGIS, (void **) (&func_glMultiTexCoord4fvSGIS) },
   { "glMultiTexCoord4hNV", "glMultiTexCoord4hNV", (void *) wine_glMultiTexCoord4hNV, (void **) (&func_glMultiTexCoord4hNV) },
   { "glMultiTexCoord4hvNV", "glMultiTexCoord4hvNV", (void *) wine_glMultiTexCoord4hvNV, (void **) (&func_glMultiTexCoord4hvNV) },
   { "glMultiTexCoord4i", "glMultiTexCoord4i", (void *) wine_glMultiTexCoord4i, (void **) (&func_glMultiTexCoord4i) },
+  { "glMultiTexCoord4iARB", "glMultiTexCoord4iARB", (void *) wine_glMultiTexCoord4iARB, (void **) (&func_glMultiTexCoord4iARB) },
   { "glMultiTexCoord4iSGIS", "glMultiTexCoord4iSGIS", (void *) wine_glMultiTexCoord4iSGIS, (void **) (&func_glMultiTexCoord4iSGIS) },
   { "glMultiTexCoord4iv", "glMultiTexCoord4iv", (void *) wine_glMultiTexCoord4iv, (void **) (&func_glMultiTexCoord4iv) },
+  { "glMultiTexCoord4ivARB", "glMultiTexCoord4ivARB", (void *) wine_glMultiTexCoord4ivARB, (void **) (&func_glMultiTexCoord4ivARB) },
   { "glMultiTexCoord4ivSGIS", "glMultiTexCoord4ivSGIS", (void *) wine_glMultiTexCoord4ivSGIS, (void **) (&func_glMultiTexCoord4ivSGIS) },
   { "glMultiTexCoord4s", "glMultiTexCoord4s", (void *) wine_glMultiTexCoord4s, (void **) (&func_glMultiTexCoord4s) },
+  { "glMultiTexCoord4sARB", "glMultiTexCoord4sARB", (void *) wine_glMultiTexCoord4sARB, (void **) (&func_glMultiTexCoord4sARB) },
   { "glMultiTexCoord4sSGIS", "glMultiTexCoord4sSGIS", (void *) wine_glMultiTexCoord4sSGIS, (void **) (&func_glMultiTexCoord4sSGIS) },
   { "glMultiTexCoord4sv", "glMultiTexCoord4sv", (void *) wine_glMultiTexCoord4sv, (void **) (&func_glMultiTexCoord4sv) },
+  { "glMultiTexCoord4svARB", "glMultiTexCoord4svARB", (void *) wine_glMultiTexCoord4svARB, (void **) (&func_glMultiTexCoord4svARB) },
   { "glMultiTexCoord4svSGIS", "glMultiTexCoord4svSGIS", (void *) wine_glMultiTexCoord4svSGIS, (void **) (&func_glMultiTexCoord4svSGIS) },
   { "glMultiTexCoordPointerSGIS", "glMultiTexCoordPointerSGIS", (void *) wine_glMultiTexCoordPointerSGIS, (void **) (&func_glMultiTexCoordPointerSGIS) },
   { "glNewBufferRegion", "glNewBufferRegion", (void *) wine_glNewBufferRegion, (void **) (&func_glNewBufferRegion) },
@@ -2654,6 +2756,13 @@ void WINAPI wine_glActiveTexture( GLenum texture ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glActiveTextureARB( GLenum texture ) {
+  TRACE("(%d)\n", texture );
+  ENTER_GL();
+  func_glActiveTextureARB( texture );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glAlphaFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod ) {
   TRACE("(%d, %d, %d, %d, %d, %d)\n", op, dst, dstMod, arg1, arg1Rep, arg1Mod );
   ENTER_GL();
@@ -2975,6 +3084,13 @@ void WINAPI wine_glClientActiveTexture( GLenum texture ) {
   TRACE("(%d)\n", texture );
   ENTER_GL();
   func_glClientActiveTexture( texture );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glClientActiveTextureARB( GLenum texture ) {
+  TRACE("(%d)\n", texture );
+  ENTER_GL();
+  func_glClientActiveTextureARB( texture );
   LEAVE_GL();
 }
 
@@ -5207,6 +5323,13 @@ void WINAPI wine_glMultiTexCoord1d( GLenum target, GLdouble s ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord1dARB( GLenum target, GLdouble s ) {
+  TRACE("(%d, %f)\n", target, s );
+  ENTER_GL();
+  func_glMultiTexCoord1dARB( target, s );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord1dSGIS( GLenum target, GLdouble s ) {
   TRACE("(%d, %f)\n", target, s );
   ENTER_GL();
@@ -5218,6 +5341,13 @@ void WINAPI wine_glMultiTexCoord1dv( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord1dv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord1dvARB( GLenum target, GLdouble* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord1dvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5235,6 +5365,13 @@ void WINAPI wine_glMultiTexCoord1f( GLenum target, GLfloat s ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord1fARB( GLenum target, GLfloat s ) {
+  TRACE("(%d, %f)\n", target, s );
+  ENTER_GL();
+  func_glMultiTexCoord1fARB( target, s );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord1fSGIS( GLenum target, GLfloat s ) {
   TRACE("(%d, %f)\n", target, s );
   ENTER_GL();
@@ -5246,6 +5383,13 @@ void WINAPI wine_glMultiTexCoord1fv( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord1fv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord1fvARB( GLenum target, GLfloat* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord1fvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5277,6 +5421,13 @@ void WINAPI wine_glMultiTexCoord1i( GLenum target, GLint s ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord1iARB( GLenum target, GLint s ) {
+  TRACE("(%d, %d)\n", target, s );
+  ENTER_GL();
+  func_glMultiTexCoord1iARB( target, s );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord1iSGIS( GLenum target, GLint s ) {
   TRACE("(%d, %d)\n", target, s );
   ENTER_GL();
@@ -5288,6 +5439,13 @@ void WINAPI wine_glMultiTexCoord1iv( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord1iv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord1ivARB( GLenum target, GLint* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord1ivARB( target, v );
   LEAVE_GL();
 }
 
@@ -5305,6 +5463,13 @@ void WINAPI wine_glMultiTexCoord1s( GLenum target, GLshort s ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord1sARB( GLenum target, GLshort s ) {
+  TRACE("(%d, %d)\n", target, s );
+  ENTER_GL();
+  func_glMultiTexCoord1sARB( target, s );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord1sSGIS( GLenum target, GLshort s ) {
   TRACE("(%d, %d)\n", target, s );
   ENTER_GL();
@@ -5316,6 +5481,13 @@ void WINAPI wine_glMultiTexCoord1sv( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord1sv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord1svARB( GLenum target, GLshort* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord1svARB( target, v );
   LEAVE_GL();
 }
 
@@ -5333,6 +5505,13 @@ void WINAPI wine_glMultiTexCoord2d( GLenum target, GLdouble s, GLdouble t ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t ) {
+  TRACE("(%d, %f, %f)\n", target, s, t );
+  ENTER_GL();
+  func_glMultiTexCoord2dARB( target, s, t );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord2dSGIS( GLenum target, GLdouble s, GLdouble t ) {
   TRACE("(%d, %f, %f)\n", target, s, t );
   ENTER_GL();
@@ -5344,6 +5523,13 @@ void WINAPI wine_glMultiTexCoord2dv( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord2dv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord2dvARB( GLenum target, GLdouble* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord2dvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5361,6 +5547,13 @@ void WINAPI wine_glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t ) {
+  TRACE("(%d, %f, %f)\n", target, s, t );
+  ENTER_GL();
+  func_glMultiTexCoord2fARB( target, s, t );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t ) {
   TRACE("(%d, %f, %f)\n", target, s, t );
   ENTER_GL();
@@ -5372,6 +5565,13 @@ void WINAPI wine_glMultiTexCoord2fv( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord2fv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord2fvARB( GLenum target, GLfloat* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord2fvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5403,6 +5603,13 @@ void WINAPI wine_glMultiTexCoord2i( GLenum target, GLint s, GLint t ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t ) {
+  TRACE("(%d, %d, %d)\n", target, s, t );
+  ENTER_GL();
+  func_glMultiTexCoord2iARB( target, s, t );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord2iSGIS( GLenum target, GLint s, GLint t ) {
   TRACE("(%d, %d, %d)\n", target, s, t );
   ENTER_GL();
@@ -5414,6 +5621,13 @@ void WINAPI wine_glMultiTexCoord2iv( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord2iv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord2ivARB( GLenum target, GLint* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord2ivARB( target, v );
   LEAVE_GL();
 }
 
@@ -5431,6 +5645,13 @@ void WINAPI wine_glMultiTexCoord2s( GLenum target, GLshort s, GLshort t ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t ) {
+  TRACE("(%d, %d, %d)\n", target, s, t );
+  ENTER_GL();
+  func_glMultiTexCoord2sARB( target, s, t );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord2sSGIS( GLenum target, GLshort s, GLshort t ) {
   TRACE("(%d, %d, %d)\n", target, s, t );
   ENTER_GL();
@@ -5442,6 +5663,13 @@ void WINAPI wine_glMultiTexCoord2sv( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord2sv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord2svARB( GLenum target, GLshort* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord2svARB( target, v );
   LEAVE_GL();
 }
 
@@ -5459,6 +5687,13 @@ void WINAPI wine_glMultiTexCoord3d( GLenum target, GLdouble s, GLdouble t, GLdou
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r ) {
+  TRACE("(%d, %f, %f, %f)\n", target, s, t, r );
+  ENTER_GL();
+  func_glMultiTexCoord3dARB( target, s, t, r );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord3dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r ) {
   TRACE("(%d, %f, %f, %f)\n", target, s, t, r );
   ENTER_GL();
@@ -5470,6 +5705,13 @@ void WINAPI wine_glMultiTexCoord3dv( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord3dv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord3dvARB( GLenum target, GLdouble* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord3dvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5487,6 +5729,13 @@ void WINAPI wine_glMultiTexCoord3f( GLenum target, GLfloat s, GLfloat t, GLfloat
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r ) {
+  TRACE("(%d, %f, %f, %f)\n", target, s, t, r );
+  ENTER_GL();
+  func_glMultiTexCoord3fARB( target, s, t, r );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord3fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r ) {
   TRACE("(%d, %f, %f, %f)\n", target, s, t, r );
   ENTER_GL();
@@ -5498,6 +5747,13 @@ void WINAPI wine_glMultiTexCoord3fv( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord3fv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord3fvARB( GLenum target, GLfloat* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord3fvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5529,6 +5785,13 @@ void WINAPI wine_glMultiTexCoord3i( GLenum target, GLint s, GLint t, GLint r ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r ) {
+  TRACE("(%d, %d, %d, %d)\n", target, s, t, r );
+  ENTER_GL();
+  func_glMultiTexCoord3iARB( target, s, t, r );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord3iSGIS( GLenum target, GLint s, GLint t, GLint r ) {
   TRACE("(%d, %d, %d, %d)\n", target, s, t, r );
   ENTER_GL();
@@ -5540,6 +5803,13 @@ void WINAPI wine_glMultiTexCoord3iv( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord3iv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord3ivARB( GLenum target, GLint* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord3ivARB( target, v );
   LEAVE_GL();
 }
 
@@ -5557,6 +5827,13 @@ void WINAPI wine_glMultiTexCoord3s( GLenum target, GLshort s, GLshort t, GLshort
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLshort r ) {
+  TRACE("(%d, %d, %d, %d)\n", target, s, t, r );
+  ENTER_GL();
+  func_glMultiTexCoord3sARB( target, s, t, r );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord3sSGIS( GLenum target, GLshort s, GLshort t, GLshort r ) {
   TRACE("(%d, %d, %d, %d)\n", target, s, t, r );
   ENTER_GL();
@@ -5568,6 +5845,13 @@ void WINAPI wine_glMultiTexCoord3sv( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord3sv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord3svARB( GLenum target, GLshort* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord3svARB( target, v );
   LEAVE_GL();
 }
 
@@ -5585,6 +5869,13 @@ void WINAPI wine_glMultiTexCoord4d( GLenum target, GLdouble s, GLdouble t, GLdou
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
+  TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
+  ENTER_GL();
+  func_glMultiTexCoord4dARB( target, s, t, r, q );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord4dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
   ENTER_GL();
@@ -5596,6 +5887,13 @@ void WINAPI wine_glMultiTexCoord4dv( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord4dv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord4dvARB( GLenum target, GLdouble* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord4dvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5613,6 +5911,13 @@ void WINAPI wine_glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
+  TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
+  ENTER_GL();
+  func_glMultiTexCoord4fARB( target, s, t, r, q );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord4fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
   ENTER_GL();
@@ -5624,6 +5929,13 @@ void WINAPI wine_glMultiTexCoord4fv( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord4fv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord4fvARB( GLenum target, GLfloat* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord4fvARB( target, v );
   LEAVE_GL();
 }
 
@@ -5655,6 +5967,13 @@ void WINAPI wine_glMultiTexCoord4i( GLenum target, GLint s, GLint t, GLint r, GL
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r, GLint q ) {
+  TRACE("(%d, %d, %d, %d, %d)\n", target, s, t, r, q );
+  ENTER_GL();
+  func_glMultiTexCoord4iARB( target, s, t, r, q );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord4iSGIS( GLenum target, GLint s, GLint t, GLint r, GLint q ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, s, t, r, q );
   ENTER_GL();
@@ -5666,6 +5985,13 @@ void WINAPI wine_glMultiTexCoord4iv( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord4iv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord4ivARB( GLenum target, GLint* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord4ivARB( target, v );
   LEAVE_GL();
 }
 
@@ -5683,6 +6009,13 @@ void WINAPI wine_glMultiTexCoord4s( GLenum target, GLshort s, GLshort t, GLshort
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) {
+  TRACE("(%d, %d, %d, %d, %d)\n", target, s, t, r, q );
+  ENTER_GL();
+  func_glMultiTexCoord4sARB( target, s, t, r, q );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiTexCoord4sSGIS( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, s, t, r, q );
   ENTER_GL();
@@ -5694,6 +6027,13 @@ void WINAPI wine_glMultiTexCoord4sv( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
   ENTER_GL();
   func_glMultiTexCoord4sv( target, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiTexCoord4svARB( GLenum target, GLshort* v ) {
+  TRACE("(%d, %p)\n", target, v );
+  ENTER_GL();
+  func_glMultiTexCoord4svARB( target, v );
   LEAVE_GL();
 }
 

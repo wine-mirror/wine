@@ -82,8 +82,7 @@ $gen_traces = 1;
 %cat_1_1 = ( %cat_1_0,
 	     "1_1" => 1 );
 %cat_1_2 = ( %cat_1_1,
-	     "VERSION_1_2" => 1,
-	     "ARB_multitexture" => 1 );
+	     "VERSION_1_2" => 1 );
 
 %norm_categories = ();
 

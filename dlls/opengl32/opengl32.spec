@@ -27,7 +27,6 @@
 @  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
 @  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
 @  stdcall glAccum( long long ) wine_glAccum
-@  stdcall glActiveTextureARB( long ) wine_glActiveTextureARB
 @  stdcall glAlphaFunc( long long ) wine_glAlphaFunc
 @  stdcall glAreTexturesResident( long ptr ptr ) wine_glAreTexturesResident
 @  stdcall glArrayElement( long ) wine_glArrayElement
@@ -45,7 +44,6 @@
 @  stdcall glClearDepth( double ) wine_glClearDepth
 @  stdcall glClearIndex( long ) wine_glClearIndex
 @  stdcall glClearStencil( long ) wine_glClearStencil
-@  stdcall glClientActiveTextureARB( long ) wine_glClientActiveTextureARB
 @  stdcall glClipPlane( long ptr ) wine_glClipPlane
 @  stdcall glColor3b( long long long ) wine_glColor3b
 @  stdcall glColor3bv( ptr ) wine_glColor3bv
@@ -238,38 +236,6 @@
 @  stdcall glMinmax( long long long ) wine_glMinmax
 @  stdcall glMultMatrixd( ptr ) wine_glMultMatrixd
 @  stdcall glMultMatrixf( ptr ) wine_glMultMatrixf
-@  stdcall glMultiTexCoord1dARB( long double ) wine_glMultiTexCoord1dARB
-@  stdcall glMultiTexCoord1dvARB( long ptr ) wine_glMultiTexCoord1dvARB
-@  stdcall glMultiTexCoord1fARB( long long ) wine_glMultiTexCoord1fARB
-@  stdcall glMultiTexCoord1fvARB( long ptr ) wine_glMultiTexCoord1fvARB
-@  stdcall glMultiTexCoord1iARB( long long ) wine_glMultiTexCoord1iARB
-@  stdcall glMultiTexCoord1ivARB( long ptr ) wine_glMultiTexCoord1ivARB
-@  stdcall glMultiTexCoord1sARB( long long ) wine_glMultiTexCoord1sARB
-@  stdcall glMultiTexCoord1svARB( long ptr ) wine_glMultiTexCoord1svARB
-@  stdcall glMultiTexCoord2dARB( long double double ) wine_glMultiTexCoord2dARB
-@  stdcall glMultiTexCoord2dvARB( long ptr ) wine_glMultiTexCoord2dvARB
-@  stdcall glMultiTexCoord2fARB( long long long ) wine_glMultiTexCoord2fARB
-@  stdcall glMultiTexCoord2fvARB( long ptr ) wine_glMultiTexCoord2fvARB
-@  stdcall glMultiTexCoord2iARB( long long long ) wine_glMultiTexCoord2iARB
-@  stdcall glMultiTexCoord2ivARB( long ptr ) wine_glMultiTexCoord2ivARB
-@  stdcall glMultiTexCoord2sARB( long long long ) wine_glMultiTexCoord2sARB
-@  stdcall glMultiTexCoord2svARB( long ptr ) wine_glMultiTexCoord2svARB
-@  stdcall glMultiTexCoord3dARB( long double double double ) wine_glMultiTexCoord3dARB
-@  stdcall glMultiTexCoord3dvARB( long ptr ) wine_glMultiTexCoord3dvARB
-@  stdcall glMultiTexCoord3fARB( long long long long ) wine_glMultiTexCoord3fARB
-@  stdcall glMultiTexCoord3fvARB( long ptr ) wine_glMultiTexCoord3fvARB
-@  stdcall glMultiTexCoord3iARB( long long long long ) wine_glMultiTexCoord3iARB
-@  stdcall glMultiTexCoord3ivARB( long ptr ) wine_glMultiTexCoord3ivARB
-@  stdcall glMultiTexCoord3sARB( long long long long ) wine_glMultiTexCoord3sARB
-@  stdcall glMultiTexCoord3svARB( long ptr ) wine_glMultiTexCoord3svARB
-@  stdcall glMultiTexCoord4dARB( long double double double double ) wine_glMultiTexCoord4dARB
-@  stdcall glMultiTexCoord4dvARB( long ptr ) wine_glMultiTexCoord4dvARB
-@  stdcall glMultiTexCoord4fARB( long long long long long ) wine_glMultiTexCoord4fARB
-@  stdcall glMultiTexCoord4fvARB( long ptr ) wine_glMultiTexCoord4fvARB
-@  stdcall glMultiTexCoord4iARB( long long long long long ) wine_glMultiTexCoord4iARB
-@  stdcall glMultiTexCoord4ivARB( long ptr ) wine_glMultiTexCoord4ivARB
-@  stdcall glMultiTexCoord4sARB( long long long long long ) wine_glMultiTexCoord4sARB
-@  stdcall glMultiTexCoord4svARB( long ptr ) wine_glMultiTexCoord4svARB
 @  stdcall glNewList( long long ) wine_glNewList
 @  stdcall glNormal3b( long long long ) wine_glNormal3b
 @  stdcall glNormal3bv( ptr ) wine_glNormal3bv
