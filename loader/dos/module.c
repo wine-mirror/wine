@@ -400,15 +400,14 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   close(x_fd);
   lpDosTask->task=child;
   /* wait for child process to signal readiness */
-  do {
-   if (read(lpDosTask->read_pipe,&ret,sizeof(ret))!=sizeof(ret)) {
+  while (1) {
+    if (read(lpDosTask->read_pipe,&ret,sizeof(ret))==sizeof(ret)) break;
     if ((errno==EINTR)||(errno==EAGAIN)) continue;
     /* failure */
     ERR(module,"dosmod has failed to initialize\n");
     if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
     return FALSE;
-   }
-  } while (0);
+  }
   /* the child has now mmaped the temp file, it's now safe to unlink.
    * do it here to avoid leaving a mess in /tmp if/when Wine crashes... */
   if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
