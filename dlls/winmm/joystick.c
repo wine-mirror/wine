@@ -107,8 +107,8 @@ void joySendMessages(void)
 		if (joyOpenDriver(joy) == FALSE) continue;
                 dev_stat = read(joy_dev[joy], &js, sizeof(js));
                 if (dev_stat == sizeof(js)) {
-                        js.x = js.x*37;
-                        js.y = js.y*37;
+                        js.x = js.x<<8;
+                        js.y = js.y<<8;
                         if ((joyCapData[joy].wXpos != js.x) || (joyCapData[joy].wYpos != js.y)) {
                                 SendMessageA(CaptureWnd[joy], MM_JOY1MOVE + joy, js.buttons, MAKELONG(js.x, js.y));
                                 joyCapData[joy].wXpos = js.x;
@@ -318,8 +318,8 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 		return JOYERR_UNPLUGGED; /* FIXME: perhaps wrong, but what should I return else ? */
 	}
 	count_use[wID] = 0;
-	js.x = js.x*37;
-	js.y = js.y*37;
+	js.x = js.x<<8;
+	js.y = js.y<<8;
 	lpInfo->wXpos = js.x;   /* FIXME: perhaps multiply it somehow ? */
 	lpInfo->wYpos = js.y;
 	lpInfo->wZpos = 0; /* FIXME: Don't know what to do with this value as joystick driver doesn't provide a Z value */
