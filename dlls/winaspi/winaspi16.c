@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include <callback.h>
+#include <string.h>
 #include "windows.h"
 #include "aspi.h"
 #include "winaspi.h"
@@ -59,7 +60,11 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     fd = open(device_str, O_RDWR);
     if (fd == -1) {
 	int save_error = errno;
-	ERR(aspi, "Error opening device %s, errno=%d\n", device_str, save_error);
+#ifdef HAVE_STRERROR
+	ERR(aspi, "Error opening device %s, error '%s'\n", device_str, strerror(save_error));
+#else
+    ERR(aspi, "Error opening device %s, error %d\n", device_str, save_error);
+#endif
 	return -1;
     }
 
@@ -278,14 +283,18 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 
   status = write(fd, sg_hd, in_len);
   if (status < 0 || status != in_len) {
-      int myerror = errno;
+      int save_error = errno;
 
     WARN(aspi, "Not enough bytes written to scsi device bytes=%d .. %d\n", in_len, status);
     if (status < 0) {
-	if (myerror == ENOMEM) {
+		if (save_error == ENOMEM) {
 	    MSG("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
 	}
-	WARN(aspi, "errno: = %d\n", myerror);
+#ifdef HAVE_STRERROR
+		WARN(aspi, "error:= '%s'\n", strerror(save_error));
+#else
+		WARN(aspi, "error:= %d\n", save_error);
+#endif
     }
     goto error_exit;
   }
@@ -462,31 +471,27 @@ DWORD WINAPI GetASPIDLLVersion16()
 }
 
 
-void WINAPI ASPI_DOS_func(DWORD srb)
+void WINAPI ASPI_DOS_func(CONTEXT *context)
 {
-       ASPI_SendASPICommand(srb, ASPI_DOS);
+	WORD *stack = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
+	DWORD ptrSRB = *(DWORD *)&stack[2];
+
+	ASPI_SendASPICommand(ptrSRB, ASPI_DOS);
+
+	/* simulate a normal RETF sequence as required by DPMI CallRMProcFar */
+	IP_reg(context) = *(stack++);
+	CS_reg(context) = *(stack++);
+	SP_reg(context) += 2*sizeof(WORD);
 }
 
 
-/* returns a real mode call address to ASPI_DOS_func() */
+/* returns the address of a real mode callback to ASPI_DOS_func() */
 void ASPI_DOS_HandleInt(CONTEXT *context)
 {
 #ifdef linux
-       FARPROC16 DOS_func;
-       DWORD dos;
-       LPBYTE dosptr;
-
-       DOS_func = MODULE_GetWndProcEntry16("ASPI_DOS_func");
-       dos = GlobalDOSAlloc(5);
-       dosptr = (BYTE *)PTR_SEG_OFF_TO_LIN(LOWORD(dos), 0);
-       *dosptr++ = 0xea; /* ljmp */
-       *(FARPROC16 *)dosptr = DOS_func;
-
-       *(DWORD *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context))
-               = MAKELONG(0, HIWORD(dos)); /* real mode address */
-       TRACE(aspi, "real mode proc: %04x:%04x.\n", HIWORD(dos), 0);
-       RESET_CFLAG(context);
-       AX_reg(context) = CX_reg(context);
+	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
+	*p = DPMI_AllocInternalRMCB(ASPI_DOS_func);
+	TRACE(aspi, "allocated real mode proc %p\n", *p);
 #else
        SET_CFLAG(context);
 #endif

@@ -59,7 +59,11 @@ ASPI_OpenDevice32(SRB_ExecSCSICmd32 *prb)
     fd = open(device_str, O_RDWR);
     if (fd == -1) {
 	int save_error = errno;
-	ERR(aspi, "Error opening device %s, errno=%d\n", device_str, save_error);
+#ifdef HAVE_STRERROR
+    ERR(aspi, "Error opening device %s, error '%s'\n", device_str, strerror(save_error));
+#else
+    ERR(aspi, "Error opening device %s, error %d\n", device_str, save_error);
+#endif
 	return -1;
     }
 
@@ -226,14 +230,18 @@ ASPI_ExecScsiCmd32(SRB_ExecSCSICmd32 *lpPRB)
 
   status = write(fd, sg_hd, in_len);
   if (status < 0 || status != in_len) {
-      int myerror = errno;
+      int save_error = errno;
 
     WARN(aspi, "Not enough bytes written to scsi device bytes=%d .. %d\n", in_len, status);
     if (status < 0) {
-	if (myerror == ENOMEM) {
+		if (save_error == ENOMEM) {
 	    MSG("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
 	}
-	WARN(aspi, "errno: = %d\n", myerror);
+#ifdef HAVE_STRERROR
+		WARN(aspi, "error:= '%s'\n", strerror(save_error));
+#else
+		WARN(aspi, "error:= %d\n", save_error);
+#endif
     }
     goto error_exit;
   }
