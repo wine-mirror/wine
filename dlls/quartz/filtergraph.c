@@ -182,6 +182,7 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
     TRACE("(%p)->(%s (%p), %p)\n", This, debugstr_guid(riid), riid, ppvObj);
     
     if (IsEqualGUID(&IID_IUnknown, riid) ||
+	IsEqualGUID(&IID_IFilterGraph, riid) ||
 	IsEqualGUID(&IID_IGraphBuilder, riid)) {
         *ppvObj = &(This->IGraphBuilder_vtbl);
         TRACE("   returning IGraphBuilder interface (%p)\n", *ppvObj);
