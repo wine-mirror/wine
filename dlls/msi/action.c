@@ -143,6 +143,8 @@ static UINT ACTION_InstallInitialize(MSIHANDLE hPackage);
 static UINT ACTION_InstallValidate(MSIHANDLE hPackage);
 static UINT ACTION_ProcessComponents(MSIHANDLE hPackage);
 static UINT ACTION_RegisterTypeLibraries(MSIHANDLE hPackage);
+static UINT ACTION_RegisterClassInfo(MSIHANDLE hPackage);
+static UINT ACTION_RegisterProgIdInfo(MSIHANDLE hPackage);
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -193,6 +195,10 @@ const static WCHAR szProcessComponents[] =
 const static WCHAR szRegisterTypeLibraries[] = 
 {'R','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r',
 'i','e','s',0};
+const static WCHAR szRegisterClassInfo[] = 
+{'R','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
+const static WCHAR szRegisterProgIdInfo[] = 
+{'R','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -842,14 +848,16 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_WriteRegistryValues(hPackage);
      else if (strcmpW(action,szRegisterTypeLibraries)==0)
         rc = ACTION_RegisterTypeLibraries(hPackage);
+     else if (strcmpW(action,szRegisterClassInfo)==0)
+        rc = ACTION_RegisterClassInfo(hPackage);
+     else if (strcmpW(action,szRegisterProgIdInfo)==0)
+        rc = ACTION_RegisterProgIdInfo(hPackage);
 
     /*
      Current called during itunes but unimplemented and seem important
 
      ResolveSource  (sets SourceDir)
      CreateShortcuts (would be nice to have soon)
-     RegisterClassInfo
-     RegisterProgIdInfo (Lots to do)
      RegisterProduct
      InstallFinalize
      */
@@ -3245,6 +3253,473 @@ static UINT ACTION_RegisterTypeLibraries(MSIHANDLE hPackage)
    
 }
 
+static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
+{
+    static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const WCHAR ExecSeqQuery[] = 
+{'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','p','p','I'
+,'d',' ','w','h','e','r','e',' ','A','p','p','I','d','=','`','%','s','`',0};
+    WCHAR Query[0x1000];
+    MSIPACKAGE* package;
+    HKEY hkey2,hkey3;
+    LPWSTR buffer=0;
+    DWORD sz;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+
+    sprintfW(Query,ExecSeqQuery,clsid);
+
+    rc = MsiDatabaseOpenViewW(package->db, Query, &view);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    RegCreateKeyW(HKEY_CLASSES_ROOT,szAppID,&hkey2);
+    RegCreateKeyW(hkey2,clsid,&hkey3);
+    RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)app,
+                   (strlenW(app)+1)*sizeof(WCHAR));
+
+    MsiViewFetch(view,&row);
+
+    if (!MsiRecordIsNull(row,2)) 
+    {
+        LPWSTR deformated=0;
+        UINT size; 
+        static const WCHAR szRemoteServerName[] =
+{'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
+        sz =  0;
+        MsiRecordGetStringW(row,2,NULL,&sz);
+        sz++;
+        buffer = HeapAlloc(GetProcessHeap(),0,sz * sizeof (WCHAR));
+        MsiRecordGetStringW(row,2,buffer,&sz);
+        size = deformat_string(hPackage,buffer,&deformated);
+        RegSetValueExW(hkey3,szRemoteServerName,0,REG_SZ,(LPVOID)deformated,
+                       size);
+        HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,buffer);
+    }
+
+    if (!MsiRecordIsNull(row,3)) 
+    {
+        static const WCHAR szLocalService[] =
+{'L','o','c','a','l','S','e','r','v','i','c','e',0};
+        UINT size;
+        sz =  0;
+        MsiRecordGetStringW(row,3,NULL,&sz);
+        sz++;
+        size = sz * sizeof(WCHAR);
+        buffer = HeapAlloc(GetProcessHeap(),0,size);
+        MsiRecordGetStringW(row,3,buffer,&sz);
+        RegSetValueExW(hkey3,szLocalService,0,REG_SZ,(LPVOID)buffer,size);
+        HeapFree(GetProcessHeap(),0,buffer);
+    }
+
+    if (!MsiRecordIsNull(row,4)) 
+    {
+        static const WCHAR szService[] =
+{'S','e','r','v','i','c','e','P','a','r','a','m','e','t','e','r','s',0};
+        UINT size;
+        sz =  0;
+        MsiRecordGetStringW(row,4,NULL,&sz);
+        sz++;
+        size = sz * sizeof(WCHAR);
+        buffer = HeapAlloc(GetProcessHeap(),0,size);
+        MsiRecordGetStringW(row,4,buffer,&sz);
+        RegSetValueExW(hkey3,szService,0,REG_SZ,(LPVOID)buffer,size);
+        HeapFree(GetProcessHeap(),0,buffer);
+    }
+
+    if (!MsiRecordIsNull(row,5)) 
+    {
+        static const WCHAR szDLL[] =
+{'D','l','l','S','u','r','r','o','g','a','t','e',0};
+        UINT size;
+        sz =  0;
+        MsiRecordGetStringW(row,5,NULL,&sz);
+        sz++;
+        size = sz * sizeof(WCHAR);
+        buffer = HeapAlloc(GetProcessHeap(),0,size);
+        MsiRecordGetStringW(row,5,buffer,&sz);
+        RegSetValueExW(hkey3,szDLL,0,REG_SZ,(LPVOID)buffer,size);
+        HeapFree(GetProcessHeap(),0,buffer);
+    }
+
+    if (!MsiRecordIsNull(row,6)) 
+    {
+        static const WCHAR szActivate[] =
+{'A','c','t','i','v','a','t','e','A','s','S','t','o','r','a','g','e',0};
+        static const WCHAR szY[] = {'Y',0};
+
+        if (MsiRecordGetInteger(row,6))
+            RegSetValueExW(hkey3,szActivate,0,REG_SZ,(LPVOID)szY,4);
+    }
+
+    if (!MsiRecordIsNull(row,7)) 
+    {
+        static const WCHAR szRunAs[] = {'R','u','n','A','s',0};
+        static const WCHAR szUser[] = 
+{'I','n','t','e','r','a','c','t','i','v','e',' ','U','s','e','r',0};
+
+        if (MsiRecordGetInteger(row,7))
+            RegSetValueExW(hkey3,szRunAs,0,REG_SZ,(LPVOID)szUser,34);
+    }
+
+    MsiCloseHandle(row);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
+    return rc;
+}
+
+static UINT ACTION_RegisterClassInfo(MSIHANDLE hPackage)
+{
+    /* 
+     * again i am assuming the words, "Whose key file respesents" when refering
+     * to a Component as to meanin that Components KeyPath file
+     *
+     * Also there is a very strong connection between ClassInfo and ProgID
+     * that i am mostly glossing over.  
+     * What would be more proper is to load the ClassInfo and the ProgID info
+     * into memory data structures and then be able to enable and disable them
+     * based on component. 
+     */
+    
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const CHAR *ExecSeqQuery = "SELECT * from Class";
+    MSIPACKAGE* package;
+    static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
+    static const WCHAR szProgID[] = { 'P','r','o','g','I','D',0 };
+    static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
+    HKEY hkey,hkey2,hkey3;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = RegCreateKeyW(HKEY_CLASSES_ROOT,szCLSID,&hkey);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_FUNCTION_FAILED;
+
+    rc = MsiDatabaseOpenViewA(package->db, ExecSeqQuery, &view);
+
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        goto end;
+    }
+
+    while (1)
+    {
+        WCHAR clsid[0x100];
+        WCHAR buffer[0x100];
+        WCHAR desc[0x100];
+        DWORD sz;
+        INT index;
+     
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        sz=0x100;
+        MsiRecordGetStringW(row,3,buffer,&sz);
+
+        index = get_loaded_component(package,buffer);
+
+        if (index < 0)
+        {
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        if (!package->components[index].Enabled ||
+            !package->components[index].FeatureState)
+        {
+            TRACE("Skipping class reg due to disabled component\n");
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        sz=0x100;
+        MsiRecordGetStringW(row,1,clsid,&sz);
+        RegCreateKeyW(hkey,clsid,&hkey2);
+
+        if (!MsiRecordIsNull(row,5))
+        {
+            sz=0x100;
+            MsiRecordGetStringW(row,5,desc,&sz);
+
+            RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)desc,
+                           (strlenW(desc)+1)*sizeof(WCHAR));
+        }
+        else
+            desc[0]=0;
+
+        sz=0x100;
+        MsiRecordGetStringW(row,2,buffer,&sz);
+
+        RegCreateKeyW(hkey2,buffer,&hkey3);
+
+        index = get_loaded_file(package,package->components[index].KeyPath);
+        RegSetValueExW(hkey3,NULL,0,REG_SZ,
+                       (LPVOID)package->files[index].TargetPath,
+                       (strlenW(package->files[index].TargetPath)+1)
+                        *sizeof(WCHAR));
+
+        RegCloseKey(hkey3);
+
+        if (!MsiRecordIsNull(row,4))
+        {
+            sz=0x100;
+            MsiRecordGetStringW(row,4,buffer,&sz);
+
+            RegCreateKeyW(hkey2,szProgID,&hkey3);
+    
+            RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)buffer,
+                       (strlenW(buffer)+1)*sizeof(WCHAR));
+
+            RegCloseKey(hkey3);
+        }
+
+        if (!MsiRecordIsNull(row,6))
+        { 
+            sz=0x100;
+            MsiRecordGetStringW(row,6,buffer,&sz);
+
+            RegSetValueExW(hkey2,szAppID,0,REG_SZ,(LPVOID)buffer,
+                       (strlenW(buffer)+1)*sizeof(WCHAR));
+
+            register_appid(hPackage,buffer,desc);
+        }
+
+        RegCloseKey(hkey2);
+
+        FIXME("Process the rest of the fields >7\n");
+
+        ui_actiondata(hPackage,szRegisterClassInfo,row);
+
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+end:
+    RegCloseKey(hkey);
+    return rc;
+}
+
+static UINT register_progid_base(MSIHANDLE row, LPWSTR clsid)
+{
+    static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
+    HKEY hkey,hkey2;
+    WCHAR buffer[0x1000];
+    DWORD sz;
+
+
+    sz = 0x1000;
+    MsiRecordGetStringW(row,1,buffer,&sz);
+    RegCreateKeyW(HKEY_CLASSES_ROOT,buffer,&hkey);
+
+    if (!MsiRecordIsNull(row,4))
+    {
+        sz = 0x1000;
+        MsiRecordGetStringW(row,4,buffer,&sz);
+        RegSetValueExW(hkey,NULL,0,REG_SZ,(LPVOID)buffer, (strlenW(buffer)+1) *
+                       sizeof(WCHAR));
+    }
+
+    if (!MsiRecordIsNull(row,3))
+    {   
+        sz = 0x1000;
+    
+        MsiRecordGetStringW(row,3,buffer,&sz);
+        RegCreateKeyW(hkey,szCLSID,&hkey2);
+        RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)buffer, (strlenW(buffer)+1) *
+                       sizeof(WCHAR));
+
+        if (clsid)
+            strcpyW(clsid,buffer);
+
+        RegCloseKey(hkey2);
+    }
+    else
+    {
+        FIXME("UNHANDLED case, Parent progid but classid is NULL\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+    if (!MsiRecordIsNull(row,5))
+        FIXME ("UNHANDLED icon in Progid\n");
+    return ERROR_SUCCESS;
+}
+
+static UINT register_progid(MSIHANDLE hPackage, MSIHANDLE row, LPWSTR clsid);
+
+static UINT register_parent_progid(MSIHANDLE hPackage, LPCWSTR parent, 
+                                   LPWSTR clsid)
+{
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const WCHAR Query_t[] = 
+{'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','P','r','o','g'
+,'I','d',' ','w','h','e','r','e',' ','P','r','o','g','I','d',' ','=',' ','`'
+,'%','s','`',0};
+    WCHAR Query[0x1000];
+    MSIPACKAGE* package;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    sprintfW(Query,Query_t,parent);
+
+    rc = MsiDatabaseOpenViewW(package->db, Query, &view);
+
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    rc = MsiViewFetch(view,&row);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    register_progid(hPackage,row,clsid);
+
+    MsiCloseHandle(row);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    return rc;
+}
+
+static UINT register_progid(MSIHANDLE hPackage, MSIHANDLE row, LPWSTR clsid)
+{
+    UINT rc = ERROR_SUCCESS; 
+
+    if (MsiRecordIsNull(row,2))
+        rc = register_progid_base(row,clsid);
+    else
+    {
+        WCHAR buffer[0x1000];
+        DWORD sz;
+        HKEY hkey,hkey2;
+        static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
+
+        sz = 0x1000;
+        MsiRecordGetStringW(row,2,buffer,&sz);
+        rc = register_parent_progid(hPackage,buffer,clsid);
+
+        sz = 0x1000;
+        MsiRecordGetStringW(row,1,buffer,&sz);
+        RegCreateKeyW(HKEY_CLASSES_ROOT,buffer,&hkey);
+        /* clasid is same as parent */
+        RegCreateKeyW(hkey,szCLSID,&hkey2);
+        RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)clsid, (strlenW(clsid)+1) *
+                       sizeof(WCHAR));
+
+        RegCloseKey(hkey2);
+        if (!MsiRecordIsNull(row,4))
+        {
+            sz = 0x1000;
+            MsiRecordGetStringW(row,4,buffer,&sz);
+            RegSetValueExW(hkey,NULL,0,REG_SZ,(LPVOID)buffer,
+                           (strlenW(buffer)+1) * sizeof(WCHAR));
+        }
+
+        if (!MsiRecordIsNull(row,5))
+            FIXME ("UNHANDLED icon in Progid\n");
+
+        RegCloseKey(hkey);
+    }
+    return rc;
+}
+
+static UINT ACTION_RegisterProgIdInfo(MSIHANDLE hPackage)
+{
+    /* 
+     * Sigh, here i am just brute force registering all progid
+     * this needs to be linked to the Classes that have been registerd
+     * but the easiest way to do that is to load all these stuff into
+     * memory for easy checking.
+     *
+     * gives me something to continue to work toward
+     */
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const CHAR *Query = "SELECT * FROM ProgId";
+    MSIPACKAGE* package;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MsiDatabaseOpenViewA(package->db, Query, &view);
+
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    while (1)
+    {
+        WCHAR clsid[0x1000];
+
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+        
+        register_progid(hPackage,row,clsid);
+
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    return rc;
+}
+
 /* Msi functions that seem approperate here */
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 {
@@ -3488,11 +3963,13 @@ static UINT ACTION_Template(MSIHANDLE hPackage)
     MSIHANDLE view;
     MSIHANDLE row = 0;
     static const CHAR *ExecSeqQuery;
-    MSIHANDLE db;
+    MSIPACKAGE* package;
 
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
-    MsiCloseHandle(db);
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MsiDatabaseOpenViewA(package->db, ExecSeqQuery, &view);
 
     if (rc != ERROR_SUCCESS)
         return rc;
