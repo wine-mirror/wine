@@ -2152,7 +2152,7 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
   if (size == 0)
       return 0;
   if(file->_cnt) { 
-	int pcnt=(file->_cnt>wrcnt)? file->_cnt: wrcnt;
+	int pcnt=(file->_cnt>wrcnt)? wrcnt: file->_cnt;
 	memcpy(file->_ptr, ptr, pcnt);
 	file->_cnt -= pcnt;
 	file->_ptr += pcnt;
