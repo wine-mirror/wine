@@ -28,11 +28,13 @@
 #endif
 #include <stdlib.h>
 #include <errno.h>
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 
 #include "winbase.h"
 #include "winerror.h"
-#include "winnls.h" 
+#include "winnls.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/exception.h"
