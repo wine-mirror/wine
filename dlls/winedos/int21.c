@@ -291,37 +291,23 @@ static WORD INT21_GetHeapSelector( CONTEXT86 *context )
 /***********************************************************************
  *           INT21_BufferedInput
  *
- * Handler for function 0x0a.
+ * Handler for function 0x0a and reading from console using
+ * function 0x3f.
  *
  * Reads a string of characters from standard input until
- * enter key is pressed.
+ * enter key is pressed. Returns either number of characters 
+ * read from console including terminating CR or 
+ * zero if capacity was zero.
  */
-static void INT21_BufferedInput( CONTEXT86 *context )
+static WORD INT21_BufferedInput( CONTEXT86 *context, BYTE *ptr, WORD capacity )
 {
-    BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
-                                   context->SegDs,
-                                   context->Edx);
-    BYTE capacity = ptr[0]; /* includes CR */
-    BYTE length = 0;        /* excludes CR */
-
-    TRACE( "BUFFERED INPUT (size=%d)\n", capacity );
+    BYTE length = 0;
 
     /*
      * Return immediately if capacity is zero.
-     *
-     * FIXME: What to return to application?
      */
     if (capacity == 0)
-        return;
-
-    /*
-     * FIXME: Some documents state that
-     *        ptr[1] holds number of chars from last input which 
-     *        may be recalled on entry, other documents do not mention
-     *        this at all.
-     */
-    if (ptr[1])
-        TRACE( "Handle old chars in buffer!\n" );
+        return 0;
 
     while(TRUE)
     {
@@ -337,9 +323,8 @@ static void INT21_BufferedInput( CONTEXT86 *context )
              */
             DOSVM_PutChar( '\r' );
             DOSVM_PutChar( '\n' );
-            ptr[1] = length;
-            ptr[2 + length] = '\r';
-            return;
+            ptr[length] = '\r';
+            return length + 1;
         }
 
         /*
@@ -355,7 +340,7 @@ static void INT21_BufferedInput( CONTEXT86 *context )
         if (ascii != 0 && length < capacity-1)
         {
             DOSVM_PutChar( ascii );
-            ptr[2 + length] = ascii;
+            ptr[length] = ascii;
             length++;
         }
     }
@@ -1408,7 +1393,33 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x0a: /* BUFFERED INPUT */
-        INT21_BufferedInput( context );
+        {
+            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                           context->SegDs,
+                                           context->Edx);
+            WORD result;
+
+            TRACE( "BUFFERED INPUT (size=%d)\n", ptr[0] );
+
+            /*
+             * FIXME: Some documents state that
+             *        ptr[1] holds number of chars from last input which 
+             *        may be recalled on entry, other documents do not mention
+             *        this at all.
+             */
+            if (ptr[1])
+                TRACE( "Handle old chars in buffer!\n" );
+
+            /*
+             * ptr[0] - capacity (includes terminating CR)
+             * ptr[1] - characters read (excludes terminating CR)
+             */
+            result = INT21_BufferedInput( context, ptr + 2, ptr[0] );
+            if (result > 0)
+                ptr[1] = (BYTE)result - 1;
+            else
+                ptr[1] = 0;
+        }
         break;
 
     case 0x0b: /* GET STDIN STATUS */
@@ -1789,8 +1800,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
              *        does not work as it is supposed to work.
              */
 
-            if (ReadFile( DosFileHandleToWin32Handle(BX_reg(context)),
-                          buffer, count, &result, NULL ))
+            if (!DOSVM_IsWin16() && BX_reg(context) == 0)
+            {
+                result = INT21_BufferedInput( context, buffer, count );
+                SET_AX( context, (WORD)result );
+            }
+            else if (ReadFile( DosFileHandleToWin32Handle(BX_reg(context)),
+                               buffer, count, &result, NULL ))
                 SET_AX( context, (WORD)result );
             else
                 bSetDOSExtendedError = TRUE;
@@ -1804,7 +1820,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             BYTE *ptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 
-            if (!DOSVM_IsWin16() && BX_reg(context) == 1)
+            if (!DOSVM_IsWin16() && 
+                (BX_reg(context) == 1 || BX_reg(context) == 2))
             {
                 int i;
                 for(i=0; i<CX_reg(context); i++)
