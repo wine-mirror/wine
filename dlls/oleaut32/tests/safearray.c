@@ -659,7 +659,7 @@ static void test_SafeArrayCreateLockDestroy(void)
            vt == VT_INT_PTR)),
            "VARTYPE %d (@%d dimensions) failed\n", vt, dimension);
       else
-        ok(sa == NULL || (vt == VT_R8 && IS_ANCIENT),
+        ok(sa == NULL || vt == VT_R8,
            "VARTYPE %d (@%d dimensions) succeeded!\n", vt, dimension);
 
       if (sa)
@@ -667,7 +667,7 @@ static void test_SafeArrayCreateLockDestroy(void)
         ok(SafeArrayGetDim(sa) == (UINT)dimension,
            "VARTYPE %d (@%d dimensions) cDims is %d, expected %d\n",
            vt, dimension, SafeArrayGetDim(sa), dimension);
-        ok(SafeArrayGetElemsize(sa) == dwLen || (vt == VT_R8 && IS_ANCIENT),
+        ok(SafeArrayGetElemsize(sa) == dwLen || vt == VT_R8,
            "VARTYPE %d (@%d dimensions) cbElements is %d, expected %ld\n",
            vt, dimension, SafeArrayGetElemsize(sa), dwLen);
 
@@ -759,7 +759,11 @@ static void test_VectorCreateLockDestroy(void)
       sa = pSafeArrayCreateVector(vt, 0, element);
 
       if (dwLen)
-        ok(sa != NULL, "VARTYPE %d (@%d elements) failed\n", vt, element);
+      {
+        /* win2000 has a bug where U/INT_PTR aren't accepted */
+        ok(sa != NULL || vt == VT_INT_PTR || vt == VT_UINT_PTR,
+           "VARTYPE %d (@%d elements) failed\n", vt, element);
+      }
       else
         ok(sa == NULL, "VARTYPE %d (@%d elements) succeeded!\n", vt, element);
 
