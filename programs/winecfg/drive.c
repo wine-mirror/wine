@@ -84,7 +84,7 @@ long drive_available_mask(char letter)
   return result;
 }
 
-BOOL add_drive(char letter, char *targetpath, char *label, char *serial, uint type)
+BOOL add_drive(char letter, char *targetpath, char *label, char *serial, unsigned int type)
 {
     int driveIndex = letter_to_index(letter);
 

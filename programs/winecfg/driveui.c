@@ -91,11 +91,11 @@ static void set_advanced(HWND dialog)
 }
 
 struct drive_typemap {
-    const uint sCode;
+    unsigned int sCode;
     const char *sDesc;
 };
 
-static struct drive_typemap type_pairs[] = {
+static const struct drive_typemap type_pairs[] = {
   { DRIVE_FIXED,      "Local hard disk" },
   { DRIVE_REMOTE,     "Network share"   },
   { DRIVE_REMOVABLE,  "Floppy disk"     },
@@ -334,7 +334,7 @@ void on_remove_click(HWND dialog)
 static void update_controls(HWND dialog)
 {
     char *path;
-    uint type;
+    unsigned int type;
     char *label;
     char *serial;
     char *device;
