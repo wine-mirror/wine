@@ -836,6 +836,7 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
 static void do_trap( CONTEXT *context, int trap_code )
 {
     EXCEPTION_RECORD rec;
+    DWORD dr0, dr1, dr2, dr3, dr6, dr7;
 
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionRecord  = NULL;
@@ -845,18 +846,15 @@ static void do_trap( CONTEXT *context, int trap_code )
     switch(trap_code)
     {
     case T_TRCTRAP:  /* Single-step exception */
+        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         if (context->EFlags & 0x100)
         {
-            rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
             context->EFlags &= ~0x100;  /* clear single-step flag */
         }
-        else
+        else  /* hardware breakpoint, fetch the debug registers */
         {
-            /* likely we get this because of a kill(SIGTRAP) on ourself,
-             * so send a bp exception instead of a single step exception
-             */
-            TRACE("Spurious single step trap => breakpoint simulation\n");
-            rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+            context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
+            GetThreadContext(GetCurrentThread(), context);
         }
         break;
     case T_BPTFLT:   /* Breakpoint exception */
@@ -866,7 +864,22 @@ static void do_trap( CONTEXT *context, int trap_code )
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         break;
     }
+    dr0 = context->Dr0;
+    dr1 = context->Dr1;
+    dr2 = context->Dr2;
+    dr3 = context->Dr3;
+    dr6 = context->Dr6;
+    dr7 = context->Dr7;
+
     EXC_RtlRaiseException( &rec, context );
+
+    if (dr0 != context->Dr0 || dr1 != context->Dr1 || dr2 != context->Dr2 ||
+        dr3 != context->Dr3 || dr6 != context->Dr6 || dr7 != context->Dr7)
+    {
+        /* the debug registers have changed, set the new values */
+        context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
+        SetThreadContext(GetCurrentThread(), context);
+    }
 }
 
 
