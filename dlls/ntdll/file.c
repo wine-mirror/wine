@@ -628,6 +628,23 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         return STATUS_PIPE_DISCONNECTED;
     }
 
+    if (flags & FD_FLAG_TIMEOUT)
+    {
+        if (hEvent)
+        {
+            /* this shouldn't happen, but check it */
+            FIXME("NIY-hEvent\n");
+            wine_server_release_fd( hFile, unix_handle );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+        io_status->u.Status = NtCreateEvent(&hEvent, SYNCHRONIZE, NULL, 0, 0);
+        if (io_status->u.Status)
+        {
+            wine_server_release_fd( hFile, unix_handle );
+            return io_status->u.Status;
+        }
+    }
+
     if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
     {
         async_fileio*   ovp;
