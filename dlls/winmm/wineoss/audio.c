@@ -405,24 +405,30 @@ static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
     return ret;
 }
 
+const static int win_std_oss_fmts[2]={AFMT_U8,AFMT_S16_LE};
+const static int win_std_rates[5]={96000,48000,44100,22050,11025};
+const static int win_std_formats[2][2][5]=
+    {{{WAVE_FORMAT_96M08, WAVE_FORMAT_48M08, WAVE_FORMAT_4M08,
+       WAVE_FORMAT_2M08,  WAVE_FORMAT_1M08},
+      {WAVE_FORMAT_96S08, WAVE_FORMAT_48S08, WAVE_FORMAT_4S08,
+       WAVE_FORMAT_2S08,  WAVE_FORMAT_1S08}},
+     {{WAVE_FORMAT_96M16, WAVE_FORMAT_48M16, WAVE_FORMAT_4M16,
+       WAVE_FORMAT_2M16,  WAVE_FORMAT_1M16},
+      {WAVE_FORMAT_96S16, WAVE_FORMAT_48S16, WAVE_FORMAT_4S16,
+       WAVE_FORMAT_2S16,  WAVE_FORMAT_1S16}},
+    };
+
 /******************************************************************
  *		OSS_WaveOutInit
  *
  *
  */
-static BOOL     OSS_WaveOutInit(OSS_DEVICE* ossdev)
+static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 {
-    int	                smplrate;
-    int	                samplesize = 16;
-    int	                dsp_stereo = 1;
-    int	                bytespersmpl;
-    int                 caps;
-    int                 mask;
+    int rc,arg;
+    int f,c,r;
 
     if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0, 0, 0, 0) != 0) return FALSE;
-
-    memset(&ossdev->out_caps, 0, sizeof(ossdev->out_caps));
-
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
     /* FIXME: some programs compare this string against the content of the
@@ -440,70 +446,68 @@ static BOOL     OSS_WaveOutInit(OSS_DEVICE* ossdev)
     strcpy(ossdev->out_caps.szPname, "CS4236/37/38");
 #endif
     ossdev->out_caps.vDriverVersion = 0x0100;
+    ossdev->out_caps.wChannels = 1;
     ossdev->out_caps.dwFormats = 0x00000000;
+    ossdev->out_caps.wReserved1 = 0;
     ossdev->out_caps.dwSupport = WAVECAPS_VOLUME;
 
-    ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &mask);
-    TRACE("OSS dsp out mask=%08x\n", mask);
-
-    /* First bytespersampl, then stereo */
-    bytespersmpl = (ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &samplesize) != 0) ? 1 : 2;
-
-    ossdev->out_caps.wChannels = (ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &dsp_stereo) != 0) ? 1 : 2;
-    if (ossdev->out_caps.wChannels > 1) ossdev->out_caps.dwSupport |= WAVECAPS_LRVOLUME;
-
-    smplrate = 44100;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &smplrate) == 0) {
-	if (mask & AFMT_U8) {
-	    ossdev->out_caps.dwFormats |= WAVE_FORMAT_4M08;
-	    if (ossdev->out_caps.wChannels > 1)
-		ossdev->out_caps.dwFormats |= WAVE_FORMAT_4S08;
-	}
-	if ((mask & AFMT_S16_LE) && bytespersmpl > 1) {
-	    ossdev->out_caps.dwFormats |= WAVE_FORMAT_4M16;
-	    if (ossdev->out_caps.wChannels > 1)
-		ossdev->out_caps.dwFormats |= WAVE_FORMAT_4S16;
-	}
+    if (WINE_TRACE_ON(wave)) {
+        /* Note that this only reports the formats supported by the hardware.
+         * The driver may support other formats and do the conversions in
+         * software which is why we don't use this value
+         */
+        int oss_mask;
+        ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &oss_mask);
+        TRACE("OSS dsp out mask=%08x\n", oss_mask);
     }
-    smplrate = 22050;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &smplrate) == 0) {
-	if (mask & AFMT_U8) {
-	    ossdev->out_caps.dwFormats |= WAVE_FORMAT_2M08;
-	    if (ossdev->out_caps.wChannels > 1)
-		ossdev->out_caps.dwFormats |= WAVE_FORMAT_2S08;
-	}
-	if ((mask & AFMT_S16_LE) && bytespersmpl > 1) {
-	    ossdev->out_caps.dwFormats |= WAVE_FORMAT_2M16;
-	    if (ossdev->out_caps.wChannels > 1)
-		ossdev->out_caps.dwFormats |= WAVE_FORMAT_2S16;
-	}
+
+    /* We must first set the format and the stereo mode as some sound cards
+     * may support 44kHz mono but not 44kHz stereo. Also we must
+     * systematically check the return value of these ioctls as they will
+     * always succeed (see OSS Linux) but will modify the parameter to match
+     * whatever they support. The OSS specs also say we must first set the
+     * sample size, then the stereo and then the sample rate.
+     */
+    for (f=0;f<2;f++) {
+        arg=win_std_oss_fmts[f];
+        rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
+        if (rc!=0 || arg!=win_std_oss_fmts[f])
+            continue;
+
+        for (c=0;c<2;c++) {
+            arg=c;
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+            if (rc!=0 || arg!=c)
+                continue;
+            if (c==1) {
+                ossdev->out_caps.wChannels=2;
+                ossdev->out_caps.dwSupport|=WAVECAPS_LRVOLUME;
+            }
+
+            for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
+                arg=win_std_rates[r];
+                rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
+                TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
+                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
+                if (rc==0 && NEAR_MATCH(arg,win_std_rates[r]))
+                    ossdev->out_caps.dwFormats|=win_std_formats[f][c][r];
+            }
+        }
     }
-    smplrate = 11025;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &smplrate) == 0) {
-	if (mask & AFMT_U8) {
-	    ossdev->out_caps.dwFormats |= WAVE_FORMAT_1M08;
-	    if (ossdev->out_caps.wChannels > 1)
-		ossdev->out_caps.dwFormats |= WAVE_FORMAT_1S08;
-	}
-	if ((mask & AFMT_S16_LE) && bytespersmpl > 1) {
-	    ossdev->out_caps.dwFormats |= WAVE_FORMAT_1M16;
-	    if (ossdev->out_caps.wChannels > 1)
-		ossdev->out_caps.dwFormats |= WAVE_FORMAT_1S16;
-	}
-    }
-    if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0) {
-	TRACE("OSS dsp out caps=%08X\n", caps);
-	if ((caps & DSP_CAP_REALTIME) && !(caps & DSP_CAP_BATCH)) {
-	    ossdev->out_caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
-	}
-	/* well, might as well use the DirectSound cap flag for something */
-	if ((caps & DSP_CAP_TRIGGER) && (caps & DSP_CAP_MMAP) &&
-	    !(caps & DSP_CAP_BATCH))
-	    ossdev->out_caps.dwSupport |= WAVECAPS_DIRECTSOUND;
+
+    if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &arg) == 0) {
+        TRACE("OSS dsp out caps=%08X\n", arg);
+        if ((arg & DSP_CAP_REALTIME) && !(arg & DSP_CAP_BATCH)) {
+            ossdev->out_caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
+        }
+        /* well, might as well use the DirectSound cap flag for something */
+        if ((arg & DSP_CAP_TRIGGER) && (arg & DSP_CAP_MMAP) &&
+            !(arg & DSP_CAP_BATCH))
+            ossdev->out_caps.dwSupport |= WAVECAPS_DIRECTSOUND;
     }
     OSS_CloseDevice(ossdev);
     TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
-	  ossdev->out_caps.dwFormats, ossdev->out_caps.dwSupport);
+          ossdev->out_caps.dwFormats, ossdev->out_caps.dwSupport);
     return TRUE;
 }
 
@@ -514,80 +518,67 @@ static BOOL     OSS_WaveOutInit(OSS_DEVICE* ossdev)
  */
 static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 {
-    int	                smplrate;
-    int	                samplesize = 16;
-    int	                dsp_stereo = 1;
-    int	                bytespersmpl;
-    int                 caps;
-    int                 mask;
+    int rc,arg;
+    int f,c,r;
 
     if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0, 0, 0, 0) != 0) return FALSE;
-
-    memset(&ossdev->in_caps, 0, sizeof(ossdev->in_caps));
-
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
+    /* See comment in OSS_WaveOutInit */
 #ifdef EMULATE_SB16
     ossdev->in_caps.wMid = 0x0002;
     ossdev->in_caps.wPid = 0x0004;
     strcpy(ossdev->in_caps.szPname, "SB16 Wave In");
 #else
-    ossdev->in_caps.wMid = 0x00FF; 	/* Manufac ID */
-    ossdev->in_caps.wPid = 0x0001; 	/* Product ID */
+    ossdev->in_caps.wMid = 0x00FF; /* Manufac ID */
+    ossdev->in_caps.wPid = 0x0001; /* Product ID */
     strcpy(ossdev->in_caps.szPname, "OpenSoundSystem WAVIN Driver");
 #endif
     ossdev->in_caps.dwFormats = 0x00000000;
-    ossdev->in_caps.wChannels = (ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &dsp_stereo) != 0) ? 1 : 2;
-
+    ossdev->in_caps.wChannels = 1;
+    ossdev->in_caps.wReserved1 = 0;
     ossdev->bTriggerSupport = FALSE;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0) {
-	TRACE("OSS dsp in caps=%08X\n", caps);
-	if (caps & DSP_CAP_TRIGGER)
+
+    if (WINE_TRACE_ON(wave)) {
+        /* Note that this only reports the formats supported by the hardware.
+         * The driver may support other formats and do the conversions in
+         * software which is why we don't use this value
+         */
+        int oss_mask;
+        ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &oss_mask);
+        TRACE("OSS dsp out mask=%08x\n", oss_mask);
+    }
+
+    /* See the comment in OSS_WaveOutInit */
+    for (f=0;f<2;f++) {
+        arg=win_std_oss_fmts[f];
+        rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
+        if (rc!=0 || arg!=win_std_oss_fmts[f])
+            continue;
+
+        for (c=0;c<2;c++) {
+            arg=c;
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+            if (rc!=0 || arg!=c)
+                continue;
+            if (c==1) {
+                ossdev->in_caps.wChannels=2;
+            }
+
+            for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
+                arg=win_std_rates[r];
+                rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
+                TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
+                if (rc==0 && NEAR_MATCH(arg,win_std_rates[r]))
+                    ossdev->in_caps.dwFormats|=win_std_formats[f][c][r];
+            }
+        }
+    }
+
+    if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &arg) == 0) {
+        TRACE("OSS dsp in caps=%08X\n", arg);
+        if (arg & DSP_CAP_TRIGGER)
             ossdev->bTriggerSupport = TRUE;
-    }
-
-    ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &mask);
-    TRACE("OSS in dsp mask=%08x\n", mask);
-
-    bytespersmpl = (ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &samplesize) != 0) ? 1 : 2;
-    smplrate = 44100;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &smplrate) == 0) {
-	if (mask & AFMT_U8) {
-	    ossdev->in_caps.dwFormats |= WAVE_FORMAT_4M08;
-	    if (ossdev->in_caps.wChannels > 1)
-		ossdev->in_caps.dwFormats |= WAVE_FORMAT_4S08;
-	}
-	if ((mask & AFMT_S16_LE) && bytespersmpl > 1) {
-	    ossdev->in_caps.dwFormats |= WAVE_FORMAT_4M16;
-	    if (ossdev->in_caps.wChannels > 1)
-		ossdev->in_caps.dwFormats |= WAVE_FORMAT_4S16;
-	}
-    }
-    smplrate = 22050;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &smplrate) == 0) {
-	if (mask & AFMT_U8) {
-	    ossdev->in_caps.dwFormats |= WAVE_FORMAT_2M08;
-	    if (ossdev->in_caps.wChannels > 1)
-		ossdev->in_caps.dwFormats |= WAVE_FORMAT_2S08;
-	}
-	if ((mask & AFMT_S16_LE) && bytespersmpl > 1) {
-	    ossdev->in_caps.dwFormats |= WAVE_FORMAT_2M16;
-	    if (ossdev->in_caps.wChannels > 1)
-		ossdev->in_caps.dwFormats |= WAVE_FORMAT_2S16;
-	}
-    }
-    smplrate = 11025;
-    if (ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &smplrate) == 0) {
-	if (mask & AFMT_U8) {
-	    ossdev->in_caps.dwFormats |= WAVE_FORMAT_1M08;
-	    if (ossdev->in_caps.wChannels > 1)
-		ossdev->in_caps.dwFormats |= WAVE_FORMAT_1S08;
-	}
-	if ((mask & AFMT_S16_LE) && bytespersmpl > 1) {
-	    ossdev->in_caps.dwFormats |= WAVE_FORMAT_1M16;
-	    if (ossdev->in_caps.wChannels > 1)
-		ossdev->in_caps.dwFormats |= WAVE_FORMAT_1S16;
-	}
     }
     OSS_CloseDevice(ossdev);
     TRACE("in dwFormats = %08lX\n", ossdev->in_caps.dwFormats);
