@@ -1,7 +1,11 @@
-#include "wine/test.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
+
+#include "wine/test.h"
 
 int goon = 0;
 

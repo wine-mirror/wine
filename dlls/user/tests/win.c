@@ -23,10 +23,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "wine/test.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "wine/test.h"
+
+#ifndef IDC_ARROWA
+# define IDC_ARROWA IDC_ARROW
+#endif
+
+#ifndef SPI_GETDESKWALLPAPER
+#define SPI_GETDESKWALLPAPER 0x0073
+#endif
+
+#define LONG_PTR INT_PTR
+#define ULONG_PTR UINT_PTR
 
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 

@@ -18,10 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "wine/test.h"
 #include <stdio.h>
-#include <winbase.h>
-#include <shellapi.h>
+ 
+#include "winbase.h"
+#include "wtypes.h"
+#include "shellapi.h"
+
+#include "wine/test.h"
 
 CHAR CURR_DIR[MAX_PATH];
 

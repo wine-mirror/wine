@@ -27,10 +27,14 @@
 #include "winuser.h"
 
 #ifndef IDI_APPLICATIONA
-#define IDI_APPLICATIONA IDI_APPLICATION
+# define IDI_APPLICATIONA IDI_APPLICATION
 #endif
 #ifndef IDC_ARROWA
-#define IDC_ARROWA IDC_ARROW
+# define IDC_ARROWA IDC_ARROW
+#endif
+
+#ifndef SPI_GETDESKWALLPAPER
+# define SPI_GETDESKWALLPAPER 0x0073
 #endif
 
 #define eq(received, expected, label, type) \
