@@ -70,6 +70,7 @@ struct msi_dialog_tag
     INT scale;
     DWORD attributes;
     HWND hwnd;
+    LPWSTR default_font;
     msi_font *font_list;
     msi_control *control_list;
     WCHAR name[1];
@@ -217,7 +218,7 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
 {
     DWORD x, y, width, height;
     LPCWSTR text, name;
-    LPWSTR font, title = NULL;
+    LPWSTR font = NULL, title = NULL;
     msi_control *control = NULL;
 
     style |= WS_CHILD | WS_VISIBLE | WS_GROUP;
@@ -244,17 +245,17 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
     width = msi_dialog_scale_unit( dialog, width );
     height = msi_dialog_scale_unit( dialog, height );
 
-    font = msi_dialog_get_style( &text );
-    deformat_string( dialog->package, text, &title );
+    if( text )
+    {
+        font = msi_dialog_get_style( &text );
+        deformat_string( dialog->package, text, &title );
+    }
     control->hwnd = CreateWindowW( szCls, title, style,
                           x, y, width, height, dialog->hwnd, NULL, NULL, NULL );
-    if( font )
-    {
-        msi_dialog_set_font( dialog, control->hwnd, font );
-        HeapFree( GetProcessHeap(), 0, font );
-    }
-    if( title )
-        HeapFree( GetProcessHeap(), 0, font );
+    msi_dialog_set_font( dialog, control->hwnd,
+                         font ? font : dialog->default_font );
+    HeapFree( GetProcessHeap(), 0, font );
+    HeapFree( GetProcessHeap(), 0, title );
     return control;
 }
 
@@ -518,6 +519,8 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
         'F','R','O','M',' ','D','i','a','l','o','g',' ',
         'W','H','E','R','E',' ',
            '`','D','i','a','l','o','g','`',' ','=',' ','\'','%','s','\'',0};
+    static const WCHAR df[] = {
+        'D','e','f','a','u','l','t','U','I','F','o','n','t',0 };
     msi_dialog *dialog = (msi_dialog*) cs->lpCreateParams;
     MSIPACKAGE *package = dialog->package;
     MSIQUERY *view = NULL;
@@ -560,13 +563,14 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     width = msi_dialog_scale_unit( dialog, width );
     height = msi_dialog_scale_unit( dialog, height ) + 25; /* FIXME */
 
+    dialog->default_font = load_dynamic_property( dialog->package, df, NULL );
+
     deformat_string( dialog->package, text, &title );
     SetWindowTextW( hwnd, title );
     SetWindowPos( hwnd, 0, 0, 0, width, height,
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW );
 
-    if( title )
-        HeapFree( GetProcessHeap(), 0, title );
+    HeapFree( GetProcessHeap(), 0, title );
     msiobj_release( &rec->hdr );
 
     msi_dialog_build_font_list( dialog );
@@ -815,18 +819,23 @@ UINT msi_dialog_run_message_loop( msi_dialog *dialog )
     return ERROR_SUCCESS;
 }
 
-void msi_dialog_check_messages( msi_dialog *dialog )
+void msi_dialog_check_messages( msi_dialog *dialog, HANDLE handle )
 {
     MSG msg;
+    DWORD r;
 
-    if( dialog->finished )
-        return;
-
-    while( PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ) )
+    do
     {
-        TranslateMessage( &msg );
-        DispatchMessageW( &msg );
+        while( PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ) )
+        {
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+        if( !handle )
+            break;
+        r = MsgWaitForMultipleObjects( 1, &handle, 0, INFINITE, QS_ALLEVENTS );
     }
+    while( WAIT_OBJECT_0 != r );
 }
 
 void msi_dialog_do_preview( msi_dialog *dialog )
@@ -859,6 +868,7 @@ void msi_dialog_destroy( msi_dialog *dialog )
         DeleteObject( t->hfont );
         HeapFree( GetProcessHeap(), 0, t );
     }
+    HeapFree( GetProcessHeap(), 0, dialog->default_font );
 
     if( dialog->hwnd )
         DestroyWindow( dialog->hwnd );

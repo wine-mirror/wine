@@ -368,7 +368,7 @@ typedef VOID (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, msi_dia
 extern msi_dialog *msi_dialog_create( MSIPACKAGE*, LPCWSTR, msi_dialog_event_handler );
 extern UINT msi_dialog_run_message_loop( msi_dialog* );
 extern void msi_dialog_end_dialog( msi_dialog* );
-extern void msi_dialog_check_messages( msi_dialog* );
+extern void msi_dialog_check_messages( msi_dialog*, HANDLE );
 extern void msi_dialog_do_preview( msi_dialog* );
 extern void msi_dialog_destroy( msi_dialog* );
 extern void msi_dialog_register_class( void );
