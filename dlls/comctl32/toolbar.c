@@ -45,6 +45,7 @@
  *     - TB_GETMETRICS
  *     - TB_GETOBJECT
  *     - TB_INSERTMARKHITTEST
+ *     - TB_SAVERESTORE
  *     - TB_SETMETRICS
  *   - Notifications:
  *     - NM_CHAR
