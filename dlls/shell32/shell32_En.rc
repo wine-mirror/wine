@@ -155,7 +155,7 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
 	IDS_CREATEFOLDER_DENIED "Can not create new Folder: Permission denied."
-	IDS_CREATEFOLDER_CAPTION "Error during creating a new folder"
+	IDS_CREATEFOLDER_CAPTION "Error during creation of a new folder"
 	IDS_DELETEITEM_CAPTION "Confirm file delete"
 	IDS_DELETEFOLDER_CAPTION "Confirm folder delete"
 	IDS_DELETEITEM_TEXT "Are you sure you want to delete '%1'?"

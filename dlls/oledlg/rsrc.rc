@@ -32,3 +32,4 @@
  * get localized bitmaps for example.
  */
 #include "oledlg_En.rc"
+#include "oledlg_It.rc"
