@@ -995,6 +995,11 @@ static const CSIDL_DATA CSIDL_Data[] =
 	0, 0, /* FIXME */
 	NULL,
 	NULL,
+    },
+    { /* CSIDL_PROFILES */
+	0, 0, /* FIXME */
+	NULL,
+	NULL,
     }
 };
 #undef HKCU
@@ -1017,14 +1022,15 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 
 	TRACE("%p,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
-	if ((folder > CSIDL_COMPUTERSNEARME) || (CSIDL_Data[folder].hRootKey == 0))
+	if ((folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0])) ||
+	    (CSIDL_Data[folder].hRootKey == 0))
 	{
-	    ERR("folder unknown or not allowed\n");
+	    ERR("folder 0x%04lx unknown or not allowed\n", folder);
 	    return FALSE;
 	}
 	if (CSIDL_Data[folder].hRootKey == (HKEY)1)
 	{
-	    FIXME("folder unknown, please add.\n");
+	    FIXME("folder 0x%04lx unknown, please add.\n", folder);
 	    return FALSE;
 	}
 
