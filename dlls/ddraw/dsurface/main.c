@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "mesa_private.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
 #include "dsurface/main.h"
@@ -158,6 +159,24 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	*ppObj = ICOM_INTERFACE(This, IDirectDrawGammaControl);
 	return S_OK;
     }
+#ifdef HAVE_OPENGL
+    else if ( IsEqualGUID( &IID_D3DDEVICE_OpenGL, riid ) )
+    {
+	This->ref++;
+	return is_OpenGL_dx3(riid, This, (IDirect3DDeviceImpl**)ppObj)?S_OK:E_NOINTERFACE;
+    }
+    else if (IsEqualGUID( &IID_IDirect3DTexture, riid ) )
+    {
+	LPDIRECT3DTEXTURE iface;
+	This->ref++;
+	iface = d3dtexture_create(This);
+	if (iface) {
+	  *ppObj = (LPVOID)iface;
+	  return S_OK;
+	} else
+	  return E_NOINTERFACE;
+    }    
+#endif
     else
 	return E_NOINTERFACE;
 }
