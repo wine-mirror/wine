@@ -1127,7 +1127,6 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
 	  continue;
 	}
 
-
       /*
        * See if we already have something for this symbol.
        * If so, ignore this entry, because it would have come from the
@@ -1299,16 +1298,15 @@ leave:
 int
 DEBUG_ReadExecutableDbgInfo(void)
 {
-  Elf32_Ehdr	      * ehdr;
   const char	      * exe_name;
-  Elf32_Dyn	      * dynpnt;
-  struct r_debug      * dbg_hdr;
-  struct link_map     * lpnt = NULL;
-#ifdef __GNUC__
-  extern Elf32_Dyn      _DYNAMIC[] __attribute__ ((weak));
-#else
-  extern Elf32_Dyn      _DYNAMIC[];
-#endif
+  DBG_VALUE		val;
+  u_long		dyn_addr;
+  Elf32_Dyn		dyn;
+  struct r_debug        dbg_hdr;
+  u_long		lm_addr;
+  struct link_map       lm;
+  Elf32_Ehdr	        ehdr;
+  char			bufstr[256];
   int			rtn = FALSE;
   int                   rowcount;
 
@@ -1324,33 +1322,24 @@ DEBUG_ReadExecutableDbgInfo(void)
   rowcount = 17 + strlen(exe_name);
   DEBUG_ProcessElfObject(exe_name, 0);
 
-  /*
-   * Finally walk the tables that the dynamic loader maintains to find all
-   * of the other shared libraries which might be loaded.  Perform the
-   * same step for all of these.
-   */
-  if( (&_DYNAMIC == NULL) || (_DYNAMIC == NULL) )
+  if (!DEBUG_GetSymbolValue("_DYNAMIC", -1, &val, FALSE)) {
+    fprintf(stderr, "Can't find symbol _DYNAMIC\n");
+    goto leave;
+  }
+  dyn_addr = val.addr.off;
+
+  do {
+    if (!DEBUG_READ_MEM_VERBOSE((void*)dyn_addr, &dyn, sizeof(dyn)))
       goto leave;
-
-  dynpnt = _DYNAMIC;
-
-  /*
-   * Now walk the dynamic section (of the executable, looking for a DT_DEBUG
-   * entry.
-   */
-  for(; dynpnt->d_tag != DT_NULL; dynpnt++)
-      if( dynpnt->d_tag == DT_DEBUG )
-	  break;
-
-  if(    (dynpnt->d_tag != DT_DEBUG)
-      || (dynpnt->d_un.d_ptr == 0) )
-      goto leave;
+    dyn_addr += sizeof(dyn);
+  } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
+  if (dyn.d_tag == DT_NULL) goto leave;
 
   /*
    * OK, now dig into the actual tables themselves.
    */
-  dbg_hdr = (struct r_debug *) dynpnt->d_un.d_ptr;
-  lpnt = dbg_hdr->r_map;
+  if (!DEBUG_READ_MEM_VERBOSE((void*)dyn.d_un.d_ptr, &dbg_hdr, sizeof(dbg_hdr)))
+    goto leave;
 
   /*
    * Now walk the linked list.  In all known ELF implementations,
@@ -1358,27 +1347,33 @@ DEBUG_ReadExecutableDbgInfo(void)
    * cases the first entry doesn't appear with a name, in other cases it
    * does.
    */
-  for(; lpnt; lpnt = lpnt->l_next )
+  for (lm_addr = (u_long)dbg_hdr.r_map; lm_addr; lm_addr = (u_long)lm.l_next)
     {
+      if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
+	goto leave;
+      if (!DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)))
+	continue;
       /*
        * We already got the stuff for the executable using the
        * argv[0] entry above.  Here we only need to concentrate on any
        * shared libraries which may be loaded.
        */
-      ehdr = (Elf32_Ehdr *) lpnt->l_addr;
-      if( (lpnt->l_addr == 0) || (ehdr->e_type != ET_DYN) )
+      if( (lm.l_addr == 0) || (ehdr.e_type != ET_DYN) )
 	  continue;
 
-      if( lpnt->l_name != NULL )
+      if( lm.l_name != NULL )
       {
-          if (rowcount + strlen(lpnt->l_name) > 76)
+	  if (!DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr)))
+	    continue;
+	  bufstr[sizeof(bufstr) - 1] = '\0';
+          if (rowcount + strlen(bufstr) > 76)
           {
               fprintf( stderr, "\n   " );
               rowcount = 3;
           }
-          fprintf( stderr, " %s", lpnt->l_name );
-          rowcount += strlen(lpnt->l_name) + 1;
-	  DEBUG_ProcessElfObject(lpnt->l_name, lpnt->l_addr);
+          fprintf( stderr, " %s", bufstr );
+          rowcount += strlen(bufstr) + 1;
+	  DEBUG_ProcessElfObject(bufstr, lm.l_addr);
       }
     }
 
