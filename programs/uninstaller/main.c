@@ -95,7 +95,7 @@ void ListUninstallPrograms(void)
     int i;
     
     if (! FetchUninstallInformation())
-        exit(1);
+        return;
 
     for (i=0; i < numentries; i++)
         printf("%s|||%s\n", entries[i].key, entries[i].descr);
@@ -107,7 +107,7 @@ void RemoveSpecificProgram(char *name)
     int i;
 
     if (! FetchUninstallInformation())
-        exit(1);
+        return;
 
     for (i=0; i < numentries; i++)
     {
