@@ -39,7 +39,7 @@ Options:
         up with a sensible set of defaults; in this case, you can run
         <command>wine</command> without explicitly listing any
         options.  In rare cases, you might want to override certain
-        parameters on the command line.  
+        parameters on the command line.
       </para>
       <para>
         After the options, you should put the name of the file you
@@ -166,69 +166,69 @@ Options:
 all</><entry>accel</><entry>advapi</><entry>animate</><entry>aspi</>
 </row><row><entry>
 atom</><entry>avifile</><entry> bitblt</><entry> bitmap</><entry> caret</>
-</row><row><entry> 
+</row><row><entry>
 cdrom</><entry>class</><entry> clipboard</><entry> clipping</><entry>combo</>
-</row><row><entry> 
+</row><row><entry>
 comboex</><entry> comm</><entry>commctrl</><entry>commdlg</><entry> console</>
-</row><row><entry> 
+</row><row><entry>
 crtdll</><entry>cursor</><entry>datetime</><entry>dc</><entry> ddeml</>
-</row><row><entry> 
+</row><row><entry>
 ddraw</><entry> debug</><entry> debugstr</><entry>delayhlp</><entry>dialog</>
-</row><row><entry> 
+</row><row><entry>
 dinput</><entry>dll</><entry> dosfs</><entry>dosmem</><entry>dplay</>
-</row><row><entry> 
+</row><row><entry>
 driver</><entry>dsound</><entry>edit</><entry>elfdll</><entry>enhmetafile</>
-</row><row><entry> 
+</row><row><entry>
 event</><entry>exec</><entry>file</><entry>fixup</><entry>font</>
-</row><row><entry> 
+</row><row><entry>
 gdi</><entry> global</><entry>graphics</><entry> header</><entry>heap</>
-</row><row><entry> 
+</row><row><entry>
 hook</><entry>hotkey</><entry>icmp</><entry>icon</><entry>imagehlp</>
-</row><row><entry> 
+</row><row><entry>
 imagelist</><entry> imm</><entry>int</><entry>int10</><entry>int16</>
-</row><row><entry> 
+</row><row><entry>
 int17</><entry>int19</><entry>int21</><entry>int31</><entry> io</>
-</row><row><entry> 
+</row><row><entry>
 ipaddress</><entry>joystick</><entry>key</><entry>keyboard</><entry>loaddll</>
-</row><row><entry> 
+</row><row><entry>
 ldt</><entry>listbox</><entry>listview</><entry>local</><entry>mci</>
-</row><row><entry> 
+</row><row><entry>
 mcianim</><entry>mciavi</><entry>mcicda</><entry>mcimidi</><entry>mciwave</>
-</row><row><entry> 
+</row><row><entry>
 mdi</><entry>menu</><entry>message</><entry>metafile</><entry>midi</>
-</row><row><entry> 
+</row><row><entry>
 mmaux</><entry>mmio</><entry>mmsys</><entry>mmtime</><entry>module</>
-</row><row><entry> 
+</row><row><entry>
 monthcal</><entry>mpr</><entry>msacm</><entry>msg</><entry>msvideo</>
-</row><row><entry> 
+</row><row><entry>
 nativefont</><entry>nonclient</><entry>ntdll</><entry>odbc</><entry>ole</>
-</row><row><entry> 
+</row><row><entry>
 opengl</><entry>pager</><entry>palette</><entry>pidl</><entry>print</>
-</row><row><entry> 
+</row><row><entry>
 process</><entry>profile</><entry>progress</><entry>prop</><entry>propsheet</>
-</row><row><entry> 
+</row><row><entry>
 psapi</><entry>psdrv</><entry>ras</><entry>rebar</><entry>reg</>
-</row><row><entry> 
+</row><row><entry>
 region</><entry>relay</><entry>resource</><entry>richedit</><entry>scroll</>
-</row><row><entry> 
+</row><row><entry>
 segment</><entry>seh</><entry>selector</><entry>sendmsg</><entry>server</>
-</row><row><entry> 
+</row><row><entry>
 setupapi</><entry>setupx</><entry>shell</><entry>snoop</><entry>sound</>
-</row><row><entry> 
+</row><row><entry>
 static</><entry>statusbar</><entry>storage</><entry>stress</><entry>string</>
-</row><row><entry> 
+</row><row><entry>
 syscolor</><entry>system</><entry>tab</><entry>tape</><entry>tapi</>
-</row><row><entry> 
+</row><row><entry>
 task</><entry>text</><entry>thread</><entry>thunk</><entry>timer</>
-</row><row><entry> 
+</row><row><entry>
 toolbar</><entry>toolhelp</><entry>tooltips</><entry>trackbar</><entry>treeview</>
-</row><row><entry> 
+</row><row><entry>
 ttydrv</><entry>tweak</><entry>typelib</><entry>updown</><entry>ver</>
-</row><row><entry> 
+</row><row><entry>
 virtual</><entry>vxd</><entry>wave</><entry>win</><entry>win16drv</>
-</row><row><entry> 
+</row><row><entry>
 win32</><entry>winedbg</><entry>wing</><entry>wininet</><entry>winsock</>
-</row><row><entry> 
+</row><row><entry>
 winspool</><entry>wnet</><entry>x11</>
 </row>
 		</tbody>
@@ -245,24 +245,47 @@ winspool</><entry>wnet</><entry>x11</>
       <sect2>
         <title>--dll</title>
         <para>
-          
+
         </para>
       </sect2>
 
       <sect2>
         <title>--help</title>
         <para>
-          
+
         </para>
       </sect2>
 
       <sect2>
         <title>--version</title>
         <para>
-          
+
         </para>
       </sect2>
     </sect1>
+
+    <sect1 id="environment-variables">
+      <title>Setting Windows/DOS environment variables</title>
+      <para>
+        Your program might require some environment variable to be set
+	properly in order to run successfully.
+	In this case you need to set this environment variable in the
+	Linux shell, since Wine will pass on the entire shell environment
+	variable settings to the Windows environment variable space.
+	Example for the bash shell (other shells may have a different syntax
+	!):
+        <screen>
+	  export MYENVIRONMENTVAR=myenvironmentvarsetting
+	</screen>
+	This will make sure your Windows program can access the
+	MYENVIRONMENTVAR environment variable once you start your program
+	using Wine.
+	If you want to have MYENVIRONMENTVAR set permanently, then you can
+	place the setting into /etc/profile, or also ~/.bashrc in the case of
+	bash.
+      </para>
+    </sect1>
+
   </chapter>
 
 <!-- Keep this comment at the end of the file
