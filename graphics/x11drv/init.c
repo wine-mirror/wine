@@ -66,6 +66,9 @@ BOOL X11DRV_GDI_Initialize( Display *display )
 
     if (!X11DRV_BITMAP_Init()) return FALSE;
 
+    /* Initialize XRender */
+    X11DRV_XRender_Init();
+
     /* Initialize fonts and text caps */
 
     log_pixels_x = MulDiv( WidthOfScreen(screen), 254, WidthMMOfScreen(screen) * 10 );
@@ -157,6 +160,9 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 BOOL X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
+    if(physDev->xrender)
+      X11DRV_XRender_DeleteDC(dc);
     wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );
     while (physDev->used_visuals-- > 0)

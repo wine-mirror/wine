@@ -46,11 +46,17 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE; 
 
+
+    if(dc->gdiFont)
+        return X11DRV_XRender_ExtTextOut(dc, x, y, flags, lprect, wstr, count,
+					 lpDx);
+
+
     if (!X11DRV_SetupGCForText( dc )) return TRUE;
 
     pfo = XFONT_GetFontObject( physDev->font );
     font = pfo->fs;
-     
+
     if (pfo->lf.lfEscapement && pfo->lpX11Trans)
         rotated = TRUE;
     dfBreakChar = (char)pfo->fi->df.dfBreakChar;

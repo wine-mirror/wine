@@ -58,6 +58,8 @@ typedef struct
   /* X physical font */
 typedef UINT	 X_PHYSFONT;
 
+typedef struct tagXRENDERINFO *XRENDERINFO;
+
   /* X physical device */
 typedef struct
 {
@@ -72,6 +74,7 @@ typedef struct
     XVisualInfo  *visuals[MAX_PIXELFORMATS];
     int           used_visuals;
     int           current_pf;
+    XRENDERINFO   xrender;
 } X11DRV_PDEVICE;
 
 
@@ -195,6 +198,16 @@ extern BOOL X11DRV_SetupGCForText( struct tagDC *dc );
 extern const int X11DRV_XROPfunction[];
 
 extern void _XInitImageFuncPtrs(XImage *);
+
+extern BOOL X11DRV_XRender_Installed;
+extern void X11DRV_XRender_Init(void);
+extern void X11DRV_XRender_Finalize(void);
+extern BOOL X11DRV_XRender_SelectFont(struct tagDC*, HFONT);
+extern void X11DRV_XRender_DeleteDC(struct tagDC*);
+extern BOOL X11DRV_XRender_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
+				      const RECT *lprect, LPCWSTR wstr,
+				      UINT count, const INT *lpDx);
+extern void X11DRV_XRender_UpdateDrawable(DC *dc);
 
 /* exported dib functions for now */
 

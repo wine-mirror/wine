@@ -206,6 +206,10 @@ static const SuffixCharset sufch_iso10646[] = {
     { "1", DEFAULT_CHARSET, 0, X11DRV_CPTABLE_UNICODE },
     { NULL, DEFAULT_CHARSET, 0, X11DRV_CPTABLE_UNICODE }};
 
+static const SuffixCharset sufch_dec[] = {
+    { "dectech", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { NULL, 0, 0, X11DRV_CPTABLE_SBCS }};
+
 /* Each of these must be matched explicitly */
 static const SuffixCharset sufch_any[] = {
     { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
@@ -244,6 +248,7 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "unicode",      sufch_unicode,      &__fETTable[19]},
 			{ "iso10646",     sufch_iso10646,     &__fETTable[20]},
 			{ "cp",           sufch_windows,      &__fETTable[21]},
+			{ "dec",          sufch_dec,          &__fETTable[22]},
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
@@ -2919,6 +2924,10 @@ int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
 
   RAW_ASCENT  = TSXInternAtom(gdi_display, "RAW_ASCENT", TRUE);
   RAW_DESCENT = TSXInternAtom(gdi_display, "RAW_DESCENT", TRUE);
+
+  if(X11DRV_XRender_Installed)
+    XTextCaps |= TC_VA_ABLE;
+
   return XTextCaps;
 }
 
@@ -3166,10 +3175,16 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont )
     LOGFONT16 lf;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
+    TRACE("dc=%p, hfont=%04x\n", dc, hfont);
+
     if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return GDI_ERROR;
 
-    /* If we want to use a gdi font, we should check for XRender extension
-       and return FALSE here */
+    TRACE("dc->gdiFont = %p\n", dc->gdiFont);
+
+    if(dc->gdiFont && X11DRV_XRender_Installed) {
+        X11DRV_XRender_SelectFont(dc, hfont);
+	return FALSE;
+    }
 
     EnterCriticalSection( &crtsc_fonts_X11 );
 

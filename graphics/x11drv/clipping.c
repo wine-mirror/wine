@@ -99,6 +99,8 @@ void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int or
         dc->DCOrgY = org_y;
         physDev->drawable = drawable;
         TSXSetSubwindowMode( gdi_display, physDev->gc, mode );
+	if(physDev->xrender)
+	  X11DRV_XRender_UpdateDrawable(dc);
         GDI_ReleaseObj( hdc );
     }
 }
