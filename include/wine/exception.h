@@ -145,7 +145,7 @@ static inline EXCEPTION_FRAME *EXC_push_frame( EXCEPTION_FRAME *frame )
                          : "=&r" (prev) : "r" (frame) : "memory" );
     return prev;
 #else
-    TEB * teb = CURRENT();
+    TEB *teb = NtCurrentTeb();
     frame->Prev = teb->except;
     teb->except = frame;
     return frame->Prev;
@@ -160,7 +160,7 @@ static inline EXCEPTION_FRAME *EXC_pop_frame( EXCEPTION_FRAME *frame )
     return frame->Prev;
 
 #else
-    CURRENT()->except = frame->Prev;
+    NtCurrentTeb()->except = frame->Prev;
     return frame->Prev;
 #endif
 }

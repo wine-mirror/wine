@@ -373,7 +373,12 @@ FARPROC SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC orig
 	return origfun;
 }
 
-REGS_ENTRYPOINT(SNOOP_Entry) { }
-REGS_ENTRYPOINT(SNOOP_Return) { }
+void WINAPI REGS_FUNC(SNOOP_Entry)( CONTEXT *context )
+{
+}
+
+void WINAPI REGS_FUNC(SNOOP_Return)( CONTEXT *context )
+{
+}
 
 #endif	/* !__i386__ */

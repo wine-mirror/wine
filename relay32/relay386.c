@@ -305,6 +305,6 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
 
 #else  /* __i386__ */
 
-REGS_ENTRYPOINT(RELAY_CallFrom32Regs) { }
+void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context ) { }
 
 #endif  /* __i386__ */
