@@ -686,6 +686,7 @@ static DWORD CDROM_GetLabel(int drive, char *label)
     case CDROM_DISK_DATA_TRACK:
         if (!CDROM_Data_GetLabel(drive, label))
             ret = 0;
+        break;
     case CDROM_DISK_AUDIO_TRACK:
         strcpy(label, "Audio CD   ");
         break;
