@@ -1110,7 +1110,8 @@ HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file )
     STARTUPINFOA info;
     HMODULE16 hModule;
     NE_MODULE *pModule;
-    LPSTR cmdline = GetCommandLineA();
+    INT len;
+    LPSTR pCmdLine, cmdline = GetCommandLineA();
 
     if ((hModule = NE_LoadExeHeader( file, name )) < 32) return hModule;
 
@@ -1123,10 +1124,17 @@ HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file )
 
     while (*cmdline && *cmdline != ' ') cmdline++;
     if (*cmdline) cmdline++;
+    len = strlen(cmdline);
+    pCmdLine = HeapAlloc(GetProcessHeap(), 0, len+2);
+    if (pCmdLine)
+    {
+        strcpy(pCmdLine+1, cmdline);
+        *pCmdLine = len;
+    }
     GetStartupInfoA( &info );
     if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = 1;
 
-    return NE_CreateThread( pModule, info.wShowWindow, cmdline );
+    return NE_CreateThread( pModule, info.wShowWindow, pCmdLine );
 }
 
 
