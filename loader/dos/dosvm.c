@@ -21,6 +21,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "debug.h"
+#include "debugger.h"
 #include "module.h"
 #include "task.h"
 #include "ldt.h"
@@ -28,19 +29,23 @@
 
 #ifdef MZ_SUPPORTED
 
-static void DOSVM_Dump( LPDOSTASK lpDosTask)
+#include <sys/mman.h>
+#include <sys/vm86.h>
+
+static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
+                        struct vm86plus_struct*VM86 )
 {
  unsigned iofs;
  BYTE*inst;
  int x;
 
- switch (VM86_TYPE(lpDosTask->fn)) {
+ switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
    printf("Trapped signal\n"); break;
   case VM86_UNKNOWN:
    printf("Trapped unhandled GPF\n"); break;
   case VM86_INTx:
-   printf("Trapped INT %02x\n",VM86_ARG(lpDosTask->fn)); break;
+   printf("Trapped INT %02x\n",VM86_ARG(fn)); break;
   case VM86_STI:
    printf("Trapped STI\n"); break;
   case VM86_PICRETURN:
@@ -48,7 +53,7 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask)
   case VM86_TRAP:
    printf("Trapped debug request\n"); break;
  }
-#define REGS lpDosTask->VM86.regs
+#define REGS VM86->regs
  fprintf(stderr,"AX=%04lX CX=%04lX DX=%04lX BX=%04lX\n",REGS.eax,REGS.ebx,REGS.ecx,REGS.edx);
  fprintf(stderr,"SI=%04lX DI=%04lX SP=%04lX BP=%04lX\n",REGS.esi,REGS.edi,REGS.esp,REGS.ebp);
  fprintf(stderr,"CS=%04X DS=%04X ES=%04X SS=%04X\n",REGS.cs,REGS.ds,REGS.es,REGS.ss);
@@ -77,27 +82,28 @@ static int DOSVM_Int(int vect, PCONTEXT context )
            CP(ss,SegSs); CP(fs,SegFs); CP(gs,SegGs); \
            CP(eip,Eip); CP(eflags,EFlags)
 
-int DOSVM_Process( LPDOSTASK lpDosTask )
+static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
+                          struct vm86plus_struct*VM86 )
 {
  CONTEXT context;
  int ret=0;
 
-#define CP(x,y) context.y = lpDosTask->VM86.regs.x
+#define CP(x,y) context.y = VM86->regs.x
  CV;
 #undef CP
  (void*)V86BASE(&context)=lpDosTask->img;
 
- switch (VM86_TYPE(lpDosTask->fn)) {
+ switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
    printf("Trapped signal\n");
    ret=-1; break;
   case VM86_UNKNOWN: /* unhandled GPF */
-   DOSVM_Dump(lpDosTask);
+   DOSVM_Dump(lpDosTask,fn,VM86);
    ctx_debug(SIGSEGV,&context);
    break;
   case VM86_INTx:
-   TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(lpDosTask->fn),context.Eax);
-   ret=DOSVM_Int(VM86_ARG(lpDosTask->fn),&context); break;
+   TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(fn),context.Eax);
+   ret=DOSVM_Int(VM86_ARG(fn),&context); break;
   case VM86_STI:
    break;
   case VM86_PICRETURN:
@@ -106,11 +112,10 @@ int DOSVM_Process( LPDOSTASK lpDosTask )
    ctx_debug(SIGTRAP,&context);
    break;
   default:
-   DOSVM_Dump(lpDosTask);
+   DOSVM_Dump(lpDosTask,fn,VM86);
  }
 
- lpDosTask->fn=VM86_ENTER;
-#define CP(x,y) lpDosTask->VM86.regs.x = context.y
+#define CP(x,y) VM86->regs.x = context.y
  CV;
 #undef CP
  return ret;
@@ -121,6 +126,7 @@ int DOSVM_Enter( PCONTEXT context )
  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
  LPDOSTASK lpDosTask;
+ struct vm86plus_struct VM86;
  int stat;
 
  GlobalUnlock16( GetCurrentTask() );
@@ -147,18 +153,47 @@ int DOSVM_Enter( PCONTEXT context )
  } else lpDosTask=pModule->lpDosTask;
 
  if (context) {
-#define CP(x,y) lpDosTask->VM86.regs.x = context->y
+#define CP(x,y) VM86.regs.x = context->y
   CV;
 #undef CP
+ } else {
+/* initial setup */
+  memset(&VM86,0,sizeof(VM86));
+  VM86.regs.cs=lpDosTask->init_cs;
+  VM86.regs.eip=lpDosTask->init_ip;
+  VM86.regs.ss=lpDosTask->init_ss;
+  VM86.regs.esp=lpDosTask->init_sp;
+  VM86.regs.ds=lpDosTask->psp_seg;
+  VM86.regs.es=lpDosTask->psp_seg;
+  /* hmm, what else do we need? */
  }
 
- /* main loop */
- while ((stat = MZ_RunModule(lpDosTask)) >= 0)
-  if (stat > 0 && DOSVM_Process(lpDosTask) < 0)
-   break;
+ /* main exchange loop */
+ stat = VM86_ENTER;
+ do {
+  /* transmit VM86 structure to dosmod task */
+  if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat))
+   return -1;
+  if (write(lpDosTask->write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86))
+   return -1;
+  /* wait for response */
+  do {
+   if (read(lpDosTask->read_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+    if ((errno==EINTR)||(errno==EAGAIN)) continue;
+    return -1;
+   }
+  } while (0);
+  do {
+   if (read(lpDosTask->read_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
+    if ((errno==EINTR)||(errno==EAGAIN)) continue;
+    return -1;
+   }
+  } while (0);
+  /* got response */
+ } while (DOSVM_Process(lpDosTask,stat,&VM86)>=0);
 
  if (context) {
-#define CP(x,y) context->y = lpDosTask->VM86.regs.x
+#define CP(x,y) context->y = VM86.regs.x
   CV;
 #undef CP
  }

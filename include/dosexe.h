@@ -6,20 +6,16 @@
 
 #ifdef linux
 
-#include <unistd.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/vm86.h>
 #include "wintypes.h"
 
 typedef struct _DOSTASK {
  LPVOID img;
  unsigned img_ofs;
  WORD psp_seg,load_seg;
+ WORD init_cs,init_ip,init_ss,init_sp;
+ WORD xms_seg;
  WORD dpmi_seg,dpmi_sel,dpmi_flag;
  HMODULE16 hModule;
- struct vm86plus_struct VM86;
- int fn, state;
  char mm_name[128];
  int mm_fd;
  int read_pipe,write_pipe;
@@ -30,9 +26,7 @@ typedef struct _DOSTASK {
 
 extern int MZ_InitTask( LPDOSTASK lpDosTask );
 extern int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule );
-extern int MZ_RunModule( LPDOSTASK lpDosTask );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
-extern int DOSVM_Process( LPDOSTASK lpDosTask );
 
 #endif /* linux */
 

@@ -59,8 +59,11 @@ extern void WINAPI INT_Int25Handler(CONTEXT*);
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT*);
 
-/* msdos/int31.c */
+/* msdos/dpmi.c */
 extern void WINAPI INT_Int31Handler(CONTEXT*);
+
+/* msdos/xms.c */
+extern void WINAPI XMS_Handler(CONTEXT*);
 
 /* loader/signal.c */
 extern BOOL32 SIGNAL_Init(void);
