@@ -502,8 +502,8 @@ DWORD WINAPI FormatMessage16(
     DWORD	talloced;
     LPSTR	from,f;
     DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
-    DWORD	nolinefeed = 0;
-    LPSTR       allocstring;
+    BOOL	eos = FALSE;
+    LPSTR       allocstring = NULL;
 
     TRACE("(0x%lx,%lx,%d,0x%x,%p,%d,%p)\n",
 	  dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -541,7 +541,7 @@ DWORD WINAPI FormatMessage16(
 
     if (from) {
         f=from;
-	while (*f && !nolinefeed) {
+	while (*f && !eos) {
 	    if (*f=='%') {
 	        int	insertnr;
 		char	*fmtstr,*sprintfbuf,*x,*lastf;
@@ -612,30 +612,27 @@ DWORD WINAPI FormatMessage16(
 		    }
 		    HeapFree(GetProcessHeap(),0,fmtstr);
 		    break;
-		case 'n':
-		    /* FIXME: perhaps add \r too? */
-		    ADD_TO_T('\n');
+	       	case '0': /* Just stop processing format string */
+		    eos = TRUE;
 		    f++;
 		    break;
-		case '0':
-		    nolinefeed=1;
-		    f++;
-		    break;
+		case 'n': /* 16 bit version just outputs 'n' */
 		default:
 		    ADD_TO_T(*f++);
 		    break;
-
 		}
-	    } else {
-	        ADD_TO_T(*f++);
+	    } else { /* '\n' or '\r' gets mapped to "\r\n" */
+	        if(*f == '\n' || *f == '\r') {
+		    ADD_TO_T('\r');
+		    ADD_TO_T('\n');
+		    if(*f++ == '\r' && *f == '\n')
+		        f++;
+		} else {
+		    ADD_TO_T(*f++);
+		}
 	    }
 	}
 	*t='\0';
-    }
-    if (!nolinefeed) {
-        /* add linefeed */
-        if(t==target || t[-1]!='\n')
-	    ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
     }
     talloced = strlen(target)+1;
     if (nSize && talloced<nSize) {
@@ -661,7 +658,7 @@ DWORD WINAPI FormatMessage16(
 #undef ADD_TO_T
 
 /***********************************************************************
- *           FormatMessage32A   (KERNEL32.138)
+ *           FormatMessageA   (KERNEL32.138)
  * FIXME: missing wrap,FROM_SYSTEM message-loading,
  */
 DWORD WINAPI FormatMessageA(
@@ -679,7 +676,7 @@ DWORD WINAPI FormatMessageA(
 	DWORD	talloced;
 	LPSTR	from,f;
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
-	DWORD	nolinefeed = 0;
+	BOOL    eos = FALSE;
 
 	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -716,7 +713,7 @@ DWORD WINAPI FormatMessageA(
 
 	if (from) {
 		f=from;
-		while (*f && !nolinefeed) {
+		while (*f && !eos) {
 			if (*f=='%') {
 				int	insertnr;
 				char	*fmtstr,*sprintfbuf,*x,*lastf;
@@ -768,7 +765,7 @@ DWORD WINAPI FormatMessageA(
 						else
                                                     argliststart=(*(DWORD**)args)+insertnr-1;
 
-						if (fmtstr[strlen(fmtstr)-1]=='s')
+						if (fmtstr[strlen(fmtstr)-1]=='s' && argliststart[0])
 							sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
 						else
 							sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
@@ -791,28 +788,30 @@ DWORD WINAPI FormatMessageA(
 					HeapFree(GetProcessHeap(),0,fmtstr);
 					break;
 				case 'n':
-					/* FIXME: perhaps add \r too? */
+					ADD_TO_T('\r');
 					ADD_TO_T('\n');
 					f++;
 					break;
 				case '0':
-					nolinefeed=1;
+					eos = TRUE;
 					f++;
 					break;
-				default:ADD_TO_T(*f++)
+				default:
+				        ADD_TO_T(*f++)
 					break;
-
 				}
-			} else {
-				ADD_TO_T(*f++)
+			} else { /* '\n' or '\r' gets mapped to "\r\n" */
+			    if(*f == '\n' || *f == '\r') {
+			        ADD_TO_T('\r');
+				ADD_TO_T('\n');
+				if(*f++ == '\r' && *f == '\n')
+				    f++;
+			    } else {
+			        ADD_TO_T(*f++);
+			    }
 			}
 		}
 		*t='\0';
-	}
-	if (!nolinefeed) {
-	    /* add linefeed */
-	    if(t==target || t[-1]!='\n')
-		ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
 	}
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize) {
@@ -838,7 +837,7 @@ DWORD WINAPI FormatMessageA(
 
 
 /***********************************************************************
- *           FormatMessage32W   (KERNEL32.138)
+ *           FormatMessageW   (KERNEL32.138)
  */
 DWORD WINAPI FormatMessageW(
 	DWORD	dwFlags,
@@ -855,7 +854,7 @@ DWORD WINAPI FormatMessageW(
 	DWORD	talloced;
 	LPSTR	from,f;
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
-	DWORD	nolinefeed = 0;
+	BOOL	eos = FALSE;
 
 	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -894,7 +893,7 @@ DWORD WINAPI FormatMessageW(
 
 	if (from) {
 		f=from;
-		while (*f && !nolinefeed) {
+		while (*f && !eos) {
 			if (*f=='%') {
 				int	insertnr;
 				char	*fmtstr,*sprintfbuf,*x;
@@ -945,7 +944,7 @@ DWORD WINAPI FormatMessageW(
 					else
 						argliststart=(*(DWORD**)args)+insertnr-1;
 
-					if (fmtstr[strlen(fmtstr)-1]=='s') {
+					if (fmtstr[strlen(fmtstr)-1]=='s' && argliststart[0]) {
 						DWORD	xarr[3];
 
 						xarr[0]=(DWORD)HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)(*(argliststart+0)));
@@ -970,28 +969,30 @@ DWORD WINAPI FormatMessageW(
 					HeapFree(GetProcessHeap(),0,fmtstr);
 					break;
 				case 'n':
-					/* FIXME: perhaps add \r too? */
+				        ADD_TO_T('\r');
 					ADD_TO_T('\n');
 					f++;
 					break;
 				case '0':
-					nolinefeed=1;
+					eos = TRUE;
 					f++;
 					break;
-				default:ADD_TO_T(*f++)
+				default:
+				        ADD_TO_T(*f++)
 					break;
-
 				}
-			} else {
-				ADD_TO_T(*f++)
+			} else { /* '\n' or '\r' gets mapped to "\r\n" */
+			    if(*f == '\n' || *f == '\r') {
+			        ADD_TO_T('\r');
+				ADD_TO_T('\n');
+				if(*f++ == '\r' && *f == '\n')
+				    f++;
+			    } else {
+				ADD_TO_T(*f++);
+			    }
 			}
 		}
 		*t='\0';
-	}
-	if (!nolinefeed) {
-	    /* add linefeed */
-	    if(t==target || t[-1]!='\n')
-		ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
 	}
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize)
