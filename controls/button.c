@@ -695,6 +695,12 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
             ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
         else if (infoPtr->state & BUTTON_3STATE) y += 2 * checkBoxHeight;
 
+	/* The bitmap for the radio button is not aligned with the
+	 * left of the window, it is 1 pixel off. */
+        if (((wndPtr->dwStyle & 0x0f) == BS_RADIOBUTTON) ||
+            ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON))
+	  rbox.left += 1;
+
 	SelectObject( hMemDC, hbitmapCheckBoxes );
 	BitBlt( hDC, rbox.left, rbox.top + delta, checkBoxWidth,
 		  checkBoxHeight, hMemDC, x, y, SRCCOPY );
