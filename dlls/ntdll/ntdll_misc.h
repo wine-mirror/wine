@@ -73,11 +73,6 @@ extern void SNOOP_SetupDLL( HMODULE hmod );
 #define GetCurrentProcessId()  ((DWORD)NtCurrentTeb()->ClientId.UniqueProcess)
 #define GetCurrentThreadId()   ((DWORD)NtCurrentTeb()->ClientId.UniqueThread)
 
-/* hack: upcall to kernel */
-extern HANDLE (WINAPI *pCreateFileW)( LPCWSTR filename, DWORD access, DWORD sharing,
-                                      LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                                      DWORD attributes, HANDLE template );
-
 /* Device IO */
 extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice, 
                                       HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
@@ -89,6 +84,8 @@ extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void);
+extern NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+                                int check_last, int check_case );
 
 /* virtual memory */
 typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);

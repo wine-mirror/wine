@@ -53,6 +53,7 @@
 #include "ntdll_misc.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -71,11 +72,16 @@ typedef struct
 
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
 
+#ifndef O_DIRECTORY
+# define O_DIRECTORY 0200000 /* must be directory */
+#endif
+
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
 #endif  /* linux */
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+#define IS_SEPARATOR(ch)   ((ch) == '\\' || (ch) == '/')
 
 #define INVALID_DOS_CHARS  '*','?','<','>','|','"','+','=',',',';','[',']',' ','\345'
 
@@ -571,4 +577,298 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     if (cwd != -1) close( cwd );
     TRACE( "=> %lx (%ld)\n", io->u.Status, io->Information );
     return io->u.Status;
+}
+
+
+/***********************************************************************
+ *           find_file_in_dir
+ *
+ * Find a file in a directory the hard way, by doing a case-insensitive search.
+ * The file found is appended to unix_name at pos.
+ * There must be at least MAX_DIR_ENTRY_LEN+2 chars available at pos.
+ */
+static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, int length,
+                                  int is_last, int check_last, int check_case )
+{
+    WCHAR buffer[MAX_DIR_ENTRY_LEN];
+    UNICODE_STRING str;
+    BOOLEAN spaces;
+    DIR *dir;
+    struct dirent *de;
+    struct stat st;
+    int ret, used_default, is_name_8_dot_3;
+
+    /* try a shortcut for this directory */
+
+    unix_name[pos++] = '/';
+    ret = ntdll_wcstoumbs( 0, name, length, unix_name + pos, MAX_DIR_ENTRY_LEN,
+                           NULL, &used_default );
+    /* if we used the default char, the Unix name won't round trip properly back to Unicode */
+    /* so it cannot match the file we are looking for */
+    if (ret >= 0 && !used_default)
+    {
+        unix_name[pos + ret] = 0;
+        if (!stat( unix_name, &st )) return STATUS_SUCCESS;
+    }
+    if (check_case) goto not_found;  /* we want an exact match */
+
+    if (pos > 1) unix_name[pos - 1] = 0;
+    else unix_name[1] = 0;  /* keep the initial slash */
+
+    /* check if it fits in 8.3 so that we don't look for short names if we won't need them */
+
+    str.Buffer = (WCHAR *)name;
+    str.Length = length * sizeof(WCHAR);
+    str.MaximumLength = str.Length;
+    is_name_8_dot_3 = RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) && !spaces;
+
+    /* now look for it through the directory */
+
+#ifdef VFAT_IOCTL_READDIR_BOTH
+    if (is_name_8_dot_3)
+    {
+        int fd = open( unix_name, O_RDONLY | O_DIRECTORY );
+        if (fd != -1)
+        {
+            KERNEL_DIRENT de[2];
+
+            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1)
+            {
+                unix_name[pos - 1] = '/';
+                for (;;)
+                {
+                    if (!de[0].d_reclen) break;
+
+                    if (de[1].d_name[0])
+                    {
+                        ret = ntdll_umbstowcs( 0, de[1].d_name, strlen(de[1].d_name),
+                                               buffer, MAX_DIR_ENTRY_LEN );
+                        if (ret == length && !memicmpW( buffer, name, length))
+                        {
+                            strcpy( unix_name + pos, de[1].d_name );
+                            close( fd );
+                            return STATUS_SUCCESS;
+                        }
+                    }
+                    ret = ntdll_umbstowcs( 0, de[0].d_name, strlen(de[0].d_name),
+                                           buffer, MAX_DIR_ENTRY_LEN );
+                    if (ret == length && !memicmpW( buffer, name, length))
+                    {
+                        strcpy( unix_name + pos,
+                                de[1].d_name[0] ? de[1].d_name : de[0].d_name );
+                        close( fd );
+                        return STATUS_SUCCESS;
+                    }
+                    if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1)
+                    {
+                        close( fd );
+                        goto not_found;
+                    }
+                }
+            }
+            close( fd );
+        }
+        /* fall through to normal handling */
+    }
+#endif /* VFAT_IOCTL_READDIR_BOTH */
+
+    if (!(dir = opendir( unix_name ))) return FILE_GetNtStatus();
+    unix_name[pos - 1] = '/';
+    str.Buffer = buffer;
+    str.MaximumLength = sizeof(buffer);
+    while ((de = readdir( dir )))
+    {
+        ret = ntdll_umbstowcs( 0, de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
+        if (ret == length && !memicmpW( buffer, name, length ))
+        {
+            strcpy( unix_name + pos, de->d_name );
+            closedir( dir );
+            return STATUS_SUCCESS;
+        }
+
+        if (!is_name_8_dot_3) continue;
+
+        str.Length = ret * sizeof(WCHAR);
+        if (!RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) || spaces)
+        {
+            WCHAR short_nameW[12];
+            ret = hash_short_file_name( &str, short_nameW );
+            if (ret == length && !memicmpW( short_nameW, name, length ))
+            {
+                strcpy( unix_name + pos, de->d_name );
+                closedir( dir );
+                return STATUS_SUCCESS;
+            }
+        }
+    }
+    closedir( dir );
+    goto not_found;  /* avoid warning */
+
+not_found:
+    if (is_last && !check_last)  /* return the name anyway */
+    {
+        int used_default;
+        ret = ntdll_wcstoumbs( 0, name, length, unix_name + pos,
+                               MAX_DIR_ENTRY_LEN, NULL, &used_default );
+        if (ret > 0 && !used_default)
+        {
+            unix_name[pos + ret] = 0;
+            return STATUS_SUCCESS;
+        }
+    }
+    unix_name[pos - 1] = 0;
+    return is_last ? STATUS_NO_SUCH_FILE : STATUS_OBJECT_PATH_NOT_FOUND;
+}
+
+
+/* return the length of the DOS namespace prefix if any */
+static inline int get_dos_prefix_len( const UNICODE_STRING *name )
+{
+    static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
+    static const WCHAR dosdev_prefixW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\'};
+
+    if (name->Length > sizeof(nt_prefixW) &&
+        !memcmp( name->Buffer, nt_prefixW, sizeof(nt_prefixW) ))
+        return sizeof(nt_prefixW) / sizeof(WCHAR);
+
+    if (name->Length > sizeof(dosdev_prefixW) &&
+        !memicmpW( name->Buffer, dosdev_prefixW, sizeof(dosdev_prefixW)/sizeof(WCHAR) ))
+        return sizeof(dosdev_prefixW) / sizeof(WCHAR);
+
+    return 0;
+}
+
+
+/******************************************************************************
+ *           DIR_nt_to_unix
+ *
+ * Convert a file name from NT namespace to Unix namespace.
+ */
+NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+                         int check_last, int check_case )
+{
+    NTSTATUS status = STATUS_NO_SUCH_FILE;
+    const char *config_dir = wine_get_config_dir();
+    const WCHAR *end, *name;
+    struct stat st;
+    char *unix_name;
+    int pos, ret, name_len, unix_len, used_default;
+
+    name     = nameW->Buffer;
+    name_len = nameW->Length / sizeof(WCHAR);
+
+    if ((pos = get_dos_prefix_len( nameW )))
+    {
+        name += pos;
+        name_len -= pos;
+        if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
+            return STATUS_NO_SUCH_FILE;
+        name += 2;  /* skip drive letter */
+        name_len -= 2;
+        unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
+        unix_len += MAX_DIR_ENTRY_LEN + 3;
+        unix_len += strlen(config_dir) + sizeof("/dosdevices/a:");
+        if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+            return STATUS_NO_MEMORY;
+        strcpy( unix_name, config_dir );
+        strcat( unix_name, "/dosdevices/a:" );
+        pos = strlen(unix_name);
+        unix_name[pos - 2] = tolowerW( name[-2] );
+    }
+    else  /* no DOS prefix, assume NT native name, map directly to Unix */
+    {
+        if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_NO_SUCH_FILE;
+        unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
+        unix_len += MAX_DIR_ENTRY_LEN + 3;
+        if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+            return STATUS_NO_MEMORY;
+        pos = 0;
+    }
+
+    /* try a shortcut first */
+
+    ret = ntdll_wcstoumbs( 0, name, name_len, unix_name + pos, unix_len - pos - 1,
+                           NULL, &used_default );
+    if (ret > 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    {
+        char *p;
+        unix_name[pos + ret] = 0;
+        for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
+        if (!stat( unix_name, &st )) goto done;
+    }
+    if (check_case && check_last)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        return STATUS_NO_SUCH_FILE;
+    }
+
+    /* now do it component by component */
+
+    for (;;)
+    {
+        while (name_len && IS_SEPARATOR(*name))
+        {
+            name++;
+            name_len--;
+        }
+        if (!name_len) break;
+
+        end = name;
+        while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
+
+        /* grow the buffer if needed */
+
+        if (unix_len - pos < MAX_DIR_ENTRY_LEN + 2)
+        {
+            char *new_name;
+            unix_len += 2 * MAX_DIR_ENTRY_LEN;
+            if (!(new_name = RtlReAllocateHeap( GetProcessHeap(), 0, unix_name, unix_len )))
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+                return STATUS_NO_MEMORY;
+            }
+            unix_name = new_name;
+        }
+
+        status = find_file_in_dir( unix_name, pos, name, end - name,
+                                   (end - name == name_len), check_last, check_case );
+        if (status != STATUS_SUCCESS)
+        {
+            /* couldn't find it at all, fail */
+            WARN( "%s not found in %s\n", debugstr_w(name), unix_name );
+            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+            return status;
+        }
+
+        pos += strlen( unix_name + pos );
+        name_len -= end - name;
+        name = end;
+    }
+
+    WARN( "%s -> %s required a case-insensitive search\n",
+          debugstr_us(nameW), debugstr_a(unix_name) );
+
+done:
+    TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
+    unix_name_ret->Buffer = unix_name;
+    unix_name_ret->Length = strlen(unix_name);
+    unix_name_ret->MaximumLength = unix_len;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************
+ *		RtlDoesFileExists_U   (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    BOOLEAN ret;
+
+    if (!RtlDosPathNameToNtPathName_U( file_name, &nt_name, NULL, NULL )) return FALSE;
+    ret = (DIR_nt_to_unix( &nt_name, &unix_name, TRUE, FALSE ) == STATUS_SUCCESS);
+    if (ret) RtlFreeAnsiString( &unix_name );
+    RtlFreeUnicodeString( &nt_name );
+    return ret;
 }

@@ -40,11 +40,6 @@ static const WCHAR DeviceRootW[] = {'\\','\\','.','\\',0};
 static const WCHAR NTDosPrefixW[] = {'\\','?','?','\\',0};
 static const WCHAR UncPfxW[] = {'U','N','C','\\',0};
 
-/* FIXME: hack! */
-HANDLE (WINAPI *pCreateFileW)( LPCWSTR filename, DWORD access, DWORD sharing,
-                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                               DWORD attributes, HANDLE template );
-
 #define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
 
 #define MAX_DOS_DRIVES 26
@@ -208,20 +203,6 @@ DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
         if (IS_SEPARATOR(path[2])) return ABSOLUTE_DRIVE_PATH;  /* "c:/foo" */
         return RELATIVE_DRIVE_PATH;                             /* "c:foo" */
     }
-}
-
-/******************************************************************
- *		RtlDoesFileExists_U
- *
- * FIXME: should not use CreateFileW
- */
-BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
-{
-    HANDLE handle = pCreateFileW( file_name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                                  NULL, OPEN_EXISTING, 0, 0 );
-    if (handle == INVALID_HANDLE_VALUE) return FALSE;
-    NtClose( handle );
-    return TRUE;
 }
 
 /***********************************************************************

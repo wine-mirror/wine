@@ -71,52 +71,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
  * Open a file.
  *
  * PARAMS
- *  FileHandle       [O] Variable that receives the file handle on return
- *  DesiredAccess    [I] Access desired by the caller to the file
- *  ObjectAttributes [I] Structue describing the file to be opened
- *  IoStatusBlock    [O] Receives details about the result of the operation
- *  ShareAccess      [I] Type of shared access the caller requires
- *  OpenOptions      [I] Options for the file open
+ *  handle    [O] Variable that receives the file handle on return
+ *  access    [I] Access desired by the caller to the file
+ *  attr      [I] Structue describing the file to be opened
+ *  io        [O] Receives details about the result of the operation
+ *  sharing   [I] Type of shared access the caller requires
+ *  options   [I] Options for the file open
  *
  * RETURNS
  *  Success: 0. FileHandle and IoStatusBlock are updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtOpenFile(
-	OUT PHANDLE FileHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	ULONG ShareAccess,
-	ULONG OpenOptions)
+NTSTATUS WINAPI NtOpenFile( PHANDLE handle, ACCESS_MASK access,
+                            POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK io,
+                            ULONG sharing, ULONG options )
 {
-	LPWSTR filename;
-	static const WCHAR szDosDevices[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
-
-	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx) partial stub\n",
-		FileHandle, DesiredAccess, ObjectAttributes,
-		IoStatusBlock, ShareAccess, OpenOptions);
-
-	dump_ObjectAttributes (ObjectAttributes);
-
-	if(ObjectAttributes->RootDirectory)
-	{
-		FIXME("Object root directory unknown %p\n",
-			ObjectAttributes->RootDirectory);
-		return STATUS_OBJECT_NAME_NOT_FOUND;
-	}
-
-	filename = ObjectAttributes->ObjectName->Buffer;
-
-	/* FIXME: DOSFS stuff should call here, not vice-versa */
-	if(strncmpW(filename, szDosDevices, strlenW(szDosDevices)))
-		return STATUS_OBJECT_NAME_NOT_FOUND;
-
-	/* FIXME: this calls SetLastError() -> bad */
-        *FileHandle = pCreateFileW( &filename[strlenW(szDosDevices)], DesiredAccess, ShareAccess,
-                                    NULL, OPEN_EXISTING, 0, 0 );
-        if (*FileHandle == INVALID_HANDLE_VALUE) return STATUS_OBJECT_NAME_NOT_FOUND;
-        return STATUS_SUCCESS;
+    return NtCreateFile( handle, access, attr, io, NULL, 0,
+                         sharing, FILE_OPEN, options, NULL, 0 );
 }
 
 /**************************************************************************
@@ -127,41 +98,63 @@ NTSTATUS WINAPI NtOpenFile(
  * directory or volume.
  *
  * PARAMS
- *	FileHandle        [O] Points to a variable which receives the file handle on return
- *	DesiredAccess     [I] Desired access to the file
- *	ObjectAttributes  [I] Structure describing the file
- *	IoStatusBlock     [O] Receives information about the operation on return
- *	AllocationSize    [I] Initial size of the file in bytes
- *	FileAttributes    [I] Attributes to create the file with
- *	ShareAccess       [I] Type of shared access the caller would like to the file
- *	CreateDisposition [I] Specifies what to do, depending on whether the file already exists
- *	CreateOptions     [I] Options for creating a new file
- *	EaBuffer          [I] Undocumented
- *	EaLength          [I] Undocumented
+ *	handle       [O] Points to a variable which receives the file handle on return
+ *	access       [I] Desired access to the file
+ *	attr         [I] Structure describing the file
+ *	io           [O] Receives information about the operation on return
+ *	alloc_size   [I] Initial size of the file in bytes
+ *	attributes   [I] Attributes to create the file with
+ *	sharing      [I] Type of shared access the caller would like to the file
+ *	disposition  [I] Specifies what to do, depending on whether the file already exists
+ *	options      [I] Options for creating a new file
+ *	ea_buffer    [I] Undocumented
+ *	ea_length    [I] Undocumented
  *
  * RETURNS
- *  Success: 0. FileHandle and IoStatusBlock are updated.
+ *  Success: 0. handle and io are updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtCreateFile(
-	OUT PHANDLE FileHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	PLARGE_INTEGER AllocateSize,
-	ULONG FileAttributes,
-	ULONG ShareAccess,
-	ULONG CreateDisposition,
-	ULONG CreateOptions,
-	PVOID EaBuffer,
-	ULONG EaLength)
+NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIBUTES attr,
+                              PIO_STATUS_BLOCK io, PLARGE_INTEGER alloc_size,
+                              ULONG attributes, ULONG sharing, ULONG disposition,
+                              ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
-	FIXME("(%p,0x%08lx,%p,%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
-	FileHandle,DesiredAccess,ObjectAttributes,
-	IoStatusBlock,AllocateSize,FileAttributes,
-	ShareAccess,CreateDisposition,CreateOptions,EaBuffer,EaLength);
-	dump_ObjectAttributes (ObjectAttributes);
-	return 0;
+    ANSI_STRING unix_name;
+
+    TRACE("handle=%p access=%08lx name=%s objattr=%08lx root=%p sec=%p io=%p alloc_size=%p\n"
+          "attr=%08lx sharing=%08lx disp=%ld options=%08lx ea=%p.0x%08lx\n",
+          handle, access, debugstr_us(attr->ObjectName), attr->Attributes,
+          attr->RootDirectory, attr->SecurityDescriptor, io, alloc_size,
+          attributes, sharing, disposition, options, ea_buffer, ea_length );
+
+    if (attr->RootDirectory)
+    {
+        FIXME( "RootDirectory %p not supported\n", attr->RootDirectory );
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+    if (alloc_size) FIXME( "alloc_size not supported\n" );
+
+    if (!(io->u.Status = DIR_nt_to_unix( attr->ObjectName, &unix_name,
+                                         (disposition == FILE_OPEN || disposition == FILE_OVERWRITE),
+                                         !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    {
+        SERVER_START_REQ( create_file )
+        {
+            req->access     = access;
+            req->inherit    = (attr->Attributes & OBJ_INHERIT) != 0;
+            req->sharing    = sharing;
+            req->create     = disposition;
+            req->options    = options;
+            req->attrs      = attributes;
+            wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
+            io->u.Status = wine_server_call( req );
+            *handle = reply->handle;
+        }
+        SERVER_END_REQ;
+        RtlFreeAnsiString( &unix_name );
+    }
+    else WARN("%s not found (%lx)\n", debugstr_us(attr->ObjectName), io->u.Status );
+    return io->u.Status;
 }
 
 /***********************************************************************
@@ -240,7 +233,7 @@ NTSTATUS FILE_GetNtStatus(void)
     case EPERM:
     case EROFS:
     case EACCES:       nt = STATUS_ACCESS_DENIED;           break;
-    case ENOENT:       nt = STATUS_SHARING_VIOLATION;       break;
+    case ENOENT:       nt = STATUS_OBJECT_NAME_NOT_FOUND;   break;
     case EISDIR:       nt = STATUS_FILE_IS_A_DIRECTORY;     break;
     case EMFILE:
     case ENFILE:       nt = STATUS_NO_MORE_FILES;           break;

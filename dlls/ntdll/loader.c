@@ -1333,9 +1333,13 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, DWORD flags, 
 static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
                                WCHAR *filename, ULONG *size, WINE_MODREF **pwm, HANDLE *handle )
 {
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    UNICODE_STRING nt_name;
     WCHAR *file_part, *ext;
     ULONG len;
 
+    nt_name.Buffer = NULL;
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
     {
         /* we need to search for it */
@@ -1368,7 +1372,17 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             {
                 if ((*pwm = find_basename_module( file_part )) != NULL) return STATUS_SUCCESS;
             }
-            *handle = pCreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+            if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, NULL, NULL ))
+                return STATUS_NO_MEMORY;
+
+            attr.Length = sizeof(attr);
+            attr.RootDirectory = 0;
+            attr.Attributes = OBJ_CASE_INSENSITIVE;
+            attr.ObjectName = &nt_name;
+            attr.SecurityDescriptor = NULL;
+            attr.SecurityQualityOfService = NULL;
+            if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ, 0 )) *handle = 0;
+            RtlFreeUnicodeString( &nt_name );
             return STATUS_SUCCESS;
         }
 
@@ -1394,19 +1408,33 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
 
     /* absolute path name, or relative path name but not found above */
 
-    len = RtlGetFullPathName_U( libname, *size, filename, &file_part );
+    if (!RtlDosPathNameToNtPathName_U( libname, &nt_name, &file_part, NULL ))
+        return STATUS_NO_MEMORY;
+
+    len = nt_name.Length - 4*sizeof(WCHAR);  /* for \??\ prefix */
     if (len >= *size) goto overflow;
+    memcpy( filename, nt_name.Buffer + 4, len + sizeof(WCHAR) );
     if (file_part && !strchrW( file_part, '.' ))
     {
         len += sizeof(dllW) - sizeof(WCHAR);
         if (len >= *size) goto overflow;
-        strcatW( file_part, dllW );
+        strcatW( filename, dllW );
     }
-    if ((*pwm = find_fullname_module( filename )) != NULL) return STATUS_SUCCESS;
-    *handle = pCreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if (!(*pwm = find_fullname_module( filename )))
+    {
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.Attributes = OBJ_CASE_INSENSITIVE;
+        attr.ObjectName = &nt_name;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ, 0 )) *handle = 0;
+    }
+    RtlFreeUnicodeString( &nt_name );
     return STATUS_SUCCESS;
 
 overflow:
+    RtlFreeUnicodeString( &nt_name );
     *size = len + sizeof(WCHAR);
     return STATUS_BUFFER_TOO_SMALL;
 }
@@ -1427,7 +1455,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     ULONG size;
     const char *filetype = "";
     WINE_MODREF *main_exe;
-    HANDLE handle = INVALID_HANDLE_VALUE;
+    HANDLE handle = 0;
     NTSTATUS nts;
 
     TRACE( "looking for %s in %s\n", debugstr_w(libname), debugstr_w(load_path) );
@@ -1473,7 +1501,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         {
         case LOADORDER_DLL:
             TRACE("Trying native dll %s\n", debugstr_w(filename));
-            if (handle == INVALID_HANDLE_VALUE) continue;  /* it cannot possibly be loaded */
+            if (!handle) continue;  /* it cannot possibly be loaded */
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
             filetype = "native";
             break;
@@ -1497,7 +1525,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
             /* Set the ldr.LoadCount here so that an attach failure will */
             /* decrement the dependencies through the MODULE_FreeLibrary call. */
             (*pwm)->ldr.LoadCount = 1;
-            if (handle != INVALID_HANDLE_VALUE) NtClose( handle );
+            if (handle) NtClose( handle );
             if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
             return nts;
         }
@@ -1505,7 +1533,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     }
 
     WARN("Failed to load module %s; status=%lx\n", debugstr_w(libname), nts);
-    if (handle != INVALID_HANDLE_VALUE) NtClose( handle );
+    if (handle) NtClose( handle );
     if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
     return nts;
 }
@@ -2005,13 +2033,6 @@ void __wine_process_init( int argc, char *argv[] )
                                           0, (void **)&init_func )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %lx\n", status );
-        exit(1);
-    }
-    RtlInitAnsiString( &func_name, "CreateFileW" );
-    if ((status = LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name,
-                                          0, (void **)&pCreateFileW )) != STATUS_SUCCESS)
-    {
-        MESSAGE( "wine: could not find CreateFileW in kernel32.dll, status %lx\n", status );
         exit(1);
     }
     init_func();
