@@ -540,6 +540,7 @@ int _FUNCTION_ {
 
 #undef _CHAR_
 #undef _EOF_
+#undef _EOF_RET
 #undef _ISSPACE_
 #undef _ISDIGIT_
 #undef _CONVERT_

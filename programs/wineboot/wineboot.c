@@ -170,7 +170,7 @@ static BOOL pendingRename()
                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                      'C','o','n','t','r','o','l','\\',
                                      'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
-    const WCHAR *buffer=NULL;
+    WCHAR *buffer=NULL;
     const WCHAR *src=NULL, *dst=NULL;
     DWORD dataLength=0;
     HKEY hSession=NULL;
