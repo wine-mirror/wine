@@ -89,6 +89,9 @@ static	void WINMM_DeleteIData(void)
  *             WINMM_LoadMMSystem
  *
  */
+static HANDLE (WINAPI *pGetModuleHandle16)(LPCSTR);
+static DWORD (WINAPI *pLoadLibrary16)(LPCSTR);
+
 BOOL WINMM_CheckForMMSystem(void)
 {
     /* 0 is not checked yet, -1 is not present, 1 is present */
@@ -100,9 +103,10 @@ BOOL WINMM_CheckForMMSystem(void)
         loaded = -1;
         if (h)
         {
-            HANDLE  (WINAPI *gmh)(LPCSTR) = (void*)GetProcAddress(h, "GetModuleHandle16");
-            DWORD   (WINAPI *ll)(LPCSTR)  = (void*)GetProcAddress(h, "LoadLibrary16");
-            if (gmh && ll && (gmh("MMSYSTEM.DLL") || ll("MMSYSTEM.DLL")))
+            pGetModuleHandle16 = (void*)GetProcAddress(h, "GetModuleHandle16");
+            pLoadLibrary16 = (void*)GetProcAddress(h, "LoadLibrary16");
+            if (pGetModuleHandle16 && pLoadLibrary16 &&
+                (pGetModuleHandle16("MMSYSTEM.DLL") || pLoadLibrary16("MMSYSTEM.DLL")))
                 loaded = 1;
         }
     }
