@@ -211,14 +211,14 @@ debug_channels (msvcrt)
 @ cdecl _errno() MSVCRT__errno
 @ cdecl _except_handler2(ptr ptr ptr ptr) _except_handler2
 @ cdecl _except_handler3(ptr ptr ptr ptr) _except_handler3
-@ stub _execl #(str str) varargs
+@ varargs _execl(str str) _execl
 @ stub _execle #(str str) varargs
-@ stub _execlp #(str str) varargs
+@ varargs _execlp(str str) _execlp
 @ stub _execlpe #(str str) varargs
-@ stub _execv #(str str)
-@ stub _execve #(str str str)
-@ stub _execvp #(str str)
-@ stub _execvpe #(str str str)
+@ cdecl _execv(str str) _execv
+@ cdecl _execve(str str str) _execve
+@ cdecl _execvp(str str) _execvp
+@ cdecl _execvpe(str str str) _execvpe
 @ cdecl _exit(long) MSVCRT__exit
 @ cdecl _expand(ptr long) _expand
 @ cdecl _fcloseall() _fcloseall

@@ -182,6 +182,83 @@ int _cwait(int *status, int pid, int action)
 }
 
 /*********************************************************************
+ *		_execl (MSVCRT.@)
+ */
+int _execl(const char* name, const char* arg0, ...)
+{
+  va_list ap;
+  char * args;
+  int ret;
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  ret = msvcrt_spawn(_P_OVERLAY, name, args, NULL);
+  MSVCRT_free(args);
+
+  return ret;
+}
+
+/*********************************************************************
+ *		_execlp (MSVCRT.@)
+ */
+int _execlp(const char* name, const char* arg0, ...)
+{
+  va_list ap;
+  char * args;
+  int ret;
+  char fullname[MAX_PATH];
+
+  _searchenv(name, "PATH", fullname);
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  ret = msvcrt_spawn(_P_OVERLAY, fullname[0] ? fullname : name, args, NULL);
+  MSVCRT_free(args);
+
+  return ret;
+}
+
+/*********************************************************************
+ *		_execv (MSVCRT.@)
+ */
+int _execv(const char* name, char* const* argv)
+{
+  return _spawnve(_P_OVERLAY, name, (const char* const*) argv, NULL);
+}
+
+/*********************************************************************
+ *		_execve (MSVCRT.@)
+ */
+int _execve(const char* name, char* const* argv, const char* const* envv)
+{
+  return _spawnve(_P_OVERLAY, name, (const char* const*) argv, envv);
+}
+
+/*********************************************************************
+ *		_execvpe (MSVCRT.@)
+ */
+int _execvpe(const char* name, char* const* argv, const char* const* envv)
+{
+  char fullname[MAX_PATH];
+
+  _searchenv(name, "PATH", fullname);
+  return _spawnve(_P_OVERLAY, fullname[0] ? fullname : name,
+                  (const char* const*) argv, envv);
+}
+
+/*********************************************************************
+ *		_execvp (MSVCRT.@)
+ */
+int _execvp(const char* name, char* const* argv)
+{
+  return _execvpe(name, argv, NULL);
+}
+
+/*********************************************************************
  *		_spawnl (MSVCRT.@)
  */
 int _spawnl(int flags, const char* name, const char* arg0, ...)
@@ -201,7 +278,7 @@ int _spawnl(int flags, const char* name, const char* arg0, ...)
 }
 
 /*********************************************************************
- *		_spawnl (MSVCRT.@)
+ *		_spawnlp (MSVCRT.@)
  */
 int _spawnlp(int flags, const char* name, const char* arg0, ...)
 {
@@ -216,7 +293,7 @@ int _spawnlp(int flags, const char* name, const char* arg0, ...)
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, name, args, NULL);
+  ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, NULL);
   MSVCRT_free(args);
 
   return ret;
