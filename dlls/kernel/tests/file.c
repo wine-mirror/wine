@@ -47,7 +47,7 @@ static void test__hread( void )
     char buffer[10000];
     long bytes_read;
     long bytes_wanted;
-    UINT i;
+    long i;
 
     SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL); /* be sure to remove stale files */
     DeleteFileA( filename );
@@ -68,9 +68,9 @@ static void test__hread( void )
 
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
 
-    ok( strlen( sillytext ) == bytes_read, "file read size error" );
+    ok( lstrlenA( sillytext ) == bytes_read, "file read size error" );
 
-    for (bytes_wanted = 0; bytes_wanted < strlen( sillytext ); bytes_wanted++)
+    for (bytes_wanted = 0; bytes_wanted < lstrlenA( sillytext ); bytes_wanted++)
     {
         ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
         ok( _hread( filehandle, buffer, bytes_wanted ) == bytes_wanted, "erratic _hread return value" );
@@ -91,9 +91,9 @@ static void test__hwrite( void )
     HFILE filehandle;
     char buffer[10000];
     long bytes_read;
-    UINT bytes_written;
-    UINT blocks;
-    UINT i;
+    long bytes_written;
+    long blocks;
+    long i;
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
@@ -205,7 +205,7 @@ static void test__lcreat( void )
 
     ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
 
-    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value" );
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  lstrlenA( sillytext ), "erratic _hread return value" );
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
@@ -235,7 +235,7 @@ static void test__lcreat( void )
 
     ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
 
-    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value" );
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  lstrlenA( sillytext ), "erratic _hread return value" );
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
@@ -250,7 +250,7 @@ static void test__lcreat( void )
 
     ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
 
-    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value" );
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  lstrlenA( sillytext ), "erratic _hread return value" );
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
@@ -359,7 +359,7 @@ static void test__lread( void )
 
     bytes_read = _lread( filehandle, buffer, 2 * strlen( sillytext ) );
 
-    ok( strlen( sillytext ) == bytes_read, "file read size error" );
+    ok( lstrlenA( sillytext ) == bytes_read, "file read size error" );
 
     for (bytes_wanted = 0; bytes_wanted < strlen( sillytext ); bytes_wanted++)
     {
@@ -382,9 +382,9 @@ static void test__lwrite( void )
     HFILE filehandle;
     char buffer[10000];
     long bytes_read;
-    UINT bytes_written;
-    UINT blocks;
-    UINT i;
+    long bytes_written;
+    long blocks;
+    long i;
     char *contents;
     HLOCAL memory_object;
     char checksum[1];

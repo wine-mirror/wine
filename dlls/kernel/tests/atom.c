@@ -106,7 +106,8 @@ static void test_get_atom_name(void)
 {
     char buf[10];
     WCHAR bufW[10];
-    int i, len;
+    int i;
+    UINT len;
     static const WCHAR resultW[] = {'f','o','o','b','a','r',0,'.','.','.'};
 
     ATOM atom = GlobalAddAtomA( "foobar" );

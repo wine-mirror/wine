@@ -178,9 +178,9 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
 
 /* split path into leading directory, and 8.3 filename */
 static void test_SplitShortPathA(CHAR *path,CHAR *dir,CHAR *eight,CHAR *three) {
-  DWORD len,done,error;
-  DWORD ext,fil;
-  INT i;
+  int done,error;
+  int ext,fil;
+  int len,i;
   len=lstrlenA(path);
   ext=len; fil=len; done=0; error=0;
 /* walk backwards over path looking for '.' or '\\' seperators */
@@ -813,7 +813,7 @@ static void test_GetTempPathA(char* tmp_dir)
     len = GetTempPathA(MAX_PATH, buf);
     ok(len <= MAX_PATH, "should fit into MAX_PATH");
     ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]",tmp_dir,buf);
-    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
+    ok(len == strlen(buf), "returned length should be equal to the length of string");
 
     /* Some versions of Windows touch the buffer, some don't so we don't
      * test that. Also, NT sometimes exagerates the required buffer size
@@ -834,7 +834,7 @@ static void test_GetTempPathA(char* tmp_dir)
     lstrcpyA(buf, "foo");
     len = GetTempPathA(len, buf);
     ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]",tmp_dir,buf);
-    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
+    ok(len == strlen(buf), "returned length should be equal to the length of string");
 }
 
 static void test_GetTempPathW(char* tmp_dir)

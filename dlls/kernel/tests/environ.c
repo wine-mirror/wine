@@ -38,25 +38,25 @@ static void test_GetSetEnvironmentVariableA(void)
 
     /* Try to retrieve the environment variable we just set */
     ret_size = GetEnvironmentVariableA(name, NULL, 0);
-    ok(ret_size == lstrlenA(value) + 1,
+    ok(ret_size == strlen(value) + 1,
        "should return length with terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value));
     ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    ok(ret_size == lstrlenA(value) + 1,
+    ok(ret_size == strlen(value) + 1,
        "should return length with terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
     ok(lstrcmpA(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenA(value),
+    ok(ret_size == strlen(value),
        "should return length without terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name_cased, buf, lstrlenA(value) + 1);
     ok(lstrcmpA(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenA(value),
+    ok(ret_size == strlen(value),
        "should return length without terminating 0 ret_size=%ld", ret_size);
 
     /* Remove that environment variable */
@@ -79,7 +79,7 @@ static void test_GetSetEnvironmentVariableA(void)
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name_cased, buf, lstrlenA(value) + 1);
     ok(lstrcmpA(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenA(value),
+    ok(ret_size == strlen(value),
        "should return length without terminating 0 ret_size=%ld", ret_size);
 
     ret = SetEnvironmentVariableA(name_cased, "");

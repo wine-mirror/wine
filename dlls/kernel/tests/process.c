@@ -57,9 +57,8 @@ static void     release_memory(void)
 
 static char*    encodeA(const char* str)
 {
-    size_t      len;
     char*       ptr;
-    int         i;
+    size_t      len,i;
 
     if (!str) return "";
     len = strlen(str) + 1;
@@ -72,9 +71,8 @@ static char*    encodeA(const char* str)
 
 static char*    encodeW(const WCHAR* str)
 {
-    size_t      len;
     char*       ptr;
-    int         i;
+    size_t      len,i;
 
     if (!str) return "";
     len = lstrlenW(str) + 1;
@@ -96,9 +94,8 @@ static unsigned decode_char(char c)
 
 static char*    decodeA(const char* str)
 {
-    size_t      len;
     char*       ptr;
-    int         i;
+    size_t      len,i;
 
     len = strlen(str) / 2;
     if (!len--) return NULL;
@@ -346,7 +343,7 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
  */
 #define okChildInt(sect, key, expect) \
     do { \
-        int result = GetPrivateProfileIntA((sect), (key), !(expect), resfile); \
+        UINT result = GetPrivateProfileIntA((sect), (key), !(expect), resfile); \
         ok(result == expect, "%s:%s expected %d, but got %d\n", (sect), (key), (int)(expect), result); \
    } while (0)
 

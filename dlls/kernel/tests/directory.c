@@ -46,7 +46,7 @@ static void test_GetWindowsDirectoryA(void)
     lstrcpyA(buf, "foo");
     len = GetWindowsDirectoryA(buf, len_with_null);
     ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
-    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
+    ok(len == strlen(buf), "returned length should be equal to the length of string");
     ok(len == len_with_null-1, "GetWindowsDirectoryA returned %d, expected %d",
        len, len_with_null-1);
 }
@@ -109,7 +109,7 @@ static void test_GetSystemDirectoryA(void)
     lstrcpyA(buf, "foo");
     len = GetSystemDirectoryA(buf, len_with_null);
     ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
-    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
+    ok(len == strlen(buf), "returned length should be equal to the length of string");
     ok(len == len_with_null-1, "GetSystemDirectoryW returned %d, expected %d",
        len, len_with_null-1);
 }
