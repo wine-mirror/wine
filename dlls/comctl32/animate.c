@@ -10,7 +10,6 @@
  *     Eric <ekohl@abo.rhein-zeitung.de>
  *
  * TODO:
- *   - correct RLE4 decompression
  *   - check for the 'rec ' list in some AVI files
  *   - concurrent access to infoPtr
  */
@@ -71,7 +70,7 @@ typedef struct
    /* tranparency info*/
    COLORREF         	transparentColor;   
    HBRUSH           	hbrushBG;
-   
+   HBITMAP  	    	hbmPrevFrame;
 } ANIMATE_INFO;
 
 #define ANIMATE_GetInfoPtr(hWnd) ((ANIMATE_INFO *)GetWindowLongA(hWnd, 0))
@@ -190,6 +189,11 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
 	HeapFree(GetProcessHeap(), 0, infoPtr->outdata);
             infoPtr->outdata = NULL;
         }
+    	if( infoPtr->hbmPrevFrame )
+        {
+	    DeleteObject(infoPtr->hbmPrevFrame);
+            infoPtr->hbmPrevFrame = 0;
+        }
 	infoPtr->indata = infoPtr->outdata = NULL;
 	infoPtr->hWnd = 0;
 	infoPtr->hMMio = 0;
@@ -200,123 +204,6 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
     }
     infoPtr->transparentColor = ANIMATE_COLOR_NONE;    
 }
-
-/***********************************************************************
- *	      ANIMATE_Expand_RLE8
- *
- * Decompresses an 8-bit compressed frame over previous frame
- *
- */
-
-enum Rle8_EscapeCodes		
-{
-  RleEol 	= 0,		/* End of line */
-  RleEnd 	= 1,		/* End of bitmap */
-  RleDelta	= 2		    /* Delta */
-};                         
-
-static LRESULT ANIMATE_Expand_RLE8(BYTE* pDest, int nWidth, int nHeight, BYTE* pSource)
-{
-    int x;              /* X-positon on each line.  Increases. */
-    int line;           /* Line #.  Increases */
-    BYTE *pOut;         /* current position in destination buffer */
-    BYTE length;        /* The length of a run */
-    BYTE color_index;   /* index for current pixel */
-    BYTE escape_code;   /* See enum Rle8_EscapeCodes.*/
-    int bEndOfBitmap=0;
-    /* image width including byte padding */
-    int nStride = ((( nWidth - 1 ) >> 2) + 1 ) << 2;
-
-    if (nHeight < 1 || nWidth < 1 || nStride < 1 || !pSource || !pDest)
-        return FALSE;
-
-    x = 0;
-    line = 0;
-    pOut = pDest;
-    do
-    {
-        length = *pSource++;     
-        /* 
-         * If the length byte is not zero (which is the escape value),
-         * We have a run of length pixels all the same colour.  The color 
-         * index is stored next. 
-         *
-         * If the length byte is zero, we need to read the next byte to
-         * know what to do.			
-         */
-        if (length != 0)
-        {
-            /* 
-             * [Run-Length] Encoded mode 
-             */
-            color_index = (*pSource++); /* Get the color index. */
-
-            while (length-- && x < nWidth)
-            {
-                *pOut++=color_index;
-                x++;
-        }
-        } else
-        {
-            /* 
-             * Escape codes or absolute sequence
-             */
-            escape_code = (*pSource++);
-            switch (escape_code)
-            {
-                case RleEol: /* =0, end of line */
-                {
-                    x = 0;  
-                    line++;
-                    pOut = pDest + nStride * line;
-                    break;
-    }
-                case RleEnd: /* =1, end of bitmap */
-            {
-                    bEndOfBitmap=TRUE;
-                    line=nHeight; /* exit from loop. */
-                     break;
-                }      
-                case RleDelta: /* =2, a delta */
-                {
-                    x += (*pSource++);
-                    line    += (*pSource++);
-                    if (line >= nHeight || x >= nWidth)
-                    {
-                        WARN("Delta out of bounds\n");
-                        line = nHeight;
-                    }
-                    pOut = pDest + (line * nStride) + x;
-                     break;
-                }      
-                default:    /* >2, absolute mode */
-                {
-                    length = escape_code;
-                    while (length--)
-                    {
-                        color_index = (*pSource++);
-                        if (x < nWidth)
-                        {
-                            *pOut++=color_index;
-                            x++;
-                        }
-                    }
-                    if (escape_code & 1)
-                        pSource++; /* Throw away the pad byte. */
-                     break;
-            }
-            } /* switch (escape_code) */
-        }  /* process either an encoded sequence or an escape sequence */
-
-        /* We expect to come here more than once per line. */
-    } while (line < nHeight);  /* Do this until the bitmap is filled */
-
-    if ( !bEndOfBitmap )
-    {
-        TRACE("Reached end of bitmap without a EndOfBitmap code\n");
-            }
-    return TRUE;
-            }
 
 static void ANIMATE_TransparentBlt(ANIMATE_INFO* infoPtr, HDC hdcDest, HDC hdcSource)
 {       
@@ -356,7 +243,6 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
     LPBITMAPINFO pBitmapInfo = NULL;
 
     HDC hdcMem;
-    HBITMAP hbmNew;
     HBITMAP hbmOld;
 
     int nOffsetX = 0;
@@ -368,18 +254,14 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
     if (!hDC || !infoPtr->inbih)
 	return TRUE;
 
-    if (infoPtr->hic || 
-        /* put this once correct RLE4 decompression is implemented */
-        /* infoPtr->inbih->biCompression == BI_RLE4 || */ 
-        infoPtr->inbih->biCompression == BI_RLE8 )
+    if (infoPtr->hic )
     {
         pBitmapData = infoPtr->outdata;
         pBitmapInfo = (LPBITMAPINFO)infoPtr->outbih;
 
         nWidth = infoPtr->outbih->biWidth;
         nHeight = infoPtr->outbih->biHeight;  
-        }
-    else
+    } else
     {  
         pBitmapData = infoPtr->indata;
         pBitmapInfo = (LPBITMAPINFO)infoPtr->inbih;
@@ -388,20 +270,15 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
         nHeight = infoPtr->inbih->biHeight;  
     }  
 
-    if (infoPtr->inbih->biCompression == BI_RLE8) 
-        ANIMATE_Expand_RLE8(pBitmapData, nWidth, nHeight, infoPtr->indata);
+    if(!infoPtr->hbmPrevFrame)
+    {
+        infoPtr->hbmPrevFrame=CreateCompatibleBitmap(hDC, nWidth,nHeight );
+    }
 
-    if (infoPtr->inbih->biCompression == BI_RLE4)           
-        FIXME("correct RLE4 decompression not implemented yet (no samples available)\n");
+    SetDIBits(hDC, infoPtr->hbmPrevFrame, 0, nHeight, pBitmapData, (LPBITMAPINFO)pBitmapInfo, DIB_RGB_COLORS); 
     
     hdcMem = CreateCompatibleDC(hDC);
-    hbmNew = CreateCompatibleBitmap(hDC,nWidth, nHeight);
-    hbmOld = SelectObject(hdcMem, hbmNew);
-
-    StretchDIBits(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, 
-		      0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight,
-              pBitmapData, (LPBITMAPINFO)pBitmapInfo, DIB_RGB_COLORS, 
-		      SRCCOPY);
+    hbmOld = SelectObject(hdcMem, infoPtr->hbmPrevFrame);
 
     /* 
      * we need to get the transparent color even without ACS_TRANSPARENT, 
@@ -434,8 +311,8 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
         SelectObject(hdcFinal, hbmOld2);
         SelectObject(hdcMem, hbmFinal);
         DeleteDC(hdcFinal);
-        DeleteObject(hbmNew);
-        hbmNew=hbmFinal;
+        DeleteObject(infoPtr->hbmPrevFrame);
+        infoPtr->hbmPrevFrame = hbmFinal;
          }
     
     if (GetWindowLongA(infoPtr->hWnd, GWL_STYLE) & ACS_CENTER) 
@@ -450,7 +327,6 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
 
     SelectObject(hdcMem, hbmOld);
     DeleteDC(hdcMem);
-    DeleteObject(hbmNew);  
     return TRUE;
 }
 
@@ -745,50 +621,10 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
     DWORD	outSize;
 
     /* check uncompressed AVI */
-    if (infoPtr->ash.fccHandler == mmioFOURCC('D', 'I', 'B', ' ')) {
-	infoPtr->hic = 0;
-	return TRUE;
-    }
-    else if (infoPtr->ash.fccHandler == mmioFOURCC('R', 'L', 'E', ' ')) 
+    if ((infoPtr->ash.fccHandler == mmioFOURCC('D', 'I', 'B', ' ')) ||
+       (infoPtr->ash.fccHandler == mmioFOURCC('R', 'L', 'E', ' ')))
     {
-        int nStride = 0;        
-        int frameBufferSize;
-        int sizebih=sizeof(BITMAPINFOHEADER) + infoPtr->inbih->biClrUsed *sizeof(RGBQUAD);
-
-        if(infoPtr->inbih->biCompression == BI_RLE8)
-            nStride = (((( infoPtr->inbih->biWidth - 1 ) >> 2) + 1 ) << 2);
-        else if(infoPtr->inbih->biCompression == BI_RLE4)
-            nStride = (((( infoPtr->inbih->biWidth - 1 ) >> 3) + 1 ) << 2);  
-        else
-        {
-            ERR("Image compression format unknown\n");
-            return FALSE;
-        }
-
-        frameBufferSize = infoPtr->inbih->biHeight * nStride;  
-                    
         infoPtr->hic = 0;             
-        infoPtr->outbih = HeapAlloc(GetProcessHeap(),0, sizebih);
-        if(!infoPtr->outbih)
-        {
-            ERR("out of memory!\n");
-            return FALSE;
-        }
-
-        infoPtr->outdata = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, frameBufferSize);
-        if(!infoPtr->outdata)
-        {
-            HeapFree(GetProcessHeap(),0,infoPtr->outbih);
-            infoPtr->outbih = 0;
-            ERR("out of memory!\n");
-            return FALSE;
-        }   
-
-        /* create a BITMAPINFO header for the uncompressed bitmap */
-        memcpy(infoPtr->outbih, infoPtr->inbih, sizebih);      
-        infoPtr->outbih->biCompression = BI_RGB;
-        infoPtr->outbih->biSizeImage = frameBufferSize;
-
 	return TRUE;
     }
 
@@ -935,6 +771,7 @@ static LRESULT ANIMATE_Create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     SetWindowLongA(hWnd, 0, (DWORD)infoPtr);
     infoPtr->hWnd = hWnd;
     infoPtr->transparentColor = ANIMATE_COLOR_NONE;
+    infoPtr->hbmPrevFrame = 0;
     hModWinmm = LoadLibraryA("WINMM");
 
     infoPtr->fnmmioOpenA = (void*)GetProcAddress(hModWinmm, "mmioOpenA");
