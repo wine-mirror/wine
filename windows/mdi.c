@@ -182,7 +182,7 @@ static void MDI_PostUpdate(HWND hwnd, MDICLIENTINFO* ci, WORD recalc)
 const struct builtin_class_descr MDICLIENT_builtin_class =
 {
     "MDIClient",            /* name */
-    CS_GLOBALCLASS,         /* style */
+    0,                      /* style */
     MDIClientWndProcA,      /* procA */
     MDIClientWndProcW,      /* procW */
     sizeof(MDICLIENTINFO),  /* extra */

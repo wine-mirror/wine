@@ -48,7 +48,7 @@ static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LP
 const struct builtin_class_descr DESKTOP_builtin_class =
 {
     DESKTOP_CLASS_ATOM,   /* name */
-    CS_GLOBALCLASS,       /* style */
+    CS_DBLCLKS,           /* style */
     NULL,                 /* procA (winproc is Unicode only) */
     DesktopWndProc,       /* procW */
     0,                    /* extra */

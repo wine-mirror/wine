@@ -184,7 +184,7 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
 const struct builtin_class_descr MENU_builtin_class =
 {
     POPUPMENU_CLASS_ATOMA,         /* name */
-    CS_GLOBALCLASS | CS_SAVEBITS,  /* style */
+    CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,  /* style */
     NULL,                          /* procA (winproc is Unicode only) */
     PopupMenuWndProc,              /* procW */
     sizeof(HMENU),                 /* extra */

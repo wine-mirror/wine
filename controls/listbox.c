@@ -139,7 +139,7 @@ static LRESULT LISTBOX_GetItemRect( LB_DESCR *descr, INT index, RECT *rect );
 const struct builtin_class_descr LISTBOX_builtin_class =
 {
     "ListBox",            /* name */
-    CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,  /* style */
+    CS_DBLCLKS /*| CS_PARENTDC*/,  /* style */
     ListBoxWndProcA,      /* procA */
     ListBoxWndProcW,      /* procW */
     sizeof(LB_DESCR *),   /* extra */
@@ -154,7 +154,7 @@ const struct builtin_class_descr LISTBOX_builtin_class =
 const struct builtin_class_descr COMBOLBOX_builtin_class =
 {
     "ComboLBox",          /* name */
-    CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,  /* style */
+    CS_DBLCLKS | CS_SAVEBITS,  /* style */
     ComboLBWndProcA,      /* procA */
     ComboLBWndProcW,      /* procW */
     sizeof(LB_DESCR *),   /* extra */

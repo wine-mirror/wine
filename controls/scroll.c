@@ -132,7 +132,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 const struct builtin_class_descr SCROLL_builtin_class =
 {
     "ScrollBar",            /* name */
-    CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
+    CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
     NULL,                   /* procA (winproc is Unicode only) */
     ScrollBarWndProc,       /* procW */
     sizeof(SCROLLBAR_INFO), /* extra */

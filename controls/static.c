@@ -80,7 +80,7 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
 const struct builtin_class_descr STATIC_builtin_class =
 {
     "Static",            /* name */
-    CS_GLOBALCLASS | CS_DBLCLKS | CS_PARENTDC, /* style  */
+    CS_DBLCLKS | CS_PARENTDC, /* style  */
     StaticWndProcA,      /* procA */
     StaticWndProcW,      /* procW */
     STATIC_EXTRA_BYTES,  /* extra */

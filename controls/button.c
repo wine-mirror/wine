@@ -104,7 +104,7 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 const struct builtin_class_descr BUTTON_builtin_class =
 {
     "Button",            /* name */
-    CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
+    CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
     ButtonWndProcA,      /* procA */
     ButtonWndProcW,      /* procW */
     NB_EXTRA_BYTES,      /* extra */

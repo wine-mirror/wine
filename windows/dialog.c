@@ -97,7 +97,7 @@ typedef struct
 const struct builtin_class_descr DIALOG_builtin_class =
 {
     DIALOG_CLASS_ATOMA,  /* name */
-    CS_GLOBALCLASS | CS_SAVEBITS | CS_DBLCLKS, /* style  */
+    CS_SAVEBITS | CS_DBLCLKS, /* style  */
     DefDlgProcA,        /* procA */
     DefDlgProcW,        /* procW */
     DLGWINDOWEXTRA,     /* extra */

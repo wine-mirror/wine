@@ -285,7 +285,7 @@ LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 const struct builtin_class_descr EDIT_builtin_class =
 {
     "Edit",               /* name */
-    CS_GLOBALCLASS | CS_DBLCLKS | CS_PARENTDC,   /* style */
+    CS_DBLCLKS | CS_PARENTDC,   /* style */
     EditWndProcA,         /* procA */
     EditWndProcW,         /* procW */
     sizeof(EDITSTATE *),  /* extra */
