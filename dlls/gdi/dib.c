@@ -522,9 +522,10 @@ INT WINAPI GetDIBits(
         {
             /*FIXME: Only RGB dibs supported for now */
             unsigned int srcwidth = bmp->dib->dsBm.bmWidth, srcwidthb = bmp->dib->dsBm.bmWidthBytes;
+            unsigned int dstwidth = info->bmiHeader.biWidth;
             int dstwidthb = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
             LPBYTE dbits = bits, sbits = (LPBYTE) bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
-            unsigned int x, y;
+            unsigned int x, y, width, widthb;
 
             if ((info->bmiHeader.biHeight < 0) ^ (bmp->dib->dsBmih.biHeight < 0))
             {
@@ -546,9 +547,10 @@ INT WINAPI GetDIBits(
 
                     case 16: /* 16 bpp srcDIB -> 16 bpp dstDIB */
                         {
+                            widthb = min(srcwidthb, abs(dstwidthb));
                             /* FIXME: BI_BITFIELDS not supported yet */
                             for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
-                                memcpy(dbits, sbits, srcwidthb);
+                                memcpy(dbits, sbits, widthb);
                         }
                         break;
 
@@ -556,8 +558,9 @@ INT WINAPI GetDIBits(
                         {
                             LPBYTE srcbits = sbits;
 
+                            width = min(srcwidth, dstwidth);
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++, srcbits += 3)
+                                for( x = 0; x < width; x++, srcbits += 3)
                                     *dstbits++ = ((srcbits[0] >> 3) & bmask) |
                                                  (((WORD)srcbits[1] << 2) & gmask) |
                                                  (((WORD)srcbits[2] << 7) & rmask);
@@ -573,8 +576,9 @@ INT WINAPI GetDIBits(
                             LPDWORD srcbits = (LPDWORD)sbits;
                             DWORD val;
 
+                            width = min(srcwidth, dstwidth);
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++ ) {
+                                for( x = 0; x < width; x++ ) {
                                     val = *srcbits++;
                                     *dstbits++ = (WORD)(((val >> 3) & bmask) | ((val >> 6) & gmask) |
                                                        ((val >> 9) & rmask));
@@ -604,9 +608,10 @@ INT WINAPI GetDIBits(
                             LPWORD srcbits = (LPWORD)sbits;
                             WORD val;
 
+                            width = min(srcwidth, dstwidth);
                             /* FIXME: BI_BITFIELDS not supported yet */
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++ ) {
+                                for( x = 0; x < width; x++ ) {
                                     val = *srcbits++;
                                     *dstbits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));
                                     *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
@@ -620,8 +625,9 @@ INT WINAPI GetDIBits(
 
                     case 24: /* 24 bpp srcDIB -> 24 bpp dstDIB */
                         {
+                            widthb = min(srcwidthb, abs(dstwidthb));
                             for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
-                                memcpy(dbits, sbits, srcwidthb);
+                                memcpy(dbits, sbits, widthb);
                         }
                         break;
 
@@ -629,8 +635,9 @@ INT WINAPI GetDIBits(
                         {
                             LPBYTE srcbits = (LPBYTE)sbits;
 
+                            width = min(srcwidth, dstwidth);
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++, srcbits++ ) {
+                                for( x = 0; x < width; x++, srcbits++ ) {
                                     *dstbits++ = *srcbits++;
                                     *dstbits++ = *srcbits++;
                                     *dstbits++ = *srcbits++;
@@ -661,9 +668,10 @@ INT WINAPI GetDIBits(
                             LPWORD srcbits = (LPWORD)sbits;
                             DWORD val;
 
+                            width = min(srcwidth, dstwidth);
                             /* FIXME: BI_BITFIELDS not supported yet */
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++ ) {
+                                for( x = 0; x < width; x++ ) {
                                     val = (DWORD)*srcbits++;
                                     *dstbits++ = ((val << 3) & 0xf8) | ((val >> 2) & 0x07) |
                                                  ((val << 6) & 0xf800) | ((val << 1) & 0x0700) |
@@ -679,8 +687,9 @@ INT WINAPI GetDIBits(
                         {
                             LPBYTE srcbits = sbits;
 
+                            width = min(srcwidth, dstwidth);
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++, srcbits+=3 )
+                                for( x = 0; x < width; x++, srcbits+=3 )
                                     *dstbits++ = ((DWORD)*srcbits) & 0x00ffffff;
                                 dstbits=(LPDWORD)(dbits+=dstwidthb);
                                 srcbits=(sbits+=srcwidthb);
@@ -688,11 +697,13 @@ INT WINAPI GetDIBits(
                         }
                         break;
 
-                    case 32: /* 32 bpp srcDIB -> 16 bpp dstDIB */
+                    case 32: /* 32 bpp srcDIB -> 32 bpp dstDIB */
                         {
+                            widthb = min(srcwidthb, abs(dstwidthb));
                             /* FIXME: BI_BITFIELDS not supported yet */
-                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
-                                memcpy(dbits, sbits, srcwidthb);
+                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb) {
+                                memcpy(dbits, sbits, widthb);
+                            }
                         }
                         break;
 
