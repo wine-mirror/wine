@@ -809,14 +809,93 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
 
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
 {
-    FIXME("%s\n", debugstr_a(szProduct));
-    return INSTALLSTATE_UNKNOWN;
+    LPWSTR szwProduct;
+    UINT len;
+    INSTALLSTATE rc;
+
+    len = MultiByteToWideChar(CP_ACP,0,szProduct,-1,NULL,0);
+    szwProduct = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP,0,szProduct,-1,szwProduct,len);
+    rc = MsiQueryProductStateW(szwProduct);
+    HeapFree(GetProcessHeap(),0,szwProduct);
+    return rc;
 }
 
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 {
-    FIXME("%s\n", debugstr_w(szProduct));
-    return INSTALLSTATE_UNKNOWN;
+    WCHAR squished_pc[0x100];
+    UINT rc;
+    INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
+    HKEY hkey=0,hkey2=0,hkey3=0;
+    static const WCHAR szInstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'I','n','s','t','a','l','l','e','r',0 };
+     static const WCHAR szUninstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'U','n','i','n','s','t','a','l','l',0 };
+    static const WCHAR szProducts[] = {
+         'P','r','o','d','u','c','t','s',0 };
+    static const WCHAR szWindowsInstaller[] = {
+         'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0 };
+    DWORD sz;
+
+    TRACE("%s\n", debugstr_w(szProduct));
+
+    squash_guid(szProduct,squished_pc);
+
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    rc = RegOpenKeyW(HKEY_CURRENT_USER,szInstaller,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    /* check the products key for the product */
+    rc = RegOpenKeyW(hkey,szProducts,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegOpenKeyW(hkey2,squished_pc,&hkey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
+    RegCloseKey(hkey);
+
+    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,szUninstaller,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegOpenKeyW(hkey,szProduct,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    sz = sizeof(rrc);
+    rc = RegQueryValueExW(hkey2,szWindowsInstaller,NULL,NULL,(LPVOID)&rrc, &sz);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    
+    switch (rrc)
+    {
+        case 1:
+            /* default */
+            rrc = INSTALLSTATE_DEFAULT;
+            break;
+        default:
+            FIXME("Unknown install state read from registry (%i)\n",rrc);
+            rrc = INSTALLSTATE_UNKNOWN;
+            break;
+    }
+end:
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
+    RegCloseKey(hkey);
+    return rrc;
 }
 
 INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
@@ -1297,7 +1376,8 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
     HeapFree( GetProcessHeap(), 0, szwComponent);
     if (lpwPathBuf)
     {
-        WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, incoming_len,
+        if (rc != INSTALLSTATE_UNKNOWN)
+            WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, incoming_len,
                             lpPathBuf, incoming_len, NULL, NULL);
         HeapFree( GetProcessHeap(), 0, lpwPathBuf);
     }
@@ -1311,7 +1391,7 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     WCHAR squished_pc[0x100];
     WCHAR squished_cc[0x100];
     UINT rc;
-    INSTALLSTATE rrc = INSTALLSTATE_ABSENT;
+    INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
     HKEY hkey=0,hkey2=0,hkey3=0;
     static const WCHAR szInstaller[] = {
          'S','o','f','t','w','a','r','e','\\',
@@ -1321,6 +1401,8 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
          'I','n','s','t','a','l','l','e','r',0 };
     static const WCHAR szComponents[] = {
          'C','o','m','p','o','n','e','n','t','s',0 };
+    static const WCHAR szProducts[] = {
+         'P','r','o','d','u','c','t','s',0 };
 
     TRACE("(%s %s %p %p)\n", debugstr_w(szProduct),
            debugstr_w(szComponent), lpPathBuf, pcchBuf);
@@ -1328,9 +1410,25 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     squash_guid(szProduct,squished_pc);
     squash_guid(szComponent,squished_cc);
 
+    TRACE("squished (%s:%s)\n", debugstr_w(squished_cc),
+           debugstr_w(squished_pc));
+
     rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
     if (rc != ERROR_SUCCESS)
         goto end;
+
+    /* check the products key for the product */
+    rc = RegOpenKeyW(hkey,szProducts,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegOpenKeyW(hkey2,squished_pc,&hkey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
 
     rc = RegOpenKeyW(hkey,szComponents,&hkey2);
     if (rc != ERROR_SUCCESS)
@@ -1354,6 +1452,8 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     FIXME("Only working for installed files, not registry keys\n");
     if (GetFileAttributesW(lpPathBuf) != INVALID_FILE_ATTRIBUTES)
         rrc = INSTALLSTATE_LOCAL;
+    else
+        rrc = INSTALLSTATE_ABSENT;
 
 end:
     RegCloseKey(hkey3);
