@@ -113,11 +113,13 @@ extern "C" {
 #define FAR         __ONLY_IN_WINELIB()
 #endif
 
-#ifndef _declspec
-#define _declspec(x)    __ONLY_IN_WINELIB()
-#endif
-#ifndef __declspec
-#define __declspec(x)   __ONLY_IN_WINELIB()
+#ifndef _MSC_VER
+# ifndef _declspec
+#  define _declspec(x)    __ONLY_IN_WINELIB()
+# endif
+# ifndef __declspec
+#  define __declspec(x)   __ONLY_IN_WINELIB()
+# endif
 #endif
 
 #define CALLBACK    __stdcall
