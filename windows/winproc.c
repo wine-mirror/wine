@@ -260,32 +260,30 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
     BYTE *ptr;
     WINDOWPROC *proc;
 
+    /* ptr cannot be < 64K */
+    if (!HIWORD(handle)) return NULL;
+
     /* Check for a linear pointer */
 
-    if (handle && HeapValidate( WinProcHeap, 0, (LPVOID)handle ))
-    {
-        ptr = (BYTE *)handle;
-        /* First check if it is the jmp address */
-        if (*ptr == 0xe9 /* jmp */) ptr -= (int)&((WINDOWPROC *)0)->jmp -
-                                           (int)&((WINDOWPROC *)0)->thunk;
-        /* Now it must be the thunk address */
-        if (*ptr == 0x58 /* popl eax */) ptr -= (int)&((WINDOWPROC *)0)->thunk;
-        /* Now we have a pointer to the WINDOWPROC struct */
-        if (((WINDOWPROC *)ptr)->magic == WINPROC_MAGIC)
-            return (WINDOWPROC *)ptr;
-    }
+    ptr = (BYTE *)handle;
+    /* First check if it is the jmp address */
+    proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->jmp);
+    if (HeapValidate( WinProcHeap, 0, proc ) && (proc->magic == WINPROC_MAGIC))
+        return proc;
+    /* Now it must be the thunk address */
+    proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->thunk);
+    if (HeapValidate( WinProcHeap, 0, proc ) && (proc->magic == WINPROC_MAGIC))
+        return proc;
 
     /* Check for a segmented pointer */
 
-    if (!IsBadReadPtr16((SEGPTR)handle,sizeof(WINDOWPROC)-sizeof(proc->thunk)))
+    if (!IsBadReadPtr16( (SEGPTR)handle, sizeof(proc->thunk) ))
     {
         ptr = (BYTE *)PTR_SEG_TO_LIN(handle);
-        if (!HeapValidate( WinProcHeap, 0, ptr )) return NULL;
         /* It must be the thunk address */
-        if (*ptr == 0x58 /* popl eax */) ptr -= (int)&((WINDOWPROC *)0)->thunk;
-        /* Now we have a pointer to the WINDOWPROC struct */
-        if (((WINDOWPROC *)ptr)->magic == WINPROC_MAGIC)
-            return (WINDOWPROC *)ptr;
+        proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->thunk);
+        if (HeapValidate( WinProcHeap, 0, proc ) && (proc->magic == WINPROC_MAGIC))
+            return proc;
     }
 
     return NULL;
