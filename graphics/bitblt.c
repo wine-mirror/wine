@@ -366,7 +366,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     }
 
     /* Replace non-transparent area on destination with black */
-    if(!BitBlt(hdcDest, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) {
+    if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) {
         TRACE("Failed to clear destination area\n");
         goto error;
     }
