@@ -50,16 +50,20 @@ extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS];
 Colormap X11DRV_PALETTE_PaletteXColormap = 0;
 UINT16   X11DRV_PALETTE_PaletteFlags     = 0;
 
-static int X11DRV_PALETTE_Redshift   = 0; /* to handle abortive X11DRV_PALETTE_VIRTUAL visuals */
-static int X11DRV_PALETTE_Redscale   = 0;
-static int X11DRV_PALETTE_Redmax     = 0;
-static int X11DRV_PALETTE_Greenshift = 0;
-static int X11DRV_PALETTE_Greenscale = 0;
-static int X11DRV_PALETTE_Greenmax   = 0;
-static int X11DRV_PALETTE_Blueshift  = 0;
-static int X11DRV_PALETTE_Bluescale  = 0;
-static int X11DRV_PALETTE_Bluemax    = 0;
-static int X11DRV_PALETTE_Graymax    = 0;
+typedef struct {
+    int shift;
+    int scale;
+    int max;
+} ColorShifts;
+
+/* initialize to zero to handle abortive X11DRV_PALETTE_VIRTUAL visuals */
+static ColorShifts X11DRV_PALETTE_PRed   = {0,0,0};
+static ColorShifts X11DRV_PALETTE_LRed   = {0,0,0};
+static ColorShifts X11DRV_PALETTE_PGreen = {0,0,0};
+static ColorShifts X11DRV_PALETTE_LGreen = {0,0,0};
+static ColorShifts X11DRV_PALETTE_PBlue  = {0,0,0};
+static ColorShifts X11DRV_PALETTE_LBlue  = {0,0,0};
+static int X11DRV_PALETTE_Graymax        = 0;
 
 static int palette_size;
 
@@ -87,7 +91,7 @@ int *X11DRV_PALETTE_XPixelToPalette = NULL;
 
 static BOOL X11DRV_PALETTE_BuildPrivateMap(void);
 static BOOL X11DRV_PALETTE_BuildSharedMap(void);
-static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, int *shift, int *max, int *scale);
+static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, ColorShifts *physical, ColorShifts *to_logical);
 static void X11DRV_PALETTE_FillDefaultColors(void);
 static void X11DRV_PALETTE_FormatSystemPalette(void);
 static BOOL X11DRV_PALETTE_CheckSysColor(COLORREF c);
@@ -191,10 +195,10 @@ int X11DRV_PALETTE_Init(void)
         X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
                                                             visual, AllocNone);
         X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-        X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_Redshift, &X11DRV_PALETTE_Redmax, &X11DRV_PALETTE_Redscale);
-	X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_Greenshift, &X11DRV_PALETTE_Greenmax, &X11DRV_PALETTE_Greenscale);
-        X11DRV_PALETTE_ComputeShifts(visual->blue_mask, &X11DRV_PALETTE_Blueshift, &X11DRV_PALETTE_Bluemax, &X11DRV_PALETTE_Bluescale);
-	break;
+        X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_PRed, &X11DRV_PALETTE_LRed);
+        X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_PGreen, &X11DRV_PALETTE_LGreen);
+        X11DRV_PALETTE_ComputeShifts(visual->blue_mask, &X11DRV_PALETTE_PBlue, &X11DRV_PALETTE_LBlue);
+        break;
       }
     }
 
@@ -240,26 +244,45 @@ void X11DRV_PALETTE_Cleanup(void)
  *
  * Calculate conversion parameters for direct mapped visuals
  */
-static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, int *shift, int *max, int *scale)
+static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, ColorShifts *physical, ColorShifts *to_logical)
 {
     int i;
 
     if (maskbits==0)
     {
-        *shift=0;
-        *max=0;
+        physical->shift=0;
+        physical->scale=0;
+        physical->max=0;
+        to_logical->shift=0;
+        to_logical->scale=0;
+        to_logical->max=0;
         return;
     }
 
     for(i=0;!(maskbits&1);i++)
         maskbits >>= 1;
 
-    *shift = i;
-    *max = maskbits;
+    physical->shift = i;
+    physical->max = maskbits;
 
     for(i=0;maskbits!=0;i++)
         maskbits >>= 1;
-    *scale = i;
+    physical->scale = i;
+
+    if (physical->scale>8)
+    {
+        /* On FreeBSD, VNC's default 32bpp mode is bgrabb (ffc00000,3ff800,7ff)!
+         * So we adjust the shifts to also normalize the color fields to
+         * the Win32 standard of 8 bits per color.
+         */
+        to_logical->shift=physical->shift+(physical->scale-8);
+        to_logical->scale=8;
+        to_logical->max=0xff;
+    } else {
+        to_logical->shift=physical->shift;
+        to_logical->scale=physical->scale;
+        to_logical->max=physical->max;
+    }
 }
 
 /***********************************************************************
@@ -625,11 +648,11 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 
 	 if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
 	 {
-            if (X11DRV_PALETTE_Redmax != 255) no_r = (red * X11DRV_PALETTE_Redmax) / 255;
-            if (X11DRV_PALETTE_Greenmax != 255) no_g = (green * X11DRV_PALETTE_Greenmax) / 255;
-            if (X11DRV_PALETTE_Bluemax != 255) no_b = (blue * X11DRV_PALETTE_Bluemax) / 255;
+            if (X11DRV_PALETTE_PRed.max != 255) no_r = (red * X11DRV_PALETTE_PRed.max) / 255;
+            if (X11DRV_PALETTE_PGreen.max != 255) no_g = (green * X11DRV_PALETTE_PGreen.max) / 255;
+            if (X11DRV_PALETTE_PBlue.max != 255) no_b = (blue * X11DRV_PALETTE_PBlue.max) / 255;
 
-            X11DRV_PALETTE_PaletteToXPixel[idx] = (no_r << X11DRV_PALETTE_Redshift) | (no_g << X11DRV_PALETTE_Greenshift) | (no_b << X11DRV_PALETTE_Blueshift);
+            X11DRV_PALETTE_PaletteToXPixel[idx] = (no_r << X11DRV_PALETTE_PRed.shift) | (no_g << X11DRV_PALETTE_PGreen.shift) | (no_b << X11DRV_PALETTE_PBlue.shift);
 	 }
 	 else if( !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) )
 	 {
@@ -696,15 +719,19 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 
     if ( (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) && !X11DRV_PALETTE_Graymax )
     {
-         color.red = (pixel >> X11DRV_PALETTE_Redshift) & X11DRV_PALETTE_Redmax;
-         color.green = (pixel >> X11DRV_PALETTE_Greenshift) & X11DRV_PALETTE_Greenmax;
-         color.blue = (pixel >> X11DRV_PALETTE_Blueshift) & X11DRV_PALETTE_Bluemax;
-         return RGB(color.red   << (8-X11DRV_PALETTE_Redscale)   |
-                    color.red   >> (2*X11DRV_PALETTE_Redscale-8),
-                    color.green << (8-X11DRV_PALETTE_Greenscale) |
-                    color.green >> (2*X11DRV_PALETTE_Greenscale-8),
-                    color.blue  << (8-X11DRV_PALETTE_Bluescale)  |
-                    color.blue  >> (2*X11DRV_PALETTE_Bluescale-8));
+         color.red = (pixel >> X11DRV_PALETTE_LRed.shift) & X11DRV_PALETTE_LRed.max;
+         if (X11DRV_PALETTE_LRed.scale<8)
+             color.red=  color.red   << (8-X11DRV_PALETTE_LRed.scale) |
+                         color.red   >> (2*X11DRV_PALETTE_LRed.scale-8);
+         color.green = (pixel >> X11DRV_PALETTE_LGreen.shift) & X11DRV_PALETTE_LGreen.max;
+         if (X11DRV_PALETTE_LGreen.scale<8)
+             color.green=color.green << (8-X11DRV_PALETTE_LGreen.scale) |
+                         color.green >> (2*X11DRV_PALETTE_LGreen.scale-8);
+         color.blue = (pixel >> X11DRV_PALETTE_LBlue.shift) & X11DRV_PALETTE_LBlue.max;
+         if (X11DRV_PALETTE_LBlue.scale<8)
+             color.blue= color.blue  << (8-X11DRV_PALETTE_LBlue.scale)  |
+                         color.blue  >> (2*X11DRV_PALETTE_LBlue.scale-8);
+                 return RGB(color.red,color.green,color.blue);
     }
 
     /* check if we can bypass X */
@@ -789,15 +816,24 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	else
         {
 	    /* scale each individually and construct the TrueColor pixel value */
-	    if (X11DRV_PALETTE_Redscale != 8)
-		red = red >> (8-X11DRV_PALETTE_Redscale);
-	    if (X11DRV_PALETTE_Greenscale != 8)
-		green = green >> (8-X11DRV_PALETTE_Greenscale);
-	    if (X11DRV_PALETTE_Bluescale != 8)
-		blue = blue >> (8-X11DRV_PALETTE_Bluescale);
+	    if (X11DRV_PALETTE_PRed.scale < 8)
+		red = red >> (8-X11DRV_PALETTE_PRed.scale);
+	    else if (X11DRV_PALETTE_PRed.scale > 8)
+		red =   red   << (X11DRV_PALETTE_PRed.scale-8) |
+                        red   >> (16-X11DRV_PALETTE_PRed.scale);
+	    if (X11DRV_PALETTE_PGreen.scale < 8)
+		green = green >> (8-X11DRV_PALETTE_PGreen.scale);
+	    else if (X11DRV_PALETTE_PGreen.scale > 8)
+		green = green << (X11DRV_PALETTE_PGreen.scale-8) |
+                        green >> (16-X11DRV_PALETTE_PGreen.scale);
+	    if (X11DRV_PALETTE_PBlue.scale < 8)
+		blue =  blue  >> (8-X11DRV_PALETTE_PBlue.scale);
+	    else if (X11DRV_PALETTE_PBlue.scale > 8)
+		blue =  blue  << (X11DRV_PALETTE_PBlue.scale-8) |
+                        blue  >> (16-X11DRV_PALETTE_PBlue.scale);
 
 	    GDI_ReleaseObj( hPal );
-            return (red << X11DRV_PALETTE_Redshift) | (green << X11DRV_PALETTE_Greenshift) | (blue << X11DRV_PALETTE_Blueshift);
+            return (red << X11DRV_PALETTE_PRed.shift) | (green << X11DRV_PALETTE_PGreen.shift) | (blue << X11DRV_PALETTE_PBlue.shift);
         }
     }
     else 
