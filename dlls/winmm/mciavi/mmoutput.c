@@ -563,7 +563,10 @@ void MCIAVI_PlayAudioBlocks(WINE_MCIAVI* wma, unsigned nHdr, LPWAVEHDR waveHdr)
 	ResetEvent(wma->hEvent);
 	if (InterlockedDecrement(&wma->dwEventCount) < 0 ||
 	    !wma->lpAudioIndex[wma->dwCurrAudioBlock].dwOffset)
+        {
+            InterlockedIncrement(&wma->dwEventCount);
 	    break;
+        }
 
 	mmioSeek(wma->hFile, wma->lpAudioIndex[wma->dwCurrAudioBlock].dwOffset, SEEK_SET);
 	mmioRead(wma->hFile, waveHdr[whidx].lpData, wma->lpAudioIndex[wma->dwCurrAudioBlock].dwSize);
@@ -573,7 +576,6 @@ void MCIAVI_PlayAudioBlocks(WINE_MCIAVI* wma, unsigned nHdr, LPWAVEHDR waveHdr)
 	waveOutWrite(wma->hWave, &waveHdr[whidx], sizeof(WAVEHDR));
 	wma->dwCurrAudioBlock++;
     }
-    InterlockedIncrement(&wma->dwEventCount);
 }
 
 LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
