@@ -1714,27 +1714,24 @@ int MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
  */
 char *MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
 {
-  int    cc;
+  int    cc = MSVCRT_EOF;
   char * buf_start = s;
 
   TRACE(":file(%p) fd (%d) str (%p) len (%d)\n",
 	file,file->_file,s,size);
 
-  for(cc = MSVCRT_fgetc(file); cc != MSVCRT_EOF && cc != '\n';
-      cc = MSVCRT_fgetc(file))
-    /* _read already handled the translation */
+  while ((size >1) && (cc = MSVCRT_fgetc(file)) != MSVCRT_EOF && cc != '\n')
     {
-      if (--size <= 0) break;
       *s++ = (char)cc;
+      size --;
     }
   if ((cc == MSVCRT_EOF) && (s == buf_start)) /* If nothing read, return 0*/
   {
     TRACE(":nothing read\n");
-    return 0;
+    return NULL;
   }
-  if (cc == '\n')
-    if (--size > 0)
-      *s++ = '\n';
+  if ((cc != MSVCRT_EOF) && (size > 1))
+    *s++ = cc;
   *s = '\0';
   TRACE(":got '%s'\n", debugstr_a(buf_start));
   return buf_start;
@@ -1797,29 +1794,26 @@ MSVCRT_wint_t MSVCRT_getwchar(void)
  */
 MSVCRT_wchar_t *MSVCRT_fgetws(MSVCRT_wchar_t *s, int size, MSVCRT_FILE* file)
 {
-  int    cc;
+  int    cc = MSVCRT_WEOF;
   MSVCRT_wchar_t * buf_start = s;
 
   TRACE(":file(%p) fd (%d) str (%p) len (%d)\n",
         file,file->_file,s,size);
 
-  for(cc = MSVCRT_fgetwc(file); cc != MSVCRT_WEOF && cc != L'\n';
-      cc = MSVCRT_fgetwc(file))
-    /* _read already handled the translation */
+  while ((size >1) && (cc = MSVCRT_fgetwc(file)) != MSVCRT_WEOF && cc != '\n')
     {
-      if (--size <= 0) break;
-      *s++ = cc;
+      *s++ = (char)cc;
+      size --;
     }
-  if ((cc == MSVCRT_EOF) && (s == buf_start)) /* If nothing read, return 0*/
+  if ((cc == MSVCRT_WEOF) && (s == buf_start)) /* If nothing read, return 0*/
   {
     TRACE(":nothing read\n");
-    return 0;
+    return NULL;
   }
-  if (cc == L'\n')
-    if (--size > 0)
-      *s++ = '\n';
-  *s = '\0';
-/*  TRACE(":got '%s'\n", buf_start); */
+  if ((cc != MSVCRT_WEOF) && (size > 1))
+    *s++ = cc;
+  *s = 0;
+  TRACE(":got %s\n", debugstr_w(buf_start));
   return buf_start;
 }
 
