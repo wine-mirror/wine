@@ -1646,7 +1646,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
             nSocket = ((LPWININETFILE)lpwh)->nDataSocket;
             if (nSocket != -1)
             {
-                int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, 0);
+                int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, MSG_WAITALL);
                 retval = (res >= 0);
                 *dwNumOfBytesRead = retval ? res : 0;
             }
