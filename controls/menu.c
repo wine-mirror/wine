@@ -2636,7 +2636,10 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    /* fall through */
 		case WM_LBUTTONDBLCLK:
 		case WM_LBUTTONDOWN:
-		    fRemove = fEndMenu = !MENU_ButtonDown( &mt, hmenu, wFlags );
+		    /* If the message belongs to the menu, removes it from the queue */
+		    /* Else, end menu tracking */
+		    fRemove = MENU_ButtonDown( &mt, hmenu, wFlags );
+		    fEndMenu = !fRemove;
 		    break;
 		
 		case WM_RBUTTONUP:
