@@ -2131,7 +2131,7 @@ static HMENU MENU_PtMenu( HMENU hMenu, POINT16 pt )
  *           MENU_ExecFocusedItem
  *
  * Execute a menu item (for instance when user pressed Enter).
- * Return the wID of the executed item. Otherwise, zero indicating
+ * Return the wID of the executed item. Otherwise, -1 indicating
  * that no menu item wase executed;
  * Have to receive the flags for the TrackPopupMenu options to avoid
  * sending unwanted message.
@@ -2145,7 +2145,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
     TRACE("%p hmenu=0x%04x\n", pmt, hMenu);
 
     if (!menu || !menu->nItems || 
-	(menu->FocusedItem == NO_SELECTED_ITEM)) return 0;
+	(menu->FocusedItem == NO_SELECTED_ITEM)) return -1;
 
     item = &menu->items[menu->FocusedItem];
 
@@ -2172,7 +2172,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
     else
 	pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hMenu, TRUE, wFlags);
 
-    return 0;
+    return -1;
 }
 
 /***********************************************************************
@@ -2247,7 +2247,7 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
  *
  * Return the value of MENU_ExecFocusedItem if
  * the selected item was not a popup. Else open the popup.
- * A zero return value indicates that we go on with menu tracking.
+ * A -1 return value indicates that we go on with menu tracking.
  *
  */
 static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
@@ -2274,11 +2274,11 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 	    /* is a click on an already "poppped" item                 */
 	    /* Stop the menu tracking and close the opened submenus    */
 	    if((pmt->hTopMenu == hPtMenu) && (ptmenu->bTimeToHide == TRUE))
-		return 1;
+		return 0;
 	}
 	ptmenu->bTimeToHide = TRUE;
     }
-    return 0;
+    return -1;
 }
 
 
@@ -2579,7 +2579,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     MSG msg;
     POPUPMENU *menu;
     BOOL fRemove;
-    INT executedMenuId = 0;
+    INT executedMenuId = -1;
     MTRACKER mt;
     BOOL enterIdleSent = FALSE;
 
@@ -2649,8 +2649,8 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
                         executedMenuId = MENU_ButtonUp( &mt, hmenu, wFlags);
 
 			/* End the loop if executedMenuId is an item ID */
-			/* or if the job was done (executedMenuId = 1). */
-                        fEndMenu = fRemove = (executedMenuId != 0);
+			/* or if the job was done (executedMenuId = 0). */
+                        fEndMenu = fRemove = (executedMenuId != -1);
 		    }
                     /* No menu was selected by the mouse */
                     /* if the function was called by TrackPopupMenu, continue
@@ -2733,7 +2733,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    if (msg.wParam == '\r' || msg.wParam == ' ')
 		    {
                         executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu, wFlags);
-                        fEndMenu = (executedMenuId != 0);
+                        fEndMenu = (executedMenuId != -1);
 
 			break;
 		    }
@@ -2750,7 +2750,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    {
 			MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu, pos, TRUE );
                         executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu, wFlags);
-                        fEndMenu = (executedMenuId != 0);
+                        fEndMenu = (executedMenuId != -1);
 		    }
 		}		    
 		break;
@@ -2790,9 +2790,9 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     /* Reset the variable for hiding menu */
     menu->bTimeToHide = FALSE;
     
-    /* Returning the id of the selected menu.
+    /* Return 1 if executedMenuId != -1.
        The return value is only used by TrackPopupMenu */
-    return executedMenuId;
+    return ((executedMenuId != -1) ? 1 : 0);
 }
 
 /***********************************************************************
