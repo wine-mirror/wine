@@ -332,6 +332,8 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
         if ( --queue->lockCount == 0 )
         {
             DeleteCriticalSection ( &queue->cSection );
+            if (queue->hEvent)
+                CloseHandle( queue->hEvent );
             GlobalFree16( queue->self );
         }
     
@@ -449,6 +451,23 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
     
     InitializeCriticalSection( &msgQueue->cSection );
+
+    /* Create an Event object for waiting on message, used by win32 thread
+       only */
+    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    {
+        msgQueue->hEvent = CreateEvent32A( NULL, FALSE, FALSE, NULL);
+
+        if (msgQueue->hEvent == 0)
+        {
+            WARN(msg, "CreateEvent32A is not able to create an event object");
+            return 0;
+        }
+        msgQueue->hEvent = ConvertToGlobalHandle( msgQueue->hEvent );
+    }
+    else
+        msgQueue->hEvent = 0;
+         
     msgQueue->lockCount = 1;
     msgQueue->magic = QUEUE_MAGIC;
     
@@ -561,16 +580,6 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
     return sysMsgQueue;
 }
 
-/***********************************************************************
- *           QUEUE_Signal
- */
-void QUEUE_Signal( THDB *thdb  )
-{
-    /* Wake up thread waiting for message */
-    SetEvent( thdb->event );
-
-    PostEvent( thdb->process->task );
-}
 
 /***********************************************************************
  *           QUEUE_Wait
@@ -604,7 +613,14 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
     if (queue->wakeMask & bit)
     {
         queue->wakeMask = 0;
-        QUEUE_Signal( queue->thdb );
+        
+        /* Wake up thread waiting for message */
+        if ( THREAD_IsWin16( queue->thdb ) )
+            PostEvent( queue->thdb->process->task );
+        else
+        {
+            SetEvent( queue->hEvent );
+        }
     }
 }
 

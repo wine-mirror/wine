@@ -847,7 +847,7 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
-    MSG16 msg;
+    MSG32 msg;
     INT32 retval;
 
       /* Owner must be a top-level window */
@@ -860,10 +860,10 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
     while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, PM_REMOVE,
                                   !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {
-	if (!IsDialogMessage16( hwnd, &msg))
+	if (!IsDialogMessage32A( hwnd, &msg))
 	{
-	    TranslateMessage16( &msg );
-	    DispatchMessage16( &msg );
+	    TranslateMessage32( &msg );
+	    DispatchMessage32A( &msg );
 	}
 	if (dlgInfo->flags & DF_END) break;
     }

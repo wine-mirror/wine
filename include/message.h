@@ -14,7 +14,7 @@
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
 /* message.c */
-extern BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd,
+extern BOOL32 MSG_InternalGetMessage( MSG32 *msg, HWND32 hwnd,
                                       HWND32 hwndOwner, WPARAM32 code,
                                       WORD flags, BOOL32 sendIdle );
 
@@ -24,7 +24,7 @@ extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern void TIMER_SwitchQueue( HQUEUE16 hOldQueue, HQUEUE16 hNewQueue );
 extern LONG TIMER_GetNextExpiration(void);
 extern void TIMER_ExpireTimers(void);
-extern BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
+extern BOOL32 TIMER_GetTimerMsg( MSG32 *msg, HWND32 hwnd,
                                  HQUEUE16 hQueue, BOOL32 remove );
 
 #define EVENT_IO_READ		0

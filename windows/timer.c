@@ -187,7 +187,7 @@ void TIMER_ExpireTimers(void)
  *
  * Build a message for an expired timer.
  */
-BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
+BOOL32 TIMER_GetTimerMsg( MSG32 *msg, HWND32 hwnd,
                           HQUEUE16 hQueue, BOOL32 remove )
 {
     TIMER *pTimer = pNextTimer;
@@ -205,9 +205,9 @@ BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
 		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
       /* Build the message */
-    msg->hwnd    = (HWND16)pTimer->hwnd;
+    msg->hwnd    = pTimer->hwnd;
     msg->message = pTimer->msg;
-    msg->wParam  = (UINT16)pTimer->id;
+    msg->wParam  = pTimer->id;
     msg->lParam  = (LONG)pTimer->proc;
     msg->time    = curTime;
     return TRUE;

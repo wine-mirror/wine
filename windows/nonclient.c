@@ -1881,7 +1881,7 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 {
     LONG hittest = 0;
     POINT16 pt;
-    MSG16 msg;
+    MSG32 msg;
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
@@ -1910,8 +1910,8 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
-		hittest = NC_HandleNCHitTest( wndPtr->hwndSelf, msg.pt );
-		pt = msg.pt;
+                CONV_POINT32TO16(&msg.pt, &pt);
+                hittest = NC_HandleNCHitTest( wndPtr->hwndSelf, pt );
 		if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
 		    hittest = 0;
 		break;
@@ -1959,11 +1959,11 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 /***********************************************************************
  *           NC_DoSizeMove
  *
- * Perform SC_MOVE and SC_SIZE commands.
+ * Perform SC_MOVE and SC_SIZE commands.               `
  */
 static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
 {
-    MSG16 msg;
+    MSG32 msg;
     RECT32 sizingRect, mouseRect;
     HDC32 hdc;
     LONG hittest = (LONG)(wParam & 0x0f);
@@ -2201,7 +2201,8 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
  */
 static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 {
-    MSG16 msg;
+    MSG32 msg;
+    POINT16 pt16;
     HDC32 hdc = GetWindowDC32( hwnd );
     BOOL32 pressed = TRUE;
     void  (*paintButton)(HWND32, HDC16, BOOL32);
@@ -2220,8 +2221,9 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
     {
 	BOOL32 oldstate = pressed;
         MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
+        CONV_POINT32TO16( &msg.pt, &pt16 );
 
-	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
+	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
 	if (pressed != oldstate)
 	   (*paintButton)( hwnd, hdc, pressed );
     } while (msg.message != WM_LBUTTONUP);
@@ -2233,10 +2235,10 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
     if (!pressed) return;
 
     if (wParam == HTMINBUTTON) 
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&msg.pt );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&pt16 );
     else
 	SendMessage16( hwnd, WM_SYSCOMMAND, 
-		  IsZoomed32(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&msg.pt );
+		  IsZoomed32(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&pt16 );
 }
 
 
@@ -2248,7 +2250,8 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 static void
 NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
 {
-    MSG16 msg;
+    MSG32 msg;
+    POINT16 pt16;
     HDC32 hdc = GetWindowDC32( hwnd );
     BOOL32 pressed = TRUE;
 
@@ -2260,8 +2263,9 @@ NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
     {
 	BOOL32 oldstate = pressed;
         MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
+        CONV_POINT32TO16( &msg.pt, &pt16 );
 
-	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
+	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
 	if (pressed != oldstate)
 	   NC_DrawCloseButton95 (hwnd, hdc, pressed);
     } while (msg.message != WM_LBUTTONUP);
@@ -2272,7 +2276,7 @@ NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
     ReleaseDC32( hwnd, hdc );
     if (!pressed) return;
 
-    SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, *(LONG*)&msg.pt );
+    SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, *(LONG*)&pt16 );
 }
 
 

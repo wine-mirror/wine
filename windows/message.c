@@ -33,6 +33,7 @@
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
 
+    
 typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, 
                SYSQ_MSG_ACCEPT, SYSQ_MSG_CONTINUE } SYSQ_STATUS;
 
@@ -46,10 +47,10 @@ static INT32 debugSMRL = 0;       /* intertask SendMessage() recursion level */
 /***********************************************************************
  *           MSG_CheckFilter
  */
-BOOL32 MSG_CheckFilter(WORD uMsg, DWORD filter)
+BOOL32 MSG_CheckFilter(DWORD uMsg, DWORD first, DWORD last)
 {
-   if( filter )
-       return (uMsg >= LOWORD(filter) && uMsg <= HIWORD(filter));
+   if( first || last )
+       return (uMsg >= first && uMsg <= last);
    return TRUE;
 }
 
@@ -87,8 +88,8 @@ static void MSG_SendParentNotify(WND* wndPtr, WORD event, WORD idChild, LPARAM l
  * to the user, left in the queue, or skipped entirely (in this case
  * HIWORD contains hit test code).
  */
-static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter, 
-				    MSG16 *msg, BOOL32 remove, WND* pWndScope )
+static DWORD MSG_TranslateMouseMsg( HWND32 hTopWnd, DWORD first, DWORD last,
+				    MSG32 *msg, BOOL32 remove, WND* pWndScope )
 {
     static DWORD   dblclk_time_limit = 0;
     static UINT16     clk_message = 0;
@@ -96,9 +97,9 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
     static POINT16    clk_pos = { 0, 0 };
 
     WND *pWnd;
-    HWND16 hWnd;
+    HWND32 hWnd;
     INT16 ht, hittest, sendSC = 0;
-    UINT16 message = msg->message;
+    UINT32 message = msg->message;
     POINT16 screen_pt, pt;
     HANDLE16 hQ = GetFastQueue();
     MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock(hQ);
@@ -110,11 +111,13 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
 
       /* Find the window */
 
+    CONV_POINT32TO16( &msg->pt, &pt );
+    
     ht = hittest = HTCLIENT;
-    hWnd = GetCapture16();
+    hWnd = GetCapture32();
     if( !hWnd )
     {
-	ht = hittest = WINPOS_WindowFromPoint( pWndScope, msg->pt, &pWnd );
+	ht = hittest = WINPOS_WindowFromPoint( pWndScope, pt, &pWnd );
 	if( !pWnd ) pWnd = WIN_GetDesktop();
 	hWnd = pWnd->hwndSelf;
 	sendSC = 1;
@@ -144,7 +147,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
 	/* check if hWnd is within hWndScope */
 
     if( hTopWnd && hWnd != hTopWnd )
-        if( !IsChild16(hTopWnd, hWnd) )
+        if( !IsChild32(hTopWnd, hWnd) )
         {
             QUEUE_Unlock( queue );
             return SYSQ_MSG_CONTINUE;
@@ -168,18 +171,18 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
 	   }
 	}
     }
-    screen_pt = pt = msg->pt;
+    screen_pt = pt;
 
     if (hittest != HTCLIENT)
     {
-	message += ((INT16)WM_NCMOUSEMOVE - WM_MOUSEMOVE);
+	message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
 	msg->wParam = hittest;
     }
     else ScreenToClient16( hWnd, &pt );
 
 	/* check message filter */
 
-    if (!MSG_CheckFilter(message, filter))
+    if (!MSG_CheckFilter(message, first, last))
     {
         QUEUE_Unlock(queue);
         return SYSQ_MSG_CONTINUE;
@@ -230,20 +233,20 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
 	     * notification message is still WM_L/M/RBUTTONDOWN.
 	     */
 
-            MSG_SendParentNotify( pWnd, msg->message, 0, MAKELPARAM(screen_pt.x, screen_pt.y) );
+            MSG_SendParentNotify( pWnd, msg->message & 0xffff, 0, MAKELPARAM(screen_pt.x, screen_pt.y) );
 
             /* Activate the window if needed */
 
-            if (hWnd != GetActiveWindow16() && hWnd != GetDesktopWindow16())
+            if (hWnd != GetActiveWindow32() && hWnd != GetDesktopWindow32())
             {
-                LONG ret = SendMessage16( hWnd, WM_MOUSEACTIVATE, hwndTop,
+                LONG ret = SendMessage32A( hWnd, WM_MOUSEACTIVATE, hwndTop,
                                           MAKELONG( hittest, message ) );
 
                 if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
                          eatMsg = TRUE;
 
                 if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
-                      && hwndTop != GetActiveWindow16() )
+                      && hwndTop != GetActiveWindow32() )
                       if (!WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE ))
 			 eatMsg = TRUE;
             }
@@ -253,7 +256,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
      /* Send the WM_SETCURSOR message */
 
     if (sendSC)
-        SendMessage16( hWnd, WM_SETCURSOR, (WPARAM16)hWnd,
+        SendMessage32A( hWnd, WM_SETCURSOR, hWnd,
                        MAKELONG( hittest, message ));
     if (eatMsg) return MAKELONG( (UINT16)SYSQ_MSG_SKIP, hittest);
 
@@ -269,11 +272,11 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
  *
  * Translate an keyboard hardware event into a real message.
  */
-static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
-				  MSG16 *msg, BOOL32 remove )
+static DWORD MSG_TranslateKbdMsg( HWND32 hTopWnd, DWORD first, DWORD last,
+				  MSG32 *msg, BOOL32 remove )
 {
     WORD message = msg->message;
-    HWND16 hWnd = GetFocus16();
+    HWND32 hWnd = GetFocus32();
     WND *pWnd;
 
       /* Should check Ctrl-Esc and PrintScreen here */
@@ -283,7 +286,7 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
 	  /* Send the message to the active window instead,  */
 	  /* translating messages to their WM_SYS equivalent */
 
-	hWnd = GetActiveWindow16();
+	hWnd = GetActiveWindow32();
 
 	if( message < WM_SYSKEYDOWN )
 	    message += WM_SYSKEYDOWN - WM_KEYDOWN;
@@ -304,14 +307,14 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
     }
 
     if (hTopWnd && hWnd != hTopWnd)
-	if (!IsChild16(hTopWnd, hWnd)) return SYSQ_MSG_CONTINUE;
-    if (!MSG_CheckFilter(message, filter)) return SYSQ_MSG_CONTINUE;
+	if (!IsChild32(hTopWnd, hWnd)) return SYSQ_MSG_CONTINUE;
+    if (!MSG_CheckFilter(message, first, last)) return SYSQ_MSG_CONTINUE;
 
     msg->hwnd = hWnd;
     msg->message = message;
 
     return (HOOK_CallHooks16( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
-			      msg->wParam, msg->lParam )
+			      LOWORD (msg->wParam), msg->lParam )
             ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT);
 }
 
@@ -321,9 +324,9 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
  *
  * Build an EVENTMSG structure and call JOURNALRECORD hook
  */
-static void MSG_JournalRecordMsg( MSG16 *msg )
+static void MSG_JournalRecordMsg( MSG32 *msg )
 {
-    EVENTMSG16 *event = SEGPTR_NEW(EVENTMSG16);
+    EVENTMSG32 *event = (EVENTMSG32 *) HeapAlloc(SystemHeap, 0, sizeof(EVENTMSG32));
     if (!event) return;
     event->message = msg->message;
     event->time = msg->time;
@@ -333,16 +336,14 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
         event->paramH = msg->lParam & 0x7FFF;  
         if (HIWORD(msg->lParam) & 0x0100)
             event->paramH |= 0x8000;               /* special_key - bit */
-        HOOK_CallHooks16( WH_JOURNALRECORD, HC_ACTION, 0,
-                          (LPARAM)SEGPTR_GET(event) );
+        HOOK_CallHooks32A( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
     }
     else if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
     {
         event->paramL = LOWORD(msg->lParam);       /* X pos */
         event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
         ClientToScreen16( msg->hwnd, (LPPOINT16)&event->paramL );
-        HOOK_CallHooks16( WH_JOURNALRECORD, HC_ACTION, 0,
-                          (LPARAM)SEGPTR_GET(event) );
+        HOOK_CallHooks32A( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
     }
     else if ((msg->message >= WM_NCMOUSEFIRST) &&
              (msg->message <= WM_NCMOUSELAST))
@@ -350,10 +351,10 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
         event->paramL = LOWORD(msg->lParam);       /* X pos */
         event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
         event->message += WM_MOUSEMOVE-WM_NCMOUSEMOVE;/* give no info about NC area */
-        HOOK_CallHooks16( WH_JOURNALRECORD, HC_ACTION, 0,
-                          (LPARAM)SEGPTR_GET(event) );
+        HOOK_CallHooks32A( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
     }
-    SEGPTR_FREE(event);
+    
+    HeapFree(SystemHeap, 0, event);
 }
 
 /***********************************************************************
@@ -363,15 +364,17 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
  */
 static int MSG_JournalPlayBackMsg(void)
 {
- EVENTMSG16 *tmpMsg;
- long wtime,lParam;
- WORD keyDown,i,wParam,result=0;
+ EVENTMSG32 *tmpMsg;
+ long wtime,lParam,wParam;
+ WORD keyDown,i,result=0;
 
  if ( HOOK_IsHooked( WH_JOURNALPLAYBACK ) )
  {
-  tmpMsg = SEGPTR_NEW(EVENTMSG16);
-  wtime=HOOK_CallHooks16( WH_JOURNALPLAYBACK, HC_GETNEXT, 0,
-			  (LPARAM)SEGPTR_GET(tmpMsg));
+  tmpMsg = (EVENTMSG32 *) HeapAlloc(SystemHeap, 0, sizeof(EVENTMSG32));
+  if (!tmpMsg) return result;
+  
+  wtime=HOOK_CallHooks32A( WH_JOURNALPLAYBACK, HC_GETNEXT, 0,
+                           (LPARAM) tmpMsg );
   /*  TRACE(msg,"Playback wait time =%ld\n",wtime); */
   if (wtime<=0)
   {
@@ -398,7 +401,8 @@ static int MSG_JournalPlayBackMsg(void)
        lParam |= 0x20000000;     
      if (tmpMsg->paramH & 0x8000)              /*special_key bit*/
        lParam |= 0x01000000;
-     hardware_event( tmpMsg->message, wParam, lParam,0, 0, tmpMsg->time, 0 );     
+     hardware_event( tmpMsg->message & 0xffff, LOWORD(wParam), lParam,
+                     0, 0, tmpMsg->time, 0 );
    }
    else
    {
@@ -428,22 +432,23 @@ static int MSG_JournalPlayBackMsg(void)
      if (MouseButtonsStates[0]) wParam |= MK_LBUTTON;
      if (MouseButtonsStates[1]) wParam |= MK_MBUTTON;
      if (MouseButtonsStates[2]) wParam |= MK_RBUTTON;
-     hardware_event( tmpMsg->message, wParam, lParam,  
+     hardware_event( tmpMsg->message & 0xffff, LOWORD (wParam), lParam,
                      tmpMsg->paramL, tmpMsg->paramH, tmpMsg->time, 0 );
     }
    }
-   HOOK_CallHooks16( WH_JOURNALPLAYBACK, HC_SKIP, 0,
-		     (LPARAM)SEGPTR_GET(tmpMsg));
+   HOOK_CallHooks32A( WH_JOURNALPLAYBACK, HC_SKIP, 0,
+                      (LPARAM) tmpMsg);
   }
   else
   {
+      
     if( tmpMsg->message == WM_QUEUESYNC )
         if (HOOK_IsHooked( WH_CBT ))
-            HOOK_CallHooks16( WH_CBT, HCBT_QS, 0, 0L);
+            HOOK_CallHooks32A( WH_CBT, HCBT_QS, 0, 0L);
 
     result= QS_MOUSE | QS_KEY; /* ? */
   }
-  SEGPTR_FREE(tmpMsg);
+  HeapFree(SystemHeap, 0, tmpMsg);
  }
  return result;
 } 
@@ -453,7 +458,7 @@ static int MSG_JournalPlayBackMsg(void)
  *
  * Peek for a hardware message matching the hwnd and message filters.
  */
-static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
+static BOOL32 MSG_PeekHardwareMsg( MSG32 *msg, HWND32 hwnd, DWORD first, DWORD last,
                                    BOOL32 remove )
 {
     /* FIXME: should deal with MSG32 instead of MSG16 */
@@ -474,9 +479,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
     for ( kbd_msg = 0; qmsg; qmsg = nextqmsg)
     {
 
-        /* FIXME: this line will be reenabled when msg will be a MSG32 */
-        /* *msg = qmsg->msg; */
-        STRUCT32_MSG32to16(&qmsg->msg, msg);
+        *msg = qmsg->msg;
 
         nextqmsg = qmsg->nextMsg;
 
@@ -486,14 +489,14 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
         {
             HWND32 hWndScope = (HWND32)qmsg->extraInfo;
 
-	    status = MSG_TranslateMouseMsg(hwnd, filter, msg, remove, 
+	    status = MSG_TranslateMouseMsg(hwnd, first, last, msg, remove,
 					  (Options.managed && IsWindow32(hWndScope) ) 
 					   ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop() );
 	    kbd_msg = 0;
         }
         else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
         {
-            status = MSG_TranslateKbdMsg(hwnd, filter, msg, remove);
+            status = MSG_TranslateKbdMsg(hwnd, first, last, msg, remove);
 	    kbd_msg = 1;
         }
         else /* Non-standard hardware event */
@@ -503,8 +506,8 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
             {
                 BOOL32 ret;
                 hook->hWnd     = msg->hwnd;
-                hook->wMessage = msg->message;
-                hook->wParam   = msg->wParam;
+                hook->wMessage = msg->message & 0xffff;
+                hook->wParam   = LOWORD (msg->wParam);
                 hook->lParam   = msg->lParam;
                 ret = HOOK_CallHooks16( WH_HARDWARE,
                                         remove ? HC_ACTION : HC_NOREMOVE,
@@ -529,17 +532,17 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
                 {
                    if( kbd_msg )
 		       HOOK_CallHooks16( WH_CBT, HCBT_KEYSKIPPED, 
-						 msg->wParam, msg->lParam );
+                                         LOWORD (msg->wParam), msg->lParam );
 		   else
 		   {
                        MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
                        if (hook)
                        {
-                           hook->pt           = msg->pt;
+                           CONV_POINT32TO16( &msg->pt,&hook->pt );
                            hook->hwnd         = msg->hwnd;
                            hook->wHitTestCode = HIWORD(status);
                            hook->dwExtraInfo  = 0;
-                           HOOK_CallHooks16( WH_CBT, HCBT_CLICKSKIPPED ,msg->message,
+                           HOOK_CallHooks16( WH_CBT, HCBT_CLICKSKIPPED ,msg->message & 0xffff,
                                           (LPARAM)SEGPTR_GET(hook) );
                            SEGPTR_FREE(hook);
                        }
@@ -566,7 +569,6 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
     }
     return FALSE;
 }
-
 
 
 /**********************************************************************
@@ -747,12 +749,13 @@ void WINAPI ReplyMessage16( LRESULT result )
 /***********************************************************************
  *           MSG_PeekMessage
  */
-static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
+static BOOL32 MSG_PeekMessage( LPMSG32 msg, HWND32 hwnd, DWORD first, DWORD last,
                                WORD flags, BOOL32 peek )
 {
     int mask;
     MESSAGEQUEUE *msgQueue;
     HQUEUE16 hQueue;
+    POINT16 pt16;
 
 #ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
@@ -809,12 +812,11 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
         if (((msgQueue->wakeBits & mask) & QS_POSTMESSAGE) &&
             ((qmsg = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != 0))
         {
-            /* FIXME: this line will be reenabled when msg will be a MSG32 */
-            /* *msg = qmsg->msg; */
-            STRUCT32_MSG32to16(&qmsg->msg, msg);
+            *msg = qmsg->msg;
             
             msgQueue->GetMessageTimeVal      = msg->time;
-            msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
+            CONV_POINT32TO16(&msg->pt, &pt16);
+            msgQueue->GetMessagePosVal       = *(DWORD *)&pt16;
             msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
             if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, qmsg );
@@ -826,11 +828,12 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
         /* Now find a hardware event */
 
         if (((msgQueue->wakeBits & mask) & (QS_MOUSE | QS_KEY)) &&
-            MSG_PeekHardwareMsg( msg, hwnd, MAKELONG(first,last), flags & PM_REMOVE ))
+            MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
         {
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
-	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
+            CONV_POINT32TO16(&msg->pt, &pt16);
+	    msgQueue->GetMessagePosVal       = *(DWORD *)&pt16;
 	    msgQueue->GetMessageExtraInfoVal = 0;  /* Always 0 for now */
             break;
         }
@@ -920,7 +923,6 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
     else return (msg->message != WM_QUIT);
 }
 
-
 /***********************************************************************
  *           MSG_InternalGetMessage
  *
@@ -929,7 +931,7 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
+BOOL32 MSG_InternalGetMessage( MSG32 *msg, HWND32 hwnd, HWND32 hwndOwner,
                                WPARAM32 code, WORD flags, BOOL32 sendIdle ) 
 {
     for (;;)
@@ -940,7 +942,7 @@ BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow32(hwndOwner))
-                    SendMessage16( hwndOwner, WM_ENTERIDLE,
+                    SendMessage32A( hwndOwner, WM_ENTERIDLE,
                                    code, (LPARAM)hwnd );
 		MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
 	    }
@@ -952,16 +954,17 @@ BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
 
         if (HOOK_IsHooked( WH_SYSMSGFILTER ) || HOOK_IsHooked( WH_MSGFILTER ))
         {
-            MSG16 *pmsg = SEGPTR_NEW(MSG16);
+            MSG32 *pmsg = HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
             if (pmsg)
             {
                 BOOL32 ret;
                 *pmsg = *msg;
-                ret = ((BOOL16)HOOK_CallHooks16( WH_SYSMSGFILTER, code, 0,
-                                                 (LPARAM)SEGPTR_GET(pmsg) ) ||
-                       (BOOL16)HOOK_CallHooks16( WH_MSGFILTER, code, 0,
-                                                 (LPARAM)SEGPTR_GET(pmsg) ));
-                SEGPTR_FREE(pmsg);
+                ret = (HOOK_CallHooks32A( WH_SYSMSGFILTER, code, 0,
+                                          (LPARAM) pmsg ) ||
+                       HOOK_CallHooks32A( WH_MSGFILTER, code, 0,
+                                          (LPARAM) pmsg ));
+                       
+                HeapFree( SystemHeap, 0, pmsg );
                 if (ret)
                 {
                     /* Message filtered -> remove it from the queue */
@@ -981,10 +984,14 @@ BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
 /***********************************************************************
  *           PeekMessage16   (USER.109)
  */
-BOOL16 WINAPI PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
+BOOL16 WINAPI PeekMessage16( LPMSG16 lpmsg, HWND16 hwnd, UINT16 first,
                              UINT16 last, UINT16 flags )
 {
-    return MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
+    MSG32 msg32;
+    BOOL16 ret;
+    ret = PeekMessage32A(&msg32, hwnd, first, last, flags);
+    STRUCT32_MSG32to16(&msg32, lpmsg);
+    return ret;
 }
 
 /***********************************************************************
@@ -1024,12 +1031,7 @@ BOOL16 WINAPI WIN16_PeekMessage32( LPMSG16_32 lpmsg16_32, HWND16 hwnd,
 BOOL32 WINAPI PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
                               UINT32 min,UINT32 max,UINT32 wRemoveMsg)
 {
-	MSG16 msg;
-	BOOL32 ret;
-	ret=PeekMessage16(&msg,hwnd,min,max,wRemoveMsg);
-        /* FIXME: should translate the message to Win32 */
-	STRUCT32_MSG16to32(&msg,lpmsg);
-	return ret;
+    return MSG_PeekMessage( lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
 }
 
 /***********************************************************************
@@ -1075,14 +1077,18 @@ BOOL32 WINAPI PeekMessage32W(
  */
 BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 {
+    BOOL32 ret;
     MSG16 *lpmsg = (MSG16 *)PTR_SEG_TO_LIN(msg);
-    MSG_PeekMessage( lpmsg,
-                     hwnd, first, last, PM_REMOVE, FALSE );
+    MSG32 msg32;
+        
+    ret = GetMessage32A( &msg32, hwnd, first, last );
+
+    STRUCT32_MSG32to16( &msg32, lpmsg );
 
     TRACE(msg,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
 		     				                 hwnd, first, last );
-    HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
-    return (lpmsg->message != WM_QUIT);
+
+    return ret;
 }
 
 /***********************************************************************
@@ -1123,14 +1129,14 @@ BOOL16 WINAPI WIN16_GetMessage32( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
  */
 BOOL32 WINAPI GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 {
-    BOOL32 ret;
-    MSG16 *msg = SEGPTR_NEW(MSG16);
-    if (!msg) return 0;
-    ret=GetMessage16(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
-    /* FIXME */
-    STRUCT32_MSG16to32(msg,lpmsg);
-    SEGPTR_FREE(msg);
-    return ret;
+    MSG_PeekMessage( lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
+    
+    TRACE(msg,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
+          hwnd, min, max );
+    
+    HOOK_CallHooks32A( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)lpmsg );
+
+    return (lpmsg->message != WM_QUIT);
 }
 
 /***********************************************************************
@@ -1166,14 +1172,8 @@ BOOL32 WINAPI GetMessage32W(
   UINT32 min,   /* minimum message to receive */
   UINT32 max    /* maximum message to receive */
 ) {
-    BOOL32 ret;
-    MSG16 *msg = SEGPTR_NEW(MSG16);
-    if (!msg) return 0;
-    ret=GetMessage16(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
     /* FIXME */
-    STRUCT32_MSG16to32(msg,lpmsg);
-    SEGPTR_FREE(msg);
-    return ret;
+    return GetMessage32A(lpmsg, hwnd, min, max);
 }
 
 
@@ -1182,6 +1182,16 @@ BOOL32 WINAPI GetMessage32W(
  */
 BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
                              LPARAM lParam )
+{
+    return (BOOL16) PostMessage32A( hwnd, message, wParam, lParam );
+}
+
+
+/***********************************************************************
+ *           PostMessage32A   (USER32.419)
+ */
+BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                              LPARAM lParam )
 {
     MSG32       msg;
     WND 	*wndPtr;
@@ -1208,7 +1218,7 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
             {
                 TRACE(msg,"BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
                             wndPtr->hwndSelf, message, wParam, lParam);
-                PostMessage16( wndPtr->hwndSelf, message, wParam, lParam );
+                PostMessage32A( wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
         TRACE(msg,"End of HWND_BROADCAST !\n");
@@ -1223,32 +1233,13 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           PostMessage32A   (USER32.419)
- */
-BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                              LPARAM lParam )
-{
-  /* FIXME */
-  if (message&0xffff0000)
-    FIXME(msg,"message is truncated from %d to %d\n", message, message&0xffff);
-  if (wParam&0xffff0000)
-    FIXME(msg,"wParam is truncated from %d to %d\n", wParam, wParam&0xffff);
-  return PostMessage16( hwnd, message, wParam, lParam );
-}
-
-
-/***********************************************************************
  *           PostMessage32W   (USER32.420)
  */
 BOOL32 WINAPI PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
                               LPARAM lParam )
 {
   /* FIXME */
-  if (message&0xffff0000)
-    FIXME(msg,"message is truncated from %d to %d\n", message, message&0xffff);
-  if (wParam&0xffff0000)
-    FIXME(msg,"wParam is truncated from %d to %d\n", wParam, wParam&0xffff);
-  return PostMessage16( hwnd, message, wParam, lParam );
+  return PostMessage32A( hwnd, message, wParam, lParam );
 }
 
 
@@ -1382,11 +1373,21 @@ static void  MSG_CallWndProcHook32( LPMSG32 pmsg, BOOL32 bUnicode )
 BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
                                    WPARAM32 wParam, LPARAM lParam )
 {
-   THDB *thdb = THREAD_ID_TO_THDB(idThread);
-   if (!thdb || !thdb->process) return FALSE;
+    MSG32 msg;
+    HQUEUE16 hQueue;
 
-   FIXME(sendmsg, "(...): Should use thread-local message queue!\n");
-   return PostAppMessage16(thdb->process->task, message, wParam, lParam);
+    if ((hQueue = GetThreadQueue(idThread)) == 0)
+        return FALSE;
+    
+    msg.hwnd    = 0;
+    msg.message = message;
+    msg.wParam  = wParam;
+    msg.lParam  = lParam;
+    msg.time    = GetTickCount();
+    msg.pt.x    = 0;
+    msg.pt.y    = 0;
+
+    return QUEUE_AddMsg( hQueue, &msg, 0 );
 }
 
 /**********************************************************************
@@ -1400,11 +1401,8 @@ BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
 BOOL32 WINAPI PostThreadMessage32W(DWORD idThread , UINT32 message,
                                    WPARAM32 wParam, LPARAM lParam )
 {
-   THDB *thdb = THREAD_ID_TO_THDB(idThread);
-   if (!thdb || !thdb->process) return FALSE;
-
-   FIXME(sendmsg, "(...): Should use thread-local message queue!\n");
-   return PostAppMessage16(thdb->process->task, message, wParam, lParam);
+   FIXME(sendmsg, "(...): Should do unicode/ascii conversion!\n");
+   return PostThreadMessage32A(idThread, message, wParam, lParam);
 }
 
 /***********************************************************************
@@ -1596,9 +1594,9 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE32 *pHandles,
 {
     DWORD i;
     HANDLE32 handles[MAXIMUM_WAIT_OBJECTS];
+    DWORD ret;
 
-    TDB *currTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    HQUEUE16 hQueue = currTask? currTask->hQueue : 0;
+    HQUEUE16 hQueue = GetFastQueue();
     MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
     if (!msgQueue) return WAIT_FAILED;
 
@@ -1612,12 +1610,14 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE32 *pHandles,
     msgQueue->changeBits = 0;
     msgQueue->wakeMask = dwWakeMask;
 
-    QUEUE_Unlock( msgQueue );
-    
     /* Add the thread event to the handle list */
     for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
-    handles[nCount] = currTask->thdb->event;
-    return WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
+    handles[nCount] = msgQueue->hEvent;
+    ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
+
+    QUEUE_Unlock( msgQueue );
+    
+    return ret;
 }
 
 

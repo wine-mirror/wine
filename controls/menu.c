@@ -2344,7 +2344,7 @@ static void MENU_KeyRight( MTRACKER* pmt )
 static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
                               HWND32 hwnd, const RECT32 *lprect )
 {
-    MSG16 msg;
+    MSG32 msg;
     POPUPMENU *menu;
     BOOL32 fRemove;
     MTRACKER mt = { 0, hmenu, hmenu, hwnd, {x, y} };	/* control struct */
@@ -2367,15 +2367,16 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 	if (!MSG_InternalGetMessage( &msg, msg.hwnd, mt.hOwnerWnd,
 				     MSGF_MENU, PM_NOREMOVE, TRUE )) break;
 
-        TranslateMessage16( &msg );
-        CONV_POINT16TO32( &msg.pt, &mt.pt );
+        TranslateMessage32( &msg );
+        mt.pt = msg.pt;
 
         fRemove = FALSE;
 	if ((msg.message >= WM_MOUSEFIRST) && (msg.message <= WM_MOUSELAST))
 	{
 	    /* Find a menu for this mouse event */
-
-	    hmenu = MENU_PtMenu( mt.hTopMenu, msg.pt );
+            POINT16 pt16;
+            CONV_POINT32TO16( &msg.pt, &pt16 );
+	    hmenu = MENU_PtMenu( mt.hTopMenu, pt16 );
 
 	    switch(msg.message)
 	    {
@@ -2483,7 +2484,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		    if ((msg.wParam <= 32) || (msg.wParam >= 127)) break;
 
 		    pos = MENU_FindItemByKey( mt.hOwnerWnd, mt.hCurrentMenu, 
-							msg.wParam, FALSE );
+                                              LOWORD(msg.wParam), FALSE );
 		    if (pos == (UINT32)-2) fEndMenu = TRUE;
 		    else if (pos == (UINT32)-1) MessageBeep32(0);
 		    else
@@ -2497,7 +2498,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 	}
 	else
 	{
-	    DispatchMessage16( &msg );
+	    DispatchMessage32A( &msg );
 	}
 
 	if (!fEndMenu) fRemove = TRUE;
@@ -2505,7 +2506,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 	/* finally remove message from the queue */
 
         if (fRemove && !(mt.trackFlags & TF_SKIPREMOVE) )
-	    PeekMessage16( &msg, 0, msg.message, msg.message, PM_REMOVE );
+	    PeekMessage32A( &msg, 0, msg.message, msg.message, PM_REMOVE );
 	else mt.trackFlags &= ~TF_SKIPREMOVE;
     }
 
