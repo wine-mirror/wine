@@ -267,7 +267,7 @@ void ELF_UnloadLibrary(WINE_MODREF *wm)
 
 #else
 
-WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags)
+WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 {
 	return NULL;
 }
