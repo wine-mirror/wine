@@ -2116,6 +2116,10 @@
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Windows]
 "CSDVersion"=dword:00000600
 
+# Without this winipcfg sometimes fails
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VxD\MSTCP]
+@=""
+
 #
 # Entries for programs that read the registry to get Serial/Com Port info
 #
