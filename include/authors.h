@@ -130,6 +130,7 @@ static const char * const SHELL_People[] =
     "Linus Torvalds",
     "Gregory Trubetskoy",
     "Petri Tuomola",
+    "Lionel Ulmer",
     "Michael Veksler",
     "Sven Verdoolaege",
     "Ronan Waide",

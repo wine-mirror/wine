@@ -987,6 +987,7 @@ struct _dga_directdrawsurface {
 
 struct _xlib_directdrawsurface {
     XImage		*image;
+    int                 on_screen;
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo	shminfo;
 #endif
