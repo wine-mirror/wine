@@ -38,6 +38,7 @@
 #include "wine/unicode.h"
 #include "controls.h"
 #include "win.h"
+#include "winpos.h"
 #include "user.h"
 #include "wine/debug.h"
 
@@ -897,6 +898,8 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 
     SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
                  | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
+
+    if (hwnd == GetActiveWindow()) WINPOS_ActivateOtherWindow( hwnd );
 
     /* unblock dialog loop */
     PostMessageA(hwnd, WM_NULL, 0, 0);
