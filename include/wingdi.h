@@ -762,6 +762,9 @@ typedef struct
 #define FF_SCRIPT           0x40
 #define FF_DECORATIVE       0x50
 
+#ifndef _TEXTMETRIC_DEFINED
+#define _TEXTMETRIC_DEFINED
+
 typedef struct
 {
     LONG      tmHeight;
@@ -813,6 +816,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(TEXTMETRIC)
 DECL_WINELIB_TYPE_AW(PTEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPTEXTMETRIC)
+#endif /* _TEXTMETRIC_DEFINED */
 
 
 typedef struct tagPANOSE
