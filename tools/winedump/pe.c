@@ -111,27 +111,23 @@ void*	RVA(unsigned long rva, unsigned long len)
     IMAGE_SECTION_HEADER*	sectHead;
     int				i;
 
+    if (rva == 0) return NULL;
+
     sectHead = (IMAGE_SECTION_HEADER*)((char*)PE_nt_headers + sizeof(DWORD) +
 				       sizeof(IMAGE_FILE_HEADER) +
 				       PE_nt_headers->FileHeader.SizeOfOptionalHeader);
-
-    if (rva == 0) return NULL;
 
     for (i = PE_nt_headers->FileHeader.NumberOfSections - 1; i >= 0; i--)
     {
         if (sectHead[i].VirtualAddress <= rva &&
             rva + len <= (DWORD)sectHead[i].VirtualAddress + sectHead[i].SizeOfRawData)
-            break;
+        {
+            /* return image import directory offset */
+            return PRD(sectHead[i].PointerToRawData + rva - sectHead[i].VirtualAddress, len);
+        }
     }
 
-    if (i < 0)
-    {
-	printf("rva not found in any section (%lu)\n", rva);
-        return NULL;
-    }
-
-    /* return image import directory offset */
-    return PRD(sectHead[i].PointerToRawData + rva - sectHead[i].VirtualAddress, len);
+    return NULL;
 }
 
 static	void*	get_dir(unsigned idx)
@@ -170,7 +166,7 @@ static	void	dump_pe_header(void)
     printf("  Machine:                      %04X (%s)\n",
 	   fileHeader->Machine, get_machine_str(fileHeader->Machine));
     printf("  Number of Sections:           %d\n", fileHeader->NumberOfSections);
-    printf("  TimeDateStamp:                %08lX (%s) offset %ld\n",
+    printf("  TimeDateStamp:                %08lX (%s) offset %lu\n",
 	   fileHeader->TimeDateStamp, get_time_str(fileHeader->TimeDateStamp),
 	   Offset(&(fileHeader->TimeDateStamp)));
     printf("  PointerToSymbolTable:         %08lX\n", fileHeader->PointerToSymbolTable);
@@ -591,8 +587,12 @@ static void dump_dir_tls(void)
     printf( "  Callbacks       %08lx -> {", (DWORD)dir->AddressOfCallBacks );
     if (dir->AddressOfCallBacks)
     {
-        callbacks = RVA((DWORD)dir->AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase,0);
-        while (*callbacks) printf( " %08lx", *callbacks++ );
+        DWORD   addr = (DWORD)dir->AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase;
+        while ((callbacks = RVA(addr, sizeof(DWORD))) && *callbacks)
+        {
+            printf( " %08lx", *callbacks );
+            addr += sizeof(DWORD);
+        }
     }
     printf(" }\n\n");
 }
@@ -704,6 +704,11 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
     unsigned int i, j;
 
     printf( "%s", prefix );
+    if (!ptr)
+    {
+        printf("NULL\n");
+        return;
+    }
     for (i = 0; i < size; i++)
     {
         printf( "%02x%c", ptr[i], (i % 16 == 7) ? '-' : ' ' );
@@ -1224,9 +1229,9 @@ static	void	do_grab_sym( enum FileSig sig )
  *
  * Open a DLL and read in exported symbols
  */
-void  dll_open (const char *dll_name)
+int dll_open (const char *dll_name)
 {
-    pe_analysis(dll_name, do_grab_sym, SIG_PE);
+    return pe_analysis(dll_name, do_grab_sym, SIG_PE);
 }
 
 /*******************************************************************

@@ -157,9 +157,9 @@ extern _globals globals;
 void	dump_file(const char* name);
 
 /* DLL functions */
-void  dll_open (const char *dll_name);
+int   dll_open (const char *dll_name);
 
-int dll_next_symbol (parsed_symbol * sym);
+int   dll_next_symbol (parsed_symbol * sym);
 
 /* Symbol functions */
 int   symbol_init(parsed_symbol* symbol, const char* name);

@@ -404,7 +404,8 @@ int   main (int argc, char *argv[])
         if (globals.input_name == NULL)
             fatal("No file name has been given\n");
 	set_module_name(1);
-	dll_open (globals.input_name);
+	if (!dll_open (globals.input_name))
+            break;
 
 	output_spec_preamble ();
 	output_header_preamble ();
