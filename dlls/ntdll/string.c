@@ -69,7 +69,7 @@ LPSTR __cdecl _strlwr( LPSTR str )
  */
 LPSTR  __cdecl _ultoa( unsigned long x, LPSTR buf, INT radix )
 {
-    char buffer[32], *p;
+    char *p, buffer[8*sizeof(unsigned long) + 1];  /* assume 8-bit chars */
 
     p = buffer + sizeof(buffer);
     *--p = 0;
