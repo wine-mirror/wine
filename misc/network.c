@@ -883,6 +883,15 @@ DWORD WINAPI WNetGetProviderNameW(
 }
 
 /*****************************************************************
+ *  WNetRemoveCachedPassword [MPR.95]
+ */
+
+UINT WINAPI WNetRemoveCachedPassword (DWORD x, DWORD y, DWORD z)
+{	FIXME_(mpr)("(%lx,%lx,%lx): stub\n",x,y,z);
+  return 0;
+}
+
+/*****************************************************************
  *  WNetUseConnectionA [MPR.100]
  */
 DWORD WINAPI WNetUseConnectionA(
