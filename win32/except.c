@@ -253,7 +253,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
        RegCloseKey(hDbgConf);
     } else {
 	/* try a default setup... */
-	strcpy( format, "winedbg --debugmsg -all -- --auto %ld %ld" );
+	strcpy( format, "winedbg --debugmsg -all --auto %ld %ld" );
     }
 
     if (!bAuto)

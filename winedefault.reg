@@ -87,7 +87,7 @@
 #
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\AeDebug]
 # command line to start a debugger when an exception occurs
-"Debugger"="winedbg %ld %ld"
+"Debugger"="winedbg --debugmsg -all %ld %ld"
 # to 0 if a message box has to be presented before running the debugger
 "Auto"="1"
 
@@ -401,4 +401,3 @@
 "Times New Roman Greek,161"="Times New Roman,161"
 "Times New Roman TUR,162"="Times New Roman,162"
 "Tms Rmn"="Times New Roman"
-

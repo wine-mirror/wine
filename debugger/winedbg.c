@@ -28,11 +28,11 @@
 #include "ntddk.h"
 #include "thread.h"
 #include "wincon.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "msvcrt/excpt.h"
-
-#include "winreg.h"
+#include "wine/library.h"
 
 DBG_PROCESS*	DEBUG_CurrProcess = NULL;
 DBG_THREAD*	DEBUG_CurrThread = NULL;
@@ -991,16 +991,30 @@ int main(int argc, char** argv)
     /* Initialize internal vars (types must have been initialized before) */
     if (!DEBUG_IntVarsRW(TRUE)) return -1;
 
-    if (argc > 1 && !strcmp( argv[1], "--auto" ))
+    /* parse options */
+    while (argc > 1 && argv[1][0] == '-')
     {
-        argc--;
-        argv++;
-        automatic_mode = 1;
-        /* force some internal variables */
-        DBG_IVAR(UseXTerm) = 0;
-        DBG_IVAR(BreakOnDllLoad) = 0;
-        DBG_IVAR(ConChannelMask) = 0;
-        DBG_IVAR(StdChannelMask) = DBG_CHN_MESG;
+        if (!strcmp( argv[1], "--auto" ))
+        {
+            automatic_mode = 1;
+            /* force some internal variables */
+            DBG_IVAR(UseXTerm) = 0;
+            DBG_IVAR(BreakOnDllLoad) = 0;
+            DBG_IVAR(ConChannelMask) = 0;
+            DBG_IVAR(StdChannelMask) = DBG_CHN_MESG;
+            argc--;
+            argv++;
+            continue;
+        }
+        if (!strcmp( argv[1], "--debugmsg" ) && argv[2])
+        {
+            wine_dbg_parse_options( argv[2] );
+            argc -= 2;
+            argv += 2;
+            continue;
+        }
+        DEBUG_Printf(DBG_CHN_MESG, "Usage: winedbg [--debugmsg dbgoptions] [--auto] cmdline\n" );
+        return 1;
     }
 
     DEBUG_InitConsole();
