@@ -24,6 +24,7 @@
 #include "peexe.h"
 #include "debugger.h"
 #include "peexe.h"
+#include "task.h"
 #include "xmalloc.h"
 
 struct searchlist
@@ -492,9 +493,12 @@ DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
     last = DEBUG_LastDisassemble;
     if (!last.seg && !last.off)
     {
+        TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
         last.seg = CS_reg(&DEBUG_context);
         last.off = EIP_reg(&DEBUG_context);
+        if (ISV86(&DEBUG_context)) last.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16; else
         if (IS_SELECTOR_SYSTEM(last.seg)) last.seg = 0;
+        GlobalUnlock16( GetCurrentTask() );
     }
     for (i=0;i<offset;i++)
       if (!_disassemble(&last)) break;

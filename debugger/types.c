@@ -349,18 +349,20 @@ DEBUG_InitTypes()
 long long int
 DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 {
+  DBG_ADDR address = *addr;
   unsigned int rtn;
   struct datatype * type2 = NULL;
   struct en_values * e;
   char * def_format = "0x%x";
 
   rtn = 0;
+  address.seg = 0; /* FIXME? I don't quite get this... */
   assert(addr->type != NULL);
 
   switch(addr->type->type)
     {
     case BASIC:
-      if (!DBG_CHECK_READ_PTR( addr,  addr->type->un.basic.basic_size)) 
+      if (!DBG_CHECK_READ_PTR( &address,  addr->type->un.basic.basic_size)) 
 	{
 	  return 0;
 	}
@@ -388,7 +390,7 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 	}
       break;
     case POINTER:
-      if (!DBG_CHECK_READ_PTR( addr, 1 )) return 0;
+      if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       type2 = addr->type->un.pointer.pointsto;
       if( type2->type == BASIC && type2->un.basic.basic_size == 1 )
@@ -403,11 +405,12 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
       break;
     case ARRAY:
     case STRUCT:
-      if (!DBG_CHECK_READ_PTR( addr, 1 )) return 0;
+      if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       def_format = "0x%8.8x";
       break;
     case ENUM:
+      if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       for(e = addr->type->un.enumeration.members; e; e = e->next )
 	{
@@ -442,6 +445,8 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 unsigned int
 DEBUG_TypeDerefPointer(DBG_ADDR * addr, struct datatype ** newtype)
 {
+  DBG_ADDR address = *addr;
+
   /*
    * Make sure that this really makes sense.
    */
@@ -452,7 +457,8 @@ DEBUG_TypeDerefPointer(DBG_ADDR * addr, struct datatype ** newtype)
     }
 
   *newtype = addr->type->un.pointer.pointsto;
-  return *(unsigned int*) (addr->off);
+  address.off = *(unsigned int*) (addr->off);
+  return (unsigned int)DBG_ADDR_TO_LIN(&address); /* FIXME: is this right (or "better") ? */
 }
 
 unsigned int

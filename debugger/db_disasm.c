@@ -1160,7 +1160,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	 * Set this so we get can supress the printout if we need to.
 	 */
 	db_display = display;
-        db_disasm_16 = !IS_SELECTOR_32BIT(addr->seg);
+        db_disasm_16 = IS_SELECTOR_V86(addr->seg) || !IS_SELECTOR_32BIT(addr->seg);
 
 	get_value_inc( inst, addr, 1, FALSE );
 

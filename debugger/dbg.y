@@ -230,8 +230,11 @@ break_command:
 				 DBG_ADDR addr = { NULL,
 						   CS_reg(&DEBUG_context),
                                                    EIP_reg(&DEBUG_context) };
-
+				 TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+				 if (ISV86(&DEBUG_context))
+				     addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
 				 DBG_FIX_ADDR_SEG( &addr, CS_reg(&DEBUG_context) );
+				 GlobalUnlock16( GetCurrentTask() );
 				 DEBUG_FindNearestSymbol(&addr, TRUE,
 							 &nh, 0, NULL);
 				 if( nh != NULL )
@@ -249,6 +252,10 @@ break_command:
     | tBREAK tEOL              { DBG_ADDR addr = { NULL,
 						   CS_reg(&DEBUG_context),
                                                    EIP_reg(&DEBUG_context) };
+				 TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+				 if (ISV86(&DEBUG_context))
+				     addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
+				 GlobalUnlock16( GetCurrentTask() );
                                  DEBUG_AddBreakpoint( &addr );
                                }
 

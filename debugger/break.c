@@ -16,6 +16,7 @@
 #include "toolhelp.h"
 #include "windows.h"
 #include "debugger.h"
+#include "dosexe.h"
 
 #define INT3          0xcc   /* int 3 opcode */
 
@@ -97,6 +98,7 @@ static BOOL32 DEBUG_IsStepOverInstr()
 
           /* Handle call instructions */
 
+        case 0xcd:  /* int <intno> */
         case 0xe8:  /* call <offset> */
         case 0x9a:  /* lcall <seg>:<off> */
             return TRUE;
@@ -347,9 +349,9 @@ void DEBUG_AddModuleBreakpoints(void)
         if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
         if (pModule->flags & NE_FFLAGS_LIBMODULE) continue;  /* Library */
 
-        if (pModule->dos_image) { /* DOS module */
-            addr.seg = pModule->cs | ((DWORD)pModule->self << 16);
-            addr.off = pModule->ip;
+        if (pModule->lpDosTask) { /* DOS module */
+            addr.seg = pModule->lpDosTask->init_cs | ((DWORD)pModule->self << 16);
+            addr.off = pModule->lpDosTask->init_ip;
             fprintf( stderr, "DOS task '%s': ", entry.szModule );
             DEBUG_AddBreakpoint( &addr );
         } else

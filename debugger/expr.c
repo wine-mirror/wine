@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <neexe.h>
 #include "module.h"
+#include "task.h"
 #include "selectors.h"
 #include "debugger.h"
 #include "xmalloc.h"
@@ -494,6 +495,11 @@ DEBUG_EvalExpr(struct expr * exp)
 	case EXP_OP_SEG:
 	  rtn.seg = VAL(exp1);
           exp->un.binop.result = VAL(exp2);
+          if (ISV86(&DEBUG_context)) {
+            TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+            rtn.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
+            GlobalUnlock16( GetCurrentTask() );
+          }
 	  break;
 	case EXP_OP_LOR:
 	  rtn.seg = 0;
