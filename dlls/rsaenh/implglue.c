@@ -259,6 +259,8 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, CONST BYTE *in
                         DWORD enc) 
 {
     unsigned long inlen, outlen;
+    BYTE *in_reversed = NULL;
+    int key;
         
     switch (aiAlgid) {
         case CALG_RC2:
@@ -287,36 +289,38 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, CONST BYTE *in
             break;
 
         case CALG_RSA_KEYX:
-            outlen = inlen = (mp_count_bits(&pKeyContext->rsa.N)+7)/8;
-            if (enc) {
-                if (rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa) != CRYPT_OK) {
-                    SetLastError(NTE_FAIL);
-                    return FALSE;
-                }
-                reverse_bytes((BYTE*)out, outlen);
-            } else {
-                reverse_bytes((BYTE*)in, inlen);
-                if (rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa) != CRYPT_OK) {
-                    SetLastError(NTE_FAIL);
-                    return FALSE;
-                }
-            }
-            break;
-
         case CALG_RSA_SIGN:
             outlen = inlen = (mp_count_bits(&pKeyContext->rsa.N)+7)/8;
             if (enc) {
-                if (rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa) != CRYPT_OK) {
+                if (aiAlgid == CALG_RSA_SIGN) {
+                    key = PK_PRIVATE;
+                } else {
+                    key = PK_PUBLIC;
+                }
+                if (rsa_exptmod(in, inlen, out, &outlen, key, &pKeyContext->rsa) != CRYPT_OK) {
                     SetLastError(NTE_FAIL);
                     return FALSE;
                 }
-                reverse_bytes((BYTE*)out, outlen);
+                reverse_bytes(out, outlen);
             } else {
-                reverse_bytes((BYTE*)in, inlen);
-                if (rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa) != CRYPT_OK) {
+                if (aiAlgid == CALG_RSA_SIGN) {
+                    key = PK_PUBLIC;
+                } else {
+                    key = PK_PRIVATE;
+                }
+                in_reversed = HeapAlloc(GetProcessHeap(), 0, inlen);
+                if (!in_reversed) {
+                    SetLastError(NTE_NO_MEMORY);
+                    return FALSE;
+                }
+                memcpy(in_reversed, in, inlen);
+                reverse_bytes(in_reversed, inlen);
+                if (rsa_exptmod(in_reversed, inlen, out, &outlen, key, &pKeyContext->rsa) != CRYPT_OK) {
+                    HeapFree(GetProcessHeap(), 0, in_reversed);
                     SetLastError(NTE_FAIL);
                     return FALSE;
                 }
+                HeapFree(GetProcessHeap(), 0, in_reversed);
             }
             break;
 
