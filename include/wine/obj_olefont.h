@@ -55,7 +55,8 @@ typedef TEXTMETRICW TEXTMETRICOLE;
   ICOM_METHOD1(HRESULT, ReleaseHfont, HFONT, hfont) \
   ICOM_METHOD1(HRESULT, SetHdc, HDC, hdc)     
 #define IFont_IMETHODS \
-  ICOM_INHERITS(IFont,IUnknown)
+	IUnknown_IMEHTODS \
+	IFont_METHODS
 ICOM_DEFINE(IFont,IUnknown)
 #undef ICOM_INTERFACE
 

@@ -432,8 +432,8 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
  */
 #define ICOM_INTERFACE IOleItemContainer
 #define IOleItemContainer_METHODS \
-	ICOM_METHOD5(HRESULT,GetObject, LPOLESTR,pszItem, DWORD,dwSpeedNeeded, IBindCtx*,pbc, REFIID,riid, void*,ppvObject) \
-	ICOM_METHOD4(HRESULT,GetObjectStorage, LPOLESTR,pszItem, IBindCtx*,pbc, REFIID,riid, void*,ppvStorage) \
+	ICOM_METHOD5(HRESULT,GetObject, LPOLESTR,pszItem, DWORD,dwSpeedNeeded, IBindCtx*,pbc, REFIID,riid, void**,ppvObject) \
+	ICOM_METHOD4(HRESULT,GetObjectStorage, LPOLESTR,pszItem, IBindCtx*,pbc, REFIID,riid, void**,ppvStorage) \
 	ICOM_METHOD1(HRESULT,IsRunning, LPOLESTR,pszItem)
 #define IOleItemContainer_IMETHODS \
 	IOleContainer_IMETHODS \

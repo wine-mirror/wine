@@ -115,7 +115,7 @@ ICOM_DEFINE(IQuickActivate,IUnknown)
 #define ICOM_INTERFACE IPointerInactive
 #define IPointerInactive_METHODS \
 	ICOM_METHOD1(HRESULT,GetActivationPolicy, DWORD*,pdwPolicy) \
-	ICOM_METHOD4(HRESULT,OnInactiveMoveMouse, LPCRECT,pRectBounds, LONG,x, LONG,y, DWORD,grfKeyState) \
+	ICOM_METHOD4(HRESULT,OnInactiveMouseMove, LPCRECT,pRectBounds, LONG,x, LONG,y, DWORD,grfKeyState) \
 	ICOM_METHOD5(HRESULT,OnInactiveSetCursor, LPCRECT,pRectBounds, LONG,x, LONG,y, DWORD,dwMouseMsg, BOOL,fSetAlways) 
 #define IPointerInactive_IMETHODS \
 	IUnknown_IMETHODS \

@@ -669,7 +669,11 @@ typedef struct IUnknown IUnknown, *LPUNKNOWN;
 typedef struct ICOM_VTABLE(IUnknown) ICOM_VTABLE(IUnknown);
 struct IUnknown {
     ICOM_VTABLE(IUnknown)* lpvtbl;
+#if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE) && !defined(ICOM_CINTERFACE)
+} __attribute__ ((com_interface)); 
+#else
 };
+#endif /* ICOM_US_COM_INTERFACE_ATTRIBUTE, !ICOM_CINTERFACE */
 
 struct ICOM_VTABLE(IUnknown) {
 #ifdef ICOM_MSVTABLE_COMPAT
@@ -846,6 +850,9 @@ HRESULT WINAPI CoRegisterClassObject16(REFCLSID rclsid, LPUNKNOWN pUnk, DWORD dw
 HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
 
 HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
+
+void WINAPI CoUninitialize16(void);
+void WINAPI CoUninitialize(void);
 
 /*****************************************************************************
  *	COM Server dll - exports

@@ -206,7 +206,7 @@ ICOM_DEFINE(IOleDocumentSite,IUnknown)
 	ICOM_METHOD1(HRESULT,GetDocument, IUnknown**,ppunk) \
 	ICOM_METHOD1(HRESULT,SetRect, LPRECT,prcView) \
 	ICOM_METHOD1(HRESULT,GetRect, LPRECT,prcView) \
-	ICOM_METHOD4(HRESULT,GetRectComplex, LPRECT,prcView, LPRECT,prcHScroll, LPRECT,prcVScroll, LPRECT,prcSizeBox) \
+	ICOM_METHOD4(HRESULT,SetRectComplex, LPRECT,prcView, LPRECT,prcHScroll, LPRECT,prcVScroll, LPRECT,prcSizeBox) \
 	ICOM_METHOD1(HRESULT,Show, BOOL,fShow) \
 	ICOM_METHOD1(HRESULT,UIActivate, BOOL,fUIActivate) \
 	ICOM_METHOD (HRESULT,Open) \
@@ -275,7 +275,7 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
  */
 #define ICOM_INTERFACE IOleCommandTarget
 #define IOleCommandTarget_METHODS \
-	ICOM_METHOD4(HRESULT,QueryStatus, const GUID*,pguidCmdGroup, ULONG,cCmds, OLECMD*,prgCmds[1], OLECMDTEXT*,pCmdText) \
+	ICOM_METHOD4(HRESULT,QueryStatus, const GUID*,pguidCmdGroup, ULONG,cCmds, OLECMD*,prgCmds, OLECMDTEXT*,pCmdText) \
 	ICOM_METHOD5(HRESULT,Exec, const GUID*,pguidCmdGroup, DWORD,nCmdID, DWORD,nCmdexecopt, VARIANT*,pvaIn, VARIANT*,pvaOut)
 #define IOleCommandTarget_IMETHODS \
 	IUnknown_IMETHODS \

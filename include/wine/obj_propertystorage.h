@@ -35,6 +35,9 @@ typedef struct IPropertyStorage IPropertyStorage,*LPPROPERTYSTORAGE;
 typedef struct tagSTATPROPSETSTG STATPROPSETSTG;
 typedef struct tagSTATPROPSTG STATPROPSTG;
 
+extern const FMTID FMTID_SummaryInformation;
+extern const FMTID FMTID_DocSummaryInformation;
+extern const FMTID FMTID_UserDefinedProperties;
 
 /*****************************************************************************
  * PROPSPEC structure
@@ -136,7 +139,8 @@ struct tagSTATPROPSTG
     ICOM_METHOD (HRESULT,Reset) \
     ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSETSTG**,ppenum)
 #define IEnumSTATPROPSETSTG_IMETHODS \
-    ICOM_INHERITS(IEnumSTATPROPSETSTG,IUnknown)
+		IUnknown_IMETHODS \
+		IEnumSTATPROPSETSTG_METHODS
 ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -163,7 +167,8 @@ ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
     ICOM_METHOD (HRESULT,Reset) \
     ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSTG**,ppenum)
 #define IEnumSTATPROPSTG_IMETHODS \
-    ICOM_INHERITS(IEnumSTATPROPSTG,IUnknown)
+		IUnknown_IMETHODS \
+		IEnumSTATPROPSTG_METHODS 
 ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -190,7 +195,8 @@ ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
     ICOM_METHOD1(HRESULT,Delete, REFFMTID,rfmtid) \
     ICOM_METHOD1(HRESULT,Enum,   IEnumSTATPROPSETSTG**,ppenum)
 #define IPropertySetStorage_IMETHODS \
-    ICOM_INHERITS(IPropertySetStorage,IUnknown)
+		IUnknown_IMETHODS \
+		IPropertySetStorage_METHODS
 ICOM_DEFINE(IPropertySetStorage,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -411,7 +417,8 @@ struct tagPROPVARIANT
     ICOM_METHOD1(HRESULT,SetClass,            REFCLSID,clsid) \
     ICOM_METHOD1(HRESULT,Stat,                STATPROPSETSTG*,pstatpsstg)
 #define IPropertyStorage_IMETHODS \
-    ICOM_INHERITS(IPropertyStorage,IUnknown)
+		IUnknown_IMETHODS \
+		IPropertyStorage_METHODS
 ICOM_DEFINE(IPropertyStorage,IUnknown)
 #undef ICOM_INTERFACE
 

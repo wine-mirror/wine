@@ -46,7 +46,8 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
     ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL, fEscapePressed, DWORD, grfKeyState) \
     ICOM_METHOD1(HRESULT, GiveFeedback, DWORD, dwEffect)
 #define IDropSource_IMETHODS \
-  ICOM_INHERITS(IDropSource,IUnknown)
+	IUnknown_IMETHODS \
+	IDropSource_METHODS
 ICOM_DEFINE(IDropSource,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -55,7 +56,7 @@ ICOM_DEFINE(IDropSource,IUnknown)
 #define IDropSource_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDropSource_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IDropSource_Release(p)            ICOM_CALL (Release,p)
-/*** IDropTarget methods ***/
+/*** IDropSource methods ***/
 #define IDropSource_QueryContinueDrag(p,a,b) ICOM_CALL2(QueryContinueDrag,p,a,b)
 #define IDropSource_GiveFeedback(p,a)        ICOM_CALL1(GiveFeedback,p,a)
 #endif
@@ -70,7 +71,8 @@ ICOM_DEFINE(IDropSource,IUnknown)
     ICOM_METHOD(HRESULT, DragLeave) \
     ICOM_METHOD4(HRESULT, Drop, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect)
 #define IDropTarget_IMETHODS \
-  ICOM_INHERITS(IDropTarget,IUnknown)
+	IUnknown_IMETHODS \
+	IDropTarget_METHODS
 ICOM_DEFINE(IDropTarget,IUnknown)
 #undef ICOM_INTERFACE
 

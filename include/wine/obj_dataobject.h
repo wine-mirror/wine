@@ -335,5 +335,8 @@ ICOM_DEFINE(IEnumSTATDATA,IUnknown)
 /* FIXME: not implemented */
 HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid, LPVOID* ppv);
 
+#ifdef __cplusplus
+} /* extern "C"  */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_DATAOBJECT_H */

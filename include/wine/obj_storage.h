@@ -283,7 +283,7 @@ ICOM_DEFINE(ILockBytes,IUnknown)
  */
 #define ICOM_INTERFACE IPersist
 #define IPersist_METHODS \
-    ICOM_CMETHOD1(HRESULT,GetClassID, CLSID*,pClassID)
+    ICOM_METHOD1(HRESULT,GetClassID, CLSID*,pClassID)
 #define IPersist_IMETHODS \
     IUnknown_IMETHODS \
     IPersist_METHODS
@@ -305,11 +305,11 @@ ICOM_DEFINE(IPersist,IUnknown)
  */
 #define ICOM_INTERFACE IPersistFile
 #define IPersistFile_METHODS \
-    ICOM_CMETHOD (HRESULT,IsDirty) \
+    ICOM_METHOD (HRESULT,IsDirty) \
     ICOM_METHOD2 (HRESULT,Load,          LPCOLESTR,pszFileName, DWORD,dwMode) \
     ICOM_METHOD2 (HRESULT,Save,          LPCOLESTR,pszFileName, BOOL,fRemember) \
     ICOM_METHOD1 (HRESULT,SaveCompleted, LPCOLESTR,pszFileName) \
-    ICOM_CMETHOD1(HRESULT,GetCurFile,    LPOLESTR*,ppszFileName)
+    ICOM_METHOD1(HRESULT,GetCurFile,    LPOLESTR*,ppszFileName)
 #define IPersistFile_IMETHODS \
     IPersist_IMETHODS \
     IPersistFile_METHODS
