@@ -90,7 +90,7 @@ static const char main_key_US_phantom[MAIN_LEN][4] =
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
  "<>" /* the phantom key */
 };
 
