@@ -272,12 +272,12 @@ type	win32
 @ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr) RtlAllocateAndInitializeSid
 @ stdcall RtlAllocateHeap(long long long) RtlAllocateHeap
 @ stub RtlAnsiCharToUnicodeChar
-@ stub RtlAnsiStringToUnicodeSize
+@ stdcall RtlAnsiStringToUnicodeSize(ptr) RtlAnsiStringToUnicodeSize
 @ stdcall RtlAnsiStringToUnicodeString(ptr ptr long) RtlAnsiStringToUnicodeString
-@ stub RtlAppendAsciizToString
-@ stub RtlAppendStringToString
-@ stub RtlAppendUnicodeStringToString
-@ stub RtlAppendUnicodeToString
+@ stdcall RtlAppendAsciizToString(ptr str) RtlAppendAsciizToString
+@ stdcall RtlAppendStringToString(ptr ptr) RtlAppendStringToString
+@ stdcall RtlAppendUnicodeStringToString(ptr ptr) RtlAppendUnicodeStringToString
+@ stdcall RtlAppendUnicodeToString(ptr wstr) RtlAppendUnicodeToString
 @ stub RtlApplyRXact
 @ stub RtlApplyRXactNoFlush
 @ stub RtlAreAllAccessesGranted
@@ -293,7 +293,7 @@ type	win32
 @ stub RtlCompactHeap
 @ stdcall RtlCompareMemory(ptr ptr long) RtlCompareMemory
 @ stub RtlCompareMemoryUlong
-@ stub RtlCompareString
+@ stdcall RtlCompareString(ptr ptr long) RtlCompareString
 @ stdcall RtlCompareUnicodeString (ptr ptr long) RtlCompareUnicodeString
 @ stub RtlCompressBuffer
 @ stub RtlConsoleMultiByteToUnicodeN
@@ -308,8 +308,8 @@ type	win32
 @ stub RtlCopySecurityDescriptor
 @ stdcall RtlCopySid(long ptr ptr) RtlCopySid
 @ stub RtlCopySidAndAttributesArray
-@ stub RtlCopyString
-@ stub RtlCopyUnicodeString
+@ stdcall RtlCopyString(ptr ptr) RtlCopyString
+@ stdcall RtlCopyUnicodeString(ptr ptr) RtlCopyUnicodeString
 @ stdcall RtlCreateAcl(ptr long long) RtlCreateAcl
 @ stub RtlCreateAndSetSD
 @ stdcall RtlCreateEnvironment(long long) RtlCreateEnvironment
@@ -319,8 +319,8 @@ type	win32
 @ stub RtlCreateRegistryKey
 @ stdcall RtlCreateSecurityDescriptor(ptr long) RtlCreateSecurityDescriptor
 @ stub RtlCreateTagHeap
-@ stub RtlCreateUnicodeString
-@ stub RtlCreateUnicodeStringFromAsciiz
+@ stdcall RtlCreateUnicodeString(ptr wstr) RtlCreateUnicodeString
+@ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str) RtlCreateUnicodeStringFromAsciiz
 @ stub RtlCreateUserProcess
 @ stub RtlCreateUserSecurityObject
 @ stub RtlCreateUserThread
@@ -357,9 +357,9 @@ type	win32
 @ stub RtlEqualLuid
 @ stdcall RtlEqualPrefixSid(ptr ptr) RtlEqualPrefixSid
 @ stdcall RtlEqualSid (long long) RtlEqualSid
-@ stub RtlEqualString
-@ stdcall RtlEqualUnicodeString(long long long) RtlEqualUnicodeString
-@ stub RtlEraseUnicodeString
+@ stdcall RtlEqualString(ptr ptr long) RtlEqualString
+@ stdcall RtlEqualUnicodeString(ptr ptr long) RtlEqualUnicodeString
+@ stdcall RtlEraseUnicodeString(ptr) RtlEraseUnicodeString
 @ stub RtlExpandEnvironmentStrings_U
 @ stub RtlExtendHeap
 @ stdcall RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
@@ -379,7 +379,7 @@ type	win32
 @ stub RtlFormatMessage
 @ stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
 @ stdcall RtlFreeHeap(long long long) RtlFreeHeap
-@ stub RtlFreeOemString
+@ stdcall RtlFreeOemString(ptr) RtlFreeOemString
 @ stdcall RtlFreeSid (long) RtlFreeSid
 @ stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
 @ stub RtlGenerate8dot3Name
@@ -441,7 +441,7 @@ type	win32
 @ stub RtlMapGenericMask
 @ stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
 @ stdcall RtlMultiByteToUnicodeN(ptr long ptr ptr long) RtlMultiByteToUnicodeN
-@ stub RtlMultiByteToUnicodeSize
+@ stdcall RtlMultiByteToUnicodeSize(ptr str long) RtlMultiByteToUnicodeSize
 @ stub RtlNewInstanceSecurityObject
 @ stub RtlNewSecurityGrantedAccess
 @ stdcall RtlNewSecurityObject(long long long long long long) RtlNewSecurityObject
@@ -450,12 +450,12 @@ type	win32
 @ stub RtlNumberGenericTableElements
 @ stub RtlNumberOfClearBits
 @ stub RtlNumberOfSetBits
-@ stub RtlOemStringToUnicodeSize
+@ stdcall RtlOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlOemStringToUnicodeString(ptr ptr long) RtlOemStringToUnicodeString
 @ stdcall RtlOemToUnicodeN(ptr long ptr ptr long) RtlOemToUnicodeN
 @ stdcall RtlOpenCurrentUser(long ptr) RtlOpenCurrentUser
 @ stub RtlPcToFileHeader
-@ stub RtlPrefixString
+@ stdcall RtlPrefixString(ptr ptr long) RtlPrefixString
 @ stdcall RtlPrefixUnicodeString(ptr ptr long) RtlPrefixUnicodeString
 @ stub RtlProtectHeap
 @ stdcall RtlQueryEnvironmentVariable_U(long long long) RtlQueryEnvironmentVariable_U
@@ -510,29 +510,29 @@ type	win32
 @ stdcall RtlTimeToSecondsSince1970(ptr ptr) RtlTimeToSecondsSince1970
 @ stdcall RtlTimeToSecondsSince1980(ptr ptr) RtlTimeToSecondsSince1980
 @ stdcall RtlTimeToTimeFields (long long) RtlTimeToTimeFields
-@ stub RtlUnicodeStringToAnsiSize
+@ stdcall RtlUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
 @ stub RtlUnicodeStringToCountedOemString
 @ stub RtlUnicodeStringToInteger
-@ stub RtlUnicodeStringToOemSize
+@ stdcall RtlUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stdcall RtlUnicodeStringToOemString(ptr ptr long) RtlUnicodeStringToOemString
 @ stub RtlUnicodeToCustomCPN
 @ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long) RtlUnicodeToMultiByteN
-@ stub RtlUnicodeToMultiByteSize
+@ stdcall RtlUnicodeToMultiByteSize(ptr wstr long) RtlUnicodeToMultiByteSize
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
 @ stub RtlUniform
 @ stub RtlUnlockHeap
 @ stdcall RtlUnwind(ptr ptr ptr long) RtlUnwind
 @ stub RtlUpcaseUnicodeChar
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
-@ stub RtlUpcaseUnicodeStringToAnsiString
+@ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long) RtlUpcaseUnicodeStringToAnsiString
 @ stub RtlUpcaseUnicodeStringToCountedOemString
 @ stdcall RtlUpcaseUnicodeStringToOemString(ptr ptr long) RtlUpcaseUnicodeStringToOemString
 @ stub RtlUpcaseUnicodeToCustomCPN
-@ stub RtlUpcaseUnicodeToMultiByteN
+@ stdcall RtlUpcaseUnicodeToMultiByteN(ptr long ptr ptr long) RtlUpcaseUnicodeToMultiByteN
 @ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long) RtlUpcaseUnicodeToOemN
 @ stub RtlUpperChar
-@ stub RtlUpperString
+@ stdcall RtlUpperString(ptr ptr) RtlUpperString
 @ stub RtlUsageHeap
 @ stub RtlValidAcl
 @ stdcall RtlValidSecurityDescriptor(ptr) RtlValidSecurityDescriptor
@@ -552,10 +552,10 @@ type	win32
 @ stub RtlpNtSetValueKey
 @ stub RtlpUnWaitCriticalSection
 @ stub RtlpWaitForCriticalSection
-@ stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlxAnsiStringToUnicodeSize
-@ stdcall RtlxOemStringToUnicodeSize(ptr) RtlxOemStringToUnicodeSize
-@ stub RtlxUnicodeStringToAnsiSize
-@ stdcall RtlxUnicodeStringToOemSize(ptr) RtlxUnicodeStringToOemSize
+@ stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlAnsiStringToUnicodeSize
+@ stdcall RtlxOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
+@ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
+@ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stub SaveEm87Context
 @ stdcall ZwAcceptConnectPort(long long long long long long) NtAcceptConnectPort
 @ stub ZwAccessCheck
