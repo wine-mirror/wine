@@ -43,7 +43,7 @@ static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_
         res = pGetAncestor( hwnd, GA_PARENT );
         ok( res == ga_parent, "Wrong result for GA_PARENT %x expected %x", res, ga_parent );
     }
-    res = GetWindowLongW( hwnd, GWL_HWNDPARENT );
+    res = (HWND)GetWindowLongW( hwnd, GWL_HWNDPARENT );
     ok( res == gwl_parent, "Wrong result for GWL_HWNDPARENT %x expected %x", res, gwl_parent );
     res = GetParent( hwnd );
     ok( res == get_parent, "Wrong result for GetParent %x expected %x", res, get_parent );
@@ -197,7 +197,7 @@ static void test_parent_owner(void)
 
     /* desktop window */
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, hwndMain2 );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)hwndMain2 );
     ok( !ret, "Set GWL_HWNDPARENT succeeded on desktop" );
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
     ok( !SetParent( desktop, hwndMain ), "SetParent succeeded on desktop" );
@@ -207,20 +207,20 @@ static void test_parent_owner(void)
     test = create_tool_window( WS_CHILD, hwndMain );
     trace( "created child %x\n", test );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, hwndMain2 );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)hwndMain2 );
     ok( ret == hwndMain, "GWL_HWNDPARENT return value %x expected %x", ret, hwndMain );
     check_parents( test, hwndMain2, hwndMain2, hwndMain2, 0, hwndMain2, hwndMain2 );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, child );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)child );
     ok( ret == hwndMain2, "GWL_HWNDPARENT return value %x expected %x", ret, hwndMain2 );
     check_parents( test, child, child, child, 0, hwndMain, hwndMain );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, desktop );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)desktop );
     ok( ret == child, "GWL_HWNDPARENT return value %x expected %x", ret, child );
     check_parents( test, desktop, 0, desktop, 0, test, desktop );
 
     /* window is now child of desktop so GWL_HWNDPARENT changes owner from now on */
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, child );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)child );
     ok( ret == 0, "GWL_HWNDPARENT return value %x expected %x", ret, 0 );
     check_parents( test, desktop, child, desktop, child, test, desktop );
 
@@ -233,11 +233,11 @@ static void test_parent_owner(void)
     test = create_tool_window( 0, 0 );
     trace( "created top-level %x\n", test );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, hwndMain2 );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)hwndMain2 );
     ok( ret == 0, "GWL_HWNDPARENT return value %x expected %x", ret, 0 );
     check_parents( test, desktop, hwndMain2, 0, hwndMain2, test, test );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, child );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)child );
     ok( ret == hwndMain2, "GWL_HWNDPARENT return value %x expected %x", ret, hwndMain2 );
     check_parents( test, desktop, child, 0, child, test, test );
 
@@ -250,11 +250,11 @@ static void test_parent_owner(void)
     test = create_tool_window( WS_POPUP, 0 );
     trace( "created popup %x\n", test );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, hwndMain2 );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)hwndMain2 );
     ok( ret == 0, "GWL_HWNDPARENT return value %x expected %x", ret, 0 );
     check_parents( test, desktop, hwndMain2, hwndMain2, hwndMain2, test, hwndMain2 );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, child );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (LONG_PTR)child );
     ok( ret == hwndMain2, "GWL_HWNDPARENT return value %x expected %x", ret, hwndMain2 );
     check_parents( test, desktop, child, child, child, test, hwndMain );
 
@@ -297,7 +297,7 @@ static void test_parent_owner(void)
     ok( ret == desktop, "SetParent return value %x expected %x", ret, desktop );
     check_parents( test, child, child, hwndMain2, hwndMain2, hwndMain, hwndMain2 );
 
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, hwndMain );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (ULONG_PTR)hwndMain );
     ok( ret == child, "GWL_HWNDPARENT return value %x expected %x", ret, child );
     check_parents( test, hwndMain, hwndMain, hwndMain2, hwndMain2, hwndMain, hwndMain2 );
     DestroyWindow( test );
@@ -330,7 +330,7 @@ static void test_parent_owner(void)
     owner = create_tool_window( WS_CHILD, hwndMain2 );
     test = create_tool_window( WS_POPUP, 0 );
     trace( "created owner %x and popup %x\n", owner, test );
-    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, owner );
+    ret = (HWND)SetWindowLongW( test, GWL_HWNDPARENT, (ULONG_PTR)owner );
     ok( ret == 0, "GWL_HWNDPARENT return value %x expected %x", ret, 0 );
     check_parents( test, desktop, owner, owner, owner, test, hwndMain2 );
     DestroyWindow( owner );

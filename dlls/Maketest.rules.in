@@ -9,7 +9,7 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS         = @DLLFLAGS@ $(EXTRADEFS)
+DEFS         = @DLLFLAGS@ -DSTRICT -DNONAMELESSUNION -DNONAMELESSSTRUCT $(EXTRADEFS)
 LDDLLFLAGS   = @LDDLLFLAGS@
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
