@@ -271,7 +271,7 @@ typedef struct tagLISTVIEW_INFO
  * forward declarations
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
-static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *, INT, LPRECT, LPRECT, LPRECT, LPRECT);
+static BOOL LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
@@ -1232,7 +1232,7 @@ static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
     {
 	RECT rcBox;
 
-	if (!LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcBox, 0, 0, 0)) 
+	if (!LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcBox)) 
 	    return;
 	if ((rcBox.bottom - rcBox.top) > infoPtr->nItemHeight)
 	{
@@ -1262,7 +1262,7 @@ static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 	if (fShow) dis.itemState |= ODS_FOCUS;
 	dis.hwndItem = infoPtr->hwndSelf;
 	dis.hDC = hdc;
-	if (!LISTVIEW_GetItemMeasures(infoPtr, dis.itemID, &dis.rcItem, 0, 0, 0)) goto done;
+	if (!LISTVIEW_GetItemBox(infoPtr, dis.itemID, &dis.rcItem)) goto done;
 	dis.itemData = item.lParam;
 
 	SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
@@ -1609,24 +1609,15 @@ fail:
  * [I] nItem : item number
  * [O] lprcBox : ptr to Box rectangle
  *                The internal LVIR_BOX rectangle
- * [O] lprcBounds : ptr to Bounds rectangle
- *                Same as LVM_GETITEMRECT with LVIR_BOUNDS
- * [O] lprcIcon : ptr to Icon rectangle
- *                Same as LVM_GETITEMRECT with LVIR_ICON
- * [O] lprcLabel : ptr to Label rectangle
- *                Same as LVM_GETITEMRECT with LVIR_LABEL
  *
  * RETURN:
  *   TRUE if computations OK
  *   FALSE otherwise
  */
-static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
-				    LPRECT lprcBox, LPRECT lprcBounds,
-				    LPRECT lprcIcon, LPRECT lprcLabel)
+static BOOL LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBox)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    BOOL doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
     POINT Position, Origin;
     LVITEMW lvItem;
 
@@ -1634,43 +1625,23 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
 
     /* Be smart and try to figure out the minimum we have to do */
-    if (lprcBounds)
-    {
-	if (uView == LVS_REPORT) doIcon = TRUE;
-        else doLabel = TRUE;
-    }
-    if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel) &&
-	infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
-	oversizedBox = doLabel = TRUE;
-    if (lprcLabel) doLabel = TRUE;
-    if (doLabel || lprcIcon) doIcon = TRUE;
-
-    /* get what we need from the item before hand, so we make
-     * only one request. This can speed up things, if data
-     * is stored on the app side */
     lvItem.mask = 0;
-    if (doIcon && uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
-    if (doLabel) lvItem.mask |= LVIF_TEXT;
+    if (uView == LVS_ICON && infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
+	lvItem.mask |= LVIF_TEXT;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     if (lvItem.mask && !LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-    if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel))
+    if (uView == LVS_ICON)
     {
 	lvItem.mask |= LVIF_STATE;
 	lvItem.stateMask = LVIS_FOCUSED;
-	lvItem.state = (oversizedBox ? LVIS_FOCUSED : 0);
+	lvItem.state = (lvItem.mask & LVIF_TEXT ? LVIS_FOCUSED : 0);
     }
-    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprcBox, lprcBounds, 0, lprcIcon, lprcLabel)) return FALSE;
+    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprcBox, 0, 0, 0, 0)) return FALSE;
 
-    Position.x += Origin.x;
-    Position.y += Origin.y;
-
-    if (lprcBox) OffsetRect(lprcBox, Position.x, Position.y);
-    if (lprcBounds) OffsetRect(lprcBounds, Position.x, Position.y);
-    if (lprcIcon) OffsetRect(lprcIcon, Position.x, Position.y);
-    if (lprcLabel) OffsetRect(lprcLabel, Position.x, Position.y);
+    OffsetRect(lprcBox, Position.x + Origin.x, Position.y + Origin.y);
 
     return TRUE;
 }
@@ -3588,7 +3559,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     iterator_destroy(&i);
 
     /* draw the focused item last, in case it's oversized */
-    if (LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcBox, 0, 0, 0) &&
+    if (LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcBox) &&
         RectVisible(hdc, &rcBox))
     {
 	if (LISTVIEW_GetItemListOrigin(infoPtr, infoPtr->nFocusedItem, &Position))
@@ -5040,28 +5011,61 @@ static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT 
  */
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 {
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    BOOL doLabel = TRUE, oversizedBox = FALSE;
+    POINT Position, Origin;
+    LVITEMW lvItem;
     RECT label_rect;
 
     TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
 
     if (!lprc || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+    if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) return FALSE;
+
+    /* Be smart and try to figure out the minimum we have to do */
+    if (lprc->left == LVIR_ICON) doLabel = FALSE;
+    if (uView == LVS_REPORT && lprc->left == LVIR_BOUNDS) doLabel = FALSE;
+    if (uView == LVS_ICON && lprc->left != LVIR_ICON &&
+	infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
+	oversizedBox = TRUE;
+
+    /* get what we need from the item before hand, so we make
+     * only one request. This can speed up things, if data
+     * is stored on the app side */
+    lvItem.mask = 0;
+    if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
+    if (doLabel) lvItem.mask |= LVIF_TEXT;
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = 0;
+    lvItem.pszText = szDispText;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    if (lvItem.mask && !LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
+    /* we got the state already up, simulate it here, to avoid a reget */
+    if (uView == LVS_ICON && (lprc->left != LVIR_ICON))
+    {
+	lvItem.mask |= LVIF_STATE;
+	lvItem.stateMask = LVIS_FOCUSED;
+	lvItem.state = (oversizedBox ? LVIS_FOCUSED : 0);
+    }
 
     switch(lprc->left)
     {
     case LVIR_ICON:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, lprc, NULL)) return FALSE;
+	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, NULL, lprc, NULL)) return FALSE;
         break;
 
     case LVIR_LABEL:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, NULL, lprc)) return FALSE;
+	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, NULL, NULL, lprc)) return FALSE;
         break;
 
     case LVIR_BOUNDS:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, lprc, NULL, NULL)) return FALSE;
+	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, lprc, NULL, NULL, NULL)) return FALSE;
         break;
 
     case LVIR_SELECTBOUNDS:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, lprc, NULL, &label_rect)) return FALSE;
+	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, lprc, NULL, NULL, &label_rect)) return FALSE;
 	if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && 
 	     !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) )
 	    lprc->right = label_rect.right;
@@ -5071,6 +5075,8 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 	WARN("Unknown value: %d\n", lprc->left);
 	return FALSE;
     }
+
+    OffsetRect(lprc, Position.x + Origin.x, Position.y + Origin.y);
 
     TRACE(" rect=%s\n", debugrect(lprc));
 
@@ -5548,7 +5554,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	    iterator_frameditems(&i, infoPtr, &rcSearch);
 	    while(iterator_next(&i))
 	    {
-		if (!LISTVIEW_GetItemMeasures(infoPtr, i.nItem, &rcBounds, 0, 0, 0)) continue;
+		if (!LISTVIEW_GetItemBox(infoPtr, i.nItem, &rcBounds)) continue;
 		if (PtInRect(&rcBounds, lpht->pt)) break;
 	    }
 	    lpht->iItem = i.nItem;
