@@ -129,6 +129,11 @@ static void write_field(FILE *h, var_t *v)
       /* not all C/C++ compilers support anonymous structs and unions */
       switch (v->type->type) {
       case RPC_FC_STRUCT:
+      case RPC_FC_CVSTRUCT:
+      case RPC_FC_CPSTRUCT:
+      case RPC_FC_CSTRUCT:
+      case RPC_FC_PSTRUCT:
+      case RPC_FC_BOGUS_STRUCT:
       case RPC_FC_ENCAPSULATED_UNION:
         fprintf(h, " DUMMYSTRUCTNAME");
         break;
@@ -241,6 +246,11 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
         else fprintf(h, "handle_t");
         break;
       case RPC_FC_STRUCT:
+      case RPC_FC_CVSTRUCT:
+      case RPC_FC_CPSTRUCT:
+      case RPC_FC_CSTRUCT:
+      case RPC_FC_PSTRUCT:
+      case RPC_FC_BOGUS_STRUCT:
       case RPC_FC_ENCAPSULATED_UNION:
         if (t->defined && !t->written) {
           if (t->name) fprintf(h, "struct %s {\n", t->name);

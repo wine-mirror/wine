@@ -89,6 +89,7 @@ static type_t *find_type(char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
 static type_t *get_typev(unsigned char type, var_t *name, int t);
+static int get_struct_type(var_t *fields);
 
 static var_t *reg_const(var_t *var);
 static var_t *find_const(char *name, int f);
@@ -676,6 +677,8 @@ pointer_type:
 	;
 
 structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, tsSTRUCT);
+                                                  /* overwrite RPC_FC_STRUCT with a more exact type */
+						  $$->type = get_struct_type( $4 );
 						  $$->fields = $4;
 						  $$->defined = TRUE;
 						}
@@ -1066,10 +1069,8 @@ static type_t *reg_type(type_t *type, char *name, int t)
 /* determine pointer type from attrs */
 static unsigned char get_pointer_type( type_t *type )
 {
-    if( is_attr( type->attrs, ATTR_SIZEIS ) )
-        return RPC_FC_CARRAY;
-    if( type->fields )
-        return RPC_FC_CSTRUCT;
+    int t = get_attrv( type->attrs, ATTR_POINTERTYPE );
+    if( t ) return t;
     return RPC_FC_FP;
 }
 
@@ -1158,6 +1159,112 @@ static type_t *get_typev(unsigned char type, var_t *name, int t)
     free(name);
   }
   return get_type(type, sname, t);
+}
+
+static int get_struct_type(var_t *field)
+{
+  int has_pointer = 0;
+  int has_conformant_array = 0;
+  int has_conformant_string = 0;
+
+  while (field)
+  {
+    type_t *t = field->type;
+
+    /* get the base type */
+    while( (t->type == 0) && t->ref )
+      t = t->ref;
+
+    switch (t->type)
+    {
+    /*
+     * RPC_FC_BYTE, RPC_FC_STRUCT, etc
+     *  Simple types don't effect the type of struct.
+     *  A struct containing a simple struct is still a simple struct.
+     *  So long as we can block copy the data, we return RPC_FC_STRUCT.
+     */
+    case 0: /* void pointer */
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+    case RPC_FC_HYPER:
+    case RPC_FC_FLOAT:
+    case RPC_FC_DOUBLE:
+    case RPC_FC_STRUCT:
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+      break;
+
+    case RPC_FC_UP:
+    case RPC_FC_FP:
+      has_pointer = 1;
+      break;
+    case RPC_FC_CARRAY:
+      has_conformant_array = 1;
+      break;
+    case RPC_FC_C_CSTRING:
+    case RPC_FC_C_WSTRING:
+      has_conformant_string = 1;
+      break;
+
+    /*
+     * Propagate member attributes
+     *  a struct should be at least as complex as its member
+     */
+    case RPC_FC_CVSTRUCT:
+      has_conformant_string = 1;
+      has_pointer = 1;
+      break;
+
+    case RPC_FC_CPSTRUCT:
+      has_conformant_array = 1;
+      has_pointer = 1;
+      break;
+
+    case RPC_FC_CSTRUCT:
+      has_conformant_array = 1;
+      break;
+
+    case RPC_FC_PSTRUCT:
+      has_pointer = 1;
+      break;
+
+    default:
+      fprintf(stderr,"Unknown struct member %s with type (0x%02x)\n",
+              field->name, t->type);
+      /* fallthru - treat it as complex */
+
+    /* as soon as we see one of these these members, it's bogus... */
+    case RPC_FC_IP:
+    case RPC_FC_ENCAPSULATED_UNION:
+    case RPC_FC_NON_ENCAPSULATED_UNION:
+    case RPC_FC_TRANSMIT_AS:
+    case RPC_FC_REPRESENT_AS:
+    case RPC_FC_PAD:
+    case RPC_FC_EMBEDDED_COMPLEX:
+    case RPC_FC_BOGUS_STRUCT:
+      return RPC_FC_BOGUS_STRUCT;
+    }
+    field = NEXT_LINK(field);
+  }
+
+  if( has_conformant_string && has_pointer )
+    return RPC_FC_CVSTRUCT;
+  if( has_conformant_array && has_pointer )
+    return RPC_FC_CPSTRUCT;
+  if( has_conformant_array )
+    return RPC_FC_CSTRUCT;
+  if( has_pointer )
+    return RPC_FC_PSTRUCT;
+  return RPC_FC_STRUCT;
 }
 
 /***** constant repository *****/
