@@ -166,6 +166,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (dwFlags & WAVE_MAPPED) {
 	if (lpDesc->uMappedDeviceID >= ndhi) {
             WARN("invalid parameter: dwFlags WAVE_MAPPED\n");
+            HeapFree(GetProcessHeap(), 0, wom);
             return MMSYSERR_INVALPARAM;
         }
 	ndlo = lpDesc->uMappedDeviceID;
