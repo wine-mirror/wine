@@ -198,7 +198,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
             checkBoxWidth  = bmp.bmWidth / 4;
             checkBoxHeight = bmp.bmHeight / 3;
         }
-        if (btn_type < 0L || btn_type >= MAX_BTN_TYPE)
+        if (btn_type >= MAX_BTN_TYPE)
             return -1; /* abort */
         set_button_state( hWnd, BUTTON_UNCHECKED );
         return 0;

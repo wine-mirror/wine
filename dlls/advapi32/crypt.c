@@ -842,7 +842,7 @@ BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 		CRYPT_ReturnLastError(ERROR_INVALID_PARAMETER);
 	if (dwFlags & ~(CRYPT_USER_DEFAULT | CRYPT_MACHINE_DEFAULT))
 		CRYPT_ReturnLastError(NTE_BAD_FLAGS);
-	if (dwProvType < 0 || dwProvType > 999)
+	if (dwProvType > 999)
 		CRYPT_ReturnLastError(NTE_BAD_PROV_TYPE);
 	if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, dwFlags & CRYPT_USER_DEFAULT)) )
 		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -1129,7 +1129,7 @@ BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pd
 
 	if (!pszProvName || pdwReserved)
 		CRYPT_ReturnLastError(ERROR_INVALID_PARAMETER);
-	if (dwProvType < 0 || dwProvType > MAXPROVTYPES)
+	if (dwProvType > MAXPROVTYPES)
 		CRYPT_ReturnLastError(NTE_BAD_PROV_TYPE);
 	if (dwFlags & ~(CRYPT_MACHINE_DEFAULT | CRYPT_USER_DEFAULT | CRYPT_DELETE_DEFAULT)
 			|| dwFlags == CRYPT_DELETE_DEFAULT)

@@ -288,8 +288,7 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(
   /*
    * Check for invalid cookies.
    */
-  if ( (dwConnection < 0) ||
-       (dwConnection >= This->maxSinks) )
+  if (dwConnection >= This->maxSinks)
     return OLE_E_NOCONNECTION;
 
   if (This->arrayOfSinks[dwConnection] == NULL)
@@ -647,8 +646,7 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
   /*
    * Check for invalid cookies.
    */
-  if ( (dwConnection < 0) ||
-       (dwConnection >= This->maxCons) )
+  if (dwConnection >= This->maxCons)
     return OLE_E_NOCONNECTION;
 
   if (This->Connections[dwConnection].sink == NULL)

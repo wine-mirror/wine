@@ -1407,7 +1407,7 @@ static Window __get_top_decoration( Display *display, Window w, Window ancestor 
 static unsigned __td_lookup( Window w, Window* list, unsigned max )
 {
     unsigned    i;
-    for( i = max - 1; i >= 0; i-- ) if( list[i] == w ) break;
+    for( i = max; i > 0; i-- ) if( list[i - 1] == w ) break;
     return i;
 }
 

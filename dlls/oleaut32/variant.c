@@ -4067,7 +4067,7 @@ HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT* puiOut)
 {
 	TRACE("( %ld, %p ), stub\n", ulIn, puiOut );
 
-	if( ulIn < UI2_MIN || ulIn > UI2_MAX )
+	if( ulIn > UI2_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -4167,7 +4167,7 @@ HRESULT WINAPI VarUI4FromI4(LONG lIn, ULONG* pulOut)
 {
 	TRACE("( %ld, %p ), stub\n", lIn, pulOut );
 
-	if( lIn < UI4_MIN )
+	if( lIn < 0 )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -4885,7 +4885,7 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
  */
 HRESULT WINAPI VarBstrCmp(BSTR left, BSTR right, LCID lcid, DWORD flags)
 {
-    DWORD r;
+    INT r;
 
     TRACE("( %s %s %ld %lx ) partial stub\n", debugstr_w(left), debugstr_w(right), lcid, flags);
 

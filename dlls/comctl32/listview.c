@@ -1832,10 +1832,10 @@ static VOID LISTVIEW_ShiftIndices(HWND hwnd, INT nItem, INT direction)
   {
     checkselection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,index);
     if ((checkselection->lower >= nItem)&&
-       (checkselection->lower + direction >= 0))
+       ((int)(checkselection->lower + direction) >= 0))
         checkselection->lower += direction;
     if ((checkselection->upper >= nItem)&&
-       (checkselection->upper + direction >=0))
+       ((int)(checkselection->upper + direction) >= 0))
         checkselection->upper += direction;
     index ++;
   }
