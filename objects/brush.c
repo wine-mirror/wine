@@ -79,93 +79,6 @@ static HGLOBAL16 dib_copy(BITMAPINFO *info, UINT coloruse)
 }
 
 
-
-static BOOL create_brush_indirect(BRUSHOBJ *brushPtr, BOOL v16)
-{
-    LOGBRUSH *brush = &brushPtr->logbrush;
-
-    switch (brush->lbStyle)
-    {
-       case BS_PATTERN8X8:
-            brush->lbStyle = BS_PATTERN;
-       case BS_PATTERN:
-            brush->lbHatch = (LONG)BITMAP_CopyBitmap( (HBITMAP) brush->lbHatch );
-            if (! brush->lbHatch)
-               break;
-            return TRUE;
-
-       case BS_DIBPATTERNPT:
-            brush->lbStyle = BS_DIBPATTERN;
-            brush->lbHatch = (LONG)dib_copy( (BITMAPINFO *) brush->lbHatch,
-                                             brush->lbColor);
-            if (! brush->lbHatch)
-               break;
-            return TRUE;
-
-       case BS_DIBPATTERN8X8:
-       case BS_DIBPATTERN:
-       {
-            BITMAPINFO* bmi;
-            HGLOBAL     h = brush->lbHatch;
-
-            brush->lbStyle = BS_DIBPATTERN;
-            if (v16)
-            {
-               if (!(bmi = (BITMAPINFO *)GlobalLock16( h )))
-                  break;
-            }
-            else
-            {
-               if (!(bmi = (BITMAPINFO *)GlobalLock( h )))
-                  break;
-            }
-
-            brush->lbHatch = dib_copy( bmi, brush->lbColor);
-
-            if (v16)  GlobalUnlock16( h );
-            else      GlobalUnlock( h );
-
-            if (!brush->lbHatch)
-               break;
-
-            return TRUE;
-       }
-
-       default:
-          if( brush->lbStyle <= BS_MONOPATTERN)
-             return TRUE;
-    }
-
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           CreateBrushIndirect    (GDI.50)
- */
-HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
-{
-    BOOL success;
-    BRUSHOBJ * brushPtr;
-    HBRUSH hbrush;
-
-    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush, &brush_funcs )))
-        return 0;
-    brushPtr->logbrush.lbStyle = brush->lbStyle;
-    brushPtr->logbrush.lbColor = brush->lbColor;
-    brushPtr->logbrush.lbHatch = brush->lbHatch;
-    success = create_brush_indirect(brushPtr, TRUE);
-    if(!success)
-    {
-       GDI_FreeObject( hbrush, brushPtr );
-       hbrush = 0;
-    }
-    else GDI_ReleaseObj( hbrush );
-    TRACE("%04x\n", hbrush);
-    return hbrush;
-}
-
-
 /***********************************************************************
  *           CreateBrushIndirect    (GDI32.@)
  *
@@ -177,23 +90,57 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
  */
 HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 {
-    BOOL success;
-    BRUSHOBJ * brushPtr;
+    BRUSHOBJ * ptr;
     HBRUSH hbrush;
-    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush, &brush_funcs )))
-        return 0;
-    brushPtr->logbrush.lbStyle = brush->lbStyle;
-    brushPtr->logbrush.lbColor = brush->lbColor;
-    brushPtr->logbrush.lbHatch = brush->lbHatch;
-    success = create_brush_indirect(brushPtr, FALSE);
-    if(!success)
+
+    if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush, &brush_funcs ))) return 0;
+    ptr->logbrush.lbStyle = brush->lbStyle;
+    ptr->logbrush.lbColor = brush->lbColor;
+    ptr->logbrush.lbHatch = brush->lbHatch;
+
+    switch (ptr->logbrush.lbStyle)
     {
-       GDI_FreeObject( hbrush, brushPtr );
-       hbrush = 0;
+    case BS_PATTERN8X8:
+        ptr->logbrush.lbStyle = BS_PATTERN;
+        /* fall through */
+    case BS_PATTERN:
+        ptr->logbrush.lbHatch = (LONG)BITMAP_CopyBitmap( (HBITMAP) ptr->logbrush.lbHatch );
+        if (!ptr->logbrush.lbHatch) goto error;
+        break;
+
+    case BS_DIBPATTERNPT:
+        ptr->logbrush.lbStyle = BS_DIBPATTERN;
+        ptr->logbrush.lbHatch = (LONG)dib_copy( (BITMAPINFO *) ptr->logbrush.lbHatch,
+                                                ptr->logbrush.lbColor);
+        if (!ptr->logbrush.lbHatch) goto error;
+        break;
+
+    case BS_DIBPATTERN8X8:
+    case BS_DIBPATTERN:
+       {
+            BITMAPINFO* bmi;
+            HGLOBAL h = (HGLOBAL)ptr->logbrush.lbHatch;
+
+            ptr->logbrush.lbStyle = BS_DIBPATTERN;
+            if (!(bmi = (BITMAPINFO *)GlobalLock( h ))) goto error;
+            ptr->logbrush.lbHatch = dib_copy( bmi, ptr->logbrush.lbColor);
+            GlobalUnlock( h );
+            if (!ptr->logbrush.lbHatch) goto error;
+            break;
+       }
+
+    default:
+        if(ptr->logbrush.lbStyle > BS_MONOPATTERN) goto error;
+        break;
     }
-    else GDI_ReleaseObj( hbrush );
+
+    GDI_ReleaseObj( hbrush );
     TRACE("%08x\n", hbrush);
     return hbrush;
+
+ error:
+    GDI_FreeObject( hbrush, ptr );
+    return 0;
 }
 
 
@@ -222,25 +169,8 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
     TRACE("%04x\n", hbitmap );
 
-    logbrush.lbHatch = hbitmap;
+    logbrush.lbHatch = (ULONG_PTR)hbitmap;
     return CreateBrushIndirect( &logbrush );
-}
-
-
-/***********************************************************************
- *           CreateDIBPatternBrush    (GDI.445)
- */
-HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
-{
-    LOGBRUSH16 logbrush;
-
-    TRACE("%04x\n", hbitmap );
-
-    logbrush.lbStyle = BS_DIBPATTERN;
-    logbrush.lbColor = coloruse;
-    logbrush.lbHatch = hbitmap;
-
-    return CreateBrushIndirect16( &logbrush );
 }
 
 

@@ -750,6 +750,23 @@ HBITMAP16 WINAPI CreateBitmapIndirect16( const BITMAP16 * bmp )
 
 
 /***********************************************************************
+ *           CreateBrushIndirect    (GDI.50)
+ */
+HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
+{
+    LOGBRUSH brush32;
+
+    if (brush->lbStyle == BS_DIBPATTERN || brush->lbStyle == BS_DIBPATTERN8X8)
+        return CreateDIBPatternBrush16( brush->lbHatch, brush->lbColor );
+
+    brush32.lbStyle = brush->lbStyle;
+    brush32.lbColor = brush->lbColor;
+    brush32.lbHatch = brush->lbHatch;
+    return HBRUSH_16( CreateBrushIndirect(&brush32) );
+}
+
+
+/***********************************************************************
  *           CreateCompatibleBitmap    (GDI.51)
  */
 HBITMAP16 WINAPI CreateCompatibleBitmap16( HDC16 hdc, INT16 width, INT16 height )
@@ -1902,6 +1919,21 @@ HRGN16 WINAPI CreateRoundRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bo
     else
         return HRGN_16( CreateRoundRectRgn( left, top, right, bottom,
                                             ellipse_width, ellipse_height ));
+}
+
+
+/***********************************************************************
+ *           CreateDIBPatternBrush    (GDI.445)
+ */
+HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
+{
+    BITMAPINFO *bmi;
+    HBRUSH16 ret;
+
+    if (!(bmi = GlobalLock16( hbitmap ))) return 0;
+    ret = HBRUSH_16( CreateDIBPatternBrushPt( bmi, coloruse ));
+    GlobalUnlock16( hbitmap );
+    return ret;
 }
 
 
