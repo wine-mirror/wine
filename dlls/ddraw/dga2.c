@@ -149,7 +149,7 @@ DGA2_Create( LPDIRECTDRAW *lplpDD ) {
       ERR("Could not find mode !\n");
       mode_to_use = 1;
     } else {
-      DPRINTF("Using mode number %d\n", mode_to_use);
+      TRACE("Using mode number %d\n", mode_to_use);
     }
 
     dgpriv->DGA.InstallColormap = TSXDGAInstallColormap;
