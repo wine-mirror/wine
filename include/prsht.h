@@ -293,6 +293,8 @@ typedef struct _PSHNOTIFY
 #define PSN_WIZFINISH           (PSN_FIRST-8)
 #define PSN_QUERYCANCEL         (PSN_FIRST-9)
 #define PSN_GETOBJECT           (PSN_FIRST-10)
+#define PSN_TRANSLATEACCELERATOR (PSN_FIRST-12)
+#define PSN_QUERYINITIALFOCUS   (PSN_FIRST-13)
 
 #define PSNRET_NOERROR              0
 #define PSNRET_INVALID              1
