@@ -19,6 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -106,7 +109,7 @@ static BOOL WINAPI SHLWAPI_ChrCmpA(WORD ch1, WORD ch2)
 }
 
 /*************************************************************************
- * ChrCmpIA	[SHLWAPI.@]
+ * ChrCmpIA	[SHLWAPI.385]
  *
  * Compare two characters, ignoring case.
  *
@@ -136,7 +139,7 @@ static BOOL WINAPI SHLWAPI_ChrCmpW(WCHAR ch1, WCHAR ch2)
 }
 
 /*************************************************************************
- * ChrCmpIW	[SHLWAPI.@]
+ * ChrCmpIW	[SHLWAPI.386]
  *
  * See ChrCmpIA.
  */
@@ -940,7 +943,7 @@ LPWSTR WINAPI StrDupW(LPCWSTR lpszStr)
  * Internal implementation of StrSpnA/StrCSpnA/StrCSpnIA
  */
 static int WINAPI SHLWAPI_StrSpnHelperA(LPCSTR lpszStr, LPCSTR lpszMatch,
-                                        LPSTR WINAPI (*pStrChrFn)(LPCSTR,WORD),
+                                        LPSTR (WINAPI *pStrChrFn)(LPCSTR,WORD),
                                         BOOL bInvert)
 {
   LPCSTR lpszRead = lpszStr;
@@ -966,7 +969,7 @@ static int WINAPI SHLWAPI_StrSpnHelperA(LPCSTR lpszStr, LPCSTR lpszMatch,
  * Internal implementation of StrSpnW/StrCSpnW/StrCSpnIW
  */
 static int WINAPI SHLWAPI_StrSpnHelperW(LPCWSTR lpszStr, LPCWSTR lpszMatch,
-                                      LPWSTR WINAPI (*pStrChrFn)(LPCWSTR,WCHAR),
+                                      LPWSTR (WINAPI *pStrChrFn)(LPCWSTR,WCHAR),
                                       BOOL bInvert)
 {
   LPCWSTR lpszRead = lpszStr;

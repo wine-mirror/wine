@@ -74,7 +74,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef HAVE_SYS_POOL_H
+#ifdef HAVE_SYS_POLL_H
 # include <sys/poll.h>
 #endif
 #ifdef HAVE_SYS_MODEM_H

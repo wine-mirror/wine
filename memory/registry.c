@@ -508,7 +508,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    static const int info_size = info->Data - (UCHAR *)info;
+    static const int info_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );

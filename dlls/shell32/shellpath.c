@@ -22,6 +22,10 @@
  * Many of these functions are in SHLWAPI.DLL also
  *
  */
+
+#include "config.h"
+#include "wine/port.h"
+
 #include <string.h>
 #include <ctype.h>
 #include "wine/debug.h"

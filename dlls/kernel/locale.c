@@ -443,7 +443,7 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
     NTSTATUS status;
     UNICODE_STRING nameW;
     KEY_VALUE_PARTIAL_INFORMATION *info;
-    static const int info_size = info->Data - (UCHAR *)info;
+    static const int info_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
 
     if (RegOpenKeyExA( HKEY_CURRENT_USER, "Control Panel\\International", 0, KEY_READ, &hkey))
         return -1;

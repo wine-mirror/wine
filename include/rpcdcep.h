@@ -44,7 +44,7 @@ typedef struct _RPC_MESSAGE
     unsigned long RpcFlags;
 } RPC_MESSAGE, *PRPC_MESSAGE;
 
-typedef void __RPC_STUB (*RPC_DISPATCH_FUNCTION)(PRPC_MESSAGE Message);
+typedef void  (__RPC_STUB *RPC_DISPATCH_FUNCTION)(PRPC_MESSAGE Message);
 
 typedef struct
 {

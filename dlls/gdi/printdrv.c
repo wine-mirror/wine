@@ -22,12 +22,16 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

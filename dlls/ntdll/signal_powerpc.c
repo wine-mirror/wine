@@ -27,7 +27,9 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>

@@ -26,6 +26,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

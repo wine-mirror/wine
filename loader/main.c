@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <locale.h>
 #include <stdlib.h>
@@ -98,4 +99,3 @@ void WINAPI ExitKernel16( void )
     WriteOutProfiles16();
     TerminateProcess( GetCurrentProcess(), 0 );
 }
-
