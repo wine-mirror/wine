@@ -555,6 +555,11 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
     	pDDSD->dwFlags |= DDSD_CAPS;
     }
 
+    if (pDDSD->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) {
+        /* If the surface is of the 'alloconload' type, ignore the LPSURFACE field */
+        pDDSD->dwFlags &= ~DDSD_LPSURFACE;
+    }
+
     if (ppSurf == NULL) {
 	FIXME("You want to get back a surface? Don't give NULL ptrs!\n");
 	return E_POINTER; /* unchecked */
