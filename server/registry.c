@@ -663,7 +663,6 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
 
     if (!*path) goto done;
     *created = 1;
-    touch_key( key, REG_NOTIFY_CHANGE_NAME ); /* FIXME: is this right? */
     if (flags & KEY_DIRTY) make_dirty( key );
     base = key;
     base_idx = index;
@@ -1201,7 +1200,8 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 
 /* load and create a key from the input file */
 static struct key *load_key( struct key *base, const char *buffer, int flags,
-                             int prefix_len, struct file_load_info *info )
+                             int prefix_len, struct file_load_info *info,
+                             int default_modif )
 {
     WCHAR *p, *name;
     int res, len, modif;
@@ -1214,7 +1214,7 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
         file_read_error( "Malformed key", info );
         return NULL;
     }
-    if (sscanf( buffer + res, " %d", &modif ) != 1) modif = time(NULL);
+    if (sscanf( buffer + res, " %d", &modif ) != 1) modif = default_modif;
 
     p = (WCHAR *)info->tmp;
     while (prefix_len && *p) { if (*p++ == '\\') prefix_len--; }
@@ -1388,6 +1388,7 @@ static void load_keys( struct key *key, FILE *f )
     struct key *subkey = NULL;
     struct file_load_info info;
     char *p;
+    int default_modif = time(NULL);
     int flags = (key->flags & KEY_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
     int prefix_len = -1;  /* number of key name prefixes to skip */
 
@@ -1418,7 +1419,7 @@ static void load_keys( struct key *key, FILE *f )
         case '[':   /* new key */
             if (subkey) release_object( subkey );
             if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
-            if (!(subkey = load_key( key, p + 1, flags, prefix_len, &info )))
+            if (!(subkey = load_key( key, p + 1, flags, prefix_len, &info, default_modif )))
                 file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
