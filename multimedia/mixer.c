@@ -52,6 +52,7 @@ static	BOOL	MIX_GetVal(int chn, int* val)
 	WARN("mixer device not available !\n");
     } else {
 	if (ioctl(mixer, MIXER_READ(chn), val) >= 0) {
+	    TRACE("Reading %x on %d\n", *val, chn);
 	    ret = TRUE;
 	}
 	close(mixer);
@@ -363,7 +364,7 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc, DWORD 
 	    return MMSYSERR_INVALPARAM;
 	break;
     default:
-	ERR("Unknown query %08lx\n", flags & MIXER_GETLINECONTROLSF_QUERYMASK);
+	ERR("Unknown flag %08lx\n", flags & MIXER_GETLINECONTROLSF_QUERYMASK);
 	return MMSYSERR_INVALPARAM;
     }
     TRACE("Returning volume control\n");
@@ -399,7 +400,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 {
     DWORD	ret = MMSYSERR_NOTSUPPORTED;
 
-    FIXME("(%04X, %p, %lu): stub!\n", wDevID, lpmcd, fdwDetails);
+    TRACE("(%04X, %p, %lu)\n", wDevID, lpmcd, fdwDetails);
     
     if (lpmcd == NULL) return MMSYSERR_INVALPARAM;
 
@@ -440,7 +441,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 	FIXME("NIY\n");
 	break;
     default:
-	WARN("Unknown GetControlDetails flag (%08lx)\n", fdwDetails & MIXER_GETCONTROLDETAILSF_QUERYMASK);
+	WARN("Unknown flag (%08lx)\n", fdwDetails & MIXER_GETCONTROLDETAILSF_QUERYMASK);
     }
     return ret;
 }
@@ -451,7 +452,8 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWORD fdwDetails)
 {
     DWORD	ret = MMSYSERR_NOTSUPPORTED;
-    FIXME("(%04X, %p, %lu): stub!\n", wDevID, lpmcd, fdwDetails);
+    
+    TRACE("(%04X, %p, %lu)\n", wDevID, lpmcd, fdwDetails);
     
     if (lpmcd == NULL) return MMSYSERR_INVALPARAM;
     
