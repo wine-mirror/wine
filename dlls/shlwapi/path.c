@@ -3154,12 +3154,41 @@ HRESULT WINAPI PathCreateFromUrlA(LPCSTR lpszUrl, LPSTR lpszPath,
 HRESULT WINAPI PathCreateFromUrlW(LPCWSTR lpszUrl, LPWSTR lpszPath,
                                   LPDWORD pcchPath, DWORD dwFlags)
 {
-  FIXME("(%s,%p,%p,0x%08lx)-stub\n", debugstr_w(lpszUrl), lpszPath, pcchPath, dwFlags);
+  static const WCHAR stemp[] = { 'f','i','l','e',':','/','/',0 };
+  LPWSTR pwszPathPart;
+  HRESULT hr;
+
+  TRACE("(%s,%p,%p,0x%08lx)\n", debugstr_w(lpszUrl), lpszPath, pcchPath, dwFlags);
 
   if (!lpszUrl || !lpszPath || !pcchPath || !*pcchPath)
     return E_INVALIDARG;
 
-  return S_OK;
+  /* Path of the form file://... */
+  if (!strncmpW(lpszUrl, stemp, 7))
+  {
+    lpszUrl += 7;
+  }
+  /* Path of the form file:... */
+  else if (!strncmpW(lpszUrl, stemp, 5))
+  {
+    lpszUrl += 5;
+  }
+
+  /* Ensure that path is of the form c:... or c|... */
+  if (lpszUrl[1] != ':' && lpszUrl[1] != '|' && isalphaW(*lpszUrl))
+    return E_INVALIDARG;
+
+  hr = UrlUnescapeW(lpszUrl, lpszPath, pcchPath, dwFlags);
+  if (lpszPath[1] == '|')
+    lpszPath[1] = ':';
+
+  for (pwszPathPart = lpszPath; *pwszPathPart; pwszPathPart++)
+    if (*pwszPathPart == '/')
+      *pwszPathPart = '\\';
+
+  TRACE("Returning %s\n",debugstr_w(lpszPath));
+
+  return hr;
 }
 
 /*************************************************************************

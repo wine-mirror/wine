@@ -8,6 +8,7 @@ IMPORTS   = shlwapi advapi32
 CTESTS = \
 	clist.c \
 	generated.c \
+	path.c \
 	shreg.c
 
 @MAKE_TEST_RULES@
