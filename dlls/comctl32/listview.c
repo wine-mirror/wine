@@ -3945,7 +3945,6 @@ static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT iStart, UINT uFlags)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-  LISTVIEW_ITEM *lpItem;
   UINT style_mask = LVS_TYPEMASK & lStyle;
   UINT uMask = 0;
   INT nItems = GETITEMCOUNT(infoPtr);
@@ -5541,14 +5540,11 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode,
 static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  INT nCountPerColumn;
-  INT nCountPerRow;
   HWND hwndParent = GetParent(hwnd);
   NMLVKEYDOWN nmKeyDown; 
   NMHDR nmh;
-  INT oldFocusedItem = infoPtr->nFocusedItem;
+  INT nextItem = -1;
 
   /* send LVN_KEYDOWN notification */
   ZeroMemory(&nmKeyDown, sizeof(NMLVKEYDOWN));
@@ -5580,154 +5576,28 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
 
   case VK_HOME:
     if (GETITEMCOUNT(infoPtr) > 0)
-    {
-      LISTVIEW_KeySelection(hwnd, 0); 
-    }
+      nextItem = 0;
     break;
 
   case VK_END:
     if (GETITEMCOUNT(infoPtr) > 0)
-    {
-      LISTVIEW_KeySelection(hwnd, GETITEMCOUNT(infoPtr) - 1);
-    }
+      nextItem = GETITEMCOUNT(infoPtr) - 1;
     break;
 
   case VK_LEFT:
-    switch (LVS_TYPEMASK & lStyle)
-    {
-    case LVS_LIST:
-      if (infoPtr->nFocusedItem >= infoPtr->nCountPerColumn) 
-      {
-        LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem - 
-                              infoPtr->nCountPerColumn);
-      }
-      break;
-
-    case LVS_SMALLICON:
-    case LVS_ICON:
-      if (lStyle & LVS_ALIGNLEFT)
-      {
-        nCountPerColumn = max((infoPtr->rcList.bottom - infoPtr->rcList.top) /
-                              infoPtr->nItemHeight, 1);
-        if (infoPtr->nFocusedItem >= nCountPerColumn) 
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem - nCountPerColumn);
-        }
-      }
-      else
-      {
-        nCountPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left) /
-                           infoPtr->nItemWidth, 1);
-        if (infoPtr->nFocusedItem % nCountPerRow != 0)
-        {
-          LISTVIEW_SetSelection(hwnd, infoPtr->nFocusedItem - 1); 
-        }
-      }
-      break;
-    }
+    nextItem = LISTVIEW_GetNextItem(hwnd, infoPtr->nFocusedItem, LVNI_TOLEFT);
     break;
   
   case VK_UP:
-    switch (LVS_TYPEMASK & lStyle)
-    {
-    case LVS_LIST:
-    case LVS_REPORT:
-      if (infoPtr->nFocusedItem > 0)
-      {
-        LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem - 1);
-      }
-      break;
-
-    default:
-      if (lStyle & LVS_ALIGNLEFT)
-      {
-        nCountPerColumn = max((infoPtr->rcList.bottom - infoPtr->rcList.top) /
-                              infoPtr->nItemHeight, 1);
-        if (infoPtr->nFocusedItem % nCountPerColumn != 0)
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem - 1);
-        }
-      }
-      else
-      {
-        nCountPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left) /
-                           infoPtr->nItemWidth, 1);
-        if (infoPtr->nFocusedItem >= nCountPerRow)
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem - nCountPerRow);
-        }
-      }
-    }
+    nextItem = LISTVIEW_GetNextItem(hwnd, infoPtr->nFocusedItem, LVNI_ABOVE);
     break;
     
   case VK_RIGHT:
-    switch (LVS_TYPEMASK & lStyle)
-    {
-    case LVS_LIST:
-      if (infoPtr->nFocusedItem < GETITEMCOUNT(infoPtr) - 
-          infoPtr->nCountPerColumn)
-      {
-        LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem +
-                              infoPtr->nCountPerColumn);
-      }
-      break;
-
-    case LVS_ICON:
-    case LVS_SMALLICON:
-      if (lStyle & LVS_ALIGNLEFT)
-      {
-        nCountPerColumn = max((infoPtr->rcList.bottom - infoPtr->rcList.top) /
-                              infoPtr->nItemHeight, 1);
-        if (infoPtr->nFocusedItem < GETITEMCOUNT(infoPtr) - nCountPerColumn)
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem + nCountPerColumn);
-        }
-      }
-      else
-      {
-        nCountPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left) /
-                           infoPtr->nItemWidth, 1);
-        if ((infoPtr->nFocusedItem % nCountPerRow != nCountPerRow - 1) && 
-            (infoPtr->nFocusedItem < GETITEMCOUNT(infoPtr) - 1))
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem + 1);
-        }
-      }
-    }
+    nextItem = LISTVIEW_GetNextItem(hwnd, infoPtr->nFocusedItem, LVNI_TORIGHT);
     break;
 
   case VK_DOWN:
-    switch (LVS_TYPEMASK & lStyle)
-    {
-    case LVS_LIST:
-    case LVS_REPORT:
-      if (infoPtr->nFocusedItem < GETITEMCOUNT(infoPtr) - 1)
-      {
-        LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem + 1);
-      }
-      break;
-
-    case LVS_SMALLICON:
-    case LVS_ICON:
-      if (lStyle & LVS_ALIGNLEFT)
-      {
-        nCountPerColumn = max((infoPtr->rcList.bottom - infoPtr->rcList.top) /
-                              infoPtr->nItemHeight, 1);
-        if (infoPtr->nFocusedItem % nCountPerColumn != nCountPerColumn - 1)
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem + 1);
-        }
-      }
-      else
-      {
-        nCountPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left) /
-                           infoPtr->nItemWidth, 1);
-        if (infoPtr->nFocusedItem < GETITEMCOUNT(infoPtr) - nCountPerRow)
-        {
-          LISTVIEW_KeySelection(hwnd, infoPtr->nFocusedItem + nCountPerRow);
-        }
-      }
-    }
+    nextItem = LISTVIEW_GetNextItem(hwnd, infoPtr->nFocusedItem, LVNI_BELOW);
     break;
 
   case VK_PRIOR:
@@ -5737,9 +5607,10 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
     break;
   }
 
-  /* refresh client area if necessary*/
-  if(oldFocusedItem != infoPtr->nFocusedItem)
+  if((nextItem != infoPtr->nFocusedItem) && (nextItem != -1)) {
+    LISTVIEW_KeySelection(hwnd, nextItem);
     InvalidateRect(hwnd, NULL, TRUE);
+  }
 
   return 0;
 }
