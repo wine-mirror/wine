@@ -769,7 +769,8 @@ static void scroll_window(int direction, char lines, char row1,
 {
    if (!lines) /* Actually, clear the window */
    {
-       VGA_ClearText(row1, col1, row2, col2, attribute);
+       if(!VGA_ClearText(row1, col1, row2, col2, attribute))
+            ERR("VGA_ClearText failed!\n");
    }
    else if (direction == SCROLL_UP)
    {
@@ -792,7 +793,7 @@ void WINAPI DOSVM_PutChar(BYTE ascii)
   BIOSDATA *data = DOSMEM_BiosData();
   unsigned  xpos, ypos;
 
-  TRACE("char: 0x%02x\n", ascii);
+  TRACE("char: 0x%02x(%c)\n", ascii, ascii);
 
   VGA_PutChar(ascii);
   VGA_GetCursorPos(&xpos, &ypos);

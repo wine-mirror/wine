@@ -51,7 +51,7 @@ static HANDLE poll_timer;
  *               Each pixel uses (vga_fb_depth+7)/8 bytes because
  *               1-16 color modes are mapped to 256 color mode.
  *               Can be modified when display mode is changed.
- * vga_fb_pitch: How many bytes to add to pointer in order to move 
+ * vga_fb_pitch: How many bytes to add to pointer in order to move
  *               from one row to another. This is fixed in VGA modes,
  *               but can be modified in SVGA modes.
  * vga_fb_offset: Offset added to framebuffer start address in order
@@ -76,8 +76,8 @@ static char *textbuf_old = NULL;
 
 /*
  * VGA controller ports 0x3c0, 0x3c4, 0x3ce and 0x3d4 are
- * indexed registers. These ports are used to select VGA controller 
- * subregister that can be written to or read from using ports 0x3c1, 
+ * indexed registers. These ports are used to select VGA controller
+ * subregister that can be written to or read from using ports 0x3c1,
  * 0x3c5, 0x3cf or 0x3d5. Selected subregister indexes are
  * stored in variables vga_index_*.
  *
@@ -89,7 +89,7 @@ static char *textbuf_old = NULL;
 static BYTE vga_index_3c0;
 static BYTE vga_index_3c4;
 static BYTE vga_index_3ce;
-static BYTE vga_index_3d4; 
+static BYTE vga_index_3d4;
 static BOOL vga_address_3c0 = TRUE;
 
 static BOOL vga_mode_initialized = FALSE;
@@ -549,12 +549,17 @@ int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
     return 0;
 }
 
-void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
+BOOL VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
 {
     CONSOLE_SCREEN_BUFFER_INFO info;
-    GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info);
-    if (Xres) *Xres=info.dwSize.X;
-    if (Yres) *Yres=info.dwSize.Y;
+    if(!GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info))
+    {
+        return FALSE;
+    } else {
+        if (Xres) *Xres=info.dwSize.X;
+        if (Yres) *Yres=info.dwSize.Y;
+        return TRUE;
+    }
 }
 
 void VGA_SetCursorShape(unsigned char start_options, unsigned char end)
@@ -697,7 +702,7 @@ void VGA_SetTextAttribute(BYTE attr)
     SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
 }
 
-void VGA_ClearText(unsigned row1, unsigned col1,
+BOOL VGA_ClearText(unsigned row1, unsigned col1,
                   unsigned row2, unsigned col2,
                   BYTE attr)
 {
@@ -705,7 +710,15 @@ void VGA_ClearText(unsigned row1, unsigned col1,
     COORD off;
     char *dat = VGA_AlphaBuffer();
     HANDLE con = VGA_AlphaConsole();
-    VGA_GetAlphaMode(&width, &height);
+
+    /* return if we fail to get the height and width of the window */
+    if(!VGA_GetAlphaMode(&width, &height))
+    {
+        ERR("failed\n");
+        return FALSE;
+    }
+
+    TRACE("dat = %p, width = %d, height = %d\n", dat, width, height);
 
     EnterCriticalSection(&vga_lock);
 
@@ -723,6 +736,8 @@ void VGA_ClearText(unsigned row1, unsigned col1,
     }
 
     LeaveCriticalSection(&vga_lock);
+
+    return TRUE;
 }
 
 void VGA_ScrollUpText(unsigned row1, unsigned col1,
@@ -754,7 +769,7 @@ void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
 
 
 /*** CONTROL ***/
- 
+
 /*
  * Copy part of VGA framebuffer to VGA window.
  */
@@ -780,7 +795,7 @@ static void VGA_Poll_Graphics(void)
   unsigned int Pitch, Height, Width, X, Y;
   char *surf;
   char *dat = vga_fb_data + vga_fb_offset;
-  int   bpp = (vga_fb_depth + 7) / 8; 
+  int   bpp = (vga_fb_depth + 7) / 8;
 
   surf = VGA_Lock(&Pitch,&Height,&Width,NULL);
   if (!surf) return;
@@ -874,17 +889,17 @@ void VGA_ioport_out( WORD port, BYTE val )
            if (vga_address_3c0)
                vga_index_3c0 = val;
            else
-               FIXME("Unsupported index, register 0x3c0: 0x%02x (value 0x%02x)\n",  
-                     vga_index_3c0, val);            
+               FIXME("Unsupported index, register 0x3c0: 0x%02x (value 0x%02x)\n",
+                     vga_index_3c0, val);
            vga_address_3c0 = !vga_address_3c0;
            break;
         case 0x3c4:
            vga_index_3c4 = val;
            break;
         case 0x3c5:
-           FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n", 
-                 vga_index_3c4, val); 
-           break;        
+           FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n",
+                 vga_index_3c4, val);
+           break;
         case 0x3c8:
             palreg=val; palcnt=0; break;
         case 0x3c9:
@@ -894,10 +909,10 @@ void VGA_ioport_out( WORD port, BYTE val )
                 palcnt=0;
             }
             break;
-        case 0x3ce: 
-            vga_index_3ce = val; 
-           break; 
-        case 0x3cf: 
+        case 0x3ce:
+            vga_index_3ce = val;
+           break;
+        case 0x3cf:
            FIXME("Unsupported index, register 0x3ce: 0x%02x (value 0x%02x)\n",
                  vga_index_3ce, val);
            break;
@@ -919,20 +934,20 @@ BYTE VGA_ioport_in( WORD port )
 
     switch (port) {
         case 0x3c1:
-           FIXME("Unsupported index, register 0x3c0: 0x%02x\n", 
-                 vga_index_3c0); 
+           FIXME("Unsupported index, register 0x3c0: 0x%02x\n",
+                 vga_index_3c0);
            return 0xff;
-        case 0x3c5: 
-            FIXME("Unsupported index, register 0x3c4: 0x%02x\n",  
-                 vga_index_3c4);  
-           return 0xff; 
+        case 0x3c5:
+            FIXME("Unsupported index, register 0x3c4: 0x%02x\n",
+                 vga_index_3c4);
+           return 0xff;
         case 0x3cf:
-           FIXME("Unsupported index, register 0x3ce: 0x%02x\n",   
-                 vga_index_3ce);   
+           FIXME("Unsupported index, register 0x3ce: 0x%02x\n",
+                 vga_index_3ce);
            return 0xff;
-        case 0x3d5: 
-           FIXME("Unsupported index, register 0x3d4: 0x%02x\n",   
-                 vga_index_3d4);   
+        case 0x3d5:
+           FIXME("Unsupported index, register 0x3d4: 0x%02x\n",
+                 vga_index_3d4);
            return 0xff;
         case 0x3da:
            /*

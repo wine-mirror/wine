@@ -758,12 +758,17 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon, LPDWORD mode)
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
+ *
+ *    mode:
+ *      ENABLE_PROCESSED_INPUT	0x01
+ *      ENABLE_LINE_INPUT	0x02
+ *      ENABLE_ECHO_INPUT	0x04
+ *      ENABLE_WINDOW_INPUT	0x08
+ *      ENABLE_MOUSE_INPUT	0x10
  */
 BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
 {
     BOOL ret;
-
-    TRACE("(%x,%lx)\n", hcon, mode);
 
     SERVER_START_REQ(set_console_mode)
     {
@@ -775,6 +780,9 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
     /* FIXME: when resetting a console input to editline mode, I think we should
      * empty the S_EditString buffer
      */
+
+    TRACE("(%x,%lx) retval == %d\n", hcon, mode, ret);
+
     return ret;
 }
 
