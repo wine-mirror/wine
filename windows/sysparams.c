@@ -66,6 +66,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETGRADIENTCAPTIONS_IDX             23
 #define SPI_SETHOTTRACKING_IDX                  24
 #define SPI_SETLISTBOXSMOOTHSCROLLING_IDX       25
+#define SPI_SETMOUSEHOVERWIDTH_IDX              26
+#define SPI_SETMOUSEHOVERHEIGHT_IDX             27
+#define SPI_SETMOUSEHOVERTIME_IDX               28
+#define SPI_SETMOUSESCROLLLINES_IDX             29
+#define SPI_SETMENUSHOWDELAY_IDX                30
 
 #define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
 
@@ -137,7 +142,16 @@ static const WCHAR SPI_USERPREFERENCEMASK_REGKEY[]=           {'C','o','n','t','
 static const WCHAR SPI_USERPREFERENCEMASK_VALNAME[]=          {'U','s','e','r','P','r','e','f','e','r','e','n','c','e','m','a','s','k',0};
 static const WCHAR SPI_SETLISTBOXSMOOTHSCROLLING_REGKEY[]=    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETLISTBOXSMOOTHSCROLLING_VALNAME[]=   {'S','m','o','o','t','h','S','c','r','o','l','l',0};
-
+static const WCHAR SPI_SETMOUSEHOVERWIDTH_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETMOUSEHOVERWIDTH_VALNAME[]=          {'M','o','u','s','e','H','o','v','e','r','W','i','d','t','h',0};
+static const WCHAR SPI_SETMOUSEHOVERHEIGHT_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETMOUSEHOVERHEIGHT_VALNAME[]=         {'M','o','u','s','e','H','o','v','e','r','H','e','i','g','h','t',0};
+static const WCHAR SPI_SETMOUSEHOVERTIME_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETMOUSEHOVERTIME_VALNAME[]=           {'M','o','u','s','e','H','o','v','e','r','T','i','m','e',0};
+static const WCHAR SPI_SETMOUSESCROLLLINES_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETMOUSESCROLLLINES_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','L','i','n','e','s',0};
+static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETMENUSHOWDELAY_VALNAME[]=            {'M','e','n','u','S','h','o','w','D','e','l','a','y',0};
 
 /* FIXME - real values */
 static const WCHAR SPI_SETKEYBOARDPREF_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -186,6 +200,11 @@ static BOOL drag_full_windows = FALSE;
 static RECT work_area;
 static BOOL keyboard_pref = TRUE;
 static BOOL screen_reader = FALSE;
+static int mouse_hover_width = 4;
+static int mouse_hover_height = 4;
+static int mouse_hover_time = 400;
+static int mouse_scroll_lines = 3;
+static int menu_show_delay = 400;
 static BOOL screensaver_running = FALSE;
 static BOOL font_smoothing = FALSE;
 static BOOL keyboard_cues = FALSE;
@@ -1770,39 +1789,192 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETMOUSEHOVERWIDTH:		/*     98  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
-	*(UINT *)pvParam = 4;
+
+        spi_idx = SPI_SETMOUSEHOVERWIDTH_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETMOUSEHOVERWIDTH_REGKEY,
+                                SPI_SETMOUSEHOVERWIDTH_VALNAME,
+                                buf, sizeof(buf) ))
+                mouse_hover_width = atoiW( buf );
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = mouse_hover_width;
 	break;
+	
+    case SPI_SETMOUSEHOVERWIDTH:		/*     99  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    {
+        WCHAR buf[10];
 
-    WINE_SPI_FIXME(SPI_SETMOUSEHOVERWIDTH);	/*     99  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        spi_idx = SPI_SETMOUSEHOVERWIDTH_IDX;
+        wsprintfW(buf, CSu, uiParam);
 
+        if (SYSPARAMS_Save( SPI_SETMOUSEHOVERWIDTH_REGKEY,
+                            SPI_SETMOUSEHOVERWIDTH_VALNAME,
+                            buf, fWinIni ))
+        {
+            mouse_hover_width = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+	
     case SPI_GETMOUSEHOVERHEIGHT:		/*    100  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
-	*(UINT *)pvParam = 4;
+
+        spi_idx = SPI_SETMOUSEHOVERHEIGHT_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETMOUSEHOVERHEIGHT_REGKEY,
+                                SPI_SETMOUSEHOVERHEIGHT_VALNAME,
+                                buf, sizeof(buf) ))
+                mouse_hover_height = atoiW( buf );
+
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = mouse_hover_height;
 	break;
 
-    WINE_SPI_FIXME(SPI_SETMOUSEHOVERHEIGHT);	/*    101  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    case SPI_SETMOUSEHOVERHEIGHT:		/*    101  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    {
+        WCHAR buf[10];
 
+        spi_idx = SPI_SETMOUSEHOVERHEIGHT_IDX;
+        wsprintfW(buf, CSu, uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETMOUSEHOVERHEIGHT_REGKEY,
+                            SPI_SETMOUSEHOVERHEIGHT_VALNAME,
+                            buf, fWinIni ))
+        {
+            mouse_hover_height = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+    
     case SPI_GETMOUSEHOVERTIME:			/*    102  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
-	*(UINT *)pvParam = 400; /* default for menu dropdowns */
+
+        spi_idx = SPI_SETMOUSEHOVERTIME_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETMOUSEHOVERTIME_REGKEY,
+                                SPI_SETMOUSEHOVERTIME_VALNAME,
+                                buf, sizeof(buf) ))
+                mouse_hover_time = atoiW( buf );
+
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = mouse_hover_time;
 	break;
 
-    WINE_SPI_FIXME(SPI_SETMOUSEHOVERTIME);	/*    103  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    case SPI_SETMOUSEHOVERTIME:			/*    103  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    {
+        WCHAR buf[10];
 
+        spi_idx = SPI_SETMOUSEHOVERTIME_IDX;
+        wsprintfW(buf, CSu, uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETMOUSEHOVERTIME_REGKEY,
+                            SPI_SETMOUSEHOVERTIME_VALNAME,
+                            buf, fWinIni ))
+        {
+            mouse_hover_time = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+    
     case SPI_GETWHEELSCROLLLINES:		/*    104  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
-	*(UINT *)pvParam = 3; /* default for num scroll lines */
+
+        spi_idx = SPI_SETMOUSESCROLLLINES_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETMOUSESCROLLLINES_REGKEY,
+                                SPI_SETMOUSESCROLLLINES_VALNAME,
+                                buf, sizeof(buf) ))
+                mouse_scroll_lines = atoiW( buf );
+
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = mouse_scroll_lines;
 	break;
 
-    WINE_SPI_FIXME(SPI_SETWHEELSCROLLLINES);	/*    105  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    case SPI_SETWHEELSCROLLLINES:		/*    105  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    {
+        WCHAR buf[10];
 
-    case SPI_GETMENUSHOWDELAY:                  /*    106  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
-        if (!pvParam) return FALSE;
-        *(UINT *)pvParam = 400; /* Tested against Windows NT 4.0 and Windows 2000 */
+        spi_idx = SPI_SETMOUSESCROLLLINES_IDX;
+        wsprintfW(buf, CSu, uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETMOUSESCROLLLINES_REGKEY,
+                            SPI_SETMOUSESCROLLLINES_VALNAME,
+                            buf, fWinIni ))
+        {
+            mouse_scroll_lines = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
         break;
+    }
+    
+    case SPI_GETMENUSHOWDELAY:			/*    106  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
 
+        spi_idx = SPI_SETMENUSHOWDELAY_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETMENUSHOWDELAY_REGKEY,
+                                SPI_SETMENUSHOWDELAY_VALNAME,
+                                buf, sizeof(buf) ))
+                menu_show_delay = atoiW( buf );
+
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = menu_show_delay;
+	break;
+
+    case SPI_SETMENUSHOWDELAY:			/*    107  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    {
+        WCHAR buf[10];
+
+        spi_idx = SPI_SETMENUSHOWDELAY_IDX;
+        wsprintfW(buf, CSu, uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETMENUSHOWDELAY_REGKEY,
+                            SPI_SETMENUSHOWDELAY_VALNAME,
+                            buf, fWinIni ))
+        {
+            menu_show_delay = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+    
     WINE_SPI_FIXME(SPI_GETSHOWIMEUI);		/*    110  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETSHOWIMEUI);		/*    111  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+    WINE_SPI_FIXME(SPI_GETMOUSESPEED);          /*    112  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    WINE_SPI_FIXME(SPI_SETMOUSESPEED);          /*    113  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETSCREENSAVERRUNNING:             /*    114  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
