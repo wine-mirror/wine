@@ -41,6 +41,14 @@ For example: to run Windows' solitaire:
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
 
+WHAT'S NEW with version 0.6: (see ChangeLog for details)
+	- Working towards elimination of Xt-dependent code.  Thanks to
+	  Alexandre and Martin.
+	- Other bug fixes.
+	- I added a rudimentary spy facility which can be turned
+ 	  on from the wine.ini file.  See the sample wine.ini
+	  for details
+
 WHAT'S NEW with version 0.5: (see ChangeLog for details)
 	- Working towards elimination of Xt-dependent code.
 	- StretchBlt()

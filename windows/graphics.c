@@ -7,7 +7,9 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <math.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #ifndef PI
 #define PI M_PI
 #endif
@@ -413,47 +415,43 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
 
 
 /**********************************************************************
- *          Line  (Not a MSWin Call)
- */
-void Line(HDC hDC, int X1, int Y1, int X2, int Y2)
-{
-MoveTo(hDC, X1, Y1);
-LineTo(hDC, X2, Y2);
-}
-
-
-/**********************************************************************
  *          DrawReliefRect  (Not a MSWin Call)
  */
- void DrawReliefRect(HDC hDC, RECT rect, int ThickNess, int Mode)
+void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
 {
-HPEN   hWHITEPen;
-HPEN   hDKGRAYPen;
-HPEN   hOldPen;
-int    OldColor;
-rect.right--;  rect.bottom--;
-hDKGRAYPen = CreatePen(PS_SOLID, 1, 0x00808080L);
-hWHITEPen = GetStockObject(WHITE_PEN);
-hOldPen = SelectObject(hDC, hWHITEPen);
-while(ThickNess > 0) {
-    if (Mode == 0)
-	SelectObject(hDC, hWHITEPen);
-    else
-	SelectObject(hDC, hDKGRAYPen);
-    Line(hDC, rect.left, rect.top, rect.right, rect.top);
-    Line(hDC, rect.left, rect.top, rect.left, rect.bottom + 1);
-    if (Mode == 0)
-	SelectObject(hDC, hDKGRAYPen);
-    else
-	SelectObject(hDC, hWHITEPen);
-    Line(hDC, rect.right, rect.bottom, rect.left, rect.bottom);
-    Line(hDC, rect.right, rect.bottom, rect.right, rect.top - 1);
-    InflateRect(&rect, -1, -1);
-    ThickNess--;
+    HBRUSH hbrushOld, hbrushShadow, hbrushHighlight;
+    int i;
+
+    hbrushShadow = CreateSolidBrush( GetSysColor(COLOR_BTNSHADOW) );
+    hbrushHighlight = CreateSolidBrush( GetSysColor(COLOR_BTNHIGHLIGHT) );
+
+    if (pressed) hbrushOld = SelectObject( hdc, hbrushShadow );
+    else hbrushOld = SelectObject( hdc, hbrushHighlight );
+
+    for (i = 0; i < thickness; i++)
+    {
+	PatBlt( hdc, rect.left + i, rect.top,
+	        1, rect.bottom - rect.top - i, PATCOPY );
+	PatBlt( hdc, rect.left, rect.top + i,
+	        rect.right - rect.left - i, 1, PATCOPY );
     }
-SelectObject(hDC, hOldPen);
-DeleteObject(hDKGRAYPen);
+
+    if (pressed) hbrushOld = SelectObject( hdc, hbrushHighlight );
+    else hbrushOld = SelectObject( hdc, hbrushShadow );
+
+    for (i = 0; i < thickness; i++)
+    {
+	PatBlt( hdc, rect.right - i - 1, rect.top + i,
+	        1, rect.bottom - rect.top - i, PATCOPY );
+	PatBlt( hdc, rect.left + i, rect.bottom - i - 1,
+	        rect.right - rect.left - i, 1, PATCOPY );
+    }
+
+    SelectObject( hdc, hbrushOld );
+    DeleteObject( hbrushShadow );
+    DeleteObject( hbrushHighlight );
 }
+
 
 /**********************************************************************
  *          Polyline  (GDI.37)

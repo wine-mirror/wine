@@ -238,6 +238,49 @@ typedef struct
 #define WVR_REDRAW          (WVR_HREDRAW | WVR_VREDRAW)
 #define WVR_VALIDRECTS      0x0400
 
+  /* WM_NCHITTEST return codes */
+#define HTERROR             (-2)
+#define HTTRANSPARENT       (-1)
+#define HTNOWHERE           0
+#define HTCLIENT            1
+#define HTCAPTION           2
+#define HTSYSMENU           3
+#define HTSIZE              4
+#define HTMENU              5
+#define HTHSCROLL           6
+#define HTVSCROLL           7
+#define HTMINBUTTON         8
+#define HTMAXBUTTON         9
+#define HTLEFT              10
+#define HTRIGHT             11
+#define HTTOP               12
+#define HTTOPLEFT           13
+#define HTTOPRIGHT          14
+#define HTBOTTOM            15
+#define HTBOTTOMLEFT        16
+#define HTBOTTOMRIGHT       17
+#define HTBORDER            18
+#define HTGROWBOX           HTSIZE
+#define HTREDUCE            HTMINBUTTON
+#define HTZOOM              HTMAXBUTTON
+
+  /* WM_SYSCOMMAND parameters */
+#define SC_SIZE         0xf000
+#define SC_MOVE         0xf010
+#define SC_MINIMIZE     0xf020
+#define SC_MAXIMIZE     0xf030
+#define SC_NEXTWINDOW   0xf040
+#define SC_PREVWINDOW   0xf050
+#define SC_CLOSE        0xf060
+#define SC_VSCROLL      0xf070
+#define SC_HSCROLL      0xf080
+#define SC_MOUSEMENU    0xf090
+#define SC_KEYMENU      0xf100
+#define SC_ARRANGE      0xf110
+#define SC_RESTORE      0xf120
+#define SC_TASKLIST     0xf130
+#define SC_SCREENSAVE   0xf140
+#define SC_HOTKEY       0xf150
 
   /* Dialogs */
 
@@ -794,6 +837,8 @@ typedef METARECORD *PMETARECORD;
 #define SM_PENWINDOWS         41
 #define SM_DBCSENABLED        42
 
+#define SM_CMETRICS           43
+
   /* Device-independent bitmaps */
 
 typedef struct { BYTE rgbBlue, rgbGreen, rgbRed, rgbReserved; } RGBQUAD;
@@ -1058,6 +1103,63 @@ typedef HANDLETABLE *LPHANDLETABLE;
 #define IDC_SIZEWE MAKEINTRESOURCE(32544)
 #define IDC_SIZENS MAKEINTRESOURCE(32545)
 
+/* OEM Resource Ordinal Numbers */
+#define OBM_CLOSE           32754
+#define OBM_UPARROW         32753
+#define OBM_DNARROW         32752
+#define OBM_RGARROW         32751
+#define OBM_LFARROW         32750
+#define OBM_REDUCE          32749
+#define OBM_ZOOM            32748
+#define OBM_RESTORE         32747
+#define OBM_REDUCED         32746
+#define OBM_ZOOMD           32745
+#define OBM_RESTORED        32744
+#define OBM_UPARROWD        32743
+#define OBM_DNARROWD        32742
+#define OBM_RGARROWD        32741
+#define OBM_LFARROWD        32740
+#define OBM_MNARROW         32739
+#define OBM_COMBO           32738
+#define OBM_UPARROWI        32737
+#define OBM_DNARROWI        32736
+#define OBM_RGARROWI        32735
+#define OBM_LFARROWI        32734
+
+#define OBM_OLD_CLOSE       32767
+#define OBM_SIZE            32766
+#define OBM_OLD_UPARROW     32765
+#define OBM_OLD_DNARROW     32764
+#define OBM_OLD_RGARROW     32763
+#define OBM_OLD_LFARROW     32762
+#define OBM_BTSIZE          32761
+#define OBM_CHECK           32760
+#define OBM_CHECKBOXES      32759
+#define OBM_BTNCORNERS      32758
+#define OBM_OLD_REDUCE      32757
+#define OBM_OLD_ZOOM        32756
+#define OBM_OLD_RESTORE     32755
+
+#define OCR_NORMAL          32512
+#define OCR_IBEAM           32513
+#define OCR_WAIT            32514
+#define OCR_CROSS           32515
+#define OCR_UP              32516
+#define OCR_SIZE            32640
+#define OCR_ICON            32641
+#define OCR_SIZENWSE        32642
+#define OCR_SIZENESW        32643
+#define OCR_SIZEWE          32644
+#define OCR_SIZENS          32645
+#define OCR_SIZEALL         32646
+#define OCR_ICOCUR          32647
+
+#define OIC_SAMPLE          32512
+#define OIC_HAND            32513
+#define OIC_QUES            32514
+#define OIC_BANG            32515
+#define OIC_NOTE            32516
+
   /* Stock GDI objects for GetStockObject() */
 
 #define WHITE_BRUSH	    0
@@ -1097,9 +1199,24 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 
 #define WM_NCCREATE         0x0081
 #define WM_NCDESTROY        0x0082
-#define WM_NCCALCSIZE	    0x0083
+#define WM_NCCALCSIZE       0x0083
+#define WM_NCHITTEST        0x0084
+#define WM_NCPAINT          0x0085
+#define WM_NCACTIVATE       0x0086
 
 #define WM_GETDLGCODE	    0x0087
+
+  /* Non-client mouse messages */
+#define WM_NCMOUSEMOVE      0x00a0
+#define WM_NCLBUTTONDOWN    0x00a1
+#define WM_NCLBUTTONUP      0x00a2
+#define WM_NCLBUTTONDBLCLK  0x00a3
+#define WM_NCRBUTTONDOWN    0x00a4
+#define WM_NCRBUTTONUP      0x00a5
+#define WM_NCRBUTTONDBLCLK  0x00a6
+#define WM_NCMBUTTONDOWN    0x00a7
+#define WM_NCMBUTTONUP      0x00a8
+#define WM_NCMBUTTONDBLCLK  0x00a9
 
   /* Keyboard messages */
 #define WM_KEYDOWN          0x0100
@@ -1115,6 +1232,7 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 
 #define WM_INITDIALOG       0x0110 
 #define WM_COMMAND          0x0111
+#define WM_SYSCOMMAND       0x0112
 #define WM_TIMER	    0x0113
 #define WM_SYSTIMER	    0x0118
 
@@ -1165,6 +1283,14 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define PM_NOREMOVE	0x0000
 #define PM_REMOVE	0x0001
 #define PM_NOYIELD	0x0002
+
+#define WM_SHOWWINDOW       0x0018
+
+/* WM_SHOWWINDOW wParam codes */
+#define SW_PARENTCLOSING    1
+#define SW_OTHERMAXIMIZED   2
+#define SW_PARENTOPENING    3
+#define SW_OTHERRESTORED    4
 
 enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 	SW_MAXIMIZE, SW_SHOWNOACTIVATE, SW_SHOW, SW_MINIMIZE,
@@ -1284,9 +1410,7 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define DT_NOPREFIX 2048
 #define DT_INTERNAL 4096
 
-
-
-
+/* Window Styles */
 #define WS_OVERLAPPED 0x00000000L
 #define WS_POPUP 0x80000000L
 #define WS_CHILD 0x40000000L
@@ -2022,7 +2146,7 @@ Fa(WORD,GetPolyFillMode,HDC,a)
 Fa(WORD,GetRelAbs,HDC,a)
 Fa(WORD,GetROP2,HDC,a)
 Fa(WORD,GetStretchBltMode,HDC,a)
-Fa(int,GetSystemMetrics,short,a)
+Fa(int,GetSystemMetrics,WORD,a)
 Fa(int,GetWindowTextLength,HWND,a)
 Fa(int,RestoreVisRgn,HDC,a)
 Fa(int,SaveDC,HDC,a)
@@ -2347,7 +2471,7 @@ Fd(int,LoadString,HANDLE,a,WORD,b,LPSTR,c,int,d)
 Fd(int,MessageBox,HWND,a,LPSTR,b,LPSTR,c,WORD,d)
 Fd(int,SetScrollPos,HWND,a,int,b,int,c,BOOL,d)
 Fd(int,SetVoiceNote,int,a,int,b,int,c,int,d)
-Fd(void,AdjustWindowRectEx,LPRECT,a,LONG,b,BOOL,c,DWORD,d)
+Fd(void,AdjustWindowRectEx,LPRECT,a,DWORD,b,BOOL,c,DWORD,d)
 Fd(void,AnimatePalette,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
 Fd(void,CheckRadioButton,HWND,a,WORD,b,WORD,c,WORD,d)
 Fd(void,CreateCaret,HWND,a,HBITMAP,b,short,c,short,d)

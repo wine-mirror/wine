@@ -125,7 +125,7 @@ static TSecHeader *load (char *file)
 	    if (c == ' ' || c == '\t')
 		break;
 	    
-	    if (c == '\n' || overflow) /* Abort Definition */
+	    if (c == '\n' || c == ';' || overflow) /* Abort Definition */
 		next = CharBuffer;
 	    
 	    if (c == '=' || overflow){

@@ -6,33 +6,23 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
-#include <X11/Core.h>
+#include <X11/Xlib.h>
 
 #include "windows.h"
 #include "win.h"
 #include "class.h"
+#include "message.h"
 
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
-static WORD dblclick_time = 300; /* Max. time for a double click (milliseconds) */
 
-extern Display * XT_display;
-
-  /* Event handlers */
-static void EVENT_expose();
-static void EVENT_key();
-static void EVENT_mouse_motion();
-static void EVENT_mouse_button();
-static void EVENT_structure();
-static void EVENT_focus_change();
-static void EVENT_enter_notify();
+extern Display * display;
 
   /* X context to associate a hwnd to an X window */
 static XContext winContext = 0;
 
   /* State variables */
+static WORD ALTKeyState;
 static HWND captureWnd = 0;
 Window winHasCursor = 0;
 extern HWND hWndFocus;
@@ -118,6 +108,17 @@ static char *event_names[] =
 };
 #endif
 
+  /* Event handlers */
+static void EVENT_key( HWND hwnd, XKeyEvent *event );
+static void EVENT_ButtonPress( HWND hwnd, XButtonEvent *event );
+static void EVENT_ButtonRelease( HWND hwnd, XButtonEvent *event );
+static void EVENT_MotionNotify( HWND hwnd, XMotionEvent *event );
+static void EVENT_EnterNotify( HWND hwnd, XCrossingEvent *event );
+static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
+static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
+static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
+static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
+
 
 /***********************************************************************
  *           EVENT_ProcessEvent
@@ -128,117 +129,72 @@ void EVENT_ProcessEvent( XEvent *event )
 {
     HWND hwnd;
     XPointer ptr;
-    Boolean cont_dispatch = TRUE;
     
-    XFindContext( XT_display, ((XAnyEvent *)event)->window, winContext, &ptr );
-    hwnd = (HWND)ptr & 0xffff;
+    XFindContext( display, ((XAnyEvent *)event)->window, winContext, &ptr );
+    hwnd = (HWND) (int)ptr;
 
 #ifdef DEBUG_EVENT
-    printf( "Got event %s for hwnd %d\n", 
-	    event_names[event->type], hwnd );
+    printf( "Got event %s for hwnd %d\n", event_names[event->type], hwnd );
 #endif
 
     switch(event->type)
     {
-        case Expose:
-	    EVENT_expose( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case KeyPress:
+    case KeyRelease:
+	EVENT_key( hwnd, (XKeyEvent*)event );
+	break;
+	
+    case ButtonPress:
+	EVENT_ButtonPress( hwnd, (XButtonEvent*)event );
+	break;
 
-	case KeyPress:
-	case KeyRelease:
-	    EVENT_key( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case ButtonRelease:
+	EVENT_ButtonRelease( hwnd, (XButtonEvent*)event );
+	break;
 
-	case MotionNotify:
-	    EVENT_mouse_motion( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case MotionNotify:
+	EVENT_MotionNotify( hwnd, (XMotionEvent*)event );
+	break;
 
-	case ButtonPress:
-	case ButtonRelease:
-	    EVENT_mouse_button( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case EnterNotify:
+	EVENT_EnterNotify( hwnd, (XCrossingEvent*)event );
+	break;
 
-	case CirculateNotify:
-	case ConfigureNotify:
-	case MapNotify:
-	case UnmapNotify:
-	    EVENT_structure( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case FocusIn:
+	EVENT_FocusIn( hwnd, (XFocusChangeEvent*)event );
+	break;
 
-	case FocusIn:
-	case FocusOut:
-	    EVENT_focus_change( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case FocusOut:
+	EVENT_FocusOut( hwnd, (XFocusChangeEvent*)event );
+	break;
 
-	case EnterNotify:
-	    EVENT_enter_notify( 0, hwnd, event, &cont_dispatch );
-	    break;
+    case Expose:
+	EVENT_Expose( hwnd, (XExposeEvent*)event );
+	break;
+
+    case ConfigureNotify:
+	EVENT_ConfigureNotify( hwnd, (XConfigureEvent*)event );
+	break;
 
 #ifdef DEBUG_EVENT
-	default:
-	    printf( "Unprocessed event %s for hwnd %d\n", 
-		    event_names[event->type], hwnd );
-	    break;
-#endif
+    default:    
+	printf( "Unprocessed event %s for hwnd %d\n",
+	        event_names[event->type], hwnd );
+	break;
+#endif	
     }
 }
 
 
 /***********************************************************************
- *           EVENT_AddHandlers
+ *           EVENT_RegisterWindow
  *
- * Add the event handlers to the given window
+ * Associate an X window to a HWND.
  */
-#ifdef USE_XLIB
-void EVENT_AddHandlers( Window w, int hwnd )
+void EVENT_RegisterWindow( Window w, HWND hwnd )
 {
     if (!winContext) winContext = XUniqueContext();
-    XSaveContext( XT_display, w, winContext, (XPointer)hwnd );
-}
-#else
-void EVENT_AddHandlers( Widget w, int hwnd )
-{
-    XtAddEventHandler(w, ExposureMask, FALSE,
-		      EVENT_expose, (XtPointer)hwnd );
-    XtAddEventHandler(w, KeyPressMask | KeyReleaseMask, FALSE, 
-		      EVENT_key, (XtPointer)hwnd );
-    XtAddEventHandler(w, PointerMotionMask, FALSE,
-		      EVENT_mouse_motion, (XtPointer)hwnd );
-    XtAddEventHandler(w, ButtonPressMask | ButtonReleaseMask, FALSE,
-		      EVENT_mouse_button, (XtPointer)hwnd );
-    XtAddEventHandler(w, StructureNotifyMask, FALSE,
-		      EVENT_structure, (XtPointer)hwnd );
-    XtAddEventHandler(w, FocusChangeMask, FALSE,
-		      EVENT_focus_change, (XtPointer)hwnd );
-    XtAddEventHandler(w, EnterWindowMask, FALSE,
-		      EVENT_enter_notify, (XtPointer)hwnd );
-}
-#endif
-
-
-/***********************************************************************
- *           EVENT_RemoveHandlers
- *
- * Remove the event handlers of the given window
- */
-void EVENT_RemoveHandlers( Widget w, int hwnd )
-{
-#ifndef USE_XLIB
-    XtRemoveEventHandler(w, ExposureMask, FALSE,
-			 EVENT_expose, (XtPointer)hwnd );
-    XtRemoveEventHandler(w, KeyPressMask | KeyReleaseMask, FALSE, 
-			 EVENT_key, (XtPointer)hwnd );
-    XtRemoveEventHandler(w, PointerMotionMask, FALSE,
-			 EVENT_mouse_motion, (XtPointer)hwnd );
-    XtRemoveEventHandler(w, ButtonPressMask | ButtonReleaseMask, FALSE,
-			 EVENT_mouse_button, (XtPointer)hwnd );
-    XtRemoveEventHandler(w, StructureNotifyMask, FALSE,
-			 EVENT_structure, (XtPointer)hwnd );
-    XtRemoveEventHandler(w, FocusChangeMask, FALSE,
-			 EVENT_focus_change, (XtPointer)hwnd );
-    XtRemoveEventHandler(w, EnterWindowMask, FALSE,
-			 EVENT_enter_notify, (XtPointer)hwnd );
-#endif
+    XSaveContext( display, w, winContext, (XPointer)(int)hwnd );
 }
 
 
@@ -262,12 +218,9 @@ static WORD EVENT_XStateToKeyState( int state )
 
 
 /***********************************************************************
- *           EVENT_expose
- *
- * Handle a X expose event
+ *           EVENT_Expose
  */
-static void EVENT_expose( Widget w, int hwnd, XExposeEvent *event,
-			  Boolean *cont_dispatch )
+static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
 {
     RECT rect;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -288,10 +241,8 @@ static void EVENT_expose( Widget w, int hwnd, XExposeEvent *event,
  *
  * Handle a X key event
  */
-static void EVENT_key( Widget w, int hwnd, XKeyEvent *event,
-		       Boolean *cont_dispatch )
+static void EVENT_key( HWND hwnd, XKeyEvent *event )
 {
-    MSG msg;
     char Str[24]; 
     XComposeStatus cs; 
     KeySym keysym;
@@ -350,25 +301,20 @@ static void EVENT_key( Widget w, int hwnd, XKeyEvent *event,
 
     if (event->type == KeyPress)
     {
-	msg.hwnd    = hwnd;
-	msg.message = WM_KEYDOWN;
-	msg.wParam  = vkey;
+	if (vkey == VK_MENU) ALTKeyState = TRUE;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode);
 	keylp.lp1.extended = (extended ? 1 : 0);
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = (KeyDown ? 0 : 1);
 	keylp.lp1.transition = 0;
-	msg.lParam  = keylp.lp2;
 #ifdef DEBUG_KEY
-	printf("            wParam=%X, lParam=%lX\n", msg.wParam, msg.lParam);
+	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
 #endif
-	msg.time = event->time;
-	msg.pt.x = event->x & 0xffff;
-	msg.pt.y = event->y & 0xffff;
-    
-	hardware_event( hwnd, WM_KEYDOWN, vkey, keylp.lp2,
-		        event->x & 0xffff, event->y & 0xffff, event->time, 0 );
+	hardware_event( hwnd, ALTKeyState ? WM_SYSKEYDOWN : WM_KEYDOWN, 
+		        vkey, keylp.lp2,
+		        event->x_root & 0xffff, event->y_root & 0xffff,
+		        event->time, 0 );
 	KeyDown = TRUE;
 
 	/* The key translation ought to take place in TranslateMessage().
@@ -378,218 +324,145 @@ static void EVENT_key( Widget w, int hwnd, XKeyEvent *event,
 	 */
 	if (count == 1)                /* key has an ASCII representation */
 	{
-	    msg.hwnd    = hwnd;
-	    msg.message = WM_CHAR;
-	    msg.wParam  = (WORD)Str[0];
-	    msg.lParam  = keylp.lp2;
 #ifdef DEBUG_KEY
-	printf("WM_CHAR :   wParam=%X\n", msg.wParam);
+	    printf("WM_CHAR :   wParam=%X\n", (WORD)Str[0] );
 #endif
-	    msg.time = event->time;
-	    msg.pt.x = event->x & 0xffff;
-	    msg.pt.y = event->y & 0xffff;
 	    PostMessage( hwnd, WM_CHAR, (WORD)Str[0], keylp.lp2 );
 	}
     }
     else
     {
-	msg.hwnd    = hwnd;
-	msg.message = WM_KEYUP;
-	msg.wParam  = vkey;
+	if (vkey == VK_MENU) ALTKeyState = FALSE;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode);
 	keylp.lp1.extended = (extended ? 1 : 0);
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = 1;
 	keylp.lp1.transition = 1;
-	msg.lParam  = keylp.lp2;
 #ifdef DEBUG_KEY
-	printf("            wParam=%X, lParam=%lX\n", msg.wParam, msg.lParam);
+	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
 #endif
-	msg.time = event->time;
-	msg.pt.x = event->x & 0xffff;
-	msg.pt.y = event->y & 0xffff;
-    
-	hardware_event( hwnd, WM_KEYUP, vkey, keylp.lp2,
-		        event->x & 0xffff, event->y & 0xffff, event->time, 0 );
+	hardware_event( hwnd, 
+		        ((ALTKeyState || vkey == VK_MENU) ? 
+			 WM_SYSKEYUP : WM_KEYUP), 
+		        vkey, keylp.lp2,
+		        event->x_root & 0xffff, event->y_root & 0xffff,
+		        event->time, 0 );
 	KeyDown = FALSE;
     }
 }
 
 
 /***********************************************************************
- *           EVENT_mouse_motion
- *
- * Handle a X mouse motion event
+ *           EVENT_MotionNotify
  */
-static void EVENT_mouse_motion( Widget w, int hwnd, XMotionEvent *event, 
-			        Boolean *cont_dispatch )
+static void EVENT_MotionNotify( HWND hwnd, XMotionEvent *event )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
-
-      /* Position must be relative to client area */
-    event->x -= wndPtr->rectClient.left - wndPtr->rectWindow.left;
-    event->y -= wndPtr->rectClient.top - wndPtr->rectWindow.top;
-
-    hardware_event( hwnd, WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ),
-		    (event->x & 0xffff) | (event->y << 16),
-		    event->x & 0xffff, event->y & 0xffff,
+    hardware_event( hwnd, WM_MOUSEMOVE,
+		    EVENT_XStateToKeyState( event->state ), 0L,
+		    event->x_root & 0xffff, event->y_root & 0xffff,
 		    event->time, 0 );		    
 }
 
 
 /***********************************************************************
- *           EVENT_mouse_button
- *
- * Handle a X mouse button event
+ *           EVENT_ButtonPress
  */
-static void EVENT_mouse_button( Widget w, int hwnd, XButtonEvent *event,
-			        Boolean *cont_dispatch )
+static void EVENT_ButtonPress( HWND hwnd, XButtonEvent *event )
 {
-    static WORD messages[3][NB_BUTTONS] = 
-    {
-	{ WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN },
-	{ WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP },
-        { WM_LBUTTONDBLCLK, WM_MBUTTONDBLCLK, WM_RBUTTONDBLCLK }
-    };
-    static unsigned long lastClickTime[NB_BUTTONS] = { 0, 0, 0 };
-        
-    int buttonNum, prevTime, type;
+    static WORD messages[NB_BUTTONS] = 
+        { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
+    int buttonNum = event->button - 1;
 
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
-
-      /* Position must be relative to client area */
-    event->x -= wndPtr->rectClient.left - wndPtr->rectWindow.left;
-    event->y -= wndPtr->rectClient.top - wndPtr->rectWindow.top;
-
-    buttonNum = event->button-1;
-    if (buttonNum >= NB_BUTTONS) return;
-    if (event->type == ButtonRelease) type = 1;
-    else
-    {  /* Check if double-click */
-	prevTime = lastClickTime[buttonNum];
-	lastClickTime[buttonNum] = event->time;
-	if (event->time - prevTime < dblclick_time)
-	{
-	    WND * wndPtr;
-	    CLASS * classPtr;
-	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
-	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return;
-	    type = (classPtr->wc.style & CS_DBLCLKS) ? 2 : 0;
-	}
-	else type = 0;
-    }	
-    
+    if (buttonNum >= NB_BUTTONS) return;    
     winHasCursor = event->window;
-
-    hardware_event( hwnd, messages[type][buttonNum],
-		    EVENT_XStateToKeyState( event->state ),
-		    (event->x & 0xffff) | (event->y << 16),
-		    event->x & 0xffff, event->y & 0xffff,
+    hardware_event( hwnd, messages[buttonNum],
+		    EVENT_XStateToKeyState( event->state ), 0L,
+		    event->x_root & 0xffff, event->y_root & 0xffff,
 		    event->time, 0 );		    
 }
 
 
 /***********************************************************************
- *           EVENT_structure
- *
- * Handle a X StructureNotify event
+ *           EVENT_ButtonRelease
  */
-static void EVENT_structure( Widget w, int hwnd, XEvent *event, 
- 			     Boolean *cont_dispatch )
+static void EVENT_ButtonRelease( HWND hwnd, XButtonEvent *event )
 {
-    MSG msg;
-    
-    msg.hwnd = hwnd;
-    msg.time = GetTickCount();
-    msg.pt.x = 0;
-    msg.pt.y = 0;
+    static const WORD messages[NB_BUTTONS] = 
+        { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
+    int buttonNum = event->button - 1;
 
-    switch(event->type)
-    {
-      case ConfigureNotify:
-	{
-	    HANDLE handle;
-	    NCCALCSIZE_PARAMS *params;	    
-	    XConfigureEvent * evt = (XConfigureEvent *)event;
-	    WND * wndPtr = WIN_FindWndPtr( hwnd );
-	    if (!wndPtr) return;
-	    wndPtr->rectWindow.left   = evt->x;
-	    wndPtr->rectWindow.top    = evt->y;
-	    wndPtr->rectWindow.right  = evt->x + evt->width;
-	    wndPtr->rectWindow.bottom = evt->y + evt->height;
+    if (buttonNum >= NB_BUTTONS) return;    
+    winHasCursor = event->window;
+    hardware_event( hwnd, messages[buttonNum],
+		    EVENT_XStateToKeyState( event->state ), 0L,
+		    event->x_root & 0xffff, event->y_root & 0xffff,
+		    event->time, 0 );		    
+}
 
-	      /* Send WM_NCCALCSIZE message */
-	    handle = GlobalAlloc( GMEM_MOVEABLE, sizeof(*params) );
-	    params = (NCCALCSIZE_PARAMS *)GlobalLock( handle );
-	    params->rgrc[0] = wndPtr->rectWindow;
-	    params->lppos   = NULL;  /* Should be WINDOWPOS struct */
-	    SendMessage( hwnd, WM_NCCALCSIZE, FALSE, params );
-	    wndPtr->rectClient = params->rgrc[0];
-	    PostMessage( hwnd, WM_MOVE, 0,
-		             MAKELONG( wndPtr->rectClient.left,
-				       wndPtr->rectClient.top ));
-	    PostMessage( hwnd, WM_SIZE, SIZE_RESTORED,
-		   MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-			    wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-	    GlobalUnlock( handle );
-	    GlobalFree( handle );
-	}
-	break;
-	
-    }    
+
+/***********************************************************************
+ *           EVENT_ConfigureNotify
+ */
+static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
+{
+    HANDLE handle;
+    NCCALCSIZE_PARAMS *params;	    
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return;
+    wndPtr->rectWindow.left   = event->x;
+    wndPtr->rectWindow.top    = event->y;
+    wndPtr->rectWindow.right  = event->x + event->width;
+    wndPtr->rectWindow.bottom = event->y + event->height;
+
+      /* Send WM_NCCALCSIZE message */
+    handle = GlobalAlloc( GMEM_MOVEABLE, sizeof(*params) );
+    params = (NCCALCSIZE_PARAMS *)GlobalLock( handle );
+    params->rgrc[0] = wndPtr->rectWindow;
+    params->lppos   = NULL;  /* Should be WINDOWPOS struct */
+    SendMessage( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)params );
+    wndPtr->rectClient = params->rgrc[0];
+    PostMessage( hwnd, WM_MOVE, 0,
+		 MAKELONG( wndPtr->rectClient.left, wndPtr->rectClient.top ));
+    PostMessage( hwnd, WM_SIZE, SIZE_RESTORED,
+		 MAKELONG( wndPtr->rectClient.right-wndPtr->rectClient.left,
+			   wndPtr->rectClient.bottom-wndPtr->rectClient.top) );
+    GlobalUnlock( handle );
+    GlobalFree( handle );
 }
 
 
 /**********************************************************************
- *              EVENT_focus_change
- *
- * Handle an X FocusChange event
+ *              EVENT_FocusIn
  */
-static void EVENT_focus_change( Widget w, int hwnd, XEvent *event, 
-			       Boolean *cont_dispatch )
+static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
 {
-    switch(event->type)
-    {
-      case FocusIn:
-	{
-	    PostMessage( hwnd, WM_SETFOCUS, hwnd, 0 );
-	    hWndFocus = hwnd;
-	}
-	break;
-	
-      case FocusOut:
-	{
-	    if (hWndFocus)
-	    {
-		PostMessage( hwnd, WM_KILLFOCUS, hwnd, 0 );
-		hWndFocus = 0;
-	    }
-	}
-    }    
+    PostMessage( hwnd, WM_SETFOCUS, hwnd, 0 );
+    hWndFocus = hwnd;
 }
 
 
 /**********************************************************************
- *              EVENT_enter_notify
- *
- * Handle an X EnterNotify event
+ *              EVENT_FocusOut
  */
-static void EVENT_enter_notify( Widget w, int hwnd, XCrossingEvent *event, 
-			       Boolean *cont_dispatch )
+static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
+{
+    if (hWndFocus)
+    {
+	PostMessage( hwnd, WM_KILLFOCUS, hwnd, 0 );
+	hWndFocus = 0;
+    }
+}
+
+
+/**********************************************************************
+ *              EVENT_EnterNotify
+ */
+static void EVENT_EnterNotify( HWND hwnd, XCrossingEvent *event )
 {
     if (captureWnd != 0) return;
-
     winHasCursor = event->window;
-
-    switch(event->type)
-    {
-      case EnterNotify:
-	PostMessage( hwnd, WM_SETCURSOR, hwnd, 0 );
-	break;
-    }    
+    PostMessage( hwnd, WM_SETCURSOR, hwnd, 0 );
 }
 
 
@@ -604,15 +477,9 @@ HWND SetCapture(HWND wnd)
     if (wnd_p == NULL)
 	return 0;
     
-#ifdef USE_XLIB
-    rv = XGrabPointer(XT_display, wnd_p->window, False, 
+    rv = XGrabPointer(display, wnd_p->window, False, 
 		      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
 		      GrabModeAsync, GrabModeSync, None, None, CurrentTime);
-#else
-    rv = XtGrabPointer(wnd_p->winWidget, False, 
-		       ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-		       GrabModeAsync, GrabModeSync, None, None, CurrentTime);
-#endif
 
     if (rv == GrabSuccess)
     {
@@ -637,12 +504,7 @@ void ReleaseCapture()
     if (wnd_p == NULL)
 	return;
     
-#ifdef USE_XLIB
-    XUngrabPointer( XT_display, CurrentTime );
-#else
-    XtUngrabPointer(wnd_p->winWidget, CurrentTime);
-#endif
-
+    XUngrabPointer( display, CurrentTime );
     captureWnd = 0;
 }
 
@@ -653,24 +515,3 @@ HWND GetCapture()
 {
     return captureWnd;
 }
- 
-/**********************************************************************
- *		SetDoubleClickTime  (USER.20)
- */
-void SetDoubleClickTime (WORD interval)
-{
-	if (interval == 0)
-		dblclick_time = 500;
-	else
-		dblclick_time = interval;
-}		
-
-/**********************************************************************
- *		GetDoubleClickTime  (USER.21)
- */
-WORD GetDoubleClickTime ()
-{
-	return ((WORD)dblclick_time);
-}		
-
-

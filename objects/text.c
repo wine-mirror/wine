@@ -6,15 +6,8 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
-#include <X11/Core.h>
-#include <X11/Shell.h>
 #include <X11/Xatom.h>
 
-#include "message.h"
-#include "callback.h"
-#include "win.h"
 #include "gdi.h"
 
 #define TAB     9
@@ -224,8 +217,8 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 
 	if (flags & DT_SINGLELINE)
 	{
-	    if (flags & DT_VCENTER) y = (rect->top + rect->bottom - 
-					 size.cy) / 2;
+	    if (flags & DT_VCENTER) y = rect->top + 
+	    	(rect->bottom - rect->top) / 2 - size.cy / 2;
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
 	}
 

@@ -153,6 +153,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
     if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
 	sizeof(size_shift))
     {
+    	printf("FindResourceByNumber (%s) bad block size !\n", resource_id);
 	return -1;
     }
     
@@ -160,40 +161,38 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
      * Find resource.
      */
     typeinfo.type_id = 0xffff;
-    while (typeinfo.type_id != 0)
-    {
+    while (typeinfo.type_id != 0) {
 	if (read(ResourceFd, &typeinfo, sizeof(typeinfo)) !=
-	    sizeof(typeinfo))
-	{
+	    sizeof(typeinfo)) {
+	    printf("FindResourceByNumber (%X) bad typeinfo size !\n", resource_id);
 	    return -1;
-	}
-	if (typeinfo.type_id != 0)
-	{
-	    for (i = 0; i < typeinfo.count; i++)
-	    {
-		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
-		    sizeof(nameinfo))
-		{
-		    return -1;
-		}
-
-#if defined(DEBUG_RESOURCE) && defined(VERBOSE_DEBUG)
-		if (type_id == typeinfo.type_id)
-		{
-		    printf("FindResource: type id = %d, resource id = %x\n",
-			   type_id, nameinfo.id);
-		}
+	    }
+#ifdef DEBUG_RESOURCE
+	printf("FindResourceByNumber type=%X count=%d\n", 
+			typeinfo.type_id, typeinfo.count);
 #endif
-		if ((type_id == -1 || typeinfo.type_id == type_id) &&
-		    nameinfo.id == resource_id)
-		{
+	if (typeinfo.type_id == 0) break;
+	if (typeinfo.type_id == type_id || type_id == -1) {
+	    for (i = 0; i < typeinfo.count; i++) {
+		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
+		    sizeof(nameinfo)) {
+		    printf("FindResourceByNumber (%X) bad nameinfo size !\n", resource_id);
+		    return -1;
+		    }
+#ifdef DEBUG_RESOURCE
+		printf("FindResource: search type=%X id=%X // type=%X id=%X\n",
+			type_id, resource_id, typeinfo.type_id, nameinfo.id);
+#endif
+		if (nameinfo.id == resource_id) {
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
 		    return size_shift;
-		}
+		    }
+	        }
 	    }
-	}
-    }
-    
+	else {
+	    lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
+	    }
+        }
     return -1;
 }
 
@@ -243,7 +242,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	    return -1;
 	}
 #ifdef DEBUG_RESOURCE
-	printf("FindResourceByName typeinfo.type_id=%d type_id=%d\n",
+	printf("FindResourceByName typeinfo.type_id=%X type_id=%X\n",
 			typeinfo.type_id, type_id);
 #endif
 	if (typeinfo.type_id == 0) break;
@@ -269,7 +268,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 		lseek(ResourceFd, old_pos, SEEK_SET);
 		name[nbytes] = '\0';
 #ifdef DEBUG_RESOURCE
-		printf("FindResourceByName type_id=%d name='%s' resource_name='%s'\n", 
+		printf("FindResourceByName type_id=%X name='%s' resource_name='%s'\n", 
 				typeinfo.type_id, name, resource_name);
 #endif
 		if (strcasecmp(name, resource_name) == 0)
@@ -281,7 +280,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	}
 	else {
 	    lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-	}
+	    }
     }
     return -1;
 }
@@ -681,9 +680,6 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     printf("LoadBitmap: instance = %04x, name = %08x\n",
 	   instance, bmp_name);
 #endif
-    printf("LoadBitmap: instance = %04x, name = %08x\n",
-	   instance, bmp_name);
-    
     if (instance == (HANDLE)NULL)  instance = hSysRes;
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
 
@@ -706,7 +702,6 @@ printf("before GlobalLock\n");
     else if (*lp == sizeof(BITMAPINFOHEADER))
 	hbitmap = ConvertInfoBitmap( hdc, (BITMAPINFO *) lp );
     else hbitmap = 0;
-printf("LoadBitmap %04X\n", hbitmap);
     GlobalFree(rsc_mem);
     ReleaseDC( 0, hdc );
     return hbitmap;

@@ -52,7 +52,7 @@ LPSTR lstrcpyn(LPSTR target,LPCSTR source,int n)
 /* KERNEL.90 */
 int lstrlen(LPCSTR str)
 {
-  strlen(str);
+  return strlen(str);
 }
 
 /* AnsiUpper USER.431 */

@@ -6,17 +6,19 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-#ifndef USE_XLIB
-#include <X11/Intrinsic.h>
-#include <X11/Shell.h>
-#endif
 
 #include "windows.h"
 #include "win.h"
 #include "class.h"
 #include "user.h"
 
-extern Display * XT_display;
+extern Display * display;
+
+extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
+extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
+extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
+extern LONG NC_HandleNCMouseMsg(HWND hwnd, WORD msg, WORD wParam, LONG lParam);
+
 
 /***********************************************************************
  *           DefWindowProc   (USER.107)
@@ -26,6 +28,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     CLASS * classPtr;
     LPSTR textPtr;
     int len;
+    int tempwidth, tempheight;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
 #ifdef DEBUG_MESSAGE
@@ -51,40 +54,19 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	}
 
     case WM_NCCALCSIZE:
-	{
-#ifdef USE_XLIB
-	    NCCALCSIZE_PARAMS *params = (NCCALCSIZE_PARAMS *)lParam;
-	    if (wndPtr->dwStyle & WS_CHILD)
-	    {
-		if (wndPtr->dwStyle & WS_BORDER)
-		{
-		    params->rgrc[0].left   += 1; /* SM_CXBORDER */
-		    params->rgrc[0].top    += 1; /* SM_CYBORDER */
-		    params->rgrc[0].right  -= 1; /* SM_CXBORDER */
-		    params->rgrc[0].bottom -= 1; /* SM_CYBORDER */
-		}
-	    }
-	    else
-	    {
-		params->rgrc[0].left   += 4; /* SM_CXFRAME */
-		params->rgrc[0].top    += 30; /* SM_CYFRAME+SM_CYCAPTION */
-		params->rgrc[0].right  -= 4; /* SM_CXFRAME */
-		params->rgrc[0].bottom -= 4; /* SM_CYFRAME */
-		if (wndPtr->dwStyle & WS_VSCROLL)
-		{
-		    params->rgrc[0].right -= 16; /* SM_CXVSCROLL */
-		}
-		if (wndPtr->dwStyle & WS_HSCROLL)
-		{
-		    params->rgrc[0].bottom += 16;  /* SM_CYHSCROLL */
-		}
-	    }
-#endif
-	    return 0;
-	}
-	
-    case WM_CREATE:
-	return 0;
+	return NC_HandleNCCalcSize( hwnd, (NCCALCSIZE_PARAMS *)lParam );
+
+    case WM_NCPAINT:
+	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
+
+    case WM_NCHITTEST:
+	return NC_HandleNCHitTest( hwnd, MAKEPOINT(lParam) );
+
+    case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONUP:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_NCMOUSEMOVE:
+	return NC_HandleNCMouseMsg( hwnd, msg, wParam, lParam );
 
     case WM_NCDESTROY:
 	{
@@ -188,18 +170,42 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 					    strlen((LPSTR)lParam) + 1);
 	    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
 	    strcpy(textPtr, (LPSTR)lParam);
-#ifdef USE_XLIB
-	    XStoreName( XT_display, wndPtr->window, textPtr );
-#else
-	    if (wndPtr->shellWidget)
-		XtVaSetValues( wndPtr->shellWidget, XtNtitle, textPtr, NULL );
-#endif
+	    XStoreName( display, wndPtr->window, textPtr );
 	    return (0L);
 	}
     case WM_SETCURSOR:
 	if (wndPtr->hCursor != (HCURSOR)NULL)
 	    SetCursor(wndPtr->hCursor);
 	return 0L;
+    case WM_SYSCOMMAND:
+	switch (wParam)
+	    {
+	    case SC_CLOSE:
+		ShowWindow(hwnd, SW_MINIMIZE);
+		printf("defdwndproc WM_SYSCOMMAND SC_CLOSE !\n");
+	        return SendMessage( hwnd, WM_CLOSE, 0, 0 );
+	    case SC_RESTORE:
+		ShowWindow(hwnd, SW_RESTORE);
+		break;
+	    case SC_MINIMIZE:
+		ShowWindow(hwnd, SW_MINIMIZE);
+		printf("defdwndproc WM_SYSCOMMAND SC_MINIMIZE !\n");
+		break;
+	    case SC_MAXIMIZE:
+		ShowWindow(hwnd, SW_MAXIMIZE);
+		break;
+	    }
+    	break;    	
+    case WM_SYSKEYDOWN:
+    	if (wParam == VK_MENU) {
+    	    printf("VK_MENU Pressed // hMenu=%04X !\n", GetMenu(hwnd));
+    	    }
+    	break;    	
+    case WM_SYSKEYUP:
+    	if (wParam == VK_MENU) {
+    	    printf("VK_MENU Released // hMenu=%04X !\n", GetMenu(hwnd));
+    	    }
+    	break;    	
     }
     return 0;
 }

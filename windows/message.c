@@ -17,15 +17,15 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "message.h"
 #include "win.h"
-
+#include "wineopts.h"
+#include "sysmetrics.h"
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
-extern BOOL TIMER_CheckTimer( DWORD *next );    /* timer.c */
-
-extern Display * XT_display;
-extern Screen * XT_screen;
-extern XtAppContext XT_app_context;
+extern BOOL TIMER_CheckTimer( DWORD *next );      /* timer.c */
+extern void EVENT_ProcessEvent( XEvent *event );  /* event.c */
+  
+extern Display * display;
 
   /* System message queue (for hardware events) */
 static HANDLE hmemSysMsgQueue = 0;
@@ -34,6 +34,10 @@ static MESSAGEQUEUE * sysMsgQueue = NULL;
   /* Application message queue (should be a list, one queue per task) */
 static HANDLE hmemAppMsgQueue = 0;
 static MESSAGEQUEUE * appMsgQueue = NULL;
+
+  /* Double-click time */
+static int doubleClickSpeed = 452;
+
 
 /***********************************************************************
  *           MSG_CreateMsgQueue
@@ -78,7 +82,8 @@ static HANDLE MSG_CreateMsgQueue( int size )
 /***********************************************************************
  *           MSG_CreateSysMsgQueue
  *
- * Create the system message queue. Must be called only once.
+ * Create the system message queue, and set the double-click speed.
+ * Must be called only once.
  */
 BOOL MSG_CreateSysMsgQueue( int size )
 {
@@ -86,6 +91,7 @@ BOOL MSG_CreateSysMsgQueue( int size )
     else if (size <= 0) size = 1;
     if (!(hmemSysMsgQueue = MSG_CreateMsgQueue( size ))) return FALSE;
     sysMsgQueue = (MESSAGEQUEUE *) GlobalLock( hmemSysMsgQueue );
+    doubleClickSpeed = GetProfileInt( "windows", "DoubleClickSpeed", 452 );
     return TRUE;
 }
 
@@ -99,6 +105,8 @@ static int MSG_AddMsg( MESSAGEQUEUE * msgQueue, MSG * msg, DWORD extraInfo )
 {
     int pos;
   
+    SpyMessage(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+    
     if (!msgQueue) return FALSE;
     pos = msgQueue->nextFreeMessage;
 
@@ -184,6 +192,93 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 
 
 /***********************************************************************
+ *           MSG_TranslateMouseMsg
+ *
+ * Translate an mouse hardware event into a real mouse message.
+ * Actions performed:
+ * - Translate button down messages in double-clicks.
+ * - Send the WM_NCHITTEST message to find where the cursor is.
+ * - Translate the message into a non-client message, or translate
+ *   the coordinates to client coordinates.
+ */
+static void MSG_TranslateMouseMsg( MSG *msg )
+{
+    static DWORD lastClickTime = 0;
+    static WORD  lastClickMsg = 0;
+    static POINT lastClickPos = { 0, 0 };
+
+    LONG hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
+				       MAKELONG( msg->pt.x, msg->pt.y ) );
+
+    if ((msg->message == WM_LBUTTONDOWN) ||
+        (msg->message == WM_RBUTTONDOWN) ||
+        (msg->message == WM_MBUTTONDOWN))
+    {
+	BOOL dbl_click = FALSE;
+
+	  /* Check for double-click */
+
+	if ((msg->message == lastClickMsg) &&
+	    (msg->time - lastClickTime < doubleClickSpeed) &&
+	    (abs(msg->pt.x - lastClickPos.x) < SYSMETRICS_CXDOUBLECLK/2) &&
+	    (abs(msg->pt.y - lastClickPos.y) < SYSMETRICS_CYDOUBLECLK/2))
+	    dbl_click = TRUE;
+
+	if (dbl_click && (hittest_result == HTCLIENT))
+	{
+	    /* Check whether window wants the double click message. */
+	    WND * wndPtr = WIN_FindWndPtr( msg->hwnd );
+	    if (!wndPtr || !(wndPtr->flags & WIN_DOUBLE_CLICKS))
+		dbl_click = FALSE;
+	}
+
+	if (dbl_click) switch(msg->message)
+	{
+	    case WM_LBUTTONDOWN: msg->message = WM_LBUTTONDBLCLK; break;
+	    case WM_RBUTTONDOWN: msg->message = WM_RBUTTONDBLCLK; break;
+	    case WM_MBUTTONDOWN: msg->message = WM_MBUTTONDBLCLK; break;
+	}
+
+	lastClickTime = msg->time;
+	lastClickMsg  = msg->message;
+	lastClickPos  = msg->pt;
+    }
+
+    msg->lParam = MAKELONG( msg->pt.x, msg->pt.y );
+    if (hittest_result == HTCLIENT)
+    {
+	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
+    }
+    else
+    {
+	msg->wParam = hittest_result;
+	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
+    }
+}
+
+
+/**********************************************************************
+ *		SetDoubleClickTime  (USER.20)
+ */
+void SetDoubleClickTime( WORD interval )
+{
+    if (interval == 0)
+	doubleClickSpeed = 500;
+    else
+	doubleClickSpeed = interval;
+}		
+
+
+/**********************************************************************
+ *		GetDoubleClickTime  (USER.21)
+ */
+WORD GetDoubleClickTime()
+{
+	return (WORD)doubleClickSpeed;
+}		
+
+
+/***********************************************************************
  *           MSG_IncPaintCount
  */
 void MSG_IncPaintCount( HANDLE hQueue )
@@ -233,6 +328,7 @@ void MSG_DecTimerCount( HANDLE hQueue )
  *           hardware_event
  *
  * Add an event to the system message queue.
+ * Note: the position is in screen coordinates.
  */
 void hardware_event( HWND hwnd, WORD message, WORD wParam, LONG lParam,
 		     WORD xPos, WORD yPos, DWORD time, DWORD extraInfo )
@@ -325,24 +421,6 @@ BOOL GetInputState()
 }
 
 
-#ifndef USE_XLIB
-static XtIntervalId xt_timer = 0;
-
-/***********************************************************************
- *           MSG_TimerCallback
- */
-static void MSG_TimerCallback( XtPointer data, XtIntervalId * xtid )
-{
-    DWORD nextExp;
-    TIMER_CheckTimer( &nextExp );
-    if (nextExp != (DWORD)-1)
-	xt_timer = XtAppAddTimeOut( XT_app_context, nextExp,
-				    MSG_TimerCallback, NULL );
-    else xt_timer = 0;
-}
-#endif  /* USE_XLIB */
-
-
 /***********************************************************************
  *           MSG_PeekMessage
  */
@@ -351,9 +429,7 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 {
     int pos, mask;
     DWORD nextExp;  /* Next timer expiration time */
-#ifdef USE_XLIB
     XEvent event;
-#endif
 
     if (first || last)
     {
@@ -366,16 +442,11 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
     }
     else mask = QS_MOUSE | QS_KEY | QS_POSTMESSAGE | QS_TIMER | QS_PAINT;
 
-#ifdef USE_XLIB
-    while (XPending( XT_display ))
+    while (XPending( display ))
     {
-	XNextEvent( XT_display, &event );
+	XNextEvent( display, &event );
 	EVENT_ProcessEvent( &event );
     }    
-#else
-    while (XtAppPending( XT_app_context ))
-	XtAppProcessEvent( XT_app_context, XtIMAll );
-#endif
 
     while(1)
     {    
@@ -432,6 +503,8 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	    msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
 	    if (flags & PM_REMOVE) MSG_RemoveMsg( sysMsgQueue, pos );
+	    if ((msg->message >= WM_MOUSEFIRST) &&
+		(msg->message <= WM_MOUSELAST)) MSG_TranslateMouseMsg( msg );
 	    break;
 	}
 
@@ -447,26 +520,16 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 
 	  /* Finally handle WM_TIMER messages */
 	if ((msgQueue->status & QS_TIMER) && (mask & QS_TIMER))
-	{
-	    BOOL posted = TIMER_CheckTimer( &nextExp );
-#ifndef USE_XLIB
-	    if (xt_timer) XtRemoveTimeOut( xt_timer );
-	    if (nextExp != (DWORD)-1)
-		xt_timer = XtAppAddTimeOut( XT_app_context, nextExp,
-					    MSG_TimerCallback, NULL );
-	    else xt_timer = 0;
-#endif
-	    if (posted) continue;  /* Restart the whole thing */
-	}
+	    if (TIMER_CheckTimer( &nextExp ))
+		continue;  /* Restart the whole search */
 
 	  /* Wait until something happens */
 	if (peek) return FALSE;
-#ifdef USE_XLIB
-	if (!XPending( XT_display ) && (nextExp != -1))
+	if (!XPending( display ) && (nextExp != -1))
 	{
 	    fd_set read_set;
 	    struct timeval timeout;
-	    int fd = ConnectionNumber(XT_display);
+	    int fd = ConnectionNumber(display);
 	    FD_ZERO( &read_set );
 	    FD_SET( fd, &read_set );
 	    timeout.tv_sec = nextExp / 1000;
@@ -474,11 +537,8 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	    if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
 		continue;  /* On timeout or error, restart from the start */
 	}
-	XNextEvent( XT_display, &event );
+	XNextEvent( display, &event );
 	EVENT_ProcessEvent( &event );
-#else       
-	XtAppProcessEvent( XT_app_context, XtIMAll );
-#endif	
     }
 
       /* We got a message */
@@ -529,7 +589,11 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
  */
 LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    WND * wndPtr;
+
+    SpyMessage(hwnd, msg, wParam, lParam);
+    
+    wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
     return CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
 }
@@ -564,7 +628,7 @@ LONG DispatchMessage( LPMSG msg )
     int painting;
     
 #ifdef DEBUG_MSG
-    printf( "Dispatch message hwnd=%08x msg=%d w=%d l=%d time=%u pt=%d,%d\n",
+    printf( "Dispatch message hwnd=%08x msg=0x%x w=%d l=%d time=%u pt=%d,%d\n",
 	    msg->hwnd, msg->message, msg->wParam, msg->lParam, 
 	    msg->time, msg->pt.x, msg->pt.y );
 #endif
@@ -587,7 +651,7 @@ LONG DispatchMessage( LPMSG msg )
     if (painting && (wndPtr->flags & WIN_NEEDS_BEGINPAINT))
     {
 #ifdef DEBUG_WIN
-	printf( "BeginPaint not called on WM_PAINT!\n" );
+	printf( "BeginPaint not called on WM_PAINT for hwnd %d!\n", msg->hwnd);
 #endif
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
     }

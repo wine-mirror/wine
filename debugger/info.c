@@ -172,7 +172,7 @@ void examine_memory(int addr, int count, char format){
 		pnt = (char *) addr;
 		for(i=0; i<count; i++) 
 		{
-			fprintf(stderr," %w", *pnt++);
+			fprintf(stderr," %02.2x", (*pnt++) & 0xff);
 			if ((i % 32) == 7) {
 				fprintf(stderr,"\n");
 				print_address((unsigned int) pnt, stderr);

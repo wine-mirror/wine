@@ -24,6 +24,7 @@
  * integer atoms, use the "#1234" form.
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,7 +91,7 @@ static WORD ATOM_Hash( WORD entries, LPCSTR str, WORD len )
 {
     WORD i, hash = 0;
 
-    for (i = 0; i < len; i++) hash ^= str[i] + i;
+    for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
     return hash % entries;
 }
 

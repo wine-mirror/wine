@@ -13,7 +13,6 @@
 #include <X11/Xaw/Command.h>
 #include <X11/Xaw/Box.h>
 
-#include "windows.h"
 
 typedef struct tagMENUITEM
 {
@@ -23,7 +22,9 @@ typedef struct tagMENUITEM
     struct tagMENUITEM *parent;
     WORD	item_flags;
     WORD	item_id;
-    char       *item_text;
+    WORD	sel_key;
+    char	*shortcut;
+    char	*item_text;
     Widget	w;
     Widget	menu_w;
     char	menu_name[10];
@@ -46,11 +47,15 @@ typedef struct tagMENUBAR
 typedef struct tagPOPUPMENU
 {
     HWND	hWnd;			/* PopupMenu window handle	  */
+    HWND	hWndParent;		/* Parent opupMenu window handle  */
     HWND	ownerWnd;		/* Owner window			  */
     WORD	nItems;    		/* Number of items on menu	  */
     MENUITEM   *firstItem;
     WORD	FocusedItem;
     WORD	MouseFlags;
+    WORD	BarFlags;
+    WORD	Width;
+    WORD	Height;
 } POPUPMENU, *LPPOPUPMENU;
 
 typedef struct

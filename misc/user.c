@@ -16,6 +16,7 @@ MDESC *USER_Heap = NULL;
 
 extern BOOL ATOM_Init();
 extern BOOL GDI_Init();
+extern void SYSMETRICS_Init();
 
 /***********************************************************************
  *           USER_HeapInit
@@ -40,13 +41,16 @@ USER_InitApp(int hInstance)
 {
     int queueSize;
 
+    SpyInit();
+
       /* Global atom table initialisation */
     if (!ATOM_Init()) return 0;
     
       /* GDI initialisation */
     if (!GDI_Init()) return 0;
 
-      /* Initialize system colors */
+      /* Initialize system colors and metrics*/
+    SYSMETRICS_Init();
     SYSCOLOR_Init();
     
       /* Create USER heap */

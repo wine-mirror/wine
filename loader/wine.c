@@ -21,6 +21,9 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "dlls.h"
 #include "wine.h"
 #include "windows.h"
+#include "wineopts.h"
+
+/* #define DEBUG_FIXUP */
 
 extern int CallToInit16(unsigned long csip, unsigned long sssp, 
 			unsigned short ds);
@@ -45,6 +48,8 @@ HINSTANCE hSysRes;
 
 static char *Extensions[] = { "dll", "exe", NULL };
 static char *WinePath = NULL;
+
+FILE *SpyFp = NULL;
 
 /**********************************************************************
  *					DebugPrintString
@@ -110,6 +115,19 @@ HINSTANCE LoadImage(char *modulename)
     unsigned int status;
     char buffer[256];
 
+    /*
+     * search file
+     */
+    if (FindFile(buffer, sizeof(buffer), modulename, Extensions, WindowsPath)
+    	==NULL)
+    {
+	
+
+    	fprintf(stderr,"LoadImage: I can't find %s !\n",modulename);
+	return (HINSTANCE) NULL;
+    }
+    fprintf(stderr,"LoadImage: loading %s (%s)\n", modulename, buffer);
+
     /* First allocate a spot to store the info we collect, and add it to
      * our linked list.
      */
@@ -123,20 +141,6 @@ HINSTANCE LoadImage(char *modulename)
       wpnt1->next  = wpnt;
     };
     wpnt->next = NULL;
-
-    /*
-     * search file
-     */
-
-    if (FindFile(buffer, sizeof(buffer), modulename, Extensions, WindowsPath)
-    	==NULL)
-    {
-    	char temp[256];
-    	
-    	sprintf(temp,"LoadImage: I can't find %s !\n",modulename);
-    	myerror(temp);
-    }
-	fprintf(stderr,"LoadImage: loading %s (%s)\n", modulename, buffer);
 
     /*
      * Open file for reading.
@@ -251,6 +255,31 @@ HINSTANCE LoadImage(char *modulename)
 return(wpnt->hinstance);
 }
 
+/**********************************************************************
+ *					ParseArgs
+ */
+void
+ParseArgs(int argc, char **argv)
+{
+    if (argc < 2)
+    {
+	fprintf(stderr, "usage: %s [-spy FILENAME] FILENAME\n", argv[0]);
+	exit(1);
+    }
+
+    Argc = argc - 1;
+    
+    for (Argv = argv + 1; **Argv == '-' && Argc > 0; Argv++)
+    {
+	if (strcmp(*Argv, "-spy") == 0)
+	{
+	    if (strcmp(*(++Argv), "-") == 0)
+		SpyFp = stdout;
+	    else
+		SpyFp = fopen(*Argv, "a");
+	}
+    }
+}
 
 /**********************************************************************
  *					main
@@ -260,6 +289,7 @@ _WinMain(int argc, char **argv)
 	int segment;
 	char *p;
 	char *sysresname;
+	char filename[100];
 	char syspath[256];
 	char exe_path[256];
 #ifdef WINESTAT
@@ -269,15 +299,8 @@ _WinMain(int argc, char **argv)
 	int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
 	int i;
 	int rv;
-	
-	Argc = argc - 1;
-	Argv = argv + 1;
-	
-	if (argc < 2)
-	{
-		fprintf(stderr, "usage: %s FILENAME\n", argv[0]);
-		exit(1);
-	}
+
+	ParseArgs(argc, argv);
 
 	p = getenv("WINEPATH");
 	WinePath = malloc(256 + strlen(p));
@@ -285,27 +308,17 @@ _WinMain(int argc, char **argv)
 	strcat(WinePath, ";");
 	strcat(WinePath, p);
 
-	LoadImage(argv[1]);
-	hSysRes = LoadImage("sysres.dll");
+	LoadImage(Argv[0]);
+
+	GetPrivateProfileString("wine", "SystemResources", "sysres.dll", 
+				filename, sizeof(filename),
+				WINE_INI);
+	hSysRes = LoadImage(filename);
 	if (hSysRes == (HINSTANCE)NULL)
  	    printf("Error Loading System Resources !!!\n");
  	else
  	    printf("System Resources Loaded // hSysRes='%04X'\n", hSysRes);
 	
-	if(ran_out) exit(1);
-#ifdef DEBUG
-	{
-	    int dummy1, dummy2;
-
-	    GetEntryDLLName("USER", "INITAPP", &dummy1, &dummy2);
-	}
-	for(i=0; i<1024; i++) {
-		int j;
-		j = GetEntryPointFromOrdinal(wine_files, i);
-		if(j == 0)  break;
-		fprintf(stderr," %d %x\n", i,  j);
-	};
-#endif
     /*
      * Fixup references.
      */
@@ -442,8 +455,10 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     seg = &seg_table[segment_num];
     sel = &selector_table[segment_num];
 
-    fprintf(stderr, "Segment fixups for %s, segment %d, selector %x\n", 
-	    wpnt->name, segment_num, (int) sel->base_addr >> 16);
+#ifdef DEBUG_FIXUP
+    printf("Segment fixups for %s, segment %d, selector %x\n", 
+	   wpnt->name, segment_num, (int) sel->base_addr >> 16);
+#endif
 
     if ((seg->seg_data_offset == 0) ||
 	!(seg->seg_flags & NE_SEGFLAGS_RELOC_DATA))
@@ -589,13 +604,6 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		    rep->target1, rep->target2);
 	    free(rep1);
 	    return -1;
-#if 0
-	    sp = (unsigned short *) ((char *) sel->base_addr + rep->offset);
-	    fprintf(stderr, "  FIXUP ADDRESS %04.4x:%04.4x\n",
-		    (int) sel->base_addr >> 16, rep->offset);
-	    WineForceFail = 1;
-	    continue;
-#endif
 	}
 
 	/*
@@ -619,6 +627,10 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	{
 	  case NE_RADDR_OFFSET16:
 	    do {
+#ifdef DEBUG_FIXUP
+		printf("    %04.4x:%04.4x:%04.4x OFFSET16\n",
+		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
+#endif
 		next_addr = *sp;
 		*sp = (unsigned short) address;
 		if (additive == 2)
@@ -631,6 +643,10 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  case NE_RADDR_POINTER32:
 	    do {
+#ifdef DEBUG_FIXUP
+		printf("    %04.4x:%04.4x:%04.4x POINTER32\n",
+		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
+#endif
 		next_addr = *sp;
 		*sp     = (unsigned short) address;
 		if (additive == 2)
@@ -644,11 +660,15 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  case NE_RADDR_SELECTOR:
 	    do {
+#ifdef DEBUG_FIXUP
+		printf("    %04.4x:%04.4x:%04.4x SELECTOR\n",
+		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
+#endif
 		next_addr = *sp;
 		*sp     = (unsigned short) selector;
 		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
-		if (rep->relocation_type == NE_RELTYPE_INT1) break;
-
+		if (rep->relocation_type == NE_RELTYPE_INT1) 
+		    break;
 	    } 
 	    while (next_addr != 0xffff && !additive);
 

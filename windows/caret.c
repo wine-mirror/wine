@@ -6,11 +6,7 @@
 
 static char Copyright[] = "Copyright  David Metcalfe, 1993";
 
-#include <X11/Intrinsic.h>
-
 #include "windows.h"
-
-extern XtAppContext XT_app_context;
 
 typedef struct
 {
@@ -23,49 +19,46 @@ typedef struct
     short         height;
     COLORREF      color;
     WORD          timeout;
-    XtIntervalId  xtid;
+    WORD          timerid;
 } CARET;
 
 static CARET Caret;
 static BOOL LockCaret;
 
-static void CARET_Callback(XtPointer data, XtIntervalId *xtid);
-static void CARET_HideCaret(CARET *pCaret);
+static WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime);
+static void CARET_HideCaret();
 
 
 /*****************************************************************
  *               CARET_Callback
  */
 
-static void CARET_Callback(XtPointer data, XtIntervalId *xtid)
+static WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
 {
-    CARET *pCaret = (CARET *)data;
     HDC hdc;
     HBRUSH hBrush;
     HRGN rgn;
 
 #ifdef DEBUG_CARET
-    printf("CARET_Callback: LockCaret=%d, hidden=%d, on=%d\n",
-	   LockCaret, pCaret->hidden, pCaret->on);
+    printf("CARET_Callback: id=%d: LockCaret=%d, hidden=%d, on=%d\n",
+	   timerid, LockCaret, Caret.hidden, Caret.on);
 #endif
-    if (!LockCaret && (!pCaret->hidden || pCaret->on))
+    if (!LockCaret && (!Caret.hidden || Caret.on))
     {
-	pCaret->on = (pCaret->on ? FALSE : TRUE);
-	hdc = GetDC(pCaret->hwnd);
-	hBrush = CreateSolidBrush(pCaret->color);
+	Caret.on = (Caret.on ? FALSE : TRUE);
+	hdc = GetDC(Caret.hwnd);
+	hBrush = CreateSolidBrush(Caret.color);
 	SelectObject(hdc, (HANDLE)hBrush);
 	SetROP2(hdc, R2_XORPEN);
-	rgn = CreateRectRgn(pCaret->x, pCaret->y, 
-			    pCaret->x + pCaret->width,
-			    pCaret->y + pCaret->height);
+	rgn = CreateRectRgn(Caret.x, Caret.y, 
+			    Caret.x + Caret.width,
+			    Caret.y + Caret.height);
 	FillRgn(hdc, rgn, hBrush);
 	DeleteObject((HANDLE)rgn);
 	DeleteObject((HANDLE)hBrush);
-	ReleaseDC(pCaret->hwnd, hdc);
+	ReleaseDC(Caret.hwnd, hdc);
     }
-
-    pCaret->xtid = XtAppAddTimeOut(XT_app_context, pCaret->timeout,
-				   CARET_Callback, pCaret);
+    return 0;
 }
 
 
@@ -73,24 +66,24 @@ static void CARET_Callback(XtPointer data, XtIntervalId *xtid)
  *               CARET_HideCaret
  */
 
-static void CARET_HideCaret(CARET *pCaret)
+static void CARET_HideCaret()
 {
     HDC hdc;
     HBRUSH hBrush;
     HRGN rgn;
 
-    pCaret->on = FALSE;
-    hdc = GetDC(pCaret->hwnd);
-    hBrush = CreateSolidBrush(pCaret->color);
+    Caret.on = FALSE;
+    hdc = GetDC(Caret.hwnd);
+    hBrush = CreateSolidBrush(Caret.color);
     SelectObject(hdc, (HANDLE)hBrush);
     SetROP2(hdc, R2_XORPEN);
-    rgn = CreateRectRgn(pCaret->x, pCaret->y, 
-			pCaret->x + pCaret->width,
-			pCaret->y + pCaret->height);
+    rgn = CreateRectRgn(Caret.x, Caret.y, 
+			Caret.x + Caret.width,
+			Caret.y + Caret.height);
     FillRgn(hdc, rgn, hBrush);
     DeleteObject((HANDLE)rgn);
     DeleteObject((HANDLE)hBrush);
-    ReleaseDC(pCaret->hwnd, hdc);
+    ReleaseDC(Caret.hwnd, hdc);
 }
 
 
@@ -101,6 +94,7 @@ static void CARET_HideCaret(CARET *pCaret)
 void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
 {
     if (!hwnd) return;
+
 
     /* if cursor already exists, destroy it */
 /*    if (Caret.hwnd)
@@ -131,8 +125,11 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
     Caret.timeout = 750;
     LockCaret = FALSE;
 
-    Caret.xtid = XtAppAddTimeOut(XT_app_context, Caret.timeout,
-				 CARET_Callback, &Caret);
+    Caret.timerid = SetSystemTimer(NULL, 0, Caret.timeout, CARET_Callback);
+
+#ifdef DEBUG_CARET
+    printf("CreateCaret: hwnd=%d, timerid=%d\n", hwnd, Caret.timerid);
+#endif
 }
    
 
@@ -144,10 +141,14 @@ void DestroyCaret()
 {
 /*    if (!Caret.hwnd) return;
 */
-    XtRemoveTimeOut(Caret.xtid);
+#ifdef DEBUG_CARET
+    printf("DestroyCaret: timerid\n", Caret.timerid);
+#endif
+
+    KillSystemTimer(NULL, Caret.timerid);
 
     if (Caret.on)
-	CARET_HideCaret(&Caret);
+	CARET_HideCaret();
 
     Caret.hwnd = 0;          /* cursor marked as not existing */
 }
@@ -171,7 +172,7 @@ void SetCaretPos(short x, short y)
 
     LockCaret = TRUE;
     if (Caret.on)
-	CARET_HideCaret(&Caret);
+	CARET_HideCaret();
 
     Caret.x = x;
     Caret.y = y;
@@ -189,7 +190,7 @@ void HideCaret(HWND hwnd)
 
     LockCaret = TRUE;
     if (Caret.on)
-	CARET_HideCaret(&Caret);
+	CARET_HideCaret();
 
     ++Caret.hidden;
     LockCaret = FALSE;
@@ -221,7 +222,9 @@ void SetCaretBlinkTime(WORD msecs)
 {
     if (!Caret.hwnd) return;
 
+    KillSystemTimer(NULL, Caret.timerid);
     Caret.timeout = msecs;
+    Caret.timerid = SetSystemTimer(NULL, 0, Caret.timeout, CARET_Callback);
 }
 
 

@@ -21,6 +21,15 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include <dirent.h>
 #include <sys/stat.h>
 
+HBITMAP hUpArrow = 0;
+HBITMAP hDnArrow = 0;
+HBITMAP hLfArrow = 0;
+HBITMAP hRgArrow = 0;
+HBITMAP hUpArrowD = 0;
+HBITMAP hDnArrowD = 0;
+HBITMAP hLfArrowD = 0;
+HBITMAP hRgArrowD = 0;
+
 LPHEADSCROLL ScrollBarGetWindowAndStorage(HWND hwnd, WND **wndPtr);
 LPHEADSCROLL ScrollBarGetStorageHeader(HWND hwnd);
 void StdDrawScrollBar(HWND hwnd);
@@ -34,9 +43,13 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {    
     WORD	wRet;
     short	x, y;
+    short	width, height;
     WND  	*wndPtr;
     LPHEADSCROLL lphs;
-    RECT rect;
+    LPDRAWITEMSTRUCT lpdis;
+    HDC		hMemDC;
+    BITMAP	bm;
+    RECT 	rect;
     static RECT rectsel;
     switch(message)
     {
@@ -45,6 +58,22 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 #ifdef DEBUG_SCROLL
         printf("ScrollBar Creation up=%X down=%X!\n", lphs->hWndUp, lphs->hWndDown);
 #endif
+	if (hUpArrow == (HBITMAP)NULL) 
+	    hUpArrow = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_UPARROWI));
+	if (hDnArrow == (HBITMAP)NULL) 
+	    hDnArrow = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_DNARROWI));
+	if (hLfArrow == (HBITMAP)NULL) 
+	    hLfArrow = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_LFARROWI));
+	if (hRgArrow == (HBITMAP)NULL) 
+	    hRgArrow = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_RGARROWI));
+	if (hUpArrowD == (HBITMAP)NULL) 
+	    hUpArrowD = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_UPARROWD));
+	if (hDnArrowD == (HBITMAP)NULL) 
+	    hDnArrowD = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_DNARROWD));
+	if (hLfArrowD == (HBITMAP)NULL) 
+	    hLfArrowD = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_LFARROWD));
+	if (hRgArrowD == (HBITMAP)NULL) 
+	    hRgArrowD = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_RGARROWD));
 	return 0;
     case WM_DESTROY:
 	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
@@ -129,15 +158,6 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	ReleaseCapture();
 	break;
 
-    case WM_KEYDOWN:
-    case WM_KEYUP:
-    case WM_CHAR:
-	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
-	return(SendMessage(wndPtr->hwndParent, message, wParam, lParam));
-
-    case WM_PAINT:
-	StdDrawScrollBar(hwnd);
-	break;
     case WM_MOUSEMOVE:
         if ((wParam & MK_LBUTTON) != 0) {
 	    lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
@@ -150,11 +170,87 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	    x = (y * (lphs->MaxVal - lphs->MinVal) / 
 	    		lphs->MaxPix) + lphs->MinVal;
 #ifdef DEBUG_SCROLL
-	    printf("WM_MOUSEMOVE val=%d pix=%d\n", x, y);
+	    printf("Scroll WM_MOUSEMOVE val=%d pix=%d\n", x, y);
 #endif
             SendMessage(wndPtr->hwndParent, lphs->Direction, 
             		SB_THUMBTRACK, MAKELONG(x, hwnd));
 	    }
+	break;
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_CHAR:
+	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
+	return(SendMessage(wndPtr->hwndParent, message, wParam, lParam));
+
+    case WM_SIZE:
+	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
+	width  = LOWORD(lParam);
+	height = HIWORD(lParam);
+	if (lphs->Direction == WM_VSCROLL) {
+	    MoveWindow(lphs->hWndUp, 0, 0, width, width, TRUE);
+	    MoveWindow(lphs->hWndDown, 0, height - width, width, width, TRUE);
+	    }
+	else {
+	    MoveWindow(lphs->hWndUp, 0, 0, height, height, TRUE);
+	    MoveWindow(lphs->hWndDown, width - height, 0, height, height, TRUE);
+	    }
+	break;
+    case WM_DRAWITEM:
+#ifdef DEBUG_SCROLL
+	    printf("Scroll WM_DRAWITEM w=%04X l=%08X\n", wParam, lParam);
+#endif
+        lpdis = (LPDRAWITEMSTRUCT)lParam;
+	if (lpdis->CtlType == ODT_BUTTON && lpdis->itemAction == ODA_DRAWENTIRE) {
+	    hMemDC = CreateCompatibleDC(lpdis->hDC);
+	    if (lpdis->CtlID == 1) {
+		GetObject(hUpArrow, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hUpArrow);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    if (lpdis->CtlID == 2) {
+		GetObject(hDnArrow, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hDnArrow);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    if (lpdis->CtlID == 3) {
+		GetObject(hLfArrow, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hLfArrow);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    if (lpdis->CtlID == 4) {
+		GetObject(hRgArrow, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hRgArrow);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    DeleteDC(hMemDC);
+	    }
+	if (lpdis->CtlType == ODT_BUTTON && lpdis->itemAction == ODA_SELECT) {
+	    hMemDC = CreateCompatibleDC(lpdis->hDC);
+	    if (lpdis->CtlID == 1) {
+		GetObject(hUpArrowD, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hUpArrowD);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    if (lpdis->CtlID == 2) {
+		GetObject(hDnArrowD, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hDnArrowD);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    if (lpdis->CtlID == 3) {
+		GetObject(hLfArrowD, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hLfArrowD);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    if (lpdis->CtlID == 4) {
+		GetObject(hRgArrowD, sizeof(BITMAP), (LPSTR)&bm);
+		SelectObject(hMemDC, hRgArrowD);
+		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		}
+	    DeleteDC(hMemDC);
+	    }
+	break;
+    case WM_PAINT:
+	StdDrawScrollBar(hwnd);
 	break;
     default:
 	return DefWindowProc( hwnd, message, wParam, lParam );
@@ -274,10 +370,10 @@ int CreateScrollBarStruct(HWND hwnd)
 	lphs->MaxPix = height - 3 * width;
 	lphs->Direction = WM_VSCROLL;
 	lphs->hWndUp = CreateWindow("BUTTON", "", 
-        	WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        	WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
         	0, 0, width, width, hwnd, 1, wndPtr->hInstance, 0L);
 	lphs->hWndDown = CreateWindow("BUTTON", "", 
-        	WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        	WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
         	0, height - width, width, width, hwnd, 2,
         	wndPtr->hInstance, 0L);
 	}
@@ -286,11 +382,11 @@ int CreateScrollBarStruct(HWND hwnd)
 	lphs->MaxPix = width - 3 * height;
 	lphs->Direction = WM_HSCROLL;
 	lphs->hWndUp = CreateWindow("BUTTON", "", 
-        	WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        	0, 0, height, height, hwnd, 0, wndPtr->hInstance, 0L);
+        	WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+        	0, 0, height, height, hwnd, 3, wndPtr->hInstance, 0L);
 	lphs->hWndDown = CreateWindow("BUTTON", "", 
-        	WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        	width - height, 0, height, height, hwnd, 0,
+        	WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+        	width - height, 0, height, height, hwnd, 4,
         	wndPtr->hInstance, 0L);
 	}
     if (lphs->MaxPix < 1)  lphs->MaxPix = 1;

@@ -15,10 +15,12 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "user.h"
 #include "dce.h"
+#include "sysmetrics.h"
 
-extern Display * XT_display;
-extern Screen * XT_screen;
+extern Display * display;
 extern Colormap COLOR_WinColormap;
+
+extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
 
 static HWND firstWindow = 0;
 
@@ -178,17 +180,22 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     CREATESTRUCT *createStruct;
     HANDLE hcreateStruct;
     int wmcreate;
-    short newwidth, newheight;
+    XSetWindowAttributes win_attr;
+    Window parentWindow;
+    int x_rel, y_rel;
+    LPPOPUPMENU lpbar;
 
 #ifdef DEBUG_WIN
-    printf( "CreateWindowEx: %s %s %d,%d %dx%d %08x\n",
-	    className, windowName, x, y, width, height, style );
+    printf( "CreateWindowEx: %d '%s' '%s' %d,%d %dx%d %08x %x\n",
+	   exStyle, className, windowName, x, y, width, height, style, parent);
 #endif
 
-    if (x == CW_USEDEFAULT) x = 0;
-    if (y == CW_USEDEFAULT) y = 0;
-    if (width == CW_USEDEFAULT) width = 600;
-    if (height == CW_USEDEFAULT) height = 400;
+    if (x == CW_USEDEFAULT) x = y = 0;
+    if (width == CW_USEDEFAULT)
+    {
+	width = 600;
+	height = 400;
+    }
     if (width == 0) width = 1;
     if (height == 0) height = 1;
 
@@ -201,11 +208,18 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	if (!parent) return 0;
     }
     else if (style & WS_CHILD) return 0;  /* WS_CHILD needs a parent */
-
+    
     if (!(class = CLASS_FindClassByName( className, &classPtr ))) {
 	printf("CreateWindow BAD CLASSNAME '%s' !\n", className);
 	return 0;
 	}    
+
+      /* Correct the window style */
+
+    if (!(style & (WS_POPUP | WS_CHILD)))  /* Overlapped window */
+	style |= WS_CAPTION | WS_CLIPSIBLINGS;
+    if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
+
       /* Create the window structure */
 
     hwnd = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(WND)+classPtr->wc.cbWndExtra);
@@ -217,8 +231,8 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hwndNext   = 0;
     wndPtr->hwndChild  = 0;
     wndPtr->dwMagic    = WND_MAGIC;
-    wndPtr->hwndParent = parent;
-    wndPtr->hwndOwner  = parent;  /* What else? */
+    wndPtr->hwndParent = (style & WS_CHILD) ? parent : 0;
+    wndPtr->hwndOwner  = (style & WS_CHILD) ? 0 : parent;
     wndPtr->hClass     = class;
     wndPtr->hInstance  = instance;
     wndPtr->rectWindow.left   = x;
@@ -239,9 +253,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hCursor           = 0;
     wndPtr->hWndVScroll       = 0;
     wndPtr->hWndHScroll       = 0;
+    wndPtr->hWndMenuBar       = 0;
+    wndPtr->hWndCaption       = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
+    if (classPtr->wc.style & CS_DBLCLKS) wndPtr->flags |= WIN_DOUBLE_CLICKS;
     classPtr->cWindows++;
 
       /* Get class or window DC if needed */
@@ -261,156 +278,32 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     WIN_LinkWindow( hwnd, HWND_TOP );
 
-    if (!strcasecmp(className, "COMBOBOX"))
-    {
-	height = 16;
-    }
+      /* Create the X window */
 
-#ifdef USE_XLIB
-    {
-	XSetWindowAttributes win_attr;
-	Window parentWindow;
-	int x_rel, y_rel;
-	
-	win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-	                      PointerMotionMask | ButtonPressMask |
-			      ButtonReleaseMask | StructureNotifyMask |
-			      FocusChangeMask | EnterWindowMask;
-	win_attr.override_redirect = /*True*/ False;
-	win_attr.colormap = COLOR_WinColormap;
-	if (style & WS_CHILD)
-	{
-	    parentWindow = parentPtr->window;
-	    x_rel = x + parentPtr->rectClient.left-parentPtr->rectWindow.left;
-	    y_rel = y + parentPtr->rectClient.top-parentPtr->rectWindow.top;
-	}
-	else
-	{
-	    parentWindow = DefaultRootWindow( XT_display );
-	    x_rel = x;
-	    y_rel = y;
-	}
-	wndPtr->window = XCreateWindow( XT_display, parentWindow,
-				        x_rel, y_rel, width, height, 0,
-				        CopyFromParent, InputOutput,
-				        CopyFromParent,
-				        CWEventMask | CWOverrideRedirect |
-				        CWColormap, &win_attr );
-	XStoreName( XT_display, wndPtr->window, windowName );
-    }
-#else
-    /* Create the widgets */
-
+    win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
+	                  PointerMotionMask | ButtonPressMask |
+			  ButtonReleaseMask | StructureNotifyMask |
+			  FocusChangeMask | EnterWindowMask;
+    win_attr.override_redirect = /*True*/ False;
+    win_attr.colormap = COLOR_WinColormap;
     if (style & WS_CHILD)
     {
-	wndPtr->shellWidget = 0;
-	if (style & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME))
-	{ 
-	    int borderCol = 0;
-	    if (COLOR_WinColormap == DefaultColormapOfScreen(XT_screen))
-		borderCol = BlackPixelOfScreen(XT_screen);
-	    wndPtr->winWidget = XtVaCreateManagedWidget(className,
-						    compositeWidgetClass,
-						    parentPtr->winWidget,
-						    XtNx, x,
-						    XtNy, y,
-						    XtNwidth, width,
-						    XtNheight, height,
-						    XtNborderColor, borderCol,
-						    XtNmappedWhenManaged, FALSE,
-						    NULL );
-	}
-	else
-	{
-	    wndPtr->winWidget = XtVaCreateManagedWidget(className,
-						    compositeWidgetClass,
-						    parentPtr->winWidget,
-						    XtNx, x,
-						    XtNy, y,
-						    XtNwidth, width,
-						    XtNheight, height,
-						    XtNborderWidth, 0,
-						    XtNmappedWhenManaged, FALSE,
-						    NULL );
-	}
+	parentWindow = parentPtr->window;
+	x_rel = x + parentPtr->rectClient.left - parentPtr->rectWindow.left;
+	y_rel = y + parentPtr->rectClient.top - parentPtr->rectWindow.top;
     }
     else
     {
-	wndPtr->shellWidget = XtVaAppCreateShell(windowName, 
-						 className,
-						 topLevelShellWidgetClass,
-						 XT_display,
-						 XtNx, x,
-						 XtNy, y,
-						 XtNcolormap, COLOR_WinColormap,
-						 XtNmappedWhenManaged, FALSE,
-						 NULL );
-	wndPtr->compositeWidget = XtVaCreateManagedWidget(className,
-						    formWidgetClass,
-						    wndPtr->shellWidget,
-						    NULL );
-/*	wndPtr->winWidget = wndPtr->compositeWidget; */
-	wndPtr->winWidget = wndPtr->shellWidget;
-	if (wndPtr->wIDmenu == 0)
-	{
-	    wndPtr->menuBarPtr = 
-		    MENU_CreateMenuBar(wndPtr->compositeWidget,
-				       instance, hwnd,
-				       classPtr->wc.lpszMenuName,
-				       width);
-	    if (wndPtr->menuBarPtr)
-		    wndPtr->wIDmenu = 
-			GlobalHandleFromPointer(wndPtr->menuBarPtr->firstItem);
-	}
-	else
-	{
-	    wndPtr->menuBarPtr = MENU_UseMenu(wndPtr->compositeWidget,
-						  instance, hwnd,
-						  wndPtr->wIDmenu, width);
-	}
-
-	if (wndPtr->menuBarPtr != NULL)
-	{
-	    wndPtr->winWidget = 
-		    XtVaCreateManagedWidget(className,
-					    compositeWidgetClass,
-					    wndPtr->compositeWidget,
-					    XtNwidth, width,
-					    XtNheight, height,
-					    XtNfromVert,
-					    wndPtr->menuBarPtr->menuBarWidget,
-					    XtNvertDistance, 4,
-					    NULL );
-	}
-	else
-	{
-	    wndPtr->winWidget = 
-		    XtVaCreateManagedWidget(className,
-					compositeWidgetClass,
-					wndPtr->compositeWidget,
-					XtNwidth, width,
-					XtNheight, height,
-					NULL );
-	}
+	parentWindow = DefaultRootWindow( display );
+	x_rel = x;
+	y_rel = y;
     }
-    if (wndPtr->shellWidget) XtRealizeWidget( wndPtr->shellWidget );
-    if (wndPtr->compositeWidget) XtRealizeWidget( wndPtr->compositeWidget );
-    XtRealizeWidget( wndPtr->winWidget );
-    wndPtr->window = XtWindow( wndPtr->winWidget );
-#endif  /* USE_XLIB */
-
-    if ((style & WS_VSCROLL) == WS_VSCROLL) {
-    	newheight = height - (((style & WS_HSCROLL) == WS_HSCROLL) ? 16 : 0);
-	wndPtr->hWndVScroll = CreateWindow("SCROLLBAR", "",
-		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_VERT,
-		width - 16, 0, 16, newheight, hwnd, 2, instance, 0L);
-	}
-    if ((style & WS_HSCROLL) == WS_HSCROLL) {
-    	newwidth = width - (((style & WS_VSCROLL) == WS_VSCROLL) ? 16 : 0);
-	wndPtr->hWndHScroll = CreateWindow("SCROLLBAR", "",
-		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_HORZ,
-		0, height - 16, newwidth, 16, hwnd, 3, instance, 0L);
-	}
+    wndPtr->window = XCreateWindow(display, parentWindow,
+				   x_rel, y_rel, width, height, 0,
+				   CopyFromParent, InputOutput, CopyFromParent,
+				   CWEventMask | CWOverrideRedirect |
+				   CWColormap, &win_attr );
+    XStoreName( display, wndPtr->window, windowName );
 
       /* Send the WM_CREATE message */
 	
@@ -452,30 +345,56 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     GlobalUnlock( hcreateStruct );
     GlobalFree( hcreateStruct );
-    
+
     if (wmcreate == -1)
     {
 	  /* Abort window creation */
 
-	if (parent) parentPtr->hwndChild = wndPtr->hwndNext;
-	else firstWindow = wndPtr->hwndNext;
-#ifdef USE_XLIB
-	XDestroyWindow( XT_display, wndPtr->window );
-#else	
-	if (wndPtr->shellWidget) XtDestroyWidget( wndPtr->shellWidget );
-	else XtDestroyWidget( wndPtr->winWidget );
-#endif
+	WIN_UnlinkWindow( hwnd );
+	XDestroyWindow( display, wndPtr->window );
 	if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
 	classPtr->cWindows--;
 	USER_HEAP_FREE( hwnd );
 	return 0;
     }
 
-#ifdef USE_XLIB    
-    EVENT_AddHandlers( wndPtr->window, hwnd );
-#else
-    EVENT_AddHandlers( wndPtr->winWidget, hwnd );
-#endif
+      /* Create scrollbars */
+
+    if (windowName != NULL) SetWindowText(hwnd, windowName);
+    if ((style & WS_CAPTION) == WS_CAPTION) {
+	wndPtr->hWndCaption = CreateWindow("CAPTION", "",
+		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
+		0, -20, width, 20, hwnd, 1, instance, 0L);
+	}
+    if (((style & WS_CHILD) != WS_CHILD) && (wndPtr->wIDmenu != 0)) {
+	lpbar = (LPPOPUPMENU) GlobalLock(wndPtr->wIDmenu);
+	if (lpbar != NULL) {
+	    lpbar->ownerWnd = hwnd;
+	    wndPtr->hWndMenuBar = CreateWindow("POPUPMENU", "",
+		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
+		0, 0, width, 20, hwnd, 2, instance, (LPSTR)lpbar);
+	    }
+	}
+    if ((style & WS_VSCROLL) == WS_VSCROLL)
+    {
+	wndPtr->hWndVScroll = CreateWindow("SCROLLBAR", "",
+		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_VERT,
+		wndPtr->rectClient.right-wndPtr->rectClient.left, 0,
+                SYSMETRICS_CXVSCROLL,
+		wndPtr->rectClient.bottom-wndPtr->rectClient.top,
+                hwnd, 3, instance, 0L);
+    }
+    if ((style & WS_HSCROLL) == WS_HSCROLL)
+    {
+	wndPtr->hWndHScroll = CreateWindow("SCROLLBAR", "",
+		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_HORZ,
+		0, wndPtr->rectClient.bottom-wndPtr->rectClient.top,
+                wndPtr->rectClient.right-wndPtr->rectClient.left,
+		SYSMETRICS_CYHSCROLL,
+                hwnd, 4, instance, 0L);
+    }
+
+    EVENT_RegisterWindow( wndPtr->window, hwnd );
 
     WIN_SendParentNotify( hwnd, wndPtr, WM_CREATE );
     
@@ -515,12 +434,7 @@ BOOL DestroyWindow( HWND hwnd )
 
       /* Destroy the window */
 
-#ifdef USE_XLIB
-    XDestroyWindow( XT_display, wndPtr->window );
-#else
-    if (wndPtr->shellWidget) XtDestroyWidget( wndPtr->shellWidget );
-    else XtDestroyWidget( wndPtr->winWidget );
-#endif
+    XDestroyWindow( display, wndPtr->window );
     if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
     classPtr->cWindows--;
     USER_HEAP_FREE( hwnd );
@@ -588,49 +502,7 @@ HMENU GetMenu( HWND hwnd )
  */
 BOOL SetMenu(HWND hwnd, HMENU hmenu)
 {
-#ifdef USE_XLIB
     return FALSE;
-#else
-    WND *wndPtr;
-    wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr == NULL)
-	return FALSE;
-
-    if (wndPtr->dwStyle & WS_CHILD) return FALSE;
-
-    if (wndPtr->menuBarPtr != NULL)
-    {
-	XtVaSetValues(wndPtr->winWidget, XtNfromVert, NULL, NULL);
-	MENU_CollapseMenu(wndPtr->menuBarPtr);
-    }
-    
-    wndPtr->menuBarPtr = MENU_UseMenu(wndPtr->compositeWidget, 
-				      wndPtr->hInstance, hwnd, hmenu, 
-				      wndPtr->rectClient.right -
-				      wndPtr->rectClient.left);
-
-    if (wndPtr->menuBarPtr != NULL)
-    {
-	XtVaSetValues(wndPtr->winWidget, 
-		      XtNfromVert, wndPtr->menuBarPtr->menuBarWidget, 
-		      XtNvertDistance, 4,
-		      NULL);
-    }
-    else
-    {
-	if (wndPtr->wIDmenu != 0)
-	{
-	    wndPtr->menuBarPtr = MENU_UseMenu(wndPtr->compositeWidget, 
-					      wndPtr->hInstance, hwnd, 
-					      wndPtr->wIDmenu, 
-					      wndPtr->rectClient.right -
-					      wndPtr->rectClient.left);
-	}
-	return FALSE;
-    }
-
-    return TRUE;
-#endif  /* USE_XLIB */
 }
 
 

@@ -11,9 +11,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xatom.h>
 #include "gdi.h"
 
-extern Display * XT_display;
-extern Screen * XT_screen;
-
 
 /***********************************************************************
  *           FONT_MatchFont

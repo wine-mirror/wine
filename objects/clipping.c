@@ -20,15 +20,22 @@ void CLIPPING_SetDeviceClipping( DC * dc )
     if (dc->w.hGCClipRgn)
     {
 	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
-	XSetClipMask( XT_display, dc->u.x.gc, obj->region.pixmap );
-	XSetClipOrigin( XT_display, dc->u.x.gc,
-		        dc->w.DCOrgX + obj->region.box.left,
-		        dc->w.DCOrgY + obj->region.box.top );
+	if (obj->region.pixmap)
+	{
+	    XSetClipMask( display, dc->u.x.gc, obj->region.pixmap );
+	    XSetClipOrigin( display, dc->u.x.gc,
+			    dc->w.DCOrgX + obj->region.box.left,
+			    dc->w.DCOrgY + obj->region.box.top );
+	}
+	else  /* Clip everything */
+	{
+	    XSetClipRectangles( display, dc->u.x.gc, 0, 0, NULL, 0, 0 );
+	}
     }
     else
     {
-	XSetClipMask( XT_display, dc->u.x.gc, None );
-	XSetClipOrigin( XT_display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
+	XSetClipMask( display, dc->u.x.gc, None );
+	XSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 }
 

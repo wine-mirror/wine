@@ -661,7 +661,7 @@ char *WineIniFileName(void)
 
 char *WinIniFileName()
 {
-	char name[256];
+	static char name[256];
 	
 	strcpy(name,GetDirectUnixFileName(WindowsDirectory));	
 	strcat(name,"win.ini");

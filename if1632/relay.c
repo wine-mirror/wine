@@ -19,6 +19,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "dlls.h"
 
+/* #define DEBUG_RELAY */
+
 #define N_BUILTINS	8
 
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
@@ -98,14 +100,6 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	printf("  ESP %08x, EBP %08x, SS %04x\n", 
 	       IF1632_Saved16_esp, IF1632_Saved16_ebp,
 	       IF1632_Saved16_ss);
-
-	if (strcmp("GetMessage", dll_p->export_name) == 0 &&
-	    seg_off == 0x00972526 &&
-	    *ret_addr == 0x004700cd &&
-	    IF1632_Saved16_esp == 0x2526 &&
-	    IF1632_Saved16_ebp == 0x2534 &&
-	    IF1632_Saved16_ss  == 0x0097)
-	    printf("ACK!!\n");
 
 #ifdef DEBUG_STACK
 	stack_p = (unsigned short *) seg_off;

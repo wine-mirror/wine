@@ -282,7 +282,10 @@ extern HANDLE GDI_AllocObject( WORD, WORD );
 extern BOOL GDI_FreeObject( HANDLE );
 extern GDIOBJHDR * GDI_GetObjPtr( HANDLE, WORD );
 
-extern Display * XT_display;
-extern Screen * XT_screen;
+extern Display * XT_display;  /* Will be removed */
+extern Screen * XT_screen;    /* Will be removed */
+
+extern Display * display;
+extern Screen * screen;
 
 #endif  /* GDI_H */

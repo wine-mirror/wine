@@ -1,6 +1,6 @@
 ######################################################################
 # These variables are inherited by the sub-makefiles
-DEBUGOPTS=-DUSE_XLIB
+DEBUGOPTS=
 COPTS=-O2 -m486
 INCLUDE_DIR=include
 LDFLAGS=

@@ -8,8 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 
-extern Display * XT_display;
-extern Screen * XT_screen;
 
 #define NB_HATCH_STYLES  6
 

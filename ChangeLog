@@ -1,3 +1,90 @@
+Tue Jan  4 13:01:33 1994  David Metcalfe <david@prism.demon.co.uk>
+
+        * [window/caret.c]
+        Modified code to use system timer.
+
+Jan 9, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [windows/win.c]
+	Windows create if required new XLIB MenuBar & CaptionBar.
+
+	* [windows/defwnd.c]
+	WM_CALCSIZE Move & Resize caption, menubar & scrollbars.
+	(I'm not sure it's the good place for it, but it work...)
+
+	* [loader/resource.c]
+	optimize in FindResourceByNumber, make lseek() if next type ...
+
+	* [controls/scroll.c]
+	scrollbar buttons are now using system resources bitmaps.
+
+	* [controls/caption.c] - new file ...
+	captionbar showing title, close button with SysMenu,
+	and other buttons using system resources bitmaps.
+
+	* [controls/menu.c]
+	New functions: SetMenuItemBitmaps() with 'glues',
+	Make new version of LoadMenu() & ParseMenu(),
+	( put #define USE_POPUPMENU ).
+	Implementation of MenuBar functions.
+	
+	* [sysres.dll]
+	New bitmaps for system such OBM_CLOSE, OBM_MINIMIZE, OBM_UPARROWI.
+	New SYSMENU menu, it don't work yet ! :-((
+
+Tue Jan 11 05:27:45 1994  julliard@di.epfl.ch (Alexandre Julliard
+
+	* [memory/atom.c]
+	Fixed a bug that could cause atoms to be case-sensitive.
+
+	* [misc/rect.c]
+	Bug fix in SubtractRect().
+
+	* [objects/clipping.c]
+	Bug fix when setting the clip mask to an empty region.
+
+	* [windows/dce.c]
+	Bug fix in ReleaseDC().
+
+	* [windows/dialog.c]
+	Call AdjustWindowRectEx() before creating the dialog window.
+	Added support for DS_MODALFRAME style.
+
+	* [windows/event.c]
+	Cleaned up event handling and removed old Xt stuff.
+	Moved double-click handling to windows/message.c
+
+	* [windows/focus.c]
+	Bug fix: only set the X focus when the window is viewable.
+
+	* [windows/graphics.c]
+	Rewritten DrawReliefRect() to use brush instead of pen, and
+	to use the system colors.
+
+	* [windows/message.c]
+	Implemented WM_NCHITTEST message sending, and non-client
+	mouse messages.
+	Cleaned up double-click handling, and removed the Xt code.
+
+	* [windows/nonclient.c]  (New file)
+	Implemented AdjustWindowRect().
+	Implemented WM_NCCALCSIZE, WM_NCHITTEST and WM_NCPAINT handling.
+
+	* [windows/painting.c]
+	Added sending of the WM_NCPAINT message in BeginPaint().
+
+	* [windows/sysmetrics.c] [include/sysmetrics.h]  (New files)
+	Implemented system metrics.
+
+	* [windows/win.c]
+	Bug fix in setting the parent and owner in CreateWindow().
+	Removed the Xt code.
+
+	* [windows/winpos.c]
+	Added sending of the WM_NCPAINT message in SetWindowPos().
+	Removed the Xt code.
+
+----------------------------------------------------------------------
 Sun Jan  2 12:38:53 1994  David Metcalfe <david@prism.demon.co.uk>
 
 	* [windows/class.c]
@@ -101,7 +188,6 @@ Sat Jan  1 10:22:43 1994  Bob Amstadt  (bob@pooh)
 
 	* loader/wine.c: Added support for relocation types 5 and 6.
 
-----------------------------------------------------------------------
 Mon Dec 27 11:06:03 1993  Erik Bos (erik@trashcan.hacktic.nl)
 
 	* [misc/comm.c]

@@ -8,8 +8,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "win.h"
 
-extern Display * XT_display;
-extern Screen * XT_screen;
+extern Display * display;
 
 
 /***********************************************************************
@@ -213,10 +212,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
     RECT newWindowRect, newClientRect;
     WND *wndPtr;
     int calcsize_result = 0;
-#ifdef USE_XLIB
     XWindowChanges winChanges;
     int changeMask = 0;
-#endif
 
 #ifdef DEBUG_WIN
     printf( "SetWindowPos: %d %d %d,%d %dx%d 0x%x\n",
@@ -311,7 +308,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
     }
     
       /* Perform the moving and resizing */
-#ifdef USE_XLIB
+
     if (!(winPos->flags & SWP_NOMOVE))
     {
 	WND * parentPtr;
@@ -343,30 +340,27 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	}
 	changeMask |= CWStackMode;
     }
-    if (changeMask) XConfigureWindow( XT_display, wndPtr->window,
+    if (changeMask) XConfigureWindow( display, wndPtr->window,
 				      changeMask, &winChanges );
-#endif
 
     if (winPos->flags & SWP_SHOWWINDOW)
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
-#ifdef USE_XLIB
-	XMapWindow( XT_display, wndPtr->window );
-#else		
-	if (wndPtr->shellWidget) XtMapWidget( wndPtr->shellWidget );
-	else XtMapWidget( wndPtr->winWidget );
-#endif
+	XMapWindow( display, wndPtr->window );
     }
     else if (winPos->flags & SWP_HIDEWINDOW)
     {
 	wndPtr->dwStyle &= ~WS_VISIBLE;
-#ifdef USE_XLIB
-	XUnmapWindow( XT_display, wndPtr->window );
-#else		
-	if (wndPtr->shellWidget) XtUnmapWidget( wndPtr->shellWidget );
-	else XtUnmapWidget( wndPtr->winWidget );
-#endif	
+	XUnmapWindow( display, wndPtr->window );
     }
+
+      /* Send WM_NCPAINT message if needed */
+    if ((winPos->flags & (SWP_FRAMECHANGED | SWP_SHOWWINDOW)) ||
+	(!(winPos->flags & SWP_NOSIZE)) ||
+	(!(winPos->flags & SWP_NOMOVE)) ||
+	(!(winPos->flags & SWP_NOACTIVATE)) ||
+	(!(winPos->flags & SWP_NOZORDER)))
+	    SendMessage( hwnd, WM_NCPAINT, 1, 0L );
 
       /* Finally send the WM_WINDOWPOSCHANGED message */
     wndPtr->rectWindow = newWindowRect;

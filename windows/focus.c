@@ -27,13 +27,19 @@ HWND SetFocus(HWND hwnd)
 
     if (hwnd == 0)
     {
-	XSetInputFocus(XT_display, None, RevertToPointerRoot, CurrentTime);
+	XSetInputFocus(display, None, RevertToPointerRoot, CurrentTime);
     }
     else
     {
+	XWindowAttributes win_attr;
 	wndPtr = WIN_FindWndPtr(hwnd);
-	XSetInputFocus(XT_display, wndPtr->window,
-		       RevertToParent, CurrentTime);
+	
+	if (XGetWindowAttributes( display, wndPtr->window, &win_attr ))
+	{
+	    if (win_attr.map_state == IsViewable)
+		XSetInputFocus(display, wndPtr->window,
+			       RevertToParent, CurrentTime);
+	}
     }
 
     return hWndPrevFocus;

@@ -15,8 +15,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
-extern Display * XT_display;
-extern Screen * XT_screen;
+extern Display * display;
 
 static HANDLE firstDCE = 0;
 static HDC defaultDCstate = 0;
@@ -159,11 +158,11 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    IntersectVisRect( hdc, 0, 0, dc->w.DCSizeX, dc->w.DCSizeY );
 	}	
     }
-    else dc->u.x.drawable = DefaultRootWindow( XT_display );
+    else dc->u.x.drawable = DefaultRootWindow( display );
 
     if (flags & DCX_CLIPCHILDREN)
-	XSetSubwindowMode( XT_display, dc->u.x.gc, ClipByChildren );
-    else XSetSubwindowMode( XT_display, dc->u.x.gc, IncludeInferiors);
+	XSetSubwindowMode( display, dc->u.x.gc, ClipByChildren );
+    else XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors);
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
     {
@@ -216,7 +215,7 @@ HDC GetWindowDC( HWND hwnd )
 int ReleaseDC( HWND hwnd, HDC hdc )
 {
     HANDLE hdce;
-    DCE * dce;
+    DCE * dce = NULL;
     
 #ifdef DEBUG_DC
     printf( "ReleaseDC: %d %d\n", hwnd, hdc );
@@ -227,11 +226,12 @@ int ReleaseDC( HWND hwnd, HDC hdc )
 	if (!(dce = (DCE *) USER_HEAP_ADDR( hdce ))) return 0;
 	if (dce->inUse && (dce->hdc == hdc)) break;
     }
+    if (!hdce) return 0;
 
     if (dce->type == DCE_CACHE_DC)
     {
 	SetDCState( dce->hdc, defaultDCstate );
 	dce->inUse = FALSE;
     }
-    return (hdce != 0);
+    return 1;
 }

@@ -18,9 +18,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 
-extern Display * XT_display;
-extern Screen * XT_screen;
-
 extern Colormap COLOR_WinColormap;
 
 GDIOBJHDR * PALETTE_systemPalette;
@@ -36,7 +33,7 @@ BOOL PALETTE_Init()
     HPALETTE hpalette;
     LOGPALETTE * palPtr;
 
-    size = DefaultVisual( XT_display, DefaultScreen(XT_display) )->map_entries;
+    size = DefaultVisual( display, DefaultScreen(display) )->map_entries;
     palPtr = malloc( sizeof(LOGPALETTE) + (size-1)*sizeof(PALETTEENTRY) );
     if (!palPtr) return FALSE;
     palPtr->palVersion = 0x300;
@@ -46,7 +43,7 @@ BOOL PALETTE_Init()
     for (i = 0; i < size; i++)
     {
 	color.pixel = i;
-	XQueryColor( XT_display, COLOR_WinColormap, &color );
+	XQueryColor( display, COLOR_WinColormap, &color );
 	palPtr->palPalEntry[i].peRed   = color.red >> 8;
 	palPtr->palPalEntry[i].peGreen = color.green >> 8;
 	palPtr->palPalEntry[i].peBlue  = color.blue >> 8;
@@ -132,7 +129,7 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
 
-    if ((COLOR_WinColormap != DefaultColormapOfScreen(XT_screen)) &&
+    if ((COLOR_WinColormap != DefaultColormapOfScreen(screen)) &&
 	(hpalette == STOCK_DEFAULT_PALETTE))
     {
 	if ((color & 0xffffff) == 0) return 0;  /* Entry 0 is black */

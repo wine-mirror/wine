@@ -44,7 +44,7 @@ XImage * DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
     XImage * image;
     int bytesPerLine = (bmp->biWidth * bmp->biBitCount + 31) / 32 * 4;
     
-    image = XCreateImage( XT_display, DefaultVisualOfScreen( XT_screen ),
+    image = XCreateImage( display, DefaultVisualOfScreen( screen ),
 			  bmp->biBitCount, ZPixmap, 0, bmpData,
 			  bmp->biWidth, bmp->biHeight, 32, bytesPerLine );
     if (!image) return 0;

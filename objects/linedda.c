@@ -7,7 +7,7 @@
 static char Copyright[] = "Copyright  Bob Amstadt, 1993";
 
 #include <stdlib.h>
-#include "win.h"
+#include "windows.h"
 
 /**********************************************************************
  *		LineDDA		(GDI.100)

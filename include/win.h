@@ -7,7 +7,7 @@
 #ifndef WIN_H
 #define WIN_H
 
-#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 
 #include "windows.h"
 #include "menu.h"
@@ -40,11 +40,10 @@ typedef struct tagWND
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags */
-    Widget       shellWidget;    /* For top-level windows */
-    Widget       winWidget;      /* For all windows */
-    Widget       compositeWidget;/* For top-level windows */
     Window       window;         /* X window */
     LPMENUBAR	 menuBarPtr;	 /* Menu bar */
+    HWND	 hWndMenuBar;	 /* Menu bar */
+    HWND	 hWndCaption;	 /* Caption bar */
     WORD         wExtra[1];      /* Window extra bytes */
 } WND;
 
@@ -54,6 +53,7 @@ typedef struct tagWND
 #define WIN_GOT_SIZEMSG         0x04  /* WM_SIZE has been sent to the window */
 #define WIN_OWN_DC              0x08  /* Win class has style CS_OWNDC */
 #define WIN_CLASS_DC            0x10  /* Win class has style CS_CLASSDC */
+#define WIN_DOUBLE_CLICKS       0x20  /* Win class has style CS_DBLCLKS */
 
   /* Window functions */
 WND *WIN_FindWndPtr( HWND hwnd );

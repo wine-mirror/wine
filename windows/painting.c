@@ -21,8 +21,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
  */
 HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps ) 
 {
+    HRGN hrgnUpdate;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
+
+    hrgnUpdate = wndPtr->hrgnUpdate;  /* Save update region */
 
     if (!(lps->hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
 			      DCX_INTERSECTRGN | DCX_USESTYLE ))) return 0;
@@ -35,7 +38,8 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 	MSG_DecPaintCount( wndPtr->hmemTaskQ );
     }
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
-    
+
+    SendMessage( hwnd, WM_NCPAINT, hrgnUpdate, 0 );
     if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
     else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
     

@@ -22,6 +22,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 Display * XT_display;
 Screen * XT_screen;
+Display * display;
+Screen * screen;
 XtAppContext XT_app_context;
 
 static Widget topLevelWidget;
@@ -40,6 +42,8 @@ void main(int argc, char **argv)
 				       NULL );
     XT_display = XtDisplay( topLevelWidget );
     XT_screen  = XtScreen( topLevelWidget );
+    display = XtDisplay( topLevelWidget );
+    screen  = XtScreen( topLevelWidget );
     
     DOS_InitFS();
     Comm_Init();
@@ -68,32 +72,3 @@ DWORD GetTickCount()
     struct tms dummy;
     return (times(&dummy) * 1000) / HZ;
 }
-
-
-int GetSystemMetrics( short index )
-{
-    printf( "GetSystemMetrics: %d\n", index );
-    switch(index)
-    {
-      case SM_CXSCREEN:
-	return DisplayWidth( XT_display, DefaultScreen( XT_display ));
-
-      case SM_CYSCREEN:
-	return DisplayHeight( XT_display, DefaultScreen( XT_display ));
-
-      default:
-	  return 0;
-    }
-}
-
-void AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
-{
-    printf( "AdjustWindowRect: (%d,%d)-(%d,%d) %d %d\n", rect->left, rect->top,
-	   rect->right, rect->bottom, style, menu );
-#ifdef USE_XLIB
-    rect->right += 8;
-    rect->bottom += 34;
-#endif
-}
-
-

@@ -184,11 +184,13 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     HMENU hMenu;
     HFONT hFont = 0;
     HWND hwnd;
+    RECT rect;
     WND * wndPtr;
     int i;
     DLGTEMPLATE template;
     DLGCONTROLHEADER * header;
     DIALOGINFO * dlgInfo;
+    DWORD exStyle = 0;
     WORD xUnit = xBaseUnit;
     WORD yUnit = yBaseUnit;
 
@@ -229,7 +231,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    HFONT oldFont;
 	    HDC hdc;
 
-	    hdc = GetDC(GetDesktopWindow());
+	    hdc = GetDC(0);
 	    oldFont = SelectObject( hdc, hFont );
 	    GetTextMetrics( hdc, &tm );
 	    SelectObject( hdc, oldFont );
@@ -241,14 +243,19 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     
       /* Create dialog main window */
 
-    hwnd = CreateWindow( template.className, template.caption,
-			 template.header->style,
-			 template.header->x * xUnit / 4,
-			 template.header->y * yUnit / 8,
-			 template.header->cx * xUnit / 4,
-			 template.header->cy * yUnit / 8,
-			 owner, hMenu, hInst,
-			 NULL );
+    rect.left = rect.top = 0;
+    rect.right = template.header->cx * xUnit / 4;
+    rect.bottom = template.header->cy * yUnit / 8;
+    if (template.header->style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
+    AdjustWindowRectEx( &rect, template.header->style, hMenu, exStyle );
+
+    hwnd = CreateWindowEx( exStyle, template.className, template.caption,
+			   template.header->style,
+			   rect.left + template.header->x * xUnit / 4,
+			   rect.top + template.header->y * yUnit / 8,
+			   rect.right - rect.left, rect.bottom - rect.top,
+			   owner, hMenu, hInst,
+			   NULL );
     if (!hwnd)
     {
 	if (hFont) DeleteObject( hFont );
