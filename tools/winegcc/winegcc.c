@@ -161,8 +161,8 @@ struct options
     int gui_app;
     int compile_only;
     int wine_mode;
-    const char* prefix;
     const char* output_name;
+    strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
     strarray* compiler_args;
@@ -342,7 +342,7 @@ static const char* compile_to_object(struct options* opts, const char* file)
 
 static void build(struct options* opts)
 {
-    static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib" };
+    static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     strarray *lib_dirs, *files;
     strarray *spec_args, *comp_args, *link_args;
     char *spec_c_name, *spec_o_name, *base_file, *base_name;
@@ -433,7 +433,9 @@ static void build(struct options* opts)
 		    strarray_add(files, strmake("-s%s", file + 2));
 		    break;
 	        default:
-		    fprintf(stderr, "Can't find library '%s', ignoring\n", file);
+                    /* keep it anyway, the linker may know what to do with it */
+                    strarray_add(files, file);
+                    break;
 	    }
 	    free(fullname);
 	}
@@ -527,6 +529,7 @@ static void build(struct options* opts)
 	const char* name = files->base[j] + 2;
 	switch(files->base[j][1])
 	{
+	    case 'l':
 	    case 's':
 		strarray_add(link_args, strmake("-l%s", name));
 		break;
@@ -720,28 +723,20 @@ int main(int argc, char **argv)
 	    if (argv[i][1] == 'o')
 		raw_compiler_arg = raw_linker_arg = 0;
 
-	    /* put the arg into the appropriate bucket */
-	    if (raw_linker_arg) 
-	    {
-		strarray_add(opts.linker_args, argv[i]);
-		if (next_is_arg && (i + 1 < argc)) 
-		    strarray_add(opts.linker_args, argv[i + 1]);
-	    }
-	    if (raw_compiler_arg)
-	    {
-		strarray_add(opts.compiler_args, argv[i]);
-		if (next_is_arg && (i + 1 < argc))
-		    strarray_add(opts.compiler_args, argv[i + 1]);
-	    }
-
 	    /* do a bit of semantic analysis */
             switch (argv[i][1]) 
 	    {
 		case 'B':
 		    str = strdup(option_arg);
-		    if (strendswith(str, "/tools/winebuild")) opts.wine_mode = 1;
+		    if (strendswith(str, "/tools/winebuild"))
+                    {
+                        opts.wine_mode = 1;
+                        /* don't pass it to the compiler, this generates warnings */
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
 		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
-		    opts.prefix = str;
+                    if (!opts.prefix) opts.prefix = strarray_alloc();
+                    strarray_add(opts.prefix, str);
 		    break;
                 case 'c':        /* compile or assemble */
 		    if (argv[i][2] == 0) opts.compile_only = 1;
@@ -809,6 +804,20 @@ int main(int argc, char **argv)
                         linking = -1;
                     break;
             }
+
+	    /* put the arg into the appropriate bucket */
+	    if (raw_linker_arg) 
+	    {
+		strarray_add(opts.linker_args, argv[i]);
+		if (next_is_arg && (i + 1 < argc)) 
+		    strarray_add(opts.linker_args, argv[i + 1]);
+	    }
+	    if (raw_compiler_arg)
+	    {
+		strarray_add(opts.compiler_args, argv[i]);
+		if (next_is_arg && (i + 1 < argc))
+		    strarray_add(opts.compiler_args, argv[i + 1]);
+	    }
 
 	    /* skip the next token if it's an argument */
 	    if (next_is_arg) i++;

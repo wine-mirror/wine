@@ -41,7 +41,7 @@ void error(const char* s, ...)
     va_list ap;
     
     va_start(ap, s);
-    fprintf(stderr, "Error: ");
+    fprintf(stderr, "winegcc: ");
     vfprintf(stderr, s, ap);
     fprintf(stderr, "\n");
     va_end(ap);
@@ -273,7 +273,7 @@ file_type get_lib_type(strarray* path, const char* library, char** file)
     return file_na;
 }
 
-void spawn(const char* prefix, const strarray* args)
+void spawn(const strarray* prefix, const strarray* args)
 {
     int i, status;
     strarray* arr = strarray_dup(args);
@@ -285,16 +285,23 @@ void spawn(const char* prefix, const strarray* args)
 
     if (prefix)
     {
-        const char* p;
-	struct stat st;
+        for (i = 0; i < prefix->size; i++)
+        {
+            const char* p;
+            struct stat st;
 
-	if (!(p = strrchr(argv[0], '/'))) p = argv[0];
-	prog = strmake("%s/%s", prefix, p);
-	if (stat(prog, &st) == 0)
-	{
-	    if ((st.st_mode & S_IFREG) && (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)))
-		argv[0] = prog;
-	}
+            if (!(p = strrchr(argv[0], '/'))) p = argv[0];
+            free( prog );
+            prog = strmake("%s/%s", prefix->base[i], p);
+            if (stat(prog, &st) == 0)
+            {
+                if ((st.st_mode & S_IFREG) && (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)))
+                {
+                    argv[0] = prog;
+                    break;
+                }
+            }
+        }
     }
 
     if (verbose)
@@ -306,7 +313,7 @@ void spawn(const char* prefix, const strarray* args)
     if ((status = spawnvp( _P_WAIT, argv[0], argv)))
     {
 	if (status > 0) error("%s failed.", argv[0]);
-	else perror("Error:");
+	else perror("winegcc");
 	exit(3);
     }
 
