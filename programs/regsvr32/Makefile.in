@@ -1,0 +1,13 @@
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = regsvr32
+
+C_SRCS = \
+	regsvr32.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:
