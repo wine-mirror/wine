@@ -1433,3 +1433,24 @@ BOOL WINAPI shell32_243(DWORD a, DWORD b)
 { 
   return FALSE; 
 }
+
+/************************************************************************
+ *      Win32DeleteFile                         [SHELL32.164]  
+ *
+ * Deletes a file.  Also triggers a change notify if one exists, but
+ * that mechanism doesn't yet exist in Wine's SHELL32.
+ *
+ * FIXME:
+ * Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be
+ * ANSI.  Is this Unicode on NT?
+ *
+ */ 
+
+BOOL WINAPI Win32DeleteFile(LPSTR fName)
+{
+  FIXME("%p(%s): partial stub\n", fName, fName);
+
+  DeleteFileA(fName);
+
+  return TRUE;
+}

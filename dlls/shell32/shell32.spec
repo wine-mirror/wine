@@ -169,7 +169,7 @@ init	Shell32LibMain
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
  162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPathAW
  163 stdcall StrToOleStr (wstr str) StrToOleStrAW
- 164 stub Win32DeleteFile
+ 164 stdcall Win32DeleteFile(str) Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
  166 stub CallCPLEntry16
  167 stub SHAddFromPropSheetExtArray
