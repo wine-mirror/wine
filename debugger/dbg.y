@@ -21,7 +21,6 @@
 
 extern FILE * yyin;
 
-static void issue_prompt(void);
 static void mode_command(int);
 int yylex(void);
 int yyerror(char *);
@@ -81,8 +80,8 @@ int yyerror(char *);
 
 %%
 
-input: line                   	{ issue_prompt(); }
-    | input line                { issue_prompt(); }
+input: line
+    | input line
 
 line: command 
     | tEOL
@@ -344,13 +343,6 @@ identifier:
 
 %%
 
-static void issue_prompt(void)
-{
-#ifdef DONT_USE_READLINE
-   DEBUG_Printf(DBG_CHN_MESG, "Wine-dbg>");
-#endif
-}
-
 static void mode_command(int newmode)
 {
     switch(newmode)
@@ -410,7 +402,6 @@ BOOL	DEBUG_Parser(void)
     ret_ok = FALSE;
     do {
        __TRY {
-	  issue_prompt();
 	  ret_ok = TRUE;
 	  if ((ret = yyparse())) {
 	     DEBUG_FlushSymbols();

@@ -13,13 +13,11 @@
 #include "debugger.h"
 #include "y.tab.h"
 
-#ifndef DONT_USE_READLINE
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = DEBUG_ReadLine("Wine-dbg>", (char *) buf, max_size, TRUE )) < 0 ) \
+	if ( (result = DEBUG_ReadLine("Wine-dbg>", (char *) buf, max_size, TRUE, TRUE )) < 0 ) \
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
 
-#endif  /* DONT_USE_READLINE */
 
 #define YY_NO_UNPUT
 
@@ -169,8 +167,6 @@ enum					{ return tENUM; }
 int yywrap(void) { return 1; }
 #endif
 
-#ifndef DONT_USE_READLINE
-
 #ifndef whitespace
 #define whitespace(c) (((c) == ' ') || ((c) == '\t'))
 #endif
@@ -195,7 +191,7 @@ static void stripwhite (char *string)
   string[++i] = '\0';
 }
 
-int DEBUG_ReadLine(const char* pfx, char * buf, int size, int remind)
+int DEBUG_ReadLine(const char* pfx, char * buf, int size, int flush_sym, int keep_hist)
 {
     char 	buf_line[256];
     char*	ptr;
@@ -204,7 +200,7 @@ int DEBUG_ReadLine(const char* pfx, char * buf, int size, int remind)
 
     for (;;)
     {
-        DEBUG_FlushSymbols();
+        if (flush_sym) DEBUG_FlushSymbols();
 	/* as of today, console handles can be file handles... so better use file APIs rather than
 	 * consoles
 	 */
@@ -219,7 +215,7 @@ int DEBUG_ReadLine(const char* pfx, char * buf, int size, int remind)
         /* Remove leading and trailing whitespace from the line */
         stripwhite (buf_line);
 
-	if (remind)
+	if (keep_hist)
 	{
 	    static char last_line[256] = "";
 	    /* If there is anything left, add it to the history list
@@ -234,7 +230,7 @@ int DEBUG_ReadLine(const char* pfx, char * buf, int size, int remind)
 	}
 	else
 	{
-	    /* I could also tweak with the undoc functions to remove this line from the console
+	    /* I should also tweak with the undoc functions to remove this line from the console
 	     * history... */
 	    ptr = buf_line;
 	}
@@ -269,5 +265,3 @@ void DEBUG_FlushSymbols(void)
 	while(--next_symbol >= 0) DBG_free(local_symbols[next_symbol]);
 	next_symbol = 0;
 }
-
-#endif  /* DONT_USE_READLINE */
