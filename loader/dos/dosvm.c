@@ -126,27 +126,29 @@ static void DOSVM_Dump( int fn, int sig, struct vm86plus_struct*VM86 )
  printf("\n");
 }
 
-static int DOSVM_Int( int vect, CONTEXT86 *context )
-{
- if (vect==0x31) {
-  if (context->SegCs==DOSMEM_wrap_seg) {
-   /* exit from real-mode wrapper */
-   return -1;
-  }
-  /* we could probably move some other dodgy stuff here too from dpmi.c */
- }
- INT_RealModeInterrupt(vect,context);
- return 0;
-}
-
-static void DOSVM_SimulateInt( int vect, CONTEXT86 *context )
+static int DOSVM_SimulateInt( int vect, CONTEXT86 *context )
 {
   FARPROC16 handler=INT_GetRMHandler(vect);
 
-  if (SELECTOROF(handler)==0xf000) {
-    /* if internal interrupt, call it directly */
-    INT_RealModeInterrupt(vect,context);
-  } else {
+  /* check for our real-mode hooks */
+  if (vect==0x31) {
+    if (context->SegCs==DOSMEM_wrap_seg) {
+      /* exit from real-mode wrapper */
+      return -1;
+    }
+    /* we could probably move some other dodgy stuff here too from dpmi.c */
+  }
+  /* check if the call is from our fake BIOS interrupt stubs */
+  if (context->SegCs==0xf000) {
+    INT_RealModeInterrupt(vect, context);
+  }
+  /* check if the call goes to an unhooked interrupt */
+  else if (SELECTOROF(handler)==0xf000) {
+    /* if so, call it directly */
+    INT_RealModeInterrupt(OFFSETOF(handler)/4, context);
+  }
+  /* the interrupt is hooked, simulate interrupt in DOS space */
+  else {
     WORD*stack= PTR_REAL_TO_LIN( context->SegSs, context->Esp );
     WORD flag=LOWORD(context->EFlags);
 
@@ -161,6 +163,7 @@ static void DOSVM_SimulateInt( int vect, CONTEXT86 *context )
     context->Eip=OFFSETOF(handler);
     IF_CLR(context);
   }
+  return 0;
 }
 
 #define SHOULD_PEND(x) \
@@ -316,7 +319,7 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
   case VM86_INTx:
    if (TRACE_ON(relay))
     DPRINTF("Call DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
-   ret=DOSVM_Int(VM86_ARG(fn),&context);
+   ret=DOSVM_SimulateInt(VM86_ARG(fn),&context);
    if (TRACE_ON(relay))
     DPRINTF("Ret  DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
    break;
@@ -561,7 +564,7 @@ void DOSVM_SetTimer( unsigned ticks )
   if (MZ_Current()) {
     /* the PC clocks ticks at 1193180 Hz */
     tim.tv_sec=0;
-    tim.tv_usec=((unsigned long long)ticks*1000000)/1193180;
+    tim.tv_usec=MulDiv(ticks,1000000,1193180);
     /* sanity check */
     if (!tim.tv_usec) tim.tv_usec=1;
 
@@ -594,7 +597,7 @@ unsigned DOSVM_GetTimer( void )
       ERR_(module)("dosmod sync lost, errno=%d\n",errno);
       return 0;
     }
-    return ((unsigned long long)tim.tv_usec*1193180)/1000000;
+    return MulDiv(tim.tv_usec,1193180,1000000);
   }
   return 0;
 }
