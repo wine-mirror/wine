@@ -48,7 +48,6 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
 #include "ts_xlib.h"

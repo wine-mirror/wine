@@ -4,7 +4,6 @@
  * Copyright 1997 Marcus Meissner
  */
 
-#include <stdio.h>
 #include "thread.h"
 #include "winerror.h"
 #include "heap.h"
@@ -32,8 +31,53 @@ VOID WINAPI GetpWin16Lock(CRITICAL_SECTION **lock)
 }
 
 /***********************************************
+ *           _ConfirmWin16Lock    (KERNEL32.96)
+ */
+DWORD _ConfirmWin16Lock(void)
+{
+    FIXME(win32, "()\n");
+    return 1;
+}
+
+/***********************************************
+ *           _EnterSysLevel    (KERNEL32.97)
+ */
+VOID _EnterSysLevel(CRITICAL_SECTION *lock)
+{
+    FIXME(win32, "(%p)\n", lock);
+}
+
+/***********************************************
+ *           _EnterSysLevel    (KERNEL32.98)
+ */
+VOID _LeaveSysLevel(CRITICAL_SECTION *lock)
+{
+    FIXME(win32, "(%p)\n", lock);
+}
+
+/***********************************************
+ *           ReleaseThunkLock    (KERNEL32.48)
+ */
+VOID ReleaseThunkLock(DWORD *mutex_count)
+{
+    _LeaveSysLevel(&Win16Mutex);
+
+    *mutex_count = (DWORD) NtCurrentTeb()->mutex_count;
+    NtCurrentTeb()->mutex_count = 0xFFFF;
+}
+
+/***********************************************
+ *           RestoreThunkLock    (KERNEL32.49)
+ */
+VOID RestoreThunkLock(DWORD mutex_count)
+{
+    NtCurrentTeb()->mutex_count = (WORD)mutex_count;
+
+    _EnterSysLevel(&Win16Mutex);
+}
+
+/***********************************************
  *           GetPK16SysVar    (KERNEL32.92)
- * Return the infamous Win16Mutex.
  */
 LPVOID WINAPI GetPK16SysVar(void)
 {
@@ -65,7 +109,7 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 	TDB	*pTask;
 
 	action+=56;
-	fprintf(stderr,"KERNEL32_18(%ld,%ld+0x38)\n",processid,action);
+	TRACE(win32,"(%ld,%ld+0x38)\n",processid,action);
 	if (!process || action>56)
 		return 0;
 	switch (action) {
@@ -121,7 +165,7 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 	case 56:/* unexplored */
 		return 0;
 	default:
-		fprintf(stderr,"_KERNEL32_18:unknown offset (%ld)\n",action);
+		WARN(win32,"Unknown offset (%ld)\n",action);
 		return 0;
 	}
 	/* shouldn't come here */
@@ -134,17 +178,17 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
  */
 DWORD WINAPI GetWin16DOSEnv()
 {
-	fprintf(stderr,"GetWin16DOSEnv(), STUB returning 0\n");
+	FIXME(dosmem,"stub, returning 0\n");
 	return 0;
 }
 
 BOOL32 WINAPI _KERNEL32_100(HANDLE32 threadid,DWORD exitcode,DWORD x) {
-	fprintf(stderr,"KERNEL32_100(%d,%ld,0x%08lx),stub\n",threadid,exitcode,x);
+	FIXME(thread,"(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 
 DWORD WINAPI _KERNEL32_99(DWORD x) {
-	fprintf(stderr,"KERNEL32_99(0x%08lx),stub\n",x);
+	FIXME(win32,"(0x%08lx): stub\n",x);
 	return 1;
 }
 

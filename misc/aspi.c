@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -310,7 +309,7 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
     WARN(aspi, "Not enough bytes written to scsi device bytes=%d .. %d\n", in_len, status);
     if (status < 0) {
 	if (myerror == ENOMEM) {
-	    fprintf(stderr, "ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
+	    MSG("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
 	}
 	WARN(aspi, "errno: = %d\n", myerror);
     }

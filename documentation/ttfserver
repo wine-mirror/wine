@@ -1,0 +1,50 @@
+1. Get freetype-1.0.full.tar.gz 
+2. Read docus, unpack, configure and install
+3. Test the library, e.g. "ftview 20 /dosc/win95/fonts/times "
+4. Get xfsft-beta1e.linux-i586
+5. Install it and start it when booting, e.g. in an rc-script. 
+	The manpage for xfs applies.
+6. Follow the hints given by williamc@dai.ed.ac.uk
+==========
+I got xfsft from http://www.dcs.ed.ac.uk/home/jec/progindex.html.
+I have it running all the time.  Here is /usr/X11R6/lib/X11/fs/config:
+clone-self = on
+use-syslog = off
+catalogue = /c/windows/fonts
+error-file = /usr/X11R6/lib/X11/fs/fs-errors
+default-point-size = 120
+default-resolutions = 75,75,100,100
+Obviously /c/windows/fonts is where my Windows fonts on my
+Win95 C: drive live; could be e.g. /mnt/dosC/windows/system
+for Win31.
+In /c/windows/fonts/fonts.scale I have
+14
+arial.ttf -monotype-arial-medium-r-normal--0-0-0-0-p-0-iso8859-1
+arialbd.ttf -monotype-arial-bold-r-normal--0-0-0-0-p-0-iso8859-1
+arialbi.ttf -monotype-arial-bold-o-normal--0-0-0-0-p-0-iso8859-1
+ariali.ttf -monotype-arial-medium-o-normal--0-0-0-0-p-0-iso8859-1
+cour.ttf -monotype-courier-medium-r-normal--0-0-0-0-p-0-iso8859-1
+courbd.ttf -monotype-courier-bold-r-normal--0-0-0-0-p-0-iso8859-1
+courbi.ttf -monotype-courier-bold-o-normal--0-0-0-0-p-0-iso8859-1
+couri.ttf -monotype-courier-medium-o-normal--0-0-0-0-p-0-iso8859-1
+times.ttf -monotype-times-medium-r-normal--0-0-0-0-p-0-iso8859-1
+timesbd.ttf -monotype-times-bold-r-normal--0-0-0-0-p-0-iso8859-1
+timesbi.ttf -monotype-times-bold-i-normal--0-0-0-0-p-0-iso8859-1
+timesi.ttf -monotype-times-medium-i-normal--0-0-0-0-p-0-iso8859-1
+symbol.ttf -monotype-symbol-medium-r-normal--0-0-0-0-p-0-microsoft-symbol
+wingding.ttf -microsoft-wingdings-medium-r-normal--0-0-0-0-p-0-microsoft-symbol
+                                                             
+In /c/windows/fonts/fonts.dir I have exactly the same.
+
+In /usr/X11R6/lib/X11/XF86Config I have
+FontPath "tcp/localhost:7100"
+in front of the other FontPath lines.
+That's it!  As an interesting by-product of course, all those web
+pages which specify Arial come up in Arial in Netscape ...
+=======
+7. Shut down X and restart ( and debug errors you did while setting
+   up everything.
+
+8. Test with e.g "xlsfont |grep arial"
+
+Hope this helps

@@ -13,7 +13,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <sys/sem.h>
-#include <stdio.h>
 #include <errno.h>
 #include "debug.h"
 #include "shm_semaph.h"
@@ -42,8 +41,8 @@ void shm_read_wait(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
   
   if (ret<0) 
-     fprintf(stderr,"failed semaphore lock for read. semid=%d,errno=%d\n",
-	     semid, errno);
+     WARN(sem,"(semid=%d,errno=%d): Failed semaphore lock for read\n",
+         semid, errno);
 }
 void shm_write_wait(shm_sem semid)
 {
@@ -68,7 +67,7 @@ void shm_write_wait(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
 
   if (ret<0) 			   /* test for the error */
-     fprintf(stderr,"failed semaphore lock for write. semid=%d,errno=%d\n",
+     WARN(sem,"(semid=%d,errno=%d): Failed semaphore lock for write\n",
 	     semid, errno);
 }
 void shm_write_signal(shm_sem semid)
@@ -90,7 +89,7 @@ void shm_write_signal(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
 
   if (ret<0) 			   /* test for the error */
-     fprintf(stderr,"failed semaphore unlock for write. semid=%d,errno=%d\n",
+     WARN(sem,"(semid=%d,errno=%d): Failed semaphore unlock for write\n",
 	     semid, errno);
 }
 
@@ -109,7 +108,7 @@ void shm_read_signal(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
 
   if (ret<0) 			   /* test for the error */
-     fprintf(stderr,"failed semaphore unlock for read. semid=%d,errno=%d\n",
+     WARN(sem,"(semid=%d,errno=%d): Failed semaphore unlock for read\n",
 	     semid, errno);
 }
 

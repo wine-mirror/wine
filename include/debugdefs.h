@@ -4,9 +4,12 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 113
+#define DEBUG_CHANNEL_COUNT 116
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -147,6 +150,7 @@ const char* debug_ch_name[] = {
 "ddraw",
 "debug",
 "dialog",
+"dinput",
 "dll",
 "dosfs",
 "dosmem",
@@ -194,6 +198,7 @@ const char* debug_ch_name[] = {
 "ole",
 "palette",
 "print",
+"process",
 "profile",
 "progress",
 "prop",
@@ -211,15 +216,16 @@ const char* debug_ch_name[] = {
 "shm",
 "sound",
 "static",
-"status",
 "stress",
 "string",
+"syscolor",
 "system",
 "task",
 "text",
 "thread",
 "thunk",
 "timer",
+"toolbar",
 "toolhelp",
 "tweak",
 "uitools",

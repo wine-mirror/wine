@@ -4,15 +4,20 @@
  *  Copyright 1998 Eric Kohl
  *
  *  TODO:
- *   - Bitmap support (partially).
  *   - Imagelist support (partially).
- *   - Hottrack support (partially).
- *   - Control specific cursors (over dividers).
+ *   - Callback items.
  *   - Owner draw support.
  *   - Order list support.
+ *   - Control specific cursors (over dividers).
+ *   - Hottrack support (partially).
  *   - Custom draw support (including Notifications).
  *   - Drag and Drop support (including Notifications).
  *   - Unicode support.
+ *
+ *  FIXME:
+ *   - Replace DrawText32A by DrawTextEx32A(...|DT_ENDELLIPSIS) in
+ *     HEADER_DrawItem.
+ *   - Little flaw when drawing a bitmap on the right side of the text.
  */
 
 #include "windows.h"
@@ -28,10 +33,6 @@
 
 #define VERT_BORDER     4
 #define DIVIDER_WIDTH  10
-
-#define UNKNOWN_PARAM(msg, wParam, lParam) WARN(header, \
-        "Unknown parameter(s) for message " #msg     \
-	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
 
 #define HEADER_GetInfoPtr(wndPtr) ((HEADER_INFO *)wndPtr->wExtra[0])
 
@@ -76,6 +77,8 @@ HEADER_DrawItem (WND *wndPtr, HDC32 hdc, HEADER_ITEM *phdi, BOOL32 bHotTrack)
 	    HDC32    hdcBitmap;
 	    INT32    yD, yS, cx, cy, rx, ry;
 
+	    GetObject32A (phdi->hbm, sizeof(BITMAP32), (LPVOID)&bmp);
+
 	    ry = r.bottom - r.top;
 	    rx = r.right - r.left;
 
@@ -98,7 +101,6 @@ HEADER_DrawItem (WND *wndPtr, HDC32 hdc, HEADER_ITEM *phdi, BOOL32 bHotTrack)
 		cx = rx - 6;
 	    }
 
-	    GetObject32A (phdi->hbm, sizeof(BITMAP32), (LPVOID)&bmp);
 	    hdcBitmap = CreateCompatibleDC32 (hdc);
 	    SelectObject32 (hdcBitmap, phdi->hbm);
 	    BitBlt32 (hdc, r.left + 3, yD, cx, cy, hdcBitmap, 0, yS, SRCCOPY);
@@ -107,24 +109,63 @@ HEADER_DrawItem (WND *wndPtr, HDC32 hdc, HEADER_ITEM *phdi, BOOL32 bHotTrack)
 	    r.left += (bmp.bmWidth + 3);
 	}
 
-/*
+
 	if ((phdi->fmt & HDF_BITMAP_ON_RIGHT) && (phdi->hbm)) {
 	    BITMAP32 bmp;
 	    HDC32    hdcBitmap;
+	    INT32    xD, yD, yS, cx, cy, rx, ry, tx;
+	    RECT32   textRect;
 
 	    GetObject32A (phdi->hbm, sizeof(BITMAP32), (LPVOID)&bmp);
 
+	    textRect = r;
+            DrawText32A(hdc, phdi->pszText, lstrlen32A(phdi->pszText),
+	   	  &textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
+	    tx = textRect.right - textRect.left;
+	    ry = r.bottom - r.top;
+	    rx = r.right - r.left;
 
+	    if (ry >= bmp.bmHeight) {
+		cy = bmp.bmHeight;
+		yD = r.top + (ry - bmp.bmHeight) / 2;
+		yS = 0;
+	    }
+	    else {
+		cy = ry;
+		yD = r.top;
+		yS = (bmp.bmHeight - ry) / 2;
+
+	    }
+
+	    if (r.left + tx + bmp.bmWidth + 9 <= r.right) {
+		cx = bmp.bmWidth;
+		xD = r.left + tx + 6;
+	    }
+	    else {
+		if (rx >= bmp.bmWidth + 6) {
+		    cx = bmp.bmWidth;
+		    xD = r.right - bmp.bmWidth - 3;
+		    r.right = xD - 3;
+		}
+		else {
+		    cx = rx - 3;
+		    xD = r.left;
+		    r.right = r.left;
+		}
+	    }
+
+	    hdcBitmap = CreateCompatibleDC32 (hdc);
+	    SelectObject32 (hdcBitmap, phdi->hbm);
+	    BitBlt32 (hdc, xD, yD, cx, cy, hdcBitmap, 0, yS, SRCCOPY);
+	    DeleteDC32 (hdcBitmap);
 	}
-*/
 
-/*
 	if (phdi->fmt & HDF_IMAGE) {
+	    HEADER_INFO *infoPtr = HEADER_GetInfoPtr(wndPtr);
 
-	    ImageList_Draw (....);
 
+//	    ImageList_Draw (infoPtr->himl, phdi->iImage,...);
 	}
-*/
 
         if ((phdi->fmt & HDF_STRING) && (phdi->pszText)) {
             oldBkMode = SetBkMode32(hdc, TRANSPARENT);

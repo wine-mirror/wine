@@ -58,7 +58,7 @@ typedef struct tagSHFILEINFO32W {
 	WCHAR	szTypeName[80];		/* type name */
 } SHFILEINFO32W;
 
-DECL_WINELIB_TYPE_AW(SHFILEINFO);
+DECL_WINELIB_TYPE_AW(SHFILEINFO)
 
 typedef struct _AppBarData {
 	DWORD	cbSize;

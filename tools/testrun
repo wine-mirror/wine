@@ -1,0 +1,274 @@
+#!/usr/bin/perl
+# Copyright 1996-1998 Marcus Meissner
+# IPC remove code Copyright 1995 Michael Veksler
+#
+# This perl script automatically test runs ALL windows .exe and .scr binaries
+# it finds (and can access) on your computer. It creates a subdirectory called
+# runs/ and stores the output there. It also does (unique) diffs between runs.
+#
+# It only reruns the test if ChangeLog or the executeable is NEWER than the
+# run file. (If you want to rerun everything inbetween releases, touch
+# ChangeLog.)
+
+#
+# BEGIN OF USER CONFIGURATION
+#
+# Path to WINE executeable. If not specified, 'wine' is searched in the path.
+#
+$wine = 'wine';
+#
+# WINE options. -managed when using a windowmanager is probably not good in
+# automatic testruns.
+#
+$wineoptions='';
+#
+# Path to WINE ChangeLog. Used as timestamp for new releases...
+#
+$changelog = '/home/marcus/wine/ChangeLog';
+# 
+# How long before automatically killing all subprocesses
+# 30 is good for automatic testing, 300 or more for interactive testing.
+#
+$waittime = 30;
+#
+#diff command
+#
+$diff='diff -u';
+#
+# truncate at how-much-lines
+#
+$trunclines=200;
+#
+$<||die "Running this script under UID 0 is a great security risk (and risk for existing windows installations on mounted DOS/W95 partitions). If you really want to, comment out this line.\n";
+#
+# END OF USER CONFIGURATION
+#
+
+if (! -d "runs") { die "no subdirectory runs/ found in $cwd. Please create one first!\n";}
+
+# look for the exact path to wine executeable in case we need it for a 
+# replacement changelog.
+if (! ($wine =~ /\//)) { # no path specified. Look it up.
+	@paths = split(/:/,$ENV{'PATH'});
+	foreach $path (@paths) {
+		if (-e "$path/$wine" && -x "$path/$wine") {
+			$wine = "$path/$wine";
+			last;
+		}
+	}
+}
+
+# if we don't have a changelog use the modification date of the WINE executeable
+if (! -e $changelog) {
+	$changelog = $wine;
+}
+
+# sanity check so we just fill runs/ with errors.
+(-x $wine)  || die "no $wine executable found!\n";
+# dito. will print usage
+system("$wine -h >/dev/null")||die "wine call failed:$!\n";
+
+print "Using $wine as WINE executeable.\n";
+print "Using $changelog as testrun timereference.\n";
+
+chomp($cwd = `pwd`);
+
+# Find out all present semaphores so we don't remove them later.
+$IPC_RMID=0;
+$USER=$ENV{'USER'};
+open(IPCS,"ipcs|");
+while(<IPCS>) {
+    split;
+    # try to find out the IPC-ID, assume it is the first number.
+    foreach (@_) {
+	$_ ne int($_) && next;	# not a decimal number
+	$num=$_;
+	last;
+    }
+    if (/sem/i .. /^\s*$/ ) {
+	index($_,$USER)>=0 || next;
+	$sem_used{$num}=1;
+	print "found $num\n";
+    }
+}
+close(IPCS);
+
+sub kill_subprocesses {
+	local($killedalready,%parentof,%kids,$changed,%cmdline);
+
+	# FIXME: Linux ps dependend...
+	#
+	open(PSAUX,"ps --format pid,ppid,comm|");
+	# lookup all processes, remember their parents and cmdlines.
+	%parentof=();
+	while (<PSAUX>) {
+		if (/\s*(\d*)\s*(\d*)\s*(\S*)/) {
+			$parentof{$1}=$2;
+			$cmdline{$1}=$3;
+		}
+	}
+	close(PSAUX);
+
+	# find out all kids of this perlscript
+	%kids = ();
+	$kids{$$} = 1;
+	$changed = 1;
+	while ($changed) {
+		$changed = 0;
+		foreach (keys %parentof) {
+			next if ($kids{$_});
+			if ($kids{$parentof{$_}}) {
+				$changed = 1;
+				$kids{$_}=1;
+			}
+		}
+	}
+	# .. but do not consider us for killing
+	delete $kids{$$};
+	# remove all processes killed in the meantime from %killedalready.
+	foreach $pid (keys %killedalready) {
+		delete $killedalready{$pid} if (!$kids{$pid} );
+	}
+	# kill all subprocesses called 'wine'. Do not kill find, diff, sh
+	# and friends, which are also subprocesses of us.
+	foreach (keys %kids) {
+		next unless ($cmdline{$_} =~ /wine/);
+		# if we have already killed it using -TERM, use -KILL
+		if ($killedalready{$_}) {
+			kill(9,$_);	# FIXME: use correct number?
+		} else {
+			kill(15,$_);	# FIXME: use correct number?
+		}
+		$killedalready{$_}=1;
+	}
+	alarm($waittime);		# wait again...
+};
+
+# borrowed from tools/ipcl. See comments there.
+# killing wine subprocesses unluckily leaves all of their IPC stuff lying
+# around. We have to wipe it or we run out of it.
+sub cleanup_wine_ipc {
+	open(IPCS,"ipcs|");
+	while(<IPCS>) {
+	    split;
+	    # try to find out the IPC-ID, assume it is the first number.
+	    foreach (@_) {
+		$_ ne int($_) && next;	# not a decimal number
+		$num=$_;
+		last;
+	    }
+	    # was there before start of this script, skip it.
+	    #
+	    # FIXME: this doesn't work for programs started during the testrun.
+	    #
+	    if (/sem/i .. /^\s*$/ ) {
+		index($_,$USER)>=0 || next;
+		push(@sem,$num);
+	    }
+	}
+	foreach (@sem) {
+	    $sem_used{$_} && next;
+	    semctl($_, 0, $IPC_RMID,0);
+	}
+	close(IPCS);
+}
+
+# kill all subwineprocesses for automatic runs.
+sub alarmhandler {
+	print "timer triggered.\n";
+	&kill_subprocesses;
+}
+
+$SIG{'ALRM'} = "alarmhandler";
+
+# NOTE: following find will also cross NFS mounts, so be sure to have nothing
+# mounted that's not on campus or add relevant ! -fstype nfs or similar.
+#
+
+open(FIND,"find / -type f  \\( -name \"*.EXE\" -o -name \"*.exe\" -o -name \"*.scr\" -o -name \"*.SCR\" \\) -print|");
+while ($exe=<FIND>) {
+	chop($exe);
+
+	# This could change during a testrun (by doing 'make' for instance)
+	# FIXME: doesn't handle missing libwine.so during compile...
+	(-x $wine)  || die "no $wine executable found!\n";
+
+	# Skip all mssetup, acmsetup , installshield whatever exes. 
+	# they seem to work, mostly and starting them is just annoying.
+	next if ($exe =~ /acmsetup/);
+	next if ($exe =~ /unwise/);
+	next if ($exe =~ /testexit/);
+	next if ($exe =~ /_msset/);
+	next if ($exe =~ /isun/i);
+	next if ($exe =~ /st4u/);
+	next if ($exe =~ /st5u/);
+	next if ($exe =~ /_mstest/);
+	next if ($exe =~ /_isdel/);
+	next if ($exe =~ /ms-setup/);
+	next if ($exe =~ /~mss/);
+	next if ($exe =~ /unin/);
+
+	$runfile = $exe;
+	$runfile =~ s/[\/ ]/_/g;
+	$runfile =~ s/\.exe$//g;
+	$runfile =~ s/\.scr$//ig;
+	$flag=0;
+	#
+	# Check if changelog is newer, if not, continue
+	#
+	if (	-e "runs/${runfile}.out" && 
+		(-M $changelog > -M "runs/${runfile}.out") && 
+		(-M $exe > -M "runs/${runfile}.out")
+	) {
+		#print "skipping $exe, already done.\n";
+		next;
+	}
+
+	# check runfile if the exe is a DOS executeable or 
+	# of different architecture (win32)
+	if (open(RUNFILE,"runs/$runfile.out")) {
+		while ($xrun=<RUNFILE>) {
+			chop($xrun);
+			if ($xrun=~ /LoadModule:.*error=11$/) {
+				$flag=1;
+				last;
+			}
+			if ($xrun=~ /LoadModule:.*error=21$/) {
+				$flag=2;
+				last;
+			}
+		}
+		close(RUNFILE);
+		if ($flag==1) {
+			#print "skipping $exe, seems to be a DOS executable.\n";
+			next;
+		}
+		if ($flag==2) {
+			#print "skipping $exe, seems to be a non i386 executable.\n";
+			next;
+		}
+	}
+	# now testrun...
+	print "$exe:\n";
+	$dir = $exe;
+	$dir =~ s/^(.*)\/[^\/]*$/$1/; #cut of the basename.
+
+	alarm($waittime);
+
+	chdir($dir)||die "$dir:$!";
+	if ($exe =~ /\.scr/i) {
+		system("echo quit|$wine $wineoptions \"$exe /s\" >$cwd/${runfile}.out 2>&1");
+	} else {
+		system("echo quit|$wine $wineoptions \"$exe\" >$cwd/${runfile}.out 2>&1");
+	}
+	alarm(1000);# so it doesn't trigger in the diff, kill or find.
+
+	system("touch $cwd/runs/${runfile}.out");
+	system("$diff $cwd/runs/${runfile}.out $cwd/${runfile}.out");
+	system("head -$trunclines $cwd/${runfile}.out >$cwd/runs/${runfile}.out");
+	unlink("$cwd/${runfile}.out");
+	&kill_subprocesses;
+	&cleanup_wine_ipc;
+	chdir($cwd);
+}
+close(FIND);

@@ -116,18 +116,29 @@
 #define NORM_IGNORENONSPACE			2
 #define NORM_IGNORESYMBOLS			4
 #define NORM_STRINGSORT				0x1000
+#define NORM_IGNOREKANATYPE                     0x00010000
+#define NORM_IGNOREWIDTH                        0x00020000
 
-#define CP_ACP						0
-#define CP_OEMCP					1
+#define CP_ACP					0
+#define CP_OEMCP				1
 
 #define WC_DEFAULTCHECK				0x00000100
 #define WC_COMPOSITECHECK			0x00000200
 #define WC_DISCARDNS				0x00000010
-#define WC_SEPCHARS					0x00000020
+#define WC_SEPCHARS				0x00000020
 #define WC_DEFAULTCHAR				0x00000040
 
-#define MAKELCID(l, s)    (MAKELONG(l, s))
-#define MAKELANGID(p, s)  ((((WORD)(s))<<10) | (WORD)(p))
+#define MAKELCID(l, s)		(MAKELONG(l, s))
+
+#define MAKELANGID(p, s)	((((WORD)(s))<<10) | (WORD)(p))
+#define PRIMARYLANGID(l)	((WORD)(l) & 0x3ff)
+#define SUBLANGID(l)		((WORD)(l) >> 10)
+
+#define LANG_SYSTEM_DEFAULT	(MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT))
+#define LANG_USER_DEFAULT	(MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT))
+#define LOCALE_SYSTEM_DEFAULT	(MAKELCID(LANG_SYSTEM_DEFAULT, SORT_DEFAULT))
+#define LOCALE_USER_DEFAULT	(MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT)) 
+
 
 /* Language IDs (were in winnt.h,  for some reason) */
 
@@ -178,23 +189,94 @@
 #define LANG_TURKISH                     0x1f
 #define LANG_UKRAINIAN                   0x22
 
-/* "default"ish values */
+/* Sublanguage definitions */
+#define SUBLANG_NEUTRAL                  0x00    /* language neutral */
+#define SUBLANG_DEFAULT                  0x01    /* user default */
+#define SUBLANG_SYS_DEFAULT              0x02    /* system default */
 
-#define SORT_DEFAULT      0
-#define SUBLANG_DEFAULT   1
-#define SUBLANG_SYS_DEFAULT 1 /* FIXME: I don't know if this is right */
+#define SUBLANG_ARABIC                   0x01
+#define SUBLANG_ARABIC_IRAQ              0x02
+#define SUBLANG_ARABIC_EGYPT             0x03
+#define SUBLANG_ARABIC_LIBYA             0x04
+#define SUBLANG_ARABIC_ALGERIA           0x05
+#define SUBLANG_ARABIC_MOROCCO           0x06
+#define SUBLANG_ARABIC_TUNISIA           0x07
+#define SUBLANG_ARABIC_OMAN              0x08
+#define SUBLANG_ARABIC_YEMEN             0x09
+#define SUBLANG_ARABIC_SYRIA             0x10
+#define SUBLANG_ARABIC_JORDAN            0x11
+#define SUBLANG_ARABIC_LEBANON           0x12
+#define SUBLANG_ARABIC_KUWAIT            0x13
+#define SUBLANG_ARABIC_UAE               0x14
+#define SUBLANG_ARABIC_BAHRAIN           0x15
+#define SUBLANG_ARABIC_QATAR             0x16
+#define SUBLANG_CHINESE_TRADITIONAL      0x01
+#define SUBLANG_CHINESE_SIMPLIFIED       0x02
+#define SUBLANG_CHINESE_HONGKONG         0x03
+#define SUBLANG_CHINESE_SINGAPORE        0x04
+#define SUBLANG_DUTCH                    0x01
+#define SUBLANG_DUTCH_BELGIAN            0x02
+#define SUBLANG_ENGLISH_US               0x01
+#define SUBLANG_ENGLISH_UK               0x02
+#define SUBLANG_ENGLISH_AUS              0x03
+#define SUBLANG_ENGLISH_CAN              0x04
+#define SUBLANG_ENGLISH_NZ               0x05
+#define SUBLANG_ENGLISH_EIRE             0x06
+#define SUBLANG_ENGLISH_SAFRICA          0x07
+#define SUBLANG_ENGLISH_JAMAICA          0x08
+#define SUBLANG_ENGLISH_CARRIBEAN        0x09
+#define SUBLANG_FRENCH                   0x01
+#define SUBLANG_FRENCH_BELGIAN           0x02
+#define SUBLANG_FRENCH_CANADIAN          0x03
+#define SUBLANG_FRENCH_SWISS             0x04
+#define SUBLANG_FRENCH_LUXEMBOURG        0x05
+#define SUBLANG_GERMAN                   0x01
+#define SUBLANG_GERMAN_SWISS             0x02
+#define SUBLANG_GERMAN_AUSTRIAN          0x03
+#define SUBLANG_GERMAN_LUXEMBOURG        0x04
+#define SUBLANG_GERMAN_LIECHTENSTEIN     0x05
+#define SUBLANG_ITALIAN                  0x01
+#define SUBLANG_ITALIAN_SWISS            0x02
+#define SUBLANG_KOREAN                   0x01
+#define SUBLANG_KOREAN_JOHAB             0x02
+#define SUBLANG_NORWEGIAN_BOKMAL         0x01
+#define SUBLANG_NORWEGIAN_NYNORSK        0x02
+#define SUBLANG_PORTUGUESE               0x02
+#define SUBLANG_PORTUGUESE_BRAZILIAN     0x01
+#define SUBLANG_SPANISH                  0x01
+#define SUBLANG_SPANISH_MEXICAN          0x02
+#define SUBLANG_SPANISH_MODERN           0x03
+#define SUBLANG_SPANISH_GUATEMALA        0x04
+#define SUBLANG_SPANISH_COSTARICA        0x05
+#define SUBLANG_SPANISH_PANAMA           0x06
+#define SUBLANG_SPANISH_DOMINICAN        0x07
+#define SUBLANG_SPANISH_VENEZUELA        0x08
+#define SUBLANG_SPANISH_COLOMBIA         0x09
+#define SUBLANG_SPANISH_PERU             0x10
+#define SUBLANG_SPANISH_ARGENTINA        0x11
+#define SUBLANG_SPANISH_ECUADOR          0x12
+#define SUBLANG_SPANISH_CHILE            0x13
+#define SUBLANG_SPANISH_URUGUAY          0x14
+#define SUBLANG_SPANISH_PARAGUAY         0x15
+#define SUBLANG_SPANISH_BOLIVIA          0x16
 
+/* Sort definitions */
+#define SORT_DEFAULT                     0x0
+#define SORT_JAPANESE_XJIS               0x0
+#define SORT_JAPANESE_UNICODE            0x1
+#define SORT_CHINESE_BIG5                0x0
+#define SORT_CHINESE_UNICODE             0x1
+#define SORT_KOREAN_KSC                  0x0
+#define SORT_KOREAN_UNICODE              0x1
 
-#define LANG_SYSTEM_DEFAULT   (MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT))
-#define LANG_USER_DEFAULT     (MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT))
-#define LOCALE_SYSTEM_DEFAULT (MAKELCID(LANG_SYSTEM_DEFAULT, SORT_DEFAULT))
-#define LOCALE_USER_DEFAULT   (MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT)) 
 
 /* Locale Dependent Mapping Flags */
 #define LCMAP_LOWERCASE	0x00000100	/* lower case letters */
 #define LCMAP_UPPERCASE	0x00000200	/* upper case letters */
 #define LCMAP_SORTKEY	0x00000400	/* WC sort key (normalize) */
 #define LCMAP_BYTEREV	0x00000800	/* byte reversal */
+
+#define SORT_STRINGSORT 0x00001000      /* take punctuation into account */
 
 #define LCMAP_HIRAGANA	0x00100000	/* map katakana to hiragana */
 #define LCMAP_KATAKANA	0x00200000	/* map hiragana to katakana */
@@ -216,5 +298,21 @@
 /* use this in a WineLib program if you really want all types */
 #define LOCALE_TIMEDATEBOTH    0x00000300  /* full set */
 
+/* Prototypes for Unicode case conversion routines */
+WCHAR towupper(WCHAR);
+WCHAR towlower(WCHAR);
+
+/* Definitions for IsTextUnicode() function */
+#define IS_TEXT_UNICODE_ASCII16		0x0001
+#define IS_TEXT_UNICODE_SIGNATURE	0x0008
+#define IS_TEXT_UNICODE_REVERSE_ASCII16	0x0010
+#define IS_TEXT_UNICODE_REVERSE_SIGNATURE 0x0080
+#define IS_TEXT_UNICODE_ILLEGAL_CHARS	0x0100
+#define IS_TEXT_UNICODE_ODD_LENGTH	0x0200
+
+/* Tests that we currently implement */
+#define ITU_IMPLEMENTED_TESTS \
+	IS_TEXT_UNICODE_SIGNATURE| \
+	IS_TEXT_UNICODE_ODD_LENGTH
 
 #endif  /* __WINE_WINNLS_H */

@@ -1,7 +1,7 @@
 /*
  * Program Manager
  *
- * Copyright 1997 Henrik Olsen
+ * Copyright 1997 Henrik Olsen <henrik@iaeste.dk>
  */
 
 #define LANGUAGE_ID                  Da

@@ -1,0 +1,41 @@
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+
+PROGRAMS = wrc@PROGEXT@
+MODULE   = none
+
+C_SRCS = \
+	dumpres.c \
+	genres.c \
+	newstruc.c \
+	preproc.c \
+	readres.c \
+	utils.c \
+	wrc.c \
+	writeres.c
+
+EXTRA_SRCS = parser.y parser.l
+EXTRA_OBJS = y.tab.o lex.yy.o
+
+all: $(PROGRAMS)
+
+depend:: y.tab.h
+
+@MAKE_RULES@
+
+wrc@PROGEXT@: $(OBJS)
+	$(CC) $(CFLAGS) -o wrc@PROGEXT@ $(OBJS) $(LEXLIB)
+
+y.tab.c y.tab.h: parser.y
+	$(YACC) -d -t $(SRCDIR)/parser.y
+
+lex.yy.c: parser.l
+	$(LEX) -8 $(SRCDIR)/parser.l
+
+clean::
+	$(RM) y.tab.c y.tab.h lex.yy.c
+
+### Dependencies:

@@ -37,8 +37,6 @@ typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP,
 extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
 extern MESSAGEQUEUE *pActiveQueue;
 
-extern void joySendMessages(void);
-
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
 static UINT32 doubleClickSpeed = 452;

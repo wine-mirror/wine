@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "winbase.h"
 #include "class.h"
 #include "module.h"
 #include "options.h"
@@ -565,20 +566,20 @@ void DebugBreak( CONTEXT *regs )
 
 void wine_debug( int signal, SIGCONTEXT *regs )
 {
-    DEBUG_SetSigContext( regs );
 #if 0
-    DWORD *stack = (DWORD *)ESP_reg(&DEBUG_context);
+    DWORD *stack = (DWORD *)ESP_sig(regs);
     *(--stack) = 0;
     *(--stack) = 0;
     *(--stack) = EH_NONCONTINUABLE;
     *(--stack) = EXCEPTION_ACCESS_VIOLATION;
-    *(--stack) = EIP_reg(&DEBUG_context);
-    ESP_reg(&DEBUG_context) = (DWORD)stack;
-    EIP_reg(&DEBUG_context) = GetProcAddress32( GetModuleHandle("KERNEL32"),
-                                                "RaiseException" );
-#endif
+    *(--stack) = EIP_sig(regs);
+    ESP_sig(regs) = (DWORD)stack;
+    EIP_sig(regs) = (DWORD)RaiseException;
+#else
+    DEBUG_SetSigContext( regs );
     DEBUG_Main( signal );
     DEBUG_GetSigContext( regs );
+#endif
 }
 
 int yyerror(char * s)
@@ -586,4 +587,3 @@ int yyerror(char * s)
 	fprintf(stderr,"%s\n", s);
         return 0;
 }
-

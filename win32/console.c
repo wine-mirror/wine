@@ -6,7 +6,6 @@
  * Copyright 1998 John Richardson
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
@@ -1126,3 +1125,17 @@ BOOL32 WINAPI FillConsoleOutputAttribute( HANDLE32 hConsoleOutput,
     return TRUE;
 }
 
+/******************************************************************************
+ * ReadConsoleOutputCharacter32A [KERNEL32.573]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL32 WINAPI ReadConsoleOutputCharacter32A(HANDLE32 hConsoleOutput, 
+	      LPSTR lpstr, DWORD dword, COORD coord, LPDWORD lpdword)
+{
+    FIXME(console, "(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,lpstr,
+	  dword,coord.x,coord.y,lpdword);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

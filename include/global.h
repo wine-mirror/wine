@@ -28,6 +28,7 @@ extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,
 extern WORD GlobalHandleToSel( HGLOBAL16 handle );
 
 /* memory/virtual.c */
+extern BOOL32 VIRTUAL_Init( void );
 extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);
 

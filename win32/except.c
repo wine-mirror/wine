@@ -32,7 +32,6 @@
  */
 
 #include <assert.h>
-#include <stdio.h>
 #include "windows.h"
 #include "winerror.h"
 #include "ldt.h"
@@ -40,6 +39,7 @@
 #include "thread.h"
 #include "debug.h"
 #include "except.h"
+#include "stackframe.h"
 
 #define TEB_EXCEPTION_FRAME(pcontext) \
     ((PEXCEPTION_FRAME)((TEB *)GET_SEL_BASE((pcontext)->SegFs))->except)
@@ -49,16 +49,27 @@
  *
  *  This function is undocumented. This is the general idea of 
  *  RtlUnwind, though. Note that error handling is not yet implemented.
+ *
+ * The real prototype is:
+ * void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
+ *                            PEXCEPTION_RECORD pRecord, DWORD returnEax );
  */
-void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
-                       PEXCEPTION_RECORD pRecord, DWORD returnEax,
-                       PCONTEXT pcontext /* Wine additional parameter */ )
-{   
-   EXCEPTION_RECORD record;
-   DWORD            dispatch;
-   int              retval;
-  
-   EAX_reg(pcontext) = returnEax;
+REGS_ENTRYPOINT(RtlUnwind)
+{
+    EXCEPTION_RECORD record;
+    DWORD            dispatch;
+    int              retval;
+    PEXCEPTION_FRAME pEndFrame;
+    PEXCEPTION_RECORD pRecord;
+
+    /* get the arguments from the stack */
+
+    DWORD ret        = STACK32_POP(context);  /* return addr */
+    pEndFrame        = (PEXCEPTION_FRAME)STACK32_POP(context);
+    (void)STACK32_POP(context);  /* unused arg */
+    pRecord          = (PEXCEPTION_RECORD)STACK32_POP(context);
+    EAX_reg(context) = STACK32_POP(context);
+    STACK32_PUSH(context,ret);  /* restore return addr */
    
    /* build an exception record, if we do not have one */
    if(!pRecord)
@@ -66,7 +77,7 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
      record.ExceptionCode    = STATUS_INVALID_DISPOSITION;
      record.ExceptionFlags   = 0;
      record.ExceptionRecord  = NULL;
-     record.ExceptionAddress = (LPVOID)EIP_reg(pcontext); 
+     record.ExceptionAddress = (LPVOID)EIP_reg(context); 
      record.NumberParameters = 0;
      pRecord = &record;
    }
@@ -77,67 +88,68 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
      pRecord->ExceptionFlags|=EH_UNWINDING | EH_EXIT_UNWIND;
   
    /* get chain of exception frames */      
-   while ((TEB_EXCEPTION_FRAME(pcontext) != NULL) &&
-          (TEB_EXCEPTION_FRAME(pcontext) != ((void *)0xffffffff)) &&
-          (TEB_EXCEPTION_FRAME(pcontext) != pEndFrame))
+   while ((TEB_EXCEPTION_FRAME(context) != NULL) &&
+          (TEB_EXCEPTION_FRAME(context) != ((void *)0xffffffff)) &&
+          (TEB_EXCEPTION_FRAME(context) != pEndFrame))
    {
        TRACE(win32, "calling exception handler at 0x%x\n",
-                      (int)TEB_EXCEPTION_FRAME(pcontext)->Handler );
+                      (int)TEB_EXCEPTION_FRAME(context)->Handler );
 
        dispatch=0;       
-       retval = TEB_EXCEPTION_FRAME(pcontext)->Handler( pRecord,
-                                                TEB_EXCEPTION_FRAME(pcontext),
-                                                pcontext, &dispatch);
+       retval = TEB_EXCEPTION_FRAME(context)->Handler( pRecord,
+                                                TEB_EXCEPTION_FRAME(context),
+                                                context, &dispatch);
                                          
        TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
   
        if (	(retval == ExceptionCollidedUnwind) &&
-           	(TEB_EXCEPTION_FRAME(pcontext) != (LPVOID)dispatch)
+           	(TEB_EXCEPTION_FRAME(context) != (LPVOID)dispatch)
        )
-           TEB_EXCEPTION_FRAME(pcontext) = (LPVOID)dispatch;
-       else if (	(TEB_EXCEPTION_FRAME(pcontext) != pEndFrame) &&
-           		(TEB_EXCEPTION_FRAME(pcontext) != TEB_EXCEPTION_FRAME(pcontext)->Prev)
+           TEB_EXCEPTION_FRAME(context) = (LPVOID)dispatch;
+       else if (	(TEB_EXCEPTION_FRAME(context) != pEndFrame) &&
+           		(TEB_EXCEPTION_FRAME(context) != TEB_EXCEPTION_FRAME(context)->Prev)
        )
-           TEB_EXCEPTION_FRAME(pcontext) = TEB_EXCEPTION_FRAME(pcontext)->Prev;
+           TEB_EXCEPTION_FRAME(context) = TEB_EXCEPTION_FRAME(context)->Prev;
        else
           break;  
    }
 }
 
-/* This is the real entry point called by relay debugging code */
-void EXC_RtlUnwind( CONTEXT *context )
-{
-    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
-    DWORD *args = (DWORD *)ESP_reg(context);
-    ESP_reg(context) += 4 * sizeof(DWORD);  /* Pop the arguments */
-    RtlUnwind( (PEXCEPTION_FRAME)args[1], (LPVOID)args[2],
-               (PEXCEPTION_RECORD)args[3], args[4], context );
-}
-
 
 /*******************************************************************
  *         RaiseException  (KERNEL32.418)
+ *
+ * The real prototype is:
+ * void WINAPI EXC_RaiseException(DWORD dwExceptionCode,
+ *                                DWORD dwExceptionFlags,
+ *                                DWORD cArguments,
+ *                                const LPDWORD lpArguments );
  */
-void WINAPI RaiseException(DWORD dwExceptionCode,
-                           DWORD dwExceptionFlags,
-                           DWORD cArguments,
-                           const LPDWORD lpArguments,
-                           PCONTEXT pcontext /* Wine additional parameter */ )
+REGS_ENTRYPOINT(RaiseException)
 {
     PEXCEPTION_FRAME    pframe; 
     EXCEPTION_RECORD    record;
     DWORD               dispatch; /* is this used in raising exceptions ?? */
     int                 retval;
     int                 i;
-    
+
+    /* Get the arguments from the stack */
+
+    DWORD ret                 = STACK32_POP(context);  /* return addr */
+    DWORD dwExceptionCode     = STACK32_POP(context);
+    DWORD dwExceptionFlags    = STACK32_POP(context);
+    DWORD cArguments          = STACK32_POP(context);
+    const LPDWORD lpArguments = (LPDWORD)STACK32_POP(context);
+    STACK32_PUSH(context,ret);  /* Restore the return address */
+
     /* compose an exception record */ 
     
     record.ExceptionCode       = dwExceptionCode;   
     record.ExceptionFlags      = dwExceptionFlags;
     record.ExceptionRecord     = NULL;
     record.NumberParameters    = cArguments;
-    record.ExceptionAddress    = (LPVOID)EIP_reg(pcontext);
+    record.ExceptionAddress    = (LPVOID)EIP_reg(context);
     
     if (lpArguments) for( i = 0; i < cArguments; i++)
         record.ExceptionInformation[i] = lpArguments[i];
@@ -145,7 +157,7 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
     /* get chain of exception frames */    
     
     retval = ExceptionContinueSearch;    
-    pframe = TEB_EXCEPTION_FRAME( pcontext );
+    pframe = TEB_EXCEPTION_FRAME( context );
     
     while((pframe!=NULL)&&(pframe!=((void *)0xFFFFFFFF)))
     {
@@ -153,8 +165,8 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
                                                 (int) pframe->Handler);
        dispatch=0;  
        TRACE(relay,"(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
-                     pframe->Handler, &record, pframe, pcontext, &dispatch );
-       retval=pframe->Handler(&record,pframe,pcontext,&dispatch);
+                     pframe->Handler, &record, pframe, context, &dispatch );
+       retval=pframe->Handler(&record,pframe,context,&dispatch);
  
        TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
@@ -172,14 +184,6 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
    }
 }
 
-/* This is the real entry point called by relay debugging code */
-void EXC_RaiseException( CONTEXT *context )
-{
-    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
-    DWORD *args = (DWORD *)ESP_reg(context);
-    ESP_reg(context) += 4 * sizeof(DWORD);  /* Pop the arguments */
-    RaiseException( args[1], args[2], args[3], (LPDWORD)args[4], context );
-}
 
 /*******************************************************************
  *         UnhandledExceptionFilter   (KERNEL32.537)

@@ -7,7 +7,6 @@
 /* Misc. new functions - they should be moved into appropriate files
 at a later date. */
 
-#include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -28,7 +27,7 @@ BOOL32 WINAPI UTRegister(HMODULE32 hModule,
                       /*FARPROC*/ LPVOID pfnUT32CallBack,
                       LPVOID lpBuff)
 {
-    fprintf(stderr, "UTRegister(%#x,...): stub!\n",hModule);
+    FIXME(updown, "(%#x,...): stub\n",hModule);
     return TRUE;
 }
 
@@ -37,7 +36,7 @@ BOOL32 WINAPI UTRegister(HMODULE32 hModule,
  */
 BOOL32 WINAPI UTUnRegister(HMODULE32 hModule)
 {
-    fprintf(stderr, "UTUnRegister(%#x: stub!\n", hModule);
+    FIXME(updown, "(%#x...): stub\n", hModule);
     return TRUE;
 }
 
@@ -62,6 +61,11 @@ HANDLE32 WINAPI FindFirstChangeNotification32A(LPCSTR lpPathName,BOOL32 bWatchSu
 }
 
 BOOL32 WINAPI FindNextChangeNotification(HANDLE32 fcnhandle) {
+	FIXME(file,"(%08x): stub!\n",fcnhandle);
+	return FALSE;
+}
+
+BOOL32 WINAPI FindCloseChangeNotification(HANDLE32 fcnhandle) {
 	FIXME(file,"(%08x): stub!\n",fcnhandle);
 	return FALSE;
 }
@@ -357,3 +361,8 @@ BOOL32 WINAPI SetComputerName32W( LPCWSTR lpComputerName )
     return TRUE;
 }
 
+
+BOOL32 WINAPI EnumPorts32A(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD bufneeded,LPDWORD bufreturned) {
+	FIXME(win32,"(%s,%d,%p,%d,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
+	return FALSE;
+}

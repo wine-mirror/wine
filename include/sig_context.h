@@ -124,6 +124,7 @@ typedef struct _CONTEXT		/* Note 1 */
 #define FS_sig(context)      ((context)->sc_fs)
 #define GS_sig(context)      ((context)->sc_gs)
 #define CR2_sig(context)     ((context)->cr2)
+#define TRAP_sig(context)    ((context)->sc_trapno)
 #endif
                             
 #ifndef __FreeBSD__         

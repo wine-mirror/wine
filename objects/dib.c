@@ -4,7 +4,6 @@
  * Copyright 1993,1994  Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "ts_xlib.h"
 #include "ts_xutil.h"
@@ -14,8 +13,6 @@
 #include "palette.h"
 #include "color.h"
 #include "debug.h"
-
-extern void CLIPPING_UpdateGCRegion(DC* );
 
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
 static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
@@ -30,8 +27,9 @@ typedef struct
     DWORD             infoWidth;
     WORD              depth;
     WORD              infoBpp;
-    const BITMAPINFO *info;
-    WORD              coloruse;
+    WORD              compression;
+    RGBQUAD          *colorMap;
+    int               nColorMap;
     Drawable          drawable;
     GC                gc;
     int               xSrc;
@@ -145,13 +143,14 @@ int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
  * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
  */
 static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
-                              int *height, WORD *bpp )
+                              int *height, WORD *bpp, WORD *compr )
 {
     if (header->biSize == sizeof(BITMAPINFOHEADER))
     {
         *width  = header->biWidth;
         *height = header->biHeight;
         *bpp    = header->biBitCount;
+        *compr  = header->biCompression;
         return 1;
     }
     if (header->biSize == sizeof(BITMAPCOREHEADER))
@@ -160,6 +159,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
         *width  = core->bcWidth;
         *height = core->bcHeight;
         *bpp    = core->bcBitCount;
+        *compr  = 0;
         return 0;
     }
     WARN(bitmap, "(%ld): wrong size for header\n", header->biSize );
@@ -171,15 +171,15 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
  *           DIB_BuildColorMap
  *
  * Build the color map from the bitmap palette. Should not be called
- * for a 24-bit deep bitmap.
+ * for a >8-bit deep bitmap.
  */
-static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
-                               const BITMAPINFO *info )
+static RGBQUAD *DIB_BuildColorMap( const BITMAPINFO *info, 
+				   HPALETTE16 hPalette, int *nColors )
 {
     int i, colors;
     BOOL32 isInfo;
     WORD *colorPtr;
-    int *colorMapping;
+    RGBQUAD *colorMapping;
 
     if ((isInfo = (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))))
     {
@@ -192,45 +192,90 @@ static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
         colors = 1 << ((BITMAPCOREHEADER *)&info->bmiHeader)->bcBitCount;
         colorPtr = (WORD *)((BITMAPCOREINFO *)info)->bmciColors;
     }
-    if (!(colorMapping = (int *)HeapAlloc(GetProcessHeap(), 0,
-                                          colors * sizeof(int) ))) return NULL;
 
-    if (coloruse == DIB_RGB_COLORS)
+    if (colors > 256)
+    {
+        ERR(bitmap, "DIB_BuildColorMap called with >256 colors!\n");
+        return NULL;
+    }
+
+    if (!(colorMapping = (RGBQUAD *)HeapAlloc(GetProcessHeap(), 0,
+                                              colors * sizeof(RGBQUAD) ))) 
+	return NULL;
+
+    if (hPalette == 0) /* DIB_RGB_COLORS */
     {
         if (isInfo)
         {
             RGBQUAD * rgb = (RGBQUAD *)colorPtr;
-        
-            if (depth == 1)  /* Monochrome */
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = (rgb->rgbRed + rgb->rgbGreen + 
-                                       rgb->rgbBlue > 255*3/2);
-            else
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgb->rgbRed,
-                                                                rgb->rgbGreen,
-                                                                rgb->rgbBlue));
+
+            for (i = 0; i < colors; i++, rgb++)
+                colorMapping[i] = *rgb;
         }
         else
         {
             RGBTRIPLE * rgb = (RGBTRIPLE *)colorPtr;
         
-            if (depth == 1)  /* Monochrome */
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = (rgb->rgbtRed + rgb->rgbtGreen + 
-                                       rgb->rgbtBlue > 255*3/2);
-            else
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgb->rgbtRed,
-                                                               rgb->rgbtGreen,
-                                                               rgb->rgbtBlue));
+            for (i = 0; i < colors; i++, rgb++)
+                colorMapping[i].rgbRed   = rgb->rgbtRed,
+                colorMapping[i].rgbGreen = rgb->rgbtGreen,
+                colorMapping[i].rgbBlue  = rgb->rgbtBlue;
         }
     }
     else  /* DIB_PAL_COLORS */
     {
+	PALETTEOBJ *palPtr = (PALETTEOBJ *)GDI_GetObjPtr(hPalette, PALETTE_MAGIC);
+	if (!palPtr) 
+	{
+	    HeapFree(GetProcessHeap(), 0, colorMapping);
+	    return NULL;
+	}
+
         for (i = 0; i < colors; i++, colorPtr++)
-            colorMapping[i] = COLOR_ToPhysical( dc, PALETTEINDEX(*colorPtr) );
+	    if (*colorPtr >= palPtr->logpalette.palNumEntries)
+	    {
+		colorMapping[i].rgbRed   = 0;
+		colorMapping[i].rgbGreen = 0;
+		colorMapping[i].rgbBlue  = 0;
+	    }
+	    else
+	    {
+		PALETTEENTRY *pe = palPtr->logpalette.palPalEntry + *colorPtr;
+		colorMapping[i].rgbRed   = pe->peRed;
+		colorMapping[i].rgbGreen = pe->peGreen;
+		colorMapping[i].rgbBlue  = pe->peBlue;
+	    }
+	
+	GDI_HEAP_UNLOCK(hPalette);
     }
+
+    *nColors = colors;
+    return colorMapping;
+}
+
+/***********************************************************************
+ *           DIB_PhysicalColorMap
+ *
+ * Translate color map to physical colors
+ */
+static int *DIB_PhysicalColorMap( DC *dc, int depth, 
+				  RGBQUAD *colorMap, int nColorMap)
+{
+    int *colorMapping, i;
+
+    if (!nColorMap) return NULL;
+    if (!(colorMapping = (int *)HeapAlloc(GetProcessHeap(), 0,
+                                          nColorMap * sizeof(int) ))) return NULL;
+
+    if (depth == 1) /* Monochrome */
+	for (i = 0; i < nColorMap; i++, colorMap++)
+	    colorMapping[i] = (colorMap->rgbRed + colorMap->rgbGreen + 
+                               colorMap->rgbBlue > 255*3/2);
+    else
+	for (i = 0; i < nColorMap; i++, colorMap++)
+            colorMapping[i] = COLOR_ToPhysical( dc, RGB(colorMap->rgbRed,
+                                                        colorMap->rgbGreen,
+                                                        colorMap->rgbBlue));
     return colorMapping;
 }
 
@@ -771,17 +816,13 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 {
     int *colorMapping;
     XImage *bmpImage;
-    DWORD compression = 0;
     int lines;
 
-    if (descr->info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-        compression = descr->info->bmiHeader.biCompression;
-
-      /* Build the color mapping table */
+      /* Translate the color mapping table */
 
     if (descr->infoBpp > 8) colorMapping = NULL;
-    else if (!(colorMapping = DIB_BuildColorMap( descr->dc, descr->coloruse,
-                                                 descr->depth, descr->info )))
+    else if (!(colorMapping = DIB_PhysicalColorMap( descr->dc, descr->depth,
+						    descr->colorMap, descr->nColorMap )))
         return 0;
 
     if( descr->dc->w.flags & DC_DIRTY ) CLIPPING_UpdateGCRegion(descr->dc);
@@ -798,14 +839,14 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 			    descr->width, descr->xSrc, colorMapping, bmpImage );
 	break;
     case 4:
-	if (compression) DIB_SetImageBits_RLE4( descr->lines, descr->bits,
+	if (descr->compression) DIB_SetImageBits_RLE4( descr->lines, descr->bits,
                                                 descr->infoWidth, descr->width, descr->xSrc,
                                                 colorMapping, bmpImage );
 	else DIB_SetImageBits_4( descr->lines, descr->bits, descr->infoWidth,
                                  descr->width, descr->xSrc, colorMapping, bmpImage );
 	break;
     case 8:
-	if (compression) DIB_SetImageBits_RLE8( descr->lines, descr->bits,
+	if (descr->compression) DIB_SetImageBits_RLE8( descr->lines, descr->bits,
                                                 descr->infoWidth, descr->width, descr->xSrc,
                                                 colorMapping, bmpImage );
 	else DIB_SetImageBits_8( descr->lines, descr->bits, descr->infoWidth,
@@ -925,7 +966,7 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
         return 0;
     }
     if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &height,
-                           &descr.infoBpp ) == -1)
+                           &descr.infoBpp, &descr.compression ) == -1)
     {
         GDI_HEAP_UNLOCK( hbitmap );
         GDI_HEAP_UNLOCK( hdc );
@@ -941,11 +982,25 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     }
     if (startscan + lines > height) lines = height - startscan;
 
+    if (descr.infoBpp <= 8)
+    {
+        descr.colorMap = DIB_BuildColorMap( info, coloruse == DIB_PAL_COLORS?
+                                            descr.dc->w.hPalette : 0, 
+                                            &descr.nColorMap);
+
+        if (!descr.colorMap)
+        {
+            GDI_HEAP_UNLOCK( hbitmap );
+            GDI_HEAP_UNLOCK( hdc );
+            return 0;
+        } 
+    }
+
+
+
     descr.bits      = bits;
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.depth     = bmp->bitmap.bmBitsPixel;
-    descr.info      = info;
-    descr.coloruse  = coloruse;
     descr.drawable  = bmp->pixmap;
     descr.gc        = BITMAP_GC(bmp);
     descr.xSrc      = 0;
@@ -958,6 +1013,8 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     EnterCriticalSection( &X11DRV_CritSection );
     result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
     LeaveCriticalSection( &X11DRV_CritSection );
+
+    HeapFree(GetProcessHeap(), 0, descr.colorMap);
 
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hbitmap );
@@ -1000,8 +1057,8 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return 0;
     }
-    if (DIB_GetBitmapInfo( &info->bmiHeader, &width,
-                           &height, &descr.infoBpp ) == -1)
+    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, 
+			   &descr.infoBpp, &descr.compression ) == -1)
         return 0;
     tmpheight = height;
     if (height < 0) height = -height;
@@ -1017,13 +1074,21 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
     DC_SetupGCForText( dc );  /* To have the correct colors */
     TSXSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
 
+    if (descr.infoBpp <= 8)
+    {
+        descr.colorMap = DIB_BuildColorMap( info, coloruse == DIB_PAL_COLORS?
+                                            descr.dc->w.hPalette : 0, 
+                                            &descr.nColorMap );
+
+        if (!descr.colorMap)
+            return 0;
+    }
+
     descr.dc        = dc;
     descr.bits      = bits;
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.infoWidth = width;
     descr.depth     = dc->w.bitsPerPixel;
-    descr.info      = info;
-    descr.coloruse  = coloruse;
     descr.drawable  = dc->u.x.drawable;
     descr.gc        = dc->u.x.gc;
     descr.xSrc      = xSrc;
@@ -1036,6 +1101,8 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
     EnterCriticalSection( &X11DRV_CritSection );
     result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
     LeaveCriticalSection( &X11DRV_CritSection );
+
+    HeapFree(GetProcessHeap(), 0, descr.colorMap);
     return result;
 }
 
@@ -1161,7 +1228,7 @@ INT32 WINAPI GetDIBits32(
     PALETTEOBJ * palette;
     XImage * bmpImage;
     int i, x, y;
-        
+
     if (!lines) return 0;
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -1193,7 +1260,7 @@ INT32 WINAPI GetDIBits32(
 	    else ((WORD *)info->bmiColors)[i] = (WORD)i;
 	}
     }
-    
+
     if (bits)
     {	
 	BYTE*	bbits = bits;
@@ -1367,8 +1434,9 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
     DWORD width;
     int height;
     WORD bpp;
+    WORD compr;
 
-    if (DIB_GetBitmapInfo( header, &width, &height, &bpp ) == -1) return 0;
+    if (DIB_GetBitmapInfo( header, &width, &height, &bpp, &compr ) == -1) return 0;
     if (height < 0) height = -height;
 
     /* Check if we should create a monochrome or color bitmap. */
@@ -1415,7 +1483,7 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
-    handle = fColor ? CreateCompatibleBitmap32( hdc, width, height ) :
+    handle = fColor ? CreateBitmap32( width, height, 1, screenDepth, NULL ) :
                       CreateBitmap32( width, height, 1, 1, NULL );
     if (!handle) return 0;
 
@@ -1431,7 +1499,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 				     LPVOID **bits, HANDLE16 section,
 				     DWORD offset)
 {
-  return CreateDIBSection32 (hdc, bmi, usage, bits, section, offset);
+    return CreateDIBSection32(hdc, bmi, usage, bits, section, offset);
 }
 
 /***********************************************************************
@@ -1441,35 +1509,173 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 				     LPVOID **bits,HANDLE32 section,
 				     DWORD offset)
 {
-  HBITMAP32 res = 0;
+    HBITMAP32 res = 0;
+    BITMAPOBJ *bmp = NULL;
+    DIBSECTION *dib = NULL;
+    RGBQUAD *colorMap = NULL;
+    int nColorMap;
 
-  FIXME(bitmap,
-	  "(%d,[w=%ld,h=%ld],%d,%p,0x%08x,%ld),semistub\n",
-	  hdc,bmi->bmiHeader.biWidth,bmi->bmiHeader.biHeight,
-	  usage,bits,section,offset);
+    /* Fill BITMAP32 structure with DIB data */
+    BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+    BITMAP32 bm;
 
-  if (bmi->bmiHeader.biHeight < 0 ) bmi->bmiHeader.biHeight = -bmi->bmiHeader.biHeight;
-  if (bmi->bmiHeader.biWidth < 0 ) bmi->bmiHeader.biWidth = -bmi->bmiHeader.biWidth;
-  /* FIXME.  The following line isn't quite right.  */
-  res = CreateDIBitmap32 (hdc, &bmi->bmiHeader, 0, NULL, bmi, 0);
-  if (res)
+    TRACE(bitmap, "format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
+	  bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
+	  bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+
+    if (bi->biCompression)
     {
-      BITMAP32 bmp;
-      if (GetObject32A (res, sizeof (bmp), &bmp))
-	{
-            /* FIXME: this is wrong! (bmBits is always NULL) */
-            if (bits) *bits = bmp.bmBits;
-	    /* hmpf */
-	    TRACE(bitmap,"allocating %ld bytes of memory\n",
-                bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
-	    if (bits) *bits = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
-            return res;
-	}
+	FIXME(bitmap, "Compression not implemented!\n");
+	return 0;
     }
 
-  /* Error.  */
-  if (res) DeleteObject32 (res);
-  if (bits) *bits = NULL;
-  return 0;
+    bm.bmType = 0;
+    bm.bmWidth = bi->biWidth;
+    bm.bmHeight = bi->biHeight;
+    bm.bmWidthBytes = DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
+    bm.bmPlanes = bi->biPlanes;
+    bm.bmBitsPixel = bi->biBitCount;
+    bm.bmBits = NULL;
+
+    /* Get storage location for DIB bits */
+    if (section)
+	FIXME(bitmap, "section != NULL not implemented!\n");	
+    else
+    {
+	INT32 totalSize = bi->biSizeImage? bi->biSizeImage
+                                         : bm.bmWidthBytes * bm.bmHeight;
+
+	bm.bmBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, totalSize);
+    }
+
+    /* Allocate Memory for DIB and fill structure */
+    if (bm.bmBits)
+	dib = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DIBSECTION));
+    if (dib)
+    {
+	dib->dsBm = bm;
+	dib->dsBmih = *bi;
+	/* FIXME: dib->dsBitfields ??? */
+	dib->dshSection = section;
+	dib->dsOffset = offset;
+    }
+
+    /* Create Color Map */
+    if (dib && bm.bmBitsPixel <= 8)
+    {
+        HPALETTE16 hPalette = 0;
+        if (usage == DIB_PAL_COLORS)
+        {
+            DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
+            if (!dc) 
+	        dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+            if (dc)
+	    {
+		hPalette = dc->w.hPalette;
+		GDI_HEAP_UNLOCK(hdc);
+	    }
+	}
+	colorMap = DIB_BuildColorMap(bmi, hPalette, &nColorMap);
+    }
+
+    /* Create Device Dependent Bitmap and add DIB/ColorMap info */
+    if (dib) 
+    {
+       res = CreateDIBitmap32(hdc, bi, 0, NULL, bmi, usage);
+       bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
+       if (bmp)
+       {
+	    bmp->dibSection = dib;
+            bmp->colorMap   = colorMap;
+	    bmp->nColorMap  = nColorMap;
+	    GDI_HEAP_UNLOCK(res);
+       }
+    }
+
+    /* Clean up in case of errors */
+    if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
+    {
+	if (bm.bmBits && section) 
+	    HeapFree(GetProcessHeap(), 0, bm.bmBits), bm.bmBits = NULL;
+
+	if (colorMap) HeapFree(GetProcessHeap(), 0, colorMap), colorMap = NULL;
+	if (dib) HeapFree(GetProcessHeap(), 0, dib), dib = NULL;
+	if (res) DeleteObject32(res), res = 0;
+    }
+
+    /* Return BITMAP handle and storage location */
+    if (bm.bmBits && bits) *bits = bm.bmBits;
+    return res;
 }
+
+/***********************************************************************
+ *           DIB_UpdateDIBSection
+ */
+void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
+{
+    BITMAPOBJ *bmp;
+    DIBSECTION *dib;
+
+    /* Ensure this is a Compatible DC that has a DIB section selected */
+
+    if (!dc) return;
+    if (!(dc->w.flags & DC_MEMORY)) return;
+
+    bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
+    if (!bmp) return;
+
+    dib = bmp->dibSection;
+    if (!dib)
+    {
+	GDI_HEAP_UNLOCK(dc->w.hBitmap);
+	return;
+    }
+
+  
+    /* Copy Pixmap to bits */
+    if (toDIB)
+    {
+        /* Expect colour corruption if you uncomment this. -MF */
+//        BITMAPINFO bi;
+//        bi.bmiHeader = dib->dsBmih;
+//        bi.bmiHeader.biClrUsed = 0; /* don't copy palette */
+//        TRACE(bitmap, "Copying from Pixmap to DIB bits\n");
+//        GetDIBits32( dc->hSelf, dc->w.hBitmap, 0, dib->dsBmih.biHeight,
+//                     dib->dsBm.bmBits, &bi, 0 );
+    }
+
+    /* Copy bits to Pixmap */
+    else
+    {
+    	DIB_SETIMAGEBITS_DESCR descr;
+
+	TRACE(bitmap, "Copying from DIB bits to Pixmap\n"); 
+	if (DIB_GetBitmapInfo( &dib->dsBmih, &descr.infoWidth, &descr.lines,
+			       &descr.infoBpp, &descr.compression ) == -1)
+	{
+	    GDI_HEAP_UNLOCK(dc->w.hBitmap);
+	    return;
+	}
+
+        descr.dc        = dc;
+        descr.colorMap  = bmp->colorMap;
+        descr.nColorMap = bmp->nColorMap;
+        descr.bits      = dib->dsBm.bmBits;
+        descr.depth     = bmp->bitmap.bmBitsPixel;
+        descr.drawable  = bmp->pixmap;
+        descr.gc        = BITMAP_GC(bmp);
+        descr.xSrc      = 0;
+        descr.ySrc      = 0;
+        descr.xDest     = 0;
+        descr.yDest     = 0;
+        descr.width     = bmp->bitmap.bmWidth;
+        descr.height    = bmp->bitmap.bmHeight;
+
+        EnterCriticalSection( &X11DRV_CritSection );
+        CALL_LARGE_STACK( DIB_SetImageBits, &descr );
+        LeaveCriticalSection( &X11DRV_CritSection );
+    }
+
+    GDI_HEAP_UNLOCK(dc->w.hBitmap);
+}
+

@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <signal.h>
-#include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include "k32obj.h"
@@ -245,7 +244,10 @@ void SYNC_WakeUp( THREAD_QUEUE *wait_queue, DWORD max )
         if (SYNC_CheckCondition( &thdb->wait_struct, THDB_TO_THREAD_ID(thdb) ))
         {
             TRACE(win32, "waking up %04x\n", thdb->teb_sel );
-            kill( thdb->unix_pid, SIGUSR1 );
+            if (thdb->unix_pid)
+	    	kill( thdb->unix_pid, SIGUSR1 );
+	    else
+	    	FIXME(win32,"have got unix_pid 0\n");
             if (!--max) break;
         }
         if (entry == *wait_queue) break;
@@ -300,8 +302,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
     }
 
     if (alertable)
-        fprintf( stderr,
-                 "WaitForMultipleObjectEx: alertable not implemented\n" );
+        FIXME(win32, "alertable not implemented\n" );
 
     SYSTEM_LOCK();
     if (!SYNC_BuildWaitStruct( count, handles, wait_all, wait ))

@@ -14,7 +14,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <math.h>
 #include "windows.h"
 #include "win.h"

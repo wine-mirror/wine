@@ -107,7 +107,7 @@ file	krnl386.exe
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize16
 107 pascal16 SetErrorMode(word) SetErrorMode16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
-109 register SwitchStackBack(word word word) SwitchStackBack
+109 register SwitchStackBack() SwitchStackBack
 110 pascal16 PatchCodeHandle(word) PatchCodeHandle
 111 pascal   GlobalWire(word) GlobalWire16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16
@@ -143,7 +143,7 @@ file	krnl386.exe
 140 pascal16 SetSigHandler(segptr ptr ptr word word) SetSigHandler
 141 stub InitTask1
 142 stub GetProfileSectionNames
-143 stub GetPrivateProfileSectionNames
+143 pascal16 GetPrivateProfileSectionNames(ptr word str) GetPrivateProfileSectionNames16
 144 pascal16 CreateDirectory(ptr ptr) CreateDirectory16
 145 pascal16 RemoveDirectory(ptr) RemoveDirectory16
 146 pascal16 DeleteFile(ptr) DeleteFile16
@@ -280,7 +280,7 @@ file	krnl386.exe
 357 pascal MapSL(segptr) MapSL
 358 pascal MapLS(long) MapLS
 359 pascal UnMapLS(segptr) UnMapLS
-360 stub OpenFileEx
+360 pascal16 OpenFileEx(str ptr word) OpenFile16
 #361 PIGLET_361
 365 stub KERNEL_365
 403 pascal16 FarSetOwner(word word) FarSetOwner
@@ -311,6 +311,8 @@ file	krnl386.exe
 447 stub KERNEL_447
 449 pascal KERNEL_449() KERNEL_449
 450 pascal16 KERNEL_450() stub_KERNEL_450
+452 stub KERNEL_452
+453 stub KERNEL_453
 454 equate __FLATCS 0   # initialized by BUILTIN_Init()
 455 equate __FLATDS 0   # initialized by BUILTIN_Init()
 471 pascal KERNEL_471() _KERNEL_471
@@ -321,6 +323,7 @@ file	krnl386.exe
 481 stub KERNEL_481
 482 pascal LoadLibrary32(str) LoadLibrary32A
 485 stub KERNEL_485
+486 stub KERNEL_486
 491 stub RegisterServiceProcess
 500 stub KERNEL_500
 502 stub KERNEL_502

@@ -7,7 +7,6 @@
 
 /* Only empty stubs for now */
 
-#include <stdio.h>
 #include "ddeml.h"
 #include "debug.h"
 
@@ -283,7 +282,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
  */
 BOOL32 WINAPI DdeFreeStringHandle32( DWORD idInst, HSZ hsz )
 {
-    FIXME( ddeml, "(%d,%d): stub\n",idInst, hsz );
+    FIXME( ddeml, "(%ld,%ld): stub\n",idInst, hsz );
     return TRUE;
 }
 

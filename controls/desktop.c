@@ -166,6 +166,18 @@ LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
     return 0;
 }
 
+/***********************************************************************
+ *           PaintDesktop   (USER32.415)
+ *
+ */
+BOOL32 WINAPI PaintDesktop(HDC32 hdc)
+{
+    HWND32 hwnd = GetDesktopWindow32();
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+
+    return DESKTOP_DoEraseBkgnd( hwnd, hdc, infoPtr );
+}
 
 /***********************************************************************
  *           SetDeskPattern   (USER.279)

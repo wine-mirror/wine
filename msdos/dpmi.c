@@ -4,7 +4,6 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include "windows.h"
@@ -374,14 +373,18 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     switch(AX_reg(context))
     {
     case 0x0000:  /* Allocate LDT descriptors */
+    	TRACE(int31,"allocate LDT descriptors (%d)\n",CX_reg(context));
         if (!(AX_reg(context) = AllocSelectorArray( CX_reg(context) )))
         {
+    	    TRACE(int31,"failed\n");
             AX_reg(context) = 0x8011;  /* descriptor unavailable */
             SET_CFLAG(context);
         }
+	TRACE(int31,"success, array starts at 0x%04x\n",AX_reg(context));
         break;
 
     case 0x0001:  /* Free LDT descriptor */
+    	TRACE(int31,"free LDT descriptor (0x%04x)\n",BX_reg(context));
         if (FreeSelector( BX_reg(context) ))
         {
             AX_reg(context) = 0x8022;  /* invalid selector */
@@ -399,6 +402,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0002:  /* Real mode segment to descriptor */
+    	TRACE(int31,"real mode segment to descriptor (0x%04x)\n",BX_reg(context));
         {
             WORD entryPoint = 0;  /* KERNEL entry point for descriptor */
             switch(BX_reg(context))
@@ -424,18 +428,22 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0003:  /* Get next selector increment */
+    	TRACE(int31,"get selector increment (__AHINCR)\n");
         AX_reg(context) = __AHINCR;
         break;
 
     case 0x0004:  /* Lock selector (not supported) */
+    	FIXME(int31,"lock selector not supported\n");
         AX_reg(context) = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0005:  /* Unlock selector (not supported) */
+    	FIXME(int31,"unlock selector not supported\n");
         AX_reg(context) = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0006:  /* Get selector base address */
+    	TRACE(int31,"get selector base address (0x%04x)\n",BX_reg(context));
         if (!(dw = GetSelectorBase( BX_reg(context) )))
         {
             AX_reg(context) = 0x8022;  /* invalid selector */
@@ -449,20 +457,24 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0007:  /* Set selector base address */
+    	TRACE(int31,"set selector base address (0x%04x,0x%08lx)\n",BX_reg(context),MAKELONG(DX_reg(context),CX_reg(context)));
         SetSelectorBase( BX_reg(context),
                          MAKELONG( DX_reg(context), CX_reg(context) ) );
         break;
 
     case 0x0008:  /* Set selector limit */
+    	TRACE(int31,"set selector limit (0x%04x,0x%08lx)\n",BX_reg(context),MAKELONG(DX_reg(context),CX_reg(context)));
         SetSelectorLimit( BX_reg(context),
                           MAKELONG( DX_reg(context), CX_reg(context) ) );
         break;
 
     case 0x0009:  /* Set selector access rights */
+    	TRACE(int31,"set selector access rights(0x%04x,0x%04x)\n",BX_reg(context),CX_reg(context));
         SelectorAccessRights( BX_reg(context), 1, CX_reg(context) );
         break;
 
     case 0x000a:  /* Allocate selector alias */
+    	TRACE(int31,"allocate selector alias (0x%04x)\n",BX_reg(context));
         if (!(AX_reg(context) = AllocCStoDSAlias( BX_reg(context) )))
         {
             AX_reg(context) = 0x8011;  /* descriptor unavailable */
@@ -471,6 +483,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x000b:  /* Get descriptor */
+    	TRACE(int31,"get descriptor (0x%04x)\n",BX_reg(context));
         {
             ldt_entry entry;
             LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
@@ -481,6 +494,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x000c:  /* Set descriptor */
+    	TRACE(int31,"set descriptor (0x%04x)\n",BX_reg(context));
         {
             ldt_entry entry;
             LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(context),
@@ -490,6 +504,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x000d:  /* Allocate specific LDT descriptor */
+    	FIXME(int31,"allocate descriptor (0x%04x), stub!\n",BX_reg(context));
         AX_reg(context) = 0x8011; /* descriptor unavailable */
         SET_CFLAG(context);
         break;
@@ -503,12 +518,14 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     	SET_CFLAG(context);
         break;
     case 0x0204:  /* Get protected mode interrupt vector */
+    	TRACE(int31,"get protected mode interrupt handler (0x%02x), stub!\n",BL_reg(context));
 	dw = (DWORD)INT_GetHandler( BL_reg(context) );
 	CX_reg(context) = HIWORD(dw);
 	DX_reg(context) = LOWORD(dw);
 	break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
+    	TRACE(int31,"set protected mode interrupt handler (0x%02x,0x%08lx), stub!\n",BL_reg(context),PTR_SEG_OFF_TO_LIN(CX_reg(context),DX_reg(context)));
 	INT_SetHandler( BL_reg(context),
                         (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CX_reg(context),
                                                           DX_reg(context) ));
@@ -540,6 +557,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 	break;
 
     case 0x0400:  /* Get DPMI version */
+        TRACE(int31,"get DPMI version\n");
     	{
 	    SYSTEM_INFO si;
 
@@ -551,6 +569,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 	    break;
 	}
     case 0x0500:  /* Get free memory information */
+        TRACE(int31,"get free memory information\n");
         {
             MEMMANINFO mmi;
 
@@ -564,6 +583,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             break;
         }
     case 0x0501:  /* Allocate memory block */
+        TRACE(int31,"allocate memory block (%ld)\n",MAKELONG(CX_reg(context),BX_reg(context)));
 	if (!(ptr = (BYTE *)VirtualAlloc(NULL, MAKELONG(CX_reg(context), BX_reg(context)), MEM_COMMIT, PAGE_EXECUTE_READWRITE)))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
@@ -577,10 +597,12 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0502:  /* Free memory block */
+        TRACE(int31,"free memory block (0x%08lx)\n",MAKELONG(DI_reg(context),SI_reg(context)));
 	VirtualFree((void *)MAKELONG(DI_reg(context), SI_reg(context)), 0, MEM_RELEASE);
         break;
 
     case 0x0503:  /* Resize memory block */
+        TRACE(int31,"resize memory block (0x%08lx,%ld)\n",MAKELONG(DI_reg(context),SI_reg(context)),MAKELONG(CX_reg(context),BX_reg(context)));
         if (!(ptr = (BYTE *)HeapReAlloc( GetProcessHeap(), 0,
                            (void *)MAKELONG(DI_reg(context),SI_reg(context)),
                                    MAKELONG(CX_reg(context),BX_reg(context)))))
@@ -596,29 +618,37 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0600:  /* Lock linear region */
+        FIXME(int31,"lock linear region unimplemented\n");
         break;  /* Just ignore it */
 
     case 0x0601:  /* Unlock linear region */
+        FIXME(int31,"unlock linear region unimplemented\n");
         break;  /* Just ignore it */
 
     case 0x0602:  /* Unlock real-mode region */
+        FIXME(int31,"unlock realmode region unimplemented\n");
         break;  /* Just ignore it */
 
     case 0x0603:  /* Lock real-mode region */
+        FIXME(int31,"lock realmode region unimplemented\n");
         break;  /* Just ignore it */
 
     case 0x0604:  /* Get page size */
+        TRACE(int31,"get pagesize\n");
         BX_reg(context) = 0;
-        CX_reg(context) = 4096;
+        CX_reg(context) = VIRTUAL_GetPageSize();
 	break;
 
     case 0x0702:  /* Mark page as demand-paging candidate */
+        FIXME(int31,"mark page as demand-paging candidate\n");
         break;  /* Just ignore it */
 
     case 0x0703:  /* Discard page contents */
+        FIXME(int31,"discard page contents\n");
         break;  /* Just ignore it */
 
      case 0x0800:  /* Physical address mapping */
+        FIXME(int31,"map real to linear (0x%08lx)\n",MAKELONG(CX_reg(context),BX_reg(context)));
          if(!(ptr=DOSMEM_MapRealToLinear(MAKELONG(CX_reg(context),BX_reg(context)))))
          {
              AX_reg(context) = 0x8021; 

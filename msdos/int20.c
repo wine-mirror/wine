@@ -2,7 +2,6 @@
  * DOS interrupt 20h handler (TERMINATE PROGRAM)
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "miscemu.h"
 /* #define DEBUG_INT */

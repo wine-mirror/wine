@@ -69,6 +69,9 @@
 /* Define if you have the strerror function.  */
 #undef HAVE_STRERROR
 
+/* Define if you have the stricmp function.  */
+#undef HAVE_STRICMP
+
 /* Define if you have the tcgetattr function.  */
 #undef HAVE_TCGETATTR
 

@@ -6,7 +6,6 @@
  */
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -459,10 +458,12 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
 /***********************************************************************
  *           PROFILE_GetSection
  *
- * Enumerate all the keys of a section.
+ * Returns all keys of a section.
+ * If return_values is TRUE, also include the corrseponding values.
  */
 static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
-                                 LPSTR buffer, INT32 len, BOOL32 handle_env )
+                                 LPSTR buffer, INT32 len, BOOL32 handle_env,
+				 BOOL32 return_values )
 {
     PROFILEKEY *key;
     while (section)
@@ -477,6 +478,13 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
                 PROFILE_CopyEntry( buffer, key->name, len - 1, handle_env );
                 len -= strlen(buffer) + 1;
                 buffer += strlen(buffer) + 1;
+		if (return_values && key->value) {
+			buffer[-1] = '=';
+			PROFILE_CopyEntry ( buffer,
+				key->value, len - 1, handle_env );
+			len -= strlen(buffer) + 1;
+			buffer += strlen(buffer) + 1;
+                }
             }
             *buffer = '\0';
             if (len < 1)
@@ -518,7 +526,8 @@ static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
-    return PROFILE_GetSection(CurProfile.section, section, buffer, len, FALSE);
+    return PROFILE_GetSection(CurProfile.section, section, buffer, len,
+				FALSE, FALSE);
 }
 
 
@@ -588,7 +597,7 @@ int PROFILE_GetWineIniString( const char *section, const char *key_name,
                          section, key_name, def, buffer );
         return strlen( buffer );
     }
-    return PROFILE_GetSection( WineProfile, section, buffer, len, TRUE );
+    return PROFILE_GetSection( WineProfile, section, buffer, len, TRUE, FALSE );
 }
 
 
@@ -988,7 +997,9 @@ INT32 WINAPI GetPrivateProfileSection32A( LPCSTR section, LPSTR buffer,
                                           INT32 len, LPCSTR filename )
 {
     if (PROFILE_Open( filename ))
-        return PROFILE_GetString( section, NULL, NULL, buffer, len );
+        return PROFILE_GetSection(CurProfile.section, section, buffer, len,
+                                FALSE, TRUE);
+
     return 0;
 }
 
@@ -1052,6 +1063,16 @@ BOOL32 WINAPI WritePrivateProfileSection32A( LPCSTR section,
     return FALSE;
 }
 
+/***********************************************************************
+ *           GetPrivateProfileSectionNames16   (KERNEL.143)
+ */
+WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
+                                             LPCSTR filename )
+{
+    FIXME(profile, "(%p,%d,%s):stub\n", buffer, size, filename);
+    buffer[0] = buffer[1] = '\0';
+    return 0;
+}
 
 /***********************************************************************
  *           WriteOutProfiles   (KERNEL.315)

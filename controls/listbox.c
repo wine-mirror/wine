@@ -5,7 +5,6 @@
  */
 
 #include <string.h>
-#include <stdio.h>
 #include "windows.h"
 #include "winerror.h"
 #include "drive.h"

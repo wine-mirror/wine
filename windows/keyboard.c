@@ -4,11 +4,11 @@
  * Copyright 1993 Bob Amstadt
  * Copyright 1996 Albrecht Kleine 
  * Copyright 1997 David Faure
+ * Copyright 1998 Morten Welinder
  *
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <X11/keysym.h>
@@ -209,7 +209,7 @@ BOOL32 KEYBOARD_Init(void)
     e2.display = display;
     e2.state = 0;
 
-    OEMvkey = 0xb9; /* first OEM virtual key available is ba */
+    OEMvkey = VK_OEM_7; /* next is available.  */
     for (e2.keycode=min_keycode; e2.keycode<=max_keycode; e2.keycode++)
     {
         TSXLookupString(&e2, NULL, 0, &keysym, NULL);
@@ -270,6 +270,25 @@ BOOL32 KEYBOARD_Init(void)
 		    vkey = keysym;
             }
 
+            for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
+            {
+                keysym = TSXLookupKeysym(&e2, i);
+		switch (keysym)
+		{
+		case ';': case ':':   vkey = VK_OEM_1; break;
+		case '/': case '?':   vkey = VK_OEM_2; break;
+		case '`': case '~':   vkey = VK_OEM_3; break;
+		case '[':             vkey = VK_OEM_4; break;
+		case '\\':            vkey = VK_OEM_5; break;
+		case ']':             vkey = VK_OEM_6; break;
+		case '\'': case '\"': vkey = VK_OEM_7; break;
+		case ',':             vkey = VK_OEM_COMMA; break;
+		case '.':             vkey = VK_OEM_PERIOD; break;
+		case '-':             vkey = VK_OEM_MINUS; break;
+		case '+':             vkey = VK_OEM_PLUS; break;
+		}
+	    }
+
             if (!vkey)
             {
                 /* Others keys: let's assign OEM virtual key codes in the allowed range,
@@ -278,7 +297,7 @@ BOOL32 KEYBOARD_Init(void)
                 {
                 case 0xc1 : OEMvkey=0xdb; break;
                 case 0xe5 : OEMvkey=0xe9; break;
-                case 0xf6 : OEMvkey=0xf5; fprintf(stderr,"No more OEM vkey available!\n");
+                case 0xf6 : OEMvkey=0xf5; WARN(keyboard,"No more OEM vkey available!\n");
                 }
 
                 vkey = OEMvkey;
@@ -287,8 +306,8 @@ BOOL32 KEYBOARD_Init(void)
                 {
 		    dbg_decl_str(keyboard, 1024);
 
-                    TRACE(keyboard, "OEM specific virtual key %X assigned"
-				 "to keycode %X :\n", OEMvkey, e2.keycode);
+                    TRACE(keyboard, "OEM specific virtual key %X assigned "
+				 "to keycode %X:\n", OEMvkey, e2.keycode);
                     for (i = 0; i < keysyms_per_keycode; i += 1)
                     {
                         char	*ksname;
@@ -864,11 +883,11 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 	      if (TSXKeycodeToKeysym(display,keycode,i)==keysym) index=i;
 	    switch (index) {
 	    case -1 :
-	      fprintf(stderr,"Keysym %lx not found while parsing the keycode table\n",keysym); break;
+	      WARN(keyboard,"Keysym %lx not found while parsing the keycode table\n",keysym); break;
 	    case 0 : break;
 	    case 1 : highbyte = 0x0100; break;
 	    case 2 : highbyte = 0X0600; break;
-	    default : fprintf(stderr,"index %d found by XKeycodeToKeysym. please report! \n",index);
+	    default : ERR(keyboard,"index %d found by XKeycodeToKeysym. please report! \n",index);
 	    }
 	    /*
 	      index : 0     adds 0x0000
@@ -924,7 +943,7 @@ INT32 WINAPI GetKeyboardType32(INT32 nTypeFlag)
       return 12;   /* We're doing an 101 for now, so return 12 F-keys */
       break;
     default:     
-      fprintf(stderr, "Unknown type on GetKeyboardType\n");
+      WARN(keyboard, "Unknown type\n");
       return 0;    /* The book says 0 here, so 0 */
     }
 }
@@ -987,7 +1006,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 			return 0;
 			}
 		default: /* reserved */
-			fprintf(stderr, "MapVirtualKey: unknown wMapType %d !\n",
+			WARN(keyboard, "Unknown wMapType %d !\n",
 				wMapType);
 			return 0;	
 	}
@@ -1105,7 +1124,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
       }
     if (!e.keycode)
       {
-	fprintf(stderr,"ToAscii : Unknown virtual key %X !!! \n",virtKey);
+	WARN(keyboard,"Unknown virtual key %X !!! \n",virtKey);
 	return virtKey; /* whatever */
       }
     e.state = 0;
@@ -1228,9 +1247,9 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)
 		{
-		fprintf(stderr, "Please report : no char for keysym %04lX (%s) :\n",
+		ERR(keyboard, "Please report: no char for keysym %04lX (%s) :\n",
 			keysym, ksname);
-		fprintf(stderr, "  virtKey = %X, scanCode = %X, keycode = %X, state = %X\n",
+		ERR(keyboard, "(virtKey=%X,scanCode=%X,keycode=%X,state=%X)\n",
 			virtKey, scanCode, e.keycode, e.state);
 		}
 	    }
@@ -1246,7 +1265,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
  */
 HKL32 WINAPI GetKeyboardLayout(DWORD dwLayout)
 {
-	fprintf(stderr,"GetKeyboardLayout(%ld),STUB!\n",dwLayout);
+	FIXME(keyboard,"(%ld): stub\n",dwLayout);
 	return (0xcafe<<16)|GetSystemDefaultLCID(); /* FIXME */
 }
 
@@ -1256,7 +1275,7 @@ HKL32 WINAPI GetKeyboardLayout(DWORD dwLayout)
  */
 INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
 {
-	fprintf(stderr,"GetKeyboardLayoutList(%d,%p),STUB!\n",nBuff,layouts);
+	FIXME(keyboard,"(%d,%p): stub\n",nBuff,layouts);
 	if (layouts)
 		layouts[0] = GetKeyboardLayout(0);
 	return 1;
@@ -1267,7 +1286,7 @@ INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
  *           RegisterHotKey			(USER32.433)
  */
 BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
-	fprintf(stderr,"RegisterHotKey(%08x,%d,%08x,%d), STUB!\n",
+	FIXME(keyboard,"(%08x,%d,%08x,%d): stub\n",
 		hwnd,id,modifiers,vk
 	);
 	return TRUE;
@@ -1277,6 +1296,6 @@ BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
  *           UnregisterHotKey			(USER32.565)
  */
 BOOL32 WINAPI UnregisterHotKey(HWND32 hwnd,INT32 id) {
-	fprintf(stderr,"UnregisterHotKey(%08x,%d),stub!\n",hwnd,id);
+	FIXME(keyboard,"(%08x,%d): stub\n",hwnd,id);
 	return TRUE;
 }

@@ -19,6 +19,7 @@ C_SRCS = \
 	scroll.c \
 	static.c \
 	status.c \
+	toolbar.c \
 	uitools.c \
 	updown.c \
 	widgets.c

@@ -15,6 +15,7 @@ DLLS = \
 	lzexpand.spec \
 	mmsystem.spec \
 	mouse.spec \
+	msvideo.spec \
 	ole2.spec \
 	ole2conv.spec \
 	ole2disp.spec \

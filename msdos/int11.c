@@ -2,7 +2,6 @@
  * BIOS interrupt 11h handler
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "miscemu.h"
 #include "msdos.h"

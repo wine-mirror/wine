@@ -20,7 +20,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -40,11 +39,7 @@
 #include "xmalloc.h"
 #include "winreg.h"
 
-void SHELL_StartupRegistry();
-
-/* This is not used anywhere */
-#define	DEBUG_W95_LOADREG	0
-
+static void REGISTRY_Init();
 /* FIXME: following defines should be configured global ... */
 
 /* NOTE: do not append a /. linux' mkdir() WILL FAIL if you do that */
@@ -102,6 +97,10 @@ static KEYSTRUCT	*key_dyn_data=NULL;
  * FIXME
  *   Are these doing the same as HEAP_strdupAtoW and HEAP_strdupWtoA?
  *   If so, can we remove them?
+ * ANSWER
+ *   No, the memory handling functions are called very often in here, 
+ *   just replacing them by HeapAlloc(SystemHeap,...) makes registry
+ *   loading 100 times slower. -MM
  */
 static LPWSTR strdupA2W(LPCSTR src)
 {
@@ -214,59 +213,101 @@ static DWORD remove_handle( HKEY hkey )
 }
 
 
-/* debug function, converts a unicode into a static memory area 
- * (sub for using two static strings, in case we need them in a single call)
- *
- * FIXME
- *    This seems to be used the same as debugstr_w.
- *    If so, can this one go away?
- */
-LPSTR
-W2C(LPCWSTR x,int sub) {
-	static	LPSTR	unicodedebug[2]={NULL,NULL};
-	if (x==NULL)
-		return "<NULL>";
-	if (sub!=0 && sub!=1)
-		return "<W2C:bad sub>";
-	if (unicodedebug[sub]) HeapFree( SystemHeap, 0, unicodedebug[sub] );
-	unicodedebug[sub] = HEAP_strdupWtoA( SystemHeap, 0, x );
-	return unicodedebug[sub];
-}
-
-
 /******************************************************************************
  * lookup_hkey [Internal]
+ * 
+ * Just as the name says. Creates the root keys on demand, so we can call the
+ * Reg* functions at any time.
  *
  * RETURNS
  *    Success: Pointer to key structure
  *    Failure: NULL
  */
+#define ADD_ROOT_KEY(xx) \
+	xx = (LPKEYSTRUCT)xmalloc(sizeof(KEYSTRUCT));\
+	memset(xx,'\0',sizeof(KEYSTRUCT));\
+	xx->keyname= strdupA2W("<should_not_appear_anywhere>");
+
 static LPKEYSTRUCT lookup_hkey( HKEY hkey )
 {
 	switch (hkey) {
-    /* These seem erroneous */
-    /*	case 0x00000000: */
-    /*	case 0x00000001: */
-	case HKEY_CLASSES_ROOT:
+	/* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
+	 * some programs. Do not remove those cases. -MM
+	 */
+    	case 0x00000000:
+	case 0x00000001:
+	case HKEY_CLASSES_ROOT: {
+		if (!key_classes_root) {
+			HKEY	cl_r_hkey;
+
+			/* calls lookup_hkey recursively, TWICE */
+			if (RegCreateKey16(HKEY_LOCAL_MACHINE,"SOFTWARE\\Classes",&cl_r_hkey)!=ERROR_SUCCESS) {
+				ERR(reg,"Could not create HKLM\\SOFTWARE\\Classes. This is impossible.\n");
+				exit(1);
+			}
+			key_classes_root = lookup_hkey(cl_r_hkey);
+		}
 		return key_classes_root;
+	}
 	case HKEY_CURRENT_USER:
+		if (!key_current_user) {
+			HKEY	c_u_hkey;
+			struct	passwd	*pwd;
+
+			pwd=getpwuid(getuid());
+			/* calls lookup_hkey recursively, TWICE */
+			if (pwd && pwd->pw_name) {
+				if (RegCreateKey16(HKEY_USERS,pwd->pw_name,&c_u_hkey)!=ERROR_SUCCESS) {
+					ERR(reg,"Could not create HU\\%s. This is impossible.\n",pwd->pw_name);
+					exit(1);
+				}
+				key_current_user = lookup_hkey(c_u_hkey);
+			} else {
+				/* nothing found, use standalone */
+				ADD_ROOT_KEY(key_current_user);
+			}
+		}
 		return key_current_user;
 	case HKEY_LOCAL_MACHINE:
+		if (!key_local_machine) {
+			ADD_ROOT_KEY(key_local_machine);
+			REGISTRY_Init();
+		}
 		return key_local_machine;
 	case HKEY_USERS:
+		if (!key_users) {
+			ADD_ROOT_KEY(key_users);
+		}
 		return key_users;
 	case HKEY_PERFORMANCE_DATA:
+		if (!key_performance_data) {
+			ADD_ROOT_KEY(key_performance_data);
+		}
 		return key_performance_data;
 	case HKEY_DYN_DATA:
+		if (!key_dyn_data) {
+			ADD_ROOT_KEY(key_dyn_data);
+		}
 		return key_dyn_data;
 	case HKEY_CURRENT_CONFIG:
+		if (!key_current_config) {
+			ADD_ROOT_KEY(key_current_config);
+		}
 		return key_current_config;
 	default:
 		return get_handle(hkey);
 	}
 	/*NOTREACHED*/
 }
-
+#undef ADD_ROOT_KEY
+/* so we don't accidently access them ... */
+#define key_current_config NULL NULL
+#define key_current_user NULL NULL
+#define key_users NULL NULL
+#define key_local_machine NULL NULL
+#define key_classes_root NULL NULL
+#define key_dyn_data NULL NULL
+#define key_performance_data NULL NULL
 
 /******************************************************************************
  * split_keypath [Internal]
@@ -322,62 +363,14 @@ static void split_keypath( LPCWSTR wp, LPWSTR **wpv, int *wpc)
 
 
 /******************************************************************************
- * SHELL_Init [Internal]
- * Shell initialisation, allocates keys. 
+ * REGISTRY_Init [Internal]
+ * Registry initialisation, allocates some default keys. 
  */
-void SHELL_Init() {
-	struct	passwd	*pwd;
-
-	HKEY	cl_r_hkey,c_u_hkey;
-#define ADD_ROOT_KEY(xx) \
-	xx = (LPKEYSTRUCT)xmalloc(sizeof(KEYSTRUCT));\
-	memset(xx,'\0',sizeof(KEYSTRUCT));\
-	xx->keyname= strdupA2W("<should_not_appear_anywhere>");
-
-	ADD_ROOT_KEY(key_local_machine);
-	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"SOFTWARE\\Classes",&cl_r_hkey)!=ERROR_SUCCESS) {
-		ERR(reg,"Could not create HKLM\\SOFTWARE\\Classes. This is impossible.\n");
-		exit(1);
-	}
-	key_classes_root = lookup_hkey(cl_r_hkey);
-
-	ADD_ROOT_KEY(key_users);
-
-#if 0
-	/* FIXME: load all users and their resp. pwd->pw_dir/.wine/user.reg 
-	 *	  (later, when a win32 registry editing tool becomes avail.)
-	 */
-	while (pwd=getpwent()) {
-		if (pwd->pw_name == NULL)
-			continue;
-		RegCreateKey16(HKEY_USERS,pwd->pw_name,&c_u_hkey);
-		RegCloseKey(c_u_hkey);
-	}
-#endif
-	pwd=getpwuid(getuid());
-	if (pwd && pwd->pw_name) {
-		RegCreateKey16(HKEY_USERS,pwd->pw_name,&c_u_hkey);
-		key_current_user = lookup_hkey(c_u_hkey);
-	} else {
-		ADD_ROOT_KEY(key_current_user);
-	}
-	ADD_ROOT_KEY(key_performance_data);
-	ADD_ROOT_KEY(key_current_config);
-	ADD_ROOT_KEY(key_dyn_data);
-#undef ADD_ROOT_KEY
-	SHELL_StartupRegistry();
-}
-
-
-/******************************************************************************
- * SHELL_StartupRegistry [Internal]
- */
-void SHELL_StartupRegistry( void )
-{
+static void REGISTRY_Init() {
 	HKEY	hkey;
 	char	buf[200];
 
-    TRACE(reg,"(void)\n");
+	TRACE(reg,"(void)\n");
 
 	RegCreateKey16(HKEY_DYN_DATA,"PerfStats\\StatData",&hkey);
 	RegCloseKey(hkey);
@@ -599,7 +592,7 @@ void SHELL_SaveRegistry( void )
 		strcat(fn,"/"SAVE_CURRENT_USER);
 		tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
 		strcpy(tmp,fn);strcat(tmp,".tmp");
-		if (_savereg(key_current_user,tmp,all)) {
+		if (_savereg(lookup_hkey(HKEY_CURRENT_USER),tmp,all)) {
 			if (-1==rename(tmp,fn)) {
 				perror("rename tmp registry");
 				unlink(tmp);
@@ -612,7 +605,7 @@ void SHELL_SaveRegistry( void )
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
 		tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
 		strcpy(tmp,fn);strcat(tmp,".tmp");
-		if (_savereg(key_local_machine,tmp,all)) {
+		if (_savereg(lookup_hkey(HKEY_LOCAL_MACHINE),tmp,all)) {
 			if (-1==rename(tmp,fn)) {
 				perror("rename tmp registry");
 				unlink(tmp);
@@ -1508,10 +1501,9 @@ void _w31_loadreg() {
 	OFSTRUCT		ofs;
 	BY_HANDLE_FILE_INFORMATION hfinfo;
 	time_t			lastmodified;
-	HKEY			hkey;
 	LPKEYSTRUCT		lpkey;
 
-    TRACE(reg,"(void)\n");
+	TRACE(reg,"(void)\n");
 
 	hf = OpenFile32("reg.dat",&ofs,OF_READ);
 	if (hf==HFILE_ERROR32)
@@ -1564,10 +1556,7 @@ void _w31_loadreg() {
 		return;
 	}
 	lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
-
-	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"SOFTWARE\\Classes",&hkey)!=ERROR_SUCCESS)
-		return;
-	lpkey = lookup_hkey(hkey);
+	lpkey = lookup_hkey(HKEY_CLASSES_ROOT);
 	__w31_dumptree(tab[0].w1,txt,tab,&head,lpkey,lastmodified,0);
 	free(tab);
 	free(txt);
@@ -1586,17 +1575,14 @@ void SHELL_LoadRegistry( void )
 	LPKEYSTRUCT	lpkey;
 	HKEY		hkey;
 
-    TRACE(reg,"(void)\n");
-
-	if (key_classes_root==NULL)
-		SHELL_Init();
+	TRACE(reg,"(void)\n");
 
 	/* Load windows 3.1 entries */
 	_w31_loadreg();
 	/* Load windows 95 entries */
-	_w95_loadreg("C:\\system.1st",	key_local_machine);
-	_w95_loadreg("system.dat",	key_local_machine);
-	_w95_loadreg("user.dat",	key_users);
+	_w95_loadreg("C:\\system.1st",	lookup_hkey(HKEY_LOCAL_MACHINE));
+	_w95_loadreg("system.dat",	lookup_hkey(HKEY_LOCAL_MACHINE));
+	_w95_loadreg("user.dat",	lookup_hkey(HKEY_USERS));
 
 	/* the global user default is loaded under HKEY_USERS\\.Default */
 	RegCreateKey16(HKEY_USERS,".Default",&hkey);
@@ -1606,11 +1592,11 @@ void SHELL_LoadRegistry( void )
 	_wine_loadreg(lpkey,SAVE_USERS_DEFAULT,0);
 
 	/* HKEY_USERS\\.Default is copied to HKEY_CURRENT_USER */
-	_copy_registry(lpkey,key_current_user);
+	_copy_registry(lpkey,lookup_hkey(HKEY_CURRENT_USER));
 	RegCloseKey(hkey);
 
 	/* the global machine defaults */
-	_wine_loadreg(key_local_machine,SAVE_LOCAL_MACHINE_DEFAULT,0);
+	_wine_loadreg(lookup_hkey(HKEY_LOCAL_MACHINE),SAVE_LOCAL_MACHINE_DEFAULT,0);
 
 	/* load the user saved registries */
 
@@ -1621,12 +1607,12 @@ void SHELL_LoadRegistry( void )
 		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_CURRENT_USER)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_CURRENT_USER);
-		_wine_loadreg(key_current_user,fn,REG_OPTION_TAINTED);
+		_wine_loadreg(lookup_hkey(HKEY_CURRENT_USER),fn,REG_OPTION_TAINTED);
 		free(fn);
 		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
-		_wine_loadreg(key_local_machine,fn,REG_OPTION_TAINTED);
+		_wine_loadreg(lookup_hkey(HKEY_LOCAL_MACHINE),fn,REG_OPTION_TAINTED);
 		free(fn);
 	} else
 		WARN(reg,"Failed to get homedirectory of UID %d.\n",getuid());
@@ -1828,11 +1814,6 @@ DWORD WINAPI RegCreateKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey,
     if (!lpNextKey)
         return ERROR_BADKEY;
 
-    if (lpszSubKey[0] == '\\') {
-        WARN(reg,"Subkey %s must not begin with backslash.\n",debugstr_w(lpszSubKey));
-        return ERROR_BAD_PATHNAME;
-    }
-
 	if (!lpszSubKey || !*lpszSubKey) {
 		add_handle(++currenthandle,lpNextKey,samDesired);
 		*retkey=currenthandle;
@@ -1840,6 +1821,11 @@ DWORD WINAPI RegCreateKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey,
 		lpNextKey->flags|=REG_OPTION_TAINTED;
 		return ERROR_SUCCESS;
 	}
+
+    if (lpszSubKey[0] == '\\') {
+        WARN(reg,"Subkey %s must not begin with backslash.\n",debugstr_w(lpszSubKey));
+        return ERROR_BAD_PATHNAME;
+    }
 
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
@@ -2388,7 +2374,7 @@ DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName,
             TRACE(reg," Data(binary)\n");
             break;
         case REG_DWORD:
-            TRACE(reg," Data(dword)=%lx\n", (DWORD)*lpbData);
+            TRACE(reg," Data(dword)=%lx\n", (DWORD)lpbData);
             break;
         default:
             TRACE(reg,"Unknown type: %ld\n", dwType);
@@ -2500,7 +2486,7 @@ DWORD WINAPI RegSetValue32W(
 	DWORD	ret;
 
 	TRACE(reg,"(%x,%s,%ld,%s,%ld)\n",
-		hkey,W2C(lpszSubKey,0),dwType,W2C(lpszData,0),cbData
+		hkey,debugstr_w(lpszSubKey),dwType,debugstr_w(lpszData),cbData
 	);
 	if (lpszSubKey && *lpszSubKey) {
 		ret=RegCreateKey32W(hkey,lpszSubKey,&xhkey);
@@ -2514,7 +2500,7 @@ DWORD WINAPI RegSetValue32W(
 	}
 	if (cbData!=2*lstrlen32W(lpszData)+2) {
 		TRACE(reg,"RegSetValueX called with len=%ld != strlen(%s)+1=%d!\n",
-			cbData,W2C(lpszData,0),2*lstrlen32W(lpszData)+2
+			cbData,debugstr_w(lpszData),2*lstrlen32W(lpszData)+2
 		);
 		cbData=2*lstrlen32W(lpszData)+2;
 	}
@@ -2913,7 +2899,7 @@ DWORD WINAPI RegDeleteKey32W( HKEY hkey, LPWSTR lpszSubKey )
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
 			TRACE(reg, "  Scanning [%s]\n",
-				     W2C (lpxkey->keyname, 0));
+				     debugstr_w(lpxkey->keyname));
 			if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
@@ -2931,7 +2917,7 @@ DWORD WINAPI RegDeleteKey32W( HKEY hkey, LPWSTR lpszSubKey )
 	lplpPrevKey = &(lpNextKey->nextsub);
 	while (lpxkey) {
 		TRACE(reg, "  Scanning [%s]\n",
-			     W2C (lpxkey->keyname, 0));
+			     debugstr_w(lpxkey->keyname));
 		if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 			break;
 		lplpPrevKey	= &(lpxkey->next);
@@ -3310,5 +3296,117 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL32 fWatchSubTree,
     FIXME(reg,"(%x,%i,%ld,%d,%i): stub\n",hkey,fWatchSubTree,fdwNotifyFilter,
           hEvent,fAsync);
     return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegUnLoadKey32W [ADVAPI32.173]
+ */
+LONG WINAPI RegUnLoadKey32W( HKEY hkey, LPCWSTR lpSubKey )
+{
+    FIXME(reg,"(%x,%s): stub\n",hkey, debugstr_w(lpSubKey));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegUnLoadKey32A [ADVAPI32.172]
+ */
+LONG WINAPI RegUnLoadKey32A( HKEY hkey, LPCSTR lpSubKey )
+{
+    LONG ret;
+    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
+    ret = RegUnLoadKey32W( hkey, lpSubKeyW );
+    HeapFree( GetProcessHeap(), 0, lpSubKeyW );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegSetKeySecurity [ADVAPI32.167]
+ */
+LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
+                               LPSECURITY_DESCRIPTOR pSecurityDesc )
+{
+    FIXME(reg, "%x,%ld,%p): stub\n", hkey, SecurityInfo, pSecurityDesc);
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegSaveKey32W [ADVAPI32.166]
+ */
+LONG WINAPI RegSaveKey32W( HKEY hkey, LPCWSTR lpFile, 
+                           LPSECURITY_ATTRIBUTES sa )
+{
+    FIXME(reg, "%x,%s,%p): stub\n", hkey, debugstr_w(lpFile), sa);
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegSaveKey32A [ADVAPI32.165]
+ */
+LONG WINAPI RegSaveKey32A( HKEY hkey, LPCSTR lpFile, 
+                           LPSECURITY_ATTRIBUTES sa )
+{
+    LONG ret;
+    LPWSTR lpFileW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpFile);
+    ret = RegSaveKey32W( hkey, lpFileW, sa );
+    HeapFree( GetProcessHeap(), 0, lpFileW );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegRestoreKey32W [ADVAPI32.164]
+ */
+LONG WINAPI RegRestoreKey32W( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
+{
+    FIXME(reg, "%x,%s,%ld): stub\n", hkey, debugstr_w(lpFile), dwFlags);
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegRestoreKey32A [ADVAPI32.163]
+ */
+LONG WINAPI RegRestoreKey32A( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
+{
+    LONG ret;
+    LPWSTR lpFileW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpFile);
+    ret = RegRestoreKey32W( hkey, lpFileW, dwFlags );
+    HeapFree( GetProcessHeap(), 0, lpFileW );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegReplaceKey32W [ADVAPI32.162]
+ */
+LONG WINAPI RegReplaceKey32W( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
+                              LPCWSTR lpOldFile )
+{
+    FIXME(reg, "%x,%s,%s,%s): stub\n", hkey, debugstr_w(lpSubKey), 
+          debugstr_w(lpNewFile),debugstr_w(lpOldFile));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegReplaceKey32A [ADVAPI32.161]
+ */
+LONG WINAPI RegReplaceKey32A( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
+                              LPCSTR lpOldFile )
+{
+    LONG ret;
+    LPWSTR lpSubKeyW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpSubKey);
+    LPWSTR lpNewFileW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpNewFile);
+    LPWSTR lpOldFileW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpOldFile);
+    ret = RegReplaceKey32W( hkey, lpSubKeyW, lpNewFileW, lpOldFileW );
+    HeapFree( GetProcessHeap(), 0, lpOldFileW );
+    HeapFree( GetProcessHeap(), 0, lpNewFileW );
+    HeapFree( GetProcessHeap(), 0, lpSubKeyW );
+    return ret;
 }
 

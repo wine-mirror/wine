@@ -7,7 +7,6 @@
  * Copyright 1998 Marcus Meissner
  */
 
-#include <stdio.h>
 #include <assert.h>
 #include <time.h>
 #include <string.h>
@@ -1504,27 +1503,27 @@ OLESTATUS WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 	OFSTRUCT	ofs;
 	BYTE		magic[24];
 
-	TRACE(ole,"(\'%s\')",fn);
+	TRACE(ole,"(\'%s\')\n",fn);
 	hf = OpenFile32(fn,&ofs,OF_SHARE_DENY_NONE);
 	if (hf==HFILE_ERROR32)
 		return STG_E_FILENOTFOUND;
 	if (24!=_lread32(hf,magic,24)) {
-		fprintf(stderr," too short\n");
+		WARN(ole," too short\n");
 		_lclose32(hf);
 		return S_FALSE;
 	}
 	if (!memcmp(magic,STORAGE_magic,8)) {
-		fprintf(stderr," -> YES\n");
+		WARN(ole," -> YES\n");
 		_lclose32(hf);
 		return S_OK;
 	}
 	if (!memcmp(magic,STORAGE_notmagic,8)) {
-		fprintf(stderr," -> NO\n");
+		WARN(ole," -> NO\n");
 		_lclose32(hf);
 		return S_FALSE;
 	}
 	if (!memcmp(magic,STORAGE_oldmagic,8)) {
-		fprintf(stderr," -> old format\n");
+		WARN(ole," -> old format\n");
 		_lclose32(hf);
 		return STG_E_OLDFORMAT;
 	}
@@ -1560,7 +1559,7 @@ OLESTATUS WINAPI StgOpenStorage16(
 	_create_istorage16(ppstgOpen);
 	hf = CreateFile32A(pwcsName,GENERIC_READ,0,NULL,0,0,0);
 	if (hf==INVALID_HANDLE_VALUE32) {
-		fprintf(stderr,"couldn't open file for storage\n");
+		WARN(ole,"Couldn't open file for storage\n");
 		return E_FAIL;
 	}
 	lpstg = (LPSTORAGE16)PTR_SEG_TO_LIN(*ppstgOpen);

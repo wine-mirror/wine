@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <stdio.h>
 #include "debug.h"
 #include "windows.h"
 #include "callback.h"

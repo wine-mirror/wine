@@ -4,7 +4,6 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -596,9 +595,13 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 
     if (Options.desktopGeometry && Options.managed)
     {
+#if 0
         MSG( "%s: -managed and -desktop options cannot be used together\n",
                  Options.programName );
         exit(1);
+#else
+        Options.managed = FALSE;
+#endif
     }
 
     screen       = DefaultScreenOfDisplay( display );
@@ -813,7 +816,27 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
                 uParam = sizeof(ANIMATIONINFO);
                 break;
         }
- 
+
+        case SPI_GETHIGHCONTRAST:
+        {
+                LPHIGHCONTRASTA lpHighContrastA = (LPHIGHCONTRASTA)lpvParam;
+
+                FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
+
+                if ( lpHighContrastA->cbSize == sizeof( HIGHCONTRASTA ) )
+                {
+                        /* Indicate that there is no high contrast available */
+                        lpHighContrastA->dwFlags = 0;
+                        lpHighContrastA->lpszDefaultScheme = NULL;
+                }
+                else
+                {
+                        return FALSE;
+                }
+
+                break;
+        }
+
 	default:
 		return SystemParametersInfo16(uAction,uParam,lpvParam,fuWinIni);
 	}
@@ -993,7 +1016,6 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		case SPI_SETFASTTASKSWITCH:
 		case SPI_SETKEYBOARDDELAY:
 		case SPI_SETKEYBOARDSPEED:
-	        case SPI_GETHIGHCONTRAST:
 			WARN(system, "Option %d ignored.\n", uAction);
 			break;
 
@@ -1067,6 +1089,26 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
 	break;
+    }
+
+    case SPI_GETHIGHCONTRAST:
+    {
+       LPHIGHCONTRASTA lpHighContrastW = (LPHIGHCONTRASTW)lpvParam;
+
+       FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
+
+       if ( lpHighContrastW->cbSize == sizeof( HIGHCONTRASTW ) )
+       {
+          /* Indicate that there is no high contrast available */
+          lpHighContrastW->dwFlags = 0;
+          lpHighContrastW->lpszDefaultScheme = NULL;
+       }
+       else
+       {
+          return FALSE;
+       }
+
+       break;
     }
 
     default:

@@ -110,7 +110,8 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	FIXME(ole,"(%p)->(%08x,%p,%p,%p,%p,%p),stub!\n",
 		this,hwndOwner,pbcReserved,lpszDisplayName,pchEaten,ppidl,pdwAttributes
 	);
-	*(DWORD*)pbcReserved = 0;
+	if (pbcReserved)
+		*(DWORD*)pbcReserved = 0;
 	return 0;
 }
 

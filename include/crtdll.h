@@ -22,4 +22,7 @@
 #define CRTDLL_LEADBYTE		0x8000
 #define CRTDLL_ALPHA		(0x0100|CRTDLL_UPPER|CRTDLL_LOWER)
 
-#endif
+/* function prototypes used in crtdll.c */
+extern int LastErrorToErrno(DWORD);
+
+#endif /* __WINE_CRTDLL_H */

@@ -3,7 +3,6 @@
   Copyright 1998, Douglas Ridgway
 */
 
-#include <stdio.h>
 #include <string.h>
 #include "windows.h"
 #include "gdi.h"

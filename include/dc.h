@@ -25,7 +25,9 @@ extern void DC_UpdateXforms( DC * dc );
 
 extern const int DC_XROPfunction[];
 
+/* objects/clipping.c */
 INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
-                                  INT32 right, INT32 bottom, UINT32 flags );
+    INT32 right, INT32 bottom, UINT32 flags );
+extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 #endif /* __WINE_DC_H */

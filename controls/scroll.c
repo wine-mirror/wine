@@ -6,7 +6,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "windows.h"
@@ -900,9 +899,23 @@ INT16 WINAPI SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
 
 /*************************************************************************
  *           SetScrollInfo32   (USER32.501)
+ * SetScrollInfo32 can be used to set the position, upper bound, 
+ * lower bound, and page size of a scrollbar control.
+ *
+ * RETURNS
+ *    Scrollbar position
+ *
+ * NOTE
+ *    For 100 lines of text to be displayed in a window of 25 lines,
+ *  one would for instance use info->nMin=0, info->nMax=75
+ *  (corresponding to the 76 different positions of the window on
+ *  the text), and info->nPage=25.
  */
-INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
-                              BOOL32 bRedraw )
+INT32 WINAPI SetScrollInfo32( 
+HWND32 hwnd /* [I] Handle of window whose scrollbar will be affected */, 
+INT32 nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */, 
+const SCROLLINFO *info /* [I] Specifies what to change and new values */,
+BOOL32 bRedraw /* [I] Should scrollbar be redrawn afterwards ? */)
 {
     SCROLLBAR_INFO *infoPtr;
     UINT32 new_flags;
@@ -1019,8 +1032,15 @@ BOOL16 WINAPI GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
 
 /*************************************************************************
  *           GetScrollInfo32   (USER32.284)
+ * GetScrollInfo32 can be used to retrieve the position, upper bound, 
+ * lower bound, and page size of a scrollbar control.
+ *
+ * RETURNS STD
  */
-BOOL32 WINAPI GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO info )
+BOOL32 WINAPI GetScrollInfo32( 
+  HWND32 hwnd /* [I] Handle of window */ , 
+  INT32 nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */, 
+  LPSCROLLINFO info /* [IO] (info.fMask [I] specifies which values are to retrieve) */)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1054,9 +1074,20 @@ INT16 WINAPI SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos,
 
 /*************************************************************************
  *           SetScrollPos32   (USER32.502)
+ *
+ * RETURNS
+ *    Success: Scrollbar position
+ *    Failure: 0
+ *
+ * REMARKS
+ *    Note the ambiguity when 0 is returned.  Use GetLastError
+ *    to make sure there was an error (and to know which one).
  */
-INT32 WINAPI SetScrollPos32( HWND32 hwnd, INT32 nBar, INT32 nPos,
-                             BOOL32 bRedraw )
+INT32 WINAPI SetScrollPos32( 
+HWND32 hwnd /* [I] Handle of window whose scrollbar will be affected */,
+INT32 nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */,
+INT32 nPos /* [I] New value */,
+BOOL32 bRedraw /* [I] Should scrollbar be redrawn afterwards ? */ )
 {
     SCROLLINFO info;
     SCROLLBAR_INFO *infoPtr;
@@ -1083,8 +1114,18 @@ INT16 WINAPI GetScrollPos16( HWND16 hwnd, INT16 nBar )
 
 /*************************************************************************
  *           GetScrollPos32   (USER32.285)
+ *
+ * RETURNS
+ *    Success: Current position
+ *    Failure: 0   
+ *
+ * REMARKS
+ *    Note the ambiguity when 0 is returned.  Use GetLastError
+ *    to make sure there was an error (and to know which one).
  */
-INT32 WINAPI GetScrollPos32( HWND32 hwnd, INT32 nBar )
+INT32 WINAPI GetScrollPos32( 
+HWND32 hwnd, /* [I] Handle of window */
+INT32 nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1107,9 +1148,15 @@ void WINAPI SetScrollRange16( HWND16 hwnd, INT16 nBar,
 
 /*************************************************************************
  *           SetScrollRange32   (USER32.503)
+ *
+ * RETURNS STD
  */
-BOOL32 WINAPI SetScrollRange32( HWND32 hwnd, INT32 nBar,
-                                INT32 MinVal, INT32 MaxVal, BOOL32 bRedraw )
+BOOL32 WINAPI SetScrollRange32( 
+HWND32 hwnd, /* [I] Handle of window whose scrollbar will be affected */
+INT32 nBar, /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */
+INT32 MinVal, /* [I] New minimum value */
+INT32 MaxVal, /* [I] New maximum value */
+BOOL32 bRedraw /* [I] Should scrollbar be redrawn afterwards ? */)
 {
     SCROLLINFO info;
 
@@ -1172,9 +1219,14 @@ BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar,
 
 /*************************************************************************
  *           GetScrollRange32   (USER32.286)
+ *
+ * RETURNS STD
  */
-BOOL32 WINAPI GetScrollRange32( HWND32 hwnd, INT32 nBar,
-                                LPINT32 lpMin, LPINT32 lpMax)
+BOOL32 WINAPI GetScrollRange32( 
+HWND32 hwnd, /* [I] Handle of window */
+INT32 nBar, /* [I] One of SB_HORZ, SB_VERT, or SB_CTL  */
+LPINT32 lpMin, /* [O] Where to store minimum value */
+LPINT32 lpMax /* [O] Where to store maximum value */)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1201,8 +1253,13 @@ void WINAPI ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
 
 /*************************************************************************
  *           ShowScrollBar32   (USER32.532)
+ *
+ * RETURNS STD
  */
-BOOL32 WINAPI ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
+BOOL32 WINAPI ShowScrollBar32( 
+HWND32 hwnd, /* [I] Handle of window whose scrollbar(s) will be affected   */
+INT32 nBar, /* [I] One of SB_HORZ, SB_VERT, SB_BOTH or SB_CTL */
+BOOL32 fShow /* [I] TRUE = show, FALSE = hide  */)
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 

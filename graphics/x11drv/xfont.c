@@ -19,6 +19,7 @@
 #include "ts_xlib.h"
 #include <X11/Xatom.h>
 #include <math.h>
+#include <assert.h>
 #include "heap.h"
 #include "options.h"
 #include "x11font.h"
@@ -29,7 +30,7 @@
 #define X_FMC_MAGIC		(0x0000CAFE)
 
 #define MAX_FONT_FAMILIES	64
-#define MAX_LFD_LENGTH		128
+#define MAX_LFD_LENGTH		256
 
 #define REMOVE_SUBSETS		1
 #define UNMARK_SUBSETS		0
@@ -396,6 +397,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    const char*  lpEncoding = NULL;
    char         h_string[64], point_string[64];
 
+   *(lpLFD+MAX_LFD_LENGTH-1)=0;
    lstrcpy32A( lpLFD, fo->fr->resource );
 
 /* add weight */
@@ -543,6 +545,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    }
 
    TRACE(font,"\tLFD: %s\n", lpLFD );
+   assert(*(lpLFD+MAX_LFD_LENGTH-1)==0); /* check if overwrittem */
    return TRUE;
 }
 
@@ -1242,7 +1245,7 @@ static int XFONT_CheckIniSection()
     PROFILE_EnumerateWineIniSection("Fonts", &XFONT_CheckIniCallback,
                     (void *)&found);
     if(found)
-    fprintf(stderr, fontmsgepilogue);
+    MSG(fontmsgepilogue);
 
     return 1;
 }
@@ -1267,21 +1270,21 @@ static void  XFONT_CheckIniCallback(
 	/* Valid key; make sure the value doesn't contain a wildcard */
 	if(strchr(value, '*')) {
 	    if(*(int *)found == 0) {
-		fprintf(stderr, fontmsgprologue);
+		MSG(fontmsgprologue);
 		++*(int *)found;
 	    }
 
-	    fprintf(stderr, "     %s=%s [no wildcards allowed]\n", key, value);
+	    MSG("     %s=%s [no wildcards allowed]\n", key, value);
 	}
     }
     else {
 	/* Not a valid key */
 	if(*(int *)found == 0) {
-	    fprintf(stderr, fontmsgprologue);
+	    MSG(fontmsgprologue);
 	    ++*(int *)found;
     }
 
-	fprintf(stderr, "     %s=%s [obsolete]\n", key, value);
+	MSG("     %s=%s [obsolete]\n", key, value);
     }
 
     return;

@@ -8,7 +8,6 @@
    stubs. 'Real' implementations go into context specific files */
 
 #include <unistd.h>
-#include <stdio.h>
 #include <stdarg.h>
 #include "windows.h"
 #include "winerror.h"

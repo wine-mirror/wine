@@ -4,7 +4,6 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include "dc.h"
 #include "metafile.h"
 #include "region.h"

@@ -4,7 +4,6 @@
  * Copyright 1997 Marcus Meissner
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>

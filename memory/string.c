@@ -230,12 +230,11 @@ INT32 WINAPI lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
     }
     while (*str1)
     {
-        /* FIXME: Unicode */
-        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
+        if ((res = towupper(*str1) - towupper(*str2)) != 0) return res;
         str1++;
         str2++;
     }
-    return toupper(*str1) - toupper(*str2);
+    return towupper(*str1) - towupper(*str2);
 }
 
 
@@ -408,12 +407,11 @@ INT32 WINAPI lstrncmpi32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
     if (!n) return 0;
     while ((--n > 0) && *str1)
     {
-        /* FIXME: Unicode */
-        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
+        if ((res = towupper(*str1) - towupper(*str2)) != 0) return res;
         str1++;
         str2++;
     }
-    return toupper(*str1) - toupper(*str2);
+    return towupper(*str1) - towupper(*str2);
 }
 
 

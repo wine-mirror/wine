@@ -4,7 +4,6 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>

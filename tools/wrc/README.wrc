@@ -1,0 +1,258 @@
+This is the first release (1.0.0 (28-May-1998)) of the new resource compiler
+'wrc'. It improves the winerc implementation by these features:
+
+- source preprocessing
+- 16 and 32 bit support
+- LANGUAGE support (32 bit only)
+- almost all resource types are supported
+- enhanced expression capabilities and resource naming
+- indirect loadable resources
+- NE/PE resource directory generation
+- binary .res file generation/reading
+
+Wrc generates an assembly file that can be assembled with GNU's gas, or
+passed to gcc. The assembly became necessary for two reasons. First, C does
+not ensure relative position of declared data. Secondly, C complaints about
+complex initialization schemes that became necessary with the NE/PE
+directory generation.
+
+
+Wrc command-line
+----------------
+You can get this message by typing 'wrc -?':
+
+Usage: wrc [options...] [infile[.rc|.res]]
+   -a n        Alignment of resource (win16 only, default is 4)
+   -b          Create a C array from a binary .res file
+   -c          Add 'const' prefix to C constants
+   -C cp       Set the resource's codepage to cp (default is 0)
+   -d n        Set debug level to 'n'
+   -D id[=val] Define preprocessor identifier id=val
+   -e          Disable recognition of win32 keywords in 16bit compile
+   -g          Add symbols to the global c namespace
+   -h          Also generate a .h file
+   -H file     Same as -h but written to file
+   -I path     Set include search dir to path (multiple -I allowed)
+   -l lan      Set default language to lan (default is neutral {0})
+   -n          Do not generate .s file
+   -o file     Output to file (default is infile.[res|s|h]
+   -p prefix   Give a prefix for the generated names
+   -r          Create binary .res file (compile only)
+   -s          Add structure with win32/16 (PE/NE) resource directory
+   -t          Generate indirect loadable resource tables
+   -T          Generate only indirect loadable resources tables
+   -V          Print version end exit
+   -w 16|32    Select win16 or win32 output (default is win32)
+   -W          Enable pedantic warnings
+
+Input is taken from stdin if no sourcefile specified.
+
+Debug level 'n' is a bitmask with following meaning:
+    * 0x01 Tell which resource is parsed (verbose mode)
+    * 0x02 Dump internal structures
+    * 0x04 Create a parser trace (yydebug=1)
+
+The -o option only applies to the final destination file, which is
+in case of normal compile a .s file. You must use the '-H header.h'
+option to override the header-filename.
+If no input filename is given and the output name is not overridden
+with -o and/or -H, then the output is written to "wrc.tab.[sh]"
+
+
+Preprocessing
+-------------
+The build-in preprocessor is not a full implementation of the C counterpart.
+Wrc does not understand function-type macros. These are discarded as they
+are scanned. This will be a future project. Wrc does understand these:
+#define
+#if
+#ifdef
+#ifndef
+#elif
+#else
+#endif
+#error
+
+Also 'defined' is supported as operator (both with and without parenthesis).
+'#if' expressions can be anything valid that evaluates to an integer
+expression (where 0 is false and anything else is true). Others (#pragma,
+#line) are ignored. A special case '#' generates an error. This is due to
+the implementation to enable generation of errors on preprocessing and will
+be improved in the future.
+
+
+16 and 32 bit support
+---------------------
+All of wrc is layed out in such a way that it enables compilation of both 16
+and 32 bit resources. They mainly differ in code-generation and extra
+keywords. Win32 keywords are recognized by default in 16 bit compile. You
+can disable recognition of win32 reserved keywords by using the '-e' option,
+if you encounter .rc-files that use win32 reserved keywords (I strongly
+recommend that you just rename things in the source).
+
+
+Language support
+----------------
+Wrc also understands the LANGUAGE keyword (win32 only) for both global and
+local definitions of language. There are differences with respect to MS' and
+Borland's implementation. Wrc uses 0,0 as the default language if non is
+specified. Both MS and Borland use the language of the system that the
+compiler runs on.
+
+Not all resource-types can have local language keywords attached yet
+(notably: BITMAP, CURSOR, ICON and usertype). This is due to implementation
+of filename-scanning and the complexity that it poses. This will be changed
+in the next release.
+
+
+Resource types supported
+------------------------
+All types are supported except for:
+- FONT
+- MESSAGETABLE
+- extensions like TOOLBAR and the like
+
+These types will be implemented as soon as I get a proper specification of
+the layout.
+
+Note: Usertype resources with character strings as types have a different
+layout and do not accept expressions when a numerical type is specified. The
+must be enclosed in double quotes. These are examples of valid usertype
+resources:
+
+MyName "MyType" mydata.bin
+MyName 12345 mydata.bin
+MyName "MyType" "mydata.bin"
+MyName 12345 "mydata.bin"
+
+MyName "MyType"
+{
+  ..., data, ...
+}
+
+or
+
+MyName 12345
+{
+ ..., data, ...
+}
+
+
+Expression capabilities and resource names
+------------------------------------------
+You can use an expression in most places where the resource definition
+expects a number (except usertype type). Operators supported: 
+()	parenthesis
+*	multiply
+/	divide
++	add
+-	minus/substract
+|	binary or
+&	binary and
+~	binary not (unary operator though)
+NOT	... (sigh)
+
+Minus (-) can both be unary and binary. The NOT operator is (primarily)
+used to disable window styles but I strongly suggest to refrain from using
+this operator.
+There is a shift/reduce conflict on the unary minus, but this is not
+problematic. I was too lazy to make a new expression parser (next version or
+so). Unary plus (+) would cause another confilct, so I let it out for now.
+
+Resource names can be both numerical (expressions) and character typed. Wrc
+does supports this insane (deep sigh) construct:
+
+MENU MENU
+{
+ ...
+}
+
+It is _ONLY_ supported for backwards compatibility so that old sources can
+be compiled with winelib. DO NOT USE IT IN NEW RESOURCES, PLEASE!
+
+
+Indirect loadable resources
+---------------------------
+
+Wrc can generate tables for indirect resource loading like winerc did. There
+are two new structures defined in 'wine-base-dir/include/wrc_rsc.h':
+
+typedef struct wrc_resource16
+{
+        INT32   resid;          /* The resource id if resname == NULL */
+        LPSTR   resname;
+        INT32   restype;        /* The resource type-id if typename == NULL */
+        LPSTR   typename;
+        LPBYTE  data;           /* Actual resource data */
+        UINT32  datasize;       /* The size of the resource */
+} wrc_resource16_t;
+
+typedef struct wrc_resource32
+{
+        INT32   resid;          /* The resource id if resname == NULL */
+        LPWSTR  resname;
+        INT32   restype;        /* The resource type-id if typename == NULL */
+        LPWSTR  typename;
+        LPBYTE  data;           /* Actual resource data */
+        UINT32  datasize;       /* The size of the resource */
+} wrc_resource32_t;
+
+The extension to winerc lies in the addition of the 'typename' field to
+support usertype resoursec with names for types.
+
+Note that _ALL_ names generated by wrc and to be used in interfacing with
+wine are PASCAL-style strings, unlike winerc. The first element contains the
+length and the strings are _not_ '\0'-terminated!
+
+You can also generate header files with wrc when specifying the '-h' or
+'-H<filename>' option.
+
+
+NE/PE resource directory generation
+-----------------------------------
+A windows executable has a table/directory of resources avalable in that
+module. Wrc will generate this directory with the '-s' option and place it
+in the assembly output (and header-file). This will enable the separation
+of different modules (dlls) in wine, which is the next project after wrc.
+
+The layout of the PE directory should be exactly like the executable file.
+The NE-directory layout _DIFFERS_ from the real NE-executable in such way
+that all offsets to actual resource-data is relative to the NE-directory and
+_NOT_ the beginning of the file.
+
+
+Binary .res file generation/reading
+-----------------------------------
+Wrc can both generate (32 and 16 bit) and read (32 bit only) .res-files.
+These can be used as intermediate files or binary files can be imported from
+other sources. The reading of 16 bit .res-files is on the list for the next
+release.
+
+You cannot convert 32 bit .res-files into 16 bit output or vice versa. I
+might implement 16 bit res into 32 bit output in the future, but I stronly
+oppose to the other way arround.
+
+
+Bugs
+----
+Inherent to programs you have bugs. These I know are there, plus a few
+things that I noted in the above text (more lack of implementation than bug
+though):
+- No codepage translation
+- UNICODE translations are not/not correct implemented
+- No documentation ('wrc -?' gives command-line options though)
+- grep for FIXME in the source
+
+
+Reporting bugs and patches
+--------------------------
+Send problems to the wine newsgroup or, preferrably,  directly to me at:
+
+bertho@akhphd.au.dk
+
+Please send the problematic rc-source with the bug so I can reproduce it.
+Patches should _not_ be send to Alexandre but to me. I will then review the
+change and send a full patch to be included into the new wine release (I
+prefer 'diff -u' format). You can always upload suggestions to wine
+headquarters, but be sure to send me a copy.
+

@@ -29,7 +29,6 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -928,5 +927,27 @@ DWORD WINAPI DllCanUnloadNow(void)
 {
     FIXME(dsound, "(void): stub\n");
     return S_FALSE;
+}
+
+/***************************************************************************
+ *   DirectPlayLobbyCreateW (DPLAYX.5)
+ *
+ */
+HRESULT WINAPI DirectPlayLobbyCreateW( LPGUID lpGUID, LPDIRECTPLAYLOBBY *a,
+                                       IUnknown *b, LPVOID c, DWORD d )
+{
+  FIXME(dsound,"lpGUID=%p a=%p b=%p c=%p d=%08lx :stub\n",lpGUID,a,b,c,d);
+  return E_FAIL;
+}
+
+/***************************************************************************
+ *  DirectPlayLobbyCreateA   (DPLAYX.4)
+ *
+ */
+HRESULT WINAPI DirectPlayLobbyCreateA( LPGUID lpGUID, LPDIRECTPLAYLOBBYA *a,
+                                       IUnknown *b, LPVOID c, DWORD d )
+{
+  FIXME(dsound,"lpGUID=%p a=%p b=%p c=%p d=%08lx :stub\n",lpGUID,a,b,c,d);
+  return E_FAIL;
 }
 

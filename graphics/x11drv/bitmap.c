@@ -15,8 +15,6 @@
 #include "heap.h"
 #include "debug.h"
 
-extern void CLIPPING_UpdateGCRegion(DC* );
-
 /***********************************************************************
  *           X11DRV_BITMAP_Init
  */

@@ -1,0 +1,467 @@
+/*
+ * General type definitions
+ *
+ * Copyright 1998 Bertho A. Stultiens (BS)
+ *
+ */
+
+#ifndef __WRC_WRCTYPES_H
+#define __WRC_WRCTYPES_H
+
+/* First is MS style, second wine style */
+#if !defined(_INC_WINDOWS) && !defined(__WINE_WINDOWS_H)
+#include "windows.h"
+#endif
+
+#ifndef MAKELANGID
+#include "winnls.h"
+#endif
+
+#ifndef VS_FFI_SIGNATURE
+#include "ver.h"
+#endif
+
+
+/* Binary resource structure */
+#define RES_BLOCKSIZE	512
+
+typedef struct res {
+	int	allocsize;	/* Allocated datablock size */
+	int	size;		/* Actual size of data */
+	int	dataidx;	/* Tag behind the resource-header */
+	char	*data;
+} res_t;
+
+/* Resource strings are slightly more complex because they include '\0' */
+enum str_e {str_char, str_unicode};
+
+typedef struct string {
+	int 		size;
+	enum str_e	type;
+	union {
+		char *cstr;
+		short *wstr;
+	} str;
+} string_t;
+
+/* Resources are identified either by name or by number */
+enum name_e {name_str, name_ord};
+
+typedef struct name_id {
+	union {
+		string_t *s_name;
+		int	i_name;
+	} name;
+	enum name_e type;
+} name_id_t;
+
+/* Language definitions */
+typedef struct language {
+	int	id;
+	int	sub;
+} language_t;
+
+typedef DWORD characts_t;
+typedef DWORD version_t;
+
+typedef struct lvc {
+	language_t	*language;
+	version_t	*version;
+	characts_t	*characts;
+} lvc_t;
+
+typedef struct font_id {
+	string_t	*name;
+	int		size;
+	int		weight;
+	int		italic;
+} font_id_t;
+
+/* resource types */
+/* These are in the same order (and ordinal) as the RT_xxx
+ * defines. This is _required_.
+ * I rolled my own numbers for the win32 extension that are
+ * documented, but generate either old RT_xxx numbers, or
+ * don't have an ordinal associated (user type).
+ * I don't know any specs for those noted such, for that matter,
+ * I don't even know whether they can be generated other than by
+ * using a user-type resource.
+ */
+enum res_e {
+	res_0 = 0,
+	res_cur,
+	res_ico,
+	res_bmp,
+	res_men,
+	res_dlg,
+	res_stt,
+	res_fntdir,
+	res_fnt,
+	res_acc,
+	res_rdt,
+	res_msg,
+	res_curg,
+	res_13,		/* Hm, wonder why its not used... */
+	res_icog,
+	res_15,
+	res_ver,
+	res_dlginc,	/* Not implemented, no layout available */
+	res_18,
+	res_pnp,	/* Not implemented, no layout available */
+	res_vxd,	/* Not implemented, no layout available */
+	res_anicur,	/* Not implemented, no layout available */
+	res_aniico,	/* Not implemented, no layout available */
+
+	res_menex = 256 + 4,
+	res_dlgex,
+	res_usr,
+};
+
+/* Raw bytes in a row... */
+typedef struct raw_data {
+	int	size;
+	char	*data;
+} raw_data_t;
+
+/* Dialog structures */
+typedef struct control {
+	struct control	*next;		/* List of controls */
+	struct control	*prev;
+	name_id_t	*ctlclass;	/* ControlClass */
+	string_t	*title;		/* Title of control */
+	int		id;
+	int		x;		/* Position */
+	int		y;
+	int		width;		/* Size */
+	int		height;
+	DWORD		style;		/* Style */
+	DWORD		exstyle;
+	DWORD		helpid;		/* EX: */
+	int		gotstyle;	/* Used to determine whether the default */
+	int		gotexstyle;	/* styles must be set */
+	int		gothelpid;
+	raw_data_t	*extra;		/* EX: number of extra bytes in resource */
+} control_t;
+
+typedef struct dialog {
+	DWORD		memopt;
+	int		x;		/* Position */
+	int		y;
+	int		width;		/* Size */
+	int		height;
+	DWORD		style;		/* Style */
+	DWORD		exstyle;
+	int		gotstyle;	/* Used to determine whether the default */
+	int		gotexstyle;	/* styles must be set */
+	name_id_t	*menu;
+	name_id_t	*dlgclass;
+	string_t	*title;
+	font_id_t	*font;
+	lvc_t		lvc;
+	control_t	*controls;
+} dialog_t;
+
+/* DialogEx structures */
+typedef struct dialogex {
+	DWORD		memopt;
+	int		x;		/* Position */
+	int		y;
+	int		width;		/* Size */
+	int		height;
+	DWORD		style;		/* Style */
+	DWORD		exstyle;
+	DWORD		helpid;		/* EX: */
+	int		gotstyle;	/* Used to determine whether the default */
+	int		gotexstyle;	/* styles must be set */
+	int		gothelpid;
+	name_id_t	*menu;
+	name_id_t	*dlgclass;
+	string_t	*title;
+	font_id_t	*font;
+	lvc_t		lvc;
+	control_t	*controls;
+} dialogex_t;
+
+/* Menu structures */
+typedef struct menu_item {
+	struct menu_item *next;
+	struct menu_item *prev;
+	struct menu_item *popup;
+	int		id;
+	DWORD		state;
+	string_t	*name;
+} menu_item_t;
+
+typedef struct menu {
+	DWORD		memopt;
+	lvc_t		lvc;
+	menu_item_t	*items;
+} menu_t;
+
+/* MenuEx structures */
+typedef struct menuex_item {
+	struct menuex_item *next;
+	struct menuex_item *prev;
+	struct menuex_item *popup;
+	int		id;
+	DWORD		type;
+	DWORD		state;
+	int		helpid;
+	string_t	*name;
+	int		gotid;
+	int		gottype;
+	int		gotstate;
+	int		gothelpid;
+} menuex_item_t;
+
+typedef struct menuex {
+	DWORD		memopt;
+	lvc_t		lvc;
+	menuex_item_t	*items;
+} menuex_t;
+
+typedef struct itemex_opt
+{
+	int	id;
+	DWORD	type;
+	DWORD	state;
+	int	helpid;
+	int	gotid;
+	int	gottype;
+	int	gotstate;
+	int	gothelpid;
+} itemex_opt_t;
+
+/* RC structures for types read from file or supplied binary */
+typedef struct font {
+	DWORD		memopt;
+	raw_data_t	*data;
+} font_t;
+
+typedef struct icon_dir_entry {
+    BYTE  width;	/* From the SKD doc. */
+    BYTE  height;
+    BYTE  nclr;
+    BYTE  reserved;
+    WORD  planes;
+    WORD  bits;
+    DWORD ressize;
+    DWORD offset;
+} icon_dir_entry_t;
+
+typedef struct icon {
+	struct icon	*next;
+	struct icon	*prev;
+	int		id;	/* Unique icon id within resource file */
+	int		width;	/* Field from the IconDirEntry */
+	int		height;
+	int		nclr;
+	int		planes;
+	int		bits;
+	raw_data_t	*data;
+} icon_t;
+
+typedef struct icon_group {
+	DWORD		memopt;
+	icon_t		*iconlist;
+	int		nicon;
+} icon_group_t;
+
+typedef struct cursor_dir_entry {
+    BYTE  width;	/* From the SKD doc. */
+    BYTE  height;
+    BYTE  nclr;
+    BYTE  reserved;
+    WORD  xhot;
+    WORD  yhot;
+    DWORD ressize;
+    DWORD offset;
+} cursor_dir_entry_t;
+
+typedef struct cursor {
+	struct cursor	*next;
+	struct cursor	*prev;
+	int		id;	/* Unique icon id within resource file */
+	int		width;	/* Field from the CursorDirEntry */
+	int		height;
+	int		nclr;
+	int		planes;
+	int		bits;
+	int		xhot;
+	int		yhot;
+	raw_data_t	*data;
+} cursor_t;
+
+typedef struct cursor_group {
+	DWORD		memopt;
+	cursor_t	*cursorlist;
+	int		ncursor;
+} cursor_group_t;
+
+typedef struct bitmap {
+	DWORD		memopt;
+	raw_data_t	*data;
+} bitmap_t;
+
+typedef struct rcdata {
+	DWORD		memopt;
+	lvc_t		lvc;
+	raw_data_t	*data;
+} rcdata_t;
+
+typedef struct user {
+	DWORD		memopt;
+	name_id_t	*type;
+	raw_data_t	*data;
+} user_t;
+
+typedef struct messagetable {
+	raw_data_t	*data;
+} messagetable_t;
+
+/* StringTable structures */
+typedef struct stt_entry {
+	string_t		*str;
+	int			id;
+	DWORD			memopt;
+	characts_t		*characts;
+	version_t		*version;
+} stt_entry_t;
+
+typedef struct stringtable {
+	struct stringtable	*next;
+	struct stringtable	*prev;
+	DWORD			memopt;
+	lvc_t			lvc;
+	int			idbase;
+	int			nentries;
+	stt_entry_t		*entries;
+} stringtable_t;
+
+/* VersionInfo structures */
+enum ver_val_e {val_str, val_words, val_block};
+
+struct ver_block;	/* Forward ref */
+
+typedef struct ver_words {
+	WORD	*words;
+	int	nwords;
+} ver_words_t;
+
+typedef struct ver_value {
+	struct ver_value	*next;
+	struct ver_value	*prev;
+	string_t		*key;
+	union {
+		string_t		*str;
+		ver_words_t		*words;
+		struct ver_block	*block;
+	} value;
+	enum ver_val_e		type;
+} ver_value_t;
+
+typedef struct ver_block {
+	struct ver_block	*next;
+	struct ver_block	*prev;
+	string_t		*name;
+	ver_value_t		*values;
+} ver_block_t;
+
+typedef struct versioninfo {
+	int	filever_maj1;
+	int	filever_maj2;
+	int	filever_min1;
+	int	filever_min2;
+	int	prodver_maj1;
+	int	prodver_maj2;
+	int	prodver_min1;
+	int	prodver_min2;
+	int	fileos;
+	int	fileflags;
+	int	fileflagsmask;
+	int	filetype;
+	int	filesubtype;
+	struct {
+		int fv:1;
+		int pv:1;
+		int fo:1;
+		int ff:1;
+		int ffm:1;
+		int ft:1;
+		int fst:1;
+	} gotit;
+	ver_block_t	*blocks;
+} versioninfo_t;
+
+/* Accelerator structures */
+#define WRC_AF_VIRTKEY	0x0001
+#define WRC_AF_NOINVERT	0x0002
+#define WRC_AF_SHIFT	0x0004
+#define WRC_AF_CONTROL	0x0008
+#define WRC_AF_ALT	0x0010
+#define WRC_AF_ASCII	0x4000
+
+typedef struct event {
+	struct event	*next;
+	struct event	*prev;
+	int		flags;
+	int		key;
+	int		id;
+} event_t;
+
+typedef struct accelerator {
+	DWORD		memopt;
+	lvc_t		lvc;
+	event_t		*events;
+} accelerator_t;
+
+/* A top-level resource node */
+typedef struct resource {
+	struct resource	*next;
+	struct resource *prev;
+	enum res_e	type;
+	name_id_t	*name;	/* resource's name */
+	language_t	*lan;	/* Only used as a sorting key and c-name creation*/
+	union {
+		accelerator_t	*acc;
+		bitmap_t	*bmp;
+		cursor_t	*cur;
+		cursor_group_t	*curg;
+		dialog_t	*dlg;
+		dialogex_t	*dlgex;
+		font_t		*fnt;
+		icon_t		*ico;
+		icon_group_t	*icog;
+		menu_t		*men;
+		menuex_t	*menex;
+		messagetable_t	*msg;
+		rcdata_t	*rdt;
+		stringtable_t	*stt;
+		user_t		*usr;
+		versioninfo_t	*ver;
+		void		*overlay; /* To catch all types at once... */
+	} res;
+	res_t		*binres;	/* To binary converted resource */
+	char		*c_name;	/* BaseName in output */
+	DWORD		memopt;
+} resource_t;
+
+/* Resource count */
+typedef struct res32_count {
+	int			count;
+	resource_t		**rsc;
+} res32_count_t;
+
+typedef struct res_count {
+	name_id_t		type;
+	int			count;		/* win16 mode */
+	resource_t		**rscarray;
+	int			count32;
+	res32_count_t		*rsc32array;	/* win32 mode */
+	int			n_id_entries;
+	int			n_name_entries;
+} res_count_t;
+
+#endif
+
+

@@ -7,7 +7,7 @@ type	win32
 104 stub AddFormW
 105 stub AddJobA
 106 stub AddJobW
-107 stub AddMonitorA
+107 stdcall AddMonitorA(str long ptr) AddMonitor32A
 108 stub AddMonitorW
 109 stub AddPortA
 110 stub AddPortExA
@@ -66,7 +66,7 @@ type	win32
 163 stub EnumJobsW
 164 stub EnumMonitorsA
 165 stub EnumMonitorsW
-166 stub EnumPortsA
+166 stdcall EnumPortsA(ptr long ptr ptr ptr ptr) EnumPorts32A
 167 stub EnumPortsW
 168 stub EnumPrintProcessorDatatypesA
 169 stub EnumPrintProcessorDatatypesW

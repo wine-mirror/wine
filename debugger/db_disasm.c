@@ -25,7 +25,7 @@
  */
 /*
  * HISTORY
- * $Log:	db_disasm.c,v $
+ *
  * Revision 2.6  92/01/03  20:05:00  dbg
  * 	Add a switch to disassemble 16-bit code.
  * 	Fix spelling of 'lods' opcodes.

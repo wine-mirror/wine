@@ -49,11 +49,6 @@
 #define SMC_DRAWFRAME		0x0004
 #define SMC_SETXPOS		0x0008
 
-/* ----- external functions ----- */
-
-extern void 	FOCUS_SwitchFocus( HWND32 , HWND32 );
-extern HWND32	CARET_GetHwnd();
-
 /* ----- internal variables ----- */
 
 static HWND32 hwndActive      = 0;  /* Currently active window */

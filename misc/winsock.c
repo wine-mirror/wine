@@ -12,7 +12,6 @@
  
 #include "config.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -97,9 +96,6 @@ static int           _px_sock_ops[] =
 
 static int   _check_ws(LPWSINFO pwsi, ws_socket* pws);
 static char* _check_buffer(LPWSINFO pwsi, int size);
-
-extern void EVENT_AddIO( int fd, unsigned flag );
-extern void EVENT_DeleteIO( int fd, unsigned flag );
 
 /***********************************************************************
  *          convert_sockopt()
@@ -1674,14 +1670,6 @@ INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
  *								       *
  * ------------------------------------------------------------------- */
 
-
-/***********************************************************************
- *          Asynchronous DNS services
- */
-
-/* winsock_dns.c */
-extern HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, LPCSTR init,
-				 INT32 len, LPCSTR proto, void* sbuf, INT32 buflen, UINT32 flag);
 
 /***********************************************************************
  *       WSAAsyncGetHostByAddr()	(WINSOCK.102)

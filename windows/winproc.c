@@ -5,7 +5,6 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "callback.h"
 #include "heap.h"
@@ -99,7 +98,7 @@ BOOL32 WINPROC_Init(void)
     WinProcHeap = HeapCreate( HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 0 );
     if (!WinProcHeap)
     {
-        fprintf( stderr, "Unable to create winproc heap\n" );
+        WARN(relay, "Unable to create winproc heap\n" );
         return FALSE;
     }
     return TRUE;
@@ -439,8 +438,7 @@ INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        fprintf( stderr, "MapMsg32ATo32W: message %04x needs translation\n",
-                 msg );
+        TRACE(msg, "message %04x needs translation\n", msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -550,8 +548,7 @@ INT32 WINPROC_MapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        fprintf( stderr, "MapMsg32WTo32A: message %04x needs translation\n",
-                 msg );
+        WARN(msg, "message %04x needs translation\n",msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -811,8 +808,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        fprintf( stderr, "MapMsg16To32A: message %04x needs translation\n",
-                 msg16 );
+        WARN( msg, "message %04x needs translation\n",msg16 );
         return -1;
 
     default:  /* No translation needed */
@@ -1432,8 +1428,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        fprintf( stderr, "MapMsg32ATo16: message %04x needs translation\n",
-                 msg32 );
+        WARN( msg, "message %04x needs translation\n", msg32 );
         return -1;
 
     default:  /* No translation needed */
@@ -1856,7 +1851,7 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
         return WINPROC_CallProc16To32W( hwnd, msg, wParam, lParam,
                                         proc->thunk.t_from16.proc );
     default:
-        fprintf( stderr, "CallWindowProc16: invalid proc %p\n", proc );
+        WARN( relay, "Invalid proc %p\n", proc );
         return 0;
     }
 }
@@ -1892,7 +1887,7 @@ LRESULT WINAPI CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
         return WINPROC_CallProc32ATo32W( proc->thunk.t_from16.proc,
                                          hwnd, msg, wParam, lParam );
     default:
-        fprintf( stderr, "CallWindowProc32A: invalid proc %p\n", proc );
+        WARN( relay, "Invalid proc %p\n", proc );
         return 0;
     }
 }
@@ -1928,7 +1923,7 @@ LRESULT WINAPI CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
         return WINPROC_CallWndProc32( proc->thunk.t_from16.proc,
                                       hwnd, msg, wParam, lParam );
     default:
-        fprintf( stderr, "CallWindowProc32W: invalid proc %p\n", proc );
+        WARN( relay, "Invalid proc %p\n", proc );
         return 0;
     }
 }

@@ -12,7 +12,10 @@
 typedef struct
 {
   int StartX,StartY,EndX,EndY;
+  BOOL DontRedraw;
 } HandData;
+
+extern HandData OldMinute, OldHour, OldSecond;
 
 /* function prototypes */
 

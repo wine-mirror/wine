@@ -77,9 +77,6 @@ static void fixup_wshe(struct ws_hostent* p_wshe, void* base);
 static void fixup_wspe(struct ws_protoent* p_wspe, void* base);
 static void fixup_wsse(struct ws_servent* p_wsse, void* base);
 
-extern void EVENT_AddIO( int fd, unsigned flag );
-extern void EVENT_DeleteIO( int fd, unsigned flag );
-
 /* ----------------------------------- async/non-blocking I/O */
 
 int WINSOCK_async_io(int fd, int async)
@@ -321,8 +318,8 @@ static int aop_control(ws_async_op* p_aop, int flag )
 }
 
 
-HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, LPSTR init,
-		  	  INT32 len, LPSTR proto, void* sbuf, INT32 buflen, UINT32 flag)
+HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, 
+    LPCSTR init, INT32 len, LPCSTR proto, void* sbuf, INT32 buflen, UINT32 flag)
 {
     /* queue 'flag' request and fork off its handler */
 
@@ -336,7 +333,7 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, L
 	{
 	    async_ctl.rq.init = (char*)init;
 	    async_ctl.ilength = len;
-	    async_ctl.buffer = proto;
+	    async_ctl.buffer = (char*)proto;
 	    async_ctl.type = type;
 
 	    async_ctl.ws_aop->hWnd = hWnd;

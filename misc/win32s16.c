@@ -9,7 +9,6 @@
 #include "debug.h"
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 void BootTask()
 {

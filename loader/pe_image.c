@@ -38,7 +38,6 @@
 
 #include <errno.h>
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -251,7 +250,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	    res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
 	}
 	if (res <= (HMODULE32) 32) {
-	    WARN (module, "Module %s not found\n", name);
+	    ERR (module, "Module %s not found\n", name);
 	    return res;
 	}
 	xwm = wm->next;
@@ -793,6 +792,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
         if (wm->module < 32) 
         {
 	    process->modref_list = wm->next;
+	    FreeLibrary16( hModule);
 	    HeapFree(process->heap,0,wm);
 	    ERR(win32,"can't load %s\n",ofs.szPathName);
             return 21; /* FIXME: probably 0 */

@@ -2,7 +2,6 @@
  * BIOS interrupt 10h handler
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "miscemu.h"
 /* #define DEBUG_INT */

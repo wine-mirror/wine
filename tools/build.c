@@ -971,7 +971,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 static int BuildSpec32File( char * specfile, FILE *outfile )
 {
     ORDDEF *odp;
-    int i, nb_names, nb_reg_funcs = 0;
+    int i, nb_names;
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              specfile );
@@ -987,6 +987,25 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         fprintf( outfile, "static void __stub_%d() { BUILTIN32_Unimplemented(&%s_Descriptor,%d); }\n",
                  i, DLLName, i );
     }
+
+    /* Output code for all register functions */
+
+    fprintf( outfile, "#ifdef __i386__\n" );
+    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    {
+        if (odp->type != TYPE_REGISTER) continue;
+        fprintf( outfile,
+                 "__asm__(\".align 4\\n\\t\"\n"
+                 "        \".globl " PREFIX "%s\\n\\t\"\n"
+                 "        \".type " PREFIX "%s,@function\\n\\t\"\n"
+                 "        \"%s:\\n\\t\"\n"
+                 "        \"pushl $" PREFIX "__regs_%s\\n\\t\"\n"
+                 "        \"pushl $" PREFIX "CALL32_Regs\\n\\t\"\n"
+                 "        \"ret\");\n",
+                 odp->u.func.link_name, odp->u.func.link_name,
+                 odp->u.func.link_name, odp->u.func.link_name );
+    }
+    fprintf( outfile, "#endif\n" );
 
     /* Output the DLL functions prototypes */
 
@@ -1106,7 +1125,6 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             break;
         case TYPE_REGISTER:
             args = 0xfe;
-            nb_reg_funcs++;
             break;
         default:
             args = 0xff;
@@ -1125,7 +1143,6 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "    %d,\n", Base );
     fprintf( outfile, "    %d,\n", Limit - Base + 1 );
     fprintf( outfile, "    %d,\n", nb_names );
-    fprintf( outfile, "    %d,\n", nb_reg_funcs );
     fprintf( outfile,
              "    Functions,\n"
              "    FuncNames,\n"

@@ -26,6 +26,7 @@ MODULE    = none
 LIBSUBDIRS = \
 	rc \
 	tools \
+	tools/wrc \
 	controls \
 	files \
 	graphics \

@@ -2,9 +2,9 @@
  * Emulator thunks
  *
  * Copyright 1996, 1997 Alexandre Julliard
+ * Copyright 1998       Ulrich Weigand
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "callback.h"
 #include "resource.h"
@@ -13,12 +13,14 @@
 #include "heap.h"
 #include "hook.h"
 #include "module.h"
+#include "process.h"
 #include "stackframe.h"
 #include "selectors.h"
 #include "task.h"
 #include "except.h"
 #include "win.h"
 #include "debug.h"
+#include "flatthunk.h"
 
 
 /* List of the 16-bit callback functions. This list is used  */
@@ -709,4 +711,239 @@ static BOOL32 WINAPI THUNK_WOWCallback16Ex(
     if (pdwret) 
     	*pdwret = ret;
     return TRUE;
+}
+
+
+/***********************************************************************
+ * 16->32 Flat Thunk routines:
+ */
+
+/***********************************************************************
+ *              ThunkConnect16          (KERNEL.651)
+ * Connects a 32bit and a 16bit thunkbuffer.
+ */
+UINT32 WINAPI ThunkConnect16(
+        LPSTR module16,              /* [in] name of win16 dll */
+        LPSTR module32,              /* [in] name of win32 dll */
+        HINSTANCE16 hInst16,         /* [in] hInst of win16 dll */
+        DWORD dwReason,              /* [in] initialisation argument */
+        struct ThunkDataCommon *TD,  /* [in/out] thunkbuffer */
+        LPSTR thunkfun32,            /* [in] win32 thunkfunction */
+        WORD CS                      /* [in] CS of win16 dll */
+) {
+    BOOL32 directionSL;
+
+    if (!lstrncmp32A(TD->magic, "SL01", 4))
+    {
+        directionSL = TRUE;
+
+        TRACE(thunk, "SL01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
+                     module16, (DWORD)TD, module32, thunkfun32, dwReason);
+    }
+    else if (!lstrncmp32A(TD->magic, "LS01", 4))
+    {
+        directionSL = FALSE;
+
+        TRACE(thunk, "LS01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
+                     module16, (DWORD)TD, module32, thunkfun32, dwReason);
+    }
+    else
+    {
+        ERR(thunk, "Invalid magic %c%c%c%c\n",
+                   TD->magic[0], TD->magic[1], TD->magic[2], TD->magic[3]);
+        return 0;
+    }
+
+    switch (dwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+            if (directionSL)
+            {
+                struct ThunkDataSL16 *SL16 = (struct ThunkDataSL16 *)TD;
+                struct ThunkDataSL   *SL   = SL16->fpData;
+
+                if (SL == NULL)
+                {
+                    SL = HeapAlloc(GetProcessHeap(), 0, sizeof(*SL));
+
+                    SL->common   = SL16->common;
+                    SL->flags1   = SL16->flags1;
+                    SL->flags2   = SL16->flags2;
+
+                    SL->apiDB    = PTR_SEG_TO_LIN(SL16->apiDatabase);
+                    SL->targetDB = NULL;
+
+                    lstrcpyn32A(SL->pszDll16, module16, 255);
+                    lstrcpyn32A(SL->pszDll32, module32, 255);
+
+                    /* We should create a SEGPTR to the ThunkDataSL,
+                       but since the contents are not in the original format,
+                       any access to this by 16-bit code would crash anyway. */
+                    SL16->spData = 0;
+                    SL16->fpData = SL;
+                }
+
+
+                if (SL->flags2 & 0x80000000)
+                {
+                    TRACE(thunk, "Preloading 32-bit library\n");
+                    LoadLibrary32A(module32);
+                }
+            }
+            else
+            {
+                /* nothing to do */
+            }
+            break;
+
+        case DLL_PROCESS_DETACH:
+            /* FIXME: cleanup */
+            break;
+    }
+
+    return 1;
+}
+
+
+/***********************************************************************
+ *           C16ThkSL                           (KERNEL.630)
+ */
+
+void WINAPI C16ThkSL(CONTEXT *context)
+{
+    extern void CallFrom16_t_long_(void);
+    LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
+    WORD cs, ds;
+    GET_CS(cs);
+    GET_DS(ds);
+
+    /* We produce the following code:
+     *
+     *   mov ax, __FLATDS
+     *   mov es, ax
+     *   movzx ecx, cx
+     *   mov edx, es:[ecx + $EDX]
+     *   push bp
+     *   push edx
+     *   call __FLATCS:CallFrom16_t_long_
+     */
+
+    *x++ = 0xB8; *((WORD *)x)++ = ds;
+    *x++ = 0x8E; *x++ = 0xC0;
+    *x++ = 0x60; *x++ = 0x0F; *x++ = 0xB7; *x++ = 0xC9;
+    *x++ = 0x67; *x++ = 0x66; *x++ = 0x26; *x++ = 0x8B;
+                 *x++ = 0x91; *((DWORD *)x)++ = EDX_reg(context);
+
+    *x++ = 0x55;
+    *x++ = 0x66; *x++ = 0x52;
+    *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16_t_long_;
+                              *((WORD *)x)++ = cs;
+
+    /* Jump to the stub code just created */
+    IP_reg(context) = LOWORD(EAX_reg(context));
+    CS_reg(context) = HIWORD(EAX_reg(context));
+
+    /* Since C16ThkSL got called by a jmp, we need to leave the
+       orginal return address on the stack */
+    SP_reg(context) -= 4;
+}
+
+/***********************************************************************
+ *           C16ThkSL01                         (KERNEL.631)
+ */
+
+void WINAPI C16ThkSL01(CONTEXT *context)
+{
+    LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
+
+    if (stub)
+    {
+        struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(EDX_reg(context));
+        struct ThunkDataSL *td = SL16->fpData;
+
+        extern void CallFrom16_t_long_(void);
+        DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), 631);
+        WORD cs;
+        GET_CS(cs);
+
+        if (!td)
+        {
+            ERR(thunk, "ThunkConnect16 was not called!\n");
+            return;
+        }
+
+        TRACE(thunk, "Creating stub for ThunkDataSL %08lx\n", (DWORD)td);
+
+
+        /* We produce the following code:
+         *
+         *   xor eax, eax
+         *   mov edx, $td
+         *   call C16ThkSL01
+         *   push bp
+         *   push edx
+         *   call __FLATCS:CallFrom16_t_long_
+         */
+
+        *x++ = 0x66; *x++ = 0x33; *x++ = 0xC0;
+        *x++ = 0x66; *x++ = 0xBA; *((DWORD *)x)++ = (DWORD)td;
+        *x++ = 0x9A; *((DWORD *)x)++ = procAddress;
+
+        *x++ = 0x55;
+        *x++ = 0x66; *x++ = 0x52;
+        *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16_t_long_;
+                                  *((WORD *)x)++ = cs;
+
+        /* Jump to the stub code just created */
+        IP_reg(context) = LOWORD(EAX_reg(context));
+        CS_reg(context) = HIWORD(EAX_reg(context));
+
+        /* Since C16ThkSL01 got called by a jmp, we need to leave the
+           orginal return address on the stack */
+        SP_reg(context) -= 4;
+    }
+    else
+    {
+        struct ThunkDataSL *td = (struct ThunkDataSL *)EDX_reg(context);
+        DWORD targetNr = CX_reg(context) / 4;
+        struct SLTargetDB *tdb;
+
+        TRACE(thunk, "Process %08lx calling target %ld of ThunkDataSL %08lx\n",
+                     (DWORD)PROCESS_Current(), targetNr, (DWORD)td);
+
+        for (tdb = td->targetDB; tdb; tdb = tdb->next)
+            if (tdb->process == PROCESS_Current())
+                break;
+
+        if (!tdb)
+        {
+            TRACE(thunk, "Loading 32-bit library %s\n", td->pszDll32);
+            LoadLibrary32A(td->pszDll32);
+
+            for (tdb = td->targetDB; tdb; tdb = tdb->next)
+                if (tdb->process == PROCESS_Current())
+                    break;
+        }
+
+        if (tdb)
+        {
+            EDX_reg(context) = tdb->targetTable[targetNr];
+
+            TRACE(thunk, "Call target is %08lx\n", EDX_reg(context));
+        }
+        else
+        {
+            WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
+            DX_reg(context) = HIWORD(td->apiDB[targetNr].errorReturnValue);
+            AX_reg(context) = LOWORD(td->apiDB[targetNr].errorReturnValue);
+            IP_reg(context) = stack[2];
+            CS_reg(context) = stack[3];
+            SP_reg(context) += td->apiDB[targetNr].nrArgBytes + 4;
+
+            /* Win95 allows delayed loading of the 32-bit DLL.
+               We don't do that at the moment. */
+            ERR(thunk, "Process %08lx did not ThunkConnect32 %s to %s\n",
+                       (DWORD)PROCESS_Current(), td->pszDll32, td->pszDll16);
+        }
+    }
 }

@@ -6,7 +6,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include "win.h"
 #include "user.h"
 #include "heap.h"

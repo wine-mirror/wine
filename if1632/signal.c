@@ -4,7 +4,6 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -24,6 +23,30 @@
 #include "thread.h"
 #include "debug.h"
 
+static const char * const SIGNAL_traps[] =
+{
+    "Division by zero exception",      /* 0 */
+    "Debug exception",                 /* 1 */
+    "NMI interrupt",                   /* 2 */
+    "Breakpoint exception",            /* 3 */
+    "Overflow exception",              /* 4 */
+    "Bound range exception",           /* 5 */
+    "Invalid opcode exception",        /* 6 */
+    "Device not available exception",  /* 7 */
+    "Double fault exception",          /* 8 */
+    "Coprocessor segment overrun",     /* 9 */
+    "Invalid TSS exception",           /* 10 */
+    "Segment not present exception",   /* 11 */
+    "Stack fault",                     /* 12 */
+    "General protection fault",        /* 13 */
+    "Page fault",                      /* 14 */
+    "Unknown exception",               /* 15 */
+    "Floating point exception",        /* 16 */
+    "Alignment check exception",       /* 17 */
+    "Machine check exception"          /* 18 */
+};
+
+#define NB_TRAPS  (sizeof(SIGNAL_traps) / sizeof(SIGNAL_traps[0]))
 
 extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
 extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
@@ -62,20 +85,25 @@ static HANDLER_DEF(SIGNAL_trap)
  */
 static HANDLER_DEF(SIGNAL_fault)
 {
+    const char *fault = "Segmentation fault";
+
     HANDLER_INIT();
     if (INSTR_EmulateInstruction( HANDLER_CONTEXT )) return;
+#ifdef TRAP_sig
+    if (TRAP_sig( HANDLER_CONTEXT ) < NB_TRAPS)
+        fault = SIGNAL_traps[TRAP_sig( HANDLER_CONTEXT )];
+#endif
     if (IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)))
     {
-        MSG("Segmentation fault in 32-bit code (0x%08lx).\n",
-            EIP_sig(HANDLER_CONTEXT) );
+        MSG("%s in 32-bit code (0x%08lx).\n", fault, EIP_sig(HANDLER_CONTEXT));
     }
     else
     {
-        MSG("Segmentation fault in 16-bit code (%04x:%04lx).\n",
+        MSG("%s in 16-bit code (%04x:%04lx).\n", fault,
             (WORD)CS_sig(HANDLER_CONTEXT), EIP_sig(HANDLER_CONTEXT) );
     }
 #ifdef CR2_sig
-    fprintf(stderr,"Fault address is 0x%08lx\n",CR2_sig(HANDLER_CONTEXT));
+    MSG("Fault address is 0x%08lx\n",CR2_sig(HANDLER_CONTEXT));
 #endif
     wine_debug( signal, HANDLER_CONTEXT );
 }

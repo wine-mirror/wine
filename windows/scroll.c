@@ -18,9 +18,6 @@
 #include "sysmetrics.h"
 #include "debug.h"
 
-extern HWND32 CARET_GetHwnd();			/* windows/caret.c */
-extern void   CARET_GetRect(LPRECT32);
-extern void CLIPPING_UpdateGCRegion(DC* );	/* objects/clipping.c */
 
 /*************************************************************************
  *             ScrollWindow16   (USER.61)

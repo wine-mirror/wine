@@ -3,7 +3,6 @@
  * Copyright 1997 Len White
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "msdos.h"
 #include "miscemu.h"

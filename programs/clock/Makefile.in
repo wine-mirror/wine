@@ -8,7 +8,7 @@ PROGRAMS  = clock
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 
-LANGUAGES   = En De Sw
+LANGUAGES   = En Da De Sw
 LICENSELANG = En
 
 MOSTSRCS = \
@@ -33,6 +33,23 @@ all: check_winerc $(PROGRAMS)
 depend:: $(RC_SRCS:.rc=.h)
 
 @MAKE_RULES@
+
+# Rules for using old resource compiler
+.rc.c:
+	echo "#include \"windows.h\"" >$*-tmp.c
+	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
+	cat $< >>$*-tmp.c
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
+	$(RM) $*-tmp.c
+.rc.h:
+	echo "#include \"windows.h\"" >$*-tmp.c
+	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
+	cat $< >>$*-tmp.c
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
+	$(RM) $*-tmp.c
+clean::
+	$(RM) $(RC_SRCS:.rc=.c)
+
 
 clock: $(MOSTOBJS) $(STRINGOBJS)
 	$(CC) -o clock $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)

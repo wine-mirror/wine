@@ -167,14 +167,14 @@ void shm_print_free_list(struct shm_block *block)
 
   item=block->free_list;
   if (item==0) {
-     fprintf(stddeb,"no free fragments");
+     DUMP("no free fragments");
   } else {
      for (; item ; item=fragment->info.next) {
 	fragment=FRAG_PTR(block,item);
-	fprintf(stddeb,"{0x%04x,0x%04x} ",item,fragment->size);
+	DUMP("{0x%04x,0x%04x} ",item,fragment->size);
      }
   }
-  fprintf(stddeb," [total free=%04x]\n",block->free);
+  DUMP(" [total free=%04x]\n",block->free);
   fflush(stddeb);
 }
 

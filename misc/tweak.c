@@ -24,7 +24,6 @@
  *
  *****************************************************************************/
 
-#include <stdio.h>
 #include <malloc.h>
 #include "ts_xlib.h"
 #include <string.h>

@@ -4,7 +4,6 @@
  * Copied and modified heavily from loader/resource.c
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
 #include "libres.h"
@@ -14,13 +13,13 @@
 
 typedef struct RLE
 {
-    const struct resource* const * Resources;  /* NULL-terminated array of pointers */
+    const wrc_resource32_t * const * Resources;  /* NULL-terminated array of pointers */
     struct RLE* next;
 } ResListE;
 
 static ResListE* ResourceList=NULL;
 
-void LIBRES_RegisterResources(const struct resource* const * Res)
+void LIBRES_RegisterResources(const wrc_resource32_t * const * Res)
 {
   ResListE** Curr;
   ResListE* n;
@@ -38,7 +37,7 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
-  const struct resource* const * Res;
+  const wrc_resource32_t* const * Res;
 
   if(HIWORD(name))
   {
@@ -72,15 +71,16 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
   else
     typeid=LOWORD(type);
   
+  /* FIXME: types can be strings */
   for(ResBlock=ResourceList; ResBlock; ResBlock=ResBlock->next)
     for(Res=ResBlock->Resources; *Res; Res++)
       if(name)
       {
-	if((*Res)->type==typeid && !lstrcmpi32W((LPCWSTR)(*Res)->name,name))
+	if((*Res)->restype==typeid && !lstrncmpi32W((LPCWSTR)((*Res)->resname+1), name, *((*Res)->resname)))
 	  return (HRSRC32)*Res;
       }
       else
-	if((*Res)->type==typeid && (*Res)->id==nameid)
+	if((*Res)->restype==typeid && (*Res)->resid==nameid)
 	  return (HRSRC32)*Res;
   return 0;
 }
@@ -91,7 +91,7 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
  */
 HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-  return (HGLOBAL32)(((struct resource*)hRsrc)->bytes);
+  return (HGLOBAL32)(((wrc_resource32_t*)hRsrc)->data);
 }
 
 
@@ -100,5 +100,5 @@ HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
  */
 DWORD LIBRES_SizeofResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-  return (DWORD)(((struct resource*)hRsrc)->size);
+  return (DWORD)(((wrc_resource32_t*)hRsrc)->datasize);
 }

@@ -4,7 +4,6 @@
  */
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
 #include "winnt.h"
@@ -71,9 +70,9 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
-    printf( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
-                                                 frame->entry_ip,
-                                                 &ordinal ));
+    DPRINTF( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
+                                                  frame->entry_ip,
+                                                  &ordinal ));
     VA_START16( args16 );
 
     if (func_type & 4)  /* cdecl */
@@ -84,32 +83,32 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
             {
             case 'w':
             case 's':
-                printf( "0x%04x", *(WORD *)args16 );
+                DPRINTF( "0x%04x", *(WORD *)args16 );
                 args16 += 2;
                 break;
             case 'l':
-                printf( "0x%08x", *(int *)args16 );
+                DPRINTF( "0x%08x", *(int *)args16 );
                 args16 += 4;
                 break;
             case 't':
-                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 if (HIWORD(*(SEGPTR *)args16))
                     debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 args16 += 4;
                 break;
             case 'p':
-                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 args16 += 4;
                 break;
             case 'T':
-                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 if (HIWORD( *(SEGPTR *)args16 ))
                     debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 args16 += 4;
                 break;
             }
             args++;
-            if (*args) printf( "," );
+            if (*args) DPRINTF( "," );
         }
     }
     else  /* not cdecl */
@@ -139,42 +138,42 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
             case 'w':
             case 's':
                 args16 -= 2;
-                printf( "0x%04x", *(WORD *)args16 );
+                DPRINTF( "0x%04x", *(WORD *)args16 );
                 break;
             case 'l':
                 args16 -= 4;
-                printf( "0x%08x", *(int *)args16 );
+                DPRINTF( "0x%08x", *(int *)args16 );
                 break;
             case 't':
                 args16 -= 4;
-                printf( "0x%08x", *(int *)args16 );
+                DPRINTF( "0x%08x", *(int *)args16 );
                 if (HIWORD(*(SEGPTR *)args16))
                     debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 break;
             case 'p':
                 args16 -= 4;
-                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 break;
             case 'T':
                 args16 -= 4;
-                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 if (HIWORD( *(SEGPTR *)args16 ))
                     debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 break;
             }
             args++;
-            if (*args) printf( "," );
+            if (*args) DPRINTF( "," );
         }
     }
 
-    printf( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
+    DPRINTF( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
     VA_END16( args16 );
 
     if (func_type & 2)  /* register function */
-        printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
-                AX_reg(context), BX_reg(context), CX_reg(context),
-                DX_reg(context), SI_reg(context), DI_reg(context),
-                (WORD)ES_reg(context), EFL_reg(context) );
+        DPRINTF( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+                 AX_reg(context), BX_reg(context), CX_reg(context),
+                 DX_reg(context), SI_reg(context), DI_reg(context),
+                 (WORD)ES_reg(context), EFL_reg(context) );
 }
 
 
@@ -188,23 +187,23 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
-    printf( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
+    DPRINTF( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
                                                    frame->entry_ip,
                                                    &ordinal ));
     switch(func_type)
     {
     case 0: /* long */
-        printf( "retval=0x%08x ret=%04x:%04x ds=%04x\n",
-                ret_val, frame->cs, frame->ip, frame->ds );
+        DPRINTF( "retval=0x%08x ret=%04x:%04x ds=%04x\n",
+                 ret_val, frame->cs, frame->ip, frame->ds );
         break;
     case 1: /* word */
-        printf( "retval=0x%04x ret=%04x:%04x ds=%04x\n",
-                ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
+        DPRINTF( "retval=0x%04x ret=%04x:%04x ds=%04x\n",
+                 ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
         break;
     case 2: /* regs */
-        printf( "retval=none ret=%04x:%04x ds=%04x\n",
+        DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)CS_reg(context), IP_reg(context), (WORD)DS_reg(context));
-        printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
                 (WORD)ES_reg(context), EFL_reg(context) );
@@ -251,25 +250,25 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
     {
         CONTEXT *context = (CONTEXT *)stack[0];
         WORD *stack16 = (WORD *)THREAD_STACK16(thdb);
-        printf( "CallTo16(func=%04lx:%04x,ds=%04lx",
+        DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
         nb_args = stack[1] / sizeof(WORD);
         while (nb_args--) printf( ",0x%04x", *(--stack16) );
-        printf( ") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
+        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
-        printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
                 BP_reg(context), (WORD)ES_reg(context) );
     }
     else
     {
-        printf( "CallTo16(func=%04x:%04x,ds=%04x",
+        DPRINTF("CallTo16(func=%04x:%04x,ds=%04x",
                 HIWORD(stack[0]), LOWORD(stack[0]),
                 SELECTOROF(thdb->cur_stack) );
         stack++;
-        while (nb_args--) printf( ",0x%04x", *stack++ );
-        printf( ") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
+        while (nb_args--) DPRINTF(",0x%04x", *stack++ );
+        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
     }
 }

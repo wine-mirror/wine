@@ -4,7 +4,8 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = resources
-RCFLAGS   = -w32
+#RCFLAGS   = -w32
+WRCEXTRA  = -p $*
 
 RC_SRCS = \
 	sysres_Ca.rc \
@@ -26,10 +27,10 @@ RC_SRCS = \
 
 C_SRCS = sysres.c
 
-all: check_winerc $(MODULE).o
+all: check_wrc $(MODULE).o
 
 @MAKE_RULES@
 
-$(RC_SRCS:.rc=.c): $(WINERC)
+$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:

@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "dc.h"
 #include "gdi.h"
 #include "heap.h"
 #include "metafile.h"
@@ -15,9 +16,6 @@
 #include "font.h"
 #include "winerror.h"
 #include "x11font.h"
-
-extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
-
 
   /* ROP code to GC function conversion */
 const int DC_XROPfunction[16] =

@@ -2,7 +2,6 @@
  * DOS interrupt 25h handler
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>

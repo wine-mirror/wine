@@ -107,6 +107,8 @@ LPMALLOC16	IMalloc16_Constructor();
 LPMALLOC32	IMalloc32_Constructor();
 #endif
 
+HRESULT WINAPI CoGetMalloc32(DWORD, LPMALLOC32*);
+
 #undef STDMETHOD
 #undef STDMETHOD_
 #undef PURE

@@ -192,14 +192,12 @@ typedef struct
  
 /* Functions prototypes */
 
-HWND16     WINAPI CreateStatusWindow16(INT16,LPCSTR,HWND16,UINT16);
 HWND32     WINAPI CreateStatusWindow32A(INT32,LPCSTR,HWND32,UINT32);
 HWND32     WINAPI CreateStatusWindow32W(INT32,LPCWSTR,HWND32,UINT32);
 #define    CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
 HWND32     WINAPI CreateUpDownControl(DWORD,INT32,INT32,INT32,INT32,
                                       HWND32,INT32,HINSTANCE32,HWND32,
                                       INT32,INT32,INT32);
-VOID       WINAPI DrawStatusText16(HDC16,LPRECT16,LPCSTR,UINT16);
 VOID       WINAPI DrawStatusText32A(HDC32,LPRECT32,LPCSTR,UINT32);
 VOID       WINAPI DrawStatusText32W(HDC32,LPRECT32,LPCWSTR,UINT32);
 #define    DrawStatusText WINELIB_NAME_AW(DrawStatusText)
@@ -276,6 +274,7 @@ typedef struct _IMAGELISTDRAWPARAMS
 
  
 INT32      WINAPI ImageList_Add(HIMAGELIST,HBITMAP32,HBITMAP32);
+INT32      WINAPI ImageList_AddIcon (HIMAGELIST, HICON32);
 INT32      WINAPI ImageList_AddMasked(HIMAGELIST,HBITMAP32,COLORREF);
 BOOL32     WINAPI ImageList_BeginDrag(HIMAGELIST,INT32,INT32,INT32);
 BOOL32     WINAPI ImageList_Copy(HIMAGELIST,INT32,HIMAGELIST,INT32,INT32);
@@ -284,7 +283,7 @@ BOOL32     WINAPI ImageList_Destroy(HIMAGELIST);
 BOOL32     WINAPI ImageList_DragEnter(HWND32,INT32,INT32);
 BOOL32     WINAPI ImageList_DragLeave(HWND32); 
 BOOL32     WINAPI ImageList_DragMove(INT32,INT32);
-BOOL32     WINAPI ImageList_DragShowNolock (BOOL32 bShow);
+BOOL32     WINAPI ImageList_DragShowNolock (BOOL32);
 BOOL32     WINAPI ImageList_Draw(HIMAGELIST,INT32,HDC32,INT32,INT32,UINT32);
 BOOL32     WINAPI ImageList_DrawEx(HIMAGELIST,INT32,HDC32,INT32,INT32,INT32,
                                    INT32,COLORREF,COLORREF,UINT32);
@@ -304,18 +303,25 @@ HIMAGELIST WINAPI ImageList_LoadImage32W(HINSTANCE32,LPCWSTR,INT32,INT32,
                                          COLORREF,UINT32,UINT32);
 #define    ImageList_LoadImage WINELIB_NAME_AW(ImageList_LoadImage)
 HIMAGELIST WINAPI ImageList_Merge(HIMAGELIST,INT32,HIMAGELIST,INT32,INT32,INT32);
-
+#ifdef __IStream_INTREFACE_DEFINED__
+HIMAGELIST WINAPI ImageList_Read (LPSTREAM32);
+#endif
 BOOL32     WINAPI ImageList_Remove(HIMAGELIST,INT32);
 BOOL32     WINAPI ImageList_Replace(HIMAGELIST,INT32,HBITMAP32,HBITMAP32);
 INT32      WINAPI ImageList_ReplaceIcon(HIMAGELIST,INT32,HICON32);
-
 COLORREF   WINAPI ImageList_SetBkColor(HIMAGELIST,COLORREF);
 BOOL32     WINAPI ImageList_SetDragCursorImage(HIMAGELIST,INT32,INT32,INT32);
+
 BOOL32     WINAPI ImageList_SetIconSize (HIMAGELIST,INT32,INT32);
 BOOL32     WINAPI ImageList_SetImageCount (HIMAGELIST,INT32);
 BOOL32     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT32,INT32);
+#ifdef __IStream_INTREFACE_DEFINED__
+BOOL32     WINAPI ImageList_Write (HIMAGELIST, LPSTREAM32);
+#endif
 
+#ifndef __WINE__
 #define ImageList_AddIcon(himl,hicon) ImageList_ReplaceIcon(himl,-1,hicon)
+#endif
 #define ImageList_ExtractIcon(hi,himl,i) ImageList_GetIcon(himl,i,0)
 #define ImageList_LoadBitmap(hi,lpbmp,cx,cGrow,crMask) \
   ImageList_LoadImage(hi,lpbmp,cx,cGrow,crMask,IMAGE_BITMAP,0)
@@ -415,11 +421,6 @@ BOOL32     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT32,INT32);
 #define HDN_BEGINDRACK          (HDN_FIRST-10)
 #define HDN_ENDDRACK            (HDN_FIRST-11)
 
-
-#define Header_Layout(hwndHD,playout) \
-  (BOOL32)SendMessage32A((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
-
-
 typedef struct _HD_LAYOUT
 {
     RECT32      *prc;
@@ -427,7 +428,6 @@ typedef struct _HD_LAYOUT
 } HDLAYOUT, *LPHDLAYOUT;
 
 #define HD_LAYOUT   HDLAYOUT
-
 
 typedef struct _HD_ITEMA
 {
@@ -442,7 +442,6 @@ typedef struct _HD_ITEMA
     INT32     iOrder;
 } HD_ITEMA;
 
-
 typedef struct _HD_HITTESTINFO
 {
     POINT32 pt;
@@ -452,7 +451,6 @@ typedef struct _HD_HITTESTINFO
 
 #define HD_HITTESTINFO   HDHITTESTINFO
 
-
 typedef struct tagNMHEADERA
 {
     NMHDR    hdr;
@@ -460,6 +458,193 @@ typedef struct tagNMHEADERA
     INT32    iButton;
     HD_ITEMA *pitem;
 } NMHEADERA, *LPNMHEADERA;
+
+
+#define Header_GetItemCount(hwndHD) \
+  (INT32)SendMessage32A((hwndHD),HDM_GETITEMCOUNT,0,0L)
+#define Header_InsertItem(hwndHD,i,phdi) \
+  (INT32)SendMessage32A((hwndHD),HDM_INSERTITEM,(WPARAM32)(INT32)(i),\
+			(LPARAM)(const HD_ITEMA*)(phdi))
+#define Header_DeleteItem(hwndHD,i) \
+  (BOOL32)SendMessage32A((hwndHD),HDM_DELETEITEM,(WPARAM32)(INT32)(i),0L)
+#define Header_GetItem(hwndHD,i,phdi) \
+  (BOOL32)SendMessage32A((hwndHD),HDM_GETITEM,(WPARAM32)(INT32)(i),(LPARAM)(HD_ITEMA*)(phdi))
+#define Header_SetItem(hwndHD,i,phdi) \
+  (BOOL32)SendMessage32A((hwndHD),HDM_SETITEM,(WPARAM32)(INT32)(i),(LPARAM)(const HD_ITEMA*)(phdi))
+#define Header_Layout(hwndHD,playout) \
+  (BOOL32)SendMessage32A((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
+#define Header_GetItemRect(hwnd,iItem,lprc) \
+  (BOOL32)SendMessage32A((hwnd),HDM_GETITEMRECT,(WPARAM32)iItem,(LPARAM)lprc)
+#define Header_SetImageList(hwnd,himl) \
+  (HIMAGELIST)SendMessage32A((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
+#define Header_GetImageList(hwnd) \
+  (HIMAGELIST)SendMessage32A((hwnd),HDM_GETIMAGELIST,0,0)
+#define Header_OrderToIndex(hwnd,i) \
+  (INT32)SendMessage32A((hwnd),HDM_ORDERTOINDEX,(WPARAM32)i,0)
+#define Header_CreateDragImage(hwnd,i) \
+  (HIMAGELIST)SendMessage32A((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM32)i,0)
+#define Header_GetOrderArray(hwnd,iCount,lpi) \
+  (BOOL32)SendMessage32A((hwnd),HDM_GETORDERARRAY,(WPARAM32)iCount,(LPARAM)lpi)
+#define Header_SetOrderArray(hwnd,iCount,lpi) \
+  (BOOL32)SendMessage32A((hwnd),HDM_SETORDERARRAY,(WPARAM32)iCount,(LPARAM)lpi)
+#define Header_SetHotDivider(hwnd,fPos,dw) \
+  (INT32)SendMessage32A((hwnd),HDM_SETHOTDIVIDER,(WPARAM32)fPos,(LPARAM)dw)
+#define Header_SetUnicodeFormat(hwnd,fUnicode) \
+  (BOOL32)SendMessage32A((hwnd),HDM_SETUNICODEFORMAT,(WPARAM32)(fUnicode),0)
+#define Header_GetUnicodeFormat(hwnd) \
+  (BOOL32)SendMessage32A((hwnd),HDM_GETUNICODEFORMAT,0,0)
+
+
+/* Toolbar */
+
+#define TOOLBARCLASSNAME16        "ToolbarWindow" 
+#define TOOLBARCLASSNAME32W       L"ToolbarWindow32" 
+#define TOOLBARCLASSNAME32A       "ToolbarWindow32" 
+#define TOOLBARCLASSNAME WINELIB_NAME_AW(TOOLBARCLASSNAME)
+
+ 
+#define CMB_MASKED              0x02 
+ 
+#define TBSTATE_CHECKED         0x01 
+#define TBSTATE_PRESSED         0x02 
+#define TBSTATE_ENABLED         0x04 
+#define TBSTATE_HIDDEN          0x08 
+#define TBSTATE_INDETERMINATE   0x10 
+#define TBSTATE_WRAP            0x20 
+#define TBSTATE_ELLIPSES        0x40
+#define TBSTATE_MARKED          0x80 
+ 
+ 
+#define TBSTYLE_BUTTON          0x00 
+#define TBSTYLE_SEP             0x01 
+#define TBSTYLE_CHECK           0x02 
+#define TBSTYLE_GROUP           0x04 
+#define TBSTYLE_CHECKGROUP      (TBSTYLE_GROUP | TBSTYLE_CHECK) 
+#define TBSTYLE_DROPDOWN        0x08 
+ 
+#define TBSTYLE_TOOLTIPS        0x0100 
+#define TBSTYLE_WRAPABLE        0x0200 
+#define TBSTYLE_ALTDRAG         0x0400 
+#define TBSTYLE_FLAT            0x0800 
+#define TBSTYLE_LIST            0x1000 
+#define TBSTYLE_CUSTOMERASE     0x2000 
+ 
+#define TB_ENABLEBUTTON          (WM_USER+1)
+#define TB_CHECKBUTTON           (WM_USER+2)
+#define TB_PRESSBUTTON           (WM_USER+3)
+#define TB_HIDEBUTTON            (WM_USER+4)
+#define TB_INDETERMINATE         (WM_USER+5)
+#define TB_ISBUTTONENABLED       (WM_USER+9) 
+#define TB_ISBUTTONCHECKED       (WM_USER+10) 
+#define TB_ISBUTTONPRESSED       (WM_USER+11) 
+#define TB_ISBUTTONHIDDEN        (WM_USER+12) 
+#define TB_ISBUTTONINDETERMINATE (WM_USER+13)
+#define TB_ISBUTTONHIGHLIGHTED   (WM_USER+14)
+#define TB_SETSTATE              (WM_USER+17)
+#define TB_GETSTATE              (WM_USER+18)
+#define TB_ADDBITMAP             (WM_USER+19)
+#define TB_ADDBUTTONS32A         (WM_USER+20)
+#define TB_ADDBUTTONS32W         (WM_USER+68)
+#define TB_ADDBUTTONS WINELIB_NAME_AW(TB_ADDBUTTONS)
+#define TB_HITTEST               (WM_USER+69)
+#define TB_INSERTBUTTON32A       (WM_USER+21)
+#define TB_INSERTBUTTON32W       (WM_USER+67)
+#define TB_INSERTBUTTON WINELIB_NAME_AW(TB_INSERTBUTTON)
+#define TB_DELETEBUTTON          (WM_USER+22)
+#define TB_GETBUTTON             (WM_USER+23)
+#define TB_BUTTONCOUNT           (WM_USER+24)
+#define TB_COMMANDTOINDEX        (WM_USER+25)
+#define TB_SAVERESTORE32A        (WM_USER+26)
+#define TB_SAVERESTORE32W        (WM_USER+76)
+#define TB_SAVERESTORE WINELIB_NAME_AW(TB_SAVERESTORE)
+#define TB_CUSTOMIZE             (WM_USER+27)
+#define TB_ADDSTRING32A          (WM_USER+28) 
+#define TB_ADDSTRING32W          (WM_USER+77) 
+#define TB_ADDSTRING WINELIB_NAME_AW(TB_ADDSTRING)
+#define TB_GETITEMRECT           (WM_USER+29)
+#define TB_BUTTONSTRUCTSIZE      (WM_USER+30)
+#define TB_SETBUTTONSIZE         (WM_USER+31)
+#define TB_SETBITMAPSIZE         (WM_USER+32)
+#define TB_AUTOSIZE              (WM_USER+33)
+#define TB_GETTOOLTIPS           (WM_USER+35)
+#define TB_SETTOOLTIPS           (WM_USER+36)
+#define TB_SETPARENT             (WM_USER+37)
+#define TB_SETROWS               (WM_USER+39)
+#define TB_GETROWS               (WM_USER+40)
+#define TB_SETCMDID              (WM_USER+42)
+#define TB_CHANGEBITMAP          (WM_USER+43)
+#define TB_GETBITMAP             (WM_USER+44)
+#define TB_GETBUTTONTEXT32A      (WM_USER+45)
+#define TB_GETBUTTONTEXT32W      (WM_USER+75)
+#define TB_GETBUTTONTEXT WINELIB_NAME_AW(TB_GETBUTTONTEXT)
+#define TB_REPLACEBITMAP         (WM_USER+46)
+#define TB_SETINDENT             (WM_USER+47)
+#define TB_SETIMAGELIST          (WM_USER+48)
+#define TB_GETIMAGELIST          (WM_USER+49)
+#define TB_LOADIMAGES            (WM_USER+50)
+#define TB_GETRECT               (WM_USER+51) /* wParam is the Cmd instead of index */
+#define TB_SETHOTIMAGELIST       (WM_USER+52)
+#define TB_GETHOTIMAGELIST       (WM_USER+53)
+#define TB_SETDISABLEDIMAGELIST  (WM_USER+54)
+#define TB_GETDISABLEDIMAGELIST  (WM_USER+55)
+#define TB_SETSTYLE              (WM_USER+56)
+#define TB_GETSTYLE              (WM_USER+57)
+#define TB_GETBUTTONSIZE         (WM_USER+58)
+#define TB_SETBUTTONWIDTH        (WM_USER+59)
+#define TB_SETMAXTEXTROWS        (WM_USER+60)
+#define TB_GETTEXTROWS           (WM_USER+61)
+
+
+/* This is just for old CreateToolbar. */
+/* Don't use it in new programs. */
+typedef struct _OLDTBBUTTON {
+    INT32 iBitmap;
+    INT32 idCommand;
+    BYTE  fsState;
+    BYTE  fsStyle;
+    BYTE  bReserved[2];
+    DWORD dwData;
+} OLDTBBUTTON, *POLDTBBUTTON, *LPOLDTBBUTTON;
+typedef const OLDTBBUTTON *LPCOLDTBBUTTON;
+
+
+typedef struct _TBBUTTON {
+    INT32 iBitmap;
+    INT32 idCommand;
+    BYTE  fsState;
+    BYTE  fsStyle;
+    BYTE  bReserved[2];
+    DWORD dwData;
+    INT32 iString;
+} TBBUTTON, *PTBBUTTON, *LPTBBUTTON;
+typedef const TBBUTTON *LPCTBBUTTON;
+
+
+typedef struct _COLORMAP {
+    COLORREF from;
+    COLORREF to;
+} COLORMAP, *LPCOLORMAP;
+
+typedef struct tagTBADDBITMAP {
+    HINSTANCE32 hInst;
+    UINT32      nID;
+} TBADDBITMAP, *LPTBADDBITMAP;
+
+#define HINST_COMMCTRL         ((HINSTANCE32)-1)
+
+
+HWND32 WINAPI
+CreateToolbar(HWND32, DWORD, UINT32, INT32, HINSTANCE32,
+              UINT32, LPCOLDTBBUTTON, INT32); 
+ 
+HWND32 WINAPI
+CreateToolbarEx(HWND32, DWORD, UINT32, INT32,
+                HINSTANCE32, UINT32, LPCTBBUTTON, 
+                INT32, INT32, INT32, INT32, INT32, UINT32); 
+
+HBITMAP32 WINAPI
+CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32); 
+
 
 
 #endif  /* __WINE_COMMCTRL_H */

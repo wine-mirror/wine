@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include "miscemu.h"
 #include "debug.h"
 

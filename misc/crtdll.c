@@ -21,7 +21,6 @@ Unresolved issues Uwe Bonnes 970904:
 /* FIXME: all the file handling is hopelessly broken -- AJ */
 
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -44,12 +43,11 @@ Unresolved issues Uwe Bonnes 970904:
 #include "file.h"
 #include "except.h"
 #include "options.h"
+#include "winnls.h"
 
 extern int FILE_GetUnixHandle( HFILE32  );
 
 static DOS_FULL_NAME CRTDLL_tmpname;
-
-extern INT32 WIN32_wsprintf32W( DWORD *args );
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;         /* CRTDLL.24 */
@@ -199,23 +197,16 @@ static FILE *xlat_file_ptr(void *ptr)
 /*******************************************************************
  *         _global_unwind2  (CRTDLL.129)
  */
-void __cdecl CRTDLL__global_unwind2( CONTEXT *context )
+void __cdecl CRTDLL__global_unwind2( PEXCEPTION_FRAME frame )
 {
-    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
-    DWORD *args = (DWORD *)ESP_reg(context);
-    RtlUnwind( (PEXCEPTION_FRAME)args[1], (LPVOID)EIP_reg(context),
-               NULL, 0, context );
+    RtlUnwind( frame, 0, NULL, 0 );
 }
 
 /*******************************************************************
  *         _local_unwind2  (CRTDLL.173)
  */
-void __cdecl CRTDLL__local_unwind2( CONTEXT *context )
+void __cdecl CRTDLL__local_unwind2( PEXCEPTION_FRAME endframe, DWORD nr )
 {
-    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
-    DWORD *args = (DWORD *)ESP_reg(context);
-    PEXCEPTION_FRAME endframe = (PEXCEPTION_FRAME)args[1];
-    DWORD nr = args[2];
     TRACE(crtdll,"(%p,%ld)\n",endframe,nr);
 }
 
@@ -902,7 +893,7 @@ LPWSTR __cdecl CRTDLL__wcsupr(LPWSTR x)
 	LPWSTR	y=x;
 
 	while (*y) {
-		*y=toupper(*y);
+		*y=towupper(*y);
 		y++;
 	}
 	return x;
@@ -916,7 +907,7 @@ LPWSTR __cdecl CRTDLL__wcslwr(LPWSTR x)
 	LPWSTR	y=x;
 
 	while (*y) {
-		*y=tolower(*y);
+		*y=towlower(*y);
 		y++;
 	}
 	return x;
@@ -1291,14 +1282,6 @@ INT32 __cdecl CRTDLL_wcsspn(LPWSTR str,LPWSTR accept)
 		s++;
 	} while (*s);
 	return s-str; /* nr of wchars */
-}
-
-/*********************************************************************
- *                  towupper           (CRTDLL.494)
- */
-WCHAR __cdecl CRTDLL_towupper(WCHAR x)
-{
-    return (WCHAR)toupper((CHAR)x);
 }
 
 /*********************************************************************
@@ -1692,8 +1675,7 @@ INT32 __cdecl CRTDLL__mkdir(LPCSTR newdir)
 LPINT32 __cdecl CRTDLL__errno()
 {
 	static	int crtdllerrno;
-	extern int LastErrorToErrno(DWORD);
-
+	
 	/* FIXME: we should set the error at the failing function call time */
 	crtdllerrno = LastErrorToErrno(GetLastError());
 	return &crtdllerrno;

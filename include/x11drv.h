@@ -51,6 +51,7 @@ typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPA
 struct tagDC;
 struct tagDeviceCaps;
 
+extern BOOL32 X11DRV_Init(void);
 extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                              INT32 width, INT32 height, struct tagDC *dcSrc,
                              INT32 xSrc, INT32 ySrc, DWORD rop );
@@ -115,5 +116,7 @@ extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
 /* Xlib critical section */
 
 extern CRITICAL_SECTION X11DRV_CritSection;
+
+extern void _XInitImageFuncPtrs(XImage *);
 
 #endif  /* __WINE_X11DRV_H */

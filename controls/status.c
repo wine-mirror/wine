@@ -5,8 +5,6 @@
  * Copyright 1998 Eric Kohl
  */
 
-#include <stdio.h>
-
 #include "windows.h"
 #include "status.h"
 #include "commctrl.h"
@@ -21,15 +19,9 @@
 
 /*
  * Fixme/Todo
- * 1) Don't hard code bar to bottom of window, allow CCS_TOP also
- * 2) Add 'non hack' version of icon drawing code
+ * 1) Don't hard code bar to bottom of window, allow CCS_TOP also.
+ + 2) Tooltip support.
  */
-
-#define __GET_ICON_INFO_HACK__
-
-#ifdef __GET_ICON_INFO_HACK__
-#include "bitmap.h"
-#endif
 
 #define _MAX(a,b) (((a)>(b))?(a):(b))
 #define _MIN(a,b) (((a)>(b))?(b):(a))
@@ -92,61 +84,20 @@ SB_DrawPart( HDC32 hdc, LPRECT32 lprc, HICON32 hIcon,
     RECT32 r = *lprc;
     UINT32 border = BDR_SUNKENOUTER;
 
-    if(style==SBT_POPOUT)
+    if (style==SBT_POPOUT)
       border = BDR_RAISEDOUTER;
-    else if(style==SBT_NOBORDERS)
+    else if (style==SBT_NOBORDERS)
       border = 0;
 
     DrawEdge32(hdc, &r, border, BF_RECT|BF_ADJUST);
 
     /* draw the icon */
     if (hIcon) {
-#ifdef __GET_ICON_INFO_HACK__
-        HBITMAP32 hbmImage;
-        HBITMAP32 hbmMask;
-        CURSORICONINFO *ptr;
-        HDC32 hdcSrc;
-	INT32 y, cy, ry, ty;
+	INT32 cy = r.bottom - r.top;
 
-        if (ptr = (CURSORICONINFO *)GlobalLock16(hIcon)) {
-        hbmMask  = CreateBitmap32 (ptr->nWidth, ptr->nHeight, 1, 1, 
-                                   (char *)(ptr + 1));
-        hbmImage = CreateBitmap32 (ptr->nWidth, ptr->nHeight, ptr->bPlanes,
-                                   ptr->bBitsPerPixel,
-                                   (char *)(ptr + 1) + ptr->nHeight * 
-                                   BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
 	r.left += 2;
-	ry = r.bottom - r.top;
-	if (ry >= ptr->nHeight) {
-	    /* full view of icon */
-	    y = 0;
-	    cy = ptr->nHeight;
-	    ty = r.top + (ry - ptr->nHeight) / 2;
-	}
-	else {
-	    /* partial view of icon */
-	    y = (ptr->nHeight - ry) / 2;
-	    cy = ry;
-	    ty = r.top;
-	}
-
-	    hdcSrc = CreateCompatibleDC32 (hdc);
-	    SelectObject32 (hdcSrc, hbmMask);
-	    BitBlt32 (hdc, r.left, r.top, ptr->nWidth, cy,
-		      hdcSrc, 0, y, SRCAND);
-	    SelectObject32 (hdcSrc, hbmImage);
-	    BitBlt32 (hdc, r.left, r.top, ptr->nWidth, cy,
-		      hdcSrc, 0, y, SRCPAINT);
-	    DeleteDC32 (hdcSrc);
-
-	    r.left += ptr->nWidth;
-	    DeleteObject32 (hbmImage);
-	    DeleteObject32 (hbmMask);
-	    GlobalUnlock16 (hIcon);
-	}
-#else
-	/* FIXME: no "non hack" version available!!! */
-#endif
+	DrawIconEx32 (hdc, r.left, r.top, hIcon, cy, cy, 0, 0, DI_NORMAL);
+	r.left += cy;
     }
 
     /* now draw text */
@@ -378,10 +329,11 @@ SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     STATUSWINDOWINFO *self;
 
     wndPtr = WIN_FindWndPtr(hwnd);
-    wndPtr->wExtra[0] = HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
-				   sizeof(STATUSWINDOWINFO));
+    self = (STATUSWINDOWINFO*)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+					 sizeof(STATUSWINDOWINFO));
 
-    self = (STATUSWINDOWINFO*)wndPtr->wExtra[0];
+    wndPtr->wExtra[0] = (DWORD)self;
+
     self->numParts = 1;
     self->parts = 0;
     self->simple = FALSE;
@@ -397,33 +349,33 @@ SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     self->part0.hIcon = 0;
 
     /* initialize first part */
-    self->parts = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY,
-			    sizeof(STATUSWINDOWPART));
+    self->parts = HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+			     sizeof(STATUSWINDOWPART));
     self->parts[0].bound = rect;
     self->parts[0].text = 0;
     self->parts[0].x = -1;
     self->parts[0].style = 0;
     self->parts[0].hIcon = 0;
 
-    if (len = lstrlen32A( lpCreate->lpszName ) ) {
-        self->parts[0].text = HeapAlloc( SystemHeap, 0, len + 1 );
-        lstrcpy32A( self->parts[0].text, lpCreate->lpszName );
+    if ((len = lstrlen32A (lpCreate->lpszName))) {
+        self->parts[0].text = HeapAlloc (SystemHeap, 0, len + 1);
+        lstrcpy32A (self->parts[0].text, lpCreate->lpszName);
     }
 
     height = 20;
-    if ((hdc = GetDC32(0))) {
+    if ((hdc = GetDC32 (0))) {
 	TEXTMETRIC32A tm;
 	GetTextMetrics32A(hdc, &tm);
 	self->textHeight = tm.tmHeight;
 	ReleaseDC32(0, hdc);
     }
 
-    parent = GetParent32(hwnd);
-    GetClientRect32(parent, &rect);
+    parent = GetParent32 (hwnd);
+    GetClientRect32 (parent, &rect);
     width = rect.right - rect.left;
     self->height = self->textHeight + 4 + VERT_BORDER;
-    MoveWindow32(hwnd, lpCreate->x, lpCreate->y-1, width, self->height, FALSE);
-    SW_SetPartBounds(hwnd, self);
+    MoveWindow32 (hwnd, lpCreate->x, lpCreate->y-1, width, self->height, FALSE);
+    SW_SetPartBounds (hwnd, self);
     return 0;
 }
 
@@ -495,12 +447,11 @@ SW_GetTextLength(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lP
 static LRESULT
 SW_SetMinHeight(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
-    INT32	width, height, x, y;
+    INT32	width, x, y;
     RECT32	parent_rect;
     HWND32	parent;
 
     if (IsWindowVisible32 (hwnd)) {
-	/* width and height don't apply */
 	parent = GetParent32(hwnd);
 	GetClientRect32(parent, &parent_rect);
 	self->height = (INT32)wParam + VERT_BORDER;
@@ -531,12 +482,10 @@ SW_SetBkColor(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lPara
 
 
 static LRESULT
-SW_SetIcon(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+SW_SetIcon (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
-    HDC32    hdc;
-    INT32    nPart;
+    INT32  nPart = (INT32)wParam & 0x00ff;
 
-    nPart = (INT32)wParam & 0x00ff;
     if ((nPart < -1) || (nPart >= self->numParts)) return FALSE;
 
     if (nPart == -1) {
@@ -558,7 +507,7 @@ SW_GetIcon(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     INT32    nPart;
 
     nPart = (INT32)wParam & 0x00ff;
-    if ((nPart < -1) || (nPart >= self->numParts)) return NULL;
+    if ((nPart < -1) || (nPart >= self->numParts)) return 0;
 
     if (nPart == -1)
         return (self->part0.hIcon);
@@ -663,7 +612,6 @@ SW_NcHitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 SW_NcLButtonDown (HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
-//    TRACE (status, "WM_NCLBUTTONDOWN\n");
     PostMessage32A (GetParent32 (hwnd), WM_NCLBUTTONDOWN,
 		    wParam, lParam);
     return 0;
@@ -673,7 +621,6 @@ SW_NcLButtonDown (HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 SW_NcLButtonUp (HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
-//    TRACE (status, "WM_NCLBUTTONUP\n");
     PostMessage32A (GetParent32 (hwnd), WM_NCLBUTTONUP,
 		    wParam, lParam);
     return 0;
@@ -722,8 +669,8 @@ SW_WMSetText (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lPara
         HeapFree(SystemHeap, 0, part->text);
     part->text = 0;
     if (lParam && (len = lstrlen32A((LPCSTR)lParam))) {
-        part->text = HeapAlloc(SystemHeap, 0, len+1);
-        lstrcpy32A(part->text, (LPCSTR)lParam);
+        part->text = HeapAlloc (SystemHeap, 0, len+1);
+        lstrcpy32A (part->text, (LPCSTR)lParam);
     }
     InvalidateRect32(hwnd, &part->bound, FALSE);
 
@@ -735,7 +682,7 @@ static LRESULT
 SW_Size(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
     /* Need to resize width to match parent */
-    INT32	width, height, x, y;
+    INT32	width, x, y;
     RECT32	parent_rect;
     HWND32	parent;
 
@@ -836,7 +783,7 @@ StatusWindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     case WM_NCHITTEST:
         return SW_NcHitTest (wndPtr, wParam, lParam);
 
-   case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONDOWN:
 	return SW_NcLButtonDown (hwnd, wParam, lParam);
 
     case WM_NCLBUTTONUP:
@@ -862,25 +809,25 @@ StatusWindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
 
 /***********************************************************************
- *           STATUS_Register [Internal]
+ * STATUS_Register [Internal]
  *
  * Registers the status window class.
  */
-void STATUS_Register(void)
+void STATUS_Register (void)
 {
     WNDCLASS32A wndClass;
 
-    if( GlobalFindAtom32A( STATUSCLASSNAME32A ) ) return;
+    if (GlobalFindAtom32A (STATUSCLASSNAME32A)) return;
 
-    ZeroMemory( &wndClass, sizeof( WNDCLASS32A ) );
+    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC32)StatusWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(STATUSWINDOWINFO *);
-    wndClass.hCursor       = LoadCursor32A( 0, IDC_ARROW32A );
+    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
     wndClass.hbrBackground = (HBRUSH32)(COLOR_3DFACE + 1);
     wndClass.lpszClassName = STATUSCLASSNAME32A;
  
-    RegisterClass32A( &wndClass );
+    RegisterClass32A (&wndClass);
 }
 

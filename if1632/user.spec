@@ -462,8 +462,8 @@ file	user.exe
 514 pascal16 WNetDeviceMode(word) WNetDeviceMode
 515 pascal16 WNetBrowseDialog(word word ptr) WNetBrowseDialog
 516 pascal16 WNetGetUser(ptr ptr ptr) WNetGetUser
-517 pascal16 WNetAddConnection(ptr ptr ptr) WNetAddConnection16
-518 pascal16 WNetCancelConnection(ptr word) WNetCancelConnection
+517 pascal16 WNetAddConnection(str str str) WNetAddConnection16
+518 pascal16 WNetCancelConnection(str word) WNetCancelConnection
 519 pascal16 WNetGetError(ptr) WNetGetError
 520 pascal16 WNetGetErrorText(word ptr ptr) WNetGetErrorText
 521 stub WNetEnable

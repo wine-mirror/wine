@@ -3,7 +3,6 @@
  */
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -45,6 +44,7 @@ static const char * const SHELL_People[] =
     "Niels de Carpentier",
     "Gordon Chaffee",
     "Jimen Ching",
+    "Pascal Cuoq",
     "David A. Cuthbert",
     "Huw D. M. Davies",
     "Roman Dolejsi",
@@ -56,6 +56,7 @@ static const char * const SHELL_People[] =
     "Claus Fischer",
     "Olaf Flebbe",
     "Chad Fraleigh",
+    "Matthew Francis",
     "Peter Galbavy",
     "Ramon Garcia",
     "Matthew Ghio",
@@ -64,6 +65,7 @@ static const char * const SHELL_People[] =
     "Charles M. Hannum",
     "Adrian Harvey",
     "John Harvey",
+    "Bill Hawes",
     "Cameron Heide",
     "Jochen Hoenicke",
     "Onno Hovers",
@@ -145,6 +147,7 @@ static const char * const SHELL_People[] =
     "Ronan Waide",
     "Eric Warnke",
     "Manfred Weichel",
+    "Ulrich Weigand",
     "Morten Welinder",
     "Len White",
     "Lawson Whitney",
@@ -279,7 +282,8 @@ BOOL16 WINAPI DragQueryPoint(HDROP16 hDrop, POINT16 *p)
 }
 
 /*************************************************************************
- *				SHELL_FindExecutable
+ *	SHELL_FindExecutable [Internal]
+ *
  * Utility for code sharing between FindExecutable and ShellExecute
  */
 static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile, 
@@ -298,27 +302,34 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     int i;                  /* random counter */
     char xlpFile[256];      /* result of SearchPath */
 
-    TRACE(exec, "%s\n",
-                 (lpFile != NULL?lpFile:"-") );
+    TRACE(exec, "%s\n", (lpFile != NULL?lpFile:"-") );
+
     lpResult[0]='\0'; /* Start off with an empty return string */
 
     /* trap NULL parameters on entry */
     if (( lpFile == NULL ) || ( lpResult == NULL ) || ( lpOperation == NULL ))
     {
-	/* FIXME - should throw a warning, perhaps! */
-	return 2; /* File not found. Close enough, I guess. */
+	WARN(exec, "(lpFile=%s,lpResult=%s,lpOperation=%s): NULL parameter\n",
+           lpFile, lpOperation, lpResult);
+        return 2; /* File not found. Close enough, I guess. */
     }
 
     if (SearchPath32A( NULL, lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
+    {
+	TRACE(exec, "SearchPath32A returned non-zero\n");
         lpFile = xlpFile;
+    }
 
     /* First thing we need is the file's extension */
     extension = strrchr( xlpFile, '.' ); /* Assume last "." is the one; */
 					/* File->Run in progman uses */
 					/* .\FILE.EXE :( */
+    TRACE(exec, "xlpFile=%s,extension=%s\n", xlpFile, extension);
+
     if ((extension == NULL) || (extension == &xlpFile[strlen(xlpFile)]))
     {
-	return 31; /* no association */
+        WARN(exec, "Returning 31 - No association\n");
+        return 31; /* no association */
     }
 
     /* Make local copy & lowercase it for reg & 'programs=' lookup */
@@ -1658,8 +1669,3 @@ BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) {
 	lstrcpy32A(pszPath,"E:\\"); /* FIXME */
 	return NOERROR;
 }
-
-
-
-
-

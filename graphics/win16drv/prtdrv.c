@@ -133,7 +133,7 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
     }
     if (!bSlotFound)
     {
-	fprintf(stderr,"Too many printers drivers loaded\n");
+	WARN(win16drv,"Too many printers drivers loaded\n");
 	return NULL;
     }
 
@@ -148,7 +148,7 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
     if (hInst <= 32)
     {
 	/* Failed to load driver */
-	fprintf(stderr, "Failed to load printer driver %s\n", pszDriver);
+	WARN(win16drv, "Failed to load printer driver %s\n", pszDriver);
     } else {
         TRACE(win16drv, "Loaded the library\n");
 	/* Allocate some memory for printer driver info */
@@ -297,7 +297,7 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
 	if(lpFaceName)
 	    SEGPTR_FREE(lP2);
     } else 
-        fprintf(stderr,"Failed to find device\n");
+        WARN(win16drv,"Failed to find device\n");
     
     TRACE(win16drv, "return %x\n", wRet);
     return wRet;
@@ -340,7 +340,7 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
                                               lP1, wP2, lP3, lP4 );
     }
     else 
-        fprintf(stderr,"Failed to find device\n");
+        WARN(win16drv,"Failed to find device\n");
     
     TRACE(win16drv, "return %x\n", wRet);
     return wRet;
@@ -395,7 +395,7 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	    clip = HeapAlloc( SystemHeap, 0, size );
 	    if(!clip) 
 	    {
-	        fprintf(stderr, "Can't alloc clip array in PRTDRV_Output\n");
+	        WARN(win16drv, "Can't alloc clip array in PRTDRV_Output\n");
 		return FALSE;
 	    }
 	    GetRegionData( hClipRgn, size, clip );
@@ -486,8 +486,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 
         case DRVOBJ_PBITMAP:
         default:
-	    fprintf(stderr, 
-	       "PRTDRV_RealizeObject: Object type %d not supported\n", wStyle);
+	    WARN(win16drv, "Object type %d not supported\n", wStyle);
             nSize = 0;
             
 	}
@@ -670,26 +669,27 @@ int WINAPI dmEnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName, FARPROC16 lpCallb
 
 int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPSTR lpOutObj, SEGPTR lpTextXForm)
 {
-    fprintf(stderr, "dmRealizeObject(lpDestDev: %08x, wStyle: %04x, lpInObj: %08x, lpOutObj: %08x, lpTextXForm: %08x): stub: ", (UINT32)lpDestDev, wStyle, (UINT32)lpInObj, (UINT32)lpOutObj, (UINT32)lpTextXForm);
+    FIXME(win16drv, "(lpDestDev=%08x,wStyle=%04x,lpInObj=%08x,lpOutObj=%08x,lpTextXForm=%08x): stub\n",
+        (UINT32)lpDestDev, wStyle, (UINT32)lpInObj, (UINT32)lpOutObj, (UINT32)lpTextXForm);
     if (wStyle < 0) { /* Free extra memory of given object's structure */
 	switch ( -wStyle ) {
             case DRVOBJ_PEN:    {
                                 /* LPLOGPEN16 DeletePen = (LPLOGPEN16)lpInObj; */
 
-                                fprintf(stderr, "DRVOBJ_PEN_delete\n");
+                                TRACE(win16drv, "DRVOBJ_PEN_delete\n");
 				break;
                                 }
             case DRVOBJ_BRUSH:	{
-				fprintf(stderr, "DRVOBJ_BRUSH_delete\n");
+				TRACE(win16drv, "DRVOBJ_BRUSH_delete\n");
                                 break;
 				}
             case DRVOBJ_FONT:	{
 				/* LPTEXTXFORM16 TextXForm
 					= (LPTEXTXFORM16)lpTextXForm; */
-				fprintf(stderr, "DRVOBJ_FONT_delete\n");
+				TRACE(win16drv, "DRVOBJ_FONT_delete\n");
                                 break;
 				}
-            case DRVOBJ_PBITMAP:        fprintf(stderr, "DRVOBJ_PBITMAP_delete\n");
+            case DRVOBJ_PBITMAP:        TRACE(win16drv, "DRVOBJ_PBITMAP_delete\n");
                                 break;
 	}
     }
@@ -699,7 +699,7 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
 	    case DRVOBJ_PEN: {
 				LPLOGPEN16 InPen  = (LPLOGPEN16)lpInObj;
 
-				fprintf(stderr, "DRVOBJ_PEN\n");
+				TRACE(win16drv, "DRVOBJ_PEN\n");
 				if (lpOutObj) {
 				    if (InPen->lopnStyle == PS_NULL) {
 					*(DWORD *)lpOutObj = 0;
@@ -722,7 +722,7 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
 				LPLOGBRUSH16 OutBrush = (LPLOGBRUSH16)lpOutObj;
                                 /* LPPOINT16 Point = (LPPOINT16)lpTextXForm; */
 
-				fprintf(stderr, "DRVOBJ_BRUSH\n");
+				TRACE(win16drv, "DRVOBJ_BRUSH\n");
 				if (!lpOutObj) return sizeof(LOGBRUSH16);
 				else {
 				    OutBrush->lbStyle = InBrush->lbStyle;
@@ -736,10 +736,10 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
 	    case DRVOBJ_FONT: {
                                 /* LPTEXTXFORM16 TextXForm
                                         = (LPTEXTXFORM16)lpTextXForm; */
-                                fprintf(stderr, "DRVOBJ_FONT\n");
+                                TRACE(win16drv, "DRVOBJ_FONT\n");
 				return 0;/* DISPLAY.DRV doesn't realize fonts */
 			      }
-	    case DRVOBJ_PBITMAP:	fprintf(stderr, "DRVOBJ_PBITMAP\n");
+	    case DRVOBJ_PBITMAP:	TRACE(win16drv, "DRVOBJ_PBITMAP\n");
 					return 0; /* create memory bitmap */
 	}
     }

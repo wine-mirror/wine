@@ -4,7 +4,6 @@
  * Copyright 1997 Andrew Taylor
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

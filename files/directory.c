@@ -465,9 +465,11 @@ static BOOL32 DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
 
     if (pdb->flags & PDB32_WIN16_PROC) {
 	if (!GetCurrentTask()) return FALSE;
-	GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) );
+	if (!GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) ))
+		buffer[0]='\0';
     } else {
-	GetModuleFileName32A( 0, buffer, sizeof(buffer) );
+	if (!GetModuleFileName32A( 0, buffer, sizeof(buffer) ))
+		buffer[0]='\0';
     }
     if (!(p = strrchr( buffer, '\\' ))) return FALSE;
     if (sizeof(buffer) - (++p - buffer) <= strlen(name)) return FALSE;
@@ -568,7 +570,31 @@ done:
 
 
 /***********************************************************************
- *           SearchPath32A   (KERNEL32.447)
+ * SearchPath32A [KERNEL32.447]
+ *
+ * Searches for a specified file in the search path.
+ *
+ * PARAMS
+ *    path	[I] Path to search
+ *    name	[I] Filename to search for.
+ *    ext	[I] File extension to append to file name. The first
+ *		    character must be a period. This parameter is
+ *                  specified only if the filename given does not
+ *                  contain an extension.
+ *    buflen	[I] size of buffer, in characters
+ *    buffer	[O] buffer for found filename
+ *    lastpart  [O] address of pointer to last used character in
+ *                  buffer (the final '\')
+ *
+ * RETURNS
+ *    Success: length of string copied into buffer, not including
+ *             terminating null character. If the filename found is
+ *             longer than the length of the buffer, the length of the
+ *             filename is returned.
+ *    Failure: Zero
+ * 
+ * NOTES
+ *    Should call SetLastError(but currently doesn't).
  */
 DWORD WINAPI SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
                             LPSTR buffer, LPSTR *lastpart )
@@ -587,6 +613,7 @@ DWORD WINAPI SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
     }
+    TRACE(dosfs, "Returning %d\n", (*res ? strlen(res) + 2 : 3));
     return *res ? strlen(res) + 2 : 3;
 }
 

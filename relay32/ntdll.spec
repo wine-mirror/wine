@@ -124,7 +124,7 @@ type	win32
 121 stub NtMapViewOfSection
 122 stub NtNotifyChangeDirectoryFile
 123 stub NtNotifyChangeKey
-124 stub NtOpenDirectoryObject
+124 stdcall NtOpenDirectoryObject(long long long) NtOpenDirectoryObject
 125 stub NtOpenEvent
 126 stub NtOpenEventPair
 127 stdcall NtOpenFile(ptr long ptr ptr long long) NtOpenFile
@@ -149,7 +149,7 @@ type	win32
 146 stub NtQueryAttributesFile
 147 stub NtQueryDefaultLocale
 148 stub NtQueryDirectoryFile
-149 stub NtQueryDirectoryObject
+149 stdcall NtQueryDirectoryObject(long long) NtQueryDirectoryObject
 150 stub NtQueryEaFile
 151 stub NtQueryEvent
 152 stub NtQueryInformationFile
@@ -161,14 +161,14 @@ type	win32
 158 stub NtQueryIoCompletion
 159 stub NtQueryKey
 160 stub NtQueryMutant
-161 stub NtQueryObject
+161 stdcall NtQueryObject(long long) NtQueryObject
 162 stub NtQueryPerformanceCounter
 163 stub NtQuerySection
 164 stub NtQuerySecurityObject
 165 stub NtQuerySemaphore
 166 stub NtQuerySymbolicLinkObject
 167 stub NtQuerySystemEnvironmentValue
-168 stub NtQuerySystemInformation
+168 stdcall NtQuerySystemInformation(long) NtQuerySystemInformation
 169 stub NtQuerySystemTime
 170 stub NtQueryTimer
 171 stub NtQueryTimerResolution
@@ -207,7 +207,7 @@ type	win32
 204 stub NtSetInformationFile
 205 stub NtSetInformationKey
 206 stub NtSetInformationObject
-207 stub NtSetInformationProcess
+207 stdcall NtSetInformationProcess(long) NtSetInformationProcess
 208 stub NtSetInformationThread
 209 stub NtSetInformationToken
 210 stub NtSetIntervalProfile
@@ -373,7 +373,7 @@ type	win32
 370 stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
 371 stub RtlFormatCurrentUserKeyPath
 372 stub RtlFormatMessage
-373 stub RtlFreeAnsiString
+373 stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
 374 stdcall RtlFreeHeap(long long long) HeapFree
 375 stub RtlFreeOemString
 376 stub RtlFreeSid
@@ -417,7 +417,7 @@ type	win32
 414 stub RtlIsDosDeviceName_U
 415 stub RtlIsGenericTableEmpty
 416 stub RtlIsNameLegalDOS8Dot3
-417 stub RtlIsTextUnicode
+417 stdcall RtlIsTextUnicode(ptr long ptr) RtlIsTextUnicode
 418 stub RtlLargeIntegerAdd
 419 stub RtlLargeIntegerArithmeticShift
 420 stub RtlLargeIntegerDivide
@@ -502,7 +502,7 @@ type	win32
 499 stub RtlSubtreeSuccessor
 500 stub RtlSystemTimeToLocalTime
 501 stub RtlTimeFieldsToTime
-502 stub RtlTimeToElapsedTimeFields
+502 stdcall RtlTimeToElapsedTimeFields(long) RtlTimeToElapsedTimeFields
 503 stub RtlTimeToSecondsSince1970
 504 stub RtlTimeToSecondsSince1980
 505 stub RtlTimeToTimeFields
@@ -936,7 +936,7 @@ type	win32
 933 cdecl vsprintf(ptr str ptr) CRTDLL_vsprintf
 934 cdecl wcscat(wstr wstr) CRTDLL_wcscat
 935 cdecl wcschr(wstr long) CRTDLL_wcschr
-936 stub wcscmp
+936 cdecl wcscmp(wstr wstr) CRTDLL_wcscmp
 937 cdecl wcscpy(ptr wstr) CRTDLL_wcscpy
 938 stub wcscspn
 939 cdecl wcslen(wstr) CRTDLL_wcslen

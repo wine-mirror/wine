@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "windows.h"
@@ -298,7 +297,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template,
                     dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
                     if (!dlgInfo->hDialogHeap)
                     {
-                        fprintf( stderr, "CreateDialogIndirectParam: Insufficient memory to create heap for edit control\n" );
+                        ERR(dialog, "Insufficient memory to create heap for edit control\n" );
                         continue;
                     }
                     LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);

@@ -139,6 +139,7 @@ extern void MUTEX_Abandon( K32OBJ *obj );
 /* scheduler/synchro.c */
 extern void SYNC_WaitForCondition( WAIT_STRUCT *wait, DWORD timeout );
 extern void SYNC_WakeUp( THREAD_QUEUE *queue, DWORD max );
+extern void SYNC_SetupSignals(void);
 
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( THDB *thread );

@@ -4,7 +4,6 @@
  * Copyright 1995 Anand Kumria
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "msdos.h"
 #include "miscemu.h"

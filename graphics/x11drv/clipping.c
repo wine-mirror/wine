@@ -24,7 +24,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
     if (!obj)
     {
-        fprintf( stderr, "X11DRV_SetDeviceClipping: Rgn is 0. Please report this.\n");
+        ERR(x11drv, "Rgn is 0. Please report this.\n");
         exit(1);
     }
     
@@ -38,7 +38,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
 			    sizeof(*pXrect) * obj->rgn->numRects );
 	if(!pXrect)
 	{
-	    fprintf(stderr, "X11DRV_SetDeviceClipping() can't alloc buffer\n");
+	    WARN(x11drv, "Can't alloc buffer\n");
 	    return;
 	}
 

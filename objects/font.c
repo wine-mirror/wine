@@ -5,7 +5,6 @@
  *           1997 Alex Korobka
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "font.h"

@@ -2,7 +2,6 @@
  * Dummy function definitions
  */
 
-#include <stdio.h>
 #include "wintypes.h"
 #include "debug.h"
 

@@ -78,7 +78,7 @@ type	win32
 0074 stdcall InitializeSid(ptr ptr long) InitializeSid
 0075 stub InitiateSystemShutdownA
 0076 stub InitiateSystemShutdownW
-0077 stub IsTextUnicode
+0077 stdcall IsTextUnicode(ptr long ptr) RtlIsTextUnicode
 0078 stub IsValidAcl
 0079 stub IsValidSecurityDescriptor
 0080 stdcall IsValidSid(ptr) IsValidSid
@@ -162,19 +162,19 @@ type	win32
 0158 stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) RegQueryValueEx32W
 0159 stdcall RegQueryValueW(long wstr ptr ptr) RegQueryValue32W
 0160 stub RegRemapPreDefKey
-0161 stub RegReplaceKeyA
-0162 stub RegReplaceKeyW
-0163 stub RegRestoreKeyA
-0164 stub RegRestoreKeyW
-0165 stub RegSaveKeyA
-0166 stub RegSaveKeyW
-0167 stub RegSetKeySecurity
+0161 stdcall RegReplaceKeyA(long str str str) RegReplaceKey32A
+0162 stdcall RegReplaceKeyW(long wstr wstr wstr) RegReplaceKey32W
+0163 stdcall RegRestoreKeyA(long str long) RegRestoreKey32A
+0164 stdcall RegRestoreKeyW(long wstr long) RegRestoreKey32W
+0165 stdcall RegSaveKeyA(long ptr ptr) RegSaveKey32A
+0166 stdcall RegSaveKeyW(long ptr ptr) RegSaveKey32W
+0167 stdcall RegSetKeySecurity(long long ptr) RegSetKeySecurity
 0168 stdcall RegSetValueA(long str long ptr long) RegSetValue32A
 0169 stdcall RegSetValueExA(long str long long ptr long) RegSetValueEx32A
 0170 stdcall RegSetValueExW(long wstr long long ptr long) RegSetValueEx32W
 0171 stdcall RegSetValueW(long wstr long ptr long) RegSetValue32W
-0172 stub RegUnLoadKeyA
-0173 stub RegUnLoadKeyW
+0172 stdcall RegUnLoadKeyA(long str) RegUnLoadKey32A
+0173 stdcall RegUnLoadKeyW(long wstr) RegUnLoadKey32W
 0174 stdcall RegisterEventSourceA(ptr ptr) RegisterEventSource32A
 0175 stdcall RegisterEventSourceW(ptr ptr) RegisterEventSource32W
 0176 stub RegisterServiceCtrlHandlerA

@@ -139,7 +139,7 @@ void dde_proc_add(dde_proc procs)
   }
   else	{
      fflush(stdout);
-     fprintf(stderr,"dde_proc_add: Can't allocate process\n");
+     WARN(dde,"Can't allocate process\n");
   }
   shm_write_signal(main_block->sem);
 }
@@ -231,7 +231,7 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
 	return TRUE;
      } else {
 	fflush(stdout);
-	fprintf(stderr,"get_ack: DDE_DoOneMessage: timeout\n");
+	WARN(dde,"get_ack: DDE_DoOneMessage: timeout\n");
 	return FALSE;
      }
   }
@@ -278,8 +278,7 @@ static HWND16 HWND_Local2Remote(HWND16 orig)
     return IDX_TO_HWND(dde_wnd_idx);
   }
 
-  fprintf(stderr,
-	  "HWND_Local2Remote: Can't map any more windows to DDE windows\n");
+  WARN(dde, "Can't map any more windows to DDE windows\n");
   return 0;			
 }
 

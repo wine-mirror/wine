@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include "windows.h"
+#include "task.h"
 
 #pragma pack(1)
 
@@ -164,8 +165,8 @@ typedef struct WSAData {
 #define INVALID_SOCKET32 	   (~0)
 #define SOCKET_ERROR               (-1)
 
-DECL_WINELIB_TYPE(INVALID_SOCKET);
-DECL_WINELIB_TYPE(SOCKET);
+DECL_WINELIB_TYPE(INVALID_SOCKET)
+DECL_WINELIB_TYPE(SOCKET)
 
 /*
  * Types
@@ -563,6 +564,7 @@ typedef struct _WSINFO
   HTASK16               tid;    		/* owning task id - process might be better */
 } WSINFO, *LPWSINFO;
 
+/* function prototypes */
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
 int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag);
 int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
@@ -570,6 +572,11 @@ int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
 void WS_do_async_gethost(LPWSINFO, unsigned);
 void WS_do_async_getproto(LPWSINFO, unsigned);
 void WS_do_async_getserv(LPWSINFO, unsigned);
+
+/* winsock_dns.c */
+extern HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, 
+    INT32 type, LPCSTR init, INT32 len, LPCSTR proto, void* sbuf, 
+    INT32 buflen, UINT32 flag);
 
 int WINSOCK_async_io(int fd, int async);
 int WINSOCK_unblock_io(int fd, int noblock);
@@ -585,6 +592,8 @@ BOOL32 WINSOCK_HandleIO(int* fd_max, int num_pending, fd_set pending_set[3], fd_
 void   WINSOCK_Shutdown(void);
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);
+
+extern INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* );
 
 #endif  /* _WINSOCKAPI_ */
 

@@ -3,14 +3,16 @@
  *
  */
 
-#include "windows.h"
 #include "callback.h"
+#include "debug.h"
 #include "debugger.h"
 #include "main.h"
 #include "miscemu.h"
 #include "module.h"
 #include "options.h"
-#include "debug.h"
+#include "process.h"
+#include "win16drv.h"
+#include "windows.h"
 
 
 /***********************************************************************
@@ -18,9 +20,6 @@
  */
 BOOL32 MAIN_EmulatorInit(void)
 {
-    extern BOOL32 WIN16DRV_Init(void);
-    extern BOOL32 RELAY_Init(void);
-
     /* Initialize the kernel */
     if (!MAIN_KernelInit()) return FALSE;
 
@@ -43,8 +42,6 @@ BOOL32 MAIN_EmulatorInit(void)
  */
 int main( int argc, char *argv[] )
 {
-    extern BOOL32 PROCESS_Init(void);
-    extern void *CALL32_Init(void);
     extern char * DEBUG_argv0;
 
     int i,loaded;

@@ -2,7 +2,6 @@
  * DOS interrupt 26h handler
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>

@@ -4,7 +4,6 @@
  * Copyright 1995 Martin von Loewis
  */
 
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/times.h>
@@ -68,7 +67,8 @@ BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask
 	if (!thdb) 
 		return FALSE;
 	if (dwThreadAffinityMask!=1) {
-		fprintf(stderr,"SetThreadAffinityMask(%d,%ld), only 1 processor supported.\n",(int)hThread,dwThreadAffinityMask);
+		WARN(thread,"(%d,%ld): only 1 processor supported.\n",
+                    (int)hThread,dwThreadAffinityMask);
 		K32OBJ_DecCount((K32OBJ*)thdb);
 		return FALSE;
 	}
@@ -76,6 +76,9 @@ BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask
 	return TRUE;
 }
 
+/**********************************************************************
+ *  CreateProcess32A [KERNEL32.171]
+ */
 BOOL32 WINAPI CreateProcess32A(
 	LPCSTR appname,LPSTR cmdline,LPSECURITY_ATTRIBUTES processattributes,
         LPSECURITY_ATTRIBUTES threadattributes,BOOL32 inherithandles,
@@ -96,13 +99,16 @@ BOOL32 WINAPI CreateProcess32A(
 #endif
 }
 
+/**********************************************************************
+ *  CreateProcess32W [KERNEL32.172]
+ */
 BOOL32 WINAPI CreateProcess32W(
 	LPCWSTR appname,LPWSTR cmdline,LPSECURITY_ATTRIBUTES processattributes,
         LPSECURITY_ATTRIBUTES threadattributes,BOOL32 inherithandles,
 	DWORD creationflags,LPVOID env,LPCWSTR curdir,
 	LPSTARTUPINFO32W startupinfo,LPPROCESS_INFORMATION processinfo)
 {
-    fprintf(stderr,"CreateProcessW(%p,%p,%p,%p,%d,%08lx,%p,%p,%p,%p) stub\n",
+    FIXME(win32,"(%p,%p,%p,%p,%d,%08lx,%p,%p,%p,%p): stub\n",
             appname,cmdline,processattributes,threadattributes,
             inherithandles,creationflags,env,curdir,startupinfo,processinfo );
     /* make from lcc uses system as fallback if CreateProcess returns
@@ -110,8 +116,11 @@ BOOL32 WINAPI CreateProcess32W(
     return FALSE;
 }
 
+/**********************************************************************
+ *  ContinueDebugEvent [KERNEL32.146]
+ */
 BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
-	fprintf(stderr,"ContinueDebugEvent(%ld,%ld,%ld) stub\n",pid,tid,contstatus);
+    FIXME(win32,"(%ld,%ld,%ld): stub\n",pid,tid,contstatus);
 	return TRUE;
 }
 

@@ -11,6 +11,7 @@
 # RC_SRCS      : resource source files (optional)
 # EXTRA_SRCS   : extra source files for make depend (optional)
 # EXTRA_OBJS   : extra object files (optional)
+# WRCEXTRA     : extra wrc flags (e.g. '-p _SysRes') (optional)
 
 # First some useful definitions
 
@@ -42,6 +43,8 @@ LINTFLAGS = +posixlib +gnuextensions +trytorecover
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
+WRC       = $(TOPOBJDIR)/tools/wrc/wrc@PROGEXT@
+WRCFLAGS  = -t -c
 WINESTUB  = $(TOPOBJDIR)/library/winestub.o
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
@@ -65,7 +68,7 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) \
 
 # Implicit rules
 
-.SUFFIXES: .rc
+.SUFFIXES: .rc .res
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -76,25 +79,45 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) \
 .S.o:
 	$(CC) -c -o $*.o $<  
 
-.rc.c:
-	echo "#include \"windows.h\"" >$*-tmp.c
-	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
-	cat $< >>$*-tmp.c
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
-	$(RM) $*-tmp.c
+.rc.s:
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) $<
 
 .rc.h:
-	echo "#include \"windows.h\"" >$*-tmp.c
-	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
-	cat $< >>$*-tmp.c
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
-	$(RM) $*-tmp.c
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -nh $<
+
+.rc.res:
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -r $<
+
+.res.s:
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) -b $<
+
+.res.h:
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) -bnh $<
+
+# Obsolete
+#.rc.c:
+#	echo "#include \"windows.h\"" >$*-tmp.c
+#	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
+#	cat $< >>$*-tmp.c
+#	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
+#	$(RM) $*-tmp.c
+#
+#.rc.h:
+#	echo "#include \"windows.h\"" >$*-tmp.c
+#	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
+#	cat $< >>$*-tmp.c
+#	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
+#	$(RM) $*-tmp.c
+#
 
 
-# Rule to rebuild resource compiler
+# Rule to rebuild the resource compiler
 
 $(WINERC) check_winerc:
 	cd $(TOPOBJDIR)/rc; $(SUBMAKE) winerc@PROGEXT@
+
+$(WRC) check_wrc:
+	cd $(TOPOBJDIR)/tools/wrc; $(SUBMAKE) wrc@PROGEXT@
 
 # Rule to rebuild the 'makedep' program
 
@@ -132,7 +155,7 @@ depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *% *.bak *.orig *.rej *.flc *-tmp.c y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+	$(RM) *.o \#*\# *~ *% *.bak *.orig *.rej *.flc *-tmp.c y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
 
 dummy:
 

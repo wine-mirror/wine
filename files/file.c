@@ -9,7 +9,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/errno.h>
@@ -1004,7 +1003,15 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
     }
 
     if ((result = lseek( file->unix_handle, distance, origin )) == -1)
+      {
+	/* care for this pathological case:
+	   SetFilePointer(00000006,ffffffff,00000000,00000002)
+	   ret=0062ab4a fs=01c7 */
+	if ((distance != -1))
         FILE_SetDosError();
+	else
+	  result = 0;
+      }
     FILE_ReleaseFile( file );
     return (DWORD)result;
 }
@@ -1849,4 +1856,54 @@ BOOL32 WINAPI UnlockFile(
 #endif
   return TRUE;
 }
+
+/**************************************************************************
+ * GetFileAttributesEx32A [KERNEL32.874]
+ */
+BOOL32 WINAPI GetFileAttributesEx32A(
+	LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+	LPVOID lpFileInformation)
+{
+    DOS_FULL_NAME full_name;
+    BY_HANDLE_FILE_INFORMATION info;
+    
+    if (lpFileName == NULL) return FALSE;
+    if (lpFileInformation == NULL) return FALSE;
+
+    if (fInfoLevelId == GetFileExInfoStandard) {
+	LPWIN32_FILE_ATTRIBUTE_DATA lpFad = 
+	    (LPWIN32_FILE_ATTRIBUTE_DATA) lpFileInformation;
+	if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name )) return FALSE;
+	if (!FILE_Stat( full_name.long_name, &info )) return FALSE;
+
+	lpFad->dwFileAttributes = info.dwFileAttributes;
+	lpFad->ftCreationTime   = info.ftCreationTime;
+	lpFad->ftLastAccessTime = info.ftLastAccessTime;
+	lpFad->ftLastWriteTime  = info.ftLastWriteTime;
+	lpFad->nFileSizeHigh    = info.nFileSizeHigh;
+	lpFad->nFileSizeLow     = info.nFileSizeLow;
+    }
+    else {
+	FIXME (file, "invalid info level %d!\n", fInfoLevelId);
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+/**************************************************************************
+ * GetFileAttributesEx32W [KERNEL32.875]
+ */
+BOOL32 WINAPI GetFileAttributesEx32W(
+	LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+	LPVOID lpFileInformation)
+{
+    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
+    BOOL32 res = 
+	GetFileAttributesEx32A( nameA, fInfoLevelId, lpFileInformation);
+    HeapFree( GetProcessHeap(), 0, nameA );
+    return res;
+}
+
 

@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "dde_atom.h"
 #include "shm_main_blk.h"
 #include "shm_fragment.h"
@@ -187,7 +186,7 @@ ATOM DDE_GlobalDeleteAtom( ATOM atom )
   switch (atom_ofs=ATOM_OFS(atom_idx)) {
     case DELETED:
     case EMPTY:
-      fprintf(stderr,"trying to free unallocated atom %d\n", atom);
+      WARN(atom, "Trying to free unallocated atom %d\n", atom);
       retval=atom;
       break;
     default :
@@ -273,7 +272,7 @@ WORD DDE_GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
   shm_read_wait(main_block->sem);
   atom_ofs=ATOM_OFS(atom_idx);
   if (atom_ofs==EMPTY || atom_ofs==DELETED) {
-     fprintf(stderr,"GlobalGetAtomName: illegal atom=%d\n",(int)atom);
+     WARN(atom,"Illegal atom=%d\n",(int)atom);
      size=0;
   } else {			   /* non empty entry */
      /* string length will be at most count-1, find actual size */

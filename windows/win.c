@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <X11/Xatom.h>
 
@@ -40,11 +39,6 @@ static HWND32 hwndSysModal = 0;
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
-extern BOOL32 ICONTITLE_Init(void);
-extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
-extern HWND32 CARET_GetHwnd(void);
-extern BOOL32 EVENT_CheckFocus(void);
-
 /***********************************************************************
  *           WIN_FindWndPtr
  *
@@ -59,7 +53,7 @@ WND * WIN_FindWndPtr( HWND32 hwnd )
     if (ptr->dwMagic != WND_MAGIC) return NULL;
     if (ptr->hwndSelf != hwnd)
     {
-        fprintf( stderr, "Can't happen: hwnd %04x self pointer is %04x\n",
+        ERR( win, "Can't happen: hwnd %04x self pointer is %04x\n",
                  hwnd, ptr->hwndSelf );
         return NULL;
     }
@@ -80,16 +74,15 @@ void WIN_DumpWindow( HWND32 hwnd )
 
     if (!(ptr = WIN_FindWndPtr( hwnd )))
     {
-        fprintf( stderr, "%04x is not a window handle\n", hwnd );
+        WARN( win, "%04x is not a window handle\n", hwnd );
         return;
     }
 
     if (!GetClassName32A( hwnd, className, sizeof(className ) ))
         strcpy( className, "#NULL#" );
 
-    fprintf( stderr, "Window %04x (%p):\n", hwnd, ptr );
-    fprintf( stderr,
-             "next=%p  child=%p  parent=%p  owner=%p  class=%p '%s'\n"
+    TRACE( win, "Window %04x (%p):\n", hwnd, ptr );
+    DUMP(    "next=%p  child=%p  parent=%p  owner=%p  class=%p '%s'\n"
              "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x dce=%p  idmenu=%08x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08x  text='%s'\n"
              "client=%d,%d-%d,%d  window=%d,%d-%d,%d"
@@ -106,12 +99,12 @@ void WIN_DumpWindow( HWND32 hwnd )
 
     if (ptr->class->cbWndExtra)
     {
-        fprintf( stderr, "extra bytes:" );
+        DUMP( "extra bytes:" );
         for (i = 0; i < ptr->class->cbWndExtra; i++)
-            fprintf( stderr, " %02x", *((BYTE*)ptr->wExtra+i) );
-        fprintf( stderr, "\n" );
+            DUMP( " %02x", *((BYTE*)ptr->wExtra+i) );
+        DUMP( "\n" );
     }
-    fprintf( stderr, "\n" );
+    DUMP( "\n" );
 }
 
 
@@ -128,21 +121,21 @@ void WIN_WalkWindows( HWND32 hwnd, int indent )
     ptr = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop;
     if (!ptr)
     {
-        fprintf( stderr, "*** Invalid window handle %04x\n", hwnd );
+        WARN( win, "Invalid window handle %04x\n", hwnd );
         return;
     }
 
     if (!indent)  /* first time around */
-        fprintf( stderr, "%-16.16s %-8.8s %-6.6s %-17.17s %-8.8s %s\n",
+       DUMP( "%-16.16s %-8.8s %-6.6s %-17.17s %-8.8s %s\n",
                  "hwnd", " wndPtr", "queue", "Class Name", " Style", " WndProc");
 
     while (ptr)
     {
-        fprintf(stderr, "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
+        DUMP( "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
 
         GlobalGetAtomName16(ptr->class->atomName,className,sizeof(className));
         
-        fprintf( stderr, "%08lx %-6.4x %-17.17s %08x %08x\n",
+        DUMP( "%08lx %-6.4x %-17.17s %08x %08x\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
                  (UINT32)ptr->dwStyle, (UINT32)ptr->winproc );
         
@@ -480,11 +473,11 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	/* Make sure parent is valid */
         if (!IsWindow32( cs->hwndParent ))
         {
-            fprintf( stderr, "CreateWindowEx: bad parent %04x\n", cs->hwndParent );
+            WARN( win, "Bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
     } else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP)) {
-        fprintf( stderr, "CreateWindowEx: no parent for child window\n" );
+        WARN( win, "No parent for child window\n" );
         return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
     }
 
@@ -493,7 +486,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     {
         char buffer[256];
         GlobalGetAtomName32A( classAtom, buffer, sizeof(buffer) );
-        fprintf( stderr, "CreateWindowEx: bad class '%s'\n", buffer );
+        WARN( win, "Bad class '%s'\n", buffer );
         return 0;
     }
 
@@ -914,11 +907,11 @@ HWND32 WINAPI CreateWindowEx32W( DWORD exStyle, LPCWSTR className,
     	if (HIWORD(className))
         {
             LPSTR cn = HEAP_strdupWtoA( GetProcessHeap(), 0, className );
-            fprintf( stderr, "CreateWindowEx32W: bad class name '%s'\n",cn);
+            WARN( win, "Bad class name '%s'\n",cn);
             HeapFree( GetProcessHeap(), 0, cn );
 	}
         else
-            fprintf( stderr, "CreateWindowEx32W: bad class name %p\n", className );
+            WARN( win, "Bad class name %p\n", className );
         return 0;
     }
 
@@ -1401,7 +1394,7 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
     {
         if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
         {
-            fprintf( stderr, "GetWindowWord: invalid offset %d\n", offset );
+            WARN( win, "Invalid offset %d\n", offset );
             return 0;
         }
         return *(WORD *)(((char *)wndPtr->wExtra) + offset);
@@ -1410,16 +1403,18 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
     {
     case GWW_ID:         
     	if (HIWORD(wndPtr->wIDmenu))
-    		fprintf(stderr,"GetWindowWord32(GWW_ID) discards high bits of 0x%08x!\n",wndPtr->wIDmenu);
+    		WARN( win,"GWW_ID: discards high bits of 0x%08x!\n",
+                    wndPtr->wIDmenu);
     	return (WORD)wndPtr->wIDmenu;
     case GWW_HWNDPARENT: return wndPtr->parent ?
 			wndPtr->parent->hwndSelf : wndPtr->owner->hwndSelf;
     case GWW_HINSTANCE:  
     	if (HIWORD(wndPtr->hInstance))
-    		fprintf(stderr,"GetWindowWord32(GWW_HINSTANCE) discards high bits of 0x%08x!\n",wndPtr->hInstance);
+    		WARN(win,"GWW_HINSTANCE: discards high bits of 0x%08x!\n",
+                    wndPtr->hInstance);
    	return (WORD)wndPtr->hInstance;
     default:
-        fprintf( stderr, "GetWindowWord: invalid offset %d\n", offset );
+        WARN( win, "Invalid offset %d\n", offset );
         return 0;
     }
 }
@@ -1457,7 +1452,7 @@ WORD WINAPI SetWindowWord32( HWND32 hwnd, INT32 offset, WORD newval )
     {
         if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
         {
-            fprintf( stderr, "SetWindowWord: invalid offset %d\n", offset );
+            WARN( win, "Invalid offset %d\n", offset );
             return 0;
         }
         ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
@@ -1468,7 +1463,7 @@ WORD WINAPI SetWindowWord32( HWND32 hwnd, INT32 offset, WORD newval )
 	case GWW_HINSTANCE: ptr = (WORD *)&wndPtr->hInstance; break;
 	case GWW_HWNDPARENT: return SetParent32( hwnd, newval );
 	default:
-            fprintf( stderr, "SetWindowWord: invalid offset %d\n", offset );
+            WARN( win, "Invalid offset %d\n", offset );
             return 0;
     }
     retval = *ptr;
@@ -1491,7 +1486,7 @@ static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
     {
         if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
         {
-            fprintf( stderr, "GetWindowLong: invalid offset %d\n", offset );
+            WARN( win, "Invalid offset %d\n", offset );
             return 0;
         }
         retval = *(LONG *)(((char *)wndPtr->wExtra) + offset);
@@ -1512,7 +1507,7 @@ static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
                                         (HWND32)wndPtr->parent->hwndSelf : 0;
         case GWL_HINSTANCE:  return wndPtr->hInstance;
         default:
-            fprintf( stderr, "GetWindowLong: unknown offset %d\n", offset );
+            WARN( win, "Unknown offset %d\n", offset );
     }
     return 0;
 }
@@ -1534,7 +1529,7 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
     {
         if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
         {
-            fprintf( stderr, "SetWindowLong: invalid offset %d\n", offset );
+            WARN( win, "Invalid offset %d\n", offset );
             return 0;
         }
         ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
@@ -1571,7 +1566,7 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
         case GWL_USERDATA: ptr = &wndPtr->userdata; break;
         case GWL_EXSTYLE:  ptr = &wndPtr->dwExStyle; break;
 	default:
-            fprintf( stderr, "SetWindowLong: invalid offset %d\n", offset );
+            WARN( win, "Invalid offset %d\n", offset );
             return 0;
     }
     retval = *ptr;

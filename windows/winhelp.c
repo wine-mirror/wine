@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "debug.h"
 #include "windows.h"
 #include "heap.h"
 #include "ldt.h"
@@ -80,7 +81,7 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 			dsize = ((LPHELPWININFO)dwData)->wStructSize;
 			break;
 		default:
-			fprintf(stderr,"Unknown help command %d\n",wCommand);
+			WARN( win,"Unknown help command %d\n",wCommand);
 			return FALSE;
 	}
 	if(lpHelpFile)

@@ -7,7 +7,6 @@
  */
 
 #include <ctype.h>
-#include <stdio.h>
 
 #include "windows.h"
 #include "winerror.h"
@@ -22,16 +21,16 @@
  * Redirects a local device (either a disk drive or printer port)
  * to a shared device on a remote server.
  */
-UINT16 WINAPI WNetAddConnection16(LPSTR lpNetPath, LPSTR lpPassWord,
-                                LPSTR lpLocalName)
+UINT16 WINAPI WNetAddConnection16(LPCSTR lpNetPath, LPCSTR lpPassWord,
+                                LPCSTR lpLocalName)
 {	
    return WNetAddConnection32A(lpNetPath, lpPassWord, lpLocalName);
 }
 
 /* [MPR.50] */
 
-UINT32 WNetAddConnection32A(LPSTR NetPath, LPSTR PassWord,
-			    LPSTR LocalName)
+UINT32 WINAPI WNetAddConnection32A(LPCSTR NetPath, LPCSTR PassWord,
+			    LPCSTR LocalName)
 {
    FIXME(wnet, "('%s', %p, '%s'): stub\n",
 	 NetPath, PassWord, LocalName);
@@ -40,9 +39,9 @@ UINT32 WNetAddConnection32A(LPSTR NetPath, LPSTR PassWord,
 
 /* [MPR.51] */
 
-UINT32 WNetAddConnection32W(LPWSTR NetPath, 
-			    LPWSTR PassWord,
-			    LPWSTR LocalName)
+UINT32 WINAPI WNetAddConnection32W(LPCWSTR NetPath, 
+			    LPCWSTR PassWord,
+			    LPCWSTR LocalName)
 {
    FIXME(wnet, " stub!\n");
    return WN_NO_NETWORK;
@@ -52,7 +51,7 @@ UINT32 WNetAddConnection32W(LPWSTR NetPath,
  * WNetAddConnection2_32A [MPR.46] 
  */
 
-UINT32
+UINT32 WINAPI
 WNetAddConnection2_32A(LPNETRESOURCE32A netresource, /* [in] */
 		       LPCSTR password,        /* [in] */     
 		       LPCSTR username,        /* [in] */
@@ -68,7 +67,7 @@ WNetAddConnection2_32A(LPNETRESOURCE32A netresource, /* [in] */
  * WNetAddConnection2W [MPR.47]
  */
 
-UINT32
+UINT32 WINAPI
 WNetAddConnection2_32W(LPNETRESOURCE32W netresource, /* [in] */
 		       LPCWSTR password,        /* [in] */     
 		       LPCWSTR username,        /* [in] */
@@ -83,7 +82,7 @@ WNetAddConnection2_32W(LPNETRESOURCE32W netresource, /* [in] */
  * WNetAddConnection3_32A [MPR.48]
  */
 
-UINT32 WNetAddConnection3_32A(HWND32 owner,
+UINT32 WINAPI WNetAddConnection3_32A(HWND32 owner,
 		      LPNETRESOURCE32A netresource,
 		      LPCSTR password,
 		      LPCSTR username,
@@ -98,7 +97,7 @@ UINT32 WNetAddConnection3_32A(HWND32 owner,
  * WNetAddConnection3W [MPR.49]
  */
 
-UINT32 WNetAddConnection3_32W(HWND32 owner,
+UINT32 WINAPI WNetAddConnection3_32W(HWND32 owner,
 			      LPNETRESOURCE32W netresource,
 			      LPCWSTR username,
 			      LPCWSTR password,
@@ -113,7 +112,7 @@ UINT32 WNetAddConnection3_32W(HWND32 owner,
 /********************************************************************
  *   WNetCancelConnection	[USER.518]  undirects a local device
  */
-UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
+UINT16 WINAPI WNetCancelConnection(LPCSTR lpName, BOOL16 bForce)
 {
     FIXME(wnet, "('%s', %04X): stub\n", lpName, bForce);
     return WN_NO_NETWORK;
@@ -552,11 +551,11 @@ UINT16 WINAPI WNetOpenEnum16(DWORD dwScope, DWORD dwType,
 /**************************************************************************
  *				WNetOpenEnumA		[MPR.92]
  */
-UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, 
+UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, DWORD dwUsage,
                               LPNETRESOURCE32A lpNet, HANDLE32 *lphEnum)
 {
-	FIXME(wnet, "(%08lX, %08lX, %p, %p): stub\n",
-	      dwScope, dwType, lpNet, lphEnum);
+	FIXME(wnet, "(%08lX, %08lX, %08lX, %p, %p): stub\n",
+	      dwScope, dwType, dwUsage, lpNet, lphEnum);
 	return WN_NO_NETWORK;
 }
 
@@ -614,7 +613,7 @@ DWORD WINAPI WNetGetCachedPassword(
     return WN_ACCESS_DENIED;
 }
 
-/* ****************************************************************
+/*****************************************************************
  *     MultinetGetConnectionPerformanceA [MPR.25]
  *
  * RETURNS
@@ -629,5 +628,27 @@ DWORD WINAPI MultinetGetConnectionPerformance32A(
 	LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct
 ) {
 	FIXME(mpr,"(%p,%p): stub\n",lpNetResource,lpNetConnectInfoStruct);
+	return WN_NO_NETWORK;
+}
+
+
+/*****************************************************************
+ *  [MPR.22]
+ */
+
+DWORD WINAPI _MPR_22(DWORD x)
+{
+	FIXME(mpr,"(%lx): stub\n",x);
+	return 0;
+}
+
+/*****************************************************************
+ *  [MPR.25]
+ */
+
+DWORD WINAPI _MPR_25(DWORD x, DWORD y)
+{
+	FIXME(mpr,"(%lx,%lx): stub\n",x,y);
 	return 1;
 }
+

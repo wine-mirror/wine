@@ -6,6 +6,7 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <limits.h>
@@ -128,13 +129,84 @@ static void stab_strcpy(char * dest, const char * source)
    * ':'.
    */
   while(*source != '\0' && *source != ':')
-    {
       *dest++ = *source++;
-    }
   *dest++ = '\0';
 }
 
 #define MAX_TD_NESTING	128
+
+static int **typenums;
+static int *nroftypenums=NULL;
+static int nrofnroftypenums=0;
+static int curtypenum = 0;
+
+static
+int
+DEBUG_FileSubNr2StabEnum(int filenr,int subnr) {
+    if (nrofnroftypenums<=filenr) {
+    	nroftypenums = xrealloc(nroftypenums,sizeof(nroftypenums[0])*(filenr+1));
+	memset(nroftypenums+nrofnroftypenums,0,(filenr+1-nrofnroftypenums)*sizeof(nroftypenums[0]));
+	typenums = xrealloc(typenums,sizeof(typenums[0])*(filenr+1));
+	memset(typenums+nrofnroftypenums,0,sizeof(typenums[0])*(filenr+1-nrofnroftypenums));
+	nrofnroftypenums=filenr+1;
+    }
+    if (nroftypenums[filenr]<=subnr) {
+    	typenums[filenr] = xrealloc(typenums[filenr],sizeof(typenums[0][0])*(subnr+1));
+	memset(typenums[filenr]+nroftypenums[filenr],0,sizeof(typenums[0][0])*(subnr+1-nroftypenums[filenr]));
+	nroftypenums[filenr] = subnr+1;
+    }
+    if (!typenums[filenr][subnr])
+    	typenums[filenr][subnr]=++curtypenum;
+
+    if( num_stab_types <= curtypenum ) {
+	num_stab_types = curtypenum + 256;
+	stab_types = (struct datatype **) xrealloc(stab_types, 
+		    num_stab_types * sizeof(struct datatype *)
+	);
+    }
+    //fprintf(stderr,"(%d,%d) is %d\n",filenr,subnr,typenums[filenr][subnr]);
+    return typenums[filenr][subnr];
+}
+
+static
+int
+DEBUG_ReadTypeEnumBackwards(char*x) {
+    int	filenr,subnr;
+
+    if (*x==')') {
+	while (*x!='(')
+	    x--;
+	x++;				/* '(' */
+	filenr=strtol(x,&x,10);		/* <int> */
+	assert(*(x++)==',');		/* ',' */
+	subnr=strtol(x,&x,10);		/* <int> */
+	assert(*(x++)==')');		/* ')' */
+    } else {
+	while ((*x>='0') && (*x<='9'))
+	    x--;
+	filenr = 0;
+	subnr = atol(x+1);
+    }
+    return DEBUG_FileSubNr2StabEnum(filenr,subnr);
+}
+
+static 
+int
+DEBUG_ReadTypeEnum(char **x) {
+    int filenr,subnr;
+
+    if (**x=='(') {
+	(*x)++;					/* '(' */
+	filenr=strtol(*x,x,10);			/* <int> */
+	(*x)++;					/* ',' */
+	subnr=strtol(*x,x,10);			/* <int> */
+	(*x)++;					/* ')' */
+    } else {
+    	filenr = 0;
+	subnr = strtol(*x,x,10);		/* <int> */
+    }
+    return DEBUG_FileSubNr2StabEnum(filenr,subnr);
+}
 
 static
 int
@@ -144,12 +216,10 @@ DEBUG_RegisterTypedef(const char * name, struct datatype ** types, int ndef)
   struct known_typedef * ktd;
 
   if( ndef == 1 )
-    {
       return TRUE;
-    }
 
-  ktd = (struct known_typedef *) malloc(sizeof(struct known_typedef) 
-					+ ndef * sizeof(struct datatype *));
+  ktd = (struct known_typedef *) xmalloc(sizeof(struct known_typedef) 
+					 + ndef * sizeof(struct datatype *));
   
   hash = stab_hash(name);
 
@@ -171,27 +241,18 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
   int			 hash;
   struct known_typedef * ktd;
   char		       * ptr;
-  char		       * tc;
-  int			 typenum;
 
   hash = stab_hash(name);
 
   for(ktd = ktd_head[hash]; ktd; ktd = ktd->next)
-    {
-      if(    (ktd->name[0] == name[0])
-	  && (strcmp(name, ktd->name) == 0) )
-	{
+      if ((ktd->name[0] == name[0]) && (strcmp(name, ktd->name) == 0) )
 	  break;
-	}
-    }
 
   /*
    * Didn't find it.  This must be a new one.
    */
   if( ktd == NULL )
-    {
       return FALSE;
-    }
 
   /*
    * Examine the stab to make sure it has the same number of definitions.
@@ -200,9 +261,7 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
   for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
     {
       if( count >= ktd->ndefs )
-	{
 	  return FALSE;
-	}
 
       /*
        * Make sure the types of all of the objects is consistent with
@@ -221,6 +280,7 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
 	  expect = ARRAY;
 	  break;
 	case '1':
+	case '(':
 	case 'r':
 	  expect = BASIC;
 	  break;
@@ -234,52 +294,24 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
 	  expect = FUNC;
 	  break;
 	default:
-	  fprintf(stderr, "Unknown type.\n");
+	  fprintf(stderr, "Unknown type (%c).\n",ptr[1]);
           return FALSE;
 	}
       if( expect != DEBUG_GetType(ktd->types[count]) )
-	{
 	  return FALSE;
-	}
       count++;
     }
 
   if( ktd->ndefs != count )
-    {
       return FALSE;
-    }
 
   /*
-   * OK, this one is safe.  Go through, dig out all of the type numbers,
-   * and substitute the appropriate things.
+   * Go through, dig out all of the type numbers, and substitute the
+   * appropriate things.
    */
   count = 0;
   for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
-    {
-      /*
-       * Back up until we get to a non-numeric character.  This is the type
-       * number.
-       */
-      tc = ptr - 1;
-      while( *tc >= '0' && *tc <= '9' )
-	{
-	  tc--;
-	}
-      
-      typenum = atol(tc + 1);
-      if( num_stab_types <= typenum )
-	{
-	  num_stab_types = typenum + 32;
-	  stab_types = (struct datatype **) xrealloc(stab_types, 
-						     num_stab_types * sizeof(struct datatype *));
-	  if( stab_types == NULL )
-	    {
-	      return FALSE;
-	    }
-	}
-
-      stab_types[typenum] = ktd->types[count++];
-    }
+      stab_types[DEBUG_ReadTypeEnumBackwards(ptr-1)] = ktd->types[count++];
 
   return TRUE;
 }
@@ -322,7 +354,6 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
   int		    ntypes = 0;
   int		    offset;
   const char	  * orig_typename;
-  int		    rtn = FALSE;
   int		    size;
   char		  * tc;
   char		  * tc2;
@@ -330,10 +361,8 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 
   orig_typename = typename;
 
-  if( DEBUG_HandlePreviousTypedef(typename, ptr) == TRUE )
-    {
+  if( DEBUG_HandlePreviousTypedef(typename, ptr) )
       return TRUE;
-    }
 
   /* 
    * Go from back to front.  First we go through and figure out what
@@ -347,22 +376,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
        * Back up until we get to a non-numeric character.  This is the type
        * number.
        */
-      tc = c - 1;
-      while( *tc >= '0' && *tc <= '9' )
-	{
-	  tc--;
-	}
-      typenum = atol(tc + 1);
-      if( num_stab_types <= typenum )
-	{
-	  num_stab_types = typenum + 32;
-	  stab_types = (struct datatype **) xrealloc(stab_types, 
-						     num_stab_types * sizeof(struct datatype *));
-	  if( stab_types == NULL )
-	    {
-	      goto leave;
-	    }
-	}
+      typenum = DEBUG_ReadTypeEnumBackwards(c-1);
 
       if( ntypes >= MAX_TD_NESTING )
 	{
@@ -388,6 +402,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  stab_types[typenum] = DEBUG_NewDataType(ARRAY, NULL);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
+	case '(':
 	case '1':
 	case 'r':
 	  stab_types[typenum] = DEBUG_NewDataType(BASIC, typename);
@@ -407,7 +422,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	default:
-	  fprintf(stderr, "Unknown type.\n");
+	  fprintf(stderr, "Unknown type (%c).\n",c[1]);
 	}
       typename = NULL;
     }
@@ -426,16 +441,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
       */
      for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
        {
-	 /*
-	  * Back up until we get to a non-numeric character.  This is the type
-	  * number.
-	  */
-	 tc = c - 1;
-	 while( *tc >= '0' && *tc <= '9' )
-	   {
-	     tc--;
-	   }
-	 typenum = atol(tc + 1);
+         int typenum = DEBUG_ReadTypeEnumBackwards(c-1);
 	 curr_type = stab_types[typenum];
 	 
 	 switch(c[1])
@@ -443,34 +449,24 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	   case 'x':
 	     tc = c + 3;
 	     while( *tc != ':' )
-	       {
-		 tc ++;
-	       }
+		 tc++;
 	     tc++;
 	     if( *tc == '\0' )
-	       {
 		 *c = '\0';
-	       }
 	     else
-	       {
 		 strcpy(c, tc);
-	       }
-	     
 	     break;
 	   case '*':
 	   case 'f':
 	     tc = c + 2;
-	     datatype = stab_types[strtol(tc, &tc, 10)];
+	     datatype = stab_types[DEBUG_ReadTypeEnum(&tc)];
 	     DEBUG_SetPointerType(curr_type, datatype);
 	     if( *tc == '\0' )
-	       {
 		 *c = '\0';
-	       }
 	     else
-	       {
 		 strcpy(c, tc);
-	       }
 	     break;
+	   case '(':
 	   case '1':
 	   case 'r':
 	     /*
@@ -479,25 +475,27 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	     *c = '\0';
 	     break;
 	   case 'a':
-	     tc  = c + 5;
-	     arrmin = strtol(tc, &tc, 10);
-	     tc++;
-	     arrmax = strtol(tc, &tc, 10);
-	     tc++;
-	     datatype = stab_types[strtol(tc, &tc, 10)];
+	     /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo>,<int>,<int>;; */
+
+	     tc  = c + 3;
+	     assert(c[2]=='r');
+	     DEBUG_ReadTypeEnum(&tc);
+	     assert(*(tc++)==';'); 			/* ';' */
+	     arrmin = strtol(tc, &tc, 10); 		/* <int> */
+	     assert(*(tc++)==';'); 			/* ';' */
+	     arrmax = strtol(tc, &tc, 10);		/* <int> */
+	     assert(*(tc++)==';'); 			/* ';' */
+	     datatype = stab_types[DEBUG_ReadTypeEnum(&tc)]; /* <typeinfo> */
 	     if( *tc == '\0' )
-	       {
 		 *c = '\0';
-	       }
 	     else
-	       {
 		 strcpy(c, tc);
-	       }
-	     
 	     DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
 	     break;
 	   case 's':
-	   case 'u':
+	   case 'u': {
+	     int failure = 0;
+
 	     tc = c + 2;
 	     if( DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10)) == FALSE )
 	       {
@@ -506,20 +504,14 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 		  * so just skip forward to the end of the definition.
 		  */
 		 while( tc[0] != ';' && tc[1] != ';' )
-		   {
 		     tc++;
-		   }
 		 
 		 tc += 2;
 		 
 		 if( *tc == '\0' )
-		   {
 		     *c = '\0';
-		   }
 		 else
-		   {
 		     strcpy(c, tc + 1);
-		   }
 		 continue;
 	       }
 
@@ -528,30 +520,44 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	      */
 	     while(*tc != ';')
 	       {
+	         char *ti;
 		 tc2 = element_name;
 		 while(*tc != ':')
-		   {
 		     *tc2++ = *tc++;
-		   }
 		 tc++;
 		 *tc2++ = '\0';
-		 datatype = stab_types[strtol(tc, &tc, 10)];
+		 ti=tc;
+		 datatype = stab_types[DEBUG_ReadTypeEnum(&tc)];
+		 *tc='\0';
 		 tc++;
 		 offset  = strtol(tc, &tc, 10);
 		 tc++;
 		 size  = strtol(tc, &tc, 10);
 		 tc++;
-		 DEBUG_AddStructElement(curr_type, element_name, datatype, offset, size);
+		 if (datatype)
+		    DEBUG_AddStructElement(curr_type, element_name, datatype, offset, size);
+		 else {
+		    failure = 1;
+		    /* ... but proceed parsing to the end of the stab */
+		 }
 	       }
+
+	     if (failure) {
+	        /* if we had a undeclared value this one is undeclared too.
+		 * remove it from the stab_types. 
+		 * I just set it to NULL to detect bugs in my thoughtprocess.
+		 * FIXME: leaks the memory for the structure elements.
+		 * FIXME: such structures should have been optimized away
+		 *        by ld.
+		 */
+	     	stab_types[typenum] = NULL;
+	     }
 	     if( *tc == '\0' )
-	       {
 		 *c = '\0';
-	       }
 	     else
-	       {
 		 strcpy(c, tc + 1);
-	       }
 	     break;
+	   }
 	   case 'e':
 	     tc = c + 2;
 	     /*
@@ -561,9 +567,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	       {
 		 tc2 = element_name;
 		 while(*tc != ':')
-		   {
 		     *tc2++ = *tc++;
-		   }
 		 tc++;
 		 *tc2++ = '\0';
 		 offset  = strtol(tc, &tc, 10);
@@ -571,25 +575,17 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 		 DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
 	       }
 	     if( *tc == '\0' )
-	       {
 		 *c = '\0';
-	       }
 	     else
-	       {
 		 strcpy(c, tc + 1);
-	       }
 	     break;
 	   default:
-	     fprintf(stderr, "Unknown type.\n");
+	     fprintf(stderr, "Unknown type (%c).\n",c[1]);
 	     break;
 	   }
        }
      
-     rtn = TRUE;
-     
-leave:
-     
-     return rtn;
+     return TRUE;
 
 }
 
@@ -597,7 +593,6 @@ static struct datatype *
 DEBUG_ParseStabType(const char * stab)
 {
   char * c;
-  int    typenum;
 
   /*
    * Look through the stab definition, and figure out what datatype
@@ -606,9 +601,7 @@ DEBUG_ParseStabType(const char * stab)
    */
   c = strchr(stab, ':');
   if( c == NULL )
-    {
       return NULL;
-    }
 
   c++;
   /*
@@ -616,15 +609,11 @@ DEBUG_ParseStabType(const char * stab)
    * of symbol.  Skip it.
    */
   c++;
-
-  typenum = atol(c);
-
-  if( typenum < num_stab_types && stab_types[typenum] != NULL )
-    {
-      return stab_types[typenum];
-    }
-
-  return NULL;
+  /* 
+   * The next is either an integer or a (integer,integer).
+   * The DEBUG_ReadTypeEnum takes care that stab_types is large enough.
+   */
+  return stab_types[DEBUG_ReadTypeEnum(&c)];
 }
 
 static 
@@ -664,10 +653,6 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
    */
   stabbufflen = 65536;
   stabbuff = (char *) xmalloc(stabbufflen);
-  if( stabbuff == NULL )
-    {
-      goto leave;
-    }
 
   strtabinc = 0;
   stabbuff[0] = '\0';
@@ -686,10 +671,6 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 	    {
 	      stabbufflen += 65536;
 	      stabbuff = (char *) xrealloc(stabbuff, stabbufflen);
-	      if( stabbuff == NULL )
-		{
-		  goto leave;
-		}
 	    }
 	  strncat(stabbuff, ptr, len - 1);
 	  continue;
@@ -886,7 +867,11 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 	       * The datatypes that we would need to use are reset when
 	       * we start a new file.
 	       */
-	      memset(stab_types, 0, num_stab_types * sizeof(stab_types));
+	      memset(stab_types, 0, num_stab_types * sizeof(stab_types[0]));
+	      /*
+	      for (i=0;i<nrofnroftypenums;i++)
+		memset(typenums[i],0,sizeof(typenums[i][0])*nroftypenums[i]);
+	       */
 	    }
 	  else
 	    {
@@ -945,8 +930,6 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 	      strs + (unsigned int) stab_ptr->n_un.n_name);
 #endif
     }
-
-leave:
 
   if( stab_types != NULL )
     {
@@ -1025,9 +1008,7 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
        */
       if(    (DEBUG_GetSymbolValue(symname, -1, &new_addr, FALSE ) == TRUE)
 	  && (new_addr.off == (load_offset + symp->st_value)) )
-	{
 	  continue;
-	}
 
       new_addr.seg = 0;
       new_addr.type = NULL;
@@ -1035,22 +1016,16 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
       flags = SYM_WINE | (ELF32_ST_BIND(symp->st_info) == STT_FUNC 
 			  ? SYM_FUNC : SYM_DATA);
       if( ELF32_ST_BIND(symp->st_info) == STB_GLOBAL )
-	{
 	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, NULL, flags );
-	}
       else
-	{
 	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, curfile, flags );
-	}
 
       /*
        * Record the size of the symbol.  This can come in handy in
        * some cases.  Not really used yet, however.
        */
       if(  symp->st_size != 0 )
-	{
 	  DEBUG_SetSymbolSize(curr_sym, symp->st_size);
-	}
     }
 
   return TRUE;
@@ -1078,9 +1053,7 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
    * Make sure we can stat and open this file.
    */
   if( filename == NULL )
-    {
       goto leave;
-    }
 
   status = stat(filename, &statbuf);
   if( status == -1 )
@@ -1116,9 +1089,7 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
    */
   fd = open(filename, O_RDONLY);
   if( fd == -1 )
-    {
       goto leave;
-    }
 
 
   /*
@@ -1127,9 +1098,7 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
   if( addr == (char *) 0xffffffff )
-    {
       goto leave;
-    }
 
   /*
    * Give a nice status message here...
@@ -1145,13 +1114,9 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
   ehptr = (Elf32_Ehdr *) addr;
 
   if( load_offset == 0 )
-    {
       DEBUG_RegisterELFDebugInfo(ehptr->e_entry, statbuf.st_size, filename);
-    }
   else
-    {
       DEBUG_RegisterELFDebugInfo(load_offset, statbuf.st_size, filename);
-    }
 
   spnt = (Elf32_Shdr *) (addr + ehptr->e_shoff);
   nsect = ehptr->e_shnum;
@@ -1162,20 +1127,14 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
   for(i=0; i < nsect; i++)
     {
       if( strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0 )
-	{
 	  stabsect = i;
-	}
 
       if( strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0 )
-	{
 	  stabstrsect = i;
-	}
     }
 
   if( stabsect == -1 || stabstrsect == -1 )
-    {
       goto leave;
-    }
 
   /*
    * OK, now just parse all of the stabs.
@@ -1187,38 +1146,28 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 			 spnt[stabstrsect].sh_size);
 
   if( rtn != TRUE )
-    {
       goto leave;
-    }
 
   for(i=0; i < nsect; i++)
     {
       if(    (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
 	  && (spnt[i].sh_type == SHT_SYMTAB) )
-	{
 	  DEBUG_ProcessElfSymtab(addr, load_offset, 
 				 spnt + i, spnt + spnt[i].sh_link);
-	}
 
       if(    (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
 	  && (spnt[i].sh_type == SHT_DYNSYM) )
-	{
 	  DEBUG_ProcessElfSymtab(addr, load_offset, 
 				 spnt + i, spnt + spnt[i].sh_link);
-	}
     }
 
 leave:
 
   if( addr != (char *) 0xffffffff )
-    {
       munmap(addr, statbuf.st_size);
-    }
 
   if( fd != -1 )
-    {
       close(fd);
-    }
 
   return (rtn);
 
@@ -1241,9 +1190,7 @@ DEBUG_ReadExecutableDbgInfo(void)
    * Make sure we can stat and open this file.
    */
   if( exe_name == NULL )
-    {
       goto leave;
-    }
 
   DEBUG_ProcessElfObject(exe_name, 0);
 
@@ -1254,27 +1201,19 @@ DEBUG_ReadExecutableDbgInfo(void)
    */
   dynpnt = _DYNAMIC;
   if( dynpnt == NULL )
-    {
       goto leave;
-    }
 
   /*
    * Now walk the dynamic section (of the executable, looking for a DT_DEBUG
    * entry.
    */
   for(; dynpnt->d_tag != DT_NULL; dynpnt++)
-    {
       if( dynpnt->d_tag == DT_DEBUG )
-	{
 	  break;
-	}
-    }
 
   if(    (dynpnt->d_tag != DT_DEBUG)
       || (dynpnt->d_un.d_ptr == 0) )
-    {
       goto leave;
-    }
 
   /*
    * OK, now dig into the actual tables themselves.
@@ -1297,14 +1236,10 @@ DEBUG_ReadExecutableDbgInfo(void)
        */
       ehdr = (Elf32_Ehdr *) lpnt->l_addr;
       if( (lpnt->l_addr == 0) || (ehdr->e_type != ET_DYN) )
-	{
 	  continue;
-	}
 
       if( lpnt->l_name != NULL )
-	{
 	  DEBUG_ProcessElfObject(lpnt->l_name, lpnt->l_addr);
-	}
     }
 
   rtn = TRUE;
@@ -1340,24 +1275,18 @@ DEBUG_ReadExecutableDbgInfo(void)
    * Make sure we can stat and open this file.
    */
   if( exe_name == NULL )
-    {
       goto leave;
-    }
 
   status = stat(exe_name, &statbuf);
   if( status == -1 )
-    {
       goto leave;
-    }
 
   /*
    * Now open the file, so that we can mmap() it.
    */
   fd = open(exe_name, O_RDONLY);
   if( fd == -1 )
-    {
       goto leave;
-    }
 
 
   /*
@@ -1366,9 +1295,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
   if( addr == (char *) 0xffffffff )
-    {
       goto leave;
-    }
 
   ahdr = (struct exec *) addr;
 
@@ -1390,14 +1317,10 @@ DEBUG_ReadExecutableDbgInfo(void)
 leave:
 
   if( addr != (char *) 0xffffffff )
-    {
       munmap(addr, statbuf.st_size);
-    }
 
   if( fd != -1 )
-    {
       close(fd);
-    }
 
   return (rtn);
 

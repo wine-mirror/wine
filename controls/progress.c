@@ -159,9 +159,10 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
     {
     case WM_CREATE:
       /* allocate memory for info struct */
-      wndPtr->wExtra[0] = HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+      infoPtr = (PROGRESS_INFO *)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
                                      sizeof(PROGRESS_INFO));
-      infoPtr = (PROGRESS_INFO *)wndPtr->wExtra[0];
+      wndPtr->wExtra[0] = (DWORD)infoPtr;
+
       /* initialize the info struct */
       infoPtr->MinVal=0; 
       infoPtr->MaxVal=100;
@@ -169,11 +170,11 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       infoPtr->Step=10;
       infoPtr->ColorBar=CLR_DEFAULT;
       infoPtr->ColorBk=CLR_DEFAULT;
-      TRACE(updown, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
+      TRACE(progress, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
     case WM_DESTROY:
-      TRACE(updown, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+      TRACE(progress, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
       HeapFree (SystemHeap, 0, infoPtr);
       break;
 
@@ -183,10 +184,12 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       return 1;
 	
     case WM_GETFONT:
+      FIXME (progress, "WM_GETFONT - empty message!\n");
       /* FIXME: What do we need to do? */
       break;
 
     case WM_SETFONT:
+      FIXME (progress, "WM_SETFONT - empty message!\n");
       /* FIXME: What do we need to do? */
       break;
 

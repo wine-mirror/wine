@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -39,6 +38,7 @@
 #include "keyboard.h"
 #include "debug.h"
 #include "dde_proc.h"
+#include "winsock.h"
 
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
@@ -106,10 +106,6 @@ static void EVENT_MapNotify( HWND32 hwnd, XMapEvent *event );
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 */
 
-extern void FOCUS_SetXFocus( HWND32 );
-extern BOOL16 DRAG_QueryUpdate( HWND16, SEGPTR, BOOL32 );
-extern BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set p[3], fd_set e[3] );
-
 /***********************************************************************
  *           EVENT_Init
  *
@@ -130,13 +126,13 @@ BOOL32 EVENT_Init(void)
 /***********************************************************************
  *          EVENT_AddIO 
  */
-void EVENT_AddIO( int fd, int io_type )
+void EVENT_AddIO( int fd, unsigned io_type )
 {
     FD_SET( fd, &__event_io_set[io_type] );
     if( __event_max_fd <= fd ) __event_max_fd = fd + 1;
 }
 
-void EVENT_DeleteIO( int fd, int io_type )
+void EVENT_DeleteIO( int fd, unsigned io_type )
 {
     FD_CLR( fd, &__event_io_set[io_type] );
 }

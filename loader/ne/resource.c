@@ -513,7 +513,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
     WORD count;
-    NE_MODULE *pModule = NE_GetPtr( GetExePtr(handle) );
+    NE_MODULE *pModule = NE_GetPtr( FarGetOwner(handle) );
 
     if (!handle || !pModule || !pModule->res_table) return handle;
 

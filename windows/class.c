@@ -9,7 +9,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "class.h"
 #include "heap.h"
@@ -37,15 +36,14 @@ void CLASS_DumpClass( CLASS *ptr )
 
     if (ptr->magic != CLASS_MAGIC)
     {
-        fprintf( stderr, "%p is not a class\n", ptr );
+        DUMP("%p is not a class\n", ptr );
         return;
     }
 
     GlobalGetAtomName32A( ptr->atomName, className, sizeof(className) );
 
-    fprintf( stderr, "Class %p:\n", ptr );
-    fprintf( stderr,
-             "next=%p  name=%04x '%s'  style=%08x  wndProc=%08x\n"
+    DUMP( "Class %p:\n", ptr );
+    DUMP( "next=%p  name=%04x '%s'  style=%08x  wndProc=%08x\n"
              "inst=%04x  dce=%08x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
              "clsExtra=%d  winExtra=%d  #windows=%d\n",
              ptr->next, ptr->atomName, className, ptr->style,
@@ -54,12 +52,12 @@ void CLASS_DumpClass( CLASS *ptr )
              ptr->cbClsExtra, ptr->cbWndExtra, ptr->cWindows );
     if (ptr->cbClsExtra)
     {
-        fprintf( stderr, "extra bytes:" );
+        DUMP( "extra bytes:" );
         for (i = 0; i < ptr->cbClsExtra; i++)
-            fprintf( stderr, " %02x", *((BYTE *)ptr->wExtra+i) );
-        fprintf( stderr, "\n" );
+            DUMP( " %02x", *((BYTE *)ptr->wExtra+i) );
+        DUMP( "\n" );
     }
-    fprintf( stderr, "\n" );
+    DUMP( "\n" );
 }
 
 
@@ -73,14 +71,14 @@ void CLASS_WalkClasses(void)
     CLASS *ptr;
     char className[80];
 
-    fprintf( stderr, " Class   Name                  Style   WndProc\n" );
+    DUMP( " Class   Name                  Style   WndProc\n" );
     for (ptr = firstClass; ptr; ptr = ptr->next)
     {
         GlobalGetAtomName32A( ptr->atomName, className, sizeof(className) );
-        fprintf( stderr, "%08x %-20.20s %08x %08x\n", (UINT32)ptr, className,
+        DUMP( "%08x %-20.20s %08x %08x\n", (UINT32)ptr, className,
                  ptr->style, (UINT32)ptr->winproc );
     }
-    fprintf( stderr, "\n" );
+    DUMP( "\n" );
 }
 
 
@@ -173,7 +171,7 @@ static BOOL32 CLASS_FreeClass( CLASS *classPtr )
         if (*ppClass == classPtr) break;
     if (!*ppClass)
     {
-        fprintf(stderr, "ERROR: Class list corrupted\n" );
+        ERR( class, "Class list corrupted\n" );
         return FALSE;
     }
     *ppClass = classPtr->next;
@@ -265,10 +263,10 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
 
     if (classExtra < 0) classExtra = 0;
     else if (classExtra > 40)  /* Extra bytes are limited to 40 in Win32 */
-        fprintf(stderr, "Warning: class extra bytes %d is > 40\n", classExtra);
+        WARN(class, "Class extra bytes %d is > 40\n", classExtra);
     if (winExtra < 0) winExtra = 0;
     else if (winExtra > 40)    /* Extra bytes are limited to 40 in Win32 */
-        fprintf( stderr, "Warning: win extra bytes %d is > 40\n", winExtra );
+        WARN(class, "Win extra bytes %d is > 40\n", winExtra );
 
     /* Create the class */
 
@@ -585,7 +583,7 @@ WORD WINAPI GetClassWord32( HWND32 hwnd, INT32 offset )
         case GCW_HMODULE:
             return (WORD)GetClassLong32A( hwnd, offset );
     }
-    fprintf(stderr, "Warning: invalid offset %d for GetClassWord()\n", offset);
+    WARN(class, "Invalid offset %d\n", offset);
     return 0;
 }
 
@@ -641,7 +639,7 @@ LONG WINAPI GetClassLong32A( HWND32 hwnd, INT32 offset )
         case GCL_HICONSM:
             return GetClassWord32( hwnd, offset );
     }
-    fprintf(stderr, "Warning: invalid offset %d for GetClassLong()\n", offset);
+    WARN(class, "Invalid offset %d\n", offset);
     return 0;
 }
 
@@ -692,8 +690,7 @@ WORD WINAPI SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
             ptr = ((char *)wndPtr->class->wExtra) + offset;
         else
         {
-            fprintf( stderr, "Warning: invalid offset %d for SetClassWord()\n",
-                     offset );
+            WARN( class, "Invalid offset %d\n", offset );
             return 0;
         }
     }
@@ -710,8 +707,7 @@ WORD WINAPI SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
         case GCW_HICONSM:       ptr = &wndPtr->class->hIconSm; break;
         case GCW_ATOM:          ptr = &wndPtr->class->atomName; break;
         default:
-            fprintf( stderr, "Warning: invalid offset %d for SetClassWord()\n",
-                     offset);
+            WARN( class, "Invalid offset %d\n", offset);
             return 0;
     }
     retval = GET_WORD(ptr);
@@ -760,8 +756,7 @@ LONG WINAPI SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
             ptr = ((char *)wndPtr->class->wExtra) + offset;
         else
         {
-            fprintf( stderr, "Warning: invalid offset %d for SetClassLong()\n",
-                     offset );
+            WARN( class, "Invalid offset %d\n", offset );
             return 0;
         }
     }
@@ -786,8 +781,7 @@ LONG WINAPI SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
         case GCL_CBCLSEXTRA: ptr = &wndPtr->class->cbClsExtra; break;
         case GCL_HMODULE:    ptr = &wndPtr->class->hInstance; break;
         default:
-            fprintf( stderr, "Warning: invalid offset %d for SetClassLong()\n",
-                     offset);
+            WARN( class, "Invalid offset %d\n", offset );
             return 0;
     }
     retval = GET_DWORD(ptr);

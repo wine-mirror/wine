@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include "windows.h"
@@ -105,4 +104,10 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
     FIXME(print,"Nearly empty stub\n");
     *lpdwReturned=0;
     return TRUE;
+}
+BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
+{
+    FIXME(print, "(%s,%lx,%p):stub!\n", pName, Level, pMonitors);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }

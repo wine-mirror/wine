@@ -1,3 +1,7 @@
+Henrik Olsen <henrik@iaeste.dk>
+        * [Da.rc]
+        Added Danish language support.
+
 Fri May 15 23:59:22 1998  Marcel Baur <mbaur@g26.ethz.ch>
         * Date/Time now uses locale-specific formats
         * Language-specific window caption, displays file being edited.

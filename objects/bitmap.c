@@ -4,7 +4,6 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ts_xlib.h"
@@ -175,6 +174,10 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmpObjPtr->bitmap.bmBitsPixel = (BYTE)bpp;
     bmpObjPtr->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmBits = NULL;
+
+    bmpObjPtr->dibSection = NULL;
+    bmpObjPtr->colorMap = NULL;
+    bmpObjPtr->nColorMap = 0;
 
       /* Create the pixmap */
     bmpObjPtr->pixmap = TSXCreatePixmap(display, rootWindow, width, height, bpp);
@@ -824,6 +827,19 @@ BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
       shmdt(p->si.shmaddr);  /* already marked for destruction */
     }
 #endif
+
+    if (bmp->dibSection)
+    {
+	DIBSECTION *dib = bmp->dibSection;
+
+	if (!dib->dshSection && dib->dsBm.bmBits)
+	    HeapFree(GetProcessHeap(), 0, dib->dsBm.bmBits);
+
+	HeapFree(GetProcessHeap(), 0, dib);
+    }
+    if (bmp->colorMap)
+	HeapFree(GetProcessHeap(), 0, bmp->colorMap);
+
     return GDI_FreeObject( hbitmap );
 }
 
@@ -833,9 +849,17 @@ BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
  */
 INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 {
-    if (count > sizeof(bmp->bitmap)) count = sizeof(bmp->bitmap);
-    memcpy( buffer, &bmp->bitmap, count );
-    return count;
+    if (bmp->dibSection)
+    {
+	FIXME(bitmap, "not implemented for DIBs\n");
+	return 0;
+    }
+    else
+    {
+	if (count > sizeof(bmp->bitmap)) count = sizeof(bmp->bitmap);
+	memcpy( buffer, &bmp->bitmap, count );
+	return count;
+    }
 }
     
 
@@ -844,17 +868,34 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
  */
 INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 {
-    BITMAP32 bmp32;
-    bmp32.bmType       = bmp->bitmap.bmType;
-    bmp32.bmWidth      = bmp->bitmap.bmWidth;
-    bmp32.bmHeight     = bmp->bitmap.bmHeight;
-    bmp32.bmWidthBytes = bmp->bitmap.bmWidthBytes;
-    bmp32.bmPlanes     = bmp->bitmap.bmPlanes;
-    bmp32.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
-    bmp32.bmBits       = NULL;
-    if (count > sizeof(bmp32)) count = sizeof(bmp32);
-    memcpy( buffer, &bmp32, count );
-    return count;
+    if (bmp->dibSection)
+    {
+	if (count < sizeof(DIBSECTION))
+	{
+	    if (count > sizeof(BITMAP32)) count = sizeof(BITMAP32);
+	}
+	else
+	{
+	    if (count > sizeof(DIBSECTION)) count = sizeof(DIBSECTION);
+	}
+
+	memcpy( buffer, bmp->dibSection, count );
+	return count;
+    }
+    else
+    {
+	BITMAP32 bmp32;
+	bmp32.bmType       = bmp->bitmap.bmType;
+	bmp32.bmWidth      = bmp->bitmap.bmWidth;
+	bmp32.bmHeight     = bmp->bitmap.bmHeight;
+	bmp32.bmWidthBytes = bmp->bitmap.bmWidthBytes;
+	bmp32.bmPlanes     = bmp->bitmap.bmPlanes;
+	bmp32.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
+	bmp32.bmBits       = NULL;
+	if (count > sizeof(bmp32)) count = sizeof(bmp32);
+	memcpy( buffer, &bmp32, count );
+	return count;
+    }
 }
     
 

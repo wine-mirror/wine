@@ -4,7 +4,6 @@
  * Copyright 1996 Martin von Loewis
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "winerror.h"
 #include "struct32.h"

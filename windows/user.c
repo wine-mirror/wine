@@ -5,7 +5,6 @@
  *	     1996 Alex Korobka 
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
 #include "resource.h"
@@ -16,16 +15,15 @@
 #include "queue.h"
 #include "win.h"
 #include "clipboard.h"
+#include "menu.h"
 #include "hook.h"
 #include "debug.h"
 #include "toolhelp.h"
 #include "message.h"
 #include "module.h"
 #include "miscemu.h"
+#include "queue.h"
 #include "shell.h"
-
-extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
-extern void QUEUE_FlushMessages(HQUEUE16);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -244,7 +242,7 @@ void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
 	     break;
 
 	default:
-	     fprintf(stderr,"Unimplemented USER signal: %i\n", (int)uCode );
+	     FIXME(msg,"Unimplemented USER signal: %i\n", (int)uCode );
     }
 }
 
@@ -263,7 +261,7 @@ BOOL16 WINAPI ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
  */
 BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
 {
-    fprintf(stderr, "ExitWindowsExec() : Should run the following in DOS-mode :\n\t\"%s %s\"\n",
+    TRACE(system, "Should run the following in DOS-mode: \"%s %s\"\n",
 	lpszExe, lpszParams);
     return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
 }
@@ -310,7 +308,7 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
  *           EnumDisplaySettingsA   (USER32.592)
  */
 BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
-	fprintf(stderr,"EnumDisplaySettings32A(%s,%ld,%p)\n",name,n,devmode);
+	TRACE(system,"(%s,%ld,%p)\n",name,n,devmode);
 	if (n==0) {
 		devmode->dmBitsPerPel = DefaultDepthOfScreen(screen);
 		devmode->dmPelsHeight = screenHeight;
@@ -328,7 +326,7 @@ BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
  */
 FARPROC16 SetEventHook(FARPROC16 lpfnEventHook)
 {
-	fprintf(stderr, "SetEventHook(lpfnEventHook = %08x): stub !\n", (UINT32)lpfnEventHook);
+	FIXME(hook, "(lpfnEventHook=%08x): stub\n", (UINT32)lpfnEventHook);
 	return NULL;
 }
 

@@ -1,4 +1,268 @@
 ----------------------------------------------------------------------
+Sun May 31 13:40:13 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [if1632/signal.c]
+	Added display of exception name.
+
+	* [loader/task.c]
+	Yet another attempt at fixing SwitchStackTo/SwitchStackBack.
+
+	* [memory/selector.c] [relay32/builtin32.c] [tools/build.c]
+	  [win32/kernel32.c]
+	Generate an assembly stub for Win32 register functions to make
+	their names available at link time.
+
+	* [programs/*/Makefile.in]
+	Added hacks to support old resource compiler.
+
+Fri May 29 16:27:14 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [tools/testrun]
+	Merge of my testscripts at home into one single perl program
+	(tested with perl5). Works only on Linux due to 'ps' and 'ipcs'
+	magic.
+
+	* [controls/menu.c]
+	Added some DefaultMenuItem stubs.
+
+	* [debugger/stabs.c]
+	Fixed stabs loading, now supports (int,int) typeinfo format used
+	by gcc-2.8 and egcs-1. If it still crashes, please mail me.
+
+	* [if1632/][relay32/]
+	Added msvideo.dll (stubs only)
+	Replaced some ptr by str for stringcases
+	Added some new stubs (VxDCall, FindCloseNotif....)
+
+	* [misc/network.c]
+	Some argument fixes.
+
+	* [misc/registry.c][misc/cpu.c]
+	Registry initialization partially rewritten and enhanced.
+
+	* [scheduler/*.c]
+	Some additions so we don't do kill(0,SIGUSR1) (kill processgroup
+	instead of targeted thread)
+	Added SetThreadContext.
+
+Thu May 28 23:59:59 1998  Bertho Stultiens <bertho@akhphd.au.dk>
+
+	* [tools/wrc/*]
+	New resource compiler version 1.0.0 (28-May-1998)
+
+	* [Make.rules.in] [Makefile.in]
+	Changed and added rc rules to point to tools/wrc/wrc.
+
+	* [configure.in] [include/config.h.in]
+	Added check for function 'stricmp'.
+
+	* [include/resource.h]
+	Commented out the old resource structure to catch references.
+	It also includes wrc_rsc.h.
+
+	* [include/wrc_rsc.h]
+	New file. Definitions for the resources generated with wrc.
+
+	* [include/windows.h]
+	Added #ifdef RC_INVOKED to exclude stdarg.h.
+	Added SS_NOTIFY flag.
+
+	* [include/winnls.h]
+	Added SUBLANG_* definitions and corrected some defaults.
+
+	* [loader/libres.c]
+	Changed the sysres load functions to support wrc generated
+	resources.
+
+	* [resource/sysres_*.rc]
+	Added #include <windows.h>
+
+	* [resource/sysres.c]
+	Changed declarations to match wrc's output
+
+	* [resource/Makefile.in]
+	Changed rules to work with wrc.
+
+	* [tools/makedep.c]
+	Changed generation of .rc file dependencies to .s target.
+
+Thu May 28 22:28:39 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [files/file.c][include/windows.c][relay32/kernel32.spec]
+	Implemented GetFileAttributesEx32A/W.
+
+	* [misc/imagelist.h][include/commctrl.h][relay32/comctl32.spec]
+	Added ImageList_Read and ImageList_Write stubs.
+	Added ImageList_AddIcon function.
+	Added ImageList_LoadImage. It is the same as ImageList_LoadImage32A.
+
+	* [controls/header.c]
+	Fixed bitmap drawing bug.
+	Added full bitmap support.
+
+	* [include/commctrl.h]
+	Added missing header macros.
+
+	* [controls/toolbar.c][include/toolbar.h][include/commctrl.h]
+	  [controls/commctrl.c] [relay32/comctl32.spec]
+	First implementation of toolbar control.
+	Implemented CreateToolbar, CreateToolbarEx and CreateMappedBitmap.
+
+	* [controls/progress.c][controls/status.c]
+	Some code cleanup.
+
+	* [controls/commctrl.c][include/commctrl.h][relay32/comctl32.spec]
+	Removed CreateStatusWindow16 and DrawStatusText16.
+	CreateStatusWindow is the same as CreateStatusWindow32A.
+	DrawStatusText is the same as DrawStatusText32A.
+
+Thu May 28 16:01:28 1998  Matthew J. Francis  <asbel@dial.pipex.com>
+
+	* [objects/bitmap.c] [objects/bitmap.h] [objects/oembitmap.c]
+	  [objects/dc.c] [graphics/x11drv/bitblt.c]
+	Added partial implementation of CreateDIBSection, with great thanks
+	to Ulrich Weigand <weigand@informatik.uni-erlangen.de> for
+	contributing the bulk of the patch.
+
+Wed May 27 19:04:31 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [win32/kernel32.c] [if1632/thunk.c] [include/flatthunk.h]
+	ThunkConnect16 and related functions moved to emulator.
+
+	* [loader/ne/segment.c]
+	Call DllEntryPoint with correct arguments.
+
+	* [relay32/builtin32.c]
+	Bugfix: Relay debugging did not work for multiple processes.
+
+	* [controls/menu.c]
+	Bugfix: dwItemData was not set for MF_OWNERDRAW menus.
+
+	* [if1632/relay.c] [relay32/relay386.c]
+	Relay messages converted to use DPRINTF.
+
+	* [controls/desktop.c] [relay32/user32.spec]
+	Implemented PaintDesktop.
+
+	* [files/profile.c] [if1632/kernel.spec] [misc/network.c]
+	  [misc/printdrv.c] [relay32/winspool.spec] 
+	  [win32/ordinals.c] [relay32/kernel32.spec]
+	Some stubs added.
+
+	* [relay32/mpr.spec]
+	All ordinals were off by one.
+
+Tue May 26 13:32:57 1998  Bill Hawes <whawes@star.net>
+
+	* [misc/lstr.c] [include/casemap.h] [tools/unimap.pl]
+	Added Unicode case conversion routines towupper/towlower,
+	with mapping tables casemap.h created by tools/unimap.pl.
+
+	* [misc/ntdll.c] [include/winnls.h] [relay32/ntdll.spec]
+	  [relay32/advapi.spec]
+	Minimal implementation of IsTextUnicode, just enough to get
+	NT4 notepad to open ascii/unicode files.
+
+	* [Make.rules.in] [resources/sysres_En.rc]
+	Added include file dlgs.h for building resource files, so that
+	resources can refer to defined values (e.g. pshHelp).
+
+	* [misc/crtdll.c] [relay32/crtdll.spec]
+	Use towupper/towlower for 32W case conversions.
+
+	* [memory/string.c]
+	Use towupper for 32W case conversions.
+
+	* [ole/ole2nls.c]
+	Use towupper for 32W case conversions; fix mem leak; minor cleanup
+
+	* [controls/edit.c]
+	Added soft break flag to edit state. Print unknown action values
+	for WM_VSCROLL (action 190 occurs when running NT4 notepad.)
+
+Mon May 25 22:42:40 1998  Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [files/file.c]
+	Care for a pathological case in SetFilePointer.
+
+	* [graphics/x11drv/xfont.c]
+	Handle longer Font names in LFD_ComposeLFD and try to catch errors.
+
+	* [loader/pe_image.c]
+	Unload Dummymodule when PE_LoadLibraryEx32A fails with
+	PE_LoadImage (makes Encarta 98 installer proceed).
+
+	* [misc/registry.c]
+	Move a check for a special case in RegCreateKeyEx32W after the
+	check for existence.
+
+Tue May 25 20:18:26 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [misc/ntdll.c]
+	Added some stubs, just guessing at the size of their param lists.
+
+	* [misc/registry.c]
+	Added stubs for RegUnLoadKey, RegSetKeySecurity, RegSaveKey,
+	RegRestoreKey, and RegReplaceKey
+
+	* [programs/regtest/regtest.c]
+	Updated registry testing program.
+
+Sun May 24 18:11:40 1998  Alex Priem <alexp@sci.kun.nl>
+
+	* [file/profile.c]
+	Added flag 'return_values' to PROFILE_GetSection.
+
+Sun May 24 13:41:10 1998  James Juran <jrj120@psu.edu>
+
+	* [misc/shell.c] [files/directory.c]
+	Documentation/debugging info additions.
+
+	* [*/*.c] [include/*.h]
+	Moved many extern function definitions to appropriate header files.
+	Cleaned up a few compile warnings.
+	If #include "debug.h" is present, removed #include <stdio.h>.
+	debug.h includes stdio.h, so it is not necessary to include both.
+
+	* [graphics/*.c] [if1632/signal.c] [ipc/*.c] [scheduler/*.c]
+	  [win32/*.c] [windows/*.c]
+	Final patch to convert fprintf statements to new debugging interface.
+	Some fprintfs are still left, especially in the debugger/ directory.
+	However, IMHO, it's not worth the effort to change the rest.
+
+Fri May 22 21:58:35 1998  Morten Welinder  <terra@diku.dk>
+
+	* [windows/keyboard.c]
+	Correct handling of keys "`-=[]\;',./".
+
+Fri May 22 12:06:00 1998  Per Lindström <pelinstr@algonet.se>
+
+	* [include/windows.h] [relay32/kernel32.spec] [win32/console.c]
+	Added stub for ReadConsoleOutputCharacter32A.
+
+Thu May 21 16:45:48 1998  Pascal Cuoq <pcuoq@ens-lyon.fr>
+
+	* [ole/ole2nls.c]
+	Began better implementation of LCMapString32A.
+	Not very well tested yet, and still need improvements.
+
+	* [controls/scroll.c]
+	Documented functions.
+
+Wed May 20 21:37:56 1998  Peter Hunnisett <hunnise@nortel.ca>
+
+	* [include/windows.h][misc/main.c]
+	Change SystemParameterInfo to support SPI_GETHIGHCONTRAST. Also
+	include some missing SPI_ definitions.
+
+	* [include/dsound.h][multimedia/dsound.c][relay32/dplayx.spec]
+	Added stubs for DirectPlayLobbyCreate[AW]. Not sure if these
+	should go into a new files dplayx.c? Anyone care?
+
+	* [include/winnls.h]
+	Added two missing flags for the CompareString32 functions.
+
+----------------------------------------------------------------------
 Sun May 17 16:23:56 1998  Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
 
 	* [file/profile.c]

@@ -521,6 +521,46 @@ void NE_FixupPrologs( NE_MODULE *pModule )
     }
 }
 
+/***********************************************************************
+ *           NE_GetDLLInitParams
+ */
+static VOID NE_GetDLLInitParams( NE_MODULE *pModule, 
+				 WORD *hInst, WORD *ds, WORD *heap )
+{
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+
+    if (!(pModule->flags & NE_FFLAGS_SINGLEDATA))
+    {
+        if (pModule->flags & NE_FFLAGS_MULTIPLEDATA || pModule->dgroup)
+        {
+            /* Not SINGLEDATA */
+            ERR(dll, "Library is not marked SINGLEDATA\n");
+            exit(1);
+        }
+        else  /* DATA NONE DLL */
+        {
+            *ds = 0;
+            *heap = 0;
+        }
+    }
+    else  /* DATA SINGLE DLL */
+    {
+	if (pModule->dgroup) {
+            *ds   = pSegTable[pModule->dgroup-1].selector;
+            *heap = pModule->heap_size;
+	}
+	else /* hmm, DLL has no dgroup,
+		but why has it NE_FFLAGS_SINGLEDATA set ?
+		Buggy DLL compiler ? */
+	{
+            *ds   = 0;
+            *heap = 0;
+	}
+    }
+
+    *hInst = *ds ? *ds : pModule->self;
+}
+
 
 /***********************************************************************
  *           NE_InitDLL
@@ -530,14 +570,8 @@ void NE_FixupPrologs( NE_MODULE *pModule )
 static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegTable;
+    WORD hInst, ds, heap, fs;
     CONTEXT context;
-
-    /* Registers at initialization must be:
-     * cx     heap size
-     * di     library instance
-     * ds     data segment if any
-     * es:si  command line (always 0)
-     */
 
     pSegTable = NE_SEG_TABLE( pModule );
 
@@ -556,42 +590,29 @@ static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
     if (!pModule->cs) return TRUE;  /* no initialization code */
 
+
+    /* Registers at initialization must be:
+     * cx     heap size
+     * di     library instance
+     * ds     data segment if any
+     * es:si  command line (always 0)
+     */
+
     memset( &context, 0, sizeof(context) );
 
-    if (!(pModule->flags & NE_FFLAGS_SINGLEDATA))
-    {
-        if (pModule->flags & NE_FFLAGS_MULTIPLEDATA || pModule->dgroup)
-        {
-            /* Not SINGLEDATA */
-            ERR(dll, "Library is not marked SINGLEDATA\n");
-            exit(1);
-        }
-        else  /* DATA NONE DLL */
-        {
-            DS_reg(&context)  = 0;
-            ECX_reg(&context) = 0;
-        }
-    }
-    else  /* DATA SINGLE DLL */
-    {
-	if (pModule->dgroup) {
-            DS_reg(&context)  = pSegTable[pModule->dgroup-1].selector;
-            ECX_reg(&context) = pModule->heap_size;
-	}
-	else /* hmm, DLL has no dgroup,
-		but why has it NE_FFLAGS_SINGLEDATA set ?
-		Buggy DLL compiler ? */
-	{
-            DS_reg(&context)  = 0;
-            ECX_reg(&context) = 0;
-	}
-    }
+    NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
+    GET_FS( fs );
+
+    ECX_reg(&context) = heap;
+    EDI_reg(&context) = hInst;
+    DS_reg(&context)  = ds;
+    ES_reg(&context)  = ds;   /* who knows ... */
+    FS_reg(&context)  = fs;
 
     CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
     EIP_reg(&context) = pModule->ip;
     EBP_reg(&context) = OFFSETOF(THREAD_Current()->cur_stack)
                           + (WORD)&((STACK16FRAME*)0)->bp;
-    EDI_reg(&context) = DS_reg(&context) ? DS_reg(&context) : pModule->self;
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
@@ -610,6 +631,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
 static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 {
+    WORD hInst, ds, heap, fs;
     FARPROC16 entryPoint;
     WORD ordinal;
     CONTEXT context;
@@ -622,15 +644,22 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 
     memset( &context, 0, sizeof(context) );
 
+    NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
+    GET_FS( fs );
+
+    DS_reg(&context) = ds;
+    ES_reg(&context) = ds;   /* who knows ... */
+    FS_reg(&context) = fs;
+
     CS_reg(&context) = HIWORD(entryPoint);
     IP_reg(&context) = LOWORD(entryPoint);
     EBP_reg(&context) =  OFFSETOF( thdb->cur_stack )
                          + (WORD)&((STACK16FRAME*)0)->bp;
 
     *(DWORD *)(stack -  4) = dwReason;      /* dwReason */
-    *(WORD *) (stack -  6) = pModule->self; /* hInst */
-    *(WORD *) (stack -  8) = 0;             /* wDS */
-    *(WORD *) (stack - 10) = 0;             /* wHeapSize */
+    *(WORD *) (stack -  6) = hInst;         /* hInst */
+    *(WORD *) (stack -  8) = ds;            /* wDS */
+    *(WORD *) (stack - 10) = heap;          /* wHeapSize */
     *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
     *(WORD *) (stack - 16) = 0;             /* wReserved2 */
 

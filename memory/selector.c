@@ -621,17 +621,17 @@ x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
     EAX_reg(context) = ptr;
 }
 
-void WINAPI SMapLS_IP_EBP_8(CONTEXT *context)  {x_SMapLS_IP_EBP_x(context,8);}
-void WINAPI SMapLS_IP_EBP_12(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,12);}
-void WINAPI SMapLS_IP_EBP_16(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,16);}
-void WINAPI SMapLS_IP_EBP_20(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,20);}
-void WINAPI SMapLS_IP_EBP_24(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,24);}
-void WINAPI SMapLS_IP_EBP_28(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,28);}
-void WINAPI SMapLS_IP_EBP_32(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,32);}
-void WINAPI SMapLS_IP_EBP_36(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,36);}
-void WINAPI SMapLS_IP_EBP_40(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,40);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_8)  {x_SMapLS_IP_EBP_x(context,8);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_12) {x_SMapLS_IP_EBP_x(context,12);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_16) {x_SMapLS_IP_EBP_x(context,16);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_20) {x_SMapLS_IP_EBP_x(context,20);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_24) {x_SMapLS_IP_EBP_x(context,24);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_28) {x_SMapLS_IP_EBP_x(context,28);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_32) {x_SMapLS_IP_EBP_x(context,32);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_36) {x_SMapLS_IP_EBP_x(context,36);}
+REGS_ENTRYPOINT(SMapLS_IP_EBP_40) {x_SMapLS_IP_EBP_x(context,40);}
 
-void WINAPI SMapLS(CONTEXT *context)
+REGS_ENTRYPOINT(SMapLS)
 {
     if (EAX_reg(context)>=0x10000) {
 	EAX_reg(context) = MapLS((LPVOID)EAX_reg(context));
@@ -641,7 +641,7 @@ void WINAPI SMapLS(CONTEXT *context)
     }
 }
 
-void WINAPI SUnMapLS(CONTEXT *context)
+REGS_ENTRYPOINT(SUnMapLS)
 {
     if (EAX_reg(context)>=0x10000)
 	UnMapLS((SEGPTR)EAX_reg(context));
@@ -653,15 +653,15 @@ x_SUnMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
 		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
 	*(DWORD*)(EBP_reg(context)+argoff)=0;
 }
-void WINAPI SUnMapLS_IP_EBP_8(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,12); }
-void WINAPI SUnMapLS_IP_EBP_12(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,12); }
-void WINAPI SUnMapLS_IP_EBP_16(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,16); }
-void WINAPI SUnMapLS_IP_EBP_20(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,20); }
-void WINAPI SUnMapLS_IP_EBP_24(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,24); }
-void WINAPI SUnMapLS_IP_EBP_28(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,28); }
-void WINAPI SUnMapLS_IP_EBP_32(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,32); }
-void WINAPI SUnMapLS_IP_EBP_36(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,36); }
-void WINAPI SUnMapLS_IP_EBP_40(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,40); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_8)  { x_SUnMapLS_IP_EBP_x(context,12); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_12) { x_SUnMapLS_IP_EBP_x(context,12); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_16) { x_SUnMapLS_IP_EBP_x(context,16); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_20) { x_SUnMapLS_IP_EBP_x(context,20); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_24) { x_SUnMapLS_IP_EBP_x(context,24); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_28) { x_SUnMapLS_IP_EBP_x(context,28); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_32) { x_SUnMapLS_IP_EBP_x(context,32); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_36) { x_SUnMapLS_IP_EBP_x(context,36); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_40) { x_SUnMapLS_IP_EBP_x(context,40); }
 
 /**********************************************************************
  * 		AllocMappedBuffer	(KERNEL32.38)
@@ -682,7 +682,7 @@ void WINAPI SUnMapLS_IP_EBP_40(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,4
  *       The SEGPTR is used by the caller!
  */
 
-void WINAPI AllocMappedBuffer(CONTEXT *context)
+REGS_ENTRYPOINT(AllocMappedBuffer)
 {
     HGLOBAL32 handle = GlobalAlloc32(0, EDI_reg(context) + 8);
     DWORD *buffer = (DWORD *)GlobalLock32(handle);
@@ -715,7 +715,7 @@ void WINAPI AllocMappedBuffer(CONTEXT *context)
  * Input: EDI register: pointer to buffer
  */
 
-void WINAPI FreeMappedBuffer(CONTEXT *context)
+REGS_ENTRYPOINT(FreeMappedBuffer)
 {
     if (EDI_reg(context))
     {

@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include "debug.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "heap.h"
@@ -150,7 +151,7 @@ K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if ((entry->access & access) != access)
-            fprintf( stderr, "Warning: handle %08x bad access (acc=%08lx req=%08lx)\n",
+            WARN(win32, "Handle %08x bad access (acc=%08lx req=%08lx)\n",
                      handle, entry->access, access );
         ptr = entry->ptr;
         if (ptr && ((type == K32OBJ_UNKNOWN) || (ptr->type == type)))

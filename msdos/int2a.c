@@ -2,7 +2,6 @@
  * DOS interrupt 2ah handler
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "msdos.h"
 #include "miscemu.h"

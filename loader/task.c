@@ -4,7 +4,6 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -29,14 +28,13 @@
 #include "thread.h"
 #include "toolhelp.h"
 #include "winnt.h"
+#include "winsock.h"
 #include "thread.h"
 #include "debug.h"
 #include "dde_proc.h"
 
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
-
-extern INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* );
 
   /* Pointer to function to switch to a larger stack */
 int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
@@ -971,7 +969,11 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
     /* Save the old stack */
 
-    pData->old_ss_sp   = pTask->thdb->cur_stack;
+    oldFrame = THREAD_STACK16( pTask->thdb );
+    /* pop frame + args and push bp */
+    pData->old_ss_sp   = pTask->thdb->cur_stack - sizeof(STACK16FRAME)
+                           - 2 * sizeof(WORD);
+    *(WORD *)PTR_SEG_TO_LIN(pData->old_ss_sp) = oldFrame->bp;
     pData->stacktop    = top;
     pData->stackmin    = ptr;
     pData->stackbottom = ptr;
@@ -981,15 +983,16 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
     /* Note: we need to take the 3 arguments into account; otherwise,
      * the stack will underflow upon return from this function.
      */
-    oldFrame = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
-    pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( seg,
-                             ptr - sizeof(STACK16FRAME) - 3 * sizeof(WORD) );
-    newFrame = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
+    copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
+    copySize += 3 * sizeof(WORD) + sizeof(STACK16FRAME);
+    pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( seg, ptr - copySize );
+    newFrame = THREAD_STACK16( pTask->thdb );
 
     /* Copy the stack frame and the local variables to the new stack */
 
-    copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
-    memmove( newFrame, oldFrame, MAX( copySize, sizeof(STACK16FRAME) ));
+    memmove( newFrame, oldFrame, copySize );
+    newFrame->bp = ptr;
+    *(WORD *)PTR_SEG_OFF_TO_LIN( seg, ptr ) = 0;  /* clear previous bp */
 }
 
 
@@ -1013,18 +1016,23 @@ void WINAPI SwitchStackBack( CONTEXT *context )
     TRACE(task, "restoring stack %04x:%04x\n",
 		 SELECTOROF(pData->old_ss_sp), OFFSETOF(pData->old_ss_sp) );
 
-    oldFrame = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
+    oldFrame = THREAD_STACK16( pTask->thdb );
+
+    /* Pop bp from the previous stack */
+
+    BP_reg(context) = *(WORD *)PTR_SEG_TO_LIN(pData->old_ss_sp);
+    pData->old_ss_sp += sizeof(WORD);
 
     /* Switch back to the old stack */
 
-    pTask->thdb->cur_stack = pData->old_ss_sp;
+    pTask->thdb->cur_stack = pData->old_ss_sp - sizeof(STACK16FRAME);
     SS_reg(context)  = SELECTOROF(pData->old_ss_sp);
-    ESP_reg(context) = OFFSETOF(pData->old_ss_sp);
+    ESP_reg(context) = OFFSETOF(pData->old_ss_sp) - sizeof(DWORD); /*ret addr*/
     pData->old_ss_sp = 0;
 
     /* Build a stack frame for the return */
 
-    newFrame = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
+    newFrame = THREAD_STACK16( pTask->thdb );
     newFrame->frame32 = oldFrame->frame32;
     if (TRACE_ON(relay))
     {

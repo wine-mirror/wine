@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
 #include "thread.h"
@@ -167,7 +166,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
     if (stack_size<1024*1024)
     	stack_size = 1024 * 1024;
     if (stack_size >= 16*1024*1024)
-    	fprintf(stderr,"Warning:Thread stack size is %ld MB.\n",stack_size/1024/1024);
+    	WARN(thread,"Thread stack size is %ld MB.\n",stack_size/1024/1024);
     thdb->stack_base = VirtualAlloc(NULL,
                                     stack_size + (alloc_stack16 ? 0x10000 : 0),
                                     MEM_COMMIT, PAGE_EXECUTE_READWRITE );
@@ -564,6 +563,24 @@ BOOL32 WINAPI TlsSetValue(
     return TRUE;
 }
 
+
+/***********************************************************************
+ * SetThreadContext [KERNEL32.670]  Sets context of thread.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI SetThreadContext(
+    HANDLE32 handle,  /* [in]  Handle to thread with context */
+    CONTEXT *context) /* [out] Address of context structure */
+{
+    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT );
+    if (!thread) return FALSE;
+    *context = thread->context;
+    K32OBJ_DecCount( &thread->header );
+    return TRUE;
+}
 
 /***********************************************************************
  * GetThreadContext [KERNEL32.294]  Retrieves context of thread.

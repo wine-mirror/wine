@@ -32,13 +32,6 @@ typedef struct __EXCEPTION_FRAME
   PEXCEPTION_HANDLER       Handler;
 } EXCEPTION_FRAME, *PEXCEPTION_FRAME;
 
-/*
- * Function definitions  
- */
- 
-void WINAPI RaiseException(DWORD exccode, DWORD excflags, 
-                           DWORD nargs, const LPDWORD pargs,
-                           PCONTEXT pcontext /* Wine additional parameter */); 
                         
 /*
  *  this undocumented function is called when an exception
@@ -53,11 +46,9 @@ void WINAPI RaiseException(DWORD exccode, DWORD excflags,
  *  a fourth parameter, that is used as the eax in the 
  *  context.   
  */
-
 void WINAPI RtlUnwind( PEXCEPTION_FRAME pestframe,
                        LPVOID unusedEIP,
                        PEXCEPTION_RECORD pexcrec,
-                       DWORD contextEAX,
-                       PCONTEXT pcontext /* Wine additional parameter */ );
+                       DWORD contextEAX );
 
 #endif  /* __WINE_EXCEPT_H */

@@ -42,9 +42,7 @@
 #include "task.h"
 #include "user.h"
 #include "keyboard.h"
-
-extern UINT16 COLOR_GetSystemPaletteSize();
-extern void _XInitImageFuncPtrs(XImage *);
+#include "x11drv.h"
 
 Cursor CURSORICON_XCursor = None;    /* Current X cursor */
 static HCURSOR32 hActiveCursor = 0;  /* Active cursor */

@@ -40,12 +40,11 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
     if (!(pq = (MESSAGEQUEUE*) GlobalLock16( hQueue )) ||
         GlobalSize16(hQueue) < sizeof(MESSAGEQUEUE)+pq->queueSize*sizeof(QMSG))
     {
-        fprintf( stderr, "%04x is not a queue handle\n", hQueue );
+        WARN(msg, "%04x is not a queue handle\n", hQueue );
         return;
     }
 
-    fprintf( stderr,
-             "next: %12.4x  Intertask SendMessage:\n"
+    DUMP(    "next: %12.4x  Intertask SendMessage:\n"
              "hTask: %11.4x  ----------------------\n"
              "msgSize: %9.4x  hWnd: %10.4x\n"
              "msgCount: %8.4x  msg: %11.4x\n"
@@ -75,22 +74,22 @@ void QUEUE_WalkQueues(void)
     char module[10];
     HQUEUE16 hQueue = hFirstQueue;
 
-    fprintf( stderr, "Queue Size Msgs Task\n" );
+    DUMP( "Queue Size Msgs Task\n" );
     while (hQueue)
     {
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         if (!queue)
         {
-            fprintf( stderr, "*** Bad queue handle %04x\n", hQueue );
+            WARN( msg, "Bad queue handle %04x\n", hQueue );
             return;
         }
         if (!GetModuleName( queue->hTask, module, sizeof(module )))
             strcpy( module, "???" );
-        fprintf( stderr, "%04x %5d %4d %04x %s\n", hQueue, queue->msgSize,
+        DUMP( "%04x %5d %4d %04x %s\n", hQueue, queue->msgSize,
                  queue->msgCount, queue->hTask, module );
         hQueue = queue->next;
     }
-    fprintf( stderr, "\n" );
+    DUMP( "\n" );
 }
 
 
@@ -421,7 +420,7 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG16 * msg, DWORD extraInfo )
     if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0))
     {
 	SIGNAL_MaskAsyncEvents( FALSE );
-        fprintf(stderr,"MSG_AddMsg // queue is full !\n");
+        WARN( msg,"Queue is full!\n" );
         return FALSE;
     }
 

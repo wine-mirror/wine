@@ -336,6 +336,11 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->bitmap.bmPlanes     = 1;
     bmpObjPtr->bitmap.bmBitsPixel  = bpp;
     bmpObjPtr->bitmap.bmBits       = (SEGPTR)NULL;
+
+    bmpObjPtr->dibSection          = NULL;
+    bmpObjPtr->colorMap            = NULL;
+    bmpObjPtr->nColorMap           = 0;
+
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
 }

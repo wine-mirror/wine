@@ -40,30 +40,22 @@ int RELAY_CallFrom32( int ret_addr, ... )
     assert(TRACE_ON(relay));
     func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
-    printf( "Call %s(", buffer );
+    DPRINTF( "Call %s(", buffer );
     args++;
     for (i = 0, mask = 3; i < nb_args; i++, mask <<= 2)
     {
-        if (i) printf( "," );
+        if (i) DPRINTF( "," );
 	if ((typemask & mask) && HIWORD(args[i]))
         {
 	    if (typemask & (2<<(2*i)))
-            {
-                char buff[80];
-                lstrcpynWtoA( buff, (LPWSTR)args[i], sizeof(buff) );
-		buff[sizeof(buff)-1]='\0';
-	    	printf( "%08x L", args[i] );
-		debug_dumpstr( buff );
-	    }
-            else {
-	    	printf( "%08x ", args[i] );
-		debug_dumpstr((LPCSTR)args[i]);
-	    }
+	    	DPRINTF( "%08x L%s", args[i], debugstr_w((LPWSTR)args[i]) );
+            else
+	    	DPRINTF( "%08x %s", args[i], debugstr_a((LPCSTR)args[i]) );
 	}
-        else printf( "%08x", args[i] );
+        else DPRINTF( "%08x", args[i] );
     }
     GET_FS( fs );
-    printf( ") ret=%08x fs=%04x\n", ret_addr, fs );
+    DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
     if (*relay_addr == 0xc3) /* cdecl */
     {
         LRESULT (*cfunc)() = (LRESULT(*)())func;
@@ -100,7 +92,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
                              args[6],args[7],args[8],args[9],args[10],args[11],
                              args[12],args[13],args[14]); break;
         default:
-            fprintf( stderr, "RELAY_CallFrom32: Unsupported nb args %d\n",
+            ERR(relay, "Unsupported nb args %d\n",
                      nb_args );
             assert(FALSE);
         }
@@ -140,13 +132,12 @@ int RELAY_CallFrom32( int ret_addr, ... )
                             args[6],args[7],args[8],args[9],args[10],args[11],
                             args[12],args[13],args[14]); break;
         default:
-            fprintf( stderr, "RELAY_CallFrom32: Unsupported nb args %d\n",
-                     nb_args );
+            ERR(relay, "Unsupported nb args %d\n",nb_args );
             assert(FALSE);
         }
     }
-    printf( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
-            buffer, ret, ret_addr, fs );
+    DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
+             buffer, ret, ret_addr, fs );
     return ret;
 }
 
@@ -220,11 +211,11 @@ void RELAY_CallFrom32Regs( CONTEXT context )
 	EIP_reg(&context) = *(DWORD *)ESP_reg(&context);
 
         BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
-        printf("Call %s(regs) ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
-        printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+        DPRINTF("Call %s(regs) ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
+        DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
                 EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
-        printf(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+        DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
                 EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
                 DS_reg(&context), ES_reg(&context), FS_reg(&context),
                 GS_reg(&context), EFL_reg(&context) );
@@ -232,11 +223,11 @@ void RELAY_CallFrom32Regs( CONTEXT context )
         /* Now call the real function */
         entry_point( &context );
 
-        printf("Ret  %s() retval=regs ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
-        printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+        DPRINTF("Ret  %s() retval=regs ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
+        DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
                 EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
-        printf(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+        DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
                 EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
                 DS_reg(&context), ES_reg(&context), FS_reg(&context),
                 GS_reg(&context), EFL_reg(&context) );

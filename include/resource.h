@@ -9,14 +9,24 @@
 
 #include "windows.h"
 
-struct resource
-{
-    int id;
-    int type;
-    const char *name;
-    const unsigned char* bytes;
-    unsigned size;
-};
+#ifndef __WRC_RSC_H
+#include "wrc_rsc.h"
+#endif
+
+/*
+ * BS: I comment this out to catch all occurences
+ * of reference to this structure which is now
+ * rendered obsolete.
+ *
+ * struct resource
+ * {
+ *     int id;
+ *     int type;
+ *     const char *name;
+ *     const unsigned char* bytes;
+ *     unsigned size;
+ * };
+ */
 
 /* Built-in resources */
 typedef enum
@@ -35,7 +45,7 @@ typedef enum
     SYSRES_DIALOG_REPLACE_TEXT
 } SYSTEM_RESOURCE;
 
-extern void LIBRES_RegisterResources(const struct resource* const * Res);
+extern void LIBRES_RegisterResources(const wrc_resource32_t * const * Res);
 
 #if defined(__GNUC__) && (__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)
 #define WINE_CONSTRUCTOR  __attribute__((constructor))

@@ -10,7 +10,7 @@ type	win32
    4 stub SHELL32_4
    5 stub SHELL32_5
    6 stub CheckEscapesW
-   7 stdcall CommandLineToArgvW(ptr ptr) CommandLineToArgvW
+   7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
    8 stub Control_FillCache_RunDLL
   12 stdcall Control_RunDLL(long long long long) Control_RunDLL
   14 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
@@ -50,7 +50,7 @@ type	win32
   48 stub SHELL32_48
   49 stub SHELL32_49
   50 stub DragQueryFileA
-  51 stub SHELL32_51
+  51 stdcall SHELL32_51(str long long) SHELL32_51
   52 stdcall SHELL32_52(str) SHELL32_52
   53 stub DragQueryFileAorW
   54 stub DragQueryFileW
@@ -81,12 +81,12 @@ type	win32
   79 stdcall SHELL32_79(str ptr) SHELL32_79
   80 stub DuplicateIcon
   81 stub SHELL32_81
-  82 stub ExtractAssociatedIconA
+  82 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A
   83 stub SHELL32_83
   84 stub SHELL32_84
   85 stdcall SHELL32_85(long long long long) SHELL32_85
-  86 stub SHELL32_86
-  87 stub SHELL32_87
+  86 stdcall SHELL32_86(long ptr) SHELL32_86
+  87 stdcall SHELL32_87(long) SHELL32_87
   88 stub SHELL32_88
   89 stdcall SHELL32_89(long long long) SHELL32_89
   90 stub SHELL32_90
@@ -100,7 +100,7 @@ type	win32
   98 stub SHELL32_98
   99 stub SHELL32_99
  100 stdcall SHELL32_100(long) SHELL32_100
- 101 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A
+ 101 stub ExtractAssociatedIconExA
  102 stdcall SHELL32_102(ptr ptr long ptr ptr) SHELL32_102
  103 stub SHELL32_103
  104 stub SHELL32_104
@@ -242,9 +242,9 @@ type	win32
  240 stub SheSetCurDrive
  241 stub SheShortenPathA
  242 stub SheShortenPathW
- 243 stdcall ShellAboutA(long ptr ptr long) ShellAbout32A
- 244 stdcall ShellAboutW(long ptr ptr long) ShellAbout32W
- 245 stdcall ShellExecuteA(long ptr ptr ptr ptr long) ShellExecute32A
+ 243 stdcall ShellAboutA(long str str long) ShellAbout32A
+ 244 stdcall ShellAboutW(long wstr wstr long) ShellAbout32W
+ 245 stdcall ShellExecuteA(long str str str str long) ShellExecute32A
  246 stub ShellExecuteEx
  247 stub ShellExecuteExA
  248 stub ShellExecuteW

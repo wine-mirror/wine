@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "debug.h"
 #include "gdi.h"
 #include "tweak.h"
 
@@ -199,7 +200,7 @@ HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
 {
     if (0 <= index && index < NUM_SYS_COLORS)
         return SysColorBrushes[index];
-    fprintf( stderr, "GetSysColorBrush32: Unknown index(%d)\n", index );
+    WARN(syscolor, "Unknown index(%d)\n", index );
     return GetStockObject32(LTGRAY_BRUSH);
 }
 

@@ -279,7 +279,7 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         else if (!strcmp( ext, ".rc" ))  /* resource file */
         {
             *ext = '\0';
-            fprintf( file, "%s.c %s.h: %s", obj, obj, pFile->filename );
+            fprintf( file, "%s.s: %s", obj, pFile->filename );
             *column += 2 * strlen(obj) + strlen(pFile->filename) + 7;
         }
         else

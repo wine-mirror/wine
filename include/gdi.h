@@ -429,6 +429,8 @@ extern BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
 extern BOOL32 DRIVER_UnregisterDriver( LPCSTR name );
 
+extern BOOL32 DIB_Init(void);
+
 extern Display * display;
 extern Screen * screen;
 extern Window rootWindow;

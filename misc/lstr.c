@@ -7,7 +7,6 @@
 
 #include "config.h"
 
-#include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,8 +15,6 @@
 #ifdef HAVE_WCTYPE_H
 # include <wctype.h>
 #else
-# define towlower(c) tolower(c)
-# define towupper(c) toupper(c)
 # define iswalnum(c) isalnum(c)
 # define iswalpha(c) isalpha(c)
 # define iswupper(c) isupper(c)
@@ -37,6 +34,27 @@
 /* Funny to divide them between user and kernel. */
 
 /* be careful: always use functions from wctype.h if character > 255 */
+
+/*
+ * Unicode case conversion routines ... these should be used where
+ * toupper/tolower are used for ASCII.
+ */
+#ifndef HAVE_WCTYPE_H
+/* FIXME: should probably get rid of wctype.h altogether */
+#include "casemap.h"
+
+WCHAR _towupper(WCHAR code)
+{
+    const WCHAR * ptr = uprtable[HIBYTE(code)];
+    return ptr ? ptr[LOBYTE(code)] : code;
+}
+
+WCHAR _towlower(WCHAR code)
+{
+    const WCHAR * ptr = lwrtable[HIBYTE(code)];
+    return ptr ? ptr[LOBYTE(code)] : code;
+}
+#endif  /* HAVE_WCTYPE_H */
 
 /***********************************************************************
  *		IsCharAlpha (USER.433)
@@ -350,7 +368,7 @@ LPWSTR WINAPI CharLower32W(LPWSTR x)
         }
         return x;
     }
-    else return (LPWSTR)towlower(LOWORD(x));
+    else return (LPWSTR)((UINT32)towlower(LOWORD(x)));
 }
 
 /***********************************************************************
@@ -424,7 +442,7 @@ LPWSTR WINAPI CharUpper32W(LPWSTR x)
         }
         return x;
     }
-    else return (LPWSTR)towupper(LOWORD(x));
+    else return (LPWSTR)((UINT32)towupper(LOWORD(x)));
 }
 
 /***********************************************************************

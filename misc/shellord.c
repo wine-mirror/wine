@@ -10,11 +10,11 @@
  * Copyright 1997 Marcus Meissner
  */
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
 #include "windows.h"
+#include "winerror.h"
 #include "file.h"
 #include "shell.h"
 #include "heap.h"
@@ -251,6 +251,14 @@ BOOL32 WINAPI SHELL32_45(LPSTR fn) {
 }
 
 /*************************************************************************
+ *				SHELL32_51	[SHELL32.51]
+ */
+DWORD WINAPI SHELL32_51(LPCSTR s,DWORD x2,DWORD x3) {
+	FIXME(shell,"(%s,0x%08lx,0x%08lx),stub!\n",s,x2,x3);
+	return 0;
+}
+
+/*************************************************************************
  *				SHELL32_52	[SHELL32.52]
  * look for next arg in string. handle "quoted" strings
  * returns pointer to argument *AFTER* the space. Or to the \0.
@@ -453,8 +461,12 @@ static DWORD SH_get_instance(REFCLSID clsid,LPSTR dllname,
 
  */
 	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
-	if (hres<0)
+	if (hres<0 || (hres>=0x80000000))
 		return hres;
+	if (!classfac) {
+		FIXME(shell,"no classfactory, but hres is 0x%ld!\n",hres);
+		return E_FAIL;
+	}
 	classfac->lpvtbl->fnCreateInstance(classfac,unknownouter,refiid,inst);
 	classfac->lpvtbl->fnRelease(classfac);
 	return 0;
@@ -668,6 +680,24 @@ DWORD WINAPI SHELL32_85(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
     FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
     	x1,x2,x3,x4
     );
+    return 0;
+}
+
+/*************************************************************************
+ * SHELL32_86 [SHELL32.86]
+ * unknown
+ */
+DWORD WINAPI SHELL32_86(HWND32 hwnd,DWORD x2) {
+    FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",hwnd,x2);
+    return 0;
+}
+
+/*************************************************************************
+ * SHELL32_87 [SHELL32.87]
+ * unknown
+ */
+DWORD WINAPI SHELL32_87(DWORD x) {
+    FIXME(shell,"(0x%08lx):stub.\n",x);
     return 0;
 }
 

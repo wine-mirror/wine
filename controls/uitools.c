@@ -5,7 +5,6 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "debug.h"
 

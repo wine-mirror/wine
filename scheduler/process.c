@@ -6,11 +6,11 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "process.h"
 #include "module.h"
 #include "file.h"
+#include "global.h"
 #include "heap.h"
 #include "task.h"
 #include "ldt.h"
@@ -209,7 +209,6 @@ error:
  */
 BOOL32 PROCESS_Init(void)
 {
-    extern BOOL32 VIRTUAL_Init(void);
     extern BOOL32 THREAD_InitDone;
     PDB32 *pdb;
     THDB *thdb;
@@ -224,6 +223,7 @@ BOOL32 PROCESS_Init(void)
     /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
     if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL ))) return FALSE;
+    thdb->unix_pid = getpid();
     SET_CUR_THREAD( thdb );
     THREAD_InitDone = TRUE;
 
@@ -277,6 +277,8 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     else
         size = 0;
     if (!(thdb = THREAD_Create( pdb, size, FALSE, NULL, NULL ))) goto error;
+
+    thdb->unix_pid = getpid(); /* FIXME: wrong here ... */
 
     /* Create a Win16 task for this process */
 
@@ -451,7 +453,7 @@ BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
     	pdb->priority = 0x00000018;
     	break;
     default:
-    	fprintf(stderr,"SetPriorityClass: unknown priority class %ld\n",priorityclass);
+    	WARN(process,"Unknown priority class %ld\n",priorityclass);
 	break;
     }
     K32OBJ_DecCount( &pdb->header );
@@ -483,7 +485,7 @@ DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 	    ret = REALTIME_PRIORITY_CLASS;
 	    break;
 	default:
-	    fprintf(stderr,"GetPriorityClass: unknown priority %ld\n",pdb->priority);
+	    WARN(process,"Unknown priority %ld\n",pdb->priority);
 	}
 	K32OBJ_DecCount( &pdb->header );
     }
@@ -588,10 +590,8 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 BOOL32 WINAPI SetProcessWorkingSetSize(HANDLE32 hProcess,DWORD minset,
                                        DWORD maxset)
 {
-	fprintf(stderr,"SetProcessWorkingSetSize(0x%08x,%ld,%ld), STUB!\n",
-		hProcess,minset,maxset
-	);
-	return TRUE;
+    FIXME(process,"(0x%08x,%ld,%ld): stub\n",hProcess,minset,maxset);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -600,9 +600,7 @@ BOOL32 WINAPI SetProcessWorkingSetSize(HANDLE32 hProcess,DWORD minset,
 BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
                                        LPDWORD maxset)
 {
-	fprintf(stderr,"SetProcessWorkingSetSize(0x%08x,%p,%p), STUB!\n",
-		hProcess,minset,maxset
-	);
+	FIXME(process,"(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
 	/* 32 MB working set size */
 	if (minset) *minset = 32*1024*1024;
 	if (maxset) *maxset = 32*1024*1024;
@@ -614,10 +612,8 @@ BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
  */
 BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
 {
-	fprintf(stderr,"SetProcessShutdownParameters(%ld,0x%08lx), STUB!\n",
-		level,flags
-	);
-	return TRUE;
+    FIXME(process,"(%ld,0x%08lx): stub\n",level,flags);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -654,7 +650,7 @@ BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPVOID lpBaseAddress,
  */
 HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 h)
 {
-	fprintf(stderr,"ConvertToGlobalHandle(%d),stub!\n",h);
+	FIXME(process,"(%d): stub\n",h);
 	return h;
 }
 

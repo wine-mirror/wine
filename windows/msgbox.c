@@ -4,7 +4,6 @@
  * Copyright 1995 Bernd Schmidt
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "dlgs.h"
 #include "heap.h"

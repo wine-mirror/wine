@@ -4,7 +4,6 @@
  * Copyright 1994 Martin Ayotte
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

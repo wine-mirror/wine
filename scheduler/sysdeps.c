@@ -99,7 +99,7 @@ int SYSDEPS_SpawnThread( THDB *thread )
                CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, thread ) < 0)
         return -1;
 #else
-    fprintf( stderr, "CreateThread: stub\n" );
+    FIXME(thread, "CreateThread: stub\n" );
 #endif  /* __linux__ */
     return 0;
 }

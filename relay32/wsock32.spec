@@ -33,11 +33,11 @@ type	win32
 057 stdcall gethostname(ptr long) WINSOCK_gethostname32
 101 stdcall WSAAsyncSelect(long long long long) WSAAsyncSelect32
 102 stdcall WSAAsyncGetHostByAddr(long long ptr long long ptr long) WSAAsyncGetHostByAddr32
-103 stdcall WSAAsyncGetHostByName(long long ptr ptr long) WSAAsyncGetHostByName32
+103 stdcall WSAAsyncGetHostByName(long long str ptr long) WSAAsyncGetHostByName32
 104 stdcall WSAAsyncGetProtoByNumber(long long long ptr long) WSAAsyncGetProtoByNumber32
-105 stdcall WSAAsyncGetProtoByName(long long ptr ptr long) WSAAsyncGetProtoByName32
-106 stdcall WSAAsyncGetServByPort(long long long ptr ptr long) WSAAsyncGetServByPort32
-107 stdcall WSAAsyncGetServByName(long long ptr ptr ptr long) WSAAsyncGetServByName32
+105 stdcall WSAAsyncGetProtoByName(long long str ptr long) WSAAsyncGetProtoByName32
+106 stdcall WSAAsyncGetServByPort(long long long str ptr long) WSAAsyncGetServByPort32
+107 stdcall WSAAsyncGetServByName(long long str str ptr long) WSAAsyncGetServByName32
 108 stdcall WSACancelAsyncRequest(long) WSACancelAsyncRequest32
 109 stdcall WSASetBlockingHook(ptr) WSASetBlockingHook32
 110 stdcall WSAUnhookBlockingHook() WSAUnhookBlockingHook32
@@ -53,15 +53,15 @@ type	win32
 # ... as it is, they don't
 #1000 stub WSApSetPostRoutine
 1001 stdcall WsControl(long long ptr ptr ptr ptr) WsControl
-1100 stdcall inet_network(ptr) inet_network
-1101 stdcall getnetbyname(ptr) getnetbyname
+1100 stdcall inet_network(str) inet_network
+1101 stdcall getnetbyname(str) getnetbyname
 #1102 stub rcmd
 #1103 stub rexec
 #1104 stub rresvport
 #1105 stub sethostname
 #1106 stub dn_expand
 1107 stub WSARecvEx
-1108 stdcall s_perror(ptr) WS_s_perror
+1108 stdcall s_perror(str) WS_s_perror
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW
 #1111 stub EnumProtocolsA

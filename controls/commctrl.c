@@ -11,12 +11,13 @@
 #include "header.h"
 #include "progress.h"
 #include "status.h"
+#include "toolbar.h"
 #include "updown.h"
 #include "debug.h"
 
 
 /***********************************************************************
- *           DrawStatusText32A   (COMCTL32.5)
+ * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
  */
 void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
                                UINT32 style )
@@ -55,22 +56,7 @@ void WINAPI DrawStatusText32W( HDC32 hdc, LPRECT32 lprc, LPCWSTR text,
 }
 
 /***********************************************************************
- *           DrawStatusText16   (COMCTL32.27)
- */
-void WINAPI DrawStatusText16( HDC16 hdc, LPRECT16 lprc, LPCSTR text,
-			      UINT16 style )
-{
-  if(!lprc)
-    DrawStatusText32A((HDC32)hdc, 0, text, (UINT32)style);
-  else{    
-    RECT32 rect32;
-    CONV_RECT16TO32( lprc, &rect32 );
-    DrawStatusText32A((HDC32)hdc, &rect32, text, (UINT32)style);
-  }
-}
-
-/***********************************************************************
- *           CreateStatusWindow32A   (COMCTL32.6)
+ * CreateStatusWindow32A [COMCTL32.6][COMCTL32.21]
  */
 HWND32 WINAPI CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
                                      UINT32 wid )
@@ -78,18 +64,6 @@ HWND32 WINAPI CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
     return CreateWindow32A(STATUSCLASSNAME32A, text, style, 
 			   CW_USEDEFAULT32, CW_USEDEFAULT32,
 			   CW_USEDEFAULT32, CW_USEDEFAULT32, 
-			   parent, wid, 0, 0);
-}
-
-/***********************************************************************
- *           CreateStatusWindow16   (COMCTL32.21)
- */
-HWND16 WINAPI CreateStatusWindow16( INT16 style, LPCSTR text, HWND16 parent,
-				    UINT16 wid )
-{
-    return CreateWindow16(STATUSCLASSNAME16, text, style, 
-			   CW_USEDEFAULT16, CW_USEDEFAULT16,
-			   CW_USEDEFAULT16, CW_USEDEFAULT16, 
 			   parent, wid, 0, 0);
 }
 
@@ -177,7 +151,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
         break;
 
       case ICC_BAR_CLASSES:
-        TRACE (commctrl, "No toolbar class implemented!\n");
+	TOOLBAR_Register ();
 	STATUS_Register ();
         TRACE (commctrl, "No trackbar class implemented!\n");
         TRACE (commctrl, "No tooltip class implemented!\n");
@@ -208,6 +182,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
         TRACE (commctrl, "No month calendar class implemented!\n");
         TRACE (commctrl, "No date picker class implemented!\n");
         TRACE (commctrl, "No time picker class implemented!\n");
+        UPDOWN_Register ();
         break;
 
       case ICC_USEREX_CLASSES:
@@ -288,3 +263,81 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
             break;
     }
 }
+
+
+/***********************************************************************
+ * CreateToolbarEx [COMCTL32.32]
+ *
+ *
+ *
+ */
+
+HWND32 WINAPI
+CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
+                 HINSTANCE32 hBMInst, UINT32 wBMID, LPCTBBUTTON lpButtons,
+                 INT32 iNumButtons, INT32 dxButton, INT32 dyButton,
+                 INT32 dxBitmap, INT32 dyBitmap, UINT32 uStructSize)
+{
+    HWND32 hwndTB =
+        CreateWindowEx32A(0, TOOLBARCLASSNAME32A, "", style, 0, 0, 0, 0,
+			  hwnd, (HMENU32)wID, 0, NULL);
+    if(hwndTB) {
+	TBADDBITMAP tbab;
+
+        SendMessage32A (hwndTB, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+
+	/* set bitmap and button size */
+
+	/* add bitmaps */
+	tbab.hInst = hBMInst;
+	tbab.nID   = wBMID;
+	SendMessage32A (hwndTB, TB_ADDBITMAP,
+			(WPARAM32)nBitmaps, (LPARAM)&tbab);
+
+	/* add buttons */
+	SendMessage32A (hwndTB, TB_ADDBUTTONS32A,
+			(WPARAM32)iNumButtons, (LPARAM)&lpButtons);
+    }
+
+    return (hwndTB);
+}
+
+
+/***********************************************************************
+ * CreateMappedBitmap [COMCTL32.8]
+ *
+ *
+ *
+ */
+
+HBITMAP32 WINAPI
+CreateMappedBitmap (HINSTANCE32 hInstance, INT32 idBitmap, UINT32 wFlags,
+		    LPCOLORMAP lpColorMap, INT32 iNumMaps)
+{
+    HBITMAP32 hbm;
+
+    FIXME (commctrl, "semi-stub!\n");
+
+    hbm = LoadBitmap32A (hInstance, MAKEINTRESOURCE32A(idBitmap));
+
+    return hbm;
+ }
+
+
+/***********************************************************************
+ * CreateToolbar [COMCTL32.7]
+ *
+ *
+ *
+ */
+
+HWND32 WINAPI
+CreateToolbar (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
+	       HINSTANCE32 hBMInst, UINT32 wBMID,
+	       LPCOLDTBBUTTON lpButtons,INT32 iNumButtons)
+{
+    return CreateToolbarEx (hwnd, style | CCS_NODIVIDER, wID, nBitmaps,
+			    hBMInst, wBMID, (LPCTBBUTTON)lpButtons,
+			    iNumButtons, 0, 0, 0, 0, sizeof (OLDTBBUTTON));
+}
+

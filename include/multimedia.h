@@ -73,4 +73,8 @@ typedef struct {
 	HLOCAL16	hMidiHdr;
 	WORD	dwStatus;
 } LINUX_MCIMIDI;
+
+/* function prototypes */
+extern BOOL32 MULTIMEDIA_Init( void );
+
 #endif /* __WINE_MULTIMEDIA_H */

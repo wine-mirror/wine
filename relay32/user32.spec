@@ -262,7 +262,7 @@ type	win32
 257 stdcall GetMenu(long) GetMenu32
 258 stdcall GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 259 stub GetMenuContextHelpId
-260 stub GetMenuDefaultItem
+260 stdcall GetMenuDefaultItem(long long long) GetMenuDefaultItem32
 261 stub GetMenuIndex
 262 stdcall GetMenuItemCount(long) GetMenuItemCount32
 263 stdcall GetMenuItemID(long long) GetMenuItemID32
@@ -417,7 +417,7 @@ type	win32
 412 stub OpenWindowStationA
 413 stub OpenWindowStationW
 414 stub PackDDElParam
-415 stub PaintDesktop
+415 stdcall PaintDesktop(long) PaintDesktop
 416 stdcall PeekMessageA(ptr long long long long) PeekMessage32A
 417 stdcall PeekMessageW(ptr long long long long) PeekMessage32W
 418 stub PlaySoundEvent

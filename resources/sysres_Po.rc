@@ -1,3 +1,5 @@
+#include <windows.h>
+
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
  MENUITEM "&Restaurar", 61728

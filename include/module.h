@@ -65,6 +65,8 @@ typedef struct
 
   /* Self-loading modules contain this structure in their first segment */
 
+#pragma pack(1)
+
 typedef struct
 {
     WORD      version;       /* Must be 0xA0 */
@@ -79,8 +81,6 @@ typedef struct
     WORD      reserved3[4];
     FARPROC16 SetOwner;      /* Set Owner procedure, exported by wine */
 } SELFLOADHEADER;
-
-#pragma pack(1)
 
   /* Parameters for LoadModule() */
 typedef struct
@@ -102,7 +102,7 @@ typedef struct
 #pragma pack(4)
 
 /* internal representation of 32bit modules. per process. */
-typedef enum { MODULE32_PE=1, MODULE32_ELF, /* ... */ } MODULE32_TYPE;
+typedef enum { MODULE32_PE=1, MODULE32_ELF /* ,... */ } MODULE32_TYPE;
 typedef struct _wine_modref
 {
 	struct _wine_modref	*next;

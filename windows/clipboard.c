@@ -7,7 +7,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -442,7 +441,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
  */
 HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
 {
-    fprintf( stderr, "SetClipboardData: empty stub\n" );
+    FIXME(clipboard, "(%d,%d): stub\n", wFormat, hData );
     return 0;
 }
 
@@ -547,7 +546,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
  */
 HANDLE32 WINAPI GetClipboardData32( UINT32 wFormat )
 {
-    fprintf( stderr, "GetClipboardData32: empty stub\n" );
+    FIXME(clipboard, "(%d): stub\n", wFormat );
     return 0;
 }
 
@@ -866,8 +865,7 @@ HWND32 WINAPI GetOpenClipboardWindow32(void)
  */
 INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *lpPriorityList, INT16 nCount)
 {
-    fprintf( stderr, "GetPriorityClipboardFormat16(%p, %d): stub\n",
-             lpPriorityList, nCount );
+    FIXME(clipboard, "(%p,%d): stub\n", lpPriorityList, nCount );
     return 0;
 }
 

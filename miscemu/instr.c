@@ -4,7 +4,6 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "ldt.h"
 #include "miscemu.h"
@@ -299,6 +298,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 
     long_op = long_addr = IS_SELECTOR_32BIT(CS_sig(context));
     instr = (BYTE *)MAKE_PTR(CS_sig(context),EIP_sig(context));
+    if (!instr) return FALSE;
 
     /* First handle any possible prefix */
 

@@ -1,3 +1,5 @@
+#include <windows.h>
+
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
  MENUITEM "&Obnov", 61728

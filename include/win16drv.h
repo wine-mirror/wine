@@ -203,6 +203,7 @@ extern WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT32 lpBuffer,
 
 /* Wine driver functions */
 
+extern BOOL32 WIN16DRV_Init(void);
 extern BOOL32 WIN16DRV_GetCharWidth( struct tagDC *dc, UINT32 firstChar, UINT32 lastChar,
 				   LPINT32 buffer );
 

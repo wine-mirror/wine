@@ -11,7 +11,6 @@
 */
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -87,7 +86,7 @@ static void do_IO_port_init_read_or_write(char* temp, char rw)
 {
 	int val, val1, i, len;
 	if (!strcasecmp(temp, "all")) {
-		fprintf(stderr, "Warning!!! Granting FULL IO port access to"
+		MSG("Warning!!! Granting FULL IO port access to"
 			" windoze programs!\nWarning!!! "
 			"*** THIS IS NOT AT ALL "
 			"RECOMMENDED!!! ***\n");

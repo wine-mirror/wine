@@ -5,7 +5,6 @@
  * Copyright 1996 Albrecht Kleine
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "win.h"

@@ -138,7 +138,7 @@ const struct map_lcid2str {
 	{0x0403,"Katalanisch"},
 	{0x0404,"Traditionales Chinesisch"},
 	{0x0405,"Tschecisch"},
-	{0x0406,"Ddnisch"},
+	{0x0406,"D‰nisch"},
 	{0x0407,"Deutsch"},
 	{0x0408,"Griechisch"},
 	{0x0409,"Amerikanisches Englisch"},
@@ -1710,7 +1710,7 @@ UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle,
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
-		FIXME(ole, "IGNORENONSPACE not supprted\n");
+		FIXME(ole, "IGNORENONSPACE not supported\n");
 	if(fdwStyle & NORM_IGNORESYMBOLS)
 		FIXME(ole, "IGNORESYMBOLS not supported\n");
 	/* Is strcmp defaulting to string sort or to word sort?? */
@@ -1960,19 +1960,23 @@ BOOL32 WINAPI GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,
 DWORD WINAPI VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen)
 {
 	int	i;
-	char	*buf;
+	DWORD	result;
+	char	buffer[80];
 
 	TRACE(ver,"(%d,%p,%d)\n",langid,langname,langnamelen);
 	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
 	 * from the registry. 
 	 */
-	buf=(char*)malloc(strlen("\\System\\CurrentControlSet\\control\\Nls\\Locale\\")+9);
-	sprintf(buf,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
-	if (ERROR_SUCCESS==RegQueryValue16(HKEY_LOCAL_MACHINE,buf,langname,(LPDWORD)&langnamelen)) {
+	sprintf(buffer,
+		"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
+		langid);
+	result = RegQueryValue16(HKEY_LOCAL_MACHINE, buffer, langname,
+				(LPDWORD)&langnamelen);
+	if (result == ERROR_SUCCESS) {
 		langname[langnamelen-1]='\0';
 		return langnamelen;
 	}
-	/* if that fails, use the interal table */
+	/* if that fails, use the internal table */
 	for (i=0;languages[i].langid!=0;i++)
 		if (langid==languages[i].langid)
 			break;
@@ -1997,100 +2001,607 @@ DWORD WINAPI VerLanguageName32W(UINT32 langid,LPWSTR langname,
                                 UINT32 langnamelen)
 {
 	int	i;
-	char	buffer[80];
 	LPWSTR	keyname;
+	DWORD	result;
+	char	buffer[80];
 
 	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
 	 * from the registry. 
 	 */
-	sprintf(buffer,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
+	sprintf(buffer,
+		"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
+		langid);
 	keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
-	if (ERROR_SUCCESS==RegQueryValue32W(HKEY_LOCAL_MACHINE,keyname,langname,(LPDWORD)&langnamelen)) {
-		HeapFree( GetProcessHeap(), 0, keyname );
-		return langnamelen;
+	result = RegQueryValue32W(HKEY_LOCAL_MACHINE, keyname, langname,
+				(LPDWORD)&langnamelen);
+	HeapFree( GetProcessHeap(), 0, keyname );
+	if (result != ERROR_SUCCESS) {
+		/* if that fails, use the internal table */
+		for (i=0;languages[i].langid!=0;i++)
+			if (langid==languages[i].langid)
+				break;
+        	lstrcpyAtoW( langname, languages[i].langname );
+		langnamelen = strlen(languages[i].langname);
+	 	/* same as strlenW(langname); */
 	}
-        HeapFree( GetProcessHeap(), 0, keyname );
-	/* if that fails, use the interal table */
-	for (i=0;languages[i].langid!=0;i++)
-		if (langid==languages[i].langid)
-			break;
-        lstrcpyAtoW( langname, languages[i].langname );
-	return strlen(languages[i].langname); /* same as strlenW(langname); */
+	return langnamelen;
+}
+ 
+static int is_punctuation(unsigned char c)
+{
+  /* punctuation characters are :
+     39, 45, 127-129, 141-144, 150-151, 157-158, 173 */
+  if (c>=141)
+  {
+    if (c<=151)
+      return (c<=144) || (c>=150);
+    if (c<=158)
+      return (c>=157);
+    return (c==173);
+  }
+  if (c>=127)
+    return (c<=129);
+  return (c==39) || (c==45);
 }
 
-
-INT32 WINAPI LCMapString32A(
-	LCID lcid,DWORD mapflags,LPCSTR srcstr,INT32 srclen,LPSTR dststr,
-	INT32 dstlen
-) {
-	int	i,len;
-
-	TRACE(string,"(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
-		lcid,mapflags,srcstr,srclen,dststr,dstlen);
-	if (!dstlen || !dststr) {
-		dststr = (LPSTR)srcstr;
-	}
-	if (!srclen) srclen = strlen(srcstr);
-	if (!dstlen) dstlen = strlen(dststr);
-	len = dstlen;
-	if (srclen < len)
-		len = srclen;
-	if (mapflags & LCMAP_LOWERCASE) {
-		for (i=0;i<len;i++)
-			dststr[i]=tolower(srcstr[i]);
-		mapflags &= ~LCMAP_LOWERCASE;
-	}
-	if (mapflags & LCMAP_UPPERCASE) {
-		for (i=0;i<len;i++)
-			dststr[i]=toupper(srcstr[i]);
-		mapflags &= ~LCMAP_UPPERCASE;
-	}
-	if (mapflags)
-	  {
-	    FIXME(ole,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
-		  "unimplemented flags: 0x%08lx\n",
-		  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
-	  }
-	return len;
+static int identity(int c)
+{
+  return c;
 }
 
-/* FIXME: implement everyhting & correct */
+static const unsigned char LCM_Unicode_LUT[] = {
+  7      ,   2, /*   -  32 */
+  7      ,  28, /* ! -  33 */
+  7      ,  29, /* " -  34 */ /* " */
+  7      ,  31, /* # -  35 */
+  7      ,  33, /* $ -  36 */
+  7      ,  35, /* % -  37 */
+  7      ,  37, /* & -  38 */
+  6      , 128, /* ' -  39 */
+  7      ,  39, /* ( -  40 */
+  7      ,  42, /* ) -  41 */
+  7      ,  45, /* * -  42 */
+  8      ,   3, /* + -  43 */
+  7      ,  47, /* , -  44 */
+  6      , 130, /* - -  45 */
+  7      ,  51, /* . -  46 */
+  7      ,  53, /* / -  47 */
+ 12      ,   3, /* 0 -  48 */
+ 12      ,  33, /* 1 -  49 */
+ 12      ,  51, /* 2 -  50 */
+ 12      ,  70, /* 3 -  51 */
+ 12      ,  88, /* 4 -  52 */
+ 12      , 106, /* 5 -  53 */
+ 12      , 125, /* 6 -  54 */
+ 12      , 144, /* 7 -  55 */
+ 12      , 162, /* 8 -  56 */
+ 12      , 180, /* 9 -  57 */
+  7      ,  55, /* : -  58 */
+  7      ,  58, /* ; -  59 */
+  8      ,  14, /* < -  60 */
+  8      ,  18, /* = -  61 */
+  8      ,  20, /* > -  62 */
+  7      ,  60, /* ? -  63 */
+  7      ,  62, /* @ -  64 */
+ 14      ,   2, /* A -  65 */
+ 14      ,   9, /* B -  66 */
+ 14      ,  10, /* C -  67 */
+ 14      ,  26, /* D -  68 */
+ 14      ,  33, /* E -  69 */
+ 14      ,  35, /* F -  70 */
+ 14      ,  37, /* G -  71 */
+ 14      ,  44, /* H -  72 */
+ 14      ,  50, /* I -  73 */
+ 14      ,  53, /* J -  74 */
+ 14      ,  54, /* K -  75 */
+ 14      ,  72, /* L -  76 */
+ 14      ,  81, /* M -  77 */
+ 14      , 112, /* N -  78 */
+ 14      , 124, /* O -  79 */
+ 14      , 126, /* P -  80 */
+ 14      , 137, /* Q -  81 */
+ 14      , 138, /* R -  82 */
+ 14      , 145, /* S -  83 */
+ 14      , 153, /* T -  84 */
+ 14      , 159, /* U -  85 */
+ 14      , 162, /* V -  86 */
+ 14      , 164, /* W -  87 */
+ 14      , 166, /* X -  88 */
+ 14      , 167, /* Y -  89 */
+ 14      , 169, /* Z -  90 */
+  7      ,  63, /* [ -  91 */
+  7      ,  65, /* \ -  92 */
+  7      ,  66, /* ] -  93 */
+  7      ,  67, /* ^ -  94 */
+  7      ,  68, /* _ -  95 */
+  7      ,  72, /* ` -  96 */
+ 14      ,   2, /* a -  97 */
+ 14      ,   9, /* b -  98 */
+ 14      ,  10, /* c -  99 */
+ 14      ,  26, /* d - 100 */
+ 14      ,  33, /* e - 101 */
+ 14      ,  35, /* f - 102 */
+ 14      ,  37, /* g - 103 */
+ 14      ,  44, /* h - 104 */
+ 14      ,  50, /* i - 105 */
+ 14      ,  53, /* j - 106 */
+ 14      ,  54, /* k - 107 */
+ 14      ,  72, /* l - 108 */
+ 14      ,  81, /* m - 109 */
+ 14      , 112, /* n - 110 */
+ 14      , 124, /* o - 111 */
+ 14      , 126, /* p - 112 */
+ 14      , 137, /* q - 113 */
+ 14      , 138, /* r - 114 */
+ 14      , 145, /* s - 115 */
+ 14      , 153, /* t - 116 */
+ 14      , 159, /* u - 117 */
+ 14      , 162, /* v - 118 */
+ 14      , 164, /* w - 119 */
+ 14      , 166, /* x - 120 */
+ 14      , 167, /* y - 121 */
+ 14      , 169, /* z - 122 */
+  7      ,  74, /* { - 123 */
+  7      ,  76, /* | - 124 */
+  7      ,  78, /* } - 125 */
+  7      ,  80, /* ~ - 126 */
+  6      ,  29, /*  - 127 */
+  6      ,  30, /* Ä - 128 */
+  6      ,  31, /* Å - 129 */
+  7      , 123, /* Ç - 130 */
+ 14      ,  35, /* É - 131 */
+  7      , 127, /* Ñ - 132 */
+ 10      ,  21, /* Ö - 133 */
+ 10      ,  15, /* Ü - 134 */
+ 10      ,  16, /* á - 135 */
+  7      ,  67, /* à - 136 */
+ 10      ,  22, /* â - 137 */
+ 14      , 145, /* ä - 138 */
+  7      , 136, /* ã - 139 */
+ 14 + 16 , 124, /* å - 140 */
+  6      ,  43, /* ç - 141 */
+  6      ,  44, /* é - 142 */
+  6      ,  45, /* è - 143 */
+  6      ,  46, /* ê - 144 */
+  7      , 121, /* ë - 145 */
+  7      , 122, /* í - 146 */
+  7      , 125, /* ì - 147 */
+  7      , 126, /* î - 148 */
+ 10      ,  17, /* ï - 149 */
+  6      , 137, /* ñ - 150 */
+  6      , 139, /* ó - 151 */
+  7      ,  93, /* ò - 152 */
+ 14      , 156, /* ô - 153 */
+ 14      , 145, /* ö - 154 */
+  7      , 137, /* õ - 155 */
+ 14 + 16 , 124, /* ú - 156 */
+  6      ,  59, /* ù - 157 */
+  6      ,  60, /* û - 158 */
+ 14      , 167, /* ü - 159 */
+  7      ,   4, /* † - 160 */
+  7      ,  81, /* ° - 161 */
+ 10      ,   2, /* ¢ - 162 */
+ 10      ,   3, /* £ - 163 */
+ 10      ,   4, /* § - 164 */
+ 10      ,   5, /* • - 165 */
+  7      ,  82, /* ¶ - 166 */
+ 10      ,   6, /* ß - 167 */
+  7      ,  83, /* ® - 168 */
+ 10      ,   7, /* © - 169 */
+ 14      ,   2, /* ™ - 170 */
+  8      ,  24, /* ´ - 171 */
+ 10      ,   8, /* ¨ - 172 */
+  6      , 131, /* ≠ - 173 */
+ 10      ,   9, /* Æ - 174 */
+  7      ,  84, /* Ø - 175 */
+ 10      ,  10, /* ∞ - 176 */
+  8      ,  23, /* ± - 177 */
+ 12      ,  51, /* ≤ - 178 */
+ 12      ,  70, /* ≥ - 179 */
+  7      ,  85, /* ¥ - 180 */
+ 10      ,  11, /* µ - 181 */
+ 10      ,  12, /* ∂ - 182 */
+ 10      ,  13, /* ∑ - 183 */
+  7      ,  86, /* ∏ - 184 */
+ 12      ,  33, /* π - 185 */
+ 14      , 124, /* ∫ - 186 */
+  8      ,  26, /* ª - 187 */
+ 12      ,  21, /* º - 188 */
+ 12      ,  25, /* Ω - 189 */
+ 12      ,  29, /* æ - 190 */
+  7      ,  87, /* ø - 191 */
+ 14      ,   2, /* ¿ - 192 */
+ 14      ,   2, /* ¡ - 193 */
+ 14      ,   2, /* ¬ - 194 */
+ 14      ,   2, /* √ - 195 */
+ 14      ,   2, /* ƒ - 196 */
+ 14      ,   2, /* ≈ - 197 */
+ 14 + 16 ,   2, /* ∆ - 198 */
+ 14      ,  10, /* « - 199 */
+ 14      ,  33, /* » - 200 */
+ 14      ,  33, /* … - 201 */
+ 14      ,  33, /*   - 202 */
+ 14      ,  33, /* À - 203 */
+ 14      ,  50, /* Ã - 204 */
+ 14      ,  50, /* Õ - 205 */
+ 14      ,  50, /* Œ - 206 */
+ 14      ,  50, /* œ - 207 */
+ 14      ,  26, /* – - 208 */
+ 14      , 112, /* — - 209 */
+ 14      , 124, /* “ - 210 */
+ 14      , 124, /* ” - 211 */
+ 14      , 124, /* ‘ - 212 */
+ 14      , 124, /* ’ - 213 */
+ 14      , 124, /* ÷ - 214 */
+  8      ,  28, /* ◊ - 215 */
+ 14      , 124, /* ÿ - 216 */
+ 14      , 159, /* Ÿ - 217 */
+ 14      , 159, /* ⁄ - 218 */
+ 14      , 159, /* € - 219 */
+ 14      , 159, /* ‹ - 220 */
+ 14      , 167, /* › - 221 */
+ 14 + 32 , 153, /* ﬁ - 222 */
+ 14 + 48 , 145, /* ﬂ - 223 */
+ 14      ,   2, /* ‡ - 224 */
+ 14      ,   2, /* · - 225 */
+ 14      ,   2, /* ‚ - 226 */
+ 14      ,   2, /* „ - 227 */
+ 14      ,   2, /* ‰ - 228 */
+ 14      ,   2, /* Â - 229 */
+ 14 + 16 ,   2, /* Ê - 230 */
+ 14      ,  10, /* Á - 231 */
+ 14      ,  33, /* Ë - 232 */
+ 14      ,  33, /* È - 233 */
+ 14      ,  33, /* Í - 234 */
+ 14      ,  33, /* Î - 235 */
+ 14      ,  50, /* Ï - 236 */
+ 14      ,  50, /* Ì - 237 */
+ 14      ,  50, /* Ó - 238 */
+ 14      ,  50, /* Ô - 239 */
+ 14      ,  26, /*  - 240 */
+ 14      , 112, /* Ò - 241 */
+ 14      , 124, /* Ú - 242 */
+ 14      , 124, /* Û - 243 */
+ 14      , 124, /* Ù - 244 */
+ 14      , 124, /* ı - 245 */
+ 14      , 124, /* ˆ - 246 */
+  8      ,  29, /* ˜ - 247 */
+ 14      , 124, /* ¯ - 248 */
+ 14      , 159, /* ˘ - 249 */
+ 14      , 159, /* ˙ - 250 */
+ 14      , 159, /* ˚ - 251 */
+ 14      , 159, /* ¸ - 252 */
+ 14      , 167, /* ˝ - 253 */
+ 14 + 32 , 153, /* ˛ - 254 */
+ 14      , 167  /* ˇ - 255 */ };
 
+static const unsigned char LCM_Unicode_LUT_2[] = { 33, 44, 145 };
+
+#define LCM_Diacritic_Start 131
+
+static const unsigned char LCM_Diacritic_LUT[] = { 
+123,  /* É - 131 */
+  2,  /* Ñ - 132 */
+  2,  /* Ö - 133 */
+  2,  /* Ü - 134 */
+  2,  /* á - 135 */
+  3,  /* à - 136 */
+  2,  /* â - 137 */
+ 20,  /* ä - 138 */
+  2,  /* ã - 139 */
+  2,  /* å - 140 */
+  2,  /* ç - 141 */
+  2,  /* é - 142 */
+  2,  /* è - 143 */
+  2,  /* ê - 144 */
+  2,  /* ë - 145 */
+  2,  /* í - 146 */
+  2,  /* ì - 147 */
+  2,  /* î - 148 */
+  2,  /* ï - 149 */
+  2,  /* ñ - 150 */
+  2,  /* ó - 151 */
+  2,  /* ò - 152 */
+  2,  /* ô - 153 */
+ 20,  /* ö - 154 */
+  2,  /* õ - 155 */
+  2,  /* ú - 156 */
+  2,  /* ù - 157 */
+  2,  /* û - 158 */
+ 19,  /* ü - 159 */
+  2,  /* † - 160 */
+  2,  /* ° - 161 */
+  2,  /* ¢ - 162 */
+  2,  /* £ - 163 */
+  2,  /* § - 164 */
+  2,  /* • - 165 */
+  2,  /* ¶ - 166 */
+  2,  /* ß - 167 */
+  2,  /* ® - 168 */
+  2,  /* © - 169 */
+  3,  /* ™ - 170 */
+  2,  /* ´ - 171 */
+  2,  /* ¨ - 172 */
+  2,  /* ≠ - 173 */
+  2,  /* Æ - 174 */
+  2,  /* Ø - 175 */
+  2,  /* ∞ - 176 */
+  2,  /* ± - 177 */
+  2,  /* ≤ - 178 */
+  2,  /* ≥ - 179 */
+  2,  /* ¥ - 180 */
+  2,  /* µ - 181 */
+  2,  /* ∂ - 182 */
+  2,  /* ∑ - 183 */
+  2,  /* ∏ - 184 */
+  2,  /* π - 185 */
+  3,  /* ∫ - 186 */
+  2,  /* ª - 187 */
+  2,  /* º - 188 */
+  2,  /* Ω - 189 */
+  2,  /* æ - 190 */
+  2,  /* ø - 191 */
+ 15,  /* ¿ - 192 */
+ 14,  /* ¡ - 193 */
+ 18,  /* ¬ - 194 */
+ 25,  /* √ - 195 */
+ 19,  /* ƒ - 196 */
+ 26,  /* ≈ - 197 */
+  2,  /* ∆ - 198 */
+ 28,  /* « - 199 */
+ 15,  /* » - 200 */
+ 14,  /* … - 201 */
+ 18,  /*   - 202 */
+ 19,  /* À - 203 */
+ 15,  /* Ã - 204 */
+ 14,  /* Õ - 205 */
+ 18,  /* Œ - 206 */
+ 19,  /* œ - 207 */
+104,  /* – - 208 */
+ 25,  /* — - 209 */
+ 15,  /* “ - 210 */
+ 14,  /* ” - 211 */
+ 18,  /* ‘ - 212 */
+ 25,  /* ’ - 213 */
+ 19,  /* ÷ - 214 */
+  2,  /* ◊ - 215 */
+ 33,  /* ÿ - 216 */
+ 15,  /* Ÿ - 217 */
+ 14,  /* ⁄ - 218 */
+ 18,  /* € - 219 */
+ 19,  /* ‹ - 220 */
+ 14,  /* › - 221 */
+  2,  /* ﬁ - 222 */
+  2,  /* ﬂ - 223 */
+ 15,  /* ‡ - 224 */
+ 14,  /* · - 225 */
+ 18,  /* ‚ - 226 */
+ 25,  /* „ - 227 */
+ 19,  /* ‰ - 228 */
+ 26,  /* Â - 229 */
+  2,  /* Ê - 230 */
+ 28,  /* Á - 231 */
+ 15,  /* Ë - 232 */
+ 14,  /* È - 233 */
+ 18,  /* Í - 234 */
+ 19,  /* Î - 235 */
+ 15,  /* Ï - 236 */
+ 14,  /* Ì - 237 */
+ 18,  /* Ó - 238 */
+ 19,  /* Ô - 239 */
+104,  /*  - 240 */
+ 25,  /* Ò - 241 */
+ 15,  /* Ú - 242 */
+ 14,  /* Û - 243 */
+ 18,  /* Ù - 244 */
+ 25,  /* ı - 245 */
+ 19,  /* ˆ - 246 */
+  2,  /* ˜ - 247 */
+ 33,  /* ¯ - 248 */
+ 15,  /* ˘ - 249 */
+ 14,  /* ˙ - 250 */
+ 18,  /* ˚ - 251 */
+ 19,  /* ¸ - 252 */
+ 14,  /* ˝ - 253 */
+  2,  /* ˛ - 254 */
+ 19,  /* ˇ - 255 */
+} ;
+
+/*************************************************************************
+ * Convert a string, or generate a sort key from it.
+ *
+ * If (mapflags & LCMAP_SORTKEY), the function will generate
+ * a sort key for the source string.  Else, it will convert it
+ * accordingly to the flags LCMAP_UPPERCASE, LCMAP_LOWERCASE,...
+ *
+ * RETURNS
+ *    Error : (destination buffer too small) 0.
+ *    Success : length of the result string.
+ *
+ * REMARKS
+ *    If called with scrlen = -1, the function will compute the length
+ *      of the 0-terminated string strsrc by itself.      
+ */
+ INT32 WINAPI LCMapString32A(
+	LCID lcid /* locale identifier created with MAKELCID; 
+		     LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are predefined
+		     values. */,
+	DWORD mapflags /* flags */,
+	LPCSTR srcstr  /* source buffer */,
+	INT32 srclen   /* source length */,
+	LPSTR dststr   /* destination buffer */,
+	INT32 dstlen   /* destination buffer length */) 
+{
+  int i;
+ 
+  TRACE(string,"(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+	lcid,mapflags,srcstr,srclen,dststr,dstlen);
+
+  if ((dststr==NULL) || (srcstr==NULL))
+    return 0;
+  if (srclen==-1) 
+    srclen = lstrlen32A(srcstr);
+
+  if (mapflags & ~ ( LCMAP_UPPERCASE | LCMAP_LOWERCASE | LCMAP_SORTKEY |
+		     SORT_STRINGSORT) )
+  {
+    FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
+	  "unimplemented flags: 0x%08lx\n",
+	  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
+  }
+  
+  if ( !(mapflags & LCMAP_SORTKEY) )
+  {
+    int (*f)(int)=identity; 
+
+    if (dstlen==0)
+      return srclen;  /* dstlen=0 means "do nothing but return required length" */
+    if (dstlen<srclen)
+      return 0;       /* it's an error */
+    if (mapflags & LCMAP_UPPERCASE)
+      f = toupper;
+    else if (mapflags & LCMAP_LOWERCASE)
+      f = tolower;
+    for (i=0; i < srclen; i++)
+      dststr[i] = (CHAR) f(srcstr[i]);
+    return srclen;
+  }
+
+  /* else ... (mapflags & LCMAP_SORTKEY)  */
+  {
+    int unicode_len=0;
+    int case_len=0;
+    int diacritic_len=0;
+    char *case_component;
+    char *diacritic_component;
+    int room,count;
+    int flag_stringsort = mapflags & SORT_STRINGSORT;
+
+    /* compute how much room we will need */
+    for (i=0;i<srclen;i++)
+    {
+      int ofs;
+      if ((srcstr[i]!='\0') && (flag_stringsort || !is_punctuation(srcstr[i])))
+      {
+	unicode_len++;
+	if(((unsigned char)srcstr[i])<=31)
+	{
+	  FIXME(string," control characters in argument string\n");
+	  return 0;
+	}
+	if ( LCM_Unicode_LUT[2*((unsigned char)srcstr[i]-32)] & ~15 )
+	  unicode_len++;             /* double letter */
+      }
+	  
+      if (isupper(srcstr[i]))
+	case_len=unicode_len; 
+
+      ofs = (unsigned char)srcstr[i] - LCM_Diacritic_Start;
+      if ((ofs>=0) && (LCM_Diacritic_LUT[ofs]!=2))
+	diacritic_len=unicode_len;
+    }
+
+    room =  2 * unicode_len         /* "unicode" component */
+      +     diacritic_len           /* "diacritic" component */
+      +     case_len                /* "case" component */
+      +     4                       /* four '\1' separators */
+      +     1  ;                    /* terminal '\0' */
+    if (dstlen==0)
+      return room;      
+    else if (dstlen<room)
+      return 0;   
+
+    /* locate each component, write separators */
+    diacritic_component = dststr + 2*unicode_len ;
+    *diacritic_component++ = '\1'; 
+
+    case_component = diacritic_component + diacritic_len ;
+    *case_component++ = '\1'; 
+
+    /* read source string char by char, write 
+       corresponding weight in each component. */
+    for (i=0,count=0;count<unicode_len;i++)
+    {
+      unsigned char c=srcstr[i];
+      if ( (c!='\0') && (flag_stringsort || !is_punctuation(c)) )
+      {
+	int type,longcode;
+	int LUT_offset = 2*(c-32);
+	type = LCM_Unicode_LUT[LUT_offset];
+	longcode = type >> 4;
+	type &= 15;
+	dststr[2*count] = type;
+	dststr[2*count+1] = LCM_Unicode_LUT[LUT_offset+1];  
+	if (longcode)
+	{
+	  if (count<case_len)
+	    case_component[count] = ( isupper(srcstr[i]) ? 18 : 2 ) ;
+	  if (count<diacritic_len)
+	    diacritic_component[count] = 2; /* assumption: a double letter
+					       is never accented */
+	  count++;
+
+	  dststr[2*count] = type;
+	  dststr[2*count+1] = *(LCM_Unicode_LUT_2 - 1 + longcode); 
+	  /* 16 in the first column of LCM_Unicode_LUT  -->  longcode = 1 
+	     32 in the first column of LCM_Unicode_LUT  -->  longcode = 2 
+	     48 in the first column of LCM_Unicode_LUT  -->  longcode = 3 */
+	}
+
+	if (count<case_len)
+	  case_component[count] = ( isupper(srcstr[i]) ? 18 : 2 ) ;
+	if (count<diacritic_len)
+	{
+	  int ofs = (unsigned char)srcstr[i] - LCM_Diacritic_Start;
+	  diacritic_component[count] = (ofs>=0 ? LCM_Diacritic_LUT[ofs] : 2);
+	}
+	count++;
+      }
+    }
+    dststr[room-3] = dststr[room-2] = '\1';
+    dststr[room-1] = '\0';
+    return room;
+  }
+}
+ 
 INT32 WINAPI LCMapString32W(
 	LCID lcid,DWORD mapflags,LPCWSTR srcstr,INT32 srclen,LPWSTR dststr,
-	INT32 dstlen
-) {
-	int	i,len;
+	INT32 dstlen)
+{
+  int i;
+ 
+  TRACE(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+	lcid,mapflags,srcstr,srclen,dststr,dstlen);
 
-	TRACE(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
-		lcid,mapflags,srcstr,srclen,dststr,dstlen
-	);
-	if (!dstlen || !dststr) {
-		dststr = (LPWSTR)srcstr;
-	}
-	if (!srclen) srclen = lstrlen32W(srcstr);
-	if (!dstlen) dstlen = lstrlen32W(dststr);
-	len = dstlen;
-	if (srclen < len)
-		len = srclen;
-	if (mapflags & LCMAP_LOWERCASE) {
-		for (i=0;i<len;i++)
-			dststr[i]=tolower(srcstr[i]);
-		mapflags &= ~LCMAP_LOWERCASE;
-	}
-	if (mapflags & LCMAP_UPPERCASE) {
-		for (i=0;i<len;i++)
-			dststr[i]=toupper(srcstr[i]);
-		mapflags &= ~LCMAP_UPPERCASE;
-	}
-	if (mapflags)
-	  {
-	    FIXME(ole,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
-		  "unimplemented flags: 0x%08lx\n",
-		  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
-	  }
-	return len;
+  if ((dststr==NULL) || (srcstr==NULL))
+    return 0;
+  if (srclen==-1) 
+    srclen = lstrlen32W(srcstr);
+  if (mapflags & LCMAP_SORTKEY) 
+  {
+    FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
+	  "unimplemented flags: 0x%08lx\n",
+	  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
+    return 0;
+  }
+  else
+  {
+    int (*f)(int)=identity; 
+
+    if (dstlen==0)
+      return srclen;  
+    if (dstlen<srclen)
+      return 0;       
+    if (mapflags & LCMAP_UPPERCASE)
+      f = toupper;
+    else if (mapflags & LCMAP_LOWERCASE)
+      f = tolower;
+    for (i=0; i < srclen; i++)
+      dststr[i] = (WCHAR) f(srcstr[i]);
+    return srclen;
+  }
 }
+
 
 /*****************************************************************
  *
@@ -2626,12 +3137,11 @@ INT32 WINAPI GetDateFormat32W(LCID locale,DWORD flags,
 
 /**************************************************************************
  *              GetNumberFormat32A	(KERNEL32.355)
+ * NOTE: type of lpFormat should be CONST NUMBERFORMAT 
  */
 INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
 			       LPCSTR lpvalue,  char *lpFormat,
 			       LPSTR lpNumberStr, int cchNumber)
-/* NOTE: type of lpFormat should be CONST NUMBERFORMAT */
-
 {
  int n;
 
@@ -2704,7 +3214,6 @@ GetTimeFormat32A(LCID locale,        /* in  */
 /* ****************************************************************
  *  GetTimeFormat32W()  [KERNEL32.423] Makes a Unicode string of the time
  * 
-
  *
  */
 
@@ -2736,39 +3245,40 @@ GetTimeFormat32W(LCID locale,DWORD flags,
       realformat = format;
    } else if (locale) {
       /* allocate memory */
+      retval = ERROR_INSUFFICIENT_BUFFER;
       fmt_buf = malloc((fmt_buf_size+=7) * sizeof(WCHAR));
-      if (!fmt_buf) {
-	 SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	 WARN(ole, "could not allocate %d chars of memory\n", fmt_buf_size); 
-	 return 0;
-      };
+      if (!fmt_buf)
+	goto out_nomem;
+
       while(!GetLocaleInfo32W(locale, LOCALE_STIMEFORMAT,
 			      fmt_buf, fmt_buf_size)) {
-	 fmt_buf = realloc(fmt_buf, 
+	retval = ERROR_OUTOFMEMORY;
+	fmt_buf = realloc(fmt_buf, 
 			   (fmt_buf_size += 10) * sizeof(WCHAR));
-	 if (!fmt_buf) {
-	    SetLastError(ERROR_OUTOFMEMORY);
-	    WARN(ole, "could not allocate %d chars of memory\n", fmt_buf_size); 
-	    return 0;
-	 };
-      };
+	if (!fmt_buf)
+		goto out_nomem;
+      }
       realformat = fmt_buf;
    } else {
       FIXME(ole,  "caller gave no locale,  no format;  what should we do?\n");
       SetLastError(ERROR_BAD_FORMAT);
-   };
-   if (!locale) {
+   }
+   if (!locale)
       locale = GetSystemDefaultLCID();
-}
 
    realtime = xtime;
    if (!realtime) {
       realtime = &t;
       GetSystemTime(realtime);
-   };
-
+   }
 
    retval = OLE_GetFormatW(locale, flags, realtime, realformat, timestr,  timelen);
-   if (fmt_buf) free(fmt_buf);
+   if (fmt_buf)
+	free(fmt_buf);
    return retval;
+
+out_nomem:
+	SetLastError(retval);
+	WARN(ole, "could not allocate %d chars of memory\n", fmt_buf_size); 
+	return 0;
 }

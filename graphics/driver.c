@@ -4,7 +4,6 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include <stdio.h>
 #include "gdi.h"
 #include "heap.h"
 #include "debug.h"

@@ -130,7 +130,7 @@ type	win32
 126 stub _getpid
 127 stub _getsystime
 128 stub _getw
-129 register _global_unwind2() CRTDLL__global_unwind2
+129 cdecl _global_unwind2(ptr) CRTDLL__global_unwind2
 130 stub _heapchk
 131 stub _heapmin
 132 stub _heapset
@@ -174,7 +174,7 @@ type	win32
 170 stub _kbhit
 171 stub _lfind
 172 stub _loaddll
-173 register _local_unwind2() CRTDLL__local_unwind2
+173 cdecl _local_unwind2(ptr long) CRTDLL__local_unwind2
 174 stub _locking
 175 stub _logb
 176 cdecl _lrotl (long long) CRTDLL__lrotl
@@ -494,8 +494,8 @@ type	win32
 490 cdecl tmpnam(str) CRTDLL_tmpnam
 491 cdecl tolower(long) tolower
 492 cdecl toupper(long) toupper
-493 stub towlower
-494 cdecl towupper(long) CRTDLL_towupper
+493 cdecl towlower(long) towlower
+494 cdecl towupper(long) towupper
 495 stub ungetc
 496 stub ungetwc
 497 cdecl vfprintf(ptr str ptr) CRTDLL_vfprintf

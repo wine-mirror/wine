@@ -4,7 +4,6 @@
  * Copyright 1994 Martin Ayotte
 */
 
-#include <stdio.h>
 #include "windows.h"
 #include "win.h"
 #include "callback.h"
@@ -14,7 +13,10 @@
 
 LPDRIVERITEM lpDrvItemList = NULL;
 
-void LoadStartupDrivers(void)
+/**************************************************************************
+ *	LoadStartupDrivers
+ */
+static void LoadStartupDrivers(void)
 {
     HDRVR16 hDrv;
     char  str[256];
@@ -23,8 +25,7 @@ void LoadStartupDrivers(void)
     if (GetPrivateProfileString32A( "drivers", NULL, "", str, sizeof(str),
 				 "SYSTEM.INI" ) < 2)
     {
-    	fprintf( stderr,
-		 "LoadStartupDrivers // can't find drivers section in system.ini\n" );
+    	ERR( driver,"Can't find drivers section in system.ini\n" );
 	return;
     }
 

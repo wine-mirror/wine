@@ -31,6 +31,10 @@ extern BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
 #define EVENT_IO_EXCEPT		2
 
 /* event.c */
+extern void EVENT_AddIO( int fd, unsigned flag );
+extern BOOL32 EVENT_CheckFocus( void );
+extern void EVENT_DeleteIO( int fd, unsigned flag );
+extern BOOL32 EVENT_Init( void );
 extern BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek );
 extern void EVENT_Synchronize(void);
 extern void EVENT_ProcessEvent( XEvent *event );
@@ -39,5 +43,7 @@ extern void EVENT_DestroyWindow( WND *pWnd );
 extern void EVENT_DummyMotionNotify(void);
 extern HWND32 EVENT_Capture( HWND32, INT16 );
 extern INT16 EVENT_GetCaptureInfo(void);
+
+extern void joySendMessages(void);
 
 #endif  /* __WINE_MESSAGE_H */

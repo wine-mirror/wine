@@ -9,7 +9,6 @@
  */
 #ifdef CONFIG_IPC
 
-#include <stdio.h>
 #include <assert.h>
 #include "debug.h"
 #include "ldt.h"
@@ -136,7 +135,7 @@ DDE_malloc(unsigned int flags, unsigned long size, SHMDATA *shmdata)
        h_info= (struct handle_info *)
 	  shm_FragPtrAlloc(block, size+sizeof(struct handle_info));
        if (h_info==NULL) {
-	  fprintf(stderr,"DDE_malloc: BUG! unallocated fragment\n");
+	  ERR(global,"BUG! unallocated fragment\n");
 	  shm_write_signal(main_block->proc[curr_proc_idx].sem);
 	  return 0;
        }

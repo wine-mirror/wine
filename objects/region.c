@@ -80,7 +80,6 @@ SOFTWARE.
  * the y-x-banding that's so nice to have...
  */
 
-#include <stdio.h>
 #include "region.h"
 #include "debug.h"
 #include "heap.h"

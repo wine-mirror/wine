@@ -2,10 +2,9 @@
  * What processor?
  *
  * Copyright 1995,1997 Morten Welinder
- * Copyright 1997 Marcus Meissner
+ * Copyright 1997-1998 Marcus Meissner
  */
 
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include "global.h"
@@ -15,19 +14,33 @@
 #include "winreg.h"
 #include "debug.h"
 
-/* Should this write to the registry? */
-#define DO_REG FALSE
-
 static BYTE PF[64] = {0,};
 
 /***********************************************************************
  * 			GetSystemInfo            	[KERNELL32.404]
+ *
+ * Gets the current system information.
+ *
+ * On the first call it reads cached values, so it doesn't have to determine
+ * them repeatedly. On Linux, the /proc/cpuinfo special file is used.
+ *
+ * It creates a registry subhierarchy, looking like:
+ * \HARDWARE\DESCRIPTION\System\CentralProcessor\<processornumber>\
+ *							Identifier (CPU x86)
+ * Note that there is a hierarchy for every processor installed, so this
+ * supports multiprocessor systems. This is done like Win95 does it, I think.
+ *							
+ * It also creates a cached flag array for IsProcessorFeaturePresent().
+ *
+ * RETURNS
+ *	nothing, really
  */
-VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
-{
+VOID WINAPI GetSystemInfo(
+	LPSYSTEM_INFO si	/* [out] system information */
+) {
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
-	HKEY	hkey;
+	HKEY	xhkey=0,hkey;
 	char	buf[20];
 
 	if (cache) {
@@ -55,17 +68,12 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 	cache = 1; /* even if there is no more info, we now have a cacheentry */
 	memcpy(si,&cachedsi,sizeof(*si));
 
-	/* hmm, reasonable processor feature defaults? */
+	/* Hmm, reasonable processor feature defaults? */
 
-        /* The registry calls were removed because they were being called 
-           before the registries were loaded, and they were giving errors */
         /* Create this registry key for all systems */
-
-#if DO_REG
 	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) {
             WARN(reg,"Unable to register CPU information\n");
         }
-#endif
 
 #ifdef linux
 	{
@@ -74,7 +82,7 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 
 	if (!f)
 		return;
-        /*xhkey = 0;*/
+        xhkey = 0;
 	while (fgets(line,200,f)!=NULL) {
 		char	*s,*value;
 
@@ -108,12 +116,10 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 					break;
 				}
 			}
-#if DO_REG
 			/* set the CPU type of the current processor */
 			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
-			if (hkey)
-				RegSetValueEx32A(hkey,"Identifier",0,REG_SZ,buf,strlen(buf));
-#endif
+			if (xhkey)
+				RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
 		/* old 2.0 method */
@@ -138,12 +144,10 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 					break;
 				}
 			}
-#if DO_REG
 			/* set the CPU type of the current processor */
 			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
-			if (hkey)
-				RegSetValueEx32A(hkey,"Identifier",0,REG_SZ,buf,strlen(buf));
-#endif
+			if (xhkey)
+				RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
 		if (!lstrncmpi32A(line,"fdiv_bug",strlen("fdiv_bug"))) {
@@ -166,14 +170,13 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 				if (x+1>cachedsi.dwNumberOfProcessors)
 					cachedsi.dwNumberOfProcessors=x+1;
 
-#if 0
-			/* create a new processor subkey */
-                        /* What exactly is trying to be done here? */
+			/* Create a new processor subkey on a multiprocessor
+			 * system
+			 */
 			sprintf(buf,"%d",x);
 			if (xhkey)
 				RegCloseKey(xhkey);
 			RegCreateKey16(hkey,buf,&xhkey);
-#endif
 		}
 		if (!lstrncmpi32A(line,"stepping",strlen("stepping"))) {
 			int	x;
@@ -195,31 +198,27 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 #else  /* linux */
 	/* FIXME: how do we do this on other systems? */
 
-#if 0
+	RegCreateKey16(hkey,"0",&xhkey);
 	RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
-#endif
-
 #endif  /* !linux */
-
-#if 0
-	(xhkey)
+	if (xhkey)
 		RegCloseKey(xhkey);
-#endif
-#if DO_REG
-    if (hkey)
-        RegCloseKey(hkey);
-#endif
-
+	if (hkey)
+		RegCloseKey(hkey);
 }
 
 
 /***********************************************************************
  * 			IsProcessorFeaturePresent	[KERNELL32.880]
+ * RETURNS:
+ *	TRUE if processorfeature present
+ *	FALSE otherwise
  */
-BOOL32 WINAPI IsProcessorFeaturePresent (DWORD feature)
-{
+BOOL32 WINAPI IsProcessorFeaturePresent (
+	DWORD feature	/* [in] feature number, see PF_ defines */
+) {
   SYSTEM_INFO si;
-  GetSystemInfo (&si); /* to ensure the information is loaded and cached */
+  GetSystemInfo (&si); /* To ensure the information is loaded and cached */
 
   if (feature < 64)
     return PF[feature];

@@ -2,7 +2,6 @@
  * Main initialization code
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -16,6 +15,8 @@
 #include "win.h"
 #include "main.h"
 #include "menu.h"
+#include "message.h"
+#include "multimedia.h"
 #include "atom.h"
 #include "dialog.h"
 #include "drive.h"
@@ -27,6 +28,7 @@
 #include "keyboard.h"
 #include "miscemu.h"
 #include "options.h"
+#include "process.h"
 #include "spy.h"
 #include "tweak.h"
 #include "user.h"
@@ -43,8 +45,6 @@ int __winelib = 1;  /* Winelib run-time flag */
  */
 BOOL32 MAIN_KernelInit(void)
 {
-    extern BOOL32 EVENT_Init(void);
-
     /* Initialize signal handling */
     if (!SIGNAL_Init()) return FALSE;
 
@@ -78,9 +78,6 @@ BOOL32 MAIN_KernelInit(void)
  */
 BOOL32 MAIN_UserInit(void)
 {
-    extern BOOL32 WIDGETS_Init(void);
-    extern BOOL32 MULTIMEDIA_Init(void);
-
     int queueSize;
 
     /* Create USER and GDI heap */
@@ -160,8 +157,6 @@ BOOL32 MAIN_UserInit(void)
  */
 BOOL32 MAIN_WinelibInit( int *argc, char *argv[] )
 {
-    extern BOOL32 PROCESS_Init(void);
-
     /* Create the initial process */
     if (!PROCESS_Init()) return FALSE;
 

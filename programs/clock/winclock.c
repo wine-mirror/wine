@@ -86,18 +86,21 @@ void DrawFace(HDC dc)
 
 void DrawHourHand(HDC dc)
 {
+  if (OldHour.DontRedraw) return;
   MoveToEx(dc, OldHour.StartX, OldHour.StartY, NULL);
   LineTo(dc, OldHour.EndX, OldHour.EndY);
 }
 
 void DrawMinuteHand(HDC dc)
 {
+  if (OldMinute.DontRedraw) return;
   MoveToEx(dc, OldMinute.StartX, OldMinute.StartY, NULL);
   LineTo(dc, OldMinute.EndX, OldMinute.EndY);
 }
 
 void DrawSecondHand(HDC dc)
 {
+    if (OldSecond.DontRedraw) return;
     MoveToEx(dc, OldSecond.StartX, OldSecond.StartY, NULL);
     LineTo(dc, OldSecond.EndX, OldSecond.EndY);
 }
@@ -116,6 +119,7 @@ BOOL UpdateHourHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
   if (Globals.bAnalog && rv)DrawHourHand(dc);
   OldHour.StartX = Sx; OldHour.EndX = Ex;
   OldHour.StartY = Sy; OldHour.EndY = Ey;
+  OldHour.DontRedraw=FALSE;
   return rv;
 }
 
@@ -133,6 +137,7 @@ BOOL UpdateMinuteHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
   if (Globals.bAnalog && rv)DrawMinuteHand(dc);
   OldMinute.StartX = Sx; OldMinute.EndX = Ex;
   OldMinute.StartY = Sy; OldMinute.EndY = Ey;
+  OldMinute.DontRedraw=FALSE;
   return rv;
 }
 
@@ -152,6 +157,7 @@ BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
     if (Globals.bAnalog && rv)DrawSecondHand(dc);
     OldSecond.StartX = Sx; OldSecond.EndX = Ex;
     OldSecond.StartY = Sy; OldSecond.EndY = Ey;
+    OldSecond.DontRedraw=FALSE;
   }
   
   return rv;

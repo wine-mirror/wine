@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/sem.h>
+#include "debug.h"
 #include "windows.h"
 #include "winerror.h"
 #include "winbase.h"
@@ -102,7 +103,7 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
     if (obj)
     {
         if (crit->RecursionCount)  /* Should not happen */
-            fprintf( stderr, "Deleting owned critical section (%p)\n", crit );
+            MSG("Deleting owned critical section (%p)\n", crit );
         crit->LockCount      = -1;
         crit->RecursionCount = 0;
         crit->OwningThread   = 0;
@@ -156,7 +157,7 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
         }
         else
         {
-            fprintf( stderr, "Uninitialized critical section (%p)\n", crit );
+            MSG( "Uninitialized critical section (%p)\n", crit );
             return;
         }
     }

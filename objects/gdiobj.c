@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include "color.h"
 #include "bitmap.h"
 #include "brush.h"
@@ -227,9 +226,6 @@ static void  ReadFontInformation(
  */
 BOOL32 GDI_Init(void)
 {
-    extern BOOL32 X11DRV_Init(void);
-    extern BOOL32 DIB_Init(void);
-
     /* Kill some warnings.  */
     (void)align_OEMFixedFont;
     (void)align_AnsiFixedFont;

@@ -34,6 +34,22 @@ depend:: $(RC_SRCS:.rc=.h) y.tab.h
 
 @MAKE_RULES@
 
+# Rules for using old resource compiler
+.rc.c:
+	echo "#include \"windows.h\"" >$*-tmp.c
+	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
+	cat $< >>$*-tmp.c
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
+	$(RM) $*-tmp.c
+.rc.h:
+	echo "#include \"windows.h\"" >$*-tmp.c
+	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
+	cat $< >>$*-tmp.c
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
+	$(RM) $*-tmp.c
+clean::
+	$(RM) $(RC_SRCS:.rc=.c)
+
 # Some strings need addresses >= 0x10000
 winhelp: $(MOSTOBJS) $(STRINGOBJS)
 	$(CC) -o winhelp $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)

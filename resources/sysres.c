@@ -8,42 +8,43 @@
 #include "global.h"
 #include "options.h"
 #include "resource.h"
+#include "wrc_rsc.h"
 
-extern const struct resource * const sysres_En_Table[];
-extern const struct resource * const sysres_Es_Table[];
-extern const struct resource * const sysres_De_Table[];
-extern const struct resource * const sysres_No_Table[];
-extern const struct resource * const sysres_Fr_Table[];
-extern const struct resource * const sysres_Fi_Table[];
-extern const struct resource * const sysres_Da_Table[];
-extern const struct resource * const sysres_Cz_Table[];
-extern const struct resource * const sysres_Eo_Table[];
-extern const struct resource * const sysres_It_Table[];
-extern const struct resource * const sysres_Ko_Table[];
-extern const struct resource * const sysres_Hu_Table[];
-extern const struct resource * const sysres_Pl_Table[];
-extern const struct resource * const sysres_Po_Table[];
-extern const struct resource * const sysres_Sw_Table[];
-extern const struct resource * const sysres_Ca_Table[];
+extern const wrc_resource32_t * const sysres_En_ResTable[];
+extern const wrc_resource32_t * const sysres_Es_ResTable[];
+extern const wrc_resource32_t * const sysres_De_ResTable[];
+extern const wrc_resource32_t * const sysres_No_ResTable[];
+extern const wrc_resource32_t * const sysres_Fr_ResTable[];
+extern const wrc_resource32_t * const sysres_Fi_ResTable[];
+extern const wrc_resource32_t * const sysres_Da_ResTable[];
+extern const wrc_resource32_t * const sysres_Cz_ResTable[];
+extern const wrc_resource32_t * const sysres_Eo_ResTable[];
+extern const wrc_resource32_t * const sysres_It_ResTable[];
+extern const wrc_resource32_t * const sysres_Ko_ResTable[];
+extern const wrc_resource32_t * const sysres_Hu_ResTable[];
+extern const wrc_resource32_t * const sysres_Pl_ResTable[];
+extern const wrc_resource32_t * const sysres_Po_ResTable[];
+extern const wrc_resource32_t * const sysres_Sw_ResTable[];
+extern const wrc_resource32_t * const sysres_Ca_ResTable[];
 
-static const struct resource * const * SYSRES_Resources[] =
+static const wrc_resource32_t * const * SYSRES_Resources[] =
 {
-    sysres_En_Table,  /* LANG_En */
-    sysres_Es_Table,  /* LANG_Es */
-    sysres_De_Table,  /* LANG_De */
-    sysres_No_Table,  /* LANG_No */
-    sysres_Fr_Table,  /* LANG_Fr */
-    sysres_Fi_Table,  /* LANG_Fi */
-    sysres_Da_Table,  /* LANG_Da */
-    sysres_Cz_Table,  /* LANG_Cz */
-    sysres_Eo_Table,  /* LANG_Eo */
-    sysres_It_Table,  /* LANG_It */
-    sysres_Ko_Table,  /* LANG_Ko */
-    sysres_Hu_Table,  /* LANG_Hu */
-    sysres_Pl_Table,  /* LANG_Pl */
-    sysres_Po_Table,  /* LANG_Po */
-    sysres_Sw_Table,  /* LANG_Sw */
-    sysres_Ca_Table   /* LANG_Ca */
+    sysres_En_ResTable,  /* LANG_En */
+    sysres_Es_ResTable,  /* LANG_Es */
+    sysres_De_ResTable,  /* LANG_De */
+    sysres_No_ResTable,  /* LANG_No */
+    sysres_Fr_ResTable,  /* LANG_Fr */
+    sysres_Fi_ResTable,  /* LANG_Fi */
+    sysres_Da_ResTable,  /* LANG_Da */
+    sysres_Cz_ResTable,  /* LANG_Cz */
+    sysres_Eo_ResTable,  /* LANG_Eo */
+    sysres_It_ResTable,  /* LANG_It */
+    sysres_Ko_ResTable,  /* LANG_Ko */
+    sysres_Hu_ResTable,  /* LANG_Hu */
+    sysres_Pl_ResTable,  /* LANG_Pl */
+    sysres_Po_ResTable,  /* LANG_Po */
+    sysres_Sw_ResTable,  /* LANG_Sw */
+    sysres_Ca_ResTable   /* LANG_Ca */
 };
 
 
@@ -54,7 +55,7 @@ static const struct resource * const * SYSRES_Resources[] =
  */
 LPCVOID SYSRES_GetResPtr( SYSTEM_RESOURCE id )
 {
-    return SYSRES_Resources[Options.language][id]->bytes;
+    return SYSRES_Resources[Options.language][id]->data;
 }
 
 
@@ -65,10 +66,10 @@ LPCVOID SYSRES_GetResPtr( SYSTEM_RESOURCE id )
  */
 HGLOBAL16 SYSRES_LoadResource( SYSTEM_RESOURCE id )
 {
-    const struct resource *resPtr;
+    const wrc_resource32_t *resPtr;
 
     resPtr = SYSRES_Resources[Options.language][id];
-    return GLOBAL_CreateBlock( GMEM_FIXED, resPtr->bytes, resPtr->size,
+    return GLOBAL_CreateBlock( GMEM_FIXED, resPtr->data, resPtr->datasize,
 			       GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
 }
 

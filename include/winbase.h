@@ -178,6 +178,7 @@ void      WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 HANDLE32  WINAPI OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
+void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 int       WINAPI TerminateProcess(HANDLE32 h, int ret);
 
 #endif  /* __WINE_WINBASE_H */

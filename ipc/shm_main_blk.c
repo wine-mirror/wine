@@ -12,7 +12,6 @@
 #define inline __inline__
 #include <sys/types.h>
 #include <sys/sem.h>
-#include <stdio.h>
 #include <time.h>
 #include <assert.h>
 #include <unistd.h>
@@ -252,8 +251,7 @@ int shm_init(void)
 {
   if ( !shm_locate_MainBlock(WineKey)
        && !shm_create_MainBlock(WineKey)) { 
-     fflush(stdout);
-     fprintf(stderr,"shm_init: failed to init main shm block\n");
+     ERR(shm, "Failed to init main shm block\n");
      exit(1);
   }
 

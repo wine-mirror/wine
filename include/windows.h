@@ -5,7 +5,10 @@
 extern "C" {
 #endif
 
+#ifndef RC_INVOKED
 #include <stdarg.h>
+#endif
+
 #include "wintypes.h"
 
 #pragma pack(1)
@@ -2498,7 +2501,7 @@ typedef struct tagCOMSTAT
 #define CSTF_TXIM	0x40
 
 /* SystemParametersInfo */
-
+/* defines below are for all win versions */
 #define SPI_GETBEEP               1
 #define SPI_SETBEEP               2
 #define SPI_GETMOUSE              3
@@ -2532,17 +2535,7 @@ typedef struct tagCOMSTAT
 #define SPI_SETICONTITLELOGFONT   34
 #define SPI_GETFASTTASKSWITCH     35
 #define SPI_SETFASTTASKSWITCH     36
-#define SPI_SETDRAGFULLWINDOWS    37
-#define SPI_GETDRAGFULLWINDOWS    38
-#define SPI_GETNONCLIENTMETRICS   41
-#define SPI_SETNONCLIENTMETRICS   42
-#define SPI_GETMINIMIZEDMETRICS   43
-#define SPI_SETMINIMIZEDMETRICS   44
-#define SPI_GETICONMETRICS        45
-#define SPI_SETICONMETRICS        46
-#define SPI_SETWORKAREA           47
-#define SPI_GETWORKAREA           48
-#define SPI_SETPENWINDOWS         49
+
 #define SPI_GETFILTERKEYS         50
 #define SPI_SETFILTERKEYS         51
 #define SPI_GETTOGGLEKEYS         52
@@ -2555,10 +2548,25 @@ typedef struct tagCOMSTAT
 #define SPI_SETSTICKYKEYS         59
 #define SPI_GETACCESSTIMEOUT      60
 #define SPI_SETACCESSTIMEOUT      61
-#define SPI_GETSERIALKEYS         62
-#define SPI_SETSERIALKEYS         63
+
 #define SPI_GETSOUNDSENTRY        64
 #define SPI_SETSOUNDSENTRY        65
+
+/* defines below are for all win versions WINVER >= 0x0400 */
+#define SPI_SETDRAGFULLWINDOWS    37
+#define SPI_GETDRAGFULLWINDOWS    38
+#define SPI_GETNONCLIENTMETRICS   41
+#define SPI_SETNONCLIENTMETRICS   42
+#define SPI_GETMINIMIZEDMETRICS   43
+#define SPI_SETMINIMIZEDMETRICS   44
+#define SPI_GETICONMETRICS        45
+#define SPI_SETICONMETRICS        46
+#define SPI_SETWORKAREA           47
+#define SPI_GETWORKAREA           48
+#define SPI_SETPENWINDOWS         49
+
+#define SPI_GETSERIALKEYS         62
+#define SPI_SETSERIALKEYS         63
 #define SPI_GETHIGHCONTRAST       66
 #define SPI_SETHIGHCONTRAST       67
 #define SPI_GETKEYBOARDPREF       68
@@ -2588,12 +2596,78 @@ typedef struct tagCOMSTAT
 #define SPI_GETWINDOWSEXTENSION   92
 #define SPI_SETMOUSETRAILS        93
 #define SPI_GETMOUSETRAILS        94
-#define SPI_SCREENSAVERRUNNING    97
+#define SPI_SETSCREENSAVERRUNNING 97
+#define SPI_SCREENSAVERRUNNING    SPI_SETSCREENSAVERRUNNING
+
+/* defines below are for all win versions (_WIN32_WINNT >= 0x0400) ||
+ *                                        (_WIN32_WINDOWS > 0x0400) */
+#define SPI_GETMOUSEHOVERWIDTH    98
+#define SPI_SETMOUSEHOVERWIDTH    99
+#define SPI_GETMOUSEHOVERHEIGHT   100
+#define SPI_SETMOUSEHOVERHEIGHT   101
+#define SPI_GETMOUSEHOVERTIME     102
+#define SPI_SETMOUSEHOVERTIME     103
+#define SPI_GETWHEELSCROLLLINES   104
+#define SPI_SETWHEELSCROLLLINES   105
+
+#define SPI_GETSHOWIMEUI          110
+#define SPI_SETSHOWIMEUI          111
+
+/* defines below are for all win versions WINVER >= 0x0500 */
+#define SPI_GETMOUSESPEED         112
+#define SPI_SETMOUSESPEED         113
+#define SPI_GETSCREENSAVERRUNNING 114
+
+#define SPI_GETACTIVEWINDOWTRACKING    0x1000
+#define SPI_SETACTIVEWINDOWTRACKING    0x1001
+#define SPI_GETMENUANIMATION           0x1002
+#define SPI_SETMENUANIMATION           0x1003
+#define SPI_GETCOMBOBOXANIMATION       0x1004
+#define SPI_SETCOMBOBOXANIMATION       0x1005
+#define SPI_GETLISTBOXSMOOTHSCROLLING  0x1006
+#define SPI_SETLISTBOXSMOOTHSCROLLING  0x1007
+#define SPI_GETGRADIENTCAPTIONS        0x1008
+#define SPI_SETGRADIENTCAPTIONS        0x1009
+#define SPI_GETMENUUNDERLINES          0x100A
+#define SPI_SETMENUUNDERLINES          0x100B
+#define SPI_GETACTIVEWNDTRKZORDER      0x100C
+#define SPI_SETACTIVEWNDTRKZORDER      0x100D
+#define SPI_GETHOTTRACKING             0x100E
+#define SPI_SETHOTTRACKING             0x100F
+#define SPI_GETFOREGROUNDLOCKTIMEOUT   0x2000
+#define SPI_SETFOREGROUNDLOCKTIMEOUT   0x2001
+#define SPI_GETACTIVEWNDTRKTIMEOUT     0x2002
+#define SPI_SETACTIVEWNDTRKTIMEOUT     0x2003
+#define SPI_GETFOREGROUNDFLASHCOUNT    0x2004
+#define SPI_SETFOREGROUNDFLASHCOUNT    0x2005
 
 /* SystemParametersInfo flags */
 
-#define SPIF_UPDATEINIFILE		1
-#define SPIF_SENDWININICHANGE		2
+#define SPIF_UPDATEINIFILE              1
+#define SPIF_SENDWININICHANGE           2
+#define SPIF_SENDCHANGE                 SPIF_SENDWININICHANGE
+
+/* flags for HIGHCONTRAST dwFlags field */
+#define HCF_HIGHCONTRASTON  0x00000001
+#define HCF_AVAILABLE       0x00000002
+#define HCF_HOTKEYACTIVE    0x00000004
+#define HCF_CONFIRMHOTKEY   0x00000008
+#define HCF_HOTKEYSOUND     0x00000010
+#define HCF_INDICATOR       0x00000020
+#define HCF_HOTKEYAVAILABLE 0x00000040
+typedef struct tagHIGHCONTRASTA
+{
+    UINT32  cbSize;
+    DWORD   dwFlags;
+    LPSTR   lpszDefaultScheme;
+}   HIGHCONTRASTA, *LPHIGHCONTRASTA;
+
+typedef struct tagHIGHCONTRASTW
+{
+    UINT32  cbSize;
+    DWORD   dwFlags;
+    LPWSTR  lpszDefaultScheme;
+}   HIGHCONTRASTW, *LPHIGHCONTRASTW;
 
 /* GetFreeSystemResources() parameters */
 
@@ -3622,6 +3696,7 @@ DECL_WINELIB_TYPE(DRAWSTATEPROC)
 #define SS_TYPEMASK         0x0000001FL
 
 #define SS_NOPREFIX         0x00000080L
+#define SS_NOTIFY           0x00000100L
 #define SS_CENTERIMAGE      0x00000200L
 #define SS_RIGHTJUST        0x00000400L
 #define SS_REALSIZEIMAGE    0x00000800L
@@ -4446,9 +4521,19 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT)
 #define VK_LMENU            0xA4
 #define VK_RMENU            0xA5
 /*                          0xA6-0xB9  Unassigned */
-/*                          0xBA-0xC0  OEM specific */
+#define VK_OEM_1            0xBA
+#define VK_OEM_PLUS         0xBB
+#define VK_OEM_COMMA        0xBC
+#define VK_OEM_MINUS        0xBD
+#define VK_OEM_PERIOD       0xBE
+#define VK_OEM_2            0xBF
+#define VK_OEM_3            0xC0
 /*                          0xC1-0xDA  Unassigned */
-/*                          0xDB-0xE4  OEM specific */
+#define VK_OEM_4            0xDB
+#define VK_OEM_5            0xDC
+#define VK_OEM_6            0xDD
+#define VK_OEM_7            0xDE
+/*                          0xDF-0xE4  OEM specific */
 
 #define VK_PROCESSKEY       0xE5
 
@@ -5948,6 +6033,19 @@ typedef struct _numberfmt32w {
     UINT32 NegativeOrder;
 } NUMBERFMT32W;
 
+typedef enum _GET_FILEEX_INFO_LEVELS {
+    GetFileExInfoStandard
+} GET_FILEEX_INFO_LEVELS;
+
+typedef struct _WIN32_FILE_ATTRIBUTES_DATA {
+    DWORD    dwFileAttributes;
+    FILETIME ftCreationTime;
+    FILETIME ftLastAccessTime;
+    FILETIME ftLastWriteTime;
+    DWORD    nFileSizeHigh;
+    DWORD    nFileSizeLow;
+} WIN32_FILE_ATTRIBUTE_DATA, *LPWIN32_FILE_ATTRIBUTE_DATA;
+
 
 
 
@@ -6239,6 +6337,9 @@ LPWSTR      WINAPI GetEnvironmentStrings32W(void);
 DWORD       WINAPI GetEnvironmentVariable32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI GetEnvironmentVariable32W(LPCWSTR,LPWSTR,DWORD);
 #define     GetEnvironmentVariable WINELIB_NAME_AW(GetEnvironmentVariable)
+BOOL32      WINAPI GetFileAttributesEx32A(LPCSTR,GET_FILEEX_INFO_LEVELS,LPVOID);
+BOOL32      WINAPI GetFileAttributesEx32W(LPCWSTR,GET_FILEEX_INFO_LEVELS,LPVOID);
+#define     GetFileattributesEx WINELIB_NAME_AW(GetFileAttributesEx)
 DWORD       WINAPI GetFileInformationByHandle(HFILE32,BY_HANDLE_FILE_INFORMATION*);
 DWORD       WINAPI GetFileSize(HFILE32,LPDWORD);
 BOOL32      WINAPI GetFileTime(HFILE32,LPFILETIME,LPFILETIME,LPFILETIME);
@@ -6366,6 +6467,9 @@ BOOL32      WINAPI QueryPerformanceCounter(LPLARGE_INTEGER);
 BOOL32      WINAPI ReadConsole32A(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 BOOL32      WINAPI ReadConsole32W(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 #define     ReadConsole WINELIB_NAME_AW(ReadConsole)
+BOOL32      WINAPI ReadConsoleOutputCharacter32A(HANDLE32,LPSTR,DWORD,
+						 COORD,LPDWORD);
+#define     ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
 BOOL32      WINAPI ReadFile(HANDLE32,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 LONG        WINAPI RegConnectRegistry32A(LPCSTR,HKEY,LPHKEY);
 LONG        WINAPI RegConnectRegistry32W(LPCWSTR,HKEY,LPHKEY);
@@ -6398,6 +6502,19 @@ DWORD       WINAPI RegQueryInfoKey32A(HKEY,LPSTR,LPDWORD,LPDWORD,LPDWORD,
                                       LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
                                       LPDWORD,LPFILETIME);
 #define     RegQueryInfoKey WINELIB_NAME_AW(RegQueryInfoKey)
+LONG        WINAPI RegReplaceKey32A(HKEY,LPCSTR,LPCSTR,LPCSTR);
+LONG        WINAPI RegReplaceKey32W(HKEY,LPCWSTR,LPCWSTR,LPCWSTR);
+#define     RegReplaceKey WINELIB_NAME_AW(RegReplaceKey)
+LONG        WINAPI RegRestoreKey32A(HKEY,LPCSTR,DWORD);
+LONG        WINAPI RegRestoreKey32W(HKEY,LPCWSTR,DWORD);
+#define     RegRestoreKey WINELIB_NAME_AW(RegRestoreKey)
+LONG        WINAPI RegSaveKey32A(HKEY,LPCSTR,LPSECURITY_ATTRIBUTES);
+LONG        WINAPI RegSaveKey32W(HKEY,LPCWSTR,LPSECURITY_ATTRIBUTES);
+#define     RegSaveKey WINELIB_NAME_AW(RegSaveKey)
+LONG        WINAPI RegSetKeySecurity(HKEY,SECURITY_INFORMATION,LPSECURITY_DESCRIPTOR);
+LONG        WINAPI RegUnLoadKey32A(HKEY,LPCSTR);
+LONG        WINAPI RegUnLoadKey32W(HKEY,LPCWSTR);
+#define     RegUnLoadKey WINELIB_NAME_AW(RegUnLoadKey)
 BOOL32      WINAPI ReleaseSemaphore(HANDLE32,LONG,LPLONG);
 BOOL32      WINAPI ResetEvent(HANDLE32);
 VOID        WINAPI RtlFillMemory(LPVOID,UINT32,UINT32);
@@ -8737,9 +8854,9 @@ BOOL16      WINAPI WinHelp16(HWND16,LPCSTR,UINT16,DWORD);
 BOOL32      WINAPI WinHelp32A(HWND32,LPCSTR,UINT32,DWORD);
 BOOL32      WINAPI WinHelp32W(HWND32,LPCWSTR,UINT32,DWORD);
 #define     WinHelp WINELIB_NAME_AW(WinHelp)
-UINT16      WNetAddConnection16(LPSTR,LPSTR,LPSTR);
-UINT32      WNetAddConnection32A(LPSTR,LPSTR,LPSTR);
-UINT32      WNetAddConnection32W(LPWSTR,LPWSTR,LPWSTR);
+UINT16      WINAPI WNetAddConnection16(LPCSTR,LPCSTR,LPCSTR);
+UINT32      WINAPI WNetAddConnection32A(LPCSTR,LPCSTR,LPCSTR);
+UINT32      WINAPI WNetAddConnection32W(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WNetAddConnection WINELIB_NAME_AW(WNetAddConnection)
 INT16       WINAPIV wsnprintf16(LPSTR,UINT16,LPCSTR,...);
 INT32       WINAPIV wsnprintf32A(LPSTR,UINT32,LPCSTR,...);

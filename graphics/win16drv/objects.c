@@ -42,7 +42,7 @@ HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
         ret = WIN16DRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );	  
         break;
     case BITMAP_MAGIC:
-        fprintf(stderr, "WIN16DRV_SelectObject for BITMAP not implemented\n");
+        FIXME(gdi, "WIN16DRV_SelectObject for BITMAP not implemented\n");
         ret = 1;
         break;
     case FONT_MAGIC:

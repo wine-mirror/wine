@@ -214,7 +214,7 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(clone getpagesize memmove sigaltstack strerror tcgetattr timegm usleep wait4 waitpid)
+AC_CHECK_FUNCS(clone getpagesize memmove sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid)
 AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h sys/cdio.h sys/filio.h)
 AC_HEADER_STAT()
 AC_C_CONST()
@@ -449,6 +449,7 @@ relay32/Makefile
 resources/Makefile
 scheduler/Makefile
 tools/Makefile
+tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
 windows/Makefile ])

@@ -11,8 +11,8 @@ type	win32
   4 stub GetEffectiveClientRect
   5 stdcall DrawStatusTextA(long ptr ptr long) DrawStatusText32A
   6 stdcall CreateStatusWindowA(long ptr long long) CreateStatusWindow32A
-  7 stub CreateToolbar
-  8 stub CreateMappedBitmap
+  7 stdcall CreateToolbar(long long long long long long ptr long) CreateToolbar
+  8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
   9 stub COMCTL32_9
  10 stub COMCTL32_10
  11 stub COMCTL32_11
@@ -25,15 +25,13 @@ type	win32
  18 stub CreatePropertySheetPage
  19 stub CreatePropertySheetPageA
  20 stub CreatePropertySheetPageW
-# 21 pascal16 CreateStatusWindow(word ptr word word) CreateStatusWindow16
- 21 stub CreateStatusWindow
+ 21 stdcall CreateStatusWindow(long ptr long long) CreateStatusWindow32A
  22 stdcall CreateStatusWindowW(long ptr long long) CreateStatusWindow32W
- 23 stub CreateToolbarEx
+ 23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
  24 stub DestroyPropertySheetPage
  25 stub DllGetVersion
  26 stub DllInstall
-# 27 pascal16 DrawStatusText(word ptr ptr word) DrawStatusText16
- 27 stub DrawStatusText
+ 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32A
  28 stdcall DrawStatusTextW(long ptr ptr long) DrawStatusText32W
  29 stub FlatSB_EnableScrollBar
  30 stub FlatSB_GetScrollInfo
@@ -46,7 +44,7 @@ type	win32
  37 stub FlatSB_SetScrollRange
  38 stub FlatSB_ShowScrollBar
  39 stdcall ImageList_Add(ptr long long) ImageList_Add
- 40 stub ImageList_AddIcon
+ 40 stdcall ImageList_AddIcon(ptr long) ImageList_AddIcon
  41 stdcall ImageList_AddMasked(ptr long long) ImageList_AddMasked
  42 stdcall ImageList_BeginDrag(ptr long long long) ImageList_BeginDrag
  43 stdcall ImageList_Copy(ptr long ptr long long) ImageList_Copy
@@ -68,11 +66,11 @@ type	win32
  59 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
  60 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
  61 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
- 62 stub ImageList_LoadImage
+ 63 stdcall ImageList_LoadImage(long ptr long long long long long) ImageList_LoadImage32A
  63 stdcall ImageList_LoadImageA(long ptr long long long long long) ImageList_LoadImage32A
  64 stdcall ImageList_LoadImageW(long ptr long long long long long) ImageList_LoadImage32W
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
- 66 stub ImageList_Read
+ 66 stdcall ImageList_Read(ptr) ImageList_Read
  67 stdcall ImageList_Remove(ptr long) ImageList_Remove
  68 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
  69 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
@@ -86,7 +84,7 @@ type	win32
  77 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
  78 stdcall ImageList_SetImageCount(ptr long) ImageList_SetImageCount
  79 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
- 80 stub ImageList_Write
+ 80 stdcall ImageList_Write(ptr ptr) ImageList_Write
  81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
  82 stub InitializeFlatSB
  83 stub PropertySheet
@@ -122,6 +120,7 @@ type	win32
 325 stub DSA_SetItem
 326 stub DSA_DeleteItem
 327 stub DSA_DeleteAllItems
+
 328 stub DPA_Create
 329 stub DPA_Destroy
 330 stub DPA_Grow

@@ -11,7 +11,6 @@
  *	please read EDIT.TODO (and update it when you change things)
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "winnt.h"
 #include "win.h"
@@ -41,6 +40,7 @@
 #define EF_HSCROLL_HACK		0x0040	/* we already have informed the user of the hacked handler */
 #define EF_AFTER_WRAP		0x0080	/* the caret is displayed after the last character of a
 					   wrapped line, instead of in front of the next character */
+#define EF_USE_SOFTBRK		0x0100	/* Enable soft breaks in text. */
 
 typedef BOOL32 *LPBOOL32;
 
@@ -1948,10 +1948,15 @@ static LRESULT EDIT_EM_CharFromPos(WND *wnd, EDITSTATE *es, INT32 x, INT32 y)
  *
  *	EM_FMTLINES
  *
+ * Enable or disable soft breaks.
  */
 static BOOL32 EDIT_EM_FmtLines(WND *wnd, EDITSTATE *es, BOOL32 add_eol)
 {
-	FIXME(edit, "message not implemented\n");
+	es->flags &= ~EF_USE_SOFTBRK;
+	if (add_eol) {
+		es->flags |= EF_USE_SOFTBRK;
+		FIXME(edit, "soft break enabled, not implemented\n");
+	}
 	return add_eol;
 }
 
@@ -1965,7 +1970,7 @@ static BOOL32 EDIT_EM_FmtLines(WND *wnd, EDITSTATE *es, BOOL32 add_eol)
  *	However, with this message a 32 bit application requests
  *	a handle to 32 bit moveable local heap memory, where it expects
  *	to find the text.
- *	It's a pitty that from this moment on we have to use this
+ *	It's a pity that from this moment on we have to use this
  *	local heap, because applications may rely on the handle
  *	in the future.
  *
@@ -3896,7 +3901,8 @@ static LRESULT EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT32 action, INT32 pos,
 		break;
 
 	default:
-		ERR(edit, "undocumented WM_VSCROLL parameter, please report\n");
+		ERR(edit, "undocumented WM_VSCROLL action %d, please report\n",
+			action);
 		return 0;
 	}
 	if (dy)

@@ -4,7 +4,6 @@
  * Copyright 1995 Martin von Loewis and Cameron Heide
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
 #include "winerror.h"

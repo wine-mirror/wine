@@ -1,3 +1,5 @@
+#include <windows.h>
+
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
  MENUITEM "&Genopret", 61728
@@ -51,7 +53,7 @@ FONT 10, "System"
  LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", 1088, 189, 10, 14, 16
  LTEXT "", 100, 8, 10, 137, 33
- LTEXT "Wine was brought to you by:", 98, 8, 55, 137, 10
+ LTEXT "Wine havde ikke været mulig uden hjælp fra disse personer:", 98, 8, 55, 137, 10
 }
 
 OPEN_FILE DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 275, 134

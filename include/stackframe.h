@@ -1,7 +1,7 @@
 /*
- * 16-bit mode stack frame layout
+ * 16-bit and 32-bit mode stack frame layout
  *
- * Copyright 1995 Alexandre Julliard
+ * Copyright 1995, 1998 Alexandre Julliard
  */
 
 #ifndef __WINE_STACKFRAME_H
@@ -77,5 +77,14 @@ typedef void *VA_LIST16;
  (memmove((char*)THREAD_STACK16(thdb)+(size),THREAD_STACK16(thdb), \
           sizeof(STACK16FRAME)), \
   (thdb)->cur_stack += (size))
+
+/* Push a DWORD on the 32-bit stack */
+#define STACK32_PUSH(context,val) (*--((DWORD *)ESP_reg(context)) = (val))
+
+/* Pop a DWORD from the 32-bit stack */
+#define STACK32_POP(context) (*((DWORD *)ESP_reg(context))++)
+
+/* Win32 register functions */
+#define REGS_ENTRYPOINT(name) void WINAPI __regs_##name( CONTEXT *context )
 
 #endif /* __WINE_STACKFRAME_H */

@@ -129,6 +129,10 @@ extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
 extern HINSTANCE32 WIN_GetWindowInstance( HWND32 hwnd );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT32 bwa, UINT32* pnum );
 
+extern HWND32 CARET_GetHwnd(void);
+extern void CARET_GetRect(LPRECT32 lprc);  /* windows/caret.c */
+
+extern BOOL16 DRAG_QueryUpdate( HWND32, SEGPTR, BOOL32 );
 extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );
 extern HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType );     /* windows/defwnd.c */
 
@@ -138,9 +142,17 @@ extern BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                                   HRGN32 hrgnUpdate, UINT32 flags,
                                   UINT32 control );		      /* windows/painting.c */
 
-extern BOOL32 WIDGETS_IsControl32( WND* pWnd, BUILTIN_CLASS32 cls );  /* controls/widgets.c */
+/* controls/widgets.c */
+extern BOOL32 WIDGETS_Init( void );
+extern BOOL32 WIDGETS_IsControl32( WND* pWnd, BUILTIN_CLASS32 cls );  
 
-extern HWND32 ICONTITLE_Create( WND* );				      /* controls/icontitle.c */
+/* controls/icontitle.c */
+extern HWND32 ICONTITLE_Create( WND* );
+extern BOOL32 ICONTITLE_Init( void );
+
+/* windows/focus.c */
+extern void FOCUS_SetXFocus( HWND32 );
+extern void FOCUS_SwitchFocus( HWND32 , HWND32 );
 
 extern Display * display;
 extern Screen * screen;

@@ -1,3 +1,8 @@
+Tue May 26 16:56:48 1997  Matthew Becker <mbecker@glasscity.net>
+
+	* [regtest.c]
+	More improvements, untested because of WineLib issue.
+
 Wed May 13 22:58:05 1997  Matthew Becker <mbecker@glasscity.net>
 
 	* [regtest.c] (new)

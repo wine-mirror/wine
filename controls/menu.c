@@ -15,7 +15,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "windows.h"
 #include "bitmap.h"
@@ -77,6 +76,7 @@ typedef struct {
     HWND32      hWnd;         /* Window containing the menu */
     MENUITEM   *items;        /* Array of menu items */
     UINT32      FocusedItem;  /* Currently focused item */
+    WORD	defitem;      /* default item position. Unused (except for set/get)*/
 } POPUPMENU, *LPPOPUPMENU;
 
 /* internal flags for menu tracking */
@@ -1444,8 +1444,12 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
         }
     }
     else if (flags & MF_BITMAP) item->text = (LPSTR)(HBITMAP32)LOWORD(str);
-    else if (flags & MF_OWNERDRAW) item->text = (LPSTR)str;
     else item->text = NULL;
+
+    if (flags & MF_OWNERDRAW) 
+        item->dwItemData = (DWORD)str;
+    else
+        item->dwItemData = 0;
 
     if ((item->fType & MF_POPUP) && (flags & MF_POPUP) && (item->hSubMenu != id) )
 	DestroyMenu32( item->hSubMenu );   /* ModifyMenu() spec */
@@ -3032,7 +3036,6 @@ BOOL32 WINAPI InsertMenu32A( HMENU32 hMenu, UINT32 pos, UINT32 flags,
 	((POPUPMENU *)USER_HEAP_LIN_ADDR((HMENU16)id))->wFlags |= MF_POPUP;
 
     item->hCheckBit = item->hUnCheckBit = 0;
-    item->dwItemData = 0;
     return TRUE;
 }
 
@@ -3735,7 +3738,7 @@ static BOOL32 GetMenuItemInfo32_common ( HMENU32 hmenu, UINT32 item,
 					 LPMENUITEMINFO32A lpmii,
 					 BOOL32 unicode)
 {
-  MENUITEM *menu = MENU_FindItem (&hmenu, &item, bypos);
+  MENUITEM *menu = MENU_FindItem (&hmenu, &item, bypos? MF_BYPOSITION : 0);
     debug_print_menuitem("GetMenuItemInfo32_common: ", menu, "");
     if (!menu)
 	return FALSE;
@@ -3853,7 +3856,7 @@ static BOOL32 SetMenuItemInfo32_common(MENUITEM * menu,
 BOOL32 WINAPI SetMenuItemInfo32A(HMENU32 hmenu, UINT32 item, BOOL32 bypos,
                                  const MENUITEMINFO32A *lpmii) 
 {
-    return SetMenuItemInfo32_common(MENU_FindItem(&hmenu, &item, bypos),
+    return SetMenuItemInfo32_common(MENU_FindItem(&hmenu, &item, bypos? MF_BYPOSITION : 0),
 				    lpmii, FALSE);
 }
 
@@ -3863,7 +3866,7 @@ BOOL32 WINAPI SetMenuItemInfo32A(HMENU32 hmenu, UINT32 item, BOOL32 bypos,
 BOOL32 WINAPI SetMenuItemInfo32W(HMENU32 hmenu, UINT32 item, BOOL32 bypos,
                                  const MENUITEMINFO32W *lpmii)
 {
-    return SetMenuItemInfo32_common(MENU_FindItem(&hmenu, &item, bypos),
+    return SetMenuItemInfo32_common(MENU_FindItem(&hmenu, &item, bypos? MF_BYPOSITION : 0),
 				    (const MENUITEMINFO32A*)lpmii, TRUE);
 }
 
@@ -3872,12 +3875,34 @@ BOOL32 WINAPI SetMenuItemInfo32W(HMENU32 hmenu, UINT32 item, BOOL32 bypos,
  */
 BOOL32 WINAPI SetMenuDefaultItem32(HMENU32 hmenu, UINT32 item, BOOL32 bypos)
 {
-    MENUITEM *menu = MENU_FindItem(&hmenu, &item, bypos);
-    if (!menu) return FALSE;
-    debug_print_menuitem("SetMenuDefaultItem32: ", menu, "");
+    MENUITEM *menuitem = MENU_FindItem(&hmenu, &item, bypos);
+    POPUPMENU *menu;
+
+    if (!menuitem) return FALSE;
+    if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hmenu))) return FALSE;
+
+    menu->defitem = item; /* position */
+
+    debug_print_menuitem("SetMenuDefaultItem32: ", menuitem, "");
     FIXME(menu, "(0x%x,%d,%d), empty stub!\n",
 		  hmenu, item, bypos);
     return TRUE;
+}
+
+/**********************************************************************
+ *		GetMenuDefaultItem32    (USER32.260)
+ */
+UINT32 WINAPI GetMenuDefaultItem32(HMENU32 hmenu, UINT32 bypos, UINT32 flags)
+{
+    POPUPMENU *menu;
+
+    if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hmenu))) return 0; /*FIXME*/
+
+    FIXME(menu, "(0x%x,%d,%d), stub!\n", hmenu, bypos, flags);
+    if (bypos & MF_BYPOSITION)
+    	return menu->defitem;
+    else
+    	return menu->items[menu->defitem].wID;
 }
 
 /*******************************************************************

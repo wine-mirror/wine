@@ -6,7 +6,6 @@
  * FIXME: roll up in Netscape 3.01.
  */
 
-#include <stdio.h>
 #include <string.h>
 
 #include "windows.h"

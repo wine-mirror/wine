@@ -4,7 +4,6 @@
  * Copyright 1996 Marcus Meissner
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -12,6 +11,7 @@
 #include <math.h>
 #include "win.h"
 #include "windows.h"
+#include "winnls.h"
 #include "ntdll.h"
 #include "heap.h"
 #include "debug.h"
@@ -204,7 +204,7 @@ DWORD /* NTSTATUS */ WINAPI RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR
  */
 LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 {
-    FIXME(ntdll,"(%p), stub.\n",x);
+    FIXME(ntdll,"(%p), stub\n",x);
     return x;
 }
 
@@ -429,8 +429,8 @@ DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LP
  */
 DWORD WINAPI RtlNtStatusToDosError(DWORD error)
 {
-	/* FIXME: map STATUS_ to ERROR_ */
-	return error;
+    FIXME(ntdll, "(%x): map STATUS_ to ERROR_\n",error);
+    return error;
 }
 
 /**************************************************************************
@@ -438,8 +438,8 @@ DWORD WINAPI RtlNtStatusToDosError(DWORD error)
  */
 DWORD WINAPI RtlGetNtProductType(LPVOID x)
 {
-	/* FIXME : find documentation for this one */
-	return 0;
+    FIXME(ntdll, "(%p): stub\n", x);
+    return 0;
 }
 
 /**************************************************************************
@@ -463,7 +463,7 @@ DWORD WINAPI RtlUpcaseUnicodeString(LPUNICODE_STRING dest,LPUNICODE_STRING src,B
 	s=dest->Buffer;t=src->Buffer;
 	/* len is in bytes */
 	for (i=0;i<len/2;i++)
-		s[i]=toupper(t[i]);
+		s[i] = towupper(t[i]);
 	return STATUS_SUCCESS;
 }
 
@@ -481,6 +481,49 @@ UINT32 WINAPI RtlxOemStringToUnicodeSize(LPSTRING str)
 UINT32 WINAPI RtlxAnsiStringToUnicodeSize(LPANSI_STRING str)
 {
 	return str->Length*2+2;
+}
+
+/**************************************************************************
+ *                 RtlIsTextUnicode			[NTDLL]
+ *
+ *	Apply various feeble heuristics to guess whether
+ *	the text buffer contains Unicode.
+ *	FIXME: should implement more tests.
+ */
+DWORD WINAPI RtlIsTextUnicode(LPVOID buf, DWORD len, DWORD *pf)
+{
+	LPWSTR s = buf;
+	DWORD flags = -1, out_flags = 0;
+
+	if (!len)
+		goto out;
+	if (pf)
+		flags = *pf;
+	/*
+	 * Apply various tests to the text string. According to the
+	 * docs, each test "passed" sets the corresponding flag in
+	 * the output flags. But some of the tests are mutually
+	 * exclusive, so I don't see how you could pass all tests ...
+	 */
+
+	/* Check for an odd length ... pass if even. */
+	if (!(len & 1))
+		out_flags |= IS_TEXT_UNICODE_ODD_LENGTH;
+
+	/* Check for the special unicode marker byte. */
+	if (*s == 0xFEFF)
+		out_flags |= IS_TEXT_UNICODE_SIGNATURE;
+
+	/*
+	 * Check whether the string passed all of the tests.
+	 */
+	flags &= ITU_IMPLEMENTED_TESTS;
+	if ((out_flags & flags) != flags)
+		len = 0;
+out:
+	if (pf)
+		*pf = out_flags;
+	return len;
 }
 
 /**************************************************************************
@@ -504,7 +547,7 @@ BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
  */
 DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6)
 {
-	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx)\n",
+	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx): stub\n",
 	      x1,flags,x3,x4,alignment,x6);
 	/* returns file io completion status */
 	return 0;
@@ -517,4 +560,77 @@ DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,D
 void NTDLL_chkstk(void)
 {
     /* FIXME: should subtract %eax bytes from stack pointer */
+    FIXME(ntdll, "(void): stub\n");
 }
+
+
+/**************************************************************************
+ * NtOpenDirectoryObject [NTDLL.124]
+ */
+DWORD WINAPI NtOpenDirectoryObject(DWORD x1,DWORD x2,DWORD x3)
+{
+    FIXME(ntdll,"(%lx,%lx,%lx): stub\n",x1,x2,x3);
+    return 0;
+}
+
+
+/**************************************************************************
+ * NtQueryDirectoryObject [NTDLL.149]
+ */
+DWORD WINAPI NtQueryDirectoryObject(DWORD x1, DWORD x2)
+{
+    FIXME(ntdll,"(%lx,%lx): stub\n",x1,x2);
+    return 0;
+}
+
+
+/**************************************************************************
+ * RtlFreeAnsiString [NTDLL.373]
+ */
+DWORD WINAPI RtlFreeAnsiString(DWORD x1)
+{
+    FIXME(ntdll,"(%lx): stub\n",x1);
+    return 0;
+}
+
+
+/**************************************************************************
+ * NtQuerySystemInformation [NTDLL.168]
+ */
+DWORD WINAPI NtQuerySystemInformation( DWORD x1 )
+{
+    FIXME(ntdll,"(%lx): stub\n",x1);
+    return 0;
+}
+
+
+/******************************************************************************
+ * NtQueryObject [NTDLL.161]
+ */
+DWORD WINAPI NtQueryObject( DWORD x1, DWORD x2 )
+{
+    FIXME(ntdll,"(%lx,%lx): stub\n",x1,x2);
+    return 0;
+}
+
+
+/******************************************************************************
+ * RtlTimeToElapsedTimeFields [NTDLL.502]
+ */
+DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1 )
+{
+    FIXME(ntdll,"(%lx): stub\n",x1);
+    return 0;
+}
+
+
+/******************************************************************************
+ * NtSetInformationProcess [NTDLL.207]
+ */
+DWORD WINAPI NtSetInformationProcess( DWORD x1 )
+{
+    FIXME(ntdll,"(%lx): stub\n",x1);
+    return 0;
+}
+
+

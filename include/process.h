@@ -130,6 +130,7 @@ extern BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle,
 extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
 
 /* scheduler/process.c */
+extern BOOL32 PROCESS_Init( void );
 extern PDB32 *PROCESS_Current(void);
 extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );

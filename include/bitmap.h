@@ -29,6 +29,12 @@ typedef struct
     BITMAP16    bitmap;
     Pixmap      pixmap;
     SIZE16      size;   /* For SetBitmapDimension() */
+
+    /* For device-independent bitmaps: */
+    DIBSECTION *dibSection;
+    RGBQUAD    *colorMap;
+    int         nColorMap;
+
 } BITMAPOBJ;
 
   /* GCs used for B&W and color bitmap operations */
@@ -62,6 +68,8 @@ extern INT32   BITMAP_GetBitsWidth( int width, int depth );
 extern int DIB_GetDIBWidthBytes( int width, int depth );
 extern int DIB_GetXImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
+extern void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB );
+
 
   /* objects/oembitmap.c */
 extern BOOL32 OBM_Init(void);

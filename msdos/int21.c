@@ -5,7 +5,6 @@
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/file.h>
 #include <string.h>
@@ -919,9 +918,6 @@ Output of DOS 6.22:
 	if (!seg_LOL) seg_LOL = SEGPTR_GET(LOL);
 	return seg_LOL+(WORD)&((DOS_LISTOFLISTS*)0)->ptr_first_DPB;
 }
-
-
-extern void LOCAL_PrintHeap (WORD ds);
 
 /***********************************************************************
  *           DOS3Call  (KERNEL.102)

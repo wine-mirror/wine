@@ -42,7 +42,7 @@ struct storage_pps_entry {
 
 typedef LPOLESTR16 *SNB16;
 typedef LPOLESTR32 *SNB32;
-DECL_WINELIB_TYPE(SNB);
+DECL_WINELIB_TYPE(SNB)
 
 typedef struct IStorage16 IStorage16,*LPSTORAGE16;
 typedef struct IStorage32 IStorage32,*LPSTORAGE32;

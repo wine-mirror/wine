@@ -38,8 +38,6 @@
 #define SWAP_INT32(i1,i2) \
     do { INT32 __t = *(i1); *(i1) = *(i2); *(i2) = __t; } while(0)
 
-extern void CLIPPING_UpdateGCRegion(DC* );
-
 static const unsigned char BITBLT_Opcodes[256][MAX_OP_LEN] =
 {
     { OP(PAT,DST,GXclear) },                         /* 0x00  0              */
@@ -1381,9 +1379,11 @@ BOOL32 X11DRV_PatBlt( DC *dc, INT32 left, INT32 top,
     struct StretchBlt_params params = { dc, left, top, width, height,
                                         NULL, 0, 0, 0, 0, rop };
     BOOL32 result;
+    DIB_UpdateDIBSection( dc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
+    DIB_UpdateDIBSection( dc, TRUE );
     return result;
 }
 
@@ -1398,9 +1398,13 @@ BOOL32 X11DRV_BitBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     struct StretchBlt_params params = { dcDst, xDst, yDst, width, height,
                                         dcSrc, xSrc, ySrc, width, height, rop};
     BOOL32 result;
+    DIB_UpdateDIBSection( dcDst, FALSE );
+    DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
+    DIB_UpdateDIBSection( dcDst, TRUE );
+    DIB_UpdateDIBSection( dcSrc, TRUE );
     return result;
 }
 
@@ -1417,8 +1421,12 @@ BOOL32 X11DRV_StretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
                                         dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                         rop };
     BOOL32 result;
+    DIB_UpdateDIBSection( dcDst, FALSE );
+    DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
+    DIB_UpdateDIBSection( dcDst, TRUE );
+    DIB_UpdateDIBSection( dcSrc, TRUE );
     return result;
 }

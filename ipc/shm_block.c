@@ -12,7 +12,6 @@
 #define inline __inline__
 #include <sys/types.h>
 #include <sys/sem.h>
-#include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>

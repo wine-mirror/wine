@@ -49,7 +49,7 @@ void NE_DumpModule( HMODULE16 hModule )
 
     if (!(pModule = NE_GetPtr( hModule )))
     {
-        fprintf( stderr, "**** %04x is not a module handle\n", hModule );
+        MSG( "**** %04x is not a module handle\n", hModule );
         return;
     }
 
@@ -189,16 +189,16 @@ void NE_DumpModule( HMODULE16 hModule )
 void NE_WalkModules(void)
 {
     HMODULE16 hModule = hFirstModule;
-    fprintf( stderr, "Module Flags Name\n" );
+    MSG( "Module Flags Name\n" );
     while (hModule)
     {
         NE_MODULE *pModule = NE_GetPtr( hModule );
         if (!pModule)
         {
-            fprintf( stderr, "**** Bad module %04x in list\n", hModule );
+            MSG( "Bad module %04x in list\n", hModule );
             return;
         }
-        fprintf( stderr, " %04x  %04x  %.*s\n", hModule, pModule->flags,
+        MSG( " %04x  %04x  %.*s\n", hModule, pModule->flags,
                  *((char *)pModule + pModule->name_table),
                  (char *)pModule + pModule->name_table + 1 );
         hModule = pModule->next;
@@ -716,11 +716,7 @@ static BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
 /**********************************************************************
  *	    NE_LoadModule
  *
- * Implementation of LoadModule().
- *
- * cmd_line must contain the whole command-line, including argv[0] (and
- * without a preceding length byte).
- * If cmd_line is NULL, the module is loaded as a library even if it is a .exe
+ * Implementation of LoadModule16().
  */
 HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
                            BOOL32 implicit, BOOL32 lib_only )

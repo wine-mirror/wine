@@ -5,7 +5,6 @@
  * Copyright 1997 Onno Hovers
  */
 
-#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include "windows.h"

@@ -8,7 +8,6 @@
  *	  window coords as well, lookup 'the pain' comment in the winpos.c).
  */
 
-#include <stdio.h>
 #include "win.h"
 #include "queue.h"
 #include "gdi.h"
@@ -135,7 +134,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     if (!lps->hdc)
     {
-        fprintf(stderr, "GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
+        WARN(win, "GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
         return 0;
     }
 
