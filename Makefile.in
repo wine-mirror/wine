@@ -36,7 +36,6 @@ SUBDIRS = \
 	programs \
 	server \
 	tools \
-	tsx11 \
 	unicode
 
 # Sub-directories to install for install-lib
@@ -47,7 +46,6 @@ INSTALLLIBSUBDIRS = \
 	miscemu \
 	programs \
 	server \
-	tsx11 \
 	unicode
 
 # Sub-directories to install for install-dev
@@ -113,14 +111,14 @@ uninstall::
 # Dependencies between directories
 
 all: $(SUBDIRS)
-dlls: library ole tools tsx11 unicode
+dlls: library ole tools unicode
 server: library tools unicode
-miscemu programs: dlls library ole tools tsx11 unicode
+miscemu programs: dlls library ole tools unicode
 tools: library unicode
 
-dlls/__install__: library ole tools tsx11 unicode
+dlls/__install__: library ole tools unicode
 server/__install__: library tools unicode
-miscemu/__install__ programs/__install__: library ole tools tsx11 unicode dlls/__install__
+miscemu/__install__ programs/__install__: library ole tools unicode dlls/__install__
 library/__install__: library
 ole/__install__: ole
 tools/__install__: tools

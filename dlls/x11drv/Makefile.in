@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = x11drv.dll
 IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
+EXTRALIBS = $(X_LIBS) $(XLIB)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
@@ -31,6 +31,7 @@ C_SRCS = \
 	keyboard.c \
 	mouse.c \
 	scroll.c \
+	ts_xlib.c \
 	window.c \
 	winpos.c \
 	x11ddraw.c \

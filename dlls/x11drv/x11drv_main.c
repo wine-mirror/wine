@@ -49,9 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static void (*old_tsx11_lock)(void);
-static void (*old_tsx11_unlock)(void);
-
 static CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT("X11DRV_CritSection");
 
 Screen *screen;
@@ -136,17 +133,17 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
 }
 
 /***********************************************************************
- *		X11DRV_tsx11_lock   (X11DRV.@)
+ *		wine_tsx11_lock   (X11DRV.@)
  */
-void X11DRV_tsx11_lock(void)
+void wine_tsx11_lock(void)
 {
     EnterCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
- *		X11DRV_tsx11_unlock   (X11DRV.@)
+ *		wine_tsx11_unlock   (X11DRV.@)
  */
-void X11DRV_tsx11_unlock(void)
+void wine_tsx11_unlock(void)
 {
     LeaveCriticalSection( &X11DRV_CritSection );
 }
@@ -270,12 +267,6 @@ static void process_attach(void)
     get_server_startup();
     setup_options();
 
-    /* setup TSX11 locking */
-    old_tsx11_lock    = wine_tsx11_lock;
-    old_tsx11_unlock  = wine_tsx11_unlock;
-    wine_tsx11_lock   = X11DRV_tsx11_lock;
-    wine_tsx11_unlock = X11DRV_tsx11_unlock;
-
     /* Open display */
 
     if (!(display = TSXOpenDisplay( NULL )))
@@ -397,9 +388,6 @@ static void process_detach(void)
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
 
-    /* restore TSX11 locking */
-    wine_tsx11_lock = old_tsx11_lock;
-    wine_tsx11_unlock = old_tsx11_unlock;
     DeleteCriticalSection( &X11DRV_CritSection );
 }
 

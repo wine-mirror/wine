@@ -28,7 +28,7 @@
 # This program expects to be run from Wine's main directory.
 
 $X11_include_dir = "/usr/X11/include";
-$outdir = "tsx11";
+$outdir = "dlls/x11drv";
 $wantfile = "$outdir/X11_calls";
 @dolist = ("Xlib");
 
@@ -53,7 +53,7 @@ foreach $name (@dolist) {
 
     $outfile = "/ts_$lcname";
     open(OUTC, ">$outdir/$outfile.c") || die "open";
-    open(OUTH, ">include/$outfile.h") || die "open";
+    open(OUTH, ">$outdir/$outfile.h") || die "open";
 
     $x11_incl = "";
     $extensions_dir = "";
@@ -79,8 +79,8 @@ foreach $name (@dolist) {
 $pre_file
 $x11_incl#include <X11/$extensions_dir$inc_name.h>
 
-extern void (*wine_tsx11_lock)(void);
-extern void (*wine_tsx11_unlock)(void);
+extern void wine_tsx11_lock(void);
+extern void wine_tsx11_unlock(void);
 
 END
 
@@ -153,13 +153,7 @@ END
 $post_file
 #endif /* __WINE_TS_$ucname\_H */
 END
-    print OUTC <<END;
-
-$post_file
-END
-
-
-
+    print OUTC "\n", $post_file;
 }
 
 foreach $i (keys %want) {

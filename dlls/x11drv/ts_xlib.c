@@ -680,4 +680,3 @@ XIM  TSXOpenIM(Display* a0, struct _XrmHashBucketRec* a1, char* a2, char* a3)
 }
 
 #endif /* defined(HAVE_X11_XLIB_H) */
-

@@ -16,8 +16,8 @@
 
 #include <X11/Xlib.h>
 
-extern void (*wine_tsx11_lock)(void);
-extern void (*wine_tsx11_unlock)(void);
+extern void wine_tsx11_lock(void);
+extern void wine_tsx11_unlock(void);
 
 extern XFontStruct * TSXLoadQueryFont(Display*, const  char*);
 extern XImage * TSXGetImage(Display*, Drawable, int, int, unsigned int, unsigned int, unsigned long, int);
