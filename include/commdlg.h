@@ -174,7 +174,7 @@ typedef struct {
 	HWND		hwndOwner;
 	HWND		hInstance;
 	DWORD	        rgbResult;
-	LPDWORD         *lpCustColors;
+	LPDWORD         lpCustColors;
 	DWORD 		Flags;
 	DWORD		lCustData;
         LPCCHOOKPROC    lpfnHook;
