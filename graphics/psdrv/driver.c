@@ -154,16 +154,13 @@ LRESULT WINAPI PSDRV_AdvancedSetupDlgProc32(HWND32 hWnd, UINT32 wMsg,
  *
  *	PSDRV_AdvancedSetupDialog16	[WINEPS.93]
  *
- * Presumably dev1 and dev2 are in and out, don't know which is which yet.
- * Not sure about return value either. (I haven't got any docs on this at all)
- *
  */
-INT16 WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
-					 LPDEVMODE16 dev1, LPDEVMODE16 dev2 )
+WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
+					 LPDEVMODE16 devin, LPDEVMODE16 devout)
 {
 
-  TRACE(psdrv, "hwnd = %04x, hDriver = %04x dev1=%p dev2=%p\n", hwnd,
-	hDriver, dev1, dev2);
+  TRACE(psdrv, "hwnd = %04x, hDriver = %04x devin=%p devout=%p\n", hwnd,
+	hDriver, devin, devout);
   return IDCANCEL;
 
 
