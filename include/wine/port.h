@@ -248,6 +248,10 @@ ssize_t pread( int fd, void *buf, size_t count, off_t offset );
 ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
 #endif /* HAVE_PWRITE */
 
+#ifndef HAVE_READLINK
+int readlink( const char *path, char *buf, size_t size );
+#endif /* HAVE_READLINK */
+
 #ifndef HAVE_SIGSETJMP
 # include <setjmp.h>
 typedef jmp_buf sigjmp_buf;

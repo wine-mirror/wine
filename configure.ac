@@ -1040,6 +1040,7 @@ AC_CHECK_FUNCS(\
 	popen \
 	pread \
 	pwrite \
+	readlink \
 	rfork \
 	select \
 	sendmsg \

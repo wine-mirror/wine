@@ -18,6 +18,7 @@ C_SRCS = \
 	mkstemps.c \
 	pread.c \
 	pwrite.c \
+	readlink.c \
 	sigsetjmp.c \
 	spawn.c \
 	statfs.c \
