@@ -300,7 +300,7 @@ static void destroy_window( struct window *win )
     if (win->update_region) free_region( win->update_region );
     release_class( win->class );
     if (win->text) free( win->text );
-    memset( win, 0x55, sizeof(*win) );
+    memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
     free( win );
 }
 
