@@ -20,12 +20,6 @@
 
 #ifndef __WINE_WTYPES_H
 #define __WINE_WTYPES_H
-
-#include "basetsd.h"
-#include "guiddef.h"
-#include "rpc.h"
-#include "rpcndr.h"
-
 typedef void* HMETAFILEPICT;
 
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
@@ -295,5 +289,11 @@ typedef struct {
 #define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1
 #define ROTFLAGS_ALLOWANYCLIENT 0x2
 #endif /* !defined(_ROTFLAGS_DEFINED) */
+
+#include "rpc.h"
+#include "rpcndr.h"
+
+#include "basetsd.h"
+#include "guiddef.h"
 
 #endif /* __WINE_WTYPES_H */
