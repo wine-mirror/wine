@@ -1242,7 +1242,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       WCHAR lpwstrTemp[MAX_PATH];
       DWORD dwEaten, dwAttributes;
 
-      if ((lpszTemp = COMDLG32_PathFindNextComponentA(lpszTemp)))
+      lpszTemp = COMDLG32_PathFindNextComponentA(lpszTemp);
+      if (*lpszTemp)
         lstrcpynAtoW(lpwstrTemp, lpszTemp1, lpszTemp - lpszTemp1);
       else
       {

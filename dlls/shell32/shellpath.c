@@ -2177,15 +2177,17 @@ BOOL WINAPI PathCanonicalizeW(LPWSTR pszBuf, LPCWSTR pszPath)
 
 /*************************************************************************
  * PathFindNextComponentA
+ *
+ * Windows returns a pointer NULL (BO 000605)
  */
 LPSTR WINAPI PathFindNextComponentA(LPCSTR pszPath)
 {
 	while( *pszPath )
 	{
 	  if(*pszPath++=='\\')
-	    return (LPSTR)((*pszPath)? pszPath : NULL);
+	    return pszPath;
 	}
-	return NULL;
+	return pszPath;
 }
 
 /*************************************************************************
@@ -2196,9 +2198,9 @@ LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath)
 	while( *pszPath )
 	{
 	  if(*pszPath++=='\\')
-	    return (LPWSTR)((*pszPath)? pszPath : NULL);
+	    return pszPath;
 	}
-	return NULL;
+	return pszPath;
 }
 
 /*************************************************************************
