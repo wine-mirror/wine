@@ -1749,6 +1749,7 @@ static void test_SetMenu(HWND parent)
     HMENU hMenu, ret;
     BOOL is_win9x = GetWindowLongPtrW(parent, GWLP_WNDPROC) == 0;
     BOOL retok;
+    DWORD style;
 
     hMenu = CreateMenu();
     assert(hMenu);
@@ -1811,6 +1812,16 @@ static void test_SetMenu(HWND parent)
     test_nonclient_area(child);
     ret = GetMenu(child);
     ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
+
+    style = GetWindowLong(child, GWL_STYLE);
+    SetWindowLong(child, GWL_STYLE, style | WS_POPUP);
+    ok(SetMenu(child, hMenu), "SetMenu on a popup child window should not fail\n");
+    ok(SetMenu(child, 0), "SetMenu on a popup child window should not fail\n");
+    SetWindowLong(child, GWL_STYLE, style);
+
+    SetWindowLong(child, GWL_STYLE, style | WS_OVERLAPPED);
+    ok(!SetMenu(child, hMenu), "SetMenu on a overlapped child window should fail\n");
+    SetWindowLong(child, GWL_STYLE, style);
 
     DestroyWindow(child);
     DestroyMenu(hMenu);

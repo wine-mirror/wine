@@ -161,6 +161,8 @@ typedef struct
 		   MF_POPUP | MF_SYSMENU | MF_HELP)
 #define STATE_MASK (~TYPE_MASK)
 
+#define WIN_ALLOWED_MENU(style) ((style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+
   /* Dimension of the menu bitmaps */
 static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 
@@ -2988,8 +2990,8 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 
     /* find window that has a menu */
 
-    while (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
-        if (!(hwnd = GetParent( hwnd ))) return;
+    while (!WIN_ALLOWED_MENU(GetWindowLongW( hwnd, GWL_STYLE )))
+        if (!(hwnd = GetAncestor( hwnd, GA_PARENT ))) return;
 
     /* check if we have to track a system menu */
 
@@ -3758,7 +3760,8 @@ BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
         WARN("hMenu %p is not a menu handle\n", hMenu);
         return FALSE;
     }
-    if (GetWindowLongW( hWnd, GWL_STYLE ) & WS_CHILD) return FALSE;
+    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+        return FALSE;
 
     hWnd = WIN_GetFullHandle( hWnd );
     if (GetCapture() == hWnd) MENU_SetCapture(0);  /* release the capture */
@@ -3812,7 +3815,8 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
     LPPOPUPMENU lppop;
     HMENU hMenu = GetMenu(hWnd);
 
-    if (GetWindowLongW( hWnd, GWL_STYLE ) & WS_CHILD) return FALSE;
+    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+        return FALSE;
     if (!hMenu || !(lppop = MENU_GetMenu( hMenu ))) return FALSE;
 
     lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
