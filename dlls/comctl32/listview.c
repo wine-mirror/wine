@@ -365,8 +365,8 @@ static BOOL dispinfo_notifyT(HWND self, INT notificationCode, LPNMLVDISPINFOW pd
     if (notificationCode != LVN_GETDISPINFOW)
     { /* length of existing text */
       cchTempBufMax = convertToUnicode ?
-      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL) :
-      MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0);
+      MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0):
+      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
     }
     else
       cchTempBufMax = pdi->item.cchTextMax;
@@ -375,11 +375,11 @@ static BOOL dispinfo_notifyT(HWND self, INT notificationCode, LPNMLVDISPINFOW pd
         (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
     if (!pszTempBuf) return FALSE;
     if (convertToUnicode)
-      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) pszTempBuf,
-                          cchTempBufMax, NULL, NULL);
-    else
       MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, 
                           pszTempBuf, cchTempBufMax);
+    else
+      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) pszTempBuf,
+                          cchTempBufMax, NULL, NULL);
     TRACE("   text=%s\n", debugstr_t(pszTempBuf, convertToUnicode));
     savCchTextMax = pdi->item.cchTextMax;
     savPszText = pdi->item.pszText;
