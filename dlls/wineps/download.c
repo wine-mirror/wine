@@ -67,6 +67,24 @@ static DOWNLOAD *is_font_downloaded(PSDRV_PDEVICE *physDev, char *ps_name)
 }
 
 /****************************************************************************
+ *  is_room_for_font
+ */
+static BOOL is_room_for_font(PSDRV_PDEVICE *physDev)
+{
+    DOWNLOAD *pdl;
+    int count = 0;
+
+    /* FIXME: should consider vm usage of each font and available printer memory.
+       For now we allow upto two fonts to be downloaded at a time */
+    for(pdl = physDev->downloaded_fonts; pdl; pdl = pdl->next)
+        count++;
+
+    if(count > 1)
+        return FALSE;
+    return TRUE;
+}
+
+/****************************************************************************
  *  PSDRV_SelectDownloadFont
  *
  *  Set up physDev->font for a downloadable font
@@ -125,6 +143,9 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
 	strcpy(pdl->ps_name, ps_name);
 	pdl->next = NULL;
 
+        if(!is_room_for_font(physDev))
+            PSDRV_EmptyDownloadList(physDev, TRUE);
+
         if(physDev->pi->ppd->TTRasterizer == RO_Type42) {
 	    pdl->typeinfo.Type42 = T42_download_header(physDev, potm,
 						       ps_name);
@@ -137,6 +158,12 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
 	pdl->next = physDev->downloaded_fonts;
 	physDev->downloaded_fonts = pdl;
 	physDev->font.fontinfo.Download = pdl;
+
+        if(pdl->type == Type42) {
+            char g_name[MAX_G_NAME + 1];
+            get_glyph_name(physDev->hdc, 0, g_name);
+            T42_download_glyph(physDev, pdl, 0, g_name);
+        }
     }
 
 
@@ -200,9 +227,14 @@ BOOL PSDRV_WriteDownloadGlyphShow(PSDRV_PDEVICE *physDev, WORD *glyphs,
  *  Clear the list of downloaded fonts
  *
  */
-BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev)
+BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev, BOOL write_undef)
 {
     DOWNLOAD *pdl, *old;
+    char undef[] = "/%s findfont 40 scalefont setfont /%s undefinefont\n";
+    char buf[sizeof(undef) + 200];
+    char *default_font = physDev->pi->ppd->DefaultFont ?
+        physDev->pi->ppd->DefaultFont : "Courier";
+
     if(physDev->font.fontloc == Download) {
         physDev->font.set = FALSE;
 	physDev->font.fontinfo.Download = NULL;
@@ -211,6 +243,11 @@ BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev)
     pdl = physDev->downloaded_fonts;
     physDev->downloaded_fonts = NULL;
     while(pdl) {
+        if(write_undef) {
+            sprintf(buf, undef, default_font, pdl->ps_name);
+            PSDRV_WriteSpool(physDev, buf, strlen(buf));
+        }
+
         switch(pdl->type) {
 	case Type42:
 	    T42_free(pdl->typeinfo.Type42);

@@ -45,11 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
             ( (DWORD)_x2 <<  8 ) |     \
               (DWORD)_x1         )
 
-/* undef this to download the metrics in one go in the hmtx table.
-   Most printers seem unable to use incremental metrics unfortunately */
-#define USE_SEPARATE_METRICS
-#undef USE_SEPARATE_METRICS
-
 typedef struct {
   DWORD MS_tag;
   DWORD len, check;
@@ -64,12 +59,8 @@ const OTTable tables_templ[] = {
       { MS_MAKE_TAG('g','l','y','f'), 0, 0, NULL, FALSE },
       { MS_MAKE_TAG('h','e','a','d'), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('h','h','e','a'), 0, 0, NULL, TRUE },
-#ifdef USE_SEPARATE_METRICS
-      { MS_MAKE_TAG('h','m','t','x'), 0, 0, NULL, FALSE },
-#else
       { MS_MAKE_TAG('h','m','t','x'), 0, 0, NULL, TRUE },
-#endif
-      { MS_MAKE_TAG('l','o','c','a'), 0, 0, NULL, FALSE },
+      { MS_MAKE_TAG('l','o','c','a'), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('m','a','x','p'), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('p','r','e','p'), 0, 0, NULL, TRUE },
       { 0, 0, 0, NULL, 0 }
@@ -78,10 +69,12 @@ const OTTable tables_templ[] = {
 struct tagTYPE42 {
     OTTable tables[sizeof(tables_templ)/sizeof(tables_templ[0])];
     int glyf_tab, loca_tab, head_tab; /* indices of glyf, loca and head tables */
-    int hmtx_tab;
+    int hmtx_tab, maxp_tab;
+    int num_of_written_tables;
     DWORD glyph_sent_size;
     BOOL *glyph_sent;
     DWORD emsize;
+    DWORD *glyf_blocks;
 };
 
 #define GLYPH_SENT_INC 128
@@ -116,13 +109,33 @@ static BOOL LoadTable(HDC hdc, OTTable *table)
     return TRUE;
 }
 
+static BOOL get_glyf_pos(TYPE42 *t42, DWORD index, DWORD *start, DWORD *end)
+{
+    WORD loca_format = GET_BE_WORD(t42->tables[t42->head_tab].data + 50);
+    TRACE("loca_format = %d\n", loca_format);
+    switch(loca_format) {
+    case 0:
+        *start = GET_BE_WORD(((WORD*)t42->tables[t42->loca_tab].data) + index);
+        *start <<= 1;
+        *end = GET_BE_WORD(((WORD*)t42->tables[t42->loca_tab].data) + index + 1);
+        *end <<= 1;
+        break;
+    case 1:
+        *start = GET_BE_DWORD(((DWORD*)t42->tables[t42->loca_tab].data) + index);
+        *end = GET_BE_DWORD(((DWORD*)t42->tables[t42->loca_tab].data) + index + 1);
+        break;
+    default:
+        ERR("Unknown loca_format %d\n", loca_format);
+        return FALSE;
+    }
+    return TRUE;
+}
 
 TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 			    char *ps_name)
 {
-    DWORD i, j, tablepos;
+    DWORD i, j, tablepos, nb_blocks, glyf_off = 0, loca_off = 0, cur_off;
     WORD num_of_tables = sizeof(tables_templ) / sizeof(tables_templ[0]) - 1;
-    WORD num_of_write_tables = 0;
     char *buf;
     TYPE42 *t42;
     char start[] = /* name, fontbbox */
@@ -137,14 +150,13 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 	    " /CharStrings 256 dict begin\n"
 	    "  /.notdef 0 def\n"
             " currentdict end def\n"
-	    " /GlyphDirectory 256 dict def\n"
-#ifdef USE_SEPARATE_METRICS
-            " /Metrics 256 dict def\n"
-#endif
 	    " /sfnts [\n";
     char TT_offset_table[] = "<00010000%04x%04x%04x%04x\n";
     char TT_table_dir_entry[] = "%08lx%08lx%08lx%08lx\n";
+    char storage[] ="]\nhavetype42gdir{pop}{{string} forall}ifelse\n";
     char end[] = "] def\n"
+      "havetype42gdir{/GlyphDirectory 256 dict def\n"
+      " sfnts 0 get dup %d (x) putinterval %d (x) putinterval}if\n"
       "currentdict end dup /FontName get exch definefont pop\n";
 
 
@@ -152,11 +164,12 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
     memcpy(t42->tables, tables_templ, sizeof(tables_templ));
     t42->loca_tab = t42->glyf_tab = t42->head_tab = t42->hmtx_tab = -1;
     t42->emsize = potm->otmEMSquare;
+    t42->num_of_written_tables = 0;
 
     for(i = 0; i < num_of_tables; i++) {
         LoadTable(physDev->hdc, t42->tables + i);
 	if(t42->tables[i].len > 0xffff && t42->tables[i].write) break;
-	if(t42->tables[i].write) num_of_write_tables++;
+	if(t42->tables[i].write) t42->num_of_written_tables++;
 	if(t42->tables[i].MS_tag == MS_MAKE_TAG('l','o','c','a'))
 	    t42->loca_tab = i;
 	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('g','l','y','f'))
@@ -165,6 +178,8 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 	    t42->head_tab = i;
 	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('h','m','t','x'))
 	    t42->hmtx_tab = i;
+	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('m','a','x','p'))
+	    t42->maxp_tab = i;
     }
     if(i < num_of_tables) {
         TRACE("Table %ld has length %ld.  Will use Type 1 font instead.\n", i, t42->tables[i].len);
@@ -188,12 +203,14 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
-    sprintf(buf, TT_offset_table, num_of_write_tables,
-	    num_of_write_tables, num_of_write_tables, num_of_write_tables);
+    t42->num_of_written_tables++; /* explicitly add glyf */
+    sprintf(buf, TT_offset_table, t42->num_of_written_tables,
+	    t42->num_of_written_tables, t42->num_of_written_tables, t42->num_of_written_tables);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
-    tablepos = 12 + num_of_write_tables * 16;
+    tablepos = 12 + t42->num_of_written_tables * 16;
+    cur_off = 12;
     for(i = 0; i < num_of_tables; i++) {
         if(!t42->tables[i].write) continue;
         sprintf(buf, TT_table_dir_entry, FLIP_ORDER(t42->tables[i].MS_tag),
@@ -201,8 +218,15 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 		t42->tables[i].len);
 	PSDRV_WriteSpool(physDev, buf, strlen(buf));
 	tablepos += ((t42->tables[i].len + 3) & ~3);
+        if(t42->tables[i].MS_tag == MS_MAKE_TAG('l','o','c','a'))
+            loca_off = cur_off;
+        cur_off += 16;
     }
-    PSDRV_WriteSpool(physDev, ">\n", 2);
+    sprintf(buf, TT_table_dir_entry, FLIP_ORDER(t42->tables[t42->glyf_tab].MS_tag),
+            t42->tables[t42->glyf_tab].check, tablepos, t42->tables[t42->glyf_tab].len);
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(physDev, "00>\n", 4); /* add an extra byte for old PostScript rips */
+    glyf_off = cur_off;
 
     for(i = 0; i < num_of_tables; i++) {
         if(t42->tables[i].len == 0 || !t42->tables[i].write) continue;
@@ -212,10 +236,36 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 	    PSDRV_WriteSpool(physDev, buf, strlen(buf));
 	    if(j % 16 == 15) PSDRV_WriteSpool(physDev, "\n", 1);
 	}
-	PSDRV_WriteSpool(physDev, ">\n", 2);
+	PSDRV_WriteSpool(physDev, "00>\n", 4); /* add an extra byte for old PostScript rips */
+    }
+    
+    /* glyf_blocks is a 0 terminated list, holding the start offset of each block.  For simplicity
+       glyf_blocks[0] is 0 */
+    nb_blocks = 2;
+    t42->glyf_blocks = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (nb_blocks + 1) * sizeof(DWORD));
+    for(i = 0; i < GET_BE_WORD(t42->tables[t42->maxp_tab].data + 4); i++) {
+        DWORD start, end, size;
+        get_glyf_pos(t42, i, &start, &end);
+        size = end - t42->glyf_blocks[nb_blocks-2];
+        if(size > 0x2000 && t42->glyf_blocks[nb_blocks-1] % 4 == 0) {
+            nb_blocks++;
+            t42->glyf_blocks = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           t42->glyf_blocks, (nb_blocks + 1) * sizeof(DWORD));
+        }
+        t42->glyf_blocks[nb_blocks-1] = end;
     }
 
-    PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
+    PSDRV_WriteSpool(physDev, "[ ", 2);
+    for(i = 1; t42->glyf_blocks[i]; i++) {
+        sprintf(buf,"%ld ", t42->glyf_blocks[i] - t42->glyf_blocks[i-1] + 1);
+        /* again add one byte for old PostScript rips */
+        PSDRV_WriteSpool(physDev, buf, strlen(buf));
+        if(i % 8 == 0)
+            PSDRV_WriteSpool(physDev, "\n", 1);
+    }
+    PSDRV_WriteSpool(physDev, storage, sizeof(storage) - 1);
+    sprintf(buf, end, loca_off, glyf_off);
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
     HeapFree(GetProcessHeap(), 0, buf);
     return t42;
 }
@@ -229,35 +279,20 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     DWORD start, end, i;
     char *buf;
     TYPE42 *t42;
-    WORD loca_format;
     WORD awidth;
     short lsb;
 
-#ifdef USE_SEPARATE_METRICS
-    char glyph_with_Metrics_def[] = 
-      "/%s findfont exch 1 index /GlyphDirectory get\n"
-      "begin\n"
-      " %d exch def\n"
-      "end\n"
-      "dup /CharStrings get\n"
-      "begin\n"
-      " /%s %d def\n"
-      "end\n"
-      "/Metrics get\n"
-      "begin\n"
-      " /%s [%f %f] def\n"
-      "end\n";
-#else
     char glyph_def[] = 
-      "/%s findfont exch 1 index /GlyphDirectory get\n"
-      "begin\n"
-      " %d exch def\n"
-      "end\n"
+      "/%s findfont exch 1 index\n"
+      "havetype42gdir\n"
+      "{/GlyphDirectory get begin %d exch def end}\n"
+      "{/sfnts get 4 index get 3 index 2 index putinterval pop}\n"
+      "ifelse\n"
       "/CharStrings get\n"
       "begin\n"
       " /%s %d def\n"
-      "end\n";
-#endif
+      "end\n"
+      "pop pop\n";
 
     TRACE("%ld %s\n", index, glyph_name);
     assert(pdl->type == Type42);
@@ -276,23 +311,7 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(glyph_def) +
 		    strlen(pdl->ps_name) + 100);
 
-    loca_format = GET_BE_WORD(t42->tables[t42->head_tab].data + 50);
-    TRACE("loca_format = %d\n", loca_format);
-    switch(loca_format) {
-    case 0:
-        start = GET_BE_WORD(((WORD*)t42->tables[t42->loca_tab].data) + index);
-	start <<= 1;
-	end = GET_BE_WORD(((WORD*)t42->tables[t42->loca_tab].data) + index + 1);
-	end <<= 1;
-	break;
-    case 1:
-        start = GET_BE_DWORD(((DWORD*)t42->tables[t42->loca_tab].data) + index);
-	end = GET_BE_DWORD(((DWORD*)t42->tables[t42->loca_tab].data) + index + 1);
-	break;
-    default:
-        ERR("Unknown loca_format %d\n", loca_format);
-	return FALSE;
-    }
+    if(!get_glyf_pos(t42, index, &start, &end)) return FALSE;
     TRACE("start = %lx end = %lx\n", start, end);
 
     awidth = GET_BE_WORD(t42->tables[t42->hmtx_tab].data + index * 4);
@@ -325,8 +344,13 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 	} while(sg_flags & MORE_COMPONENTS);
     }
 
-    sprintf(buf, "%%%%glyph %04lx\n", index);
+    for(i = 1; t42->glyf_blocks[i]; i++)
+        if(start < t42->glyf_blocks[i]) break;
+    /* we don't have a string for the gdir and glyf tables, but we do have a 
+       string for the TT header.  So the offset we need is tables - 2 */
+    sprintf(buf, "%ld %ld\n", t42->num_of_written_tables - 2 + i, start - t42->glyf_blocks[i-1]);
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
+
     PSDRV_WriteSpool(physDev, "<", 1);
     for(i = start; i < end; i++) {
         sprintf(buf, "%02x", *(t42->tables[t42->glyf_tab].data + i));
@@ -335,12 +359,7 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 	    PSDRV_WriteSpool(physDev, "\n", 1);
     }
     PSDRV_WriteSpool(physDev, ">\n", 2);
-#if USE_SEPARATE_METRICS
-    sprintf(buf, glyph_with_Metrics_def, pdl->ps_name, index, glyph_name, index,
-	    glyph_name, (float)lsb / t42->emsize, (float)awidth / t42->emsize);
-#else
     sprintf(buf, glyph_def, pdl->ps_name, index, glyph_name, index);
-#endif
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     t42->glyph_sent[index] = TRUE;
@@ -354,6 +373,7 @@ void T42_free(TYPE42 *t42)
     for(table = t42->tables; table->MS_tag; table++)
         if(table->data) HeapFree(GetProcessHeap(), 0, table->data);
     if(t42->glyph_sent) HeapFree(GetProcessHeap(), 0, t42->glyph_sent);
+    if(t42->glyf_blocks) HeapFree(GetProcessHeap(), 0, t42->glyf_blocks);
     HeapFree(GetProcessHeap(), 0, t42);
     return;
 }

@@ -513,7 +513,7 @@ extern BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteDownloadGlyphShow(PSDRV_PDEVICE *physDev, WORD *glpyhs,
 					 UINT count);
-extern BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev, BOOL write_undef);
 
 #define MAX_G_NAME 31 /* max length of PS glyph name */
 extern void get_glyph_name(HDC hdc, WORD index, char *name);

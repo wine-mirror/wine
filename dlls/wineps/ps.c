@@ -56,7 +56,8 @@ static char psprolog[] =
 "  {t moveto 0 b t sub rlineto}\n"
 "  for\n"
 "} bind def\n"
-"/B {pop pop pop pop} def\n";
+"/B {pop pop pop pop} def\n"
+"/havetype42gdir {version cvi 2015 ge} bind def\n";
 
 static char psbeginsetup[] =
 "%%BeginSetup\n";
