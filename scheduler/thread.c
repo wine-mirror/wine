@@ -91,7 +91,9 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->tls_ptr   = teb->tls_array;
     teb->exit_code = STILL_ACTIVE;
     teb->socket    = -1;
-    teb->stack_top = (void *)~0UL;
+    teb->request_fd = -1;
+    teb->reply_fd   = -1;
+    teb->stack_top  = (void *)~0UL;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
@@ -113,6 +115,8 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
     /* Free the associated memory */
 
     if (teb->socket != -1) close( teb->socket );
+    close( NtCurrentTeb()->request_fd );
+    close( NtCurrentTeb()->reply_fd );
     if (teb->stack_sel) FreeSelector16( teb->stack_sel );
     FreeSelector16( teb->teb_sel );
     if (teb->buffer) munmap( (void *)teb->buffer,
@@ -280,7 +284,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {
-    int socket, handle = -1;
+    int socket = -1, handle = -1;
     TEB *teb;
     void *tid = 0;
 
@@ -290,10 +294,11 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
 
         req->suspend = ((flags & CREATE_SUSPENDED) != 0);
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (!server_call_fd( REQ_NEW_THREAD, -1, &socket ))
+        if (!server_call( REQ_NEW_THREAD ))
         {
             handle = req->handle;
             tid = req->tid;
+            socket = wine_server_recv_fd( handle, 0 );
         }
     }
     SERVER_END_REQ;

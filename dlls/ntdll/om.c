@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "debugtools.h"
 
 #include "ntddk.h"
@@ -221,6 +222,7 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
         struct close_handle_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = Handle;
         ret = server_call_noerr( REQ_CLOSE_HANDLE );
+        if (!ret && req->fd != -1) close( req->fd );
     }
     SERVER_END_REQ;
     return ret;

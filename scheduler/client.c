@@ -157,7 +157,7 @@ static void send_request( enum request req, struct request_header *header )
     header->req = req;
     NtCurrentTeb()->buffer_info->cur_req = (char *)header - (char *)NtCurrentTeb()->buffer;
     /* write a single byte; the value is ignored anyway */
-    if (write( NtCurrentTeb()->socket, header, 1 ) == -1)
+    if (write( NtCurrentTeb()->request_fd, header, 1 ) == -1)
     {
         if (errno == EPIPE) SYSDEPS_ExitThread(0);
         server_perror( "sendmsg" );
@@ -220,67 +220,11 @@ static void wait_reply(void)
 
     for (;;)
     {
-        if ((ret = read( NtCurrentTeb()->socket, dummy, 1 )) > 0) return;
+        if ((ret = read( NtCurrentTeb()->reply_fd, dummy, 1 )) > 0) return;
         if (!ret) break;
         if (errno == EINTR) continue;
         if (errno == EPIPE) break;
         server_perror("read");
-    }
-    /* the server closed the connection; time to die... */
-    SYSDEPS_ExitThread(0);
-}
-
-
-/***********************************************************************
- *           wait_reply_fd
- *
- * Wait for a reply from the server, when a file descriptor is passed.
- */
-static void wait_reply_fd( int *fd )
-{
-    struct iovec vec;
-    int ret;
-    char dummy[1];
-
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-    struct msghdr msghdr;
-
-    *fd = -1;
-    msghdr.msg_accrights    = (void *)fd;
-    msghdr.msg_accrightslen = sizeof(*fd);
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
-    struct msghdr msghdr;
-    struct cmsg_fd cmsg;
-
-    cmsg.len   = sizeof(cmsg);
-    cmsg.level = SOL_SOCKET;
-    cmsg.type  = SCM_RIGHTS;
-    cmsg.fd    = -1;
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
-    msghdr.msg_flags      = 0;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
-
-    msghdr.msg_name    = NULL;
-    msghdr.msg_namelen = 0;
-    msghdr.msg_iov     = &vec;
-    msghdr.msg_iovlen  = 1;
-    vec.iov_base = (void *)dummy;
-    vec.iov_len  = 1;
-
-    for (;;)
-    {
-        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) > 0)
-        {
-#ifndef HAVE_MSGHDR_ACCRIGHTS
-            *fd = cmsg.fd;
-#endif
-            return;
-        }
-        if (!ret) break;
-        if (errno == EINTR) continue;
-        if (errno == EPIPE) break;
-        server_perror("recvmsg");
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
@@ -305,23 +249,117 @@ unsigned int wine_server_call( enum request req )
  *           server_call_fd
  *
  * Perform a server call, passing a file descriptor.
- * If *fd is != -1, it will be passed to the server.
- * If the server passes an fd, it will be stored into *fd.
  */
-unsigned int server_call_fd( enum request req, int fd_out, int *fd_in )
+unsigned int server_call_fd( enum request req, int fd_out )
 {
     unsigned int res;
     void *req_ptr = get_req_buffer();
 
-    if (fd_out == -1) send_request( req, req_ptr );
-    else send_request_fd( req, req_ptr, fd_out );
-
-    if (fd_in) wait_reply_fd( fd_in );
-    else wait_reply();
+    send_request_fd( req, req_ptr, fd_out );
+    wait_reply();
 
     if ((res = ((struct request_header *)req_ptr)->error))
         SetLastError( RtlNtStatusToDosError(res) );
     return res;  /* error code */
+}
+
+
+/***********************************************************************
+ *           set_handle_fd
+ *
+ * Store the fd for a given handle in the server
+ */
+static int set_handle_fd( int handle, int fd )
+{
+    SERVER_START_REQ
+    {
+        struct set_handle_info_request *req = wine_server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->flags  = 0;
+        req->mask   = 0;
+        req->fd     = fd;
+        if (!server_call( REQ_SET_HANDLE_INFO ))
+        {
+            if (req->cur_fd != fd)
+            {
+                /* someone was here before us */
+                close( fd );
+                fd = req->cur_fd;
+            }
+            else fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
+        }
+        else
+        {
+            close( fd );
+            fd = -1;
+        }
+    }
+    SERVER_END_REQ;
+    return fd;
+}
+
+
+/***********************************************************************
+ *           wine_server_recv_fd
+ *
+ * Receive a file descriptor passed from the server.
+ * The file descriptor must be closed after use.
+ */
+int wine_server_recv_fd( int handle, int cache )
+{
+    struct iovec vec;
+    int ret, fd, server_handle;
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    struct msghdr msghdr;
+
+    fd = -1;
+    msghdr.msg_accrights    = (void *)&fd;
+    msghdr.msg_accrightslen = sizeof(fd);
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    struct msghdr msghdr;
+    struct cmsg_fd cmsg;
+
+    cmsg.len   = sizeof(cmsg);
+    cmsg.level = SOL_SOCKET;
+    cmsg.type  = SCM_RIGHTS;
+    cmsg.fd    = -1;
+    msghdr.msg_control    = &cmsg;
+    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_flags      = 0;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = &vec;
+    msghdr.msg_iovlen  = 1;
+    vec.iov_base = (void *)&server_handle;
+    vec.iov_len  = sizeof(server_handle);
+
+    for (;;)
+    {
+        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) > 0)
+        {
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+            fd = cmsg.fd;
+#endif
+            if (handle != server_handle)
+                server_protocol_error( "recv_fd: got handle %d, expected %d\n",
+                                       server_handle, handle );
+            if (cache)
+            {
+                fd = set_handle_fd( handle, fd );
+                if (fd != -1) fd = dup(fd);
+            }
+            return fd;
+        }
+        if (!ret) break;
+        if (errno == EINTR) continue;
+        if (errno == EPIPE) break;
+        server_perror("recvmsg");
+    }
+    /* the server closed the connection; time to die... */
+    SYSDEPS_ExitThread(0);
 }
 
 
@@ -564,14 +602,24 @@ int CLIENT_InitThread(void)
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
 
-    wait_reply_fd( &fd );
-    if (fd == -1) server_protocol_error( "no fd passed on first request\n" );
+    teb->request_fd = wine_server_recv_fd( -1, 0 );
+    if (teb->request_fd == -1) server_protocol_error( "no request fd passed on first request\n" );
+    fcntl( teb->request_fd, F_SETFD, 1 ); /* set close on exec flag */
+
+    teb->reply_fd = wine_server_recv_fd( -1, 0 );
+    if (teb->reply_fd == -1) server_protocol_error( "no reply fd passed on first request\n" );
+    fcntl( teb->reply_fd, F_SETFD, 1 ); /* set close on exec flag */
+
+    fd = wine_server_recv_fd( -1, 0 );
+    if (fd == -1) server_protocol_error( "no fd received for thread buffer\n" );
 
     if ((size = lseek( fd, 0, SEEK_END )) == -1) server_perror( "lseek" );
     teb->buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
     close( fd );
     if (teb->buffer == (void*)-1) server_perror( "mmap" );
     teb->buffer_info = (struct server_buffer_info *)((char *)teb->buffer + size) - 1;
+
+    wait_reply();
 
     req = (struct get_thread_buffer_request *)teb->buffer;
     teb->pid = req->pid;
@@ -596,6 +644,7 @@ int CLIENT_InitThread(void)
     SERVER_END_REQ;
     return ret;
 }
+
 
 /***********************************************************************
  *           CLIENT_BootDone

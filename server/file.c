@@ -325,11 +325,6 @@ struct file *get_file_obj( struct process *process, int handle, unsigned int acc
     return (struct file *)get_handle_obj( process, handle, access, &file_ops );
 }
 
-int file_get_mmap_fd( struct file *file )
-{
-    return dup( file->obj.fd );
-}
-
 static int set_file_pointer( int handle, int *low, int *high, int whence )
 {
     struct file *file;
@@ -479,7 +474,8 @@ DECL_HANDLER(get_handle_fd)
     req->fd = -1;
     if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
     {
-        set_reply_fd( current, obj->ops->get_fd( obj ) );
+        if ((req->fd = get_handle_fd( current->process, req->handle, req->access )) == -1)
+            send_client_fd( current, obj->ops->get_fd( obj ), req->handle );
         release_object( obj );
     }
 }

@@ -419,7 +419,7 @@ DECL_HANDLER(alloc_console)
         if ((out = alloc_handle( current->process, current->process->console_out,
                                  req->access, req->inherit )) != -1)
             goto done;  /* everything is fine */
-        close_handle( current->process, in );
+        close_handle( current->process, in, NULL );
         in = -1;
     }
     free_console( current->process );

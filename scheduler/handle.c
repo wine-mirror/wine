@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "winbase.h"
 #include "server.h"
 #include "winerror.h"
@@ -40,10 +41,13 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
     BOOL ret;
     SERVER_START_REQ
     {
-        struct get_handle_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        struct set_handle_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
-        ret = !server_call( REQ_GET_HANDLE_INFO );
-        if (ret && flags) *flags = req->flags;
+        req->flags  = 0;
+        req->mask   = 0;
+        req->fd     = -1;
+        ret = !server_call( REQ_SET_HANDLE_INFO );
+        if (ret && flags) *flags = req->old_flags;
     }
     SERVER_END_REQ;
     return ret;
@@ -62,6 +66,7 @@ BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
         req->handle = handle;
         req->flags  = flags;
         req->mask   = mask;
+        req->fd     = -1;
         ret = !server_call( REQ_SET_HANDLE_INFO );
     }
     SERVER_END_REQ;
@@ -89,7 +94,11 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
         req->options     = options;
 
         ret = !server_call( REQ_DUP_HANDLE );
-        if (ret && dest) *dest = req->handle;
+        if (ret)
+        {
+            if (dest) *dest = req->handle;
+            if (req->fd != -1) close( req->fd );
+        }
     }
     SERVER_END_REQ;
     return ret;

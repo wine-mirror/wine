@@ -118,7 +118,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
     if ((handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE )) == -1)
     {
-        close_handle( debugger, event->data.info.create_process.process );
+        close_handle( debugger, event->data.info.create_process.process, NULL );
         return 0;
     }
     event->data.info.create_process.thread = handle;
@@ -128,8 +128,8 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
         /* the doc says write access too, but this doesn't seem a good idea */
         ((handle = alloc_handle( debugger, process->exe.file, GENERIC_READ, FALSE )) == -1))
     {
-        close_handle( debugger, event->data.info.create_process.process );
-        close_handle( debugger, event->data.info.create_process.thread );
+        close_handle( debugger, event->data.info.create_process.process, NULL );
+        close_handle( debugger, event->data.info.create_process.thread, NULL );
         return 0;
     }
     event->data.info.create_process.file       = handle;
@@ -316,17 +316,17 @@ static void debug_event_destroy( struct object *obj )
         switch(event->data.code)
         {
         case CREATE_THREAD_DEBUG_EVENT:
-            close_handle( debugger, event->data.info.create_thread.handle );
+            close_handle( debugger, event->data.info.create_thread.handle, NULL );
             break;
         case CREATE_PROCESS_DEBUG_EVENT:
             if (event->data.info.create_process.file != -1)
-                close_handle( debugger, event->data.info.create_process.file );
-            close_handle( debugger, event->data.info.create_process.thread );
-            close_handle( debugger, event->data.info.create_process.process );
+                close_handle( debugger, event->data.info.create_process.file, NULL );
+            close_handle( debugger, event->data.info.create_process.thread, NULL );
+            close_handle( debugger, event->data.info.create_process.process, NULL );
             break;
         case LOAD_DLL_DEBUG_EVENT:
             if (event->data.info.load_dll.handle != -1)
-                close_handle( debugger, event->data.info.load_dll.handle );
+                close_handle( debugger, event->data.info.load_dll.handle, NULL );
             break;
         }
     }

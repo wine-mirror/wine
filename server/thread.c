@@ -89,26 +89,33 @@ static struct thread *booting_thread;
 static int alloc_client_buffer( struct thread *thread )
 {
     struct get_thread_buffer_request *req;
-    int fd;
+    int fd, fd_pipe[2];
 
-    if ((fd = create_anonymous_file()) == -1) return -1;
+    if (pipe( fd_pipe ) == -1) return -1;
+    if ((fd = create_anonymous_file()) == -1) goto error;
     if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
     if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
     thread->buffer_info = (struct server_buffer_info *)((char *)thread->buffer + MAX_REQUEST_LENGTH) - 1;
+    if (!(thread->request_fd = create_request_socket( thread ))) goto error;
+    thread->reply_fd = fd_pipe[1];
     /* build the first request into the buffer and send it */
     req = thread->buffer;
     req->pid  = get_process_id( thread->process );
     req->tid  = get_thread_id( thread );
     req->boot = (thread == booting_thread);
     req->version = SERVER_PROTOCOL_VERSION;
-    set_reply_fd( thread, fd );
+
+    send_client_fd( thread, fd_pipe[0], -1 );
+    send_client_fd( thread, fd, -1 );
     send_reply( thread );
     return 1;
 
  error:
     file_set_error();
     if (fd != -1) close( fd );
+    close( fd_pipe[0] );
+    close( fd_pipe[1] );
     return 0;
 }
 
@@ -135,6 +142,8 @@ struct thread *create_thread( int fd, struct process *process )
     thread->apc_tail    = NULL;
     thread->error       = 0;
     thread->pass_fd     = -1;
+    thread->request_fd  = NULL;
+    thread->reply_fd    = -1;
     thread->state       = RUNNING;
     thread->attached    = 0;
     thread->exit_code   = 0;
@@ -197,7 +206,9 @@ static void destroy_thread( struct object *obj )
     if (thread->info) release_object( thread->info );
     if (thread->queue) release_object( thread->queue );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
+    if (thread->reply_fd != -1) close( thread->reply_fd );
     if (thread->pass_fd != -1) close( thread->pass_fd );
+    if (thread->request_fd) release_object( thread->request_fd );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -618,7 +629,11 @@ void kill_thread( struct thread *thread, int violent_death )
     wake_up( &thread->obj, 0 );
     detach_thread( thread, violent_death ? SIGTERM : 0 );
     remove_select_user( &thread->obj );
+    release_object( thread->request_fd );
+    close( thread->reply_fd );
     munmap( thread->buffer, MAX_REQUEST_LENGTH );
+    thread->request_fd = NULL;
+    thread->reply_fd = -1;
     thread->buffer = (void *)-1;
     release_object( thread );
 }
@@ -675,7 +690,7 @@ DECL_HANDLER(new_thread)
             if ((req->handle = alloc_handle( current->process, thread,
                                              THREAD_ALL_ACCESS, req->inherit )) != -1)
             {
-                set_reply_fd( current, sock[1] );
+                send_client_fd( current, sock[1], req->handle );
                 /* thread object will be released when the thread gets killed */
                 add_process_thread( current->process, thread );
                 return;

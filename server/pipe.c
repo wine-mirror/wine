@@ -165,7 +165,7 @@ DECL_HANDLER(create_pipe)
                                    STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
                                    req->inherit );
             if (hwrite == -1)
-                close_handle( current->process, hread );
+                close_handle( current->process, hread, NULL );
         }
         release_object( obj[0] );
         release_object( obj[1] );

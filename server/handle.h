@@ -23,9 +23,10 @@ struct object_ops;
 /* that the thing pointed to starts with a struct object... */
 extern int alloc_handle( struct process *process, void *obj,
                          unsigned int access, int inherit );
-extern int close_handle( struct process *process, int handle );
+extern int close_handle( struct process *process, int handle, int *fd );
 extern struct object *get_handle_obj( struct process *process, int handle,
                                       unsigned int access, const struct object_ops *ops );
+extern int get_handle_fd( struct process *process, int handle, unsigned int access );
 extern int duplicate_handle( struct process *src, int src_handle, struct process *dst,
                              unsigned int access, int inherit, int options );
 extern int open_object( const WCHAR *name, size_t len, const struct object_ops *ops,

@@ -30,6 +30,7 @@ struct mapping
     int            shared_size;     /* shared mapping total size */
 };
 
+static int mapping_get_fd( struct object *obj );
 static void mapping_dump( struct object *obj, int verbose );
 static void mapping_destroy( struct object *obj );
 
@@ -43,7 +44,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* satisfied */
     NULL,                        /* get_poll_events */
     NULL,                        /* poll_event */
-    no_get_fd,                   /* get_fd */
+    mapping_get_fd,              /* get_fd */
     no_flush,                    /* flush */
     no_get_file_info,            /* get_file_info */
     mapping_destroy              /* destroy */
@@ -86,6 +87,13 @@ static void init_page_size(void)
 #define ROUND_SIZE(addr,size) \
    (((int)(size) + ((int)(addr) & page_mask) + page_mask) & ~page_mask)
 
+/* get the fd to use for mmaping a file */
+inline static int get_mmap_fd( struct file *file )
+{
+    struct object *obj;
+    if (!(obj = (struct object *)file)) return -1;
+    return obj->ops->get_fd( obj );
+}
 
 /* allocate and fill the temp file for a shared PE image mapping */
 static int build_shared_mapping( struct mapping *mapping, int fd,
@@ -115,7 +123,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 
     if (!(mapping->shared_file = create_temp_file( GENERIC_READ|GENERIC_WRITE ))) goto error;
     if (!grow_file( mapping->shared_file, 0, total_size )) goto error;
-    if ((shared_fd = file_get_mmap_fd( mapping->shared_file )) == -1) goto error;
+    if ((shared_fd = get_mmap_fd( mapping->shared_file )) == -1) goto error;
 
     if (!(buffer = malloc( max_size ))) goto error;
 
@@ -159,7 +167,7 @@ static int get_image_params( struct mapping *mapping )
 
     /* load the headers */
 
-    if ((fd = file_get_mmap_fd( mapping->file )) == -1) return 0;
+    if ((fd = get_mmap_fd( mapping->file )) == -1) return 0;
     filepos = lseek( fd, 0, SEEK_SET );
     if (read( fd, &dos, sizeof(dos) ) != sizeof(dos)) goto error;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
@@ -270,6 +278,13 @@ static void mapping_dump( struct object *obj, int verbose )
     fputc( '\n', stderr );
 }
 
+static int mapping_get_fd( struct object *obj )
+{
+    struct mapping *mapping = (struct mapping *)obj;
+    assert( obj->ops == &mapping_ops );
+    return get_mmap_fd( mapping->file );
+}
+
 static void mapping_destroy( struct object *obj )
 {
     struct mapping *mapping = (struct mapping *)obj;
@@ -323,11 +338,10 @@ DECL_HANDLER(get_mapping_info)
         req->base        = mapping->base;
         req->shared_file = -1;
         req->shared_size = mapping->shared_size;
+        req->anonymous   = !mapping->file;
         if (mapping->shared_file)
             req->shared_file = alloc_handle( current->process, mapping->shared_file,
                                              GENERIC_READ|GENERIC_WRITE, 0 );
-        if (mapping->file) set_reply_fd( current, file_get_mmap_fd( mapping->file ) );
         release_object( mapping );
     }
 }
-

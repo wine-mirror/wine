@@ -1478,8 +1478,10 @@ LPVOID WINAPI MapViewOfFileEx(
     UINT ptr = (UINT)-1, size = 0;
     int flags = MAP_PRIVATE;
     int unix_handle = -1;
-    int prot;
-    struct get_mapping_info_request *req = get_req_buffer();
+    int prot, anonymous, res;
+    void *base;
+    DWORD size_low, size_high, header_size, shared_size;
+    HANDLE shared_file;
 
     /* Check parameters */
 
@@ -1490,25 +1492,44 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
     }
 
-    req->handle = handle;
-    if (server_call_fd( REQ_GET_MAPPING_INFO, -1, &unix_handle )) goto error;
-    prot = req->protect;
+    SERVER_START_REQ
+    {
+        struct get_mapping_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        res = server_call( REQ_GET_MAPPING_INFO );
+        prot        = req->protect;
+        base        = req->base;
+        size_low    = req->size_low;
+        size_high   = req->size_high;
+        header_size = req->header_size;
+        shared_file = req->shared_file;
+        shared_size = req->shared_size;
+        anonymous   = req->anonymous;
+    }
+    SERVER_END_REQ;
+    if (res) goto error;
+
+    if (!anonymous)
+    {
+        if ((unix_handle = FILE_GetUnixHandle( handle, 0 )) == -1) goto error;
+    }
 
     if (prot & VPROT_IMAGE)
-        return map_image( handle, unix_handle, req->base, req->size_low, req->header_size,
-                          req->shared_file, req->shared_size );
+        return map_image( handle, unix_handle, base, size_low, header_size,
+                          shared_file, shared_size );
 
-    if (req->size_high || offset_high)
+
+    if (size_high || offset_high)
         ERR("Offsets larger than 4Gb not supported\n");
 
-    if ((offset_low >= req->size_low) ||
-        (count > req->size_low - offset_low))
+    if ((offset_low >= size_low) ||
+        (count > size_low - offset_low))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         goto error;
     }
     if (count) size = ROUND_SIZE( offset_low, count );
-    else size = req->size_low - offset_low;
+    else size = size_low - offset_low;
 
     switch(access)
     {

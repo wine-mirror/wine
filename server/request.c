@@ -71,6 +71,32 @@ static const struct object_ops master_socket_ops =
 };
 
 
+struct request_socket
+{
+    struct object       obj;         /* object header */
+    struct thread      *thread;      /* owning thread */
+};
+
+static void request_socket_dump( struct object *obj, int verbose );
+static void request_socket_poll_event( struct object *obj, int event );
+
+static const struct object_ops request_socket_ops =
+{
+    sizeof(struct request_socket), /* size */
+    request_socket_dump,           /* dump */
+    no_add_queue,                  /* add_queue */
+    NULL,                          /* remove_queue */
+    NULL,                          /* signaled */
+    NULL,                          /* satisfied */
+    NULL,                          /* get_poll_events */
+    request_socket_poll_event,     /* poll_event */
+    no_get_fd,                     /* get_fd */
+    no_flush,                      /* flush */
+    no_get_file_info,              /* get_file_info */
+    no_destroy                     /* destroy */
+};
+
+
 struct thread *current = NULL;  /* thread handling the current request */
 unsigned int global_error = 0;  /* global error code for when no thread is current */
 
@@ -149,13 +175,6 @@ static inline void call_req_handler( struct thread *thread )
     fatal_protocol_error( current, "bad request %d\n", req );
 }
 
-/* set the fd to pass to the thread */
-void set_reply_fd( struct thread *thread, int pass_fd )
-{
-    assert( thread->pass_fd == -1 );
-    thread->pass_fd = pass_fd;
-}
-
 /* send a reply to a thread */
 void send_reply( struct thread *thread )
 {
@@ -213,35 +232,49 @@ int write_request( struct thread *thread )
 
     header->error = thread->error;
 
-    if (thread->pass_fd == -1)
-    {
-        /* write a single byte; the value is ignored anyway */
-        ret = write( thread->obj.fd, header, 1 );
-    }
-    else  /* we have an fd to send */
-    {
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-        msghdr.msg_accrightslen = sizeof(int);
-        msghdr.msg_accrights = (void *)&thread->pass_fd;
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
-        msghdr.msg_control    = &cmsg;
-        msghdr.msg_controllen = sizeof(cmsg);
-        cmsg.fd = thread->pass_fd;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+    assert (thread->pass_fd == -1);
 
-        myiovec.iov_base = (void *)header;
-        myiovec.iov_len  = 1;
-
-        ret = sendmsg( thread->obj.fd, &msghdr, 0 );
-        close( thread->pass_fd );
-        thread->pass_fd = -1;
-    }
+    ret = write( thread->reply_fd, header, 1 );
     if (ret > 0)
     {
         set_select_events( &thread->obj, POLLIN );
         return 1;
     }
     if (errno == EWOULDBLOCK) return 0;  /* not a fatal error */
+    if (errno == EPIPE)
+    {
+        kill_thread( thread, 0 );  /* normal death */
+    }
+    else
+    {
+        perror("sendmsg");
+        thread->exit_code = 1;
+        kill_thread( thread, 1 );
+    }
+    return -1;
+}
+
+/* send an fd to a client */
+int send_client_fd( struct thread *thread, int fd, int handle )
+{
+    int ret;
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    msghdr.msg_accrightslen = sizeof(fd);
+    msghdr.msg_accrights = (void *)&fd;
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    msghdr.msg_control    = &cmsg;
+    msghdr.msg_controllen = sizeof(cmsg);
+    cmsg.fd = fd;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+
+    myiovec.iov_base = (void *)&handle;
+    myiovec.iov_len  = sizeof(handle);
+
+    ret = sendmsg( thread->obj.fd, &msghdr, 0 );
+    close( fd );
+
+    if (ret > 0) return 0;
     if (errno == EPIPE)
     {
         kill_thread( thread, 0 );  /* normal death */
@@ -295,6 +328,61 @@ static void socket_cleanup(void)
 static void master_socket_destroy( struct object *obj )
 {
     socket_cleanup();
+}
+
+static void request_socket_dump( struct object *obj, int verbose )
+{
+    struct request_socket *sock = (struct request_socket *)obj;
+    assert( obj->ops == &request_socket_ops );
+    fprintf( stderr, "Request socket fd=%d thread=%p\n", sock->obj.fd, sock->thread );
+}
+
+/* handle a request socket event */
+static void request_socket_poll_event( struct object *obj, int event )
+{
+    struct request_socket *sock = (struct request_socket *)obj;
+    assert( obj->ops == &request_socket_ops );
+
+    if (event & (POLLERR | POLLHUP)) kill_thread( sock->thread, 0 );
+    else if (event & POLLIN)
+    {
+        struct thread *thread = sock->thread;
+        int ret;
+        char dummy[1];
+
+        ret = read( sock->obj.fd, &dummy, 1 );
+        if (ret > 0)
+        {
+            call_req_handler( thread );
+            return;
+        }
+        if (!ret)  /* closed pipe */
+        {
+            kill_thread( thread, 0 );
+            return;
+        }
+        perror("read");
+        thread->exit_code = 1;
+        kill_thread( thread, 1 );
+    }
+}
+
+/* create a request socket and send the fd to the client thread */
+struct object *create_request_socket( struct thread *thread )
+{
+    struct request_socket *sock;
+    int fd[2];
+
+    if (pipe( fd )) return NULL;
+    if (!(sock = alloc_object( &request_socket_ops, fd[0] )))
+    {
+        close( fd[1] );
+        return NULL;
+    }
+    sock->thread = thread;
+    send_client_fd( thread, fd[1], -1 );
+    set_select_events( &sock->obj, POLLIN );
+    return &sock->obj;
 }
 
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */

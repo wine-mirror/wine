@@ -471,21 +471,23 @@ static void dump_close_handle_request( const struct close_handle_request *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_get_handle_info_request( const struct get_handle_info_request *req )
+static void dump_close_handle_reply( const struct close_handle_request *req )
 {
-    fprintf( stderr, " handle=%d", req->handle );
-}
-
-static void dump_get_handle_info_reply( const struct get_handle_info_request *req )
-{
-    fprintf( stderr, " flags=%d", req->flags );
+    fprintf( stderr, " fd=%d", req->fd );
 }
 
 static void dump_set_handle_info_request( const struct set_handle_info_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " mask=%d", req->mask );
+    fprintf( stderr, " mask=%d,", req->mask );
+    fprintf( stderr, " fd=%d", req->fd );
+}
+
+static void dump_set_handle_info_reply( const struct set_handle_info_request *req )
+{
+    fprintf( stderr, " old_flags=%d,", req->old_flags );
+    fprintf( stderr, " cur_fd=%d", req->cur_fd );
 }
 
 static void dump_dup_handle_request( const struct dup_handle_request *req )
@@ -500,7 +502,8 @@ static void dump_dup_handle_request( const struct dup_handle_request *req )
 
 static void dump_dup_handle_reply( const struct dup_handle_request *req )
 {
-    fprintf( stderr, " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " fd=%d", req->fd );
 }
 
 static void dump_open_process_request( const struct open_process_request *req )
@@ -957,7 +960,8 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_request *
     fprintf( stderr, " header_size=%d,", req->header_size );
     fprintf( stderr, " base=%p,", req->base );
     fprintf( stderr, " shared_file=%d,", req->shared_file );
-    fprintf( stderr, " shared_size=%d", req->shared_size );
+    fprintf( stderr, " shared_size=%d,", req->shared_size );
+    fprintf( stderr, " anonymous=%d", req->anonymous );
 }
 
 static void dump_create_device_request( const struct create_device_request *req )
@@ -1471,7 +1475,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_queue_apc_request,
     (dump_func)dump_get_apc_request,
     (dump_func)dump_close_handle_request,
-    (dump_func)dump_get_handle_info_request,
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
     (dump_func)dump_open_process_request,
@@ -1582,9 +1585,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_apc_reply,
-    (dump_func)0,
-    (dump_func)dump_get_handle_info_reply,
-    (dump_func)0,
+    (dump_func)dump_close_handle_reply,
+    (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
     (dump_func)dump_select_reply,
@@ -1695,7 +1697,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "queue_apc",
     "get_apc",
     "close_handle",
-    "get_handle_info",
     "set_handle_info",
     "dup_handle",
     "open_process",

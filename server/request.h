@@ -33,11 +33,12 @@ extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
 extern void read_request( struct thread *thread );
 extern int write_request( struct thread *thread );
-extern void set_reply_fd( struct thread *thread, int pass_fd );
+extern int send_client_fd( struct thread *thread, int fd, int handle );
 extern void send_reply( struct thread *thread );
 extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
+extern struct object *create_request_socket( struct thread *thread );
 
 extern void trace_request( enum request req );
 extern void trace_reply( struct thread *thread );
@@ -90,7 +91,6 @@ DECL_HANDLER(unload_dll);
 DECL_HANDLER(queue_apc);
 DECL_HANDLER(get_apc);
 DECL_HANDLER(close_handle);
-DECL_HANDLER(get_handle_info);
 DECL_HANDLER(set_handle_info);
 DECL_HANDLER(dup_handle);
 DECL_HANDLER(open_process);
@@ -205,7 +205,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_queue_apc,
     (req_handler)req_get_apc,
     (req_handler)req_close_handle,
-    (req_handler)req_get_handle_info,
     (req_handler)req_set_handle_info,
     (req_handler)req_dup_handle,
     (req_handler)req_open_process,

@@ -48,7 +48,9 @@ struct thread
     struct thread_apc  *apc_head;    /* queue of async procedure calls */
     struct thread_apc  *apc_tail;    /* queue of async procedure calls */
     unsigned int        error;       /* current error code */
-    int                 pass_fd;   /* fd to pass to the client */
+    struct object      *request_fd;  /* fd for receiving client requests */
+    int                 pass_fd;     /* fd to pass to the client */
+    int                 reply_fd;    /* fd to use to wake a client waiting on a reply */
     enum run_state      state;     /* running state */
     int                 attached;  /* is thread attached with ptrace? */
     int                 exit_code; /* thread exit code */

@@ -359,15 +359,7 @@ struct close_handle_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* handle to close */
-};
-
-
-/* Get information about a handle */
-struct get_handle_info_request
-{
-    REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* handle we are interested in */
-    OUT int          flags;        /* handle flags */
+    OUT int          fd;           /* associated fd to close */
 };
 
 
@@ -378,6 +370,9 @@ struct set_handle_info_request
     IN  int          handle;       /* handle we are interested in */
     IN  int          flags;        /* new handle flags */
     IN  int          mask;         /* mask for flags to set */
+    IN  int          fd;           /* file descriptor or -1 */
+    OUT int          old_flags;    /* old flag value */
+    OUT int          cur_fd;       /* current file descriptor */
 };
 
 
@@ -392,6 +387,7 @@ struct dup_handle_request
     IN  int          inherit;      /* inherit flag */
     IN  int          options;      /* duplicate options (see below) */
     OUT int          handle;       /* duplicated handle in dst process */
+    OUT int          fd;           /* associated fd to close */
 };
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
 #define DUP_HANDLE_SAME_ACCESS   DUPLICATE_SAME_ACCESS
@@ -860,6 +856,7 @@ struct get_mapping_info_request
     OUT void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
     OUT int          shared_file;   /* shared mapping file handle */
     OUT int          shared_size;   /* shared mapping size */
+    OUT int          anonymous;     /* anonymous mapping? */
 };
 
 
@@ -1373,7 +1370,6 @@ enum request
     REQ_QUEUE_APC,
     REQ_GET_APC,
     REQ_CLOSE_HANDLE,
-    REQ_GET_HANDLE_INFO,
     REQ_SET_HANDLE_INFO,
     REQ_DUP_HANDLE,
     REQ_OPEN_PROCESS,
@@ -1489,7 +1485,6 @@ union generic_request
     struct queue_apc_request queue_apc;
     struct get_apc_request get_apc;
     struct close_handle_request close_handle;
-    struct get_handle_info_request get_handle_info;
     struct set_handle_info_request set_handle_info;
     struct dup_handle_request dup_handle;
     struct open_process_request open_process;
@@ -1579,7 +1574,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 30
+#define SERVER_PROTOCOL_VERSION 31
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1605,9 +1600,10 @@ struct server_buffer_info
 /* client communication functions */
 
 extern unsigned int wine_server_call( enum request req );
-extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
+extern unsigned int server_call_fd( enum request req, int fd_out );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
 extern void *wine_server_alloc_req( size_t fixed_size, size_t var_size );
+extern int wine_server_recv_fd( int handle, int cache );
 extern const char *get_config_dir(void);
 
 /* compatibility macros */

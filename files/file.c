@@ -185,7 +185,7 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
 {
     struct alloc_file_handle_request *req = get_req_buffer();
     req->access  = access;
-    server_call_fd( REQ_ALLOC_FILE_HANDLE, fd, NULL );
+    server_call_fd( REQ_ALLOC_FILE_HANDLE, fd );
     return req->handle;
 }
 
@@ -197,12 +197,21 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
  */
 int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 {
-    int unix_handle = -1;
-    struct get_handle_fd_request *req = get_req_buffer();
-    req->handle = handle;
-    req->access = access;
-    server_call_fd( REQ_GET_HANDLE_FD, -1, &unix_handle );
-    return unix_handle;
+    int ret, fd = -1;
+    SERVER_START_REQ
+    {
+        struct get_handle_fd_request *req = wine_server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->access = access;
+        if (!(ret = server_call( REQ_GET_HANDLE_FD ))) fd = req->fd;
+    }
+    SERVER_END_REQ;
+    if (!ret)
+    {
+        if (fd == -1) return wine_server_recv_fd( handle, 1 );
+        fd = dup(fd);
+    }
+    return fd;
 }
 
 

@@ -19,8 +19,9 @@
 
 struct handle_entry
 {
-    struct object *ptr;
-    unsigned int   access;
+    struct object *ptr;       /* object */
+    unsigned int   access;    /* access rights */
+    int            fd;        /* file descriptor (in client process) */
 };
 
 struct handle_table
@@ -173,6 +174,7 @@ static int alloc_entry( struct handle_table *table, void *obj, unsigned int acce
     table->free = i + 1;
     entry->ptr    = grab_object( obj );
     entry->access = access;
+    entry->fd     = -1;
     return index_to_handle(i);
 }
 
@@ -269,6 +271,7 @@ struct object *copy_handle_table( struct process *process, struct process *paren
         for (i = 0; i <= table->last; i++, ptr++)
         {
             if (!ptr->ptr) continue;
+            ptr->fd = -1;
             if (ptr->access & RESERVED_INHERIT) grab_object( ptr->ptr );
             else ptr->ptr = NULL; /* don't inherit this entry */
         }
@@ -280,7 +283,7 @@ struct object *copy_handle_table( struct process *process, struct process *paren
 
 /* close a handle and decrement the refcount of the associated object */
 /* return 1 if OK, 0 on error */
-int close_handle( struct process *process, int handle )
+int close_handle( struct process *process, int handle, int *fd )
 {
     struct handle_table *table;
     struct handle_entry *entry;
@@ -294,6 +297,9 @@ int close_handle( struct process *process, int handle )
     }
     obj = entry->ptr;
     entry->ptr = NULL;
+    if (fd) *fd = entry->fd;
+    else if (entry->fd != -1) return 1;  /* silently ignore close attempt if we cannot close the fd */
+    entry->fd = -1;
     table = HANDLE_IS_GLOBAL(handle) ? global_table : (struct handle_table *)process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
@@ -351,11 +357,27 @@ struct object *get_handle_obj( struct process *process, int handle,
     return grab_object( obj );
 }
 
-/* get/set the handle reserved flags */
-/* return the new flags (or -1 on error) */
-static int set_handle_info( struct process *process, int handle, int mask, int flags )
+/* retrieve the cached fd for a given handle */
+int get_handle_fd( struct process *process, int handle, unsigned int access )
 {
     struct handle_entry *entry;
+
+    if (HANDLE_IS_GLOBAL(handle)) return -1;  /* no fd cache for global handles */
+    if (!(entry = get_handle( process, handle ))) return -1;
+    if ((entry->access & access) != access)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return -1;
+    }
+    return entry->fd;
+}
+
+/* get/set the handle reserved flags */
+/* return the old flags (or -1 on error) */
+static int set_handle_info( struct process *process, int handle, int mask, int flags, int *fd )
+{
+    struct handle_entry *entry;
+    unsigned int old_access;
 
     if (get_magic_handle( handle ))
     {
@@ -364,10 +386,14 @@ static int set_handle_info( struct process *process, int handle, int mask, int f
         return 0;
     }
     if (!(entry = get_handle( process, handle ))) return -1;
+    old_access = entry->access;
     mask  = (mask << RESERVED_SHIFT) & RESERVED_ALL;
     flags = (flags << RESERVED_SHIFT) & mask;
     entry->access = (entry->access & ~mask) | flags;
-    return (entry->access & RESERVED_ALL) >> RESERVED_SHIFT;
+    /* if no current fd set it, otherwise return current fd */
+    if (entry->fd == -1) entry->fd = *fd;
+    *fd = entry->fd;
+    return (old_access & RESERVED_ALL) >> RESERVED_SHIFT;
 }
 
 /* duplicate a handle */
@@ -420,19 +446,17 @@ int open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
 /* close a handle */
 DECL_HANDLER(close_handle)
 {
-    close_handle( current->process, req->handle );
-}
-
-/* get information about a handle */
-DECL_HANDLER(get_handle_info)
-{
-    req->flags = set_handle_info( current->process, req->handle, 0, 0 );
+    close_handle( current->process, req->handle, &req->fd );
 }
 
 /* set a handle information */
 DECL_HANDLER(set_handle_info)
 {
-    set_handle_info( current->process, req->handle, req->mask, req->flags );
+    int fd = req->fd;
+
+    if (HANDLE_IS_GLOBAL(req->handle)) fd = -1;  /* no fd cache for global handles */
+    req->old_flags = set_handle_info( current->process, req->handle, req->mask, req->flags, &fd );
+    req->cur_fd = fd;
 }
 
 /* duplicate a handle */
@@ -441,6 +465,7 @@ DECL_HANDLER(dup_handle)
     struct process *src, *dst;
 
     req->handle = -1;
+    req->fd = -1;
     if ((src = get_process_from_handle( req->src_process, PROCESS_DUP_HANDLE )))
     {
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
@@ -456,7 +481,10 @@ DECL_HANDLER(dup_handle)
         }
         /* close the handle no matter what happened */
         if (req->options & DUP_HANDLE_CLOSE_SOURCE)
-            close_handle( src, req->src_handle );
+        {
+            if (src == current->process) close_handle( src, req->src_handle, &req->fd );
+            else close_handle( src, req->src_handle, NULL );
+        }
         release_object( src );
     }
 }

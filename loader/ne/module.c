@@ -1019,7 +1019,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     LPSTR cmdline;
     WORD cmdShow;
     HANDLE hThread = -1;
-    int socket;
+    int socket = -1;
 
     /* Load module */
 
@@ -1066,7 +1066,11 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
         struct new_thread_request *req = server_alloc_req( sizeof(*req), 0 );
         req->suspend = 0;
         req->inherit = 0;
-        if (!server_call_fd( REQ_NEW_THREAD, -1, &socket )) hThread = req->handle;
+        if (!server_call( REQ_NEW_THREAD ))
+        {
+            hThread = req->handle;
+            socket = wine_server_recv_fd( hThread, 0 );
+        }
     }
     SERVER_END_REQ;
     if (hThread == -1) return 0;
