@@ -74,11 +74,6 @@ static CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0,
 # error You must define GET_IP for this CPU
 #endif
 
-void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD, LPVOID,
-                           PEXCEPTION_RECORD, DWORD, PCONTEXT );
-void WINAPI EXC_NtRaiseException( PEXCEPTION_RECORD, PCONTEXT,
-                                  BOOL, PCONTEXT );
 
 /*******************************************************************
  *         EXC_RaiseHandler
@@ -309,15 +304,14 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, LPVOID unusedEip,
-                           PEXCEPTION_RECORD pRecord, DWORD returnEax,
-                           CONTEXT *context )
+void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, PVOID unusedEip,
+                           PEXCEPTION_RECORD pRecord, PVOID returnEax, CONTEXT *context )
 {
     EXCEPTION_RECORD record, newrec;
     PEXCEPTION_REGISTRATION_RECORD frame, dispatch;
 
 #ifdef __i386__
-    context->Eax = returnEax;
+    context->Eax = (DWORD)returnEax;
 #endif
 
     /* build an exception record, if we do not have one */
@@ -383,8 +377,8 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, LPVOID unus
 #ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( RtlUnwind, EXC_RtlUnwind, 16, 16 );
 #else
-void WINAPI RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, LPVOID unusedEip,
-                       PEXCEPTION_RECORD pRecord, DWORD returnEax )
+void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
+                       PEXCEPTION_RECORD pRecord, PVOID returnEax )
 {
     CONTEXT context;
     memset( &context, 0, sizeof(context) );
