@@ -33,7 +33,13 @@ extern "C" {
 #define cchTextLimitDefault 0x7fff
 
 #define RICHEDIT_CLASS20A	"RichEdit20A"
-static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','0','W', '\0' };
+#if defined(__GNUC__)
+# define RICHEDIT_CLASS20W (const WCHAR []){ 'R','i','c','h','E','d','i','t','2','0','W',0 }
+#elif defined(_MSC_VER)
+# define RICHEDIT_CLASS20W      L"RichEdit20W"
+#else
+static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','0','W',0 };
+#endif
 #define RICHEDIT_CLASS10A	"RICHEDIT"
 
 #if (_RICHEDIT_VER >= 0x0200 )

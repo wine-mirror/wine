@@ -134,65 +134,147 @@ typedef struct _PUBLICKEYSTRUC {
 
 /* Provider names */
 #define MS_DEF_PROV_A                            "Microsoft Base Cryptographic Provider v1.0"
+#if defined(__GNUC__)
+# define MS_DEF_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'B','a','s','e',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ', \
+	'P','r','o','v','i','d','e','r',' ','v','1','.','0',0 }
+#elif defined(_MSC_VER)
+# define MS_DEF_PROV_W      L"Microsoft Base Cryptographic Provider v1.0"
+#else
 static const WCHAR MS_DEF_PROV_W[] =             { 'M','i','c','r','o','s','o','f','t',' ',
 	'B','a','s','e',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ',
 	'P','r','o','v','i','d','e','r',' ','v','1','.','0',0 };
+#endif
 #define MS_DEF_PROV                              WINELIB_NAME_AW(MS_DEF_PROV_)
 
-#define MS_ENHANCED_PROV_A                       "Microsoft Enhanced Cryptographic Provider "
+#define MS_ENHANCED_PROV_A                       "Microsoft Enhanced Cryptographic Provider v1.0"
+#if defined(__GNUC__)
+# define MS_ENHANCED_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'E','n','h','a','n','c','e','d',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ', \
+	'P','r','o','v','i','d','e','r',' ','v','1','.','0',0 }
+#elif defined(_MSC_VER)
+# define MS_ENHANCED_PROV_W     L"Microsoft Enhanced Cryptographic Provider v1.0"
+#else
 static const WCHAR MS_ENHANCED_PROV_W[] =        { 'M','i','c','r','o','s','o','f','t',' ',
 	'E','n','h','a','n','c','e','d',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ',
-	'P','r','o','v','i','d','e','r',' ', 0 };
+	'P','r','o','v','i','d','e','r',' ','v','1','.','0',0 };
+#endif
 #define MS_ENHANCED_PROV                         WINELIB_NAME_AW(MS_ENHANCED_PROV_)
 
 #define MS_STRONG_PROV_A                         "Microsoft Strong Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_STRONG_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'S','t','r','o','n','g',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ', \
+	'P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_STRONG_PROV_W     L"Microsoft Strong Cryptographic Provider"
+#else
 static const WCHAR MS_STRONG_PROV_W[] =          { 'M','i','c','r','o','s','o','f','t',' ',
 	'S','t','r','o','n','g',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ',
 	'P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_STRONG_PROV                           WINELIB_NAME_AW(MS_STRONG_PROV_)
 
 #define MS_DEF_RSA_SIG_PROV_A                    "Microsoft RSA Signature Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_DEF_RSA_SIG_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'R','S','A',' ','S','i','g','n','a','t','u','r','e',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_DEF_RSA_SIG_PROV_W      L"Microsoft RSA Signature Cryptographic Provider"
+#else
 static const WCHAR MS_DEF_RSA_SIG_PROV_W[] =     { 'M','i','c','r','o','s','o','f','t',' ',
 	'R','S','A',' ','S','i','g','n','a','t','u','r','e',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_DEF_RSA_SIG_PROV                      WINELIB_NAME_AW(MS_DEF_RSA_SIG_PROV_)
 
 #define MS_DEF_RSA_SCHANNEL_PROV_A               "Microsoft RSA SChannel Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_DEF_RSA_SCHANNEL_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'R','S','A',' ','S','C','h','a','n','n','e','l',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_DEF_RSA_SCHANNEL_PROV_W     L"Microsoft RSA SChannel Cryptographic Provider"
+#else
 static const WCHAR MS_DEF_RSA_SCHANNEL_PROV_W[] = { 'M','i','c','r','o','s','o','f','t',' ',
 	'R','S','A',' ','S','C','h','a','n','n','e','l',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_DEF_RSA_SCHANNEL_PROV                 WINELIB_NAME_AW(MS_DEF_RSA_SCHANNEL_PROV_)
 
 #define MS_DEF_DSS_PROV_A                        "Microsoft Base DSS Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_DEF_DSS_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'B','a','s','e',' ','D','S','S',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_DEF_DSS_PROV_W     L"Microsoft Base DSS Cryptographic Provider"
+#else
 static const WCHAR MS_DEF_DSS_PROV_W[] =         { 'M','i','c','r','o','s','o','f','t',' ',
 	'B','a','s','e',' ','D','S','S',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_DEF_DSS_PROV                          WINELIB_NAME_AW(MS_DEF_DSS_PROV_)
 
 #define MS_DEF_DSS_DH_PROV_A                     "Microsoft Base DSS and Diffie-Hellman Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_DEF_DSS_DH_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'B','a','s','e',' ','D','S','S',' ','a','n','d',' ', \
+	'D','i','f','f','i','e','-','H','e','l','l','m','a','n',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_DEF_DSS_DH_PROV_W     L"Microsoft Base DSS and Diffie-Hellman Cryptographic Provider"
+#else
 static const WCHAR MS_DEF_DSS_DH_PROV_W[] =      { 'M','i','c','r','o','s','o','f','t',' ',
 	'B','a','s','e',' ','D','S','S',' ','a','n','d',' ',
 	'D','i','f','f','i','e','-','H','e','l','l','m','a','n',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_DEF_DSS_DH_PROV                       WINELIB_NAME_AW(MS_DEF_DSS_DH_PROV_)
 
 #define MS_ENH_DSS_DH_PROV_A                     "Microsoft Enhanced DSS and Diffie-Hellman Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_ENH_DSS_DH_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'E','n','h','a','n','c','e','d',' ','D','S','S',' ','a','n','d',' ', \
+	'D','i','f','f','i','e','-','H','e','l','l','m','a','n',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_ENH_DSS_DH_PROV_W     L"Microsoft Enhanced DSS and Diffie-Hellman Cryptographic Provider"
+#else
 static const WCHAR MS_ENH_DSS_DH_PROV_W[] =      { 'M','i','c','r','o','s','o','f','t',' ',
 	'E','n','h','a','n','c','e','d',' ','D','S','S',' ','a','n','d',' ',
 	'D','i','f','f','i','e','-','H','e','l','l','m','a','n',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_ENH_DSS_DH_PROV                       WINELIB_NAME_AW(MS_ENH_DSS_DH_PROV_)
 
 #define MS_DEF_DH_SCHANNEL_PROV_A                "Microsoft DH SChannel Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_DEF_DH_SCHANNEL_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'D','H',' ','S','C','h','a','n','n','e','l',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_DEF_DH_SCHANNEL_PROV_W     L"Microsoft DH SChannel Cryptographic Provider"
+#else
 static const WCHAR MS_DEF_DH_SCHANNEL_PROV_W[] = { 'M','i','c','r','o','s','o','f','t',' ',
 	'D','H',' ','S','C','h','a','n','n','e','l',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_DEF_DH_SCHANNEL_PROV                  WINELIB_NAME_AW(MS_DEF_DH_SCHANNEL_PROV_)
 
 #define MS_SCARD_PROV_A                          "Microsoft Base Smart Card Cryptographic Provider"
+#if defined(__GNUC__)
+# define MS_SCARD_PROV_W (const WCHAR []){ 'M','i','c','r','o','s','o','f','t',' ', \
+	'B','a','s','e',' ','S','m','a','r','t',' ','C','a','r','d',' ', \
+	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
+#elif defined(_MSC_VER)
+# define MS_SCARD_PROV_W     L"Microsoft Base Smart Card Cryptographic Provider"
+#else
 static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','f','t',' ',
 	'B','a','s','e',' ','S','m','a','r','t',' ','C','a','r','d',' ',
 	'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 };
+#endif
 #define MS_SCARD_PROV                            WINELIB_NAME_AW(MS_SCARD_PROV_)
 
 /* Key Specs*/

@@ -34,8 +34,15 @@ extern "C" {
 
 
 #define WC_PROPSHEETA      "SysPropertySheet"
+#if defined(__GNUC__)
+# define WC_PROPSHEETW (const WCHAR []){ 'S','y','s', \
+  'P','r','o','p','e','r','t','y','S','h','e','e','t',0 }
+#elif defined(_MSC_VER)
+# define WC_PROPSHEETW     L"SysPropertySheet"
+#else
 static const WCHAR WC_PROPSHEETW[] = { 'S','y','s',
   'P','r','o','p','e','r','t','y','S','h','e','e','t',0 };
+#endif
 #define WC_PROPSHEET         WINELIB_NAME_AW(WC_PROPSHEET)
 
 struct _PROPSHEETPAGEA;  /** need to forward declare those structs **/

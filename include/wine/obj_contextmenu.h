@@ -58,9 +58,19 @@ typedef struct IContextMenu IContextMenu, *LPCONTEXTMENU;
 #define CMDSTR_NEWFOLDERA   "NewFolder"
 #define CMDSTR_VIEWLISTA    "ViewList"
 #define CMDSTR_VIEWDETAILSA "ViewDetails"
+#if defined(__GNUC__)
+# define CMDSTR_NEWFOLDERW (const WCHAR []){ 'N','e','w','F','o','l','d','e','r',0 }
+# define CMDSTR_VIEWLISTW (const WCHAR []){ 'V','i','e','w','L','i','s','t',0 }
+# define CMDSTR_VIEWDETAILSW (const WCHAR []){ 'V','i','e','w','D','e','t','a','i','l','s',0 }
+#elif defined(_MSC_VER)
+# define CMDSTR_NEWFOLDERW   L"NewFolder"
+# define CMDSTR_VIEWLISTW    L"ViewList"
+# define CMDSTR_VIEWDETAILSW L"ViewDetails"
+#else
 static const WCHAR CMDSTR_NEWFOLDERW[] = {'N','e','w','F','o','l','d','e','r',0};
 static const WCHAR CMDSTR_VIEWLISTW [] = {'V','i','e','w','L','i','s','t',0};
 static const WCHAR CMDSTR_VIEWDETAILSW[] = {'V','i','e','w','D','e','t','a','i','l','s',0};
+#endif
 
 #define CMDSTR_NEWFOLDER    CMDSTR_NEWFOLDERA
 #define CMDSTR_VIEWLIST     CMDSTR_VIEWLISTA
