@@ -964,3 +964,13 @@ HRESULT WINAPI SHELL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 
    return S_OK;		/* indicate success */
 }
+
+/***********************************************************************
+ *              DllCanUnloadNow (SHELL32.@)
+ */
+HRESULT WINAPI SHELL32_DllCanUnloadNow(void)
+{
+    FIXME("(void): stub\n");
+
+    return S_FALSE;
+}

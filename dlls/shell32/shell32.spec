@@ -404,7 +404,7 @@ import	ole32.dll
 # version 4.71 (IE4.0)
 # _WIN32_IE >= 0x0400
 #
-@ stub DllCanUnloadNow
+@ stdcall DllCanUnloadNow() SHELL32_DllCanUnloadNow
 @ stdcall DllGetVersion(ptr)SHELL32_DllGetVersion
 @ stub SHGetFreeDiskSpace
 @ stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
