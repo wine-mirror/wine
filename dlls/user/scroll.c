@@ -26,11 +26,6 @@
  * Unless otherwise noted, we believe this code to be complete, as per
  * the specification mentioned above.
  * If you discover missing features, or bugs, please note them below.
- *
- * TODO:
- *   - GetScrollBarInfo
- *   - SBM_GETSCROLLBARINFO
- *   - SCROLLBARINFO
  */
 
 #include <stdarg.h>
@@ -1209,6 +1204,101 @@ static BOOL SCROLL_GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 
 
 /*************************************************************************
+ *           SCROLL_GetScrollBarInfo
+ *
+ * Internal helper for the API function
+ *
+ * PARAMS
+ *    hwnd     [I]  Handle of window with scrollbar(s)
+ *    idObject [I]  One of OBJID_CLIENT, OBJID_HSCROLL, or OBJID_VSCROLL
+ *    info     [IO] cbSize specifies the size of the structure
+ *
+ * RETURNS
+ *    FALSE if failed
+ */
+static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO info)
+{
+    LPSCROLLBAR_INFO infoPtr;
+    INT nBar;
+    INT nDummy;
+    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
+    BOOL pressed;
+
+    switch (idObject)
+    {
+        case OBJID_CLIENT: nBar = SB_CTL; break;
+        case OBJID_HSCROLL: nBar = SB_HORZ; break;
+        case OBJID_VSCROLL: nBar = SB_VERT; break;
+        default: return FALSE;
+    }
+
+    /* handle invalid data structure */
+    if (!info->cbSize != sizeof(*info))
+        return FALSE;
+
+    if (!SCROLL_GetScrollBarRect(hwnd, nBar, &info->rcScrollBar, &nDummy,
+                                 &info->dxyLineButton, &info->xyThumbTop))
+        return FALSE;
+
+    info->xyThumbBottom = info->xyThumbTop + info->dxyLineButton;
+
+    infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, TRUE);
+    
+    /* Scroll bar state */
+    info->rgstate[0] = 0;
+    if ((nBar == SB_HORZ && !(style & WS_HSCROLL))
+        || (nBar == SB_VERT && !(style & WS_VSCROLL)))
+        info->rgstate[0] |= STATE_SYSTEM_INVISIBLE;
+    if (infoPtr->minVal >= infoPtr->maxVal - max(infoPtr->page - 1, 0))
+    {
+        if (!(info->rgstate[0] & STATE_SYSTEM_INVISIBLE))
+            info->rgstate[0] |= STATE_SYSTEM_UNAVAILABLE;
+        else
+            info->rgstate[0] |= STATE_SYSTEM_OFFSCREEN;
+    }
+    if (nBar == SB_CTL && !IsWindowEnabled(hwnd))
+        info->rgstate[0] |= STATE_SYSTEM_UNAVAILABLE;
+    
+    pressed = ((nBar == SB_VERT) == SCROLL_trackVertical && GetCapture() == hwnd);
+    
+    /* Top/left arrow button state. MSDN says top/right, but I don't believe it */
+    info->rgstate[1] = 0;
+    if (pressed && SCROLL_trackHitTest == SCROLL_TOP_ARROW)
+        info->rgstate[1] |= STATE_SYSTEM_PRESSED;
+    if (infoPtr->flags & ESB_DISABLE_LTUP)
+        info->rgstate[1] |= STATE_SYSTEM_UNAVAILABLE;
+
+    /* Page up/left region state. MSDN says up/right, but I don't believe it */
+    info->rgstate[2] = 0;
+    if (infoPtr->curVal == infoPtr->minVal)
+        info->rgstate[2] |= STATE_SYSTEM_INVISIBLE;
+    if (pressed && SCROLL_trackHitTest == SCROLL_TOP_RECT)
+        info->rgstate[2] |= STATE_SYSTEM_PRESSED;
+
+    /* Thumb state */
+    info->rgstate[3] = 0;
+    if (pressed && SCROLL_trackHitTest == SCROLL_THUMB)
+        info->rgstate[3] |= STATE_SYSTEM_PRESSED;
+
+    /* Page down/right region state. MSDN says down/left, but I don't believe it */
+    info->rgstate[4] = 0;
+    if (infoPtr->curVal >= infoPtr->maxVal - 1)
+        info->rgstate[4] |= STATE_SYSTEM_INVISIBLE;
+    if (pressed && SCROLL_trackHitTest == SCROLL_BOTTOM_RECT)
+        info->rgstate[4] |= STATE_SYSTEM_PRESSED;
+    
+    /* Bottom/right arrow button state. MSDN says bottom/left, but I don't believe it */
+    info->rgstate[5] = 0;
+    if (pressed && SCROLL_trackHitTest == SCROLL_BOTTOM_ARROW)
+        info->rgstate[5] |= STATE_SYSTEM_PRESSED;
+    if (infoPtr->flags & ESB_DISABLE_RTDN)
+        info->rgstate[5] |= STATE_SYSTEM_UNAVAILABLE;
+        
+    return TRUE;
+}
+
+
+/*************************************************************************
  *           SCROLL_GetScrollPos
  *
  *  Internal helper for the API function
@@ -1439,10 +1529,12 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case SBM_GETSCROLLINFO:
         return SCROLL_GetScrollInfo(hwnd, SB_CTL, (SCROLLINFO *)lParam);
 
+    case SBM_GETSCROLLBARINFO:
+        return SCROLL_GetScrollBarInfo(hwnd, OBJID_CLIENT, (SCROLLBARINFO *)lParam);
+
     case 0x00e5:
     case 0x00e7:
     case 0x00e8:
-    case 0x00eb:
     case 0x00ec:
     case 0x00ed:
     case 0x00ee:
@@ -1661,6 +1753,32 @@ BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
         SCROLL_GetScrollInfo(hwnd, nBar, info);
 
     return TRUE;
+}
+
+
+/*************************************************************************
+ *           GetScrollBarInfo   (USER32.@)
+ *
+ * GetScrollBarInfo can be used to retrieve information about a scrollbar
+ * control.
+ *
+ * PARAMS
+ *  hwnd     [I]  Handle of window with scrollbar(s)
+ *  idObject [I]  One of OBJID_CLIENT, OBJID_HSCROLL, or OBJID_VSCROLL
+ *  info     [IO] cbSize specifies the size of SCROLLBARINFO
+ *
+ * RETURNS
+ *  TRUE if success
+ */
+BOOL WINAPI GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO info)
+{
+    TRACE("hwnd=%p idObject=%ld info=%p\n", hwnd, idObject, info);
+
+    /* Refer OBJID_CLIENT requests to the window */
+    if (idObject == OBJID_CLIENT)
+        return SendMessageW(hwnd, SBM_GETSCROLLBARINFO, (WPARAM)0, (LPARAM)info);
+    else
+        return SCROLL_GetScrollBarInfo(hwnd, idObject, info);
 }
 
 
