@@ -341,10 +341,6 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 			     ,,
 			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
-                if test -n "$OPENGL_LIBS"
-                then
-                  OPENGL_LIBS="$OPENGL_LIBS -lpthread"
-                fi
 	     fi
 	 fi
     fi

@@ -8198,10 +8198,6 @@ if test $ac_cv_lib_GLU_gluLookAt = yes; then
 
 fi
 
-                if test -n "$OPENGL_LIBS"
-                then
-                  OPENGL_LIBS="$OPENGL_LIBS -lpthread"
-                fi
 	     fi
 	 fi
     fi
