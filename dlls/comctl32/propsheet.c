@@ -1475,8 +1475,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   }
 
   if (psInfo->proppage[index].useCallback)
-    (*(ppshpage->pfnCallback))(hwndParent,
-                               PSPCB_CREATE,
+    (*(ppshpage->pfnCallback))(0, PSPCB_CREATE,
                                (LPPROPSHEETPAGEW)ppshpage);
 
   if(ppshpage->dwFlags & PSP_INTERNAL_UNICODE)
