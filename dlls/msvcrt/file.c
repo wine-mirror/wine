@@ -2135,7 +2135,7 @@ int MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
   if(file->_flag & MSVCRT__IORW) {
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
   }
-  return _lseek(file->_file,offset,whence);
+  return (_lseek(file->_file,offset,whence) == -1)?-1:0;
 }
 
 /*********************************************************************
