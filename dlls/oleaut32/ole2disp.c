@@ -72,6 +72,10 @@ BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 
 /******************************************************************************
  *		SysAllocString	[OLEAUT32.2]
+ *
+ * MSDN (October 2001) states that this returns a NULL value if the argument
+ * is a zero-length string.  This does not appear to be true; certainly it
+ * returns a value under Win98 (Oleaut32.dll Ver 2.40.4515.0)
  */
 BSTR WINAPI SysAllocString(LPCOLESTR in)
 {
