@@ -167,6 +167,13 @@ typedef struct
     /* char title[...]; */
 } startup_info_t;
 
+/* structure for absolute timeouts */
+typedef struct
+{
+    int            sec;      /* seconds since Unix epoch */
+    int            usec;     /* microseconds */
+} abs_time_t;
+
 /* structure returned in the list of window properties */
 typedef struct
 {
@@ -486,8 +493,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 @REQ(select)
     int          flags;        /* wait flags (see below) */
     void*        cookie;       /* magic cookie to return to client */
-    int          sec;          /* absolute timeout */
-    int          usec;         /* absolute timeout */
+    abs_time_t   timeout;      /* absolute timeout */
     VARARG(handles,handles);   /* handles to select on */
 @END
 #define SELECT_ALL           1
@@ -1426,8 +1432,7 @@ enum char_info_mode
 /* Set a waitable timer */
 @REQ(set_timer)
     obj_handle_t handle;        /* handle to the timer */
-    int          sec;           /* next expiration absolute time */
-    int          usec;          /* next expiration absolute time */
+    abs_time_t   expire;        /* next expiration absolute time */
     int          period;        /* timer period in ms */
     void*        callback;      /* callback function */
     void*        arg;           /* callback argument */

@@ -23,12 +23,13 @@
 #include "winternl.h"
 #include "module.h"
 #include "thread.h"
+#include "wine/server.h"
 
 /* debug helper */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
-extern void NTDLL_get_server_timeout( struct timeval *when, const LARGE_INTEGER *timeout );
+extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout );
 
 /* module handling */
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );

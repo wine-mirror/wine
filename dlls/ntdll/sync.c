@@ -412,11 +412,8 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                           PLARGE_INTEGER timeout )
 {
     int ret, cookie;
-    struct timeval tv;
 
     if (count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
-
-    NTDLL_get_server_timeout( &tv, timeout );
 
     for (;;)
     {
@@ -424,8 +421,7 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
         {
             req->flags   = SELECT_INTERRUPTIBLE;
             req->cookie  = &cookie;
-            req->sec     = tv.tv_sec;
-            req->usec    = tv.tv_usec;
+            NTDLL_get_server_timeout( &req->timeout, timeout );
             wine_server_add_data( req, handles, count * sizeof(HANDLE) );
 
             if (wait_all) req->flags |= SELECT_ALL;

@@ -131,7 +131,7 @@ static void cancel_timer( struct timer *timer )
 }
 
 /* set the timer expiration and period */
-static void set_timer( struct timer *timer, int sec, int usec, int period,
+static void set_timer( struct timer *timer, const abs_time_t *expire, int period,
                        void *callback, void *arg )
 {
     cancel_timer( timer );
@@ -140,7 +140,7 @@ static void set_timer( struct timer *timer, int sec, int usec, int period,
         period = 0;  /* period doesn't make any sense for a manual timer */
         timer->signaled = 0;
     }
-    if (!sec && !usec)
+    if (!expire->sec && !expire->usec)
     {
         /* special case: use now + period as first expiration */
         gettimeofday( &timer->when, 0 );
@@ -148,8 +148,8 @@ static void set_timer( struct timer *timer, int sec, int usec, int period,
     }
     else
     {
-        timer->when.tv_sec  = sec;
-        timer->when.tv_usec = usec;
+        timer->when.tv_sec  = expire->sec;
+        timer->when.tv_usec = expire->usec;
     }
     timer->period       = period;
     timer->callback     = callback;
@@ -220,7 +220,7 @@ DECL_HANDLER(set_timer)
     if ((timer = (struct timer *)get_handle_obj( current->process, req->handle,
                                                  TIMER_MODIFY_STATE, &timer_ops )))
     {
-        set_timer( timer, req->sec, req->usec, req->period, req->callback, req->arg );
+        set_timer( timer, &req->expire, req->period, req->callback, req->arg );
         release_object( timer );
     }
 }

@@ -40,6 +40,7 @@
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -299,30 +300,31 @@ static inline void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryFi
  *
  * Convert a NTDLL timeout into a timeval struct to send to the server.
  */
-void NTDLL_get_server_timeout( struct timeval *when, const LARGE_INTEGER *timeout )
+void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout )
 {
     UINT remainder;
 
     if (!timeout)  /* infinite timeout */
     {
-        when->tv_sec = when->tv_usec = 0;
+        when->sec = when->usec = 0;
     }
     else if (timeout->QuadPart <= 0)  /* relative timeout */
     {
+        struct timeval tv;
         ULONG sec = RtlEnlargedUnsignedDivide( -timeout->QuadPart, TICKSPERSEC, &remainder );
-        gettimeofday( when, 0 );
-        if ((when->tv_usec += remainder / 10) >= 1000000)
+        gettimeofday( &tv, 0 );
+        when->sec = tv.tv_sec + sec;
+        if ((when->usec = tv.tv_usec + (remainder / 10)) >= 1000000)
         {
-            when->tv_usec -= 1000000;
-            when->tv_sec++;
+            when->usec -= 1000000;
+            when->sec++;
         }
-        when->tv_sec += sec;
     }
     else  /* absolute time */
     {
-        when->tv_sec = RtlEnlargedUnsignedDivide( timeout->QuadPart - TICKS_1601_TO_1970,
+        when->sec = RtlEnlargedUnsignedDivide( timeout->QuadPart - TICKS_1601_TO_1970,
                                                   TICKSPERSEC, &remainder );
-        when->tv_usec = remainder / 10;
+        when->usec = remainder / 10;
     }
 }
 

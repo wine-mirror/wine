@@ -59,6 +59,29 @@ static void dump_uints( const int *ptr, int len )
     fputc( '}', stderr );
 }
 
+static void dump_abs_time( const abs_time_t *time )
+{
+    struct timeval tv;
+    int secs, usecs;
+
+    if (!time->sec && !time->usec)
+    {
+        fprintf( stderr, "0" );
+        return;
+    }
+    gettimeofday( &tv, NULL );
+    secs = time->sec - tv.tv_sec;
+    if ((usecs = time->usec - tv.tv_usec) < 0)
+    {
+        usecs += 1000000;
+        secs--;
+    }
+    if (secs > 0 || (secs == 0 && usecs >= 0))
+        fprintf( stderr, "%d.%06d (+%d.%06d)", time->sec, time->usec, secs, usecs );
+    else
+        fprintf( stderr, "%d.%06d (-%d.%06d)", time->sec, time->usec, abs(secs+1), 1000000-usecs );
+}
+
 static void dump_rectangle( const rectangle_t *rect )
 {
     fprintf( stderr, "{%d,%d;%d,%d}",
@@ -684,8 +707,9 @@ static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " cookie=%p,", req->cookie );
-    fprintf( stderr, " sec=%d,", req->sec );
-    fprintf( stderr, " usec=%d,", req->usec );
+    fprintf( stderr, " timeout=" );
+    dump_abs_time( &req->timeout );
+    fprintf( stderr, "," );
     fprintf( stderr, " handles=" );
     dump_varargs_handles( cur_size );
 }
@@ -1662,8 +1686,9 @@ static void dump_open_timer_reply( const struct open_timer_reply *req )
 static void dump_set_timer_request( const struct set_timer_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " sec=%d,", req->sec );
-    fprintf( stderr, " usec=%d,", req->usec );
+    fprintf( stderr, " expire=" );
+    dump_abs_time( &req->expire );
+    fprintf( stderr, "," );
     fprintf( stderr, " period=%d,", req->period );
     fprintf( stderr, " callback=%p,", req->callback );
     fprintf( stderr, " arg=%p", req->arg );

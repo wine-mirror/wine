@@ -130,21 +130,18 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
 {
     BOOL ret;
-    struct timeval tv;
-
-    if (!when->s.LowPart && !when->s.HighPart)
-    {
-        /* special case to start timeout on now+period without too many calculations */
-        tv.tv_sec  = 0;
-        tv.tv_usec = 0;
-    }
-    else NTDLL_get_server_timeout( &tv, when );
 
     SERVER_START_REQ( set_timer )
     {
+        if (!when->s.LowPart && !when->s.HighPart)
+        {
+            /* special case to start timeout on now+period without too many calculations */
+            req->expire.sec  = 0;
+            req->expire.usec = 0;
+        }
+        else NTDLL_get_server_timeout( &req->expire, when );
+
         req->handle   = handle;
-        req->sec      = tv.tv_sec;
-        req->usec     = tv.tv_usec;
         req->period   = period;
         req->callback = callback;
         req->arg      = arg;

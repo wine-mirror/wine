@@ -154,6 +154,13 @@ typedef struct
 
 typedef struct
 {
+    int            sec;
+    int            usec;
+} abs_time_t;
+
+
+typedef struct
+{
     atom_t         atom;
     short          string;
     obj_handle_t   handle;
@@ -608,8 +615,7 @@ struct select_request
     struct request_header __header;
     int          flags;
     void*        cookie;
-    int          sec;
-    int          usec;
+    abs_time_t   timeout;
     /* VARARG(handles,handles); */
 };
 struct select_reply
@@ -1994,8 +2000,7 @@ struct set_timer_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    int          sec;
-    int          usec;
+    abs_time_t   expire;
     int          period;
     void*        callback;
     void*        arg;
@@ -3572,6 +3577,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 103
+#define SERVER_PROTOCOL_VERSION 104
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

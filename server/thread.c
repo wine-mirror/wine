@@ -373,7 +373,7 @@ static void end_wait( struct thread *thread )
 }
 
 /* build the thread wait structure */
-static int wait_on( int count, struct object *objects[], int flags, int sec, int usec )
+static int wait_on( int count, struct object *objects[], int flags, const abs_time_t *timeout )
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
@@ -388,8 +388,8 @@ static int wait_on( int count, struct object *objects[], int flags, int sec, int
     current->wait = wait;
     if (flags & SELECT_TIMEOUT)
     {
-        wait->timeout.tv_sec = sec;
-        wait->timeout.tv_usec = usec;
+        wait->timeout.tv_sec  = timeout->sec;
+        wait->timeout.tv_usec = timeout->usec;
     }
 
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
@@ -518,7 +518,7 @@ static void thread_timeout( void *ptr )
 
 /* select on a list of handles */
 static void select_on( int count, void *cookie, const obj_handle_t *handles,
-                       int flags, int sec, int usec )
+                       int flags, const abs_time_t *timeout )
 {
     int ret, i;
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
@@ -535,7 +535,7 @@ static void select_on( int count, void *cookie, const obj_handle_t *handles,
     }
 
     if (i < count) goto done;
-    if (!wait_on( count, objects, flags, sec, usec )) goto done;
+    if (!wait_on( count, objects, flags, timeout )) goto done;
 
     if ((ret = check_wait( current )) != -1)
     {
@@ -963,7 +963,7 @@ DECL_HANDLER(resume_thread)
 DECL_HANDLER(select)
 {
     int count = get_req_data_size() / sizeof(int);
-    select_on( count, req->cookie, get_req_data(), req->flags, req->sec, req->usec );
+    select_on( count, req->cookie, get_req_data(), req->flags, &req->timeout );
 }
 
 /* queue an APC for a thread */
