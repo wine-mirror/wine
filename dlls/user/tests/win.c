@@ -20,6 +20,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* To get ICON_SMALL2 with the MSVC headers */
+#define _WIN32_WINNT 0x0501
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
