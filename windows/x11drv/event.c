@@ -745,7 +745,14 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
             else
 	    SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
             WIN_ReleaseWndPtr(pWnd);
-	    SetForegroundWindow( 0 );
+
+            /* Abey : 6-Oct-99. Check again if the focus out window is the
+               Foreground window, because in most cases the messages sent
+               above must have already changed the foreground window, in which
+               case we don't have to change the foreground window to 0 */
+
+            if (hWnd == GetForegroundWindow())
+                SetForegroundWindow( 0 );
 	}
 }
 
