@@ -2183,10 +2183,10 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
 	    type=SOCK_STREAM;
 	    break;
 	case WS_SOCK_DGRAM:
-	    type=SOCK_STREAM;
+	    type=SOCK_DGRAM;
 	    break;
 	case WS_SOCK_RAW:
-	    type=SOCK_STREAM;
+	    type=SOCK_RAW;
 	    break;
 	default:        SetLastError(WSAESOCKTNOSUPPORT); 
 			return INVALID_SOCKET;
