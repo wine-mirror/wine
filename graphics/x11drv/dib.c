@@ -1699,15 +1699,15 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
         case 24:
 	    {
 		if (bmpImage->bits_per_pixel == 24) {
-			int tocopy = linebytes;
+			int dstlinebytes = linebytes;
 			BYTE *dstpixel;
 			BYTE *ptr = (BYTE *)(srcbits+left*3);
 
-			if (tocopy < 0 ) tocopy = -tocopy;
-			dstpixel = bmpImage->data + lines*tocopy + left*3;
+			if (dstlinebytes < 0 ) dstlinebytes = -dstlinebytes;
+			dstpixel = bmpImage->data + lines*dstlinebytes + left*3;
                         for(h = lines ; h-- ; ) {
-				dstpixel-=tocopy;
-				memcpy(dstpixel,ptr,tocopy);
+				dstpixel-=dstlinebytes;
+				memcpy(dstpixel,ptr,dstwidth*3);
 				ptr +=linebytes;
 			}
 			break;
