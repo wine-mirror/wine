@@ -120,7 +120,8 @@ static void PROFILE_CopyEntry( LPWSTR buffer, LPCWSTR value, int len,
         return;
     }
 
-    for (p = value; (*p && (len > 1)); *buffer++ = *p++, len-- )
+    p = value;
+    while (*p && (len > 1))
     {
         if ((*p == '$') && (p[1] == '{'))
         {
@@ -139,6 +140,11 @@ static void PROFILE_CopyEntry( LPWSTR buffer, LPCWSTR value, int len,
                 len -= copy_len;
             }
             p = p2 + 1;
+        }
+        else
+        {
+            *buffer++ = *p++;
+            len--;
         }
     }
     if (quote && (len > 1)) buffer--;
