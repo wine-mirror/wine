@@ -32,6 +32,11 @@
 #include "process.h"
 #include "thread.h"
 
+#if defined(linux) && defined(__SIGRTMIN)
+/* the signal used by linuxthreads as exit signal for clone() threads */
+# define SIG_PTHREAD_CANCEL (__SIGRTMIN+1)
+#endif
+
 typedef void (*signal_callback)(void);
 
 struct handler
@@ -220,11 +225,17 @@ void init_signals(void)
     sigaddset( &blocked_sigset, SIGIO );
     sigaddset( &blocked_sigset, SIGQUIT );
     sigaddset( &blocked_sigset, SIGTERM );
+#ifdef SIG_PTHREAD_CANCEL
+    sigaddset( &blocked_sigset, SIG_PTHREAD_CANCEL );
+#endif
 
     action.sa_mask = blocked_sigset;
     action.sa_flags = 0;
     action.sa_handler = do_sigchld;
     sigaction( SIGCHLD, &action, NULL );
+#ifdef SIG_PTHREAD_CANCEL
+    sigaction( SIG_PTHREAD_CANCEL, &action, NULL );
+#endif
     action.sa_handler = do_sighup;
     sigaction( SIGHUP, &action, NULL );
     action.sa_handler = do_sigint;
