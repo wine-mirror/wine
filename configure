@@ -10070,13 +10070,21 @@ ac_config_commands="$ac_config_commands dlls/dinput/mouse"
 
 ac_config_commands="$ac_config_commands dlls/kernel/messages"
 
+ac_config_commands="$ac_config_commands dlls/kernel/tests"
+
 ac_config_commands="$ac_config_commands dlls/user/dde"
 
 ac_config_commands="$ac_config_commands dlls/user/resources"
 
+ac_config_commands="$ac_config_commands dlls/user/tests"
+
 ac_config_commands="$ac_config_commands dlls/wineps/data"
 
 ac_config_commands="$ac_config_commands include/wine"
+
+ac_config_commands="$ac_config_commands programs/regapi/tests"
+
+ac_config_commands="$ac_config_commands programs/winetest/tests"
 
 ac_config_commands="$ac_config_commands include/wine/version.h"
 
@@ -10167,7 +10175,7 @@ DEFS=-DHAVE_CONFIG_H
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
 ac_clean_files="$ac_clean_files $CONFIG_STATUS"
-{ echo "$as_me:10170: creating $CONFIG_STATUS" >&5
+{ echo "$as_me:10178: creating $CONFIG_STATUS" >&5
 echo "$as_me: creating $CONFIG_STATUS" >&6;}
 cat >$CONFIG_STATUS <<_ACEOF
 #! $SHELL
@@ -10343,7 +10351,7 @@ cat >>$CONFIG_STATUS <<\EOF
     echo "$ac_cs_version"; exit 0 ;;
   --he | --h)
     # Conflict between --help and --header
-    { { echo "$as_me:10346: error: ambiguous option: $1
+    { { echo "$as_me:10354: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -10362,7 +10370,7 @@ Try \`$0 --help' for more information." >&2;}
     ac_need_defaults=false;;
 
   # This is an error.
-  -*) { { echo "$as_me:10365: error: unrecognized option: $1
+  -*) { { echo "$as_me:10373: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -10557,13 +10565,17 @@ do
   "dlls/dinput/keyboard" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/keyboard" ;;
   "dlls/dinput/mouse" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/mouse" ;;
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
+  "dlls/kernel/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/tests" ;;
   "dlls/user/dde" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/dde" ;;
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
+  "dlls/user/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/tests" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
+  "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
+  "programs/winetest/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/winetest/tests" ;;
   "include/wine/version.h" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine/version.h" ;;
   "include/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
-  *) { { echo "$as_me:10566: error: invalid argument: $ac_config_target" >&5
+  *) { { echo "$as_me:10578: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
   esac
@@ -10828,7 +10840,7 @@ done; }
   esac
 
   if test x"$ac_file" != x-; then
-    { echo "$as_me:10831: creating $ac_file" >&5
+    { echo "$as_me:10843: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
     rm -f "$ac_file"
   fi
@@ -10846,7 +10858,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:10849: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:10861: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -10859,7 +10871,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:10862: error: cannot find input file: $f" >&5
+           { { echo "$as_me:10874: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -10920,7 +10932,7 @@ for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
   * )   ac_file_in=$ac_file.in ;;
   esac
 
-  test x"$ac_file" != x- && { echo "$as_me:10923: creating $ac_file" >&5
+  test x"$ac_file" != x- && { echo "$as_me:10935: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
 
   # First look for the input files in the build tree, otherwise in the
@@ -10931,7 +10943,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:10934: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:10946: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -10944,7 +10956,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:10947: error: cannot find input file: $f" >&5
+           { { echo "$as_me:10959: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -11061,7 +11073,7 @@ cat >>$CONFIG_STATUS <<\EOF
   rm -f $tmp/in
   if test x"$ac_file" != x-; then
     if cmp -s $ac_file $tmp/config.h 2>/dev/null; then
-      { echo "$as_me:11064: $ac_file is unchanged" >&5
+      { echo "$as_me:11076: $ac_file is unchanged" >&5
 echo "$as_me: $ac_file is unchanged" >&6;}
     else
       ac_dir=`$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
@@ -11112,42 +11124,50 @@ for ac_file in : $CONFIG_COMMANDS; do test "x$ac_file" = x: && continue
   ac_source=`echo "$ac_file" | sed 's,[^:]*:,,'`
 
   case $ac_dest in
-    dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:11115: creating dlls/ddraw/d3ddevice" >&5
+    dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:11127: creating dlls/ddraw/d3ddevice" >&5
 echo "$as_me: creating dlls/ddraw/d3ddevice" >&6;} && mkdir "dlls/ddraw/d3ddevice") ;;
-    dlls/ddraw/dclipper ) test -d "dlls/ddraw/dclipper" || ({ echo "$as_me:11117: creating dlls/ddraw/dclipper" >&5
+    dlls/ddraw/dclipper ) test -d "dlls/ddraw/dclipper" || ({ echo "$as_me:11129: creating dlls/ddraw/dclipper" >&5
 echo "$as_me: creating dlls/ddraw/dclipper" >&6;} && mkdir "dlls/ddraw/dclipper") ;;
-    dlls/ddraw/ddraw ) test -d "dlls/ddraw/ddraw" || ({ echo "$as_me:11119: creating dlls/ddraw/ddraw" >&5
+    dlls/ddraw/ddraw ) test -d "dlls/ddraw/ddraw" || ({ echo "$as_me:11131: creating dlls/ddraw/ddraw" >&5
 echo "$as_me: creating dlls/ddraw/ddraw" >&6;} && mkdir "dlls/ddraw/ddraw") ;;
-    dlls/ddraw/direct3d ) test -d "dlls/ddraw/direct3d" || ({ echo "$as_me:11121: creating dlls/ddraw/direct3d" >&5
+    dlls/ddraw/direct3d ) test -d "dlls/ddraw/direct3d" || ({ echo "$as_me:11133: creating dlls/ddraw/direct3d" >&5
 echo "$as_me: creating dlls/ddraw/direct3d" >&6;} && mkdir "dlls/ddraw/direct3d") ;;
-    dlls/ddraw/dpalette ) test -d "dlls/ddraw/dpalette" || ({ echo "$as_me:11123: creating dlls/ddraw/dpalette" >&5
+    dlls/ddraw/dpalette ) test -d "dlls/ddraw/dpalette" || ({ echo "$as_me:11135: creating dlls/ddraw/dpalette" >&5
 echo "$as_me: creating dlls/ddraw/dpalette" >&6;} && mkdir "dlls/ddraw/dpalette") ;;
-    dlls/ddraw/dsurface ) test -d "dlls/ddraw/dsurface" || ({ echo "$as_me:11125: creating dlls/ddraw/dsurface" >&5
+    dlls/ddraw/dsurface ) test -d "dlls/ddraw/dsurface" || ({ echo "$as_me:11137: creating dlls/ddraw/dsurface" >&5
 echo "$as_me: creating dlls/ddraw/dsurface" >&6;} && mkdir "dlls/ddraw/dsurface") ;;
-    dlls/dinput/joystick ) test -d "dlls/dinput/joystick" || ({ echo "$as_me:11127: creating dlls/dinput/joystick" >&5
+    dlls/dinput/joystick ) test -d "dlls/dinput/joystick" || ({ echo "$as_me:11139: creating dlls/dinput/joystick" >&5
 echo "$as_me: creating dlls/dinput/joystick" >&6;} && mkdir "dlls/dinput/joystick") ;;
-    dlls/dinput/keyboard ) test -d "dlls/dinput/keyboard" || ({ echo "$as_me:11129: creating dlls/dinput/keyboard" >&5
+    dlls/dinput/keyboard ) test -d "dlls/dinput/keyboard" || ({ echo "$as_me:11141: creating dlls/dinput/keyboard" >&5
 echo "$as_me: creating dlls/dinput/keyboard" >&6;} && mkdir "dlls/dinput/keyboard") ;;
-    dlls/dinput/mouse ) test -d "dlls/dinput/mouse" || ({ echo "$as_me:11131: creating dlls/dinput/mouse" >&5
+    dlls/dinput/mouse ) test -d "dlls/dinput/mouse" || ({ echo "$as_me:11143: creating dlls/dinput/mouse" >&5
 echo "$as_me: creating dlls/dinput/mouse" >&6;} && mkdir "dlls/dinput/mouse") ;;
-    dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:11133: creating dlls/kernel/messages" >&5
+    dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:11145: creating dlls/kernel/messages" >&5
 echo "$as_me: creating dlls/kernel/messages" >&6;} && mkdir "dlls/kernel/messages") ;;
-    dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:11135: creating dlls/user/dde" >&5
+    dlls/kernel/tests ) test -d "dlls/kernel/tests" || ({ echo "$as_me:11147: creating dlls/kernel/tests" >&5
+echo "$as_me: creating dlls/kernel/tests" >&6;} && mkdir "dlls/kernel/tests") ;;
+    dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:11149: creating dlls/user/dde" >&5
 echo "$as_me: creating dlls/user/dde" >&6;} && mkdir "dlls/user/dde") ;;
-    dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:11137: creating dlls/user/resources" >&5
+    dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:11151: creating dlls/user/resources" >&5
 echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources") ;;
-    dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:11139: creating dlls/wineps/data" >&5
+    dlls/user/tests ) test -d "dlls/user/tests" || ({ echo "$as_me:11153: creating dlls/user/tests" >&5
+echo "$as_me: creating dlls/user/tests" >&6;} && mkdir "dlls/user/tests") ;;
+    dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:11155: creating dlls/wineps/data" >&5
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
-    include/wine ) test -d "include/wine" || ({ echo "$as_me:11141: creating include/wine" >&5
+    include/wine ) test -d "include/wine" || ({ echo "$as_me:11157: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
-    include/wine/version.h ) { echo "$as_me:11143: creating include/wine/version.h" >&5
+    programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:11159: creating programs/regapi/tests" >&5
+echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/tests") ;;
+    programs/winetest/tests ) test -d "programs/winetest/tests" || ({ echo "$as_me:11161: creating programs/winetest/tests" >&5
+echo "$as_me: creating programs/winetest/tests" >&6;} && mkdir "programs/winetest/tests") ;;
+    include/wine/version.h ) { echo "$as_me:11163: creating include/wine/version.h" >&5
 echo "$as_me: creating include/wine/version.h" >&6;}
 cat >$tmp/version.h <<CEOF
 /* Generated automatically by configure; DO NOT EDIT! */
 #define WINE_RELEASE_INFO "Wine version $wine_version"
 CEOF
 if cmp -s $tmp/version.h include/wine/version.h 2>/dev/null; then
-  { echo "$as_me:11150: include/wine/version.h is unchanged" >&5
+  { echo "$as_me:11170: include/wine/version.h is unchanged" >&5
 echo "$as_me: include/wine/version.h is unchanged" >&6;}
   rm -f $tmp/version.h
 else
