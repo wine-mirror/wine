@@ -28,7 +28,7 @@ GDI:
 		win16drv/	-> see below 
 		ttydrv/		- tty display driver
 		psdrv/		- PostScript graphics driver
-		metafiledrv/	- metafile drivr
+		metafiledrv/	- metafile driver
 		enhmetafiledrv/	- enhanced metafile driver
 	objects/		- logical objects
 
@@ -45,24 +45,46 @@ Other DLLs:
 		avifil32/	- COM object to play AVI files
 		comctl32/	- common controls
 		commdlg/	- common dialog boxes (both 16 & 32 bit)
+		dplayx/		- DirectX dplayx
+		dsound/		- DirectX dsound
 		imagehlp/	- PE (Portable Executable) Image Helper lib
-		msacm/		- audio compression manager (multimedia)
-		msacm32/	- audio compression manager (multimedia)
+		imm32/
+		lzexpand/	- Liv-Zempel compression/decompression
+		mpr/		- Multi-Protocol Router (interface to various 
+                                  network transport protocols)
+		msacm/		- audio compression manager (multimedia) (16 bit)
+		msacm32/	- audio compression manager (multimedia) (32 bit)
+		msnet/
+		msvideo/	- 16 bit video manager
+		ole32/		- 32 bit OLE 2.0 librairies
+		oleaut32/	- 32 bit OLE 2.0 automation
+		olecli/		- 16 bit OLE client
+		oledlg/		- OLE 2.0 user interface support
+		olesvr/		- 16 bit OLE server
 		ntdll/		- NT implementation of kernel calls
 		psapi/		- process status API
 		rasapi32/	- remote access server API
 		shell32/	- COM object implementing shell views
+		sound/		- Sound on loudspeaker (not sound card)
 		tapi32/		- telephone API
 		ver/		- File Installation Library (16 bit)
 		version/	- File Installation Library (32 bit)
-		winaspi/	- 
+		win32s
+		win87em		- 80387 math-emulation
+		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
+		windebug/	- Windows debugger
+		wing/		- WinG (for games) internface
+		winmm/		- multimedia (16 & 32 bit)
+			mciXXX/	- various MCI drivers
+			wineoss/- MM driver for OSS systems
+			wavemap/- audio mapper
+			midimap/- midi mapper
 		winspool/	- Printing & Print Spooler 
-		wnaspi32/	- 
+		wnaspi32/	- 32 bit ASPI
 
 Miscellaneous:
 
 	misc/			- shell, registry, winsock, etc.
-	multimedia/		- multimedia driver
 	ipc/			- SysV IPC based interprocess communication
 	win32/			- misc Win32 functions
         ole/			- OLE code 
@@ -164,6 +186,72 @@ into a stub:
 4. Implement and test the rest of the function.
 
 
+IMPLEMENTING A NEW DLL
+======================
+
+Apart from writing the set of needed .c files, you also need to do the 
+following:
+
+1.  Create a directory <MyDll> where to store the implementation of
+    the DLL. 
+
+    If the DLL exists under Windows as both 16 and 32 bit DLL, you can
+    either create one directory for each, or have a single directory
+    with both implementations. 
+
+    This (those) directory(ies) have to be put under the dlls/
+    directory in Wine tree structure.
+
+2.  Create the Makefile.in in the ./dlls/<MyDll>/ directory. You can
+    copy an existing Makefile.in from another ./dlls/ subdirectory.
+
+    You need at least to change the MODULE, SPEC_SRCS, and C_SRCS
+    macros. 
+
+3.  Add the directory (and the generated .o file for the module) in: 
+    + ./configure.in (in AC_OUTPUT macro at the end of the file to
+      trigger the Makefile generation),
+    + ./Makefile.in (in LIBSUBDIRS and LIBOBJS macros)
+
+4.  You can now regenerate ./configure file (with 'make configure')
+    and the various Makefiles (with 'configure; make depend') (run
+    from the top of Wine's tree).
+
+    You shall now have a Makefile file in ./dlls/<MyDll>/
+
+5.  You now need to declare the DLL in the module lists. This is done
+    by adding the corresponding descriptor in ./if1632/builtin.c if
+    your DLL is 16 bit (resp. ./relay32/builtin.c for a 32 bit DLL)
+    (or both if your directory contains the dual 16/32
+    implementations). 
+
+    Note: the name of the descriptor is based on the module name, not
+    on the file name (they are the same in most of the case, but for
+    some DLLs it's not the case).
+
+6.  You also need to define the loadorder for the created DLL
+    (./wine.ini and ./module/loadorder.c). Usually, "native,builtin"
+    is ok. If you have written a paired 16/32 bit implementation, don't
+    forget to define it also in those files. 
+
+7.  Create the .spec file for the DLL export points in your
+    directory. Refer to 'Implementation of new API calls' earlier in
+    this document for more information on this part.
+
+8.  Don't forget the .cvsignore file.
+
+9.  You can now start adding .c files.
+
+10. For the .h files, if they are standard Windows one, put them in
+    include/. If they are linked to *your* implementation of the DLL,
+    put them in your newly created directory.
+
+If you need to create a new debug channel, just add the
+DECLARE_DEBUG_CHANNEL to your .c file(s) and rerun
+tools/make_debug. When sending out your patch, you don't need to
+provide nor ./configure nor the ./include/debugdefs.h diffs. Just
+indicate that those files need to be regenerated.
+
 MEMORY AND SEGMENTS
 ===================
 
@@ -223,7 +311,7 @@ used by Windows code, you need to embed the struct within two special
 #include's which will take care of the packing for you:
 
 #include "pshpack1.h"
-struct {BYTE x; WORD y; };
+struct { BYTE x; WORD y; };
 #include "poppack1.h"
 
 For alignment on a 2-byte boundary, there is a "pshpack2.h", etc.
