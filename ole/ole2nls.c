@@ -472,8 +472,9 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 
     found=0; i=0; lang=lcid;
 
-    if (lang ==0x400) /*LANG_NEUTRAL ==> US English*/
-    {	lang = 0x409;
+    if ((lang & 0xff) == 0x00) /*LANG_NEUTRAL ==> US English*/
+    {
+	lang = 0x409;
         WARN(ole,"no language set, assume LANG_ENGLISH_US \n");
     }
     
