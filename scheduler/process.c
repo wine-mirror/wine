@@ -743,6 +743,7 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     const char *unixdir = NULL;
     DOS_FULL_NAME full_dir, full_name;
     HANDLE load_done_evt = 0;
+    HANDLE process_info;
 
     info->hThread = info->hProcess = 0;
 
@@ -797,6 +798,7 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
                 lstrcpynA( server_data_ptr(req), filename, MAX_PATH );
         }
         ret = !server_call( REQ_NEW_PROCESS );
+        process_info = req->info;
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
@@ -805,24 +807,30 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     pid = fork_and_exec( unixfilename, cmd_line, env, unixdir );
 
-    SERVER_START_REQ
+    /* wait for the new process info to be ready */
+
+    ret = FALSE;
+    if ((pid != -1) && (WaitForSingleObject( process_info, 2000 ) == STATUS_WAIT_0))
     {
-        struct wait_process_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->cancel   = (pid == -1);
-        req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
-        req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
-        req->timeout  = 2000;
-        if ((ret = !server_call( REQ_WAIT_PROCESS )) && (pid != -1))
+        SERVER_START_REQ
         {
-            info->dwProcessId = (DWORD)req->pid;
-            info->dwThreadId  = (DWORD)req->tid;
-            info->hProcess    = req->phandle;
-            info->hThread     = req->thandle;
-            load_done_evt     = req->event;
+            struct get_new_process_info_request *req = server_alloc_req( sizeof(*req), 0 );
+            req->info     = process_info;
+            req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+            req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
+            if ((ret = !server_call( REQ_GET_NEW_PROCESS_INFO )))
+            {
+                info->dwProcessId = (DWORD)req->pid;
+                info->dwThreadId  = (DWORD)req->tid;
+                info->hProcess    = req->phandle;
+                info->hThread     = req->thandle;
+                load_done_evt     = req->event;
+            }
         }
+        SERVER_END_REQ;
     }
-    SERVER_END_REQ;
-    if (!ret || (pid == -1)) goto error;
+    CloseHandle( process_info );
+    if (!ret) goto error;
 
     /* Wait until process is initialized (or initialization failed) */
     if (load_done_evt)

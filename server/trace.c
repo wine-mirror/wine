@@ -275,15 +275,19 @@ static void dump_new_process_request( const struct new_process_request *req )
     cur_pos += dump_varargs_string( req );
 }
 
-static void dump_wait_process_request( const struct wait_process_request *req )
+static void dump_new_process_reply( const struct new_process_request *req )
 {
-    fprintf( stderr, " pinherit=%d,", req->pinherit );
-    fprintf( stderr, " tinherit=%d,", req->tinherit );
-    fprintf( stderr, " timeout=%d,", req->timeout );
-    fprintf( stderr, " cancel=%d", req->cancel );
+    fprintf( stderr, " info=%d", req->info );
 }
 
-static void dump_wait_process_reply( const struct wait_process_request *req )
+static void dump_get_new_process_info_request( const struct get_new_process_info_request *req )
+{
+    fprintf( stderr, " info=%d,", req->info );
+    fprintf( stderr, " pinherit=%d,", req->pinherit );
+    fprintf( stderr, " tinherit=%d", req->tinherit );
+}
+
+static void dump_get_new_process_info_reply( const struct get_new_process_info_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " phandle=%d,", req->phandle );
@@ -1050,13 +1054,14 @@ static void dump_next_module_reply( const struct next_module_request *req )
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )
 {
-    fprintf( stderr, " timeout=%d", req->timeout );
+    fprintf( stderr, " get_handle=%d", req->get_handle );
 }
 
 static void dump_wait_debug_event_reply( const struct wait_debug_event_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " wait=%d,", req->wait );
     fprintf( stderr, " event=" );
     cur_pos += dump_varargs_debug_event( req );
 }
@@ -1474,7 +1479,7 @@ static void dump_async_result_request( const struct async_result_request *req )
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
-    (dump_func)dump_wait_process_request,
+    (dump_func)dump_get_new_process_info_request,
     (dump_func)dump_new_thread_request,
     (dump_func)dump_boot_done_request,
     (dump_func)dump_init_process_request,
@@ -1584,8 +1589,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
-    (dump_func)0,
-    (dump_func)dump_wait_process_reply,
+    (dump_func)dump_new_process_reply,
+    (dump_func)dump_get_new_process_info_reply,
     (dump_func)dump_new_thread_reply,
     (dump_func)0,
     (dump_func)dump_init_process_reply,
@@ -1696,7 +1701,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
-    "wait_process",
+    "get_new_process_info",
     "new_thread",
     "boot_done",
     "init_process",

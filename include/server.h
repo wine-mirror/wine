@@ -131,18 +131,18 @@ struct new_process_request
     IN  handle_t     hstdout;      /* handle for stdout */
     IN  handle_t     hstderr;      /* handle for stderr */
     IN  int          cmd_show;     /* main window show mode */
+    OUT handle_t     info;         /* new process info handle */
     IN  VARARG(filename,string);   /* file name of main exe */
 };
 
 
-/* Wait for the new process to start */
-struct wait_process_request
+/* Retrieve information about a newly started process */
+struct get_new_process_info_request
 {
     REQUEST_HEADER;                /* request header */
+    IN  handle_t     info;         /* info handle returned from new_process_request */
     IN  int          pinherit;     /* process handle inherit flag */
     IN  int          tinherit;     /* thread handle inherit flag */
-    IN  int          timeout;      /* wait timeout */
-    IN  int          cancel;       /* cancel the process creation? */
     OUT void*        pid;          /* process id */
     OUT handle_t     phandle;      /* process handle (in the current process) */
     OUT void*        tid;          /* thread id */
@@ -930,9 +930,10 @@ struct next_module_request
 struct wait_debug_event_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int           timeout;     /* timeout in ms */
+    IN  int           get_handle;  /* should we alloc a handle for waiting? */
     OUT void*         pid;         /* process id */
     OUT void*         tid;         /* thread id */
+    OUT handle_t      wait;        /* wait handle if no event ready */
     OUT VARARG(event,debug_event); /* debug event data */
 };
 
@@ -1356,7 +1357,7 @@ struct async_result_request
 enum request
 {
     REQ_NEW_PROCESS,
-    REQ_WAIT_PROCESS,
+    REQ_GET_NEW_PROCESS_INFO,
     REQ_NEW_THREAD,
     REQ_BOOT_DONE,
     REQ_INIT_PROCESS,
@@ -1471,7 +1472,7 @@ union generic_request
     struct request_max_size max_size;
     struct request_header header;
     struct new_process_request new_process;
-    struct wait_process_request wait_process;
+    struct get_new_process_info_request get_new_process_info;
     struct new_thread_request new_thread;
     struct boot_done_request boot_done;
     struct init_process_request init_process;
@@ -1580,7 +1581,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 34
+#define SERVER_PROTOCOL_VERSION 35
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

@@ -241,37 +241,6 @@ static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
     return event;
 }
 
-/* build a reply for the wait_debug_event request */
-static void build_wait_debug_reply( struct thread *thread, struct object *obj, int signaled )
-{
-    struct wait_debug_event_request *req = get_req_ptr( thread );
-
-    if (obj)
-    {
-        struct debug_ctx *debug_ctx = (struct debug_ctx *)obj; 
-        struct debug_event *event = find_event_to_send( debug_ctx );
-        size_t size = get_req_data_size(req);
-
-        /* the object that woke us has to be our debug context */
-        assert( obj->ops == &debug_ctx_ops );
-        assert( event );
-
-        event->state = EVENT_SENT;
-        event->sender->debug_event = event;
-        req->pid = event->sender->process;
-        req->tid = event->sender;
-        if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
-        memcpy( get_req_data(req), &event->data, size );
-        set_req_data_size( req, size );
-    }
-    else  /* timeout or error */
-    {
-        set_req_data_size( req, 0 );
-        req->pid  = 0;
-        req->tid  = 0;
-    }
-}
-
 /* build a reply for the send_event request */
 static void build_exception_event_reply( struct thread *thread, struct object *obj, int signaled )
 {
@@ -355,29 +324,6 @@ static void debug_ctx_destroy( struct object *obj )
 
     /* free all pending events */
     while ((event = debug_ctx->event_head) != NULL) unlink_event( debug_ctx, event );
-}
-
-/* wait for a debug event (or send a reply at once if one is pending) */
-static int wait_for_debug_event( int timeout )
-{
-    struct debug_ctx *debug_ctx = current->debug_ctx;
-    struct object *obj = &debug_ctx->obj;
-    int flags = 0;
-    struct timeval tv;
-
-    if (!debug_ctx)  /* current thread is not a debugger */
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return 0;
-    }
-    if (timeout != -1)
-    {
-        flags = SELECT_TIMEOUT;
-        gettimeofday( &tv, 0 );
-        add_timeout( &tv, timeout );
-    }
-    else tv.tv_sec = tv.tv_usec = 0;
-    return sleep_on( 1, &obj, flags, tv.tv_sec, tv.tv_usec, build_wait_debug_reply );
 }
 
 /* continue a debug event */
@@ -539,11 +485,33 @@ void debug_exit_thread( struct thread *thread )
 /* Wait for a debug event */
 DECL_HANDLER(wait_debug_event)
 {
-    if (!wait_for_debug_event( req->timeout ))
+    struct debug_ctx *debug_ctx = current->debug_ctx;
+    struct debug_event *event;
+
+    if (!debug_ctx)  /* current thread is not a debugger */
     {
-        req->pid = NULL;
-        req->tid = NULL;
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+    req->wait = 0;
+    if ((event = find_event_to_send( debug_ctx )))
+    {
+        size_t size = get_req_data_size(req);
+        event->state = EVENT_SENT;
+        event->sender->debug_event = event;
+        req->pid = event->sender->process;
+        req->tid = event->sender;
+        if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
+        memcpy( get_req_data(req), &event->data, size );
+        set_req_data_size( req, size );
+    }
+    else  /* no event ready */
+    {
+        req->pid  = 0;
+        req->tid  = 0;
         set_req_data_size( req, 0 );
+        if (req->get_handle)
+            req->wait = alloc_handle( current->process, debug_ctx, SYNCHRONIZE, FALSE );
     }
 }
 

@@ -68,6 +68,7 @@ struct startup_info
     int                 cmd_show;     /* main window show mode */
     struct file        *exe_file;     /* file handle for main exe */
     char               *filename;     /* file name for main exe */
+    struct thread      *owner;        /* owner thread (the one that created the new process) */
     struct process     *process;      /* created process */
     struct thread      *thread;       /* created thread */
 };
@@ -319,6 +320,11 @@ static void startup_info_destroy( struct object *obj )
     if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
     if (info->thread) release_object( info->thread );
+    if (info->owner)
+    {
+        info->owner->info = NULL;
+        release_object( info->owner );
+    }
 }
 
 static void startup_info_dump( struct object *obj, int verbose )
@@ -336,33 +342,6 @@ static int startup_info_signaled( struct object *obj, struct thread *thread )
     return (info->thread != NULL);
 }
 
-
-/* build a reply for the wait_process request */
-static void build_wait_process_reply( struct thread *thread, struct object *obj, int signaled )
-{
-    struct wait_process_request *req = get_req_ptr( thread );
-    if (obj)
-    {
-        struct startup_info *info = (struct startup_info *)obj;
-        assert( obj->ops == &startup_info_ops );
-
-        req->pid = get_process_id( info->process );
-        req->tid = get_thread_id( info->thread );
-        req->phandle = alloc_handle( thread->process, info->process,
-                                     PROCESS_ALL_ACCESS, req->pinherit );
-        req->thandle = alloc_handle( thread->process, info->thread,
-                                     THREAD_ALL_ACCESS, req->tinherit );
-        if (info->process->init_event)
-            req->event = alloc_handle( thread->process, info->process->init_event,
-                                       EVENT_ALL_ACCESS, 0 );
-        else
-            req->event = 0;
-
-        /* FIXME: set_error */
-    }
-    release_object( thread->info );
-    thread->info = NULL;
-}
 
 /* get a process from an id (and increment the refcount) */
 struct process *get_process_from_id( void *id )
@@ -731,52 +710,52 @@ DECL_HANDLER(new_process)
     info->cmd_show     = req->cmd_show;
     info->exe_file     = NULL;
     info->filename     = NULL;
+    info->owner        = (struct thread *)grab_object( current );
     info->process      = NULL;
     info->thread       = NULL;
 
     if (req->exe_file &&
         !(info->exe_file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
-    {
-        release_object( info );
-        return;
-    }
+        goto done;
 
-    if (!(info->filename = mem_alloc( len + 1 )))
-    {
-        release_object( info );
-        return;
-    }
+    if (!(info->filename = mem_alloc( len + 1 ))) goto done;
+
     memcpy( info->filename, get_req_data(req), len );
     info->filename[len] = 0;
     current->info = info;
+    req->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
+
+ done:
+    release_object( info );
 }
 
-/* Wait for the new process to start */
-DECL_HANDLER(wait_process)
+/* Retrieve information about a newly started process */
+DECL_HANDLER(get_new_process_info)
 {
-    if (!current->info)
+    struct startup_info *info;
+
+    req->event = 0;
+
+    if ((info = (struct startup_info *)get_handle_obj( current->process, req->info,
+                                                       0, &startup_info_ops )))
     {
-        fatal_protocol_error( current, "wait_process: no process is being created\n" );
-        return;
-    }
-    req->pid     = 0;
-    req->tid     = 0;
-    req->phandle = 0;
-    req->thandle = 0;
-    req->event   = 0;
-    if (req->cancel)
-    {
-        release_object( current->info );
-        current->info = NULL;
+        req->pid = get_process_id( info->process );
+        req->tid = get_thread_id( info->thread );
+        req->phandle = alloc_handle( current->process, info->process,
+                                     PROCESS_ALL_ACCESS, req->pinherit );
+        req->thandle = alloc_handle( current->process, info->thread,
+                                     THREAD_ALL_ACCESS, req->tinherit );
+        if (info->process->init_event)
+            req->event = alloc_handle( current->process, info->process->init_event,
+                                       EVENT_ALL_ACCESS, 0 );
+        release_object( info );
     }
     else
     {
-        struct timeval timeout;
-        struct object *obj = &current->info->obj;
-        gettimeofday( &timeout, 0 );
-        add_timeout( &timeout, req->timeout );
-        sleep_on( 1, &obj, SELECT_TIMEOUT, timeout.tv_sec, timeout.tv_usec,
-                  build_wait_process_reply );
+        req->pid     = 0;
+        req->tid     = 0;
+        req->phandle = 0;
+        req->thandle = 0;
     }
 }
 
