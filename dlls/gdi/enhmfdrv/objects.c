@@ -85,6 +85,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	emr->offBmi = sizeof(EMRCREATEDIBPATTERNBRUSHPT);
 	emr->cbBmi = biSize;
 	emr->offBits = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize;
+	emr->cbBits = bmSize;
 	memcpy((char *)emr + sizeof(EMRCREATEDIBPATTERNBRUSHPT), info,
 	       biSize + bmSize );
 
