@@ -98,3 +98,20 @@ Bye,
 
 Frans van Dorsselaer
 dorssel@rulhm1.LeidenUniv.nl
+**************************************************************
+1998, October
+
+Subject: Put Mark in DebugLog
+
+I added an item to SYSMENU to put a mark in the Debuglog by request of the 
+User. I picked 61762 as the next ID after SC_ABOUTWINE. This item needs
+translations to all supported languages. At present it is only done for
+
+* English
+* German
+
+After you implemented it for your language, please add it to the list above.
+
+Bye
+
+Uwe Bonnes bon@elektron.ikp.physik.tu-darmstadt.de

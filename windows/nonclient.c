@@ -36,6 +36,7 @@ static HBITMAP16 hbitmapRestore = 0;
 static HBITMAP16 hbitmapRestoreD = 0;
 
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
+#define SC_PUTMARK     		(SC_SCREENSAVE+2)
 
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \
@@ -2508,6 +2509,9 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
             ShellAbout32A(hwnd,"Wine", WINE_RELEASE_INFO, 0);
+	else 
+	  if (wParam == SC_PUTMARK)
+            TRACE(shell,"Mark requested by user\n");
 	break;
   
     case SC_HOTKEY:
