@@ -20,6 +20,19 @@ DirectDraw). Moreover, 99 % of the code in the Direct3D implementation
 is 'device independant' (i.e. GLX / OSMesa / whatever), so that
 changing to GLX will have only a minor impact on Direct3D's code.
 
+Where to find Mesa :
+--------------------
+
+The home of Mesa should soon be http://www.mesa3d.org/
+But for now, check http://www.ssec.wisc.edu/~brianp/Mesa.html
+
+For precompiled RPMs, use AltaVista or FTPSearch, but I prefer to 'Use
+the Source' :-)
+
+WARNING : if you experience crashes in D3DTexture2_Load, see file
+d3dtexture.c for a 'cure'. You could also patch your version of Mesa
+or wait for version 3.2b (that should have the bug corrected).
+
 Code structure
 --------------
 
@@ -30,22 +43,29 @@ Status
 
 Some programs with which I tested the code :
 
- * BOIDS.EXE (DX5.0) that comes with the 5.2 DirectX SDK : works
-   great. Only thing missing is the texturing and transparency on the
-   spinning gobes. Lighting seems to be a bit different than the Real
-   One.
+ * BOIDS.EXE (DX5.0) : works great. Only thing missing is the
+   texturing and transparency on the spinning gobes. Lighting seems to
+   be a bit different than the Real One.
+
+ * TWIST.EXE (DX3.0) : vertex transformation works as it
+   should. Texturing and lighting still off.
 
  * Tomb Raider II (DX5.0) : works perfectly (but slowly). All the
    calls needed to make TR2 work have been written.
 
  * Jedi Knight (DX3.0) : does not start
 
- * Shadow of the Empire demo (DX3.0) : runs but does not display
-   anything
+ * Shadow of the Empire demo (DX3.0) : displays a mangled intro screen
+   (only blue squares on the screen)
+
+ * Forsaken Demo : starts to work. Texturing is missing and it is
+   really really slow.
+
+ * Grim Fandango (DX ?, seems to be 3.0 !!) : does not start.
 
 TODO
 ----
- * finish working on Execute Buffers (i.e. Direct3D 3.0)
+ * work on optimizing Execute Buffers (i.e. Direct3D 3.0)
  * real GLX implementation (will need a complete rewrite of DirectDraw
    also) to have 3DFx support
  * restructuration of all the DDRAW.DLL (put that in the dll
@@ -58,4 +78,4 @@ TODO
 
 -- 
 Lionel Ulmer - ulmer@directprovider.net
-Last updated : Sun Jan 10 1999
+Last updated : Tue Jan 19 1999
