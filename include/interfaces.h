@@ -46,7 +46,7 @@ typedef struct {
 	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
 	STDMETHOD_(ULONG,Release) (THIS) PURE;
 	STDMETHOD(CreateInstance) (THIS_ LPUNKNOWN pUnkOuter, REFIID riid, LPVOID FAR* ppvObject) PURE;
-    STDMETHOD(LockServer) (THIS) PURE;
+	STDMETHOD(LockServer) (THIS_ BOOL32) PURE;
 } *LPCLASSFACTORY_VTABLE,IClassFactory_VTable;
 
 struct IClassFactory {
