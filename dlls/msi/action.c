@@ -85,6 +85,7 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
 static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
 static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package);
 static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package);
+static UINT ACTION_RegisterUser(MSIPACKAGE *package);
 static UINT ACTION_CreateShortcuts(MSIPACKAGE *package);
 static UINT ACTION_PublishProduct(MSIPACKAGE *package);
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package);
@@ -311,7 +312,7 @@ struct _actions StandardActions[] = {
     { szRegisterProduct, ACTION_RegisterProduct },
     { szRegisterProgIdInfo, ACTION_RegisterProgIdInfo },
     { szRegisterTypeLibraries, ACTION_RegisterTypeLibraries },
-    { szRegisterUser, NULL},
+    { szRegisterUser, ACTION_RegisterUser},
     { szRemoveDuplicateFiles, NULL},
     { szRemoveEnvironmentStrings, NULL},
     { szRemoveExistingProducts, NULL},
@@ -5106,7 +5107,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {'A','R','P','S','I','Z','E',0},
 {'A','R','P','U','R','L','I','N','F','O','A','B','O','U','T',0},
 {'A','R','P','U','R','L','U','P','D','A','T','E','I','N','F','O',0},
-{'P','r','o','d','u','c','t','I','D',0},
 {0},
     };
 
@@ -5126,7 +5126,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {'S','i','z','e',0},
 {'U','R','L','I','n','f','o','A','b','o','u','t',0},
 {'U','R','L','U','p','d','a','t','e','I','n','f','o',0},
-{'P','r','o','d','u','c','t','I','D',0},
 {0},
     };
 
@@ -5559,6 +5558,70 @@ static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
 end:
     return rc;
+}
+
+static UINT ACTION_RegisterUser(MSIPACKAGE *package)
+{
+    static const WCHAR szProductCode[]=
+         {'P','r','o','d','u','c','t','C','o','d','e',0};
+    static const WCHAR szProductID[]=
+         {'P','r','o','d','u','c','t','I','D',0};
+    HKEY hkey=0;
+    LPWSTR buffer;
+    LPWSTR productcode;
+    LPWSTR productid;
+    UINT rc,i;
+    DWORD size;
+
+    static const WCHAR szPropKeys[][80] = 
+    {
+{'P','r','o','d','u','c','t','I','D',0},
+{'U','S','E','R','N','A','M','E',0},
+{'C','O','M','P','A','N','Y','N','A','M','E',0},
+{0},
+    };
+
+    static const WCHAR szRegKeys[][80] = 
+    {
+{'P','r','o','d','u','c','t','I','D',0},
+{'R','e','g','O','w','n','e','r',0},
+{'R','e','g','C','o','m','p','a','n','y',0},
+{0},
+    };
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    productid = load_dynamic_property(package,szProductID,&rc);
+    if (!productid)
+        return ERROR_SUCCESS;
+
+    productcode = load_dynamic_property(package,szProductCode,&rc);
+    if (!productcode)
+        return rc;
+
+    rc = MSIREG_OpenUninstallKey(productcode,&hkey,TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    i = 0;
+    while (szPropKeys[i][0]!=0)
+    {
+        buffer = load_dynamic_property(package,szPropKeys[i],&rc);
+        if (rc == ERROR_SUCCESS)
+        {
+            size = strlenW(buffer)*sizeof(WCHAR);
+            RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
+        }
+        i++;
+    }
+
+end:
+    HeapFree(GetProcessHeap(),0,productcode);
+    HeapFree(GetProcessHeap(),0,productid);
+    RegCloseKey(hkey);
+
+    return ERROR_SUCCESS;
 }
 
 /* Msi functions that seem appropriate here */
