@@ -576,7 +576,7 @@ static void X11DRV_GetTextMetricsA_cp932( fontObject* pfo, LPTEXTMETRICA pTM )
     if ( pfo_ansi != NULL )
     {
 	pTM->tmAveCharWidth = floor((pfo_ansi->foAvgCharWidth * 2.0 + pfo->foAvgCharWidth) / 3.0 * pfo->rescale + 0.5);
-	pTM->tmMaxCharWidth = __max(pfo_ansi->foMaxCharWidth, pfo->foMaxCharWidth) * pfo->rescale;
+	pTM->tmMaxCharWidth = max(pfo_ansi->foMaxCharWidth, pfo->foMaxCharWidth) * pfo->rescale;
     }
     else
     {

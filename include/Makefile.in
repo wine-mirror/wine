@@ -39,6 +39,7 @@ INSTALLED_INCLUDES = \
 	mapidefs.h \
 	mciavi.h \
 	mcx.h \
+	minmax.h \
 	mmreg.h \
 	mmsystem.h \
 	msacm.h \
