@@ -170,6 +170,12 @@ extern HRESULT WINAPI IDirectMusicScriptTrack_IPersistStream_Load (LPPERSISTSTRE
 extern HRESULT WINAPI IDirectMusicScriptTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicScriptTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dmscript.dll
+ */
+extern LONG DMSCRIPT_refCount;
+static inline void DMSCRIPT_LockModule() { InterlockedIncrement( &DMSCRIPT_refCount ); }
+static inline void DMSCRIPT_UnlockModule() { InterlockedDecrement( &DMSCRIPT_refCount ); }
 
 /*****************************************************************************
  * Misc.

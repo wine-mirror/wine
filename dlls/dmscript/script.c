@@ -67,6 +67,8 @@ ULONG WINAPI IDirectMusicScriptImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 
   TRACE("(%p): AddRef from %ld\n", This, ref - 1);
 
+  DMSCRIPT_LockModule();
+
   return ref;
 }
 
@@ -83,6 +85,9 @@ ULONG WINAPI IDirectMusicScriptImpl_IUnknown_Release (LPUNKNOWN iface) {
     HeapFree(GetProcessHeap(), 0, This->pwzSource);
     HeapFree(GetProcessHeap(), 0, This);
   }
+
+  DMSCRIPT_UnlockModule();
+  
   return ref;
 }
 
