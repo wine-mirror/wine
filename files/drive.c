@@ -787,18 +787,6 @@ WCHAR *DRIVE_BuildEnv(void)
 
 
 /***********************************************************************
- *           GetDiskFreeSpace   (KERNEL.422)
- */
-BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
-                                  LPDWORD sector_bytes, LPDWORD free_clusters,
-                                  LPDWORD total_clusters )
-{
-    return GetDiskFreeSpaceA( root, cluster_sectors, sector_bytes,
-                                free_clusters, total_clusters );
-}
-
-
-/***********************************************************************
  *           GetDiskFreeSpaceW   (KERNEL32.@)
  *
  * Fails if expression resulting from current drive's dir and "root"
@@ -1029,26 +1017,6 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root, PULARGE_INTEGER avail,
 }
 
 /***********************************************************************
- *           GetDriveType   (KERNEL.136)
- * This function returns the type of a drive in Win16.
- * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
- * remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
- * verified on Win 3.11 and Windows 95. Some programs rely on it, so don't
- * do any pseudo-clever changes.
- *
- * RETURNS
- *	drivetype DRIVE_xxx
- */
-UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of drive */
-{
-    UINT type = DRIVE_GetType(drive);
-    TRACE("(%c:)\n", 'A' + drive );
-    if (type == DRIVE_CDROM) type = DRIVE_REMOTE;
-    return type;
-}
-
-
-/***********************************************************************
  *           GetDriveTypeW   (KERNEL32.@)
  *
  * Returns the type of the disk drive specified. If root is NULL the
@@ -1172,15 +1140,6 @@ UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
         }
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           SetCurrentDirectory   (KERNEL.412)
- */
-BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
-{
-    return SetCurrentDirectoryA( dir );
 }
 
 

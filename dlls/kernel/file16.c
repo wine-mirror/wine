@@ -45,22 +45,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
+
 /***********************************************************************
- *           _hread16   (KERNEL.349)
+ *           GetProfileInt   (KERNEL.57)
  */
-LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
+UINT16 WINAPI GetProfileInt16( LPCSTR section, LPCSTR entry, INT16 def_val )
 {
-    return _lread( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
+    return GetPrivateProfileInt16( section, entry, def_val, "win.ini" );
 }
 
 
 /***********************************************************************
- *           _hwrite   (KERNEL.350)
+ *           GetProfileString   (KERNEL.58)
  */
-LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
+INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
+                                 LPSTR buffer, UINT16 len )
 {
-    return _hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
+    return GetPrivateProfileString16( section, entry, def_val,
+                                      buffer, len, "win.ini" );
 }
+
+
+/***********************************************************************
+ *           WriteProfileString   (KERNEL.59)
+ */
+BOOL16 WINAPI WriteProfileString16( LPCSTR section, LPCSTR entry,
+                                    LPCSTR string )
+{
+    return WritePrivateProfileString16( section, entry, string, "win.ini" );
+}
+
 
 /***********************************************************************
  *           _lclose   (KERNEL.81)
@@ -152,23 +166,6 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 
 
 /***********************************************************************
- *           DeleteFile   (KERNEL.146)
- */
-BOOL16 WINAPI DeleteFile16( LPCSTR path )
-{
-    return DeleteFileA( path );
-}
-
-/**************************************************************************
- *           GetFileAttributes   (KERNEL.420)
- */
-DWORD WINAPI GetFileAttributes16( LPCSTR name )
-{
-    return GetFileAttributesA( name );
-}
-
-
-/***********************************************************************
  *           GetTempFileName   (KERNEL.97)
  */
 UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
@@ -216,12 +213,114 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     return ret;
 }
 
-/**************************************************************************
- *              SetFileAttributes	(KERNEL.421)
+
+/***********************************************************************
+ *           GetPrivateProfileInt   (KERNEL.127)
  */
-BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
+UINT16 WINAPI GetPrivateProfileInt16( LPCSTR section, LPCSTR entry,
+                                      INT16 def_val, LPCSTR filename )
 {
-    return SetFileAttributesA( lpFileName, attributes );
+    /* we used to have some elaborate return value limitation (<= -32768 etc.)
+     * here, but Win98SE doesn't care about this at all, so I deleted it.
+     * AFAIR versions prior to Win9x had these limits, though. */
+    return (INT16)GetPrivateProfileIntA(section,entry,def_val,filename);
+}
+
+
+/***********************************************************************
+ *           WritePrivateProfileString   (KERNEL.129)
+ */
+BOOL16 WINAPI WritePrivateProfileString16( LPCSTR section, LPCSTR entry,
+                                           LPCSTR string, LPCSTR filename )
+{
+    return WritePrivateProfileStringA(section,entry,string,filename);
+}
+
+
+/***********************************************************************
+ *           GetWindowsDirectory   (KERNEL.134)
+ */
+UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
+{
+    return GetWindowsDirectoryA( path, count );
+}
+
+
+/***********************************************************************
+ *           GetSystemDirectory   (KERNEL.135)
+ */
+UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
+{
+    return GetSystemDirectoryA( path, count );
+}
+
+
+/***********************************************************************
+ *           GetDriveType   (KERNEL.136)
+ * This function returns the type of a drive in Win16.
+ * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
+ * remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
+ * verified on Win 3.11 and Windows 95. Some programs rely on it, so don't
+ * do any pseudo-clever changes.
+ */
+UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of drive */
+{
+    UINT type;
+    WCHAR root[3];
+
+    root[0] = 'A' + drive;
+    root[1] = ':';
+    root[2] = 0;
+    type = GetDriveTypeW( root );
+    if (type == DRIVE_CDROM) type = DRIVE_REMOTE;
+    return type;
+}
+
+
+/***********************************************************************
+ *           GetProfileSectionNames   (KERNEL.142)
+ */
+WORD WINAPI GetProfileSectionNames16(LPSTR buffer, WORD size)
+
+{
+    return GetPrivateProfileSectionNamesA(buffer,size,"win.ini");
+}
+
+
+/***********************************************************************
+ *           GetPrivateProfileSectionNames   (KERNEL.143)
+ */
+WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
+                                             LPCSTR filename )
+{
+    return GetPrivateProfileSectionNamesA(buffer,size,filename);
+}
+
+
+/***********************************************************************
+ *           CreateDirectory   (KERNEL.144)
+ */
+BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
+{
+    return CreateDirectoryA( path, NULL );
+}
+
+
+/***********************************************************************
+ *           RemoveDirectory   (KERNEL.145)
+ */
+BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
+{
+    return RemoveDirectoryA( path );
+}
+
+
+/***********************************************************************
+ *           DeleteFile   (KERNEL.146)
+ */
+BOOL16 WINAPI DeleteFile16( LPCSTR path )
+{
+    return DeleteFileA( path );
 }
 
 
@@ -231,6 +330,53 @@ BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
     return SetHandleCount( count );
+}
+
+
+/***********************************************************************
+ *           _hread16   (KERNEL.349)
+ */
+LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
+{
+    return _lread( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
+}
+
+
+/***********************************************************************
+ *           _hwrite   (KERNEL.350)
+ */
+LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
+{
+    return _hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
+}
+
+
+/***********************************************************************
+ *           WritePrivateProfileStruct (KERNEL.406)
+ */
+BOOL16 WINAPI WritePrivateProfileStruct16 (LPCSTR section, LPCSTR key,
+                                           LPVOID buf, UINT16 bufsize, LPCSTR filename)
+{
+    return WritePrivateProfileStructA( section, key, buf, bufsize, filename );
+}
+
+
+/***********************************************************************
+ *           GetPrivateProfileStruct (KERNEL.407)
+ */
+BOOL16 WINAPI GetPrivateProfileStruct16(LPCSTR section, LPCSTR key,
+                                        LPVOID buf, UINT16 len, LPCSTR filename)
+{
+    return GetPrivateProfileStructA( section, key, buf, len, filename );
+}
+
+
+/***********************************************************************
+ *           SetCurrentDirectory   (KERNEL.412)
+ */
+BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
+{
+    return SetCurrentDirectoryA( dir );
 }
 
 
@@ -291,4 +437,72 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
     GlobalUnlock16( handle );
     GlobalFree16( handle );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           WritePrivateProfileSection   (KERNEL.416)
+ */
+BOOL16 WINAPI WritePrivateProfileSection16( LPCSTR section,
+                                            LPCSTR string, LPCSTR filename )
+{
+    return WritePrivateProfileSectionA( section, string, filename );
+}
+
+
+/***********************************************************************
+ *           WriteProfileSection   (KERNEL.417)
+ */
+BOOL16 WINAPI WriteProfileSection16( LPCSTR section, LPCSTR keys_n_values)
+{
+    return WritePrivateProfileSection16( section, keys_n_values, "win.ini");
+}
+
+
+/***********************************************************************
+ *           GetPrivateProfileSection   (KERNEL.418)
+ */
+INT16 WINAPI GetPrivateProfileSection16( LPCSTR section, LPSTR buffer,
+                                         UINT16 len, LPCSTR filename )
+{
+    return GetPrivateProfileSectionA( section, buffer, len, filename );
+}
+
+
+/***********************************************************************
+ *           GetProfileSection   (KERNEL.419)
+ */
+INT16 WINAPI GetProfileSection16( LPCSTR section, LPSTR buffer, UINT16 len )
+{
+    return GetPrivateProfileSection16( section, buffer, len, "win.ini" );
+}
+
+
+/**************************************************************************
+ *           GetFileAttributes   (KERNEL.420)
+ */
+DWORD WINAPI GetFileAttributes16( LPCSTR name )
+{
+    return GetFileAttributesA( name );
+}
+
+
+/**************************************************************************
+ *              SetFileAttributes	(KERNEL.421)
+ */
+BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
+{
+    return SetFileAttributesA( lpFileName, attributes );
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpace   (KERNEL.422)
+ */
+BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
+                                  LPDWORD sector_bytes, LPDWORD free_clusters,
+                                  LPDWORD total_clusters )
+{
+    return GetDiskFreeSpaceA( root, cluster_sectors, sector_bytes,
+                                free_clusters, total_clusters );
 }

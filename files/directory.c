@@ -370,15 +370,6 @@ UINT WINAPI GetTempDrive( BYTE ignored )
 
 
 /***********************************************************************
- *           GetWindowsDirectory   (KERNEL.134)
- */
-UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
-{
-    return (UINT16)GetWindowsDirectoryA( path, count );
-}
-
-
-/***********************************************************************
  *           GetWindowsDirectoryW   (KERNEL32.@)
  *
  * See comment for GetWindowsDirectoryA.
@@ -435,15 +426,6 @@ UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetSystemDirectory   (KERNEL.135)
- */
-UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
-{
-    return (UINT16)GetSystemDirectoryA( path, count );
-}
-
-
-/***********************************************************************
  *           GetSystemDirectoryW   (KERNEL32.@)
  *
  * See comment for GetWindowsDirectoryA.
@@ -474,16 +456,6 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
         len--;
     }
     return len;
-}
-
-
-/***********************************************************************
- *           CreateDirectory   (KERNEL.144)
- */
-BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
-{
-    TRACE_(file)("(%s,%p)\n", path, dummy );
-    return (BOOL16)CreateDirectoryA( path, NULL );
 }
 
 
@@ -582,15 +554,6 @@ BOOL WINAPI CreateDirectoryExW( LPCWSTR template, LPCWSTR path,
                                     LPSECURITY_ATTRIBUTES lpsecattribs)
 {
     return CreateDirectoryW(path,lpsecattribs);
-}
-
-
-/***********************************************************************
- *           RemoveDirectory   (KERNEL.145)
- */
-BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
-{
-    return (BOOL16)RemoveDirectoryA( path );
 }
 
 
