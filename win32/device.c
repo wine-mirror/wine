@@ -45,6 +45,11 @@ static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
+static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
 
 static BOOL VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
 
@@ -160,6 +165,7 @@ static const struct VxDInfo VxDList[] =
 
     /* Multimedia OEM IDs */
     { "VTDAPI",   0x0442, NULL, DeviceIo_VTDAPI },
+    { "MMDEVLDR", 0x044A, NULL, DeviceIo_MMDEVLDR },
 
     /* Network Device IDs */
     { "VNetSup",  0x0480, NULL, NULL },
@@ -199,6 +205,7 @@ static const struct VxDInfo VxDList[] =
     { "AFILTER",  0x04A1, NULL, NULL },
     { "IRLAMP",   0x04A2, NULL, NULL },
 
+    /* WINE additions, ids unknown */
     { "MONODEBG.VXD", 0x4242, NULL, DeviceIo_MONODEBG },
 
     { NULL,       0,      NULL, NULL }
@@ -904,10 +911,29 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
     return retv;
 }
 
-
-
-
-
+/* this is the main multimedia device loader */
+static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+	FIXME(win32,"(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+	    dwIoControlCode,
+	    lpvInBuffer,cbInBuffer,
+	    lpvOutBuffer,cbOutBuffer,
+	    lpcbBytesReturned,
+	    lpOverlapped
+	);
+	switch (dwIoControlCode) {
+	case 5:
+		/* Hmm. */
+		*(DWORD*)lpvOutBuffer=0;
+		*lpcbBytesReturned=4;
+		return TRUE;
+	}
+	return FALSE;
+}
 /* this is used by some Origin games */
 static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
