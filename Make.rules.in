@@ -65,7 +65,10 @@ MAKEDEP      = $(TOOLSDIR)/tools/makedep
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
 WIDL         = $(TOOLSDIR)/tools/widl/widl
-WRCFLAGS     = --nostdinc $(INCLUDES) $(EXTRAWRCFLAGS)
+RC           = $(WRC)
+RC16         = $(WRC)
+RCFLAGS      = --nostdinc $(INCLUDES) $(EXTRARCFLAGS)
+RC16FLAGS    = -O res16 $(RCFLAGS)
 LDPATH       = @LDPATH@
 DLLDIR       = $(TOPOBJDIR)/dlls
 LIBDIR       = $(TOPOBJDIR)/libs
@@ -117,7 +120,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(WRC) $(WRCFLAGS) -o $@ $<
+	$(LDPATH) $(RC) $(RCFLAGS) -fo$@ $<
 
 .res.res.o:
 	$(WINDRES) -i $< -o $@
@@ -248,9 +251,7 @@ $(SUBDIRS:%=%/__crosstest__): dummy
 
 # Misc. rules
 
-$(RC_SRCS:.rc=.res): $(WRC)
-
-$(RC_SRCS16:.rc=.res): $(WRC)
+$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC)
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
