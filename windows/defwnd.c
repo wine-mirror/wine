@@ -55,7 +55,7 @@ static const WCHAR imm32W[] = { 'i','m','m','3','2','\0' };
  *
  * Handle the WM_WINDOWPOSCHANGED message.
  */
-static void DEFWND_HandleWindowPosChanged( HWND hwnd, UINT flags )
+static void DEFWND_HandleWindowPosChanged( HWND hwnd, const WINDOWPOS *winpos )
 {
     RECT rect;
     WND *wndPtr = WIN_GetPtr( hwnd );
@@ -63,10 +63,10 @@ static void DEFWND_HandleWindowPosChanged( HWND hwnd, UINT flags )
     rect = wndPtr->rectClient;
     WIN_ReleasePtr( wndPtr );
 
-    if (!(flags & SWP_NOCLIENTMOVE))
+    if (!(winpos->flags & SWP_NOCLIENTMOVE))
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG(rect.left, rect.top));
 
-    if (!(flags & SWP_NOCLIENTSIZE))
+    if (!(winpos->flags & SWP_NOCLIENTSIZE))
     {
         WPARAM wp = SIZE_RESTORED;
         if (IsZoomed(hwnd)) wp = SIZE_MAXIMIZED;
@@ -318,7 +318,7 @@ static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARA
 /***********************************************************************
  *           DEFWND_DefWinProc
  *
- * Default window procedure for messages that are the same in Win16 and Win32.
+ * Default window procedure for messages that are the same in Ansi and Unicode.
  */
 static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
@@ -334,6 +334,16 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             pt.y = (short)HIWORD(lParam);
             return NC_HandleNCHitTest( hwnd, pt );
         }
+
+    case WM_NCCALCSIZE:
+        return NC_HandleNCCalcSize( hwnd, (RECT *)lParam );
+
+    case WM_WINDOWPOSCHANGING:
+        return WINPOS_HandleWindowPosChanging( hwnd, (WINDOWPOS *)lParam );
+
+    case WM_WINDOWPOSCHANGED:
+        DEFWND_HandleWindowPosChanged( hwnd, (const WINDOWPOS *)lParam );
+        break;
 
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN:
@@ -715,79 +725,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 
 /***********************************************************************
- *		DefWindowProc (USER.107)
- */
-LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam,
-                                LPARAM lParam )
-{
-    LRESULT result = 0;
-    HWND hwnd = WIN_Handle32( hwnd16 );
-
-    if (!WIN_IsCurrentProcess( hwnd ))
-    {
-        if (!IsWindow( hwnd )) return 0;
-        ERR( "called for other process window %p\n", hwnd );
-        return 0;
-    }
-    SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
-
-    switch(msg)
-    {
-    case WM_NCCREATE:
-	{
-	    CREATESTRUCT16 *cs = MapSL(lParam);
-	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
-	     * may have child window IDs instead of window name */
-	    if (HIWORD(cs->lpszName))
-                DEFWND_SetTextA( hwnd, MapSL(cs->lpszName) );
-	    result = 1;
-	}
-        break;
-
-    case WM_NCCALCSIZE:
-        {
-            RECT rect32;
-            RECT16 *rect16 = MapSL(lParam);
-
-            rect32.left   = rect16->left;
-            rect32.top    = rect16->top;
-            rect32.right  = rect16->right;
-            rect32.bottom = rect16->bottom;
-            result = NC_HandleNCCalcSize( hwnd, &rect32 );
-            rect16->left   = rect32.left;
-            rect16->top    = rect32.top;
-            rect16->right  = rect32.right;
-            rect16->bottom = rect32.bottom;
-        }
-        break;
-
-    case WM_WINDOWPOSCHANGING:
-        result = WINPOS_HandleWindowPosChanging16( hwnd, MapSL(lParam) );
-        break;
-
-    case WM_WINDOWPOSCHANGED:
-	{
-	    WINDOWPOS16 * winPos = MapSL(lParam);
-            DEFWND_HandleWindowPosChanged( hwnd, winPos->flags );
-	}
-        break;
-
-    case WM_GETTEXT:
-    case WM_SETTEXT:
-        result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)MapSL(lParam) );
-        break;
-
-    default:
-        result = DefWindowProcA( hwnd, msg, wParam, lParam );
-        break;
-    }
-
-    SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result, wParam, lParam );
-    return result;
-}
-
-
-/***********************************************************************
  *		DefWindowProcA (USER32.@)
  *
  */
@@ -816,21 +753,6 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	    if (HIWORD(cs->lpszName))
                 DEFWND_SetTextA( hwnd, cs->lpszName );
 	    result = 1;
-	}
-        break;
-
-    case WM_NCCALCSIZE:
-        result = NC_HandleNCCalcSize( hwnd, (RECT *)lParam );
-        break;
-
-    case WM_WINDOWPOSCHANGING:
-        result = WINPOS_HandleWindowPosChanging( hwnd, (WINDOWPOS *)lParam );
-        break;
-
-    case WM_WINDOWPOSCHANGED:
-	{
-	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
-            DEFWND_HandleWindowPosChanged( hwnd, winPos->flags );
 	}
         break;
 
@@ -972,21 +894,6 @@ LRESULT WINAPI DefWindowProcW(
 	    if (HIWORD(cs->lpszName))
 	        DEFWND_SetTextW( hwnd, cs->lpszName );
 	    result = 1;
-	}
-        break;
-
-    case WM_NCCALCSIZE:
-        result = NC_HandleNCCalcSize( hwnd, (RECT *)lParam );
-        break;
-
-    case WM_WINDOWPOSCHANGING:
-        result = WINPOS_HandleWindowPosChanging( hwnd, (WINDOWPOS *)lParam );
-        break;
-
-    case WM_WINDOWPOSCHANGED:
-	{
-	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
-            DEFWND_HandleWindowPosChanged( hwnd, winPos->flags );
 	}
         break;
 

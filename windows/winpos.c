@@ -1101,32 +1101,6 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
 
 
 /***********************************************************************
- *           WINPOS_HandleWindowPosChanging16
- *
- * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
- */
-LONG WINPOS_HandleWindowPosChanging16( HWND hwnd, WINDOWPOS16 *winpos )
-{
-    POINT minTrack, maxTrack;
-    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-
-    if (winpos->flags & SWP_NOSIZE) return 0;
-    if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
-    {
-	WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
-	if (winpos->cx > maxTrack.x) winpos->cx = maxTrack.x;
-	if (winpos->cy > maxTrack.y) winpos->cy = maxTrack.y;
-	if (!(style & WS_MINIMIZE))
-	{
-	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
-	    if (winpos->cy < minTrack.y ) winpos->cy = minTrack.y;
-	}
-    }
-    return 0;
-}
-
-
-/***********************************************************************
  *           WINPOS_HandleWindowPosChanging
  *
  * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
