@@ -38,7 +38,6 @@
 #include "win.h"
 #include "winpos.h"
 #include "dce.h"
-#include "options.h"
 #include "hook.h"
 #include "mwm.h"
 
@@ -74,6 +73,7 @@ static LPCSTR icon_window_atom;
  */
 inline static BOOL is_window_managed( WND *win )
 {
+    if (!managed_mode) return FALSE;
     /* tray window is always managed */
     if (win->dwExStyle & WS_EX_TRAYWINDOW) return TRUE;
     /* child windows are not managed */

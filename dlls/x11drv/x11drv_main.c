@@ -39,7 +39,6 @@
 #include "wine/debug.h"
 #include "gdi.h"
 #include "file.h"
-#include "options.h"
 #include "user.h"
 #include "win.h"
 #include "wine_gl.h"
@@ -61,6 +60,7 @@ unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
 int dxgrab, usedga, usexvidmode;
+int managed_mode = 1;
 
 unsigned int X11DRV_server_startticks;
 
@@ -231,6 +231,9 @@ static void setup_options(void)
         ** sizing entry */
         if (!IS_OPTION_FALSE(buffer[0])) desktop_geometry = strdup(buffer);
     }
+
+    if (!get_config_key( hkey, appkey, "Managed", buffer, sizeof(buffer) ))
+        managed_mode = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "DXGrab", buffer, sizeof(buffer) ))
         dxgrab = IS_OPTION_TRUE( buffer[0] );

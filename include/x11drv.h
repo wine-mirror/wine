@@ -351,6 +351,7 @@ extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
 extern unsigned int text_caps;
+extern int managed_mode;
 
 extern Atom wmProtocols;
 extern Atom wmDeleteWindow;
