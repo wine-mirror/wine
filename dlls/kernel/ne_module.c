@@ -1162,22 +1162,23 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     enum loadorder_type loadorder[LOADORDER_NTYPES];
     int i;
     const char *filetype = "";
-    const char *ptr;
+    const char *ptr, *basename;
 
     /* strip path information */
 
-    if (libname[0] && libname[1] == ':') libname += 2;  /* strip drive specification */
-    if ((ptr = strrchr( libname, '\\' ))) libname = ptr + 1;
-    if ((ptr = strrchr( libname, '/' ))) libname = ptr + 1;
+    basename = libname;
+    if (basename[0] && basename[1] == ':') basename += 2;  /* strip drive specification */
+    if ((ptr = strrchr( basename, '\\' ))) basename = ptr + 1;
+    if ((ptr = strrchr( basename, '/' ))) basename = ptr + 1;
 
-    if (is_builtin_present(libname))
+    if (is_builtin_present(basename))
     {
-        TRACE( "forcing loadorder to builtin for %s\n", debugstr_a(libname) );
+        TRACE( "forcing loadorder to builtin for %s\n", debugstr_a(basename) );
         /* force builtin loadorder since the dll is already in memory */
         loadorder[0] = LOADORDER_BI;
         loadorder[1] = LOADORDER_INVALID;
     }
-    else MODULE_GetLoadOrder(loadorder, libname, FALSE);
+    else MODULE_GetLoadOrder(loadorder, basename, FALSE);
 
     for(i = 0; i < LOADORDER_NTYPES; i++)
     {
