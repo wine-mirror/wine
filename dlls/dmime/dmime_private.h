@@ -960,4 +960,7 @@ extern const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask);
 /* dump whole DMUS_OBJECTDESC struct */
 extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
 
+HRESULT IDirectMusicImpl_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
+HRESULT IDirectMusicImpl_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
+
 #endif	/* __WINE_DMIME_PRIVATE_H */

@@ -214,31 +214,77 @@ ICOM_VTABLE(IDirectMusicTrack8) DirectMusicTempoTrack_Track_Vtbl = {
 
 /* IDirectMusicTempoTrack IPersistStream part: */
 HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTempoTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
+  return IDirectMusicTempoTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 ULONG WINAPI IDirectMusicTempoTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTempoTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
+  return IDirectMusicTempoTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 ULONG WINAPI IDirectMusicTempoTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTempoTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
+  return IDirectMusicTempoTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
+  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
+  FIXME("(%p, %p): stub\n", This, pClassID);
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
+  FIXME("(%p): stub, always S_FALSE\n", This);
+  return S_FALSE;
 }
 
 HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-	FIXME(": Loading not implemented yet\n");
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
+  DMUS_PRIVATE_CHUNK Chunk;
+  DWORD StreamSize, StreamCount;
+  LARGE_INTEGER liMove;
+  DMUS_IO_TEMPO_ITEM item;
+  DWORD nItem = 0;
+  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
+  
+#if 1
+  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+  switch (Chunk.fccID) {	
+  case DMUS_FOURCC_TEMPO_TRACK: {
+    TRACE_(dmfile)(": tempo track\n");
+#if 1
+    IStream_Read (pStm, &StreamSize, sizeof(DWORD), NULL);
+    StreamSize -= sizeof(DWORD);
+    StreamCount = 0;
+    TRACE_(dmfile)(": items (size = %lu, chunkSize = %lu)\n", StreamSize, Chunk.dwSize - sizeof(DWORD));
+    do {
+      IStream_Read (pStm, &item, sizeof(item), NULL);
+      ++nItem;
+      TRACE_(dmfile)("DMUS_IO_TEMPO_ITEM: item %ld\n", nItem);
+      TRACE_(dmfile)(" - lTime = %lu\n", item.lTime);
+      TRACE_(dmfile)(" - dblTempo = %g\n", item.dblTempo);
+      StreamCount += sizeof(item);
+      TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+    } while (StreamCount < StreamSize); 
+#else    
+    liMove.QuadPart = Chunk.dwSize;
+    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+#endif
+    break;
+  }
+  default: {
+    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
+    liMove.QuadPart = Chunk.dwSize;
+    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+    return E_FAIL;
+  }
+  }
+#endif
+
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {

@@ -191,7 +191,9 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate (LPDIREC
   } else {
     if (This->fActive) return S_OK;
     This->fActive = TRUE;
-    IDirectSoundBuffer_Stop(This->pDSBuffer);
+    if (NULL != This->pDSBuffer) {
+      IDirectSoundBuffer_Stop(This->pDSBuffer);
+    }
   }
   return S_OK;
 }

@@ -209,39 +209,265 @@ ICOM_VTABLE(IDirectMusicTrack8) DirectMusicSegTriggerTrack_Track_Vtbl = {
 
 /* IDirectMusicSegTriggerTrack IPersistStream part: */
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
-	return IDirectMusicSegTriggerTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+  return IDirectMusicSegTriggerTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 ULONG WINAPI IDirectMusicSegTriggerTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
-	return IDirectMusicSegTriggerTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+  return IDirectMusicSegTriggerTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 ULONG WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
-	return IDirectMusicSegTriggerTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+  return IDirectMusicSegTriggerTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
+  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
+  FIXME("(%p, %p): stub\n", This, pClassID);
+  return E_NOTIMPL;
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+  FIXME("(%p): stub, always S_FALSE\n", This);
+  return S_FALSE;
 }
 
+static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegTriggerTrack* This) {
+
+  DMUS_PRIVATE_CHUNK Chunk;
+  DWORD ListSize[3], ListCount[3];
+  LARGE_INTEGER liMove; /* used when skipping chunks */
+
+  if (pChunk->fccID != DMUS_FOURCC_SEGMENT_LIST) {
+    ERR_(dmfile)(": %s chunk should be a SEGMENT list\n", debugstr_fourcc (pChunk->fccID));
+    return E_FAIL;
+  }
+
+  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
+  ListCount[0] = 0;
+
+  do {
+    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    switch (Chunk.fccID) { 
+    case DMUS_FOURCC_SEGMENTITEM_CHUNK: {
+      TRACE_(dmfile)(": segment item chunk\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      break;
+    }
+    case DMUS_FOURCC_SEGMENTITEMNAME_CHUNK: {
+      TRACE_(dmfile)(": segment item name chunk\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      break;
+    }
+    case FOURCC_LIST: {
+      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
+      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
+      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
+      ListCount[1] = 0;
+      switch (Chunk.fccID) { 
+	/**
+	 * should be a DMRF (DirectMusic Reference) list @TODO
+	 */
+      default: {
+	TRACE_(dmfile)(": unknown (skipping)\n");
+	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
+	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	break;						
+      }
+      }	
+      break;
+    }
+    default: {
+      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      break;						
+    }
+    }
+    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+  } while (ListCount[0] < ListSize[0]);
+  
+  return S_OK;
+}
+
+static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegTriggerTrack* This) {
+
+  HRESULT hr = E_FAIL;
+  DMUS_PRIVATE_CHUNK Chunk;
+  DWORD ListSize[3], ListCount[3];
+  LARGE_INTEGER liMove; /* used when skipping chunks */
+
+  if (pChunk->fccID != DMUS_FOURCC_SEGMENTS_LIST) {
+    ERR_(dmfile)(": %s chunk should be a SEGMENTS list\n", debugstr_fourcc (pChunk->fccID));
+    return E_FAIL;
+  }
+
+  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
+  ListCount[0] = 0;
+
+  do {
+    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    switch (Chunk.fccID) { 
+    case FOURCC_LIST: {
+      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
+      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
+      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
+      ListCount[1] = 0;
+      switch (Chunk.fccID) { 
+      case DMUS_FOURCC_SEGMENT_LIST: {
+	TRACE_(dmfile)(": SEGMENT list\n"); 
+	hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (iface, &Chunk, pStm, This);
+	if (FAILED(hr)) return hr;	
+	break;
+      }
+      default: {
+	TRACE_(dmfile)(": unknown (skipping)\n");
+	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
+	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	break;						
+      }
+      }	
+      break;
+    }
+    default: {
+      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      break;						
+    }
+    }
+    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+  } while (ListCount[0] < ListSize[0]);
+  
+  return S_OK;
+}
+
+static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegTriggerTrack* This) {
+
+  HRESULT hr = E_FAIL;
+  DMUS_PRIVATE_CHUNK Chunk;
+  DWORD ListSize[3], ListCount[3];
+  LARGE_INTEGER liMove; /* used when skipping chunks */
+
+  if (pChunk->fccID != DMUS_FOURCC_SEGTRACK_LIST) {
+    ERR_(dmfile)(": %s chunk should be a TRACK list\n", debugstr_fourcc (pChunk->fccID));
+    return E_FAIL;
+  }  
+
+  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
+  ListCount[0] = 0;
+
+  do {
+    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    switch (Chunk.fccID) { 
+    case DMUS_FOURCC_SEGTRACK_CHUNK: {
+      FIXME_(dmfile)(": segment trigger track chunk\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      break;
+    }
+    case FOURCC_LIST: {
+      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
+      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
+      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
+      ListCount[1] = 0;
+      switch (Chunk.fccID) { 
+      case DMUS_FOURCC_SEGMENTS_LIST: {
+	TRACE_(dmfile)(": SEGMENTS list\n"); 
+	hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (iface, &Chunk, pStm, This);
+	if (FAILED(hr)) return hr;
+	break;
+      }
+      default: {
+	TRACE_(dmfile)(": unknown (skipping)\n");
+	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
+	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	break;						
+      }
+      }	
+      break;
+    }
+    default: {
+      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      break;						
+    }
+    }
+    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+  } while (ListCount[0] < ListSize[0]);
+
+  return S_OK;
+}
+
+
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-	FIXME(": Loading not implemented yet\n");
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+
+  DMUS_PRIVATE_CHUNK Chunk;
+  LARGE_INTEGER liMove;
+  HRESULT hr;
+
+  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
+  
+#if 1
+  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+  switch (Chunk.fccID) {	
+  case FOURCC_LIST: {
+    IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    switch (Chunk.fccID) {
+    case DMUS_FOURCC_SEGTRACK_LIST: {
+      TRACE_(dmfile)(": segment trigger track list\n");
+      hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (iface, &Chunk, pStm, This);
+      if (FAILED(hr)) return hr;
+      /*
+	liMove.QuadPart = Chunk.dwSize;
+	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      */
+      
+      break;    
+    }
+    default: {
+      TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
+      liMove.QuadPart = Chunk.dwSize;
+      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      return E_FAIL;
+    }
+    }
+    TRACE_(dmfile)(": reading finished\n");
+    break;
+  }
+  default: {
+    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
+    liMove.QuadPart = Chunk.dwSize;
+    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
+    return E_FAIL;
+  }
+  }  
+#endif
+
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-	return E_NOTIMPL;
+  return E_NOTIMPL;
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-	return E_NOTIMPL;
+  return E_NOTIMPL;
 }
 
 ICOM_VTABLE(IPersistStream) DirectMusicSegTriggerTrack_PersistStream_Vtbl = {
