@@ -700,6 +700,8 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
 /**********************************************************************
  *       CreateProcess32W          (KERNEL32.172)
+ * NOTES
+ *  lpReserved is not converted
  */
 BOOL32 WINAPI CreateProcess32W( LPCWSTR lpApplicationName, LPWSTR lpCommandLine, 
                                 LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -708,13 +710,34 @@ BOOL32 WINAPI CreateProcess32W( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
                                 LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
                                 LPSTARTUPINFO32W lpStartupInfo,
                                 LPPROCESS_INFORMATION lpProcessInfo )
-{
-    FIXME(win32, "(%s,%s,...): stub\n", debugstr_w(lpApplicationName),
-                 debugstr_w(lpCommandLine));
+{   BOOL32 ret;
+    STARTUPINFO32A StartupInfoA;
+    
+    LPSTR lpApplicationNameA = HEAP_strdupWtoA (GetProcessHeap(),0,lpApplicationName);
+    LPSTR lpCommandLineA = HEAP_strdupWtoA (GetProcessHeap(),0,lpCommandLine);
+    LPSTR lpCurrentDirectoryA = HEAP_strdupWtoA (GetProcessHeap(),0,lpCurrentDirectory);
 
-    /* make from lcc uses system as fallback if CreateProcess returns
-       FALSE, so return false */
-    return FALSE;
+    memcpy (&StartupInfoA, lpStartupInfo, sizeof(STARTUPINFO32A));
+    StartupInfoA.lpDesktop = HEAP_strdupWtoA (GetProcessHeap(),0,lpStartupInfo->lpDesktop);
+    StartupInfoA.lpTitle = HEAP_strdupWtoA (GetProcessHeap(),0,lpStartupInfo->lpTitle);
+
+    TRACE(win32, "(%s,%s,...)\n", debugstr_w(lpApplicationName), debugstr_w(lpCommandLine));
+
+    if (lpStartupInfo->lpReserved)
+      FIXME(win32,"StartupInfo.lpReserved is used, please report (%s)\n", debugstr_w(lpStartupInfo->lpReserved));
+      
+    ret = CreateProcess32A(  lpApplicationNameA,  lpCommandLineA, 
+                             lpProcessAttributes, lpThreadAttributes,
+                             bInheritHandles, dwCreationFlags,
+                             lpEnvironment, lpCurrentDirectoryA,
+                             &StartupInfoA, lpProcessInfo );
+
+    HeapFree( GetProcessHeap(), 0, lpCurrentDirectoryA );
+    HeapFree( GetProcessHeap(), 0, lpCommandLineA );
+    HeapFree( GetProcessHeap(), 0, StartupInfoA.lpDesktop );
+    HeapFree( GetProcessHeap(), 0, StartupInfoA.lpTitle );
+
+    return ret;
 }
 
 /***********************************************************************
