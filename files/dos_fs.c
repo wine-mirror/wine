@@ -52,6 +52,8 @@
 #include "wine/server.h"
 #include "msvcrt/excpt.h"
 
+#include "smb.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosfs);
@@ -121,7 +123,11 @@ typedef struct
     BYTE  attr;
     int   drive;
     int   cur_pos;
-    DOS_DIR *dir;
+    union
+    {
+        DOS_DIR *dos_dir;
+        SMB_DIR *smb_dir;
+    } u;
 } FIND_FIRST_INFO;
 
 
@@ -1154,6 +1160,13 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
       return 0;
     }
 
+    if(shortpath[0]=='\\' && shortpath[1]=='\\')
+    {
+        ERR("UNC pathname %s\n",debugstr_a(shortpath));
+        lstrcpynA( longpath, full_name.short_name, longlen );
+        return lstrlenA(longpath);
+    }
+
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
     lstrcpynA( longpath, full_name.short_name, longlen );
 
@@ -1485,7 +1498,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
     strcat( buffer, "/" );
     p = buffer + strlen(buffer);
 
-    while (DOSFS_ReadDir( info->dir, &long_name, &short_name ))
+    while (DOSFS_ReadDir( info->u.dos_dir, &long_name, &short_name ))
     {
         info->cur_pos++;
 
@@ -1583,12 +1596,12 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     _EnterWin16Lock();
 
     /* Check the cached directory */
-    if (!(info.dir && info.path == path && info.short_mask == short_mask
+    if (!(info.u.dos_dir && info.path == path && info.short_mask == short_mask
                    && info.long_mask == long_mask && info.drive == drive
                    && info.attr == attr && info.cur_pos <= skip))
     {
         /* Not in the cache, open it anew */
-        if (info.dir) DOSFS_CloseDir( info.dir );
+        if (info.u.dos_dir) DOSFS_CloseDir( info.u.dos_dir );
 
         info.path = (LPSTR)path;
         info.long_mask = (LPSTR)long_mask;
@@ -1596,24 +1609,24 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         info.attr = attr;
         info.drive = drive;
         info.cur_pos = 0;
-        info.dir = DOSFS_OpenDir( info.path );
+        info.u.dos_dir = DOSFS_OpenDir( info.path );
     }
 
     /* Skip to desired position */
     while (info.cur_pos < skip)
-        if (info.dir && DOSFS_ReadDir( info.dir, &long_name, &short_name ))
+        if (info.u.dos_dir && DOSFS_ReadDir( info.u.dos_dir, &long_name, &short_name ))
             info.cur_pos++;
         else
             break;
 
-    if (info.dir && info.cur_pos == skip && DOSFS_FindNextEx( &info, entry ))
+    if (info.u.dos_dir && info.cur_pos == skip && DOSFS_FindNextEx( &info, entry ))
         count = info.cur_pos - skip;
     else
         count = 0;
 
     if (!count)
     {
-        if (info.dir) DOSFS_CloseDir( info.dir );
+        if (info.u.dos_dir) DOSFS_CloseDir( info.u.dos_dir );
         memset( &info, '\0', sizeof(info) );
     }
 
@@ -1633,7 +1646,6 @@ HANDLE WINAPI FindFirstFileExA(
 	LPVOID lpSearchFilter,
 	DWORD dwAdditionalFlags)
 {
-    DOS_FULL_NAME full_name;
     HGLOBAL handle;
     FIND_FIRST_INFO *info;
 
@@ -1650,6 +1662,28 @@ HANDLE WINAPI FindFirstFileExA(
           WIN32_FIND_DATAA * data = (WIN32_FIND_DATAA *) lpFindFileData;
           data->dwReserved0 = data->dwReserved1 = 0x0;
           if (!lpFileName) return 0;
+          if (lpFileName[0] == '\\' && lpFileName[1] == '\\')
+          {
+              ERR("UNC path name\n");
+              if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
+
+              info = (FIND_FIRST_INFO *)GlobalLock( handle );
+              info->u.smb_dir = SMB_FindFirst(lpFileName);
+              if(info->u.smb_dir < 0)
+              {
+                 GlobalUnlock( handle );
+                 GlobalFree(handle);
+                 break;
+              }
+
+              info->drive = -1;
+
+              GlobalUnlock( handle );
+          }
+          else
+          {
+            DOS_FULL_NAME full_name;
+
           if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
           if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
           info = (FIND_FIRST_INFO *)GlobalLock( handle );
@@ -1664,9 +1698,10 @@ HANDLE WINAPI FindFirstFileExA(
           else info->drive = DRIVE_GetCurrentDrive();
           info->cur_pos = 0;
 
-          info->dir = DOSFS_OpenDir( info->path );
-
+            info->u.dos_dir = DOSFS_OpenDir( info->path );
           GlobalUnlock( handle );
+          }
+
           if (!FindNextFileA( handle, data ))
           {
               FindClose( handle );
@@ -1766,28 +1801,41 @@ HANDLE WINAPI FindFirstFileW( LPCWSTR lpFileName, WIN32_FIND_DATAW *lpFindData )
 BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
     FIND_FIRST_INFO *info;
+    BOOL ret = FALSE;
 
     if ((handle == INVALID_HANDLE_VALUE) ||
        !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
+        return ret;
     }
-    GlobalUnlock( handle );
-    if (!info->path || !info->dir)
+    if (info->drive == -1)
+    {
+        ret = SMB_FindNext( info->u.smb_dir, data );
+        if(!ret)
+        {
+            SMB_CloseDir( info->u.smb_dir );
+            HeapFree( GetProcessHeap(), 0, info->path );
+            SetLastError( ERROR_NO_MORE_FILES );
+        }
+        goto done;
+    }
+    else if (!info->path || !info->u.dos_dir)
     {
         SetLastError( ERROR_NO_MORE_FILES );
-        return FALSE;
     }
-    if (!DOSFS_FindNextEx( info, data ))
+    else if (!DOSFS_FindNextEx( info, data ))
     {
-        DOSFS_CloseDir( info->dir ); info->dir = NULL;
+        DOSFS_CloseDir( info->u.dos_dir ); info->u.dos_dir = NULL;
         HeapFree( GetProcessHeap(), 0, info->path );
         info->path = info->long_mask = NULL;
         SetLastError( ERROR_NO_MORE_FILES );
-        return FALSE;
     }
-    return TRUE;
+    else
+        ret = TRUE;
+done:
+    GlobalUnlock( handle );
+    return ret;
 }
 
 
@@ -1825,7 +1873,7 @@ BOOL WINAPI FindClose( HANDLE handle )
     {
         if ((info = (FIND_FIRST_INFO *)GlobalLock( handle )))
         {
-            if (info->dir) DOSFS_CloseDir( info->dir );
+            if (info->u.dos_dir) DOSFS_CloseDir( info->u.dos_dir );
             if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
         }
     }
@@ -2368,7 +2416,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
     else info->drive = DRIVE_GetCurrentDrive();
     info->cur_pos = 0;
 
-    info->dir = DOSFS_OpenDir( info->path );
+    info->u.dos_dir = DOSFS_OpenDir( info->path );
 
     GlobalUnlock16( handle );
     if (!FindNextFile16( handle, data ))
@@ -2394,14 +2442,14 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
         return FALSE;
     }
     GlobalUnlock16( handle );
-    if (!info->path || !info->dir)
+    if (!info->path || !info->u.dos_dir)
     {
         SetLastError( ERROR_NO_MORE_FILES );
         return FALSE;
     }
     if (!DOSFS_FindNextEx( info, data ))
     {
-        DOSFS_CloseDir( info->dir ); info->dir = NULL;
+        DOSFS_CloseDir( info->u.dos_dir ); info->u.dos_dir = NULL;
         HeapFree( GetProcessHeap(), 0, info->path );
         info->path = info->long_mask = NULL;
         SetLastError( ERROR_NO_MORE_FILES );
@@ -2423,7 +2471,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (info->dir) DOSFS_CloseDir( info->dir );
+    if (info->u.dos_dir) DOSFS_CloseDir( info->u.dos_dir );
     if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
     GlobalUnlock16( handle );
     GlobalFree16( handle );

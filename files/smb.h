@@ -25,6 +25,7 @@
 #define SMB_ADDWORD(p,word) { (p)[0] = (word & 0xff); (p)[1] = ((word)>>8)&0xff; }
 #define SMB_GETWORD(p) ( (((p)[1])<<8) | ((p)[0]) )
 #define SMB_ADDDWORD(p,w) { (p)[3]=((w)>>24)&0xff; (p)[2]=((w)>>16)&0xff; (p)[1]=((w)>>8)&0xff; (p)[0]=(w)&0xff; }
+#define SMB_GETDWORD(p) ( (((p)[3])<<24) | (((p)[2])<<16) | (((p)[1])<<8) | ((p)[0]) )
 
 #define SMB_COM_CREATE_DIRECTORY       0x00
 #define SMB_COM_DELETE_DIRECTORY       0x01
@@ -91,10 +92,24 @@
 #define SMB_COM_CLOSE_PRINT_FILE       0xC2
 #define SMB_COM_GET_PRINT_QUEUE        0xC3
 
+#define TRANS2_FIND_FIRST2             0x01
+#define TRANS2_FIND_NEXT2              0x02
+
 extern BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped);
 extern HANDLE WINAPI SMB_CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template );
 
-#endif /* __INC_SMB__ */
+typedef struct tagSMB_DIR
+{
+    int current;
+    int num_entries;
+    unsigned char **entries;
+    unsigned char *buffer;
+} SMB_DIR;
 
+extern SMB_DIR* WINAPI SMB_FindFirst(LPCSTR filename);
+extern BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAA *data );
+extern BOOL WINAPI SMB_CloseDir(SMB_DIR *dir);
+
+#endif /* __INC_SMB__ */

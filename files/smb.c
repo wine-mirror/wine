@@ -26,6 +26,31 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * FIXME:
+ *
+ *   - There is a race condition when two threads try to read from the same
+ *     SMB handle. Either we need to lock the SMB handle for the time we
+ *     use it in the client, or do all reading and writing to the socket
+ *     fd in the server.
+ *
+ *   - Each new handle opens up a new connection to the SMB server. This
+ *     is not ideal, since operations can be multiplexed on one socket. For
+ *     this to work properly we would need to have some way of discovering
+ *     connections that are already open.
+ *
+ *   - All access is currently anonymous. Password protected shares cannot
+ *     be accessed.  We need some way of organising passwords, storing them
+ *     in the config file, or putting up a dialog box for the user.
+ *
+ *   - We don't deal with SMB dialects at all.
+ *
+ *   - SMB supports passing unicode over the wire, should use this if possible.
+ *
+ *   - Implement ability to read named pipes over the network. Would require
+ *     integrate this code with the named pipes code in the server, and
+ *     possibly implementing some support for security tokens.
  */
 
 #include "config.h"
@@ -89,6 +114,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 USHORT SMB_MultiplexId = 0;
 
+struct NB_Buffer
+{
+    unsigned char *buffer;
+    int len;
+};
+
 static int netbios_name(const char *p, unsigned char *buffer)
 {
     char ch;
@@ -129,7 +160,7 @@ static DWORD NB_NameReq(LPCSTR host, unsigned char *buffer, int len)
     NBR_ADDWORD(&buffer[i],0x0020); i+=2;
     NBR_ADDWORD(&buffer[i],0x0001); i+=2;
 
-    ERR("packet is %d bytes in length\n",i);
+    TRACE("packet is %d bytes in length\n",i);
 
     {
         int j;
@@ -145,7 +176,7 @@ static BOOL UNC_SplitName(LPSTR unc, LPSTR *hostname, LPSTR *share, LPSTR *file)
 {
     char *p;
 
-    ERR("%s\n",unc);
+    TRACE("%s\n",unc);
 
     p = strchr(unc,'\\');
     if(!p)
@@ -222,7 +253,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     if(r<0)
         goto err;
 
-    ERR("%d bytes received\n",r);
+    TRACE("%d bytes received\n",r);
 
     if(r!=62)
         goto err;
@@ -234,7 +265,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     if(0x0f & buffer[3])
         goto err;
 
-    ERR("packet is OK\n");
+    TRACE("packet is OK\n");
 
     memcpy(&addr->sin_addr, &buffer[58], sizeof addr->sin_addr);
 
@@ -260,7 +291,7 @@ static BOOL NB_SessionReq(int fd, char *called, char *calling)
     int len = 0,r;
     struct pollfd fds;
 
-    ERR("called %s, calling %s\n",called,calling);
+    TRACE("called %s, calling %s\n",called,calling);
 
     buffer[0] = NB_SESSION_REQ;
     buffer[1] = NB_FIRST;
@@ -296,15 +327,15 @@ static BOOL NB_SessionReq(int fd, char *called, char *calling)
     r = read(fd, buffer, NB_HDRSIZE);
     if((r!=NB_HDRSIZE) || (buffer[0]!=0x82))
     {
-        ERR("Received %d bytes\n",r);
-        ERR("%02x %02x %02x %02x\n", buffer[0],buffer[1],buffer[2],buffer[3]);
+        TRACE("Received %d bytes\n",r);
+        TRACE("%02x %02x %02x %02x\n", buffer[0],buffer[1],buffer[2],buffer[3]);
         return FALSE;
     }
 
     return TRUE;
 }
 
-static BOOL NB_SendData(int fd, unsigned char *data, int size)
+static BOOL NB_SendData(int fd, struct NB_Buffer *out)
 {
     unsigned char buffer[NB_HDRSIZE];
     int r;
@@ -314,14 +345,14 @@ static BOOL NB_SendData(int fd, unsigned char *data, int size)
 
     buffer[0] = NB_SESSION_MSG;
     buffer[1] = NB_FIRST;
-    NBR_ADDWORD(&buffer[2],size);
+    NBR_ADDWORD(&buffer[2],out->len);
 
     r = write(fd, buffer, NB_HDRSIZE);
     if(r!=NB_HDRSIZE)
         return FALSE;
 
-    r = write(fd, data, size);
-    if(r!=size)
+    r = write(fd, out->buffer, out->len);
+    if(r!=out->len)
     {
         ERR("write failed\n");
         return FALSE;
@@ -330,9 +361,9 @@ static BOOL NB_SendData(int fd, unsigned char *data, int size)
     return TRUE;
 }
 
-static BOOL NB_RecvData(int fd, unsigned char *data, int *outlen)
+static BOOL NB_RecvData(int fd, struct NB_Buffer *rx)
 {
-    int r,len;
+    int r;
     unsigned char buffer[NB_HDRSIZE];
 
     r = read(fd, buffer, NB_HDRSIZE);
@@ -342,28 +373,39 @@ static BOOL NB_RecvData(int fd, unsigned char *data, int *outlen)
         return FALSE;
     }
 
-    len = NBR_GETWORD(&buffer[2]);
-    r = read(fd, data, len);
-    if(len!=r)
+    rx->len = NBR_GETWORD(&buffer[2]);
+
+    rx->buffer = HeapAlloc(GetProcessHeap(), 0, rx->len);
+    if(!rx->buffer)
+        return FALSE;
+
+    r = read(fd, rx->buffer, rx->len);
+    if(rx->len!=r)
     {
-        ERR("Received %d bytes\n",r);
+        TRACE("Received %d bytes\n",r);
+        HeapFree(GetProcessHeap(), 0, rx->buffer);
+        rx->buffer = 0;
+        rx->len = 0;
         return FALSE;
     }
-    *outlen = len;
 
     return TRUE;
 }
 
-static BOOL NB_Transaction(int fd, unsigned char *buffer, int len, int *outlen)
+static BOOL NB_Transaction(int fd, struct NB_Buffer *in, struct NB_Buffer *out)
 {
-    int r,i;
+    int r;
     struct pollfd fds;
 
+    if(TRACE_ON(file))
+    {
+        int i;
     DPRINTF("Sending request:\n");
-    for(i=0; i<len; i++)
-        DPRINTF("%02X%c",buffer[i],(((i+1)!=len)&&((i+1)%16))?' ':'\n');
+        for(i=0; i<in->len; i++)
+            DPRINTF("%02X%c",in->buffer[i],(((i+1)!=in->len)&&((i+1)%16))?' ':'\n');
+    }
 
-    if(!NB_SendData(fd,buffer,len))
+    if(!NB_SendData(fd,in))
         return FALSE;
 
     fds.fd = fd;
@@ -377,13 +419,16 @@ static BOOL NB_Transaction(int fd, unsigned char *buffer, int len, int *outlen)
         return FALSE;
     }
 
-    if(!NB_RecvData(fd, buffer, outlen))
+    if(!NB_RecvData(fd, out))
         return FALSE;
 
-    len = *outlen;
+    if(TRACE_ON(file))
+    {
+        int i;
     DPRINTF("Got response:\n");
-    for(i=0; i<len; i++)
-        DPRINTF("%02X%c",buffer[i],(((i+1)!=len)&&((i+1)%16))?' ':'\n');
+        for(i=0; i<out->len; i++)
+            DPRINTF("%02X%c",out->buffer[i],(((i+1)!=out->len)&&((i+1)%16))?' ':'\n');
+    }
 
     return TRUE;
 }
@@ -403,8 +448,31 @@ static BOOL NB_Transaction(int fd, unsigned char *buffer, int len, int *outlen)
 
 static DWORD SMB_GetError(unsigned char *buffer)
 {
-    if(buffer[SMB_ERRCLASS]==0)
+    char *err_class;
+
+    switch(buffer[SMB_ERRCLASS])
+    {
+    case 0:
         return STATUS_SUCCESS;
+    case 1:
+        err_class = "DOS";
+        break;
+    case 2:
+        err_class = "net server";
+        break;
+    case 3:
+        err_class = "hardware";
+        break;
+    case 0xff:
+        err_class = "smb";
+        break;
+    default:
+        err_class = "unknown";
+        break;
+    }
+
+    ERR("%s error %d \n",err_class, buffer[SMB_ERRCODE]);
+
     /* FIXME: return propper error codes */
     return STATUS_INVALID_PARAMETER;
 }
@@ -447,38 +515,48 @@ static const char *SMB_ProtocolDialect = "NT LM 0.12";
 /* FIXME: support multiple SMB dialects */
 static BOOL SMB_NegotiateProtocol(int fd, USHORT *dialect)
 {
-    unsigned char buffer[0x100];
-    int buflen,len = 0;
+    unsigned char buf[0x100];
+    int buflen = 0;
+    struct NB_Buffer tx, rx;
 
-    ERR("\n");
+    TRACE("\n");
 
-    memset(buffer,0,sizeof buffer);
+    memset(buf,0,sizeof buf);
 
-    len = SMB_Header(buffer, SMB_COM_NEGOTIATE, 0, 0);
+    tx.buffer = buf;
+    tx.len = SMB_Header(tx.buffer, SMB_COM_NEGOTIATE, 0, 0);
 
     /* parameters */
-    buffer[len++] = 0; /* no parameters */
+    tx.buffer[tx.len++] = 0; /* no parameters */
 
     /* command buffer */
     buflen = strlen(SMB_ProtocolDialect)+2;  /* include type and nul byte */
-    SMB_ADDWORD(&buffer[len],buflen); len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],buflen); tx.len += 2;
 
-    buffer[len] = 0x02;
-    strcpy(&buffer[len+1],SMB_ProtocolDialect);
-    len += buflen;
+    tx.buffer[tx.len] = 0x02;
+    strcpy(&tx.buffer[tx.len+1],SMB_ProtocolDialect);
+    tx.len += buflen;
 
-    if(!NB_Transaction(fd, buffer, len, &len))
+    rx.buffer = NULL;
+    rx.len = 0;
+    if(!NB_Transaction(fd, &tx, &rx))
     {
         ERR("Failed\n");
         return FALSE;
     }
 
+    if(!rx.buffer)
+        return FALSE;
+
     /* FIXME: check response */
-    if(SMB_GetError(buffer))
+    if(SMB_GetError(rx.buffer))
     {
         ERR("returned error\n");
+        HeapFree(GetProcessHeap(),0,rx.buffer);
         return FALSE;
     }
+
+    HeapFree(GetProcessHeap(),0,rx.buffer);
 
     *dialect = 0;
 
@@ -492,112 +570,156 @@ static BOOL SMB_NegotiateProtocol(int fd, USHORT *dialect)
 
 static BOOL SMB_SessionSetup(int fd, USHORT *userid)
 {
-    unsigned char buffer[0x100];
-    int len = 0;
-    int i,pcount,bcount;
+    unsigned char buf[0x100];
+    int pcount,bcount;
+    struct NB_Buffer rx, tx;
 
-    memset(buffer,0,sizeof buffer);
+    memset(buf,0,sizeof buf);
+    tx.buffer = buf;
 
-    len = SMB_Header(buffer, SMB_COM_SESSION_SETUP_ANDX, 0, 0);
+    tx.len = SMB_Header(tx.buffer, SMB_COM_SESSION_SETUP_ANDX, 0, 0);
 
-    buffer[len++] = 0;    /* no parameters? */
+    tx.buffer[tx.len++] = 0;    /* no parameters? */
 
-    buffer[len++] = 0xff; /* AndXCommand: secondary request */
-    buffer[len++] = 0x00; /* AndXReserved */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* AndXOffset */
-    SMB_ADDWORD(&buffer[len],0x400); len += 2; /* MaxBufferSize */
-    SMB_ADDWORD(&buffer[len],1); len += 2;     /* MaxMpxCount */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* VcNumber */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* SessionKey */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* SessionKey */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* Password length */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* Reserved */
-    SMB_ADDWORD(&buffer[len],0); len += 2;     /* Reserved */
+    tx.buffer[tx.len++] = 0xff; /* AndXCommand: secondary request */
+    tx.buffer[tx.len++] = 0x00; /* AndXReserved */
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* AndXOffset */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0x400); /* MaxBufferSize */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],1);     /* MaxMpxCount */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* VcNumber */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* SessionKey */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* SessionKey */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* Password length */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* Reserved */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);     /* Reserved */
+    tx.len += 2;
 
     /* FIXME: add name and password here */
-    buffer[len++] = 0; /* number of bytes in password */
+    tx.buffer[tx.len++] = 0; /* number of bytes in password */
 
-    if(!NB_Transaction(fd, buffer, len, &len))
+    rx.buffer = NULL;
+    rx.len = 0;
+    if(!NB_Transaction(fd, &tx, &rx))
         return FALSE;
 
-    if(SMB_GetError(buffer))
+    if(!rx.buffer)
         return FALSE;
 
-    pcount = SMB_PARAM_COUNT(buffer);
+    if(SMB_GetError(rx.buffer))
+        goto done;
 
-    if( (SMB_HDRSIZE+pcount*2) > len )
+    pcount = SMB_PARAM_COUNT(rx.buffer);
+
+    if( (SMB_HDRSIZE+pcount*2) > rx.len )
     {
         ERR("Bad parameter count %d\n",pcount);
-        return FALSE;
+        goto done;
     }
 
+    if(TRACE_ON(file))
+    {
+        int i;
     DPRINTF("SMB_COM_SESSION_SETUP response, %d args: ",pcount);
     for(i=0; i<pcount; i++)
-        DPRINTF("%04x ",SMB_PARAM(buffer,i));
+            DPRINTF("%04x ",SMB_PARAM(rx.buffer,i));
     DPRINTF("\n");
-
-    bcount = SMB_BUFFER_COUNT(buffer);
-    if( (SMB_HDRSIZE+pcount*2+2+bcount) > len )
-    {
-        ERR("parameter count %x, buffer count %x, len %x\n",pcount,bcount,len);
-        return FALSE;
     }
 
+    bcount = SMB_BUFFER_COUNT(rx.buffer);
+    if( (SMB_HDRSIZE+pcount*2+2+bcount) > rx.len )
+    {
+        ERR("parameter count %x, buffer count %x, len %x\n",pcount,bcount,rx.len);
+        goto done;
+    }
+
+    if(TRACE_ON(file))
+    {
+        int i;
     DPRINTF("response buffer %d bytes: ",bcount);
     for(i=0; i<bcount; i++)
     {
-        unsigned char ch = SMB_BUFFER(buffer,i);
+            unsigned char ch = SMB_BUFFER(rx.buffer,i);
         DPRINTF("%c", isprint(ch)?ch:' ');
     }
     DPRINTF("\n");
+    }
 
-    *userid = SMB_GETWORD(&buffer[SMB_USERID]);
+    *userid = SMB_GETWORD(&rx.buffer[SMB_USERID]);
 
+    HeapFree(GetProcessHeap(),0,rx.buffer);
     return TRUE;
+
+done:
+    HeapFree(GetProcessHeap(),0,rx.buffer);
+    return FALSE;
 }
+
 
 static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *treeid)
 {
-    unsigned char buffer[0x100];
-    int len = 0,slen;
+    unsigned char buf[0x100];
+    int slen;
+    struct NB_Buffer rx,tx;
 
-    ERR("%s\n",share_name);
+    TRACE("%s\n",share_name);
 
-    memset(buffer,0,sizeof buffer);
+    memset(buf,0,sizeof buf);
+    tx.buffer = buf;
 
-    len = SMB_Header(buffer, SMB_COM_TREE_CONNECT, 0, user_id);
+    tx.len = SMB_Header(tx.buffer, SMB_COM_TREE_CONNECT, 0, user_id);
 
-    buffer[len++] = 4; /* parameters */
+    tx.buffer[tx.len++] = 4; /* parameters */
 
-    buffer[len++] = 0xff; /* AndXCommand: secondary request */
-    buffer[len++] = 0x00; /* AndXReserved */
-    SMB_ADDWORD(&buffer[len],0); len += 2; /* AndXOffset */
-    SMB_ADDWORD(&buffer[len],0); len += 2; /* Flags */
-    SMB_ADDWORD(&buffer[len],1); len += 2; /* Password length */
+    tx.buffer[tx.len++] = 0xff; /* AndXCommand: secondary request */
+    tx.buffer[tx.len++] = 0x00; /* AndXReserved */
+    SMB_ADDWORD(&tx.buffer[tx.len],0); /* AndXOffset */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],0); /* Flags */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],1); /* Password length */
+    tx.len += 2;
 
     /* SMB command buffer */
-    SMB_ADDWORD(&buffer[len],3); len += 2; /* command buffer len */
-    buffer[len++] = 0; /* null terminated password */
+    SMB_ADDWORD(&tx.buffer[tx.len],3); /* command buffer len */
+    tx.len += 2;
+    tx.buffer[tx.len++] = 0; /* null terminated password */
 
     slen = strlen(share_name);
-    if(slen<(sizeof buffer-len))
-        strcpy(&buffer[len], share_name);
+    if(slen<(sizeof buf-tx.len))
+        strcpy(&tx.buffer[tx.len], share_name);
     else
         return FALSE;
-    len += slen+1;
+    tx.len += slen+1;
 
     /* name of the service */
-    buffer[len++] = 0;
+    tx.buffer[tx.len++] = 0;
 
-    if(!NB_Transaction(fd, buffer, len, &len))
+    rx.buffer = NULL;
+    rx.len = 0;
+    if(!NB_Transaction(fd, &tx, &rx))
         return FALSE;
 
-    if(SMB_GetError(buffer))
+    if(!rx.buffer)
         return FALSE;
 
-    *treeid = SMB_GETWORD(&buffer[SMB_TREEID]);
+    if(SMB_GetError(rx.buffer))
+    {
+        HeapFree(GetProcessHeap(),0,rx.buffer);
+        return FALSE;
+    }
 
-    ERR("OK, treeid = %04x\n", *treeid);
+    *treeid = SMB_GETWORD(&rx.buffer[SMB_TREEID]);
+
+    HeapFree(GetProcessHeap(),0,rx.buffer);
+    TRACE("OK, treeid = %04x\n", *treeid);
 
     return TRUE;
 }
@@ -611,7 +733,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
     unsigned char buffer[0x100];
     int len = 0,slen;
 
-    ERR("%s\n",filename);
+    TRACE("%s\n",filename);
 
     memset(buffer,0,sizeof buffer);
 
@@ -648,7 +770,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
     SMB_ADDDWORD(&buffer[len],sharing);      len += 4; /* ShareAccess */
 
     /* 0x2c */
-    ERR("creation = %08lx\n",creation);
+    TRACE("creation = %08lx\n",creation);
     SMB_ADDDWORD(&buffer[len],creation);      len += 4; /* CreateDisposition */
 
     /* 0x30 */
@@ -678,7 +800,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
     if(SMB_GetError(buffer))
         return FALSE;
 
-    ERR("OK\n");
+    TRACE("OK\n");
 
     /* FIXME */
     /* *file_id = SMB_GETWORD(&buffer[xxx]); */
@@ -735,7 +857,7 @@ static BOOL SMB_OpenAndX(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
     int len = 0;
     USHORT mode;
 
-    ERR("%s\n",filename);
+    TRACE("%s\n",filename);
 
     mode = SMB_GetMode(access,sharing);
 
@@ -758,119 +880,407 @@ static BOOL SMB_OpenAndX(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 }
 #endif
 
+
 static BOOL SMB_Open(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
                               LPCSTR filename, DWORD access, DWORD sharing,
                               DWORD creation, DWORD attributes, USHORT *file_id )
 {
-    unsigned char buffer[0x100];
-    int len = 0,slen,pcount,i;
+    unsigned char buf[0x100];
+    int slen,pcount,i;
     USHORT mode = SMB_GetMode(access,sharing);
+    struct NB_Buffer rx,tx;
 
-    ERR("%s\n",filename);
+    TRACE("%s\n",filename);
 
-    memset(buffer,0,sizeof buffer);
+    memset(buf,0,sizeof buf);
 
-    len = SMB_Header(buffer, SMB_COM_OPEN, tree_id, user_id);
+    tx.buffer = buf;
+    tx.len = SMB_Header(tx.buffer, SMB_COM_OPEN, tree_id, user_id);
 
     /* 0 */
-    buffer[len++] = 2; /* parameters */
-    SMB_ADDWORD(buffer+len,mode); len+=2;
-    SMB_ADDWORD(buffer+len,0);    len+=2; /* search attributes */
+    tx.buffer[tx.len++] = 2; /* parameters */
+    SMB_ADDWORD(tx.buffer+tx.len,mode); tx.len+=2;
+    SMB_ADDWORD(tx.buffer+tx.len,0);    tx.len+=2; /* search attributes */
 
     slen = strlen(filename)+2;   /* inc. nul and BufferFormat */
-    SMB_ADDWORD(buffer+len,slen); len+=2;
+    SMB_ADDWORD(tx.buffer+tx.len,slen); tx.len+=2;
 
-    buffer[len] = 0x04;  /* BufferFormat */
-    strcpy(&buffer[len+1],filename);
-    len += slen;
+    tx.buffer[tx.len] = 0x04;  /* BufferFormat */
+    strcpy(&tx.buffer[tx.len+1],filename);
+    tx.len += slen;
 
-    if(!NB_Transaction(fd, buffer, len, &len))
+    rx.buffer = NULL;
+    rx.len = 0;
+    if(!NB_Transaction(fd, &tx, &rx))
         return FALSE;
 
-    if(SMB_GetError(buffer))
+    if(!rx.buffer)
         return FALSE;
 
-    pcount = SMB_PARAM_COUNT(buffer);
+    if(SMB_GetError(rx.buffer))
+        return FALSE;
 
-    if( (SMB_HDRSIZE+pcount*2) > len )
+    pcount = SMB_PARAM_COUNT(rx.buffer);
+
+    if( (SMB_HDRSIZE+pcount*2) > rx.len )
     {
         ERR("Bad parameter count %d\n",pcount);
         return FALSE;
     }
 
-    ERR("response, %d args: ",pcount);
+    TRACE("response, %d args: ",pcount);
     for(i=0; i<pcount; i++)
-        DPRINTF("%04x ",SMB_PARAM(buffer,i));
+        DPRINTF("%04x ",SMB_PARAM(rx.buffer,i));
     DPRINTF("\n");
 
-    *file_id = SMB_PARAM(buffer,0);
+    *file_id = SMB_PARAM(rx.buffer,0);
 
-    ERR("file_id = %04x\n",*file_id);
+    TRACE("file_id = %04x\n",*file_id);
 
     return TRUE;
 }
 
-static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect, USHORT file_id, DWORD offset, LPVOID out, USHORT count, LPUSHORT read)
-{
-    unsigned char *buffer;
-    int len,buf_size,n,i;
 
-    ERR("user %04x tree %04x file %04x count %04x offset %08lx\n",
+static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
+       USHORT file_id, DWORD offset, LPVOID out, USHORT count, LPUSHORT read)
+{
+    int buf_size,n,i;
+    struct NB_Buffer rx,tx;
+
+    TRACE("user %04x tree %04x file %04x count %04x offset %08lx\n",
         user_id, tree_id, file_id, count, offset);
 
     buf_size = count+0x100;
-    buffer = (unsigned char *) HeapAlloc(GetProcessHeap(),0,buf_size);
+    tx.buffer = (unsigned char *) HeapAlloc(GetProcessHeap(),0,buf_size);
 
-    memset(buffer,0,buf_size);
+    memset(tx.buffer,0,buf_size);
 
-    len = SMB_Header(buffer, SMB_COM_READ, tree_id, user_id);
+    tx.len = SMB_Header(tx.buffer, SMB_COM_READ, tree_id, user_id);
 
-    buffer[len++] = 5;
-    SMB_ADDWORD(&buffer[len],file_id); len += 2;
-    SMB_ADDWORD(&buffer[len],count);   len += 2;
-    SMB_ADDDWORD(&buffer[len],offset); len += 4;
-    SMB_ADDWORD(&buffer[len],0);       len += 2; /* how many more bytes will be read */
+    tx.buffer[tx.len++] = 5;
+    SMB_ADDWORD(&tx.buffer[tx.len],file_id); tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],count);   tx.len += 2;
+    SMB_ADDDWORD(&tx.buffer[tx.len],offset); tx.len += 4;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);       tx.len += 2; /* how many more bytes will be read */
 
-    buffer[len++] = 0;
+    tx.buffer[tx.len++] = 0;
 
-    if(!NB_Transaction(fd, buffer, len, &len))
+    rx.buffer = NULL;
+    rx.len = 0;
+    if(!NB_Transaction(fd, &tx, &rx))
     {
-        HeapFree(GetProcessHeap(),0,buffer);
+        HeapFree(GetProcessHeap(),0,tx.buffer);
         return FALSE;
     }
 
-    if(SMB_GetError(buffer))
+    if(SMB_GetError(rx.buffer))
     {
-        HeapFree(GetProcessHeap(),0,buffer);
+        HeapFree(GetProcessHeap(),0,rx.buffer);
+        HeapFree(GetProcessHeap(),0,tx.buffer);
         return FALSE;
     }
 
-    n = SMB_PARAM_COUNT(buffer);
+    n = SMB_PARAM_COUNT(rx.buffer);
 
-    if( (SMB_HDRSIZE+n*2) > len )
+    if( (SMB_HDRSIZE+n*2) > rx.len )
     {
-        HeapFree(GetProcessHeap(),0,buffer);
+        HeapFree(GetProcessHeap(),0,rx.buffer);
+        HeapFree(GetProcessHeap(),0,tx.buffer);
         ERR("Bad parameter count %d\n",n);
         return FALSE;
     }
 
-    ERR("response, %d args: ",n);
+    TRACE("response, %d args: ",n);
     for(i=0; i<n; i++)
-        DPRINTF("%04x ",SMB_PARAM(buffer,i));
+        DPRINTF("%04x ",SMB_PARAM(rx.buffer,i));
     DPRINTF("\n");
 
-    n = SMB_PARAM(buffer,5) - 3;
+    n = SMB_PARAM(rx.buffer,5) - 3;
     if(n>count)
         n=count;
 
-    memcpy( out, &SMB_BUFFER(buffer,3), n);
+    memcpy( out, &SMB_BUFFER(rx.buffer,3), n);
 
-    ERR("Read %d bytes\n",n);
+    TRACE("Read %d bytes\n",n);
     *read = n;
 
-    HeapFree(GetProcessHeap(),0,buffer);
+    HeapFree(GetProcessHeap(),0,tx.buffer);
+    HeapFree(GetProcessHeap(),0,rx.buffer);
 
     return TRUE;
+}
+
+
+/*
+ * setup_count : number of USHORTs in the setup string
+ */
+struct SMB_Trans2Info
+{
+    struct NB_Buffer buf;
+    unsigned char *setup;
+    int setup_count;
+    unsigned char *params;
+    int param_count;
+    unsigned char *data;
+    int data_count;
+};
+
+/*
+ * Do an SMB transaction
+ *
+ * This function allocates memory in the recv structure. It is
+ * the caller's responsibility to free the memory if it finds
+ * that recv->buf.buffer is nonzero.
+ */
+static BOOL SMB_Transaction2(int fd, int tree_id, int user_id,
+                 struct SMB_Trans2Info *send,
+                 struct SMB_Trans2Info *recv)
+{
+    int buf_size;
+    const int retmaxparams = 0xf000;
+    const int retmaxdata = 1024;
+    const int retmaxsetup = 0; /* FIXME */
+    const int flags = 0;
+    const int timeout = 0;
+    int param_ofs, data_ofs;
+    struct NB_Buffer tx;
+    BOOL ret = FALSE;
+
+    buf_size = 0x100 + send->setup_count*2 + send->param_count + send->data_count ;
+    tx.buffer = (unsigned char *) HeapAlloc(GetProcessHeap(),0,buf_size);
+
+    tx.len = SMB_Header(tx.buffer, SMB_COM_TRANSACTION2, tree_id, user_id);
+
+    tx.buffer[tx.len++] = 14 + send->setup_count;
+    SMB_ADDWORD(&tx.buffer[tx.len],send->param_count); /* total param bytes sent */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],send->data_count);  /* total data bytes sent */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],retmaxparams); /*max parameter bytes to return */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],retmaxdata);  /* max data bytes to return */
+    tx.len += 2;
+    tx.buffer[tx.len++] = retmaxsetup;
+    tx.buffer[tx.len++] = 0;                     /* reserved1 */
+
+    SMB_ADDWORD(&tx.buffer[tx.len],flags);       /* flags */
+    tx.len += 2;
+    SMB_ADDDWORD(&tx.buffer[tx.len],timeout);    /* timeout */
+    tx.len += 4;
+    SMB_ADDWORD(&tx.buffer[tx.len],0);           /* reserved2 */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],send->param_count); /* parameter count - this buffer */
+    tx.len += 2;
+
+    param_ofs = tx.len;                          /* parameter offset */
+    tx.len += 2;
+    SMB_ADDWORD(&tx.buffer[tx.len],send->data_count);  /* data count */
+    tx.len += 2;
+
+    data_ofs = tx.len;                           /* data offset */
+    tx.len += 2;
+    tx.buffer[tx.len++] = send->setup_count;     /* setup count */
+    tx.buffer[tx.len++] = 0;                     /* reserved3 */
+
+    memcpy(&tx.buffer[tx.len], send->setup, send->setup_count*2); /* setup */
+    tx.len += send->setup_count*2;
+
+    /* add string here when implementing SMB_COM_TRANS */
+
+    SMB_ADDWORD(&tx.buffer[param_ofs], tx.len);
+    memcpy(&tx.buffer[tx.len], send->params, send->param_count); /* parameters */
+    tx.len += send->param_count;
+    if(tx.len%2)
+        tx.len ++;                                      /* pad2 */
+
+    SMB_ADDWORD(&tx.buffer[data_ofs], tx.len);
+    if(send->data_count && send->data)
+    {
+        memcpy(&tx.buffer[tx.len], send->data, send->data_count); /* data */
+        tx.len += send->data_count;
+    }
+
+    recv->buf.buffer = NULL;
+    recv->buf.len = 0;
+    if(!NB_Transaction(fd, &tx, &recv->buf))
+        goto done;
+
+    if(!recv->buf.buffer)
+        goto done;
+
+    if(SMB_GetError(recv->buf.buffer))
+        goto done;
+
+    /* reuse these two offsets to check the received message */
+    param_ofs = SMB_PARAM(recv->buf.buffer,4);
+    data_ofs = SMB_PARAM(recv->buf.buffer,7);
+
+    if( (recv->param_count + param_ofs) > recv->buf.len )
+        goto done;
+
+    if( (recv->data_count + data_ofs) > recv->buf.len )
+        goto done;
+
+    TRACE("Success\n");
+
+    recv->setup = NULL;
+    recv->setup_count = 0;
+
+    recv->param_count = SMB_PARAM(recv->buf.buffer,0);
+    recv->params = &recv->buf.buffer[param_ofs];
+
+    recv->data_count = SMB_PARAM(recv->buf.buffer,6);
+    recv->data = &recv->buf.buffer[data_ofs];
+
+   /*
+    TRACE("%d words\n",SMB_PARAM_COUNT(recv->buf.buffer));
+    TRACE("total parameters = %d\n",SMB_PARAM(recv->buf.buffer,0));
+    TRACE("total data       = %d\n",SMB_PARAM(recv->buf.buffer,1));
+    TRACE("parameters       = %d\n",SMB_PARAM(recv->buf.buffer,3));
+    TRACE("parameter offset = %d\n",SMB_PARAM(recv->buf.buffer,4));
+    TRACE("param displace   = %d\n",SMB_PARAM(recv->buf.buffer,5));
+
+    TRACE("data count       = %d\n",SMB_PARAM(recv->buf.buffer,6));
+    TRACE("data offset      = %d\n",SMB_PARAM(recv->buf.buffer,7));
+    TRACE("data displace    = %d\n",SMB_PARAM(recv->buf.buffer,8));
+   */
+
+    ret = TRUE;
+
+done:
+    if(tx.buffer)
+        HeapFree(GetProcessHeap(),0,tx.buffer);
+
+    return ret;
+}
+
+static BOOL SMB_SetupFindFirst(struct SMB_Trans2Info *send, LPSTR filename)
+{
+    int search_attribs = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+    int search_count = 10;
+    int flags = 0;
+    int infolevel = 0x104; /* SMB_FILE_BOTH_DIRECTORY_INFO */
+    int storagetype = 0;
+    int len, buf_size;
+
+    memset(send,0,sizeof send);
+
+    send->setup_count = 1;
+    send->setup = HeapAlloc(GetProcessHeap(),0,send->setup_count*2);
+    if(!send->setup)
+        return FALSE;
+
+    buf_size = 0x10 + lstrlenA(filename);
+    send->params = HeapAlloc(GetProcessHeap(),0,buf_size);
+    if(!send->params)
+    {
+        HeapFree(GetProcessHeap(),0,send->setup);
+        return FALSE;
+    }
+
+    SMB_ADDWORD(send->setup,TRANS2_FIND_FIRST2);
+
+    len = 0;
+    memset(send->params,0,buf_size);
+    SMB_ADDWORD(&send->params[len],search_attribs); len += 2;
+    SMB_ADDWORD(&send->params[len],search_count); len += 2;
+    SMB_ADDWORD(&send->params[len],flags); len += 2;
+    SMB_ADDWORD(&send->params[len],infolevel); len += 2;
+    SMB_ADDDWORD(&send->params[len],storagetype); len += 4;
+
+    strcpy(&send->params[len],filename);
+    len += lstrlenA(filename)+1;
+
+    send->param_count = len;
+    send->data = NULL;
+    send->data_count = 0;
+
+    return TRUE;
+}
+
+static SMB_DIR *SMB_Trans2FindFirst(int fd, USHORT tree_id,
+                    USHORT user_id, USHORT dialect, LPSTR filename )
+{
+    int num;
+    BOOL ret;
+    /* char *filename = "\\*"; */
+    struct SMB_Trans2Info send, recv;
+    SMB_DIR *smbdir = NULL;
+
+    TRACE("patern = %s\n",filename);
+
+    if(!SMB_SetupFindFirst(&send, filename))
+        return FALSE;
+
+    memset(&recv,0,sizeof recv);
+
+    ret = SMB_Transaction2(fd, tree_id, user_id, &send, &recv);
+    HeapFree(GetProcessHeap(),0,send.params);
+    HeapFree(GetProcessHeap(),0,send.setup);
+
+    if(!ret)
+        goto done;
+
+    if(recv.setup_count)
+        goto done;
+
+    if(recv.param_count != 10)
+        goto done;
+
+    num = SMB_GETWORD(&recv.params[2]);
+    TRACE("Success, search id: %d\n",num);
+
+    if(SMB_GETWORD(&recv.params[4]))
+        FIXME("need to read more!\n");
+
+    smbdir = HeapAlloc(GetProcessHeap(),0,sizeof(*smbdir));
+    if(smbdir)
+    {
+        int i, ofs=0;
+
+        smbdir->current = 0;
+        smbdir->num_entries = num;
+        smbdir->entries = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned char*)*num);
+        if(!smbdir->entries)
+            goto done;
+        smbdir->buffer = recv.buf.buffer; /* save to free later */
+
+        for(i=0; i<num; i++)
+        {
+            int size = SMB_GETDWORD(&recv.data[ofs]);
+
+            smbdir->entries[i] = &recv.data[ofs];
+
+            if(TRACE_ON(file))
+            {
+                int j;
+                for(j=0; j<size; j++)
+                    DPRINTF("%02x%c",recv.data[ofs+j],((j+1)%16)?' ':'\n');
+            }
+            TRACE("file %d : %s\n", i, &recv.data[ofs+0x5e]);
+            ofs += size;
+            if(ofs>recv.data_count)
+                goto done;
+        }
+
+        ret = TRUE;
+    }
+
+done:
+    if(!ret)
+    {
+        if( recv.buf.buffer )
+            HeapFree(GetProcessHeap(),0,recv.buf.buffer);
+        if( smbdir )
+        {
+            if( smbdir->entries )
+                HeapFree(GetProcessHeap(),0,smbdir->entries);
+            HeapFree(GetProcessHeap(),0,smbdir);
+        }
+        smbdir = NULL;
+    }
+
+    return smbdir;
 }
 
 static int SMB_GetSocket(LPCSTR host)
@@ -879,10 +1289,7 @@ static int SMB_GetSocket(LPCSTR host)
     struct sockaddr_in sin;
     struct hostent *he;
 
-    ERR("host %s\n",host);
-
-    if(NB_Lookup(host,&sin))
-        goto connect;
+    TRACE("host %s\n",host);
 
     he = gethostbyname(host);
     if(he)
@@ -890,6 +1297,9 @@ static int SMB_GetSocket(LPCSTR host)
         memcpy(&sin.sin_addr,he->h_addr, sizeof (sin.sin_addr));
         goto connect;
     }
+
+    if(NB_Lookup(host,&sin))
+        goto connect;
 
     /* FIXME: resolve by WINS too */
 
@@ -907,7 +1317,7 @@ connect:
 
     {
         unsigned char *x = (unsigned char *)&sin.sin_addr;
-        ERR("Connecting to %d.%d.%d.%d ...\n", x[0],x[1],x[2],x[3]);
+        TRACE("Connecting to %d.%d.%d.%d ...\n", x[0],x[1],x[2],x[3]);
     }
     r = connect(fd, &sin, sizeof sin);
 
@@ -924,7 +1334,7 @@ static BOOL SMB_LoginAndConnect(int fd, LPCSTR host, LPCSTR share, USHORT *tree_
 {
     LPSTR name=NULL;
 
-    ERR("host %s share %s\n",host,share);
+    TRACE("host %s share %s\n",host,share);
 
     if(!SMB_NegotiateProtocol(fd, dialect))
         return FALSE;
@@ -967,7 +1377,7 @@ static HANDLE SMB_RegisterFile( int fd, USHORT tree_id, USHORT user_id, USHORT d
     SERVER_END_REQ;
 
     if(!r)
-        ERR("created wineserver smb object, handle = %04x\n",ret);
+        TRACE("created wineserver smb object, handle = %04x\n",ret);
     else
         SetLastError( ERROR_PATH_NOT_FOUND );
 
@@ -995,7 +1405,7 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
         return handle;
     }
 
-    ERR("server is %s, share is %s, file is %s\n", host, share, file);
+    TRACE("server is %s, share is %s, file is %s\n", host, share, file);
 
     fd = SMB_GetSocket(host);
     if(fd < 0)
@@ -1063,7 +1473,7 @@ static BOOL SMB_SetOffset(HANDLE hFile, DWORD offset)
 {
     int r;
 
-    ERR("offset = %08lx\n",offset);
+    TRACE("offset = %08lx\n",offset);
 
     SERVER_START_REQ( get_smb_info )
     {
@@ -1087,7 +1497,7 @@ BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD
     USHORT user_id, tree_id, dialect, file_id, read;
     BOOL r=TRUE;
 
-    ERR("%04x %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead);
+    TRACE("%04x %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead);
 
     if(!SMB_GetSmbInfo(hFile, &tree_id, &user_id, &dialect, &file_id, &offset))
         return FALSE;
@@ -1125,4 +1535,95 @@ BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD
         return FALSE;
 
     return r;
+}
+
+SMB_DIR* WINAPI SMB_FindFirst(LPCSTR name)
+{
+    int fd = -1;
+    LPSTR host,share,file;
+    USHORT tree_id=0, user_id=0, dialect=0;
+    SMB_DIR *ret = NULL;
+    LPSTR filename;
+
+    TRACE("Find %s\n",debugstr_a(name));
+
+    filename = HeapAlloc(GetProcessHeap(),0,lstrlenA(name)+1);
+    if(!filename)
+        return ret;
+
+    lstrcpyA(filename,name);
+
+    if( !UNC_SplitName(filename, &host, &share, &file) )
+        goto done;
+
+    fd = SMB_GetSocket(host);
+    if(fd < 0)
+        goto done;
+
+    if(!SMB_LoginAndConnect(fd, host, share, &tree_id, &user_id, &dialect))
+        goto done;
+
+    TRACE("server is %s, share is %s, file is %s\n", host, share, file);
+
+    ret = SMB_Trans2FindFirst(fd, tree_id, user_id, dialect, file);
+
+done:
+    /* disconnect */
+    if(fd != -1)
+        close(fd);
+
+    if(filename)
+        HeapFree(GetProcessHeap(),0,filename);
+
+    return ret;
+}
+
+
+BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAA *data )
+{
+    unsigned char *ent;
+    int len, fnlen;
+
+    TRACE("%d of %d\n",dir->current,dir->num_entries);
+
+    if(dir->current >= dir->num_entries)
+        return FALSE;
+
+    memset(data, 0, sizeof *data);
+
+    ent = dir->entries[dir->current];
+    len = SMB_GETDWORD(&ent[0]);
+    if(len<0x5e)
+        return FALSE;
+
+    memcpy(&data->ftCreationTime, &ent[8], 8);
+    memcpy(&data->ftLastAccessTime, &ent[0x10], 8);
+    memcpy(&data->ftLastWriteTime, &ent[0x18], 8);
+    data->nFileSizeHigh = SMB_GETDWORD(&ent[0x30]);
+    data->nFileSizeLow = SMB_GETDWORD(&ent[0x34]);
+    data->dwFileAttributes = SMB_GETDWORD(&ent[0x38]);
+
+    /* copy the long filename */
+    fnlen = SMB_GETDWORD(&ent[0x3c]);
+    if ( fnlen > (sizeof data->cFileName/sizeof(CHAR)) )
+        return FALSE;
+    memcpy(data->cFileName, &ent[0x5e], fnlen);
+
+    /* copy the short filename */
+    if ( ent[0x44] > (sizeof data->cAlternateFileName/sizeof(CHAR)) )
+        return FALSE;
+    memcpy(data->cAlternateFileName, &ent[0x5e + len], ent[0x44]);
+
+    dir->current++;
+
+    return TRUE;
+}
+
+BOOL WINAPI SMB_CloseDir(SMB_DIR *dir)
+{
+    HeapFree(GetProcessHeap(),0,dir->buffer);
+    HeapFree(GetProcessHeap(),0,dir->entries);
+    memset(dir,0,sizeof *dir);
+    HeapFree(GetProcessHeap(),0,dir);
+    return TRUE;
 }
