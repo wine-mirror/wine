@@ -351,14 +351,14 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
         }
 
             /* Send initialisation messages to the control */
-        if (dlgInfo->hUserFont) SendMessageA( hwndCtrl, WM_SETFONT,
+        if (dlgInfo->hUserFont) SendMessageW( hwndCtrl, WM_SETFONT,
                                              (WPARAM)dlgInfo->hUserFont, 0 );
-        if (SendMessageA(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
+        if (SendMessageW(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
         {
               /* If there's already a default push-button, set it back */
               /* to normal and use this one instead. */
             if (hwndDefButton)
-                SendMessageA( hwndDefButton, BM_SETSTYLE, BS_PUSHBUTTON, FALSE );
+                SendMessageW( hwndDefButton, BM_SETSTYLE, BS_PUSHBUTTON, FALSE );
             hwndDefButton = hwndCtrl;
             dlgInfo->idResult = GetWindowLongPtrA( hwndCtrl, GWLP_ID );
         }
@@ -651,7 +651,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     else SetWindowLongA( hwnd, DWL_DLGPROC, (LONG)dlgProc );
 
     if (dlgInfo->hUserFont)
-        SendMessageA( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
+        SendMessageW( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
 
     /* Create controls */
 
@@ -659,7 +659,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     {
         /* Send initialisation messages and set focus */
 
-        if (SendMessageA( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
+        if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
         {
             /* By returning TRUE, app has requested a default focus assignment */
             dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);
@@ -912,7 +912,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM wParam )
         DWORD style = GetWindowLongW( hwndControl, GWL_STYLE );
         if ((style & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE)
         {
-            dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
+            dlgCode = SendMessageW( hwndControl, WM_GETDLGCODE, 0, 0 );
             if ( (dlgCode & (DLGC_BUTTON | DLGC_STATIC)) &&
                  GetWindowTextW( hwndControl, buffer, sizeof(buffer)/sizeof(WCHAR) ))
             {
@@ -931,14 +931,14 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM wParam )
                     if ((dlgCode & DLGC_STATIC) || (style & 0x0f) == BS_GROUPBOX )
                     {
                         /* set focus to the control */
-                        SendMessageA( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndControl, 1);
+                        SendMessageW( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndControl, 1);
                         /* and bump it on to next */
-                        SendMessageA( hwndDlg, WM_NEXTDLGCTL, 0, 0);
+                        SendMessageW( hwndDlg, WM_NEXTDLGCTL, 0, 0);
                     }
                     else if (dlgCode & DLGC_BUTTON)
                     {
                         /* send BM_CLICK message to the control */
-                        SendMessageA( hwndControl, BM_CLICK, 0, 0 );
+                        SendMessageW( hwndControl, BM_CLICK, 0, 0 );
                     }
                     return TRUE;
                 }
@@ -1356,7 +1356,7 @@ UINT WINAPI GetDlgItemInt( HWND hwnd, INT id, BOOL *translated,
  */
 BOOL WINAPI CheckDlgButton( HWND hwnd, INT id, UINT check )
 {
-    SendDlgItemMessageA( hwnd, id, BM_SETCHECK, check, 0 );
+    SendDlgItemMessageW( hwnd, id, BM_SETCHECK, check, 0 );
     return TRUE;
 }
 
@@ -1366,7 +1366,7 @@ BOOL WINAPI CheckDlgButton( HWND hwnd, INT id, UINT check )
  */
 UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
 {
-    return (UINT)SendDlgItemMessageA( hwnd, id, BM_GETCHECK, 0, 0 );
+    return (UINT)SendDlgItemMessageW( hwnd, id, BM_GETCHECK, 0, 0 );
 }
 
 
@@ -1654,25 +1654,26 @@ HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
  *
  * Helper function for DlgDirSelect*
  */
-static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
+static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPWSTR str, INT len,
                                  INT id, BOOL unicode, BOOL combo )
 {
-    char *buffer, *ptr;
+    WCHAR *buffer, *ptr;
     INT item, size;
     BOOL ret;
     HWND listbox = GetDlgItem( hwnd, id );
 
-    TRACE("%p '%s' %d\n", hwnd, str, id );
+    TRACE("%p '%s' %d\n", hwnd, unicode ? debugstr_w(str) : debugstr_a((LPSTR)str), id );
     if (!listbox) return FALSE;
 
-    item = SendMessageA(listbox, combo ? CB_GETCURSEL : LB_GETCURSEL, 0, 0 );
+    item = SendMessageW(listbox, combo ? CB_GETCURSEL : LB_GETCURSEL, 0, 0 );
     if (item == LB_ERR) return FALSE;
-    size = SendMessageA(listbox, combo ? CB_GETLBTEXTLEN : LB_GETTEXTLEN, 0, 0 );
+
+    size = SendMessageW(listbox, combo ? CB_GETLBTEXTLEN : LB_GETTEXTLEN, 0, 0 );
     if (size == LB_ERR) return FALSE;
 
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size+1 ))) return FALSE;
 
-    SendMessageA( listbox, combo ? CB_GETLBTEXT : LB_GETTEXT, item, (LPARAM)buffer );
+    SendMessageW( listbox, combo ? CB_GETLBTEXT : LB_GETTEXT, item, (LPARAM)buffer );
 
     if ((ret = (buffer[0] == '[')))  /* drive or directory */
     {
@@ -1684,20 +1685,20 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
         }
         else
         {
-            buffer[strlen(buffer)-1] = '\\';
+            buffer[strlenW(buffer)-1] = '\\';
             ptr = buffer + 1;
         }
     }
     else ptr = buffer;
 
-    if (unicode)
+    if (!unicode)
     {
-        if (len > 0 && !MultiByteToWideChar( CP_ACP, 0, ptr, -1, (LPWSTR)str, len ))
-            ((LPWSTR)str)[len-1] = 0;
+        if (len > 0 && !WideCharToMultiByte( CP_ACP, 0, ptr, -1, (LPSTR)str, len, 0, 0 ))
+            ((LPSTR)str)[len-1] = 0;
     }
-    else lstrcpynA( str, ptr, len );
+    else lstrcpynW( str, ptr, len );
     HeapFree( GetProcessHeap(), 0, buffer );
-    TRACE("Returning %d '%s'\n", ret, str );
+    TRACE("Returning %d '%s'\n", ret, unicode ? debugstr_w(str) : debugstr_a((LPSTR)str) );
     return ret;
 }
 
@@ -1816,7 +1817,7 @@ static INT DIALOG_DlgDirListA( HWND hDlg, LPSTR spec, INT idLBox,
  */
 BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
 {
-    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, FALSE );
+    return DIALOG_DlgDirSelect( hwnd, (LPWSTR)str, len, id, FALSE, FALSE );
 }
 
 
@@ -1825,7 +1826,7 @@ BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
  */
 BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 {
-    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, FALSE );
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE );
 }
 
 
@@ -1835,7 +1836,7 @@ BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
                                          INT id )
 {
-    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, TRUE );
+    return DIALOG_DlgDirSelect( hwnd, (LPWSTR)str, len, id, FALSE, TRUE );
 }
 
 
@@ -1845,7 +1846,7 @@ BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
 BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
                                          INT id)
 {
-    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE );
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, TRUE );
 }
 
 
