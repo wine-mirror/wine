@@ -155,3 +155,9 @@ LONG WINAPI KERNEL_nop(void)
 {
     return 0;
 }
+
+BOOL WINAPI SwitchToThread(VOID)
+{
+    Sleep(0);
+    return 1;
+}

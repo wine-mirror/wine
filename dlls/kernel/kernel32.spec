@@ -937,7 +937,7 @@ init	MAIN_KernelInit
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long) SetWaitableTimer
 @ stub SignalObjectAndWait
 @ stub SwitchToFiber
-@ stub SwitchToThread
+@ stdcall SwitchToThread() SwitchToThread
 @ forward TryEnterCriticalSection ntdll.RtlTryEnterCriticalSection
 @ stdcall VirtualAllocEx(long ptr long long long) VirtualAllocEx
 @ stub VirtualFreeEx
