@@ -9,6 +9,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	console.c \
 	crtdll_main.c \
 	dir.c \
 	exit.c \

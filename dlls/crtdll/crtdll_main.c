@@ -124,9 +124,16 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 	  __CRTDLL__init_io();
+	  __CRTDLL_init_console();
 	  CRTDLL_setlocale( CRTDLL_LC_ALL, "C" );
 	  CRTDLL_HUGE_dll = HUGE_VAL;
 	}
+	else if (fdwReason == DLL_PROCESS_DETACH)
+        {
+	  CRTDLL__fcloseall();
+	  __CRTDLL_free_console();
+	}
+
 	return TRUE;
 }
 
@@ -1670,5 +1677,69 @@ double __cdecl CRTDLL__nextafter(double x, double y)
   if (!finite(x) || !finite(y)) CRTDLL_errno = EDOM;
     retVal  = nextafter(x,y);
   return retVal;
+}
+
+/*********************************************************************
+ *                  _searchenv        (CRTDLL.260)
+ *
+ * Search CWD and each directory of an environment variable for
+ * location of a file.
+ */
+VOID __cdecl CRTDLL__searchenv(LPCSTR file, LPCSTR env, LPSTR buff)
+{
+  LPSTR envVal, penv;
+  char curPath[MAX_PATH];
+
+  *buff = '\0';
+
+  /* Try CWD first */
+  if (GetFileAttributesA( file ) != 0xFFFFFFFF)
+  {
+    GetFullPathNameA( file, MAX_PATH, buff, NULL );
+    /* Sigh. This error is *always* set, regardless of sucess */
+    __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
+    return;
+  }
+
+  /* Search given environment variable */
+  envVal = CRTDLL_getenv(env);
+  if (!envVal)
+  {
+    __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
+    return;
+  }
+
+  penv = envVal;
+  TRACE(":searching for %s in paths %s\n", file, envVal);
+
+  do
+  {
+    LPSTR end = penv;
+
+	while(*end && *end != ';') end++; /* Find end of next path */
+    if (penv == end || !*penv)
+    {
+      __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
+      return;
+    }
+    strncpy(curPath, penv, end - penv);
+    if (curPath[end - penv] != '/' || curPath[end - penv] != '\\')
+    {
+      curPath[end - penv] = '\\';
+      curPath[end - penv + 1] = '\0';
+    }
+    else
+      curPath[end - penv] = '\0';
+
+    strcat(curPath, file);
+    TRACE("Checking for file %s\n", curPath);
+    if (GetFileAttributesA( curPath ) != 0xFFFFFFFF)
+    {
+      strcpy(buff, curPath);
+      __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
+      return; /* Found */
+    }
+    penv = *end ? end + 1 : end;
+  } while(1);
 }
 

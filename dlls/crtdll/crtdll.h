@@ -55,6 +55,8 @@
 #define _O_TEXT   0x4000
 #define _O_BINARY 0x8000
 
+#define _O_TEMPORARY 0x0040 /* Will be closed and deleted on exit */
+
 /* _access() bit flags FIXME: incomplete */
 #define W_OK      2
 
@@ -246,7 +248,7 @@ typedef INT (__cdecl *comp_func)(LPCVOID, LPCVOID );
 
 /* CRTDLL functions */
 
-/* CRTDLL_dir.c */
+/* dir.c */
 INT    __cdecl CRTDLL__chdir( LPCSTR newdir );
 BOOL   __cdecl CRTDLL__chdrive( INT newdrive );
 INT    __cdecl CRTDLL__findclose( DWORD hand );
@@ -259,7 +261,7 @@ INT    __cdecl CRTDLL__getdrive( VOID );
 INT    __cdecl CRTDLL__mkdir( LPCSTR newdir );
 INT    __cdecl CRTDLL__rmdir( LPSTR dir );
 
-/* CRTDLL_exit.c */
+/* exit.c */
 INT    __cdecl CRTDLL__abnormal_termination( VOID );
 VOID   __cdecl CRTDLL__amsg_exit( INT err );
 VOID   __cdecl CRTDLL__assert( LPVOID str, LPVOID file, UINT line );
@@ -271,13 +273,14 @@ VOID   __cdecl CRTDLL_abort( VOID );
 INT    __cdecl CRTDLL_atexit( atexit_function x );
 atexit_function __cdecl CRTDLL__onexit( atexit_function func);
 
-/* CRTDLL_file.c */
+/* file.c */
 CRTDLL_FILE* __cdecl CRTDLL__iob( VOID );
 CRTDLL_FILE* __cdecl CRTDLL__fsopen( LPCSTR path, LPCSTR mode, INT share );
 CRTDLL_FILE* __cdecl CRTDLL__fdopen( INT fd, LPCSTR mode );
 LPSTR        __cdecl CRTDLL__mktemp( LPSTR pattern );
 CRTDLL_FILE* __cdecl CRTDLL_fopen( LPCSTR path, LPCSTR mode );
 CRTDLL_FILE* __cdecl CRTDLL_freopen( LPCSTR path,LPCSTR mode,CRTDLL_FILE* f );
+CRTDLL_FILE* __cdecl CRTDLL_tmpfile( void );
 INT    __cdecl CRTDLL__fgetchar( VOID );
 DWORD  __cdecl CRTDLL_fread( LPVOID ptr,INT size,INT nmemb,CRTDLL_FILE* file );
 INT    __cdecl CRTDLL_fscanf( CRTDLL_FILE* stream, LPSTR format, ... );
@@ -300,6 +303,7 @@ INT    __cdecl CRTDLL_vfprintf( CRTDLL_FILE* file, LPCSTR format,va_list args);
 INT    __cdecl CRTDLL_fprintf( CRTDLL_FILE* file, LPCSTR format, ... );
 INT    __cdecl CRTDLL__putw( INT val, CRTDLL_FILE* file );
 INT    __cdecl CRTDLL__read( INT fd, LPVOID buf, UINT count );
+INT    __cdecl CRTDLL__rmtmp( void );
 UINT   __cdecl CRTDLL__write( INT fd,LPCVOID buf,UINT count );
 INT    __cdecl CRTDLL__access( LPCSTR filename, INT mode );
 INT    __cdecl CRTDLL_fflush( CRTDLL_FILE* file );
@@ -417,8 +421,9 @@ double __cdecl CRTDLL__y0( double x );
 double __cdecl CRTDLL__y1( double x );
 double __cdecl CRTDLL__yn( INT x, double y );
 double __cdecl CRTDLL__nextafter( double x, double y );
+VOID   __cdecl CRTDLL__searchenv(LPCSTR file, LPCSTR env, LPSTR buff);
 
-/* CRTDLL_mem.c */
+/* memory.c */
 LPVOID  __cdecl CRTDLL_new( DWORD size );
 VOID   __cdecl CRTDLL_delete( LPVOID ptr );
 new_handler_type __cdecl CRTDLL_set_new_handler( new_handler_type func );
@@ -433,11 +438,15 @@ VOID   __cdecl CRTDLL_free( LPVOID ptr );
 LPVOID __cdecl CRTDLL_malloc( DWORD size );
 LPVOID __cdecl CRTDLL_realloc( VOID *ptr, DWORD size );
 
-/* CRTDLL_spawn.c */
-HANDLE __cdecl CRTDLL__spawnve( INT flags, LPSTR name, LPSTR *argv, LPSTR *envv);
-INT    __cdecl CRTDLL_system( LPSTR x );
+/* spawn.c */
+HANDLE __cdecl CRTDLL__spawnv( INT flags, LPCSTR name, LPCSTR *argv);
+HANDLE __cdecl CRTDLL__spawnve( INT flags, LPCSTR name, LPCSTR *argv, LPCSTR *envv);
+HANDLE __cdecl CRTDLL__spawnvp( INT flags, LPCSTR name, LPCSTR *argv);
+HANDLE __cdecl CRTDLL__spawnvpe( INT flags, LPCSTR name, LPCSTR *argv, LPCSTR *envv);
+INT    __cdecl CRTDLL_system( LPCSTR cmd );
+INT    __cdecl CRTDLL__cwait( PINT status, INT pid, INT action );
 
-/* CRTDLL_str.c */
+/* str.c */
 LPSTR  __cdecl CRTDLL__strdec( LPSTR str1, LPSTR str2 );
 LPSTR  __cdecl CRTDLL__strdup( LPCSTR ptr );
 LPSTR  __cdecl CRTDLL__strinc( LPSTR str );
@@ -450,7 +459,7 @@ LONG   __cdecl CRTDLL__strncnt( LPSTR str, LONG max );
 LPSTR  __cdecl CRTDLL__strspnp( LPSTR str1, LPSTR str2 );
 VOID   __cdecl CRTDLL__swab( LPSTR src, LPSTR dst, INT len );
 
-/* CRTDLL_time.c */
+/* time.c */
 LPSTR   __cdecl CRTDLL__strdate ( LPSTR date );
 LPSTR   __cdecl CRTDLL__strtime ( LPSTR date );
 clock_t __cdecl CRTDLL_clock ( void );
@@ -483,10 +492,22 @@ INT    __cdecl CRTDLL_iswspace( WCHAR wc );
 INT    __cdecl CRTDLL_iswupper( WCHAR wc );
 INT    __cdecl CRTDLL_iswxdigit( WCHAR wc );
 
+/* console.c */
+LPSTR  __cdecl CRTDLL__cgets( LPSTR str );
+INT    __cdecl CRTDLL__cputs( LPCSTR str );
+INT    __cdecl CRTDLL__getch( VOID );
+INT    __cdecl CRTDLL__getche( VOID );
+INT    __cdecl CRTDLL__kbhit( VOID );
+INT    __cdecl CRTDLL__putch( INT c );
+INT    __cdecl CRTDLL__ungetch( INT c );
+
+
 /* INTERNAL: Shared internal functions */
 void   __CRTDLL__set_errno(ULONG err);
 LPSTR  __CRTDLL__strndup(LPSTR buf, INT size);
 VOID   __CRTDLL__init_io(VOID);
+VOID   __CRTDLL_init_console(VOID);
+VOID   __CRTDLL_free_console(VOID);
 
 extern WORD CRTDLL_ctype [257];
 extern WORD __CRTDLL_current_ctype[257];

@@ -20,7 +20,6 @@
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
 /* INTERNAL: Translate find_t to PWIN32_FIND_DATAA */
-static void __CRTDLL__fttofd(LPWIN32_FIND_DATAA fd, find_t* ft);
 static void __CRTDLL__fttofd(LPWIN32_FIND_DATAA fd, find_t* ft)
 {
   DWORD dw;
@@ -28,7 +27,7 @@ static void __CRTDLL__fttofd(LPWIN32_FIND_DATAA fd, find_t* ft)
   /* Tested with crtdll.dll Version 2.50.4170 (NT) from win98 SE:
    * attrib 0x80 (FILE_ATTRIBUTE_NORMAL)is returned as 0.
    */
-  if (fd->dwFileAttributes  == FILE_ATTRIBUTE_NORMAL)
+  if (fd->dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
     ft->attrib = 0;
   else
     ft->attrib = fd->dwFileAttributes;
@@ -341,3 +340,4 @@ INT __cdecl CRTDLL__rmdir(LPSTR dir)
   __CRTDLL__set_errno(GetLastError());
   return -1;
 }
+

@@ -105,8 +105,7 @@ VOID __cdecl CRTDLL__assert(LPVOID str, LPVOID file, UINT line)
  */
 VOID __cdecl CRTDLL__c_exit(VOID)
 {
-  FIXME("not calling CRTDLL cleanup\n");
-  /* dont exit, return to caller */
+  /* All cleanup is done on DLL detach; Return to caller */
 }
 
 
@@ -115,8 +114,7 @@ VOID __cdecl CRTDLL__c_exit(VOID)
  */
 VOID __cdecl CRTDLL__cexit(VOID)
 {
-  FIXME("not calling CRTDLL cleanup\n");
-  /* dont exit, return to caller */
+  /* All cleanup is done on DLL detach; Return to caller */
 }
 
 

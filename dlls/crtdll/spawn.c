@@ -60,8 +60,7 @@ extern INT CRTDLL_doserrno;
 
 
 /* INTERNAL: Spawn a child process */
-static int __CRTDLL__spawn(INT flags, LPSTR exe, LPSTR args, LPSTR env);
-static int __CRTDLL__spawn(INT flags, LPSTR exe, LPSTR args, LPSTR env)
+static int __CRTDLL__spawn(INT flags, LPCSTR exe, LPSTR args, LPSTR env)
 {
   STARTUPINFOA si;
   PROCESS_INFORMATION pi;
@@ -109,10 +108,9 @@ static int __CRTDLL__spawn(INT flags, LPSTR exe, LPSTR args, LPSTR env)
 
 
 /* INTERNAL: Convert argv list to a single 'delim'-seperated string */
-static LPSTR __CRTDLL__argvtos(LPSTR *arg, CHAR delim);
-static LPSTR __CRTDLL__argvtos(LPSTR *arg, CHAR delim)
+static LPSTR __CRTDLL__argvtos(LPCSTR *arg, CHAR delim)
 {
-  LPSTR *search = arg;
+  LPCSTR *search = arg;
   LONG size = 0;
   LPSTR ret;
 
@@ -145,40 +143,107 @@ static LPSTR __CRTDLL__argvtos(LPSTR *arg, CHAR delim)
 
 
 /*********************************************************************
- *                  _spawnve    (CRTDLL.274)
+ *                  _cwait       (CRTDLL.069)
+ *
+ * Wait for a spawned process to finish.
+ */
+INT __cdecl CRTDLL__cwait(PINT status, INT pid, INT action)
+{
+  HANDLE hPid = (HANDLE)pid;
+
+  action = action; /* Remove warning */
+
+  if (!WaitForSingleObject(hPid, -1)) /* wait forvever */
+  {
+    if (status)
+    {
+      DWORD stat;
+      GetExitCodeProcess(hPid, &stat);
+      *status = (INT)stat;
+    }
+    return pid;
+  }
+  CRTDLL_doserrno = GetLastError();
+
+  if (CRTDLL_doserrno == ERROR_INVALID_HANDLE)
+    CRTDLL_errno = ECHILD;
+  else
+    __CRTDLL__set_errno(CRTDLL_doserrno);
+
+  return status ? *status = -1 : -1;
+}
+
+
+/*********************************************************************
+ *                  _spawnv      (CRTDLL.273)
  *
  * Spawn a process.
- *
  */
-HANDLE __cdecl CRTDLL__spawnve(INT flags, LPSTR name, LPSTR *argv, LPSTR *envv)
+HANDLE __cdecl CRTDLL__spawnv(INT flags, LPCSTR name, LPCSTR *argv)
+{
+  return CRTDLL__spawnve(flags, name, argv, NULL);
+}
+
+
+/*********************************************************************
+ *                  _spawnve     (CRTDLL.274)
+ *
+ * Spawn a process.
+ */
+HANDLE __cdecl CRTDLL__spawnve(INT flags, LPCSTR name, LPCSTR *argv, LPCSTR *envv)
 {
   LPSTR args = __CRTDLL__argvtos(argv,' ');
   LPSTR envs = __CRTDLL__argvtos(envv,0);
-  LPSTR fullname = name;
+  LPCSTR fullname = name;
+  HANDLE ret = -1;
 
   FIXME(":not translating name %s to locate program\n",fullname);
   TRACE(":call (%s), params (%s), env (%s)\n",name,args,envs?"Custom":"Null");
 
   if (args)
   {
-    HANDLE ret = __CRTDLL__spawn(flags, fullname, args, envs);
+    ret = __CRTDLL__spawn(flags, fullname, args, envs);
     CRTDLL_free(args);
-    CRTDLL_free(envs);
-    return ret;
   }
   if (envs)
     CRTDLL_free(envs);
 
-  WARN(":No argv[0] passed - process will not be executed");
-  return -1;
+  return ret;
+}
+
+
+/*********************************************************************
+ *                  _spawnvp     (CRTDLL.275)
+ *
+ * Spawn a process.
+ */
+HANDLE __cdecl CRTDLL__spawnvp(INT flags, LPCSTR name, LPCSTR *argv)
+{
+  return CRTDLL__spawnvpe(flags, name, argv, NULL);
+}
+
+
+/*********************************************************************
+ *                  _spawnvpe    (CRTDLL.276)
+ *
+ * Spawn a process.
+ */
+HANDLE __cdecl CRTDLL__spawnvpe(INT flags, LPCSTR name, LPCSTR *argv, LPCSTR *envv)
+{
+  char fullname[MAX_PATH];
+
+  CRTDLL__searchenv(name, "PATH", fullname);
+  return CRTDLL__spawnve(flags, fullname[0] ? fullname : name, argv, envv);
 }
 
 
 /*********************************************************************
  *                  system       (CRTDLL.485)
+ *
+ * Spawn an O/S process.
  */
-INT __cdecl CRTDLL_system(LPSTR x)
+INT __cdecl CRTDLL_system(LPCSTR cmd)
 {
     /* FIXME: should probably launch cmd interpreter in COMSPEC */
-    return __CRTDLL__spawn(_P_WAIT, NULL, x, NULL);
+    return __CRTDLL__spawn(_P_WAIT, cmd, NULL, NULL);
 }

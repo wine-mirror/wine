@@ -57,7 +57,7 @@ debug_channels (crtdll)
 @ cdecl _c_exit() CRTDLL__c_exit
 @ cdecl _cabs(long) CRTDLL__cabs
 @ cdecl _cexit() CRTDLL__cexit
-@ stub _cgets
+@ cdecl _cgets(str) CRTDLL__cgets
 @ cdecl _chdir(str) CRTDLL__chdir
 @ cdecl _chdrive(long) CRTDLL__chdrive
 @ cdecl _chgsign(double) CRTDLL__chgsign
@@ -72,11 +72,11 @@ debug_channels (crtdll)
 @ cdecl _copysign(double double) CRTDLL__copysign
 @ stub _cprintf
 @ stub _cpumode_dll
-@ stub _cputs
+@ cdecl _cputs(str) CRTDLL__cputs
 @ cdecl _creat(str long) CRTDLL__creat
 @ stub _cscanf
 @ extern _ctype CRTDLL_ctype
-@ stub _cwait
+@ cdecl _cwait(ptr long long) CRTDLL__cwait
 @ stub _daylight_dll
 @ stub _dup
 @ stub _dup2
@@ -125,8 +125,8 @@ debug_channels (crtdll)
 @ cdecl _futime(long ptr) CRTDLL__futime
 @ cdecl _gcvt(double long str) gcvt
 @ cdecl _get_osfhandle(long) CRTDLL__get_osfhandle
-@ stub _getch
-@ stub _getche
+@ cdecl _getch() CRTDLL__getch
+@ cdecl _getche() CRTDLL__getche
 @ cdecl _getcwd(ptr long) CRTDLL__getcwd
 @ cdecl _getdcwd(long ptr long) CRTDLL__getdcwd
 @ cdecl _getdiskfree(long ptr) CRTDLL__getdiskfree
@@ -177,7 +177,7 @@ debug_channels (crtdll)
 @ cdecl _j0(double) j0
 @ cdecl _j1(double) j1
 @ cdecl _jn(long double) jn
-@ stub _kbhit
+@ cdecl _kbhit() CRTDLL__kbhit
 @ cdecl _lfind(ptr ptr ptr long ptr) CRTDLL__lfind
 @ cdecl _loaddll(str) CRTDLL__loaddll
 @ cdecl _local_unwind2(ptr long) CRTDLL__local_unwind2
@@ -259,17 +259,17 @@ debug_channels (crtdll)
 @ stub _pipe
 @ stub _popen
 @ cdecl _purecall() CRTDLL__purecall
-@ stub _putch
+@ cdecl _putch(long) CRTDLL__putch
 @ stub _putenv
 @ cdecl _putw(long ptr) CRTDLL__putw
 @ stub _pwctype_dll
 @ cdecl _read(long ptr long) CRTDLL__read
 @ cdecl _rmdir(str) CRTDLL__rmdir
-@ stub _rmtmp
+@ cdecl _rmtmp() CRTDLL__rmtmp
 @ cdecl _rotl (long long) CRTDLL__rotl
 @ cdecl _rotr (long long) CRTDLL__rotr
 @ cdecl _scalb (double long) CRTDLL__scalb
-@ stub _searchenv
+@ cdecl _searchenv(str str str) CRTDLL__searchenv
 @ stub _seterrormode
 @ cdecl _setjmp (ptr) CRTDLL__setjmp
 @ cdecl _setmode(long long) CRTDLL__setmode
@@ -282,10 +282,10 @@ debug_channels (crtdll)
 @ stub _spawnle
 @ stub _spawnlp
 @ stub _spawnlpe
-@ stub _spawnv
+@ cdecl _spawnv(long str ptr) CRTDLL__spawnv
 @ cdecl _spawnve(long str ptr ptr) CRTDLL__spawnve
-@ stub _spawnvp
-@ stub _spawnvpe
+@ cdecl _spawnvp(long str ptr) CRTDLL__spawnvp
+@ cdecl _spawnvpe(long str ptr ptr) CRTDLL__spawnvpe
 @ cdecl _splitpath (str ptr ptr ptr ptr) CRTDLL__splitpath
 @ cdecl _stat (str ptr) CRTDLL__stat
 @ cdecl _statusfp() CRTDLL__statusfp
@@ -321,7 +321,7 @@ debug_channels (crtdll)
 @ forward _ultoa ntdll._ultoa
 @ cdecl _ultow(long str long) CRTDLL__ultow
 @ cdecl _umask(long) CRTDLL__umask
-@ stub _ungetch
+@ cdecl _ungetch(long) CRTDLL__ungetch
 @ cdecl _unlink(str) CRTDLL__unlink
 @ cdecl _unloaddll(long) CRTDLL__unloaddll
 @ cdecl _utime(str ptr) CRTDLL__utime
@@ -496,7 +496,7 @@ debug_channels (crtdll)
 @ cdecl tan(double) tan
 @ cdecl tanh(double) tanh
 @ cdecl time(ptr) CRTDLL_time
-@ stub tmpfile
+@ cdecl tmpfile() CRTDLL_tmpfile
 @ cdecl tmpnam(str) CRTDLL_tmpnam
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper

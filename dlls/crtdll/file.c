@@ -49,6 +49,7 @@ DEFAULT_DEBUG_CHANNEL(crtdll);
 HANDLE __CRTDLL_handles[CRTDLL_MAX_FILES];
 CRTDLL_FILE* __CRTDLL_files[CRTDLL_MAX_FILES];
 INT  __CRTDLL_flags[CRTDLL_MAX_FILES];
+LPSTR __CRTDLL_tempfiles[CRTDLL_MAX_FILES];
 CRTDLL_FILE __CRTDLL_iob[3];
 
 static int __CRTDLL_fdstart = 3; /* first unallocated fd */
@@ -182,6 +183,7 @@ VOID __CRTDLL__init_io(VOID)
     /* FILE structs for stdin/out/err are static and never deleted */
     __CRTDLL_files[i] = &__CRTDLL_iob[i];
     __CRTDLL_iob[i]._file = i;
+    __CRTDLL_tempfiles[i] = NULL;
   }
 }
 
@@ -261,6 +263,14 @@ INT __cdecl CRTDLL__close(INT fd)
     __CRTDLL__set_errno(GetLastError());
     return -1;
   }
+  if (__CRTDLL_tempfiles[fd])
+  {
+    TRACE("deleting temporary file '%s'\n",__CRTDLL_tempfiles[fd]);
+    CRTDLL__unlink(__CRTDLL_tempfiles[fd]);
+    CRTDLL_free(__CRTDLL_tempfiles[fd]);
+    __CRTDLL_tempfiles[fd] = NULL;
+  }
+
   TRACE(":ok\n");
   return 0;
 }
@@ -361,7 +371,8 @@ INT __cdecl CRTDLL__fcloseall(VOID)
       num_closed++;
     }
 
-  TRACE(":closed (%d) handles\n",num_closed);
+  if (num_closed)
+    TRACE(":closed (%d) handles\n",num_closed);
   return num_closed;
 }
 
@@ -792,11 +803,9 @@ INT __cdecl CRTDLL__open(LPCSTR path,INT flags)
     flags &= ~_O_TEXT;
   }
 
-  if (flags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL|_O_CREAT|_O_RDWR))
+  if (flags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL
+                |_O_CREAT|_O_RDWR|_O_TEMPORARY))
     TRACE(":unsupported flags 0x%04x\n",flags);
-
-  /* clear those pesky flags ;-) */
-  flags &= (_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL|_O_CREAT|_O_RDWR);
 
   hand = CreateFileA( path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
                       NULL, creation, FILE_ATTRIBUTE_NORMAL, -1);
@@ -808,12 +817,17 @@ INT __cdecl CRTDLL__open(LPCSTR path,INT flags)
     return -1;
   }
 
-  fd = __CRTDLL__alloc_fd(hand,ioflag);
+  fd = __CRTDLL__alloc_fd(hand, ioflag);
 
   TRACE(":fd (%d) handle (%d)\n",fd, hand);
 
-  if (flags & _IOAPPEND && fd > 0)
-    CRTDLL__lseek(fd, 0, FILE_END );
+  if (fd > 0)
+  {
+    if (flags & _O_TEMPORARY)
+      __CRTDLL_tempfiles[fd] = CRTDLL__strdup(path);
+    if (ioflag & _IOAPPEND)
+      CRTDLL__lseek(fd, 0, FILE_END );
+  }
 
   return fd;
 }
@@ -840,6 +854,28 @@ INT __cdecl CRTDLL__open_osfhandle(HANDLE hand, INT flags)
 INT __cdecl CRTDLL__putw(INT val, CRTDLL_FILE* file)
 {
   return CRTDLL__write(file->_file, &val, sizeof(val)) == 1? val : EOF;
+}
+
+
+/*********************************************************************
+ *                  _rmtmp     (CRTDLL.256)
+ *
+ * Remove all temporary files created by tmpfile().
+ */
+INT __cdecl CRTDLL__rmtmp(void)
+{
+  int num_removed = 0, i = 3;
+
+  while(i < __CRTDLL_fdend)
+    if (__CRTDLL_tempfiles[i])
+    {
+      CRTDLL__close(i);
+      num_removed++;
+    }
+
+  if (num_removed)
+    TRACE(":removed (%d) temp files\n",num_removed);
+  return num_removed;
 }
 
 
@@ -1627,6 +1663,24 @@ INT __cdecl CRTDLL_setbuf(CRTDLL_FILE* file, LPSTR buf)
     WARN(":user buffer will not be used!\n");
   /* FIXME: no buffering for now */
   return 0;
+}
+
+
+/*********************************************************************
+ *                  tmpfile     (CRTDLL.486)
+ *
+ * Create and return a temporary file.
+ */
+CRTDLL_FILE* __cdecl CRTDLL_tmpfile(void)
+{
+  LPSTR filename = CRTDLL_tmpnam(NULL);
+  int fd = CRTDLL__open(filename, _O_CREAT | _O_BINARY |
+                        _O_RDWR | _O_TEMPORARY);
+
+  if (fd != -1)
+    return __CRTDLL__alloc_fp(fd);
+
+  return NULL;
 }
 
 
