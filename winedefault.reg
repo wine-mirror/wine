@@ -146,6 +146,14 @@
 # Entries for OLE32 (COM/OLE base)
 #
 
+# The GlobalInterfaceTable is used for marshalling interfaces between threading contexts by cookie lookup table
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00000323-0000-0000-c000-000000000046}]
+@="StdGlobalInterfaceTable"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00000323-0000-0000-c000-000000000046}\InProcServer32]
+@="ole32.dll"
+"ThreadingModel"="Apartment"
+
 # OLE32's built-in marshaler, handles standard interfaces such as IClassFactory.
 # (PSFactoryBuffer = Proxy/Stub factory)
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00000320-0000-0000-C000-000000000046}]
@@ -2852,4 +2860,3 @@
 
 [HKEY_CLASSES_ROOT\txtfile\shell\print\command]
 @="C:\\WINDOWS\\NOTEPAD.EXE /p %1"
-

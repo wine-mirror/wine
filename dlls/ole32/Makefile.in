@@ -22,6 +22,7 @@ C_SRCS = \
 	errorinfo.c \
 	filemoniker.c \
 	ftmarshal.c \
+	git.c \
 	hglobalstream.c \
 	ifs.c \
 	itemmoniker.c \

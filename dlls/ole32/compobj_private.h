@@ -27,6 +27,9 @@
 
 #include "wtypes.h"
 
+extern void* StdGlobalInterfaceTable_Construct();
+extern void  StdGlobalInterfaceTable_Destroy(void* self);
+
 extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
 extern HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
 

@@ -555,7 +555,7 @@ CoMarshalInterThreadInterfaceInStream(
   LARGE_INTEGER		seekto;
   HRESULT		hres;
 
-  TRACE("(,%s,)\n",debugstr_guid(riid));
+  TRACE("(%s, %p, %p)\n",debugstr_guid(riid), pUnk, ppStm);
   hres = CreateStreamOnHGlobal(0, TRUE, ppStm);
   if (hres) return hres;
   /* CoMarshalInterface(...); */

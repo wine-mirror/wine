@@ -58,6 +58,10 @@ static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext,
 static void COM_RevokeAllClasses();
 static void COM_ExternalLockFreeList();
 
+const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
+
+static void* StdGlobalInterfaceTableInstance;
+
 /*****************************************************************************
  * Appartment management stuff
  *
@@ -1316,6 +1320,20 @@ HRESULT WINAPI CoCreateInstance(
    */
   *ppv = 0;
 
+  /*
+   * The Standard Global Interface Table (GIT) object is a process-wide singleton.
+   * Rather than create a class factory, we can just check for it here
+   */
+  if (IsEqualIID(rclsid, &CLSID_StdGlobalInterfaceTable)) {
+    if (StdGlobalInterfaceTableInstance == NULL) 
+      StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
+    hres = IGlobalInterfaceTable_QueryInterface( (IGlobalInterfaceTable*) StdGlobalInterfaceTableInstance, iid, ppv);
+    if (hres) return hres;
+    
+    TRACE("Retrieved GIT (%p)\n", *ppv);
+    return S_OK;
+  }
+  
   /*
    * Get a class factory to construct the object we want.
    */
