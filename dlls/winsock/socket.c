@@ -1202,6 +1202,10 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 		if( _get_sock_mask(s) )
 		{
 		    /* AsyncSelect()'ed sockets are always nonblocking */
+		    if (*argp) {
+			close(fd);
+			return 0;
+		    }
 		    SetLastError(WSAEINVAL); 
 		    close(fd);
 		    return SOCKET_ERROR; 
