@@ -364,7 +364,6 @@ BOOL				DEBUG_Attach(DWORD pid, BOOL cofe, BOOL wfe)
         while (DEBUG_CurrProcess && WaitForDebugEvent(&de, INFINITE))
         {
             if (DEBUG_HandleDebugEvent(&de)) break;
-            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
         }
         if (DEBUG_CurrProcess) DEBUG_InteractiveP = TRUE;
     }
@@ -506,7 +505,7 @@ static  void	DEBUG_ExceptionEpilog(void)
     DEBUG_InException = FALSE;
 }
 
-static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force)
+static DWORD DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force)
 {
     BOOL             is_debug = FALSE;
     THREADNAME_INFO *pThreadName;
@@ -532,13 +531,13 @@ static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             DEBUG_Printf (DBG_CHN_MESG,
                           "Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
                           pThread->tid, pThread->name);
-        return FALSE;
+        return DBG_CONTINUE;
     }
 
     if (first_chance && !is_debug && !force && !DBG_IVAR(BreakOnFirstChance))
     {
         /* pass exception to program except for debug exceptions */
-        return FALSE;
+        return DBG_EXCEPTION_NOT_HANDLED;
     }
 
     if (!is_debug)
@@ -596,7 +595,7 @@ static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
 	    {
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
-		return FALSE;
+		return DBG_EXCEPTION_NOT_HANDLED;
 	    }
             break;
         case EXCEPTION_WINE_STUB:
@@ -653,23 +652,23 @@ static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
     {
         DEBUG_ExceptionProlog(is_debug, FALSE, rec->ExceptionCode);
         DEBUG_ExceptionEpilog();
-        return TRUE;  /* terminate execution */
+        return 0;  /* terminate execution */
     }
 
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode))
     {
 	DEBUG_InteractiveP = TRUE;
-        return TRUE;
+        return 0;
     }
     DEBUG_ExceptionEpilog();
 
-    return FALSE;
+    return DBG_CONTINUE;
 }
 
 static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 {
     char		buffer[256];
-    BOOL                ret = FALSE;
+    DWORD cont = DBG_CONTINUE;
 
     DEBUG_CurrPid = de->dwProcessId;
     DEBUG_CurrTid = de->dwThreadId;
@@ -701,10 +700,10 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 
         if (DEBUG_FetchContext())
         {
-            ret = DEBUG_HandleException(&de->u.Exception.ExceptionRecord,
+            cont = DEBUG_HandleException(&de->u.Exception.ExceptionRecord,
                                         de->u.Exception.dwFirstChance,
                                         DEBUG_CurrThread->wait_for_first_exception);
-            if (!ret && DEBUG_CurrThread)
+            if (cont && DEBUG_CurrThread)
             {
                 DEBUG_CurrThread->wait_for_first_exception = 0;
                 SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
@@ -850,7 +849,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         {
             DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n",
                          buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
-            ret = DEBUG_FetchContext();
+            if (DEBUG_FetchContext()) cont = 0;
         }
         break;
 
@@ -885,8 +884,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: unknown event (%ld)\n",
                      de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
-
-    return ret;
+    if (!cont) return TRUE;  /* stop execution */
+    ContinueDebugEvent(de->dwProcessId, de->dwThreadId, cont);
+    return FALSE;  /* continue execution */
 }
 
 static void                     DEBUG_ResumeDebuggee(DWORD cont)
@@ -931,7 +931,6 @@ void                            DEBUG_WaitNextException(DWORD cont, int count, i
     while (DEBUG_CurrProcess && WaitForDebugEvent(&de, INFINITE))
     {
         if (DEBUG_HandleDebugEvent(&de)) break;
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
     }
     if (!DEBUG_CurrProcess) return;
     DEBUG_InteractiveP = TRUE;
@@ -957,7 +956,6 @@ static	DWORD	DEBUG_MainLoop(void)
     while (WaitForDebugEvent(&de, INFINITE))
     {
         if (DEBUG_HandleDebugEvent(&de)) break;
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
     }
     if (local_mode == automatic_mode)
     {
