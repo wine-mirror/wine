@@ -13,8 +13,10 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#ifdef __i386__
+
 #ifdef linux
-#include <asm/unistd.h>
+#include <sys/syscall.h>
 
 struct modify_ldt_s 
 {
@@ -28,8 +30,21 @@ struct modify_ldt_s
     unsigned int  seg_not_present : 1;
 };
 
-static __inline__ _syscall3(int, modify_ldt, int, func, void *, ptr,
-                            unsigned long, bytecount);
+static __inline__ int modify_ldt( int func, struct modify_ldt_s *ptr,
+                                  unsigned long count )
+{
+    int res;
+    __asm__ __volatile__("int $0x80"
+                         : "=a" (res)
+                         : "0" (SYS_modify_ldt),
+                           "b" (func),
+                           "c" (ptr),
+                           "d" (count) );
+    if (res >= 0) return res;
+    errno = -res;
+    return -1;
+}
+
 #endif  /* linux */
 
 #if defined(__svr4__) || defined(_SCO_DS)
@@ -43,6 +58,8 @@ static __inline__ _syscall3(int, modify_ldt, int, func, void *, ptr,
 extern int i386_get_ldt(int, union descriptor *, int);
 extern int i386_set_ldt(int, union descriptor *, int);
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
+
+#endif  /* __i386__ */
 
 
 ldt_copy_entry ldt_copy[LDT_SIZE];
@@ -129,6 +146,8 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     /* Entry 0 must not be modified; its base and limit are always 0 */
     if (!entry) return 0;
 
+#ifdef __i386__
+
 #ifdef linux
     if (!__winelib)
     {
@@ -189,6 +208,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         }
     }
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
+
 #if defined(__svr4__) || defined(_SCO_DS)
     if (!__winelib)
     {
@@ -216,6 +236,8 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         if ((ret = sysi86(SI86DSCR, &ldt_mod)) == -1) perror("sysi86");
     }    
 #endif
+
+#endif  /* __i386__ */
 
     if (ret < 0) return ret;
     ldt_copy[entry].base = content->base;

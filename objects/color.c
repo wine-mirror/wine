@@ -194,7 +194,9 @@ static void COLOR_FillDefaultColors(void)
   int red, no_r, inc_r;
   int green, no_g, inc_g; 
   int blue, no_b, inc_b;
-
+  
+  if (cSpace.size <= NB_RESERVED_COLORS)
+  	return;
   while (i*i*i < (cSpace.size - NB_RESERVED_COLORS)) i++;
   no_r = no_g = no_b = --i;
   if ((no_r * (no_g+1) * no_b) < (cSpace.size - NB_RESERVED_COLORS)) no_g++;
@@ -623,13 +625,29 @@ BOOL32 COLOR_Init(void)
 
     case TrueColor:
 	cSpace.flags |= COLOR_VIRTUAL;
-    case StaticColor:
+    case StaticColor: {
+    	int *depths,nrofdepths;
+	/* FIXME: hack to detect XFree32 XF_VGA16 ... We just have
+	 * depths 1 and 4
+	 */
+	depths=XListDepths(display,DefaultScreen(display),&nrofdepths);
+	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
+	    cSpace.monoPlane = 1;
+	    for( white = cSpace.size - 1; !(white & 1); white >>= 1 )
+	        cSpace.monoPlane++;
+    	    cSpace.flags = (white & mask) ? COLOR_WHITESET : 0;
+	    cSpace.colorMap = DefaultColormapOfScreen( screen );
+	    XFree(depths);
+	    break;
+	}
+	XFree(depths);
         cSpace.colorMap = DefaultColormapOfScreen( screen );
         cSpace.flags |= COLOR_FIXED;
         COLOR_Computeshifts(visual->red_mask, &COLOR_Redshift, &COLOR_Redmax);
         COLOR_Computeshifts(visual->green_mask, &COLOR_Greenshift, &COLOR_Greenmax);
         COLOR_Computeshifts(visual->blue_mask, &COLOR_Blueshift, &COLOR_Bluemax);
-	break;	
+	break;
+    }
     }
 
     dprintf_palette(stddeb," visual class %i (%i)\n", 

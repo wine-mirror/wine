@@ -1,6 +1,7 @@
 name	user
 type	win16
 heap	65520
+file	user.exe
 
 1   pascal16 MessageBox(word str str word) MessageBox16
 2   stub OldExitWindows
@@ -247,7 +248,7 @@ heap	65520
              CreateDialogIndirectParam16
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits
 244 pascal16 EqualRect(ptr ptr) EqualRect16
-245 stub EnableCommNotification
+245 pascal16 EnableCommNotification(s_word word s_word s_word) EnableCommNotification
 246 pascal16 ExitWindowsExec(str str) ExitWindowsExec16
 247 pascal16 GetCursor() GetCursor16
 248 pascal16 GetOpenClipboardWindow() GetOpenClipboardWindow16

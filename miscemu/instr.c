@@ -28,10 +28,11 @@ static WORD INSTR_ReplaceSelector( SIGCONTEXT *context, WORD sel)
 {
     if (sel == 0x40)
     {
-        extern void SIGNAL_StartBIOSTimer(void);
+        static WORD sys_timer = 0;
         fprintf( stderr, "Direct access to segment 0x40 (cs:ip=%04x:%04lx).\n",
                  CS_sig(context), EIP_sig(context) );
-        SIGNAL_StartBIOSTimer();
+        if (!sys_timer)
+            sys_timer = CreateSystemTimer( 55, (FARPROC16)DOSMEM_Tick );
         return DOSMEM_BiosSeg;
     }
     return 0;  /* Can't replace selector */

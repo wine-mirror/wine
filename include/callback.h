@@ -48,6 +48,8 @@ extern LONG CallTo16_long_lwwllwlllllw( FARPROC16, LONG, WORD, WORD, LONG,
 
 #define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
     CallTo16_long_lwwll( func, dwId, msg, hdrvr, lparam1, lparam2 )
+#define CallDriverCallback( func, hdev, msg, user, lparam1, lparam2 ) \
+    CallTo16_word_wwlll( func, hdev, msg, user, lparam1, lparam2 )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     CallTo16_word_wwlll( func, id, msg, dwUser, dw1, dw2 )
 #define CallWindowsExitProc( func, nExitType ) \
@@ -78,6 +80,8 @@ extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
 
 #define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
     (*func)( dwId, msg, hdrvr, lparam1, lparam2 )
+#define CallDriverCallback( func, hdev, msg, user, lparam1, lparam2 ) \
+    (*func)( hdev, msg, user, lparam1, lparam2 )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     (*func)( id, msg, dwUser, dw1, dw2 )
 #define CallWindowsExitProc( func, nExitType ) \

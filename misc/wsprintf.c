@@ -257,8 +257,15 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
             else cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );
             args = (SEGPTR *)args + 1;
             break;
-        case WPR_HEXA:
         case WPR_SIGNED:
+            if (!(format.flags & WPRINTF_LONG))
+            {
+                cur_arg = (DWORD)(INT32)*(INT16 *)args;
+                args = (INT16 *)args + 1;
+                break;
+            }
+            /* fall through */
+        case WPR_HEXA:
         case WPR_UNSIGNED:
             if (format.flags & WPRINTF_LONG)
             {

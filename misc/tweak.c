@@ -410,16 +410,19 @@ void  TWEAK_DrawReliefRect95(
 
 /******************************************************************************
  *
- *   void  TWEAK_DrawMenuSeparator95(
+ *   void  TWEAK_DrawRevReliefRect95(
  *      HDC32  hdc,               // Device context on which to draw
- *      UINT32  xc1,              // Left x-coordinate
- *      UINT32  yc,               // Y-coordinate of the LOWER line
- *      UINT32  xc2 )             // Right x-coordinate
+ *      RECT32 const  *rect )     // Rectangle to use
  *
- *   Draws the menu separator bar Win 95 style.
+ *   Draws the double-bordered Win95-style relief rectangle.
  *
  *   Bugs
- *        Same as those for DrawReliefRect95.
+ *        There are some checks missing from this function.  Perhaps the
+ *        SelectObject32 calls should be examined?  Hasn't failed on me (yet).
+ *
+ *        Should I really be calling X functions directly from here?  It is
+ *        an optimization, but should I be optimizing alpha code?  Probably
+ *        not.
  *
  *   Revision history
  *        08-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
@@ -427,7 +430,76 @@ void  TWEAK_DrawReliefRect95(
  *
  *****************************************************************************/
 
-void  TWEAK_DrawMenuSeparator95(
+void  TWEAK_DrawRevReliefRect95(
+    HDC32  hdc,
+    RECT32 const  *rect )
+{
+    DC  *dc;
+    HPEN32  prevpen;
+
+    if((dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC))) {
+
+	/* Draw the top/left lines first */
+	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
+	DC_SetupGCForPen(dc);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
+		  rect->right - 1, rect->top);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
+		  rect->left, rect->bottom - 1);
+
+	SelectObject32(hdc, TWEAK_Pen0095);
+	DC_SetupGCForPen(dc);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+		  rect->top + 1, rect->right - 2, rect->top + 1);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+		  rect->top + 1, rect->left + 1, rect->bottom - 2);
+
+
+	/* Now the bottom/right lines */
+	SelectObject32(hdc, TWEAK_PenFF95);
+	DC_SetupGCForPen(dc);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
+		  rect->bottom - 1, rect->right - 1, rect->bottom - 1);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
+		  rect->top, rect->right - 1, rect->bottom - 1);
+
+	SelectObject32(hdc, TWEAK_PenE095);
+	DC_SetupGCForPen(dc);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+		  rect->bottom - 2, rect->right - 2, rect->bottom - 2);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 2,
+		  rect->top + 1, rect->right - 2, rect->bottom - 2);
+	
+	SelectObject32(hdc, prevpen);
+    }
+
+    return;
+}
+
+
+
+/******************************************************************************
+ *
+ *   void  TWEAK_DrawMenuSeparatorHoriz95(
+ *      HDC32  hdc,               // Device context on which to draw
+ *      UINT32  xc1,              // Left x-coordinate
+ *      UINT32  yc,               // Y-coordinate of the LOWER line
+ *      UINT32  xc2 )             // Right x-coordinate
+ *
+ *   Draws a horizontal menu separator bar Win 95 style.
+ *
+ *   Bugs
+ *        Same as those for DrawReliefRect95.
+ *
+ *   Revision history
+ *        08-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *             Original implementation.
+ *        11-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *             Changed name from DrawMenuSeparator95
+ *
+ *****************************************************************************/
+
+void  TWEAK_DrawMenuSeparatorHoriz95(
     HDC32  hdc,
     UINT32  xc1,
     UINT32  yc,
@@ -448,6 +520,55 @@ void  TWEAK_DrawMenuSeparator95(
 	SelectObject32(hdc, TWEAK_PenFF95);
 	DC_SetupGCForPen(dc);
 	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc, xc2, yc);
+
+	SelectObject32(hdc, prevpen);
+    }
+
+    return;
+}
+
+
+/******************************************************************************
+ *
+ *   void  TWEAK_DrawMenuSeparatorVert95(
+ *      HDC32  hdc,               // Device context on which to draw
+ *      UINT32  xc,               // X-coordinate of the RIGHT line
+ *      UINT32  yc1,              // top Y-coordinate
+ *      UINT32  yc2 )             // bottom Y-coordinate
+ *
+ *   Draws a vertical menu separator bar Win 95 style.
+ *
+ *   Bugs
+ *        Same as those for DrawReliefRect95.
+ *
+ *   Revision history
+ *        11-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *             Original implementation.
+ *
+ *****************************************************************************/
+
+void  TWEAK_DrawMenuSeparatorVert95(
+    HDC32  hdc,
+    UINT32  xc,
+    UINT32  yc1,
+    UINT32  yc2 )
+{
+    DC  *dc;
+    HPEN32  prevpen;
+
+    if((dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC))) {
+
+	/* Draw the top line */
+	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
+	DC_SetupGCForPen(dc);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc, yc1, xc,
+		  yc2);
+
+	/* And the bottom line */
+	SelectObject32(hdc, TWEAK_PenFF95);
+	DC_SetupGCForPen(dc);
+	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc + 1, yc1, xc + 1,
+		  yc2);
 
 	SelectObject32(hdc, prevpen);
     }

@@ -595,7 +595,33 @@ BOOL16 THUNK_UnhookWindowsHookEx16( HHOOK hhook )
 }
 
 
-/*************************************************************
+/***********************************************************************
+ *           THUNK_CreateSystemTimer   (SYSTEM.2)
+ */
+WORD THUNK_CreateSystemTimer( WORD rate, FARPROC16 callback )
+{
+    THUNK *thunk = THUNK_Alloc( callback, (RELAY)CallTo16_word_ );
+    if (!thunk) return 0;
+    return CreateSystemTimer( rate, (FARPROC16)thunk );
+}
+
+
+/***********************************************************************
+ *           THUNK_KillSystemTimer   (SYSTEM.3)
+ */
+WORD THUNK_KillSystemTimer( WORD timer )
+{
+    extern WORD SYSTEM_KillSystemTimer( WORD timer );  /* misc/system.c */
+    extern FARPROC16 SYSTEM_GetTimerProc( WORD timer );  /* misc/system.c */
+
+    THUNK *thunk = (THUNK *)SYSTEM_GetTimerProc( timer );
+    WORD ret = SYSTEM_KillSystemTimer( timer );
+    if (thunk) THUNK_Free( thunk );
+    return ret;
+}
+
+
+/***********************************************************************
  *            THUNK_SetUnhandledExceptionFilter   (KERNEL32.516)
  */
 LPTOP_LEVEL_EXCEPTION_FILTER THUNK_SetUnhandledExceptionFilter(

@@ -899,6 +899,13 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
 
     *translate = *dispatch = FALSE;
 
+    if (message == WM_PAINT)
+    {
+        /* Apparently, we have to handle this one as well */
+        *dispatch = TRUE;
+        return TRUE;
+    }
+
       /* Only the key messages get special processing */
     if ((message != WM_KEYDOWN) &&
         (message != WM_SYSCHAR) &&

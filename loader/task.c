@@ -578,9 +578,9 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
       /* Create the 16-bit stack frame */
 
-    pTask->ss_sp = MAKELONG( ((pModule->sp != 0) ? pModule->sp :
-                 pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1,
-                             hInstance );
+    pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( hInstance,
+                        ((pModule->sp != 0) ? pModule->sp :
+                pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1 );
     stack16Top = (char *)PTR_SEG_TO_LIN( pTask->ss_sp );
     frame16 = (STACK16FRAME *)stack16Top - 1;
     frame16->saved_ss_sp = 0;
@@ -1159,8 +1159,8 @@ void SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
     /* Switch to the new stack */
 
-    IF1632_Saved16_ss_sp = pTask->ss_sp = MAKELONG( ptr - sizeof(STACK16FRAME),
-                                                    seg );
+    IF1632_Saved16_ss_sp = pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( seg,
+                                                  ptr - sizeof(STACK16FRAME) );
     newFrame = CURRENT_STACK16;
 
     /* Copy the stack frame and the local variables to the new stack */
@@ -1216,23 +1216,19 @@ void SwitchStackBack(void)
 /***********************************************************************
  *           GetTaskQueueDS  (KERNEL.118)
  */
-#ifndef WINELIB
 void GetTaskQueueDS( CONTEXT *context )
 {
     DS_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
-#endif  /* WINELIB */
 
 
 /***********************************************************************
  *           GetTaskQueueES  (KERNEL.119)
  */
-#ifndef WINELIB
 void GetTaskQueueES( CONTEXT *context )
 {
     ES_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
-#endif  /* WINELIB */
 
 
 /***********************************************************************

@@ -4,24 +4,43 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
+INCLUDES = \
+	AUTHORS \
+	LICENSE \
+	WARRANTY
+
 SOURCES = \
 	wine.texinfo \
-	$(TOPSRCDIR)/AUTHORS \
-	$(TOPSRCDIR)/LICENSE \
-	$(TOPSRCDIR)/WARRANTY
+	$(INCLUDES)
 
-all: wine.info
+INFOFILES = \
+	wine.info \
+	wine.info-1 \
+	wine.info-2
+
+DVIFILES = wine.dvi
+
+all: $(INFOFILES) $(DVIFILES)
 
 @MAKE_RULES@
 
-wine.info: $(SOURCES)
-	makeinfo -I$(TOPSRCDIR) $(SRCDIR)/wine.texinfo
+$(INFOFILES): $(SOURCES)
+	makeinfo $(SRCDIR)/wine.texinfo
 
-wine.dvi: $(SOURCES)
+$(DVIFILES): $(SOURCES)
 	texi2dvi $(SRCDIR)/wine.texinfo
 
+$(INCLUDES):
+	$(RM) $(INCLUDES)
+	for i in $(INCLUDES); do $(LN_S) $(TOPSRCDIR)/$$i $$i || exit 1; done
+
+install:: $(INFOFILES)
+	for i in $(INFOFILES); do $(INSTALL_DATA) $$i $(infodir)/$$i; done
+	$(INSTALL_DATA) $(SRCDIR)/wine.man $(mandir)/wine$(manext)
+
 clean::
-	$(RM) wine.aux wine.cp wine.cps wine.dvi wine.fn wine.fns wine.info \
-		wine.ky wine.log wine.pg wine.toc wine.tp wine.tps wine.vr
+	$(RM) $(INFOFILES) $(DVIFILES) $(INCLUDES)
+	$(RM) wine.aux wine.cp wine.cps wine.fn wine.fns wine.ky wine.log \
+		wine.pg wine.toc wine.tp wine.tps wine.vr wine.vrs
 
 ### Dependencies:

@@ -9,9 +9,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "process.h"
+#include "module.h"
 #include "file.h"
 #include "heap.h"
 #include "task.h"
+#include "ldt.h"
 #include "thread.h"
 #include "winerror.h"
 
@@ -786,107 +788,6 @@ BOOL32 SetStdHandle( DWORD std_handle, HANDLE32 handle )
     }
     SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
-}
-
-/***********************************************************************
- *           _KERNEL32_18    (KERNEL32.18,Win95)
- * 'Of course you cannot directly access Windows internal structures'
- */
-extern THDB *pCurrentThread;
-DWORD
-_KERNEL32_18(DWORD processid,DWORD action) {
-	PDB32	*process;
-	TDB	*pTask;
-
-	action+=56;
-	fprintf(stderr,"_KERNEL32_18(%ld,%ld+0x38)\n",processid,action);
-	if (action>56)
-		return 0;
-	if (!processid) {
-		process=pCurrentProcess;
-		/* check if valid process */
-	} else
-		process=(PDB32*)pCurrentProcess; /* decrypt too, if needed */
-	switch (action) {
-	case 0:	/* return app compat flags */
-		pTask = (TDB*)GlobalLock16(process->task);
-		if (!pTask)
-			return 0;
-		return pTask->compat_flags;
-	case 4:	/* returns offset 0xb8 of process struct... dunno what it is */
-		return 0;
-	case 8:	/* return hinstance16 */
-		pTask = (TDB*)GlobalLock16(process->task);
-		if (!pTask)
-			return 0;
-		return pTask->hInstance;
-	case 12:/* return expected windows version */
-		pTask = (TDB*)GlobalLock16(process->task);
-		if (!pTask)
-			return 0;
-		return pTask->version;
-	case 16:/* return uncrypted pointer to current thread */
-		return (DWORD)pCurrentThread;
-	case 20:/* return uncrypted pointer to process */
-		return (DWORD)process;
-	case 24:/* return stdoutput handle from startupinfo */
-		return (DWORD)(process->env_db->startup_info->hStdOutput);
-	case 28:/* return stdinput handle from startupinfo */
-		return (DWORD)(process->env_db->startup_info->hStdInput);
-	case 32:/* get showwindow flag from startupinfo */
-		return (DWORD)(process->env_db->startup_info->wShowWindow);
-	case 36:{/* return startup x and y sizes */
-		LPSTARTUPINFO32A si = process->env_db->startup_info;
-		DWORD x,y;
-
-		x=si->dwXSize;if (x==0x80000000) x=0x8000;
-		y=si->dwYSize;if (y==0x80000000) y=0x8000;
-		return (y<<16)+x;
-	}
-	case 40:{/* return startup x and y */
-		LPSTARTUPINFO32A si = process->env_db->startup_info;
-		DWORD x,y;
-
-		x=si->dwX;if (x==0x80000000) x=0x8000;
-		y=si->dwY;if (y==0x80000000) y=0x8000;
-		return (y<<16)+x;
-	}
-	case 44:/* return startup flags */
-		return process->env_db->startup_info->dwFlags;
-	case 48:/* return uncrypted pointer to parent process (if any) */
-		return (DWORD)process->parent;
-	case 52:/* return process flags */
-		return process->flags;
-	case 56:/* unexplored */
-		return 0;
-	default:
-		fprintf(stderr,"_KERNEL32_18:unknown offset (%ld)\n",action);
-		return 0;
-	}
-	/* shouldn't come here */
-}
-
-VOID /* FIXME */
-_KERNEL32_52(DWORD arg1,CONTEXT *regs) {
-	SEGPTR *str = SEGPTR_STRDUP("ThkBuf");
-
-	fprintf(stderr,"_KERNE32_52(arg1=%08lx,%08lx)\n",arg1,EDI_reg(regs));
-
-	EAX_reg(regs) = GetProcAddress16(EDI_reg(regs),SEGPTR_GET(str));
-	fprintf(stderr,"	GetProcAddress16(\"ThkBuf\") returns %08lx\n",
-			EAX_reg(regs)
-	);
-	SEGPTR_FREE(str);
-}
-
-/***********************************************************************
- *           GetPWinLock    (KERNEL32) FIXME
- */
-VOID
-GetPWinLock(CRITICAL_SECTION **lock) {
-	static CRITICAL_SECTION plock;
-	fprintf(stderr,"GetPWinlock(%p)\n",lock);
-	*lock = &plock;
 }
 
 /***********************************************************************

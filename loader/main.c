@@ -44,12 +44,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "debugger.h"
 #endif
 
-/* Winelib run-time flag */
-#ifdef WINELIB
-int __winelib = 1;
-#else
-int __winelib = 0;
-#endif
+int __winelib = 1;  /* Winelib run-time flag */
 
 HANDLE32 SystemHeap = 0;
 HANDLE32 SegptrHeap = 0;
@@ -61,7 +56,6 @@ int MAIN_Init(void)
 {
     extern BOOL32 RELAY_Init(void);
     extern BOOL32 WIN16DRV_Init(void);
-    extern BOOL32 SIGNAL_Init(void);
     extern BOOL32 VIRTUAL_Init(void);
     extern BOOL32 WIDGETS_Init(void);
 
@@ -80,6 +74,9 @@ int MAIN_Init(void)
       /* Initialize DOS memory */
     if (!DOSMEM_Init()) return 0;
 
+      /* Initialize signal handling */
+    if (!SIGNAL_Init()) return 0;
+
 #ifdef WINELIB
     /* Create USER and GDI heap */
     USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
@@ -94,7 +91,7 @@ int MAIN_Init(void)
     if (!BUILTIN_Init()) return 0;
 
       /* Initialize signal handling */
-    if (!SIGNAL_Init()) return 0;
+    if (!SIGNAL_InitEmulator()) return 0;
 
     /* Create the Win16 printer driver */
     if (!WIN16DRV_Init()) return 0;
@@ -183,6 +180,8 @@ int main(int argc, char *argv[] )
 
     int i,loaded;
     HINSTANCE16 handle;
+
+    __winelib = 0;  /* First of all, clear the Winelib flag */
 
     /*
      * Save this so that the internal debugger can get a hold of it if

@@ -320,10 +320,13 @@ ATOM RegisterClass16( const WNDCLASS16 *wc )
         return 0;
     }
 
-    dprintf_class( stddeb, "RegisterClass16: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
+    dprintf_class( stddeb, "RegisterClass16: atom=%04x wndproc=%08lx hinst=%04x
+bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
                    atom, (DWORD)wc->lpfnWndProc, hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
-                   wc->cbWndExtra, classPtr );
+                   wc->cbWndExtra, classPtr,
+		   HIWORD(wc->lpszClassName) ?
+                       (char *)PTR_SEG_TO_LIN(wc->lpszClassName) : "" );
 
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = 0;
@@ -357,10 +360,12 @@ ATOM RegisterClass32A( const WNDCLASS32A* wc )
         return 0;
     }
 
-    dprintf_class( stddeb, "RegisterClass32A: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
+    dprintf_class( stddeb, "RegisterClass32A: atom=%04x wndproc=%08lx
+hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
                    atom, (DWORD)wc->lpfnWndProc, hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
-                   wc->cbWndExtra, classPtr );
+                   wc->cbWndExtra, classPtr,
+                   HIWORD(wc->lpszClassName) ? wc->lpszClassName : "" );
     
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = 0;

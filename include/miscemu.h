@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "winnt.h"
 
-  /* miscemu/dosmem.c */
+  /* msdos/dosmem.c */
 extern HANDLE16 DOSMEM_BiosSeg;
 extern DWORD DOSMEM_CollateTable;
 
@@ -24,9 +24,6 @@ extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT32); /* linear DOS to Wine */
 extern UINT32 DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
-/* miscemu/interrupts.c */
-extern BOOL32 INT_Init(void);
-
 /* msdos/interrupts.c */
 extern FARPROC16 INT_GetHandler( BYTE intnum );
 extern void INT_SetHandler( BYTE intnum, FARPROC16 handler );
@@ -38,6 +35,14 @@ extern void IO_outport( int port, int count, DWORD value );
 
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
+
+/* loader/signal.c */
+extern BOOL32 SIGNAL_Init(void);
+extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
+extern void SIGNAL_MaskAsyncEvents( BOOL32 flag );
+
+/* if1632/signal.c */
+extern BOOL32 SIGNAL_InitEmulator(void);
 
 #define INT_BARF(context,num) \
     fprintf( stderr, "int%x: unknown/not implemented parameters:\n" \

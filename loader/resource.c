@@ -626,7 +626,7 @@ LoadString32A(HINSTANCE32 instance,UINT32 resource_id,LPSTR buffer,int buflen)
     if (buffer) buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen * 2 );
     retval = LoadString32W(instance,resource_id,buffer2,buflen);
 
-    if (buffer)
+    if (buffer2)
     {
         lstrcpynWtoA( buffer, buffer2, buflen );
 	HeapFree( GetProcessHeap(), 0, buffer2 );

@@ -3,46 +3,22 @@
 # all (default):	build wine
 # clean:		remove all intermediate files
 # distclean:		also remove all files created by configure
+# install:              install everything
 # depend:		create the dependencies
-# etags:		Create a TAGS file for Emacs.
+# etags:		create a TAGS file for Emacs.
 #
-# Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
-#                         <patra@itp1.physik.tu-berlin.de>
-
-# First some useful definitions
-
-SHELL     = /bin/sh
-CC        = @CC@
-CFLAGS    = @CFLAGS@
-OPTIONS   = @OPTIONS@
-X_LIBS    = @X_LIBS@
-TOPSRC    = @top_srcdir@
-XPM_LIB   = -lXpm
-XLIB      = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
-LDLIBS    = @LDLIBS@
-AR        = ar rc
-RANLIB    = @RANLIB@
-RM        = rm -f
-MKDIR     = mkdir
-SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
-@SET_MAKE@
-
-# Installation infos
-
-INSTALL         = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA    = @INSTALL_DATA@
-prefix          = @prefix@
-exec_prefix     = @exec_prefix@
-bindir          = @bindir@
-libdir          = @libdir@
-mandir          = @mandir@/man1
-manext          = .1
-includedir      = @includedir@/wine
 
 # Main target to build
 
 MAIN_TARGET = @MAIN_TARGET@
+
+# Directories
+
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = .
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
 
 COMMONSUBDIRS = \
 	rc \
@@ -76,12 +52,19 @@ PROGSUBDIRS = libtest programs
 
 DOCSUBDIRS = documentation
 
+# All sub-directories
 ALLSUBDIRS = \
 	$(COMMONSUBDIRS) \
 	$(EMUSUBDIRS) \
 	$(LIBSUBDIRS) \
 	$(PROGSUBDIRS) \
 	$(DOCSUBDIRS)
+
+# Sub-directories to run make depend into
+DEPENDSUBDIRS = $(COMMONSUBDIRS) $(LIBSUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
+
+# Sub-directories to run make install into
+INSTALLSUBDIRS = $(DOCSUBDIRS)
 
 COMMONOBJS = \
 	controls/controls.o \
@@ -109,10 +92,11 @@ EMUOBJS = \
 
 LIBOBJS = library/library.o
 
-
 all: $(MAIN_TARGET)
 
-install: install_$(MAIN_TARGET)
+@MAKE_RULES@
+
+install:: install_$(MAIN_TARGET)
 
 wine wine.sym: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
 	$(CC) -o wine $(COMMONOBJS) $(EMUOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
@@ -120,7 +104,6 @@ wine wine.sym: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
 
 install_wine: dummy
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
-	$(INSTALL_DATA) $(TOPSRC)/wine.man $(mandir)/wine$(manext)
 
 libwine.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 	$(RM) $@
@@ -146,17 +129,18 @@ $(ALLSUBDIRS): dummy
 install_programs: dummy
 	@cd programs; $(SUBMAKE) install
 
-depend: dummy
-	for i in $(COMMONSUBDIRS) $(LIBSUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS); do \
-	  (cd $$i; $(MAKE) depend) || exit 1; \
-	done
+install::
+	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) install) || exit 1; done
 
-etags:
-	etags `find . -name '*.[chS]' -print | grep -v dbgmain`
+depend:: dummy
+	for i in $(DEPENDSUBDIRS); do (cd $$i && $(MAKE) depend) || exit 1; done
 
-clean:
+TAGS etags:
+	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`
+
+clean::
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in . include; do (cd $$i; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc); done
+	for i in include; do (cd $$i; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
 
 distclean: clean
@@ -169,4 +153,4 @@ configure: configure.in
 include/config.h.in: configure.in include/acconfig.h
 	autoheader -l include
 
-dummy:
+### Dependencies:

@@ -126,6 +126,7 @@ extern FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern BOOL16 MODULE_SetEntryPoint( HMODULE16 hModule, WORD ordinal,
                                     WORD offset );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
+extern FARPROC16 WIN32_GetProcAddress16( HMODULE16 hmodule, LPSTR name );
 
 /* builtin.c */
 extern BOOL16 BUILTIN_Init(void);

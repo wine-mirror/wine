@@ -10,20 +10,15 @@
      fix that, I guess.
 */
 
-#ifdef linux
 #include <ctype.h>
-#include <unistd.h>
-#include <asm/io.h>
-#include <string.h>
-#include "options.h"
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include "windows.h"
+#include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_INT */
 #include "debug.h"
 
 static BYTE cmosaddress;
@@ -40,9 +35,18 @@ static BYTE cmosimage[64] =
   0x1b, 0x7b, 0x21, 0x00, 0x00, 0x00, 0x05, 0x5f
 };
 
-#ifdef linux
-char do_direct_port_access = 0;
-char port_permissions[0x10000];
+#if defined(linux) && defined(__i386__)
+# define DIRECT_IO_ACCESS
+#else
+# undef DIRECT_IO_ACCESS
+#endif  /* linux && __i386__ */
+
+#ifdef DIRECT_IO_ACCESS
+static char do_direct_port_access = 0;
+static char port_permissions[0x10000];
+
+#define IO_READ  1
+#define IO_WRITE 2
 #endif
 
 /**********************************************************************
@@ -52,8 +56,8 @@ char port_permissions[0x10000];
 /* set_IO_permissions(int val1, int val)
  * Helper function for IO_port_init
  */
-#ifdef linux
-void set_IO_permissions(int val1, int val, char rw)
+#ifdef DIRECT_IO_ACCESS
+static void set_IO_permissions(int val1, int val, char rw)
 {
 	int j;
 	if (val1 != -1) {
@@ -76,7 +80,7 @@ void set_IO_permissions(int val1, int val, char rw)
  * Helper function for IO_port_init
  */
 
-void do_IO_port_init_read_or_write(char* temp, char rw)
+static void do_IO_port_init_read_or_write(char* temp, char rw)
 {
 	int val, val1, i, len;
 	if (!strcasecmp(temp, "all")) {
@@ -126,15 +130,48 @@ void do_IO_port_init_read_or_write(char* temp, char rw)
 	}
 }
 
-#endif
+static __inline__ BYTE inb( WORD port )
+{
+    BYTE b;
+    __asm__ __volatile__( "inb %w1,%0" : "=a" (b) : "d" (port) );
+    return b;
+}
+
+static __inline__ WORD inw( WORD port )
+{
+    WORD w;
+    __asm__ __volatile__( "inw %w1,%0" : "=a" (w) : "d" (port) );
+    return w;
+}
+
+static __inline__ DWORD inl( WORD port )
+{
+    DWORD dw;
+    __asm__ __volatile__( "inl %w1,%0" : "=a" (dw) : "d" (port) );
+    return dw;
+}
+
+static __inline__ void outb( BYTE value, WORD port )
+{
+    __asm__ __volatile__( "outb %b0,%w1" : : "a" (value), "d" (port) );
+}
+
+static __inline__ void outw( WORD value, WORD port )
+{
+    __asm__ __volatile__( "outw %w0,%w1" : : "a" (value), "d" (port) );
+}
+
+static __inline__ void outl( DWORD value, WORD port )
+{
+    __asm__ __volatile__( "outl %0,%w1" : : "a" (value), "d" (port) );
+}
+
+#endif  /* DIRECT_IO_ACCESS */
 
 void IO_port_init()
 {
-#ifdef linux
+#ifdef DIRECT_IO_ACCESS
 	char temp[1024];
-
-	memset(port_permissions, 0, sizeof(port_permissions));
-	do_direct_port_access = 0;
 
 	/* Can we do that? */
 	if (!iopl(3)) {
@@ -142,15 +179,14 @@ void IO_port_init()
 
 		PROFILE_GetWineIniString( "ports", "read", "*",
 					 temp, sizeof(temp) );
-		do_IO_port_init_read_or_write(temp, 1);
+		do_IO_port_init_read_or_write(temp, IO_READ);
 		PROFILE_GetWineIniString( "ports", "write", "*",
 					 temp, sizeof(temp) );
-		do_IO_port_init_read_or_write(temp, 2);
+		do_IO_port_init_read_or_write(temp, IO_WRITE);
 	}
-
-
-#endif
+#endif  /* DIRECT_IO_ACCESS */
 }
+
 
 /**********************************************************************
  *	    IO_inport
@@ -160,43 +196,50 @@ DWORD IO_inport( int port, int count )
     DWORD res = 0;
     BYTE b;    
 
-#ifdef linux    
-    if (do_direct_port_access) iopl(3);
+#ifdef DIRECT_IO_ACCESS    
+    if (do_direct_port_access)
+    {
+        /* Make sure we have access to the whole range */
+        int i;
+        for (i = 0; i < count; i++)
+            if (!(port_permissions[port+i] & IO_READ)) break;
+        if (i == count)
+        {
+            iopl(3);
+            switch(count)
+            {
+                case 1: res = inb( port ); break;
+                case 2: res = inw( port ); break;
+                case 4: res = inl( port ); break;
+                default:
+                    fprintf( stderr, "IO_inport: invalid count %d\n", count);
+            }
+            iopl(0);
+            return res;
+        }
+    }
 #endif
 
     dprintf_int(stddeb, "IO: %d bytes from port 0x%02x ", count, port );
 
     while (count-- > 0)
     {
-#ifdef linux
-	    if(port_permissions[port] & 1) {		    
-		    b = inb(port);
-	    } else 
-#endif
-	    {
-		    switch (port)
-		    {
-		    case 0x70:
-			    b = cmosaddress;
-			    break;
-		    case 0x71:
-			    b = cmosimage[cmosaddress & 0x3f];
-			    break;
-		    default:
-			    fprintf( stderr, 
-				    "Direct I/O read attempted "
-				    "from port %x\n", port);
-			    b = 0xff;
-			    break;
-		    }
-	    }
-
-	    port++;
-	    res = (res << 8) | b;
+        switch (port)
+        {
+        case 0x70:
+            b = cmosaddress;
+            break;
+        case 0x71:
+            b = cmosimage[cmosaddress & 0x3f];
+            break;
+        default:
+            fprintf( stderr, "Direct I/O read attempted from port %x\n", port);
+            b = 0xff;
+            break;
+        }
+        port++;
+        res = (res << 8) | b;
     }
-#ifdef linux
-    if (do_direct_port_access) iopl(0);
-#endif
     dprintf_int(stddeb, "( 0x%lx )\n", res );
     return res;
 }
@@ -212,37 +255,47 @@ void IO_outport( int port, int count, DWORD value )
     dprintf_int( stddeb, "IO: 0x%lx (%d bytes) to port 0x%02x\n",
                  value, count, port );
 
-#ifdef linux
-    if (do_direct_port_access) iopl(3);
+#ifdef DIRECT_IO_ACCESS
+    if (do_direct_port_access)
+    {
+        /* Make sure we have access to the whole range */
+        int i;
+        for (i = 0; i < count; i++)
+            if (!(port_permissions[port+i] & IO_WRITE)) break;
+        if (i == count)
+        {
+            iopl(3);
+            switch(count)
+            {
+                case 1: outb( LOBYTE(value), port ); break;
+                case 2: outw( LOWORD(value), port ); break;
+                case 4: outl( value, port ); break;
+                default:
+                    fprintf( stderr, "IO_outport: invalid count %d\n", count);
+            }
+            iopl(0);
+            return;
+        }
+    }
 #endif
 
     while (count-- > 0)
     {
         b = value & 0xff;
         value >>= 8;
-#ifdef linux
-	if (port_permissions[port] & 2) {
-		outb(b, port);
-	} else 
-#endif
-	{
-		switch (port)
-		{
-		case 0x70:
-			cmosaddress = b & 0x7f;
-			break;
-		case 0x71:
-			cmosimage[cmosaddress & 0x3f] = b;
-			break;
-		default:
-			fprintf( stderr, "Direct I/O write attempted "
-				"to port %x\n", port );
-			break;
-		}
-	}
+        switch (port)
+        {
+        case 0x70:
+            cmosaddress = b & 0x7f;
+            break;
+        case 0x71:
+            cmosimage[cmosaddress & 0x3f] = b;
+            break;
+        default:
+            fprintf( stderr, "Direct I/O write attempted "
+                     "to port %x\n", port );
+            break;
+        }
 	port++;
     }
-#ifdef linux
-    if (do_direct_port_access) iopl(0);
-#endif
 }

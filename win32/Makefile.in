@@ -17,6 +17,7 @@ C_SRCS = \
 	init.c \
 	k32obj.c \
 	newfns.c \
+	ordinals.c \
 	process.c \
 	security.c \
 	string32.c \

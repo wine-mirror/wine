@@ -156,7 +156,7 @@ base	1
 0149 stdcall DlgDirSelectExW(long ptr long long) DlgDirSelectEx32W
 0150 stdcall DragDetect(long long long) DragDetect32
 0151 stub DragObject
-0152 stub DrawAnimatedRects
+0152 stdcall DrawAnimatedRects(long long ptr ptr) DrawAnimatedRects32
 0153 stub DrawCaption
 0154 stdcall DrawEdge(long ptr long long) DrawEdge32
 0155 stdcall DrawFocusRect(long ptr) DrawFocusRect32
@@ -267,8 +267,8 @@ base	1
 0260 stub GetMenuIndex
 0261 stdcall GetMenuItemCount(long) GetMenuItemCount32
 0262 stdcall GetMenuItemID(long long) GetMenuItemID32
-0263 stub GetMenuItemInfoA
-0264 stub GetMenuItemInfoW
+0263 stdcall GetMenuItemInfoA(long long long ptr) GetMenuItemInfo32A
+0264 stdcall GetMenuItemInfoW(long long long ptr) GetMenuItemInfo32W
 0265 stub GetMenuItemRect
 0266 stdcall GetMenuState(long long long) GetMenuState32
 0267 stdcall GetMenuStringA(long long ptr long long) GetMenuString32A

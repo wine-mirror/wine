@@ -73,7 +73,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pOffsetViewportOrgEx */
     NULL,                            /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
-    NULL,                            /* pPatBlt */
+    WIN16DRV_PatBlt,                 /* pPatBlt */
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolygon */
@@ -223,13 +223,13 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     int nPDEVICEsize;
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
-
+    int numFonts;
     /* Realizing fonts */
     int nSize;
     char printerEnabled[20];
     PROFILE_GetWineIniString( "wine", "printer", "off",
                              printerEnabled, sizeof(printerEnabled) );
-    if (strcmp(printerEnabled,"on"))
+    if (lstrcmpi32A(printerEnabled,"on"))
     {
         printf("WIN16DRV_CreateDC disabled in wine.conf file\n");
         return FALSE;
@@ -323,6 +323,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 		wepfc.nCount = 0;
 		PRTDRV_EnumDFonts(physDev->segptrPDEVICE, NULL, pfnCallback, 
 				  (void *)&wepfc);
+                numFonts = wepfc.nCount;
 	    }
 	}
     }
@@ -378,7 +379,12 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     return TRUE;
 }
 
-
+extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
+                             INT32 width, INT32 height, DWORD rop )
+{
+  printf("In WIN16DRV_PatBlt\n");
+  return FALSE;
+}
 /* 
  * Escape (GDI.38)
  */
@@ -393,31 +399,56 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
     if (dc != NULL && physDev->segptrPDEVICE != 0)
     {
 	switch(nEscape)
-	{
-	  case SETABORTPROC:
-	    printf("Escape: SetAbortProc ignored\n");
+          {
+          case SETABORTPROC:
+	    printf("Escape: SetAbortProc ignored should be stored in dc somewhere\n");
+            /* Make calling application believe this worked */
+            nRet = 1;
 	    break;
 
-	  case GETEXTENDEDTEXTMETRICS:
-	  {
-	    SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(EXTTEXTDATA)));
-            EXTTEXTDATA *textData = (EXTTEXTDATA *)(PTR_SEG_TO_LIN(newInData));
+          case NEXTBAND:
+            {
+              SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(POINT16)));
+              nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
+                                    newInData, lpOutData);
+              GlobalFree16(newInData);
+              break;
+            }
 
-	    textData->nSize = cbInput;
-	    textData->lpindata = lpInData;
-	    textData->lpFont = physDev->segptrFontInfo;
-	    textData->lpXForm = win16drv_SegPtr_TextXForm;
-	    textData->lpDrawMode = win16drv_SegPtr_DrawMode;
+	  case GETEXTENDEDTEXTMETRICS:
+            {
+              SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(EXTTEXTDATA)));
+              EXTTEXTDATA *textData = (EXTTEXTDATA *)(PTR_SEG_TO_LIN(newInData));
+
+              textData->nSize = cbInput;
+              textData->lpindata = lpInData;
+              textData->lpFont = physDev->segptrFontInfo;
+              textData->lpXForm = win16drv_SegPtr_TextXForm;
+              textData->lpDrawMode = win16drv_SegPtr_DrawMode;
+              nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
+                                    newInData, lpOutData);
+              GlobalFree16(newInData);
+              
+            }
+          break;
+          case STARTDOC:
 	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
-				  newInData, lpOutData);
-	    GlobalFree16(newInData);
-            
-	  }
-        break;
-        
+				  lpInData, lpOutData);
+            if (nRet != -1)
+            {
+              SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(HDC32)));
+#define SETPRINTERDC SETABORTPROC
+              HDC32 *tmpHdc = (HDC32 *)(PTR_SEG_TO_LIN(newInData));
+              *tmpHdc = dc->hSelf;
+              PRTDRV_Control(physDev->segptrPDEVICE, SETPRINTERDC,
+                             newInData, (SEGPTR)NULL);
+              GlobalFree16(newInData);
+            }
+            break;
 	  default:
 	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
 				  lpInData, lpOutData);
+            break;
 	}
     }
     else

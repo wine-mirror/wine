@@ -1,11 +1,11 @@
 name	system
 type	win16
 
-1 pascal   InquireSystem(word word word) InquireSystem
-2 stub CreateSystemTimer
-3 stub KillSystemTimer
-4 stub EnableSystemTimers
-5 stub DisableSystemTimers
+1 pascal   InquireSystem(word word) InquireSystem
+2 pascal16 CreateSystemTimer(word segptr) THUNK_CreateSystemTimer
+3 pascal16 KillSystemTimer(word) THUNK_KillSystemTimer
+4 pascal16 EnableSystemTimers() EnableSystemTimers
+5 pascal16 DisableSystemTimers() DisableSystemTimers
 6 pascal   GetSystemMSecCount() GetTickCount
 7 return Get80x87SaveSize 0 94
 8 stub Save80x87State

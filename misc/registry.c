@@ -26,8 +26,6 @@
 #include "xmalloc.h"
 #include "winreg.h"
 
-#define MAKE_DWORD(x,y) ((DWORD)MAKELONG(x,y))
-
 /* FIXME: following defines should be configured global ... */
 
 /* NOTE: do not append a /. linux' mkdir() WILL FAIL if you do that */
@@ -275,6 +273,7 @@ SHELL_StartupRegistry() {
 
 	RegCreateKey16(HKEY_DYN_DATA,"\\PerfStats\\StatData",&xhkey);
 	RegCloseKey(xhkey);
+        xhkey = 0;
 	RegCreateKey16(HKEY_LOCAL_MACHINE,"\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey);
 #ifdef linux
 	F=fopen("/proc/cpuinfo","r");
@@ -392,7 +391,7 @@ _save_USTRING(FILE *F,LPWSTR wstr,int escapeeq) {
 		if (escapeeq && *s=='=')
 			doescape = 1;
 		if (*s=='\\')
-			fputc(*s,F); /* if \\ than put it twice. */
+                        fputc(*s,F); /* if \\ then put it twice. */
 		if (doescape)
 			fprintf(F,"\\u%04x",*((unsigned short*)s));
 		else
@@ -3000,7 +2999,7 @@ DWORD RegQueryInfoKey32A(
 		lpcbSecurityDescriptor,
 		ft
 	);
-	if (ret==ERROR_SUCCESS)
+	if (ret==ERROR_SUCCESS && lpszClass)
 		lstrcpyWtoA(lpszClass,lpszClassW);
 	if (lpcchClass)
 		*lpcchClass/=2;

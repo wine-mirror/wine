@@ -983,15 +983,15 @@ struct db {
 /* in memory structure... */
 	char	name[1]; 	/* padded to dword alignment */
 /* .... 
-	char	data[datalen];     padded to dword alignemnt
+	char	data[datalen];     padded to dword alignment
 	BYTE	subdirdata[];      until nextoff
  */
 };
 
 static BYTE*
-_find_data(BYTE *block,LPCSTR str) {
+_find_data(BYTE *block,LPCSTR str, WORD buff_remain) {
 	char	*nextslash;
-	int	substrlen;
+	int	substrlen, inc_size;
 	struct	db	*db;
 
 	while (*str && *str=='\\')
@@ -1013,20 +1013,23 @@ _find_data(BYTE *block,LPCSTR str) {
 		dprintf_ver(stddeb,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s,db->data=%s\n",
 			db,db->nextoff,db->datalen,db->name,(char*)((char*)db+4+((strlen(db->name)+4)&~3))
 		);
-		if (!db->nextoff)
+		if ((!db->nextoff) || (!buff_remain)) /* no more entries ? */
 			return NULL;
 
 		dprintf_ver(stddeb,"comparing with %s\n",db->name);
 		if (!strncmp(db->name,str,substrlen)) {
-			if (nextslash)
-				return _find_data(
-					block+4+((strlen(db->name)+4)&~3)+((db->datalen+3)&~3)
-					,nextslash
-				);
+			if (nextslash) {
+				inc_size = 4+((strlen(db->name)+4)&~3)+((db->datalen+3)&~3);
+
+				return _find_data( block+inc_size ,nextslash,
+							buff_remain - inc_size);
+			}
 			else
 				return block;
 		}
-		block=block+((db->nextoff+3)&~3);
+		inc_size=((db->nextoff+3)&~3);
+		block=block+inc_size;
+		buff_remain=buff_remain-inc_size;
 	}
 }
 
@@ -1044,7 +1047,7 @@ VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
-	b=_find_data(block,s);
+	b=_find_data(block, s, *(WORD *)block);
 	if (b==NULL) {
 		*buflen=0;
 		return 0;
@@ -1071,7 +1074,7 @@ VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
-	b=_find_data(block,s);
+	b=_find_data(block, s, *(WORD *)block);
 	if (b==NULL) {
 		*buflen=0;
 		return 0;
@@ -1100,7 +1103,7 @@ VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	sb = HEAP_strdupWtoA( GetProcessHeap(), 0, subblock );
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(sb)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,sb);
-	b=_find_data(block,s);
+	b=_find_data(block, s, *(WORD *)block);
 	if (b==NULL) {
 		*buflen=0;
 		HeapFree( GetProcessHeap(), 0, sb );

@@ -3,10 +3,11 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-PROGRAMS  = hello hello2 hello3 hello4 new rolex
+PROGRAMS  = expand hello hello2 hello3 hello4 new rolex
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
 C_SRCS = \
+	expand.c \
 	hello.c \
 	hello2.c \
 	hello3.c \
@@ -20,6 +21,9 @@ GEN_C_SRCS = \
 all: check_winerc $(PROGRAMS)
 
 @MAKE_RULES@
+
+expand: expand.o
+	$(CC) -o expand expand.o $(LDOPTIONS) $(ALL_LIBS)
 
 hello: hello.o
 	$(CC) -o hello hello.o $(LDOPTIONS) $(ALL_LIBS)

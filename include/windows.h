@@ -2844,6 +2844,67 @@ typedef struct
 #define MF_HELP            0x4000
 #define MF_MOUSESELECT     0x8000
 
+/* Flags for extended menu item types.  */
+#define MFT_STRING         MF_STRING
+#define MFT_BITMAP         MF_BITMAP
+#define MFT_MENUBARBREAK   MF_MENUBARBREAK
+#define MFT_MENUBREAK      MF_MENUBREAK
+#define MFT_OWNERDRAW      MF_OWNERDRAW
+#define MFT_RADIOCHECK     0x00000200L
+#define MFT_SEPARATOR      MF_SEPARATOR
+#define MFT_RIGHTORDER     0x00002000L
+#define MFT_RIGHTJUSTIFY   MF_RIGHTJUSTIFY
+
+/* Flags for extended menu item states.  */
+#define MFS_GRAYED          0x00000003L
+#define MFS_DISABLED        MFS_GRAYED
+#define MFS_CHECKED         MF_CHECKED
+#define MFS_HILITE          MF_HILITE
+#define MFS_ENABLED         MF_ENABLED
+#define MFS_UNCHECKED       MF_UNCHECKED
+#define MFS_UNHILITE        MF_UNHILITE
+#define MFS_DEFAULT         MF_DEFAULT
+
+typedef struct {
+  UINT32    cbSize;
+  UINT32    fMask;
+  UINT32    fType;
+  UINT32    fState;
+  UINT32    wID;
+  HMENU32   hSubMenu;
+  HBITMAP32 hbmpChecked;
+  HBITMAP32 hbmpUnchecked;
+  DWORD     dwItemData;
+  LPSTR     dwTypeData;
+  UINT32    cch;
+} MENUITEMINFO32A, *LPMENUITEMINFO32A;
+
+typedef struct {
+  UINT32    cbSize;
+  UINT32    fMask;
+  UINT32    fType;
+  UINT32    fState;
+  UINT32    wID;
+  HMENU32   hSubMenu;
+  HBITMAP32 hbmpChecked;
+  HBITMAP32 hbmpUnchecked;
+  DWORD     dwItemData;
+  LPWSTR    dwTypeData;
+  UINT32    cch;
+} MENUITEMINFO32W, *LPMENUITEMINFO32W;
+
+DECL_WINELIB_TYPE_AW(MENUITEMINFO);
+DECL_WINELIB_TYPE_AW(LPMENUITEMINFO);
+
+/* Field specifiers for MENUITEMINFO[AW] type.  */
+#define MIIM_STATE       0x00000001
+#define MIIM_ID          0x00000002
+#define MIIM_SUBMENU     0x00000004
+#define MIIM_CHECKMARKS  0x00000008
+#define MIIM_TYPE        0x00000010
+#define MIIM_DATA        0x00000020
+
+
 #ifndef NOWINOFFSETS
 #define GCW_HBRBACKGROUND (-10)
 #endif
@@ -5070,13 +5131,17 @@ INT16      Catch(LPCATCHBUF);
 WORD       ChangeSelector(WORD,WORD);
 INT16      CloseComm(INT16);
 HGLOBAL16  CreateCursorIconIndirect(HINSTANCE16,CURSORICONINFO*,LPCVOID,LPCVOID);
+WORD       CreateSystemTimer(WORD,FARPROC16);
 BOOL16     DCHook(HDC16,WORD,DWORD,LPARAM);
 VOID       DirectedYield(HTASK16);
 HGLOBAL16  DirectResAlloc(HINSTANCE16,WORD,UINT16);
+VOID       DisableSystemTimers(void);
 BOOL16     DlgDirSelect(HWND16,LPSTR,INT16);
 BOOL16     DlgDirSelectComboBox(HWND16,LPSTR,INT16);
 DWORD      DumpIcon(SEGPTR,WORD*,SEGPTR*,SEGPTR*);
+BOOL16     EnableCommNotification(INT16,HWND16,INT16,INT16);
 BOOL16     EnableHardwareInput(BOOL16);
+VOID       EnableSystemTimers(void);
 INT16      ExcludeVisRect(HDC16,INT16,INT16,INT16,INT16);
 HANDLE16   FarGetOwner(HGLOBAL16);
 VOID       FarSetOwner(HGLOBAL16,HANDLE16);
@@ -5283,6 +5348,9 @@ DWORD      GetFullPathName32W(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define    GetFullPathName WINELIB_NAME_AW(GetFullPathName)
 VOID       GetLocalTime(LPSYSTEMTIME);
 DWORD      GetLogicalDrives(void);
+BOOL32     GetMenuItemInfo32A(HMENU32,UINT32,BOOL32,MENUITEMINFO32A*);
+BOOL32     GetMenuItemInfo32W(HMENU32,UINT32,BOOL32,MENUITEMINFO32W*);
+#define    GetMenuItemInfo WINELIB_NAME_AW(GetMenuItemInfo)
 UINT32     GetOEMCP(void);
 DWORD      GetPriorityClass(HANDLE32);
 HANDLE32   GetProcessHeap(void);

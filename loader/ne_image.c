@@ -77,8 +77,8 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
  		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
  	oldstack = IF1632_Saved16_ss_sp;
  	oldselector = pSeg->selector;
- 	IF1632_Saved16_ss_sp = MAKELONG( 0xFF00 - sizeof(*stack16Top),
-                                         pModule->self_loading_sel );
+ 	IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
+                                                 0xff00 - sizeof(*stack16Top));
         stack16Top = CURRENT_STACK16;
         stack16Top->saved_ss_sp = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;

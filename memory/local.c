@@ -159,7 +159,7 @@ static void LOCAL_MakeBlockFree( char *baseptr, WORD block )
         next = pNext->next;
     }
 
-    dprintf_local( stddeb, "Local_AddFreeBlock %04x, next %04x\n", block, next );
+    dprintf_local( stddeb, "Local_MakeBlockFree %04x, next %04x\n", block, next );
       /* Insert the free block in the free-list */
 
     pArena->free_prev = pNext->free_prev;

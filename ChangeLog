@@ -1,4 +1,134 @@
 ----------------------------------------------------------------------
+Sun Aug  3 14:03:43 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [documentation/Makefile.in]
+	Create links for files included from wine.texinfo.
+
+	* [wine.man]
+	Moved to documentation dir.
+
+	* [if1632/builtin.c]
+	Made SYSTEM.DLL always loaded by default.
+
+	* [loader/signal.c] [if1632/signal.c]
+	Split signal.c in generic/emulator-specific parts.
+
+	* [misc/system.c] [if1632/thunk.c]
+	Implemented system timer functions.
+	Fixed InquireSystem parameters.
+
+	* [msdos/ioports.c]
+	Defined inb/outb functions to avoid including asm/io.h.
+	Use the right instruction for word and dword direct access.
+
+	* [multimedia/mmsystem.c]
+	Fixed CallTo16 usage.
+
+Sat Aug 2 13:05:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [controls/edit.c]
+	When text is inserted into a newly created editline, the caret
+	is placed after the text. Should be placed before the text. Fixed.
+
+	* [files/file.c]
+	Removed O_TRUNC flag from OF_WRITE mode in _lopen32().
+	According to doc _lopen() never truncates files.
+
+	* [if1632/user.spec] [misc/comm.c]
+	Added stub for EnableCommNotification().
+
+	* [misc/ver.c]
+	Fixed problem with VerQueryValue*() running over end of name table
+	in rare cases.
+
+	* [msdos/int21.c]
+	Enhanced ioctlGetDeviceInfo() to correctly return the current drive.
+
+	* [multimedia/joystick.c] [windows/message.c]
+	Added joystick support !!!
+	Needs Linux >= 2.1.45 or joystick-0.8.0.tar.gz.
+
+Fri Aug  1 18:02:09 1997  Morten Welinder  <terra@diku.dk>
+
+	* [if1632/user32.spec]
+	Define DrawAnimatedRects32.
+
+	* [graphics/painting.c]
+	(DrawAnimatedRects32): Create stub.
+
+	* [misc/registry.c]
+	Cope with NULL class in RegQueryInfoKey32A.
+
+	* [if1632/user32.spec]
+	Add GetMenuItemInfo32[AW].
+
+	* [controls/menu.c]
+	(InsertMenu32A): Upgrade flags to 8 hex-digits.
+	(MENUEX_ParseResource): First shot at implementation.
+	(LoadMenuIndirect32A): Handle extended menus.
+	(GetMenuItemInfo32[AW]): First shot at implementation.
+
+	* [include/windows.h]
+	Define MFT_*, MFS_*, MIIM_* macros.  Define MENUITEMINFO[AW]
+ 	structures and pointers.
+
+	* [Makefile.in]
+	(etags): Add TAGS as target.
+
+	* [if1632/comctl32.spec]
+	Use Windows 95's ordinals.  Add a few missing stubs.
+
+Thu Jul 31 14:01:13 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [objects/color.c]
+	Fix for 16 color mode of XFree.
+
+	* [if1632/kernel32.spec][win32/ordinals.c]
+	Moved/added some ordinal only exported functions from kernel32.dll
+	(mostly thunking preparation stuff).
+
+Wed Jul 30 09:16:38 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/win16drv/init.c] [include/win16drv.h]
+        Escape(SETABORTPROC) returns success to keep pbrush.exe happy.
+        Escape(NEXTBAND) implemented to make HP PCL printer driver work in
+ 	word.  Stub for PATBLT added to start work on printing more than
+ 	text.
+
+Mon Jul 28 13:14:28 1997  Victor Schneider <vischne@ibm.net>
+
+	* [libtest/expand.c]
+	New Winelib test program.
+
+Wed Jul 23 09:37:13 1997  Adrian Harvey <adrian@select.com.au>
+
+	* [tools/build.c] [tools/build-spec.txt] [if1632/kernel.spec]
+	  [if1632/user.spec]
+	Added ability to set filename wine considers the built-in DLLs 
+	to be in  to something other than name.DLL with new "file" key
+	in .spec files.
+	Made kernel filename KRNL386.EXE (some programs use this name 
+	explicitly - ChemOffice install now starts up).
+	Made user filename USER.EXE (just to be tidy).
+
+Sun Jul 20 23:51:02 1997  David A. Cuthbert <dacut@henry.ece.cmu.edu>
+
+	* [controls/menu.c] [misc/tweak.c] [include/tweak.h]
+	Fixed MENU_KeyLeft and MENU_KeyRight to handle multiple-column
+	menus.  Misc menu drawing issues for Win95 tweaks fixed.  Misc
+	warnings fixed.
+
+	* [loader/module.c]
+	Spaces are now permitted in file/path names on the command line.
+	If multiple matches can be made, the preferred match is the
+	path/file with fewer spaces.
+
+Tue Jul 29 02:21:15 1997  Bruce Milner <Bruce.Milner@genetics.utah.edu>
+
+	* [misc/compobj.c]
+	Added CLSIDFromString and StringFromCLSID.
+
+----------------------------------------------------------------------
 Sat Jul 19 13:03:01 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [tools/build.c] [include/stackframe.h]

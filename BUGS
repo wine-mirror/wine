@@ -9,6 +9,10 @@ As of June 1997 -
 
 General:
 
+ * We need to do InsertMenuItem32[AW] and then code most of the other
+   inserting function in terms of this.  Without this, we cannot support
+   all the new extended menus.  Not hard, but slightly big.
+
  * TrueType, .FON rasterizer.
 
  * No thread/process scheduling support in Win32 code. 
@@ -53,5 +57,3 @@ Miscellaneous:
 Where to look in source files:
 
  * grep for FIXME in the source files.
-
-

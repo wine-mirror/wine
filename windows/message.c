@@ -37,6 +37,8 @@ typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP,
 extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
 extern MESSAGEQUEUE *pActiveQueue;
 
+extern void JoySendMessages(void);
+
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
 static UINT32 doubleClickSpeed = 452;
@@ -411,6 +413,9 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
     DWORD status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     int i, kbd_msg, pos = sysMsgQueue->nextMessage;
+
+    /* FIXME: there has to be a better way to do this */
+    JoySendMessages();
 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && XPending(display))

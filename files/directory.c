@@ -502,9 +502,9 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* First check the supplied parameters */
 
-    if (!(p = strrchr( name, '\\' ))) p = name;
-    if (!(p = strrchr( p, '/' ))) p = name;
-    if (strchr( p, '.' )) ext = NULL;  /* Ignore the specified extension */
+    p = strrchr( name, '.' );
+    if (p && !strchr( p, '/' ) && !strchr( p, '\\' ))
+        ext = NULL;  /* Ignore the specified extension */
     if ((*name && (name[1] == ':')) ||
         strchr( name, '/' ) || strchr( name, '\\' ))
         path = NULL;  /* Ignore path if name already contains a path */

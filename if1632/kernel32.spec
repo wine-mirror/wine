@@ -26,14 +26,18 @@ base	1
  
 30  stub _KERNEL32_31
  
-34  stub LoadLibrary16
+33  stdcall _KERNEL32_34() _KERNEL32_34
+34  stdcall LoadLibrary16(ptr) LoadLibrary16
 35  stub FreeLibrary16
-36  stub GetProcAddress16
+36  stdcall GetProcAddress16(long ptr) WIN32_GetProcAddress16
  
 39  stub _KERNEL32_40
-
-42  return _KERNEL32_43 20 0
-44  stub _KERNEL32_45
+40  stdcall _KERNEL32_41(long long long long long) _KERNEL32_41
+41  stub _KERNEL32_42
+42  stdcall _KERNEL32_43(long ptr long ptr ptr) _KERNEL32_43
+44  register _KERNEL32_45(long) _KERNEL32_45 
+45  stdcall _KERNEL32_46(long long long long long) _KERNEL32_46
+46  stub _KERNEL32_47
  
 49  stdcall AddAtomA(ptr) AddAtom32A
 
@@ -42,7 +46,7 @@ base	1
 # WOW calls
 53  stub WOWCallback16
 54  stub WOWCallback16Ex
-55  stub WOWGetVDMPointer
+55  stdcall WOWGetVDMPointer(long long long) WOWGetVDMPointer
 56  stub WOWHandle32
 57  stub WOWHandle16
 58  stub WOWGlobalAlloc16
@@ -54,9 +58,9 @@ base	1
 64  stub WOWGlobalLockSize16
 65  stub WOWYield16
 66  stub WOWDirectedYield16
-67  stub WOWGetVDMPointerFix
-68  stub WOWGetVDMPointerUnfix
-69  stub WOW32_1
+67  stdcall WOWGetVDMPointerFix(long long long) WOWGetVDMPointerFix
+68  stdcall WOWGetVDMPointerUnfix(long) WOWGetVDMPointerUnfix
+69  stdcall WOW32_1(long long) WOW32_1
  
 71  stub RtlLargeIntegerAdd
 72  stub RtlEnlargedIntegerMultiply
@@ -73,11 +77,12 @@ base	1
 83  stub RtlConvertLongToLargeInteger
 84  stub RtlConvertUlongToLargeInteger
 
-86  stub _KERNEL32_87
-87  stub _KERNEL32_88
-
-90  stub _KERNEL32_90
-91  stub _KERNEL32_91
+86  stdcall _KERNEL32_87() _KERNEL32_87
+87  cdecl _KERNEL32_88(long long ptr) _KERNEL32_88
+88  stub _KERNEL32_89
+89  stub _KERNEL32_90
+90  register _KERNEL32_91() _KERNEL32_91
+91  stub _KERNEL32_92
 92  stdcall GETPWIN16LOCK(ptr) GetPWinLock
 96  stub ENTERSYSLEVEL
 97  stub LEAVESYSLEVEL

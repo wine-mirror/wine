@@ -1172,6 +1172,10 @@ HWND16 FindWindowEx16( HWND16 parent, HWND16 child,
 {
     ATOM atom = 0;
 
+    dprintf_win(stddeb, "FindWindowEx16: %04x %04x '%s' '%s'\n", parent,
+		child, HIWORD(className)?(char *)PTR_SEG_TO_LIN(className):"",
+		title ? title : "");
+
     if (className)
     {
         /* If the atom doesn't exist, then no class */

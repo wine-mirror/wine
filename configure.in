@@ -38,8 +38,12 @@ AC_PROG_YACC
 AC_PROG_LEX
 AC_PROG_RANLIB
 AC_PROG_INSTALL
+AC_PROG_LN_S
 dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt,LDLIBS="$LDLIBS -li386")
+
+dnl **** If ln -s doesn't work, use cp instead ****
+if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
 
 dnl **** Check for gcc strength-reduce bug ****
 

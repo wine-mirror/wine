@@ -293,7 +293,8 @@ BOOL16 DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 			return FALSE;
 		case DCB_FUNCTION:
 			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_FUNCTION !\n");
-			CallTo16_word_wwlll((FARPROC16)dwCallBack,hDev,wMsg,dwUser,dwParam1,dwParam2);
+			CallDriverCallback( (FARPROC16)dwCallBack, hDev, wMsg,
+                                            dwUser, dwParam1, dwParam2 );
 			break;
 		}
 	return TRUE;

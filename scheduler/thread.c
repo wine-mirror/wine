@@ -10,6 +10,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "selectors.h"
+#include "miscemu.h"
 #include "winnt.h"
 
 THDB *pCurrentThread = NULL;

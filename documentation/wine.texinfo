@@ -24,7 +24,8 @@ This file documents Wine, the Windows Emulator.
 
 @c 
 Copyright @copyright{} 1997 The Wine authors. @*
-@xref{Authors}, for a list of the copyright holders.
+@xref{Authors, The Wine Authors, The Wine Authors},
+for a list of the copyright holders.
 
 Permission is granted to make and distribute verbatim
 copies of this manual provided the copyright notice and
@@ -44,6 +45,8 @@ the section entitled ``License, Warranty, and Authors of Wine''.
 
 @sp 4
 FIXME: UNIX and POSIX trademarks. @*
+DOS @*
+X11 @*
 MS-Windows, Windows-NT, Windows 95 are registered trademarks of
 Microsoft Corp. Postscript is a registered trademark of Adobe Systems
 Inc. All other product names mentioned herein are the trademarks of
@@ -57,7 +60,7 @@ their respective owners.
 @sp 10
 
 @center @titlefont{The Wine Reference Manual}
-@center Edition 0.0.1, 6 July 1997
+@center Edition 0.0.2, 21 July 1997
 
 
 @c The following two commands start the copyright page.
@@ -65,7 +68,8 @@ their respective owners.
 @vskip 0pt plus 1filll
 
 Copyright @copyright{} 1997 The Wine authors. @*
-@xref{Authors}, for a list of the copyright holders.
+@xref{Authors, The Wine Authors, The Wine Authors},
+for a list of the copyright holders.
 
 Permission is granted to make and distribute verbatim
 copies of this manual provided the copyright notice and
@@ -91,19 +95,23 @@ their respective owners.
 
 @c Edit this macro manually in the above parts of the document
 @macro winemanualversion
-0.0.1
+0.0.2
 @end macro
 
 @c Edit this macro manually in the above parts of the document
 @macro winemanualdate
-6 July 1997
+21 July 1997
 @end macro
 
 @c Edit this macro manually into the TeX titlepage
-@macro winemanualtitle {}
+@macro winemanualtitle
 The Wine Reference Manual
 @end macro
 
+@c
+@macro winelib
+Winelib
+@end macro
 @c
 @c MICROSOFT
 @c
@@ -117,6 +125,9 @@ MS-Windows
 @c spell it always the same
 @macro WIN32
 WIN32
+@end macro
+@macro WIN16
+WIN16
 @end macro
 
 @c FIXME: automatical trademark reference
@@ -142,6 +153,15 @@ UNIX
 @macro posix
 POSIX
 @end macro
+
+@macro unicode
+Unicode
+@end macro
+
+@macro ascii
+ASCII
+@end macro
+
 @c
 @c THIS MANUAL
 @c
@@ -176,10 +196,49 @@ Present in @WIN95{} and @WINNT{}.
 Not yet implemented.
 @end macro
 
+@c
+@c MACROS FOR FUNCTIONS, TYPES, CONSTANTS, VARIABLES
+@c
 
+@c Constants in the WIN32 API
+@macro defvr_cw32 {restofline}
+@defvr Constant \restofline\
+@end macro
+@macro defvrx_cw32 {restofline}
+@defvrx Constant \restofline\
+@end macro
 
+@c Functions in the WIN32 API
+@macro deftypefn_w32 {restofline}
+@deftypefn {WIN32 function} \restofline\
+@end macro
+@macro deftypefnx_w32 {restofline}
+@deftypefnx {WIN32 function} \restofline\
+@end macro
 
+@c Types in the WIN32 API
+@macro deftp_w32 {restofline}
+@deftp {Data type} \restofline\
+@end macro
+@macro deftpx_w32 {restofline}
+@deftpx {Data type} \restofline\
+@end macro
 
+@c Macros internal to Wine
+@macro deffn_winemacro {restofline}
+@deffn {Wine internal macro} \restofline\
+@end macro
+@macro deffnx_winemacro {restofline}
+@deffn {Wine internal macro} \restofline\
+@end macro
+
+@c Constants internal to Wine
+@macro defvr_cwine {restofline}
+@defvr {Wine internal constant} \restofline\
+@end macro
+@macro defvrx_cwine {restofline}
+@defvrx {Wine internal constant} \restofline\
+@end macro
 
 
 @c
@@ -203,20 +262,20 @@ Wine is free software. Wine is still in development-only state.
 * Copying::                     License, Warranty, and Authors of Wine.
 * Introduction::                A short overview.
 * Reference Manual::            The Wine reference manual.
-* Installation::                Installing Wine.
+* Installation::                Installing and configuring Wine.
 * The Wine Project::            How to contribute to Wine.
 * Concept Index::               Index of concepts and names.
 * Type Index::                  Index of types and type qualifiers.
 * Function Index::              Index of functions and function-like
                                 macros.
-* Variable Index::              Index of variables and variable-like
-                                macros.
+* Variable Index::              Index of variables, constants, and
+                                variable-like macros.
 * File Index::                  Index of programs and files.
 @end menu
 
 @node Copying, Introduction, Top, Top
 
-@unnumbered License, Warranty, and Authors of Wine.
+@unnumbered License, Warranty, and Authors of Wine
 @cindex copying conditions for Wine
 @cindex conditions for copying Wine
 @cindex Wine copying conditions
@@ -274,9 +333,97 @@ Alexandre Julliard @*
 @node Introduction, Reference Manual, Copying, Top
 @chapter Introduction
 
-FIXME: Somebody should say some solemn words.
+@center Wine:
+@center the WINdows Emulator,
+@center or Wine Is Not an Emulator
+
+FIXME: make an easy-readable fluent text out of this.
+
+Welcome to @winemanualtitle{}. This is edition @winemanualversion{},
+last updated @winemanualdate{}.
+
+@strong{What is Wine?}
+
+Wine is a program that allows running MS-Windows programs under X11.
+
+
+Wine incorporates two features, the program loader and @winelib{}:
+@enumerate
+@item
+You can run @mswindows{} binaries (programs) in Wine. Wine contains a
+program loader which loads and executes an @mswindows{} binary. It uses
+the @winelib{} features of Wine to translate @WIN32{} and @WIN16{} calls
+to their @unix{}/X11 equivalent.
+
+Both 16 bit and 32 bit binaries can be loaded.
+@item
+@winelib{}: Wine can also be used as a library which implements the 
+@mswindows{} API on top of a @unix{} or @unix{}-like operating system
+with X11. @winelib{} (i.e. the Wine library) translates @WIN16{} or
+@WIN32{} API calls to their @unix{}/X11 equivalent.
+
+You can write a user-level application program that calls the @WIN16{}
+or @WIN32{} API functions and compile it on a @unix{} box.
+@end enumerate
+
+@strong{Status}
+
+Wine is still at development stage. The file @file{ANNOUNCE} says,
+``This is still a developer's only release.  There are many bugs and
+many unimplemented API features.  Most applications still do not work
+correctly.''
+@xref{Warranty}, for additional information.
+
+@strong{Requirements}
+
+Wine needs an 80x86 CPU to run on. Emulating the CPU is currently not
+possible.
+
+Currently, you must have one of:
+@itemize @bullet
+@item
+Linux version 0.99.13 or above
+@item
+NetBSD-current
+@item
+FreeBSD-current or FreeBSD 1.1
+@end itemize
+You need X11, and you must have @file{libXpm} installed on your system.
+
+@strong{Availability}
+
+Wine is free software. The file @file{README} says, ``Basically, you can do
+anything with it, except claim that you wrote it.''
+@xref{Copying}, for more information.
+
+@strong{Performance}
+
+Wine is expected to run @mswindows{} binaries about the same speed as
+@mswindows{} would. However, be aware that the 16 bit versions of
+@mswindows{} programs are generally slower than their 32 bit
+counterparts.
+
+@strong{Further information}
+
+You should consult the files @file{README}, @file{ANNOUNCE},
+@file{RELEASE-NOTES}, @file{BUGS}, @file{LICENSE}, and @file{WARRANTY},
+in the root directory of the Wine distribution.
+
+The Wine FAQ, available from
+@url{ftp://ftp.asgardpro.com/wine/dave/Wine.FAQ},
+@url{ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/Wine.FAQ},
+@url{ftp://rtfm.mit.edu/pub/usenet-by-group/comp.emulators.ms-windows.wine/WINE_(WINdows_Emulator)_Frequently_Asked_Questions},
+@url{ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/Wine.FAQ},
+@url{http://www.asgardpro.com/wine/index.html},
+gives answer to a lot of questions.
+
+The Wine USENET newsgroup is interesting for developers. It discusses technical
+matters about Wine. The address is: @url{news:comp.emulators.ms-windows.wine}.
+
+
 
 @xref{The Wine Project}, if you consider contributing some work.
+
 
 
 @node Reference Manual, Installation, Introduction, Top
@@ -305,11 +452,10 @@ FIXME: Somebody should say some solemn words.
 * Memory Management::           How your programs get memory from
                                 Wine.
 * I/O Facilities::              Input/Output in Wine.
-                                .everything except communication and windows
 * Communication::               How processes can communicate.
 * Windows and Graphics::        GUI functions of @WIN32{}.
 * Errors and Exceptions::       How your program can report errors.
-                                . messaging
+                                (messaging)
 * Resources::                   Functions for dealing with resources.
 * The Registry::                FIXME missing.
 * Dynamic Link Libraries::      Functions for dealing with DLL's.
@@ -344,22 +490,22 @@ representations.
 * Type FILETIME::               The data structure used for specifying
                                 file times.
 * Compare File Times::          Compare two file times.
-* Get File Times::              Get the time attributes of a file.
 @end menu
 
 @c
 @c *** struct FILETIME ***
 @c
 @node Type FILETIME, Compare File Times, , File Times
+@subsubsection Type FILETIME
 
 @noindent
 File times in Wine are specified by the data type @code{FILETIME},
 defined in @file{windows.h}.
-
-@deftp {Data type} FILETIME
+@deftp_w32  FILETIME
+@deftpx_w32 LPFILETIME
 This is the data type for specifying file times. The file times are
 stored with 64 bit precision. The actual data type is a structure with
-two 32 bit values which are interpreted as the low and high parts of a
+two 32-bit values which are interpreted as the low and high parts of a
 64-bit value. This value gives a time measured in a granularity of 100
 nanoseconds, so 1.5 seconds are specified by a value of 15,000,000.  In
 Wine, this 64-bit value is signed, with the sign taken from the high
@@ -367,11 +513,11 @@ part. The lower part is used as unsigned.
 
 The definition of @code{FILETIME} reads:
 @example
-typedef struct _FILETIME
+typedef struct
 @{
     INT32 dwLowDateTime;
     INT32 dwHighDateTime;
-@} FILETIME;
+@} FILETIME, *LPFILETIME;
 @end example
 
 @cindex epoch in file time
@@ -381,6 +527,8 @@ intervals elapsed since 1 January 1601, 00:00:00 UTC (Coordinated
 Universal Time, which is GMT, Greenwich Mean Time). This might be
 called the @dfn{epoch} for file times. With a signed 64-bit value, this
 representation covers absolute times of 29247 years around the epoch.
+To convert this type to local time, use the function
+@code{FileTimeToLocalFileTime}. 
 
 @windiff{}
 In @mswindows{}, the elements of the structure are apparently of type
@@ -391,14 +539,13 @@ unsigned I do not know.
 @c
 @c *** CompareFileTime ***
 @c
-@node Compare File Times, Get File Times, Type FILETIME, File Times
+@node Compare File Times, , Type FILETIME, File Times
 
 @noindent
 The Wine function @code{CompareFileTime} compares two file times, and
 returns whether the first time is less than, equal to, or greater than
 the second file time. It is defined in @file{windows.h}.
-
-@deftypefn {WIN32 function} LONG CompareFileTime (@w{CONST FILETIME* @var{time_1},} @w{CONST FILETIME* @var{time_2})}
+@deftypefn_w32 LONG CompareFileTime (@w{CONST FILETIME* @var{time_1},} @w{CONST FILETIME* @var{time_2})}
 This function returns @code{1}, if @var{time_1} is greater than
 @var{time_2}, @code{-1} if it is less, and @code{0} if both times are
 equal. 
@@ -410,34 +557,6 @@ equal.
 @completionnone{}
 @end deftypefn
 
-@c
-@c ***GetFileTime ***
-@c
-@node Get File Times, , Compare File Times, File Times
-@noindent
-FIXME: move this function to the file IO section. @*
-The Wine function @code{GetFileTime} returns the creation time and
-the times of last the read and modification access to a file. It is
-defined in @file{windows.h}.
-
-@deftypefn {WIN32 function} BOOL GetFileTime (@w{HANDLE @var{file},} @w{LPFILETIME @var{ctime},} @w{LPFILETIME @var{atime},} @w{LPFILETIME @var{mtime})}
-This function obtains for the specified @var{file} the creation time
-@var{ctime}, the time of the last access to the file @var{atime}, and
-the time of the last modification (write) to the file, @var{mtime}.
-The @var{file} handle must have been obtained by opening the file with
-@code{GENERIC_READ} access. The file time arguments of this function are
-pointers to @code{FILETIME} variables, which are filled with a value that
-indicates an absolute time in UTC. To convert these values to local
-times, use the function @code{FileTimeToLocalFileTime}. If you do not
-need some of the times, you can pass a @code{NULL} pointer.
-The function returns @code{TRUE} on success, @code{FALSE} on failure.
-
-@winconfall{}
-
-@windiffnone{}
-@end deftypefn
-
-
 @node System Information, Memory Management, Date and Time, @WIN32{} Reference Manual
 @section System Information
 
@@ -446,6 +565,247 @@ The function returns @code{TRUE} on success, @code{FALSE} on failure.
 
 @node I/O Facilities, Communication, Memory Management, @WIN32{} Reference Manual
 @section I/O Facilities
+
+This section describes all input/output of a process, except for two
+topics: communication with other processes, and communication with the
+windowing system.
+
+@menu
+* I/O on Files::                Accessing the contents of files.
+* File System Interface::       Functions for manipulating files as a whole.
+@end menu
+
+@node I/O on Files, File System Interface, , I/O Facilities
+@subsection I/O on Files
+
+@node File System Interface, , I/O on Files, I/O Facilities
+@subsection File System Interface
+
+These functions are concerned with operating on files themselves, rather
+than on their contents.
+
+@menu
+* Type BY_HANDLE_FILE_INFORMATION::     The data structure used to
+                                        specify file information.
+* File attributes::                     The file attributes flags in
+                                        a file information structure.
+* Getting file information::            These functions let you obtain
+                                        information about a file.
+@end menu
+
+@node Type BY_HANDLE_FILE_INFORMATION, File attributes, , File System Interface
+@subsubsection The file information structure
+
+The file information structure of Wine is used to obtain information
+about files. It is declared in the header @file{winedows.h}.
+@deftp_w32 BY_HANDLE_FILE_INFORMATION
+This is the data type for specifying information about files as objects
+of the file system. It contains the following members:
+@table @code
+@item int dwFileAttributes
+   @cindex file attributes in file information
+   @cindex attributes of file in file information
+   @xref{File attributes}, for details.
+@item FILETIME ftCreationTime
+   @cindex creation time in file information
+   @cindex time of file creation in file information
+   The time when the file was created.
+   @xref{Type FILETIME}, for details.
+@item FILETIME ftLastAccessTime
+   @cindex access time in file information
+   @cindex time of file access in file information
+   The time when the file was last accessed.
+   @xref{Type FILETIME}, for details.
+@item FILETIME ftLastWriteTime
+   @cindex write time in file information
+   @cindex time of last file write in file information
+   The time when the file was last written to.
+   @xref{Type FILETIME}, for details.
+@item int dwVolumeSerialNumber
+   @cindex serial number of volume in file information
+   @cindex volume number (serial) in file information
+   The serial number of the volume containing the file. In Wine,
+   currently 0.
+@item int nFileSizeHigh
+   @cindex file size in file information
+   @cindex size of file in file information
+   A 32 bit value which contains the high part of the 64 bit file size.
+@item int nFileSizeLow
+   A 32 bit value which contains the low part of the 64 bit file size.
+@item int nNumberOfLinks
+   @cindex hard links number in file information
+   @cindex links (number of hard) in file information
+   This is the number of hard links to the file. In a file system which
+   does not support hard links, this is 1.
+@item int nFileIndexHigh
+   @cindex inode number in file information
+   @cindex file index in file information
+   @cindex index of file in file information
+   A 32 bit value which contains the high part of the 64 bit file
+   index. The file index is a unique number for a file on a volume.
+   This identifier cannot change while the file is opened by a process.
+   Together with the volume number, the file index is a unique
+   identifier for the file. This can be used by an application to check
+   whether two handles refer to the same file. Wine currently uses the
+   inode number for the file index.
+@item int nFileIndexLow
+   A 32 bit value which contains the low part of the 64 bit file index.
+@end table
+
+The definition of @code{BY_HANDLE_FILE_INFORMATION} reads:
+@example
+typedef struct
+@{
+  int dwFileAttributes;
+  FILETIME ftCreationTime;
+  FILETIME ftLastAccessTime;
+  FILETIME ftLastWriteTime;
+  int dwVolumeSerialNumber;
+  int nFileSizeHigh;
+  int nFileSizeLow;
+  int nNumberOfLinks;
+  int nFileIndexHigh;
+  int nFileIndexLow;
+@} BY_HANDLE_FILE_INFORMATION ;
+@end example
+
+The @code{BY_HANDLE_FILE_INFORMATION} structure can be obtained by the
+@code{GetFileInformationByHandle} function (@pxref{Getting file information}, for
+details).
+
+@windiff{}
+In @mswindows{}, the @code{int} elements of the structure are apparently
+of type @code{DWORD}.
+@end deftp
+
+@node File attributes, Getting file information, Type BY_HANDLE_FILE_INFORMATION, File System Interface
+@subsubsection The file attributes in a file information structure
+
+The file attributes in a file information structure and in other structures
+are a logical @emph{or} of one or more of the following constants:
+
+@defvr_cw32 FILE_ATTRIBUTE_READONLY
+The file is a read-only file. (Wine value: 0x0001).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_HIDDEN
+The file is a hidden file. Files in Wine do not have this attribute. (Wine value:
+0x0002).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_SYSTEM
+The file belongs to the operating system. Files in Wine do not have this
+attribute. (Wine value: 0x0004).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_LABEL
+This is not present in the @mswindows{} API. (Wine value: 0x0008).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_DIRECTORY
+The file is a directory. (Wine value: 0x0010).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_ARCHIVE
+The file is an archive file. All non-directory files are reported by Wine 
+to have this attribute. (Wine value: 0x0020).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_NORMAL
+The file does not have any other attributes set. This value must be used
+alone. In Wine, normal files are reported as archive files. (Wine value:
+0x0080).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_TEMPORARY
+The file is used as a temporary storage. Files in Wine do not have this
+attribute. (Wine value: 0x0100).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_ATOMIC_WRITE
+This is reserved for future use. Files in Wine do not have this
+attribute. (Wine value: 0x0200).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_XACTION_WRITE
+This is reserved for future use. Files in Wine do not have this
+attribute. (Wine value: 0x0400).
+@end defvr
+@defvr_cw32 FILE_ATTRIBUTE_COMPRESSED
+The file is compressed. Files in Wine do not have this attribute. (Wine
+value: 0x0800). 
+@end defvr
+
+@node Getting file information, , File attributes, File System Interface
+@subsubsection Getting file information
+
+The functions in this section describe how to get information about
+files. 
+
+@c
+@c *** GetFileInformationByHandle
+@c
+@noindent
+The Wine function @code{GetFileInformationByHandle} returns a file
+information structure. It is defined in @file{windows.h}.
+
+@deftypefn_w32 BOOL GetFileInformationByHandle (@w{HFILE32 @var{file},} @w{BY_HANDLE_FILE_INFORMATION *@var{info})}
+This function obtains for the specified @var{file} the file information,
+and stores it in @var{info}. The file information contains the file
+attributes, the file times, the volume serial number, the file size, the
+number of links, and a unique file identifier. The function returns
+@code{TRUE} on success, @code{FALSE} on failure.
+
+@winconfall{}
+
+@windiff{}
+The Wine function can of course only give back information that is
+accessible in the @unix{} file system. File times are produced in a
+granularity of full seconds. Most file attributes are not present in the
+@unix{} file system. @xref{File attributes}, for details. The volume
+serial number is set to 0.
+@end deftypefn
+
+
+@c
+@c *** GetFileTime ***
+@c
+@noindent
+The Wine function @code{GetFileTime} returns the creation time and
+the times of last the read and modification access to a file. It is
+defined in @file{windows.h}.
+
+@deftypefn_w32 BOOL GetFileTime (@w{HANDLE @var{file},} @w{LPFILETIME @var{ctime},} @w{LPFILETIME @var{atime},} @w{LPFILETIME @var{mtime})}
+This function obtains for the specified @var{file} the creation time
+@var{ctime}, the time of the last access to the file @var{atime}, and
+the time of the last modification (write) to the file, @var{mtime}.
+The file time arguments of this function are pointers to @code{FILETIME}
+variables, which are filled with a value that indicates an absolute time
+in UTC. @xref{Type FILETIME}, for details. If you do not need some of
+the times, you can pass a @code{NULL} pointer.
+The function returns @code{TRUE} on
+success, @code{FALSE} on failure.
+
+@winconfall{}
+
+@windiff{}
+The file times are produced in a granularity of full seconds, due to the
+underlying @unix{} file system. 
+@end deftypefn
+
+@c
+@c *** GetFileAttributes ***
+@c
+@noindent
+The Wine function @code{GetFileAttributes} returns the file attributes
+for a file. It is defined in @file{windows.h}.
+
+@deftypefn_w32 DWORD GetFileAttributes (@w{LPCTSTR @var{name})}
+This function looks up the file with name @var{name}, and returns the
+attributes of the file. @xref{File attributes}, for details on the file
+attributes. If the function is not successful, it returns a word with
+all bits set (@samp{0xffffffff}).
+
+@winconfall{}
+
+@windiff{}
+Most file attributes are not present in the
+@unix{} file system. @xref{File attributes}, for details.
+@end deftypefn
+
+
+
 
 @node Communication, Windows and Graphics, I/O Facilities, @WIN32{} Reference Manual
 @section Communication
@@ -465,6 +825,11 @@ The function returns @code{TRUE} on success, @code{FALSE} on failure.
 @node Dynamic Link Libraries, , The Registry, @WIN32{} Reference Manual
 @section Dynamic Link Libraries (DLL's)
 
+This section deals with API functions for handling DLL's (dynamic link
+libraries). It does not describe DLL's themselves; nor does it give
+information on how Wine handles DLL's. @xref{The build program}, for
+information on how DLL's are integrated into Wine.
+
 
 
 
@@ -483,8 +848,318 @@ The function returns @code{TRUE} on success, @code{FALSE} on failure.
 @node Tools, , Programs, Reference Manual
 @chapter Tools
 
+This chapter describes some of the tools that are used by Wine. These
+are not user-level programs which the user of Wine will
+run. @xref{Programs} for such programs.
+
+Tools are internal programs that are used to help compile or configure
+Wine.
+
+@menu
+* The build program::           A program used to build the DLL entry
+                                points from specifications in @file{if1632/}.
+@end menu
+
+
+@node The build program, , , Tools
+@section The @file{build} program
+
+@cindex modules of Wine
+@cindex Wine modules
+@cindex DLL's built-in in Wine
+@cindex Wine DLL's built-in
+@cindex built-in DLL's in Wine
+Wine contains several modules that implement various DLL's which are
+required to run @mswindows{} programs.
+
+The @file{build} program, located in the @file{tools/} directory, is
+used to create the bindings for the DLL entry points of the API functions.
+This program reads a @file{.spec}-file in the @file{if1632} directory
+and creates the assembly code that translates the function arguments
+correctly. 
+
+
+@menu
+* The spec files::              The format of the @file{.spec}-files.
+@end menu
+
+FIXME: where in Wine are the DLL's affixed?
+
+FIXME: write a description
+
+@xref{Implementing an API function}, for notes on using this program.
+
+@node The spec files, , , The build program
+@subsection The @file{.spec}-files
+@cindex DLL spec files
+@cindex spec files of DLL's
+@cindex entry points in DLL's
+
+This subsection describes the format of the @file{.spec}-files.
+
+A @file{.spec}-file contains the information about the functions,
+variables, and constants that are contained in a DLL (dynamic link
+library).
+
+To be able to interpret the contents of a @file{.spec}-file, you must
+know about the concept of ordinals.
+@menu
+* The general format::                  General format conventions.
+* Ordinals::                            Ordinals are indexes of entry
+                                        points into DLL's.
+* Spec file header::                    The header information.
+* Variable entry points::               Entries for DLL variables.
+* Function entry points::               Entries for DLL functions.
+* Special entries::                     Entries for stubs, dummy
+                                        functions, Wine symbols, and
+                                        constant values.
+@end menu
+
+@node The general format, Ordinals, , The spec files
+@subsubsection The general format
+@cindex format of spec files
+@cindex spec files format
+
+The @file{.spec}-file contains a header and a sequence of declarations.
+Each declaration describes an ordinal.
+
+The header gives general information about the DLL and its properties.
+
+Ordinal declarations are optional. That means that there is a default
+behaviour assigned to ordinals which are not mentioned in the
+@file{.spec}-file. The default handler function of an ordinal will print
+an error message when called.
+
+Comments are indicated by hash marks (@samp{#}); everything between a
+hash mark and the end of the line is ignored.
+
+Empty lines are allowed.
+@* FIXME: is that so?
+
+@node Ordinals, Spec file header, The general format, The spec files
+@subsubsection Ordinals
+@cindex ordinals in DLL's
+@cindex DLL ordinals
+
+All references to DLL objects like functions or variables are indexed by
+unique nonnegative numbers. These numbers are called
+@dfn{ordinals}. Apparently, a program can refer to a DLL function or
+variable by specifying its name or its ordinal. Although reference by
+name is the common usage, some program parts (notably DLL's themselves)
+sometimes refer to DLL entries by ordinal. Therefore, the ordinals
+cannot be chosen arbitrarily.
+@* FIXME: is that correct?
+
+@node Spec file header, Variable entry points, Ordinals, The spec files
+@subsubsection The header of a @file{.spec}-file
+
+The @file{.spec}-file starts with two mandatory definitions. The first
+line gives the name of the DLL which the @file{.spec}-file describes,
+@example
+name @var{NAME}
+@end example
+where @var{NAME} is the name of the DLL. The next line defines the type
+of the DLL, 
+@example
+type @var{TYPE}
+@end example
+with @var{TYPE} being either @samp{win16} or @samp{win32}.
+
+An optional statement of the form
+@example
+base @var{ORDINAL}
+@end example
+can be used to define the offset of the first ordinal. @var{ORDINAL}
+must be an integer number. If no base is specified, the offset is zero.
+@* FIXME: is this the offset of the first or an offset that is added to all
+ordinals?
+what is the offset? Is it added to the ordinals, or is it an address, or
+xxx?
+
+An optional statement like
+@example
+heap @var{SIZE}
+@end example
+can be used to define the size of the module local heap. This is only
+used for @WIN16{} DLL's. The local heap is the place where the segments
+of 16 bit programs can locally allocate memory, without interfering with
+one another. The default size of the local heap, if not specified, is 0.
+
+@* FIXME: to my impression, a local heap in DLL's would only be required
+if DLL functions used it. As all DLL functions in Wine are truly 32 bit
+functions that are mapped from 16 bit on being called and back to 16 bit
+on returning, a local heap should never be necessary.
+If I receive a confirmation of that here, I will state so. Otherwise I
+am missing some information on local heaps.
+But why is a heap defined in user.spec and gdi.spec?
+
+@node Variable entry points, Function entry points, Spec file header, The spec files
+@subsubsection Variable entry points of @file{.spec}-files
+
+You can declare an ordinal that holds data. Data items may be of 8, 16,
+or 32 bit in size.
+
+@example
+@var{ORDINAL} @var{VARTYPE} @var{EXPORTNAME} (@var{DATA} @var{[DATA @dots{}]})
+@end example
+
+@var{ORDINAL} is the ordinal number corresponding to the
+variable. @var{VARTYPE} must be @samp{byte}, @samp{word}, or
+@samp{long}, for 8, 16, or 32 bits respectively. @var{EXPORTNAME} will
+be the name available for dynamic linking. @var{DATA} can be a decimal
+number or a hex number preceded by @samp{0x}. Each @var{DATA} item defines
+a unit of storage.
+
+The following example defines the variable @samp{VariableA} at ordinal
+2, containing 4 bytes:
+@example
+2 byte VariableA(-1 0xff 0 0)
+@end example
+
+
+@node Function entry points, Special entries, Variable entry points, The spec files
+@subsubsection Function entry points of @file{.spec}-files
+
+@example
+@var{ORDINAL} @var{FUNCTYPE} @var{EXPORTNAME} (@var{[ARGTYPE} @dots{} @var{]}) @var{HANDLERNAME}
+@end example
+
+@var{ORDINAL} is the ordinal number corresponding to the
+function. @var{FUNCTYPE} must be chosen from this table:
+@table @samp
+@item pascal16
+A @WIN16{} function that returns a 16 bit value.
+@item pascal
+A @WIN16{} function that returns a 32 bit value.
+@item register
+A function using CPU registers to pass arguments.
+@item stdcall
+A normal @WIN32{} function.
+@item cdecl
+A @WIN32{} function using the C calling conventions. (This is presently
+only used for the built-in functions of the C runtime system).
+@end table
+
+@var{EXPORTNAME} specifies the name (prototype) available for dynamic
+linking.
+
+@var{ARGTYPE} must be chosen from this table:
+@table @samp
+@item byte
+  An 8 bit argument. Can be used in @WIN16{} functions only.
+@item word
+  A 16 bit argument. Can be used in @WIN16{} functions only.
+@item long
+  A 32 bit argument. Can be used in @WIN16{} or @WIN32{} functions.
+@item ptr
+  A linear pointer, unsegmented. Can be used in @WIN16{} or @WIN32{}
+  functions.
+@item str
+  A linear pointer, unsegmented, pointing to a null-terminated string.
+  Can be used in @WIN16{} or @WIN32{} functions.
+@item s_byte
+  A signed 8 bit argument. Can be used in @WIN16{} functions only.
+@item s_word
+  A signed 16 bit argument. Can be used in @WIN16{} functions only.
+@item s_long
+  A signed 32 bit argument. Can be used in @WIN16{} or @WIN32{}
+  functions.
+@item segptr
+  A segmented pointer. Can be used in @WIN16{} functions only.
+@item segstr
+  A segmented pointer to a null-terminated string. Can be used in
+  @WIN16{} functions only.
+@end table
+
+@var{HANDLERNAME} is the name of the actual Wine function that will
+process the request in 32-bit mode.
+
+
+@sp 2
+Here are some examples. The first example defines an entry point for the
+@code{CreateWindow()} call (the ordinal 100 is just an example):
+@example
+100 pascal CreateWindow(ptr ptr long s_word s_word s_word s_word
+                        word word word ptr) WIN_CreateWindow
+@end example
+
+The second example defines an entry point for the @code{GetFocus()} call
+(again, the ordinal 100 is an example):
+@example
+100 pascal GetFocus() WIN_GetFocus()
+@end example
+
+To declare a function that uses a variable number of arguments, specify
+the function as taking no arguments. In this special case, in @WIN32{}
+the called function will be passed a pointer to the first arg; in
+@WIN16{}, the args are available as @code{CURRENT_STACK16->args}.
+@* FIXME: create a reference here
+See the @code{wsprintf}* functions in @file{user.spec} and 
+@file{user32.spec} for an example.
+
+
+@node Special entries, , Function entry points, The spec files
+@subsubsection Special entries of @file{.spec}-files
+
+The @file{.spec}-files offer the possibility to use some special
+entries. These entries are used for stubs (which allow linking for
+non-existing functions), dummy functions that do not perform any
+operations, Wine symbols that must be referenced directly, and constant
+values.
+
+
+@strong{Stub ordinals}
+
+This pseudo function type defines a stub function. It makes the name and
+ordinal available for dynamic linking, but will terminate execution with
+an error message if the function is ever called.
+
+@example
+@var{ORDINAL} stub @var{EXPORTNAME}
+@end example
+
+@var{ORDINAL} is the ordinal number corresponding to the
+function. @var{EXPORTNAME} specifies the name (prototype) available for dynamic
+linking.
+
+@strong{Return ordinals}
+
+This pseudo function type defines a function entry point whose handler
+should do nothing but return a value.
+@example
+@var{ORDINAL} return @var{EXPORTNAME} @var{ARGLENGTH} @var{RETVALUE}
+@end example
+
+@var{ORDINAL} is replaced by the ordinal number corresponding to the
+function. @var{ARGLENGTH} is the number of bytes that need to be removed
+from the stack before returning to the caller. @var{RETVALUE} is the
+return value which will be passed back to the caller.
+
+@strong{Extern ordinals}
+
+@example
+@var{ORDINAL} extern @var{EXPORTNAME} @var{SYMBOLNAME}
+@end example
+This type defines an entry that simply maps to a Wine symbol
+(variable or function); @var{EXPORTNAME} will point to the symbol
+@var{SYMBOLNAME} that must be defined in C code. This type only works with
+@WIN32{}.
+
+
+@strong{Equate ordinals}
+
+@example
+@var{ORDINAL} equate @var{EXPORTNAME} @var{DATA}
+@end example
+
+This type defines an ordinal as an absolute value.
+@var{ORDINAL} is replaced by the ordinal number corresponding to the
+entry. @var{EXPORTNAME} will be the name available for dynamic linking.  
+@var{DATA} can be a decimal number or a hex number preceeded by @samp{0x}.
+
+
 @node Installation, The Wine Project, Reference Manual, Top
-@chapter Wine Installation
+@chapter Wine installation and configuration
 FIXME: write installation guide
 
 @menu
@@ -507,8 +1182,17 @@ If you are new to Wine and want to support this project, here are
 some suggestions. 
 
 @menu
-* Creating patches::            How to create patches for Wine.
-* Adding Documentation::        Templates for the documentation.
+* Implementing an API type::            How to implement a data type
+                                        of the API (a checklist).
+* Implementing an API function::        How to implement one function
+                                        of the API (a checklist).
+* API function and type naming::        How to name API functions in Wine.
+* Creating patches::                    How to create patches for Wine.
+* Adding Documentation::                Templates for the documentation.
+* File names::                          How Wine treats @mswindows{} and
+                                        @unix{} file names.
+* Wide character strings::              How Wine treats wide character
+                                        strings.
 @end menu
 
 @xref{Debugging}, for advice on how to debug Wine.
@@ -516,21 +1200,372 @@ some suggestions.
 
 FIXME: what is most urgently needed
 
-@node Creating patches, Adding Documentation, , The Wine Project
+@node Implementing an API type, Implementing an API function, , The Wine Project
+@section Implementing an API type
+
+Here is a checklist that should help you writing your first API type. It
+will of course not tell you which elements to put into the type
+(assuming it is a structure), but it should help you along the way of
+integrating this type into Wine.
+@xref{Implementing an API function}, for comparison.
+
+@enumerate
+@item
+Find out how the type should be named in Wine and in the DLL's.
+@xref{API function and type naming}, for details.
+
+@item
+Find out where the type should go. Please try to keep the header files
+structure as similar to @mswindows{} as possible. 
+
+@item
+Prepare for the later patch (by saving the original files before you
+work on them). @xref{Creating patches}, for details.
+
+@item
+Put the type declaration into the header file.
+
+@item
+Make sure the declaration is syntactically correct, i.e. it does not
+keep Wine from compiling.
+
+@item
+Make sure the declared type is layout-compatible with
+@mswindows{}-compiled types. Especially keep an eye on the packing of
+the structure.
+@* FIXME: a reference to packed structures here.
+
+@item
+Build Wine and test the type, if possible. If you cannot test the
+type by implementing a proper API function, write a small test program
+to test it on its own. Or rather stop here.
+
+@item
+Write the documentation of the type in the @file{wine.texinfo}
+file. @xref{Adding Documentation}, for details.
+With types, be especially careful and document all the details. Also
+document all constants or flags that are used in the type.
+
+@item
+Create an entry in the @file{ChangeLog} file.
+
+@item
+Collect some of these changes, and create a patch. @xref{Creating
+patches}, for details.
+
+@item
+Mail the patch to Alexandre Julliard, @email{julliard@@lrc.epfl.ch}.
+
+@item
+Wait for the patch to appear in the official distribution.
+@end enumerate
+
+
+@node Implementing an API function, API function and type naming, Implementing an API type, The Wine Project
+@section Implementing an API function
+
+Here is a checklist that should help you writing your first API
+function. It will of course not tell you what to do in the function,
+but it should help you along the way of integrating this function into
+Wine.
+
+@enumerate
+@item
+Make sure all data types that appear in function arguments are properly
+declared in Wine. Otherwise, start with the data types.
+
+@item
+Find out how the function should be named in Wine and in the DLL's.
+@xref{API function and type naming}, for details.
+
+@item
+Find out where the function should go:
+@enumerate
+@item
+Which header file for the prototype.
+@item
+Which C source file.
+@item
+Which DLL(s), and which ordinal the function will take there. Perhaps
+the function name is already present in one of the @file{.spec}-files in
+the @file{if1632} directory.
+@end enumerate
+
+@item
+Prepare for the later patch (by saving the original files before you
+work on them). @xref{Creating patches}, for details.
+
+@item
+Put the prototype into the header file, and the code into the C file.
+
+@item
+Make sure the code compiles.
+
+@item
+Create or change the information for the DLL entry points in the
+@file{.spec}-file in the @file{if1632} directory.
+@xref{The build program}, for details of the DLL spec files.
+
+@item
+Build Wine and test the function, if possible. If you cannot test the
+function in Wine, write a small test program to test it on its own.
+
+@item
+Write the documentation of the function in the @file{wine.texinfo}
+file. @xref{Adding Documentation}, for details.
+
+@item
+Create an entry in the @file{ChangeLog} file.
+
+@item
+Collect some of these changes, and create a patch. @xref{Creating
+patches}, for details.
+
+@item
+Mail the patch to Alexandre Julliard, @email{julliard@@lrc.epfl.ch}.
+
+@item
+Wait for the patch to appear in the official distribution.
+@end enumerate
+
+
+@node API function and type naming, Creating patches, Implementing an API function, The Wine Project
+@section API function and data type naming conventions
+@cindex API function names
+@cindex API type names
+@cindex names of API functions and types
+@cindex naming scheme for API functions and types
+@cindex suffixes for API functions and types
+@cindex endings of API function and type names
+
+This section describes Wine's naming scheme for API functions and data
+types.
+
+The purpose of these naming conventions is to ensure that
+@itemize @bullet
+@item
+both the @WIN16{} and @WIN32{} API are supported within the same source
+code,
+@item
+both wide character functions (with @unicode{} strings) and 8 bit
+character functions (with @ascii{} or extended @ascii{} encoding) are
+supported, and
+@item
+the source code can be shared between the emulator and the library
+version of Wine.
+@end itemize
+
+A function or data type whose name in the @mswindows{} API is @var{xxx}
+will in the Wine code have the following name(s):
+@table @code
+@item @var{xxx}16
+This is the version for the 16 bit API. You might call it the ``16 bit
+version'' except that the function itself of course runs in true 32 bit
+mode (being part of Wine). So, the correct meaning of the suffix is that
+this function is part of the 16 bit API.
+@item @var{xxx}32
+This is the version for the 32 bit API. Use this suffix only if the
+function does not use character strings in its parameters or return
+values. Otherwise use the next two.
+@item @var{xxx}32A
+This is the version for the 32 bit API which uses @ascii{} strings (or
+rather, strings with 8 bit character encodings, i.e. the standard C
+@code{char} type). This version always goes together with another
+version, using the next suffix.
+@item @var{xxx}32W
+This is the version for the 32 bit API which uses @unicode{} strings,
+i.e. strings with wide characters. It goes together with the @ascii{}
+version.
+@end table
+
+So, where the @mswindows{} API offers one name, Wine actually has two or
+three different functions implemented (which will hopefully share a
+large part of the code).
+
+Wine allows to use its API functions in two ways. The emulator part of
+Wine provides DLL's for the @mswindows{} programs it can run. The
+library part of Wine provides a @unix{} programmer with the facility to
+use the Wine API's in a standard @unix{} program.
+
+@menu
+* Access from the emulator::    How to access API functions and types
+                                from applications that are run in the
+                                Wine emulator.
+* Access in the library::       How to access API functions and types
+                                from applications that are linked with
+                                the Wine library.
+* Access from inside Wine::     How to access API functions and types
+                                from inside the Wine code.
+@end menu
+
+@node Access from the emulator, Access in the library, , API function and type naming
+@subsection Accessing API functions and types from the emulator
+@cindex access to DLL API functions and types
+@cindex Wine emulator access to API functions and types
+@cindex emulator access to Wine API functions and types
+
+The emulator part of Wine provides the hooks for dynamically linking the
+API functions to the @mswindows{} executables (@file{.EXE}-files). The
+Wine emulator contains all versions (16 or 32 bit, @ascii{} or
+@unicode{}) of the API functions in one executable. The emulator
+performs a mapping from the @mswindows{} name of the function,
+by which the executable calls it, to one of the Wine internal names that
+have been used in coding it.
+
+This mapping is done by the built-in DLL handling code of Wine. A
+programmer of Wine has to declare the function in one of the virtual
+DLL's that are provided by Wine. The declarations are done in the
+@file{.spec}-files in the @file{if1632/} directory. @xref{The build
+program}, for details.
+
+The @mswindows{} application simply calls the API function by its
+standard @mswindows{} name. Wine will apply the correct mapping
+according to Wine's selected appearance (as a 16 bit or 32 bit emulator,
+which is a parameter on invocation of Wine).
+
+
+@node Access in the library, Access from inside Wine, Access from the emulator, API function and type naming
+@subsection Accessing API functions and types in the library
+@cindex Wine library API function and type access
+@cindex access to Wine library API functions and types
+
+If Wine is built as a library, and linked to a user-level main program,
+the user will also use the standard @mswindows{} names for the API
+functions.
+
+Some macros are defined in @file{include/wintypes.h} which perform the
+necessary name mappings. 
+
+These macros are (see the examples below):
+@deffn_winemacro WINELIB_NAME (@var{xxx})
+This macro replaces @var{xxx} by one of @var{xxx}16 or
+@var{xxx}32, depending on the definition of the symbols
+@code{WINELIB16} and @code{WINELIB32}. @var{xxx} should
+be the name of an API function that uses no string arguments.
+Use this macro with a @code{#define} to establish the API name @var{xxx}.
+@end deffn
+@deffn_winemacro WINELIB_NAME_AW (@var{xxx})
+This macro replaces @var{xxx} by one of @var{xxx}16, @var{xxx}32A, or
+@var{xxx}32W, depending on the definition of the symbols
+@code{WINELIB16}, @code{WINELIB32}, and @code{UNICODE}. @var{xxx} should
+be the name of an API function that uses string arguments.
+Use this macro with a @code{#define} to establish the API name @var{xxx}.
+@end deffn
+@deffn_winemacro DECL_WINELIB_TYPE (@var{xxx})
+This macro declares @var{xxx} to be an equivalent to @var{xxx}16 or
+@var{xxx}32, depending on the definition of the symbols
+@code{WINELIB16} and @code{WINELIB32}. @var{xxx} should
+be the name of an API data type that contains no string arguments.
+@end deffn
+@deffn_winemacro DECL_WINELIB_TYPE_AW (@var{xxx})
+This macro declares the type @var{xxx} to be an equivalent to
+@var{xxx}16, @var{xxx}32A, or @var{xxx}32W, depending on the definition
+of the symbols @code{WINELIB16}, @code{WINELIB32}, and
+@code{UNICODE}. @var{xxx} should be the name of an API data type that
+contains string arguments. 
+@end deffn
+
+If Wine is compiled as an emulator, these macros have no effect, for the
+mapping is then done by the DLL code. This means that within Wine the
+name @var{xxx} itself will not be defined.
+
+Note: If the definition of @var{xxx} is exactly the same in @WIN16{} and
+@WIN32{}, you can simply use the same name as @mswindows{}.
+
+Here are some examples:
+@example
+/* A simple type without strings */
+typedef short INT16;
+typedef int INT32;
+DECL_WINELIB_TYPE(INT);
+
+/* A type with strings */
+typedef struct @{ /* Win32 ASCII data structure */ @} WNDCLASS32A;
+typedef struct @{ /* Win32 Unicode data structure */ @} WNDCLASS32W;
+typedef struct @{ /* Win16 data structure */ @} WNDCLASS16;
+DECL_WINELIB_TYPE_AW(WNDCLASS);
+
+/* A function with strings */
+ATOM RegisterClass16( WNDCLASS16 * );
+ATOM RegisterClass32A( WNDCLASS32A * );
+ATOM RegisterClass32W( WNDCLASS32W * );
+#define RegisterClass WINELIB_NAME_AW(RegisterClass)
+@end example
+
+The Winelib user can then say (in the application program):
+@example
+    INT i;
+    WNDCLASS wc = @{ @dots{} @};
+    RegisterClass( &wc );
+@end example
+and this will use the correct declaration depending on the definitions
+@code{WINELIB16}, @code{WINELIB32}, and @code{UNICODE}.
+
+Here are the primary defines that are used when Wine is compiled as a
+library:
+@defvr_cwine WINELIB16
+If this @code{#define} is set, the Wine library is to be compiled in its
+16 bit form. That means, the 16 bit variants of all functions will be
+used and the appearance of the application linked with the Wine library
+will be that of a 16 bit application. Of course, both the application
+and the Wine library function really run in 32 bit mode. The switch only
+selects the function with the name ending in @code{@dots{}16}, which
+will perhaps have a behaviour different from its 32 bit counterpart.
+@end defvr
+@defvr_cwine WINELIB32
+If this @code{#define} is set, the Wine library is to be compiled in its
+32 bit form. That means, the 32 bit variants of all functions will be
+used and the appearance of the application linked with the Wine library
+will be that of a 32 bit application.
+@end defvr
+@defvr_cwine UNICODE
+This @code{define} is used to select one of two possible 32 bit
+variants. Functions and data types of the 32 bit API come in two
+flavours: one handling @ascii{} strings (or rather strings with
+characters encoded in 8 bit), the other @unicode{} strings. This define
+selects the correct variant. As a user of the Wine library, you are
+responsible to use the correct character type in your part of the
+application which accesses the Wine API functions and data types.
+@end defvr
+
+These switches are automatically set when Wine is compiled as a library.
+
+
+@node Access from inside Wine, , Access in the library, API function and type naming
+@subsection Accessing API functions from within Wine
+@cindex explicit names of API functions and types
+
+Within Wine and during the compilation of Wine, you cannot rely on the
+@mswindows{} names of the API functions and data types. If Wine is
+compiled as a library, they will be defined; if Wine is compiled as an
+emulator, they won't.
+
+You therefore have to access all functions and data types by their full
+names, with the proper suffix explicitely appended. In Wine, the 16 bit
+and 32 bit versions of the functions are distinct entities, which might
+(theoretically) show a completely different behaviour. They may even
+call each other (and they will quite frequently).
+
+Therefore Wine is a conglomerate that contains all two or
+three flavours of each function at once, and exports to the
+application whichever of these is appropriate. Remember that inside
+Wine, there is no memory segmentation, so all functions are 32 bit.
+The 16-to-32 bit mapping is done on exporting the DLL functions.
+
+
+@node Creating patches, Adding Documentation, API function and type naming, The Wine Project
 @section Creating patches
 @xref{Applying patches}, for instructions on applying patches.
 
 FIXME: how to create patches
 
-@node Adding Documentation, , Creating patches, The Wine Project
+@node Adding Documentation, File names, Creating patches, The Wine Project
 @section Adding Documentation
 
 @ifinfo
 Here are some templates which should help you collaborate on this
 documentation. Read the text below before examining them.
 @end ifinfo
-
-FIXME they are not here in dvi
 
 @menu
 * Type Template::               How to document data types in Wine's
@@ -551,6 +1586,9 @@ the well-trained @unix{} reader. Please keep that in mind when you add
 some documentation.
 
 Finally, read the info pages for @code{texinfo}.
+
+The rest of this section provides some templates which can serve as a
+start in writing documentation.
 
 @subsection Template introduction
 @iftex
@@ -603,6 +1641,13 @@ adapt the comment like this:
 @@node Ints and Longs, NextNodeName, PreviousNodeName, ParentNodeName
 @end example
 
+After the node name, put a sectioning command, such as @samp{@@chapter},
+@samp{@@section}, @samp{@@subsection}, or @samp{@@subsubsection}.
+Without that command, cross references to the node will fail.
+@example
+@@subsubsection Type FILETIME
+@end example
+
 Start the description of the type(s) or function(s) with a single
 non-indented paragraph that gives a one-line description of the type(s)
 or function(s) and states the include files that are required.
@@ -616,11 +1661,13 @@ as a common description. If more paragraphs are required for a proper
 description, indent all but the first of them.
 
 Then start the definition of the data type or function. Use the proper
-macro and specify a category and the  formal definition on the same
-line. For proper categories, take a look at the specialized templates.
+macro, which you will find defined in the beginning of the texinfo file.
+If appropriate, add your own macros.
 Again, put everything that belongs to the header into a single line.
+Use continuation lines for additional headers.
 @example
-@@deftp @{Data type@} FILETIME
+@@deftp_w32  FILETIME
+@@deftpx_w32 LPFILETIME
 @end example
 
 In the definition, give a verbal explanation of the data type or
@@ -647,11 +1694,11 @@ well prepared example will help the readers write their code.
 @example
 The definition of @@code@{FILETIME@} reads:
 @@example
-typedef struct _FILETIME
+typedef struct
 @@@{
     INT32 dwLowDateTime;
     INT32 dwHighDateTime;
-@@@} FILETIME;
+@@@} FILETIME, *LPFILETIME;
 @@end example
 @end example
 
@@ -728,7 +1775,7 @@ The Wine function @@code@{GetFileTime@} returns the creation time and
 the times of last the read and modification access to a file. It is
 defined in @@file@{windows.h@}.
 
-@@deftypefn @{WIN32 function@} BOOL GetFileTime (@@w@{HANDLE @@var@{file@},@} @@w@{LPFILETIME @@var@{ctime@},@} @@w@{LPFILETIME @@var@{atime@},@} @@w@{LPFILETIME @@var@{mtime@})@}
+@@deftypefn_w32 BOOL GetFileTime (@@w@{HANDLE @@var@{file@},@} @@w@{LPFILETIME @@var@{ctime@},@} @@w@{LPFILETIME @@var@{atime@},@} @@w@{LPFILETIME @@var@{mtime@})@}
 This function obtains for the specified @@var@{file@} the creation time
 @@var@{ctime@}, the time of the last access to the file @@var@{atime@}, and
 the time of the last modification (write) to the file, @@var@{mtime@}.
@@ -747,8 +1794,40 @@ The function returns @@code@{TRUE@} on success, @@code@{FALSE@} on failure.
 @end example
 
 
+@node File names, Wide character strings, Adding Documentation, The Wine Project
+@section @mswindows{} and @unix{} file names in Wine
+@cindex file names in Wine
+@cindex Windows file names
+@cindex DOS file names in Wine
+@cindex UNIX file names in Wine
+@cindex POSIX file names in Wine
 
+FIXME:
 
+@node Wide character strings, , File names, The Wine Project
+@section Wide character strings in API functions
+@cindex unicode strings in API functions
+@cindex wide character strings in API functions
+@cindex strings in API functions
+@cindex ascii strings in API functions
+@cindex 16 bit characters in API functions
+@cindex wchar_t in API functions
+
+Presently, all wide character strings in API functions of Wine are
+internally converted to 8 bit representation. Thus, the @WIN32{} API
+with @unicode{} strings is not fully functional for the application
+programmer at present.
+
+Even so, application programmers might consider developing their
+applications in wide character format with Wine, as future versions
+might bring a change. This might come when a @unix{} filesystem can
+handle @unicode{} file names.
+
+Furthermore, the @unicode{} API is required to let Wine run @mswindows{}
+applications which have been compiled for wide character strings.
+
+In Wine, wide characters are strictly 16 bit; the @code{wchar_t} type of
+standard C can therefore not be used.
 
 @node Concept Index, , , Top
 @comment  node-name,  next,  previous,  up
@@ -767,7 +1846,7 @@ The function returns @@code@{TRUE@} on success, @@code@{FALSE@} on failure.
 
 @node Variable Index, , , Top
 @comment  node-name,  next,  previous,  up
-@unnumbered Variable Index
+@unnumbered Variable, Constants, and Variable-like Macros Index
 @printindex vr
 
 @node File Index, , , Top

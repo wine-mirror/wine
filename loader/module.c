@@ -1162,8 +1162,9 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 					0xFF00, hModule, FALSE, FALSE, FALSE)
 					);
 		oldstack = IF1632_Saved16_ss_sp;
-		IF1632_Saved16_ss_sp = MAKELONG( 0xFF00 - sizeof(*stack16Top),
-                                                 pModule->self_loading_sel );
+		IF1632_Saved16_ss_sp =
+                    PTR_SEG_OFF_TO_SEGPTR( pModule->self_loading_sel,
+                                           0xff00 - sizeof(*stack16Top) );
                 stack16Top = CURRENT_STACK16;
                 stack16Top->saved_ss_sp = 0;
                 stack16Top->ebp = 0;
@@ -1458,10 +1459,11 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 {
     LOADPARAMS params;
     HGLOBAL16 cmdShowHandle, cmdLineHandle;
-    HINSTANCE16 handle;
+    HINSTANCE16 handle = 2;
     WORD *cmdShowPtr;
     char *p, *cmdline, filename[256];
     static int use_load_module = 1;
+    int  spacelimit = 0, exhausted = 0;
 
     if (!lpCmdLine)
         return 2;  /* File not found */
@@ -1473,121 +1475,183 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
         return 8;  /* Out of memory */
     }
 
-      /* Store nCmdShow */
+    /* Keep trying to load a file by trying different filenames; e.g.,
+       for the cmdline "abcd efg hij", try "abcd" with args "efg hij",
+       then "abcd efg" with arg "hij", and finally "abcd efg hij" with
+       no args */
 
-    cmdShowPtr = (WORD *)GlobalLock16( cmdShowHandle );
-    cmdShowPtr[0] = 2;
-    cmdShowPtr[1] = nCmdShow;
+    while(!exhausted && handle == 2) {
+	int spacecount = 0;
 
-      /* Build the filename and command-line */
+	/* Store nCmdShow */
 
-    cmdline = (char *)GlobalLock16( cmdLineHandle );
-    lstrcpyn32A(filename, lpCmdLine, sizeof(filename) - 4 /* for extension */);
-    for (p = filename; *p && (*p != ' ') && (*p != '\t'); p++);
-    if (*p) lstrcpyn32A( cmdline + 1, p + 1, 127 );
-    else cmdline[1] = '\0';
-    cmdline[0] = strlen( cmdline + 1 ) + 1;
-    *p = '\0';
+	cmdShowPtr = (WORD *)GlobalLock16( cmdShowHandle );
+	cmdShowPtr[0] = 2;
+	cmdShowPtr[1] = nCmdShow;
 
-      /* Now load the executable file */
+	/* Build the filename and command-line */
 
-    if (use_load_module)
-    {
+	cmdline = (char *)GlobalLock16( cmdLineHandle );
+	lstrcpyn32A(filename, lpCmdLine,
+		    sizeof(filename) - 4 /* for extension */);
+
+	/* Keep grabbing characters until end-of-string, tab, or until the
+	   number of spaces is greater than the spacelimit */
+
+	for (p = filename; ; p++) {
+	    if(*p == ' ') {
+		++spacecount;
+		if(spacecount > spacelimit) {
+		    ++spacelimit;
+		    break;
+		}
+	    }
+
+	    if(*p == '\0' || *p == '\t') {
+		exhausted = 1;
+		break;
+	    }
+	}
+
+	if (*p)
+	    lstrcpyn32A( cmdline + 1, p + 1, 127 );
+	else
+	    cmdline[1] = '\0';
+
+	cmdline[0] = strlen( cmdline + 1 ) + 1;
+	*p = '\0';
+
+	/* Now load the executable file */
+
+	if (use_load_module)
+	{
 #ifdef WINELIB
-        /* WINELIB: Use LoadModule() only for the program itself */
-        use_load_module = 0;
-	params.hEnvironment = (HGLOBAL16)GetDOSEnvironment();
+	    /* WINELIB: Use LoadModule() only for the program itself */
+	    use_load_module = 0;
+	    params.hEnvironment = (HGLOBAL16)GetDOSEnvironment();
 #else
-	params.hEnvironment = (HGLOBAL16)SELECTOROF( GetDOSEnvironment() );
+	    params.hEnvironment = (HGLOBAL16)SELECTOROF( GetDOSEnvironment() );
 #endif  /* WINELIB */
-	params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
-	params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
-	params.reserved = 0;
-	handle = LoadModule16( filename, &params );
-	if (handle == 2)  /* file not found */
-	{
-	    /* Check that the original file name did not have a suffix */
-	    p = strrchr(filename, '.');
-	    /* if there is a '.', check if either \ OR / follow */
-	    if (!p || strchr(p, '/') || strchr(p, '\\'))
-            {
-                p = filename + strlen(filename);
-                strcpy( p, ".exe" );
-                handle = LoadModule16( filename, &params );
-                *p = '\0';  /* Remove extension */
-            }
+	    params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
+	    params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
+	    params.reserved = 0;
+	    handle = LoadModule16( filename, &params );
+	    if (handle == 2)  /* file not found */
+	    {
+		/* Check that the original file name did not have a suffix */
+		p = strrchr(filename, '.');
+		/* if there is a '.', check if either \ OR / follow */
+		if (!p || strchr(p, '/') || strchr(p, '\\'))
+		{
+		    p = filename + strlen(filename);
+		    strcpy( p, ".exe" );
+		    handle = LoadModule16( filename, &params );
+		    *p = '\0';  /* Remove extension */
+		}
+	    }
 	}
-    }
-    else handle = 2;
+	else
+	    handle = 2; /* file not found */
 
-    if (handle < 32)
-    {
-        /* Try to start it as a unix program */
-        if (!fork())
+	if (handle < 32)
 	{
-            /* Child process */
-            DOS_FULL_NAME full_name;
-            const char *unixfilename = NULL;
-            const char *argv[256], **argptr;
-            int iconic = (nCmdShow == SW_SHOWMINIMIZED ||
-                          nCmdShow == SW_SHOWMINNOACTIVE);
+	    /* Try to start it as a unix program */
+	    if (!fork())
+	    {
+		/* Child process */
+		DOS_FULL_NAME full_name;
+		const char *unixfilename = NULL;
+		const char *argv[256], **argptr;
+		int iconic = (nCmdShow == SW_SHOWMINIMIZED ||
+			      nCmdShow == SW_SHOWMINNOACTIVE);
 
-            /* get unixfilename */
-            if (strchr(filename, '/') ||
-                strchr(filename, ':') ||
-                strchr(filename, '\\'))
-            {
-                if (DOSFS_GetFullName( filename, TRUE, &full_name ))
-                    unixfilename = full_name.long_name;
-            }
-            else unixfilename = filename;
+		/* get unixfilename */
+		if (strchr(filename, '/') ||
+		    strchr(filename, ':') ||
+		    strchr(filename, '\\'))
+		{
+		    if (DOSFS_GetFullName( filename, TRUE, &full_name ))
+			unixfilename = full_name.long_name;
+		}
+		else unixfilename = filename;
 
-            if (unixfilename)
-            {
-                /* build argv */
-                argptr = argv;
-                if (iconic) *argptr++ = "-iconic";
-                *argptr++ = unixfilename;
-                p = cmdline;
-                while (1)
-                {
-                    while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
-                    if (!*p) break;
-                    *argptr++ = p;
-                    while (*p && *p != ' ' && *p != '\t') p++;
-                }
-                *argptr++ = 0;
+		if (unixfilename)
+		{
+		    /* build argv */
+		    argptr = argv;
+		    if (iconic) *argptr++ = "-iconic";
+		    *argptr++ = unixfilename;
+		    p = cmdline;
+		    while (1)
+		    {
+			while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
+			if (!*p) break;
+			*argptr++ = p;
+			while (*p && *p != ' ' && *p != '\t') p++;
+		    }
+		    *argptr++ = 0;
 
-                /* Execute */
-                execvp(argv[0], (char**)argv);
-            }
+		    /* Execute */
+		    execvp(argv[0], (char**)argv);
+		}
 
-	    /* Failed ! */
+		/* Failed ! */
 
-            if (__winelib)
-            {
-                /* build argv */
-                argptr = argv;
-                *argptr++ = "wine";
-                if (iconic) *argptr++ = "-iconic";
-                *argptr++ = lpCmdLine;
-                *argptr++ = 0;
+		if (__winelib)
+		{
+		    /* build argv */
+		    argptr = argv;
+		    *argptr++ = "wine";
+		    if (iconic) *argptr++ = "-iconic";
+		    *argptr++ = lpCmdLine;
+		    *argptr++ = 0;
 
-                /* Execute */
-                execvp(argv[0] , (char**)argv);
+		    /* Execute */
+		    execvp(argv[0] , (char**)argv);
 
-                /* Failed ! */
-                fprintf(stderr, "WinExec: can't exec 'wine %s'\n", lpCmdLine);
-            }
-	    exit(1);
+		    /* Failed ! */
+		    fprintf(stderr, "WinExec: can't exec 'wine %s'\n",
+			    lpCmdLine);
+		}
+		exit(1);
+	    }
 	}
-    }
+    } /* while (!exhausted && handle < 32) */
 
     GlobalFree16( cmdShowHandle );
     GlobalFree16( cmdLineHandle );
     return handle;
 }
 
+
+/***********************************************************************
+ *           WIN32_GetProcAddress16   (KERNEL32.36)
+ * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
+ */
+FARPROC16 WIN32_GetProcAddress16( HMODULE16 hModule, LPSTR name )
+{
+    WORD	ordinal;
+    FARPROC16	ret;
+
+    if (!hModule) {
+    	fprintf(stderr,"WIN32_GetProcAddress16: hModule may not be 0!\n");
+	return (FARPROC16)0;
+    }
+    hModule = GetExePtr(hModule);
+    if (HIWORD(name)) {
+        ordinal = MODULE_GetOrdinal( hModule, name );
+        dprintf_module( stddeb, "WIN32_GetProcAddress16: %04x '%s'\n",
+                        hModule, name );
+    } else {
+        ordinal = LOWORD(name);
+        dprintf_module( stddeb, "GetProcAddress: %04x %04x\n",
+                        hModule, ordinal );
+    }
+    if (!ordinal) return (FARPROC16)0;
+    ret = MODULE_GetEntryPoint( hModule, ordinal );
+    dprintf_module(stddeb,"WIN32_GetProcAddress16: returning %08x\n",(UINT32)ret);
+    return ret;
+}
 
 /***********************************************************************
  *           GetProcAddress16   (KERNEL.50)

@@ -12,10 +12,6 @@
 #include "global.h"
 #include "debug.h"
 
-void SIGNAL_MaskAsyncEvents( BOOL32 mask )
-{
-    /* FIXME: signals don't work in the library */
-}
 
 /* for windows/winproc.c */
 void CallFrom16_long_wwwll(void) {}

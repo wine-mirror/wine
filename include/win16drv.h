@@ -188,6 +188,8 @@ extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                                   const RECT32 *lprect, LPCSTR str, UINT32 count,
                                   const INT32 *lpDx );
 extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
+extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
+                               INT32 width, INT32 height, DWORD rop );
 
 
 

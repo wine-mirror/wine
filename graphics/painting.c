@@ -764,3 +764,14 @@ BOOL32 DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 uState )
              hdc,rc,uType,uState );
     return TRUE;
 }
+
+/**********************************************************************
+ *          DrawFrameControl32  (USER32.152)
+ */
+BOOL32 DrawAnimatedRects32( HWND32 hwnd, int idAni,
+                           const LPRECT32 lprcFrom, const LPRECT32 lprcTo )
+{
+    fprintf( stdnimp,"DrawAnimatedRects32(%x,%d,%p,%p), empty stub!\n",
+             hwnd, idAni, lprcFrom, lprcTo );
+    return TRUE;
+}

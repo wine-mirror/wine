@@ -42,6 +42,7 @@
 #include "heap.h"
 #include "ldt.h"
 #include "winsock.h"
+#include "miscemu.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -50,8 +51,6 @@
                         ((struct sockaddr_in *)a)->sin_family, \
                         inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
                         ntohs(((struct sockaddr_in *)a)->sin_port))
-
-extern void SIGNAL_MaskAsyncEvents( BOOL32 );
 
 #pragma pack(4)
 

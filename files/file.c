@@ -951,7 +951,7 @@ HFILE32 _lopen32( LPCSTR path, INT32 mode )
     switch(mode & 3)
     {
     case OF_WRITE:
-        unixMode = O_WRONLY | O_TRUNC;
+        unixMode = O_WRONLY;
         break;
     case OF_READWRITE:
         unixMode = O_RDWR;

@@ -407,7 +407,7 @@ INT16 OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		port = device[3] - '0';
 
 		if (port-- == 0) {
-			fprintf(stderr, "comm: BUG ! COM0 doesn't exists!.\n");
+			fprintf(stderr, "comm: BUG ! COM0 doesn't exist !\n");
 			commerror = IE_BADID;
 		}
 
@@ -738,18 +738,27 @@ INT16 GetCommError(INT16 fd,LPCOMSTAT lpStat)
 	unsigned long	cnt;
 	int		rc;
 
-	lpStat->status = 0;
+	if (lpStat) {
+		lpStat->status = 0;
 
-	rc = ioctl(fd, TIOCOUTQ, &cnt);
-	lpStat->cbOutQue = cnt;
+		rc = ioctl(fd, TIOCOUTQ, &cnt);
+		if (rc) fprintf(stderr, "Error !\n");
+		lpStat->cbOutQue = cnt;
 
-	rc = ioctl(fd, TIOCINQ, &cnt);
-	lpStat->cbInQue = cnt;
+		rc = ioctl(fd, TIOCINQ, &cnt);
+                if (rc) fprintf(stderr, "Error !\n");
+		lpStat->cbInQue = cnt;
 
-    	dprintf_comm(stddeb,
-		"GetCommError: fd %d, error %d, lpStat %d %d %d\n",
-		fd, commerror,
-		lpStat->status, lpStat->cbInQue, lpStat->cbOutQue);
+    		dprintf_comm(stddeb,
+			"GetCommError: fd %d, error %d, lpStat %d %d %d\n",
+			fd, commerror,
+			lpStat->status, lpStat->cbInQue, lpStat->cbOutQue);
+	}
+	else
+		dprintf_comm(stddeb,
+                "GetCommError: fd %d, error %d, lpStat NULL\n",
+                fd, commerror);
+
 	/*
 	 * [RER] I have no idea what the following is trying to accomplish.
 	 * [RER] It is certainly not what the reference manual suggests.
@@ -1652,7 +1661,7 @@ INT16 WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
  *	GetCommTimeouts		(KERNEL32.160)
  */
 BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
-	dprintf_comm(stddeb,"GetCommTimeouts(%x,%p), empty stub.\n",
+	fprintf(stderr,"GetCommTimeouts(%x,%p), empty stub.\n",
 		fd,lptimeouts
 	);
 	return TRUE;
@@ -1662,8 +1671,19 @@ BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
  *	SetCommTimeouts		(KERNEL32.453)
  */
 BOOL32 SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
-	dprintf_comm(stddeb,"SetCommTimeouts(%x,%p), empty stub.\n",
+	fprintf(stderr,"SetCommTimeouts(%x,%p), empty stub.\n",
 		fd,lptimeouts
 	);
 	return TRUE;
 }
+
+/***********************************************************************
+ *           EnableCommNotification   (USER.246)
+ */
+BOOL16 EnableCommNotification( INT16 fd, HWND16 hwnd, INT16 cbWriteNotify,
+                               INT16 cbOutQueue )
+{
+	fprintf(stderr, "EnableCommNotification(%d, %x, %d, %d), empty stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
+	return TRUE;
+}
+

@@ -58,6 +58,7 @@ C_SRCS = \
 	builtin.c \
 	dummy.c \
 	relay.c \
+	signal.c \
 	thunk.c
 
 GEN_ASM_SRCS = \

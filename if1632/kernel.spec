@@ -1,5 +1,6 @@
 name	kernel
 type	win16
+file	krnl386.exe
 
 1   stub FatalExit
 2   stub ExitKernel
@@ -317,9 +318,9 @@ type	win16
 502 stub KERNEL_502
 503 stub KERNEL_503
 511 stub KERNEL_511
-513 pascal LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16
-514 stub FreeLibrary32W
-515 pascal GetProcAddress32W(long ptr) GetProcAddress32
+513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16
+514 pascal16 FreeLibrary32W(long) FreeLibrary32
+515 pascal   GetProcAddress32W(long ptr) GetProcAddress32
 516 stub GetVDMPointer32W
 517 pascal CallProc32W() WIN16_CallProc32W
 518 stub CallProcEx32W

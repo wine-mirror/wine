@@ -216,9 +216,11 @@ static void GetDrivePB( CONTEXT *context, int drive )
 
 static void ioctlGetDeviceInfo( CONTEXT *context )
 {
+    int curr_drive;
     dprintf_int (stddeb, "int21: ioctl (%d, GetDeviceInfo)\n", BX_reg(context));
     
-    DX_reg(context) = 0x0942;
+    curr_drive = DRIVE_GetCurrentDrive();
+    DX_reg(context) = 0x0140 + curr_drive + ((curr_drive > 1) ? 0x0800 : 0); /* no floppy */
     /* bits 0-5 are current drive
      * bit 6 - file has NOT been written..FIXME: correct?
      * bit 8 - generate int24 if no diskspace on write/ read past end of file
@@ -332,10 +334,11 @@ void OpenExistingFile( CONTEXT *context )
         SET_CFLAG(context);
     }
 #if 0
-	int handle;
-	int mode;
-	int lock;
-	
+    {
+        int handle;
+        int mode;
+        int lock;
+
         switch (AX_reg(context) & 0x0070)
 	{
 	  case 0x00:    /* compatability mode */
@@ -385,7 +388,7 @@ void OpenExistingFile( CONTEXT *context )
 	  if(result)  
 	  {
 	    errno_to_doserr();
-	    AX_reg(context) = ExtendedError;
+	    AX_reg(context) = DOS_ExtendedError;
 	    close(handle);
 	    SET_CFLAG(context);
 	    return;
@@ -396,6 +399,7 @@ void OpenExistingFile( CONTEXT *context )
 	Error (0,0,0);
 	AX_reg(context) = handle;
 	RESET_CFLAG(context);
+    }
 #endif
 }
 

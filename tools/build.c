@@ -125,7 +125,8 @@ typedef struct
 static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 
 static SPEC_TYPE SpecType = SPEC_INVALID;
-char DLLName[80];
+static char DLLName[80];
+static char DLLFileName[80];
 int Limit = 0;
 int Base = 0;
 int DLLHeapSize = 0;
@@ -573,6 +574,12 @@ static int ParseTopLevel(void)
 	{
 	    strcpy(DLLName, GetToken());
 	    strupper(DLLName);
+            if (!DLLFileName[0]) sprintf( DLLFileName, "%s.DLL", DLLName );
+	}
+	else if (strcmp(token, "file") == 0)
+	{
+	    strcpy(DLLFileName, GetToken());
+	    strupper(DLLFileName);
 	}
         else if (strcmp(token, "type") == 0)
         {
@@ -743,8 +750,8 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pModule->fileinfo = (int)pFileInfo - (int)pModule;
     memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
     pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
-                        + strlen(DLLName) + 4;
-    sprintf( pFileInfo->szPathName, "%s.DLL", DLLName );
+                        + strlen(DLLFileName);
+    strcpy( pFileInfo->szPathName, DLLFileName );
     pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
         
       /* Segment table */
@@ -928,8 +935,8 @@ static int BuildModule32( FILE *outfile )
     pModule->fileinfo = (int)pFileInfo - (int)pModule;
     memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
     pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
-                        + strlen(DLLName) + 4;
-    sprintf( pFileInfo->szPathName, "%s.DLL", DLLName );
+                        + strlen(DLLFileName);
+    strcpy( pFileInfo->szPathName, DLLFileName );
     pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
         
       /* Segment table */

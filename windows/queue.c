@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <signal.h>
+#include "miscemu.h"
 #include "module.h"
 #include "queue.h"
 #include "task.h"
@@ -25,8 +26,6 @@ static MESSAGEQUEUE *sysMsgQueue = NULL;
 
 static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
 static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
-
-extern void SIGNAL_MaskAsyncEvents(BOOL32);
 
 MESSAGEQUEUE *pCursorQueue = NULL; 
 MESSAGEQUEUE *pActiveQueue = NULL;
