@@ -284,7 +284,8 @@ type	win32
 0280 stub LsaCreateTrustedDomain
 0281 stub LsaOpenTrustedDomain
 0282 stub LsaSetSecret
-0283 stub LsaQuerySecret
+# FIXME
+##0283 stub LsaQuerySecret
 0284 stub LsaCreateAccount
 0285 stub LsaAddPrivilegesToAccount
 0286 stub LsaRemovePrivilegesFromAccount
@@ -292,7 +293,8 @@ type	win32
 0288 stub LsaSetSystemAccessAccount
 0289 stub LsaEnumeratePrivilegesOfAccount
 0290 stub LsaEnumerateAccounts
-0291 stub LsaOpenTrustedDomain
+# FIXME
+##0291 stub LsaOpenTrustedDomain
 0292 stub LsaGetSystemAccessAccount
 0293 stub LsaSetInformationTrustedDomain
 0294 stub LsaEnumerateTrustedDomains

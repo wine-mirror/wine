@@ -122,7 +122,7 @@ init    MAIN_OdbcInit
 118 stub    SQLGetInfoW
 119 stub    SQLGetTypeInfoW
 120 stub    SQLSetConnectOptionW
-121 stub    SQLSpecialColumnsA
+121 stub    SQLSpecialColumnsW
 122 stub    SQLStatisticsW
 123 stub    SQLTablesW
 124 stub    SQLBrowseConnectW
@@ -137,7 +137,7 @@ init    MAIN_OdbcInit
 133 stub    SQLDriversW
 134 stub    SQLSetDescFieldW
 135 stub    SQLSetStmtAttrW
-136 stub    SQLColAttributesW
+136 stub    SQLColAttributesA
 137 stub    SQLConnectA
 138 stub    SQLDescribeColA
 139 stub    SQLErrorA
