@@ -89,13 +89,29 @@ extern int num_lock;
   
 /* Note: The following is purely to keep the source code as clear from #ifdefs as possible */
 #if defined(GL_VERSION_1_3)
-#define GL_ACTIVETEXTURE(textureNo)                          \
-            glActiveTexture(GL_TEXTURE0 + textureNo);        \
+#define GLACTIVETEXTURE(textureNo)                          \
+            glActiveTexture(GL_TEXTURE0 + textureNo);       \
             checkGLcall("glActiveTexture");      
+#define GLMULTITEXCOORD1F(a,b)                              \
+            glMultiTexCoord1f(GL_TEXTURE0 + a, b);
+#define GLMULTITEXCOORD2F(a,b,c)                            \
+            glMultiTexCoord2f(GL_TEXTURE0 + a, b, c);
+#define GLMULTITEXCOORD3F(a,b,c,d)                          \
+            glMultiTexCoord3f(GL_TEXTURE0 + a, b, c, d);
+#define GLMULTITEXCOORD4F(a,b,c,d,e)                        \
+            glMultiTexCoord4f(GL_TEXTURE0 + a, b, c, d, e);
 #else 
-#define GL_ACTIVETEXTURE(textureNo)                          \
-            glActiveTextureARB(GL_TEXTURE0_ARB + textureNo); \
+#define GLACTIVETEXTURE(textureNo)                             \
+            glActiveTextureARB(GL_TEXTURE0_ARB + textureNo);   \
             checkGLcall("glActiveTextureARB");
+#define GLMULTITEXCOORD1F(a,b)                                 \
+            glMultiTexCoord1fARB(GL_TEXTURE0 + a, b);
+#define GLMULTITEXCOORD2F(a,b,c)                               \
+            glMultiTexCoord2fARB(GL_TEXTURE0 + a, b, c);
+#define GLMULTITEXCOORD3F(a,b,c,d)                             \
+            glMultiTexCoord3fARB(GL_TEXTURE0 + a, b, c, d);
+#define GLMULTITEXCOORD4F(a,b,c,d,e)                           \
+            glMultiTexCoord4fARB(GL_TEXTURE0 + a, b, c, d, e);
 #endif
 
 /* DirectX Device Limits */
@@ -184,6 +200,36 @@ extern const float identity[16];
        VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
     } \
 }
+
+/* TODO: Confirm each of these works when wined3d move completed */
+#if 0 /* NOTE: Must be 0 in cvs */
+  /* To avoid having to get gigabytes of trace, the following can be compiled in, and at the start
+     of each frame, a check is made for the existence of C:\D3DTRACE, and if if exists d3d trace
+     is enabled, and if it doesn't exists it is disabled.                                           */
+# define FRAME_DEBUGGING
+  /*  Adding in the SINGLE_FRAME_DEBUGGING gives a trace of just what makes up a single frame, before
+      the file is deleted                                                                            */
+# if 1 /* NOTE: Must be 1 in cvs, as this is mostly more useful than a trace from program start */
+#  define SINGLE_FRAME_DEBUGGING
+# endif  
+  /* The following, when enabled, lets you see the makeup of the frame, by drawprimitive calls.
+     It can only be enabled when FRAME_DEBUGGING is also enabled                               
+     The contents of the back buffer are written into /tmp/backbuffer_* after each primitive 
+     array is drawn.                                                                            */
+# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */                                                                                       
+#  define SHOW_FRAME_MAKEUP 1
+# endif  
+  /* The following, when enabled, lets you see the makeup of the all the textures used during each
+     of the drawprimitive calls. It can only be enabled when SHOW_FRAME_MAKEUP is also enabled.
+     The contents of the textures assigned to each stage are written into 
+     /tmp/texture_*_<Stage>.ppm after each primitive array is drawn.                            */
+# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */
+#  define SHOW_TEXTURE_MAKEUP 0
+# endif  
+extern BOOL isOn;
+extern BOOL isDumpingFrames;
+extern LONG primCounter;
+#endif
 
 /*****************************************************************************
  * Prototypes

@@ -1577,7 +1577,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
 
     /* Clear the screen */
-    /* TODO: IDirect3DDevice8Impl_Clear((LPDIRECT3DDEVICE8) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0); */
+    IWineD3DDevice_Clear((IWineD3DDevice *) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
 
     } /* End of FIXME: remove when dx8 merged in */
 

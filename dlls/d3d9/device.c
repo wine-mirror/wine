@@ -155,8 +155,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DPRESENT_
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_Present(LPDIRECT3DDEVICE9 iface, CONST RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : stub!\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_Present(This->WineD3DDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetBackBuffer(LPDIRECT3DDEVICE9 iface, UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface9** ppBackBuffer) {
@@ -297,14 +296,12 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_BeginScene(LPDIRECT3DDEVICE9 iface) {
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_EndScene(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_EndScene(This->WineD3DDevice);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_Clear(LPDIRECT3DDEVICE9 iface, DWORD Count, CONST D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_Clear(This->WineD3DDevice, Count, pRects, Flags, Color, Z, Stencil);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetTransform(LPDIRECT3DDEVICE9 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* lpMatrix) {

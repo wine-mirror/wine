@@ -212,7 +212,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
 
         /* Make appropriate texture active */
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GL_ACTIVETEXTURE(i);
+            GLACTIVETEXTURE(i);
         } else if (i > 0) {
             FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
         }

@@ -25,6 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_fps);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
 /**********************************************************
@@ -175,7 +176,7 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
            if (changeTexture) {
                /* Make appropriate texture active */
                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                   GL_ACTIVETEXTURE(Stage);
+                   GLACTIVETEXTURE(Stage);
                 } else if (Stage > 0) {
                     FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 }
@@ -417,11 +418,9 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
     if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) { /* handle texture matrices */
         if (d3dts < GL_LIMITS(textures)) {
             int tex = d3dts - D3DTS_TEXTURE0;
-            GL_ACTIVETEXTURE(tex);
-#if 0 /* TODO: */
+            GLACTIVETEXTURE(tex);
             set_texture_matrix((float *)lpmatrix, 
                                This->updateStateBlock->textureState[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
-#endif
         }
 
     } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
@@ -979,10 +978,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWORD Inde
     glLoadMatrixf((float *) &This->stateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
 
     TRACE("Clipplane [%f,%f,%f,%f]\n", 
-	  This->updateStateBlock->clipplane[Index][0], 
-	  This->updateStateBlock->clipplane[Index][1],
-      This->updateStateBlock->clipplane[Index][2], 
-	  This->updateStateBlock->clipplane[Index][3]);
+          This->updateStateBlock->clipplane[Index][0], 
+          This->updateStateBlock->clipplane[Index][1],
+          This->updateStateBlock->clipplane[Index][2], 
+          This->updateStateBlock->clipplane[Index][3]);
     glClipPlane(GL_CLIP_PLANE0 + Index, This->updateStateBlock->clipplane[Index]);
     checkGLcall("glClipPlane");
 
@@ -1536,7 +1535,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 /* Note the D3DRS value applies to all textures, but GL has one
                    per texture, so apply it now ready to be used!               */
                 if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                    GL_ACTIVETEXTURE(i);
+                    GLACTIVETEXTURE(i);
                 } else if (i>0) {
                     FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 }
@@ -2100,7 +2099,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
     /* Make appropriate texture active */
     VTRACE(("Activating appropriate texture state %ld\n", Stage));
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GL_ACTIVETEXTURE(Stage);
+        GLACTIVETEXTURE(Stage);
     } else if (Stage > 0) {
         FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
     }
@@ -2600,6 +2599,235 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p)\n", This);
+
+    ENTER_GL();
+
+    glFlush();
+    checkGLcall("glFlush");
+
+#if 0  /* TODO: render targer support */
+    if ((This->frontBuffer != This->renderTarget) && (This->backBuffer != This->renderTarget)) {
+
+      IWineD3DBaseTexture *cont = NULL;
+      HRESULT              hr;
+
+      hr = IDirect3DSurface8_GetContainer((LPDIRECT3DSURFACE8) This->renderTarget, &IID_IDirect3DBaseTexture8, (void**) &cont);
+      if (SUCCEEDED(hr) && NULL != cont) {
+        /** always dirtify for now. we must find a better way to see that surface have been modified */
+        This->renderTarget->inPBuffer = TRUE;
+        This->renderTarget->inTexture = FALSE;
+              IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
+        IDirect3DBaseTexture8_PreLoad(cont);
+        This->renderTarget->inPBuffer = FALSE;
+        IDirect3DBaseTexture8Impl_Release(cont);
+        cont = NULL;
+      }
+    }
+#endif  /* TODO: render targer support */
+
+    LEAVE_GL();
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface, 
+                                          CONST RECT* pSourceRect, CONST RECT* pDestRect, 
+                                          HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) Presenting the frame\n", This);
+
+    ENTER_GL();
+
+    if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
+
+    glXSwapBuffers(This->display, This->drawable);
+    /* Don't call checkGLcall, as glGetError is not applicable here */
+    
+    TRACE("glXSwapBuffers called, Starting new frame\n");
+
+    /* FPS support */
+    if (TRACE_ON(d3d_fps))
+    {
+        static long prev_time, frames;
+
+        DWORD time = GetTickCount();
+        frames++;
+        /* every 1.5 seconds */
+        if (time - prev_time > 1500) {
+            TRACE_(d3d_fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
+            prev_time = time;
+            frames = 0;
+        }
+    }
+
+#if defined(FRAME_DEBUGGING)
+{
+    if (GetFileAttributesA("C:\\D3DTRACE") != INVALID_FILE_ATTRIBUTES) {
+        if (!isOn) {
+            isOn = TRUE;
+            FIXME("Enabling D3D Trace\n");
+            __WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_d3d, 1);
+#if defined(SHOW_FRAME_MAKEUP)
+            FIXME("Singe Frame snapshots Starting\n");
+            isDumpingFrames = TRUE;
+            glClear(GL_COLOR_BUFFER_BIT);
+#endif
+
+#if defined(SINGLE_FRAME_DEBUGGING)
+        } else {
+#if defined(SHOW_FRAME_MAKEUP)
+            FIXME("Singe Frame snapshots Finishing\n");
+            isDumpingFrames = FALSE;
+#endif
+            FIXME("Singe Frame trace complete\n");
+            DeleteFileA("C:\\D3DTRACE");
+            __WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_d3d, 0);
+#endif
+        }
+    } else {
+        if (isOn) {
+            isOn = FALSE;
+#if defined(SHOW_FRAME_MAKEUP)
+            FIXME("Singe Frame snapshots Finishing\n");
+            isDumpingFrames = FALSE;
+#endif
+            FIXME("Disabling D3D Trace\n");
+            __WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_d3d, 0);
+        }
+    }
+}
+#endif
+
+    LEAVE_GL();
+    /* Although this is not strictly required, a simple demo showed this does occur
+       on (at least non-debug) d3d                                                  */
+    if (This->presentParms.SwapEffect == D3DSWAPEFFECT_DISCARD) {
+       IWineD3DDevice_Clear(iface, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+    }
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST D3DRECT* pRects, 
+                                        DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* TODO: From MSDN This method fails if you specify the D3DCLEAR_ZBUFFER or D3DCLEAR_STENCIL flags when the
+      render target does not have an attached depth buffer. Similarly, if you specify the D3DCLEAR_STENCIL flag
+      when the depth-buffer format does not contain stencil buffer information, this method fails. */
+    GLbitfield     glMask = 0;
+    GLboolean      old_ztest;
+    GLfloat        old_z_clear_value;
+    GLint          old_stencil_clear_value;
+    GLfloat        old_color_clear_value[4];
+    unsigned int   i;
+    CONST D3DRECT* curRect;
+
+    TRACE("(%p) Count (%ld), pRects (%p), Flags (%lx), Z (%f), Stencil (%ld)\n", This,
+          Count, pRects, Flags, Z, Stencil);
+
+    ENTER_GL();
+
+    glEnable(GL_SCISSOR_TEST);
+    checkGLcall("glEnable GL_SCISSOR_TEST");
+
+    if (Count > 0 && pRects) {
+        curRect = pRects;
+    } else {
+        curRect = NULL;
+    }
+
+    /* Only set the values up once, as they are not changing */
+    if (Flags & D3DCLEAR_STENCIL) {        
+        glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
+        glClearStencil(Stencil);
+        checkGLcall("glClearStencil");
+        glMask = glMask | GL_STENCIL_BUFFER_BIT;
+        glStencilMask(0xFFFFFFFF);
+    }
+
+    if (Flags & D3DCLEAR_ZBUFFER) {
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
+        glDepthMask(GL_TRUE); 
+        glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
+        glClearDepth(Z);
+        checkGLcall("glClearDepth");
+        glMask = glMask | GL_DEPTH_BUFFER_BIT;
+    }
+
+    if (Flags & D3DCLEAR_TARGET) {
+        TRACE("Clearing screen with glClear to color %lx\n", Color);
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
+        glClearColor(((Color >> 16) & 0xFF) / 255.0f, 
+                     ((Color >>  8) & 0xFF) / 255.0f,
+                     ((Color >>  0) & 0xFF) / 255.0f, 
+                     ((Color >> 24) & 0xFF) / 255.0f);
+        checkGLcall("glClearColor");
+
+        /* Clear ALL colors! */
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glMask = glMask | GL_COLOR_BUFFER_BIT;
+    }
+
+    /* Now process each rect in turn */
+    for (i = 0; i < Count || i == 0; i++) {
+
+#if 0 /* TODO: renderTarget support */
+        if (curRect) {
+            /* Note gl uses lower left, width/height */
+            TRACE("(%p) %p Rect=(%ld,%ld)->(%ld,%ld) glRect=(%ld,%ld), len=%ld, hei=%ld\n", This, curRect,
+                  curRect->x1, curRect->y1, curRect->x2, curRect->y2,
+                  curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
+                  curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
+            glScissor(curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
+                      curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
+            checkGLcall("glScissor");
+        } else {
+            glScissor(This->stateBlock->viewport.X, 
+                      (This->renderTarget->myDesc.Height - (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)), 
+                      This->stateBlock->viewport.Width, 
+                      This->stateBlock->viewport.Height);
+            checkGLcall("glScissor");
+        }
+#endif
+
+        /* Clear the selected rectangle (or full screen) */
+        glClear(glMask);
+        checkGLcall("glClear");
+
+        /* Step to the next rectangle */
+        if (curRect) curRect = curRect + sizeof(D3DRECT);
+    }
+
+    /* Restore the old values (why..?) */
+    if (Flags & D3DCLEAR_STENCIL) {
+        glClearStencil(old_stencil_clear_value);
+        glStencilMask(This->stateBlock->renderState[D3DRS_STENCILWRITEMASK]);
+    }    
+    if (Flags & D3DCLEAR_ZBUFFER) {
+        glDepthMask(old_ztest);
+        glClearDepth(old_z_clear_value);
+    }
+    if (Flags & D3DCLEAR_TARGET) {
+        glClearColor(old_color_clear_value[0], 
+                     old_color_clear_value[1],
+                     old_color_clear_value[2], 
+                     old_color_clear_value[3]);
+        glColorMask(This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE, 
+                    This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE, 
+                    This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+    }
+
+    glDisable(GL_SCISSOR_TEST);
+    checkGLcall("glDisable");
+    LEAVE_GL();
+
+    return D3D_OK;
+}
+
 /*****
  * Drawing functions
  *****/
@@ -2778,6 +3006,9 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetTextureStageState,
 
     IWineD3DDeviceImpl_BeginScene,
+    IWineD3DDeviceImpl_EndScene,
+    IWineD3DDeviceImpl_Present,
+    IWineD3DDeviceImpl_Clear,
 
     IWineD3DDeviceImpl_DrawPrimitive,
     IWineD3DDeviceImpl_DrawIndexedPrimitive,

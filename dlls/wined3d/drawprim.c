@@ -372,7 +372,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
        For the non-created vertex shaders, the VertexShader var holds the real 
           FVF and only stream 0 matters
        For the created vertex shaders, there is an FVF per stream              */
-    if (!This->stateBlock->streamIsUP && (This->updateStateBlock->vertexShader == NULL)) {
+    if (!This->stateBlock->streamIsUP && !(This->updateStateBlock->vertexShader == NULL)) {
         LoopThroughTo = MAX_STREAMS;
     } else {
         LoopThroughTo = 1;
@@ -521,10 +521,8 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
                  BOOL isPtSize, float ptSize,                       /* pointSize    */
                  D3DVECTOR_4 *texcoords, int *numcoords)               /* texture info */
 {
-#if 0 /* TODO: Texture support */
     unsigned int textureNo;
     float s, t, r, q;
-#endif
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     /* Diffuse -------------------------------- */
@@ -557,7 +555,6 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
     }
 
     /* Texture coords --------------------------- */
-#if 0 /* TODO: Texture support */
     for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
 
         if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
@@ -568,7 +565,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
         /* Query tex coords */
         if (This->stateBlock->textures[textureNo] != NULL) {
 
-            int    coordIdx = This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
+            int    coordIdx = This->updateStateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
             if (coordIdx > 7) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 continue;
@@ -594,11 +591,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
                 case D3DTTFF_COUNT1:
                     VTRACE(("tex:%d, s=%f\n", textureNo, s));
                     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                        glMultiTexCoord1f(GL_TEXTURE0 + textureNo, s);
-#else
-                        glMultiTexCoord1fARB(GL_TEXTURE0_ARB + textureNo, s);
-#endif
+                        GLMULTITEXCOORD1F(textureNo, s);
                     } else {
                         glTexCoord1f(s);
                     }
@@ -606,11 +599,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
                 case D3DTTFF_COUNT2:
                     VTRACE(("tex:%d, s=%f, t=%f\n", textureNo, s, t));
                     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                        glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
-#else
-                        glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-#endif
+                        GLMULTITEXCOORD2F(textureNo, s, t);
                     } else {
                         glTexCoord2f(s, t);
                     }
@@ -618,11 +607,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
                 case D3DTTFF_COUNT3:
                     VTRACE(("tex:%d, s=%f, t=%f, r=%f\n", textureNo, s, t, r));
                     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                        glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r);
-#else
-                        glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-#endif
+                        GLMULTITEXCOORD3F(textureNo, s, t, r);
                     } else {
                         glTexCoord3f(s, t, r);
                     }
@@ -630,11 +615,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
                 case D3DTTFF_COUNT4:
                     VTRACE(("tex:%d, s=%f, t=%f, r=%f, q=%f\n", textureNo, s, t, r, q));
                     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                        glMultiTexCoord4f(GL_TEXTURE0 + textureNo, s, t, r, q);
-#else
-                        glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, s, t, r, q);
-#endif
+                        GLMULTITEXCOORD4F(textureNo, s, t, r, q);
                     } else {
                         glTexCoord4f(s, t, r, q);
                     }
@@ -645,7 +626,6 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
             }
         }
     } /* End of textures */
-#endif
 
     /* Position -------------------------------- */
     if (isXYZ) {
@@ -1540,7 +1520,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     if (useHW) {
 	/* Lighting is not completely bypassed with ATI drivers although it should be. Mesa is ok from this respect...
 	   So make sure lighting is disabled. */
-	isLightingOn = glIsEnabled(GL_LIGHTING);
+        isLightingOn = glIsEnabled(GL_LIGHTING);
         glDisable(GL_LIGHTING);
         checkGLcall("glDisable(GL_LIGHTING);");
         TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn); 

@@ -187,6 +187,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(SetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD  Value) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD * pValue) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
+    STDMETHOD(EndScene)(THIS) PURE;
+    STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
+    STDMETHOD(Clear)(THIS_ DWORD  Count,CONST D3DRECT * pRects,DWORD  Flags,D3DCOLOR  Color,float  Z,DWORD  Stencil) PURE;
     STDMETHOD(DrawPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  StartVertex,UINT  PrimitiveCount) PURE;
     STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE;
     STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
@@ -234,6 +237,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_SetTextureStageState(p,a,b,c)            (p)->lpVtbl->SetTextureStageState(p,a,b,c)
 #define IWineD3DDevice_GetTextureStageState(p,a,b,c)            (p)->lpVtbl->GetTextureStageState(p,a,b,c)
 #define IWineD3DDevice_BeginScene(p)                            (p)->lpVtbl->BeginScene(p)
+#define IWineD3DDevice_EndScene(p)                              (p)->lpVtbl->EndScene(p)
+#define IWineD3DDevice_Present(p,a,b,c,d)                       (p)->lpVtbl->Present(p,a,b,c,d)
+#define IWineD3DDevice_Clear(p,a,b,c,d,e,f)                     (p)->lpVtbl->Clear(p,a,b,c,d,e,f)
 #define IWineD3DDevice_DrawPrimitive(p,a,b,c)                   (p)->lpVtbl->DrawPrimitive(p,a,b,c)
 #define IWineD3DDevice_DrawIndexedPrimitive(p,a,b,c,d,e,f)      (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e,f)
 #define IWineD3DDevice_DrawPrimitiveUP(p,a,b,c,d)               (p)->lpVtbl->DrawPrimitiveUP(p,a,b,c,d)
