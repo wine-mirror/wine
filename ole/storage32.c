@@ -3085,6 +3085,7 @@ StorageInternalImpl* StorageInternalImpl_Construct(
 void StorageInternalImpl_Destroy(
   StorageInternalImpl* This)
 {
+  StorageBaseImpl_Release((IStorage*)This->ancestorStorage);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -5224,7 +5225,7 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm)
   BOOL bSTGM_FAILIFTHERE = ! (bSTGM_CREATE || bSTGM_CONVERT);
 
   if (bSTGM_CREATE)
-    dwCreationDistribution = CREATE_NEW;
+    dwCreationDistribution = CREATE_ALWAYS;
   else if (bSTGM_FAILIFTHERE)
     dwCreationDistribution = CREATE_NEW;
   else if (bSTGM_CONVERT)
