@@ -56,6 +56,7 @@ typedef struct
   DWORD style;
   short x;
   short y;
+  short cx;
   short cy;
   DWORD id;
 } MyDLGITEMTEMPLATEEX;
@@ -432,7 +433,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
 
   if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
   {
-    /* DIALOGEX template */
+    /* DLGTEMPLATEEX (not defined in any std. header file) */
 
     p++;       /* dlgVer    */
     p++;       /* signature */
@@ -442,7 +443,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   }
   else
   {
-    /* DIALOG template */
+    /* DLGTEMPLATE */
 
     p += 2;    /* style     */
     p += 2;    /* ext style */
@@ -1179,6 +1180,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
  * Get the size of an in-memory Template
  *
  *( Based on the code of PROPSHEET_CollectPageInfo)
+ * See also dialog.c/DIALOG_ParseTemplate32().
  */
 
 static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
@@ -1190,8 +1192,9 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
 
   if (istemplateex)
   {
-    /* DIALOGEX template */
+    /* DLGTEMPLATEEX (not defined in any std. header file) */
 
+    TRACE("is DLGTEMPLATEEX\n");
     p++;       /* dlgVer    */
     p++;       /* signature */
     p += 2;    /* help ID   */
@@ -1200,8 +1203,9 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
   }
   else
   {
-    /* DIALOG template */
+    /* DLGTEMPLATE */
 
+    TRACE("is DLGTEMPLATE\n");
     p += 2;    /* style     */
     p += 2;    /* ext style */
   }
@@ -1234,7 +1238,7 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
       p++;
       break;
     case 0xffff:
-      p += 2;
+      p += 2; /* 0xffff plus predefined window class ordinal value */
       break;
     default:
       TRACE("class %s\n",debugstr_w((LPCWSTR)p));
@@ -1242,26 +1246,30 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
       break;
   }
 
-  /*title */
+  /* title */
   TRACE("title %s\n",debugstr_w((LPCWSTR)p));
   p += lstrlenW((LPCWSTR)p) + 1;
 
-  /* font, if DS_FONT set */
+  /* font, if DS_SETFONT set */
   if ((DS_SETFONT & ((istemplateex)?  ((MyDLGTEMPLATEEX*)pTemplate)->style :
 		     pTemplate->style)))
     {
       p+=(istemplateex)?3:1;
       TRACE("font %s\n",debugstr_w((LPCWSTR)p));
-      p += lstrlenW( (LPCWSTR)p ) + 1; /* the font name*/
+      p += lstrlenW( (LPCWSTR)p ) + 1; /* the font name */
     }
 
+  /* now process the DLGITEMTEMPLATE(EX) structs (plus custom data)
+   * that are following the DLGTEMPLATE(EX) data */
   TRACE("%d items\n",nrofitems);
   while (nrofitems > 0)
     {
       p = (WORD*)(((DWORD)p + 3) & ~3); /* DWORD align */
       
+      /* skip header */
       p += (istemplateex ? sizeof(MyDLGITEMTEMPLATEEX) : sizeof(DLGITEMTEMPLATE))/sizeof(WORD);
       
+      /* check class */
       switch ((WORD)*p)
 	{
 	case 0x0000:
@@ -1276,6 +1284,8 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
 	  p += lstrlenW( (LPCWSTR)p ) + 1;
 	  break;
 	}
+
+      /* check title text */
       switch ((WORD)*p)
 	{
 	case 0x0000:
@@ -1356,6 +1366,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   if (!temp)
     return FALSE;
   
+  TRACE("copying pTemplate %p into temp %p (%ld)\n", pTemplate, temp, resSize);
   memcpy(temp, pTemplate, resSize);
   pTemplate = temp;
 
@@ -2665,7 +2676,7 @@ static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID)
 INT_PTR CALLBACK
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
+  TRACE("hwnd=%p msg=0x%04x wparam=%x lparam=%lx\n",
 	hwnd, uMsg, wParam, lParam);
 
   switch (uMsg)
