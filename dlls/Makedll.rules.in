@@ -67,25 +67,16 @@ crosstest:: $(SUBDIRS:%=%/__crosstest__)
 
 # Rules for auto documentation
 
-$(SUBDIRS:%=%/__man__): dummy
-	cd `dirname $@` && $(MAKE) man
-
-man: $(C_SRCS) $(SUBDIRS:%=%/__man__)
+man: $(C_SRCS)
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -S$(api_manext) $(DIVINCL) $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
 
-$(SUBDIRS:%=%/__doc_html__): dummy
-	cd `dirname $@` && $(MAKE) doc-html
-
-doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
+doc-html: $(C_SRCS)
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) $(DIVINCL) -Th $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
 
-$(SUBDIRS:%=%/__doc_sgml__): dummy
-	cd `dirname $@` && $(MAKE) doc-sgml
-
-doc-sgml: $(C_SRCS) $(SUBDIRS:%=%/__doc_sgml__)
+doc-sgml: $(C_SRCS)
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) $(DIVINCL) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
 
-.PHONY: man doc-html doc-sgml $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
+.PHONY: man doc-html doc-sgml
 
 # Sanity check
 

@@ -312,6 +312,25 @@ print NEWMAKE "\tfi\n\n";
 # makefile trailer
 
 print NEWMAKE <<EOF;
+# Rules for auto documentation
+
+\$(SUBDIRS:%=%/__man__): dummy
+	cd `dirname \$@` && \$(MAKE) man
+
+man: \$(SUBDIRS:%=%/__man__)
+
+\$(SUBDIRS:%=%/__doc_html__): dummy
+	cd `dirname \$@` && \$(MAKE) doc-html
+
+doc-html: \$(SUBDIRS:%=%/__doc_html__)
+
+\$(SUBDIRS:%=%/__doc_sgml__): dummy
+	cd `dirname \$@` && \$(MAKE) doc-sgml
+
+doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
+
+.PHONY: man doc-html doc-sgml \$(SUBDIRS:%=%/__man__) \$(SUBDIRS:%=%/__doc_html__) \$(SUBDIRS:%=%/__doc_sgml__)
+
 # Misc rules
 
 install install-dev:: \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
