@@ -514,6 +514,8 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   if (!Binding->server && Binding->FromConn &&
       memcmp(&Binding->FromConn->ActiveInterface, InterfaceId,
              sizeof(RPC_SYNTAX_IDENTIFIER))) {
+
+    TRACE("releasing pre-existing connection\n");
     RPCRT4_ReleaseConnection(Binding->FromConn);
     Binding->FromConn = NULL;
   } else {
@@ -577,13 +579,13 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
         response_hdr->common.rpc_ver_minor != RPC_VER_MINOR ||
         response_hdr->common.ptype != PKT_BIND_ACK) {
       WARN("invalid protocol version or rejection packet\n");
-      RPCRT4_ReleaseConnection(Binding->FromConn);
+      RPCRT4_ReleaseConnection(*Connection);
       return RPC_S_PROTOCOL_ERROR;
     }
 
     if (response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
       WARN("server doesn't allow large enough packets\n");
-      RPCRT4_ReleaseConnection(Binding->FromConn);
+      RPCRT4_ReleaseConnection(*Connection);
       return RPC_S_PROTOCOL_ERROR;
     }
 
