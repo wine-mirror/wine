@@ -241,10 +241,10 @@ static int get_image_params( struct mapping *mapping )
 }
 
 /* get the size of the unix file associated with the mapping */
-inline static int get_file_size( struct mapping *mapping, int *size_high, int *size_low )
+inline static int get_file_size( struct file *file, int *size_high, int *size_low )
 {
     struct stat st;
-    int unix_fd = get_unix_fd( mapping->obj.fd_obj );
+    int unix_fd = get_file_unix_fd( file );
 
     if (fstat( unix_fd, &st ) == -1) return 0;
     *size_high = st.st_size >> 32;
@@ -283,7 +283,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         }
         if (!size_high && !size_low)
         {
-            if (!get_file_size( mapping, &size_high, &size_low )) goto error;
+            if (!get_file_size( mapping->file, &size_high, &size_low )) goto error;
         }
         else
         {
