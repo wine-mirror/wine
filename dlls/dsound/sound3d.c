@@ -67,6 +67,8 @@
 
 /* default intensity level for human ears */
 #define DEFAULT_INTENSITY 0.000000000001f
+/* default velocity of sound in the air */
+#define DEFAULT_VELOCITY 340
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
 
@@ -135,7 +137,7 @@ static inline D3DVALUE AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 	angle = acos(cos);
 	/* we now have angle in radians */
 	angle = RadToDeg(angle);
-	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x,
 	      b->u2.y, b->u3.z, angle);
 	return angle;	
 }
@@ -150,7 +152,7 @@ static inline D3DVALUE AngleBetweenVectorsRad (LPD3DVECTOR a, LPD3DVECTOR b)
 	lb = VectorMagnitude (b);
 	cos = product/(la*lb);
 	angle = acos(cos);
-	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x,
 	      b->u2.y, b->u3.z, angle);
 	return angle;	
 }
@@ -162,9 +164,20 @@ static inline D3DVECTOR VectorBetweenTwoPoints (LPD3DVECTOR a, LPD3DVECTOR b)
 	c.u1.x = b->u1.x - a->u1.x;
 	c.u2.y = b->u2.y - a->u2.y;
 	c.u3.z = b->u3.z - a->u3.z;
-	TRACE("A (%f,%f,%f), B (%f,%f,%f), AB = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
+	TRACE("A (%f,%f,%f), B (%f,%f,%f), AB = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y,
 	      b->u3.z, c.u1.x, c.u2.y, c.u3.z);
 	return c;
+}
+
+/* calculates the lenght of vector's projection on another vector */
+static inline D3DVALUE ProjectVector (LPD3DVECTOR a, LPD3DVECTOR p)
+{
+	D3DVALUE prod, result;
+	prod = ScalarProduct(a, p);
+	result = prod/VectorMagnitude(p);
+	TRACE("length projection of (%f,%f,%f) on (%f,%f,%f) = %f\n", a->u1.x, a->u2.y, a->u3.z, p->u1.x,
+              p->u2.y, p->u3.z, result);
+	return result;
 }
 
 /*******************************************************************************
@@ -186,6 +199,8 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	/* panning related stuff */
 	D3DVALUE flAngle;
 	D3DVECTOR vLeft;
+	/* doppler shift related stuff */
+	D3DVALUE flFreq, flBufferVel, flListenerVel;
 	
 	if (ds3db->dsb->dsound->listener == NULL)
 		return;	
@@ -271,6 +286,7 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 		TRACE("conning: Angle = %f deg; InsideConeAngle(/2) = %ld deg; OutsideConeAngle(/2) = %ld deg; ConeOutsideVolume = %ld => adjusting volume to %f\n",
 		       flAngle, ds3db->ds3db.dwInsideConeAngle/2, ds3db->ds3db.dwOutsideConeAngle/2, ds3db->ds3db.lConeOutsideVolume, lVolume);
 	}
+	ds3db->dsb->volpan.lVolume = lVolume;
 	
 	/* panning */
 	vDistance = VectorBetweenTwoPoints(&dsl->ds3dl.vPosition, &ds3db->ds3db.vPosition);
@@ -279,12 +295,35 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	/* for now, we'll use "linear formula" (which is probably incorrect); if someone has it in book, correct it */
 	ds3db->dsb->volpan.lPan = 10000*2*flAngle/M_PI - 10000;
 	TRACE("panning: Angle = %f rad, lPan = %ld\n", flAngle, ds3db->dsb->volpan.lPan);
-	
+
+	/* FIXME: Doppler Effect disabled since i have no idea which frequency to change and how to do it */
+#if 0	
 	/* doppler shift*/
+	if ((VectorMagnitude(&ds3db->ds3db.vVelocity) == 0) && (VectorMagnitude(&dsl->ds3dl.vVelocity) == 0))
+	{
+		TRACE("doppler: Buffer and Listener don't have velocities\n");
+	}
+	else
+	{
+		/* calculate lenght of ds3db.vVelocity component which causes Doppler Effect
+		   NOTE: if buffer moves TOWARDS the listener, it's velocity component is NEGATIVE
+		         if buffer moves AWAY from listener, it's velocity component is POSITIVE */
+		flBufferVel = ProjectVector(&ds3db->ds3db.vVelocity, &vDistance);
+		/* calculate lenght of ds3dl.vVelocity component which causes Doppler Effect
+		   NOTE: if listener moves TOWARDS the buffer, it's velocity component is POSITIVE
+		         if listener moves AWAY from buffer, it's velocity component is NEGATIVE */
+		flListenerVel = ProjectVector(&dsl->ds3dl.vVelocity, &vDistance);
+		/* formula taken from Gianicoli D.: Physics, 4th edition: */
+		/* FIXME: replace ds3db->dsb->freq with appropriate frequency ! */
+		flFreq = ds3db->dsb->freq * ((DEFAULT_VELOCITY + flListenerVel)/(DEFAULT_VELOCITY + flBufferVel));
+		TRACE("doppler: Buffer velocity (component) = %lf, Listener velocity (component) = %lf => Doppler shift: %ld Hz -> %lf Hz\n", flBufferVel, flListenerVel, \
+		      ds3db->dsb->freq, flFreq);
+		/* FIXME: replace following line with correct frequency setting ! */
+		ds3db->dsb->freq = flFreq;
+	}
+#endif	
 	
-	/* at last, we got the desired volume */
-	ds3db->dsb->volpan.lVolume = lVolume;
-	ds3db->dsb->dsound->volpan.lVolume = lVolume;
+	/* time for remix */
 	DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
 	DSOUND_ForceRemix (ds3db->dsb);			
 }
