@@ -975,8 +975,8 @@ static	LPCWSTR		MCI_FindCommand(UINT uTbl, LPCWSTR verb)
  */
 static	DWORD		MCI_GetReturnType(LPCWSTR lpCmd)
 {
-    lpCmd += strlenW(lpCmd) + 1 + sizeof(DWORD) + sizeof(WORD);
-    if (*lpCmd == '\0' && *(const WORD*)(lpCmd + 1 + sizeof(DWORD)) == MCI_RETURN) {
+    lpCmd = (LPCWSTR)((BYTE*)(lpCmd + strlenW(lpCmd) + 1) + sizeof(DWORD) + sizeof(WORD));
+    if (*lpCmd == '\0' && *(const WORD*)((BYTE*)(lpCmd + 1) + sizeof(DWORD)) == MCI_RETURN) {
 	return *(const DWORD*)(lpCmd + 1);
     }
     return 0L;
