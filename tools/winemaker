@@ -784,7 +784,7 @@ sub source_scan_directory($$$$)
   my @local_dlls=();
   my @local_depends=();
   my @exe_list=();
-  foreach my $target_name (sort { $b cmp $a } keys %targets) {
+  foreach my $target_name (map (lc, (sort { $b cmp $a } keys %targets))) {
     # Create the target...
     my $basename;
     my $target=[];
