@@ -348,12 +348,8 @@ IMediaFilter_fnSetSyncSource(IMediaFilter* iface,IReferenceClock* pobjClock)
 
 	QUARTZ_CompList_Unlock( This->m_pFilterList );
 
-	if ( This->m_pClock != NULL )
-		IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_CLOCK_CHANGED, 0, 0);
-	else
-		IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_CLOCK_UNSET, 0, 0);
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+		EC_CLOCK_CHANGED, 0, 0);
 
 	LeaveCriticalSection( &This->m_csClock );
 

@@ -21,7 +21,6 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "basefilt.h"
-#include "mtype.h"
 #include "memalloc.h"
 
 
@@ -66,6 +65,7 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
 	HRESULT	hr = E_NOTIMPL;
+	ULONG	i;
 
 	FIXME("(%p)->(%p,%p) stub!\n",This,pPin,pmt);
 
@@ -74,7 +74,7 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 	if ( pPin == NULL || pmt == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( &This->csPin );
+	EnterCriticalSection( This->pcsPin );
 
 	if ( This->pPinConnectedTo != NULL )
 	{
@@ -84,11 +84,52 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 
 	/* FIXME - return fail if running */
 
-	/* FIXME */
+	if ( pmt != NULL )
+	{
+		hr = IPin_QueryAccept(iface,pmt);
+		if ( FAILED(hr) )
+			goto err;
+		hr = IPin_ReceiveConnection(pPin,iface,pmt);
+		if ( FAILED(hr) )
+			goto err;
+	}
+	else
+	{
+		for ( i = 0; i < This->cAcceptTypes; i++ )
+		{
+			pmt = &This->pmtAcceptTypes[i];
+			hr = IPin_QueryAccept(iface,pmt);
+			if ( SUCCEEDED(hr) )
+			{
+				hr = IPin_ReceiveConnection(pPin,iface,pmt);
+				if ( SUCCEEDED(hr) )
+				{
+					goto connected;
+				}
+			}
+		}
 
-	hr = E_NOTIMPL;
+		hr = VFW_E_TYPE_NOT_ACCEPTED;
+		goto err;
+	}
+
+	if ( FAILED(hr) )
+		goto err;
+
+connected:;
+	This->pmtConn = QUARTZ_MediaType_Duplicate( pmt );
+	if ( This->pmtConn == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		IPin_Disconnect(pPin);
+		goto err;
+	}
+	hr = S_OK;
+
+	This->pPinConnectedTo = pPin; IPin_AddRef(pPin);
+
 err:
-	LeaveCriticalSection( &This->csPin );
+	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
 }
@@ -106,7 +147,7 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 	if ( pPin == NULL || pmt == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( &This->csPin );
+	EnterCriticalSection( This->pcsPin );
 
 	if ( This->pPinConnectedTo != NULL )
 	{
@@ -116,13 +157,24 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 
 	/* FIXME - return fail if running */
 
-	/* FIXME */
 
-	hr = E_NOTIMPL;
+	hr = IPin_QueryAccept(iface,pmt);
+	if ( FAILED(hr) )
+		goto err;
+
+	This->pmtConn = QUARTZ_MediaType_Duplicate( pmt );
+	if ( This->pmtConn == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto err;
+	}
+	hr = S_OK;
+
+	This->pPinConnectedTo = pPin; IPin_AddRef(pPin);
 err:
-	LeaveCriticalSection( &This->csPin );
+	LeaveCriticalSection( This->pcsPin );
 
-	return E_NOTIMPL;
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -133,7 +185,7 @@ CPinBaseImpl_fnDisconnect(IPin* iface)
 
 	FIXME("(%p)->() stub!\n",This);
 
-	EnterCriticalSection( &This->csPin );
+	EnterCriticalSection( This->pcsPin );
 
 	/* FIXME - return fail if running */
 
@@ -156,7 +208,7 @@ CPinBaseImpl_fnDisconnect(IPin* iface)
 		hr = S_FALSE; /* FIXME - is this correct??? */
 	}
 
-	LeaveCriticalSection( &This->csPin );
+	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
 }
@@ -172,7 +224,7 @@ CPinBaseImpl_fnConnectedTo(IPin* iface,IPin** ppPin)
 	if ( ppPin == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( &This->csPin );
+	EnterCriticalSection( This->pcsPin );
 
 	*ppPin = This->pPinConnectedTo;
 	if ( This->pPinConnectedTo != NULL )
@@ -181,7 +233,7 @@ CPinBaseImpl_fnConnectedTo(IPin* iface,IPin** ppPin)
 		hr = NOERROR;
 	}
 
-	LeaveCriticalSection( &This->csPin );
+	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
 }
@@ -197,7 +249,7 @@ CPinBaseImpl_fnConnectionMediaType(IPin* iface,AM_MEDIA_TYPE* pmt)
 	if ( pmt == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( &This->csPin );
+	EnterCriticalSection( This->pcsPin );
 
 	if ( This->pmtConn != NULL )
 	{
@@ -211,7 +263,7 @@ CPinBaseImpl_fnConnectionMediaType(IPin* iface,AM_MEDIA_TYPE* pmt)
 		hr = NOERROR;
 	}
 
-	LeaveCriticalSection( &This->csPin );
+	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
 }
@@ -226,7 +278,7 @@ CPinBaseImpl_fnQueryPinInfo(IPin* iface,PIN_INFO* pinfo)
 	if ( pinfo == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( &This->csPin );
+	EnterCriticalSection( This->pcsPin );
 
 	ZeroMemory( pinfo, sizeof(PIN_INFO) );
 	pinfo->pFilter = (IBaseFilter*)(This->pFilter);
@@ -241,7 +293,7 @@ CPinBaseImpl_fnQueryPinInfo(IPin* iface,PIN_INFO* pinfo)
 		pinfo->achName[sizeof(pinfo->achName)/sizeof(pinfo->achName[0])-1] = 0;
 	}
 
-	LeaveCriticalSection( &This->csPin );
+	LeaveCriticalSection( This->pcsPin );
 
 	return NOERROR;
 }
@@ -283,20 +335,42 @@ static HRESULT WINAPI
 CPinBaseImpl_fnQueryAccept(IPin* iface,const AM_MEDIA_TYPE* pmt)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
+	HRESULT hr;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pmt);
 
-	return E_NOTIMPL;
+	if ( pmt == NULL )
+		return E_POINTER;
+
+	hr = NOERROR;
+	EnterCriticalSection( This->pcsPin );
+	if ( This->pHandlers->pCheckMediaType != NULL )
+		hr = This->pHandlers->pCheckMediaType(This,pmt);
+	LeaveCriticalSection( This->pcsPin );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CPinBaseImpl_fnEnumMediaTypes(IPin* iface,IEnumMediaTypes** ppenum)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
+	HRESULT hr;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,ppenum);
 
-	return E_NOTIMPL;
+	if ( ppenum == NULL )
+		return E_POINTER;
+
+	hr = E_NOTIMPL;
+
+	EnterCriticalSection( This->pcsPin );
+	if ( This->cAcceptTypes > 0 )
+		hr = QUARTZ_CreateEnumMediaTypes(
+			ppenum, This->pmtAcceptTypes, This->cAcceptTypes );
+	LeaveCriticalSection( This->pcsPin );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -314,52 +388,76 @@ static HRESULT WINAPI
 CPinBaseImpl_fnEndOfStream(IPin* iface)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
+	HRESULT hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
 	if ( This->bOutput )
 		return E_UNEXPECTED;
 
-	return E_NOTIMPL;
+	EnterCriticalSection( This->pcsPin );
+	if ( This->pHandlers->pEndOfStream != NULL )
+		hr = This->pHandlers->pEndOfStream(This);
+	LeaveCriticalSection( This->pcsPin );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CPinBaseImpl_fnBeginFlush(IPin* iface)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
+	HRESULT hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
 	if ( This->bOutput )
 		return E_UNEXPECTED;
 
-	return E_NOTIMPL;
+	EnterCriticalSection( This->pcsPin );
+	if ( This->pHandlers->pBeginFlush != NULL )
+		hr = This->pHandlers->pBeginFlush(This);
+	LeaveCriticalSection( This->pcsPin );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CPinBaseImpl_fnEndFlush(IPin* iface)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
+	HRESULT hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
 	if ( This->bOutput )
 		return E_UNEXPECTED;
 
-	return E_NOTIMPL;
+	EnterCriticalSection( This->pcsPin );
+	if ( This->pHandlers->pEndFlush != NULL )
+		hr = This->pHandlers->pEndFlush(This);
+	LeaveCriticalSection( This->pcsPin );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CPinBaseImpl_fnNewSegment(IPin* iface,REFERENCE_TIME rtStart,REFERENCE_TIME rtStop,double rate)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
+	HRESULT hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
 	if ( This->bOutput )
 		return E_UNEXPECTED;
 
-	return E_NOTIMPL;
+	EnterCriticalSection( This->pcsPin );
+	if ( This->pHandlers->pNewSegment != NULL )
+		hr = This->pHandlers->pNewSegment(This,rtStart,rtStop,rate);
+	LeaveCriticalSection( This->pcsPin );
+
+	return hr;
 }
 
 
@@ -393,8 +491,10 @@ static ICOM_VTABLE(IPin) ipin =
 
 HRESULT CPinBaseImpl_InitIPin(
 	CPinBaseImpl* This, IUnknown* punkControl,
+	CRITICAL_SECTION* pcsPin,
 	CBaseFilterImpl* pFilter, LPCWSTR pwszId,
-	BOOL bOutput )
+	BOOL bOutput,
+	const CBasePinHandlers*	pHandlers )
 {
 	HRESULT	hr = NOERROR;
 
@@ -408,9 +508,13 @@ HRESULT CPinBaseImpl_InitIPin(
 
 	ICOM_VTBL(This) = &ipin;
 	This->punkControl = punkControl;
+	This->pHandlers = pHandlers;
 	This->cbIdLen = sizeof(WCHAR)*(strlenW(pwszId)+1);
 	This->pwszId = NULL;
 	This->bOutput = bOutput;
+	This->pmtAcceptTypes = NULL;
+	This->cAcceptTypes = 0;
+	This->pcsPin = pcsPin;
 	This->pFilter = pFilter;
 	This->pPinConnectedTo = NULL;
 	This->pmtConn = NULL;
@@ -421,8 +525,7 @@ HRESULT CPinBaseImpl_InitIPin(
 		hr = E_OUTOFMEMORY;
 		goto err;
 	}
-
-	InitializeCriticalSection( &This->csPin );
+	memcpy( This->pwszId, pwszId, This->cbIdLen );
 
 	return NOERROR;
 
@@ -442,8 +545,6 @@ void CPinBaseImpl_UninitIPin( CPinBaseImpl* This )
 		QUARTZ_FreeMem( This->pwszId );
 		This->pwszId = NULL;
 	}
-
-	DeleteCriticalSection( &This->csPin );
 }
 
 
@@ -497,7 +598,7 @@ CMemInputPinBaseImpl_fnGetAllocator(IMemInputPin* iface,IMemAllocator** ppAlloca
 	if ( ppAllocator == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( This->pcsPin );
+	EnterCriticalSection( This->pPin->pcsPin );
 
 	if ( This->pAllocator == NULL )
 	{
@@ -516,7 +617,7 @@ CMemInputPinBaseImpl_fnGetAllocator(IMemInputPin* iface,IMemAllocator** ppAlloca
 		IMemAllocator_AddRef(This->pAllocator);
 	}
 
-	LeaveCriticalSection( This->pcsPin );
+	LeaveCriticalSection( This->pPin->pcsPin );
 
 	return hr;
 }
@@ -531,7 +632,7 @@ CMemInputPinBaseImpl_fnNotifyAllocator(IMemInputPin* iface,IMemAllocator* pAlloc
 	if ( pAllocator == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( This->pcsPin );
+	EnterCriticalSection( This->pPin->pcsPin );
 
 	if ( This->pAllocator != NULL )
 	{
@@ -543,7 +644,7 @@ CMemInputPinBaseImpl_fnNotifyAllocator(IMemInputPin* iface,IMemAllocator* pAlloc
 
 	This->bReadonly = bReadonly;
 
-	LeaveCriticalSection( This->pcsPin );
+	LeaveCriticalSection( This->pPin->pcsPin );
 
 	return NOERROR;
 }
@@ -566,10 +667,16 @@ static HRESULT WINAPI
 CMemInputPinBaseImpl_fnReceive(IMemInputPin* iface,IMediaSample* pSample)
 {
 	ICOM_THIS(CMemInputPinBaseImpl,iface);
+	HRESULT hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pSample);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( This->pPin->pcsPin );
+	if ( This->pPin->pHandlers->pReceive != NULL )
+		hr = This->pPin->pHandlers->pReceive(This->pPin,pSample);
+	LeaveCriticalSection( This->pPin->pcsPin );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -584,7 +691,7 @@ CMemInputPinBaseImpl_fnReceiveMultiple(IMemInputPin* iface,IMediaSample** ppSamp
 	if ( ppSample == NULL || pnSampleProcessed == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( This->pcsPin );
+	EnterCriticalSection( This->pPin->pcsPin );
 
 	hr = NOERROR;
 	for ( n = 0; n < nSample; n++ )
@@ -594,7 +701,7 @@ CMemInputPinBaseImpl_fnReceiveMultiple(IMemInputPin* iface,IMediaSample** ppSamp
 			break;
 	}
 
-	LeaveCriticalSection( This->pcsPin );
+	LeaveCriticalSection( This->pPin->pcsPin );
 
 	*pnSampleProcessed = n;
 	return hr;
@@ -604,10 +711,16 @@ static HRESULT WINAPI
 CMemInputPinBaseImpl_fnReceiveCanBlock(IMemInputPin* iface)
 {
 	ICOM_THIS(CMemInputPinBaseImpl,iface);
+	HRESULT hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( This->pPin->pcsPin );
+	if ( This->pPin->pHandlers->pReceiveCanBlock != NULL )
+		hr = This->pPin->pHandlers->pReceiveCanBlock(This->pPin);
+	LeaveCriticalSection( This->pPin->pcsPin );
+
+	return hr;
 }
 
 
@@ -629,8 +742,7 @@ static ICOM_VTABLE(IMemInputPin) imeminputpin =
 
 HRESULT CMemInputPinBaseImpl_InitIMemInputPin(
 	CMemInputPinBaseImpl* This, IUnknown* punkControl,
-	CRITICAL_SECTION* pcsPin
-	)
+	CPinBaseImpl* pPin )
 {
 	TRACE("(%p,%p)\n",This,punkControl);
 
@@ -642,7 +754,7 @@ HRESULT CMemInputPinBaseImpl_InitIMemInputPin(
 
 	ICOM_VTBL(This) = &imeminputpin;
 	This->punkControl = punkControl;
-	This->pcsPin = pcsPin;
+	This->pPin = pPin;
 	This->pAllocator = NULL;
 	This->bReadonly = FALSE;
 
@@ -661,4 +773,107 @@ void CMemInputPinBaseImpl_UninitIMemInputPin(
 	}
 }
 
+/***************************************************************************
+ *
+ *	CQualityControlPassThruImpl
+ *
+ */
+
+static HRESULT WINAPI
+CQualityControlPassThruImpl_fnQueryInterface(IQualityControl* iface,REFIID riid,void** ppobj)
+{
+	ICOM_THIS(CQualityControlPassThruImpl,iface);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_QueryInterface(This->punkControl,riid,ppobj);
+}
+
+static ULONG WINAPI
+CQualityControlPassThruImpl_fnAddRef(IQualityControl* iface)
+{
+	ICOM_THIS(CQualityControlPassThruImpl,iface);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_AddRef(This->punkControl);
+}
+
+static ULONG WINAPI
+CQualityControlPassThruImpl_fnRelease(IQualityControl* iface)
+{
+	ICOM_THIS(CQualityControlPassThruImpl,iface);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_Release(This->punkControl);
+}
+
+
+static HRESULT WINAPI
+CQualityControlPassThruImpl_fnNotify(IQualityControl* iface,IBaseFilter* pFilter,Quality q)
+{
+	ICOM_THIS(CQualityControlPassThruImpl,iface);
+	HRESULT hr = S_FALSE;
+
+	TRACE("(%p)->()\n",This);
+
+	if ( This->pControl != NULL )
+		return IQualityControl_Notify( This->pControl, pFilter, q );
+
+	EnterCriticalSection( This->pPin->pcsPin );
+	if ( This->pPin->pHandlers->pQualityNotify != NULL )
+		hr = This->pPin->pHandlers->pQualityNotify(This->pPin,pFilter,q);
+	LeaveCriticalSection( This->pPin->pcsPin );
+
+	return hr;
+}
+
+static HRESULT WINAPI
+CQualityControlPassThruImpl_fnSetSink(IQualityControl* iface,IQualityControl* pControl)
+{
+	ICOM_THIS(CQualityControlPassThruImpl,iface);
+
+	TRACE("(%p)->()\n",This);
+
+	This->pControl = pControl; /* AddRef() must not be called */
+
+	return NOERROR;
+}
+
+static ICOM_VTABLE(IQualityControl) iqualitycontrol =
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	/* IUnknown fields */
+	CQualityControlPassThruImpl_fnQueryInterface,
+	CQualityControlPassThruImpl_fnAddRef,
+	CQualityControlPassThruImpl_fnRelease,
+	/* IQualityControl fields */
+	CQualityControlPassThruImpl_fnNotify,
+	CQualityControlPassThruImpl_fnSetSink,
+};
+
+HRESULT CQualityControlPassThruImpl_InitIQualityControl(
+	CQualityControlPassThruImpl* This, IUnknown* punkControl,
+	CPinBaseImpl* pPin )
+{
+	TRACE("(%p,%p)\n",This,punkControl);
+
+	if ( punkControl == NULL )
+	{
+		ERR( "punkControl must not be NULL\n" );
+		return E_INVALIDARG;
+	}
+
+	ICOM_VTBL(This) = &iqualitycontrol;
+	This->punkControl = punkControl;
+	This->pPin = pPin;
+
+	return NOERROR;
+}
+
+void CQualityControlPassThruImpl_UninitIQualityControl(
+	CQualityControlPassThruImpl* This )
+{
+}
 

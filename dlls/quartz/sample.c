@@ -491,6 +491,8 @@ HRESULT QUARTZ_CreateMemMediaSample(
 void QUARTZ_DestroyMemMediaSample(
 	CMemMediaSample* pSample )
 {
+	TRACE("(%p)\n",pSample);
+
 	QUARTZ_FreeObj( pSample );
 }
 

@@ -10,6 +10,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	amundoc.c \
+	audren.c \
 	basefilt.c \
 	basepin.c \
 	complist.c \

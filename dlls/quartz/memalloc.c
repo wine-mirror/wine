@@ -287,6 +287,10 @@ IMemAllocator_fnDecommit(IMemAllocator* iface)
 
 		if ( !bBlock )
 		{
+			QUARTZ_FreeMem(This->ppSamples);
+			This->ppSamples = NULL;
+			QUARTZ_FreeMem(This->pData);
+			This->pData = NULL;
 			hr = NOERROR;
 			break;
 		}

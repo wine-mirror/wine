@@ -80,6 +80,20 @@ static HRESULT CFilterGraph_DisconnectAllPins( IBaseFilter* pFilter )
 }
 
 
+static HRESULT CFilterGraph_GraphChanged( CFilterGraph* This )
+{
+	/* IDistributorNotify_NotifyGraphChange() */
+
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_GRAPH_CHANGED, 0, 0);
+	EnterCriticalSection( &This->m_csGraphVersion );
+	This->m_lGraphVersion ++;
+	LeaveCriticalSection( &This->m_csGraphVersion );
+
+	return NOERROR;
+}
+
+
 /****************************************************************************/
 
 static HRESULT WINAPI
@@ -220,12 +234,9 @@ name_ok:
 		goto end;
 	}
 
-	/* IDistributorNotify_NotifyGraphChange() */
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_GRAPH_CHANGED, 0, 0);
-	EnterCriticalSection( &This->m_csGraphVersion );
-	This->m_lGraphVersion ++;
-	LeaveCriticalSection( &This->m_csGraphVersion );
+	hr = CFilterGraph_GraphChanged(This);
+	if ( FAILED(hr) )
+		goto end;
 
 	hr = hrSucceeded;
 end:
@@ -269,12 +280,9 @@ IFilterGraph2_fnRemoveFilter(IFilterGraph2* iface,IBaseFilter* pFilter)
 			This->m_pFilterList, (IUnknown*)pFilter );
 	}
 
-	/* IDistributorNotify_NotifyGraphChange() */
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_GRAPH_CHANGED, 0, 0);
-	EnterCriticalSection( &This->m_csGraphVersion );
-	This->m_lGraphVersion ++;
-	LeaveCriticalSection( &This->m_csGraphVersion );
+	hr = CFilterGraph_GraphChanged(This);
+	if ( FAILED(hr) )
+		goto end;
 
 end:;
 	QUARTZ_CompList_Unlock( This->m_pFilterList );
@@ -403,12 +411,9 @@ IFilterGraph2_fnConnectDirect(IFilterGraph2* iface,IPin* pOut,IPin* pIn,const AM
 		goto end;
 	}
 
-	/* IDistributorNotify_NotifyGraphChange() */
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_GRAPH_CHANGED, 0, 0);
-	EnterCriticalSection( &This->m_csGraphVersion );
-	This->m_lGraphVersion ++;
-	LeaveCriticalSection( &This->m_csGraphVersion );
+	hr = CFilterGraph_GraphChanged(This);
+	if ( FAILED(hr) )
+		goto end;
 
 end:
 	QUARTZ_CompList_Unlock( This->m_pFilterList );
@@ -454,14 +459,14 @@ IFilterGraph2_fnDisconnect(IFilterGraph2* iface,IPin* pPin)
 		IPin_Release(pConnTo);
 	}
 	hr = IPin_Disconnect(pPin);
+	if ( FAILED(hr) )
+		goto end;
 
-	/* IDistributorNotify_NotifyGraphChange() */
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_GRAPH_CHANGED, 0, 0);
-	EnterCriticalSection( &This->m_csGraphVersion );
-	This->m_lGraphVersion ++;
-	LeaveCriticalSection( &This->m_csGraphVersion );
+	hr = CFilterGraph_GraphChanged(This);
+	if ( FAILED(hr) )
+		goto end;
 
+end:
 	QUARTZ_CompList_Unlock( This->m_pFilterList );
 
 	return hr;
@@ -657,17 +662,13 @@ static HRESULT WINAPI
 IFilterGraph2_fnReconnectEx(IFilterGraph2* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	HRESULT hr;
 
 	FIXME( "(%p)->(%p,%p) stub!\n",This,pPin,pmt );
 
 	/* reconnect asynchronously. */
 
-	/* IDistributorNotify_NotifyGraphChange() */
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_GRAPH_CHANGED, 0, 0);
-	EnterCriticalSection( &This->m_csGraphVersion );
-	This->m_lGraphVersion ++;
-	LeaveCriticalSection( &This->m_csGraphVersion );
+	hr = CFilterGraph_GraphChanged(This);
 
 	return E_NOTIMPL;
 }

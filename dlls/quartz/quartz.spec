@@ -4,7 +4,7 @@ init	QUARTZ_DllMain
 
 import oleaut32.dll
 import ole32.dll
-#import winmm.dll
+import winmm.dll
 import user32.dll
 #import gdi32.dll
 import advapi32.dll

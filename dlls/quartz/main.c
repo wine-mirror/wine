@@ -12,6 +12,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "mmsystem.h"
 #include "ole2.h"
 #include "wine/obj_oleaut.h"
 #include "strmif.h"
@@ -30,6 +31,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "fmap.h"
 #include "fmap2.h"
 #include "seekpass.h"
+#include "audren.h"
 
 
 typedef struct QUARTZ_CLASSENTRY
@@ -74,6 +76,7 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_FilterMapper, &QUARTZ_CreateFilterMapper },
 	{ &CLSID_FilterMapper2, &QUARTZ_CreateFilterMapper2 },
 	{ &CLSID_SeekingPassThru, &QUARTZ_CreateSeekingPassThru },
+	{ &CLSID_AudioRender, &QUARTZ_CreateAudioRenderer },
 	{ NULL, NULL },
 };
 
@@ -292,6 +295,8 @@ BOOL WINAPI QUARTZ_DllMain(
 	DWORD fdwReason,
 	LPVOID lpvReserved )
 {
+	TRACE("(%08x,%08lx,%p)\n",hInstDLL,fdwReason,lpvReserved);
+
 	switch ( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:

@@ -73,54 +73,81 @@ static HRESULT WINAPI
 CBaseFilterImpl_fnStop(IBaseFilter* iface)
 {
 	ICOM_THIS(CBaseFilterImpl,iface);
+	HRESULT hr;
 
 	TRACE("(%p)->()\n",This);
 
+	hr = NOERROR;
+
 	EnterCriticalSection( &This->csFilter );
 
-	/* FIXME - call OnStop() */
+	if ( This->fstate == State_Running )
+	{
+		if ( This->pHandlers->pOnInactive != NULL )
+			hr = This->pHandlers->pOnInactive( This );
+	}
 
-	This->fstate = State_Stopped;
+	if ( SUCCEEDED(hr) )
+		This->fstate = State_Stopped;
 	LeaveCriticalSection( &This->csFilter );
 
-	return NOERROR;
+	return hr;
 }
 
 static HRESULT WINAPI
 CBaseFilterImpl_fnPause(IBaseFilter* iface)
 {
 	ICOM_THIS(CBaseFilterImpl,iface);
+	HRESULT hr;
 
 	TRACE("(%p)->()\n",This);
 
+	hr = NOERROR;
+
 	EnterCriticalSection( &This->csFilter );
 
-	/* FIXME - call OnPause() */
+	if ( This->fstate == State_Running )
+	{
+		if ( This->pHandlers->pOnInactive != NULL )
+			hr = This->pHandlers->pOnInactive( This );
+	}
 
-	This->fstate = State_Paused;
+	if ( SUCCEEDED(hr) )
+		This->fstate = State_Paused;
 
 	LeaveCriticalSection( &This->csFilter );
 
-	return NOERROR;
+	TRACE("hr = %08lx\n",hr);
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CBaseFilterImpl_fnRun(IBaseFilter* iface,REFERENCE_TIME rtStart)
 {
 	ICOM_THIS(CBaseFilterImpl,iface);
+	HRESULT hr;
 
 	TRACE("(%p)->()\n",This);
 
+	hr = NOERROR;
+
 	EnterCriticalSection( &This->csFilter );
 
-	/* FIXME - call OnRun() */
-
 	This->rtStart = rtStart;
-	This->fstate = State_Running;
+
+	if ( This->fstate != State_Running )
+	{
+		if ( This->pHandlers->pOnActive != NULL )
+			hr = This->pHandlers->pOnActive( This );
+	}
+
+	if ( SUCCEEDED(hr) )
+		This->fstate = State_Running;
 
 	LeaveCriticalSection( &This->csFilter );
 
-	return NOERROR;
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -136,6 +163,7 @@ CBaseFilterImpl_fnGetState(IBaseFilter* iface,DWORD dw,FILTER_STATE* pState)
 	/* FIXME - ignore 'intermediate state' now */
 
 	EnterCriticalSection( &This->csFilter );
+	TRACE("state %d\n",This->fstate);
 	*pState = This->fstate;
 	LeaveCriticalSection( &This->csFilter );
 
@@ -366,7 +394,8 @@ static ICOM_VTABLE(IBaseFilter) ibasefilter =
 
 HRESULT CBaseFilterImpl_InitIBaseFilter(
 	CBaseFilterImpl* This, IUnknown* punkControl,
-	const CLSID* pclsidFilter, LPCWSTR lpwszNameGraph )
+	const CLSID* pclsidFilter, LPCWSTR lpwszNameGraph,
+	const CBaseFilterHandlers* pHandlers )
 {
 	TRACE("(%p,%p)\n",This,punkControl);
 
@@ -378,6 +407,7 @@ HRESULT CBaseFilterImpl_InitIBaseFilter(
 
 	ICOM_VTBL(This) = &ibasefilter;
 	This->punkControl = punkControl;
+	This->pHandlers = pHandlers;
 	This->pclsidFilter = pclsidFilter;
 	This->pInPins = NULL;
 	This->pOutPins = NULL;
@@ -393,6 +423,18 @@ HRESULT CBaseFilterImpl_InitIBaseFilter(
 	if ( This->pwszNameGraph == NULL )
 		return E_OUTOFMEMORY;
 	memcpy( This->pwszNameGraph, lpwszNameGraph, This->cbNameGraph );
+
+	This->pInPins = QUARTZ_CompList_Alloc();
+	This->pOutPins = QUARTZ_CompList_Alloc();
+	if ( This->pInPins == NULL || This->pOutPins == NULL )
+	{
+		if ( This->pInPins != NULL )
+			QUARTZ_CompList_Free(This->pInPins);
+		if ( This->pOutPins != NULL )
+			QUARTZ_CompList_Free(This->pOutPins);
+		QUARTZ_FreeMem(This->pwszNameGraph);
+		return E_OUTOFMEMORY;
+	}
 
 	InitializeCriticalSection( &This->csFilter );
 
@@ -415,7 +457,6 @@ void CBaseFilterImpl_UninitIBaseFilter( CBaseFilterImpl* This )
 				break;
 			pPin = (IPin*)QUARTZ_CompList_GetItemPtr( pListItem );
 			QUARTZ_CompList_RemoveComp( This->pInPins, (IUnknown*)pPin );
-			IPin_Release( pPin );
 		}
 
 		QUARTZ_CompList_Free( This->pInPins );
@@ -430,7 +471,6 @@ void CBaseFilterImpl_UninitIBaseFilter( CBaseFilterImpl* This )
 				break;
 			pPin = (IPin*)QUARTZ_CompList_GetItemPtr( pListItem );
 			QUARTZ_CompList_RemoveComp( This->pOutPins, (IUnknown*)pPin );
-			IPin_Release( pPin );
 		}
 
 		QUARTZ_CompList_Free( This->pOutPins );

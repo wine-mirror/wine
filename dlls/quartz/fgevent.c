@@ -25,7 +25,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "quartz_private.h"
 #include "fgraph.h"
 
-#define EVENTQUEUE_BLOCKSIZE	16
+#define EVENTQUEUE_BLOCKSIZE	2
 #define EVENTQUEUE_MAX			1024
 
 struct FilterGraph_MEDIAEVENT
@@ -35,6 +35,106 @@ struct FilterGraph_MEDIAEVENT
 	LONG_PTR	lParam2;
 };
 
+
+static HRESULT FGEVENT_KeepEvent(
+	BOOL bKeep,
+	long lEventCode, LONG_PTR lParam1, LONG_PTR lParam2 )
+{
+	switch ( lEventCode )
+	{
+	/*case EC_COMPLETE:*/
+	case EC_USERABORT:
+		break;
+	case EC_ERRORABORT:
+		break;
+	case EC_TIME:
+		break;
+	/*case EC_REPAINT:*/
+	case EC_STREAM_ERROR_STOPPED:
+		break;
+	case EC_STREAM_ERROR_STILLPLAYING:
+		break;
+	case EC_ERROR_STILLPLAYING:
+		break;
+	case EC_PALETTE_CHANGED:
+		break;
+	case EC_VIDEO_SIZE_CHANGED:
+		break;
+	case EC_QUALITY_CHANGE:
+		break;
+	/*case EC_SHUTTING_DOWN:*/
+	case EC_CLOCK_CHANGED:
+		break;
+	case EC_PAUSED:
+		break;
+
+	case EC_OPENING_FILE:
+		break;
+	case EC_BUFFERING_DATA:
+		break;
+	case EC_FULLSCREEN_LOST:
+		if ( bKeep )
+		{
+			if ( ((IBaseFilter*)lParam2) != NULL )
+				IBaseFilter_AddRef( (IBaseFilter*)lParam2 );
+		}
+		else
+		{
+			if ( ((IBaseFilter*)lParam2) != NULL )
+				IBaseFilter_Release( (IBaseFilter*)lParam2 );
+		}
+		break;
+	/*case EC_ACTIVATE:*/
+	/*case EC_NEED_RESTART:*/
+	/*case EC_WINDOW_DESTROYED:*/
+	/*case EC_DISPLAY_CHANGED:*/
+	/*case EC_STARVATION:*/
+	/*case EC_OLE_EVENT:*/
+	/*case EC_NOTIFY_WINDOW:*/
+	/*case EC_STREAM_CONTROL_STOPPED:*/
+	/*case EC_STREAM_CONTROL_STARTED:*/
+	/*case EC_END_OF_SEGMENT:*/
+	/*case EC_SEGMENT_STARTED:*/
+	case EC_LENGTH_CHANGED:
+		break;
+	case EC_DEVICE_LOST:
+		if ( bKeep )
+		{
+			if ( ((IUnknown*)lParam1) != NULL )
+				IUnknown_AddRef( (IUnknown*)lParam1 );
+		}
+		else
+		{
+			if ( ((IUnknown*)lParam1) != NULL )
+				IUnknown_Release( (IUnknown*)lParam1 );
+		}
+		break;
+
+	case EC_STEP_COMPLETE:
+		break;
+	case EC_SKIP_FRAMES:
+		break;
+
+	/*case EC_TIMECODE_AVAILABLE:*/
+	/*case EC_EXTDEVICE_MODE_CHANGE:*/
+
+	case EC_GRAPH_CHANGED:
+		break;
+	case EC_CLOCK_UNSET:
+		break;
+
+	default:
+		if ( lEventCode < EC_USER )
+		{
+			FIXME( "unknown system event %08lx\n", lEventCode );
+			return E_INVALIDARG;
+		}
+		TRACE( "user event %08lx\n", lEventCode );
+		break;
+	}
+
+	return NOERROR;
+}
 
 /***************************************************************************
  *
@@ -129,7 +229,7 @@ static HRESULT WINAPI
 IMediaEventEx_fnGetEvent(IMediaEventEx* iface,long* plEventCode,LONG_PTR* plParam1,LONG_PTR* plParam2,long lTimeOut)
 {
 	CFilterGraph_THIS(iface,mediaevent);
-	ULONG cbQueued;
+	ULONG cQueued;
 	DWORD dw;
 	DWORD dwStart;
 	HRESULT	hr;
@@ -154,11 +254,11 @@ IMediaEventEx_fnGetEvent(IMediaEventEx* iface,long* plEventCode,LONG_PTR* plPara
 		hr = S_FALSE;
 		if ( This->m_cbMediaEventsMax > 0 )
 		{
-			cbQueued =
+			cQueued =
 				(This->m_cbMediaEventsMax +
 				 This->m_cbMediaEventsPut - This->m_cbMediaEventsGet) %
 					This->m_cbMediaEventsMax;
-			if ( cbQueued > 0 )
+			if ( cQueued > 0 )
 			{
 				pEvent = &This->m_pMediaEvents[This->m_cbMediaEventsGet];
 				*plEventCode = pEvent->lEventCode;
@@ -168,6 +268,8 @@ IMediaEventEx_fnGetEvent(IMediaEventEx* iface,long* plEventCode,LONG_PTR* plPara
 						This->m_cbMediaEventsMax;
 
 				hr = NOERROR;
+				if ( This->m_cbMediaEventsPut == This->m_cbMediaEventsGet )
+					ResetEvent( This->m_hMediaEvent );
 			}
 		}
 		LeaveCriticalSection( &This->m_csMediaEvents );
@@ -259,9 +361,9 @@ IMediaEventEx_fnFreeEventParams(IMediaEventEx* iface,long lEventCode,LONG_PTR lP
 {
 	CFilterGraph_THIS(iface,mediaevent);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%08lx,%08x,%08x)\n",This,lEventCode,lParam1,lParam2);
 
-	return E_NOTIMPL;
+	return FGEVENT_KeepEvent( FALSE, lEventCode, lParam1, lParam2 );
 }
 
 static HRESULT WINAPI
@@ -269,9 +371,15 @@ IMediaEventEx_fnSetNotifyWindow(IMediaEventEx* iface,OAHWND hwnd,long message,LO
 {
 	CFilterGraph_THIS(iface,mediaevent);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%08x,%08lx,%08x)\n",This,hwnd,message,lParam);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csMediaEvents );
+	This->m_hwndEventNotify = (HWND)hwnd;
+	This->m_lEventNotifyMsg = message;
+	This->m_lEventNotifyParam = lParam;
+	LeaveCriticalSection( &This->m_csMediaEvents );
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -279,9 +387,16 @@ IMediaEventEx_fnSetNotifyFlags(IMediaEventEx* iface,long lNotifyFlags)
 {
 	CFilterGraph_THIS(iface,mediaevent);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%ld)\n",This,lNotifyFlags);
 
-	return E_NOTIMPL;
+	if ( lNotifyFlags != 0 && lNotifyFlags != 1 )
+		return E_INVALIDARG;
+
+	EnterCriticalSection( &This->m_csMediaEvents );
+	This->m_lEventNotifyFlags = lNotifyFlags;
+	LeaveCriticalSection( &This->m_csMediaEvents );
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -289,9 +404,16 @@ IMediaEventEx_fnGetNotifyFlags(IMediaEventEx* iface,long* plNotifyFlags)
 {
 	CFilterGraph_THIS(iface,mediaevent);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,plNotifyFlags);
 
-	return E_NOTIMPL;
+	if ( plNotifyFlags == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->m_csMediaEvents );
+	*plNotifyFlags = This->m_lEventNotifyFlags;
+	LeaveCriticalSection( &This->m_csMediaEvents );
+
+	return NOERROR;
 }
 
 
@@ -336,6 +458,10 @@ HRESULT CFilterGraph_InitIMediaEventEx( CFilterGraph* pfg )
 	pfg->m_cbMediaEventsPut = 0;
 	pfg->m_cbMediaEventsGet = 0;
 	pfg->m_cbMediaEventsMax = 0;
+	pfg->m_hwndEventNotify = (HWND)NULL;
+	pfg->m_lEventNotifyMsg = 0;
+	pfg->m_lEventNotifyParam = 0;
+	pfg->m_lEventNotifyFlags = 0;
 
 	return NOERROR;
 }
@@ -411,10 +537,98 @@ static HRESULT WINAPI
 IMediaEventSink_fnNotify(IMediaEventSink* iface,long lEventCode,LONG_PTR lParam1,LONG_PTR lParam2)
 {
 	CFilterGraph_THIS(iface,mediaeventsink);
+	HRESULT hr = NOERROR;
+	ULONG cQueued;
+	ULONG cTemp;
+	FilterGraph_MEDIAEVENT*	pEvent;
 
-	FIXME("(%p)->(%ld,%08x,%08x) stub!\n",This,lEventCode,lParam1,lParam2);
+	TRACE("(%p)->(%08lx,%08x,%08x) stub!\n",This,lEventCode,lParam1,lParam2);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csMediaEvents );
+
+	/* allocate a new entry. */
+	if ( This->m_cbMediaEventsMax == 0 )
+		cQueued = 0;
+	else
+		cQueued =
+			(This->m_cbMediaEventsMax +
+			 This->m_cbMediaEventsPut - This->m_cbMediaEventsGet) %
+				This->m_cbMediaEventsMax;
+
+	if ( (cQueued + 1) >= This->m_cbMediaEventsMax )
+	{
+		if ( This->m_cbMediaEventsMax >= EVENTQUEUE_MAX )
+		{
+			hr = E_FAIL;
+			goto end;
+		}
+		pEvent = (FilterGraph_MEDIAEVENT*)
+			QUARTZ_AllocMem( sizeof(FilterGraph_MEDIAEVENT) *
+				(This->m_cbMediaEventsMax+EVENTQUEUE_BLOCKSIZE) );
+		if ( pEvent == NULL )
+		{
+			hr = E_OUTOFMEMORY;
+			goto end;
+		}
+		if ( cQueued > 0 )
+		{
+			if ( (This->m_cbMediaEventsGet + cQueued) >=
+				This->m_cbMediaEventsMax )
+			{
+				cTemp = This->m_cbMediaEventsMax - This->m_cbMediaEventsGet;
+				memcpy(
+					pEvent,
+					&This->m_pMediaEvents[This->m_cbMediaEventsGet],
+					sizeof(FilterGraph_MEDIAEVENT) * cTemp );
+				memcpy(
+					pEvent + cTemp,
+					&This->m_pMediaEvents[0],
+					sizeof(FilterGraph_MEDIAEVENT) * (cQueued - cTemp) );
+			}
+			else
+			{
+				memcpy(
+					pEvent,
+					&This->m_pMediaEvents[This->m_cbMediaEventsGet],
+					sizeof(FilterGraph_MEDIAEVENT) * cQueued );
+			}
+			QUARTZ_FreeMem( This->m_pMediaEvents );
+		}
+		This->m_pMediaEvents = pEvent;
+		This->m_cbMediaEventsMax += EVENTQUEUE_BLOCKSIZE;
+		This->m_cbMediaEventsPut = cQueued;
+		This->m_cbMediaEventsGet = 0;
+	}
+
+	/* duplicate params if necessary. */
+	hr = FGEVENT_KeepEvent( TRUE, lEventCode, lParam1, lParam2 );
+	if ( FAILED(hr) )
+		goto end;
+
+	/* add to the queue. */
+	pEvent = &This->m_pMediaEvents[This->m_cbMediaEventsPut];
+	pEvent->lEventCode = lEventCode;
+	pEvent->lParam1 = lParam1;
+	pEvent->lParam2 = lParam2;
+	This->m_cbMediaEventsPut =
+		(This->m_cbMediaEventsPut + 1) % This->m_cbMediaEventsMax;
+
+	SetEvent( This->m_hMediaEvent );
+	if ( This->m_hwndEventNotify != (HWND)NULL &&
+		 This->m_lEventNotifyFlags == 0 )
+	{
+		PostMessageA(
+			This->m_hwndEventNotify,
+			This->m_lEventNotifyMsg,
+			(WPARAM)0,
+			(LPARAM)This->m_lEventNotifyParam );
+	}
+
+	hr = NOERROR;
+end:
+	LeaveCriticalSection( &This->m_csMediaEvents );
+
+	return hr;
 }
 
 

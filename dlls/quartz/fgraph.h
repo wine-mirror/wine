@@ -140,6 +140,10 @@ typedef struct CFilterGraph
 	ULONG	m_cbMediaEventsPut;
 	ULONG	m_cbMediaEventsGet;
 	ULONG	m_cbMediaEventsMax;
+	HWND	m_hwndEventNotify;
+	long	m_lEventNotifyMsg;
+	LONG_PTR	m_lEventNotifyParam;
+	long	m_lEventNotifyFlags;
 	/* IMediaEventSink fields. */
 	/* IMediaPosition fields. */
 	/* IMediaSeeking fields. */

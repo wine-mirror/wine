@@ -318,6 +318,16 @@
 "FriendlyName"="Audio Renderers"
 
 
+# CLSID_AudioRender
+
+[HKEY_CLASSES_ROOT\CLSID\{e30629d1-27e5-11ce-875d-00608cb78066}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
+[HKEY_CLASSES_ROOT\CLSID\{E0F158E1-CB04-11D0-BD4E-00A0C911CE86}\Instance\{e30629d1-27e5-11ce-875d-00608cb78066}]
+"CLSID"="{e30629d1-27e5-11ce-875d-00608cb78066}"
+"FriendlyName"="Waveout audio renderer"
+
 
 #
 # Entries for Mozilla ActiveX control support
