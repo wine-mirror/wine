@@ -273,10 +273,10 @@ HICON       WINAPI ExtractAssociatedIconW(HINSTANCE,LPWSTR,LPWORD);
 HICON       WINAPI ExtractAssociatedIconExA(HINSTANCE,LPSTR,LPWORD,LPWORD);
 HICON       WINAPI ExtractAssociatedIconExW(HINSTANCE,LPWSTR,LPWORD,LPWORD);
 #define     ExtractAssociatedIconEx WINELIB_NAME_AW(ExtractAssociatedIconEx)
-HICON       WINAPI ExtractIconExA( LPCSTR, INT, HICON *, HICON *, UINT );
-HICON       WINAPI ExtractIconExW( LPCWSTR, INT, HICON *, HICON *, UINT );
+UINT        WINAPI ExtractIconExA(LPCSTR,INT,HICON*,HICON*,UINT);
+UINT        WINAPI ExtractIconExW(LPCWSTR,INT,HICON*,HICON*,UINT);
 #define     ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
-HICON       WINAPI ExtractIconExAW(LPCVOID, INT, HICON *, HICON *, UINT );
+UINT        WINAPI ExtractIconExAW(LPCVOID,INT,HICON*,HICON*,UINT);
 HINSTANCE   WINAPI FindExecutableA(LPCSTR,LPCSTR,LPSTR);
 HINSTANCE   WINAPI FindExecutableW(LPCWSTR,LPCWSTR,LPWSTR);
 #define     FindExecutable WINELIB_NAME_AW(FindExecutable)

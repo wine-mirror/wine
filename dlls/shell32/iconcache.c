@@ -397,7 +397,7 @@ INT WINAPI Shell_GetCachedImageIndexAW(LPCVOID szPath, INT nIndex, BOOL bSimulat
 /*************************************************************************
  * ExtractIconEx			[SHELL32.@]
  */
-HICON WINAPI ExtractIconExAW ( LPCVOID lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
+UINT WINAPI ExtractIconExAW(LPCVOID lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons)
 {	if (SHELL_OsIsUnicode())
 	  return ExtractIconExW ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 	return ExtractIconExA ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
@@ -407,48 +407,22 @@ HICON WINAPI ExtractIconExAW ( LPCVOID lpszFile, INT nIconIndex, HICON * phiconL
  * ExtractIconExW			[SHELL32.@]
  * RETURNS: 
  *  0 no icon found
- *  1 file is not valid
- *  HICON handle of a icon (phiconLarge/Small == NULL)
+ *  -1 file is not valid
+ *  or number of icons extracted
  */
-HICON WINAPI ExtractIconExW( LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
+UINT WINAPI ExtractIconExW(LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons)
 {
-    HICON ret = 0;
+	TRACE("%s %i %p %p %i\n", debugstr_w(lpszFile), nIconIndex, phiconLarge, phiconSmall, nIcons);
 
-    TRACE("%s %i %p %p %i\n", debugstr_w(lpszFile), nIconIndex, phiconLarge, phiconSmall, nIcons);
-
-    if (phiconLarge && !phiconSmall && nIconIndex == -1)	/* Number of icons requested */
-        return (HICON)PrivateExtractIconsW(lpszFile, 0, 0, 0, NULL, NULL, 0, 0);
-
-    if (phiconLarge)
-    {
-      ret = (HICON)PrivateExtractIconsW(lpszFile, nIconIndex, 32, 32, phiconLarge, NULL, nIcons, 0);
-      if (nIcons==1)
-      {
-        ret = phiconLarge[0];
-      }
-    }
-
-    /* if no pointers given and one icon expected, return the handle directly */
-    if (!phiconLarge && !phiconSmall && nIcons==1)
-      phiconSmall = &ret;
-
-    if (phiconSmall)
-    {
-      ret = (HICON)PrivateExtractIconsW(lpszFile, nIconIndex, 16, 16, phiconSmall, NULL, nIcons, 0);
-      if (nIcons==1)
-      { 
-        ret = phiconSmall[0];
-      }
-    }
-    return ret;
+	return PrivateExtractIconExW(lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }
 
 /*************************************************************************
  * ExtractIconExA			[SHELL32.@]
  */
-HICON WINAPI ExtractIconExA(LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
+UINT WINAPI ExtractIconExA(LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons)
 {
-    HICON ret;
+    UINT ret;
     INT len = MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, NULL, 0);
     LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
