@@ -102,7 +102,7 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM 
     case 0:
         return PostMessageW( hwnd, msg32, wparam32, lparam );
     case 1:
-        ERR( "16-bit message %x contains pointer, cannot post\n", msg );
+        ERR( "16-bit message 0x%04x contains pointer, cannot post\n", msg );
         return FALSE;
     default:
         return FALSE;

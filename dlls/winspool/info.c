@@ -160,7 +160,7 @@ CUPS_LoadPrinters(void) {
 
 	if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
 	    if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
-	        ERR("%s not added by AddPrinterA (%ld)\n",printers[i],GetLastError());
+	        ERR("printer '%s' not added by AddPrinterA (error %ld)\n",printers[i],GetLastError());
 	}
 	HeapFree(GetProcessHeap(),0,port);
     }
@@ -1060,7 +1060,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
      */
     size = DocumentPropertiesW(0, -1, pi->pPrinterName, NULL, NULL, 0);
     if(size < 0) {
-        FIXME("DocumentProperties fails\n");
+        FIXME("DocumentPropertiesW on printer '%s' fails\n", pi->pPrinterName);
 	size = sizeof(DEVMODEW);
     }
     if(pi->pDevMode)
@@ -1069,7 +1069,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	dmW = HeapAlloc(GetProcessHeap(), 0, size);
 	dmW->dmSize = size;
 	if (0>DocumentPropertiesW(0,-1,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) {
-	    ERR("DocumentPropertiesW failed!\n");
+	    ERR("DocumentPropertiesW on printer '%s' failed!\n", pi->pPrinterName);
 	    SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
 	    return 0;
 	}
