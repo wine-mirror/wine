@@ -310,6 +310,7 @@ ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
 
 HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk);
 HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc, IBindStatusCallback **ppbsc, DWORD dwReserved);
+HRESULT WINAPI CompareSecurityIds(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 
 #ifdef __cplusplus
 }      /* extern "C" */
