@@ -481,14 +481,17 @@ char filetorun[MAX_PATH];
   WCMD_parse (command, quals, param1, param2);	/* Quick way to get the filename */
   if (!(*param1) && !(*param2))
     return;
-  if (strpbrk (param1, "\\:") == NULL) {	/* No explicit path given */
-    if ((strchr (param1, '.') == NULL) || (strstr (param1, ".bat") != NULL)) {
+  if (strpbrk (param1, "/\\:") == NULL) {  /* No explicit path given */
+    char *ext = strrchr( param1, '.' );
+    if (!ext || !strcasecmp( ext, ".bat"))
+    {
       if (SearchPath (NULL, param1, ".bat", sizeof(filetorun), filetorun, NULL)) {
         WCMD_batch (filetorun, command, 0);
         return;
       }
     }
-    if ((strchr (param1, '.') == NULL) || (strstr (param1, ".cmd") != NULL)) {
+    if (!ext || !strcasecmp( ext, ".cmd"))
+    {
       if (SearchPath (NULL, param1, ".cmd", sizeof(filetorun), filetorun, NULL)) {
         WCMD_batch (filetorun, command, 0);
         return;
@@ -496,12 +499,15 @@ char filetorun[MAX_PATH];
     }
   }
   else {                                        /* Explicit path given */
-    if ((strstr (param1, ".bat") != NULL) || 
-        (strstr (param1, ".cmd") != NULL)) {
+    char *ext = strrchr( param1, '.' );
+    if (ext && (!strcasecmp( ext, ".bat" ) || !strcasecmp( ext, ".cmd" )))
+    {
       WCMD_batch (param1, command, 0);
       return;
     }
-    if (strchr (param1, '.') == NULL) {
+    if (strpbrk( ext, "/\\:" )) ext = NULL;
+    if (!ext)
+    {
       strcpy (filetorun, param1);
       strcat (filetorun, ".bat");
       h = CreateFile (filetorun, GENERIC_READ, FILE_SHARE_READ,
