@@ -1007,6 +1007,14 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
         ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
     wine_tsx11_unlock();
 
+    /* Ignore some unwanted events */
+    if ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
+         keysym == XK_Mode_switch)
+    {
+        TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
+        return;
+    }
+
     TRACE_(key)("state = %X\n", event->state);
 
     /* If XKB extensions are used, the state mask for AltGr will use the group
