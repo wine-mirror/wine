@@ -1462,7 +1462,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 		case '+':             vkey = VK_OEM_PLUS; break;
 		}
 	    }
-#endif
+
             if (!vkey)
             {
                 /* Others keys: let's assign OEM virtual key codes in the allowed range,
@@ -1494,6 +1494,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
                     TRACE(")\n");
                 }
             }
+#endif
         }
         TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
         keyc2vkey[e2.keycode] = vkey;
