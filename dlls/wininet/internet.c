@@ -644,8 +644,9 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
     return TRUE;
 }
 
+
 /***********************************************************************
- *           InternetGetConnectedStateEx (WININET.@)
+ *           InternetGetConnectedStateExW (WININET.@)
  *
  * Return connected state
  *
@@ -670,6 +671,35 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
     }
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           InternetGetConnectedStateExA (WININET.@)
+ */
+BOOL WINAPI InternetGetConnectedStateExA(LPDWORD lpdwStatus, LPSTR lpszConnectionName,
+                                         DWORD dwNameLen, DWORD dwReserved)
+{
+    LPWSTR lpwszConnectionName = NULL;
+    BOOL rc;
+
+    TRACE("(%p, %s, %ld, 0x%08lx)\n", lpdwStatus, debugstr_a(lpszConnectionName), dwNameLen, dwReserved);
+
+    if (lpszConnectionName && dwNameLen > 0)
+        lpwszConnectionName= HeapAlloc(GetProcessHeap(), 0, dwNameLen * sizeof(WCHAR));
+
+    rc = InternetGetConnectedStateExW(lpdwStatus,lpwszConnectionName, dwNameLen,
+                                      dwReserved);
+    if (rc && lpwszConnectionName)
+    {
+        WideCharToMultiByte(CP_ACP,0,lpwszConnectionName,-1,lpszConnectionName,
+                            dwNameLen, NULL, NULL);
+
+        HeapFree(GetProcessHeap(),0,lpwszConnectionName);
+    }
+
+    return rc;
+}
+
 
 /***********************************************************************
  *           InternetConnectW (WININET.@)
