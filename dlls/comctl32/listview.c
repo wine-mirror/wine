@@ -6081,17 +6081,15 @@ flags, LPRECT lprc)
     }
     else
     {
+        int top = min(((LISTVIEW_INFO *)GetWindowLongW(hwnd, 0))->nColumnCount,
+                      nSubItem - 1);
+
         LISTVIEW_GetItemRect(hwnd,nItem,lprc);
-        count = 0;
-        while (count<(nSubItem-1))
-        {
+        for (count = 0; count < top; count++)
             lprc->left += LISTVIEW_GetColumnWidth(hwnd,count);
-            count ++;
-        }
 
         lprc->right = LISTVIEW_GetColumnWidth(hwnd,(nSubItem-1)) +
                             lprc->left;
-
     }
     return TRUE;
 }
@@ -6549,8 +6547,8 @@ static INT LISTVIEW_SuperHitTestItem(HWND hwnd, LPLV_INTHIT lpInt, BOOL subitem)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
-  INT i,topindex,bottomindex;
-  RECT rcItem;
+  INT i,j,topindex,bottomindex;
+  RECT rcItem,rcSubItem;
   DWORD xterm, yterm, dist;
 
   TRACE("(hwnd=%x, x=%ld, y=%ld)\n", hwnd, lpInt->ht.pt.x, lpInt->ht.pt.y);
@@ -6576,6 +6574,7 @@ static INT LISTVIEW_SuperHitTestItem(HWND hwnd, LPLV_INTHIT lpInt, BOOL subitem)
     {
       if (PtInRect(&rcItem, lpInt->ht.pt))
       {
+        rcSubItem = rcItem;
         rcItem.left = LVIR_ICON;
         if (LISTVIEW_GetItemRect(hwnd, i, &rcItem))
         {
@@ -6583,8 +6582,7 @@ static INT LISTVIEW_SuperHitTestItem(HWND hwnd, LPLV_INTHIT lpInt, BOOL subitem)
           {
             lpInt->ht.flags = LVHT_ONITEMICON;
             lpInt->ht.iItem = i;
-            if (subitem) lpInt->ht.iSubItem = 0;
-            return i;
+            goto set_subitem;
           }
         }
 
@@ -6595,14 +6593,28 @@ static INT LISTVIEW_SuperHitTestItem(HWND hwnd, LPLV_INTHIT lpInt, BOOL subitem)
           {
             lpInt->ht.flags = LVHT_ONITEMLABEL;
             lpInt->ht.iItem = i;
-            if (subitem) lpInt->ht.iSubItem = 0;
-            return i;
+            goto set_subitem;
           }
         }
 
         lpInt->ht.flags = LVHT_ONITEMSTATEICON;
         lpInt->ht.iItem = i;
-        if (subitem) lpInt->ht.iSubItem = 0;
+       set_subitem:
+        if (subitem)
+        {
+          lpInt->ht.iSubItem = 0;
+          rcSubItem.right = rcSubItem.left;
+          for (j = 0; j < infoPtr->nColumnCount; j++)
+          {
+            rcSubItem.left = rcSubItem.right;
+            rcSubItem.right += LISTVIEW_GetColumnWidth(hwnd, j);
+            if (PtInRect(&rcSubItem, lpInt->ht.pt))
+            {
+              lpInt->ht.iSubItem = j;
+              break;
+            }
+          }
+        }
         return i;
       }
       else
@@ -6693,6 +6705,40 @@ static LRESULT LISTVIEW_HitTest(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
      */
     nItem = LISTVIEW_HitTestItem(hwnd, lpHitTestInfo, FALSE);
   }
+
+  return nItem;
+}
+
+/***
+ * DESCRIPTION:
+ * Determines which listview subitem is located at the specified position.
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [IO} LPLVHITTESTINFO : hit test information
+ *
+ * RETURN:
+ *   SUCCESS : item index
+ *   FAILURE : -1
+ */
+static LRESULT LISTVIEW_SubItemHitTest(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  INT nItem = -1;
+
+  lpHitTestInfo->flags = 0;
+
+  if (infoPtr->rcList.left > lpHitTestInfo->pt.x)
+    lpHitTestInfo->flags = LVHT_TOLEFT;
+  else if (infoPtr->rcList.right < lpHitTestInfo->pt.x)
+    lpHitTestInfo->flags = LVHT_TORIGHT;
+  if (infoPtr->rcList.top > lpHitTestInfo->pt.y)
+    lpHitTestInfo->flags |= LVHT_ABOVE;
+  else if (infoPtr->rcList.bottom < lpHitTestInfo->pt.y)
+    lpHitTestInfo->flags |= LVHT_BELOW;
+
+  if (lpHitTestInfo->flags == 0)
+    nItem = LISTVIEW_HitTestItem(hwnd, lpHitTestInfo, TRUE);
 
   return nItem;
 }
@@ -9644,7 +9690,8 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case LVM_SORTITEMS:
     return LISTVIEW_SortItems(hwnd, (PFNLVCOMPARE)lParam, (LPARAM)wParam);
 
-/*	case LVM_SUBITEMHITTEST: */
+  case LVM_SUBITEMHITTEST:
+    return LISTVIEW_SubItemHitTest(hwnd, (LPLVHITTESTINFO)lParam);
 
   case LVM_UPDATE:
     return LISTVIEW_Update(hwnd, (INT)wParam);
