@@ -441,13 +441,35 @@ interface IPersistMoniker : IUnknown
 }
 
 /*****************************************************************************
+ * IMonikerProp interface
+ */
+[
+    object,
+    uuid(A5CA5F7F-1847-4D87-9C5B-918509F7511D),
+    pointer_default(unique)
+]
+interface IMonikerProp : IUnknown
+{
+    typedef [unique] IMonikerProp *LPMONIKERPROP;
+
+    typedef enum {
+        MIMETYPEPROP = 0x00000000,
+        USE_SRC_URL  = 0x00000001
+    } MONIKERPROPERTY;
+
+    HRESULT PutProperty(
+        [in] MONIKERPROPERTY mkp,
+        [in] LPCWSTR val);
+}
+
+/*****************************************************************************
  * IInternetBindInfo interface
  */
 [
-        local,
-        object,
-        uuid(79EAC9E1-BAF9-11CE-8C82-00AA004BA90B),
-        pointer_default(unique)
+    local,
+    object,
+    uuid(79EAC9E1-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
 ]
 interface IInternetBindInfo : IUnknown
 {
@@ -480,6 +502,23 @@ interface IInternetBindInfo : IUnknown
         [in, out] LPOLESTR *ppwzStr,
         [in]      ULONG cEl,
         [in, out] ULONG *pcElFetched);
+}
+
+/*****************************************************************************
+ * IInternetPriority interface
+ */
+[
+    local,
+    object,
+    uuid(79EAC9EB-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
+]
+interface IInternetPriority : IUnknown
+{
+    typedef [unique] IInternetPriority *LPIINTERNETPRIORITY;
+
+    HRESULT SetPriority([in] LONG nPriority);
+    HRESULT GetPriority([out] LONG *pnPriority);
 }
 
 /*****************************************************************************
@@ -998,6 +1037,7 @@ cpp_quote("#define INET_E_UNKNOWN_PROTOCOL          0x800C000DL")
 cpp_quote("#define INET_E_SECURITY_PROBLEM          0x800C000EL")
 cpp_quote("#define INET_E_CANNOT_LOAD_DATA          0x800C000FL")
 cpp_quote("#define INET_E_CANNOT_INSTANTIATE_OBJECT 0x800C0010L")
+cpp_quote("#define INET_E_USE_DEFAULT_PROTOCOLHANDLER 0x800C0011L")
 cpp_quote("#define INET_E_QUERYOPTION_UNKNOWN       0x800C0013L")
 cpp_quote("#define INET_E_REDIRECT_FAILED           0x800C0014L")
 cpp_quote("#define INET_E_REDIRECT_TO_DIR           0x800C0015L")
