@@ -53,6 +53,7 @@
 #include <X11/Xatom.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "ts_xlib.h"
 
@@ -240,6 +241,13 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         
         int dbgClasses = 0;
         char selMask[8], dbgClassMask[8], clearSelection[8];
+	int i;
+
+	/* Don't inherit wine's X sockets to the wineclipsrv, otherwise
+	 * windows stay around when you have to kill a hanging wine...
+	 */
+	for (i = 3; i < 256; ++i)
+		fcntl(i, F_SETFD, 1);
 
         sprintf(selMask, "%d", selectionAcquired);
 
@@ -255,12 +263,12 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         /* Get the clear selection preference */
         sprintf(clearSelection, "%d",
                 PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0));
-            
+
         /* Exec the clipboard server passing it the selection and debug class masks */
-        execl( BINDIR "/wineclipsvr", "wineclipsvr",
+        execl( BINDIR "/wineclipsrv", "wineclipsrv",
                selMask, dbgClassMask, clearSelection, NULL );
-        execlp( "wineclipsvr", "wineclipsvr", selMask, dbgClassMask, clearSelection, NULL );
-        execl( "./windows/x11drv/wineclipsvr", "wineclipsvr",
+        execlp( "wineclipsrv", "wineclipsrv", selMask, dbgClassMask, clearSelection, NULL );
+        execl( "./windows/x11drv/wineclipsrv", "wineclipsrv",
                selMask, dbgClassMask, clearSelection, NULL );
 
         /* Exec Failed! */
