@@ -280,13 +280,23 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
                  BOOL is_primary, BOOL set_volume, LONG volume,
                  BOOL set_pan, LONG pan, BOOL play, double duration,
                  BOOL buffer3d, LPDIRECTSOUND3DLISTENER listener,
-                 BOOL move_listener, BOOL move_sound)
+                 BOOL move_listener, BOOL move_sound,
+                 BOOL set_frequency, DWORD frequency)
 {
     HRESULT rc;
     DSBCAPS dsbcaps;
     WAVEFORMATEX wfx,wfx2;
     DWORD size,status,freq;
     int ref;
+
+    if (set_frequency) {
+        rc=IDirectSoundBuffer_SetFrequency(dsbo,frequency);
+        ok(rc==DS_OK||rc==DSERR_CONTROLUNAVAIL,
+           "IDirectSoundBuffer_SetFrequency() failed to set frequency "
+           "%s\n",DXGetErrorString8(rc));
+        if (rc!=DS_OK)
+            return;
+    }
 
     /* DSOUND: Error: Invalid caps pointer */
     rc=IDirectSoundBuffer_GetCaps(dsbo,0);
@@ -336,8 +346,9 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
        (rc==DSERR_CONTROLUNAVAIL&&!(dsbcaps.dwFlags&DSBCAPS_CTRLFREQUENCY)),
        "IDirectSoundBuffer_GetFrequency() failed: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK) {
-        ok(freq==wfx.nSamplesPerSec,"The frequency returned by GetFrequency "
-           "%ld does not match the format %ld\n",freq,wfx.nSamplesPerSec);
+        DWORD f = set_frequency?frequency:wfx.nSamplesPerSec;
+        ok(freq==f,"The frequency returned by GetFrequency "
+           "%ld does not match the format %ld\n",freq,f);
     }
 
     /* DSOUND: Error: Invalid status pointer */
@@ -404,8 +415,14 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         DWORD start_time,now;
 
         if (winetest_interactive) {
-            trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
-                  wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels);
+            if (set_frequency)
+                trace("    Playing %g second 440Hz tone at %ldx%dx%d with a "
+                      "frequency of %ld (%ldHz)\n", duration,
+                      wfx.nSamplesPerSec, wfx.wBitsPerSample, wfx.nChannels,
+                      frequency, (440 * frequency) / wfx.nSamplesPerSec);
+            else
+                trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
+                      wfx.nSamplesPerSec, wfx.wBitsPerSample, wfx.nChannels);
         }
 
         if (is_primary) {
@@ -522,7 +539,10 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             }
         }
 
-        state.wave=wave_generate_la(&wfx,duration,&state.wave_len);
+        if (set_frequency)
+            state.wave=wave_generate_la(&wfx,(duration*frequency)/wfx.nSamplesPerSec,&state.wave_len);
+        else
+            state.wave=wave_generate_la(&wfx,duration,&state.wave_len);
 
         state.dsbo=dsbo;
         state.wfx=&wfx;
@@ -840,7 +860,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                 duration=(move_listener || move_sound?4.0:1.0);
                 test_buffer(dso,secondary,0,FALSE,0,FALSE,0,
                             winetest_interactive,duration,has_3dbuffer,
-                            listener,move_listener,move_sound);
+                            listener,move_listener,move_sound,FALSE,0);
                 ref=IDirectSoundBuffer_Release(secondary);
                 ok(ref==0,"IDirectSoundBuffer_Release() %s has %d references, "
                    "should have 0\n",has_duplicate?"duplicated":"secondary",
@@ -937,7 +957,8 @@ static HRESULT test_primary(LPGUID lpGuid)
        "to create a primary buffer: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK && primary!=NULL) {
         test_buffer(dso,primary,1,TRUE,0,TRUE,0,winetest_interactive &&
-                    !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,NULL,0,0);
+                    !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,NULL,0,0,
+                    FALSE,0);
         if (winetest_interactive) {
             LONG volume,pan;
 
@@ -946,7 +967,7 @@ static HRESULT test_primary(LPGUID lpGuid)
                 test_buffer(dso,primary,1,TRUE,volume,TRUE,0,
                             winetest_interactive &&
                             !(dscaps.dwFlags & DSCAPS_EMULDRIVER),
-                            1.0,0,NULL,0,0);
+                            1.0,0,NULL,0,0,FALSE,0);
                 volume -= ((DSBVOLUME_MAX-DSBVOLUME_MIN) / 40);
             }
 
@@ -954,7 +975,7 @@ static HRESULT test_primary(LPGUID lpGuid)
             for (i = 0; i < 7; i++) {
                 test_buffer(dso,primary,1,TRUE,0,TRUE,pan,
                             winetest_interactive &&
-                            !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,0,0,0);
+                            !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,0,0,0,FALSE,0);
                 pan += ((DSBPAN_RIGHT-DSBPAN_LEFT) / 6);
             }
         }
@@ -1030,7 +1051,8 @@ static HRESULT test_primary_3d(LPGUID lpGuid)
            "failed to create a 3D primary buffer: %s\n",DXGetErrorString8(rc));
         if (rc==DS_OK && primary!=NULL) {
             test_buffer(dso,primary,1,FALSE,0,FALSE,0,winetest_interactive &&
-                        !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,0,0,0);
+                        !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,0,0,0,
+                        FALSE,0);
             ref=IDirectSoundBuffer_Release(primary);
             ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
                "should have 0\n",ref);
@@ -1129,7 +1151,7 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                 test_buffer(dso,primary,1,FALSE,0,FALSE,0,
                             winetest_interactive &&
                             !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,
-                            listener,0,0);
+                            listener,0,0,FALSE,0);
             }
 
             /* Testing the reference counting */

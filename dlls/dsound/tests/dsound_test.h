@@ -55,7 +55,7 @@ extern HWND get_hwnd(void);
 extern void init_format(WAVEFORMATEX*,int,int,int,int);
 extern void test_buffer(LPDIRECTSOUND,LPDIRECTSOUNDBUFFER,
                         BOOL,BOOL,LONG,BOOL,LONG,BOOL,double,BOOL,
-                        LPDIRECTSOUND3DLISTENER,BOOL,BOOL);
+                        LPDIRECTSOUND3DLISTENER,BOOL,BOOL,BOOL,DWORD);
 extern void test_buffer8(LPDIRECTSOUND8,LPDIRECTSOUNDBUFFER,
                          BOOL,BOOL,LONG,BOOL,LONG,BOOL,double,BOOL,
                          LPDIRECTSOUND3DLISTENER,BOOL,BOOL);

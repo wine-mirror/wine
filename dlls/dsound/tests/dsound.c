@@ -455,7 +455,7 @@ static HRESULT test_primary(LPGUID lpGuid)
             trace("Listen for stutter, changes in pitch, volume, etc.\n");
         }
         test_buffer(dso,primary,1,FALSE,0,FALSE,0,winetest_interactive &&
-                    !(dscaps.dwFlags & DSCAPS_EMULDRIVER),5.0,0,0,0,0);
+                    !(dscaps.dwFlags & DSCAPS_EMULDRIVER),5.0,0,0,0,0,FALSE,0);
 
         ref=IDirectSoundBuffer_Release(primary);
         ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
@@ -590,7 +590,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
 
             if (rc==DS_OK && secondary!=NULL) {
                 test_buffer(dso,secondary,0,FALSE,0,FALSE,0,
-                            winetest_interactive,1.0,0,NULL,0,0);
+                            winetest_interactive,1.0,0,NULL,0,0,FALSE,0);
 
                 ref=IDirectSoundBuffer_Release(secondary);
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
@@ -703,7 +703,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
 
             if (rc==DS_OK && secondary!=NULL) {
                 test_buffer(dso,secondary,0,FALSE,0,FALSE,0,
-                            winetest_interactive,1.0,0,NULL,0,0);
+                            winetest_interactive,1.0,0,NULL,0,0,FALSE,0);
 
                 ref=IDirectSoundBuffer_Release(secondary);
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
@@ -783,6 +783,115 @@ static HRESULT test_block_align(LPGUID lpGuid)
     return rc;
 }
 
+static struct fmt {
+    int bits;
+    int channels;
+} fmts[] = { { 8, 1 }, { 8, 2 }, { 16, 1 }, {16, 2 } };
+
+static HRESULT test_frequency(LPGUID lpGuid)
+{
+    HRESULT rc;
+    LPDIRECTSOUND dso=NULL;
+    LPDIRECTSOUNDBUFFER primary=NULL,secondary=NULL;
+    DSBUFFERDESC bufdesc;
+    DSCAPS dscaps;
+    WAVEFORMATEX wfx, wfx1;
+    DWORD f, r;
+    int ref;
+    int rates[] = { 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
+                    48000, 96000 };
+
+    /* Create the DirectSound object */
+    rc=DirectSoundCreate(lpGuid,&dso,NULL);
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
+    if (rc!=DS_OK)
+        return rc;
+
+    /* Get the device capabilities */
+    ZeroMemory(&dscaps, sizeof(dscaps));
+    dscaps.dwSize=sizeof(dscaps);
+    rc=IDirectSound_GetCaps(dso,&dscaps);
+    ok(rc==DS_OK,"IDirectSound_GetCaps() failed: %s\n",DXGetErrorString8(rc));
+    if (rc!=DS_OK)
+        goto EXIT;
+
+    /* We must call SetCooperativeLevel before creating primary buffer */
+    /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */
+    rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
+    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel() failed: %s\n",
+       DXGetErrorString8(rc));
+    if (rc!=DS_OK)
+        goto EXIT;
+
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
+    ok(rc==DS_OK && primary!=NULL,
+       "IDirectSound_CreateSoundBuffer() failed to create a primary buffer "
+       "%s\n",DXGetErrorString8(rc));
+
+    if (rc==DS_OK && primary!=NULL) {
+        rc=IDirectSoundBuffer_GetFormat(primary,&wfx1,sizeof(wfx1),NULL);
+        ok(rc==DS_OK,"IDirectSoundBuffer8_Getformat() failed: %s\n",
+           DXGetErrorString8(rc));
+        if (rc!=DS_OK)
+            goto EXIT1;
+
+        for (f=0;f<sizeof(fmts)/sizeof(fmts[0]);f++) {
+        for (r=0;r<sizeof(rates)/sizeof(rates[0]);r++) {
+            init_format(&wfx,WAVE_FORMAT_PCM,11025,fmts[f].bits,
+                        fmts[f].channels);
+            secondary=NULL;
+            ZeroMemory(&bufdesc, sizeof(bufdesc));
+            bufdesc.dwSize=sizeof(bufdesc);
+            bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2|DSBCAPS_CTRLFREQUENCY;
+            bufdesc.dwBufferBytes=align((wfx.nAvgBytesPerSec*rates[r]/11025)*
+                                        BUFFER_LEN/1000,wfx.nBlockAlign);
+            bufdesc.lpwfxFormat=&wfx;
+            if (winetest_interactive) {
+                trace("  Testing a secondary buffer at %ldx%dx%d "
+                      "with a primary buffer at %ldx%dx%d\n",
+                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                      wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
+            }
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DS_OK && secondary!=NULL,
+               "IDirectSound_CreateSoundBuffer() failed to create a secondary "
+               "buffer %s\n",DXGetErrorString8(rc));
+
+            if (rc==DS_OK && secondary!=NULL) {
+                test_buffer(dso,secondary,0,FALSE,0,FALSE,0,
+                            winetest_interactive,1.0,0,NULL,0,0,TRUE,rates[r]);
+
+                ref=IDirectSoundBuffer_Release(secondary);
+                ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
+                   "should have 0\n",ref);
+            }
+        }
+        }
+EXIT1:
+        ref=IDirectSoundBuffer_Release(primary);
+        ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
+           "should have 0\n",ref);
+    }
+
+    /* Set the CooperativeLevel back to normal */
+    /* DSOUND: Setting DirectSound cooperative level to DSSCL_NORMAL */
+    rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
+    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel() failed: %s\n",
+       DXGetErrorString8(rc));
+
+EXIT:
+    ref=IDirectSound_Release(dso);
+    ok(ref==0,"IDirectSound_Release() has %d references, should have 0\n",ref);
+    if (ref!=0)
+        return DSERR_GENERIC;
+
+    return rc;
+}
+
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                                    LPCSTR lpcstrModule, LPVOID lpContext)
 {
@@ -800,6 +909,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         test_primary(lpGuid);
         test_primary_secondary(lpGuid);
         test_secondary(lpGuid);
+        test_frequency(lpGuid);
     }
 
     return 1;
