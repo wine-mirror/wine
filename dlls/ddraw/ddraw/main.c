@@ -341,6 +341,12 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	ddsd.u4.ddpfPixelFormat = This->pixelformat;
     }
 
+    /* We do not support for now compressed texture formats... */
+    if (ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+    {
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+    
     if (!(ddsd.dwFlags & DDSD_PITCH))
     {
 	ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth,
