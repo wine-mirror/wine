@@ -218,9 +218,17 @@ dlls/msacm
 
 dlls/msacm/imaadp32
 
-% dlls/msacm/msg711/msg711.drv.spec
+% dlls/msacm/msadp32/msadp32.acm.spec
+
+dlls/msacm/msadp32
+
+% dlls/msacm/msg711/msg711.acm.spec
 
 dlls/msacm/msg711
+
+% dlls/msacm/winemp3/winemp3.acm.spec
+
+dlls/msacm/winemp3
 
 % dlls/msnet32/msnet32.spec
 

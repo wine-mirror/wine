@@ -34,7 +34,7 @@ WCHAR
 
 %long --extension
 
-handle_t
+obj_handle_t
 
 %long # --forbidden
 
@@ -115,6 +115,7 @@ void *
 WCHAR *
 char *
 enum fd_type *
+obj_handle_t *
 int *
 
 %str
