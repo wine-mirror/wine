@@ -88,10 +88,8 @@ BEGIN
     END
     POPUP "&Ayuda"
     BEGIN
-/*
- *        MENUITEM "&Help Topics",                ID_HELP_HELPTOPICS
- *        MENUITEM SEPARATOR
- */
+        MENUITEM "&Help Topics",                ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
         MENUITEM "&Acerca de Editor de registro", ID_HELP_ABOUT
     END
 END

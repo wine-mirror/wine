@@ -88,10 +88,8 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-/*
- *        MENUITEM "&Help-onderwerpen",                 ID_HELP_HELPTOPICS
- *        MENUITEM SEPARATOR
- */
+        MENUITEM "&Help-onderwerpen",                 ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
         MENUITEM "&Info",      ID_HELP_ABOUT
     END
 END

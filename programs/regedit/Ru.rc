@@ -88,10 +88,8 @@ BEGIN
     END
     POPUP "&Справка"
     BEGIN
-/*
- *        MENUITEM "&Содержание",                ID_HELP_HELPTOPICS
- *        MENUITEM SEPARATOR
- */
+        MENUITEM "&Содержание",                ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
         MENUITEM "&О редакторе реестра",      ID_HELP_ABOUT
     END
 END

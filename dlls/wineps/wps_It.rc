@@ -1,6 +1,6 @@
 /*
  * Copyright 2000 Huw D M Davies
- * Copyright 2003 Ivan Leo Murray-Smith
+ * Copyright 2003-2004 Ivan Leo Murray-Smith
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,8 +28,8 @@ FONT 8, "Helv"
  LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
 	 WS_TABSTOP
  GROUPBOX "Orientazione", -1, 10, 80, 200, 50
- CONTROL "&Immagine", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+ CONTROL "&Orizzontale", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
 	WS_TABSTOP, 20, 90, 60, 10
- CONTROL "&Paesaggio", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+ CONTROL "&Verticale", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
 	 20, 110, 60, 10
 }

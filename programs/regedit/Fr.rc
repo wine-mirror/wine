@@ -89,10 +89,8 @@ BEGIN
     END
     POPUP "&Aide"
     BEGIN
-/*
- *        MENUITEM "&Sujets de l'aide",                ID_HELP_HELPTOPICS
- *        MENUITEM SEPARATOR
- */
+        MENUITEM "&Sujets de l'aide",                ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
         MENUITEM "&A propos de l'éditeur de registres",      ID_HELP_ABOUT
     END
 END

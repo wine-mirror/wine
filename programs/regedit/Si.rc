@@ -88,10 +88,8 @@ BEGIN
     END
     POPUP "&Pomoè"
     BEGIN
-/*
- *        MENUITEM "&Teme pomoèi",                ID_HELP_HELPTOPICS
- *        MENUITEM SEPARATOR
- */
+        MENUITEM "&Teme pomoèi",                ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
         MENUITEM "&O Urejevalniku registra",      ID_HELP_ABOUT
     END
 END
