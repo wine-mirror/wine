@@ -1,3 +1,4 @@
-Makefile
 *.spec.c
 *.spec.glue.s
+Makefile
+libavifil32.so.1.0

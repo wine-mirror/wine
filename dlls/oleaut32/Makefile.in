@@ -3,7 +3,10 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = oleaut32
+SOVERSION = 1.0
+IMPORTS   = ole32 comctl32
 
 SPEC_SRCS = oleaut32.spec ole2disp.spec typelib.spec
 
@@ -16,9 +19,12 @@ C_SRCS = \
 	typelib.c \
 	variant.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

@@ -14,19 +14,15 @@ C_SRCS = \
 
 all: $(PROGRAMS)
 
-depend::
-
 @MAKE_RULES@
 
 regapi: $(OBJS) $(WINESTUB)
 	$(CC) -o regapi $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) regapi $(bindir)/regapi
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/regapi
-
-dummy:
 
 ### Dependencies:

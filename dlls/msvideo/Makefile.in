@@ -3,16 +3,21 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = msvideo
+LIBEXT    = @LIBEXT@
+MODULE    = msvfw32
+SOVERSION = 1.0
 
 SPEC_SRCS = msvfw32.spec msvideo.spec
 
 C_SRCS = \
 	msvideo_main.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

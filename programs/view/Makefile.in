@@ -34,14 +34,12 @@ depend:: $(RC_SRCS:.rc=.h)
 view: $(OBJS) $(WINESTUB)
 	$(CC) -o view $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) view $(bindir)/view
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/view
 
 $(RC_SRCS:.rc=.s): $(WRC)
-
-dummy:
 
 ### Dependencies:

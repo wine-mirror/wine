@@ -25,7 +25,8 @@ OPTIONS   = @OPTIONS@ -D_REENTRANT
 X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
 XLIB      = @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
-WINELIB   = $(WINESTUB) -L$(TOPOBJDIR) -lwine
+DLL_LINK  = @DLL_LINK@
+WINELIB   = $(WINESTUB) $(DLL_LINK)
 LIBS      = @LIBS@
 YACC      = @YACC@
 LEX       = @LEX@
@@ -75,10 +76,57 @@ prog_manext     = 1
 conf_manext     = 5
 includedir      = @includedir@/wine
 
-OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o) \
-       $(SPEC_SRCS:.spec=.spec.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
+OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
+       $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
 LINTS = $(C_SRCS:.c=.ln)
+
+# DLL list
+
+DLLS = \
+	avifil32 \
+	comctl32 \
+	comdlg32 \
+	dciman32 \
+	dplayx \
+	dsound \
+	icmp \
+	imagehlp \
+	imm32 \
+	lz32 \
+	mcianim.drv \
+	mciavi.drv \
+	mcicda.drv \
+	mciseq.drv \
+	mciwave.drv \
+	midimap.drv \
+	msacm \
+	msacm.drv \
+	msacm32 \
+	msnet32 \
+	msvfw32 \
+	odbc32 \
+	ole32 \
+	oleaut32 \
+	olecli32 \
+	oledlg \
+	olesvr32 \
+	psapi \
+	rasapi32 \
+	setupx \
+	shell32 \
+	sound \
+	stress \
+	tapi32 \
+	version \
+	win32s \
+	win87em \
+	windebug \
+	wineoss.drv \
+	wing \
+	winspool \
+	wnaspi32 \
+	wsock32
 
 # Implicit rules
 
@@ -120,6 +168,8 @@ LINTS = $(C_SRCS:.c=.ln)
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
+
+.PHONY: all install uninstall clean distclean depend dummy
 
 # Rule to rebuild the resource compiler
 
@@ -165,6 +215,36 @@ Makefile: Makefile.in $(TOPSRCDIR)/configure
 	@exit 1
 
 all: Makefile
+
+# Rules for checking that no imports are missing
+
+IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
+
+checklink_so checklink_a: lib$(MODULE).$(LIBEXT) $(IMPORTLIBS)
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
+
+checklink:: $(LIBEXT:%=checklink_%)
+
+$(IMPORTLIBS): dummy
+	@cd $(DLLDIR) && $(MAKE) `basename $@`
+
+# Rules for installation
+
+install_so: lib$(MODULE).so.$(SOVERSION)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
+	cd $(libdir) && $(RM) lib$(MODULE).so && $(LN_S) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).so
+
+install_a: lib$(MODULE).a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
+
+uninstall_so uninstall_a:
+	cd $(libdir) && $(RM) lib$(MODULE).so lib$(MODULE).so.$(SOVERSION) lib$(MODULE).a
+
+install:: $(LIBEXT:%=install_%)
+
+uninstall:: $(LIBEXT:%=uninstall_%)
 
 # Rules for auto documentation
 

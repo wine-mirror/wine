@@ -1,2 +1,3 @@
+*.spec.c
 Makefile
-wineoss.spec.c
+libwineoss.drv.so.1.0

@@ -18,12 +18,10 @@ all: check_wrc $(PROGRAMS)
 winver: $(OBJS) $(WINESTUB)
 	$(CC) -o winver $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) winver $(bindir)/winver
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/winver
-
-dummy:
 
 ### Dependencies:

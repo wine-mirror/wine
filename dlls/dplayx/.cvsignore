@@ -1,3 +1,4 @@
-Makefile
 *.spec.c
 *.spec.glue.s
+Makefile
+libdplayx.so.1.0

@@ -381,7 +381,7 @@ BOOL MODULE_InitLoadOrder(void)
 #endif
 
 	/* Get the default load order */
-	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,e,s,b", buffer, sizeof(buffer));
+	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,b,e,s", buffer, sizeof(buffer));
 	if(!nbuffer)
 	{
 		MESSAGE("MODULE_InitLoadOrder: mysteriously read nothing from default loadorder\n");

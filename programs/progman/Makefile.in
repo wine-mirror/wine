@@ -33,10 +33,10 @@ all: check_wrc $(PROGRAMS)
 progman: $(OBJS) $(WINESTUB)
 	$(CC) -o progman $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install:: dummy
+install::
 	$(INSTALL_PROGRAM) progman $(bindir)/progman
 
-uninstall:: dummy
+uninstall::
 	$(RM) $(bindir)/progman
 
 ### Dependencies:

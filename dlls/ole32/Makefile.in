@@ -3,7 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = ole32
+SOVERSION = 1.0
 
 SPEC_SRCS = ole32.spec ole2.spec storage.spec compobj.spec
 
@@ -29,9 +31,12 @@ C_SRCS = \
 	storage.c \
 	storage32.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

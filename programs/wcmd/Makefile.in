@@ -30,14 +30,12 @@ WINESTUB =
 wcmd: $(OBJS) $(WINESTUB)
 	$(CC) -o wcmd $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) wcmd $(bindir)/wcmd
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/wcmd
 
 $(RC_SRCS:.rc=.s): $(WRC)
-
-dummy:
 
 ### Dependencies:

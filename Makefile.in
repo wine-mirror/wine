@@ -1,7 +1,6 @@
 # This Makefile understands the following targets:
 #
 # all (default):	build wine
-# lib:                  build libwine
 # clean:		remove all intermediate files
 # distclean:		also remove all files created by configure
 # install:              install everything
@@ -11,19 +10,13 @@
 # manpages:		compile manpages for Wine API
 #
 
-# Main target to build
-
-MAIN_TARGET = @MAIN_TARGET@
-LIB_TARGET  = @LIB_TARGET@
-LIB_TYPE    = @LIB_TYPE@
-ALT_LINK    = @ALT_LINK@
-
 # Directories
 
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = .
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = wine
 SOVERSION = 1.0
 
@@ -36,56 +29,13 @@ LIBSUBDIRS = \
 	console \
 	debugger \
 	dlls/advapi32 \
-	dlls/avifil32 \
-	dlls/comctl32 \
-	dlls/commdlg \
 	dlls/crtdll \
-	dlls/dciman32 \
 	dlls/display \
-	dlls/dplayx \
-	dlls/dsound \
-	dlls/icmp \
-	dlls/imagehlp \
-	dlls/imm32 \
-	dlls/lzexpand \
 	dlls/mouse \
 	dlls/mpr \
-	dlls/msacm \
-	dlls/msacm32 \
-	dlls/msnet32 \
-	dlls/msvideo \
 	dlls/ntdll \
-	dlls/odbc32 \
-	dlls/ole32 \
-	dlls/oleaut32 \
-	dlls/olecli \
-	dlls/oledlg \
-	dlls/olesvr \
-	dlls/psapi \
-	dlls/rasapi32 \
-	dlls/setupx \
-	dlls/shell32 \
-	dlls/sound \
-	dlls/stress \
-	dlls/tapi32 \
-	dlls/version \
-	dlls/win32s \
-	dlls/win87em \
 	dlls/winaspi \
-	dlls/windebug \
-	dlls/wing \
 	dlls/winmm \
-	dlls/winmm/mcianim \
-	dlls/winmm/mciavi \
-	dlls/winmm/mcicda \
-	dlls/winmm/mciseq \
-	dlls/winmm/mciwave \
-	dlls/winmm/midimap \
-	dlls/winmm/wavemap \
-	dlls/winmm/wineoss \
-	dlls/winsock \
-	dlls/winspool \
-	dlls/wnaspi32 \
 	files \
 	graphics \
 	graphics/enhmetafiledrv \
@@ -135,18 +85,19 @@ BUILDSUBDIRS = \
 	$(TOOLSUBDIRS) \
 	$(LIBSUBDIRS) \
 	$(X11SUBDIRS) \
+	$(DLLDIR) \
 	$(EMUSUBDIRS) \
 	$(PROGSUBDIRS) \
 	$(DOCSUBDIRS)
 
 # Sub-directories to run make depend into
-DEPENDSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
+DEPENDSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Sub-directories to run make install into
-INSTALLSUBDIRS = $(DOCSUBDIRS) $(INCSUBDIRS)
+INSTALLSUBDIRS = $(DLLDIR) $(DOCSUBDIRS) $(INCSUBDIRS)
 
 # Sub-directories to run make lint into
-LINTSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
+LINTSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Extra sub-directories to clean
 CLEANSUBDIRS = dlls include include/bitmaps include/wine
@@ -156,56 +107,13 @@ LIBOBJS = \
 	console/console.o \
 	debugger/debugger.o \
 	dlls/advapi32/advapi32.o \
-	dlls/avifil32/avifil32.o \
-	dlls/comctl32/comctl32.o \
-	dlls/commdlg/commdlg.o \
 	dlls/crtdll/crtdll.o \
-	dlls/dciman32/dciman32.o \
 	dlls/display/display.o \
-	dlls/dplayx/dplayx.o \
-	dlls/dsound/dsound.o \
-	dlls/icmp/icmp.o \
-	dlls/imagehlp/imagehlp.o \
-	dlls/imm32/imm32.o \
-	dlls/lzexpand/lzexpand.o \
 	dlls/mouse/mouse.o \
 	dlls/mpr/mpr.o \
-	dlls/msacm/msacm.o \
-	dlls/msacm32/msacm32.o \
-	dlls/msnet32/msnet32.o \
-	dlls/msvideo/msvideo.o \
 	dlls/ntdll/ntdll.o \
-	dlls/odbc32/odbc32.o \
-	dlls/ole32/ole32.o \
-	dlls/oleaut32/oleaut32.o \
-	dlls/olecli/olecli.o \
-	dlls/oledlg/oledlg.o \
-	dlls/olesvr/olesvr.o \
-	dlls/psapi/psapi.o \
-	dlls/rasapi32/rasapi32.o \
-	dlls/setupx/setupx.o \
-	dlls/shell32/shell32.o \
-	dlls/sound/sound.o \
-	dlls/stress/stress.o \
-	dlls/tapi32/tapi32.o \
-	dlls/version/version.o \
-	dlls/win32s/win32s.o \
-	dlls/win87em/win87em.o \
 	dlls/winaspi/winaspi.o \
-	dlls/windebug/windebug.o \
-	dlls/wing/wing.o \
 	dlls/winmm/winmm.o \
-	dlls/winmm/mcianim/mcianim.drv.o \
-	dlls/winmm/mciavi/mciavi.drv.o \
-	dlls/winmm/mcicda/mcicda.drv.o \
-	dlls/winmm/mciseq/mciseq.drv.o \
-	dlls/winmm/mciwave/mciwave.drv.o \
-	dlls/winmm/midimap/midimap.drv.o \
-	dlls/winmm/wavemap/msacm.drv.o \
-	dlls/winmm/wineoss/wineoss.drv.o \
-	dlls/winsock/winsock.o \
-	dlls/winspool/winspool.o \
-	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \
 	graphics/graphics.o \
 	graphics/enhmetafiledrv/enhmetafiledrv.o \
@@ -237,9 +145,13 @@ X11OBJS = \
 EMUOBJS = \
 	miscemu/miscemu.o
 
+DLLOBJS = $(DLLS:%=dlls/lib%.@LIBEXT@)
+
 EXTRA_OBJS = $(LIBOBJS) $(X11OBJS)
 
-all: Makefile Make.rules $(PROGRAMS) $(MAIN_TARGET)
+EMU_TARGET = @EMU_TARGET@
+
+all: Make.rules $(PROGRAMS) $(EMU_TARGET)
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
@@ -253,48 +165,36 @@ WINAPI_CHECK_EXTRA_FLAGS = --global
 
 @MAKE_RULES@
 
+all: lib$(MODULE).$(LIBEXT) $(DLLOBJS)
+
 Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-install:: install_$(MAIN_TARGET)
-
-emu: wine
-
-lib: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET)
-
-wine wine.sym: $(LIB_TARGET) $(EMUOBJS) $(X11OBJS) $(LIBOBJS)
-	$(CC) -o wine $(EMUOBJS) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
+wine wine.sym: lib$(MODULE).$(LIBEXT) $(DLLOBJS) $(EMUOBJS)
+	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
 llib-lwine.ln : $(LIBLINTS) $(X11LINTS)
 	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS) $(X11LINTS)
 
-install_emu: install_lib
+install_wine: wine
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	[ -f wine.sym ] && $(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
-install_lib: install_$(LIB_TYPE)
-
-install_nolib: dummy
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	if [ -f wine.sym ]; then $(INSTALL_DATA) wine.sym $(libdir)/wine.sym; fi
+install:: $(PROGRAMS) $(EMU_TARGET:%=install_%)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
 	$(INSTALL_PROGRAM) windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
 	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 
-install_dll: install_nolib
-	$(INSTALL_PROGRAM) $(LIB_TARGET) $(libdir)
-	$(LDCONFIG) || (cd $(libdir) ; $(RM) libwine.so ; $(LN_S) $(LIB_TARGET) libwine.so)
-
-install_static: install_nolib
-	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)
-
 uninstall::
-	cd $(libdir) && $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
+	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION) wine.sym
 	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod
 
-$(X11OBJS) $(EMUOBJS) $(LIBOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
+$(X11OBJS) $(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 $(BUILDSUBDIRS): dummy
@@ -311,12 +211,16 @@ uninstall_programs: dummy
 
 install::
 	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) install) || exit 1; done
+	-$(LDCONFIG)
 
 uninstall::
 	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) uninstall) || exit 1; done
 
-depend:: dummy
+depend::
 	for i in $(DEPENDSUBDIRS); do (cd $$i && $(MAKE) depend) || exit 1; done
+
+checklink::
+	@cd dlls && $(MAKE) checklink
 
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`

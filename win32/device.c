@@ -23,12 +23,12 @@
 #include <stdarg.h>
 #include <time.h>
 #include "winbase.h"
+#include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "winversion.h"
 #include "file.h"
 #include "process.h"
-#include "mmsystem.h"
 #include "heap.h"
 #include "winioctl.h"
 #include "winnt.h"
@@ -452,7 +452,7 @@ static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
     {
     case 5:
         if (lpvOutBuffer && (cbOutBuffer>=4))
-            *(DWORD*)lpvOutBuffer = timeGetTime();
+            *(DWORD*)lpvOutBuffer = GetTickCount();
 
         if (lpcbBytesReturned)
             *lpcbBytesReturned = 4;

@@ -3,7 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winsock
+LIBEXT    = @LIBEXT@
+MODULE    = wsock32
+SOVERSION = 1.0
 
 SPEC_SRCS = winsock.spec wsock32.spec
 
@@ -11,8 +13,11 @@ C_SRCS = \
 	async.c \
 	socket.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:

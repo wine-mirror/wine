@@ -3,16 +3,22 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = olecli
+LIBEXT    = @LIBEXT@
+MODULE    = olecli32
+SOVERSION = 1.0
+IMPORTS   = olesvr32 ole32
 
 SPEC_SRCS = olecli32.spec olecli.spec
 
 C_SRCS = \
 	olecli_main.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

@@ -3,7 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = tapi32
+SOVERSION = 1.0
 
 SPEC_SRCS = tapi32.spec
 
@@ -12,9 +14,12 @@ C_SRCS = \
 	line.c \
 	phone.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

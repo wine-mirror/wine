@@ -21,8 +21,6 @@ MOSTOBJS = $(MOSTSRCS:.c=.o)
 
 all: check_wrc $(PROGRAMS)
 
-depend::
-
 @MAKE_RULES@
 
 # Override resource compiler rules
@@ -34,14 +32,12 @@ aviinfo: aviinfo.o $(WINESTUB)
 aviplay: aviplay.o $(WINESTUB)
 	$(CC) -o aviplay aviplay.o $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) icinfo $(bindir)/icinfo
 	$(INSTALL_PROGRAM) aviinfo $(bindir)/aviinfo
 	$(INSTALL_PROGRAM) aviplay $(bindir)/aviplay
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/aviinfo $(bindir)/icinfo $(bindir)/aviplay
-
-dummy:
 
 ### Dependencies:

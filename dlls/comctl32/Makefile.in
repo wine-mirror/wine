@@ -3,7 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = comctl32
+SOVERSION = 1.0
 WRCEXTRA  = -s -p$(MODULE)
 
 SPEC_SRCS = comctl32.spec
@@ -38,10 +40,13 @@ C_SRCS = \
 RC_SRCS= \
 	rsrc.rc
 
-all: check_wrc $(MODULE).o
+all: check_wrc lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
 
 $(RC_SRCS:.rc=.s): $(WRC)
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:

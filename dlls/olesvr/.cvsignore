@@ -1,3 +1,4 @@
-Makefile
 *.spec.c
 *.spec.glue.s
+Makefile
+libolesvr32.so.1.0

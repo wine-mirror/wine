@@ -3,16 +3,21 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = olesvr
+LIBEXT    = @LIBEXT@
+MODULE    = olesvr32
+SOVERSION = 1.0
 
 SPEC_SRCS = olesvr32.spec olesvr.spec
 
 C_SRCS = \
 	olesvr_main.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

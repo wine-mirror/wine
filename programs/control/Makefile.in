@@ -16,12 +16,10 @@ all: $(PROGRAMS)
 control: $(OBJS) $(WINESTUB)
 	$(CC) -o control $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) control $(bindir)/control
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/control
-
-dummy:
 
 ### Dependencies:

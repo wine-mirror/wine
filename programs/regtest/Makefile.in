@@ -18,12 +18,10 @@ all: $(PROGRAMS)
 regtest: $(OBJS) $(WINESTUB)
 	$(CC) -o regtest $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) regtest $(bindir)/regtest
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/regtest
-
-dummy:
 
 ### Dependencies:

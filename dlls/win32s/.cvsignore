@@ -1,3 +1,4 @@
-Makefile
 *.spec.c
 *.spec.glue.s
+Makefile
+libwin32s.so.1.0

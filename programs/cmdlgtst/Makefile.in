@@ -32,14 +32,12 @@ depend:: $(RC_SRCS:.rc=.h)
 cmdlgtst: $(OBJS) $(WINESTUB)
 	$(CC) -o cmdlgtst $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) cmdlgtst $(bindir)/cmdlgtst
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/cmdlgtst
 
 $(RC_SRCS:.rc=.s): $(WRC)
-
-dummy:
 
 ### Dependencies:

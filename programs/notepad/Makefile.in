@@ -22,8 +22,6 @@ RC_SRCS = rsrc.rc
 
 all: check_wrc $(PROGRAMS)
 
-depend::
-
 @MAKE_RULES@
 
 # Override resource compiler rules
@@ -33,10 +31,10 @@ depend::
 notepad: $(OBJS) $(WINESTUB)
 	$(CC) -o notepad $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install:: dummy
+install::
 	$(INSTALL_PROGRAM) notepad $(bindir)/notepad
 
-uninstall:: dummy
+uninstall::
 	$(RM) $(bindir)/notepad
 
 ### Dependencies:

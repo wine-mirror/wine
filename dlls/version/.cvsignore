@@ -1,3 +1,4 @@
-Makefile
 *.spec.c
 *.spec.glue.s
+Makefile
+libversion.so.1.0

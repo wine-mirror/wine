@@ -3,7 +3,10 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = version
+SOVERSION = 1.0
+IMPORTS   = lz32
 
 SPEC_SRCS = ver.spec version.spec
 
@@ -13,8 +16,11 @@ C_SRCS = \
 	resource.c \
 	ver16.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:

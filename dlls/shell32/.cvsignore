@@ -1,4 +1,5 @@
-Makefile
 *.spec.c
 *.spec.glue.s
+Makefile
+libshell32.so.1.0
 shres.s

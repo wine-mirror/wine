@@ -1,2 +1,3 @@
+*.spec.c
 Makefile
-msacm.spec.c
+libmsacm.drv.so.1.0

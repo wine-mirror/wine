@@ -19,12 +19,10 @@ WINESTUB =
 osversioncheck: $(OBJS)
 	$(CC) -o osversioncheck $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-install: dummy
+install::
 	$(INSTALL_PROGRAM) osversioncheck $(bindir)/osversioncheck
 
-uninstall: dummy
+uninstall::
 	$(RM) $(bindir)/osversioncheck
-
-dummy:
 
 ### Dependencies:

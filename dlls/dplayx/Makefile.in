@@ -3,7 +3,10 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = dplayx
+SOVERSION = 1.0
+IMPORTS   = ole32
 
 SPEC_SRCS = dplay.spec dplayx.spec 
 
@@ -13,9 +16,12 @@ C_SRCS = dplay.c \
          dplayx_main.c \
          dplayx_global.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
 

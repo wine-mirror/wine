@@ -33,7 +33,6 @@
 #include <assert.h>
 
 #include "winbase.h"
-#include "oleauto.h" /* for SysFreeString(BSTR) */
 #include "winerror.h"
 #include "ole2.h"
 #include "wine/obj_oleview.h"
@@ -95,8 +94,8 @@ struct DefaultHandler
   /*
    * Name of the container and object contained
    */
-  BSTR containerApp; 
-  BSTR containerObj;
+  LPWSTR containerApp; 
+  LPWSTR containerObj;
 
 };
 
@@ -500,13 +499,13 @@ static void DefaultHandler_Destroy(
    */
   if (ptrToDestroy->containerApp!=NULL)
   {
-    SysFreeString(ptrToDestroy->containerApp);
+    HeapFree( GetProcessHeap(), 0, ptrToDestroy->containerApp );
     ptrToDestroy->containerApp = NULL;
   }
 
   if (ptrToDestroy->containerObj!=NULL)
   {
-    SysFreeString(ptrToDestroy->containerObj);
+    HeapFree( GetProcessHeap(), 0, ptrToDestroy->containerObj );
     ptrToDestroy->containerObj = NULL;
   }
   
@@ -814,13 +813,13 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
    */ 
   if (this->containerApp!=NULL)
   {
-    SysFreeString(this->containerApp);
+    HeapFree( GetProcessHeap(), 0, this->containerApp );
     this->containerApp = NULL;
   }
 
   if (this->containerObj!=NULL)
   {
-    SysFreeString(this->containerObj);
+    HeapFree( GetProcessHeap(), 0, this->containerObj );
     this->containerObj = NULL;
   }
 
@@ -828,11 +827,18 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
    * Copy the string supplied.
    */
   if (szContainerApp != NULL)
-    this->containerApp = SysAllocString(szContainerApp);
+  {
+      if ((this->containerApp = HeapAlloc( GetProcessHeap(), 0,
+                                           (lstrlenW(szContainerApp) + 1) * sizeof(WCHAR) )))
+          lstrcpyW( this->containerApp, szContainerApp );
+  }
 
   if (szContainerObj != NULL)
-    this->containerObj = SysAllocString(szContainerObj);
- 
+  {
+      if ((this->containerObj = HeapAlloc( GetProcessHeap(), 0,
+                                           (lstrlenW(szContainerObj) + 1) * sizeof(WCHAR) )))
+          lstrcpyW( this->containerObj, szContainerObj );
+  }
   return S_OK;
 }
 

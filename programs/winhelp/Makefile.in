@@ -35,11 +35,11 @@ winhelp: $(OBJS) $(WINESTUB)
 hlp2sgml: hlp2sgml.o hlpfile.o
 	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o
 
-install:: dummy
+install::
 	$(INSTALL_PROGRAM) winhelp $(bindir)/winhelp
 	$(INSTALL_PROGRAM) hlp2sgml $(bindir)/hlp2sgml
 
-uninstall:: dummy
+uninstall::
 	$(RM) $(bindir)/winhelp $(bindir)/hlp2sgml
 
 y.tab.c y.tab.h: macro.yacc.y

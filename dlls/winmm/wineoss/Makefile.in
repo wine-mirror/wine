@@ -3,7 +3,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = wineoss.drv
+SOVERSION = 1.0
 
 SPEC_SRCS = \
 	wineoss.spec
@@ -16,11 +18,11 @@ C_SRCS = \
 	mmaux.c \
 	oss.c
 
-all: $(MODULE).o
+all: lib$(MODULE).$(LIBEXT)
 
 @MAKE_RULES@
 
-call32.s: $(BUILD)
-	$(BUILD) @BUILDFLAGS@ -o $@ -call32
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
 
 ### Dependencies:
