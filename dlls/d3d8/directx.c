@@ -965,9 +965,14 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 #else
         FIXME("Requested full screen support not implemented, expect windowed operation\n");
 #endif
+
+        /* Make popup window */
+        ShowWindow(whichHWND, SW_HIDE);
+        SetWindowLongA(whichHWND, GWL_STYLE, WS_POPUP);
         SetWindowPos(object->win_handle, HWND_TOP, 0, 0, 
 		     pPresentationParameters->BackBufferWidth,
                      pPresentationParameters->BackBufferHeight, SWP_SHOWWINDOW | SWP_FRAMECHANGED);
+        ShowWindow(whichHWND, SW_SHOW);
     }
 
     TRACE("Creating back buffer\n");
