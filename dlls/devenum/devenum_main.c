@@ -36,6 +36,7 @@ typedef struct
 } register_info;
 
 static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWSTR pszThreadingModel);
+static void DEVENUM_RegisterQuartz(void);
 
 /***********************************************************************
  *		Global string constant definitions
@@ -100,20 +101,21 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
     HKEY hkey2 = NULL;
     LPOLESTR pszClsidDevMon = NULL;
     IFilterMapper2 * pMapper = NULL;
-    const WCHAR threadingModel[] = {'B','o','t','h',0};
-    const WCHAR sysdevenum[] = {'S','y','s','t','e','m',' ','D','e','v','i','c','e',' ','E','n','u','m',0};
-    const WCHAR devmon[] = {'D','e','v','i','c','e','M','o','n','i','k','e','r',0};
-    const WCHAR acmcat[] = {'A','C','M',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
-    const WCHAR vidcat[] = {'I','C','M',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
-    const WCHAR filtcat[] = {'A','c','t','i','v','e','M','o','v','i','e',' ','F','i','l','t','e','r',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
-    const WCHAR vfwcat[] = {'V','F','W',' ','C','a','p','t','u','r','e',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
-    const WCHAR wavein[] = {'W','a','v','e','I','n',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r', 0};
-    const WCHAR waveout[] = {'W','a','v','e','O','u','t',' ','a','n','d',' ','D','S','o','u','n','d',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
-    const WCHAR midiout[] = {'M','i','d','i','O','u','t',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
-    const WCHAR amcat[] = {'A','c','t','i','v','e','M','o','v','i','e',' ','F','i','l','t','e','r',' ','C','a','t','e','g','o','r','i','e','s',0};
-    const WCHAR device[] = {'d','e','v','i','c','e',0};
-    const WCHAR device_1[] = {'d','e','v','i','c','e','.','1',0};
-    const register_info ri[] =
+    LPVOID mapvptr;
+    static const WCHAR threadingModel[] = {'B','o','t','h',0};
+    static const WCHAR sysdevenum[] = {'S','y','s','t','e','m',' ','D','e','v','i','c','e',' ','E','n','u','m',0};
+    static const WCHAR devmon[] = {'D','e','v','i','c','e','M','o','n','i','k','e','r',0};
+    static const WCHAR acmcat[] = {'A','C','M',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR vidcat[] = {'I','C','M',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR filtcat[] = {'A','c','t','i','v','e','M','o','v','i','e',' ','F','i','l','t','e','r',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR vfwcat[] = {'V','F','W',' ','C','a','p','t','u','r','e',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR wavein[] = {'W','a','v','e','I','n',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r', 0};
+    static const WCHAR waveout[] = {'W','a','v','e','O','u','t',' ','a','n','d',' ','D','S','o','u','n','d',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR midiout[] = {'M','i','d','i','O','u','t',' ','C','l','a','s','s',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR amcat[] = {'A','c','t','i','v','e','M','o','v','i','e',' ','F','i','l','t','e','r',' ','C','a','t','e','g','o','r','i','e','s',0};
+    static const WCHAR device[] = {'d','e','v','i','c','e',0};
+    static const WCHAR device_1[] = {'d','e','v','i','c','e','.','1',0};
+    static const register_info ri[] =
     {
         {&CLSID_SystemDeviceEnum, sysdevenum, FALSE},
 	{&CLSID_CDeviceMoniker, devmon, FALSE},
@@ -131,37 +133,40 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
 
     res = register_clsids(sizeof(ri) / sizeof(register_info), ri, threadingModel);
 
+    /* Quartz is needed for IFilterMapper2 */
+    DEVENUM_RegisterQuartz();
+
 /*** ActiveMovieFilter Categories ***/
-    {
-    const WCHAR friendlyvidcap[] = {'V','i','d','e','o',' ','C','a','p','t','u','r','e',' ','S','o','u','r','c','e','s',0};
-    const WCHAR friendlydshow[] = {'D','i','r','e','c','t','S','h','o','w',' ','F','i','l','t','e','r','s',0};
-    const WCHAR friendlyvidcomp[] = {'V','i','d','e','o',' ','C','o','m','p','r','e','s','s','o','r','s',0};
-    const WCHAR friendlyaudcap[] = {'A','u','d','i','o',' ','C','a','p','t','u','r','e',' ','S','o','u','r','c','e','s',0};
-    const WCHAR friendlyaudcomp[] = {'A','u','d','i','o',' ','C','o','m','p','r','e','s','s','o','r','s',0};
-    const WCHAR friendlyaudrend[] = {'A','u','d','i','o',' ','R','e','n','d','e','r','e','r','s',0};
-    const WCHAR friendlymidirend[] = {'M','i','d','i',' ','R','e','n','d','e','r','e','r','s',0};
-    const WCHAR friendlyextrend[] = {'E','x','t','e','r','n','a','l',' ','R','e','n','d','e','r','e','r','s',0};
-    const WCHAR friendlydevctrl[] = {'D','e','v','i','c','e',' ','C','o','n','t','r','o','l',' ','F','i','l','t','e','r','s',0};
-    LPVOID mapvptr;
 
     CoInitialize(NULL);
     
     res = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
                            &IID_IFilterMapper2,  &mapvptr);
-    pMapper = (IFilterMapper2*)mapvptr;
+    if (SUCCEEDED(res))
+    {
+        static const WCHAR friendlyvidcap[] = {'V','i','d','e','o',' ','C','a','p','t','u','r','e',' ','S','o','u','r','c','e','s',0};
+        static const WCHAR friendlydshow[] = {'D','i','r','e','c','t','S','h','o','w',' ','F','i','l','t','e','r','s',0};
+        static const WCHAR friendlyvidcomp[] = {'V','i','d','e','o',' ','C','o','m','p','r','e','s','s','o','r','s',0};
+        static const WCHAR friendlyaudcap[] = {'A','u','d','i','o',' ','C','a','p','t','u','r','e',' ','S','o','u','r','c','e','s',0};
+        static const WCHAR friendlyaudcomp[] = {'A','u','d','i','o',' ','C','o','m','p','r','e','s','s','o','r','s',0};
+        static const WCHAR friendlyaudrend[] = {'A','u','d','i','o',' ','R','e','n','d','e','r','e','r','s',0};
+        static const WCHAR friendlymidirend[] = {'M','i','d','i',' ','R','e','n','d','e','r','e','r','s',0};
+        static const WCHAR friendlyextrend[] = {'E','x','t','e','r','n','a','l',' ','R','e','n','d','e','r','e','r','s',0};
+        static const WCHAR friendlydevctrl[] = {'D','e','v','i','c','e',' ','C','o','n','t','r','o','l',' ','F','i','l','t','e','r','s',0};
 
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_VideoInputDeviceCategory, MERIT_DO_NOT_USE, friendlyvidcap);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_LegacyAmFilterCategory, MERIT_NORMAL, friendlydshow);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_VideoCompressorCategory, MERIT_DO_NOT_USE, friendlyvidcomp);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_AudioInputDeviceCategory, MERIT_DO_NOT_USE, friendlyaudcap);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_AudioCompressorCategory, MERIT_DO_NOT_USE, friendlyaudcomp);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_AudioRendererCategory, MERIT_NORMAL, friendlyaudrend);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_MidiRendererCategory, MERIT_NORMAL, friendlymidirend);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_TransmitCategory, MERIT_DO_NOT_USE, friendlyextrend);
-    IFilterMapper2_CreateCategory(pMapper, &CLSID_DeviceControlCategory, MERIT_DO_NOT_USE, friendlydevctrl);
+        pMapper = (IFilterMapper2*)mapvptr;
 
-    IFilterMapper2_Release(pMapper);
-    CoUninitialize();
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_VideoInputDeviceCategory, MERIT_DO_NOT_USE, friendlyvidcap);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_LegacyAmFilterCategory, MERIT_NORMAL, friendlydshow);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_VideoCompressorCategory, MERIT_DO_NOT_USE, friendlyvidcomp);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_AudioInputDeviceCategory, MERIT_DO_NOT_USE, friendlyaudcap);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_AudioCompressorCategory, MERIT_DO_NOT_USE, friendlyaudcomp);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_AudioRendererCategory, MERIT_NORMAL, friendlyaudrend);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_MidiRendererCategory, MERIT_NORMAL, friendlymidirend);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_TransmitCategory, MERIT_DO_NOT_USE, friendlyextrend);
+        IFilterMapper2_CreateCategory(pMapper, &CLSID_DeviceControlCategory, MERIT_DO_NOT_USE, friendlydevctrl);
+
+        IFilterMapper2_Release(pMapper);
     }
 
 /*** CDeviceMoniker ***/
@@ -181,7 +186,7 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
     }
     if (SUCCEEDED(res))
     {
-        const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
+        static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
         res = RegCreateKeyW(hkey1, wszProgID, &hkey2)
 	      == ERROR_SUCCESS ? S_OK : E_FAIL;
     }
@@ -190,10 +195,16 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
         res = RegSetValueW(hkey2, NULL, REG_SZ, device_1, (lstrlenW(device_1) + 1) * sizeof(WCHAR))
 	      == ERROR_SUCCESS ? S_OK : E_FAIL;
     }
-    RegCloseKey(hkey2);
+
+    if (hkey2)
+    {
+        RegCloseKey(hkey2);
+        hkey2 = NULL;
+    }
+
     if (SUCCEEDED(res))
     {
-        const WCHAR wszVProgID[] = {'V','e','r','s','i','o','n','I','n','d','e','p','e','d','e','n','t','P','r','o','g','I','D',0};
+        static const WCHAR wszVProgID[] = {'V','e','r','s','i','o','n','I','n','d','e','p','e','d','e','n','t','P','r','o','g','I','D',0};
 	res = RegCreateKeyW(hkey1, wszVProgID, &hkey2)
 	      == ERROR_SUCCESS ? S_OK : E_FAIL;
     }
@@ -202,8 +213,19 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
         res = RegSetValueW(hkey2, NULL, REG_SZ, device, (lstrlenW(device) + 1) * sizeof(WCHAR))
 	      == ERROR_SUCCESS ? S_OK : E_FAIL;
     }
-    RegCloseKey(hkey2);
-    RegCloseKey(hkey1);
+
+    if (hkey2)
+    {
+        RegCloseKey(hkey2);
+        hkey2 = NULL;
+    }
+
+    if (hkey1)
+    {
+        RegCloseKey(hkey1);
+        hkey1 = NULL;
+    }
+
     if (SUCCEEDED(res))
     {
         res = RegCreateKeyW(HKEY_CLASSES_ROOT, device, &hkey1)
@@ -219,8 +241,17 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
         res = RegSetValueW(hkey2, NULL, REG_SZ, pszClsidDevMon, (lstrlenW(pszClsidDevMon) + 1) * sizeof(WCHAR))
 	      == ERROR_SUCCESS ? S_OK : E_FAIL;
     }
-    RegCloseKey(hkey2);
-    RegCloseKey(hkey1);
+    if (hkey2)
+    {
+        RegCloseKey(hkey2);
+        hkey2 = NULL;
+    }
+
+    if (hkey1)
+    {
+        RegCloseKey(hkey1);
+        hkey1 = NULL;
+    }
 
     if (SUCCEEDED(res))
     {
@@ -237,13 +268,20 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
         res = RegSetValueW(hkey2, NULL, REG_SZ, pszClsidDevMon, (lstrlenW(pszClsidDevMon) + 1) * sizeof(WCHAR))
 	      == ERROR_SUCCESS ? S_OK : E_FAIL;
     }
-    RegCloseKey(hkey2);
-    RegCloseKey(hkey1);
 
-    RegCloseKey(hkeyClsid);
+    if (hkey2)
+        RegCloseKey(hkey2);
+
+    if (hkey1)
+        RegCloseKey(hkey1);
+
+    if (hkeyClsid)
+        RegCloseKey(hkeyClsid);
 
     if (pszClsidDevMon)
         CoTaskMemFree(pszClsidDevMon);
+
+    CoUninitialize();
 
     return res;
 }
@@ -328,4 +366,21 @@ static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWST
     RegCloseKey(hkeyClsid);
 
     return res;
+}
+
+typedef HRESULT (WINAPI *DllRegisterServer_func)(void);
+
+/* calls DllRegisterServer() for the Quartz DLL */
+static void DEVENUM_RegisterQuartz()
+{
+    HANDLE hDLL = LoadLibraryA("quartz.dll");
+    DllRegisterServer_func pDllRegisterServer = NULL;
+    if (hDLL)
+        pDllRegisterServer = (DllRegisterServer_func)GetProcAddress(hDLL, "DllRegisterServer");
+    if (pDllRegisterServer)
+    {
+        HRESULT hr = pDllRegisterServer();
+        if (FAILED(hr))
+            ERR("Failed to register Quartz. Error was 0x%lx)\n", hr);
+    }
 }

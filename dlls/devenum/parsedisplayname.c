@@ -90,8 +90,8 @@ static ULONG WINAPI DEVENUM_IParseDisplayName_Release(LPPARSEDISPLAYNAME iface)
  *  Creates a moniker referenced to by the display string argument
  *
  * POSSIBLE BUGS:
- *  Might not handle more complicated strings properly (ie not in
- *  "@device:sw:{CLSID1}\{CLSID2}" format
+ *  Might not handle more complicated strings properly (ie anything
+ *  not in "@device:sw:{CLSID1}\<filter name or CLSID>" format
  */
 static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
     LPPARSEDISPLAYNAME iface,
@@ -106,6 +106,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
     MediaCatMoniker * pMoniker = NULL;
     CLSID clsidDevice;
     HRESULT res = S_OK;
+
     TRACE("(%p, %s, %p, %p)\n", pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
 
     *ppmkOut = NULL;

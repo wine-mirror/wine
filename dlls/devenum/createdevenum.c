@@ -21,8 +21,10 @@
  * - Implements ICreateDevEnum interface which creates an IEnumMoniker
  *   implementation
  * - Also creates the special registry keys created at run-time
- * - ...
  */
+
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
 
 #include "devenum_private.h"
 
@@ -36,8 +38,9 @@ extern ICOM_VTABLE(IEnumMoniker) IEnumMoniker_Vtbl;
 extern HINSTANCE DEVENUM_hInstance;
 
 const WCHAR wszInstanceKeyName[] ={'I','n','s','t','a','n','c','e',0};
-const WCHAR wszRegSeperator[] =   {'\\', 0 };
-const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
+
+static const WCHAR wszRegSeperator[] =   {'\\', 0 };
+static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                    'M','i','c','r','o','s','o','f','t','\\',
                                    'A','c','t','i','v','e','M','o','v','i','e','\\',
                                    'd','e','v','e','n','u','m','\\',0};
@@ -125,11 +128,9 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     *ppEnumMoniker = NULL;
 
     if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
         IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
     {
-        if (FAILED(DEVENUM_CreateSpecialCategories()))
-             return E_FAIL;
-
         hbasekey = HKEY_CURRENT_USER;
         strcpyW(wszRegKey, wszActiveMovieKey);
 
@@ -151,8 +152,25 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 
     if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
     {
-        FIXME("Category %s not found\n", debugstr_guid(clsidDeviceClass));
-        return S_FALSE;
+        if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
+            IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
+            IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
+        {
+             HRESULT hr = DEVENUM_CreateSpecialCategories();
+             if (FAILED(hr))
+                 return hr;
+             if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
+             {
+                 ERR("Couldn't open registry key for special device: %s\n",
+                     debugstr_guid(clsidDeviceClass));
+                 return S_FALSE;
+             }
+        }
+        else
+        {
+            FIXME("Category %s not found\n", debugstr_guid(clsidDeviceClass));
+            return S_FALSE;
+        }
     }
 
     pEnumMoniker = (EnumMonikerImpl *)CoTaskMemAlloc(sizeof(EnumMonikerImpl));
@@ -186,23 +204,46 @@ static ICOM_VTABLE(ICreateDevEnum) ICreateDevEnum_Vtbl =
  */
 CreateDevEnumImpl DEVENUM_CreateDevEnum = { &ICreateDevEnum_Vtbl, 0 };
 
+/**********************************************************************
+ * DEVENUM_CreateAMCategoryKey (INTERNAL)
+ *
+ * Creates a registry key for a category at HKEY_CURRENT_USER\Software\
+ * Microsoft\ActiveMovie\devenum\{clsid}
+ */
+static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
+{
+    WCHAR wszRegKey[MAX_PATH];
+    HRESULT res = S_OK;
+    HKEY hkeyDummy = NULL;
+
+    strcpyW(wszRegKey, wszActiveMovieKey);
+
+    if (!StringFromGUID2(clsidCategory, wszRegKey + strlenW(wszRegKey), sizeof(wszRegKey)/sizeof(wszRegKey[0]) - strlenW(wszRegKey)))
+        res = E_INVALIDARG;
+
+    if (SUCCEEDED(res))
+        res = HRESULT_FROM_WIN32(
+            RegCreateKeyW(HKEY_CURRENT_USER, wszRegKey, &hkeyDummy));
+
+    if (hkeyDummy)
+        RegCloseKey(hkeyDummy);
+
+    if (FAILED(res))
+        ERR("Failed to create key HKEY_CURRENT_USER\\%s\n", debugstr_w(wszRegKey));
+
+    return res;
+}
 
 /**********************************************************************
- * CreateSpecialCategories (INTERNAL)
+ * DEVENUM_CreateSpecialCategories (INTERNAL)
  *
  * Creates the keys in the registry for the dynamic categories
  */
 static HRESULT DEVENUM_CreateSpecialCategories()
 {
-    HRESULT res = S_OK;
-/* this section below needs some attention - when it is enabled it appears to create
- * a circular dependency. IE IFilterMapper2_RegisterFilter calls back into this library
- * which again calls RegisterFilter.
- */
-#if 0
-    IMoniker * pMoniker = NULL;
-    WCHAR szAltNameFormat[MAX_PATH + 1];
-    WCHAR szAltName[MAX_PATH + 1];
+    HRESULT res;
+    WCHAR szDSoundNameFormat[MAX_PATH + 1];
+    WCHAR szDSoundName[MAX_PATH + 1];
     DWORD iDefaultDevice = -1;
     UINT numDevs;
     IFilterMapper2 * pMapper = NULL;
@@ -219,10 +260,16 @@ static HRESULT DEVENUM_CreateSpecialCategories()
     rfp2.lpMedium = NULL;
     rfp2.clsPinCategory = &IID_NULL;
 
+    if (!LoadStringW(DEVENUM_hInstance, IDS_DEVENUM_DS, szDSoundNameFormat, sizeof(szDSoundNameFormat)/sizeof(szDSoundNameFormat[0])-1))
+    {
+        ERR("Couldn't get string resource (GetLastError() is %ld)\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
     res = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
                            &IID_IFilterMapper2, (void **) &pMapper);
     /*
-     * Fill in info for out devices
+     * Fill in info for devices
      */
     if (SUCCEEDED(res))
     {
@@ -231,14 +278,20 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 	WAVEINCAPSW wicaps;
         MIDIOUTCAPSW mocaps;
         REGPINTYPES * pTypes;
+
 	numDevs = waveOutGetNumDevs();
+
+        res = DEVENUM_CreateAMCategoryKey(&CLSID_AudioRendererCategory);
+        if (FAILED(res)) /* can't register any devices in this category */
+            numDevs = 0;
 
 	for (i = 0; i < numDevs; i++)
 	{
-	    LoadStringW(DEVENUM_hInstance, IDS_DEVENUM_DS, szAltNameFormat, MAX_PATH);
 	    if (waveOutGetDevCapsW(i, &wocaps, sizeof(WAVEOUTCAPSW))
 	        == MMSYSERR_NOERROR)
 	    {
+                IMoniker * pMoniker = NULL;
+
                 rfp2.nMediaTypes = 1;
                 pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
                 if (!pTypes)
@@ -253,7 +306,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 
                 rfp2.lpMediaType = pTypes;
 
-                IFilterMapper2_RegisterFilter(pMapper,
+                res = IFilterMapper2_RegisterFilter(pMapper,
 		                              &CLSID_AudioRender,
 					      wocaps.szPname,
 					      &pMoniker,
@@ -266,13 +319,13 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 		if (pMoniker)
 		    IMoniker_Release(pMoniker);
 
-		wsprintfW(szAltName, szAltNameFormat, wocaps.szPname);
-	        IFilterMapper2_RegisterFilter(pMapper,
+		wsprintfW(szDSoundName, szDSoundNameFormat, wocaps.szPname);
+	        res = IFilterMapper2_RegisterFilter(pMapper,
 		                              &CLSID_DSoundRender,
-					      szAltName,
+					      szDSoundName,
 					      &pMoniker,
 					      &CLSID_AudioRendererCategory,
-					      szAltName,
+					      szDSoundName,
 					      &rf2);
 
                 /* FIXME: do additional stuff with IMoniker here, depending on what RegisterFilter does */
@@ -291,11 +344,17 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 
         numDevs = waveInGetNumDevs();
 
+        res = DEVENUM_CreateAMCategoryKey(&CLSID_AudioInputDeviceCategory);
+        if (FAILED(res)) /* can't register any devices in this category */
+            numDevs = 0;
+
         for (i = 0; i < numDevs; i++)
         {
             if (waveInGetDevCapsW(i, &wicaps, sizeof(WAVEINCAPSW))
                 == MMSYSERR_NOERROR)
             {
+                IMoniker * pMoniker = NULL;
+
                 rfp2.nMediaTypes = 1;
                 pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
                 if (!pTypes)
@@ -310,7 +369,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 
                 rfp2.lpMediaType = pTypes;
 
-	        IFilterMapper2_RegisterFilter(pMapper,
+	        res = IFilterMapper2_RegisterFilter(pMapper,
 		                              &CLSID_AudioRecord,
 					      wicaps.szPname,
 					      &pMoniker,
@@ -326,13 +385,20 @@ static HRESULT DEVENUM_CreateSpecialCategories()
                 CoTaskMemFree(pTypes);
 	    }
 	}
+
 	numDevs = midiOutGetNumDevs();
+
+        res = DEVENUM_CreateAMCategoryKey(&CLSID_MidiRendererCategory);
+        if (FAILED(res)) /* can't register any devices in this category */
+            numDevs = 0;
 
 	for (i = 0; i < numDevs; i++)
 	{
 	    if (midiOutGetDevCapsW(i, &mocaps, sizeof(MIDIOUTCAPSW))
 	        == MMSYSERR_NOERROR)
 	    {
+                IMoniker * pMoniker = NULL;
+
                 rfp2.nMediaTypes = 1;
                 pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
                 if (!pTypes)
@@ -347,7 +413,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 
                 rfp2.lpMediaType = pTypes;
 
-                IFilterMapper2_RegisterFilter(pMapper,
+                res = IFilterMapper2_RegisterFilter(pMapper,
 		                              &CLSID_AVIMIDIRender,
 					      mocaps.szPname,
 					      &pMoniker,
@@ -373,6 +439,5 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 
     if (pMapper)
         IFilterMapper2_Release(pMapper);
-#endif
     return res;
 }

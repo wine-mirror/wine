@@ -130,15 +130,15 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
             switch (V_VT(pVar))
             {
             case VT_LPWSTR:
-                V_UNION(pVar, bstrVal) = CoTaskMemAlloc(received * sizeof(WCHAR));
-                strcpyW(V_UNION(pVar, bstrVal), (LPWSTR)pData);
+                V_UNION(pVar, bstrVal) = CoTaskMemAlloc(received);
+                memcpy(V_UNION(pVar, bstrVal), (LPWSTR)pData, received);
                 res = S_OK;
                 break;
             case VT_EMPTY:
                 V_VT(pVar) = VT_BSTR;
             /* fall through */
             case VT_BSTR:
-                V_UNION(pVar, bstrVal) = SysAllocStringLen((LPWSTR)pData, received - 1);
+                V_UNION(pVar, bstrVal) = SysAllocStringLen((LPWSTR)pData, received/sizeof(WCHAR) - 1);
                 res = S_OK;
                 break;
             }

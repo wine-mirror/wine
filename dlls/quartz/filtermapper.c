@@ -628,7 +628,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
     IBindCtx * pBindCtx = NULL;
     IMoniker * pMoniker = NULL;
     IPropertyBag * pPropBag = NULL;
-    HRESULT hr = S_OK;
+    HRESULT hr;
     LPWSTR pwszParseName = NULL;
     LPWSTR pCurrent;
     static const WCHAR wszDevice[] = {'@','d','e','v','i','c','e',':','s','w',':',0};
@@ -644,14 +644,14 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         debugstr_w(szInstance),
         prf2);
 
-    if (ppMoniker)
-        FIXME("ppMoniker != NULL not supported at the moment\n");
-
     if (prf2->dwVersion != 2)
     {
         FIXME("dwVersion != 2 not supported at the moment\n");
         return E_NOTIMPL;
     }
+
+    if (ppMoniker)
+        *ppMoniker = NULL;
 
     if (!pclsidCategory)
         pclsidCategory = &CLSID_ActiveMovieCategories;
@@ -667,8 +667,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
     else
         nameLen += CHARS_IN_GUID - 1; /* CHARS_IN_GUID includes null terminator */
 
-    pwszParseName = CoTaskMemAlloc(nameLen);
-    pCurrent = pwszParseName;
+    pCurrent = pwszParseName = CoTaskMemAlloc(nameLen*sizeof(WCHAR));
     if (!pwszParseName)
         return E_OUTOFMEMORY;
 
@@ -676,12 +675,13 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
     pCurrent += strlenW(wszDevice);
 
     hr = StringFromCLSID(pclsidCategory, &szClsidTemp);
-    strcpyW(pCurrent, szClsidTemp);
-    pCurrent += CHARS_IN_GUID - 1;
-    pCurrent[0] = '\\';
 
     if (SUCCEEDED(hr))
     {
+        strncpyW(pCurrent, szClsidTemp, CHARS_IN_GUID);
+        pCurrent += CHARS_IN_GUID - 1;
+        pCurrent[0] = '\\';
+
         if (szInstance)
             strcpyW(pCurrent+1, szInstance);
         else
@@ -692,7 +692,8 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
                 szClsidTemp = NULL;
             }
             hr = StringFromCLSID(clsidFilter, &szClsidTemp);
-            strcpyW(pCurrent+1, szClsidTemp);
+            if (SUCCEEDED(hr))
+                strcpyW(pCurrent+1, szClsidTemp);
         }
     }
 
@@ -703,13 +704,10 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         hr = CreateBindCtx(0, &pBindCtx);
 
     if (SUCCEEDED(hr))
-    {
         hr = IParseDisplayName_ParseDisplayName(pParser, pBindCtx, pwszParseName, &ulEaten, &pMoniker);
-    }
 
     if (pBindCtx)
         IBindCtx_Release(pBindCtx); pBindCtx = NULL;
-
     if (pParser)
         IParseDisplayName_Release(pParser); pParser = NULL;
 
@@ -725,14 +723,15 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
     if (SUCCEEDED(hr))
         hr = FM2_WriteFilterData(pPropBag, prf2);
 
-    if (pMoniker)
-        IMoniker_Release(pMoniker); pMoniker = NULL;
-
     if (pPropBag)
         IPropertyBag_Release(pPropBag); pPropBag = NULL;
-
     if (szClsidTemp)
         CoTaskMemFree(szClsidTemp);
+
+    if (SUCCEEDED(hr) && ppMoniker)
+        *ppMoniker = pMoniker;
+    else if (pMoniker)
+        IMoniker_Release(pMoniker); pMoniker = NULL;
 
     TRACE("-- returning %lx\n", hr);
 
