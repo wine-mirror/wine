@@ -129,6 +129,7 @@ then {
   }
   else {
     CONF=$sysconfdir/wine.conf
+    mkdir -p $sysconfdir
     DOCONF=yes
   }
   fi
