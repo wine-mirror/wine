@@ -326,7 +326,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
         case WIN_PROC_32W:
             proc->thunk.t_from16.pushw_bp    = 0x5566; /* pushw %bp */
             proc->thunk.t_from16.pushl_func  = 0x68;   /* pushl $proc */
-            proc->thunk.t_from16.proc        = (FARPROC)func;
+            proc->thunk.t_from16.proc        = (WNDPROC)func;
             proc->thunk.t_from16.pushw_ax    = 0x5066; /* pushw %ax */
             proc->thunk.t_from16.pushl_relay = 0x68;   /* pushl $relay */
             proc->thunk.t_from16.relay       = (type == WIN_PROC_32A) ?

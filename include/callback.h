@@ -84,7 +84,7 @@ typedef struct tagTHUNK
     THUNK aname; \
     aname.popl_eax = 0x58; \
     aname.pushl_func = 0x68; \
-    aname.proc = (FARPROC) (aproc); \
+    aname.proc = (FARPROC16) (aproc); \
     aname.pushl_eax = 0x50; \
     aname.jmp = 0xe9; \
     aname.relay = (RELAY)((char *)(arelay) - (char *)(&(aname).next)); \

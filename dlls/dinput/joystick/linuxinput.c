@@ -831,7 +831,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE2A iface,
     }
 
     case (DWORD) DIPROP_RANGE: {
-      LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
+      /* LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph; */
       if ((pdiph->dwHow == DIPH_BYID) &&
 	  (pdiph->dwObj & DIDFT_ABSAXIS)) {
 	/* The app is querying the current range of the axis : return the lMin and lMax values */
