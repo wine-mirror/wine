@@ -638,6 +638,7 @@ typedef struct
 #define WM_NOTIFY		0x004e
 #define WM_TCARD                0x0052
 #define WM_HELP			0x0053
+#define WM_USERCHANGED		0x0054
 #define WM_NOTIFYFORMAT		0x0055
 
 #define WM_CONTEXTMENU		0x007b
