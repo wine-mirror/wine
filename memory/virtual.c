@@ -697,11 +697,11 @@ BOOL WINAPI VirtualFree(
         return TRUE;
     }
 
-    /* Decommit the pages by unmapping them and remapping zero-pages instead */
+    /* Decommit the pages by remapping zero-pages instead */
 
-    FILE_munmap( (LPVOID)base, 0, size );
     if (FILE_dommap( -1, (LPVOID)base, 0, size, 0, 0,
-                     VIRTUAL_GetUnixProt( 0 ), MAP_PRIVATE ) == (LPVOID)-1)
+                     VIRTUAL_GetUnixProt( 0 ), MAP_PRIVATE|MAP_FIXED ) 
+        != (LPVOID)base)
         ERR( "Could not remap pages, expect trouble\n" );
     return VIRTUAL_SetProt( view, base, size, 0 );
 }
