@@ -1795,9 +1795,10 @@ typedef struct {
 #define BI_RLE4          2
 #define BI_BITFIELDS     3
 
-typedef struct {
-	BITMAPINFOHEADER bmiHeader;
-	RGBQUAD	bmiColors[1];
+typedef struct tagBITMAPINFO
+{
+    BITMAPINFOHEADER bmiHeader;
+    RGBQUAD          bmiColors[1];
 } BITMAPINFO, *PBITMAPINFO, *LPBITMAPINFO;
 
 typedef struct
