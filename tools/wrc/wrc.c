@@ -89,7 +89,6 @@ static char usage[] =
 	"   -b          Create an assembly array from a binary .res file\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
 	"               (win32 only; default is " ENDIAN "-endian)\n"
-	"   -c          Add 'const' prefix to C constants\n"
 	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
 	"   -d n        Set debug level to 'n'\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
@@ -104,8 +103,8 @@ static char usage[] =
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
 	"   -N          Do not preprocess input\n"
-	"   -o file     Output to file (default is infile.[res|s|h]\n"
-	"   -O format	The output format: one of `res', 'asm', 'hdr'.\n"
+	"   -o file     Output to file (default is infile.[res|s]\n"
+	"   -O format	The output format: one of `res', 'asm'.\n"
 	"   -p prefix   Give a prefix for the generated names\n"
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
 	"   -v          Enable verbose mode.\n"
@@ -137,7 +136,7 @@ static char usage[] =
 	"    * 0x10 Preprocessor lex messages\n"
 	"    * 0x20 Preprocessor yacc trace\n"
 	"If no input filename is given and the output name is not overridden\n"
-	"with -o, then the output is written to \"wrc.tab.[sh]\"\n"
+	"with -o, then the output is written to \"wrc.tab.{s,res}\"\n"
 	;
 
 char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
@@ -156,14 +155,9 @@ char *prefix = __ASM_NAME("_Resource");
 int win32 = 1;
 
 /*
- * Set when generated C variables should be prefixed with 'const'
- */
-int constant = 0;
-
-/*
  * Output type (default res)
  */
-enum output_t { output_def, output_res, output_asm, output_hdr } output_type = output_def;
+enum output_t { output_def, output_res, output_asm } output_type = output_def;
 
 /*
  * debuglevel == DEBUGLEVEL_NONE	Don't bother
@@ -352,9 +346,6 @@ int main(int argc,char *argv[])
 				lose++;
 			}
 			break;
-		case 'c':
-			constant = 1;
-			break;
 		case 'C':
 			codepage = strtol(optarg, NULL, 0);
 			break;
@@ -411,7 +402,6 @@ int main(int argc,char *argv[])
 		case 'O':
 			if (strcmp(optarg, "res") == 0) output_type = output_res;
 			else if (strcmp(optarg, "asm") == 0) output_type = output_asm;
-			else if (strcmp(optarg, "hdr") == 0) output_type = output_hdr;
 			else error("Output format %s not supported.", optarg);
 			break;
 		case 'p':
@@ -481,7 +471,6 @@ int main(int argc,char *argv[])
 		if (dotstr)
 		{
 			if (strcmp(dotstr+1, "s") == 0) output_type = output_asm;
-			else if(strcmp(dotstr+1, "h") == 0) output_type = output_hdr;
 		}
 	}
 
@@ -498,12 +487,6 @@ int main(int argc,char *argv[])
 
 	if(output_type == output_res)
 	{
-		if(constant)
-		{
-			warning("Option -c ignored with compile to .res\n");
-			constant = 0;
-		}
-
 		if(global)
 		{
 			warning("Option -g ignored with compile to .res\n");
@@ -529,12 +512,6 @@ int main(int argc,char *argv[])
 
 	if(preprocess_only)
 	{
-		if(constant)
-		{
-			warning("Option -c ignored with preprocess only\n");
-			constant = 0;
-		}
-
 		if(global)
 		{
 			warning("Option -g ignored with preprocess only\n");
@@ -616,7 +593,6 @@ int main(int argc,char *argv[])
 		output_name = dup_basename(input_name, binary ? ".res" : ".rc");
 		if (output_type == output_res) strcat(output_name, ".res");
 		else if (output_type == output_asm) strcat(output_name, ".s");
-		else if (output_type == output_hdr) strcat(output_name, ".h");
 	}
 
 	/* Run the preprocessor on the input */
@@ -692,11 +668,6 @@ int main(int argc,char *argv[])
 			chat("Writing .s-file");
 			write_s_file(output_name, resource_top);
 		}
-		else if(output_type == output_hdr)
-		{
-			chat("Writing .h-file");
-			write_h_file(output_name, resource_top);
-		}
 
 	}
 	else
@@ -708,11 +679,6 @@ int main(int argc,char *argv[])
 		{
 			chat("Writing .s-file");
 			write_s_file(output_name, resource_top);
-		}
-		else if(output_type == output_hdr)
-		{
-			chat("Writing .h-file");
-			write_h_file(output_name, resource_top);
 		}
 	}
 

@@ -25,9 +25,9 @@ takes only one \fBinputfile\fR as argument. The \fBinputfile\fR has
 extension \fB.rc\fR for resources in source form and \fB.res\fR for
 binary resources. The resources are read from standard input if no
 inputfile is given. If the outputfile is not specified with \fI-o\fR,
-then \fBwrc\fR will write the output to \fBinputfile.{s,h,res}\fR
+then \fBwrc\fR will write the output to \fBinputfile.{s,res}\fR
 with \fB.rc\fR stripped, depending on the mode of compilation.
-The outputfile is named \fBwrc.tab.{s,h,res}\fR if no inputfile was
+The outputfile is named \fBwrc.tab.{s,res}\fR if no inputfile was
 given.
 .SH OPTIONS
 .TP
@@ -43,9 +43,6 @@ Win32 only; set output byte\-ordering, where \fIx\fR is one of n[ative],
 l[ittle] or b[ig].  Only resources in source-form can be reorderd. Native
 ordering depends on the system on which \fBwrc\fR was built. You can see
 the native ordering by typing \fIwrc \-?\fR.
-.TP
-.I \-c
-Add 'const' prefix to C constants when writing header files.
 .TP
 .I \-C cp
 Set the resource's codepage to \fIcp\fR. Default codepage is 0.
@@ -119,8 +116,8 @@ with \fB.rc\fR stripped or \fBwrc.tab.{s,h,res}\fR, depending on the
 compilation mode.
 .TP
 .I \-O format
-Sets the output format. \fformat\fR can one of 'res', 'asm', and 'hdr'
-to generate a \fB.res\fR, \fB.s\fR, or \fB.h\fR file respectively.
+Sets the output format. \fformat\fR can one either 'res' or 'asm'
+to generate a \fB.res\fR or \fB.s\fR file respectively.
 If not specified, \fBwrc\fR assumes 'res'.
 .TP
 .I \-p prefix

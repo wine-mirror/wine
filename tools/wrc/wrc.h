@@ -49,11 +49,9 @@ extern int debuglevel;
 #define DEBUGLEVEL_PPTRACE	0x0020
 
 extern int win32;
-extern int constant;
 extern int create_res;
 extern int extensions;
 extern int binary;
-extern int create_header;
 extern int create_dir;
 extern int global;
 extern int alignment;
@@ -69,7 +67,6 @@ extern int remap;
 extern char *prefix;
 extern char *output_name;
 extern char *input_name;
-extern char *header_name;
 extern char *cmdline;
 extern time_t now;
 

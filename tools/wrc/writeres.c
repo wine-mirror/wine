@@ -48,26 +48,6 @@ static char s_file_tail_str[] =
         "\n"
 	;
 
-static char h_file_head_str[] =
-	"/*\n"
-	" * This file is generated with wrc version " WRC_FULLVERSION ". Do not edit!\n"
-	" * Source : %s\n"
-	" * Cmdline: %s\n"
-	" * Date   : %s"
-	" */\n"
-        "\n"
-	"#ifndef __%08lx_H\n"	/* This becomes the date of compile */
-	"#define __%08lx_H\n"
-	"\n"
-	"#include <wrc_rsc.h>\n"
-	"\n"
-	;
-
-static char h_file_tail_str[] =
-	"#endif\n"
-	"/* <eof> */\n\n"
-	;
-
 char _NEResTab[] = "_NEResTab";
 char _PEResTab[] = "_PEResTab";
 char _ResTable[] = "_ResTable";
@@ -950,56 +930,5 @@ void write_s_file(char *outname, resource_t *top)
 	}
 
 	fprintf(fo, s_file_tail_str);
-	fclose(fo);
-}
-
-/*
- *****************************************************************************
- * Function	: write_h_file
- * Syntax	: void write_h_file(char *outname, resource_t *top)
- * Input	:
- *	outname	- Filename to write to
- *	top	- The resource-tree to convert
- * Output	:
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-void write_h_file(char *outname, resource_t *top)
-{
-	FILE *fo;
-	resource_t *rsc;
-
-	fo = fopen(outname, "wt");
-	if(!fo)
-	{
-		error("Could not open %s\n", outname);
-	}
-
-	fprintf(fo, h_file_head_str, input_name ? input_name : "stdin",
-                cmdline, ctime(&now), (long)now, (long)now);
-
-	/* First write the segment tables reference */
-	if(create_dir)
-	{
-		fprintf(fo, "extern %schar %s%s[];\n\n",
-			constant ? "const " : "",
-			prefix,
-			win32 ? _PEResTab : _NEResTab);
-	}
-
-	/* Write the resource data */
-	for(rsc = top; global && rsc; rsc = rsc->next)
-	{
-		if(!rsc->binres)
-			continue;
-
-		fprintf(fo, "extern %schar %s%s_data[];\n",
-			constant ? "const " : "",
-			prefix,
-			rsc->c_name);
-	}
-
-	fprintf(fo, h_file_tail_str);
 	fclose(fo);
 }

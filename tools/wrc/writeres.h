@@ -27,6 +27,5 @@
 
 void write_resfile(char *outname, resource_t *top);
 void write_s_file(char *outname, resource_t *top);
-void write_h_file(char *outname, resource_t *top);
 
 #endif
