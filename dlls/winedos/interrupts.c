@@ -22,6 +22,8 @@
 #include "wine/debug.h"
 #include "wine/winbase16.h"
 
+#include "thread.h"
+
 #ifdef HAVE_SYS_VM86_H
 # include <sys/vm86.h>
 #endif
@@ -81,6 +83,23 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
 
 
 /**********************************************************************
+ *         DOSVM_IsIRQ
+ *
+ * Return TRUE if interrupt is an IRQ.
+ */
+static BOOL DOSVM_IsIRQ( BYTE intnum )
+{
+    if (intnum >= 0x08 && intnum <= 0x0f)
+        return TRUE;
+
+    if (intnum >= 0x70 && intnum <= 0x77)
+        return TRUE;
+
+    return FALSE;
+}
+
+
+/**********************************************************************
  *         DOSVM_DefaultHandler
  *
  * Default interrupt handler. This will be used to emulate all
@@ -105,6 +124,10 @@ static INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
     }
 
     WARN("int%x not implemented, returning dummy handler\n", intnum );
+
+    if (DOSVM_IsIRQ(intnum))
+        return DOSVM_AcknowledgeIRQ;
+
     return DOSVM_DefaultHandler;
 }
 
@@ -118,6 +141,33 @@ static void DOSVM_IntProcRelay( CONTEXT86 *context, LPVOID data )
 {
     INTPROC proc = (INTPROC)data;
     proc(context);
+}
+
+
+/**********************************************************************
+ *          DOSVM_PrepareIRQ
+ *
+ */
+static void DOSVM_PrepareIRQ( CONTEXT86 *context, BOOL isbuiltin )
+{
+    /* Disable virtual interrupts. */
+    NtCurrentTeb()->dpmi_vif = 0;
+
+    if (!isbuiltin)
+    {
+        DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                          context->SegSs,
+                                          context->Esp);
+
+        /* Push return address to stack. */
+        *(--stack) = context->SegCs;
+        *(--stack) = context->Eip;
+        context->Esp += -8;
+
+        /* Jump to enable interrupts stub. */
+        context->SegCs = DOSVM_dpmi_segments->relay_code_sel;
+        context->Eip   = 5;
+    }
 }
 
 
@@ -270,6 +320,8 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
 
             if (intnum == 0x25 || intnum == 0x26)
                 DOSVM_PushFlags( context, TRUE, FALSE );
+            else if (DOSVM_IsIRQ(intnum))
+                DOSVM_PrepareIRQ( context, TRUE );
 
             DOSVM_BuildCallFrame( context,
                                   DOSVM_IntProcRelay,
@@ -278,14 +330,16 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
         }
         else
         {
-            DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                              context->SegSs, 
-                                              context->Esp);
+            DWORD *stack;
             
             TRACE( "invoking hooked interrupt %02x at %04x:%08lx\n",
                    intnum, addr.selector, addr.offset );
             
+            if (DOSVM_IsIRQ(intnum))
+                DOSVM_PrepareIRQ( context, FALSE );
+
             /* Push the flags and return address on the stack */
+            stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
             *(--stack) = context->EFlags;
             *(--stack) = context->SegCs;
             *(--stack) = context->Eip;
@@ -308,7 +362,9 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
 
             if (intnum == 0x25 || intnum == 0x26)
                 DOSVM_PushFlags( context, FALSE, FALSE );
-            
+            else if (DOSVM_IsIRQ(intnum))
+                DOSVM_PrepareIRQ( context, TRUE );
+
             DOSVM_BuildCallFrame( context, 
                                   DOSVM_IntProcRelay,
                                   DOSVM_GetBuiltinHandler(
@@ -316,14 +372,16 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
         }
         else
         {
-            WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                             context->SegSs, 
-                                             context->Esp);
+            WORD *stack;
             
             TRACE( "invoking hooked interrupt %02x at %04x:%04x\n", 
                    intnum, SELECTOROF(addr), OFFSETOF(addr) );
 
+            if (DOSVM_IsIRQ(intnum))
+                DOSVM_PrepareIRQ( context, FALSE );
+
             /* Push the flags and return address on the stack */
+            stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
             *(--stack) = LOWORD(context->EFlags);
             *(--stack) = context->SegCs;
             *(--stack) = LOWORD(context->Eip);
@@ -537,6 +595,12 @@ void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
  */
 void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum ) 
 {
+    /*
+     * FIXME: Make all builtin interrupt calls go via this routine.
+     * FIXME: Check for PM->RM interrupt reflection.
+     * FIXME: Check for RM->PM interrupt reflection.
+     */
+
   INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
   proc( context );
 }

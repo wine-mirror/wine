@@ -943,6 +943,11 @@ static void set_vm86_pend( CONTEXT *context )
             teb->vm86_ptr = NULL;
             rec.ExceptionAddress = (LPVOID)context->Eip;
             EXC_RtlRaiseException( &rec, context );
+            /*
+             * FIXME: EXC_RtlRaiseException has unblocked all signals. 
+             *        If we receive nested SIGUSR2 here, VM86 event 
+             *        handling may lock up!
+             */
             teb->vm86_ptr = vm86;
         }
     }
@@ -965,9 +970,30 @@ static void set_vm86_pend( CONTEXT *context )
             save_vm86_context( &vcontext, vm86 );
             rec.ExceptionAddress = (LPVOID)vcontext.Eip;
             EXC_RtlRaiseException( &rec, &vcontext );
+            /*
+             * FIXME: EXC_RtlRaiseException has unblocked all signals. 
+             *        If we receive nested SIGUSR2 here, VM86 event 
+             *        handling may lock up!
+             */
             teb->vm86_ptr = vm86;
             restore_vm86_context( &vcontext, vm86 );
         }
+    }
+    else if(teb->dpmi_vif && 
+            !IS_SELECTOR_SYSTEM(context->SegCs) &&
+            !IS_SELECTOR_SYSTEM(context->SegSs))
+    {
+        /* Executing DPMI code and virtual interrupts are enabled. */
+        teb->vm86_pending = 0;
+        rec.ExceptionAddress = (LPVOID)context->Eip;
+        EXC_RtlRaiseException( &rec, context );
+        /*
+         * EXC_RtlRaiseException has unblocked all signals and this
+         * signal handler is about to return to either DOS relay or
+         * IRQ handler. Because both of these will check pending
+         * interrupts again, it is not a problem if we receive
+         * a nested SIGUSR2 here and ignore it.
+         */
     }
 }
 

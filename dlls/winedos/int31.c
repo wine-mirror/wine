@@ -28,7 +28,9 @@
 #include "msdos.h"
 #include "dosexe.h"
 
+#include "excpt.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "stackframe.h"
 #include "toolhelp.h"
 
@@ -75,6 +77,29 @@ static void* lastvalloced = NULL;
 BOOL DOSVM_IsDos32(void)
 {
   return (dpmi_flag & 1) ? TRUE : FALSE;
+}
+
+
+/**********************************************************************
+ *          dpmi_exception_handler
+ *
+ * Handle EXCEPTION_VM86_STI exceptions generated
+ * when there are pending asynchronous events.
+ */
+static WINE_EXCEPTION_FILTER(dpmi_exception_handler)
+{
+    EXCEPTION_RECORD *rec = GetExceptionInformation()->ExceptionRecord;
+    CONTEXT *context = GetExceptionInformation()->ContextRecord;
+
+    if (rec->ExceptionCode == EXCEPTION_VM86_STI)
+    {
+        if (ISV86(context))
+            ERR( "Real mode STI caught by protected mode handler!\n" );
+        DOSVM_SendQueuedEvents(context);
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 
@@ -297,10 +322,15 @@ __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
  */
 static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
 {
+    DWORD old_vif = NtCurrentTeb()->dpmi_vif;
+
+    /* Disable virtual interrupts. */
+    NtCurrentTeb()->dpmi_vif = 0;
+
     if (IS_SELECTOR_SYSTEM( rmcb->proc_sel )) {
         /* Wine-internal RMCB, call directly */
         ((RMCBPROC)rmcb->proc_ofs)(context);
-    } else {
+    } else __TRY {
 #ifdef __i386__
         UINT16 ss,es;
         DWORD esp,edi;
@@ -340,7 +370,10 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
 #else
         ERR("RMCBs only implemented for i386\n");
 #endif
-    }
+    } __EXCEPT(dpmi_exception_handler) { } __ENDTRY
+        
+    /* Restore virtual interrupt flag. */
+    NtCurrentTeb()->dpmi_vif = old_vif;                                 
 }
 
 
@@ -548,17 +581,36 @@ static void StartPM( CONTEXT86 *context )
 
     TRACE("DOS program is now entering %d-bit protected mode\n", 
           DOSVM_IsDos32() ? 32 : 16);
-    wine_call_to_16_regs_short(&pm_ctx, 0);
+
+    /*
+     * Enable interrupts. Note that we also make a dummy 
+     * relay call in order to process all pending events. 
+     * This is needed in order to prevent event handling from
+     * getting stuck.
+     */
+    NtCurrentTeb()->dpmi_vif = 1;
+    DOSVM_BuildCallFrame( context, NULL, NULL );
+
+    __TRY 
+    {
+        wine_call_to_16_regs_short(&pm_ctx, 0);
+    } 
+    __EXCEPT(dpmi_exception_handler) 
+    { 
+    } 
+    __ENDTRY
 
     /* in the current state of affairs, we won't ever actually return here... */
     /* we should have int21/ah=4c do it someday, though... */
 
+#if 0
     FreeSelector16(psp->environment);
     psp->environment = env_seg;
     FreeSelector16(es);
     if (ds != ss) FreeSelector16(ds);
     FreeSelector16(ss);
     FreeSelector16(cs);
+#endif
 }
 
 static RMCB *DPMI_AllocRMCB( void )

@@ -181,7 +181,8 @@ void DOSVM_InitSegments( void )
     static const char relay[]=
     {
         0xca, 0x04, 0x00, /* 16-bit far return and pop 4 bytes (relay void* arg) */
-        0xcd, 0x31        /* int 31 */
+        0xcd, 0x31,       /* int 31 */
+        0xfb, 0x66, 0xcb  /* sti and 32-bit far return */
     };
 
     /*
@@ -253,6 +254,7 @@ void DOSVM_InitSegments( void )
     /*
      * PM / offset 0: Stub where __wine_call_from_16_regs returns.
      * PM / offset 3: Stub which swaps back to 32-bit application code/stack.
+     * PM / offset 5: Stub which enables interrupts
      */
     ptr = DOSVM_AllocCodeUMB( sizeof(relay), 
                               0,  &DOSVM_dpmi_segments->relay_code_sel);

@@ -26,6 +26,8 @@
 #include "selectors.h"
 #include "wine/debug.h"
 #include "callback.h"
+#include "thread.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(io);
@@ -793,12 +795,19 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             context->Eip += prefixlen + 1;
             return 0;
 
-        case 0xfa: /* cli, ignored */
+        case 0xfa: /* cli */
+            NtCurrentTeb()->dpmi_vif = 0;
             context->Eip += prefixlen + 1;
             return 0;
 
-        case 0xfb: /* sti, ignored */
+        case 0xfb: /* sti */
+            NtCurrentTeb()->dpmi_vif = 1;
             context->Eip += prefixlen + 1;
+            if (NtCurrentTeb()->vm86_pending)
+            {
+                NtCurrentTeb()->vm86_pending = 0;
+                return EXCEPTION_VM86_STI;
+            }
             return 0;
     }
 
