@@ -59,7 +59,7 @@ static DOS_FULL_NAME DIR_System;
  * Get a path name from the wine.ini file and make sure it is valid.
  */
 static int DIR_GetPath( const char *keyname, const char *defval,
-                        DOS_FULL_NAME *full_name, BOOL warn )
+                        DOS_FULL_NAME *full_name, char * longname, BOOL warn )
 {
     char path[MAX_PATHNAME_LEN];
     BY_HANDLE_FILE_INFORMATION info;
@@ -68,7 +68,8 @@ static int DIR_GetPath( const char *keyname, const char *defval,
     PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
     if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
         (!FILE_Stat( full_name->long_name, &info ) && (mess=strerror(errno)))||
-        (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")))
+        (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")) || 
+        (!(GetLongPathNameA(full_name->short_name, longname, MAX_PATHNAME_LEN))) )
     {
         if (warn)
            MESSAGE("Invalid path '%s' for %s directory: %s\n", path, keyname, mess);
@@ -84,6 +85,7 @@ static int DIR_GetPath( const char *keyname, const char *defval,
 int DIR_Init(void)
 {
     char path[MAX_PATHNAME_LEN];
+    char longpath[MAX_PATHNAME_LEN];
     DOS_FULL_NAME tmp_dir, profile_dir;
     int drive;
     const char *cwd;
@@ -106,9 +108,9 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, cwd );
     }
 
-    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows, TRUE )) ||
-	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System, TRUE )) ||
-	!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir, TRUE )))
+    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows, longpath, TRUE )) ||
+	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System, longpath, TRUE )) ||
+	!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir, longpath, TRUE )))
     {
 	PROFILE_UsageWineIni();
         return 0;
@@ -163,10 +165,10 @@ int DIR_Init(void)
     TRACE("Cwd        = %c:\\%s\n",
           'A' + drive, DRIVE_GetDosCwd( drive ) );
 
-    if (DIR_GetPath( "profile", "", &profile_dir, FALSE ))
+    if (DIR_GetPath( "profile", "", &profile_dir, longpath, FALSE ))
     {
-        TRACE("USERPROFILE= %s\n", profile_dir.short_name );
-        SetEnvironmentVariableA( "USERPROFILE", profile_dir.short_name );
+        TRACE("USERPROFILE= %s\n", longpath );
+        SetEnvironmentVariableA( "USERPROFILE", longpath );
     }	
 
     TRACE("SYSTEMROOT = %s\n", DIR_Windows.short_name );
