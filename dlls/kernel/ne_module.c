@@ -632,17 +632,17 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
 
     if (!read_data( handle, 0, &mz_header, sizeof(mz_header)) ||
         (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
 
     if (!read_data( handle, mz_header.e_lfanew, &ne_header, sizeof(ne_header) ))
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
 
     if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
         MESSAGE("Sorry, this is an OS/2 linear executable (LX) file!\n");
         return (HMODULE16)12;
     }
-    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
+    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return ERROR_BAD_FORMAT;
 
     /* We now have a valid NE header */
 
@@ -651,7 +651,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
      * (only fail for OS/2 ne_exetyp 0x01 here?) */
     if ((ne_header.ne_exetyp != 0x02 /* Windows */)
         && (ne_header.ne_exetyp != 0x04) /* Windows 386 */)
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
 
     size = sizeof(NE_MODULE) +
              /* segment table */
@@ -673,7 +673,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
            sizeof(OFSTRUCT) - sizeof(ofs->szPathName) + strlen(path) + 1;
 
     hModule = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, size );
-    if (!hModule) return (HMODULE16)11;  /* invalid exe */
+    if (!hModule) return ERROR_BAD_FORMAT;
 
     FarSetOwner16( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
@@ -728,7 +728,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
             HeapFree( GetProcessHeap(), 0, buffer );
             HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         }
         pSeg = (struct ne_segment_table_entry_s *)buffer;
         for (i = ne_header.ne_cseg; i > 0; i--, pSeg++)
@@ -742,7 +742,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
     {
         HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
     }
 
     /* Get the resource table */
@@ -753,7 +753,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
         if (!READ(mz_header.e_lfanew + ne_header.ne_rsrctab,
                   ne_header.ne_restab - ne_header.ne_rsrctab,
                   pData ))
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         pData += ne_header.ne_restab - ne_header.ne_rsrctab;
         NE_InitResourceHandler( pModule );
     }
@@ -768,7 +768,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
     {
         HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
     }
     pData += ne_header.ne_modtab - ne_header.ne_restab;
 
@@ -783,7 +783,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
         {
             HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         }
         pData += ne_header.ne_cmod * sizeof(WORD);
     }
@@ -798,7 +798,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
     {
         HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
     }
     pData += ne_header.ne_enttab - ne_header.ne_imptab;
 
@@ -816,7 +816,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
             HeapFree( GetProcessHeap(), 0, pTempEntryTable );
             HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         }
 
         s = pTempEntryTable;
@@ -870,7 +870,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
                     bundle->first = bundle->last =
                         oldbundle->last + nr_entries;
                     bundle->next = 0;
-		    entry = (ET_ENTRY*)(((BYTE*)entry)+sizeof(ET_BUNDLE));
+                    entry = (ET_ENTRY*)(((BYTE*)entry)+sizeof(ET_BUNDLE));
                 }
             }
         }
@@ -880,7 +880,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
     {
         HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        return (HMODULE16)11;  /* invalid exe */
+        return ERROR_BAD_FORMAT;
     }
 
     pData += ne_header.ne_cbenttab + sizeof(ET_BUNDLE) +
@@ -912,7 +912,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
         if (!pModule->nrname_handle)
         {
             GlobalFree16( hModule );
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         }
         FarSetOwner16( pModule->nrname_handle, hModule );
         buffer = GlobalLock16( pModule->nrname_handle );
@@ -920,7 +920,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
         {
             GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         }
     }
     else pModule->nrname_handle = 0;
@@ -935,7 +935,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
         {
             if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
-            return (HMODULE16)11;  /* invalid exe */
+            return ERROR_BAD_FORMAT;
         }
         FarSetOwner16( pModule->dlls_to_init, hModule );
     }
@@ -1159,6 +1159,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     const BUILTIN16_DESCRIPTOR *descr = NULL;
     char dllname[20], owner[20], *p;
     const char *basename;
+    int owner_exists;
 
     /* strip path information */
 
@@ -1169,23 +1170,21 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
     if (strlen(basename) < sizeof(dllname)-4)
     {
-        int file_exists;
-
         strcpy( dllname, basename );
         p = strrchr( dllname, '.' );
         if (!p) strcat( dllname, ".dll" );
         for (p = dllname; *p; p++) if (*p >= 'A' && *p <= 'Z') *p += 32;
 
-        if (wine_dll_get_owner( dllname, owner, sizeof(owner), &file_exists ) == -1)
-        {
-            if (file_exists) return 21;  /* it may be a Win32 module then */
-        }
-        else  /* found 32-bit owner, try to load it */
+        if (wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
         {
             HMODULE mod32 = LoadLibraryA( owner );
             if (mod32)
             {
-                if (!(descr = find_dll_descr( dllname ))) FreeLibrary( mod32 );
+                if (!(descr = find_dll_descr( dllname )))
+                {
+                    FreeLibrary( mod32 );
+                    owner_exists = 0;
+                }
                 /* loading the 32-bit library can have the side effect of loading the module */
                 /* if so, simply incr the ref count and return the module */
                 if ((hModule = GetModuleHandle16( libname )))
@@ -1216,6 +1215,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
         TRACE("Trying native dll '%s'\n", libname);
         hinst = NE_LoadModule(libname, lib_only);
         if (hinst > 32) TRACE_(loaddll)("Loaded module %s : native\n", debugstr_a(libname));
+        if (hinst == ERROR_FILE_NOT_FOUND && owner_exists) hinst = 21;  /* win32 module */
     }
 
     if (hinst > 32 && !implicit)
@@ -1310,7 +1310,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     {
         /* Special case: second instance of an already loaded NE module */
 
-        if ( !( pModule = NE_GetPtr( hModule ) ) ) return (HINSTANCE16)11;
+        if ( !( pModule = NE_GetPtr( hModule ) ) ) return ERROR_BAD_FORMAT;
         if ( pModule->module32 ) return (HINSTANCE16)21;
 
         /* Increment refcount */
@@ -1325,7 +1325,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
             return hModule;
 
         if ( !(pModule = NE_GetPtr( hModule )) )
-            return (HINSTANCE16)11;
+            return ERROR_BAD_FORMAT;
     }
 
     /* If library module, we just retrieve the instance handle */
@@ -1827,7 +1827,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
     HeapFree( GetProcessHeap(), 0, cmdline );
     if (name != lpCmdLine) HeapFree( GetProcessHeap(), 0, name );
 
-    if (ret == 21 || ret == 11)  /* 32-bit module or unknown executable*/
+    if (ret == 21 || ret == ERROR_BAD_FORMAT)  /* 32-bit module or unknown executable*/
     {
         DWORD count;
         ReleaseThunkLock( &count );
@@ -2094,11 +2094,11 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     char filename[MAX_PATH];
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module32 );
 
-    if (!nt) return (HMODULE16)11;  /* invalid exe */
+    if (!nt) return ERROR_BAD_FORMAT;
 
     /* Extract base filename */
     len = GetModuleFileNameA( module32, filename, sizeof(filename) );
-    if (!len || len >= sizeof(filename)) return (HMODULE16)11;  /* invalid exe */
+    if (!len || len >= sizeof(filename)) return ERROR_BAD_FORMAT;
     basename = strrchr(filename, '\\');
     if (!basename) basename = filename;
     else basename++;
@@ -2119,7 +2119,7 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
                  8;
 
     hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-    if (!hModule) return (HMODULE16)11;  /* invalid exe */
+    if (!hModule) return ERROR_BAD_FORMAT;
 
     FarSetOwner16( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
