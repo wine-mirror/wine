@@ -62,6 +62,7 @@ typedef struct
     INT  fLocation;
     INT  flags;
     BOOL bUnicode;
+    BOOL bFocussed;
     RECT rcChannel;
     RECT rcSelection;
     RECT rcThumb;
@@ -226,18 +227,17 @@ TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
     offsetthumb = (int)(infoPtr->uThumbLen/4.5);
     offsetedge  = offsetthumb + 3;
     cyChannel   = (dwStyle & TBS_ENABLESELRANGE) ? (offsetthumb+1)*3 : 4;
-
     if (dwStyle & TBS_VERT) {
         channel->top    = lpRect.top + offsetedge;
         channel->bottom = lpRect.bottom - offsetedge;
-        channel->left = lpRect.left + offsetthumb;
+        channel->left = lpRect.left + offsetthumb - cyChannel;
         if (dwStyle & (TBS_BOTH | TBS_LEFT))
             channel->left += (lpRect.right-lpRect.left-offsetthumb-cyChannel)/2;
         channel->right = channel->left + cyChannel;
     } else {
         channel->left = lpRect.left + offsetedge;
         channel->right = lpRect.right - offsetedge;
-        channel->top = lpRect.top + offsetthumb;
+        channel->top = lpRect.top + offsetedge;
         if (dwStyle & (TBS_BOTH | TBS_TOP))
             channel->top += (lpRect.bottom-lpRect.top-offsetedge-cyChannel)/2;
         channel->bottom   = channel->top + cyChannel;
@@ -247,34 +247,33 @@ TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
 static void
 TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
 {
-    int range, width, thumbdepth;
+    int range, width, height, thumbdepth, ticOffset = 5 + 2; /* 5 is length of tic, 2 is extra indent */
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     RECT lpRect;
 
-    range=infoPtr->lRangeMax - infoPtr->lRangeMin;
-    thumbdepth = ((int)(infoPtr->uThumbLen / 4.5) * 2) + 2;
+    range = infoPtr->lRangeMax - infoPtr->lRangeMin;
+    thumbdepth = ((int)(infoPtr->uThumbLen / 4.5)) + 2;
 
     if (!range) range = 1;
 
     GetClientRect(infoPtr->hwndSelf, &lpRect);
-
     if (dwStyle & TBS_VERT)
     {
-    	width=infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
+    	height = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
 
         if (dwStyle & (TBS_BOTH | TBS_LEFT))
-            thumb->left = (lpRect.right - lpRect.bottom - infoPtr->uThumbLen)/2;
+            thumb->left = (lpRect.right - lpRect.left - infoPtr->uThumbLen)/2 + ticOffset;
         else
             thumb->left = 2;
-        thumb->right = thumb -> left + infoPtr->uThumbLen;
+        thumb->right = thumb->left + infoPtr->uThumbLen - (ticOffset * 2);
         thumb->top = infoPtr->rcChannel.top +
-                     (width*(lPos - infoPtr->lRangeMin))/range -
+                     (height*(lPos - infoPtr->lRangeMin))/range -
                      thumbdepth/2;
         thumb->bottom = thumb->top + thumbdepth;
     }
     else
     {
-    	width=infoPtr->rcChannel.right - infoPtr->rcChannel.left;
+    	width = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
 
         thumb->left = infoPtr->rcChannel.left +
                       (width*(lPos - infoPtr->lRangeMin))/range -
@@ -284,7 +283,7 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
             thumb->top = (lpRect.bottom - lpRect.top - infoPtr->uThumbLen)/2;
         else
             thumb->top = 2;
-        thumb->bottom = thumb->top + infoPtr->uThumbLen;
+        thumb->bottom = thumb->top + infoPtr->uThumbLen - 20; /* double the bottom padding for the ticks, chosen to resemble native control */
     }
 }
 
@@ -382,6 +381,16 @@ static void
 TRACKBAR_DrawChannel (TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
 {
     RECT rcChannel = infoPtr->rcChannel;
+    int runOver = 5;
+
+    /* make the channel slightly overrun the last tick, to make it look more like the native control, and less "clunky" */
+    if (dwStyle & TBS_VERT) {
+	rcChannel.top -= runOver;
+	rcChannel.bottom += runOver;
+    } else {
+	rcChannel.left -= runOver;
+	rcChannel.right += runOver;
+    }
 
     DrawEdge (hdc, &rcChannel, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
     if (dwStyle & TBS_ENABLESELRANGE) {		 /* fill the channel */
@@ -406,6 +415,7 @@ TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
     } else {
 	rcTics.left   = infoPtr->rcChannel.left;
 	rcTics.right  = infoPtr->rcChannel.right;
+	rcTics.bottom -= 10; /* value obtained by guesswork and experimentation */
     }
 
     if (flags & (TBS_TOP | TBS_LEFT)) {
@@ -429,7 +439,7 @@ TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
     }
 
     if (flags & TBS_VERT) {
-	int height = rcTics.bottom = rcTics.top;
+	int height = rcTics.bottom - rcTics.top;
 	y = rcTics.top + (height*(ticPos - infoPtr->lRangeMin))/range;
 	x -= (offset + 2) * side;
 	y += indent;
@@ -520,7 +530,6 @@ TRACKBAR_DrawThumb(TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
     int fillClr;
 
     static INT PointDepth = 4;
-
     fillClr = infoPtr->flags & TB_DRAG_MODE ? COLOR_BTNHILIGHT : COLOR_BTNFACE;
     oldbr = SelectObject (hdc, GetSysColorBrush(fillClr));
     SetPolyFillMode (hdc, WINDING);
@@ -782,6 +791,11 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
 	    if (icdrf & CDRF_NOTIFYPOSTPAINT)
 		notify_customdraw(&nmcd, CDDS_ITEMPOSTPAINT);
 	}
+    }
+
+    /* draw focus rectangle */
+    if (infoPtr->bFocussed) {
+	DrawFocusRect(hdc, &rcClient);
     }
 
     /* finish up the painting */
@@ -1128,12 +1142,11 @@ TRACKBAR_SetSelStart (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lStart)
 static LRESULT inline
 TRACKBAR_SetThumbLength (TRACKBAR_INFO *infoPtr, UINT iLength)
 {
-    if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_FIXEDLENGTH)
+    if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_FIXEDLENGTH) {
         infoPtr->uThumbLen = iLength;
-
-    infoPtr->flags |= TB_THUMBSIZECHANGED;
-
-    InvalidateRect (infoPtr->hwndSelf, &infoPtr->rcThumb, FALSE);
+	infoPtr->flags |= TB_THUMBSIZECHANGED;
+	InvalidateRect (infoPtr->hwndSelf, &infoPtr->rcThumb, FALSE);
+    }
 
     return 0;
 }
@@ -1213,10 +1226,16 @@ TRACKBAR_SetUnicodeFormat (TRACKBAR_INFO *infoPtr, BOOL fUnicode)
 static LRESULT
 TRACKBAR_InitializeThumb (TRACKBAR_INFO *infoPtr)
 {
-    /* initial thumb length */
+    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     RECT rect;
+
+    /* initial thumb length */
     GetClientRect(infoPtr->hwndSelf,&rect);
-    infoPtr->uThumbLen = (rect.bottom - rect.top - 6);
+    if (dwStyle & TBS_VERT) {
+	infoPtr->uThumbLen = (rect.right - rect.left - 6);
+    } else {
+	infoPtr->uThumbLen = (rect.bottom - rect.top);
+    }
 
     TRACKBAR_CalcChannel (infoPtr);
     TRACKBAR_UpdateThumb (infoPtr);
@@ -1305,7 +1324,7 @@ static LRESULT
 TRACKBAR_KillFocus (TRACKBAR_INFO *infoPtr, HWND hwndGetFocus)
 {
     TRACE("\n");
-
+    infoPtr->bFocussed = FALSE;
     TRACKBAR_InvalidateAll(infoPtr);
 
     return 0;
@@ -1387,7 +1406,7 @@ static LRESULT
 TRACKBAR_SetFocus (TRACKBAR_INFO *infoPtr, HWND hwndLoseFocus)
 {
     TRACE("\n");
-
+    infoPtr->bFocussed = TRUE;
     TRACKBAR_InvalidateAll(infoPtr);
 
     return 0;
