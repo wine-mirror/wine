@@ -1621,6 +1621,7 @@ dlls/psapi/Makefile
 dlls/psapi/tests/Makefile
 dlls/qcap/Makefile
 dlls/quartz/Makefile
+dlls/quartz/tests/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
