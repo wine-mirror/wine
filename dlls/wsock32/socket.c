@@ -28,27 +28,32 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include "windef.h"
-#include "winbase.h"
-#include "debugtools.h"
-#include "winsock2.h"
-#include "winnt.h"
-#include "wscontrol.h"
 #include <ctype.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_SOCKIO_H
 # include <sys/sockio.h>
 #endif
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
-#include <errno.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "debugtools.h"
+#include "winsock2.h"
+#include "winnt.h"
+#include "wscontrol.h"
 
 #ifdef __NetBSD__
 #undef if_type

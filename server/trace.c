@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "winsock2.h"
 #include "winnt.h"
 #include "winbase.h"
 #include "wincon.h"
