@@ -5485,6 +5485,11 @@ HRESULT WINAPI StgOpenStorage(
   if (FAILED(hr))
   {
     HeapFree(GetProcessHeap(), 0, newStorage);
+    /*
+     * According to the docs if the file is not a storage, return STG_E_FILEALREADYEXISTS
+     */
+    if(hr == STG_E_INVALIDHEADER)
+	return STG_E_FILEALREADYEXISTS;
     return hr;
   }
   
