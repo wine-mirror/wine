@@ -1858,7 +1858,7 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
     /* get protocol        */
     base.size = sizeof(base);
     res1 = SHLWAPI_1(lpstrPath, &base);
-    return (base.fcncde) ? TRUE : FALSE;
+    return (base.fcncde > 0);
 }
 
 /*************************************************************************
@@ -1874,7 +1874,7 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
     /* get protocol        */
     base.size = sizeof(base);
     res1 = SHLWAPI_2(lpstrPath, &base);
-    return (base.fcncde) ? TRUE : FALSE;
+    return (base.fcncde > 0);
 }
 
 /*************************************************************************

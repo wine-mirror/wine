@@ -47,7 +47,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(exec);
 
-/* this function is supposed to expand the escape sequences found in the registry
+/***********************************************************************
+ * this function is supposed to expand the escape sequences found in the registry
  * some diving reported that the following were used:
  * + %1, %2...  seem to report to parameter of index N in ShellExecute pmts
  *	%1 file
@@ -106,7 +107,7 @@ static BOOL argify(char* res, int len, const char* fmt, const char* lpFile)
  *	SHELL_ExecuteA [Internal]
  *
  */
-static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL is32)
+static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL is32, BOOL shWait)
 {
     STARTUPINFOA  startup;
     PROCESS_INFORMATION info;
@@ -122,6 +123,11 @@ static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL is32)
         if (CreateProcessA(NULL, lpCmd, NULL, NULL, FALSE, 0,
                         NULL, sei->lpDirectory, &startup, &info))
         {
+            /* Give 30 seconds to the app to come up, if desired. Probably only needed
+               when starting app immediately before making a DDE connection. */
+            if (shWait)
+                if (WaitForInputIdle( info.hProcess, 30000 ) == -1)
+                    WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
             retval = (HINSTANCE)33;
             if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
 	        sei->hProcess = info.hProcess;
@@ -381,7 +387,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
     if (!hConv)
     {
         TRACE("Launching '%s'\n", start);
-        ret = SHELL_ExecuteA(start, sei, is32);
+        ret = SHELL_ExecuteA(start, sei, is32, TRUE);
         if (ret < 32)
         {
             TRACE("Couldn't launch\n");
@@ -390,6 +396,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
         hConv = DdeConnect(ddeInst, hszApp, hszTopic, NULL);
         if (!hConv)
         {
+            TRACE("Couldn't connect. ret=%d\n", ret);
             ret = 30; /* whatever */
             goto error;
         }
@@ -405,7 +412,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
     TRACE("%s %s => %s\n", exec, lpFile, res);
 
     ret = (DdeClientTransaction(res, strlen(res) + 1, hConv, 0L, 0,
-                                XTYP_EXECUTE, 10000, &tid) != DMLERR_NO_ERROR) ? 31 : 32;
+                                XTYP_EXECUTE, 10000, &tid) != DMLERR_NO_ERROR) ? 31 : 33;
     DdeDisconnect(hConv);
  error:
     DdeUninitialize(ddeInst);
@@ -444,7 +451,7 @@ static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA 
             /* Is there a replace() function anywhere? */
             cmd[cmdlen] = '\0';
             argify(param, sizeof(param), cmd, lpFile);
-            retval = SHELL_ExecuteA(param, sei, is32);
+            retval = SHELL_ExecuteA(param, sei, is32, FALSE);
         }
     }
     else TRACE("ooch\n");
@@ -576,7 +583,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
             strcat(cmd, " ");
             strcat(cmd, szApplicationName);
         }
-        retval = SHELL_ExecuteA(cmd, sei, is32);
+        retval = SHELL_ExecuteA(cmd, sei, is32, FALSE);
         if (retval > 32)
             return TRUE;
         else
@@ -600,7 +607,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         strcat(szApplicationName, szCommandline);
     }
 
-    retval = SHELL_ExecuteA(szApplicationName, sei, is32);
+    retval = SHELL_ExecuteA(szApplicationName, sei, is32, FALSE);
     if (retval > 32)
         return TRUE;
 
@@ -617,7 +624,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         if (*lpstrProtocol)
             retval = execute_from_key(lpstrProtocol, szApplicationName, sei, is32);
         else
-            retval = SHELL_ExecuteA(cmd, sei, is32);
+            retval = SHELL_ExecuteA(cmd, sei, is32, FALSE);
     }
     else if (PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
     {
@@ -625,7 +632,6 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         INT iSize;
 
         lpstrRes = strchr(lpFile, ':');
-        /* PathIsURLA probably should fail on strings without a ':', but it doesn't */
         if (lpstrRes)
             iSize = lpstrRes - lpFile;
         else

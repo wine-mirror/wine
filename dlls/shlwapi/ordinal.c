@@ -170,6 +170,7 @@ DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
     DWORD cnt;
     const SHL_2_inet_scheme *inet_pro;
 
+    y->fcncde = URL_SCHEME_INVALID;
     if (y->size != 0x18) return E_INVALIDARG;
     /* FIXME: leading white space generates error of 0x80041001 which
      *        is undefined
@@ -226,6 +227,7 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
     LPSTR cmpstr;
     INT len;
 
+    y->fcncde = URL_SCHEME_INVALID;
     if (y->size != 0x18) return E_INVALIDARG;
     /* FIXME: leading white space generates error of 0x80041001 which
      *        is undefined
