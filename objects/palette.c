@@ -11,12 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "winbase.h"
+#include "wine/winuser16.h"
 #include "gdi.h"
 #include "color.h"
 #include "palette.h"
 #include "xmalloc.h"
 #include "debug.h"
-#include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(palette)
 

@@ -1,11 +1,58 @@
 #ifndef __WINE_WINUSER16_H
 #define __WINE_WINUSER16_H
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
+#include "winuser.h" /* winuser.h needed for MSGBOXCALLBACK */
+                     /* wingdi.h needed for COLORREF */
+
+
 
 #include "pshpack1.h"
+
+typedef struct tagCOMSTAT16
+{
+    BYTE   status;
+    UINT16 cbInQue WINE_PACKED;
+    UINT16 cbOutQue WINE_PACKED;
+} COMSTAT16,*LPCOMSTAT16;
+
+typedef struct tagDCB16
+{
+    BYTE   Id;
+    UINT16 BaudRate WINE_PACKED;
+    BYTE   ByteSize;
+    BYTE   Parity;
+    BYTE   StopBits;
+    UINT16 RlsTimeout;
+    UINT16 CtsTimeout;
+    UINT16 DsrTimeout;
+
+    unsigned fBinary        :1;
+    unsigned fRtsDisable    :1;
+    unsigned fParity        :1;
+    unsigned fOutxCtsFlow   :1;
+    unsigned fOutxDsrFlow   :1;
+    unsigned fDummy         :2;
+    unsigned fDtrDisable    :1;
+
+    unsigned fOutX          :1;
+    unsigned fInX           :1;
+    unsigned fPeChar        :1;
+    unsigned fNull          :1;
+    unsigned fChEvt         :1;
+    unsigned fDtrflow       :1;
+    unsigned fRtsflow       :1;
+    unsigned fDummy2        :1;
+
+    CHAR   XonChar;
+    CHAR   XoffChar;
+    UINT16 XonLim;
+    UINT16 XoffLim;
+    CHAR   PeChar;
+    CHAR   EofChar;
+    CHAR   EvtChar;
+    UINT16 TxDelay WINE_PACKED;
+} DCB16, *LPDCB16;
+
 
   /* SetWindowPlacement() struct */
 typedef struct

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "windef.h"
+#include "winbase.h"
 #include "wine/winbase16.h" /* GetTaskDS */
 #include "callback.h"
 #include "mmsystem.h"

@@ -12,12 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "winbase.h"
+#include "wine/winuser16.h"
 #include "callback.h"
 #include "dc.h"
 #include "debug.h"
 #include "gdi.h"
 #include "options.h"
-#include "wine/winuser16.h"
 #include "winerror.h"
 #include "xmalloc.h"
 
