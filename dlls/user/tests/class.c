@@ -38,7 +38,7 @@ LRESULT WINAPI ClassTest_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
  *
  *           WinMain
  */
-BOOL ClassTest(HINSTANCE hInstance, BOOL global)
+void ClassTest(HINSTANCE hInstance, BOOL global)
 {
     WNDCLASSW cls, wc;
     WCHAR className[] = {'T','e','s','t','C','l','a','s','s',0};
@@ -46,6 +46,7 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
     HWND hTestWnd;
     DWORD i;
     WCHAR str[20];
+    ATOM classatom;
 
     cls.style         = CS_HREDRAW | CS_VREDRAW | (global?CS_GLOBALCLASS:0);
     cls.lpfnWndProc   = ClassTest_WndProc;
@@ -58,8 +59,10 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
     cls.lpszMenuName  = 0;
     cls.lpszClassName = className;
 
-    ok(RegisterClassW (&cls) ,
-        "failed to register class");
+    classatom=RegisterClassW(&cls);
+    if (!classatom && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+    ok(classatom, "failed to register class");
 
     ok(!RegisterClassW (&cls),
         "RegisterClass of the same class should fail for the second time");
@@ -180,7 +183,7 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
     ok(UnregisterClassW(className, hInstance),
         "UnregisterClass() failed");
 
-    return TRUE;
+    return;
 }
 
 START_TEST(class)
