@@ -66,7 +66,7 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_Attach (LPSTREAM iface, LPCWSTR wzFi
         return DMUS_E_LOADER_FAILEDOPEN;
     }
     /* create IDirectMusicGetLoader */
-    (LPDIRECTMUSICLOADER) This->pLoader = pLoader;
+    This->pLoader = (LPDIRECTMUSICLOADER8)pLoader;
     strncpyW (This->wzFileName, wzFile, MAX_PATH);
     TRACE(": succeeded\n");
     return S_OK;
